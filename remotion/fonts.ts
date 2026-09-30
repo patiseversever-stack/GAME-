@@ -1,26 +1,29 @@
-// Yerel fontlar (@remotion/fonts). Türkçe karakterler (Ş Ğ İ ı) latin-ext dosyalarındadır;
-// her yüz latin + latin-ext olarak unicode aralığıyla birlikte yüklenir.
+// Yerel fontlar (@remotion/fonts). Türkçe karakterler latin-ext dosyalarındadır; her yüz latin + latin-ext
+// olarak unicode aralığıyla yüklenir (UnifrakturMaguntia yalnızca latin: sadece Türkçe karaktersiz metinde kullanılır).
 import { loadFont } from '@remotion/fonts';
 import { staticFile } from 'remotion';
 
 const LATIN = 'U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+0304,U+0308,U+0329,U+2000-206F,U+20AC,U+2122,U+2191,U+2193,U+2212,U+2215,U+FEFF,U+FFFD';
 const LATIN_EXT = 'U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1D00-1DBF,U+1E00-1E9F,U+1EF2-1EFF,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF';
 
-const faces: Array<[family: string, file: string, weight: string, style: string]> = [
-  ['Playfair Display', 'playfair-display', '900', 'normal'],
-  ['Playfair Display', 'playfair-display', '700', 'normal'],
-  ['Playfair Display', 'playfair-display', '700', 'italic'],
-  ['Playfair Display', 'playfair-display', '400', 'italic'],
-  ['Gelasio', 'gelasio', '700', 'normal'],
-  ['Gelasio', 'gelasio', '400', 'normal'],
-  ['Gelasio', 'gelasio', '400', 'italic'],
-  ['IBM Plex Mono', 'ibm-plex-mono', '500', 'normal'],
-  ['IBM Plex Mono', 'ibm-plex-mono', '600', 'normal'],
+const faces: Array<[family: string, file: string, weight: string, style: string, ext: boolean]> = [
+  ['Playfair Display', 'playfair-display', '900', 'normal', true],
+  ['Playfair Display', 'playfair-display', '700', 'normal', true],
+  ['Playfair Display', 'playfair-display', '700', 'italic', true],
+  ['Playfair Display', 'playfair-display', '400', 'italic', true],
+  ['EB Garamond', 'eb-garamond', '400', 'normal', true],
+  ['EB Garamond', 'eb-garamond', '400', 'italic', true],
+  ['EB Garamond', 'eb-garamond', '600', 'normal', true],
+  ['Cinzel', 'cinzel', '700', 'normal', true],
+  ['Cinzel', 'cinzel', '900', 'normal', true],
+  ['Courier Prime', 'courier-prime', '400', 'normal', true],
+  ['Courier Prime', 'courier-prime', '700', 'normal', true],
+  ['UnifrakturMaguntia', 'unifrakturmaguntia', '400', 'normal', false],
 ];
 
 export const fontsReady = Promise.all(
-  faces.flatMap(([family, file, weight, style]) => [
+  faces.flatMap(([family, file, weight, style, ext]) => [
     loadFont({ family, url: staticFile(`fonts/${file}-latin-${weight}-${style}.woff2`), weight, style, unicodeRange: LATIN, display: 'block' }),
-    loadFont({ family, url: staticFile(`fonts/${file}-latin-ext-${weight}-${style}.woff2`), weight, style, unicodeRange: LATIN_EXT, display: 'block' }),
+    ...(ext ? [loadFont({ family, url: staticFile(`fonts/${file}-latin-ext-${weight}-${style}.woff2`), weight, style, unicodeRange: LATIN_EXT, display: 'block' })] : []),
   ]),
 );
