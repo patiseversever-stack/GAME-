@@ -10,7 +10,7 @@ import { SpriteSystem, SPRING } from './sprites.js';
 import { RackModel, classifyGroup } from './rack.js';
 import { createTileEl, setTileFace, setFlip } from './tile-dom.js';
 import { SeatView } from './seats.js';
-import { packMelds, hitMeld } from './meld-layout.js';
+import { packMeldsZoned, hitMeld } from './meld-layout.js';
 import { icon } from './icons.js';
 import { avatarSVG } from './avatars.js';
 import { surfaceHTML } from './surface.js';
@@ -578,17 +578,25 @@ export class Scene {
     }
     const L = this.L;
     const cap = L.profile === 'landscape' ? Math.min(L.rack.tw * 0.72, 44) : Math.min(L.rack.tw * 0.66, 40);
-    this.packed = packMelds(d.melds, L.meldArea, { maxTw: cap, minTw: 11 });
+    this.packed = packMeldsZoned(d.melds, L.meldArea, { maxTw: cap, minTw: 11 });
   }
 
   _renderMeldTags() {
     const host = this.meldTags;
     host.innerHTML = '';
     if (!this.packed) return;
-    for (const it of this.packed.items) {
-      const tag = document.createElement('i');
-      tag.style.cssText = `position:absolute;left:${it.tag.x}px;top:${it.tag.y}px;width:${it.tag.w}px;height:${Math.max(3, it.tag.h)}px;border-radius:2px;background:${OWNER_COLOR[it.owner]};opacity:.85`;
-      host.appendChild(tag);
+    // sahip bölgeleri: hafif zemin + etiket (avatar, isim, açılış puanı)
+    for (const z of this.packed.zones || []) {
+      const mine = this.disp.melds.filter((m) => m.owner === z.owner);
+      const pts = mine.filter((m) => m.kind !== 'pair').reduce((a, m) => a + meldPoints(m), 0);
+      const pairs = mine.filter((m) => m.kind === 'pair').length;
+      const ro = this.cfg.roster[z.owner];
+      const el = document.createElement('div');
+      el.className = 'mzone';
+      el.dataset.owner = String(z.owner);
+      el.style.cssText = `left:${z.rect.x}px;top:${z.rect.y}px;width:${z.rect.w}px;height:${z.rect.h}px;--oc:${OWNER_COLOR[z.owner]}`;
+      el.innerHTML = `<span class="mzone__tag"><i>${avatarSVG(ro.avatar)}</i><b>${z.owner === 0 ? 'Sen' : ro.name}</b><em>${pairs && !pts ? pairs + ' çift' : pts + ' puan'}</em></span>`;
+      host.appendChild(el);
     }
   }
 
@@ -849,11 +857,13 @@ export class Scene {
   highlightMeld(id) {
     if (this._hlMeld === id) return;
     this._hlMeld = id;
-    this.meldTags.querySelectorAll('i').forEach((el, i) => {
-      const it = this.packed?.items[i];
-      el.style.opacity = it && it.meldId === id ? '1' : '.85';
-      el.style.height = it && it.meldId === id ? Math.max(6, it.tag.h + 3) + 'px' : Math.max(3, it?.tag.h ?? 3) + 'px';
-    });
+    this.meldTags.querySelector('.mhl')?.remove();
+    const it = id !== null && id !== undefined ? this.packed?.items.find((x) => x.meldId === id) : null;
+    if (!it) return;
+    const el = document.createElement('div');
+    el.className = 'mhl';
+    el.style.cssText = `left:${it.rect.x - 5}px;top:${it.rect.y - 5}px;width:${it.rect.w + 10}px;height:${it.rect.h + 10}px`;
+    this.meldTags.appendChild(el);
   }
 
   setDropZoneVisible(v) {

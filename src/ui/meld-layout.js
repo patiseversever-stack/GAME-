@@ -111,3 +111,36 @@ export function hitMeld(packed, x, y, slack = 8) {
 }
 
 export const _clamp = clamp;
+
+// Sahip bölgeleri: her oyuncunun açtığı perler masada kendi bölümünde (rakip uygulamalardaki gibi).
+// Açan oyuncu sayısına göre alan 1×1, 1×2 ya da 2×2 hücreye bölünür; hücre başında sahip etiketi için şerit.
+// Tüm hücrelerde aynı taş boyutu kullanılır (görsel tutarlılık).
+export function packMeldsZoned(melds, area, opts = {}) {
+  const owners = OWNER_ORDER.filter((o) => melds.some((m) => m.owner === o));
+  if (!owners.length) return { tw: opts.maxTw || 40, th: 0, items: [], rows: 0, zones: [] };
+  const n = owners.length;
+  const gap = 6;
+  const labelH = opts.labelH ?? 15;
+  const wide = area.w / Math.max(1, area.h) > 2.2;
+  const cols = n === 1 ? 1 : n === 2 ? (wide ? 2 : 1) : 2;
+  const rows = Math.ceil(n / cols);
+  const cw = (area.w - gap * (cols - 1)) / cols;
+  const ch = (area.h - gap * (rows - 1)) / rows;
+  const cells = owners.map((o, i) => {
+    const c = i % cols;
+    const r = (i / cols) | 0;
+    // tek kalan son hücre tüm satırı kaplar
+    const span = i === n - 1 && n % cols === 1 && cols > 1 ? cols : 1;
+    const rect = { x: area.x + c * (cw + gap), y: area.y + r * (ch + gap), w: cw * span + gap * (span - 1), h: ch };
+    return { owner: o, rect, inner: { x: rect.x + 4, y: rect.y + labelH, w: rect.w - 8, h: rect.h - labelH - 3 } };
+  });
+  // ortak taş boyutu: her hücrenin sığdırabildiği en büyük boyutun en küçüğü
+  let tw = opts.maxTw || 40;
+  for (const cell of cells) tw = Math.min(tw, packMelds(melds.filter((m) => m.owner === cell.owner), cell.inner, opts).tw);
+  const items = [];
+  for (const cell of cells) {
+    const p = packMelds(melds.filter((m) => m.owner === cell.owner), cell.inner, { ...opts, maxTw: tw, minTw: Math.min(opts.minTw || 11, tw) });
+    items.push(...p.items);
+  }
+  return { tw, th: Math.round(tw * (opts.ratio || 1.36)), items, rows, zones: cells.map((c) => ({ owner: c.owner, rect: c.rect })) };
+}

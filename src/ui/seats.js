@@ -17,7 +17,7 @@ export class SeatView {
       <div class="seat__glow"></div>
       <div class="seat__card">
         <div class="seat__main">
-          <div class="seat__avatar">${avatarSVG(cfg.avatar)}</div>
+          <div class="seat__avatar">${avatarSVG(cfg.avatar)}<svg class="seat__ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" pathLength="100"/></svg></div>
           <div class="seat__text">
             <div class="seat__name"></div>
             <div class="seat__sub"><span class="seat__count num">0</span><span class="lvl" title="Seviye">${[1, 2, 3].map((i) => `<i class="${i <= dots ? 'on' : ''}"></i>`).join('')}</span><span class="seat__think" aria-hidden="true"><i></i><i></i><i></i></span></div>
@@ -104,7 +104,17 @@ export class SeatView {
   }
 
   setActive(on) {
+    const was = this.el.classList.contains('is-active');
     this.el.classList.toggle('is-active', !!on);
+    // sıra halkası: her yeni sırada baştan dolar
+    if (on && !was) {
+      const c = this.el.querySelector('.seat__ring circle');
+      if (c) {
+        c.style.animation = 'none';
+        void c.getBoundingClientRect();
+        c.style.animation = '';
+      }
+    }
   }
 
   // text: kısa bildirim balonu (≈2 sn); thinking: sayı yanında nokta animasyonu

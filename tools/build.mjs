@@ -8,3 +8,8 @@ html = html.replace(/<link rel="(manifest|icon|stylesheet)"[^>]*>\n?/g, '').repl
 fs.mkdirSync('dist', { recursive: true });
 fs.writeFileSync('dist/okey-oyunu.html', html);
 console.log('dist/okey-oyunu.html', (html.length / 1024).toFixed(0) + ' KB');
+// Canlı önizleme sürümü (claude.ai Artifact): iskelet etiketleri olmadan
+const body = html.match(/<body>([\s\S]*)<\/body>/)[1];
+const live = `<title>Patisever Okey</title>\n<style>${css}</style>\n${body}`;
+fs.writeFileSync('dist/live.html', live);
+console.log('dist/live.html', (live.length / 1024).toFixed(0) + ' KB');
