@@ -1,19 +1,25 @@
-// 3B sahne (Three.js / WebGL) — taşların ve oyuncunun ıstakasının fiziksel çizimi.
-// Oyun durumu ve hareket fiziği değişmez: SpriteSystem her sprite için (x, y, h, rot, sc, flip, z) üretir;
-// bu sınıf onları ekran pikseline birebir hizalı ortografik kamerayla gerçek ışık/gölge alan 3B nesnelere dönüştürür.
-// Dünya koordinatı: x = ekran x, y = -ekran y, z = masadan yükseklik (piksel). DOM katmanları (HUD, koltuklar,
-// çöplük çerçeveleri) canvas'ın altında/üstünde kalır; isabet testi geometrik olduğundan etkilenmez.
+// Perspektif 3B sahne (Three.js) — masaya oturmuş oyuncunun gözünden.
+//
+// İlke: "ekrana bağlı 3B". Yerleşim çözücü ve etkileşim ekran pikselinde çalışır (layout.js, input.js, SpriteSystem).
+// Bu sınıf her nesneyi, ekrandaki noktasından atılan ışının ilgili yüzeye (masa düzlemi ya da ıstaka düzlemi)
+// değdiği yere, o noktadaki "piksel başına dünya birimi" ölçeğiyle yerleştirir. Böylece:
+//   • taşlar tam yerleşimdeki konumlarında görünür → dokunma/sürükleme hesabı değişmez,
+//   • masa gerçek perspektifte, ışıkta ve gölgede durur; ıstaka öne eğik, taşlar üzerinde dik durur,
+//   • ıstaka ↔ masa geçişlerinde (çekme/atma) yüzey ve yönelim yumuşakça karışır (ışınlanma yok).
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { faceTexture, descFromEl } from './tile-face.js';
 import { woodCanvas } from '../ui/wood.js';
 
 const DEG = Math.PI / 180;
+const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const smooth = (t) => t * t * (3 - 2 * t);
 
 function roundedShape(w, h, r) {
   const s = new THREE.Shape();
   const x = -w / 2;
   const y = -h / 2;
+  r = Math.min(r, w / 2, h / 2);
   s.moveTo(x + r, y);
   s.lineTo(x + w - r, y);
   s.quadraticCurveTo(x + w, y, x + w, y + r);
@@ -35,88 +41,169 @@ export function webglAvailable() {
   }
 }
 
+// çuha dokusu: lifli gürültü, tekrar eden
+function feltTexture() {
+  const S = 512;
+  const c = document.createElement('canvas');
+  c.width = c.height = S;
+  const g = c.getContext('2d');
+  g.fillStyle = '#2d6154';
+  g.fillRect(0, 0, S, S);
+  const img = g.getImageData(0, 0, S, S);
+  const d = img.data;
+  let seed = 99991;
+  const rnd = () => ((seed = (seed * 48271) % 2147483647) / 2147483647);
+  const n = new Float32Array(S * S);
+  for (let i = 0; i < n.length; i++) n[i] = rnd();
+  for (let y = 0; y < S; y++) {
+    for (let x = 0; x < S; x++) {
+      let v = 0;
+      for (let k = -2; k <= 2; k++) v += n[y * S + ((x + k + S) % S)];
+      v = v / 5 - 0.5;
+      const i = (y * S + x) * 4;
+      const f = 1 + v * 0.22 + (n[((y + 3) % S) * S + x] - 0.5) * 0.06;
+      d[i] *= f;
+      d[i + 1] *= f;
+      d[i + 2] *= f;
+    }
+  }
+  g.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 8;
+  return t;
+}
+
 export class Stage3D {
   constructor(host, { quality = 'high' } = {}) {
     this.host = host;
     this.quality = quality;
     const canvas = document.createElement('canvas');
     canvas.className = 'gl-stage';
-    host.appendChild(canvas);
+    host.insertBefore(canvas, host.firstChild.nextSibling);
     this.canvas = canvas;
-    const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-    r.setClearColor(0x000000, 0);
+    const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: false, powerPreference: 'high-performance' });
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.toneMapping = THREE.NeutralToneMapping;
     r.toneMappingExposure = 1.0;
     r.shadowMap.enabled = true;
     r.shadowMap.type = THREE.PCFSoftShadowMap;
     this.renderer = r;
-    this.scene = new THREE.Scene();
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x07100d);
+    this.scene = scene;
     const pm = new THREE.PMREMGenerator(r);
-    this.scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
-    this.scene.environmentIntensity = 0.32;
-    this.camera = new THREE.OrthographicCamera(0, 100, 0, -100, -3000, 3000);
-    this.camera.position.set(0, 0, 1500);
-    // ışık: sol üstten, önden gelen sıcak lamba + yumuşak dolgu
-    this.key = new THREE.DirectionalLight(0xfff1d8, 2.1);
-    this.key.castShadow = true;
-    this.key.shadow.mapSize.set(2048, 2048);
-    this.key.shadow.bias = -0.0006;
-    this.key.shadow.normalBias = 0.6;
-    this.key.shadow.radius = 5;
-    this.scene.add(this.key, this.key.target);
-    this.fill = new THREE.HemisphereLight(0xfff6e6, 0x1c3a32, 0.4);
-    this.scene.add(this.fill);
-    // gölge alan görünmez masa düzlemi
-    this.ground = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShadowMaterial({ opacity: 0.55 }));
-    this.ground.receiveShadow = true;
-    this.scene.add(this.ground);
+    scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+    scene.environmentIntensity = 0.16;
+    this.camera = new THREE.PerspectiveCamera(30, 1, 10, 20000);
+    // ışık: masanın üstünde sarkan sıcak lamba (spot) + çok zayıf ortam dolgusu
+    this.lamp = new THREE.SpotLight(0xffe4bd, 5.2, 0, 0.62, 0.9, 0);
+    this.lamp.castShadow = true;
+    this.lamp.shadow.mapSize.set(2048, 2048);
+    this.lamp.shadow.bias = -0.00025;
+    this.lamp.shadow.normalBias = 0.8;
+    this.lamp.shadow.radius = 6;
+    scene.add(this.lamp, this.lamp.target);
+    this.fill = new THREE.HemisphereLight(0xfff1dc, 0x0d1f1a, 0.35);
+    scene.add(this.fill);
+    this.rim = new THREE.DirectionalLight(0xbfd8ff, 0.35);
+    scene.add(this.rim);
+    // masa (çuha) ve ahşap kenar
+    this.felt = feltTexture();
+    this.table = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ map: this.felt, roughness: 0.96, metalness: 0, color: 0x5f8378 }));
+    this.table.rotation.x = -Math.PI / 2;
+    this.table.receiveShadow = true;
+    scene.add(this.table);
     this.rackGroup = new THREE.Group();
-    this.scene.add(this.rackGroup);
-    this.meshes = new Map(); // sprite id → { group, face, back, el }
-    this.decos = new Map(); // DOM öğesi → mesh
+    scene.add(this.rackGroup);
+    this.meshes = new Map();
+    this.decos = new Map();
+    this.opp = new Map();
     this.dirty = true;
-    this.tw = 40;
-    this.th = 54;
     this._raf = 0;
     this._loop = this._loop.bind(this);
-    this.bodyMat = new THREE.MeshPhysicalMaterial({ color: 0xf1e8d2, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.35, sheen: 0.2 });
-    this.bodyBackMat = new THREE.MeshPhysicalMaterial({ color: 0x2c5248, roughness: 0.4, clearcoat: 0.5 });
+    this.ray = new THREE.Raycaster();
+    this.planeT = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
+    this.planeR = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+    this.bodyMat = new THREE.MeshPhysicalMaterial({ color: 0xf3ead6, roughness: 0.34, clearcoat: 0.7, clearcoatRoughness: 0.25, sheen: 0.25, sheenColor: new THREE.Color(0xfff4dc) });
+    this.backMatBody = new THREE.MeshPhysicalMaterial({ color: 0x2f5a4e, roughness: 0.38, clearcoat: 0.6 });
+    this._v = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
+    this._q = new THREE.Quaternion();
+    this._q2 = new THREE.Quaternion();
+    this._m = new THREE.Matrix4();
+  }
+
+  // ─── ekran → dünya ───
+  _hit(sx, sy, plane, out) {
+    const ndc = new THREE.Vector2((sx / this.W) * 2 - 1, -(sy / this.H) * 2 + 1);
+    this.ray.setFromCamera(ndc, this.camera);
+    return this.ray.ray.intersectPlane(plane, out) || out.set(0, 0, 0);
+  }
+  // yüzeyde piksel başına dünya birimi
+  _k(sx, sy, plane) {
+    const a = this._hit(sx - 4, sy, plane, this._v[2]);
+    const b = this._hit(sx + 4, sy, plane, this._v[3]);
+    return a.distanceTo(b) / 8;
   }
 
   // ─── ölçek / yerleşim ───
   resize(L, dpr) {
-    const W = L.w;
-    const H = L.h;
     this.L = L;
+    const W = (this.W = L.w);
+    const H = (this.H = L.h);
     const q = this.quality === 'low' ? 1 : Math.min(dpr || 1, 2);
     this.renderer.setPixelRatio(q);
     this.renderer.setSize(W, H, false);
     this.canvas.style.width = W + 'px';
     this.canvas.style.height = H + 'px';
-    const c = this.camera;
-    c.left = 0;
-    c.right = W;
-    c.top = 0;
-    c.bottom = -H;
-    c.updateProjectionMatrix();
-    this.ground.scale.set(W * 2, H * 2, 1);
-    this.ground.position.set(W / 2, -H / 2, 0);
-    // ışık kamerası tüm masayı kapsar
-    const k = this.key;
-    k.position.set(W * 0.5 - H * 0.55, -H * 0.55 + H * 0.75, 900);
-    k.target.position.set(W * 0.5, -H * 0.55, 0);
-    const sc = k.shadow.camera;
-    const ext = Math.max(W, H) * 0.9;
-    sc.left = -ext;
-    sc.right = ext;
-    sc.top = ext;
-    sc.bottom = -ext;
-    sc.near = 100;
-    sc.far = 4000;
-    sc.updateProjectionMatrix();
+    const cam = this.camera;
+    cam.aspect = W / H;
+    // ekran ortasında 1 birim ≈ 1 piksel olacak uzaklık; masaya ~52° eğik bakış
+    const pitch = (L.profile === 'landscape' ? 60 : 64) * DEG;
+    const dist = H / 2 / Math.tan((cam.fov * DEG) / 2);
+    cam.position.set(0, dist * Math.sin(pitch), dist * Math.cos(pitch));
+    cam.lookAt(0, 0, 0);
+    cam.near = dist * 0.1;
+    cam.far = dist * 8;
+    cam.updateProjectionMatrix();
+    cam.updateMatrixWorld();
+    this.dist = dist;
+    // masa düzlemi y=0; ekranın her yerini kaplayacak kadar büyük
+    const span = dist * 6;
+    this.table.scale.set(span, span, 1);
+    this.felt.repeat.set(span / 420, span / 420);
+    // ıstaka düzlemi: ıstaka merkezine giden ışın üzerinde, kameraya daha yakın, kameraya bakan ve hafif geriye yatık
+    const rr = L.rack.rect;
+    const rc = this._hit(rr.x + rr.w / 2, rr.y + rr.h / 2, this.planeT, new THREE.Vector3());
+    const toCam = new THREE.Vector3().subVectors(cam.position, rc).normalize();
+    const anchor = rc.clone().addScaledVector(toCam, dist * 0.14);
+    // kameranın bakış eksenine dik → düzlem üzerinde ölçek her yerde eşit (model ıstaka yerleşimle birebir örtüşür)
+    const n = new THREE.Vector3().subVectors(cam.position, new THREE.Vector3(0, 0, 0)).normalize();
+    this.planeR.setFromNormalAndCoplanarPoint(n, anchor);
+    this.rackN = n;
+    // ıstaka yüzeyinin "yukarı" yönü (dünya yukarısının düzleme izdüşümü)
+    const up = new THREE.Vector3(0, 1, 0);
+    this.rackUp = up.sub(n.clone().multiplyScalar(up.dot(n))).normalize();
+    this.rackRight = new THREE.Vector3().crossVectors(this.rackUp, n).normalize();
+    this.qRack = new THREE.Quaternion().setFromRotationMatrix(new THREE.Matrix4().makeBasis(this.rackRight, this.rackUp, n));
+    // masadaki taşlar: yatık ama yüzü kameraya ~22° dönük (gerçek masada eğilip bakmak gibi) → okunur
+    this.qTable = new THREE.Quaternion()
+      .setFromRotationMatrix(new THREE.Matrix4().makeBasis(new THREE.Vector3(1, 0, 0), new THREE.Vector3(0, 0, -1), new THREE.Vector3(0, 1, 0)))
+      .multiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), 30 * DEG));
+    // lamba: oyun alanının üstünde, biraz karşı tarafta
+    const center = this._hit(W / 2, L.table.y + L.table.h * 0.55, this.planeT, new THREE.Vector3());
+    this.lamp.position.set(center.x - dist * 0.25, dist * 1.35, center.z - dist * 0.35);
+    this.lamp.target.position.copy(center);
+    this.lamp.distance = 0;
+    this.lamp.angle = 0.72;
+    this.lamp.shadow.camera.near = dist * 0.3;
+    this.lamp.shadow.camera.far = dist * 4;
+    this.rim.position.set(dist, dist * 0.6, -dist);
     this.setTileSize(L.rack.tw, L.rack.th);
     this.buildRack(L);
+    for (const o of this.opp.values()) this.scene.remove(o.group);
+    this.opp.clear();
     this.invalidate();
   }
 
@@ -124,120 +211,139 @@ export class Stage3D {
     if (this.tileGeo && tw === this.tw && th === this.th) return;
     this.tw = tw;
     this.th = th;
-    const bs = tw * 0.045; // kenar yuvarlama
-    const bt = tw * 0.05;
-    const D = tw * 0.26; // taş kalınlığı
+    const bs = tw * 0.05;
+    const bt = tw * 0.06;
+    const D = tw * 0.3;
     this.D = D + 2 * bt;
     const shape = roundedShape(tw - 2 * bs, th - 2 * bs, tw * 0.13);
-    const geo = new THREE.ExtrudeGeometry(shape, { depth: D, bevelEnabled: true, bevelThickness: bt, bevelSize: bs, bevelSegments: 3, curveSegments: 8 });
+    const geo = new THREE.ExtrudeGeometry(shape, { depth: D, bevelEnabled: true, bevelThickness: bt, bevelSize: bs, bevelSegments: 4, curveSegments: 8 });
     geo.translate(0, 0, -D / 2);
     this.tileGeo?.dispose();
     this.tileGeo = geo;
     this.faceGeo?.dispose();
-    this.faceGeo = new THREE.PlaneGeometry(tw - bs * 0.6, th - bs * 0.6);
-    this.faceZ = D / 2 + bt + 0.15;
+    this.faceGeo = new THREE.PlaneGeometry(tw - bs * 0.5, th - bs * 0.5);
+    this.faceZ = D / 2 + bt + 0.12;
     for (const m of this.meshes.values()) this._applyGeo(m);
     for (const m of this.decos.values()) this._applyGeo(m);
   }
 
-  // ─── oyuncunun ıstakası: ahşap gövde, oyuk basamaklar, taşların önünü örten çıtalar ───
-  buildRack(L) {
-    const g = this.rackGroup;
-    for (const c of [...g.children]) {
-      g.remove(c);
-      c.geometry?.dispose();
-    }
-    const R = L.rack;
-    const rr = R.rect;
-    const tw = R.tw;
+  _wood(color, rough, rx, ry) {
     if (!this.woodTex) {
       const wc = woodCanvas();
       if (wc) {
         this.woodTex = new THREE.CanvasTexture(wc);
         this.woodTex.colorSpace = THREE.SRGBColorSpace;
         this.woodTex.wrapS = this.woodTex.wrapT = THREE.MirroredRepeatWrapping;
+        this.woodTex.anisotropy = 8;
       }
     }
-    const wood = (color, rough = 0.55) => {
-      const m = new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0 });
-      if (this.woodTex) {
-        m.map = this.woodTex.clone();
-        m.map.needsUpdate = true;
-        m.map.repeat.set(1 / 640, 1 / 160);
-      }
-      return m;
-    };
-    this.rackZ = tw * 0.1; // ıstaka üst yüzü
-    // gövde
-    const bodyShape = roundedShape(rr.w, rr.h, Math.min(14, tw * 0.3));
-    const body = new THREE.Mesh(new THREE.ExtrudeGeometry(bodyShape, { depth: this.rackZ, bevelEnabled: true, bevelThickness: 3, bevelSize: 3, bevelSegments: 3 }), wood(0xa87447, 0.6));
-    body.position.set(rr.x + rr.w / 2, -(rr.y + rr.h / 2), -3);
-    body.receiveShadow = true;
-    body.castShadow = true;
-    g.add(body);
-    // basamak oyukları (koyu, hafif çukur)
-    for (let r = 0; r < R.rows; r++) {
-      const s = R.slotRect(r * R.cols);
-      const gw = rr.w - 14;
-      const gh = R.th + tw * 0.1;
-      const gm = wood(0x6b3f1f, 0.8);
-      if (gm.map) gm.map.repeat.set(gw / 640, gh / 160);
-      const groove = new THREE.Mesh(new THREE.PlaneGeometry(gw, gh), gm);
-      groove.position.set(rr.x + rr.w / 2, -(s.y + R.th / 2 - tw * 0.05), this.rackZ + 0.5);
-      groove.receiveShadow = true;
-      g.add(groove);
-      // ön çıta: yuvarlatılmış çubuk, taşların alt kenarının önünde
-      const lipH = Math.max(7, tw * 0.28);
-      const lipTop = s.y + R.th - tw * 0.05;
-      const front = this.rackZ + this.D + 4;
-      const lipShape = roundedShape(rr.w - 6, lipH, lipH * 0.45);
-      const lip = new THREE.Mesh(new THREE.ExtrudeGeometry(lipShape, { depth: front - this.rackZ - 3, bevelEnabled: true, bevelThickness: 3, bevelSize: 2, bevelSegments: 4 }), wood(0xc18b58, 0.45));
-      lip.position.set(rr.x + rr.w / 2, -(lipTop + lipH / 2), this.rackZ);
-      lip.castShadow = true;
-      lip.receiveShadow = true;
-      g.add(lip);
+    const m = new THREE.MeshStandardMaterial({ color, roughness: rough, metalness: 0 });
+    if (this.woodTex) {
+      m.map = this.woodTex.clone();
+      m.map.needsUpdate = true;
+      m.map.repeat.set(rx, ry);
     }
+    return m;
   }
 
-  // ─── rakip ıstakaları: ahşap çıta üzerinde ters duran taşlar (sayı = taş sayısı) ───
+  // ─── oyuncunun ıstakası (ıstaka düzleminde, piksel biriminde kurulur, ölçekle dünyaya taşınır) ───
+  buildRack(L) {
+    const g = this.rackGroup;
+    for (const c of [...g.children]) {
+      g.remove(c);
+      c.traverse?.((o) => o.geometry?.dispose());
+    }
+    const R = L.rack;
+    const rr = R.rect;
+    const tw = R.tw;
+    const cx = rr.x + rr.w / 2;
+    const cy = rr.y + rr.h / 2;
+    const k = this._k(cx, cy, this.planeR);
+    const origin = this._hit(cx, cy, this.planeR, new THREE.Vector3());
+    const root = new THREE.Group();
+    root.position.copy(origin);
+    root.quaternion.copy(this.qRack);
+    root.scale.setScalar(k);
+    g.add(root);
+    this.rackK = k;
+    // yerel koordinat: x sağ, y yukarı (ekran y'nin tersi), z kameraya doğru; birim = piksel
+    const loc = (sx, sy) => [sx - cx, -(sy - cy)];
+    const bodyD = tw * 0.55;
+    const body = new THREE.Mesh(
+      new THREE.ExtrudeGeometry(roundedShape(rr.w, rr.h, Math.min(16, tw * 0.3)), { depth: bodyD, bevelEnabled: true, bevelThickness: 4, bevelSize: 4, bevelSegments: 4 }),
+      this._wood(0xb07a4a, 0.55, 1 / 640, 1 / 160),
+    );
+    body.position.z = -bodyD - 4;
+    body.castShadow = body.receiveShadow = true;
+    root.add(body);
+    for (let r = 0; r < R.rows; r++) {
+      const s = R.slotRect(r * R.cols);
+      const gw = rr.w - 16;
+      const gh = R.th + tw * 0.14;
+      const [, gy] = loc(0, s.y + R.th / 2 - tw * 0.06);
+      const groove = new THREE.Mesh(new THREE.PlaneGeometry(gw, gh), this._wood(0x6a3c1c, 0.85, gw / 640, gh / 160));
+      groove.position.set(0, gy, 0.4);
+      groove.receiveShadow = true;
+      root.add(groove);
+      const lipH = Math.max(8, tw * 0.3);
+      const lipTop = s.y + R.th - tw * 0.05;
+      const [, ly] = loc(0, lipTop + lipH / 2);
+      const lipD = this.D + 6;
+      const lip = new THREE.Mesh(
+        new THREE.ExtrudeGeometry(roundedShape(rr.w - 6, lipH, lipH * 0.45), { depth: lipD, bevelEnabled: true, bevelThickness: 3, bevelSize: 2.5, bevelSegments: 5 }),
+        this._wood(0xc58e5a, 0.42, 1 / 640, 1 / 160),
+      );
+      lip.position.set(0, ly, 0);
+      lip.castShadow = lip.receiveShadow = true;
+      root.add(lip);
+    }
+    this.invalidate();
+  }
+
+  // ─── rakip ıstakaları: masada duran ahşap ıstaka, taşların sırtı oyuncuya dönük ───
   setOpponent(seat, rect, count, vertical) {
-    this.opp = this.opp || new Map();
-    const key = `${rect.x},${rect.y},${rect.w},${rect.h},${count},${vertical}`;
+    if (!this.L) return;
+    const key = `${rect.x},${rect.y},${rect.w},${rect.h},${count},${vertical},${this.W}`;
     const old = this.opp.get(seat);
     if (old && old.key === key) return;
     if (old) this.scene.remove(old.group);
+    const cx = rect.x + rect.w / 2;
+    const cy = rect.y + rect.h / 2;
+    const k = this._k(cx, cy, this.planeT);
+    const p = this._hit(cx, cy, this.planeT, new THREE.Vector3());
     const group = new THREE.Group();
-    if (!this.oppWood) {
-      this.oppWood = new THREE.MeshStandardMaterial({ color: 0xa87447, roughness: 0.6, map: this.woodTex || null });
-      this.oppBack = new THREE.MeshPhysicalMaterial({ color: 0x2f5a4e, roughness: 0.38, clearcoat: 0.6 });
-    }
+    group.position.copy(p);
+    group.scale.setScalar(k);
+    // yerel: x boyunca uzun kenar; ıstaka masada dik durur (y yukarı)
     const long = vertical ? rect.h : rect.w;
-    const short = vertical ? rect.w : rect.h;
-    const bar = new THREE.Mesh(new THREE.BoxGeometry(vertical ? short : long, vertical ? long : short, 6), this.oppWood);
-    bar.position.set(rect.x + rect.w / 2, -(rect.y + rect.h / 2), 3);
-    bar.castShadow = bar.receiveShadow = true;
-    group.add(bar);
+    const thick = Math.min(vertical ? rect.w : rect.h, 14);
+    const H = thick * 1.6;
+    const wood = this._wood(0xa06b3e, 0.6, 1 / 640, 1 / 160);
+    const base = new THREE.Mesh(new THREE.BoxGeometry(long, H * 0.55, thick), wood);
+    base.position.y = H * 0.275;
+    base.castShadow = base.receiveShadow = true;
+    group.add(base);
     const n = Math.max(0, count);
     if (n) {
       const pitch = (long - 6) / n;
-      const tLong = Math.min(pitch * 0.92, short * 0.75);
-      const tShort = short * 0.72;
-      const geo = new THREE.BoxGeometry(vertical ? tShort : tLong, vertical ? tLong : tShort, 5);
+      const tw = Math.min(pitch * 0.94, H * 0.95);
+      const geo = new THREE.BoxGeometry(tw, tw * 1.36, thick * 0.55);
       for (let i = 0; i < n; i++) {
-        const m = new THREE.Mesh(geo, this.oppBack);
-        const off = 3 + pitch * (i + 0.5);
-        if (vertical) m.position.set(rect.x + rect.w / 2, -(rect.y + off), 9);
-        else m.position.set(rect.x + off, -(rect.y + rect.h / 2), 9);
+        const m = new THREE.Mesh(geo, this.backMatBody);
+        m.position.set(-long / 2 + 3 + pitch * (i + 0.5), H * 0.55 + tw * 0.55, -thick * 0.1);
+        m.rotation.x = -10 * DEG;
         m.castShadow = true;
         group.add(m);
       }
     }
+    // yönelim: üstteki rakip bize dönük (sırtlar görünür), yanlar masanın ortasına dönük
+    if (vertical) group.rotation.y = seat === 3 ? -Math.PI / 2 : Math.PI / 2;
     this.scene.add(group);
     this.opp.set(seat, { key, group });
     this.invalidate();
   }
 
-  // ─── sprite eşlemesi ───
+  // ─── taşlar ───
   _applyGeo(m) {
     m.body.geometry = this.tileGeo;
     m.face.geometry = this.faceGeo;
@@ -248,17 +354,18 @@ export class Stage3D {
 
   _make(el) {
     const group = new THREE.Group();
+    const inner = new THREE.Group();
+    group.add(inner);
     const body = new THREE.Mesh(this.tileGeo, this.bodyMat);
     body.castShadow = true;
     body.receiveShadow = true;
-    const faceMat = new THREE.MeshPhysicalMaterial({ map: null, transparent: true, roughness: 0.38, clearcoat: 0.6, clearcoatRoughness: 0.3, alphaTest: 0.5 });
-    const face = new THREE.Mesh(this.faceGeo, faceMat);
-    const back = new THREE.Mesh(this.faceGeo, new THREE.MeshPhysicalMaterial({ map: faceTexture({ kind: 'back' }), transparent: true, roughness: 0.4, clearcoat: 0.5, alphaTest: 0.5 }));
+    const face = new THREE.Mesh(this.faceGeo, new THREE.MeshPhysicalMaterial({ transparent: true, roughness: 0.5, clearcoat: 0.3, clearcoatRoughness: 0.4, alphaTest: 0.5 }));
+    const back = new THREE.Mesh(this.faceGeo, new THREE.MeshPhysicalMaterial({ map: faceTexture({ kind: 'back' }), transparent: true, roughness: 0.36, clearcoat: 0.6, alphaTest: 0.5 }));
     back.rotation.y = Math.PI;
     face.receiveShadow = true;
-    group.add(body, face, back);
+    inner.add(body, face, back);
     this.scene.add(group);
-    const m = { group, body, face, back, el, key: '' };
+    const m = { group, inner, body, face, back, el, key: '' };
     this._applyGeo(m);
     return m;
   }
@@ -273,18 +380,46 @@ export class Stage3D {
     }
     const cl = m.el.classList;
     const em = m.face.material.emissive;
-    if (cl.contains('is-invalid')) em.setRGB(0.45, 0.06, 0.03);
+    if (cl.contains('is-invalid')) em.setRGB(0.5, 0.06, 0.03);
     else if (cl.contains('is-hint')) em.setRGB(0.22, 0.16, 0.02);
-    else if (cl.contains('is-new')) em.setRGB(0.16, 0.12, 0.04);
-    else if (cl.contains('is-selected')) em.setRGB(0.08, 0.07, 0.03);
+    else if (cl.contains('is-new')) em.setRGB(0.14, 0.1, 0.03);
     else em.setRGB(0, 0, 0);
-    const dim = cl.contains('is-dim');
-    m.face.material.color.setScalar(dim ? 0.62 : 1);
+    m.face.material.color.setScalar(cl.contains('is-dim') ? 0.6 : 1);
   }
 
-  // SpriteSystem'in her kare çağırdığı eşleme
-  update(s, tw, th) {
-    // sistemden çıkarılmış sprite (ör. uçuş sonunda silinen hayalet) yeniden yaratılmasın
+  // Ekrandaki (x, y) → dünya konumu/yönelimi/ölçeği. rackT: 0 masa, 1 ıstaka.
+  _place(group, x, y, h, rot, sc, flip, z, rackT) {
+    const pT = this._hit(x, y, this.planeT, this._v[0]);
+    const kT = this._k(x, y, this.planeT);
+    let p = pT;
+    let k = kT;
+    const q = this._q;
+    if (rackT > 0) {
+      const pR = this._hit(x, y, this.planeR, this._v[1]);
+      const kR = this._k(x, y, this.planeR);
+      p = rackT >= 1 ? pR : pT.clone().lerp(pR, rackT);
+      k = kT + (kR - kT) * rackT;
+      q.copy(this.qTable).slerp(this.qRack, smooth(rackT));
+    } else q.copy(this.qTable);
+    // normal yönünde kalınlık + kaldırma
+    const n = this._v[2].set(0, 0, 1).applyQuaternion(q);
+    group.position.copy(p).addScaledVector(n, (this.D / 2 + 1.5 + (z || 0) * 0.03 + h * 1.25) * k);
+    this._q2.setFromAxisAngle(this._v[3].set(0, 0, 1), -rot * DEG);
+    group.quaternion.copy(q).multiply(this._q2);
+    group.scale.setScalar(k * sc * (1 + h * 0.003));
+    return flip;
+  }
+
+  _rackT(x, y) {
+    const r = this.L.rack.rect;
+    const band = this.L.rack.th * 0.9;
+    const dy = y - r.y; // ıstakanın üst kenarından aşağı
+    const t = clamp((dy + band * 0.5) / band, 0, 1);
+    const inX = x > r.x - this.L.rack.tw && x < r.x + r.w + this.L.rack.tw ? 1 : clamp(1 - (Math.min(Math.abs(x - r.x), Math.abs(x - r.x - r.w)) - this.L.rack.tw) / 60, 0, 1);
+    return t * inX;
+  }
+
+  update(s) {
     if (!s.el.isConnected) {
       if (this.meshes.has(s.id)) this.remove(s.id);
       return;
@@ -295,13 +430,8 @@ export class Stage3D {
       this.meshes.set(s.id, m);
     }
     m.el = s.el;
-    this._syncFace(m);
-    const zBase = (this.rackZ || 4) + this.D / 2 + 1 + (s.z || 0) * 0.02;
-    m.group.position.set(s.x, -s.y, zBase + s.h * 1.4);
-    const sc = s.sc * (1 + s.h * 0.0035);
-    m.group.scale.setScalar(sc);
-    m.group.rotation.set(0.3 + s.h * 0.003, s.flip * DEG, -s.rot * DEG);
-    m.group.visible = s.el.style.display !== 'none';
+    const flip = this._place(m.group, s.x, s.y, s.h, s.rot, s.sc, s.flip, s.z, this._rackT(s.x, s.y));
+    m.inner.rotation.set(0.22 * this._rackT(s.x, s.y), flip * DEG, 0);
     this.invalidate();
   }
 
@@ -319,7 +449,6 @@ export class Stage3D {
     for (const id of [...this.meshes.keys()]) this.remove(id);
   }
 
-  // dekor taşlar (deste yığını, okey göstergesi, sürükleme hayaleti): DOM öğesi + parametre
   deco(el, { x, y, sc = 1, flip = 0, rot = 0, z = 0 }) {
     let m = this.decos.get(el);
     if (!m) {
@@ -327,13 +456,11 @@ export class Stage3D {
       this.decos.set(el, m);
     }
     this._syncFace(m);
-    m.group.position.set(x, -y, (this.rackZ || 4) + this.D / 2 + z * 0.3);
-    m.group.scale.setScalar(sc);
-    m.group.rotation.set(0.3, flip * DEG, -rot * DEG);
+    this._place(m.group, x, y, z > 100 ? 10 : 0, rot, sc, flip, z % 100, this._rackT(x, y));
+    m.inner.rotation.set(0, flip * DEG, 0);
     this.invalidate();
   }
 
-  // DOM'dan kaldırılmış dekorları temizle, görünürlükleri eşitle
   syncDecos() {
     for (const [el, m] of this.decos) {
       if (!el.isConnected) {
@@ -348,7 +475,6 @@ export class Stage3D {
     this.invalidate();
   }
 
-  // DOM sınıf/veri değişikliklerini (seçili, ipucu, geçersiz, yüz) izle
   observe(...roots) {
     this._mo = new MutationObserver(() => this.invalidate());
     for (const r of roots) this._mo.observe(r, { subtree: true, attributes: true, attributeFilter: ['class', 'data-t', 'data-rep', 'style'] });

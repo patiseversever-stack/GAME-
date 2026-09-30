@@ -1339,3 +1339,9 @@
 .badge-ov .stock__count { bottom: -0.45rem; }
 [data-profile='portrait'] .me-plate { display: flex; }
 [data-profile='portrait'] .me-plate__name { display: none; }
+/* perspektif sahne: WebGL tuvali masanın kendisi → DOM masa katmanının ALTINDA */
+.gl-stage { z-index: 4 !important; }
+.gl-on .mzone { background: none; }
+.gl-on .pile { background: none; }
+.gl-on .pile.is-take, .gl-on .pile.is-drop, .gl-on .pile.is-dragging-zone { background: radial-gradient(closest-side, rgba(255, 222, 150, 0.16), rgba(255, 222, 150, 0)); }
+.gl-on .fx-ambient { display: none; }
