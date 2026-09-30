@@ -1255,3 +1255,10 @@
   border-color: rgba(224, 105, 90, 0.8);
   color: #ffe2dc;
 }
+.rack.is-drop-target {
+  box-shadow: 0 0 0 3px rgba(216, 184, 120, 0.6), 0 0 30px rgba(216, 184, 120, 0.35), 0 18px 30px rgba(0, 0, 0, 0.55);
+}
+.drag-ghost {
+  transition: none;
+  filter: drop-shadow(0 14px 12px rgba(0, 0, 0, 0.5));
+}

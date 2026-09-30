@@ -8,6 +8,7 @@
 //  • deste / yandan al / çöplük / per / rozet dokunuşları
 //  • çoklu dokunuşta sürükleme iptal; pointercancel güvenli
 
+import { createTileEl, setFlip } from './tile-dom.js';
 import { SPRING } from './sprites.js';
 
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
@@ -66,6 +67,11 @@ export class InputController {
     const hit = this.sc.hit(x, y);
     if (!hit) return;
     this.p = { id: e.pointerId, type: e.pointerType, x0: x, y0: y, x, y, t0: performance.now(), hit, dragging: false, slot: -1, hot: null };
+    if (hit.kind === 'stock' || hit.kind === 'side') {
+      try {
+        this.sc.root.setPointerCapture(e.pointerId);
+      } catch {}
+    }
     if (hit.kind === 'rackTile') {
       try {
         this.sc.root.setPointerCapture(e.pointerId);
@@ -84,6 +90,7 @@ export class InputController {
     const p = this.p;
     p.x = e.clientX;
     p.y = e.clientY;
+    if (p.hit.kind === 'stock' || p.hit.kind === 'side') return this.drawDragMove(p);
     if (p.hit.kind !== 'rackTile') return;
     const thr = p.type === 'mouse' ? 4 : 7;
     if (!p.dragging) {
@@ -91,6 +98,49 @@ export class InputController {
       if (!this.startDrag()) return;
     }
     this.drag();
+  }
+
+  // Desteden / yandan sürükleyerek çekme: taşı ıstakada istediğin yuvaya bırak
+  drawDragMove(p) {
+    const caps = this.h.caps();
+    const ok = p.hit.kind === 'stock' ? caps.canDrawStock : caps.canTakeSide;
+    if (!ok) return;
+    if (!p.drawDrag) {
+      if (Math.hypot(p.x - p.x0, p.y - p.y0) < 10) return;
+      p.drawDrag = true;
+      const sc = this.sc;
+      const t = p.hit.kind === 'side' ? sc.disp.piles[3].at(-1) : 0;
+      const el = createTileEl(t ?? 0, sc.ctx);
+      el.classList.add('is-dragging', 'drag-ghost');
+      setFlip(el, p.hit.kind === 'stock' ? 180 : 0);
+      el.style.zIndex = '400';
+      sc.els.sprites.appendChild(el);
+      p.ghostEl = el;
+      sc.deps.audio?.play('select');
+    }
+    const L = this.L;
+    const oy = this.offsetY(p);
+    p.ghostEl.style.transform = `translate3d(${p.x - L.rack.tw / 2}px,${p.y + oy - L.rack.th / 2}px,0) scale(1.06) rotate(-3deg)`;
+    const inRack = L.rack.inside(p.x, p.y + oy, 10);
+    p.slot = inRack ? L.rack.slotAt(p.x, p.y + oy) : -1;
+    this.sc.els.rack.classList.toggle('is-drop-target', inRack);
+  }
+
+  async drawDragEnd(p) {
+    const sc = this.sc;
+    p.ghostEl?.remove();
+    sc.els.rack.classList.remove('is-drop-target');
+    if (p.slot < 0) return;
+    const slot = p.slot;
+    const before = new Set(sc.rack.tiles());
+    const ok = await this.h.intent({ type: p.hit.kind === 'stock' ? 'drawStock' : 'takeSide' });
+    if (!ok) return;
+    const t = sc.rack.tiles().find((x) => !before.has(x));
+    if (t === undefined) return;
+    sc.rack.moveTo(t, slot);
+    sc.retarget(true);
+    sc.onRackChanged();
+    sc.persistRack?.();
   }
 
   offsetY(p = this.p) {
@@ -186,6 +236,7 @@ export class InputController {
     try {
       this.sc.root.releasePointerCapture(e.pointerId);
     } catch {}
+    if (p.drawDrag) return this.drawDragEnd(p);
     if (p.dragging) return this.drop(p);
     const moved = Math.hypot(p.x - p.x0, p.y - p.y0);
     if (moved > 12) {
