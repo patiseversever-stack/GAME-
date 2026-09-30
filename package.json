@@ -6,8 +6,8 @@
   "type": "module",
   "scripts": {
     "studio": "remotion studio remotion/index.ts",
-    "still:s1": "remotion still Sekans1-Kesisim out/sekans1.jpg --frame=460",
-    "render:s1": "remotion render Sekans1-Kesisim out/sekans1-kesisim.mp4 --codec=h264 --crf=17 --x264-preset=slow --pixel-format=yuv420p --image-format=jpeg --jpeg-quality=95"
+    "still:s1": "remotion still Sekans1-Acilis out/sekans1.png --frame=299",
+    "render:s1": "remotion render Sekans1-Acilis out/sekans1-acilis.mp4 --codec=h264 --crf=16 --x264-preset=slow --pixel-format=yuv420p --image-format=jpeg --jpeg-quality=96"
   },
   "dependencies": {
     "@remotion/bundler": "4.0.531",
