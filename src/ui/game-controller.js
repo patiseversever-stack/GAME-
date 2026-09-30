@@ -643,7 +643,7 @@ export class GameController {
   enterHumanTurn() {
     const sc = this.scene;
     this.updateUI();
-    sc.focus(undefined, undefined, false);
+    sc._turnLight(0);
     this.coachTurn();
   }
 

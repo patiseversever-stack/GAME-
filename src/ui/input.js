@@ -121,6 +121,10 @@ export class InputController {
     const L = this.L;
     const oy = this.offsetY(p);
     p.ghostEl.style.transform = `translate3d(${p.x - L.rack.tw / 2}px,${p.y + oy - L.rack.th / 2}px,0) scale(1.06) rotate(-3deg)`;
+    if (this.sc.stage) {
+      p.ghostEl.classList.add('gl-proxy');
+      this.sc.stage.deco(p.ghostEl, { x: p.x, y: p.y + oy, sc: 1.06, rot: -3, flip: p.hit.kind === 'stock' ? 180 : 0, z: 120 });
+    }
     const inRack = L.rack.inside(p.x, p.y + oy, 10);
     p.slot = inRack ? L.rack.slotAt(p.x, p.y + oy) : -1;
     this.sc.els.rack.classList.toggle('is-drop-target', inRack);
@@ -129,6 +133,7 @@ export class InputController {
   async drawDragEnd(p) {
     const sc = this.sc;
     p.ghostEl?.remove();
+    sc.stage?.syncDecos();
     sc.els.rack.classList.remove('is-drop-target');
     if (p.slot < 0) return;
     const slot = p.slot;

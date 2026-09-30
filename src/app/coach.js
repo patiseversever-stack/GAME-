@@ -18,8 +18,8 @@ export function createCoach(host, settings) {
     const el = document.createElement('div');
     el.className = 'coach-bub is-' + place;
     el.setAttribute('role', 'status');
-    el.innerHTML = `<p>${text}</p><button class="coach-bub__ok">Tamam</button>`;
-    el.style.left = at.x + 'px';
+    el.innerHTML = `<p>${text}</p>`;
+    el.style.left = Math.max(90, Math.min(innerWidth - 90, at.x)) + 'px';
     el.style.top = at.y + 'px';
     el.addEventListener('pointerdown', (e) => {
       e.stopPropagation();
@@ -27,7 +27,7 @@ export function createCoach(host, settings) {
     });
     host.appendChild(el);
     cur = el;
-    setTimeout(() => cur === el && hide(), 9000);
+    setTimeout(() => cur === el && hide(), 6000);
   };
   return {
     attach() {},
@@ -38,14 +38,14 @@ export function createCoach(host, settings) {
       const s = ctl.game.state;
       if (ev === 'gameStart' && s.rules.mode === 'okey101') {
         const r = L.rack.rect;
-        show('open101', 'İlk açışında ıstakadaki perlerin toplamı <b>en az 101</b> olmalı (ya da 5 çift). Perleri boşlukla ayır; puanlar üstlerinde görünür.', { x: r.x + r.w / 2, y: r.y - 8 });
+        show('open101', 'İlk açış: perlerin toplamı <b>en az 101</b> ya da 5 çift', { x: r.x + r.w / 2, y: r.y - 8 });
       }
       if (ev === 'turn' && s.turn.seat === 0 && s.turn.needsDraw) {
-        show('draw', 'Sıra sende: <b>desteye dokun</b> ya da taşı ıstakada istediğin yere sürükle. Soldaki çöplükten de alabilirsin.', { x: L.stock.cx, y: L.stock.cy - L.stock.h / 2 - 10 });
+        show('draw', '<b>Dokun</b> ya da ıstakaya sürükle', { x: L.stock.cx, y: L.stock.cy - L.stock.h / 2 - 10 });
       }
       if (ev === 'draw') {
         const p = L.piles[0];
-        show('discard', 'Taşları sürükleyerek diz. <b>Diz</b> düğmesi perleri senin için gruplar. Sonra bir taşı <b>buraya sürükleyerek</b> at.', { x: p.cx - p.w, y: p.cy - p.h / 2 - 10 });
+        show('discard', 'Bir taşı <b>buraya sürükle</b>', { x: p.cx - p.w * 0.3, y: p.cy - p.h / 2 - 8 });
       }
     },
     hide,

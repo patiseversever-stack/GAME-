@@ -15,6 +15,8 @@ import { icon } from './icons.js';
 import { avatarSVG } from './avatars.js';
 import { surfaceHTML } from './surface.js';
 import { woodTexture } from './wood.js';
+import { paintTable } from './table-art.js';
+import { Stage3D, webglAvailable } from '../render3d/stage.js';
 import { COLORS, isOkey, isFake } from '../game/tiles.js';
 import { meldPoints } from '../game/melds.js';
 
@@ -56,7 +58,7 @@ export class Scene {
     el.setAttribute('role', 'application');
     el.setAttribute('aria-label', 'Okey masası');
     el.innerHTML = `
-      ${surfaceHTML()}
+      <div class="surface"><div class="surface__cam" style="position:absolute;inset:0"><canvas class="table-art"></canvas></div><div class="surface__focus"></div><div class="surface__rim"></div></div>
       <canvas class="fx-ambient" style="inset:0;z-index:5;pointer-events:none;width:100%;height:100%"></canvas>
       <div class="layer layer--table"></div>
       <div class="rack"></div>
@@ -72,6 +74,7 @@ export class Scene {
       </div>
       <div class="scorebar"></div>
       <div class="actionbar">
+        <div class="me-plate"><i class="me-plate__av"></i><span class="me-plate__name">Sen</span><b class="me-plate__score num">0</b></div>
         <div class="status"><div class="status__main"></div><div class="status__sub"></div></div>
         <div class="actions"></div>
       </div>
@@ -84,6 +87,7 @@ export class Scene {
     this.els = {
       surface: q('.surface'),
       cam: q('.surface__cam'),
+      art: q('.table-art'),
       focus: q('.surface__focus'),
       table: q('.layer--table'),
       rack: q('.rack'),
@@ -106,6 +110,18 @@ export class Scene {
       soundBtn: q('[data-act="sound"]'),
     };
     this.sys = new SpriteSystem(this.els.sprites);
+    // 3B çizim: WebGL varsa taşlar ve ıstaka Three.js ile (yoksa DOM taşları olduğu gibi çalışır)
+    if (webglAvailable() && this.deps.settings.get('quality') !== 'dom') {
+      try {
+        this.stage = new Stage3D(el, { quality: this.deps.settings.get('quality') });
+        this.sys.stage = this.stage;
+        this.host.classList.add('gl-on');
+        this.stage.observe(this.els.sprites, this.els.table);
+      } catch (e) {
+        console.warn('WebGL başlatılamadı, DOM çizimine dönülüyor', e);
+        this.stage = null;
+      }
+    }
     this.sys.onSlow = (avg) => this.deps.onSlow?.(avg);
     // tabanlar (çöplük, deste, etiketler)
     const t = this.els.table;
@@ -146,6 +162,7 @@ export class Scene {
     for (const seat of [1, 2, 3]) {
       const ro = cfg.roster[seat];
       this.seats[seat] = new SeatView(this.els.table, { seat, name: ro.name, avatar: ro.avatar, difficulty: ro.difficulty, orient: seat === 2 ? 'h' : 'v' });
+      this.seats[seat].stage = this.stage;
     }
     this._buildScorebar();
     this.sys.clear();
@@ -223,6 +240,7 @@ export class Scene {
     root.dataset.size = L.sizeClass;
     root.style.setProperty('--tw', L.rack.tw + 'px');
     root.style.setProperty('--th', L.rack.th + 'px');
+    this.stage?.resize(L, window.devicePixelRatio || 1);
     this.sys.setSize(L.rack.tw, L.rack.th);
 
     const place = (el, r) => {
@@ -234,6 +252,8 @@ export class Scene {
     place(this.els.hud, L.hud);
     this.els.hud.style.setProperty('--hudh', L.hud.h + 'px');
     this._mountScorebar(L);
+    const cs = getComputedStyle(this.host);
+    paintTable(this.els.art, L, { dpr: window.devicePixelRatio || 1, felt: [cs.getPropertyValue('--felt-hi').trim() || '#2c5e52', cs.getPropertyValue('--felt-mid').trim() || '#173c34', cs.getPropertyValue('--felt-lo').trim() || '#0a1e1a'] });
     place(this.els.actionbar, L.action);
     this.els.actionbar.style.setProperty('--strip-h', L.action.h + 'px');
     // toast konumu: HUD/skor altı
@@ -351,12 +371,17 @@ export class Scene {
     el.style.transform = `translate3d(${x - this.L.rack.tw / 2}px,${y - this.L.rack.th / 2}px,0) scale(${sc})`;
     setFlip(el, flip);
     this.els.table.appendChild(el);
+    if (this.stage) {
+      el.classList.add('gl-proxy');
+      this.stage.deco(el, { x, y, sc, flip, z });
+    }
     return el;
   }
   decoClear(tag) {
     const sel = tag ? `.tile[data-deco="${tag}"]` : '.tile[data-deco]';
     this.els.table.querySelectorAll(sel).forEach((n) => n.remove());
     if (!tag || tag === 'stock') this.stockDeco = [];
+    this.stage?.syncDecos();
   }
 
   // ───────────────────────────── görüntü modeli ─────────────────────────────
@@ -419,12 +444,24 @@ export class Scene {
       }
       el.classList.toggle('is-turn', d.turn === s && g.status === 'playing');
     }
-    // koltuklar
+    // koltuklar (skor koltukta: bilgi kişinin yanında)
     for (const s of [1, 2, 3]) {
       const sv = this.seats[s];
       sv.setCount(d.counts[s]);
+      sv.setScore?.(d.scores[s]);
       sv.setActive(d.turn === s && g.status === 'playing');
     }
+    const mp = this.root.querySelector('.me-plate');
+    if (mp) {
+      if (!mp._init) {
+        mp.querySelector('.me-plate__av').innerHTML = avatarSVG(this.cfg.roster[0].avatar);
+        mp._init = true;
+      }
+      mp.querySelector('.me-plate__score').textContent = String(d.scores[0]);
+      mp.classList.toggle('is-turn', d.turn === 0 && g.status === 'playing');
+    }
+    this.host.classList.toggle('is-myturn', d.turn === 0 && g.status === 'playing');
+    this._turnLight(g.status === 'playing' ? d.turn : null);
     // çöplük etiketleri/sayıları
     for (let s = 0; s < 4; s++) {
       this.pileEls[s].querySelector('.pile__count').textContent = String(d.piles[s].length);
@@ -432,7 +469,32 @@ export class Scene {
     }
     this.stockEl.querySelector('.stock__count').textContent = String(d.stock);
     this.stockDeco.forEach((el, i) => (el.style.display = d.stock > (2 - i) * 3 || i === 2 ? (d.stock > 0 ? '' : 'none') : 'none'));
+    this.stage?.syncDecos();
     this.refreshSoundIcon();
+  }
+
+  // Sıradaki oyuncuya doğru masanın ışığı kayar: yazı okumadan kimin oynadığı anlaşılır
+  _turnLight(seat) {
+    const f = this.els.focus;
+    if (seat === null || seat === undefined || !this.L) {
+      f.classList.remove('is-on');
+      return;
+    }
+    const L = this.L;
+    let x;
+    let y;
+    if (seat === 0) {
+      x = L.rack.rect.x + L.rack.rect.w / 2;
+      y = L.rack.rect.y + L.rack.rect.h * 0.3;
+    } else {
+      const p = L.seats[seat].panel;
+      x = p.x + p.w / 2;
+      y = p.y + p.h / 2;
+    }
+    f.style.left = x + 'px';
+    f.style.top = y + 'px';
+    f.dataset.seat = String(seat);
+    f.classList.add('is-on');
   }
 
   refreshSoundIcon() {
@@ -887,6 +949,7 @@ export class Scene {
     const d = this.indDeco;
     if (d) {
       d.style.opacity = '1';
+      this.stage?.syncDecos();
       d.animate?.([{ filter: 'brightness(1.6)' }, { filter: 'brightness(1)' }], { duration: 900, easing: 'ease-out' });
     }
   }
@@ -911,6 +974,7 @@ export class Scene {
     for (const d of this.disposers) d();
     this.disposers = [];
     this.sys?.clear();
+    this.stage?.destroy();
     this.root?.remove();
     this._probe?.remove();
   }

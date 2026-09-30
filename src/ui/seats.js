@@ -19,7 +19,7 @@ export class SeatView {
         <div class="seat__main">
           <div class="seat__avatar">${avatarSVG(cfg.avatar)}<svg class="seat__ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" pathLength="100"/></svg></div>
           <div class="seat__text">
-            <div class="seat__name"></div>
+            <div class="seat__name"></div><div class="seat__score num"></div>
             <div class="seat__sub"><span class="seat__count num">0</span><span class="lvl" title="Seviye">${[1, 2, 3].map((i) => `<i class="${i <= dots ? 'on' : ''}"></i>`).join('')}</span><span class="seat__think" aria-hidden="true"><i></i><i></i><i></i></span></div>
           </div>
         </div>
@@ -53,6 +53,7 @@ export class SeatView {
     this.rect = rect;
     this.rendered = -1; // kapalı taş rafını yeniden hesapla
     this._layoutBacks();
+    requestAnimationFrame(() => this.sync3d());
   }
 
   _layoutBacks() {
@@ -95,12 +96,26 @@ export class SeatView {
       } else while (this.$backs.children.length > n) this.$backs.lastChild.remove();
       this._layoutBacks();
     }
+    this.sync3d();
+  }
+
+  // 3B çizici varsa rakip ıstakasını orada çiz (DOM şeridi gizli kalır)
+  sync3d() {
+    if (!this.stage || !this.el.isConnected) return;
+    const b = this.$backs.getBoundingClientRect();
+    if (!b.width) return;
+    this.stage.setOpponent(this.cfg.seat, { x: b.left, y: b.top, w: b.width, h: b.height }, this.count || 0, this.cfg.orient === 'v');
   }
 
   // Yeni taş geldiğinde (çekme/alma) küçük "pop"
   pop() {
     const last = this.$backs.lastElementChild;
     if (last && last.animate) last.animate([{ transform: 'scale(1.6)', opacity: 0.5 }, { transform: 'scale(1)', opacity: 1 }], { duration: 240, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
+  }
+
+  setScore(v) {
+    const el = this.el.querySelector('.seat__score');
+    if (el && el.textContent !== String(v)) el.textContent = String(v);
   }
 
   setActive(on) {

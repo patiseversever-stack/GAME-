@@ -1262,3 +1262,75 @@
   transition: none;
   filter: drop-shadow(0 14px 12px rgba(0, 0, 0, 0.5));
 }
+
+/* ═════════ Sanat yönetimi v3: fiziksel masa ═════════ */
+.table-art { position: absolute; inset: 0; display: block; }
+.surface { background: #0a1e1a; }
+.surface__rim { border-width: 3px; border-image: none; border-color: #0b0806; box-shadow: inset 0 0 0 1px rgba(255, 235, 200, 0.06), inset 0 0 24px rgba(0, 0, 0, 0.55); }
+/* tur ışığı: masanın üstündeki sıcak ışık sıradaki oyuncuya kayar */
+.surface__focus {
+  width: min(62vmin, 520px);
+  aspect-ratio: 1;
+  background: radial-gradient(closest-side, rgba(255, 228, 170, 0.2), rgba(255, 228, 170, 0.07) 55%, rgba(255, 228, 170, 0));
+  mix-blend-mode: soft-light;
+  transition: opacity 600ms var(--ease-soft), left 700ms cubic-bezier(.3,.7,.2,1), top 700ms cubic-bezier(.3,.7,.2,1);
+}
+.surface__focus[data-seat='0'] { width: min(110vmin, 900px); aspect-ratio: 2.4; background: radial-gradient(closest-side, rgba(255, 228, 170, 0.26), rgba(255, 228, 170, 0.08) 60%, rgba(255, 228, 170, 0)); }
+/* HUD: çip yok; köşelerde çıplak ikonlar */
+[data-profile='landscape'] .hud > .scorebar { display: none; }
+.hud .icon-btn { background: none; border: 0; color: rgba(240, 230, 210, 0.72); }
+.hud .icon-btn:active { color: #fff; }
+[data-profile='landscape'] .hud__title { margin: 0 auto; align-items: center; }
+[data-profile='landscape'] .hud__title b { display: none; }
+[data-profile='landscape'] .hud__title small { font-size: 0.62rem; letter-spacing: 0.18em; color: rgba(240, 230, 210, 0.5); }
+/* koltuk: skor ismin altında, sade yazı */
+.seat__score { font-size: 0.66rem; font-weight: 800; color: rgba(240, 230, 210, 0.62); font-variant-numeric: tabular-nums; text-align: center; line-height: 1; text-shadow: 0 1px 2px #000; }
+.seat__name { background: none; border: 0; padding: 0; font-size: 0.72rem; color: rgba(245, 238, 222, 0.92); text-shadow: 0 1px 3px #000, 0 0 8px rgba(0,0,0,.6); }
+.seat.is-active .seat__name { color: #ffe3a6; }
+.seat:not(.is-active) .seat__avatar > svg:first-child { filter: saturate(0.7) brightness(0.82); }
+.seat--h .seat__text { gap: 1px; }
+.seat--h .seat__sub { display: none; }
+.seat--h .seat__score { text-align: left; }
+.seat__glow { display: none; }
+/* ben plakası: eylem şeridinin başında avatar + skor; sıram gelince canlanır */
+.me-plate { display: flex; align-items: center; gap: 7px; flex: none; padding-right: 4px; color: rgba(245, 238, 222, 0.9); }
+.me-plate__av { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; display: block; box-shadow: 0 0 0 2px #120c06, 0 0 0 3.5px rgba(184, 146, 79, 0.7); transition: box-shadow 300ms; }
+.me-plate__av svg { width: 100%; height: 100%; display: block; }
+.me-plate__name { font-size: 0.74rem; font-weight: 750; }
+.me-plate__score { font-size: 0.74rem; color: rgba(240, 230, 210, 0.6); font-variant-numeric: tabular-nums; }
+.me-plate.is-turn .me-plate__av { box-shadow: 0 0 0 2px #120c06, 0 0 0 3.5px #f2cf86, 0 0 14px rgba(255, 214, 140, 0.55); }
+[data-profile='portrait'] .me-plate { display: none; }
+/* durum metni ikincil: ışık ve eylem hazırlığı sırayı anlatır */
+[data-profile='landscape'] .status__main { font-size: 0.74rem; font-weight: 700; color: rgba(240, 230, 210, 0.8); }
+[data-profile='landscape'] .status.is-mine .status__main { color: #ffe3a6; }
+[data-profile='landscape'] .status__sub { font-size: 0.7rem; color: rgba(240, 230, 210, 0.45); }
+/* sıram: ıstakanın üst kenarında sıcak ışık çizgisi */
+.app.is-myturn .rack { box-shadow: inset 0 1px 0 rgba(255, 236, 200, 0.55), inset 0 -3px 0 rgba(0, 0, 0, 0.35), 0 -1px 0 rgba(255, 214, 140, 0.35), 0 -10px 30px rgba(255, 210, 130, 0.12), 0 3px 0 var(--rack-3), 0 6px 0 rgba(20, 10, 3, 0.9), 0 18px 30px rgba(0, 0, 0, 0.55); }
+
+/* ═════════ 3B çizim açıkken: DOM taşlar yalnız vekil (erişilebilirlik/isabet), görünmez ═════════ */
+.gl-stage { position: absolute; inset: 0; z-index: var(--z-sprites); pointer-events: none; }
+.gl-on .layer--sprites .tile,
+.gl-on .tile.gl-proxy { visibility: hidden; }
+.gl-on .rack,
+.gl-on .rack-lips { visibility: hidden; }
+
+/* ═════════ Masa üstü öğeler: kutu/kesikli çizgi yok; çuhaya oyulmuş gibi ═════════ */
+.pile { border: 0; border-radius: 10px; background: radial-gradient(closest-side, rgba(0, 0, 0, 0.22), rgba(0, 0, 0, 0.05) 70%, rgba(0, 0, 0, 0)); box-shadow: none; }
+.pile.is-take, .pile.is-drop, .pile.is-dragging-zone { border: 0; background: radial-gradient(closest-side, rgba(255, 222, 150, 0.2), rgba(255, 222, 150, 0.05) 70%, rgba(255, 222, 150, 0)); animation: felt-breathe 1.8s ease-in-out infinite; box-shadow: none; }
+.pile.is-drop-hot { background: radial-gradient(closest-side, rgba(255, 222, 150, 0.4), rgba(255, 222, 150, 0.1) 70%, rgba(255, 222, 150, 0)); transform: scale(1.12); box-shadow: none; }
+@keyframes felt-breathe { 50% { opacity: 0.55; } }
+.pile__count { background: rgba(8, 12, 10, 0.75); border: 0; color: rgba(240, 230, 210, 0.75); }
+.stock.is-ready::before { inset: -10px; border: 0; border-radius: 50%; background: radial-gradient(closest-side, rgba(255, 222, 150, 0.28), rgba(255, 222, 150, 0)); animation: felt-breathe 1.8s ease-in-out infinite; }
+.stock__count { background: rgba(8, 12, 10, 0.8); border: 0; }
+.plate { background: none; border: 0; box-shadow: none; }
+.plate__cap { color: rgba(240, 230, 210, 0.55); font-weight: 700; }
+.plate__cap--okey { color: #e8c67a; }
+.mzone { background: radial-gradient(120% 100% at 50% 50%, rgba(0, 0, 0, 0.16), rgba(0, 0, 0, 0.04)); border: 0; border-radius: 16px; }
+.mzone__tag { top: 3px; }
+.mzone__tag b { color: rgba(245, 238, 222, 0.85); }
+/* eylemler: hap değil, ahşap üzerinde lake düğme */
+[data-profile='landscape'] .actions .btn { border-radius: 9px; border: 0; background: linear-gradient(180deg, #2b221a, #1a140f); color: rgba(245, 236, 218, 0.9); box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.12), 0 2px 0 #0b0806, 0 4px 10px rgba(0, 0, 0, 0.4); }
+[data-profile='landscape'] .actions .btn--primary { background: linear-gradient(180deg, #f1d18f, #c99a4d); color: #2a1a07; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5), 0 2px 0 #6e4e1c, 0 5px 12px rgba(0, 0, 0, 0.45); }
+[data-profile='landscape'] .actions .btn:active { transform: translateY(2px); box-shadow: inset 0 1px 0 rgba(255, 230, 190, 0.12), 0 0 0 #0b0806; }
+.gl-on .seat__backs { background: none; box-shadow: none; }
+.gl-on .seat__backs i { visibility: hidden; }

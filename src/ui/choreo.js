@@ -632,7 +632,7 @@ export class Choreo {
     } else this.audio.play('lose', { vol: 0.8 });
     sc.banner(w === 0 ? 'Bitirdin!' : `${name} bitirdi`, res.finishLabel || '');
     await this.sleep(1600);
-    sc.focus(undefined, undefined, false);
+    sc._turnLight(null);
   }
 
   async revealHand(res, w) {

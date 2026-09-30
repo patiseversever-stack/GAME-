@@ -74,6 +74,7 @@ export class SpriteSystem {
     this.frameTimes = [];
     this.onSlow = null;
     this.paused = false;
+    this.stage = null; // 3B çizici (varsa DOM transform yerine)
     this._tick = this._tick.bind(this);
   }
 
@@ -102,11 +103,13 @@ export class SpriteSystem {
     this.active.delete(s);
     s.el.remove();
     this.sprites.delete(id);
+    this.stage?.remove(id);
   }
 
   clear() {
     for (const s of this.sprites.values()) s.el.remove();
     this.sprites.clear();
+    this.stage?.clearSprites();
     this.active.clear();
   }
 
@@ -462,6 +465,10 @@ export class SpriteSystem {
 
   _render(s, force = false) {
     const el = s.el;
+    if (this.stage) {
+      this.stage.update(s, this.tw, this.th);
+      return;
+    }
     const sc = s.sc * (1 + s.h * 0.0042);
     el.style.transform = `translate3d(${(s.x - this.tw / 2).toFixed(2)}px,${(s.y - this.th / 2 - s.h).toFixed(2)}px,0) rotate(${s.rot.toFixed(2)}deg) scale(${sc.toFixed(4)})`;
     if (force || Math.abs(s.h - s._lastH) > 0.25) {

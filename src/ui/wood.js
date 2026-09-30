@@ -1,5 +1,10 @@
 // Ahşap damarı dokusu: bir kez canvas ile üretilir, data-URI olarak CSS değişkenine yazılır (indirme yok).
 let cache = null;
+let canvasCache = null;
+export function woodCanvas() {
+  woodTexture();
+  return canvasCache;
+}
 export function woodTexture() {
   if (cache) return cache;
   try {
@@ -42,6 +47,7 @@ export function woodTexture() {
         g.stroke();
       }
     }
+    canvasCache = c;
     cache = `url(${c.toDataURL('image/jpeg', 0.82)})`;
   } catch {
     cache = 'none';
