@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git add *)",
+      "Bash(git commit -q -m 'Istaka yeniden çizildi: ceviz damarı dokusu, oyuk basamaklar, kalın ön dudaklar *)",
+      "Bash(git push *)"
+    ]
+  }
+}

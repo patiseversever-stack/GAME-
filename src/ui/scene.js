@@ -14,6 +14,7 @@ import { packMeldsZoned, hitMeld } from './meld-layout.js';
 import { icon } from './icons.js';
 import { avatarSVG } from './avatars.js';
 import { surfaceHTML } from './surface.js';
+import { woodTexture } from './wood.js';
 import { COLORS, isOkey, isFake } from '../game/tiles.js';
 import { meldPoints } from '../game/melds.js';
 
@@ -262,27 +263,30 @@ export class Scene {
     const L = this.L;
     const rack = L.rack;
     const rackEl = this.els.rack;
+    this.host.style.setProperty('--wood', woodTexture());
     rackEl.innerHTML = '';
     this.els.lips.innerHTML = '';
+    const tw = rack.tw;
     for (let r = 0; r < rack.rows; r++) {
       const s = rack.slotRect(r * rack.cols);
-      const ledge = document.createElement('div');
-      ledge.className = 'rack__row';
-      ledge.style.top = s.y + Math.round(rack.th * 0.66) - rack.rect.y + 'px';
-      ledge.style.height = Math.round(rack.th * 0.34) + rack.ledge - 2 + 'px';
-      rackEl.appendChild(ledge);
+      // oyuk: taşların yaslandığı eğimli arka yüz
+      const groove = document.createElement('div');
+      groove.className = 'rack__groove';
+      groove.style.top = s.y - Math.round(tw * 0.1) - rack.rect.y + 'px';
+      groove.style.height = rack.th + Math.round(tw * 0.1) + 'px';
+      rackEl.appendChild(groove);
+      // ön dudak: taşların alt kenarını örten kalın yuvarlak çıta (sprite katmanının ÜSTÜNDE)
       const lip = document.createElement('i');
-      const lipTop = s.y + rack.th - Math.round(rack.tw * 0.05);
-      lip.style.left = rack.rect.x + 5 + 'px';
-      lip.style.width = rack.rect.w - 10 + 'px';
+      const lipTop = s.y + rack.th - Math.round(tw * 0.1);
+      lip.style.left = rack.rect.x + 2 + 'px';
+      lip.style.width = rack.rect.w - 4 + 'px';
       lip.style.top = lipTop + 'px';
-      lip.style.height = Math.round(rack.tw * 0.24) + 'px';
+      lip.style.height = Math.max(7, Math.round(tw * 0.3)) + 'px';
       this.els.lips.appendChild(lip);
     }
     for (const side of ['left', 'right']) {
       const cap = document.createElement('i');
-      cap.className = 'rack__cap';
-      cap.style[side] = '5px';
+      cap.className = 'rack__cap rack__cap--' + side;
       rackEl.appendChild(cap);
     }
   }
