@@ -1,0 +1,7 @@
+node_modules/
+out/
+.remotion/
+*.log
+.DS_Store
+# verification scratch (frames, traces); curated contact sheets live in docs/
+verify-out/
