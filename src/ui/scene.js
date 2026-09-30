@@ -133,10 +133,28 @@ export class Scene {
       t.appendChild(p);
       return p;
     });
+    // sayaç rozetleri 3B taşların üstünde kalsın diye ayrı katmanda (çöplük/deste dikdörtgenleriyle eş konumlu)
+    this.badgeLayer = document.createElement('div');
+    this.badgeLayer.className = 'layer layer--badges';
+    el.appendChild(this.badgeLayer);
+    this.pileOv = this.pileEls.map((pe) => {
+      const ov = document.createElement('div');
+      ov.className = 'badge-ov';
+      const c = pe.querySelector('.pile__count');
+      ov.appendChild(c);
+      pe._count = c;
+      this.badgeLayer.appendChild(ov);
+      return ov;
+    });
     this.stockEl = document.createElement('div');
     this.stockEl.className = 'stock';
     this.stockEl.innerHTML = '<span class="stock__count num">0</span>';
     t.appendChild(this.stockEl);
+    this.stockOv = document.createElement('div');
+    this.stockOv.className = 'badge-ov';
+    this.stockCount = this.stockEl.querySelector('.stock__count');
+    this.stockOv.appendChild(this.stockCount);
+    this.badgeLayer.appendChild(this.stockOv);
     this.stockDeco = [];
     this.indPlate = document.createElement('div');
     this.indPlate.className = 'plate';
@@ -271,6 +289,7 @@ export class Scene {
     for (let s = 0; s < 4; s++) {
       const p = L.piles[s];
       place(this.pileEls[s], { x: p.cx - p.w / 2, y: p.cy - p.h / 2, w: p.w, h: p.h });
+      place(this.pileOv[s], { x: p.cx - p.w / 2, y: p.cy - p.h / 2, w: p.w, h: p.h });
     }
     this._placeStock();
     this._placePlates();
@@ -319,6 +338,7 @@ export class Scene {
     el.style.top = s.cy - s.h / 2 + 'px';
     el.style.width = s.w + 'px';
     el.style.height = s.h + 'px';
+    Object.assign(this.stockOv.style, { left: el.style.left, top: el.style.top, width: el.style.width, height: el.style.height });
     // dekoratif kapalı taş yığını (3 kat)
     this.decoClear('stock');
     const sc = L.scale.stock;
@@ -464,10 +484,10 @@ export class Scene {
     this._turnLight(g.status === 'playing' ? d.turn : null);
     // çöplük etiketleri/sayıları
     for (let s = 0; s < 4; s++) {
-      this.pileEls[s].querySelector('.pile__count').textContent = String(d.piles[s].length);
-      this.pileEls[s].querySelector('.pile__count').style.display = d.piles[s].length ? '' : 'none';
+      this.pileEls[s]._count.textContent = String(d.piles[s].length);
+      this.pileEls[s]._count.style.display = d.piles[s].length > 1 ? '' : 'none';
     }
-    this.stockEl.querySelector('.stock__count').textContent = String(d.stock);
+    this.stockCount.textContent = String(d.stock);
     this.stockDeco.forEach((el, i) => (el.style.display = d.stock > (2 - i) * 3 || i === 2 ? (d.stock > 0 ? '' : 'none') : 'none'));
     this.stage?.syncDecos();
     this.refreshSoundIcon();

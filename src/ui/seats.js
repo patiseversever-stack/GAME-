@@ -45,8 +45,8 @@ export class SeatView {
     s.height = rect.h + 'px';
     const v = this.cfg.orient === 'v';
     // avatar: dikey panelde genişlik ve yükseklikle, yatay panelde yükseklikle sınırlı
-    const av = v ? Math.min(rect.w - 14, rect.h * 0.4, 46) : Math.min(rect.h - 10, 46);
-    this.av = clamp(Math.round(av), 24, 46);
+    const av = v ? Math.min(rect.w - 14, rect.h * 0.4, 76) : Math.min(rect.h - 10, 76);
+    this.av = clamp(Math.round(av), 24, 76);
     s.setProperty('--av', this.av + 'px');
     this.el.dataset.size = sizeClass;
     this.el.classList.toggle('is-compact', rect.h < 92 && v ? true : rect.h < 50);

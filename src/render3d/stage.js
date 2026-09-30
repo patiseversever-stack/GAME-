@@ -155,7 +155,7 @@ export class Stage3D {
       if (wc) {
         this.woodTex = new THREE.CanvasTexture(wc);
         this.woodTex.colorSpace = THREE.SRGBColorSpace;
-        this.woodTex.wrapS = this.woodTex.wrapT = THREE.RepeatWrapping;
+        this.woodTex.wrapS = this.woodTex.wrapT = THREE.MirroredRepeatWrapping;
       }
     }
     const wood = (color, rough = 0.55) => {
@@ -284,6 +284,11 @@ export class Stage3D {
 
   // SpriteSystem'in her kare çağırdığı eşleme
   update(s, tw, th) {
+    // sistemden çıkarılmış sprite (ör. uçuş sonunda silinen hayalet) yeniden yaratılmasın
+    if (!s.el.isConnected) {
+      if (this.meshes.has(s.id)) this.remove(s.id);
+      return;
+    }
     let m = this.meshes.get(s.id);
     if (!m) {
       m = this._make(s.el);
@@ -295,7 +300,7 @@ export class Stage3D {
     m.group.position.set(s.x, -s.y, zBase + s.h * 1.4);
     const sc = s.sc * (1 + s.h * 0.0035);
     m.group.scale.setScalar(sc);
-    m.group.rotation.set(0.12 + s.h * 0.004, s.flip * DEG, -s.rot * DEG);
+    m.group.rotation.set(0.3 + s.h * 0.003, s.flip * DEG, -s.rot * DEG);
     m.group.visible = s.el.style.display !== 'none';
     this.invalidate();
   }
@@ -324,7 +329,7 @@ export class Stage3D {
     this._syncFace(m);
     m.group.position.set(x, -y, (this.rackZ || 4) + this.D / 2 + z * 0.3);
     m.group.scale.setScalar(sc);
-    m.group.rotation.set(0.12, flip * DEG, -rot * DEG);
+    m.group.rotation.set(0.3, flip * DEG, -rot * DEG);
     this.invalidate();
   }
 
