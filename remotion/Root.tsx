@@ -1,21 +1,12 @@
-// Kompozisyonlar (dikey 1080x1920, 30 kare/sn)
+// Kompozisyonlar (dikey 1080x1920)
 import React from 'react';
-import { Composition, Folder } from 'remotion';
+import { Composition } from 'remotion';
 import './fonts';
-import { FilmLook } from './fx/FilmLook';
-import { Film } from './film/Film';
-import { FPS, H, TOTAL, W } from './film/timeline';
-import { Papirus } from './scenes/Papirus';
-import { Parsomen } from './scenes/Parsomen';
-
-const solo = (C: React.FC): React.FC => () => <FilmLook><C /></FilmLook>;
+import { T } from './seq/kesisim/field';
+import { Kesisim } from './seq/kesisim/Kesisim';
 
 export const RemotionRoot: React.FC = () => (
   <>
-    <Composition id="Film" component={Film} width={W} height={H} fps={FPS} durationInFrames={Math.round(TOTAL * FPS)} />
-    <Folder name="Sahneler">
-      <Composition id="Papirus" component={solo(Papirus)} width={W} height={H} fps={FPS} durationInFrames={105} />
-      <Composition id="Parsomen" component={solo(Parsomen)} width={W} height={H} fps={FPS} durationInFrames={105} />
-    </Folder>
+    <Composition id="Sekans1-Kesisim" component={Kesisim} width={1080} height={1920} fps={60} durationInFrames={Math.ceil(T.end * 60)} />
   </>
 );
