@@ -1,0 +1,272 @@
+/* Temel: sıfırlama, uygulama kabuğu, düğmeler, tipografi, ortak bileşenler */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg-deep);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 16px;
+  line-height: 1.35;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+}
+button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  cursor: default;
+}
+:focus-visible {
+  outline: 2px solid var(--accent-strong);
+  outline-offset: 2px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.app {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  background: var(--bg-deep);
+  transition: background-color 400ms;
+}
+.screen {
+  position: absolute;
+  inset: 0;
+}
+.hidden {
+  display: none !important;
+}
+
+/* ───────── Düğmeler ───────── */
+.btn {
+  --h: 2.5rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45em;
+  min-height: var(--h);
+  padding: 0 1.05em;
+  border-radius: 999px;
+  border: 1px solid var(--panel-line);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.04));
+  color: var(--ink);
+  font-weight: 650;
+  font-size: 0.9rem;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  touch-action: manipulation;
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast), opacity var(--dur-fast), box-shadow var(--dur-fast);
+  position: relative;
+}
+.btn::after {
+  /* dokunma hedefini genişlet (≥44px) */
+  content: '';
+  position: absolute;
+  inset: -4px -2px;
+}
+.btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+.btn:disabled {
+  opacity: 0.42;
+}
+.btn--primary {
+  color: var(--accent-ink);
+  border-color: rgba(0, 0, 0, 0.25);
+  background: linear-gradient(180deg, var(--accent-strong), var(--accent));
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.45) inset, 0 6px 14px rgba(0, 0, 0, 0.35);
+  font-weight: 800;
+}
+.btn--primary:disabled {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.08));
+  color: var(--ink-dim);
+  box-shadow: none;
+}
+.btn--ghost {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--ink-dim);
+}
+.btn svg {
+  width: 1.05em;
+  height: 1.05em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex: none;
+}
+.btn-badge {
+  font-style: normal;
+  font-size: 0.72em;
+  opacity: 0.8;
+}
+.btn--lg {
+  --h: 3.1rem;
+  font-size: 1rem;
+  padding: 0 1.5em;
+}
+.btn--sm {
+  --h: 2.1rem;
+  font-size: 0.8rem;
+  padding: 0 0.85em;
+}
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 2.4rem;
+  height: 2.4rem;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid var(--panel-line);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--ink);
+  position: relative;
+  touch-action: manipulation;
+  transition: transform var(--dur-fast) var(--ease-out), background var(--dur-fast);
+}
+.icon-btn::after {
+  content: '';
+  position: absolute;
+  inset: -4px;
+}
+.icon-btn:active {
+  transform: scale(0.92);
+}
+.icon-btn svg {
+  width: 1.2rem;
+  height: 1.2rem;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.07));
+  }
+  .btn--primary:hover:not(:disabled) {
+    background: linear-gradient(180deg, #f6dc9f, var(--accent-strong));
+  }
+  .icon-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+}
+
+/* ───────── Etiketler / rozetler ───────── */
+.eyebrow {
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35em;
+  padding: 0.18em 0.6em;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--panel-line);
+  font-size: 0.72rem;
+  font-weight: 650;
+  color: var(--ink-dim);
+}
+.display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+.num {
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ───────── Toast ───────── */
+.toasts {
+  position: absolute;
+  left: 0;
+  right: 0;
+  z-index: var(--z-toast);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;
+}
+.toast {
+  max-width: min(92vw, 420px);
+  padding: 0.55rem 0.95rem;
+  border-radius: 14px;
+  background: rgba(10, 18, 16, 0.92);
+  border: 1px solid var(--panel-line);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  font-size: 0.86rem;
+  font-weight: 600;
+  text-align: center;
+  animation: toast-in 280ms var(--ease-out) both;
+}
+.toast.is-out {
+  animation: toast-out 260ms var(--ease-soft) both;
+}
+.toast--warn {
+  border-color: rgba(224, 105, 90, 0.5);
+}
+.toast--good {
+  border-color: rgba(124, 199, 154, 0.5);
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+  }
+}
+@keyframes toast-out {
+  to {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app[data-motion='auto'] *,
+  .app[data-motion='auto'] *::before,
+  .app[data-motion='auto'] *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+.app[data-motion='reduced'] *,
+.app[data-motion='reduced'] *::before,
+.app[data-motion='reduced'] *::after {
+  animation-duration: 0.01ms !important;
+  transition-duration: 0.01ms !important;
+}

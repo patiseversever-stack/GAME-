@@ -1,0 +1,16 @@
+{
+  "name": "patisever-okey",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Patisever Okey — Okey ve 101 Okey. Mobil-öncelikli, çevrimdışı, tek dosya dağıtılabilir.",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/",
+    "build": "node tools/build.mjs",
+    "dev": "node tools/dev-server.mjs",
+    "test:ui": "node tests/ui/run.mjs"
+  },
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}
