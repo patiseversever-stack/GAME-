@@ -159,3 +159,39 @@ export function historySheet(host, ctl, history = []) {
   }
   return sheet(host, { title: 'Oyun özeti', body, cls: 'is-history' });
 }
+
+// ───────────── Ayarlar ─────────────
+export function settingsSheet(host, settings) {
+  const seg = (key, opts) => `<div class="seg" role="radiogroup" data-key="${key}">${opts.map(([v, l]) => `<button role="radio" data-v="${v}" aria-checked="${String(settings.get(key)) === String(v)}">${l}</button>`).join('')}</div>`;
+  const sw = (key, label) => `<label class="set-row"><span>${label}</span><button class="switch" role="switch" data-sw="${key}" aria-checked="${!!settings.get(key)}"><i></i></button></label>`;
+  const body = document.createElement('div');
+  body.className = 'settings2';
+  body.innerHTML = `
+    <h3>Ses</h3>${sw('sfx', 'Efekt sesleri')}${sw('music', 'Müzik')}${sw('haptics', 'Titreşim')}
+    <h3>Oynanış</h3>
+    <div class="set-row"><span>Bot hızı</span>${seg('botSpeed', [['slow', 'Yavaş'], ['normal', 'Normal'], ['fast', 'Hızlı']])}</div>
+    ${sw('tapToDiscard', 'Seçili taşa ikinci dokunuşla at')}${sw('meldHints', 'Perleri ıstakada işaretle')}${sw('tutorial', 'İpuçlarını göster')}
+    <h3>Görünüm ve erişilebilirlik</h3>
+    <div class="set-row"><span>Animasyon</span>${seg('motion', [['auto', 'Sistem'], ['full', 'Tam'], ['reduced', 'Az']])}</div>
+    <div class="set-row"><span>Yazı boyutu</span>${seg('textScale', [['0.9', 'Küçük'], ['1', 'Normal'], ['1.15', 'Büyük'], ['1.3', 'Çok büyük']])}</div>
+    <div class="set-row"><span>Istaka</span>${seg('rack', [['walnut', 'Ceviz'], ['maple', 'Akçaağaç'], ['ebony', 'Abanoz']])}</div>
+    <div class="set-row"><span>Taşlar</span>${seg('tiles', [['ivory', 'Fildişi'], ['bone', 'Kemik'], ['onyx', 'Oniks']])}</div>`;
+  body.addEventListener('click', (e) => {
+    const s = e.target.closest('[data-sw]');
+    if (s) {
+      const k = s.dataset.sw;
+      settings.set(k, !settings.get(k));
+      s.setAttribute('aria-checked', String(!!settings.get(k)));
+      return;
+    }
+    const b = e.target.closest('.seg [data-v]');
+    if (b) {
+      const g = b.parentElement;
+      const k = g.dataset.key;
+      const v = k === 'textScale' ? Number(b.dataset.v) : b.dataset.v;
+      settings.set(k, v);
+      g.querySelectorAll('[data-v]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
+    }
+  });
+  return sheet(host, { title: 'Ayarlar', body, actions: [{ label: 'Tamam', primary: true }] });
+}

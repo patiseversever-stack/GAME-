@@ -3,8 +3,9 @@ import { Settings, applyDocumentSettings } from './meta/settings.js';
 import { Profile } from './meta/profile.js';
 import { AudioManager, NullAudio } from './audio/audio-manager.js';
 import { GameController, hasSavedGame, savedSummary, clearSavedGame } from './ui/game-controller.js';
-import { resultScreen, historySheet, sheet } from './app/overlays.js';
+import { resultScreen, historySheet, sheet, settingsSheet } from './app/overlays.js';
 const history = [];
+import { createCoach } from './app/coach.js';
 
 const q = new URLSearchParams(location.search);
 const app = document.getElementById('app');
@@ -31,6 +32,7 @@ const ui = {
       { label: 'Devam', primary: true },
       { label: 'Oyun özeti', close: false, run: () => historySheet(app, ctl, history) },
       { label: 'Nasıl oynanır?', close: false, run: () => ui.howTo() },
+      { label: 'Ayarlar', close: false, run: () => settingsSheet(app, settings) },
       { label: 'Ana menü', run: () => { ctl.save?.(); goHome(); } },
     ] });
   },
@@ -51,7 +53,9 @@ const ui = {
   },
 };
 
+ui.coach = createCoach(app, settings);
 window.__okey.ui = ui;
+settings.subscribe((k) => { if (k === 'textScale') setTimeout(() => ctl?.scene?.layout(true), 30); });
 let ctl = null;
 async function start(mode, difficulty, seed) {
   app.querySelectorAll('.ov,.home').forEach((n) => n.remove());
@@ -77,6 +81,7 @@ function home() {
       <div class="home__diff" role="group" aria-label="Zorluk"><button data-d="casual">Kolay</button><button data-d="normal">Normal</button><button data-d="expert">Uzman</button></div>
       ${saved ? `<button class="btn btn--lg" data-m="resume">Devam et · ${saved.mode === 'okey101' ? '101' : 'Okey'}</button>` : ''}
       <button class="btn btn--ghost" data-m="how">Nasıl oynanır?</button>
+      <button class="btn btn--ghost" data-m="settings">Ayarlar</button>
     </div></div>`;
   const mark = () => el.querySelectorAll('[data-d]').forEach((b) => b.classList.toggle('on', b.dataset.d === diff));
   mark();
@@ -87,6 +92,7 @@ function home() {
     if (!m) return;
     audio.unlock?.();
     if (m === 'how') return ui.howTo();
+    if (m === 'settings') return settingsSheet(app, settings);
     if (m === 'resume') {
       el.remove();
       ctl = new GameController({ host: app, settings, profile, audio, ui, onExit: goHome });
