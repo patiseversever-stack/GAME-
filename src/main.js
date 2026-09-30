@@ -69,10 +69,18 @@ function home() {
   let diff = settings.get('difficulty') || 'normal';
   const el = document.createElement('div');
   el.className = 'home';
-  el.innerHTML = `<div class="home__in"><div class="eyebrow">Patisever</div><h1 class="display">OKEY</h1>
-    <div class="home__diff" role="group"><button data-d="casual">Kolay</button><button data-d="normal">Normal</button><button data-d="expert">Uzman</button></div>
-    <div class="home__btns"><button class="btn btn--primary btn--lg" data-m="okey">Okey</button><button class="btn btn--primary btn--lg" data-m="okey101">101 Okey</button>
-    ${saved ? `<button class="btn btn--lg" data-m="resume">Devam et · ${saved.mode === 'okey101' ? '101' : 'Okey'}</button>` : ''}<button class="btn btn--lg" data-m="how">Nasıl oynanır?</button></div></div>`;
+  const tile = (n, c, extra = '') => `<span class="mt mt--${c}${extra}"><b>${n}</b><i></i></span>`;
+  el.innerHTML = `<div class="home__in">
+    <header class="home__head"><div class="eyebrow">Patisever</div><h1 class="display">OKEY</h1></header>
+    <div class="home__modes">
+      <button class="mode" data-m="okey"><span class="mode__tiles">${tile(5, 'r')}${tile(6, 'r')}${tile(7, 'r')}${tile('★', 'j', ' mt--okey')}</span><span class="mode__t">Okey</span><span class="mode__d">14 taşı perlere diz, son taşı at, eli bitir.</span></button>
+      <button class="mode" data-m="okey101"><span class="mode__tiles">${tile(10, 'k')}${tile(10, 'b')}${tile(10, 'y')}${tile(10, 'r')}</span><span class="mode__t">101 Okey</span><span class="mode__d">En az 101 puanla aç, perlere işle, cezadan kaç.</span></button>
+    </div>
+    <div class="home__bar">
+      <div class="home__diff" role="group" aria-label="Zorluk"><button data-d="casual">Kolay</button><button data-d="normal">Normal</button><button data-d="expert">Uzman</button></div>
+      ${saved ? `<button class="btn btn--lg" data-m="resume">Devam et · ${saved.mode === 'okey101' ? '101' : 'Okey'}</button>` : ''}
+      <button class="btn btn--ghost" data-m="how">Nasıl oynanır?</button>
+    </div></div>`;
   const mark = () => el.querySelectorAll('[data-d]').forEach((b) => b.classList.toggle('on', b.dataset.d === diff));
   mark();
   el.onclick = async (e) => {
