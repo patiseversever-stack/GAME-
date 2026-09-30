@@ -59,6 +59,7 @@ export class Scene {
     el.setAttribute('aria-label', 'Okey masası');
     el.innerHTML = `
       <div class="surface"><div class="surface__cam" style="position:absolute;inset:0"><canvas class="table-art"></canvas></div><div class="surface__focus"></div><div class="surface__rim"></div></div>
+      <div class="gl-vignette"></div>
       <canvas class="fx-ambient" style="inset:0;z-index:5;pointer-events:none;width:100%;height:100%"></canvas>
       <div class="layer layer--table"></div>
       <div class="rack"></div>

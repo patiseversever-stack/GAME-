@@ -1345,3 +1345,9 @@
 .gl-on .pile { background: none; }
 .gl-on .pile.is-take, .gl-on .pile.is-drop, .gl-on .pile.is-dragging-zone { background: radial-gradient(closest-side, rgba(255, 222, 150, 0.16), rgba(255, 222, 150, 0)); }
 .gl-on .fx-ambient { display: none; }
+/* sinematik vinyet: tuvalin üstünde, DOM öğelerinin altında */
+.gl-on .surface__rim { display: none; }
+.gl-on .scene::before { content: ''; position: absolute; inset: 0; z-index: 5; pointer-events: none; background: radial-gradient(120% 95% at 50% 62%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.45) 100%); }
+.gl-on .scene::before { background: radial-gradient(70% 60% at 50% 48%, rgba(255, 226, 170, 0.14), rgba(255, 226, 170, 0) 70%), radial-gradient(120% 100% at 50% 55%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.62) 100%); }
+.gl-vignette { display: none; }
+.gl-on .gl-vignette { display: block; inset: 0; z-index: 6; pointer-events: none; background: radial-gradient(70% 60% at 50% 46%, rgba(255, 226, 170, 0.16), rgba(255, 226, 170, 0) 70%), radial-gradient(125% 105% at 50% 55%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.6) 100%); }

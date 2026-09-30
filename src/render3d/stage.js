@@ -98,20 +98,20 @@ export class Stage3D {
     scene.environmentIntensity = 0.16;
     this.camera = new THREE.PerspectiveCamera(30, 1, 10, 20000);
     // ışık: masanın üstünde sarkan sıcak lamba (spot) + çok zayıf ortam dolgusu
-    this.lamp = new THREE.SpotLight(0xffe4bd, 5.2, 0, 0.62, 0.9, 0);
+    this.lamp = new THREE.SpotLight(0xffe4bd, 6.4, 0, 0.62, 1, 0);
     this.lamp.castShadow = true;
     this.lamp.shadow.mapSize.set(2048, 2048);
     this.lamp.shadow.bias = -0.00025;
     this.lamp.shadow.normalBias = 0.8;
     this.lamp.shadow.radius = 6;
     scene.add(this.lamp, this.lamp.target);
-    this.fill = new THREE.HemisphereLight(0xfff1dc, 0x0d1f1a, 0.35);
+    this.fill = new THREE.HemisphereLight(0xfff1dc, 0x0d1f1a, 0.2);
     scene.add(this.fill);
     this.rim = new THREE.DirectionalLight(0xbfd8ff, 0.35);
     scene.add(this.rim);
     // masa (çuha) ve ahşap kenar
     this.felt = feltTexture();
-    this.table = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ map: this.felt, roughness: 0.96, metalness: 0, color: 0x5f8378 }));
+    this.table = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ map: this.felt, roughness: 0.96, metalness: 0, color: 0x5a8a80 }));
     this.table.rotation.x = -Math.PI / 2;
     this.table.receiveShadow = true;
     scene.add(this.table);
@@ -196,10 +196,11 @@ export class Stage3D {
     this.lamp.position.set(center.x - dist * 0.25, dist * 1.35, center.z - dist * 0.35);
     this.lamp.target.position.copy(center);
     this.lamp.distance = 0;
-    this.lamp.angle = 0.72;
+    this.lamp.angle = 0.6;
     this.lamp.shadow.camera.near = dist * 0.3;
     this.lamp.shadow.camera.far = dist * 4;
     this.rim.position.set(dist, dist * 0.6, -dist);
+    this.buildRails(L);
     this.setTileSize(L.rack.tw, L.rack.th);
     this.buildRack(L);
     for (const o of this.opp.values()) this.scene.remove(o.group);
@@ -225,6 +226,46 @@ export class Stage3D {
     this.faceZ = D / 2 + bt + 0.12;
     for (const m of this.meshes.values()) this._applyGeo(m);
     for (const m of this.decos.values()) this._applyGeo(m);
+  }
+
+  // masanın kenarları: uzak kenarda ve yanlarda cilalı ceviz pervaz; ötesi loş oda (perspektif derinlik)
+  buildRails(L) {
+    this.railGroup && this.scene.remove(this.railGroup);
+    const g = new THREE.Group();
+    this.railGroup = g;
+    const topY = Math.max(2, L.hud.y + L.hud.h * 0.35);
+    const far = this._hit(this.W / 2, topY, this.planeT, new THREE.Vector3()).z;
+    const bl = this._hit(0, this.H, this.planeT, new THREE.Vector3());
+    const tl = this._hit(0, topY, this.planeT, new THREE.Vector3());
+    const d = this.dist;
+    const railW = d * 0.09;
+    const railH = d * 0.05;
+    const wood = this._wood(0x7a4a26, 0.35, 1 / 900, 1 / 220);
+    wood.metalness = 0.05;
+    const near = bl.z + d * 0.5;
+    const halfW = Math.max(Math.abs(tl.x), Math.abs(bl.x)) - railW * 0.1;
+    // uzak kenar
+    const back = new THREE.Mesh(new THREE.BoxGeometry(halfW * 2 + railW * 2, railH, railW), wood);
+    back.position.set(0, railH / 2, far - railW / 2);
+    back.castShadow = back.receiveShadow = true;
+    g.add(back);
+    // yanlar (ekran kenarlarında, perspektifte birleşir)
+    for (const sx of [-1, 1]) {
+      const len = near - far;
+      const side = new THREE.Mesh(new THREE.BoxGeometry(railW, railH, len), wood);
+      side.position.set(sx * (halfW + railW / 2), railH / 2, far + len / 2);
+      side.castShadow = side.receiveShadow = true;
+      g.add(side);
+    }
+    // çuha yalnız pervazın içinde; dışı koyu zemin
+    this.table.scale.set(halfW * 2 + 2, near - far + 2, 1);
+    this.table.position.set(0, 0, (far + near) / 2);
+    this.felt.repeat.set((halfW * 2) / 420, (near - far) / 420);
+    const floor = new THREE.Mesh(new THREE.PlaneGeometry(d * 20, d * 20), new THREE.MeshStandardMaterial({ color: 0x120c08, roughness: 1 }));
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = -railH * 2;
+    g.add(floor);
+    this.scene.add(g);
   }
 
   _wood(color, rough, rx, ry) {
