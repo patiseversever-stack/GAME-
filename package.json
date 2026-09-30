@@ -1,0 +1,29 @@
+{
+  "name": "gece-postasi-yukleme",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Gece Postası için gazete/bulmaca kimlikli yükleme animasyonu: kodsal (DOM + WAAPI) çalışma zamanı, Remotion önizleme/inceleme projesi ve oyuna entegrasyon araçları.",
+  "type": "module",
+  "scripts": {
+    "studio": "remotion studio remotion/index.ts",
+    "extract": "node scripts/extract-game-data.mjs",
+    "build:loader": "node scripts/build-loader.mjs",
+    "inject": "node scripts/inject-into-game.mjs",
+    "build": "npm run extract && npm run build:loader && npm run inject",
+    "verify": "node scripts/verify/run-all.mjs"
+  },
+  "dependencies": {
+    "@remotion/bundler": "4.0.531",
+    "@remotion/cli": "4.0.531",
+    "@remotion/renderer": "4.0.531",
+    "react": "19.0.0",
+    "react-dom": "19.0.0",
+    "remotion": "4.0.531"
+  },
+  "devDependencies": {
+    "@types/react": "19.0.0",
+    "esbuild": "0.25.0",
+    "playwright-core": "1.56.1",
+    "typescript": "5.8.3"
+  }
+}

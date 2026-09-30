@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover">
+<title>Gece Postası · Yükleme önizlemesi</title>
+<link rel="stylesheet" href="../build/loader.css">
+<style>html,body{margin:0;height:100%;background:#172022;overflow:hidden}</style>
+</head>
+<body>
+<img id="gp-bg" alt="" style="position:fixed;inset:0;width:100%;height:100%;object-fit:fill;z-index:0;display:none">
+<div id="gp-loader"><p id="load-message">Bir sayfa. Bir dünya.</p></div>
+<script src="../build/loader.preview.js"></script>
+<script>
+  // ?mode=seek  → kareyi dışarıdan sür (Remotion / otomatik test)   ?mode=live → gerçek zamanlı
+  const p = new URLSearchParams(location.search);
+  const mode = p.get('mode') || 'live';
+  if (p.get('bg')) { const b = document.getElementById('gp-bg'); b.src = p.get('bg'); b.style.display = 'block'; }
+  const size = p.get('w') ? { w: +p.get('w'), h: +p.get('h') } : undefined;
+  window.__gp = GPLoaderKit.createLoader(document.getElementById('gp-loader'), {
+    mode, size, coarse: p.get('coarse') !== '0', theme: p.get('theme') || undefined,
+    reduceMotion: p.get('reduce') === '1' ? true : undefined, lite: p.get('lite') === '1' ? true : undefined,
+    settings: {},
+  });
+  if (mode === 'live' && p.get('ready')) setTimeout(() => window.__gp.ready({}), +p.get('ready'));
+</script>
+</body>
+</html>
