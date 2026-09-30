@@ -477,81 +477,103 @@ export class Choreo {
     this.fx.camera.play('intro');
     sc.root.classList.add('is-intro');
 
-    // 1) karıştırma: merkezdeki kapalı taş kümesi
+    // 1) yıkama: kapalı taşlar masanın ortasına saçılır, iki tur dairesel karışır, sonra deste olarak toplanır
     const st = this.stockPos();
+    const k = this.k;
+    const MA = L.meldArea;
+    const cx = MA.x + MA.w / 2;
+    const cy = MA.y + MA.h / 2;
+    const R0 = Math.min(MA.w * 0.42, 190);
+    const N = 28;
     const ghosts = [];
-    for (let i = 0; i < 16; i++) {
+    for (let i = 0; i < N; i++) {
       const { id, s } = sc.ghost();
-      sc.sys.snap(id, { x: st.x + rnd(-4, 4), y: st.y + rnd(-4, 4), sc: L.scale.stock, flip: 180, rot: rnd(-8, 8), z: 100 + i, h: 0 });
+      sc.sys.snap(id, { x: st.x + rnd(-3, 3), y: st.y + rnd(-3, 3), sc: L.scale.stock, flip: 180, rot: rnd(-6, 6), z: 100 + i, h: 0 });
       s.placed = true;
-      ghosts.push(id);
+      ghosts.push({ id, a: (i / N) * Math.PI * 2 + rnd(-0.2, 0.2), r: R0 * (0.35 + Math.random() * 0.65) });
     }
-    await this.sleep(250);
+    await this.sleep(120);
     this.audio.play('shuffle');
-    const cx = L.table.x + L.table.w / 2;
-    const cy = L.meldArea.y + L.meldArea.h / 2;
-    for (let round = 0; round < 6; round++) {
-      ghosts.forEach((id, i) => {
-        sc.sys.to(id, { x: (round % 2 ? st.x : cx) + rnd(-46, 46), y: (round % 2 ? st.y : cy) + rnd(-26, 26), rot: rnd(-50, 50), sc: L.scale.stock * 1.05 }, { spring: SPRING.soft, delay: i * 6 });
+    // saçılma
+    ghosts.forEach((g2, i) => sc.sys.fly(g2.id, { x: cx + Math.cos(g2.a) * g2.r, y: cy + Math.sin(g2.a) * Math.min(g2.r * 0.55, MA.h * 0.42), sc: L.scale.stock, flip: 180, rot: rnd(-90, 90), z: 100 + i, h: 0 }, { dur: 420 * k, delay: i * 9 * k, arc: 16, bounce: 0 }));
+    await this.sleep(560 * k);
+    // dairesel yıkama (iki tur, avuç hareketi)
+    for (let step = 1; step <= 6; step++) {
+      ghosts.forEach((g2, i) => {
+        const ang = g2.a + step * 0.9 * (i % 2 ? 1 : -0.7);
+        const rr = g2.r * (step % 2 ? 0.8 : 1.05);
+        sc.sys.to(g2.id, { x: cx + Math.cos(ang) * rr, y: cy + Math.sin(ang) * Math.min(rr * 0.55, MA.h * 0.45), rot: rnd(-120, 120) }, { spring: SPRING.soft, delay: i * 3 });
       });
-      await this.sleep(150);
+      if (step === 3) this.audio.play('shuffle', { vol: 0.8 });
+      await this.sleep(120 * k);
     }
-    ghosts.forEach((id, i) => sc.sys.to(id, { x: st.x + rnd(-2, 2), y: st.y + rnd(-2, 2), rot: rnd(-6, 6), sc: L.scale.stock }, { spring: SPRING.settle, delay: i * 4 }));
-    await this.sleep(300);
-    ghosts.forEach((id) => sc.dropSprite(id));
+    // toplanma: deste yerine düzgün yığın
+    ghosts.forEach((g2, i) => sc.sys.fly(g2.id, { x: st.x - (i % 4) * 0.8, y: st.y - (i % 4) * 1.2, sc: L.scale.stock, flip: 180, rot: 0, z: 100 + (i % 4), h: 0 }, { dur: 360 * k, delay: i * 7 * k, arc: 12, bounce: 1 }));
+    await this.sleep((360 + N * 7) * k);
+    this.audio.play('place', { vol: 0.8 });
+    ghosts.forEach((g2) => sc.dropSprite(g2.id));
 
-    // 2) dağıtım: her adımda 4 koltuğa birer taş
-    const per = g.hands[g.starter].length - 1 + 0; // başlayan +1 taşla başlar
+    // 2) dağıtma: gerçek masadaki gibi paketler halinde (rakiplere 3'erli deste, bana tek tek kapalı), sonra benim taşlarım dalga halinde açılır
     const mine = g.hands[0].slice();
     const counts = g.hands.map((h) => h.length);
-    const steps = Math.max(...counts);
     const order = [1, 2, 3, 0];
-    const k = this.k;
-    let n = 0;
-    for (let step = 0; step < steps; step++) {
-      for (let oi = 0; oi < 4; oi++) {
-        const seat = order[oi];
-        if (step >= counts[seat]) continue;
-        const delay = (step * 34 + oi * 8) * k;
+    const PACK = 3;
+    const rounds = Math.ceil(Math.max(...counts) / PACK);
+    let t0 = 0;
+    const dealt = [0, 0, 0, 0];
+    for (let r = 0; r < rounds; r++) {
+      for (const seat of order) {
+        const take = Math.min(PACK, counts[seat] - dealt[seat]);
+        if (take <= 0) continue;
+        const delay = t0 * k;
         const a = this.seatAnchor(seat);
-        if (seat === 0) {
-          const t = mine[step];
-          sc.rack.addAuto(t);
-          const sp = sc.ensure(t);
-          sp.z = 120 + step;
-          const tg = sc.targetOf(t);
-          sc.sys.fly(t, tg, {
-            delay,
-            dur: 380,
-            arc: 26,
-            bounce: 2,
-            onLand: () => {
-              sc.disp.counts[0]++;
-            },
-          });
-        } else {
-          const { id, s } = sc.ghost();
-          sc.sys.snap(id, { x: st.x, y: st.y, sc: L.scale.stock, flip: 180, rot: 0, z: 110, h: 0 });
-          s.placed = true;
-          sc.sys.fly(id, { x: a.x, y: a.y, sc: 0.4, flip: 180, rot: rnd(-6, 6), z: 110, h: 0 }, {
-            delay,
-            dur: 360,
-            arc: 20,
-            bounce: 0,
-            onLand: () => {
-              sc.disp.counts[seat]++;
-              sc.seats[seat].setCount(sc.disp.counts[seat]);
-              sc.dropSprite(id);
-            },
-          });
+        for (let j = 0; j < take; j++) {
+          const idx = dealt[seat] + j;
+          if (seat === 0) {
+            const t = mine[idx];
+            sc.rack.addAuto(t);
+            const sp = sc.ensure(t);
+            sp.z = 120 + idx;
+            const tg = { ...sc.targetOf(t), flip: 180 };
+            sc.sys.fly(t, tg, { delay: delay + j * 40 * k, dur: 360 * k, arc: 30, bounce: 2, onLand: () => { sc.disp.counts[0]++; } });
+          } else {
+            const { id, s: gs } = sc.ghost();
+            sc.sys.snap(id, { x: st.x, y: st.y, sc: L.scale.stock, flip: 180, rot: 0, z: 110 + j, h: 0 });
+            gs.placed = true;
+            sc.sys.fly(id, { x: a.x + j * 3, y: a.y - j * 2, sc: 0.42, flip: 180, rot: rnd(-8, 8), z: 110 + j, h: 0 }, {
+              delay: delay + j * 25 * k,
+              dur: 340 * k,
+              arc: 22,
+              bounce: 0,
+              onLand: () => {
+                sc.disp.counts[seat]++;
+                sc.seats[seat].setCount(sc.disp.counts[seat]);
+                sc.seats[seat].pop?.();
+                sc.dropSprite(id);
+              },
+            });
+          }
         }
-        n++;
-        if (n % 2 === 0) setTimeout(() => this.audio.play('deal'), delay);
+        setTimeout(() => this.audio.play('deal'), delay);
+        dealt[seat] += take;
+        t0 += 150;
       }
     }
-    await this.sleep(steps * 34 + 560);
+    await this.sleep((t0 + 420) * k);
     sc.disp.stock = g.stock.length + 1;
     sc.refreshChrome();
+    // benim taşlarım soldan sağa dalga halinde açılır
+    const slotsNow = sc.rack.slots.slice();
+    let w = 0;
+    slotsNow.forEach((t) => {
+      if (t === null) return;
+      const tg = sc.targetOf(t);
+      sc.sys.to(t, { ...tg, flip: 0, h: 10 }, { spring: SPRING.snappy, delay: w * 28 * k });
+      setTimeout(() => sc.sys.to(t, tg, { spring: SPRING.settle }), (w * 28 + 160) * k);
+      w++;
+    });
+    this.audio.cascade?.('touch', Math.min(w, 10), 0.03);
+    await this.sleep((w * 28 + 360) * k);
     sc.onRackChanged();
 
     // 3) gösterge

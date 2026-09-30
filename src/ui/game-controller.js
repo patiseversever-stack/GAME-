@@ -323,7 +323,6 @@ export class GameController {
       } else sc.setStatus('Per işle ya da taş at', op === 'pairs' ? 'Çift açtın: çift indir, perlere taş işle' : 'Taşı seç, pere dokun · ya da sürükle', true);
     }
     actions.push({ id: 'sort', label: 'Diz', icon: 'sort', kind: 'ghost' });
-    actions.push({ id: 'hint', label: this.hintOn ? 'Uygula' : 'Öneri', icon: 'wand', kind: this.hintOn ? '' : 'ghost' });
     if (!is101 && !draw && caps.finishing.size) actions.push({ id: 'finish', label: 'Bitir', kind: 'primary' });
     if (!is101 && s.rules.mode === 'okey' && !s.firstActionTaken[0] && !s.shownIndicator[0]) {
       const ind = s.ctx.indicator;
@@ -360,7 +359,7 @@ export class GameController {
         sc.refreshSoundIcon();
         break;
       case 'sort':
-        this.openSortMenu(el);
+        this.sortCycle();
         break;
       case 'hint':
         this.hint();
@@ -402,7 +401,8 @@ export class GameController {
     const items = [
       ['color', 'Renge göre'],
       ['number', 'Sayıya göre'],
-      ['smart', 'Akıllı (per önerisi)'],
+      ['smart', 'Akıllı (perler)'],
+      ['pairs', 'Çiftler'],
     ];
     menu.innerHTML = items.map(([k, l]) => `<button type="button" data-sort="${k}">${l}</button>`).join('');
     const r = anchor.getBoundingClientRect();
@@ -424,6 +424,16 @@ export class GameController {
     this._sortMenu = null;
   }
 
+  // Tek düğme, akıllı döngü: perler → çiftler → renk → sayı. Istaka elle değişirse döngü baştan başlar.
+  sortCycle() {
+    const order = ['smart', 'pairs', 'color', 'number'];
+    const sig = this.scene.rack.slots.join(',');
+    const i = sig === this._sortSig ? (this._sortIdx + 1) % order.length : 0;
+    this.sort(order[i]);
+    this._sortIdx = i;
+    this._sortSig = this.scene.rack.slots.join(',');
+  }
+
   sort(mode) {
     const sc = this.scene;
     const g = this.game;
@@ -441,7 +451,7 @@ export class GameController {
     setTimeout(() => this.audio.play('place'), 220);
     sc.onRackChanged();
     this.save();
-    sc.toast({ color: 'Renge göre dizildi', number: 'Sayıya göre dizildi', smart: 'Perler bir araya getirildi' }[mode], '', 1400);
+    sc.toast({ color: 'Renge göre dizildi', number: 'Sayıya göre dizildi', smart: 'Perler bir araya getirildi', pairs: 'Çiftler yan yana' }[mode] + ' · tekrar bas: sonraki diziliş', '', 1500);
   }
 
   // Öneri: en iyi perleri vurgula; ikinci dokunuşta uygula (otomasyon oyuncuyu ele geçirmez)
@@ -478,13 +488,37 @@ export class GameController {
   }
 
   // ───────────────────────────── insan niyetleri ─────────────────────────────
-  reject(msg, tile) {
+  // Geçersiz hamle geri bildirimi: ses + titreşim + taş sallanması/kırmızı parıltı + açıklayıcı uyarı
+  reject(msg, tile, extra = {}) {
     const sc = this.scene;
+    const s = this.game.state;
     this.audio.play('invalid');
-    if (msg) sc.toast(msg, 'warn', 2400);
+    if (this.settings.get('haptics') !== false) navigator.vibrate?.([28, 40, 28]);
+    if (msg) sc.toast(msg, 'warn', 2800);
+    const marks = new Set();
     const t = tile ?? sc.selected;
-    const sp = t !== null && t !== undefined ? sc.sys.get(t) : null;
-    if (sp && sp.el.animate) sp.el.animate([{ translate: '0 0' }, { translate: '-5px 0' }, { translate: '5px 0' }, { translate: '-3px 0' }, { translate: '0 0' }], { duration: 260, easing: 'ease-out' });
+    if (t !== null && t !== undefined) marks.add(t);
+    // yandan alınan taş kullanılmadıysa: o taşı ve "Geri bırak"ı göster
+    if (/Yandan/.test(msg || '') && s.turn.sideTile !== null && s.turn.sideTile !== undefined) {
+      marks.add(s.turn.sideTile);
+      const btn = sc.els.actions.querySelector('[data-act="return"]');
+      btn?.classList.remove('is-nudge');
+      void btn?.offsetWidth;
+      btn?.classList.add('is-nudge');
+    }
+    if (extra.badGroup) for (const x of extra.badGroup.tiles || []) marks.add(x.t ?? x);
+    for (const id of marks) {
+      const sp = sc.sys.get(id);
+      if (!sp) continue;
+      sp.el.classList.remove('is-invalid');
+      void sp.el.offsetWidth;
+      sp.el.classList.add('is-invalid');
+      setTimeout(() => sp.el.classList.remove('is-invalid'), 900);
+    }
+    const bar = sc.els.status;
+    bar.classList.remove('is-shake');
+    void bar.offsetWidth;
+    bar.classList.add('is-shake');
   }
 
   async intent(i) {
@@ -556,7 +590,7 @@ export class GameController {
     const res = g.apply(0, action);
     if (!res.ok) {
       if (res.events.length) await this.choreo.playEvents(res.events);
-      this.reject(res.error, i.tile);
+      this.reject(res.error, i.tile, res);
       return false;
     }
     this.busy = true;

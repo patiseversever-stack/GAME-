@@ -221,9 +221,30 @@ export class RackModel {
       if (jokers.length) groups.push(jokers);
       return this._layoutGroups(groups);
     }
-    // 'smart': çözücüyle en çok taşı per yapan diziliş; perler bitişik, aralarda boşluk
+    if (mode === 'pairs') {
+      // aynı yüzlü ikililer yan yana (çift bitiş / 101 çift açılış), okeyler tekli taşlarla eşlenir
+      const byFace = new Map();
+      for (const t of rest) {
+        const f = face(t);
+        const k = f.c * 16 + f.v;
+        if (!byFace.has(k)) byFace.set(k, []);
+        byFace.get(k).push(t);
+      }
+      const groups = [];
+      const singles = [];
+      for (const [, arr] of [...byFace.entries()].sort((a, b) => a[0] - b[0])) {
+        while (arr.length >= 2) groups.push(arr.splice(0, 2));
+        singles.push(...arr);
+      }
+      const js = jokers.slice();
+      while (js.length && singles.length) groups.push([singles.shift(), js.shift()]);
+      if (js.length) groups.push(js);
+      if (singles.length) groups.push(singles);
+      return this._layoutGroups(groups);
+    }
+    // 'smart': çözücüyle en iyi per bölüşümü (klasik: en çok taş, 101: en çok puan); perler bitişik, aralarda boşluk
     const wrap = rules.mode === 'okey' ? true : !!rules.wrapHigh101;
-    const best = findBest(tiles, ctx, { wrapHigh: wrap, objective: 'tiles' });
+    const best = findBest(tiles, ctx, { wrapHigh: wrap, objective: rules.mode === 'okey101' ? 'points' : 'tiles' });
     const used = new Set();
     const groups = [];
     if (best) {

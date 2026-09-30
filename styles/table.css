@@ -1218,3 +1218,40 @@
 .seat--v .seat__main {
   overflow: visible;
 }
+
+/* geçersiz hamle geri bildirimi */
+.tile.is-invalid .tile__flip {
+  animation: tile-invalid 520ms cubic-bezier(.36,.07,.19,.97) both;
+}
+.tile.is-invalid .tile__face {
+  box-shadow: 0 0 0 2px #e0695a, 0 0 16px rgba(224, 105, 90, 0.8), inset 0 0 12px rgba(224, 105, 90, 0.35);
+  transition: box-shadow 200ms;
+}
+@keyframes tile-invalid {
+  10%, 90% { transform: translateX(-1px) rotate(-1deg); }
+  20%, 80% { transform: translateX(3px) rotate(2deg); }
+  30%, 50%, 70% { transform: translateX(-5px) rotate(-3deg); }
+  40%, 60% { transform: translateX(5px) rotate(3deg); }
+}
+.status.is-shake {
+  animation: bar-shake 420ms ease-out;
+}
+@keyframes bar-shake {
+  20% { transform: translateX(-6px); }
+  40% { transform: translateX(5px); }
+  60% { transform: translateX(-3px); }
+  80% { transform: translateX(2px); }
+}
+.btn.is-nudge {
+  animation: btn-nudge 900ms ease-out 2;
+  border-color: var(--accent-strong);
+}
+@keyframes btn-nudge {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(216, 184, 120, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(216, 184, 120, 0); transform: scale(1.06); }
+}
+.toast--warn {
+  background: linear-gradient(180deg, rgba(70, 20, 16, 0.96), rgba(40, 12, 10, 0.96));
+  border-color: rgba(224, 105, 90, 0.8);
+  color: #ffe2dc;
+}
