@@ -1277,7 +1277,7 @@
 }
 .surface__focus[data-seat='0'] { width: min(110vmin, 900px); aspect-ratio: 2.4; background: radial-gradient(closest-side, rgba(255, 228, 170, 0.26), rgba(255, 228, 170, 0.08) 60%, rgba(255, 228, 170, 0)); }
 /* HUD: çip yok; köşelerde çıplak ikonlar */
-[data-profile='landscape'] .hud > .scorebar { display: none; }
+.hud > .scorebar { display: none; }
 .hud .icon-btn { background: none; border: 0; color: rgba(240, 230, 210, 0.72); }
 .hud .icon-btn:active { color: #fff; }
 [data-profile='landscape'] .hud__title { margin: 0 auto; align-items: center; }
@@ -1337,3 +1337,5 @@
 .layer--badges { z-index: calc(var(--z-sprites) + 5); pointer-events: none; }
 .badge-ov { position: absolute; pointer-events: none; }
 .badge-ov .stock__count { bottom: -0.45rem; }
+[data-profile='portrait'] .me-plate { display: flex; }
+[data-profile='portrait'] .me-plate__name { display: none; }

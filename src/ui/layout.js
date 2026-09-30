@@ -125,9 +125,9 @@ function layoutPortrait(o) {
   const hudH = R(ui * 2.6);
   const hud = rect(x0, y, contentW, hudH);
   y += hudH + 2;
-  const scoresH = R(ui * 2.1);
-  const scores = rect(x0, y, contentW, scoresH);
-  y += scoresH + 6;
+  // skorlar artık koltuklarda (ayrı skor satırı yok → masaya daha çok yer)
+  const scores = null;
+  y += 4;
   const tableTop = y;
 
   const bottomPad = Math.max(safe.b, 8);
