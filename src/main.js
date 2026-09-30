@@ -3,7 +3,8 @@ import { Settings, applyDocumentSettings } from './meta/settings.js';
 import { Profile } from './meta/profile.js';
 import { AudioManager, NullAudio } from './audio/audio-manager.js';
 import { GameController, hasSavedGame, savedSummary, clearSavedGame } from './ui/game-controller.js';
-import { FINISH_LABEL } from './game/scoring.js';
+import { resultScreen, historySheet, sheet } from './app/overlays.js';
+const history = [];
 
 const q = new URLSearchParams(location.search);
 const app = document.getElementById('app');
@@ -15,7 +16,7 @@ applyDocumentSettings(settings, app);
 const audio = q.get('mute') ? new NullAudio() : new AudioManager(settings);
 window.__okey = { settings, profile, audio };
 
-const overlay = (html, cls = '') => {
+const _overlay = (html, cls = '') => {
   const el = document.createElement('div');
   el.className = 'ov ' + cls;
   el.innerHTML = `<div class="ov__card">${html}</div>`;
@@ -26,35 +27,31 @@ const goHome = () => { location.href = location.pathname; };
 
 const ui = {
   pauseMenu(ctl) {
-    const el = overlay(`<h2>Duraklatıldı</h2><button class="btn btn--primary btn--lg" data-a="go">Devam</button><button class="btn btn--lg" data-a="home">Ana menü (kaydedilir)</button>`);
-    el.onclick = (e) => {
-      const a = e.target.closest('[data-a]')?.dataset.a;
-      if (a === 'go') el.remove();
-      if (a === 'home') { ctl.save?.(); goHome(); }
-    };
+    sheet(app, { title: 'Duraklatıldı', body: '<p class="sheet__p">Oyun kaydedildi. İstediğin zaman kaldığın yerden devam edebilirsin.</p>', actions: [
+      { label: 'Devam', primary: true },
+      { label: 'Oyun özeti', close: false, run: () => historySheet(app, ctl, history) },
+      { label: 'Nasıl oynanır?', close: false, run: () => ui.howTo() },
+      { label: 'Ana menü', run: () => { ctl.save?.(); goHome(); } },
+    ] });
   },
   howTo() {
-    const el = overlay(`<h2>Nasıl oynanır?</h2><p>Sıra sendeyken <b>desteden</b> ya da <b>soldaki çöplükten</b> bir taş çek. Taşları ıstakada sürükleyerek düzenle; perleri (aynı sayı farklı renk ya da aynı renk ardışık) oluştur. Sonra bir taşı <b>sağ alttaki çöplüğe sürükleyerek</b> at.</p><p>Elini bitirmek için 14 taşı perlere ayır ve son taşı “Bitir” olarak at. Okey (★) her taşın yerine geçer; gösterge bir fazlası okeydir.</p><p><b>101:</b> ilk açışta perlerin toplamı en az 101 (ya da 5 çift) olmalı; sonra açılmış perlere taş işleyebilirsin.</p><button class="btn btn--primary" data-a="x">Tamam</button>`);
-    el.onclick = (e) => e.target.closest('[data-a]') && el.remove();
+    sheet(app, { title: 'Nasıl oynanır?', body: `<div class="howto2">
+      <p><b>1. Taş al.</b> Sıra sende iken ortadaki desteye dokun ya da soldaki çöplükten (yandan) al.</p>
+      <p><b>2. Diz.</b> Taşları ıstakada sürükle. <b>Diz</b> düğmesi perleri otomatik gruplar; tekrar basınca çift, renk ve sayı dizilişine geçer.</p>
+      <p><b>3. At.</b> Bir taşı sağdaki çöplüğe sürükle ya da seçip ikinci kez dokun.</p>
+      <p><b>Per:</b> aynı renk ardışık (3-4-5) ya da aynı sayı farklı renk (7-7-7). <b>Okey</b> (yıldızlı) her taşın yerine geçer; göstergenin bir fazlasıdır.</p>
+      <p><b>Okey:</b> 14 taşı perlere ayırıp son taşı atınca bitersin. Yedi çift de bitirir.</p>
+      <p><b>101:</b> ilk açılışta perlerin toplamı en az 101 (ya da 5 çift) olmalı. Açtıktan sonra masadaki perlere taş işleyebilirsin. Yandan aldığın taşı açılışta ya da işlemede kullanmak zorundasın. En düşük puan kazanır.</p></div>`, actions: [{ label: 'Anladım', primary: true }] });
   },
-  discardHistory() {},
-  restart(cfg) { start(cfg.mode, cfg.difficulty); },
+  discardHistory(ctl) { historySheet(app, ctl, history); },
+  restart(cfg) { clearSavedGame(); start(cfg.mode, cfg.difficulty); },
   roundResult: async (o) => {
-    const { game: g, roster, result: r, matchOver, winnerSeat } = o;
-    const name = (s) => (s === 0 ? 'Sen' : roster[s].name);
-    const title = r.winner === null ? 'El berabere bitti' : r.winner === 0 ? 'Eli kazandın! 🎉' : `${name(r.winner)} eli aldı`;
-    const rows = g.state.scores.map((sc, i) => `<div class="ov__row${i === 0 ? ' me' : ''}"><span>${name(i)}</span><b>${sc}</b></div>`).join('');
-    const el = overlay(`<h2>${title}</h2><p>${FINISH_LABEL?.[r.finish] || r.finishLabel || ''}</p>${rows}${matchOver ? '' : '<button class="btn btn--primary btn--lg" data-a="next">Sonraki el</button>'}<button class="btn btn--lg" data-a="again">Yeni oyun</button><button class="btn btn--lg" data-a="home">Ana menü</button>`);
-    el.onclick = (e) => {
-      const a = e.target.closest('[data-a]')?.dataset.a;
-      if (a === 'next') { el.remove(); o.onNext(); }
-      if (a === 'again') { clearSavedGame(); goHome(); }
-      if (a === 'home') goHome();
-    };
-    if (winnerSeat === 0) window.__roundWon = true;
+    history.push({ round: o.result.round, winner: o.result.winner, finish: o.result.finish, deltas: o.result.deltas.slice() });
+    resultScreen(app, { ...o, onAgain: () => { clearSavedGame(); goHome(); } }, history);
   },
 };
 
+window.__okey.ui = ui;
 let ctl = null;
 async function start(mode, difficulty, seed) {
   app.querySelectorAll('.ov,.home').forEach((n) => n.remove());
@@ -108,3 +105,8 @@ if (q.get('resume')) {
   ctl.resume().then(() => (document.body.dataset.ready = '1'));
 } else if (q.get('mode')) start(q.get('mode'), q.get('difficulty') || 'normal', q.get('seed') ? Number(q.get('seed')) : undefined).catch((e) => { document.body.dataset.error = String(e && e.stack); });
 else home();
+
+// skor çiplerine dokununca oyun özeti (tek dokunuş)
+app.addEventListener('click', (e) => {
+  if (e.target.closest('.scorebar') && ctl?.game) historySheet(app, ctl, history);
+});
