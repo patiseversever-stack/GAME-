@@ -14,6 +14,7 @@ const viewCtx = {
     return 1 - smoothstep(rs * 0.6, rs * 1.25, d);
   },
   near(pos) { return camera.position.distanceTo(pos) < 48; },
+  dim() { return Math.max(G.night, G.ecl.amt); },
 };
 function updateSunControl(dtR) {
   const st = G.state;
@@ -41,10 +42,11 @@ function updateSunControl(dtR) {
   if (sp > 0.55 && Math.random() < sp * 0.5) { const p = orb.g.position; FX.sparkle(p.x + (Math.random() - 0.5) * 0.6, p.y + (Math.random() - 0.5) * 0.6, p.z, [2.6, 1.7, 0.8], 0.35); }
 }
 function exposureNow(lv, x, z, nx, nz) {
-  let e = 0;
+  let e = 0; const mir = lv.mirrors && lv.mirrors.length; G.mirHit = false;
   for (let q = -1; q <= 1; q++) {
     const px = x + nx * ZIFIR_HALF * q, pz = z + nz * ZIFIR_HALF * q;
-    const l1 = occluded(lv.cols, px, ZIFIR_Y, pz, L1, -1) ? 0 : 1;
+    let l1 = occluded(lv.cols, px, ZIFIR_Y, pz, L1, -1) ? 0 : 1;
+    if (!l1 && mir && mirrorsLit(lv.mirrors, px, ZIFIR_Y, pz, L1)) { l1 = 1; G.mirHit = true; }
     e += lv.sun.twin ? (l1 + (occluded(lv.cols, px, ZIFIR_Y, pz, L2, -1) ? 0 : 1)) * 0.5 : l1;
   }
   return e / 3;
@@ -73,6 +75,18 @@ function collectDrop(d) {
   const pill = $('#dropPill'); pill.classList.remove('bump'); void pill.offsetWidth; pill.classList.add('bump');
   updateHud();
 }
+function onWisp(ev) {
+  const w = ev.w;
+  if (ev.kind === 'eat') {
+    act.eaten++; G.meter = Math.min(1, G.meter + 0.15); G.combo++;
+    audio.sprite(3); haptic(16); zifir.kick(1.8); G.flash = Math.max(G.flash, 0.12); G.flashCol.set(0.7, 0.55, 1.0);
+    popText(w.x, 1.0, w.z, 'peri yutuldu ✦');
+  } else if (ev.kind === 'hit') {
+    G.meter -= 0.14; G.expTotal += 0.3; G.combo = 0;
+    audio.flareBurst(); haptic([25, 20, 25]); G.trauma = Math.max(G.trauma, 0.4); G.ca = Math.max(G.ca, 0.015); zifir.kick(-3);
+    popText(w.x, 1.0, w.z, 'yandı!');
+  }
+}
 function endEpisode() {
   if (G.burnEp > 0.22) {
     audio.relief();
@@ -94,7 +108,7 @@ function stepPlay(dt, dtR) {
   updateCrystals(dt);
   // ilerleme (köprüde bekleme)
   if (G.T > lv.walkDelay) {
-    let ns = G.s + lv.speed * dt;
+    let ns = G.s + lv.speed * act.speedMul() * dt;
     const wasWaiting = G.waiting; G.waiting = false;
     for (const br of lv.bridges) {
       const entry = br.s0 - 0.3;
@@ -109,14 +123,21 @@ function stepPlay(dt, dtR) {
   let f = 0;
   if (G.T > lv.walkDelay && !onBridge && G.ecl.amt < 0.5) f = exposureNow(lv, PA.x, PA.z, PA.nx, PA.nz);
   G.f = f;
+  const dashing = act.dashT > 0, fm = flareMul(lv, G.T) * (dashing ? 0.35 : 1);
   if (f > 0) {
     if (G.burnEp === 0) { audio.whoosh(true, 0.2, 0.04); for (let i = 0; i < 5; i++) FX.ember(PA.x, 0.3, PA.z); }
-    G.meter -= lv.burn * f * dt; G.expTotal += f * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
+    if (G.mirHit && Math.random() < dt * 20) FX.sparkle(PA.x + (Math.random() - 0.5) * 0.4, 0.4 + Math.random() * 0.3, PA.z + (Math.random() - 0.5) * 0.4, [2.6, 2.0, 1.2], 0.4);
+    G.meter -= lv.burn * f * fm * dt; G.expTotal += f * (dashing ? 0.35 : 1) * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
     G.trauma = Math.max(G.trauma, 0.12 + f * 0.12);
     G.hapT -= dtR; if (G.hapT <= 0) { haptic(10); G.hapT = 0.28; }
   } else {
     G.meter = Math.min(1, G.meter + lv.regen * dt);
     if (G.burnEp > 0) endEpisode();
+  }
+  act.step(dt, f, G.T > lv.walkDelay && !G.waiting);
+  if (lv.sprites && lv.sprites.length) {
+    const ev = wisps.step(dt, G.T, PA.x, PA.z, f === 0, act.dashT > 0 || G.ecl.amt > 0.5);
+    if (ev) onWisp(ev);
   }
   if (G.meter < 0.35 && G.T > G.nextHeart) { audio.heartbeat(); G.nextHeart = G.T + 0.75; }
   audio.setSizzle(f);
@@ -128,6 +149,7 @@ function stepPlay(dt, dtR) {
     d.lit = false;
     if (d.awake && G.ecl.amt < 0.5) {
       let lit = occluded(lv.cols, d.x, 0.3, d.z, L1, -1) ? 0 : 1;
+      if (!lit && lv.mirrors && lv.mirrors.length && mirrorsLit(lv.mirrors, d.x, 0.3, d.z, L1)) lit = 1;
       if (lv.sun.twin) lit = (lit + (occluded(lv.cols, d.x, 0.3, d.z, L2, -1) ? 0 : 1)) * 0.5;
       if (lit > 0) { d.lit = true; d.hp -= (lit * dt) / DROP_LIFE; if (Math.random() < dt * 16) FX.smoke(d.x, 0.35, d.z, 0.45); }
       if (d.hp <= 0) {
@@ -275,6 +297,8 @@ function update(dt, dtR) {
   if (lv) {
     G.view.update(dtR, G.T, viewCtx);
     drops.update(dtR, U.uTime.value);
+    wisps.update(dtR, U.uTime.value);
+    flare.update(lv, G.T, dtR, G.state === 'play');
     updateZifirView(dtR);
     applyLighting(dtR);
     if (G.hint && (G.state === 'play' || G.state === 'ready')) {
@@ -301,9 +325,9 @@ function update(dt, dtR) {
   pu.uTime.value = U.uTime.value; pu.uFlash.value = G.flash; pu.uFlashCol.value.copy(G.flashCol);
   pu.uCA.value = G.ca + (G.state === 'play' ? G.f * 0.004 : 0);
   pu.uDesat.value = clamp01(G.desat + ecl * 0.08);
-  pu.uExposure.value = 1.0 - ecl * 0.06 + G.night * 0.15;
+  pu.uExposure.value = 1.0 - ecl * 0.06 + G.night * 0.15 + flare.k * 0.1;
   pu.uNight.value = G.night;
-  pu.uBloomAdd.value = 0.35 + G.night * 0.4 + ecl * 0.3;
+  pu.uBloomAdd.value = 0.35 + G.night * 0.4 + ecl * 0.3 + flare.k * 0.45 + flare.warnK * 0.12;
   pu.uRays.value = 0.5 * (1 - G.night) * (1 - ecl);
   const danger = G.state === 'play' ? (G.f > 0 ? 0.35 + (1 - G.meter) * 0.8 : G.meter < 0.35 ? 0.2 + Math.sin(U.uTime.value * 8) * 0.08 : 0) : 0;
   pu.uDanger.value = damp(pu.uDanger.value, danger, 8, dtR);
@@ -344,7 +368,8 @@ window.addEventListener('keydown', (e) => {
   if (e.repeat && (e.code === 'Space')) return;
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') { G.keyDir = 1; if (G.state === 'ready') startPlay(); }
-  else if (e.code === 'Space') { if (G.state === 'play') triggerEclipse(); else if (G.state === 'ready') startPlay(); else if (G.state === 'complete' && G.compStage >= 5) nextFromComplete(); else if (G.state === 'fail' && G.fShown) retry(); else if (G.state === 'title') $('#btnPlay').click(); }
+  else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { if (G.state === 'play') act.dash(); }
+  else if (e.code === 'Space') { if (G.state === 'play') { if (G.lv.spec.eclipse && G.ecl.charge >= 1) triggerEclipse(); else act.dash(); } else if (G.state === 'ready') startPlay(); else if (G.state === 'complete' && G.compStage >= 5) nextFromComplete(); else if (G.state === 'fail' && G.fShown) retry(); else if (G.state === 'title') $('#btnPlay').click(); }
   else if (e.code === 'Escape' || e.code === 'KeyP') { if (G.state === 'paused') resume(); else pause(); }
 });
 window.addEventListener('keyup', (e) => { if (['ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD'].includes(e.code)) G.keyDir = 0; });
@@ -377,7 +402,13 @@ const CONST = [
   [[50, 12], [74, 24], [84, 48], [74, 72], [50, 82], [26, 72], [16, 48], [26, 24]],
   [[62, 10], [46, 18], [40, 34], [52, 46], [62, 60], [50, 74], [42, 92], [58, 108]],
   [[30, 14], [28, 40], [26, 66], [24, 96], [70, 14], [72, 40], [74, 66], [76, 96]],
+  [[80, 12], [68, 28], [58, 44], [48, 60], [28, 64], [22, 90], [44, 100], [54, 80]],
+  [[50, 110], [50, 88], [50, 66], [32, 52], [28, 26], [50, 40], [72, 26], [68, 52]],
+  [[22, 14], [50, 14], [78, 14], [50, 40], [50, 64], [36, 80], [50, 96], [64, 80]],
 ];
+const SEQ = [0, 1, 2, 3, 4, 5, 6].map((i) => [i, i + 1]);
+const CONST_EDGES = { 2: [...SEQ, [7, 0]], 4: SEQ.filter((e) => e[0] !== 3), 5: [...SEQ, [7, 3]], 6: [...SEQ, [7, 2]],
+  7: [[0, 1], [1, 2], [1, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 4]] };
 function chapterStars(ci) { let s = 0; for (let i = 0; i < 8; i++) s += Save.stars(ci * 8 + i); return s; }
 function buildMap() {
   const box = $('#chapters'); box.innerHTML = '';
@@ -387,12 +418,10 @@ function buildMap() {
     const card = document.createElement('div'); card.className = 'chap' + (locked ? ' locked' : '');
     const pts = CONST[ci];
     let svg = `<svg class="const" viewBox="0 0 100 120" preserveAspectRatio="xMidYMid meet">`;
-    for (let i = 0; i < 7; i++) {
-      if (ci === 4 && i === 3) continue;
-      const a = pts[i], b = pts[i + 1], lit = Save.stars(ci * 8 + i) > 0 && Save.stars(ci * 8 + i + 1) > 0;
+    for (const [i, j] of CONST_EDGES[ci] || SEQ) {
+      const a = pts[i], b = pts[j], lit = Save.stars(ci * 8 + i) > 0 && Save.stars(ci * 8 + j) > 0;
       svg += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="${lit ? 'rgba(255,214,140,.75)' : 'rgba(255,240,220,.16)'}" stroke-width="${lit ? 0.9 : 0.5}" ${lit ? '' : 'stroke-dasharray="1.5 1.5"'}/>`;
     }
-    if (ci === 2) { const a = pts[7], b = pts[0]; svg += `<line x1="${a[0]}" y1="${a[1]}" x2="${b[0]}" y2="${b[1]}" stroke="rgba(255,240,220,.16)" stroke-width="0.5" stroke-dasharray="1.5 1.5"/>`; }
     pts.forEach((p, i) => {
       const g = ci * 8 + i, st = Save.stars(g), open = g <= un, cur = g === un && !Save.data.levels[g];
       const r = st ? 4.6 : open ? 4 : 2.4;
@@ -409,7 +438,7 @@ function buildMap() {
     box.appendChild(card);
   });
   box.querySelectorAll('.node').forEach((n) => n.addEventListener('click', () => { if (n.dataset.open === '1') { audio.ui(); startStory(+n.dataset.g); } }));
-  const cur = Math.min(4, Math.floor(un / 8));
+  const cur = Math.min(CHAPTERS.length - 1, Math.floor(un / 8));
   requestAnimationFrame(() => { const c = box.children[cur]; if (c) box.scrollLeft = c.offsetLeft - (box.clientWidth - c.clientWidth) / 2; });
   $('#mapTotal').textContent = `★ ${Save.totalStars()}/${STORY_LEVELS * 3}`;
   const endOk = un >= 16, dayOk = un >= 4;
@@ -475,6 +504,7 @@ bind('#btnHowT', () => { audio.ui(); TUT.show('title'); });
 bind('#btnHowS', () => { audio.ui(); TUT.show('settings'); });
 bind('#btnHowP', () => { audio.ui(); TUT.show('pause'); });
 $('#eclipseBtn').addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); triggerEclipse(); });
+$('#dashBtn').addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); if (!act.dash() && G.state === 'play') { const b = $('#dashBtn'); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); } });
 
 /* =====================================================================
    BOYUT, KALİTE, ANA DÖNGÜ, AÇILIŞ

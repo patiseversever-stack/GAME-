@@ -9,7 +9,7 @@ const STORY_LEVELS = CHAPTERS.length * 8;
 
 function levelSpec(g) {
   const ch = Math.floor(g / 8), i = g % 8, chap = CHAPTERS[ch];
-  const gp = g / (STORY_LEVELS - 1), d = i / 7;
+  const gp = Math.min(1, g / 39), d = i / 7;
   const finale = i === 7;
   const spec = {
     kind: 'story', g, ch, i, chap, seed: 7919 * (g + 1) + 104729 * (ch + 3), finale,
@@ -37,6 +37,20 @@ function levelSpec(g) {
   if (ch === 4 && i >= 5) spec.features.clouds = i % 2 === 0;
   if (finale) { spec.speed *= 1.04; spec.drops += 1; }
   if (chap.features.twin) { spec.burn *= 0.72; spec.margin = Math.max(spec.margin, 0.42); spec.spacing = Math.min(spec.spacing, 2.7); spec.sunSpeed = 0.58; spec.prune = Math.min(spec.prune, 3); }
+  // yeni dünyalar (VI–VIII): kendi zorluk eğrileri
+  if (ch >= 5) Object.assign(spec, {
+    speed: 1.46 + 0.12 * d + (ch - 5) * 0.05, burn: 0.74 + 0.1 * d + (ch - 5) * 0.03, spacing: lerp(2.4, 3.1, d),
+    prune: i >= 2 ? Math.round(lerp(2, 5, d)) : 0, margin: lerp(0.5, 0.32, d), drops: 3 + Math.round(d * 3) + (finale ? 1 : 0), sunSpeed: 0.72,
+    ctrl: finale ? 8 : 5 + Math.round(d * 2), amp: lerp(2.6, 3.8, d),
+  });
+  if (chap.features.melt) spec.margin = Math.max(spec.margin, 0.36);
+  if (chap.features.mirrors) { spec.burn *= 0.9; spec.margin = Math.max(spec.margin, 0.36); spec.mirrors = i < 2 ? 1 : i < 5 ? 2 : 3; }
+  if (chap.features.gears) { spec.features.pendulum = i >= 2; spec.gears = i < 3 ? 1 : 2; }
+  // aksiyon: ışık perileri ve güneş patlamaları
+  spec.sprites = ch === 2 ? (i >= 4 ? 1 : 0) : ch === 3 ? (i >= 2 ? 2 : 1) : ch === 4 ? 2 : ch >= 5 ? (i < 2 ? 2 : 3) : 0;
+  if (finale && ch >= 2) spec.sprites += 1;
+  spec.flares = (finale && ch >= 1) || (ch >= 5 && i >= 4);
+  spec.dash = g >= 2;
   return spec;
 }
 function endlessSpec(n, seedBase) {
@@ -44,6 +58,7 @@ function endlessSpec(n, seedBase) {
   const rng = new RNG(seedBase + n * 977);
   const ch = n === 0 ? 0 : rng.int(0, maxCh), chap = CHAPTERS[ch];
   const d = clamp01(n / 12);
+  const ex = { sprites: n >= 2 ? Math.min(3, 1 + Math.floor(n / 4)) : 0, flares: n >= 5 && rng.chance(0.35), dash: true, mirrors: 2, gears: 1 };
   const features = Object.assign({}, chap.features);
   if (ch === 1) features.windmills = rng.chance(0.6);
   if (maxCh >= 2 && ch !== 2 && rng.chance(0.25)) features.balloons = true;
@@ -52,7 +67,7 @@ function endlessSpec(n, seedBase) {
     kind: 'endless', g: -1, n, ch, i: 0, chap, seed: seedBase + n * 7151, finale: false,
     speed: Math.min(2.5, 1.45 + n * 0.07), burn: Math.min(1.15, 0.7 + n * 0.035) * twinK, regen: 0.42,
     spacing: lerp(2.5, 3.5, d), amp: lerp(2.6, 4.0, d), ctrl: 5 + Math.round(d * 2), pergolaRate: lerp(0.6, 0.25, d),
-    prune: Math.round(lerp(1, 6, d)), margin: lerp(0.45, 0.28, d), drops: 3 + Math.round(d * 2), features, eclipse: true, sunStart: 0.5, sunSpeed: 0.72,
+    prune: Math.round(lerp(1, 6, d)), margin: lerp(0.45, 0.28, d), drops: 3 + Math.round(d * 2), features, eclipse: true, sunStart: 0.5, sunSpeed: 0.72, ...ex,
   };
 }
 function dailySpec(dateNum) {
@@ -64,6 +79,7 @@ function dailySpec(dateNum) {
   return {
     kind: 'daily', g: -1, ch, i: 4, chap, seed: dateNum * 31 + 17, finale: false,
     speed: 1.5 + rng.range(0, 0.35), burn: 0.8, regen: 0.42, spacing: 3.0, amp: 3.4, ctrl: 7, pergolaRate: 0.4, prune: 4, margin: 0.32, drops: 5, features, eclipse: true, sunStart: 0.5, sunSpeed: 0.7,
+    sprites: 2, flares: true, dash: true, mirrors: 2, gears: 1,
   };
 }
 
@@ -122,11 +138,17 @@ const PROP_SETS = {
   peri: { shade: [['chimney', 5], ['chimneyTwin', 1.6], ['apricot', 2]], deco: [['rock', 3], ['bush', 1.5], ['smallChimney', 2]], arch: 'rockArch' },
   tuz: { shade: [['saltCone', 3], ['saltBlock', 3], ['saltPillar', 2]], deco: [['saltRock', 3], ['flamingo', 2], ['saltCrystal', 2]], arch: 'saltArch' },
   ikiz: { shade: [['monolith', 3], ['spire', 2.5], ['mushroom', 3]], deco: [['alienRock', 2.5], ['glowBush', 2.5], ['orb', 1.5]], arch: 'mushroomArch' },
+  buz: { shade: [['iceSpire', 4], ['iceColumn', 3], ['pine', 2.5], ['igloo', 1]], deco: [['snowRock', 2.5], ['iceShard', 2], ['penguin', 2]], arch: 'iceArch' },
+  ayna: { shade: [['kiosk', 3], ['minaret', 2.5], ['fountain', 1.5], ['cypress', 2.5]], deco: [['tulips', 3], ['urn', 2], ['tileBench', 1.5]], arch: 'iwan' },
+  saat: { shade: [['clockTower', 3], ['cogStand', 2.5], ['pipeStack', 2.5], ['steamTank', 1.5]], deco: [['bolt', 2.5], ['smallGear', 2], ['lamp', 2]], arch: 'gearArch' },
 };
 function propFootprint(type) {
   return ({ house: 1.15, cypress: 0.55, olive: 1.0, poplar: 0.6, haystack: 0.75, chimney: 1.0, chimneyTwin: 1.5, apricot: 0.9, saltCone: 1.0, saltBlock: 0.95,
     saltPillar: 0.6, monolith: 0.75, spire: 0.6, mushroom: 1.25, windmill: 1.15, rock: 0.45, bush: 0.45, pots: 0.35, wall: 0.9, hay: 0.5, hedge: 0.8, smallChimney: 0.5,
-    saltRock: 0.45, flamingo: 0.35, saltCrystal: 0.4, alienRock: 0.5, glowBush: 0.45, orb: 0.4, hut: 0.95, crystal: 0.45 })[type] || 0.6;
+    saltRock: 0.45, flamingo: 0.35, saltCrystal: 0.4, alienRock: 0.5, glowBush: 0.45, orb: 0.4, hut: 0.95, crystal: 0.45,
+    iceSpire: 0.7, iceColumn: 0.62, pine: 0.8, igloo: 1.1, snowRock: 0.45, iceShard: 0.4, penguin: 0.3,
+    kiosk: 1.15, minaret: 0.55, fountain: 1.05, tulips: 0.4, urn: 0.35, tileBench: 0.8, mirror: 0.6,
+    clockTower: 0.8, cogStand: 1.0, pipeStack: 0.8, steamTank: 0.9, bolt: 0.35, smallGear: 0.5, lamp: 0.3, gear: 2.0, pendFrame: 0.4 })[type] || 0.6;
 }
 // prop çarpıştırıcılarını üret (yükseklik h hedefi verilebilir)
 function buildPropCols(pr, rng) {
@@ -183,12 +205,43 @@ function buildPropCols(pr, rng) {
     case 'orb': cols.push(cSphere(x, P.y, z, P.r, 1)); break;
     case 'flamingo': cols.push(cSphere(x, 0.75, z, 0.22, 1.1)); cols.push(cFrustum(x, z, 0, 0.6, 0.05, 0.05)); break;
     case 'crystal': { const c = cFrustum(x, z, 0, P.h, 0.3, 0.3); cols.push(c); pr.selfId = c.id; break; }
+    case 'iceSpire': cols.push(cFrustum(x, z, 0, P.h, P.r, 0.05)); break;
+    case 'iceColumn': cols.push(cFrustum(x, z, 0, P.h, P.r, P.r * 0.82)); break;
+    case 'pine': cols.push(cFrustum(x, z, 0, P.h * 0.15, 0.14, 0.14)); cols.push(cFrustum(x, z, P.h * 0.15, P.h * 0.55, P.r, P.r * 0.62)); cols.push(cFrustum(x, z, P.h * 0.55, P.h, P.r * 0.62, 0.04)); break;
+    case 'igloo': cols.push(cSphere(x, 0.05, z, P.r, 0.78)); break;
+    case 'snowRock': case 'iceShard': cols.push(cSphere(x, P.r * 0.55, z, P.r, P.sy || 0.8)); break;
+    case 'penguin': cols.push(cSphere(x, 0.36, z, 0.2, 1.6)); break;
+    case 'kiosk': {
+      cols.push(cBox(x, P.h / 2, z, P.w / 2, P.h / 2 + 0.05, P.d / 2, yaw));
+      cols.push(cSphere(x, P.h + 0.05, z, P.dr, 1));
+      break;
+    }
+    case 'minaret': cols.push(cFrustum(x, z, 0, P.h, P.r, P.r * 0.85)); cols.push(cFrustum(x, z, P.h * 0.72, P.h * 0.72 + 0.16, P.r * 1.45, P.r * 1.45)); cols.push(cFrustum(x, z, P.h, P.h + P.r * 2.6, P.r * 0.9, 0.02)); break;
+    case 'fountain': cols.push(cFrustum(x, z, 0, 0.6, P.r, P.r * 0.92)); cols.push(cSphere(x, 1.75, z, P.r * 0.95, 0.55)); break;
+    case 'tulips': cols.push(cSphere(x, 0.2, z, P.r, 0.6)); break;
+    case 'urn': cols.push(cFrustum(x, z, 0, 0.62, 0.16, 0.26)); break;
+    case 'tileBench': cols.push(cBox(x, P.h / 2, z, P.w / 2, P.h / 2, P.d / 2, yaw)); break;
+    case 'mirror': { const c = cBox(x, 1.35, z, 0.52, 0.66, 0.05, yaw); cols.push(c); pr.panelId = c.id; cols.push(cFrustum(x, z, 0, 0.7, 0.09, 0.07)); break; }
+    case 'clockTower': cols.push(cBox(x, P.h / 2, z, P.w / 2, P.h / 2, P.w / 2, yaw)); cols.push(cFrustum(x, z, P.h, P.h + 1.0, P.w * 0.72, 0.03)); break;
+    case 'cogStand': cols.push(cBox(x, P.r + 0.35, z, P.r, P.r, 0.14, yaw)); break;
+    case 'pipeStack': for (const q of P.pipes) { const [px, pz] = L(q[0], q[1]); cols.push(cFrustum(px, pz, 0, q[2], q[3], q[3])); } break;
+    case 'steamTank': cols.push(cSphere(x, P.r + 0.45, z, P.r, 1)); break;
+    case 'bolt': cols.push(cFrustum(x, z, 0, 0.5, 0.18, 0.14)); break;
+    case 'smallGear': cols.push(cBox(x, 0.45, z, 0.42, 0.42, 0.08, yaw)); break;
+    case 'lamp': cols.push(cFrustum(x, z, 0, 1.5, 0.05, 0.05)); cols.push(cSphere(x, 1.6, z, 0.18, 1)); break;
+    case 'gear': break;
+    case 'pendFrame': {
+      const hw = P.span / 2;
+      for (const sd of [-1, 1]) { const [px, pz] = L(sd * hw, 0); cols.push(cFrustum(px, pz, 0, P.h, 0.2, 0.16)); }
+      cols.push(cBox(x, P.h, z, hw + 0.2, 0.14, 0.14, yaw));
+      break;
+    }
     case 'windmill': {
       cols.push(cFrustum(x, z, 0, P.h, P.r, P.r * 0.86));
       cols.push(cFrustum(x, z, P.h, P.h + 1.15, P.r * 0.94, 0.06));
       break;
     }
-    case 'pergola': case 'rockArch': case 'saltArch': case 'mushroomArch': {
+    case 'pergola': case 'rockArch': case 'saltArch': case 'mushroomArch': case 'iceArch': case 'iwan': case 'gearArch': {
       const hw = P.w / 2, hl = P.l / 2, H = P.h;
       if (pr.type === 'mushroomArch') {
         const [sx, sz] = L(hw + 0.15, 0);
@@ -245,6 +298,27 @@ function makeProp(type, x, z, yaw, rng, hNeed = 0) {
     case 'flamingo': h = 1.0; break;
     case 'crystal': P.h = 2.1; h = 2.1; break;
     case 'windmill': P.r = 1.0; P.h = rng.range(3.1, 3.6); P.blades = 4; P.len = 2.5; h = P.h + 1.1; break;
+    case 'iceSpire': P.r = rng.range(0.62, 0.8); P.h = clamp(Math.max(hNeed * 1.35, rng.range(2.6, 4.2)), 2.2, 5.6); h = P.h; break;
+    case 'iceColumn': P.r = rng.range(0.5, 0.6); P.h = clamp(Math.max(hNeed * 1.1, rng.range(2.2, 3.6)), 1.8, 5.0); h = P.h; break;
+    case 'pine': P.r = rng.range(0.72, 0.85); P.h = clamp(Math.max(hNeed * 1.2, rng.range(2.8, 4.2)), 2.4, 5.4); h = P.h; break;
+    case 'igloo': P.r = rng.range(0.95, 1.1); h = P.r * 0.8; break;
+    case 'snowRock': P.r = rng.range(0.3, 0.48); P.sy = rng.range(0.6, 0.85); h = P.r; break;
+    case 'iceShard': P.r = rng.range(0.25, 0.38); P.sy = 1.6; h = P.r * 2; break;
+    case 'penguin': h = 0.7; break;
+    case 'kiosk': P.w = rng.range(1.5, 2.1); P.d = rng.range(1.4, 2.0); P.h = clamp(Math.max(hNeed, rng.range(1.4, 2.2)), 1.3, 3.0); P.dr = Math.min(P.w, P.d) * 0.44; h = P.h + P.dr; break;
+    case 'minaret': P.r = rng.range(0.34, 0.42); P.h = clamp(Math.max(hNeed * 1.1, rng.range(3.4, 5.0)), 3.0, 6.2); h = P.h + P.r * 2.6; break;
+    case 'fountain': P.r = rng.range(0.95, 1.1); h = 2.3; break;
+    case 'tulips': P.r = rng.range(0.3, 0.42); h = 0.45; break;
+    case 'urn': h = 0.62; break;
+    case 'tileBench': P.w = rng.range(1.2, 1.8); P.d = 0.45; P.h = 0.5; h = 0.5; break;
+    case 'mirror': h = 2.05; break;
+    case 'clockTower': P.w = rng.range(0.85, 1.15); P.h = clamp(Math.max(hNeed, rng.range(2.8, 4.6)), 2.4, 5.8); h = P.h + 1; break;
+    case 'cogStand': P.r = clamp(Math.max(hNeed * 0.55, rng.range(0.8, 1.15)), 0.75, 1.5); P.teeth = 10 + Math.round(P.r * 4); h = P.r * 2 + 0.35; break;
+    case 'pipeStack': { const hh = clamp(Math.max(hNeed * 1.05, rng.range(2.2, 3.6)), 1.8, 4.6); P.pipes = [[0, 0, hh, 0.32], [0.5, 0.25, hh * 0.72, 0.24], [-0.42, 0.3, hh * 0.55, 0.22]]; h = hh; break; }
+    case 'steamTank': P.r = clamp(Math.max(hNeed * 0.4, rng.range(0.7, 0.9)), 0.65, 1.1); h = P.r * 2 + 0.45; break;
+    case 'bolt': h = 0.5; break;
+    case 'smallGear': h = 0.87; break;
+    case 'lamp': h = 1.8; break;
   }
   const pr = { type, x, z, yaw, fr: propFootprint(type), h, p: P };
   buildPropCols(pr, rng);
@@ -324,8 +398,10 @@ function generateLevel(spec, attempt = 0) {
       if (Math.hypot(p.x - x, p.z - z) < p.fr + fr + 0.22) return false;
     }
     for (const c of lv.crystals) if (Math.hypot(c.x - x, c.z - z) < fr + 1.4) return false;
+    for (const k of keepOut) if (Math.hypot(k.x - x, k.z - z) < fr + k.r) return false;
     return true;
   };
+  const keepOut = lv.keepOut = [];
 
   // ---- başlangıç kulübesi & kapı ----
   pathAt(path, 0, PA);
@@ -349,6 +425,29 @@ function generateLevel(spec, attempt = 0) {
     if (!done) return null;
   }
 
+  // ---- sarkaç (Gök Saati) — kemerlerden önce yerleşir ----
+  if (spec.features.pendulum) {
+    for (let t = 0; t < 90; t++) {
+      const s = rng.range(path.length * 0.3, path.length * 0.72); pathAt(path, s, PA);
+      const span = t < 45 ? 5.4 : 4.6, yaw = Math.atan2(PA.nx, PA.nz) + PI / 2;
+      const p1 = [PA.x + PA.nx * span / 2, PA.z + PA.nz * span / 2], p2 = [PA.x - PA.nx * span / 2, PA.z - PA.nz * span / 2];
+      if (!insideIsland(lv, p1[0], p1[1], 0.4) || !insideIsland(lv, p2[0], p2[1], 0.4)) continue;
+      if (distToPath(path, p1[0], p1[1]) < 1.1 || distToPath(path, p2[0], p2[1]) < 1.1) continue;
+      if (placed.some((p) => Math.hypot(p.x - p1[0], p.z - p1[1]) < p.fr + 0.6 || Math.hypot(p.x - p2[0], p.z - p2[1]) < p.fr + 0.6)) continue;
+      let blocked = false;
+      for (let d = -5; d <= 5 && !blocked; d += 0.5) { const qx = PA.x + PA.tx * d, qz = PA.z + PA.tz * d; if (placed.some((p) => (p.h || 0) > 1.3 && Math.hypot(p.x - qx, p.z - qz) < p.fr + 1.0) || lv.crystals.some((c) => Math.hypot(c.x - qx, c.z - qz) < 1.6)) blocked = true; }
+      if (blocked) continue;
+      const fr = { type: 'pendFrame', x: PA.x, z: PA.z, yaw, fr: 0.4, h: 8.9, p: { span, h: 8.9 }, fixed: true, noBlock: true };
+      buildPropCols(fr); placed.push(fr);
+      // sarkaç yol boyunca salınır (gövde direkler arasında kalır)
+      const m = { kind: 'pendulum', px: PA.x, py: 8.75, pz: PA.z, L: 6.4, dx: PA.tx, dz: PA.tz, amp: rng.range(0.55, 0.72), w: TAU / rng.range(3.6, 4.8), ph: rng.range(0, TAU), cols: [cSphere(0, 0, 0, 0.8, 1)], prop: fr };
+      fr.mover = m; lv.movers.push(m);
+      const ext = m.L * Math.sin(m.amp) + 0.9;
+      for (let d = -ext; d <= ext; d += 0.6) keepOut.push({ x: PA.x + PA.tx * d, z: PA.z + PA.tz * d, r: 1.5 });
+      break;
+    }
+  }
+
   // ---- kemerler (güvenli tüneller) ----
   const archType = set.arch;
   let lastArch = -99;
@@ -363,6 +462,7 @@ function generateLevel(spec, attempt = 0) {
     const pr = makeArch(archType, PA, rng);
     if (!insideIsland(lv, pr.x, pr.z, 1.5)) continue;
     if (placed.some((p) => Math.hypot(p.x - pr.x, p.z - pr.z) < p.fr + 1.8)) continue;
+    if (keepOut.some((k) => Math.hypot(k.x - pr.x, k.z - pr.z) < k.r + pr.fr)) continue;
     pr.arch = true; pr.s = s; placed.push(pr); lastArch = s;
   }
 
@@ -391,6 +491,37 @@ function generateLevel(spec, attempt = 0) {
     }
   }
 
+  // ---- aynalar (Ayna Sarayı) ----
+  lv.mirrors = [];
+  for (let k = 0; k < (spec.features.mirrors ? spec.mirrors || 2 : 0); k++) {
+    for (let t = 0; t < 60; t++) {
+      const s = rng.range(path.length * 0.15, path.length * 0.85); pathAt(path, s, PA);
+      const sd = rng.sign(), off = rng.range(1.5, 2.6);
+      const x = PA.x + PA.nx * off * sd, z = PA.z + PA.nz * off * sd;
+      if (!okSpot(x, z, 0.6, 0.85) || lv.mirrors.some((m) => Math.hypot(m.x - x, m.z - z) < 4)) continue;
+      const yaw = rng.range(PI * 0.55, PI * 1.45), nx = Math.sin(yaw), nz = Math.cos(yaw);
+      const pr = makeProp('mirror', x, z, yaw, rng); pr.fixed = true; placed.push(pr);
+      lv.mirrors.push({ x, y: 1.35, z, nx, ny: 0, nz, ux: 0, uy: 1, uz: 0, vx: Math.cos(yaw), vy: 0, vz: -Math.sin(yaw), hw: 0.48, hh: 0.62, prop: pr, id: pr.panelId });
+      break;
+    }
+  }
+  // ---- dönen dişliler & sarkaç (Gök Saati) ----
+  if (spec.features.gears) {
+    for (let k = 0; k < (spec.gears || 1); k++) {
+      for (let t = 0; t < 70; t++) {
+        const s = rng.range(path.length * 0.15, path.length * 0.85); pathAt(path, s, PA);
+        const rg = rng.range(1.5, 2.05), sd = rng.sign(), off = rg + rng.range(0.85, 1.3);
+        const x = PA.x + PA.nx * off * sd, z = PA.z + PA.nz * off * sd;
+        if (!okSpot(x, z, rg + 0.1, 0.5)) continue;
+        const pr = { type: 'gear', x, z, yaw: 0, fr: rg + 0.1, h: 0.1, p: { rg, teeth: 14 + Math.round(rg * 6) }, cols: [], fixed: true };
+        const n = rng.int(2, 3), items = [];
+        for (let q = 0; q < n; q++) { const h = rng.range(2.2, 3.4); items.push({ rho: rg * 0.66, phi: (q / n) * TAU + rng.range(-0.3, 0.3), h, c: cFrustum(0, 0, 0, h, 0.34, 0.27) }); }
+        const m = { kind: 'orbit', cx: x, cz: z, w: rng.sign() * rng.range(0.3, 0.5), a0: rng.range(0, TAU), items, cols: items.map((i) => i.c), prop: pr };
+        pr.mover = m; placed.push(pr); lv.movers.push(m);
+        break;
+      }
+    }
+  }
   // ---- gölge sağlayıcılar (tasarlanmış güneş açılarıyla) ----
   const shadeTypes = set.shade;
   let prevU = spec.sunStart;
@@ -454,13 +585,28 @@ function generateLevel(spec, attempt = 0) {
     }
   }
 
+  // ---- güneş patlamaları & ışık perileri (ayrı tohum) ----
+  const rng2 = new RNG((spec.seed ^ 0x9e3779b9) + attempt);
+  lv.flares = null;
+  if (spec.flares) { lv.flares = []; for (let t = rng2.range(3.5, 5); t < T - 2.2; t += rng2.range(6.5, 8.5)) lv.flares.push({ w: t, a: t + 1.25, e: t + 2.55 }); }
+  lv.sprites = [];
+  for (let k = 0; k < (spec.sprites || 0); k++) {
+    const ts = T * (0.18 + (0.62 * (k + 0.5)) / spec.sprites) + rng2.range(-0.8, 0.8);
+    const sAt = Math.max(0, (ts - lv.walkDelay) * lv.speed), sa = Math.min(lv.length - 1.2, sAt + rng2.range(4.5, 6.5));
+    pathAt(path, sa, PA);
+    let sd = rng2.sign(), off = rng2.range(2.4, 3.6), x = PA.x + PA.nx * off * sd, z = PA.z + PA.nz * off * sd;
+    if (!insideIsland(lv, x, z, 0.4)) { sd = -sd; x = PA.x + PA.nx * off * sd; z = PA.z + PA.nz * off * sd; }
+    if (!insideIsland(lv, x, z, 0.4)) { x = PA.x + PA.nx * 1.6 * sd; z = PA.z + PA.nz * 1.6 * sd; }
+    lv.sprites.push({ t: ts, x, z });
+  }
+
   rebuildColliderList(lv);
 
   // ---- çözülebilirlik: çöz → onar → (zorsa) budama ----
   let orc = new Oracle(lv);
   let sol = orc.solve();
   let repairs = 0;
-  const applyRepair = (r) => { if (!r) return false; if (r.crystal) { rebuildColliderList(lv); orc = new Oracle(lv); } else orc.apply(r.prop.cols, 1); return true; };
+  const applyRepair = (r) => { if (!r) return false; if (r.crystal) { rebuildColliderList(lv); orc = new Oracle(lv); } else if (r.prop.mover) orc.applyMover(r.prop.mover, 1); else orc.apply(r.prop.cols, 1); return true; };
   while (!sol.ok && repairs < 24) {
     if (!applyRepair(repairAt(lv, sol, rng, okSpot))) break;
     repairs++; sol = orc.solve();
@@ -476,7 +622,7 @@ function generateLevel(spec, attempt = 0) {
   if (spec.prune > 0) {
     let removed = 0;
     for (let t = 0; t < spec.prune * 3 && removed < spec.prune; t++) {
-      const cands = placed.filter((p) => !p.fixed && !p.arch && p.type !== 'windmill');
+      const cands = placed.filter((p) => !p.fixed && !p.arch && !p.mover && p.type !== 'windmill');
       if (!cands.length) break;
       const pr = rng.pick(cands), idx = placed.indexOf(pr);
       placed.splice(idx, 1); orc.apply(pr.cols, -1);
@@ -499,6 +645,9 @@ function makeArch(type, PA, rng) {
   if (type === 'rockArch') { P.w = 1.7; P.h = 2.2; P.roof = 0.6; P.post = 0.34; }
   if (type === 'saltArch') { P.w = 1.6; P.h = 2.0; P.roof = 0.45; P.post = 0.3; }
   if (type === 'mushroomArch') { P.w = 1.4; P.l = 1.6; P.h = 2.3; }
+  if (type === 'iceArch') { P.w = 1.6; P.h = 2.0; P.roof = 0.45; P.post = 0.3; }
+  if (type === 'iwan') { P.w = 1.7; P.h = 2.3; P.roof = 0.55; P.post = 0.32; }
+  if (type === 'gearArch') { P.w = 1.6; P.h = 2.1; P.roof = 0.36; P.post = 0.18; }
   const pr = { type, x: PA.x, z: PA.z, yaw, fr: Math.max(P.w, P.l) / 2 + 0.25, h: P.h, p: P };
   buildPropCols(pr);
   return pr;
@@ -517,14 +666,20 @@ function placeShadeFor(lv, s, u, type, rng, okSpot, which = 1) {
     const pr = makeProp(type, x, z, rng.range(0, TAU), rng, hNeed);
     if (pr.h < hNeed * 0.9) continue;
     lv.props.push(pr);
+    if (lv.spec.features.melt && (type === 'iceSpire' || type === 'iceColumn')) makeMelt(lv, pr, s, rng);
     return pr;
   }
   return null;
 }
+function makeMelt(lv, pr, s, rng) {
+  const tReach = lv.walkDelay + s / lv.speed, t0 = Math.max(0.8, tReach - rng.range(0.6, 3.2)), dur = rng.range(4.5, 7.5);
+  const m = { kind: 'melt', prop: pr, cols: pr.cols, base: pr.cols.map((c) => ({ y0: c.y0, y1: c.y1, r0: c.r0, r1: c.r1 })), t0, t1: t0 + dur, drop: 0.72, f: 1 };
+  pr.cols = []; pr.mover = m; lv.movers.push(m);
+}
 function rebuildColliderList(lv) {
   const cols = [];
   for (const p of lv.props) for (const c of p.cols) cols.push(c);
-  for (const m of lv.movers) { if (m.kind === 'sails') cols.push(...m.cols); else for (const p of m.parts) cols.push(p.c); }
+  for (const m of lv.movers) cols.push(...moverCols(m));
   lv.cols = cols;
   lv.hasMovers = lv.movers.length > 0;
 }
@@ -560,7 +715,7 @@ function repairAt(lv, sol, rng, okSpot, forceK = -1) {
   // son çare: kemer
   const PA = pathAt(lv.path, s, {});
   const pr = makeArch(set.arch, PA, rng);
-  if (!lv.props.some((p) => Math.hypot(p.x - pr.x, p.z - pr.z) < p.fr + 1.2)) { pr.arch = true; pr.s = s; lv.props.push(pr); return { prop: pr }; }
+  if (!lv.props.some((p) => Math.hypot(p.x - pr.x, p.z - pr.z) < p.fr + 1.2) && !(lv.keepOut || []).some((k) => Math.hypot(k.x - pr.x, k.z - pr.z) < k.r + pr.fr)) { pr.arch = true; pr.s = s; lv.props.push(pr); return { prop: pr }; }
   return null;
 }
 
@@ -592,14 +747,26 @@ class Oracle {
     this.k1 = new Uint16Array(K * NU); this.k2 = this.twin ? new Uint16Array(K * NU) : null;
     const statics = []; for (const p of lv.props) for (const c of p.cols) statics.push(c);
     this.apply(statics, 1);
+    // güneş patlaması yanma çarpanı
+    this.fk = new Float32Array(K); for (let k = 0; k < K; k++) this.fk[k] = flareMul(lv, k * dt);
+    // aynalar: yansıma noktası maskesi (gölge tanımaz → bir kez hesaplanır)
+    this.mirr = null;
+    if (lv.mirrors && lv.mirrors.length) {
+      this.mirr = new Uint8Array(K * NU * 3);
+      for (let j = 0; j < NU; j++) for (const mr of lv.mirrors) {
+        const d = mirrorVDir(mr, this.L1[j], {}); if (!d) continue;
+        for (let k = 0; k < K; k++) if (this.valid[k]) for (let q = 0; q < 3; q++) if (mirrorHit(mr, d, this.sx[k * 3 + q], ZIFIR_Y, this.sz[k * 3 + q])) this.mirr[(k * NU + j) * 3 + q] = 1;
+      }
+    }
     // hareketliler: her adımda poz
     if (lv.movers.length) {
-      const mcols = []; for (const m of lv.movers) { if (m.kind === 'sails') mcols.push(...m.cols); else for (const p of m.parts) mcols.push(p.c); }
+      const mcols = []; for (const m of lv.movers) mcols.push(...moverCols(m));
       for (let k = 0; k < K; k++) { updateMovers(lv, k * dt); this.applyAt(k, mcols, 1); }
       updateMovers(lv, 0);
     }
   }
   apply(cols, sign) { for (let k = 0; k < this.K; k++) this.applyAt(k, cols, sign); }
+  applyMover(m, sign) { const cols = moverCols(m); for (let k = 0; k < this.K; k++) { moverUpdate(m, k * SOLVE_DT); this.applyAt(k, cols, sign); } moverUpdate(m, 0); }
   applyAt(k, cols, sign) {
     const NU = this.NU, twin = this.twin, ci = this.crys[k];
     const doZ = this.valid[k] === 1;
@@ -625,6 +792,7 @@ class Oracle {
     if (!this.valid[k]) return 0;
     const b = (k * this.NU + j) * 3; let e = 0;
     if (this.twin) { for (let q = 0; q < 3; q++) e += ((this.c1[b + q] === 0 ? 1 : 0) + (this.c2[b + q] === 0 ? 1 : 0)) * 0.5; }
+    else if (this.mirr) for (let q = 0; q < 3; q++) e += this.c1[b + q] === 0 || this.mirr[b + q] ? 1 : 0;
     else for (let q = 0; q < 3; q++) e += this.c1[b + q] === 0 ? 1 : 0;
     return e / 3;
   }
@@ -642,7 +810,7 @@ class Oracle {
         for (let q = 0; q < order.length; q++) { const i = j + order[q]; if (i >= 0 && i < NU && best[i] > bm + 1e-6) { bm = best[i]; bo = order[q]; } }
         if (bm <= 0 || (needC && !this.crysLit(k, j))) { nb[j] = -1; continue; }
         const f = this.expo(k, j);
-        const m = f > 0 ? bm - burn * f * dt : Math.min(1, bm + regen * dt);
+        const m = f > 0 ? bm - burn * this.fk[k] * f * dt : Math.min(1, bm + regen * dt);
         nb[j] = m > 0 ? m : -1; choice[k * NU + j] = bo;
         if (m > 0) alive = true;
       }
@@ -658,7 +826,7 @@ class Oracle {
     for (let k = K - 1; k >= 1; k--) { js[k] = j; traj[k] = j / (NU - 1); exposure += this.expo(k, j) * dt; j += choice[k * NU + j]; }
     js[0] = j; traj[0] = j / (NU - 1);
     let m = 1, minMeter = 1, minK = 0;
-    for (let k = 1; k < K; k++) { const f = this.expo(k, js[k]); m = f > 0 ? m - burn * f * dt : Math.min(1, m + regen * dt); if (m < minMeter) { minMeter = m; minK = k; } }
+    for (let k = 1; k < K; k++) { const f = this.expo(k, js[k]); m = f > 0 ? m - burn * this.fk[k] * f * dt : Math.min(1, m + regen * dt); if (m < minMeter) { minMeter = m; minK = k; } }
     return { ok: true, traj, K, dt, exposure, minMeter, minK, bestU: traj[minK] };
   }
 }
@@ -679,7 +847,7 @@ function placeDrops(lv, rng) {
       if (lv.hasMovers) updateMovers(lv, t);
       sunDirs(sol.traj[k], lv.sun, L1, L2);
       if (lv.sun.twin) litT += ((occluded(lv.cols, PA.x, 0.3, PA.z, L1, -1) ? 0 : 1) + (occluded(lv.cols, PA.x, 0.3, PA.z, L2, -1) ? 0 : 1)) * 0.5 * sol.dt;
-      else if (!occluded(lv.cols, PA.x, 0.3, PA.z, L1, -1)) litT += sol.dt;
+      else if (!occluded(lv.cols, PA.x, 0.3, PA.z, L1, -1) || (lv.mirrors && lv.mirrors.length && mirrorsLit(lv.mirrors, PA.x, 0.3, PA.z, L1))) litT += sol.dt;
     }
     return litT;
   };
@@ -701,7 +869,7 @@ function placeDrops(lv, rng) {
 // tohumdan ada: çözülemezse yeni deneme. Hikâye adaları deterministik olduğundan
 // geçerli deneme numaraları önceden bilinir (farklı JS motorlarında kayarsa
 // döngü kendiliğinden devam eder — yalnızca hızlandırmadır).
-const ATTEMPT_HINT = [0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 5, 7, 1, 59, 3, 0, 51];
+const ATTEMPT_HINT = [0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 5, 7, 1, 59, 3, 0, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 1, 0, 0, 4];
 function buildLevel(spec) {
   const easy = Object.assign({}, spec, { spacing: Math.min(spec.spacing, 2.2), prune: 0, margin: 0.3, pergolaRate: 1.0 });
   const order = [];

@@ -11,7 +11,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, 'src')
 BUILD = os.path.join(ROOT, '.build')
 PARTS = ['10_boot.js', '20_audio.js', '30_world.js', '40_gen.js', '50_render.js', '60_env.js',
-         '70_island.js', '80_actors.js', '90_game.js', '92_tutorial.js', '95_main.js']
+         '70_island.js', '80_actors.js', '85_action.js', '90_game.js', '92_tutorial.js', '95_main.js']
 
 os.makedirs(BUILD, exist_ok=True)
 if not os.path.isdir(os.path.join(BUILD, 'node_modules', 'three')):

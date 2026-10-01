@@ -84,7 +84,7 @@ function setShadowSize(n) {
 /* ---------- gökyüzü ---------- */
 const SKY_VERT = `varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }`;
 const SKY_FRAG = `
-uniform vec3 uZen, uHor, uBelow, uSunDir, uSunCol, uSun2Dir, uSun2Col; uniform float uTwin, uStars, uTime, uEclipse, uNight; varying vec3 vDir;
+uniform vec3 uZen, uHor, uBelow, uSunDir, uSunCol, uSun2Dir, uSun2Col; uniform float uTwin, uStars, uTime, uEclipse, uNight, uAurora; varying vec3 vDir;
 float h13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
 void main(){
   vec3 d = normalize(vDir); float h = d.y;
@@ -103,11 +103,24 @@ void main(){
     if (r > 0.972){ vec3 f = fract(sp) - 0.5; float s = (1.0 - smoothstep(0.0, 0.16, length(f))) * (0.55 + 0.45 * sin(uTime * (1.5 + r * 3.0) + r * 60.0)); col += vec3(0.9, 0.92, 1.0) * s * st * 1.6 * smoothstep(-0.1, 0.25, h); }
     float neb = sin(d.x * 3.0 + d.z * 2.0) * sin(d.y * 4.0 - d.x * 1.5); col += vec3(0.22, 0.12, 0.35) * max(neb, 0.0) * 0.18 * st;
   }
+  // kutup ışıkları: dikey ışınlı, dalgalanan perdeler
+  if (uAurora > 0.001 && h > 0.0){
+    float az = atan(d.z, d.x), band = 0.0;
+    for (int i = 0; i < 3; i++){
+      float fi = float(i);
+      float hc = 0.1 + fi * 0.075 + sin(az * (2.0 + fi) + uTime * (0.05 + fi * 0.02) + fi * 1.7) * 0.05 + sin(az * (7.0 + fi * 3.0) - uTime * 0.09) * 0.018;
+      float rays = 0.55 + 0.45 * sin(az * (120.0 + fi * 37.0) + sin(az * 11.0 + uTime * 0.35 + fi) * 4.0);
+      float up = smoothstep(hc - 0.012, hc + 0.004, h) * exp(-max(h - hc, 0.0) * (9.0 - fi * 2.0));
+      band += up * rays * (0.55 + 0.45 * sin(az * 1.6 + fi * 2.1 + uTime * 0.03));
+    }
+    vec3 ac = mix(vec3(0.15, 1.0, 0.6), vec3(0.75, 0.35, 1.0), smoothstep(0.12, 0.4, h));
+    col += ac * band * uAurora * 0.32;
+  }
   gl_FragColor = vec4(col, 1.0);
 }`;
 const skyU = {
   uZen: { value: new THREE.Color() }, uHor: { value: new THREE.Color() }, uBelow: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color() },
-  uSun2Dir: { value: new THREE.Vector3(0, 1, 0) }, uSun2Col: { value: new THREE.Color(SUN2_COLOR) }, uTwin: { value: 0 }, uStars: { value: 0 }, uTime: U.uTime, uEclipse: { value: 0 }, uNight: { value: 0 },
+  uSun2Dir: { value: new THREE.Vector3(0, 1, 0) }, uSun2Col: { value: new THREE.Color(SUN2_COLOR) }, uTwin: { value: 0 }, uStars: { value: 0 }, uTime: U.uTime, uEclipse: { value: 0 }, uNight: { value: 0 }, uAurora: { value: 0 },
 };
 const skyMat = new THREE.ShaderMaterial({ vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, uniforms: skyU, side: THREE.BackSide, depthWrite: false, depthTest: true });
 const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 48, 24), skyMat); sky.renderOrder = -10; sky.frustumCulled = false;

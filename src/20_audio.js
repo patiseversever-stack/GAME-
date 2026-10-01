@@ -13,6 +13,12 @@ const MUSIC = [
   { root: 53, scale: [0, 2, 4, 6, 7, 9, 11], chords: [[41, 48, 53, 57, 64], [43, 50, 55, 59, 62], [45, 52, 57, 60, 64], [41, 48, 55, 59, 64]], tempo: 0.5, bright: 1.25 },
   // İkiz Güneş: tam ton, gizemli
   { root: 48, scale: [0, 2, 4, 6, 8, 10], chords: [[36, 48, 52, 56, 62], [38, 50, 54, 58, 64], [40, 52, 56, 60, 66], [34, 46, 50, 54, 60]], tempo: 0.66, bright: 0.85 },
+  // Buz Diyarı: E minör eklemeli, cam gibi
+  { root: 52, scale: [0, 2, 3, 7, 9, 14], chords: [[40, 52, 59, 66, 71], [36, 48, 55, 62, 67], [43, 55, 62, 66, 71], [38, 50, 57, 64, 69]], tempo: 0.42, bright: 1.35, ice: true },
+  // Ayna Sarayı: Hüseyni esintisi (A dorian)
+  { root: 57, scale: [0, 2, 3, 5, 7, 9, 10], chords: [[45, 52, 57, 60, 64], [43, 50, 55, 59, 62], [41, 48, 53, 57, 60], [40, 47, 52, 56, 59]], tempo: 0.6, bright: 1.05 },
+  // Gök Saati: C lidyen, mekanik nabız
+  { root: 48, scale: [0, 2, 4, 6, 7, 11], chords: [[36, 43, 52, 55, 59], [38, 45, 54, 57, 62], [33, 40, 48, 52, 55], [31, 38, 50, 54, 57]], tempo: 0.8, bright: 0.95, clock: true },
 ];
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -204,6 +210,13 @@ class AudioEngine {
     else this.osc('sine', 600, t, 0.25, 0.04, null, { f1: 300 });
   }
   closeCall() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.35, 0.08, { type: 'highpass', f: 1200, f1: 9000, a: 0.3 }); this.bell(1760, t + 0.3, 1.2, 0.07, { ratio: 2.0, index: 1.4, verb: 0.9 }); }
+  iceCrack() { if (!this.ok) return; const t = this.t; for (let i = 0; i < 4; i++) this.noiseHit(t + i * 0.035 + Math.random() * 0.02, 0.05, 0.05, { type: 'highpass', f: 2500 + Math.random() * 3000, q: 2 }); this.osc('sine', 90, t, 0.3, 0.08, null, { f1: 50 }); this.bell(2637, t + 0.05, 1.4, 0.025, { ratio: 3.01, index: 0.9, verb: 0.9 }); }
+  tock(hi) { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.05, 0.06, { f: hi ? 2200 : 1600, q: 9 }); this.osc('sine', hi ? 1040 : 780, t, 0.08, 0.04, null, { f1: hi ? 980 : 720 }); this.osc('sine', 140, t, 0.12, 0.05, null, { f1: 80 }); }
+  flareWarn() { if (!this.ok) return; const t = this.t; this.osc('sawtooth', 110, t, 1.25, 0.035, null, { f1: 440, a: 0.9, verb: 0.4 }); this.noiseHit(t, 1.25, 0.06, { type: 'bandpass', f: 300, f1: 3000, q: 1.5, a: 1.0, verb: 0.4 }); }
+  flareBurst() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 1.6, 0.18, { type: 'lowpass', f: 3500, f1: 400, a: 0.02, verb: 0.6 }); this.osc('sine', 70, t, 1.2, 0.22, null, { f1: 40 }); this.bell(880, t, 1.8, 0.05, { ratio: 1.41, index: 3, verb: 0.8 }); }
+  sprite(n = 0) { if (!this.ok) return; const t = this.t, sc = MUSIC[this.chapter].scale, r = MUSIC[this.chapter].root + 24; for (let i = 0; i < 4; i++) this.bell(mtof(r + sc[(i * 2 + n) % sc.length] + 12 * Math.floor((i * 2 + n) / sc.length)), t + i * 0.07, 1.1, 0.05, { ratio: 2, index: 1.2, verb: 0.8, dly: 0.4 }); this.noiseHit(t, 0.6, 0.05, { type: 'highpass', f: 4000, f1: 9000, a: 0.2, verb: 0.6 }); }
+  dash() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.4, 0.14, { type: 'bandpass', f: 300, f1: 3200, q: 1.4, a: 0.05, verb: 0.3 }); this.osc('sine', 220, t, 0.3, 0.08, null, { f1: 660 }); }
+  streak(n) { if (!this.ok) return; const t = this.t, sc = MUSIC[this.chapter].scale, r = MUSIC[this.chapter].root + 12; for (let i = 0; i <= Math.min(n, 5); i++) this.bell(mtof(r + sc[i % sc.length] + 12 * Math.floor(i / sc.length) + 12), t + i * 0.06, 0.9, 0.045, { ratio: 2, index: 1.0, verb: 0.6 }); }
   stoneRise() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.25, 0.05, { type: 'lowpass', f: 400 }); }
 
   /* --- müzik & ambiyans planlayıcı --- */
@@ -230,6 +243,9 @@ class AudioEngine {
       const dens = 1 + this.intensity * 1.5;
       this.nextArp = start + (0.5 + Math.random() * 1.1) * (1 / m.tempo) * 0.6 / dens;
     }
+    // dünya ambiyansı
+    if (m.clock && t > (this.nextClock || 0)) { this.nextClock = Math.max(t, this.nextClock || 0) + 1.0; const hi = (this.clockN = (this.clockN || 0) + 1) % 2; this.noiseHit(this.nextClock, 0.03, 0.022, { f: hi ? 3000 : 2200, q: 10, dest: this.amb }); }
+    if (m.ice && Math.random() < dt * 0.25) this.bell(mtof(m.root + 36 + m.scale[Math.floor(Math.random() * m.scale.length)]), t + 0.05, 2.4, 0.012, { ratio: 3.5, index: 0.6, dest: this.amb, verb: 0.9 });
     // kuşlar
     if (this.birdsOn && t > this.nextBird) {
       this.nextBird = t + 4 + Math.random() * 8;

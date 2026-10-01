@@ -138,6 +138,8 @@ function applyLighting(dt) {
   skyU.uSunDir.value.copy(L1); skyU.uSunCol.value.copy(scA.sun);
   skyU.uTwin.value = lv.sun.twin ? 1 : 0; skyU.uSun2Dir.value.copy(L2);
   skyU.uStars.value = Math.max(night, ecl * 0.85); skyU.uEclipse.value = ecl; skyU.uNight.value = night;
+  const aur = (lv.chap.key === 'buz' ? 0.45 + night * 0.55 : 0) + (G.state === 'ending' ? night * 0.9 : 0);
+  skyU.uAurora.value = damp(skyU.uAurora.value, Math.max(aur, ecl * (lv.chap.key === 'buz' ? 1 : 0)), 2, dt);
   const nE = Math.max(night, ecl * 0.8);
   seaU.uLit.value.copy(scA.below).multiplyScalar(1.12).lerp(NIGHT.sea, nE * 0.6); seaU.uDeep.value.copy(scA.deep).lerp(NIGHT.sea, nE);
   U.uFogCol.value.copy(skyU.uHor.value); U.uBelowCol.value.copy(skyU.uBelow.value);
@@ -146,6 +148,7 @@ function applyLighting(dt) {
   sunLight.color.copy(scA.sun);
   const LK = lv.chap.light || { sun: 1, hemi: 1 };
   sunLight.intensity = 3.9 * LK.sun * lerp(0.7, 1, smoothstep(0.05, 0.5, Math.sin(e))) * (1 - ecl * 0.94);
+  sunLight.intensity *= 1 + flare.k * 0.5;
   if (lv.sun.twin) { sunLight2.position.copy(L2).multiplyScalar(60); sunLight2.target.position.set(0, 0, 0); sunLight2.intensity = 2.0 * (1 - ecl * 0.94); sunLight.intensity *= 0.8; }
   hemi.color.copy(scA.hemiS).lerp(_cc.set('#3a4a9a'), ecl * 0.7); hemi.groundColor.copy(scA.hemiG).lerp(_cc.set('#1a1830'), ecl * 0.7);
   hemi.intensity = lerp(0.62, 0.85, k) * LK.hemi * (1 - ecl * 0.55);
@@ -153,7 +156,7 @@ function applyLighting(dt) {
   orbPosInto(G.u, lv.sun.tilt, lv.sun.thMin, orb.g.position);
   orb.u.uCol.value.copy(scA.sun).lerp(_cc.set('#fff4dc'), 0.4);
   orb.halo.material.color.copy(scA.sun).multiplyScalar(2.2 * (1 - ecl * 0.9) * (1 - night));
-  orb.rays.material.color.copy(scA.sun).multiplyScalar(1.5 * (1 - ecl) * (1 - night)); orb.rays.material.rotation += dt * 0.05;
+  orb.rays.material.color.copy(scA.sun).multiplyScalar((1.5 + flare.k * 2.5 + flare.warnK * (0.8 + Math.sin(U.uTime.value * 18) * 0.8)) * (1 - ecl) * (1 - night)); orb.rays.material.rotation += dt * (0.05 + flare.k * 0.8);
   orb.u.uEclipse.value = Math.max(ecl * 0.97, night);
   orb.moon.visible = ecl > 0.01; orb.moon.position.set((1 - ecl) * 1.3, (1 - ecl) * 0.4, 0.2); orb.moon.quaternion.copy(camera.quaternion);
   orb.corona.material.opacity = ecl * 0.95; orb.corona.material.rotation -= dt * 0.1; orb.corona.scale.setScalar(6 + Math.sin(U.uTime.value * 3) * 0.3);
@@ -196,6 +199,7 @@ function resetRun() {
   for (const c of lv.crystals) { c.lit = false; c.glow = 0; }
   updateMovers(lv, 0);
   drops.build(lv.drops);
+  wisps.reset(lv); flare.reset(); act.reset();
   clearPrints(); fxAdd.clear(); fxMix.clear();
   zifir.reset();
   pathAt(lv.path, 0, PA); zifir.g.position.set(PA.x, 0, PA.z); zifir.yaw = Math.atan2(PA.tx, PA.tz);
@@ -260,6 +264,13 @@ function startPlay() {
   if (lv.spec.features.windmills && lv.movers.some((m) => m.kind === 'sails')) setTimeout(() => { if (G.state === 'play') tip('t-mill', 'Değirmen kanatları gölgeyi <em>böler</em>.', 3.5); }, 5000);
   if (lv.spec.features.balloons) tip('t-balloon', 'Balonlar yüksekte: <em>alçak güneş</em> gölgelerini uzağa savurur.', 4.2);
   if (lv.bridges.length) tip('t-bridge', 'Köprü yalnızca <em>kristal ışıktayken</em> belirir. Zifir bekler — ama gölgede tut!', 4.6);
+  if (lv.spec.dash && g >= 2) setTimeout(() => { if (G.state === 'play') tip('t-dash', '<em>Sıçra</em>: Zifir ileri atılır, ışıkta daha az yanar. Sol alttaki düğme ya da ↑', 4.4); }, 1800);
+  if (lv.sprites && lv.sprites.length) setTimeout(() => { if (G.state === 'play') tip('t-wisp', '<em>Işık perileri</em> Zifir’e süzülür: gölgedeyken ya da <em>sıçrarken</em> yut, ışıkta yakar!', 4.6); }, Math.max(0, (lv.sprites[0].t - 1.2) * 1000));
+  if (lv.flares) setTimeout(() => { if (G.state === 'play') tip('t-flare', '<em>Güneş patlaması</em>: uyarı çubuğu dolunca ışık iki kat yakar. Önceden gölgeye gir!', 4.4); }, Math.max(0, (lv.flares[0].w - 0.3) * 1000));
+  if (lv.movers.some((m) => m.kind === 'melt')) tip('t-melt', '<em>Buz sütunları</em> güneşte erir — gölgeleri giderek kısalır.', 4.2);
+  if (lv.mirrors && lv.mirrors.length) tip('t-mirror', '<em>Aynalar</em> güneşi yansıtır: yansıyan ışık gölge tanımaz. Huzmeyi Zifir’den uzak tut!', 4.8);
+  if (lv.movers.some((m) => m.kind === 'orbit')) tip('t-gear', 'Dev <em>dişliler</em> döner: üstündeki kulelerin gölgesi saat gibi geri gelir.', 4.4);
+  if (lv.movers.some((m) => m.kind === 'pendulum')) setTimeout(() => { if (G.state === 'play') tip('t-pend', '<em>Sarkaç</em> yol boyunca salınır — gölgesiyle aynı ritimde yürü.', 4.2); }, 3000);
   if (lv.sun.twin) tip('t-twin', 'İki güneş: <em>renkli gölge</em> yarı korur. Gerçek karanlık ikisinin kesişimi.', 4.6);
 }
 function retry(fromComplete = false) {
@@ -306,7 +317,7 @@ function reachGate() {
   const lv = G.lv;
   G.stars = [true, G.dropsGot >= lv.drops.length, G.expTotal <= lv.flawless + 1e-6];
   if (G.mode === 'endless') {
-    const e = G.endless, add = 100 + G.dropsGot * 25 + (G.stars[2] ? 60 : 0);
+    const e = G.endless, add = 100 + G.dropsGot * 25 + (G.stars[2] ? 60 : 0) + act.best * 15 + act.eaten * 20;
     e.score += add; e.n++; updateHud(true);
     setTimeout(() => banner('+' + add, G.stars[2] ? 'Lekesiz' : `Ada ${e.n}`), 700);
   }
@@ -334,6 +345,8 @@ function showComplete() {
   $('#st0').textContent = 'Kapıya ulaştı';
   $('#st1').textContent = lv.drops.length ? `Damlalar ${G.dropsGot}/${lv.drops.length}` : 'Damlalar';
   $('#st2').innerHTML = `Lekesiz<br>güneşte ${G.expTotal.toFixed(1)} / ${lv.flawless.toFixed(1)} sn`;
+  const extra = []; if (act.best > 0) extra.push(`gölge serisi ×${act.best + 1}`); if (act.eaten > 0) extra.push(`${act.eaten} peri yutuldu`);
+  $('#cSub').textContent = lv.chap.name + (extra.length ? ' · ' + extra.join(' · ') : '');
   $$('.star').forEach((el) => el.classList.remove('lit', 'shown'));
   const last = sp.g === STORY_LEVELS - 1;
   $('#btnNext').textContent = G.mode === 'daily' ? 'Gökyüzü' : last ? 'Final' : res.chapterDone ? 'Yeni takımyıldızı' : 'Sonraki Ada';

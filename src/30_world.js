@@ -75,11 +75,54 @@ const CHAPTERS = [
       grade: { lift: [0.03, 0.01, 0.06], gamma: [1, 1, 1], gain: [1.0, 0.99, 1.03], sat: 1.08, contrast: 1.05 },
     },
   },
+  {
+    key: 'buz', name: 'Buz Diyarı', roman: 'VI', constellation: 'Kutup Yıldızı',
+    sub: 'Kutup ışıkları altında eriyen buz sütunları.', hint: 'Buz güneşte erir — gölgesi kısalmadan kullan.',
+    tilt: 50, thMin: 13, features: { melt: true }, light: { sun: 0.82, hemi: 0.95 },
+    pal: {
+      skyLowZ: '#1b2a5a', skyLowH: '#ff9fbe', skyHighZ: '#2f63b0', skyHighH: '#cdeaff',
+      belowLow: '#e2d4ec', belowHigh: '#e6f2fb', seaDeep: '#8aa6c8', sunLow: '#ffb08a', sunHigh: '#f2f8ff',
+      hemiSky: '#a8c8ff', hemiGround: '#d8e6f4',
+      ground: '#eef4fa', groundVar: ['#e2ecf6', '#f8fbff', '#d6e3f0', '#e8f0f8'], path: '#bcd2e6', pathEdge: '#7f9cb8', pathStone: '#dcebf8',
+      cliffTop: '#f6f9fd', soil: '#b6cbe0', bands: ['#bcd8ee', '#9cc4e4', '#d4e8f6', '#86b0d6', '#c4dcf0'], rockDark: '#3e4f6e',
+      grass: ['#e8f2fc', '#ffffff', '#cfe4f6', '#bfe0ff'], flowers: ['#ffffff', '#bfe6ff', '#e0d4ff', '#ffffff'],
+      grade: { lift: [0.01, 0.02, 0.05], gamma: [1, 1, 1], gain: [0.98, 1.0, 1.03], sat: 1.04, contrast: 1.06 },
+    },
+  },
+  {
+    key: 'ayna', name: 'Ayna Sarayı', roman: 'VII', constellation: 'Lale',
+    sub: 'Çini avlular, altın çerçeveli aynalar.', hint: 'Yansıyan ışık gölge tanımaz — ışını Zifir’den uzak tut.',
+    tilt: 36, thMin: 17, features: { mirrors: true },
+    pal: {
+      skyLowZ: '#26245e', skyLowH: '#ffaa7a', skyHighZ: '#2a64c4', skyHighH: '#d4eeff',
+      belowLow: '#f0cdb8', belowHigh: '#e4effa', seaDeep: '#8e8cbc', sunLow: '#ffa25c', sunHigh: '#fff3dc',
+      hemiSky: '#9ab8ff', hemiGround: '#e8c8a0',
+      ground: '#efe2c8', groundVar: ['#e6d6b6', '#f6ecd6', '#dccaa8', '#f2e4c6'], path: '#f8f0dc', pathEdge: '#2a6fb8', pathStone: '#ffffff',
+      cliffTop: '#2a8a96', soil: '#c08a62', bands: ['#e2c29a', '#2f7fae', '#f0d6b0', '#c94e3e', '#e8cfa6'], rockDark: '#3a2a3e',
+      grass: ['#7aa04a', '#8cb456', '#6a9040', '#a2c060'], flowers: ['#d63a3a', '#2a6fd0', '#ffffff', '#f2c040'],
+      grade: { lift: [0.02, 0.01, 0.03], gamma: [1, 1, 1], gain: [1.02, 1.0, 0.99], sat: 1.1, contrast: 1.05 },
+    },
+  },
+  {
+    key: 'saat', name: 'Gök Saati', roman: 'VIII', constellation: 'Sarkaç',
+    sub: 'Dişliler döner, sarkaç gölgeyi biçer.', hint: 'Dönen gölgeler saat gibi geri gelir — zamanla.',
+    tilt: 32, thMin: 15, features: { gears: true, pendulum: true }, light: { sun: 0.95, hemi: 0.9 },
+    pal: {
+      skyLowZ: '#1a2846', skyLowH: '#ff9458', skyHighZ: '#26527e', skyHighH: '#bfe0e6',
+      belowLow: '#d8b8a0', belowHigh: '#cfe0e2', seaDeep: '#5a6a7e', sunLow: '#ff9a52', sunHigh: '#fff0d4',
+      hemiSky: '#8ab4d0', hemiGround: '#b08a5a',
+      ground: '#7c6c54', groundVar: ['#6e5f4a', '#88785e', '#64573f', '#92825f'], path: '#e2c88e', pathEdge: '#4e3c28', pathStone: '#f0d89e',
+      cliffTop: '#b08a4a', soil: '#5a4a3a', bands: ['#8a5a3a', '#4f7a72', '#a06a42', '#3f665e', '#94643e'], rockDark: '#24242a',
+      grass: ['#c8a050', '#4f8a80', '#b08a40', '#5a9a8e'], flowers: ['#ffd27a', '#7affea', '#ffb347', '#ffffff'],
+      grade: { lift: [0.02, 0.015, 0.02], gamma: [1, 1, 1], gain: [1.03, 1.0, 0.96], sat: 1.06, contrast: 1.07 },
+    },
+  },
 ];
 const SUN2_COLOR = '#9fd8ff';
 const SKINS = [
   { name: 'Mürekkep', c: '#7a6cff' }, { name: 'Ege Mavisi', c: '#3d8bff' }, { name: 'Rüzgâr', c: '#6fffd2' },
   { name: 'Kor', c: '#ff7a3d' }, { name: 'Gül', c: '#ff6fb1' }, { name: 'Altın', c: '#ffd36b' },
+  { name: 'Kutup', c: '#9ff0ff' }, { name: 'Lale', c: '#ff4f6a' }, { name: 'Pirinç', c: '#ffb347' },
 ];
 
 /* ---------- güneş geometrisi ---------- */
@@ -195,27 +238,68 @@ function moverPose(m, t, o) {
   return o;
 }
 const _mp = { x: 0, y: 0, z: 0 };
-function updateMovers(level, t) {
-  for (const m of level.movers) {
-    if (m.kind === 'sails') {
-      const ang = m.a0 + m.w * t;
-      // kanat düzlemi: normal n (yatay), yukarı u, yan s
-      for (let i = 0; i < m.cols.length; i++) {
-        const a = ang + (i * TAU) / m.cols.length, ca = Math.cos(a), sa = Math.sin(a);
-        const bx = m.sx * sa, by = ca, bz = m.sz * sa; // kanat yönü (yan*sin + yukarı*cos)
-        const c = m.cols[i], off = m.len * 0.5 + 0.22;
-        c.x = m.hx + bx * off; c.y = m.hy + by * off; c.z = m.hz + bz * off;
-        c.ax = bx; c.ay = by; c.az = bz; // uzunluk ekseni
-        c.cx = m.nx; c.cy_ = 0; c.cz = m.nz; // kalınlık ekseni (normal)
-        c.bx_ = c.ay * c.cz - c.az * c.cy_; c.by_ = c.az * c.cx - c.ax * c.cz; c.bz_ = c.ax * c.cy_ - c.ay * c.cx; // genişlik
-        c.bx = c.x; c.by = c.y; c.bz = c.z;
-      }
-    } else {
-      moverPose(m, t, _mp);
-      for (const p of m.parts) { const c = p.c; c.x = _mp.x + p.dx; c.y = _mp.y + p.dy; c.z = _mp.z + p.dz; c.bx = c.x; c.by = c.y; c.bz = c.z; }
+const moverCols = (m) => m.cols || m.parts.map((p) => p.c);
+function refreshFrustum(c) { c.B = (c.r1 - c.r0) / Math.max(1e-6, c.y1 - c.y0); c.A = c.r0 - c.B * c.y0; c.bx = c.x; c.bz = c.z; c.by = (c.y0 + c.y1) / 2; c.br = Math.hypot(Math.max(c.r0, c.r1), (c.y1 - c.y0) / 2) + 0.01; }
+function moverUpdate(m, t) {
+  if (m.kind === 'sails') {
+    const ang = m.a0 + m.w * t;
+    // kanat düzlemi: normal n (yatay), yukarı u, yan s
+    for (let i = 0; i < m.cols.length; i++) {
+      const a = ang + (i * TAU) / m.cols.length, ca = Math.cos(a), sn = Math.sin(a);
+      const bx = m.sx * sn, by = ca, bz = m.sz * sn; // kanat yönü (yan*sin + yukarı*cos)
+      const c = m.cols[i], off = m.len * 0.5 + 0.22;
+      c.x = m.hx + bx * off; c.y = m.hy + by * off; c.z = m.hz + bz * off;
+      c.ax = bx; c.ay = by; c.az = bz; // uzunluk ekseni
+      c.cx = m.nx; c.cy_ = 0; c.cz = m.nz; // kalınlık ekseni (normal)
+      c.bx_ = c.ay * c.cz - c.az * c.cy_; c.by_ = c.az * c.cx - c.ax * c.cz; c.bz_ = c.ax * c.cy_ - c.ay * c.cx; // genişlik
+      c.bx = c.x; c.by = c.y; c.bz = c.z;
     }
+  } else if (m.kind === 'melt') {
+    // buz: zamanla erir, gölgesi kısalır
+    const f = 1 - m.drop * smoothstep(m.t0, m.t1, t); m.f = f;
+    for (let i = 0; i < m.cols.length; i++) { const c = m.cols[i], b = m.base[i]; c.y0 = b.y0 * f; c.y1 = b.y1 * f; c.r0 = b.r0 * (0.75 + 0.25 * f); c.r1 = b.r1 * (0.75 + 0.25 * f); refreshFrustum(c); }
+  } else if (m.kind === 'orbit') {
+    // dişli platform: üstündeki kuleler merkez etrafında döner
+    const a = m.a0 + m.w * t; m.ang = a;
+    for (const it of m.items) { const ph = it.phi + a; const c = it.c; c.x = m.cx + Math.cos(ph) * it.rho; c.z = m.cz + Math.sin(ph) * it.rho; c.bx = c.x; c.bz = c.z; }
+  } else if (m.kind === 'pendulum') {
+    const ang = m.amp * Math.sin(m.w * t + m.ph); m.ang = ang;
+    const c = m.cols[0];
+    c.x = m.px + Math.sin(ang) * m.L * m.dx; c.z = m.pz + Math.sin(ang) * m.L * m.dz; c.y = m.py - Math.cos(ang) * m.L;
+    c.bx = c.x; c.by = c.y; c.bz = c.z;
+  } else {
+    moverPose(m, t, _mp);
+    for (const p of m.parts) { const c = p.c; c.x = _mp.x + p.dx; c.y = _mp.y + p.dy; c.z = _mp.z + p.dz; c.bx = c.x; c.by = c.y; c.bz = c.z; }
   }
 }
+function updateMovers(level, t) { for (const m of level.movers) moverUpdate(m, t); }
+
+/* ---------- aynalar: yansıyan ışık gölge tanımaz ----------
+   Nokta P, aynanın yansıttığı ışığı alıyorsa P'den "sanal güneş" yönünde
+   giden ışın ayna dikdörtgenine çarpar. */
+function mirrorVDir(mr, L, o) {
+  const dn = L.x * mr.nx + L.y * mr.ny + L.z * mr.nz;
+  if (dn <= 0.03) return null;
+  o.x = L.x - 2 * dn * mr.nx; o.y = L.y - 2 * dn * mr.ny; o.z = L.z - 2 * dn * mr.nz;
+  return o;
+}
+function mirrorHit(mr, d, x, y, z) {
+  const px = x - mr.x, py = y - mr.y, pz = z - mr.z, pn = px * mr.nx + py * mr.ny + pz * mr.nz;
+  if (pn <= 0) return false;
+  const dn = d.x * mr.nx + d.y * mr.ny + d.z * mr.nz; if (dn >= -1e-4) return false;
+  const t = -pn / dn;
+  const hx = px + d.x * t, hy = py + d.y * t, hz = pz + d.z * t;
+  return Math.abs(hx * mr.ux + hy * mr.uy + hz * mr.uz) <= mr.hh && Math.abs(hx * mr.vx + hy * mr.vy + hz * mr.vz) <= mr.hw;
+}
+const _vd = { x: 0, y: 0, z: 0 };
+function mirrorsLit(mirrors, x, y, z, L) {
+  for (const mr of mirrors) { const d = mirrorVDir(mr, L, _vd); if (d && mirrorHit(mr, d, x, y, z)) return true; }
+  return false;
+}
+// güneş patlaması: [uyarı, etkin, bitiş] pencereleri
+const FLARE_MUL = 2.1;
+function flareMul(lv, t) { if (!lv.flares) return 1; for (const f of lv.flares) if (t >= f.a && t <= f.e) return FLARE_MUL; return 1; }
+function flarePhase(lv, t) { if (!lv.flares) return 0; for (const f of lv.flares) { if (t >= f.w && t < f.a) return 1; if (t >= f.a && t <= f.e) return 2; } return 0; }
 
 /* ---------- yol örnekleme ---------- */
 function pathAt(path, s, o) {
