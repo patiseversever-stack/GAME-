@@ -343,6 +343,7 @@ export class Choreo {
       this.fx.camera.play('punch');
       sc.stage?.lampFlash('gold', 0.4, 600);
       sc.stamp(ev.openKind === 'pairs' ? `${ev.count} ÇİFT AÇTI` : `${ev.points} İLE AÇTI`, ev.seat === 0 ? 'Masaya per indirebilirsin' : name, 'open', 1500);
+      setTimeout(() => sc.meldLens(ev.seat, { auto: true, mark: tiles }), 650);
     }
     await this.sleep(total * 0.8);
   }
@@ -370,6 +371,7 @@ export class Choreo {
     sc.retarget(true);
     sc.refreshChrome();
     sc.onRackChanged();
+    if (ev.seat !== 0) sc.meldLens(m.owner, { auto: true, mark: [ev.tile] });
     const tgt = sc.targetOf(ev.tile);
     if (tgt) sc.stage?.ping(tgt.x, tgt.y, { r: (sc.L.rack.tw || 40) * 1.1, color: 'rgb(150,230,190)', dur: 640, s0: 0.5, s1: 1.6, delay: total * 0.6 });
     await this.sleep(total * 0.7);

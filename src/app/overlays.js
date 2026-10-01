@@ -4,17 +4,19 @@ import { createTileEl } from '../ui/tile-dom.js';
 import { avatarSVG } from '../ui/avatars.js';
 import { FINISH_LABEL } from '../game/scoring.js';
 import { COLORS, COLOR_TR } from '../game/tiles.js';
+import { Confetti } from '../ui/effects.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 export function sheet(host, { title, body = '', actions = [], cls = '', onClose, dismissable = true }) {
   const el = document.createElement('div');
   el.className = 'sheet-wrap ' + cls;
-  el.innerHTML = `<div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-    <header class="sheet__head"><h2>${title}</h2>${dismissable ? '<button class="icon-btn sheet__x" data-x aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : ''}</header>
+  el.innerHTML = `<div class="sheet-frame"><i class="stud stud--tl"></i><i class="stud stud--tr"></i><i class="stud stud--bl"></i><i class="stud stud--br"></i>
+  <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
+    <header class="sheet__head"><span class="sheet__orn"></span><h2>${title}</h2><span class="sheet__orn"></span>${dismissable ? '<button class="icon-btn sheet__x" data-x aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : ''}</header>
     <div class="sheet__body"></div>
     ${actions.length ? `<footer class="sheet__foot">${actions.map((a, i) => `<button class="btn ${a.primary ? 'btn--primary' : ''} btn--lg" data-i="${i}">${a.label}</button>`).join('')}</footer>` : ''}
-  </div>`;
+  </div></div>`;
   const bodyEl = el.querySelector('.sheet__body');
   if (typeof body === 'string') bodyEl.innerHTML = body;
   else bodyEl.appendChild(body);
@@ -62,13 +64,18 @@ export function resultScreen(host, o, history) {
   const won = r.winner === 0;
   const wrap = document.createElement('div');
   wrap.className = 'result';
+  const left = document.createElement('div');
+  left.className = 'result__left';
+  const right = document.createElement('div');
+  right.className = 'result__right';
   const hero = document.createElement('div');
   hero.className = 'result__hero' + (won ? ' is-win' : '');
   const finish = FINISH_LABEL[r.finish] || (r.reason === 'stock' ? 'Deste bitti' : r.reason === 'allPairs' ? 'Dört çift' : '');
+  const crown = '<svg class="result__crown" viewBox="0 0 48 32"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3c6"/><stop offset=".55" stop-color="#e8b648"/><stop offset="1" stop-color="#9a6a1c"/></linearGradient></defs><path d="M4 26 L8 8 L18 18 L24 4 L30 18 L40 8 L44 26 Z" fill="url(#cg)" stroke="#5a3a0c" stroke-width="1.5" stroke-linejoin="round"/><circle cx="8" cy="7" r="2.6" fill="#fff3c6"/><circle cx="24" cy="3.6" r="2.8" fill="#fff3c6"/><circle cx="40" cy="7" r="2.6" fill="#fff3c6"/><rect x="5" y="26" width="38" height="4" rx="2" fill="url(#cg)" stroke="#5a3a0c" stroke-width="1.2"/></svg>';
   hero.innerHTML = r.winner === null
     ? `<div class="result__stamp">BERABERE</div><p>${esc(finish)}</p>`
-    : `<div class="result__av">${avatarSVG(roster[r.winner].avatar)}</div><div><div class="result__stamp">${won ? 'KAZANDIN' : esc(name(r.winner)) + ' KAZANDI'}</div><p>${esc(finish)}${r.multiplier > 1 ? ` · ×${r.multiplier}` : ''}</p></div>`;
-  wrap.appendChild(hero);
+    : `<div class="result__avwrap">${crown}<div class="result__av">${avatarSVG(roster[r.winner].avatar)}</div></div><div class="result__who"><div class="result__stamp">${won ? 'KAZANDIN' : esc(name(r.winner)) + ' KAZANDI'}</div><p>${esc(finish)}${r.multiplier > 1 ? ` · ×${r.multiplier}` : ''}</p></div>`;
+  left.appendChild(hero);
   // kazanan el
   if (r.winner !== null) {
     const groups = r.winningGroups?.length ? r.winningGroups.map(idsOf) : [r.handsAtEnd[r.winner]];
@@ -76,11 +83,13 @@ export function resultScreen(host, o, history) {
     hand.className = 'result__hand';
     groups.forEach((gr, i) => {
       const row = tileRow(gr, ctx, 22);
-      row.style.animationDelay = i * 90 + 'ms';
+      row.style.animationDelay = 300 + i * 90 + 'ms';
       hand.appendChild(row);
     });
-    wrap.appendChild(hand);
+    left.appendChild(hand);
   }
+  wrap.appendChild(left);
+  wrap.appendChild(right);
   // puan tablosu: bu el değişimi + toplam, sıralı
   const table = document.createElement('div');
   table.className = 'result__table';
@@ -89,27 +98,39 @@ export function resultScreen(host, o, history) {
     const d = r.deltas[i];
     const row = document.createElement('div');
     row.className = 'result__row' + (i === 0 ? ' is-me' : '') + (i === r.winner ? ' is-winner' : '');
+    row.style.animationDelay = 160 + rank * 90 + 'ms';
+    row.dataset.rank = rank + 1;
     row.innerHTML = `<span class="result__rank">${rank + 1}</span><span class="result__pav">${avatarSVG(roster[i].avatar)}</span><span class="result__name">${esc(name(i))}</span>
       <span class="result__delta ${d > 0 ? 'up' : d < 0 ? 'down' : ''}">${d > 0 ? '+' : ''}${d}</span><b class="result__total num" data-to="${r.totals[i]}">${r.totals[i] - d}</b>`;
     table.appendChild(row);
   });
-  wrap.appendChild(table);
+  right.appendChild(table);
   const penalties = (r.penalties || []).filter((p) => p.points);
   if (penalties.length) {
     const p = document.createElement('p');
     p.className = 'result__note';
-    p.textContent = 'Cezalar: ' + penalties.map((x) => `${name(x.seat)} +${x.points} (${x.reason || 'ceza'})`).join(' · ');
-    wrap.appendChild(p);
+    p.textContent = 'Cezalar: ' + penalties.slice(0, 2).map((x) => `${name(x.seat)} +${x.points}`).join(' · ') + (penalties.length > 2 ? ` · +${penalties.length - 2} ceza daha` : '');
+    right.appendChild(p);
   }
   const hint = document.createElement('p');
   hint.className = 'result__note';
   hint.textContent = s.rules.mode === 'okey101' ? 'En düşük puan kazanır.' : 'En yüksek puan kazanır.';
-  wrap.appendChild(hint);
+  if (!penalties.length) right.appendChild(hint);
   const actions = [];
   if (!matchOver) actions.push({ label: 'Sonraki el', primary: true, run: o.onNext });
   actions.push({ label: 'Geçmiş', close: false, run: () => historySheet(host, o.controller, history) });
   actions.push({ label: matchOver ? 'Yeni oyun' : 'Menü', primary: matchOver, run: matchOver ? o.onAgain : o.onMenu });
   const sh = sheet(host, { title: matchOver ? 'Maç sonucu' : `El ${r.round} sonucu`, body: wrap, actions, cls: 'is-result', dismissable: false });
+  if (won) {
+    const cv = document.createElement('canvas');
+    cv.className = 'result__confetti';
+    sh.el.appendChild(cv);
+    const cf = new Confetti(cv);
+    const W = sh.el.clientWidth;
+    const H = sh.el.clientHeight;
+    [0, 260, 520].forEach((d, i) => setTimeout(() => cf.burst(W * (0.25 + i * 0.25), H * 0.75, 46), 350 + d));
+    setTimeout(() => cv.remove(), 6500);
+  }
   // toplamlar sayarak
   setTimeout(() => {
     sh.el.querySelectorAll('[data-to]').forEach((el) => {

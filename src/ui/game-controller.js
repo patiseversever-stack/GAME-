@@ -530,7 +530,11 @@ export class GameController {
 
   async intent(i) {
     if (i.type === 'history') return this.ui.discardHistory?.(this, i.seat), true;
-    if (i.type === 'inspectMeld') return true;
+    if (i.type === 'inspectMeld') {
+      const m = this.scene.disp?.melds.find((x) => x.id === i.meldId);
+      if (m) this.scene.meldLens(m.owner);
+      return true;
+    }
     if (!this.myTurn) return false;
     const g = this.game;
     const s = g.state;

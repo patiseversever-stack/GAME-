@@ -7,6 +7,7 @@ import { resultScreen, historySheet, sheet, settingsSheet } from './app/overlays
 import { createHome } from './app/home.js';
 const history = [];
 import { createCoach } from './app/coach.js';
+import { woodTexture } from './ui/wood.js';
 
 const q = new URLSearchParams(location.search);
 const app = document.getElementById('app');
@@ -16,6 +17,7 @@ for (const [k, s] of [['theme', 'theme'], ['rack', 'rack'], ['tiles', 'tiles'], 
 if (q.get('quality')) settings.set('quality', q.get('quality'));
 if (q.get('text')) settings.set('textScale', Number(q.get('text')));
 applyDocumentSettings(settings, app);
+document.documentElement.style.setProperty('--wood', woodTexture());
 const audio = q.get('mute') ? new NullAudio() : new AudioManager(settings);
 window.__okey = { settings, profile, audio };
 
@@ -60,12 +62,43 @@ ui.coach = createCoach(app, settings);
 window.__okey.ui = ui;
 settings.subscribe((k) => { if (k === 'textScale') setTimeout(() => ctl?.scene?.layout(true), 30); });
 let ctl = null;
+// Dikey tutulan telefonda: masa yatayda çok daha geniş; tek seferlik, kapatılabilir ipucu
+let rotateDismissed = false;
+function rotateHint() {
+  try {
+    if (!matchMedia('(pointer: coarse)').matches) return;
+    const mq = matchMedia('(orientation: portrait)');
+    let el = null;
+    const upd = () => {
+      if (mq.matches && !rotateDismissed && ctl) {
+        if (el) return;
+        el = document.createElement('button');
+        el.className = 'rot-hint';
+        el.innerHTML = '<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.2"/><path d="M3 12h2M19 12h2"/><path d="M20.5 8.5c.9 1 1.5 2.4 1.5 3.5"/></svg><span>Daha geniş masa için telefonu yatay çevir</span><i>×</i>';
+        el.onclick = () => {
+          rotateDismissed = true;
+          el.remove();
+          el = null;
+        };
+        app.appendChild(el);
+        setTimeout(() => el?.classList.add('is-out'), 9000);
+        setTimeout(() => el?.remove(), 9400);
+      } else if (el) {
+        el.remove();
+        el = null;
+      }
+    };
+    mq.addEventListener?.('change', upd);
+    setTimeout(upd, 1200);
+  } catch {}
+}
 async function start(mode, difficulty, seed) {
   app.querySelectorAll('.ov,.home').forEach((n) => n.remove());
   ctl = new GameController({ host: app, settings, profile, audio, ui, onExit: goHome });
   window.__okey.ctl = ctl;
   await ctl.newGame({ mode, difficulty, seed, rules: { matchType: 'single', rounds: 3 } });
   document.body.dataset.ready = '1';
+  rotateHint();
 }
 
 let homeView = null;
@@ -89,6 +122,7 @@ function home() {
       ctl = new GameController({ host: app, settings, profile, audio, ui, onExit: goHome });
       window.__okey.ctl = ctl;
       if (!(await ctl.resume())) goHome();
+      else rotateHint();
     },
   });
 }

@@ -1417,3 +1417,24 @@
 .floaty--warn { color: #ff7a66; }
 .floaty--good { color: #9be3b4; }
 @keyframes floaty { from { opacity: 0; transform: translate(-50%, -20%) scale(.5); } 18% { opacity: 1; transform: translate(-50%, -70%) scale(1.25); } 100% { opacity: 0; transform: translate(-50%, -260%) scale(1); } }
+
+/* ───────────── Per merceği ───────────── */
+.lens { position: absolute; z-index: 74; transform: translate(-50%, -50%); padding: 8px 12px 12px; border-radius: 16px; pointer-events: auto; touch-action: manipulation;
+  background: linear-gradient(180deg, rgba(34, 24, 14, .96), rgba(16, 10, 6, .96)); border: 1.5px solid color-mix(in srgb, var(--oc) 70%, #000);
+  box-shadow: 0 0 0 3px rgba(12, 7, 3, .6), 0 0 34px color-mix(in srgb, var(--oc) 40%, transparent), 0 18px 40px rgba(0, 0, 0, .65), inset 0 1px 0 rgba(255, 235, 190, .18);
+  animation: lens-in 360ms cubic-bezier(.18, 1.2, .3, 1) both; }
+.lens.is-auto { pointer-events: none; }
+.lens.is-out { animation: lens-out 240ms ease-in both; }
+.lens header { display: flex; align-items: center; gap: 7px; margin-bottom: 7px; font-size: .74rem; line-height: 1; }
+.lens header i { width: 22px; height: 22px; border-radius: 50%; overflow: hidden; box-shadow: 0 0 0 2px var(--oc); flex: none; }
+.lens header i svg { width: 100%; height: 100%; display: block; }
+.lens header b { font-weight: 800; color: #f6e9c6; }
+.lens header em { font-style: normal; font-weight: 800; color: var(--oc); font-size: .82rem; }
+.lens header span { margin-left: auto; color: #a89a78; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; font-size: .6rem; }
+.lens__melds { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.lens__meld { display: flex; gap: 2px; padding: 4px 5px; border-radius: 8px; background: rgba(0, 0, 0, .34); box-shadow: inset 0 1px 3px rgba(0, 0, 0, .6), 0 0 0 1px rgba(222, 180, 100, .16); }
+.lens__meld.is-pair { box-shadow: inset 0 1px 3px rgba(0, 0, 0, .6), 0 0 0 1px rgba(150, 190, 255, .35); }
+.lens .tile { --th: calc(var(--tw) * 1.36); position: relative; transform: none; }
+.lens .tile__shadow { display: none; }
+@keyframes lens-in { from { opacity: 0; transform: translate(-50%, -46%) scale(.82); } }
+@keyframes lens-out { to { opacity: 0; transform: translate(-50%, -54%) scale(.96); } }

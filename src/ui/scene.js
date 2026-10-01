@@ -726,6 +726,7 @@ export class Scene {
     if (this.packed) {
       const m = hitMeld(this.packed, x, y, 10);
       if (m) return { kind: 'meld', meldId: m.meldId, end: m.end };
+      for (const z of this.packed.zones || []) if (x >= z.rect.x && x <= z.rect.x + z.rect.w && y >= z.rect.y && y <= z.rect.y + z.rect.h) return { kind: 'zone', owner: z.owner };
     }
     return null;
   }
@@ -1034,6 +1035,86 @@ export class Scene {
   flashSeat(seat, color = 'rgb(255,120,100)') {
     const r = this.stage?.glowRects?.[seat];
     if (r) this.stage.flashRect(r, { color, dur: 900, grow: 0.09 });
+  }
+
+  // Per merceği: bir oyuncunun masadaki perlerini okunur boyda gösterir (dokununca ya da açılış/işleme anında kendiliğinden)
+  meldLens(owner, { auto = false, mark = [] } = {}) {
+    const L = this.L;
+    const d = this.disp;
+    if (!L || !d) return;
+    const mine = d.melds.filter((m) => m.owner === owner);
+    this.closeLens(true);
+    if (!mine.length) return;
+    const ro = this.cfg.roster[owner];
+    const pts = mine.filter((m) => m.kind !== 'pair').reduce((a, m) => a + meldPoints(m), 0);
+    const pairs = mine.filter((m) => m.kind === 'pair').length;
+    const total = mine.reduce((a, m) => a + m.tiles.length, 0);
+    // sığacak en büyük taş: genişlik ve yükseklik bütçesine göre
+    const W = Math.min(L.table.w * 0.86, 640);
+    const H = L.table.h * 0.7 - 40;
+    let tw = 34;
+    for (; tw > 16; tw -= 2) {
+      const gw = (n) => n * (tw + 2) + 8;
+      let rows = 1;
+      let x = 0;
+      for (const m of mine) {
+        const w = gw(m.tiles.length) + 8;
+        if (x + w > W && x > 0) {
+          rows++;
+          x = 0;
+        }
+        x += w;
+      }
+      if (rows * (tw * 1.36 + 10) <= H) break;
+    }
+    const el = document.createElement('div');
+    el.className = 'lens' + (auto ? ' is-auto' : '');
+    el.style.setProperty('--tw', tw + 'px');
+    el.style.setProperty('--oc', OWNER_COLOR[owner]);
+    const cx = L.table.x + L.table.w / 2;
+    el.style.left = cx + 'px';
+    el.style.top = L.table.y + L.table.h * 0.5 + 'px';
+    el.style.maxWidth = W + 24 + 'px';
+    el.innerHTML = `<header><i>${avatarSVG(ro.avatar)}</i><b>${owner === 0 ? 'Sen' : ro.name}</b><em>${pairs && !pts ? pairs + ' çift' : pts + ' puan'}</em><span>${total} taş</span></header><div class="lens__melds"></div>`;
+    const host = el.querySelector('.lens__melds');
+    const marks = new Set(mark);
+    for (const m of mine) {
+      const g = document.createElement('div');
+      g.className = 'lens__meld' + (m.kind === 'pair' ? ' is-pair' : '');
+      for (const x of m.tiles) {
+        const t = createTileEl(x.t, this.ctx, { inline: true });
+        setTileFace(t, x.t, this.ctx, isOkey(x.t, this.ctx) ? { c: x.c, v: x.v } : null);
+        if (marks.has(x.t)) t.classList.add('is-new');
+        g.appendChild(t);
+      }
+      host.appendChild(g);
+    }
+    this.els.coach.appendChild(el);
+    this._lens = el;
+    if (auto) {
+      this._lensT = setTimeout(() => this.closeLens(), 2300);
+    } else {
+      el.addEventListener('pointerdown', (e) => {
+        e.stopPropagation();
+        this.closeLens();
+      });
+      this._lensAway = (e) => {
+        if (!el.contains(e.target)) this.closeLens();
+      };
+      setTimeout(() => document.addEventListener('pointerdown', this._lensAway, true), 60);
+    }
+  }
+
+  closeLens(now = false) {
+    clearTimeout(this._lensT);
+    if (this._lensAway) document.removeEventListener('pointerdown', this._lensAway, true);
+    this._lensAway = null;
+    const el = this._lens;
+    this._lens = null;
+    if (!el) return;
+    if (now) return el.remove();
+    el.classList.add('is-out');
+    setTimeout(() => el.remove(), 240);
   }
 
   showOkeyDeco() {

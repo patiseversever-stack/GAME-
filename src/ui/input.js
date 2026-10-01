@@ -395,6 +395,12 @@ export class InputController {
         if (sc.selected !== null && caps.canLayoff) await this.h.intent({ type: 'layoff', tile: sc.selected, meldId: hit.meldId, end: hit.end });
         else await this.h.intent({ type: 'inspectMeld', meldId: hit.meldId });
         break;
+      case 'zone':
+        if (sc.selected === null) {
+          sc.meldLens(hit.owner);
+          audio?.play('tap');
+        }
+        break;
       case 'chip':
         if (sc.selected !== null) await this.h.intent({ type: 'layoff', tile: sc.selected, meldId: hit.meldId, end: hit.end });
         break;
@@ -414,7 +420,7 @@ export class InputController {
     if (this.hoverTile !== null) this.sc.sys.get(this.hoverTile)?.el.classList.remove('is-hover');
     this.hoverTile = t;
     if (t !== null) this.sc.sys.get(t)?.el.classList.add('is-hover');
-    this.sc.root.style.cursor = hit && ['rackTile', 'stock', 'side', 'pile', 'myPile', 'meld', 'chip', 'badge'].includes(hit.kind) ? 'pointer' : '';
+    this.sc.root.style.cursor = hit && ['rackTile', 'stock', 'side', 'pile', 'myPile', 'meld', 'chip', 'badge', 'zone'].includes(hit.kind) ? 'pointer' : '';
   }
 
   // ───────────────────────────── klavye ─────────────────────────────
