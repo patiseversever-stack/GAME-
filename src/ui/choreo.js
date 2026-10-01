@@ -60,6 +60,7 @@ export class Choreo {
   seatAnchor(seat) {
     const L = this.sc.L;
     if (seat === 0) return { x: L.rack.rect.x + L.rack.rect.w / 2, y: L.rack.rect.y + L.rack.rect.h / 2 };
+    if (L.seats[seat].anchor) return L.seats[seat].anchor;
     const p = L.seats[seat].panel;
     return seat === 2 ? { x: p.x + p.w * 0.72, y: p.y + p.h * 0.62 } : { x: p.x + p.w / 2, y: p.y + p.h - 16 };
   }

@@ -1351,3 +1351,37 @@
 .gl-on .scene::before { background: radial-gradient(70% 60% at 50% 48%, rgba(255, 226, 170, 0.14), rgba(255, 226, 170, 0) 70%), radial-gradient(120% 100% at 50% 55%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.62) 100%); }
 .gl-vignette { display: none; }
 .gl-on .gl-vignette { display: block; inset: 0; z-index: 6; pointer-events: none; background: radial-gradient(70% 60% at 50% 46%, rgba(255, 226, 170, 0.16), rgba(255, 226, 170, 0) 70%), radial-gradient(125% 105% at 50% 55%, rgba(0,0,0,0) 45%, rgba(0,0,0,0.6) 100%); }
+
+/* ═════════ Yatay v3: yuvalar 3B'de, plakalar DOM'da ═════════ */
+.gl-on .pile { background: none !important; border: 0 !important; box-shadow: none !important; animation: none !important; }
+.gl-on .pile.is-drop-hot { transform: none; }
+[data-profile='landscape'] .seat__backs, [data-profile='landscape'] .seat__sub { display: none !important; }
+[data-profile='landscape'] .seat__card {
+  background: linear-gradient(180deg, rgba(40, 28, 17, 0.94), rgba(18, 12, 7, 0.94));
+  border: 1px solid rgba(196, 156, 88, 0.55);
+  border-radius: 12px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 226, 170, 0.14);
+  overflow: visible;
+  padding: 3px 6px;
+}
+[data-profile='landscape'] .seat--v .seat__card { flex-direction: column; align-items: center; justify-content: center; padding: 5px 4px 4px; }
+[data-profile='landscape'] .seat--v .seat__main { flex-direction: column; align-items: center; gap: 2px; width: 100%; }
+[data-profile='landscape'] .seat--h .seat__card { flex-direction: row; padding: 2px 10px 2px 3px; }
+[data-profile='landscape'] .seat--h .seat__main { flex-direction: row; align-items: center; gap: 7px; }
+[data-profile='landscape'] .seat__avatar { flex: none; }
+[data-profile='landscape'] .seat__badge {
+  position: absolute; right: -5px; bottom: -4px; min-width: 18px; height: 18px; padding: 0 4px;
+  display: grid; place-items: center; border-radius: 9px;
+  background: #0b0805; border: 1.5px solid rgba(214, 176, 104, 0.9); color: #ffe7b6; font-size: 0.64rem; font-weight: 800; line-height: 1;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.6);
+}
+[data-profile='landscape'] .seat--h .seat__name { font-size: 0.74rem; max-width: 84px; }
+[data-profile='landscape'] .seat--v .seat__name { font-size: 0.68rem; max-width: 100%; }
+[data-profile='landscape'] .seat--h .seat__score { text-align: left; }
+[data-profile='landscape'] .seat.is-active .seat__card { border-color: #f2cf86; box-shadow: 0 0 0 1px rgba(242, 207, 134, 0.5), 0 0 22px rgba(255, 200, 110, 0.35), 0 6px 14px rgba(0, 0, 0, 0.5); }
+[data-profile='portrait'] .seat__badge { display: none; }
+.seat__badge { display: none; }
+[data-profile='landscape'] .seat__badge { display: grid; }
+[data-profile='landscape'] .hud__title { display: none; }
+.gl-on .mzone { background: none; border: 0; }
+.gl-on .mzone__tag { top: 4px; left: 8px; }

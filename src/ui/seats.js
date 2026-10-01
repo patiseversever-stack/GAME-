@@ -17,7 +17,7 @@ export class SeatView {
       <div class="seat__glow"></div>
       <div class="seat__card">
         <div class="seat__main">
-          <div class="seat__avatar">${avatarSVG(cfg.avatar)}<svg class="seat__ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" pathLength="100"/></svg></div>
+          <div class="seat__avatar">${avatarSVG(cfg.avatar)}<b class="seat__badge num">0</b><svg class="seat__ring" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="18.5" pathLength="100"/></svg></div>
           <div class="seat__text">
             <div class="seat__name"></div><div class="seat__score num"></div>
             <div class="seat__sub"><span class="seat__count num">0</span><span class="lvl" title="Seviye">${[1, 2, 3].map((i) => `<i class="${i <= dots ? 'on' : ''}"></i>`).join('')}</span><span class="seat__think" aria-hidden="true"><i></i><i></i><i></i></span></div>
@@ -29,6 +29,7 @@ export class SeatView {
     if (cfg.seat === 1) this.el.classList.add('seat--right');
     this.$name = this.el.querySelector('.seat__name');
     this.$count = this.el.querySelector('.seat__count');
+    this.$badge = this.el.querySelector('.seat__badge');
     this.$status = this.el.querySelector('.seat__status');
     this.$backs = this.el.querySelector('.seat__backs');
     this.$name.textContent = cfg.name;
@@ -44,12 +45,14 @@ export class SeatView {
     s.width = rect.w + 'px';
     s.height = rect.h + 'px';
     const v = this.cfg.orient === 'v';
-    // avatar: dikey panelde genişlik ve yükseklikle, yatay panelde yükseklikle sınırlı
-    const av = v ? Math.min(rect.w - 14, rect.h * 0.4, 76) : Math.min(rect.h - 10, 76);
-    this.av = clamp(Math.round(av), 24, 76);
+    // avatar: dikey plakada genişlik/yükseklikle, yatay plakada yükseklikle sınırlı
+    const plate = this.el.closest('[data-profile="landscape"]') !== null;
+    this.el.classList.toggle('is-plate', plate);
+    const av = plate ? (v ? Math.min(rect.w - 14, rect.h - 30, 64) : rect.h - 6) : v ? Math.min(rect.w - 14, rect.h * 0.4, 76) : Math.min(rect.h - 10, 76);
+    this.av = clamp(Math.round(av), 22, 76);
     s.setProperty('--av', this.av + 'px');
     this.el.dataset.size = sizeClass;
-    this.el.classList.toggle('is-compact', rect.h < 92 && v ? true : rect.h < 50);
+    this.el.classList.toggle('is-compact', !plate && (rect.h < 92 && v ? true : rect.h < 50));
     this.rect = rect;
     this.rendered = -1; // kapalı taş rafını yeniden hesapla
     this._layoutBacks();
@@ -86,6 +89,7 @@ export class SeatView {
   setCount(n) {
     this.count = n;
     this.$count.textContent = String(n);
+    this.$badge.textContent = String(n);
     if (this.rendered !== n) {
       this.rendered = n;
       const cur = this.$backs.children.length;
@@ -101,7 +105,7 @@ export class SeatView {
 
   // 3B çizici varsa rakip ıstakasını orada çiz (DOM şeridi gizli kalır)
   sync3d() {
-    if (!this.stage || !this.el.isConnected) return;
+    if (!this.stage || !this.el.isConnected || this.el.classList.contains('is-plate')) return;
     const b = this.$backs.getBoundingClientRect();
     if (!b.width) return;
     this.stage.setOpponent(this.cfg.seat, { x: b.left, y: b.top, w: b.width, h: b.height }, this.count || 0, this.cfg.orient === 'v');

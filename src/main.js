@@ -12,6 +12,7 @@ const app = document.getElementById('app');
 const settings = new Settings();
 const profile = new Profile();
 for (const [k, s] of [['theme', 'theme'], ['rack', 'rack'], ['tiles', 'tiles'], ['speed', 'botSpeed'], ['motion', 'motion']]) if (q.get(k)) settings.set(s, q.get(k));
+if (q.get('quality')) settings.set('quality', q.get('quality'));
 if (q.get('text')) settings.set('textScale', Number(q.get('text')));
 applyDocumentSettings(settings, app);
 const audio = q.get('mute') ? new NullAudio() : new AudioManager(settings);

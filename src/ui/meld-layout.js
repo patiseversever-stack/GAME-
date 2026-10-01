@@ -120,7 +120,7 @@ export function packMeldsZoned(melds, area, opts = {}) {
   if (!owners.length) return { tw: opts.maxTw || 40, th: 0, items: [], rows: 0, zones: [] };
   const n = owners.length;
   const gap = 6;
-  const labelH = opts.labelH ?? 15;
+  const labelH = opts.labelH ?? 19;
   const wide = area.w / Math.max(1, area.h) > 2.2;
   const cols = n === 1 ? 1 : n === 2 ? (wide ? 2 : 1) : 2;
   const rows = Math.ceil(n / cols);

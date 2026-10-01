@@ -277,7 +277,7 @@ export class Scene {
     place(this.els.actionbar, L.action);
     this.els.actionbar.style.setProperty('--strip-h', L.action.h + 'px');
     // toast konumu: HUD/skor altı
-    const tTop = L.table.y + (L.seats[2].panel ? L.seats[2].panel.h : 50) + 8;
+    const tTop = L.profile === 'landscape' ? L.seats[2].panel.y + L.seats[2].panel.h + 8 : L.table.y + (L.seats[2].panel ? L.seats[2].panel.h : 50) + 8;
     this.els.toasts.style.top = tTop + 'px';
     // ıstaka
     const rr = L.rack.rect;
@@ -293,6 +293,7 @@ export class Scene {
       place(this.pileEls[s], { x: p.cx - p.w / 2, y: p.cy - p.h / 2, w: p.w, h: p.h });
       place(this.pileOv[s], { x: p.cx - p.w / 2, y: p.cy - p.h / 2, w: p.w, h: p.h });
     }
+    this.stage?.syncSlotStates(this.pileEls);
     this._placeStock();
     this._placePlates();
     if (this.disp) this.retarget(false);
@@ -484,6 +485,7 @@ export class Scene {
     }
     this.host.classList.toggle('is-myturn', d.turn === 0 && g.status === 'playing');
     this._turnLight(g.status === 'playing' ? d.turn : null);
+    this.stage?.setTurn(g.status === 'playing' ? d.turn : null);
     // çöplük etiketleri/sayıları
     for (let s = 0; s < 4; s++) {
       this.pileEls[s]._count.textContent = String(d.piles[s].length);
@@ -492,6 +494,7 @@ export class Scene {
     this.stockCount.textContent = String(d.stock);
     this.stockDeco.forEach((el, i) => (el.style.display = d.stock > (2 - i) * 3 || i === 2 ? (d.stock > 0 ? '' : 'none') : 'none'));
     this.stage?.syncDecos();
+    this.stage?.setCounts(d.counts);
     this.refreshSoundIcon();
   }
 
@@ -672,8 +675,12 @@ export class Scene {
   _renderMeldTags() {
     const host = this.meldTags;
     host.innerHTML = '';
-    if (!this.packed) return;
+    if (!this.packed) {
+      this.stage?.setZones([]);
+      return;
+    }
     // sahip bölgeleri: hafif zemin + etiket (avatar, isim, açılış puanı)
+    this.stage?.setZones((this.packed.zones || []).map((z) => ({ rect: z.rect, color: OWNER_COLOR[z.owner] })));
     for (const z of this.packed.zones || []) {
       const mine = this.disp.melds.filter((m) => m.owner === z.owner);
       const pts = mine.filter((m) => m.kind !== 'pair').reduce((a, m) => a + meldPoints(m), 0);

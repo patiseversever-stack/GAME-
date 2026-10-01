@@ -205,57 +205,45 @@ function layoutPortrait(o) {
 }
 
 // ───────────────────────────── YATAY ─────────────────────────────
-// Düzen: geniş ıstaka altta (neredeyse tam genişlik). Hemen üstünde kontrol şeridi (durum + eylemler).
-// Onun üstünde masa bandı:
-//   üst satır  : [sol rakip]   [çöplük2][ üst rakip ][çöplük1]   [sağ rakip]
-//   orta       :               (per alanı — 101'de açılan perler)
-//   alt satır  : [çöplük3][deste][gösterge→okey]            …            [çöplük0 (benim)]
-// Gerekçe: telefonda yatay oyunda yükseklik kıt, genişlik boldur; ıstaka genişliği kullanınca taşlar
-// yükseklik sınırına kadar büyür (101'de bile klasikle aynı boyut), atma çöplüğü ıstakanın hemen üstünde
-// olduğu için parmak ofsetiyle bile erişilir, başparmak köşelerinde (deste/çöplük) kalır.
+// Gerçek bir okey masası: dört oyuncu masanın dört kenarında, herkesin ıstakası kendi kenarının ortasında.
+//   üst   : rakip ıstakası (merkezde, arkası bize dönük) + yanında isim plakası
+//   sol/sağ: rakip ıstakaları kendi kenarlarında dikey, ortalı; isim plakaları ıstakanın iç yanında
+//   köşeler: dört çöplük yuvası (sol-üst: üst oyuncu, sağ-üst: sağ oyuncu, sol-alt: soldaki oyuncu = yandan al, sağ-alt: benim)
+//   merkez : deste + gösterge + okey (101'de üst sırada; per alanı merkezi kaplar)
+//   alt    : benim ıstakam (GLB), hemen üstünde durum + eylem şeridi
 function layoutLandscape(o) {
   const { w, h, safe, ui, mode } = o;
   const spec = RACK_SPEC[mode];
   const tight = h < 400;
-  const rim = tight ? 4 : 7; // masa çerçevesi kalınlığı (CSS --rim ile aynı olmalı)
-  const m = rim + 3;
+  const m = tight ? 9 : 13; // 3B masa pervazının iç kenarı
   const X0 = safe.l + m;
   const X1 = w - safe.r - m;
   const cw = X1 - X0;
   const cx = (X0 + X1) / 2;
-  const Y0 = safe.t + rim + 1;
-
-  const hudH = clamp(R(ui * (tight ? 2.0 : 2.15)), 30, 42);
+  const Y0 = safe.t + (tight ? 7 : 11);
+  const hudH = tight ? 30 : 34;
+  // HUD üst bantta bir flex satırı: köşelerde simgeler, ortası boş (rakip ıstakasının üstünden geçer)
   const hud = rect(X0, Y0, cw, hudH);
-  const TT = Y0 + hudH + 2; // masa bandının üstü
-  const YB = h - (Math.max(R(safe.b * 0.45), 3) + 2); // ıstaka tabanı (ev çubuğu bölgesine hafif taşabilir: yalnız süs)
+  const YB = h - (Math.max(R(safe.b * 0.45), 3) + (tight ? 5 : 8));
   const stripH = clamp(R(ui * (tight ? 1.95 : 2.15)), 30, 40);
 
-  // Görünüm ölçeği: büyük ekranlarda paneller de büyür
   const maxRackH = Math.min(h * (h <= 420 ? 0.42 : h >= 700 ? 0.34 : 0.42 - (0.08 * (h - 420)) / 280), 330);
   const capTw = h > 700 ? 64 : 54;
   const minTw = 22;
+  const topW = mode === 'okey' ? clamp(R(cw * 0.25), 140, 280) : clamp(R(cw * 0.19), 120, 220); // 101'de per alanı için daha dar
+  const topH = Math.max(30, R(topW * 0.2) + 4);
 
-  // tw'ye bağlı yan ölçüler
   const dims = (tw) => {
     const pw = clamp(R(tw * 0.78), 22, 48);
-    const pw2 = clamp(R(pw * 0.78), 18, 38);
-    const pileW = pw + 8;
-    const pileH = R(pw * 1.36) + 8;
-    const pileW2 = pw2 + 6;
-    const pileH2 = R(pw2 * 1.36) + 6;
-    const stockW = R(pw * 1.05);
+    const pileW = pw + 10;
+    const pileH = R(pw * 1.36) + 10;
+    const stockW = R(pw * 1.08);
     const stockH = R(stockW * 1.36);
     const pg = plateGeom(R(pw * (tight ? 0.86 : 0.92)), tight ? 9 : 11);
-    const rowH = Math.max(pileH, stockH + 5, pg.h);
-    const S = clamp(pw / 34, 0.8, 1.45);
-    const sideW = clamp(R(Math.max(ui * 3.6, 58 * S)), 54, 104);
-    const topH = clamp(R(Math.max(ui * 2.45, 40 * S)), 36, 62);
-    const sideMin = R(58 * Math.min(S, 1));
-    return { pw, pw2, pileW, pileH, pileW2, pileH2, stockW, stockH, pg, rowH, S, sideW, topH, sideMin };
+    const clusterH = Math.max(stockH + 6, pg.h);
+    return { pw, pileW, pileH, stockW, stockH, pg, clusterH };
   };
 
-  // Istaka: en büyük taş; dikey bant ve yatay genişlik kısıtlarıyla
   let best = null;
   for (let tw = capTw; tw >= minTw; tw--) {
     const d = dims(tw);
@@ -264,11 +252,10 @@ function layoutLandscape(o) {
       if (fh > maxRackH) continue;
       const minCols = Math.ceil((spec.tiles + spec.spare) / rows);
       if (rackWidth(tw, minCols) > cw) continue;
-      const band = YB - fh - stripH - 3 - TT;
-      if (band < Math.max(d.sideMin + 4 + d.rowH, d.topH + 4 + 46)) continue;
+      const band = YB - fh - stripH - 3 - Y0;
+      if (band < topH + 20 + 10 + d.clusterH + 10) continue;
       const score = tw - 2.5 * (rows - 2);
       if (!best || score > best.score) {
-        // bol genişlikte yedek sütunlar: daha rahat düzenleme
         const want = rows === 2 ? (mode === 'okey' ? 11 : 15) : minCols + 1;
         let cols = minCols;
         while (cols < want && rackWidth(tw, cols + 1) <= cw) cols++;
@@ -276,56 +263,93 @@ function layoutLandscape(o) {
       }
     }
   }
-  if (!best) {
-    const tw = minTw;
-    best = { rows: 3, cols: Math.ceil((spec.tiles + spec.spare) / 3), tw };
-  }
+  if (!best) best = { rows: 3, cols: Math.ceil((spec.tiles + spec.spare) / 3), tw: minTw };
   const rack = buildRack(best, { cx, bottom: YB });
   const tw = rack.tw;
   const d = dims(tw);
   const pileSc = d.pw / tw;
-  const pile2Sc = d.pw2 / tw;
 
-  // kontrol şeridi (durum + eylemler)
   const stripW = clamp(rack.rect.w, Math.min(cw, 540), cw);
   const action = rect(cx - stripW / 2, rack.rect.y - 3 - stripH, stripW, stripH);
-  const bandBottom = action.y - 3;
-  const table = rect(X0, TT, cw, bandBottom - TT);
+  const bandBottom = action.y - 4;
+  const bandTop = Y0;
+  const table = rect(X0, Y0, cw, bandBottom - Y0);
 
-  // alt satır: sol küme + sağ çöplük
-  const { pileW, pileH, stockW, stockH, pg, rowH } = d;
-  const rowTop = bandBottom - rowH;
+  // yan istasyonlar: dikey ıstaka (kenarda, ortalı) + iç yanında plaka
+  const sideTop = Y0 + hudH + 2;
+  const sideAvail = bandBottom - sideTop - 6;
+  const sideLen = clamp(R(sideAvail * 0.78), 70, 230);
+  const sideW = clamp(R(sideLen * 0.2) + 4, 26, 60);
+  const sideY = sideTop + (sideAvail - sideLen) / 2;
+  const plW = clamp(R(Math.max(ui * 4, d.pw * 1.9)), 58, 92);
+  const plH = clamp(R(plW * 0.95), 54, 88);
+  const leftRack = rect(X0, sideY, sideW, sideLen);
+  const rightRack = rect(X1 - sideW, sideY, sideW, sideLen);
+  const leftPlate = rect(leftRack.x + leftRack.w + 8, sideY + (sideLen - plH) / 2, plW, plH);
+  const rightPlate = rect(rightRack.x - 8 - plW, sideY + (sideLen - plH) / 2, plW, plH);
+  // üst istasyon
+  const topRack = rect(cx - topW / 2, Y0, topW, topH);
+  // plaka ıstakanın ön yüzüne asılı (isim tabelası gibi): yan yana yer ayırmaz
+  const topPlW = clamp(R(topW * 0.62), 100, 150);
+  const topPlate = rect(cx - topPlW / 2, Y0 + topH - 8, topPlW, 28);
+  const topBottom = topPlate.y + topPlate.h;
+
+  // çöplük yuvaları: köşelerde, yan istasyonların iç tarafında
+  const { pileW, pileH } = d;
+  const xl = Math.max(leftPlate.x + leftPlate.w, leftRack.x + leftRack.w) + 14;
+  const xr = Math.min(rightPlate.x, rightRack.x) - 14;
+  const topSlotY = Y0 + 4 + pileH / 2;
+  const botSlotY = bandBottom - 2 - pileH / 2;
   const piles = [];
-  piles[3] = { seat: 3, cx: X0 + pileW / 2, cy: bandBottom - pileH / 2, w: pileW, h: pileH, sc: pileSc };
-  piles[0] = { seat: 0, cx: X1 - pileW / 2, cy: bandBottom - pileH / 2, w: pileW, h: pileH, sc: pileSc };
-  const stockX = X0 + pileW + 10;
-  const stock = { cx: stockX + stockW / 2, cy: bandBottom - 5 - stockH / 2, w: stockW, h: stockH, tw: stockW };
-  const plate = { x: R(stockX + stockW + 12), y: R(bandBottom - pg.h), w: pg.w, h: pg.h, capH: pg.capH };
+  piles[2] = { seat: 2, cx: xl + pileW / 2, cy: topSlotY, w: pileW, h: pileH, sc: pileSc };
+  piles[1] = { seat: 1, cx: xr - pileW / 2, cy: topSlotY, w: pileW, h: pileH, sc: pileSc };
+  piles[3] = { seat: 3, cx: xl + pileW / 2, cy: botSlotY, w: pileW, h: pileH, sc: pileSc };
+  piles[0] = { seat: 0, cx: xr - pileW / 2, cy: botSlotY, w: pileW, h: pileH, sc: pileSc };
+
+  // merkez: deste + gösterge → okey
+  const { stockW, stockH, pg, clusterH } = d;
+  const clusterW = stockW + 12 + pg.w;
+  const free0 = topBottom + 8; // üst istasyonun altı
+  let cluster;
+  let clusterRow = false; // küme üst satırda mı (per alanının üstünde yer tutar)
+  if (mode === 'okey') {
+    cluster = { x: cx - clusterW / 2, y: free0 + (bandBottom - free0 - clusterH) / 2 };
+  } else {
+    // 101: merkez per alanına kalsın → küme üst satırda, üst ıstakanın sağında/solunda boş bölmeye; sığmazsa altında ortalı
+    const rightSeg = [topRack.x + topRack.w + 12, xr - pileW - 8];
+    const leftSeg = [xl + pileW + 8, topRack.x - 12];
+    if (rightSeg[1] - rightSeg[0] >= clusterW) cluster = { x: rightSeg[0] + (rightSeg[1] - rightSeg[0] - clusterW) / 2, y: Y0 + 2 };
+    else if (leftSeg[1] - leftSeg[0] >= clusterW) cluster = { x: leftSeg[0] + (leftSeg[1] - leftSeg[0] - clusterW) / 2, y: Y0 + 2 };
+    else {
+      cluster = { x: cx - clusterW / 2, y: free0 };
+      clusterRow = true;
+    }
+  }
+  const stock = { cx: cluster.x + stockW / 2, cy: cluster.y + clusterH - 3 - stockH / 2, w: stockW, h: stockH, tw: stockW };
+  const plate = { x: R(cluster.x + stockW + 12), y: R(cluster.y + clusterH - pg.h), w: pg.w, h: pg.h, capH: pg.capH };
   const tileCy = plate.y + pg.capH + 4 + pg.indH / 2;
   const indicator = { cx: plate.x + pg.padX + pg.indW / 2, cy: tileCy, w: pg.indW, h: pg.indH, tw: pg.indW };
   const okeyMini = { cx: plate.x + pg.padX + pg.indW + pg.gap + pg.indW / 2, cy: tileCy, w: pg.indW, h: pg.indH, tw: pg.indW };
 
-  // üst satır: üst rakip (ortada) + iki yanında bilgi çöplükleri; yan rakipler köşelerde
-  const topW = clamp(R(cw * 0.27), 150, 280);
-  const seat2 = rect(cx - topW / 2, TT, topW, d.topH);
-  piles[2] = { seat: 2, cx: seat2.x - 6 - d.pileW2 / 2, cy: TT + d.pileH2 / 2, w: d.pileW2, h: d.pileH2, sc: pile2Sc };
-  piles[1] = { seat: 1, cx: seat2.x + seat2.w + 6 + d.pileW2 / 2, cy: TT + d.pileH2 / 2, w: d.pileW2, h: d.pileH2, sc: pile2Sc };
+  // per alanı (101): iki çöplük sütunu arası; üst satırın (ıstaka + küme) altı → bandın tabanı
+  const topRowBottom = mode === 'okey' ? topBottom : clusterRow ? free0 + clusterH : Math.max(topBottom, Y0 + clusterH + 2);
+  const mx0 = xl + pileW + 12;
+  const mx1 = xr - pileW - 12;
+  const my0 = topRowBottom + 6;
+  const meldArea = rect(mx0, my0, mx1 - mx0, Math.max(20, bandBottom - my0));
+  const drop = inflate(fromCenter(piles[0]), 30, 26, 8, 8);
 
-  const sideH = clamp(rowTop - 4 - TT, d.sideMin, R(d.sideW * 1.7));
   const seats = [];
   seats[0] = { seat: 0 };
-  seats[3] = { seat: 3, orient: 'v', panel: rect(X0, TT, d.sideW, sideH) };
-  seats[1] = { seat: 1, orient: 'v', panel: rect(X1 - d.sideW, TT, d.sideW, sideH) };
-  seats[2] = { seat: 2, orient: 'h', panel: seat2 };
+  seats[1] = { seat: 1, orient: 'v', panel: rightPlate, rack: rightRack, anchor: { x: rightRack.x + rightRack.w / 2, y: rightRack.y + rightRack.h / 2 } };
+  seats[2] = { seat: 2, orient: 'h', panel: topPlate, rack: topRack, anchor: { x: topRack.x + topRack.w / 2, y: topRack.y + topRack.h / 2 } };
+  seats[3] = { seat: 3, orient: 'v', panel: leftPlate, rack: leftRack, anchor: { x: leftRack.x + leftRack.w / 2, y: leftRack.y + leftRack.h / 2 } };
 
-  // per alanı: sol kümenin sağı … benim çöplüğümün solu; üst satırın altı … bandın tabanı
-  const mx0 = Math.max(plate.x + plate.w, X0 + d.sideW) + 8;
-  const mx1 = Math.min(piles[0].cx - pileW / 2, X1 - d.sideW) - 8;
-  const my0 = TT + Math.max(d.topH, d.pileH2) + 4;
-  const meldArea = rect(mx0, my0, mx1 - mx0, Math.max(30, bandBottom - my0));
-  const drop = inflate(fromCenter(piles[0]), 34, 24, 6, 6);
-
-  return { profile: 'landscape', hud, scores: null, table, action, rack, seats, piles, stock, plate, indicator, okeyMini, meldArea, drop, pw: d.pw, ph: R(d.pw * 1.36), unit: { pad: m, sideW: d.sideW, topH: d.topH, rowH, stripH } };
+  return {
+    profile: 'landscape', hud, scores: null, table, action, rack, seats, piles, stock, plate, indicator, okeyMini, meldArea, drop,
+    pw: d.pw, ph: R(d.pw * 1.36), edge: { t: Y0 - 7, l: X0 - 7, r: X1 + 7 },
+    unit: { pad: m, topH, stripH, clusterH },
+  };
 }
 
 // Dışa açılan ana işlev
@@ -354,7 +378,6 @@ export function computeLayout({ w, h, safe = { t: 0, r: 0, b: 0, l: 0 }, rem = 1
 // Görünüm kutuları (çakışma testi / hata ayıklama)
 export function regionsOf(L) {
   const r = {
-    hud: L.hud,
     action: L.action,
     rack: L.rack.rect,
     stock: fromCenter(L.stock),
@@ -367,6 +390,14 @@ export function regionsOf(L) {
     seat2: L.seats[2].panel,
     seat3: L.seats[3].panel,
   };
+  if (L.profile === 'landscape') {
+    r.rack1 = L.seats[1].rack;
+    r.rack2 = L.seats[2].rack;
+    r.rack3 = L.seats[3].rack;
+    // HUD yalnız köşelerde simge: iki köşe kutusu
+    r.hudL = { x: L.hud.x, y: L.hud.y, w: 72, h: L.hud.h };
+    r.hudR = { x: L.hud.x + L.hud.w - 110, y: L.hud.y, w: 110, h: L.hud.h };
+  } else r.hud = L.hud;
   if (L.scores) r.scores = L.scores;
   return r;
 }

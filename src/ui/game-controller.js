@@ -225,8 +225,15 @@ export class GameController {
     else this.fx.dust.stop();
   }
 
-  onSlowFrames() {
-    if (this.settings.get('quality') !== 'auto' || this.autoLow) return;
+  onSlowFrames(avg) {
+    if (this.settings.get('quality') !== 'auto') return;
+    // 3B kalite basamaklı düşer (yüksek → orta → düşük); DOM efektleri en sonda
+    const st = this.scene?.stage;
+    if (st && st.qLevel < 2) {
+      st.setQuality(st.qLevel + 1);
+      return;
+    }
+    if (this.autoLow) return;
     this.autoLow = true;
     this.applyMotion();
   }

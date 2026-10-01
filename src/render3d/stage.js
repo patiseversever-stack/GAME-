@@ -109,6 +109,7 @@ function feltTexture() {
 export class Stage3D {
   constructor(host, { quality = 'high' } = {}) {
     this.host = host;
+    this.qLevel = quality === 'low' ? 2 : 0;
     this.quality = quality;
     const canvas = document.createElement('canvas');
     canvas.className = 'gl-stage';
@@ -120,6 +121,8 @@ export class Stage3D {
     r.toneMappingExposure = 1.0;
     r.shadowMap.enabled = true;
     r.shadowMap.type = THREE.PCFSoftShadowMap;
+    r.shadowMap.autoUpdate = false; // gölge yalnız nesneler hareket edince yeniden çizilir
+    this.shadowDirty = true;
     this.renderer = r;
     const scene = new THREE.Scene();
     scene.background = new THREE.Color(0x07100d);
@@ -127,10 +130,11 @@ export class Stage3D {
     const pm = new THREE.PMREMGenerator(r);
     scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
     scene.environmentIntensity = 0.16;
-    this.camera = new THREE.PerspectiveCamera(30, 1, 10, 20000);
+    this.camera = new THREE.PerspectiveCamera(17, 1, 10, 40000);
     // ışık: masanın üstünde sarkan sıcak lamba (spot) + çok zayıf ortam dolgusu
     this.lamp = new THREE.SpotLight(0xffe4bd, 6.4, 0, 0.62, 1, 0);
-    this.lamp.castShadow = true;
+    this.lamp.castShadow = this.qLevel < 2;
+    r.shadowMap.enabled = this.qLevel < 2;
     this.lamp.shadow.mapSize.set(2048, 2048);
     this.lamp.shadow.bias = -0.00025;
     this.lamp.shadow.normalBias = 0.8;
@@ -142,7 +146,7 @@ export class Stage3D {
     scene.add(this.rim);
     // masa (çuha) ve ahşap kenar
     this.felt = feltTexture();
-    this.table = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ map: this.felt, roughness: 0.96, metalness: 0, color: 0x5a8a80 }));
+    this.table = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ map: this.felt, bumpMap: this.felt, bumpScale: 1.2, roughness: 0.97, metalness: 0, color: 0x5f9488 }));
     this.table.rotation.x = -Math.PI / 2;
     this.table.receiveShadow = true;
     scene.add(this.table);
@@ -165,6 +169,29 @@ export class Stage3D {
     this._m = new THREE.Matrix4();
   }
 
+  // Uyarlanabilir kalite: 0 yüksek, 1 orta (1,5 dpr + 1024 gölge), 2 düşük (1 dpr, gölgesiz)
+  setQuality(level) {
+    if (level === this.qLevel) return;
+    this.qLevel = level;
+    const on = level < 2;
+    this.renderer.shadowMap.enabled = on;
+    this.lamp.castShadow = on;
+    if (on) {
+      const sz = level === 0 ? 2048 : 1024;
+      if (this.lamp.shadow.mapSize.x !== sz) {
+        this.lamp.shadow.mapSize.set(sz, sz);
+        this.lamp.shadow.map?.dispose();
+        this.lamp.shadow.map = null;
+      }
+    }
+    this.scene.traverse((o) => {
+      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => (m.needsUpdate = true));
+    });
+    if (this.L) this.resize(this.L, this.dpr);
+    this.shadowDirty = true;
+    this.invalidate();
+  }
+
   // ─── ekran → dünya ───
   _hit(sx, sy, plane, out) {
     const ndc = new THREE.Vector2((sx / this.W) * 2 - 1, -(sy / this.H) * 2 + 1);
@@ -183,7 +210,8 @@ export class Stage3D {
     this.L = L;
     const W = (this.W = L.w);
     const H = (this.H = L.h);
-    const q = this.quality === 'low' ? 1 : Math.min(dpr || 1, 2);
+    this.dpr = dpr || 1;
+    const q = this.qLevel >= 2 ? 1 : this.qLevel === 1 ? Math.min(this.dpr, 1.5) : Math.min(this.dpr, 2);
     this.renderer.setPixelRatio(q);
     this.renderer.setSize(W, H, false);
     this.canvas.style.width = W + 'px';
@@ -232,8 +260,12 @@ export class Stage3D {
     this.lamp.shadow.camera.far = dist * 4;
     this.rim.position.set(dist, dist * 0.6, -dist);
     this.buildRails(L);
+    this.shadowDirty = true;
     this.setTileSize(L.rack.tw, L.rack.th);
     this.buildRack(L);
+    this.buildSlots(L);
+    this.buildOpponents(L);
+    this.buildGlows(L);
     for (const o of this.opp.values()) this.scene.remove(o.group);
     this.opp.clear();
     this.invalidate();
@@ -264,7 +296,7 @@ export class Stage3D {
     this.railGroup && this.scene.remove(this.railGroup);
     const g = new THREE.Group();
     this.railGroup = g;
-    const topY = Math.max(2, L.hud.y + L.hud.h * 0.35);
+    const topY = Math.max(2, L.edge ? L.edge.t : L.hud.y + L.hud.h * 0.35);
     const far = this._hit(this.W / 2, topY, this.planeT, new THREE.Vector3()).z;
     const bl = this._hit(0, this.H, this.planeT, new THREE.Vector3());
     const tl = this._hit(0, topY, this.planeT, new THREE.Vector3());
@@ -335,6 +367,7 @@ export class Stage3D {
         if (!m || !this.L) return;
         this.rackModel = m;
         this.buildRack(this.L);
+        this.buildOpponents(this.L);
         this.onRackChanged?.();
         this.invalidate();
       });
@@ -453,7 +486,332 @@ export class Stage3D {
     this.invalidate();
   }
 
-  // ─── rakip ıstakaları: masada duran ahşap ıstaka, taşların sırtı oyuncuya dönük ───
+
+  // ─── çöplük yuvaları: çuhaya gömülü, deri kenarlı; ekrandaki dikdörtgenin masa düzlemindeki birebir karşılığı ───
+  _decalQuad(x0, y0, x1, y1, lift) {
+    const a = this._hit(x0, y0, this.planeT, new THREE.Vector3());
+    const b = this._hit(x1, y0, this.planeT, new THREE.Vector3());
+    const c = this._hit(x1, y1, this.planeT, new THREE.Vector3());
+    const d = this._hit(x0, y1, this.planeT, new THREE.Vector3());
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.Float32BufferAttribute([a.x, lift, a.z, b.x, lift, b.z, c.x, lift, c.z, d.x, lift, d.z], 3));
+    g.setAttribute('uv', new THREE.Float32BufferAttribute([0, 1, 1, 1, 1, 0, 0, 0], 2));
+    g.setIndex([0, 2, 1, 0, 3, 2]);
+    g.computeVertexNormals();
+    return g;
+  }
+
+  _slotTexture(w, h, kind, glow = false) {
+    const S = 3;
+    const c = document.createElement('canvas');
+    c.width = Math.max(32, Math.round(w * S));
+    c.height = Math.max(32, Math.round(h * S));
+    const g = c.getContext('2d');
+    const r = Math.min(c.width, c.height) * 0.16;
+    const rr = (x, y, ww, hh, rad) => {
+      g.beginPath();
+      g.roundRect(x, y, ww, hh, rad);
+    };
+    if (glow) {
+      // vurgu: altın kenar ışıması
+      for (let i = 0; i < 6; i++) {
+        g.strokeStyle = `rgba(255,214,130,${0.2 - i * 0.03})`;
+        g.lineWidth = 3 + i * 3;
+        rr(8, 8, c.width - 16, c.height - 16, r);
+        g.stroke();
+      }
+      g.strokeStyle = 'rgba(255,226,160,0.95)';
+      g.lineWidth = 3;
+      rr(8, 8, c.width - 16, c.height - 16, r);
+      g.stroke();
+      return this._tex(c);
+    }
+    // oyuk: koyu iç, üstten iç gölge, alt kenarda ışık çizgisi
+    rr(4, 4, c.width - 8, c.height - 8, r);
+    g.fillStyle = 'rgba(2,12,9,0.62)';
+    g.fill();
+    g.save();
+    g.clip();
+    const sh = g.createLinearGradient(0, 0, 0, c.height);
+    sh.addColorStop(0, 'rgba(0,0,0,0.55)');
+    sh.addColorStop(0.28, 'rgba(0,0,0,0.12)');
+    sh.addColorStop(1, 'rgba(255,255,255,0.05)');
+    g.fillStyle = sh;
+    g.fillRect(0, 0, c.width, c.height);
+    g.restore();
+    g.lineWidth = 5;
+    g.strokeStyle = 'rgba(14,8,4,0.95)';
+    rr(4, 4, c.width - 8, c.height - 8, r);
+    g.stroke();
+    g.lineWidth = 1.5;
+    g.strokeStyle = 'rgba(205,165,95,0.38)';
+    rr(9, 9, c.width - 18, c.height - 18, r * 0.8);
+    g.stroke();
+    // yön simgesi (boşken belli belirsiz)
+    g.strokeStyle = 'rgba(235,225,200,0.26)';
+    g.lineWidth = Math.max(3, c.width * 0.035);
+    g.lineCap = 'round';
+    g.lineJoin = 'round';
+    const cx = c.width / 2;
+    const cy = c.height / 2;
+    const u = Math.min(c.width, c.height) * 0.16;
+    g.beginPath();
+    if (kind === 'take') {
+      g.moveTo(cx - u, cy);
+      g.lineTo(cx + u, cy);
+      g.moveTo(cx + u * 0.2, cy - u * 0.8);
+      g.lineTo(cx + u, cy);
+      g.lineTo(cx + u * 0.2, cy + u * 0.8);
+    } else if (kind === 'drop') {
+      g.moveTo(cx, cy - u);
+      g.lineTo(cx, cy + u * 0.7);
+      g.moveTo(cx - u * 0.8, cy);
+      g.lineTo(cx, cy + u * 0.8);
+      g.lineTo(cx + u * 0.8, cy);
+    }
+    g.stroke();
+    return this._tex(c);
+  }
+
+  _tex(c) {
+    const t = new THREE.CanvasTexture(c);
+    t.colorSpace = THREE.SRGBColorSpace;
+    t.anisotropy = 4;
+    return t;
+  }
+
+  buildSlots(L) {
+    if (this.slotGroup) {
+      this.scene.remove(this.slotGroup);
+      this.slotGroup.traverse((o) => {
+        o.geometry?.dispose();
+        o.material?.map?.dispose();
+        o.material?.dispose?.();
+      });
+    }
+    const g = new THREE.Group();
+    this.slotGroup = g;
+    this.slots = [];
+    const lift = 0.2 * this._k(this.W / 2, this.H / 2, this.planeT);
+    for (let s = 0; s < 4; s++) {
+      const p = L.piles[s];
+      const x0 = p.cx - p.w / 2;
+      const x1 = p.cx + p.w / 2;
+      const y0 = p.cy - p.h / 2;
+      const y1 = p.cy + p.h / 2;
+      const kind = s === 3 ? 'take' : s === 0 ? 'drop' : 'none';
+      const base = new THREE.Mesh(this._decalQuad(x0, y0, x1, y1, lift), new THREE.MeshBasicMaterial({ map: this._slotTexture(p.w, p.h, kind), transparent: true, depthWrite: false, toneMapped: false }));
+      base.renderOrder = 2;
+      const glow = new THREE.Mesh(this._decalQuad(x0 - 3, y0 - 3, x1 + 3, y1 + 3, lift * 1.6), new THREE.MeshBasicMaterial({ map: this._slotTexture(p.w + 6, p.h + 6, kind, true), transparent: true, opacity: 0, depthWrite: false, toneMapped: false, blending: THREE.AdditiveBlending }));
+      glow.renderOrder = 3;
+      g.add(base, glow);
+      this.slots[s] = { base, glow, mode: 0, cur: 0 };
+    }
+    this.scene.add(g);
+  }
+
+  // DOM sınıflarından (is-take / is-drop / is-drop-hot / is-finish) yuva vurgusu
+  syncSlotStates(pileEls) {
+    this.pileEls = pileEls;
+    this.invalidate();
+  }
+
+  _slotFrame(t) {
+    let busy = false;
+    if (this.glows) {
+      this.glows.forEach((gl, i) => {
+        const on = this.turnSeat === i;
+        const target = on ? 0.55 + 0.3 * Math.sin(t / 420) : 0;
+        gl.cur += (target - gl.cur) * 0.12;
+        gl.mesh.material.opacity = Math.max(0, gl.cur);
+        if (on || gl.cur > 0.01) busy = true;
+      });
+    }
+    if (!this.slots || !this.pileEls) return busy;
+    this.slots.forEach((sl, i) => {
+      const el = this.pileEls[i];
+      if (!el || !sl) return;
+      const c = el.classList;
+      const on = c.contains('is-take') || c.contains('is-drop') || c.contains('is-dragging-zone') || c.contains('is-finish');
+      const hot = c.contains('is-drop-hot');
+      const target = hot ? 1 : on ? 0.45 + 0.35 * (0.5 + 0.5 * Math.sin(t / 260)) : 0;
+      sl.cur += (target - sl.cur) * 0.25;
+      sl.glow.material.opacity = sl.cur;
+      if (on || hot || Math.abs(target - sl.cur) > 0.01) busy = true;
+    });
+    return busy;
+  }
+
+
+  // ─── 101 per bölgeleri: çuhaya serili ince plaka (sahip renginde kenar) ───
+  _zoneTexture(w, h, color) {
+    const S = 2;
+    const c = document.createElement('canvas');
+    c.width = Math.max(32, Math.round(w * S));
+    c.height = Math.max(32, Math.round(h * S));
+    const g = c.getContext('2d');
+    const r = 14 * S;
+    g.beginPath();
+    g.roundRect(3, 3, c.width - 6, c.height - 6, r);
+    const grd = g.createLinearGradient(0, 0, 0, c.height);
+    grd.addColorStop(0, 'rgba(0,0,0,0.30)');
+    grd.addColorStop(1, 'rgba(0,0,0,0.12)');
+    g.fillStyle = grd;
+    g.fill();
+    g.lineWidth = 2.5;
+    g.strokeStyle = color;
+    g.globalAlpha = 0.55;
+    g.stroke();
+    return this._tex(c);
+  }
+
+  setZones(list) {
+    if (this.zoneGroup) {
+      this.scene.remove(this.zoneGroup);
+      this.zoneGroup.traverse((o) => {
+        o.geometry?.dispose();
+        o.material?.map?.dispose();
+        o.material?.dispose?.();
+      });
+    }
+    const g = new THREE.Group();
+    this.zoneGroup = g;
+    const lift = 0.35 * this._k(this.W / 2, this.H / 2, this.planeT);
+    for (const z of list || []) {
+      const r = z.rect;
+      const m = new THREE.Mesh(this._decalQuad(r.x, r.y, r.x + r.w, r.y + r.h, lift), new THREE.MeshBasicMaterial({ map: this._zoneTexture(r.w, r.h, z.color), transparent: true, depthWrite: false, toneMapped: false }));
+      m.renderOrder = 1;
+      g.add(m);
+    }
+    this.scene.add(g);
+    this.invalidate();
+  }
+
+  // ─── sıra ışığı: aktif oyuncunun istasyonunun çevresinde sıcak ışık havuzu ───
+  _glowTexture() {
+    if (this._glowTex) return this._glowTex;
+    const c = document.createElement('canvas');
+    c.width = c.height = 128;
+    const g = c.getContext('2d');
+    const gr = g.createRadialGradient(64, 64, 4, 64, 64, 62);
+    gr.addColorStop(0, 'rgba(255,224,160,0.85)');
+    gr.addColorStop(0.5, 'rgba(255,200,110,0.35)');
+    gr.addColorStop(1, 'rgba(255,190,90,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 128, 128);
+    return (this._glowTex = this._tex(c));
+  }
+
+  buildGlows(L) {
+    if (this.glowGroup) this.scene.remove(this.glowGroup);
+    const g = new THREE.Group();
+    this.glowGroup = g;
+    this.glows = [];
+    const lift = 0.5 * this._k(this.W / 2, this.H / 2, this.planeT);
+    const rects = [];
+    const R = L.rack.rect;
+    rects[0] = { x: R.x - 40, y: R.y - 30, w: R.w + 80, h: R.h + 60 };
+    for (const s of [1, 2, 3]) {
+      const rr = L.seats[s].rack || L.seats[s].panel;
+      const grow = 34;
+      rects[s] = { x: rr.x - grow, y: rr.y - grow, w: rr.w + grow * 2, h: rr.h + grow * 2 };
+    }
+    for (let s = 0; s < 4; s++) {
+      const r = rects[s];
+      const mesh = new THREE.Mesh(this._decalQuad(r.x, r.y, r.x + r.w, r.y + r.h, lift), new THREE.MeshBasicMaterial({ map: this._glowTexture(), transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending, toneMapped: false }));
+      mesh.renderOrder = 0;
+      g.add(mesh);
+      this.glows[s] = { mesh, cur: 0 };
+    }
+    this.scene.add(g);
+    this.setTurn(this.turnSeat);
+  }
+
+  setTurn(seat) {
+    this.turnSeat = seat;
+    this.invalidate();
+  }
+
+  // ─── rakip ıstakaları: GLB, arkası bize dönük; taşların uçları çıtanın üstünden görünür ───
+  buildOpponents(L) {
+    if (this.oppGroup) this.scene.remove(this.oppGroup);
+    this.oppGroup = null;
+    this.oppSlivers = {};
+    if (!this.rackModel || L.profile !== 'landscape' || !L.seats[2].rack) return;
+    const g = new THREE.Group();
+    this.oppGroup = g;
+    const defs = [
+      [1, 'v', Math.PI / 2],
+      [2, 'h', Math.PI],
+      [3, 'v', -Math.PI / 2],
+    ];
+    for (const [seat, orient, yaw] of defs) {
+      const rr = L.seats[seat].rack;
+      const cx = rr.x + rr.w / 2;
+      const cy = rr.y + rr.h / 2;
+      let a;
+      let b;
+      if (orient === 'h') {
+        a = this._hit(rr.x, cy, this.planeT, new THREE.Vector3());
+        b = this._hit(rr.x + rr.w, cy, this.planeT, new THREE.Vector3());
+      } else {
+        a = this._hit(cx, rr.y, this.planeT, new THREE.Vector3());
+        b = this._hit(cx, rr.y + rr.h, this.planeT, new THREE.Vector3());
+      }
+      const len = a.distanceTo(b);
+      const sc = len / MODEL.w;
+      const holder = new THREE.Group();
+      const m = this.rackModel.clone(true);
+      m.traverse((o) => {
+        if (o.isMesh) {
+          o.castShadow = true;
+          o.receiveShadow = true;
+          o.material.envMapIntensity = 0.8;
+        }
+      });
+      holder.add(m);
+      holder.scale.setScalar(sc);
+      holder.rotation.y = yaw;
+      const c = this._hit(cx, cy, this.planeT, new THREE.Vector3());
+      holder.position.set(c.x, 0.0528 * sc, c.z);
+      // taş uçları: çıtanın üstünde ivory dilimler (sayıya göre)
+      const sl = new THREE.Group();
+      holder.add(sl);
+      this.oppSlivers[seat] = { group: sl, n: -1 };
+      g.add(holder);
+    }
+    this.scene.add(g);
+    this.shadowDirty = true;
+    if (this.counts) this.setCounts(this.counts);
+  }
+
+  setCounts(counts) {
+    this.counts = counts;
+    if (!this.oppSlivers) return;
+    for (const seat of [1, 2, 3]) {
+      const o = this.oppSlivers[seat];
+      if (!o || o.n === counts[seat]) continue;
+      o.n = counts[seat];
+      o.group.clear();
+      const n = Math.min(counts[seat], 22);
+      if (!n) continue;
+      const span = 0.4;
+      const pitch = span / Math.max(n, 10);
+      if (!this._sliverGeo) this._sliverGeo = new THREE.BoxGeometry(1, 1, 1);
+      if (!this._sliverMat) this._sliverMat = new THREE.MeshStandardMaterial({ color: 0xf1e7cf, roughness: 0.5 });
+      this.shadowDirty = true;
+      for (let i = 0; i < n; i++) {
+        const m = new THREE.Mesh(this._sliverGeo, this._sliverMat);
+        m.scale.set(pitch * 0.82, 0.012, 0.012);
+        m.position.set(-span / 2 + pitch * (i + 0.5) + (n < 10 ? (10 - n) * pitch * 0.5 : 0), 0.0535, -0.034);
+        m.castShadow = true;
+        o.group.add(m);
+      }
+    }
+    this.invalidate();
+  }
+
+  // ─── (dikey profil) rakip ıstakaları: masada duran ahşap ıstaka, taşların sırtı oyuncuya dönük ───
   setOpponent(seat, rect, count, vertical) {
     if (!this.L) return;
     const key = `${rect.x},${rect.y},${rect.w},${rect.h},${count},${vertical},${this.W}`;
@@ -513,7 +871,7 @@ export class Stage3D {
     body.castShadow = true;
     body.receiveShadow = true;
     const face = new THREE.Mesh(this.faceGeo, new THREE.MeshPhysicalMaterial({ transparent: true, roughness: 0.5, clearcoat: 0.3, clearcoatRoughness: 0.4, alphaTest: 0.5 }));
-    const back = new THREE.Mesh(this.faceGeo, new THREE.MeshPhysicalMaterial({ map: faceTexture({ kind: 'back' }), transparent: true, roughness: 0.36, clearcoat: 0.6, alphaTest: 0.5 }));
+    const back = new THREE.Mesh(this.faceGeo, new THREE.MeshPhysicalMaterial({ map: faceTexture({ kind: 'back' }), transparent: true, roughness: 0.5, clearcoat: 0.15, alphaTest: 0.5, color: 0xb8c4bd }));
     back.rotation.y = Math.PI;
     face.receiveShadow = true;
     inner.add(body, face, back);
@@ -585,12 +943,14 @@ export class Stage3D {
     m.el = s.el;
     const flip = this._place(m.group, s.x, s.y, s.h, s.rot, s.sc, s.flip, s.z, this._rackT(s.x, s.y));
     m.inner.rotation.set(0.05 * this._rackT(s.x, s.y), flip * DEG, 0);
+    this.shadowDirty = true;
     this.invalidate();
   }
 
   remove(id) {
     const m = this.meshes.get(id);
     if (!m) return;
+    this.shadowDirty = true;
     this.scene.remove(m.group);
     m.face.material.dispose();
     m.back.material.dispose();
@@ -611,6 +971,7 @@ export class Stage3D {
     this._syncFace(m);
     this._place(m.group, x, y, z > 100 ? 10 : 0, rot, sc, flip, z % 100, this._rackT(x, y));
     m.inner.rotation.set(0, flip * DEG, 0);
+    this.shadowDirty = true;
     this.invalidate();
   }
 
@@ -642,11 +1003,15 @@ export class Stage3D {
     this._raf = 0;
     if (!this.dirty) return;
     this.dirty = false;
+    const busy = this._slotFrame(performance.now());
+    this.renderer.shadowMap.needsUpdate = this.shadowDirty;
+    this.shadowDirty = false;
     for (const m of this.meshes.values()) {
       this._syncFace(m);
       m.group.visible = m.el.style.display !== 'none';
     }
     this.renderer.render(this.scene, this.camera);
+    if (busy) this.invalidate();
   }
 
   destroy() {
