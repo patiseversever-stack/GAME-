@@ -182,7 +182,8 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
   touch-action:pan-x;scrollbar-width:none;padding:0 7vw;gap:4vw;min-height:0}
 #chapters::-webkit-scrollbar{display:none}
 .chap{flex:0 0 86vw;max-width:440px;scroll-snap-align:center;display:flex;flex-direction:column;align-items:center;padding:16px 8px;border-radius:28px;position:relative;
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.015));border:1px solid rgba(255,240,220,.12)}
+  background:linear-gradient(180deg,rgba(34,26,58,.84),rgba(16,12,30,.9));border:1px solid rgba(255,240,220,.14);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.chap .info{display:contents}.chap svg.const{order:2}.chap .cstat{order:3}
 .chap .num{font-size:11px;letter-spacing:.42em;color:var(--gold-2);font-weight:700}
 .chap h6{font-family:var(--serif);font-style:italic;font-weight:600;font-size:30px;margin-top:4px;text-align:center}
 .chap .desc{font-size:12px;color:var(--ivory-dim);letter-spacing:.04em;margin-top:4px;text-align:center;padding:0 10px}
@@ -223,6 +224,20 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #ending p{font-size:15px;line-height:1.6;color:var(--ivory);max-width:340px;text-shadow:0 1px 10px rgba(0,0,0,.5)}
 
 #rotateNote{display:none}
+@media (min-aspect-ratio: 5/4){
+  #title{justify-content:center;align-items:flex-start;gap:7vh;padding-left:calc(var(--sal) + 7vw)}
+  #title .brand{text-align:left}
+  #title h1{font-size:clamp(46px,8vw,96px)}
+  #title .actions{align-items:flex-start}
+  #title .hint{order:3}
+  #complete{padding-top:calc(var(--sat) + 4vh)}
+  #stars{margin-top:3vh}
+  .chap{flex:0 0 min(640px,72vw);max-width:none;flex-direction:row;align-items:stretch;padding:14px 18px 14px 26px;gap:10px}
+  .chap .info{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:6px;flex:0 0 36%;text-align:left}
+  .chap h6,.chap .desc{text-align:left}.chap .desc{padding:0}
+  .chap svg.const{flex:1;height:100%;max-height:none;margin:0}
+  #map .modes{margin-top:8px}#map .skins{margin-top:8px}
+}
 </style>
 </head>
 <body>
@@ -760,15 +775,15 @@ const CHAPTERS = [
   {
     key: 'tuz', name: 'Tuz Gölü', roman: 'IV', constellation: 'Flamingo',
     sub: 'Kristaller ışık ister, Zifir gölge.', hint: 'Işık köprüleri yalnızca kristal aydınlıkken belirir.',
-    tilt: 46, thMin: 14, features: { bridges: true },
+    tilt: 46, thMin: 14, features: { bridges: true }, light: { sun: 0.74, hemi: 0.8 },
     pal: {
       skyLowZ: '#5d5fa4', skyLowH: '#ffb4c6', skyHighZ: '#8ab0e6', skyHighH: '#fde4f0',
       belowLow: '#f6cfe0', belowHigh: '#f4f0fb', seaDeep: '#b3a3c9', sunLow: '#ff9f86', sunHigh: '#fff2f0',
       hemiSky: '#c4c4ff', hemiGround: '#f0c4d4',
-      ground: '#eeeaf0', groundVar: ['#e2dde8', '#f7f4f8', '#dcd3e2', '#f0e6ee'], path: '#cfc6db', pathEdge: '#9d90ae', pathStone: '#e4def0',
+      ground: '#ebe6ef', groundVar: ['#ddd5e3', '#f4f0f6', '#d6cbdf', '#efe4ec'], path: '#b9aecb', pathEdge: '#857898', pathStone: '#d6cde4',
       cliffTop: '#f2eef5', soil: '#d9c8d6', bands: ['#ead8e2', '#d8c2d2', '#f4e8ee', '#cbb3c7', '#e2cfda'], rockDark: '#8a7690',
       grass: ['#e7e3ef', '#f5f2f8', '#d9d2e6', '#ffffff'], flowers: ['#ff8fb8', '#ffffff', '#ffc2d6', '#e86a9a'],
-      grade: { lift: [0.03, 0.02, 0.05], gamma: [1, 1, 1], gain: [1.0, 0.98, 1.02], sat: 1.04, contrast: 1.03 },
+      grade: { lift: [0.02, 0.01, 0.04], gamma: [1.04, 1.04, 1.02], gain: [0.98, 0.96, 1.0], sat: 1.1, contrast: 1.1 },
     },
   },
   {
@@ -1741,7 +1756,7 @@ void main(){
   s += texture2D(tSrc, vUv - h).rgb; s += texture2D(tSrc, vUv + h).rgb;
   s += texture2D(tSrc, vUv + vec2(h.x, -h.y)).rgb; s += texture2D(tSrc, vUv - vec2(h.x, -h.y)).rgb;
   s /= 8.0;
-  if (uFirst > 0.5) s = k(s);
+  if (uFirst > 0.5) { if (any(isnan(s)) || any(isinf(s))) s = vec3(0.0); s = k(s); }
   gl_FragColor = vec4(s, 1.0);
 }`;
 const UP_FRAG = /* glsl */`
@@ -1785,6 +1800,7 @@ void main(){
   vec3 col;
   if (uCA > 0.0001){ vec2 cd = (uv - 0.5) * uCA; col = vec3(texture2D(tScene, uv + cd).r, texture2D(tScene, uv).g, texture2D(tScene, uv - cd).b); }
   else col = texture2D(tScene, uv).rgb;
+  if (any(isnan(col))) col = vec3(0.0);
 #ifdef TILT
   float ty = abs(uv.y - uTiltC);
   float b = smoothstep(uTiltW, uTiltW + 0.34, ty) * uTilt;
@@ -1804,7 +1820,7 @@ void main(){
     for (int i = 0; i < 4; i++){
       float k = float(i) * 0.38 + 0.45; vec2 gp = uSunUV + axis * k * 2.0;
       float r = 0.025 + float(i) * 0.018; float gd = length((uv - gp) * vec2(uAspect, 1.0));
-      fl += mix(uFlareCol, vec3(0.5, 0.7, 1.0), float(i) / 3.0) * smoothstep(r, r * 0.55, gd) * 0.10;
+      fl += mix(uFlareCol, vec3(0.5, 0.7, 1.0), float(i) / 3.0) * (1.0 - smoothstep(r * 0.55, r, gd)) * 0.10;
     }
     col += fl * uSunVis * uFlare;
   }
@@ -1818,7 +1834,7 @@ void main(){
   // gece tonu (soğuk)
   col = mix(col, col * vec3(0.82, 0.9, 1.18), uNight * 0.35);
   vec2 vd = (vUv - 0.5) * vec2(uAspect * 0.8, 1.0);
-  float vig = smoothstep(0.95, 0.28, length(vd));
+  float vig = (1.0 - smoothstep(0.28, 0.95, length(vd)));
   col *= mix(1.0, vig, uVignette);
   col += vec3(1.0, 0.36, 0.08) * (1.0 - vig) * uDanger * 0.55;
   col += uFlashCol * uFlash;
@@ -1935,9 +1951,10 @@ function injectWorld(sh, flags) {
       vec3 nc = gl_FragColor.rgb * vec3(0.15, 0.19, 0.4) + vec3(0.002, 0.003, 0.011);
       gl_FragColor.rgb = mix(gl_FragColor.rgb, nc, ins * 0.92);
       float nd = length(vNW.xz - uNightC);
-      gl_FragColor.rgb += vec3(0.65, 0.42, 1.0) * exp(-pow((nd - uNightR) * 1.1, 2.0)) * uNightRim * 1.6;
+      float rd = (nd - uNightR) * 1.1;
+      gl_FragColor.rgb += vec3(0.65, 0.42, 1.0) * exp(-rd * rd) * uNightRim * 1.6;
       ${flags.noFog ? '' : 'float fd = length(vNW - uCamPos); gl_FragColor.rgb = mix(gl_FragColor.rgb, uFogCol, smoothstep(uFogNear, uFogFar, fd));'}
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, uBelowCol, smoothstep(-3.0, -11.5, vNW.y) * 0.94);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, uBelowCol, (1.0 - smoothstep(-11.5, -3.0, vNW.y)) * 0.94);
     }
     #include <dithering_fragment>`);
 }
@@ -1974,7 +1991,7 @@ float h13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fra
 void main(){
   vec3 d = normalize(vDir); float h = d.y;
   vec3 col = mix(uHor, uZen, pow(smoothstep(-0.03, 0.9, h), 0.55));
-  col = mix(col, uBelow, smoothstep(0.03, -0.3, h));
+  col = mix(col, uBelow, (1.0 - smoothstep(-0.3, 0.03, h)));
   float sd = max(dot(d, uSunDir), 0.0);
   float ecl = 1.0 - uEclipse * 0.92;
   col += uSunCol * (pow(sd, 5.0) * 0.32 + pow(sd, 48.0) * 0.6) * ecl * (1.0 - uNight * 0.85);
@@ -1985,7 +2002,7 @@ void main(){
   float st = uStars;
   if (st > 0.001){
     vec3 sp = d * 180.0; vec3 cell = floor(sp); float r = h13(cell);
-    if (r > 0.972){ vec3 f = fract(sp) - 0.5; float s = smoothstep(0.16, 0.0, length(f)) * (0.55 + 0.45 * sin(uTime * (1.5 + r * 3.0) + r * 60.0)); col += vec3(0.9, 0.92, 1.0) * s * st * 1.6 * smoothstep(-0.1, 0.25, h); }
+    if (r > 0.972){ vec3 f = fract(sp) - 0.5; float s = (1.0 - smoothstep(0.0, 0.16, length(f))) * (0.55 + 0.45 * sin(uTime * (1.5 + r * 3.0) + r * 60.0)); col += vec3(0.9, 0.92, 1.0) * s * st * 1.6 * smoothstep(-0.1, 0.25, h); }
     float neb = sin(d.x * 3.0 + d.z * 2.0) * sin(d.y * 4.0 - d.x * 1.5); col += vec3(0.22, 0.12, 0.35) * max(neb, 0.0) * 0.18 * st;
   }
   gl_FragColor = vec4(col, 1.0);
@@ -2155,6 +2172,30 @@ arc2.g.visible = false;
 
 /* ---------- uzak adalar & kuşlar ---------- */
 const farGroup = new THREE.Group(); scene.add(farGroup);
+function buildFarIslands(chap) {
+  farGroup.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
+  farGroup.clear();
+  const pal = chap.pal, rng = new RNG(1234 + chap.roman.length * 77);
+  const mat = worldMat({ vertexColors: true, roughness: 0.95, flatShading: true });
+  const spots = [[-46, 5, -66, 2.4], [42, 1, -78, 3.0], [-84, 2, -30, 3.4], [78, 6, -40, 2.6], [-20, 11, -118, 4.2], [26, -1, -52, 1.6], [-58, 0, 4, 2.0], [62, 1, 2, 2.2]];
+  for (const [x, y, z, s] of spots) {
+    const P = [];
+    const n = rng.int(6, 9), r = rng.range(1.6, 2.4);
+    P.push(part(new THREE.CylinderGeometry(r, r * 0.92, 0.35, n), pal.cliffTop, { pos: [0, 0, 0], jit: 0.08 }));
+    P.push(part(new THREE.ConeGeometry(r * 0.92, r * rng.range(1.6, 2.4), n, 3), pal.bands[rng.int(0, pal.bands.length - 1)], { pos: [0, -r * 1.0 - 0.17, 0], rot: [PI, 0, 0], jit: 0.16, top: pal.rockDark, y0: 0, y1: -r * 2 }));
+    const t = rng.int(1, 3);
+    for (let k = 0; k < t; k++) {
+      const a = rng.range(0, TAU), d = rng.range(0, r * 0.55), h = rng.range(0.9, 1.6);
+      if (chap.key === 'peri' || chap.key === 'tuz') P.push(part(new THREE.ConeGeometry(0.35, h, 7), chap.key === 'tuz' ? '#f4eef4' : '#e2c19c', { pos: [Math.cos(a) * d, 0.17 + h / 2, Math.sin(a) * d] }));
+      else P.push(part(new THREE.ConeGeometry(0.28, h, 6), chap.key === 'ikiz' ? '#7a5ad0' : '#3d6a34', { pos: [Math.cos(a) * d, 0.17 + h / 2, Math.sin(a) * d] }));
+    }
+    const m = new THREE.Mesh(mergeParts(P, false), mat);
+    m.position.set(x, y, z); m.scale.setScalar(s); m.rotation.y = rng.range(0, TAU);
+    m.userData = { y, ph: rng.range(0, TAU) };
+    farGroup.add(m);
+  }
+}
+function updateFar(t) { for (const m of farGroup.children) m.position.y = m.userData.y + Math.sin(t * 0.25 + m.userData.ph) * 0.6; }
 const birds = { mesh: null, n: 9, t: 0, active: false, dir: 1, y: 0, z: 0, x0: 0 };
 function buildBirds() {
   const g = new THREE.BufferGeometry();
@@ -2245,7 +2286,8 @@ function lathe(profile, seg) { return new THREE.LatheGeometry(profile.map((p) =>
 const matProp = worldMat({ vertexColors: true, roughness: 0.84, metalness: 0 });
 const matPropSmooth = worldMat({ vertexColors: true, roughness: 0.9, metalness: 0 });
 const matWindow = worldMat({ color: 0x26324e, roughness: 0.35, metalness: 0.1 }, { glow: true });
-const matGlowBasic = (c) => new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(2.6) });
+const GLOW_CACHE = new Map();
+const matGlowBasic = (c) => { let m = GLOW_CACHE.get(c); if (!m) { m = new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(2.6) }); m.userData.shared = true; GLOW_CACHE.set(c, m); } return m; };
 
 /* ---------- prop modelleri ---------- */
 function buildPropVisual(pr, key, rng) {
@@ -2408,7 +2450,10 @@ function buildPropVisual(pr, key, rng) {
   if (parts.length) { const m = new THREE.Mesh(mergeParts(parts), matProp); m.castShadow = m.receiveShadow = true; g.add(m); }
   if (smooth.length) { const m = new THREE.Mesh(mergeParts(smooth), matPropSmooth); m.castShadow = m.receiveShadow = true; g.add(m); }
   if (win.length) { const geo = mergeSimple(win); const m = new THREE.Mesh(geo, matWindow); m.receiveShadow = true; g.add(m); }
-  for (const e of extra) { const m = new THREE.Mesh(e.geo, e.mat); m.castShadow = !!e.cast; m.userData.extra = e.mat; g.add(m); }
+  // aynı malzemeli küçük detayları tek çizim çağrısında birleştir
+  const groups = new Map();
+  for (const e of extra) { const k = e.mat; if (!groups.has(k)) groups.set(k, { mat: e.mat, cast: !!e.cast, geos: [] }); groups.get(k).geos.push(e.geo); }
+  for (const gr of groups.values()) { const m = new THREE.Mesh(gr.geos.length > 1 ? mergeSimple(gr.geos) : gr.geos[0], gr.mat); m.castShadow = gr.cast; g.add(m); }
   g.position.set(pr.x, 0, pr.z); g.rotation.y = pr.yaw;
   return g;
 }
@@ -2558,12 +2603,19 @@ const matFlower = worldMat({ vertexColors: false, roughness: 0.8, metalness: 0 }
 /* ---------- bulut / balon ---------- */
 const BALLOON_COLS = [['#e8463a', '#ffd25a'], ['#2f6fd2', '#f5f0e6'], ['#f28a2e', '#7a3fb0'], ['#3fae6a', '#f3e9c8'], ['#ff6fa8', '#36c5c0'], ['#f5c542', '#d6403a']];
 function buildCloud(m, rng) {
-  const g = new THREE.Group();
-  const mat = worldMat({ color: 0xffffff, roughness: 1, metalness: 0, emissive: 0xfff2e6, emissiveIntensity: 0.16, transparent: true, opacity: 0.94, depthWrite: true }, { noFog: true });
+  // tüm puflar tek geometri; önce derinlik ön geçişi, sonra yalnızca en öndeki yüzey boyanır
+  const parts = [];
   for (const p of m.parts) {
-    const s = new THREE.Mesh(new THREE.IcosahedronGeometry(p.c.r, 2), mat); s.scale.set(1, p.c.sy, 1); s.position.set(p.dx, p.dy, p.dz); s.castShadow = true; g.add(s);
-    for (let k = 0; k < 2; k++) { const r = p.c.r * rng.range(0.45, 0.6); const q = new THREE.Mesh(new THREE.IcosahedronGeometry(r, 1), mat); const a = rng.range(0, TAU); q.position.set(p.dx + Math.cos(a) * (p.c.r - r) * 0.8, p.dy + p.c.r * p.c.sy * 0.35, p.dz + Math.sin(a) * (p.c.r - r) * 0.8); q.scale.set(1, 0.8, 1); g.add(q); }
+    parts.push(part(new THREE.IcosahedronGeometry(p.c.r, 2), '#ffffff', { pos: [p.dx, p.dy, p.dz], scale: [1, p.c.sy, 1], flat: false }));
+    for (let k = 0; k < 2; k++) { const r = p.c.r * rng.range(0.45, 0.6), a = rng.range(0, TAU); parts.push(part(new THREE.IcosahedronGeometry(r, 1), '#ffffff', { pos: [p.dx + Math.cos(a) * (p.c.r - r) * 0.8, p.dy + p.c.r * p.c.sy * 0.35, p.dz + Math.sin(a) * (p.c.r - r) * 0.8], scale: [1, 0.8, 1], flat: false })); }
   }
+  const geo = mergeParts(parts, false);
+  const g = new THREE.Group();
+  const pre = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, transparent: true }));
+  pre.renderOrder = 10;
+  const mat = worldMat({ vertexColors: true, roughness: 1, metalness: 0, emissive: 0xfff2e6, emissiveIntensity: 0.16, transparent: true, opacity: 0.9, depthWrite: false }, { noFog: true });
+  const vis = new THREE.Mesh(geo, mat); vis.renderOrder = 11; vis.castShadow = true;
+  g.add(pre, vis);
   g.userData.mat = mat;
   return g;
 }
@@ -2602,7 +2654,7 @@ void main(){
   float sw = a + r * 3.0 - uTime * 0.6;
   vec3 col = mix(vec3(0.02, 0.01, 0.06), vec3(0.1, 0.05, 0.28), 0.5 + 0.5 * sin(sw * 3.0));
   vec2 q = vec2(cos(sw), sin(sw)) * r * 8.0; vec2 cell = floor(q); float st = h(cell);
-  if (st > 0.82){ vec2 f = fract(q) - 0.5; col += vec3(0.9, 0.85, 1.0) * smoothstep(0.18, 0.0, length(f)) * (0.6 + 0.4 * sin(uTime * 3.0 + st * 40.0)); }
+  if (st > 0.82){ vec2 f = fract(q) - 0.5; col += vec3(0.9, 0.85, 1.0) * (1.0 - smoothstep(0.0, 0.18, length(f))) * (0.6 + 0.4 * sin(uTime * 3.0 + st * 40.0)); }
   col += vec3(0.55, 0.4, 1.0) * smoothstep(0.65, 1.0, r) * (1.4 + uPulse * 6.0);
   col += vec3(0.4, 0.3, 1.0) * uPulse * 3.0 * (1.0 - r);
   gl_FragColor = vec4(col, 1.0);
@@ -2682,8 +2734,8 @@ class IslandView {
         uniforms: bu, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
         vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
         fragmentShader: `uniform float uTime, uOn, uLen; varying vec2 vUv;
-          void main(){ float e = smoothstep(0.0, 0.12, vUv.x) * smoothstep(1.0, 0.88, vUv.x);
-            float st = fract(vUv.y * uLen * 1.6 - uTime * 1.8); float chev = smoothstep(0.0, 0.25, st) * smoothstep(0.65, 0.4, st);
+          void main(){ float e = smoothstep(0.0, 0.12, vUv.x) * (1.0 - smoothstep(0.88, 1.0, vUv.x));
+            float st = fract(vUv.y * uLen * 1.6 - uTime * 1.8); float chev = smoothstep(0.0, 0.25, st) * (1.0 - smoothstep(0.4, 0.65, st));
             float edge = smoothstep(0.8, 1.0, abs(vUv.x - 0.5) * 2.0);
             vec3 c = mix(vec3(0.5, 0.75, 1.6), vec3(1.6, 1.2, 0.6), vUv.y) * (0.35 + chev * 0.8 + edge * 1.4);
             float dots = step(0.5, fract(vUv.y * uLen * 3.0)) * edge * 0.25;
@@ -2718,6 +2770,17 @@ class IslandView {
       }
       const vm = new THREE.Mesh(mergeParts(vines, false), matPropSmooth); this.root.add(vm);
     }
+    // yörüngedeki kaya parçaları
+    this.orbit = new THREE.Group();
+    const orbs = [];
+    for (let k = 0; k < 9; k++) {
+      const a = (k / 9) * TAU + rng.range(-0.3, 0.3), r = rng.range(8.5, 12.5), y = rng.range(-5.5, -1.2), s = rng.range(0.25, 0.7);
+      const rx = Math.cos(a) * r * 0.75, rz = Math.sin(a) * r;
+      orbs.push(part(new THREE.IcosahedronGeometry(s, 0), pal.bands[k % pal.bands.length], { pos: [rx, y, rz], scale: [1, 0.8, 1], jit: s * 0.25, seed: k }));
+      orbs.push(part(new THREE.ConeGeometry(s * 0.9, s * 1.8, 6), pal.rockDark, { pos: [rx, y - s * 1.1, rz], rot: [PI, 0, 0], jit: s * 0.1 }));
+      orbs.push(part(new THREE.CylinderGeometry(s * 0.95, s * 0.9, 0.08, 7), pal.cliffTop, { pos: [rx, y + s * 0.62, rz] }));
+    }
+    const om = new THREE.Mesh(mergeParts(orbs, false), this.cliffMat); this.orbit.add(om); this.root.add(this.orbit);
     scene.add(this.root);
     this.introT = 0; this.popped = 0;
   }
@@ -2769,12 +2832,13 @@ class IslandView {
   sink(dt) { this.root.position.y -= dt * (8 + this.root.position.y * -1.6); this.root.rotation.z += dt * 0.02; }
   update(dt, t, ctx) {
     const lv = this.lv;
+    this.orbit.rotation.y += dt * 0.018; this.orbit.position.y = Math.sin(U.uTime.value * 0.4) * 0.25;
     for (const pr of lv.props) if (pr.rotor) pr.rotor.rotation.z = -(pr.mover.a0 + pr.mover.w * t);
     for (const mv of this.moverViews) {
       moverPose(mv.m, t, _mp); mv.v.position.set(_mp.x, _mp.y, _mp.z);
       // Zifir'i örtüyorsa saydamlaş
-      const fade = ctx.occludeFade(mv.v.position, mv.m.kind === 'cloud' ? 2.6 : 1.9);
-      const op = lerp(mv.m.kind === 'cloud' ? 0.94 : 1, 0.3, fade);
+      const fade = ctx.occludeFade(mv.v.position, mv.m.kind === 'cloud' ? 4.0 : 2.4);
+      const op = lerp(mv.m.kind === 'cloud' ? 0.88 : 1, mv.m.kind === 'cloud' ? 0.2 : 0.35, fade);
       if (mv.m.kind === 'cloud') mv.v.userData.mat.opacity = op;
       else {
         for (const m of mv.v.userData.mats) m.opacity = op;
@@ -2795,7 +2859,7 @@ class IslandView {
     this.root.traverse((o) => {
       if (o.geometry) o.geometry.dispose();
       const m = o.material;
-      if (m && m !== matProp && m !== matPropSmooth && m !== matWindow && m !== matGrass && m !== matFlower && typeof m.dispose === 'function') m.dispose();
+      if (m && m !== matProp && m !== matPropSmooth && m !== matWindow && m !== matGrass && m !== matFlower && !(m.userData && m.userData.shared) && typeof m.dispose === 'function') m.dispose();
     });
     this.tex.dispose(); this.topMat.dispose(); this.cliffMat.dispose();
   }
@@ -2811,9 +2875,9 @@ const PART_FRAG = `varying vec3 vC; varying float vA; varying float vT;
 void main(){
   vec2 c = gl_PointCoord - 0.5; float d = length(c);
   float a;
-  if (vT < 0.5) a = smoothstep(0.5, 0.0, d);
-  else if (vT < 1.5) { a = smoothstep(0.5, 0.12, d); a *= 0.75 + 0.25 * sin(atan(c.y, c.x) * 5.0 + vA * 9.0); }
-  else { float s = max(exp(-abs(c.x) * 26.0) * exp(-abs(c.y) * 3.5), exp(-abs(c.y) * 26.0) * exp(-abs(c.x) * 3.5)); a = s + smoothstep(0.22, 0.0, d); }
+  if (vT < 0.5) a = (1.0 - smoothstep(0.0, 0.5, d));
+  else if (vT < 1.5) { a = (1.0 - smoothstep(0.12, 0.5, d)); a *= 0.75 + 0.25 * sin(atan(c.y, c.x) * 5.0 + vA * 9.0); }
+  else { float s = max(exp(-abs(c.x) * 26.0) * exp(-abs(c.y) * 3.5), exp(-abs(c.y) * 26.0) * exp(-abs(c.x) * 3.5)); a = s + (1.0 - smoothstep(0.0, 0.22, d)); }
   if (a * vA < 0.003) discard;
   gl_FragColor = vec4(vC, a * vA);
 }`;
@@ -2873,7 +2937,7 @@ const FX = {
   burst(x, y, z, n, o) { for (let i = 0; i < n; i++) { const a = Math.random() * TAU, e = (Math.random() - 0.3) * PI * 0.5, sp = (o.sp || 3) * (0.4 + Math.random() * 0.8); (o.add ? fxAdd : fxMix).spawn(x, y, z, Math.cos(a) * Math.cos(e) * sp, Math.sin(e) * sp + (o.up || 0), Math.sin(a) * Math.cos(e) * sp, o); } },
   smoke(x, y, z, k = 1) { fxMix.spawn(x + (Math.random() - 0.5) * 0.25, y, z + (Math.random() - 0.5) * 0.25, (Math.random() - 0.5) * 0.4, 0.8 + Math.random() * 0.8, (Math.random() - 0.5) * 0.4, { c: [0.05, 0.04, 0.07], a: 0.55 * k, s: 0.35, s1: 1.1, life: 1.1 + Math.random() * 0.5, drag: 1.2, t: 1 }); },
   ember(x, y, z) { fxAdd.spawn(x, y, z, (Math.random() - 0.5) * 1.5, 1.2 + Math.random() * 1.6, (Math.random() - 0.5) * 1.5, { c: [3, 1.1, 0.25], a: 1, s: 0.09, s1: 0.03, life: 0.6 + Math.random() * 0.5, drag: 1.4, g: -1.2 }); },
-  mote(x, y, z, c) { fxAdd.spawn(x, y, z, (Math.random() - 0.5) * 0.2, 0.05 + Math.random() * 0.12, (Math.random() - 0.5) * 0.2, { c, a: 0.9, s: 0.07, s1: 0.07, life: 4 + Math.random() * 3, drag: 0.1 }); },
+  mote(x, y, z, c, s = 0.07) { fxAdd.spawn(x, y, z, (Math.random() - 0.5) * 0.2, 0.05 + Math.random() * 0.12, (Math.random() - 0.5) * 0.2, { c, a: 0.9, s, s1: s, life: 4 + Math.random() * 3, drag: 0.1 }); },
   sparkle(x, y, z, c, s = 0.5) { fxAdd.spawn(x, y, z, 0, 0.3, 0, { c, a: 1, s, s1: s * 0.2, life: 0.6, drag: 2, t: 2 }); },
 };
 
@@ -2923,13 +2987,13 @@ void main(){
   vec3 H = normalize(uSunDir + V); float sp = pow(max(dot(N, H), 0.0), 70.0);
   col += uSunCol * sp * (0.6 + uLit * 2.5);
   float cr = n3(vL * 9.0 + vec3(0.0, uTime * 0.8, 0.0)) * 0.65 + n3(vL * 21.0 - uTime) * 0.35;
-  float crack = smoothstep(0.55, 0.62, cr) * smoothstep(0.75, 0.62, cr);
+  float crack = smoothstep(0.55, 0.62, cr) * (1.0 - smoothstep(0.62, 0.75, cr));
   col += vec3(4.0, 1.3, 0.25) * crack * uBurn * 2.2 + vec3(1.5, 0.45, 0.08) * uBurn * fr * 2.0;
   gl_FragColor = vec4(col * uFade, 1.0);
 }`;
 const RING_FRAG = `uniform float uV, uA, uTime; varying vec2 vUv;
 void main(){ vec2 p = vUv - 0.5; float r = length(p) * 2.0; float a = atan(p.x, -p.y) / 6.2831853 + 0.5;
-  float band = smoothstep(0.78, 0.82, r) * smoothstep(0.98, 0.94, r);
+  float band = smoothstep(0.78, 0.82, r) * (1.0 - smoothstep(0.94, 0.98, r));
   float fill = step(a, uV);
   vec3 c = mix(vec3(3.0, 0.7, 0.2), vec3(1.6, 1.4, 2.6), smoothstep(0.25, 0.7, uV));
   float pulse = uV < 0.3 ? 0.6 + 0.4 * sin(uTime * 18.0) : 1.0;
@@ -3142,19 +3206,21 @@ const Cam = {
       this.place(cam, pose); cam.updateMatrixWorld();
       const b = bounds(pts), q = bounds(orbPts);
       const top = Math.max(b.y1, q.y1), bottom = b.y0;
-      const rX = Math.max((b.x1 - b.x0) / (2 * o.xI), (q.x1 - q.x0) / (2 * o.xO));
+      const wx0 = o.wx0 ?? -1, wx1 = o.wx1 ?? 1, ww = (wx1 - wx0) / 2;
+      const rX = Math.max((b.x1 - b.x0) / (2 * o.xI * ww), (q.x1 - q.x0) / (2 * o.xO * ww));
       const rY = (top - bottom) / (o.yTop - o.yBot);
       pose.dist *= Math.pow(Math.max(rX, rY), 0.7);
       const hh = Math.tan(deg(fov / 2)) * pose.dist;
       pose.target.addScaledVector(up, ((top + bottom) / 2 - (o.yTop + o.yBot) / 2) * hh * 0.6);
-      pose.target.x += ((b.x0 + b.x1) / 2) * hh * aspect * 0.5;
+      pose.target.x += ((b.x0 + b.x1) / 2 - (wx0 + wx1) / 2) * hh * aspect * 0.5;
     }
     return pose;
   },
   fit(lv) {
     const port = innerWidth < innerHeight;
     this.set(this.base, this.solveFit(lv, { yTop: port ? 0.8 : 0.84, yBot: -0.9, xI: 0.9, xO: 0.99 }));
-    this.title = this.solveFit(lv, { yTop: port ? 0.5 : 0.56, yBot: port ? -0.62 : -0.72, xI: 0.86, xO: 0.97 });
+    const wide = innerWidth / innerHeight > 1.25;
+    this.title = wide ? this.solveFit(lv, { yTop: 0.8, yBot: -0.86, xI: 0.92, xO: 0.98, wx0: -0.02, wx1: 0.96 }) : this.solveFit(lv, { yTop: port ? 0.5 : 0.56, yBot: port ? -0.62 : -0.72, xI: 0.86, xO: 0.97 });
   },
   cinema(to, dur, ease = Ease.inOutCubic) { this.cine = { from: { target: this.cur.target.clone(), dist: this.cur.dist, pitch: this.cur.pitch, yaw: this.cur.yaw, fov: this.cur.fov }, to, t: 0, dur, ease }; },
   pose(mod = {}) { const b = this.base; return { target: (mod.target || b.target).clone(), dist: mod.dist ?? b.dist, pitch: mod.pitch ?? b.pitch, yaw: mod.yaw ?? b.yaw, fov: mod.fov ?? b.fov }; },
@@ -3195,24 +3261,26 @@ function applyLighting(dt) {
   const e = Math.asin(clamp(L1.y, 0, 1)), eMax = PI / 2 - lv.sun.tilt;
   const k = smoothstep(0.08, 0.92, Math.sin(e) / Math.sin(eMax));
   skyColors(lv.chap.pal, k, scA);
-  if (G.palT < 1 && G.prevPal) { skyColors(G.prevPal, k, scB); for (const key in scA) scA[key].lerp(scB, 1 - Ease.inOutSine(G.palT)); }
+  if (G.palT < 1 && G.prevPal) { skyColors(G.prevPal, k, scB); for (const key in scA) scA[key].lerp(scB[key], 1 - Ease.inOutSine(G.palT)); }
   const night = G.night, ecl = G.ecl.amt;
   // gökyüzü
   skyU.uZen.value.copy(scA.zen).lerp(NIGHT.zen, Math.max(night, ecl * 0.75));
-  skyU.uHor.value.copy(scA.hor).lerp(NIGHT.hor, Math.max(night, ecl * 0.6));
-  skyU.uBelow.value.copy(scA.below).lerp(NIGHT.below, Math.max(night * 0.9, ecl * 0.5));
+  skyU.uHor.value.copy(scA.hor).lerp(NIGHT.hor, Math.max(night, ecl * 0.85));
+  skyU.uBelow.value.copy(scA.below).lerp(NIGHT.below, Math.max(night * 0.9, ecl * 0.85));
   skyU.uSunDir.value.copy(L1); skyU.uSunCol.value.copy(scA.sun);
   skyU.uTwin.value = lv.sun.twin ? 1 : 0; skyU.uSun2Dir.value.copy(L2);
   skyU.uStars.value = Math.max(night, ecl * 0.85); skyU.uEclipse.value = ecl; skyU.uNight.value = night;
-  seaU.uLit.value.copy(scA.below).multiplyScalar(1.12).lerp(NIGHT.sea, night * 0.6); seaU.uDeep.value.copy(scA.deep).lerp(NIGHT.sea, night);
+  const nE = Math.max(night, ecl * 0.8);
+  seaU.uLit.value.copy(scA.below).multiplyScalar(1.12).lerp(NIGHT.sea, nE * 0.6); seaU.uDeep.value.copy(scA.deep).lerp(NIGHT.sea, nE);
   U.uFogCol.value.copy(skyU.uHor.value); U.uBelowCol.value.copy(skyU.uBelow.value);
   // ışıklar
   sunLight.position.copy(L1).multiplyScalar(60); sunLight.target.position.set(0, 0, 0);
   sunLight.color.copy(scA.sun);
-  sunLight.intensity = 3.9 * lerp(0.7, 1, smoothstep(0.05, 0.5, Math.sin(e))) * (1 - ecl * 0.94);
+  const LK = lv.chap.light || { sun: 1, hemi: 1 };
+  sunLight.intensity = 3.9 * LK.sun * lerp(0.7, 1, smoothstep(0.05, 0.5, Math.sin(e))) * (1 - ecl * 0.94);
   if (lv.sun.twin) { sunLight2.position.copy(L2).multiplyScalar(60); sunLight2.target.position.set(0, 0, 0); sunLight2.intensity = 2.0 * (1 - ecl * 0.94); sunLight.intensity *= 0.8; }
   hemi.color.copy(scA.hemiS).lerp(_cc.set('#3a4a9a'), ecl * 0.7); hemi.groundColor.copy(scA.hemiG).lerp(_cc.set('#1a1830'), ecl * 0.7);
-  hemi.intensity = lerp(0.62, 0.85, k) * (1 - ecl * 0.55);
+  hemi.intensity = lerp(0.62, 0.85, k) * LK.hemi * (1 - ecl * 0.55);
   // küreler
   orbPosInto(G.u, lv.sun.tilt, lv.sun.thMin, orb.g.position);
   orb.u.uCol.value.copy(scA.sun).lerp(_cc.set('#fff4dc'), 0.4);
@@ -3274,6 +3342,7 @@ function setChapterLook(lv) {
   if (lv.sun.twin) arc2.build(lv.sun.tilt2, lv.sun.thMin2, true);
   if (sunLight2.castShadow !== lv.sun.twin) { sunLight2.castShadow = lv.sun.twin; sunLight2.visible = lv.sun.twin; }
   audio.setChapter(lv.spec.ch);
+  if (G.farChap !== lv.spec.ch) { G.farChap = lv.spec.ch; buildFarIslands(lv.chap); }
   birds.mesh.material.uniforms.uCol.value.set(lv.spec.ch === 4 ? '#2a1d4a' : '#2b2433');
 }
 function enterLevel(spec, opts = {}) {
@@ -3283,6 +3352,7 @@ function enterLevel(spec, opts = {}) {
   if (G.view) { if (G.outView) G.outView.dispose(); G.outView = G.view; G.outT = 0; }
   G.spec = spec; setChapterLook(lv); G.lv = lv;
   G.view = new IslandView(lv);
+  try { renderer.compile(scene, camera); } catch (e) {}
   resetRun();
   zifir.g.visible = false;
   Cam.fit(lv);
@@ -3336,7 +3406,7 @@ function retry(fromComplete = false) {
 function failLevel() {
   if (G.state !== 'play') return;
   G.state = 'fail'; G.stateT = 0; G.fShown = false;
-  G.hitStop = 0.12; G.slowT = 0.8; G.slowK = 0.3; G.trauma = 0.6; G.ca = 0.02;
+  G.hitStop = 0.12; G.slowT = 0.8; G.slowK = 0.3; G.trauma = 0.6; G.ca = 0.02; G.ecl.active = false;
   audio.setSizzle(0); audio.fail(); haptic([30, 40, 70]);
   const x = zifir.g.position.x, z = zifir.g.position.z;
   FX.burst(x, 0.35, z, 36, { c: [0.04, 0.03, 0.06], a: 0.7, s: 0.32, s1: 1.0, life: 1.4, sp: 2.2, up: 1, drag: 2.2, t: 1 });
@@ -3355,7 +3425,7 @@ function showFail() {
     $('#fProg').style.width = '100%';
   } else {
     $('#fTitle').textContent = lines[(Save.data.fails[lv.spec.g] || 0) % lines.length];
-    $('#fSub').textContent = `Yolun %${pct}'i`;
+    $('#fSub').textContent = `Yol · %${pct}`;
     $('#fProg').style.width = '0%'; requestAnimationFrame(() => { $('#fProg').style.width = pct + '%'; });
   }
   $('#fail').classList.toggle('offerhint', G.mode === 'story' && (Save.data.fails[lv.spec.g] || 0) >= 3 && !G.hint);
@@ -3651,7 +3721,7 @@ function ambient(dtR) {
   if (Math.random() < dtR * (n > 0.4 ? 9 : 3)) {
     const ch = lv.chunks[Math.floor(Math.random() * lv.chunks.length)];
     const x = ch.cx + (Math.random() - 0.5) * ch.hx * 1.8, z = ch.cz + (Math.random() - 0.5) * ch.hz * 1.8;
-    if (n > 0.4) FX.mote(x, 0.2 + Math.random() * 1.2, z, [2.2, 2.1, 0.7]);
+    if (n > 0.4) FX.mote(x, 0.2 + Math.random() * 1.2, z, [2.6, 2.4, 0.8], 0.13);
     else { const c = sunLight.color; FX.mote(x, 0.5 + Math.random() * 3, z, [c.r * 1.2, c.g * 1.1, c.b * 0.9]); }
   }
 }
@@ -3712,7 +3782,7 @@ function update(dt, dtR) {
       const t = G.stateT;
       const k = clamp01(t / 0.35); zifir.g.scale.setScalar(Math.max(0.001, 1 - Ease.inCubic(k)));
       if (t > 0.35) zifir.g.visible = false;
-      G.desat = damp(G.desat, 0.7, 4, dtR);
+      G.desat = damp(G.desat, 0.45, 4, dtR);
       if (t > 0.95 && !G.fShown) { G.fShown = true; showFail(); }
       break;
     }
@@ -3728,6 +3798,8 @@ function update(dt, dtR) {
     }
     case 'map': case 'ending': { G.night = damp(G.night, G.state === 'ending' ? 1 : G.mapNight, 1.5, dtR); U.uNightAmt.value = G.night; U.uNightR.value = 60; U.uNightRim.value = 0; break; }
   }
+  if (G.state !== 'play') { G.ecl.amt = damp(G.ecl.amt, 0, 6, dtR); if (G.ecl.amt < 0.01) G.ecl.amt = 0; }
+  if (G.state === 'play' || (G.ecl.amt > 0 && G.state === 'fail')) { U.uNightAmt.value = G.ecl.amt * 0.72; U.uNightR.value = 999; U.uNightRim.value = 0; }
   // görseller
   if (lv) {
     G.view.update(dtR, G.T, viewCtx);
@@ -3740,13 +3812,13 @@ function update(dt, dtR) {
     } else ghost.material.opacity = 0;
   }
   arc1.update(dtR); arc2.update(dtR);
-  ambient(dtR); updateBirds(dtR);
+  ambient(dtR); updateBirds(dtR); updateFar(U.uTime.value);
   fxAdd.update(dtR); fxMix.update(dtR); updatePrints(dtR); updatePops(dtR);
   // efekt sönümleri
   G.orbPulse = Math.max(0, (G.orbPulse || 0) - dtR * 4);
   G.trauma = Math.max(0, G.trauma - dtR * 1.4); G.flash = Math.max(0, G.flash - dtR * 2.6); G.fovKick = damp(G.fovKick, 0, 5, dtR); G.ca = damp(G.ca, 0, 3, dtR);
   if (G.state !== 'fail' && G.state !== 'rewind') G.desat = damp(G.desat, 0, 4, dtR);
-  Cam.zoom = G.state === 'play' ? 0.86 : G.state === 'ready' ? 0.93 : 1;
+  Cam.zoom = G.state === 'play' ? lerp(0.86, 1.0, G.ecl.amt) : G.state === 'ready' ? 0.93 : 1;
   Cam.update(dt, dtR);
   U.uCamPos.value.copy(camera.position);
   // gölge haritası: yalnızca gerektiğinde
@@ -3757,7 +3829,7 @@ function update(dt, dtR) {
   const pu = post.u, ecl = G.ecl.amt;
   pu.uTime.value = U.uTime.value; pu.uFlash.value = G.flash; pu.uFlashCol.value.copy(G.flashCol);
   pu.uCA.value = G.ca + (G.state === 'play' ? G.f * 0.004 : 0);
-  pu.uDesat.value = clamp01(G.desat + ecl * 0.3);
+  pu.uDesat.value = clamp01(G.desat + ecl * 0.08);
   pu.uExposure.value = 1.0 - ecl * 0.06 + G.night * 0.15;
   pu.uNight.value = G.night;
   pu.uBloomAdd.value = 0.35 + G.night * 0.4 + ecl * 0.3;
@@ -3861,7 +3933,7 @@ function buildMap() {
       svg += `</g>`;
     });
     svg += `</svg>`;
-    card.innerHTML = `<div class="num">${ch.roman}</div><h6>${ch.name}</h6><div class="desc">${ch.sub}</div>${svg}<div class="cstat">★ ${chapterStars(ci)}/24 · ${ch.constellation}</div><div class="lock">Önceki takımyıldızını tamamla</div>`;
+    card.innerHTML = `<div class="info"><div class="num">${ch.roman}</div><h6>${ch.name}</h6><div class="desc">${ch.sub}</div><div class="cstat">★ ${chapterStars(ci)}/24 · ${ch.constellation}</div></div>${svg}<div class="lock">Önceki takımyıldızını tamamla</div>`;
     box.appendChild(card);
   });
   box.querySelectorAll('.node').forEach((n) => n.addEventListener('click', () => { if (n.dataset.open === '1') { audio.ui(); startStory(+n.dataset.g); } }));
@@ -3984,7 +4056,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer,
   start: (g) => startStory(g), auto: (on = true) => { G.auto = on; }, setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
