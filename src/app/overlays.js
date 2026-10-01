@@ -9,12 +9,12 @@ import { icon } from '../ui/icons.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
-export function sheet(host, { title, body = '', actions = [], cls = '', onClose, dismissable = true }) {
+export function sheet(host, { title, sub = '', icon: ic = '', tone = 'blue', body = '', actions = [], cls = '', onClose, dismissable = true }) {
   const el = document.createElement('div');
   el.className = 'sheet-wrap ' + cls;
-  el.innerHTML = `<div class="sheet-frame"><i class="stud stud--tl"></i><i class="stud stud--tr"></i><i class="stud stud--bl"></i><i class="stud stud--br"></i>
+  el.innerHTML = `<div class="sheet-frame t-${tone}">
   <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-    <header class="sheet__head"><h2 class="sheet__title">${title}</h2>${dismissable ? '<button class="icon-btn sheet__x" data-x aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : ''}</header>
+    <header class="sheet__head">${ic ? `<span class="sheet__medal">${icon(ic)}</span>` : ''}<div class="sheet__ttl"><h2 class="sheet__title">${title}</h2>${sub ? `<p class="sheet__sub">${sub}</p>` : ''}</div>${dismissable ? '<button class="sheet__x" data-x aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : ''}</header>
     <div class="sheet__body"></div>
     ${actions.length ? `<footer class="sheet__foot">${actions.map((a, i) => `<button class="btn ${a.primary ? 'btn--primary' : ''} btn--lg" data-i="${i}">${a.label}</button>`).join('')}</footer>` : ''}
   </div></div>`;
@@ -42,7 +42,9 @@ export function sheet(host, { title, body = '', actions = [], cls = '', onClose,
     }
   });
   host.appendChild(el);
-  setTimeout(() => el.querySelector('.btn--primary, [data-i], [data-x]')?.focus(), 50);
+  const dlg = el.querySelector('.sheet');
+  dlg.tabIndex = -1;
+  setTimeout(() => dlg.focus({ preventScroll: true }), 30);
   return { el, close, body: bodyEl };
 }
 
@@ -121,7 +123,7 @@ export function resultScreen(host, o, history) {
   if (!matchOver) actions.push({ label: 'Sonraki el', primary: true, run: o.onNext });
   actions.push({ label: 'Geçmiş', close: false, run: () => historySheet(host, o.controller, history) });
   actions.push({ label: matchOver ? 'Yeni oyun' : 'Menü', primary: matchOver, run: matchOver ? o.onAgain : o.onMenu });
-  const sh = sheet(host, { title: matchOver ? 'Maç sonucu' : `El ${r.round} sonucu`, body: wrap, actions, cls: 'is-result', dismissable: false });
+  const sh = sheet(host, { title: matchOver ? 'Maç sonucu' : `El ${r.round} sonucu`, icon: 'trophy', tone: won ? 'mint' : 'violet', body: wrap, actions, cls: 'is-result', dismissable: false });
   if (won) {
     const cv = document.createElement('canvas');
     cv.className = 'result__confetti';
@@ -179,7 +181,7 @@ export function historySheet(host, ctl, history = []) {
   for (const h of history) {
     body.insertAdjacentHTML('beforeend', `<div class="hist__round"><b>El ${h.round}</b><span>${h.winner === null ? 'Berabere' : esc(name(h.winner)) + ' · ' + esc(FINISH_LABEL[h.finish] || '')}</span><span class="num">${h.deltas.map((d, i) => `${esc(name(i))} ${d > 0 ? '+' : ''}${d}`).join(' · ')}</span></div>`);
   }
-  return sheet(host, { title: 'Oyun özeti', body, cls: 'is-history' });
+  return sheet(host, { title: 'Oyun özeti', sub: 'Atılan taşlar ve önceki eller', icon: 'chart', tone: 'blue', body, cls: 'is-history' });
 }
 
 // ───────────── Ayarlar ─────────────
@@ -190,18 +192,13 @@ export function settingsSheet(host, settings) {
   const sw = (key, label) => `<label class="set-row">${lab(key, label)}<button class="switch" role="switch" data-sw="${key}" aria-checked="${!!settings.get(key)}"><i></i></button></label>`;
   const body = document.createElement('div');
   body.className = 'settings2';
-  body.innerHTML = `
-    <h3>Ses</h3>${sw('sfx', 'Efekt sesleri')}${sw('music', 'Müzik')}${sw('haptics', 'Titreşim')}
-    <h3>Deneyim</h3>${sw('gyro', 'Jiroskop kamera')}<p class="set-hint">Telefonu eğdikçe masa ve lamba ışığı hareket eder.</p>${sw('ambience', 'Kahvehane ambiyansı')}${sw('cinematic', 'Sinematik kamera')}
-    <div class="set-row">${lab('quality', 'Grafik')}${seg('quality', [['auto', 'Otomatik'], ['high', 'Yüksek'], ['medium', 'Dengeli'], ['low', 'Pil']])}</div>
-    <h3>Oynanış</h3>
-    <div class="set-row">${lab('botSpeed', 'Bot hızı')}${seg('botSpeed', [['slow', 'Yavaş'], ['normal', 'Normal'], ['fast', 'Hızlı']])}</div>
-    ${sw('tapToDiscard', 'Seçili taşa ikinci dokunuşla at')}${sw('meldHints', 'Perleri ıstakada işaretle')}${sw('tutorial', 'İpuçlarını göster')}
-    <h3>Görünüm ve erişilebilirlik</h3>
-    <div class="set-row">${lab('motion', 'Animasyon')}${seg('motion', [['auto', 'Sistem'], ['full', 'Tam'], ['reduced', 'Az']])}</div>
-    <div class="set-row">${lab('textScale', 'Yazı boyutu')}${seg('textScale', [['0.9', 'Küçük'], ['1', 'Normal'], ['1.15', 'Büyük'], ['1.3', 'Çok büyük']])}</div>
-    <div class="set-row">${lab('rack', 'Istaka')}${seg('rack', [['walnut', 'Ceviz'], ['maple', 'Akçaağaç'], ['ebony', 'Abanoz']])}</div>
-    <div class="set-row">${lab('tiles', 'Taşlar')}${seg('tiles', [['ivory', 'Fildişi'], ['bone', 'Kemik'], ['onyx', 'Oniks']])}</div>`;
+  const sec = (ttl, tone, inner) => `<section class="set-card t-${tone}"><h3>${ttl}</h3><div class="set-group">${inner}</div></section>`;
+  body.innerHTML = [
+    sec('Ses', 'blue', `${sw('sfx', 'Efekt sesleri')}${sw('music', 'Müzik')}${sw('haptics', 'Titreşim')}`),
+    sec('Deneyim', 'pink', `${sw('gyro', 'Jiroskop kamera')}<p class="set-hint">Telefonu eğdikçe masa ve lamba ışığı hareket eder.</p>${sw('ambience', 'Kahvehane ambiyansı')}${sw('cinematic', 'Sinematik kamera')}<div class="set-row">${lab('quality', 'Grafik')}${seg('quality', [['auto', 'Oto'], ['high', 'Yüksek'], ['medium', 'Dengeli'], ['low', 'Pil']])}</div>`),
+    sec('Oynanış', 'mint', `<div class="set-row">${lab('botSpeed', 'Bot hızı')}${seg('botSpeed', [['slow', 'Yavaş'], ['normal', 'Normal'], ['fast', 'Hızlı']])}</div>${sw('tapToDiscard', 'İkinci dokunuşla at')}${sw('meldHints', 'Perleri ıstakada işaretle')}${sw('tutorial', 'İpuçlarını göster')}`),
+    sec('Görünüm', 'amber', `<div class="set-row">${lab('motion', 'Animasyon')}${seg('motion', [['auto', 'Sistem'], ['full', 'Tam'], ['reduced', 'Az']])}</div><div class="set-row">${lab('textScale', 'Yazı boyutu')}${seg('textScale', [['0.9', 'Küçük'], ['1', 'Normal'], ['1.15', 'Büyük'], ['1.3', 'Çok büyük']])}</div><div class="set-row">${lab('rack', 'Istaka')}${seg('rack', [['walnut', 'Ceviz'], ['maple', 'Akçaağaç'], ['ebony', 'Abanoz']])}</div><div class="set-row">${lab('tiles', 'Taşlar')}${seg('tiles', [['ivory', 'Fildişi'], ['bone', 'Kemik'], ['onyx', 'Oniks']])}</div>`),
+  ].join('');
   body.addEventListener('click', (e) => {
     const s = e.target.closest('[data-sw]');
     if (s) {
@@ -221,5 +218,5 @@ export function settingsSheet(host, settings) {
       g.querySelectorAll('[data-v]').forEach((x) => x.setAttribute('aria-checked', String(x === b)));
     }
   });
-  return sheet(host, { title: 'Ayarlar', body, actions: [{ label: 'Tamam', primary: true }] });
+  return sheet(host, { title: 'Ayarlar', sub: 'Oyunu kendine göre ayarla', icon: 'cog', tone: 'teal', body, actions: [{ label: 'Tamam', primary: true }], cls: 'is-settings' });
 }

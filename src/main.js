@@ -46,7 +46,7 @@ const ui = {
     body.className = 'pause4';
     body.innerHTML = `<p class="sheet__p pause4__note">${icon('check')}<span>Oyun kaydedildi — istediğin an kaldığın yerden sürer.</span></p>
       <div class="pause4__grid">${items.map((it, i) => `<button class="pause4__item" data-pi="${i}"><i class="${it.c}">${icon(it.icon)}</i><span>${it.label}</span></button>`).join('')}</div>`;
-    const sh = sheet(app, { title: 'Duraklatıldı', body, actions: [{ label: 'Oyuna dön', primary: true }], cls: 'is-pause' });
+    const sh = sheet(app, { title: 'Duraklatıldı', sub: 'Oyun kaydedildi', icon: 'play', tone: 'teal', body, actions: [{ label: 'Oyuna dön', primary: true }], cls: 'is-pause' });
     body.addEventListener('click', (e) => {
       const b = e.target.closest('[data-pi]');
       if (!b) return;
@@ -56,13 +56,23 @@ const ui = {
     });
   },
   howTo() {
-    sheet(app, { title: 'Nasıl oynanır?', body: `<div class="howto2">
-      <p><b>1. Taş al.</b> Sıra sende iken ortadaki desteye dokun ya da soldaki çöplükten (yandan) al.</p>
-      <p><b>2. Diz.</b> Taşları ıstakada sürükle. <b>Diz</b> düğmesi perleri otomatik gruplar; tekrar basınca çift, renk ve sayı dizilişine geçer.</p>
-      <p><b>3. At.</b> Bir taşı sağdaki çöplüğe sürükle ya da seçip ikinci kez dokun.</p>
-      <p><b>Per:</b> aynı renk ardışık (3-4-5) ya da aynı sayı farklı renk (7-7-7). <b>Okey</b> (yıldızlı) her taşın yerine geçer; göstergenin bir fazlasıdır.</p>
-      <p><b>Okey:</b> 14 taşı perlere ayırıp son taşı atınca bitersin. Yedi çift de bitirir.</p>
-      <p><b>101:</b> ilk açılışta perlerin toplamı en az 101 (ya da 5 çift) olmalı. Açtıktan sonra masadaki perlere taş işleyebilirsin. Yandan aldığın taşı açılışta ya da işlemede kullanmak zorundasın. En düşük puan kazanır.</p></div>`, actions: [{ label: 'Anladım', primary: true }] });
+    const steps = [
+      ['hand', 'blue', 'Taş al', 'Sıra sende iken ortadaki desteye dokun ya da soldaki çöplükten (yandan) al.'],
+      ['sort', 'violet', 'Diz', 'Taşları ıstakada sürükle. “Diz” perleri otomatik gruplar; tekrar basınca çift, renk, sayı dizilişine geçer.'],
+      ['layers', 'teal', 'At', 'Bir taşı sağdaki çöplüğe sürükle ya da seçip ikinci kez dokun.'],
+      ['star', 'amber', 'Per ve okey', 'Aynı renk ardışık (3-4-5) ya da aynı sayı farklı renk (7-7-7). Yıldızlı okey her taşın yerine geçer.'],
+      ['trophy', 'mint', 'Bitir', '14 taşı perlere ayırıp son taşı at. Yedi çift de bitirir.'],
+      ['target', 'pink', '101 modu', 'İlk açılışta perlerin toplamı en az 101 (ya da 5 çift). Sonra perlere taş işleyebilirsin. Yandan aldığın taşı kullanmak zorundasın. En düşük puan kazanır.'],
+    ];
+    sheet(app, {
+      title: 'Nasıl oynanır?',
+      sub: 'Altı adımda okey',
+      icon: 'book',
+      tone: 'violet',
+      cls: 'is-howto',
+      body: `<div class="how6">${steps.map(([ic, t, h, d], i) => `<div class="how6__step t-${t}"><span class="how6__n">${icon(ic)}<em>${i + 1}</em></span><div><b>${h}</b><p>${d}</p></div></div>`).join('')}</div>`,
+      actions: [{ label: 'Anladım', primary: true }],
+    });
   },
   discardHistory(ctl) { historySheet(app, ctl, history); },
   settings() { settingsSheet(app, settings); },

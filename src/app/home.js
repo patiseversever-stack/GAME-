@@ -96,24 +96,49 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
 
   const open = {
     goals() {
-      const rows = goals.map((g) => `<div class="goal${g.done ? ' is-done' : ''}"><div><b>${esc(g.text)}</b><div class="bar"><i style="width:${Math.round((g.progress / g.target) * 100)}%"></i></div></div><span>${g.done ? '✓ +50 XP' : g.progress + '/' + g.target}</span></div>`).join('');
-      sheet(host, { title: 'Günlük görevler', body: `<div class="goals">${rows}</div><p class="sheet__p">Görevler her gün yenilenir. Tamamlanan her görev 50 XP verir.</p>`, actions: [{ label: 'Tamam', primary: true }] });
+      const tones = ['blue', 'violet', 'amber', 'pink'];
+      const ics = ['target', 'bolt', 'star', 'trophy'];
+      const rows = goals
+        .map((g, i) => {
+          const pctG = Math.min(100, Math.round((g.progress / g.target) * 100));
+          const t = tones[i % tones.length];
+          return `<div class="goal6 t-${t}${g.done ? ' is-done' : ''}"><span class="goal6__medal">${icon(ics[i % ics.length])}</span>
+            <div class="goal6__main"><div class="goal6__top"><b>${esc(g.text)}</b><em>${g.progress}/${g.target}</em></div><div class="bar6"><i style="width:${pctG}%"></i></div></div>
+            ${g.done ? `<span class="goal6__done">${icon('check')}</span>` : `<span class="goal6__xp">${icon('star')}50<small>XP</small></span>`}</div>`;
+        })
+        .join('');
+      sheet(host, { title: 'Günlük görevler', sub: `${doneGoals} / ${goals.length} tamamlandı`, icon: 'target', tone: 'blue', body: `<div class="goals6">${rows}</div><p class="foot6">${icon('refresh')}<span>Görevler her gün yenilenir. Her görev 50 XP verir.</span></p>`, actions: [{ label: 'Tamam', primary: true }] });
     },
     ach() {
       const got = profile.d.achievements;
-      const items = ACHIEVEMENTS.map((a) => `<div class="ach${got[a.id] ? ' is-got' : ''}"><i>${got[a.id] ? icon('trophy') : icon('lock')}</i><b>${esc(a.name)}</b><span>${esc(a.desc)}</span></div>`).join('');
-      sheet(host, { title: `Başarımlar · ${Object.keys(got).length}/${ACHIEVEMENTS.length}`, body: `<div class="achs">${items}</div>`, actions: [{ label: 'Tamam', primary: true }] });
+      const tones = ['amber', 'violet', 'teal', 'pink', 'mint', 'blue'];
+      const items = ACHIEVEMENTS.map((a, i) => {
+        const on = got[a.id];
+        return `<div class="ach6 t-${tones[i % tones.length]}${on ? ' is-got' : ''}"><span class="ach6__medal">${on ? icon('trophy') : icon('lock')}</span><b>${esc(a.name)}</b><small>${esc(a.desc)}</small></div>`;
+      }).join('');
+      sheet(host, { title: 'Başarımlar', sub: `${Object.keys(got).length} / ${ACHIEVEMENTS.length} kazanıldı`, icon: 'trophy', tone: 'amber', body: `<div class="achs6">${items}</div>`, actions: [{ label: 'Tamam', primary: true }] });
     },
     stats() {
       const s = profile.d.stats;
-      const row = (k, v) => `<div class="statrow"><span>${k}</span><b>${v}</b></div>`;
-      sheet(host, { title: 'İstatistikler', body: `<div class="stats">${row('Oynanan el', s.rounds)}${row('Kazanılan el', s.wins)}${row('Okey maçı', `${s.matches.okey.won}/${s.matches.okey.played}`)}${row('101 maçı', `${s.matches.okey101.won}/${s.matches.okey101.played}`)}${row('Galibiyet serisi', `${s.streak} (en iyi ${s.bestStreak})`)}${row('101’de açılış', s.open101)}</div>`, actions: [{ label: 'Tamam', primary: true }] });
+      const tile = (ic, tone, val, label) => `<div class="stat6 t-${tone}"><span class="stat6__medal">${icon(ic)}</span><b>${val}</b><small>${label}</small></div>`;
+      sheet(host, {
+        title: 'İstatistikler',
+        sub: 'Masadaki yolculuğun',
+        icon: 'chart',
+        tone: 'violet',
+        body: `<div class="stats6">${tile('layers', 'blue', s.rounds, 'Oynanan el')}${tile('trophy', 'amber', s.wins, 'Kazanılan el')}${tile('star', 'mint', `${s.matches.okey.won}/${s.matches.okey.played}`, 'Okey maçı')}${tile('target', 'pink', `${s.matches.okey101.won}/${s.matches.okey101.played}`, '101 maçı')}${tile('bolt', 'teal', `${s.streak}`, `Seri · en iyi ${s.bestStreak}`)}${tile('hand', 'violet', s.open101, '101’de açılış')}</div>`,
+        actions: [{ label: 'Tamam', primary: true }],
+      });
     },
     profile() {
-      sheet(host, { title: 'Profil', body: `<div class="stats">${row2('Seviye', prog.level)}${row2('Sonraki seviyeye', `${prog.need - prog.into} XP`)}</div>`, actions: [{ label: 'Tamam', primary: true }] });
-      function row2(k, v) {
-        return `<div class="statrow"><span>${k}</span><b>${v}</b></div>`;
-      }
+      sheet(host, {
+        title: esc(pname),
+        sub: `Seviye ${prog.level}`,
+        icon: 'user',
+        tone: 'mint',
+        body: `<div class="prof6"><div class="prof6__xp"><b>${prog.into}<small> / ${prog.need} XP</small></b><div class="bar6"><i style="width:${pct}%"></i></div><p>Sonraki seviyeye <b>${prog.need - prog.into} XP</b></p></div></div>`,
+        actions: [{ label: 'Tamam', primary: true }],
+      });
     },
   };
 

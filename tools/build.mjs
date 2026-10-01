@@ -1,7 +1,7 @@
 // Tek dosya derleme: CSS + JS (esbuild) + yazı tipleri satır içi → dist/okey-oyunu.html
 import { build } from 'esbuild';
 import fs from 'node:fs';
-const css = ['fonts.generated', 'tokens', 'base', 'tile', 'table', 'screens', 'ui5'].map((n) => fs.readFileSync(`styles/${n}.css`, 'utf8')).join('\n');
+const css = ['fonts.generated', 'tokens', 'base', 'tile', 'table', 'screens', 'ui5', 'ui7'].map((n) => fs.readFileSync(`styles/${n}.css`, 'utf8')).join('\n');
 const js = (await build({ entryPoints: ['src/main.js'], bundle: true, minify: true, format: 'iife', write: false, target: 'es2020' })).outputFiles[0].text.replace(/<\/script/g, '<\\/script');
 let html = fs.readFileSync('index.html', 'utf8');
 const rackGlb = fs.readFileSync('assets/models/rack.glb').toString('base64');
