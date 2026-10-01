@@ -7,20 +7,25 @@ const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
 export class Camera {
   constructor(el, getMotion) {
     this.el = el;
+    this.extra = []; // 3B tuval gibi aynı kamerayı paylaşan öğeler
     this.getMotion = getMotion;
   }
-  // kind: 'push' (yavaş yakınlaş), 'punch' (kısa vuruş), 'shake' (ceza: çok hafif), 'settle'
+  // kind: 'push' (yavaş yakınlaş), 'punch' (kısa vuruş), 'shake' (ceza), 'slam' (sert darbe), 'intro'
   play(kind) {
-    if (this.getMotion() === 'reduced' || !this.el.animate) return;
+    if (this.getMotion() === 'reduced') return;
     const e = 'cubic-bezier(.2,.8,.2,1)';
-    if (kind === 'push') this.el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.03) translateY(-6px)' }, { transform: 'scale(1)' }], { duration: 1500, easing: e });
-    else if (kind === 'punch') this.el.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.022) translateY(3px)', offset: 0.18 }, { transform: 'scale(1)' }], { duration: 520, easing: e });
-    else if (kind === 'shake')
-      this.el.animate(
-        [{ transform: 'translateX(0)' }, { transform: 'translateX(-3px)', offset: 0.15 }, { transform: 'translateX(3px)', offset: 0.35 }, { transform: 'translateX(-2px)', offset: 0.55 }, { transform: 'translateX(1px)', offset: 0.75 }, { transform: 'translateX(0)' }],
-        { duration: 360, easing: 'ease-out' }
-      );
-    else if (kind === 'intro') this.el.animate([{ transform: 'scale(1.07) translateY(-16px)', opacity: 0.4 }, { transform: 'scale(1) translateY(0)', opacity: 1 }], { duration: 1400, easing: e });
+    const K = {
+      push: [[{ transform: 'scale(1)' }, { transform: 'scale(1.03) translateY(-6px)' }, { transform: 'scale(1)' }], { duration: 1500, easing: e }],
+      punch: [[{ transform: 'scale(1)' }, { transform: 'scale(1.022) translateY(3px)', offset: 0.18 }, { transform: 'scale(1)' }], { duration: 520, easing: e }],
+      shake: [
+        [{ transform: 'scale(1.012) translate(0,0)' }, { transform: 'scale(1.012) translate(-7px,2px)', offset: 0.12 }, { transform: 'scale(1.012) translate(6px,-2px)', offset: 0.3 }, { transform: 'scale(1.012) translate(-4px,1px)', offset: 0.5 }, { transform: 'scale(1.012) translate(2px,0)', offset: 0.72 }, { transform: 'scale(1) translate(0,0)' }],
+        { duration: 460, easing: 'ease-out' },
+      ],
+      slam: [[{ transform: 'scale(1)' }, { transform: 'scale(1.045) translateY(5px)', offset: 0.1 }, { transform: 'scale(0.992)', offset: 0.35 }, { transform: 'scale(1)' }], { duration: 640, easing: e }],
+      intro: [[{ transform: 'scale(1.07) translateY(-16px)', opacity: 0.4 }, { transform: 'scale(1) translateY(0)', opacity: 1 }], { duration: 1400, easing: e }],
+    }[kind];
+    if (!K) return;
+    for (const el of [this.el, ...this.extra]) el?.animate?.(K[0], K[1]);
   }
 }
 

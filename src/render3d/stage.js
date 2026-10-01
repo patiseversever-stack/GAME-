@@ -9,6 +9,7 @@
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { fxMethods } from './stage-fx.js';
 import { faceTexture, descFromEl } from './tile-face.js';
 import { woodCanvas } from '../ui/wood.js';
 
@@ -723,12 +724,23 @@ export class Stage3D {
       g.add(mesh);
       this.glows[s] = { mesh, cur: 0 };
     }
+    this.glowRects = rects;
     this.scene.add(g);
+    this._lastTurn = this.turnSeat;
     this.setTurn(this.turnSeat);
   }
 
   setTurn(seat) {
+    const changed = seat !== this._lastTurn;
     this.turnSeat = seat;
+    this._lastTurn = seat;
+    if (changed && seat !== null && seat !== undefined && this.glowRects) {
+      // sıra bildirimi: istasyonun çevresinde ışık çerçevesi yayılır; benim sıram daha güçlü
+      const r = this.glowRects[seat];
+      const mine = seat === 0;
+      this.flashRect(r, { color: mine ? 'rgb(255,214,120)' : 'rgb(255,226,170)', dur: mine ? 1000 : 700, grow: mine ? 0.1 : 0.06, a: mine ? 1 : 0.7 });
+      if (mine) this.ping(r.x + r.w / 2, r.y + r.h * 0.5, { r: r.w * 0.22, glow: true, dur: 900, s0: 0.4, s1: 2.4, a: 0.6 });
+    }
     this.invalidate();
   }
 
@@ -1003,7 +1015,8 @@ export class Stage3D {
     this._raf = 0;
     if (!this.dirty) return;
     this.dirty = false;
-    const busy = this._slotFrame(performance.now());
+    const now = performance.now();
+    const busy = this._slotFrame(now) | this._fxFrame(now);
     this.renderer.shadowMap.needsUpdate = this.shadowDirty;
     this.shadowDirty = false;
     for (const m of this.meshes.values()) {
@@ -1022,3 +1035,5 @@ export class Stage3D {
     this.canvas.remove();
   }
 }
+
+Object.assign(Stage3D.prototype, fxMethods);

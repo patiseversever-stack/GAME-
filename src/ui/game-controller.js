@@ -106,7 +106,7 @@ export class GameController {
     scene.build();
     this.scene = scene;
     this.fx = {
-      camera: new Camera(scene.els.cam, () => (scene.sys.reduced ? 'reduced' : 'full')),
+      camera: Object.assign(new Camera(scene.els.cam, () => (scene.sys.reduced ? 'reduced' : 'full')), { extra: scene.stage ? [scene.stage.canvas] : [] }),
       confetti: new Confetti(this._confettiCanvas()),
       dust: new Dust(scene.els.canvas),
     };
@@ -651,6 +651,10 @@ export class GameController {
     const sc = this.scene;
     this.updateUI();
     sc._turnLight(0);
+    if (this._cueTurn !== this.game.state.turn) {
+      this._cueTurn = this.game.state.turn;
+      sc.cue('SIRA SENDE', this.game.state.turn.needsDraw ? 'Taş çek' : '');
+    }
     this.coachTurn();
   }
 

@@ -119,6 +119,8 @@ export class Choreo {
       sp.z = 140;
       const tg = sc.targetOf(t);
       this.audio.play('draw');
+      const sk = sc.L.stock;
+      if (sk) sc.pulseSource(sk.cx, sk.cy, Math.max(sk.w || 50, sk.h || 50) * 0.7);
       sc.sys.fly(t, tg, {
         dur: 400,
         arc: 30,
@@ -177,6 +179,8 @@ export class Choreo {
     const i = arr.lastIndexOf(ev.tile);
     if (i >= 0) arr.splice(i, 1);
     this.audio.play('draw', { vol: ev.seat === 0 ? 1 : 0.6 });
+    const tp = sc.L.piles[ev.from];
+    if (tp) sc.pulseSource(tp.cx, tp.cy, Math.max(tp.w, tp.h) * 0.6);
     if (ev.seat === 0) {
       const t = ev.tile;
       sc.rack.addAuto(t);
@@ -276,13 +280,17 @@ export class Choreo {
         this.audio.play(finish ? 'finish' : 'discard', { vol: seat === 0 ? 1 : 0.85 });
         if (finish) this.fx.camera.play('punch');
         sc.retarget(true);
-        sc.pulsePile(seat);
+        sc.pulsePile(seat, finish);
+        if (finish) sc.stage?.lampFlash('gold', 0.8, 700);
         sc.onRackChanged();
       },
     });
     sc.retarget(true);
     sc.refreshChrome();
-    if (ev.penalized) this.fx.camera.play('shake');
+    if (ev.penalized) {
+      this.fx.camera.play('shake');
+      sc.flash('red', 460);
+    }
     await this.sleep(dur * 0.72);
   }
 
@@ -330,7 +338,12 @@ export class Choreo {
     sc.onRackChanged();
     const name = ev.seat === 0 ? 'Sen' : sc.cfg.roster[ev.seat].name;
     sc.seats[ev.seat]?.setStatus(ev.openKind === 'pairs' ? 'çift açtı' : ev.additional ? 'per indirdi' : `açtı · ${ev.points}`, { good: true });
-    if (!ev.additional) sc.toast(`${name} ${ev.openKind === 'pairs' ? `${ev.count} çift` : `${ev.points} puanla`} açtı`, 'good', 1800);
+    sc.flashZone(ev.seat);
+    if (!ev.additional) {
+      this.fx.camera.play('punch');
+      sc.stage?.lampFlash('gold', 0.4, 600);
+      sc.stamp(ev.openKind === 'pairs' ? `${ev.count} ÇİFT AÇTI` : `${ev.points} İLE AÇTI`, ev.seat === 0 ? 'Masaya per indirebilirsin' : name, 'open', 1500);
+    }
     await this.sleep(total * 0.8);
   }
 
@@ -357,6 +370,8 @@ export class Choreo {
     sc.retarget(true);
     sc.refreshChrome();
     sc.onRackChanged();
+    const tgt = sc.targetOf(ev.tile);
+    if (tgt) sc.stage?.ping(tgt.x, tgt.y, { r: (sc.L.rack.tw || 40) * 1.1, color: 'rgb(150,230,190)', dur: 640, s0: 0.5, s1: 1.6, delay: total * 0.6 });
     await this.sleep(total * 0.7);
   }
 
@@ -378,6 +393,7 @@ export class Choreo {
     sc.retarget(true);
     sc.refreshChrome();
     sc.onRackChanged();
+    sc.flashZone(ev.seat);
     await this.sleep(total * 0.7);
   }
 
@@ -435,8 +451,15 @@ export class Choreo {
     const name = ev.seat === 0 ? 'Sen' : sc.cfg.roster[ev.seat].name;
     this.audio.play('penalty');
     sc.toast(`${name}: +${ev.points} ceza · ${ev.reason}`, 'warn', 2600);
-    this.fx.camera.play('shake');
-    await this.sleep(260);
+    this.fx.camera.play('slam');
+    sc.flash('red', 620);
+    sc.stage?.lampFlash('red', 0.5, 640);
+    sc.flashSeat(ev.seat, 'rgb(255,96,80)');
+    sc.stamp(`CEZA +${ev.points}`, `${name} · ${ev.reason}`, 'penalty', 1900);
+    const a = this.seatAnchor(ev.seat);
+    sc.floatText(`+${ev.points}`, a.x, a.y, 'warn');
+    sc.seats[ev.seat]?.hit?.();
+    await this.sleep(520);
   }
 
   async onTurn(ev) {
@@ -620,6 +643,9 @@ export class Choreo {
     }
     const name = w === 0 ? 'Sen' : sc.cfg.roster[w].name;
     sc.focus(L.table.x + L.table.w / 2, L.table.y + L.table.h / 2, true);
+    sc.stage?.cine(1);
+    this.fx.camera.play('slam');
+    sc.stage?.lampFlash('gold', 0.9, 800);
     // kazanan elini masanın ortasında göster (klasik: per grupları)
     if (res.winningGroups && res.winningGroups.length) {
       await this.revealHand(res, w);
@@ -631,8 +657,12 @@ export class Choreo {
       setTimeout(() => this.fx.confetti.burst(cx - L.table.w * 0.25, L.table.y + L.table.h * 0.6, 34), 220);
       setTimeout(() => this.fx.confetti.burst(cx + L.table.w * 0.25, L.table.y + L.table.h * 0.6, 34), 380);
     } else this.audio.play('lose', { vol: 0.8 });
-    sc.banner(w === 0 ? 'Bitirdin!' : `${name} bitirdi`, res.finishLabel || '');
-    await this.sleep(1600);
+    if (w === 0) sc.flash('gold', 900);
+    sc.stamp(w === 0 ? 'BİTTİ!' : `${name.toUpperCase()} BİTİRDİ`, res.finishLabel || '', w === 0 ? 'win' : 'lose', 2200);
+    const wa = this.seatAnchor(w);
+    sc.stage?.ping(wa.x, wa.y, { r: Math.max(L.rack.tw * 3, 90), glow: true, dur: 1200, s0: 0.4, s1: 2.6, a: 0.8 });
+    await this.sleep(2000);
+    sc.stage?.cine(0);
     sc._turnLight(null);
   }
 

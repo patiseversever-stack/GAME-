@@ -966,11 +966,74 @@ export class Scene {
     this.pileEls[0].classList.toggle('is-dragging-zone', !!v);
   }
 
-  pulsePile(seat) {
+  pulsePile(seat, strong = false) {
     const el = this.pileEls[seat];
     el.classList.remove('is-pulse');
     void el.offsetWidth;
     el.classList.add('is-pulse');
+    const p = this.L?.piles?.[seat];
+    if (p) this.stage?.ping(p.cx, p.cy, { r: Math.max(p.w, p.h) * (strong ? 0.95 : 0.7), color: strong ? 'rgb(255,200,90)' : 'rgb(255,236,200)', dur: strong ? 900 : 620, s1: strong ? 2.1 : 1.5 });
+  }
+
+  // Desteden/yandan çekişte kaynak yuvada küçük halka
+  pulseSource(x, y, r = 40) {
+    this.stage?.ping(x, y, { r, color: 'rgb(190,225,255)', dur: 520, s0: 0.7, s1: 1.4, a: 0.7 });
+  }
+
+  _fxEl(cls, html, css = '') {
+    const el = document.createElement('div');
+    el.className = cls;
+    el.innerHTML = html;
+    if (css) el.style.cssText = css;
+    this.els.coach.appendChild(el);
+    return el;
+  }
+
+  // "SIRA SENDE" bildirimi: ıstakanın hemen üstünde süzülen pirinç plaka
+  cue(text, sub = '') {
+    const L = this.L;
+    if (!L) return;
+    const cx = L.table.x + L.table.w / 2;
+    const y = Math.max(L.table.y + 24, L.rack.rect.y - 22);
+    const el = this._fxEl('cue', `<span class="cue__bar"></span><b>${text}</b>${sub ? `<small>${sub}</small>` : ''}<span class="cue__bar"></span>`, `left:${cx}px;top:${y}px`);
+    setTimeout(() => el.classList.add('is-out'), 1250);
+    setTimeout(() => el.remove(), 1650);
+  }
+
+  // Mühür: ceza / bitiş / açılış gibi anların büyük damgası
+  stamp(text, sub = '', kind = 'penalty', ms = 1700) {
+    const L = this.L;
+    if (!L) return;
+    const cx = L.table.x + L.table.w / 2;
+    const cy = L.table.y + L.table.h * 0.42;
+    const el = this._fxEl(`stamp stamp--${kind}`, `<b>${text}</b>${sub ? `<small>${sub}</small>` : ''}`, `left:${cx}px;top:${cy}px`);
+    setTimeout(() => el.classList.add('is-out'), ms);
+    setTimeout(() => el.remove(), ms + 420);
+  }
+
+  // Ekranı kısa süre boyar (kırmızı = ceza, altın = bitiş)
+  flash(kind = 'red', ms = 520) {
+    const el = this._fxEl(`flash flash--${kind}`, '');
+    el.animate?.([{ opacity: 0 }, { opacity: 1, offset: 0.16 }, { opacity: 0 }], { duration: ms, easing: 'ease-out' });
+    setTimeout(() => el.remove(), ms + 40);
+  }
+
+  floatText(text, x, y, kind = 'warn') {
+    const el = this._fxEl(`floaty floaty--${kind}`, text, `left:${x}px;top:${y}px`);
+    setTimeout(() => el.remove(), 1500);
+  }
+
+  // 101: oyuncunun per bölgesi sahibinin renginde parlar
+  flashZone(seat) {
+    const z = (this.packed?.zones || []).find((x) => x.owner === seat);
+    if (z && this.stage) this.stage.flashRect({ x: z.rect.x - 2, y: z.rect.y - 2, w: z.rect.w + 4, h: z.rect.h + 4 }, { color: OWNER_COLOR[seat], dur: 950, grow: 0.06 });
+    else this.flashSeat(seat, 'rgb(150,230,190)');
+  }
+
+  // Bir oyuncunun istasyonu: sıcak/kırmızı çerçeve parlaması (ceza, açılış)
+  flashSeat(seat, color = 'rgb(255,120,100)') {
+    const r = this.stage?.glowRects?.[seat];
+    if (r) this.stage.flashRect(r, { color, dur: 900, grow: 0.09 });
   }
 
   showOkeyDeco() {
@@ -980,6 +1043,12 @@ export class Scene {
       d.style.opacity = '1';
       this.stage?.syncDecos();
       d.animate?.([{ filter: 'brightness(1.6)' }, { filter: 'brightness(1)' }], { duration: 900, easing: 'ease-out' });
+      const ind = this.L?.indicator;
+      if (ind) {
+        this.stage?.ping(ind.cx, ind.cy, { r: Math.max(ind.w || 60, ind.h || 60) * 1.1, glow: true, dur: 1100, s0: 0.4, s1: 2.2, a: 0.9 });
+        this.stage?.ping(ind.cx, ind.cy, { r: Math.max(ind.w || 60, ind.h || 60) * 0.9, color: 'rgb(255,210,120)', dur: 900, s0: 0.6, s1: 2.6, delay: 140 });
+        this.stage?.lampFlash('gold', 0.55, 700);
+      }
     }
   }
 

@@ -117,6 +117,13 @@ export class SeatView {
     if (last && last.animate) last.animate([{ transform: 'scale(1.6)', opacity: 0.5 }, { transform: 'scale(1)', opacity: 1 }], { duration: 240, easing: 'cubic-bezier(.2,.9,.3,1.2)' });
   }
 
+  // Ceza vuruşu: plaka sarsılır, kırmızı yanıp söner
+  hit() {
+    const c = this.el.querySelector('.seat__card') || this.el;
+    c.animate?.([{ transform: 'translateX(0)' }, { transform: 'translateX(-6px)', offset: 0.15 }, { transform: 'translateX(6px)', offset: 0.35 }, { transform: 'translateX(-4px)', offset: 0.55 }, { transform: 'translateX(2px)', offset: 0.75 }, { transform: 'translateX(0)' }], { duration: 480, easing: 'ease-out' });
+    c.animate?.([{ boxShadow: '0 0 0 2px rgba(255,90,70,.95), 0 0 28px rgba(255,70,50,.8)' }, { boxShadow: '0 0 0 0 rgba(255,90,70,0)' }], { duration: 900, easing: 'ease-out' });
+  }
+
   setScore(v) {
     const el = this.el.querySelector('.seat__score');
     if (el && el.textContent !== String(v)) el.textContent = String(v);

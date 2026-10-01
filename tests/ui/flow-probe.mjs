@@ -2,19 +2,19 @@
 import { chromium } from '/opt/node22/lib/node_modules/playwright/index.mjs';
 import { startServer } from '/home/user/GAME-/tools/dev-server.mjs';
 const S = '/tmp/claude-0/-home-user-GAME-/eb259e66-b9d3-5e28-97cf-ac059024af83/scratchpad';
-const [, , query = 'mode=okey&seed=7&speed=fast', w = '390', h = '844'] = process.argv;
+const [, , query = "mode=okey&seed=7&speed=fast&quality=low", w = "900", h = "400"] = process.argv;
 const server = await startServer(5197);
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--no-sandbox', '--autoplay-policy=no-user-gesture-required'] });
-const ctx = await browser.newContext({ viewport: { width: +w, height: +h }, deviceScaleFactor: 1.5, hasTouch: true, isMobile: true });
+const ctx = await browser.newContext({ viewport: { width: +w, height: +h }, deviceScaleFactor: 1, hasTouch: true, isMobile: true });
 const page = await ctx.newPage();
 const errs = [];
 page.on('pageerror', (e) => errs.push('pageerror: ' + e.message + '\n' + (e.stack || '').split('\n').slice(0, 5).join('\n')));
 page.on('console', (m) => { if (['error', 'warning'].includes(m.type())) errs.push(m.type() + ': ' + m.text()); });
 await page.goto('http://localhost:5197/index.html?mute=1&' + query);
-await page.waitForFunction(() => document.body.dataset.ready === '1', null, { timeout: 30000 });
+await page.waitForFunction(() => document.body.dataset.ready === '1', null, { timeout: 60000 });
 const log = (...a) => console.log(...a);
 const st = () => page.evaluate(() => { const c = window.__okey.ctl; const s = c.game.state; return { turn: s.turn.seat, needsDraw: s.turn.needsDraw, hand0: s.hands[0].length, stock: s.stock.length, d0: s.discards[0].length, status: s.status, busy: c.busy, myTurn: c.myTurn, rack: c.scene.rack.count }; });
-await page.waitForFunction(() => window.__okey.ctl.myTurn, null, { timeout: 40000 });
+await page.waitForFunction(() => window.__okey.ctl.myTurn, null, { timeout: 60000 });
 log('my turn', JSON.stringify(await st()));
 const L = await page.evaluate(() => { const L = window.__okey.ctl.scene.L; return { stock: L.stock, pile0: L.piles[0], rack: L.rack.rect, slot0: L.rack.slotCenter(0) }; });
 // 1) desteye dokun → çek; kare kare
