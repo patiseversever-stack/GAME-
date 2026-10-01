@@ -1548,3 +1548,5 @@
   .hist__row { padding: 3px 0; }
   .hist h3 { margin: 3px 0; }
 }
+.coach-bub.is-bottom { transform: translate(-50%, 0); }
+.coach-bub.is-bottom::after { bottom: auto; top: -4px; }

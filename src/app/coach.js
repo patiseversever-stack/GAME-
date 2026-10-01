@@ -10,7 +10,7 @@ export function createCoach(host, settings) {
     cur?.remove();
     cur = null;
   };
-  const show = (id, text, at, place = 'top') => {
+  const show = (id, text, at, place = 'top', below = null) => {
     if (!settings.get('tutorial') || seen.has(id)) return;
     seen.add(id);
     writeJSON(KEY, [...seen]);
@@ -26,6 +26,11 @@ export function createCoach(host, settings) {
       hide();
     });
     host.appendChild(el);
+    // üstte yer yoksa (deste ekranın tepesindeyse) balon aşağıya geçer
+    if (below !== null && at.y - el.offsetHeight < 6) {
+      el.classList.replace('is-' + place, 'is-bottom');
+      el.style.top = below + 'px';
+    }
     cur = el;
     setTimeout(() => cur === el && hide(), 6000);
   };
@@ -41,11 +46,11 @@ export function createCoach(host, settings) {
         show('open101', 'İlk açış: perlerin toplamı <b>en az 101</b> ya da 5 çift', { x: r.x + r.w / 2, y: r.y - 8 });
       }
       if (ev === 'turn' && s.turn.seat === 0 && s.turn.needsDraw) {
-        show('draw', '<b>Dokun</b> ya da ıstakaya sürükle', { x: L.stock.cx, y: L.stock.cy - L.stock.h / 2 - 10 });
+        show('draw', '<b>Dokun</b> ya da ıstakaya sürükle', { x: L.stock.cx, y: L.stock.cy - L.stock.h / 2 - 10 }, 'top', L.stock.cy + L.stock.h / 2 + 12);
       }
       if (ev === 'draw') {
         const p = L.piles[0];
-        show('discard', 'Bir taşı <b>buraya sürükle</b>', { x: p.cx - p.w * 0.3, y: p.cy - p.h / 2 - 8 });
+        show('discard', 'Bir taşı <b>buraya sürükle</b>', { x: p.cx - p.w * 0.3, y: p.cy - p.h / 2 - 8 }, 'top', p.cy + p.h / 2 + 10);
       }
     },
     hide,
