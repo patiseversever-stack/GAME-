@@ -10,6 +10,7 @@ import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
 import { loadRackModel, sharpenModel } from './rack-model.js';
 import { fxMethods } from './stage-fx.js';
+import { emblemTexture } from './emblem.js';
 import { faceTexture, faceBump, descFromEl } from './tile-face.js';
 import { woodCanvas } from '../ui/wood.js';
 
@@ -257,6 +258,7 @@ export class Stage3D {
     this.lamp.shadow.camera.far = dist * 4;
     this.rim.position.set(dist, dist * 0.6, -dist);
     this.buildRails(L);
+    this.buildEmblem(L);
     this.shadowDirty = true;
     this.setTileSize(L.rack.tw, L.rack.th);
     this.buildRack(L);
@@ -286,6 +288,28 @@ export class Stage3D {
     this.faceZ = D / 2 + bt + 0.12;
     for (const m of this.meshes.values()) this._applyGeo(m);
     for (const m of this.decos.values()) this._applyGeo(m);
+  }
+
+  // masa ortasında işlemeli altın amblem (yumuşak, öğelerin arkasında kalır)
+  buildEmblem(L) {
+    if (this.emblem) {
+      this.scene.remove(this.emblem);
+      this.emblem.geometry.dispose();
+      this.emblem.material.dispose();
+      this.emblem = null;
+    }
+    const T = L.table;
+    const cx = T.x + T.w / 2;
+    const cy = T.y + T.h * 0.5;
+    const r = Math.min(T.w * 0.36, T.h * 0.62);
+    const lift = 0.1 * this._k(cx, cy, this.planeT);
+    const { geo, pos } = this._decalAt(cx, cy, r, r, lift);
+    const m = new THREE.Mesh(geo, new THREE.MeshStandardMaterial({ map: emblemTexture(), transparent: true, opacity: 0.4, roughness: 0.55, metalness: 0.15, color: 0xffe3a0, emissive: 0x3a2808, emissiveIntensity: 0.35, depthWrite: false }));
+    m.position.copy(pos);
+    m.receiveShadow = true;
+    m.renderOrder = 0;
+    this.scene.add(m);
+    this.emblem = m;
   }
 
   // masanın kenarları: uzak kenarda ve yanlarda cilalı ceviz pervaz; ötesi loş oda (perspektif derinlik)

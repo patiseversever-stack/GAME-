@@ -1514,3 +1514,8 @@
 .status.is-hushed { opacity: 0; }
 .toasts { display: none !important; }
 .mzone__tag em.is-counting { color: #ffe39a; text-shadow: 0 0 10px rgba(255, 210, 120, .9); }
+/* yatay HUD: menü sol köşede, ses sağ köşede (yan ıstakaların üstü) — köşe çöplükleriyle çakışmaz; kurallar duraklatma menüsünde */
+[data-profile='landscape'] .hud .icon-btn { width: 30px; height: 30px; }
+[data-profile='landscape'] .hud .icon-btn svg { width: 16px; height: 16px; }
+[data-profile='landscape'] .hud [data-act='help'] { display: none; }
+[data-profile='landscape'] .hud [data-act='sound'] { margin-left: auto; }
