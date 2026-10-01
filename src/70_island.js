@@ -741,8 +741,9 @@ function updateMirrorView(mv, lv, L, dim, dt) {
 
 /* ---------- ada görünümü ---------- */
 class IslandView {
-  constructor(lv) {
-    this.lv = lv; const pal = lv.chap.pal, key = lv.chap.key, Q = Perf.Q, rng = new RNG(lv.spec.seed ^ 0x2545f491);
+  constructor(lv, opts = {}) {
+    this.lv = lv; const pal = lv.chap.pal, key = lv.chap.key, Q = opts.Q || Perf.Q, rng = new RNG(lv.spec.seed ^ 0x2545f491);
+    this.parent = opts.parent || scene; this.quiet = !!opts.quiet;
     this.root = new THREE.Group(); this.disposables = [];
     // yüzey
     this.tex = paintTop(lv, pal, Q.texScale);
@@ -888,7 +889,7 @@ class IslandView {
       orbs.push(part(new THREE.CylinderGeometry(s * 0.95, s * 0.9, 0.08, 7), pal.cliffTop, { pos: [rx, y + s * 0.62, rz] }));
     }
     const om = new THREE.Mesh(mergeParts(orbs, false), this.cliffMat); this.orbit.add(om); this.root.add(this.orbit);
-    scene.add(this.root);
+    this.parent.add(this.root);
     this.introT = 0; this.popped = 0;
   }
   buildGrass(rng, pal, key, Q) {
@@ -929,7 +930,7 @@ class IslandView {
     let changed = t < 1.4;
     for (const v of this.propViews) {
       const k = clamp01((t - v.userData.delay) / 0.5);
-      if (k > 0 && v.userData.pop === 0) { v.userData.pop = 1; if (this.popped++ % 3 === 0) audio.pop(this.popped); }
+      if (k > 0 && v.userData.pop === 0) { v.userData.pop = 1; if (this.popped++ % 3 === 0 && !this.quiet) audio.pop(this.popped); }
       const s = k <= 0 ? 0.001 : k >= 1 ? 1 : Math.max(0.001, Ease.outBack(k, 2.2));
       if (v.scale.x !== s) { v.scale.set(s, k >= 1 ? 1 : lerp(1.25, 1, k) * s, s); changed = true; }
     }
@@ -989,7 +990,7 @@ class IslandView {
     this.gate.userData.pu.uPulse.value = Math.max(0, this.gate.userData.pu.uPulse.value - dt * 1.5);
   }
   dispose() {
-    scene.remove(this.root);
+    this.parent.remove(this.root);
     this.root.traverse((o) => {
       if (o.geometry) o.geometry.dispose();
       const m = o.material;

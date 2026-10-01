@@ -264,8 +264,8 @@ function startPlay() {
   if (lv.spec.features.windmills && lv.movers.some((m) => m.kind === 'sails')) setTimeout(() => { if (G.state === 'play') tip('t-mill', 'Değirmen kanatları gölgeyi <em>böler</em>.', 3.5); }, 5000);
   if (lv.spec.features.balloons) tip('t-balloon', 'Balonlar yüksekte: <em>alçak güneş</em> gölgelerini uzağa savurur.', 4.2);
   if (lv.bridges.length) tip('t-bridge', 'Köprü yalnızca <em>kristal ışıktayken</em> belirir. Zifir bekler — ama gölgede tut!', 4.6);
-  if (lv.spec.dash && g >= 2) setTimeout(() => { if (G.state === 'play') tip('t-dash', '<em>Sıçra</em>: Zifir ileri atılır, ışıkta daha az yanar. Sol alttaki düğme ya da ↑', 4.4); }, 1800);
-  if (lv.sprites && lv.sprites.length) setTimeout(() => { if (G.state === 'play') tip('t-wisp', '<em>Işık perileri</em> Zifir’e süzülür: gölgedeyken ya da <em>sıçrarken</em> yut, ışıkta yakar!', 4.6); }, Math.max(0, (lv.sprites[0].t - 1.2) * 1000));
+  if (lv.spec.dash && g >= 2) setTimeout(() => { if (G.state === 'play') tip('t-dash', '<em>Dal</em>: Zifir bir an mürekkebe gömülür — ışık neredeyse işlemez. Sol alttaki düğme ya da ↑', 4.4); }, 1800);
+  if (lv.sprites && lv.sprites.length) setTimeout(() => { if (G.state === 'play') tip('t-wisp', '<em>Işık perileri</em> Zifir’e süzülür: gölgedeyken ya da <em>dalarken</em> yut, ışıkta yakar!', 4.6); }, Math.max(0, (lv.sprites[0].t - 1.2) * 1000));
   if (lv.flares) setTimeout(() => { if (G.state === 'play') tip('t-flare', '<em>Güneş patlaması</em>: uyarı çubuğu dolunca ışık iki kat yakar. Önceden gölgeye gir!', 4.4); }, Math.max(0, (lv.flares[0].w - 0.3) * 1000));
   if (lv.movers.some((m) => m.kind === 'melt')) tip('t-melt', '<em>Buz sütunları</em> güneşte erir — gölgeleri giderek kısalır.', 4.2);
   if (lv.mirrors && lv.mirrors.length) tip('t-mirror', '<em>Aynalar</em> güneşi yansıtır: yansıyan ışık gölge tanımaz. Huzmeyi Zifir’den uzak tut!', 4.8);

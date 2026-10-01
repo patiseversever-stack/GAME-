@@ -36,7 +36,7 @@ function levelSpec(g) {
   if (ch === 4 && i >= 3) spec.features.balloons = i % 2 === 1;
   if (ch === 4 && i >= 5) spec.features.clouds = i % 2 === 0;
   if (finale) { spec.speed *= 1.04; spec.drops += 1; }
-  if (chap.features.twin) { spec.burn *= 0.72; spec.margin = Math.max(spec.margin, 0.42); spec.spacing = Math.min(spec.spacing, 2.7); spec.sunSpeed = 0.58; spec.prune = Math.min(spec.prune, 3); }
+  if (chap.features.twin) { spec.burn *= 0.68; spec.margin = Math.max(spec.margin, 0.52); spec.spacing = Math.min(spec.spacing, 2.7); spec.sunSpeed = 0.58; spec.prune = Math.min(spec.prune, 3); }
   // yeni dünyalar (VI–VIII): kendi zorluk eğrileri
   if (ch >= 5) Object.assign(spec, {
     speed: 1.46 + 0.12 * d + (ch - 5) * 0.05, burn: 0.74 + 0.1 * d + (ch - 5) * 0.03, spacing: lerp(2.4, 3.1, d),

@@ -197,6 +197,8 @@ class Zifir {
       for (let i = 0; i < 2; i++) { this.feet[i].position.z = damp(this.feet[i].position.z, 0.02, 8, dt); this.feet[i].position.y = 0.04; }
     }
     sy *= 1 + this.squash; sx *= 1 - this.squash * 0.55;
+    const dv = st.dive || 0; sy *= 1 - dv * 0.72; sx *= 1 + dv * 0.45; bodyY -= dv * 0.06;
+    this.aura.scale.setScalar(1 + dv * 0.9); this.aura.material.opacity = 0.85 + dv * 0.15;
     const shrink = lerp(0.62, 1, st.meter);
     this.scaleK = damp(this.scaleK, shrink, 6, dt);
     this.shiver = st.burn > 0 ? 0.018 * st.burn : 0;
@@ -205,7 +207,7 @@ class Zifir {
     // göz kırpma & bakış
     this.blinkT -= dt; if (this.blinkT < 0) { this.blink = 0.14; this.blinkT = 1.8 + Math.random() * 3.5; }
     this.blink = Math.max(0, this.blink - dt);
-    const squint = st.burn > 0.05 ? 0.45 : st.mood > 0 ? 0.35 : 1;
+    const squint = (st.dive || 0) > 0.5 ? 0.25 : st.burn > 0.05 ? 0.45 : st.mood > 0 ? 0.35 : 1;
     const ey = this.blink > 0 ? 0.12 : squint;
     for (const e of this.eyes) e.scale.y = damp(e.scale.y, 1.25 * ey, 30, dt);
     if (st.look) {

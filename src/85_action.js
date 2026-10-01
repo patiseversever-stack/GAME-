@@ -1,12 +1,14 @@
 
 /* =====================================================================
-   AKSİYON — Sıçra (gölge atılımı), Işık Perileri, Güneş Patlaması,
+   AKSİYON — Dal (mürekkebe dalış), Işık Perileri, Güneş Patlaması,
    Gölge Serisi
+   Dal, Zifir'in konumunu değiştirmez: çözülmüş güneş planı her zaman
+   geçerli kalır; dalış yalnızca yanmayı azaltır ve perileri yutar.
    ===================================================================== */
-const DASH_CD = 3.2, DASH_DUR = 0.34, DASH_MUL = 3.4, WISP_LIFE = 7.5;
+const DASH_CD = 3.0, DASH_DUR = 0.6, DIVE_BURN = 0.15, WISP_LIFE = 7.5;
 
 /* ---------- ışık perileri: Zifir'e süzülen güneş kıvılcımları ----------
-   Gölgedeyken ya da sıçrarken dokunursa Zifir onu yutar (enerji);
+   Gölgedeyken ya da dalarken dokunursa Zifir onu yutar (enerji);
    ışıkta dokunursa patlar ve yakar. */
 const WISP_CORE = new THREE.SpriteMaterial({ map: TEX.glow, color: new THREE.Color(3.2, 2.4, 1.2), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
 const WISP_HALO = new THREE.SpriteMaterial({ map: TEX.glow, color: new THREE.Color(1.6, 0.9, 0.35), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
@@ -38,7 +40,7 @@ const wisps = {
       const wob = Math.sin(w.t * 5 + w.ph) * 0.9;
       w.vx = damp(w.vx, (dx / d) * sp + (-dz / d) * wob, 3, dt); w.vz = damp(w.vz, (dz / d) * sp + (dx / d) * wob, 3, dt);
       w.x += w.vx * dt; w.z += w.vz * dt; w.y = damp(w.y, d < 2 ? 0.42 : 0.9 + Math.sin(w.t * 3.1 + w.ph) * 0.25, 3, dt);
-      if (d < 0.5 && w.y < 0.75) {
+      if ((dashing && d < 1.7) || (d < 0.5 && w.y < 0.75)) {
         w.state = 2; w.g.visible = false;
         if (shaded || dashing) { ev = { kind: 'eat', w }; FX.burst(w.x, 0.35, w.z, 22, { add: true, c: [1.2, 0.7, 2.6], a: 1, s: 0.16, s1: 0.02, life: 0.8, sp: 3, up: 0.6, drag: 2.4, t: 2 }); }
         else { ev = { kind: 'hit', w }; FX.burst(w.x, 0.35, w.z, 30, { add: true, c: [3, 1.5, 0.4], a: 1, s: 0.2, s1: 0.02, life: 0.6, sp: 4, up: 1, drag: 2, t: 2 }); for (let i = 0; i < 10; i++) FX.ember(w.x, 0.35, w.z); }
@@ -91,26 +93,31 @@ const flare = {
   },
 };
 
-/* ---------- sıçra & seri ---------- */
+/* ---------- dal & seri ---------- */
 const act = {
-  dashCd: 0, dashT: 0, shadeT: 0, streak: 0, best: 0, eaten: 0, litT: 0,
-  reset() { this.dashCd = 0; this.dashT = 0; this.shadeT = 0; this.streak = 0; this.best = 0; this.eaten = 0; this.litT = 0; this.hud(true); },
+  dashCd: 0, dashT: 0, diveK: 0, shadeT: 0, streak: 0, best: 0, eaten: 0, litT: 0, dives: 0,
+  reset() { this.dashCd = 0; this.dashT = 0; this.diveK = 0; this.dives = 0; this.shadeT = 0; this.streak = 0; this.best = 0; this.eaten = 0; this.litT = 0; this.hud(true); },
   canDash() { const lv = G.lv; return !!(lv && lv.spec.dash) && G.state === 'play' && G.T > lv.walkDelay && this.dashCd <= 0 && !G.waiting; },
   dash() {
     if (!this.canDash()) return false;
-    this.dashT = DASH_DUR; this.dashCd = DASH_CD;
-    audio.dash(); haptic(14); zifir.kick(-2.2); G.fovKick = 3; G.ca = Math.max(G.ca, 0.008);
+    this.dashT = DASH_DUR; this.dashCd = DASH_CD; this.dives++;
+    audio.dash(); haptic(14); zifir.kick(-3.2); G.fovKick = -2; G.ca = Math.max(G.ca, 0.008);
     const x = zifir.g.position.x, z = zifir.g.position.z;
-    for (let i = 0; i < 14; i++) { const a = Math.random() * TAU; fxMix.spawn(x, 0.25 + Math.random() * 0.3, z, Math.cos(a) * 1.4, 0.4, Math.sin(a) * 1.4, { c: [0.05, 0.03, 0.09], a: 0.7, s: 0.22, s1: 0.04, life: 0.45, drag: 2, t: 1 }); }
+    // mürekkep sıçraması
+    for (let i = 0; i < 22; i++) { const a = Math.random() * TAU, sp = 1.2 + Math.random() * 1.8; fxMix.spawn(x, 0.15, z, Math.cos(a) * sp, 1.2 + Math.random() * 1.6, Math.sin(a) * sp, { c: [0.04, 0.02, 0.08], a: 0.85, s: 0.13, s1: 0.04, life: 0.55, drag: 1.2, g: -7, t: 0 }); }
+    for (let i = 0; i < 10; i++) { const a = Math.random() * TAU; fxAdd.spawn(x + Math.cos(a) * 0.5, 0.1, z + Math.sin(a) * 0.5, Math.cos(a) * 1.6, 0.2, Math.sin(a) * 1.6, { c: [0.7, 0.45, 2.2], a: 0.9, s: 0.12, s1: 0.01, life: 0.5, drag: 2.5, t: 2 }); }
     return true;
   },
-  speedMul() { return this.dashT > 0 ? DASH_MUL : 1; },
+  speedMul() { return 1; },
+  burnMul() { return this.dashT > 0 ? DIVE_BURN : 1; },
   step(dt, f, walking) {
+    this.diveK = damp(this.diveK, this.dashT > 0 ? 1 : 0, this.dashT > 0 ? 18 : 9, dt);
     if (this.dashT > 0) {
       this.dashT -= dt; pathAt(G.lv.path, G.s, PA);
       const x = PA.x, z = PA.z;
-      fxMix.spawn(x + (Math.random() - 0.5) * 0.3, 0.2 + Math.random() * 0.3, z + (Math.random() - 0.5) * 0.3, 0, 0.3, 0, { c: [0.06, 0.03, 0.12], a: 0.8, s: 0.3, s1: 0.05, life: 0.5, drag: 2, t: 1 });
-      fxAdd.spawn(x, 0.3, z, (Math.random() - 0.5) * 0.5, 0.5, (Math.random() - 0.5) * 0.5, { c: [0.8, 0.5, 2.2], a: 0.8, s: 0.12, s1: 0.01, life: 0.4, drag: 2, t: 2 });
+      if (Math.random() < dt * 30) { const a = Math.random() * TAU; fxMix.spawn(x + Math.cos(a) * 0.45, 0.04, z + Math.sin(a) * 0.45, Math.cos(a) * 0.6, 0.05, Math.sin(a) * 0.6, { c: [0.05, 0.03, 0.1], a: 0.7, s: 0.3, s1: 0.6, life: 0.5, drag: 2, t: 1 }); }
+      if (f > 0 && Math.random() < dt * 25) fxAdd.spawn(x + (Math.random() - 0.5) * 0.5, 0.15, z + (Math.random() - 0.5) * 0.5, 0, 0.8, 0, { c: [0.8, 0.5, 2.2], a: 0.8, s: 0.1, s1: 0.01, life: 0.4, drag: 2, t: 2 });
+      if (this.dashT <= 0) { zifir.kick(4.5); audio.pop(5); }
     }
     this.dashCd = Math.max(0, this.dashCd - dt);
     if (!walking) return;

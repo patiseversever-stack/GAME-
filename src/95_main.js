@@ -82,7 +82,7 @@ function onWisp(ev) {
     audio.sprite(3); haptic(16); zifir.kick(1.8); G.flash = Math.max(G.flash, 0.12); G.flashCol.set(0.7, 0.55, 1.0);
     popText(w.x, 1.0, w.z, 'peri yutuldu ✦');
   } else if (ev.kind === 'hit') {
-    G.meter -= 0.14; G.expTotal += 0.3; G.combo = 0;
+    G.meter -= 0.1; G.expTotal += 0.3; G.combo = 0;
     audio.flareBurst(); haptic([25, 20, 25]); G.trauma = Math.max(G.trauma, 0.4); G.ca = Math.max(G.ca, 0.015); zifir.kick(-3);
     popText(w.x, 1.0, w.z, 'yandı!');
   }
@@ -123,11 +123,12 @@ function stepPlay(dt, dtR) {
   let f = 0;
   if (G.T > lv.walkDelay && !onBridge && G.ecl.amt < 0.5) f = exposureNow(lv, PA.x, PA.z, PA.nx, PA.nz);
   G.f = f;
-  const dashing = act.dashT > 0, fm = flareMul(lv, G.T) * (dashing ? 0.35 : 1);
+  const dashing = act.dashT > 0, fm = flareMul(lv, G.T) * act.burnMul();
+  if (G.auto && G.autoDive && lv.spec.dash && act.canDash() && (f > 0 || wisps.items.some((w) => w.state === 1 && Math.hypot(w.x - PA.x, w.z - PA.z) < 1.4))) act.dash();
   if (f > 0) {
     if (G.burnEp === 0) { audio.whoosh(true, 0.2, 0.04); for (let i = 0; i < 5; i++) FX.ember(PA.x, 0.3, PA.z); }
     if (G.mirHit && Math.random() < dt * 20) FX.sparkle(PA.x + (Math.random() - 0.5) * 0.4, 0.4 + Math.random() * 0.3, PA.z + (Math.random() - 0.5) * 0.4, [2.6, 2.0, 1.2], 0.4);
-    G.meter -= lv.burn * f * fm * dt; G.expTotal += f * (dashing ? 0.35 : 1) * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
+    G.meter -= lv.burn * f * fm * dt; G.expTotal += f * act.burnMul() * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
     G.trauma = Math.max(G.trauma, 0.12 + f * 0.12);
     G.hapT -= dtR; if (G.hapT <= 0) { haptic(10); G.hapT = 0.28; }
   } else {
@@ -135,7 +136,7 @@ function stepPlay(dt, dtR) {
     if (G.burnEp > 0) endEpisode();
   }
   act.step(dt, f, G.T > lv.walkDelay && !G.waiting);
-  if (lv.sprites && lv.sprites.length) {
+  if (lv.sprites && lv.sprites.length && !window.__noWisps) {
     const ev = wisps.step(dt, G.T, PA.x, PA.z, f === 0, act.dashT > 0 || G.ecl.amt > 0.5);
     if (ev) onWisp(ev);
   }
@@ -224,7 +225,7 @@ function updateZifirView(dtR) {
   const looking = G.drag || Math.abs(G.uSV) > 0.25;
   zifir.update(dtR, {
     x: PA.x, z: PA.z, yaw: Math.atan2(PA.tx, PA.tz), moving: G.state === 'play' && G.T > lv.walkDelay && !G.waiting, speed: lv.speed * (G.slowT > 0 ? G.slowK : 1),
-    burn: G.state === 'play' ? G.f : G.state === 'fail' ? 1 : 0, meter: G.state === 'fail' ? 0.4 : G.meter, look: looking ? orb.g.position : camera.position, mood: 0,
+    burn: G.state === 'play' ? G.f * act.burnMul() : G.state === 'fail' ? 1 : 0, meter: G.state === 'fail' ? 0.4 : G.meter, look: looking ? orb.g.position : camera.position, mood: 0, dive: act.diveK,
   });
   U.uZifir.value.set(PA.x, 0, PA.z);
   Cam.follow.set(PA.x + PA.tx * 1.5 - Cam.base.target.x, 0, PA.z + PA.tz * 1.5 - Cam.base.target.z);
@@ -236,6 +237,7 @@ function update(dt, dtR) {
   G.stateT += dtR;
   if (G.palT < 1) G.palT = Math.min(1, G.palT + dtR / 1.6);
   if (G.outView) { G.outT += dtR; G.outView.sink(dtR); if (G.outT > 1.2) { G.outView.dispose(); G.outView = null; } }
+  if (SkyMap.active && G.state !== 'map') SkyMap.deactivate();
   updateSunControl(dtR);
   const lv = G.lv;
   // ada girişi (durumdan bağımsız sürer)
@@ -289,12 +291,13 @@ function update(dt, dtR) {
       if (t > 0.9) { G.state = 'ready'; G.readyT = 0; G.readyHint = true; zifir.g.scale.setScalar(1); G.uT = G.u; G.rwFx = false; if (G.auto) startPlay(); }
       break;
     }
-    case 'map': case 'ending': { G.night = damp(G.night, G.state === 'ending' ? 1 : G.mapNight, 1.5, dtR); U.uNightAmt.value = G.night; U.uNightR.value = 60; U.uNightRim.value = 0; break; }
+    case 'map': SkyMap.update(dtR); G.night = damp(G.night, G.mapNight, 1.5, dtR); break;
+    case 'ending': { G.night = damp(G.night, G.state === 'ending' ? 1 : G.mapNight, 1.5, dtR); U.uNightAmt.value = G.night; U.uNightR.value = 60; U.uNightRim.value = 0; break; }
   }
   if (G.state !== 'play') { G.ecl.amt = damp(G.ecl.amt, 0, 6, dtR); if (G.ecl.amt < 0.01) G.ecl.amt = 0; }
   if (G.state === 'play' || (G.ecl.amt > 0 && G.state === 'fail')) { U.uNightAmt.value = G.ecl.amt * 0.72; U.uNightR.value = 999; U.uNightRim.value = 0; }
   // görseller
-  if (lv) {
+  if (lv && G.state !== 'map') {
     G.view.update(dtR, G.T, viewCtx);
     drops.update(dtR, U.uTime.value);
     wisps.update(dtR, U.uTime.value);
@@ -343,6 +346,7 @@ function update(dt, dtR) {
 const sens = () => 1 / (Math.min(innerWidth, 620) * 0.8);
 canvas.addEventListener('pointerdown', (e) => {
   audio.unlock();
+  if (G.state === 'map') { SkyMap.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (G.state === 'complete') { if (G.compStage < 5 && G.mode !== 'endless') G.ffwd = true; return; }
   if (G.state === 'fail' && G.fShown) { retry(); return; }
   if (G.drag) return;
@@ -353,6 +357,7 @@ canvas.addEventListener('pointerdown', (e) => {
   if (G.state === 'ready') startPlay();
 });
 canvas.addEventListener('pointermove', (e) => {
+  if (G.state === 'map') { SkyMap.move(e); return; }
   const d = G.drag; if (!d || e.pointerId !== d.id) return;
   const now = performance.now(), dx = e.clientX - d.x, dtm = Math.max(1, now - d.t);
   d.x = e.clientX; d.t = now;
@@ -360,12 +365,13 @@ canvas.addEventListener('pointermove', (e) => {
   G.uT += du;
   d.v = lerp(d.v, (du / dtm) * 1000, 0.45);
 });
-const endDrag = (e) => { const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
+const endDrag = (e) => { if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
 window.addEventListener('keydown', (e) => {
   audio.unlock();
   if (TUT.open) { TUT.key(e); return; }
   if (e.repeat && (e.code === 'Space')) return;
+  if (G.state === 'map') { if (e.code === 'ArrowLeft' || e.code === 'KeyA') SkyMap.go(Math.round(SkyMap.tf) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') SkyMap.go(Math.round(SkyMap.tf) + 1); else if (e.code === 'Enter' || e.code === 'Space') $('#mpPlay').click(); else if (e.code === 'Escape') $('#btnMapBack').click(); return; }
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') { G.keyDir = 1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { if (G.state === 'play') act.dash(); }
@@ -394,7 +400,13 @@ function resume() { if (G.state !== 'paused') return; UI.hide('pause'); G.state 
 function openMap() {
   audio.ui(); hideToast();
   G.mapNight = G.night > 0.5 ? 1 : 0.55;
-  G.state = 'map'; UI.hideAll(); UI.hud(false); buildMap(); UI.show('map');
+  const fresh = G.state !== 'map';
+  if (fresh) { const f = $('#fader'); f.classList.add('on'); }
+  const go = () => {
+    G.state = 'map'; G.drag = null; UI.hideAll(); UI.hud(false); buildMap(); SkyMap.open(); UI.show('map');
+    if (fresh) requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on')));
+  };
+  if (fresh) setTimeout(go, 260); else go();
 }
 const CONST = [
   [[12, 104], [24, 88], [36, 76], [44, 60], [58, 52], [66, 36], [78, 26], [90, 12]],
@@ -411,9 +423,8 @@ const CONST_EDGES = { 2: [...SEQ, [7, 0]], 4: SEQ.filter((e) => e[0] !== 3), 5: 
   7: [[0, 1], [1, 2], [1, 3], [3, 4], [4, 5], [5, 6], [6, 7], [7, 4]] };
 function chapterStars(ci) { let s = 0; for (let i = 0; i < 8; i++) s += Save.stars(ci * 8 + i); return s; }
 function buildMap() {
-  const box = $('#chapters'); box.innerHTML = '';
   const un = Save.data.unlocked;
-  CHAPTERS.forEach((ch, ci) => {
+  if (false) CHAPTERS.forEach((ch, ci) => {
     const locked = un < ci * 8;
     const card = document.createElement('div'); card.className = 'chap' + (locked ? ' locked' : '');
     const pts = CONST[ci];
@@ -437,9 +448,6 @@ function buildMap() {
     card.innerHTML = `<div class="info"><div class="num">${ch.roman}</div><h6>${ch.name}</h6><div class="desc">${ch.sub}</div><div class="cstat">★ ${chapterStars(ci)}/24 · ${ch.constellation}</div></div>${svg}<div class="lock">Önceki takımyıldızını tamamla</div>`;
     box.appendChild(card);
   });
-  box.querySelectorAll('.node').forEach((n) => n.addEventListener('click', () => { if (n.dataset.open === '1') { audio.ui(); startStory(+n.dataset.g); } }));
-  const cur = Math.min(CHAPTERS.length - 1, Math.floor(un / 8));
-  requestAnimationFrame(() => { const c = box.children[cur]; if (c) box.scrollLeft = c.offsetLeft - (box.clientWidth - c.clientWidth) / 2; });
   $('#mapTotal').textContent = `★ ${Save.totalStars()}/${STORY_LEVELS * 3}`;
   const endOk = un >= 16, dayOk = un >= 4;
   $('#btnEndless').classList.toggle('lockd', !endOk); $('#btnDaily').classList.toggle('lockd', !dayOk);
@@ -449,7 +457,7 @@ function buildMap() {
   SKINS.forEach((s, i) => {
     const ok = i === 0 || chapterStars(i - 1) === 24;
     const b = document.createElement('button'); b.className = 'skin tap' + (Save.data.skin === i ? ' sel' : '') + (ok ? '' : ' locked'); b.style.setProperty('--c', s.c); b.style.pointerEvents = 'auto'; b.title = ok ? s.name : `${CHAPTERS[i - 1].name}: 24 yıldız`;
-    b.addEventListener('click', () => { if (!ok) { toast(`<em>${s.name}</em> — ${CHAPTERS[i - 1].name} takımyıldızındaki 24 yıldızı topla.`, 2.8); return; } audio.ui(); Save.data.skin = i; Save.save(); zifir.setSkin(i); buildMap(); });
+    b.addEventListener('click', () => { if (!ok) { toast(`<em>${s.name}</em> — ${CHAPTERS[i - 1].name} takımyıldızındaki 24 yıldızı topla.`, 2.8); return; } audio.ui(); Save.data.skin = i; Save.save(); zifir.setSkin(i); buildMap(); if (SkyMap.inited) SkyMap.refresh(); });
     sk.appendChild(b);
   });
 }
@@ -493,10 +501,19 @@ bind('#btnRetry', () => { audio.ui(); retry(); });
 bind('#btnHint', () => { audio.ui(); G.hint = true; retry(); toast('Soluk <em>hayalet güneşi</em> takip et.', 3); });
 bind('#btnMapF', () => openMap());
 bind('#btnMapBack', () => {
-  audio.ui(); UI.hide('map');
-  G.state = 'title'; G.stateT = 99; G.mode = 'story'; G.userSun = true; $('#hud').classList.remove('endless');
-  $('#btnPlay').textContent = Save.data.unlocked > 0 ? 'Devam Et' : 'Başla'; UI.show('title');
+  audio.ui(); audio.whoosh(false, 0.6, 0.05); $('#fader').classList.add('on');
+  setTimeout(() => {
+    UI.hide('map');
+    G.state = 'title'; G.stateT = 99; G.mode = 'story'; G.userSun = true; $('#hud').classList.remove('endless');
+    $('#btnPlay').textContent = Save.data.unlocked > 0 ? 'Devam Et' : 'Başla'; UI.show('title');
+    requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on')));
+  }, 260);
 });
+bind('#mpPlay', () => { const ci = Math.round(SkyMap.tf); if (Save.data.unlocked < ci * 8) { audio.clunk(); toast('Önce bir önceki <em>takımyıldızını</em> tamamla.', 2.4); return; } SkyMap.pick(SkyMap.playG); });
+bind('#mapPrev', () => { audio.ui(); SkyMap.go(Math.round(SkyMap.tf) - 1); });
+bind('#mapNext', () => { audio.ui(); SkyMap.go(Math.round(SkyMap.tf) + 1); });
+let wheelT = 0;
+canvas.addEventListener('wheel', (e) => { if (G.state !== 'map') return; const now = performance.now(); if (now - wheelT < 380) return; wheelT = now; SkyMap.go(Math.round(SkyMap.tf) + Math.sign(e.deltaY || e.deltaX)); }, { passive: true });
 bind('#btnEndless', () => { if (Save.data.unlocked < 16) { toast('Sonsuz Gün <em>16. adayı</em> tamamlayınca açılır.', 2.6); return; } audio.ui(); startEndless(); });
 bind('#btnDaily', () => { if (Save.data.unlocked < 4) { toast('Günün Adası <em>4. adayı</em> tamamlayınca açılır.', 2.6); return; } audio.ui(); startDaily(); });
 bind('#btnEndOk', () => openMap());
@@ -516,7 +533,7 @@ function onResize() {
   renderer.setPixelRatio(dpr); renderer.setSize(w, h, false);
   const v = renderer.getDrawingBufferSize(new THREE.Vector2());
   post.build(v.x, v.y, Q);
-  camera.aspect = w / h; camera.updateProjectionMatrix();
+  camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h);
   if (G.lv) Cam.fit(G.lv);
   fxAdd.u.uPx.value = fxMix.u.uPx.value = v.y / (2 * Math.tan(deg(camera.fov / 2)));
 }
@@ -543,7 +560,9 @@ function frame(now) {
   update(dt, dtR);
   TUT.update(dtR);
   audio.update(dtR, G.state === 'play');
-  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) post.render(scene, camera);
+  const onMap = G.state === 'map' && SkyMap.active;
+  if (onMap) SkyMap.apply();
+  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) post.render(onMap ? mapScene : scene, onMap ? mapCam : camera);
 }
 function bootGame() {
   applyQuality();
@@ -564,7 +583,7 @@ function bootGame() {
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
   G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT,
-  start: (g) => startStory(g), auto: (on = true) => { G.auto = on; }, setU: (u) => { G.uT = u; },
+  start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
   info: () => ({ state: G.state, u: G.u, s: G.s, len: G.lv && G.lv.length, meter: G.meter, T: G.T, drops: G.dropsGot, quality: Perf.level, scale: Perf.scale, ema: Perf.ema }),

@@ -201,10 +201,64 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 .danger-link{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,160,140,.75);padding:8px;align-self:center}
 
 /* ---------- map ---------- */
-#map{justify-content:flex-start;padding:calc(var(--sat) + 16px) 0 calc(var(--sab) + 18px);background:linear-gradient(180deg,rgba(8,6,18,.55),rgba(8,6,18,.15) 30%,rgba(8,6,18,.15) 70%,rgba(8,6,18,.6))}
+#map{justify-content:flex-start;padding:calc(var(--sat) + 14px) 0 calc(var(--sab) + 14px);background:linear-gradient(180deg,rgba(10,6,26,.6),rgba(10,6,26,0) 20%,rgba(10,6,26,0) 52%,rgba(10,6,26,.55) 78%,rgba(10,6,26,.8))}
 #map .mtop{width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 calc(var(--sar) + 16px) 0 calc(var(--sal) + 16px)}
 #map .mtop h5{font-family:var(--serif);font-style:italic;font-weight:600;font-size:28px}
 #map .mtop .tot{font-size:12px;letter-spacing:.2em;color:var(--gold-2);font-weight:700;display:flex;align-items:center;gap:6px}
+#mapLayer{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+#map .mtitle{display:flex;flex-direction:column;align-items:center}
+#mapDots{display:flex;gap:7px;margin-top:6px;align-items:center}
+#mapDots i{width:7px;height:7px;border-radius:4px;background:rgba(255,244,226,.32);transition:width .35s,background .35s,box-shadow .35s;cursor:pointer}
+#mapDots i.lk{background:rgba(255,244,226,.12)}
+#mapDots i.on{width:22px;background:var(--gold-2);box-shadow:0 0 12px rgba(255,200,120,.8)}
+.mnode{position:absolute;left:0;top:0;width:46px;height:52px;margin:-26px 0 0 -23px;display:none;flex-direction:column;align-items:center;justify-content:center;will-change:transform,opacity;background:none;border:0;padding:0;cursor:pointer}
+.mnode b{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--serif);font-weight:700;font-size:16px;color:#2a1a08;
+  background:radial-gradient(circle at 38% 32%,#fff8e4,#f4c870 58%,#c4823a);box-shadow:0 0 0 1px rgba(255,236,190,.7),0 4px 14px rgba(20,8,0,.45),0 0 22px rgba(255,180,90,.7)}
+.mnode.open b{background:radial-gradient(circle at 38% 32%,#ffffff,#ece6ff 58%,#a596f2);color:#1c1438;box-shadow:0 0 0 1px rgba(255,255,255,.75),0 4px 14px rgba(10,6,30,.45),0 0 20px rgba(170,150,255,.75)}
+.mnode.lk b{width:24px;height:24px;font-size:12px;background:rgba(22,16,40,.62);color:rgba(255,244,226,.4);box-shadow:0 0 0 1px rgba(255,244,226,.2)}
+.mnode.cur b{animation:curP 1.5s ease-in-out infinite}
+@keyframes curP{50%{transform:scale(1.16);box-shadow:0 0 0 2px #fff,0 4px 14px rgba(10,6,30,.45),0 0 34px rgba(190,170,255,1)}}
+.mnode i{display:flex;gap:3px;margin-top:4px;font-style:normal}
+.mnode s{width:5px;height:5px;transform:rotate(45deg);background:rgba(255,255,255,.22);text-decoration:none}
+.mnode s.on{background:#ffd27a;box-shadow:0 0 6px #ffb347}
+.mnode.lk i{display:none}
+.mnode:active b{transform:scale(.88)}
+.mtag{position:absolute;left:0;top:0;opacity:0;white-space:nowrap;font-family:var(--serif);font-style:italic;font-weight:600;font-size:17px;color:var(--ivory);text-shadow:0 2px 14px rgba(0,0,0,.65);
+  padding:5px 14px;border-radius:999px;background:rgba(20,12,38,.38);border:1px solid rgba(255,240,220,.16);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);cursor:pointer;will-change:transform,opacity}
+.mtag small{font-family:var(--sans);font-style:normal;font-size:9px;font-weight:800;letter-spacing:.3em;color:var(--gold-2);margin-right:8px}
+.mtag.lk{color:rgba(255,244,226,.55)}
+.mtag em{font-family:var(--sans);font-style:normal;font-size:9px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-2);margin-left:9px;opacity:.85}
+.mtag.lk em{color:var(--ivory-dim)}
+.mnav{position:absolute;top:44%;width:42px;height:42px;opacity:.85}
+#mapPrev{left:calc(var(--sal) + 10px)}#mapNext{right:calc(var(--sar) + 10px)}
+.mnav.dis{opacity:0;pointer-events:none!important}
+#mapPanel{position:absolute;left:50%;bottom:calc(var(--sab) + 100px);transform:translateX(-50%);width:min(92vw,460px);padding:15px 20px 16px;border-radius:26px;
+  background:linear-gradient(160deg,rgba(46,32,82,.5),rgba(14,10,30,.66));border:1px solid rgba(255,240,220,.17);-webkit-backdrop-filter:blur(16px) saturate(1.25);backdrop-filter:blur(16px) saturate(1.25);
+  box-shadow:0 22px 60px rgba(5,2,15,.55),inset 0 1px 0 rgba(255,255,255,.09)}
+#mapPanel.sw{animation:panelIn .55s cubic-bezier(.2,.9,.2,1)}
+@keyframes panelIn{0%{opacity:0;transform:translate(-50%,14px)}100%{opacity:1;transform:translate(-50%,0)}}
+#mapPanel .mpk{display:flex;align-items:center;gap:10px;font-size:10px;font-weight:800;letter-spacing:.34em;text-transform:uppercase;color:var(--gold-2)}
+#mapPanel .mpk i{flex:0 0 22px;height:1px;background:linear-gradient(90deg,rgba(255,223,158,.8),transparent)}
+#mapPanel h6{font-family:var(--serif);font-style:italic;font-weight:600;font-size:31px;line-height:1.05;margin-top:5px;text-shadow:0 0 24px rgba(180,150,255,.35)}
+#mapPanel p{font-size:12.5px;color:var(--ivory-dim);margin-top:3px;letter-spacing:.02em}
+#mapPanel .mprow{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:12px}
+#mapPanel .mpst{flex:1;min-width:0}
+#mapPanel .mpst span{display:block;font-size:11px;letter-spacing:.14em;color:var(--ivory-dim);margin-top:6px}
+#mapPanel .mpst b{color:var(--gold-2);font-size:14px}
+#mapPanel .mpbar{height:5px;border-radius:5px;background:rgba(255,255,255,.1);overflow:hidden}
+#mapPanel .mpbar i{display:block;height:100%;background:linear-gradient(90deg,#ffdf9e,#f2a54d);box-shadow:0 0 12px rgba(255,190,100,.8);transition:width .6s}
+#mapPanel .btn.primary{height:50px;min-width:0;padding:0 22px;font-size:13px;display:flex;flex-direction:column;justify-content:center;line-height:1.05}
+#mapPanel .btn small{display:block;font-size:9px;letter-spacing:.24em;opacity:.7;margin-top:3px}
+#mapPanel .mplock{display:none;align-items:center;gap:8px;margin-top:12px;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--ivory-dim)}
+#mapPanel .mplock svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}
+#mapPanel.locked .mprow{display:none}#mapPanel.locked .mplock{display:flex}#mapPanel.locked h6{opacity:.7}
+#map .modes,#map .skins{position:absolute;left:0;right:0}
+#map .modes{bottom:calc(var(--sab) + 50px);margin:0;flex-wrap:nowrap;gap:8px}
+#map .skins{bottom:calc(var(--sab) + 12px);margin:0;gap:8px}
+#map .mtop,#map .modes,#map .skins,#mapPanel,.mnav,.mtag{transition:opacity .35s ease}
+#map.diving .mtop,#map.diving .modes,#map.diving .skins,#map.diving #mapPanel,#map.diving .mnav,#map.diving .mtag{opacity:0!important;pointer-events:none!important}
+#fader{position:absolute;inset:0;background:#06040e;opacity:0;pointer-events:none;transition:opacity .7s ease;z-index:40}
+#fader.on{opacity:1;transition:opacity .25s ease}
 #chapters{margin-top:2vh;width:100%;flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
   touch-action:pan-x;scrollbar-width:none;padding:0 7vw;gap:4vw;min-height:0}
 #chapters::-webkit-scrollbar{display:none}
@@ -226,8 +280,8 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 @keyframes nodepulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.5}}
 .node text{font-family:var(--sans);font-weight:800;font-size:10px;fill:#1b1230;text-anchor:middle;dominant-baseline:central}
 #map .modes{display:flex;gap:10px;justify-content:center;margin-top:12px;padding:0 16px;flex-wrap:wrap}
-#map .modes .btn{height:50px;font-size:12px;padding:0 18px}
-#map .modes .btn small{font-size:10px;letter-spacing:.12em;opacity:.7;font-weight:600;text-transform:none}
+#map .modes .btn{height:38px;font-size:10.5px;padding:0 14px;letter-spacing:.12em}
+#map .modes .btn small{font-size:9px;letter-spacing:.06em;opacity:.7;font-weight:600;text-transform:none}
 #map .modes .btn.lockd{opacity:.45}
 #map .skins{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px}
 #map .skins span{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--ivory-dim);margin-right:4px}
@@ -305,6 +359,12 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
   #title .hint{order:3}
   #complete{padding-top:calc(var(--sat) + 4vh)}
   #stars{margin-top:3vh}
+  #mapPanel{left:calc(var(--sal) + 18px);bottom:calc(var(--sab) + 18px);transform:none;width:min(40vw,380px)}
+  #mapPanel.sw{animation:panelInL .55s cubic-bezier(.2,.9,.2,1)}
+  @keyframes panelInL{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
+  #map .modes{left:auto;right:calc(var(--sar) + 18px);bottom:calc(var(--sab) + 60px);justify-content:flex-end}
+  #map .skins{left:auto;right:calc(var(--sar) + 18px);justify-content:flex-end}
+  #mapPrev{left:calc(var(--sal) + 12px);top:40%}
   .chap{flex:0 0 min(640px,72vw);max-width:none;flex-direction:row;align-items:stretch;padding:14px 18px 14px 26px;gap:10px}
   .chap .info{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:6px;flex:0 0 36%;text-align:left}
   .chap h6,.chap .desc{text-align:left}.chap .desc{padding:0}
@@ -355,7 +415,7 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
     </div>
     <div id="flareBar"><div class="fbar"><i></i></div><span class="fw">Güneş patlaması geliyor</span><span class="fb">Güneş patlaması · yanma ×2</span></div>
     <div class="bottom">
-      <button id="dashBtn" class="tap" style="pointer-events:auto" aria-label="Sıçra"><div class="fill"></div><svg viewBox="0 0 40 40"><path d="M8 26c6-1 10-6 12-12" stroke="#b9adff" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".55"/><path d="M6 31c8-1 15-8 17-16" stroke="#e9e2ff" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".35"/><circle cx="26" cy="13" r="7.5" fill="#120e1f" stroke="#c9bfff" stroke-width="1.6"/><circle cx="28.4" cy="11.6" r="1.6" fill="#fff"/></svg><label>Sıçra</label></button>
+      <button id="dashBtn" class="tap" style="pointer-events:auto" aria-label="Dal"><div class="fill"></div><svg viewBox="0 0 40 40"><path d="M8 26c6-1 10-6 12-12" stroke="#b9adff" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".55"/><path d="M6 31c8-1 15-8 17-16" stroke="#e9e2ff" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".35"/><circle cx="26" cy="13" r="7.5" fill="#120e1f" stroke="#c9bfff" stroke-width="1.6"/><circle cx="28.4" cy="11.6" r="1.6" fill="#fff"/></svg><label>Dal</label></button>
       <button id="eclipseBtn" class="tap" style="pointer-events:auto" aria-label="Tutulma"><div class="fill"></div><div class="disc"></div><label>Tutulma</label></button>
     </div>
   </div>
@@ -418,12 +478,24 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
   </div>
 
   <div id="map" class="screen">
+    <div id="mapLayer"></div>
     <div class="mtop">
       <button class="icon tap" id="btnMapBack" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <h5>Gökyüzü</h5>
+      <div class="mtitle"><h5>Gökyüzü</h5><div id="mapDots"></div></div>
       <div class="tot" id="mapTotal">★ 0</div>
     </div>
-    <div id="chapters" class="tap"></div>
+    <button class="icon tap mnav" id="mapPrev" aria-label="Önceki takımyıldızı"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+    <button class="icon tap mnav" id="mapNext" aria-label="Sonraki takımyıldızı"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
+    <div id="mapPanel">
+      <div class="mpk"><span id="mpNum">I</span><i></i><span id="mpCons"></span></div>
+      <h6 id="mpName"></h6>
+      <p id="mpSub"></p>
+      <div class="mprow">
+        <div class="mpst"><div class="mpbar"><i id="mpFill"></i></div><span><b id="mpStars">0</b>/24 yıldız</span></div>
+        <button class="btn primary tap" id="mpPlay">Oyna</button>
+      </div>
+      <div class="mplock"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Önceki takımyıldızını tamamla</div>
+    </div>
     <div class="modes">
       <button class="btn ghost tap" id="btnEndless">Sonsuz Gün <small id="endlessInfo"></small></button>
       <button class="btn ghost tap" id="btnDaily">Günün Adası <small id="dailyInfo"></small></button>
@@ -431,6 +503,7 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
     <div class="skins" id="skins"><span>Zifir</span></div>
   </div>
 
+  <div id="fader"></div>
   <div id="chapterCard"><div class="cn" id="ccNum">I</div><div class="ct" id="ccTitle"></div><div class="line"></div><div class="cs" id="ccSub"></div></div>
 
   <div id="tutorial" aria-label="Nasıl oynanır">
