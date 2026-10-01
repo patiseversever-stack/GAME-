@@ -1513,3 +1513,4 @@
 .status { transition: opacity 200ms; }
 .status.is-hushed { opacity: 0; }
 .toasts { display: none !important; }
+.mzone__tag em.is-counting { color: #ffe39a; text-shadow: 0 0 10px rgba(255, 210, 120, .9); }

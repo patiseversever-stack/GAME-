@@ -58,20 +58,43 @@ function base(g, back = false) {
   g.save();
   g.clip();
   if (back) {
+    // arka yüz: fildişi zemin, kabartma çerçeve ve ortada altın Patisever yıldızı (çuhadan net ayrışır)
     const bg = g.createLinearGradient(0, 0, W, H);
-    bg.addColorStop(0, '#3f6a5e');
-    bg.addColorStop(1, '#1f3c34');
+    bg.addColorStop(0, '#f3e9d2');
+    bg.addColorStop(1, '#ddcba6');
     g.fillStyle = bg;
     g.fillRect(0, 0, W, H);
-    g.strokeStyle = 'rgba(226,196,130,0.6)';
-    g.lineWidth = 5;
-    roundRect(g, W * 0.14, H * 0.12, W * 0.72, H * 0.76, W * 0.08);
+    const v = g.createRadialGradient(W * 0.4, H * 0.32, W * 0.1, W / 2, H / 2, W * 0.95);
+    v.addColorStop(0, 'rgba(255,255,255,0.4)');
+    v.addColorStop(1, 'rgba(110,80,30,0.16)');
+    g.fillStyle = v;
+    g.fillRect(0, 0, W, H);
+    g.strokeStyle = 'rgba(150,108,40,0.55)';
+    g.lineWidth = W * 0.022;
+    roundRect(g, W * 0.12, H * 0.1, W * 0.76, H * 0.8, W * 0.09);
+    g.stroke();
+    g.strokeStyle = 'rgba(255,255,255,0.7)';
+    g.lineWidth = W * 0.008;
+    roundRect(g, W * 0.12 + 3, H * 0.1 + 3, W * 0.76, H * 0.8, W * 0.09);
     g.stroke();
     g.save();
     g.translate(W / 2, H / 2);
-    g.rotate(Math.PI / 4);
-    g.strokeStyle = 'rgba(226,196,130,0.75)';
-    g.strokeRect(-W * 0.12, -W * 0.12, W * 0.24, W * 0.24);
+    const gold = g.createLinearGradient(-W * 0.2, -W * 0.2, W * 0.2, W * 0.2);
+    gold.addColorStop(0, '#e9c46a');
+    gold.addColorStop(1, '#9a6b1f');
+    g.fillStyle = gold;
+    g.beginPath();
+    for (let i = 0; i < 16; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 8;
+      const r = i % 2 ? W * 0.085 : W * 0.21;
+      g.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    g.closePath();
+    g.fill();
+    g.fillStyle = '#f3e9d2';
+    g.beginPath();
+    g.arc(0, 0, W * 0.05, 0, Math.PI * 2);
+    g.fill();
     g.restore();
   } else {
     const bg = g.createLinearGradient(0, 0, 0, H);

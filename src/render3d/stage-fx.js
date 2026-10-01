@@ -109,6 +109,51 @@ export const fxMethods = {
     this._addPulse(mesh, { dur, s0: 0.97, s1: 1 + grow, a, delay, own: true });
   },
 
+  // Kadife vitrin tepsisi (el sonu): koyu zemin, pirinç kenar; yumuşakça belirir
+  setTray(rect) {
+    if (this.tray) {
+      this.scene.remove(this.tray);
+      this.tray.geometry.dispose();
+      this.tray.material.map?.dispose();
+      this.tray.material.dispose();
+      this.tray = null;
+    }
+    if (!rect || !this.L) return this.invalidate();
+    const S = 2;
+    const c = document.createElement('canvas');
+    c.width = Math.max(64, Math.round(rect.w * S));
+    c.height = Math.max(64, Math.round(rect.h * S));
+    const g = c.getContext('2d');
+    const r = 18 * S;
+    g.beginPath();
+    g.roundRect(6, 6, c.width - 12, c.height - 12, r);
+    const grd = g.createRadialGradient(c.width / 2, c.height * 0.3, 10, c.width / 2, c.height / 2, Math.max(c.width, c.height) * 0.7);
+    grd.addColorStop(0, 'rgba(34,10,14,0.92)');
+    grd.addColorStop(1, 'rgba(12,4,6,0.94)');
+    g.fillStyle = grd;
+    g.fill();
+    g.lineWidth = 3.5 * S;
+    g.strokeStyle = 'rgba(214,170,90,0.9)';
+    g.stroke();
+    g.beginPath();
+    g.roundRect(6 + 6 * S, 6 + 6 * S, c.width - 12 - 12 * S, c.height - 12 - 12 * S, r * 0.7);
+    g.lineWidth = 1 * S;
+    g.strokeStyle = 'rgba(255,220,150,0.35)';
+    g.stroke();
+    const tex = this._tex(c);
+    const cx = rect.x + rect.w / 2;
+    const cy = rect.y + rect.h / 2;
+    const lift = 0.45 * this._k(cx, cy, this.planeT);
+    const { geo, pos } = this._decalAt(cx, cy, rect.w / 2, rect.h / 2, lift);
+    const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ map: tex, transparent: true, opacity: 0, depthWrite: false, toneMapped: false }));
+    m.position.copy(pos);
+    m.renderOrder = 1;
+    this.scene.add(m);
+    this.tray = m;
+    this._trayT0 = performance.now();
+    this.invalidate();
+  },
+
   // Sinematik ışık: 0..1 (bitiş anında lamba güçlenir, ortam kararır)
   cine(v) {
     this._cineT = v;
@@ -147,6 +192,10 @@ export const fxMethods = {
         p.mesh.material.opacity = p.a * Math.pow(1 - u, 1.6) * Math.min(1, u * 10);
         busy = true;
       }
+    }
+    if (this.tray && this.tray.material.opacity < 1) {
+      this.tray.material.opacity = Math.min(1, (now - this._trayT0) / 380);
+      busy = true;
     }
     // sinematik / lamba
     const baseLamp = this._baseLamp ?? (this._baseLamp = this.lamp.intensity);

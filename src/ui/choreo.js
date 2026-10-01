@@ -42,8 +42,27 @@ export class Choreo {
     });
   }
 
+  // Gecikmeli adım: atlanırsa (skipAll) hemen çalışır — durum (ıstaka içeriği) hiçbir zaman eksik kalmaz
+  later(fn, ms) {
+    if (this.skipping || !ms) return fn();
+    this.laters = this.laters || new Map();
+    const id = setTimeout(() => {
+      this.laters.delete(id);
+      fn();
+    }, ms);
+    this.laters.set(id, fn);
+  }
+
   skipAll() {
     this.skipping = true;
+    if (this.laters) {
+      const fns = [...this.laters.entries()];
+      this.laters.clear();
+      for (const [id, fn] of fns) {
+        clearTimeout(id);
+        fn();
+      }
+    }
     for (const id of this.timers) clearTimeout(id);
     this.timers.clear();
     for (const w of [...this.waiters]) w();
@@ -295,31 +314,58 @@ export class Choreo {
   }
 
   // ───────────────────────────── 101: açma / işleme / çift / okey al ─────────────────────────────
-  async _flyTilesToMelds(seat, tiles, baseDelay = 0) {
+  // Taşları perlerine uçur. Benim taşlarım önce ıstakadan kalkar (seçildiklerini gösterir), sonra per per akar;
+  // her per tamamlanınca çerçevesi altın parlar ve tık sesi gelir.
+  async _flyTilesToMelds(seat, tiles, baseDelay = 0, groups = null) {
     const sc = this.sc;
-    const order = tiles;
-    order.forEach((t, i) => {
-      let sp = sc.sys.get(t);
-      if (seat !== 0) {
-        sp = sc.ensure(t);
-        const a = this.seatAnchor(seat);
-        sc.sys.snap(t, { x: a.x, y: a.y, sc: 0.4, flip: 180, rot: 0, z: 150, h: 0 });
-      }
-      sc._applyFace(t, sp);
-      const tg = sc.targetOf(t);
-      if (!tg) return;
-      sp.z = 150 + i;
-      sc.sys.fly(t, { ...tg, z: tg.z }, { delay: baseDelay + i * 28, dur: 380, arc: 26, bounce: 2.5, spin: rnd(-6, 6) });
+    const k = this.k;
+    let lift = 0;
+    if (seat === 0 && tiles.length > 1) {
+      tiles.forEach((t, i) => {
+        const sp = sc.sys.get(t);
+        if (!sp) return;
+        sc.sys.to(t, { x: sp.x, y: sp.y - sc.L.rack.th * 0.35, h: 12, sc: 1.06 }, { spring: SPRING.snappy, delay: i * 18 * k });
+      });
+      this.audio.cascade?.('touch', Math.min(tiles.length, 6), 0.03, { vol: 0.7 });
+      lift = 260 + tiles.length * 18;
+    }
+    const gs = groups || [tiles];
+    let t = baseDelay + lift;
+    const step = gs.length > 1 ? 42 : 30;
+    gs.forEach((grp, gi) => {
+      grp.forEach((tile, i) => {
+        let sp = sc.sys.get(tile);
+        if (seat !== 0 || !sp) {
+          sp = sc.ensure(tile);
+          const a = this.seatAnchor(seat);
+          sc.sys.snap(tile, { x: a.x, y: a.y, sc: 0.4, flip: 180, rot: 0, z: 150, h: 0 });
+          sp.placed = true;
+        }
+        sc._applyFace(tile, sp);
+        const tg = sc.targetOf(tile);
+        if (!tg) return;
+        sp.z = 150 + i;
+        sc.sys.fly(tile, { ...tg, z: tg.z }, { delay: (t + i * step) * k, dur: 400 * k, arc: 30, bounce: 2.5, spin: rnd(-8, 8) });
+      });
+      const land = t + (grp.length - 1) * step + 400;
+      const it = sc.packed?.items.find((x) => x.tiles.some((y) => y.t === grp[0]));
+      this.later(() => {
+        this.audio.play('meld', { vol: 0.8 });
+        if (it) sc.stage?.flashRect({ x: it.rect.x - 3, y: it.rect.y - 3, w: it.rect.w + 6, h: it.rect.h + 6 }, { color: 'rgb(255,214,120)', dur: 700, grow: 0.08 });
+      }, land * k);
+      t += grp.length * step + 90;
     });
-    return order.length * 28 + 380;
+    return t + 400;
   }
 
   async onOpen(ev) {
     const sc = this.sc;
     const d = sc.disp;
     const tiles = [];
+    const groups = [];
     for (const m of ev.melds) {
       d.melds.push(structuredClone(m));
+      groups.push(m.tiles.map((x) => x.t));
       for (const x of m.tiles) tiles.push(x.t);
     }
     if (ev.seat === 0) {
@@ -332,20 +378,29 @@ export class Choreo {
     d.opened[ev.seat] = ev.additional ? d.opened[ev.seat] : ev.openKind;
     sc._packMelds();
     this.audio.play('open');
-    const total = await this._flyTilesToMelds(ev.seat, tiles);
+    const name = ev.seat === 0 ? 'Sen' : sc.cfg.roster[ev.seat].name;
+    if (!ev.additional) {
+      sc.stage?.cine(0.45);
+      sc.toast(`${name} ${ev.openKind === 'pairs' ? `${ev.count} çift` : `${ev.points} puanla`} açtı`, 'good', 2200);
+    }
+    const total = await this._flyTilesToMelds(ev.seat, tiles, 0, groups);
     sc.retarget(true);
     sc.refreshChrome();
     sc.onRackChanged();
-    const name = ev.seat === 0 ? 'Sen' : sc.cfg.roster[ev.seat].name;
     sc.seats[ev.seat]?.setStatus(ev.openKind === 'pairs' ? 'çift açtı' : ev.additional ? 'per indirdi' : `açtı · ${ev.points}`, { good: true });
+    await this.sleep(total * 0.72);
     sc.flashZone(ev.seat);
     if (!ev.additional) {
+      // açılış anı: bölge sahibinin renginde parlar, puan bölgenin üstünden yükselir, lamba bir an güçlenir
       this.fx.camera.play('punch');
-      sc.stage?.lampFlash('gold', 0.4, 600);
-      sc.stamp(ev.openKind === 'pairs' ? `${ev.count} ÇİFT AÇTI` : `${ev.points} İLE AÇTI`, ev.seat === 0 ? 'Masaya per indirebilirsin' : name, 'open', 1500);
-      setTimeout(() => sc.meldLens(ev.seat, { auto: true, mark: tiles }), 650);
+      sc.stage?.lampFlash('gold', 0.45, 650);
+      const z = (sc.packed?.zones || []).find((x) => x.owner === ev.seat);
+      if (z) sc.floatText(ev.openKind === 'pairs' ? `${ev.count} ÇİFT` : `+${ev.points}`, z.rect.x + z.rect.w / 2, z.rect.y + z.rect.h * 0.45, 'good');
+      sc.countZone?.(ev.seat);
+      sc.stage?.cine(0);
+      if (ev.seat !== 0) this.later(() => sc.meldLens(ev.seat, { auto: true, mark: tiles }), 380);
     }
-    await this.sleep(total * 0.8);
+    await this.sleep(320);
   }
 
   async onLayoff(ev) {
@@ -371,7 +426,6 @@ export class Choreo {
     sc.retarget(true);
     sc.refreshChrome();
     sc.onRackChanged();
-    if (ev.seat !== 0) sc.meldLens(m.owner, { auto: true, mark: [ev.tile] });
     const tgt = sc.targetOf(ev.tile);
     if (tgt) sc.stage?.ping(tgt.x, tgt.y, { r: (sc.L.rack.tw || 40) * 1.1, color: 'rgb(150,230,190)', dur: 640, s0: 0.5, s1: 1.6, delay: total * 0.6 });
     await this.sleep(total * 0.7);
@@ -468,7 +522,10 @@ export class Choreo {
     const sc = this.sc;
     sc.disp.turn = ev.seat;
     sc.refreshChrome();
-    if (ev.seat === 0) this.audio.play('myTurn');
+    if (ev.seat === 0) {
+      this.audio.play('myTurn');
+      if (this.settings.get('haptics')) navigator.vibrate?.(14);
+    }
     else this.audio.play('turn', { vol: 0.7 });
   }
 
@@ -503,89 +560,125 @@ export class Choreo {
     this.fx.camera.play('intro');
     sc.root.classList.add('is-intro');
 
-    // 1) yıkama: kapalı taşlar masanın ortasına saçılır, iki tur dairesel karışır, sonra deste olarak toplanır
+    // 1) yıkama: kapalı taşlar masanın ortasına saçılır, avuçla dairesel karıştırılır
     const st = this.stockPos();
     const k = this.k;
     const MA = L.meldArea;
     const cx = MA.x + MA.w / 2;
     const cy = MA.y + MA.h / 2;
-    const R0 = Math.min(MA.w * 0.42, 190);
-    const N = 28;
+    const R0 = Math.min(MA.w * 0.42, 200);
+    const mine = g.hands[0].slice();
+    const counts = g.hands.map((h) => h.length);
+    const PACKS = g.rules.mode === 'okey101' ? 4 : 3; // kişi başı istif
+    const order = [1, 2, 3, 0];
+    const nStacks = PACKS * 4;
+    const N = nStacks * 5;
     const ghosts = [];
     for (let i = 0; i < N; i++) {
       const { id, s } = sc.ghost();
-      sc.sys.snap(id, { x: st.x + rnd(-3, 3), y: st.y + rnd(-3, 3), sc: L.scale.stock, flip: 180, rot: rnd(-6, 6), z: 100 + i, h: 0 });
+      sc.sys.snap(id, { x: st.x + rnd(-3, 3), y: st.y + rnd(-3, 3), sc: L.scale.stock, flip: 180, rot: rnd(-6, 6), z: 100 + (i % 20), h: 0 });
       s.placed = true;
-      ghosts.push({ id, a: (i / N) * Math.PI * 2 + rnd(-0.2, 0.2), r: R0 * (0.35 + Math.random() * 0.65) });
+      ghosts.push({ id, a: (i / N) * Math.PI * 2 + rnd(-0.25, 0.25), r: R0 * (0.25 + Math.random() * 0.75) });
     }
-    await this.sleep(120);
+    await this.sleep(100);
     this.audio.play('shuffle');
-    // saçılma
-    ghosts.forEach((g2, i) => sc.sys.fly(g2.id, { x: cx + Math.cos(g2.a) * g2.r, y: cy + Math.sin(g2.a) * Math.min(g2.r * 0.55, MA.h * 0.42), sc: L.scale.stock, flip: 180, rot: rnd(-90, 90), z: 100 + i, h: 0 }, { dur: 420 * k, delay: i * 9 * k, arc: 16, bounce: 0 }));
-    await this.sleep(560 * k);
-    // dairesel yıkama (iki tur, avuç hareketi)
+    const ell = (r) => Math.min(r * 0.52, MA.h * 0.44);
+    ghosts.forEach((g2, i) => sc.sys.fly(g2.id, { x: cx + Math.cos(g2.a) * g2.r, y: cy + Math.sin(g2.a) * ell(g2.r), sc: L.scale.stock, flip: 180, rot: rnd(-90, 90), z: 100 + (i % 20), h: 0 }, { dur: 420 * k, delay: (i % 30) * 8 * k, arc: 18, bounce: 0 }));
+    await this.sleep(520 * k);
     for (let step = 1; step <= 6; step++) {
       ghosts.forEach((g2, i) => {
-        const ang = g2.a + step * 0.9 * (i % 2 ? 1 : -0.7);
-        const rr = g2.r * (step % 2 ? 0.8 : 1.05);
-        sc.sys.to(g2.id, { x: cx + Math.cos(ang) * rr, y: cy + Math.sin(ang) * Math.min(rr * 0.55, MA.h * 0.45), rot: rnd(-120, 120) }, { spring: SPRING.soft, delay: i * 3 });
+        const ang = g2.a + step * 0.85 * (i % 2 ? 1 : -0.75);
+        const rr = g2.r * (step % 2 ? 0.78 : 1.06);
+        sc.sys.to(g2.id, { x: cx + Math.cos(ang) * rr, y: cy + Math.sin(ang) * ell(rr), rot: rnd(-140, 140) }, { spring: SPRING.soft, delay: (i % 12) * 3 });
       });
-      if (step === 3) this.audio.play('shuffle', { vol: 0.8 });
-      await this.sleep(120 * k);
+      if (step % 3 === 0) this.audio.play('shuffle', { vol: 0.75 });
+      await this.sleep(115 * k);
     }
-    // toplanma: deste yerine düzgün yığın
-    ghosts.forEach((g2, i) => sc.sys.fly(g2.id, { x: st.x - (i % 4) * 0.8, y: st.y - (i % 4) * 1.2, sc: L.scale.stock, flip: 180, rot: 0, z: 100 + (i % 4), h: 0 }, { dur: 360 * k, delay: i * 7 * k, arc: 12, bounce: 1 }));
-    await this.sleep((360 + N * 7) * k);
-    this.audio.play('place', { vol: 0.8 });
-    ghosts.forEach((g2) => sc.dropSprite(g2.id));
 
-    // 2) dağıtma: gerçek masadaki gibi paketler halinde (rakiplere 3'erli deste, bana tek tek kapalı), sonra benim taşlarım dalga halinde açılır
-    const mine = g.hands[0].slice();
-    const counts = g.hands.map((h) => h.length);
-    const order = [1, 2, 3, 0];
-    const PACK = 3;
-    const rounds = Math.ceil(Math.max(...counts) / PACK);
+    // 2) istifler: gerçek masadaki gibi beşer taşlık istifler iki sıra halinde dizilir
+    const tw = L.rack.tw * L.scale.stock;
+    const th = tw * 1.36;
+    const perRow = Math.ceil(nStacks / 2);
+    const gapX = Math.min(tw + 5, (MA.w - 16) / perRow);
+    const vstep = Math.max(2.2, tw * 0.22);
+    const rowY = [cy - th * 0.62, cy + th * 0.62];
+    const stacks = [];
+    for (let si = 0; si < nStacks; si++) {
+      const row = si < perRow ? 0 : 1;
+      const col = row ? si - perRow : si;
+      const nInRow = row ? nStacks - perRow : perRow;
+      stacks.push({ x: cx + (col - (nInRow - 1) / 2) * gapX, y: rowY[row] + 2 * vstep, ids: [] });
+    }
+    ghosts.forEach((g2, i) => {
+      const si = i % nStacks;
+      const l = (i / nStacks) | 0;
+      const S = stacks[si];
+      S.ids.push(g2.id);
+      sc.sys.fly(g2.id, { x: S.x, y: S.y - l * vstep, sc: L.scale.stock, flip: 180, rot: 0, z: 100 + l * 4 + (si % 4), h: l * 6 }, { dur: 380 * k, delay: (si * 22 + l * 70) * k, arc: 14 + l * 3, bounce: 1.5 });
+    });
+    await this.sleep((380 + nStacks * 22 + 4 * 70) * k);
+    this.audio.cascade?.('place', 5, 0.05, { vol: 0.7 });
+    sc.disp.stock = g.stock.length + 1;
+    sc.refreshChrome();
+    await this.sleep(160 * k);
+
+    // 3) dağıtma: istifler sırayla oyunculara kayar (rakiplere kapalı, bana ıstakaya)
     let t0 = 0;
+    let next = 0;
     const dealt = [0, 0, 0, 0];
-    for (let r = 0; r < rounds; r++) {
+    for (let r = 0; r < PACKS; r++) {
       for (const seat of order) {
-        const take = Math.min(PACK, counts[seat] - dealt[seat]);
-        if (take <= 0) continue;
+        const S = stacks[next++];
+        if (!S) continue;
+        const last = r === PACKS - 1;
+        const take = last ? counts[seat] - dealt[seat] : Math.min(5, counts[seat] - dealt[seat]);
         const delay = t0 * k;
         const a = this.seatAnchor(seat);
-        for (let j = 0; j < take; j++) {
-          const idx = dealt[seat] + j;
-          if (seat === 0) {
+        if (seat === 0) {
+          // istif yerine gerçek taşlarım geçer (aynı yerde, kapalı), sonra ıstakaya akar
+          for (let j = 0; j < take; j++) {
+            const idx = dealt[0] + j;
             const t = mine[idx];
-            sc.rack.addAuto(t);
-            const sp = sc.ensure(t);
-            sp.z = 120 + idx;
-            const tg = { ...sc.targetOf(t), flip: 180 };
-            sc.sys.fly(t, tg, { delay: delay + j * 40 * k, dur: 360 * k, arc: 30, bounce: 2, onLand: () => { sc.disp.counts[0]++; } });
-          } else {
-            const { id, s: gs } = sc.ghost();
-            sc.sys.snap(id, { x: st.x, y: st.y, sc: L.scale.stock, flip: 180, rot: 0, z: 110 + j, h: 0 });
-            gs.placed = true;
-            sc.sys.fly(id, { x: a.x + j * 3, y: a.y - j * 2, sc: 0.42, flip: 180, rot: rnd(-8, 8), z: 110 + j, h: 0 }, {
-              delay: delay + j * 25 * k,
-              dur: 340 * k,
-              arc: 22,
+            if (t === undefined) continue;
+            const l = Math.min(j, 4);
+            this.later(() => {
+              sc.rack.addAuto(t);
+              const sp = sc.ensure(t);
+              sc.sys.snap(t, { x: S.x, y: S.y - l * vstep, sc: L.scale.stock, flip: 180, rot: 0, z: 120 + l, h: l * 6 });
+              sp.placed = true;
+              sp.z = 140 + idx;
+              if (j === 0) for (const gid of S.ids) sc.dropSprite(gid);
+              const tg = { ...sc.targetOf(t), flip: 180 };
+              sc.sys.fly(t, tg, { dur: 380 * k, arc: 34, bounce: 2.2, delay: j * 42 * k, onLand: () => { sc.disp.counts[0]++; } });
+            }, delay);
+          }
+        } else {
+          const ids = S.ids.slice();
+          ids.forEach((gid, j) => {
+            sc.sys.fly(gid, { x: a.x + rnd(-4, 4), y: a.y + rnd(-3, 3), sc: 0.42, flip: 180, rot: rnd(-10, 10), z: 110 + j, h: 0 }, {
+              delay: delay + (4 - j) * 26 * k,
+              dur: 400 * k,
+              arc: 26,
               bounce: 0,
               onLand: () => {
-                sc.disp.counts[seat]++;
-                sc.seats[seat].setCount(sc.disp.counts[seat]);
-                sc.seats[seat].pop?.();
-                sc.dropSprite(id);
+                sc.dropSprite(gid);
+                if (j === 0) {
+                  sc.disp.counts[seat] = Math.min(counts[seat], sc.disp.counts[seat] + take);
+                  sc.seats[seat].setCount(sc.disp.counts[seat]);
+                  sc.seats[seat].pop?.();
+                }
               },
             });
-          }
+          });
         }
         setTimeout(() => this.audio.play('deal'), delay);
         dealt[seat] += take;
-        t0 += 150;
+        t0 += 135;
       }
     }
-    await this.sleep((t0 + 420) * k);
+    // kullanılmayan istifler (olursa) desteye döner
+    for (; next < stacks.length; next++) for (const gid of stacks[next].ids) sc.dropSprite(gid);
+    await this.sleep((t0 + 460) * k);
     sc.disp.stock = g.stock.length + 1;
     sc.refreshChrome();
     // benim taşlarım soldan sağa dalga halinde açılır
@@ -644,6 +737,7 @@ export class Choreo {
       return;
     }
     const name = w === 0 ? 'Sen' : sc.cfg.roster[w].name;
+    sc.closeLens?.(true);
     sc.focus(L.table.x + L.table.w / 2, L.table.y + L.table.h / 2, true);
     sc.stage?.cine(1);
     this.fx.camera.play('slam');
@@ -672,8 +766,34 @@ export class Choreo {
     const sc = this.sc;
     const L = sc.L;
     const melds = res.winningGroups.map((g, i) => ({ id: 'w' + i, owner: w, kind: g.kind, tiles: g.tiles }));
-    const area = { x: L.table.x + 8, y: L.meldArea.y, w: L.table.w - 16, h: Math.max(60, L.meldArea.h) };
-    const packed = packMelds(melds, area, { maxTw: Math.min(L.rack.tw * 0.85, 46), minTw: 12 });
+    // vitrin: masanın ortası (yatayda köşe çöplükleri arası, üst plaka ile eylem şeridi arası); deste ve gösterge çekilir
+    let area = { x: L.table.x + 8, y: L.meldArea.y, w: L.table.w - 16, h: Math.max(60, L.meldArea.h) };
+    if (L.profile === 'landscape') {
+      const x0 = L.piles[3].cx + L.piles[3].w / 2 + 12;
+      const x1 = L.piles[0].cx - L.piles[0].w / 2 - 12;
+      const y0 = L.seats[2].panel.y + L.seats[2].panel.h + 10;
+      const y1 = L.action.y - 10;
+      area = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    }
+    sc.setRevealMode?.(true);
+    const packed = packMelds(melds, area, { maxTw: Math.min(L.rack.tw * 1.05, 56), minTw: 12 });
+    // vitrini alanın tam ortasına al
+    if (packed.items.length) {
+      let y0 = Infinity, y1 = -Infinity, x0 = Infinity, x1 = -Infinity;
+      for (const it of packed.items) {
+        y0 = Math.min(y0, it.rect.y); y1 = Math.max(y1, it.rect.y + it.rect.h);
+        x0 = Math.min(x0, it.rect.x); x1 = Math.max(x1, it.rect.x + it.rect.w);
+      }
+      const dy = area.y + (area.h - (y1 - y0)) / 2 - y0;
+      const dx = area.x + (area.w - (x1 - x0)) / 2 - x0;
+      for (const it of packed.items) {
+        it.rect = { ...it.rect, x: it.rect.x + dx, y: it.rect.y + dy };
+        for (const x of it.tiles) {
+          x.cx += dx;
+          x.cy += dy;
+        }
+      }
+    }
     const map = new Map();
     const tiles = [];
     packed.items.forEach((it) => it.tiles.forEach((x, i) => {
@@ -681,6 +801,14 @@ export class Choreo {
       tiles.push(x.t);
     }));
     sc.reveal = { map };
+    if (packed.items.length) {
+      let bx0 = Infinity, by0 = Infinity, bx1 = -Infinity, by1 = -Infinity;
+      for (const it of packed.items) {
+        bx0 = Math.min(bx0, it.rect.x); by0 = Math.min(by0, it.rect.y);
+        bx1 = Math.max(bx1, it.rect.x + it.rect.w); by1 = Math.max(by1, it.rect.y + it.rect.h);
+      }
+      sc.stage?.setTray({ x: bx0 - 16, y: by0 - 14, w: bx1 - bx0 + 32, h: by1 - by0 + 28 });
+    }
     this.audio.cascade('deal', Math.min(tiles.length, 14), 0.045, { vol: 1.2 });
     tiles.forEach((t, i) => {
       let sp = sc.sys.get(t);
@@ -691,6 +819,12 @@ export class Choreo {
       }
       sc.sys.fly(t, map.get(t), { delay: i * 34, dur: 420, arc: 30, bounce: 2.5 });
     });
-    await this.sleep(tiles.length * 34 + 520);
+    await this.sleep(tiles.length * 34 + 460);
+    // perler tek tek altınla çerçevelenir (kazananın eli okunur, ritimli tık sesleri)
+    for (const it of packed.items) {
+      sc.stage?.flashRect({ x: it.rect.x - 4, y: it.rect.y - 4, w: it.rect.w + 8, h: it.rect.h + 8 }, { color: 'rgb(255,210,110)', dur: 900, grow: 0.1 });
+      this.audio.play('meld', { vol: 0.9 });
+      await this.sleep(150);
+    }
   }
 }

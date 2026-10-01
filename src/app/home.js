@@ -19,48 +19,61 @@ export function tryFullscreen() {
 
 export function createHome({ host, settings, profile, audio, saved, onStart, onResume, ui }) {
   const root = document.createElement('div');
-  root.className = 'home3';
+  root.className = 'home3 h4';
   let diff = settings.get('difficulty') || 'normal';
   const prog = profile.progress();
   const goals = profile.d.daily.goals;
   const doneGoals = goals.filter((g) => g.done).length;
   const roster = settings.get('playerAvatar');
+  const pname = settings.get('playerName') || 'Oyuncu';
   const pct = Math.round((prog.into / prog.need) * 100);
+  const streak = profile.d.stats?.streak || 0;
   root.innerHTML = `
-    <div class="h3-vignette"></div>
-    <div class="h3-top">
-      <button class="h3-ic" data-a="fs" aria-label="Tam ekran">${icon('expand')}</button>
-      <button class="h3-ic" data-a="sound" aria-label="Ses">${icon(settings.get('sfx') ? 'volumeOn' : 'volumeOff')}</button>
-    </div>
-    <section class="h3-brand">
-      <small>PATISEVER</small>
-      <h1>OKEY</h1>
-      <p>İki oyun, tek masa.</p>
-      <button class="h3-profile" data-a="profile" aria-label="Profil">
-        <span class="h3-ring" style="--p:${pct}"><i>${avatarSVG(roster)}</i></span>
-        <span class="h3-lvl"><b>Seviye ${prog.level}</b><em>${prog.into} / ${prog.need} XP</em></span>
+    <div class="h4-shade"></div>
+    <div class="h4-rays"></div>
+    <header class="h4-top">
+      <button class="h4-profile" data-a="profile" aria-label="Profil">
+        <span class="h4-ring" style="--p:${pct}"><i>${avatarSVG(roster)}</i><b>${prog.level}</b></span>
+        <span class="h4-who"><b>${esc(pname)}</b><span class="h4-xp"><s style="width:${pct}%"></s></span><em>${prog.into} / ${prog.need} XP</em></span>
       </button>
-      ${saved ? `<button class="h3-resume" data-a="resume"><span>Devam et</span><em>${saved.mode === 'okey101' ? '101 Okey' : 'Okey'} · El ${saved.round}</em></button>` : ''}
+      <div class="h4-chips">
+        <button class="h4-chip" data-a="goals"><i>${icon('target')}</i><b>${doneGoals}/${goals.length}</b><span>Görev</span></button>
+        <span class="h4-chip h4-chip--fire"><i>${icon('bolt')}</i><b>${streak}</b><span>Seri</span></span>
+      </div>
+      <div class="h4-icons">
+        <button class="h4-ic" data-a="fs" aria-label="Tam ekran">${icon('expand')}</button>
+        <button class="h4-ic" data-a="sound" aria-label="Ses">${icon(settings.get('sfx') ? 'volumeOn' : 'volumeOff')}</button>
+        <button class="h4-ic" data-a="settings" aria-label="Ayarlar">${icon('cog')}</button>
+      </div>
+    </header>
+    <section class="h4-brand">
+      <div class="h4-crest"><i></i><small>PATISEVER</small><i></i></div>
+      <h1 class="h4-logo" data-text="OKEY">OKEY</h1>
+      <p class="h4-sub"><span>Klasik</span><i></i><span>101</span><i></i><span>Çevrimdışı</span></p>
+      ${saved ? `<button class="h4-resume" data-a="resume"><span class="h4-resume__ic">${icon('play')}</span><span><b>Devam et</b><em>${saved.mode === 'okey101' ? '101 Okey' : 'Okey'} · El ${saved.round}</em></span></button>` : ''}
     </section>
-    <section class="h3-modes">
-      <button class="mtile" data-m="okey" aria-label="Okey oyna">
-        <span class="mtile__face mtile__face--star"><i class="mtile__star"></i><b>OKEY</b></span>
-        <span class="mtile__cap">Klasik · 14 taş</span>
+    <section class="h4-modes">
+      <button class="h4-card" data-m="okey" aria-label="Okey oyna">
+        <span class="h4-halo"></span>
+        <span class="h4-tile h4-tile--gold"><i class="h4-star"></i><b>OKEY</b></span>
+        <span class="h4-plate"><b>Klasik Okey</b><em>14 taş · gösterge · okey</em></span>
+        <span class="h4-play">${icon('play')}<b>OYNA</b></span>
       </button>
-      <button class="mtile" data-m="okey101" aria-label="101 Okey oyna">
-        <span class="mtile__face"><b class="mtile__num">101</b><span class="mtile__marks"><i class="r"></i><i class="b"></i><i class="k"></i><i class="y"></i></span></span>
-        <span class="mtile__cap">Açıl, işle, cezadan kaç</span>
+      <button class="h4-card" data-m="okey101" aria-label="101 Okey oyna">
+        <span class="h4-halo"></span>
+        <span class="h4-tile"><b class="h4-num">101</b><span class="h4-marks"><i class="r"></i><i class="b"></i><i class="k"></i><i class="y"></i></span></span>
+        <span class="h4-plate"><b>101 Okey</b><em>Aç · işle · cezadan kaç</em></span>
+        <span class="h4-play">${icon('play')}<b>OYNA</b></span>
       </button>
-      <div class="h3-diff" role="radiogroup" aria-label="Zorluk">
-        <button role="radio" data-d="casual">Kolay</button><button role="radio" data-d="normal">Normal</button><button role="radio" data-d="expert">Uzman</button>
+      <div class="h4-diff" role="radiogroup" aria-label="Zorluk">
+        <span>Rakip</span><button role="radio" data-d="casual">Kolay</button><button role="radio" data-d="normal">Normal</button><button role="radio" data-d="expert">Uzman</button>
       </div>
     </section>
-    <nav class="h3-dock">
+    <nav class="h4-dock">
       <button data-a="goals"><i>${icon('target')}</i><span>Görevler</span>${doneGoals < goals.length ? `<em>${goals.length - doneGoals}</em>` : ''}</button>
       <button data-a="ach"><i>${icon('trophy')}</i><span>Başarımlar</span></button>
       <button data-a="stats"><i>${icon('chart')}</i><span>İstatistik</span></button>
-      <button data-a="how"><i>${icon('help')}</i><span>Nasıl oynanır</span></button>
-      <button data-a="settings"><i>${icon('cog')}</i><span>Ayarlar</span></button>
+      <button data-a="how"><i>${icon('book')}</i><span>Kurallar</span></button>
     </nav>`;
   host.appendChild(root);
 
@@ -69,6 +82,8 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
     try {
       menu3d = new MenuStage(root, { quality: settings.get('quality') });
       root.insertBefore(menu3d.canvas, root.firstChild);
+      menu3d.onClack = (v) => audio.play?.('place', { vol: 0.12 + 0.25 * v });
+      window.__menu = menu3d;
     } catch (e) {
       console.warn('Menü 3B başlatılamadı', e);
     }
@@ -116,7 +131,7 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
       root.classList.add('is-leaving');
       tryFullscreen();
       menu3d?.dive();
-      setTimeout(() => onStart(m.dataset.m, diff), menu3d ? 560 : 120);
+      setTimeout(() => onStart(m.dataset.m, diff), menu3d ? 620 : 120);
       return;
     }
     const a = e.target.closest('[data-a]')?.dataset.a;

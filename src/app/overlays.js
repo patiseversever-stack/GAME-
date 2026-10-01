@@ -5,6 +5,7 @@ import { avatarSVG } from '../ui/avatars.js';
 import { FINISH_LABEL } from '../game/scoring.js';
 import { COLORS, COLOR_TR } from '../game/tiles.js';
 import { Confetti } from '../ui/effects.js';
+import { icon } from '../ui/icons.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -13,7 +14,7 @@ export function sheet(host, { title, body = '', actions = [], cls = '', onClose,
   el.className = 'sheet-wrap ' + cls;
   el.innerHTML = `<div class="sheet-frame"><i class="stud stud--tl"></i><i class="stud stud--tr"></i><i class="stud stud--bl"></i><i class="stud stud--br"></i>
   <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-    <header class="sheet__head"><span class="sheet__orn"></span><h2>${title}</h2><span class="sheet__orn"></span>${dismissable ? '<button class="icon-btn sheet__x" data-x aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : ''}</header>
+    <header class="sheet__head"><h2 class="ribbon"><span>${title}</span></h2>${dismissable ? '<button class="icon-btn sheet__x" data-x aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : ''}</header>
     <div class="sheet__body"></div>
     ${actions.length ? `<footer class="sheet__foot">${actions.map((a, i) => `<button class="btn ${a.primary ? 'btn--primary' : ''} btn--lg" data-i="${i}">${a.label}</button>`).join('')}</footer>` : ''}
   </div></div>`;
@@ -184,19 +185,21 @@ export function historySheet(host, ctl, history = []) {
 // ───────────── Ayarlar ─────────────
 export function settingsSheet(host, settings) {
   const seg = (key, opts) => `<div class="seg" role="radiogroup" data-key="${key}">${opts.map(([v, l]) => `<button role="radio" data-v="${v}" aria-checked="${String(settings.get(key)) === String(v)}">${l}</button>`).join('')}</div>`;
-  const sw = (key, label) => `<label class="set-row"><span>${label}</span><button class="switch" role="switch" data-sw="${key}" aria-checked="${!!settings.get(key)}"><i></i></button></label>`;
+  const IC = { sfx: 'volumeOn', music: 'music', haptics: 'vibrate', botSpeed: 'bolt', tapToDiscard: 'hand', meldHints: 'eye', tutorial: 'help', motion: 'wand', textScale: 'book', rack: 'palette', tiles: 'layers' };
+  const lab = (key, label) => `<span class="set-lab"><i>${icon(IC[key] || 'cog')}</i>${label}</span>`;
+  const sw = (key, label) => `<label class="set-row">${lab(key, label)}<button class="switch" role="switch" data-sw="${key}" aria-checked="${!!settings.get(key)}"><i></i></button></label>`;
   const body = document.createElement('div');
   body.className = 'settings2';
   body.innerHTML = `
     <h3>Ses</h3>${sw('sfx', 'Efekt sesleri')}${sw('music', 'Müzik')}${sw('haptics', 'Titreşim')}
     <h3>Oynanış</h3>
-    <div class="set-row"><span>Bot hızı</span>${seg('botSpeed', [['slow', 'Yavaş'], ['normal', 'Normal'], ['fast', 'Hızlı']])}</div>
+    <div class="set-row">${lab('botSpeed', 'Bot hızı')}${seg('botSpeed', [['slow', 'Yavaş'], ['normal', 'Normal'], ['fast', 'Hızlı']])}</div>
     ${sw('tapToDiscard', 'Seçili taşa ikinci dokunuşla at')}${sw('meldHints', 'Perleri ıstakada işaretle')}${sw('tutorial', 'İpuçlarını göster')}
     <h3>Görünüm ve erişilebilirlik</h3>
-    <div class="set-row"><span>Animasyon</span>${seg('motion', [['auto', 'Sistem'], ['full', 'Tam'], ['reduced', 'Az']])}</div>
-    <div class="set-row"><span>Yazı boyutu</span>${seg('textScale', [['0.9', 'Küçük'], ['1', 'Normal'], ['1.15', 'Büyük'], ['1.3', 'Çok büyük']])}</div>
-    <div class="set-row"><span>Istaka</span>${seg('rack', [['walnut', 'Ceviz'], ['maple', 'Akçaağaç'], ['ebony', 'Abanoz']])}</div>
-    <div class="set-row"><span>Taşlar</span>${seg('tiles', [['ivory', 'Fildişi'], ['bone', 'Kemik'], ['onyx', 'Oniks']])}</div>`;
+    <div class="set-row">${lab('motion', 'Animasyon')}${seg('motion', [['auto', 'Sistem'], ['full', 'Tam'], ['reduced', 'Az']])}</div>
+    <div class="set-row">${lab('textScale', 'Yazı boyutu')}${seg('textScale', [['0.9', 'Küçük'], ['1', 'Normal'], ['1.15', 'Büyük'], ['1.3', 'Çok büyük']])}</div>
+    <div class="set-row">${lab('rack', 'Istaka')}${seg('rack', [['walnut', 'Ceviz'], ['maple', 'Akçaağaç'], ['ebony', 'Abanoz']])}</div>
+    <div class="set-row">${lab('tiles', 'Taşlar')}${seg('tiles', [['ivory', 'Fildişi'], ['bone', 'Kemik'], ['onyx', 'Oniks']])}</div>`;
   body.addEventListener('click', (e) => {
     const s = e.target.closest('[data-sw]');
     if (s) {

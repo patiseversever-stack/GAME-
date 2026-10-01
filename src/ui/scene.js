@@ -1052,6 +1052,25 @@ export class Scene {
     else this.flashSeat(seat, 'rgb(150,230,190)');
   }
 
+  // per bölgesi etiketindeki puan sıfırdan sayarak gelir
+  countZone(owner) {
+    const em = this.meldTags.querySelector(`.mzone[data-owner="${owner}"] .mzone__tag em`);
+    if (!em) return;
+    const m = em.textContent.match(/(\d+)\s*(.*)/);
+    if (!m) return;
+    const to = +m[1];
+    const suffix = m[2];
+    const t0 = performance.now();
+    em.classList.add('is-counting');
+    const step = (now) => {
+      const k = Math.min(1, (now - t0) / 800);
+      em.textContent = `${Math.round(to * (1 - Math.pow(1 - k, 3)))} ${suffix}`;
+      if (k < 1) requestAnimationFrame(step);
+      else em.classList.remove('is-counting');
+    };
+    requestAnimationFrame(step);
+  }
+
   // Bir oyuncunun istasyonu: sıcak/kırmızı çerçeve parlaması (ceza, açılış)
   flashSeat(seat, color = 'rgb(255,120,100)') {
     const r = this.stage?.glowRects?.[seat];
@@ -1168,6 +1187,23 @@ export class Scene {
 
   clearReveal() {
     this.reveal = null;
+    this.setRevealMode(false);
+  }
+
+  // el sonu vitrini: deste/gösterge masadan çekilir, kazananın eli koyu kadife tepside sergilenir
+  setRevealMode(on) {
+    this.root.classList.toggle('is-reveal', !!on);
+    const hide = (el) => el && (el.style.visibility = on ? 'hidden' : '');
+    for (const d of this.stockDeco || []) d.style.opacity = on ? '0' : '';
+    if (this.indDeco) this.indDeco.style.opacity = on ? '0' : this.okeyShown ? '1' : '0';
+    const ind = this.disp?.indicatorTile;
+    const isp = ind !== null && ind !== undefined ? this.sys.get(ind) : null;
+    if (isp && !(this.reveal && this.reveal.map.has(ind))) isp.el.style.display = on ? 'none' : '';
+    hide(this.indPlate);
+    hide(this.stockEl);
+    hide(this.stockOv);
+    if (!on) this.stage?.setTray(null);
+    this.stage?.syncDecos();
   }
 
   destroy() {

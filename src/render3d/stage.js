@@ -878,7 +878,7 @@ export class Stage3D {
     body.castShadow = true;
     body.receiveShadow = true;
     const face = new THREE.Mesh(this.faceGeo, new THREE.MeshPhysicalMaterial({ transparent: true, roughness: 0.5, clearcoat: 0.3, clearcoatRoughness: 0.4, alphaTest: 0.5 }));
-    const back = new THREE.Mesh(this.faceGeo, new THREE.MeshPhysicalMaterial({ map: faceTexture({ kind: 'back' }), transparent: true, roughness: 0.5, clearcoat: 0.15, alphaTest: 0.5, color: 0xb8c4bd }));
+    const back = new THREE.Mesh(this.faceGeo, new THREE.MeshStandardMaterial({ map: faceTexture({ kind: 'back' }), transparent: true, roughness: 0.62, metalness: 0, envMapIntensity: 0.25, alphaTest: 0.5, color: 0xffffff }));
     back.rotation.y = Math.PI;
     face.receiveShadow = true;
     inner.add(body, face, back);

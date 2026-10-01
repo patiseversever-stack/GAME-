@@ -5,6 +5,7 @@ import { AudioManager, NullAudio } from './audio/audio-manager.js';
 import { GameController, hasSavedGame, savedSummary, clearSavedGame } from './ui/game-controller.js';
 import { resultScreen, historySheet, sheet, settingsSheet } from './app/overlays.js';
 import { createHome } from './app/home.js';
+import { icon } from './ui/icons.js';
 const history = [];
 import { createCoach } from './app/coach.js';
 import { woodTexture } from './ui/wood.js';
@@ -35,13 +36,24 @@ const goHome = () => { location.href = location.pathname; };
 
 const ui = {
   pauseMenu(ctl) {
-    sheet(app, { title: 'Duraklatıldı', body: '<p class="sheet__p">Oyun kaydedildi. İstediğin zaman kaldığın yerden devam edebilirsin.</p>', actions: [
-      { label: 'Devam', primary: true },
-      { label: 'Oyun özeti', close: false, run: () => historySheet(app, ctl, history) },
-      { label: 'Nasıl oynanır?', close: false, run: () => ui.howTo() },
-      { label: 'Ayarlar', close: false, run: () => settingsSheet(app, settings) },
-      { label: 'Ana menü', run: () => { ctl.save?.(); goHome(); } },
-    ] });
+    const items = [
+      { icon: 'chart', label: 'Oyun özeti', run: () => historySheet(app, ctl, history) },
+      { icon: 'book', label: 'Kurallar', run: () => ui.howTo() },
+      { icon: 'cog', label: 'Ayarlar', run: () => settingsSheet(app, settings) },
+      { icon: 'back', label: 'Ana menü', close: true, run: () => { ctl.save?.(); goHome(); } },
+    ];
+    const body = document.createElement('div');
+    body.className = 'pause4';
+    body.innerHTML = `<p class="sheet__p pause4__note">${icon('check')}<span>Oyun kaydedildi — istediğin an kaldığın yerden sürer.</span></p>
+      <div class="pause4__grid">${items.map((it, i) => `<button class="pause4__item" data-pi="${i}"><i>${icon(it.icon)}</i><span>${it.label}</span></button>`).join('')}</div>`;
+    const sh = sheet(app, { title: 'Duraklatıldı', body, actions: [{ label: 'Oyuna dön', primary: true }], cls: 'is-pause' });
+    body.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-pi]');
+      if (!b) return;
+      const it = items[+b.dataset.pi];
+      if (it.close) sh.close();
+      it.run();
+    });
   },
   howTo() {
     sheet(app, { title: 'Nasıl oynanır?', body: `<div class="howto2">
