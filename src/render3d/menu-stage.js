@@ -111,7 +111,6 @@ export class MenuStage {
     this.t0 = performance.now();
     this.px = 0;
     this.py = 0;
-    this.dive = 0;
     this.diving = false;
     this._frame = this._frame.bind(this);
     this.fallTimer = 1.2;
