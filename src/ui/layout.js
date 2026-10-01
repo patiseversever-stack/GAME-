@@ -21,9 +21,9 @@ const fromCenter = (o) => ({ x: o.cx - o.w / 2, y: o.cy - o.h / 2, w: o.w, h: o.
 const inflate = (r, l, t, rr, b) => ({ x: r.x - l, y: r.y - t, w: r.w + l + rr, h: r.h + t + b });
 
 // Istaka yüksekliği (taş genişliğine göre): üst boşluk + satırlar (taş + raf) + alt boşluk
-const frameH = (tw, rows) => R(tw * 0.3) + rows * (R(tw * 1.36) + R(tw * 0.26)) + R(tw * 0.12);
+const frameH = (tw, rows) => R(tw * 0.3) + rows * (R(tw * 1.36) + R(tw * 0.26)) + R(tw * 0.32);
 const rackGap = (tw) => Math.max(2, R(tw * 0.07));
-const rackPadX = (tw) => Math.max(6, R(tw * 0.2));
+const rackPadX = (tw) => Math.max(8, R(tw * 0.6)); // uç başlıklar (GLB ıstaka)
 const rackWidth = (tw, cols) => cols * tw + (cols - 1) * rackGap(tw) + 2 * rackPadX(tw);
 
 // Istaka ızgarası (dikey profil): (satır, sütun) adayları arasından, sığan en büyük taş genişliğini seçer.
@@ -31,7 +31,7 @@ function solveRack({ availW, maxH, minSlots, rowsOptions, capTw, minTw, maxCols 
   let best = null;
   for (const rows of rowsOptions) {
     for (let cols = Math.ceil(minSlots / rows); cols <= maxCols; cols++) {
-      let tw = Math.min(availW / (cols + 0.07 * (cols - 1)), capTw);
+      let tw = Math.min(availW / (cols + 0.07 * (cols - 1) + 1.2), capTw);
       if (frameH(tw, rows) > maxH) {
         let lo = 8;
         let hi = tw;
@@ -51,7 +51,7 @@ function solveRack({ availW, maxH, minSlots, rowsOptions, capTw, minTw, maxCols 
   if (!best) {
     const rows = rowsOptions[rowsOptions.length - 1];
     const cols = Math.ceil(minSlots / rows);
-    best = { rows, cols, tw: Math.max(18, Math.floor(availW / (cols + 0.07 * (cols - 1)))) };
+    best = { rows, cols, tw: Math.max(18, Math.floor(availW / (cols + 0.07 * (cols - 1) + 1.2))) };
   }
   return best;
 }
@@ -63,7 +63,7 @@ function buildRack(sol, at) {
   const padX = rackPadX(tw);
   const padTop = R(tw * 0.3);
   const pitch = th + R(tw * 0.26);
-  const padBottom = R(tw * 0.12);
+  const padBottom = R(tw * 0.32);
   const W = rackWidth(tw, cols);
   const H = padTop + rows * pitch + padBottom;
   const x = R(at.cx - W / 2);
@@ -139,7 +139,7 @@ function layoutPortrait(o) {
   const minTableH = R(ui * 5) + 70 + R(pwGuess * 1.36 + ui * 1.3) + 14;
   const maxRackH = clamp(h - tableTop - bottomPad - actionH - 10 - minTableH, 100, Math.min(h * 0.3, 300));
   const sol = solveRack({
-    availW: contentW - 2 * Math.max(6, R(capTw * 0.2)),
+    availW: contentW,
     maxH: maxRackH,
     minSlots: spec.tiles + spec.spare,
     rowsOptions: mode === 'okey' ? (contentW >= 330 ? [2] : [2, 3]) : [2, 3, 4],

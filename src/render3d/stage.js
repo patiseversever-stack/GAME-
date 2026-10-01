@@ -8,6 +8,7 @@
 //   • ıstaka ↔ masa geçişlerinde (çekme/atma) yüzey ve yönelim yumuşakça karışır (ışınlanma yok).
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
+import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { faceTexture, descFromEl } from './tile-face.js';
 import { woodCanvas } from '../ui/wood.js';
 
@@ -31,6 +32,36 @@ function roundedShape(w, h, r) {
   s.quadraticCurveTo(x, y, x + r, y);
   return s;
 }
+
+// Patisever ıstakası (GLB): bir kez yüklenir. Derlenmiş dosyada base64 gömülüdür (window.__RACK_GLB), geliştirmede dosyadan.
+let rackPromise = null;
+function loadRackModel() {
+  if (rackPromise) return rackPromise;
+  rackPromise = (async () => {
+    try {
+      let buf;
+      if (typeof window !== 'undefined' && window.__RACK_GLB) {
+        const bin = atob(window.__RACK_GLB);
+        const u = new Uint8Array(bin.length);
+        for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
+        buf = u.buffer;
+      } else buf = await (await fetch('./assets/models/rack.opt.glb')).arrayBuffer();
+      return await new Promise((res, rej) => new GLTFLoader().parse(buf, '', (g) => res(g.scene), rej));
+    } catch (e) {
+      console.warn('Istaka modeli yüklenemedi, yedek ıstaka çiziliyor', e);
+      return null;
+    }
+  })();
+  return rackPromise;
+}
+
+// Modelin (metre) kesit ölçüleri: iki kademenin basamak noktaları (y,z) ve kademe düzleminin yönü
+const MODEL = { w: 0.48, p1: [0.016, 0.0], p2: [-0.02, 0.032] };
+const _dy = MODEL.p2[0] - MODEL.p1[0];
+const _dz = MODEL.p2[1] - MODEL.p1[1];
+const _len = Math.hypot(_dy, _dz); // basamaklar arası uzaklık (≈47.5 mm)
+const SL_C = -_dy / _len; // yukarı-eğim yönünün y bileşeni
+const SL_S = _dz / _len; // z bileşeni (negatif yönde)
 
 export function webglAvailable() {
   try {
@@ -160,7 +191,7 @@ export class Stage3D {
     const cam = this.camera;
     cam.aspect = W / H;
     // ekran ortasında 1 birim ≈ 1 piksel olacak uzaklık; masaya ~52° eğik bakış
-    const pitch = (L.profile === 'landscape' ? 60 : 64) * DEG;
+    const pitch = (L.profile === 'landscape' ? 50 : 56) * DEG;
     const dist = H / 2 / Math.tan((cam.fov * DEG) / 2);
     cam.position.set(0, dist * Math.sin(pitch), dist * Math.cos(pitch));
     cam.lookAt(0, 0, 0);
@@ -289,6 +320,85 @@ export class Stage3D {
 
   // ─── oyuncunun ıstakası (ıstaka düzleminde, piksel biriminde kurulur, ölçekle dünyaya taşınır) ───
   buildRack(L) {
+    if (L.rack.rows === 2 && this.rackModel) {
+      try {
+        this._buildGlbRack(L);
+        return;
+      } catch (e) {
+        console.warn('GLB ıstaka kurulamadı', e);
+      }
+    }
+    this._buildProceduralRack(L);
+    if (!this.rackModel && !this._modelTried) {
+      this._modelTried = true;
+      loadRackModel().then((m) => {
+        if (!m || !this.L) return;
+        this.rackModel = m;
+        this.buildRack(this.L);
+        this.onRackChanged?.();
+        this.invalidate();
+      });
+    }
+  }
+
+  _buildGlbRack(L) {
+    const g = this.rackGroup;
+    for (const c of [...g.children]) g.remove(c);
+    const R = L.rack;
+    const rr = R.rect;
+    const cx = rr.x + rr.w / 2;
+    const b0 = R.slotRect(0).y + R.th;
+    const b1 = R.slotRect(R.cols).y + R.th;
+    const cyMid = (b0 + b1) / 2;
+    const mPx = R.pitch / _len; // metre → piksel (iki kademe arası = ıstaka satır aralığı)
+    const fx = rr.w / (MODEL.w * mPx);
+    const y0 = (MODEL.p1[0] + MODEL.p2[0]) / 2;
+    const z0 = (MODEL.p1[1] + MODEL.p2[1]) / 2;
+    const model = this.rackModel.clone(true);
+    model.traverse((o) => {
+      if (o.isMesh) {
+        o.castShadow = true;
+        o.receiveShadow = true;
+        o.material.envMapIntensity = 0.9;
+      }
+    });
+    model.matrixAutoUpdate = false;
+    model.matrix.set(
+      mPx * fx, 0, 0, 0,
+      0, mPx * SL_C, -mPx * SL_S, -mPx * (SL_C * y0 - SL_S * z0),
+      0, mPx * SL_S, mPx * SL_C, -mPx * (SL_S * y0 + SL_C * z0),
+      0, 0, 0, 1,
+    );
+    model.matrixWorldNeedsUpdate = true;
+    const root = new THREE.Group();
+    root.add(model);
+    g.add(root);
+    const p0 = this._hit(cx, cyMid, this.planeR, new THREE.Vector3());
+    const k0 = this._k(cx, cyMid, this.planeR);
+    const cam = this.camera.position;
+    root.quaternion.copy(this.qRack);
+    // ıstakayı görüntüyü değiştirmeden (kamera ışını boyunca kaydırıp ölçekleyerek) tabanı masaya oturana dek yerleştir
+    const place = (f) => {
+      root.position.copy(cam).addScaledVector(new THREE.Vector3().subVectors(p0, cam), f);
+      root.scale.setScalar(k0 * f);
+      root.updateMatrixWorld(true);
+      return new THREE.Box3().setFromObject(model, true).min.y;
+    };
+    let lo = 0.6;
+    let hi = 3;
+    for (let i = 0; i < 22; i++) {
+      const mid = (lo + hi) / 2;
+      if (place(mid) > 0) lo = mid;
+      else hi = mid;
+    }
+    place((lo + hi) / 2);
+    // kademe düzlemi artık modelin gerçek düzlemi: taşlar buna oturur
+    this.planeR.setFromNormalAndCoplanarPoint(this.rackN, root.position);
+    this.rackK = root.scale.x;
+    this.invalidate();
+  }
+
+  _buildProceduralRack(L) {
     const g = this.rackGroup;
     for (const c of [...g.children]) {
       g.remove(c);
@@ -472,7 +582,7 @@ export class Stage3D {
     }
     m.el = s.el;
     const flip = this._place(m.group, s.x, s.y, s.h, s.rot, s.sc, s.flip, s.z, this._rackT(s.x, s.y));
-    m.inner.rotation.set(0.22 * this._rackT(s.x, s.y), flip * DEG, 0);
+    m.inner.rotation.set(0.05 * this._rackT(s.x, s.y), flip * DEG, 0);
     this.invalidate();
   }
 

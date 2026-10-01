@@ -118,6 +118,7 @@ export class Scene {
         this.sys.stage = this.stage;
         this.host.classList.add('gl-on');
         this.stage.observe(this.els.sprites, this.els.table);
+        this.stage.onRackChanged = () => this.L && this.sys.setSize(this.L.rack.tw, this.L.rack.th);
       } catch (e) {
         console.warn('WebGL başlatılamadı, DOM çizimine dönülüyor', e);
         this.stage = null;
