@@ -1,6 +1,6 @@
 
 /* =====================================================================
-   ÖĞRETİCİ — "Nasıl oynanır?": dokuz adımlı, canlı SVG animasyonlu rehber.
+   ÖĞRETİCİ — "Nasıl oynanır?": on bir adımlı, canlı SVG animasyonlu rehber.
    Animasyonlar oyunun gerçek kurallarını küçük bir 2B dioramada simüle
    eder: güneş yayda kayar, gölgeler döner, Zifir ışıkta erir.
    ===================================================================== */
@@ -552,8 +552,151 @@ const TUT_CARDS = [
     },
   },
   {
-    k: 'Hazırsın · 9', t: 'Güneş senin elinde', dur: 9,
-    b: '40 ada, beş takımyıldızı, <em>Sonsuz Gün</em> ve her gün yenilenen <em>Günün Adası</em> seni bekliyor. Bu rehbere ayarlardan istediğin zaman dönebilirsin.',
+    k: 'Aksiyon · 9', t: 'Dal, periler, patlama', dur: 11,
+    b: 'Sol alttaki <em>Dal</em> Zifir’i bir anlığına mürekkebe gömer: ışık neredeyse işlemez, yaklaşan <em>ışık perilerini</em> yutar. <em>Güneş patlaması</em> çubuğu dolunca ışık iki kat yakar — önceden gölgeye gir.',
+    build(svg, id) {
+      tutDefs(svg, id);
+      const dio = new TDio(svg, id, { seed: 17 });
+      const cyp = dio.add('cypress', 140, 248, 64, 18); dio.add('olive', 304, 262, 34, 20);
+      const ink = sv('ellipse', { rx: 0, ry: 0, fill: 'rgba(10,6,22,.78)' }, dio.lAct);
+      const z = new TZif(dio.lAct, id), fx = new TPuffs(dio.lFx, 40), sp = new TPuffs(sv('g', { filter: `url(#${id}glow)` }, dio.lFx), 50);
+      const wisp = sv('g', { filter: `url(#${id}glow)`, opacity: 0 }, dio.lFx); sv('circle', { r: 10, fill: '#ffb347', opacity: 0.5 }, wisp); sv('circle', { r: 4.6, fill: '#fff6d8' }, wisp);
+      const btn = sv('g', { transform: 'translate(62 330)' }, dio.lTop);
+      sv('circle', { r: 24, fill: 'rgba(44,30,86,.92)', stroke: 'rgba(200,185,255,.4)' }, btn);
+      const prog = sv('circle', { r: 26.5, fill: 'none', stroke: '#b9adff', 'stroke-width': 3, pathLength: 100, 'stroke-dasharray': '100 100', transform: 'rotate(-90)', 'stroke-linecap': 'round' }, btn);
+      sv('path', { d: 'M-13 10 C -7 9 -3 5 -1 -1', stroke: '#b9adff', 'stroke-width': 2.2, fill: 'none', 'stroke-linecap': 'round', opacity: 0.7 }, btn);
+      sv('circle', { cx: 4, cy: -4, r: 8, fill: '#120e1f', stroke: '#c9bfff', 'stroke-width': 1.4 }, btn); sv('circle', { cx: 6, cy: -5.5, r: 1.8, fill: '#fff' }, btn);
+      const bl = sv('text', { x: 0, y: 40, 'text-anchor': 'middle', 'font-family': 'Manrope, system-ui, sans-serif', 'font-size': 8.5, 'font-weight': 800, 'letter-spacing': 2.4, fill: 'rgba(255,244,226,.7)' }, btn); bl.textContent = 'DAL';
+      const f = new TFinger(dio.lTop);
+      const bar = sv('g', { transform: 'translate(200 40)', opacity: 0 }, dio.lTop);
+      sv('rect', { x: -72, y: -4, width: 144, height: 8, rx: 4, fill: 'rgba(0,0,0,.35)', stroke: 'rgba(255,200,120,.4)' }, bar);
+      const barFill = sv('rect', { x: -72, y: -4, width: 0, height: 8, rx: 4, fill: '#ff8a3a' }, bar);
+      const barTxt = sv('text', { x: 0, y: 20, 'text-anchor': 'middle', 'font-family': 'Manrope, system-ui, sans-serif', 'font-size': 9, 'font-weight': 800, 'letter-spacing': 2, fill: '#ffd9a0' }, bar);
+      const flash = sv('rect', { x: -20, y: -20, width: 440, height: 440, fill: '#ff9a40', opacity: 0 }, dio.lFx);
+      const lab = tutLabel(dio.lTop, 200, 84, '+ ENERJİ', { w: 92, fill: '#d6ccff' }); sa(lab.g, { opacity: 0 });
+      let eaten = false, lastC = 0, m = 1;
+      return (t, dt) => {
+        const c = t % 11; if (c < lastC) eaten = false; lastC = c;
+        dio.setSun(0.26, t, dt); dio.update();
+        const sx = (cyp.x + cyp.ex) / 2, sy = (cyp.y + cyp.ey) / 2 + 6;
+        const wk = smoothstep(4.6, 5.8, c) * (1 - smoothstep(10.2, 10.9, c)), zx = lerp(238, sx, wk), zy = lerp(272, sy, wk);
+        const dive = smoothstep(2.25, 2.4, c) * (1 - smoothstep(2.95, 3.15, c));
+        const shaded = dio.shaded(zx, zy - 6, 2);
+        const flareK = smoothstep(6.45, 6.6, c) * (1 - smoothstep(8.2, 8.6, c));
+        const burn = shaded ? 0 : (dive > 0.5 ? 0.08 : 0.42) * (1 + flareK);
+        m = burn > 0.2 ? Math.max(0.3, m - dt * 0.1) : Math.min(1, m + dt * 0.35);
+        z.set(zx, zy, { t, walk: (wk > 0.01 && wk < 0.99) || c < 2.2, burn, meter: m, squash: dive * 0.72, happy: (eaten && c < 4.4) || (shaded && c > 6), look: c < 2.6 ? [1, -0.4] : [0, -1] });
+        sa(ink, { cx: r2(zx), cy: r2(zy + 2), rx: r2(dive * 26), ry: r2(dive * 8) });
+        const wa = clamp01((c - 0.7) / 1.9), wx = lerp(352, zx + 6, Ease.inCubic(wa)), wy = lerp(166, zy - 16, wa) + Math.sin(c * 9) * 6 * (1 - wa);
+        const wv = c > 0.6 && c < 2.62;
+        sa(wisp, { transform: `translate(${r2(wx)} ${r2(wy)}) scale(${r2(0.85 + Math.sin(t * 14) * 0.15)})`, opacity: wv ? 1 : 0 });
+        if (wv && Math.random() < dt * 30) sp.spawn(wx, wy, { fill: '#ffcf7a', vx: (Math.random() - 0.5) * 20, vy: -10, r0: 2.2, r1: 0.3, life: 0.5, a: 0.9 });
+        if (c > 2.62 && c < 4 && !eaten) { eaten = true; sp.burst(zx, zy - 14, 22, { fill: '#c9bfff', r0: 3, r1: 0.4, life: 0.8, a: 1, sp: 80 }); fx.burst(zx, zy, 12, { fill: '#0c0916', r0: 2, r1: 6, life: 0.6, a: 0.7, sp: 50, up: 30 }); }
+        sa(lab.g, { opacity: r2(pulse(c, 2.65, 4.0, 0.15, 0.5)), transform: `translate(200 ${r2(84 - smoothstep(2.65, 4, c) * 10)})` });
+        const fa = pulse(c, 1.6, 2.7, 0.3, 0.3), press = smoothstep(2.1, 2.25, c) * (1 - smoothstep(2.4, 2.6, c)), fm = 1 - smoothstep(1.6, 2.1, c);
+        f.set(62 + fm * 50, 330 + fm * 30, fa, press);
+        sa(prog, { 'stroke-dasharray': `${r2((c < 2.25 ? 1 : clamp01((c - 2.25) / 3)) * 100)} 100` }); sa(btn, { transform: `translate(62 330) scale(${r2(1 - press * 0.12)})` });
+        const warn = smoothstep(4.9, 5.1, c) * (1 - smoothstep(8.4, 8.8, c));
+        sa(bar, { opacity: r2(warn) });
+        const fk = c < 6.5 ? clamp01((c - 5.0) / 1.5) : 1 - clamp01((c - 6.5) / 1.8);
+        sa(barFill, { width: r2(144 * fk), fill: c < 6.5 ? '#ff8a3a' : '#ff4a2a' });
+        barTxt.textContent = c < 6.5 ? 'GÜNEŞ PATLAMASI GELİYOR' : 'IŞIK ×2 · GÖLGEDE KAL';
+        sa(flash, { opacity: r2(flareK * (0.14 + Math.sin(t * 20) * 0.03) + pulse(c, 6.45, 6.9, 0.05, 0.4) * 0.35) });
+        sa(dio.sun.halo, { transform: `scale(${r2(1 + flareK * 0.9 + (c > 5 && c < 6.5 ? Math.sin(t * 16) * 0.08 : 0))})` });
+        if (burn > 0.2 && Math.random() < dt * 12) fx.spawn(zx, zy - 26, { vy: -30, r0: 3, r1: 9, life: 0.9, a: 0.5 });
+        fx.update(dt); sp.update(dt);
+      };
+    },
+  },
+  {
+    k: 'Keşif · 10', t: 'Üç yeni dünya', dur: 11,
+    b: '<em>Buz Diyarı</em>’nda sütunlar güneşte erir, <em>Ayna Sarayı</em>’nda yansıyan ışık gölge tanımaz, <em>Gök Saati</em>’nde dişliler döner ve dev sarkaç gölgeyi yol boyunca biçer.',
+    build(svg, id) {
+      tutDefs(svg, id);
+      const d = svg.querySelector('defs');
+      const tile = (i, title) => {
+        const x = (i % 2) * 196 + 6, y = Math.floor(i / 2) * 176 + 4;
+        const cpid = id + 'nc' + i; const cp = sv('clipPath', { id: cpid }, d); sv('rect', { x: 0, y: 0, width: 190, height: 168, rx: 16 }, cp);
+        const g = sv('g', { transform: `translate(${x} ${y})` }, svg);
+        sv('rect', { x: 0, y: 0, width: 190, height: 168, rx: 16, fill: 'rgba(255,255,255,.045)', stroke: 'rgba(255,240,220,.16)' }, g);
+        const inner = sv('g', { 'clip-path': `url(#${cpid})` }, g);
+        const lab = sv('text', { x: 95, y: 156, 'text-anchor': 'middle', 'font-family': 'Manrope, system-ui, sans-serif', 'font-size': 10.5, 'font-weight': 800, 'letter-spacing': 1.4, fill: '#ffdf9e' }, g); lab.textContent = title;
+        return inner;
+      };
+      const ground = (g, col = `url(#${id}top)`, cx = 95, cy = 112, rx = 78, ry = 24) => { sv('path', { d: `M${cx - rx} ${cy} Q ${cx} ${cy + ry * 2.6} ${cx + rx} ${cy} Z`, fill: '#6a5a72' }, g); return sv('ellipse', { cx, cy, rx, ry, fill: col }, g); };
+      const sunAt = (g) => sv('circle', { r: 7, fill: '#fff4d8', filter: `url(#${id}glow)` }, g);
+      // a) eriyen buz
+      const A = tile(0, 'ERİYEN BUZ'); ground(A, '#eef4fa');
+      const aSun = sunAt(A); sa(aSun, { cx: 34, cy: 40 });
+      const aSh = sv('line', { x1: 70, y1: 112, x2: 120, y2: 122, stroke: 'rgba(60,70,130,.45)', 'stroke-width': 14, 'stroke-linecap': 'round', filter: `url(#${id}blur)` }, A);
+      const ice = sv('polygon', { fill: '#cfeeff', stroke: '#ffffff', 'stroke-width': 1, opacity: 0.95 }, A);
+      const pud = sv('ellipse', { cx: 70, cy: 114, rx: 8, ry: 3, fill: '#8cc8ea', opacity: 0.8 }, A);
+      const zA = new TZif(A, id); const drip = new TPuffs(A, 14);
+      // b) ayna
+      const B = tile(1, 'AYNA'); ground(B, '#efe2c8');
+      const bSun = sunAt(B);
+      const beam = sv('polygon', { fill: `url(#${id}beam)`, opacity: 0.85 }, B);
+      const spot = sv('ellipse', { rx: 16, ry: 6, fill: '#ffe2a0', opacity: 0.85, filter: `url(#${id}glow)` }, B);
+      const mir = sv('g', { transform: 'translate(150 102)' }, B);
+      sv('rect', { x: -10, y: -34, width: 20, height: 28, rx: 2, fill: '#e8b04a' }, mir); sv('rect', { x: -7, y: -31, width: 14, height: 22, fill: '#e8f2ff' }, mir); sv('rect', { x: -1.5, y: -6, width: 3, height: 10, fill: '#8a6a3a' }, mir);
+      const zB = new TZif(B, id);
+      // c) dişli
+      const C = tile(2, 'DÖNEN DİŞLİ'); ground(C, '#7c6c54');
+      const cSun = sunAt(C); sa(cSun, { cx: 30, cy: 34 });
+      const gearSh = sv('g', { filter: `url(#${id}blur)` }, C);
+      const shs = [0, 1].map(() => sv('line', { stroke: 'rgba(20,10,40,.5)', 'stroke-width': 9, 'stroke-linecap': 'round' }, gearSh));
+      const gear = sv('ellipse', { cx: 82, cy: 110, rx: 40, ry: 13, fill: '#c8954a', stroke: '#8a6a3a', 'stroke-width': 3, 'stroke-dasharray': '4 3' }, C);
+      const towers = [0, 1].map(() => { const g = sv('g', {}, C); sv('rect', { x: -5, y: -34, width: 10, height: 34, fill: '#b08040' }, g); sv('circle', { cx: 0, cy: -37, r: 3.4, fill: '#ffd27a', filter: `url(#${id}glow)` }, g); return g; });
+      const zC = new TZif(C, id);
+      // d) sarkaç
+      const D = tile(3, 'SARKAÇ'); ground(D, '#7c6c54');
+      const dSun = sunAt(D); sa(dSun, { cx: 95, cy: 14 });
+      const bobSh = sv('ellipse', { cy: 118, rx: 13, ry: 5, fill: 'rgba(20,10,40,.55)', filter: `url(#${id}blur)` }, D);
+      sv('rect', { x: 30, y: 18, width: 5, height: 96, fill: '#b08040' }, D); sv('rect', { x: 155, y: 18, width: 5, height: 96, fill: '#b08040' }, D); sv('rect', { x: 26, y: 14, width: 138, height: 6, fill: '#c8954a' }, D);
+      const pend = sv('g', { transform: 'translate(95 20)' }, D);
+      sv('line', { x1: 0, y1: 0, x2: 0, y2: 70, stroke: '#c8954a', 'stroke-width': 2 }, pend); sv('circle', { cx: 0, cy: 76, r: 11, fill: '#e8b04a', stroke: '#fff2c8', 'stroke-width': 1 }, pend);
+      const zD = new TZif(D, id);
+      return (t, dt) => {
+        // a: buz erir, gölge kısalır
+        const ac = t % 7, melt = smoothstep(1, 6, ac), h = lerp(56, 18, melt);
+        sa(ice, { points: `${62},112 ${78},112 ${r2(74 - melt * 2)},${r2(112 - h)} ${r2(68 + melt * 2)},${r2(112 - h * 0.92)}` });
+        const shL = h * 1.05; sa(aSh, { x1: 70, y1: 112, x2: r2(70 + shL), y2: r2(112 + shL * 0.22) });
+        sa(pud, { rx: r2(8 + melt * 14), ry: r2(3 + melt * 4) });
+        if (Math.random() < dt * 6 * (melt > 0 && melt < 1 ? 1 : 0)) drip.spawn(70 + (Math.random() - 0.5) * 10, 112 - h * 0.6, { fill: '#9fd8ff', vy: 40, r0: 1.6, r1: 1, life: 0.5, a: 0.9 });
+        drip.update(dt);
+        const zaX = 118, inA = zaX < 70 + shL - 4;
+        zA.set(zaX, 118, { t, scale: 0.72, burn: inA ? 0 : 0.5, meter: inA ? 1 : 0.7, happy: inA });
+        // b: ayna ışını güneşle kayar
+        const bu = 0.5 + 0.42 * Math.sin(t * 0.7), bsx = 18 + bu * 70, bsy = 50 - Math.sin(bu * PI) * 36;
+        sa(bSun, { cx: r2(bsx), cy: r2(bsy) });
+        const tx = 150 - (bsx - 30) * 1.1, tyy = 118;
+        sa(beam, { points: `143,72 157,72 ${r2(tx + 12)},${tyy} ${r2(tx - 12)},${tyy}` }); sa(spot, { cx: r2(tx), cy: tyy });
+        const zbx = 60 + Math.sin(t * 0.45) * 30, hitB = Math.abs(zbx - tx) < 16;
+        zB.set(zbx, 120, { t, scale: 0.7, walk: true, burn: hitB ? 0.7 : 0, meter: hitB ? 0.6 : 1, look: [1, 0] });
+        // c: dişli kuleleri döner, gölgeler saat gibi
+        const ga = t * 0.9;
+        sa(gear, { 'stroke-dashoffset': r2(-t * 18) });
+        let zcShade = false;
+        towers.forEach((g, k) => {
+          const a = ga + k * PI, x = 82 + Math.cos(a) * 26, y = 110 + Math.sin(a) * 8;
+          sa(g, { transform: `translate(${r2(x)} ${r2(y)})` });
+          const ex = x + 46, ey = y + 12; sa(shs[k], { x1: r2(x), y1: r2(y), x2: r2(ex), y2: r2(ey) });
+          const vx = ex - x, vy = ey - y, kk = clamp01(((140 - x) * vx + (120 - y) * vy) / (vx * vx + vy * vy)); if (Math.hypot(x + vx * kk - 140, y + vy * kk - 120) < 7) zcShade = true;
+          // derinlik
+          if (Math.sin(a) > 0) C.appendChild(g); else C.insertBefore(g, gear.nextSibling);
+        });
+        zC.set(140, 124, { t, scale: 0.7, burn: zcShade ? 0 : 0.45, meter: zcShade ? 1 : 0.75, happy: zcShade });
+        // d: sarkaç yol boyunca salınır
+        const pa = Math.sin(t * 1.7) * 0.6; sa(pend, { transform: `translate(95 20) rotate(${r2((-pa * 180) / PI)})` });
+        const bx = 95 + Math.sin(pa) * 76; sa(bobSh, { cx: r2(bx) });
+        const zdx = 95 + Math.sin(t * 0.5) * 50, inD = Math.abs(zdx - bx) < 13;
+        zD.set(zdx, 120, { t, scale: 0.7, walk: true, burn: inD ? 0 : 0.35, meter: inD ? 1 : 0.8, happy: inD });
+      };
+    },
+  },
+  {
+    k: 'Hazırsın · 11', t: 'Güneş senin elinde', dur: 9,
+    b: '64 ada, sekiz takımyıldızı, <em>Sonsuz Gün</em>, her gün yenilenen <em>Günün Adası</em> ve perdede canlanan <em>Gölge Tiyatrosu</em> seni bekliyor. Bu rehbere ayarlardan istediğin zaman dönebilirsin.',
     build(svg, id) {
       tutDefs(svg, id);
       const dio = new TDio(svg, id, { seed: 31 });

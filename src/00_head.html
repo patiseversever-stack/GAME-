@@ -257,6 +257,24 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #map .skins{bottom:calc(var(--sab) + 12px);margin:0;gap:8px}
 #map .mtop,#map .modes,#map .skins,#mapPanel,.mnav,.mtag{transition:opacity .35s ease}
 #map.diving .mtop,#map.diving .modes,#map.diving .skins,#map.diving #mapPanel,#map.diving .mnav,#map.diving .mtag{opacity:0!important;pointer-events:none!important}
+#theater{justify-content:space-between;padding:calc(var(--sat) + 14px) 0 calc(var(--sab) + 20px);background:radial-gradient(ellipse at 50% 120%,rgba(20,8,2,.55),transparent 55%),linear-gradient(180deg,rgba(10,5,2,.55),transparent 18%)}
+#theater .ttop{width:100%;display:flex;justify-content:space-between;align-items:center;padding:0 calc(var(--sar) + 16px) 0 calc(var(--sal) + 16px)}
+#theater .tttl{display:flex;flex-direction:column;align-items:center}
+#theater h5{font-family:var(--serif);font-style:italic;font-weight:600;font-size:26px;color:#ffe6c0;text-shadow:0 0 22px rgba(255,150,60,.45)}
+#theater .thsub{display:flex;align-items:center;gap:10px;margin-top:4px;font-size:10px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-2)}
+#thDots{display:flex;gap:6px}#thDots i{width:6px;height:6px;border-radius:50%;background:rgba(255,230,190,.25)}
+#thDots i.ok{background:#ffcf7a;box-shadow:0 0 8px #ff9a3a}#thDots i.on{transform:scale(1.5);background:#fff2d6;box-shadow:0 0 10px #ffd28a}
+#thMsg{position:absolute;left:50%;bottom:calc(var(--sab) + 34px);transform:translate(-50%,10px);width:min(86vw,420px);text-align:center;font-size:14px;line-height:1.5;color:#ffeccc;
+  padding:12px 18px;border-radius:18px;background:rgba(30,14,6,.5);border:1px solid rgba(255,210,150,.2);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;transition:opacity .5s,transform .5s;pointer-events:none}
+#thMsg.on{opacity:1;transform:translate(-50%,0)}#thMsg em{font-style:normal;color:#ffcf7a}
+#thCard{position:absolute;left:50%;bottom:calc(var(--sab) + 26px);transform:translate(-50%,24px);width:min(90vw,440px);text-align:center;padding:20px 22px 18px;border-radius:26px;opacity:0;pointer-events:none;
+  background:linear-gradient(170deg,rgba(60,28,12,.62),rgba(20,8,4,.72));border:1px solid rgba(255,210,150,.24);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 24px 60px rgba(0,0,0,.5);transition:opacity .7s,transform .7s cubic-bezier(.2,.9,.2,1)}
+#theater.solved #thCard{opacity:1;transform:translate(-50%,0)}#theater.solved #thCard .tap{pointer-events:auto}
+#thCard .k{font-size:10px;font-weight:800;letter-spacing:.34em;text-transform:uppercase;color:var(--gold-2)}
+#thCard h3{font-family:var(--serif);font-style:italic;font-weight:600;font-size:44px;line-height:1;margin-top:6px;color:#fff1d8;text-shadow:0 0 30px rgba(255,140,50,.5)}
+#thCard p{font-size:13.5px;line-height:1.5;color:rgba(255,236,204,.75);margin-top:8px}
+#thCard .row{display:flex;gap:10px;justify-content:center;margin-top:14px}
+#thCard .btn.primary{height:50px;min-width:0;padding:0 26px;font-size:13px}#thCard .btn.ghost{height:50px}
 #fader{position:absolute;inset:0;background:#06040e;opacity:0;pointer-events:none;transition:opacity .7s ease;z-index:40}
 #fader.on{opacity:1;transition:opacity .25s ease}
 #chapters{margin-top:2vh;width:100%;flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
@@ -397,6 +415,7 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
       <button class="btn primary tap" id="btnPlay">Başla</button>
       <div class="row">
         <button class="btn ghost tap" id="btnMapT">Gökyüzü</button>
+        <button class="btn ghost tap" id="btnTheaterT">Tiyatro</button>
         <button class="icon tap" id="btnHowT" aria-label="Nasıl oynanır"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></button>
         <button class="icon tap" id="btnSetT" aria-label="Ayarlar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
       </div>
@@ -499,10 +518,25 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
     <div class="modes">
       <button class="btn ghost tap" id="btnEndless">Sonsuz Gün <small id="endlessInfo"></small></button>
       <button class="btn ghost tap" id="btnDaily">Günün Adası <small id="dailyInfo"></small></button>
+      <button class="btn ghost tap" id="btnTheater">Tiyatro <small id="theaterInfo"></small></button>
     </div>
     <div class="skins" id="skins"><span>Zifir</span></div>
   </div>
 
+  <div id="theater" class="screen">
+    <div class="ttop">
+      <button class="icon tap" id="thBack" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
+      <div class="tttl"><h5>Gölge Tiyatrosu</h5><div class="thsub"><span id="thAct">I. perde</span><span id="thDots"></span></div></div>
+      <button class="icon tap" id="thHint" aria-label="İpucu"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></button>
+    </div>
+    <div id="thMsg"></div>
+    <div id="thCard">
+      <div class="k">Gölge canlandı</div>
+      <h3 id="thName"></h3>
+      <p id="thLine"></p>
+      <div class="row"><button class="btn primary tap" id="thNext">Sonraki perde</button><button class="btn ghost tap" id="thExit">Çık</button></div>
+    </div>
+  </div>
   <div id="fader"></div>
   <div id="chapterCard"><div class="cn" id="ccNum">I</div><div class="ct" id="ccTitle"></div><div class="line"></div><div class="cs" id="ccSub"></div></div>
 

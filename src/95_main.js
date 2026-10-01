@@ -292,12 +292,13 @@ function update(dt, dtR) {
       break;
     }
     case 'map': SkyMap.update(dtR); G.night = damp(G.night, G.mapNight, 1.5, dtR); break;
+    case 'theater': Theater.update(dtR); break;
     case 'ending': { G.night = damp(G.night, G.state === 'ending' ? 1 : G.mapNight, 1.5, dtR); U.uNightAmt.value = G.night; U.uNightR.value = 60; U.uNightRim.value = 0; break; }
   }
   if (G.state !== 'play') { G.ecl.amt = damp(G.ecl.amt, 0, 6, dtR); if (G.ecl.amt < 0.01) G.ecl.amt = 0; }
   if (G.state === 'play' || (G.ecl.amt > 0 && G.state === 'fail')) { U.uNightAmt.value = G.ecl.amt * 0.72; U.uNightR.value = 999; U.uNightRim.value = 0; }
   // görseller
-  if (lv && G.state !== 'map') {
+  if (lv && G.state !== 'map' && G.state !== 'theater') {
     G.view.update(dtR, G.T, viewCtx);
     drops.update(dtR, U.uTime.value);
     wisps.update(dtR, U.uTime.value);
@@ -347,6 +348,7 @@ const sens = () => 1 / (Math.min(innerWidth, 620) * 0.8);
 canvas.addEventListener('pointerdown', (e) => {
   audio.unlock();
   if (G.state === 'map') { SkyMap.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
+  if (G.state === 'theater') { Theater.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (G.state === 'complete') { if (G.compStage < 5 && G.mode !== 'endless') G.ffwd = true; return; }
   if (G.state === 'fail' && G.fShown) { retry(); return; }
   if (G.drag) return;
@@ -358,6 +360,7 @@ canvas.addEventListener('pointerdown', (e) => {
 });
 canvas.addEventListener('pointermove', (e) => {
   if (G.state === 'map') { SkyMap.move(e); return; }
+  if (G.state === 'theater') { Theater.move(e); return; }
   const d = G.drag; if (!d || e.pointerId !== d.id) return;
   const now = performance.now(), dx = e.clientX - d.x, dtm = Math.max(1, now - d.t);
   d.x = e.clientX; d.t = now;
@@ -365,12 +368,13 @@ canvas.addEventListener('pointermove', (e) => {
   G.uT += du;
   d.v = lerp(d.v, (du / dtm) * 1000, 0.45);
 });
-const endDrag = (e) => { if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
+const endDrag = (e) => { if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
 window.addEventListener('keydown', (e) => {
   audio.unlock();
   if (TUT.open) { TUT.key(e); return; }
   if (e.repeat && (e.code === 'Space')) return;
+  if (G.state === 'theater') { const k = 0.12; if (e.code === 'ArrowLeft' || e.code === 'KeyA') Theater.rot(-k, 0); else if (e.code === 'ArrowRight' || e.code === 'KeyD') Theater.rot(k, 0); else if (e.code === 'ArrowUp' || e.code === 'KeyW') Theater.rot(0, -k); else if (e.code === 'ArrowDown' || e.code === 'KeyS') Theater.rot(0, k); else if (e.code === 'Escape') Theater.close(); else if ((e.code === 'Enter' || e.code === 'Space') && Theater.cardShown) $('#thNext').click(); return; }
   if (G.state === 'map') { if (e.code === 'ArrowLeft' || e.code === 'KeyA') SkyMap.go(Math.round(SkyMap.tf) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') SkyMap.go(Math.round(SkyMap.tf) + 1); else if (e.code === 'Enter' || e.code === 'Space') $('#mpPlay').click(); else if (e.code === 'Escape') $('#btnMapBack').click(); return; }
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') { G.keyDir = 1; if (G.state === 'ready') startPlay(); }
@@ -452,6 +456,7 @@ function buildMap() {
   const endOk = un >= 16, dayOk = un >= 4;
   $('#btnEndless').classList.toggle('lockd', !endOk); $('#btnDaily').classList.toggle('lockd', !dayOk);
   $('#endlessInfo').textContent = endOk ? (Save.data.endlessBest ? `En iyi ${Save.data.endlessBest}` : 'Yeni') : '16. adada açılır';
+  $('#theaterInfo').textContent = `${(Save.data.theater || []).length}/${ST_FIGS.length}`;
   $('#dailyInfo').textContent = dayOk ? (Save.data.daily.date === dateNum() ? `★ ${Save.data.daily.stars}/3` : 'Bugün') : '4. adada açılır';
   const sk = $('#skins'); sk.innerHTML = '<span>Zifir</span>';
   SKINS.forEach((s, i) => {
@@ -510,6 +515,13 @@ bind('#btnMapBack', () => {
   }, 260);
 });
 bind('#mpPlay', () => { const ci = Math.round(SkyMap.tf); if (Save.data.unlocked < ci * 8) { audio.clunk(); toast('Önce bir önceki <em>takımyıldızını</em> tamamla.', 2.4); return; } SkyMap.pick(SkyMap.playG); });
+const openTheater = (from) => { audio.ui(); hideToast(); $('#fader').classList.add('on'); setTimeout(() => { Theater.open(from); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); };
+bind('#btnTheater', () => openTheater('map'));
+bind('#btnTheaterT', () => openTheater('title'));
+bind('#thBack', () => { audio.ui(); $('#fader').classList.add('on'); setTimeout(() => { Theater.close(); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); });
+bind('#thExit', () => $('#thBack').click());
+bind('#thHint', () => Theater.hint());
+bind('#thNext', () => { Theater.cardShown = false; Theater.next(); });
 bind('#mapPrev', () => { audio.ui(); SkyMap.go(Math.round(SkyMap.tf) - 1); });
 bind('#mapNext', () => { audio.ui(); SkyMap.go(Math.round(SkyMap.tf) + 1); });
 let wheelT = 0;
@@ -533,7 +545,7 @@ function onResize() {
   renderer.setPixelRatio(dpr); renderer.setSize(w, h, false);
   const v = renderer.getDrawingBufferSize(new THREE.Vector2());
   post.build(v.x, v.y, Q);
-  camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h); Theater.resize(w, h);
   if (G.lv) Cam.fit(G.lv);
   fxAdd.u.uPx.value = fxMix.u.uPx.value = v.y / (2 * Math.tan(deg(camera.fov / 2)));
 }
@@ -560,9 +572,9 @@ function frame(now) {
   update(dt, dtR);
   TUT.update(dtR);
   audio.update(dtR, G.state === 'play');
-  const onMap = G.state === 'map' && SkyMap.active;
-  if (onMap) SkyMap.apply();
-  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) post.render(onMap ? mapScene : scene, onMap ? mapCam : camera);
+  const onMap = G.state === 'map' && SkyMap.active, onTh = G.state === 'theater' && Theater.active;
+  if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
+  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera);
 }
 function bootGame() {
   applyQuality();
@@ -582,7 +594,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT, Theater, SkyMap,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),

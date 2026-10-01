@@ -19,6 +19,8 @@ const MUSIC = [
   { root: 57, scale: [0, 2, 3, 5, 7, 9, 10], chords: [[45, 52, 57, 60, 64], [43, 50, 55, 59, 62], [41, 48, 53, 57, 60], [40, 47, 52, 56, 59]], tempo: 0.6, bright: 1.05 },
   // Gök Saati: C lidyen, mekanik nabız
   { root: 48, scale: [0, 2, 4, 6, 7, 11], chords: [[36, 43, 52, 55, 59], [38, 45, 54, 57, 62], [33, 40, 48, 52, 55], [31, 38, 50, 54, 57]], tempo: 0.8, bright: 0.95, clock: true },
+  // Gölge Tiyatrosu: Hicaz, kandil ışığında yavaş
+  { root: 50, scale: [0, 1, 4, 5, 7, 8, 10], chords: [[38, 45, 50, 54, 57], [43, 50, 55, 58, 62], [41, 48, 53, 56, 60], [38, 45, 50, 51, 57]], tempo: 0.45, bright: 0.8 },
 ];
 const mtof = (m) => 440 * Math.pow(2, (m - 69) / 12);
 
@@ -217,6 +219,26 @@ class AudioEngine {
   sprite(n = 0) { if (!this.ok) return; const t = this.t, sc = MUSIC[this.chapter].scale, r = MUSIC[this.chapter].root + 24; for (let i = 0; i < 4; i++) this.bell(mtof(r + sc[(i * 2 + n) % sc.length] + 12 * Math.floor((i * 2 + n) / sc.length)), t + i * 0.07, 1.1, 0.05, { ratio: 2, index: 1.2, verb: 0.8, dly: 0.4 }); this.noiseHit(t, 0.6, 0.05, { type: 'highpass', f: 4000, f1: 9000, a: 0.2, verb: 0.6 }); }
   dash() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.4, 0.14, { type: 'bandpass', f: 300, f1: 3200, q: 1.4, a: 0.05, verb: 0.3 }); this.osc('sine', 220, t, 0.3, 0.08, null, { f1: 660 }); }
   streak(n) { if (!this.ok) return; const t = this.t, sc = MUSIC[this.chapter].scale, r = MUSIC[this.chapter].root + 12; for (let i = 0; i <= Math.min(n, 5); i++) this.bell(mtof(r + sc[i % sc.length] + 12 * Math.floor(i / sc.length) + 12), t + i * 0.06, 0.9, 0.045, { ratio: 2, index: 1.0, verb: 0.6 }); }
+  /* --- gölge tiyatrosu --- */
+  theaterOpen() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 1.8, 0.07, { type: 'bandpass', f: 400, f1: 1600, q: 0.8, a: 0.6, verb: 0.6 }); this.bell(mtof(62), t + 0.2, 2.5, 0.05, { ratio: 1.5, index: 1.2, verb: 0.9 }); this.bell(mtof(69), t + 0.45, 2.5, 0.04, { ratio: 1.5, index: 1.2, verb: 0.9 }); }
+  theaterTone(k) {
+    if (!this.ok) return; const c = this.ctx, t = this.t;
+    if (!this.thT) { const o = c.createOscillator(), o2 = c.createOscillator(), g = c.createGain(), f = c.createBiquadFilter(); o.type = 'triangle'; o2.type = 'sine'; f.type = 'lowpass'; f.frequency.value = 900; g.gain.value = 0; o.connect(f); o2.connect(f); f.connect(g); g.connect(this.sfx); const v = c.createGain(); v.gain.value = 0.5; g.connect(v); v.connect(this.verbSfx); o.start(); o2.start(); this.thT = { o, o2, g, f }; }
+    const h = this.thT, fr = 110 * Math.pow(2, k * 1.58);
+    h.o.frequency.setTargetAtTime(fr, t, 0.08); h.o2.frequency.setTargetAtTime(fr * 1.5 + Math.sin(t * 6) * k * 3, t, 0.08);
+    h.f.frequency.setTargetAtTime(500 + k * k * 2600, t, 0.1); h.g.gain.setTargetAtTime(k > 0.02 ? 0.006 + k * k * 0.045 : 0, t, 0.12);
+  }
+  theaterCreak(v) { if (!this.ok || v < 0.05) return; const t = this.t; if (t - (this.lastCreak || 0) < 0.07) return; this.lastCreak = t; this.noiseHit(t, 0.06, 0.012 + v * 0.03, { type: 'bandpass', f: 900 + Math.random() * 900, q: 6 }); }
+  theaterSolve() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.05, 0.12, { f: 3000, q: 4 }); this.osc('sine', 90, t, 1.6, 0.25, null, { f1: 45, verb: 0.6 }); this.bell(mtof(50), t + 0.05, 3.5, 0.08, { ratio: 1.41, index: 2.4, verb: 1 }); for (let i = 0; i < 5; i++) this.bell(mtof([62, 65, 69, 74, 77][i]), t + 0.35 + i * 0.09, 2.2, 0.045, { ratio: 2, index: 1.0, verb: 0.9, dly: 0.4 }); }
+  theaterAlive(key) {
+    if (!this.ok) return; const t = this.t + 0.5;
+    if (key === 'kus') { for (let i = 0; i < 6; i++) this.noiseHit(t + i * 0.19, 0.16, 0.06, { type: 'bandpass', f: 600, f1: 1800, q: 1.2 }); for (let i = 0; i < 3; i++) this.osc('sine', 2600, t + 0.4 + i * 0.12, 0.09, 0.03, null, { f1: 3400 }); }
+    else if (key === 'kedi') { const o = this.osc('sawtooth', 520, t + 0.2, 0.7, 0.05, null, { f1: 380, curve: 'lin', verb: 0.4 }); o.frequency.linearRampToValueAtTime(820, t + 0.45); o.frequency.linearRampToValueAtTime(420, t + 0.9); }
+    else if (key === 'balina') { const o = this.osc('sine', 140, t, 2.6, 0.12, null, { f1: 95, curve: 'lin', verb: 1, a: 0.6 }); o.frequency.linearRampToValueAtTime(230, t + 1.1); o.frequency.linearRampToValueAtTime(95, t + 2.6); this.noiseHit(t + 0.9, 1.0, 0.07, { type: 'highpass', f: 1500, a: 0.1, verb: 0.6 }); }
+    else if (key === 'tavsan') { for (let i = 0; i < 4; i++) this.osc('sine', 300 + i * 40, t + 1.6 + i * 0.62, 0.12, 0.06, null, { f1: 700 }); }
+    else if (key === 'fil') { const o = this.osc('sawtooth', 330, t + 0.5, 1.3, 0.06, null, { f1: 300, curve: 'lin', verb: 0.7, a: 0.08 }); o.frequency.linearRampToValueAtTime(520, t + 0.9); o.frequency.linearRampToValueAtTime(420, t + 1.7); for (let i = 0; i < 4; i++) this.osc('sine', 60, t + 2.6 + i * 0.6, 0.3, 0.12, null, { f1: 40 }); }
+    else { this.pop(2); this.bell(mtof(74), t + 2.2, 1.5, 0.05, { ratio: 2, index: 1, verb: 0.8 }); this.bell(mtof(81), t + 3.6, 2.5, 0.06, { ratio: 2, index: 1.4, verb: 1, dly: 0.5 }); }
+  }
   stoneRise() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.25, 0.05, { type: 'lowpass', f: 400 }); }
 
   /* --- müzik & ambiyans planlayıcı --- */
