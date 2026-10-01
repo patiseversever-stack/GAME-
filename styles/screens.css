@@ -1550,3 +1550,13 @@
 }
 .coach-bub.is-bottom { transform: translate(-50%, 0); }
 .coach-bub.is-bottom::after { bottom: auto; top: -4px; }
+
+/* ipucu balonu v3: konumu JS hesaplar (çakışmasız); ok hedefe döner */
+.coach-bub { transform: none !important; max-width: 230px; padding: 6px 11px; border-radius: 10px; background: linear-gradient(180deg, #fff8e6, #f1e0b8); color: #2a1d0b; box-shadow: 0 0 0 1px rgba(120, 80, 20, .35), 0 8px 20px rgba(0, 0, 0, .5); animation: none !important; opacity: 1; }
+.coach-bub p { font-size: .74rem; white-space: nowrap; }
+.coach-bub::after { width: 10px; height: 10px; background: #f6e9c8; transform: rotate(45deg); }
+.coach-bub.is-top::after { left: calc(var(--ax, 50%) - 5px); bottom: -5px; top: auto; }
+.coach-bub.is-bottom::after { left: calc(var(--ax, 50%) - 5px); top: -5px; bottom: auto; background: #fff8e6; }
+.coach-bub.is-right::after { left: -5px; top: calc(var(--ay, 50%) - 5px); bottom: auto; }
+.coach-bub.is-left::after { right: -5px; left: auto; top: calc(var(--ay, 50%) - 5px); bottom: auto; }
+@keyframes coach-in3 { from { opacity: 0; scale: .85; } }

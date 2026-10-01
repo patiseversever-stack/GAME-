@@ -8,9 +8,9 @@
 //   • ıstaka ↔ masa geçişlerinde (çekme/atma) yüzey ve yönelim yumuşakça karışır (ışınlanma yok).
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { loadRackModel, sharpenModel } from './rack-model.js';
 import { fxMethods } from './stage-fx.js';
-import { faceTexture, descFromEl } from './tile-face.js';
+import { faceTexture, faceBump, descFromEl } from './tile-face.js';
 import { woodCanvas } from '../ui/wood.js';
 
 const DEG = Math.PI / 180;
@@ -32,28 +32,6 @@ function roundedShape(w, h, r) {
   s.lineTo(x, y + r);
   s.quadraticCurveTo(x, y, x + r, y);
   return s;
-}
-
-// Patisever ıstakası (GLB): bir kez yüklenir. Derlenmiş dosyada base64 gömülüdür (window.__RACK_GLB), geliştirmede dosyadan.
-let rackPromise = null;
-function loadRackModel() {
-  if (rackPromise) return rackPromise;
-  rackPromise = (async () => {
-    try {
-      let buf;
-      if (typeof window !== 'undefined' && window.__RACK_GLB) {
-        const bin = atob(window.__RACK_GLB);
-        const u = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
-        buf = u.buffer;
-      } else buf = await (await fetch('./assets/models/rack.opt.glb')).arrayBuffer();
-      return await new Promise((res, rej) => new GLTFLoader().parse(buf, '', (g) => res(g.scene), rej));
-    } catch (e) {
-      console.warn('Istaka modeli yüklenemedi, yedek ıstaka çiziliyor', e);
-      return null;
-    }
-  })();
-  return rackPromise;
 }
 
 // Modelin (metre) kesit ölçüleri: iki kademenin basamak noktaları (y,z) ve kademe düzleminin yönü
@@ -110,7 +88,7 @@ function feltTexture() {
 export class Stage3D {
   constructor(host, { quality = 'high' } = {}) {
     this.host = host;
-    this.qLevel = quality === 'low' ? 2 : 0;
+    this.qLevel = quality === 'low' ? 3 : 0;
     this.quality = quality;
     const canvas = document.createElement('canvas');
     canvas.className = 'gl-stage';
@@ -136,6 +114,7 @@ export class Stage3D {
     this.lamp = new THREE.SpotLight(0xffe4bd, 6.4, 0, 0.62, 1, 0);
     this.lamp.castShadow = this.qLevel < 2;
     r.shadowMap.enabled = this.qLevel < 2;
+    r.setPixelRatio(1);
     this.lamp.shadow.mapSize.set(2048, 2048);
     this.lamp.shadow.bias = -0.00025;
     this.lamp.shadow.normalBias = 0.8;
@@ -170,9 +149,12 @@ export class Stage3D {
     this._m = new THREE.Matrix4();
   }
 
-  // Uyarlanabilir kalite: 0 yüksek, 1 orta (1,5 dpr + 1024 gölge), 2 düşük (1 dpr, gölgesiz)
+  // Uyarlanabilir kalite — netlik en son feda edilir (bulanık ıstaka kabul edilemez):
+  // 0: yerel dpr (≤3) + 2048 gölge · 1: yerel dpr + 1024 gölge · 2: dpr ≤2.25, gölgesiz · 3: dpr ≤1.75, gölgesiz
   setQuality(level) {
+    level = Math.max(0, Math.min(3, level));
     if (level === this.qLevel) return;
+    const hadShadow = this.qLevel < 2;
     this.qLevel = level;
     const on = level < 2;
     this.renderer.shadowMap.enabled = on;
@@ -185,12 +167,27 @@ export class Stage3D {
         this.lamp.shadow.map = null;
       }
     }
-    this.scene.traverse((o) => {
-      if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => (m.needsUpdate = true));
-    });
-    if (this.L) this.resize(this.L, this.dpr);
+    if (hadShadow !== on)
+      this.scene.traverse((o) => {
+        if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => (m.needsUpdate = true));
+      });
+    if (this.L) this._applyPixelRatio();
     this.shadowDirty = true;
     this.invalidate();
+  }
+
+  _pixelRatio() {
+    const d = this.dpr || 1;
+    const cap = [3, 3, 2.25, 1.75][this.qLevel] ?? 2;
+    return Math.min(d, cap);
+  }
+
+  _applyPixelRatio() {
+    const q = this._pixelRatio();
+    if (this.renderer.getPixelRatio() !== q) {
+      this.renderer.setPixelRatio(q);
+      this.renderer.setSize(this.W, this.H, false);
+    }
   }
 
   // ─── ekran → dünya ───
@@ -212,8 +209,7 @@ export class Stage3D {
     const W = (this.W = L.w);
     const H = (this.H = L.h);
     this.dpr = dpr || 1;
-    const q = this.qLevel >= 2 ? 1 : this.qLevel === 1 ? Math.min(this.dpr, 1.5) : Math.min(this.dpr, 2);
-    this.renderer.setPixelRatio(q);
+    this.renderer.setPixelRatio(this._pixelRatio());
     this.renderer.setSize(W, H, false);
     this.canvas.style.width = W + 'px';
     this.canvas.style.height = H + 'px';
@@ -394,10 +390,9 @@ export class Stage3D {
         o.castShadow = true;
         o.receiveShadow = true;
         o.material.envMapIntensity = 0.9;
-        const an = this.renderer.capabilities.getMaxAnisotropy();
-        for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap']) if (o.material[k]) o.material[k].anisotropy = an;
       }
     });
+    sharpenModel(model, this.renderer);
     model.matrixAutoUpdate = false;
     model.matrix.set(
       mPx * fx, 0, 0, 0,
@@ -899,6 +894,8 @@ export class Stage3D {
     if (key !== m.key) {
       m.key = key;
       m.face.material.map = faceTexture(d);
+      m.face.material.bumpMap = faceBump(d);
+      m.face.material.bumpScale = 1.6;
       m.face.material.needsUpdate = true;
     }
     const cl = m.el.classList;
@@ -911,22 +908,38 @@ export class Stage3D {
   }
 
   // Ekrandaki (x, y) → dünya konumu/yönelimi/ölçeği. rackT: 0 masa, 1 ıstaka.
-  _place(group, x, y, h, rot, sc, flip, z, rackT) {
+  // Masadaki taşlar eğik ve kalınlıkları kadar kalkık durduğundan izdüşüm merkezleri yukarı kayar; bir adımlık
+  // ekran-uzayı düzeltmesiyle taşın görünen merkezi tam yerleşimdeki noktaya (yuva/per merkezi) oturtulur.
+  _surf(x, y, rackT, out) {
     const pT = this._hit(x, y, this.planeT, this._v[0]);
     const kT = this._k(x, y, this.planeT);
-    let p = pT;
-    let k = kT;
+    if (rackT <= 0) {
+      out.copy(pT);
+      return kT;
+    }
+    const pR = this._hit(x, y, this.planeR, this._v[1]);
+    const kR = this._k(x, y, this.planeR);
+    if (rackT >= 1) out.copy(pR);
+    else out.copy(pT).lerp(pR, rackT);
+    return kT + (kR - kT) * rackT;
+  }
+
+  _place(group, x, y, h, rot, sc, flip, z, rackT) {
     const q = this._q;
-    if (rackT > 0) {
-      const pR = this._hit(x, y, this.planeR, this._v[1]);
-      const kR = this._k(x, y, this.planeR);
-      p = rackT >= 1 ? pR : pT.clone().lerp(pR, rackT);
-      k = kT + (kR - kT) * rackT;
-      q.copy(this.qTable).slerp(this.qRack, smooth(rackT));
-    } else q.copy(this.qTable);
-    // normal yönünde kalınlık + kaldırma
-    const n = this._v[2].set(0, 0, 1).applyQuaternion(q);
-    group.position.copy(p).addScaledVector(n, (this.D / 2 + 1.5 + (z || 0) * 0.03 + h * 1.25) * k);
+    if (rackT > 0) q.copy(this.qTable).slerp(this.qRack, smooth(rackT));
+    else q.copy(this.qTable);
+    const n = (this._n || (this._n = new THREE.Vector3())).set(0, 0, 1).applyQuaternion(q);
+    const lift = this.D / 2 + 1.5 + (z || 0) * 0.03 + h * 1.25;
+    let k = this._surf(x, y, rackT, group.position);
+    group.position.addScaledVector(n, lift * k);
+    const w = 1 - rackT;
+    if (w > 0.01) {
+      const v = this._v[3].copy(group.position).project(this.camera);
+      const px = (v.x + 1) * 0.5 * this.W;
+      const py = (1 - v.y) * 0.5 * this.H;
+      k = this._surf(x + (x - px) * w, y + (y - py) * w, rackT, group.position);
+      group.position.addScaledVector(n, lift * k);
+    }
     this._q2.setFromAxisAngle(this._v[3].set(0, 0, 1), -rot * DEG);
     group.quaternion.copy(q).multiply(this._q2);
     group.scale.setScalar(k * sc * (1 + h * 0.003));
@@ -956,6 +969,7 @@ export class Stage3D {
     const flip = this._place(m.group, s.x, s.y, s.h, s.rot, s.sc, s.flip, s.z, this._rackT(s.x, s.y));
     m.inner.rotation.set(0.05 * this._rackT(s.x, s.y), flip * DEG, 0);
     this.shadowDirty = true;
+    this._activeT = performance.now();
     this.invalidate();
   }
 
@@ -1024,11 +1038,19 @@ export class Stage3D {
       m.group.visible = m.el.style.display !== 'none';
     }
     this.renderer.render(this.scene, this.camera);
-    if (busy) this.invalidate();
+    if (busy) {
+      // yalnız ortam nabzı (sıra ışığı, yuva parıltısı) sürüyorsa ~22 fps yeter: telefon ısınmaz, kare bütçesi taşlara kalır
+      const ambient = now - (this._activeT || 0) > 120 && !(this.pulses && this.pulses.length) && !this._lampFx && (this._cine || 0) === (this._cineT || 0);
+      if (ambient) {
+        clearTimeout(this._ambT);
+        this._ambT = setTimeout(() => this.invalidate(), 45);
+      } else this.invalidate();
+    }
   }
 
   destroy() {
     cancelAnimationFrame(this._raf);
+    clearTimeout(this._ambT);
     this._mo?.disconnect();
     this.clearSprites();
     this.renderer.dispose();

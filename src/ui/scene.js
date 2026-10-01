@@ -567,7 +567,11 @@ export class Scene {
   pileTarget(seat, t, k) {
     const p = this.L.piles[seat];
     const j = this.jitter(t);
-    return { x: p.cx + j.dx - k * 1.3, y: p.cy - 5 + j.dy - k * 1.7, rot: j.rot, sc: p.sc, flip: 0, h: 0, z: 14 - k };
+    // 3B'de taşın görünen merkezi yuvanın merkezine oturtulur; DOM'da kalınlık alta çizildiği için hafif yukarı
+    const up = this.stage ? 0 : 5;
+    // en üstteki taş yuvaya düzgün oturur; alttakiler hafif dağınık (deste derinliği görünsün)
+    const m = k === 0 ? 0.3 : 0.8;
+    return { x: p.cx + j.dx * m - k * 1.1, y: p.cy - up + j.dy * m - k * 1.4, rot: j.rot * m, sc: p.sc, flip: 0, h: 0, z: 14 - k };
   }
 
   // Bir taşın şu an nerede olması gerektiği (görüntü modeline göre)
@@ -893,16 +897,38 @@ export class Scene {
     }
   }
 
+  // Mesaj şeridi: tüm bildirimler eylem şeridindeki durum yazısının yerinde, sırayla akar — masadaki hiçbir şeyin
+  // (plaka, deste, per, ıstaka) üstüne binmez. Yeni mesaj eskisini iter.
   toast(text, kind = '', ms = 2200) {
+    const bar = this.els.actionbar;
+    const st = this.els.status;
+    if (!bar || !st) return null;
+    let host = this.els.ticker;
+    if (!host) {
+      host = document.createElement('div');
+      host.className = 'ticker';
+      bar.appendChild(host);
+      this.els.ticker = host;
+    }
+    host.style.left = st.offsetLeft + 'px';
+    host.style.width = Math.max(120, st.offsetWidth) + 'px';
+    for (const old of [...host.children]) {
+      old.classList.add('is-out');
+      setTimeout(() => old.remove(), 260);
+    }
     const el = document.createElement('div');
-    el.className = 'toast' + (kind ? ' toast--' + kind : '');
-    el.textContent = text;
-    this.els.toasts.appendChild(el);
-    while (this.els.toasts.children.length > 3) this.els.toasts.firstChild.remove();
-    setTimeout(() => {
+    el.className = 'ticker__msg' + (kind ? ' is-' + kind : '');
+    el.innerHTML = `<i></i><span></span>`;
+    el.querySelector('span').textContent = text;
+    host.appendChild(el);
+    st.classList.add('is-hushed');
+    clearTimeout(this._tickT);
+    this._tickT = setTimeout(() => {
       el.classList.add('is-out');
+      st.classList.remove('is-hushed');
       setTimeout(() => el.remove(), 280);
     }, ms);
+    this.els.live.textContent = text;
     return el;
   }
 
@@ -990,15 +1016,10 @@ export class Scene {
     return el;
   }
 
-  // "SIRA SENDE" bildirimi: ıstakanın hemen üstünde süzülen pirinç plaka
+  // "SIRA SENDE" bildirimi: mesaj şeridinde altın, harf aralığı açılarak beliren yazı + ıstaka çerçevesinde ışık
   cue(text, sub = '') {
-    const L = this.L;
-    if (!L) return;
-    const cx = L.table.x + L.table.w / 2;
-    const y = Math.max(L.table.y + 24, L.rack.rect.y - 22);
-    const el = this._fxEl('cue', `<span class="cue__bar"></span><b>${text}</b>${sub ? `<small>${sub}</small>` : ''}<span class="cue__bar"></span>`, `left:${cx}px;top:${y}px`);
-    setTimeout(() => el.classList.add('is-out'), 1250);
-    setTimeout(() => el.remove(), 1650);
+    const el = this.toast(text, 'cue', 1500);
+    if (el && sub) el.insertAdjacentHTML('beforeend', `<small>${sub}</small>`);
   }
 
   // Mühür: ceza / bitiş / açılış gibi anların büyük damgası

@@ -4,7 +4,7 @@ import * as THREE from 'three';
 
 const INK = { red: '#c0302b', blue: '#1b5ca6', black: '#1e2328', yellow: '#cc8410' };
 const cache = new Map();
-const W = 256;
+const W = 320;
 const H = Math.round(W * 1.36);
 
 function roundRect(g, x, y, w, h, r) {
@@ -157,7 +157,7 @@ export function faceTexture(desc) {
   }
   t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
-  t.anisotropy = 4;
+  t.anisotropy = 16;
   cache.set(key, t);
   return t;
 }
@@ -173,6 +173,52 @@ function star(g, cx, cy, r) {
   g.fill();
 }
 
+// Oyma kabartma haritası: zemin yüksek (beyaz), rakam/işaret oyuk (koyu) — lamba ışığında gerçek oyma gölgesi verir
+const bumpCache = new Map();
+export function faceBump(desc) {
+  if (desc.kind === 'back') return null;
+  const key = `${desc.kind}|${desc.value || ''}|${desc.color || ''}`;
+  let t = bumpCache.get(key);
+  if (t) return t;
+  const c = document.createElement('canvas');
+  c.width = W;
+  c.height = H;
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff';
+  g.fillRect(0, 0, W, H);
+  g.filter = 'blur(2.2px)';
+  g.fillStyle = '#000';
+  g.strokeStyle = '#000';
+  g.textAlign = 'center';
+  g.textBaseline = 'alphabetic';
+  if (desc.kind === 'num') {
+    const txt = String(desc.value);
+    const fs = txt.length > 1 ? W * 0.62 : W * 0.72;
+    g.font = `800 ${fs}px "DM Sans", "Segoe UI", system-ui, sans-serif`;
+    g.fillText(txt, W / 2, H * 0.56);
+    const keep = INK[desc.color];
+    INK[desc.color] = '#000';
+    mark(g, desc.color, W / 2, H * 0.74, W * 0.17);
+    INK[desc.color] = keep;
+  } else if (desc.kind === 'okey') {
+    star(g, W / 2, H * 0.44, W * 0.3);
+    g.font = `800 ${W * 0.15}px "DM Sans", system-ui, sans-serif`;
+    g.fillText('OKEY', W / 2, H * 0.84);
+  } else if (desc.kind === 'fake') {
+    g.font = `800 ${W * 0.46}px "DM Sans", system-ui, sans-serif`;
+    g.fillText(String(desc.value), W / 2, H * 0.44);
+    g.lineWidth = 7;
+    g.beginPath();
+    g.arc(W / 2, H * 0.64, W * 0.13, 0, Math.PI * 2);
+    g.stroke();
+  }
+  g.filter = 'none';
+  t = new THREE.CanvasTexture(c);
+  t.anisotropy = 16;
+  bumpCache.set(key, t);
+  return t;
+}
+
 // DOM taş öğesinden yüz tanımı (tile-dom.js'in yazdığı dataset'ten)
 export function descFromEl(el) {
   const d = el.dataset;
@@ -185,4 +231,6 @@ export function descFromEl(el) {
 export function clearFaceCache() {
   for (const t of cache.values()) t.dispose();
   cache.clear();
+  for (const t of bumpCache.values()) t.dispose();
+  bumpCache.clear();
 }

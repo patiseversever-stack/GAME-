@@ -48,8 +48,9 @@ export class SeatView {
     // avatar: dikey plakada genişlik/yükseklikle, yatay plakada yükseklikle sınırlı
     const plate = this.el.closest('[data-profile="landscape"]') !== null;
     this.el.classList.toggle('is-plate', plate);
-    const av = plate ? (v ? Math.min(rect.w - 14, rect.h - 30, 64) : rect.h - 6) : v ? Math.min(rect.w - 14, rect.h * 0.4, 76) : Math.min(rect.h - 10, 76);
-    this.av = clamp(Math.round(av), 22, 76);
+    // plaka: dikeyde avatar + halka payı (2×5) + isim şeridi (≈17) + skor (≈12) yüksekliğe sığar; yatayda şerit yüksekliğine
+    const av = plate ? (v ? Math.min(rect.w - 16, rect.h - 46, 60) : rect.h - 8) : v ? Math.min(rect.w - 14, rect.h * 0.4, 76) : Math.min(rect.h - 10, 76);
+    this.av = clamp(Math.round(av), 20, 76);
     s.setProperty('--av', this.av + 'px');
     this.el.dataset.size = sizeClass;
     this.el.classList.toggle('is-compact', !plate && (rect.h < 92 && v ? true : rect.h < 50));

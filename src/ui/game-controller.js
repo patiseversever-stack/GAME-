@@ -229,7 +229,11 @@ export class GameController {
     if (this.settings.get('quality') !== 'auto') return;
     // 3B kalite basamaklı düşer (yüksek → orta → düşük); DOM efektleri en sonda
     const st = this.scene?.stage;
-    if (st && st.qLevel < 2) {
+    if (st && st.qLevel < 3) {
+      // basamaklar arası en az 8 sn: bir kerelik takılma (ör. açılış animasyonu) netliği öldürmesin
+      const now = performance.now();
+      if (now - (this._lastDegrade || 0) < 8000) return;
+      this._lastDegrade = now;
       st.setQuality(st.qLevel + 1);
       return;
     }

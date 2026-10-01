@@ -2,7 +2,7 @@
 // ara ara düşüp seken taş, fare/eğim ile yumuşak kamera paralaksı. Oyuna girerken kamera masaya dalar.
 import * as THREE from 'three';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { loadRackModel, sharpenModel } from './rack-model.js';
 import { faceTexture } from './tile-face.js';
 
 const DEG = Math.PI / 180;
@@ -141,18 +141,7 @@ export class MenuStage {
   }
 
   async _loadRack() {
-    try {
-      let buf;
-      if (window.__RACK_GLB) {
-        const bin = atob(window.__RACK_GLB);
-        const u = new Uint8Array(bin.length);
-        for (let i = 0; i < bin.length; i++) u[i] = bin.charCodeAt(i);
-        buf = u.buffer;
-      } else buf = await (await fetch('./assets/models/rack.opt.glb')).arrayBuffer();
-      return await new Promise((res, rej) => new GLTFLoader().parse(buf, '', (g) => res(g.scene), rej));
-    } catch {
-      return null;
-    }
+    return loadRackModel();
   }
 
   _mkTile(desc, { shadow = true } = {}) {

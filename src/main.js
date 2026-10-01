@@ -8,6 +8,7 @@ import { createHome } from './app/home.js';
 const history = [];
 import { createCoach } from './app/coach.js';
 import { woodTexture } from './ui/wood.js';
+import { loadRackModel } from './render3d/rack-model.js';
 
 const q = new URLSearchParams(location.search);
 const app = document.getElementById('app');
@@ -18,6 +19,8 @@ if (q.get('quality')) settings.set('quality', q.get('quality'));
 if (q.get('text')) settings.set('textScale', Number(q.get('text')));
 applyDocumentSettings(settings, app);
 document.documentElement.style.setProperty('--wood', woodTexture());
+// ıstaka modeli (en ağır varlık) hemen çözülmeye başlar: menü ve masa hazır bulur
+if (q.get('quality') !== 'dom') loadRackModel();
 const audio = q.get('mute') ? new NullAudio() : new AudioManager(settings);
 window.__okey = { settings, profile, audio };
 

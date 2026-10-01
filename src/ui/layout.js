@@ -282,7 +282,8 @@ function layoutLandscape(o) {
   const sideW = clamp(R(sideLen * 0.2) + 4, 26, 60);
   const sideY = sideTop + (sideAvail - sideLen) / 2;
   const plW = clamp(R(Math.max(ui * 4, d.pw * 1.9)), 58, 92);
-  const plH = clamp(R(plW * 0.95), 54, 88);
+  // madalyon plaka: avatar + isim şeridi + skor dikine sığsın (hiçbir şey kutudan taşmaz)
+  const plH = clamp(R(Math.min(plW * 1.32, sideLen)), 70, 116);
   const leftRack = rect(X0, sideY, sideW, sideLen);
   const rightRack = rect(X1 - sideW, sideY, sideW, sideLen);
   const leftPlate = rect(leftRack.x + leftRack.w + 8, sideY + (sideLen - plH) / 2, plW, plH);
@@ -291,7 +292,7 @@ function layoutLandscape(o) {
   const topRack = rect(cx - topW / 2, Y0, topW, topH);
   // plaka ıstakanın ön yüzüne asılı (isim tabelası gibi): yan yana yer ayırmaz
   const topPlW = clamp(R(topW * 0.62), 100, 150);
-  const topPlate = rect(cx - topPlW / 2, Y0 + topH - 8, topPlW, 28);
+  const topPlate = rect(cx - topPlW / 2, Y0 + topH - 8, topPlW, 30);
   const topBottom = topPlate.y + topPlate.h;
 
   // çöplük yuvaları: köşelerde, yan istasyonların iç tarafında
