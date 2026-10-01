@@ -4,6 +4,7 @@ import { Profile } from './meta/profile.js';
 import { AudioManager, NullAudio } from './audio/audio-manager.js';
 import { GameController, hasSavedGame, savedSummary, clearSavedGame } from './ui/game-controller.js';
 import { resultScreen, historySheet, sheet, settingsSheet } from './app/overlays.js';
+import { createHome } from './app/home.js';
 const history = [];
 import { createCoach } from './app/coach.js';
 
@@ -47,6 +48,7 @@ const ui = {
       <p><b>101:</b> ilk açılışta perlerin toplamı en az 101 (ya da 5 çift) olmalı. Açtıktan sonra masadaki perlere taş işleyebilirsin. Yandan aldığın taşı açılışta ya da işlemede kullanmak zorundasın. En düşük puan kazanır.</p></div>`, actions: [{ label: 'Anladım', primary: true }] });
   },
   discardHistory(ctl) { historySheet(app, ctl, history); },
+  settings() { settingsSheet(app, settings); },
   restart(cfg) { clearSavedGame(); start(cfg.mode, cfg.difficulty); },
   roundResult: async (o) => {
     history.push({ round: o.result.round, winner: o.result.winner, finish: o.result.finish, deltas: o.result.deltas.slice() });
@@ -66,44 +68,29 @@ async function start(mode, difficulty, seed) {
   document.body.dataset.ready = '1';
 }
 
+let homeView = null;
 function home() {
   const saved = hasSavedGame() ? savedSummary() : null;
-  let diff = settings.get('difficulty') || 'normal';
-  const el = document.createElement('div');
-  el.className = 'home';
-  const tile = (n, c, extra = '') => `<span class="mt mt--${c}${extra}"><b>${n}</b><i></i></span>`;
-  el.innerHTML = `<div class="home__in">
-    <header class="home__head"><div class="eyebrow">Patisever</div><h1 class="display">OKEY</h1></header>
-    <div class="home__modes">
-      <button class="mode" data-m="okey"><span class="mode__tiles">${tile(5, 'r')}${tile(6, 'r')}${tile(7, 'r')}${tile('★', 'j', ' mt--okey')}</span><span class="mode__t">Okey</span><span class="mode__d">14 taşı perlere diz, son taşı at, eli bitir.</span></button>
-      <button class="mode" data-m="okey101"><span class="mode__tiles">${tile(10, 'k')}${tile(10, 'b')}${tile(10, 'y')}${tile(10, 'r')}</span><span class="mode__t">101 Okey</span><span class="mode__d">En az 101 puanla aç, perlere işle, cezadan kaç.</span></button>
-    </div>
-    <div class="home__bar">
-      <div class="home__diff" role="group" aria-label="Zorluk"><button data-d="casual">Kolay</button><button data-d="normal">Normal</button><button data-d="expert">Uzman</button></div>
-      ${saved ? `<button class="btn btn--lg" data-m="resume">Devam et · ${saved.mode === 'okey101' ? '101' : 'Okey'}</button>` : ''}
-      <button class="btn btn--ghost" data-m="how">Nasıl oynanır?</button>
-      <button class="btn btn--ghost" data-m="settings">Ayarlar</button>
-    </div></div>`;
-  const mark = () => el.querySelectorAll('[data-d]').forEach((b) => b.classList.toggle('on', b.dataset.d === diff));
-  mark();
-  el.onclick = async (e) => {
-    const d = e.target.closest('[data-d]');
-    if (d) { diff = d.dataset.d; settings.set('difficulty', diff); mark(); return; }
-    const m = e.target.closest('[data-m]')?.dataset.m;
-    if (!m) return;
-    audio.unlock?.();
-    if (m === 'how') return ui.howTo();
-    if (m === 'settings') return settingsSheet(app, settings);
-    if (m === 'resume') {
-      el.remove();
+  homeView = createHome({
+    host: app,
+    settings,
+    profile,
+    audio,
+    saved,
+    ui,
+    onStart: (m, diff) => {
+      homeView?.destroy();
+      homeView = null;
+      start(m, diff);
+    },
+    onResume: async () => {
+      homeView?.destroy();
+      homeView = null;
       ctl = new GameController({ host: app, settings, profile, audio, ui, onExit: goHome });
       window.__okey.ctl = ctl;
       if (!(await ctl.resume())) goHome();
-      return;
-    }
-    start(m, diff);
-  };
-  app.appendChild(el);
+    },
+  });
 }
 
 if (q.get('resume')) {

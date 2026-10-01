@@ -27,6 +27,9 @@ const P = {
   plus: '<path d="M12 5v14M5 12h14"/>',
   vibrate: '<rect x="8" y="3.5" width="8" height="17" rx="2"/><path d="M4 8v8M20 8v8M1.5 10.5v3M22.5 10.5v3"/>',
   palette: '<path d="M12 3.5a8.5 8.5 0 1 0 0 17c1.5 0 2-1 1.6-2-.5-1.3.2-2.4 1.6-2.4H17a3.5 3.5 0 0 0 3.5-3.6C20.2 7 16.6 3.5 12 3.5z"/><path d="M7.5 11h.01M10 7.5h.01M14.5 7.5h.01"/>',
+  expand: '<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>',
+  target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r="1"/>',
+  chart: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
   lock: '<rect x="5.5" y="10.5" width="13" height="9.5" rx="2"/><path d="M8.5 10.5V8a3.5 3.5 0 0 1 7 0v2.5"/>',
 };
 
