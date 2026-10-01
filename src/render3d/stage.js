@@ -360,6 +360,8 @@ export class Stage3D {
         o.castShadow = true;
         o.receiveShadow = true;
         o.material.envMapIntensity = 0.9;
+        const an = this.renderer.capabilities.getMaxAnisotropy();
+        for (const k of ['map', 'normalMap', 'roughnessMap', 'metalnessMap', 'aoMap']) if (o.material[k]) o.material[k].anisotropy = an;
       }
     });
     model.matrixAutoUpdate = false;

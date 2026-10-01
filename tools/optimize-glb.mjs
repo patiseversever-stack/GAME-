@@ -20,7 +20,7 @@ for (const img of json.images) {
     const c = document.createElement('canvas');
     c.width = c.height = size;
     c.getContext('2d').drawImage(bmp, 0, 0, size, size);
-    const url = c.toDataURL('image/jpeg', 0.84);
+    const url = c.toDataURL("image/jpeg", 0.93);
     return url.split(',')[1];
   }, { src, size });
   views[img.bufferView].data = Buffer.from(out, 'base64');
