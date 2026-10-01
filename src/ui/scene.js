@@ -162,7 +162,7 @@ export class Scene {
     this.stockDeco = [];
     this.indPlate = document.createElement('div');
     this.indPlate.className = 'plate';
-    this.indPlate.innerHTML = '<span class="plate__cap plate__cap--ind">Gösterge</span><span class="plate__cap plate__cap--okey">Okey</span><span class="plate__arrow"></span>';
+    this.indPlate.innerHTML = '<span class="plate__cap plate__cap--stock">Deste</span><span class="plate__cap plate__cap--ind">Gösterge</span><span class="plate__cap plate__cap--okey">Okey</span><span class="plate__plus">+1</span>';
     t.appendChild(this.indPlate);
     this.meldTags = document.createElement('div');
     this.meldTags.className = 'layer';
@@ -347,8 +347,10 @@ export class Scene {
     // dekoratif kapalı taş yığını (3 kat)
     this.decoClear('stock');
     const sc = L.scale.stock;
-    for (let i = 2; i >= 0; i--) {
-      const d = this.decoTile(0, { x: s.cx - i * 1.4, y: s.cy - i * 1.8, sc, flip: 180, z: 11 + (2 - i), tag: 'stock' });
+    // gerçek bir deste gibi: beş kat, her kat belirgin biçimde üstte ve hafif kaymış
+    const step = Math.max(1.8, L.rack.tw * sc * 0.07);
+    for (let i = 4; i >= 0; i--) {
+      const d = this.decoTile(0, { x: s.cx + (i - 2) * 0.6, y: s.cy + (i - 2) * step, sc, flip: 180, z: 11 + (4 - i), tag: 'stock' });
       this.stockDeco.push(d);
     }
   }
@@ -364,20 +366,35 @@ export class Scene {
     el.style.width = pl.w + 'px';
     el.style.height = pl.h + 'px';
     el.style.setProperty('--cap', pl.capH + 'px');
-    // başlıklar kendi taşlarının üstünde; ok iki taşın arasında
+    // başlıklar kendi taşlarının üstünde (DESTE · GÖSTERGE · OKEY); "+1" iki taşın arasında
     const indLeft = ind.cx - pl.x;
     const okLeft = ok.cx - pl.x;
+    const st = L.stock;
+    const capS = el.querySelector('.plate__cap--stock');
     const capI = el.querySelector('.plate__cap--ind');
     const capO = el.querySelector('.plate__cap--okey');
+    capS.style.left = st.cx - pl.x + 'px';
+    capS.style.display = pl.compact ? 'none' : ''; // dar bölmede deste başlığı yerine yalnız sayı rozeti
+    // deste daha uzun: başlığı destenin üst kenarının hemen üstünde
+    const stTop = st.cy - st.h / 2;
+    capS.style.top = Math.min(1, stTop - pl.y - 12) + 'px';
     capI.style.left = indLeft + 'px';
     capO.style.left = okLeft + 'px';
-    const arrow = el.querySelector('.plate__arrow');
-    arrow.style.left = (indLeft + ind.w / 2 + okLeft - ok.w / 2) / 2 - 4 + 'px';
-    arrow.style.top = ind.cy - pl.y - 3 + 'px';
+    const plus = el.querySelector('.plate__plus');
+    plus.style.left = (indLeft + ind.w / 2 + okLeft - ok.w / 2) / 2 + 'px';
+    plus.style.top = ind.cy - pl.y + 'px';
+    // çuhaya gömülü tepsi: üç öğeyi tek grup olarak çerçeveler
+    const x0 = Math.min(st.cx - st.w / 2, ind.cx - ind.w / 2) - 10;
+    const x1 = ok.cx + ok.w / 2 + 10;
+    const y0 = Math.min(pl.y, st.cy - st.h / 2 - 12) - 5;
+    const y1 = Math.max(st.cy + st.h / 2 + 12, ind.cy + ind.h / 2 + 8);
+    this._clusterRect = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
+    this.stage?.setClusterTray?.(this._clusterRect);
     this.decoClear('ind');
     if (this.game) {
+      // okey kutusu: genel yıldız değil, okeyin gerçek yüzü (göstergenin bir fazlası) + köşede yıldız
       const okTile = this._okeyDecoId();
-      const d = this.decoTile(okTile, { x: ok.cx, y: ok.cy, sc: L.scale.indicator, flip: 0, z: 12, tag: 'ind' });
+      const d = this.decoTile(okTile, { x: ok.cx, y: ok.cy, sc: L.scale.indicator, flip: 0, z: 12, tag: 'ind', represent: { c: this.ctx.oc, v: this.ctx.ov } });
       d.style.opacity = this.okeyShown ? '1' : '0';
       this.indDeco = d;
     }
@@ -389,8 +406,9 @@ export class Scene {
   }
 
   // ───────────────────────────── dekoratif taşlar ─────────────────────────────
-  decoTile(t, { x, y, sc = 1, flip = 0, z = 11, tag = 'deco' }) {
+  decoTile(t, { x, y, sc = 1, flip = 0, z = 11, tag = 'deco', represent = null }) {
     const el = createTileEl(t, this.ctx);
+    if (represent) setTileFace(el, t, this.ctx, represent);
     el.dataset.deco = tag;
     el.style.zIndex = String(z);
     el.style.transform = `translate3d(${x - this.L.rack.tw / 2}px,${y - this.L.rack.th / 2}px,0) scale(${sc})`;
@@ -494,7 +512,7 @@ export class Scene {
       this.pileEls[s]._count.style.display = d.piles[s].length > 1 ? '' : 'none';
     }
     this.stockCount.textContent = String(d.stock);
-    this.stockDeco.forEach((el, i) => (el.style.display = d.stock > (2 - i) * 3 || i === 2 ? (d.stock > 0 ? '' : 'none') : 'none'));
+    this.stockDeco.forEach((el, i) => (el.style.display = d.stock > (4 - i) * 4 || i === 4 ? (d.stock > 0 ? '' : 'none') : 'none'));
     this.stage?.syncDecos();
     this.stage?.setCounts(d.counts);
     this.refreshSoundIcon();
@@ -1205,6 +1223,7 @@ export class Scene {
     hide(this.stockEl);
     hide(this.stockOv);
     if (!on) this.stage?.setTray(null);
+    this.stage?.setClusterTray?.(on ? null : this._clusterRect);
     this.stage?.syncDecos();
   }
 

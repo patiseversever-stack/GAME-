@@ -289,6 +289,64 @@ export const fxMethods = {
     a.needsUpdate = true;
   },
 
+  // Orta grup tepsisi (deste · gösterge · okey): çuhaya hafif gömülmüş koyu yuva, ince ışık kenarı
+  setClusterTray(rect) {
+    const key = rect ? `${Math.round(rect.x)},${Math.round(rect.y)},${Math.round(rect.w)},${Math.round(rect.h)},${this.W},${this.H}` : '';
+    if (key === this._clusterKey) return;
+    this._clusterKey = key;
+    if (this.clusterTray) {
+      this.scene.remove(this.clusterTray);
+      this.clusterTray.geometry.dispose();
+      this.clusterTray.material.map?.dispose();
+      this.clusterTray.material.dispose();
+      this.clusterTray = null;
+    }
+    if (!rect || !this.L) return this.invalidate();
+    const S = 3;
+    const c = document.createElement('canvas');
+    c.width = Math.max(64, Math.round(rect.w * S));
+    c.height = Math.max(64, Math.round(rect.h * S));
+    const g = c.getContext('2d');
+    const r = Math.min(16 * S, c.height * 0.22);
+    const path = (inset) => {
+      g.beginPath();
+      g.roundRect(inset, inset, c.width - inset * 2, c.height - inset * 2, Math.max(2, r - inset));
+    };
+    // oyuk zemin
+    path(3);
+    g.fillStyle = 'rgba(4, 12, 9, 0.46)';
+    g.fill();
+    // üstten iç gölge (gömülü his)
+    g.save();
+    path(3);
+    g.clip();
+    const sh = g.createLinearGradient(0, 0, 0, c.height);
+    sh.addColorStop(0, 'rgba(0,0,0,0.42)');
+    sh.addColorStop(0.18, 'rgba(0,0,0,0.08)');
+    sh.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = sh;
+    g.fillRect(0, 0, c.width, c.height);
+    g.restore();
+    // kenar: üstte koyu, altta ince ışık (kumaşın kıvrımı)
+    g.lineWidth = 1.5 * S;
+    path(3);
+    const edge = g.createLinearGradient(0, 0, 0, c.height);
+    edge.addColorStop(0, 'rgba(0,0,0,0.55)');
+    edge.addColorStop(1, 'rgba(190,240,215,0.22)');
+    g.strokeStyle = edge;
+    g.stroke();
+    const tex = this._tex(c);
+    const cx = rect.x + rect.w / 2;
+    const cy = rect.y + rect.h / 2;
+    const lift = 0.15 * this._k(cx, cy, this.planeT);
+    const quad = this._decalQuad(rect.x, rect.y, rect.x + rect.w, rect.y + rect.h, lift);
+    const m = new THREE.Mesh(quad, new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: false }));
+    m.renderOrder = 1;
+    this.scene.add(m);
+    this.clusterTray = m;
+    this.invalidate();
+  },
+
   // Sinematik ışık: 0..1 (bitiş anında lamba güçlenir, ortam kararır)
   cine(v) {
     this._cineT = v;

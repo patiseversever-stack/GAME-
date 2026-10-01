@@ -264,7 +264,6 @@ export class Stage3D {
     this._lampBase = undefined; // jiroskop lambası yeni konuma göre
     this.rim.position.set(dist, dist * 0.6, -dist);
     this.buildRails(L);
-    this.buildEmblem(L);
     this.buildDust(L);
     this.shadowDirty = true;
     this.setTileSize(L.rack.tw, L.rack.th);

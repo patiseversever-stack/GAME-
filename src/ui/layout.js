@@ -311,25 +311,34 @@ function layoutLandscape(o) {
 
   // merkez: deste + gösterge → okey
   const { stockW, stockH, pg, clusterH } = d;
-  const clusterW = stockW + 12 + pg.w;
   const free0 = topBottom + 8; // üst istasyonun altı
   let cluster;
   let clusterRow = false; // küme üst satırda mı (per alanının üstünde yer tutar)
+  // deste ile gösterge arası: geniş (başlıklar rahat) — 101'de üst bölmeye sığmazsa daralır
+  let sgap = 26;
+  let clusterW = stockW + sgap + pg.w;
   if (mode === 'okey') {
     cluster = { x: cx - clusterW / 2, y: free0 + (bandBottom - free0 - clusterH) / 2 };
   } else {
     // 101: merkez per alanına kalsın → küme üst satırda, üst ıstakanın sağında/solunda boş bölmeye; sığmazsa altında ortalı
     const rightSeg = [topRack.x + topRack.w + 12, xr - pileW - 8];
     const leftSeg = [xl + pileW + 8, topRack.x - 12];
-    if (rightSeg[1] - rightSeg[0] >= clusterW) cluster = { x: rightSeg[0] + (rightSeg[1] - rightSeg[0] - clusterW) / 2, y: Y0 + 2 };
-    else if (leftSeg[1] - leftSeg[0] >= clusterW) cluster = { x: leftSeg[0] + (leftSeg[1] - leftSeg[0] - clusterW) / 2, y: Y0 + 2 };
-    else {
+    for (const g of [26, 18, 12]) {
+      sgap = g;
+      clusterW = stockW + sgap + pg.w;
+      if (rightSeg[1] - rightSeg[0] >= clusterW) cluster = { x: rightSeg[0] + (rightSeg[1] - rightSeg[0] - clusterW) / 2, y: Y0 + 2 };
+      else if (leftSeg[1] - leftSeg[0] >= clusterW) cluster = { x: leftSeg[0] + (leftSeg[1] - leftSeg[0] - clusterW) / 2, y: Y0 + 2 };
+      if (cluster) break;
+    }
+    if (!cluster) {
+      sgap = 26;
+      clusterW = stockW + sgap + pg.w;
       cluster = { x: cx - clusterW / 2, y: free0 };
       clusterRow = true;
     }
   }
   const stock = { cx: cluster.x + stockW / 2, cy: cluster.y + clusterH - 3 - stockH / 2, w: stockW, h: stockH, tw: stockW };
-  const plate = { x: R(cluster.x + stockW + 12), y: R(cluster.y + clusterH - pg.h), w: pg.w, h: pg.h, capH: pg.capH };
+  const plate = { x: R(cluster.x + stockW + sgap), y: R(cluster.y + clusterH - pg.h), w: pg.w, h: pg.h, capH: pg.capH, compact: sgap < 20 };
   const tileCy = plate.y + pg.capH + 4 + pg.indH / 2;
   const indicator = { cx: plate.x + pg.padX + pg.indW / 2, cy: tileCy, w: pg.indW, h: pg.indH, tw: pg.indW };
   const okeyMini = { cx: plate.x + pg.padX + pg.indW + pg.gap + pg.indW / 2, cy: tileCy, w: pg.indW, h: pg.indH, tw: pg.indW };

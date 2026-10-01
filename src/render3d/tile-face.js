@@ -80,8 +80,8 @@ function base(g, back = false) {
     g.save();
     g.translate(W / 2, H / 2);
     const gold = g.createLinearGradient(-W * 0.2, -W * 0.2, W * 0.2, W * 0.2);
-    gold.addColorStop(0, '#e9c46a');
-    gold.addColorStop(1, '#9a6b1f');
+    gold.addColorStop(0, 'rgba(190,150,80,0.55)');
+    gold.addColorStop(1, 'rgba(140,100,40,0.55)');
     g.fillStyle = gold;
     g.beginPath();
     for (let i = 0; i < 16; i++) {
@@ -146,8 +146,11 @@ export function faceTexture(desc) {
     });
     if (desc.rep) {
       // masadaki okey: köşede küçük yıldız
-      g.fillStyle = '#c99722';
-      star(g, W * 0.82, H * 0.12, W * 0.09);
+      // okey rozeti: koyu çerçeveli altın yıldız (okey olduğu ilk bakışta anlaşılır)
+      g.fillStyle = '#5a3d06';
+      star(g, W * 0.79, H * 0.13, W * 0.15);
+      g.fillStyle = '#f2b81c';
+      star(g, W * 0.79, H * 0.13, W * 0.12);
     }
   } else if (desc.kind === 'okey') {
     const gg = g.createLinearGradient(0, 0, 0, H);
