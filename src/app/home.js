@@ -10,6 +10,9 @@ const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&l
 
 export function tryFullscreen() {
   try {
+    if (typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {});
+  } catch {}
+  try {
     const el = document.documentElement;
     if (document.fullscreenElement || !el.requestFullscreen) return;
     const p = el.requestFullscreen({ navigationUI: 'hide' });
@@ -48,7 +51,7 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
     </header>
     <section class="h4-brand">
       <div class="h4-crest"><i></i><small>PATISEVER</small><i></i></div>
-      <h1 class="h4-logo" data-text="OKEY">OKEY</h1>
+      <h1 class="h5-logo" aria-label="OKEY">${[["O", "r"], ["K", "b"], ["E", "k"], ["Y", "y"]].map(([ch, c], i) => `<span class="h5-lt h5-lt--${c}" style="--i:${i}"><b>${ch}</b><i></i></span>`).join("")}</h1>
       <p class="h4-sub"><span>Klasik</span><i></i><span>101</span><i></i><span>Çevrimdışı</span></p>
       ${saved ? `<button class="h4-resume" data-a="resume"><span class="h4-resume__ic">${icon('play')}</span><span><b>Devam et</b><em>${saved.mode === 'okey101' ? '101 Okey' : 'Okey'} · El ${saved.round}</em></span></button>` : ''}
     </section>
@@ -80,7 +83,7 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
   let menu3d = null;
   if (webglAvailable() && settings.get('quality') !== 'dom') {
     try {
-      menu3d = new MenuStage(root, { quality: settings.get('quality') });
+      menu3d = new MenuStage(root, { quality: settings.get('quality'), gyro: settings.get('gyro') !== false });
       root.insertBefore(menu3d.canvas, root.firstChild);
       menu3d.onClack = (v) => audio.play?.('place', { vol: 0.12 + 0.25 * v });
       window.__menu = menu3d;

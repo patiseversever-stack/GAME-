@@ -115,6 +115,8 @@ export class Scene {
     if (webglAvailable() && this.deps.settings.get('quality') !== 'dom') {
       try {
         this.stage = new Stage3D(el, { quality: this.deps.settings.get('quality') });
+        this.stage.isHeld = () => this.dragTile !== null && this.dragTile !== undefined;
+        this.stage.setGyro(!!this.deps.settings.get('gyro'));
         this.sys.stage = this.stage;
         this.host.classList.add('gl-on');
         this.stage.observe(this.els.sprites, this.els.table);

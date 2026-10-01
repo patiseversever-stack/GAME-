@@ -227,14 +227,16 @@ function layoutLandscape(o) {
   const YB = h - (Math.max(R(safe.b * 0.45), 3) + (tight ? 5 : 8));
   const stripH = clamp(R(ui * (tight ? 1.95 : 2.15)), 30, 40);
 
-  const maxRackH = Math.min(h * (h <= 420 ? 0.42 : h >= 700 ? 0.34 : 0.42 - (0.08 * (h - 420)) / 280), 330);
+  // ıstaka ekranın en çok ~%35'i: masa ferah kalır, sahne sıkışık durmaz
+  const maxRackH = Math.min(h * (h <= 420 ? 0.355 : h >= 700 ? 0.3 : 0.355 - (0.055 * (h - 420)) / 280), 300);
   const capTw = h > 700 ? 64 : 54;
   const minTw = 22;
   const topW = mode === 'okey' ? clamp(R(cw * 0.25), 140, 280) : clamp(R(cw * 0.19), 120, 220); // 101'de per alanı için daha dar
   const topH = Math.max(30, R(topW * 0.2) + 4);
 
   const dims = (tw) => {
-    const pw = clamp(R(tw * 0.78), 22, 48);
+    // çöplük/deste taşları ekran yüksekliğiyle de ölçeklenir: küçük ıstakada masa öğeleri cılız kalmasın
+    const pw = clamp(R(Math.max(tw * 0.82, h * 0.092)), 22, 52);
     const pileW = pw + 10;
     const pileH = R(pw * 1.36) + 10;
     const stockW = R(pw * 1.08);

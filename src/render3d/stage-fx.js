@@ -154,6 +154,141 @@ export const fxMethods = {
     this.invalidate();
   },
 
+  // ─── Jiroskop kamera: telefon eğildikçe görüş kamerası masanın merkezi çevresinde hafifçe döner (gerçek paralaks:
+  // ıstaka ve taşların hacmi, yan ıstakalar, gölgeler kayar) ve lamba eğime karşı süzülür (parıltılar yer değiştirir).
+  // Yerleşim/isabet hesabı sabit "yerleşim kamerası"yla yapılır; yalnız çizim "görüş kamerası"yla → dokunma bozulmaz.
+  setGyro(on) {
+    if (!!this._gyroOn === !!on) return;
+    this._gyroOn = !!on;
+    if (on) {
+      this.gyro = this.gyro || { x: 0, y: 0, tx: 0, ty: 0, bx: null, by: null };
+      this._onOri = (e) => {
+        if (e.gamma == null || e.beta == null) return;
+        const g = this.gyro;
+        // yatay tutuşta eksenler yer değiştirir
+        const ang = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+        let gx = e.gamma;
+        let gy = e.beta;
+        if (ang === 90) [gx, gy] = [e.beta, -e.gamma];
+        else if (ang === -90 || ang === 270) [gx, gy] = [-e.beta, e.gamma];
+        if (g.bx === null) {
+          g.bx = gx;
+          g.by = gy;
+        }
+        // taban yavaşça güncel duruşa kayar: kullanıcı telefonu nasıl tutarsa tutsun ortalanır
+        g.bx += (gx - g.bx) * 0.004;
+        g.by += (gy - g.by) * 0.004;
+        g.tx = Math.max(-1, Math.min(1, (gx - g.bx) / 18));
+        g.ty = Math.max(-1, Math.min(1, (gy - g.by) / 18));
+        this.invalidate();
+      };
+      window.addEventListener('deviceorientation', this._onOri);
+    } else {
+      window.removeEventListener('deviceorientation', this._onOri);
+      if (this.gyro) {
+        this.gyro.tx = 0;
+        this.gyro.ty = 0;
+      }
+      this.invalidate();
+    }
+  },
+
+  // görüş kamerası: yerleşim kamerasının kopyası + jiroskop sapması. Değişim yoksa false döner.
+  _gyroFrame() {
+    const g = this.gyro;
+    if (!g) return false;
+    const hold = this.isHeld?.() ? 0 : 1; // taş sürüklenirken sahne sabitlenir
+    const tx = g.tx * hold;
+    const ty = g.ty * hold;
+    const px = g.x;
+    const py = g.y;
+    g.x += (tx - g.x) * 0.09;
+    g.y += (ty - g.y) * 0.09;
+    if (Math.abs(g.x) < 0.0005 && Math.abs(g.y) < 0.0005 && tx === 0 && ty === 0) {
+      g.x = g.y = 0;
+      this._viewActive = false;
+      if (this._lampBase) {
+        this.lamp.position.copy(this._lampBase);
+        this.shadowDirty = true;
+      }
+      return Math.abs(px) + Math.abs(py) > 0;
+    }
+    const vc = (this.viewCam = this.viewCam || this.camera.clone());
+    vc.fov = this.camera.fov;
+    vc.aspect = this.camera.aspect;
+    vc.near = this.camera.near;
+    vc.far = this.camera.far;
+    vc.updateProjectionMatrix();
+    const base = this.camera.position;
+    const yaw = g.x * 2.2 * (Math.PI / 180);
+    const pitch = -g.y * 1.6 * (Math.PI / 180);
+    const r = base.length();
+    const el = Math.asin(base.y / r) + pitch;
+    const az = Math.atan2(base.x, base.z) + yaw;
+    vc.position.set(Math.sin(az) * Math.cos(el) * r, Math.sin(el) * r, Math.cos(az) * Math.cos(el) * r);
+    vc.lookAt(0, 0, 0);
+    vc.updateMatrixWorld();
+    // lamba eğime karşı süzülür (gölgeler ve parıltılar kayar)
+    if (this._lampBase === undefined && this.lamp) this._lampBase = this.lamp.position.clone();
+    if (this._lampBase) {
+      this.lamp.position.set(this._lampBase.x - g.x * this.dist * 0.18, this._lampBase.y, this._lampBase.z + g.y * this.dist * 0.14);
+      this.shadowDirty = true;
+    }
+    this._viewActive = true;
+    return Math.abs(g.x - px) + Math.abs(g.y - py) > 0.0004;
+  },
+
+  // Lamba konisinde süzülen ince toz zerreleri (yalnız yüksek kalitede; göz yormayan, çok yavaş)
+  buildDust(L) {
+    if (this.dustPts) {
+      this.scene.remove(this.dustPts);
+      this.dustPts.geometry.dispose();
+      this.dustPts.material.dispose();
+      this.dustPts = null;
+    }
+    if (this.qLevel > 0 || !L) return;
+    const d = this.dist;
+    const N = 70;
+    const pos = new Float32Array(N * 3);
+    this.dust = [];
+    const c = this._hit(L.table.x + L.table.w / 2, L.table.y + L.table.h * 0.5, this.planeT, new THREE.Vector3());
+    for (let i = 0; i < N; i++) {
+      const p = { x: c.x + (Math.random() - 0.5) * d * 0.9, y: Math.random() * d * 0.5, z: c.z + (Math.random() - 0.5) * d * 0.6, s: 0.3 + Math.random() * 0.7, ph: Math.random() * 6.28 };
+      this.dust.push(p);
+      pos.set([p.x, p.y, p.z], i * 3);
+    }
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const cv = document.createElement('canvas');
+    cv.width = cv.height = 64;
+    const g = cv.getContext('2d');
+    const gr = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    gr.addColorStop(0, 'rgba(255,245,220,1)');
+    gr.addColorStop(0.4, 'rgba(255,230,180,0.35)');
+    gr.addColorStop(1, 'rgba(255,220,160,0)');
+    g.fillStyle = gr;
+    g.fillRect(0, 0, 64, 64);
+    this.dustPts = new THREE.Points(geo, new THREE.PointsMaterial({ map: new THREE.CanvasTexture(cv), size: d * 0.0045, sizeAttenuation: true, transparent: true, opacity: 0.32, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xffe6b8 }));
+    this.dustPts.renderOrder = 9;
+    this.scene.add(this.dustPts);
+  },
+
+  _dustFrame(now) {
+    if (!this.dustPts) return;
+    const t = now / 1000;
+    const a = this.dustPts.geometry.attributes.position;
+    const d = this.dist;
+    const dt = Math.min(0.05, (now - (this._dustT || now)) / 1000);
+    this._dustT = now;
+    for (let i = 0; i < this.dust.length; i++) {
+      const p = this.dust[i];
+      p.y += dt * d * 0.006 * p.s;
+      if (p.y > d * 0.5) p.y = 0;
+      a.setXYZ(i, p.x + Math.sin(t * 0.25 * p.s + p.ph) * d * 0.02, p.y, p.z + Math.cos(t * 0.2 * p.s + p.ph) * d * 0.02);
+    }
+    a.needsUpdate = true;
+  },
+
   // Sinematik ışık: 0..1 (bitiş anında lamba güçlenir, ortam kararır)
   cine(v) {
     this._cineT = v;

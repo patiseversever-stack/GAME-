@@ -37,15 +37,15 @@ const goHome = () => { location.href = location.pathname; };
 const ui = {
   pauseMenu(ctl) {
     const items = [
-      { icon: 'chart', label: 'Oyun özeti', run: () => historySheet(app, ctl, history) },
-      { icon: 'book', label: 'Kurallar', run: () => ui.howTo() },
-      { icon: 'cog', label: 'Ayarlar', run: () => settingsSheet(app, settings) },
-      { icon: 'back', label: 'Ana menü', close: true, run: () => { ctl.save?.(); goHome(); } },
+      { icon: 'chart', label: 'Oyun özeti', c: 'c-blue', run: () => historySheet(app, ctl, history) },
+      { icon: 'book', label: 'Kurallar', c: 'c-violet', run: () => ui.howTo() },
+      { icon: 'cog', label: 'Ayarlar', c: 'c-teal', run: () => settingsSheet(app, settings) },
+      { icon: 'back', label: 'Ana menü', c: 'c-slate', close: true, run: () => { ctl.save?.(); goHome(); } },
     ];
     const body = document.createElement('div');
     body.className = 'pause4';
     body.innerHTML = `<p class="sheet__p pause4__note">${icon('check')}<span>Oyun kaydedildi — istediğin an kaldığın yerden sürer.</span></p>
-      <div class="pause4__grid">${items.map((it, i) => `<button class="pause4__item" data-pi="${i}"><i>${icon(it.icon)}</i><span>${it.label}</span></button>`).join('')}</div>`;
+      <div class="pause4__grid">${items.map((it, i) => `<button class="pause4__item" data-pi="${i}"><i class="${it.c}">${icon(it.icon)}</i><span>${it.label}</span></button>`).join('')}</div>`;
     const sh = sheet(app, { title: 'Duraklatıldı', body, actions: [{ label: 'Oyuna dön', primary: true }], cls: 'is-pause' });
     body.addEventListener('click', (e) => {
       const b = e.target.closest('[data-pi]');

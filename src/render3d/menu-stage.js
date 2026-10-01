@@ -7,6 +7,7 @@ import { loadRackModel, sharpenModel } from './rack-model.js';
 import { faceTexture, faceBump } from './tile-face.js';
 import { woodCanvas } from '../ui/wood.js';
 import { emblemTexture } from './emblem.js';
+import { feltTextures, feltMaterial } from './felt.js';
 
 const DEG = Math.PI / 180;
 // gerçek okey taşı oranları (ince): 28 × 40 mm, 9 mm kalınlık
@@ -81,7 +82,7 @@ function dotTexture() {
 }
 
 export class MenuStage {
-  constructor(host, { quality = 'high' } = {}) {
+  constructor(host, { quality = 'high', gyro = true } = {}) {
     this.host = host;
     this.canvas = document.createElement('canvas');
     this.canvas.className = 'menu-gl';
@@ -141,11 +142,22 @@ export class MenuStage {
       this.py = (e.clientY / innerHeight - 0.5) * 2;
     };
     window.addEventListener('pointermove', this._onMove);
-    if (window.DeviceOrientationEvent) {
+    if (gyro && window.DeviceOrientationEvent) {
       this._onTilt = (e) => {
-        if (e.gamma == null) return;
-        this.px = Math.max(-1, Math.min(1, e.gamma / 25));
-        this.py = Math.max(-1, Math.min(1, (e.beta - 40) / 25));
+        if (e.gamma == null || e.beta == null) return;
+        const ang = (screen.orientation && screen.orientation.angle) || window.orientation || 0;
+        let gx = e.gamma;
+        let gy = e.beta;
+        if (ang === 90) [gx, gy] = [e.beta, -e.gamma];
+        else if (ang === -90 || ang === 270) [gx, gy] = [-e.beta, e.gamma];
+        if (this._bx === undefined) {
+          this._bx = gx;
+          this._by = gy;
+        }
+        this._bx += (gx - this._bx) * 0.004;
+        this._by += (gy - this._by) * 0.004;
+        this.px = Math.max(-1, Math.min(1, (gx - this._bx) / 16));
+        this.py = Math.max(-1, Math.min(1, (gy - this._by) / 16));
       };
       window.addEventListener('deviceorientation', this._onTilt);
     }
@@ -183,12 +195,12 @@ export class MenuStage {
     floor.position.y = -0.06;
     scene.add(floor);
     // çuha
-    const felt = feltTexture();
-    felt.repeat.set(7, 5);
+    const ft = feltTextures();
+    for (const t of [ft.map, ft.normal]) t.repeat.set(9, 6);
     const FW = 1.9;
     const FD = 1.3;
     this.feltBox = { x0: -FW / 2 + 0.03, x1: FW / 2 - 0.03, z0: -0.62, z1: FD - 0.62 - 0.03 };
-    const table = new THREE.Mesh(new THREE.PlaneGeometry(FW, FD), new THREE.MeshStandardMaterial({ map: felt, bumpMap: felt, bumpScale: 0.5, roughness: 0.97, color: 0x74ab9c }));
+    const table = new THREE.Mesh(new THREE.PlaneGeometry(FW, FD), feltMaterial(!this.low));
     table.rotation.x = -Math.PI / 2;
     table.position.set(0, 0, -0.62 + FD / 2);
     table.receiveShadow = true;

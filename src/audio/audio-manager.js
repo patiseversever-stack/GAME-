@@ -6,6 +6,7 @@
 
 import { RECIPES, RULES } from './synth.js';
 import { Music } from './music.js';
+import { Ambience } from './ambience.js';
 
 const HAPTICS = {
   select: [6],
@@ -39,7 +40,7 @@ export class AudioManager {
     this._onVis = this._onVis.bind(this);
     document.addEventListener('visibilitychange', this._onVis);
     settings.subscribe?.((key) => {
-      if (key === 'music' || key === 'musicVol') this.applyMusic();
+      if (key === 'music' || key === 'musicVol' || key === 'ambience') this.applyMusic();
       if (key === 'sfxVol' && this.sfxBus) this.sfxBus.gain.value = this.settings.get('sfxVol');
     });
   }
@@ -98,6 +99,11 @@ export class AudioManager {
       if (!this.music) this.music = new Music(this.ctx, this.musicBus);
       this.music.start(this.settings.get('musicVol'));
     } else this.music?.stop(1.0);
+    const amb = this.wantMusic && this.settings.get('ambience') !== false;
+    if (amb) {
+      if (!this.ambience) this.ambience = new Ambience(this.ctx, this.musicBus);
+      this.ambience.start(this.settings.get('musicVol'));
+    } else this.ambience?.stop(1.0);
   }
 
   // name: RECIPES anahtarı. opts: { delay, rate, vol, step }
@@ -152,6 +158,7 @@ export class AudioManager {
   destroy() {
     document.removeEventListener('visibilitychange', this._onVis);
     this.music?.stop(0.1);
+    this.ambience?.stop(0.1);
     this.ctx?.close?.();
   }
 }

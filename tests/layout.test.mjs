@@ -94,8 +94,8 @@ for (const mode of ['okey', 'okey101']) {
       test(`yatay telefon ölçütleri ${mode} ${w}×${h} safe=${safe.l}`, () => {
         const L = computeLayout({ w, h, safe, rem: 16, mode });
         const tag = `@${w}×${h} ${mode}`;
-        // taş boyutu: yüksekliğin ~%11'i (klasik ve 101 aynı — ıstaka tam genişlik kullanır)
-        const minTw = Math.floor(h * 0.1) + 1;
+        // taş boyutu: yüksekliğin ~%9'u — ıstaka ekranın ~%35'inde kalır, masa ferah (klasik ve 101 aynı)
+        const minTw = Math.floor(h * 0.088);
         assert.ok(L.rack.tw >= minTw, `ıstaka taşı küçük: ${L.rack.tw} < ${minTw} ${tag}`);
         assert.equal(L.rack.rows, 2, `yatay telefonda ıstaka 2 satır olmalı ${tag}`);
         // dokunma hedefleri

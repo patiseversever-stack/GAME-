@@ -11,6 +11,7 @@ import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment
 import { loadRackModel, sharpenModel } from './rack-model.js';
 import { fxMethods } from './stage-fx.js';
 import { emblemTexture } from './emblem.js';
+import { feltTextures, feltMaterial } from './felt.js';
 import { faceTexture, faceBump, descFromEl } from './tile-face.js';
 import { woodCanvas } from '../ui/wood.js';
 
@@ -89,7 +90,7 @@ function feltTexture() {
 export class Stage3D {
   constructor(host, { quality = 'high' } = {}) {
     this.host = host;
-    this.qLevel = quality === 'low' ? 3 : 0;
+    this.qLevel = quality === 'low' ? 3 : quality === 'medium' ? 2 : 0;
     this.quality = quality;
     const canvas = document.createElement('canvas');
     canvas.className = 'gl-stage';
@@ -110,7 +111,7 @@ export class Stage3D {
     const pm = new THREE.PMREMGenerator(r);
     scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
     scene.environmentIntensity = 0.16;
-    this.camera = new THREE.PerspectiveCamera(17, 1, 10, 40000);
+    this.camera = new THREE.PerspectiveCamera(27, 1, 10, 40000);
     // ışık: masanın üstünde sarkan sıcak lamba (spot) + çok zayıf ortam dolgusu
     this.lamp = new THREE.SpotLight(0xffe4bd, 6.4, 0, 0.62, 1, 0);
     this.lamp.castShadow = this.qLevel < 2;
@@ -126,8 +127,9 @@ export class Stage3D {
     this.rim = new THREE.DirectionalLight(0xbfd8ff, 0.35);
     scene.add(this.rim);
     // masa (çuha) ve ahşap kenar
-    this.felt = feltTexture();
-    this.table = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshStandardMaterial({ map: this.felt, bumpMap: this.felt, bumpScale: 1.2, roughness: 0.97, metalness: 0, color: 0x5f9488 }));
+    this.feltTex = feltTextures();
+    this.feltMats = [feltMaterial(true), feltMaterial(false)];
+    this.table = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), this.feltMats[this.qLevel === 0 ? 0 : 1]);
     this.table.rotation.x = -Math.PI / 2;
     this.table.receiveShadow = true;
     scene.add(this.table);
@@ -157,6 +159,7 @@ export class Stage3D {
     if (level === this.qLevel) return;
     const hadShadow = this.qLevel < 2;
     this.qLevel = level;
+    if (this.table && this.feltMats) this.table.material = this.feltMats[level === 0 ? 0 : 1];
     const on = level < 2;
     this.renderer.shadowMap.enabled = on;
     this.lamp.castShadow = on;
@@ -168,6 +171,7 @@ export class Stage3D {
         this.lamp.shadow.map = null;
       }
     }
+    if (this.L && (level === 0) !== !!this.dustPts) this.buildDust(this.L);
     if (hadShadow !== on)
       this.scene.traverse((o) => {
         if (o.material) (Array.isArray(o.material) ? o.material : [o.material]).forEach((m) => (m.needsUpdate = true));
@@ -217,7 +221,7 @@ export class Stage3D {
     const cam = this.camera;
     cam.aspect = W / H;
     // ekran ortasında 1 birim ≈ 1 piksel olacak uzaklık; masaya ~52° eğik bakış
-    const pitch = (L.profile === 'landscape' ? 50 : 56) * DEG;
+    const pitch = (L.profile === 'landscape' ? 46 : 54) * DEG;
     const dist = H / 2 / Math.tan((cam.fov * DEG) / 2);
     cam.position.set(0, dist * Math.sin(pitch), dist * Math.cos(pitch));
     cam.lookAt(0, 0, 0);
@@ -229,7 +233,8 @@ export class Stage3D {
     // masa düzlemi y=0; ekranın her yerini kaplayacak kadar büyük
     const span = dist * 6;
     this.table.scale.set(span, span, 1);
-    this.felt.repeat.set(span / 420, span / 420);
+    // bir desen tekrarı ≈ 260 px: lifler ince ve yoğun, tekrar fark edilmez
+    for (const t of [this.feltTex.map, this.feltTex.normal]) t.repeat.set(span / 260, span / 260);
     // ıstaka düzlemi: ıstaka merkezine giden ışın üzerinde, kameraya daha yakın, kameraya bakan ve hafif geriye yatık
     const rr = L.rack.rect;
     const rc = this._hit(rr.x + rr.w / 2, rr.y + rr.h / 2, this.planeT, new THREE.Vector3());
@@ -256,9 +261,11 @@ export class Stage3D {
     this.lamp.angle = 0.6;
     this.lamp.shadow.camera.near = dist * 0.3;
     this.lamp.shadow.camera.far = dist * 4;
+    this._lampBase = undefined; // jiroskop lambası yeni konuma göre
     this.rim.position.set(dist, dist * 0.6, -dist);
     this.buildRails(L);
     this.buildEmblem(L);
+    this.buildDust(L);
     this.shadowDirty = true;
     this.setTileSize(L.rack.tw, L.rack.th);
     this.buildRack(L);
@@ -344,7 +351,7 @@ export class Stage3D {
     // çuha yalnız pervazın içinde; dışı koyu zemin
     this.table.scale.set(halfW * 2 + 2, near - far + 2, 1);
     this.table.position.set(0, 0, (far + near) / 2);
-    this.felt.repeat.set((halfW * 2) / 420, (near - far) / 420);
+    for (const t of [this.feltTex.map, this.feltTex.normal]) t.repeat.set((halfW * 2) / 260, (near - far) / 260);
     const floor = new THREE.Mesh(new THREE.PlaneGeometry(d * 20, d * 20), new THREE.MeshStandardMaterial({ color: 0x120c08, roughness: 1 }));
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = -railH * 2;
@@ -1054,14 +1061,19 @@ export class Stage3D {
     if (!this.dirty) return;
     this.dirty = false;
     const now = performance.now();
-    const busy = this._slotFrame(now) | this._fxFrame(now);
+    let busy = this._slotFrame(now) | this._fxFrame(now);
+    this._dustFrame(now);
+    if (this._gyroFrame()) {
+      busy = true;
+      this._activeT = now;
+    }
     this.renderer.shadowMap.needsUpdate = this.shadowDirty;
     this.shadowDirty = false;
     for (const m of this.meshes.values()) {
       this._syncFace(m);
       m.group.visible = m.el.style.display !== 'none';
     }
-    this.renderer.render(this.scene, this.camera);
+    this.renderer.render(this.scene, this._viewActive ? this.viewCam : this.camera);
     if (busy) {
       // yalnız ortam nabzı (sıra ışığı, yuva parıltısı) sürüyorsa ~22 fps yeter: telefon ısınmaz, kare bütçesi taşlara kalır
       const ambient = now - (this._activeT || 0) > 120 && !(this.pulses && this.pulses.length) && !this._lampFx && (this._cine || 0) === (this._cineT || 0);

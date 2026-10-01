@@ -14,7 +14,7 @@ export function sheet(host, { title, body = '', actions = [], cls = '', onClose,
   el.className = 'sheet-wrap ' + cls;
   el.innerHTML = `<div class="sheet-frame"><i class="stud stud--tl"></i><i class="stud stud--tr"></i><i class="stud stud--bl"></i><i class="stud stud--br"></i>
   <div class="sheet" role="dialog" aria-modal="true" aria-label="${esc(title)}">
-    <header class="sheet__head"><h2 class="ribbon"><span>${title}</span></h2>${dismissable ? '<button class="icon-btn sheet__x" data-x aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : ''}</header>
+    <header class="sheet__head"><h2 class="sheet__title">${title}</h2>${dismissable ? '<button class="icon-btn sheet__x" data-x aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>' : ''}</header>
     <div class="sheet__body"></div>
     ${actions.length ? `<footer class="sheet__foot">${actions.map((a, i) => `<button class="btn ${a.primary ? 'btn--primary' : ''} btn--lg" data-i="${i}">${a.label}</button>`).join('')}</footer>` : ''}
   </div></div>`;
@@ -185,13 +185,15 @@ export function historySheet(host, ctl, history = []) {
 // ───────────── Ayarlar ─────────────
 export function settingsSheet(host, settings) {
   const seg = (key, opts) => `<div class="seg" role="radiogroup" data-key="${key}">${opts.map(([v, l]) => `<button role="radio" data-v="${v}" aria-checked="${String(settings.get(key)) === String(v)}">${l}</button>`).join('')}</div>`;
-  const IC = { sfx: 'volumeOn', music: 'music', haptics: 'vibrate', botSpeed: 'bolt', tapToDiscard: 'hand', meldHints: 'eye', tutorial: 'help', motion: 'wand', textScale: 'book', rack: 'palette', tiles: 'layers' };
-  const lab = (key, label) => `<span class="set-lab"><i>${icon(IC[key] || 'cog')}</i>${label}</span>`;
+  const IC = { sfx: ['volumeOn', 'c-blue'], music: ['music', 'c-violet'], haptics: ['vibrate', 'c-teal'], botSpeed: ['bolt', 'c-amber'], tapToDiscard: ['hand', 'c-mint'], meldHints: ['eye', 'c-blue'], tutorial: ['help', 'c-violet'], motion: ['wand', 'c-pink'], textScale: ['book', 'c-teal'], rack: ['palette', 'c-amber'], tiles: ['layers', 'c-mint'], gyro: ['target', 'c-pink'], dynLight: ['star', 'c-amber'], ambience: ['music', 'c-teal'], quality: ['layers', 'c-blue'] };
+  const lab = (key, label) => `<span class="set-lab"><i class="${(IC[key] || [])[1] || 'c-slate'}">${icon((IC[key] || ['cog'])[0])}</i>${label}</span>`;
   const sw = (key, label) => `<label class="set-row">${lab(key, label)}<button class="switch" role="switch" data-sw="${key}" aria-checked="${!!settings.get(key)}"><i></i></button></label>`;
   const body = document.createElement('div');
   body.className = 'settings2';
   body.innerHTML = `
     <h3>Ses</h3>${sw('sfx', 'Efekt sesleri')}${sw('music', 'Müzik')}${sw('haptics', 'Titreşim')}
+    <h3>Deneyim</h3>${sw('gyro', 'Jiroskop kamera')}<p class="set-hint">Telefonu eğdikçe masa ve lamba ışığı hareket eder.</p>${sw('ambience', 'Kahvehane ambiyansı')}${sw('cinematic', 'Sinematik kamera')}
+    <div class="set-row">${lab('quality', 'Grafik')}${seg('quality', [['auto', 'Otomatik'], ['high', 'Yüksek'], ['medium', 'Dengeli'], ['low', 'Pil']])}</div>
     <h3>Oynanış</h3>
     <div class="set-row">${lab('botSpeed', 'Bot hızı')}${seg('botSpeed', [['slow', 'Yavaş'], ['normal', 'Normal'], ['fast', 'Hızlı']])}</div>
     ${sw('tapToDiscard', 'Seçili taşa ikinci dokunuşla at')}${sw('meldHints', 'Perleri ıstakada işaretle')}${sw('tutorial', 'İpuçlarını göster')}
@@ -204,6 +206,8 @@ export function settingsSheet(host, settings) {
     const s = e.target.closest('[data-sw]');
     if (s) {
       const k = s.dataset.sw;
+      // iOS: jiroskop izni kullanıcı dokunuşu içinde istenmeli
+      if (k === 'gyro' && !settings.get(k) && typeof DeviceOrientationEvent !== 'undefined' && DeviceOrientationEvent.requestPermission) DeviceOrientationEvent.requestPermission().catch(() => {});
       settings.set(k, !settings.get(k));
       s.setAttribute('aria-checked', String(!!settings.get(k)));
       return;

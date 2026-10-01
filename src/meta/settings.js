@@ -10,7 +10,10 @@ export const DEFAULTS = Object.freeze({
   musicVol: 0.85,
   haptics: true,
   motion: 'auto', // 'auto' | 'full' | 'reduced'
-  quality: 'auto', // 'auto' | 'high' | 'low'
+  quality: 'auto', // 'auto' | 'high' | 'medium' | 'low'
+  gyro: true, // telefon eğimiyle kamera/ışık paralaksı
+  ambience: true, // kahvehane ortam sesi
+  cinematic: true, // büyük anlarda kamera hareketi
   theme: 'lounge',
   rack: 'walnut',
   tiles: 'ivory',

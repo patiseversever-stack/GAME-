@@ -106,7 +106,7 @@ export class GameController {
     scene.build();
     this.scene = scene;
     this.fx = {
-      camera: Object.assign(new Camera(scene.els.cam, () => (scene.sys.reduced ? 'reduced' : 'full')), { extra: scene.stage ? [scene.stage.canvas] : [] }),
+      camera: Object.assign(new Camera(scene.els.cam, () => (scene.sys.reduced ? 'reduced' : 'full')), { extra: scene.stage ? [scene.stage.canvas] : [], enabled: () => this.settings.get('cinematic') !== false }),
       confetti: new Confetti(this._confettiCanvas()),
       dust: new Dust(scene.els.canvas),
     };
@@ -199,9 +199,11 @@ export class GameController {
     };
     sc.root.addEventListener('click', onClick);
     sc.disposers.push(() => sc.root.removeEventListener('click', onClick));
-    const unsub = this.settings.subscribe((k) => {
+    const unsub = this.settings.subscribe((k, v) => {
       if (k === 'sfx') sc.refreshSoundIcon();
       if (['motion', 'botSpeed', 'quality'].includes(k)) this.applyMotion();
+      if (k === 'gyro') this.scene?.stage?.setGyro(!!v);
+      if (k === 'quality') this.scene?.stage?.setQuality({ low: 3, medium: 2, high: 0, auto: 0 }[v] ?? 0);
       if (k === 'meldHints') sc.onRackChanged();
     });
     sc.disposers.push(unsub);
@@ -458,6 +460,17 @@ export class GameController {
     const idx = new Map();
     slots.forEach((t, i) => t !== null && idx.set(t, i));
     sc.retarget(true, { spring: { k: 360, c: 29 }, stagger: (t) => (idx.get(t) ?? 0) * 12 });
+    // yer değiştiren taşlar hafifçe kalkar, kayar ve yerine oturur (elle dizme hissi)
+    if (!sc.sys.reduced) {
+      slots.forEach((t, i) => {
+        if (t === null || before[i] === t) return;
+        const tg = sc.targetOf(t);
+        if (!tg) return;
+        const d = i * 12;
+        sc.sys.to(t, { ...tg, h: 9, sc: 1.04 }, { spring: { k: 420, c: 30 }, delay: d });
+        setTimeout(() => sc.sys.to(t, sc.targetOf(t) || tg, { spring: { k: 300, c: 24 } }), d + 190);
+      });
+    }
     this.audio.cascade('touch', 8, 0.035);
     setTimeout(() => this.audio.play('place'), 220);
     sc.onRackChanged();

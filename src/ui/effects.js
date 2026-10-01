@@ -12,7 +12,7 @@ export class Camera {
   }
   // kind: 'push' (yavaş yakınlaş), 'punch' (kısa vuruş), 'shake' (ceza), 'slam' (sert darbe), 'intro'
   play(kind) {
-    if (this.getMotion() === 'reduced') return;
+    if (this.getMotion() === 'reduced' || this.enabled?.() === false) return;
     const e = 'cubic-bezier(.2,.8,.2,1)';
     const K = {
       push: [[{ transform: 'scale(1)' }, { transform: 'scale(1.03) translateY(-6px)' }, { transform: 'scale(1)' }], { duration: 1500, easing: e }],
