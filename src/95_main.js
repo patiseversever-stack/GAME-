@@ -340,6 +340,7 @@ const endDrag = (e) => { const d = G.drag; if (!d || e.pointerId !== d.id) retur
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
 window.addEventListener('keydown', (e) => {
   audio.unlock();
+  if (TUT.open) { TUT.key(e); return; }
   if (e.repeat && (e.code === 'Space')) return;
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') { G.keyDir = 1; if (G.state === 'ready') startPlay(); }
@@ -470,6 +471,9 @@ bind('#btnMapBack', () => {
 bind('#btnEndless', () => { if (Save.data.unlocked < 16) { toast('Sonsuz Gün <em>16. adayı</em> tamamlayınca açılır.', 2.6); return; } audio.ui(); startEndless(); });
 bind('#btnDaily', () => { if (Save.data.unlocked < 4) { toast('Günün Adası <em>4. adayı</em> tamamlayınca açılır.', 2.6); return; } audio.ui(); startDaily(); });
 bind('#btnEndOk', () => openMap());
+bind('#btnHowT', () => { audio.ui(); TUT.show('title'); });
+bind('#btnHowS', () => { audio.ui(); TUT.show('settings'); });
+bind('#btnHowP', () => { audio.ui(); TUT.show('pause'); });
 $('#eclipseBtn').addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); triggerEclipse(); });
 
 /* =====================================================================
@@ -495,7 +499,7 @@ function applyQuality() {
 }
 let resizeTimer = 0;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(onResize, 120); });
-let lastT = performance.now();
+let lastT = performance.now(), frameNo = 0;
 function frame(now) {
   requestAnimationFrame(frame);
   const ms = now - lastT; lastT = now;
@@ -507,8 +511,9 @@ function frame(now) {
   if (G.slowT > 0) { G.slowT -= dtR; dt *= lerp(1, G.slowK, smoothstep(0, 0.2, G.slowT)); }
   if (G.state === 'paused') dt = 0;
   update(dt, dtR);
+  TUT.update(dtR);
   audio.update(dtR, G.state === 'play');
-  if (!window.__noRender) post.render(scene, camera);
+  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) post.render(scene, camera);
 }
 function bootGame() {
   applyQuality();
@@ -523,11 +528,12 @@ function bootGame() {
   try { renderer.compile(scene, camera); } catch (e) {}
   requestAnimationFrame((t) => { lastT = t; frame(t); });
   setTimeout(() => $('#loader').classList.add('off'), 250);
-  setTimeout(() => UI.show('title'), 900);
+  if (!Save.seen('tutorial')) setTimeout(() => TUT.show('boot'), 1300);
+  else setTimeout(() => UI.show('title'), 900);
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT,
   start: (g) => startStory(g), auto: (on = true) => { G.auto = on; }, setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
