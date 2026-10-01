@@ -162,7 +162,7 @@ export class Scene {
     this.stockDeco = [];
     this.indPlate = document.createElement('div');
     this.indPlate.className = 'plate';
-    this.indPlate.innerHTML = '<span class="plate__cap plate__cap--stock">Deste</span><span class="plate__cap plate__cap--ind">Gösterge</span><span class="plate__cap plate__cap--okey">Okey</span><span class="plate__plus">+1</span>';
+    this.indPlate.innerHTML = '<span class="plate__cap plate__cap--stock"><span class="cap-l">Deste</span><span class="cap-n num">0</span></span><span class="plate__cap plate__cap--ind">Gösterge</span><span class="plate__cap plate__cap--okey">Okey</span><span class="plate__plus">+1</span>';
     t.appendChild(this.indPlate);
     this.meldTags = document.createElement('div');
     this.meldTags.className = 'layer';
@@ -347,10 +347,17 @@ export class Scene {
     // dekoratif kapalı taş yığını (3 kat)
     this.decoClear('stock');
     const sc = L.scale.stock;
-    // gerçek bir deste gibi: beş kat, her kat belirgin biçimde üstte ve hafif kaymış
-    const step = Math.max(1.8, L.rack.tw * sc * 0.07);
-    for (let i = 4; i >= 0; i--) {
-      const d = this.decoTile(0, { x: s.cx + (i - 2) * 0.6, y: s.cy + (i - 2) * step, sc, flip: 180, z: 11 + (4 - i), tag: 'stock' });
+    // gerçek deste: üst üste konmuş kapalı taşlar (3B yükseklik), her kat hafif kaymış/dönük
+    const D = this.stage?.D ?? L.rack.tw * 0.42;
+    const hStep = (D * sc) / 1.25;
+    const jit = [
+      [0, 0, 0],
+      [-2.2, 1.2, -3.5],
+      [1.8, -0.8, 2.6],
+    ];
+    for (let i = 0; i < 3; i++) {
+      const [jx, jy, jr] = jit[i];
+      const d = this.decoTile(0, { x: s.cx + jx, y: s.cy + jy - (this.stage ? 0 : i * 3), sc, flip: 180, rot: jr, z: 11 + i, h: i * hStep, tag: 'stock' });
       this.stockDeco.push(d);
     }
   }
@@ -366,38 +373,39 @@ export class Scene {
     el.style.width = pl.w + 'px';
     el.style.height = pl.h + 'px';
     el.style.setProperty('--cap', pl.capH + 'px');
-    // başlıklar kendi taşlarının üstünde (DESTE · GÖSTERGE · OKEY); "+1" iki taşın arasında
+    // tek satır başlık: taşların tabanının hemen altında DESTE · GÖSTERGE · OKEY (hepsi aynı hizada)
     const indLeft = ind.cx - pl.x;
     const okLeft = ok.cx - pl.x;
     const st = L.stock;
     const capS = el.querySelector('.plate__cap--stock');
     const capI = el.querySelector('.plate__cap--ind');
     const capO = el.querySelector('.plate__cap--okey');
+    const tilesBottom = Math.max(st.cy + st.h / 2, ind.cy + ind.h / 2);
+    const capTop = tilesBottom - pl.y + 4;
+    for (const c of [capS, capI, capO]) c.style.top = capTop + 'px';
     capS.style.left = st.cx - pl.x + 'px';
-    capS.style.display = pl.compact ? 'none' : ''; // dar bölmede deste başlığı yerine yalnız sayı rozeti
-    // deste daha uzun: başlığı destenin üst kenarının hemen üstünde
-    const stTop = st.cy - st.h / 2;
-    capS.style.top = Math.min(1, stTop - pl.y - 12) + 'px';
+    capS.classList.toggle('is-compact', !!pl.compact); // dar bölmede yalnız sayı
+    this.capCount = capS.querySelector('.cap-n');
     capI.style.left = indLeft + 'px';
     capO.style.left = okLeft + 'px';
     const plus = el.querySelector('.plate__plus');
     plus.style.left = (indLeft + ind.w / 2 + okLeft - ok.w / 2) / 2 + 'px';
     plus.style.top = ind.cy - pl.y + 'px';
-    // çuhaya gömülü tepsi: üç öğeyi tek grup olarak çerçeveler
-    const x0 = Math.min(st.cx - st.w / 2, ind.cx - ind.w / 2) - 10;
-    const x1 = ok.cx + ok.w / 2 + 10;
-    const y0 = Math.min(pl.y, st.cy - st.h / 2 - 12) - 5;
-    const y1 = Math.max(st.cy + st.h / 2 + 12, ind.cy + ind.h / 2 + 8);
-    this._clusterRect = { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
-    this.stage?.setClusterTray?.(this._clusterRect);
+    // tepsi: üstte istif payı, altta başlık satırı; deste ile gösterge arasında ince ayraç
+    const x0 = st.cx - st.w / 2 - 12;
+    const x1 = ok.cx + ok.w / 2 + 12;
+    const y0 = Math.min(st.cy - st.h / 2 - st.w * 0.42, ind.cy - ind.h / 2) - 6;
+    const y1 = tilesBottom + 4 + 15 + 7;
+    const div = (st.cx + st.w / 2 + ind.cx - ind.w / 2) / 2;
+    this._clusterRect = { x: x0, y: y0, w: x1 - x0, h: y1 - y0, div: div - x0 };
     this.decoClear('ind');
     if (this.game) {
       // okey kutusu: genel yıldız değil, okeyin gerçek yüzü (göstergenin bir fazlası) + köşede yıldız
       const okTile = this._okeyDecoId();
       const d = this.decoTile(okTile, { x: ok.cx, y: ok.cy, sc: L.scale.indicator, flip: 0, z: 12, tag: 'ind', represent: { c: this.ctx.oc, v: this.ctx.ov } });
-      d.style.opacity = this.okeyShown ? '1' : '0';
       this.indDeco = d;
     }
+    this._applyCluster();
   }
 
   _okeyDecoId() {
@@ -406,17 +414,17 @@ export class Scene {
   }
 
   // ───────────────────────────── dekoratif taşlar ─────────────────────────────
-  decoTile(t, { x, y, sc = 1, flip = 0, z = 11, tag = 'deco', represent = null }) {
+  decoTile(t, { x, y, sc = 1, flip = 0, z = 11, tag = 'deco', represent = null, rot = 0, h = 0 }) {
     const el = createTileEl(t, this.ctx);
     if (represent) setTileFace(el, t, this.ctx, represent);
     el.dataset.deco = tag;
     el.style.zIndex = String(z);
-    el.style.transform = `translate3d(${x - this.L.rack.tw / 2}px,${y - this.L.rack.th / 2}px,0) scale(${sc})`;
+    el.style.transform = `translate3d(${x - this.L.rack.tw / 2}px,${y - this.L.rack.th / 2}px,0) rotate(${rot}deg) scale(${sc})`;
     setFlip(el, flip);
     this.els.table.appendChild(el);
     if (this.stage) {
       el.classList.add('gl-proxy');
-      this.stage.deco(el, { x, y, sc, flip, z });
+      this.stage.deco(el, { x, y, sc, flip, z, rot, h });
     }
     return el;
   }
@@ -457,7 +465,8 @@ export class Scene {
       for (const t of add) this.rack.addAuto(t);
     }
     this.okeyShown = true;
-    if (this.indDeco) this.indDeco.style.opacity = '1';
+    this._clusterHidden = false;
+    this._applyCluster();
     this.refreshChrome();
     this.retarget(false);
     this.onRackChanged();
@@ -512,7 +521,9 @@ export class Scene {
       this.pileEls[s]._count.style.display = d.piles[s].length > 1 ? '' : 'none';
     }
     this.stockCount.textContent = String(d.stock);
-    this.stockDeco.forEach((el, i) => (el.style.display = d.stock > (4 - i) * 4 || i === 4 ? (d.stock > 0 ? '' : 'none') : 'none'));
+    // kat sayısı kalan taşa göre: 3 / 2 / 1 / yok
+    this.stockDeco.forEach((el, i) => (el.style.display = d.stock > [0, 5, 14][i] ? '' : 'none'));
+    if (this.capCount) this.capCount.textContent = String(d.stock);
     this.stage?.syncDecos();
     this.stage?.setCounts(d.counts);
     this.refreshSoundIcon();
@@ -1180,9 +1191,8 @@ export class Scene {
   showOkeyDeco() {
     this.okeyShown = true;
     const d = this.indDeco;
+    this._applyCluster();
     if (d) {
-      d.style.opacity = '1';
-      this.stage?.syncDecos();
       d.animate?.([{ filter: 'brightness(1.6)' }, { filter: 'brightness(1)' }], { duration: 900, easing: 'ease-out' });
       const ind = this.L?.indicator;
       if (ind) {
@@ -1214,16 +1224,32 @@ export class Scene {
   setRevealMode(on) {
     this.root.classList.toggle('is-reveal', !!on);
     const hide = (el) => el && (el.style.visibility = on ? 'hidden' : '');
-    for (const d of this.stockDeco || []) d.style.opacity = on ? '0' : '';
-    if (this.indDeco) this.indDeco.style.opacity = on ? '0' : this.okeyShown ? '1' : '0';
+    this._revealOn = !!on;
     const ind = this.disp?.indicatorTile;
     const isp = ind !== null && ind !== undefined ? this.sys.get(ind) : null;
     if (isp && !(this.reveal && this.reveal.map.has(ind))) isp.el.style.display = on ? 'none' : '';
-    hide(this.indPlate);
     hide(this.stockEl);
     hide(this.stockOv);
     if (!on) this.stage?.setTray(null);
-    this.stage?.setClusterTray?.(on ? null : this._clusterRect);
+    this._applyCluster();
+  }
+
+  // Orta grup (deste · gösterge · okey): dağıtım sırasında ve el sonu vitrininde masadan kalkar
+  setClusterVisible(on, { animate = false } = {}) {
+    this._clusterHidden = !on;
+    this._applyCluster();
+    if (on && animate) {
+      for (const n of [this.indPlate]) n?.animate?.([{ opacity: 0, transform: 'translateY(4px)' }, { opacity: 1, transform: 'none' }], { duration: 420, easing: 'cubic-bezier(.2,.8,.2,1)' });
+      const r = this._clusterRect;
+      if (r) this.stage?.ping?.(r.x + r.w / 2, r.y + r.h / 2, { r: Math.max(r.w, r.h) * 0.6, glow: true, dur: 700, s0: 0.7, s1: 1.25, a: 0.35 });
+    }
+  }
+  _applyCluster() {
+    const off = !!(this._clusterHidden || this._revealOn);
+    for (const d of this.stockDeco || []) d.style.opacity = off ? '0' : '';
+    if (this.indDeco) this.indDeco.style.opacity = off || !this.okeyShown ? '0' : '1';
+    if (this.indPlate) this.indPlate.style.visibility = off ? 'hidden' : '';
+    this.stage?.setClusterTray?.(off ? null : this._clusterRect);
     this.stage?.syncDecos();
   }
 

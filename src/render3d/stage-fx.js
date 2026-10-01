@@ -307,33 +307,42 @@ export const fxMethods = {
     c.width = Math.max(64, Math.round(rect.w * S));
     c.height = Math.max(64, Math.round(rect.h * S));
     const g = c.getContext('2d');
-    const r = Math.min(16 * S, c.height * 0.22);
+    const r = Math.min(14 * S, c.height * 0.2);
     const path = (inset) => {
       g.beginPath();
       g.roundRect(inset, inset, c.width - inset * 2, c.height - inset * 2, Math.max(2, r - inset));
     };
-    // oyuk zemin
-    path(3);
-    g.fillStyle = 'rgba(4, 12, 9, 0.46)';
+    // tok, koyu zemin (saydam değil): çuhadan net ayrılan sakin bir yuva
+    path(2);
+    const bg = g.createLinearGradient(0, 0, 0, c.height);
+    bg.addColorStop(0, 'rgba(10, 26, 20, 0.9)');
+    bg.addColorStop(1, 'rgba(14, 34, 27, 0.9)');
+    g.fillStyle = bg;
     g.fill();
-    // üstten iç gölge (gömülü his)
+    // üst iç gölge: hafif gömülü his
     g.save();
-    path(3);
+    path(2);
     g.clip();
-    const sh = g.createLinearGradient(0, 0, 0, c.height);
-    sh.addColorStop(0, 'rgba(0,0,0,0.42)');
-    sh.addColorStop(0.18, 'rgba(0,0,0,0.08)');
+    const sh = g.createLinearGradient(0, 0, 0, 14 * S);
+    sh.addColorStop(0, 'rgba(0,0,0,0.35)');
     sh.addColorStop(1, 'rgba(0,0,0,0)');
     g.fillStyle = sh;
-    g.fillRect(0, 0, c.width, c.height);
+    g.fillRect(0, 0, c.width, 14 * S);
+    // deste ile gösterge arasında ince ayraç
+    if (rect.div) {
+      const dx = Math.round(rect.div * S);
+      const dg = g.createLinearGradient(0, c.height * 0.15, 0, c.height * 0.85);
+      dg.addColorStop(0, 'rgba(255,255,255,0)');
+      dg.addColorStop(0.5, 'rgba(255,255,255,0.12)');
+      dg.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = dg;
+      g.fillRect(dx - S * 0.5, c.height * 0.15, S, c.height * 0.7);
+    }
     g.restore();
-    // kenar: üstte koyu, altta ince ışık (kumaşın kıvrımı)
-    g.lineWidth = 1.5 * S;
-    path(3);
-    const edge = g.createLinearGradient(0, 0, 0, c.height);
-    edge.addColorStop(0, 'rgba(0,0,0,0.55)');
-    edge.addColorStop(1, 'rgba(190,240,215,0.22)');
-    g.strokeStyle = edge;
+    // ince açık kenar
+    g.lineWidth = 1 * S;
+    path(2.5);
+    g.strokeStyle = 'rgba(255,255,255,0.09)';
     g.stroke();
     const tex = this._tex(c);
     const cx = rect.x + rect.w / 2;

@@ -559,6 +559,9 @@ export class Choreo {
     sc.els.actionbar.style.opacity = '0';
     this.fx.camera.play('intro');
     sc.root.classList.add('is-intro');
+    // orta grup (deste · gösterge · okey) dağıtım bitene dek masada görünmez
+    sc.okeyShown = false;
+    sc.setClusterVisible?.(false);
 
     // 1) yıkama: kapalı taşlar masanın ortasına saçılır, avuçla dairesel karıştırılır
     const st = this.stockPos();
@@ -702,6 +705,7 @@ export class Choreo {
     sc.sys.snap(ind, { x: st.x, y: st.y, sc: L.scale.stock, flip: 180, rot: 0, z: 130, h: 0 });
     isp.placed = true;
     sc.disp.indicatorTile = ind;
+    sc.setClusterVisible?.(true, { animate: true });
     this.audio.play('okey');
     sc.sys.fly(ind, { x: L.indicator.cx, y: L.indicator.cy, sc: L.scale.indicator, flip: 0, rot: 0, z: 13, h: 0 }, { dur: 620, arc: 34, bounce: 2 });
     sc.disp.stock = g.stock.length;

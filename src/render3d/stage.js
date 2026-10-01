@@ -1018,14 +1018,14 @@ export class Stage3D {
     for (const id of [...this.meshes.keys()]) this.remove(id);
   }
 
-  deco(el, { x, y, sc = 1, flip = 0, rot = 0, z = 0 }) {
+  deco(el, { x, y, sc = 1, flip = 0, rot = 0, z = 0, h = 0 }) {
     let m = this.decos.get(el);
     if (!m) {
       m = this._make(el);
       this.decos.set(el, m);
     }
     this._syncFace(m);
-    this._place(m.group, x, y, z > 100 ? 10 : 0, rot, sc, flip, z % 100, this._rackT(x, y));
+    this._place(m.group, x, y, z > 100 ? 10 : h, rot, sc, flip, z % 100, this._rackT(x, y));
     m.inner.rotation.set(0, flip * DEG, 0);
     this.shadowDirty = true;
     this.invalidate();

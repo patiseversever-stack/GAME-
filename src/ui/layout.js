@@ -107,7 +107,8 @@ function plateGeom(indW, capH) {
   const indH = R(indW * 1.36);
   const padX = 5;
   const gap = Math.max(20, R(indW * 0.7));
-  return { indW, indH, capH, padX, gap, w: 2 * padX + 2 * indW + gap, h: capH + 4 + indH + 5 };
+  // taşlar üstte, başlık satırı altta (deste başlığıyla aynı hizada)
+  return { indW, indH, capH, padX, gap, w: 2 * padX + 2 * indW + gap, h: 4 + indH + capH + 6 };
 }
 
 // ───────────────────────────── DİKEY ─────────────────────────────
@@ -180,8 +181,8 @@ function layoutPortrait(o) {
   const cxx = table.x + table.w / 2 - clusterW / 2;
   const cyRow = rowC + pileH / 2 - R(ui * 0.1);
   const stock = { cx: cxx + stockW / 2, cy: cyRow, w: stockW, h: R(stockW * 1.36), tw: stockW };
-  const plate = { x: R(cxx + stockW + gap), y: R(cyRow - pg.h / 2), w: pg.w, h: pg.h, capH };
-  const tileCy = plate.y + capH + 4 + pg.indH / 2;
+  const plate = { x: R(cxx + stockW + gap), y: R(cyRow + stockW * 0.68 - pg.indH - 4), w: pg.w, h: pg.h, capH };
+  const tileCy = plate.y + 4 + pg.indH / 2;
   const indicator = { cx: plate.x + pg.padX + indW / 2, cy: tileCy, w: indW, h: pg.indH, tw: indW };
   const okeyMini = { cx: plate.x + pg.padX + indW + pg.gap + indW / 2, cy: tileCy, w: indW, h: pg.indH, tw: indW };
 
@@ -242,7 +243,8 @@ function layoutLandscape(o) {
     const stockW = R(pw * 1.08);
     const stockH = R(stockW * 1.36);
     const pg = plateGeom(R(pw * (tight ? 0.86 : 0.92)), tight ? 9 : 11);
-    const clusterH = Math.max(stockH + 6, pg.h);
+    // üstte 3B deste istifinin yükselme payı, altta başlık satırı
+    const clusterH = R(stockW * 0.4) + stockH + pg.capH + 6;
     return { pw, pileW, pileH, stockW, stockH, pg, clusterH };
   };
 
@@ -315,9 +317,16 @@ function layoutLandscape(o) {
   let cluster;
   let clusterRow = false; // küme üst satırda mı (per alanının üstünde yer tutar)
   // deste ile gösterge arası: geniş (başlıklar rahat) — 101'de üst bölmeye sığmazsa daralır
-  let sgap = 26;
+  let sgap = 48;
   let clusterW = stockW + sgap + pg.w;
   if (mode === 'okey') {
+    // dar ekranda deste–gösterge arası daralır (başlık yerine yalnız sayı)
+    const room = xr - pileW - 10 - (xl + pileW + 10);
+    for (const g of [48, 40, 30]) {
+      sgap = g;
+      clusterW = stockW + sgap + pg.w;
+      if (clusterW <= room) break;
+    }
     cluster = { x: cx - clusterW / 2, y: free0 + (bandBottom - free0 - clusterH) / 2 };
   } else {
     // 101: merkez per alanına kalsın → küme üst satırda, üst ıstakanın sağında/solunda boş bölmeye; sığmazsa altında ortalı
@@ -331,15 +340,21 @@ function layoutLandscape(o) {
       if (cluster) break;
     }
     if (!cluster) {
-      sgap = 26;
-      clusterW = stockW + sgap + pg.w;
+      const room = xr - pileW - 10 - (xl + pileW + 10);
+      for (const g of [48, 40, 30, 22]) {
+        sgap = g;
+        clusterW = stockW + sgap + pg.w;
+        if (clusterW <= room) break;
+      }
       cluster = { x: cx - clusterW / 2, y: free0 };
       clusterRow = true;
     }
   }
-  const stock = { cx: cluster.x + stockW / 2, cy: cluster.y + clusterH - 3 - stockH / 2, w: stockW, h: stockH, tw: stockW };
-  const plate = { x: R(cluster.x + stockW + sgap), y: R(cluster.y + clusterH - pg.h), w: pg.w, h: pg.h, capH: pg.capH, compact: sgap < 20 };
-  const tileCy = plate.y + pg.capH + 4 + pg.indH / 2;
+  // taşların tabanı aynı hizada; başlıklar hepsinin altında tek satır
+  const tilesBottom = cluster.y + clusterH - pg.capH - 6;
+  const stock = { cx: cluster.x + stockW / 2, cy: tilesBottom - stockH / 2, w: stockW, h: stockH, tw: stockW };
+  const plate = { x: R(cluster.x + stockW + sgap), y: R(tilesBottom - pg.indH - 4), w: pg.w, h: pg.h, capH: pg.capH, compact: sgap < 34 };
+  const tileCy = plate.y + 4 + pg.indH / 2;
   const indicator = { cx: plate.x + pg.padX + pg.indW / 2, cy: tileCy, w: pg.indW, h: pg.indH, tw: pg.indW };
   const okeyMini = { cx: plate.x + pg.padX + pg.indW + pg.gap + pg.indW / 2, cy: tileCy, w: pg.indW, h: pg.indH, tw: pg.indW };
 
