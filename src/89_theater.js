@@ -304,13 +304,16 @@ const Theater = {
   },
   open(from) {
     this.init(); this.from = from || 'title'; this.active = true;
+    const ss = Perf.level >= 1 ? 2048 : 1024; this.light.shadow.mapSize.set(ss, ss);
     const sv = Save.data.theater || []; let i = 0; while (sv.includes(i) && i < ST_FIGS.length - 1) i++;
     this.build(i); audio.setChapter(8); this.t = 0; this.camIn = 0;
     G.state = 'theater'; UI.hideAll(); UI.hud(false); UI.show('theater');
     audio.whoosh(true, 1.0, 0.06); audio.theaterOpen();
   },
   close() {
-    this.active = false; audio.theaterTone(0); audio.setChapter(G.lv ? G.lv.spec.ch : 0); UI.hide('theater');
+    this.active = false;
+    for (const g of [this.root, this.ink, this.ghost]) { while (g.children.length) { const o = g.children.pop(); o.traverse((m) => { if (m.geometry) m.geometry.dispose(); if (m.material) m.material.dispose(); }); } }
+    if (this.light.shadow.map) { this.light.shadow.map.dispose(); this.light.shadow.map = null; } audio.theaterTone(0); audio.setChapter(G.lv ? G.lv.spec.ch : 0); UI.hide('theater');
     if (this.from === 'map') openMap();
     else { G.state = 'title'; G.stateT = 99; G.userSun = true; UI.show('title'); }
   },

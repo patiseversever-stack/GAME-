@@ -98,7 +98,7 @@ const Cam = {
       const k = this.cine; k.t += dtR; const e = k.ease(clamp01(k.t / k.dur)), to = typeof k.to === 'function' ? k.to() : k.to;
       c.target.lerpVectors(k.from.target, to.target, e); c.dist = lerp(k.from.dist, to.dist, e); c.pitch = lerp(k.from.pitch, to.pitch, e); c.yaw = lerp(k.from.yaw, to.yaw, e); c.fov = lerp(k.from.fov, to.fov, e);
       if (k.t >= k.dur && !k.hold) this.cine = null;
-    } else {
+    } else if (G.state !== 'film') {
       const ttl = G.state === 'title' && this.title, b = ttl ? this.title : this.base; const fz = G.state === 'play' || G.state === 'ready';
       const tx = b.target.x + this.follow.x * (fz ? 0.26 : 0), tz = b.target.z + this.follow.z * (fz ? 0.22 : 0);
       c.target.x = damp(c.target.x, tx, 3, dtR); c.target.y = damp(c.target.y, b.target.y, 3, dtR); c.target.z = damp(c.target.z, tz, 3, dtR);
@@ -106,6 +106,9 @@ const Cam = {
       c.yaw = damp(c.yaw, b.yaw + clamp(G.uSV * 0.012, -0.03, 0.03) + Math.sin(U.uTime.value * 0.11) * 0.012, 4, dtR);
     }
     const pose = { target: c.target.clone(), dist: c.dist, pitch: c.pitch, yaw: c.yaw, fov: c.fov + G.fovKick };
+    // açılış filmi ve başlıkta eğim/fare paralaksı (gerçek 3B derinlik)
+    Tilt.x = damp(Tilt.x, G.state === 'film' || G.state === 'title' ? Tilt.tx : 0, 2.5, dtR); Tilt.y = damp(Tilt.y, G.state === 'film' || G.state === 'title' ? Tilt.ty : 0, 2.5, dtR);
+    pose.yaw += Tilt.x * 0.075; pose.pitch -= Tilt.y * 0.04;
     const tr = G.trauma * G.trauma, t = U.uTime.value;
     if (tr > 0.0001) { pose.target.x += Math.sin(t * 47.1) * tr * 0.3; pose.target.y += Math.sin(t * 39.3 + 1.7) * tr * 0.25; pose.target.z += Math.sin(t * 43.7 + 4.1) * tr * 0.3; }
     this.place(camera, pose);
@@ -170,7 +173,7 @@ function applyLighting(dt) {
   const pu = post.u;
   _pv.copy(orb.g.position).project(camera);
   pu.uSunUV.value.set(_pv.x * 0.5 + 0.5, _pv.y * 0.5 + 0.5);
-  pu.uSunVis.value = (_pv.z < 1 ? 1 : 0) * (1 - ecl) * (1 - night) * smoothstep(1.25, 0.9, Math.max(Math.abs(_pv.x), Math.abs(_pv.y)));
+  pu.uSunVis.value = (_pv.z < 1 && orb.g.visible ? 1 : 0) * (1 - ecl) * (1 - night) * smoothstep(1.25, 0.9, Math.max(Math.abs(_pv.x), Math.abs(_pv.y)));
   pu.uFlareCol.value.copy(scA.sun).multiplyScalar(0.8);
   post.rays.uniforms.uSun.value.copy(pu.uSunUV.value);
   if (lv.sun.twin) { _pv.copy(orb2.g.position).project(camera); post.rays.uniforms.uSun2.value.set(_pv.x * 0.5 + 0.5, _pv.y * 0.5 + 0.5); }

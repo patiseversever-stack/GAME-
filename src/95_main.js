@@ -238,6 +238,7 @@ function update(dt, dtR) {
   if (G.palT < 1) G.palT = Math.min(1, G.palT + dtR / 1.6);
   if (G.outView) { G.outT += dtR; G.outView.sink(dtR); if (G.outT > 1.2) { G.outView.dispose(); G.outView = null; } }
   if (SkyMap.active && G.state !== 'map') SkyMap.deactivate();
+  if (Film.active && G.state !== 'film') Film.finish(true);
   updateSunControl(dtR);
   const lv = G.lv;
   // ada girişi (durumdan bağımsız sürer)
@@ -291,11 +292,12 @@ function update(dt, dtR) {
       if (t > 0.9) { G.state = 'ready'; G.readyT = 0; G.readyHint = true; zifir.g.scale.setScalar(1); G.uT = G.u; G.rwFx = false; if (G.auto) startPlay(); }
       break;
     }
+    case 'film': Film.update(dtR); break;
     case 'map': SkyMap.update(dtR); G.night = damp(G.night, G.mapNight, 1.5, dtR); break;
     case 'theater': Theater.update(dtR); break;
     case 'ending': { G.night = damp(G.night, G.state === 'ending' ? 1 : G.mapNight, 1.5, dtR); U.uNightAmt.value = G.night; U.uNightR.value = 60; U.uNightRim.value = 0; break; }
   }
-  if (G.state !== 'play') { G.ecl.amt = damp(G.ecl.amt, 0, 6, dtR); if (G.ecl.amt < 0.01) G.ecl.amt = 0; }
+  if (G.state !== 'play' && G.state !== 'film') { G.ecl.amt = damp(G.ecl.amt, 0, 6, dtR); if (G.ecl.amt < 0.01) G.ecl.amt = 0; }
   if (G.state === 'play' || (G.ecl.amt > 0 && G.state === 'fail')) { U.uNightAmt.value = G.ecl.amt * 0.72; U.uNightR.value = 999; U.uNightRim.value = 0; }
   // görseller
   if (lv && G.state !== 'map' && G.state !== 'theater') {
@@ -322,7 +324,7 @@ function update(dt, dtR) {
   U.uCamPos.value.copy(camera.position);
   // gölge haritası: yalnızca gerektiğinde
   const moved = Math.abs(G.u - (G.shU ?? -1)) > 1e-5;
-  if (moved || (lv && lv.hasMovers && G.state === 'play') || G.state === 'intro' || G.state === 'title') { renderer.shadowMap.needsUpdate = true; G.shU = G.u; }
+  if (moved || (lv && lv.hasMovers && G.state === 'play') || G.state === 'intro' || G.state === 'title' || G.state === 'film') { renderer.shadowMap.needsUpdate = true; G.shU = G.u; }
   envT += dtR; if (refreshEnvSoon > 0) { refreshEnvSoon -= dtR; if (refreshEnvSoon <= 0 && G.state !== 'play') { refreshEnv(); refreshEnvSoon = -1; } }
   // post
   const pu = post.u, ecl = G.ecl.amt;
@@ -332,12 +334,12 @@ function update(dt, dtR) {
   pu.uExposure.value = 1.0 - ecl * 0.06 + G.night * 0.15 + flare.k * 0.1;
   pu.uNight.value = G.night;
   pu.uBloomAdd.value = 0.35 + G.night * 0.4 + ecl * 0.3 + flare.k * 0.45 + flare.warnK * 0.12;
-  pu.uRays.value = 0.5 * (1 - G.night) * (1 - ecl);
+  pu.uRays.value = 0.5 * (1 - G.night) * (1 - ecl) * (orb.g.visible ? 1 : 0);
   const danger = G.state === 'play' ? (G.f > 0 ? 0.35 + (1 - G.meter) * 0.8 : G.meter < 0.35 ? 0.2 + Math.sin(U.uTime.value * 8) * 0.08 : 0) : 0;
   pu.uDanger.value = damp(pu.uDanger.value, danger, 8, dtR);
   _pv.set(zifir.g.position.x, 0.35, zifir.g.position.z).project(camera);
   pu.uHeat.value.set(_pv.x * 0.5 + 0.5, _pv.y * 0.5 + 0.5, G.state === 'play' ? G.f * 0.9 : 0);
-  const focusY = G.state === 'title' || G.state === 'map' ? 0.42 : clamp(_pv.y * 0.5 + 0.5, 0.25, 0.65);
+  const focusY = G.state === 'title' || G.state === 'map' || G.state === 'film' ? 0.42 : clamp(_pv.y * 0.5 + 0.5, 0.25, 0.65);
   pu.uTiltC.value = damp(pu.uTiltC.value, focusY, 2, dtR); pu.uTiltW.value = 0.3; pu.uTilt.value = 0.7;
 }
 
@@ -347,6 +349,7 @@ function update(dt, dtR) {
 const sens = () => 1 / (Math.min(innerWidth, 620) * 0.8);
 canvas.addEventListener('pointerdown', (e) => {
   audio.unlock();
+  if (G.state === 'film') { Film.skip(); return; }
   if (G.state === 'map') { SkyMap.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (G.state === 'theater') { Theater.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (G.state === 'complete') { if (G.compStage < 5 && G.mode !== 'endless') G.ffwd = true; return; }
@@ -374,6 +377,7 @@ window.addEventListener('keydown', (e) => {
   audio.unlock();
   if (TUT.open) { TUT.key(e); return; }
   if (e.repeat && (e.code === 'Space')) return;
+  if (G.state === 'film') { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') Film.skip(); return; }
   if (G.state === 'theater') { const k = 0.12; if (e.code === 'ArrowLeft' || e.code === 'KeyA') Theater.rot(-k, 0); else if (e.code === 'ArrowRight' || e.code === 'KeyD') Theater.rot(k, 0); else if (e.code === 'ArrowUp' || e.code === 'KeyW') Theater.rot(0, -k); else if (e.code === 'ArrowDown' || e.code === 'KeyS') Theater.rot(0, k); else if (e.code === 'Escape') Theater.close(); else if ((e.code === 'Enter' || e.code === 'Space') && Theater.cardShown) $('#thNext').click(); return; }
   if (G.state === 'map') { if (e.code === 'ArrowLeft' || e.code === 'KeyA') SkyMap.go(Math.round(SkyMap.tf) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') SkyMap.go(Math.round(SkyMap.tf) + 1); else if (e.code === 'Enter' || e.code === 'Space') $('#mpPlay').click(); else if (e.code === 'Escape') $('#btnMapBack').click(); return; }
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
@@ -514,6 +518,7 @@ bind('#btnMapBack', () => {
     requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on')));
   }, 260);
 });
+bind('#filmSkip', () => { audio.unlock(); Film.skip(); });
 bind('#mpPlay', () => { const ci = Math.round(SkyMap.tf); if (Save.data.unlocked < ci * 8) { audio.clunk(); toast('Önce bir önceki <em>takımyıldızını</em> tamamla.', 2.4); return; } SkyMap.pick(SkyMap.playG); });
 const openTheater = (from) => { audio.ui(); hideToast(); $('#fader').classList.add('on'); setTimeout(() => { Theater.open(from); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); };
 bind('#btnTheater', () => openTheater('map'));
@@ -558,7 +563,22 @@ function applyQuality() {
 }
 let resizeTimer = 0;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(onResize, 120); });
-let lastT = performance.now(), frameNo = 0;
+let lastT = performance.now(), frameNo = 0, renderedFrames = 0, errShown = false;
+function reportError(e) {
+  console.error(e);
+  if (errShown) return; errShown = true;
+  $('#fader').classList.remove('on', 'soon');
+  try { toast('Küçük bir aksaklık oldu — oyun devam ediyor.', 2.6); } catch (err) {}
+}
+addEventListener('error', (e) => reportError(e.error || e.message));
+addEventListener('unhandledrejection', (e) => reportError(e.reason));
+// grafik belleği dolarsa (mobil): sessizce yeniden başlat — ilerleme kayıtlı
+canvas.addEventListener('webglcontextlost', (e) => {
+  e.preventDefault();
+  const f = $('#fader'); f.classList.add('on');
+  toast('Grafik belleği tazeleniyor…', 3);
+  setTimeout(() => location.reload(), 900);
+}, false);
 function frame(now) {
   requestAnimationFrame(frame);
   const ms = now - lastT; lastT = now;
@@ -569,13 +589,138 @@ function frame(now) {
   if (G.hitStop > 0) { G.hitStop -= dtR; dt = 0; }
   if (G.slowT > 0) { G.slowT -= dtR; dt *= lerp(1, G.slowK, smoothstep(0, 0.2, G.slowT)); }
   if (G.state === 'paused') dt = 0;
-  update(dt, dtR);
-  TUT.update(dtR);
+  try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
   audio.update(dtR, G.state === 'play');
   const onMap = G.state === 'map' && SkyMap.active, onTh = G.state === 'theater' && Theater.active;
   if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
-  if (!window.__noRender && !window.__ldCover && (!TUT.open || (frameNo++ & 1) === 0)) post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera);
+  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; } catch (e) { reportError(e); } }
+  // güvenlik: geçiş perdesi takılı kalmasın
+  const fd = $('#fader'); if (fd.classList.contains('on')) { fd.__t = (fd.__t || 0) + dtR; if (fd.__t > 3.5) { fd.classList.remove('on', 'soon'); fd.__t = 0; } } else fd.__t = 0;
 }
+
+/* =====================================================================
+   AÇILIŞ FİLMİ — oyunun kendi 3B sahnesiyle çekilen ~5.6 sn'lik sinematik
+   gece göğü → ada bulut denizinden yükselir → şafak: güneş pirinç yayda
+   doğar, gerçek gölgeler adayı süpürür → tam tutulma → ışık döner → başlık
+   Kamera yolu Catmull-Rom; telefon eğimi/fare ile hafif 3B paralaks.
+   ===================================================================== */
+const Tilt = { x: 0, y: 0, tx: 0, ty: 0, gyro: false };
+addEventListener('deviceorientation', (e) => { if (e.gamma == null) return; Tilt.gyro = true; Tilt.tx = clamp(e.gamma / 24, -1, 1); Tilt.ty = clamp((e.beta - 45) / 24, -1, 1); }, { passive: true });
+addEventListener('pointermove', (e) => { if (Tilt.gyro || G.drag || e.pointerType === 'touch') return; Tilt.tx = (e.clientX / innerWidth - 0.5) * 2; Tilt.ty = (e.clientY / innerHeight - 0.5) * 2; }, { passive: true });
+function crScalar(keys, t, get, settle) {
+  let i = 0; while (i < keys.length - 2 && t > keys[i + 1].t) i++;
+  const k0 = keys[Math.max(0, i - 1)], k1 = keys[i], k2 = keys[i + 1], k3 = keys[Math.min(keys.length - 1, i + 2)];
+  const h = k2.t - k1.t, u = clamp01((t - k1.t) / h), p0 = get(k0), p1 = get(k1), p2 = get(k2), p3 = get(k3);
+  const m1 = ((p2 - p0) / Math.max(1e-4, k2.t - k0.t)) * h, m2 = settle && i + 2 >= keys.length ? 0 : ((p3 - p1) / Math.max(1e-4, k3.t - k1.t)) * h;
+  const u2 = u * u, u3 = u2 * u;
+  return (2 * u3 - 3 * u2 + 1) * p1 + (u3 - 2 * u2 + u) * m1 + (-2 * u3 + 3 * u2) * p2 + (u3 - u2) * m2;
+}
+const Film = {
+  active: false, started: false, t: 0, dur: 5.6, keys: null, clouds: [], flashed: false, popped: false, uiShown: false,
+  // motor ayağa kalkarken: sahneyi gece başlangıcına kur (henüz zaman akmaz)
+  prepare() {
+    const tp = Cam.title, T = tp.target;
+    // yukarıdan, dönerek inen kamera (ufuk görünmez; ada bulut denizinden yükselir)
+    this.keys = [
+      { t: 0.0, x: 0, y: -2, z: 0, d: 2.75, p: deg(83), w: -1.45, f: tp.fov + 4 },
+      { t: 1.6, x: 0, y: -1, z: 0, d: 2.35, p: deg(75), w: -0.98, f: tp.fov + 3 },
+      { t: 3.0, x: 0, y: 0, z: 0, d: 1.62, p: deg(64), w: -0.46, f: tp.fov + 1 },
+      { t: 4.3, x: 0, y: 0, z: 0, d: 1.17, p: tp.pitch + deg(3), w: -0.12, f: tp.fov },
+      { t: 5.6, x: 0, y: 0, z: 0, d: 1, p: tp.pitch, w: 0, f: tp.fov },
+    ];
+    this.T = T.clone(); this.D = tp.dist;
+    this.active = true; this.started = false; this.t = 0; this.flashed = false; this.popped = false; this.uiShown = false;
+    G.state = 'film'; G.stateT = 0; G.userSun = false; G.zShown = false; zifir.g.visible = false;
+    G.u = G.uT = 0; G.night = 0.72; G.ecl.amt = 0;
+    if (G.view) G.view.introT = -0.15; // ada bulut denizinden hemen yükselmeye başlar
+    Cam.cine = null; this.pose(0);
+    orb.g.visible = false; arc1.g.visible = false; arc2.g.visible = orb2.g.visible = false;
+  },
+  // yükleme kartı kalkınca zaman akmaya başlar
+  begin() { this.started = true; this.t0 = performance.now(); setTimeout(() => { if (this.active) $('#filmSkip').classList.add('on'); }, 900); },
+  buildClouds() {
+    const rng = new RNG(424242), T = this.T, D = this.D;
+    const spots = [[-0.62, 0.42, 0.95], [-0.2, 0.3, 1.1], [-0.82, 0.2, 0.55], [0.18, 0.46, 0.8], [-0.45, 0.12, 1.35], [0.4, 0.24, 1.2], [-1.0, 0.5, 1.25]];
+    for (const [sx, sy, sz] of spots) {
+      const m = { parts: [] }, R = rng.range(2.6, 4.2);
+      const puffs = [[0, 0, 0, R, 0.6], [R * 0.9, -0.2, rng.range(-0.5, 0.5), R * 0.72, 0.58], [-R * 0.85, -0.15, rng.range(-0.5, 0.5), R * 0.76, 0.6], [rng.range(-0.6, 0.6), 0.3, R * 0.6, R * 0.6, 0.6]];
+      for (const p of puffs) m.parts.push({ dx: p[0], dy: p[1], dz: p[2], c: { r: p[3], sy: p[4] } });
+      const g = buildCloud(m, rng);
+      g.traverse((o) => { if (o.isMesh) o.castShadow = false; });
+      g.position.set(T.x + sx * D, T.y + sy * D, T.z + sz * D); g.userData.base = g.position.clone(); g.userData.ph = rng.range(0, TAU);
+      scene.add(g); this.clouds.push(g);
+    }
+  },
+  clearClouds() {
+    for (const g of this.clouds) { scene.remove(g); g.traverse((o) => { if (o.geometry) o.geometry.dispose(); if (o.material) o.material.dispose(); }); }
+    this.clouds = [];
+  },
+  pose(t) {
+    const K = this.keys, c = Cam.cur, T = this.T, D = this.D;
+    c.target.set(T.x + crScalar(K, t, (k) => k.x * D, true), T.y + crScalar(K, t, (k) => k.y, true), T.z + crScalar(K, t, (k) => k.z, true));
+    c.dist = crScalar(K, t, (k) => k.d, true) * D; c.pitch = crScalar(K, t, (k) => k.p, true); c.yaw = crScalar(K, t, (k) => k.w, true); c.fov = crScalar(K, t, (k) => k.f, true);
+  },
+  update(dtR) {
+    if (!this.active) return;
+    // gerçek zaman saati: kare hızı düşük cihazlarda da film ~5.6 sn sürer
+    if (this.started) this.t = Math.min(this.dur, (performance.now() - this.t0) / 1000);
+    const t = this.t, lv = G.lv;
+    this.pose(t);
+    // ışık senaryosu (gece güneş görünmez)
+    const sunUp = t > 0.95, twin = !!(lv && lv.sun.twin);
+    orb.g.visible = sunUp; arc1.g.visible = sunUp; arc2.g.visible = orb2.g.visible = twin && sunUp;
+    G.night = 0.72 * (1 - smoothstep(0.8, 2.6, t)); // mavi saat → şafak
+    G.u = G.uT = lerp(0, 0.44, Ease.outCubic(clamp01((t - 1.0) / 2.6)));
+    const e = smoothstep(3.55, 3.95, t) * (1 - smoothstep(4.55, 5.05, t));
+    G.ecl.amt = e;
+    U.uNightAmt.value = Math.max(G.night, e * 0.72); U.uNightR.value = 999; U.uNightRim.value = 0;
+    // tutulmada Zifir karanlıkta belirir
+    if (t > 3.9 && !this.popped) { this.popped = true; popZifir(); }
+    if (G.zShown && G.zPop < 1) { G.zPop = Math.min(1, G.zPop + dtR / 0.7); zifir.g.scale.setScalar(Math.max(0.001, Ease.outElastic(G.zPop))); }
+    if (G.zShown) { pathAt(lv.path, 0, PA); zifir.update(dtR, { x: PA.x, z: PA.z, yaw: Math.atan2(PA.tx, PA.tz), moving: false, speed: 0, burn: 0, meter: 1, look: camera.position, mood: e > 0.5 ? 1 : 0 }); }
+    if (e > 0.6 && Math.random() < dtR * 18) { const p = orb.g.position; FX.sparkle(p.x + (Math.random() - 0.5) * 2.4, p.y + (Math.random() - 0.5) * 2.4, p.z, [1.5, 1.4, 2.6], 0.3); }
+    // elmas yüzük: ışık geri döner
+    if (t > 4.62 && !this.flashed) {
+      this.flashed = true; G.flash = 0.55; G.flashCol.set(1.0, 0.86, 0.62); G.trauma = Math.max(G.trauma, 0.14);
+      const p = orb.g.position; FX.burst(p.x, p.y, p.z, 36, { add: true, c: [2.6, 2.2, 1.6], a: 1, s: 0.24, s1: 0.03, life: 1.0, sp: 5, drag: 1.6, t: 2 });
+    }
+    // bulutlar: geceden şafağa renklenir, kamera içlerinden geçer, sonra dağılır
+    const fade = 1 - smoothstep(2.9, 4.1, t);
+    for (const g of this.clouds) {
+      const u = g.userData; g.position.set(u.base.x + Math.sin(U.uTime.value * 0.25 + u.ph) * 0.6, u.base.y + Math.sin(U.uTime.value * 0.4 + u.ph) * 0.25, u.base.z);
+      const m = g.userData.mat; if (m) m.opacity = 0.9 * fade * smoothstep(0, 0.35, t + 0.35);
+      g.visible = fade > 0.01;
+    }
+    if (t > 4.85 && !this.uiShown) { this.uiShown = true; this.showUi(); }
+    if (t >= this.dur) this.finish();
+  },
+  showUi() { $('#filmSkip').classList.remove('on'); if (!Save.seen('tutorial')) setTimeout(() => TUT.show('boot'), 500); else UI.show('title'); },
+  skip() {
+    if (!this.active || !this.started) return;
+    audio.whoosh(true, 0.5, 0.05);
+    this.t = this.dur; this.t0 = performance.now() - this.dur * 1000; this.flashed = true;
+    if (!this.popped) { this.popped = true; popZifir(); G.zPop = 1; zifir.g.scale.setScalar(1); }
+    this.update(0);
+  },
+  finish(external) {
+    if (!this.active) return;
+    this.active = false; this.clearClouds(); orb.g.visible = true; arc1.g.visible = true;
+    const tw = !!(G.lv && G.lv.sun.twin); arc2.g.visible = orb2.g.visible = tw;
+    $('#filmSkip').classList.remove('on');
+    if (external) return; // oyuncu filmi beklemeden bir moda geçti: yalnızca görselleri geri ver
+    if (!this.uiShown) { this.uiShown = true; this.showUi(); }
+    G.state = 'title'; G.stateT = 99; G.userSun = true; G.uT = G.u; G.night = 0; G.ecl.amt = 0; U.uNightAmt.value = 0;
+    if (G.view) G.view.introT = Math.max(G.view.introT, 3.5);
+    Cam.set(Cam.cur, Cam.title); refreshEnvSoon = 0.2;
+  },
+};
+function popZifir() {
+  const lv = G.lv; if (!lv) return;
+  G.zShown = true; zifir.g.visible = true; zifir.g.scale.setScalar(0.001); G.zPop = 0; audio.pop(3);
+  pathAt(lv.path, 0, PA); zifir.g.position.set(PA.x, 0, PA.z);
+  FX.burst(PA.x, 0.2, PA.z, 12, { c: [0.03, 0.02, 0.06], a: 0.8, s: 0.15, s1: 0.4, life: 0.6, sp: 1.6, up: 1.4, g: -5, drag: 1 });
+}
+
 function bootGame() {
   applyQuality();
   const word = 'Gündönümü';
@@ -583,35 +728,25 @@ function bootGame() {
   $('#btnPlay').textContent = Save.data.unlocked > 0 ? 'Devam Et' : 'Başla';
   const g = Math.min(Save.data.unlocked, STORY_LEVELS - 1);
   enterLevel(levelSpec(g), { title: true });
-  G.state = 'title'; G.stateT = 0;
-  applyLighting(0); refreshEnv(); refreshEnvSoon = -1;
+  G.state = 'title'; G.stateT = 0; G.night = 0;
+  applyLighting(0); refreshEnv(); refreshEnvSoon = -1; // ortam haritası gündüz göğünden
+  Film.prepare(); applyLighting(0);
   Cam.update(0, 0);
   try { renderer.compile(scene, camera); } catch (e) {}
+  try { post.render(scene, camera); } catch (e) {} // efekt shader'ları şimdi derlensin (sonradan takılma olmasın)
   requestAnimationFrame((t) => { lastT = t; frame(t); });
-  // sinematik çıkış: 5 sn'lik yükleme sahnesi (bulutlar → ay → şafak → tutulma) bitince ışık patlamasıyla adaya dalınır
-  const ld = $('#loader'), wait = Math.max(300, 5150 - (performance.now() - (window.__ldT0 || 0)));
-  setTimeout(() => { window.__ldCover = false; }, Math.max(0, wait - 600));
-  setTimeout(() => {
-    ld.classList.add('done'); replayTitleIntro();
-    setTimeout(() => ld.classList.add('off'), 650);
-    setTimeout(() => { ld.style.display = 'none'; }, 1600);
-    if (!Save.seen('tutorial')) setTimeout(() => TUT.show('boot'), 1500);
-    else setTimeout(() => UI.show('title'), 1100);
-  }, wait);
-}
-// açılış sinematiği yükleme ekranı kalkarken yeniden başlar (ada yükselir, kamera iner)
-function replayTitleIntro() {
-  if (!G.lv || G.state !== 'title') return;
-  const tp = Cam.title;
-  Cam.set(Cam.cur, { target: tp.target.clone().add(new THREE.Vector3(0, 10, -8)), dist: tp.dist * 2.4, pitch: deg(78), yaw: 0, fov: tp.fov });
-  Cam.cinema({ target: tp.target.clone(), dist: tp.dist, pitch: tp.pitch, yaw: 0, fov: tp.fov }, 3.2, Ease.inOutCubic);
-  if (G.view) G.view.introT = 0;
-  G.zShown = false; zifir.g.visible = false; G.stateT = 0; if (!G.userSun) G.u = G.uT = 0;
-  renderer.shadowMap.needsUpdate = true;
+  // yükleme kartı: motor hazır ve en az birkaç kare çizildikten sonra kalkar, film başlar
+  const ld = $('#loader');
+  const lift = () => {
+    if (renderedFrames < 3 || performance.now() < 1100) { requestAnimationFrame(lift); return; }
+    Film.begin(); ld.classList.add('off');
+    setTimeout(() => { ld.style.display = 'none'; }, 1000);
+  };
+  requestAnimationFrame(lift);
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT, Theater, SkyMap,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT, Theater, SkyMap, Film,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),

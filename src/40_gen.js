@@ -601,6 +601,8 @@ function generateLevel(spec, attempt = 0) {
   }
 
   rebuildColliderList(lv);
+  // harita kartpostalı: çözücüye gerek yok (hızlı ve bellek dostu)
+  if (spec.visualOnly) { lv.solution = null; lv.drops = []; lv.flawless = 0; lv.repairs = 0; updateMovers(lv, 0); return lv; }
 
   // ---- çözülebilirlik: çöz → onar → (zorsa) budama ----
   let orc = new Oracle(lv);

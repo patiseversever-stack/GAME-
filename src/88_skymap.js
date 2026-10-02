@@ -145,10 +145,10 @@ const SkyMap = {
   },
   /* ----- ada kurulumu (gerçek bölüm adası, düşük doku) ----- */
   buildIsland(I) {
-    const lv = buildLevel(levelSpec(I.i * 8 + 4)); if (!lv) { I.failed = true; return; }
+    const lv = buildLevel(Object.assign({}, levelSpec(I.i * 8 + 4), { visualOnly: true })); if (!lv) { I.failed = true; return; }
     for (const m of lv.movers) if (m.kind === 'melt') m.drop = 0;
     for (const br of lv.bridges) br.active = true;
-    const Q = Object.assign({}, Perf.Q, { texScale: Math.min(0.6, Perf.Q.texScale), grass: Math.round(Perf.Q.grass * 0.4) });
+    const Q = Object.assign({}, Perf.Q, { texScale: Math.min(0.5, Perf.Q.texScale), grass: Math.round(Perf.Q.grass * 0.35) });
     const v = new IslandView(lv, { parent: I.holder, Q, quiet: true });
     if (v.grass) { v.grass.computeBoundingSphere(); v.grass.frustumCulled = true; }
     v.introT = 0; I.view = v; I.lv = lv;
@@ -164,6 +164,10 @@ const SkyMap = {
       I.nodes.push(new THREE.Vector3());
     }
     this.refreshIsland(I);
+  },
+  freeIsland(I) {
+    I.view.dispose(); I.view = null; I.lv = null; I.marks = []; I.nodes = [];
+    for (const b of I.btns) b.style.display = 'none';
   },
   refreshIsland(I) {
     const un = Save.data.unlocked;
@@ -213,6 +217,7 @@ const SkyMap = {
   },
   deactivate() {
     this.active = false; this.dive = null; this.drag = null; $('#map').classList.remove('diving');
+    if (mapSun.shadow.map) { mapSun.shadow.map.dispose(); mapSun.shadow.map = null; }
     U.uFogNear.value = 70; U.uFogFar.value = 340;
     for (const I of this.isl) { if (I.tag) I.tag.style.opacity = 0; if (I.btns) for (const b of I.btns) b.style.display = 'none'; }
   },
@@ -276,9 +281,11 @@ const SkyMap = {
     // adaları sırayla kur (kamera dururken)
     this.buildT -= dtR;
     if (this.buildT <= 0 && !this.drag && !this.dive && this.intro > 0.85) {
-      const fc = Math.round(this.f), order = [fc, fc + 1, fc - 1, fc + 2, fc + 3, fc - 2, fc + 4, fc - 3, fc + 5, fc + 6, fc + 7];
+      const fc = Math.round(this.f), order = [fc, fc + 1, fc - 1, fc + 2];
       for (const i of order) { const I = this.isl[i]; if (I && !I.view && !I.failed) { this.buildIsland(I); this.refresh(); this.buildT = 0.3; break; } }
     }
+    // bellek: odaktan uzak adaları serbest bırak
+    for (const I of this.isl) if (I.view && (I.i - this.f > 2.7 || this.f - I.i > 1.7) && !this.drag) this.freeIsland(I);
     // kamera
     const fc = clamp(this.f, 0, CHAPTERS.length - 1), u = fc / (CHAPTERS.length - 1);
     const P = mapCamCurve.getPoint(u), T = mapTgtCurve.getPoint(u);
@@ -303,6 +310,7 @@ const SkyMap = {
     // ışık ve gölge kamerası hedefi izler
     mapSun.target.position.copy(T); mapSun.position.copy(T).addScaledVector(MAP_SUN, 90);
     mapSun.castShadow = Perf.level >= 1;
+    const ms = Perf.level >= 2 ? 2048 : 1024; if (mapSun.shadow.mapSize.x !== ms) { mapSun.shadow.mapSize.set(ms, ms); if (mapSun.shadow.map) { mapSun.shadow.map.dispose(); mapSun.shadow.map = null; } }
     // adalar
     for (const I of this.isl) {
       const di = I.i - this.f, vis = di > -1.6 && di < 4.2;
