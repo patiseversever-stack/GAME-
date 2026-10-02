@@ -158,51 +158,7 @@ const SF_CAT = (() => {
   };
 })();
 
-/* ---------- III. Tavşan — üç sıçrayış ---------- */
-function SF_RAB_PERFORM(t, S) {
-  const B = S.b;
-  // burun seğirmesi
-  const tw = (t > 0.4 && t < 1.3) || (t > 2.6 && t < 3.3) ? Math.sin(t * 52) * 0.5 + 0.5 : 0;
-  B.head.sy = 1 + tw * 0.025; B.head.r = tw * 0.02;
-  B.body.sy = 1 + Math.sin(t * 2.8) * 0.014;
-  // kulaklar
-  B.earN0.r = ring(t, 1.0, -0.32, 3.2, 4.5) + kf(t, [[2.2, 0], [2.6, 0.08], [3.6, 0.08], [3.9, 0]]);
-  B.earF1.r = kf(t, [[1.5, 0], [1.75, -0.7, 'out'], [2.4, -0.6], [2.7, 0, 'back']]);
-  B.earF0.r = ring(t, 3.0, -0.2, 3, 5);
-  // şaha kalk: etrafı dinle
-  const rear = kf(t, [[2.0, 0], [2.45, 1, 'out'], [3.6, 1], [3.85, 0, 'in']]);
-  B.rab.r = -0.08 * rear; B.rab.sy = 1 + rear * 0.2 + ring(t, 3.85, -0.05, 4, 7); B.rab.sx = 1 - rear * 0.06; B.body.r = -0.12 * rear;
-  B.head.r += rear * kf(t, [[2.4, 0.25], [2.8, -0.2], [3.2, -0.2], [3.5, 0.2]]);
-  // sıçrayışlar
-  const t0 = 4.4, hd = 0.62;
-  if (t > t0 - 0.25) {
-    const u = t - t0, n = Math.floor(Math.max(0, u) / hd), p = u < 0 ? 0 : (u % hd) / hd, air = u < 0 ? 0 : Math.sin(p * PI);
-    const crouch = u < 0 ? smoothstep(-0.25, 0, u) : p > 0.88 ? smoothstep(0.88, 1, p) * 0.6 : 0;
-    B.rab.x = (n + Ease.inOutSine(p)) * 175 * (u < 0 ? 0 : 1); B.rab.y = -air * 72 + crouch * 6;
-    B.rab.r = lerp(-0.28, 0.22, p) * air;
-    B.rab.sx = 1 + air * 0.1 - crouch * 0.05; B.rab.sy = 1 - air * 0.05 - crouch * 0.1;
-    B.earN0.r += -0.5 * air - 0.2 * crouch; B.earF0.r += -0.6 * air; B.earN1.r = -0.3 * air; B.earF1.r += -0.35 * air;
-    B.tail.y = -air * 6;
-  }
-}
-const SF_RAB = {
-  key: 'tavsan', name: 'Tavşan', line: 'Kulakları seğirdi, burnu kıpırdadı — üç sekişte ayışığına karıştı.', dur: 8.0, fitW: 3.4, fitH: 3.5,
-  bones: {
-    rab: [null, -80, 128, 60, 128], body: ['rab', -40, 60, 40, -40], head: ['body', 40, -44, 118, -30],
-    earN0: ['head', 60, -80, 56, -136], earN1: ['earN0', 56, -136, 50, -196], earF0: ['head', 46, -78, 32, -130], earF1: ['earF0', 32, -130, 14, -184],
-    tail: ['body', -104, 34, -120, 34],
-  },
-  layers: [
-    { id: 'earF', bind: ['earF0', 'earF1'], soft: 16, pts: [sfLeaf(50, -70, 14, -184, 34)] },
-    { id: 'body', bind: ['body', 'head'], soft: 18, holeSub: [1],
-      d: 'M 118 -30 C 118 -22 112 -16 104 -14 C 98 -10 92 -8 86 -6 C 86 8 84 22 82 36 C 80 52 82 80 86 112 C 88 120 96 120 102 122 C 106 126 102 128 96 128 L 66 128 C 64 112 62 96 60 84 C 50 80 40 78 30 80 C 22 92 24 108 34 116 C 40 120 46 122 50 124 C 52 127 50 128 46 128 L -80 128 C -98 128 -106 112 -104 94 C -100 70 -106 40 -100 20 C -92 -20 -66 -52 -30 -62 C -6 -68 14 -66 30 -62 C 40 -76 56 -88 74 -88 C 92 -88 106 -74 112 -58 C 116 -48 119 -38 118 -30 Z M 86 -62 C 90 -62 92 -59 92 -56 C 92 -52 90 -50 86 -50 C 82 -50 80 -52 80 -56 C 80 -59 82 -62 86 -62 Z' },
-    { id: 'tail', bind: ['tail'], pts: [sfEllipse(-106, 34, 18, 20)] },
-    { id: 'earN', bind: ['earN0', 'earN1'], soft: 16, pts: [sfLeaf(64, -72, 50, -198, 38)] },
-    { id: 'whisk', bind: ['head'], pts: [sfStroke([114, -28, 136, -34, 156, -42], 3.6, 1.4, 1, 0), sfStroke([114, -25, 138, -22, 158, -20], 3.6, 1.4, 1, 0)] },
-  ],
-  perform: SF_RAB_PERFORM,
-  events: [[0.4, 'sniff'], [2.0, 'rear'], [4.4, 'hop'], [5.02, 'hop'], [5.64, 'hop']],
-};
+/* III. Tavşan: 87_sfwild.js (SF_RABBIT) */
 
 /* ---------- IV. Balina — perdeden geçen okyanus ---------- */
 function sfSpout(k) {
@@ -395,4 +351,4 @@ const SF_ZIF = {
   events: [[0.7, 'blink'], [2.55, 'hop'], [3.1, 'hop'], [3.95, 'wink'], [4.6, 'dance'], [6.4, 'leap']],
 };
 
-const SF_DEFS = [SF_BIRD, SF_CAT, SF_RAB, SF_WHALE, SF_ELE, SF_ZIF];
+const SF_DEFS = [SF_BIRD, SF_CAT, null /* tavşan: 87_sfwild.js */, SF_WHALE, SF_ELE, SF_ZIF];

@@ -279,7 +279,7 @@ const SM = {
 /* ---------- perde (kumaş) gölgelendiricisi ---------- */
 const ST_WALL_V = /* glsl */`varying vec3 vW; varying vec2 vUv; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vUv = uv; gl_Position = projectionMatrix * viewMatrix * w; }`;
 const ST_WALL_F = /* glsl */`
-uniform sampler2D tMask, tCloth, tMacro, tTgt, tGlowS, tGlowH; uniform vec4 uRect; uniform vec3 uLamp, uLampCol, uSpotDir, uAmb, uHintCol, uGlowC; uniform float uCosIn, uCosOut, uHint, uRep, uGlow, uOut, uTime, uSoft;
+uniform sampler2D tMask, tCloth, tMacro, tTgt, tGlowS, tGlowH; uniform vec4 uRect; uniform vec3 uLamp, uLampCol, uSpotDir, uAmb, uHintCol, uGlowC; uniform float uCosIn, uCosOut, uHint, uRep, uGlow, uOut, uTime, uSoft, uExt;
 varying vec3 vW; varying vec2 vUv;
 void main(){
   vec3 toL = uLamp - vW; float d2 = dot(toL, toL); vec3 l = toL * inversesqrt(d2);
@@ -295,7 +295,8 @@ void main(){
   vec2 mu = (vW.xy - uRect.xy) / uRect.zw;
   float inR = step(0.0, mu.x) * step(mu.x, 1.0) * step(0.0, mu.y) * step(mu.y, 1.0);
   // maske hafifçe bulanık bir alan gibi okunur: 0.5 eşiğinden keskin ve kenar yumuşatmalı kontur
-  vec3 mm = texture2D(tMask, clamp(mu, 0.001, 0.999)).rgb * max(inR, uOut);
+  // uExt: kenara değen gölge (deniz) perdenin sonuna dek sürer
+  vec3 mm = texture2D(tMask, clamp(mu, 0.001, 0.999)).rgb * max(max(inR, uOut), uExt);
   float mx = max(mm.r, max(mm.g, mm.b)), aa = fwidth(mx) * 0.85 + 0.003;
   float eg = smoothstep(0.5 - uSoft - aa, 0.5 + uSoft + aa, mx);
   vec3 occ = mx > 0.002 ? mm / mx * eg : vec3(0.0);
@@ -448,6 +449,22 @@ const ST_SFX = {
     lick(A, t) { for (let i = 0; i < 3; i++) A.noiseHit(t + i * 0.16, 0.06, 0.03, { type: 'bandpass', f: 2500, q: 2 }); stPurr(A, t + 0.45, 1.8, 0.2); },
     tail(A, t) { stMeow(A, t + 0.1, 1.25, 0.32, 0.12); },
   },
+  balina: {
+    seaRise(A, t) { A.noiseHit(t, 2.4, 0.09, { type: 'lowpass', f: 180, f1: 1100, a: 1.2, verb: 0.8 }); A.noiseHit(t + 1.2, 1.6, 0.04, { type: 'highpass', f: 2500, a: 0.5, verb: 0.6 }); },
+    surface(A, t) { A.noiseHit(t, 0.9, 0.08, { type: 'lowpass', f: 1500, f1: 400, a: 0.1, verb: 0.5 }); },
+    breach(A, t) { A.noiseHit(t, 1.0, 0.14, { type: 'bandpass', f: 300, f1: 1800, q: 0.7, a: 0.5, verb: 0.6 }); A.noiseHit(t + 0.1, 1.4, 0.1, { type: 'highpass', f: 1500, a: 0.15, verb: 0.7 }); },
+    crash(A, t) { A.noiseHit(t, 2.2, 0.26, { type: 'lowpass', f: 3200, f1: 260, a: 0.02, verb: 1.0 }); A.osc('sine', 58, t, 1.4, 0.32, null, { f1: 30 }); A.noiseHit(t + 0.3, 2.0, 0.07, { type: 'highpass', f: 2600, a: 0.3, verb: 0.9 }); },
+    flukeSplash(A, t) { A.noiseHit(t, 1.2, 0.12, { type: 'lowpass', f: 2200, f1: 300, a: 0.03, verb: 0.8 }); A.osc('sine', 70, t, 0.8, 0.14, null, { f1: 38 }); },
+    gull(A, t) { for (let i = 0; i < 3; i++) A.voice(t + i * 0.42, { dur: 0.32 + (i === 2) * 0.2, f: [[0, 1650], [0.08, 2200], [0.32, 1500]], F: [[0, [1700, 2600, 3600]], [0.2, [1500, 2300, 3300]]], q: [6, 8, 10], rough: [70, 0.3], breath: 0.15, g: 0.09, a: 0.02, r: 0.12, verb: 0.9 }); },
+  },
+  tavsan: {
+    nibble(A, t) { for (let i = 0; i < 16; i++) { const tt = t + 0.2 + i * 0.075 + Math.random() * 0.02; A.noiseHit(tt, 0.025, 0.03 * (0.6 + Math.random() * 0.5), { type: 'bandpass', f: 2600 + Math.random() * 1500, q: 3 }); } for (let i = 0; i < 4; i++) A.noiseHit(t + 0.3 + i * 0.28, 0.06, 0.03, { type: 'highpass', f: 3500 }); },
+    alert(A, t) { A.noiseHit(t, 0.06, 0.04, { type: 'bandpass', f: 1800, q: 2 }); A.noiseHit(t + 0.08, 0.25, 0.03, { type: 'bandpass', f: 1100, q: 1.5, a: 0.05 }); },
+    sitUp(A, t) { A.noiseHit(t, 0.35, 0.03, { type: 'bandpass', f: 700, f1: 1500, q: 1, a: 0.1 }); for (let i = 0; i < 5; i++) A.noiseHit(t + 0.5 + i * 0.12, 0.04, 0.02, { type: 'highpass', f: 3000 }); },
+    thump(A, t) { A.osc('sine', 82, t + 0.08, 0.22, 0.2, null, { f1: 42 }); A.noiseHit(t + 0.08, 0.08, 0.06, { type: 'lowpass', f: 380 }); },
+    hop(A, t) { A.noiseHit(t, 0.2, 0.03, { type: 'bandpass', f: 900, q: 1, a: 0.04 }); A.osc('sine', 90, t + 0.4, 0.16, 0.12, null, { f1: 48 }); A.noiseHit(t + 0.4, 0.14, 0.04, { type: 'highpass', f: 2200, a: 0.02 }); A.osc('sine', 80, t + 0.5, 0.14, 0.09, null, { f1: 45 }); },
+    leap(A, t) { A.noiseHit(t, 0.4, 0.04, { type: 'bandpass', f: 800, f1: 2400, q: 1, a: 0.1 }); [76, 79, 83, 88].forEach((n, i) => A.bell(mtof(n), t + 0.5 + i * 0.16, 2.2, 0.03, { ratio: 2, index: 1, verb: 1 })); A.noiseHit(t + 0.6, 1.4, 0.03, { type: 'highpass', f: 6000, f1: 9000, a: 0.4, verb: 0.9 }); },
+  },
   fil: {
     trumpet(A, t) { stTrumpet(A, t, 290, 1.35, 0.3); },
     babyCall(A, t) { stTrumpet(A, t, 520, 0.7, 0.2); },
@@ -583,7 +600,7 @@ const Theater = {
     this.wallU = {
       tMask: { value: null }, tCloth: { value: stClothTex() }, tMacro: { value: stMacroTex() }, tTgt: { value: null }, uRect: { value: new THREE.Vector4() },
       uLamp: { value: new THREE.Vector3() }, uLampCol: { value: new THREE.Color() }, uSpotDir: { value: new THREE.Vector3() }, uAmb: { value: new THREE.Color(0.12, 0.075, 0.045) },
-      uCosIn: { value: 0.9 }, uCosOut: { value: 0.8 }, uHint: { value: 0 }, uRep: { value: 9 }, uGlow: { value: 0 }, uOut: { value: 0 }, uTime: { value: 0 }, uSoft: { value: 0.3 }, uHintCol: { value: new THREE.Color(2.2, 1.0, 0.35) },
+      uCosIn: { value: 0.9 }, uCosOut: { value: 0.8 }, uHint: { value: 0 }, uRep: { value: 9 }, uGlow: { value: 0 }, uOut: { value: 0 }, uTime: { value: 0 }, uSoft: { value: 0.3 }, uExt: { value: 0 }, uHintCol: { value: new THREE.Color(2.2, 1.0, 0.35) },
       tGlowS: { value: null }, tGlowH: { value: null }, uGlowC: { value: new THREE.Color(0, 0, 0) },
     };
     this.wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ vertexShader: ST_WALL_V, fragmentShader: ST_WALL_F, uniforms: this.wallU }));
@@ -799,7 +816,7 @@ const Theater = {
     SM.setProxies(this.meshes);
     // ipucu hedefi
     SM.renderTarget(this.toWorld(all));
-    this.assembleT = 0; this.lastSec = -1; this.wallU.uOut.value = 0;
+    this.assembleT = 0; this.lastSec = -1; this.wallU.uOut.value = 0; this.wallU.uExt.value = 0;
     $('#thHint').classList.remove('used');
     this.updateDom();
     stMus.begin(i); stAmb.begin(i); this.figPan = 0;
@@ -1008,6 +1025,7 @@ const Theater = {
     stCam.position.copy(P); stCam.lookAt(T);
     this.curL.position.z = ST_WZ + 0.8 + Math.sin(t * 0.5) * 0.03; this.curR.position.z = ST_WZ + 0.8 + Math.sin(t * 0.47 + 1) * 0.03;
     // müzik ve ortam: durum, hizaya yakınlık, kandil ve gösteri
+    this.wallU.uExt.value = this.F.def.ext && sv > 0 ? 1 : 0;
     const MS = { state: this.state, near: this.near, lamp: this.lampOn, perf: sv > 1.1, card: this.cardShown };
     try { stMus.update(dtR, MS); stAmb.update(dtR, MS); } catch (e) { console.warn('tiyatro sesi', e); }
   },

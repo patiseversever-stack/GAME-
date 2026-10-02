@@ -20,7 +20,7 @@ const TH_USUL = { sofyan: 'D...T.K.', duyek: 'DT.TD.T.', semai: 'D.T.T.', aksak:
 // perde başına müzik: makam, tempo, usul, ortam
 const TH_ACT_MU = [
   { mk: 'rast', bpm: 84, us: 'sofyan', env: 'garden' }, { mk: 'nihavend', bpm: 76, us: 'duyek', env: 'night' },
-  { mk: 'ussak', bpm: 96, us: 'sofyan', env: 'meadow' }, { mk: 'rast', bpm: 60, us: 'sofyan', env: 'ocean', low: 1 },
+  { mk: 'ussak', bpm: 96, us: 'sofyan', env: 'moonMeadow' }, { mk: 'rast', bpm: 60, us: 'sofyan', env: 'ocean', low: 1 },
   { mk: 'hicaz', bpm: 70, us: 'duyek', env: 'savanna' }, { mk: 'saba', bpm: 66, us: 'aksak', env: 'mystic' },
   { mk: 'ussak', bpm: 100, us: 'sofyan', env: 'snow' }, { mk: 'kurdi', bpm: 80, us: 'semai', env: 'forest' },
   { mk: 'saba', bpm: 64, us: 'sofyan', env: 'night' }, { mk: 'rast', bpm: 92, us: 'semai', env: 'lake' },
@@ -201,7 +201,7 @@ const stMus = {
 /* ---------- ortam: salon, kandil, seyirci ve perdenin dünyası ---------- */
 const TH_ENV = {
   garden: { wind: 0.5, birds: 1, leaves: 0.6 }, night: { wind: 0.35, crickets: 1 }, meadow: { wind: 0.7, birds: 0.5, insects: 0.4, leaves: 0.4 },
-  ocean: { waves: 1, wind: 0.4 }, savanna: { wind: 0.6, insects: 0.8 }, mystic: { rumble: 0.35, whistle: 0.25 }, snow: { whistle: 0.9, wind: 0.6 },
+  moonMeadow: { wind: 0.45, crickets: 0.8, leaves: 0.4 }, ocean: { waves: 1, wind: 0.4 }, savanna: { wind: 0.6, insects: 0.8 }, mystic: { rumble: 0.35, whistle: 0.25 }, snow: { whistle: 0.9, wind: 0.6 },
   forest: { wind: 0.55, birds: 0.35, leaves: 0.8 }, lake: { waves: 0.55, wind: 0.9 }, under: { rumble: 0.7, bubbles: 1 }, desert: { wind: 0.85, hiss: 0.7 },
   cave: { rumble: 1, crackle: 0.8, wind: 0.2 },
 };
