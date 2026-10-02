@@ -285,6 +285,9 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
   padding:12px 18px;border-radius:18px;background:rgba(30,14,6,.5);border:1px solid rgba(255,210,150,.2);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;transition:opacity .5s,transform .5s;pointer-events:none}
 #thMsg.on{opacity:1;transform:translate(-50%,0)}#thMsg em{font-style:normal;color:#ffcf7a}#thMsg b{font-family:var(--serif);font-style:italic;font-weight:600;font-size:19px;color:#fff0d4;letter-spacing:.01em}
 #thHint.used{opacity:.55}
+#thMsg .swipe{display:block;position:relative;height:30px;margin:8px auto 0;width:140px}#thMsg .swipe:before{content:'';position:absolute;left:10px;right:10px;top:14px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,rgba(255,210,150,.5),transparent)}
+#thMsg .swipe i{position:absolute;top:4px;left:50%;width:22px;height:22px;margin-left:-11px;border-radius:50%;background:radial-gradient(circle,#fff3dc 0 35%,rgba(255,200,120,.5) 36% 60%,transparent 62%);box-shadow:0 0 14px rgba(255,180,90,.7);animation:thSwipe 1.8s ease-in-out infinite}
+@keyframes thSwipe{0%{transform:translateX(-46px);opacity:0}15%{opacity:1}50%{transform:translateX(46px)}85%{opacity:1}100%{transform:translateX(-46px);opacity:0}}
 #thCard{position:absolute;left:50%;bottom:calc(var(--sab) + 26px);transform:translate(-50%,24px);width:min(90vw,440px);text-align:center;padding:20px 22px 18px;border-radius:26px;opacity:0;pointer-events:none;
   background:linear-gradient(170deg,rgba(60,28,12,.62),rgba(20,8,4,.72));border:1px solid rgba(255,210,150,.24);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 24px 60px rgba(0,0,0,.5);transition:opacity .7s,transform .7s cubic-bezier(.2,.9,.2,1)}
 #theater.solved #thCard{opacity:1;transform:translate(-50%,0)}#theater.solved #thCard .tap{pointer-events:auto}

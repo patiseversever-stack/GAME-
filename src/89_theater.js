@@ -18,7 +18,7 @@ const ST_ACTS = [
   { axes: 1, par: 45, riddle: 'Kelebek avcısı', mats: ['copper', 'ivory', 'ebony'] },
   { axes: 2, par: 55, riddle: 'Uzun kulaklı, çevik', mats: ['silver', 'walnut', 'cini'] },
   { axes: 2, par: 60, riddle: 'Okyanusun şarkıcısı', mats: ['cini', 'brass', 'ebony'] },
-  { axes: 3, par: 80, riddle: 'Hortumlu dev… ve bir sürpriz', mats: ['walnut', 'copper', 'ivory'] },
+  { axes: 3, par: 80, riddle: 'Hortumlu dev ve bir sürpriz', mats: ['walnut', 'copper', 'ivory'] },
   { axes: 3, par: 80, riddle: 'Perdenin asıl sahibi', mats: ['ebony', 'brass', 'cini'] },
 ];
 const ST_FIGS = SF_DEFS.map((d) => sfCompile(d));
@@ -241,13 +241,15 @@ const SM = {
 /* ---------- perde (kumaş) gölgelendiricisi ---------- */
 const ST_WALL_V = /* glsl */`varying vec3 vW; varying vec2 vUv; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vUv = uv; gl_Position = projectionMatrix * viewMatrix * w; }`;
 const ST_WALL_F = /* glsl */`
-uniform sampler2D tMask, tCloth, tMacro, tTgt; uniform vec4 uRect; uniform vec3 uLamp, uLampCol, uSpotDir, uAmb, uHintCol; uniform float uCosIn, uCosOut, uHint, uRep, uGlow, uOut;
+uniform sampler2D tMask, tCloth, tMacro, tTgt; uniform vec4 uRect; uniform vec3 uLamp, uLampCol, uSpotDir, uAmb, uHintCol; uniform float uCosIn, uCosOut, uHint, uRep, uGlow, uOut, uTime;
 varying vec3 vW; varying vec2 vUv;
 void main(){
   vec3 toL = uLamp - vW; float d2 = dot(toL, toL); vec3 l = toL * inversesqrt(d2);
   vec2 e = vec2(1.0 / 512.0, 0.0);
   float h0 = texture2D(tMacro, vUv).g, hx = texture2D(tMacro, vUv + e.xy).g, hy = texture2D(tMacro, vUv + e.yx).g;
-  vec3 n = normalize(vec3((h0 - hx) * 7.0, (h0 - hy) * 7.0, 1.0));
+  // kumaş havada hafifçe dalgalanır
+  float wv = sin(vW.x * 0.9 + uTime * 0.7) * 0.6 + sin(vW.y * 0.7 - uTime * 0.53 + vW.x * 0.3) * 0.4;
+  vec3 n = normalize(vec3((h0 - hx) * 7.0 + cos(vW.x * 0.9 + uTime * 0.7) * 0.018, (h0 - hy) * 7.0 + wv * 0.012, 1.0));
   float ndl = max(dot(n, l), 0.0), cd = dot(-l, uSpotDir);
   float sp0 = smoothstep(uCosOut, uCosIn, cd); float spot = sp0 * sp0 * (3.0 - 2.0 * sp0) * 0.9 + 0.1 * smoothstep(uCosOut - 0.08, uCosOut, cd);
   float ang = acos(clamp(cd, -1.0, 1.0));
@@ -326,7 +328,7 @@ function stMats() {
     ebony: new THREE.MeshPhysicalMaterial({ color: 0x2b1e17, roughness: 0.4, clearcoat: 0.9, clearcoatRoughness: 0.15, envMapIntensity: 0.9 }),
     ivory: new THREE.MeshPhysicalMaterial({ color: 0xeadfc6, roughness: 0.42, clearcoat: 0.45, clearcoatRoughness: 0.3, sheen: 0.4, sheenColor: new THREE.Color(0xfff1d8), envMapIntensity: 0.8 }),
     cini: new THREE.MeshPhysicalMaterial({ map: cini, color: 0xffffff, roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 1.0 }),
-    glass: new THREE.MeshPhysicalMaterial({ color: 0xffa040, roughness: 0.05, metalness: 0, transparent: true, opacity: 0.5, envMapIntensity: 1.6, clearcoat: 1, depthWrite: false }),
+    glass: new THREE.MeshPhysicalMaterial({ color: 0xffb060, roughness: 0.04, metalness: 0, transparent: true, opacity: 0.32, envMapIntensity: 2.2, clearcoat: 1, clearcoatRoughness: 0.02, specularIntensity: 1, depthWrite: false }),
   };
 }
 
@@ -437,7 +439,7 @@ const Theater = {
     this.wallU = {
       tMask: { value: null }, tCloth: { value: stClothTex() }, tMacro: { value: stMacroTex() }, tTgt: { value: null }, uRect: { value: new THREE.Vector4() },
       uLamp: { value: new THREE.Vector3() }, uLampCol: { value: new THREE.Color() }, uSpotDir: { value: new THREE.Vector3() }, uAmb: { value: new THREE.Color(0.16, 0.1, 0.06) },
-      uCosIn: { value: 0.9 }, uCosOut: { value: 0.8 }, uHint: { value: 0 }, uRep: { value: 9 }, uGlow: { value: 0 }, uOut: { value: 0 }, uHintCol: { value: new THREE.Color(2.2, 1.0, 0.35) },
+      uCosIn: { value: 0.9 }, uCosOut: { value: 0.8 }, uHint: { value: 0 }, uRep: { value: 9 }, uGlow: { value: 0 }, uOut: { value: 0 }, uTime: { value: 0 }, uHintCol: { value: new THREE.Color(2.2, 1.0, 0.35) },
     };
     this.wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ vertexShader: ST_WALL_V, fragmentShader: ST_WALL_F, uniforms: this.wallU }));
     stScene.add(this.wall);
@@ -660,12 +662,13 @@ const Theater = {
     $('#thAct').textContent = `${ST_ROMAN[this.idx]}. perde`;
     $('#theater').classList.remove('solved'); $('#thTime').textContent = '0:00';
     const ax = this.act.axes === 1 ? 'Heykeli parmağınla <em>sağa sola</em> çevir.' : this.act.axes === 2 ? 'Bu kez <em>yukarı aşağı</em> da dönüyor.' : 'Artık heykel <em>her yöne</em> döner.';
-    $('#thMsg').innerHTML = `<b>${this.act.riddle}…</b><br>${ax}`; $('#thMsg').classList.add('on');
+    $('#thMsg').innerHTML = `<b>${this.act.riddle}…</b><br>${ax}${this.idx === 0 && !(Save.data.theater || []).length ? '<span class="swipe"><i></i></span>' : ''}`; $('#thMsg').classList.add('on');
   },
   open(from) {
     this.init(); this.from = from || 'title'; this.active = true;
     const sv = Save.data.theater || []; let i = 0; while (sv.includes(i) && i < ST_ACTS.length - 1) i++;
     this.build(i); audio.setChapter(8); this.t = 0; this.camIn = 0; this.state = 'intro'; this.stT = 0; this.curtain = 1; this.lampOn = 0;
+    try { this.apply(); this.update(0); const pt = renderer.getRenderTarget(); renderer.setRenderTarget(post.rtScene); renderer.compile(stScene, stCam); renderer.setRenderTarget(pt); } catch (e) { console.warn('tiyatro derleme', e); }
     G.state = 'theater'; UI.hideAll(); UI.hud(false); UI.show('theater');
     audio.whoosh(true, 1.0, 0.06); audio.theaterOpen();
   },
@@ -707,13 +710,14 @@ const Theater = {
   update(dtR) {
     if (!this.active) return;
     this.t += dtR; this.stT += dtR; const t = this.t;
-    this.beamU.uTime.value = t;
+    this.beamU.uTime.value = t; this.wallU.uTime.value = t;
     // perde (ön perdeler) ve kandil
     if (this.state === 'intro') {
       this.curtain = 1 - Ease.inOutCubic(clamp01((this.stT - 0.15) / 1.3));
       this.lampOn = clamp01((this.stT - 0.5) / 0.9);
       if (this.stT > 0.25 && !this.introSfx) { this.introSfx = true; audio.whoosh(true, 1.4, 0.05); }
-      if (this.stT > 1.5) { this.state = 'play'; this.stT = 0; this.introSfx = false; }
+      if (this.stT > 0.5 && !this.lampSfx) { this.lampSfx = true; if (audio.ok) { const t0 = audio.t; audio.noiseHit(t0, 0.12, 0.07, { type: 'highpass', f: 2500 }); audio.noiseHit(t0 + 0.05, 0.9, 0.05, { type: 'bandpass', f: 600, f1: 1400, q: 0.7, a: 0.15, verb: 0.4 }); for (let k = 0; k < 6; k++) audio.noiseHit(t0 + 0.1 + Math.random() * 0.6, 0.02, 0.025, { type: 'highpass', f: 4000 }); } }
+      if (this.stT > 1.5) { this.state = 'play'; this.stT = 0; this.introSfx = false; this.lampSfx = false; }
     } else if (this.state === 'closing') {
       this.curtain = Ease.inOutCubic(clamp01(this.stT / 0.9)); this.lampOn = Math.max(0, 1 - this.stT / 0.7);
       if (this.stT > 1.0) { this.build(this.nextIdx); this.state = 'intro'; this.stT = 0; }
@@ -768,7 +772,7 @@ const Theater = {
     const I = 820 * lampI;
     this.wallU.uLampCol.value.setRGB(1.0, 0.8, 0.58).multiplyScalar(I);
     this.spot.intensity = I * 0.62; this.hemi.intensity = 0.35 + this.lampOn * 0.25; this.rim.intensity = 0.5 * this.lampOn;
-    this.beamU.uAmt.value = 0.045 * lampI; this.beamU.uLampCol.value.setRGB(1.0, 0.7, 0.4);
+    this.beamU.uAmt.value = 0.06 * lampI; this.beamU.uLampCol.value.setRGB(1.0, 0.7, 0.4);
     this.wallU.uGlow.value = this.near * 0.6 + flare;
     // ipucu çizgisi
     this.hintT = Math.max(0, this.hintT - dtR);
@@ -834,5 +838,10 @@ const Theater = {
     pu.uTilt.value = 0; pu.uGrain.value = 0.035;
     this.dustU.uPx.value = renderer.domElement.height / (2 * Math.tan(deg(stCam.fov / 2)));
   },
-  resize(w, h) { stCam.aspect = w / h; stCam.updateProjectionMatrix(); if (this.active) { const was = this.portrait; this.layout(); if (was !== this.portrait) this.build(this.idx, true); } },
+  resize(w, h) {
+    stCam.aspect = w / h; stCam.updateProjectionMatrix(); if (!this.active) return;
+    const was = this.portrait; this.layout(); if (was === this.portrait) return;
+    const solved = this.solvedT >= 0, st = this.state; this.build(this.idx, true);
+    if (solved) { this.solvedT = this.t - 1.2; this.perfT = 0; this.state = 'solved'; for (const p of this.pieces) p.g.visible = false; } else if (st === 'play') this.state = 'play';
+  },
 };

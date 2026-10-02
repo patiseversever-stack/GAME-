@@ -747,7 +747,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT, Theater, SkyMap, Film,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
