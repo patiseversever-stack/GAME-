@@ -20,10 +20,22 @@ const ST_ACTS = [
   { axes: 2, par: 60, riddle: 'Okyanusun şarkıcısı', mats: ['cini', 'brass', 'ebony'] },
   { axes: 3, par: 80, riddle: 'Hortumlu dev ve bir sürpriz', mats: ['walnut', 'copper', 'ivory'] },
   { axes: 3, par: 80, riddle: 'Perdenin asıl sahibi', mats: ['ebony', 'brass', 'cini'] },
+  // Yaban Hayatı
+  { axes: 3, par: 85, riddle: 'Karın altını dinleyen', mats: ['copper', 'ivory', 'walnut'] },
+  { axes: 3, par: 90, riddle: 'Başında bir orman taşır', mats: ['walnut', 'brass', 'ivory'] },
+  { axes: 3, par: 90, riddle: 'Gecenin iki kandili', mats: ['ebony', 'silver', 'cini'] },
+  { axes: 2, par: 110, riddle: 'Gökten inen ok, sudan çıkan gümüş', mats: ['brass', 'silver', 'cini'] },
+  { axes: 3, par: 100, riddle: 'Rüzgârın kardeşi', mats: ['copper', 'ebony', 'ivory'] },
+  { axes: 3, par: 110, riddle: 'Sekiz kollu bilge', mats: ['cini', 'copper', 'silver'] },
+  { axes: 2, par: 120, riddle: 'Çölün gemileri', mats: ['walnut', 'brass', 'copper'] },
+  { axes: 3, par: 110, riddle: 'Aya türkü söyleyen', mats: ['silver', 'ebony', 'walnut'] },
+  { axes: 3, par: 160, riddle: 'Perdenin son efsanesi', mats: ['ebony', 'copper', 'brass'] },
 ];
-const ST_FIGS = SF_DEFS.map((d) => sfCompile(d));
+// figürler ilk açıldıklarında derlenir (açılışta 15 iskeleti birden kurmamak için)
+const ST_FIGS = [];
+const stFig = (i) => ST_FIGS[i] || (ST_FIGS[i] = sfCompile(SF_DEFS[i]));
 const ST_MASK_RES = [1024, 1536, 1536, 2048];
-const ST_ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+const ST_ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV'];
 
 /* ---------- 2B çokgen yardımcıları (perde koordinatı, y yukarı) ---------- */
 function stWinding(x, y, polys) {
@@ -180,13 +192,18 @@ const SM = {
   },
   alloc(res) {
     if (this.res === res) return; this.res = res;
-    for (const k of ['rt', 'a', 'b', 'tRt', 'tA', 'tB']) if (this[k]) this[k].dispose();
+    for (const k of ['rt', 'a', 'b', 'tRt', 'tA', 'tB', 'gRt', 'gA', 'gB', 'gC', 'gD']) if (this[k]) this[k].dispose();
     const o = { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: false, stencilBuffer: false };
     this.rt = new THREE.WebGLRenderTarget(res, res, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true, stencilBuffer: true });
     this.a = new THREE.WebGLRenderTarget(res, res, o); this.b = new THREE.WebGLRenderTarget(res, res, o);
     const tr = Math.max(256, res >> 1);
     this.tRt = new THREE.WebGLRenderTarget(tr, tr, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true, stencilBuffer: true });
     this.tA = new THREE.WebGLRenderTarget(tr, tr, o); this.tB = new THREE.WebGLRenderTarget(tr, tr, o);
+    // ışık maskesi (göz, fener, ay, alev): R = önde (gölgenin üstünde), G = arkada (gölgenin ardında)
+    const gr = Math.max(256, res >> 1), ho = Object.assign({ type: THREE.HalfFloatType }, o);
+    this.gRt = new THREE.WebGLRenderTarget(gr, gr, { minFilter: THREE.LinearFilter, magFilter: THREE.LinearFilter, depthBuffer: true, stencilBuffer: true });
+    for (const k of ['gA', 'gB', 'gC', 'gD']) this[k] = new THREE.WebGLRenderTarget(gr, gr, ho);
+    this.glowOn = true;
   },
   // perde dikdörtgeni (dünya) ve kandil → izdüşüm matrisi
   setRect(cx, cy, size, lamp) {
@@ -211,7 +228,7 @@ const SM = {
     this.fanGeo.attributes.position.needsUpdate = true; this.fanGeo.setDrawRange(0, n); this.fanN = n;
     const r = this.rect; this.cover.position.set(r.x + r.z / 2, r.y + r.w / 2, z); this.cover.scale.set(r.z, r.w, 1);
   },
-  render(showSculpt, polys, blurPx) {
+  render(showSculpt, polys, blurPx, glow) {
     const prevT = renderer.getRenderTarget(), prevC = renderer.getClearColor(new THREE.Color()), prevA = renderer.getClearAlpha(), prevAuto = renderer.autoClear;
     renderer.autoClear = false; renderer.setClearColor(0x000000, 1);
     renderer.setRenderTarget(this.rt); renderer.clear(true, true, true);
@@ -224,6 +241,26 @@ const SM = {
     m.uniforms.tSrc.value = this.rt.texture; m.uniforms.uDir.value.set(k / this.res, 0); post.pass(m, this.a);
     m.uniforms.tSrc.value = this.a.texture; m.uniforms.uDir.value.set(0, k / this.res); post.pass(m, this.b);
     if (blurPx > 9) { m.uniforms.tSrc.value = this.b.texture; m.uniforms.uDir.value.set(k * 0.6 / this.res, 0); post.pass(m, this.a); m.uniforms.tSrc.value = this.a.texture; m.uniforms.uDir.value.set(0, k * 0.6 / this.res); post.pass(m, this.b); }
+    // ışık maskesi: önce ön, sonra arka ışıklar (aynı sarım kuralı, farklı kanal); yumuşak çekirdek + geniş hale
+    const gOn = !!glow && (glow.front.length > 0 || glow.back.length > 0);
+    if (gOn || this.glowOn) {
+      renderer.setRenderTarget(this.gRt); renderer.clear(true, true, true);
+      if (gOn) {
+        for (const p of this.proxies) p.visible = false;
+        this.fanF.visible = this.fanB.visible = this.cover.visible = true;
+        const col = this.cover.material.color;
+        for (const [ps, c] of [[glow.front, 0xff0000], [glow.back, 0x00ff00]]) { if (!ps.length) continue; this.fill(ps); col.setHex(c); renderer.render(this.scene, this.cam); }
+        col.setHex(0xffffff);
+      }
+      const gr = this.gRt.width;
+      m.uniforms.tSrc.value = this.gRt.texture; m.uniforms.uDir.value.set(1.6 / gr, 0); post.pass(m, this.gA);
+      m.uniforms.tSrc.value = this.gA.texture; m.uniforms.uDir.value.set(0, 1.6 / gr); post.pass(m, this.gB);
+      m.uniforms.tSrc.value = this.gB.texture; m.uniforms.uDir.value.set(5.5 / gr, 0); post.pass(m, this.gC);
+      m.uniforms.tSrc.value = this.gC.texture; m.uniforms.uDir.value.set(0, 5.5 / gr); post.pass(m, this.gD);
+      m.uniforms.tSrc.value = this.gD.texture; m.uniforms.uDir.value.set(3.2 / gr, 0); post.pass(m, this.gC);
+      m.uniforms.tSrc.value = this.gC.texture; m.uniforms.uDir.value.set(0, 3.2 / gr); post.pass(m, this.gD);
+      this.glowOn = gOn;
+    }
     renderer.setRenderTarget(prevT); renderer.setClearColor(prevC, prevA); renderer.autoClear = prevAuto;
   },
   // ipucu için hedef silüet (bir kez)
@@ -242,7 +279,7 @@ const SM = {
 /* ---------- perde (kumaş) gölgelendiricisi ---------- */
 const ST_WALL_V = /* glsl */`varying vec3 vW; varying vec2 vUv; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vUv = uv; gl_Position = projectionMatrix * viewMatrix * w; }`;
 const ST_WALL_F = /* glsl */`
-uniform sampler2D tMask, tCloth, tMacro, tTgt; uniform vec4 uRect; uniform vec3 uLamp, uLampCol, uSpotDir, uAmb, uHintCol; uniform float uCosIn, uCosOut, uHint, uRep, uGlow, uOut, uTime, uSoft;
+uniform sampler2D tMask, tCloth, tMacro, tTgt, tGlowS, tGlowH; uniform vec4 uRect; uniform vec3 uLamp, uLampCol, uSpotDir, uAmb, uHintCol, uGlowC; uniform float uCosIn, uCosOut, uHint, uRep, uGlow, uOut, uTime, uSoft;
 varying vec3 vW; varying vec2 vUv;
 void main(){
   vec3 toL = uLamp - vW; float d2 = dot(toL, toL); vec3 l = toL * inversesqrt(d2);
@@ -273,6 +310,11 @@ void main(){
   float edge = smoothstep(0.12, 0.5, tg) * (1.0 - smoothstep(0.5, 0.88, tg));
   col += uHintCol * (edge * uHint + tg * uHint * 0.06);
   col += vec3(1.0, 0.6, 0.25) * uGlow * spot * 0.06;
+  // figür ışıkları: ön ışık gölgenin üstünde yanar, arka ışık (ay) gölgenin ardında kalır
+  vec2 gu = clamp(mu, 0.001, 0.999);
+  vec3 gs = texture2D(tGlowS, gu).rgb * inR, gh = texture2D(tGlowH, gu).rgb * inR;
+  float gF = smoothstep(0.0, 0.6, gs.r) + gh.r * 0.85, gK = (smoothstep(0.35, 0.65, gs.g) * 0.9 + gh.g * 0.55) * (1.0 - occ.r);
+  col += (alb * 1.25 + 0.1) * uGlowC * (gF + gK);
   gl_FragColor = vec4(col, 1.0);
 }`;
 
@@ -391,8 +433,96 @@ function stFrustum(T, outer, holes, s0, s1, b) {
 }
 
 /* ---------- sesler (figür olayları) ---------- */
+// Yaban Hayatı: figüre özel sesler (olay adı çakışsa bile anahtar ayırır)
+const stPaws = (A, t, n, dt, f = 600, g = 0.04) => { for (let i = 0; i < n; i++) A.noiseHit(t + i * dt + Math.random() * 0.02, 0.07, g * (0.7 + Math.random() * 0.4), { type: 'lowpass', f: f + Math.random() * 200 }); };
+const stHooves = (A, t, n, dt, g = 0.12) => { for (let i = 0; i < n; i++) { const tt = t + i * dt + (i % 3 === 2 ? 0.05 : 0); A.osc('sine', 120, tt, 0.12, g, null, { f1: 55 }); A.noiseHit(tt, 0.06, g * 0.4, { type: 'bandpass', f: 1200, q: 1.2 }); } };
+const stHowl = (A, t, f0, d, g, verb) => {
+  const o = A.osc('sine', f0, t, d, g, null, { f1: f0 * 0.9, curve: 'lin', verb, a: d * 0.2 }); o.frequency.linearRampToValueAtTime(f0 * 1.62, t + d * 0.28); o.frequency.linearRampToValueAtTime(f0 * 1.5, t + d * 0.7);
+  const h = A.osc('triangle', f0 * 2, t, d, g * 0.18, null, { f1: f0 * 1.8, curve: 'lin', verb, a: d * 0.25 }); h.frequency.linearRampToValueAtTime(f0 * 3.24, t + d * 0.28); h.frequency.linearRampToValueAtTime(f0 * 3.0, t + d * 0.7);
+  A.noiseHit(t, d * 0.9, g * 0.15, { type: 'bandpass', f: f0 * 3, q: 3, a: d * 0.3, verb });
+};
+const ST_SFX = {
+  tilki: {
+    listen(A, t) { for (let i = 0; i < 3; i++) A.osc('sine', 3300 + i * 140, t + 0.3 + i * 0.16, 0.05, 0.012, null, { f1: 3800, verb: 0.3 }); A.noiseHit(t, 0.08, 0.02, { type: 'highpass', f: 3000 }); },
+    pounce(A, t) { A.noiseHit(t, 0.6, 0.08, { type: 'bandpass', f: 300, f1: 2400, q: 1, a: 0.3, verb: 0.3 }); },
+    snowHit(A, t) { A.noiseHit(t, 0.45, 0.12, { type: 'lowpass', f: 1600, f1: 250, verb: 0.3 }); for (let i = 0; i < 8; i++) A.noiseHit(t + Math.random() * 0.25, 0.03, 0.03, { type: 'highpass', f: 3500 + Math.random() * 2500 }); },
+    pop(A, t) { A.noiseHit(t, 0.25, 0.06, { type: 'lowpass', f: 1200, f1: 400 }); A.osc('sine', 3000, t + 0.15, 0.08, 0.014, null, { f1: 3600 }); },
+    trot(A, t) { stPaws(A, t, 10, 0.19, 500, 0.035); },
+  },
+  geyik: {
+    graze(A, t) { for (let i = 0; i < 7; i++) A.noiseHit(t + 0.6 + i * 0.2, 0.06, 0.025, { type: 'bandpass', f: 1800, q: 2 }); },
+    alert(A, t) { A.noiseHit(t - 0.1, 0.04, 0.09, { type: 'highpass', f: 2800, q: 2 }); A.osc('triangle', 700, t - 0.1, 0.05, 0.03, null, { f1: 300 }); },
+    shake(A, t) { for (let i = 0; i < 10; i++) { const tt = t + i * 0.06; A.noiseHit(tt, 0.04, 0.04, { type: 'bandpass', f: 2200 + Math.random() * 800, q: 4 }); A.osc('triangle', 380 + Math.random() * 120, tt, 0.05, 0.02, null, { f1: 200 }); } },
+    bellow(A, t) { const o = A.osc('sawtooth', 120, t, 1.3, 0.05, null, { f1: 80, curve: 'lin', verb: 0.8, a: 0.12 }); o.frequency.linearRampToValueAtTime(170, t + 0.35); A.osc('square', 121, t, 1.2, 0.015, null, { f1: 82, verb: 0.6, a: 0.15 }); A.noiseHit(t, 1.1, 0.04, { type: 'bandpass', f: 500, q: 1.5, a: 0.2, verb: 0.6 }); },
+    bound(A, t) { for (let i = 0; i < 4; i++) { const tt = t + 0.6 + i * 0.62; A.osc('sine', 90, tt, 0.25, 0.12, null, { f1: 45 }); A.noiseHit(tt, 0.12, 0.05, { type: 'lowpass', f: 600 }); A.noiseHit(tt - 0.5, 0.35, 0.025, { type: 'bandpass', f: 400, f1: 1500, q: 1 }); } },
+  },
+  baykus: {
+    hoot(A, t) { for (const [d, f, l] of [[0, 400, 0.32], [0.5, 380, 0.22], [0.78, 400, 0.62]]) { A.osc('sine', f, t + d, l, 0.08, null, { f1: f * 0.88, verb: 0.9, a: 0.05 }); A.osc('triangle', f * 2, t + d, l, 0.008, null, { f1: f * 1.76, verb: 0.6, a: 0.05 }); } },
+    turn(A, t) { A.noiseHit(t, 0.7, 0.03, { type: 'bandpass', f: 900, q: 3, a: 0.25 }); A.noiseHit(t + 0.9, 0.6, 0.025, { type: 'bandpass', f: 1000, q: 3, a: 0.2 }); },
+    tilt(A, t) { A.osc('sine', 900, t, 0.08, 0.02, null, { f1: 1300 }); A.osc('sine', 800, t + 0.65, 0.08, 0.02, null, { f1: 1200 }); },
+    puff(A, t) { A.noiseHit(t, 0.45, 0.05, { type: 'highpass', f: 1800, a: 0.12 }); },
+    owlFly(A, t) { for (let i = 0; i < 5; i++) A.noiseHit(t + i * 0.24, 0.2, 0.05 * (1 - i * 0.12), { type: 'lowpass', f: 450, q: 0.7 }); },
+  },
+  kartal: {
+    soar(A, t) { for (let i = 0; i < 2; i++) { const tt = t + 0.3 + i * 0.9; A.osc('sawtooth', 2100, tt, 0.55, 0.012, null, { f1: 1500, verb: 0.9, a: 0.02 }); A.osc('sine', 2500, tt, 0.5, 0.025, null, { f1: 1700, verb: 0.9, a: 0.02 }); A.noiseHit(tt, 0.45, 0.02, { type: 'bandpass', f: 2600, q: 5, verb: 0.6 }); } },
+    fishJump(A, t) { A.noiseHit(t, 0.35, 0.07, { type: 'lowpass', f: 2200, f1: 400, verb: 0.4 }); },
+    stoop(A, t) { A.noiseHit(t, 0.65, 0.09, { type: 'bandpass', f: 700, f1: 3400, q: 1.6, a: 0.5, verb: 0.3 }); },
+    catch(A, t) { A.noiseHit(t, 0.6, 0.1, { type: 'lowpass', f: 1600, f1: 300, verb: 0.6 }); for (let i = 0; i < 6; i++) A.noiseHit(t + 0.15 + i * 0.15, 0.1, 0.05 * (1 - i / 7), { type: 'lowpass', f: 800, q: 0.7 }); A.osc('sine', 2300, t + 0.4, 0.5, 0.02, null, { f1: 1600, verb: 0.9 }); },
+  },
+  at: {
+    snort(A, t) { A.noiseHit(t, 0.35, 0.09, { type: 'bandpass', f: 600, q: 0.8, a: 0.02 }); A.noiseHit(t + 0.05, 0.3, 0.05, { type: 'lowpass', f: 300 }); },
+    paw(A, t) { A.noiseHit(t + 0.32, 0.18, 0.06, { type: 'bandpass', f: 1600, q: 1 }); A.osc('sine', 110, t + 0.36, 0.12, 0.08, null, { f1: 60 }); },
+    neigh(A, t) {
+      const o = A.osc('sawtooth', 600, t, 1.3, 0.035, null, { f1: 420, curve: 'lin', verb: 0.9, a: 0.04 }), v = A.osc('sine', 650, t, 1.3, 0.04, null, { f1: 450, curve: 'lin', verb: 0.9, a: 0.04 });
+      for (let i = 0; i < 12; i++) { const f = (i < 4 ? 900 + i * 90 : 1250 - i * 55) * (i % 2 ? 0.93 : 1.05); o.frequency.linearRampToValueAtTime(f, t + 0.05 + i * 0.09); v.frequency.linearRampToValueAtTime(f * 1.08, t + 0.05 + i * 0.09); }
+      A.noiseHit(t, 1.2, 0.03, { type: 'bandpass', f: 1500, q: 2, a: 0.1, verb: 0.6 });
+    },
+    land(A, t) { A.osc('sine', 75, t, 0.45, 0.22, null, { f1: 35 }); A.noiseHit(t, 0.3, 0.1, { type: 'lowpass', f: 700 }); },
+    gallop(A, t) { stHooves(A, t, 12, 0.145, 0.1); },
+  },
+  ahtapot: {
+    bubble(A, t) { for (let i = 0; i < 9; i++) A.osc('sine', 450 + Math.random() * 450, t + i * 0.2 + Math.random() * 0.06, 0.08, 0.018, null, { f1: 1300 + Math.random() * 500, verb: 0.5 }); },
+    armWave(A, t) { A.noiseHit(t, 1.2, 0.06, { type: 'lowpass', f: 300, f1: 900, a: 0.5, verb: 0.9 }); A.osc('sine', 110, t, 1.2, 0.04, null, { f1: 150, verb: 0.8, a: 0.4 }); },
+    spread(A, t) { A.osc('sine', 80, t, 1.4, 0.12, null, { f1: 60, verb: 0.9, a: 0.4 }); A.noiseHit(t, 1.0, 0.05, { type: 'lowpass', f: 500, a: 0.5, verb: 0.7 }); },
+    ink(A, t) { A.noiseHit(t, 1.3, 0.12, { type: 'lowpass', f: 380, f1: 110, a: 0.05, verb: 0.9 }); A.osc('sine', 60, t, 1.0, 0.15, null, { f1: 35 }); },
+    jet(A, t) { A.noiseHit(t, 0.8, 0.11, { type: 'bandpass', f: 220, f1: 1800, q: 1, a: 0.15, verb: 0.6 }); for (let i = 0; i < 14; i++) A.osc('sine', 600 + Math.random() * 600, t + 0.1 + Math.random() * 0.8, 0.06, 0.012, null, { f1: 1600, verb: 0.4 }); },
+  },
+  kervan: {
+    camelGroan(A, t) { const o = A.osc('sawtooth', 95, t, 1.1, 0.04, null, { f1: 70, curve: 'lin', verb: 0.6, a: 0.1 }); o.frequency.linearRampToValueAtTime(130, t + 0.4); for (let i = 0; i < 6; i++) A.osc('sine', 180 + Math.random() * 200, t + 0.2 + i * 0.12, 0.06, 0.02, null, { f1: 120 }); A.noiseHit(t, 0.9, 0.03, { type: 'bandpass', f: 350, q: 2, verb: 0.5 }); },
+    bells(A, t) { for (let i = 0; i < 9; i++) { const tt = t + 0.1 + i * 0.47 + Math.random() * 0.05; A.bell(i % 2 ? 1180 : 1390, tt, 0.9, 0.022, { ratio: 1.41, index: 2.2, verb: 0.7 }); if (i % 2) A.bell(880, tt + 0.23, 0.9, 0.018, { ratio: 1.41, index: 2.0, verb: 0.7 }); } stPaws(A, t + 0.3, 14, 0.32, 350, 0.03); },
+    kneel(A, t) { A.osc('sine', 70, t + 0.5, 0.3, 0.14, null, { f1: 40 }); A.osc('sine', 65, t + 1.05, 0.35, 0.16, null, { f1: 35 }); A.noiseHit(t + 0.5, 0.6, 0.05, { type: 'lowpass', f: 500 }); const o = A.osc('sawtooth', 110, t + 0.1, 0.8, 0.03, null, { f1: 75, verb: 0.5 }); o.frequency.linearRampToValueAtTime(140, t + 0.3); },
+    shootingStar(A, t) { A.noiseHit(t, 0.7, 0.04, { type: 'highpass', f: 5000, f1: 9000, a: 0.1, verb: 0.8 }); A.bell(2637, t + 0.3, 1.6, 0.04, { ratio: 3.01, index: 0.9, verb: 1 }); A.bell(3520, t + 0.42, 1.4, 0.025, { ratio: 2.0, index: 0.8, verb: 1 }); },
+  },
+  kurt: {
+    moonRise(A, t) { [57, 64, 69, 72].forEach((n, i) => A.osc('triangle', mtof(n), t + i * 0.25, 3.2, 0.022, null, { a: 1.0, verb: 1.3 })); },
+    howl(A, t) { stHowl(A, t, 380, 1.5, 0.08, 1.1); },
+    howl2(A, t) { stHowl(A, t, 430, 0.85, 0.08, 1.1); },
+    answer(A, t) { stHowl(A, t + 0.35, 330, 1.7, 0.025, 1.6); stHowl(A, t + 0.9, 360, 1.4, 0.018, 1.6); },
+    leap(A, t) { A.noiseHit(t, 0.55, 0.08, { type: 'bandpass', f: 300, f1: 2200, q: 1, a: 0.25, verb: 0.3 }); A.osc('sine', 80, t + 0.6, 0.25, 0.12, null, { f1: 40 }); },
+    run(A, t) { stPaws(A, t, 10, 0.18, 550, 0.05); },
+  },
+  ejderha: {
+    eyeGlow(A, t) { A.osc('sine', 48, t, 2.2, 0.16, null, { f1: 42, a: 0.8, verb: 0.6 }); A.noiseHit(t, 2.0, 0.05, { type: 'lowpass', f: 160, a: 0.8 }); A.bell(mtof(45), t + 0.3, 2.5, 0.03, { ratio: 1.41, index: 3, verb: 1.2 }); },
+    smoke(A, t) { A.noiseHit(t, 1.0, 0.04, { type: 'highpass', f: 1500, a: 0.3, verb: 0.4 }); A.noiseHit(t + 0.9, 0.8, 0.03, { type: 'highpass', f: 1700, a: 0.3, verb: 0.4 }); },
+    unfurl(A, t) { A.noiseHit(t, 0.8, 0.14, { type: 'bandpass', f: 180, f1: 1400, q: 0.9, a: 0.3, verb: 0.5 }); A.noiseHit(t + 0.75, 0.08, 0.1, { type: 'highpass', f: 1200 }); A.osc('sine', 60, t + 0.75, 0.3, 0.14, null, { f1: 35 }); },
+    inhale(A, t) { A.noiseHit(t, 0.8, 0.08, { type: 'bandpass', f: 500, f1: 2400, q: 1.4, a: 0.7, verb: 0.4 }); },
+    fire(A, t) {
+      A.noiseHit(t, 2.1, 0.22, { type: 'lowpass', f: 1100, f1: 500, a: 0.06, verb: 0.6 }); A.noiseHit(t, 2.0, 0.08, { type: 'bandpass', f: 400, q: 0.8, a: 0.1, verb: 0.5 });
+      A.osc('sawtooth', 70, t, 2.0, 0.04, null, { f1: 55, a: 0.1, verb: 0.4 });
+      for (let i = 0; i < 26; i++) A.noiseHit(t + Math.random() * 2.2, 0.03, 0.04, { type: 'highpass', f: 2500 + Math.random() * 4000, q: 2 });
+    },
+    roar(A, t) {
+      const o = A.osc('sawtooth', 150, t, 1.6, 0.07, null, { f1: 60, curve: 'lin', verb: 1.0, a: 0.08 }); o.frequency.linearRampToValueAtTime(190, t + 0.3);
+      A.osc('square', 95, t, 1.5, 0.03, null, { f1: 45, verb: 0.8, a: 0.1 }); A.noiseHit(t, 1.5, 0.1, { type: 'bandpass', f: 500, f1: 220, q: 1.2, a: 0.08, verb: 0.9 });
+      A.osc('sine', 40, t, 1.6, 0.2, null, { f1: 30, a: 0.1 });
+    },
+    wingBeat(A, t) { A.noiseHit(t, 0.4, 0.14, { type: 'lowpass', f: 650, q: 0.8, a: 0.05, verb: 0.4 }); A.osc('sine', 55, t + 0.05, 0.3, 0.16, null, { f1: 32 }); },
+    takeoff(A, t) { for (let i = 0; i < 6; i++) { const tt = t + i * 0.43; A.noiseHit(tt, 0.4, 0.13 * (1 - i * 0.12), { type: 'lowpass', f: 650, q: 0.8, a: 0.05, verb: 0.5 }); A.osc('sine', 55, tt + 0.05, 0.3, 0.13 * (1 - i * 0.12), null, { f1: 32 }); } A.noiseHit(t, 2.6, 0.06, { type: 'bandpass', f: 200, f1: 1200, q: 0.8, a: 1.2, verb: 0.7 }); },
+  },
+};
 function stSfx(key, ev) {
   if (!audio.ok) return; const A = audio, t = A.t;
+  const own = ST_SFX[key] && ST_SFX[key][ev]; if (own) { own(A, t); return; }
   const chirp = (t0, f0, f1, d, g = 0.035) => A.osc('sine', f0, t0, d, g, null, { f1, verb: 0.35 });
   if (ev === 'song') {
     let tt = t; for (let i = 0; i < 7; i++) { chirp(tt, 2400, 3100, 0.06); tt += 0.085; }
@@ -446,6 +576,7 @@ const Theater = {
       tMask: { value: null }, tCloth: { value: stClothTex() }, tMacro: { value: stMacroTex() }, tTgt: { value: null }, uRect: { value: new THREE.Vector4() },
       uLamp: { value: new THREE.Vector3() }, uLampCol: { value: new THREE.Color() }, uSpotDir: { value: new THREE.Vector3() }, uAmb: { value: new THREE.Color(0.12, 0.075, 0.045) },
       uCosIn: { value: 0.9 }, uCosOut: { value: 0.8 }, uHint: { value: 0 }, uRep: { value: 9 }, uGlow: { value: 0 }, uOut: { value: 0 }, uTime: { value: 0 }, uSoft: { value: 0.3 }, uHintCol: { value: new THREE.Color(2.2, 1.0, 0.35) },
+      tGlowS: { value: null }, tGlowH: { value: null }, uGlowC: { value: new THREE.Color(0, 0, 0) },
     };
     this.wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ vertexShader: ST_WALL_V, fragmentShader: ST_WALL_F, uniforms: this.wallU }));
     stScene.add(this.wall);
@@ -500,7 +631,7 @@ const Theater = {
     SM.alloc(ST_MASK_RES[Perf.level] || 1536);
     SM.setRect(this.WC.x, this.WC.y + (portrait ? 0.4 : 0), portrait ? 9.6 : 12, this.lamp);
     this.pxu = SM.res / SM.size;
-    const W = this.wallU; W.tMask.value = SM.b.texture; W.tTgt.value = SM.tB.texture; W.uRect.value.copy(SM.rect); W.uLamp.value.copy(this.lamp); W.uSpotDir.value.copy(cd); W.uCosIn.value = cosIn; W.uCosOut.value = cosOut;
+    const W = this.wallU; W.tMask.value = SM.b.texture; W.tTgt.value = SM.tB.texture; W.tGlowS.value = SM.gB.texture; W.tGlowH.value = SM.gD.texture; W.uRect.value.copy(SM.rect); W.uLamp.value.copy(this.lamp); W.uSpotDir.value.copy(cd); W.uCosIn.value = cosIn; W.uCosOut.value = cosOut;
     const B = this.beamU; B.uLamp.value.copy(this.lamp); B.uAxis.value.copy(cd); B.uCosIn.value = Math.cos(Math.atan(2.0 / this.rayLen)); B.uCosOut.value = Math.cos(Math.atan(4.6 / this.rayLen)); B.tMask.value = SM.b.texture; B.uRect.value.copy(SM.rect); B.uDC.value = this.lamp.distanceTo(this.C);
     this.buildBeam(); this.buildDust(); this.buildEnv();
   },
@@ -556,103 +687,126 @@ const Theater = {
   /* ----- bir perdeyi kur ----- */
   build(i, keepQ) {
     this.layout();
+    const prev = keepQ && this.grp ? this.grp.map((g) => ({ q: g.q.clone(), yaw: g.yaw, pitch: g.pitch, lock: g.lock })) : null;
     this.clearPieces();
-    const act = ST_ACTS[i], F = ST_FIGS[i], rng = new RNG(1000 + i * 97 + (keepQ ? 0 : (Math.random() * 1000) | 0)), S = this.figS;
+    const act = ST_ACTS[i], F = stFig(i), rng = new RNG(1000 + i * 97 + (keepQ ? 0 : (Math.random() * 1000) | 0)), S = this.figS;
     this.idx = i; this.F = F; this.act = act; this.near = 0; this.hintT = 0; this.cardShown = false; this.solvedT = -1; this.perfT = -1; this.hints = 0; this.playT = 0;
-    this.pose = sfNewPose(F); this.evI = 0;
+    this.pose = sfNewPose(F); this.evI = 0; this.glowPolys = null;
     // dinlenme silüeti (perde koordinatı, ölçekli)
     const rest = sfToWall(F, sfPose(F, this.pose)).filter((r) => !r.prop);
     const sc = (p) => { const o = new Array(p.length); for (let k = 0; k < p.length; k++) o[k] = p[k] * S; return o; };
     const all = rest.map((r) => sc(Array.from(r.p)));
     this.restPolys = all;
-    // katmanları dış/delik olarak grupla, büyükleri kırıklara böl
-    const groups = new Map();
-    rest.forEach((r, k) => { if (!groups.has(r.id)) groups.set(r.id, { outer: [], holes: [] }); (r.hole ? groups.get(r.id).holes : groups.get(r.id).outer).push(all[k]); });
-    const frags = [];
-    for (const [, g] of groups) for (const o of g.outer) {
-      const hs = g.holes.filter((h) => stWinding(h[0], h[1], [o]) !== 0);
-      const A = Math.abs(sfArea(o));
-      if (A < 0.5) { frags.push({ o, hs }); continue; }
-      let parts = [{ o, hs }]; const cuts = A > 2.5 ? 2 : 1;
-      for (let c = 0; c < cuts; c++) {
-        const big = parts.reduce((a, p) => (Math.abs(sfArea(p.o)) > Math.abs(sfArea(a.o)) ? p : a)), [cx, cy] = stCentroid(big.o);
-        for (let tr = 0; tr < 12; tr++) {
-          const an = rng.range(0, PI), a = Math.cos(an), b = Math.sin(an), cc = -(a * (cx + rng.range(-0.15, 0.15)) + b * (cy + rng.range(-0.15, 0.15)));
-          // delik ikiye bölünmesin
-          if (big.hs.some((h) => { let pos = 0, neg = 0; for (let k = 0; k < h.length; k += 2) (a * h[k] + b * h[k + 1] + cc > 0 ? pos++ : neg++); return pos && neg; })) continue;
-          const sp = stSplit(big.o, a, b, cc); if (sp.length < 2) continue;
-          parts = parts.filter((p) => p !== big).concat(sp.map((q) => ({ o: q, hs: big.hs.filter((h) => stWinding(h[0], h[1], [q]) !== 0) })));
-          break;
+    // heykeller: tanım "groups" verirse her grup ayrı döner (katman kimliğine göre)
+    const gdef = F.def.groups || null, gOf = (id) => { if (!gdef) return 0; const k = gdef.findIndex((g) => g.includes(id)); return k < 0 ? 0 : k; };
+    const nG = gdef ? gdef.length : 1;
+    this.root.position.set(0, 0, 0); this.root.quaternion.identity();
+    this.grp = []; this.grpMats = [];
+    const Lp = this.lamp, P3 = (C, u, v, s) => new THREE.Vector3(Lp.x + s * (this.WC.x + u - Lp.x) - C.x, Lp.y + s * (this.WC.y + v - Lp.y) - C.y, Lp.z + s * (ST_WZ - Lp.z) - C.z);
+    let decoLeft = Math.min(9, 4 + i);
+    for (let gi = 0; gi < nG; gi++) {
+      const ks = rest.map((_, k) => k).filter((k) => gOf(rest[k].id) === gi);
+      const outers = ks.filter((k) => !rest[k].hole).map((k) => all[k]), holes = ks.filter((k) => rest[k].hole).map((k) => all[k]);
+      if (!outers.length) continue;
+      const [bx0, by0, bx1, by1] = stBBox(outers.flat()), gx = (bx0 + bx1) / 2, gy = (by0 + by1) / 2;
+      const Cg = new THREE.Vector3(Lp.x + this.sC * (this.WC.x + gx - Lp.x), Lp.y + this.sC * (this.WC.y + gy - Lp.y), Lp.z + this.sC * (ST_WZ - Lp.z));
+      const gr = new THREE.Group(); gr.position.copy(Cg); this.root.add(gr);
+      const mats = act.mats.map((m) => (nG > 1 ? this.M[m].clone() : this.M[m])); if (nG > 1) this.grpMats.push(...mats);
+      const G = { gi, root: gr, C: Cg, lampL: Lp.clone().sub(Cg), q: new THREE.Quaternion(), yaw: 0, pitch: 0, w: new THREE.Vector2(), lock: false, lockT: -1, mats, polys: outers, hl: 0 };
+      this.grp.push(G);
+      // dış konturlar + içerdikleri delikler (başka katmanın deliği de olabilir: baykuşun yüz diski)
+      const frags = [];
+      for (const o of outers) {
+        const hs = holes.filter((h) => stWinding(h[0], h[1], [o]) !== 0);
+        const A = Math.abs(sfArea(o));
+        if (A < 0.5) { frags.push({ o, hs }); continue; }
+        let parts = [{ o, hs }]; const cuts = A > 2.5 ? 2 : 1;
+        for (let c = 0; c < cuts; c++) {
+          const big = parts.reduce((a, p) => (Math.abs(sfArea(p.o)) > Math.abs(sfArea(a.o)) ? p : a)), [cx, cy] = stCentroid(big.o);
+          for (let tr = 0; tr < 12; tr++) {
+            const an = rng.range(0, PI), a = Math.cos(an), b = Math.sin(an), cc = -(a * (cx + rng.range(-0.15, 0.15)) + b * (cy + rng.range(-0.15, 0.15)));
+            // delik ikiye bölünmesin
+            if (big.hs.some((h) => { let pos = 0, neg = 0; for (let k = 0; k < h.length; k += 2) (a * h[k] + b * h[k + 1] + cc > 0 ? pos++ : neg++); return pos && neg; })) continue;
+            const sp = stSplit(big.o, a, b, cc); if (sp.length < 2) continue;
+            parts = parts.filter((p) => p !== big).concat(sp.map((q) => ({ o: q, hs: big.hs.filter((h) => stWinding(h[0], h[1], [q]) !== 0) })));
+            break;
+          }
+        }
+        for (const p of parts) frags.push(p);
+      }
+      // derinlikler: ışın boyunca karışık; kalınlık parçaya göre
+      const nF = frags.length, depths = frags.map((_, k) => lerp(-1.25, 1.25, (k + 0.5) / nF) + rng.range(-0.2, 0.2));
+      for (let k = nF - 1; k > 0; k--) { const j = rng.int(0, k); [depths[k], depths[j]] = [depths[j], depths[k]]; }
+      const T = { lamp: Lp, WC: this.WC, C: Cg };
+      frags.forEach((f, k) => {
+        const th = clamp(Math.sqrt(Math.abs(sfArea(f.o))) * rng.range(0.14, 0.32), 0.07, 0.42), d = depths[k];
+        const s0 = this.sC + (d - th / 2) / this.rayLen, s1 = this.sC + (d + th / 2) / this.rayLen;
+        const g = stFrustum(T, f.o, f.hs, s0, s1, 0.028), mat = mats[k % mats.length];
+        const mesh = new THREE.Mesh(g, mat); const pg = new THREE.Group(); pg.add(mesh);
+        gr.add(pg); this.meshes.push(mesh); mesh.userData.gi = this.grp.length - 1;
+        this.pieces.push({ G, g: pg, mesh, ph: rng.range(0, TAU), amp: rng.range(0.012, 0.03), dir: new THREE.Vector3(rng.range(-1, 1), rng.range(-0.3, 1), rng.range(-0.6, 1)).normalize(), spin: new THREE.Vector3(rng.range(-3, 3), rng.range(-3, 3), rng.range(-3, 3)), d, glow: 0, dis: rng.range(0, 0.35) });
+      });
+      const inside = (x, y, r) => { for (let a = 0; a < 12; a++) if (stWinding(x + Math.cos((a / 12) * TAU) * r, y + Math.sin((a / 12) * TAU) * r, all) === 0) return false; return stWinding(x, y, outers) !== 0; };
+      // pirinç pimler: üst üste binen kırıkları ışın boyunca bağlar (gölgesi nokta)
+      const pins = [];
+      for (let k = 0; k < frags.length && pins.length < (nG > 1 ? 3 : 5); k++) {
+        for (let tries = 0; tries < 30; tries++) {
+          const [x0, y0, x1, y1] = stBBox(frags[k].o), x = rng.range(x0, x1), y = rng.range(y0, y1);
+          if (stWinding(x, y, [frags[k].o]) === 0 || !inside(x, y, 0.07)) continue;
+          const j = frags.findIndex((f, jj) => jj !== k && Math.abs(depths[jj] - depths[k]) > 0.3 && Math.abs(depths[jj] - depths[k]) < 0.95 && stWinding(x, y, [f.o]) !== 0);
+          if (j < 0) continue; pins.push([x, y, Math.min(depths[k], depths[j]), Math.max(depths[k], depths[j])]); break;
         }
       }
-      for (const p of parts) frags.push(p);
-    }
-    // derinlikler: ışın boyunca karışık; kalınlık parçaya göre
-    const nF = frags.length, depths = frags.map((_, k) => lerp(-1.25, 1.25, (k + 0.5) / nF) + rng.range(-0.2, 0.2));
-    for (let k = nF - 1; k > 0; k--) { const j = rng.int(0, k); [depths[k], depths[j]] = [depths[j], depths[k]]; }
-    const mats = act.mats.map((m) => this.M[m]);
-    frags.forEach((f, k) => {
-      const th = clamp(Math.sqrt(Math.abs(sfArea(f.o))) * rng.range(0.14, 0.32), 0.07, 0.42), d = depths[k];
-      const s0 = this.sC + (d - th / 2) / this.rayLen, s1 = this.sC + (d + th / 2) / this.rayLen;
-      const g = stFrustum(this, f.o, f.hs, s0, s1, 0.028), mat = mats[k % mats.length];
-      const mesh = new THREE.Mesh(g, mat); const pg = new THREE.Group(); pg.add(mesh);
-      this.root.add(pg); this.meshes.push(mesh);
-      this.pieces.push({ g: pg, mesh, ph: rng.range(0, TAU), amp: rng.range(0.012, 0.03), dir: new THREE.Vector3(rng.range(-1, 1), rng.range(-0.3, 1), rng.range(-0.6, 1)).normalize(), spin: new THREE.Vector3(rng.range(-3, 3), rng.range(-3, 3), rng.range(-3, 3)), d, glow: 0, dis: rng.range(0, 0.35) });
-    });
-    const inside = (x, y, r) => { for (let a = 0; a < 12; a++) if (stWinding(x + Math.cos((a / 12) * TAU) * r, y + Math.sin((a / 12) * TAU) * r, all) === 0) return false; return stWinding(x, y, all) !== 0; };
-    // pirinç pimler: üst üste binen kırıkları ışın boyunca bağlar (gölgesi nokta)
-    const pins = [];
-    for (let k = 0; k < frags.length && pins.length < 5; k++) {
-      for (let tries = 0; tries < 30; tries++) {
-        const [x0, y0, x1, y1] = stBBox(frags[k].o), x = rng.range(x0, x1), y = rng.range(y0, y1);
-        if (stWinding(x, y, [frags[k].o]) === 0 || !inside(x, y, 0.07)) continue;
-        const j = frags.findIndex((f, jj) => jj !== k && Math.abs(depths[jj] - depths[k]) > 0.3 && Math.abs(depths[jj] - depths[k]) < 0.95 && stWinding(x, y, [f.o]) !== 0);
-        if (j < 0) continue; pins.push([x, y, Math.min(depths[k], depths[j]), Math.max(depths[k], depths[j])]); break;
+      // süs: cam boncuklar ve pirinç küreler (gölgeleri silüetin içinde kalır)
+      const deco = [], nDeco = gi === nG - 1 ? decoLeft : Math.ceil(decoLeft / (nG - gi));
+      for (let k = 0, tries = 0; k < nDeco && tries < 500; tries++) {
+        const r = rng.range(0.06, 0.13), x = rng.range(bx0, bx1), y = rng.range(by0, by1), d = rng.range(-1.6, 1.6), s = this.sC + d / this.rayLen;
+        if (!inside(x, y, (r / s) * 1.25)) continue; deco.push([x, y, d, r, rng.chance(0.45)]); k++;
       }
+      decoLeft -= deco.length;
+      for (const [x, y, d0, d1] of pins) {
+        const a = P3(Cg, x, y, this.sC + d0 / this.rayLen), b = P3(Cg, x, y, this.sC + d1 / this.rayLen), len = a.distanceTo(b), pg = new THREE.Group();
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, len, 8), this.M.brass); rod.position.copy(a).lerp(b, 0.5); rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); pg.add(rod);
+        for (const e of [a, b]) { const bead = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 8), this.M.brass); bead.position.copy(e); pg.add(bead); }
+        gr.add(pg); pg.children.forEach((m) => { m.userData.gi = this.grp.length - 1; this.meshes.push(m); });
+        this.pieces.push({ G, g: pg, mesh: rod, ph: 0, amp: 0, dir: new THREE.Vector3(0, 1, 0), spin: new THREE.Vector3(1, 2, 0), d: (d0 + d1) / 2, glow: 0, dis: 0.1, pin: true });
+      }
+      for (const [x, y, d, r, glass] of deco) {
+        const s = this.sC + d / this.rayLen, m = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), glass ? this.M.glass : this.M.brass);
+        m.position.copy(P3(Cg, x, y, s)); m.userData.glass = glass; m.userData.gi = this.grp.length - 1; const pg = new THREE.Group(); pg.add(m); gr.add(pg); this.meshes.push(m);
+        this.pieces.push({ G, g: pg, mesh: m, ph: rng.range(0, TAU), amp: rng.range(0.01, 0.025), dir: new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-1, 1)).normalize(), spin: new THREE.Vector3(rng.range(-3, 3), rng.range(-3, 3), rng.range(-3, 3)), d, glow: 0, dis: rng.range(0, 0.3) });
+      }
+      // başlangıç yönelimi (her heykel ayrı)
+      const pv = prev && prev[this.grp.length - 1];
+      if (pv) { G.q.copy(pv.q); G.yaw = pv.yaw; G.pitch = pv.pitch; G.lock = pv.lock; }
+      else {
+        const sgn = rng.sign();
+        G.yaw = sgn * rng.range(0.9, 2.2); G.pitch = act.axes >= 2 ? rng.sign() * rng.range(0.35, 0.8) : 0;
+        if (act.axes >= 3) G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, rng.sign() * rng.range(0.3, 0.7), 'YXZ'));
+        else G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ'));
+      }
+      gr.quaternion.copy(G.q);
     }
-    // süs: cam boncuklar ve pirinç küreler (gölgeleri silüetin içinde kalır)
-    const [bx0, by0, bx1, by1] = stBBox(all.flat());
-    const deco = [];
-    for (let k = 0, tries = 0; k < 4 + i && tries < 500; tries++) {
-      const r = rng.range(0.06, 0.13), x = rng.range(bx0, bx1), y = rng.range(by0, by1), d = rng.range(-1.6, 1.6), s = this.sC + d / this.rayLen;
-      if (!inside(x, y, (r / s) * 1.25)) continue; deco.push([x, y, d, r, rng.chance(0.45)]); k++;
-    }
-    const P3 = (u, v, s) => new THREE.Vector3(this.lamp.x + s * (this.WC.x + u - this.lamp.x) - this.C.x, this.lamp.y + s * (this.WC.y + v - this.lamp.y) - this.C.y, this.lamp.z + s * (ST_WZ - this.lamp.z) - this.C.z);
-    for (const [x, y, d0, d1] of pins) {
-      const a = P3(x, y, this.sC + d0 / this.rayLen), b = P3(x, y, this.sC + d1 / this.rayLen), len = a.distanceTo(b), pg = new THREE.Group();
-      const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, len, 8), this.M.brass); rod.position.copy(a).lerp(b, 0.5); rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); pg.add(rod);
-      for (const e of [a, b]) { const bead = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 8), this.M.brass); bead.position.copy(e); pg.add(bead); }
-      this.root.add(pg); pg.children.forEach((m) => this.meshes.push(m));
-      this.pieces.push({ g: pg, mesh: rod, ph: 0, amp: 0, dir: new THREE.Vector3(0, 1, 0), spin: new THREE.Vector3(1, 2, 0), d: (d0 + d1) / 2, glow: 0, dis: 0.1, pin: true });
-    }
-    for (const [x, y, d, r, glass] of deco) {
-      const s = this.sC + d / this.rayLen, m = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), glass ? this.M.glass : this.M.brass);
-      m.position.copy(P3(x, y, s)); m.userData.glass = glass; const pg = new THREE.Group(); pg.add(m); this.root.add(pg); this.meshes.push(m);
-      this.pieces.push({ g: pg, mesh: m, ph: rng.range(0, TAU), amp: rng.range(0.01, 0.025), dir: new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-1, 1)).normalize(), spin: new THREE.Vector3(rng.range(-3, 3), rng.range(-3, 3), rng.range(-3, 3)), d, glow: 0, dis: rng.range(0, 0.3) });
-    }
-    this.root.position.copy(this.C);
+    this.sel = 0;
     SM.setProxies(this.meshes);
     // ipucu hedefi
     SM.renderTarget(this.toWorld(all));
-    // başlangıç yönelimi
-    if (!keepQ) {
-      const sgn = rng.sign();
-      this.yaw = sgn * rng.range(0.9, 2.2); this.pitch = act.axes >= 2 ? rng.sign() * rng.range(0.35, 0.8) : 0;
-      if (act.axes >= 3) this.q.setFromEuler(new THREE.Euler(this.pitch, this.yaw, rng.sign() * rng.range(0.3, 0.7), 'YXZ'));
-      else this.q.setFromEuler(new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ'));
-    }
-    this.w.set(0, 0); this.assembleT = 0; this.lastSec = -1; this.wallU.uOut.value = 0;
+    this.assembleT = 0; this.lastSec = -1; this.wallU.uOut.value = 0;
     $('#thHint').classList.remove('used');
     this.updateDom();
   },
   clearPieces() {
     for (const p of this.pieces) { this.root.remove(p.g); p.g.traverse((m) => { if (m.geometry) m.geometry.dispose(); if (m.userData && m.userData.mat0) { m.material.dispose(); m.userData.mat0 = null; } }); }
     this.pieces = []; this.meshes = []; this.emb && (this.emb.length = 0);
+    if (this.grp) for (const G of this.grp) this.root.remove(G.root);
+    if (this.grpMats) { for (const m of this.grpMats) m.dispose(); this.grpMats = []; }
+    this.grp = [];
   },
   toWorld(polys) { const S = 1, o = []; for (const p of polys) { const q = new Array(p.length); for (let k = 0; k < p.length; k += 2) { q[k] = this.WC.x + p[k] * S; q[k + 1] = this.WC.y + p[k + 1] * S; } o.push(q); } return o; },
   figWorld() {
-    const F = this.F, S = this.figS, out = [], polys = sfPose(F, this.pose);
-    for (const r of polys) { const p = r.p, q = new Array(p.length); for (let k = 0; k < p.length; k += 2) { q[k] = this.WC.x + (p[k] - F.cx) * F.sc * S; q[k + 1] = this.WC.y - (p[k + 1] - F.cy) * F.sc * S; } out.push(q); }
+    const F = this.F, S = this.figS, out = [], front = [], back = [], polys = sfPose(F, this.pose);
+    for (const r of polys) { const p = r.p, q = new Array(p.length); for (let k = 0; k < p.length; k += 2) { q[k] = this.WC.x + (p[k] - F.cx) * F.sc * S; q[k + 1] = this.WC.y - (p[k + 1] - F.cy) * F.sc * S; } (r.glow ? (r.back ? back : front) : out).push(q); }
+    this.glowPolys = { front, back };
     return out;
   },
   /* ----- arayüz ----- */
@@ -667,7 +821,8 @@ const Theater = {
     this.dots.forEach((d, k) => { d.classList.toggle('on', k === this.idx); d.classList.toggle('ok', sv.includes(k)); d.classList.toggle('lock', !this.unlocked(k)); d.title = stars[k] ? '★'.repeat(stars[k]) : ''; });
     $('#thAct').textContent = `${ST_ROMAN[this.idx]}. perde`;
     $('#theater').classList.remove('solved'); $('#thTime').textContent = '0:00';
-    const ax = this.act.axes === 1 ? 'Heykeli parmağınla <em>sağa sola</em> çevir.' : this.act.axes === 2 ? 'Bu kez <em>yukarı aşağı</em> da dönüyor.' : 'Artık heykel <em>her yöne</em> döner.';
+    const two = this.grp.length > 1;
+    const ax = two ? `<em>İki heykel</em> var: dokunduğun döner, ikisini de hizala.` : this.act.axes === 1 ? 'Heykeli parmağınla <em>sağa sola</em> çevir.' : this.act.axes === 2 ? 'Bu kez <em>yukarı aşağı</em> da dönüyor.' : 'Artık heykel <em>her yöne</em> döner.';
     $('#thMsg').innerHTML = `<b>${this.act.riddle}…</b><br>${ax}${this.idx === 0 && !(Save.data.theater || []).length ? '<span class="swipe"><i></i></span>' : ''}`; $('#thMsg').classList.add('on');
   },
   open(from) {
@@ -690,28 +845,46 @@ const Theater = {
   replay() { if (this.perfT < 0) return; audio.ui(); this.perfT = 0; this.wallU.uOut.value = 0; this.evI = 0; this.cardShown = false; $('#theater').classList.remove('solved'); },
   hint() {
     if (this.state !== 'play') return; this.hintT = 3.2; this.hints++; audio.sprite(1); haptic(10);
-    // yarı yola it: hedefe doğru döndür
-    if (this.act.axes < 3) { this.yaw *= 0.55; this.pitch *= 0.55; } else this.q.slerp(new THREE.Quaternion(), 0.45);
-    this.w.set(0, 0); $('#thHint').classList.add('used');
+    // yarı yola it: hedefe doğru döndür (kilitlenmemiş her heykel)
+    for (const G of this.grp) { if (G.lock) continue; if (this.act.axes < 3) { G.yaw *= 0.55; G.pitch *= 0.55; G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ')); } else G.q.slerp(new THREE.Quaternion(), 0.45); G.w.set(0, 0); }
+    $('#thHint').classList.add('used');
   },
   /* ----- dokunma ----- */
-  down(e) { if (this.state !== 'play') return; this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now() }; this.w.set(0, 0); $('#thMsg').classList.remove('on'); },
+  // birden çok heykelde: parmağın altındaki (ya da ekranda en yakın) kilitlenmemiş heykel seçilir
+  pick(e) {
+    const free = this.grp.filter((G) => !G.lock); if (free.length <= 1) return free.length ? free[0].gi : this.sel;
+    const ndc = new THREE.Vector2((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1), rc = this.rc || (this.rc = new THREE.Raycaster());
+    rc.setFromCamera(ndc, stCam);
+    const hit = rc.intersectObjects(this.meshes.filter((m) => !this.grp[m.userData.gi].lock), false)[0];
+    if (hit) return hit.object.userData.gi;
+    let best = free[0].gi, bd = 1e9;
+    for (const G of free) { const v = G.C.clone().project(stCam), d = Math.hypot(v.x - ndc.x, (v.y - ndc.y) * innerHeight / innerWidth); if (d < bd) { bd = d; best = G.gi; } }
+    return best;
+  },
+  down(e) { if (this.state !== 'play') return; this.sel = this.pick(e); const G = this.grp[this.sel]; this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), g: this.sel }; if (G) G.w.set(0, 0); $('#thMsg').classList.remove('on'); if (this.grp.length > 1 && G) { G.hl = 1; haptic(5); } },
   move(e) {
     const d = this.drag; if (!d || e.pointerId !== d.id) return;
     const now = performance.now(), dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Math.max(8, now - d.t) / 1000; d.x = e.clientX; d.y = e.clientY; d.t = now;
-    const k = 0.0078; this.rot(dx * k, dy * k);
-    this.w.set(lerp(this.w.x, (dx * k) / dt, 0.4), lerp(this.w.y, (dy * k) / dt, 0.4));
+    const k = 0.0078, G = this.grp[d.g]; if (!G) return; this.rot(dx * k, dy * k, d.g);
+    G.w.set(lerp(G.w.x, (dx * k) / dt, 0.4), lerp(G.w.y, (dy * k) / dt, 0.4));
     audio.theaterCreak(Math.min(1, Math.hypot(dx, dy) * 0.03));
   },
-  up(e) { const d = this.drag; if (!d || e.pointerId !== d.id) return; this.drag = null; if (performance.now() - d.t > 80) this.w.set(0, 0); },
-  rot(a, b) {
-    if (this.state !== 'play' || (!a && !b)) return;
+  up(e) { const d = this.drag; if (!d || e.pointerId !== d.id) return; this.drag = null; const G = this.grp[d.g]; if (G && performance.now() - d.t > 80) G.w.set(0, 0); },
+  rot(a, b, gi = this.sel) {
+    const G = this.grp[gi];
+    if (this.state !== 'play' || !G || G.lock || (!a && !b)) return;
     const ax = this.act.axes;
-    if (ax < 3) { this.yaw += a; if (ax === 2) this.pitch = clamp(this.pitch + b, -1.3, 1.3); this.q.setFromEuler(new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ')); return; }
-    const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), a), qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), b); this.q.premultiply(qy).premultiply(qx).normalize();
+    if (ax < 3) { G.yaw += a; if (ax === 2) G.pitch = clamp(G.pitch + b, -1.3, 1.3); G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ')); return; }
+    const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), a), qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), b); G.q.premultiply(qy).premultiply(qx).normalize();
   },
-  angle() { return 2 * Math.acos(Math.min(1, Math.abs(this.q.w))); },
-  align() { this.yaw = 0; this.pitch = 0; this.q.identity(); this.w.set(0, 0); },
+  // klavye: Tab ile heykel değiştir
+  cycle() { if (this.state !== 'play') return; const free = this.grp.filter((G) => !G.lock); if (free.length < 2) return; const k = free.findIndex((G) => G.gi === this.sel); this.sel = free[(k + 1) % free.length].gi; this.grp[this.sel].hl = 1; audio.ui(); },
+  angle(G = this.grp[0]) { return G ? 2 * Math.acos(Math.min(1, Math.abs(G.q.w))) : 0; },
+  align() { for (const G of this.grp) { G.yaw = 0; G.pitch = 0; G.q.identity(); G.w.set(0, 0); } },
+  lockG(G) {
+    G.lock = true; G.q.identity(); G.yaw = 0; G.pitch = 0; G.w.set(0, 0); G.lockT = this.t;
+    if (this.grp.some((g) => !g.lock)) { audio.crystal(true); haptic([10, 30, 10]); const nx = this.grp.find((g) => !g.lock); if (nx) this.sel = nx.gi; if (this.drag && this.drag.g === G.gi) this.drag = null; }
+  },
   /* ----- kare ----- */
   update(dtR) {
     if (!this.active) return;
@@ -730,22 +903,38 @@ const Theater = {
     }
     if (this.state === 'play') {
       this.playT += dtR; const sec = Math.floor(this.playT); if (sec !== this.lastSec) { this.lastSec = sec; $('#thTime').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; }
-      if (!this.drag) { this.rot(this.w.x * dtR, this.w.y * dtR); this.w.multiplyScalar(Math.exp(-dtR * 3.2)); }
-      const ang = this.angle();
-      if (ang < deg(12) && !this.drag) { if (this.act.axes < 3) { const k = 1 - Math.exp(-dtR * 6); this.yaw = lerp(this.yaw, Math.round(this.yaw / TAU) * TAU, k); this.pitch = lerp(this.pitch, 0, k); this.q.setFromEuler(new THREE.Euler(this.pitch, this.yaw, 0, 'YXZ')); } else this.q.slerp(new THREE.Quaternion(), 1 - Math.exp(-dtR * 6)); this.w.multiplyScalar(0.8); }
-      if (this.angle() < deg(1.3)) this.solve();
-      const prevN = this.near; this.near = damp(this.near, clamp01(1 - ang / deg(75)), 5, dtR);
+      let nearSum = 0;
+      for (const G of this.grp) {
+        if (G.lock) { nearSum += 1; continue; }
+        const held = this.drag && this.drag.g === G.gi;
+        if (!held) { this.rot(G.w.x * dtR, G.w.y * dtR, G.gi); G.w.multiplyScalar(Math.exp(-dtR * 3.2)); }
+        const ang = this.angle(G);
+        if (ang < deg(12) && !held) { if (this.act.axes < 3) { const k = 1 - Math.exp(-dtR * 6); G.yaw = lerp(G.yaw, Math.round(G.yaw / TAU) * TAU, k); G.pitch = lerp(G.pitch, 0, k); G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ')); } else G.q.slerp(new THREE.Quaternion(), 1 - Math.exp(-dtR * 6)); G.w.multiplyScalar(0.8); }
+        if (this.angle(G) < deg(1.3)) this.lockG(G);
+        nearSum += clamp01(1 - this.angle(G) / deg(75));
+      }
+      if (this.grp.every((G) => G.lock)) this.solve();
+      const prevN = this.near; this.near = damp(this.near, nearSum / Math.max(1, this.grp.length), 5, dtR);
       if (Math.floor(this.near * 6) > Math.floor(prevN * 6) && this.near > 0.5) haptic(6);
     } else this.near = damp(this.near, 0, 3, dtR);
     audio.theaterTone(this.state === 'play' ? this.near : 0);
-    this.root.quaternion.copy(this.q);
+    // heykeller: seçili olan hafifçe kor gibi ısınır, kilitlenen bir an parlar
+    const multi = this.grp.length > 1;
+    for (const G of this.grp) {
+      G.root.quaternion.copy(G.q);
+      if (multi && this.solvedT < 0) {
+        const held = this.drag && this.drag.g === G.gi, sel = this.state === 'play' && G.gi === this.sel && !G.lock;
+        G.hl = damp(G.hl, held ? 1 : sel ? 0.45 : 0, 6, dtR);
+        const fl = G.lockT >= 0 ? Math.exp(-(t - G.lockT) * 3.2) : 0, e = 0.05 * G.hl * (0.85 + 0.15 * Math.sin(t * 6)) + 0.28 * fl;
+        for (const m of G.mats) m.emissive.setRGB(e * 1.0, e * 0.5, e * 0.18);
+      }
+    }
     // parçalar: kandil noktasına göre ölçeklenerek nefes alır — gölge değişmez
-    const lampL = this.lamp.clone().sub(this.C);
     const asm = 1 - Ease.outCubic(clamp01(this.assembleT / 1.5)); this.assembleT += dtR;
     const sv = this.solvedT >= 0 ? this.t - this.solvedT : -1;
     for (const p of this.pieces) {
       const k = 1 + Math.sin(t * 0.9 + p.ph) * p.amp, g = p.g;
-      g.scale.setScalar(k); g.position.copy(lampL).multiplyScalar(1 - k);
+      g.scale.setScalar(k); g.position.copy(p.G.lampL).multiplyScalar(1 - k);
       if (asm > 0.001) { g.position.addScaledVector(p.dir, asm * 7); g.rotation.set(p.spin.x * asm, p.spin.y * asm, p.spin.z * asm); } else g.rotation.set(0, 0, 0);
       if (sv >= 0) {
         // çözüldü: kenarlar kor gibi parlar, parça kıvılcıma dönüşüp dağılır
@@ -775,7 +964,10 @@ const Theater = {
     const blurPx = lerp(Math.max(2.2, 0.026 * this.pxu), 1.7, crisp) + bigBlur * 0.09 * this.pxu;
     this.wallU.uSoft.value = lerp(0.22, 0.0, crisp) + bigBlur * 0.45;
     this.root.updateMatrixWorld(true);
-    SM.render(sv < 0, polys, blurPx);
+    SM.render(sv < 0, polys, blurPx, sv >= 0 ? this.glowPolys : null);
+    // figür ışıklarının rengi ve şiddeti (pose.k.gI)
+    const gc = this.F.def.glowCol || [1.0, 0.66, 0.3], gI = sv >= 0 ? (this.pose.k.gI ?? 1) * 2.4 * this.lampOn : 0;
+    this.wallU.uGlowC.value.setRGB(gc[0] * gI, gc[1] * gI, gc[2] * gI);
     // kandil titremesi ve ışık şiddeti
     const flick = 1 + Math.sin(t * 13.1) * 0.012 + Math.sin(t * 7.3 + 1) * 0.016 + Math.sin(t * 23.7) * 0.006;
     const flare = sv >= 0 ? Math.exp(-sv * 2.2) * 0.9 : 0, lampI = this.lampOn * flick * (1 + this.near * 0.18 + flare);
@@ -818,7 +1010,7 @@ const Theater = {
     g.attributes.position.needsUpdate = true; g.attributes.aS.needsUpdate = true; g.attributes.aC.needsUpdate = true;
   },
   solve() {
-    this.state = 'solved'; this.q.identity(); this.yaw = 0; this.pitch = 0; this.root.quaternion.identity(); this.w.set(0, 0); this.drag = null;
+    this.state = 'solved'; for (const G of this.grp) { G.lock = true; G.q.identity(); G.yaw = 0; G.pitch = 0; G.w.set(0, 0); G.root.quaternion.identity(); G.hl = 0; for (const m of G.mats) if (this.grp.length > 1) m.emissive.setRGB(0, 0, 0); } this.drag = null;
     this.solvedT = this.t; this.perfT = -1; this.evI = 0; $('#thMsg').classList.remove('on');
     audio.theaterSolve(); haptic([20, 40, 20]); G.flash = 0.3; G.flashCol.set(1.0, 0.78, 0.48); G.trauma = Math.max(G.trauma, 0.25);
     const par = this.act.par, tt = this.playT, stars = this.hints === 0 && tt <= par ? 3 : this.hints <= 1 && tt <= par * 2.2 ? 2 : 1;
@@ -840,7 +1032,7 @@ const Theater = {
   updateDots() { const sv = Save.data.theater || []; this.dots.forEach((d, k) => { d.classList.toggle('ok', sv.includes(k)); d.classList.toggle('lock', !this.unlocked(k)); }); },
   apply() {
     // kalite değişti: maske çözünürlüğü, huzme adımları, toz sayısı
-    if (this.qLevel !== Perf.level) { const first = this.qLevel === undefined; this.qLevel = Perf.level; if (!first && this.inited && this.lamp) { SM.alloc(ST_MASK_RES[Perf.level] || 1536); this.pxu = SM.res / SM.size; this.wallU.tMask.value = SM.b.texture; this.wallU.tTgt.value = SM.tB.texture; this.beamU.tMask.value = SM.b.texture; this.buildBeam(); this.buildDust(); SM.renderTarget(this.toWorld(this.restPolys)); } }
+    if (this.qLevel !== Perf.level) { const first = this.qLevel === undefined; this.qLevel = Perf.level; if (!first && this.inited && this.lamp) { SM.alloc(ST_MASK_RES[Perf.level] || 1536); this.pxu = SM.res / SM.size; this.wallU.tMask.value = SM.b.texture; this.wallU.tTgt.value = SM.tB.texture; this.wallU.tGlowS.value = SM.gB.texture; this.wallU.tGlowH.value = SM.gD.texture; this.beamU.tMask.value = SM.b.texture; this.buildBeam(); this.buildDust(); SM.renderTarget(this.toWorld(this.restPolys)); } }
     const pu = post.u;
     pu.uExposure.value = 1.05 + this.near * 0.06; pu.uBloomAdd.value = 0.32 + this.near * 0.12; pu.uBloomMix.value = 0.05; pu.uRays.value = 0; pu.uSunVis.value = 0; pu.uNight.value = 0;
     pu.uDesat.value = 0; pu.uCA.value = 0; pu.uDanger.value = 0; pu.uHeat.value.z = 0; pu.uVignette.value = 0.9;

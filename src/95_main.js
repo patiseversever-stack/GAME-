@@ -378,7 +378,7 @@ window.addEventListener('keydown', (e) => {
   if (TUT.open) { TUT.key(e); return; }
   if (e.repeat && (e.code === 'Space')) return;
   if (G.state === 'film') { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') Film.skip(); return; }
-  if (G.state === 'theater') { const k = 0.12; if (e.code === 'ArrowLeft' || e.code === 'KeyA') Theater.rot(-k, 0); else if (e.code === 'ArrowRight' || e.code === 'KeyD') Theater.rot(k, 0); else if (e.code === 'ArrowUp' || e.code === 'KeyW') Theater.rot(0, -k); else if (e.code === 'ArrowDown' || e.code === 'KeyS') Theater.rot(0, k); else if (e.code === 'Escape') Theater.close(); else if ((e.code === 'Enter' || e.code === 'Space') && Theater.cardShown) $('#thNext').click(); return; }
+  if (G.state === 'theater') { const k = 0.12; if (e.code === 'ArrowLeft' || e.code === 'KeyA') Theater.rot(-k, 0); else if (e.code === 'ArrowRight' || e.code === 'KeyD') Theater.rot(k, 0); else if (e.code === 'ArrowUp' || e.code === 'KeyW') Theater.rot(0, -k); else if (e.code === 'ArrowDown' || e.code === 'KeyS') Theater.rot(0, k); else if (e.code === 'Escape') Theater.close(); else if (e.code === 'Tab') { e.preventDefault(); Theater.cycle(); } else if ((e.code === 'Enter' || e.code === 'Space') && Theater.cardShown) $('#thNext').click(); return; }
   if (G.state === 'map') { if (e.code === 'ArrowLeft' || e.code === 'KeyA') SkyMap.go(Math.round(SkyMap.tf) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') SkyMap.go(Math.round(SkyMap.tf) + 1); else if (e.code === 'Enter' || e.code === 'Space') $('#mpPlay').click(); else if (e.code === 'Escape') $('#btnMapBack').click(); return; }
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') { G.keyDir = 1; if (G.state === 'ready') startPlay(); }
@@ -460,7 +460,7 @@ function buildMap() {
   const endOk = un >= 16, dayOk = un >= 4;
   $('#btnEndless').classList.toggle('lockd', !endOk); $('#btnDaily').classList.toggle('lockd', !dayOk);
   $('#endlessInfo').textContent = endOk ? (Save.data.endlessBest ? `En iyi ${Save.data.endlessBest}` : 'Yeni') : '16. adada açılır';
-  $('#theaterInfo').textContent = `${(Save.data.theater || []).length}/${ST_FIGS.length}`;
+  $('#theaterInfo').textContent = `${(Save.data.theater || []).length}/${ST_ACTS.length}`;
   $('#dailyInfo').textContent = dayOk ? (Save.data.daily.date === dateNum() ? `★ ${Save.data.daily.stars}/3` : 'Bugün') : '4. adada açılır';
   const sk = $('#skins'); sk.innerHTML = '<span>Zifir</span>';
   SKINS.forEach((s, i) => {
