@@ -574,7 +574,7 @@ function frame(now) {
   audio.update(dtR, G.state === 'play');
   const onMap = G.state === 'map' && SkyMap.active, onTh = G.state === 'theater' && Theater.active;
   if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
-  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera);
+  if (!window.__noRender && !window.__ldCover && (!TUT.open || (frameNo++ & 1) === 0)) post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera);
 }
 function bootGame() {
   applyQuality();
@@ -588,8 +588,9 @@ function bootGame() {
   Cam.update(0, 0);
   try { renderer.compile(scene, camera); } catch (e) {}
   requestAnimationFrame((t) => { lastT = t; frame(t); });
-  // sinematik çıkış: yükleme sahnesi en az ~2.4 sn görünür, sonra ışık patlamasıyla adaya dalınır
-  const ld = $('#loader'), wait = Math.max(250, 2400 - performance.now());
+  // sinematik çıkış: 5 sn'lik yükleme sahnesi (bulutlar → ay → şafak → tutulma) bitince ışık patlamasıyla adaya dalınır
+  const ld = $('#loader'), wait = Math.max(300, 5150 - (performance.now() - (window.__ldT0 || 0)));
+  setTimeout(() => { window.__ldCover = false; }, Math.max(0, wait - 600));
   setTimeout(() => {
     ld.classList.add('done'); replayTitleIntro();
     setTimeout(() => ld.classList.add('off'), 650);
