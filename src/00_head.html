@@ -49,20 +49,75 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 .icon:active{transform:scale(.9)}
 .icon svg{width:20px;height:20px;stroke:var(--ivory);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
-/* ---------- loader ---------- */
-#loader{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
-  background:radial-gradient(120% 80% at 50% 40%,#2b2050 0%,#140f24 60%,#0b0816 100%);transition:opacity .9s ease;z-index:20;pointer-events:auto}
+/* ---------- yükleme: gündönümü usturlabı ---------- */
+#loader{position:absolute;inset:0;z-index:20;pointer-events:auto;overflow:hidden;background:#0b0920;transition:opacity .8s ease;
+  --S:min(86vw,54vh);--T:6.4s;--D:calc(var(--T) * -.6)}
 #loader.off{opacity:0;pointer-events:none}
-#loader .sunmark{width:74px;height:74px;border-radius:50%;position:relative;
-  background:radial-gradient(circle at 50% 50%,#fff8e0 0%,#ffd27a 30%,#ff9f45 58%,rgba(255,120,40,0) 72%);animation:breathe 2.2s ease-in-out infinite}
-#loader .sunmark::after{content:"";position:absolute;left:50%;top:50%;width:38px;height:38px;margin:-19px 0 0 -6px;border-radius:50%;background:#140f24;
-  box-shadow:0 0 0 1px rgba(0,0,0,.2);animation:eclipse 2.2s ease-in-out infinite}
-@keyframes breathe{0%,100%{transform:scale(1);filter:brightness(1)}50%{transform:scale(1.07);filter:brightness(1.15)}}
-@keyframes eclipse{0%,100%{transform:translateX(14px)}50%{transform:translateX(-14px)}}
-#loader .ltitle{font-family:var(--serif);font-style:italic;font-weight:600;font-size:34px;letter-spacing:.2em;text-indent:.2em;color:var(--ivory)}
-#loader .lmsg{font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--ivory-dim)}
+#loader .lsun{animation:lSunV var(--T) linear infinite}#loader .lmoon{animation:lMoonV var(--T) linear infinite}
+@keyframes lSunV{0%,20%{opacity:1}31%,69%{opacity:.28}80%,100%{opacity:1}}
+@keyframes lMoonV{0%,20%{opacity:.3}31%,69%{opacity:1}80%,100%{opacity:.3}}
+#loader .lsky.d,#loader .lsky.g,#loader .lstars,#loader .lorbit,#loader .lsh b,#loader .lsh u,#loader .lsun,#loader .lmoon{animation-delay:var(--D)!important}
+#loader .lsky{position:absolute;inset:-5%;will-change:opacity}
+#loader .lsky.n{background:radial-gradient(130% 90% at 50% 38%,#2a1f62 0%,#151036 45%,#070615 100%)}
+#loader .lsky.d{background:linear-gradient(180deg,#3f6fd0 0%,#8fa8e8 30%,#ffd2a8 62%,#ff9f86 82%,#c86a8a 100%);animation:lDay var(--T) linear infinite}
+#loader .lsky.g{background:radial-gradient(90% 55% at 50% 100%,rgba(255,140,70,.85),rgba(255,90,90,.35) 45%,rgba(255,90,90,0) 75%);animation:lDusk var(--T) linear infinite}
+@keyframes lDay{0%{opacity:.92}18%{opacity:.75}27%{opacity:.18}38%,62%{opacity:0}73%{opacity:.18}82%{opacity:.75}100%{opacity:.92}}
+@keyframes lDusk{0%,12%{opacity:0}25%{opacity:1}36%,64%{opacity:0}75%{opacity:1}88%,100%{opacity:0}}
+#loader .lstars{position:absolute;left:0;top:0;width:2px;height:2px;border-radius:50%;background:#fff;will-change:opacity}
+#loader .lstars.a{box-shadow:12vw 8vh #fff,31vw 15vh #fff,47vw 5vh #fff,66vw 12vh #fff,83vw 7vh #fff,92vw 22vh #fff,6vw 30vh #fff,23vw 41vh #fff,74vw 33vh #fff,58vw 26vh #fff,39vw 31vh #fff,88vw 44vh #fff,15vw 58vh #fff,95vw 61vh #fff,4vw 76vh #fff;animation:lStar var(--T) linear infinite}
+#loader .lstars.b{box-shadow:20vw 18vh #dfe6ff,42vw 12vh #dfe6ff,62vw 4vh #ffe9c8,77vw 19vh #dfe6ff,9vw 14vh #ffe9c8,35vw 22vh #dfe6ff,52vw 38vh #dfe6ff,81vw 30vh #ffe9c8,28vw 52vh #dfe6ff,68vw 49vh #dfe6ff,90vw 82vh #dfe6ff,10vw 88vh #ffe9c8;animation:lStar var(--T) linear infinite,lTw 1.7s ease-in-out infinite alternate}
+@keyframes lStar{0%,22%{opacity:0}36%,64%{opacity:1}78%,100%{opacity:0}}
+@keyframes lTw{0%{transform:scale(1)}100%{transform:scale(.6)}}
+#loader .lcloud{position:absolute;border-radius:50%;background:radial-gradient(closest-side,rgba(255,236,230,.55),rgba(255,236,230,0));will-change:transform;animation:lDrift linear infinite}
+@keyframes lDrift{0%{transform:translateX(-30vw)}100%{transform:translateX(130vw)}}
+#loader .lfar{position:absolute;width:calc(var(--S)*.26);opacity:.55;will-change:transform;animation:lFloat 7s ease-in-out infinite alternate}
+#loader .lfar svg{width:100%;display:block}
+@keyframes lFloat{0%{transform:translateY(-6px)}100%{transform:translateY(8px)}}
+#loader .lstage{position:absolute;left:50%;top:44%;width:var(--S);height:var(--S);margin:calc(var(--S)/-2) 0 0 calc(var(--S)/-2);will-change:transform,opacity;transition:transform 1.1s cubic-bezier(.6,0,.2,1),opacity .9s ease .2s}
+#loader .ldial{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+#loader .lring{position:absolute;inset:3%;border-radius:50%;will-change:transform;
+  background:repeating-conic-gradient(rgba(255,214,140,.55) 0 .35deg,transparent .35deg 5deg);
+  -webkit-mask:radial-gradient(closest-side,transparent 94%,#000 95%,#000 99%,transparent 100%);mask:radial-gradient(closest-side,transparent 94%,#000 95%,#000 99%,transparent 100%);animation:lSpin 40s linear infinite}
+#loader .lorbit{position:absolute;inset:0;will-change:transform;animation:lSpin var(--T) linear infinite}
+@keyframes lSpin{100%{transform:rotate(360deg)}}
+#loader .lsun,#loader .lmoon{position:absolute;left:50%;border-radius:50%}
+#loader .lsun{top:6%;width:15%;height:15%;margin:-7.5% 0 0 -7.5%;
+  background:radial-gradient(circle,#fffdf2 0%,#fff1c2 26%,#ffc861 44%,rgba(255,150,60,.45) 58%,rgba(255,120,40,0) 72%);box-shadow:0 0 calc(var(--S)*.12) rgba(255,170,80,.55)}
+#loader .lsun::before{content:"";position:absolute;inset:-70%;border-radius:50%;background:repeating-conic-gradient(rgba(255,226,160,.5) 0 3deg,transparent 3deg 22.5deg);
+  -webkit-mask:radial-gradient(closest-side,transparent 30%,#000 34%,transparent 100%);mask:radial-gradient(closest-side,transparent 30%,#000 34%,transparent 100%);animation:lSpin 9s linear infinite reverse}
+#loader .lmoon{bottom:6%;width:10%;height:10%;margin:0 0 -5% -5%;background:transparent;box-shadow:inset 0 calc(var(--S)*.02) 0 0 #f2ecff,0 0 calc(var(--S)*.06) rgba(190,180,255,.45)}
+#loader .lisle{position:absolute;left:11%;top:22%;width:78%;will-change:transform;animation:lBob 4.6s ease-in-out infinite alternate}
+#loader .lisle svg{width:100%;display:block;overflow:visible}
+@keyframes lBob{0%{transform:translateY(calc(var(--S)*-.012))}100%{transform:translateY(calc(var(--S)*.018))}}
+#loader .lsh{position:absolute;width:0;height:0}
+#loader .lsh i{position:absolute;left:0;top:0;transform:scaleY(.3)}
+#loader .lsh b{position:absolute;left:0;top:0;will-change:transform;animation:lSpin var(--T) linear infinite;transform-origin:0 0}
+#loader .lsh u{position:absolute;left:0;top:calc(var(--S)*-.014);width:var(--L);height:calc(var(--S)*.028);border-radius:999px;transform-origin:0 50%;
+  background:linear-gradient(90deg,rgba(28,12,58,.62),rgba(28,12,58,0));will-change:transform,opacity;animation:lLen var(--T) linear infinite}
+@keyframes lLen{0%{transform:scaleX(.42);opacity:.75}18%{transform:scaleX(1.05);opacity:.7}26%{transform:scaleX(1.5);opacity:.25}31%,69%{transform:scaleX(1.5);opacity:0}74%{transform:scaleX(1.5);opacity:.25}82%{transform:scaleX(1.05);opacity:.7}100%{transform:scaleX(.42);opacity:.75}}
+#loader .lzeyes{transform-box:fill-box;transform-origin:50% 50%;animation:lBlink 3.4s infinite}
+@keyframes lBlink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+#loader .lflare{position:absolute;left:50%;top:44%;width:var(--S);height:var(--S);margin:calc(var(--S)/-2) 0 0 calc(var(--S)/-2);border-radius:50%;opacity:0;pointer-events:none;
+  background:radial-gradient(closest-side,#fffaf0,rgba(255,226,160,.85) 30%,rgba(255,170,90,.35) 60%,rgba(255,150,80,0));transform:scale(.2);will-change:transform,opacity}
+#loader .lfoot{position:absolute;left:0;right:0;top:calc(44% + var(--S)/2 + 2vh);display:flex;flex-direction:column;align-items:center;gap:12px;transition:transform 1s cubic-bezier(.6,0,.2,1),opacity .7s}
+#loader .ltitle{display:flex;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(34px,9.5vw,52px);letter-spacing:.06em;color:#fff4e2;text-shadow:0 0 28px rgba(255,190,110,.45),0 2px 18px rgba(0,0,0,.35)}
+#loader .ltitle span{display:inline-block;opacity:0;transform:translateY(14px);animation:lCh .9s cubic-bezier(.2,.9,.2,1) forwards}
+@keyframes lCh{100%{opacity:1;transform:none}}
+#loader .lmsgs{position:relative;height:16px;width:80vw}
+#loader .lmsgs span{position:absolute;left:0;right:0;text-align:center;font-size:11px;font-weight:700;letter-spacing:.34em;text-transform:uppercase;color:rgba(255,236,204,.72);opacity:0;animation:lMsg 4.8s linear infinite}
+@keyframes lMsg{0%{opacity:0;transform:translateY(6px)}5%,22%{opacity:1;transform:none}27%,100%{opacity:0;transform:translateY(-6px)}}
+#loader .lbar{width:min(54vw,240px);height:2px;border-radius:2px;background:rgba(255,236,204,.14);overflow:hidden}
+#loader .lbar i{display:block;height:100%;width:100%;background:linear-gradient(90deg,#ffdf9e,#ff9a4a);box-shadow:0 0 10px #ffb060;transform-origin:0 50%;transform:scaleX(.04);animation:lProg 2.6s cubic-bezier(.3,.6,.3,1) forwards}
+@keyframes lProg{100%{transform:scaleX(.9)}}
+#loader.done .lbar i{transform:scaleX(1);animation:none;transition:transform .35s}
+#loader.done .lstage{transform:scale(2.4) translateY(4%);opacity:0}
+#loader.done .lfoot{transform:translateY(-24px);opacity:0}
+#loader.done .lflare{animation:lBurst 1.2s cubic-bezier(.2,.8,.2,1) forwards}
+@keyframes lBurst{0%{opacity:0;transform:scale(.2)}25%{opacity:1}100%{opacity:0;transform:scale(4.5)}}
 #loader .lerr{display:none;flex-direction:column;align-items:center;gap:16px;text-align:center;padding:0 30px;font-size:15px;line-height:1.5;color:var(--ivory)}
-#loader.err .lerr{display:flex}#loader.err .lmsg{display:none}
+#loader.err .lerr{display:flex}#loader.err .lmsgs,#loader.err .lbar{display:none}
+@media (min-aspect-ratio:5/4){#loader{--S:min(60vh,46vw)}#loader .lstage,#loader .lflare{top:42%}#loader .lfoot{top:calc(42% + var(--S)/2 + 1vh)}#loader .lfoot{gap:8px}}
+@media (prefers-reduced-motion:reduce){#loader *{animation-duration:20s!important}}
 
 /* ---------- title ---------- */
 #title{justify-content:space-between;padding:calc(var(--sat) + 9vh) 24px calc(var(--sab) + 30px)}
@@ -400,10 +455,61 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 </defs></svg>
 <div id="ui">
   <div id="loader">
-    <div class="sunmark"></div>
-    <div class="ltitle">GÜNDÖNÜMÜ</div>
-    <div class="lmsg">Güneş doğuyor…</div>
-    <div class="lerr"><div>Oyun motoru yüklenemedi.<br>İnternet bağlantını kontrol edip tekrar dene.</div><button class="btn ghost tap" id="btnRetryLoad" style="pointer-events:auto">Tekrar dene</button></div>
+    <div class="lsky n"></div><div class="lsky d"></div><div class="lsky g"></div>
+    <div class="lstars a"></div><div class="lstars b"></div>
+    <div class="lcloud" style="top:16vh;width:46vw;height:9vh;animation-duration:38s;animation-delay:-12s"></div>
+    <div class="lcloud" style="top:70vh;width:60vw;height:12vh;animation-duration:52s;animation-delay:-30s;opacity:.7"></div>
+    <div class="lfar" style="left:4vw;top:16vh"><svg viewBox="0 0 100 70"><path d="M8 26 C 14 46, 36 58, 50 70 C 64 58, 86 46, 92 26 Z" fill="#5a4670"/><ellipse cx="50" cy="26" rx="42" ry="11" fill="#b9a4c8"/><path d="M40 24 l4 -18 l4 18 Z M58 26 l3 -12 l3 12 Z" fill="#5a4670"/></svg></div>
+    <div class="lfar" style="right:5vw;top:26vh;animation-delay:-3s;width:calc(var(--S)*.18)"><svg viewBox="0 0 100 70"><path d="M8 26 C 14 46, 36 58, 50 70 C 64 58, 86 46, 92 26 Z" fill="#6a4a62"/><ellipse cx="50" cy="26" rx="42" ry="11" fill="#c8b0b8"/><path d="M40 24 l4 -18 l4 18 Z M58 26 l3 -12 l3 12 Z" fill="#6a4a62"/></svg></div>
+    <div class="lfar" style="left:10vw;bottom:14vh;animation-delay:-5s;width:calc(var(--S)*.16);opacity:.4"><svg viewBox="0 0 100 70"><path d="M8 26 C 14 46, 36 58, 50 70 C 64 58, 86 46, 92 26 Z" fill="#4a3a66"/><ellipse cx="50" cy="26" rx="42" ry="11" fill="#a898c8"/><path d="M40 24 l4 -18 l4 18 Z M58 26 l3 -12 l3 12 Z" fill="#4a3a66"/></svg></div>
+    <div class="lflare"></div>
+    <div class="lstage">
+      <svg class="ldial" viewBox="0 0 400 400" aria-hidden="true">
+        <defs><linearGradient id="lgBrass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#8a5a2a"/><stop offset=".5" stop-color="#f2c46d"/><stop offset="1" stop-color="#8a5a2a"/></linearGradient></defs>
+        <circle cx="200" cy="200" r="176" fill="none" stroke="#5a3a1a" stroke-width="7" opacity=".45"/>
+        <circle cx="200" cy="200" r="176" fill="none" stroke="url(#lgBrass)" stroke-width="3.4"/>
+        <circle cx="200" cy="200" r="160" fill="none" stroke="rgba(242,196,109,.3)" stroke-width="1"/>
+        <path d="M30 200 H370" stroke="rgba(255,226,170,.22)" stroke-width="1" stroke-dasharray="1 5"/>
+        <circle cx="200" cy="200" r="190" fill="none" stroke="rgba(242,196,109,.18)" stroke-width="1" stroke-dasharray="2 7"/>
+        <g stroke="#f2c46d" stroke-width="2" opacity=".75"><path d="M200 16 v14 M200 370 v14 M16 200 h14 M370 200 h14"/></g>
+        <g fill="#f2c46d" opacity=".7"><circle cx="200" cy="24" r="3"/><circle cx="200" cy="376" r="3"/><circle cx="24" cy="200" r="3"/><circle cx="376" cy="200" r="3"/></g>
+      </svg>
+      <div class="lring"></div>
+      <div class="lorbit"><div class="lsun"></div><div class="lmoon"></div></div>
+      <div class="lisle"><svg viewBox="0 0 400 300" aria-hidden="true"><defs>
+        <linearGradient id="lgTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f4e2b8"/><stop offset="1" stop-color="#d2b07c"/></linearGradient>
+        <linearGradient id="lgCliff" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c49670"/><stop offset=".45" stop-color="#8a5c56"/><stop offset="1" stop-color="#3a2856" stop-opacity="0"/></linearGradient>
+        <radialGradient id="lgGate"><stop offset="0" stop-color="#3a24a0"/><stop offset=".6" stop-color="#160a3a"/><stop offset=".85" stop-color="#8a6cff"/><stop offset="1" stop-color="#d8c8ff" stop-opacity=".3"/></radialGradient>
+        <radialGradient id="lgZ" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#2a2050"/><stop offset=".72" stop-color="#0b0814"/><stop offset="1" stop-color="#a090ff"/></radialGradient>
+      </defs>
+      <path d="M68 150 C 86 214, 156 252, 200 296 C 244 252, 314 214, 332 150 Z" fill="url(#lgCliff)"/>
+      <path d="M86 176 Q 200 214 314 176 M104 200 Q 200 236 296 200" stroke="rgba(255,230,200,.14)" stroke-width="2" fill="none"/>
+      <path d="M150 238 l7 30 l7 -30 Z M238 232 l6 22 l6 -22 Z M196 270 l4 22 l4 -22 Z" fill="#4a3456"/>
+      <ellipse cx="200" cy="150" rx="132" ry="34" fill="url(#lgTop)"/>
+      <ellipse cx="200" cy="150" rx="132" ry="34" fill="none" stroke="#8fa252" stroke-width="3.5" opacity=".85"/>
+      <path d="M96 156 Q 150 138 196 156 T 296 146" stroke="#fbf0d8" stroke-width="9" stroke-linecap="round" fill="none" opacity=".75"/>
+      <g fill="#9fb05a" opacity=".8"><circle cx="130" cy="140" r="2"/><circle cx="262" cy="164" r="2"/><circle cx="312" cy="152" r="2"/><circle cx="160" cy="170" r="1.6"/><circle cx="240" cy="138" r="1.6"/></g>
+      <g fill="#e05a96"><circle cx="138" cy="146" r="2.2"/><circle cx="276" cy="158" r="2.2"/><circle cx="252" cy="170" r="1.8"/></g>
+      <ellipse cx="300" cy="146" rx="15" ry="21" fill="url(#lgGate)"/><ellipse cx="300" cy="146" rx="17" ry="23" fill="none" stroke="#efe2c8" stroke-width="5"/>
+      <rect x="211" y="108" width="42" height="42" fill="#f6f1e8"/><rect x="209" y="105" width="46" height="5" fill="#fffdf6"/>
+      <path d="M220 108 A 12 12 0 0 1 244 108 Z" fill="#2f6ed2"/><rect x="216" y="132" width="9" height="18" rx="1" fill="#2b5fb8"/><rect x="234" y="120" width="10" height="10" rx="1" fill="#3a6fd0"/>
+      <rect x="148" y="140" width="4" height="12" fill="#5a4532"/>
+      <path d="M150 74 C 166 98, 166 134, 150 144 C 134 134, 134 98, 150 74 Z" fill="#2c4f2a"/><path d="M150 74 C 162 98, 160 128, 151 140" stroke="#4f7a3e" stroke-width="2.6" fill="none"/>
+      <rect x="170" y="150" width="3" height="9" fill="#5a4532"/>
+      <path d="M171 112 C 182 128, 182 148, 171 153 C 160 148, 160 128, 171 112 Z" fill="#335a2e"/>
+      <g transform="translate(192 160)"><ellipse cx="0" cy="3" rx="13" ry="4" fill="rgba(8,4,18,.45)"/><ellipse cx="0" cy="-8" rx="11" ry="12" fill="url(#lgZ)"/>
+        <g class="lzeyes"><ellipse cx="-4" cy="-10" rx="2.6" ry="3.4" fill="#fff"/><ellipse cx="4.2" cy="-10" rx="2.6" ry="3.4" fill="#fff"/><circle cx="-3.4" cy="-10" r="1.3" fill="#05030a"/><circle cx="4.8" cy="-10" r="1.3" fill="#05030a"/></g></g>
+    </svg>
+        <div class="lsh" style="left:37.50%;top:50.00%;--L:calc(var(--S)*0.1443)"><i><b><u></u></b></i></div><div class="lsh" style="left:42.75%;top:52.00%;--L:calc(var(--S)*0.0936)"><i><b><u></u></b></i></div><div class="lsh" style="left:58.00%;top:50.00%;--L:calc(var(--S)*0.1248)"><i><b><u></u></b></i></div><div class="lsh" style="left:75.00%;top:50.00%;--L:calc(var(--S)*0.0780)"><i><b><u></u></b></i></div>
+      </div>
+    </div>
+    <div class="lfoot">
+      <div class="ltitle"><span style="animation-delay:0.15s">G</span><span style="animation-delay:0.22s">ü</span><span style="animation-delay:0.29s">n</span><span style="animation-delay:0.36s">d</span><span style="animation-delay:0.43s">ö</span><span style="animation-delay:0.50s">n</span><span style="animation-delay:0.57s">ü</span><span style="animation-delay:0.64s">m</span><span style="animation-delay:0.71s">ü</span></div>
+      <div class="lmsgs"><span style="animation-delay:0s">Güneş doğuyor…</span><span style="animation-delay:1.2s">Adalar havalanıyor…</span><span style="animation-delay:2.4s">Gölgeler uzanıyor…</span><span style="animation-delay:3.6s">Ay yolunu buluyor…</span></div>
+      <div class="lbar"><i></i></div>
+      <div class="lerr"><div>Oyun motoru yüklenemedi.<br>İnternet bağlantını kontrol edip tekrar dene.</div><button class="btn ghost tap" id="btnRetryLoad" style="pointer-events:auto">Tekrar dene</button></div>
+    </div>
+  </div>
   </div>
 
   <div id="title" class="screen">

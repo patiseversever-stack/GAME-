@@ -588,9 +588,25 @@ function bootGame() {
   Cam.update(0, 0);
   try { renderer.compile(scene, camera); } catch (e) {}
   requestAnimationFrame((t) => { lastT = t; frame(t); });
-  setTimeout(() => $('#loader').classList.add('off'), 250);
-  if (!Save.seen('tutorial')) setTimeout(() => TUT.show('boot'), 1300);
-  else setTimeout(() => UI.show('title'), 900);
+  // sinematik çıkış: yükleme sahnesi en az ~2.4 sn görünür, sonra ışık patlamasıyla adaya dalınır
+  const ld = $('#loader'), wait = Math.max(250, 2400 - performance.now());
+  setTimeout(() => {
+    ld.classList.add('done'); replayTitleIntro();
+    setTimeout(() => ld.classList.add('off'), 650);
+    setTimeout(() => { ld.style.display = 'none'; }, 1600);
+    if (!Save.seen('tutorial')) setTimeout(() => TUT.show('boot'), 1500);
+    else setTimeout(() => UI.show('title'), 1100);
+  }, wait);
+}
+// açılış sinematiği yükleme ekranı kalkarken yeniden başlar (ada yükselir, kamera iner)
+function replayTitleIntro() {
+  if (!G.lv || G.state !== 'title') return;
+  const tp = Cam.title;
+  Cam.set(Cam.cur, { target: tp.target.clone().add(new THREE.Vector3(0, 10, -8)), dist: tp.dist * 2.4, pitch: deg(78), yaw: 0, fov: tp.fov });
+  Cam.cinema({ target: tp.target.clone(), dist: tp.dist, pitch: tp.pitch, yaw: 0, fov: tp.fov }, 3.2, Ease.inOutCubic);
+  if (G.view) G.view.introT = 0;
+  G.zShown = false; zifir.g.visible = false; G.stateT = 0; if (!G.userSun) G.u = G.uT = 0;
+  renderer.shadowMap.needsUpdate = true;
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
