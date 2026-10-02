@@ -278,11 +278,13 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #theater .tttl{display:flex;flex-direction:column;align-items:center}
 #theater h5{font-family:var(--serif);font-style:italic;font-weight:600;font-size:26px;color:#ffe6c0;text-shadow:0 0 22px rgba(255,150,60,.45)}
 #theater .thsub{display:flex;align-items:center;gap:10px;margin-top:4px;font-size:10px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-2)}
-#thDots{display:flex;gap:6px}#thDots i{width:6px;height:6px;border-radius:50%;background:rgba(255,230,190,.25)}
+#thDots{display:flex;gap:7px;pointer-events:auto}#thDots i{width:7px;height:7px;border-radius:50%;background:rgba(255,230,190,.28);cursor:pointer;transition:transform .3s,background .3s}#thDots i.lock{opacity:.35;cursor:default}
+#thTime{font-variant-numeric:tabular-nums;letter-spacing:.12em;color:rgba(255,226,180,.7)}
 #thDots i.ok{background:#ffcf7a;box-shadow:0 0 8px #ff9a3a}#thDots i.on{transform:scale(1.5);background:#fff2d6;box-shadow:0 0 10px #ffd28a}
 #thMsg{position:absolute;left:50%;bottom:calc(var(--sab) + 34px);transform:translate(-50%,10px);width:min(86vw,420px);text-align:center;font-size:14px;line-height:1.5;color:#ffeccc;
   padding:12px 18px;border-radius:18px;background:rgba(30,14,6,.5);border:1px solid rgba(255,210,150,.2);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;transition:opacity .5s,transform .5s;pointer-events:none}
-#thMsg.on{opacity:1;transform:translate(-50%,0)}#thMsg em{font-style:normal;color:#ffcf7a}
+#thMsg.on{opacity:1;transform:translate(-50%,0)}#thMsg em{font-style:normal;color:#ffcf7a}#thMsg b{font-family:var(--serif);font-style:italic;font-weight:600;font-size:19px;color:#fff0d4;letter-spacing:.01em}
+#thHint.used{opacity:.55}
 #thCard{position:absolute;left:50%;bottom:calc(var(--sab) + 26px);transform:translate(-50%,24px);width:min(90vw,440px);text-align:center;padding:20px 22px 18px;border-radius:26px;opacity:0;pointer-events:none;
   background:linear-gradient(170deg,rgba(60,28,12,.62),rgba(20,8,4,.72));border:1px solid rgba(255,210,150,.24);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);box-shadow:0 24px 60px rgba(0,0,0,.5);transition:opacity .7s,transform .7s cubic-bezier(.2,.9,.2,1)}
 #theater.solved #thCard{opacity:1;transform:translate(-50%,0)}#theater.solved #thCard .tap{pointer-events:auto}
@@ -290,7 +292,11 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #thCard h3{font-family:var(--serif);font-style:italic;font-weight:600;font-size:44px;line-height:1;margin-top:6px;color:#fff1d8;text-shadow:0 0 30px rgba(255,140,50,.5)}
 #thCard p{font-size:13.5px;line-height:1.5;color:rgba(255,236,204,.75);margin-top:8px}
 #thCard .row{display:flex;gap:10px;justify-content:center;margin-top:14px}
-#thCard .btn.primary{height:50px;min-width:0;padding:0 26px;font-size:13px}#thCard .btn.ghost{height:50px}
+#thCard .btn{white-space:nowrap;letter-spacing:.12em}#thCard .btn.primary{height:50px;min-width:0;padding:0 18px;font-size:12px}#thCard .btn.ghost{height:50px;padding:0 14px;font-size:12px}#thCard .btn.small{padding:0 12px}#thCard .row{gap:8px}
+#thStars{display:flex;justify-content:center;gap:10px;margin-top:10px;font-size:28px;line-height:1}#thStars i{font-style:normal;color:rgba(255,230,190,.18)}
+#thStars i.on{color:#ffd27a;text-shadow:0 0 16px rgba(255,170,60,.8);animation:thStar .6s cubic-bezier(.2,1.6,.4,1) both}
+@keyframes thStar{0%{transform:scale(.2) rotate(-40deg);opacity:0}100%{transform:scale(1) rotate(0);opacity:1}}
+#thStat{margin-top:6px;font-size:10.5px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:rgba(255,210,150,.6)}
 #fader{position:absolute;inset:0;background:#06040e;opacity:0;pointer-events:none;transition:opacity .7s ease;z-index:40}
 #fader.on{opacity:1;transition:opacity .25s ease}
 #chapters{margin-top:2vh;width:100%;flex:1;display:flex;overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
@@ -545,15 +551,17 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
   <div id="theater" class="screen">
     <div class="ttop">
       <button class="icon tap" id="thBack" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
-      <div class="tttl"><h5>Gölge Tiyatrosu</h5><div class="thsub"><span id="thAct">I. perde</span><span id="thDots"></span></div></div>
+      <div class="tttl"><h5>Gölge Tiyatrosu</h5><div class="thsub"><span id="thAct">I. perde</span><span id="thDots"></span><span id="thTime">0:00</span></div></div>
       <button class="icon tap" id="thHint" aria-label="İpucu"><svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg></button>
     </div>
     <div id="thMsg"></div>
     <div id="thCard">
       <div class="k">Gölge canlandı</div>
       <h3 id="thName"></h3>
+      <div id="thStars"></div>
       <p id="thLine"></p>
-      <div class="row"><button class="btn primary tap" id="thNext">Sonraki perde</button><button class="btn ghost tap" id="thExit">Çık</button></div>
+      <div id="thStat"></div>
+      <div class="row"><button class="btn primary tap" id="thNext">Sonraki perde</button><button class="btn ghost tap" id="thReplay">Tekrar izle</button><button class="btn ghost tap small" id="thExit">Çık</button></div>
     </div>
   </div>
   <div id="fader"></div>

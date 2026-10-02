@@ -525,6 +525,7 @@ bind('#btnTheater', () => openTheater('map'));
 bind('#btnTheaterT', () => openTheater('title'));
 bind('#thBack', () => { audio.ui(); $('#fader').classList.add('on'); setTimeout(() => { Theater.close(); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); });
 bind('#thExit', () => $('#thBack').click());
+bind('#thReplay', () => Theater.replay());
 bind('#thHint', () => Theater.hint());
 bind('#thNext', () => { Theater.cardShown = false; Theater.next(); });
 bind('#mapPrev', () => { audio.ui(); SkyMap.go(Math.round(SkyMap.tf) - 1); });
