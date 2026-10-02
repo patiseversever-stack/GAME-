@@ -79,7 +79,7 @@ void main(){
   s += texture2D(tSrc, vUv - h).rgb; s += texture2D(tSrc, vUv + h).rgb;
   s += texture2D(tSrc, vUv + vec2(h.x, -h.y)).rgb; s += texture2D(tSrc, vUv - vec2(h.x, -h.y)).rgb;
   s /= 8.0;
-  if (uFirst > 0.5) { if (any(isnan(s)) || any(isinf(s))) s = vec3(0.0); s = k(s); }
+  if (uFirst > 0.5) { if (any(isnan(s)) || any(isinf(s))) s = vec3(0.0); s = k(max(s, 0.0)); }
   gl_FragColor = vec4(s, 1.0);
 }`;
 const UP_FRAG = /* glsl */`
@@ -124,6 +124,7 @@ void main(){
   if (uCA > 0.0001){ vec2 cd = (uv - 0.5) * uCA; col = vec3(texture2D(tScene, uv + cd).r, texture2D(tScene, uv).g, texture2D(tScene, uv - cd).b); }
   else col = texture2D(tScene, uv).rgb;
   if (any(isnan(col))) col = vec3(0.0);
+  col = clamp(col, 0.0, 60.0);
 #ifdef TILT
   float ty = abs(uv.y - uTiltC);
   float b = smoothstep(uTiltW, uTiltW + 0.34, ty) * uTilt;

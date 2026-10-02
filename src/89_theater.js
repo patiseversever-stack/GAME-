@@ -22,6 +22,7 @@ const ST_ACTS = [
   { axes: 3, par: 80, riddle: 'Perdenin asıl sahibi', mats: ['ebony', 'brass', 'cini'] },
 ];
 const ST_FIGS = SF_DEFS.map((d) => sfCompile(d));
+const ST_MASK_RES = [1024, 1536, 1536, 2048];
 const ST_ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
 
 /* ---------- 2B çokgen yardımcıları (perde koordinatı, y yukarı) ---------- */
@@ -241,7 +242,7 @@ const SM = {
 /* ---------- perde (kumaş) gölgelendiricisi ---------- */
 const ST_WALL_V = /* glsl */`varying vec3 vW; varying vec2 vUv; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; vUv = uv; gl_Position = projectionMatrix * viewMatrix * w; }`;
 const ST_WALL_F = /* glsl */`
-uniform sampler2D tMask, tCloth, tMacro, tTgt; uniform vec4 uRect; uniform vec3 uLamp, uLampCol, uSpotDir, uAmb, uHintCol; uniform float uCosIn, uCosOut, uHint, uRep, uGlow, uOut, uTime;
+uniform sampler2D tMask, tCloth, tMacro, tTgt; uniform vec4 uRect; uniform vec3 uLamp, uLampCol, uSpotDir, uAmb, uHintCol; uniform float uCosIn, uCosOut, uHint, uRep, uGlow, uOut, uTime, uSoft;
 varying vec3 vW; varying vec2 vUv;
 void main(){
   vec3 toL = uLamp - vW; float d2 = dot(toL, toL); vec3 l = toL * inversesqrt(d2);
@@ -256,14 +257,18 @@ void main(){
   spot *= 1.0 + 0.018 * sin(ang * 90.0) * smoothstep(uCosOut, uCosIn, cd) + 0.1 * smoothstep(uCosIn, 1.0, cd);
   vec2 mu = (vW.xy - uRect.xy) / uRect.zw;
   float inR = step(0.0, mu.x) * step(mu.x, 1.0) * step(0.0, mu.y) * step(mu.y, 1.0);
-  vec3 occ = texture2D(tMask, clamp(mu, 0.001, 0.999)).rgb * max(inR, uOut);
+  // maske hafifçe bulanık bir alan gibi okunur: 0.5 eşiğinden keskin ve kenar yumuşatmalı kontur
+  vec3 mm = texture2D(tMask, clamp(mu, 0.001, 0.999)).rgb * max(inR, uOut);
+  float mx = max(mm.r, max(mm.g, mm.b)), aa = fwidth(mx) * 0.85 + 0.003;
+  float eg = smoothstep(0.5 - uSoft - aa, 0.5 + uSoft + aa, mx);
+  vec3 occ = mx > 0.002 ? mm / mx * eg : vec3(0.0);
   vec3 weave = texture2D(tCloth, vUv * uRep).rgb;
   vec4 mac = texture2D(tMacro, vUv);
   vec3 alb = vec3(0.92, 0.84, 0.7) * weave * (0.74 + 0.26 * mac.r);
   vec3 E = uLampCol * (ndl * spot / d2) * (1.0 - occ);
   vec3 col = alb * (E + uAmb) * 0.3183;
   // gölgede ışık geçirgenliği: kumaşın içinden sızan sıcak ton
-  col += alb * uLampCol * spot / d2 * 0.012 * occ.r * vec3(1.0, 0.55, 0.25);
+  col += alb * uLampCol * spot / d2 * 0.006 * occ.r * vec3(1.0, 0.5, 0.22);
   float tg = texture2D(tTgt, mu).r * inR;
   float edge = smoothstep(0.12, 0.5, tg) * (1.0 - smoothstep(0.5, 0.88, tg));
   col += uHintCol * (edge * uHint + tg * uHint * 0.06);
@@ -281,18 +286,19 @@ void main(){
   float tw = D.z < -0.01 ? (uWZ - vW.z) / D.z : 30.0; tw = min(tw, 34.0);
   float dt = tw / float(STEPS), acc = 0.0; vec3 P = vW + D * dt * 0.5;
   for (int i = 0; i < STEPS; i++) {
-    vec3 L = P - uLamp; float dl = length(L), ca = dot(L, uAxis) / dl;
-    float cone = smoothstep(uCosOut, uCosIn, ca);
-    if (cone > 0.001) {
-      float ax = dot(L, uAxis), s = (uWZ - uLamp.z) / (P.z - uLamp.z);
-      vec2 mu = ((uLamp + L * s).xy - uRect.xy) / uRect.zw;
-      float occ = texture2D(tMask, mu).r * smoothstep(uDC - 0.5, uDC + 0.7, ax);
+    vec3 L = P - uLamp; float dl = max(length(L), 0.05), ca = dot(L, uAxis) / dl;
+    float cone = smoothstep(uCosOut, uCosIn, ca), dz = P.z - uLamp.z;
+    if (cone > 0.001 && dz < -0.05) {
+      float ax = dot(L, uAxis), s = (uWZ - uLamp.z) / dz;
+      vec2 mu = clamp(((uLamp + L * s).xy - uRect.xy) / uRect.zw, 0.0, 1.0);
+      float occ = clamp(texture2D(tMask, mu).r, 0.0, 1.0) * smoothstep(uDC - 0.5, uDC + 0.7, ax);
       float nz = texture2D(tNoise, P.xy * 0.11 + vec2(P.z * 0.07, uTime * 0.006)).r * 0.65 + texture2D(tNoise, P.yz * 0.27 - vec2(uTime * 0.011, 0.0)).r * 0.35;
       acc += cone * (1.0 - occ * 0.92) * (0.35 + nz * nz * 1.3) / (1.0 + dl * dl * 0.035);
     }
     P += D * dt;
   }
-  gl_FragColor = vec4(uLampCol * acc * dt * uAmt, 1.0);
+  float o = acc * dt * uAmt; if (!(o >= 0.0)) o = 0.0;
+  gl_FragColor = vec4(uLampCol * min(o, 3.0), 1.0);
 }`;
 const ST_DUST_V = /* glsl */`
 attribute float aSeed; uniform float uTime, uPx; uniform vec3 uLamp, uAxis; uniform float uCosIn, uCosOut, uWZ, uDC; uniform sampler2D tMask; uniform vec4 uRect;
@@ -302,33 +308,33 @@ void main(){
   p.x += sin(uTime * 0.11 + aSeed * 21.0) * 0.45 + sin(uTime * 0.37 + aSeed * 7.0) * 0.08;
   p.y += mod(position.y + uTime * (0.03 + fract(aSeed * 13.0) * 0.05) + 6.0, 12.0) - 6.0 - position.y + sin(uTime * 0.23 + aSeed * 9.0) * 0.3;
   p.z += cos(uTime * 0.09 + aSeed * 17.0) * 0.45;
-  vec3 L = p - uLamp; float dl = length(L), ca = dot(L, uAxis) / dl;
-  float cone = smoothstep(uCosOut, uCosIn, ca), s = (uWZ - uLamp.z) / (p.z - uLamp.z);
-  vec2 mu = ((uLamp + L * s).xy - uRect.xy) / uRect.zw;
-  float occ = texture2D(tMask, mu).r * smoothstep(uDC - 0.3, uDC + 0.6, dot(L, uAxis));
+  vec3 L = p - uLamp; float dl = max(length(L), 0.05), ca = dot(L, uAxis) / dl, dz = min(p.z - uLamp.z, -0.05);
+  float cone = smoothstep(uCosOut, uCosIn, ca), s = (uWZ - uLamp.z) / dz;
+  vec2 mu = clamp(((uLamp + L * s).xy - uRect.xy) / uRect.zw, 0.0, 1.0);
+  float occ = clamp(texture2D(tMask, mu).r, 0.0, 1.0) * smoothstep(uDC - 0.3, uDC + 0.6, dot(L, uAxis));
   float tw = 0.45 + 0.55 * pow(abs(sin(uTime * (0.7 + fract(aSeed * 31.0)) + aSeed * 40.0)), 3.0);
-  vA = cone * (1.0 - occ) * tw * 60.0 / (dl * dl + 6.0);
+  vA = clamp(cone * (1.0 - occ) * tw * 60.0 / (dl * dl + 6.0), 0.0, 4.0); if (!(vA >= 0.0)) vA = 0.0;
   vec4 mv = viewMatrix * vec4(p, 1.0);
-  gl_PointSize = uPx * (0.016 + fract(aSeed * 7.0) * 0.022) / -mv.z;
+  gl_PointSize = uPx * (0.016 + fract(aSeed * 7.0) * 0.022) / max(-mv.z, 0.1);
   gl_Position = projectionMatrix * mv;
 }`;
 const ST_DUST_F = /* glsl */`varying float vA; void main(){ vec2 q = gl_PointCoord - 0.5; float r = dot(q, q) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(vec3(1.0, 0.82, 0.55) * vA * (1.0 - r) * (1.0 - r), 1.0); }`;
-const ST_EMB_V = /* glsl */`attribute float aS; attribute vec3 aC; uniform float uPx; varying vec3 vC; void main(){ vC = aC; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = uPx * aS / -mv.z; gl_Position = projectionMatrix * mv; }`;
+const ST_EMB_V = /* glsl */`attribute float aS; attribute vec3 aC; uniform float uPx; varying vec3 vC; void main(){ vC = aC; vec4 mv = modelViewMatrix * vec4(position, 1.0); gl_PointSize = uPx * aS / max(-mv.z, 0.1); gl_Position = projectionMatrix * mv; }`;
 const ST_EMB_F = /* glsl */`varying vec3 vC; void main(){ vec2 q = gl_PointCoord - 0.5; float r = dot(q, q) * 4.0; if (r > 1.0) discard; gl_FragColor = vec4(vC * (1.0 - r) * (1.0 - r), 1.0); }`;
 
 /* ---------- heykel malzemeleri ---------- */
 function stMats() {
   const walnut = stWalnutTex(), cini = stCiniTex();
-  const rough = stTex(stCanvas(256, 256, (x) => { const rng = new RNG(2); x.fillStyle = '#7a7a7a'; x.fillRect(0, 0, 256, 256); for (let i = 0; i < 900; i++) { x.fillStyle = `rgba(${rng.chance(0.5) ? '255,255,255' : '0,0,0'},${rng.range(0.03, 0.09)})`; x.fillRect(rng.range(0, 256), rng.range(0, 256), rng.range(8, 60), 1); } for (let i = 0; i < 40; i++) { const g = x.createRadialGradient(0, 0, 0, 0, 0, 1); x.fillStyle = `rgba(255,255,255,${rng.range(0.05, 0.15)})`; x.beginPath(); x.arc(rng.range(0, 256), rng.range(0, 256), rng.range(3, 14), 0, TAU); x.fill(); } }), false, true);
+  const rough = stTex(stCanvas(256, 256, (x) => { const rng = new RNG(2); x.fillStyle = '#b4b4b4'; x.fillRect(0, 0, 256, 256); for (let i = 0; i < 900; i++) { x.fillStyle = `rgba(${rng.chance(0.5) ? '255,255,255' : '0,0,0'},${rng.range(0.03, 0.09)})`; x.fillRect(rng.range(0, 256), rng.range(0, 256), rng.range(8, 60), 1); } for (let i = 0; i < 40; i++) { const g = x.createRadialGradient(0, 0, 0, 0, 0, 1); x.fillStyle = `rgba(255,255,255,${rng.range(0.05, 0.15)})`; x.beginPath(); x.arc(rng.range(0, 256), rng.range(0, 256), rng.range(3, 14), 0, TAU); x.fill(); } }), false, true);
   return {
-    brass: new THREE.MeshPhysicalMaterial({ color: 0xd6a85c, metalness: 1, roughness: 0.32, roughnessMap: rough, clearcoat: 0.25, clearcoatRoughness: 0.3, envMapIntensity: 1.25 }),
-    copper: new THREE.MeshPhysicalMaterial({ color: 0xc87650, metalness: 1, roughness: 0.36, roughnessMap: rough, envMapIntensity: 1.2 }),
-    silver: new THREE.MeshPhysicalMaterial({ color: 0xdedbd2, metalness: 1, roughness: 0.24, roughnessMap: rough, envMapIntensity: 1.3 }),
+    brass: new THREE.MeshPhysicalMaterial({ color: 0xd6a85c, metalness: 1, roughness: 0.36, roughnessMap: rough, clearcoat: 0.2, clearcoatRoughness: 0.3, envMapIntensity: 1.25 }),
+    copper: new THREE.MeshPhysicalMaterial({ color: 0xc87650, metalness: 1, roughness: 0.4, roughnessMap: rough, envMapIntensity: 1.2 }),
+    silver: new THREE.MeshPhysicalMaterial({ color: 0xdedbd2, metalness: 1, roughness: 0.32, roughnessMap: rough, envMapIntensity: 1.3 }),
     walnut: new THREE.MeshPhysicalMaterial({ map: walnut, color: 0xffffff, roughness: 0.48, clearcoat: 0.8, clearcoatRoughness: 0.22, envMapIntensity: 0.9 }),
-    ebony: new THREE.MeshPhysicalMaterial({ color: 0x2b1e17, roughness: 0.4, clearcoat: 0.9, clearcoatRoughness: 0.15, envMapIntensity: 0.9 }),
-    ivory: new THREE.MeshPhysicalMaterial({ color: 0xeadfc6, roughness: 0.42, clearcoat: 0.45, clearcoatRoughness: 0.3, sheen: 0.4, sheenColor: new THREE.Color(0xfff1d8), envMapIntensity: 0.8 }),
-    cini: new THREE.MeshPhysicalMaterial({ map: cini, color: 0xffffff, roughness: 0.2, clearcoat: 1, clearcoatRoughness: 0.06, envMapIntensity: 1.0 }),
-    glass: new THREE.MeshPhysicalMaterial({ color: 0xffb060, roughness: 0.04, metalness: 0, transparent: true, opacity: 0.32, envMapIntensity: 2.2, clearcoat: 1, clearcoatRoughness: 0.02, specularIntensity: 1, depthWrite: false }),
+    ebony: new THREE.MeshPhysicalMaterial({ color: 0x2b1e17, roughness: 0.4, clearcoat: 0.9, clearcoatRoughness: 0.2, envMapIntensity: 0.9 }),
+    ivory: new THREE.MeshPhysicalMaterial({ color: 0xeadfc6, roughness: 0.46, clearcoat: 0.4, clearcoatRoughness: 0.3, envMapIntensity: 0.8 }),
+    cini: new THREE.MeshPhysicalMaterial({ map: cini, color: 0xffffff, roughness: 0.3, clearcoat: 1, clearcoatRoughness: 0.18, envMapIntensity: 1.0 }),
+    glass: new THREE.MeshPhysicalMaterial({ color: 0xffb060, roughness: 0.18, metalness: 0, transparent: true, opacity: 0.34, envMapIntensity: 1.2, clearcoat: 0.6, clearcoatRoughness: 0.18, depthWrite: false }),
   };
 }
 
@@ -438,8 +444,8 @@ const Theater = {
     // perde
     this.wallU = {
       tMask: { value: null }, tCloth: { value: stClothTex() }, tMacro: { value: stMacroTex() }, tTgt: { value: null }, uRect: { value: new THREE.Vector4() },
-      uLamp: { value: new THREE.Vector3() }, uLampCol: { value: new THREE.Color() }, uSpotDir: { value: new THREE.Vector3() }, uAmb: { value: new THREE.Color(0.16, 0.1, 0.06) },
-      uCosIn: { value: 0.9 }, uCosOut: { value: 0.8 }, uHint: { value: 0 }, uRep: { value: 9 }, uGlow: { value: 0 }, uOut: { value: 0 }, uTime: { value: 0 }, uHintCol: { value: new THREE.Color(2.2, 1.0, 0.35) },
+      uLamp: { value: new THREE.Vector3() }, uLampCol: { value: new THREE.Color() }, uSpotDir: { value: new THREE.Vector3() }, uAmb: { value: new THREE.Color(0.12, 0.075, 0.045) },
+      uCosIn: { value: 0.9 }, uCosOut: { value: 0.8 }, uHint: { value: 0 }, uRep: { value: 9 }, uGlow: { value: 0 }, uOut: { value: 0 }, uTime: { value: 0 }, uSoft: { value: 0.3 }, uHintCol: { value: new THREE.Color(2.2, 1.0, 0.35) },
     };
     this.wall = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShaderMaterial({ vertexShader: ST_WALL_V, fragmentShader: ST_WALL_F, uniforms: this.wallU }));
     stScene.add(this.wall);
@@ -491,9 +497,9 @@ const Theater = {
     this.buildFrame(cx, this.floorY, cw, cy + ch / 2);
     this.floor.position.set(cx, this.floorY - 0.2, ST_WZ + 10.5);
     // maske
-    SM.alloc([768, 1024, 1536, 2048][Perf.level] || 1024);
-    SM.setRect(this.WC.x, this.WC.y + (portrait ? 0.4 : 0), portrait ? 11.5 : 13, this.lamp);
-    this.penumbra = 0.05 * SM.res / SM.size;
+    SM.alloc(ST_MASK_RES[Perf.level] || 1536);
+    SM.setRect(this.WC.x, this.WC.y + (portrait ? 0.4 : 0), portrait ? 9.6 : 12, this.lamp);
+    this.pxu = SM.res / SM.size;
     const W = this.wallU; W.tMask.value = SM.b.texture; W.tTgt.value = SM.tB.texture; W.uRect.value.copy(SM.rect); W.uLamp.value.copy(this.lamp); W.uSpotDir.value.copy(cd); W.uCosIn.value = cosIn; W.uCosOut.value = cosOut;
     const B = this.beamU; B.uLamp.value.copy(this.lamp); B.uAxis.value.copy(cd); B.uCosIn.value = Math.cos(Math.atan(2.0 / this.rayLen)); B.uCosOut.value = Math.cos(Math.atan(4.6 / this.rayLen)); B.tMask.value = SM.b.texture; B.uRect.value.copy(SM.rect); B.uDC.value = this.lamp.distanceTo(this.C);
     this.buildBeam(); this.buildDust(); this.buildEnv();
@@ -538,7 +544,7 @@ const Theater = {
       const env = new THREE.Scene(); env.background = new THREE.Color(0x050302);
       const add = (geo, col, x, y, z, ry = 0) => { const m = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ color: col, side: THREE.DoubleSide })); m.position.set(x, y, z); m.rotation.y = ry; env.add(m); return m; };
       add(new THREE.PlaneGeometry(14, 9), new THREE.Color(1.1, 0.7, 0.38), 0, -0.5, -6);
-      add(new THREE.SphereGeometry(0.7, 16, 12), new THREE.Color(30, 18, 8), this.Ldir.x * 8, this.Ldir.y * 8, this.Ldir.z * 8);
+      add(new THREE.SphereGeometry(0.8, 16, 12), new THREE.Color(7, 4.6, 2.4), this.Ldir.x * 8, this.Ldir.y * 8, this.Ldir.z * 8);
       add(new THREE.PlaneGeometry(30, 30), new THREE.Color(0.12, 0.06, 0.03), 0, -6, 0).rotation.x = -PI / 2;
       add(new THREE.PlaneGeometry(6, 14), new THREE.Color(0.32, 0.03, 0.05), -9, 0, -2, PI / 2); add(new THREE.PlaneGeometry(6, 14), new THREE.Color(0.32, 0.03, 0.05), 9, 0, -2, -PI / 2);
       add(new THREE.PlaneGeometry(10, 4), new THREE.Color(0.5, 0.3, 0.16), 0, 7, 3).rotation.x = PI / 2;
@@ -753,19 +759,23 @@ const Theater = {
     }
     this.updateEmbers(dtR);
     // gölge maskesi
-    let polys = null, blurK = 1.25 - this.near * 0.25;
+    let polys = null, bigBlur = 0;
+    // oynarken: heykel perdeden uzakta, ince bir yarı-gölge; çözülünce gölge perdeye yapışır ve keskinleşir
+    const crisp = sv >= 0 ? smoothstep(0.0, 0.45, sv) : smoothstep(0.55, 1, this.near) * 0.35;
     if (sv >= 0) {
       if (sv > 1.1) {
         if (this.perfT < 0) this.perfT = 0; else this.perfT += dtR;
         sfResetPose(this.F, this.pose); this.F.def.perform(this.perfT, this.pose);
         const ev = this.F.def.events || []; while (this.evI < ev.length && this.perfT >= ev[this.evI][0]) { stSfx(this.F.def.key, ev[this.evI][1]); this.evI++; }
         if (this.perfT > this.F.def.dur && !this.cardShown) { this.cardShown = true; this.showCard(); }
-        blurK = 1 + (this.pose.k.blur || 0) * 9; this.wallU.uOut.value = smoothstep(0.3, 0.8, this.pose.k.blur || 0);
+        bigBlur = this.pose.k.blur || 0; this.wallU.uOut.value = smoothstep(0.3, 0.8, bigBlur);
       } else sfResetPose(this.F, this.pose);
-      polys = this.figWorld(); blurK *= sv < 0.3 ? 0.75 + sv : 1;
+      polys = this.figWorld();
     }
+    const blurPx = lerp(Math.max(2.2, 0.026 * this.pxu), 1.7, crisp) + bigBlur * 0.09 * this.pxu;
+    this.wallU.uSoft.value = lerp(0.22, 0.0, crisp) + bigBlur * 0.45;
     this.root.updateMatrixWorld(true);
-    SM.render(sv < 0, polys, this.penumbra * blurK);
+    SM.render(sv < 0, polys, blurPx);
     // kandil titremesi ve ışık şiddeti
     const flick = 1 + Math.sin(t * 13.1) * 0.012 + Math.sin(t * 7.3 + 1) * 0.016 + Math.sin(t * 23.7) * 0.006;
     const flare = sv >= 0 ? Math.exp(-sv * 2.2) * 0.9 : 0, lampI = this.lampOn * flick * (1 + this.near * 0.18 + flare);
@@ -830,9 +840,9 @@ const Theater = {
   updateDots() { const sv = Save.data.theater || []; this.dots.forEach((d, k) => { d.classList.toggle('ok', sv.includes(k)); d.classList.toggle('lock', !this.unlocked(k)); }); },
   apply() {
     // kalite değişti: maske çözünürlüğü, huzme adımları, toz sayısı
-    if (this.qLevel !== Perf.level) { const first = this.qLevel === undefined; this.qLevel = Perf.level; if (!first && this.inited && this.lamp) { SM.alloc([768, 1024, 1536, 2048][Perf.level] || 1024); this.penumbra = 0.05 * SM.res / SM.size; this.wallU.tMask.value = SM.b.texture; this.wallU.tTgt.value = SM.tB.texture; this.beamU.tMask.value = SM.b.texture; this.buildBeam(); this.buildDust(); SM.renderTarget(this.toWorld(this.restPolys)); } }
+    if (this.qLevel !== Perf.level) { const first = this.qLevel === undefined; this.qLevel = Perf.level; if (!first && this.inited && this.lamp) { SM.alloc(ST_MASK_RES[Perf.level] || 1536); this.pxu = SM.res / SM.size; this.wallU.tMask.value = SM.b.texture; this.wallU.tTgt.value = SM.tB.texture; this.beamU.tMask.value = SM.b.texture; this.buildBeam(); this.buildDust(); SM.renderTarget(this.toWorld(this.restPolys)); } }
     const pu = post.u;
-    pu.uExposure.value = 1.05 + this.near * 0.06; pu.uBloomAdd.value = 0.5 + this.near * 0.2; pu.uBloomMix.value = 0.05; pu.uRays.value = 0; pu.uSunVis.value = 0; pu.uNight.value = 0;
+    pu.uExposure.value = 1.05 + this.near * 0.06; pu.uBloomAdd.value = 0.32 + this.near * 0.12; pu.uBloomMix.value = 0.05; pu.uRays.value = 0; pu.uSunVis.value = 0; pu.uNight.value = 0;
     pu.uDesat.value = 0; pu.uCA.value = 0; pu.uDanger.value = 0; pu.uHeat.value.z = 0; pu.uVignette.value = 0.9;
     pu.uLift.value.set(0.012, 0.006, 0.0); pu.uGamma.value.set(1, 1, 1.04); pu.uGain.value.set(1.06, 1.0, 0.9); pu.uSat.value = 1.05; pu.uContrast.value = 1.1;
     pu.uTilt.value = 0; pu.uGrain.value = 0.035;
