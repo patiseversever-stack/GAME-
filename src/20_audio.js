@@ -83,6 +83,33 @@ class AudioEngine {
     const sz = { src: c.createBufferSource(), hp: c.createBiquadFilter(), bp: c.createBiquadFilter(), g: c.createGain() };
     sz.src.buffer = nb; sz.src.loop = true; sz.hp.type = 'highpass'; sz.hp.frequency.value = 2400; sz.bp.type = 'peaking'; sz.bp.frequency.value = 5200; sz.bp.gain.value = 8; sz.g.gain.value = 0;
     sz.src.connect(sz.hp); sz.hp.connect(sz.bp); sz.bp.connect(sz.g); sz.g.connect(this.sfx); sz.src.start(); this.sizzle = sz;
+    // konumlu efekt yolu (tiyatroda ses, gölgenin olduğu yerden gelir)
+    this.panN = c.createStereoPanner ? c.createStereoPanner() : null; if (this.panN) this.panN.connect(this.sfx);
+  }
+  // fn içindeki tüm efektler p konumundan (−1 sol … 1 sağ) çalar; sonradan çalacaklar figürü izler
+  withPan(p, fn) { if (!this.panN) { fn(); return; } this.panN.pan.setTargetAtTime(clamp(p, -0.9, 0.9), this.t, 0.06); this.sfxDest = this.panN; try { fn(); } finally { this.sfxDest = null; } }
+  // ses yolu sentezi: kaynak (testere/üçgen) + nefes gürültüsü → pürüz (AM) → üç formant → zarf
+  // o = { dur, f: [[dt, Hz]...], F: [[dt, [F1, F2, F3]]...], q, amp, src, breath, vib: [Hz, sent], rough: [Hz, derinlik], g, a, r, verb, dest }
+  voice(t0, o) {
+    const c = this.ctx, dur = o.dur, end = t0 + dur + 0.15, src = c.createOscillator(), am = c.createGain(), env = c.createGain();
+    src.type = o.src || 'sawtooth';
+    o.f.forEach(([dt, hz], k) => (k ? src.frequency.linearRampToValueAtTime(hz, t0 + dt) : src.frequency.setValueAtTime(hz, t0 + dt)));
+    const lfo = (hz, depth, param) => { const l = c.createOscillator(), lg = c.createGain(); l.frequency.value = hz; lg.gain.value = depth; l.connect(lg); lg.connect(param); l.start(t0); l.stop(end); };
+    if (o.vib) lfo(o.vib[0], o.vib[1], src.detune);
+    if (o.jit) lfo(o.jit[0] * 0.73, o.jit[1], src.detune), lfo(o.jit[0] * 1.37, o.jit[1] * 0.6, src.detune);
+    am.gain.value = 1; if (o.rough) { am.gain.value = 1 - o.rough[1]; lfo(o.rough[0], o.rough[1], am.gain); }
+    const vg = c.createGain(); vg.gain.value = 1; src.connect(vg); vg.connect(am);
+    let ns = null; if (o.breath) { ns = c.createBufferSource(); ns.buffer = this.noise; ns.loop = true; const ng = c.createGain(); ng.gain.value = o.breath * 1.6; ns.connect(ng); ng.connect(am); }
+    const q = o.q || [6, 8, 10], amp = o.amp || [1, 0.55, 0.28];
+    const bps = [0, 1, 2].map((i) => { const bp = c.createBiquadFilter(), g = c.createGain(); bp.type = 'bandpass'; bp.Q.value = q[i]; g.gain.value = amp[i]; am.connect(bp); bp.connect(g); g.connect(env); return bp; });
+    o.F.forEach(([dt, fs], k) => bps.forEach((bp, i) => (k ? bp.frequency.linearRampToValueAtTime(fs[i], t0 + dt) : bp.frequency.setValueAtTime(fs[i], t0 + dt))));
+    const a = o.a ?? 0.04, r = o.r ?? 0.15, g = o.g ?? 0.2;
+    env.gain.setValueAtTime(0.0001, t0); env.gain.linearRampToValueAtTime(g, t0 + a);
+    if (o.env) o.env.forEach(([dt, v]) => env.gain.linearRampToValueAtTime(g * v, t0 + dt));
+    env.gain.setValueAtTime(o.env ? g * o.env[o.env.length - 1][1] : g, t0 + Math.max(a, dur - r)); env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+    env.connect(o.dest || this.sfxDest || this.sfx);
+    if (o.verb) { const v = c.createGain(); v.gain.value = o.verb; env.connect(v); v.connect(this.verbSfx); }
+    src.start(t0); src.stop(end); if (ns) { ns.start(t0, Math.random()); ns.stop(end); }
   }
   makeIR(sec) {
     const c = this.ctx, len = Math.floor(c.sampleRate * sec), b = c.createBuffer(2, len, c.sampleRate);
@@ -105,7 +132,7 @@ class AudioEngine {
     o.type = type; o.frequency.setValueAtTime(f, t0); if (detune) o.detune.value = detune;
     if (f1 !== null) { if (curve === 'exp') o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t0 + dur); else o.frequency.linearRampToValueAtTime(f1, t0 + dur); }
     g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(gain, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    o.connect(g); g.connect(dest || this.sfx);
+    o.connect(g); g.connect(dest || this.sfxDest || this.sfx);
     if (verb) { const v = c.createGain(); v.gain.value = verb; g.connect(v); v.connect(dest === this.mus ? this.verbMus : this.verbSfx); }
     o.start(t0); o.stop(t0 + dur + 0.05);
     return o;
@@ -115,7 +142,7 @@ class AudioEngine {
     s.buffer = this.noise; fl.type = type; fl.frequency.setValueAtTime(f, t0); fl.Q.value = q;
     if (f1 !== null) fl.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur);
     g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(gain, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    s.connect(fl); fl.connect(g); g.connect(dest || this.sfx);
+    s.connect(fl); fl.connect(g); g.connect(dest || this.sfxDest || this.sfx);
     if (verb) { const v = c.createGain(); v.gain.value = verb; g.connect(v); v.connect(this.verbSfx); }
     s.start(t0, Math.random() * Math.max(0, 1.9 - dur)); s.stop(t0 + dur + 0.05);
   }
@@ -125,7 +152,7 @@ class AudioEngine {
     mg.gain.setValueAtTime(f * index, t0); mg.gain.exponentialRampToValueAtTime(f * 0.05, t0 + dur * 0.7);
     mod.connect(mg); mg.connect(car.frequency);
     g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(gain, t0 + 0.006); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
-    car.connect(g); g.connect(dest || this.sfx);
+    car.connect(g); g.connect(dest || this.sfxDest || this.sfx);
     const isMus = dest === this.mus;
     if (verb) { const v = c.createGain(); v.gain.value = verb; g.connect(v); v.connect(isMus ? this.verbMus : this.verbSfx); }
     if (dly) { const v = c.createGain(); v.gain.value = dly; g.connect(v); v.connect(this.dlyIn); }
@@ -228,8 +255,8 @@ class AudioEngine {
     h.o.frequency.setTargetAtTime(fr, t, 0.08); h.o2.frequency.setTargetAtTime(fr * 1.5 + Math.sin(t * 6) * k * 3, t, 0.08);
     h.f.frequency.setTargetAtTime(500 + k * k * 2600, t, 0.1); h.g.gain.setTargetAtTime(k > 0.02 ? 0.006 + k * k * 0.045 : 0, t, 0.12);
   }
-  theaterCreak(v) { if (!this.ok || v < 0.05) return; const t = this.t; if (t - (this.lastCreak || 0) < 0.07) return; this.lastCreak = t; this.noiseHit(t, 0.06, 0.012 + v * 0.03, { type: 'bandpass', f: 900 + Math.random() * 900, q: 6 }); }
-  theaterSolve() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.05, 0.12, { f: 3000, q: 4 }); this.osc('sine', 90, t, 1.6, 0.25, null, { f1: 45, verb: 0.6 }); this.bell(mtof(50), t + 0.05, 3.5, 0.08, { ratio: 1.41, index: 2.4, verb: 1 }); for (let i = 0; i < 5; i++) this.bell(mtof([62, 65, 69, 74, 77][i]), t + 0.35 + i * 0.09, 2.2, 0.045, { ratio: 2, index: 1.0, verb: 0.9, dly: 0.4 }); }
+  theaterCreak(v) { if (!this.ok || v < 0.05) return; const t = this.t; if (t - (this.lastCreak || 0) < 0.11) return; this.lastCreak = t; this.noiseHit(t, 0.06, 0.006 + v * 0.014, { type: 'bandpass', f: 700 + Math.random() * 700, q: 6 }); }
+  theaterSolve() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.05, 0.12, { f: 3000, q: 4 }); this.osc('sine', 90, t, 1.6, 0.25, null, { f1: 45, verb: 0.6 }); this.noiseHit(t + 0.02, 1.4, 0.05, { type: 'bandpass', f: 300, f1: 2400, q: 0.8, a: 0.4, verb: 0.8 }); }
   theaterAlive(key) {
     if (!this.ok) return; const t = this.t + 0.5;
     if (key === 'kus') { for (let i = 0; i < 6; i++) this.noiseHit(t + i * 0.19, 0.16, 0.06, { type: 'bandpass', f: 600, f1: 1800, q: 1.2 }); for (let i = 0; i < 3; i++) this.osc('sine', 2600, t + 0.4 + i * 0.12, 0.09, 0.03, null, { f1: 3400 }); }
@@ -243,8 +270,11 @@ class AudioEngine {
 
   /* --- müzik & ambiyans planlayıcı --- */
   setChapter(ch) { this.chapter = ch; this.birdsOn = ch <= 2; }
+  // tiyatro modu: dış dünya müziği ve rüzgârı susar, tiyatronun kendi topluluğu çalar
+  setTheater(on) { this.thMode = on; if (!this.ok) return; this.windG.gain.setTargetAtTime(on ? 0 : 0.05, this.t, on ? 0.4 : 2.0); }
   update(dt, playing) {
     if (!this.ok || this.ctx.state !== 'running') return;
+    if (this.thMode) return;
     const t = this.t, m = MUSIC[this.chapter];
     // rüzgâr
     if (Math.random() < dt * 0.5) this.windF.frequency.setTargetAtTime(300 + Math.random() * 700, t, 1.2);

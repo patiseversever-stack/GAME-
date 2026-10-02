@@ -15,7 +15,7 @@ const stCam = new THREE.PerspectiveCamera(40, 1, 0.1, 200);
 const ST_WZ = -5;
 const ST_ACTS = [
   { axes: 1, par: 35, riddle: 'Gülün sevdalısı', mats: ['brass', 'walnut', 'cini'] },
-  { axes: 1, par: 45, riddle: 'Kelebek avcısı', mats: ['copper', 'ivory', 'ebony'] },
+  { axes: 2, par: 50, riddle: 'Kelebek avcısı', mats: ['copper', 'ivory', 'ebony'] },
   { axes: 2, par: 55, riddle: 'Uzun kulaklı, çevik', mats: ['silver', 'walnut', 'cini'] },
   { axes: 2, par: 60, riddle: 'Okyanusun şarkıcısı', mats: ['cini', 'brass', 'ebony'] },
   { axes: 3, par: 80, riddle: 'Hortumlu dev ve bir sürpriz', mats: ['walnut', 'copper', 'ivory'] },
@@ -436,12 +436,22 @@ function stFrustum(T, outer, holes, s0, s1, b) {
 // Yaban Hayatı: figüre özel sesler (olay adı çakışsa bile anahtar ayırır)
 const stPaws = (A, t, n, dt, f = 600, g = 0.04) => { for (let i = 0; i < n; i++) A.noiseHit(t + i * dt + Math.random() * 0.02, 0.07, g * (0.7 + Math.random() * 0.4), { type: 'lowpass', f: f + Math.random() * 200 }); };
 const stHooves = (A, t, n, dt, g = 0.12) => { for (let i = 0; i < n; i++) { const tt = t + i * dt + (i % 3 === 2 ? 0.05 : 0); A.osc('sine', 120, tt, 0.12, g, null, { f1: 55 }); A.noiseHit(tt, 0.06, g * 0.4, { type: 'bandpass', f: 1200, q: 1.2 }); } };
-const stHowl = (A, t, f0, d, g, verb) => {
-  const o = A.osc('sine', f0, t, d, g, null, { f1: f0 * 0.9, curve: 'lin', verb, a: d * 0.2 }); o.frequency.linearRampToValueAtTime(f0 * 1.62, t + d * 0.28); o.frequency.linearRampToValueAtTime(f0 * 1.5, t + d * 0.7);
-  const h = A.osc('triangle', f0 * 2, t, d, g * 0.18, null, { f1: f0 * 1.8, curve: 'lin', verb, a: d * 0.25 }); h.frequency.linearRampToValueAtTime(f0 * 3.24, t + d * 0.28); h.frequency.linearRampToValueAtTime(f0 * 3.0, t + d * 0.7);
-  A.noiseHit(t, d * 0.9, g * 0.15, { type: 'bandpass', f: f0 * 3, q: 3, a: d * 0.3, verb });
-};
+// formantlı hayvan sesleri (ses yolu sentezi): kaynak perdesi + ağız/gırtlak rezonansları
+const stHowl = (A, t, f0, d, g, verb) => A.voice(t, { dur: d, src: 'triangle', f: [[0, f0 * 0.92], [d * 0.28, f0 * 1.62], [d * 0.7, f0 * 1.5], [d, f0 * 0.95]], F: [[0, [360, 820, 2500]], [d * 0.3, [480, 980, 2700]], [d, [340, 720, 2400]]], q: [7, 9, 11], amp: [1, 0.5, 0.2], vib: [5.2, 16], breath: 0.08, g: g * 2.4, a: d * 0.22, r: d * 0.3, verb });
+const stMeow = (A, t, k = 1, d = 0.75, g = 0.2) => A.voice(t, { dur: d, f: [[0, 520 * k], [d * 0.24, 780 * k], [d * 0.6, 690 * k], [d, 430 * k]], F: [[0, [380, 2300, 3300]], [d * 0.25, [950, 1550, 2900]], [d * 0.7, [760, 1200, 2700]], [d, [420, 850, 2500]]], q: [5, 7, 9], breath: 0.06, vib: [6, 14], jit: [9, 10], g, a: 0.05, r: 0.22, verb: 0.35 });
+const stPurr = (A, t, d = 1.6, g = 0.2) => A.voice(t, { dur: d, f: [[0, 25], [d, 23]], F: [[0, [180, 420, 900]]], q: [1.5, 2, 2], amp: [1, 0.5, 0.2], rough: [2.3, 0.65], breath: 0.1, g, a: 0.2, r: 0.4 });
+const stTrumpet = (A, t, f0, d, g) => { A.voice(t, { dur: d, f: [[0, f0], [d * 0.15, f0 * 1.55], [d * 0.5, f0 * 1.75], [d * 0.85, f0 * 1.45], [d, f0 * 1.2]], F: [[0, [650, 1350, 2600]], [d * 0.3, [800, 1600, 2900]], [d, [600, 1200, 2500]]], q: [7, 8, 9], amp: [1, 0.85, 0.6], rough: [55, 0.35], jit: [7, 20], breath: 0.12, g, a: 0.04, r: 0.25, verb: 0.8 }); A.noiseHit(t, d * 0.8, g * 0.1, { type: 'bandpass', f: f0 * 3.5, q: 2, verb: 0.6 }); };
 const ST_SFX = {
+  kedi: {
+    swat(A, t) { A.noiseHit(t, 0.12, 0.08, { type: 'bandpass', f: 1600, f1: 400, q: 1 }); stMeow(A, t + 0.28, 1, 0.72, 0.2); },
+    yawn(A, t) { A.voice(t + 0.1, { dur: 1.15, f: [[0, 430], [0.35, 560], [1.15, 260]], F: [[0, [650, 1250, 2700]], [0.6, [820, 1150, 2600]], [1.15, [420, 820, 2400]]], q: [4, 6, 8], breath: 0.35, vib: [5, 10], g: 0.15, a: 0.18, r: 0.4, verb: 0.3 }); },
+    lick(A, t) { for (let i = 0; i < 3; i++) A.noiseHit(t + i * 0.16, 0.06, 0.03, { type: 'bandpass', f: 2500, q: 2 }); stPurr(A, t + 0.45, 1.8, 0.2); },
+    tail(A, t) { stMeow(A, t + 0.1, 1.25, 0.32, 0.12); },
+  },
+  fil: {
+    trumpet(A, t) { stTrumpet(A, t, 290, 1.35, 0.3); },
+    babyCall(A, t) { stTrumpet(A, t, 520, 0.7, 0.2); },
+  },
   tilki: {
     listen(A, t) { for (let i = 0; i < 3; i++) A.osc('sine', 3300 + i * 140, t + 0.3 + i * 0.16, 0.05, 0.012, null, { f1: 3800, verb: 0.3 }); A.noiseHit(t, 0.08, 0.02, { type: 'highpass', f: 3000 }); },
     pounce(A, t) { A.noiseHit(t, 0.6, 0.08, { type: 'bandpass', f: 300, f1: 2400, q: 1, a: 0.3, verb: 0.3 }); },
@@ -453,7 +463,7 @@ const ST_SFX = {
     graze(A, t) { for (let i = 0; i < 7; i++) A.noiseHit(t + 0.6 + i * 0.2, 0.06, 0.025, { type: 'bandpass', f: 1800, q: 2 }); },
     alert(A, t) { A.noiseHit(t - 0.1, 0.04, 0.09, { type: 'highpass', f: 2800, q: 2 }); A.osc('triangle', 700, t - 0.1, 0.05, 0.03, null, { f1: 300 }); },
     shake(A, t) { for (let i = 0; i < 10; i++) { const tt = t + i * 0.06; A.noiseHit(tt, 0.04, 0.04, { type: 'bandpass', f: 2200 + Math.random() * 800, q: 4 }); A.osc('triangle', 380 + Math.random() * 120, tt, 0.05, 0.02, null, { f1: 200 }); } },
-    bellow(A, t) { const o = A.osc('sawtooth', 120, t, 1.3, 0.05, null, { f1: 80, curve: 'lin', verb: 0.8, a: 0.12 }); o.frequency.linearRampToValueAtTime(170, t + 0.35); A.osc('square', 121, t, 1.2, 0.015, null, { f1: 82, verb: 0.6, a: 0.15 }); A.noiseHit(t, 1.1, 0.04, { type: 'bandpass', f: 500, q: 1.5, a: 0.2, verb: 0.6 }); },
+    bellow(A, t) { A.voice(t, { dur: 1.4, f: [[0, 105], [0.3, 168], [0.9, 150], [1.4, 92]], F: [[0, [420, 880, 2450]], [0.35, [680, 1150, 2600]], [1.4, [380, 760, 2300]]], q: [4, 6, 8], rough: [27, 0.6], breath: 0.18, jit: [6, 25], g: 0.34, a: 0.08, r: 0.35, verb: 0.8 }); },
     bound(A, t) { for (let i = 0; i < 4; i++) { const tt = t + 0.6 + i * 0.62; A.osc('sine', 90, tt, 0.25, 0.12, null, { f1: 45 }); A.noiseHit(tt, 0.12, 0.05, { type: 'lowpass', f: 600 }); A.noiseHit(tt - 0.5, 0.35, 0.025, { type: 'bandpass', f: 400, f1: 1500, q: 1 }); } },
   },
   baykus: {
@@ -473,9 +483,8 @@ const ST_SFX = {
     snort(A, t) { A.noiseHit(t, 0.35, 0.09, { type: 'bandpass', f: 600, q: 0.8, a: 0.02 }); A.noiseHit(t + 0.05, 0.3, 0.05, { type: 'lowpass', f: 300 }); },
     paw(A, t) { A.noiseHit(t + 0.32, 0.18, 0.06, { type: 'bandpass', f: 1600, q: 1 }); A.osc('sine', 110, t + 0.36, 0.12, 0.08, null, { f1: 60 }); },
     neigh(A, t) {
-      const o = A.osc('sawtooth', 600, t, 1.3, 0.035, null, { f1: 420, curve: 'lin', verb: 0.9, a: 0.04 }), v = A.osc('sine', 650, t, 1.3, 0.04, null, { f1: 450, curve: 'lin', verb: 0.9, a: 0.04 });
-      for (let i = 0; i < 12; i++) { const f = (i < 4 ? 900 + i * 90 : 1250 - i * 55) * (i % 2 ? 0.93 : 1.05); o.frequency.linearRampToValueAtTime(f, t + 0.05 + i * 0.09); v.frequency.linearRampToValueAtTime(f * 1.08, t + 0.05 + i * 0.09); }
-      A.noiseHit(t, 1.2, 0.03, { type: 'bandpass', f: 1500, q: 2, a: 0.1, verb: 0.6 });
+      A.voice(t, { dur: 1.35, f: [[0, 620], [0.1, 1180], [0.45, 1080], [0.8, 820], [1.1, 640], [1.35, 420]], F: [[0, [650, 1750, 2700]], [0.5, [720, 1650, 2600]], [1.35, [550, 1250, 2400]]], q: [5, 7, 9], vib: [10.5, 95], rough: [42, 0.25], breath: 0.1, g: 0.24, a: 0.03, r: 0.3, verb: 0.6 });
+      A.noiseHit(t + 1.25, 0.3, 0.07, { type: 'bandpass', f: 600, q: 0.8 });
     },
     land(A, t) { A.osc('sine', 75, t, 0.45, 0.22, null, { f1: 35 }); A.noiseHit(t, 0.3, 0.1, { type: 'lowpass', f: 700 }); },
     gallop(A, t) { stHooves(A, t, 12, 0.145, 0.1); },
@@ -488,7 +497,7 @@ const ST_SFX = {
     jet(A, t) { A.noiseHit(t, 0.8, 0.11, { type: 'bandpass', f: 220, f1: 1800, q: 1, a: 0.15, verb: 0.6 }); for (let i = 0; i < 14; i++) A.osc('sine', 600 + Math.random() * 600, t + 0.1 + Math.random() * 0.8, 0.06, 0.012, null, { f1: 1600, verb: 0.4 }); },
   },
   kervan: {
-    camelGroan(A, t) { const o = A.osc('sawtooth', 95, t, 1.1, 0.04, null, { f1: 70, curve: 'lin', verb: 0.6, a: 0.1 }); o.frequency.linearRampToValueAtTime(130, t + 0.4); for (let i = 0; i < 6; i++) A.osc('sine', 180 + Math.random() * 200, t + 0.2 + i * 0.12, 0.06, 0.02, null, { f1: 120 }); A.noiseHit(t, 0.9, 0.03, { type: 'bandpass', f: 350, q: 2, verb: 0.5 }); },
+    camelGroan(A, t) { A.voice(t, { dur: 1.25, f: [[0, 92], [0.4, 128], [0.9, 110], [1.25, 80]], F: [[0, [480, 980, 2400]], [0.5, [640, 1100, 2500]], [1.25, [420, 850, 2300]]], q: [4, 5, 7], rough: [17, 0.8], breath: 0.16, jit: [5, 30], g: 0.32, a: 0.1, r: 0.3, verb: 0.5 }); for (let i = 0; i < 6; i++) A.osc('sine', 180 + Math.random() * 200, t + 0.2 + i * 0.12, 0.06, 0.016, null, { f1: 120 }); },
     bells(A, t) { for (let i = 0; i < 9; i++) { const tt = t + 0.1 + i * 0.47 + Math.random() * 0.05; A.bell(i % 2 ? 1180 : 1390, tt, 0.9, 0.022, { ratio: 1.41, index: 2.2, verb: 0.7 }); if (i % 2) A.bell(880, tt + 0.23, 0.9, 0.018, { ratio: 1.41, index: 2.0, verb: 0.7 }); } stPaws(A, t + 0.3, 14, 0.32, 350, 0.03); },
     kneel(A, t) { A.osc('sine', 70, t + 0.5, 0.3, 0.14, null, { f1: 40 }); A.osc('sine', 65, t + 1.05, 0.35, 0.16, null, { f1: 35 }); A.noiseHit(t + 0.5, 0.6, 0.05, { type: 'lowpass', f: 500 }); const o = A.osc('sawtooth', 110, t + 0.1, 0.8, 0.03, null, { f1: 75, verb: 0.5 }); o.frequency.linearRampToValueAtTime(140, t + 0.3); },
     shootingStar(A, t) { A.noiseHit(t, 0.7, 0.04, { type: 'highpass', f: 5000, f1: 9000, a: 0.1, verb: 0.8 }); A.bell(2637, t + 0.3, 1.6, 0.04, { ratio: 3.01, index: 0.9, verb: 1 }); A.bell(3520, t + 0.42, 1.4, 0.025, { ratio: 2.0, index: 0.8, verb: 1 }); },
@@ -512,9 +521,8 @@ const ST_SFX = {
       for (let i = 0; i < 26; i++) A.noiseHit(t + Math.random() * 2.2, 0.03, 0.04, { type: 'highpass', f: 2500 + Math.random() * 4000, q: 2 });
     },
     roar(A, t) {
-      const o = A.osc('sawtooth', 150, t, 1.6, 0.07, null, { f1: 60, curve: 'lin', verb: 1.0, a: 0.08 }); o.frequency.linearRampToValueAtTime(190, t + 0.3);
-      A.osc('square', 95, t, 1.5, 0.03, null, { f1: 45, verb: 0.8, a: 0.1 }); A.noiseHit(t, 1.5, 0.1, { type: 'bandpass', f: 500, f1: 220, q: 1.2, a: 0.08, verb: 0.9 });
-      A.osc('sine', 40, t, 1.6, 0.2, null, { f1: 30, a: 0.1 });
+      A.voice(t, { dur: 1.7, f: [[0, 68], [0.25, 108], [0.9, 92], [1.7, 52]], F: [[0, [320, 820, 2000]], [0.3, [580, 1150, 2300]], [1.7, [340, 700, 1800]]], q: [3, 4, 5], amp: [1, 0.7, 0.4], rough: [33, 0.75], breath: 0.4, jit: [5, 40], g: 0.5, a: 0.07, r: 0.4, verb: 1.0 });
+      A.osc('sine', 42, t, 1.6, 0.2, null, { f1: 30, a: 0.1 });
     },
     wingBeat(A, t) { A.noiseHit(t, 0.4, 0.14, { type: 'lowpass', f: 650, q: 0.8, a: 0.05, verb: 0.4 }); A.osc('sine', 55, t + 0.05, 0.3, 0.16, null, { f1: 32 }); },
     takeoff(A, t) { for (let i = 0; i < 6; i++) { const tt = t + i * 0.43; A.noiseHit(tt, 0.4, 0.13 * (1 - i * 0.12), { type: 'lowpass', f: 650, q: 0.8, a: 0.05, verb: 0.5 }); A.osc('sine', 55, tt + 0.05, 0.3, 0.13 * (1 - i * 0.12), null, { f1: 32 }); } A.noiseHit(t, 2.6, 0.06, { type: 'bandpass', f: 200, f1: 1200, q: 0.8, a: 1.2, verb: 0.7 }); },
@@ -781,7 +789,7 @@ const Theater = {
       if (pv) { G.q.copy(pv.q); G.yaw = pv.yaw; G.pitch = pv.pitch; G.lock = pv.lock; }
       else {
         const sgn = rng.sign();
-        G.yaw = sgn * rng.range(0.9, 2.2); G.pitch = act.axes >= 2 ? rng.sign() * rng.range(0.35, 0.8) : 0;
+        G.yaw = sgn * (act.axes === 1 ? rng.range(1.5, 2.8) : rng.range(0.9, 2.2)); G.pitch = act.axes >= 2 ? rng.sign() * rng.range(i < 3 ? 0.3 : 0.35, i < 3 ? 0.55 : 0.8) : 0;
         if (act.axes >= 3) G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, rng.sign() * rng.range(0.3, 0.7), 'YXZ'));
         else G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ'));
       }
@@ -794,6 +802,7 @@ const Theater = {
     this.assembleT = 0; this.lastSec = -1; this.wallU.uOut.value = 0;
     $('#thHint').classList.remove('used');
     this.updateDom();
+    stMus.begin(i); stAmb.begin(i); this.figPan = 0;
   },
   clearPieces() {
     for (const p of this.pieces) { this.root.remove(p.g); p.g.traverse((m) => { if (m.geometry) m.geometry.dispose(); if (m.userData && m.userData.mat0) { m.material.dispose(); m.userData.mat0 = null; } }); }
@@ -830,19 +839,19 @@ const Theater = {
     const sv = Save.data.theater || []; let i = 0; while (sv.includes(i) && i < ST_ACTS.length - 1) i++;
     this.build(i); audio.setChapter(8); this.t = 0; this.camIn = 0; this.state = 'intro'; this.stT = 0; this.curtain = 1; this.lampOn = 0;
     try { this.apply(); this.update(0); const pt = renderer.getRenderTarget(); renderer.setRenderTarget(post.rtScene); renderer.compile(stScene, stCam); renderer.setRenderTarget(pt); } catch (e) { console.warn('tiyatro derleme', e); }
-    G.state = 'theater'; UI.hideAll(); UI.hud(false); UI.show('theater');
+    G.state = 'theater'; UI.hideAll(); UI.hud(false); UI.show('theater'); audio.setTheater(true);
     audio.whoosh(true, 1.0, 0.06); audio.theaterOpen();
   },
   close() {
     this.active = false; this.state = 'idle';
     this.clearPieces(); SM.setProxies([]);
-    audio.theaterTone(0); audio.setChapter(G.lv ? G.lv.spec.ch : 0); UI.hide('theater');
+    stMus.end(); stAmb.end(); audio.setTheater(false); audio.setChapter(G.lv ? G.lv.spec.ch : 0); UI.hide('theater');
     if (this.from === 'map') openMap();
     else { G.state = 'title'; G.stateT = 99; G.userSun = true; UI.show('title'); }
   },
   changeAct(k) { this.nextIdx = k; this.state = 'closing'; this.stT = 0; $('#theater').classList.remove('solved'); $('#thMsg').classList.remove('on'); audio.whoosh(false, 0.9, 0.05); },
   next() { if (this.idx >= ST_ACTS.length - 1) { this.close(); return; } audio.ui(); this.changeAct(this.idx + 1); },
-  replay() { if (this.perfT < 0) return; audio.ui(); this.perfT = 0; this.wallU.uOut.value = 0; this.evI = 0; this.cardShown = false; $('#theater').classList.remove('solved'); },
+  replay() { if (this.perfT < 0) return; audio.ui(); stMus.replay(); this.perfT = 0; this.wallU.uOut.value = 0; this.evI = 0; this.cardShown = false; $('#theater').classList.remove('solved'); },
   hint() {
     if (this.state !== 'play') return; this.hintT = 3.2; this.hints++; audio.sprite(1); haptic(10);
     // yarı yola it: hedefe doğru döndür (kilitlenmemiş her heykel)
@@ -865,7 +874,10 @@ const Theater = {
   move(e) {
     const d = this.drag; if (!d || e.pointerId !== d.id) return;
     const now = performance.now(), dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Math.max(8, now - d.t) / 1000; d.x = e.clientX; d.y = e.clientY; d.t = now;
-    const k = 0.0078, G = this.grp[d.g]; if (!G) return; this.rot(dx * k, dy * k, d.g);
+    const G = this.grp[d.g]; if (!G) return;
+    // hedefe yaklaştıkça hassas ayar: aynı parmak hareketi daha az döndürür (radyo ayarı gibi)
+    const k = 0.0078 * lerp(1, 0.38, smoothstep(deg(22), deg(3), this.angle(G))); this.rot(dx * k, dy * k, d.g);
+    stMus.turn(Math.hypot(dx * k, dy * k), Math.sign(dx || dy), this.near);
     G.w.set(lerp(G.w.x, (dx * k) / dt, 0.4), lerp(G.w.y, (dy * k) / dt, 0.4));
     audio.theaterCreak(Math.min(1, Math.hypot(dx, dy) * 0.03));
   },
@@ -883,7 +895,7 @@ const Theater = {
   align() { for (const G of this.grp) { G.yaw = 0; G.pitch = 0; G.q.identity(); G.w.set(0, 0); } },
   lockG(G) {
     G.lock = true; G.q.identity(); G.yaw = 0; G.pitch = 0; G.w.set(0, 0); G.lockT = this.t;
-    if (this.grp.some((g) => !g.lock)) { audio.crystal(true); haptic([10, 30, 10]); const nx = this.grp.find((g) => !g.lock); if (nx) this.sel = nx.gi; if (this.drag && this.drag.g === G.gi) this.drag = null; }
+    if (this.grp.some((g) => !g.lock)) { stMus.lock(); haptic([10, 30, 10]); const nx = this.grp.find((g) => !g.lock); if (nx) this.sel = nx.gi; if (this.drag && this.drag.g === G.gi) this.drag = null; }
   },
   /* ----- kare ----- */
   update(dtR) {
@@ -909,7 +921,8 @@ const Theater = {
         const held = this.drag && this.drag.g === G.gi;
         if (!held) { this.rot(G.w.x * dtR, G.w.y * dtR, G.gi); G.w.multiplyScalar(Math.exp(-dtR * 3.2)); }
         const ang = this.angle(G);
-        if (ang < deg(12) && !held) { if (this.act.axes < 3) { const k = 1 - Math.exp(-dtR * 6); G.yaw = lerp(G.yaw, Math.round(G.yaw / TAU) * TAU, k); G.pitch = lerp(G.pitch, 0, k); G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ')); } else G.q.slerp(new THREE.Quaternion(), 1 - Math.exp(-dtR * 6)); G.w.multiplyScalar(0.8); }
+        const mag = deg(this.act.mag || (this.grp.length > 1 ? 7 : [0, 4.5, 6, 9][this.act.axes]));
+        if (ang < mag && !held && G.w.length() < 0.7) { if (this.act.axes < 3) { const k = 1 - Math.exp(-dtR * 6); G.yaw = lerp(G.yaw, Math.round(G.yaw / TAU) * TAU, k); G.pitch = lerp(G.pitch, 0, k); G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ')); } else G.q.slerp(new THREE.Quaternion(), 1 - Math.exp(-dtR * 6)); G.w.multiplyScalar(0.8); }
         if (this.angle(G) < deg(1.3)) this.lockG(G);
         nearSum += clamp01(1 - this.angle(G) / deg(75));
       }
@@ -917,7 +930,6 @@ const Theater = {
       const prevN = this.near; this.near = damp(this.near, nearSum / Math.max(1, this.grp.length), 5, dtR);
       if (Math.floor(this.near * 6) > Math.floor(prevN * 6) && this.near > 0.5) haptic(6);
     } else this.near = damp(this.near, 0, 3, dtR);
-    audio.theaterTone(this.state === 'play' ? this.near : 0);
     // heykeller: seçili olan hafifçe kor gibi ısınır, kilitlenen bir an parlar
     const multi = this.grp.length > 1;
     for (const G of this.grp) {
@@ -955,11 +967,14 @@ const Theater = {
       if (sv > 1.1) {
         if (this.perfT < 0) this.perfT = 0; else this.perfT += dtR;
         sfResetPose(this.F, this.pose); this.F.def.perform(this.perfT, this.pose);
-        const ev = this.F.def.events || []; while (this.evI < ev.length && this.perfT >= ev[this.evI][0]) { stSfx(this.F.def.key, ev[this.evI][1]); this.evI++; }
+        const ev = this.F.def.events || []; while (this.evI < ev.length && this.perfT >= ev[this.evI][0]) { const e = ev[this.evI][1]; audio.withPan(this.figPan || 0, () => stSfx(this.F.def.key, e)); stMus.accent(); this.evI++; }
         if (this.perfT > this.F.def.dur && !this.cardShown) { this.cardShown = true; this.showCard(); }
         bigBlur = this.pose.k.blur || 0; this.wallU.uOut.value = smoothstep(0.3, 0.8, bigBlur);
       } else sfResetPose(this.F, this.pose);
       polys = this.figWorld();
+      // ses konumu: gölgenin perdedeki yatay yeri
+      let x0 = 1e9, x1 = -1e9; for (const p of polys) for (let k = 0; k < p.length; k += 8) { if (p[k] < x0) x0 = p[k]; if (p[k] > x1) x1 = p[k]; }
+      if (x1 > x0) this.figPan = clamp(((x0 + x1) / 2 - this.WC.x) / 3.2, -1, 1) * 0.8;
     }
     const blurPx = lerp(Math.max(2.2, 0.026 * this.pxu), 1.7, crisp) + bigBlur * 0.09 * this.pxu;
     this.wallU.uSoft.value = lerp(0.22, 0.0, crisp) + bigBlur * 0.45;
@@ -992,6 +1007,9 @@ const Theater = {
     const sh = G.trauma * G.trauma; P.x += Math.sin(t * 41) * sh * 0.12; P.y += Math.sin(t * 37) * sh * 0.1;
     stCam.position.copy(P); stCam.lookAt(T);
     this.curL.position.z = ST_WZ + 0.8 + Math.sin(t * 0.5) * 0.03; this.curR.position.z = ST_WZ + 0.8 + Math.sin(t * 0.47 + 1) * 0.03;
+    // müzik ve ortam: durum, hizaya yakınlık, kandil ve gösteri
+    const MS = { state: this.state, near: this.near, lamp: this.lampOn, perf: sv > 1.1, card: this.cardShown };
+    try { stMus.update(dtR, MS); stAmb.update(dtR, MS); } catch (e) { console.warn('tiyatro sesi', e); }
   },
   spawnEmber(p) {
     if (this.emb.length >= this.embMax) return;
@@ -1012,7 +1030,7 @@ const Theater = {
   solve() {
     this.state = 'solved'; for (const G of this.grp) { G.lock = true; G.q.identity(); G.yaw = 0; G.pitch = 0; G.w.set(0, 0); G.root.quaternion.identity(); G.hl = 0; for (const m of G.mats) if (this.grp.length > 1) m.emissive.setRGB(0, 0, 0); } this.drag = null;
     this.solvedT = this.t; this.perfT = -1; this.evI = 0; $('#thMsg').classList.remove('on');
-    audio.theaterSolve(); haptic([20, 40, 20]); G.flash = 0.3; G.flashCol.set(1.0, 0.78, 0.48); G.trauma = Math.max(G.trauma, 0.25);
+    audio.theaterSolve(); stMus.solve(); haptic([20, 40, 20]); G.flash = 0.3; G.flashCol.set(1.0, 0.78, 0.48); G.trauma = Math.max(G.trauma, 0.25);
     const par = this.act.par, tt = this.playT, stars = this.hints === 0 && tt <= par ? 3 : this.hints <= 1 && tt <= par * 2.2 ? 2 : 1;
     this.stars = stars;
     const sv = Save.data.theater || (Save.data.theater = []); if (!sv.includes(this.idx)) sv.push(this.idx);
@@ -1026,7 +1044,7 @@ const Theater = {
     const st = $('#thStars'); st.innerHTML = '';
     for (let k = 0; k < 3; k++) { const s = document.createElement('i'); s.textContent = '★'; if (k < this.stars) { s.className = 'on'; s.style.animationDelay = `${0.25 + k * 0.18}s`; } st.appendChild(s); }
     const sec = Math.floor(this.playT); $('#thStat').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')} · ${this.hints ? this.hints + ' ipucu' : 'ipucusuz'}`;
-    $('#theater').classList.add('solved'); stApplause(this.stars); for (let k = 0; k < this.stars; k++) setTimeout(() => audio.star(k, true), 300 + k * 180);
+    $('#theater').classList.add('solved'); stApplause(this.stars); stMus.card(); for (let k = 0; k < this.stars; k++) setTimeout(() => audio.star(k, true), 300 + k * 180);
     this.updateDots();
   },
   updateDots() { const sv = Save.data.theater || []; this.dots.forEach((d, k) => { d.classList.toggle('ok', sv.includes(k)); d.classList.toggle('lock', !this.unlocked(k)); }); },
