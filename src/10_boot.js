@@ -6,6 +6,7 @@
    Web Audio ile prosedürel ses.
    ===================================================================== */
 
+window.__gdStarted = true;
 const $ = (s) => document.querySelector(s);
 const $$ = (s) => Array.from(document.querySelectorAll(s));
 

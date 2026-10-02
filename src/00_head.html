@@ -587,3 +587,23 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
     <button class="btn primary tap" id="btnEndOk">Gökyüzüne dön</button>
   </div>
 </div>
+<script>
+/* açılış bekçisi: oyun modülü hiç başlamaz (dosya eksik inmiş / tarayıcı desteklemiyor) ya da
+   açılışta hata verirse yükleme kartında takılı kalmak yerine nedenini göster */
+(function () {
+  var errs = [];
+  function esc(t) { return String(t).replace(/[&<>]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]; }); }
+  function show(why) {
+    if (window.__gdBooted) return;
+    var l = document.getElementById('loader'); if (!l) return;
+    l.classList.add('err');
+    var d = l.querySelector('.lerr div'); if (!d) return;
+    var head = !window.__gdStarted ? 'Oyun dosyası açılamadı.<br>Dosya eksik inmiş olabilir: yeniden indirip tekrar dene.' : 'Oyun başlatılırken bir sorun çıktı.';
+    d.innerHTML = head + (errs.length ? '<br><small style="opacity:.6;font-size:11px;word-break:break-word">' + esc(errs[0]).slice(0, 220) + '</small>' : why ? '<br><small style="opacity:.6;font-size:11px">' + why + '</small>' : '');
+  }
+  window.__gdFail = function (e) { errs.push((e && (e.stack || e.message)) || String(e)); show(); };
+  addEventListener('error', function (e) { if (!(e instanceof ErrorEvent) || window.__gdBooted) return; errs.push((e.message || 'hata') + (e.lineno ? ' @' + e.lineno + ':' + e.colno : '')); show(); });
+  addEventListener('unhandledrejection', function (e) { if (window.__gdBooted) return; var r = e.reason; errs.push('promise: ' + ((r && r.message) || r)); show(); });
+  setTimeout(function () { if (!window.__gdBooted) show('zaman aşımı (20 sn)'); }, 20000);
+})();
+</script>

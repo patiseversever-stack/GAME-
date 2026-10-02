@@ -567,6 +567,7 @@ window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer
 let lastT = performance.now(), frameNo = 0, renderedFrames = 0, errShown = false;
 function reportError(e) {
   console.error(e);
+  if (!window.__gdBooted && window.__gdFail) window.__gdFail(e); // yükleme kartı hâlâ açıkken: nedeni orada göster
   if (errShown) return; errShown = true;
   $('#fader').classList.remove('on', 'soon');
   try { toast('Küçük bir aksaklık oldu — oyun devam ediyor.', 2.6); } catch (err) {}
@@ -740,7 +741,7 @@ function bootGame() {
   const ld = $('#loader');
   const lift = () => {
     if (renderedFrames < 3 || performance.now() < 1100) { requestAnimationFrame(lift); return; }
-    Film.begin(); ld.classList.add('off');
+    window.__gdBooted = true; Film.begin(); ld.classList.add('off');
     setTimeout(() => { ld.style.display = 'none'; }, 1000);
   };
   requestAnimationFrame(lift);
@@ -753,7 +754,7 @@ window.__gd = {
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
   info: () => ({ state: G.state, u: G.u, s: G.s, len: G.lv && G.lv.length, meter: G.meter, T: G.T, drops: G.dropsGot, quality: Perf.level, scale: Perf.scale, ema: Perf.ema }),
 };
-bootGame();
+try { bootGame(); } catch (e) { console.error(e); if (window.__gdFail) window.__gdFail(e); }
 </script>
 </body>
 </html>
