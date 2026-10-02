@@ -297,9 +297,10 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 .node.cur circle.halo{fill:rgba(255,220,150,.22);animation:nodepulse 1.8s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 @keyframes nodepulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.35);opacity:.5}}
 .node text{font-family:var(--sans);font-weight:800;font-size:10px;fill:#1b1230;text-anchor:middle;dominant-baseline:central}
-#map .modes{display:flex;gap:10px;justify-content:center;margin-top:12px;padding:0 16px;flex-wrap:wrap}
-#map .modes .btn{height:38px;font-size:10.5px;padding:0 14px;letter-spacing:.12em}
-#map .modes .btn small{font-size:9px;letter-spacing:.06em;opacity:.7;font-weight:600;text-transform:none}
+#map .modes{display:flex;gap:8px;justify-content:center;margin-top:12px;padding:0 12px;flex-wrap:nowrap}
+#map .modes .btn{height:44px;font-size:10px;padding:0 14px;letter-spacing:.1em;flex-direction:column;gap:3px;line-height:1;white-space:nowrap}
+#map .modes .btn small{font-size:8.5px;letter-spacing:.04em;opacity:.7;font-weight:600;text-transform:none}
+#btnTheater,#btnTheaterT{border-color:rgba(255,190,110,.5);background:linear-gradient(180deg,rgba(130,56,22,.5),rgba(46,18,8,.55));color:#ffe2b8;box-shadow:0 0 18px rgba(255,140,60,.18)}
 #map .modes .btn.lockd{opacity:.45}
 #map .skins{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:12px}
 #map .skins span{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--ivory-dim);margin-right:4px}
