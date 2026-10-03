@@ -295,13 +295,12 @@ function update(dt, dtR) {
     case 'film': Film.update(dtR); break;
     case 'map': SkyMap.update(dtR); G.night = damp(G.night, G.mapNight, 1.5, dtR); break;
     case 'theater': Theater.update(dtR); break;
-    case 'ebru': Ebru.update(dtR); break;
     case 'ending': { G.night = damp(G.night, G.state === 'ending' ? 1 : G.mapNight, 1.5, dtR); U.uNightAmt.value = G.night; U.uNightR.value = 60; U.uNightRim.value = 0; break; }
   }
   if (G.state !== 'play' && G.state !== 'film') { G.ecl.amt = damp(G.ecl.amt, 0, 6, dtR); if (G.ecl.amt < 0.01) G.ecl.amt = 0; }
   if (G.state === 'play' || (G.ecl.amt > 0 && G.state === 'fail')) { U.uNightAmt.value = G.ecl.amt * 0.72; U.uNightR.value = 999; U.uNightRim.value = 0; }
   // görseller
-  if (lv && G.state !== 'map' && G.state !== 'theater' && G.state !== 'ebru') {
+  if (lv && G.state !== 'map' && G.state !== 'theater') {
     G.view.update(dtR, G.T, viewCtx);
     drops.update(dtR, U.uTime.value);
     wisps.update(dtR, U.uTime.value);
@@ -353,7 +352,6 @@ canvas.addEventListener('pointerdown', (e) => {
   if (G.state === 'film') { Film.skip(); return; }
   if (G.state === 'map') { SkyMap.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (G.state === 'theater') { Theater.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
-  if (G.state === 'ebru') { Ebru.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (G.state === 'complete') { if (G.compStage < 5 && G.mode !== 'endless') G.ffwd = true; return; }
   if (G.state === 'fail' && G.fShown) { retry(); return; }
   if (G.drag) return;
@@ -366,7 +364,6 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   if (G.state === 'map') { SkyMap.move(e); return; }
   if (G.state === 'theater') { Theater.move(e); return; }
-  if (G.state === 'ebru') { Ebru.move(e); return; }
   const d = G.drag; if (!d || e.pointerId !== d.id) return;
   const now = performance.now(), dx = e.clientX - d.x, dtm = Math.max(1, now - d.t);
   d.x = e.clientX; d.t = now;
@@ -374,7 +371,7 @@ canvas.addEventListener('pointermove', (e) => {
   G.uT += du;
   d.v = lerp(d.v, (du / dtm) * 1000, 0.45);
 });
-const endDrag = (e) => { if (G.state === 'ebru' || Ebru.g) Ebru.up(e); if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag || (Theater.ptrs && Theater.ptrs.size)) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
+const endDrag = (e) => { if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag || (Theater.ptrs && Theater.ptrs.size)) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
 window.addEventListener('keydown', (e) => {
   audio.unlock();
@@ -383,7 +380,6 @@ window.addEventListener('keydown', (e) => {
   if (G.state === 'film') { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') Film.skip(); return; }
   if (G.state === 'theater' && ThTut.frozen() && (e.code === 'Enter' || e.code === 'Space' || e.code === 'ArrowRight')) { e.preventDefault(); ThTut.tap(); return; }
   if (G.state === 'theater') { const k = 0.12; if (e.code === 'ArrowLeft' || e.code === 'KeyA') Theater.rot(-k, 0); else if (e.code === 'ArrowRight' || e.code === 'KeyD') Theater.rot(k, 0); else if (e.code === 'ArrowUp' || e.code === 'KeyW') Theater.rot(0, -k); else if (e.code === 'ArrowDown' || e.code === 'KeyS') Theater.rot(0, k); else if (e.code === 'KeyQ') Theater.roll(-0.08); else if (e.code === 'KeyE') Theater.roll(0.08); else if (e.code === 'Escape') Theater.close(); else if (e.code === 'Tab') { e.preventDefault(); Theater.cycle(); } else if ((e.code === 'Enter' || e.code === 'Space') && Theater.cardShown) $('#thNext').click(); return; }
-  if (G.state === 'ebru') { if (e.code === 'Escape') $('#ebBack').click(); return; }
   if (G.state === 'map') { if (e.code === 'ArrowLeft' || e.code === 'KeyA') SkyMap.go(Math.round(SkyMap.tf) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') SkyMap.go(Math.round(SkyMap.tf) + 1); else if (e.code === 'Enter' || e.code === 'Space') $('#mpPlay').click(); else if (e.code === 'Escape') $('#btnMapBack').click(); return; }
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') { G.keyDir = 1; if (G.state === 'ready') startPlay(); }
@@ -528,7 +524,6 @@ bind('#mpPlay', () => { const ci = Math.round(SkyMap.tf); if (Save.data.unlocked
 const openTheater = (from) => { audio.ui(); hideToast(); $('#fader').classList.add('on'); setTimeout(() => { Theater.open(from); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); };
 bind('#btnTheater', () => openTheater('map'));
 bind('#btnTheaterT', () => openTheater('title'));
-bind('#btnEbruT', () => { audio.ui(); hideToast(); $('#fader').classList.add('on'); setTimeout(() => { Ebru.open(); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); });
 bind('#thBack', () => { audio.ui(); $('#fader').classList.add('on'); setTimeout(() => { Theater.close(); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); });
 bind('#thExit', () => $('#thBack').click());
 bind('#thReplay', () => Theater.replay());
@@ -559,7 +554,7 @@ function onResize() {
   renderer.setPixelRatio(dpr); renderer.setSize(w, h, false);
   const v = renderer.getDrawingBufferSize(new THREE.Vector2());
   post.build(v.x, v.y, Q);
-  camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h); Theater.resize(w, h); Ebru.resize();
+  camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h); Theater.resize(w, h);
   if (G.lv) Cam.fit(G.lv);
   fxAdd.u.uPx.value = fxMix.u.uPx.value = v.y / (2 * Math.tan(deg(camera.fov / 2)));
 }
@@ -601,9 +596,9 @@ function frame(now) {
   if (G.state === 'paused') dt = 0;
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
   audio.update(dtR, G.state === 'play');
-  const onMap = G.state === 'map' && SkyMap.active, onTh = G.state === 'theater' && Theater.active, onEb = G.state === 'ebru' && Ebru.active;
-  if (onMap) SkyMap.apply(); else if (onTh) Theater.apply(); else if (onEb) Ebru.apply();
-  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onMap ? mapScene : onTh ? stScene : onEb ? ebScene : scene, onMap ? mapCam : onTh ? stCam : onEb ? ebCam : camera); renderedFrames++; } catch (e) { reportError(e); } }
+  const onMap = G.state === 'map' && SkyMap.active, onTh = G.state === 'theater' && Theater.active;
+  if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
+  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; } catch (e) { reportError(e); } }
   // güvenlik: geçiş perdesi takılı kalmasın
   const fd = $('#fader'); if (fd.classList.contains('on')) { fd.__t = (fd.__t || 0) + dtR; if (fd.__t > 3.5) { fd.classList.remove('on', 'soon'); fd.__t = 0; } } else fd.__t = 0;
 }
@@ -756,7 +751,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT, Theater, SkyMap, Film, Ebru, ebScene, ebCam, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
