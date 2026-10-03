@@ -371,14 +371,14 @@ canvas.addEventListener('pointermove', (e) => {
   G.uT += du;
   d.v = lerp(d.v, (du / dtm) * 1000, 0.45);
 });
-const endDrag = (e) => { if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
+const endDrag = (e) => { if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag || (Theater.ptrs && Theater.ptrs.size)) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
 window.addEventListener('keydown', (e) => {
   audio.unlock();
   if (TUT.open) { TUT.key(e); return; }
   if (e.repeat && (e.code === 'Space')) return;
   if (G.state === 'film') { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') Film.skip(); return; }
-  if (G.state === 'theater') { const k = 0.12; if (e.code === 'ArrowLeft' || e.code === 'KeyA') Theater.rot(-k, 0); else if (e.code === 'ArrowRight' || e.code === 'KeyD') Theater.rot(k, 0); else if (e.code === 'ArrowUp' || e.code === 'KeyW') Theater.rot(0, -k); else if (e.code === 'ArrowDown' || e.code === 'KeyS') Theater.rot(0, k); else if (e.code === 'Escape') Theater.close(); else if (e.code === 'Tab') { e.preventDefault(); Theater.cycle(); } else if ((e.code === 'Enter' || e.code === 'Space') && Theater.cardShown) $('#thNext').click(); return; }
+  if (G.state === 'theater') { const k = 0.12; if (e.code === 'ArrowLeft' || e.code === 'KeyA') Theater.rot(-k, 0); else if (e.code === 'ArrowRight' || e.code === 'KeyD') Theater.rot(k, 0); else if (e.code === 'ArrowUp' || e.code === 'KeyW') Theater.rot(0, -k); else if (e.code === 'ArrowDown' || e.code === 'KeyS') Theater.rot(0, k); else if (e.code === 'KeyQ') Theater.roll(-0.08); else if (e.code === 'KeyE') Theater.roll(0.08); else if (e.code === 'Escape') Theater.close(); else if (e.code === 'Tab') { e.preventDefault(); Theater.cycle(); } else if ((e.code === 'Enter' || e.code === 'Space') && Theater.cardShown) $('#thNext').click(); return; }
   if (G.state === 'map') { if (e.code === 'ArrowLeft' || e.code === 'KeyA') SkyMap.go(Math.round(SkyMap.tf) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') SkyMap.go(Math.round(SkyMap.tf) + 1); else if (e.code === 'Enter' || e.code === 'Space') $('#mpPlay').click(); else if (e.code === 'Escape') $('#btnMapBack').click(); return; }
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') { G.keyDir = 1; if (G.state === 'ready') startPlay(); }

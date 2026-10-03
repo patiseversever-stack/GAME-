@@ -1046,56 +1046,80 @@ const SF_RABBIT = {
 };
 SF_DEFS[2] = SF_RABBIT;
 
-/* ---------- IV. Balina: okyanus — gölge canlanınca perdenin altından deniz yükselir ---------- */
+/* ---------- IV. Balina: okyanus — gölge canlanınca perdenin altından deniz yükselir ----------
+   Deniz ters sarımlı çizilir: balinanın suya giren kısmı karanlık denizde ışık olarak (beyaz) görünür. */
 // Gerstner dalgaları: [dalga boyu, genlik, diklik, hız, faz] — tepeler sivri, çukurlar yumuşak, sola akar
 const SF_SEA_W = [[360, 11, 0.62, 0.9, 0.0], [190, 6, 0.5, 1.25, 1.7], [96, 2.6, 0.4, 1.8, 4.1]];
-function sfSeaPt(s, t, ys) {
-  let X = s, Y = ys;
-  for (const [L, A, Q, sp, ph] of SF_SEA_W) { const k = TAU / L, th = k * s + t * sp * 1.6 + ph, q = Q / (k * A * SF_SEA_W.length); X += q * A * Math.cos(th); Y -= A * Math.sin(th); }
-  return [X, Y];
+// yüzeyin balinaya tepkisi: alttan gelen kubbe, çıkış/giriş tümseği, yayılan halka dalgalar
+function sfSeaDist(x, t, k) {
+  let d = 0; const E = k && k.wev; if (!E) return 0;
+  for (const [x0, t0, A, pre] of E) {
+    const dt = t - t0, r = Math.abs(x - x0);
+    if (pre > 0 && dt > -pre && dt < 0.12) d -= A * 0.9 * Math.sin(((dt + pre) / (pre + 0.12)) * PI) * Math.exp(-((r / 95) ** 2));
+    if (dt <= 0) continue;
+    d -= A * Math.exp(-((r / 70) ** 2)) * Math.exp(-dt * 2.4) * Math.min(1, dt / 0.1);
+    const fr = dt * 300; if (r < fr) d += A * 0.5 * Math.sin(r * 0.05 - dt * 8) * Math.exp(-dt * 0.7) * Math.exp(-r / 320) * smoothstep(fr, fr - 70, r);
+  }
+  return d;
 }
-const sfSeaY = (x, t, ys) => sfSeaPt(x, t, ys)[1];
+function sfSeaPt(s, t, ys, k) {
+  let X = s, Y = ys;
+  for (const [L, A, Q, sp, ph] of SF_SEA_W) { const kk = TAU / L, th = kk * s + t * sp * 1.6 + ph, q = Q / (kk * A * SF_SEA_W.length); X += q * A * Math.cos(th); Y -= A * Math.sin(th); }
+  return [X, Y + sfSeaDist(s, t, k)];
+}
+const sfSeaY = (x, t, ys, k) => sfSeaPt(x, t, ys, k)[1];
+// taç biçimli su sütunları: yükselir, tepede damla, geri çöker
+function sfCrown(u, x0, y0, o) {
+  const out = []; if (!(u > 0) || u > o.T * 2.2) return out;
+  for (let i = 0; i < o.n; i++) {
+    const f = o.n > 1 ? (i / (o.n - 1)) * 2 - 1 : 0, sd = o.seed + i * 7, T = o.T * (0.75 + hash1(sd + 3) * 0.5), uu = u / T; if (uu >= 2) continue;
+    const hh = o.H * (0.5 + hash1(sd) * 0.6) * (1 - Math.abs(f) * 0.4), h = hh * (2 * uu - uu * uu); if (h < 5) continue;
+    const bx = x0 + f * o.W * 0.32, tx = x0 + f * o.W * (0.35 + 0.65 * Math.min(1, uu)) + (o.lean || 0) * h, ty = y0 - h, w = o.w * (0.65 + hash1(sd + 5) * 0.7) * (1 - Math.min(1, uu) * 0.3);
+    out.push(sfStroke(sfCurve(bx, y0 + 8, lerp(bx, tx, 0.15), y0 - h * 0.45, lerp(bx, tx, 0.75), ty + h * 0.15, tx, ty, 9), w, w * 0.3, 0, 1));
+    if (uu > 0.6) out.push(sfEllipse(tx + f * 4, ty - w * 0.5 - (uu - 0.6) * 10, w * 0.42, w * 0.55, 0, 8));
+  }
+  return out;
+}
 function sfSea(k) {
   const ys = k.sea, t = k.t; if (!(ys < 460)) return [];
   const o = [], band = [];
-  for (let s = -900; s <= 900; s += 8) band.push(...sfSeaPt(s, t, ys));
-  band.push(900, 900, -900, 900); o.push(band);
+  for (let s = -900; s <= 900; s += 7) band.push(...sfSeaPt(s, t, ys, k));
+  band.push(900, 900, -900, 900); band.hole = 1; o.push(band); // ters sarım: deniz ∖ balina
   // köpük: dalga tepelerinin hemen altında ışık sızdıran ince çizgiler
   const [L0, , , sp0, ph0] = SF_SEA_W[0], k0 = TAU / L0;
   for (let n = -4; n <= 4; n++) {
     const sc = (PI / 2 + TAU * n - t * sp0 * 1.6 - ph0) / k0; if (sc < -700 || sc > 700) continue;
     for (let j = 0; j < 3; j++) {
       const len = 26 + hash1(n * 7 + j + 40) * 30, off = (j - 1) * 22 + (hash1(n * 3 + j) - 0.5) * 10, d0 = 7 + j * 5, line = [];
-      for (let q = 0; q <= 8; q++) { const s = sc + off - len / 2 + (len * q) / 8, [x, y] = sfSeaPt(s, t, ys); line.push(x, y + d0 + Math.abs(q - 4) * 0.8); }
-      const h = sfStroke(line, 3.2 - j * 0.6, 1.4, 1, 1); h.hole = 1; o.push(h);
+      for (let q = 0; q <= 8; q++) { const s = sc + off - len / 2 + (len * q) / 8, [x, y] = sfSeaPt(s, t, ys, k); line.push(x, y + d0 + Math.abs(q - 4) * 0.8); }
+      o.push(sfStroke(line, 3.2 - j * 0.6, 1.4, 1, 1));
     }
-    // tepeden savrulan serpinti
-    for (let j = 0; j < 4; j++) { const c = (t * 0.9 + hash1(n * 5 + j)) % 1, s = sc - c * 40 - j * 6, [x, y] = sfSeaPt(sc, t, ys); if (c < 0.7) o.push(sfEllipse(x - c * 34 - j * 5, y - Math.sin(c * PI) * (10 + j * 4) - 3, 2.2 - c * 1.5, 2.2 - c * 1.5, 0, 6)); }
+    for (let j = 0; j < 4; j++) { const c = (t * 0.9 + hash1(n * 5 + j)) % 1, [x, y] = sfSeaPt(sc, t, ys, k); if (c < 0.7) o.push(sfEllipse(x - c * 34 - j * 5, y - Math.sin(c * PI) * (10 + j * 4) - 3, 2.2 - c * 1.5, 2.2 - c * 1.5, 0, 6)); }
   }
-  // dalış sonrası su altından ışıklı kabarcıklar (yalnızca suyun içinde: delik)
-  for (const [bt, bx0, by0, sd] of [[k.bub2, k.rx, 360, 300], [k.bub3, 120, 300, 340]]) if (bt > 0) for (let i = 0; i < 22; i++) {
+  // su altında yükselen kabarcıklar (denizde ışık noktaları)
+  for (const [bt, bx0, by0, sd] of [[k.bub2, k.rxE, 380, 300], [k.bub3, 120, 300, 340]]) if (bt > 0) for (let i = 0; i < 22; i++) {
     const dt = bt - hash1(i + sd) * 1.6; if (dt < 0) continue;
     const x = bx0 + (hash1(i + sd + 1) - 0.5) * 140 + Math.sin(dt * 4 + i) * 7, y = by0 - dt * (90 + hash1(i + sd + 2) * 70), r = 2.5 + hash1(i + sd + 3) * 5;
-    if (y > sfSeaY(x, t, ys) + r + 6) { const b = sfEllipse(x, y, r, r * 0.9, 0, 10); b.hole = 1; o.push(b); }
+    if (y > sfSeaY(x, t, ys, k) + r + 6) o.push(sfEllipse(x, y, r, r * 0.9, 0, 10));
   }
-  // dalışın köpük halkası
-  for (const [rg, rxx] of [[k.ring, k.rx], [k.ring2, 110]]) if (rg > 0 && rg < 3) { const R = 30 + rg * 55, kr = { ring: rg, rx: rxx }; for (let j = 0; j < 7; j++) { const s = kr.rx - R + (j / 6) * R * 2, line = []; for (let q = 0; q <= 4; q++) { const ss = s + q * 6, [xx, yy] = sfSeaPt(ss, t, ys); line.push(xx, yy + 6 + Math.sin(j) * 2); } if (hash1(j + 77) < 0.75 * (1 - kr.ring / 3)) { const h = sfStroke(line, 2.6, 1.4, 1, 1); h.hole = 1; o.push(h); } } }
   return o;
 }
-// ufuktaki yelkenli: dalganın eğimine göre sallanır
+// yelkenli: dalganın eğimine göre sallanır
 function sfBoat(k) {
   const ys = k.sea, t = k.t; if (!(ys < 300)) return [];
-  const bx = -420, y0 = sfSeaY(bx - 16, t, ys), y1 = sfSeaY(bx + 16, t, ys), a = Math.atan2(y1 - y0, 32) * 0.8, y = (y0 + y1) / 2 - 2;
-  const P = (pts) => sfXf(pts, bx, y, a, 0.72);
-  return [P([-34, -2, 36, -2, 26, 11, -24, 11]), P(sfStroke([0, -2, 0, -66], 3, 2.4, 0, 1)), P([3, -62, 3, -8, 34, -9]), P([-3, -58, -3, -8, -28, -8]), P([0, -66, 12, -62, 0, -59])];
+  const bx = -420 + Math.sin(t * 0.21) * 8, y0 = sfSeaY(bx - 30, t, ys, k), y1 = sfSeaY(bx + 30, t, ys, k), a = Math.atan2(y1 - y0, 60) * 0.85, y = Math.min(y0, y1) - 9;
+  const P = (pts) => sfXf(pts, bx, y, a, 1.25);
+  return [P([-36, -2, 38, -2, 30, 8, 22, 12, -22, 12, -30, 8]), P(sfStroke([0, -2, 0, -74], 3.2, 2.4, 0, 1)), P(sfStroke([-14, -40, 14, -40], 2.2, 2.2, 1, 1)), P([3, -70, 3, -8, 36, -9, 30, -30]), P([-3, -64, -3, -8, -30, -8]), P([0, -74, 14, -70, 0, -66]), P(sfStroke([38, -2, 50, -10], 2, 1.5, 1, 1))];
 }
 function sfGulls(k) {
   const o = [], t = k.t;
-  for (let i = 0; i < 2; i++) {
-    const u = t - 1.4 - i * 0.6; if (u < 0) continue;
-    const x = 520 - u * (88 + i * 14), y = -250 + i * 34 + Math.sin(u * 0.9 + i) * 14; if (x < -560) continue;
-    const a = Math.sin(u * 7.5 + i * 2) * 0.6, s = 1 - i * 0.18;
-    o.push(sfStroke([x - 24 * s, y - (6 + a * 14) * s, x - 11 * s, y - (2 - a * 4) * s, x, y + 2 * s, x + 11 * s, y - (2 - a * 4) * s, x + 24 * s, y - (6 + a * 14) * s], 4 * s, 2.6 * s, 1, 1));
+  for (let i = 0; i < 3; i++) {
+    const u = t - 1.3 - i * 0.7; if (u < 0) continue;
+    const x = 560 - u * (80 + i * 16) - i * 40, y = -235 + i * 46 + Math.sin(u * 0.8 + i) * 18; if (x < -620) continue;
+    const a = Math.sin(u * 6.5 + i * 2) * 0.55, s = 1.9 - i * 0.35, gl = Math.sin(u * 0.6 + i) > 0.6 ? 0.25 : 1; // ara sıra süzülür
+    const aa = a * gl;
+    o.push(sfStroke([x - 26 * s, y - (5 + aa * 15) * s, x - 14 * s, y - (3 - aa * 5) * s, x - 4 * s, y + 1 * s, x, y + 2 * s, x + 4 * s, y + 1 * s, x + 14 * s, y - (3 - aa * 5) * s, x + 26 * s, y - (5 + aa * 15) * s], 4.6 * s, 2 * s, 1, 1));
+    o.push(sfEllipse(x, y + 2.5 * s, 4.6 * s, 2.6 * s, 0, 10));
   }
   return o;
 }
@@ -1104,38 +1128,40 @@ function sfMoonGlints(k) {
   const o = [], ys = k.sea, t = k.t; if (!(ys < 200)) return o;
   const mx = -300;
   for (let i = 0; i < 20; i++) {
-    const d = i * 8.5, x = mx + (hash1(i + 500) - 0.5) * (24 + i * 8) + Math.sin(t * 0.7 + i) * 6, y = sfSeaY(x, t, ys) + 7 + d, w = (7 + hash1(i + 501) * 16) * (1 - d / 240), on = Math.sin(t * (4 + hash1(i) * 3) + i * 2.3);
+    const d = i * 8.5, x = mx + (hash1(i + 500) - 0.5) * (24 + i * 8) + Math.sin(t * 0.7 + i) * 6, y = sfSeaY(x, t, ys, k) + 7 + d, w = (7 + hash1(i + 501) * 16) * (1 - d / 240), on = Math.sin(t * (4 + hash1(i) * 3) + i * 2.3);
     if (on > -0.1 && w > 2) o.push(sfEllipse(x, y, w * (0.6 + 0.4 * on), 2.1, 0, 10));
   }
   return o;
 }
-// balina okyanusta: yüzeye çık, fıskiye, derine in, sudan fırla (breach), sırtüstü çakıl, kuyruğunu dikip dal
+// su olayları: [x, başlangıç, şiddet, ön-kubbe süresi]
+const SF_WHALE_FLUKE_X = 128; // kuyruk yüzgecinin suya girdiği yer (t ≈ 7.68)
+// balina okyanusta: yüzeye çık, fıskiye, derinde dön, sudan fırla (breach), sırtüstü çakıl, kuyruğunu dikip dal
 function SF_WHALE_OCEAN(t, S) {
   const B = S.b, k = S.k; k.t = t;
-  const sw = smoothstep(0.3, 1.2, t), w = t * 0.75 * TAU, br = t > 3.5 && t < 5.2 ? 0.3 : 1, amp = sw * br;
+  const sw = smoothstep(0.3, 1.2, t), w = t * 0.75 * TAU, br = t > 3.4 && t < 5.2 ? 0.3 : 1, amp = sw * br;
   B.body.r = Math.sin(w) * 0.02 * amp; B.tail1.r = Math.sin(w - 0.7) * 0.06 * amp; B.tail2.r = Math.sin(w - 1.4) * 0.12 * amp; B.fluke.r = Math.sin(w - 2.1) * 0.22 * amp; B.head.r = -Math.sin(w) * 0.015 * amp;
   k.sea = lerp(470, 40, Ease.inOutCubic(clamp01((t - 0.8) / 1.4))) + Math.sin(t * 0.5) * 3;
   k.gI = smoothstep(0.9, 2.4, t) * 0.95;
-  // yörünge: x, y, dönüş (pozitif = baş aşağı)
-  const X = kf(t, [[0, 0], [3.0, 10], [4.3, 70, 'out'], [5.1, 100], [6.0, 110], [7.4, 190], [8.2, 200]]);
-  const Y = kf(t, [[0, 0], [1.2, 0], [2.3, -22, 'io'], [2.8, -22], [3.4, 240, 'in'], [3.55, 280], [4.3, -150, 'out'], [4.68, -100, 'in'], [5.0, 160, 'in'], [5.75, -16, 'out'], [6.0, -16], [6.6, 60, 'in'], [7.15, 210], [7.45, 250], [8.1, 640, 'in']]);
-  const R = kf(t, [[0, 0], [2.8, 0], [3.4, 0.4, 'in'], [3.5, 0.4], [3.52, -1.12, 'hold'], [3.55, -1.12], [4.3, -0.95], [4.68, -0.45, 'io'], [5.0, 0.12, 'in'], [5.75, 0, 'out'], [6.0, 0], [6.6, 0.62, 'in'], [7.15, 1.34, 'out'], [7.6, 1.42]]);
-  B.whale.x = X; B.whale.y = Y + Math.sin(w + 1.2) * 5 * sw * (t < 3.4 || (t > 5.8 && t < 6.0) ? 1 : 0); B.whale.r = R;
-  // sıçrayışta yüzgeçler çırpınır; dalışta kuyruk kalkıp düzleşir
+  // yörünge: x, y, dönüş (pozitif = baş aşağı); suyun altında yumuşak U dönüşü (artık görünür)
+  const X = kf(t, [[0, 0], [2.8, 10], [3.35, 40], [3.6, 30], [4.3, 70, 'out'], [5.0, 100], [6.0, 110], [7.4, 190], [8.2, 200]]);
+  const Y = kf(t, [[0, 0], [1.2, 0], [2.3, -22, 'io'], [2.8, -22], [3.25, 170, 'in'], [3.45, 250], [3.6, 250], [4.3, -150, 'out'], [4.68, -100, 'in'], [5.0, 160, 'in'], [5.75, -16, 'out'], [6.0, -16], [6.6, 60, 'in'], [7.15, 210], [7.45, 250], [8.3, 680, 'in']]);
+  const R = kf(t, [[0, 0], [2.8, 0], [3.25, 0.45, 'in'], [3.45, 0.1, 'io'], [3.62, -1.12, 'out'], [4.3, -0.95], [4.68, -0.45, 'io'], [5.0, 0.12, 'in'], [5.75, 0, 'out'], [6.0, 0], [6.6, 0.62, 'in'], [7.15, 1.34, 'out'], [7.6, 1.42]]);
+  B.whale.x = X; B.whale.y = Y + Math.sin(w + 1.2) * 5 * sw * (t < 2.8 || (t > 5.8 && t < 6.0) ? 1 : 0); B.whale.r = R;
   B.fin.r = Math.sin(w * 0.7) * 0.08 * sw + (t > 3.6 && t < 5.1 ? Math.sin((t - 3.6) * 9) * 0.5 - 0.7 * Math.sin(clamp01((t - 3.6) / 1.5) * PI) : 0);
   const fl = kf(t, [[6.0, 0], [6.6, 1, 'io'], [7.2, 0.3], [7.6, 0]]);
   B.tail1.r += 0.18 * fl; B.tail2.r += 0.25 * fl; B.fluke.r += 0.3 * fl;
   k.sp = t - 2.45;
-  // su olayları
-  k.su = t - 1.95; k.be = t - 3.78; k.bc = t - 4.86; k.fe = t - 7.62; k.bub2 = t - 7.7; k.bub3 = t - 4.95; k.ring = t - 7.62; k.ring2 = t - 4.9;
-  const [fx, fy] = sfBoneXf(SF_WHALE.bones, B, 'fluke', -330, -2); k.flx = fx; k.fly = fy; k.rx = fx;
-  // sudan çıkan gövdeden akan su: baş ve sırt boyunca
-  k.dr = []; if (t > 3.8 && t < 5.1) for (const [bn, px, py] of [['head', 230, 10], ['head', 160, -40], ['body', 60, -58], ['body', -40, -56]]) k.dr.push(sfBoneXf(SF_WHALE.bones, B, bn, px, py));
+  k.wev = [[236, 1.95, 10, 0.35], [80, 2.95, 9, 0], [150, 3.8, 26, 0.32], [90, 4.86, 36, 0], [150, 6.15, 8, 0], [SF_WHALE_FLUKE_X, 7.68, 16, 0]];
+  k.su = t - 1.95; k.be = t - 3.8; k.bc = t - 4.86; k.fe = t - 7.68; k.bub2 = t - 7.75; k.bub3 = t - 4.95; k.rxE = SF_WHALE_FLUKE_X;
+  const [fx, fy] = sfBoneXf(SF_WHALE.bones, B, 'fluke', -330, -2); k.flx = fx; k.fly = fy;
+  // sudan çıkan gövdeden akan su perdeleri: sırt ve karın kenarı boyunca
+  k.dr = []; if (t > 3.75 && t < 5.0) for (const [bn, px, py] of [['head', 236, 20], ['head', 200, 50], ['head', 150, -46], ['body', 70, -58], ['body', 0, -60], ['body', 40, 86], ['tail1', -110, -44]]) k.dr.push(sfBoneXf(SF_WHALE.bones, B, bn, px, py));
+  if (t > 6.5 && t < 7.7) for (const [px, py] of [[-300, 8], [-340, 20], [-360, -30]]) k.dr.push(sfBoneXf(SF_WHALE.bones, B, 'fluke', px, py));
 }
 SF_WHALE.perform = SF_WHALE_OCEAN;
 SF_WHALE.layers = SF_WHALE.layers.filter((L) => L.id !== 'bub');
 Object.assign(SF_WHALE, { ext: 1, dur: 11.0, glowCol: [0.95, 0.92, 0.8], line: 'Perdenin içinden bir okyanus geçti — dalgaları yarıp göğe fırladı, kuyruğunu ay ışığına kaldırıp derinlere daldı.' });
-SF_WHALE.k0 = Object.assign({}, SF_WHALE.k0, { t: 0, sea: 999, gI: 0, bub2: -1, bub3: -1, ring: -1, ring2: -1, rx: 160, flx: 0, fly: 0, su: -1, be: -1, bc: -1, fe: -1, dr: [] });
+SF_WHALE.k0 = Object.assign({}, SF_WHALE.k0, { t: 0, sea: 999, gI: 0, bub2: -1, bub3: -1, rxE: SF_WHALE_FLUKE_X, flx: 0, fly: 0, su: -1, be: -1, bc: -1, fe: -1, dr: [], wev: [] });
 SF_WHALE.layers.push(
   { id: 'moon', glow: 1, back: 1, show: 1, gen: (k) => (k.sea < 400 ? [sfEllipse(-300, -215, 44, 44, 0, 36)] : []) },
   { id: 'sea', prop: 1, show: 1, gen: (k) => sfSea(k) },
@@ -1143,13 +1169,27 @@ SF_WHALE.layers.push(
   { id: 'gulls', prop: 1, show: 1, gen: (k) => sfGulls(k) },
   { id: 'wspl', prop: 1, show: 1, gen: (k) => {
     if (!(k.sea < 300)) return [];
-    const ys = k.sea, o = sfSplash(k.su, 22, 900, 236, ys + 2, { up: 380, sp: 170, r: 5, life: 1.1 }).concat(sfSplash(k.be, 40, 930, 150, ys + 2, { up: 640, sp: 230, r: 6.5, life: 1.5, spread: 0.3 }), sfSplash(k.bc, 60, 960, 90, ys + 2, { up: 820, sp: 360, r: 8, life: 1.8, spread: 0.2, cone: 2.6 }), sfSplash(k.fe, 30, 990, k.rx, ys + 2, { up: 520, sp: 220, r: 6, life: 1.3 }));
-    // sudan çıkan gövdeden dökülen su
-    if (k.dr) k.dr.forEach(([dx, dy], j) => { for (let i = 0; i < 6; i++) { const c = (k.t * 1.6 + hash1(i + j * 13 + 800)) % 1, x = dx + (hash1(i + j * 7 + 801) - 0.5) * 40, y = dy + 8 + c * c * 200; if (y < sfSeaY(x, k.t, ys) - 3) o.push(sfEllipse(x, y, 2.6, 4, 0, 7)); } });
-    // kuyruk yüzgecinden süzülen damlalar
-    if (k.fly < ys - 12) for (let i = 0; i < 16; i++) { const c = (k.t * 1.3 + hash1(i + 700)) % 1, x = k.flx + (hash1(i + 701) - 0.5) * 120, y = k.fly + 10 + c * c * 180; if (y < sfSeaY(x, k.t, ys) - 3) o.push(sfEllipse(x, y, 2.4, 3.6, 0, 7)); }
+    const ys = k.sea, t = k.t, sy = (x) => sfSeaY(x, t, ys, k);
+    // taçlar + kopan damlalar
+    const o = sfCrown(k.su, 236, sy(236), { n: 7, W: 70, H: 70, T: 0.35, w: 9, seed: 10 }).concat(
+      sfCrown(k.be, 150, sy(150), { n: 11, W: 150, H: 170, T: 0.45, w: 13, seed: 40, lean: 0.15 }),
+      sfCrown(k.bc, 90, sy(90), { n: 15, W: 300, H: 260, T: 0.55, w: 16, seed: 80 }),
+      sfCrown(k.fe, k.rxE, sy(k.rxE), { n: 9, W: 110, H: 120, T: 0.4, w: 10, seed: 120 }),
+      sfSplash(k.su - 0.15, 18, 900, 236, sy(236) - 30, { up: 300, sp: 150, r: 4.5, life: 1.0 }),
+      sfSplash(k.be - 0.2, 40, 930, 150, sy(150) - 80, { up: 420, sp: 230, r: 5.5, life: 1.4, spread: 0.3 }),
+      sfSplash(k.bc - 0.25, 64, 960, 90, sy(90) - 120, { up: 520, sp: 380, r: 6.5, life: 1.7, spread: 0.25, cone: 2.8 }),
+      sfSplash(k.fe - 0.2, 30, 990, k.rxE, sy(k.rxE) - 50, { up: 380, sp: 200, r: 5, life: 1.2 }));
+    // gövdeden ve yüzgeçten dökülen su perdeleri (yüzeyin üstünde kalan kısmı)
+    k.dr.forEach(([dx, dy], j) => {
+      const surf = sy(dx); if (dy > surf - 6) return;
+      for (let i = 0; i < 3; i++) {
+        const c = (t * 1.3 + hash1(i + j * 13 + 800)) % 1, L = 26 + hash1(i + j * 7 + 802) * 46, x0 = dx + (i - 1) * 9 + (hash1(i + j * 7 + 801) - 0.5) * 10, y0 = dy + 4 + c * 40, y1 = Math.min(y0 + L, surf - 2);
+        if (y1 > y0 + 6) o.push(sfStroke([x0, y0, x0 - 3, (y0 + y1) / 2, x0 - 7, y1], 4.2, 1.2, 1, 1));
+        const yd = y1 + 8 + c * 30; if (yd < surf - 3) o.push(sfEllipse(x0 - 7, yd, 2.2, 3.4, 0, 7));
+      }
+    });
     return o;
   } },
   { id: 'glints', glow: 1, show: 1, gen: (k) => sfMoonGlints(k) },
 );
-SF_WHALE.events = [[0.4, 'whale'], [0.9, 'seaRise'], [1.95, 'surface'], [2.45, 'spout'], [3.0, 'gull'], [3.72, 'breach'], [4.86, 'crash'], [6.0, 'dive'], [7.62, 'flukeSplash'], [7.8, 'bubbles'], [8.8, 'gull']];
+SF_WHALE.events = [[0.4, 'whale'], [0.9, 'seaRise'], [1.95, 'surface'], [2.45, 'spout'], [3.0, 'gull'], [3.72, 'breach'], [4.86, 'crash'], [6.0, 'dive'], [7.68, 'flukeSplash'], [7.85, 'bubbles'], [8.8, 'gull']];

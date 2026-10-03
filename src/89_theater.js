@@ -807,7 +807,7 @@ const Theater = {
       else {
         const sgn = rng.sign();
         G.yaw = sgn * (act.axes === 1 ? rng.range(1.5, 2.8) : rng.range(0.9, 2.2)); G.pitch = act.axes >= 2 ? rng.sign() * rng.range(i < 3 ? 0.3 : 0.35, i < 3 ? 0.55 : 0.8) : 0;
-        if (act.axes >= 3) G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, rng.sign() * rng.range(0.3, 0.7), 'YXZ'));
+        if (act.axes >= 3) G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, rng.sign() * rng.range(0.15, 0.38), 'YXZ'));
         else G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ'));
       }
       gr.quaternion.copy(G.q);
@@ -848,7 +848,8 @@ const Theater = {
     $('#thAct').textContent = `${ST_ROMAN[this.idx]}. perde`;
     $('#theater').classList.remove('solved'); $('#thTime').textContent = '0:00';
     const two = this.grp.length > 1;
-    const ax = two ? `<em>İki heykel</em> var: dokunduğun döner, ikisini de hizala.` : this.act.axes === 1 ? 'Heykeli parmağınla <em>sağa sola</em> çevir.' : this.act.axes === 2 ? 'Bu kez <em>yukarı aşağı</em> da dönüyor.' : 'Artık heykel <em>her yöne</em> döner.';
+    const r3 = this.act.axes >= 3 ? '<br>Halkada daire çiz ya da iki parmakla döndür: <em>yatır</em>.' : '';
+    const ax = (two ? `<em>İki heykel</em> var: dokunduğun döner, ikisini de hizala.` : this.act.axes === 1 ? 'Heykeli parmağınla <em>sağa sola</em> çevir.' : this.act.axes === 2 ? 'Bu kez <em>yukarı aşağı</em> da dönüyor.' : 'Ortadan sürükle: <em>çevir</em>.') + r3;
     $('#thMsg').innerHTML = `<b>${this.act.riddle}…</b><br>${ax}${this.idx === 0 && !(Save.data.theater || []).length ? '<span class="swipe"><i></i></span>' : ''}`; $('#thMsg').classList.add('on');
   },
   open(from) {
@@ -887,18 +888,47 @@ const Theater = {
     for (const G of free) { const v = G.C.clone().project(stCam), d = Math.hypot(v.x - ndc.x, (v.y - ndc.y) * innerHeight / innerWidth); if (d < bd) { bd = d; best = G.gi; } }
     return best;
   },
-  down(e) { if (this.state !== 'play') return; this.sel = this.pick(e); const G = this.grp[this.sel]; this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), g: this.sel }; if (G) G.w.set(0, 0); $('#thMsg').classList.remove('on'); if (this.grp.length > 1 && G) { G.hl = 1; haptic(5); } },
+  // yatırma halkası: heykelin ekrandaki merkezi ve yarıçapı
+  ringR() { return clamp(Math.min(innerWidth, innerHeight) * 0.3, 110, 240); },
+  gScreen(G) { const v = G.C.clone().project(stCam); return [((v.x + 1) / 2) * innerWidth, ((1 - v.y) / 2) * innerHeight]; },
+  down(e) {
+    if (this.state !== 'play') return;
+    (this.ptrs || (this.ptrs = new Map())).set(e.pointerId, [e.clientX, e.clientY]); $('#thMsg').classList.remove('on');
+    // iki parmak: heykeli ekran düzleminde yatır
+    if (this.ptrs.size === 2 && this.act.axes >= 3) { const [a, b] = [...this.ptrs.values()]; this.twist = { a: Math.atan2(b[1] - a[1], b[0] - a[0]), g: this.drag ? this.drag.g : this.sel }; this.drag = null; return; }
+    if (this.ptrs.size > 1) return;
+    this.sel = this.pick(e); const G = this.grp[this.sel];
+    this.drag = { id: e.pointerId, x: e.clientX, y: e.clientY, t: performance.now(), g: this.sel };
+    if (G) {
+      G.w.set(0, 0);
+      // halkanın dışından başlayan sürükleme: daire çizerek yatır
+      if (this.act.axes >= 3) { const [cx, cy] = this.gScreen(G); if (Math.hypot(e.clientX - cx, e.clientY - cy) > this.ringR()) { this.drag.roll = true; this.drag.a = Math.atan2(e.clientY - cy, e.clientX - cx); } }
+      if (this.grp.length > 1) { G.hl = 1; haptic(5); }
+    }
+  },
   move(e) {
+    if (this.ptrs && this.ptrs.has(e.pointerId)) this.ptrs.set(e.pointerId, [e.clientX, e.clientY]);
+    if (this.twist && this.ptrs && this.ptrs.size >= 2) { const [a, b] = [...this.ptrs.values()], an = Math.atan2(b[1] - a[1], b[0] - a[0]); let da = an - this.twist.a; da = Math.atan2(Math.sin(da), Math.cos(da)); this.twist.a = an; this.roll(da, this.twist.g); return; }
     const d = this.drag; if (!d || e.pointerId !== d.id) return;
-    const now = performance.now(), dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Math.max(8, now - d.t) / 1000; d.x = e.clientX; d.y = e.clientY; d.t = now;
     const G = this.grp[d.g]; if (!G) return;
+    if (d.roll) { const [cx, cy] = this.gScreen(G), an = Math.atan2(e.clientY - cy, e.clientX - cx); let da = an - d.a; da = Math.atan2(Math.sin(da), Math.cos(da)); d.a = an; d.t = performance.now(); this.roll(da * lerp(1, 0.45, smoothstep(deg(20), deg(3), this.angle(G))), d.g); return; }
+    const now = performance.now(), dx = e.clientX - d.x, dy = e.clientY - d.y, dt = Math.max(8, now - d.t) / 1000; d.x = e.clientX; d.y = e.clientY; d.t = now;
     // hedefe yaklaştıkça hassas ayar: aynı parmak hareketi daha az döndürür (radyo ayarı gibi)
     const k = 0.0078 * lerp(1, 0.38, smoothstep(deg(22), deg(3), this.angle(G))); this.rot(dx * k, dy * k, d.g);
     stMus.turn(Math.hypot(dx * k, dy * k), Math.sign(dx || dy), this.near);
     G.w.set(lerp(G.w.x, (dx * k) / dt, 0.4), lerp(G.w.y, (dy * k) / dt, 0.4));
     audio.theaterCreak(Math.min(1, Math.hypot(dx, dy) * 0.03));
   },
-  up(e) { const d = this.drag; if (!d || e.pointerId !== d.id) return; this.drag = null; const G = this.grp[d.g]; if (G && performance.now() - d.t > 80) G.w.set(0, 0); },
+  up(e) {
+    if (this.ptrs) this.ptrs.delete(e.pointerId); if (this.twist && (!this.ptrs || this.ptrs.size < 2)) this.twist = null;
+    const d = this.drag; if (!d || e.pointerId !== d.id) return; this.drag = null; const G = this.grp[d.g]; if (G && (d.roll || performance.now() - d.t > 80)) G.w.set(0, 0);
+  },
+  // ekran düzleminde (kandil ekseni etrafında) yatır: gölge perdede olduğu gibi döner
+  roll(da, gi = this.sel) {
+    const G = this.grp[gi]; if (this.state !== 'play' || !G || G.lock || !da || this.act.axes < 3) return;
+    G.q.premultiply(new THREE.Quaternion().setFromAxisAngle(this.axis, da)).normalize();
+    stMus.turn(Math.abs(da) * 1.5, Math.sign(da), this.near); audio.theaterCreak(Math.min(1, Math.abs(da) * 10));
+  },
   rot(a, b, gi = this.sel) {
     const G = this.grp[gi];
     if (this.state !== 'play' || !G || G.lock || (!a && !b)) return;
@@ -1024,6 +1054,12 @@ const Theater = {
     const sh = G.trauma * G.trauma; P.x += Math.sin(t * 41) * sh * 0.12; P.y += Math.sin(t * 37) * sh * 0.1;
     stCam.position.copy(P); stCam.lookAt(T);
     this.curL.position.z = ST_WZ + 0.8 + Math.sin(t * 0.5) * 0.03; this.curR.position.z = ST_WZ + 0.8 + Math.sin(t * 0.47 + 1) * 0.03;
+    // yatırma halkası (üç eksenli perdeler)
+    const ring = this.ringEl || (this.ringEl = $('#thRing')), rShow = this.state === 'play' && this.act.axes >= 3 && this.grp.length > 0 && !this.grp.every((g) => g.lock);
+    if (ring) {
+      if (rShow) { const G = this.grp[this.sel] && !this.grp[this.sel].lock ? this.grp[this.sel] : this.grp.find((g) => !g.lock), [cx, cy] = this.gScreen(G), R = this.ringR(); ring.style.width = ring.style.height = 2 * R + 'px'; ring.style.transform = `translate(${(cx - R).toFixed(1)}px, ${(cy - R).toFixed(1)}px)`; }
+      ring.classList.toggle('show', !!rShow); ring.classList.toggle('act', !!((this.drag && this.drag.roll) || this.twist));
+    }
     // müzik ve ortam: durum, hizaya yakınlık, kandil ve gösteri
     this.wallU.uExt.value = this.F.def.ext && sv > 0 ? 1 : 0;
     const MS = { state: this.state, near: this.near, lamp: this.lampOn, perf: sv > 1.1, card: this.cardShown };
