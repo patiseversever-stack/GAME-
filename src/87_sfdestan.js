@@ -624,7 +624,7 @@ function SD_AK_PERFORM(t, S) {
   // nefes, rüzgârda kaput; toplar gürleyince başını ufka kaldırır
   B.akbody.sy = 1 + Math.sin(t * 1.9) * 0.005; B.akcoat.r = Math.sin(t * 2.3) * 0.025 + Math.sin(t * 5.1) * 0.008;
   B.akhead.r = kf(t, [[2.6, 0], [3.8, -0.075, 'io'], [11.8, -0.075]]);
-  k.sunY = lerp(150, 6, Ease.outCubic(clamp01((t - 2.6) / 6.0)));
+  k.sunY = lerp(150, -36, Ease.outCubic(clamp01((t - 2.6) / 7.0)));
   k.adv = clamp01((t - 5.2) / 6.6);
   k.flashes = [3.4, 3.75, 4.1, 4.6, 5.0, 5.5, 6.1, 6.6, 7.4].map((c) => t - c);
   k.gI = 0.15 + k.flashes.reduce((a, f) => a + (f > 0 && f < 0.5 ? (1 - f / 0.5) * 0.9 : 0), 0); k.gc = [1.0, 0.62, 0.25];
@@ -640,11 +640,11 @@ const SD_KOCATEPE = (() => {
     bones: { ak: [null, ...P(250, 626), ...P(250, 500)], akrock: ['ak', ...P(20, 610), ...P(490, 560)], akbody: ['ak', ...P(255, 520), ...P(262, 250)], akcoat: ['akbody', ...P(205, 300), ...P(170, 430)], akhead: ['akbody', ...P(302, 132), ...P(345, 40)] },
     k0: { t: 0, sunY: 150, adv: 0, flashes: [], gI: 0.15, gIB: 0, sky: 0.95, skyT: [0.1, 0.12, 0.32], skyB: [0.28, 0.24, 0.42], skyY: 0.42, lamp: 0.6 },
     layers: [
-      { id: 'sun', glow: 1, back: 1, show: 1, gen: (k) => { const sx = 330, sy = k.sunY, o = [sfEllipse(sx, sy, 40, 40, 0, 28)]; if ((k.gIB || 0) > 0.1) for (let i = 0; i < 5; i++) { const a = -PI + 0.7 + i * 0.42 + Math.sin((k.t || 0) * 0.4 + i) * 0.02, r1 = 180 + hash1(i) * 140; o.push([sx + Math.cos(a) * 46, sy + Math.sin(a) * 46, sx + Math.cos(a - 0.012) * r1, sy + Math.sin(a - 0.012) * r1, sx + Math.cos(a + 0.012) * r1, sy + Math.sin(a + 0.012) * r1]); } return o; } },
+      { id: 'sun', glow: 1, back: 1, show: 1, gen: (k) => { const sx = 250, sy = k.sunY, o = [sfEllipse(sx, sy, 40, 40, 0, 28)]; if ((k.gIB || 0) > 0.1) for (let i = 0; i < 5; i++) { const a = -PI + 0.7 + i * 0.42 + Math.sin((k.t || 0) * 0.4 + i) * 0.02, r1 = 180 + hash1(i) * 140; o.push([sx + Math.cos(a) * 46, sy + Math.sin(a) * 46, sx + Math.cos(a - 0.012) * r1, sy + Math.sin(a - 0.012) * r1, sx + Math.cos(a + 0.012) * r1, sy + Math.sin(a + 0.012) * r1]); } return o; } },
       { id: 'plain', prop: 1, show: 1, gen: (k) => sdAkPlain(k) },
       { id: 'horizonFire', glow: 1, show: 1, gen: (k) => { const o = []; (k.flashes || []).forEach((f, i) => { if (f > 0 && f < 0.5) { const x = -520 + hash1(i + 3) * 1000, r = 10 + (1 - f / 0.5) * 18; o.push(sfEllipse(x, 84, r, r * 0.6, 0, 12)); } }); return o; } },
       { id: 'smokeFar', prop: 1, show: 1, gen: (k) => { const o = []; (k.flashes || []).forEach((f, i) => { const x = -520 + hash1(i + 3) * 1000; o.push(...sdSmoke(0, f, x, 80, 3, 80 + i, { life: 4, r0: 8, r1: 34, rise: 50, drift: 20, gap: 0.3, tc: [0.62, 0.6, 0.6] })); }); return o; } },
-      { id: 'rocksL', prop: 1, show: 1, gen: (k) => { const o = [[-900, 200, -200, 200, -230, 150, -300, 120, -380, 136, -460, 104, -560, 126, -640, 96, -900, 120], [-900, 196, 900, 196, 900, 900, -900, 900]]; const t = k.t || 0; for (let i = 0; i < 9; i++) { const x = -560 + i * 50, w = Math.sin(t * 2.2 + i) * 4; o.push([x - 3, 150 - (i % 3) * 14, x + w + 2, 112 - (i % 3) * 14, x + 3, 150 - (i % 3) * 14]); } return o; } },
+      { id: 'rocksL', prop: 1, show: 1, gen: (k) => { const o = [[-900, 200, -200, 200, -230, 150, -300, 120, -380, 136, -460, 104, -560, 126, -640, 96, -900, 120], [-900, 196, 900, 196, 900, 900, -900, 900], [212, 200, 212, 41, 226, 44, 244, 58, 262, 70, 290, 76, 318, 98, 352, 108, 390, 132, 436, 140, 480, 160, 540, 166, 610, 182, 700, 186, 900, 190, 900, 200]]; const t = k.t || 0; for (let i = 0; i < 9; i++) { const x = -560 + i * 50, w = Math.sin(t * 2.2 + i) * 4; o.push([x - 3, 150 - (i % 3) * 14, x + w + 2, 112 - (i % 3) * 14, x + 3, 150 - (i % 3) * 14]); } return o; } },
       { id: 'ataturk', bind: ['akrock', 'akbody', 'akcoat', 'akhead'], soft: 24, pts: [sdAk(SD_AK_SIL), sdAk(SD_AK_HOLE)], holeSub: [1] },
     ],
     perform: SD_AK_PERFORM,
@@ -920,7 +920,7 @@ function sdParadeWarm() {
 }
 function sdParade(k) {
   const u = k.parade ?? -1; if (u < 0) return [];
-  const o = [], lanes = [{ from: 0, to: 15, y: 196, h: 58, dir: -1, sp: 300, gap: 34, tc: SD_MID }, { from: 15, to: 24, y: 290, h: 92, dir: 1, sp: 250, gap: 46, tc: null }];
+  const o = [], lanes = [{ from: 0, to: 15, y: 204, h: 70, dir: -1, sp: 320, gap: 36, tc: SD_MID }, { from: 15, to: 24, y: 338, h: 116, dir: 1, sp: 270, gap: 52, tc: null }];
   for (const L of lanes) {
     let off = 0;
     for (let i = L.from; i < L.to; i++) {
@@ -952,6 +952,29 @@ function sdKale() {
   for (const tx of [-292, -214, -138]) o.push([tx - 18, -84, tx - 18, -150, tx - 10, -150, tx - 10, -158, tx - 2, -158, tx - 2, -150, tx + 6, -150, tx + 6, -158, tx + 14, -158, tx + 14, -150, tx + 18, -150, tx + 18, -84]);
   return o;
 }
+function sdCmFront(k) {
+  // ön plan: meydanı dolduran kalabalık — en yakın düzlem, en büyük ve en koyu; başlar, kalpaklar, kalkan kollar, havada sancaklar
+  const r = k.front || 0; if (r <= 0) return [];
+  const o = [], t = k.t || 0, ch = k.cheer || 0, Y = 506 + (1 - r) * 160;
+  o.push([-900, Y + 22, 900, Y + 22, 900, 900, -900, 900]);
+  // arka sıra: biraz daha küçük ve havanın ardında (açık ton) — kalabalığın içinde bile derinlik
+  const tb = [0.2, 0.16, 0.17];
+  for (let i = 0; i < 24; i++) {
+    const s = 0.85 + hash1(i + 60) * 0.3, x = -860 + i * 76 + hash1(i + 80) * 30, y = Y - 36 - Math.abs(Math.sin(t * (2.2 + hash1(i + 5)) + i * 2.3)) * (1.5 + ch * 6) * s;
+    o.push(sdTag(sfEllipse(x, y + 16 * s, 34 * s, 20 * s, 0, 14), tb), sdTag(sfEllipse(x, y - 17 * s, 14 * s, 16 * s, 0, 12), tb));
+    if (i % 4 === 2) o.push(sdTag([x - 13 * s, y - 23 * s, x - 12 * s, y - 43 * s, x + 12 * s, y - 43 * s, x + 13 * s, y - 23 * s], tb));
+    if (ch > 0.2 && i % 3 === 1) { const ey = y - (30 + 50 * ch) * s, ex = x + 14 * s + Math.sin(t * 4.4 + i) * 4; o.push(sdTag(sfStroke([x + 18 * s, y + 4 * s, ex, ey], 7 * s, 5 * s, 1, 1), tb)); }
+  }
+  for (let i = 0; i < 22; i++) {
+    const s = 1.15 + hash1(i + 7) * 0.4, x = -900 + i * 86 + hash1(i + 40) * 34, hb = Math.abs(Math.sin(t * (2.4 + hash1(i) * 1.3) + i * 1.7)) * (2 + ch * 7) * s, y = Y - hb;
+    o.push(sfEllipse(x, y + 16 * s, 36 * s, 22 * s, 0, 16), sfEllipse(x, y - 18 * s, 15 * s, 17 * s, 0, 14));
+    if (i % 3 === 0) o.push([x - 14 * s, y - 24 * s, x - 13 * s, y - 46 * s, x + 13 * s, y - 46 * s, x + 14 * s, y - 24 * s]);
+    const fl = i % 4 === 1, arm = !fl && (i % 3 === 2 || (ch > 0.2 && i % 2 === 0));
+    if (arm) { const lift = Math.max(ch, 0.25 + Math.sin(t * 2.6 + i) * 0.2), sx = x + 22 * s * (i % 2 ? 1 : -1), ex = sx + 10 * s * (i % 2 ? 1 : -1) + Math.sin(t * 4 + i) * 4 * ch, ey = y - (26 + 60 * lift) * s; o.push(sfStroke([sx, y + 6 * s, (sx + ex) / 2, y - (12 + 30 * lift) * s, ex, ey], 9 * s, 7 * s, 1, 1), sfEllipse(ex, ey - 3 * s, 6 * s, 7 * s, 0, 8)); }
+    if (fl) { const sw = Math.sin(t * 1.6 + i) * 0.1 + (hash1(i + 2) - 0.5) * 0.2, len = (96 + hash1(i + 3) * 26 + ch * 18) * s, bx = x + 16 * s, tx = bx + Math.sin(sw) * len, ty = y + 4 * s - Math.cos(sw) * len; o.push(sfStroke([bx, y + 10 * s, tx, ty], 4.5, 3.5, 0, 1)); o.push(...sdBanner(tx, ty, 54 * s, 36 * s, t + i * 0.7, { amp: 0.16, sp: 5.2 })); }
+  }
+  return o;
+}
 function SD_CM_PERFORM(t, S) {
   const B = S.b, k = S.k; k.t = t; S.tc = S.tc || {};
   k.sky = 0.92; k.skyT = [0.1, 0.12, 0.3]; k.skyB = [0.62, 0.42, 0.42]; k.skyY = 0.5; k.skyS = 0.4;
@@ -967,6 +990,7 @@ function SD_CM_PERFORM(t, S) {
   k.gc = lastI % 2 ? [1.0, 0.92, 0.75] : [1.0, 0.28, 0.2];
   k.gI = 0.85 + shots.reduce((a, f) => a + (f > 0 && f < 0.25 ? 0.8 : 0), 0);
   k.crowd = t - 4.0; k.parade = t >= 9.6 ? t - 9.6 : -1;
+  k.front = Ease.outCubic(clamp01((t - 3.2) / 2.0)); k.cheer = smoothstep(16.0, 17.2, t);
   if (t > 8.5 && !SD_PARADE[23]) { let g = 0; while (!sdParadeWarm() && g++ < 30); }
   k.gIB = 0.6; k.gcB = [1.0, 0.7, 0.4];
   k.zoom = kf(t, [[0, 0.1], [3.0, 0.2, 'io'], [8.8, 0.2], [10.2, 0.0, 'io'], [16.4, 0.0], [19.4, 0.25, 'io']]); k.zx = t < 9 ? 0 : 0; k.zy = t < 9 ? -40 : 60;
@@ -977,7 +1001,7 @@ const SD_CUMHURIYET = {
   caps: [[0.6, 3.4, '<small>Ankara · 29 Ekim 1923</small>Cumhuriyet ilan edildi.'], [3.6, 6.8, 'Yüz bir pare top atıldı; gökte havai fişekler açtı.'], [7.0, 9.5, 'Fenerler yandı, sancaklar dalgalandı…'], [9.8, 16.4, '<small>Perde selamı</small>Bu perdede can bulan bütün gölgeler sizi selamlıyor.'], [16.7, 19.6, '“Ne mutlu Türk’üm diyene!”<small style="margin:6px 0 0">Mustafa Kemal Atatürk · 1933</small>']],
   groups: [['tbmm'], ['kale']],
   bones: { world: [null, 0, 200, 100, 200] },
-  k0: { t: 0, shots: [], hoist: 0, fw: [], crowd: -1, parade: -1, gI: 0.85, gIB: 0.6, sky: 0.92, skyT: [0.1, 0.12, 0.3], skyB: [0.62, 0.42, 0.42], skyY: 0.5, lamp: 0.85 },
+  k0: { t: 0, shots: [], hoist: 0, fw: [], crowd: -1, parade: -1, front: 0, cheer: 0, gI: 0.85, gIB: 0.6, sky: 0.92, skyT: [0.1, 0.12, 0.3], skyB: [0.62, 0.42, 0.42], skyY: 0.5, lamp: 0.85 },
   layers: [
     { id: 'windows', glow: 1, back: 1, show: 1, gen: () => { const o = []; for (let r = 0; r < 2; r++) for (let c = 0; c < 9; c++) { const x = 6 + c * 32 + (c > 3 ? 22 : 0); if (x > 92 && x < 176) continue; o.push(sfEllipse(x + 8, 46 + r * 44, 6, 12, 0, 10)); } return o; } },
     { id: 'kale', bone: 'world', pts: sdKale() },
@@ -986,10 +1010,11 @@ const SD_CUMHURIYET = {
     { id: 'tbmmFlag', prop: 1, show: 1, gen: (k) => { const h = k.hoist || 0; if (h <= 0) return []; return sdBanner(146, lerp(-30, -160, h), 90, 60, k.t || 0, { amp: 0.12 }); } },
     { id: 'shotFx', glow: 1, show: 1, gen: (k) => { const o = []; (k.shots || []).forEach((f, i) => { if (f > 0 && f < 0.25) { const x = [-292, -214, -138][i % 3] + 22; o.push(sfEllipse(x, -136, 24 * (1 - f * 3), 14 * (1 - f * 3), 0, 12)); } }); return o; } },
     { id: 'shotSmoke', prop: 1, show: 1, gen: (k) => { const o = []; (k.shots || []).forEach((f, i) => { if (f > 0 && f < 3.4) o.push(...sdSmoke(0, f, [-292, -214, -138][i % 3] + 34, -140, 1, 120 + i, { life: 3.2, r0: 8, r1: 36, rise: 70, drift: 40, tc: [0.5, 0.48, 0.52] })); }); return o; } },
-    { id: 'fireworks', glow: 1, show: 1, gen: (k) => { const o = []; for (const [u, x, y, i] of k.fw || []) { if (u < -0.7 || u > 1.6) continue; if (u < 0) { const v = u + 0.7, ry = lerp(SD_CM_GY, y, Ease.outCubic(v / 0.7)); o.push(sfStroke([x, ry, x + Math.sin(i) * 6, ry + 34], 3, 0.6, 1, 1)); continue; } const n = 16, R = 30 + Ease.outCubic(Math.min(1, u / 0.9)) * 90, fade = 1 - smoothstep(0.6, 1.6, u); for (let j = 0; j < n; j++) { const a = (j / n) * TAU + i, r0 = R * 0.55, dr = 18 * fade + 2, g = u * u * 30; o.push(sfStroke([x + Math.cos(a) * r0, y + Math.sin(a) * r0 + g, x + Math.cos(a) * (r0 + dr), y + Math.sin(a) * (r0 + dr) + g], 4 * fade + 1, 0.8, 1, 1)); } } return o; } },
+    { id: 'fireworks', glow: 1, show: 1, gen: (k) => { const o = []; for (const [u, x, y, i] of k.fw || []) { if (u < -0.7 || u > 1.6) continue; if (u < 0) { const v = u + 0.7, ry = lerp(SD_CM_GY, y, Ease.outCubic(v / 0.7)); o.push(sfStroke([x, ry, x + Math.sin(i) * 6, ry + 34], 3, 0.6, 1, 1)); continue; } const n = 18, R = 30 + Ease.outCubic(Math.min(1, u / 0.9)) * 96, fade = 1 - smoothstep(0.6, 1.6, u), g = u * u * 30; if (u < 0.18) o.push(sfEllipse(x, y, 26 * (1 - u / 0.18) + 6, 26 * (1 - u / 0.18) + 6, 0, 12)); for (let j = 0; j < n; j++) { const a = (j / n) * TAU + i, r0 = R * 0.55, dr = 22 * fade + 2; o.push(sfStroke([x + Math.cos(a) * r0, y + Math.sin(a) * r0 + g, x + Math.cos(a) * (r0 + dr), y + Math.sin(a) * (r0 + dr) + g * 1.2], 5 * fade + 1.2, 0.8, 1, 1)); if (j % 2 === 0) { const a2 = a + PI / n, r2 = R * 0.3; o.push(sfStroke([x + Math.cos(a2) * r2, y + Math.sin(a2) * r2 + g, x + Math.cos(a2) * (r2 + dr * 0.6), y + Math.sin(a2) * (r2 + dr * 0.6) + g], 3.5 * fade + 0.8, 0.6, 1, 1)); } } } return o; } },
     { id: 'crowd', prop: 1, show: 1, gen: (k) => { const u = k.crowd ?? -1, o = []; if (u < 0 || u > 6.4) return o; for (let i = 0; i < 12; i++) { const x = -760 + u * 210 - i * 70 + (i % 3) * 14; if (x < -820 || x > 820) continue; const fade = smoothstep(5.0, 6.4, u); o.push(...sdWalker(x, 236 + (i % 2) * 22, 0.9, u * 1.1 + i * 0.37, { torch: i % 3 !== 1, flag: i % 3 === 1, flagTc: [0.9, 0.08, 0.06], t: k.t, hat: i % 4 === 0 ? 'kalpak' : i % 4 === 2 ? false : true, scarf: i % 4 === 2, tc: fade > 0 ? sdTc([0, 0, 0], fade) : null })); } return o; } },
     { id: 'lanterns', glow: 1, show: 1, gen: (k) => { const u = k.crowd ?? -1, o = []; if (u < 0 || u > 5.2) return o; for (let i = 0; i < 12; i++) { if (i % 3 === 1) continue; const x = -760 + u * 210 - i * 70 + (i % 3) * 14; if (x < -820 || x > 820) continue; const f = 1 + Math.sin((k.t || 0) * 12 + i) * 0.12; o.push(sfEllipse(x + 22, 236 + (i % 2) * 22 - 112, 7 * f, 10 * f, 0, 10)); } return o; } },
     { id: 'parade', prop: 1, show: 1, gen: (k) => sdParade(k) },
+    { id: 'front', prop: 1, show: 1, gen: (k) => sdCmFront(k) },
   ],
   perform: SD_CM_PERFORM,
   events: [[0.4, 'night'], [1.0, 'salvo', { shake: 0.08 }], [1.6, 'hoist'], [3.2, 'fireworks'], [4.0, 'march'], [9.6, 'parade'], [16.4, 'finale', { flash: [1, 0.8, 0.6, 0.2] }]],

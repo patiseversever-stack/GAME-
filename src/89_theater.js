@@ -359,7 +359,7 @@ void main(){
 /* ---------- hacimsel ışık huzmesi (toz + gölge şaftları) ---------- */
 const ST_BEAM_V = /* glsl */`varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`;
 const ST_BEAM_F = /* glsl */`
-uniform vec3 uLamp, uAxis, uLampCol; uniform float uCosIn, uCosOut, uWZ, uTime, uDC, uAmt; uniform sampler2D tMask, tNoise; uniform vec4 uRect;
+uniform vec3 uLamp, uAxis, uLampCol; uniform float uCosIn, uCosOut, uWZ, uTime, uDC, uAmt, uTas; uniform sampler2D tMask, tNoise; uniform vec4 uRect;
 varying vec3 vW;
 void main(){
   vec3 D = normalize(vW - cameraPosition);
@@ -371,7 +371,7 @@ void main(){
     if (cone > 0.001 && dz < -0.05) {
       float ax = dot(L, uAxis), s = (uWZ - uLamp.z) / dz;
       vec2 mu = clamp(((uLamp + L * s).xy - uRect.xy) / uRect.zw, 0.0, 1.0);
-      float occ = clamp(texture2D(tMask, mu).r, 0.0, 1.0) * smoothstep(uDC - 0.5, uDC + 0.7, ax);
+      float occ = mix(clamp(texture2D(tMask, mu).r, 0.0, 1.0), 1.0, uTas) * smoothstep(uDC - 0.5, uDC + 0.7, ax);
       float nz = texture2D(tNoise, P.xy * 0.11 + vec2(P.z * 0.07, uTime * 0.006)).r * 0.65 + texture2D(tNoise, P.yz * 0.27 - vec2(uTime * 0.011, 0.0)).r * 0.35;
       acc += cone * (1.0 - occ * 0.92) * (0.35 + nz * nz * 1.3) / (1.0 + dl * dl * 0.035);
     }
@@ -381,7 +381,7 @@ void main(){
   gl_FragColor = vec4(uLampCol * min(o, 3.0), 1.0);
 }`;
 const ST_DUST_V = /* glsl */`
-attribute float aSeed; uniform float uTime, uPx; uniform vec3 uLamp, uAxis; uniform float uCosIn, uCosOut, uWZ, uDC; uniform sampler2D tMask; uniform vec4 uRect;
+attribute float aSeed; uniform float uTime, uPx; uniform vec3 uLamp, uAxis; uniform float uCosIn, uCosOut, uWZ, uDC, uTas; uniform sampler2D tMask; uniform vec4 uRect;
 varying float vA;
 void main(){
   vec3 p = position;
@@ -391,7 +391,7 @@ void main(){
   vec3 L = p - uLamp; float dl = max(length(L), 0.05), ca = dot(L, uAxis) / dl, dz = min(p.z - uLamp.z, -0.05);
   float cone = smoothstep(uCosOut, uCosIn, ca), s = (uWZ - uLamp.z) / dz;
   vec2 mu = clamp(((uLamp + L * s).xy - uRect.xy) / uRect.zw, 0.0, 1.0);
-  float occ = clamp(texture2D(tMask, mu).r, 0.0, 1.0) * smoothstep(uDC - 0.3, uDC + 0.6, dot(L, uAxis));
+  float occ = mix(clamp(texture2D(tMask, mu).r, 0.0, 1.0), 1.0, uTas) * smoothstep(uDC - 0.3, uDC + 0.6, dot(L, uAxis));
   float tw = 0.45 + 0.55 * pow(abs(sin(uTime * (0.7 + fract(aSeed * 31.0)) + aSeed * 40.0)), 3.0);
   vA = clamp(cone * (1.0 - occ) * tw * 60.0 / (dl * dl + 6.0), 0.0, 4.0); if (!(vA >= 0.0)) vA = 0.0;
   vec4 mv = viewMatrix * vec4(p, 1.0);
@@ -662,8 +662,8 @@ const Theater = {
     this.floor.material.map.repeat.set(5, 3);
     // huzme, toz, kıvılcımlar
     this.noise = stNoiseTex();
-    this.beamU = { uLamp: { value: new THREE.Vector3() }, uAxis: { value: new THREE.Vector3() }, uLampCol: { value: new THREE.Color(1, 0.72, 0.42) }, uCosIn: { value: 0.9 }, uCosOut: { value: 0.8 }, uWZ: { value: ST_WZ }, uTime: { value: 0 }, uDC: { value: 8 }, uAmt: { value: 0.05 }, tMask: { value: null }, tNoise: { value: this.noise }, uRect: { value: new THREE.Vector4() } };
-    this.dustU = { uTime: this.beamU.uTime, uPx: { value: 600 }, uLamp: this.beamU.uLamp, uAxis: this.beamU.uAxis, uCosIn: this.beamU.uCosIn, uCosOut: this.beamU.uCosOut, uWZ: this.beamU.uWZ, uDC: this.beamU.uDC, tMask: this.beamU.tMask, uRect: this.beamU.uRect };
+    this.beamU = { uLamp: { value: new THREE.Vector3() }, uAxis: { value: new THREE.Vector3() }, uLampCol: { value: new THREE.Color(1, 0.72, 0.42) }, uCosIn: { value: 0.9 }, uCosOut: { value: 0.8 }, uWZ: { value: ST_WZ }, uTime: { value: 0 }, uDC: { value: 8 }, uAmt: { value: 0.05 }, uTas: { value: 0 }, tMask: { value: null }, tNoise: { value: this.noise }, uRect: { value: new THREE.Vector4() } };
+    this.dustU = { uTime: this.beamU.uTime, uPx: { value: 600 }, uLamp: this.beamU.uLamp, uAxis: this.beamU.uAxis, uCosIn: this.beamU.uCosIn, uCosOut: this.beamU.uCosOut, uWZ: this.beamU.uWZ, uDC: this.beamU.uDC, uTas: this.beamU.uTas, tMask: this.beamU.tMask, uRect: this.beamU.uRect };
     this.root = new THREE.Group(); stScene.add(this.root);
     this.buildDom();
   },
@@ -1170,7 +1170,8 @@ const Theater = {
     const I = 820 * lampI;
     this.wallU.uLampCol.value.setRGB(1.0, 0.8, 0.58).multiplyScalar(I);
     this.spot.intensity = I * 0.62; this.hemi.intensity = 0.35 + this.lampOn * 0.25; this.rim.intensity = 0.5 * this.lampOn;
-    this.beamU.uAmt.value = 0.06 * lampI; this.beamU.uLampCol.value.setRGB(1.0, 0.7, 0.4);
+    // tasvirde perde bir resimdir, kesik değil: huzmede gölge şaftı (havada asılı hayalet kopya) bırakmaz
+    this.beamU.uAmt.value = 0.06 * lampI; this.beamU.uTas.value = sv >= 0 && D.tasvir ? smoothstep(0.1, 0.9, sv) : 0; this.beamU.uLampCol.value.setRGB(1.0, 0.7, 0.4);
     this.wallU.uGlow.value = this.near * 0.6 + flare;
     // ipucu çizgisi
     this.hintT = Math.max(0, this.hintT - dtR);
