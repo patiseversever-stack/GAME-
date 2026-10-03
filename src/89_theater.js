@@ -1263,7 +1263,7 @@ const Theater = {
     if (cap !== (this.capShown || '')) { this.capShown = cap; const el = $('#thCap'); if (el) { el.classList.remove('on'); if (cap) { el.innerHTML = cap; el.classList.toggle('long', cap.replace(/<small[^>]*>.*?<\/small>/g, '').length > 70); void el.offsetWidth; el.classList.add('on'); } } }
     // müzik ve ortam: durum, hizaya yakınlık, kandil ve gösteri
     this.wallU.uExt.value = this.F.def.ext && sv > 0 ? 1 : 0;
-    const MS = { state: this.state, near: this.near, lamp: this.lampOn, perf: sv > 1.1, card: this.cardShown };
+    const MS = { state: this.state, near: this.near, lamp: this.lampOn, perf: sv > 1.1 && this.state !== 'closing', card: this.cardShown };
     try { stMus.update(dtR, MS); stAmb.update(dtR, MS); } catch (e) { console.warn('tiyatro sesi', e); }
   },
   spawnEmber(p) {

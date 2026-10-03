@@ -544,7 +544,7 @@ function sdFtHasan(k) {
   // gönder: dikilir, sancak açılır ve rüzgârla batıya dalgalanır
   const H = 250 * lerp(0.86, 1, pl), topY = ty - H; o.push(sfStroke([polX, ty + 2, polX, topY], 4, 3.2, 0, 1), sfEllipse(polX, topY - 4, 4.5, 4.5, 0, 10), sdX(sdCrescentStar(0, 0, 26)[0], polX, topY - 16, 1, 1, -PI / 2));
   const un = Ease.outCubic(clamp01((u - 2.3) / 0.8));
-  if (un > 0.02) o.push(...sdBanner(polX - 1, topY + 6, 150 * un, 98, t, { amp: 0.11 + (1 - un) * 0.25, flip: true, star: false, droop: 0.05, sp: 5.4, emblem: un > 0.97 }));
+  if (un > 0.02) o.push(...sdBanner(polX - 1, topY + 6, 150 * un, 98, t, { amp: 0.11 + (1 - un) * 0.25, flip: true, droop: 0.05, sp: 5.4, emblem: un > 0.97 }));
   return o;
 }
 function sdManWalk(ph, o = {}) {
