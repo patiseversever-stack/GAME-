@@ -1023,17 +1023,23 @@ SF_DEFS.push(SD_SAMSUN, SD_INEBOLU, SD_KOCATEPE, SD_SANCAK, SD_CUMHURIYET);
 
 /* ---------- Destan sesleri ---------- */
 const sdBoom = (A, t, g = 0.3, far = 0) => { A.osc('sine', lerp(64, 48, far), t, 1.4 + far, g, null, { f1: 28 }); A.noiseHit(t, 0.5 + far * 0.8, g * (far ? 0.25 : 0.55), { type: 'lowpass', f: lerp(1400, 380, far), f1: 140, a: 0.005 + far * 0.05, verb: 0.6 + far * 0.6 }); A.noiseHit(t + 0.1, 2.2, g * 0.12, { type: 'lowpass', f: 220, a: 0.4, verb: 0.9 }); };
-const sdPop = (A, t, g = 0.06) => { A.noiseHit(t, 0.08, g * 1.6, { type: 'lowpass', f: 1200, verb: 0.8 }); A.osc('sine', 90, t, 0.4, g * 1.2, null, { f1: 40, verb: 0.6 }); for (let i = 0; i < 14; i++) A.noiseHit(t + 0.15 + Math.random() * 0.9, 0.02, g * 0.4, { type: 'highpass', f: 3000 + Math.random() * 4000, q: 2, verb: 0.5 }); };
+const sdPopFn = (E, t, g) => { E.noiseHit(t, 0.08, g * 1.6, { type: 'lowpass', f: 1200, verb: 0.8 }); E.osc('sine', 90, t, 0.4, g * 1.2, null, { f1: 40, verb: 0.6 }); for (let i = 0; i < 14; i++) E.noiseHit(t + 0.15 + Math.random() * 0.9, 0.02, g * 0.4, { type: 'highpass', f: 3000 + Math.random() * 4000, q: 2, verb: 0.5 }); };
+const sdPop = (A, t, g = 0.06) => stBurst(A, 'pop' + (Math.random() * 3 | 0), 1.3, t, g, sdPopFn);
 const sdRocket = (A, t) => { const o = A.osc('sine', 900, t, 0.7, 0.012, null, { f1: 2600, verb: 0.5, a: 0.05 }); A.noiseHit(t, 0.6, 0.02, { type: 'bandpass', f: 1500, f1: 4000, q: 2, a: 0.05 }); return o; };
 const sdCreak = (A, t, g = 0.02) => { const o = A.osc('sawtooth', 170 + Math.random() * 40, t, 0.55, g, null, { f1: 240, a: 0.08, verb: 0.3 }); A.noiseHit(t, 0.5, g * 0.6, { type: 'bandpass', f: 900, q: 4, a: 0.1 }); return o; };
 const sdClang = (A, t, g = 0.06) => { A.bell(1180, t, 1.6, g, { ratio: 2.76, index: 2.4, verb: 0.6 }); A.bell(1610, t, 1.2, g * 0.5, { ratio: 3.1, index: 2, verb: 0.5 }); A.noiseHit(t, 0.06, g * 1.4, { type: 'highpass', f: 2600 }); };
 const sdThunder = (A, t, g = 0.22) => { A.noiseHit(t, 0.25, g, { type: 'highpass', f: 1600, verb: 0.5 }); A.noiseHit(t + 0.05, 3.2, g * 0.9, { type: 'lowpass', f: 600, f1: 90, a: 0.04, verb: 1.0 }); A.osc('sine', 44, t + 0.1, 2.2, g * 0.6, null, { f1: 30, a: 0.2 }); };
-const sdCheer = (A, t, d = 2.4, g = 0.03) => { for (let i = 0; i < 70; i++) { const u = Math.random(); A.noiseHit(t + u * d, 0.18 + Math.random() * 0.3, g * Math.sin(Math.min(1, u * 1.4) * PI), { type: 'bandpass', f: 500 + Math.random() * 1600, q: 3, a: 0.04, verb: 0.6 }); } };
+const sdCheerFn = (d) => (E, t, g) => { for (let i = 0; i < 70; i++) { const u = Math.random(); E.noiseHit(t + u * d, 0.18 + Math.random() * 0.3, g * Math.sin(Math.min(1, u * 1.4) * PI), { type: 'bandpass', f: 500 + Math.random() * 1600, q: 3, a: 0.04, verb: 0.6 }); } };
+const sdCheer = (A, t, d = 2.4, g = 0.03) => stBurst(A, 'cheer' + d + (Math.random() < 0.5 ? 'a' : 'b'), d + 0.6, t, g, sdCheerFn(d));
+const sdVolleyFn = (E, t, g) => { for (let i = 0; i < 40; i++) E.noiseHit(t + Math.random() * 1.6, 0.4, 0.02 * g, { type: 'bandpass', f: 1800 + Math.random() * 1500, f1: 700, q: 4, a: 0.05, verb: 0.4 }); };
+// tiyatro açılırken arka planda pişirilir (kalabalık, kıvılcım, ok yağmuru)
+const SD_BAKE = [['pop0', 1.3, sdPopFn], ['pop1', 1.3, sdPopFn], ['pop2', 1.3, sdPopFn], ['volley', 2.2, sdVolleyFn]];
+for (const d of [1.2, 1.6, 2, 2.4, 2.6, 3.2, 5]) for (const v of ['a', 'b']) SD_BAKE.push(['cheer' + d + v, d + 0.6, sdCheerFn(d)]);
 const SD_SFX = {
   ergenekon: {
     night(A, t) { A.noiseHit(t, 2.5, 0.03, { type: 'bandpass', f: 400, f1: 900, q: 0.8, a: 1, verb: 0.8 }); },
     hammer(A, t) { sdClang(A, t, 0.07); A.osc('sine', 110, t, 0.2, 0.1, null, { f1: 60 }); },
-    melt(A, t) { A.noiseHit(t, 3.2, 0.1, { type: 'lowpass', f: 300, f1: 900, a: 1.2, verb: 0.8 }); A.osc('sine', 40, t, 3.0, 0.2, null, { f1: 32, a: 1.0 }); for (let i = 0; i < 30; i++) A.noiseHit(t + Math.random() * 3, 0.04, 0.03, { type: 'highpass', f: 2500 + Math.random() * 3000 }); },
+    melt(A, t) { A.noiseHit(t, 3.2, 0.1, { type: 'lowpass', f: 300, f1: 900, a: 1.2, verb: 0.8 }); A.osc('sine', 40, t, 3.0, 0.2, null, { f1: 32, a: 1.0 }); stBurst(A, 'meltCrk', 3.2, t, 1, (E, t0, g) => { for (let i = 0; i < 30; i++) E.noiseHit(t0 + Math.random() * 3, 0.04, 0.03 * g, { type: 'highpass', f: 2500 + Math.random() * 3000 }); }); },
     dawn(A, t) { [55, 62, 67, 71, 74].forEach((n, i) => A.osc('triangle', mtof(n), t + i * 0.3, 3.6, 0.018, null, { a: 1.2, verb: 1.3 })); },
     howl(A, t) { stHowl(A, t, 360, 1.8, 0.1, 1.2); stHowl(A, t + 1.9, 300, 1.4, 0.03, 1.6); },
     leap(A, t) { A.noiseHit(t, 0.5, 0.07, { type: 'bandpass', f: 300, f1: 2000, q: 1, a: 0.2 }); A.osc('sine', 80, t + 0.7, 0.3, 0.12, null, { f1: 40 }); },
@@ -1052,7 +1058,7 @@ const SD_SFX = {
     snort(A, t) { A.noiseHit(t, 0.35, 0.09, { type: 'bandpass', f: 600, q: 0.8, a: 0.02 }); },
     drums(A, t) { for (let i = 0; i < 8; i++) { A.osc('sine', 58, t + i * 0.42, 0.9, 0.14, null, { f1: 36, verb: 0.9 }); A.noiseHit(t + i * 0.42, 0.12, 0.05, { type: 'lowpass', f: 260, verb: 0.8 }); } },
     cry(A, t) { sdCheer(A, t, 1.6, 0.04); },
-    volley(A, t) { for (let i = 0; i < 40; i++) A.noiseHit(t + Math.random() * 1.6, 0.4, 0.02, { type: 'bandpass', f: 1800 + Math.random() * 1500, f1: 700, q: 4, a: 0.05, verb: 0.4 }); },
+    volley(A, t) { stBurst(A, 'volley', 2.2, t, 1, sdVolleyFn); },
     neigh(A, t) { A.voice(t, { dur: 1.35, f: [[0, 620], [0.1, 1180], [0.45, 1080], [0.8, 820], [1.1, 640], [1.35, 420]], F: [[0, [650, 1750, 2700]], [0.5, [720, 1650, 2600]], [1.35, [550, 1250, 2400]]], q: [5, 7, 9], vib: [10.5, 95], rough: [42, 0.25], breath: 0.1, g: 0.24, a: 0.03, r: 0.3, verb: 0.6 }); },
     charge(A, t) { stHooves(A, t, 18, 0.13, 0.12); },
     thunder(A, t) { for (let i = 0; i < 4; i++) stHooves(A, t + i * 0.1, 14, 0.15, 0.06); sdCheer(A, t, 2.4, 0.05); A.noiseHit(t, 3, 0.06, { type: 'lowpass', f: 300, a: 0.5, verb: 0.8 }); },
@@ -1063,7 +1069,7 @@ const SD_SFX = {
     haul(A, t) { for (let i = 0; i < 7; i++) { sdCreak(A, t + i * 0.42, 0.016); A.osc('sine', 70, t + i * 0.42 + 0.2, 0.25, 0.04, null, { f1: 45 }); } sdCheer(A, t + 0.4, 1.2, 0.02); },
     splash(A, t) { A.noiseHit(t, 1.4, 0.14, { type: 'lowpass', f: 2200, f1: 300, a: 0.02, verb: 0.8 }); A.osc('sine', 70, t, 0.8, 0.14, null, { f1: 38 }); },
     cannon(A, t) { sdBoom(A, t, 0.4); },
-    impact(A, t) { sdBoom(A, t, 0.14, 0.6); for (let i = 0; i < 18; i++) A.noiseHit(t + 0.1 + Math.random() * 1.2, 0.08, 0.04, { type: 'lowpass', f: 900 + Math.random() * 800 }); },
+    impact(A, t) { sdBoom(A, t, 0.14, 0.6); stBurst(A, 'debris', 1.5, t, 1, (E, t0, g) => { for (let i = 0; i < 18; i++) E.noiseHit(t0 + 0.1 + Math.random() * 1.2, 0.08, 0.04 * g, { type: 'lowpass', f: 900 + Math.random() * 800 }); }); },
     climb(A, t) { sdCheer(A, t, 2.0, 0.035); },
     flag(A, t) { A.noiseHit(t, 1.6, 0.04, { type: 'bandpass', f: 700, f1: 1400, q: 1.2, a: 0.2 }); sdCheer(A, t + 0.2, 2.6, 0.05); },
     dawn(A, t) { [60, 64, 67, 72, 76].forEach((n, i) => A.osc('triangle', mtof(n), t + i * 0.25, 3.4, 0.02, null, { a: 0.9, verb: 1.3 })); },

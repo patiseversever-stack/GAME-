@@ -237,21 +237,25 @@ const SM = {
     for (const m of meshes) { const p = new THREE.Mesh(m.geometry, m.userData.glass ? this.projGlass : this.proj); p.matrixAutoUpdate = false; p.matrixWorldAutoUpdate = false; p.frustumCulled = false; p.userData.src = m; this.scene.add(p); this.proxies.push(p); }
   },
   // çokgenleri (dünya xy) yelpaze üçgenlerine dök
+  // her çağrı tamponun boş kalan kısmına yazar ve yalnız yazdığını yükler (eskiden her geçişte 1,3 MB'ın tamamı gidiyordu)
   fill(polys) {
-    let n = 0; const P = this.fanPos, z = ST_WZ, max = this.cap * 3;
+    const P = this.fanPos, z = ST_WZ, max = this.cap * 3; let need = 0;
+    for (const p of polys) { const m = p.length / 2; if (m >= 3) need += (m - 2) * 3; }
+    const off = (this.fanOff || 0) + need > max ? 0 : this.fanOff || 0; let n = off;
     for (const p of polys) {
       const m = p.length / 2; if (m < 3) continue;
       const x0 = p[0], y0 = p[1];
       for (let i = 1; i < m - 1 && n < max - 3; i++) { P[n * 3] = x0; P[n * 3 + 1] = y0; P[n * 3 + 2] = z; P[n * 3 + 3] = p[i * 2]; P[n * 3 + 4] = p[i * 2 + 1]; P[n * 3 + 5] = z; P[n * 3 + 6] = p[i * 2 + 2]; P[n * 3 + 7] = p[i * 2 + 3]; P[n * 3 + 8] = z; n += 3; }
     }
-    this.fanGeo.attributes.position.needsUpdate = true; this.fanGeo.setDrawRange(0, n); this.fanN = n;
+    const at = this.fanGeo.attributes.position; if (n > off) { at.clearUpdateRanges(); at.addUpdateRange(off * 3, (n - off) * 3); at.needsUpdate = true; }
+    this.fanGeo.setDrawRange(off, n - off); this.fanN = n - off; this.fanOff = n;
     const r = this.rect; this.cover.position.set(r.x + r.z / 2, r.y + r.w / 2, z); this.cover.scale.set(r.z, r.w, 1);
   },
   // tas (tasvir): renkli, ışık geçiren gölgeler — RGB = tutulan ışık, A = kapsama
   render(showSculpt, polys, blurPx, glow, tas) {
     const prevT = renderer.getRenderTarget(), prevC = renderer.getClearColor(new THREE.Color()), prevA = renderer.getClearAlpha(), prevAuto = renderer.autoClear;
     renderer.autoClear = false; renderer.setClearColor(0x000000, tas ? 0 : 1);
-    renderer.setRenderTarget(this.rt); renderer.clear(true, true, true);
+    renderer.setRenderTarget(this.rt); renderer.clear(true, true, true); this.fanOff = 0;
     for (const p of this.proxies) { p.visible = showSculpt && p.userData.src.visible; if (p.visible) p.matrixWorld.copy(p.userData.src.matrixWorld); }
     const fig = !!polys;
     if (tas && fig) {
@@ -297,7 +301,7 @@ const SM = {
   // ipucu için hedef silüet (bir kez): heykel başına bir kanal (R: ilk, G: ikinci)
   renderTarget(sets) {
     const prevT = renderer.getRenderTarget(), prevC = renderer.getClearColor(new THREE.Color()), prevA = renderer.getClearAlpha(), prevAuto = renderer.autoClear;
-    renderer.autoClear = false; renderer.setClearColor(0x000000, 1); renderer.setRenderTarget(this.tRt); renderer.clear(true, true, true);
+    renderer.autoClear = false; renderer.setClearColor(0x000000, 1); renderer.setRenderTarget(this.tRt); renderer.clear(true, true, true); this.fanOff = 0;
     for (const p of this.proxies) p.visible = false;
     this.fanF.visible = this.fanB.visible = this.cover.visible = true;
     const col = this.cover.material.color; sets.forEach((ps, k) => { this.fill(ps); col.setHex(k ? 0x00ff00 : 0xff0000); renderer.render(this.scene, this.cam); }); col.setHex(0xffffff);
@@ -577,7 +581,7 @@ const ST_SFX = {
     fire(A, t) {
       A.noiseHit(t, 2.1, 0.22, { type: 'lowpass', f: 1100, f1: 500, a: 0.06, verb: 0.6 }); A.noiseHit(t, 2.0, 0.08, { type: 'bandpass', f: 400, q: 0.8, a: 0.1, verb: 0.5 });
       A.osc('sawtooth', 70, t, 2.0, 0.04, null, { f1: 55, a: 0.1, verb: 0.4 });
-      for (let i = 0; i < 26; i++) A.noiseHit(t + Math.random() * 2.2, 0.03, 0.04, { type: 'highpass', f: 2500 + Math.random() * 4000, q: 2 });
+      stBurst(A, 'fireCrk', 2.4, t, 1, (E, t0, g) => { for (let i = 0; i < 26; i++) E.noiseHit(t0 + Math.random() * 2.2, 0.03, 0.04 * g, { type: 'highpass', f: 2500 + Math.random() * 4000, q: 2 }); });
     },
     roar(A, t) {
       A.voice(t, { dur: 1.7, f: [[0, 68], [0.25, 108], [0.9, 92], [1.7, 52]], F: [[0, [320, 820, 2000]], [0.3, [580, 1150, 2300]], [1.7, [340, 700, 1800]]], q: [3, 4, 5], amp: [1, 0.7, 0.4], rough: [33, 0.75], breath: 0.4, jit: [5, 40], g: 0.5, a: 0.07, r: 0.4, verb: 1.0 });
@@ -621,11 +625,16 @@ function stSfx(key, ev) {
   else if (ev === 'dance') { for (let i = 0; i < 4; i++) A.bell(mtof([74, 77, 81, 79][i]), t + i * 0.2, 0.6, 0.03, { ratio: 2, index: 1, verb: 0.6 }); }
   else if (ev === 'leap') { A.noiseHit(t, 1.6, 0.16, { type: 'bandpass', f: 200, f1: 2600, q: 1, a: 1.2, verb: 0.6 }); A.osc('sine', 60, t + 1.3, 1.6, 0.25, null, { f1: 30, verb: 0.8 }); }
 }
-function stApplause(n = 1) {
-  if (!audio.ok) return; const A = audio, t = A.t;
+// çok parçalı sesler: canlı motorda pişmiş tampon (audio.burst), pişirilirken doğrudan üretim
+const stBurst = (A, key, dur, t, g, fn) => (A === audio ? audio.burst(key, dur, t, g, fn) : fn(A, t, g));
+const stApplauseFn = (n) => (A, t, g) => {
   const N = Math.round(70 + 60 * n);
-  for (let i = 0; i < N; i++) { const u = Math.random(), tt = t + 0.1 + u * 3.4, env = Math.sin(Math.min(1, u * 1.3) * PI) * 0.9 + 0.1; A.noiseHit(tt, 0.035, 0.022 * env, { type: 'bandpass', f: 900 + Math.random() * 2400, q: 1.4, verb: 0.35 }); }
-  if (n > 1) for (let i = 0; i < 3; i++) { const o = A.osc('sine', 1700, t + 0.6 + i * 0.7, 0.35, 0.02, null, { f1: 2400, verb: 0.5 }); }
+  for (let i = 0; i < N; i++) { const u = Math.random(), tt = t + 0.1 + u * 3.4, env = Math.sin(Math.min(1, u * 1.3) * PI) * 0.9 + 0.1; A.noiseHit(tt, 0.035, 0.022 * env * g, { type: 'bandpass', f: 900 + Math.random() * 2400, q: 1.4, verb: 0.35 }); }
+  if (n > 1) for (let i = 0; i < 3; i++) A.osc('sine', 1700, t + 0.6 + i * 0.7, 0.35, 0.02 * g, null, { f1: 2400, verb: 0.5 });
+};
+function stApplause(n = 1) {
+  if (!audio.ok) return; n = clamp(n, 1, 3); const v = Math.random() < 0.5 ? 'a' : 'b';
+  audio.burst('ap' + n + v, 3.9, audio.t, 1, stApplauseFn(n));
 }
 
 /* ---------- Tiyatro ---------- */
@@ -874,7 +883,7 @@ const Theater = {
     this.wallU.uHintW.value.set(1, this.grp.length > 1 ? 1 : 0); this.wallU.uHintCol.value.setRGB(...ST_GCOL[0]);
     this.assembleT = 0; this.lastSec = -1; this.wallU.uOut.value = 0; this.wallU.uExt.value = 0;
     $('#thHint').classList.remove('used');
-    this.updateDom();
+    this.updateDom(); this.paradeQ = false;
     stMus.begin(i); stAmb.begin(i); this.figPan = 0; this.pcT = 0; this.pcD = 0; this.bestPc = 0; this.stuckT = 0; this.pcShown = -1; this.dragSum = 0; this.vdragSum = 0; this.rollSum = 0; this.touched = false;
     ThTut.stop(true); ThWhisper.reset(); this.updatePar();
   },
@@ -959,6 +968,7 @@ const Theater = {
     this.build(i); audio.setChapter(8); this.t = 0; this.camIn = 0; this.state = 'intro'; this.stT = 0; this.curtain = 1; this.lampOn = 0;
     try { this.apply(); this.update(0); const pt = renderer.getRenderTarget(); renderer.setRenderTarget(post.rtScene); renderer.compile(stScene, stCam); renderer.setRenderTarget(pt); } catch (e) { console.warn('tiyatro derleme', e); }
     G.state = 'theater'; UI.hideAll(); UI.hud(false); UI.show('theater'); audio.setTheater(true);
+    if (audio.ok && !this.baked) { this.baked = true; const L = []; for (const n of [3, 2, 1]) for (const v of ['a', 'b']) L.push(['ap' + n + v, 3.9, stApplauseFn(n)]); audio.prebake(L.concat(typeof SD_BAKE !== 'undefined' ? SD_BAKE : [])); }
     audio.whoosh(true, 1.0, 0.06); audio.theaterOpen();
   },
   close() {
@@ -1091,7 +1101,9 @@ const Theater = {
     if (this.state === 'play' && frozen) { let ns = 0; for (const G of this.grp) ns += G.lock ? 1 : clamp01(1 - this.angle(G) / deg(75)); this.near = damp(this.near, ns / Math.max(1, this.grp.length), 5, dtR); }
     else if (this.state === 'play') {
       if (!ThTut.on) this.playT += dtR; const sec = Math.floor(this.playT);
-      if (this.F.def.parade && typeof sdParadeWarm === 'function') sdParadeWarm(); // final: perde selamı silüetleri, kare başına bir tane if (sec !== this.lastSec) { this.lastSec = sec; $('#thTime').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; this.updatePar(); }
+      // final: perde selamı silüetleri boşta kalan zamanlarda, birer birer (kareyi bekletmesin)
+      if (this.F.def.parade && typeof sdParadeWarm === 'function' && !this.paradeQ) { this.paradeQ = true; const ric = window.requestIdleCallback ? (f) => requestIdleCallback(f, { timeout: 400 }) : (f) => setTimeout(f, 30), step = () => { if (this.active && !sdParadeWarm()) ric(step); }; ric(step); }
+      if (sec !== this.lastSec) { this.lastSec = sec; $('#thTime').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; this.updatePar(); }
       let nearSum = 0;
       const mag = this.magnet();
       for (const G of this.grp) {

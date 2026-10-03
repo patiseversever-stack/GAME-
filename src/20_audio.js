@@ -46,7 +46,9 @@ class AudioEngine {
     const c = this.ctx;
     this.master = c.createGain(); this.master.gain.value = 0.9;
     const comp = c.createDynamicsCompressor(); comp.threshold.value = -16; comp.knee.value = 18; comp.ratio.value = 3.5; comp.attack.value = 0.004; comp.release.value = 0.22;
-    this.master.connect(comp); comp.connect(c.destination);
+    // son kat: tepe sınırlayıcı — üst üste binen toplar/kös/kalabalık 0 dBFS'i aşıp çıtırdamasın
+    const lim = c.createDynamicsCompressor(); lim.threshold.value = -2.5; lim.knee.value = 0; lim.ratio.value = 20; lim.attack.value = 0.002; lim.release.value = 0.12;
+    this.master.connect(comp); comp.connect(lim); lim.connect(c.destination);
     this.sfx = c.createGain(); this.sfx.gain.value = this.sfxOn ? 1 : 0; this.sfx.connect(this.master);
     this.mus = c.createGain(); this.mus.gain.value = this.musicOn ? 0.75 : 0; this.mus.connect(this.master);
     this.amb = c.createGain(); this.amb.gain.value = this.sfxOn ? 1 : 0; this.amb.connect(this.master);
@@ -111,6 +113,31 @@ class AudioEngine {
     if (o.verb) { const v = c.createGain(); v.gain.value = o.verb; env.connect(v); v.connect(this.verbSfx); }
     src.start(t0); src.stop(end); if (ns) { ns.start(t0, Math.random()); ns.stop(end); }
   }
+  // çok sesli patlamalar (alkış, kalabalık, kıvılcım yağmuru): yüzlerce kısa ses bir kez çevrimdışı üretilir, sonra tek tampon çalar.
+  // Gerçek zamanlı ses iş parçacığı yüzlerce düğümü aynı anda işlemeye çalışınca cızırdıyordu; ses aynı, yük tek düğüm.
+  // fn(E, t, g): E sahte motor (kanal 0 kuru, kanal 1 yankı gönderimi)
+  bake(key, dur, fn) {
+    const B = this.baked || (this.baked = new Map()); if (B.has(key)) return B.get(key);
+    B.set(key, null); if (!this.ctx || typeof OfflineAudioContext === 'undefined') return null;
+    try {
+      const sr = this.ctx.sampleRate, oc = new OfflineAudioContext(2, Math.ceil(sr * dur), sr), E = Object.create(AudioEngine.prototype), mg = oc.createChannelMerger(2);
+      mg.connect(oc.destination); E.ctx = oc; E.noise = this.noise; E.sfxDest = null;
+      E.sfx = oc.createGain(); E.verbSfx = oc.createGain(); E.sfx.connect(mg, 0, 0); E.verbSfx.connect(mg, 0, 1); E.mus = E.sfx; E.verbMus = E.verbSfx; E.dlyIn = E.verbSfx;
+      fn(E, 0.02, 1);
+      oc.startRendering().then((b) => B.set(key, b), () => B.delete(key));
+    } catch (e) { B.delete(key); }
+    return null;
+  }
+  playBaked(key, t, g = 1) {
+    const b = this.baked && this.baked.get(key); if (!b) return false;
+    const c = this.ctx, s = c.createBufferSource(), sp = c.createChannelSplitter(2), d = c.createGain(), w = c.createGain();
+    s.buffer = b; d.gain.value = g; w.gain.value = g; s.connect(sp); sp.connect(d, 0); sp.connect(w, 1); d.connect(this.sfxDest || this.sfx); w.connect(this.verbSfx);
+    s.start(Math.max(t - 0.02, c.currentTime)); return true;
+  }
+  // hazırsa pişmiş tampon, değilse (yalnız ilk kez) canlı üretim; her iki yol da aynı fn
+  burst(key, dur, t, g, fn) { if (!this.ok) return; if (this.playBaked(key, t, g)) return; this.bake(key, dur, fn); fn(this, t, g); }
+  // önceden pişir: liste kare kare işlenir, açılışta tek bir takılma olmasın
+  prebake(list) { let k = 0; const step = () => { if (k >= list.length) return; const [key, dur, fn] = list[k++]; this.bake(key, dur, fn); setTimeout(step, 60); }; step(); }
   makeIR(sec) {
     const c = this.ctx, len = Math.floor(c.sampleRate * sec), b = c.createBuffer(2, len, c.sampleRate);
     for (let ch = 0; ch < 2; ch++) {
@@ -128,7 +155,7 @@ class AudioEngine {
 
   /* --- yapı taşları --- */
   osc(type, f, t0, dur, gain, dest, { a = 0.004, f1 = null, curve = 'exp', verb = 0, detune = 0 } = {}) {
-    const c = this.ctx, o = c.createOscillator(), g = c.createGain();
+    const c = this.ctx, o = c.createOscillator(), g = c.createGain(); t0 = Math.max(t0, c.currentTime); // geçmişe kurulan zarf anında tam sesle başlar (tık)
     o.type = type; o.frequency.setValueAtTime(f, t0); if (detune) o.detune.value = detune;
     if (f1 !== null) { if (curve === 'exp') o.frequency.exponentialRampToValueAtTime(Math.max(1, f1), t0 + dur); else o.frequency.linearRampToValueAtTime(f1, t0 + dur); }
     g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(gain, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
@@ -138,7 +165,7 @@ class AudioEngine {
     return o;
   }
   noiseHit(t0, dur, gain, { type = 'bandpass', f = 1000, f1 = null, q = 1, a = 0.003, verb = 0, dest = null } = {}) {
-    const c = this.ctx, s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain();
+    const c = this.ctx, s = c.createBufferSource(), fl = c.createBiquadFilter(), g = c.createGain(); t0 = Math.max(t0, c.currentTime);
     s.buffer = this.noise; fl.type = type; fl.frequency.setValueAtTime(f, t0); fl.Q.value = q;
     if (f1 !== null) fl.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t0 + dur);
     g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(gain, t0 + a); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
@@ -147,7 +174,7 @@ class AudioEngine {
     s.start(t0, Math.random() * Math.max(0, 1.9 - dur)); s.stop(t0 + dur + 0.05);
   }
   bell(f, t0, dur, gain, { ratio = 2.0, index = 2.5, dest = null, verb = 0.5, dly = 0 } = {}) {
-    const c = this.ctx, car = c.createOscillator(), mod = c.createOscillator(), mg = c.createGain(), g = c.createGain();
+    const c = this.ctx, car = c.createOscillator(), mod = c.createOscillator(), mg = c.createGain(), g = c.createGain(); t0 = Math.max(t0, c.currentTime);
     car.frequency.value = f; mod.frequency.value = f * ratio;
     mg.gain.setValueAtTime(f * index, t0); mg.gain.exponentialRampToValueAtTime(f * 0.05, t0 + dur * 0.7);
     mod.connect(mg); mg.connect(car.frequency);

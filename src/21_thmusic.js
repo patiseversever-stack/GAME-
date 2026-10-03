@@ -176,11 +176,12 @@ const stMus = {
     this.near = damp(this.near, near, 3, dt);
     this.mode = S.state === 'play' ? 'play' : S.state === 'solved' && this.mode === 'play' ? 'play' : this.mode;
     if (S.state === 'intro' && this.mode !== 'intro') { this.mode = 'intro'; }
-    if (S.state === 'closing') { if (this.mode !== 'closing') { this.mode = 'closing'; this.drB.gain.setTargetAtTime(0.15, t, 0.2); } }
+    // perde kapanırken müzik susmaz: kanun aşağı süzülür, dem sürer, yeni perdenin kökene kayar
+    if (S.state === 'closing') { if (this.mode !== 'closing') { this.mode = 'closing'; this.drB.gain.setTargetAtTime(0.15, t, 0.2); for (let k = 0; k < 6; k++) this.pluck(t + 0.05 + k * 0.09, this.note(9 - k), 'kanun', 0.055 - k * 0.004); this.pluck(t + 0.6, this.note(0) - 12, 'ud', 0.09); } }
     if (S.perf && this.mode !== 'perf' && this.mode !== 'after') { this.mode = 'perf'; this.perfStart = t; this.nextBeat = t + 0.1; this.step = 0; this.mel = null; }
-    this.bus.gain.setTargetAtTime(S.state === 'closing' ? 0.2 : 1, t, 0.3);
+    this.bus.gain.setTargetAtTime(S.state === 'closing' ? 0.7 : 1, t, 0.3);
     // dem ve süzgeç
-    const dG = (this.mode === 'perf' ? 0.018 : this.mode === 'after' ? 0.012 : 0.02 + this.near * 0.016) * lamp;
+    const dG = (this.mode === 'perf' ? 0.018 : this.mode === 'after' ? 0.012 : 0.02 + this.near * 0.016) * (0.55 + 0.45 * lamp);
     this.drone.g.gain.setTargetAtTime(dG, t, 0.3);
     this.lp.frequency.setTargetAtTime(this.mode === 'play' ? 900 + this.near * this.near * 6500 : 7000, t, 0.25);
     // açılış: kandil yanınca kanun yükselişi
@@ -202,6 +203,8 @@ const stMus = {
   // peşrev: usul, ud dem vuruşları, kanun cevabı ve ney ezgisi
   perf(t) {
     const us = TH_USUL[this.act.us], L = us.length, e8 = 30 / this.act.bpm, bars = (t - this.perfStart) / (e8 * L);
+    // kare takıldıysa kaçan vuruşları üst üste çalma (hepsi aynı anda patlıyordu): usulde ileri sar
+    while (this.nextBeat < t - 0.03) { this.nextBeat += e8; this.step++; }
     while (this.nextBeat < t + 0.2) {
       const tb = this.nextBeat, i = this.step % L, ch = us[i], bar = Math.floor(this.step / L);
       if (this.act.mehter) {
@@ -268,7 +271,8 @@ const stAmb = {
     if (Math.random() < dt * 9) this.flame.g.gain.setTargetAtTime(lamp * (0.006 + Math.random() * 0.012), t, 0.05);
     if (lamp > 0.3 && Math.random() < dt * 1.4 * lamp) A.noiseHit(t + Math.random() * 0.05, 0.012 + Math.random() * 0.02, 0.01 + Math.random() * 0.016, { type: 'highpass', f: 2500 + Math.random() * 3000, q: 2, dest: this.out });
     // perdenin dünyası: bulmacada fısıltı, canlanınca tam
-    const lv = (S.perf ? 1 : S.state === 'play' ? 0.22 : S.state === 'solved' ? 0.5 : S.card ? 0.6 : 0.12) * lamp; this.lv = damp(this.lv, lv, 1.2, dt);
+    // kandil sönükken de dünya duyulur (geçişte ses kopmasın)
+    const lv = (S.perf ? 1 : S.state === 'play' ? 0.22 : S.state === 'solved' ? 0.5 : S.card ? 0.6 : S.state === 'closing' ? 0.3 : 0.22) * (0.4 + 0.6 * lamp); this.lv = damp(this.lv, lv, 2.0, dt);
     const B = this.beds, L = this.lv;
     B.wind.g.gain.setTargetAtTime((E.wind || 0) * L * 0.04, t, 0.6); if (Math.random() < dt * 0.5) B.wind.f.frequency.setTargetAtTime(280 + Math.random() * 700, t, 1.4);
     B.hiss.g.gain.setTargetAtTime((E.hiss || 0) * L * 0.014 * (0.6 + 0.4 * Math.sin(t * 0.4)), t, 0.4);
