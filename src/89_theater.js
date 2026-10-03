@@ -806,8 +806,8 @@ const Theater = {
       if (pv) { G.q.copy(pv.q); G.yaw = pv.yaw; G.pitch = pv.pitch; G.lock = pv.lock; }
       else {
         const sgn = rng.sign();
-        G.yaw = sgn * (act.axes === 1 ? rng.range(1.5, 2.8) : rng.range(0.9, 2.2)); G.pitch = act.axes >= 2 ? rng.sign() * rng.range(i < 3 ? 0.3 : 0.35, i < 3 ? 0.55 : 0.8) : 0;
-        if (act.axes >= 3) G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, rng.sign() * rng.range(0.15, 0.38), 'YXZ'));
+        G.yaw = sgn * (act.axes === 1 ? rng.range(1.3, 2.4) : rng.range(0.7, 1.5)); G.pitch = act.axes >= 2 ? rng.sign() * rng.range(0.22, 0.45) : 0;
+        if (act.axes >= 3) G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, rng.sign() * rng.range(0.1, 0.25), 'YXZ'));
         else G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ'));
       }
       gr.quaternion.copy(G.q);
@@ -819,7 +819,7 @@ const Theater = {
     this.assembleT = 0; this.lastSec = -1; this.wallU.uOut.value = 0; this.wallU.uExt.value = 0;
     $('#thHint').classList.remove('used');
     this.updateDom();
-    stMus.begin(i); stAmb.begin(i); this.figPan = 0;
+    stMus.begin(i); stAmb.begin(i); this.figPan = 0; this.pcT = 0; this.pcD = 0; this.bestPc = 0; this.stuckT = 0; this.pcShown = -1;
   },
   clearPieces() {
     for (const p of this.pieces) { this.root.remove(p.g); p.g.traverse((m) => { if (m.geometry) m.geometry.dispose(); if (m.userData && m.userData.mat0) { m.material.dispose(); m.userData.mat0 = null; } }); }
@@ -875,6 +875,28 @@ const Theater = {
     // yarı yola it: hedefe doğru döndür (kilitlenmemiş her heykel)
     for (const G of this.grp) { if (G.lock) continue; if (this.act.axes < 3) { G.yaw *= 0.55; G.pitch *= 0.55; G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ')); } else G.q.slerp(new THREE.Quaternion(), 0.45); G.w.set(0, 0); }
     $('#thHint').classList.add('used');
+    setTimeout(() => this.showArrow(), 450);
+  },
+  // en çok yaklaştıran hamle: çevir (←→), eğ (↑↓), yatır (↻↺)
+  bestMove() {
+    const G = this.grp[this.sel] && !this.grp[this.sel].lock ? this.grp[this.sel] : this.grp.find((g) => !g.lock); if (!G) return null;
+    const ax = this.act.axes, d = 0.06, cand = [['→', d, 0, 0], ['←', -d, 0, 0]];
+    if (ax >= 2) cand.push(['↓', 0, d, 0], ['↑', 0, -d, 0]); if (ax >= 3) cand.push(['↻', 0, 0, d], ['↺', 0, 0, -d]);
+    const a0 = this.angle(G), st = this.state; let best = null, bestA = a0;
+    this.state = 'play';
+    for (const [g, x, y, r] of cand) {
+      const q0 = G.q.clone(), y0 = G.yaw, p0 = G.pitch;
+      if (r) G.q.premultiply(new THREE.Quaternion().setFromAxisAngle(this.axis, r)); else this.rot(x, y, G.gi);
+      const a = this.angle(G); if (a < bestA - 1e-5) { bestA = a; best = g; }
+      G.q.copy(q0); G.yaw = y0; G.pitch = p0;
+    }
+    this.state = st; return best ? { g: best, G } : null;
+  },
+  showArrow() {
+    if (this.state !== 'play') return; const m = this.bestMove(), el = $('#thArrow'); if (!m || !el) return;
+    const [cx, cy] = this.gScreen(m.G); el.textContent = m.g; el.dataset.d = m.g;
+    el.style.left = `${cx}px`; el.style.top = `${cy}px`; el.classList.remove('show'); void el.offsetWidth; el.classList.add('show');
+    this.arrowT = this.t;
   },
   /* ----- dokunma ----- */
   // birden çok heykelde: parmağın altındaki (ya da ekranda en yakın) kilitlenmemiş heykel seçilir
@@ -968,11 +990,17 @@ const Theater = {
         const held = this.drag && this.drag.g === G.gi;
         if (!held) { this.rot(G.w.x * dtR, G.w.y * dtR, G.gi); G.w.multiplyScalar(Math.exp(-dtR * 3.2)); }
         const ang = this.angle(G);
-        const mag = deg(this.act.mag || (this.grp.length > 1 ? 7 : [0, 4.5, 6, 9][this.act.axes]));
-        if (ang < mag && !held && G.w.length() < 0.7) { if (this.act.axes < 3) { const k = 1 - Math.exp(-dtR * 6); G.yaw = lerp(G.yaw, Math.round(G.yaw / TAU) * TAU, k); G.pitch = lerp(G.pitch, 0, k); G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ')); } else G.q.slerp(new THREE.Quaternion(), 1 - Math.exp(-dtR * 6)); G.w.multiplyScalar(0.8); }
+        const mag = deg(this.act.mag || (this.grp.length > 1 ? 12 : [0, 7, 10, 14][this.act.axes]));
+        if (ang < mag && !held && G.w.length() < 1.0) { if (this.act.axes < 3) { const k = 1 - Math.exp(-dtR * 6); G.yaw = lerp(G.yaw, Math.round(G.yaw / TAU) * TAU, k); G.pitch = lerp(G.pitch, 0, k); G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ')); } else G.q.slerp(new THREE.Quaternion(), 1 - Math.exp(-dtR * 6)); G.w.multiplyScalar(0.8); }
         if (this.angle(G) < deg(1.3)) this.lockG(G);
         nearSum += clamp01(1 - this.angle(G) / deg(75));
       }
+      // eşleşme yüzdesi (açısal uzaklıktan): sıcak-soğuk göstergesi
+      let pc = 0; for (const G of this.grp) pc += G.lock ? 1 : Math.exp(-this.angle(G) / deg(70)); pc /= Math.max(1, this.grp.length);
+      if (pc > (this.bestPc || 0) + 0.02) { this.bestPc = pc; this.stuckT = 0; } else this.stuckT = (this.stuckT || 0) + dtR;
+      // uzun süre ilerleme yoksa yön oku kendiliğinden belirir (ipucu sayılmaz)
+      if (this.stuckT > 8 && !this.drag) { this.stuckT = 0; this.bestPc = pc; this.showArrow(); }
+      this.pcT = pc;
       if (this.grp.every((G) => G.lock)) this.solve();
       const prevN = this.near; this.near = damp(this.near, nearSum / Math.max(1, this.grp.length), 5, dtR);
       if (Math.floor(this.near * 6) > Math.floor(prevN * 6) && this.near > 0.5) haptic(6);
@@ -1040,7 +1068,7 @@ const Theater = {
     this.wallU.uGlow.value = this.near * 0.6 + flare;
     // ipucu çizgisi
     this.hintT = Math.max(0, this.hintT - dtR);
-    this.wallU.uHint.value = this.state === 'play' ? Math.max(Math.min(1, this.hintT) * 0.9, smoothstep(0.7, 0.95, this.near) * 0.25) : 0;
+    this.wallU.uHint.value = this.state === 'play' ? Math.max(Math.min(1, this.hintT) * 0.9, 0.2 + smoothstep(0.6, 0.95, this.near) * 0.22) : 0;
     // ön perdeler
     const vis = this.visibleHalfWidth(ST_WZ + 7.2) + 0.6, cc = this.curtain, cx = (this.WC.x + this.camP.x) / 2;
     this.frontL.position.set(cx - 4.4 - (1 - cc) * vis - (1 - cc) * 1.5, this.floorY + 10, ST_WZ + 7.2); this.frontR.position.set(cx + 4.4 + (1 - cc) * vis + (1 - cc) * 1.5, this.floorY + 10, ST_WZ + 7.2);
@@ -1054,6 +1082,16 @@ const Theater = {
     const sh = G.trauma * G.trauma; P.x += Math.sin(t * 41) * sh * 0.12; P.y += Math.sin(t * 37) * sh * 0.1;
     stCam.position.copy(P); stCam.lookAt(T);
     this.curL.position.z = ST_WZ + 0.8 + Math.sin(t * 0.5) * 0.03; this.curR.position.z = ST_WZ + 0.8 + Math.sin(t * 0.47 + 1) * 0.03;
+    // eşleşme göstergesi
+    const mt = this.meterEl || (this.meterEl = $('#thMeter'));
+    if (mt) {
+      const on = this.state === 'play' || (this.solvedT >= 0 && sv < 1.6), tgt = this.solvedT >= 0 ? 1 : this.pcT || 0, prev = this.pcD || 0;
+      this.pcD = damp(prev, tgt, this.solvedT >= 0 ? 6 : 9, dtR);
+      const v = Math.round(this.pcD * 100);
+      if (v !== this.pcShown) { if (v > (this.pcShown || 0)) { mt.classList.add('up'); clearTimeout(this.upTm); this.upTm = setTimeout(() => mt.classList.remove('up'), 260); } this.pcShown = v; mt.querySelector('.pct').textContent = `%${v}`; mt.querySelector('.bar i').style.width = `${v}%`; }
+      mt.classList.toggle('on', on); mt.classList.toggle('hot', v >= 80); mt.classList.toggle('done', this.solvedT >= 0);
+      const sub = mt.querySelector('.sub'), nl = this.grp.filter((g) => g.lock).length; sub.textContent = this.grp.length > 1 ? `${nl}/${this.grp.length} heykel` : '';
+    }
     // yatırma halkası (üç eksenli perdeler)
     const ring = this.ringEl || (this.ringEl = $('#thRing')), rShow = this.state === 'play' && this.act.axes >= 3 && this.grp.length > 0 && !this.grp.every((g) => g.lock);
     if (ring) {
