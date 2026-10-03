@@ -19,7 +19,7 @@ ghost.scale.setScalar(2.2); scene.add(ghost);
 
 /* ---------- arayüz yardımcıları ---------- */
 const UI = {
-  screens: ['title', 'complete', 'fail', 'pause', 'settings', 'map', 'ending', 'theater'],
+  screens: ['title', 'complete', 'fail', 'pause', 'settings', 'map', 'ending', 'theater', 'ebru'],
   show(id) { $('#' + id).classList.add('on'); },
   hide(id) { $('#' + id).classList.remove('on'); },
   hideAll() { for (const s of this.screens) this.hide(s); },
