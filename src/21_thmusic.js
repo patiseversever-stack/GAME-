@@ -16,7 +16,7 @@ const TH_MK = {
   kurdi: { r: 57, s: [0, 1.0, 3.0, 4.98, 7.02, 8.0, 10.0], g: 3 },
 };
 // usuller (sekizlik ızgara): D düm, T tek, K hafif tek, S hafif düm
-const TH_USUL = { sofyan: 'D...T.K.', duyek: 'DT.TD.T.', semai: 'D.T.T.', aksak: 'D.T.DST.T', curcuna: 'D..T.DT.T.' };
+const TH_USUL = { sofyan: 'D...T.K.', duyek: 'DT.TD.T.', semai: 'D.T.T.', aksak: 'D.T.DST.T', curcuna: 'D..T.DT.T.', mehter: 'D.TKD.T.', agir: 'D.......T...K...' };
 // perde başına müzik: makam, tempo, usul, ortam
 const TH_ACT_MU = [
   { mk: 'rast', bpm: 84, us: 'sofyan', env: 'garden' }, { mk: 'nihavend', bpm: 76, us: 'duyek', env: 'night' },
@@ -27,6 +27,12 @@ const TH_ACT_MU = [
   { mk: 'hicaz', bpm: 126, us: 'aksak', env: 'meadow' }, { mk: 'nihavend', bpm: 70, us: 'duyek', env: 'under' },
   { mk: 'hicaz', bpm: 84, us: 'aksak', env: 'desert' }, { mk: 'kurdi', bpm: 58, us: 'sofyan', env: 'night' },
   { mk: 'hicaz', bpm: 96, us: 'curcuna', env: 'cave', low: 1 },
+  // Destan
+  { mk: 'hicaz', bpm: 72, us: 'duyek', env: 'forge' }, { mk: 'ussak', bpm: 66, us: 'semai', env: 'steppe' },
+  { mk: 'rast', bpm: 104, us: 'mehter', env: 'battle', mehter: 1 }, { mk: 'rast', bpm: 96, us: 'mehter', env: 'harbor', mehter: 1 },
+  { mk: 'hicaz', bpm: 58, us: 'agir', env: 'warSea' }, { mk: 'rast', bpm: 72, us: 'sofyan', env: 'storm' },
+  { mk: 'saba', bpm: 50, us: 'agir', env: 'blizzard' }, { mk: 'nihavend', bpm: 64, us: 'duyek', env: 'dawnFront' },
+  { mk: 'rast', bpm: 60, us: 'agir', env: 'nightField' }, { mk: 'rast', bpm: 112, us: 'mehter', env: 'festival', mehter: 1 },
 ];
 
 const stMus = {
@@ -108,6 +114,21 @@ const stMus = {
     audio.noiseHit(t, 0.12, g * 0.5, { type: 'bandpass', f: f0 * 3, q: 1.2, dest: this.neyB });
     for (const x of [o, o2, ns, lfo]) { x.start(t); x.stop(tt + 1.0); }
   },
+  // zurna: çift kamışlı, genizden, parlak — mehter ezgisi
+  zurna(t0, notes, g = 0.03) {
+    if (!this.ok) return; const c = this.c, t = Math.max(t0, c.currentTime + 0.02);
+    const o = c.createOscillator(), o2 = c.createOscillator(), env = c.createGain(), f1 = c.createBiquadFilter(), f2 = c.createBiquadFilter(), lp = c.createBiquadFilter(), mix = c.createGain();
+    o.type = 'sawtooth'; o2.type = 'square'; o2.detune.value = 7; f1.type = 'peaking'; f1.frequency.value = 1300; f1.gain.value = 9; f1.Q.value = 2; f2.type = 'peaking'; f2.frequency.value = 2700; f2.gain.value = 7; f2.Q.value = 3; lp.type = 'lowpass'; lp.frequency.value = 5200; mix.gain.value = 0.5;
+    const lfo = c.createOscillator(), lg = c.createGain(); lfo.frequency.value = 6.2; lg.gain.value = 12; lfo.connect(lg); lg.connect(o.detune); lg.connect(o2.detune);
+    o.connect(mix); o2.connect(mix); mix.connect(f1); f1.connect(f2); f2.connect(lp); lp.connect(env); env.connect(this.neyB);
+    let tt = t; env.gain.setValueAtTime(0.0001, t); env.gain.linearRampToValueAtTime(g, t + 0.05);
+    for (const [m, d] of notes) { const f = mtof(m); o.frequency.setTargetAtTime(f, tt, 0.018); o2.frequency.setTargetAtTime(f, tt, 0.018); env.gain.setTargetAtTime(g * (0.85 + Math.random() * 0.2), tt, 0.03); tt += d; }
+    env.gain.setTargetAtTime(0.0001, tt, 0.08);
+    for (const x of [o, o2, lfo]) { x.start(t); x.stop(tt + 0.6); }
+  },
+  // kös: büyük kazan davul; nakkare: küçük çift kudüm
+  kos(t, v = 1) { if (!this.ok) return; const A = audio, d = this.drB; A.osc('sine', 62, t, 1.1, 0.32 * v, d, { f1: 36 }); A.osc('sine', 98, t, 0.4, 0.12 * v, d, { f1: 52 }); A.noiseHit(t, 0.18, 0.12 * v, { type: 'lowpass', f: 260, dest: d }); },
+  nakkare(t, v = 1) { if (!this.ok) return; const A = audio, d = this.drB; A.osc('triangle', 330, t, 0.12, 0.07 * v, d, { f1: 240 }); A.noiseHit(t, 0.05, 0.05 * v, { type: 'bandpass', f: 1800, q: 1.5, dest: d }); },
   // vurmalılar
   drum(t, k, v = 1) {
     if (!this.ok) return; const A = audio, d = this.drB;
@@ -183,6 +204,13 @@ const stMus = {
     const us = TH_USUL[this.act.us], L = us.length, e8 = 30 / this.act.bpm, bars = (t - this.perfStart) / (e8 * L);
     while (this.nextBeat < t + 0.2) {
       const tb = this.nextBeat, i = this.step % L, ch = us[i], bar = Math.floor(this.step / L);
+      if (this.act.mehter) {
+        // mehter: kös ve nakkare, ölçü başında zil, iki ölçüde bir zurna cümlesi
+        if (ch === 'D' || ch === 'S') this.kos(tb, bar === 0 ? 0.7 : 1); else if (ch !== '.') this.nakkare(tb, ch === 'T' ? 1 : 0.6);
+        if (i === 0) this.zil(tb, 0.04);
+        if (i === 0 && bar % 2 === 0) { const gu = this.mk.g, path = [0, 1, 2, gu, gu + 1, gu, gu - 1, 2, 1, 0], notes = []; path.forEach((d, j) => notes.push([this.note(d) + 12, e8 * (j % 4 === 3 ? 2 : 1) * 0.98])); this.zurna(tb, notes, 0.028); }
+        this.nextBeat += e8; this.step++; continue;
+      }
       if (ch !== '.') this.drum(tb, ch, bar === 0 ? 0.7 : 1);
       if (ch === 'D') this.pluck(tb, this.note(0) - 12, 'ud', 0.1); else if (ch === 'S') this.pluck(tb, this.note(4) - 12, 'ud', 0.07);
       else if (ch === 'T' && bar > 0) this.pluck(tb, this.note([2, 4, 7][(bar + i) % 3]), 'kanun', 0.05);
@@ -204,6 +232,9 @@ const TH_ENV = {
   moonMeadow: { wind: 0.45, crickets: 0.8, leaves: 0.4 }, ocean: { waves: 1, wind: 0.4 }, savanna: { wind: 0.6, insects: 0.8 }, mystic: { rumble: 0.35, whistle: 0.25 }, snow: { whistle: 0.9, wind: 0.6 },
   forest: { wind: 0.55, birds: 0.35, leaves: 0.8 }, lake: { waves: 0.55, wind: 0.9 }, under: { rumble: 0.7, bubbles: 1 }, desert: { wind: 0.85, hiss: 0.7 },
   cave: { rumble: 1, crackle: 0.8, wind: 0.2 },
+  forge: { crackle: 1, rumble: 0.5, wind: 0.35 }, steppe: { wind: 1, whistle: 0.35, leaves: 0.4 }, battle: { wind: 0.6, rumble: 0.5 }, harbor: { waves: 0.6, wind: 0.3, crickets: 0.4 },
+  warSea: { waves: 0.7, wind: 0.5, rumble: 0.45 }, storm: { waves: 1, wind: 1, whistle: 0.6, rumble: 0.7 }, blizzard: { whistle: 1, wind: 1 }, dawnFront: { wind: 0.5, rumble: 0.35, birds: 0.2 },
+  nightField: { wind: 0.4, crickets: 0.7 }, festival: { crickets: 0.25, wind: 0.2 },
 };
 const stAmb = {
   ok: false, env: null, lv: 0,

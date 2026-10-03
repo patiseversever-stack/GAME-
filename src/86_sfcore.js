@@ -95,7 +95,7 @@ function sfCompile(def) {
   }
   const k0 = Object.assign({}, def.k0 || {});
   for (const L of def.layers) {
-    const ly = { id: L.id, prop: !!L.prop || !!L.glow, glow: !!L.glow, back: !!L.back, hole: !!L.hole, bone: L.bone != null ? F.bi[L.bone] : -1, gen: L.gen || null, polys: null, morphs: {}, w: null };
+    const ly = { id: L.id, prop: !!L.prop || !!L.glow, glow: !!L.glow, back: !!L.back, hole: !!L.hole, bone: L.bone != null ? F.bi[L.bone] : -1, gen: L.gen || null, polys: null, morphs: {}, w: null, tc: L.tc || null };
     if (!L.gen) {
       let polys, counts;
       const X = L.xf ? (pp) => pp.map((q) => sfXf(q, ...L.xf)) : (pp) => pp;
@@ -141,7 +141,7 @@ function sfNewPose(F) {
 }
 function sfResetPose(F, S) {
   for (const b of F.bones) { const o = S.b[b.name]; o.r = 0; o.x = 0; o.y = 0; o.sx = 1; o.sy = 1; }
-  for (const k in S.m) S.m[k] = 0; for (const k in S.hide) delete S.hide[k];
+  for (const k in S.m) S.m[k] = 0; for (const k in S.hide) delete S.hide[k]; if (S.tc) for (const k in S.tc) delete S.tc[k];
   for (const L of F.def.layers) if ((L.prop || L.glow) && !L.show) S.hide[L.id] = 1;
   Object.assign(S.k, F.k0);
 }
@@ -158,7 +158,7 @@ function sfPose(F, S) {
     if (S.hide[ly.id]) continue;
     if (ly.gen) {
       const polys = ly.gen(S.k, S) || [], m = ly.bone >= 0 ? M[ly.bone] : SF_I;
-      for (const p0 of polys) { const hl = ly.hole || !!p0.hole, p = hl === (sfArea(p0) > 0) ? sfRev(p0) : p0.slice(); for (let i = 0; i < p.length; i += 2) { const x = p[i], y = p[i + 1]; p[i] = m[0] * x + m[2] * y + m[4]; p[i + 1] = m[1] * x + m[3] * y + m[5]; } out.push({ id: ly.id, prop: ly.prop, glow: ly.glow, back: ly.back, hole: hl, p }); }
+      for (const p0 of polys) { const hl = ly.hole || !!p0.hole, p = hl === (sfArea(p0) > 0) ? sfRev(p0) : p0.slice(); for (let i = 0; i < p.length; i += 2) { const x = p[i], y = p[i + 1]; p[i] = m[0] * x + m[2] * y + m[4]; p[i + 1] = m[1] * x + m[3] * y + m[5]; } out.push({ id: ly.id, prop: ly.prop, glow: ly.glow, back: ly.back, hole: hl, p, tc: p0.tc || (S.tc && S.tc[ly.id]) || ly.tc }); }
       continue;
     }
     const mw = Object.entries(ly.morphs).filter(([n]) => S.m[n] > 0.0001);
@@ -171,14 +171,14 @@ function sfPose(F, S) {
         for (const [bi, w] of W[v]) { const m = M[bi]; X += (m[0] * x + m[2] * y + m[4]) * w; Y += (m[1] * x + m[3] * y + m[5]) * w; }
         p[i] = X; p[i + 1] = Y;
       }
-      out.push({ id: ly.id, prop: ly.prop, glow: ly.glow, back: ly.back, hole: ly.hole, p });
+      out.push({ id: ly.id, prop: ly.prop, glow: ly.glow, back: ly.back, hole: ly.hole, p, tc: (S.tc && S.tc[ly.id]) || ly.tc });
     });
   }
   return out;
 }
 // SVG uzayı → perde birimi (y yukarı, merkezlenmiş)
 function sfToWall(F, polys) {
-  return polys.map((r) => { const q = new Float32Array(r.p.length); for (let i = 0; i < r.p.length; i += 2) { q[i] = (r.p[i] - F.cx) * F.sc; q[i + 1] = -(r.p[i + 1] - F.cy) * F.sc; } return { id: r.id, prop: r.prop, glow: r.glow, back: r.back, hole: r.hole, p: q }; });
+  return polys.map((r) => { const q = new Float32Array(r.p.length); for (let i = 0; i < r.p.length; i += 2) { q[i] = (r.p[i] - F.cx) * F.sc; q[i + 1] = -(r.p[i + 1] - F.cy) * F.sc; } return { id: r.id, prop: r.prop, glow: r.glow, back: r.back, hole: r.hole, p: q, tc: r.tc }; });
 }
 
 // perform içinden: tanımdaki kemik zincirine göre yerel noktayı dünya (SVG) uzayına taşı
