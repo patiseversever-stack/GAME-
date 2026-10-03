@@ -235,9 +235,9 @@ const SD_ERGENEKON = (() => {
   const W = sdImport(SF_WOLF, ['earF', 'lff', 'lfh', 'tail', 'body', 'jaw', 'ear', 'lnf', 'lnh'], { tx: -185, ty: -193, sc: 0.62, pre: 'bk' });
   const C = SD_ERG_C;
   return {
-    key: 'ergenekon', name: 'Ergenekon', line: 'Demirci körüğü bastı, demir dağ eridi; Bozkurt yolu gösterdi — Türkler Ergenekon’dan çıktı.', dur: 12.4, fitW: 4.7, fitH: 3.6, tasvir: 1, cine: 1, ext: 1,
+    key: 'ergenekon', name: 'Ergenekon', line: 'Demir dağ eridi, Bozkurt yolu gösterdi — bir millet karanlıktan bahara çıktı.', dur: 12.4, fitW: 4.7, fitH: 3.6, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.42, 0.1], glowColB: [1.0, 0.84, 0.55],
-    caps: [[0.6, 3.3, '<small>Ergenekon</small>Dört yüz yıl… demirden dağların ardında.'], [3.7, 6.9, 'Demirci körüğü bastı, demir dağ eridi.'], [7.2, 9.8, 'Bozkurt öne düştü, yolu gösterdi…'], [10.0, 12.4, '…ve Türkler Ergenekon’dan çıktı.']],
+    caps: [[0.6, 3.3, '<small>Ergenekon · Destan</small>Dört yüz yıl demirden dağların arasında çoğaldılar. Vadi artık onlara dar geliyordu.'], [3.7, 6.9, 'Bir demirci yolu demirde gördü: yetmiş körük birden bastı, dağ kor olup aktı.'], [7.2, 9.8, 'Eriyen dağın gediğinde bir bozkurt belirdi; dönüp baktı, yürüdü…'], [10.0, 12.4, '…ve bir millet, kurdun izinden Ergenekon’dan çıktı. O günü her bahar bayram bildiler.']],
     groups: [['bkearF', 'bklff', 'bklfh', 'bktail', 'bkbody', 'bkjaw', 'bkear', 'bklnf', 'bklnh'], ['mountain']],
     bones: Object.assign({}, W.bones, { world: [null, 0, 200, 100, 200] }),
     k0: { t: 0, melt: 0, heat: 0, ham: 0, bel: 0, gI: 0.4, gIB: 0, sunY: 220, mig: -1, sky: 0.94, skyT: [0.13, 0.16, 0.42], skyB: [0.3, 0.24, 0.44], skyY: 0.36, lamp: 0.6, hits: [] },
@@ -292,9 +292,9 @@ function SD_ORH_PERFORM(t, S) {
   k.zoom = kf(t, [[0, 0], [2.5, 0.4, 'io'], [4.5, 0.4], [6.0, 0.12, 'io'], [9, 0.12], [10.8, 0.28, 'io']]); k.zx = 40; k.zy = -60;
 }
 const SD_ORHUN = {
-  key: 'orhun', name: 'Orhun Yazıtları', line: 'Bilge Kağan sözünü taşa kazıttı; harfler gecenin içinde yandı — bozkırdan bugüne.', dur: 10.8, fitW: 4.4, fitH: 3.8, tasvir: 1, cine: 1, ext: 1,
+  key: 'orhun', name: 'Orhun Yazıtları', line: 'Söz taşa kazındı; harfleri bin üç yüz yıldır bozkırın gecesinde yanıyor.', dur: 10.8, fitW: 4.4, fitH: 3.8, tasvir: 1, cine: 1, ext: 1,
   glowCol: [1.0, 0.78, 0.36], glowColB: [0.85, 0.9, 1.0],
-  caps: [[0.6, 3.5, '<small>Orhun Yazıtları · 732</small>Bilge Kağan, kardeşi Kül Tigin için taş diktirdi.'], [3.7, 7.0, '“Üstte gök çökmedikçe, altta yer delinmedikçe…”'], [7.2, 10.8, '“…Türk milleti, ilini ve töreni kim bozabilir?”']],
+  caps: [[0.6, 3.5, '<small>Orhun Vadisi · 732</small>Bilge Kağan, kardeşi Kül Tigin’in ardından sözünü taşa kazıttı; unutulmasın diye.'], [3.7, 7.0, '“Üstte gök çökmedikçe, altta yer delinmedikçe…”'], [7.2, 10.8, '“…ey Türk milleti, ilini ve töreni kim bozabilir?”<small style="margin:6px 0 0">Kül Tigin Yazıtı</small>']],
   bones: { world: [null, 0, 200, 100, 200], thead: [null, 172, 118, 210, 108] },
   k0: { t: 0, runes: 0, gI: 0.35, gIB: 0.85, rx: -900, rph: 0, ra: 0, rdraw: 0, arrow: -1, star: 0, sky: 0.95, skyT: [0.1, 0.13, 0.36], skyB: [0.22, 0.2, 0.38], skyY: 0.3, lamp: 0.66 },
   layers: [
@@ -403,9 +403,9 @@ const SD_MALAZGIRT = (() => {
     { id: 'sarm', bind: ['sarm'], pts: [L([-8, -146, 12, -162, 20, -190], 10, 8), L([20, -186, 32, -244], 4.5, 4), sfEllipse(33, -250, 9, 12, -0.2, 14), [24, -248, 18, -254, 26, -258], [42, -252, 48, -256, 40, -260]] },
   ];
   return {
-    key: 'malazgirt', name: 'Malazgirt', line: 'Beyazlar giydi, “Bu elbise kefenim olsun” dedi — akıncılar ovaya indi, Anadolu’nun kapısı açıldı.', dur: 11.6, fitW: 4.3, fitH: 3.7, tasvir: 1, cine: 1, ext: 1,
+    key: 'malazgirt', name: 'Malazgirt', line: 'Beyaz elbisesi kefeni olacaktı; akıncılar ok oldu — Anadolu’nun kapısı açıldı.', dur: 11.6, fitW: 4.3, fitH: 3.7, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.8, 0.45], glowColB: [1.0, 0.86, 0.58],
-    caps: [[0.6, 3.1, '<small>Malazgirt · 26 Ağustos 1071</small>Sultan Alparslan o sabah beyazlar giydi.'], [3.3, 5.8, '“Bu beyaz elbise kefenim olsun.”'], [6.1, 8.6, 'Akıncılar ok gibi ovaya indi…'], [8.9, 11.6, '…ve Anadolu’nun kapıları açıldı.']],
+    caps: [[0.6, 3.1, '<small>Malazgirt · 26 Ağustos 1071 · Cuma</small>Karşısındaki ordu kat kat kalabalıktı. Sultan Alparslan o sabah beyazlar giydi.'], [3.3, 5.8, '“Şehit düşersem, bu beyaz elbise kefenim olsun.”'], [6.1, 8.6, 'Hilal gibi açılan akıncılar, ok gibi ovaya indi…'], [8.9, 11.6, '…ve o akşam Anadolu’nun kapıları bin yıllığına açıldı.']],
     bones: Object.assign({}, H.bones, { sultan: ['hbody', -20, -80, -14, -160], sarm: ['sultan', -8, -146, 20, -190], world: [null, 0, 200, 100, 200] }),
     k0: { t: 0, flow: 0.15, armyUp: 0, volley: -1, charge: 0, sweep: -1, gate: 0, gateOpen: 0, gI: 0, gIB: 0, sky: 0.9, skyT: [0.4, 0.45, 0.75], skyB: [1.2, 0.74, 0.5], skyY: 0.44, lamp: 1 },
     layers: [
@@ -446,7 +446,7 @@ function sdBanner(px, py, w, h, t, o = {}) {
   const out = [sdTag(poly, o.tc || [0.92, 0.06, 0.05])];
   if (o.emblem !== false) {
     const G = h, cu = 0.5 * G / w, su = (0.5 + 0.7208) * G / w, [ex, ey] = [px + f * cu * w, py + wv(cu) + h / 2], tilt = Math.atan2(wv(su) - wv(cu), (su - cu) * w) * f;
-    for (const p of sdCrescentStar(ex, ey, G, tilt, f)) { p.hole = 1; p.tc = poly.tc; out.push(p); }
+    const em = sdCrescentStar(ex, ey, G, tilt, f); for (const p of o.star === false ? [em[0]] : em) { p.hole = 1; p.tc = poly.tc; out.push(p); }
   }
   return out;
 }
@@ -464,12 +464,13 @@ function sdGalley(x, y, s, rot, t, o = {}) {
   return loc.map((p) => sdX(sdX(p, 0, 0, 1, 1, rot), x, y, s, o.flip ? -1 : 1));
 }
 const sdFtHill = (x) => lerp(66, -52, clamp01((x + 10) / 370));
+const SD_FT_BX = 36; // gediğin açıldığı burç (Haliç yakasındaki ilk kule)
 function sdCity(k, breach) {
   // surlar tepeye tırmanır, kuleler, kubbe (Haliç'in karşı yakası)
-  const o = [], b = breach || 0, top = [];
-  for (let x = 6; x <= 344; x += 12) { const hy = sdFtHill(x), hole = b * Math.max(0, 1 - Math.abs(x - 118) / 40) * 38; top.push(x, hy - 44 + (Math.floor(x / 12) % 2 ? 0 : -7) + hole); }
+  const o = [], b = breach || 0, top = [], BX = SD_FT_BX;
+  for (let x = 6; x <= 344; x += 12) { const hy = sdFtHill(x), hole = b * Math.max(0, 1 - Math.abs(x - BX) / 40) * 38; top.push(x, hy - 44 + (Math.floor(x / 12) % 2 ? 0 : -7) + hole); }
   const wall = top.slice(); for (let x = 344; x >= 6; x -= 24) wall.push(x, sdFtHill(x) + 8); o.push(wall);
-  for (const tx of [36, 118, 200, 282]) { const hy = sdFtHill(tx), dmg = tx === 118 ? b * 52 : 0, h = 92 - dmg, w = 20; const tp = [tx - w, hy + 4, tx - w, hy - h]; for (let j = 0; j <= 4; j++) tp.push(tx - w + j * 10, hy - h - (j % 2 ? 0 : 9)); tp.push(tx + w, hy - h, tx + w, hy + 4); o.push(tp); }
+  for (const tx of [36, 118, 200, 282]) { const hy = sdFtHill(tx), dmg = tx === BX ? b * 52 : 0, h = 92 - dmg, w = 20; const tp = [tx - w, hy + 4, tx - w, hy - h]; for (let j = 0; j <= 4; j++) tp.push(tx - w + j * 10, hy - h - (j % 2 ? 0 : 9) + (tx === BX ? b * (j % 2 ? 6 : -4) : 0)); tp.push(tx + w, hy - h, tx + w, hy + 4); o.push(tp); }
   // Ayasofya
   const dx = 232, dy = sdFtHill(232) - 96, dome = [dx - 64, dy]; for (let j = 0; j <= 24; j++) { const a = lerp(PI, 0, j / 24); dome.push(dx + Math.cos(a) * 64, dy - Math.sin(a) * 46); } dome.push(dx + 64, dy); o.push(dome, [dx - 76, dy, dx + 76, dy, dx + 76, dy + 26, dx - 76, dy + 26]);
   for (const sd of [-1, 1]) { const hx = dx + sd * 92, h = []; for (let j = 0; j <= 12; j++) { const a = lerp(PI, 0, j / 12); h.push(hx + Math.cos(a) * 34, dy + 24 - Math.sin(a) * 26); } o.push([hx - 34, dy + 36, ...h, hx + 34, dy + 36], [hx - 46, dy + 26, hx + 46, dy + 26, hx + 46, dy + 70, hx - 46, dy + 70]); }
@@ -482,49 +483,146 @@ function sdMinarets(k) {
   [[-128, 0], [-112, 0.15], [112, 0.3], [128, 0.45]].forEach(([ox, dl]) => { const u = Ease.outCubic(clamp01((g - dl) / 0.55)); if (u <= 0) return; const x = dx + ox, h = 170 * u, by = dy + 60; o.push([x - 5, by, x - 5, by - h, x + 5, by - h, x + 5, by]); if (u > 0.6) { const sh = by - h * 0.74; o.push([x - 10, sh, x + 10, sh, x + 8, sh - 6, x - 8, sh - 6]); } if (u > 0.95) o.push([x - 6, by - h, x, by - h - 30, x + 6, by - h], sfStroke([x, by - h - 30, x, by - h - 40], 2, 2, 1, 1)); });
   return o;
 }
+// yay uzunluğuyla yol: at(u) → [x, y, eğim]
+function sdPath(pts) {
+  const L = [0]; for (let i = 2; i < pts.length; i += 2) L.push(L[L.length - 1] + Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]));
+  const tot = L[L.length - 1];
+  return { tot, at(u) { const d = clamp01(u) * tot; let i = 1; while (i < L.length - 1 && L[i] < d) i++; const f = (d - L[i - 1]) / Math.max(1e-6, L[i] - L[i - 1]), x0 = pts[i * 2 - 2], y0 = pts[i * 2 - 1], x1 = pts[i * 2], y1 = pts[i * 2 + 1]; return [lerp(x0, x1, f), lerp(y0, y1, f), Math.atan2(y1 - y0, x1 - x0)]; } };
+}
+// uzak sırt (kafile ufukta) ve yakın tepe (Galata) — gemilerin kızak yolu
+const SD_FT_FAR = [-1000, -214, -860, -226, -760, -232, -620, -220, -500, -188, -380, -142, -280, -98, -200, -46, -150, 10];
+const SD_FT_NEAR = [-1040, -160, -760, -150, -600, -142, -460, -110, -330, -58, -200, 12, -110, 88];
+const SD_FT_PF = sdPath(SD_FT_FAR.map((v, i) => (i % 2 ? v - 4 : v)));
+const SD_FT_PN = sdPath([...SD_FT_NEAR.map((v, i) => (i % 2 ? v - 10 : v)), -30, 84, 120, 90, 320, 90]);
+// kafileler: uzak sırtta dört silik gemi, yakın tepede iki gemi ve halat çeken adamlar
+function sdFtFleet(k, far) {
+  const o = [], t = k.t || 0;
+  if (far) {
+    for (let j = 0; j < 4; j++) { const u = Ease.inOutSine(clamp01((t - 0.2 - j * 1.1) / 6.4)); if (u <= 0 || u >= 1) continue; const [x, y, a] = SD_FT_PF.at(u); o.push(...sdGalley(x, y, 0.26, a * 0.9, t + j, {}).map((p) => sdTag(p, [0.3, 0.28, 0.33]))); }
+    return o;
+  }
+  const landEnd = 0.79;
+  for (let j = 0; j < 2; j++) {
+    const t0 = 0.4 + j * 1.7, uEnd = j ? 0.9 : 1, u = Ease.inOutSine(clamp01((t - t0) / 6.6)) * uEnd; if (u <= 0) continue;
+    const [x, y, a0] = SD_FT_PN.at(u), wet = u > landEnd, a = wet ? Math.sin(t * 1.6 + j) * 0.03 : a0 * 0.95, s = 0.5;
+    o.push(...sdGalley(x, y + (wet ? Math.sin(t * 2 + j) * 1.5 : 0), s, a, t + j * 0.7, { row: wet ? 1 : 0 }).map((p) => sdTag(p, [0.1, 0.09, 0.09])));
+    // halat çekenler: yokuş aşağı, geminin önünde
+    if (!wet) {
+      const bow = [x + Math.cos(a) * 92 * s, y + Math.sin(a) * 92 * s];
+      for (let m = 0; m < 3; m++) {
+        const um = u + (60 + m * 26) / SD_FT_PN.tot; if (um > landEnd - 0.01) continue; const [hx, hy] = SD_FT_PN.at(um), gx = hx, gy = hy + 10;
+        o.push(...sdWalker(gx, gy, 0.42, t * 1.3 + m * 0.33 + j, { lean: 0.28, hat: m % 2 ? 'kalpak' : true, tc: [0.08, 0.07, 0.07] }));
+        o.push(sdTag(sfStroke([bow[0], bow[1], gx + 4, gy - 30], 1.3, 1.3, 1, 1), [0.08, 0.07, 0.07]));
+      }
+    }
+  }
+  return o;
+}
+// kızaklar: yağlanmış kütükler yol boyunca
+function sdFtTrack() {
+  const o = [], P = sdPath(SD_FT_NEAR.slice(2));
+  for (let i = 0; i <= 24; i++) { const [x, y, a] = P.at(i / 24); if (x > -120) continue; const nx = -Math.sin(a), ny = Math.cos(a); o.push(sfStroke([x - nx * 3, y - ny * 3 - 3, x + Math.cos(a) * 1 - nx * 3, y + Math.sin(a) * 1 - ny * 3 - 3], 7, 7, 1, 1)); }
+  return o;
+}
+// Ulubatlı Hasan: gedikten tırmanır, burca sancağı diker, oklarla diz çöker ama gönderi bırakmaz
+const SD_FT_HTOP = () => [SD_FT_BX + 4, sdFtHill(SD_FT_BX) - 40];
+function sdFtHasan(k) {
+  const u = k.hasan ?? -1; if (u < 0) return []; const t = k.t || 0, s = 0.62, o = [];
+  const [tx, ty] = SD_FT_HTOP(), c = Ease.inOutSine(clamp01(u / 1.9)), path = sdPath([-34, 94, -6, 70, 14, 46, tx, ty]), [px, py] = path.at(c);
+  if (u < 1.9) {
+    // tırmanış: sancak dürülü, gönder ileri eğik
+    const ph = u * 9.5, pose = { ...sdManWalk(ph, { lean: 0.32, stride: 0.9 }), hb: [16, -108], hf: [32, -134] };
+    o.push(...sdMan(px, py, s, pose, { hat: 'bork' }));
+    const g0 = [px + (-6) * s, py - 70 * s], g1 = [px + 86 * s, py - 250 * s]; o.push(sfStroke([...g0, ...g1], 3.4, 2.8, 1, 1), sfStroke([g1[0] - 3, g1[1] + 20, g1[0] + 9, g1[1] + 52], 7, 5, 1, 1));
+    return o;
+  }
+  const pl = Ease.outCubic(clamp01((u - 1.9) / 0.7)), kn = Ease.inOutCubic(clamp01((u - 3.5) / 1.1)), polX = tx - 22 * s, br = Math.sin(t * 2.4) * 1.2 * kn;
+  const pose = { hip: [0, lerp(-86, -50, kn) + br], ff: [lerp(12, 30, kn), 0], fb: [lerp(-12, -44, kn), lerp(0, -3, kn)], lean: lerp(lerp(0.3, -0.05, pl), 0.42, kn), head: lerp(lerp(0.2, -0.35, pl), 0.55, kn), hb: [22, lerp(-90, -66, kn)], hf: [22, lerp(-128, -96, kn)], kb: [lerp(1, 0.35, kn), lerp(-0.2, 1, kn)] };
+  o.push(...sdMan(tx, ty, s, pose, { hat: 'bork', flip: true }));
+  // saplanan oklar
+  const hits = k.hits || 0; for (let i = 0; i < hits; i++) { const hx = tx + (6 - i * 5) * s, hy = ty - (96 - i * 9 + (i % 2) * 14) * s * lerp(1, 0.75, kn), a = -0.5 + i * 0.18; o.push(sfStroke([hx, hy, hx + Math.cos(a) * 22, hy + Math.sin(a) * 22], 1.6, 1.4, 1, 1), [hx + Math.cos(a) * 22, hy + Math.sin(a) * 22, hx + Math.cos(a + 0.4) * 28, hy + Math.sin(a + 0.4) * 28, hx + Math.cos(a - 0.4) * 28, hy + Math.sin(a - 0.4) * 28]); }
+  // gönder: dikilir, sancak açılır ve rüzgârla batıya dalgalanır
+  const H = 250 * lerp(0.86, 1, pl), topY = ty - H; o.push(sfStroke([polX, ty + 2, polX, topY], 4, 3.2, 0, 1), sfEllipse(polX, topY - 4, 4.5, 4.5, 0, 10), sdX(sdCrescentStar(0, 0, 26)[0], polX, topY - 16, 1, 1, -PI / 2));
+  const un = Ease.outCubic(clamp01((u - 2.3) / 0.8));
+  if (un > 0.02) o.push(...sdBanner(polX - 1, topY + 6, 150 * un, 98, t, { amp: 0.11 + (1 - un) * 0.25, flip: true, star: false, droop: 0.05, sp: 5.4, emblem: un > 0.97 }));
+  return o;
+}
+function sdManWalk(ph, o = {}) {
+  const st = o.stride ?? 1, s1 = Math.sin(ph), c1 = Math.cos(ph), lift = (v) => Math.max(0, v) * 7 * st;
+  return { hip: [0, -84 + Math.abs(c1) * 2.5 * st], ff: [8 + s1 * 18 * st, -lift(c1)], fb: [-4 - s1 * 18 * st, -lift(-c1)], lean: o.lean ?? 0.12, head: o.head ?? 0 };
+}
+// burçtan yağan oklar: bir kısmı Hasan'a saplanır
+function sdFtArrows(k) {
+  const t = k.t || 0, o = [], [tx, ty] = SD_FT_HTOP();
+  for (let i = 0; i < 14; i++) {
+    const t0 = 9.3 + i * 0.21 + hash1(i + 70) * 0.1, u = (t - t0) / 0.5; if (u < 0 || u > 1.6) continue;
+    const hit = i % 3 === 1 && t0 > 10.15, sx = 360 + hash1(i) * 160, sy = -200 + hash1(i + 9) * 110, ex = hit ? tx + 6 : tx - 60 - hash1(i + 3) * 160, ey = hit ? ty - 60 : ty - 20 + hash1(i + 5) * 90;
+    if (hit && u > 1) continue; if (!hit && u > 1.5) continue;
+    const x = lerp(sx, ex, u) , y = lerp(sy, ey, u) - Math.sin(Math.min(1, u) * PI) * 40, a = Math.atan2(ey - sy - Math.cos(Math.min(1, u) * PI) * 40 * PI, ex - sx);
+    o.push(sfStroke([x, y, x - Math.cos(a) * 26, y - Math.sin(a) * 26], 1.6, 1.4, 1, 1), [x - Math.cos(a) * 24, y - Math.sin(a) * 24, x - Math.cos(a + 0.35) * 30, y - Math.sin(a + 0.35) * 30, x - Math.cos(a - 0.35) * 30, y - Math.sin(a - 0.35) * 30]);
+  }
+  return o;
+}
 function SD_FT_PERFORM(t, S) {
   const B = S.b, k = S.k; k.t = t; S.tc = S.tc || {};
-  const dawn = smoothstep(4.6, 7.6, t);
-  k.sky = 0.9; k.skyT = [lerp(0.16, 0.42, dawn), lerp(0.2, 0.56, dawn), lerp(0.46, 0.95, dawn)]; k.skyB = [lerp(0.4, 1.3, dawn), lerp(0.36, 0.78, dawn), lerp(0.56, 0.5, dawn)]; k.skyY = 0.42;
-  k.lamp = lerp(0.8, 1.12, dawn);
-  // kadırga kızaklarla iner, Haliç'e süzülür
-  const sl = Ease.inOutCubic(clamp01((t - 0.8) / 2.8));
-  B.galley.x = lerp(0, 66, sl); B.galley.y = lerp(0, 84, sl) + (sl >= 1 ? Math.sin(t * 2) * 2.5 : 0); B.galley.r = lerp(0, -0.3, smoothstep(0.75, 1, sl)) + Math.sin(sl * PI) * 0.05 + (sl >= 1 ? Math.sin(t * 1.7) * 0.015 : 0);
-  k.slide = sl; k.splash = t - 3.55;
-  k.breach = smoothstep(5.35, 5.9, t); k.fire = t - 5.0; k.hasan = t - 6.0; k.minaret = smoothstep(8.6, 10.2, t) * 1.45;
-  k.gI = 0.7 + (t > 5 && t < 5.5 ? (1 - (t - 5) / 0.5) * 2 : 0); k.gc = [1.0, 0.6, 0.25];
-  k.gIB = (1 - dawn) * 0.9 + smoothstep(8.6, 10.4, t) * 0.5; k.gcB = t < 7 ? [0.9, 0.92, 1.0] : [1.0, 0.86, 0.6];
-  k.zoom = kf(t, [[0, 0.1], [3.6, 0.2, 'io'], [4.6, 0.0, 'io'], [6.4, 0.34, 'io'], [8.4, 0.34], [10.6, 0.18, 'io']]); k.zx = t < 4.6 ? -100 : 150; k.zy = t < 4.6 ? 0 : -40;
+  const dawn = smoothstep(11.4, 14.4, t);
+  k.sky = 0.92; k.skyT = [lerp(0.14, 0.42, dawn), lerp(0.22, 0.58, dawn), lerp(0.9, 1.2, dawn)]; k.skyB = [lerp(0.46, 1.45, dawn), lerp(0.42, 0.78, dawn), lerp(0.8, 0.46, dawn)]; k.skyY = 0.42;
+  k.lamp = lerp(0.82, 1.12, dawn);
+  // kahraman gemi: kızakta yokuş aşağı kayar, Haliç'e iner (sıçrama), doğrulup kürek çeker
+  const sl = Ease.inOutCubic(clamp01((t - 1.6) / 2.6)), gl = Ease.inOutSine(clamp01((t - 4.4) / 3.0)), q = 1 - sl;
+  const bx = 2 * q * sl * 64 + sl * sl * 120, by = 2 * q * sl * 74 + sl * sl * 140;
+  B.galley.x = bx + gl * 60; B.galley.y = by + (sl >= 1 ? Math.sin(t * 2) * 2.2 : 0); B.galley.r = lerp(0, 0.16, smoothstep(0, 0.6, sl)) - lerp(0, 0.46, smoothstep(0.82, 1, sl)) + (sl >= 1 ? Math.sin(t * 1.7) * 0.015 : 0);
+  k.slide = sl; k.row = gl > 0.02 ? 1 : 0; k.splash = t - 4.15;
+  // kuşatma: top, gedik; Hasan; oklar; şafak
+  k.fire = t - 7.4; k.fire2 = t - 8.1; k.breach = smoothstep(7.75, 8.5, t);
+  k.hasan = t - 8.6; k.hits = t < 10.4 ? 0 : Math.min(4, Math.floor((t - 10.4) / 0.42) + 1); k.minaret = smoothstep(12.0, 13.8, t) * 1.45;
+  const flash = (f) => (f > 0 && f < 0.5 ? (1 - f / 0.5) * 2 : 0);
+  k.gI = 0.7 + flash(k.fire) + flash(k.fire2); k.gc = [1.0, 0.6, 0.25];
+  k.gIB = (1 - dawn) * 0.85 + dawn * 0.75; k.gcB = t < 11 ? [0.9, 0.92, 1.0] : [1.0, 0.82, 0.55];
+  // kamera geniş kalır; sancak dikilirken burca hafifçe yaklaşır
+  // kamera: Galata sırtındaki kafileden başlar, kayan gemiyi izler, surlara döner; yakınlaşma hafif
+  k.pan = 1; k.px = kf(t, [[0, -235], [1.8, -235], [4.6, -130, 'io'], [7.0, 20, 'io'], [14.6, 20]]); k.py = kf(t, [[0, -40], [7.0, -40], [10.8, -95, 'io']]);
+  k.zoom = kf(t, [[0, 0.07], [6.0, 0.07], [7.4, 0.03, 'io'], [9.0, 0.05], [10.8, 0.13, 'io'], [14.6, 0.14]]); k.zx = k.px; k.zy = k.py;
 }
 const SD_FETIH = (() => {
   const GX = -176, GY = -26, GR = 0.3;
   return {
-    key: 'fetih', name: 'İstanbul’un Fethi', line: 'Gemiler karadan yürüdü, sancak surlara dikildi — bir çağ kapandı, yeni bir çağ açıldı.', dur: 11.4, fitW: 4.7, fitH: 3.4, tasvir: 1, cine: 1, ext: 1,
+    key: 'fetih', name: 'İstanbul’un Fethi', line: 'Gemiler karadan yürüdü, sancak burca dikildi — İstanbul, bir milletin yurdu oldu.', dur: 14.6, fitW: 4.7, fitH: 3.4, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.6, 0.25], glowColB: [0.9, 0.92, 1.0],
-    caps: [[0.6, 3.4, '<small>İstanbul · 22 Nisan 1453</small>Gemiler, yağlanmış kızaklarla karadan yürüdü.'], [3.7, 5.8, 'Haliç’in zinciri boşa gerilmişti.'], [6.1, 8.6, '<small>29 Mayıs 1453</small>Ulubatlı Hasan sancağı surlara dikti.'], [8.9, 11.4, 'Bir çağ kapandı, yeni bir çağ açıldı.']],
+    caps: [
+      [0.5, 3.6, '<small>Galata sırtları · 22 Nisan 1453 gecesi</small>Haliç’in ağzına zincir gerilmişti. Genç Sultan, denizden geçemeyen gemilerine karayı açtı.'],
+      [3.9, 7.1, 'Yağlanmış kızaklar üstünde yetmiş gemi tepeyi aştı. Yelkenler açık, davullar vuruyordu.'],
+      [7.4, 10.3, '<small>29 Mayıs 1453 · Şafaktan önce</small>Topların açtığı gedikten, elinde sancakla Ulubatlı Hasan atıldı.'],
+      [10.6, 12.6, 'Oklar bedenini deldi; o, sancağı burca dikmeden düşmedi.'],
+      [12.9, 14.6, '“Ya ben İstanbul’u alırım, ya İstanbul beni!”<small style="margin:6px 0 0">Fatih Sultan Mehmet · 21 yaşında</small>'],
+    ],
     groups: [['galley'], ['city']],
     bones: { galley: [null, GX, GY, GX + 80, GY], world: [null, 0, 200, 100, 200] },
-    k0: { t: 0, slide: 0, splash: -1, breach: 0, fire: -1, hasan: -1, minaret: 0, gI: 0.7, gIB: 0.9, sky: 0.9, skyT: [0.16, 0.2, 0.46], skyB: [0.4, 0.36, 0.56], skyY: 0.42, lamp: 0.8 },
+    k0: { t: 0, slide: 0, row: 0, splash: -1, breach: 0, fire: -1, fire2: -1, hasan: -1, hits: 0, minaret: 0, gI: 0.7, gIB: 0.85, sky: 0.9, skyT: [0.16, 0.2, 0.5], skyB: [0.42, 0.38, 0.6], skyY: 0.42, lamp: 0.82 },
     layers: [
-      { id: 'moon', glow: 1, back: 1, show: 1, gen: (k) => ((k.t || 0) < 7.5 ? [sdCrescentStar(-60, -250, 130, -0.5)[0]] : []) },
+      { id: 'moon', glow: 1, back: 1, show: 1, gen: (k) => ((k.t || 0) < 10.8 ? [sdCrescentStar(300, -300, 120, -0.5)[0]] : []) },
+      { id: 'farRidge', prop: 1, show: 1, gen: () => [sdTag([...SD_FT_FAR, -150, 90, -1000, 90], [0.44, 0.42, 0.48])] },
+      { id: 'farFleet', prop: 1, show: 1, gen: (k) => sdFtFleet(k, true) },
       { id: 'cityHill', prop: 1, show: 1, gen: () => [sdTag([-20, SD_FT_WY + 2, ...[...Array(19)].flatMap((_, i) => { const x = i * 24; return [x, sdFtHill(x) + 6]; }), 760, -60, 760, SD_FT_WY + 2], [0.3, 0.26, 0.26])] },
-      { id: 'hill', prop: 1, show: 1, gen: () => [sdTag([-760, -150, -600, -142, -460, -110, -330, -58, -200, 12, -110, SD_FT_WY - 4, -60, SD_FT_WY + 4, -760, SD_FT_WY + 30], [0.28, 0.23, 0.2])] },
-      { id: 'logs', prop: 1, show: 1, gen: () => { const o = []; for (let i = 0; i < 10; i++) { const u = i / 9, x = lerp(-470, -110, u), y = lerp(-96, 52, u) - 6; o.push(sfEllipse(x, y, 7, 7, 0, 10)); } return o; } },
-      { id: 'torches', glow: 1, show: 1, gen: (k) => { const o = []; if ((k.t || 0) > 6) return o; for (let i = 0; i < 6; i++) { const u = i / 5, x = lerp(-560, -150, u), y = lerp(-140, 6, u) - 50, f = 1 + Math.sin((k.t || 0) * 13 + i * 2) * 0.15; o.push(sfEllipse(x, y, 6 * f, 9 * f, 0, 10), sfEllipse(x, SD_FT_WY + 14 + i * 2, 3, 12 * f, 0, 8)); } return o; } },
-      { id: 'haulers', prop: 1, show: 1, gen: (k) => { const o = [], t = k.t || 0, sl = k.slide || 0; if (t > 6) return o; for (let i = 0; i < 5; i++) { const u = clamp01(0.1 + i * 0.14 + sl * 0.4), x = lerp(-600, -130, u), y = lerp(-142, 14, u) + 2; o.push(...sdWalker(x, y, 0.62, t * 0.9 + i * 0.3, { lean: 0.32, torch: i % 2 === 0, hat: i % 2 ? 'kalpak' : true })); } return o; } },
+      { id: 'hill', prop: 1, show: 1, gen: () => [sdTag([...SD_FT_NEAR, -60, SD_FT_WY + 4, -1040, SD_FT_WY + 30], [0.28, 0.23, 0.2])] },
+      { id: 'track', prop: 1, show: 1, gen: () => sdFtTrack() },
+      { id: 'torches', glow: 1, show: 1, gen: (k) => { const o = [], t = k.t || 0; if (t > 8.6) return o; const P = sdPath(SD_FT_NEAR.slice(2)); for (let i = 0; i < 6; i++) { const [x, y] = P.at(0.08 + i * 0.15), f = 1 + Math.sin(t * 13 + i * 2) * 0.15; o.push(sfEllipse(x + 10, y - 40, 6 * f, 9 * f, 0, 10)); } return o; } },
+      { id: 'torchPoles', prop: 1, show: 1, gen: () => { const o = [], P = sdPath(SD_FT_NEAR.slice(2)); for (let i = 0; i < 6; i++) { const [x, y] = P.at(0.08 + i * 0.15); o.push(sfStroke([x + 10, y + 2, x + 10, y - 34], 2.6, 2, 0, 1)); } return o; } },
       { id: 'water', prop: 1, show: 1, gen: (k) => { const t = k.t || 0, w = [-900, SD_FT_WY]; for (let x = -900; x <= 900; x += 30) w.push(x, SD_FT_WY + Math.sin(x * 0.03 + t * 1.6) * 2.5); w.push(900, 900, -900, 900); const o = [sdTag(w, [0.46, 0.52, 0.62])]; for (let i = 0; i < 14; i++) { const x = -640 + i * 96 + Math.sin(t + i) * 10, y = SD_FT_WY + 22 + (i % 3) * 22; o.push(sdTag(sfStroke([x - 20, y, x + 20, y], 3, 3, 1, 1), [0.3, 0.35, 0.44])); } return o; } },
+      { id: 'nearFleet', prop: 1, show: 1, gen: (k) => sdFtFleet(k, false) },
       { id: 'city', bone: 'world', gen: (k) => sdCity(k, k.breach) },
+      { id: 'rubble', prop: 1, show: 1, gen: (k) => { const b = k.breach || 0; if (b <= 0.01) return []; const X = SD_FT_BX, hy = sdFtHill(X); return [[X - 78, SD_FT_WY + 4, X - 58, SD_FT_WY - 10 * b, X - 34, hy + 18 - 26 * b, X - 12, hy - 30 * b, X + 10, hy - 34 * b, X + 30, hy - 10 * b, X + 44, hy + 10, X + 30, SD_FT_WY + 4]]; } },
       { id: 'minarets', prop: 1, show: 1, gen: (k) => sdMinarets(k) },
-      { id: 'galley', bone: 'galley', gen: (k) => sdGalley(GX, GY, 0.74, GR, k.t || 0, { row: k.slide >= 1 ? 1 : 0 }) },
-      { id: 'galleys2', prop: 1, show: 1, gen: (k) => { const o = [], t = k.t || 0; for (let i = 0; i < 2; i++) { if (t < 2.4 + i * 1.6) continue; const u = Ease.inOutCubic(clamp01((t - 2.6 - i * 1.6) / 2.8)), x = lerp(-520, -300, u) - i * 40, y = lerp(-150, -50, u) - i * 14; o.push(...sdGalley(x, y, 0.42 - i * 0.07, 0.32, t, {}).map((p) => sdTag(p, i ? SD_FAR : SD_MID))); } return o; } },
-      { id: 'splash', prop: 1, show: 1, gen: (k) => sfSplash(k.splash, 16, 900, -60, SD_FT_WY, { up: 150, sp: 150, r: 7, g: 260, life: 1.0 }).map((p) => sdTag(p, [0.36, 0.42, 0.52])) },
-      { id: 'cannon', prop: 1, show: 1, gen: (k) => { const o = [], f = k.fire ?? -1, rc = f > 0 && f < 0.6 ? Math.sin((f / 0.6) * PI) * 16 : 0, x = -330 - rc, y = 196; o.push(sfStroke([x - 120, y - 30, x + 60, y - 70], 44, 30, 1, 0), [x - 170, y, x + 30, y, x + 20, y - 26, x - 160, y - 20], sfEllipse(x - 116, y - 2, 22, 22, 0, 16), sfEllipse(x - 10, y - 2, 22, 22, 0, 16), [-900, y + 14, 900, y + 14, 900, 900, -900, 900]); return o; } },
-      { id: 'smoke', prop: 1, show: 1, gen: (k) => sdSmoke(5.0, k.t || 0, -264, 120, 7, 31, { life: 3, r0: 18, r1: 70, rise: 120, drift: 60 }).concat(sdSmoke(5.4, k.t || 0, 118, 0, 6, 41, { life: 3, r0: 14, r1: 54, rise: 110, drift: 30, tc: [0.62, 0.56, 0.5] })) },
-      { id: 'shot', glow: 1, show: 1, gen: (k) => { const f = k.fire ?? -1, o = []; if (f > 0 && f < 0.25) o.push(sfEllipse(-262, 122, 46 * (1 - f * 2), 30 * (1 - f * 2), -0.2, 16)); if (f > 0.05 && f < 0.4) { const u = (f - 0.05) / 0.35, x = lerp(-250, 118, u), y = lerp(116, 0, u) - Math.sin(u * PI) * 70; o.push(sfEllipse(x, y, 7, 7, 0, 10)); } if (f > 0.38 && f < 0.8) { const u = (f - 0.38) / 0.42; o.push(sfEllipse(118, 0, 28 + u * 30, 24 + u * 26, 0, 16)); } return o; } },
-      { id: 'hasan', prop: 1, show: 1, gen: (k) => { const u = k.hasan ?? -1; if (u < 0) return []; const c = Ease.inOutCubic(clamp01(u / 2.0)), x = lerp(70, 118, c), y = lerp(SD_FT_WY - 8, sdFtHill(118) - 40, c), o = []; if (u < 2.2) o.push(...sdWalker(x, y, 0.6, u * 1.4, { lean: 0.35, pole: 1, hat: 'kalpak' })); else { const pl = Ease.outBack(clamp01((u - 2.2) / 0.6)), yy = sdFtHill(118) - 40; o.push(...sdWalker(118, yy, 0.6, 0, { stride: 0, hat: 'kalpak' })); o.push(sfStroke([130, yy, 130, yy - 110 * pl], 3.2, 2.8, 1, 1)); if (pl > 0.6) o.push(...sdBanner(130, yy - 110 * pl, 72, 48, k.t || 0, { amp: 0.1 })); } return o; } },
+      { id: 'galley', bone: 'galley', gen: (k) => sdGalley(GX, GY, 0.74, GR, k.t || 0, { row: k.row || 0 }) },
+      { id: 'splash', prop: 1, show: 1, gen: (k) => sfSplash(k.splash, 18, 900, -40, SD_FT_WY + 4, { up: 170, sp: 170, r: 7, g: 260, life: 1.1 }).map((p) => sdTag(p, [0.36, 0.42, 0.52])) },
+      { id: 'cannon', prop: 1, show: 1, gen: (k) => { const o = [], f = k.fire ?? -1, f2 = k.fire2 ?? -1, rc = (f > 0 && f < 0.6 ? Math.sin((f / 0.6) * PI) * 16 : 0) + (f2 > 0 && f2 < 0.6 ? Math.sin((f2 / 0.6) * PI) * 12 : 0), x = -330 - rc, y = 196; o.push(sfStroke([x - 120, y - 30, x + 60, y - 70], 44, 30, 1, 0), [x - 170, y, x + 30, y, x + 20, y - 26, x - 160, y - 20], sfEllipse(x - 116, y - 2, 22, 22, 0, 16), sfEllipse(x - 10, y - 2, 22, 22, 0, 16), [-900, y + 14, 900, y + 14, 900, 900, -900, 900]); return o; } },
+      { id: 'smoke', prop: 1, show: 1, gen: (k) => { const t = k.t || 0, hy = sdFtHill(SD_FT_BX); return sdSmoke(7.4, t, -264, 120, 7, 31, { life: 3, r0: 18, r1: 70, rise: 120, drift: 60 }).concat(sdSmoke(7.8, t, SD_FT_BX, hy - 20, 6, 41, { life: 3.4, r0: 14, r1: 54, rise: 110, drift: 30, tc: [0.62, 0.56, 0.5] })); } },
+      { id: 'shot', glow: 1, show: 1, gen: (k) => { const o = [], hy = sdFtHill(SD_FT_BX) - 40; for (const f of [k.fire ?? -1, k.fire2 ?? -1]) { if (f > 0 && f < 0.25) o.push(sfEllipse(-262, 122, 46 * (1 - f * 2), 30 * (1 - f * 2), -0.2, 16)); if (f > 0.05 && f < 0.4) { const u = (f - 0.05) / 0.35, x = lerp(-250, SD_FT_BX, u), y = lerp(116, hy, u) - Math.sin(u * PI) * 80; o.push(sfEllipse(x, y, 7, 7, 0, 10)); } if (f > 0.38 && f < 0.8) { const u = (f - 0.38) / 0.42; o.push(sfEllipse(SD_FT_BX, hy, 28 + u * 30, 24 + u * 26, 0, 16)); } } return o; } },
+      { id: 'hasan', prop: 1, show: 1, gen: (k) => sdFtHasan(k) },
+      { id: 'arrows', prop: 1, show: 1, gen: (k) => sdFtArrows(k) },
     ],
     perform: SD_FT_PERFORM,
-    events: [[0.5, 'night'], [0.9, 'haul'], [3.55, 'splash'], [5.0, 'cannon', { shake: 0.32, flash: [1, 0.7, 0.4, 0.3] }], [5.4, 'impact', { shake: 0.16 }], [6.0, 'climb'], [8.3, 'flag'], [8.7, 'dawn']],
+    events: [[0.4, 'night'], [0.8, 'haul'], [2.6, 'haul'], [4.15, 'splash'], [7.4, 'cannon', { shake: 0.3, flash: [1, 0.7, 0.4, 0.3] }], [7.8, 'impact', { shake: 0.14 }], [8.1, 'cannon', { shake: 0.24 }], [8.5, 'impact', { shake: 0.12 }], [8.7, 'climb'], [9.3, 'volley'], [10.6, 'flag'], [11.9, 'fall'], [12.2, 'dawn']],
   };
 })();
 SF_DEFS.push(SD_FETIH);
@@ -563,9 +661,9 @@ function SD_CK_PERFORM(t, S) {
 const SD_CANAKKALE = (() => {
   const L = (p, a, b) => sfStroke(p, a, b, 1, 1);
   return {
-    key: 'canakkale', name: 'Seyit Onbaşı', line: 'Vinç kırıldı, Seyit Onbaşı mermiyi sırtladı — Çanakkale geçilmez oldu.', dur: 11.6, fitW: 4.7, fitH: 3.6, tasvir: 1, cine: 1, ext: 1,
+    key: 'canakkale', name: 'Seyit Onbaşı', line: 'Vinç kırıldı, omuz kırılmadı — Çanakkale geçilmez oldu.', dur: 11.6, fitW: 4.7, fitH: 3.6, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.55, 0.18], glowColB: [1.0, 0.7, 0.4],
-    caps: [[0.6, 3.4, '<small>Çanakkale · 18 Mart 1915</small>Topun vinci kırıldı.'], [3.6, 5.3, 'Seyit Onbaşı mermiyi sırtına aldı…'], [5.5, 8.6, '…ve tek başına namluya sürdü.'], [8.9, 11.6, 'Çanakkale geçilmez!']],
+    caps: [[0.6, 3.4, '<small>Çanakkale · 18 Mart 1915</small>Boğaza dünyanın en güçlü donanması girdi. Bataryanın vinci bir isabetle kırıldı.'], [3.6, 5.3, 'Seyit Onbaşı, iki yüz kiloyu aşan mermiyi sırtına aldı…'], [5.5, 8.6, '…merdiveni tek başına çıktı, namluya sürdü. Bir kez daha. Bir kez daha.'], [8.9, 11.6, 'Çanakkale geçilmez!<small style="margin:6px 0 0">18 Mart · Donanmanın geri döndüğü gün</small>']],
     groups: [['syleg1', 'syleg2', 'sybody', 'syshell', 'syarm', 'syarm2'], ['gun', 'barrel']],
     bones: { sy: [null, -252, SD_CK_GY, -252, 0], sytor: ['sy', -252, -30, -196, -112], syl1: ['sy', -252, -30, -224, 62], syk1: ['syl1', -224, 62, -214, 140], syl2: ['sy', -254, -30, -280, 62], syk2: ['syl2', -280, 62, -298, 140], syarm: ['sytor', -214, -112, -262, -104], syarm2: ['sytor', -198, -110, -168, -146], barrel: [null, -40, -30, 300, -180], world: [null, 0, 200, 100, 200] },
     k0: { t: 0, load: 0, breech: 0, fire: -1, hit: -1, sink: 0, gI: 0.25, gIB: 0.5, sky: 0.85, skyT: [0.52, 0.56, 0.66], skyB: [1.0, 0.86, 0.66], skyY: 0.5, lamp: 1 },
@@ -636,7 +734,7 @@ const SD_KOCATEPE = (() => {
   return {
     key: 'kocatepe', name: 'Kocatepe', line: 'Şafakla toplar gürledi; Başkomutan’ın gözü ufuktaydı — ordular Akdeniz’e yürüdü.', dur: 12.0, fitW: 4.4, fitH: 4.5, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.62, 0.25], glowColB: [1.0, 0.82, 0.52],
-    caps: [[0.6, 3.4, '<small>Kocatepe · 26 Ağustos 1922 · Şafak</small>Başkomutan ufku bekliyor.'], [3.7, 6.7, 'Toplar gürledi; Büyük Taarruz başladı.'], [7.0, 12.0, '“Ordular! İlk hedefiniz Akdeniz’dir. İleri!”<small style="margin:6px 0 0">Başkomutan Mustafa Kemal Paşa · 1 Eylül 1922</small>']],
+    caps: [[0.6, 3.4, '<small>Kocatepe · 26 Ağustos 1922 · Şafaktan önce</small>Üç yıllık bekleyiş bu sabah bitecekti. Başkomutan ufka bakıyordu.'], [3.7, 6.7, 'Saat 5.30’da toplar gürledi. Büyük Taarruz başladı.'], [7.0, 12.0, '“Ordular! İlk hedefiniz Akdeniz’dir. İleri!”<small style="margin:6px 0 0">Başkomutan Mustafa Kemal Paşa · 1 Eylül 1922</small>']],
     bones: { ak: [null, ...P(250, 626), ...P(250, 500)], akrock: ['ak', ...P(20, 610), ...P(490, 560)], akbody: ['ak', ...P(255, 520), ...P(262, 250)], akcoat: ['akbody', ...P(205, 300), ...P(170, 430)], akhead: ['akbody', ...P(302, 132), ...P(345, 40)] },
     k0: { t: 0, sunY: 150, adv: 0, flashes: [], gI: 0.15, gIB: 0, sky: 0.95, skyT: [0.1, 0.12, 0.32], skyB: [0.28, 0.24, 0.42], skyY: 0.42, lamp: 0.6 },
     layers: [
@@ -709,9 +807,9 @@ function SD_SM_PERFORM(t, S) {
   k.zoom = kf(t, [[0, 0.1], [4.0, 0.2, 'io'], [6.0, 0.05, 'io'], [9.0, 0.08], [11.8, 0.42, 'io']]); k.zx = t < 9 ? 40 : 160; k.zy = t < 9 ? -40 : -60;
 }
 const SD_SAMSUN = {
-  key: 'samsun', name: 'Samsun’a Çıkış', line: 'Fırtınayı yardı, şafakla Samsun’a vardı — Milli Mücadele başladı.', dur: 12.0, fitW: 4.6, fitH: 3.4, tasvir: 1, cine: 1, ext: 1,
+  key: 'samsun', name: 'Samsun’a Çıkış', line: 'Fırtınayı yardı, şafakla Samsun’a vardı — bir milletin uyanışı başladı.', dur: 12.0, fitW: 4.6, fitH: 3.4, tasvir: 1, cine: 1, ext: 1,
   glowCol: [0.85, 0.9, 1.0], glowColB: [1.0, 0.82, 0.55],
-  caps: [[0.6, 3.4, '<small>Karadeniz · Mayıs 1919</small>Yaşlı bir vapur, fırtınaya daldı.'], [3.6, 6.4, 'Dalgalar güverteyi dövdü; vapur yolundan dönmedi.'], [6.7, 9.2, '<small>19 Mayıs 1919</small>Şafakla Samsun göründü.'], [9.4, 12.0, 'Bir milletin uyanışı başladı.']],
+  caps: [[0.6, 3.4, '<small>Karadeniz · 16 Mayıs 1919</small>Yurt işgal altındaydı. Pusulası bozuk, yaşlı bir vapur İstanbul’dan çıktı.'], [3.6, 6.4, 'Fırtına güverteyi dövdü; vapur rotasından dönmedi. Güvertede bir yolcu, ufka bakıyordu.'], [6.7, 9.2, '<small>19 Mayıs 1919</small>Şafakla Samsun göründü. Mustafa Kemal karaya ayak bastı.'], [9.4, 12.0, 'O sabah, bir milletin uyanışı başladı.']],
   bones: { ship: [null, 0, 10, 100, 10] },
   k0: { t: 0, storm: 1, coast: 0, lightning: [], whistle: -1, gI: 0.5, gIB: 0, sunY: 110, sky: 0.95, skyT: [0.12, 0.14, 0.26], skyB: [0.28, 0.3, 0.36], skyY: 0.46, lamp: 0.68 },
   layers: [
@@ -787,9 +885,9 @@ function SD_IN_PERFORM(t, S) {
   k.zoom = kf(t, [[0, 0.18], [3.4, 0.22, 'io'], [4.0, 0.38, 'io'], [6.2, 0.38], [8.0, 0.12, 'io'], [10.0, 0.12], [12.0, 0.4, 'io']]); k.zx = t < 3.6 ? 0 : t < 8 ? -120 : 220; k.zy = t < 8 ? -40 : -60;
 }
 const SD_INEBOLU = {
-  key: 'kagni', name: 'Şerife Bacı', line: 'Örtüsünü cephaneye örttü, kendisi karda kaldı — İstiklal’in kahramanı Şerife Bacı.', dur: 12.4, fitW: 4.7, fitH: 3.3, tasvir: 1, cine: 1, ext: 1,
+  key: 'kagni', name: 'Şerife Bacı', line: 'Yavrusunun yorganını cephaneye örttü — mermiler cepheye kuru ulaştı, o karda kaldı.', dur: 12.4, fitW: 4.7, fitH: 3.3, tasvir: 1, cine: 1, ext: 1,
   glowCol: [0.85, 0.9, 1.0], glowColB: [1.0, 0.86, 0.6],
-  caps: [[0.6, 3.3, '<small>İnebolu–Kastamonu yolu · Kış 1921</small>Cephane cepheye yetişmeliydi.'], [3.6, 6.4, 'Şerife Bacı örtüsünü cephanenin üstüne örttü…'], [6.7, 9.3, '…kendisi karda, ayazda yürüdü.'], [9.6, 12.4, 'Cephane cepheye kuru ulaştı. Adı, İstiklal’in kalbine yazıldı.']],
+  caps: [[0.6, 3.3, '<small>İnebolu–Kastamonu yolu · Kış 1921</small>Cephe mermi bekliyordu. Kar, yolları yutmuştu.'], [3.6, 6.4, 'Şerife Bacı, yavrusunun yorganını mermilerin üstüne örttü…'], [6.7, 9.3, '…kendisi ayazda, kağnının başında yürüdü.'], [9.6, 12.4, 'Mermiler cepheye kuru ulaştı. O, karın içinde, kağnısının başında kaldı.<small style="margin:6px 0 0">İstiklal’in isimsiz kahramanları için</small>']],
   bones: { cart: [null, -120, SD_IN_GY, 100, SD_IN_GY], woman: [null, 214, SD_IN_GY, 214, 0] },
   k0: { t: 0, ph: 0, wph: 0, shawl: 0, wind: 0.5, snow: 0.7, glowW: 0, gI: 0.7, gIB: 0, sky: 0.95, skyT: [0.2, 0.24, 0.42], skyB: [0.62, 0.64, 0.74], skyY: 0.5, lamp: 0.95 },
   layers: [
@@ -812,13 +910,14 @@ SD_INEBOLU.layers.find((l) => l.id === 'oxcartAnim').gen = (k, S) => sdOxCart(k,
 function sdPineRow(x0, x1, y, h) { const o = [x0, y + 10]; for (let x = x0; x <= x1; x += 26) { const hh = h * (0.6 + hash1(x) * 0.5); o.push(x, y, x + 13, y - hh, x + 26, y); } o.push(x1, y + 10); return o; }
 
 /* =====================================================================
-   XXIV. Al Sancak — gökte hilal ile yıldız, yerde kızıllık; perde bayrak olur
+   XXIV. Al Sancak — şehit kanında hilal ile yıldızın aksi; son nefer gönderi diker, kızıllık bayrak olur
    Ölçüler: Türk Bayrağı Kanunu (G en, A=G/2, B=G/2, C=G/16, D=0.4G, E=G/3, F=G/4, L=1.5G, M=G/30)
    ===================================================================== */
 const SD_SC_G = 300, SD_SC_CX = -75, SD_SC_CY = -60, SD_SC_GY = 196;
 const SD_SC_XH = SD_SC_CX - SD_SC_G / 2 - SD_SC_G / 30; // gönder (uçkurluk) kenarı
 const SD_SC_EMB = sdCrescentStar(SD_SC_CX, SD_SC_CY, SD_SC_G); // [hilal, yıldız]
-// yarım düzlem kırpma (y > yt): kızıllık yükselirken amblem deliği yalnız dolu kısımda açılır
+const SD_SC_MX = SD_SC_XH - 27; // neferin ayakları (gönder dibi sağ ayağının önünde)
+const SD_SC_PX = -95, SD_SC_PY = SD_SC_GY + 24; // şehit kanı gölü
 // yarım düzlem kırpma: ax=0 → x, ax=1 → y; sgn=+1 → değer ≥ c olan kısım kalır
 function sdClipHP(p, ax, c, sgn) {
   if (!p) return null; const o = [], n = p.length / 2;
@@ -830,71 +929,217 @@ function sdClipHP(p, ax, c, sgn) {
   return o.length >= 6 ? o : null;
 }
 const sdClipBelow = (p, yt) => sdClipHP(p, 1, yt, 1);
-// dalgalanma: gönderde sıfır, uca doğru artan kumaş dalgası
-function sdFlagWarp(x, y, t, w) { const u = clamp01((x - SD_SC_XH) / (1.5 * SD_SC_G)); return [x - Math.abs(Math.sin(u * 4.2 - t * 2.6)) * 7 * u * w, y + Math.sin(u * 4.6 - t * 2.9) * 16 * u * w + Math.sin(u * 9 - t * 4.4) * 4 * u * w]; }
-const sdWarpP = (p, t, w) => { const o = new Array(p.length); for (let i = 0; i < p.length; i += 2) [o[i], o[i + 1]] = sdFlagWarp(p[i], p[i + 1], t, w); return o; };
-const SD_SC_FT = () => SD_SC_CY - SD_SC_G / 2, SD_SC_FB = () => SD_SC_CY + SD_SC_G / 2;
-function sdScFlag(k) {
-  // kumaş: dikey şeritler, her biri dalganın eğimine göre aydınlanır; amblem her şeritte delik
-  const o = [], t = k.t || 0, f = k.fill || 0, w = k.wave || 0; if (f <= 0) return o;
-  const x0 = SD_SC_XH + SD_SC_G / 30, x1 = SD_SC_XH + 1.5 * SD_SC_G, yT = SD_SC_FT(), yB = SD_SC_FB(), top = lerp(yB, yT, f), N = 16;
-  for (let s2 = 0; s2 < N; s2++) {
-    const xa = lerp(x0, x1, s2 / N), xb = lerp(x0, x1, (s2 + 1) / N) + 0.6, um = ((xa + xb) / 2 - SD_SC_XH) / (1.5 * SD_SC_G);
-    const slope = Math.cos(um * 4.6 - t * 2.9) * um * w, sh = Math.round(clamp(1 - slope * 0.5 - Math.abs(slope) * 0.15, 0.62, 1.12) * 10) / 10;
-    const RED = [Math.min(1, 0.9 * sh), 0.05 * sh, 0.06 * sh], poly = [];
-    const m = 4; for (let j2 = 0; j2 <= m; j2++) { const x = lerp(xa, xb, j2 / m), wy = f < 1 ? Math.sin(x * 0.03 - t * 7) * 6 * (1 - f) : 0; poly.push(x, Math.max(yT, top + wy)); }
-    for (let j2 = 1; j2 <= 8; j2++) poly.push(xb, lerp(top, yB, j2 / 8));
-    for (let j2 = m - 1; j2 >= 0; j2--) poly.push(lerp(xa, xb, j2 / m), yB);
-    for (let j2 = 7; j2 >= 1; j2--) poly.push(xa, lerp(top, yB, j2 / 8));
-    o.push(sdTag(sdWarpP(poly, t, w), RED));
-    for (const e of SD_SC_EMB) { let c = sdClipHP(sdClipHP(e, 0, xa + 0.3, 1), 0, xb - 0.3, -1); if (c && f < 1) c = sdClipBelow(c, top + 8); if (!c) continue; const h = sdWarpP(c, t, w); h.hole = 1; h.tc = RED; o.push(h); }
+// eğik doğruyla kırpma: (x1,y1)→(x2,y2) doğrusunun altı (sgn=+1, ekranda aşağı) ya da üstü (sgn=−1); x2 > x1
+function sdClipLine(p, x1, y1, x2, y2, sgn) {
+  if (!p) return null; const o = [], n = p.length / 2, dx = x2 - x1, dy = y2 - y1, f = (x, y) => ((y - y1) * dx - (x - x1) * dy) * sgn;
+  for (let i = 0; i < n; i++) {
+    const j = (i + 1) % n, ax = p[i * 2], ay = p[i * 2 + 1], bx = p[j * 2], by = p[j * 2 + 1], fa = f(ax, ay), fb = f(bx, by);
+    if (fa >= 0) o.push(ax, ay);
+    if ((fa >= 0) !== (fb >= 0)) { const u = fa / (fa - fb); o.push(ax + (bx - ax) * u, ay + (by - ay) * u); }
   }
+  return o.length >= 6 ? o : null;
+}
+// kumaş dalgası: gönderde sıfır, uca doğru büyür; iki dalga katmanı, uç hafif sarkar ve kıvrıldıkça gönderin yanına çekilir
+function sdFlagWarp(x, y, t, w) {
+  const u = clamp01((x - SD_SC_XH) / (1.5 * SD_SC_G)), v = (y - SD_SC_CY) / SD_SC_G, ph = u * 5.0 - t * 3.1 + v * 0.7, ph2 = u * 10.5 - t * 5.3 + v * 1.6;
+  return [x - (1 - Math.cos(ph)) * 8 * u * w - u * u * 12 * w, y + Math.sin(ph) * 21 * u * w + Math.sin(ph2) * 5 * u * w + u * u * 9 * w];
+}
+const sdWarpP = (p, t, w) => { const o = new Array(p.length); for (let i = 0; i < p.length; i += 2) [o[i], o[i + 1]] = sdFlagWarp(p[i], p[i + 1], t, w); return o; };
+
+/* ---------- eklemli insan: yandan, sağa bakar; kalça, ayaklar ve eller hedef, diz ve dirsek iki kemik IK ---------- */
+function sdIK(ax, ay, bx, by, l1, l2, px, py) {
+  let dx = bx - ax, dy = by - ay, d = Math.hypot(dx, dy) || 1e-3; const dmax = l1 + l2 - 0.5;
+  if (d > dmax) { dx *= dmax / d; dy *= dmax / d; d = dmax; }
+  const a = Math.acos(clamp((l1 * l1 + d * d - l2 * l2) / (2 * l1 * d), -1, 1)), b = Math.atan2(dy, dx);
+  const c1x = ax + Math.cos(b + a) * l1, c1y = ay + Math.sin(b + a) * l1, c2x = ax + Math.cos(b - a) * l1, c2y = ay + Math.sin(b - a) * l1;
+  const one = (c1x - ax) * px + (c1y - ay) * py >= (c2x - ax) * px + (c2y - ay) * py;
+  return [one ? c1x : c2x, one ? c1y : c2y, ax + dx, ay + dy];
+}
+// P: { hip:[x,y], ff, fb: ayaklar, lean: gövde eğimi (+ ileri), head: baş eğimi (+ aşağı), hf, hb: eller, salute: 0..1 }
+function sdMan(x, y, s, P, o = {}) {
+  const L = (pts, a, b) => sfStroke(pts, a, b, 1, 1), out = [], lean = P.lean || 0, [hx, hy] = P.hip;
+  const ux = Math.sin(lean), uy = -Math.cos(lean), fx = Math.cos(lean), fy = Math.sin(lean), T = (a, b) => [hx + ux * a + fx * b, hy + uy * a + fy * b];
+  const leg = (ft, pref) => { const [kx, ky, ax, ay] = sdIK(hx, hy, ft[0], ft[1] - 4, 44, 43, pref[0], pref[1]); out.push(L([hx, hy, kx, ky], 16, 12), L([kx, ky, ax, ay], 12, 8.5), [ax - 6, ay - 4, ax + 5, ay - 5, ax + 17, ay + 1, ax + 17, ay + 4.5, ax - 7, ay + 4.5]); return [kx, ky]; };
+  const kb = leg(P.fb, P.kb || [0.35, 1]), kf = leg(P.ff, P.kf || [1, -0.25]);
+  // gövde ve kaput (dizlere iner)
+  const sB = T(54, -14), sF = T(54, 12), cF = T(34, 15), wF = T(8, 12), wB = T(8, -13), bk = T(34, -16);
+  out.push([wB[0], wB[1], bk[0], bk[1], sB[0], sB[1], sF[0], sF[1], cF[0], cF[1], wF[0], wF[1]]);
+  if (o.coat !== false) { const hF = [lerp(hx, kf[0], 0.92) + 7, lerp(hy, kf[1], 0.92) + 4], hB = [lerp(hx, kb[0], 0.92) - 8, lerp(hy, kb[1], 0.92) + 4]; out.push([wB[0], wB[1], wF[0] + 2, wF[1], hF[0], hF[1], (hF[0] + hB[0]) / 2, Math.max(hF[1], hB[1]) + 3, hB[0], hB[1]]); }
+  if (o.belt) out.push(L([...T(9, -14), ...T(9, 13)], 5, 5));
+  // omuza asılı tüfek
+  if (o.rifle) { const r0 = T(-8, -18), r1 = T(70, -9), r2 = T(78, -8); out.push(L([r0[0], r0[1], r1[0], r1[1]], 7, 3.2), L([r1[0], r1[1], r2[0], r2[1]], 2.2, 2)); }
+  // baş: boyun, yüz, burun, kalpak
+  const nk = T(58, 1), ha = (P.head || 0) + lean * 0.35, hcx = nk[0] + Math.sin(ha) * 13, hcy = nk[1] - Math.cos(ha) * 13;
+  const hux = Math.sin(ha), huy = -Math.cos(ha), hfx = Math.cos(ha), hfy = Math.sin(ha), H = (a, b) => [hcx + hux * a + hfx * b, hcy + huy * a + hfy * b];
+  out.push(L([nk[0], nk[1] + 2, ...H(-9, -1)], 9, 8), sfEllipse(hcx, hcy, 10.5, 12, ha, 16), sfEllipse(...H(-1, 10.5), 3.4, 2.4, ha, 8), sfEllipse(...H(-8, 6), 5, 4, ha, 8));
+  if (o.hat === 'kalpak' || o.hat === undefined) out.push([...H(4, -11.5), ...H(23, -12.5), ...H(21.5, 0), ...H(23, 12.5), ...H(4, 11.5)]);
+  else if (o.hat === 'sarik') out.push(sfEllipse(...H(9, 0), 13.5, 9, ha, 14), sfEllipse(...H(17, -1), 7, 6, ha, 10));
+  else if (o.hat === 'bork') out.push([...H(4, -10.5), ...H(37, -7), ...H(39, 3), ...H(33, 9), ...H(4, 10.5)], [...H(31, -6), ...H(14, -25), ...H(-14, -25), ...H(-15, -17), ...H(10, -13)]); // yeniçeri börkü ve arkaya düşen yatırması
+  // kollar: arka önce; selamda ön el kalpak siperine
+  const shB = T(52, -5), shF = T(52, 4), sal = P.salute || 0;
+  const arm = (sh, hand, pref) => { const [ex, ey, ax, ay] = sdIK(sh[0], sh[1], hand[0], hand[1], 30, 29, pref[0], pref[1]); out.push(L([sh[0], sh[1], ex, ey], 11.5, 9), L([ex, ey, ax, ay], 9, 7), sfEllipse(ax, ay, 5, 5.5, 0, 8)); };
+  arm(shB, P.hb, P.eb || [-0.3, 1]);
+  let hf = P.hf; if (sal > 0) { const br = H(7, 12); hf = [lerp(hf[0], br[0], sal), lerp(hf[1], br[1], sal)]; }
+  arm(shF, hf, sal > 0 ? [lerp(-0.3, 1, sal), lerp(1, -0.4, sal)] : P.ef || [-0.3, 1]);
+  return out.map((p) => { const q = sdX(p, x, y, s, o.flip ? -1 : 1); if (o.tc) q.tc = o.tc; return q; });
+}
+
+/* ---------- Al Sancak parçaları ---------- */
+// kumaş: kızıllık gönder dibinden yükselir, uca doğru yayılır; şeritler dalganın eğimine göre aydınlanır
+function sdScCloth(k) {
+  const t = k.t || 0, F = k.fill || 0, w = k.wave || 0, key = t + '|' + F + '|' + w;
+  if (sdScCloth.key === key) return sdScCloth.val;
+  const G = SD_SC_G, XH = SD_SC_XH, x0 = XH + G / 30, x1 = XH + 1.5 * G, yB = SD_SC_CY + G / 2, yT = yB - G, N = 24, W = (p) => sdWarpP(p, t, w);
+  const front = (u) => { const r = clamp01(F * 1.5 - u * 0.5), wob = Math.sin(u * 11 + t * 6) * 7 * Math.sin(r * PI); return clamp(yB - G * r + wob, yT, yB); };
+  const xs = [], fs = []; for (let i = 0; i <= N; i++) { xs.push(lerp(x0, x1, i / N)); fs.push(front(i / N)); }
+  const cloth = [], embN = []; let outline = null;
+  if (F > 0.001) {
+    // uçkurluk: gönderi saran beyaz kılıf
+    const f0 = fs[0]; if (f0 < yB - 1) { const sl = [XH - 3, f0, x0 + 0.5, f0]; for (let j = 1; j <= 8; j++) sl.push(x0 + 0.5, lerp(f0, yB, j / 8)); sl.push(XH - 3, yB); for (let j = 7; j >= 1; j--) sl.push(XH - 3, lerp(f0, yB, j / 8)); cloth.push(sdTag(W(sl), [0.9, 0.86, 0.8])); }
+    for (let i = 0; i < N; i++) {
+      const xa = xs[i], xb = xs[i + 1] + 0.5, fa = fs[i], fb = fs[i + 1];
+      if (fa < yB - 0.5 || fb < yB - 0.5) {
+        const um = (i + 0.5) / N, ph = um * 5.0 - t * 3.1, sh = Math.round(clamp(1 + 0.16 * Math.cos(ph) * um * w - 0.26 * Math.abs(Math.sin(ph + 1.1)) * um * w, 0.66, 1.14) * 20) / 20;
+        const RED = [Math.min(1, 0.9 * sh), 0.04 * sh, 0.05 * sh], poly = [xa, fa, (xa + xb) / 2, (fa + fb) / 2, xb, fb];
+        for (let j = 1; j <= 8; j++) poly.push(xb, lerp(fb, yB, j / 8)); poly.push((xa + xb) / 2, yB, xa, yB); for (let j = 7; j >= 1; j--) poly.push(xa, lerp(fa, yB, j / 8));
+        cloth.push(sdTag(W(poly), RED));
+        for (const e of SD_SC_EMB) {
+          const cE = sdClipHP(sdClipHP(e, 0, xa, 1), 0, xb, -1), lo = sdClipLine(cE, xa, fa, xb, fb, 1); if (lo) { const h = W(lo); h.hole = 1; h.tc = RED; cloth.push(h); }
+          const hi = sdClipLine(sdClipHP(sdClipHP(e, 0, xa, 1), 0, xs[i + 1], -1), xa, fa, xb, fb, -1); if (hi) embN.push(W(hi));
+        }
+      } else for (const e of SD_SC_EMB) { const c = sdClipHP(sdClipHP(e, 0, xa, 1), 0, xs[i + 1], -1); if (c) embN.push(W(c)); }
+    }
+    // gece katmanındaki kumaş deliği: şeritlerin birleşimi (aynı kenarlar)
+    const ol = [XH - 3, yB]; for (let j = 7; j >= 1; j--) ol.push(XH - 3, lerp(fs[0], yB, j / 8)); ol.push(XH - 3, fs[0]);
+    for (let i = 0; i <= N; i++) ol.push(xs[i] + (i === N ? 0.5 : 0), fs[i]);
+    for (let j = 1; j <= 8; j++) ol.push(x1 + 0.5, lerp(fs[N], yB, j / 8)); for (let i = N - 1; i >= 1; i--) ol.push(xs[i], yB);
+    outline = W(ol);
+  } else for (const e of SD_SC_EMB) embN.push(e.slice());
+  sdScCloth.key = key; sdScCloth.val = { cloth, embN, outline };
+  return sdScCloth.val;
+}
+// göl: düzensiz kıyı, kıyıya akan kan izleri; ortasında hilal ile yıldızın titreyen aksi
+function sdScPool(k) {
+  const p = k.pool || 0; if (p < 0.01) return null; const o = [];
+  for (let i = 0; i < 40; i++) { const a = (i / 40) * TAU, r = 1 + 0.12 * Math.sin(3 * a + 1) + 0.07 * Math.sin(5 * a + 2); o.push(SD_SC_PX + Math.cos(a) * 118 * r * p, SD_SC_PY + Math.sin(a) * 19 * r * p); }
   return o;
 }
+// kıyıya varan uçlar göl kıyısının dışında kalır (perdedeki delikler üst üste binmesin)
+const SD_SC_RIV = [[-560, 199, -470, 204, -390, 209, -330, 213], [70, 201, 62, 206, 52, 211], [150, 199, 112, 207, 78, 213, 58, 219], [300, 200, 240, 205, 170, 212, 110, 220, 70, 225, 49, 228]];
+function sdScRivulets(k) {
+  const fl = k.flow || 0, o = []; if (fl <= 0) return o;
+  SD_SC_RIV.forEach((pts, r) => { const u = clamp01(fl * 1.4 - r * 0.12); if (u <= 0.02) return; const n = pts.length / 2, m = Math.max(2, Math.ceil(u * (n - 1) * 4)), line = []; for (let j = 0; j <= m; j++) { const v = (j / m) * u * (n - 1), i = Math.min(n - 2, Math.floor(v)), f = v - i; line.push(lerp(pts[i * 2], pts[i * 2 + 2], f), lerp(pts[i * 2 + 1], pts[i * 2 + 3], f) + Math.sin(v * 3 + r) * 1.5); } o.push(sfStroke(line, 2.2 + r * 0.3, 3.4, 1, 1)); });
+  return o;
+}
+function sdScRefl(k) {
+  const r = k.refl || 0, p = k.pool || 0; if (r < 0.02 || p < 0.6) return [];
+  const t = k.t || 0, sx = 0.36 * p, sy = -0.36 * 0.3 * p, cx0 = SD_SC_CX + 53;
+  return SD_SC_EMB.map((e) => { const q = new Array(e.length); for (let i = 0; i < e.length; i += 2) { const yy = (e[i + 1] - SD_SC_CY) * sy; q[i] = SD_SC_PX + (e[i] - cx0) * sx + Math.sin(yy * 0.9 + t * 4.2) * 1.8 * r; q[i + 1] = SD_SC_PY - 1 + yy; } return q; });
+}
+// şehit kanı göğe yürür: gölden gönder dibine, oradan gönderi sararak kumaşın kenarına
+function sdScRibbon(k) {
+  const c = k.column || 0; if (c <= 0) return null; const t = k.t || 0, F = k.fill || 0, wd = 7.5 * (1 - smoothstep(0.55, 0.9, F)); if (wd < 0.5) return null;
+  const top = SD_SC_CY + SD_SC_G / 2 + 8, P0x = SD_SC_PX - 104, P0y = SD_SC_PY - 2, P1x = SD_SC_XH + 6, P1y = SD_SC_GY + 2, path = [], n = 30;
+  for (let j = 0; j <= n; j++) { const u = (j / n) * c; let x, y; if (u < 0.12) { const v = u / 0.12; x = lerp(P0x, P1x, v); y = lerp(P0y, P1y, v); } else { const v = (u - 0.12) / 0.88; y = lerp(P1y, top, v); x = SD_SC_XH + Math.sin(y * 0.1 - t * 6) * 7.5; } path.push(x, y); }
+  return sfStroke(path, wd, wd * 0.85, 1, 1);
+}
+function sdScPole(k) {
+  const a = k.poleA ?? 0.55, bx = SD_SC_XH, by = SD_SC_GY + 4, Lp = 434, sa = Math.sin(a), ca = Math.cos(a), tx = bx + sa * Lp, ty = by - ca * Lp;
+  const o = [sfStroke([bx, by, tx, ty], 9.5, 7, 0, 1), sfEllipse(tx + sa * 6, ty - ca * 6, 7.5, 7.5, 0, 12)];
+  o.push(sdX(sdCrescentStar(0, 0, 46)[0], tx + sa * 23, ty - ca * 23, 1, 1, -PI / 2 + a)); // alem: ucu göğe bakan hilal
+  return o;
+}
+// son nefer: diz çökmüş, çıplak gönderine yaslanmış → aksi görür → doğrulup gönderi diker → bayrağa bakar → selam durur
+function sdScSoldier(k) {
+  const r = k.rise || 0, a = k.poleA ?? 0.55, t = k.t || 0, sal = k.salute || 0, br = Math.sin(t * 1.9) * 1.4 * (1 - r);
+  const bx = 27, by = -4, P = (d) => [bx + Math.sin(a) * d, by - Math.cos(a) * d];
+  const pose = { hip: [0, lerp(-50, -86, r) + br], ff: [lerp(30, 13, r), 0], fb: [lerp(-44, -14, r), lerp(-3, 0, r)], lean: lerp(0.45, -0.04, r) + Math.sin(t * 1.9) * 0.02 * (1 - r), head: k.head ?? 0.5, hb: P(lerp(68, sal > 0 ? 104 : 92, r)), hf: P(lerp(90, 128, r)), salute: sal, kb: [lerp(0.35, 1, r), lerp(1, -0.2, r)] };
+  return sdMan(SD_SC_MX, SD_SC_GY + 4, 1, pose, { rifle: true, belt: true });
+}
+// planta tüfekler (şehitlerin yeri), kırık top tekerleği, ot
+function sdScField(k) {
+  const o = [], t = k.t || 0, L = (p, a, b) => sfStroke(p, a, b, 1, 1), G = SD_SC_GY;
+  for (const [x, h, a, cap] of [[-470, 104, -0.1, 1], [-392, 92, 0.12, 0], [70, 98, -0.08, 1], [150, 108, 0.09, 1], [300, 90, -0.14, 0], [390, 100, 0.06, 1]]) {
+    const sa = Math.sin(a), ca = Math.cos(a), P = (d) => [x + sa * d, G + 2 - ca * d];
+    o.push(L([...P(-4), ...P(h * 0.62)], 3.4, 4.2), L([...P(h * 0.62), ...P(h)], 7, 10));
+    if (cap) { const [cx, cy] = P(h + 6); o.push(sdX([-11, 6, -10, -12, 0, -14, 10, -12, 11, 6], cx, cy, 1, 1, a)); }
+  }
+  // kırık top tekerleği
+  const wx = 238, wy = G - 22, wr = 32; o.push(sfEllipse(wx, wy, wr, wr, 0, 26)); const hb = sfEllipse(wx, wy, wr * 0.8, wr * 0.8, 0, 22); hb.hole = 1; o.push(hb);
+  for (let i = 0; i < 7; i++) { if (i === 2) continue; const an = (i / 7) * TAU + 0.4; o.push(L([wx, wy, wx + Math.cos(an) * wr * 0.82, wy + Math.sin(an) * wr * 0.82], 3.6, 3)); }
+  o.push(sfEllipse(wx, wy, 7, 7, 0, 10), L([wx - 30, G + 3, wx - 140, G - 18], 15, 11));
+  // ot
+  for (let i = 0; i < 46; i++) { const x = -640 + i * 28 + hash1(i) * 18; if (x > SD_SC_PX - 140 && x < SD_SC_PX + 140) continue; const hh = 8 + hash1(i + 3) * 16, sw = Math.sin(t * 1.6 + i * 0.7) * 3 * (0.4 + (k.wave || 0)); o.push([x - 2.5, G + 3, x + sw, G + 2 - hh, x + 2.5, G + 3]); }
+  return o;
+}
+// uzak tepeler ve uzakta yanan ateşler (derinlik)
+function sdScFar() {
+  return [sdTag(sdRidge([[-760, 168], [-600, 136], [-470, 150], [-330, 124], [-190, 146], [-40, 132], [110, 150], [260, 126], [400, 146], [560, 130], [760, 160]], SD_SC_GY + 2, 77, null, 4), [0.17, 0.15, 0.2])];
+}
+const SD_SC_FIRES = [[-520, 152], [-300, 138], [215, 140], [430, 150]];
 function SD_SC_PERFORM(t, S) {
-  const B = S.b, k = S.k; k.t = t; S.tc = S.tc || {};
+  const k = S.k; k.t = t; S.tc = S.tc || {};
+  const inv = smoothstep(0.3, 1.6, t), dawn = smoothstep(11.6, 15.2, t);
   // gölge ışığa döner: hilal ile yıldız gece göğünde delik olur
-  const inv = smoothstep(0.4, 1.8, t), dawn = smoothstep(7.2, 10.5, t);
-  k.night = smoothstep(0.1, 1.2, t) * (1 - smoothstep(7.4, 9.6, t));
   for (const id of ['hilal', 'yildiz']) S.tc[id] = sdTc([0, 0, 0], inv);
-  k.sky = 0.9; k.skyT = [lerp(0.36, 0.5, dawn), lerp(0.4, 0.62, dawn), lerp(0.7, 0.98, dawn)]; k.skyB = [lerp(0.6, 1.3, dawn), lerp(0.5, 0.86, dawn), lerp(0.6, 0.6, dawn)]; k.skyY = 0.36;
-  k.lamp = lerp(1.0, 1.14, dawn);
-  // kızıl göl büyür, yansımalar titrer; kızıllık göğe yükselir, perde bayrak olur
-  k.pool = Ease.outCubic(clamp01((t - 2.0) / 2.2)) * (1 - smoothstep(9.0, 10.5, t) * 0.4);
-  k.column = smoothstep(4.4, 5.0, t) * (1 - smoothstep(6.6, 7.6, t));
-  k.fill = Ease.inOutCubic(clamp01((t - 5.0) / 2.2)); k.wave = smoothstep(6.8, 8.6, t);
-  k.pole = Ease.outCubic(clamp01((t - 6.2) / 1.0));
-  k.gI = inv * (0.75 + Math.sin(t * 2.2) * 0.08) * (1 - smoothstep(7.0, 8.4, t) * 0.55) + k.wave * 0.25; k.gc = [1.0, 0.97, 0.92];
-  k.gIB = 0; k.zoom = kf(t, [[0, 0.12], [3.0, 0.3, 'io'], [4.6, 0.3], [6.4, 0.0, 'io'], [9.0, 0.0], [12.2, 0.32, 'io']]); k.zx = t < 4.8 ? 0 : -20; k.zy = t < 4.8 ? 120 : -60;
+  k.night = smoothstep(0.05, 1.0, t) * (1 - dawn * 0.94);
+  k.sky = 0.95; k.skyT = [lerp(0.16, 0.42, dawn), lerp(0.26, 0.6, dawn), lerp(1.25, 1.35, dawn)]; k.skyB = [lerp(0.62, 1.55, dawn), lerp(0.56, 0.8, dawn), lerp(1.05, 0.42, dawn)]; k.skyY = lerp(0.3, 0.4, dawn); k.skyS = 0.32;
+  k.lamp = lerp(0.92, 1.12, dawn);
+  // kan izleri göle akar, göl büyür; gökteki ışık gölde titrer
+  k.flow = Ease.inOutSine(clamp01((t - 1.0) / 3.0)); k.pool = Ease.outCubic(clamp01((t - 1.0) / 3.3)); k.refl = smoothstep(3.4, 4.9, t);
+  // nefer
+  k.head = kf(t, [[0, 0.62], [4.2, 0.62], [5.4, 0.3, 'io'], [6.3, 0.05, 'io'], [10.4, 0.0], [11.4, -0.45, 'io'], [13.2, -0.28, 'io']]);
+  k.rise = Ease.inOutCubic(clamp01((t - 6.0) / 2.0)); k.poleA = lerp(0.55, 0, Ease.inOutCubic(clamp01((t - 6.1) / 2.2))); k.salute = smoothstep(12.7, 13.6, t);
+  // kızıllık gönderi sarar, kumaş dolar, rüzgâr alır
+  k.column = Ease.inOutSine(clamp01((t - 8.1) / 1.2)); k.fill = Ease.inOutSine(clamp01((t - 9.0) / 2.5)); k.wave = 0.18 * smoothstep(9.0, 10.0, t) + 0.82 * smoothstep(10.6, 12.6, t) * (0.88 + 0.12 * Math.sin(t * 0.7));
+  k.gI = inv * (0.85 + Math.sin(t * 2.2) * 0.08) * (1 - smoothstep(10.6, 12.6, t) * 0.45) + k.refl * 0.2; k.gc = [1.0, 0.97, 0.92];
+  k.gIB = smoothstep(11.8, 14.6, t) * 0.95; k.gcB = [1.0, 0.66, 0.36]; k.sunY = lerp(236, 150, Ease.outCubic(clamp01((t - 11.6) / 4.2)));
+  // kamera: geniş → göle ve nefere iner → doğrulurken açılır → bayrağa yükselir
+  k.pan = 1; k.px = kf(t, [[0, -75], [2.4, -75], [5.2, -150, 'io'], [6.0, -150], [8.4, -100, 'io'], [11.2, -85], [13.4, -70, 'io']]);
+  k.py = kf(t, [[0, 0], [2.4, 0], [5.2, 110, 'io'], [6.0, 110], [8.4, 10, 'io'], [11.2, -20], [13.4, -40, 'io']]);
+  k.zoom = kf(t, [[0, 0.04], [2.4, 0.04], [5.2, 0.24, 'io'], [6.0, 0.24], [8.4, 0.06, 'io'], [11.2, 0.05], [13.4, 0.14, 'io'], [15.8, 0.16]]); k.zx = k.px; k.zy = k.py;
 }
 const SD_SANCAK = (() => {
-  const [HIL, YIL] = SD_SC_EMB;
+  const [HIL, YIL] = SD_SC_EMB, NIGHT = (k) => sdTc([0.15, 0.2, 0.56], 1 - (k.night || 0)), GROUND = [0.07, 0.06, 0.06], RED = [0.86, 0.04, 0.05];
+  const holes = (ps, tc) => ps.filter(Boolean).map((p) => { const h = p.slice(); h.hole = 1; h.tc = tc; return h; });
   return {
-    key: 'sancak', name: 'Al Sancak', line: 'Kanla yoğrulan topraktan doğdu: gökte hilal ile yıldız, yerde kızıllık — al bayrağımız.', dur: 12.4, fitW: 3.4, fitH: 3.0, tasvir: 1, cine: 1, ext: 1,
-    glowCol: [1.0, 0.97, 0.92], glowColB: [1.0, 0.86, 0.6],
-    caps: [[0.5, 3.0, '<small>Kurtuluş Savaşı · Bir gece</small>Savaş bitti, ova sustu.'], [3.2, 6.0, 'Rivayet odur ki: gökte ay ile yıldız yan yana geldi, yerdeki kızıllığa yansıdı…'], [6.3, 9.0, '…kızıllık göğe yükseldi; hilal ile yıldız ona yerleşti.'], [9.3, 12.4, '“Korkma, sönmez bu şafaklarda yüzen al sancak…”<small style="margin:6px 0 0">İstiklal Marşı · Mehmet Akif Ersoy</small>']],
+    key: 'sancak', name: 'Al Sancak', line: 'Şehit kanında hilal ile yıldızın aksi titredi; son nefer gönderi dikti — al bayrağımız göğe öyle yükseldi.', dur: 15.8, fitW: 2.9, fitH: 2.6, tasvir: 1, cine: 1, ext: 1,
+    glowCol: [1.0, 0.97, 0.92], glowColB: [1.0, 0.66, 0.36],
+    caps: [
+      [0.5, 3.6, '<small>Kurtuluş Savaşı · Bir gece</small>Top sesleri dindi. Bayrağı düşen alaydan geriye bir nefer kaldı.'],
+      [3.9, 6.8, 'Gökte hilal ile yıldız yan yana doğdu. Aksi, şehitlerin kanında titredi.'],
+      [7.1, 10.1, 'Nefer doğruldu, gönderi dikti. Toprağa düşen kızıllık o gönderden göğe yürüdü…'],
+      [10.4, 12.7, '“Bayrakları bayrak yapan üstündeki kandır.”<small style="margin:6px 0 0">Mithat Cemal Kuntay</small>'],
+      [13.0, 15.8, '“Korkma, sönmez bu şafaklarda yüzen al sancak…”<small style="margin:6px 0 0">İstiklal Marşı · Mehmet Akif Ersoy</small>'],
+    ],
     groups: [['hilal'], ['yildiz']], sym: [0, 5],
     bones: { world: [null, 0, 200, 100, 200] },
-    k0: { t: 0, night: 0, pool: 0, column: 0, fill: 0, wave: 0, pole: 0, gI: 0, gIB: 0, sky: 0.9, skyT: [0.36, 0.4, 0.7], skyB: [0.6, 0.5, 0.6], skyY: 0.36, lamp: 1 },
+    k0: { t: 0, night: 0, pool: 0, flow: 0, refl: 0, column: 0, fill: 0, wave: 0, rise: 0, poleA: 0.55, head: 0.62, salute: 0, sunY: 236, gI: 0, gIB: 0, sky: 0.95, skyT: [0.2, 0.28, 0.9], skyB: [0.8, 0.6, 0.85], skyY: 0.3, skyS: 0.32, lamp: 0.92 },
     layers: [
-      { id: 'nightSky', prop: 1, show: 1, gen: (k) => { if ((k.night || 0) < 0.01) return []; const tc = sdTc([0.06, 0.08, 0.2], 1 - k.night), o = [sdTag([-900, -900, 900, -900, 900, SD_SC_GY, -900, SD_SC_GY], tc)], f = k.fill || 0, t = k.t || 0, w = k.wave || 0;
-        const yT = SD_SC_FT(), yB = SD_SC_FB(), top = lerp(yB, yT, f), x0 = SD_SC_XH + SD_SC_G / 30, x1 = SD_SC_XH + 1.5 * SD_SC_G;
-        if (f > 0.002) { const fh = sdWarpP([x0, Math.max(yT, top - 6), x1, Math.max(yT, top - 6), x1, yB, x0, yB], t, w); fh.hole = 1; fh.tc = tc; o.push(fh); }
-        for (const e of SD_SC_EMB) { const c = f > 0.002 ? sdClipHP(e, 1, top - 6, -1) : e.slice(); if (!c) continue; c.hole = 1; c.tc = tc; o.push(c); }
-        if ((k.column || 0) > 0.01) { const cw = (26 + k.column * 20) * 1.2, col = []; for (let j = 0; j <= 12; j++) { const u = j / 12; col.push(SD_SC_CX + 70 + Math.sin(u * 7 - t * 6) * 8 * (1 - u), lerp(SD_SC_GY - 1, yB + 2, u)); } const ch = sfStroke(col, cw, cw * 0.66, 0, 0); ch.hole = 1; ch.tc = tc; o.push(ch); } for (let i = 0; i < 30; i++) { const x = -560 + hash1(i) * 1120, y = -440 + hash1(i + 9) * 520, r = 1.6 + hash1(i + 17) * 2.2; if (Math.hypot(x - SD_SC_CX - 70, y - SD_SC_CY) < 200) continue; const h = sfEllipse(x, y, r, r, 0, 6); h.hole = 1; h.tc = tc; o.push(h); } return o; } },
-      { id: 'flag', prop: 1, show: 1, gen: (k) => sdScFlag(k) },
-      { id: 'column', prop: 1, show: 1, gen: (k) => { const c = k.column || 0; if (c <= 0) return []; const t = k.t || 0, w = 26 + c * 20, yB = SD_SC_CY + SD_SC_G / 2, o = [], line = []; for (let j = 0; j <= 12; j++) { const u = j / 12; line.push(SD_SC_CX + 70 + Math.sin(u * 7 - t * 6) * 8 * (1 - u), lerp(SD_SC_GY - 1, yB + 2, u)); } return [sdTag(sfStroke(line, w * 1.2, w * 0.8, 0, 0), [0.9, 0.06, 0.06])]; } },
+      { id: 'sun', glow: 1, back: 1, show: 1, gen: (k) => ((k.gIB || 0) > 0.02 ? [sfEllipse(330, k.sunY ?? 236, 46, 46, 0, 24)] : []) },
+      { id: 'nightSky', prop: 1, show: 1, gen: (k) => {
+        if ((k.night || 0) < 0.01) return []; const tc = NIGHT(k), t = k.t || 0, C = sdScCloth(k), o = [sdTag([-900, -900, 900, -900, 900, SD_SC_GY, -900, SD_SC_GY], tc)];
+        const hs = [C.outline, ...C.embN, sdClipHP(sdScRibbon(k), 1, SD_SC_GY, -1)];
+        for (let i = 0; i < 34; i++) { const x = -600 + hash1(i) * 1200, y = -560 + hash1(i + 9) * 640, r = (1.4 + hash1(i + 17) * 2.2) * (0.8 + 0.2 * Math.sin(t * 2.4 + i)); if (x > SD_SC_XH - 30 && x < SD_SC_XH + 1.5 * SD_SC_G + 30 && y > SD_SC_CY - 190 && y < SD_SC_CY + 190) continue; if (y > 110) continue; hs.push(sfEllipse(x, y, r, r, 0, 6)); }
+        return o.concat(holes(hs, tc));
+      } },
+      { id: 'far', prop: 1, show: 1, gen: (k) => sdScFar(k) },
+      { id: 'fires', glow: 1, show: 1, gen: (k) => { const t = k.t || 0, f = 1 - smoothstep(11.5, 14, t); if (f <= 0.02) return []; return SD_SC_FIRES.map(([x, y], i) => { const s = (0.8 + 0.25 * Math.sin(t * 11 + i * 3) + 0.15 * Math.sin(t * 23 + i)) * f; return sfEllipse(x, y - 3, 7 * s, 9 * s, 0, 10); }); } },
+      { id: 'smoke', prop: 1, show: 1, gen: (k) => { const t = k.t || 0, o = []; SD_SC_FIRES.forEach(([x, y], i) => o.push(...sdSmoke(0, (t + i * 1.7) % 7, x, y - 6, 4, 60 + i * 7, { life: 7, r0: 6, r1: 34, rise: 150, drift: 40, gap: 1.2, tc: [0.36, 0.33, 0.38] }))); return o; } },
+      { id: 'ground', prop: 1, show: 1, gen: (k) => [sdTag([-900, SD_SC_GY, 900, SD_SC_GY, 900, 900, -900, 900], GROUND), ...holes([sdScPool(k), ...sdScRivulets(k), sdClipHP(sdScRibbon(k), 1, SD_SC_GY, 1)], GROUND)] },
+      { id: 'pool', prop: 1, show: 1, gen: (k) => { const p = sdScPool(k); return [...(p ? [sdTag(p, RED)] : []), ...sdScRivulets(k).map((q) => sdTag(q, RED)), ...holes(sdScRefl(k), RED)]; } },
+      { id: 'reflGlow', glow: 1, show: 1, gen: (k) => ((k.refl || 0) > 0.3 ? sdScRefl(k) : []) },
+      { id: 'field', prop: 1, show: 1, gen: (k) => sdScField(k) },
+      { id: 'flag', prop: 1, show: 1, gen: (k) => sdScCloth(k).cloth },
+      { id: 'ribbon', prop: 1, show: 1, gen: (k) => { const r = sdScRibbon(k); return r ? [sdTag(r, RED)] : []; } },
+      { id: 'pole', prop: 1, show: 1, gen: (k) => sdScPole(k) },
+      { id: 'soldier', prop: 1, show: 1, gen: (k) => sdScSoldier(k) },
       { id: 'hilal', bone: 'world', pts: [HIL] },
       { id: 'yildiz', bone: 'world', pts: [YIL] },
-      { id: 'emblemGlow', glow: 1, show: 1, gen: (k) => (k.fill >= 1 ? SD_SC_EMB.map((e) => sdWarpP(e, k.t || 0, k.wave || 0)) : SD_SC_EMB.map((e) => e.slice())) },
-      { id: 'pole', prop: 1, show: 1, gen: (k) => { const p = k.pole || 0; if (p <= 0) return []; const x = SD_SC_XH - 4, top = lerp(SD_SC_GY, SD_SC_CY - SD_SC_G / 2 - 30, p); return [sfStroke([x, SD_SC_GY + 10, x, top], 9, 7, 0, 1), sfEllipse(x, top - 6, 9, 9, 0, 12)]; } },
-      { id: 'ground', prop: 1, show: 1, gen: (k) => { const tc = [0.1, 0.08, 0.07], o = [sdTag([-900, SD_SC_GY, 900, SD_SC_GY, 900, 900, -900, 900], tc)]; const pr = k.pool || 0; if (pr > 0.01) { const h = sfEllipse(SD_SC_CX + 70, SD_SC_GY + 18, 150 * pr, 16 * pr, 0, 30); h.hole = 1; h.tc = tc; o.push(h); } return o; } },
-      { id: 'pool', prop: 1, show: 1, gen: (k) => { const pr = k.pool || 0; if (pr <= 0.01) return []; const RED = [0.86, 0.04, 0.05], t = k.t || 0, o = [sdTag(sfEllipse(SD_SC_CX + 70, SD_SC_GY + 18, 150 * pr, 16 * pr, 0, 30), RED)]; const rs = smoothstep(0.5, 1, pr); if (rs > 0.05) for (const e of sdCrescentStar(SD_SC_CX + 70 - 54, SD_SC_GY + 18, 22 * rs)) { const q = []; for (let i = 0; i < e.length; i += 2) q.push(e[i] + Math.sin(e[i + 1] * 0.6 + t * 5) * 2, SD_SC_GY + 18 + (SD_SC_GY + 18 - e[i + 1]) * 0.55); q.hole = 1; q.tc = RED; o.push(q); } return o; } },
-      { id: 'field', prop: 1, show: 1, gen: (k) => { const o = [], t = k.t || 0, L = (p, a, b) => sfStroke(p, a, b, 1, 1); for (const [x, a] of [[-360, -0.12], [-300, 0.08], [250, -0.06], [330, 0.1]]) { const tx = x + Math.sin(a) * 110, ty = SD_SC_GY - Math.cos(a) * 110; o.push(L([x, SD_SC_GY + 6, tx, ty], 6, 4), L([tx, ty, tx + Math.sin(a) * 26, ty - Math.cos(a) * 26], 3, 0.8), [tx - 13, ty + 10, tx - 12, ty - 8, tx + 12, ty - 8, tx + 13, ty + 10]); } const wx = -470, wy = SD_SC_GY - 20, wr = 40; const wh = sfEllipse(wx, wy, wr, wr, 0, 24); o.push(wh); const hb = sfEllipse(wx, wy, wr * 0.78, wr * 0.78, 0, 20); hb.hole = 1; o.push(hb); for (let i = 0; i < 6; i++) { const an = (i / 6) * TAU + 0.3; o.push(L([wx, wy, wx + Math.cos(an) * wr * 0.8, wy + Math.sin(an) * wr * 0.8], 4, 4)); } for (let i = 0; i < 22; i++) { const x = -640 + i * 60 + hash1(i) * 20, w = Math.sin(t * 2 + i) * 3; o.push([x - 3, SD_SC_GY + 2, x + w, SD_SC_GY - 16 - hash1(i + 3) * 14, x + 3, SD_SC_GY + 2]); } return o; } },
-      { id: 'smokeF', prop: 1, show: 1, gen: (k) => sdSmoke(0, (k.t || 0) % 6, 420, SD_SC_GY - 10, 5, 91, { life: 6, r0: 10, r1: 60, rise: 200, drift: -30, gap: 0.9, tc: [0.55, 0.52, 0.55] }) },
+      { id: 'emblemGlow', glow: 1, show: 1, gen: (k) => ((k.fill || 0) >= 1 ? SD_SC_EMB.map((e) => sdWarpP(e, k.t || 0, k.wave || 0)) : SD_SC_EMB.map((e) => e.slice())) },
     ],
     perform: SD_SC_PERFORM,
-    events: [[0.3, 'silence'], [0.8, 'emblem'], [2.0, 'pool'], [4.4, 'rise'], [5.0, 'swell'], [7.0, 'unfurl'], [8.6, 'wind'], [9.3, 'anthemLine']],
+    events: [[0.3, 'silence'], [0.8, 'emblem'], [1.2, 'pool'], [4.0, 'gaze'], [6.0, 'rise'], [8.1, 'swell'], [9.2, 'unfurl'], [10.8, 'wind'], [12.7, 'bugle'], [13.2, 'anthemLine']],
   };
 })();
 
@@ -998,7 +1243,7 @@ function SD_CM_PERFORM(t, S) {
 const SD_CUMHURIYET = {
   key: 'cumhuriyet', name: 'Cumhuriyet', line: 'Cumhuriyet ilan edildi; perde, bir milletin sabahına açıldı.', dur: 19.6, fitW: 4.7, fitH: 3.0, tasvir: 1, cine: 1, ext: 1, parade: 1,
   glowCol: [1.0, 0.92, 0.75], glowColB: [1.0, 0.7, 0.4],
-  caps: [[0.6, 3.4, '<small>Ankara · 29 Ekim 1923</small>Cumhuriyet ilan edildi.'], [3.6, 6.8, 'Yüz bir pare top atıldı; gökte havai fişekler açtı.'], [7.0, 9.5, 'Fenerler yandı, sancaklar dalgalandı…'], [9.8, 16.4, '<small>Perde selamı</small>Bu perdede can bulan bütün gölgeler sizi selamlıyor.'], [16.7, 19.6, '“Ne mutlu Türk’üm diyene!”<small style="margin:6px 0 0">Mustafa Kemal Atatürk · 1933</small>']],
+  caps: [[0.6, 3.4, '<small>Ankara · 29 Ekim 1923 · Akşam</small>Meclis kararını verdi: “Türkiye Devleti’nin şekl-i hükûmeti Cumhuriyettir.”'], [3.6, 6.8, 'Yüz bir pare top atıldı. Ankara o gece sabaha kadar uyumadı.'], [7.0, 9.5, 'Fenerler yandı, sancaklar dalgalandı; yüzyılların yorgunluğu bayrama döndü.'], [9.8, 16.4, '<small>Perde selamı</small>Bu perdede can bulan bütün gölgeler, size selam duruyor.'], [16.7, 19.6, '“Ne mutlu Türk’üm diyene!”<small style="margin:6px 0 0">Mustafa Kemal Atatürk · 1933</small>']],
   groups: [['tbmm'], ['kale']],
   bones: { world: [null, 0, 200, 100, 200] },
   k0: { t: 0, shots: [], hoist: 0, fw: [], crowd: -1, parade: -1, front: 0, cheer: 0, gI: 0.85, gIB: 0.6, sky: 0.92, skyT: [0.1, 0.12, 0.3], skyB: [0.62, 0.42, 0.42], skyY: 0.5, lamp: 0.85 },
@@ -1073,6 +1318,8 @@ const SD_SFX = {
     climb(A, t) { sdCheer(A, t, 2.0, 0.035); },
     flag(A, t) { A.noiseHit(t, 1.6, 0.04, { type: 'bandpass', f: 700, f1: 1400, q: 1.2, a: 0.2 }); sdCheer(A, t + 0.2, 2.6, 0.05); },
     dawn(A, t) { [60, 64, 67, 72, 76].forEach((n, i) => A.osc('triangle', mtof(n), t + i * 0.25, 3.4, 0.02, null, { a: 0.9, verb: 1.3 })); },
+    volley(A, t) { stBurst(A, 'volley', 2.2, t, 1, sdVolleyFn); },
+    fall(A, t) { A.osc('sine', 82, t, 1.4, 0.12, null, { f1: 46 }); A.noiseHit(t, 0.4, 0.05, { type: 'lowpass', f: 600 }); [62, 61, 57].forEach((n, i) => A.osc('triangle', mtof(n), t + 0.3 + i * 0.5, 1.6, 0.016, null, { a: 0.3, verb: 1.4 })); },
   },
   canakkale: {
     chain(A, t) { for (let i = 0; i < 8; i++) A.bell(2200 + Math.random() * 600, t + i * 0.09, 0.3, 0.012, { ratio: 2.7, index: 1.4 }); A.noiseHit(t, 0.2, 0.04, { type: 'highpass', f: 2000 }); },
@@ -1114,6 +1361,10 @@ const SD_SFX = {
     unfurl(A, t) { A.noiseHit(t, 0.8, 0.12, { type: 'bandpass', f: 400, f1: 1600, q: 1, a: 0.05, verb: 0.5 }); A.osc('sine', 60, t, 0.5, 0.16, null, { f1: 40 }); },
     wind(A, t) { A.noiseHit(t, 4, 0.05, { type: 'bandpass', f: 700, f1: 1400, q: 1.2, a: 1, verb: 0.6 }); for (let i = 0; i < 6; i++) A.noiseHit(t + 0.4 + i * 0.6, 0.3, 0.04, { type: 'bandpass', f: 500, q: 1.5, a: 0.05 }); },
     anthemLine(A, t) { [60, 67, 72, 76, 79, 84].forEach((n, i) => A.osc('triangle', mtof(n), t + i * 0.12, 4.2, 0.02, null, { a: 0.8, verb: 1.4 })); },
+    // göldeki aks: ince, titrek iki çan
+    gaze(A, t) { [88, 95].forEach((n, i) => A.bell(mtof(n), t + i * 0.35, 3.4, 0.018, { ratio: 2.01, index: 0.5, verb: 1.6 })); A.osc('sine', 196, t, 3.6, 0.02, null, { a: 1.4, verb: 1.2 }); },
+    // borazan: uzaktan, yankılı bir selam çağrısı
+    bugle(A, t) { let tt = t; for (const [m, d] of [[67, 0.32], [72, 0.32], [76, 0.32], [79, 0.95], [76, 0.32], [79, 1.6]]) { A.osc('sawtooth', mtof(m), tt, d + 0.12, 0.011, null, { a: 0.03, verb: 1.3 }); A.osc('triangle', mtof(m), tt, d + 0.12, 0.022, null, { a: 0.03, verb: 1.3 }); tt += d; } },
   },
   cumhuriyet: {
     night(A, t) { sdCheer(A, t, 1.6, 0.012); },

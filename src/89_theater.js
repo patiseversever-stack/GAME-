@@ -32,14 +32,14 @@ const ST_ACTS = [
   { axes: 3, par: 160, riddle: 'Perdenin son efsanesi', story: 'Son perde. Usta’nın sesi titriyor: “Bu gölgeyi kimse yakalayamadı… belki sen.”', mats: ['ebony', 'copper', 'brass'] },
   // Destan: Ergenekon'dan Cumhuriyet'e (renkli tasvir ışığı, derinlik, sinema)
   { ch: 'destan', axes: 2, par: 120, riddle: 'Demir dağın ardında', story: 'Usta yeni bir perde astı, sesi değişti: “Şimdi bizim hikâyemiz. Demirden bir dağ, ardında bir halk… ve yolu bilen bir kurt.”', mats: ['ebony', 'copper', 'brass'] },
-  { ch: 'destan', axes: 3, par: 110, riddle: 'Taşa kazınan söz', story: 'Bozkırda rüzgâr taşları yontuyor. Bir kağan, sözü sonsuza dek kalsın diye onu taşa kazıttı.', mats: ['ivory', 'walnut', 'brass'] },
-  { ch: 'destan', axes: 3, par: 120, riddle: 'Beyazlar giyen sultan', story: 'Bir yaz sabahı, Anadolu’nun kapısında iki ordu karşı karşıya. Sultan o gün beyazlar giydi.', mats: ['silver', 'ivory', 'walnut'] },
-  { ch: 'destan', axes: 2, par: 140, riddle: 'Karadan yürüyen gemiler', story: 'Haliç’in ağzına zincir gerildi. Genç padişah gülümsedi: “Gemiler denizden geçemiyorsa…”', mats: ['walnut', 'brass', 'cini'] },
-  { ch: 'destan', axes: 3, par: 150, riddle: 'Geçilmez denen boğaz', story: 'Boğazda demirden zırhlılar. Topun vinci kırıldı; bir onbaşı merminin başında durdu.', mats: ['ebony', 'silver', 'copper'] },
-  { ch: 'destan', axes: 3, par: 120, riddle: 'Fırtınayı yaran vapur', story: 'Mayıs 1919. Karadeniz kabarıyor, yaşlı bir vapur fırtınaya dalıyor. Güvertede bir yolcu ufka bakıyor.', mats: ['ebony', 'brass', 'ivory'] },
-  { ch: 'destan', axes: 3, par: 130, riddle: 'Karda bir kağnı', story: 'Kar yolları yutmuş. Cephane cepheye yetişmeli; bir kağnı, bir ana, bir de uzun gece…', mats: ['walnut', 'ivory', 'copper'] },
-  { ch: 'destan', axes: 3, par: 140, riddle: 'Şafaktan önce, kayalıkta', story: '26 Ağustos 1922, şafaktan önce. Kocatepe’nin kayalarında biri, ufku bekliyor.', mats: ['ebony', 'brass', 'walnut'] },
-  { ch: 'destan', axes: 3, par: 150, riddle: 'Gökte hilal, yerde kızıl', story: 'Savaş bitti, ova sustu. Gece göğünde ay ile yıldız yan yana geldi; yerdeki kızıllığa eğildiler.', mats: ['silver', 'ivory', 'cini'] },
+  { ch: 'destan', axes: 3, par: 110, riddle: 'Taşa kazınan söz', story: 'Bozkırda rüzgâr taşları yontuyor. Bir kağan, sözü unutulmasın diye onu taşa kazıttı. O taşı yeniden dik.', mats: ['ivory', 'walnut', 'brass'] },
+  { ch: 'destan', axes: 3, par: 120, riddle: 'Beyazlar giyen sultan', story: 'Bir yaz sabahı, Anadolu’nun kapısında iki ordu karşı karşıya. Sultan o gün zırh değil, beyaz giydi.', mats: ['silver', 'ivory', 'walnut'] },
+  { ch: 'destan', axes: 2, par: 140, riddle: 'Karadan yürüyen gemiler', story: 'Haliç’in ağzına zincir gerildi. Yirmi bir yaşındaki Sultan haritaya baktı: “Gemiler denizden geçemiyorsa… karadan geçer.”', mats: ['walnut', 'brass', 'cini'] },
+  { ch: 'destan', axes: 3, par: 150, riddle: 'Geçilmez denen boğaz', story: 'Boğazda demirden zırhlılar. Topun vinci kırıldı; bir onbaşı mermiye baktı… sonra sırtını verdi.', mats: ['ebony', 'silver', 'copper'] },
+  { ch: 'destan', axes: 3, par: 120, riddle: 'Fırtınayı yaran vapur', story: 'Mayıs 1919. Yurt işgalde. Yaşlı bir vapur fırtınaya dalıyor; güvertede bir yolcu, ufka bakıyor.', mats: ['ebony', 'brass', 'ivory'] },
+  { ch: 'destan', axes: 3, par: 130, riddle: 'Karda bir kağnı', story: 'Kar yolları yutmuş. Cephane cepheye yetişmeli; bir kağnı, bir ana, kucağında bir yorgan…', mats: ['walnut', 'ivory', 'copper'] },
+  { ch: 'destan', axes: 3, par: 140, riddle: 'Şafaktan önce, kayalıkta', story: '26 Ağustos 1922, şafaktan önce. Kocatepe’nin kayalarında biri ufku bekliyor. Onun gölgesini sen bul.', mats: ['ebony', 'brass', 'walnut'] },
+  { ch: 'destan', axes: 3, par: 150, riddle: 'Gökte hilal, yerde kızıl', story: 'Usta’nın sesi kısıldı: “Bu perdeyi ayakta izle.” Gökte iki ışık birbirini arıyor. Hilal ile yıldızı yan yana getiren sen ol.', mats: ['silver', 'ivory', 'cini'] },
   { ch: 'destan', axes: 3, par: 180, riddle: 'Bir milletin sabahı', story: 'Son perde. Usta kandilini yeniden yaktı: “Yüzyıllar boyu anlattım… Şimdi bir milletin sabahını anlatacağım.”', mats: ['brass', 'copper', 'ivory'] },
 ];
 // figürler ilk açıldıklarında derlenir (açılışta 15 iskeleti birden kurmamak için)
@@ -54,6 +54,11 @@ const ST_GCOL = [[2.2, 1.0, 0.35], [0.4, 1.55, 1.75]], ST_GEM = [[1.0, 0.5, 0.18
 const ST_OPEN_ALL = true;
 // perde = bölüm (I: ilk 15 sahne, II: Destan); her perdenin kendi sahne sırası
 const stChap = (k) => (ST_ACTS[k] && ST_ACTS[k].ch ? 1 : 0), stChapStart = (c) => { const i = ST_ACTS.findIndex((a, k) => stChap(k) === c); return i < 0 ? 0 : i; };
+// perde başlıkları
+const ST_CHAP = [
+  { n: 'I. perde', t: 'Kaçak Gölgeler', s: 'Usta’nın gölgeleri kırık heykellere saklandı. Bülbülden ejderhaya, hepsini ışığa geri çağır.', k: '15 sahne' },
+  { n: 'II. perde', t: 'Destan', s: 'Ergenekon’dan Cumhuriyet’e, bir milletin gölgesi.', k: '10 sahne' },
+];
 const ST_ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI', 'XXII', 'XXIII', 'XXIV', 'XXV'];
 
 /* ---------- 2B çokgen yardımcıları (perde koordinatı, y yukarı) ---------- */
@@ -722,7 +727,7 @@ const Theater = {
     for (const x of [x0 - 0.4, x1 + 0.4]) { box(x, (top + fy) / 2, 0.8, top - fy + 1.2, 0.6, wood); box(x + (x < cx ? 0.42 : -0.42), (top + fy) / 2, 0.06, top - fy, 0.66, gold); }
     // kenar perdeleri ve saçak
     const vis = this.visibleHalfWidth(ST_WZ + 0.8);
-    const dx = Math.min(cw / 2 - 1.2, vis + 1.45); this.curL.position.set(this.camP.x - dx, (top + fy) / 2 + 1, ST_WZ + 0.8); this.curR.position.set(this.camP.x + dx, (top + fy) / 2 + 1, ST_WZ + 0.8);
+    const dx = Math.min(cw / 2 - 1.2, vis + 1.45); this.curL.position.set(this.camP.x - dx, (top + fy) / 2 + 1, ST_WZ + 0.8); this.curR.position.set(this.camP.x + dx, (top + fy) / 2 + 1, ST_WZ + 0.8); this.curLX = this.camP.x - dx; this.curRX = this.camP.x + dx;
     this.valance.position.set(cx, top - 0.6, ST_WZ + 0.9);
   },
   visibleHalfWidth(z) { const d = Math.abs(this.camP.z - z), a = innerWidth / innerHeight; return Math.tan(deg(stCam.fov / 2)) * d * a; },
@@ -798,7 +803,10 @@ const Theater = {
       const Cg = new THREE.Vector3(Lp.x + sG * (this.WC.x + gx - Lp.x), Lp.y + sG * (this.WC.y + gy - Lp.y), Lp.z + sG * (ST_WZ - Lp.z));
       const gr = new THREE.Group(); gr.position.copy(Cg); this.root.add(gr);
       const mats = (nG > 1 ? ST_GMATS[this.grp.length % 2] : act.mats).map((m) => (nG > 1 ? this.M[m].clone() : this.M[m])); if (nG > 1) this.grpMats.push(...mats);
-      const G = { gi: this.grp.length, root: gr, C: Cg, lampL: Lp.clone().sub(Cg), q: new THREE.Quaternion(), yaw: 0, pitch: 0, w: new THREE.Vector2(), lock: false, lockT: -1, mats, polys: outers, hl: 0,
+      // iki heykel: yerine oturan heykel donar ve saydamlaşır, ardındaki gölge görünür (malzemeler baştan saydam-uyumlu: sonradan derleme takılması olmasın)
+      const gBrass = nG > 1 ? this.M.brass.clone() : this.M.brass, gGlass = nG > 1 ? this.M.glass.clone() : this.M.glass; if (nG > 1) { this.grpMats.push(gBrass, gGlass); for (const m of [...mats, gBrass]) { m.transparent = true; m.opacity = 1; } }
+      const fadeMats = nG > 1 ? [...mats, gBrass, gGlass].map((m) => { m.userData.o0 = m.opacity; return [m, m.opacity]; }) : [];
+      const G = { gi: this.grp.length, root: gr, C: Cg, lampL: Lp.clone().sub(Cg), q: new THREE.Quaternion(), yaw: 0, pitch: 0, w: new THREE.Vector2(), lock: false, lockT: -1, mats, polys: outers, hl: 0, fade: 1, still: 0, fadeMats,
         sG, wallC: new THREE.Vector3(this.WC.x + gx, this.WC.y + gy, ST_WZ), rad: Math.max(bx1 - bx0, by1 - by0) * 0.5 * sG, wallR: Math.max(bx1 - bx0, by1 - by0) * 0.5, hw: 1 };
       this.grp.push(G); this.tgtSets.push(ks.map((k) => all[k]));
       if (sy) { const ax = Cg.clone().sub(Lp).normalize(); G.sym = [...Array(sy)].map((_, j) => new THREE.Quaternion().setFromAxisAngle(ax, (j * TAU) / sy)); }
@@ -854,13 +862,13 @@ const Theater = {
       decoLeft -= deco.length;
       for (const [x, y, d0, d1] of pins) {
         const a = P3(Cg, x, y, sG + d0 / this.rayLen), b = P3(Cg, x, y, sG + d1 / this.rayLen), len = a.distanceTo(b), pg = new THREE.Group();
-        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, len, 8), this.M.brass); rod.position.copy(a).lerp(b, 0.5); rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); pg.add(rod);
-        for (const e of [a, b]) { const bead = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 8), this.M.brass); bead.position.copy(e); pg.add(bead); }
+        const rod = new THREE.Mesh(new THREE.CylinderGeometry(0.014, 0.014, len, 8), gBrass); rod.position.copy(a).lerp(b, 0.5); rod.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), b.clone().sub(a).normalize()); pg.add(rod);
+        for (const e of [a, b]) { const bead = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 8), gBrass); bead.position.copy(e); pg.add(bead); }
         gr.add(pg); pg.children.forEach((m) => { m.userData.gi = this.grp.length - 1; this.meshes.push(m); });
         this.pieces.push({ G, g: pg, mesh: rod, ph: 0, amp: 0, dir: new THREE.Vector3(0, 1, 0), spin: new THREE.Vector3(1, 2, 0), d: (d0 + d1) / 2, glow: 0, dis: 0.1, pin: true });
       }
       for (const [x, y, d, r, glass] of deco) {
-        const s = sG + d / this.rayLen, m = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), glass ? this.M.glass : this.M.brass);
+        const s = sG + d / this.rayLen, m = new THREE.Mesh(new THREE.SphereGeometry(r, 20, 14), glass ? gGlass : gBrass);
         m.position.copy(P3(Cg, x, y, s)); m.userData.glass = glass; m.userData.gi = this.grp.length - 1; const pg = new THREE.Group(); pg.add(m); gr.add(pg); this.meshes.push(m);
         this.pieces.push({ G, g: pg, mesh: m, ph: rng.range(0, TAU), amp: rng.range(0.01, 0.025), dir: new THREE.Vector3(rng.range(-1, 1), rng.range(-1, 1), rng.range(-1, 1)).normalize(), spin: new THREE.Vector3(rng.range(-3, 3), rng.range(-3, 3), rng.range(-3, 3)), d, glow: 0, dis: rng.range(0, 0.3) });
       }
@@ -933,9 +941,13 @@ const Theater = {
   },
   // perde açıldı: ilk kez gelen hamle varsa öğretici, yoksa anlatıcı paneli
   onPlay(skipChap) {
-    // yeni bölümün ilk perdesi: sinematik bölüm başlığı, ardından anlatıcı
-    if (!skipChap && this.act.ch && !(ST_ACTS[this.idx - 1] || {}).ch) {
-      const el = $('#thChap'); el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); audio.whoosh(true, 1.6, 0.04);
+    // perdenin ilk sahnesi: sinematik perde başlığı (tiyatro her açıldığında bir kez), ardından anlatıcı
+    const pc = stChap(this.idx); this.chapSeen = this.chapSeen || {};
+    if (!skipChap && this.idx === stChapStart(pc) && !this.chapSeen[pc]) {
+      this.chapSeen[pc] = true; const C = ST_CHAP[pc], el = $('#thChap'); el.dataset.c = pc;
+      el.querySelector('small').textContent = C.n; el.querySelector('b').textContent = C.t; el.querySelector('span').textContent = C.s; el.querySelector('em').textContent = C.k;
+      el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); audio.whoosh(true, 1.6, 0.04);
+      if (stMus.ok) { const t0 = audio.t; stMus.zil(t0 + 0.35, 0.045); if (pc === 1) { stMus.kos(t0 + 0.3, 0.9); stMus.kos(t0 + 1.1, 0.6); } for (let k = 0; k < 5; k++) stMus.pluck(t0 + 1.0 + k * 0.11, stMus.note([0, 2, 4, 7, 9][k]), 'kanun', 0.06); }
       const id = this.idx; clearTimeout(this.chapTm); this.chapTm = setTimeout(() => { el.classList.remove('on'); if (this.state === 'play' && this.idx === id) this.onPlay(true); }, 3800); return;
     }
     const seen = Save.data.thTut || {}, ks = [];
@@ -963,7 +975,7 @@ const Theater = {
   help() { if (this.state !== 'play' || ThTut.on) return; audio.ui(); const ks = ['base']; if (this.grp.length > 1) ks.push('two'); if (this.act.axes >= 2) ks.push('tilt'); if (this.act.axes >= 3) ks.push('roll'); ThTut.start(ks); },
   selectG(gi) { const G = this.grp[gi]; if (!G || G.lock || this.state !== 'play' || ThTut.frozen()) return; if (this.sel !== gi) { this.sel = gi; audio.ui(); haptic(5); this.linkT = this.t; } G.hl = 1; },
   open(from) {
-    this.init(); this.from = from || 'title'; this.active = true;
+    this.init(); this.from = from || 'title'; this.active = true; this.chapSeen = {};
     const sv = Save.data.theater || []; let i = 0; while (sv.includes(i) && i < ST_ACTS.length - 1) i++;
     this.build(i); audio.setChapter(8); this.t = 0; this.camIn = 0; this.state = 'intro'; this.stT = 0; this.curtain = 1; this.lampOn = 0;
     try { this.apply(); this.update(0); const pt = renderer.getRenderTarget(); renderer.setRenderTarget(post.rtScene); renderer.compile(stScene, stCam); renderer.setRenderTarget(pt); } catch (e) { console.warn('tiyatro derleme', e); }
@@ -1135,6 +1147,11 @@ const Theater = {
         const fl = G.lockT >= 0 ? Math.exp(-(t - G.lockT) * 3.2) : 0, e = 0.035 + 0.07 * G.hl * (0.85 + 0.15 * Math.sin(t * 6)) + 0.32 * fl;
         const ec = ST_GEM[G.gi % 2]; for (const m of G.mats) m.emissive.setRGB(e * ec[0], e * ec[1], e * ec[2]);
       }
+      // yerine oturdu: nefes almayı bırakır, öbür heykelin gölgesini kapatmasın diye saydamlaşır (gölgesi perdede kalır)
+      if (multi) {
+        const done = G.lock && this.solvedT < 0; G.still = damp(G.still, G.lock ? 1 : 0, 5, dtR); G.fade = damp(G.fade, done ? 0.2 : 1, done ? 2.6 : 6, dtR);
+        for (const [m, o0] of G.fadeMats) { m.opacity = o0 * G.fade; m.depthWrite = G.fade > 0.97 && o0 >= 1; }
+      }
     }
     // gölge çizgileri: seçili heykelinki parlak, oturanınki söner
     if (multi) { const W = this.wallU.uHintW.value, hv = this.grp.map((G) => { const fl = G.lockT >= 0 ? Math.exp(-(t - G.lockT) * 2.5) * 1.6 : 0; G.hw = damp(G.hw, G.lock ? 0.08 : this.state === 'play' && G.gi === this.sel ? 1.25 : 0.6, 5, dtR); return G.hw + fl; }); W.set(hv[0] || 0, hv[1] || 0); }
@@ -1142,7 +1159,7 @@ const Theater = {
     this.assembleT += dtR;
     const sv = this.solvedT >= 0 ? this.t - this.solvedT : -1;
     for (const p of this.pieces) {
-      const k = 1 + Math.sin(t * 0.9 + p.ph) * p.amp, g = p.g, asm = 1 - Ease.outCubic(clamp01((this.assembleT - p.G.gi * 0.7) / 1.5));
+      const k = 1 + Math.sin(t * 0.9 + p.ph) * p.amp * (1 - (p.G.still || 0)), g = p.g, asm = 1 - Ease.outCubic(clamp01((this.assembleT - p.G.gi * 0.7) / 1.5));
       g.scale.setScalar(k); g.position.copy(p.G.lampL).multiplyScalar(1 - k);
       if (asm > 0.001) { g.position.addScaledVector(p.dir, asm * 7); g.rotation.set(p.spin.x * asm, p.spin.y * asm, p.spin.z * asm); } else g.rotation.set(0, 0, 0);
       if (sv >= 0) {
@@ -1151,7 +1168,7 @@ const Theater = {
         g.visible = u < 1; const s = 1 - Ease.inCubic(u) * 0.9; g.scale.multiplyScalar(s);
         g.position.addScaledVector(p.dir, Ease.inCubic(u) * 0.6); g.rotation.set(p.spin.x * u * 0.15, p.spin.y * u * 0.15, p.spin.z * u * 0.15);
         const gl = clamp01(sv / 0.25) * (1 - u);
-        g.traverse((m) => { if (m.isMesh) { if (!m.userData.mat0) { m.userData.mat0 = m.material; m.material = m.material.clone(); } m.material.emissive = m.material.emissive || new THREE.Color(); m.material.emissive.setRGB(1.1 * gl, 0.42 * gl, 0.1 * gl); } });
+        g.traverse((m) => { if (m.isMesh) { if (!m.userData.mat0) { m.userData.mat0 = m.material; m.material = m.material.clone(); const o0 = m.material.userData.o0; if (o0 != null) { m.material.opacity = o0; m.material.depthWrite = o0 >= 1; } } m.material.emissive = m.material.emissive || new THREE.Color(); m.material.emissive.setRGB(1.1 * gl, 0.42 * gl, 0.1 * gl); } });
         if (u > 0 && u < 1 && Math.random() < dtR * 70) this.spawnEmber(p);
       }
     }
@@ -1208,6 +1225,10 @@ const Theater = {
     const e = Ease.outCubic(this.camIn), P = this.camP.clone(), T = this.camT.clone();
     P.z += (1 - e) * 5; P.y += (1 - e) * 1.5; P.x += Math.sin(t * 0.17) * 0.18; P.y += Math.sin(t * 0.23) * 0.1;
     if (sv >= 0) { const k = Ease.inOutCubic(clamp01((sv - 0.3) / 2.6)) * (this.portrait ? 0.32 : 0.4); P.lerp(new THREE.Vector3(this.WC.x, this.WC.y + (this.portrait ? 0.4 : 0.3), this.camP.z - 1), k); T.lerp(this.WC, k * 1.4); }
+    // kaydırma (Destan): k.pan ağırlığıyla odak k.px/k.py — kamera yaklaşmadan kayar, kenar perdeleri kadrajla gelir
+    const pn = sv >= 0 ? K.pan || 0 : 0; let panX = 0;
+    if (pn > 0.001 && K.px != null) { const [wx, wy] = this.svgToWall(K.px, K.py ?? this.F.cy); const ddx = (wx - this.WC.x) * pn, ddy = (wy - this.WC.y) * pn; P.x += ddx; P.y += ddy; T.x += ddx; T.y += ddy; panX = ddx; }
+    if (this.curLX != null) { this.curL.position.x = this.curLX + panX; this.curR.position.x = this.curRX + panX; }
     // sinematik yakınlaşma (Destan): k.zoom, odak k.zx/k.zy (figür koordinatı)
     const zm = sv >= 0 ? K.zoom || 0 : 0;
     if (zm > 0.001) { const [wx, wy] = K.zx != null ? this.svgToWall(K.zx, K.zy) : [this.WC.x, this.WC.y]; P.lerp(new THREE.Vector3(wx, wy + 0.2, ST_WZ + 10.5), zm * 0.55); T.lerp(new THREE.Vector3(wx, wy, ST_WZ), zm * 0.7); }
@@ -1239,7 +1260,7 @@ const Theater = {
     const cine = !!D.cine && sv > 1.1 && !this.cardShown, ce = this.cineEl || (this.cineEl = $('#thCine'));
     if (ce) ce.classList.toggle('on', cine);
     let cap = ''; if (cine && D.caps) for (const c of D.caps) if (this.perfT >= c[0] && this.perfT < c[1]) cap = c[2];
-    if (cap !== (this.capShown || '')) { this.capShown = cap; const el = $('#thCap'); if (el) { el.classList.remove('on'); if (cap) { el.innerHTML = cap; void el.offsetWidth; el.classList.add('on'); } } }
+    if (cap !== (this.capShown || '')) { this.capShown = cap; const el = $('#thCap'); if (el) { el.classList.remove('on'); if (cap) { el.innerHTML = cap; el.classList.toggle('long', cap.replace(/<small[^>]*>.*?<\/small>/g, '').length > 70); void el.offsetWidth; el.classList.add('on'); } } }
     // müzik ve ortam: durum, hizaya yakınlık, kandil ve gösteri
     this.wallU.uExt.value = this.F.def.ext && sv > 0 ? 1 : 0;
     const MS = { state: this.state, near: this.near, lamp: this.lampOn, perf: sv > 1.1, card: this.cardShown };

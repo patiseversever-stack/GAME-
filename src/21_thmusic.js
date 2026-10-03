@@ -54,6 +54,9 @@ const stMus = {
     // dem: kök ve beşli, çok alçak süzgeç
     const dm = { g: c.createGain(), f: c.createBiquadFilter(), o: [] }; dm.f.type = 'lowpass'; dm.f.frequency.value = 420; dm.g.gain.value = 0; dm.f.connect(dm.g); dm.g.connect(this.bus);
     for (const [ty, det, k] of [['sawtooth', -5, 0.5], ['sawtooth', 6, 0.5], ['sawtooth', 3, 0.32], ['sine', 0, 1.1]]) { const o = c.createOscillator(), og = c.createGain(); o.type = ty; o.detune.value = det; og.gain.value = k; o.connect(og); og.connect(dm.f); o.start(); dm.o.push(o); }
+    // üst dem: oktav ve beşli — telefon hoparlörü alçak demi vermez, bu katman perde geçişinde de müziği duyulur tutar
+    const hf = c.createBiquadFilter(); hf.type = 'lowpass'; hf.frequency.value = 1500; hf.Q.value = 0.3; const hg = c.createGain(); hg.gain.value = 0.55; hf.connect(hg); hg.connect(dm.g);
+    for (const [ty, det, k] of [['triangle', -4, 0.22], ['triangle', 5, 0.16]]) { const o = c.createOscillator(), og = c.createGain(); o.type = ty; o.detune.value = det; og.gain.value = k; o.connect(og); og.connect(hf); o.start(); dm.o.push(o); }
     this.drone = dm;
     this.ok = true; return true;
   },
@@ -62,7 +65,7 @@ const stMus = {
     this.gen = (this.gen || 0) + 1; this.act = TH_ACT_MU[i] || TH_ACT_MU[0]; this.mk = TH_MK[this.act.mk]; this.mode = 'intro'; this.lit = false; this.walk = 7; this.acc = 0; this.nextT = 0; this.nextBeat = 0; this.step = 0; this.lastPl = 0; this.neyT = 0; this.cardDone = false; this.perfStart = -1; this.lockN = 0;
     if (!this.init()) return;
     const t = this.c.currentTime, r = this.mk.r - 12;
-    [r, r, r + 7.02, r - 12].forEach((m, k) => this.drone.o[k].frequency.setTargetAtTime(mtof(m), t, 0.4));
+    [r, r, r + 7.02, r - 12, r + 12, r + 19.02].forEach((m, k) => this.drone.o[k].frequency.setTargetAtTime(mtof(m), t, 0.4));
     this.bus.gain.setTargetAtTime(1, t, 0.4); this.drB.gain.setTargetAtTime(1, t, 0.4);
     // telleri önceden hazırla (ilk dokunuşta takılma olmasın)
     for (let d = 0; d < 15; d++) { this.kbuf(this.note(d), 'kanun'); if (d < 9) this.kbuf(this.note(d) - 12, 'ud'); }
@@ -177,7 +180,9 @@ const stMus = {
     this.mode = S.state === 'play' ? 'play' : S.state === 'solved' && this.mode === 'play' ? 'play' : this.mode;
     if (S.state === 'intro' && this.mode !== 'intro') { this.mode = 'intro'; }
     // perde kapanırken müzik susmaz: kanun aşağı süzülür, dem sürer, yeni perdenin kökene kayar
-    if (S.state === 'closing') { if (this.mode !== 'closing') { this.mode = 'closing'; this.drB.gain.setTargetAtTime(0.15, t, 0.2); for (let k = 0; k < 6; k++) this.pluck(t + 0.05 + k * 0.09, this.note(9 - k), 'kanun', 0.055 - k * 0.004); this.pluck(t + 0.6, this.note(0) - 12, 'ud', 0.09); } }
+    if (S.state === 'closing') { if (this.mode !== 'closing') { this.mode = 'closing'; this.drB.gain.setTargetAtTime(0.15, t, 0.2); for (let k = 0; k < 6; k++) this.pluck(t + 0.05 + k * 0.09, this.note(9 - k), 'kanun', 0.055 - k * 0.004); this.pluck(t + 0.6, this.note(0) - 12, 'ud', 0.09);
+      // köprü: ney, sahne yüklenirken ve kandil yanarken de çalar (ses iş parçacığında, ana döngü beklese bile kesilmez)
+      const gu = this.mk.g; this.ney(t + 0.5, [[this.note(gu) + 12, 1.1], [this.note(gu - 1) + 12, 0.45], [this.note(gu - 2) + 12, 0.45], [this.note(1) + 12, 0.6], [this.note(0) + 12, 1.9]], 0.04); } }
     if (S.perf && this.mode !== 'perf' && this.mode !== 'after') { this.mode = 'perf'; this.perfStart = t; this.nextBeat = t + 0.1; this.step = 0; this.mel = null; }
     this.bus.gain.setTargetAtTime(S.state === 'closing' ? 0.7 : 1, t, 0.3);
     // dem ve süzgeç
@@ -185,7 +190,7 @@ const stMus = {
     this.drone.g.gain.setTargetAtTime(dG, t, 0.3);
     this.lp.frequency.setTargetAtTime(this.mode === 'play' ? 900 + this.near * this.near * 6500 : 7000, t, 0.25);
     // açılış: kandil yanınca kanun yükselişi
-    if (this.mode === 'intro' && lamp > 0.35 && !this.lit) { this.lit = true; for (let k = 0; k < 8; k++) this.pluck(t + 0.05 + k * 0.06, this.note(k), k < 3 ? 'kanun' : 'kanun', 0.05 + k * 0.006); this.pluck(t + 0.6, this.note(0) - 12, 'ud', 0.1); }
+    if (this.mode === 'intro' && lamp > 0.08 && !this.lit) { this.lit = true; for (let k = 0; k < 8; k++) this.pluck(t + 0.05 + k * 0.06, this.note(k), k < 3 ? 'kanun' : 'kanun', 0.05 + k * 0.006); this.pluck(t + 0.6, this.note(0) - 12, 'ud', 0.1); }
     if (this.mode === 'play') {
       // taksim: yakınlaştıkça sıklaşır
       if (t > this.nextT) { this.phrase(t + 0.02, this.near); this.nextT = t + lerp(2.6, 0.9, this.near) * (0.7 + Math.random() * 0.6); }
