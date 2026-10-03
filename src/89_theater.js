@@ -881,11 +881,13 @@ const Theater = {
   },
   // mıknatıs: perdeler ilerledikçe küçülür — son yüzdeler giderek daha çok emek ister
   magnet() { const a = this.act; if (a.mag) return deg(a.mag); return deg(lerp(8, 4.5, clamp01(this.idx / 14)) * (a.axes >= 3 ? 1.25 : 1) * (this.grp.length > 1 ? 1.1 : 1)); },
+  // üç yıldız süresi: mıknatıs küçüldükçe biraz uzar
+  parOf() { return Math.round(this.act.par * (1 + clamp01((this.idx - 3) / 11) * 0.18)); },
   pcOf(G) { if (G.lock) return 1; const r = this.angle(G) / deg(38); return 1 / (1 + r * r); },
   // üç yıldız hedefi: kalan süre başlıkta
   updatePar() {
     const el = this.parEl || (this.parEl = $('#thPar')); if (!el || !this.act || this.solvedT >= 0) return;
-    const par = this.act.par, t = this.playT || 0, h = this.hints || 0;
+    const par = this.parOf(), t = this.playT || 0, h = this.hints || 0;
     const [n, lim] = h === 0 && t <= par ? [3, par] : h <= 1 && t <= par * 2.2 ? [2, par * 2.2] : [1, 0];
     const left = Math.max(0, Math.ceil(lim - t));
     el.innerHTML = n > 1 ? `${'★'.repeat(n)}<small>${Math.floor(left / 60)}:${String(left % 60).padStart(2, '0')}</small>` : '★';
@@ -991,13 +993,13 @@ const Theater = {
   },
   // ekran düzleminde (kandil ekseni etrafında) yatır: gölge perdede olduğu gibi döner
   roll(da, gi = this.sel) {
-    const G = this.grp[gi]; if (this.state !== 'play' || !G || G.lock || !da || this.act.axes < 3) return;
+    const G = this.grp[gi]; if (this.state !== 'play' || !G || G.lock || !da || this.act.axes < 3 || ThTut.frozen()) return;
     G.q.premultiply(new THREE.Quaternion().setFromAxisAngle(this.axis, da)).normalize(); this.rollSum += Math.abs(da);
     stMus.turn(Math.abs(da) * 1.5, Math.sign(da), this.near); audio.theaterCreak(Math.min(1, Math.abs(da) * 10));
   },
   rot(a, b, gi = this.sel) {
     const G = this.grp[gi];
-    if (this.state !== 'play' || !G || G.lock || (!a && !b)) return;
+    if (this.state !== 'play' || !G || G.lock || (!a && !b) || ThTut.frozen()) return;
     const ax = this.act.axes;
     if (ax < 3) { G.yaw += a; if (ax === 2) G.pitch = clamp(G.pitch + b, -1.3, 1.3); G.q.setFromEuler(new THREE.Euler(G.pitch, G.yaw, 0, 'YXZ')); return; }
     const qy = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), a), qx = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(1, 0, 0), b); G.q.premultiply(qy).premultiply(qx).normalize();
@@ -1029,7 +1031,7 @@ const Theater = {
     const frozen = ThTut.frozen();
     if (this.state === 'play' && frozen) { let ns = 0; for (const G of this.grp) ns += G.lock ? 1 : clamp01(1 - this.angle(G) / deg(75)); this.near = damp(this.near, ns / Math.max(1, this.grp.length), 5, dtR); }
     else if (this.state === 'play') {
-      this.playT += dtR; const sec = Math.floor(this.playT); if (sec !== this.lastSec) { this.lastSec = sec; $('#thTime').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; this.updatePar(); }
+      if (!ThTut.on) this.playT += dtR; const sec = Math.floor(this.playT); if (sec !== this.lastSec) { this.lastSec = sec; $('#thTime').textContent = `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`; this.updatePar(); }
       let nearSum = 0;
       const mag = this.magnet();
       for (const G of this.grp) {
@@ -1176,7 +1178,7 @@ const Theater = {
     this.state = 'solved'; for (const G of this.grp) { G.lock = true; G.q.identity(); G.yaw = 0; G.pitch = 0; G.w.set(0, 0); G.root.quaternion.identity(); G.hl = 0; for (const m of G.mats) if (this.grp.length > 1) m.emissive.setRGB(0, 0, 0); } this.drag = null;
     this.solvedT = this.t; this.perfT = -1; this.evI = 0; $('#thMsg').classList.remove('on');
     audio.theaterSolve(); stMus.solve(); haptic([20, 40, 20]); G.flash = 0.3; G.flashCol.set(1.0, 0.78, 0.48); G.trauma = Math.max(G.trauma, 0.25);
-    const par = this.act.par, tt = this.playT, stars = this.hints === 0 && tt <= par ? 3 : this.hints <= 1 && tt <= par * 2.2 ? 2 : 1;
+    const par = this.parOf(), tt = this.playT, stars = this.hints === 0 && tt <= par ? 3 : this.hints <= 1 && tt <= par * 2.2 ? 2 : 1;
     this.stars = stars; const pe = $('#thPar'); if (pe) { pe.textContent = '★'.repeat(stars); pe.dataset.n = 3; pe.classList.remove('low'); }
     const sv = Save.data.theater || (Save.data.theater = []); if (!sv.includes(this.idx)) sv.push(this.idx);
     const ss = Save.data.thStars || (Save.data.thStars = {}); ss[this.idx] = Math.max(ss[this.idx] || 0, stars);
@@ -1192,7 +1194,7 @@ const Theater = {
     for (let k = 0; k < 3; k++) { const s = document.createElement('i'); s.textContent = '★'; if (k < this.stars) { s.className = 'on'; s.style.animationDelay = `${0.25 + k * 0.18}s`; } st.appendChild(s); }
     const sec = Math.floor(this.playT), fm = (x) => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`, best = (Save.data.thBest || {})[this.idx];
     $('#thStat').innerHTML = `${fm(sec)} · ${this.hints ? this.hints + ' ipucu' : 'ipucusuz'}${this.record ? ' · <b>yeni rekor!</b>' : best && best < sec ? ` · rekor ${fm(best)}` : ''}`;
-    if (this.stars < 3) $('#thStat').innerHTML += `<span class="goal">★★★ için: ${fm(this.act.par)} altında, ipucusuz</span>`;
+    if (this.stars < 3) $('#thStat').innerHTML += `<span class="goal">★★★ için: ${fm(this.parOf())} altında, ipucusuz</span>`;
     $('#thTease').innerHTML = last ? '' : `Sıradaki perde: <b>“${ST_ACTS[this.idx + 1].riddle}…”</b>`;
     $('#theater').classList.add('solved'); stApplause(this.stars); stMus.card(); for (let k = 0; k < this.stars; k++) setTimeout(() => audio.star(k, true), 300 + k * 180);
     this.updateDots();
