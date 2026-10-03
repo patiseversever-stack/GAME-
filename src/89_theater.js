@@ -50,6 +50,10 @@ const ST_MASK_RES = [1024, 1536, 1536, 2048];
 const SD_QI = new THREE.Quaternion();
 const ST_GMATS = [['brass', 'copper', 'walnut'], ['firuze', 'silver', 'cini']];
 const ST_GCOL = [[2.2, 1.0, 0.35], [0.4, 1.55, 1.75]], ST_GEM = [[1.0, 0.5, 0.18], [0.22, 0.8, 0.9]];
+// deneme sürümü: bütün sahneler açık (kilit yok)
+const ST_OPEN_ALL = true;
+// perde = bölüm (I: ilk 15 sahne, II: Destan); her perdenin kendi sahne sırası
+const stChap = (k) => (ST_ACTS[k] && ST_ACTS[k].ch ? 1 : 0), stChapStart = (c) => { const i = ST_ACTS.findIndex((a, k) => stChap(k) === c); return i < 0 ? 0 : i; };
 const ST_ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII', 'XIII', 'XIV', 'XV', 'XVI', 'XVII', 'XVIII', 'XIX', 'XX', 'XXI', 'XXII', 'XXIII', 'XXIV', 'XXV'];
 
 /* ---------- 2B çokgen yardımcıları (perde koordinatı, y yukarı) ---------- */
@@ -895,14 +899,20 @@ const Theater = {
   /* ----- arayüz ----- */
   buildDom() {
     const dots = $('#thDots'); dots.innerHTML = '';
-    this.dots = ST_ACTS.map((a, k) => { const d = document.createElement('i'); if (a.ch) d.classList.add('ds'); if (a.ch && !(ST_ACTS[k - 1] || {}).ch) d.classList.add('ch'); d.addEventListener('click', (e) => { e.stopPropagation(); this.jump(k); }); dots.appendChild(d); return d; });
+    // perde geçişi: I. perdede sonda “II. perde ›”, II. perdede başta “‹ I. perde”
+    const chip = (c, txt) => { const b = document.createElement('b'); b.className = 'chs'; b.dataset.c = c; b.textContent = txt; b.addEventListener('click', (e) => { e.stopPropagation(); this.jump(stChapStart(c)); }); return b; };
+    this.chipPrev = chip(0, '‹ I. perde'); dots.appendChild(this.chipPrev);
+    this.dots = ST_ACTS.map((a, k) => { const d = document.createElement('i'); if (a.ch) d.classList.add('ds'); d.addEventListener('click', (e) => { e.stopPropagation(); this.jump(k); }); dots.appendChild(d); return d; });
+    this.chipNext = chip(1, 'II. perde ›'); dots.appendChild(this.chipNext);
   },
-  unlocked(k) { const sv = Save.data.theater || []; return k === 0 || sv.includes(k) || sv.includes(k - 1); },
+  unlocked(k) { const sv = Save.data.theater || []; return ST_OPEN_ALL || k === 0 || sv.includes(k) || sv.includes(k - 1); },
   jump(k) { if (k === this.idx || !this.unlocked(k) || this.state === 'closing') return; audio.ui(); this.changeAct(k); },
   updateDom() {
     const sv = Save.data.theater || [], stars = Save.data.thStars || {};
-    this.dots.forEach((d, k) => { d.classList.toggle('on', k === this.idx); d.classList.toggle('ok', sv.includes(k)); d.classList.toggle('lock', !this.unlocked(k)); d.title = stars[k] ? '★'.repeat(stars[k]) : ''; });
-    $('#thAct').textContent = `${ST_ROMAN[this.idx]}. perde`;
+    const c = stChap(this.idx);
+    this.dots.forEach((d, k) => { d.classList.toggle('on', k === this.idx); d.classList.toggle('ok', sv.includes(k)); d.classList.toggle('lock', !this.unlocked(k)); d.classList.toggle('hid', stChap(k) !== c); d.title = stars[k] ? '★'.repeat(stars[k]) : ''; });
+    this.chipPrev.classList.toggle('hid', c !== 1); this.chipNext.classList.toggle('hid', c !== 0); this.chipNext.classList.toggle('lock', !this.unlocked(stChapStart(1)));
+    $('#thAct').textContent = `${ST_ROMAN[c]}. perde · ${this.idx - stChapStart(c) + 1}. sahne`;
     $('#theater').classList.remove('solved'); $('#thTime').textContent = '0:00';
     $('#thMsg').innerHTML = this.storyHTML(); $('#thMsg').classList.remove('on');
   },
@@ -1253,18 +1263,19 @@ const Theater = {
   showCard() {
     $('#thName').textContent = this.F.def.name; $('#thLine').textContent = this.F.def.line;
     const last = this.idx >= ST_ACTS.length - 1;
-    $('#thNext').textContent = last ? 'Perdeyi kapat' : 'Sonraki perde';
-    $('#thCard .k').textContent = last ? 'Son perde · gölge canlandı' : 'Gölge canlandı';
+    const nc = !last && stChap(this.idx + 1) !== stChap(this.idx);
+    $('#thNext').textContent = last ? 'Perdeyi kapat' : nc ? `${ST_ROMAN[stChap(this.idx + 1)]}. perde ›` : 'Sonraki sahne';
+    $('#thCard .k').textContent = last ? 'Son sahne · gölge canlandı' : 'Gölge canlandı';
     const st = $('#thStars'); st.innerHTML = '';
     for (let k = 0; k < 3; k++) { const s = document.createElement('i'); s.textContent = '★'; if (k < this.stars) { s.className = 'on'; s.style.animationDelay = `${0.25 + k * 0.18}s`; } st.appendChild(s); }
     const sec = Math.floor(this.playT), fm = (x) => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`, best = (Save.data.thBest || {})[this.idx];
     $('#thStat').innerHTML = `${fm(sec)} · ${this.hints ? this.hints + ' ipucu' : 'ipucusuz'}${this.record ? ' · <b>yeni rekor!</b>' : best && best < sec ? ` · rekor ${fm(best)}` : ''}`;
     if (this.stars < 3) $('#thStat').innerHTML += `<span class="goal">★★★ için: ${fm(this.parOf())} altında, ipucusuz</span>`;
-    $('#thTease').innerHTML = last ? '' : `Sıradaki perde: <b>“${ST_ACTS[this.idx + 1].riddle}…”</b>`;
+    $('#thTease').innerHTML = last ? '' : nc ? `Sıradaki: <b>${ST_ROMAN[stChap(this.idx + 1)]}. perde — Destan</b>` : `Sıradaki sahne: <b>“${ST_ACTS[this.idx + 1].riddle}…”</b>`;
     $('#theater').classList.add('solved'); stApplause(this.stars); stMus.card(); for (let k = 0; k < this.stars; k++) setTimeout(() => audio.star(k, true), 300 + k * 180);
     this.updateDots();
   },
-  updateDots() { const sv = Save.data.theater || []; this.dots.forEach((d, k) => { d.classList.toggle('ok', sv.includes(k)); d.classList.toggle('lock', !this.unlocked(k)); }); },
+  updateDots() { const sv = Save.data.theater || []; this.dots.forEach((d, k) => { d.classList.toggle('ok', sv.includes(k)); d.classList.toggle('lock', !this.unlocked(k)); }); this.chipNext.classList.toggle('lock', !this.unlocked(stChapStart(1))); },
   apply() {
     // kalite değişti: maske çözünürlüğü, huzme adımları, toz sayısı
     if (this.qLevel !== Perf.level) { const first = this.qLevel === undefined; this.qLevel = Perf.level; if (!first && this.inited && this.lamp) { SM.alloc(ST_MASK_RES[Perf.level] || 1536); this.pxu = SM.res / SM.size; this.wallU.tMask.value = SM.b.texture; this.wallU.tTgt.value = SM.tB.texture; this.wallU.tGlowS.value = SM.gB.texture; this.wallU.tGlowH.value = SM.gD.texture; this.beamU.tMask.value = SM.b.texture; this.buildBeam(); this.buildDust(); SM.renderTarget(this.tgtWorld); } }

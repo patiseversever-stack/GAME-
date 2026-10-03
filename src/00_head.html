@@ -280,7 +280,7 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #theater .thsub{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 12px;margin-top:4px;font-size:10px;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--gold-2)}
 #thDots{order:3;flex-basis:100%;display:flex;justify-content:center;gap:6px;margin-top:5px;pointer-events:auto}#thDots i{width:6px;height:6px;flex:none;border-radius:50%;background:rgba(255,230,190,.28);cursor:pointer;transition:transform .3s,background .3s}#thDots i.lock{opacity:.35;cursor:default}
 #thTime{font-variant-numeric:tabular-nums;letter-spacing:.12em;color:rgba(255,226,180,.7)}
-#thDots i.ok{background:#ffcf7a;box-shadow:0 0 8px #ff9a3a}#thDots{gap:4px!important}#thDots i{width:5px!important;height:5px!important}#thDots i.ch{margin-left:7px}#thDots i.ds{background:rgba(255,150,140,.3)}#thDots i.ds.ok{background:#ff7a6a;box-shadow:0 0 8px #e0302a}
+#thDots i.ok{background:#ffcf7a;box-shadow:0 0 8px #ff9a3a}#thDots{gap:4px!important}#thDots i{width:5px!important;height:5px!important}#thDots .hid{display:none!important}#thDots b.chs{font-size:8.5px;font-weight:800;letter-spacing:.18em;color:#ffb8a8;cursor:pointer;padding:3px 8px;margin:-3px 0 -3px 6px;border:1px solid rgba(255,150,130,.35);border-radius:9px;white-space:nowrap}#thDots b.chs[data-c="0"]{margin:-3px 6px -3px 0;color:var(--gold-2);border-color:rgba(255,220,160,.3)}#thDots b.chs.lock{opacity:.35;cursor:default}#thDots i.ds{background:rgba(255,150,140,.3)}#thDots i.ds.ok{background:#ff7a6a;box-shadow:0 0 8px #e0302a}
 #thCine i{position:absolute;left:0;right:0;height:11vh;background:#000;transition:transform 1.1s cubic-bezier(.6,0,.2,1);pointer-events:none;z-index:2}#thCine i:first-child{top:0;transform:translateY(-101%)}#thCine i:last-child{bottom:0;transform:translateY(101%)}
 #thCine.on i{transform:none}
 #thCap{position:absolute;left:50%;bottom:calc(11vh - 2px);transform:translate(-50%,50%);width:min(92vw,560px);text-align:center;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(16px,4.3vw,22px);line-height:1.3;color:#fff0d8;letter-spacing:.02em;text-shadow:0 2px 14px #000;opacity:0;transition:opacity .9s;pointer-events:none;z-index:3}
@@ -642,7 +642,7 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
     <div id="thWhisper"></div>
     <div id="thCine"><i></i><i></i></div>
     <div id="thCap"></div>
-    <div id="thChap"><small>Yeni bölüm</small><b>Destan</b><i></i><span>Ergenekon’dan Cumhuriyet’e</span></div>
+    <div id="thChap"><small>II. perde</small><b>Destan</b><i></i><span>Ergenekon’dan Cumhuriyet’e</span></div>
     <div id="thMsg"></div>
     <div id="thCard">
       <div class="k">Gölge canlandı</div>
