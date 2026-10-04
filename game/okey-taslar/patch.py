@@ -17,13 +17,14 @@ rep("""_syncFace(t) {
       if(key!==t.key) {t.key=key; t.face.material.map=dr(face); t.face.material.needsUpdate=true;}""","""_syncFace(t) {
       const face=mm(t.el),th=window.PTiles?PTiles.reg(this):'',key=face.kind+'|'+face.color+'|'+face.value+'|'+face.rep+'|'+th;
       if(key!==t.key) {t.key=key; t.face.material.map=dr(face); t.face.material.needsUpdate=true;}
-      if(t.bk!==th) {t.bk=th; const bm=t.back.material; bm.map=dr({kind:'back'}); bm.toneMapped=!th; bm.envMapIntensity=th?.06:.25; bm.roughness=th?.9:.62; bm.needsUpdate=true;}""")
+      if(t.bk!==th) {t.bk=th; const bm=t.back.material; bm.map=dr({kind:'back'}); th?PTiles.vivid(bm):window.PTiles?PTiles.unvivid(bm):bm.needsUpdate=true;}""")
 rep('for(let n of this.meshes.values())this._syncFace(n),n.group.visible=n.el.style.display!=="none";','for(let n of this.meshes.values())this._syncFace(n),n.group.visible=n.el.style.display!=="none";if(this.decos)for(const[n,q]of this.decos)n.isConnected&&this._syncFace(q);')
 rep('n.dataset.tiles="ivory"','n.dataset.tiles=["ivory","cini","ebru","yagli"].includes(s.get("tiles"))?s.get("tiles"):"ivory"')
 rep('o("G\\xF6r\\xFCn\\xFCm","amber",`','o("G\\xF6r\\xFCn\\xFCm","amber",`<div class="set-row">${i("tiles","Taşlar")}${e("tiles",[["ivory","Fildişi"],["cini","Çini"],["ebru","Ebru"],["yagli","Yağlı boya"]])}</div>')
 rep("'Görünüm': 'Animasyon ve yazı boyutu'","'Görünüm': 'Taşlar, animasyon ve yazı boyutu'")
-rep('this.backMat=new ve({map:dr({kind:"back"})','this.backMat=new ve({map:window.PTiles?PTiles.menuTex({kind:"back"},dr0,Ve,he):dr({kind:"back"})')
-rep('new ve({map:dr(t),bumpMap:mc(t),','new ve({map:window.PTiles?PTiles.menuTex(t,dr0,Ve,he):dr(t),bumpMap:window.PTiles?null:mc(t),')
+rep('this.backMat=new ve({map:dr({kind:"back"}),roughness:.45,clearcoat:.3,transparent:!0,alphaTest:.5,color:16777215})','this.backMat=new ve({map:window.PTiles?PTiles.menuTex({kind:"back"},dr0,Ve,he):dr({kind:"back"}),roughness:.45,clearcoat:.3,transparent:!0,alphaTest:.5,color:16777215})')
+rep('new ve({map:dr(t),bumpMap:mc(t),bumpScale:1.2,roughness:.42,clearcoat:.35,transparent:!0,alphaTest:.5})','new ve({map:window.PTiles?PTiles.menuTex(t,dr0,Ve,he):dr(t),bumpMap:window.PTiles?null:mc(t),bumpScale:1.2,roughness:.42,clearcoat:.35,transparent:!0,alphaTest:.5})')
+s=s.replace("#9c6105","#b8730a")
 rep('this.bodyMat=new ve({color:16051417','this.bodyMat=new ve({color:window.PTiles?PTiles.menuBody(16051417):16051417')
 rep('<span class="plate__cap plate__cap--stock"><span class="cap-l">Deste</span><span class="cap-n num">0</span></span>','<span class="plate__cap plate__cap--stock"><span class="cap-l">Deste</span></span><span class="cap-n num plate__count">0</span>')
 rep('l.style.left=c.cx-e.x+"px",l.classList.toggle("is-compact",!!e.compact),this.capCount=l.querySelector(".cap-n"),h.style.left=a+"px",u.style.left=o+"px";',

@@ -633,7 +633,7 @@ const EBRU = {
   async back(x) {
     cache.ebruBackC = cache.ebruBackC || await ebruBack();
     x.drawImage(cache.ebruBackC, 0, 0);
-    x.save(); x.globalCompositeOperation = 'multiply'; x.globalAlpha = 0.35; x.drawImage(paperTex(), 0, 0); x.restore();
+    x.save(); x.globalCompositeOperation = 'multiply'; x.globalAlpha = 0.15; x.drawImage(paperTex(), 0, 0); x.restore();
     cetvel(x, MW * 0.058, MW * 0.12, MW * 0.014);
   }
 };
@@ -804,7 +804,7 @@ const OIL = {
     x.save(); x.fillStyle = '#ffe7a0'; x.shadowColor = 'rgba(255,214,110,0.9)'; x.shadowBlur = 8;
     for (let k = 0; k < 40; k++) { const px = 112 + R() * (MW - 112), py = S.H0 - 40 + R() * 40; if (S.region(px, py) === 1 && R() < 0.5) { x.beginPath(); x.ellipse(px, py, 1.8, 2.4, 0, 0, TAU); x.fill(); } }
     x.restore();
-    x.save(); x.globalCompositeOperation = 'overlay'; x.globalAlpha = 0.32; x.drawImage(TEX.weave, 0, 0); x.restore();
+    x.save(); x.globalCompositeOperation = 'overlay'; x.globalAlpha = 0.15; x.drawImage(TEX.weave, 0, 0); x.restore();
     x.save(); x.strokeStyle = 'rgba(10,12,30,0.55)'; x.lineWidth = MW * 0.012; x.beginPath(); x.roundRect(MW * 0.006, MW * 0.006, MW * 0.988, MH - MW * 0.012, MW * 0.165); x.stroke(); x.restore();
   }
 };
@@ -881,7 +881,7 @@ const META = {
   ebru: { body: 0xefe5cf, back: 0x24396f },
   yagli: { body: 0xe9dcc2, back: 0x1c3f92 }
 };
-const VER = 'v1';
+const VER = 'v2';
 const OW = 320, OH = Math.round(320 * 1.36);
 const ALL_NUMS = []; for (const c of ['red', 'blue', 'black', 'yellow']) for (let v = 1; v <= 13; v++) ALL_NUMS.push(`n:${c}:${v}`);
 const DB = (() => {
@@ -927,9 +927,11 @@ function quickBack(th) {
   }
   return c;
 }
-function toOut(src) {
+function toOut(src, vivid) {
   const c = canvas(OW, OH), x = c.getContext('2d');
-  x.imageSmoothingQuality = 'high'; x.beginPath(); x.roundRect(0, 0, OW, OH, OW * 0.16); x.clip(); x.drawImage(src, 0, 0, OW, OH);
+  x.imageSmoothingQuality = 'high'; x.beginPath(); x.roundRect(0, 0, OW, OH, OW * 0.16); x.clip();
+  if (vivid) x.filter = 'saturate(1.18) contrast(1.06)';
+  x.drawImage(src, 0, 0, OW, OH); x.filter = 'none';
   return c;
 }
 async function toBlob(c) {
@@ -944,7 +946,7 @@ async function produce(th, key, make) {
   const id = `${VER}|${th}|${key}`;
   const hit = await DB.get(id);
   if (hit) { const c = await fromBlob(hit); if (c) return { canvas: c, url: URL.createObjectURL(hit) }; }
-  const out = toOut(await make());
+  const out = toOut(await make(), key === 'back');
   const blob = await toBlob(out);
   if (blob) DB.put(id, blob);
   return { canvas: out, url: blob ? URL.createObjectURL(blob) : out.toDataURL() };
@@ -1100,6 +1102,16 @@ const PTiles = {
   },
   menuTex(s, dr0, Tex, cs) { return PTiles.tex(s, dr0, Tex, cs, PTiles.menuTheme()); },
   menuBody(def) { const m = META[PTiles.menuTheme()]; return m ? m.body : def; },
+  /* 3B malzemeyi canlı yap: ton eşlemesiz; sırtlarda resim kendi ışığını da taşır */
+  vivid(m, back = true) {
+    try {
+      m.toneMapped = false;
+      if (back && m.emissive) { m.emissive.setHex(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = 0.5; m.color.setScalar(0.62); if ('envMapIntensity' in m) m.envMapIntensity = 0.04; if ('clearcoat' in m) m.clearcoat = 0.12; m.roughness = 0.85; }
+      m.needsUpdate = true;
+    } catch {}
+    return m;
+  },
+  unvivid(m) { try { m.toneMapped = true; if (m.emissive) { m.emissive.setHex(0); m.emissiveMap = null; m.emissiveIntensity = 1; m.color.setScalar(1); } if ('envMapIntensity' in m) m.envMapIntensity = 0.25; m.roughness = 0.62; m.needsUpdate = true; } catch {} return m; },
   reg(r) {
     renderers.add(r);
     const th = cur();
@@ -1109,7 +1121,7 @@ const PTiles = {
         if (!r.__ptDef) r.__ptDef = { body: r.bodyMat && r.bodyMat.color.getHex(), back: r.backMatBody && r.backMatBody.color.getHex() };
         const m = META[th];
         if (r.bodyMat) r.bodyMat.color.setHex(m ? m.body : r.__ptDef.body);
-        if (r.backMatBody) r.backMatBody.color.setHex(m ? m.back : r.__ptDef.back);
+        if (r.backMatBody) { r.backMatBody.color.setHex(m ? m.back : r.__ptDef.back); r.backMatBody.toneMapped = !m; r.backMatBody.needsUpdate = true; }
       } catch {}
     }
     return th;
