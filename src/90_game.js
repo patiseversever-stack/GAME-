@@ -9,9 +9,11 @@ const G = {
   dropsGot: 0, combo: 0, ecl: { charge: 0, active: false, t: 0, amt: 0 },
   timeScale: 1, slowT: 0, slowK: 1, hitStop: 0, flash: 0, flashCol: new THREE.Color(1, 0.9, 0.7), trauma: 0, fovKick: 0, desat: 0, ca: 0,
   night: 0, nightR: 0, stateT: 0, introDur: 1.9, readyT: 0, hint: false, auto: false, nextHeart: 0, hapT: 0,
-  endless: null, cache: new Map(), stars: [false, false, false], from: 'title', zifirScale: 1, beatT: 0,
+  endless: null, cache: new Map(), stars: [false, false, false], from: 'title', zifirScale: 1, beatT: 0, helpK: 1,
 };
 const PATIENCE_MAX = 3.0, PATIENCE_REGEN = 0.18;
+// güneşin merhameti: aynı adada 2. başarısızlıktan sonra her denemede ışık %10 daha az yakar (en fazla %50), gölgede can daha hızlı dolar
+const helpFor = (lv) => { const n = lv.spec.kind === 'story' ? Save.data.fails[lv.spec.g] || 0 : 0; return n < 2 ? 1 : Math.max(0.5, 1 - 0.1 * (n - 1)); };
 const zifir = new Zifir();
 const drops = new DropViews();
 const L1 = new THREE.Vector3(), L2 = new THREE.Vector3(), PA = {};
@@ -204,6 +206,7 @@ function prebuildBg(spec) {
 function nextSpecOf(spec) { if (!spec) return null; if (spec.kind === 'story') return spec.g < STORY_LEVELS - 1 ? levelSpec(spec.g + 1) : null; if (spec.kind === 'endless' && G.endless) return endlessSpec(spec.n + 1, G.endless.seed); return null; }
 function resetRun() {
   const lv = G.lv;
+  G.helpK = helpFor(lv);
   G.T = 0; G.s = 0; G.meter = 1; G.minMeter = 1; G.waitT = 0; G.patience = PATIENCE_MAX; G.holding = false; G.holdT = 0; G.expTotal = 0; G.f = 0; G.burnEp = 0; G.epMin = 1; G.waiting = false; G.dropsGot = 0; G.combo = 0;
   G.ecl.active = false; G.ecl.t = 0; G.ecl.amt = 0; G.ecl.charge = lv.spec.eclipse ? 1 : 0;
   G.timeScale = 1; G.slowT = 0; G.hitStop = 0; G.trauma = 0; G.desat = 0; G.ca = 0; G.readyT = 0;
@@ -297,6 +300,7 @@ function retry(fromComplete = false) {
   if (G.mode === 'endless' && !fromComplete) { startEndless(); return; }
   UI.hide('fail'); UI.hide('complete'); UI.hud(true);
   resetRun();
+  if (G.helpK < 1) toast(`Güneş biraz yumuşadı · ışık <em>%${Math.round((1 - G.helpK) * 100)}</em> daha az yakar`, 2.6);
   G.state = 'rewind'; G.stateT = 0; G.rewFrom = G.u;
   zifir.g.visible = true; zifir.g.scale.setScalar(0.001);
   Cam.cinema(Cam.pose(), 0.7, Ease.outCubic);
@@ -324,7 +328,8 @@ function showFail() {
     $('#fProg').style.width = '100%';
   } else {
     $('#fTitle').textContent = lines[(Save.data.fails[lv.spec.g] || 0) % lines.length];
-    $('#fSub').textContent = `Yol · %${pct}`;
+    const hk = helpFor(lv);
+    $('#fSub').textContent = `Yol · %${pct}` + (hk < 1 ? ` · güneş %${Math.round((1 - hk) * 100)} yumuşayacak` : '');
     $('#fProg').style.width = '0%'; requestAnimationFrame(() => { $('#fProg').style.width = pct + '%'; });
   }
   if (G.mode === 'story') {

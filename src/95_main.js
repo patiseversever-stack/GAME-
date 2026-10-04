@@ -147,11 +147,11 @@ function stepPlay(dt, dtR) {
   if (f > 0) {
     if (G.burnEp === 0) { audio.whoosh(true, 0.2, 0.04); for (let i = 0; i < 5; i++) FX.ember(PA.x, 0.3, PA.z); }
     if (G.mirHit && Math.random() < dt * 20) FX.sparkle(PA.x + (Math.random() - 0.5) * 0.4, 0.4 + Math.random() * 0.3, PA.z + (Math.random() - 0.5) * 0.4, [2.6, 2.0, 1.2], 0.4);
-    G.meter -= lv.burn * f * fm * dt * (Save.data.settings.assist ? 0.7 : 1); G.expTotal += f * act.burnMul() * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
+    G.meter -= lv.burn * f * fm * dt * (Save.data.settings.assist ? 0.7 : 1) * G.helpK; G.expTotal += f * act.burnMul() * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
     G.trauma = Math.max(G.trauma, 0.12 + f * 0.12);
     G.hapT -= dtR; if (G.hapT <= 0) { haptic(10); G.hapT = 0.28; }
   } else {
-    G.meter = Math.min(1, G.meter + lv.regen * dt);
+    G.meter = Math.min(1, G.meter + lv.regen * (2 - G.helpK) * dt);
     if (G.burnEp > 0) endEpisode();
   }
   act.step(dt, f, G.T > lv.walkDelay && !G.waiting && !G.holding);

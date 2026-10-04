@@ -615,7 +615,15 @@ function generateLevel(spec, attempt = 0) {
   // ---- güneş patlamaları & ışık perileri (ayrı tohum) ----
   const rng2 = new RNG((spec.seed ^ 0x9e3779b9) + attempt);
   lv.flares = null;
-  if (spec.flares) { lv.flares = []; for (let t = rng2.range(3.5, 5); t < T - 2.2; t += rng2.range(6.5, 8.5)) lv.flares.push({ w: t, a: t + 1.25, e: t + 2.55 }); }
+  if (spec.flares) {
+    // patlama, köprü kristalinin yakılması gereken anla çakışmasın (iki zor iş aynı anda gelmesin)
+    const sAt = (t) => (t - lv.walkDelay) * lv.speed;
+    lv.flares = [];
+    for (let t = rng2.range(3.5, 5); t < T - 2.2; t += rng2.range(6.5, 8.5)) {
+      for (const br of lv.bridges) if (sAt(t + 2.55) > br.s0 - 3 && sAt(t + 1.25) < br.s1 + 0.6) t = lv.walkDelay + (br.s1 + 0.6) / lv.speed - 1.25;
+      if (t < T - 2.2) lv.flares.push({ w: t, a: t + 1.25, e: t + 2.55 });
+    }
+  }
   lv.sprites = [];
   for (let k = 0; k < (spec.sprites || 0); k++) {
     const ts = T * (0.18 + (0.62 * (k + 0.5)) / spec.sprites) + rng2.range(-0.8, 0.8);
