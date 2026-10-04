@@ -33,30 +33,61 @@ function guessQuality() {
   return { q, gpu };
 }
 
-/* ---------- uyarlanabilir kalite ---------- */
+/* ---------- uyarlanabilir kalite ----------
+   Kare süresi izlenir: uzun süre yavaşsa önce çözünürlük, sonra kademe düşer.
+   60 Hz ekranda kare süresi 16.7 ms'nin altına inemez; bu yüzden yükseltme "deneme" ile yapılır:
+   kararlı 60 fps sürerse bir kademe denenir, kaldıramazsa geri dönülür ve tavan olarak hatırlanır.
+   Öğrenilen ayar cihaz (GPU adı) için kaydedilir: sonraki açılış doğru kademeden başlar. */
 const Perf = {
-  auto: Save.data.settings.quality === 'auto', level: 1, cap: 3, scale: 1, ema: 16.7, slow: 0, fast: 0, lastChange: 0, ups: 0, gpu: '',
+  auto: Save.data.settings.quality === 'auto', level: 1, cap: 3, scale: 1, ema: 16.7, jit: 0, slow: 0, fast: 0, stable: 0, lastChange: 0, ups: 0, gpu: '', probe: null, ceil: null, t0: 0, dirty: false,
   init() {
-    const g = guessQuality(); this.gpu = g.gpu;
-    if (this.auto) { this.level = g.q; this.cap = Math.min(3, g.q + 1); }
-    else this.level = { low: 0, mid: 1, high: 2, ultra: 3 }[Save.data.settings.quality] ?? 1;
+    const g = guessQuality(); this.gpu = g.gpu; this.probe = null; this.stable = 0; this.slow = 0; this.fast = 0;
+    if (this.auto) {
+      const sv = Save.data.perf;
+      if (sv && sv.gpu === g.gpu && sv.level != null) { this.level = sv.level; this.scale = sv.scale || 1; this.ceil = sv.ceil || null; this.cap = Math.min(3, Math.max(sv.level, g.q) + 1); }
+      else { this.level = g.q; this.scale = 1; this.ceil = null; this.cap = Math.min(3, g.q + 1); }
+    } else { this.level = { low: 0, mid: 1, high: 2, ultra: 3 }[Save.data.settings.quality] ?? 1; this.scale = 1; }
   },
   get Q() { return QUALITY[this.level]; },
+  key() { return this.level * 10 + Math.round(this.scale * 100) / 100; },
+  remember() { if (!this.auto) return; Save.data.perf = { gpu: this.gpu, level: this.level, scale: this.scale, ceil: this.ceil }; Save.save(); this.dirty = false; },
+  down() {
+    if (this.scale > 0.76) { this.scale = Math.round((this.scale - 0.12) * 100) / 100; onResize(); }
+    else if (this.level > 0) { this.level--; this.scale = 0.92; applyQuality(); }
+    else return false;
+    return true;
+  },
+  nextUp() { if (this.scale < 1) return { level: this.level, scale: Math.min(1, Math.round((this.scale + 0.08) * 100) / 100) }; if (this.level < this.cap) return { level: this.level + 1, scale: 1 }; return null; },
+  up() {
+    const n = this.nextUp(); if (!n) return false;
+    if (this.ceil != null && n.level * 10 + n.scale >= this.ceil - 1e-6) return false; // bu kademe daha önce kaldırılamadı
+    const lv = n.level !== this.level; this.level = n.level; this.scale = n.scale; if (lv) applyQuality(); else onResize();
+    return true;
+  },
   sample(ms, now) {
     if (ms > 120) return; // tekil takılmalar (derleme vb.) sayılmaz
-    this.ema = lerp(this.ema, ms, 0.06);
-    if (!this.auto || now - this.lastChange < 2.5) return;
-    if (this.ema > 21.5) { this.slow += ms / 1000; this.fast = 0; } else { this.slow = Math.max(0, this.slow - ms / 2000); }
-    if (this.ema < 13.8) this.fast += ms / 1000; else this.fast = 0;
-    if (this.slow > 1.4) {
-      this.slow = 0; this.lastChange = now;
-      if (this.scale > 0.76) { this.scale = Math.round((this.scale - 0.12) * 100) / 100; onResize(); }
-      else if (this.level > 0) { this.level--; this.scale = 0.92; applyQuality(); }
-    } else if (this.fast > 6 && this.ups < 3) {
-      this.fast = 0; this.lastChange = now; this.ups++;
-      if (this.scale < 1) { this.scale = Math.min(1, this.scale + 0.08); onResize(); }
-      else if (this.level < this.cap) { this.level++; applyQuality(); }
+    if (!this.t0) this.t0 = now;
+    this.ema = lerp(this.ema, ms, 0.06); this.jit = lerp(this.jit, Math.abs(ms - this.ema), 0.06);
+    if (!this.auto) return;
+    const warm = now - this.t0 < 14, lock = warm ? 0.9 : 2.5; // açılışta (film sırasında) hızlı karar
+    if (now - this.lastChange < lock) return;
+    // deneme yükseltmesi kaldırılamadıysa geri dön, bu kademeyi tavan say
+    if (this.probe) {
+      if (this.ema > 18.4) { const p = this.probe; this.probe = null; this.ceil = this.ceil == null ? this.key() : Math.min(this.ceil, this.key()); this.level = p.level; this.scale = p.scale; this.lastChange = now; applyQuality(); this.remember(); return; }
+      if (now - this.probe.t > 5) { this.probe = null; this.remember(); }
     }
+    if (this.ema > 21.5) { this.slow += ms / 1000; this.fast = 0; this.stable = 0; } else this.slow = Math.max(0, this.slow - ms / 2000);
+    if (this.ema < 13.8) this.fast += ms / 1000; else this.fast = 0;
+    if (this.ema < 17.6 && this.jit < 2.2) this.stable += ms / 1000; else this.stable = Math.max(0, this.stable - ms / 500);
+    if (this.slow > (warm ? 0.6 : 1.4)) {
+      this.slow = 0; this.stable = 0; this.lastChange = now; this.probe = null;
+      const failed = this.key(); if (this.down()) { this.ceil = this.ceil == null ? failed : Math.min(this.ceil, failed); this.dirty = true; }
+    } else if ((this.fast > 6 && this.ups < 3) || (this.stable > 9 && !this.probe && this.ups < 4)) {
+      const from = { level: this.level, scale: this.scale };
+      this.fast = 0; this.stable = 0;
+      if (this.up()) { this.ups++; this.lastChange = now; this.probe = { ...from, t: now }; }
+    }
+    if (this.dirty && now - this.lastChange > 12) this.remember();
   },
 };
 Perf.init();
@@ -192,8 +223,9 @@ class Post {
     for (let i = 0; i < n - 1; i++) this.ups.push(new THREE.WebGLRenderTarget(this.rts[i].width, this.rts[i].height, opt));
     if (Q.rays) this.rtRays = new THREE.WebGLRenderTarget(this.rts[1].width, this.rts[1].height, opt);
     const defines = {}; if (Q.tilt) defines.TILT = 1; if (Q.rays) defines.RAYS = 1;
-    if (this.comp) this.comp.dispose();
-    this.comp = mkPass(COMP_FRAG, this.u, defines);
+    // yalnızca efekt seti değişince yeni shader (boyut değişiminde yeniden derleme takılması olmasın)
+    const dk = (Q.tilt ? 'T' : '') + (Q.rays ? 'R' : '');
+    if (!this.comp || this.compKey !== dk) { if (this.comp) this.comp.dispose(); this.comp = mkPass(COMP_FRAG, this.u, defines); this.compKey = dk; }
     this.u.uLevels.value = n; this.u.uRes.value.set(w, h); this.u.uAspect.value = w / h; this.rays.uniforms.uAspect.value = w / h;
   }
   dispose() {

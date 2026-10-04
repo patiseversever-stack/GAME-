@@ -3,15 +3,24 @@
    GÜNCELLEME DÖNGÜSÜ
    ===================================================================== */
 const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
+const _pc = {};
 const viewCtx = {
+  // bulut/balon Zifir'i ya da önündeki yolu (3,5 m'ye kadar) örtüyorsa saydamlaşır: oyuncu ilerisini görebilsin
   occludeFade(pos, r) {
     if (!zifir.g.visible) return 0;
-    const zp = zifir.g.position, dObj = camera.position.distanceTo(pos), dZ = camera.position.distanceTo(zp);
-    if (dObj > dZ - 0.5) return 0;
-    _pa.copy(pos).project(camera); _pb.set(zp.x, 0.3, zp.z).project(camera);
-    const d = Math.hypot((_pa.x - _pb.x) * camera.aspect, _pa.y - _pb.y);
-    const rs = r / dObj / Math.tan(deg(camera.fov / 2));
-    return 1 - smoothstep(rs * 0.6, rs * 1.25, d);
+    const lv = G.lv, dObj = camera.position.distanceTo(pos), rs = r / dObj / Math.tan(deg(camera.fov / 2));
+    _pa.copy(pos).project(camera);
+    let best = 0;
+    for (const ahead of [0, 1.5, 3.5]) {
+      let x = zifir.g.position.x, z = zifir.g.position.z;
+      if (ahead && lv) { pathAt(lv.path, Math.min(lv.length, G.s + ahead), _pc); x = _pc.x; z = _pc.z; }
+      _pb.set(x, 0.3, z);
+      if (dObj > camera.position.distanceTo(_pb) - 0.5) continue;
+      _pb.project(camera);
+      const d = Math.hypot((_pa.x - _pb.x) * camera.aspect, _pa.y - _pb.y);
+      best = Math.max(best, (1 - smoothstep(rs * 0.6, rs * 1.25, d)) * (ahead ? 0.85 : 1));
+    }
+    return best;
   },
   near(pos) { return camera.position.distanceTo(pos) < 48; },
   dim() { return Math.max(G.night, G.ecl.amt); },
@@ -107,7 +116,17 @@ function stepPlay(dt, dtR) {
   sunDirs(G.u, lv.sun, L1, L2);
   updateCrystals(dt);
   // ilerleme (köprüde bekleme)
-  if (G.T > lv.walkDelay) {
+  // Bekle: basılı tutulurken Zifir durur; sabır azalır, yürürken yavaşça dolar
+  const wantHold = !!(G.holdWait && lv.spec.wait && G.T > lv.walkDelay && !G.waiting && G.s < lv.length - 0.6);
+  if (wantHold && G.patience > 0) {
+    if (!G.holding) { G.holding = true; zifir.kick(-2.6); audio.tock(true); haptic(8); }
+    G.patience = Math.max(0, G.patience - dt); G.holdT += dt;
+    if (G.patience <= 0) { G.holding = false; zifir.kick(3); audio.pop(4); popText(PA.x, 1.0, PA.z, 'sabrı tükendi'); }
+  } else {
+    if (G.holding) { G.holding = false; zifir.kick(2.4); }
+    if (!G.waiting && G.T > lv.walkDelay) G.patience = Math.min(PATIENCE_MAX, G.patience + PATIENCE_REGEN * dt);
+  }
+  if (G.T > lv.walkDelay && !G.holding) {
     let ns = G.s + lv.speed * act.speedMul() * dt;
     const wasWaiting = G.waiting; G.waiting = false;
     for (const br of lv.bridges) {
@@ -128,14 +147,14 @@ function stepPlay(dt, dtR) {
   if (f > 0) {
     if (G.burnEp === 0) { audio.whoosh(true, 0.2, 0.04); for (let i = 0; i < 5; i++) FX.ember(PA.x, 0.3, PA.z); }
     if (G.mirHit && Math.random() < dt * 20) FX.sparkle(PA.x + (Math.random() - 0.5) * 0.4, 0.4 + Math.random() * 0.3, PA.z + (Math.random() - 0.5) * 0.4, [2.6, 2.0, 1.2], 0.4);
-    G.meter -= lv.burn * f * fm * dt; G.expTotal += f * act.burnMul() * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
+    G.meter -= lv.burn * f * fm * dt * (Save.data.settings.assist ? 0.7 : 1); G.expTotal += f * act.burnMul() * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
     G.trauma = Math.max(G.trauma, 0.12 + f * 0.12);
     G.hapT -= dtR; if (G.hapT <= 0) { haptic(10); G.hapT = 0.28; }
   } else {
     G.meter = Math.min(1, G.meter + lv.regen * dt);
     if (G.burnEp > 0) endEpisode();
   }
-  act.step(dt, f, G.T > lv.walkDelay && !G.waiting);
+  act.step(dt, f, G.T > lv.walkDelay && !G.waiting && !G.holding);
   if (lv.sprites && lv.sprites.length && !window.__noWisps) {
     const ev = wisps.step(dt, G.T, PA.x, PA.z, f === 0, act.dashT > 0 || G.ecl.amt > 0.5);
     if (ev) onWisp(ev);
@@ -224,7 +243,7 @@ function updateZifirView(dtR) {
   pathAt(lv.path, G.s, PA);
   const looking = G.drag || Math.abs(G.uSV) > 0.25;
   zifir.update(dtR, {
-    x: PA.x, z: PA.z, yaw: Math.atan2(PA.tx, PA.tz), moving: G.state === 'play' && G.T > lv.walkDelay && !G.waiting, speed: lv.speed * (G.slowT > 0 ? G.slowK : 1),
+    x: PA.x, z: PA.z, yaw: Math.atan2(PA.tx, PA.tz), moving: G.state === 'play' && G.T > lv.walkDelay && !G.waiting && !G.holding, speed: lv.speed * (G.slowT > 0 ? G.slowK : 1),
     burn: G.state === 'play' ? G.f * act.burnMul() : G.state === 'fail' ? 1 : 0, meter: G.state === 'fail' ? 0.4 : G.meter, look: looking ? orb.g.position : camera.position, mood: 0, dive: act.diveK,
   });
   U.uZifir.value.set(PA.x, 0, PA.z);
@@ -242,7 +261,7 @@ function update(dt, dtR) {
   updateSunControl(dtR);
   const lv = G.lv;
   // ada girişi (durumdan bağımsız sürer)
-  if (G.view && G.view.introT < 3.5) {
+  if (G.view && !G.view.introDone) {
     if (G.view.intro(dtR)) renderer.shadowMap.needsUpdate = true;
     const zt = (G.introDur || 2) - 0.8;
     if (G.view.introT > zt && !G.zShown && (G.state === 'title' || G.state === 'intro' || G.state === 'ready')) {
@@ -329,7 +348,7 @@ function update(dt, dtR) {
   // post
   const pu = post.u, ecl = G.ecl.amt;
   pu.uTime.value = U.uTime.value; pu.uFlash.value = G.flash; pu.uFlashCol.value.copy(G.flashCol);
-  pu.uCA.value = G.ca + (G.state === 'play' ? G.f * 0.004 : 0);
+  pu.uCA.value = Math.min(0.006, G.ca * 0.45 + (G.state === 'play' ? G.f * 0.0022 : 0)); // renk kayması: hissettir ama ekranı bozma
   pu.uDesat.value = clamp01(G.desat + ecl * 0.08);
   pu.uExposure.value = 1.0 - ecl * 0.06 + G.night * 0.15 + flare.k * 0.1;
   pu.uNight.value = G.night;
@@ -384,10 +403,16 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') { G.keyDir = 1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { if (G.state === 'play') act.dash(); }
+  else if (e.code === 'ArrowDown' || e.code === 'KeyS') { G.holdWait = true; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'Space') { if (G.state === 'play') { if (G.lv.spec.eclipse && G.ecl.charge >= 1) triggerEclipse(); else act.dash(); } else if (G.state === 'ready') startPlay(); else if (G.state === 'complete' && G.compStage >= 5) nextFromComplete(); else if (G.state === 'fail' && G.fShown) retry(); else if (G.state === 'title') $('#btnPlay').click(); }
   else if (e.code === 'Escape' || e.code === 'KeyP') { if (G.state === 'paused') resume(); else pause(); }
 });
-window.addEventListener('keyup', (e) => { if (['ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD'].includes(e.code)) G.keyDir = 0; });
+window.addEventListener('keyup', (e) => { if (['ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD'].includes(e.code)) G.keyDir = 0; if (e.code === 'ArrowDown' || e.code === 'KeyS') G.holdWait = false; });
+// Bekle düğmesi: basılı tutuldukça
+{
+  const wb = $('#waitBtn'), on = (v) => (e) => { e.stopPropagation(); e.preventDefault(); audio.unlock(); G.holdWait = v; wb.classList.toggle('hold', v); if (v) try { wb.setPointerCapture(e.pointerId); } catch (err) {} };
+  wb.addEventListener('pointerdown', on(true)); for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) wb.addEventListener(ev, on(false));
+}
 document.addEventListener('touchmove', (e) => { if (!e.target.closest || !e.target.closest('#chapters')) e.preventDefault(); }, { passive: false });
 document.addEventListener('gesturestart', (e) => e.preventDefault());
 document.addEventListener('dblclick', (e) => e.preventDefault());
@@ -562,8 +587,38 @@ function applyQuality() {
   const Q = Perf.Q;
   setShadowSize(Q.shadow); buildSeaMat(Q.cloudOct); setParticleCap(Q.particles);
   post.u.uFlare.value = Q.flare;
-  if (G.view && G.view.grass) G.view.grass.count = Math.min(G.view.grass.count, Q.grass);
+  if (G.view) G.view.setGrass(Q);
   onResize();
+}
+// Shader ön ısıtma: tüm dünyaların malzemeleri hem tek hem ikiz güneş ışık düzeniyle önceden derlenir.
+// Böylece yeni dünyaya (özellikle İkiz Güneş'e) girerken tüm programların yeniden derlenmesi takılması olmaz.
+// Derleme çağrıları GPU sürecinde arka planda işler; başlık ekranında boşta yapılır.
+let shadersWarm = false;
+function warmShaders() {
+  if (shadersWarm) return; shadersWarm = true;
+  try {
+    const geo = new THREE.BoxGeometry(0.1, 0.1, 0.1); geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(geo.attributes.position.count * 3).fill(1), 3));
+    const cv = document.createElement('canvas'); cv.width = cv.height = 4; const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
+    const tmp = [
+      worldMat({ vertexColors: true, roughness: 0.92, metalness: 0, flatShading: true }), worldMat({ map: tex, roughness: 0.95, metalness: 0 }),
+      worldMat({ vertexColors: true, roughness: 1, metalness: 0, emissive: 0xfff2e6, emissiveIntensity: 0.16, transparent: true, opacity: 0.9, depthWrite: false }, { noFog: true }),
+      worldMat({ vertexColors: true, roughness: 0.62, metalness: 0, transparent: true, opacity: 1 }, { noFog: true }), worldMat({ color: 0x7a5636, roughness: 0.9, transparent: true }, { noFog: true }),
+      envMat(new THREE.MeshStandardMaterial({ color: 0xc8b8ff, emissive: 0x8a6cff, roughness: 0.15, metalness: 0.1 })),
+      envMat(new THREE.MeshStandardMaterial({ color: 0x3a2f5a, roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.55, emissive: 0x2a1e5a })),
+      new THREE.MeshStandardMaterial({ color: '#ff8fb5', roughness: 0.8 }),
+    ];
+    const mats = [matProp, matPropSmooth, matWindow, MAT_ICE(), MAT_GOLD(), MAT_BRASS(), MAT_COPPER(), MAT_MIRROR(), MAT_WATER(), MAT_CLOCKFACE(), ...tmp];
+    const grp = new THREE.Group(); grp.visible = false;
+    for (const m of mats) { const o = new THREE.Mesh(geo, m); o.receiveShadow = true; grp.add(o); }
+    for (const m of [matGrass, matFlower]) { const o = new THREE.InstancedMesh(geo, m, 1); o.setMatrixAt(0, new THREE.Matrix4()); o.setColorAt(0, new THREE.Color(1, 1, 1)); o.receiveShadow = true; grp.add(o); }
+    scene.add(grp);
+    const prev = renderer.getRenderTarget(), v2 = sunLight2.visible, c2 = sunLight2.castShadow;
+    renderer.setRenderTarget(post.rtScene);
+    for (const tw of [false, true]) { sunLight2.visible = tw; sunLight2.castShadow = tw; renderer.compile(scene, camera); }
+    sunLight2.visible = v2; sunLight2.castShadow = c2; renderer.setRenderTarget(prev);
+    scene.remove(grp);
+    setTimeout(() => { geo.dispose(); tex.dispose(); for (const m of tmp) m.dispose(); }, 4000);
+  } catch (e) { console.warn('ön ısıtma', e); }
 }
 let resizeTimer = 0;
 window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(onResize, 120); });
@@ -595,6 +650,7 @@ function frame(now) {
   if (G.slowT > 0) { G.slowT -= dtR; dt *= lerp(1, G.slowK, smoothstep(0, 0.2, G.slowT)); }
   if (G.state === 'paused') dt = 0;
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
+  audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k };
   audio.update(dtR, G.state === 'play');
   const onMap = G.state === 'map' && SkyMap.active, onTh = G.state === 'theater' && Theater.active;
   if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
@@ -699,7 +755,7 @@ const Film = {
     if (t > 4.85 && !this.uiShown) { this.uiShown = true; this.showUi(); }
     if (t >= this.dur) this.finish();
   },
-  showUi() { $('#filmSkip').classList.remove('on'); if (!Save.seen('tutorial')) setTimeout(() => TUT.show('boot'), 500); else UI.show('title'); },
+  showUi() { setTimeout(warmShaders, 1500); $('#filmSkip').classList.remove('on'); if (!Save.seen('tutorial')) setTimeout(() => TUT.show('boot'), 500); else UI.show('title'); },
   skip() {
     if (!this.active || !this.started) return;
     audio.whoosh(true, 0.5, 0.05);
@@ -727,6 +783,7 @@ function popZifir() {
 }
 
 function bootGame() {
+  GenW.init();
   applyQuality();
   const word = 'Gündönümü';
   $('#titleWord').innerHTML = [...word].map((c, i) => `<span class="ch" style="transition-delay:${0.35 + i * 0.07}s">${c}</span>`).join('');
@@ -737,7 +794,7 @@ function bootGame() {
   applyLighting(0); refreshEnv(); refreshEnvSoon = -1; // ortam haritası gündüz göğünden
   Film.prepare(); applyLighting(0);
   Cam.update(0, 0);
-  try { renderer.compile(scene, camera); } catch (e) {}
+  try { const pr = renderer.getRenderTarget(); renderer.setRenderTarget(post.rtScene); renderer.compile(scene, camera); renderer.setRenderTarget(pr); } catch (e) {}
   try { post.render(scene, camera); } catch (e) {} // efekt shader'ları şimdi derlensin (sonradan takılma olmasın)
   requestAnimationFrame((t) => { lastT = t; frame(t); });
   // yükleme kartı: motor hazır ve en az birkaç kare çizildikten sonra kalkar, film başlar

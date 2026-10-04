@@ -77,6 +77,7 @@ for (const L of [sunLight, sunLight2]) {
 sunLight2.castShadow = false; sunLight2.visible = false;
 scene.add(hemi);
 function setShadowSize(n) {
+  if (sunLight.shadow.mapSize.x === n) return;
   for (const L of [sunLight, sunLight2]) { L.shadow.mapSize.set(n, n); if (L.shadow.map) { L.shadow.map.dispose(); L.shadow.map = null; } }
   renderer.shadowMap.needsUpdate = true;
 }
@@ -126,6 +127,34 @@ const skyMat = new THREE.ShaderMaterial({ vertexShader: SKY_VERT, fragmentShader
 const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 48, 24), skyMat); sky.renderOrder = -10; sky.frustumCulled = false;
 scene.add(sky);
 // ortam haritası için küçük kopya
+// Ortam yansıması (IBL) yalnızca parlak yüzeylere: mat yüzeylerde görsel katkısı ~0, sahne maliyetinin üçte biri.
+// Önceden tüm mat yüzeyler sahne ortamını 0.4 güçle alıyordu; aynı görünüm yarım küre ışığıyla telafi edilir.
+// Mat yüzeylerin aldığı dağınık gök ışığı: gökyüzü işlevinden küresel harmoniklerle (9 katsayı) hesaplanır.
+const ENV_MATS = new Set();
+const IBLK = { hemi: 1, probe: 0.4 };
+const envProbe = new THREE.LightProbe(); envProbe.intensity = IBLK.probe;
+const SH_DIRS = (() => { const n = 384, a = []; for (let i = 0; i < n; i++) { const y = 1 - ((i + 0.5) / n) * 2, r = Math.sqrt(1 - y * y), ph = i * 2.399963; a.push(new THREE.Vector3(Math.cos(ph) * r, y, Math.sin(ph) * r)); } return a; })();
+const _shB = new Array(9).fill(0), _shC = new THREE.Color();
+const _sm = (a, b, x) => { const t = clamp01((x - a) / (b - a)); return t * t * (3 - 2 * t); };
+// SKY_FRAG ile aynı (yıldız ve kutup ışıkları hariç)
+function skyColorAt(d, o) {
+  const S = skyU, h = d.y, k = Math.pow(_sm(-0.03, 0.9, h), 0.55);
+  o.copy(S.uHor.value).lerp(S.uZen.value, k); o.lerp(S.uBelow.value, 1 - _sm(-0.3, 0.03, h));
+  const ecl = 1 - S.uEclipse.value * 0.92, sd = Math.max(0, d.dot(S.uSunDir.value));
+  const g1 = (Math.pow(sd, 5) * 0.32 + Math.pow(sd, 48) * 0.6) * ecl * (1 - S.uNight.value * 0.85);
+  const hx = d.x, hz = d.z, hl = Math.hypot(hx, hz) || 1, sx = S.uSunDir.value.x, sz = S.uSunDir.value.z, sl = Math.hypot(sx, sz) || 1;
+  const g2 = 0.22 * Math.exp(-Math.abs(h - 0.02) * 9) * Math.pow(Math.max(0, (hx * sx + hz * sz) / (hl * sl)), 2) * ecl * (1 - S.uNight.value * 0.8);
+  o.r += S.uSunCol.value.r * (g1 + g2); o.g += S.uSunCol.value.g * (g1 + g2); o.b += S.uSunCol.value.b * (g1 + g2);
+  if (S.uTwin.value > 0.5) { const s2 = Math.max(0, d.dot(S.uSun2Dir.value)), g3 = (Math.pow(s2, 6) * 0.28 + Math.pow(s2, 60) * 0.5) * ecl; o.r += S.uSun2Col.value.r * g3; o.g += S.uSun2Col.value.g * g3; o.b += S.uSun2Col.value.b * g3; }
+  return o;
+}
+function updateEnvProbe() {
+  const c = envProbe.sh.coefficients; for (const v of c) v.set(0, 0, 0);
+  for (const d of SH_DIRS) { skyColorAt(d, _shC); THREE.SphericalHarmonics3.getBasisAt(d, _shB); for (let k = 0; k < 9; k++) { c[k].x += _shC.r * _shB[k]; c[k].y += _shC.g * _shB[k]; c[k].z += _shC.b * _shB[k]; } }
+  const w = (4 * PI) / SH_DIRS.length; for (const v of c) v.multiplyScalar(w);
+}
+function envMat(m, k = 0.4) { m.envMapIntensity = k; ENV_MATS.add(m); m.addEventListener('dispose', () => ENV_MATS.delete(m)); if (envRT) { m.envMap = envRT.texture; m.needsUpdate = true; } return m; }
+scene.add(envProbe);
 const envScene = new THREE.Scene(); envScene.add(new THREE.Mesh(new THREE.SphereGeometry(40, 32, 16), skyMat));
 const pmrem = new THREE.PMREMGenerator(renderer);
 let envRT = null;
@@ -133,7 +162,8 @@ function refreshEnv() {
   const prev = envRT;
   sky.position.set(0, 0, 0);
   envRT = pmrem.fromScene(envScene, 0.02, 0.1, 100);
-  scene.environment = envRT.texture; scene.environmentIntensity = 0.4;
+  scene.environment = null; updateEnvProbe(); envProbe.intensity = IBLK.probe;
+  for (const m of ENV_MATS) { const first = !m.envMap; m.envMap = envRT.texture; if (first) m.needsUpdate = true; }
   brassMat.envMap = silverMat.envMap = envRT.texture; brassMat.needsUpdate = silverMat.needsUpdate = true;
   if (prev) prev.dispose();
 }
@@ -164,6 +194,7 @@ const sea = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400, 1, 1), null);
 sea.rotation.x = -PI / 2; sea.position.y = -16; sea.renderOrder = -5;
 scene.add(sea);
 function buildSeaMat(oct) {
+  if (seaMat && seaMat.defines.OCT === oct) return;
   if (seaMat) seaMat.dispose();
   seaMat = new THREE.ShaderMaterial({ vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`, fragmentShader: SEA_FRAG, uniforms: seaU, defines: { OCT: oct }, depthWrite: true });
   sea.material = seaMat;

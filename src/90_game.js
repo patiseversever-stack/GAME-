@@ -11,6 +11,7 @@ const G = {
   night: 0, nightR: 0, stateT: 0, introDur: 1.9, readyT: 0, hint: false, auto: false, nextHeart: 0, hapT: 0,
   endless: null, cache: new Map(), stars: [false, false, false], from: 'title', zifirScale: 1, beatT: 0,
 };
+const PATIENCE_MAX = 3.0, PATIENCE_REGEN = 0.18;
 const zifir = new Zifir();
 const drops = new DropViews();
 const L1 = new THREE.Vector3(), L2 = new THREE.Vector3(), PA = {};
@@ -154,7 +155,7 @@ function applyLighting(dt) {
   sunLight.intensity *= 1 + flare.k * 0.5;
   if (lv.sun.twin) { sunLight2.position.copy(L2).multiplyScalar(60); sunLight2.target.position.set(0, 0, 0); sunLight2.intensity = 2.0 * (1 - ecl * 0.94); sunLight.intensity *= 0.8; }
   hemi.color.copy(scA.hemiS).lerp(_cc.set('#3a4a9a'), ecl * 0.7); hemi.groundColor.copy(scA.hemiG).lerp(_cc.set('#1a1830'), ecl * 0.7);
-  hemi.intensity = lerp(0.62, 0.85, k) * LK.hemi * (1 - ecl * 0.55);
+  hemi.intensity = lerp(0.62, 0.85, k) * LK.hemi * (1 - ecl * 0.55) * IBLK.hemi;
   // küreler
   orbPosInto(G.u, lv.sun.tilt, lv.sun.thMin, orb.g.position);
   orb.u.uCol.value.copy(scA.sun).lerp(_cc.set('#fff4dc'), 0.4);
@@ -192,9 +193,18 @@ function getLevel(spec) {
   return buildLevel(spec);
 }
 function prebuild(spec) { const k = specKey(spec); if (!G.cache.has(k)) { const lv = buildLevel(spec); if (lv) G.cache.set(k, lv); } while (G.cache.size > 2) G.cache.delete(G.cache.keys().next().value); }
+// arka planda (Worker) üret: hazır olunca önbelleğe girer; olmazsa geçişte eşzamanlı üretime düşülür
+const _bg = new Set();
+function prebuildBg(spec) {
+  const k = specKey(spec); if (G.cache.has(k) || _bg.has(k)) return;
+  if (!GenW.ok) return;
+  _bg.add(k);
+  GenW.build(spec).then((lv) => { _bg.delete(k); if (lv && !G.cache.has(k)) { G.cache.set(k, lv); while (G.cache.size > 3) G.cache.delete(G.cache.keys().next().value); } });
+}
+function nextSpecOf(spec) { if (!spec) return null; if (spec.kind === 'story') return spec.g < STORY_LEVELS - 1 ? levelSpec(spec.g + 1) : null; if (spec.kind === 'endless' && G.endless) return endlessSpec(spec.n + 1, G.endless.seed); return null; }
 function resetRun() {
   const lv = G.lv;
-  G.T = 0; G.s = 0; G.meter = 1; G.minMeter = 1; G.waitT = 0; G.expTotal = 0; G.f = 0; G.burnEp = 0; G.epMin = 1; G.waiting = false; G.dropsGot = 0; G.combo = 0;
+  G.T = 0; G.s = 0; G.meter = 1; G.minMeter = 1; G.waitT = 0; G.patience = PATIENCE_MAX; G.holding = false; G.holdT = 0; G.expTotal = 0; G.f = 0; G.burnEp = 0; G.epMin = 1; G.waiting = false; G.dropsGot = 0; G.combo = 0;
   G.ecl.active = false; G.ecl.t = 0; G.ecl.amt = 0; G.ecl.charge = lv.spec.eclipse ? 1 : 0;
   G.timeScale = 1; G.slowT = 0; G.hitStop = 0; G.trauma = 0; G.desat = 0; G.ca = 0; G.readyT = 0;
   for (const d of lv.drops) { d.hp = 1; d.state = 0; d.awake = false; d.lit = false; }
@@ -227,12 +237,12 @@ function enterLevel(spec, opts = {}) {
   if (G.view) { if (G.outView) G.outView.dispose(); G.outView = G.view; G.outT = 0; }
   G.spec = spec; setChapterLook(lv); G.lv = lv;
   G.view = new IslandView(lv);
-  try { renderer.compile(scene, camera); } catch (e) {}
+  try { const pr = renderer.getRenderTarget(); renderer.setRenderTarget(post.rtScene); renderer.compile(scene, camera); renderer.setRenderTarget(pr); } catch (e) {}
   resetRun();
   zifir.g.visible = false;
   Cam.fit(lv);
   G.state = 'intro'; G.stateT = 0; G.userSun = false; G.zShown = false; G.zPop = 0;
-  G.introDur = opts.title ? 3.2 : spec.kind === 'story' && spec.i === 0 && !opts.quick ? 3.0 : 2.0;
+  G.introDur = opts.title ? 3.2 : spec.finale ? 3.4 : spec.kind === 'story' && spec.i === 0 && !opts.quick ? 3.0 : 2.0;
   G.u = G.uT = 0.0; G.uSV = 0;
   refreshEnvSoon = 0.3;
   renderer.shadowMap.needsUpdate = true;
@@ -241,12 +251,18 @@ function enterLevel(spec, opts = {}) {
     const tp = Cam.title;
     Cam.set(Cam.cur, { target: tp.target.clone().add(new THREE.Vector3(0, 10, -8)), dist: tp.dist * 2.4, pitch: deg(78), yaw: 0, fov: tp.fov });
     Cam.cinema({ target: tp.target.clone(), dist: tp.dist, pitch: tp.pitch, yaw: 0, fov: tp.fov }, 3.2, Ease.inOutCubic);
+  } else if (!opts.keepCam && spec.finale) {
+    // dünya finali: alçak, yandan bir açıdan adanın etrafında süzülerek yerine oturan kamera
+    Cam.set(Cam.cur, Cam.pose({ yaw: 0.9, pitch: deg(24), dist: Cam.base.dist * 0.78 }));
+    Cam.cinema(Cam.pose(), 3.0, Ease.inOutCubic);
+    setTimeout(() => { if (G.lv === lv) banner('Final', `${lv.chap.constellation} takımyıldızının son yıldızı`); }, 700);
   } else if (!opts.keepCam) {
     Cam.cinema(Cam.pose({ dist: Cam.base.dist * 1.25, pitch: Cam.base.pitch + deg(6) }), 0.6, Ease.outCubic);
     setTimeout(() => { if (G.lv === lv) Cam.cinema(Cam.pose(), 1.4, Ease.inOutCubic); }, 600);
   }
   if (spec.kind === 'story' && spec.i === 0 && !opts.title) showChapterCard(lv.chap);
   updateHud(true);
+  { const ns = nextSpecOf(spec); if (ns) setTimeout(() => prebuildBg(ns), 1500); }
   if (window.__gdHook) window.__gdHook('enter', lv);
 }
 let refreshEnvSoon = -1;
@@ -267,6 +283,7 @@ function startPlay() {
   if (lv.spec.features.windmills && lv.movers.some((m) => m.kind === 'sails')) setTimeout(() => { if (G.state === 'play') tip('t-mill', 'Değirmen kanatları gölgeyi <em>böler</em>.', 3.5); }, 5000);
   if (lv.spec.features.balloons) tip('t-balloon', 'Balonlar yüksekte: <em>alçak güneş</em> gölgelerini uzağa savurur.', 4.2);
   if (lv.bridges.length) tip('t-bridge', 'Köprü yalnızca <em>kristal ışıktayken</em> belirir. Zifir bekler — ama gölgede tut!', 4.6);
+  if (lv.spec.wait && (g >= 4 || g < 0)) setTimeout(() => { if (G.state === 'play') tip('t-wait2', '<em>Bekle</em>: basılı tut, Zifir olduğu yerde durur — bulutu, sarkacı ya da patlamanın geçmesini gölgede bekle. Sabrı sınırlı; yürüdükçe dolar. (Klavye: ↓)', 5.2); }, 2600);
   if (lv.spec.dash && g >= 2) setTimeout(() => { if (G.state === 'play') tip('t-dash', '<em>Dal</em>: Zifir bir an mürekkebe gömülür — ışık neredeyse işlemez. Sol alttaki düğme ya da ↑', 4.4); }, 1800);
   if (lv.sprites && lv.sprites.length) setTimeout(() => { if (G.state === 'play') tip('t-wisp', '<em>Işık perileri</em> Zifir’e süzülür: gölgedeyken ya da <em>dalarken</em> yut, ışıkta yakar!', 4.6); }, Math.max(0, (lv.sprites[0].t - 1.2) * 1000));
   if (lv.flares) setTimeout(() => { if (G.state === 'play') tip('t-flare', '<em>Güneş patlaması</em>: uyarı çubuğu dolunca ışık iki kat yakar. Önceden gölgeye gir!', 4.4); }, Math.max(0, (lv.flares[0].w - 0.3) * 1000));
@@ -309,6 +326,11 @@ function showFail() {
     $('#fTitle').textContent = lines[(Save.data.fails[lv.spec.g] || 0) % lines.length];
     $('#fSub').textContent = `Yol · %${pct}`;
     $('#fProg').style.width = '0%'; requestAnimationFrame(() => { $('#fProg').style.width = pct + '%'; });
+  }
+  if (G.mode === 'story') {
+    const nf = Save.data.fails[lv.spec.g] || 0;
+    if (lv.spec.dash && act.dives === 0 && nf >= 2) setTimeout(() => tip('t-dash2', 'İpucu: ışığa yakalanınca <em>Dal</em>’a bas — yanma %85 azalır.', 4.2), 600);
+    else if (nf >= 5 && !Save.data.settings.assist) setTimeout(() => tip('t-assist', 'Zorlanıyorsan <em>Ayarlar → Rahat mod</em>: ışık daha yavaş yakar.', 4.2), 600);
   }
   $('#fail').classList.toggle('offerhint', G.mode === 'story' && (Save.data.fails[lv.spec.g] || 0) >= 3 && !G.hint);
   UI.hud(false); UI.show('fail');
@@ -356,7 +378,7 @@ function showComplete() {
   $('#complete').classList.remove('ready');
   UI.hud(false); UI.show('complete');
   G.compRes = res;
-  if (G.mode === 'story' && !last) setTimeout(() => { if (G.state === 'complete') prebuild(levelSpec(sp.g + 1)); }, 3800);
+  if (G.mode === 'story' && !last && !GenW.ok) setTimeout(() => { if (G.state === 'complete') prebuild(levelSpec(sp.g + 1)); }, 3800);
 }
 function nextFromComplete() {
   audio.ui();
@@ -395,6 +417,10 @@ function updateHud(force = false) {
   if (force || hudCache.sub !== sub) { $('#lvlSub').textContent = sub; hudCache.sub = sub; }
   if (force || hudCache.drops !== dt) { $('#dropTxt').textContent = dt; hudCache.drops = dt; }
   if (G.endless && (force || hudCache.score !== G.endless.score)) { $('#scoreTxt').textContent = G.endless.score; hudCache.score = G.endless.score; }
+  const wb = $('#waitBtn'), ws = !!lv.spec.wait && G.state !== 'complete';
+  if (force || hudCache.ws !== ws) { wb.classList.toggle('show', ws); hudCache.ws = ws; }
+  const wp = Math.round((G.patience ?? PATIENCE_MAX) / PATIENCE_MAX * 50) / 50;
+  if (force || hudCache.wp !== wp) { wb.style.setProperty('--p', wp); wb.classList.toggle('empty', wp < 0.08); hudCache.wp = wp; }
   const eb = $('#eclipseBtn'), show = lv.spec.eclipse;
   if (force || hudCache.ecl !== show) { eb.classList.toggle('show', show); hudCache.ecl = show; }
   const p = Math.round(G.ecl.charge * 100) / 100;

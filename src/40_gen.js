@@ -36,7 +36,7 @@ function levelSpec(g) {
   if (ch === 4 && i >= 3) spec.features.balloons = i % 2 === 1;
   if (ch === 4 && i >= 5) spec.features.clouds = i % 2 === 0;
   if (finale) { spec.speed *= 1.04; spec.drops += 1; }
-  if (chap.features.twin) { spec.burn *= 0.68; spec.margin = Math.max(spec.margin, 0.52); spec.spacing = Math.min(spec.spacing, 2.7); spec.sunSpeed = 0.58; spec.prune = Math.min(spec.prune, 3); }
+  if (chap.features.twin) { spec.burn *= 0.68; spec.margin = Math.max(spec.margin, 0.45); spec.spacing = Math.min(spec.spacing, 2.7); spec.sunSpeed = 0.58; spec.prune = Math.min(spec.prune, 3); }
   // yeni dünyalar (VI–VIII): kendi zorluk eğrileri
   if (ch >= 5) Object.assign(spec, {
     speed: 1.46 + 0.12 * d + (ch - 5) * 0.05, burn: 0.74 + 0.1 * d + (ch - 5) * 0.03, spacing: lerp(2.4, 3.1, d),
@@ -51,8 +51,19 @@ function levelSpec(g) {
   if (finale && ch >= 2) spec.sprites += 1;
   spec.flares = (finale && ch >= 1) || (ch >= 5 && i >= 4);
   spec.dash = g >= 2;
+  spec.wait = g >= 4;
+  // çeşitlilik: ada biçimi ve yol düzeni (dünyanın ilk adası her zaman tanıdık oval + zikzak)
+  const bridges = !!spec.features.bridges;
+  spec.shape = i === 0 || g < 3 ? 'oval' : ['waist', 'tear', 'oval', 'tearR'][(g * 7 + ch) % 4];
+  spec.layout = i === 0 || g < 3 ? 'zig' : bridges ? (i % 2 ? 'rev' : 'zig') : finale ? 'hair' : ['zig', 'rev', 'zig', 'hair', 'rev', 'zig'][(i - 1) % 6];
+  // U dönüşü ve ters yön ileriyi okumayı zorlaştırır: bu düzenlerde gölge payı biraz geniş tutulur
+  if (spec.layout !== 'zig') spec.margin += LAYOUT_SLACK;
+  // zorluk eğrisi: dünyanın ilk adası nefes aldırır; Tuz Gölü adaları kısa kalmasın
+  if (i === 0 && g > 0) { spec.margin = Math.max(spec.margin, 0.5); spec.speed *= 0.94; spec.prune = 0; }
+  if (bridges) { spec.speed *= 0.86; spec.amp += 0.5; }
   return spec;
 }
+const SHAPES = ['oval', 'waist', 'tear', 'tearR'], LAYOUT_SLACK = 0.06;
 function endlessSpec(n, seedBase) {
   const maxCh = Math.min(CHAPTERS.length - 1, Math.max(1, Math.floor((Save.data.unlocked) / 8)));
   const rng = new RNG(seedBase + n * 977);
@@ -63,11 +74,12 @@ function endlessSpec(n, seedBase) {
   if (ch === 1) features.windmills = rng.chance(0.6);
   if (maxCh >= 2 && ch !== 2 && rng.chance(0.25)) features.balloons = true;
   const twinK = chap.features.twin ? 0.75 : 1;
+  const shape = n < 1 ? 'oval' : rng.pick(SHAPES), layout = n < 1 ? 'zig' : chap.features.bridges ? rng.pick(['zig', 'rev']) : rng.pick(['zig', 'rev', 'hair']);
   return {
-    kind: 'endless', g: -1, n, ch, i: 0, chap, seed: seedBase + n * 7151, finale: false,
+    kind: 'endless', g: -1, n, ch, i: 0, chap, seed: seedBase + n * 7151, finale: false, shape, layout, wait: true,
     speed: Math.min(2.5, 1.45 + n * 0.07), burn: Math.min(1.15, 0.7 + n * 0.035) * twinK, regen: 0.42,
     spacing: lerp(2.5, 3.5, d), amp: lerp(2.6, 4.0, d), ctrl: 5 + Math.round(d * 2), pergolaRate: lerp(0.6, 0.25, d),
-    prune: Math.round(lerp(1, 6, d)), margin: lerp(0.45, 0.28, d), drops: 3 + Math.round(d * 2), features, eclipse: true, sunStart: 0.5, sunSpeed: 0.72, ...ex,
+    prune: Math.round(lerp(1, 6, d)), margin: lerp(0.45, 0.28, d) + (layout !== 'zig' ? LAYOUT_SLACK : 0), drops: 3 + Math.round(d * 2), features, eclipse: true, sunStart: 0.5, sunSpeed: 0.72, ...ex,
   };
 }
 function dailySpec(dateNum) {
@@ -76,19 +88,25 @@ function dailySpec(dateNum) {
   const ch = rng.int(0, maxCh), chap = CHAPTERS[ch];
   const features = Object.assign({}, chap.features);
   if (ch >= 2 && rng.chance(0.4)) features.clouds = true;
+  const shape = rng.pick(SHAPES), layout = chap.features.bridges ? rng.pick(['zig', 'rev']) : rng.pick(['zig', 'rev', 'hair']);
   return {
-    kind: 'daily', g: -1, ch, i: 4, chap, seed: dateNum * 31 + 17, finale: false,
-    speed: 1.5 + rng.range(0, 0.35), burn: 0.8, regen: 0.42, spacing: 3.0, amp: 3.4, ctrl: 7, pergolaRate: 0.4, prune: 4, margin: 0.32, drops: 5, features, eclipse: true, sunStart: 0.5, sunSpeed: 0.7,
+    kind: 'daily', g: -1, ch, i: 4, chap, seed: dateNum * 31 + 17, finale: false, shape, layout, wait: true,
+    speed: 1.5 + rng.range(0, 0.35), burn: 0.8, regen: 0.42, spacing: 3.0, amp: 3.4, ctrl: 7, pergolaRate: 0.4, prune: 4, margin: 0.32 + (layout !== 'zig' ? LAYOUT_SLACK : 0), drops: 5, features, eclipse: true, sunStart: 0.5, sunSpeed: 0.7,
     sprites: 2, flares: true, dash: true, mirrors: 2, gears: 1,
   };
 }
 
 /* ---------- ada dış hatları ---------- */
-function makeChunk(rng, cx, cz, hx, hz, seed) {
+// biçimler: oval · bel (ortası daralan) · damla (önü geniş) · ters damla (arkası geniş)
+function makeChunk(rng, cx, cz, hx, hz, seed, shape = 'oval') {
   const N = 96, pts = [], p = 2.6;
+  if (shape === 'tear' || shape === 'tearR') hx *= 0.94;
   for (let i = 0; i < N; i++) {
     const a = (i / N) * TAU, ca = Math.cos(a), sa = Math.sin(a);
-    const r = 1 / Math.pow(Math.pow(Math.abs(ca / hx), p) + Math.pow(Math.abs(sa / hz), p), 1 / p);
+    let r = 1 / Math.pow(Math.pow(Math.abs(ca / hx), p) + Math.pow(Math.abs(sa / hz), p), 1 / p);
+    if (shape === 'waist') r *= 1 - 0.22 * Math.pow(Math.abs(ca), 3);
+    else if (shape === 'tear') r *= 1 + 0.42 * sa * ca * ca;
+    else if (shape === 'tearR') r *= 1 - 0.42 * sa * ca * ca;
     const n = 1 + 0.07 * (fbm2(Math.cos(a) * 1.6 + seed, Math.sin(a) * 1.6 + seed * 0.7, 3) - 0.5) * 2;
     pts.push([cx + ca * r * n, cz + sa * r * n]);
   }
@@ -346,14 +364,21 @@ function generateLevel(spec, attempt = 0) {
       z += len + gap;
     }
   } else {
-    lv.chunks.push(makeChunk(rng, 0, 0, rng.range(6.0, 6.6), 10.9, spec.seed * 0.013));
+    lv.chunks.push(makeChunk(rng, 0, 0, rng.range(6.0, 6.6), 10.9, spec.seed * 0.013, spec.shape || 'oval'));
   }
 
   // ---- yol kontrol noktaları ----
   const ctrl = [];
   const n = spec.ctrl, zs = -9.2, ze = 8.8;
   let side = rng.sign();
-  for (let k = 0; k < n; k++) {
+  const hair = spec.layout === 'hair' && !spec.features.bridges;
+  if (hair) {
+    // U dönüşü: bir şeritten öne iner, kameranın önünde döner, öbür şeritten geri çıkar
+    const L = rng.range(2.3, 2.9), half = Math.max(3, Math.ceil(n / 2)), sd = rng.sign(), zTop = -8.8, zBot = 6.0;
+    for (let k = 0; k < half; k++) ctrl.push([-sd * L + (k > 0 ? rng.range(-0.55, 0.55) : 0), lerp(zTop, zBot, k / (half - 1))]);
+    ctrl.push([0, 8.5]);
+    for (let k = 0; k < half; k++) ctrl.push([sd * L + (k < half - 1 ? rng.range(-0.55, 0.55) : 0), lerp(zBot, zTop + 0.8, k / (half - 1))]);
+  } else for (let k = 0; k < n; k++) {
     const f = k / (n - 1);
     let z = lerp(zs, ze, f) + (k > 0 && k < n - 1 ? rng.range(-0.5, 0.5) : 0);
     let x = k === 0 || k === n - 1 ? rng.range(-1.2, 1.2) : side * spec.amp * rng.range(0.65, 1.0);
@@ -371,6 +396,8 @@ function generateLevel(spec, attempt = 0) {
     }
     ctrl.sort((p, q) => p[1] - q[1]);
   }
+  // ters yön: Zifir kameraya yakın uçtan başlayıp adanın arkasına yürür
+  if (spec.layout === 'rev') ctrl.reverse();
   // adanın içinde tut
   for (const c of ctrl) {
     for (let it = 0; it < 30 && !insideIsland(lv, c[0], c[1], 1.7); it++) c[0] *= 0.9;
@@ -619,7 +646,8 @@ function generateLevel(spec, attempt = 0) {
     if (!applyRepair(repairAt(lv, sol, rng, okSpot, sol.minK))) break;
     extra++; const s2 = orc.solve(); if (s2.ok) sol = s2; else break;
   }
-  if (sol.minMeter < 0.2) return null;
+  // zorluk bandı: çözüm payı hedefin çok altındaysa bu deneme atılır (dalgalı zorluk olmasın)
+  if (sol.minMeter < Math.max(0.2, spec.margin * 0.85)) return null;
   // budama: zorluk için gereksiz gölgeleri kaldır
   if (spec.prune > 0) {
     let removed = 0;
@@ -629,11 +657,27 @@ function generateLevel(spec, attempt = 0) {
       const pr = rng.pick(cands), idx = placed.indexOf(pr);
       placed.splice(idx, 1); orc.apply(pr.cols, -1);
       const s2 = orc.solve();
-      if (s2.ok && s2.minMeter >= spec.margin) { sol = s2; removed++; }
+      // yalnızca gölgesi gerçekten işe yarayan prop kaldırılır (süs nesneleri adayı boşaltmasın)
+      if (s2.ok && s2.minMeter >= spec.margin && s2.minMeter < sol.minMeter - 0.004) { sol = s2; removed++; }
       else { placed.splice(idx, 0, pr); orc.apply(pr.cols, 1); }
     }
   }
+  // hedefin çok üstünde kalan (fazla kolay) adalar biraz daha budanır
+  if (spec.prune > 0) {
+    for (let t = 0; t < 24 && sol.minMeter > spec.margin + 0.2; t++) {
+      const cands = placed.filter((p) => !p.fixed && !p.arch && !p.mover && p.type !== 'windmill' && (p.h || 0) > 1.2);
+      if (!cands.length) break;
+      const pr = rng.pick(cands), idx = placed.indexOf(pr);
+      placed.splice(idx, 1); orc.apply(pr.cols, -1);
+      const s2 = orc.solve();
+      if (s2.ok && s2.minMeter >= spec.margin && s2.minMeter < sol.minMeter - 0.004) sol = s2; else { placed.splice(idx, 0, pr); orc.apply(pr.cols, 1); }
+    }
+  }
   rebuildColliderList(lv);
+  // gerçek oyun hızında yeniden oynatma: plan oyunda da geçilebilmeli (ince/hareketli gölgelerde örnekleme kaçağı olmasın)
+  const pb = playbackMin(lv, sol);
+  if (pb < 0.14) return null;
+  lv.playMin = pb;
   lv.solution = sol;
   lv.repairs = repairs;
   placeDrops(lv, rng);
@@ -832,6 +876,33 @@ class Oracle {
     return { ok: true, traj, K, dt, exposure, minMeter, minK, bestU: traj[minK] };
   }
 }
+// Çözüm rotasını oyunun kendi kurallarıyla (1/30 sn adım, güneş yayı gecikmesi, 3 noktalı pozlama) oynatır; en düşük canı döner.
+function playbackMin(lv, sol) {
+  const dt = 1 / 30, T = lv.walkDelay + lv.length / lv.speed, L1 = {}, L2 = {}, P = {}, tw = lv.sun.twin, mir = lv.mirrors && lv.mirrors.length;
+  let m = 1, mn = 1, u = sol.traj[0], uv = 0;
+  const kk = 240, cc = 2 * Math.sqrt(kk) * 0.8;
+  for (let t = dt; t < T; t += dt) {
+    const f = (t + 0.1) / sol.dt, k0 = Math.min(sol.K - 1, Math.floor(f)), k1 = Math.min(sol.K - 1, k0 + 1), uT = sol.traj[k0] + (sol.traj[k1] - sol.traj[k0]) * (f - Math.floor(f));
+    for (let i = 0; i < 3; i++) { uv += ((uT - u) * kk - uv * cc) * (dt / 3); u = clamp(u + uv * (dt / 3), 0, 1); }
+    if (t <= lv.walkDelay) continue;
+    const s = Math.min(lv.length, (t - lv.walkDelay) * lv.speed);
+    if (lv.bridges.some((b) => s > b.s0 - 0.35 && s < b.s1)) continue;
+    if (lv.hasMovers) updateMovers(lv, t);
+    sunDirs(u, lv.sun, L1, L2); pathAt(lv.path, s, P);
+    let e = 0;
+    for (let q = -1; q <= 1; q++) {
+      const px = P.x + P.nx * ZIFIR_HALF * q, pz = P.z + P.nz * ZIFIR_HALF * q;
+      let l1 = occluded(lv.cols, px, ZIFIR_Y, pz, L1, -1) ? 0 : 1;
+      if (!l1 && mir && mirrorsLit(lv.mirrors, px, ZIFIR_Y, pz, L1)) l1 = 1;
+      e += tw ? (l1 + (occluded(lv.cols, px, ZIFIR_Y, pz, L2, -1) ? 0 : 1)) * 0.5 : l1;
+    }
+    e /= 3;
+    m = e > 0 ? m - lv.burn * e * flareMul(lv, t) * dt : Math.min(1, m + lv.regen * dt);
+    if (m < mn) mn = m;
+  }
+  if (lv.hasMovers) updateMovers(lv, 0);
+  return mn;
+}
 // damlalar: Zifir yaklaşınca (DROP_WAKE) uyanır ve ışığa karşı savunmasızlaşır
 const DROP_LIFE = 2.4, DROP_WAKE = 6.5;
 function placeDrops(lv, rng) {
@@ -871,12 +942,12 @@ function placeDrops(lv, rng) {
 // tohumdan ada: çözülemezse yeni deneme. Hikâye adaları deterministik olduğundan
 // geçerli deneme numaraları önceden bilinir (farklı JS motorlarında kayarsa
 // döngü kendiliğinden devam eder — yalnızca hızlandırmadır).
-const ATTEMPT_HINT = [0, 0, 0, 0, 0, 1, 0, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 9, 5, 7, 1, 59, 3, 0, 51, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 2, 0, 1, 0, 0, 4];
+const ATTEMPT_HINT = [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 0, 0, 0, 0, 1, 0, 0, 0, 0, 56, 58, 3, 59, 1, 1, 19, 2, 1, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 6, 1, 0, 4, 0, 0];
 function buildLevel(spec) {
-  const easy = Object.assign({}, spec, { spacing: Math.min(spec.spacing, 2.2), prune: 0, margin: 0.3, pergolaRate: 1.0 });
+  const easy = Object.assign({}, spec, { spacing: Math.min(spec.spacing, 2.2), prune: 0, margin: Math.min(spec.margin, 0.4), pergolaRate: 1.0 });
   const order = [];
   if (spec.kind === 'story' && ATTEMPT_HINT[spec.g] != null) order.push(ATTEMPT_HINT[spec.g]);
-  for (let a = 0; a < 10; a++) order.push(a);
+  for (let a = 0; a < 20; a++) order.push(a);
   for (let a = 50; a < 70; a++) order.push(a);
   const tried = new Set();
   for (const a of order) {
@@ -886,3 +957,27 @@ function buildLevel(spec) {
   }
   return null;
 }
+
+/* ---------- arka plan üretici (Web Worker) ----------
+   Sonraki ada oyun sürerken ayrı iş parçacığında üretilir: ada geçişinde ana iş parçacığı donmaz.
+   Kaynak, derlemede bu dosyanın saf bölümlerinden küçültülerek gömülür. Worker yoksa eşzamanlı üretime düşülür. */
+const GEN_WORKER_SRC = '__GEN_WORKER_SRC__';
+const GenW = {
+  w: null, ok: false, seq: 0, pend: new Map(),
+  init() {
+    if (this.w || typeof Worker === 'undefined' || GEN_WORKER_SRC.length < 100) return;
+    try {
+      const url = URL.createObjectURL(new Blob([GEN_WORKER_SRC], { type: 'text/javascript' }));
+      this.w = new Worker(url); this.ok = true;
+      this.w.onmessage = (e) => { const d = e.data, p = this.pend.get(d.id); if (!p) return; this.pend.delete(d.id); p(d.lv ? fixWorkerLevel(d.lv) : null); };
+      this.w.onerror = () => { this.ok = false; for (const p of this.pend.values()) p(null); this.pend.clear(); };
+    } catch (e) { this.ok = false; }
+  },
+  build(spec) {
+    if (!this.ok) return Promise.resolve(null);
+    const id = ++this.seq;
+    return new Promise((res) => { this.pend.set(id, res); try { this.w.postMessage({ id, spec }); } catch (e) { this.pend.delete(id); res(null); } });
+  },
+};
+// iş parçacığından gelen kopyada bölüm nesnesi yerel olanla değiştirilir (aynı başvuru)
+function fixWorkerLevel(lv) { const ch = CHAPTERS[lv.spec.ch]; if (ch) { lv.chap = ch; lv.spec.chap = ch; } lv.rng = new RNG(lv.spec.seed ^ 0x1234567); return lv; }

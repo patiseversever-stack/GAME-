@@ -553,7 +553,7 @@ const TUT_CARDS = [
   },
   {
     k: 'Aksiyon · 9', t: 'Dal, periler, patlama', dur: 11,
-    b: 'Sol alttaki <em>Dal</em> Zifir’i bir anlığına mürekkebe gömer: ışık neredeyse işlemez, yaklaşan <em>ışık perilerini</em> yutar. <em>Güneş patlaması</em> çubuğu dolunca ışık iki kat yakar — önceden gölgeye gir.',
+    b: 'Sol alttaki <em>Dal</em> Zifir’i bir anlığına mürekkebe gömer: ışık neredeyse işlemez, yaklaşan <em>ışık perilerini</em> yutar. Üstündeki <em>Bekle</em>’yi basılı tutarsan Zifir gölgede durur (sabrı sınırlı). <em>Güneş patlaması</em> çubuğu dolunca ışık iki kat yakar — önceden gölgeye gir.',
     build(svg, id) {
       tutDefs(svg, id);
       const dio = new TDio(svg, id, { seed: 17 });

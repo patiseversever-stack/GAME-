@@ -101,6 +101,7 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #hud{position:absolute;inset:0;opacity:0;transition:opacity .5s}
 #hud.on{opacity:1}
 #hud .top{position:absolute;left:0;right:0;top:0;padding:calc(var(--sat) + 12px) calc(var(--sar) + 14px) 0 calc(var(--sal) + 14px);display:flex;align-items:flex-start;justify-content:space-between}
+#hud .top>div:first-child{flex-wrap:wrap;max-width:calc(50% - 72px)} /* dar ekranda skor/seri kutuları başlığa binmesin: alt satıra geçer */
 #hud .lvl{position:absolute;left:50%;transform:translateX(-50%);top:calc(var(--sat) + 14px);text-align:center;white-space:nowrap}
 #hud .lvl b{display:block;font-family:var(--serif);font-style:italic;font-weight:600;font-size:22px;letter-spacing:.04em;text-shadow:0 1px 14px rgba(0,0,0,.35)}
 #hud .lvl small{display:block;margin-top:2px;font-size:10px;letter-spacing:.32em;text-transform:uppercase;color:var(--ivory-dim)}
@@ -134,6 +135,15 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #dashBtn:not(.ready) svg{filter:grayscale(.7) brightness(.6)}
 #dashBtn.ready{animation:dashGlow 2s ease-in-out infinite}
 @keyframes dashGlow{0%,100%{box-shadow:0 8px 30px rgba(10,6,30,.45),0 0 0 rgba(157,140,255,0)}50%{box-shadow:0 8px 30px rgba(10,6,30,.45),0 0 26px rgba(157,140,255,.55)}}
+#waitBtn{position:absolute;left:calc(var(--sal) + 25px);bottom:calc(var(--sab) + 126px);width:60px;height:60px;border-radius:50%;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(circle at 50% 40%,rgba(60,48,110,.9),rgba(18,14,31,.92));box-shadow:0 6px 18px rgba(0,0,0,.4),inset 0 0 0 1px rgba(201,191,255,.35);transition:transform .12s}
+#waitBtn.show{display:flex}
+#waitBtn.hold{transform:scale(.88);box-shadow:0 0 22px rgba(185,173,255,.55),inset 0 0 0 2px rgba(233,226,255,.8)}
+#waitBtn .fill{position:absolute;inset:-3px;border-radius:50%;background:conic-gradient(#9ff0ff calc(var(--p,1)*1turn),rgba(255,255,255,.08) 0);
+  -webkit-mask:radial-gradient(circle,transparent 60%,#000 61%);mask:radial-gradient(circle,transparent 60%,#000 61%)}
+#waitBtn svg{width:30px;height:30px;position:relative}
+#waitBtn.empty svg{opacity:.35}
+#waitBtn label{position:absolute;bottom:-17px;font-size:9px;letter-spacing:.28em;color:var(--ivory-dim);text-transform:uppercase}
 #dashBtn label{position:absolute;bottom:-18px;font-size:9px;letter-spacing:.28em;color:var(--ivory-dim);text-transform:uppercase}
 #streak{display:none;color:#e9e2ff;font-weight:700;letter-spacing:.06em}
 #streak svg{width:18px;height:18px}
@@ -546,6 +556,7 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
     <div id="flareBar"><div class="fbar"><i></i></div><span class="fw">Güneş patlaması geliyor</span><span class="fb">Güneş patlaması · yanma ×2</span></div>
     <div class="bottom">
       <button id="dashBtn" class="tap" style="pointer-events:auto" aria-label="Dal"><div class="fill"></div><svg viewBox="0 0 40 40"><path d="M8 26c6-1 10-6 12-12" stroke="#b9adff" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".55"/><path d="M6 31c8-1 15-8 17-16" stroke="#e9e2ff" stroke-width="2.6" fill="none" stroke-linecap="round" opacity=".35"/><circle cx="26" cy="13" r="7.5" fill="#120e1f" stroke="#c9bfff" stroke-width="1.6"/><circle cx="28.4" cy="11.6" r="1.6" fill="#fff"/></svg><label>Dal</label></button>
+      <button id="waitBtn" class="tap" style="pointer-events:auto" aria-label="Bekle"><div class="fill"></div><svg viewBox="0 0 40 40"><rect x="13" y="11" width="5" height="18" rx="2" fill="#e9e2ff"/><rect x="22" y="11" width="5" height="18" rx="2" fill="#e9e2ff"/></svg><label>Bekle</label></button>
       <button id="eclipseBtn" class="tap" style="pointer-events:auto" aria-label="Tutulma"><div class="fill"></div><div class="disc"></div><label>Tutulma</label></button>
     </div>
   </div>
@@ -601,6 +612,7 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
       <button class="toggle tap" data-set="music">Müzik <b>Açık</b></button>
       <button class="toggle tap" data-set="haptics">Titreşim <b>Açık</b></button>
       <button class="toggle tap" data-set="quality">Grafik <b>Otomatik</b></button>
+      <button class="toggle tap" data-set="assist">Rahat mod <b>Kapalı</b></button>
       <button class="btn ghost tap" id="btnHowS">Nasıl oynanır?</button>
       <button class="btn primary tap" id="btnSetClose">Tamam</button>
       <button class="danger-link tap" id="btnReset">İlerlemeyi sıfırla</button>

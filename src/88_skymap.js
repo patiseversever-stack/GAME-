@@ -10,6 +10,7 @@ const mapCam = new THREE.PerspectiveCamera(38, 1, 0.5, 3000);
 const mapSky = new THREE.Mesh(sky.geometry, skyMat); mapSky.renderOrder = -10; mapSky.frustumCulled = false; mapScene.add(mapSky);
 const mapSea = new THREE.Mesh(sea.geometry, sea.material); mapSea.rotation.x = -PI / 2; mapSea.position.y = -20; mapSea.renderOrder = -5; mapScene.add(mapSea);
 const mapHemi = new THREE.HemisphereLight(0x9a8ae6, 0x4a3050, 1.05); mapScene.add(mapHemi);
+const mapProbe = new THREE.LightProbe(); mapScene.add(mapProbe); // ana sahnenin gök ışığı (eskiden ortam haritası)
 const mapSun = new THREE.DirectionalLight(0xffb486, 2.9);
 mapSun.castShadow = true; Object.assign(mapSun.shadow.camera, { left: -26, right: 26, top: 26, bottom: -26, near: 1, far: 200 }); mapSun.shadow.camera.updateProjectionMatrix();
 mapSun.shadow.bias = -0.0005; mapSun.shadow.normalBias = 0.04; mapSun.shadow.mapSize.set(2048, 2048);
@@ -316,7 +317,7 @@ const SkyMap = {
       const di = I.i - this.f, vis = di > -1.6 && di < 4.2;
       I.holder.visible = vis && !!I.view;
       if (I.view && vis) {
-        if (I.view.introT < 3.5) I.view.intro(dtR);
+        if (!I.view.introDone) I.view.intro(dtR);
         I.view.update(dtR, t, MAP_CTX);
         I.holder.position.y = MAP_POS[I.i].y + Math.sin(t * 0.4 + I.i) * 0.35;
         for (const mk of I.marks) { const s = 1 + Math.sin(t * 2.4 + mk.ph) * 0.12; mk.halo.scale.setScalar((mk.lit ? 1.9 : 1.4) * s); mk.orb.position.y = 0.62 + Math.sin(t * 1.6 + mk.ph) * 0.06; }
@@ -407,7 +408,7 @@ const SkyMap = {
     U.uCamPos.value.copy(mapCam.position);
     mapSun.color.copy(MAP_SUN_COL); mapSun.intensity = 2.9; mapHemi.intensity = 1.05;
     if (mapSea.material !== sea.material) mapSea.material = sea.material;
-    if (scene.environment) mapScene.environment = scene.environment;
+    mapProbe.sh.copy(envProbe.sh); mapProbe.intensity = 1;
     if (mapSun.castShadow) renderer.shadowMap.needsUpdate = true;
     const pu = post.u, sp = new THREE.Vector3().copy(mapCam.position).addScaledVector(MAP_SUN, 800).project(mapCam);
     pu.uSunUV.value.set(sp.x * 0.5 + 0.5, sp.y * 0.5 + 0.5);

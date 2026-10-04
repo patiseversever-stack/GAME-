@@ -60,17 +60,17 @@ const matProp = worldMat({ vertexColors: true, roughness: 0.84, metalness: 0 });
 const matPropSmooth = worldMat({ vertexColors: true, roughness: 0.9, metalness: 0 });
 const matWindow = worldMat({ color: 0x26324e, roughness: 0.35, metalness: 0.1 }, { glow: true });
 const SHARED = (fn) => { let m = null; return () => { if (!m) { m = fn(); m.userData.shared = true; } return m; }; };
-const MAT_ICE = SHARED(() => worldMat({ color: 0xcfeeff, roughness: 0.08, metalness: 0.05, emissive: 0x3a6a9a, emissiveIntensity: 0.32, envMapIntensity: 2.4 }));
-const MAT_GOLD = SHARED(() => worldMat({ color: 0xd9a040, roughness: 0.3, metalness: 0.9, envMapIntensity: 1.3 }));
-const MAT_BRASS = SHARED(() => worldMat({ color: 0xb08040, roughness: 0.42, metalness: 0.8, envMapIntensity: 1.0 }));
-const MAT_COPPER = SHARED(() => worldMat({ color: 0xa85e3c, roughness: 0.44, metalness: 0.75, envMapIntensity: 1.0 }));
-const MAT_MIRROR = SHARED(() => worldMat({ color: 0xf2f6ff, roughness: 0.03, metalness: 1.0, envMapIntensity: 3.2 }));
+const MAT_ICE = SHARED(() => envMat(worldMat({ color: 0xcfeeff, roughness: 0.08, metalness: 0.05, emissive: 0x3a6a9a, emissiveIntensity: 0.32 })));
+const MAT_GOLD = SHARED(() => envMat(worldMat({ color: 0xd9a040, roughness: 0.3, metalness: 0.9 })));
+const MAT_BRASS = SHARED(() => envMat(worldMat({ color: 0xb08040, roughness: 0.42, metalness: 0.8 })));
+const MAT_COPPER = SHARED(() => envMat(worldMat({ color: 0xa85e3c, roughness: 0.44, metalness: 0.75 })));
+const MAT_MIRROR = SHARED(() => envMat(worldMat({ color: 0xf2f6ff, roughness: 0.03, metalness: 1.0 })));
 const MAT_CLOCKFACE = SHARED(() => { const c = document.createElement('canvas'); c.width = c.height = 128; const x = c.getContext('2d');
   x.fillStyle = '#f4ead2'; x.beginPath(); x.arc(64, 64, 62, 0, TAU); x.fill(); x.strokeStyle = '#3a2a1a'; x.lineWidth = 3;
   for (let i = 0; i < 12; i++) { const a = (i / 12) * TAU; x.beginPath(); x.moveTo(64 + Math.cos(a) * 46, 64 + Math.sin(a) * 46); x.lineTo(64 + Math.cos(a) * 56, 64 + Math.sin(a) * 56); x.stroke(); }
   x.lineWidth = 5; x.beginPath(); x.moveTo(64, 64); x.lineTo(64, 26); x.stroke(); x.lineWidth = 4; x.beginPath(); x.moveTo(64, 64); x.lineTo(94, 74); x.stroke();
   const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return worldMat({ map: t, roughness: 0.6 }, { glow: true }); });
-const MAT_WATER = SHARED(() => worldMat({ color: 0x8cc8ea, roughness: 0.04, metalness: 0.2, envMapIntensity: 2.2, transparent: true, opacity: 0.82, depthWrite: false }));
+const MAT_WATER = SHARED(() => envMat(worldMat({ color: 0x8cc8ea, roughness: 0.04, metalness: 0.2, transparent: true, opacity: 0.82, depthWrite: false })));
 // dişli çark geometrisi (XY düzleminde, z kalınlık)
 function gearGeo(r, ri, th, teeth) {
   const sh = new THREE.Shape(), n = teeth * 4;
@@ -593,6 +593,22 @@ function cliffGeometry(chunk, pal, depth, seed) {
 }
 
 /* ---------- çimen ---------- */
+// adanın kaba alanı: yola uzaklık + prop dibi maskesi (çimen ekimini binlerce kez hızlandırır)
+function islandField(lv) {
+  if (lv._field) return lv._field;
+  const B = TOP_BOUNDS, cs = 0.2, W = Math.ceil((B.x1 - B.x0) / cs), H = Math.ceil((B.z1 - B.z0) / cs), R = 1.4;
+  const dist = new Float32Array(W * H).fill(9), block = new Uint8Array(W * H), path = lv.path;
+  for (let i = 0; i < path.n; i++) {
+    const px = path.x[i], pz = path.z[i], i0 = Math.max(0, Math.floor((px - R - B.x0) / cs)), i1 = Math.min(W - 1, Math.ceil((px + R - B.x0) / cs)), j0 = Math.max(0, Math.floor((pz - R - B.z0) / cs)), j1 = Math.min(H - 1, Math.ceil((pz + R - B.z0) / cs));
+    for (let j = j0; j <= j1; j++) for (let k = i0; k <= i1; k++) { const d = Math.hypot(B.x0 + (k + 0.5) * cs - px, B.z0 + (j + 0.5) * cs - pz), q = j * W + k; if (d < dist[q]) dist[q] = d; }
+  }
+  for (const pr of lv.props) {
+    const r = pr.fr * 0.75, i0 = Math.max(0, Math.floor((pr.x - r - B.x0) / cs)), i1 = Math.min(W - 1, Math.ceil((pr.x + r - B.x0) / cs)), j0 = Math.max(0, Math.floor((pr.z - r - B.z0) / cs)), j1 = Math.min(H - 1, Math.ceil((pr.z + r - B.z0) / cs));
+    for (let j = j0; j <= j1; j++) for (let k = i0; k <= i1; k++) if (Math.hypot(B.x0 + (k + 0.5) * cs - pr.x, B.z0 + (j + 0.5) * cs - pr.z) < r) block[j * W + k] = 1;
+  }
+  const at = (x, z) => { const k = Math.floor((x - B.x0) / cs), j = Math.floor((z - B.z0) / cs); return k < 0 || j < 0 || k >= W || j >= H ? -1 : j * W + k; };
+  return (lv._field = { dist, block, at });
+}
 function bladeGeo(kind) {
   const g = new THREE.BufferGeometry();
   let p, c;
@@ -766,7 +782,7 @@ class IslandView {
     this.propViews = [];
     for (const pr of lv.props) {
       const v = buildPropVisual(pr, key, rng);
-      v.traverse((o) => { if (o.material === 'crystal') { if (!pr.crystalMat) pr.crystalMat = new THREE.MeshStandardMaterial({ color: 0xc8b8ff, emissive: 0x8a6cff, emissiveIntensity: 0.4, roughness: 0.15, metalness: 0.1 }); o.material = pr.crystalMat; } });
+      v.traverse((o) => { if (o.material === 'crystal') { if (!pr.crystalMat) pr.crystalMat = envMat(new THREE.MeshStandardMaterial({ color: 0xc8b8ff, emissive: 0x8a6cff, emissiveIntensity: 0.4, roughness: 0.15, metalness: 0.1 })); o.material = pr.crystalMat; } });
       v.userData.pop = 0; v.userData.delay = 0.25 + ((pr.z + 11) / 22) * 0.75 + rng.range(0, 0.15);
       v.scale.setScalar(0.001);
       pr.view = v; this.propViews.push(v); this.root.add(v);
@@ -892,23 +908,31 @@ class IslandView {
     this.parent.add(this.root);
     this.introT = 0; this.popped = 0;
   }
+  // kalite değişince çimen sayısı: azaltmak anında, artırmak gerekiyorsa yeniden ekim
+  setGrass(Q) {
+    const want = this.grassCount(Q, this.lv.chap.key);
+    if (want <= this.grassCap) { this.grass.count = Math.min(want, this.grassN); if (this.flowers) this.flowers.count = Math.min(this.flowersN, Math.ceil(this.flowersN * want / Math.max(1, this.grassN))); return; }
+    this.root.remove(this.grass); this.grass.dispose(); if (this.flowers) { this.root.remove(this.flowers); this.flowers.dispose(); }
+    this.buildGrass(new RNG(this.lv.spec.seed ^ 0x77), this.lv.chap.pal, this.lv.chap.key, Q);
+  }
+  grassCount(Q, key) { return Math.round(Q.grass * ({ peri: 0.45, tuz: 0.35, buz: 0.3, saat: 0.6, ayna: 0.75 }[key] ?? 1) * (this.lv.chunks.length > 1 ? 0.85 : 1)); }
   buildGrass(rng, pal, key, Q) {
     const lv = this.lv;
     const kind = key === 'tuz' || key === 'buz' ? 'salt' : 'blade';
-    const cnt = Math.round(Q.grass * ({ peri: 0.45, tuz: 0.35, buz: 0.3, saat: 0.6, ayna: 0.75 }[key] ?? 1) * (lv.chunks.length > 1 ? 0.85 : 1));
+    const cnt = this.grassCount(Q, key);
     const geo = bladeGeo(kind);
     const mesh = new THREE.InstancedMesh(geo, matGrass, cnt);
     const fl = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(0.055, 0), matFlower, Math.ceil(cnt * 0.12));
     const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(), p = new THREE.Vector3(), c = new THREE.Color();
     let n = 0, nf = 0;
+    const F = islandField(lv);
     for (let t = 0; t < cnt * 8 && n < cnt; t++) {
       const ch = rng.pick(lv.chunks), x = ch.cx + rng.range(-ch.hx, ch.hx), z = ch.cz + rng.range(-ch.hz, ch.hz);
       if (!insideChunk(ch, x, z, 0.15)) continue;
-      const dp = distToPath(lv.path, x, z);
+      const ci = F.at(x, z); if (ci < 0 || F.block[ci]) continue;
+      const dp = F.dist[ci];
       if (dp < 0.62) continue;
       if (dp < 1.0 && rng.chance(0.6)) continue;
-      let blocked = false; for (const pr of lv.props) if (Math.hypot(pr.x - x, pr.z - z) < pr.fr * 0.75) { blocked = true; break; }
-      if (blocked) continue;
       const sc = rng.range(0.65, 1.35) * (dp < 1.3 ? 0.7 : 1);
       q.setFromEuler(_eu.set(rng.range(-0.15, 0.15), rng.range(0, TAU), rng.range(-0.15, 0.15)));
       m.compose(p.set(x, 0, z), q, s.set(sc, sc * rng.range(0.8, 1.25), sc)); mesh.setMatrixAt(n, m);
@@ -920,7 +944,7 @@ class IslandView {
     mesh.count = n; fl.count = nf;
     mesh.receiveShadow = true; fl.receiveShadow = true; mesh.frustumCulled = false; fl.frustumCulled = false;
     this.root.add(mesh); if (nf) this.root.add(fl); else fl.dispose();
-    this.grass = mesh;
+    this.grass = mesh; this.grassCap = cnt; this.grassN = n; this.flowers = nf ? fl : null; this.flowersN = nf;
   }
   // giriş animasyonu: ada yükselir, proplar sırayla belirir
   intro(dt) {
@@ -935,7 +959,61 @@ class IslandView {
       if (v.scale.x !== s) { v.scale.set(s, k >= 1 ? 1 : lerp(1.25, 1, k) * s, s); changed = true; }
     }
     const gk = clamp01((t - 1.0) / 0.6); this.gate.scale.setScalar(Math.max(0.001, Ease.outBack(gk, 1.8)));
+    // giriş bitti (ya da film atlandı): her şeyi son hâline oturt, sabit propları birleştir
+    if (t >= 2.0 && !this.introDone) {
+      this.introDone = true; this.root.position.y = 0; this.gate.scale.setScalar(1);
+      for (const v of this.propViews) v.scale.set(1, 1, 1);
+      try { this.bake(); } catch (e) { console.warn('ada birleştirme', e); }
+      return true;
+    }
     return changed || gk < 1;
+  }
+  // Sabit propları malzeme başına tek ağa birleştir: ~100 çizim çağrısı yerine ~10 (gölge geçişinde de).
+  // Hareketli/animasyonlu parçası olanlar (değirmen, eriyen buz, dişli, sarkaç) ayrı kalır.
+  bake() {
+    const root = this.root; root.updateMatrixWorld(true);
+    const inv = new THREE.Matrix4().copy(root.matrixWorld).invert(), M = new THREE.Matrix4(), NM = new THREE.Matrix3(), groups = new Map(), done = [];
+    for (const pr of this.lv.props) {
+      const v = pr.view; if (!v || pr.mover || pr.rotor) continue;
+      let ok = true; v.traverse((o) => { if ((o.isMesh && (o.isInstancedMesh || o.renderOrder || Array.isArray(o.material))) || o.isSprite || o.isLine || o.isPoints) ok = false; });
+      if (!ok) continue;
+      v.traverse((o) => {
+        if (!o.isMesh) return;
+        const k = o.material.uuid + (o.castShadow ? 'c' : '') + (o.receiveShadow ? 'r' : '');
+        if (!groups.has(k)) groups.set(k, { mat: o.material, cast: o.castShadow, recv: o.receiveShadow, items: [] });
+        groups.get(k).items.push({ geo: o.geometry, m: M.multiplyMatrices(inv, o.matrixWorld).clone() });
+      });
+      done.push(v);
+    }
+    const _v = new THREE.Vector3();
+    this.baked = [];
+    for (const gr of groups.values()) {
+      const mat = gr.mat, wantC = !!mat.vertexColors, wantUV = !!mat.map;
+      const geos = gr.items.map((it) => ({ g: it.geo.index ? it.geo.toNonIndexed() : it.geo, m: it.m, own: !!it.geo.index }));
+      let n = 0; for (const e of geos) n += e.g.attributes.position.count;
+      const P = new Float32Array(n * 3), N = new Float32Array(n * 3), C = wantC ? new Float32Array(n * 3) : null, UV = wantUV ? new Float32Array(n * 2) : null;
+      let o = 0;
+      for (const e of geos) {
+        const pa = e.g.attributes.position, na = e.g.attributes.normal, ca = e.g.attributes.color, ua = e.g.attributes.uv, c = pa.count;
+        NM.getNormalMatrix(e.m);
+        for (let i = 0; i < c; i++) {
+          _v.fromBufferAttribute(pa, i).applyMatrix4(e.m); P[(o + i) * 3] = _v.x; P[(o + i) * 3 + 1] = _v.y; P[(o + i) * 3 + 2] = _v.z;
+          if (na) _v.fromBufferAttribute(na, i).applyMatrix3(NM).normalize(); else _v.set(0, 1, 0);
+          N[(o + i) * 3] = _v.x; N[(o + i) * 3 + 1] = _v.y; N[(o + i) * 3 + 2] = _v.z;
+          if (C) { if (ca) { C[(o + i) * 3] = ca.getX(i); C[(o + i) * 3 + 1] = ca.getY(i); C[(o + i) * 3 + 2] = ca.getZ(i); } else C.fill(1, (o + i) * 3, (o + i) * 3 + 3); }
+          if (UV && ua) { UV[(o + i) * 2] = ua.getX(i); UV[(o + i) * 2 + 1] = ua.getY(i); }
+        }
+        o += c; if (e.own) e.g.dispose();
+      }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(P, 3)); g.setAttribute('normal', new THREE.BufferAttribute(N, 3));
+      if (C) g.setAttribute('color', new THREE.BufferAttribute(C, 3)); if (UV) g.setAttribute('uv', new THREE.BufferAttribute(UV, 2));
+      g.computeBoundingSphere();
+      const mesh = new THREE.Mesh(g, mat); mesh.castShadow = gr.cast; mesh.receiveShadow = gr.recv; mesh.matrixAutoUpdate = false; mesh.updateMatrix();
+      root.add(mesh); this.baked.push(mesh);
+    }
+    // birleştirilenleri sahneden çıkar (geometrileri bırak; materyaller paylaşımlı)
+    for (const v of done) { root.remove(v); v.traverse((q) => { if (q.geometry) q.geometry.dispose(); }); }
+    this.bakedViews = done;
   }
   sink(dt) { this.root.position.y -= dt * (8 + this.root.position.y * -1.6); this.root.rotation.z += dt * 0.02; }
   update(dt, t, ctx) {

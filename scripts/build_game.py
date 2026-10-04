@@ -3,6 +3,7 @@
 Three.js esbuild ile paketlenip sayfaya gömülür; çıkan dosya internetsiz
 de açılır. Kullanım:  python3 scripts/build_game.py
 """
+import json
 import os
 import re
 import subprocess
@@ -34,6 +35,19 @@ const THREE = hasWebGL2() ? THREE_LIB : null;
 if (!THREE) { $('#loader').classList.add('err'); $('#loader .lerr div').innerHTML = 'Bu cihaz WebGL 2 desteklemiyor.<br>Güncel bir tarayıcıyla tekrar dene.'; throw new Error('WebGL2 yok'); }
 
 ''' + js[b:]
+# ada üretici iş parçacığı (Web Worker): saf matematik bölümleri ayrı, küçültülmüş bir betik olarak gömülür
+boot = open(os.path.join(SRC, '10_boot.js'), encoding='utf8').read()
+helpers = boot[boot.index('/* ---------- küçük matematik'):boot.index('/* ---------- kayıt')]
+wsrc = helpers + 'const Save = { data: { unlocked: 0 } };\n' + open(os.path.join(SRC, '30_world.js'), encoding='utf8').read() + open(os.path.join(SRC, '40_gen.js'), encoding='utf8').read() + '''
+self.onmessage = (e) => {
+  const { id, spec } = e.data; let lv = null;
+  try { lv = buildLevel(spec); if (lv) { delete lv.rng; delete lv._field; } } catch (err) { self.postMessage({ id, err: String(err && err.message || err) }); return; }
+  self.postMessage({ id, lv });
+};
+'''
+wmin = subprocess.run([os.path.join(BUILD, 'node_modules', '.bin', 'esbuild'), '--minify', '--target=es2020', '--legal-comments=none', '--loader=js'], input=wsrc.encode('utf8'), capture_output=True, check=True).stdout.decode('utf8')
+assert js.count("'__GEN_WORKER_SRC__'") == 1
+js = js.replace("'__GEN_WORKER_SRC__'", json.dumps(wmin))
 open(os.path.join(BUILD, 'game_src.js'), 'w', encoding='utf8').write(js)
 subprocess.run([os.path.join(BUILD, 'node_modules', '.bin', 'esbuild'), 'game_src.js', '--bundle', '--format=esm', '--minify',
                 '--target=es2020', '--legal-comments=none', '--outfile=game_bundle.js'], cwd=BUILD, check=True)

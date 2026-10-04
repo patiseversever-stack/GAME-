@@ -242,7 +242,7 @@ class DropViews {
     for (const d of drops) {
       const u = { uTime: U.uTime, uRim: { value: new THREE.Color(0.55, 0.45, 1.0) }, uWob: { value: 0.4 }, uBurn: { value: 0 } };
       const m = new THREE.Mesh(this.geo, new THREE.ShaderMaterial({ vertexShader: ZIF_VERT, fragmentShader: DROP_FRAG, uniforms: u }));
-      const shell = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), new THREE.MeshStandardMaterial({ color: 0x3a2f5a, roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.55, emissive: 0x2a1e5a, emissiveIntensity: 0.5 }));
+      const shell = new THREE.Mesh(new THREE.OctahedronGeometry(0.2, 0), envMat(new THREE.MeshStandardMaterial({ color: 0x3a2f5a, roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.55, emissive: 0x2a1e5a, emissiveIntensity: 0.5 })));
       const halo = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: new THREE.Color(0.6, 0.45, 1.6), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0.35 }));
       halo.scale.setScalar(0.9);
       const g = new THREE.Group(); g.add(m, shell, halo); g.position.set(d.x, 0.32, d.z); scene.add(g);
