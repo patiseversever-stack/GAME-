@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="tr" data-theme="lounge" data-rack="walnut" data-tiles="ivory">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Taş önizleme</title>
+<link rel="stylesheet" href="../../styles/fonts.generated.css">
+<link rel="stylesheet" href="../../styles/tokens.css">
+<link rel="stylesheet" href="../../styles/tile.css">
+<style>
+  body{margin:0;background:var(--felt-mid);color:var(--ink);font-family:var(--font-ui);padding:18px}
+  h3{margin:18px 0 8px;font-size:13px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;padding:12px;background:rgba(0,0,0,.18);border-radius:12px}
+  .row .tile{margin-right:2px}
+</style>
+</head>
+<body>
+<div id="out"></div>
+<script type="module">
+import { createTileEl, setTileFace, setFlip } from '../../src/ui/tile-dom.js';
+import { makeCtx, tileId } from '../../src/game/tiles.js';
+const ctx = makeCtx(tileId(0, 6)); // okey = kırmızı 7
+const q = new URLSearchParams(location.search);
+if (q.get('tiles')) document.documentElement.dataset.tiles = q.get('tiles');
+if (q.get('theme')) document.documentElement.dataset.theme = q.get('theme');
+const out = document.getElementById('out');
+function row(title, ids, size, cls = [], opt = {}) {
+  const h = document.createElement('h3'); h.textContent = title; out.appendChild(h);
+  const r = document.createElement('div'); r.className = 'row'; r.style.setProperty('--tw', size + 'px');
+  for (const id of ids) {
+    const el = createTileEl(id, ctx, { inline: true });
+    cls.forEach(c => el.classList.add(c));
+    if (opt.back) setFlip(el, 180);
+    if (opt.rep) setTileFace(el, id, ctx, opt.rep);
+    r.appendChild(el);
+  }
+  out.appendChild(r);
+}
+const all = [0,1,2,3,4].map(c => null);
+const seq = [tileId(0,1), tileId(1,13), tileId(2,7), tileId(3,12), tileId(0,10), tileId(1,5), tileId(2,9), tileId(3,4)];
+row('Renkler ve sayılar — 56px', seq, 56);
+row('Dört renk, aynı sayı (şekil işareti) — 44px', [tileId(0,8), tileId(1,8), tileId(2,8), tileId(3,8), tileId(0,11), tileId(1,11), tileId(2,11), tileId(3,11)], 44);
+row('Okey (gerçek) + sahte okey + masadaki okey temsili — 56px', [tileId(0,7,0), 104], 56);
+const r2 = document.createElement('div');
+row('Masadaki okey (5 yerine) — 44px', [tileId(0,7,1)], 44, [], { rep: { c: 2, v: 5 } });
+row('Durumlar: seçili / soluk / ipucu / yeni — 56px', [tileId(0,3), tileId(1,3), tileId(2,3), tileId(3,3)], 56);
+const rows = out.querySelectorAll('.row'); const st = rows[rows.length-1].children;
+st[0].classList.add('is-selected'); st[1].classList.add('is-dim'); st[2].classList.add('is-hint'); st[3].classList.add('is-new');
+row('Arka yüz — 44px', [1,2,3,4], 44, [], { back: true });
+row('Küçük boyutlar: 32 / 28 / 24px', [tileId(0,13), tileId(1,12), tileId(2,10), tileId(3,9), 104, tileId(0,7)], 32);
+row('28px', [tileId(0,13), tileId(1,12), tileId(2,10), tileId(3,9), 104, tileId(0,7)], 28);
+row('24px', [tileId(0,13), tileId(1,12), tileId(2,10), tileId(3,9), 104, tileId(0,7)], 24);
+document.body.dataset.ready = '1';
+</script>
+</body>
+</html>

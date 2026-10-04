@@ -1,0 +1,334 @@
+/* Taş — fiziksel fildişi/kemik hissi. Tüm ölçüler `--tw` (taş genişliği) oranıdır;
+   hareket (transform) sprite sistemi tarafından yazılır, burada yalnızca görünüm vardır. */
+
+.tile {
+  --th: calc(var(--tw) * 1.36);
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--tw);
+  height: var(--th);
+  margin: 0;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  transform-origin: 50% 62%;
+  contain: layout style;
+  font-family: var(--font-num);
+}
+.tile--inline {
+  position: relative;
+  display: inline-block;
+  vertical-align: middle;
+  flex: none;
+}
+
+/* Temas gölgesi: hafif, yumuşak; yükseklik (lift) arttıkça sprite sistemi kaydırır ve soluklaştırır */
+.tile__shadow {
+  position: absolute;
+  left: 5%;
+  right: 5%;
+  bottom: -5%;
+  height: 26%;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0));
+  transform-origin: 50% 40%;
+  will-change: auto;
+}
+
+.tile__flip {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+}
+
+.tile__face,
+.tile__back {
+  position: absolute;
+  inset: 0;
+  border-radius: calc(var(--tw) * 0.17);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.tile__face {
+  background:
+    radial-gradient(140% 75% at 22% 0%, var(--tile-hi) 0%, rgba(255, 255, 255, 0) 52%),
+    linear-gradient(172deg, var(--tile-1) 0%, var(--tile-2) 56%, var(--tile-3) 100%);
+  box-shadow:
+    inset 0 calc(var(--tw) * 0.028) 0 rgba(255, 255, 255, 0.9),
+    inset 0 calc(var(--tw) * -0.05) calc(var(--tw) * 0.07) rgba(110, 84, 40, 0.3),
+    inset calc(var(--tw) * 0.022) 0 0 rgba(255, 255, 255, 0.35),
+    inset calc(var(--tw) * -0.022) 0 0 rgba(110, 84, 40, 0.14),
+    0 calc(var(--tw) * 0.04) 0 var(--tile-edge-1),
+    0 calc(var(--tw) * 0.08) 0 var(--tile-edge-2),
+    0 calc(var(--tw) * 0.115) 0 var(--tile-edge-3);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: calc(var(--tw) * 0.03);
+  overflow: visible;
+}
+/* çok hafif kemik dokusu */
+.tile__face::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: repeating-linear-gradient(103deg, rgba(120, 95, 50, 0.035) 0 1px, transparent 1px 3px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.tile__back {
+  transform: rotateY(180deg);
+  background:
+    radial-gradient(120% 70% at 25% 0%, rgba(255, 255, 255, 0.22), rgba(255, 255, 255, 0) 55%),
+    linear-gradient(165deg, var(--tile-back-1), var(--tile-back-2));
+  box-shadow:
+    inset 0 calc(var(--tw) * 0.028) 0 rgba(255, 255, 255, 0.22),
+    inset 0 calc(var(--tw) * -0.05) calc(var(--tw) * 0.07) rgba(0, 0, 0, 0.35),
+    0 calc(var(--tw) * 0.04) 0 var(--tile-edge-1),
+    0 calc(var(--tw) * 0.08) 0 var(--tile-edge-2),
+    0 calc(var(--tw) * 0.115) 0 var(--tile-edge-3);
+}
+.tile__back::before {
+  content: '';
+  position: absolute;
+  inset: 13%;
+  border-radius: calc(var(--tw) * 0.1);
+  border: 1px solid rgba(216, 184, 120, 0.55);
+}
+.tile__back::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 26%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%) rotate(45deg);
+  border: 1px solid rgba(216, 184, 120, 0.7);
+  background: rgba(216, 184, 120, 0.12);
+}
+
+/* Yüz: sayı + renk körü dostu şekil işareti */
+.tile__num {
+  font-weight: 800;
+  font-size: calc(var(--tw) * 0.68);
+  line-height: 0.92;
+  letter-spacing: -0.035em;
+  font-variant-numeric: lining-nums;
+  color: var(--ink-c);
+  text-shadow: 0 calc(var(--tw) * 0.022) 0 rgba(255, 255, 255, 0.6);
+  margin-top: calc(var(--tw) * 0.04);
+}
+.tile[data-color='red'] {
+  --ink-c: var(--ink-red);
+}
+.tile[data-color='blue'] {
+  --ink-c: var(--ink-blue);
+}
+.tile[data-color='black'] {
+  --ink-c: var(--ink-black);
+}
+.tile[data-color='yellow'] {
+  --ink-c: var(--ink-yellow);
+}
+[data-tiles='onyx'] .tile__num {
+  text-shadow: 0 calc(var(--tw) * 0.02) calc(var(--tw) * 0.06) rgba(0, 0, 0, 0.7);
+}
+
+.tile__mark {
+  display: block;
+  width: calc(var(--tw) * 0.2);
+  height: calc(var(--tw) * 0.2);
+  background: var(--ink-c);
+  box-shadow: 0 calc(var(--tw) * 0.02) 0 rgba(255, 255, 255, 0.55);
+  flex: none;
+}
+.tile[data-color='red'] .tile__mark {
+  border-radius: 50%;
+}
+.tile[data-color='blue'] .tile__mark {
+  clip-path: polygon(50% 0, 100% 50%, 50% 100%, 0 50%);
+  box-shadow: none;
+  width: calc(var(--tw) * 0.24);
+  height: calc(var(--tw) * 0.24);
+}
+.tile[data-color='black'] .tile__mark {
+  clip-path: polygon(50% 4%, 100% 92%, 0 92%);
+  box-shadow: none;
+  width: calc(var(--tw) * 0.23);
+  height: calc(var(--tw) * 0.2);
+}
+.tile[data-color='yellow'] .tile__mark {
+  border-radius: calc(var(--tw) * 0.03);
+  width: calc(var(--tw) * 0.18);
+  height: calc(var(--tw) * 0.18);
+}
+
+/* Gerçek okey — altın yıldız, belirgin ama sakin */
+.tile[data-okey='1'] .tile__face {
+  background:
+    radial-gradient(120% 70% at 50% 40%, rgba(255, 226, 150, 0.45), rgba(255, 226, 150, 0) 70%),
+    radial-gradient(140% 75% at 22% 0%, var(--tile-hi) 0%, rgba(255, 255, 255, 0) 52%),
+    linear-gradient(172deg, #fff7dc 0%, #f6e7b8 56%, #e9d08a 100%);
+}
+.tile[data-okey='1'] .tile__face::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--tw) * 0.07);
+  border-radius: calc(var(--tw) * 0.12);
+  border: calc(var(--tw) * 0.028) solid rgba(185, 140, 40, 0.75);
+  pointer-events: none;
+}
+.tile__star {
+  display: block;
+  width: calc(var(--tw) * 0.62);
+  height: calc(var(--tw) * 0.62);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  background: linear-gradient(160deg, #ffe9a0 0%, #e0a92a 55%, #b87a10 100%);
+  filter: drop-shadow(0 calc(var(--tw) * 0.02) 0 rgba(120, 80, 10, 0.5));
+  margin-top: calc(var(--tw) * 0.06);
+}
+.tile__tag {
+  font-family: var(--font-ui);
+  font-weight: 800;
+  font-size: calc(var(--tw) * 0.15);
+  letter-spacing: 0.1em;
+  color: #8a5f12;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+/* Sahte okey — okeyin doğal yüzünü küçük gösterir + sakin zümrüt rozet (gerçek okeyden net ayrılır) */
+.tile[data-fake='1'] .tile__num {
+  font-size: calc(var(--tw) * 0.36);
+  margin-top: calc(var(--tw) * 0.08);
+  opacity: 0.85;
+}
+.tile[data-fake='1'] .tile__mark {
+  display: none;
+}
+.tile__emblem {
+  display: block;
+  position: relative;
+  width: calc(var(--tw) * 0.5);
+  height: calc(var(--tw) * 0.5);
+  border-radius: 50%;
+  border: calc(var(--tw) * 0.045) solid #2c6b5e;
+  background: radial-gradient(circle at 50% 42%, #f4e7c4 0 38%, #e7d6a4 100%);
+  box-shadow: inset 0 0 0 calc(var(--tw) * 0.03) #f6efd8, 0 calc(var(--tw) * 0.02) 0 rgba(255, 255, 255, 0.6);
+}
+.tile__emblem::after {
+  content: '';
+  position: absolute;
+  inset: 22%;
+  background: #2c6b5e;
+  clip-path: polygon(50% 0, 62% 38%, 100% 50%, 62% 62%, 50% 100%, 38% 62%, 0 50%, 38% 38%);
+}
+.tile[data-fake='1'] .tile__tag {
+  color: #2c6b5e;
+}
+[data-tiles='onyx'] .tile[data-fake='1'] .tile__emblem {
+  background: radial-gradient(circle at 50% 42%, #48635d 0 38%, #34504a 100%);
+  border-color: #8fd1bf;
+}
+[data-tiles='onyx'] .tile[data-fake='1'] .tile__emblem::after {
+  background: #8fd1bf;
+}
+[data-tiles='onyx'] .tile[data-okey='1'] .tile__face {
+  background:
+    radial-gradient(120% 70% at 50% 40%, rgba(255, 215, 120, 0.3), rgba(255, 215, 120, 0) 70%),
+    linear-gradient(172deg, #4a4431 0%, #393424 56%, #2a2618 100%);
+}
+[data-tiles='onyx'] .tile__tag {
+  color: #e7c77a;
+}
+
+/* Masadaki okey temsil rozeti (perde okey hangi taşı temsil ediyor) */
+.tile[data-rep='1'] .tile__face::after {
+  content: '';
+  position: absolute;
+  inset: calc(var(--tw) * 0.05);
+  border-radius: calc(var(--tw) * 0.12);
+  border: calc(var(--tw) * 0.028) dashed rgba(185, 140, 40, 0.85);
+  pointer-events: none;
+}
+.tile__badge {
+  position: absolute;
+  right: calc(var(--tw) * -0.08);
+  top: calc(var(--tw) * -0.08);
+  width: calc(var(--tw) * 0.34);
+  height: calc(var(--tw) * 0.34);
+  clip-path: polygon(50% 0, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  background: linear-gradient(160deg, #ffe9a0, #d99a1e);
+  z-index: 2;
+}
+
+/* ───────── durumlar ───────── */
+.tile.is-selected .tile__face {
+  box-shadow:
+    inset 0 calc(var(--tw) * 0.028) 0 rgba(255, 255, 255, 0.9),
+    inset 0 calc(var(--tw) * -0.05) calc(var(--tw) * 0.07) rgba(110, 84, 40, 0.3),
+    inset 0 0 0 calc(var(--tw) * 0.045) var(--accent),
+    0 calc(var(--tw) * 0.04) 0 var(--tile-edge-1),
+    0 calc(var(--tw) * 0.08) 0 var(--tile-edge-2),
+    0 calc(var(--tw) * 0.115) 0 var(--tile-edge-3);
+}
+.tile.is-dim .tile__face::after,
+.tile.is-dim .tile__back::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(24, 16, 6, 0.34);
+  border: 0;
+  width: auto;
+  transform: none;
+}
+.tile.is-hint .tile__face {
+  box-shadow:
+    inset 0 calc(var(--tw) * 0.028) 0 rgba(255, 255, 255, 0.9),
+    inset 0 calc(var(--tw) * -0.05) calc(var(--tw) * 0.07) rgba(110, 84, 40, 0.3),
+    0 0 0 calc(var(--tw) * 0.04) rgba(216, 184, 120, 0.55),
+    0 calc(var(--tw) * 0.04) 0 var(--tile-edge-1),
+    0 calc(var(--tw) * 0.08) 0 var(--tile-edge-2),
+    0 calc(var(--tw) * 0.115) 0 var(--tile-edge-3);
+}
+.tile.is-new .tile__face {
+  animation: tile-new 1.6s var(--ease-out) 1;
+}
+@keyframes tile-new {
+  0% {
+    filter: brightness(1.12);
+    box-shadow:
+      inset 0 0 0 calc(var(--tw) * 0.06) var(--accent-strong),
+      0 0 calc(var(--tw) * 0.5) rgba(236, 209, 146, 0.75),
+      0 calc(var(--tw) * 0.04) 0 var(--tile-edge-1),
+      0 calc(var(--tw) * 0.08) 0 var(--tile-edge-2),
+      0 calc(var(--tw) * 0.115) 0 var(--tile-edge-3);
+  }
+  100% {
+    filter: none;
+  }
+}
+.tile.is-ghost {
+  opacity: 0.35;
+}
+
+@media (hover: hover) {
+  .tile.is-hover .tile__face {
+    filter: brightness(1.04);
+  }
+}
+
+/* Düşük kaliteli cihaz: dokuyu ve çoklu gölgeyi sadeleştir */
+[data-quality='low'] .tile__face::before {
+  display: none;
+}
+[data-quality='low'] .tile__shadow {
+  display: none;
+}

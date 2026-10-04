@@ -1,0 +1,11 @@
+{
+  "name": "Patisever Okey",
+  "short_name": "Okey",
+  "description": "Okey ve 101 Okey — çevrimdışı, mobil öncelikli.",
+  "start_url": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#07120f",
+  "theme_color": "#07120f",
+  "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

@@ -1,0 +1,19 @@
+/* Taş takımları (render3d/tile-themes): renk değişkenleri, takım yazı tipleri, boyanmış yüz/sırt görselleri, orta grup sayaç rozeti */
+:root[data-tiles='cini']{--tile-1:#f6f3ea;--tile-2:#efeadc;--tile-3:#e4ddca;--tile-edge-1:#dcd6c8;--tile-edge-2:#c6bfad;--tile-edge-3:#a8a08d;--tile-hi:rgba(255,255,255,.9);--ink-red:#b8322a;--ink-blue:#1f429a;--ink-black:#26262c;--ink-yellow:#cd8a17;--tile-back-1:#2a52aa;--tile-back-2:#132c6c}
+:root[data-tiles='ebru']{--tile-1:#f3ebdb;--tile-2:#ece2cd;--tile-3:#e0d4ba;--tile-edge-1:#dbcdb0;--tile-edge-2:#c3b492;--tile-edge-3:#a39373;--tile-hi:rgba(255,255,255,.75);--ink-red:#a8222c;--ink-blue:#22357a;--ink-black:#1b1a1f;--ink-yellow:#c4860f;--tile-back-1:#3d5288;--tile-back-2:#22366c}
+:root[data-tiles='yagli']{--tile-1:#f1e9d9;--tile-2:#e9dfcb;--tile-3:#ddd0b8;--tile-edge-1:#c9ad84;--tile-edge-2:#b0926a;--tile-edge-3:#8f7350;--tile-hi:rgba(255,255,255,.7);--ink-red:#c22a26;--ink-blue:#203f9e;--ink-black:#1d1b1a;--ink-yellow:#d48f0b;--tile-back-1:#2f58a8;--tile-back-2:#14245c}
+:root[data-tiles='cini'] .tile__num{font-family:'Yeseva One',Georgia,serif;font-weight:400}
+:root[data-tiles='ebru'] .tile__num{font-family:'Abril Fatface',Georgia,serif;font-weight:400}
+:root[data-tiles='yagli'] .tile__num{font-family:'Fraunces',Georgia,serif;font-weight:900}
+:root[data-tiles='cini'] .tile__face,:root[data-tiles='ebru'] .tile__face,:root[data-tiles='yagli'] .tile__face{background-size:100% 100%!important;background-position:center!important;background-repeat:no-repeat!important}
+.tile.pt-ready .tile__face>*:not(.tile__badge){visibility:hidden}
+.tile.pt-ready .tile__face::before{display:none}
+.tile.pt-ready[data-okey='1']:not([data-rep]):not(.is-dim) .tile__face::after{display:none}
+:root.pt-back .tile__back{background:var(--pt-back) center/100% 100% no-repeat,linear-gradient(165deg,var(--tile-back-1),var(--tile-back-2))!important}
+:root.pt-back .tile__back::before{display:none}
+:root.pt-back .tile:not(.is-dim) .tile__back::after{display:none}
+.plate .plate__count{position:absolute;transform:translate(-50%,-50%);min-width:21px;height:16px;padding:0 5px;border-radius:99px;display:inline-flex;align-items:center;justify-content:center;font:800 10px/1 var(--font-ui,system-ui);font-variant-numeric:tabular-nums;letter-spacing:0;color:#fff6df;background:linear-gradient(180deg,#2b302c,#111513);box-shadow:0 0 0 1px rgba(216,180,106,.6),0 2px 5px rgba(0,0,0,.55);z-index:3;white-space:nowrap}
+.plate .plate__cap,.plate .plate__cap--ind{font-size:8.5px!important;letter-spacing:.09em!important;color:rgba(246,236,214,.66)!important}
+.plate .plate__cap--okey{color:#f3cf6b!important}
+.plate .plate__plus{padding:2px 5px;border-radius:99px;font:800 9px/1 var(--font-ui,system-ui);color:rgba(255,236,190,.9);background:rgba(10,20,16,.55);box-shadow:inset 0 0 0 1px rgba(216,180,106,.35)}
+:root.pt-back .seat__backs i{background:var(--pt-back) center/cover no-repeat,linear-gradient(180deg,var(--tile-back-1),var(--tile-back-2))}

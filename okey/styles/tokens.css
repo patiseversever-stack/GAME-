@@ -1,0 +1,229 @@
+/* Tasarım token'ları ve tema paketleri.
+   Tema mimarisi: masa (table), ıstaka (rack) ve taş takımı (tiles) birbirinden bağımsız CSS değişkeni paketleridir;
+   <html data-theme data-rack data-tiles> özniteliklerini değiştirmek anında yeniden boyar. */
+
+:root {
+  /* Tipografi */
+  --font-ui: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-num: 'DM Sans', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* Yüzey ve metin (tema tarafından ezilir) */
+  --ink: #f3ecdc;
+  --ink-dim: rgba(243, 236, 220, 0.66);
+  --ink-faint: rgba(243, 236, 220, 0.38);
+  --accent: #d8b878;
+  --accent-strong: #ecd192;
+  --accent-ink: #2a1f0e;
+  --ok: #7cc79a;
+  --danger: #e0695a;
+  --panel: rgba(14, 24, 22, 0.78);
+  --panel-solid: #0f1b19;
+  --panel-line: rgba(255, 255, 255, 0.09);
+
+  /* Ölçek */
+  --r-s: 8px;
+  --r-m: 14px;
+  --r-l: 22px;
+  --pad: 16px;
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-r: env(safe-area-inset-right, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-l: env(safe-area-inset-left, 0px);
+
+  /* Hareket */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-soft: cubic-bezier(0.25, 0.75, 0.2, 1);
+  --ease-spring: linear(0, 0.12 6%, 0.42 14%, 0.78 24%, 1.03 34%, 1.06 42%, 1.03 52%, 0.995 66%, 1 82%, 1);
+  --dur-fast: 140ms;
+  --dur-med: 260ms;
+  --dur-slow: 480ms;
+
+  /* z-katmanları */
+  --z-surface: 0;
+  --z-table: 10;
+  --z-rack: 20;
+  --z-sprites: 30;
+  --z-lip: 40;
+  --z-hud: 50;
+  --z-toast: 60;
+  --z-overlay: 80;
+  --z-fx: 90;
+
+  /* Tile boyutu — yerleşim çözücü tarafından yazılır */
+  --tw: 40px;
+  --th: 54px;
+
+  /* Masa perspektifi (düşük kalitede 0) */
+  --tilt: 5deg;
+}
+
+/* ─────────────────────────  MASA TEMALARI  ───────────────────────── */
+
+/* Modern Lounge — petrol yeşili keçe, ceviz çerçeve, pirinç detay */
+:root,
+:root[data-theme='lounge'] {
+  --bg-deep: #07120f;
+  --felt-hi: #2a5f51;
+  --felt-mid: #1a4339;
+  --felt-lo: #0e2924;
+  --felt-edge: #071a16;
+  --light-tint: rgba(255, 233, 180, 0.17);
+  --weave: rgba(255, 255, 255, 0.03);
+  --rim-1: #7a4f2a;
+  --rim-2: #3f2713;
+  --brass: #c9a45c;
+  --seat-glow: rgba(216, 184, 120, 0.4);
+  --table-mark: rgba(216, 184, 120, 0.1);
+}
+
+/* Premium Ceviz Salon — bordo deri/keçe */
+:root[data-theme='walnut'] {
+  --bg-deep: #120709;
+  --felt-hi: #6a2a35;
+  --felt-mid: #481a24;
+  --felt-lo: #2b0e15;
+  --felt-edge: #1a070c;
+  --light-tint: rgba(255, 214, 170, 0.15);
+  --weave: rgba(255, 255, 255, 0.025);
+  --rim-1: #5c3a20;
+  --rim-2: #2a170a;
+  --brass: #d1ad6a;
+  --seat-glow: rgba(230, 190, 130, 0.4);
+  --table-mark: rgba(230, 190, 130, 0.1);
+  --accent: #e0bd80;
+}
+
+/* Boğaz Gece — gece mavisi keçe, soğuk ay ışığı, gümüş detay */
+:root[data-theme='bosphorus'] {
+  --bg-deep: #050b16;
+  --felt-hi: #21426e;
+  --felt-mid: #142a4a;
+  --felt-lo: #0a1628;
+  --felt-edge: #050d1a;
+  --light-tint: rgba(170, 205, 255, 0.17);
+  --weave: rgba(200, 220, 255, 0.03);
+  --rim-1: #2a2f3a;
+  --rim-2: #10131a;
+  --brass: #aab8cf;
+  --seat-glow: rgba(160, 195, 245, 0.42);
+  --table-mark: rgba(170, 195, 235, 0.1);
+  --accent: #b9c9e3;
+  --accent-strong: #dbe6f8;
+  --accent-ink: #0e1a2e;
+}
+
+/* Klasik Kahvehane — zeytin yeşili çuha, eskimiş sıcak ahşap, tungsten ışık */
+:root[data-theme='kahvehane'] {
+  --bg-deep: #0c110a;
+  --felt-hi: #44622f;
+  --felt-mid: #2e4623;
+  --felt-lo: #1a2b14;
+  --felt-edge: #0d170a;
+  --light-tint: rgba(255, 196, 120, 0.2);
+  --weave: rgba(255, 240, 200, 0.03);
+  --rim-1: #92602f;
+  --rim-2: #4b2e14;
+  --brass: #c79a52;
+  --seat-glow: rgba(240, 190, 120, 0.42);
+  --table-mark: rgba(230, 190, 120, 0.1);
+}
+
+/* Yaz Terası — kum/terrakota yüzey, gün ışığı, teak çerçeve */
+:root[data-theme='teras'] {
+  --bg-deep: #1a0f0a;
+  --felt-hi: #b87a52;
+  --felt-mid: #96583a;
+  --felt-lo: #6e3a25;
+  --felt-edge: #3a1c10;
+  --light-tint: rgba(255, 240, 210, 0.26);
+  --weave: rgba(255, 245, 225, 0.05);
+  --rim-1: #a9794a;
+  --rim-2: #63401f;
+  --brass: #efd29a;
+  --seat-glow: rgba(255, 224, 160, 0.5);
+  --table-mark: rgba(255, 235, 200, 0.14);
+  --panel: rgba(40, 20, 12, 0.78);
+  --panel-solid: #2a150c;
+}
+
+/* ─────────────────────────  ISTAKA SKİNLERİ  ───────────────────────── */
+:root,
+:root[data-rack='walnut'] {
+  --rack-1: #9a6a3d;
+  --rack-2: #73481f;
+  --rack-3: #4d2c11;
+  --rack-ledge-1: #b4834f;
+  --rack-ledge-2: #6a4020;
+  --rack-groove: rgba(24, 12, 4, 0.55);
+  --rack-grain: rgba(255, 226, 180, 0.05);
+  --rack-metal: #c9a45c;
+}
+:root[data-rack='ebony'] {
+  --rack-1: #3a3633;
+  --rack-2: #25221f;
+  --rack-3: #141210;
+  --rack-ledge-1: #4c4742;
+  --rack-ledge-2: #1f1c19;
+  --rack-groove: rgba(0, 0, 0, 0.6);
+  --rack-grain: rgba(255, 255, 255, 0.035);
+  --rack-metal: #d8b878;
+}
+:root[data-rack='maple'] {
+  --rack-1: #d6b58a;
+  --rack-2: #b48b5c;
+  --rack-3: #8a6237;
+  --rack-ledge-1: #e6c9a0;
+  --rack-ledge-2: #a07747;
+  --rack-groove: rgba(70, 40, 10, 0.5);
+  --rack-grain: rgba(120, 70, 20, 0.08);
+  --rack-metal: #a9802f;
+}
+
+/* ─────────────────────────  TAŞ TAKIMLARI  ───────────────────────── */
+:root,
+:root[data-tiles='ivory'] {
+  --tile-1: #fbf6e8;
+  --tile-2: #f1e7cf;
+  --tile-3: #e4d6b6;
+  --tile-edge-1: #d2c39f;
+  --tile-edge-2: #bfae86;
+  --tile-edge-3: #a8976d;
+  --tile-hi: rgba(255, 255, 255, 0.85);
+  --ink-red: #c2302c;
+  --ink-blue: #1d5ea8;
+  --ink-black: #20252a;
+  --ink-yellow: #cf8a12;
+  --tile-back-1: #3d5f55;
+  --tile-back-2: #274339;
+}
+:root[data-tiles='bone'] {
+  --tile-1: #f1efe6;
+  --tile-2: #e3e0d3;
+  --tile-3: #d1ccbb;
+  --tile-edge-1: #bdb8a4;
+  --tile-edge-2: #a8a38d;
+  --tile-edge-3: #948f78;
+  --tile-hi: rgba(255, 255, 255, 0.7);
+  --ink-red: #b4302f;
+  --ink-blue: #25579c;
+  --ink-black: #1d2126;
+  --ink-yellow: #b9790f;
+  --tile-back-1: #4a5b66;
+  --tile-back-2: #2d3a43;
+}
+:root[data-tiles='onyx'] {
+  --tile-1: #3a3d42;
+  --tile-2: #2a2d31;
+  --tile-3: #1c1e22;
+  --tile-edge-1: #121417;
+  --tile-edge-2: #0c0d0f;
+  --tile-edge-3: #050506;
+  --tile-hi: rgba(255, 255, 255, 0.22);
+  --ink-red: #ff6b5e;
+  --ink-blue: #6db2ff;
+  --ink-black: #e9e3d2;
+  --ink-yellow: #ffc94d;
+  --tile-back-1: #6a5a38;
+  --tile-back-2: #463a22;
+}
