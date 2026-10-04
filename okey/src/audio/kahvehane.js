@@ -130,6 +130,27 @@ export class Music {
     }, fade * 1000 + 150);
   }
 
+  // Zafer cümlesi: o an çalan makamda kanun glisandosu (dizi boyunca yukarı) ve ud'un durakta tremololu kalışı.
+  // Yeni ezgi bir nefes sonra başlar.
+  flourish() {
+    if (!this.playing) return;
+    const m = MAKAMS[this.makam];
+    const t = this.ctx.currentTime + 0.05;
+    for (let i = 0; i <= 8; i++) this._pluck(this.kanunBus, t + i * 0.045, this._freq(m, i, 2), 0.2 + i * 0.012, 'kanun');
+    const top = t + 9 * 0.045;
+    this._pluck(this.kanunBus, top, this._freq(m, 7, 2), 0.3, 'kanun');
+    this._pluck(this.kanunBus, top + 0.01, this._freq(m, 4, 2), 0.18, 'kanun');
+    const land = top + 0.42;
+    for (const [deg, g] of [
+      [0, 0.38],
+      [m.strong, 0.22],
+      [7, 0.2],
+    ])
+      this._pluck(this.udBus, land, this._freq(m, deg, 1), g, 'ud');
+    for (let k = 1; k < 10; k++) this._pluck(this.udBus, land + k * 0.1, this._freq(m, 0, 1), 0.16 * Math.pow(0.88, k), 'ud');
+    this.cursor = Math.max(this.cursor, land + 2.6);
+  }
+
   // menü taksimi biraz daha belirgin; oyunda efektlerin altında kalır
   _level(v) {
     return (this.mood === 'menu' ? 0.3 : 0.22) * v;

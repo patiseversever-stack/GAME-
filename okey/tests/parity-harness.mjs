@@ -176,6 +176,17 @@ function candidateActions(Lg, seat, rng) {
   return acts;
 }
 
+// Belirsiz okey temsili: oyuncunun dizilişi (ya da işlenen okeyin ucu) belirsizse yeni motor en çok puan getiren
+// yorumu / üst ucu seçer, orijinal alt ucu. İkisi de kurala uygun; sonraki işleme/işlek taş kararları bu yüzden ayrışabilir.
+function jokerRepsDiffer(Lg, mine) {
+  const rep = (tiles) => tiles.filter((x) => x.as).map((x) => `${toInt(x.tileId)}:${COLORS.indexOf(x.as.color)}:${x.as.value}`).sort().join(',');
+  const repN = (tiles) => tiles.filter((x) => x.j).map((x) => `${x.t}:${x.c}:${x.v}`).sort().join(',');
+  return Lg.melds.some((m) => {
+    const n = mine.state.melds.find((x) => x.id === m.id);
+    return n && rep(m.tiles) !== repN(n.tiles);
+  });
+}
+
 // Orijinalin bilinen hatası: okeyli bir seriye uç taş eklerken temsili yeniden çözüp reddedebiliyor.
 function expectedDivergence(Lg, seat, a, legacyErr, newOk) {
   if (!newOk || !legacyErr) return false;
@@ -238,6 +249,10 @@ export function runParity(mode, gameCount, baseSeed, extraRules = {}) {
       }
       assert.equal(checkInvariantsLite(mine), null);
       Lg = lr.state;
+      if ((a.type === 'OPEN' || a.type === 'LAYOFF') && jokerRepsDiffer(Lg, mine)) {
+        divergent++;
+        break;
+      }
     }
   }
   return { steps, divergent, kinds };

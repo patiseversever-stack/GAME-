@@ -12,6 +12,7 @@
 :root.pt-back .tile__back{background:var(--pt-back) center/100% 100% no-repeat,linear-gradient(165deg,var(--tile-back-1),var(--tile-back-2))!important}
 :root.pt-back .tile__back::before{display:none}
 :root.pt-back .tile:not(.is-dim) .tile__back::after{display:none}
+.plate{z-index:41;pointer-events:none}
 .plate .plate__count{position:absolute;transform:translate(-50%,-50%);z-index:3;min-width:21px;height:16px;padding:0 5px;border-radius:99px;display:inline-flex;align-items:center;justify-content:center;font:800 10px/1 var(--font-ui,system-ui);font-variant-numeric:tabular-nums;letter-spacing:0;color:#fff6df;background:linear-gradient(180deg,#2b302c,#111513);box-shadow:0 0 0 1px rgba(216,180,106,.6),0 2px 5px rgba(0,0,0,.55);white-space:nowrap}
 .plate .plate__cap,.plate .plate__cap--ind{font-size:8.5px!important;letter-spacing:.09em!important;color:rgba(246,236,214,.66)!important}
 .plate .plate__cap--okey{color:#f3cf6b!important}

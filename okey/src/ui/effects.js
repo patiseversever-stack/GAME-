@@ -30,6 +30,30 @@ export class Camera {
 }
 
 // ───────────────────────── Konfeti (ince kâğıt şeritler + küçük metalik pullar) ─────────────────────────
+// Birim boyutlu (±0.5) çini motifleri
+function starPath() {
+  const p = new Path2D();
+  for (let i = 0; i < 16; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 8;
+    const r = i % 2 ? 0.24 : 0.5;
+    p.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+  }
+  p.closePath();
+  return p;
+}
+function tulipPath() {
+  const p = new Path2D();
+  p.moveTo(0, 0.5);
+  p.bezierCurveTo(-0.36, 0.34, -0.42, -0.1, -0.3, -0.46);
+  p.lineTo(-0.14, -0.2);
+  p.lineTo(0, -0.5);
+  p.lineTo(0.14, -0.2);
+  p.lineTo(0.3, -0.46);
+  p.bezierCurveTo(0.42, -0.1, 0.36, 0.34, 0, 0.5);
+  p.closePath();
+  return p;
+}
+
 export class Confetti {
   constructor(canvas) {
     this.c = canvas;
@@ -38,6 +62,9 @@ export class Confetti {
     this.raf = 0;
     this.last = 0;
     this.colors = ['#e9c77b', '#f4e6bd', '#c9a45c', '#9fd0c4', '#e7a09a', '#f2efe6'];
+    // çini paleti (lale ve yıldız parçacıkları): altın, kobalt, turkuaz, mercan
+    this.cini = ['#e8bf62', '#f1d48a', '#2a52aa', '#2f9c95', '#c23a2c'];
+    this.shapes = { star: starPath(), tulip: tulipPath() };
   }
   burst(x, y, n = 60, dpr = Math.min(2, window.devicePixelRatio || 1)) {
     const c = this.c;
@@ -63,10 +90,20 @@ export class Confetti {
         flip: Math.random() * 6.28,
         vf: 5 + Math.random() * 9,
         col: this.colors[(Math.random() * this.colors.length) | 0],
+        shape: null,
         life: 0,
         max: 1.8 + Math.random() * 1.4,
         metal: Math.random() < 0.3,
       });
+      // her dört parçadan biri altın lale ya da sekiz köşeli yıldız (biraz daha iri, daha yavaş döner)
+      const last = this.ps[this.ps.length - 1];
+      if (Math.random() < 0.26) {
+        last.shape = Math.random() < 0.5 ? 'star' : 'tulip';
+        last.col = this.cini[(Math.random() * this.cini.length) | 0];
+        last.w = last.h = 9 + Math.random() * 6;
+        last.vr *= 0.5;
+        last.vf *= 0.45;
+      }
     }
     if (!this.raf) {
       this.last = performance.now();
@@ -97,6 +134,13 @@ export class Confetti {
       ctx.scale(1, Math.cos(p.flip));
       ctx.globalAlpha = a;
       ctx.fillStyle = p.col;
+      if (p.shape) {
+        ctx.scale(p.w * d, p.w * d);
+        ctx.fill(this.shapes[p.shape]);
+        ctx.restore();
+        alive.push(p);
+        continue;
+      }
       ctx.fillRect((-p.w / 2) * d, (-p.h / 2) * d, p.w * d, p.h * d);
       if (p.metal) {
         ctx.fillStyle = 'rgba(255,255,255,.35)';

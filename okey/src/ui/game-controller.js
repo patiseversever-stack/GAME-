@@ -753,13 +753,15 @@ export class GameController {
     sc.refreshChrome();
     this.updateUI();
     sv.setStatus('', { thinking: true });
-    const speed = SPEED[this.settings.get('botSpeed')] ?? 1;
-    await this.choreo.sleep(bot.thinkTime(1));
+    const think = bot.thinkTime(1);
     let steps = 0;
+    let drawn = null;
     while (token === this.token) {
       const view = this.game.view(seat);
       let action = bot.nextAction(view);
       if (!action) break;
+      await this.choreo.sleep(this._botPause(action, steps, think, drawn));
+      if (token !== this.token) return;
       let res = this.game.apply(seat, action);
       if (!res.ok) {
         this.botRejects = (this.botRejects || 0) + 1;
@@ -768,6 +770,7 @@ export class GameController {
         if (!res.ok) break;
       }
       for (const ev of res.events) {
+        if ((ev.type === 'draw' || ev.type === 'take') && ev.seat === seat) drawn = ev.tile;
         const t = this.botStatusFor(ev);
         if (t) sv.setStatus(t, { good: ev.type === 'open' });
         if (ev.type === 'penalty' && ev.seat === 0) this.matchStats.penalties0++;
@@ -779,12 +782,20 @@ export class GameController {
       if (s.status !== 'playing' || s.turn.seat !== seat) break;
       steps++;
       if (steps > 60) break;
-      await this.choreo.sleep(300 + 110 * Math.min(steps, 3));
     }
     if (token === this.token) {
       sv.setStatus('');
       this.busy = false;
     }
+  }
+
+  // İnsan temposu: kısa bakıp çeker; çektiği işe yaramıyorsa hemen geri atar, elden atacaksa düşünür;
+  // açmadan ve bitirmeden önce bir an durur. think: botun zorluğuna göre bu sıra için düşünme süresi (ms).
+  _botPause(action, steps, think, drawn) {
+    if (steps === 0) return think * (action.type === 'TAKE_SIDE' ? 0.6 : 0.42);
+    if (action.type === 'DISCARD') return think * (action.tile === drawn ? 0.32 : 0.78);
+    if (action.type === 'FINISH' || action.type === 'OPEN') return think * 1.05;
+    return 300 + 110 * Math.min(steps, 3);
   }
 
   ensureBots() {

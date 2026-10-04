@@ -139,7 +139,10 @@ export class AudioManager {
     }
     this.voices++;
     setTimeout(() => (this.voices = Math.max(0, this.voices - 1)), (dur + (opts.delay || 0)) * 1000 + 60);
-    if (cat === 'event' && this.music?.playing && (name === 'win' || name === 'finish' || name === 'lose')) this.music.duck(0.4, 2.2);
+    if (cat === 'event' && this.music?.playing) {
+      if (name === 'win') this.music.flourish();
+      else if (name === 'finish' || name === 'lose') this.music.duck(0.4, 2.2);
+    }
   }
 
   haptic(name) {
