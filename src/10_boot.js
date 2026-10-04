@@ -87,7 +87,9 @@ function fbm2(x, y, oct = 4) { let s = 0, a = 0.5, f = 1, n = 0; for (let i = 0;
 const hexToRgb = (hex) => { const c = new THREE.Color(hex); return [c.r, c.g, c.b]; };
 
 /* ---------- kayıt ---------- */
-const SAVE_KEY = 'gundonumu.v1';
+// deneme sürümü (Gundonumu_Deneme.html): tüm adalar açık, ilerleme ayrı anahtarda tutulur — gerçek kayıt etkilenmez
+const TEST_ALL = !!window.__GD_TEST_ALL;
+const SAVE_KEY = TEST_ALL ? 'gundonumu.deneme.v1' : 'gundonumu.v1';
 const Save = {
   data: null,
   defaults() {
@@ -107,3 +109,4 @@ const Save = {
   markSeen(key) { this.data.seen[key] = 1; this.save(); },
 };
 Save.load();
+if (TEST_ALL) { Save.data.unlocked = 63; Save.data.seen.tutorial = 1; }

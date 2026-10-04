@@ -237,6 +237,8 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #lvlHelp.on{display:flex}
 #lvlHelp svg{width:13px;height:13px;fill:#ffd98a;stroke:#ffd98a;stroke-width:2;stroke-linecap:round}
 #lvlHelp em{font-style:normal}
+#testBadge{display:none;position:absolute;left:50%;top:calc(var(--sat) + 10px);transform:translateX(-50%);padding:5px 12px;border-radius:999px;background:rgba(20,14,34,.6);border:1px solid rgba(185,173,255,.45);font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#d9d2ff;white-space:nowrap;pointer-events:none;z-index:5}
+body.testall #testBadge{display:block}
 #fail .hintbtn{display:none}#fail.offerhint .hintbtn{display:inline-flex}
 
 /* ---------- pause / settings ---------- */
@@ -552,6 +554,7 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
   <button id="filmSkip" class="tap">Geç ›</button>
 
   <div id="title" class="screen">
+    <div id="testBadge">Deneme · 64 ada açık</div>
     <div class="brand">
       <h1 id="titleWord"></h1>
       <div class="tag">Güneşi sen çevir · Gölgeyi sen koru</div>

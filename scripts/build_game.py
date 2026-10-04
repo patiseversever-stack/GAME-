@@ -55,4 +55,7 @@ out = open(os.path.join(BUILD, 'game_bundle.js'), encoding='utf8').read().replac
 html = head + '<script type="module">\n' + out + '\n</script>\n</body>\n</html>\n'
 for name in ('index.html', 'Gundonumu.html'):
     open(os.path.join(ROOT, name), 'w', encoding='utf8').write(html)
+# deneme sürümü: tüm adalar açık, kayıt ayrı (gerçek ilerleme etkilenmez)
+test = re.sub(r'<title>([^<]*)</title>', r'<title>\1 · Deneme</title>', head, count=1) + '<script>window.__GD_TEST_ALL = true;</script>\n' + html[len(head):]
+open(os.path.join(ROOT, 'Gundonumu_Deneme.html'), 'w', encoding='utf8').write(test)
 print('ok', len(html), 'bayt')

@@ -757,7 +757,7 @@ const TUT = {
     Save.markSeen('tutorial');
     this.el.classList.remove('on');
     const tok = this.token; setTimeout(() => { if (!this.open && tok === this.token) { $('#tIllu').innerHTML = ''; } }, 600);
-    if (play) { audio.ui(); startStory(Math.min(Save.data.unlocked, STORY_LEVELS - 1)); return; }
+    if (play) { audio.ui(); startStory(nextStoryG()); return; }
     if (this.from === 'pause') UI.show('pause');
     else if (this.from === 'settings') { refreshToggles(); UI.show('settings'); }
     else if (G.state === 'title') UI.show('title');

@@ -515,7 +515,9 @@ $$('[data-set]').forEach((el) => el.addEventListener('click', () => {
   Save.save(); audio.ui(); refreshToggles();
 }));
 const bind = (id, fn) => $(id).addEventListener('click', (e) => { e.stopPropagation(); audio.unlock(); fn(e); });
-bind('#btnPlay', () => { audio.ui(); UI.hide('title'); const g = Math.min(Save.data.unlocked, STORY_LEVELS - 1); startStory(g); });
+// sıradaki ada (deneme sürümünde: henüz oynanmamış ilk ada)
+function nextStoryG() { if (TEST_ALL) { for (let g = 0; g < STORY_LEVELS; g++) if (!Save.data.levels[g]) return g; return 0; } return Math.min(Save.data.unlocked, STORY_LEVELS - 1); }
+bind('#btnPlay', () => { audio.ui(); UI.hide('title'); startStory(nextStoryG()); });
 bind('#btnMapT', () => openMap());
 bind('#btnSetT', () => { audio.ui(); refreshToggles(); UI.show('settings'); });
 bind('#btnSetClose', () => { audio.ui(); UI.hide('settings'); });
@@ -783,6 +785,7 @@ function popZifir() {
 }
 
 function bootGame() {
+  if (TEST_ALL) document.body.classList.add('testall');
   GenW.init();
   applyQuality();
   const word = 'Gündönümü';
