@@ -1,7 +1,7 @@
 // 101 masası (yatay): ilk el açılınca masa ızgaraya geçer — rakip ıstakaları üst/yanlara, çöplükler köşelere,
 // deste/gösterge sol alta, kontroller sağ boşluğa; perler oyuncu başına bir hücrede ızgaraya dizilir.
 // Aynı koordinatlar GL çizimi, taş uçuşları, dokunma ve sürükleme hedefleri için tek doğruluk kaynağıdır.
-import { rect, rackWidth, buildRack, inflate, fromCenter } from './layout.js';
+import { rect as box, rackWidth, buildRack, inflate, fromCenter } from './layout.js';
 
 export function configure101Table(scene, L) {
   const active = scene.mode === 'okey101' && !!scene.disp?.melds?.length && L.profile === 'landscape';
@@ -30,12 +30,12 @@ export function configure101Table(scene, L) {
     pileH = Math.round(pileTw * 1.36) + 8;
   const sideY = top + pileH + 10,
     sideRackH = Math.min(138, Math.max(90, h * 0.32));
-  const leftRack = rect(left, sideY - 8, 19, sideRackH),
-    rightRack = rect(right - 19, sideY - 8, 19, sideRackH);
+  const leftRack = box(left, sideY - 8, 19, sideRackH),
+    rightRack = box(right - 19, sideY - 8, 19, sideRackH);
   const upperRackW = Math.min(156, w * 0.18),
-    upperRack = rect((left + right - upperRackW) / 2, top - 2, upperRackW, 25);
+    upperRack = box((left + right - upperRackW) / 2, top - 2, upperRackW, 25);
   const headerW = 106;
-  const panels = [null, rect(right - 44 - headerW, top, headerW, 28), rect(upperRack.x + upperRack.w + 8, top, headerW, 28), rect(upperRack.x - headerW - 10, top, headerW, 28)];
+  const panels = [null, box(right - 44 - headerW, top, headerW, 28), box(upperRack.x + upperRack.w + 8, top, headerW, 28), box(upperRack.x - headerW - 10, top, headerW, 28)];
   L.seats = [
     { seat: 0 },
     ...[1, 2, 3].map((seat) => {
@@ -80,7 +80,7 @@ export function configure101Table(scene, L) {
     actionY = L.rack.rect.y;
     actionRight = Math.min(right, rightPileX - pileW / 2 - 6);
   }
-  L.action = rect(actionX, actionY, actionRight - actionX, Math.max(50, bottom - actionY));
+  L.action = box(actionX, actionY, actionRight - actionX, Math.max(50, bottom - actionY));
   if (L.action.w < 96) scene.host.dataset.controls101Narrow = '1';
   else delete scene.host.dataset.controls101Narrow;
   const meX = s.l + 51,
@@ -96,8 +96,8 @@ export function configure101Table(scene, L) {
   const areaLeft = s.l + pileW + 9,
     areaRight = w - s.r - pileW - 9;
   const areaTop = top + 32;
-  L.meldArea = rect(areaLeft, areaTop, areaRight - areaLeft, Math.max(80, L.rack.rect.y - 7 - areaTop));
-  L.table = rect(left, top, right - left, L.rack.rect.y - top - 4);
+  L.meldArea = box(areaLeft, areaTop, areaRight - areaLeft, Math.max(80, L.rack.rect.y - 7 - areaTop));
+  L.table = box(left, top, right - left, L.rack.rect.y - top - 4);
   L.table101 = true;
   L.gridSmall = small;
 
@@ -124,7 +124,7 @@ export function configure101Table(scene, L) {
   const dockH = Math.ceil(stockTw * 0.42) + 6 + stockH + (dockPad === 6 ? 33 : compactBottom ? 20 : 26);
   const dockY = Math.min(bottom - dockH - (compactBottom ? 0 : 8), Math.max(lowerY + pileH / 2 + 13, L.rack.rect.y - 12));
   const tileBottom = dockY + Math.ceil(stockTw * 0.42) + 6 + stockH;
-  L.stockDock = rect(dockX, dockY, dockW, dockH);
+  L.stockDock = box(dockX, dockY, dockW, dockH);
   L.stock = { cx: dockX + dockPad + stockTw / 2, cy: tileBottom - stockH / 2, w: stockTw, h: stockH, tw: stockTw };
   const indX = dockX + dockPad + stockTw + gap;
   L.plate = { x: indX - 5, y: tileBottom - indH - 4, w: 10 + indTw * 2 + indGap, h: indH + (dockPad === 6 ? 36 : 23), capH: 10, compact: true };
@@ -153,10 +153,10 @@ export function pack101Grid(melds, area, maxTw = 34, small = false) {
     if (count === 1) {
       const width = Math.min(area.w, Math.max(Math.min(360, area.w), area.w * 0.64));
       const height = Math.min(area.h, Math.max(116, area.h * 0.82));
-      rect = rect(area.x + (area.w - width) / 2, area.y + (area.h - height) / 2, width, height);
-    } else if (count === 2) rect = rect(area.x + index * (cw + gridGap), area.y, cw, area.h);
-    else if (count === 3 && index === 2) rect = rect(area.x + (area.w - cw) / 2, area.y + ch + gridGap, cw, ch);
-    else rect = rect(area.x + (index % 2) * (cw + gridGap), area.y + Math.floor(index / 2) * (ch + gridGap), cw, ch);
+      rect = box(area.x + (area.w - width) / 2, area.y + (area.h - height) / 2, width, height);
+    } else if (count === 2) rect = box(area.x + index * (cw + gridGap), area.y, cw, area.h);
+    else if (count === 3 && index === 2) rect = box(area.x + (area.w - cw) / 2, area.y + ch + gridGap, cw, ch);
+    else rect = box(area.x + (index % 2) * (cw + gridGap), area.y + Math.floor(index / 2) * (ch + gridGap), cw, ch);
     return { owner, rect, index, headerH };
   });
 
@@ -240,7 +240,7 @@ export function pack101Grid(melds, area, maxTw = 34, small = false) {
           byId.set(part.meld.id, item);
           items.push(item);
         }
-        const rect = rect(x, y, part.width, th);
+        const rect = box(x, y, part.width, th);
         item.rows.push({ rect, from: part.from, count: part.tiles.length });
         part.tiles.forEach((tile, tileIndex) => item.tiles.push({ t: tile.t, cx: x + tw / 2 + tileIndex * step, cy: y + th / 2, index: part.from + tileIndex }));
         x += part.width + groupGap;
@@ -251,12 +251,12 @@ export function pack101Grid(melds, area, maxTw = 34, small = false) {
       item.tiles.sort((a, b) => a.index - b.index);
       const xs = item.rows.map((row) => row.rect.x),
         ys = item.rows.map((row) => row.rect.y);
-      item.rect = rect(Math.min(...xs), Math.min(...ys), Math.max(...item.rows.map((row) => row.rect.x + row.rect.w)) - Math.min(...xs), Math.max(...item.rows.map((row) => row.rect.y + row.rect.h)) - Math.min(...ys));
-      item.tag = rect(item.rect.x, item.rect.y + item.rect.h, item.rect.w, 0);
+      item.rect = box(Math.min(...xs), Math.min(...ys), Math.max(...item.rows.map((row) => row.rect.x + row.rect.w)) - Math.min(...xs), Math.max(...item.rows.map((row) => row.rect.y + row.rect.h)) - Math.min(...ys));
+      item.tag = box(item.rect.x, item.rect.y + item.rect.h, item.rect.w, 0);
       const first = item.tiles[0],
         last = item.tiles[item.tiles.length - 1];
-      item.ends.low = rect(first.cx - tw / 2, first.cy - th / 2, tw, th);
-      item.ends.high = rect(last.cx - tw / 2, last.cy - th / 2, tw, th);
+      item.ends.low = box(first.cx - tw / 2, first.cy - th / 2, tw, th);
+      item.ends.high = box(last.cx - tw / 2, last.cy - th / 2, tw, th);
     }
   });
   return { tw, th, step, tileGap, groupGap, rowGap, rows: count, order: owners, items, zones, rail: 0, grid: true, headerH };

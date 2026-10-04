@@ -205,13 +205,13 @@ export function settingsSheet(host, settings) {
     difficulty: ['trophy', 'c-pink'],
     fs: ['expand', 'c-slate'],
   };
+  const lab = (key, label) => `<span class="set-lab"><i class="${(IC[key] || [])[1] || 'c-slate'}">${icon((IC[key] || ['cog'])[0])}</i>${label}</span>`;
+  const sw = (key, label) => `<label class="set-row">${lab(key, label)}<button class="switch" role="switch" data-sw="${key}" aria-checked="${!!settings.get(key)}"><i></i></button></label>`;
   // Tam ekran yalnız tarayıcıda (uygulama WebView'ı kendi tam ekranını yönetir)
   const fsRow =
     document.documentElement.requestFullscreen && !window.ReactNativeWebView
       ? `<div class="set-row">${lab('fs', 'Tam ekran')}<button class="switch" role="switch" data-fs aria-checked="${!!document.fullscreenElement}"><i></i></button></div>`
       : '';
-  const lab = (key, label) => `<span class="set-lab"><i class="${(IC[key] || [])[1] || 'c-slate'}">${icon((IC[key] || ['cog'])[0])}</i>${label}</span>`;
-  const sw = (key, label) => `<label class="set-row">${lab(key, label)}<button class="switch" role="switch" data-sw="${key}" aria-checked="${!!settings.get(key)}"><i></i></button></label>`;
   const body = document.createElement('div');
   body.className = 'settings2';
   const sec = (ttl, tone, inner) => `<section class="set-card t-${tone}"><h3>${ttl}</h3><div class="set-group">${inner}</div></section>`;
