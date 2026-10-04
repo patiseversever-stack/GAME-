@@ -1072,9 +1072,15 @@ export class Stage3D {
     if (!this._raf) this._raf = requestAnimationFrame(this._loop);
   }
 
+  // Tam ekran bir sayfa masayı tamamen örterken (el sonu) çizim durur; açılınca kaldığı yerden sürer.
+  setSuspended(v) {
+    this.suspended = !!v;
+    if (!v) this.invalidate();
+  }
+
   _loop() {
     this._raf = 0;
-    if (!this.dirty) return;
+    if (!this.dirty || this.suspended) return;
     this.dirty = false;
     const now = performance.now();
     let busy = this._slotFrame(now) | this._fxFrame(now);

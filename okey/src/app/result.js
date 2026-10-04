@@ -184,6 +184,9 @@ export function resultScreen(host, o, history, historySheet) {
     el.classList.add('is-in');
     go(0);
   });
+  // ekran masayı tamamen örttüğünde 3B çizim durur (pil, ısı; ağır kutlama efektlerine kare bütçesi kalır)
+  const stage = o.controller?.scene?.stage;
+  at(480, () => stage?.setSuspended?.(true));
   if (tone === 'win') at(380, () => fx.play(prof ? prof.equipped('effect') : 'konfeti', { calm }));
   at(1350, () => r.multiplier > 1 && audio?.play?.('okey', { quiet: true, vol: 0.6 }));
   if (groups.length) at(1300, () => audio?.cascade?.('place', Math.min(14, groups.reduce((a, b) => a + b.length, 0)), 0.055, { quiet: true, vol: 0.32 }));
@@ -267,6 +270,7 @@ export function resultScreen(host, o, history, historySheet) {
   });
   const close = () => {
     timers.forEach(clearTimeout);
+    stage?.setSuspended?.(false);
     fx.stop();
     el.classList.add('is-out');
     document.removeEventListener('keydown', key);

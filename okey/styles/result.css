@@ -9,7 +9,7 @@
 
 /* ───────── arka plan ───────── */
 .rs__bg { position: absolute; inset: 0; pointer-events: none; }
-.rs-glow { position: absolute; left: 4%; top: 6%; width: 52vw; height: 88vh; border-radius: 50%; background: radial-gradient(closest-side, rgba(var(--glow), .28), transparent); filter: blur(10px); animation: rs-breathe 5s ease-in-out infinite; }
+.rs-glow { position: absolute; left: 4%; top: 6%; width: 52vw; height: 88vh; border-radius: 50%; background: radial-gradient(closest-side, rgba(var(--glow), .28), rgba(var(--glow), .08) 60%, transparent); animation: rs-breathe 5s ease-in-out infinite; }
 .rs-lattice { position: absolute; inset: 0; width: 100%; height: 100%; color: rgba(var(--glow), .09); -webkit-mask: radial-gradient(70% 80% at 30% 50%, #000, transparent 75%); mask: radial-gradient(70% 80% at 30% 50%, #000, transparent 75%); }
 .rs-vig { position: absolute; inset: 0; background: radial-gradient(130% 100% at 50% 45%, transparent 55%, rgba(0, 0, 0, .7)); }
 .rs-motes b { position: absolute; bottom: -10px; width: 3px; height: 3px; border-radius: 50%; background: rgba(var(--glow), .7); box-shadow: 0 0 6px rgba(var(--glow), .9); animation: rs-mote 9s linear infinite; opacity: 0; }
@@ -52,12 +52,12 @@
 .rs-ring::before, .rs-ring::after { content: ''; position: absolute; width: 7px; height: 7px; border-radius: 50%; background: var(--acc1); box-shadow: 0 0 10px rgba(var(--glow), 1); top: -4px; left: calc(50% - 3.5px); }
 .rs-ring::after { top: auto; bottom: -4px; }
 .rs.is-in .rs-ring { opacity: 1; }
-.rs-rays { position: absolute; z-index: 0; left: 50%; top: 50%; width: 330vh; height: 330vh; margin: -165vh 0 0 -165vh; border-radius: 50%; opacity: 0; transform: scale(.3);
-  background: repeating-conic-gradient(from 0deg, rgba(var(--glow), .16) 0 5deg, rgba(var(--glow), 0) 5deg 15deg); -webkit-mask: radial-gradient(circle, #000 0, rgba(0, 0, 0, .55) 14%, transparent 34%); mask: radial-gradient(circle, #000 0, rgba(0, 0, 0, .55) 14%, transparent 34%);
+.rs-rays { position: absolute; z-index: 0; left: 50%; top: 50%; width: 220vh; height: 220vh; margin: -110vh 0 0 -110vh; border-radius: 50%; opacity: 0; transform: scale(.3);
+  background: repeating-conic-gradient(from 0deg, rgba(var(--glow), .16) 0 5deg, rgba(var(--glow), 0) 5deg 15deg); -webkit-mask: radial-gradient(circle, #000 0, rgba(0, 0, 0, .55) 21%, transparent 50%); mask: radial-gradient(circle, #000 0, rgba(0, 0, 0, .55) 21%, transparent 50%);
   transition: opacity 1.2s .35s, transform 1.4s cubic-bezier(.2, .8, .2, 1) .35s; }
 .rs.is-in .rs-rays { opacity: 1; transform: none; animation: rs-spin 48s linear infinite; }
 .rs--lose .rs-rays, .rs--draw .rs-rays { opacity: .35 !important; }
-.rs-cone { position: absolute; z-index: 0; left: 50%; bottom: 40%; width: 260%; height: 220%; transform: translateX(-50%); background: linear-gradient(180deg, rgba(var(--glow), 0), rgba(var(--glow), .2) 70%, rgba(var(--glow), .32)); clip-path: polygon(44% 0, 56% 0, 78% 100%, 22% 100%); filter: blur(6px); opacity: 0; transition: opacity .25s .2s; }
+.rs-cone { position: absolute; z-index: 0; left: 50%; bottom: 40%; width: 260%; height: 220%; transform: translateX(-50%); background: linear-gradient(180deg, rgba(var(--glow), 0), rgba(var(--glow), .2) 70%, rgba(var(--glow), .32)); clip-path: polygon(44% 0, 56% 0, 78% 100%, 22% 100%); -webkit-mask: linear-gradient(90deg, transparent 18%, #000 38%, #000 62%, transparent 82%); mask: linear-gradient(90deg, transparent 18%, #000 38%, #000 62%, transparent 82%); opacity: 0; transition: opacity .25s .2s; }
 .rs.is-in .rs-cone { opacity: 1; animation: rs-flicker 3.2s .6s ease-in-out infinite; }
 .rs-crown { position: absolute; z-index: 4; left: 50%; top: -48%; width: 46%; transform: translate(-50%, -260%) rotate(-24deg); opacity: 0; filter: drop-shadow(0 6px 8px rgba(0, 0, 0, .6)); transition: transform .7s cubic-bezier(.3, 1.6, .5, 1) .5s, opacity .2s .5s; }
 .rs.is-in .rs-crown { transform: translate(-50%, 0) rotate(-7deg); opacity: 1; }
