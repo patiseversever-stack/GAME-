@@ -901,10 +901,32 @@ const DB = (() => {
   };
 })();
 const S = {}; // tema durumu
-const state = th => S[th] || (S[th] = { started: false, base: null, back: null, faces: new Map(), want: [], wantSet: new Set(), pend: new Map(), texs: new Map(), running: false, stored: new Map() });
+const state = th => S[th] || (S[th] = { storedP: null, started: false, base: null, back: null, faces: new Map(), want: [], wantSet: new Set(), pend: new Map(), texs: new Map(), running: false, stored: new Map() });
 const cur = () => { const t = document.documentElement.dataset.tiles; return THEMES[t] ? t : ''; };
 const renderers = new Set();
+let menuTh = '';
 
+function quickBack(th) {
+  const c = canvas(OW, OH), x = c.getContext('2d'), R = rng(5);
+  x.beginPath(); x.roundRect(0, 0, OW, OH, OW * 0.16); x.clip();
+  if (th === 'cini') {
+    const g = x.createLinearGradient(0, 0, 0, OH); g.addColorStop(0, '#24479c'); g.addColorStop(1, '#14306f'); x.fillStyle = g; x.fillRect(0, 0, OW, OH);
+    x.lineWidth = OW * 0.07; x.strokeStyle = '#f2eee3'; x.beginPath(); x.roundRect(OW * 0.075, OW * 0.075, OW * 0.85, OH - OW * 0.15, OW * 0.1); x.stroke();
+    x.lineWidth = OW * 0.012; x.strokeStyle = '#c23a2c'; x.beginPath(); x.roundRect(OW * 0.15, OW * 0.15, OW * 0.7, OH - OW * 0.3, OW * 0.05); x.stroke();
+    x.fillStyle = '#c23a2c'; x.beginPath(); x.ellipse(OW / 2, OH * 0.4, OW * 0.1, OW * 0.15, 0, 0, TAU); x.fill();
+    x.strokeStyle = '#2f9c95'; x.lineWidth = OW * 0.03; x.beginPath(); x.moveTo(OW / 2, OH * 0.82); x.quadraticCurveTo(OW * 0.2, OH * 0.6, OW * 0.3, OH * 0.35); x.moveTo(OW / 2, OH * 0.82); x.quadraticCurveTo(OW * 0.8, OH * 0.6, OW * 0.7, OH * 0.35); x.stroke();
+  } else if (th === 'ebru') {
+    x.fillStyle = '#efe3c9'; x.fillRect(0, 0, OW, OH);
+    const pal = ['#22366c', '#22366c', '#b55f66', '#cf9d45', '#5c6c7a', '#efe3c9'];
+    for (let k = 0; k < 70; k++) { x.fillStyle = pal[(R() * pal.length) | 0]; x.beginPath(); x.ellipse(R() * OW, R() * OH, 14 + R() * 34, 20 + R() * 46, R() * 3, 0, TAU); x.fill(); }
+    x.lineWidth = OW * 0.014; x.strokeStyle = '#c9a14a'; x.beginPath(); x.roundRect(OW * 0.06, OW * 0.06, OW * 0.88, OH - OW * 0.12, OW * 0.1); x.stroke();
+  } else {
+    const g = x.createLinearGradient(0, 0, 0, OH); g.addColorStop(0, '#0f2160'); g.addColorStop(0.6, '#3566ad'); g.addColorStop(0.64, '#162048'); g.addColorStop(1, '#0d1d4a'); x.fillStyle = g; x.fillRect(0, 0, OW, OH);
+    x.fillStyle = '#f2c94c'; x.beginPath(); x.arc(OW * 0.74, OH * 0.16, OW * 0.07, 0, TAU); x.fill();
+    x.fillStyle = '#0b1a10'; x.beginPath(); x.moveTo(OW * 0.06, OH); x.quadraticCurveTo(OW * 0.1, OH * 0.4, OW * 0.17, OH * 0.12); x.quadraticCurveTo(OW * 0.26, OH * 0.4, OW * 0.25, OH); x.fill();
+  }
+  return c;
+}
 function toOut(src) {
   const c = canvas(OW, OH), x = c.getContext('2d');
   x.imageSmoothingQuality = 'high'; x.beginPath(); x.roundRect(0, 0, OW, OH, OW * 0.16); x.clip(); x.drawImage(src, 0, 0, OW, OH);
@@ -939,7 +961,8 @@ function loadFonts() {
 function invalidate() { for (const r of renderers) { try { r.invalidate && r.invalidate(); } catch {} } }
 function applyBack() {
   const th = cur(), st = th && S[th], root = document.documentElement;
-  if (st && st.back) { root.style.setProperty('--pt-back', `url("${st.back.url}")`); root.classList.add('pt-back'); }
+  const url = st && (st.back ? st.back.url : st.quickUrl);
+  if (url) { root.style.setProperty('--pt-back', `url("${url}")`); root.classList.add('pt-back'); }
   else { root.classList.remove('pt-back'); root.style.removeProperty('--pt-back'); }
 }
 function keyOf(el) {
@@ -996,6 +1019,7 @@ async function pump(th) {
   if (st.running) return;
   st.running = true;
   try {
+    if (st.storedP) await st.storedP;
     while (st.want.length) {
       const t0 = performance.now();
       while (st.want.length && performance.now() - t0 < 28) {
@@ -1011,10 +1035,11 @@ async function pump(th) {
     }
   } finally { st.running = false; }
 }
+let texP = null;
 function ready(th) {
   const T = THEMES[th];
   return T.__p || (T.__p = (async () => {
-    await loadFonts(); await buildTextures();
+    await loadFonts(); await (texP || (texP = buildTextures()));
     if (T.prepare) await T.prepare();
     T.base = canvas(); T.faceBase(T.base.getContext('2d'));
   })());
@@ -1024,12 +1049,13 @@ async function start(th) {
   if (st.started) return;
   st.started = true;
   const T = THEMES[th];
+  try { st.quick = quickBack(th); st.quickUrl = st.quick.toDataURL('image/png'); if (cur() === th) applyBack(); } catch {}
   try {
     loadFonts();
-    st.stored = await DB.prefix(`${VER}|${th}|`);
+    st.storedP = DB.prefix(`${VER}|${th}|`).then(m => { st.stored = m; });
+    await st.storedP;
     st.base = await produce(th, 'base', async () => { await ready(th); return T.base; });
     if (cur() === th) redecorateAll();
-    ALL_NUMS.forEach(k => want(th, k, false));
     pump(th);
     st.back = await produce(th, 'back', async () => { await ready(th); const c = canvas(); await T.back(c.getContext('2d')); return c; });
     publish(th, 'back', st.back);
@@ -1040,7 +1066,7 @@ function onTheme() {
   const th = cur();
   applyBack();
   redecorateAll();
-  if (th) start(th);
+  if (th) { start(th); ALL_NUMS.forEach(k => want(th, k, false)); }
   invalidate();
 }
 new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-tiles'] });
@@ -1049,19 +1075,31 @@ const PTiles = {
   themed: () => !!cur(),
   theme: cur,
   decorate,
-  tex(s, dr0, Tex, cs) {
-    const th = cur(), st = state(th);
+  tex(s, dr0, Tex, cs, forced) {
+    const th = forced || cur(), st = state(th);
+    if (forced) start(th);
     const key = s.kind === 'back' ? 'back' : s.kind === 'fake' ? `f:${s.color}:${s.value}` : (s.kind === 'okey' || s.rep) ? `o:${s.color}:${s.value}` : `n:${s.color}:${s.value}`;
     const have = st.texs.get(key);
     if (have) return have.tex;
     const c = canvas(OW, OH), x = c.getContext('2d'), res = key === 'back' ? st.back : st.faces.get(key);
     let ok = false;
     if (res && res.canvas) { x.drawImage(res.canvas, 0, 0); ok = true; }
+    else if (key === 'back' && st.quick) x.drawImage(st.quick, 0, 0);
     else { try { const fb = dr0(s).image; x.drawImage(fb, 0, 0, OW, OH); } catch {} if (key !== 'back') want(th, key, true); }
     const tex = new Tex(c); tex.colorSpace = cs; tex.anisotropy = 16;
     st.texs.set(key, { tex, canvas: c, ok });
     return tex;
   },
+  /* Ana menü ıstakası: her açılışta sıradaki takım, ayardan bağımsız */
+  menuTheme() {
+    if (menuTh) return menuTh;
+    const ids = Object.keys(THEMES);
+    let i = Math.floor(Math.random() * ids.length);
+    try { const v = localStorage.getItem('okey.menuTiles'); i = v === null ? i : (+v + 1) % ids.length; localStorage.setItem('okey.menuTiles', String(i)); } catch {}
+    return (menuTh = ids[i]);
+  },
+  menuTex(s, dr0, Tex, cs) { return PTiles.tex(s, dr0, Tex, cs, PTiles.menuTheme()); },
+  menuBody(def) { const m = META[PTiles.menuTheme()]; return m ? m.body : def; },
   reg(r) {
     renderers.add(r);
     const th = cur();
@@ -1094,6 +1132,10 @@ ptCss.textContent = `
 :root.pt-back .tile__back{background:var(--pt-back) center/100% 100% no-repeat,linear-gradient(165deg,var(--tile-back-1),var(--tile-back-2))!important}
 :root.pt-back .tile__back::before{display:none}
 :root.pt-back .tile:not(.is-dim) .tile__back::after{display:none}
+.plate .plate__count{position:absolute;transform:translate(-50%,-50%);min-width:21px;height:16px;padding:0 5px;border-radius:99px;display:inline-flex;align-items:center;justify-content:center;font:800 10px/1 var(--font-ui,system-ui);font-variant-numeric:tabular-nums;letter-spacing:0;color:#fff6df;background:linear-gradient(180deg,#2b302c,#111513);box-shadow:0 0 0 1px rgba(216,180,106,.6),0 2px 5px rgba(0,0,0,.55);z-index:3;white-space:nowrap}
+.plate .plate__cap,.plate .plate__cap--ind{font-size:8.5px!important;letter-spacing:.09em!important;color:rgba(246,236,214,.66)!important}
+.plate .plate__cap--okey{color:#f3cf6b!important}
+.plate .plate__plus{padding:2px 5px;border-radius:99px;font:800 9px/1 var(--font-ui,system-ui);color:rgba(255,236,190,.9);background:rgba(10,20,16,.55);box-shadow:inset 0 0 0 1px rgba(216,180,106,.35)}
 :root.pt-back .seat__backs i{background:var(--pt-back) center/cover no-repeat,linear-gradient(180deg,var(--tile-back-1),var(--tile-back-2))}
 `;
 document.head.appendChild(ptCss);
