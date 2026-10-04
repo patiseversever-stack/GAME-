@@ -300,7 +300,8 @@ function retry(fromComplete = false) {
   if (G.mode === 'endless' && !fromComplete) { startEndless(); return; }
   UI.hide('fail'); UI.hide('complete'); UI.hud(true);
   resetRun();
-  if (G.helpK < 1) toast(`Güneş biraz yumuşadı · ışık <em>%${Math.round((1 - G.helpK) * 100)}</em> daha az yakar`, 2.6);
+  if (G.helpK < 1) toast(`<span class="tsun"></span>Güneş yumuşadı: ışık artık <em>%${Math.round((1 - G.helpK) * 100)}</em> daha az yakıyor`, 2.8);
+  updateHud(true);
   G.state = 'rewind'; G.stateT = 0; G.rewFrom = G.u;
   zifir.g.visible = true; zifir.g.scale.setScalar(0.001);
   Cam.cinema(Cam.pose(), 0.7, Ease.outCubic);
@@ -328,17 +329,27 @@ function showFail() {
     $('#fProg').style.width = '100%';
   } else {
     $('#fTitle').textContent = lines[(Save.data.fails[lv.spec.g] || 0) % lines.length];
-    const hk = helpFor(lv);
-    $('#fSub').textContent = `Yol · %${pct}` + (hk < 1 ? ` · güneş %${Math.round((1 - hk) * 100)} yumuşayacak` : '');
+    $('#fSub').textContent = `Yol · %${pct}`;
     $('#fProg').style.width = '0%'; requestAnimationFrame(() => { $('#fProg').style.width = pct + '%'; });
   }
-  if (G.mode === 'story') {
-    const nf = Save.data.fails[lv.spec.g] || 0;
-    if (lv.spec.dash && act.dives === 0 && nf >= 2) setTimeout(() => tip('t-dash2', 'İpucu: ışığa yakalanınca <em>Dal</em>’a bas — yanma %85 azalır.', 4.2), 600);
-    else if (nf >= 5 && !Save.data.settings.assist) setTimeout(() => tip('t-assist', 'Zorlanıyorsan <em>Ayarlar → Rahat mod</em>: ışık daha yavaş yakar.', 4.2), 600);
-  }
+  showMercy(lv);
   $('#fail').classList.toggle('offerhint', G.mode === 'story' && (Save.data.fails[lv.spec.g] || 0) >= 3 && !G.hint);
   UI.hud(false); UI.show('fail');
+}
+// Güneşin merhameti kartı: yardım açıkça ve cesaret verici bir dille gösterilir; ipuçları da burada
+function showMercy(lv) {
+  const card = $('#fMercy'), hk = G.mode === 'story' ? helpFor(lv) : 1;
+  card.classList.remove('on');
+  if (hk >= 1) return;
+  const pct = Math.round((1 - hk) * 100), lvl = Math.round(pct / 10), max = hk <= 0.5 + 1e-6, nf = Save.data.fails[lv.spec.g] || 0;
+  $('#fMercyT').textContent = max ? 'Güneş en yumuşak hâlinde' : lvl === 1 ? 'Güneş seni fark etti' : 'Güneş yumuşuyor';
+  $('#fMercyS').innerHTML = max ? `Işık artık <em>%${pct}</em> daha az yakıyor. Gölgede kal, bu sefer olacak!` : `Bir sonraki denemede ışık <em>%${pct}</em> daha az yakacak.`;
+  $$('#fMercyLv i').forEach((el, i) => el.classList.toggle('on', i < lvl));
+  let t = max ? 'Yıldızlar yine sayılır.' : 'Her denemede biraz daha yumuşar · yıldızlar yine sayılır.';
+  if (lv.spec.dash && act.dives === 0) t = 'İpucu: ışığa yakalanınca <em>Dal</em>’a bas, yanma %85 azalır.';
+  else if (nf >= 5 && !Save.data.settings.assist) t = 'Daha da rahat istersen: <em>Ayarlar → Rahat mod</em>.';
+  $('#fMercyTip').innerHTML = t;
+  void card.offsetWidth; card.classList.add('on');
 }
 function reachGate() {
   G.state = 'complete'; G.stateT = 0; G.compStage = 0; G.cSquash = false;
@@ -422,6 +433,8 @@ function updateHud(force = false) {
   if (force || hudCache.sub !== sub) { $('#lvlSub').textContent = sub; hudCache.sub = sub; }
   if (force || hudCache.drops !== dt) { $('#dropTxt').textContent = dt; hudCache.drops = dt; }
   if (G.endless && (force || hudCache.score !== G.endless.score)) { $('#scoreTxt').textContent = G.endless.score; hudCache.score = G.endless.score; }
+  const hp = G.mode === 'story' && G.helpK < 1 ? Math.round((1 - G.helpK) * 100) : 0;
+  if (force || hudCache.hp !== hp) { const el = $('#lvlHelp'); el.classList.toggle('on', hp > 0); el.querySelector('em').textContent = `Işık −%${hp}`; hudCache.hp = hp; }
   const wb = $('#waitBtn'), ws = !!lv.spec.wait && G.state !== 'complete';
   if (force || hudCache.ws !== ws) { wb.classList.toggle('show', ws); hudCache.ws = ws; }
   const wp = Math.round((G.patience ?? PATIENCE_MAX) / PATIENCE_MAX * 50) / 50;
