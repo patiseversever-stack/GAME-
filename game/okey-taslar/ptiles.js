@@ -1106,7 +1106,7 @@ const PTiles = {
   vivid(m, back = true) {
     try {
       m.toneMapped = false;
-      if (back && m.emissive) { m.emissive.setHex(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = 0.5; m.color.setScalar(0.62); if ('envMapIntensity' in m) m.envMapIntensity = 0.04; if ('clearcoat' in m) m.clearcoat = 0.12; m.roughness = 0.85; }
+      if (back && m.emissive) { m.emissive.setHex(0xffffff); m.emissiveMap = m.map; m.emissiveIntensity = 0.9; m.color.setScalar(0.14); if ('envMapIntensity' in m) m.envMapIntensity = 0.04; if ('clearcoat' in m) m.clearcoat = 0.12; m.roughness = 0.85; }
       m.needsUpdate = true;
     } catch {}
     return m;
