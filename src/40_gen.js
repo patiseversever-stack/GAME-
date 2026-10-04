@@ -951,6 +951,16 @@ function placeDrops(lv, rng) {
 // geçerli deneme numaraları önceden bilinir (farklı JS motorlarında kayarsa
 // döngü kendiliğinden devam eder — yalnızca hızlandırmadır).
 const ATTEMPT_HINT = [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 0, 0, 0, 0, 1, 0, 0, 0, 0, 56, 58, 3, 59, 1, 1, 19, 2, 1, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 6, 1, 0, 4, 0, 0];
+// zorluk eğrisi: 64 ada insan profilleriyle ölçülerek kalibre edildi. Yalnızca yakıcılığı ölçekler (ada düzeni değişmez);
+// sertleştirmede plan gerçek oyun hızında yine geçilebilir kalmalı, kalmıyorsa katsayı geri çekilir.
+const BURN_TUNE = [1, 0.56, 0.88, 1, 0.77, 1.24, 1, 1, 1, 0.57, 1.03, 1, 1, 1, 1, 0.93, 0.94, 0.83, 0.91, 1.14, 1.22, 0.9, 1.19, 0.76, 1, 1.18, 0.62, 0.96, 1.03, 1.45, 1.45, 1.08, 0.61, 0.63, 0.5, 0.62, 0.51, 0.72, 0.83, 0.8, 0.69, 1.22, 1, 0.87, 0.6, 1.15, 0.96, 0.79, 1.3, 1.05, 1, 1.35, 0.74, 1.06, 1, 0.96, 1.34, 1.04, 1.1, 0.75, 0.69, 1.1, 1, 1];
+function tuneBurn(lv) {
+  if (lv.spec.kind !== 'story') return;
+  const b0 = lv.burn; let k = BURN_TUNE[lv.spec.g] || 1;
+  lv.burn = b0 * k;
+  while (k > 1 && playbackMin(lv, lv.solution) < 0.14) { k = Math.max(1, k - 0.03); lv.burn = b0 * k; }
+  lv.burnK = k;
+}
 function buildLevel(spec) {
   const easy = Object.assign({}, spec, { spacing: Math.min(spec.spacing, 2.2), prune: 0, margin: Math.min(spec.margin, 0.4), pergolaRate: 1.0 });
   const order = [];
@@ -961,7 +971,7 @@ function buildLevel(spec) {
   for (const a of order) {
     if (tried.has(a)) continue; tried.add(a);
     const lv = generateLevel(a >= 50 ? easy : spec, a);
-    if (lv) { lv.attempt = a; return lv; }
+    if (lv) { lv.attempt = a; tuneBurn(lv); return lv; }
   }
   return null;
 }
