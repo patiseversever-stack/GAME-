@@ -138,6 +138,7 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
     }
   }
   current = { root, menu3d, audio };
+  audio.setMusicWanted?.(true, 'menu'); // menüde ney ve ud taksimi (ilk dokunuşta başlar)
   setHubData({ e: profile, h: prog, u: goals, p: pname, Ra: ACHIEVEMENTS, av: avatarSVG(roster) });
 
   root.addEventListener('click', (e) => {

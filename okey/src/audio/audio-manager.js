@@ -5,7 +5,7 @@
 // • Haptik: navigator.vibrate (destek varsa, ayar açıksa)
 
 import { RECIPES, RULES } from './synth.js';
-import { Music } from './music.js';
+import { Music } from './kahvehane.js';
 import { Ambience } from './ambience.js';
 
 const HAPTICS = {
@@ -86,9 +86,10 @@ export class AudioManager {
     else if (this.unlocked) this.ctx.resume?.();
   }
 
-  // Ayarlar/ekran değişince müziği uygula
-  setMusicWanted(v) {
+  // Ayarlar/ekran değişince müziği uygula. mood: 'menu' (taksim) | 'game' (oyun havası)
+  setMusicWanted(v, mood = 'game') {
     this.wantMusic = v;
+    if (v) this.musicMood = mood;
     this.applyMusic();
   }
 
@@ -97,7 +98,7 @@ export class AudioManager {
     const on = this.wantMusic && this.settings.get('music');
     if (on) {
       if (!this.music) this.music = new Music(this.ctx, this.musicBus);
-      this.music.start(this.settings.get('musicVol'));
+      this.music.start(this.settings.get('musicVol'), this.musicMood || 'game');
     } else this.music?.stop(1.0);
     const amb = this.wantMusic && this.settings.get('ambience') !== false;
     if (amb) {

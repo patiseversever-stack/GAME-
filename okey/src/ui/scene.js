@@ -164,7 +164,7 @@ export class Scene {
     this.indPlate = document.createElement('div');
     this.indPlate.className = 'plate';
     this.indPlate.innerHTML =
-      '<span class="plate__cap plate__cap--stock"><span class="cap-l">Deste</span><span class="cap-n num plate__count">0</span></span><span class="plate__cap plate__cap--ind">Gösterge</span><span class="plate__cap plate__cap--okey">Okey</span><span class="plate__plus">+1</span>';
+      '<span class="plate__cap plate__cap--stock"><span class="cap-l">Deste</span></span><span class="cap-n num plate__count">0</span><span class="plate__cap plate__cap--ind">Gösterge</span><span class="plate__cap plate__cap--okey">Okey</span><span class="plate__plus">+1</span>';
     t.appendChild(this.indPlate);
     this.meldTags = document.createElement('div');
     this.meldTags.className = 'layer';
@@ -366,6 +366,17 @@ export class Scene {
     }
   }
 
+  // DESTE başlığı (yazı + sayaç rozeti) GÖSTERGE başlığına değerse önce yazı gizlenir (yalnız sayaç kalır),
+  // yine sığmazsa rozet sola kaydırılır. Başlıklar ortalanmış (translateX(-50%)) durur.
+  _fitStockCaption(capS, capI, left) {
+    if (this.L?.table101) return;
+    const gap = 6;
+    const clash = () => capS.getBoundingClientRect().right + gap - capI.getBoundingClientRect().left;
+    if (clash() > 0) capS.classList.add('is-compact');
+    const over = clash();
+    if (over > 0) capS.style.left = left - over + 'px';
+  }
+
   _placePlates() {
     const L = this.L;
     const pl = L.plate;
@@ -389,9 +400,19 @@ export class Scene {
     for (const c of [capS, capI, capO]) c.style.top = capTop + 'px';
     capS.style.left = st.cx - pl.x + 'px';
     capS.classList.toggle('is-compact', !!pl.compact); // dar bölmede yalnız sayı
-    this.capCount = capS.querySelector('.cap-n');
+    // kalan taş sayacı: destenin sağ üst köşesinde rozet (101 yuvasında başlık yerinde, destenin altında)
+    const cnt = el.querySelector('.plate__count');
+    this.capCount = cnt;
+    if (L.table101) {
+      cnt.style.left = st.cx - pl.x + 'px';
+      cnt.style.top = capTop + 7 + 'px';
+    } else {
+      cnt.style.left = st.cx - pl.x + st.w / 2 - 3 + 'px';
+      cnt.style.top = st.cy - st.h / 2 - pl.y - st.w * 0.04 + 'px';
+    }
     capI.style.left = indLeft + 'px';
     capO.style.left = okLeft + 'px';
+    this._fitStockCaption(capS, capI, st.cx - pl.x);
     const plus = el.querySelector('.plate__plus');
     plus.style.left = (indLeft + ind.w / 2 + okLeft - ok.w / 2) / 2 + 'px';
     plus.style.top = ind.cy - pl.y + 'px';

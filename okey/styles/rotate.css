@@ -1,0 +1,15 @@
+/* Yalnız yatay: dikey tutulan telefon/tablette oyun "yatay çevir" perdesiyle kapanır (main.js .rotate-lock) */
+.rotate-lock{display:none}
+@media (orientation:portrait) and (max-width:1024px){
+  :root.in-app .rotate-lock{display:none!important}
+  :root.in-app .app{visibility:visible!important}
+  .rotate-lock{position:fixed;inset:0;z-index:2000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:24px;text-align:center;
+    color:#f6ecd4;font-family:var(--font-ui);background:radial-gradient(120% 80% at 50% 40%,#173c30 0%,#0a1a14 60%,#050c09 100%)}
+  .rotate-lock b{font:800 1.25rem/1.2 'Playfair Display',Georgia,serif;color:#f1d9a0;letter-spacing:.01em}
+  .rotate-lock span{font:600 .85rem/1.4 var(--font-ui);color:rgba(246,236,212,.62)}
+  .rotate-lock__phone{width:54px;height:92px;margin-bottom:14px;border-radius:12px;border:3px solid #f1d9a0;position:relative;animation:rl-turn 2.6s cubic-bezier(.6,0,.3,1) infinite;box-shadow:0 0 24px rgba(241,217,160,.25)}
+  .rotate-lock__phone i{position:absolute;left:50%;bottom:6px;width:14px;height:3px;margin-left:-7px;border-radius:2px;background:#f1d9a0}
+  .app{visibility:hidden}
+}
+@keyframes rl-turn{0%,15%{transform:rotate(0)}45%,80%{transform:rotate(-90deg)}100%{transform:rotate(0)}}
+@media (prefers-reduced-motion:reduce){.rotate-lock__phone{animation:none;transform:rotate(-90deg)}}

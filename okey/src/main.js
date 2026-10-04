@@ -76,36 +76,15 @@ window.__okey.ui = ui;
 settings.subscribe((k) => {
   if (k === 'textScale') setTimeout(() => ctl?.scene?.layout(true), 30);
 });
-// Dikey tutulan telefonda: masa yatayda çok daha geniş; tek seferlik, kapatılabilir ipucu
-let rotateDismissed = false;
-function rotateHint() {
-  try {
-    if (!matchMedia('(pointer: coarse)').matches) return;
-    const mq = matchMedia('(orientation: portrait)');
-    let el = null;
-    const upd = () => {
-      if (mq.matches && !rotateDismissed && ctl) {
-        if (el) return;
-        el = document.createElement('button');
-        el.className = 'rot-hint';
-        el.innerHTML = '<svg viewBox="0 0 24 24"><rect x="7" y="3" width="10" height="18" rx="2.2"/><path d="M3 12h2M19 12h2"/><path d="M20.5 8.5c.9 1 1.5 2.4 1.5 3.5"/></svg><span>Daha geniş masa için telefonu yatay çevir</span><i>×</i>';
-        el.onclick = () => {
-          rotateDismissed = true;
-          el.remove();
-          el = null;
-        };
-        app.appendChild(el);
-        setTimeout(() => el?.classList.add('is-out'), 9000);
-        setTimeout(() => el?.remove(), 9400);
-      } else if (el) {
-        el.remove();
-        el = null;
-      }
-    };
-    mq.addEventListener?.('change', upd);
-    setTimeout(upd, 1200);
-  } catch {}
-}
+// Oyun yalnız yatay oynanır: dikey tutulan telefonda tüm ekranı "yatay çevir" perdesi kaplar (styles/rotate.css)
+const rotateLock = document.createElement('div');
+rotateLock.className = 'rotate-lock';
+rotateLock.setAttribute('role', 'alert');
+rotateLock.innerHTML = '<div class="rotate-lock__phone" aria-hidden="true"><i></i></div><b>Telefonunu yatay çevir</b><span>Patisever Okey yatay ekranda oynanır</span>';
+document.body.appendChild(rotateLock);
+// uygulama kabuğu ekran yönünü kendisi yönetir (menüyü dikey rotada hazırlayabilir)
+if (window.ReactNativeWebView) document.documentElement.classList.add('in-app');
+
 async function start(mode, difficulty, seed) {
   // önceki oyun/menü tamamen temizlenir: aynı sayfada art arda oyun başlatılabilir
   ctl?.destroy();
@@ -120,7 +99,6 @@ async function start(mode, difficulty, seed) {
   window.__okey.ctl = ctl;
   await ctl.newGame({ mode, difficulty, seed, rules: { matchType: 'single', rounds: 3 } });
   document.body.dataset.ready = '1';
-  rotateHint();
 }
 
 function home() {
@@ -143,7 +121,6 @@ function home() {
       ctl = new GameController({ host: app, settings, profile, audio, ui, onExit: goHome });
       window.__okey.ctl = ctl;
       if (!(await ctl.resume())) goHome();
-      else rotateHint();
     },
   });
 }
