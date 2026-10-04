@@ -2,7 +2,7 @@
 import { MW, MH, TAU, rng, makeNoise, ramp, pixels, once, rrPoints, bez, pathShape, textShape, spacedShape, markPath, star8Path, pawPath, rosettePath, leafPath, crackle, brush, around, paintGlaze } from './paint.js';
 
 /* ═════════════ 1 · İZNİK ÇİNİ ═════════════ */
-const C1 = { cobalt: '#1d3e93', turq: '#2f9c95', coral: '#c23a2c', stem: '#3f9c82', white: '#f4f0e6' };
+export const C1 = { cobalt: '#1d3e93', turq: '#2f9c95', coral: '#c23a2c', stem: '#3f9c82', white: '#f4f0e6' };
 const ciniGlaze = () =>
   once('ciniGlaze', () => {
     const n = makeNoise(11);
@@ -18,7 +18,7 @@ const ciniGlaze = () =>
       o[2] = 236 * L + Math.max(0, g) * 14;
     });
   });
-function ciniTulip(x, cx, by, h, rot, fill = C1.coral) {
+export function ciniTulip(x, cx, by, h, rot, fill = C1.coral) {
   const shape = pathShape((p) => {
     p.save();
     p.translate(cx, by);
@@ -62,7 +62,7 @@ function ciniTulip(x, cx, by, h, rot, fill = C1.coral) {
   }
   x.restore();
 }
-function ciniCarnation(x, cx, cy, s, rot) {
+export function ciniCarnation(x, cx, cy, s, rot) {
   const head = pathShape((p) => {
     p.save();
     p.translate(cx, cy);
@@ -120,7 +120,7 @@ function ciniHyacinth(x, P0, P1, P2, P3, n, seed) {
   }
   ciniTulip(x, sp[30][0], sp[30][1], MW * 0.055, Math.atan2(sp[30][1] - sp[28][1], sp[30][0] - sp[28][0]) + Math.PI / 2, C1.white);
 }
-function sazPath(p, sp, wmax, side) {
+export function sazPath(p, sp, wmax, side) {
   const N = sp.length - 1,
     L = [],
     Rr = [];

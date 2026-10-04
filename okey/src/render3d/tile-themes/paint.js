@@ -458,11 +458,29 @@ export function brassGrad(x) {
   ].forEach(([t, c]) => g.addColorStop(t, c));
   return g;
 }
+export function silverGrad(x) {
+  const g = x.createLinearGradient(0, 0, MW, MH * 0.74);
+  [
+    [0, '#6f747c'],
+    [0.16, '#c9ced6'],
+    [0.3, '#fbfcff'],
+    [0.44, '#a7adb7'],
+    [0.58, '#5e636b'],
+    [0.72, '#dfe3ea'],
+    [0.86, '#ffffff'],
+    [1, '#8d939c'],
+  ].forEach(([t, c]) => g.addColorStop(t, c));
+  return g;
+}
 
 /* ── ortak dokular ── */
 export const TEX = {};
-export async function buildTextures() {
-  if (TEX.dark) return;
+// tek seferlik: taş takımları ve avatar çerçeveleri aynı anda isteyebilir (yarım doku ile boyamasınlar)
+let texJob = null;
+export function buildTextures() {
+  return texJob || (texJob = buildTexturesNow());
+}
+async function buildTexturesNow() {
   const n = makeNoise(99),
     m = makeNoise(7);
   TEX.dark = pixels(MW, MH, (i, j, o) => {
@@ -708,7 +726,7 @@ export function metalPaint(x, draw, kind = 'gold', o = {}) {
   const [m, mx] = scratch(5);
   draw(mx);
   mx.globalCompositeOperation = 'source-in';
-  mx.fillStyle = kind === 'brass' ? brassGrad(mx) : goldGrad(mx);
+  mx.fillStyle = kind === 'brass' ? brassGrad(mx) : kind === 'silver' ? silverGrad(mx) : goldGrad(mx);
   mx.fillRect(0, 0, MW, MH);
   mx.globalCompositeOperation = 'source-atop';
   mx.globalAlpha = o.leaf ?? 0.22;

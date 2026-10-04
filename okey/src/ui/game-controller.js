@@ -854,7 +854,6 @@ export class GameController {
       clearSavedGame();
     } else this.save();
     const merged = this.mergeInfo(info);
-    this.audio.play(res.winner === 0 ? 'levelup' : 'tap', { vol: 0.0 });
     await this.ui.roundResult({
       controller: this,
       game: g,
@@ -879,13 +878,16 @@ export class GameController {
   }
 
   mergeInfo(list) {
-    const out = { xp: 0, levelUps: [], achievements: [], goalsDone: [] };
+    const out = { xp: 0, from: list[0]?.from ?? this.profile.d.xp, parts: [], levelUps: [], achievements: [], goalsDone: [] };
+    const parts = new Map();
     for (const x of list) {
+      for (const [label, v] of x.parts || []) parts.set(label, (parts.get(label) || 0) + v);
       out.xp += x.xp;
       out.levelUps.push(...x.levelUps);
       out.achievements.push(...x.achievements);
       out.goalsDone.push(...x.goalsDone);
     }
+    out.parts = [...parts];
     return out;
   }
 

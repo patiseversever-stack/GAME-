@@ -1,8 +1,10 @@
 // Profil ve ilerleme: XP, seviye, istatistik, başarımlar, günlük hedefler.
-// Ödeme / chip ekonomisi yok; oyun dengesi hiçbir şeye bağlı değil — yalnızca kozmetik ilerleme.
+// Oyun dengesi hiçbir şeye bağlı değil — yalnızca kozmetik ilerleme. Çevrimdışı oyun para vermez; XP, seviye,
+// unvan, çerçeve ve kutlama açar. Çarşı'daki öğeler ödüllü reklamla (ilerleme sayacı) açılır.
+// Şema hesaba bağlanmaya hazır: acct (uid, rev, updatedAt) ve snapshot()/adopt() ile sunucuya taşınabilir.
 import { readJSON, writeJSON } from './storage.js';
 import { mixSeed } from '../util/rng.js';
-import { unlockedAt } from './cosmetics.js';
+import { rewardsAt, itemOf, titleFor, DEFAULT_EQUIP } from './progression.js';
 
 const KEY = 'patisever.profile.v1';
 
@@ -64,7 +66,7 @@ function freshDaily(date) {
 }
 
 const blank = () => ({
-  v: 1,
+  v: 2,
   xp: 0,
   stats: {
     rounds: 0,
@@ -77,18 +79,90 @@ const blank = () => ({
   },
   achievements: {},
   daily: freshDaily(today()),
+  inv: { frame: [], effect: [], tiles: [] }, // reklamla / satın alımla açılanlar (seviye açılımları türetilir)
+  equip: { ...DEFAULT_EQUIP },
+  ads: {}, // 'kind:id' → izlenen ödüllü reklam sayısı
+  acct: { uid: null, rev: 0, updatedAt: 0 },
 });
 
 export class Profile {
   constructor() {
     const saved = readJSON(KEY, null);
-    this.d = saved && saved.v === 1 ? saved : blank();
-    this.d.stats = { ...blank().stats, ...this.d.stats };
+    const b = blank();
+    this.d = saved && (saved.v === 1 || saved.v === 2) ? saved : b;
+    this.migratedFrom = saved?.v || 0;
+    this.d.stats = { ...b.stats, ...this.d.stats };
+    this.d.xp = Number.isFinite(this.d.xp) ? this.d.xp : 0;
+    this.d.achievements = this.d.achievements || {};
+    // v1 → v2: envanter, kuşanılanlar, reklam sayaçları, hesap alanı
+    this.d.v = 2;
+    this.d.inv = { ...b.inv, ...(this.d.inv || {}) };
+    this.d.equip = { ...b.equip, ...(this.d.equip || {}) };
+    this.d.ads = this.d.ads || {};
+    this.d.acct = { ...b.acct, ...(this.d.acct || {}) };
     this._rollDaily();
     this.subs = new Set();
   }
   save() {
+    this.d.acct.rev++;
+    this.d.acct.updatedAt = Date.now();
     writeJSON(KEY, this.d);
+  }
+  _emit(out) {
+    for (const f of this.subs) f(out);
+  }
+
+  // ───── koleksiyon ─────
+  owns(kind, id) {
+    const it = itemOf(kind, id);
+    if (!it) return false;
+    if (it.level && this.level >= it.level) return true;
+    return kind !== 'title' && (this.d.inv[kind] || []).includes(id);
+  }
+  grant(kind, id) {
+    const list = this.d.inv[kind] || (this.d.inv[kind] = []);
+    if (!list.includes(id)) list.push(id);
+    this.save();
+    this._emit({ grant: { kind, id } });
+  }
+  equipped(kind) {
+    const id = this.d.equip[kind];
+    if (kind === 'title') return id && this.owns('title', id) ? itemOf('title', id) : titleFor(this.level);
+    return id && this.owns(kind, id) ? id : DEFAULT_EQUIP[kind];
+  }
+  equip(kind, id) {
+    if (id !== null && !this.owns(kind, id)) return false;
+    this.d.equip[kind] = id;
+    this.save();
+    this._emit({ equip: { kind, id } });
+    return true;
+  }
+  adCount(kind, id) {
+    return this.d.ads[kind + ':' + id] || 0;
+  }
+  // Bir ödüllü reklam tamamlandı → { count, need, unlocked }
+  addAd(kind, id) {
+    const it = itemOf(kind, id);
+    if (!it?.ads) return null;
+    const k = kind + ':' + id;
+    const count = Math.min(it.ads, (this.d.ads[k] || 0) + 1);
+    this.d.ads[k] = count;
+    const unlocked = count >= it.ads && !this.owns(kind, id);
+    if (unlocked) (this.d.inv[kind] || (this.d.inv[kind] = [])).push(id);
+    this.save();
+    this._emit({ ad: { kind, id, count, unlocked } });
+    return { count, need: it.ads, unlocked };
+  }
+  // Hesaba bağlanınca sunucuya gidecek / sunucudan gelecek veri
+  snapshot() {
+    return JSON.parse(JSON.stringify(this.d));
+  }
+  adopt(remote) {
+    if (!remote || remote.v !== 2 || (remote.acct?.rev || 0) <= (this.d.acct.rev || 0)) return false;
+    this.d = remote;
+    writeJSON(KEY, this.d);
+    this._emit({ adopt: true });
+    return true;
   }
   _rollDaily() {
     const t = today();
@@ -105,14 +179,18 @@ export class Profile {
     return () => this.subs.delete(fn);
   }
 
-  // Olay: { type, ... } → { xp, levelUps:[{level, unlocks}], achievements:[...], goalsDone:[...] }
+  // Olay: { type, ... } → { xp, from, parts:[[etiket, xp]], levelUps:[{level, unlocks}], achievements:[...], goalsDone:[...] }
   record(ev) {
     this._rollDaily();
-    const out = { xp: 0, levelUps: [], achievements: [], goalsDone: [] };
+    const out = { xp: 0, from: this.d.xp, parts: [], levelUps: [], achievements: [], goalsDone: [] };
     const st = this.d.stats;
     const before = this.level;
     const mult = ev.difficulty === 'expert' ? 1.4 : ev.difficulty === 'casual' ? 0.8 : 1;
-    const addXp = (n) => (out.xp += Math.round(n * mult));
+    const addXp = (n, label) => {
+      const v = Math.round(n * mult);
+      out.xp += v;
+      out.parts.push([label, v]);
+    };
     const goal = (kind, n = 1) => {
       for (const g of this.d.daily.goals) {
         if (g.ev === kind && !g.done) {
@@ -121,6 +199,7 @@ export class Profile {
             g.done = true;
             out.goalsDone.push(g);
             out.xp += 50;
+            out.parts.push(['Görev', 50]);
           }
         }
       }
@@ -134,14 +213,14 @@ export class Profile {
 
     if (ev.type === 'round') {
       st.rounds++;
-      addXp(10);
+      addXp(10, 'El');
       goal('round');
       if (st.rounds >= 25) ach('hands_25');
       if (ev.won) {
         st.wins++;
         st.streak++;
         st.bestStreak = Math.max(st.bestStreak, st.streak);
-        addXp(30);
+        addXp(30, 'Galibiyet');
         goal('win');
         ach('first_hand');
         if (ev.difficulty === 'expert') goal('expertWin');
@@ -149,47 +228,47 @@ export class Profile {
         const f = ev.finish || 'normal';
         st.finishes[f] = (st.finishes[f] || 0) + 1;
         if (f === 'okey' || f === 'pairsOkey' || f === 'kafaOkey') {
-          addXp(25);
+          addXp(25, 'Okey bitişi');
           goal('okeyFinish');
           ach('okey_finish');
         }
         if (f === 'pairs' || f === 'pairsOkey') {
-          addXp(25);
+          addXp(25, 'Çift bitişi');
           goal('pairsFinish');
           ach('pairs_finish');
         }
         if (f === 'kafa' || f === 'kafaOkey') {
-          addXp(40);
+          addXp(40, 'Kafadan');
           ach('kafa');
         }
         if (ev.colorFinish) ach('mono');
       } else st.streak = 0;
     } else if (ev.type === 'open101') {
       st.open101++;
-      addXp(10);
+      addXp(10, 'El açma');
       goal('open101');
       ach('first_101');
     } else if (ev.type === 'indicator') {
-      addXp(6);
+      addXp(6, 'Gösterge');
       goal('indicator');
       ach('indicator');
     } else if (ev.type === 'match') {
       const m = st.matches[ev.mode] || (st.matches[ev.mode] = { played: 0, won: 0 });
       m.played++;
-      addXp(20);
+      addXp(20, 'Maç');
       if (ev.won) {
         m.won++;
-        addXp(80);
+        addXp(80, 'Maç galibiyeti');
         if (ev.difficulty === 'expert') ach('expert_win');
         if (ev.mode === 'okey101' && ev.clean) ach('clean_101');
       }
     }
     this.d.xp += out.xp;
     const after = this.level;
-    for (let l = before + 1; l <= after; l++) out.levelUps.push({ level: l, unlocks: unlockedAt(l) });
+    for (let l = before + 1; l <= after; l++) out.levelUps.push({ level: l, unlocks: rewardsAt(l) });
     if (after >= 5) ach('level5');
     this.save();
-    for (const f of this.subs) f(out);
+    this._emit(out);
     return out;
   }
 }

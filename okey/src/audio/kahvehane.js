@@ -151,6 +151,42 @@ export class Music {
     this.cursor = Math.max(this.cursor, land + 2.6);
   }
 
+  // Seviye atlama: kanunda yükselen şedd (glissando), tepede tremolo, def düm-tek-tek-düm, ud ve ney ile kalış.
+  // Müzik kapalıyken de çalabilmesi için bağımsız örnekte (stinger) kullanılır; dönen süre sn.
+  fanfare(makam = 'rast') {
+    const m = MAKAMS[makam] || MAKAMS.rast;
+    const t = this.ctx.currentTime + 0.06;
+    // 1) dolum: alt bölgeden tepeye hızlanan şedd (halka dolarken)
+    const N = 14;
+    let x = t;
+    for (let i = 0; i <= N; i++) {
+      this._pluck(this.kanunBus, x, this._freq(m, i, 1), 0.13 + i * 0.008, 'kanun');
+      x += 0.085 - i * 0.0042;
+    }
+    // 2) patlama: tepe notada tremolo + alt oktav, def düm
+    const top = t + 1.12;
+    this._dum(top, 0.5);
+    for (let k = 0; k < 9; k++) this._pluck(this.kanunBus, top + k * 0.06, this._freq(m, 7, 2), 0.24 * Math.pow(0.9, k), 'kanun');
+    this._pluck(this.kanunBus, top + 0.01, this._freq(m, 0, 1), 0.2, 'kanun');
+    this._pluck(this.udBus, top, this._freq(m, 0, 1), 0.34, 'ud');
+    // 3) cevap: iniş cümlesi ve kalış (tek-tek-düm)
+    const seq = [6, 5, 4, 2, 3, 1, 0];
+    seq.forEach((d, i) => this._pluck(this.kanunBus, top + 0.62 + i * 0.12, this._freq(m, d, 2), 0.2, 'kanun'));
+    this._tek(top + 0.62, 0.3);
+    this._tek(top + 0.86, 0.26);
+    const land = top + 0.62 + seq.length * 0.12 + 0.08;
+    this._dum(land, 0.45);
+    for (const [deg, g] of [
+      [0, 0.36],
+      [m.strong, 0.2],
+      [7, 0.18],
+    ])
+      this._pluck(this.udBus, land, this._freq(m, deg, 1), g, 'ud');
+    this._ney(land + 0.02, 1.5, this._freq(m, 7, 1), 0.2);
+    for (let k = 1; k < 8; k++) this._pluck(this.kanunBus, land + k * 0.09, this._freq(m, 7, 2), 0.1 * Math.pow(0.85, k), 'kanun');
+    return land + 1.6 - this.ctx.currentTime;
+  }
+
   // menü taksimi biraz daha belirgin; oyunda efektlerin altında kalır
   _level(v) {
     return (this.mood === 'menu' ? 0.3 : 0.22) * v;

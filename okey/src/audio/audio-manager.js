@@ -145,6 +145,19 @@ export class AudioManager {
     }
   }
 
+  // Seviye atlama fanfarı (kanun). Ses açıksa müzik kapalıyken de çalar; müzik varsa altında kısılır.
+  fanfare(makam) {
+    this.haptic('win');
+    if (!this.unlocked || !this.ctx || !this.settings.get('sfx') || this.ctx.state !== 'running') return 0;
+    if (!this.stinger) {
+      this.stinger = new Music(this.ctx, this.sfxBus);
+      this.stinger.root.gain.value = 0.62;
+    }
+    const dur = this.stinger.fanfare(makam);
+    if (this.music?.playing) this.music.duck(0.25, dur + 0.6);
+    return dur;
+  }
+
   haptic(name) {
     if (!this.settings.get('haptics')) return;
     const pat = HAPTICS[name];
@@ -174,6 +187,9 @@ export class NullAudio {
   play() {}
   cascade() {}
   haptic() {}
+  fanfare() {
+    return 0;
+  }
   setMusicWanted() {}
   applyMusic() {}
   destroy() {}

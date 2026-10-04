@@ -7,7 +7,7 @@ import fs from 'node:fs';
 const HD = process.argv.includes('--hd');
 
 // Katman sırası önemlidir: temel → arayüz sürümleri → onarımlar ve 101 → taş takımları → duraklatma → menü → profil merkezi → oyun içi
-const STYLES = ['fonts.generated', 'tokens', 'base', 'tile', 'table', 'screens', 'ui5', 'ui7', 'repairs', 'table101', 'tile-themes', 'pause', 'menu', 'hub', 'play', 'rotate'];
+const STYLES = ['fonts.generated', 'tokens', 'base', 'tile', 'table', 'screens', 'ui5', 'ui7', 'repairs', 'table101', 'tile-themes', 'pause', 'menu', 'hub', 'play', 'rewards', 'result', 'bazaar', 'rotate'];
 const css = STYLES.map((n) => fs.readFileSync(`styles/${n}.css`, 'utf8')).join('\n');
 
 // Artifact sandbox'ı (CSP) blob: fetch'ini engeller: GLTFLoader dokuları ImageBitmapLoader yerine TextureLoader ile çözsün

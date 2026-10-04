@@ -7,6 +7,7 @@ import { CINI } from './cini.js';
 import { EBRU } from './ebru.js';
 import { OIL } from './oil.js';
 import { PT_FONTS } from './fonts.generated.js';
+import { DB } from './store.js';
 
 const LAB = { cini: '#1d3e93', ebru: '#22357a', yagli: '#203f9e' };
 function numLayout(st, text, k = 1, ny = st.numY) {
@@ -62,58 +63,6 @@ const OW = 320,
   OH = Math.round(320 * 1.36);
 const ALL_NUMS = [];
 for (const c of ['red', 'blue', 'black', 'yellow']) for (let v = 1; v <= 13; v++) ALL_NUMS.push(`n:${c}:${v}`);
-const DB = (() => {
-  let p = null;
-  const open = () =>
-    p ||
-    (p = new Promise((res, rej) => {
-      const r = indexedDB.open('patisever-tiles', 1);
-      r.onupgradeneeded = () => r.result.createObjectStore('img');
-      r.onsuccess = () => res(r.result);
-      r.onerror = () => rej(r.error);
-    }));
-  return {
-    async get(k) {
-      try {
-        const db = await open();
-        return await new Promise((res) => {
-          const q = db.transaction('img').objectStore('img').get(k);
-          q.onsuccess = () => res(q.result || null);
-          q.onerror = () => res(null);
-        });
-      } catch {
-        return null;
-      }
-    },
-    async put(k, v) {
-      try {
-        const db = await open();
-        db.transaction('img', 'readwrite').objectStore('img').put(v, k);
-      } catch {}
-    },
-    async prefix(pre) {
-      const out = new Map();
-      try {
-        const db = await open();
-        await new Promise((res) => {
-          const q = db
-            .transaction('img')
-            .objectStore('img')
-            .openCursor(IDBKeyRange.bound(pre, pre + '\uffff'));
-          q.onsuccess = () => {
-            const c = q.result;
-            if (c) {
-              out.set(c.key.slice(pre.length), c.value);
-              c.continue();
-            } else res();
-          };
-          q.onerror = () => res();
-        });
-      } catch {}
-      return out;
-    },
-  };
-})();
 const S = {}; // tema durumu
 const state = (th) => S[th] || (S[th] = { storedP: null, started: false, base: null, back: null, faces: new Map(), want: [], wantSet: new Set(), pend: new Map(), texs: new Map(), running: false, stored: new Map() });
 const cur = () => {

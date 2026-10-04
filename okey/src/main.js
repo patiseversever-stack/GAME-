@@ -16,6 +16,9 @@ const app = document.getElementById('app');
 const settings = new Settings();
 const profile = new Profile();
 for (const [k, s] of [['theme', 'theme'], ['rack', 'rack'], ['tiles', 'tiles'], ['speed', 'botSpeed'], ['motion', 'motion']]) if (q.get(k)) settings.set(s, q.get(k));
+// Taş takımları artık seviye / Çarşı ile açılır: eski sürümde seçilmiş takım hediye edilir, açık olmayan seçim fildişine döner
+if (profile.migratedFrom === 1 && settings.get('tiles') !== 'ivory' && !q.get('tiles')) profile.grant('tiles', settings.get('tiles'));
+if (!profile.owns('tiles', settings.get('tiles')) && !q.get('tiles')) settings.set('tiles', 'ivory');
 if (q.get('quality')) settings.set('quality', q.get('quality'));
 if (q.get('text')) settings.set('textScale', Number(q.get('text')));
 applyDocumentSettings(settings, app);

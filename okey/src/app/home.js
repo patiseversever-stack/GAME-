@@ -5,6 +5,10 @@ import { webglAvailable } from '../render3d/stage.js';
 import { openHub, setHubData } from './hub.js';
 import { ACHIEVEMENTS } from '../meta/profile.js';
 import { avatarSVG } from '../ui/avatars.js';
+import { framedAvatar } from '../ui/frame-ui.js';
+import { levelTier } from '../meta/progression.js';
+import { openBazaar } from './bazaar.js';
+import { frameURL, FRAME_IDS } from '../render3d/tile-themes/frames.js';
 import { icon } from '../ui/icons.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -93,10 +97,11 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
     <div class="h4-rays"></div>
     <header class="h4-top">
       <button class="h4-profile" data-a="profile" aria-label="Profil" data-goals="${goals.length - doneGoals}">
-        <span class="h4-ring" style="--p:${pct}"><i>${avatarSVG(roster)}</i><b>${prog.level}</b></span>
-        <span class="h4-who"><b>${esc(pname)}</b><span class="h4-xp"><s style="width:${pct}%"></s></span><em>${prog.into} / ${prog.need} XP</em></span>
+        <span class="h4-ring has-frame" style="--p:${pct}">${framedAvatar(roster, profile.equipped('frame'))}<b class="lvl lvl--${levelTier(prog.level)}">${prog.level}</b></span>
+        <span class="h4-who"><b>${esc(pname)}</b><span class="h4-xp"><s style="width:${pct}%"></s></span><em><span class="h4-ttl">${esc(profile.equipped('title').name)}</span>${prog.into} / ${prog.need} XP</em></span>
       </button>
       ${saved ? `<button class="h4-resume" data-a="resume"><span class="h4-resume__ic">${icon('play')}</span><span><b>Devam et</b><em>${saved.mode === 'okey101' ? '101 Okey' : 'Okey'} · El ${saved.round}</em></span></button>` : ''}
+      <button class="h4-bazaar" data-a="bazaar" aria-label="Çarşı">${icon('bazaar')}<span>Çarşı</span></button>
       <div class="h4-icons">
         <button class="h4-ic" data-a="sound" aria-label="Ses">${icon(settings.get('sfx') ? 'volumeOn' : 'volumeOff')}</button>
         <button class="h4-ic" data-a="settings" aria-label="Ayarlar">${icon('cog')}</button>
@@ -138,6 +143,17 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
     }
   }
   current = { root, menu3d, audio };
+  // kuşanılan çerçeve / unvan değişince kapsül yerinde yenilenir (Ödüller, Çarşı, seviye atlama)
+  const paintCapsule = () => {
+    const p = profile.progress();
+    const ring = root.querySelector('.h4-ring');
+    ring.innerHTML = `${framedAvatar(settings.get('playerAvatar'), profile.equipped('frame'))}<b class="lvl lvl--${levelTier(p.level)}">${p.level}</b>`;
+    const ttl = root.querySelector('.h4-ttl');
+    if (ttl) ttl.textContent = profile.equipped('title').name;
+  };
+  // çerçeveler menü sakinken arka planda boyanır (IndexedDB'ye yazılır): Ödüller ve Çarşı anında dolu açılır
+  const warm = setTimeout(() => FRAME_IDS.forEach((id) => frameURL(id)), 5000);
+  const offProfile = profile.onChange((ev) => (ev?.equip || ev?.grant || ev?.ad || ev?.adopt) && paintCapsule());
   audio.setMusicWanted?.(true, 'menu'); // menüde ney ve ud taksimi (ilk dokunuşta başlar)
   setHubData({ e: profile, h: prog, u: goals, p: pname, Ra: ACHIEVEMENTS, av: avatarSVG(roster) });
 
@@ -168,12 +184,16 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
       return onResume();
     }
     if (a === 'profile') return openHub('prof');
+    if (a === 'bazaar') return openBazaar({ host, profile, settings, audio });
     if (a === 'settings') return ui.settings();
   });
 
   return {
     el: root,
     destroy() {
+      offProfile();
+      clearTimeout(warm);
+      document.querySelector('.bz')?.remove();
       menu3d?.destroy();
       root.remove();
       if (current?.root === root) current = null;

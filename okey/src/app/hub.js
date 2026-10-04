@@ -2,6 +2,12 @@
 // gradyan zemin, süzülen taşlar, bento kartlar, hareketli halkalar ve sayaçlar, kayan sekme seçici).
 // Veriyi ana menü verir (setHubData); oyun içinde yalnız Kurallar açılır.
 import { icon } from '../ui/icons.js';
+import { FRAMES, EFFECTS, TILESETS, TITLES, nextReward, KIND_NAME } from '../meta/progression.js';
+import { levelFromXp } from '../meta/profile.js';
+import { rewardArt } from './reward-art.js';
+import { framedAvatar, hydrateFrames } from '../ui/frame-ui.js';
+import { Celebration } from '../ui/effects.js';
+import { openBazaar } from './bazaar.js';
 
 let hubData = null;
 // d: { e: profile, h: progress, u: günlük görevler, p: oyuncu adı, Ra: başarım listesi, av: avatar svg }
@@ -11,6 +17,7 @@ export function setHubData(d) {
 
 var TABS = [
   ['prof', 'Profil', 'user'],
+  ['rew', 'Ödüller', 'gift'],
   ['goals', 'Görevler', 'target'],
   ['ach', 'Başarımlar', 'trophy'],
   ['stats', 'İstatistik', 'chart'],
@@ -198,14 +205,14 @@ function viewProf(D) {
     HERO_ART +
     '<div class="h7hero__top"><div class="h7hero__ring">' +
     ring(xp, 'amber', 7) +
-    '<div class="h7hero__av">' +
-    D.av +
+    '<div class="h7hero__av has-frame">' +
+    framedAvatar(D.av, e.equipped ? e.equipped('frame') : 'sade') +
     '</div></div>' +
     '<div class="h7hero__lv"><small>Seviye</small><b>' +
     pr.level +
     '</b></div></div>' +
     '<div class="h7hero__txt"><span class="h7eyebrow">' +
-    rank(pr.level) +
+    esc(e.equipped ? e.equipped('title').name : rank(pr.level)) +
     '</span><h2 class="h7hero__name">' +
     esc(D.p) +
     '</h2>' +
@@ -224,6 +231,90 @@ function viewProf(D) {
     tile('stats', 'chart', 'sky', '<small>%</small>' + num(r), 'Kazanma oranı', (s.rounds || 0) + ' el oynandı', meter(r, 'sky'), 4) +
     '</div>'
   );
+}
+
+// ---------- Ödüller: koleksiyon, kuşanma, sıradaki ödül ----------
+var RSUB = [
+  ['frame', 'Çerçeveler', FRAMES],
+  ['title', 'Unvanlar', TITLES],
+  ['effect', 'Kutlamalar', EFFECTS],
+  ['tiles', 'Taşlar', TILESETS],
+];
+function settingsRef() {
+  return window.__okey && window.__okey.settings;
+}
+function equippedOf(e, kind) {
+  if (kind === 'tiles') return (settingsRef() && settingsRef().get('tiles')) || 'ivory';
+  if (kind === 'title') return e.d.equip.title || null;
+  return e.equipped(kind);
+}
+function rewCard(e, sub, it, i, eq, lv, avatar) {
+  var own = e.owns(sub, it.id),
+    on = eq === it.id,
+    foot;
+  if (on) foot = '<span class="h7rw-st is-on">' + ic('check') + 'Kuşanıldı</span>';
+  else if (own) foot = '<button type="button" class="h7rw-btn" data-eq="' + sub + ':' + it.id + '">Kuşan</button>';
+  else if (it.ads && (!it.level || it.level > lv)) foot = '<button type="button" class="h7rw-btn h7rw-btn--shop" data-shop="' + sub + ':' + it.id + '">' + ic('bazaar') + 'Çarşı’da aç</button>';
+  else foot = '<span class="h7rw-st">' + ic('lock') + 'Seviye ' + it.level + '</span>';
+  return (
+    '<article class="h7card h7rw' + (own ? '' : ' is-locked') + (on ? ' is-on' : '') + '" style="--i:' + (i + 2) + '">' +
+    '<div class="h7rw__art"' + (sub === 'effect' ? ' data-pv="' + it.id + '"' : '') + '>' + rewardArt(sub, it, avatar) +
+    (sub === 'effect' ? '<span class="h7rw__pv">' + ic('play') + '</span>' : '') + '</div>' +
+    '<b>' + esc(it.name) + '</b><small>' + esc(sub === 'frame' ? it.series : it.desc || '') + '</small>' + foot + '</article>'
+  );
+}
+function titleRow(e, it, i, eq) {
+  var own = e.owns('title', it.id),
+    on = eq === it.id;
+  return (
+    '<button type="button" class="h7card h7rw-tt' + (own ? '' : ' is-locked') + (on ? ' is-on' : '') + '" ' +
+    (own ? 'data-eq="title:' + it.id + '"' : 'disabled') + ' style="--i:' + (i + 3) + '"><b>' + esc(it.name) + '</b><small>' +
+    (own ? 'Seviye ' + it.level + ' unvanı' : 'Seviye ' + it.level + '’de açılır') + '</small>' +
+    (on ? '<em>' + ic('check') + '</em>' : own ? '' : '<em>' + ic('lock') + '</em>') + '</button>'
+  );
+}
+function viewRew(D, sub) {
+  var e = D.e,
+    lv = e.level,
+    S = settingsRef(),
+    avatar = (S && S.get('playerAvatar')) || 'mert';
+  if (!RSUB.some(function (x) { return x[0] === sub; })) sub = 'frame';
+  var all = 0,
+    got = 0;
+  RSUB.forEach(function (x) {
+    x[2].forEach(function (it) {
+      all++;
+      if (e.owns(x[0], it.id)) got++;
+    });
+  });
+  var nx = nextReward(lv),
+    nextHtml = '';
+  if (nx) {
+    var target = 0;
+    for (var l = 1; l < nx.level; l++) target += 120 + 70 * (l - 1);
+    var p = levelFromXp(e.d.xp),
+      base = e.d.xp - p.into,
+      pc = pct(e.d.xp - base, target - base);
+    nextHtml =
+      '<section class="h7card h7rw-next" style="--i:1"><span class="h7rw-next__art">' + rewardArt(nx.items[0].kind, nx.items[0], avatar) + '</span>' +
+      '<div class="h7rw-next__txt"><span class="h7eyebrow">Sıradaki ödül · Seviye ' + nx.level + '</span><b>' +
+      nx.items.map(function (x) { return esc(x.name) + ' <small>' + KIND_NAME[x.kind].toLowerCase() + '</small>'; }).join(' · ') +
+      '</b>' + meter(pc, 'amber') + '<span class="h7rw-next__xp">' + Math.max(0, target - e.d.xp) + ' XP kaldı</span></div></section>';
+  }
+  var seg =
+    '<div class="h7sub" role="tablist">' +
+    RSUB.map(function (x) {
+      return '<button type="button" role="tab" data-rs="' + x[0] + '" aria-selected="' + (x[0] === sub) + '"' + (x[0] === sub ? ' class="is-on"' : '') + '>' + x[1] + '</button>';
+    }).join('') +
+    '</div>';
+  var list = RSUB.find(function (x) { return x[0] === sub; })[2];
+  var eq = equippedOf(e, sub);
+  var body =
+    sub === 'title'
+      ? '<div class="h7rw-titles"><button type="button" class="h7card h7rw-tt' + (eq ? '' : ' is-on') + '" data-eq="title:" style="--i:2"><b>Otomatik</b><small>Her zaman en yüksek unvan</small>' + (eq ? '' : '<em>' + ic('check') + '</em>') + '</button>' +
+        list.map(function (it, i) { return titleRow(e, it, i, eq); }).join('') + '</div>'
+      : '<div class="h7rw-grid">' + list.map(function (it, i) { return rewCard(e, sub, it, i, eq, lv, avatar); }).join('') + '</div>';
+  return '<div class="h7v h7v--rew">' + head('Koleksiyon · ' + got + '/' + all, 'Ödüller', seg) + nextHtml + body + '<canvas class="h7rw-fx" aria-hidden="true"></canvas></div>';
 }
 
 function viewGoals(D) {
@@ -527,6 +618,7 @@ export function openHub(tab, host) {
     '</button></header>' +
     '<div class="h7__body"></div></div>';
   (home || host || document.body).appendChild(el);
+  var fx = null;
   var panel = el.querySelector('.h7__panel'),
     body = el.querySelector('.h7__body'),
     pill = el.querySelector('.h7seg__pill');
@@ -542,7 +634,10 @@ export function openHub(tab, host) {
     el.querySelectorAll('.h7seg [data-t]').forEach(function (b) {
       b.setAttribute('aria-selected', String(b.dataset.t === tb));
     });
-    body.innerHTML = tb === 'prof' ? viewProf(D) : tb === 'goals' ? viewGoals(D) : tb === 'ach' ? viewAch(D) : tb === 'stats' ? viewStats(D) : viewHow(sub);
+    if (fx) fx.stop();
+    fx = null;
+    body.innerHTML = tb === 'prof' ? viewProf(D) : tb === 'rew' ? viewRew(D, sub) : tb === 'goals' ? viewGoals(D) : tb === 'ach' ? viewAch(D) : tb === 'stats' ? viewStats(D) : viewHow(sub);
+    hydrateFrames(body);
     body.scrollTop = 0;
     movePill();
     countUp(body);
@@ -555,6 +650,7 @@ export function openHub(tab, host) {
   }, 1000);
   function close() {
     clearInterval(tick);
+    if (fx) fx.stop();
     document.removeEventListener('keydown', key);
     window.removeEventListener('resize', movePill);
     el.classList.add('is-out');
@@ -573,6 +669,38 @@ export function openHub(tab, host) {
     if ((b = ev.target.closest('[data-t]'))) return show(b.dataset.t);
     if ((b = ev.target.closest('[data-go]'))) return show(b.dataset.go);
     if ((b = ev.target.closest('[data-r]'))) return show('how', b.dataset.r);
+    if ((b = ev.target.closest('[data-rs]'))) return show('rew', b.dataset.rs);
+    if ((b = ev.target.closest('[data-eq]'))) {
+      var kv = b.dataset.eq.split(':');
+      if (kv[0] === 'tiles') settingsRef() && settingsRef().set('tiles', kv[1]);
+      else D.e.equip(kv[0], kv[1] || null);
+      var st = body.scrollTop;
+      show('rew', kv[0]);
+      body.scrollTop = st;
+      return;
+    }
+    if ((b = ev.target.closest('[data-shop]'))) {
+      var sk = b.dataset.shop.split(':');
+      if (settingsRef())
+        openBazaar({
+          host: document.querySelector('.home3') || document.body,
+          profile: D.e,
+          settings: settingsRef(),
+          audio: window.__okey && window.__okey.audio,
+          tab: sk[0],
+          focus: b.dataset.shop,
+          onClose: function () {
+            show('rew', sk[0]);
+          },
+        });
+      return;
+    }
+    if ((b = ev.target.closest('[data-pv]'))) {
+      var cv = body.querySelector('.h7rw-fx');
+      if (!cv) return;
+      if (!fx) fx = new Celebration(cv);
+      fx.play(b.dataset.pv);
+    }
   });
   show(tab);
   requestAnimationFrame(function () {
