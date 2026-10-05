@@ -1,0 +1,290 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import ToolHero from '../../components/tools/ToolHero.astro';
+import ToolFaq from '../../components/tools/ToolFaq.astro';
+import ToolCta from '../../components/tools/ToolCta.astro';
+import { OPS, ISO_GROUPS, TOOL_LABEL, VC, FEED_HINT, isRange } from '../../scripts/tools/cutting-data';
+import type { Op, ToolMat, Iso } from '../../scripts/tools/cutting-data';
+import { FIELDS, compute, resultsHtml, notesHtml, suggestHtml, toSlider, EST_TITLE } from '../../scripts/tools/cutting-calc';
+import { fmtInput, fmt } from '../../scripts/tools/format';
+import { breadcrumbSchema, faqSchema, toolSchema } from '../../scripts/tools/seo';
+import type { Qa } from '../../scripts/tools/seo';
+import { COARSE } from '../../scripts/tools/tap-data';
+import '../../styles/tools.css';
+
+const path = '/teknik-araclar/kesme-hizi-hesaplama';
+const title = 'Kesme Hızı ve Devir Hesaplama (Vc, n, Vf)';
+const description =
+  'Torna, freze, matkap ve kılavuz için devir (n), kesme hızı (Vc), ilerleme hızı (Vf) ve talaş kaldırma oranını (Q) hesaplayın. ISO malzeme grubuna göre başlangıç kesme hızları.';
+const crumbs = [
+  { name: 'Ana sayfa', path: '/' },
+  { name: 'Teknik Araçlar', path: '/teknik-araclar' },
+  { name: 'Kesme Hızı Hesaplama', path },
+];
+
+const DEFAULT_TOOL: Record<Op, ToolMat> = { torna: 'karbur', freze: 'karbur', delme: 'karbur', kilavuz: 'hss' };
+const initial: Record<Op, ReturnType<typeof compute>> = Object.fromEntries(
+  OPS.map((o) => [o.id, compute(o.id, 'vc2n', Object.fromEntries(FIELDS[o.id].map((f) => [f.key, f.value])))]),
+) as Record<Op, ReturnType<typeof compute>>;
+
+const tapSizes = [3, 4, 5, 6, 8, 10, 12, 14, 16, 20, 24];
+
+const faq: Qa[] = [
+  {
+    q: 'Devir nasıl hesaplanır?',
+    a: 'Devir, kesme hızının çevreye bölünmesiyle bulunur: <code>n = 1000 × Vc / (π × D)</code>. Tornada D işlenen çaptır; freze ve matkapta takımın çapıdır. Örnek: Vc = 200 m/dk ve Ø50 mm için n ≈ 1.273 dev/dk.',
+  },
+  {
+    q: 'Kesme hızını (Vc) nereden seçmeliyim?',
+    a: 'En doğru değer, kullandığınız ucun ve kalitenin kataloğundadır. Buradaki aralıklar ISO malzeme grubuna göre başlangıç değeridir: orta değerle başlayın, takım ömrüne, talaş rengine ve titreşime bakarak yukarı ya da aşağı ayarlayın.',
+  },
+  {
+    q: 'Sabit kesme hızında (G96) nelere dikkat etmeliyim?',
+    a: 'G96’da çap küçüldükçe devir yükselir. Alın tornalamada merkeze yaklaşırken devir tezgâh sınırına dayanır; Fanuc’ta <code>G50 S…</code>, Sinumerik’te <code>LIMS</code> ile üst devir sınırı verin. Hesaplayıcıdaki “tezgâh maks. devri” alanı bu durumda gerçek kesme hızını gösterir.',
+  },
+  {
+    q: 'Frezede ilerleme neden diş başına (fz) verilir?',
+    a: 'Her ağız ayrı bir talaş kaldırır; talaş kalınlığını belirleyen diş başına ilerlemedir. Tabla ilerlemesi <code>Vf = fz × z × n</code> ile bulunur. Çok düşük fz talaşı kesmek yerine ezer; paslanmazda yüzey sertleşir ve takım çabuk körelir.',
+  },
+  {
+    q: 'Kılavuz çekmede ilerleme nasıl ayarlanır?',
+    a: 'Senkron (rijit) kılavuz çekmede devir başına ilerleme hatveye eşittir. Dakikalık ilerleme <code>Vf = P × n</code>: M10 × 1,5 için 500 dev/dk’da 750 mm/dk. Farklı bir değer kılavuzu zorlar ve kırar.',
+  },
+  {
+    q: 'Talaş kaldırma oranı (Q) ne işe yarar?',
+    a: 'Q, dakikada kaldırılan talaş hacmidir (cm³/dk). Kaba işlemde farklı uç ve kesme değerlerini karşılaştırmak, işlem süresini ve tezgâh gücünün yetip yetmeyeceğini kestirmek için kullanılır.',
+  },
+];
+
+const schema = [breadcrumbSchema(Astro.site, crumbs), toolSchema(Astro.site, path, 'Kesme hızı ve devir hesaplayıcı', description), faqSchema(faq)];
+
+const groupsForTable: { op: Op; label: string }[] = [
+  { op: 'torna', label: 'Tornalama' },
+  { op: 'freze', label: 'Frezeleme' },
+  { op: 'delme', label: 'Delme' },
+  { op: 'kilavuz', label: 'Kılavuz' },
+];
+const tools: ToolMat[] = ['karbur', 'hss'];
+const cellText = (op: Op, t: ToolMat, g: Iso) => {
+  const c = VC[op][t][g];
+  return isRange(c) ? { text: `${fmt(c.min)}–${fmt(c.max)}`, est: c.est, note: c.note } : { text: '—', est: false, note: c.none };
+};
+---
+<Base title={title} description={description} schema={schema}>
+  <ToolHero
+    crumbs={crumbs}
+    eyebrow="Teknik araç 01 · Hesaplayıcı"
+    title="Kesme hızı ve devir hesaplama"
+    lead="Malzemeyi ve takımı seçin, çapı girin: tezgâha yazacağınız devri, ilerlemeyi ve talaş hacmini anında görün. Her sonucun altında formülü ve yerine konmuş değerleri var."
+    tags={['Tornalama', 'Frezeleme', 'Delme', 'Kılavuz', 'ISO P · M · K · N · S · H']}
+  >
+    <svg slot="art" class="art" viewBox="0 0 440 300" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="art-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0v6" class="hatch-ln" /></pattern>
+        <marker id="art-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 9 5 0 9z" class="arr" /></marker>
+      </defs>
+      <!-- iş parçası: kademeli mil -->
+      <path class="ln fill-paper" d="M70 96 H236 V84 H330 V216 H236 V204 H70 Z" />
+      <ellipse class="ln fill-paper2" cx="70" cy="150" rx="18" ry="54" />
+      <path class="ln-thin" d="M236 96 V204" />
+      <rect class="hatch" x="236" y="84" width="94" height="12" />
+      <line class="cl" x1="30" y1="150" x2="410" y2="150" />
+      <!-- dönüş oku n -->
+      <path class="gold-ln" d="M58 104 A20 56 0 0 0 52 196" marker-end="url(#art-arr)" />
+      <text x="26" y="112" class="t-big">n</text>
+      <!-- takım -->
+      <polygon class="gold" points="236,206 262,214 250,236 226,226" />
+      <rect class="ln fill-paper" x="232" y="226" width="34" height="58" rx="2" transform="rotate(-18 249 255)" />
+      <!-- Vc oku -->
+      <line class="gold-ln" x1="222" y1="214" x2="150" y2="214" marker-end="url(#art-arr)" />
+      <text x="150" y="236" class="t-big">Vc</text>
+      <!-- ilerleme oku -->
+      <line class="dim" x1="270" y1="246" x2="306" y2="246" marker-end="url(#art-arr)" />
+      <text x="276" y="268">fn</text>
+      <!-- ap ölçüsü -->
+      <line class="dim" x1="342" y1="84" x2="372" y2="84" /><line class="dim" x1="342" y1="96" x2="372" y2="96" />
+      <text x="378" y="94">ap</text>
+      <!-- D ölçüsü -->
+      <line class="dim" x1="252" y1="84" x2="252" y2="40" /><line class="dim" x1="252" y1="216" x2="252" y2="204" />
+      <line class="dim" x1="392" y1="84" x2="392" y2="216" marker-start="url(#art-arr)" marker-end="url(#art-arr)" />
+      <line class="dim" x1="330" y1="84" x2="400" y2="84" /><line class="dim" x1="330" y1="216" x2="400" y2="216" />
+      <text x="400" y="154" class="t-big">D</text>
+      <text x="70" y="40" class="t-small">n = 1000 · Vc / (π · D)</text>
+    </svg>
+  </ToolHero>
+
+  <section class="tl-stage" aria-label="Kesme hızı hesaplayıcı">
+    <div class="wrap">
+      <div class="tl-panel calc" data-calc data-default-tools={JSON.stringify(DEFAULT_TOOL)} data-coarse={JSON.stringify(COARSE)}>
+        <div class="tl-panel__bar">
+          <span>Hesap · ISO 513 malzeme grubu</span>
+          <span class="hide-sm">Birimler: m/dk · dev/dk · mm/dev · mm/dk · cm³/dk</span>
+        </div>
+
+        <div class="calc-tabs-wrap">
+          <div class="calc-tabs" role="tablist" aria-label="İşlem türü">
+            {OPS.map((o, i) => (
+              <button class="calc-tab" type="button" role="tab" id={`tab-${o.id}`} aria-selected={i === 0 ? 'true' : 'false'} aria-controls="calc-panel" tabindex={i === 0 ? 0 : -1} data-tab={o.id}>
+                <span>0{i + 1}</span>{o.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div class="calc-body" id="calc-panel" role="tabpanel" aria-labelledby="tab-torna" data-panel>
+          <div class="calc-in">
+            <fieldset class="calc-block">
+              <legend class="tl-legend">İşlenen malzeme · ISO 513</legend>
+              <div class="iso-pick">
+                {ISO_GROUPS.map((g, i) => (
+                  <label data-g={g.g} title={g.ex}>
+                    <input type="radio" name="calc-iso" value={g.g} checked={i === 0} data-iso />
+                    <span><b>{g.g}</b><small>{g.name}</small></span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset class="calc-block">
+              <legend class="tl-legend">Takım malzemesi</legend>
+              <div class="tl-seg tl-seg--wide">
+                <label><input type="radio" name="calc-tool" value="karbur" checked data-tool /><span data-tool-label="karbur">{TOOL_LABEL.torna.karbur}</span></label>
+                <label><input type="radio" name="calc-tool" value="hss" data-tool /><span data-tool-label="hss">{TOOL_LABEL.torna.hss}</span></label>
+              </div>
+            </fieldset>
+
+            <div class="calc-sug" data-suggest aria-live="polite" set:html={suggestHtml('torna', 'karbur', 'P')} />
+
+            {OPS.map((o) => (
+              <div class="calc-op" data-op={o.id} hidden={o.id !== 'torna'}>
+                <div class="calc-op__row">
+                  <span class="tl-legend">Hesap yönü</span>
+                  <div class="tl-seg" role="radiogroup" aria-label="Hesap yönü">
+                    <label><input type="radio" name={`${o.id}-mode`} value="vc2n" checked data-mode /><span>Vc’den devir</span></label>
+                    <label><input type="radio" name={`${o.id}-mode`} value="n2vc" data-mode /><span>Devirden Vc</span></label>
+                  </div>
+                </div>
+                {o.id === 'kilavuz' && (
+                  <div class="calc-op__row calc-op__row--stack">
+                    <span class="tl-legend">Hızlı seçim · kaba diş</span>
+                    <div class="tl-chips" data-tap-sizes>
+                      {tapSizes.map((m) => (
+                        <button type="button" class="tl-chip" data-d={m} data-p={COARSE[String(m)]} aria-pressed={m === 10 ? 'true' : 'false'}>M{m}</button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div class="tl-fields">
+                  {FIELDS[o.id].map((f) => {
+                    const id = `${o.id}-${f.key}`;
+                    const val = Number.isFinite(f.value) ? fmtInput(f.value) : '';
+                    return (
+                      <div class={`tl-field${f.optional ? ' tl-field--opt' : ''}`} data-field={f.key} data-mode-only={f.mode} hidden={f.mode === 'n2vc'}>
+                        <div class="tl-field__top">
+                          <label for={id}><span class="tl-field__sym">{f.sym}</span><span>{f.label}{f.optional && <em> (isteğe bağlı)</em>}</span></label>
+                          <div class="tl-field__box">
+                            <input id={id} type="text" inputmode={f.int ? 'numeric' : 'decimal'} autocomplete="off" spellcheck="false" value={val} placeholder={f.optional ? '—' : ''} aria-describedby={`${id}-msg`} data-input />
+                            <span class="tl-field__unit">{f.unit}</span>
+                          </div>
+                        </div>
+                        {f.slider !== false && (
+                          <input class="tl-range" type="range" min="0" max="1000" step="1" value={toSlider(f, f.value)} aria-label={`${f.label} kaydırıcısı`} style={`--p:${toSlider(f, f.value) / 10}%`} data-range />
+                        )}
+                        <p class="tl-field__msg" id={`${id}-msg`} data-msg></p>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p class="calc-hint"><Icon name="book" /> <span>{FEED_HINT[o.id]}</span></p>
+              </div>
+            ))}
+          </div>
+
+          <div class="calc-out" data-out-wrap>
+            <div class="calc-out__sticky">
+              <div class="calc-out__head"><span>Sonuç</span><span data-out-op>Tornalama</span></div>
+              {OPS.map((o) => (
+                <div class="calc-res" data-res={o.id} hidden={o.id !== 'torna'} set:html={resultsHtml(initial[o.id])} />
+              ))}
+              <div class="tl-notes" data-notes set:html={notesHtml(initial.torna)} />
+              <p class="sr-only" aria-live="polite" data-live></p>
+            </div>
+          </div>
+        </div>
+
+        <div class="calc-dock-anchor" aria-hidden="true">
+          <div class="calc-dock" data-dock data-hidden>
+            <span class="calc-dock__k" data-dock-k>n</span>
+            <b data-dock-v>{initial.torna.results[0].text}</b>
+            <span class="calc-dock__u" data-dock-u>dev/dk</span>
+            <span class="calc-dock__s" data-dock-s>Vf {initial.torna.results[1].text} mm/dk</span>
+          </div>
+        </div>
+      </div>
+
+      <ToolCta
+        id="tool-kesme-hizi"
+        title="Değerler tamam, sıra doğru uçta."
+        text="Malzemenize ve tezgâhınıza uygun kesici uç, matkap, parmak freze ya da kılavuzu birlikte seçelim. Kodu veya işi yazın, fiyat ve termin WhatsApp’tan gelsin."
+        wa="Merhaba Aksoy Kesici Takımlar, kesme hızı hesaplayıcısından geliyorum. Şu iş için kesici takım teklifi almak istiyorum: "
+      />
+    </div>
+  </section>
+
+  <section class="section section--tight tl-ref" aria-labelledby="vc-tablo">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Referans</span>
+        <h2 id="vc-tablo" class="reveal">Başlangıç kesme hızları (m/dk)</h2>
+        <p>Hesaplayıcının malzeme seçiminde önerdiği aralıklar. Değerler kaplamalı karbür ve HSS takımlar için genel başlangıç noktasıdır; kullandığınız markanın katalog değeri her zaman önceliklidir.</p>
+      </div>
+      <div class="tl-tablewrap" tabindex="0" role="region" aria-label="Başlangıç kesme hızları tablosu (yatay kaydırılabilir)">
+        <table class="tl-table tl-table--vc">
+          <thead>
+            <tr>
+              <th rowspan="2" scope="col" class="sticky-col">ISO grubu</th>
+              {groupsForTable.map((g) => <th colspan="2" scope="colgroup" class="grp">{g.label}</th>)}
+            </tr>
+            <tr>
+              {groupsForTable.map((g) => tools.map((t) => <th scope="col">{t === 'karbur' ? 'Karbür' : g.op === 'kilavuz' ? 'HSS-E' : 'HSS'}</th>))}
+            </tr>
+          </thead>
+          <tbody>
+            {ISO_GROUPS.map((g) => (
+              <tr>
+                <th scope="row" class="sticky-col"><span class="iso"><span data-g={g.g}>{g.g}</span></span> {g.name}</th>
+                {groupsForTable.map((col) => tools.map((t) => {
+                  const c = cellText(col.op, t, g.g);
+                  return <td class:list={['num', { 'is-est': c.est, 'is-none': c.text === '—' }]} title={c.est ? `${EST_TITLE}${c.note ? ' ' + c.note : ''}` : c.note}>{c.est && <span class="est-mark" aria-label="tahmini">≈</span>}{c.text}</td>;
+                }))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p class="tl-legendline"><span class="est-mark">≈</span> işaretli hücreler tahmini başlangıç değeridir; yayınlanmış bir katalog tablosuyla birebir doğrulanmamıştır. “—”: bu takım malzemesi o grup için önerilmez ya da değer markaya göre çok değiştiği için katalogdan alınmalıdır. Hücrelerin üzerine gelince not görünür.</p>
+
+      <div class="tl-formulas">
+        <h3>Formüller ve birimler</h3>
+        <dl>
+          <div><dt>n</dt><dd><b>Devir</b> = 1000 × Vc / (π × D) <span>dev/dk</span></dd></div>
+          <div><dt>Vc</dt><dd><b>Kesme hızı</b> = π × D × n / 1000 <span>m/dk</span></dd></div>
+          <div><dt>Vf</dt><dd><b>Tornalama / delme ilerlemesi</b> = fn × n <span>mm/dk</span></dd></div>
+          <div><dt>Vf</dt><dd><b>Frezeleme tabla ilerlemesi</b> = fz × z × n <span>mm/dk</span></dd></div>
+          <div><dt>Vf</dt><dd><b>Kılavuz ilerlemesi</b> = P × n <span>mm/dk</span></dd></div>
+          <div><dt>Q</dt><dd><b>Tornalama talaş kaldırma</b> = Vc × ap × fn <span>cm³/dk</span></dd></div>
+          <div><dt>Q</dt><dd><b>Frezeleme talaş kaldırma</b> = ap × ae × Vf / 1000 <span>cm³/dk</span></dd></div>
+          <div><dt>Q</dt><dd><b>Delme talaş kaldırma</b> = Vc × D × fn / 4 <span>cm³/dk</span></dd></div>
+        </dl>
+        <p>D: tornada işlenen çap, freze ve matkapta takım çapı (mm) · fn: devir başına ilerleme (mm/dev) · fz: diş başına ilerleme (mm/diş) · z: ağız sayısı · ap: kesme derinliği (mm) · ae: radyal kesme genişliği (mm) · P: hatve (mm).</p>
+      </div>
+    </div>
+  </section>
+
+  <ToolFaq id="sss-kesme" title="Kesme hızı ve devir hakkında" items={faq} />
+
+  <script>
+    import '../../scripts/tools/cutting';
+  </script>
+</Base>
