@@ -39,6 +39,49 @@ function part(geo, color, o = {}) {
   g.setAttribute('color', new THREE.BufferAttribute(col, 3));
   return g;
 }
+// Minyatür yüzen ada (uzak adalar ve adanın çevresindeki adacıklar): taşan çimen kapağı, toprak bandı,
+// katmanlı ve yuvarlak kaya gövdesi, sarkık kaya uçları; zenginse dünyaya özgü ağaçlar ve taşlar
+function isletParts(P0, rng, pal, key, r, x0, y0, z0, rich = false, tilt = 0) {
+  // önce kendi merkezinde kurulur, sonra hafif eğik olarak yerine taşınır (yukarıdan bakınca gövde de görünsün)
+  const P = [], x = 0, y = 0, z = 0;
+  const done = () => { const M = new THREE.Matrix4().makeRotationFromEuler(new THREE.Euler(rng.range(-tilt, tilt), rng.range(0, TAU), rng.range(-tilt, tilt))).setPosition(x0, y0, z0); for (const g of P) { g.applyMatrix4(M); g.computeVertexNormals(); P0.push(g); } };
+  const n = rich ? 12 : 9, sd = rng.int(1, 9999), band = pal.bands[rng.int(0, pal.bands.length - 1)];
+  const prof = [[0.001, -1.42], [0.16, -1.26], [0.36, -1.0], [0.6, -0.72], [0.8, -0.44], [0.94, -0.18], [0.99, 0]].map(([a, b]) => new THREE.Vector2(a * r, b * r));
+  P.push(part(new THREE.LatheGeometry(prof, n), band, { pos: [x, y - r * 0.06, z], jit: r * 0.11, seed: sd, top: pal.soil, y0: y - r * 0.55, y1: y - r * 0.04, band: 3.2 / r, vary: 0.1 }));
+  P.push(part(new THREE.CylinderGeometry(r * 1.05, r * 0.99, r * 0.13, n), pal.cliffTop, { pos: [x, y + r * 0.02, z], jit: r * 0.05, seed: sd + 1, top: (pal.grass || [pal.cliffTop])[0], y0: y, y1: y + r * 0.09 }));
+  for (let k = 0; k < (rich ? 3 : 2); k++) { const a = rng.range(0, TAU), d = rng.range(0.25, 0.55) * r, h = rng.range(0.35, 0.7) * r;
+    P.push(part(new THREE.ConeGeometry(r * rng.range(0.1, 0.18), h, 5), pal.rockDark, { pos: [x + Math.cos(a) * d, y - r * 1.0 - h * 0.35, z + Math.sin(a) * d], rot: [PI, 0, 0], jit: r * 0.03, seed: sd + k })); }
+  if (!rich) { done(); return; }
+  const t = rng.int(2, 4);
+  for (let k = 0; k < t; k++) {
+    const a = rng.range(0, TAU), d = rng.range(0, r * 0.6), px = x + Math.cos(a) * d, pz = z + Math.sin(a) * d, h = rng.range(0.45, 0.85) * r, top = y + r * 0.08;
+    if (key === 'peri' || key === 'tuz') P.push(part(new THREE.ConeGeometry(h * 0.3, h, 7), key === 'tuz' ? '#f4eef4' : '#e2c19c', { pos: [px, top + h / 2, pz], jit: h * 0.04 }));
+    else if (key === 'buz') P.push(part(new THREE.ConeGeometry(h * 0.28, h * 1.1, 6), '#dfeefa', { pos: [px, top + h * 0.55, pz] }));
+    else {
+      const leaf = key === 'ikiz' ? '#7a5ad0' : key === 'ayna' || key === 'ege' ? '#2f5a34' : '#3d6a34';
+      P.push(part(new THREE.CylinderGeometry(h * 0.04, h * 0.06, h * 0.3, 5), '#5a4030', { pos: [px, top + h * 0.15, pz] }));
+      P.push(part(rng.chance(0.5) ? new THREE.ConeGeometry(h * 0.2, h * 0.95, 7) : new THREE.IcosahedronGeometry(h * 0.3, 0), leaf, { pos: [px, top + h * 0.62, pz], jit: h * 0.04, seed: sd + 50 + k }));
+    }
+  }
+  for (let k = 0; k < 2; k++) { const a = rng.range(0, TAU), d = rng.range(0.3, 0.8) * r; P.push(part(new THREE.IcosahedronGeometry(r * rng.range(0.07, 0.12), 0), band, { pos: [x + Math.cos(a) * d, y + r * 0.1, z + Math.sin(a) * d], jit: r * 0.02 })); }
+  done();
+}
+// uzak adalardan buluta dökülen şelale: kayan çizgili yarı saydam şerit (tek ortak malzeme)
+const FALL_MAT = new THREE.ShaderMaterial({
+  uniforms: { uTime: U.uTime, uCol: { value: new THREE.Color(1.25, 1.35, 1.5) } }, transparent: true, depthWrite: false, side: THREE.DoubleSide,
+  vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`,
+  fragmentShader: `uniform float uTime; uniform vec3 uCol; varying vec2 vUv;
+    float h(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+    float n(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h(i), h(i + vec2(1, 0)), f.x), mix(h(i + vec2(0, 1)), h(i + vec2(1, 1)), f.x), f.y); }
+    void main(){
+      float x = vUv.x, y = vUv.y;
+      float st = n(vec2(x * 14.0, y * 3.0 + uTime * 2.2)) * 0.6 + n(vec2(x * 30.0, y * 7.0 + uTime * 3.4)) * 0.4;
+      float edge = smoothstep(0.0, 0.25, x) * smoothstep(1.0, 0.75, x);
+      float a = edge * smoothstep(1.0, 0.92, y) * smoothstep(0.0, 0.55, y) * (0.35 + 0.65 * st) * 0.75;
+      gl_FragColor = vec4(uCol * (0.85 + 0.3 * st), a);
+    }`,
+});
+
 function mergeParts(parts, ao = true) {
   let n = 0; for (const g of parts) n += g.attributes.position.count;
   const P = new Float32Array(n * 3), N = new Float32Array(n * 3), C = new Float32Array(n * 3);
@@ -918,15 +961,12 @@ class IslandView {
       }
       const vm = new THREE.Mesh(mergeParts(vines, false), matPropSmooth); this.root.add(vm);
     }
-    // yörüngedeki kaya parçaları
+    // adanın çevresinde süzülen minyatür adacıklar
     this.orbit = new THREE.Group();
     const orbs = [];
-    for (let k = 0; k < 9; k++) {
-      const a = (k / 9) * TAU + rng.range(-0.3, 0.3), r = rng.range(8.5, 12.5), y = rng.range(-5.5, -1.2), s = rng.range(0.25, 0.7);
-      const rx = Math.cos(a) * r * 0.75, rz = Math.sin(a) * r;
-      orbs.push(part(new THREE.IcosahedronGeometry(s, 0), pal.bands[k % pal.bands.length], { pos: [rx, y, rz], scale: [1, 0.8, 1], jit: s * 0.25, seed: k }));
-      orbs.push(part(new THREE.ConeGeometry(s * 0.9, s * 1.8, 6), pal.rockDark, { pos: [rx, y - s * 1.1, rz], rot: [PI, 0, 0], jit: s * 0.1 }));
-      orbs.push(part(new THREE.CylinderGeometry(s * 0.95, s * 0.9, 0.08, 7), pal.cliffTop, { pos: [rx, y + s * 0.62, rz] }));
+    for (let k = 0; k < 7; k++) {
+      const a = (k / 7) * TAU + rng.range(-0.25, 0.25), r = rng.range(10, 13.5), y = rng.range(-6.5, -2.2), s = rng.range(0.45, 0.85);
+      isletParts(orbs, rng, pal, key, s, Math.cos(a) * r * 0.78, y, Math.sin(a) * r, true, 0.32);
     }
     const om = new THREE.Mesh(mergeParts(orbs, false), this.cliffMat); this.orbit.add(om); this.root.add(this.orbit);
     this.parent.add(this.root);

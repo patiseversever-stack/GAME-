@@ -189,7 +189,7 @@ function stepPlay(dt, dtR) {
 }
 function setupCompleteCine() {
   const lv = G.lv;
-  G.cImpact = false; G.cNight = false; G.cNext = false; G.cU0 = G.u; G.ffwd = false;
+  G.cImpact = false; G.cNight = false; G.cNext = false; G.cU0 = G.u; G.ffwd = false; G.fwShown = false;
   pathAt(lv.path, lv.length, PA); G.cFrom = { x: PA.x, z: PA.z };
   const gate = new THREE.Vector3(lv.gate.x, 1.0, lv.gate.z);
   Cam.cinema(Cam.pose({ target: gate, dist: Cam.base.dist * 0.6 }), 0.55, Ease.outCubic);
@@ -217,6 +217,8 @@ function updateComplete(dt, dtR) {
   if (G.mode === 'endless') { if (t > 1.7 && !G.cNext) { G.cNext = true; enterLevel(endlessSpec(G.endless.n, G.endless.seed), { quick: true }); } return; }
   if (G.ffwd && G.compStage < 5) { if (G.compStage === 0) showComplete(); for (let i = 0; i < 3; i++) { const el = $$('.star')[i]; el.classList.add('shown'); if (G.stars[i]) el.classList.add('lit'); } G.compStage = 5; $('#complete').classList.add('ready'); }
   if (t > 1.7 && G.compStage === 0) { G.compStage = 1; showComplete(); }
+  // zafer gecesi: havai fişek gösterisi (dünya bitişi ve ısrarla gelen başarı daha büyük)
+  if (t > 1.85 && !G.fwShown && G.compStage >= 1) { G.fwShown = true; const r = G.compRes || {}; Fireworks.show(r.chapterDone ? 14 : r.firstClear && r.fails >= 3 ? 9 : G.stars && G.stars[2] ? 7 : 5, !!r.chapterDone); }
   for (let i = 0; i < 3; i++) if (t > 2.15 + i * 0.42 && G.compStage === 1 + i) {
     G.compStage++; const el = $$('.star')[i]; el.classList.add('shown'); if (G.stars[i]) el.classList.add('lit');
     audio.star(i, G.stars[i]); if (G.stars[i]) { haptic(10); G.flash = Math.max(G.flash, 0.12); G.flashCol.set(1, 0.85, 0.5); }
@@ -256,10 +258,12 @@ function update(dt, dtR) {
   updateSunControl(dtR);
   const lv = G.lv;
   // ada girişi (durumdan bağımsız sürer)
-  if (G.view && !G.view.introDone) {
-    if (G.view.intro(dtR)) renderer.shadowMap.needsUpdate = true;
+  if (G.view && !G.view.introDone && G.view.intro(dtR)) renderer.shadowMap.needsUpdate = true;
+  // Zifir'in belirişi giriş süresine bağlı (ada açılış animasyonundan bağımsız; uzun önizleme uçuşunda da gelir).
+  // 'ready' durumuna gelinmiş ve hâlâ görünmüyorsa hemen belirir (güvenlik ağı).
+  {
     const zt = (G.introDur || 2) - 0.8;
-    if (G.view.introT > zt && !G.zShown && (G.state === 'title' || G.state === 'intro' || G.state === 'ready')) {
+    if (G.view && !G.zShown && (((G.state === 'title' || G.state === 'intro') && G.stateT > zt) || G.state === 'ready')) {
       G.zShown = true; zifir.g.visible = true; zifir.g.scale.setScalar(0.001); G.zPop = 0; audio.pop(3);
       pathAt(lv.path, 0, PA); FX.burst(PA.x, 0.2, PA.z, 12, { c: [0.03, 0.02, 0.06], a: 0.8, s: 0.15, s1: 0.4, life: 0.6, sp: 1.6, up: 1.4, g: -5, drag: 1 });
     }
@@ -309,7 +313,8 @@ function update(dt, dtR) {
     case 'film': Film.update(dtR); break;
     case 'map': SkyMap.update(dtR); G.night = damp(G.night, G.mapNight, 1.5, dtR); break;
     case 'theater': Theater.update(dtR); break;
-    case 'ending': { G.night = damp(G.night, G.state === 'ending' ? 1 : G.mapNight, 1.5, dtR); U.uNightAmt.value = G.night; U.uNightR.value = 60; U.uNightRim.value = 0; break; }
+    case 'ending': { G.night = damp(G.night, G.state === 'ending' ? 1 : G.mapNight, 1.5, dtR); U.uNightAmt.value = G.night; U.uNightR.value = 60; U.uNightRim.value = 0;
+      if (G.state === 'ending' && G.lv && (G.endFw = (G.endFw ?? 1.2) - dtR) <= 0) { G.endFw = 3.6 + Math.random() * 1.4; Fireworks.show(4, true); } break; }
   }
   if (G.state !== 'play' && G.state !== 'film') { G.ecl.amt = damp(G.ecl.amt, 0, 6, dtR); if (G.ecl.amt < 0.01) G.ecl.amt = 0; }
   if (G.state === 'play' || (G.ecl.amt > 0 && G.state === 'fail')) { U.uNightAmt.value = G.ecl.amt * 0.72; U.uNightR.value = 999; U.uNightRim.value = 0; }
@@ -329,7 +334,7 @@ function update(dt, dtR) {
     } else ghost.material.opacity = 0;
   }
   arc1.update(dtR); arc2.update(dtR);
-  ambient(dtR); Ambient.update(dt, G.night); ShadowBirds.update(dt); updateBirds(dtR); updateFar(U.uTime.value);
+  ambient(dtR); Ambient.update(dt, G.night); ShadowBirds.update(dt); Fireworks.update(dt); Shoot.update(dt, skyU.uStars.value); updateBirds(dtR); updateFar(U.uTime.value);
   fxAdd.update(dtR); fxMix.update(dtR); updatePrints(dtR); updatePops(dtR);
   // efekt sönümleri
   G.orbPulse = Math.max(0, (G.orbPulse || 0) - dtR * 4);
@@ -370,7 +375,7 @@ canvas.addEventListener('pointerdown', (e) => {
   if (G.state === 'map') { SkyMap.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (G.state === 'theater') { Theater.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (G.state === 'photo') { Photo.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
-  if (G.state === 'intro' && Cam.flight) { Cam.skipFlight(); G.stateT = Math.max(G.stateT, G.introDur - 0.85); return; }
+  if (G.state === 'intro' && Cam.flight) { skipIntroFlight(); return; }
   requestGyro();
   if (G.state === 'complete') { if (G.compStage < 5 && G.mode !== 'endless') G.ffwd = true; return; }
   if (G.state === 'fail' && G.fShown) { retry(); return; }
@@ -392,6 +397,9 @@ canvas.addEventListener('pointermove', (e) => {
   G.uT += du;
   d.v = lerp(d.v, (du / dtm) * 1000, 0.45);
 });
+// sinematik girişi atla: dokunuş (tuval ya da alt şerit), Boşluk/Enter
+function skipIntroFlight() { if (!Cam.flight) return; Cam.skipFlight(); G.stateT = Math.max(G.stateT, G.introDur - 0.9); if (G.view && !G.view.introDone) G.view.introT = Math.max(G.view.introT, 1.9); audio.ui(); }
+$('#cineBars .cbBot').addEventListener('pointerdown', (e) => { e.stopPropagation(); skipIntroFlight(); });
 const endDrag = (e) => { Photo.up(e); if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag || (Theater.ptrs && Theater.ptrs.size)) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
 window.addEventListener('keydown', (e) => {
@@ -399,6 +407,7 @@ window.addEventListener('keydown', (e) => {
   if (TUT.open) { TUT.key(e); return; }
   if (e.repeat && (e.code === 'Space')) return;
   if (G.state === 'film') { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') Film.skip(); return; }
+  if (G.state === 'intro' && Cam.flight && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) { skipIntroFlight(); return; }
   if (G.state === 'theater' && ThTut.frozen() && (e.code === 'Enter' || e.code === 'Space' || e.code === 'ArrowRight')) { e.preventDefault(); ThTut.tap(); return; }
   if (G.state === 'theater') { const k = 0.12; if (e.code === 'ArrowLeft' || e.code === 'KeyA') Theater.rot(-k, 0); else if (e.code === 'ArrowRight' || e.code === 'KeyD') Theater.rot(k, 0); else if (e.code === 'ArrowUp' || e.code === 'KeyW') Theater.rot(0, -k); else if (e.code === 'ArrowDown' || e.code === 'KeyS') Theater.rot(0, k); else if (e.code === 'KeyQ') Theater.roll(-0.08); else if (e.code === 'KeyE') Theater.roll(0.08); else if (e.code === 'Escape') Theater.close(); else if (e.code === 'Tab') { e.preventDefault(); Theater.cycle(); } else if ((e.code === 'Enter' || e.code === 'Space') && Theater.cardShown) $('#thNext').click(); return; }
   if (G.state === 'map') { if (e.code === 'ArrowLeft' || e.code === 'KeyA') SkyMap.go(Math.round(SkyMap.tf) - 1); else if (e.code === 'ArrowRight' || e.code === 'KeyD') SkyMap.go(Math.round(SkyMap.tf) + 1); else if (e.code === 'Enter' || e.code === 'Space') $('#mpPlay').click(); else if (e.code === 'Escape') $('#btnMapBack').click(); return; }
@@ -633,13 +642,13 @@ function onResize() {
   post.build(v.x, v.y, Q);
   camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h); Theater.resize(w, h);
   if (G.lv) Cam.fit(G.lv);
-  fxAdd.u.uPx.value = fxMix.u.uPx.value = Ambient.u.uPx.value = v.y / (2 * Math.tan(deg(camera.fov / 2)));
+  fxAdd.u.uPx.value = fxMix.u.uPx.value = Ambient.u.uPx.value = Fireworks.u.uPx.value = v.y / (2 * Math.tan(deg(camera.fov / 2)));
 }
 function applyQuality() {
   const Q = Perf.Q;
   setShadowSize(Q.shadow); buildSeaMat(Q.cloudOct); setParticleCap(Q.particles);
   post.u.uFlare.value = Q.flare;
-  U.uSoftSh.value = Q.soft && Perf.softOk ? 1 : 0; Ambient.setCount(Q.amb); // yumuşak gölge ve hava parçacıkları: Düşük'te kapalı; yük artarsa gölge ilk kapanan
+  U.uSoftSh.value = Q.soft && Perf.softOk ? 1 : 0; Ambient.setCount(Q.amb); Fireworks.k = [0.45, 0.7, 1, 1.2][Perf.level]; // yumuşak gölge ve hava parçacıkları: Düşük'te kapalı; yük artarsa gölge ilk kapanan
   if (G.view) G.view.setGrass(Q);
   onResize();
 }
@@ -697,7 +706,7 @@ function frame(now) {
   const ms = now - lastT; lastT = now;
   if (document.hidden) return;
   const dtR = Math.min(0.05, Math.max(0, ms / 1000));
-  Perf.sample(ms, now / 1000);
+  if (!Fireworks.pts.visible) Perf.sample(ms, now / 1000); // kutlama gösterisi kaliteyi düşürmesin
   let dt = dtR;
   if (G.hitStop > 0) { G.hitStop -= dtR; dt = 0; }
   if (G.slowT > 0) { G.slowT -= dtR; dt *= lerp(1, G.slowK, smoothstep(0, 0.2, G.slowT)); }
@@ -876,7 +885,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),

@@ -11,7 +11,7 @@ const G = {
   night: 0, nightR: 0, stateT: 0, introDur: 1.9, readyT: 0, hint: false, auto: false, nextHeart: 0, hapT: 0,
   endless: null, cache: new Map(), flown: new Set(), stars: [false, false, false], from: 'title', zifirScale: 1, beatT: 0, helpK: 1,
 };
-const PATIENCE_MAX = 3.0, PATIENCE_REGEN = 0.18, FLY_DUR = 2.7;
+const PATIENCE_MAX = 3.0, PATIENCE_REGEN = 0.18, FLY_DUR = 5.6;
 // güneşin merhameti: aynı adada 2. başarısızlıktan sonra her denemede ışık %10 daha az yakar (en fazla %50), gölgede can daha hızlı dolar
 const helpFor = (lv) => { const n = lv.spec.kind === 'story' ? Save.data.fails[lv.spec.g] || 0 : 0; return n < 2 ? 1 : Math.max(0.5, 1 - 0.1 * (n - 1)); };
 const zifir = new Zifir();
@@ -200,8 +200,13 @@ const Cam = {
   cur: { target: new THREE.Vector3(0, 0, 0), dist: 34, pitch: deg(54), yaw: 0, fov: 46 },
   cine: null, follow: new THREE.Vector3(), zoom: 1, flight: null,
   // ada önizleme uçuşu: kamera yolu baştan kapıya alçaktan izler, sonra yerine oturur (dokununca atlanır)
-  fly(lv, dur) { this.flight = { t: 0, dur, lv, side: lv.spec.seed % 2 ? 1 : -1 }; this.cine = null; },
-  skipFlight() { if (!this.flight) return; this.flight = null; this.cinema(this.pose(), 0.55, Ease.outCubic); },
+  fly(lv, dur) {
+    this.flight = { t: 0, dur, lv, side: lv.spec.seed % 2 ? 1 : -1, wh: false }; this.cine = null;
+    const sp = lv.spec; $('#cbTitle').textContent = sp.kind === 'daily' ? 'Günün Adası' : `Ada ${sp.g + 1}`; $('#cbSub').textContent = lv.chap.name;
+    $('#cineBars').classList.add('on'); document.body.classList.add('cine');
+  },
+  endFlight() { $('#cineBars').classList.remove('on'); document.body.classList.remove('cine'); },
+  skipFlight() { if (!this.flight) return; this.flight = null; this.endFlight(); this.cinema(this.pose(), 0.7, Ease.outCubic); },
   set(o, pose) { o.target.copy(pose.target); o.dist = pose.dist; o.pitch = pose.pitch; o.yaw = pose.yaw; o.fov = pose.fov; },
   place(cam, pose) {
     const cp = Math.cos(pose.pitch), sp = Math.sin(pose.pitch);
@@ -247,12 +252,22 @@ const Cam = {
   update(dt, dtR) {
     const c = this.cur;
     if (this.flight) {
-      const F = this.flight, lv = F.lv; F.t += dtR;
-      const k = clamp01(F.t / F.dur), e = Ease.inOutSine(k), w = smoothstep(0, 0.2, k) * (1 - smoothstep(0.8, 1, k)), b = this.base;
-      const s0 = lerp(0.4, lv.length - 0.4, e); pathAt(lv.path, s0, _fp); pathAt(lv.path, Math.min(lv.length, s0 + 2.4), _fq);
-      c.target.set(lerp(b.target.x, (_fp.x + _fq.x) / 2, w), lerp(b.target.y, 0.35, w), lerp(b.target.z, (_fp.z + _fq.z) / 2, w));
-      c.dist = lerp(b.dist, b.dist * 0.44, w); c.pitch = lerp(b.pitch, deg(38), w); c.fov = b.fov; c.yaw = b.yaw + Math.sin(e * PI) * 0.32 * F.side * w;
-      if (F.t >= F.dur) this.flight = null;
+      // üç plan: (1) ada bulutlardan yükselirken geniş yan açı, (2) yol boyunca alçak süzülüş, (3) oyun açısına yumuşak iniş
+      const F = this.flight, lv = F.lv, b = this.base; F.t += dtR;
+      const k = clamp01(F.t / F.dur);
+      const wE = 1 - smoothstep(0.12, 0.32, k), wT = smoothstep(0.12, 0.32, k) * (1 - smoothstep(0.72, 0.94, k)), wB = 1 - wE - wT;
+      const sk = Ease.inOutSine(clamp01((k - 0.14) / 0.68));
+      const s0 = lerp(0.3, lv.length - 0.8, sk); pathAt(lv.path, s0, _fp); pathAt(lv.path, Math.min(lv.length, s0 + 2.8), _fq);
+      const rise = Ease.outCubic(clamp01(F.t / 1.5));
+      // kuruluş planı
+      const ex = b.target.x, ey = lerp(-9, 0.6, rise), ez = b.target.z, eD = b.dist * lerp(1.55, 1.25, k / 0.32), eP = deg(lerp(18, 28, clamp01(k / 0.32))), eY = b.yaw + F.side * lerp(1.05, 0.7, clamp01(k / 0.32)), eF = b.fov + 5;
+      // takip planı
+      const tx = (_fp.x + _fq.x) / 2, tz = (_fp.z + _fq.z) / 2, tD = b.dist * (0.4 + 0.06 * Math.sin(sk * PI * 2)), tP = deg(31 + 6 * sk), tY = b.yaw + F.side * (0.42 * Math.cos(sk * PI)), tF = b.fov - 3;
+      c.target.set(ex * wE + tx * wT + b.target.x * wB, ey * wE + 0.4 * wT + b.target.y * wB, ez * wE + tz * wT + b.target.z * wB);
+      c.dist = eD * wE + tD * wT + b.dist * wB; c.pitch = eP * wE + tP * wT + b.pitch * wB; c.yaw = eY * wE + tY * wT + b.yaw * wB; c.fov = eF * wE + tF * wT + b.fov * wB;
+      if (!F.wh && k > 0.15) { F.wh = true; audio.whoosh(false, 1.4, 0.05); }
+      if (k > 0.86 && !F.out) { F.out = true; this.endFlight(); }
+      if (F.t >= F.dur) { this.flight = null; this.endFlight(); }
     } else if (G.state === 'photo' && G.photo) {
       // fotoğraf modu: serbest yörünge
       const b = this.base, P = G.photo;
@@ -324,7 +339,7 @@ function applyLighting(dt) {
   const aur = (lv.chap.key === 'buz' ? 0.45 + night * 0.55 : 0) + (G.state === 'ending' ? night * 0.9 : 0);
   skyU.uAurora.value = damp(skyU.uAurora.value, Math.max(aur, ecl * (lv.chap.key === 'buz' ? 1 : 0)), 2, dt);
   const nE = Math.max(night, ecl * 0.8);
-  seaU.uLit.value.copy(scA.below).multiplyScalar(1.12).lerp(NIGHT.sea, nE * 0.6); seaU.uDeep.value.copy(scA.deep).lerp(NIGHT.sea, nE);
+  seaU.uIslK.value = 1; seaU.uLit.value.copy(scA.below).multiplyScalar(1.12).lerp(NIGHT.sea, nE * 0.6); seaU.uDeep.value.copy(scA.deep).lerp(NIGHT.sea, nE);
   U.uFogCol.value.copy(skyU.uHor.value); U.uBelowCol.value.copy(skyU.uBelow.value);
   // ışıklar
   sunLight.position.copy(L1).multiplyScalar(60); sunLight.target.position.set(0, 0, 0);
@@ -338,11 +353,14 @@ function applyLighting(dt) {
   // küreler
   orbPosInto(G.u, lv.sun.tilt, lv.sun.thMin, orb.g.position);
   orb.u.uCol.value.copy(scA.sun).lerp(_cc.set('#fff4dc'), 0.4);
-  orb.halo.material.color.copy(scA.sun).multiplyScalar(2.2 * (1 - ecl * 0.9) * (1 - night));
-  orb.rays.material.color.copy(scA.sun).multiplyScalar((1.5 + flare.k * 2.5 + flare.warnK * (0.8 + Math.sin(U.uTime.value * 18) * 0.8)) * (1 - ecl) * (1 - night)); orb.rays.material.rotation += dt * (0.05 + flare.k * 0.8);
+  orb.halo.material.color.copy(scA.sun).multiplyScalar(1.0 * (1 - ecl * 0.9) * (1 - night));
+  orb.rays.material.color.copy(scA.sun).multiplyScalar((0.75 + flare.k * 2.5 + flare.warnK * (0.8 + Math.sin(U.uTime.value * 18) * 0.8)) * (1 - ecl) * (1 - night)); orb.rays.material.rotation += dt * (0.05 + flare.k * 0.8);
   orb.u.uEclipse.value = Math.max(ecl * 0.97, night);
   orb.moon.visible = ecl > 0.01; orb.moon.position.set((1 - ecl) * 1.3, (1 - ecl) * 0.4, 0.2); orb.moon.quaternion.copy(camera.quaternion);
   orb.corona.material.opacity = ecl * 0.95; orb.corona.material.rotation -= dt * 0.1; orb.corona.scale.setScalar(6 + Math.sin(U.uTime.value * 3) * 0.3);
+  orb.crown.quaternion.copy(camera.quaternion); orb.crownU.uCol.value.copy(scA.sun).multiplyScalar(1.5);
+  orb.crownU.uK.value = (1 - ecl) * (1 - night) * (1 + (G.drag ? 0.35 : 0) + flare.k * 1.2);
+  if (lv.sun.twin) { orb2.crown.quaternion.copy(camera.quaternion); orb2.crownU.uK.value = (1 - ecl) * (1 - night) * 0.85; }
   G.orbS = damp(G.orbS || 1, G.drag ? 1.14 : 1, 12, dt);
   orb.g.scale.setScalar(lerp(1, 0.6, night) * G.orbS * (1 - (G.orbPulse || 0) * 0.18));
   if (lv.sun.twin) {
@@ -388,6 +406,7 @@ function resetRun() {
   G.ecl.active = false; G.ecl.t = 0; G.ecl.amt = 0; G.ecl.charge = lv.spec.eclipse ? 1 : 0;
   Marks.reset(lv);
   ShadowBirds.hideAll();
+  Fireworks.stop();
   G.timeScale = 1; G.slowT = 0; G.hitStop = 0; G.trauma = 0; G.desat = 0; G.ca = 0; G.readyT = 0;
   for (const d of lv.drops) { d.hp = 1; d.state = 0; d.awake = false; d.lit = false; }
   for (const br of lv.bridges) { br.active = false; br.lock = false; br.onT = 0; br.offT = 0; }
@@ -414,12 +433,15 @@ function setChapterLook(lv) {
 }
 function enterLevel(spec, opts = {}) {
   hideToast();
+  if (Cam.flight) { Cam.flight = null; Cam.endFlight(); }
   const lv = getLevel(spec);
   if (!lv) { toast('Ada oluşturulamadı. Tekrar dene.'); return; }
   if (G.view) { if (G.outView) G.outView.dispose(); G.outView = G.view; G.outT = 0; }
   G.spec = spec; setChapterLook(lv); G.lv = lv;
   G.view = new IslandView(lv);
   Ambient.setWorld(lv.chap && lv.chap.key);
+  { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const c of lv.chunks) for (const [x, z] of c.pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+    seaU.uIsl.value.set((x0 + x1) / 2, (z0 + z1) / 2, (x1 - x0) / 2, (z1 - z0) / 2); } // adanın bulutlara düşen gölgesi
   try { const pr = renderer.getRenderTarget(); renderer.setRenderTarget(post.rtScene); renderer.compile(scene, camera); renderer.setRenderTarget(pr); } catch (e) {}
   resetRun();
   zifir.g.visible = false;

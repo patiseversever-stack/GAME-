@@ -164,6 +164,19 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #hud.endless #score{display:inline-flex}
 
 /* ---------- toast & banner & pops ---------- */
+/* ---------- sinematik ada girişi ---------- */
+#cineBars{position:absolute;inset:0;pointer-events:none;z-index:6}
+#cineBars i{position:absolute;left:0;right:0;height:calc(11vh + var(--sat));background:#06040c;transition:transform .7s cubic-bezier(.6,0,.2,1)}
+#cineBars .cbTop{top:0;transform:translateY(-101%)}
+#cineBars .cbBot{bottom:0;height:calc(12vh + var(--sab));transform:translateY(101%);display:flex;align-items:center;justify-content:space-between;padding:0 22px calc(var(--sab)) 22px;box-sizing:border-box;pointer-events:auto}
+#cineBars.on .cbTop,#cineBars.on .cbBot{transform:none}
+#cineBars .cbTxt{display:flex;flex-direction:column;gap:4px;opacity:0;transform:translateY(8px);transition:all .9s ease .5s}
+#cineBars.on .cbTxt{opacity:1;transform:none}
+#cineBars b{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold-2);font-weight:600}
+#cineBars em{font-family:var(--serif);font-style:italic;font-size:clamp(20px,6vw,30px);color:var(--ivory);text-shadow:0 0 18px rgba(150,120,255,.5)}
+#cbSkip{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ivory-dim);opacity:0;transition:opacity .6s ease 1.4s;padding:12px 0 12px 12px}
+#cineBars.on #cbSkip{opacity:.8}
+body.cine #hud{opacity:0;pointer-events:none}
 #toast{position:absolute;left:50%;bottom:calc(var(--sab) + 120px);transform:translate(-50%,16px);max-width:86vw;padding:13px 20px;border-radius:18px;text-align:center;
   font-size:14px;line-height:1.45;font-weight:600;letter-spacing:.02em;color:var(--ivory);background:rgba(18,13,32,.52);border:1px solid var(--glass-b);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;transition:opacity .45s,transform .55s cubic-bezier(.2,.9,.2,1)}
@@ -601,6 +614,7 @@ body.testall #testBadge{display:block}
     </div>
   </div>
 
+  <div id="cineBars"><i class="cbTop"></i><i class="cbBot"><span class="cbTxt"><b id="cbTitle"></b><em id="cbSub"></em></span><span id="cbSkip">dokun · geç ›</span></i></div>
   <div id="toast"></div>
   <div id="banner"></div>
   <div id="pops"></div>

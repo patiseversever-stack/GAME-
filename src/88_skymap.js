@@ -402,7 +402,7 @@ const SkyMap = {
     skyU.uZen.value.set('#140d3c'); skyU.uHor.value.set('#ff9a7a'); skyU.uBelow.value.set('#3a2a5e');
     skyU.uSunDir.value.copy(MAP_SUN); skyU.uSunCol.value.set('#ff8a50').multiplyScalar(1.5);
     skyU.uTwin.value = 0; skyU.uStars.value = 0.62; skyU.uEclipse.value = 0; skyU.uNight.value = 0.22; skyU.uAurora.value = 0.32;
-    seaU.uLit.value.set('#d892a8'); seaU.uDeep.value.set('#2c2250');
+    seaU.uLit.value.set('#d892a8'); seaU.uDeep.value.set('#2c2250'); seaU.uIslK.value = 0;
     U.uFogCol.value.set('#8c6aa6'); U.uBelowCol.value.set('#2e2350');
     U.uNightAmt.value = 0.16; U.uNightR.value = 99999; U.uNightRim.value = 0; U.uNightC.value.set(0, 0);
     U.uCamPos.value.copy(mapCam.position);

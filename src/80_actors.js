@@ -150,6 +150,127 @@ const Ambient = {
 };
 Ambient.init();
 
+/* ---------- havai fişek ----------
+   Her kıvılcımın yolu kapalı formülle GPU'da hesaplanır (sürtünme + yerçekimi); işlemci yalnızca patlama anında
+   birkaç yüz değer yazar. Kıvılcım başına 3 nokta: baş + iki kuyruk izi. Işıltıyı mevcut bloom verir. */
+const FW_VERT = `attribute vec3 aO, aV; attribute vec4 aP, aC; attribute vec3 aF; uniform float uT, uPx; varying vec3 vC; varying float vA;
+void main(){
+  float t = uT - aP.x - aF.x * 0.035 * aF.z, life = aP.y;
+  if (t < 0.0 || t > life){ gl_Position = vec4(2.0, 2.0, 2.0, 1.0); gl_PointSize = 0.0; vA = 0.0; return; }
+  float k = aP.z, g = aP.w, e = (1.0 - exp(-k * t)) / k;
+  vec3 p = aO + aV * e - vec3(0.0, g, 0.0) * (t - e) / k;
+  float f = t / life;
+  float a = (1.0 - f * f) * (aF.x < 0.5 ? 1.0 : aF.x < 1.5 ? 0.42 : 0.18) * (1.0 + 1.6 * exp(-t * 14.0));
+  if (aF.y > 0.5 && f > 0.35) a *= step(0.45, fract(sin(floor(uT * 26.0) + aO.x * 13.1 + aV.y * 71.7 + aV.x * 37.3) * 43758.5453)) * 1.6;
+  vA = a; vC = aC.rgb * mix(vec3(1.0), vec3(1.25, 0.82, 0.55), f * f);
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  gl_PointSize = clamp(aC.a * (1.0 - 0.45 * f) * (1.0 - aF.x * 0.22) * uPx / -mv.z, 1.0, 36.0);
+  gl_Position = projectionMatrix * mv;
+}`;
+const FW_FRAG = `varying vec3 vC; varying float vA; void main(){ float d = length(gl_PointCoord - 0.5); float a = (1.0 - smoothstep(0.08, 0.5, d)) * vA; if (a < 0.004) discard; gl_FragColor = vec4(vC * a, a); }`;
+const FW_PAL = [[3.2, 1.2, 0.5], [3.4, 2.4, 0.8], [1.0, 2.6, 3.4], [3.0, 0.9, 2.4], [1.2, 3.2, 1.4], [2.4, 1.4, 3.4], [3.4, 3.2, 2.8]];
+const Fireworks = {
+  max: 0, head: 0, t: 0, until: 0, queue: [], k: 1,
+  init(max = 4200) {
+    this.max = max; const n = max * 3, g = new THREE.BufferGeometry();
+    const mk = (name, sz) => { const a = new THREE.BufferAttribute(new Float32Array(n * sz), sz).setUsage(THREE.DynamicDrawUsage); g.setAttribute(name, a); return a; };
+    g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(n * 3), 3));
+    this.aO = mk('aO', 3); this.aV = mk('aV', 3); this.aP = mk('aP', 4); this.aC = mk('aC', 4); this.aF = mk('aF', 3);
+    for (let i = 0; i < n; i++) { this.aP.array[i * 4] = -1e4; this.aP.array[i * 4 + 1] = 0.01; this.aP.array[i * 4 + 2] = 1; this.aF.array[i * 3] = i % 3; this.aF.array[i * 3 + 2] = 1; }
+    this.u = { uT: { value: 0 }, uPx: { value: 400 } };
+    this.mat = new THREE.ShaderMaterial({ vertexShader: FW_VERT, fragmentShader: FW_FRAG, uniforms: this.u, transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor });
+    this.pts = new THREE.Points(g, this.mat); this.pts.frustumCulled = false; this.pts.renderOrder = 9; this.pts.visible = false;
+    scene.add(this.pts);
+  },
+  // kıvılcım yaz: konum, hız, ömür, sürtünme, yerçekimi, renk, boy, çıtırtı, iz uzunluğu
+  spark(o, vx, vy, vz, life, drag, grav, c, size, crackle = 0, trail = 1, delay = 0) {
+    const i = this.head; this.head = (this.head + 1) % this.max;
+    for (let k = 0; k < 3; k++) {
+      const j = i * 3 + k;
+      this.aO.array.set([o.x, o.y, o.z], j * 3); this.aV.array.set([vx, vy, vz], j * 3);
+      this.aP.array.set([this.t + delay, life, Math.max(0.05, drag), grav], j * 4); this.aC.array.set([c[0], c[1], c[2], size], j * 4);
+      this.aF.array[j * 3 + 1] = crackle; this.aF.array[j * 3 + 2] = trail;
+    }
+    this.dirty0 = Math.min(this.dirty0 ?? i, i); this.dirty1 = Math.max(this.dirty1 ?? i, i);
+    this.until = Math.max(this.until, this.t + delay + life + 0.2);
+  },
+  flush() {
+    if (this.dirty0 == null) return;
+    const a = this.dirty0, b = this.dirty1;
+    for (const [at, sz] of [[this.aO, 3], [this.aV, 3], [this.aP, 4], [this.aC, 4], [this.aF, 3]]) { at.clearUpdateRanges(); at.addUpdateRange(a * 3 * sz, (b - a + 1) * 3 * sz); at.needsUpdate = true; }
+    this.dirty0 = this.dirty1 = null;
+  },
+  // ekranda (NDC) bir nokta ve kameradan uzaklık → dünya konumu
+  at(nx, ny, d, out = new THREE.Vector3()) { out.set(nx, ny, 0.5).unproject(camera).sub(camera.position).normalize().multiplyScalar(d).add(camera.position); return out; },
+  // roket: aşağıdan yükselir, tepede patlar
+  rocket(target, kind, col, delay = 0) {
+    const rise = 1.0 + Math.random() * 0.35, from = target.clone(); from.y -= 9 + Math.random() * 4; from.x += (Math.random() - 0.5) * 3;
+    const vy = (target.y - from.y) / rise + 4.9 * rise * 0.5, vx = (target.x - from.x) / rise, vz = (target.z - from.z) / rise;
+    this.spark(from, vx, vy, vz, rise, 0.05, 4.9, [3.2, 2.2, 1.2], 0.16, 0, 3.2, delay);
+    for (let i = 0; i < 5; i++) this.spark(from, vx * 0.9 + (Math.random() - 0.5) * 0.6, vy * 0.85, vz * 0.9, rise * (0.5 + i * 0.1), 1.2, 4.9, [2.6, 1.6, 0.7], 0.07, 1, 1.4, delay + i * 0.05);
+    this.queue.push({ t: this.t + delay + rise, fn: () => this.burst(target, kind, col) });
+    this.queue.push({ t: this.t + delay, fn: () => audio.fwLaunch && audio.fwLaunch() });
+    this.pts.visible = true;
+  },
+  burst(o, kind, col) {
+    const K = this.k, c2 = FW_PAL[(FW_PAL.indexOf(col) + 3) % FW_PAL.length] || [3.4, 3.2, 2.8];
+    const sph = (n, sp, life, drag, grav, size, cr, tr, cc, alt) => { for (let i = 0; i < n; i++) { const y = 1 - (2 * (i + 0.5)) / n, r = Math.sqrt(1 - y * y), a = i * 2.399963 + Math.random() * 0.2, s = sp * (0.88 + Math.random() * 0.24); this.spark(o, Math.cos(a) * r * s, y * s, Math.sin(a) * r * s, life * (0.85 + Math.random() * 0.3), drag, grav, alt && i % 2 ? alt : cc, size, cr, tr); } };
+    if (kind === 'ring') {
+      const n = Math.round(70 * K), ax = new THREE.Vector3(Math.random() - 0.5, 1, Math.random() - 0.5).normalize(), u = new THREE.Vector3(1, 0, 0).cross(ax).normalize(), v = ax.clone().cross(u);
+      for (let i = 0; i < n; i++) { const a = (i / n) * TAU, s = 13; this.spark(o, (u.x * Math.cos(a) + v.x * Math.sin(a)) * s, (u.y * Math.cos(a) + v.y * Math.sin(a)) * s, (u.z * Math.cos(a) + v.z * Math.sin(a)) * s, 1.6, 1.7, 2.2, col, 0.26, 0, 1.2); }
+      sph(Math.round(30 * K), 4, 1.3, 1.8, 2.2, 0.16, 0, 1, c2);
+    } else if (kind === 'willow') sph(Math.round(120 * K), 10, 3.2, 1.25, 3.6, 0.2, 0, 2.2, [3.4, 2.3, 0.9]);
+    else if (kind === 'crackle') { sph(Math.round(100 * K), 12, 1.9, 1.6, 2.6, 0.22, 1, 1, [3.4, 3.2, 2.8]); sph(Math.round(36 * K), 6, 1.4, 1.6, 2.4, 0.26, 0, 1, col); }
+    else if (kind === 'palm') { for (let j = 0; j < 9; j++) { const a = (j / 9) * TAU, el = 0.35 + Math.random() * 0.3; for (let i = 0; i < Math.round(9 * K); i++) { const s = 12 * (0.55 + i * 0.06); this.spark(o, Math.cos(a) * Math.cos(el) * s, Math.sin(el) * s, Math.sin(a) * Math.cos(el) * s, 2.2, 1.3, 3.2, i % 3 ? [3.3, 2.2, 0.8] : col, 0.26, 0, 1.6); } } }
+    else sph(Math.round(130 * K), 13, 1.9, 1.75, 2.4, 0.26, 0, 1.3, col, Math.random() < 0.5 ? c2 : null); // şakayık
+    // patlama anı: kısa parlak çekirdek
+    for (let i = 0; i < 6; i++) this.spark(o, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2, 0.25, 3, 0, [4, 3.6, 3], 0.9, 0, 0.2);
+    const d = o.distanceTo(camera.position);
+    this.queue.push({ t: this.t + Math.min(0.35, d / 340), fn: () => audio.fwBoom && audio.fwBoom(kind === 'crackle') });
+  },
+  // gösteri: n roket, ekranın üst yarısına dağılır
+  show(n, grand = false) {
+    if (!this.max) return;
+    const kinds = ['peony', 'peony', 'ring', 'willow', 'crackle', 'palm'];
+    let t = 0;
+    for (let i = 0; i < n; i++) {
+      const nx = (Math.random() * 2 - 1) * 0.7, ny = 0.05 + Math.random() * 0.6, d = 34 + Math.random() * 18;
+      const tg = this.at(nx, ny, d), kind = grand && i === n - 1 ? 'willow' : kinds[Math.floor(Math.random() * kinds.length)];
+      this.rocket(tg, kind, FW_PAL[Math.floor(Math.random() * FW_PAL.length)], t);
+      t += grand ? 0.25 + Math.random() * 0.45 : 0.45 + Math.random() * 0.6;
+      if (grand && i % 4 === 3) t += 0.6;
+    }
+  },
+  // eski kıvılcımların süresi zaten dolmuş olur (zaman ilerlemeye devam eder): tampona yazmaya gerek yok
+  stop() { this.queue.length = 0; this.until = 0; this.pts.visible = false; },
+  update(dt) {
+    if (!this.pts.visible || dt <= 0) return;
+    this.t += dt; this.u.uT.value = this.t;
+    for (let i = this.queue.length - 1; i >= 0; i--) if (this.queue[i].t <= this.t) { const q = this.queue[i]; this.queue.splice(i, 1); q.fn(); }
+    this.flush();
+    if (this.t > this.until && !this.queue.length) this.pts.visible = false;
+  },
+};
+Fireworks.init();
+// kayan yıldız: gece birkaç saniyede bir, ekranın görünen bölgesinde çapraz bir iz (gökyüzü ve bulut denizi paylaşır)
+const Shoot = {
+  next: 2, p: -1, dur: 0.7, S: new THREE.Vector3(), E: new THREE.Vector3(), a: new THREE.Vector3(), b: new THREE.Vector3(),
+  dir(nx, ny, out) { return out.set(nx, ny, 0.5).unproject(camera).sub(camera.position).normalize(); },
+  update(dt, k) {
+    if (k < 0.5 || dt <= 0) { if (k < 0.5) { uShA.value.w = 0; this.p = -1; } return; }
+    if (this.p < 0) {
+      if ((this.next -= dt) > 0) { uShA.value.w = 0; return; }
+      const x0 = (Math.random() * 2 - 1) * 0.8, y0 = 0.15 + Math.random() * 0.75, L = 0.3 + Math.random() * 0.3, sx = x0 > 0 ? -1 : 1;
+      this.dir(x0, y0, this.S); this.dir(x0 + sx * L, y0 - L * (0.35 + Math.random() * 0.5), this.E); this.p = 0; this.dur = 0.55 + Math.random() * 0.4;
+    }
+    this.p += dt / this.dur;
+    if (this.p >= 1) { this.p = -1; this.next = 2.5 + Math.random() * 5; uShA.value.w = 0; return; }
+    const head = Math.min(1, this.p * 1.25), tail = Math.max(0, head - 0.38);
+    this.a.copy(this.S).lerp(this.E, tail).normalize(); this.b.copy(this.S).lerp(this.E, head).normalize();
+    uShA.value.set(this.a.x, this.a.y, this.a.z, Math.sin(this.p * PI) * k); uShB.value.set(this.b.x, this.b.y, this.b.z, 0);
+  },
+};
+
 /* ---------- ayak izleri ---------- */
 const PRINTS = { n: 48, i: 0, mesh: null, alpha: null };
 (function buildPrints() {

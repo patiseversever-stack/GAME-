@@ -45,7 +45,7 @@ const U = {
 const WORLD_VERT_HEAD = `varying vec3 vNW;\nuniform float uTime; uniform vec3 uZifir; uniform float uWind;\n`;
 const WORLD_FRAG_HEAD = `varying vec3 vNW;
 uniform vec2 uNightC; uniform float uNightR, uNightAmt, uNightRim, uFogNear, uFogFar; uniform vec3 uCamPos, uFogCol, uBelowCol, uGlowCol;
-float nightInside(){ float nd = length(vNW.xz - uNightC); return (1.0 - smoothstep(uNightR - 2.5, uNightR, nd)) * uNightAmt; }
+float nightInside(){ float nd = length(vNW.xz - uNightC); return max(1.0 - smoothstep(uNightR - 2.5, uNightR, nd), smoothstep(18.0, 34.0, uNightR) * smoothstep(38.0, 50.0, length(vNW.xz))) * uNightAmt; }
 `;
 function injectWorld(sh, flags) {
   for (const k in U) sh.uniforms[k] = U[k];
@@ -77,12 +77,13 @@ function injectWorld(sh, flags) {
   sh.fragmentShader = WORLD_FRAG_HEAD + sh.fragmentShader;
   if (flags.glow) sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += uGlowCol * nightInside();');
   sh.fragmentShader = sh.fragmentShader.replace('#include <dithering_fragment>', `{
-      float ins = nightInside();
-      vec3 nc = gl_FragColor.rgb * vec3(0.15, 0.19, 0.4) + vec3(0.002, 0.003, 0.011);
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, nc, ins * 0.92);
-      float nd = length(vNW.xz - uNightC);
-      float rd = (nd - uNightR) * 1.1;
-      gl_FragColor.rgb += vec3(0.65, 0.42, 1.0) * exp(-rd * rd) * uNightRim * 1.6;
+      // gece hesabı yalnızca gece/tutulma varken (gündüz tüm dünya piksellerinde atlanır)
+      if (uNightAmt > 0.0) {
+        float ins = nightInside();
+        vec3 nc = gl_FragColor.rgb * vec3(0.15, 0.19, 0.4) + vec3(0.002, 0.003, 0.011);
+        gl_FragColor.rgb = mix(gl_FragColor.rgb, nc, ins * 0.92);
+        if (uNightRim > 0.0) { float rd = (length(vNW.xz - uNightC) - uNightR) * 1.1; gl_FragColor.rgb += vec3(0.65, 0.42, 1.0) * exp(-rd * rd) * uNightRim * 1.6; }
+      }
       ${flags.noFog ? '' : 'float fd = length(vNW - uCamPos); gl_FragColor.rgb = mix(gl_FragColor.rgb, uFogCol, smoothstep(uFogNear, uFogFar, fd));'}
       gl_FragColor.rgb = mix(gl_FragColor.rgb, uBelowCol, (1.0 - smoothstep(-11.5, -3.0, vNW.y)) * 0.94);
     }
@@ -114,11 +115,113 @@ function setShadowSize(n) {
   renderer.shadowMap.needsUpdate = true;
 }
 
+/* ---------- pişmiş gökyüzü dokuları ----------
+   Galaksi (Samanyolu) ve bulut denizi dokusu açılışta GPU'da BİR KEZ çizilir; sonra her kare yalnızca birkaç doku
+   okuması yapılır. Böylece eski anlık gürültü hesabından hem daha ayrıntılı hem daha ucuz bir dış dünya elde edilir. */
+const BAKE_NOISE = `
+float hh(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+float vn3(vec3 p){ vec3 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f);
+  return mix(mix(mix(hh(i), hh(i + vec3(1,0,0)), f.x), mix(hh(i + vec3(0,1,0)), hh(i + vec3(1,1,0)), f.x), f.y),
+             mix(mix(hh(i + vec3(0,0,1)), hh(i + vec3(1,0,1)), f.x), mix(hh(i + vec3(0,1,1)), hh(i + vec3(1,1,1)), f.x), f.y), f.z); }
+float fb3(vec3 p, int o){ float s = 0.0, a = 0.5, n = 0.0; for (int i = 0; i < 6; i++){ if (i >= o) break; s += a * vn3(p); n += a; p = p * 2.03 + vec3(1.7, 9.2, 4.1); a *= 0.5; } return s / n; }
+`;
+// Samanyolu: eşit dikdörtgen izdüşüm (u = boylam, v = enlem); bant, bitiş kamerasının baktığı ufkun altından geçer
+const GAL_FRAG = BAKE_NOISE + `
+uniform vec3 uN, uC; varying vec2 vUv;
+void main(){
+  float ph = (vUv.x - 0.5) * 6.2831853, th = (vUv.y - 0.5) * 3.14159265;
+  vec3 d = vec3(cos(th) * cos(ph), sin(th), cos(th) * sin(ph));
+  float b = dot(d, uN); vec3 inP = normalize(d - uN * b + 1e-5);
+  float ang = acos(clamp(dot(inP, uC), -1.0, 1.0)), core = exp(-ang * ang * 2.6);
+  vec3 q = d * 3.0;
+  float warp = fb3(q * 1.3, 4), n = fb3(q * 2.2 + warp * 1.4, 5);
+  float w = (0.065 + 0.055 * core) * (0.7 + 0.65 * n);
+  float band = exp(-(b * b) / (w * w));
+  float glow = pow(band, 1.4) * (0.2 + 0.8 * n * n) * (0.25 + 1.1 * core);
+  float dn = fb3(q * 4.5 + 7.0 + warp, 5);
+  float dust = smoothstep(0.48, 0.72, dn) * exp(-(b * b) / (w * w * 0.16)) * (0.55 + 0.45 * core);
+  glow *= 1.0 - dust * 0.88;
+  glow *= 0.62 + 0.75 * fb3(q * 15.0, 3);
+  vec3 arm = vec3(0.5, 0.58, 1.0), cor = vec3(1.0, 0.76, 0.5), pink = vec3(1.0, 0.38, 0.7);
+  vec3 col = mix(arm, cor, clamp(core * 1.3 + (n - 0.5) * 0.6, 0.0, 1.0)) * glow;
+  col += pink * smoothstep(0.7, 0.84, fb3(q * 7.0 + 3.0, 4)) * band * 0.55;
+  float neb = fb3(q * 1.1 + 11.0, 4);
+  col += mix(vec3(0.3, 0.08, 0.4), vec3(0.04, 0.22, 0.32), fb3(q * 0.7 + 5.0, 3)) * smoothstep(0.52, 0.8, neb) * 0.12;
+  gl_FragColor = vec4(min(col * 0.6, vec3(1.0)), 1.0);
+}`;
+// bulut denizi: kendini döşeyen (dikişsiz) gradyan gürültüsü; R = kabarık kümülüs, G = büyük ölçek, B = ince ayrıntı, A = alt katman
+const CLOUD_FRAG = `
+varying vec2 vUv;
+float hs(vec2 i, float s){ vec3 h = fract(vec3(i.xyx + s) * vec3(0.1031, 0.1030, 0.0973)); h += dot(h, h.yzx + 33.33); return fract((h.x + h.y) * h.z); }
+vec2 gp(vec2 i, float P, float s){ float a = hs(mod(i, P), s) * 6.2831853; return vec2(cos(a), sin(a)); }
+float gn(vec2 p, float P, float s){ vec2 i = floor(p), f = fract(p), u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+  float a = dot(gp(i, P, s), f), b = dot(gp(i + vec2(1, 0), P, s), f - vec2(1, 0)), c = dot(gp(i + vec2(0, 1), P, s), f - vec2(0, 1)), d = dot(gp(i + vec2(1, 1), P, s), f - vec2(1, 1));
+  return mix(mix(a, b, u.x), mix(c, d, u.x), u.y) * 1.4; }
+// düz fbm [0,1] ve kabarık (billow) fbm: yuvarlak tümsekler, aralarında ince kıvrımlar
+float fbm(vec2 uv, float P, float s, int o){ float t = 0.0, a = 0.5, n = 0.0; vec2 p = uv * P; for (int i = 0; i < 6; i++){ if (i >= o) break; t += a * (gn(p, P, s + float(i) * 7.3) * 0.5 + 0.5); n += a; p *= 2.0; P *= 2.0; a *= 0.5; } return t / n; }
+float bil(vec2 uv, float P, float s){ float t = 0.0; vec2 p = uv * P; float A[3] = float[](0.55, 0.3, 0.15);
+  for (int i = 0; i < 3; i++){ t += A[i] * min(1.0, abs(gn(p, P, s + float(i) * 5.1)) * 1.5); p *= 2.0; P *= 2.0; } return t; }
+void main(){
+  vec2 uv = vUv, w = vec2(fbm(uv, 3.0, 1.0, 3), fbm(uv, 3.0, 5.0, 3)) - 0.5;
+  float base = fbm(uv + w * 0.06, 4.0, 2.0, 4);
+  float puff = bil(uv + w * 0.04, 6.0, 7.0);
+  float r = clamp((base - 0.5) * 1.6 + (puff - 0.45) * 1.0 + 0.5, 0.0, 1.0);
+  float g = fbm(uv + w * 0.08, 2.0, 21.0, 3);
+  float b = fbm(uv, 16.0, 33.0, 2);
+  float a = fbm(uv + w * 0.05, 5.0, 41.0, 3);
+  gl_FragColor = vec4(r, g, b, a);
+}`;
+function bakeTex(w, h, frag, uniforms, o = {}) {
+  const rt = new THREE.WebGLRenderTarget(w, h, { depthBuffer: false, stencilBuffer: false, generateMipmaps: !!o.mip, minFilter: o.mip ? THREE.LinearMipmapLinearFilter : THREE.LinearFilter, magFilter: THREE.LinearFilter, wrapS: THREE.RepeatWrapping, wrapT: o.wrapT || THREE.ClampToEdgeWrapping });
+  if (o.aniso) rt.texture.anisotropy = o.aniso;
+  const m = mkPass(frag, uniforms), prev = renderer.getRenderTarget();
+  try { fsMesh.material = m; renderer.setRenderTarget(rt); renderer.render(fsScene, fsCam); } finally { renderer.setRenderTarget(prev); m.dispose(); }
+  rt.texture.userData.rt = rt;
+  return rt.texture;
+}
+const SKYTEX = (() => {
+  const black = new THREE.DataTexture(new Uint8Array([0, 0, 0, 255]), 1, 1); black.needsUpdate = true;
+  const grey = new THREE.DataTexture(new Uint8Array([128, 128, 128, 128]), 1, 1); grey.wrapS = grey.wrapT = THREE.RepeatWrapping; grey.needsUpdate = true;
+  let gal = black, cloud = grey;
+  try {
+    // galaksi düzlemi: bitiş ekranında kameranın aşağı-ileri baktığı yönden çapraz geçer; çekirdek görüş alanının ortasında
+    const A = new THREE.Vector3(-0.62, -0.18, -0.76).normalize(), B = new THREE.Vector3(0.66, -0.62, -0.42).normalize();
+    const N = new THREE.Vector3().crossVectors(A, B).normalize(), C = A.clone().add(B).normalize();
+    const hi = Perf.level >= 2;
+    gal = bakeTex(hi ? 2048 : 1024, hi ? 1024 : 512, GAL_FRAG, { uN: { value: N }, uC: { value: C } });
+    cloud = bakeTex(512, 512, CLOUD_FRAG, {}, { mip: true, wrapT: THREE.RepeatWrapping });
+  } catch (e) { console.warn('gök dokusu', e); }
+  return { gal: { value: gal }, cloud: { value: cloud } };
+})();
+// gece gökyüzü: iki katmanlı yıldızlar (renkli, parlayan), pişmiş galaksi ve kayan yıldız — gökyüzü ve bulut denizinde ortak
+const NIGHT_GLSL = `
+uniform sampler2D tGal; uniform vec4 uShA, uShB;
+float sh13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+vec3 starField(vec3 d, float t){
+  vec3 c = vec3(0.0);
+  vec3 sp = d * 250.0, cl = floor(sp); float r = sh13(cl);
+  if (r > 0.9){ float l = length(fract(sp) - 0.5); c += mix(vec3(0.62, 0.74, 1.0), vec3(1.0, 0.86, 0.66), fract(r * 37.0)) * smoothstep(0.24, 0.0, l) * (r - 0.9) * 13.0 * (0.72 + 0.28 * sin(t * (2.0 + r * 6.0) + r * 91.0)); }
+  sp = d * 64.0; cl = floor(sp); r = sh13(cl + 17.3);
+  if (r > 0.982){ vec3 f = fract(sp) - 0.5; float l = length(f);
+    float s = smoothstep(0.1, 0.0, l) * 2.2 + smoothstep(0.42, 0.0, l) * 0.22 + (smoothstep(0.03, 0.0, abs(f.x)) + smoothstep(0.03, 0.0, abs(f.y))) * smoothstep(0.4, 0.0, l) * 0.35;
+    c += mix(vec3(0.7, 0.8, 1.0), vec3(1.0, 0.82, 0.6), fract(r * 53.0)) * s * (0.75 + 0.25 * sin(t * (1.3 + r * 3.0) + r * 40.0)); }
+  return c;
+}
+vec3 galaxyAt(vec3 d){ return texture2D(tGal, vec2(atan(d.z, d.x) * 0.15915494 + 0.5, asin(clamp(d.y, -1.0, 1.0)) * 0.31830989 + 0.5)).rgb * 1.2; }
+vec3 shootAt(vec3 d){
+  if (uShA.w <= 0.001) return vec3(0.0);
+  vec3 ab = uShB.xyz - uShA.xyz; float k = clamp(dot(d - uShA.xyz, ab) / max(dot(ab, ab), 1e-6), 0.0, 1.0);
+  float dd = length(d - (uShA.xyz + ab * k));
+  return vec3(0.85, 0.92, 1.0) * (smoothstep(0.0028, 0.0, dd) * k * k * 2.6 + smoothstep(0.012, 0.0, dd) * k * k * k * 0.5) * uShA.w;
+}
+`;
+const uShA = { value: new THREE.Vector4() }, uShB = { value: new THREE.Vector4() };
+
 /* ---------- gökyüzü ---------- */
 const SKY_VERT = `varying vec3 vDir; void main(){ vDir = position; vec4 p = projectionMatrix * modelViewMatrix * vec4(position, 1.0); gl_Position = p.xyww; }`;
 const SKY_FRAG = `
 uniform vec3 uZen, uHor, uBelow, uSunDir, uSunCol, uSun2Dir, uSun2Col; uniform float uTwin, uStars, uTime, uEclipse, uNight, uAurora; varying vec3 vDir;
-float h13(vec3 p){ p = fract(p * 0.1031); p += dot(p, p.zyx + 31.32); return fract((p.x + p.y) * p.z); }
+${NIGHT_GLSL}
 void main(){
   vec3 d = normalize(vDir); float h = d.y;
   vec3 col = mix(uHor, uZen, pow(smoothstep(-0.03, 0.9, h), 0.55));
@@ -132,9 +235,8 @@ void main(){
   // yıldızlar
   float st = uStars;
   if (st > 0.001){
-    vec3 sp = d * 180.0; vec3 cell = floor(sp); float r = h13(cell);
-    if (r > 0.972){ vec3 f = fract(sp) - 0.5; float s = (1.0 - smoothstep(0.0, 0.16, length(f))) * (0.55 + 0.45 * sin(uTime * (1.5 + r * 3.0) + r * 60.0)); col += vec3(0.9, 0.92, 1.0) * s * st * 1.6 * smoothstep(-0.1, 0.25, h); }
-    float neb = sin(d.x * 3.0 + d.z * 2.0) * sin(d.y * 4.0 - d.x * 1.5); col += vec3(0.22, 0.12, 0.35) * max(neb, 0.0) * 0.18 * st;
+    float up = smoothstep(-0.12, 0.2, h);
+    col += (galaxyAt(d) * 0.8 + starField(d, uTime) + shootAt(d)) * st * up;
   }
   // kutup ışıkları: dikey ışınlı, dalgalanan perdeler
   if (uAurora > 0.001 && h > 0.0){
@@ -154,9 +256,11 @@ void main(){
 const skyU = {
   uZen: { value: new THREE.Color() }, uHor: { value: new THREE.Color() }, uBelow: { value: new THREE.Color() }, uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color() },
   uSun2Dir: { value: new THREE.Vector3(0, 1, 0) }, uSun2Col: { value: new THREE.Color(SUN2_COLOR) }, uTwin: { value: 0 }, uStars: { value: 0 }, uTime: U.uTime, uEclipse: { value: 0 }, uNight: { value: 0 }, uAurora: { value: 0 },
+  tGal: SKYTEX.gal, uShA, uShB,
 };
 const skyMat = new THREE.ShaderMaterial({ vertexShader: SKY_VERT, fragmentShader: SKY_FRAG, uniforms: skyU, side: THREE.BackSide, depthWrite: false, depthTest: true });
-const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 48, 24), skyMat); sky.renderOrder = -10; sky.frustumCulled = false;
+// gökyüzü opak nesnelerden SONRA çizilir: ada ve bulut denizinin kapattığı piksellerde gök hesabı hiç yapılmaz (erken derinlik reddi)
+const sky = new THREE.Mesh(new THREE.SphereGeometry(900, 48, 24), skyMat); sky.renderOrder = 1; sky.frustumCulled = false;
 scene.add(sky);
 // ortam haritası için küçük kopya
 // Ortam yansıması (IBL) yalnızca parlak yüzeylere: mat yüzeylerde görsel katkısı ~0, sahne maliyetinin üçte biri.
@@ -202,33 +306,64 @@ function refreshEnv() {
 
 /* ---------- bulut denizi ---------- */
 const SEA_FRAG = `
-uniform float uTime; uniform vec3 uSunDir, uSunCol, uLit, uDeep, uFog, uCam; uniform float uNight, uEclipse; varying vec3 vW;
-float h2(vec2 p){ return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-float vn(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(h2(i), h2(i + vec2(1, 0)), f.x), mix(h2(i + vec2(0, 1)), h2(i + vec2(1, 1)), f.x), f.y); }
-float fbm(vec2 p){ float s = 0.0, a = 0.5; for (int i = 0; i < OCT; i++){ s += a * vn(p); p = p * 2.07 + vec2(1.7, 9.2); a *= 0.5; } return s; }
+uniform float uTime, uNight, uEclipse, uStars, uIslK; uniform vec3 uSunDir, uSunCol, uLit, uDeep, uFog, uCam; uniform vec4 uIsl; uniform sampler2D tCloud; varying vec3 vW;
+${NIGHT_GLSL}
 void main(){
-  vec2 p = vW.xz * 0.022 + vec2(uTime * 0.008, uTime * 0.003);
-  float n = fbm(p), n2 = fbm(p * 1.9 + 4.0 - uTime * 0.004);
-  float dens = smoothstep(0.40, 0.66, n * 0.62 + n2 * 0.38);
-  float nl = fbm(p + uSunDir.xz * 0.03);
-  float shade = clamp((n - nl) * 7.0 + 0.55, 0.0, 1.25);
-  vec3 col = mix(uDeep, uLit, dens);
-  col *= mix(0.62, 1.0 + shade * 0.4, dens);
-  col += uSunCol * pow(dens, 3.0) * shade * 0.25 * (1.0 - uEclipse);
+  vec3 V = normalize(vW - uCam);
   float dist = length(vW.xz - uCam.xz);
+  vec2 q = vW.xz / 190.0 + vec2(uTime * 0.0009, uTime * 0.0004);
+  vec2 sd = normalize(uSunDir.xz + 1e-4);
+  // doku okumaları: kümülüs (R), güneş yönünde komşu (R), büyük ölçek (G), ince ayrıntı (B)
+  float A = texture2D(tCloud, q).r, As = texture2D(tCloud, q + sd * 0.006).r;
+#if LQ
+  float h = A;
+#else
+  float h = A * 0.64 + texture2D(tCloud, q * 0.37 + vec2(0.31, 0.77)).g * 0.36 + (texture2D(tCloud, q * 3.3 + vec2(0.13, 0.41)).b - 0.5) * 0.18;
+#endif
+  float cov = 0.39 + uStars * 0.15;                       // gece bulutlar incelir, aralarından gök görünür
+  float dens = smoothstep(cov - 0.03, cov + 0.26, h);
+  float slope = (A - As) * 17.0;                           // güneşe bakan yamaçlar aydınlık, arkası gölgeli
+  float lit = clamp(0.74 + slope * 0.75, 0.5, 1.3), ao = mix(0.76, 1.0, smoothstep(cov, cov + 0.45, h));
+#if LQ
+  float low = 0.5;
+#else
+  // aralıklardan görünen alt bulut katmanı (derinlik / paralaks)
+  float low = texture2D(tCloud, (vW.xz + V.xz / max(-V.y, 0.15) * 16.0) / 260.0 - vec2(uTime * 0.0007, 0.0)).a;
+#endif
+  vec3 deep = uDeep * (0.7 + 0.55 * smoothstep(0.32, 0.72, low));
+  float edge = smoothstep(cov, cov + 0.06, h) * (1.0 - smoothstep(cov + 0.06, cov + 0.2, h));
+  float day = (1.0 - uEclipse) * (1.0 - uNight);
+  vec3 top = uLit * lit * ao + uSunCol * edge * max(slope, 0.0) * 0.4 * day;
+  vec3 col = mix(deep, top, dens);
+  col += uSunCol * pow(dens, 3.0) * clamp(slope + 0.3, 0.0, 1.0) * 0.16 * day;
+  // güneşe doğru bakınca ince kenarlar parlar (ileri saçılma)
+  float fw = pow(max(dot(normalize(V.xz + 1e-4), sd), 0.0), 5.0) * smoothstep(90.0, 520.0, dist);
+  col += uSunCol * fw * (0.12 + edge * 0.7) * 0.3 * day;
+  // adanın bulutlara düşen gölgesi
+  vec2 sp = vW.xz + uSunDir.xz * ((0.0 - vW.y) / max(uSunDir.y, 0.18));
+  float isl = length((sp - uIsl.xy) / uIsl.zw);
+  col *= 1.0 - smoothstep(1.3, 0.7, isl) * 0.38 * day * uIslK;
   col = mix(col, uFog, smoothstep(60.0, 620.0, dist));
   col = mix(col, col * vec3(0.16, 0.2, 0.42), uNight * 0.9);
+  col += vec3(0.05, 0.07, 0.15) * edge * uNight;           // ay ışığında bulut kenarları
+  if (uStars > 0.001){
+    // bulut aralarından, adanın altındaki sonsuz gece: Samanyolu, yıldızlar, kayan yıldız
+    vec3 sky = vec3(0.004, 0.006, 0.018) + galaxyAt(V) + starField(V, uTime) + shootAt(V);
+    col = mix(col, sky, (1.0 - dens) * uStars);
+  }
   gl_FragColor = vec4(col, 1.0);
 }`;
-const seaU = { uTime: U.uTime, uSunDir: skyU.uSunDir, uSunCol: skyU.uSunCol, uLit: { value: new THREE.Color() }, uDeep: { value: new THREE.Color() }, uFog: skyU.uBelow, uCam: U.uCamPos, uNight: skyU.uNight, uEclipse: skyU.uEclipse };
+const seaU = { uTime: U.uTime, uSunDir: skyU.uSunDir, uSunCol: skyU.uSunCol, uLit: { value: new THREE.Color() }, uDeep: { value: new THREE.Color() }, uFog: skyU.uBelow, uCam: U.uCamPos, uNight: skyU.uNight, uEclipse: skyU.uEclipse,
+  uStars: skyU.uStars, uIsl: { value: new THREE.Vector4(0, 0, 7, 11) }, uIslK: { value: 1 }, tCloud: SKYTEX.cloud, tGal: SKYTEX.gal, uShA, uShB };
 let seaMat = null;
 const sea = new THREE.Mesh(new THREE.PlaneGeometry(2400, 2400, 1, 1), null);
-sea.rotation.x = -PI / 2; sea.position.y = -16; sea.renderOrder = -5;
+sea.rotation.x = -PI / 2; sea.position.y = -16; sea.renderOrder = 0; // adayla birlikte önden arkaya sıralanır: adanın arkası hesaplanmaz
 scene.add(sea);
 function buildSeaMat(oct) {
-  if (seaMat && seaMat.defines.OCT === oct) return;
+  const lq = oct <= 2 ? 1 : 0; // Düşük: tek doku okuması, alt katman yok
+  if (seaMat && seaMat.defines.LQ === lq) return;
   if (seaMat) seaMat.dispose();
-  seaMat = new THREE.ShaderMaterial({ vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`, fragmentShader: SEA_FRAG, uniforms: seaU, defines: { OCT: oct }, depthWrite: true });
+  seaMat = new THREE.ShaderMaterial({ vertexShader: `varying vec3 vW; void main(){ vec4 w = modelMatrix * vec4(position, 1.0); vW = w.xyz; gl_Position = projectionMatrix * viewMatrix * w; }`, fragmentShader: SEA_FRAG, uniforms: seaU, defines: { LQ: lq }, depthWrite: true });
   sea.material = seaMat;
 }
 
@@ -271,11 +406,26 @@ float h(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758
 float n3(vec3 p){ vec3 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(mix(h(i), h(i+vec3(1,0,0)), f.x), mix(h(i+vec3(0,1,0)), h(i+vec3(1,1,0)), f.x), f.y), mix(mix(h(i+vec3(0,0,1)), h(i+vec3(1,0,1)), f.x), mix(h(i+vec3(0,1,1)), h(i+vec3(1,1,1)), f.x), f.y), f.z); }
 void main(){
-  float fr = 1.0 - max(dot(normalize(vN), normalize(vV)), 0.0);
-  float gr = n3(vP * 5.0 + uTime * 0.6) * 0.6 + n3(vP * 11.0 - uTime * 0.9) * 0.4;
-  vec3 c = uCol * (4.5 + gr * 3.0 + uHeat * 4.0) + vec3(1.0, 0.95, 0.8) * pow(1.0 - fr, 3.0) * 6.0;
+  float mu = max(dot(normalize(vN), normalize(vV)), 0.0);
+  // granülasyon (kaynayan yüzey) + kenar kararması: merkez beyaz-sıcak, kenar turuncu
+  float gr = n3(vP * 7.0 + uTime * 0.5) * 0.55 + n3(vP * 15.0 - uTime * 0.8) * 0.3 + n3(vP * 31.0 + uTime * 1.3) * 0.15;
+  float limb = 0.42 + 0.58 * pow(mu, 0.55);
+  vec3 hot = vec3(1.0, 0.97, 0.88);
+  vec3 c = mix(uCol * vec3(1.15, 0.78, 0.5), hot, pow(mu, 1.6)) * (4.2 + gr * 2.6 + uHeat * 4.0) * limb;
+  c += hot * pow(mu, 6.0) * 3.0;
   c *= 1.0 - uEclipse * 0.97;
   gl_FragColor = vec4(c, 1.0);
+}`;
+// korona: kameraya dönük, yavaşça dönen ışık şeritleri ve ince renk küresi halkası (tek düzlem)
+const CROWN_FRAG = `uniform float uTime, uK; uniform vec3 uCol; varying vec2 vUv;
+void main(){
+  vec2 p = vUv * 2.0 - 1.0; float d = length(p), a = atan(p.y, p.x);
+  float st = 0.5 + 0.25 * sin(a * 7.0 + 1.8 * sin(a * 3.0 + uTime * 0.21) + uTime * 0.09) + 0.25 * sin(a * 13.0 - uTime * 0.16 + 1.2 * sin(a * 5.0 - uTime * 0.1));
+  float streak = pow(st, 4.0) * exp(-d * 2.8) * smoothstep(0.12, 0.24, d) * 1.8;
+  float glow = exp(-d * 5.5) * 0.45 + exp(-d * 14.0) * 0.5;
+  float ring = exp(-pow((d - 0.15) * 30.0, 2.0)) * 0.9;
+  float i = (glow + streak + ring) * uK * smoothstep(1.0, 0.7, d);
+  gl_FragColor = vec4(uCol * i, i);
 }`;
 const ORB_VERT = `varying vec3 vN; varying vec3 vV; varying vec3 vP; void main(){ vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.0); vV = cameraPosition - w.xyz; vP = position; gl_Position = projectionMatrix * viewMatrix * w; }`;
 function makeOrb(color, scale = 1) {
@@ -283,7 +433,11 @@ function makeOrb(color, scale = 1) {
   const u = { uTime: U.uTime, uHeat: { value: 0 }, uEclipse: { value: 0 }, uCol: { value: new THREE.Color(color) } };
   const core = new THREE.Mesh(new THREE.SphereGeometry(0.5 * scale, 40, 24), new THREE.ShaderMaterial({ vertexShader: ORB_VERT, fragmentShader: ORB_FRAG, uniforms: u }));
   const haloM = new THREE.SpriteMaterial({ map: TEX.glow, color: new THREE.Color(color).multiplyScalar(2.2), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
-  const halo = new THREE.Sprite(haloM); halo.scale.setScalar(5.2 * scale);
+  const halo = new THREE.Sprite(haloM); halo.scale.setScalar(3.0 * scale);
+  const crownU = { uTime: U.uTime, uK: { value: 1 }, uCol: { value: new THREE.Color(color).multiplyScalar(1.6) } };
+  const crown = new THREE.Mesh(new THREE.PlaneGeometry(7 * scale, 7 * scale), new THREE.ShaderMaterial({ vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: CROWN_FRAG, uniforms: crownU,
+    transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor }));
+  crown.renderOrder = 5;
   const raysM = new THREE.SpriteMaterial({ map: TEX.rays, color: new THREE.Color(color).multiplyScalar(1.6), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0.85 });
   const rays = new THREE.Sprite(raysM); rays.scale.setScalar(7.5 * scale);
   const moon = new THREE.Mesh(new THREE.SphereGeometry(0.56 * scale, 32, 20), new THREE.MeshBasicMaterial({ color: 0x07050c }));
@@ -291,41 +445,71 @@ function makeOrb(color, scale = 1) {
   const coronaM = new THREE.SpriteMaterial({ map: TEX.rays, color: new THREE.Color(1.6, 1.5, 2.2), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true, opacity: 0 });
   const corona = new THREE.Sprite(coronaM); corona.scale.setScalar(6 * scale);
   halo.renderOrder = rays.renderOrder = corona.renderOrder = 5;
-  g.add(rays, halo, core, moon, corona);
-  return { g, core, halo, rays, moon, corona, u, scale };
+  g.add(rays, halo, crown, core, moon, corona);
+  return { g, core, halo, rays, moon, corona, crown, crownU, u, scale };
 }
 const orb = makeOrb('#ffd48a');
 const orb2 = makeOrb(SUN2_COLOR, 0.8); orb2.g.visible = false;
 scene.add(orb.g, orb2.g);
 const brassMat = new THREE.MeshStandardMaterial({ color: 0xd09a4c, metalness: 0.95, roughness: 0.26, envMapIntensity: 1.7 });
 const silverMat = new THREE.MeshStandardMaterial({ color: 0xb4cce4, metalness: 0.95, roughness: 0.24, envMapIntensity: 1.7 });
+// Güneş yayı: iki pirinç raylı gök usturlabı; raylar arasında gün doğumundan (gül) öğleye (altın) ve gün batımına (mor)
+// renk değiştiren ışıklı şerit, güneşin bulunduğu yerde parlar; tutunca canlanır. Çentikler mücevher.
+const ARC_GLOW_FRAG = `uniform float uSun, uTime, uNight, uOn; uniform vec3 uA, uB, uC; varying vec2 vUv;
+void main(){
+  float u = vUv.x, d = u - uSun;
+  vec3 c = u < 0.5 ? mix(uA, uB, u * 2.0) : mix(uB, uC, u * 2.0 - 1.0);
+  float near = exp(-d * d / 0.0022), halo = exp(-d * d / 0.03);
+  float beads = pow(0.5 + 0.5 * sin(u * 150.0 - uTime * 2.4), 10.0);
+  float a = (0.3 + 0.25 * uNight + beads * (0.05 + 0.2 * uOn) + halo * (0.25 + 0.5 * uOn) + near * (1.3 + 1.6 * uOn)) * smoothstep(0.0, 0.025, u) * smoothstep(1.0, 0.975, u);
+  gl_FragColor = vec4(c * a, a);
+}`;
 class Arc {
-  constructor(mat) { this.g = new THREE.Group(); this.mat = mat; this.ticks = null; this.mesh = null; this.flash = new Float32Array(13); scene.add(this.g); }
+  constructor(mat) {
+    this.g = new THREE.Group(); this.mat = mat; this.ticks = null; this.mesh = null; this.flash = new Float32Array(13); this.on = 0; scene.add(this.g);
+    const silver = mat === silverMat;
+    this.glowU = { uSun: { value: 0 }, uTime: U.uTime, uNight: { value: 0 }, uOn: { value: 0 },
+      uA: { value: silver ? new THREE.Color(0.5, 0.8, 1.6) : new THREE.Color(2.2, 0.75, 0.6) }, uB: { value: silver ? new THREE.Color(1.2, 1.5, 2.2) : new THREE.Color(2.4, 1.85, 1.0) }, uC: { value: silver ? new THREE.Color(0.9, 0.6, 2.0) : new THREE.Color(1.4, 0.75, 2.2) } };
+    this.glowMat = new THREE.ShaderMaterial({ vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }`, fragmentShader: ARC_GLOW_FRAG, uniforms: this.glowU,
+      transparent: true, depthWrite: false, blending: THREE.CustomBlending, blendSrc: THREE.OneFactor, blendDst: THREE.OneFactor });
+    this.gemMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    this.capMats = [new THREE.MeshBasicMaterial({ color: new THREE.Color(silver ? 0.6 : 2.0, silver ? 0.9 : 0.7, silver ? 1.8 : 0.6) }), new THREE.MeshBasicMaterial({ color: new THREE.Color(silver ? 1.0 : 1.3, silver ? 0.7 : 0.7, 2.0) })];
+  }
   build(tilt, thMin, mirror = false) {
+    this.g.traverse((o) => { if (o.geometry) o.geometry.dispose(); });
     this.g.clear();
-    if (this.mesh) { this.mesh.geometry.dispose(); }
-    const pts = []; const v = new THREE.Vector3();
-    for (let i = 0; i <= 64; i++) { orbPosInto(i / 64, tilt, thMin, v); pts.push(v.clone()); }
-    const curve = new THREE.CatmullRomCurve3(pts);
-    this.mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, 0.095, 10, false), this.mat);
-    const rail = new THREE.Mesh(new THREE.TubeGeometry(curve, 160, 0.034, 6, false), this.mat);
-    rail.position.set(0, -0.0, 0.32); rail.scale.setScalar(1);
-    this.g.add(this.mesh, rail);
-    // uç topuzları
-    for (const u of [0, 1]) { orbPosInto(u, tilt, thMin, v); const k = new THREE.Mesh(new THREE.SphereGeometry(0.2, 16, 12), this.mat); k.position.copy(v); this.g.add(k); }
-    // saat çentikleri
-    const tg = new THREE.BoxGeometry(0.06, 0.34, 0.06);
-    this.ticks = new THREE.InstancedMesh(tg, new THREE.MeshBasicMaterial({ color: 0xffffff }), 13);
-    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), s = new THREE.Vector3(1, 1, 1), t2 = new THREE.Vector3();
+    const pts = [], inner = [], mid = [], v = new THREE.Vector3();
+    for (let i = 0; i <= 64; i++) { orbPosInto(i / 64, tilt, thMin, v); pts.push(v.clone()); inner.push(v.clone().sub(ARC_C).multiplyScalar(0.955).add(ARC_C)); mid.push(v.clone().sub(ARC_C).multiplyScalar(0.977).add(ARC_C)); }
+    const curve = new THREE.CatmullRomCurve3(pts), cIn = new THREE.CatmullRomCurve3(inner), cMid = new THREE.CatmullRomCurve3(mid);
+    this.mesh = new THREE.Mesh(new THREE.TubeGeometry(curve, 120, 0.075, 8, false), this.mat);
+    const rail = new THREE.Mesh(new THREE.TubeGeometry(cIn, 110, 0.04, 6, false), this.mat);
+    const glow = new THREE.Mesh(new THREE.TubeGeometry(cMid, 120, 0.05, 6, false), this.glowMat); glow.renderOrder = 6;
+    this.g.add(this.mesh, rail, glow);
+    // uç amblemleri: şafak ve akşam taşları (halka + parlayan çekirdek)
+    [0, 1].forEach((u, k) => {
+      orbPosInto(u, tilt, thMin, v);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.05, 8, 20), this.mat); ring.position.copy(v); ring.lookAt(v.clone().add(new THREE.Vector3(0, 0, 1)));
+      const gem = new THREE.Mesh(new THREE.OctahedronGeometry(0.15), this.capMats[k]); gem.position.copy(v); gem.scale.set(0.8, 1.25, 0.8);
+      this.g.add(ring, gem);
+    });
+    // mücevher çentikler: 13 adet, her üçüncüsü büyük; iki rayı birleştiren ince payandalar
+    const tg = new THREE.OctahedronGeometry(0.15);
+    this.ticks = new THREE.InstancedMesh(tg, this.gemMat, 13);
+    const struts = new THREE.InstancedMesh(new THREE.CylinderGeometry(0.018, 0.018, 1, 5), this.mat, 13);
+    const m = new THREE.Matrix4(), q = new THREE.Quaternion(), sc = new THREE.Vector3(), t2 = new THREE.Vector3();
     for (let i = 0; i < 13; i++) {
-      const u = i / 12; orbPosInto(u, tilt, thMin, v); orbPosInto(Math.min(1, u + 0.01), tilt, thMin, t2); if (u >= 1) { orbPosInto(0.99, tilt, thMin, t2); t2.sub(v).negate(); } else t2.sub(v);
-      t2.normalize(); const nrm = new THREE.Vector3().copy(v).sub(ARC_C).normalize();
+      const u = i / 12; orbPosInto(u, tilt, thMin, v);
+      const nrm = new THREE.Vector3().copy(v).sub(ARC_C).normalize();
       q.setFromUnitVectors(new THREE.Vector3(0, 1, 0), nrm);
-      s.set(1, i % 3 === 0 ? 1.6 : 1, 1);
-      m.compose(v, q, s); this.ticks.setMatrixAt(i, m);
-      this.ticks.setColorAt(i, new THREE.Color(0.9, 0.62, 0.28));
+      const big = i % 3 === 0; sc.set(big ? 1.25 : 0.85, big ? 1.9 : 1.25, big ? 1.25 : 0.85);
+      t2.copy(v).addScaledVector(nrm, 0.13);
+      m.compose(t2, q, sc); this.ticks.setMatrixAt(i, m);
+      this.ticks.setColorAt(i, new THREE.Color(1.6, 1.1, 0.5));
+      const inV = v.clone().sub(ARC_C).multiplyScalar(0.955).add(ARC_C), len = v.distanceTo(inV);
+      m.compose(v.clone().add(inV).multiplyScalar(0.5), q, sc.set(1, len, 1)); struts.setMatrixAt(i, m);
     }
     this.g.add(this.ticks);
+    this.g.add(struts);
     this.mirror = mirror;
   }
   hit(i) { this.flash[i] = 1; }
@@ -336,9 +520,13 @@ class Arc {
       if (this.flash[i] <= 0) continue;
       this.flash[i] = Math.max(0, this.flash[i] - dt * 2.5);
       const f = this.flash[i];
-      c.setRGB(0.9 + f * 5, 0.62 + f * 3.6, 0.28 + f * 1.6); this.ticks.setColorAt(i, c);
+      c.setRGB(1.6 + f * 5, 1.1 + f * 3.6, 0.5 + f * 1.6); this.ticks.setColorAt(i, c);
     }
     this.ticks.instanceColor.needsUpdate = true;
+    if (typeof G !== 'undefined' && G.lv) {
+      this.on = damp(this.on, G.drag ? 1 : 0, 6, dt);
+      this.glowU.uSun.value = this.mirror ? 1 - G.u : G.u; this.glowU.uNight.value = G.night; this.glowU.uOn.value = this.on;
+    }
   }
 }
 const arc1 = new Arc(brassMat), arc2 = new Arc(silverMat);
@@ -351,23 +539,23 @@ function buildFarIslands(chap) {
   farGroup.clear();
   const pal = chap.pal, rng = new RNG(1234 + chap.roman.length * 77);
   const mat = worldMat({ vertexColors: true, roughness: 0.95, flatShading: true });
-  const spots = [[-46, 5, -66, 2.4], [42, 1, -78, 3.0], [-84, 2, -30, 3.4], [78, 6, -40, 2.6], [-20, 11, -118, 4.2], [26, -1, -52, 1.6], [-58, 0, 4, 2.0], [62, 1, 2, 2.2]];
-  for (const [x, y, z, s] of spots) {
+  // bulut denizinin üstünde, ufka doğru dağılmış uzak adalar (alçakta: yukarıdan bakınca da dengeli görünür)
+  const spots = [[-46, -3, -66, 2.0], [44, -5, -80, 2.6], [-84, -4, -32, 2.8], [80, -2, -42, 2.2], [-16, -7, -150, 3.4], [26, -6, -54, 1.3], [-60, -6, 6, 1.7], [64, -5, 4, 1.8]];
+  spots.forEach(([x, y, z, s], i) => {
     const P = [];
-    const n = rng.int(6, 9), r = rng.range(1.6, 2.4);
-    P.push(part(new THREE.CylinderGeometry(r, r * 0.92, 0.35, n), pal.cliffTop, { pos: [0, 0, 0], jit: 0.08 }));
-    P.push(part(new THREE.ConeGeometry(r * 0.92, r * rng.range(1.6, 2.4), n, 3), pal.bands[rng.int(0, pal.bands.length - 1)], { pos: [0, -r * 1.0 - 0.17, 0], rot: [PI, 0, 0], jit: 0.16, top: pal.rockDark, y0: 0, y1: -r * 2 }));
-    const t = rng.int(1, 3);
-    for (let k = 0; k < t; k++) {
-      const a = rng.range(0, TAU), d = rng.range(0, r * 0.55), h = rng.range(0.9, 1.6);
-      if (chap.key === 'peri' || chap.key === 'tuz') P.push(part(new THREE.ConeGeometry(0.35, h, 7), chap.key === 'tuz' ? '#f4eef4' : '#e2c19c', { pos: [Math.cos(a) * d, 0.17 + h / 2, Math.sin(a) * d] }));
-      else P.push(part(new THREE.ConeGeometry(0.28, h, 6), chap.key === 'ikiz' ? '#7a5ad0' : '#3d6a34', { pos: [Math.cos(a) * d, 0.17 + h / 2, Math.sin(a) * d] }));
-    }
+    isletParts(P, rng, pal, chap.key, 2.2, 0, 0, 0, true, 0.1);
     const m = new THREE.Mesh(mergeParts(P, false), mat);
     m.position.set(x, y, z); m.scale.setScalar(s); m.rotation.y = rng.range(0, TAU);
     m.userData = { y, ph: rng.range(0, TAU) };
+    // her iki adadan birinde buluta dökülen şelale
+    if (i % 2 === 0 && chap.key !== 'buz') {
+      const L = 9 + rng.range(0, 5), w = 0.55, f = new THREE.Mesh(new THREE.PlaneGeometry(w, L), FALL_MAT);
+      const a = Math.atan2(-z, -x) + rng.range(-0.5, 0.5); // kameraya dönük yan
+      f.position.set(Math.cos(a) * 2.1, -L / 2 + 0.1, Math.sin(a) * 2.1); f.rotation.y = -a + PI / 2; f.renderOrder = 4;
+      const fg = new THREE.Group(); fg.add(f); fg.rotation.y = -m.rotation.y; m.add(fg);
+    }
     farGroup.add(m);
-  }
+  });
 }
 function updateFar(t) { for (const m of farGroup.children) m.position.y = m.userData.y + Math.sin(t * 0.25 + m.userData.ph) * 0.6; }
 const birds = { mesh: null, n: 9, t: 0, active: false, dir: 1, y: 0, z: 0, x0: 0 };
