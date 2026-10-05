@@ -11,6 +11,11 @@ import { DRAWING_TO_MODEL } from '../scripts/three/models-map';
 import '../styles/home.css';
 
 const featured = products.filter((p) => p.featured).slice(0, 10);
+// Kategori kartı görseli (3D açılamayan cihazlarda; açılınca canlı model gelir)
+const CAT_RENDER: Record<string, string> = {
+  insert: 'insert-C-n', 'holder-groove': 'holder-groove', 'thread-insert': 'thread-insert', endmill: 'endmill',
+  'drill-u': 'drill-carbide', tap: 'tap-helis', 'chuck-bt': 'chuck-bt',
+};
 const codes = ['CNMG 120408', 'DNMG 150608', 'WNMG 080408', 'TNMG 160408', 'VNMG 160408', 'APMT 1604PDER', 'MGMN 300', 'SPMG 090408', 'CCMT 09T304', '16ER 1.5ISO', 'RPMT 10T3', 'SEKT 1204'];
 const iso = [
   { g: 'P', t: 'Çelik', s: 'Yapı, ıslah, takım çeliği' },
@@ -106,7 +111,7 @@ const iso = [
             <li><button type="button" data-reel-seg={i} aria-label={`${i + 1}. sahne: ${c}`}><i><b></b></i><span>{c}</span></button></li>
           ))}
         </ol>
-        <button class="reel__next" type="button" data-reel-next>
+        <button class="reel__next" type="button" data-reel-next aria-label="Sonraki sahne">
           <span data-reel-next-label>Sonraki sahne</span>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
         </button>
@@ -136,7 +141,9 @@ const iso = [
         {categories.map((c, i) => (
           <a class="cat reveal" href={`/kategori/${c.slug}`} style={`--d:${(i % 4) * 70}ms`} data-glow data-model={DRAWING_TO_MODEL[c.drawing]}>
             <span class="cat__num">{String(i + 1).padStart(2, '0')} / {String(categories.length).padStart(2, '0')}</span>
-            <div class="cat__art" set:html={drawingSvg(c.drawing, c.shape)} />
+            {CAT_RENDER[c.drawing]
+              ? <div class="cat__art cat__art--img"><img src={`/img/urun/${CAT_RENDER[c.drawing]}-s.webp`} alt="" width="600" height="450" loading="lazy" decoding="async" /></div>
+              : <div class="cat__art" set:html={drawingSvg(c.drawing, c.shape)} />}
             <div>
               <h3>{c.name}</h3>
               <p>{c.summary}</p>

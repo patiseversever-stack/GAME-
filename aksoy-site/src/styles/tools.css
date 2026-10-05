@@ -334,7 +334,7 @@
 .tl-formulas h3 { font-size: var(--fs-xl); }
 .tl-formulas dl { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 0 28px; margin: 0; border-top: 1px solid var(--paper-line); }
 .tl-formulas dl > div { display: grid; grid-template-columns: 3.2em 1fr; gap: 12px; align-items: baseline; padding: 14px 0; border-bottom: 1px solid var(--paper-line); }
-.tl-formulas dt { font: 600 15px/1 var(--f-mono); color: var(--tin-lo); }
+.tl-formulas dt { font: 600 15px/1 var(--f-mono); color: var(--tin-dk); }
 .tl-formulas dd { margin: 0; font-family: var(--f-mono); font-size: 13.5px; color: var(--ink-2); }
 .tl-formulas dd b { display: block; font: 600 14px/1.3 var(--f-body); color: var(--ink); margin-bottom: 4px; }
 .tl-formulas dd span { color: var(--ink-3); margin-left: 6px; }

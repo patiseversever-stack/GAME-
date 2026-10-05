@@ -224,6 +224,7 @@
 .cat__art { position: absolute; right: -6%; top: 10%; width: 64%; max-width: 360px; opacity: 0.95; transition: transform 1100ms var(--ease-out); }
 .cat:nth-child(1) .cat__art, .cat:nth-child(2) .cat__art, .cat:nth-child(6) .cat__art, .cat:nth-child(7) .cat__art { width: 54%; right: 0; top: 2%; }
 .cat:hover .cat__art { transform: translate(-3%, -3%) rotate(-3deg) scale(1.04); }
+.cat__art--img img { width: 100%; height: auto; display: block; filter: drop-shadow(0 24px 30px rgba(0, 0, 0, 0.5)); }
 .cat h3 { font-size: var(--fs-xl); max-width: 12ch; position: relative; }
 .cat p { font-size: var(--fs-sm); color: var(--g-400); margin-top: 8px; max-width: 34ch; position: relative; }
 .cat__go { position: absolute; right: 18px; bottom: 18px; width: 42px; height: 42px; border-radius: 999px; display: grid; place-items: center; border: 1px solid var(--g-700); transition: background var(--t-med), color var(--t-med), transform var(--t-med) var(--ease-out); }

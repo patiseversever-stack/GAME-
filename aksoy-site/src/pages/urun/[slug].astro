@@ -47,7 +47,7 @@ const schema = breadcrumbSchema(
 );
 const metaDesc = clip(`${p.code} — ${p.description}`);
 ---
-<Base title={`${p.code} — ${p.name}`} description={metaDesc} theme="light" header="light" schema={schema}>
+<Base title={`${p.code} — ${p.name}`} description={metaDesc} theme="light" header="light" schema={schema} image={render ? `/og/urun/${p.slug}.jpg` : undefined}>
   <article class="pdp" data-pdp>
     <div class="wrap pdp__grid">
       <div class="pdp__media">

@@ -2,6 +2,7 @@
 import { products } from '../data/products';
 import { categoryBySlug, subcategoryName } from '../data/categories';
 import { brandBySlug } from '../data/brands';
+import { productImage } from '../lib/product-image';
 
 export function GET() {
   const index = products.map((p) => ({
@@ -14,6 +15,7 @@ export function GET() {
     sc: subcategoryName(p.category, p.subcategory),
     b: p.brands.map((b) => brandBySlug[b]?.name ?? b),
     w: (p.keywords ?? []).join(' '),
+    i: productImage(p)?.small,
   }));
   const tools = [
     { s: '', u: '/teknik-araclar/kesme-hizi-hesaplama', c: 'Kesme hızı & devir', n: 'Vc, n, ilerleme ve talaş hacmi hesaplayıcı', d: 'insert', h: 'C', k: 'Teknik araçlar', sc: 'Hesaplayıcı', b: [], w: 'devir hesaplama kesme hizi vc rpm ilerleme hesap' },

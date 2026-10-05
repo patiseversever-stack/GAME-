@@ -240,6 +240,9 @@ function buildScrew(mat: THREE.Material, holeMat: THREE.Material) {
   return g;
 }
 
+/** Çevresel çözünürlük: küçük ekranda daha az köşe (hız), büyükte daha pürüzsüz */
+const SEG = typeof matchMedia !== 'undefined' && matchMedia('(max-width: 860px)').matches ? 440 : 640;
+
 export function buildDrill(): Drill {
   const materials = makeMaterials();
   const root = new THREE.Group();
@@ -290,7 +293,7 @@ export function buildDrill(): Drill {
     ...Array.from({ length: 4 }, (_, i) => P1 + ((A_TIP - NOSE_F - P1) * (i + 1)) / 4),
     ...Array.from({ length: 26 }, (_, i) => A_TIP - NOSE_F + (NOSE_F * (i + 1)) / 26),
   ];
-  const fg = radialSurface(640, ys, (t, y) => {
+  const fg = radialSurface(SEG, ys, (t, y) => {
     const k = smooth(y, RUN0, RUN1); // 0: oluk yok (omuz), 1: tam oluk
     const twist = (1 - k) ** 1.6 * 1.25; // oluk çıkışında kıvrılma
     const rs = sectionR(t, twist, smooth(y, P0, P1));

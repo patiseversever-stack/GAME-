@@ -126,7 +126,7 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
         <div class="calc-tabs-wrap">
           <div class="calc-tabs" role="tablist" aria-label="İşlem türü">
             {OPS.map((o, i) => (
-              <button class="calc-tab" type="button" role="tab" id={`tab-${o.id}`} aria-selected={i === 0 ? 'true' : 'false'} aria-controls="calc-panel" tabindex={i === 0 ? 0 : -1} data-tab={o.id}>
+              <button class="calc-tab" type="button" role="tab" aria-label={o.label} id={`tab-${o.id}`} aria-selected={i === 0 ? 'true' : 'false'} aria-controls="calc-panel" tabindex={i === 0 ? 0 : -1} data-tab={o.id}>
                 <span>0{i + 1}</span><b class="calc-tab__l">{o.label}</b><b class="calc-tab__s" aria-hidden="true">{o.short}</b>
               </button>
             ))}

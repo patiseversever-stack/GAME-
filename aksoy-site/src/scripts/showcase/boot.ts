@@ -1,13 +1,7 @@
 // Vitrin önyükleyici: 3D çalışabilir mi karar verir; ağır modülleri (three.js, GSAP) sonradan yükler.
 // 3D yoksa ya da "hareketi azalt" açıksa poster görseli ve düz metin akışı gösterilir.
+import { canUse3D } from '../gl';
 
-function hasWebGL2() {
-  try {
-    return !!document.createElement('canvas').getContext('webgl2');
-  } catch {
-    return false;
-  }
-}
 
 export function initShowcase() {
   const root = document.querySelector<HTMLElement>('[data-showcase]');
@@ -58,7 +52,7 @@ export function initShowcase() {
   }
 
   // "Hareketi azalt" açık olsa da 3D çalışır (sakin modda); yalnızca WebGL2 yoksa düz görünüm.
-  if (!root || !hasWebGL2()) {
+  if (!root || !canUse3D()) {
     root?.classList.add('is-static');
     finishPre();
     return;

@@ -3,7 +3,7 @@
 import { drawingSvg } from '../lib/drawings';
 import type { Drawing, InsertShape } from '../data/types';
 
-interface Row { s: string; u?: string; c: string; n: string; d: Drawing; h?: InsertShape; k: string; sc: string; b: string[]; w: string }
+interface Row { s: string; u?: string; c: string; n: string; d: Drawing; h?: InsertShape; k: string; sc: string; b: string[]; w: string; i?: string }
 
 const root = document.querySelector<HTMLElement>('[data-search]');
 const input = document.querySelector<HTMLInputElement>('[data-search-input]');
@@ -59,13 +59,23 @@ function score(r: Row, q: string, qc: string, terms: string[]) {
   return s;
 }
 
+/** Harf sayısını koruyarak küçük harfe ve Türkçe karakterlerin ASCII karşılığına çevirir (vurgu konumu için) */
+function fold(s: string) {
+  let out = '';
+  for (const ch of s) {
+    const l = ch.toLocaleLowerCase('tr');
+    const m = TR[l] ?? l;
+    out += m.length === 1 ? m : ch;
+  }
+  return out;
+}
 function hl(text: string, q: string) {
-  const esc = text.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
+  const escape = (t: string) => t.replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' })[c]!);
   const t = q.trim().split(/\s+/)[0];
-  if (!t || t.length < 2) return esc;
-  const i = norm(esc).indexOf(norm(t));
-  if (i < 0) return esc;
-  return `${esc.slice(0, i)}<mark>${esc.slice(i, i + t.length)}</mark>${esc.slice(i + t.length)}`;
+  if (!t || t.length < 2) return escape(text);
+  const i = fold(text).indexOf(fold(t));
+  if (i < 0) return escape(text);
+  return `${escape(text.slice(0, i))}<mark>${escape(text.slice(i, i + t.length))}</mark>${escape(text.slice(i + t.length))}`;
 }
 
 async function ensure() {
@@ -95,7 +105,7 @@ function draw(q: string) {
   results.innerHTML = current
     .map(
       (r, i) => `<a class="sres" role="option" id="sr-${i}" aria-selected="${i === sel}" href="${r.u ?? `/urun/${r.s}`}">
-      <span class="sres__thumb">${drawingSvg(r.d, r.h)}</span>
+      <span class="sres__thumb">${r.i ? `<img src="${r.i}" alt="" width="96" height="72" loading="lazy" decoding="async" />` : drawingSvg(r.d, r.h)}</span>
       <span><span class="sres__code">${hl(r.c, q)}</span><br /><span class="sres__name">${hl(r.n, q)}</span></span>
       <span class="sres__cat">${r.sc}</span></a>`,
     )
