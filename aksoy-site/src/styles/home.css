@@ -561,3 +561,50 @@
   .reel__next span { display: none; }
   .showcase .hud { display: none; }
 }
+
+/* ---------- Kod şeridi: akan kodlar ve okuma penceresi ---------- */
+.cband { position: relative; overflow: hidden; background: #050506; border-block: 1px solid var(--g-800); padding: clamp(34px, 4.6vw, 64px) 0 clamp(26px, 3.4vw, 46px); isolation: isolate; }
+.cband::before { content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none; background: radial-gradient(34% 70% at 50% 40%, rgba(217, 164, 65, 0.09), transparent 70%); }
+.cband__row { position: relative; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); mask-image: linear-gradient(90deg, transparent, #000 12%, #000 88%, transparent); }
+.cband__track { display: flex; width: max-content; will-change: transform; }
+.cband__row--big a {
+  position: relative; display: block; padding: 0.06em 0.5em 0.1em; white-space: nowrap;
+  font: 600 clamp(2.5rem, 1.4rem + 5vw, 6.4rem) / 1 var(--f-display); letter-spacing: -0.025em;
+  color: transparent; -webkit-text-stroke: 1px rgba(236, 238, 241, 0.26);
+  transition: color 380ms var(--ease-out), -webkit-text-stroke-color 380ms;
+}
+.cband__row--big a::after { content: ''; position: absolute; right: -0.09em; top: 50%; width: 0.18em; height: 0.16em; margin-top: -0.08em; background: var(--tin); clip-path: polygon(50% 0, 100% 100%, 0 100%); opacity: 0.55; }
+.cband__row--big a.is-lit { color: #f5f6f7; -webkit-text-stroke-color: transparent; }
+.cband__row--big a:hover, .cband__row--big a:focus-visible { color: var(--tin-hi); -webkit-text-stroke-color: transparent; }
+.cband__scan { position: absolute; left: 0; top: 0; width: 0; pointer-events: none; z-index: 2; will-change: transform, width; }
+.cband__scan i { position: absolute; width: 16px; height: 16px; border: 0 solid var(--tin); }
+.cband__scan i:nth-child(1) { left: 0; top: 0; border-width: 1.5px 0 0 1.5px; }
+.cband__scan i:nth-child(2) { right: 0; top: 0; border-width: 1.5px 1.5px 0 0; }
+.cband__scan i:nth-child(3) { left: 0; bottom: 0; border-width: 0 0 1.5px 1.5px; }
+.cband__scan i:nth-child(4) { right: 0; bottom: 0; border-width: 0 1.5px 1.5px 0; }
+.cband__scan::after { content: ''; position: absolute; left: 50%; bottom: -14px; width: 1px; height: 10px; background: var(--tin); opacity: 0.6; }
+.cband__read { display: flex; justify-content: center; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; margin: 18px var(--gutter) clamp(20px, 2.6vw, 34px); min-height: 1.4em; font: 500 12.5px/1.4 var(--f-mono); letter-spacing: 0.04em; text-align: center; color: var(--g-300); }
+.cband__read span:first-child { color: var(--tin); letter-spacing: 0.14em; }
+.cband__read b { font-weight: 500; color: var(--g-100); }
+.cband__iso { padding: 2px 8px; border-radius: 999px; border: 1px solid var(--g-700); color: var(--g-300); letter-spacing: 0.2em; }
+.cband__iso:empty { display: none; }
+.cband__row--small a { display: inline-flex; align-items: baseline; gap: 10px; padding: 10px 26px; white-space: nowrap; color: var(--g-400); font: 500 var(--fs-sm) / 1 var(--f-mono); letter-spacing: 0.04em; transition: color var(--t-fast); border-left: 1px solid var(--g-800); }
+.cband__row--small a b { font-weight: 500; color: var(--g-200); }
+.cband__row--small a span { font-size: 0.82em; color: var(--g-500); letter-spacing: 0.1em; text-transform: uppercase; }
+.cband__row--small a:hover b { color: var(--tin-hi); }
+.cband__peek {
+  position: absolute; left: 0; top: 0; z-index: 3; width: 200px; padding: 10px 10px 12px; border-radius: 18px; pointer-events: none;
+  background: rgba(16, 17, 20, 0.86); border: 1px solid var(--g-700); box-shadow: 0 30px 60px -20px rgba(0, 0, 0, 0.8);
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+  opacity: 0; scale: 0.9; transition: opacity 220ms, scale 320ms var(--ease-out);
+}
+.cband__peek.is-on { opacity: 1; scale: 1; }
+.cband__peek img { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; object-fit: contain; border-radius: 10px; background: radial-gradient(70% 70% at 50% 40%, #23262b, #121316); }
+.cband__peek span { display: grid; gap: 2px; margin-top: 8px; font-size: 12.5px; line-height: 1.35; color: var(--g-300); }
+.cband__peek b { font: 600 13px/1.2 var(--f-mono); color: var(--tin-hi); }
+.cband.is-still .cband__row { overflow-x: auto; }
+@media (max-width: 640px) {
+  .cband__row--big a { padding-inline: 0.42em; }
+  .cband__read { font-size: 11.5px; }
+  .cband__row--small a { padding: 9px 18px; }
+}

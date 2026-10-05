@@ -8,6 +8,7 @@ import { brands } from '../data/brands';
 import { products } from '../data/products';
 import { drawingSvg } from '../lib/drawings';
 import { DRAWING_TO_MODEL } from '../scripts/three/models-map';
+import { productImage } from '../lib/product-image';
 import '../styles/home.css';
 
 const featured = products.filter((p) => p.featured).slice(0, 10);
@@ -16,7 +17,14 @@ const CAT_RENDER: Record<string, string> = {
   insert: 'insert-C-n', 'holder-groove': 'holder-groove', 'thread-insert': 'thread-insert', endmill: 'endmill',
   'drill-u': 'drill-carbide', tap: 'tap-helis', 'chuck-bt': 'chuck-bt',
 };
-const codes = ['CNMG 120408', 'DNMG 150608', 'WNMG 080408', 'TNMG 160408', 'VNMG 160408', 'APMT 1604PDER', 'MGMN 300', 'SPMG 090408', 'CCMT 09T304', '16ER 1.5ISO', 'RPMT 10T3', 'SEKT 1204'];
+// Kod şeridi: üst sıra uç kodları, alt sıra diğer takımlar. Her kod kendi ürün sayfasına gider.
+const reelPick = (codes: string[]) =>
+  codes
+    .map((c) => products.find((p) => p.code === c))
+    .filter((p): p is (typeof products)[number] => !!p)
+    .map((p) => ({ code: p.code, name: p.name, slug: p.slug, cat: categories.find((c) => c.slug === p.category)?.name ?? '', iso: (p.iso ?? []).join(' '), img: productImage(p)?.small ?? '' }));
+const reelTop = reelPick(['CNMG 120408', 'APMT 1604PDER', 'MGMN 300', '16ER 1.5ISO', 'DNMG 150608', 'SEKT 1204AFTN', 'VNMG 160408', 'RPMT 10T3M0', 'WNMG 080408', 'TNMG 160408', 'CCMT 09T304', 'DCMT 11T304']);
+const reelBottom = reelPick(['U-Matkap Ø25 4xD', 'PCLNR 2525M12', 'Helis Kılavuz M8', 'ER32 Pens', 'MGEHR 2020-3', 'Parmak Freze Ø10 Z4', 'BT40 ER32-70', 'Karbür Matkap Ø8,5 5xD', 'SER 2525M16', 'S20R-SDUCR11', 'BAP 400R 50-22-4T', 'Rayba Ø8 H7']);
 const iso = [
   { g: 'P', t: 'Çelik', s: 'Yapı, ıslah, takım çeliği' },
   { g: 'M', t: 'Paslanmaz', s: 'Östenitik, dubleks' },
@@ -121,11 +129,27 @@ const iso = [
   </section>
 
   <!-- ============ KOD BANDI ============ -->
-  <div class="marquee" aria-hidden="true">
-    <div class="marquee__track">
-      {[0, 1].map(() => <span>{codes.map((c) => <span>{c}</span>)}</span>)}
+  <section class="cband" data-cband aria-label="Sık sorulan kodlar">
+    <div class="cband__row cband__row--big" data-cband-row="-1">
+      <div class="cband__track">
+        {[0, 1].map((k) => reelTop.map((r) => (
+          <a href={`/urun/${r.slug}`} data-code={r.code} data-name={r.name} data-cat={r.cat} data-iso={r.iso} data-img={r.img} tabindex={k ? -1 : undefined} aria-hidden={k ? 'true' : undefined}>{r.code}</a>
+        )))}
+      </div>
     </div>
-  </div>
+    <div class="cband__scan" aria-hidden="true" data-cband-scan>
+      <i></i><i></i><i></i><i></i>
+    </div>
+    <p class="cband__read" aria-hidden="true"><span data-cband-cat>Tornalama</span><b data-cband-name>Torna ucu</b><span class="cband__iso" data-cband-iso>P M K</span></p>
+    <div class="cband__row cband__row--small" data-cband-row="1">
+      <div class="cband__track">
+        {[0, 1].map((k) => reelBottom.map((r) => (
+          <a href={`/urun/${r.slug}`} data-code={r.code} data-name={r.name} data-cat={r.cat} data-iso={r.iso} data-img={r.img} tabindex={k ? -1 : undefined} aria-hidden={k ? 'true' : undefined}><b>{r.code}</b><span>{r.cat}</span></a>
+        )))}
+      </div>
+    </div>
+    <div class="cband__peek" aria-hidden="true" data-cband-peek><img alt="" width="600" height="450" decoding="async" /><span></span></div>
+  </section>
 
   <!-- ============ ÜRÜN GRUPLARI ============ -->
   <section class="section section--dark" aria-labelledby="gruplar">
@@ -351,6 +375,7 @@ const iso = [
   </script>
   <script>
     import '../scripts/home/howto';
+    import '../scripts/home/codeband';
   </script>
   <script>
     // Mini hesaplayıcı: n = Vc·1000 / (π·D)
