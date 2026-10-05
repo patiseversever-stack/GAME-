@@ -35,6 +35,8 @@ export function toolMaterials() {
     polished: new THREE.MeshPhysicalMaterial({ color: 0xc3c7cc, metalness: 1, roughness: 0.12, envMapIntensity: 1.0 }),
     /** Siyah oksit kater gövdesi */
     black: new THREE.MeshPhysicalMaterial({ color: 0x575c63, metalness: 0.9, roughness: 0.42, clearcoat: 0.55, clearcoatRoughness: 0.22, envMapIntensity: 1.4 }),
+    /** Gri metalik kater gövdesi (taşlanmış ıslah çeliği) */
+    holder: new THREE.MeshPhysicalMaterial({ color: 0x737a83, metalness: 1, roughness: 0.38, envMapIntensity: 1.05 }),
     /** Vida başı */
     screw: new THREE.MeshPhysicalMaterial({ color: 0x3a3e45, metalness: 1, roughness: 0.34 }),
     /** Delik, yarık gibi karanlık boşluklar */
@@ -220,10 +222,10 @@ export function buildTurningHolder(m: ToolMats, insertMat = m.tin) {
 export function buildGroovingHolder(m: ToolMats, insertMat = m.tin) {
   const g = new THREE.Group();
   const zb = 8.6; // bıçak/uç orta düzlemi
-  const shank = new THREE.Mesh(new RoundedBoxGeometry(86, 20, 20, 4, 1.4), m.black);
+  const shank = new THREE.Mesh(new RoundedBoxGeometry(86, 20, 20, 4, 1.4), m.holder);
   shank.position.set(-82, -10, 0);
   g.add(shank);
-  const head = new THREE.Mesh(new RoundedBoxGeometry(25, 28, 20, 4, 1.6), m.black);
+  const head = new THREE.Mesh(new RoundedBoxGeometry(25, 28, 20, 4, 1.6), m.holder);
   head.position.set(-34.5, -6, 0);
   g.add(head);
   // Bıçak (yan profil): alt çene ucu taşır, üst çene ucun arka yarısını V sırtıyla sıkar,
@@ -234,7 +236,7 @@ export function buildGroovingHolder(m: ToolMats, insertMat = m.tin) {
   ]);
   const bladeGeo = new THREE.ExtrudeGeometry(blade, { depth: 2.0, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.2, bevelSegments: 3 });
   bladeGeo.translate(0, 0, zb - 1.0);
-  g.add(new THREE.Mesh(bladeGeo, m.black));
+  g.add(new THREE.Mesh(bladeGeo, m.holder));
   // Esneme yarığı başlık yan yüzünde devam eder
   const slit = new THREE.Mesh(new THREE.BoxGeometry(15, 0.5, 0.3), m.hole);
   slit.position.set(-29.5, -0.45, 10.02);

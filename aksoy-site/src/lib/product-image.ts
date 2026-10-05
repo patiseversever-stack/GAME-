@@ -6,10 +6,10 @@ const KEYS = new Set([
   'insert-C-n', 'insert-C-p', 'insert-D-n', 'insert-D-p', 'insert-V-n', 'insert-V-p', 'insert-S-n', 'insert-S-p',
   'insert-T-n', 'insert-T-p', 'insert-W-n', 'insert-R-p', 'insert-A-p',
   'groove-insert', 'thread-insert',
-  'holder-ext-C', 'holder-ext-D', 'holder-ext-V', 'holder-ext-W', 'holder-ext-T', 'holder-groove', 'holder-thread',
+  'holder-ext-C', 'holder-ext-D', 'holder-ext-V', 'holder-ext-V-s', 'holder-ext-W', 'holder-ext-T', 'holder-groove', 'holder-thread',
   'boring-bar-C', 'boring-bar-D',
   'drill-carbide', 'drill-hss', 'drill-u', 'center-drill', 'reamer',
-  'endmill', 'endmill-ball', 'facemill', 'facemill-shank', 'facemill-round',
+  'endmill', 'endmill-ball', 'facemill', 'facemill-45', 'facemill-shank', 'facemill-round',
   'tap-helis', 'tap-duz', 'tap-ovalama', 'collet', 'chuck-bt', 'pull-stud',
 ]);
 
@@ -25,7 +25,8 @@ export function renderKey(p: Pick<Product, 'drawing' | 'shape' | 'code' | 'name'
       if (!KEYS.has(key)) key = `insert-${shape}-${neg ? 'p' : 'n'}`;
       break;
     }
-    case 'holder-ext': key = `holder-ext-${code[1]}`; if (!KEYS.has(key)) key = 'holder-ext-C'; break;
+    // İlk harf bağlama tipi: S = vidalı (pozitif uç), P/M = kollu/pabuçlu (negatif uç)
+    case 'holder-ext': key = `holder-ext-${code[1]}${code[0] === 'S' ? '-s' : ''}`; if (!KEYS.has(key)) key = `holder-ext-${code[1]}`; if (!KEYS.has(key)) key = 'holder-ext-C'; break;
     case 'boring-bar': {
       const part = code.split('-')[1] ?? '';
       key = `boring-bar-${part[1] ?? 'C'}`;
@@ -33,7 +34,7 @@ export function renderKey(p: Pick<Product, 'drawing' | 'shape' | 'code' | 'name'
       break;
     }
     case 'facemill':
-      key = code.startsWith('EMR') ? 'facemill-round' : /C20|\b2T\b/.test(code) ? 'facemill-shank' : 'facemill';
+      key = code.startsWith('EMR') ? 'facemill-round' : /C20|\b2T\b/.test(code) ? 'facemill-shank' : /^45°|SEKT/.test(code) || p.name.includes('45°') ? 'facemill-45' : 'facemill';
       break;
     case 'tap': {
       const n = `${p.code} ${p.name}`.toLocaleLowerCase('tr');

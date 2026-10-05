@@ -5,7 +5,7 @@ Site yayında: https://game-aksoy-site.vercel.app (Vercel, varsayılan daldan de
 ## Tamamlandı
 - [x] 3D kaydırma vitrini: SDUM tipi U-matkap (WCMX trigon uçlar), 6 sahne, film kontrolü, sabit etiketler
 - [x] Kategori kartlarında canlı 3D modeller; hesaplayıcıda canlı kesme simülasyonu
-- [x] 40 gerçekçi 3D ürün görseli (`node scripts/render-products.mjs`, dev sunucusu açıkken)
+- [x] 43 gerçekçi 3D ürün görseli (`node scripts/render-products.mjs`, dev sunucusu açıkken). Katerler, baralar, frezeler, pens, BT40, çektirme civatası ve punta matkabı katalog ölçülerinde katı modelle (manifold-3d) üretilir; cep ve yarıklara ortam gölgesi pişirilir (three-mesh-bvh). Kodu: `src/scripts/three/real/`
 - [x] Ürün başına WhatsApp önizleme görseli (`node scripts/og-products.mjs`)
 - [x] Teknik araçlar, KVKK, çerez politikası, 404
 - [x] Metinlerin sadeleştirilmesi; anlamsız kodların (PAFTA, REF, A1…) kaldırılması

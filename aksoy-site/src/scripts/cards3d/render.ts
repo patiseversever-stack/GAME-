@@ -27,7 +27,7 @@ interface Present {
 const PRESENT: Record<ModelKind, Present> = {
   cnmg: { center: [0, 0, 2.4], radius: 10.5, pose: [-0.36, 0.22, 0.5], spinAxis: 'z', spin: 0.32, at: [0.7, 0.43] },
   thread: { center: [0, 0, 1.8], radius: 9.2, pose: [-0.4, 0.2, 0.3], spinAxis: 'z', spin: -0.36, at: [0.68, 0.43] },
-  groove: { center: [-12, -5, 6], radius: 17, pose: [0.46, -1.22, 0.1], spinAxis: 'y', spin: 0, at: [0.75, 0.42], env: 0.8, narrowZoom: 1.45 },
+  groove: { center: [-9, -3, 5], radius: 18, pose: [0.42, -1.2, -0.28], spinAxis: 'y', spin: 0, at: [0.79, 0.53], env: 0.8, narrowZoom: 1.3 },
   endmill: { center: [0, 14, 0], radius: 15.5, pose: [0, 0.2, -1.3], spinAxis: 'y', spin: -1.5, at: [0.6, 0.38] },
   drill: { center: [0, 15, 0], radius: 16.5, pose: [0, 0.38, -1.3], spinAxis: 'y', spin: -1.3, at: [0.6, 0.38] },
   tap: { center: [0, 14, 0], radius: 15.5, pose: [0, 0.38, -1.28], spinAxis: 'y', spin: -1.1, at: [0.6, 0.38] },

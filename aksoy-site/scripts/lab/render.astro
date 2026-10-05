@@ -7,7 +7,11 @@
   import * as THREE from 'three';
   import { buildRenderModel, type RenderKey } from '../../scripts/three/catalog-models';
   import { studioEnvironment } from '../../scripts/three/studio';
-  const key = new URLSearchParams(location.search).get('key') as RenderKey;
+  import { buildReal, REAL_KEYS } from '../../scripts/three/real/models';
+  import { bakeAO } from '../../scripts/three/real/ao';
+  const qs = new URLSearchParams(location.search);
+  const key = qs.get('key') as RenderKey;
+  (async () => {
   const canvas = document.getElementById('c') as HTMLCanvasElement;
   const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
   r.setPixelRatio(1);
@@ -17,10 +21,17 @@
   r.toneMappingExposure = 1.12;
   r.setClearColor(0x000000, 0);
   const scene = new THREE.Scene();
-  scene.environment = studioEnvironment(r);
-  (scene as any).environmentRotation?.set(0, 0.5, 0);
-  const posed = buildRenderModel(key);
+  const isReal = REAL_KEYS.includes(key);
+  scene.environment = studioEnvironment(r, true);
+  (scene as any).environmentRotation?.set(0, +(qs.get('env') ?? 0.5), 0);
+  const posed: { obj: THREE.Object3D; kind: string; ao?: { dist?: number; strength?: number } } = isReal ? await buildReal(key, qs.has('rx') ? [+qs.get('rx')!, +qs.get('ry')!, +(qs.get('rz') ?? 0)] : undefined) : buildRenderModel(key);
   scene.add(posed.obj);
+  // Eski (yüzey modeli) döner takımlar açık stüdyoda fazla parlıyor: yansımayı biraz kıs
+  if (!isReal && posed.kind === 'rotary') {
+    const seen = new Set();
+    posed.obj.traverse((o) => { const mt = (o as THREE.Mesh).material as THREE.MeshStandardMaterial; if (mt && !seen.has(mt) && 'envMapIntensity' in mt) { seen.add(mt); mt.envMapIntensity *= 0.78; } });
+  }
+  if (!qs.has('noao')) bakeAO(posed.obj, posed.ao ?? {});
   posed.obj.updateMatrixWorld(true);
   // Kadraj: kutunun 8 köşesi ekranda %80'i kaplayacak şekilde mesafe ve merkez ayarlanır
   const box = new THREE.Box3().setFromObject(posed.obj);
@@ -57,4 +68,5 @@
   r.render(scene, cam);
   (window as any).__png = canvas.toDataURL('image/png');
   (window as any).__done = true;
+  })().catch((e) => { (window as any).__err = String(e?.stack || e); (window as any).__done = true; });
 </script></body></html>
