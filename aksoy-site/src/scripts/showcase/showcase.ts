@@ -131,7 +131,7 @@ export async function startShowcase(
   };
   const intro = { k: opts.poster || calm ? 0 : 1 };
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
-  let L = 0, Ltarget = 0, coat = 0, velOff = 0, edge = 1;
+  let L = 0, Ltarget = 0, coat = 0, edge = 1, dimOn = false;
   let chapter = 0;
 
   /* ---------- Ölçü çizgileri ve etiketler ---------- */
@@ -237,43 +237,50 @@ export async function startShowcase(
     act?.kill();
     act = null;
     if (k < 1 || k > 4) return;
-    const tl = gsap.timeline({ paused: true, defaults: { ease: 'none' } });
+    // Kaydırmaya bağlı zaman çizelgesi: her tween açık başlangıç değerli (fromTo) → geri sarınca hep aynı kare
+    const tl = gsap.timeline({ paused: true, defaults: { ease: 'none', immediateRender: false } });
+    const ft = (from: object, to: object, at: number) => tl.fromTo(S, from, { ...to, immediateRender: false }, at);
     if (k === 1) {
-      // Delme: iş parçası gelir, matkap hızlanır, dalar; talaş, kıvılcım, duman; çıkar, ölçüler belirir
-      tl.set(S, { hole: 0, plunge: 0 }, 0);
-      tl.to(S, { block: 1, duration: 0.9, ease: 'power3.out' }, 0);
-      tl.to(S, { turns: `+=10`, duration: 4.4, ease: 'power1.inOut' }, 0.3);
-      tl.to(S, { plunge: 1, duration: 2.2, ease: 'power1.inOut' }, 0.9);
-      tl.to(S, { cut: 1, duration: 0.15 }, 1.05).to(S, { cut: 0, duration: 0.3 }, 3.0);
-      tl.to(S, { shake: 1, duration: 0.15 }, 1.05).to(S, { shake: 0, duration: 0.3 }, 3.0);
-      tl.to(S, { heat: 1, duration: 1.0 }, 1.1).to(S, { heat: 0.15, duration: 1.4 }, 3.1);
-      tl.to(S, { hole: 1, duration: 0.05 }, 1.1);
-      tl.to(S, { plunge: 0, duration: 1.0, ease: 'power2.inOut' }, 3.1);
-      tl.to(S, { block: 0, duration: 0.9, ease: 'power2.in' }, 4.3);
-      tl.to(S, { ...dimPose(), duration: 1.1, ease: 'power2.inOut' }, 4.6);
-      tl.to(S, { cDim: 1, duration: 0.6 }, 5.3);
-      tl.to({}, { duration: 0.4 }, 5.9);
+      const t0 = Math.round(S.turns);
+      ft({ block: 0 }, { block: 1, duration: 0.9, ease: 'power3.out' }, 0);
+      ft({ turns: t0 }, { turns: t0 + 10, duration: 4.4, ease: 'power1.inOut' }, 0.3);
+      ft({ plunge: 0 }, { plunge: 1, duration: 2.0, ease: 'power1.inOut' }, 0.9);
+      ft({ cut: 0 }, { cut: 1, duration: 0.15 }, 1.05);
+      ft({ cut: 1 }, { cut: 0, duration: 0.3 }, 2.9);
+      ft({ shake: 0 }, { shake: 1, duration: 0.15 }, 1.05);
+      ft({ shake: 1 }, { shake: 0, duration: 0.3 }, 2.9);
+      ft({ heat: 0 }, { heat: 1, duration: 1.0 }, 1.1);
+      ft({ heat: 1 }, { heat: 0.15, duration: 1.4 }, 3.0);
+      ft({ hole: 0 }, { hole: 1, duration: 0.05 }, 1.1);
+      ft({ plunge: 1 }, { plunge: 0, duration: 1.0, ease: 'power2.inOut' }, 2.95);
+      ft({ block: 1 }, { block: 0, duration: 0.9, ease: 'power2.in' }, 4.1);
+      ft({ cDim: 0 }, { cDim: 1, duration: 0.6 }, 5.0);
+      tl.to({}, { duration: 0.6 }, 5.6);
     }
     if (k === 2) {
-      // Uç çevirme: körelmiş kenar → vidalar sökülür → uçlar fırlar → 90° döner → oturur → sıkılır
-      tl.to(S, { wear: 1, cIns: 1, duration: 0.4 }, 0);
-      tl.to(S, { screw0: 1, duration: 1.0, ease: 'power1.inOut' }, 0.4).to(S, { screw1: 1, duration: 1.0, ease: 'power1.inOut' }, 0.55);
-      tl.to(S, { lift0: 1, duration: 0.7, ease: 'power2.out' }, 1.35).to(S, { lift1: 1, duration: 0.7, ease: 'power2.out' }, 1.45);
-      tl.to(S, { idx0: S.idx0 + 0.25, idx1: S.idx1 + 0.25, duration: 1.0, ease: 'power2.inOut' }, 2.0);
-      tl.to(S, { wear: 0, duration: 0.3 }, 2.35);
-      tl.to(S, { lift0: 0, lift1: 0, duration: 0.5, ease: 'power3.in' }, 3.1);
-      tl.to(S, { flash: 1, duration: 0.05 }, 3.6).to(S, { flash: 0, duration: 0.5 }, 3.65);
-      tl.to(S, { screw0: 0, screw1: 0, duration: 0.9, ease: 'power1.inOut' }, 3.7);
+      const i0 = Math.round(S.idx0 * 4) / 4, i1 = Math.round(S.idx1 * 4) / 4;
+      ft({ wear: 0, cIns: 0 }, { wear: 1, cIns: 1, duration: 0.4 }, 0);
+      ft({ screw0: 0 }, { screw0: 1, duration: 1.0, ease: 'power1.inOut' }, 0.4);
+      ft({ screw1: 0 }, { screw1: 1, duration: 1.0, ease: 'power1.inOut' }, 0.55);
+      ft({ lift0: 0 }, { lift0: 1, duration: 0.7, ease: 'power2.out' }, 1.35);
+      ft({ lift1: 0 }, { lift1: 1, duration: 0.7, ease: 'power2.out' }, 1.45);
+      ft({ idx0: i0, idx1: i1 }, { idx0: i0 + 0.25, idx1: i1 + 0.25, duration: 1.0, ease: 'power2.inOut' }, 2.0);
+      ft({ wear: 1 }, { wear: 0, duration: 0.3 }, 2.35);
+      ft({ lift0: 1, lift1: 1 }, { lift0: 0, lift1: 0, duration: 0.5, ease: 'power3.in' }, 3.1);
+      ft({ flash: 0 }, { flash: 1, duration: 0.05 }, 3.6);
+      ft({ flash: 1 }, { flash: 0, duration: 0.5 }, 3.65);
+      ft({ screw0: 1, screw1: 1 }, { screw0: 0, screw1: 0, duration: 0.9, ease: 'power1.inOut' }, 3.7);
       tl.to({}, { duration: 0.4 }, 4.6);
     }
     if (k === 3) {
-      tl.to(S, { coolant: 1, duration: 0.4 }, 0);
-      tl.fromTo(S, { jet: 0 }, { jet: 1, duration: 1.0, ease: 'power2.out', immediateRender: false }, 0);
-      tl.to(S, { cCool: 1, duration: 0.6 }, 0.6);
+      ft({ coolant: 0 }, { coolant: 1, duration: 0.4 }, 0);
+      ft({ jet: 0 }, { jet: 1, duration: 1.0, ease: 'power2.out' }, 0);
+      ft({ cCool: 0 }, { cCool: 1, duration: 0.6 }, 0.6);
       tl.to({}, { duration: 1.4 }, 1.2);
     }
     if (k === 4) {
-      tl.to(S, { lift0: 0.7, duration: 0.8, ease: 'power2.out' }, 0).to(S, { lift1: 0.7, duration: 0.8, ease: 'power2.out' }, 0.1);
+      ft({ lift0: 0 }, { lift0: 0.7, duration: 0.8, ease: 'power2.out' }, 0);
+      ft({ lift1: 0 }, { lift1: 0.7, duration: 0.8, ease: 'power2.out' }, 0.1);
       tl.to({}, { duration: 1.5 }, 0.9);
     }
     act = tl;
@@ -287,11 +294,17 @@ export async function startShowcase(
     const tl = gsap.timeline();
     seq = tl;
     // Önceki bölümden kalan efektleri toparla
-    tl.to(S, { cut: 0, shake: 0, coolant: 0, jet: 0, cDim: 0, cIns: 0, cCool: 0, wear: 0, flash: 0, duration: 0.3, ease: 'power2.out' }, 0);
-    tl.to(S, { heat: 0, duration: 0.8 }, 0);
-    tl.to(S, { turns: Math.round(S.turns), duration: 0.7, ease: 'power3.out' }, 0);
-    if (k !== 1) tl.to(S, { block: 0, plunge: 0, hole: 0, duration: 0.55, ease: 'power2.in' }, 0);
-    if (k !== 2 && k !== 4) tl.to(S, { lift0: 0, lift1: 0, screw0: 0, screw1: 0, duration: 0.5, ease: 'power3.inOut' }, 0);
+    // Önceki bölümden kalan efektleri toparla (yeni bölümün aksiyonu kendi değerlerini fromTo ile verir)
+    const own: Record<number, string[]> = {
+      1: ['block', 'plunge', 'cut', 'shake', 'heat', 'hole', 'turns', 'cDim'],
+      2: ['wear', 'cIns', 'screw0', 'screw1', 'lift0', 'lift1', 'idx0', 'idx1', 'flash'],
+      3: ['coolant', 'jet', 'cCool'],
+      4: ['lift0', 'lift1'],
+    };
+    const reset: Record<string, number> = { cut: 0, shake: 0, coolant: 0, jet: 0, cDim: 0, cIns: 0, cCool: 0, wear: 0, flash: 0, heat: 0, block: 0, plunge: 0, hole: 0, lift0: 0, lift1: 0, screw0: 0, screw1: 0 };
+    for (const key of own[k] ?? []) delete reset[key];
+    tl.to(S, { ...reset, duration: 0.45, ease: 'power2.out' }, 0);
+    if (k !== 1) tl.to(S, { turns: Math.round(S.turns), duration: 0.8, ease: 'power3.out' }, 0);
     // Kamera hareketi: hızlı, kararlı, hafif "nefes"
     tl.to(S, { ...P, duration: 2.1, ease: 'power3.inOut' }, 0);
     if (!calm) tl.to(S, { camZ: -0.22, duration: 1.0, ease: 'sine.inOut' }, 0).to(S, { camZ: 0, duration: 1.3, ease: 'sine.inOut' }, 1.0);
@@ -315,10 +328,10 @@ export async function startShowcase(
       if (k !== chapter) {
         const dir = k > chapter ? 1 : -1;
         chapter = k;
+        L = Ltarget; // yeni bölüm kendi başından (ya da geri gelişte sonundan) başlar
+        dimOn = false;
         enter(k, dir);
       }
-      const vv = self.getVelocity();
-      velOff = THREE.MathUtils.clamp(vv / 2600, -1, 1);
       if (hudBar) hudBar.style.transform = `scaleX(${progress})`;
       if (hint) hint.style.opacity = progress > 0.01 ? '0' : '';
     },
@@ -380,21 +393,26 @@ export async function startShowcase(
 
   function apply(dt: number) {
     const k = intro.k;
-    L += (Ltarget - L) * Math.min(1, dt * 2.6);
+    L += (Ltarget - L) * Math.min(1, dt * 4);
     if (act) act.progress(THREE.MathUtils.clamp((L - 0.04) / 0.86, 0, 1));
     pointer.x += (pointer.tx - pointer.x) * Math.min(1, dt * 3);
     pointer.y += (pointer.ty - pointer.y) * Math.min(1, dt * 3);
-    velOff *= Math.pow(0.04, dt);
 
     // Bölüm içi kaydırma hareketi
     let dRy = 0, dRx = 0, dSpin = 0;
     const c = chapter;
-    if (c === 0) { dRy = L * 0.5; dSpin = L * 1.2; }
-    else if (c === 1) { dRy = (L - 0.5) * 0.25; }
-    else if (c === 2) { dRy = (L - 0.5) * 0.45; dRx = (L - 0.5) * 0.12; }
-    else if (c === 3) { dRy = (L - 0.5) * 0.5; }
-    else if (c === 4) { dRy = (L - 0.5) * 0.4; }
-    else if (c === 5) { dRy = L * 0.4; dSpin = L * 0.8; }
+    const bump = Math.sin(Math.PI * THREE.MathUtils.clamp(L, 0, 1)); // 0 → 1 → 0: bölüm sınırında süreklilik
+    if (c === 0) { dRy = bump * 0.28; dSpin = bump * 0.7; }
+    else if (c === 1) { dRy = bump * 0.12; }
+    else if (c === 2) { dRy = bump * 0.22; dRx = bump * 0.06; }
+    else if (c === 3) { dRy = bump * 0.25; }
+    else if (c === 4) { dRy = bump * 0.2; }
+    else if (c === 5) { dRy = bump * 0.22; dSpin = bump * 0.5; }
+    // 2. bölüm sonunda ölçü pozu: eşik geçilince zamanla yumuşak geçiş (kaydırma geri gelirse geri döner)
+    if (c === 1 && !calm) {
+      if (L > 0.72 && !dimOn) { dimOn = true; gsap.to(S, { ...dimPose(), duration: 1.6, ease: 'power3.inOut', overwrite: 'auto' }); }
+      else if (L < 0.66 && dimOn) { dimOn = false; gsap.to(S, { ...poses()[1], duration: 1.6, ease: 'power3.inOut', overwrite: 'auto' }); }
+    }
     const idle = (c === 0 || c === 5) && !opts.poster && !calm ? 1 : 0;
     const wob = Math.sin(elapsed * 0.45) * 0.22 * idle;
 
@@ -402,7 +420,7 @@ export async function startShowcase(
     pivot.position.set((S.px * visW) / 2, (S.py * visH) / 2 - k * 0.35 + (idle ? Math.sin(elapsed * 0.9) * 0.012 : 0), 0);
     pivot.scale.setScalar(S.scale * base * (1 - k * 0.45));
     focus.position.x = -S.focus * 0.01;
-    drill.root.rotation.x = S.spin + S.turns * TAU + dSpin + wob + velOff * 0.45 - k * 3.4;
+    drill.root.rotation.x = S.spin + S.turns * TAU + dSpin + wob - k * 3.4;
     drill.root.position.x = S.plunge * 0.32;
 
     // Kamera: yakınlaşma nefesi + titreşim
