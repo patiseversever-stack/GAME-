@@ -30,7 +30,7 @@
 
 /* Ölçü çizgileri ve etiketler */
 .callouts { position: absolute; inset: 0; pointer-events: none; z-index: 3; }
-.callouts svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.callouts > svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
 .dimline { stroke: var(--tin); stroke-width: 1; fill: none; }
 .dimline-tick { stroke: var(--tin); stroke-width: 1; }
 .dimlabel {
@@ -39,21 +39,53 @@
   background: rgba(11, 12, 14, 0.8); padding: 5px 8px; border: 1px solid rgba(217, 164, 65, 0.4); border-radius: 4px;
   white-space: nowrap; will-change: transform, opacity;
 }
-.pin {
-  position: absolute; left: 0; top: 0; will-change: transform, opacity;
-  display: flex; align-items: center; gap: 10px;
-  font: 500 11px/1.25 var(--f-mono); letter-spacing: 0.05em; color: var(--g-100); white-space: nowrap;
+.pin { position: absolute; left: 0; top: 0; width: 0; height: 0; will-change: transform; pointer-events: none; }
+.pin__dot {
+  position: absolute; left: -6px; top: -6px; width: 12px; height: 12px; border-radius: 50%;
+  background: radial-gradient(circle, #fff3cf 0 22%, var(--tin) 30% 58%, transparent 62%);
+  box-shadow: 0 0 18px 2px rgba(217, 164, 65, 0.55);
+  transform: scale(0); transition: transform 500ms var(--ease-out);
 }
-.pin::before {
-  content: ''; width: 9px; height: 9px; border-radius: 50%; flex: none;
-  background: var(--tin); box-shadow: 0 0 0 4px rgba(217, 164, 65, 0.22), 0 0 18px rgba(217, 164, 65, 0.7);
-  transform: translateX(-4.5px);
+.pin__dot::before, .pin__dot::after {
+  content: ''; position: absolute; inset: -7px; border-radius: 50%; border: 1px solid rgba(217, 164, 65, 0.65);
+  animation: pinPulse 2.2s var(--ease-out) infinite; opacity: 0;
 }
-.pin span { display: block; padding: 6px 10px; border-left: 1px solid var(--tin); background: linear-gradient(90deg, rgba(11, 12, 14, 0.85), rgba(11, 12, 14, 0.3)); }
-.pin small { display: block; color: var(--g-400); font-size: 10px; margin-top: 2px; }
-.pin--left { flex-direction: row-reverse; }
-.pin--left::before { transform: translateX(4.5px); }
-.pin--left span { border-left: 0; border-right: 1px solid var(--tin); text-align: right; background: linear-gradient(270deg, rgba(11, 12, 14, 0.85), rgba(11, 12, 14, 0.3)); }
+.pin__dot::after { animation-delay: 1.1s; }
+@keyframes pinPulse { 0% { transform: scale(0.4); opacity: 0.9; } 100% { transform: scale(2.4); opacity: 0; } }
+.pin__lead { position: absolute; left: 0; top: 0; width: 1px; height: 1px; max-width: none; overflow: visible; }
+.pin__lead path { fill: none; stroke: var(--tin); stroke-width: 1.2; stroke-dasharray: 1; stroke-dashoffset: 1; transition: stroke-dashoffset 650ms var(--ease-io) 120ms; filter: drop-shadow(0 0 4px rgba(217, 164, 65, 0.5)); }
+/* Kartın yeri ve çizginin yolu her karede betikle hesaplanır (çakışmayı önlemek için) */
+.pin__card {
+  position: absolute; left: 0; top: 0; will-change: transform;
+  display: flex; align-items: stretch; gap: 0; white-space: nowrap;
+  background: linear-gradient(135deg, rgba(28, 31, 36, 0.9), rgba(11, 12, 14, 0.82));
+  border: 1px solid rgba(217, 164, 65, 0.35); border-radius: 10px;
+  box-shadow: 0 18px 40px -18px rgba(0, 0, 0, 0.9), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  clip-path: inset(0 100% 0 0 round 10px); opacity: 0;
+  transition: clip-path 600ms var(--ease-out) 520ms, opacity 200ms linear 520ms;
+}
+.pin__num { display: grid; place-items: center; padding: 0 10px; font: 600 11px/1 var(--f-mono); color: var(--tin-ink); background: var(--tin); border-radius: 9px 0 0 9px; letter-spacing: 0.04em; }
+.pin__txt { display: grid; gap: 3px; padding: 9px 14px 9px 12px; }
+.pin__txt b { font: 600 13.5px/1.1 var(--f-display); color: var(--g-50); letter-spacing: -0.005em; }
+.pin__txt small { font: 500 10.5px/1.2 var(--f-mono); color: var(--g-400); letter-spacing: 0.04em; }
+.pin.is-on .pin__dot { transform: scale(1); }
+.pin.is-on .pin__lead path { stroke-dashoffset: 0; }
+.pin.is-on .pin__card { clip-path: inset(0 0 0 0 round 10px); opacity: 1; }
+.pin:not(.is-on) .pin__card { transition: clip-path 300ms var(--ease-io), opacity 200ms linear 100ms; }
+.pin:not(.is-on) .pin__lead path { transition: stroke-dashoffset 300ms var(--ease-io) 150ms; }
+/* Sol tarafa açılan etiket: kart aynalanır */
+.pin--left .pin__card { flex-direction: row-reverse; clip-path: inset(0 0 0 100% round 10px); }
+.pin--left .pin__num { border-radius: 0 9px 9px 0; }
+.pin--left .pin__txt { text-align: right; padding: 9px 12px 9px 14px; }
+.pin--left.is-on .pin__card { clip-path: inset(0 0 0 0 round 10px); }
+.dimlabel { font: 600 11px/1 var(--f-mono); letter-spacing: 0.06em; padding: 6px 10px; border-radius: 6px; color: var(--tin-ink); background: var(--tin); border: 0; box-shadow: 0 8px 24px -10px rgba(217, 164, 65, 0.7); }
+@media (max-width: 860px) {
+  .pin__txt b { font-size: 12px; }
+  .pin__txt small { font-size: 9.5px; }
+  .pin__txt { padding: 7px 10px; }
+  .pin__num { padding: 0 8px; font-size: 10px; }
+}
 
 /* Bölüm metinleri */
 .chapter {
@@ -84,6 +116,14 @@
 .coat-chips li i { width: 16px; height: 16px; border-radius: 50%; background: var(--c); box-shadow: inset 0 -3px 6px rgba(0, 0, 0, 0.35); }
 .coat-chips li.is-on { border-color: var(--tin); color: var(--g-50); }
 
+/* Masaüstü: metin arkasında yumuşak karanlık (model arkadan geçse de okunur) */
+@media (min-width: 861px) {
+  .chapter[data-side='left']::before, .chapter[data-side='right']::before, .chapter[data-side='hero']::before {
+    content: ''; position: absolute; inset: -18% -28% -18% -40%; z-index: -1; pointer-events: none;
+    background: radial-gradient(closest-side, rgba(11, 12, 14, 0.78), rgba(11, 12, 14, 0.45) 55%, transparent);
+  }
+  .chapter[data-side='right']::before { inset: -18% -40% -18% -28%; }
+}
 /* Satır animasyonu için başlık parçaları */
 .chapter .ln { display: block; overflow: hidden; padding-bottom: 0.06em; }
 .chapter .ln > span { display: inline-block; will-change: transform; }
@@ -124,8 +164,6 @@
   .hud__bar { width: 64px; }
   .hud__name { display: none; }
   .scroll-hint, .showcase__side { display: none; }
-  .pin { font-size: 10px; }
-  .pin small { display: none; }
   .dimlabel { font-size: 10px; }
 }
 
