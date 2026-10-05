@@ -90,13 +90,13 @@ const schema = breadcrumbSchema(
         </dl>
       </div>
 
-      <nav class="cquick" aria-label="Ürün grupları">
+      <div class="cquick" role="group" aria-label="Ürün grubuna göre süz">
         {categories.map((c) => (
           <button type="button" class="cquick__btn" data-f="cat" data-v={c.slug} data-label={c.name} aria-pressed="false">
             {c.name}<span data-n>{countCat(c.slug)}</span>
           </button>
         ))}
-      </nav>
+      </div>
     </div>
   </section>
 
@@ -195,7 +195,7 @@ const schema = breadcrumbSchema(
         <div class="ctool__search">
           <Icon name="search" />
           <label class="sr-only" for="katalog-ara">Katalogda ara</label>
-          <input id="katalog-ara" type="search" data-q placeholder="Kod veya ürün: CNMG, elmas uç, klavuz…" data-ph-short="Kod ara: CNMG, klavuz…" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" />
+          <input id="katalog-ara" type="search" data-q placeholder="Kod veya ürün: CNMG, elmas uç, klavuz…" data-ph-short="Kod veya ürün ara" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" />
           <button class="ctool__clear" type="button" data-q-clear aria-label="Aramayı temizle" hidden><Icon name="close" /></button>
         </div>
         <p class="ctool__count" data-count-live aria-live="polite" aria-atomic="true"><b data-count>{total}</b> <span>ürün</span></p>
