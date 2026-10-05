@@ -21,7 +21,7 @@ const TAU = Math.PI * 2;
 
 const DESKTOP: Pose[] = [
   { rx: 0.3, ry: -0.9, rz: 0.45, px: 0.36, py: 0.14, scale: 1.15, focus: CENTER, spin: -0.5 },
-  { rx: 0.2, ry: 0.5, rz: 0.06, px: 0.16, py: -0.02, scale: 1.0, focus: 22, spin: -0.75 },
+  { rx: 0.2, ry: 0.5, rz: 0.06, px: 0.3, py: -0.04, scale: 0.92, focus: 22, spin: -0.75 },
   { rx: 0.28, ry: -1.0, rz: 0.12, px: -0.3, py: 0.02, scale: 2.5, focus: 46, spin: -0.15 },
   { rx: 0.22, ry: -0.6, rz: 0.12, px: 0.06, py: 0.02, scale: 1.75, focus: 30, spin: -0.35 },
   { rx: 0.42, ry: -0.75, rz: 0.22, px: -0.36, py: 0.04, scale: 2.5, focus: 50, spin: -0.2 },
@@ -434,7 +434,7 @@ export async function startShowcase(
 
     scene.updateMatrixWorld();
     coolant.update(dt, S.coolant, S.jet);
-    mach.update(dt, S, focus, 0);
+    mach.update(dt, S, focus, drill.root.rotation.x);
 
     // Etiketler
     for (const d of dims) {
@@ -504,7 +504,7 @@ export async function startShowcase(
   if (chapter > 0) { Object.assign(S, poses()[chapter]); showPanel(chapter, 1); }
 
   if (new URLSearchParams(location.search).has('debug')) {
-    Object.assign(window as any, { __S: S, __intro: intro, __mats: drill.materials, __renderer: renderer, __frame: frame, __enter: enter });
+    Object.assign(window as any, { __S: S, __intro: intro, __mats: drill.materials, __renderer: renderer, __frame: frame, __enter: enter, __mach: mach, __camera: camera });
   }
   frame();
   opts.onProgress?.(1);

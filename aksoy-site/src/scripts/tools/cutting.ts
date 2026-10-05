@@ -65,8 +65,9 @@ function init(root: HTMLElement) {
   /** Öneri çubuğundaki işaret: gerçekte uygulanan kesme hızı (tezgâh sınırı dahil). */
   function currentVc(): number {
     const out = state.last;
+    const limited = !!out?.results[0].badge;
+    if (state.mode[state.op] === 'vc2n' && !limited) return parseNum(inputOf(state.op, 'vc').value);
     if (out && out.vcEff > 0) return out.vcEff;
-    if (state.mode[state.op] === 'vc2n') return parseNum(inputOf(state.op, 'vc').value);
     return out ? out.results[0].value : NaN;
   }
 
