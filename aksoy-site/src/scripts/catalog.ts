@@ -40,15 +40,17 @@ function terms(q: string) {
    Katalog süzme
    -------------------------------------------------------------------------- */
 type Facet = 'cat' | 'brand' | 'iso' | 'shape';
-interface Item { el: HTMLElement; cat: string; sub: string; brands: string[]; iso: string[]; shape: string; hay: string; code: string }
+interface Item { el: HTMLElement; idx: number; cat: string; sub: string; brands: string[]; iso: string[]; shape: string; hay: string; head: string; code: string }
 interface State { cat: string; sub: string; brand: Set<string>; iso: Set<string>; shape: Set<string>; q: string }
 
 function initCatalog(root: HTMLElement) {
   const $ = <T extends Element = HTMLElement>(s: string, el: ParentNode = document) => el.querySelector<T>(s);
   const $$ = <T extends Element = HTMLElement>(s: string, el: ParentNode = document) => [...el.querySelectorAll<T>(s)];
 
-  const items: Item[] = $$('[data-item]', root).map((el) => ({
+  const items: Item[] = $$('[data-item]', root).map((el, idx) => ({
     el,
+    idx,
+    head: ` ${norm(`${el.dataset.code ?? ''} ${el.querySelector('.pcard__name')?.textContent ?? ''}`)}`,
     cat: el.dataset.cat ?? '',
     sub: el.dataset.sub ?? '',
     brands: (el.dataset.brands ?? '').split(' ').filter(Boolean),
@@ -135,6 +137,19 @@ function initCatalog(root: HTMLElement) {
     // Her terim bir kelimenin başında geçmeli: "uc" → "uç" eşleşir, "buc…" eşleşmez
     return qTerms.every((t) => it.hay.includes(` ${t}`));
   };
+  /** Sorgu varken alaka sırası: kod başı > kod içi > ad/kodda tüm terimler > yalnızca anahtar kelime */
+  const rank = (it: Item) =>
+    (qCompact.length >= 2 && it.code.startsWith(qCompact) ? 4 : qCompact.length >= 2 && it.code.includes(qCompact) ? 3 : 0) +
+    (qTerms.length && qTerms.every((t) => it.head.includes(` ${t}`)) ? 2 : 0);
+  let lastOrder = items.map((i) => i.idx).join(',');
+  function reorder() {
+    const ranked = qTerms.length ? [...items].sort((a, b) => rank(b) - rank(a) || a.idx - b.idx) : items;
+    const key = ranked.map((i) => i.idx).join(',');
+    if (key === lastOrder) return;
+    lastOrder = key;
+    grid.append(...ranked.map((i) => i.el));
+  }
+
   function test(it: Item, skip?: Facet) {
     if (skip !== 'cat') {
       if (st.sub && it.sub !== st.sub) return false;
@@ -188,6 +203,7 @@ function initCatalog(root: HTMLElement) {
     }
     $$('[data-sub-of]').forEach((ul) => { ul.hidden = ul.dataset.subOf !== st.cat; });
 
+    reorder();
     counts.forEach((el) => (el.textContent = String(n)));
     const ac = activeCount();
     if (fcount) { fcount.textContent = String(ac); fcount.hidden = ac === 0; }
