@@ -152,7 +152,7 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
     if (ttl) ttl.textContent = profile.equipped('title').name;
   };
   // çerçeveler menü sakinken arka planda boyanır (IndexedDB'ye yazılır): Ödüller ve Çarşı anında dolu açılır
-  const warm = setTimeout(() => FRAME_IDS.forEach((id) => frameURL(id)), 5000);
+  const warm = setTimeout(() => FRAME_IDS.forEach((id) => frameURL(id, false)), 2500);
   const offProfile = profile.onChange((ev) => (ev?.equip || ev?.grant || ev?.ad || ev?.adopt) && paintCapsule());
   audio.setMusicWanted?.(true, 'menu'); // menüde ney ve ud taksimi (ilk dokunuşta başlar)
   setHubData({ e: profile, h: prog, u: goals, p: pname, Ra: ACHIEVEMENTS, av: avatarSVG(roster) });
@@ -193,7 +193,7 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
     destroy() {
       offProfile();
       clearTimeout(warm);
-      document.querySelector('.bz')?.remove();
+      document.querySelector('.bz2')?.remove();
       menu3d?.destroy();
       root.remove();
       if (current?.root === root) current = null;

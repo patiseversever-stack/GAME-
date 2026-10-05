@@ -1421,7 +1421,6 @@ function feather(x, x0, y0, x1, y1, bendv, w, seed) {
 const VER = 'fr2';
 const urls = new Map();
 const jobs = new Map();
-let queue = Promise.resolve();
 
 export const frameURLSync = (id) => urls.get(id) || null;
 export const FRAME_IDS = Object.keys(DESIGNS);
@@ -1455,34 +1454,56 @@ async function paint(id) {
 }
 const toBlob = (c) => new Promise((res) => (c.toBlob ? c.toBlob((b) => res(b), 'image/png') : res(null)));
 
-// Çerçeve görselinin URL'si (önce bellek, sonra IndexedDB, yoksa boyanır). Boyamalar sırayla yapılır, ana iş parçacığı nefes alır.
-export function frameURL(id) {
+// Çerçeve görselinin URL'si (önce bellek, sonra IndexedDB, yoksa boyanır). Boyamalar tek tek yapılır, ana iş parçacığı
+// nefes alır. urgent: ekranda görünen çerçeve sıranın başına geçer; arka plan ısıtması (urgent=false) sona eklenir.
+const waitQ = [];
+let painting = false;
+async function pumpPaint() {
+  if (painting) return;
+  painting = true;
+  try {
+    while (waitQ.length) {
+      const job = waitQ.shift();
+      await idle();
+      try {
+        const c = await paint(job.id);
+        const b = await toBlob(c);
+        const u = b ? URL.createObjectURL(b) : c.toDataURL('image/png');
+        if (b) DB.put(`${VER}|${job.id}`, b);
+        urls.set(job.id, u);
+        job.resolve(u);
+      } catch (e) {
+        console.warn('[çerçeve] ' + job.id, e && e.message);
+        jobs.delete(job.id);
+        job.resolve(null);
+      }
+    }
+  } finally {
+    painting = false;
+  }
+}
+export function frameURL(id, urgent = true) {
   if (!DESIGNS[id]) return Promise.resolve(null);
   if (urls.has(id)) return Promise.resolve(urls.get(id));
-  if (jobs.has(id)) return jobs.get(id);
-  const job = (async () => {
-    const hit = await DB.get(`${VER}|${id}`);
-    if (hit) {
-      const u = URL.createObjectURL(hit);
-      urls.set(id, u);
-      return u;
-    }
-    const run = queue.then(async () => {
-      await idle();
-      const c = await paint(id);
-      const b = await toBlob(c);
-      const u = b ? URL.createObjectURL(b) : c.toDataURL('image/png');
-      if (b) DB.put(`${VER}|${id}`, b);
-      urls.set(id, u);
-      return u;
-    });
-    queue = run.catch(() => {});
-    return run;
-  })().catch((e) => {
-    console.warn('[çerçeve] ' + id, e && e.message);
-    jobs.delete(id);
-    return null;
-  });
+  if (jobs.has(id)) {
+    // zaten sırada: acilse öne al
+    const i = urgent ? waitQ.findIndex((j) => j.id === id) : -1;
+    if (i > 0) waitQ.unshift(waitQ.splice(i, 1)[0]);
+    return jobs.get(id);
+  }
+  const job = DB.get(`${VER}|${id}`).then(
+    (hit) =>
+      new Promise((resolve) => {
+        if (hit) {
+          const u = URL.createObjectURL(hit);
+          urls.set(id, u);
+          return resolve(u);
+        }
+        const j = { id, resolve };
+        urgent ? waitQ.unshift(j) : waitQ.push(j);
+        pumpPaint();
+      }),
+  );
   jobs.set(id, job);
   return job;
 }

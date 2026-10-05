@@ -317,9 +317,9 @@ export class Celebration {
     }
     const n = o.calm ? 0.45 : 1;
     const k = this.k;
-    for (let i = 0; i < Math.round(64 * n); i++) {
+    for (let i = 0; i < Math.round(46 * n); i++) {
       const a = Math.random() * Math.PI * 2,
-        v = (220 + Math.random() * 420) * k;
+        v = (200 + Math.random() * 380) * k;
       const star = Math.random() < 0.5;
       this.ps.push({ kind: star ? 'star' : 'tulip', x: cx, y: cy, vx: Math.cos(a) * v, vy: Math.sin(a) * v - 120 * k, drag: 1.6, s: (star ? 9 + Math.random() * 9 : 13 + Math.random() * 10) * k, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 5, ph: Math.random() * 6.3, col: star ? ['#fff3c4', '#d9a33c'] : TULIP_COLS[(Math.random() * TULIP_COLS.length) | 0], life: 0, max: 2.4 + Math.random(), g: 260 });
     }
@@ -390,6 +390,132 @@ export class Celebration {
       this.ps.push({ kind: 'flash', x: p.x, y: p.y, life: 0, max: 0.35, s: 60 * k, vx: 0, vy: 0, g: 0, rot: 0, vr: 0 });
     };
   }
+  // altın varak: tırtıklı ince yapraklar, döndükçe ışığı yakalar (yüz açısına göre koyu altından beyaz altına)
+  _varak(n, later) {
+    const { W, H, k } = this;
+    const flake = () => {
+      const pts = [];
+      const m = 7 + ((Math.random() * 4) | 0);
+      for (let i = 0; i < m; i++) {
+        const a = (i / m) * Math.PI * 2;
+        const r = 0.32 + Math.random() * 0.22;
+        pts.push([Math.cos(a) * r, Math.sin(a) * r * (0.6 + Math.random() * 0.5)]);
+      }
+      return pts;
+    };
+    // önce merkezden hafif bir püskürme, ardından yukarıdan süzülme
+    for (let i = 0; i < Math.round(36 * n); i++) {
+      const a = -Math.PI / 2 + (Math.random() - 0.5) * 2.4,
+        v = (160 + Math.random() * 300) * k;
+      this.ps.push({ kind: 'leaf', pts: flake(), x: W / 2, y: H * 0.62, vx: Math.cos(a) * v, vy: Math.sin(a) * v, drag: 2.2, s: (10 + Math.random() * 12) * k, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 3, flip: Math.random() * 6.3, vf: 2 + Math.random() * 3, sway: 0.8 + Math.random(), ph: Math.random() * 6.3, life: 0, max: 5.5, g: 70 });
+    }
+    this._rain(Math.round(60 * n), 2800, () => ({ kind: 'leaf', pts: flake(), x: Math.random() * W, y: -20, vx: (Math.random() - 0.5) * 20, vy: 30 + Math.random() * 40, s: (8 + Math.random() * 12) * k, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 2, flip: Math.random() * 6.3, vf: 1.5 + Math.random() * 2.5, sway: 1 + Math.random() * 1.5, ph: Math.random() * 6.3, life: 0, max: 7, g: 0 }), later);
+  }
+  // dilek fenerleri: aşağıdan süzülerek yükselir, sıcak ışık saçar; uzaktakiler küçük ve soluk (derinlik)
+  _fener(n, later) {
+    const { W, H, k } = this;
+    this._rain(Math.round(16 * Math.max(0.6, n)), 2600, () => {
+      const z = 0.45 + Math.random() * 0.55;
+      return { kind: 'lantern', z, x: W * (0.08 + Math.random() * 0.84), y: H + 30, vx: (Math.random() - 0.5) * 10, vy: -(26 + 34 * z) * k, s: (16 + 16 * z) * k, rot: 0, vr: 0, sway: 0.6 + Math.random() * 0.6, ph: Math.random() * 6.3, life: 0, max: 7.5, g: 0, fl: Math.random() * 6.3 };
+    }, later);
+    this._rain(Math.round(30 * n), 3200, () => ({ kind: 'ember2', x: W * Math.random(), y: H + 4, vx: (Math.random() - 0.5) * 16, vy: -(30 + Math.random() * 50), s: (1 + Math.random() * 1.6) * k, rot: 0, vr: 0, sway: 1.5, ph: Math.random() * 6.3, life: 0, max: 4 + Math.random() * 2, g: 0 }), later);
+  }
+  // yıldız kayması: uzun ışık kuyruklu göktaşları ve göz kırpan yıldızlar
+  _yildiz(n, later) {
+    const { W, H, k } = this;
+    for (let i = 0; i < Math.round(36 * n); i++) later(Math.random() * 2400, () => this.ps.push({ kind: 'twinkle', x: Math.random() * W, y: Math.random() * H * 0.85, s: (1.5 + Math.random() * 3) * k, rot: 0, vr: 0, vx: 0, vy: 0, g: 0, life: 0, max: 2 + Math.random() * 2 }));
+    const shots = Math.round(9 * Math.max(0.5, n));
+    for (let i = 0; i < shots; i++)
+      later(150 + i * 300 + Math.random() * 120, () => {
+        const a = Math.PI * (0.18 + Math.random() * 0.14) * (Math.random() < 0.5 ? 1 : -1) + (Math.random() < 0.5 ? 0 : Math.PI);
+        const sp = (620 + Math.random() * 420) * k;
+        const dir = Math.cos(a) >= 0 ? 1 : -1;
+        this.ps.push({ kind: 'meteor', x: dir > 0 ? -40 + Math.random() * W * 0.5 : W * 0.5 + Math.random() * W * 0.5 + 40, y: -20 + Math.random() * H * 0.35, vx: Math.abs(Math.cos(a)) * sp * dir, vy: Math.abs(Math.sin(a)) * sp, s: (2 + Math.random() * 1.4) * k, len: (90 + Math.random() * 90) * k, rot: 0, vr: 0, g: 0, life: 0, max: 1.1 + Math.random() * 0.4 });
+      });
+  }
+  // ebru damlaları: ekranda açılan iç içe mürekkep halkaları, hafifçe dalgalanır ve tarakla çekilir
+  _ebru(n, later) {
+    const { W, H, k } = this;
+    const PALS = [
+      ['#22366c', '#efe3c9', '#b55f66', '#efe3c9', '#cf9d45'],
+      ['#b55f66', '#f3dcd2', '#22366c', '#efe3c9', '#7d987a'],
+      ['#cf9d45', '#efe3c9', '#22366c', '#f6efe0', '#b55f66'],
+      ['#1f6f6a', '#efe3c9', '#cf9d45', '#efe3c9', '#22366c'],
+    ];
+    const count = Math.round(11 * Math.max(0.6, n));
+    for (let i = 0; i < count; i++)
+      later(i * 230, () => this.ps.push({ kind: 'ink', x: W * (0.1 + Math.random() * 0.8), y: H * (0.12 + Math.random() * 0.72), pal: PALS[i % PALS.length], R: (30 + Math.random() * 32) * k, seed: Math.random() * 100, comb: Math.random() < 0.5 ? (Math.random() - 0.5) * 2 : 0, s: 1, rot: 0, vr: 0, vx: 0, vy: 0, g: 0, life: 0, max: 3.4 }));
+  }
+  // kelebekler: dalgalı yollarla yükselir, kanat çırpar; morfo mavisi, monark turuncusu, beyaz, firuze
+  _kelebek(n, later) {
+    const { W, H, k } = this;
+    const C = [
+      ['#3fa8ff', '#0b3a8f', '#ffffff'],
+      ['#ff9a2e', '#7a2c00', '#1b1208'],
+      ['#f6f2e8', '#b9b09a', '#3a3328'],
+      ['#2fd1c1', '#0b5c57', '#ffffff'],
+      ['#ff6aa2', '#7a0f3f', '#ffffff'],
+    ];
+    this._rain(Math.round(20 * Math.max(0.6, n)), 2600, () => ({ kind: 'fly', x: W * (0.1 + Math.random() * 0.8), y: H + 20, vx: (Math.random() - 0.5) * 60, vy: -(60 + Math.random() * 60) * k, s: (13 + Math.random() * 9) * k, col: C[(Math.random() * C.length) | 0], fr: 10 + Math.random() * 6, ph: Math.random() * 6.3, wob: 1.2 + Math.random(), rot: 0, vr: 0, g: 0, life: 0, max: 6 }), later);
+  }
+  // çini mozaik: karolar kenarlardan gelip merkez çevresinde halka olur, döner, sonra dağılır
+  _mozaik(n, later) {
+    const { W, H, k } = this;
+    const N = Math.round(20 * Math.max(0.6, n));
+    const R0 = Math.min(W, H) * 0.34;
+    const cx = W / 2,
+      cy = H / 2;
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * Math.PI * 2;
+      const fromA = Math.random() * Math.PI * 2,
+        fr = Math.max(W, H) * 0.75;
+      const p = { kind: 'tile', x: cx + Math.cos(fromA) * fr, y: cy + Math.sin(fromA) * fr, sx: 0, sy: 0, a, i, s: (20 + (i % 3) * 3) * k, rot: Math.random() * 6, vr: 0, flip: 0, vx: 0, vy: 0, g: 0, life: 0, max: 3.6, motif: i % 3 };
+      p.sx = p.x;
+      p.sy = p.y;
+      p.upd = (q, dt) => {
+        const t = q.life;
+        const spin = Math.max(0, t - 0.9) * 1.4;
+        const tx = cx + Math.cos(q.a + spin) * R0,
+          ty = cy + Math.sin(q.a + spin) * R0 * 0.82;
+        if (t < 0.9) {
+          const e = 1 - Math.pow(1 - t / 0.9, 3);
+          q.x = q.sx + (tx - q.sx) * e;
+          q.y = q.sy + (ty - q.sy) * e;
+          q.rot += (q.a + Math.PI / 2 - q.rot) * Math.min(1, dt * 6);
+          q.flip = (1 - e) * Math.PI * 2;
+        } else if (t < 2.1) {
+          q.x = tx;
+          q.y = ty;
+          q.rot = q.a + spin + Math.PI / 2;
+          q.flip = Math.sin((t - 0.9) * 3 + q.i) * 0.25;
+          if (!q.vx) {
+            const ox = Math.cos(q.a + spin),
+              oy = Math.sin(q.a + spin);
+            q.bx = ox;
+            q.by = oy;
+          }
+        } else {
+          if (!q.burst) {
+            q.burst = true;
+            const ox = q.x - cx,
+              oy = q.y - cy,
+              d = Math.hypot(ox, oy) || 1;
+            q.vx = (ox / d) * 420 * k;
+            q.vy = (oy / d) * 420 * k - 120 * k;
+            q.vr = (Math.random() - 0.5) * 8;
+          }
+          q.vy += 600 * dt;
+          q.x += q.vx * dt;
+          q.y += q.vy * dt;
+          q.rot += q.vr * dt;
+          q.flip += dt * 6;
+        }
+        return true;
+      };
+      later(i * 25, () => this.ps.push(p));
+    }
+    later(900, () => this.burstAt?.(cx, cy, { rain: false, calm: true }));
+  }
   _tick(now) {
     const dt = Math.min(0.04, (now - this.last) / 1000);
     this.last = now;
@@ -400,7 +526,9 @@ export class Celebration {
     for (const p of this.ps) {
       p.life += dt;
       if (p.life > p.max) continue;
-      if (p.kind === 'rocket') {
+      if (p.upd) {
+        p.upd(p, dt);
+      } else if (p.kind === 'rocket') {
         p.trail.push([p.x, p.y]);
         if (p.trail.length > 10) p.trail.shift();
         p.y += p.vy * dt;
@@ -464,6 +592,222 @@ export class Celebration {
         x.moveTo(0, 0.3);
         x.lineTo(0, -0.3);
         x.stroke();
+        break;
+      }
+      case 'leaf': {
+        x.rotate(p.rot);
+        const f = Math.cos(p.flip);
+        x.scale(s * (0.2 + 0.8 * Math.abs(f)), s);
+        const lit = Math.abs(Math.sin(p.flip * 0.5 + p.rot));
+        const g = x.createLinearGradient(-0.5, -0.5, 0.5, 0.5);
+        g.addColorStop(0, `rgb(${200 + 55 * lit | 0},${150 + 90 * lit | 0},${60 + 110 * lit | 0})`);
+        g.addColorStop(0.5, `rgb(${170 + 70 * lit | 0},${118 + 80 * lit | 0},${38 + 60 * lit | 0})`);
+        g.addColorStop(1, `rgb(${120 + 60 * lit | 0},${80 + 50 * lit | 0},${20 + 30 * lit | 0})`);
+        x.fillStyle = g;
+        x.beginPath();
+        p.pts.forEach(([a, b], i) => (i ? x.lineTo(a, b) : x.moveTo(a, b)));
+        x.closePath();
+        x.fill();
+        if (lit > 0.8) {
+          x.globalAlpha *= (lit - 0.8) * 4;
+          x.fillStyle = '#fffbe8';
+          x.fill();
+        }
+        break;
+      }
+      case 'lantern': {
+        const t = p.life,
+          z = p.z;
+        x.translate(Math.sin(t * p.sway + p.ph) * 6 * z, 0);
+        x.rotate(Math.sin(t * p.sway * 0.8 + p.ph) * 0.06);
+        const fl = 0.85 + 0.15 * Math.sin(t * 13 + p.fl) * Math.sin(t * 7.3 + p.fl * 2);
+        x.globalCompositeOperation = 'lighter';
+        const halo = x.createRadialGradient(0, 0, 0, 0, 0, s * 2.4);
+        halo.addColorStop(0, `rgba(255,170,70,${0.35 * fl * z})`);
+        halo.addColorStop(1, 'rgba(255,140,40,0)');
+        x.fillStyle = halo;
+        x.beginPath();
+        x.arc(0, 0, s * 2.4, 0, Math.PI * 2);
+        x.fill();
+        x.globalCompositeOperation = 'source-over';
+        const w = s * 0.62,
+          h = s;
+        const body = x.createLinearGradient(0, -h / 2, 0, h / 2);
+        body.addColorStop(0, `rgba(255,${200 + 40 * fl | 0},140,${0.92 * (0.6 + 0.4 * z)})`);
+        body.addColorStop(0.6, `rgba(255,150,60,${0.95 * (0.6 + 0.4 * z)})`);
+        body.addColorStop(1, `rgba(214,92,30,${0.95 * (0.6 + 0.4 * z)})`);
+        x.fillStyle = body;
+        x.beginPath();
+        x.moveTo(-w * 0.78, -h / 2);
+        x.quadraticCurveTo(0, -h * 0.62, w * 0.78, -h / 2);
+        x.lineTo(w * 0.52, h / 2);
+        x.quadraticCurveTo(0, h * 0.56, -w * 0.52, h / 2);
+        x.closePath();
+        x.fill();
+        x.strokeStyle = `rgba(160,60,20,${0.35 * z})`;
+        x.lineWidth = Math.max(0.6, s * 0.03);
+        for (const q of [-0.3, 0.3]) {
+          x.beginPath();
+          x.moveTo(w * q * 1.6, -h * 0.52);
+          x.lineTo(w * q, h * 0.5);
+          x.stroke();
+        }
+        const core = x.createRadialGradient(0, h * 0.34, 0, 0, h * 0.34, w * 0.5);
+        core.addColorStop(0, `rgba(255,255,220,${fl})`);
+        core.addColorStop(1, 'rgba(255,200,120,0)');
+        x.fillStyle = core;
+        x.beginPath();
+        x.arc(0, h * 0.34, w * 0.5, 0, Math.PI * 2);
+        x.fill();
+        break;
+      }
+      case 'ember2': {
+        x.globalCompositeOperation = 'lighter';
+        x.fillStyle = `rgba(255,${170 + Math.random() * 60 | 0},90,0.9)`;
+        x.beginPath();
+        x.arc(0, 0, s, 0, Math.PI * 2);
+        x.fill();
+        break;
+      }
+      case 'twinkle': {
+        const t = p.life / p.max;
+        const r = s * Math.sin(Math.PI * t) * (0.7 + 0.3 * Math.sin(p.life * 18));
+        x.globalCompositeOperation = 'lighter';
+        x.fillStyle = 'rgba(230,240,255,0.95)';
+        x.beginPath();
+        x.moveTo(0, -r * 2.2);
+        x.quadraticCurveTo(0, 0, r * 2.2, 0);
+        x.quadraticCurveTo(0, 0, 0, r * 2.2);
+        x.quadraticCurveTo(0, 0, -r * 2.2, 0);
+        x.quadraticCurveTo(0, 0, 0, -r * 2.2);
+        x.fill();
+        break;
+      }
+      case 'meteor': {
+        x.globalCompositeOperation = 'lighter';
+        const sp = Math.hypot(p.vx, p.vy) || 1;
+        const tx = (-p.vx / sp) * p.len,
+          ty = (-p.vy / sp) * p.len;
+        const g = x.createLinearGradient(0, 0, tx, ty);
+        g.addColorStop(0, 'rgba(255,255,255,0.95)');
+        g.addColorStop(0.2, 'rgba(190,220,255,0.6)');
+        g.addColorStop(1, 'rgba(120,160,255,0)');
+        x.strokeStyle = g;
+        x.lineCap = 'round';
+        x.lineWidth = s;
+        x.beginPath();
+        x.moveTo(0, 0);
+        x.lineTo(tx, ty);
+        x.stroke();
+        const h = x.createRadialGradient(0, 0, 0, 0, 0, s * 5);
+        h.addColorStop(0, 'rgba(255,255,255,0.9)');
+        h.addColorStop(1, 'rgba(160,200,255,0)');
+        x.fillStyle = h;
+        x.beginPath();
+        x.arc(0, 0, s * 5, 0, Math.PI * 2);
+        x.fill();
+        break;
+      }
+      case 'ink': {
+        const t = p.life;
+        const grow = 1 - Math.pow(1 - Math.min(1, t / 1.1), 3);
+        const R = p.R * grow;
+        const fade = t > 2.3 ? Math.max(0, 1 - (t - 2.3) / 1.1) : 1;
+        x.globalAlpha *= 0.78 * fade;
+        if (p.comb) x.transform(1, 0, p.comb * 0.35 * grow, 1, 0, 0);
+        const rings = p.pal.length;
+        for (let i = 0; i < rings; i++) {
+          const rr = R * (1 - i / rings);
+          if (rr <= 0.5) continue;
+          x.fillStyle = p.pal[i];
+          x.beginPath();
+          const m = 40;
+          for (let j = 0; j <= m; j++) {
+            const a = (j / m) * Math.PI * 2;
+            const w = 1 + 0.06 * Math.sin(a * 3 + p.seed + i) + 0.04 * Math.sin(a * 7 + p.seed * 2 + t);
+            const px = Math.cos(a) * rr * w,
+              py = Math.sin(a) * rr * w;
+            j ? x.lineTo(px, py) : x.moveTo(px, py);
+          }
+          x.closePath();
+          x.fill();
+        }
+        break;
+      }
+      case 'fly': {
+        const t = p.life;
+        x.translate(Math.sin(t * p.wob + p.ph) * 22 * this.k, 0);
+        x.rotate(Math.sin(t * p.wob * 1.3 + p.ph) * 0.35);
+        const flap = 0.18 + 0.82 * Math.abs(Math.sin(t * p.fr + p.ph));
+        const [c0, c1, dot] = p.col;
+        for (const sd of [-1, 1]) {
+          x.save();
+          x.scale(sd * flap, 1);
+          const g = x.createLinearGradient(0, 0, s, 0);
+          g.addColorStop(0, c1);
+          g.addColorStop(0.35, c0);
+          g.addColorStop(1, c1);
+          x.fillStyle = g;
+          x.beginPath();
+          x.moveTo(0, -s * 0.05);
+          x.bezierCurveTo(s * 0.35, -s * 0.95, s * 1.15, -s * 0.85, s * 0.95, -s * 0.2);
+          x.bezierCurveTo(s * 0.85, s * 0.05, s * 0.4, s * 0.05, 0, 0);
+          x.fill();
+          x.beginPath();
+          x.moveTo(0, s * 0.02);
+          x.bezierCurveTo(s * 0.5, s * 0.1, s * 0.85, s * 0.45, s * 0.55, s * 0.72);
+          x.bezierCurveTo(s * 0.3, s * 0.85, s * 0.1, s * 0.45, 0, s * 0.1);
+          x.fill();
+          x.fillStyle = dot;
+          x.globalAlpha *= 0.85;
+          x.beginPath();
+          x.arc(s * 0.72, -s * 0.45, s * 0.08, 0, Math.PI * 2);
+          x.arc(s * 0.45, s * 0.42, s * 0.06, 0, Math.PI * 2);
+          x.fill();
+          x.restore();
+        }
+        x.fillStyle = '#1b130c';
+        x.beginPath();
+        x.ellipse(0, s * 0.1, s * 0.06, s * 0.42, 0, 0, Math.PI * 2);
+        x.fill();
+        break;
+      }
+      case 'tile': {
+        x.rotate(p.rot);
+        x.scale(Math.max(0.08, Math.abs(Math.cos(p.flip))), 1);
+        const h = s / 2;
+        x.shadowColor = 'rgba(0,0,0,0.45)';
+        x.shadowBlur = 8;
+        x.shadowOffsetY = 4;
+        x.fillStyle = '#f3eee2';
+        x.beginPath();
+        x.roundRect(-h, -h, s, s, s * 0.14);
+        x.fill();
+        x.shadowColor = 'rgba(0,0,0,0)';
+        const g = x.createLinearGradient(-h, -h, h, h);
+        g.addColorStop(0, p.motif === 1 ? '#2fa39c' : '#2c58b8');
+        g.addColorStop(1, p.motif === 1 ? '#13625c' : '#132e78');
+        x.fillStyle = g;
+        x.beginPath();
+        x.roundRect(-h * 0.84, -h * 0.84, s * 0.84, s * 0.84, s * 0.1);
+        x.fill();
+        x.save();
+        x.scale(s * 0.62, s * 0.62);
+        x.fillStyle = '#f4f0e6';
+        if (p.motif === 2) x.fill(this.shapes.tulip);
+        else x.fill(this.shapes.star);
+        x.restore();
+        x.fillStyle = '#c23a2c';
+        x.beginPath();
+        x.arc(0, p.motif === 2 ? s * 0.05 : 0, s * 0.08, 0, Math.PI * 2);
+        x.fill();
+        const sh = x.createLinearGradient(-h, -h, h, h);
+        sh.addColorStop(0, 'rgba(255,255,255,0.35)');
+        sh.addColorStop(0.4, 'rgba(255,255,255,0)');
+        x.fillStyle = sh;
+        x.beginPath();
+        x.roundRect(-h, -h, s, s, s * 0.14);
+        x.fill();
         break;
       }
       case 'star': {

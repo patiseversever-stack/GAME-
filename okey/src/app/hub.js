@@ -3,9 +3,9 @@
 // Veriyi ana menü verir (setHubData); oyun içinde yalnız Kurallar açılır.
 import { icon } from '../ui/icons.js';
 import { FRAMES, EFFECTS, TILESETS, TITLES, nextReward, KIND_NAME } from '../meta/progression.js';
-import { levelFromXp } from '../meta/profile.js';
-import { rewardArt } from './reward-art.js';
-import { framedAvatar, hydrateFrames } from '../ui/frame-ui.js';
+import { levelFromXp, xpForNext } from '../meta/profile.js';
+import { rewardArt, hydrateArt } from './reward-art.js';
+import { framedAvatar } from '../ui/frame-ui.js';
 import { Celebration } from '../ui/effects.js';
 import { openBazaar } from './bazaar.js';
 
@@ -291,7 +291,7 @@ function viewRew(D, sub) {
     nextHtml = '';
   if (nx) {
     var target = 0;
-    for (var l = 1; l < nx.level; l++) target += 120 + 70 * (l - 1);
+    for (var l = 1; l < nx.level; l++) target += xpForNext(l);
     var p = levelFromXp(e.d.xp),
       base = e.d.xp - p.into,
       pc = pct(e.d.xp - base, target - base);
@@ -637,7 +637,7 @@ export function openHub(tab, host) {
     if (fx) fx.stop();
     fx = null;
     body.innerHTML = tb === 'prof' ? viewProf(D) : tb === 'rew' ? viewRew(D, sub) : tb === 'goals' ? viewGoals(D) : tb === 'ach' ? viewAch(D) : tb === 'stats' ? viewStats(D) : viewHow(sub);
-    hydrateFrames(body);
+    hydrateArt(body);
     body.scrollTop = 0;
     movePill();
     countUp(body);

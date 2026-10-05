@@ -442,6 +442,20 @@ export function themedTexture(s, fallback, forced) {
   st.texs.set(key, { tex, canvas: c, ok });
   return tex;
 }
+// Önizleme (Çarşı, Ödüller): bir takımın sırt ('back') ya da yüz (ör. 'n:red:7') görseli, oyundakiyle aynı boyama
+const nap = (ms) => new Promise((r) => setTimeout(r, ms));
+export async function themeTile(th, key) {
+  if (!THEMES[th]) return null;
+  start(th);
+  const st = state(th);
+  if (key !== 'back') want(th, key, true);
+  for (let i = 0; i < 400; i++) {
+    const r = key === 'back' ? st.back : st.faces.get(key);
+    if (r && r.url) return r.url;
+    await nap(100);
+  }
+  return key === 'back' ? st.quickUrl || null : null;
+}
 /* Ana menü ıstakası: her açılışta sıradaki takım, ayardan bağımsız */
 export function menuTheme() {
   if (menuTh) return menuTh;
