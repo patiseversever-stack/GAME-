@@ -92,7 +92,24 @@ const iso = [
         <span class="hud__bar"><i data-hud-bar></i></span>
         <span class="hud__count"><b data-hud-n>01</b> / 06</span>
       </div>
-      <div class="scroll-hint" data-scroll-hint aria-hidden="true"><span>Kaydırın</span><i></i></div>
+      <div class="reel" data-reel role="group" aria-label="Tanıtım filmi kontrolü">
+        <button class="reel__btn" type="button" data-reel-prev aria-label="Önceki sahne">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 6l-6 6 6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+        <button class="reel__btn reel__play" type="button" data-reel-play aria-label="Filmi oynat" aria-pressed="false">
+          <svg class="i-play" viewBox="0 0 24 24" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" fill="currentColor"/></svg>
+          <svg class="i-pause" viewBox="0 0 24 24" aria-hidden="true"><path d="M7.5 5.5h3v13h-3zM13.5 5.5h3v13h-3z" fill="currentColor"/></svg>
+        </button>
+        <ol class="reel__track">
+          {['Giriş', 'Gövde', 'Uçlar', 'Soğutma', 'Kaplama', 'Teklif'].map((c, i) => (
+            <li><button type="button" data-reel-seg={i} aria-label={`${i + 1}. sahne: ${c}`}><i><b></b></i><span>{c}</span></button></li>
+          ))}
+        </ol>
+        <button class="reel__next" type="button" data-reel-next>
+          <span data-reel-next-label>Sonraki sahne</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </button>
+      </div>
       <div class="showcase__side" aria-hidden="true">U-DRILL · Ø25 · 4×D · REF A-01</div>
     </div>
   </section>

@@ -554,7 +554,7 @@ export class Machining {
         for (let k = 0; k < 3; k++) { set.R[i * 3 + k] = Math.random() * 6.28; set.W[i * 3 + k] = rnd(-16, 16); }
         set.age[i] = 0;
         set.max[i] = rnd(1.3, 2.1);
-        set.s[i] = rnd(2.2, 3.4);
+        set.s[i] = rnd(1.8, 2.8);
       }
     }
     for (const set of this.chipSets) {
