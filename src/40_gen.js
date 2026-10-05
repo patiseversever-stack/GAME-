@@ -52,6 +52,7 @@ function levelSpec(g) {
   spec.flares = (finale && ch >= 1) || (ch >= 5 && i >= 4);
   spec.dash = g >= 2;
   spec.wait = g >= 4;
+  spec.boss = finale; // dünyanın son adası: Güneş Ejderhası kovalar
   // çeşitlilik: ada biçimi ve yol düzeni (dünyanın ilk adası her zaman tanıdık oval + zikzak)
   const bridges = !!spec.features.bridges;
   spec.shape = i === 0 || g < 3 ? 'oval' : ['waist', 'tear', 'oval', 'tearR'][(g * 7 + ch) % 4];
@@ -76,7 +77,7 @@ function endlessSpec(n, seedBase) {
   const twinK = chap.features.twin ? 0.75 : 1;
   const shape = n < 1 ? 'oval' : rng.pick(SHAPES), layout = n < 1 ? 'zig' : chap.features.bridges ? rng.pick(['zig', 'rev']) : rng.pick(['zig', 'rev', 'hair']);
   return {
-    kind: 'endless', g: -1, n, ch, i: 0, chap, seed: seedBase + n * 7151, finale: false, shape, layout, wait: true,
+    kind: 'endless', g: -1, n, ch, i: 0, chap, seed: seedBase + n * 7151, finale: false, boss: n > 0 && n % 8 === 7, shape, layout, wait: true,
     speed: Math.min(2.5, 1.45 + n * 0.07), burn: Math.min(1.15, 0.7 + n * 0.035) * twinK, regen: 0.42,
     spacing: lerp(2.5, 3.5, d), amp: lerp(2.6, 4.0, d), ctrl: 5 + Math.round(d * 2), pergolaRate: lerp(0.6, 0.25, d),
     prune: Math.round(lerp(1, 6, d)), margin: lerp(0.45, 0.28, d) + (layout !== 'zig' ? LAYOUT_SLACK : 0), drops: 3 + Math.round(d * 2), features, eclipse: true, sunStart: 0.5, sunSpeed: 0.72, ...ex,

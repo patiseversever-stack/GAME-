@@ -13,7 +13,7 @@ const G = {
 };
 const PATIENCE_MAX = 3.0, PATIENCE_REGEN = 0.18, FLY_DUR = 5.6;
 // güneşin merhameti: aynı adada 2. başarısızlıktan sonra her denemede ışık %10 daha az yakar (en fazla %50), gölgede can daha hızlı dolar
-const helpFor = (lv) => { const n = lv.spec.kind === 'story' ? Save.data.fails[lv.spec.g] || 0 : 0; return n < 2 ? 1 : Math.max(0.5, 1 - 0.1 * (n - 1)); };
+const helpFor = (lv) => { const n = lv.spec.night ? NightAct.data().fails[lv.spec.g] || 0 : lv.spec.kind === 'story' ? Save.data.fails[lv.spec.g] || 0 : 0; return n < 2 ? 1 : Math.max(0.5, 1 - 0.1 * (n - 1)); };
 const zifir = new Zifir();
 zifir.setCostume(Save.data.costume || '');
 const drops = new DropViews();
@@ -435,7 +435,7 @@ function applyLighting(dt) {
 }
 
 /* ---------- seviye yönetimi ---------- */
-function specKey(spec) { return spec.kind + ':' + spec.seed + ':' + spec.g + ':' + (spec.n ?? ''); }
+function specKey(spec) { return spec.kind + ':' + spec.seed + ':' + spec.g + ':' + (spec.n ?? '') + (spec.night ? ':gece' : ''); }
 function getLevel(spec) {
   const k = specKey(spec);
   if (G.cache.has(k)) { const lv = G.cache.get(k); G.cache.delete(k); return lv; }
@@ -450,7 +450,7 @@ function prebuildBg(spec) {
   _bg.add(k);
   GenW.build(spec).then((lv) => { _bg.delete(k); if (lv && !G.cache.has(k)) { G.cache.set(k, lv); while (G.cache.size > 3) G.cache.delete(G.cache.keys().next().value); } });
 }
-function nextSpecOf(spec) { if (!spec) return null; if (spec.kind === 'story') return spec.g < STORY_LEVELS - 1 ? levelSpec(spec.g + 1) : null; if (spec.kind === 'endless' && G.endless) return endlessSpec(spec.n + 1, G.endless.seed); return null; }
+function nextSpecOf(spec) { if (!spec) return null; if (spec.kind === 'story') return spec.g < STORY_LEVELS - 1 ? (spec.night ? nightSpec(spec.g + 1) : levelSpec(spec.g + 1)) : null; if (spec.kind === 'endless' && G.endless) return endlessSpec(spec.n + 1, G.endless.seed); return null; }
 function resetRun() {
   const lv = G.lv;
   G.helpK = helpFor(lv); G.breathUsed = false; G.breathT = 0; G.passedBest = false;
@@ -475,6 +475,7 @@ function setChapterLook(lv) {
   const ch = lv.chap;
   if (G.chapIdx !== lv.spec.ch || !arc1.mesh) { G.prevPal = G.lv ? G.lv.chap.pal : null; G.palT = G.prevPal ? 0 : 1; }
   G.chapIdx = lv.spec.ch;
+  arc1.mat = lv.spec.night ? silverMat : brassMat; // Gece Perdesi: ayın gümüş yayı
   arc1.build(lv.sun.tilt, lv.sun.thMin);
   arc2.g.visible = orb2.g.visible = lv.sun.twin;
   if (lv.sun.twin) arc2.build(lv.sun.tilt2, lv.sun.thMin2, true);
@@ -491,6 +492,9 @@ function enterLevel(spec, opts = {}) {
   if (G.view) { if (G.outView) G.outView.dispose(); G.outView = G.view; G.outT = 0; }
   G.spec = spec; setChapterLook(lv); G.lv = lv;
   G.view = new IslandView(lv);
+  Dragon.setup(lv);
+  Life.setup(lv, opts);
+  NightAct.setup(lv);
   Ambient.setWorld(lv.chap && lv.chap.key);
   { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const c of lv.chunks) for (const [x, z] of c.pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
     seaU.uIsl.value.set((x0 + x1) / 2, (z0 + z1) / 2, (x1 - x0) / 2, (z1 - z0) / 2); } // adanın bulutlara düşen gölgesi
@@ -515,7 +519,7 @@ function enterLevel(spec, opts = {}) {
     // dünya finali: alçak, yandan bir açıdan adanın etrafında süzülerek yerine oturan kamera
     Cam.set(Cam.cur, Cam.pose({ yaw: 0.9, pitch: deg(24), dist: Cam.base.dist * 0.78 }));
     Cam.cinema(Cam.pose(), 3.0, Ease.inOutCubic);
-    setTimeout(() => { if (G.lv === lv) banner('Final', `${lv.chap.constellation} takımyıldızının son yıldızı`); }, 700);
+    setTimeout(() => { if (G.lv === lv) banner(spec.boss ? 'Güneş Ejderhası' : 'Final', spec.boss ? `${lv.chap.constellation} · son ada` : `${lv.chap.constellation} takımyıldızının son yıldızı`); }, 700);
   } else if (doFly) {
     Cam.fly(lv, FLY_DUR);
   } else if (!opts.keepCam) {
@@ -536,6 +540,7 @@ function startPlay() {
   if (G.state !== 'ready') return;
   G.state = 'play'; G.stateT = 0; hideToast();
   zifir.kick(1.6); audio.whoosh(true, 0.35, 0.05);
+  Dragon.start();
   const lv = G.lv, g = lv.spec.g;
   if (g === 0) setTimeout(() => { if (G.state === 'play') tip('t-keep', 'Zifir ışıkta <em>buharlaşır</em>.<br>Gölgeyi onun üstüne düşür.', 3.6); }, 900);
   if (lv.drops.length && g >= 1) setTimeout(() => { if (G.state === 'play') tip('t-drops', 'Gece damlaları Zifir yaklaşınca <em>uyanır</em> ve ışıkta erir.', 4); }, 2500);
@@ -576,9 +581,11 @@ function failLevel() {
   FX.burst(x, 0.35, z, 16, { c: [0.04, 0.03, 0.06], a: 0.6, s: 0.28, s1: 0.9, life: 1.2, sp: 1.6, up: 1, drag: 2.2, t: 1 });
   for (let i = 0; i < 10; i++) FX.ember(x, 0.35, z);
   Melt.start(); // sinematik eriyiş: kamera, jel damlalar, buhar
+  Dragon.onFail();
   Marks.died(G.lv, G.s);
   ShadowBirds.scatter();
   G.lastPct = clamp01(G.s / G.lv.length); G.newBest = 0;
+  if (G.mode === 'night') { const g = G.lv.spec.g, d = NightAct.data(); d.fails[g] = (d.fails[g] || 0) + 1; Save.save(); }
   if (G.mode === 'story') {
     const g = G.lv.spec.g, d = Save.data; d.fails[g] = (d.fails[g] || 0) + 1; d.flow = 0;
     if (!d.levels[g]) { d.best = d.best || {}; const old = d.best[g] || 0; if (G.lastPct > old + 0.005) { G.newBest = G.lastPct - old; G.prevBest = old; d.best[g] = +G.lastPct.toFixed(3); } }
@@ -607,7 +614,7 @@ function showFail() {
 }
 // Güneşin merhameti kartı: yardım açıkça ve cesaret verici bir dille gösterilir; ipuçları da burada
 function showMercy(lv) {
-  const card = $('#fMercy'), hk = G.mode === 'story' ? helpFor(lv) : 1;
+  const card = $('#fMercy'), hk = G.mode === 'story' || G.mode === 'night' ? helpFor(lv) : 1;
   card.classList.remove('on');
   if (hk >= 1) return;
   const pct = Math.round((1 - hk) * 100), lvl = Math.round(pct / 10), max = hk <= 0.5 + 1e-6, nf = Save.data.fails[lv.spec.g] || 0;
@@ -624,6 +631,7 @@ function reachGate() {
   G.state = 'complete'; G.stateT = 0; G.compStage = 0; G.cSquash = false;
   setupCompleteCine();
   audio.setSizzle(0); hideToast();
+  Dragon.defeat();
   const lv = G.lv;
   G.stars = [true, G.dropsGot >= lv.drops.length, G.expTotal <= lv.flawless + 1e-6];
   G.birdsN = ShadowBirds.finish();
@@ -651,14 +659,16 @@ function showComplete() {
   const lv = G.lv, sp = lv.spec;
   let res = { chapterDone: false, newSkin: 0 };
   if (G.mode === 'story') res = saveStory();
+  if (G.mode === 'night') res = NightAct.save();
   if (G.mode === 'daily') { const today = dateNum(); Save.data.daily = { date: today, stars: Math.max(Save.data.daily.date === today ? Save.data.daily.stars : 0, G.stars.filter(Boolean).length) }; Save.save(); }
-  $('#cKicker').textContent = res.chapterDone ? `${lv.chap.constellation} takımyıldızı tamamlandı` : 'Gece düştü';
-  $('#cTitle').textContent = G.mode === 'daily' ? 'Günün Adası' : `Ada ${sp.g + 1}`;
+  const lanAll = G.mode === 'night' && NightAct.lan.length > 1 && NightAct.lit === NightAct.lan.length;
+  $('#cKicker').textContent = lanAll ? 'Fener alayı · bütün fenerler yandı' : G.mode === 'night' ? (res.chapterDone ? `${lv.chap.constellation} gecesi tamamlandı` : 'Ay battı') : res.chapterDone ? `${lv.chap.constellation} takımyıldızı tamamlandı` : 'Gece düştü';
+  $('#cTitle').textContent = G.mode === 'daily' ? 'Günün Adası' : G.mode === 'night' ? `Gece · Ada ${sp.g + 1}` : `Ada ${sp.g + 1}`;
   $('#cSub').textContent = lv.chap.name;
   $('#st0').textContent = 'Kapıya ulaştı';
   $('#st1').textContent = lv.drops.length ? `Damlalar ${G.dropsGot}/${lv.drops.length}` : 'Damlalar';
   $('#st2').innerHTML = `Lekesiz<br>güneşte ${G.expTotal.toFixed(1)} / ${lv.flawless.toFixed(1)} sn`;
-  const extra = []; if (act.best > 0) extra.push(`gölge serisi ×${act.best + 1}`); if (act.eaten > 0) extra.push(`${act.eaten} peri yutuldu`);
+  const extra = []; if (G.mode === 'night' && NightAct.lan.length) extra.push(`fener ${NightAct.lit}/${NightAct.lan.length}`); if (act.best > 0) extra.push(`gölge serisi ×${act.best + 1}`); if (act.eaten > 0) extra.push(`${act.eaten} peri yutuldu`);
   $('#cSub').textContent = lv.chap.name + (extra.length ? ' · ' + extra.join(' · ') : '');
   $$('.star').forEach((el) => el.classList.remove('lit', 'shown'));
   // gölge kuşları sayımı
@@ -666,7 +676,7 @@ function showComplete() {
   bEl.style.display = bn > 0 ? '' : 'none';
   if (bn > 0) $('#cBirdsT').innerHTML = `<b>${bn}</b> gölge kuşu` + (ShadowBirds.rec ? ' · <span class="rec">rekor!</span>' : G.mode === 'story' && ShadowBirds.prev > bn ? ` · en çok ${ShadowBirds.prev}` : bn >= BIRD_MAX ? ' · <span class="rec">tam sürü!</span>' : '');
   const last = sp.g === STORY_LEVELS - 1;
-  $('#btnNext').textContent = G.mode === 'daily' ? 'Gökyüzü' : last ? 'Final' : res.chapterDone ? 'Yeni takımyıldızı' : 'Sonraki Ada';
+  $('#btnNext').textContent = G.mode === 'daily' ? 'Gökyüzü' : last ? (G.mode === 'night' ? 'Şafak' : 'Final') : res.chapterDone ? 'Yeni takımyıldızı' : 'Sonraki Ada';
   $('#complete').classList.remove('ready');
   UI.hud(false); UI.show('complete');
   G.compRes = res;
@@ -683,14 +693,15 @@ function showComplete() {
 function nextFromComplete() {
   audio.ui();
   if (G.mode === 'daily') { openMap(); return; }
+  if (G.mode === 'night') { const g = G.lv.spec.g; UI.hide('complete'); if (g >= STORY_LEVELS - 1) { showEnding(true); return; } UI.hud(true); enterLevel(nightSpec(g + 1)); return; }
   const g = G.lv.spec.g, ch = g >> 3;
   // takımyıldızı tamamlanınca ninninin yeni dizesi; finalde ninninin tamamı ve son
   if (G.mode === 'story' && g % 8 === 7 && !Save.seen('lore-c' + ch)) {
     const pages = ['c' + ch]; if (g === STORY_LEVELS - 1) pages.push('end'); else if (Lore.needWorld(ch + 1)) pages.push('w' + (ch + 1));
-    UI.hide('complete'); Lore.play(pages, () => { if (g === STORY_LEVELS - 1) { UI.show('ending'); G.state = 'ending'; } else { UI.hud(true); enterLevel(levelSpec(g + 1)); } });
+    UI.hide('complete'); Lore.play(pages, () => { if (g === STORY_LEVELS - 1) { showEnding(false); } else { UI.hud(true); enterLevel(levelSpec(g + 1)); } });
     return;
   }
-  if (g === STORY_LEVELS - 1) { UI.hide('complete'); UI.show('ending'); G.state = 'ending'; return; }
+  if (g === STORY_LEVELS - 1) { UI.hide('complete'); showEnding(false); return; }
   UI.hide('complete'); UI.hud(true);
   enterLevel(levelSpec(g + 1));
 }
@@ -702,11 +713,19 @@ function startEndless() {
   UI.hideAll(); UI.hud(true); $('#hud').classList.add('endless');
   enterLevel(endlessSpec(0, G.endless.seed), { quick: true });
 }
+// son ekranı: hikâye finali Gece Perdesi'ni açar; gece finali fenerleri sayar
+function showEnding(night) {
+  if (night) {
+    const [a, b] = NightAct.lanterns();
+    $('#endH').textContent = 'Gece Perdesi'; $('#endP').textContent = 'Altmış dört gece, altmış dört ay. Fenerler yandı; Zifir artık hem gündüzü hem geceyi taşıyor.'; $('#endS').textContent = `fenerler ${a}/${b} · ★ ${NightAct.stars()}/${STORY_LEVELS * 3}`;
+  } else { $('#endH').textContent = 'Gündönümü'; $('#endP').textContent = 'Sekiz takımyıldızı tamamlandı. Zifir artık geceyi taşıyor. Güneş ise ilk kez onu yakmadan batıyor.'; $('#endS').textContent = 'Gece Perdesi açıldı · Ay’ı sen çevir'; }
+  UI.show('ending'); G.state = 'ending';
+}
 function startDaily() { G.mode = 'daily'; UI.hideAll(); UI.hud(true); $('#hud').classList.remove('endless'); enterLevel(dailySpec(dateNum()), { quick: true }); }
 function startStory(g) {
   // her dünyanın ilk adasından önce o dünyanın hikâyesi (ilk kez: önsözle birlikte)
   if (g % 8 === 0 && Lore.needWorld(g >> 3) && !window.__noLore) { UI.hideAll(); Lore.play(Lore.worldPages(g >> 3), () => startStory(g)); return; }
-  const same = G.lv && G.lv.spec.kind === 'story' && G.lv.spec.g === g;
+  const same = G.lv && G.lv.spec.kind === 'story' && !G.lv.spec.night && G.lv.spec.g === g;
   if (Save.data.lastG !== g) { Save.data.lastG = g; Save.save(); } // Gökyüzü bu adanın bölümünde açılır
   if (!same) G.hint = false;
   G.mode = 'story'; UI.hideAll(); UI.hud(true); $('#hud').classList.remove('endless');
@@ -719,7 +738,7 @@ function startStory(g) {
 let hudCache = {};
 function updateHud(force = false) {
   const lv = G.lv; if (!lv) return;
-  const title = G.mode === 'endless' ? 'Sonsuz Gün' : G.mode === 'daily' ? 'Günün Adası' : `Ada ${lv.spec.g + 1}`;
+  const title = G.mode === 'endless' ? 'Sonsuz Gün' : G.mode === 'daily' ? 'Günün Adası' : G.mode === 'night' ? `Gece · Ada ${lv.spec.g + 1}` : `Ada ${lv.spec.g + 1}`;
   const sub = G.mode === 'endless' ? `${lv.chap.name} · ${G.endless.n + 1}. ada` : lv.chap.name;
   const dt = `${G.dropsGot}/${lv.drops.length}`;
   if (force || hudCache.title !== title) { $('#lvlTitle').textContent = title; hudCache.title = title; }

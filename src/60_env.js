@@ -401,7 +401,7 @@ function orbPosInto(u, tilt, thMin, out) {
   const th = lerp(PI - thMin, thMin, u), d = 13.8 * (0.52 + 0.48 * Math.sin(th));
   return out.set(ARC_C.x + _sd.x * d, ARC_C.y + _sd.y * d, ARC_C.z + _sd.z * d);
 }
-const ORB_FRAG = `uniform float uTime, uHeat, uEclipse; uniform vec3 uCol; varying vec3 vN; varying vec3 vV; varying vec3 vP;
+const ORB_FRAG = `uniform float uTime, uHeat, uEclipse, uMoon; uniform vec3 uCol; varying vec3 vN; varying vec3 vV; varying vec3 vP;
 float h(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
 float n3(vec3 p){ vec3 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(mix(h(i), h(i+vec3(1,0,0)), f.x), mix(h(i+vec3(0,1,0)), h(i+vec3(1,1,0)), f.x), f.y), mix(mix(h(i+vec3(0,0,1)), h(i+vec3(1,0,1)), f.x), mix(h(i+vec3(0,1,1)), h(i+vec3(1,1,1)), f.x), f.y), f.z); }
@@ -413,6 +413,12 @@ void main(){
   vec3 hot = vec3(1.0, 0.97, 0.88);
   vec3 c = mix(uCol * vec3(1.15, 0.78, 0.5), hot, pow(mu, 1.6)) * (4.2 + gr * 2.6 + uHeat * 4.0) * limb;
   c += hot * pow(mu, 6.0) * 3.0;
+  // Gece Perdesi: ay yüzeyi (gümüş, koyu denizler ve krater lekeleri, yumuşak kenar)
+  if (uMoon > 0.5) {
+    float mar = n3(vP * 2.4 + 7.0) * 0.6 + n3(vP * 5.2 + 3.0) * 0.4, cr = smoothstep(0.58, 0.66, n3(vP * 11.0 + 1.0)) + smoothstep(0.6, 0.7, n3(vP * 19.0 + 5.0)) * 0.6;
+    vec3 m = uCol * (1.0 - smoothstep(0.42, 0.66, mar) * 0.38 - cr * 0.16);
+    c = m * (1.5 + 1.3 * pow(mu, 0.8)) * (0.5 + 0.5 * pow(mu, 0.35));
+  }
   c *= 1.0 - uEclipse * 0.97;
   gl_FragColor = vec4(c, 1.0);
 }`;
@@ -430,7 +436,7 @@ void main(){
 const ORB_VERT = `varying vec3 vN; varying vec3 vV; varying vec3 vP; void main(){ vN = normalize(mat3(modelMatrix) * normal); vec4 w = modelMatrix * vec4(position, 1.0); vV = cameraPosition - w.xyz; vP = position; gl_Position = projectionMatrix * viewMatrix * w; }`;
 function makeOrb(color, scale = 1) {
   const g = new THREE.Group();
-  const u = { uTime: U.uTime, uHeat: { value: 0 }, uEclipse: { value: 0 }, uCol: { value: new THREE.Color(color) } };
+  const u = { uTime: U.uTime, uHeat: { value: 0 }, uEclipse: { value: 0 }, uMoon: { value: 0 }, uCol: { value: new THREE.Color(color) } };
   const core = new THREE.Mesh(new THREE.SphereGeometry(0.5 * scale, 40, 24), new THREE.ShaderMaterial({ vertexShader: ORB_VERT, fragmentShader: ORB_FRAG, uniforms: u }));
   const haloM = new THREE.SpriteMaterial({ map: TEX.glow, color: new THREE.Color(color).multiplyScalar(2.2), blending: THREE.AdditiveBlending, depthWrite: false, transparent: true });
   const halo = new THREE.Sprite(haloM); halo.scale.setScalar(3.0 * scale);

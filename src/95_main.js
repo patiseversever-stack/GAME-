@@ -35,9 +35,9 @@ function exposureNow(lv, x, z, nx, nz) {
   let e = 0; const mir = lv.mirrors && lv.mirrors.length; G.mirHit = false;
   for (let q = -1; q <= 1; q++) {
     const px = x + nx * ZIFIR_HALF * q, pz = z + nz * ZIFIR_HALF * q;
-    let l1 = occluded(lv.cols, px, ZIFIR_Y, pz, L1, -1) ? 0 : 1;
+    let l1 = occluded(lv.cols, px, ZIFIR_Y, pz, L1, -1) || Life.occ(px, ZIFIR_Y, pz, L1) ? 0 : 1; // ada canlılarının gölgesi de korur
     if (!l1 && mir && mirrorsLit(lv.mirrors, px, ZIFIR_Y, pz, L1)) { l1 = 1; G.mirHit = true; }
-    e += lv.sun.twin ? (l1 + (occluded(lv.cols, px, ZIFIR_Y, pz, L2, -1) ? 0 : 1)) * 0.5 : l1;
+    e += lv.sun.twin ? (l1 + (occluded(lv.cols, px, ZIFIR_Y, pz, L2, -1) || Life.occ(px, ZIFIR_Y, pz, L2) ? 0 : 1)) * 0.5 : l1;
   }
   return e / 3;
 }
@@ -124,13 +124,14 @@ function stepPlay(dt, dtR) {
   let f = 0;
   if (G.T > lv.walkDelay && !onBridge && G.ecl.amt < 0.5) f = exposureNow(lv, PA.x, PA.z, PA.nx, PA.nz);
   if (ShadowBirds.canT > 0) f = 0; // Kuş Kalkanı: sürünün gölgesi
+  { const fd = Dragon.step(dt, G.T <= lv.walkDelay || (!G.waiting && !G.holding), G.ecl.amt, ShadowBirds.canT > 0); if (fd > f) f = fd; } // ejderha nefesi gölge tanımaz
   G.f = f;
   const dashing = act.dashT > 0, fm = flareMul(lv, G.T) * act.burnMul();
   if (G.auto && G.autoDive && lv.spec.dash && act.canDash() && (f > 0 || wisps.items.some((w) => w.state === 1 && Math.hypot(w.x - PA.x, w.z - PA.z) < 1.4))) act.dash();
   if (f > 0) {
     if (G.burnEp === 0) { audio.whoosh(true, 0.2, 0.04); for (let i = 0; i < 5; i++) FX.ember(PA.x, 0.3, PA.z); }
     if (G.mirHit && Math.random() < dt * 20) FX.sparkle(PA.x + (Math.random() - 0.5) * 0.4, 0.4 + Math.random() * 0.3, PA.z + (Math.random() - 0.5) * 0.4, [2.6, 2.0, 1.2], 0.4);
-    G.meter -= lv.burn * f * fm * dt * (Save.data.settings.assist ? 0.7 : 1) * G.helpK; G.expTotal += f * act.burnMul() * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
+    G.meter -= lv.burn * f * fm * dt * (Save.data.settings.assist ? 0.7 : 1) * G.helpK * Life.burnK(); G.expTotal += f * act.burnMul() * dt; G.burnEp += dt; G.epMin = Math.min(G.epMin, G.meter);
     G.trauma = Math.max(G.trauma, 0.12 + f * 0.12);
     G.hapT -= dtR; if (G.hapT <= 0) { haptic(10); G.hapT = 0.28; }
   } else {
@@ -325,14 +326,18 @@ function update(dt, dtR) {
     Cam.zoom = damp(Cam.zoom, G.state === 'play' && (G.meter < 0.32 || G.breathT > 0) ? 0.93 : 1, 1.4, dtR); // tehlikede kamera hafifçe yaklaşır
     drops.update(dtR, U.uTime.value);
     wisps.update(dtR, U.uTime.value);
+    Dragon.update(dt, dtR);
     flare.update(lv, G.T, dtR, G.state === 'play');
     updateZifirView(dtR);
     applyLighting(dtR);
+    NightAct.applyLook();
+    Life.applyLook();
     if (G.hint && (G.state === 'play' || G.state === 'ready')) {
       const sol = lv.solution, k = Math.min(sol.K - 1, Math.round((G.T + 0.45) / sol.dt));
       orbPosInto(sol.traj[k], lv.sun.tilt, lv.sun.thMin, ghost.position); ghost.material.opacity = 0.45 + Math.sin(U.uTime.value * 5) * 0.15;
     } else ghost.material.opacity = 0;
   }
+  Life.update(dt, dtR); NightAct.update(dt, dtR);
   arc1.update(dtR); arc2.update(dtR);
   ambient(dtR); Ambient.update(dt, G.night); ShadowBirds.update(dt); Fireworks.update(dt); Shoot.update(dt, skyU.uStars.value); updateBirds(dtR); updateFar(U.uTime.value);
   fxAdd.update(dtR); fxMix.update(dtR); updatePrints(dtR); updatePops(dtR);
@@ -356,12 +361,13 @@ function update(dt, dtR) {
   pu.uNight.value = G.night;
   pu.uBloomAdd.value = 0.35 + G.night * 0.4 + ecl * 0.3 + flare.k * 0.45 + flare.warnK * 0.12;
   pu.uRays.value = 0.5 * (1 - G.night) * (1 - ecl) * (orb.g.visible ? 1 : 0);
-  const danger = G.state === 'play' ? (G.breathT > 0 ? 1.45 + Math.sin(U.uTime.value * 18) * 0.25 : G.f > 0 ? 0.35 + (1 - G.meter) * 0.8 : G.meter < 0.35 ? 0.2 + Math.sin(U.uTime.value * 8) * 0.08 : 0) : 0;
+  const danger = G.state === 'play' ? Math.max(G.breathT > 0 ? 1.45 + Math.sin(U.uTime.value * 18) * 0.25 : G.f > 0 ? 0.35 + (1 - G.meter) * 0.8 : G.meter < 0.35 ? 0.2 + Math.sin(U.uTime.value * 8) * 0.08 : 0, Dragon.danger() * (0.55 + Math.sin(U.uTime.value * 7) * 0.12)) : 0;
   pu.uDanger.value = damp(pu.uDanger.value, danger, 8, dtR);
   _pv.set(zifir.g.position.x, 0.35, zifir.g.position.z).project(camera);
   pu.uHeat.value.set(_pv.x * 0.5 + 0.5, _pv.y * 0.5 + 0.5, G.state === 'play' ? G.f * 0.9 : 0);
   const focusY = G.state === 'title' || G.state === 'map' || G.state === 'film' ? 0.42 : clamp(_pv.y * 0.5 + 0.5, 0.25, 0.65);
   pu.uTiltC.value = damp(pu.uTiltC.value, focusY, 2, dtR); pu.uTiltW.value = 0.3; pu.uTilt.value = 0.7;
+  NightAct.post(pu); Life.post(pu);
   if (G.state === 'photo' && G.photo) Photo.apply(pu);
 }
 
@@ -547,6 +553,7 @@ function buildMap() {
   $('#btnEndless').classList.toggle('lockd', !endOk); $('#btnDaily').classList.toggle('lockd', !dayOk);
   $('#endlessInfo').textContent = endOk ? (Save.data.endlessBest ? `En iyi ${Save.data.endlessBest}` : 'Yeni') : '16. adada açılır';
   $('#theaterInfo').textContent = `${(Save.data.theater || []).length}/${ST_ACTS.length}`;
+  const nOk = NightAct.open(); $('#btnNight').classList.toggle('lockd', !nOk); $('#nightInfo').textContent = nOk ? (Object.keys(NightAct.data().levels).length ? `☾ ${NightAct.stars()}/${STORY_LEVELS * 3}` : 'Yeni') : '64. adadan sonra';
   $('#dailyInfo').textContent = dayOk ? (Save.data.daily.date === dateNum() ? `★ ${Save.data.daily.stars}/3` : 'Bugün') : '4. adada açılır';
   // tek Zifir düğmesi: rengi gösterir, yeni kostüm varsa rozet
   const own = Save.data.costumes || [], seen = Save.data.seenCos || [], fresh = own.some((k) => !seen.includes(k));
@@ -698,6 +705,7 @@ canvas.addEventListener('wheel', (e) => { if (G.state === 'photo') { Photo.zoom(
 bind('#btnEndless', () => { if (Save.data.unlocked < 16) { toast('Sonsuz Gün <em>16. adayı</em> tamamlayınca açılır.', 2.6); return; } audio.ui(); startEndless(); });
 bind('#btnDaily', () => { if (Save.data.unlocked < 4) { toast('Günün Adası <em>4. adayı</em> tamamlayınca açılır.', 2.6); return; } audio.ui(); startDaily(); });
 bind('#btnEndOk', () => openMap());
+bind('#btnNight', () => { if (!NightAct.open()) { toast('Gece Perdesi <em>64. adayı</em> bitirince açılır.', 2.6); return; } audio.ui(); NightAct.start(NightAct.nextG()); });
 bind('#btnHowT', () => { audio.ui(); TUT.show('title'); });
 bind('#btnHowS', () => { audio.ui(); TUT.show('settings'); });
 bind('#btnHowP', () => { audio.ui(); TUT.show('pause'); });
@@ -787,7 +795,7 @@ function frame(now) {
   if (G.slowT > 0) { G.slowT -= dtR; dt *= lerp(1, G.slowK, smoothstep(0, 0.2, G.slowT)); }
   if (G.state === 'paused' || G.state === 'photo') dt = 0;
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
-  audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k };
+  audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k, dragon: G.state === 'play' && Dragon.on && Dragon.mode === 'chase', boss: Dragon.danger() };
   audio.update(dtR, G.state === 'play');
   const onWard = Ward3D.on, onTut = !onWard && TUT.open && TutStage.on, onMap = !onWard && !onTut && G.state === 'map' && SkyMap.active, onTh = !onWard && !onTut && G.state === 'theater' && Theater.active;
   if (onWard) { Ward3D.update(dtR); Ward3D.apply(); } else if (onTut) TutStage.apply(dtR); else if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
@@ -961,8 +969,8 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, TutStage, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
-  start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, TutStage, Dragon, Life, NightAct, nightSpec, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  start: (g) => startStory(g), endless: (n, seed = 12345) => { startEndless(); G.endless.n = n; G.endless.seed = seed; enterLevel(endlessSpec(n, seed), { quick: true }); }, auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
   info: () => ({ state: G.state, u: G.u, s: G.s, len: G.lv && G.lv.length, meter: G.meter, T: G.T, drops: G.dropsGot, quality: Perf.level, scale: Perf.scale, ema: Perf.ema }),

@@ -323,6 +323,66 @@ class AudioEngine {
   tock(hi) { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.05, 0.06, { f: hi ? 2200 : 1600, q: 9 }); this.osc('sine', hi ? 1040 : 780, t, 0.08, 0.04, null, { f1: hi ? 980 : 720 }); this.osc('sine', 140, t, 0.12, 0.05, null, { f1: 80 }); }
   flareWarn() { if (!this.ok) return; const t = this.t; this.osc('sawtooth', 110, t, 1.25, 0.035, null, { f1: 440, a: 0.9, verb: 0.4 }); this.noiseHit(t, 1.25, 0.06, { type: 'bandpass', f: 300, f1: 3000, q: 1.5, a: 1.0, verb: 0.4 }); }
   flareBurst() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 1.6, 0.18, { type: 'lowpass', f: 3500, f1: 400, a: 0.02, verb: 0.6 }); this.osc('sine', 70, t, 1.2, 0.22, null, { f1: 40 }); this.bell(880, t, 1.8, 0.05, { ratio: 1.41, index: 3, verb: 0.8 }); }
+  // Güneş Ejderhası: formant gürlemesi + alt gümbürtü + alev hışırtısı
+  dragonRoar(k = 1) {
+    if (!this.ok) return; const t = this.t, d = 1.2 + k * 0.5;
+    this.voice(t, { dur: d, f: [[0, 66], [0.22, 112], [d * 0.6, 90], [d, 52]], F: [[0, [360, 780, 2100]], [0.35, [520, 1080, 2500]], [d, [280, 640, 1800]]], q: [5, 7, 9], amp: [1, 0.6, 0.3], src: 'sawtooth', breath: 0.55, rough: [33, 0.6], jit: [7, 28], g: 0.15 * k, a: 0.1, r: 0.45, verb: 0.55 });
+    this.voice(t + 0.03, { dur: d * 0.9, f: [[0, 98], [0.3, 164], [d * 0.9, 74]], F: [[0, [700, 1500, 3000]], [d * 0.9, [500, 1200, 2600]]], q: [6, 8, 10], amp: [0.7, 0.5, 0.25], src: 'sawtooth', breath: 0.4, rough: [47, 0.5], g: 0.06 * k, a: 0.12, r: 0.4, verb: 0.5 });
+    this.osc('sine', 50, t, 1.5, 0.22 * k, null, { f1: 32, a: 0.06 });
+    this.noiseHit(t + 0.05, 1.4, 0.08 * k, { type: 'bandpass', f: 420, f1: 1700, q: 0.7, a: 0.18, verb: 0.35 });
+  }
+  // nefes döngüsü: alevin uğultusu (yakınlıkla güçlenir), değince çıtırtı
+  setDragon(level, fire = 0) {
+    if (!this.ok) return; const c = this.ctx, t = this.t;
+    if (!this.dragonL) {
+      const s = c.createBufferSource(), lp = c.createBiquadFilter(), pk = c.createBiquadFilter(), g = c.createGain(), lfo = c.createOscillator(), lg = c.createGain();
+      s.buffer = this.noise; s.loop = true; lp.type = 'lowpass'; lp.frequency.value = 650; pk.type = 'peaking'; pk.frequency.value = 220; pk.gain.value = 9; g.gain.value = 0;
+      lfo.frequency.value = 3.1; lg.gain.value = 260; lfo.connect(lg); lg.connect(lp.frequency);
+      s.connect(lp); lp.connect(pk); pk.connect(g); g.connect(this.sfx); s.start(); lfo.start(); this.dragonL = { g, lp };
+    }
+    this.dragonL.g.gain.setTargetAtTime(level * 0.07 + fire * 0.09, t, level > 0 ? 0.15 : 0.4);
+    this.dragonL.lp.frequency.setTargetAtTime(500 + level * 900 + fire * 1600, t, 0.2);
+    if (fire > 0 && t > (this.nextDrCr || 0)) { this.nextDrCr = t + 0.04 + Math.random() * 0.07; this.noiseHit(t, 0.02 + Math.random() * 0.03, 0.08, { f: 1500 + Math.random() * 3000, q: 3 }); }
+  }
+  // yağmur döngüsü: geniş bant hışırtı + damla tıkırtıları; fırtınada alçak uğultu
+  setRain(level, storm = 0) {
+    if (!this.ok) return; const c = this.ctx, t = this.t;
+    if (!this.rainL) {
+      if (level <= 0) return;
+      const s = c.createBufferSource(), hp = c.createBiquadFilter(), lp = c.createBiquadFilter(), g = c.createGain(), s2 = c.createBufferSource(), lp2 = c.createBiquadFilter(), g2 = c.createGain();
+      s.buffer = this.noise; s.loop = true; hp.type = 'highpass'; hp.frequency.value = 700; lp.type = 'lowpass'; lp.frequency.value = 6500; g.gain.value = 0;
+      s2.buffer = this.noise; s2.loop = true; lp2.type = 'lowpass'; lp2.frequency.value = 160; g2.gain.value = 0;
+      s.connect(hp); hp.connect(lp); lp.connect(g); g.connect(this.amb); s2.connect(lp2); lp2.connect(g2); g2.connect(this.amb); s.start(); s2.start(0, 0.7);
+      this.rainL = { g, g2, lp };
+    }
+    this.rainL.g.gain.setTargetAtTime(level * (0.05 + storm * 0.025), t, 0.6); this.rainL.g2.gain.setTargetAtTime(level * storm * 0.22, t, 0.8);
+    this.rainL.lp.frequency.setTargetAtTime(4200 + level * 3000, t, 0.5);
+    if (level > 0.15 && t > (this.nextDrip || 0)) { this.nextDrip = t + 0.02 + Math.random() * 0.12 / level; this.noiseHit(t, 0.008 + Math.random() * 0.01, 0.015 + level * 0.025, { f: 2500 + Math.random() * 5000, q: 6 }); }
+  }
+  // gök gürültüsü: yakınsa sert çatırtı, uzaksa yuvarlanan uğultu (ışıktan sonra gecikmeli)
+  thunder(near = 0.5) {
+    if (!this.ok) return; const t = this.t + 0.25 + (1 - near) * 1.1;
+    if (near > 0.5) this.noiseHit(t, 0.35, 0.16 * near, { type: 'highpass', f: 1400, f1: 300, a: 0.002, verb: 0.5 });
+    this.noiseHit(t + 0.05, 2.8 + (1 - near), 0.2, { type: 'lowpass', f: 600 + near * 900, f1: 60, a: 0.04, verb: 0.7 });
+    this.noiseHit(t + 0.4, 2.2, 0.12, { type: 'lowpass', f: 300, f1: 50, a: 0.3, verb: 0.6 });
+    this.osc('sine', 46, t, 2.4, 0.16, null, { f1: 28, a: 0.15 });
+  }
+  // gökkuşağı: yükselen yumuşak çan dizisi
+  rainbow() { if (!this.ok) return; const t = this.t, m = MUSIC[this.chapter]; for (let i = 0; i < 7; i++) this.bell(mtof(m.root + 24 + m.scale[i % m.scale.length] + 12 * Math.floor(i / m.scale.length)), t + i * 0.11, 2.4, 0.026, { ratio: 2.0, index: 0.8, verb: 0.9, dly: 0.3 }); }
+  // kuyruklu yıldız: parıltılı süzülüş + dilek çanı
+  comet() { if (!this.ok) return; const t = this.t, m = MUSIC[this.chapter]; this.noiseHit(t, 2.6, 0.06, { type: 'bandpass', f: 5000, f1: 1200, q: 1.2, a: 0.8, verb: 0.8 }); for (let i = 0; i < 5; i++) this.bell(mtof(m.root + 36 + m.scale[(i * 2) % m.scale.length]), t + 0.6 + i * 0.16, 2.0, 0.03, { ratio: 3.0, index: 1.0, verb: 0.9, dly: 0.4 }); }
+  aurora() { if (!this.ok) return; const t = this.t, m = MUSIC[this.chapter]; [0, 4, 7, 11, 14].forEach((d, i) => this.osc('sine', mtof(m.root + 24 + d), t + i * 0.25, 4.5, 0.018, null, { a: 1.4, verb: 0.9 })); }
+  // canlılar (formant sesleri)
+  meow(k = 1) { if (!this.ok) return; const t = this.t, p = 0.9 + Math.random() * 0.25; this.voice(t, { dur: 0.55, f: [[0, 480 * p], [0.12, 720 * p], [0.5, 430 * p]], F: [[0, [650, 1700, 3000]], [0.14, [1150, 1900, 3300]], [0.5, [520, 1100, 2700]]], q: [7, 9, 11], src: 'sawtooth', breath: 0.15, vib: [6, 18], g: 0.045 * k, a: 0.05, r: 0.2, verb: 0.25 }); }
+  gull() { if (!this.ok) return; const t = this.t, n = 2 + (Math.random() * 2 | 0), p = 0.9 + Math.random() * 0.2; for (let i = 0; i < n; i++) this.voice(t + i * 0.26, { dur: 0.22, f: [[0, 1150 * p], [0.05, 1550 * p], [0.2, 950 * p]], F: [[0, [1300, 2300, 3500]], [0.2, [1000, 1900, 3100]]], q: [6, 8, 9], src: 'sawtooth', rough: [70, 0.35], g: 0.022 * (1 - i * 0.2), a: 0.02, r: 0.1, verb: 0.5 }); }
+  honk(low = 0) { if (!this.ok) return; const t = this.t, f0 = low ? 300 : 520; this.voice(t, { dur: 0.3, f: [[0, f0], [0.08, f0 * 1.2], [0.28, f0 * 0.85]], F: [[0, [700, 1300, 2600]], [0.28, [600, 1100, 2400]]], q: [5, 7, 9], src: 'sawtooth', rough: [40, 0.3], g: 0.035, a: 0.02, r: 0.12, verb: 0.3 }); }
+  // ejderha ışığa dağılır: inen çan sağanağı + derin nefes
+  dragonDie() {
+    if (!this.ok) return; const t = this.t, m = MUSIC[this.chapter];
+    for (let i = 0; i < 12; i++) this.bell(mtof(m.root + 36 - i * 2 + m.scale[i % m.scale.length]), t + 0.5 + i * 0.07, 2.2, 0.03, { ratio: 2.0, index: 1.2, verb: 0.9 });
+    this.noiseHit(t + 0.45, 2.4, 0.1, { type: 'highpass', f: 900, f1: 6000, a: 0.3, verb: 0.6 });
+    this.osc('sine', 70, t + 0.5, 1.8, 0.18, null, { f1: 36, a: 0.02 });
+  }
   sprite(n = 0) { if (!this.ok) return; const t = this.t, sc = MUSIC[this.chapter].scale, r = MUSIC[this.chapter].root + 24; for (let i = 0; i < 4; i++) this.bell(mtof(r + sc[(i * 2 + n) % sc.length] + 12 * Math.floor((i * 2 + n) / sc.length)), t + i * 0.07, 1.1, 0.05, { ratio: 2, index: 1.2, verb: 0.8, dly: 0.4 }); this.noiseHit(t, 0.6, 0.05, { type: 'highpass', f: 4000, f1: 9000, a: 0.2, verb: 0.6 }); }
   dash() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.4, 0.14, { type: 'bandpass', f: 300, f1: 3200, q: 1.4, a: 0.05, verb: 0.3 }); this.osc('sine', 220, t, 0.3, 0.08, null, { f1: 660 }); }
   streak(n) { if (!this.ok) return; const t = this.t, sc = MUSIC[this.chapter].scale, r = MUSIC[this.chapter].root + 12; for (let i = 0; i <= Math.min(n, 5); i++) this.bell(mtof(r + sc[i % sc.length] + 12 * Math.floor(i / sc.length) + 12), t + i * 0.06, 0.9, 0.045, { ratio: 2, index: 1.0, verb: 0.6 }); }
@@ -372,7 +432,9 @@ class AudioEngine {
       // ışıkta: alçak bas nabzı (kalp gibi), yoğunlukla güçlenir
       if (tens > 0.25) { this.osc('sine', mtof(root - 12 + (k % 4 === 2 ? 7 : 0)), bt, beat * 0.7, 0.07 * tens, this.mus, { a: 0.01, f1: mtof(root - 12) * 0.9 }); if (k % 2 === 0) this.noiseHit(bt, 0.12, 0.02 * tens, { type: 'lowpass', f: 220, dest: this.mus }); }
       // final ya da güneş patlaması: davul deseni (düm-tek)
-      const drum = playing && (md.finale || md.flare > 0.2) ? (md.flare > 0.2 ? 1 : 0.6) : 0;
+      const drum = playing && (md.finale || md.flare > 0.2) ? Math.max(md.flare > 0.2 ? 1 : 0.6, md.dragon ? 0.75 + (md.boss || 0) * 0.35 : 0) : 0;
+      // ejderha: alçak, uğursuz nabız (yaklaştıkça güçlenir)
+      if (playing && md.dragon && k % 2 === 0) this.osc('triangle', mtof(root - 12), bt, beat * 1.7, 0.03 + (md.boss || 0) * 0.04, this.mus, { a: 0.05, f1: mtof(root - 12) * 0.985 });
       if (drum > 0) { const pat = [1, 0, 0.5, 0, 1, 0.5, 0, 0.5][k % 8]; if (pat) { this.osc('sine', pat > 0.7 ? 92 : 150, bt, 0.22, 0.06 * pat * drum, this.mus, { a: 0.003, f1: pat > 0.7 ? 46 : 90 }); this.noiseHit(bt, 0.06, 0.018 * pat * drum, { f: pat > 0.7 ? 900 : 2600, q: 2, dest: this.mus }); } }
       // gölge serisi: üst çanlar seyrek parıldar
       if (playing && (md.streak || 0) >= 2 && k % 2 === 1 && Math.random() < 0.55) this.bell(mtof(m.root + 36 + m.scale[(k * 3) % m.scale.length]), bt, 1.2, 0.012 + Math.min(0.012, md.streak * 0.002), { ratio: 3.0, index: 0.8, dest: this.mus, verb: 0.8 });
