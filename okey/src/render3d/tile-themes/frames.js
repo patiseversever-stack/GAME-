@@ -450,39 +450,63 @@ const sstep = (a, b, t) => {
 // tekrar sayısı tam olsun diye periyodu çevreye uydurur
 const fitPeriod = (L, p) => L / Math.max(1, Math.round(L / p));
 
+function star8(x, cx, cy, r) {
+  x.beginPath();
+  for (let i = 0; i < 16; i++) {
+    const a = -Math.PI / 2 + (i * Math.PI) / 8,
+      q = i % 2 ? r * 0.55 : r;
+    i ? x.lineTo(cx + Math.cos(a) * q, cy + Math.sin(a) * q) : x.moveTo(cx + Math.cos(a) * q, cy + Math.sin(a) * q);
+  }
+  x.closePath();
+}
 /* ───────────── tasarımlar ───────────── */
 const DESIGNS = {
-  // Pirinç halka: dövme izleri, iki ince kazıma
+  // Pirinç halka: geniş dövme pirinç bilezik, kabartma rumi kıvrımları, iki boncuk dizisi, cilalı ışık
   async sade(x) {
-    metalRing(x, 162, 30, 'brass', { leaf: 0.2 });
-    x.save();
-    clipRing(x, 147, 177);
-    const R = rng(31);
-    for (let k = 0; k < 140; k++) {
-      const [px, py] = P(148 + R() * 28, R() * TAU);
-      const r = 2.5 + R() * 4;
-      const g = x.createRadialGradient(px - r * 0.3, py - r * 0.3, 0, px, py, r);
-      g.addColorStop(0, 'rgba(255,248,220,0.38)');
-      g.addColorStop(0.6, 'rgba(255,248,220,0)');
-      g.addColorStop(1, 'rgba(60,35,5,0.22)');
-      x.fillStyle = g;
-      x.beginPath();
-      x.arc(px, py, r, 0, TAU);
-      x.fill();
+    metalRing(x, 166, 34, 'brass', { leaf: 0.22 });
+    // kabartma: koyu gölge + açık ışık ile çift çizim
+    const lines = [];
+    const N = 12;
+    for (let k = 0; k < N; k++) lines.push(...lyre(160, (k * TAU) / N + TAU / 24, 7.6).slice(0, 2));
+    for (const [dx, dy, col, w] of [
+      [0.9, 1.1, 'rgba(70,40,8,0.55)', 2.2],
+      [-0.6, -0.7, 'rgba(255,244,210,0.55)', 1.4],
+      [0, 0, 'rgba(176,132,58,0.9)', 1.6],
+    ]) {
+      x.save();
+      x.translate(dx, dy);
+      x.strokeStyle = col;
+      x.lineWidth = w;
+      x.lineCap = 'round';
+      for (const l of lines) {
+        poly(x, l, false);
+        x.stroke();
+      }
+      x.restore();
     }
-    for (const r of [153, 171]) {
-      x.strokeStyle = 'rgba(60,36,8,0.7)';
-      x.lineWidth = 1.2;
+    for (let k = 0; k < N; k++) {
+      const [px, py] = P(176, (k * TAU) / N + TAU / 24);
+      x.save();
+      x.fillStyle = 'rgba(70,40,8,0.5)';
+      star8(x, px + 0.8, py + 1, 3.6);
+      x.fill();
+      x.fillStyle = '#e8c97a';
+      star8(x, px, py, 3.6);
+      x.fill();
+      x.restore();
+    }
+    beads(x, 151, 56, 2, 'brass');
+    beads(x, 181.5, 64, 2, 'brass', TAU / 128);
+    gloss(x, 149, 183, 0.7);
+    x.save();
+    x.strokeStyle = 'rgba(60,34,6,0.7)';
+    x.lineWidth = 1.2;
+    for (const r of [148.6, 183.4]) {
       x.beginPath();
       x.arc(CX, CY, r, 0, TAU);
       x.stroke();
-      x.strokeStyle = 'rgba(255,240,200,0.6)';
-      x.beginPath();
-      x.arc(CX, CY, r + 1.2, 0, TAU);
-      x.stroke();
     }
     x.restore();
-    gloss(x, 147, 177, 0.6);
     return 147;
   },
 
@@ -497,7 +521,7 @@ const DESIGNS = {
         const leaf = pathShape((p) => leafPath(p, ...P(162, th + sd * 0.085), 12, th + sd * 0.9, 0.32));
         paintGlaze(x, leaf, C1.turq, { bb: BOX, contour: 'rgba(8,20,55,0.8)', contourW: 1.1, pool: 3 });
       }
-      ciniTulip(x, bx, by, 37, th + Math.PI / 2, C1.white);
+      ciniTulip(x, bx, by, 42, th + Math.PI / 2, C1.white);
       const ta = th + TAU / N / 2;
       const [rx, ry] = P(172, ta);
       const ros = pathShape((p) => rosettePath(p, rx, ry, 10, 5, ta));
@@ -559,23 +583,21 @@ const DESIGNS = {
     return 143;
   },
 
-  // Şal ebru: taraklı desen, gümüş telkari taç
+  // Şal ebru: krem zeminde iri damla sıraları, tek yönlü uzun tarak → tüy gibi sivri şal motifleri; gümüş telkari taç
   async sal(x) {
     const ops = [];
-    const pal = [EB.indigo, EB.cream, EB.rose, EB.cream, EB.ochre, EB.cream, EB.slate, EB.cream];
+    const pal = [EB.indigo, EB.rose, EB.ochre, EB.sage];
     let k = 0;
-    // yalnız bandın çevresindeki damlalar (tarak en çok 22 px taşır)
-    for (let y = CY - 230; y < CY + 230; y += 15)
-      for (let xx = 10; xx < 470; xx += 15) {
-        const px = xx + ((y / 15) % 2) * 7,
-          d = Math.hypot(px - CX, y - CY);
-        k++;
-        if (d > 115 && d < 232) ops.push(drop(px, y, 8.5, pal[k % pal.length]));
+    for (let y = CY - 262; y < CY + 262; y += 16) {
+      const c = pal[k++ % pal.length];
+      for (let xx = 0; xx < 480; xx += 16) {
+        const d = Math.hypot(xx - CX, y - CY);
+        if (d > 108 && d < 246) ops.push(drop(xx + (k % 2) * 8, y, 6.2, c), drop(xx + (k % 2) * 8, y, 2.6, '#f2e8d4'));
       }
-    for (let xg = 20, i = 0; xg < 460; xg += 11, i++) ops.push(tine(xg, 0, i % 2 ? -Math.PI / 2 : Math.PI / 2, 22, 3));
-    for (let yg = CY - 220, i = 0; yg < CY + 220; yg += 22, i++) ops.push(tine(0, yg, i % 2 ? Math.PI : 0, 12, 4));
-    ops.push(wave(Math.PI / 2, 4, 40));
-    await ebruBand(x, ops, EB.cream, 150, 196, false);
+    }
+    for (let xg = 4, i = 0; xg < 480; xg += 16, i++) ops.push(tine(xg, 0, Math.PI / 2, 22, 4));
+    ops.push(wave(0, 3, 64));
+    await ebruBand(x, ops, '#f2e8d4', 150, 196, false);
     gloss(x, 150, 196, 0.45);
     wire(x, [circleLine(148)], 5.5, 'silver', true);
     wire(x, [circleLine(198)], 5.5, 'silver', true);
