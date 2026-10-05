@@ -234,7 +234,7 @@ function tutStars(parent, n) { const out = []; for (let i = 0; i < n; i++) out.p
 const TUT_CARDS = [
   {
     k: 'Hikâye · 1', t: 'Zifir ile tanış', dur: 8,
-    b: 'Zifir, saf gölgeden doğmuş küçük bir yaratık. Her adada <em>Gece Kapısı</em>na yürür — ama güneş ışığı onu <em>buharlaştırır</em>.',
+    b: 'Zifir, saf gölgeden doğmuş küçük bir yaratık. Her adada <em>Gece Kapısı</em>na yürür ama güneş ışığı onu <em>buharlaştırır</em>.',
     build(svg, id) {
       tutDefs(svg, id);
       sv('ellipse', { cx: 200, cy: 190, rx: 220, ry: 180, fill: `url(#${id}bg)` }, svg);
@@ -339,7 +339,7 @@ const TUT_CARDS = [
   },
   {
     k: 'Toplanabilir · 5', t: 'Gece damlaları', dur: 9,
-    b: 'Yoldaki damlalar Zifir yaklaşınca <em>uyanır</em>. Uyandıktan sonra ışıkta erirler — gölgede tut, üzerinden geçip topla.',
+    b: 'Yoldaki damlalar Zifir yaklaşınca <em>uyanır</em>. Uyandıktan sonra ışıkta erirler. Onları gölgede tut, üzerinden geçip topla.',
     build(svg, id) {
       tutDefs(svg, id);
       const dio = new TDio(svg, id, { seed: 9 });
@@ -432,7 +432,7 @@ const TUT_CARDS = [
   },
   {
     k: 'Hedef · 7', t: 'Gece düşer, yıldızlar yanar', dur: 9.5,
-    b: 'Kapıya varınca ada geceye bürünür. Her adada üç yıldız var: <em>kapıya ulaşmak</em>, <em>tüm damlaları toplamak</em> ve neredeyse hiç güneş görmeden — <em>lekesiz</em> — geçmek.',
+    b: 'Kapıya varınca ada geceye bürünür. Her adada üç yıldız var: <em>kapıya ulaşmak</em>, <em>tüm damlaları toplamak</em> ve neredeyse hiç güneş görmeden, yani <em>lekesiz</em> geçmek.',
     build(svg, id) {
       tutDefs(svg, id);
       const dio = new TDio(svg, id, { seed: 21 });
@@ -553,7 +553,7 @@ const TUT_CARDS = [
   },
   {
     k: 'Aksiyon · 9', t: 'Dal, periler, patlama', dur: 11,
-    b: 'Sol alttaki <em>Dal</em> Zifir’i bir anlığına mürekkebe gömer: ışık neredeyse işlemez, yaklaşan <em>ışık perilerini</em> yutar. Üstündeki <em>Bekle</em>’yi basılı tutarsan Zifir gölgede durur (sabrı sınırlı). <em>Güneş patlaması</em> çubuğu dolunca ışık iki kat yakar — önceden gölgeye gir.',
+    b: 'Sol alttaki <em>Dal</em> Zifir’i bir anlığına mürekkebe gömer: ışık neredeyse işlemez, yaklaşan <em>ışık perilerini</em> yutar. Üstündeki <em>Bekle</em>’yi basılı tutarsan Zifir gölgede durur (sabrı sınırlı). <em>Güneş patlaması</em> çubuğu dolunca ışık iki kat yakar, önceden gölgeye gir.',
     build(svg, id) {
       tutDefs(svg, id);
       const dio = new TDio(svg, id, { seed: 17 });

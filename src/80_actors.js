@@ -75,6 +75,81 @@ const FX = {
   sparkle(x, y, z, c, s = 0.5) { fxAdd.spawn(x, y, z, 0, 0.3, 0, { c, a: 1, s, s1: s * 0.2, life: 0.6, drag: 2, t: 2 }); },
 };
 
+/* ---------- hava parçacıkları (C3) ----------
+   Dünyaya özgü süzülen zerreler: Buz'da kar, Ayna'da yaprak, İkiz'de yükselen sporlar, Tuz'da pırıltı, Saat'te pirinç tozu,
+   Ege/Rüzgâr/Peri'de polen ve toz. Tek bir Points nesnesi; tüm hareket GPU'da (CPU'da parçacık başına iş yok).
+   Sayı kaliteye bağlı (Q.amb); Düşük'te tamamen kapalı ve hiç derlenmez. */
+const AMB_VERT = `attribute vec4 aR; uniform vec3 uOff, uBoxMin, uBoxSize, uC1, uC2; uniform float uT, uSway, uTw, uSize, uPx, uAlpha;
+varying vec3 vC; varying float vA;
+void main(){
+  float sp = 0.6 + aR.y * 0.8;
+  vec3 p = position + uOff * vec3(sp, sp, sp);
+  p = mod(p - uBoxMin, uBoxSize) + uBoxMin;
+  vec3 q = (p - uBoxMin) / uBoxSize;
+  float edge = smoothstep(0.0, 0.1, q.y) * smoothstep(1.0, 0.85, q.y) * smoothstep(0.0, 0.08, q.x) * smoothstep(1.0, 0.92, q.x) * smoothstep(0.0, 0.08, q.z) * smoothstep(1.0, 0.92, q.z);
+  p.x += sin(uT * (0.55 + aR.y) + aR.x * 6.283) * uSway;
+  p.z += cos(uT * (0.45 + aR.y * 0.7) + aR.x * 4.1) * uSway * 0.7;
+  p.y += sin(uT * (0.8 + aR.z) + aR.x * 3.0) * uSway * 0.25;
+  float tw = uTw > 0.0 ? pow(0.5 + 0.5 * sin(uT * (1.4 + aR.y * 2.6) + aR.x * 6.283), uTw) : 1.0;
+  vA = uAlpha * tw * edge; vC = mix(uC1, uC2, aR.w);
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  gl_PointSize = clamp(uSize * (0.6 + aR.z * 0.8) * uPx / -mv.z, 1.0, 48.0);
+  if (vA < 0.004) gl_PointSize = 0.0;
+  gl_Position = projectionMatrix * mv;
+}`;
+const AMB_FRAG = `uniform float uStar; varying vec3 vC; varying float vA;
+void main(){
+  vec2 c = gl_PointCoord - 0.5; float d = length(c);
+  float a = 1.0 - smoothstep(0.12, 0.5, d);
+  if (uStar > 0.5) a = max(exp(-abs(c.x) * 22.0) * exp(-abs(c.y) * 4.0), exp(-abs(c.y) * 22.0) * exp(-abs(c.x) * 4.0)) + (1.0 - smoothstep(0.0, 0.2, d));
+  if (a * vA < 0.004) discard;
+  gl_FragColor = vec4(vC, min(1.0, a * vA));
+}`;
+// fall: dikey hız (− düşer, + yükselir) · drift: rüzgâr yönünde kayma · sway: salınım · tw: pırıltı keskinliği · y: kutu yüksekliği
+const AMB_KINDS = {
+  ege: { fall: 0.04, drift: 0.32, sway: 0.35, tw: 0, size: 0.05, alpha: 0.5, c1: [1.5, 1.4, 1.1], c2: [1.6, 1.35, 0.55], y: 5 },
+  ruzgar: { fall: 0.02, drift: 0.85, sway: 0.28, tw: 0, size: 0.05, alpha: 0.5, c1: [1.6, 1.55, 1.4], c2: [1.5, 1.4, 0.8], y: 5.5 },
+  peri: { fall: -0.03, drift: 0.14, sway: 0.2, tw: 2, size: 0.045, alpha: 0.5, c1: [1.7, 1.25, 0.85], c2: [1.4, 0.95, 0.65], y: 6 },
+  tuz: { fall: 0, drift: 0.05, sway: 0.12, tw: 9, size: 0.1, alpha: 0.9, c1: [2.4, 2.25, 2.6], c2: [2.0, 2.4, 2.6], y: 2.6, star: 1 },
+  ikiz: { fall: 0.17, drift: 0.05, sway: 0.3, tw: 3, size: 0.06, alpha: 0.75, c1: [0.6, 2.2, 2.0], c2: [2.2, 0.7, 1.8], y: 6 },
+  buz: { fall: -0.55, drift: 0.22, sway: 0.4, tw: 0, size: 0.065, alpha: 0.85, c1: [1.7, 1.8, 2.0], c2: [1.35, 1.55, 1.95], y: 9 },
+  ayna: { fall: -0.26, drift: 0.3, sway: 0.6, tw: 0, size: 0.075, alpha: 0.8, c1: [1.9, 0.85, 1.05], c2: [1.8, 1.6, 1.55], y: 7 },
+  saat: { fall: -0.04, drift: 0.08, sway: 0.2, tw: 6, size: 0.07, alpha: 0.75, c1: [2.3, 1.65, 0.7], c2: [1.6, 2.1, 1.9], y: 5, star: 1 },
+};
+const Ambient = {
+  max: 260, n: 0, k: null, off: new THREE.Vector3(), t: 0,
+  init() {
+    const N = this.max, pos = new Float32Array(N * 3), r = new Float32Array(N * 4);
+    for (let i = 0; i < N; i++) {
+      pos[i * 3] = Math.random() * 20 - 10; pos[i * 3 + 1] = Math.random() * 9; pos[i * 3 + 2] = Math.random() * 26 - 14;
+      for (let k = 0; k < 4; k++) r[i * 4 + k] = Math.random();
+    }
+    const g = new THREE.BufferGeometry();
+    g.setAttribute('position', new THREE.BufferAttribute(pos, 3)); g.setAttribute('aR', new THREE.BufferAttribute(r, 4));
+    this.u = { uOff: { value: this.off }, uBoxMin: { value: new THREE.Vector3(-10, 0, -14) }, uBoxSize: { value: new THREE.Vector3(20, 6, 26) },
+      uC1: { value: new THREE.Color() }, uC2: { value: new THREE.Color() }, uT: { value: 0 }, uSway: { value: 0 }, uTw: { value: 0 }, uSize: { value: 0.05 },
+      uPx: { value: 400 }, uAlpha: { value: 0 }, uStar: { value: 0 } };
+    this.mat = new THREE.ShaderMaterial({ vertexShader: AMB_VERT, fragmentShader: AMB_FRAG, uniforms: this.u, transparent: true, depthWrite: false });
+    this.pts = new THREE.Points(g, this.mat); this.pts.frustumCulled = false; this.pts.renderOrder = 6; this.pts.visible = false;
+    g.setDrawRange(0, 0); scene.add(this.pts);
+  },
+  setCount(n) { this.n = Math.min(this.max, n | 0); this.pts.geometry.setDrawRange(0, this.n); this.pts.visible = this.n > 0 && !!this.k; },
+  setWorld(key) {
+    const k = AMB_KINDS[key] || null; this.k = k; this.pts.visible = this.n > 0 && !!k; if (!k) return;
+    const u = this.u; u.uC1.value.setRGB(...k.c1); u.uC2.value.setRGB(...k.c2); u.uSway.value = k.sway; u.uTw.value = k.tw; u.uSize.value = k.size; u.uStar.value = k.star || 0;
+    u.uBoxSize.value.y = k.y; u.uAlpha.value = 0; this.fade = 0;
+  },
+  update(dt, night) {
+    if (!this.pts.visible) return;
+    const k = this.k, w = U.uWind.value; this.t += dt; this.u.uT.value = this.t;
+    this.off.x += k.drift * w * dt; this.off.z += k.drift * 0.35 * w * dt; this.off.y += k.fall * dt;
+    if (Math.abs(this.off.x) > 8000 || Math.abs(this.off.y) > 8000) this.off.set(0, 0, 0); // hassasiyet kaybını önle
+    this.fade = Math.min(1, (this.fade || 0) + dt * 0.6);
+    this.u.uAlpha.value = k.alpha * this.fade * (1 - 0.45 * night);
+  },
+};
+Ambient.init();
+
 /* ---------- ayak izleri ---------- */
 const PRINTS = { n: 48, i: 0, mesh: null, alpha: null };
 (function buildPrints() {
@@ -177,16 +252,26 @@ class Zifir {
   reset() {
     this.phase = 0; this.hop = 0; this.land = 0; this.yaw = 0; this.blinkT = 2; this.blink = 0; this.squash = 0; this.sqV = 0; this.shiver = 0;
     this.lookX = 0; this.lookY = 0; this.scaleK = 1; this.visible = true; this.mood = 0; this.wispT = 0; this.stepSide = 0;
+    this.idleT = 0; this.idleYaw = 0; this.idleTo = 0; this.idleNext = 0; this.hopT = 0; this.tapT = 0;
     this.g.visible = true; this.g.scale.setScalar(1); this.u.uFade.value = 1;
   }
   // squash impulse
   kick(v) { this.sqV += v; }
+  // kurtulunca sevinç zıplaması (canlılık açıksa)
+  relief() { if (Perf.Q.life) this.hopT = 0.55; }
   update(dt, st) {
     // st: {x, z, yaw, moving, speed, burn, meter, look:{x,y,z}|null, mood}
     const g = this.g;
     g.position.set(st.x, st.y || 0, st.z);
     let dy = st.yaw - this.yaw; while (dy > PI) dy -= TAU; while (dy < -PI) dy += TAU;
-    this.yaw += dy * (1 - Math.exp(-10 * dt)); g.rotation.y = this.yaw;
+    this.yaw += dy * (1 - Math.exp(-10 * dt));
+    // canlılık (Orta ve üstü): durunca etrafa bakınır, beklerken ayağını vurur, kurtulunca zıplar
+    const life = Perf.Q.life && !st.dive;
+    this.idleT = st.moving || !life ? 0 : this.idleT + dt;
+    if (this.idleT > 3) { if ((this.idleNext -= dt) <= 0) { this.idleTo = this.idleTo ? 0 : (Math.random() < 0.5 ? -1 : 1) * (0.45 + Math.random() * 0.35); this.idleNext = this.idleTo ? 1.1 + Math.random() * 0.8 : 1.6 + Math.random() * 1.6; } }
+    else { this.idleTo = 0; this.idleNext = 0.4; }
+    this.idleYaw = damp(this.idleYaw, this.idleTo, 5, dt);
+    g.rotation.y = this.yaw + this.idleYaw;
     // yay-sönüm squash
     this.sqV += (-this.squash * 220 - this.sqV * 16) * dt; this.squash += this.sqV * dt;
     let bodyY = 0, sx = 1, sy = 1;
@@ -207,7 +292,10 @@ class Zifir {
     } else {
       const br = Math.sin(U.uTime.value * 2.2) * 0.025; sy = 1 + br; sx = 1 - br * 0.6;
       for (let i = 0; i < 2; i++) { this.feet[i].position.z = damp(this.feet[i].position.z, 0.02, 8, dt); this.feet[i].position.y = 0.04; }
+      if (life && st.hold) { this.tapT += dt; const tp = Math.max(0, Math.sin(this.tapT * 11)); this.feet[1].position.y = 0.04 + tp * 0.045; this.feet[1].position.z = 0.05; sy *= 1 - tp * 0.015; }
+      else this.tapT = 0;
     }
+    if (this.hopT > 0) { this.hopT = Math.max(0, this.hopT - dt); const hk = Math.sin((1 - this.hopT / 0.55) * PI); bodyY += hk * 0.22; sy *= 1 + hk * 0.08; if (this.hopT === 0) this.kick(-2.4); }
     sy *= 1 + this.squash; sx *= 1 - this.squash * 0.55;
     const dv = st.dive || 0; sy *= 1 - dv * 0.72; sx *= 1 + dv * 0.45; bodyY -= dv * 0.06;
     this.aura.scale.setScalar(1 + dv * 0.9); this.aura.material.opacity = 0.85 + dv * 0.15;
@@ -228,7 +316,7 @@ class Zifir {
       const ax = cs * lx + sn * lz; const len = Math.hypot(lx, ly, lz) || 1;
       this.lookX = damp(this.lookX, clamp(ax / len, -1, 1) * 0.03, 8, dt); this.lookY = damp(this.lookY, clamp(ly / len, -1, 1) * 0.025, 8, dt);
     }
-    for (const p of this.pupils) { p.position.x = this.lookX; p.position.y = -0.005 + this.lookY; p.scale.setScalar(st.burn > 0.05 ? 0.7 : 1); }
+    for (const p of this.pupils) { p.position.x = this.lookX - this.idleYaw * 0.03; p.position.y = -0.005 + this.lookY; p.scale.setScalar(st.burn > 0.05 ? 0.7 : 1); }
     // shader
     this.u.uBurn.value = damp(this.u.uBurn.value, st.burn, 14, dt);
     this.u.uLit.value = this.u.uBurn.value;

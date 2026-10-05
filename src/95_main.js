@@ -83,13 +83,14 @@ function endEpisode() {
     const x = zifir.g.position.x, z = zifir.g.position.z;
     for (let i = 0; i < 10; i++) { const a = Math.random() * TAU; fxMix.spawn(x + Math.cos(a) * 0.9, 0.3 + Math.random() * 0.4, z + Math.sin(a) * 0.9, -Math.cos(a) * 2.2, 0, -Math.sin(a) * 2.2, { c: [0.03, 0.02, 0.07], a: 0.6, s: 0.2, s1: 0.05, life: 0.42, drag: 0.5, t: 1 }); }
     if (G.epMin < 0.3) {
-      banner('Kıl payı!', 'gölgeye döndü'); audio.closeCall(); haptic(25);
+      banner('Kıl payı!', 'gölgeye döndü'); audio.closeCall(); haptic(25); zifir.relief();
       G.slowT = 0.55; G.slowK = 0.4; G.fovKick = -3;
     }
     if (G.burnEp > 0.35) G.combo = 0;
   }
   G.burnEp = 0; G.epMin = 1;
 }
+const LAST_BREATH = 0.7; // gerçek zaman (sn)
 function stepPlay(dt, dtR) {
   const lv = G.lv;
   G.T += dt;
@@ -169,7 +170,20 @@ function stepPlay(dt, dtR) {
     if (Math.random() < dtR * 20) { const p = orb.g.position; FX.sparkle(p.x + (Math.random() - 0.5) * 2, p.y + (Math.random() - 0.5) * 2, p.z, [1.4, 1.4, 2.4], 0.25); }
   }
   G.minMeter = Math.min(G.minMeter ?? 1, G.meter); if (G.waiting) G.waitT = (G.waitT || 0) + dt;
-  if (G.meter <= 0) { G.meter = 0; failLevel(); return; }
+  // Son Nefes: can bittiği an, adada bir kez, zaman yavaşlar ve kısa bir kurtulma penceresi açılır
+  if (G.meter <= 0 && !G.breathT) {
+    if (G.breathUsed) { G.meter = 0; failLevel(); return; }
+    G.breathUsed = true; G.breathT = LAST_BREATH; G.slowT = LAST_BREATH + 0.15; G.slowK = 0.32; G.trauma = Math.max(G.trauma, 0.3);
+    audio.heartbeat(); haptic([40, 60, 40]); zifir.kick(-2.5);
+  }
+  if (G.breathT > 0) {
+    G.meter = Math.max(G.meter, 0.001);
+    if (f === 0) {
+      G.breathT = 0; G.meter = 0.14; G.slowT = 0.5; G.slowK = 0.45; G.fovKick = -3;
+      banner('Son nefes!', 'gölge seni kurtardı'); audio.closeCall(); haptic([20, 30, 20]); zifir.kick(3); zifir.relief();
+      for (let i = 0; i < 12; i++) FX.sparkle(PA.x + (Math.random() - 0.5) * 0.8, 0.3 + Math.random() * 0.5, PA.z + (Math.random() - 0.5) * 0.8, [1.4, 1.2, 2.6], 0.3);
+    } else if ((G.breathT -= dtR) <= 0) { G.breathT = 0; G.meter = 0; failLevel(); return; }
+  }
   if (G.s >= lv.length - 1e-4) reachGate();
   updateHud();
 }
@@ -193,7 +207,7 @@ function updateComplete(dt, dtR) {
     G.view.gate.userData.pu.uPulse.value = 1; audio.gate(); haptic([15, 30, 15]); G.trauma = 0.35; zifir.g.visible = false;
     FX.burst(gate.x, 1.15, gate.z, 44, { add: true, c: [1.2, 0.8, 2.6], a: 1, s: 0.22, s1: 0.02, life: 1.1, sp: 5, drag: 2, t: 2 });
     U.uNightC.value.set(gate.x, gate.z);
-    setTimeout(() => { if (G.state === 'complete') Cam.cinema(Cam.pose({ pitch: deg(30), dist: Cam.base.dist * 1.08, target: Cam.base.target.clone().add(new THREE.Vector3(0, 3.5, -1.5)) }), 2.4, Ease.inOutCubic); }, 250);
+    setTimeout(() => { if (G.state !== 'complete') return; const t0 = U.uTime.value; Cam.cinema(() => Cam.pose({ pitch: deg(30), dist: Cam.base.dist * 1.08, yaw: Cam.base.yaw + Math.sin((U.uTime.value - t0) * 0.16) * 0.3, target: Cam.base.target.clone().add(new THREE.Vector3(0, 3.5, -1.5)) }), 2.4, Ease.inOutCubic); Cam.cine.hold = true; }, 250);
   }
   const k = clamp01((t - 0.48) / 1.7);
   U.uNightAmt.value = 1; U.uNightR.value = Ease.inOutCubic(k) * 34 + 0.01; U.uNightRim.value = Math.sin(k * PI) * 1.0;
@@ -225,7 +239,7 @@ function updateZifirView(dtR) {
   const looking = G.drag || Math.abs(G.uSV) > 0.25;
   zifir.update(dtR, {
     x: PA.x, z: PA.z, yaw: Math.atan2(PA.tx, PA.tz), moving: G.state === 'play' && G.T > lv.walkDelay && !G.waiting && !G.holding, speed: lv.speed * (G.slowT > 0 ? G.slowK : 1),
-    burn: G.state === 'play' ? G.f * act.burnMul() : G.state === 'fail' ? 1 : 0, meter: G.state === 'fail' ? 0.4 : G.meter, look: looking ? orb.g.position : camera.position, mood: 0, dive: act.diveK,
+    burn: G.state === 'play' ? G.f * act.burnMul() : G.state === 'fail' ? 1 : 0, meter: G.state === 'fail' ? 0.4 : G.meter, look: looking ? orb.g.position : camera.position, mood: 0, dive: act.diveK, hold: G.holding,
   });
   U.uZifir.value.set(PA.x, 0, PA.z);
   Cam.follow.set(PA.x + PA.tx * 1.5 - Cam.base.target.x, 0, PA.z + PA.tz * 1.5 - Cam.base.target.z);
@@ -266,7 +280,7 @@ function update(dt, dtR) {
     }
     case 'ready': {
       G.readyT += dtR;
-      if (!G.readyHint && G.mode === 'story' && lv.spec.g === 0) { G.readyHint = true; toast('<span class="hand"></span>Güneşi <em>sürükle</em> — gölgeler döner, Zifir yola çıkar.', 0); }
+      if (!G.readyHint && G.mode === 'story' && lv.spec.g === 0) { G.readyHint = true; toast('<span class="hand"></span>Güneşi <em>sürükle</em>. Gölgeler döner, Zifir yola çıkar.', 0); }
       else if (!G.readyHint && G.readyT > 4.5) { G.readyHint = true; toast('<span class="hand"></span>Hazır olunca güneşi sürükle', 0); }
       sunDirs(G.u, lv.sun, L1, L2); if (lv.crystals.length) updateCrystals(dtR);
       G.night = damp(G.night, 0, 3, dtR); U.uNightAmt.value = G.night;
@@ -302,6 +316,8 @@ function update(dt, dtR) {
   // görseller
   if (lv && G.state !== 'map' && G.state !== 'theater') {
     G.view.update(dtR, G.T, viewCtx);
+    Marks.update(dtR);
+    Cam.zoom = damp(Cam.zoom, G.state === 'play' && (G.meter < 0.32 || G.breathT > 0) ? 0.93 : 1, 1.4, dtR); // tehlikede kamera hafifçe yaklaşır
     drops.update(dtR, U.uTime.value);
     wisps.update(dtR, U.uTime.value);
     flare.update(lv, G.T, dtR, G.state === 'play');
@@ -313,7 +329,7 @@ function update(dt, dtR) {
     } else ghost.material.opacity = 0;
   }
   arc1.update(dtR); arc2.update(dtR);
-  ambient(dtR); updateBirds(dtR); updateFar(U.uTime.value);
+  ambient(dtR); Ambient.update(dt, G.night); ShadowBirds.update(dt); updateBirds(dtR); updateFar(U.uTime.value);
   fxAdd.update(dtR); fxMix.update(dtR); updatePrints(dtR); updatePops(dtR);
   // efekt sönümleri
   G.orbPulse = Math.max(0, (G.orbPulse || 0) - dtR * 4);
@@ -335,12 +351,13 @@ function update(dt, dtR) {
   pu.uNight.value = G.night;
   pu.uBloomAdd.value = 0.35 + G.night * 0.4 + ecl * 0.3 + flare.k * 0.45 + flare.warnK * 0.12;
   pu.uRays.value = 0.5 * (1 - G.night) * (1 - ecl) * (orb.g.visible ? 1 : 0);
-  const danger = G.state === 'play' ? (G.f > 0 ? 0.35 + (1 - G.meter) * 0.8 : G.meter < 0.35 ? 0.2 + Math.sin(U.uTime.value * 8) * 0.08 : 0) : 0;
+  const danger = G.state === 'play' ? (G.breathT > 0 ? 1.45 + Math.sin(U.uTime.value * 18) * 0.25 : G.f > 0 ? 0.35 + (1 - G.meter) * 0.8 : G.meter < 0.35 ? 0.2 + Math.sin(U.uTime.value * 8) * 0.08 : 0) : 0;
   pu.uDanger.value = damp(pu.uDanger.value, danger, 8, dtR);
   _pv.set(zifir.g.position.x, 0.35, zifir.g.position.z).project(camera);
   pu.uHeat.value.set(_pv.x * 0.5 + 0.5, _pv.y * 0.5 + 0.5, G.state === 'play' ? G.f * 0.9 : 0);
   const focusY = G.state === 'title' || G.state === 'map' || G.state === 'film' ? 0.42 : clamp(_pv.y * 0.5 + 0.5, 0.25, 0.65);
   pu.uTiltC.value = damp(pu.uTiltC.value, focusY, 2, dtR); pu.uTiltW.value = 0.3; pu.uTilt.value = 0.7;
+  if (G.state === 'photo' && G.photo) Photo.apply(pu);
 }
 
 /* =====================================================================
@@ -352,6 +369,9 @@ canvas.addEventListener('pointerdown', (e) => {
   if (G.state === 'film') { Film.skip(); return; }
   if (G.state === 'map') { SkyMap.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
   if (G.state === 'theater') { Theater.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
+  if (G.state === 'photo') { Photo.down(e); try { canvas.setPointerCapture(e.pointerId); } catch (err) {} return; }
+  if (G.state === 'intro' && Cam.flight) { Cam.skipFlight(); G.stateT = Math.max(G.stateT, G.introDur - 0.85); return; }
+  requestGyro();
   if (G.state === 'complete') { if (G.compStage < 5 && G.mode !== 'endless') G.ffwd = true; return; }
   if (G.state === 'fail' && G.fShown) { retry(); return; }
   if (G.drag) return;
@@ -364,6 +384,7 @@ canvas.addEventListener('pointerdown', (e) => {
 canvas.addEventListener('pointermove', (e) => {
   if (G.state === 'map') { SkyMap.move(e); return; }
   if (G.state === 'theater') { Theater.move(e); return; }
+  if (G.state === 'photo') { Photo.move(e); return; }
   const d = G.drag; if (!d || e.pointerId !== d.id) return;
   const now = performance.now(), dx = e.clientX - d.x, dtm = Math.max(1, now - d.t);
   d.x = e.clientX; d.t = now;
@@ -371,7 +392,7 @@ canvas.addEventListener('pointermove', (e) => {
   G.uT += du;
   d.v = lerp(d.v, (du / dtm) * 1000, 0.45);
 });
-const endDrag = (e) => { if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag || (Theater.ptrs && Theater.ptrs.size)) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
+const endDrag = (e) => { Photo.up(e); if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag || (Theater.ptrs && Theater.ptrs.size)) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
 window.addEventListener('keydown', (e) => {
   audio.unlock();
@@ -386,7 +407,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { if (G.state === 'play') act.dash(); }
   else if (e.code === 'ArrowDown' || e.code === 'KeyS') { G.holdWait = true; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'Space') { if (G.state === 'play') { if (G.lv.spec.eclipse && G.ecl.charge >= 1) triggerEclipse(); else act.dash(); } else if (G.state === 'ready') startPlay(); else if (G.state === 'complete' && G.compStage >= 5) nextFromComplete(); else if (G.state === 'fail' && G.fShown) retry(); else if (G.state === 'title') $('#btnPlay').click(); }
-  else if (e.code === 'Escape' || e.code === 'KeyP') { if (G.state === 'paused') resume(); else pause(); }
+  else if (e.code === 'Escape' || e.code === 'KeyP') { if (G.state === 'photo') Photo.close(); else if (G.state === 'paused') resume(); else pause(); }
 });
 window.addEventListener('keyup', (e) => { if (['ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD'].includes(e.code)) G.keyDir = 0; if (e.code === 'ArrowDown' || e.code === 'KeyS') G.holdWait = false; });
 // Bekle düğmesi: basılı tutuldukça
@@ -406,6 +427,50 @@ document.addEventListener('visibilitychange', () => {
 /* =====================================================================
    EKRANLAR & DÜĞMELER
    ===================================================================== */
+/* ---------- fotoğraf modu: duraklatmadan açılır, serbest kamera + filtreler, kaydet/paylaş ---------- */
+const PHOTO_FILTERS = [
+  { name: 'Doğal' },
+  { name: 'Sıcak', f: (pu) => { pu.uGain.value.set(1.09, 1.0, 0.86); pu.uSat.value *= 1.1; pu.uContrast.value *= 1.04; } },
+  { name: 'Sinema', f: (pu) => { pu.uLift.value.set(0.0, 0.012, 0.035); pu.uGain.value.set(1.05, 1.0, 0.94); pu.uSat.value *= 0.88; pu.uContrast.value *= 1.16; pu.uVignette.value = 1.3; } },
+  { name: 'Rüya', f: (pu) => { pu.uLift.value.set(0.05, 0.025, 0.07); pu.uSat.value *= 1.22; pu.uBloomAdd.value += 0.5; pu.uContrast.value *= 0.95; } },
+  { name: 'Siyah-beyaz', f: (pu) => { pu.uSat.value = 0; pu.uContrast.value *= 1.22; pu.uGrain.value = 0.07; } },
+];
+const Photo = {
+  ptrs: new Map(), shot: false, pinch: 0,
+  open() {
+    if (G.state !== 'paused') return;
+    audio.ui(); UI.hide('pause'); UI.hud(false); hideToast();
+    const z = zifir.g.position; G.photo = { yaw: 0, pitch: 0, dist: 0.8, tx: lerp(Cam.base.target.x, z.x, 0.6), tz: lerp(Cam.base.target.z, z.z, 0.6), filter: 0, vig: post.u.uVignette.value, grain: post.u.uGrain.value };
+    G.state = 'photo'; this.chips(); UI.show('photo');
+  },
+  close() { if (G.state !== 'photo') return; audio.ui(); UI.hide('photo'); const P = G.photo; post.u.uVignette.value = P.vig; post.u.uGrain.value = P.grain; G.photo = null; G.state = 'paused'; UI.show('pause'); },
+  chips() { $$('#phFilters b').forEach((el, i) => el.classList.toggle('on', i === G.photo.filter)); },
+  setFilter(i) { G.photo.filter = i; post.u.uVignette.value = G.photo.vig; post.u.uGrain.value = G.photo.grain; this.chips(); audio.ui(); },
+  apply(pu) { const f = PHOTO_FILTERS[G.photo.filter]; if (f && f.f) f.f(pu); },
+  down(e) { this.ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); this.pinch = 0; },
+  move(e) {
+    const p = this.ptrs.get(e.pointerId); if (!p || !G.photo) return;
+    if (this.ptrs.size >= 2) {
+      const [a, b] = [...this.ptrs.values()], d0 = Math.hypot(a.x - b.x, a.y - b.y); p.x = e.clientX; p.y = e.clientY;
+      const d1 = Math.hypot(a.x - b.x, a.y - b.y); if (d0 > 10) this.zoom(d0 / d1); return;
+    }
+    const dx = e.clientX - p.x, dy = e.clientY - p.y; p.x = e.clientX; p.y = e.clientY;
+    G.photo.yaw -= dx * 0.006; G.photo.pitch += dy * 0.004;
+  },
+  up(e) { this.ptrs.delete(e.pointerId); },
+  zoom(k) { if (G.photo) G.photo.dist = clamp(G.photo.dist * k, 0.35, 1.6); },
+  capture() {
+    this.shot = false;
+    const name = `gundonumu-${G.lv && G.lv.spec.kind === 'story' ? 'ada' + (G.lv.spec.g + 1) : 'ada'}.png`;
+    renderer.domElement.toBlob((blob) => {
+      if (!blob) return;
+      const file = typeof File !== 'undefined' ? new File([blob], name, { type: 'image/png' }) : null;
+      if (file && navigator.canShare && navigator.canShare({ files: [file] }) && /Mobi|Android|iPhone|iPad/.test(navigator.userAgent)) navigator.share({ files: [file], title: 'Gündönümü' }).catch(() => {});
+      else { const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1500); }
+      G.flash = 0.5; G.flashCol.set(1, 1, 1); audio.chime(); toast('Fotoğraf kaydedildi', 1.6);
+    }, 'image/png');
+  },
+};
 function pause() {
   if (G.state !== 'play' && G.state !== 'ready') return;
   G.pausedFrom = G.state; G.state = 'paused'; G.drag = null; G.keyDir = 0;
@@ -473,7 +538,7 @@ function buildMap() {
   SKINS.forEach((s, i) => {
     const ok = i === 0 || chapterStars(i - 1) === 24;
     const b = document.createElement('button'); b.className = 'skin tap' + (Save.data.skin === i ? ' sel' : '') + (ok ? '' : ' locked'); b.style.setProperty('--c', s.c); b.style.pointerEvents = 'auto'; b.title = ok ? s.name : `${CHAPTERS[i - 1].name}: 24 yıldız`;
-    b.addEventListener('click', () => { if (!ok) { toast(`<em>${s.name}</em> — ${CHAPTERS[i - 1].name} takımyıldızındaki 24 yıldızı topla.`, 2.8); return; } audio.ui(); Save.data.skin = i; Save.save(); zifir.setSkin(i); buildMap(); if (SkyMap.inited) SkyMap.refresh(); });
+    b.addEventListener('click', () => { if (!ok) { toast(`<em>${s.name}</em> rengi için ${CHAPTERS[i - 1].name} takımyıldızındaki 24 yıldızı topla.`, 2.8); return; } audio.ui(); Save.data.skin = i; Save.save(); zifir.setSkin(i); buildMap(); if (SkyMap.inited) SkyMap.refresh(); });
     sk.appendChild(b);
   });
 }
@@ -501,6 +566,10 @@ function nextStoryG() { if (TEST_ALL) { for (let g = 0; g < STORY_LEVELS; g++) i
 bind('#btnPlay', () => { audio.ui(); UI.hide('title'); startStory(nextStoryG()); });
 bind('#btnMapT', () => openMap());
 bind('#btnSetT', () => { audio.ui(); refreshToggles(); UI.show('settings'); });
+bind('#btnPhoto', () => Photo.open());
+bind('#phClose', () => Photo.close());
+bind('#phShot', () => { Photo.shot = true; });
+$$('#phFilters b').forEach((el, i) => el.addEventListener('click', (e) => { e.stopPropagation(); Photo.setFilter(i); }));
 bind('#btnSetClose', () => { audio.ui(); UI.hide('settings'); });
 let resetArm = 0;
 bind('#btnReset', (e) => {
@@ -542,7 +611,7 @@ bind('#thNext', () => { Theater.cardShown = false; Theater.next(); });
 bind('#mapPrev', () => { audio.ui(); SkyMap.go(Math.round(SkyMap.tf) - 1); });
 bind('#mapNext', () => { audio.ui(); SkyMap.go(Math.round(SkyMap.tf) + 1); });
 let wheelT = 0;
-canvas.addEventListener('wheel', (e) => { if (G.state !== 'map') return; const now = performance.now(); if (now - wheelT < 380) return; wheelT = now; SkyMap.go(Math.round(SkyMap.tf) + Math.sign(e.deltaY || e.deltaX)); }, { passive: true });
+canvas.addEventListener('wheel', (e) => { if (G.state === 'photo') { Photo.zoom(Math.exp((e.deltaY || 0) * 0.0012)); return; } if (G.state !== 'map') return; const now = performance.now(); if (now - wheelT < 380) return; wheelT = now; SkyMap.go(Math.round(SkyMap.tf) + Math.sign(e.deltaY || e.deltaX)); }, { passive: true });
 bind('#btnEndless', () => { if (Save.data.unlocked < 16) { toast('Sonsuz Gün <em>16. adayı</em> tamamlayınca açılır.', 2.6); return; } audio.ui(); startEndless(); });
 bind('#btnDaily', () => { if (Save.data.unlocked < 4) { toast('Günün Adası <em>4. adayı</em> tamamlayınca açılır.', 2.6); return; } audio.ui(); startDaily(); });
 bind('#btnEndOk', () => openMap());
@@ -564,12 +633,13 @@ function onResize() {
   post.build(v.x, v.y, Q);
   camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h); Theater.resize(w, h);
   if (G.lv) Cam.fit(G.lv);
-  fxAdd.u.uPx.value = fxMix.u.uPx.value = v.y / (2 * Math.tan(deg(camera.fov / 2)));
+  fxAdd.u.uPx.value = fxMix.u.uPx.value = Ambient.u.uPx.value = v.y / (2 * Math.tan(deg(camera.fov / 2)));
 }
 function applyQuality() {
   const Q = Perf.Q;
   setShadowSize(Q.shadow); buildSeaMat(Q.cloudOct); setParticleCap(Q.particles);
   post.u.uFlare.value = Q.flare;
+  U.uSoftSh.value = Q.soft && Perf.softOk ? 1 : 0; Ambient.setCount(Q.amb); // yumuşak gölge ve hava parçacıkları: Düşük'te kapalı; yük artarsa gölge ilk kapanan
   if (G.view) G.view.setGrass(Q);
   onResize();
 }
@@ -611,7 +681,7 @@ function reportError(e) {
   if (!window.__gdBooted && window.__gdFail) window.__gdFail(e); // yükleme kartı hâlâ açıkken: nedeni orada göster
   if (errShown) return; errShown = true;
   $('#fader').classList.remove('on', 'soon');
-  try { toast('Küçük bir aksaklık oldu — oyun devam ediyor.', 2.6); } catch (err) {}
+  try { toast('Küçük bir aksaklık oldu, oyun devam ediyor.', 2.6); } catch (err) {}
 }
 addEventListener('error', (e) => reportError(e.error || e.message));
 addEventListener('unhandledrejection', (e) => reportError(e.reason));
@@ -631,13 +701,13 @@ function frame(now) {
   let dt = dtR;
   if (G.hitStop > 0) { G.hitStop -= dtR; dt = 0; }
   if (G.slowT > 0) { G.slowT -= dtR; dt *= lerp(1, G.slowK, smoothstep(0, 0.2, G.slowT)); }
-  if (G.state === 'paused') dt = 0;
+  if (G.state === 'paused' || G.state === 'photo') dt = 0;
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
   audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k };
   audio.update(dtR, G.state === 'play');
   const onMap = G.state === 'map' && SkyMap.active, onTh = G.state === 'theater' && Theater.active;
   if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
-  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; } catch (e) { reportError(e); } }
+  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; if (Photo.shot) Photo.capture(); } catch (e) { reportError(e); } }
   // güvenlik: geçiş perdesi takılı kalmasın
   const fd = $('#fader'); if (fd.classList.contains('on')) { fd.__t = (fd.__t || 0) + dtR; if (fd.__t > 3.5) { fd.classList.remove('on', 'soon'); fd.__t = 0; } } else fd.__t = 0;
 }
@@ -648,8 +718,22 @@ function frame(now) {
    doğar, gerçek gölgeler adayı süpürür → tam tutulma → ışık döner → başlık
    Kamera yolu Catmull-Rom; telefon eğimi/fare ile hafif 3B paralaks.
    ===================================================================== */
-const Tilt = { x: 0, y: 0, tx: 0, ty: 0, gyro: false };
-addEventListener('deviceorientation', (e) => { if (e.gamma == null) return; Tilt.gyro = true; Tilt.tx = clamp(e.gamma / 24, -1, 1); Tilt.ty = clamp((e.beta - 45) / 24, -1, 1); }, { passive: true });
+const Tilt = { x: 0, y: 0, tx: 0, ty: 0, gyro: false, rx: 0, ry: 0, bx: 0, by: 0, t: 0, asked: false };
+addEventListener('deviceorientation', (e) => {
+  if (e.gamma == null) return;
+  const land = Math.abs((screen.orientation && screen.orientation.angle) || window.orientation || 0) === 90;
+  const gx = land ? e.beta : e.gamma, gyv = land ? e.gamma : e.beta, now = performance.now(), dt = Math.min(0.2, (now - (Tilt.t || now)) / 1000); Tilt.t = now;
+  if (!Tilt.gyro) { Tilt.bx = gx; Tilt.by = gyv; }
+  Tilt.gyro = true; Tilt.tx = clamp(e.gamma / 24, -1, 1); Tilt.ty = clamp((e.beta - 45) / 24, -1, 1);
+  // oyunda: telefonun yavaşça yeni duruşa alışan tabanına göre sapma (uzun tutunca nötre döner, kayma yok)
+  const k = Math.min(1, dt / 2.2); Tilt.bx += (gx - Tilt.bx) * k; Tilt.by += (gyv - Tilt.by) * k;
+  Tilt.rx = clamp((gx - Tilt.bx) / 14, -1, 1); Tilt.ry = clamp((gyv - Tilt.by) / 14, -1, 1);
+}, { passive: true });
+// iOS: eğim verisi için kullanıcı dokunuşunda bir kez izin istenir
+function requestGyro() {
+  if (Tilt.asked || Save.data.settings.gyro === false) return; Tilt.asked = true;
+  try { if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') DeviceOrientationEvent.requestPermission().catch(() => {}); } catch (e) {}
+}
 addEventListener('pointermove', (e) => { if (Tilt.gyro || G.drag || e.pointerType === 'touch') return; Tilt.tx = (e.clientX / innerWidth - 0.5) * 2; Tilt.ty = (e.clientY / innerHeight - 0.5) * 2; }, { passive: true });
 function crScalar(keys, t, get, settle) {
   let i = 0; while (i < keys.length - 2 && t > keys[i + 1].t) i++;
@@ -792,7 +876,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),

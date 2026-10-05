@@ -510,8 +510,32 @@ function paintTop(lv, pal, scale) {
     for (let i = 0; i < 90 * scale; i++) { x.fillStyle = rng.pick(['#7affea', '#ffd27a']); x.globalAlpha = 0.5; const s2 = rng.range(1, 2.4) * scale; x.fillRect(rng.range(0, W), rng.range(0, H), s2, s2); }
     x.globalAlpha = 1;
   }
-  // prop dibi gölgelendirme (AO)
-  for (const p of lv.props) { const r = p.fr * 1.55; const g = x.createRadialGradient(X(p.x), Z(p.z), 0, X(p.x), Z(p.z), r * ppu); g.addColorStop(0, 'rgba(20,10,0,0.38)'); g.addColorStop(0.6, 'rgba(20,10,0,0.14)'); g.addColorStop(1, 'rgba(20,10,0,0)'); x.fillStyle = g; x.beginPath(); x.arc(X(p.x), Z(p.z), r * ppu, 0, TAU); x.fill(); }
+  // pişmiş ortam gölgesi: ada kenarı içe doğru hafif kararır (kenar derinliği), sonra prop dipleri
+  {
+    const cs = 0.25, gw = Math.ceil((B.x1 - B.x0) / cs), gh = Math.ceil((B.z1 - B.z0) / cs);
+    const ao = document.createElement('canvas'); ao.width = gw; ao.height = gh;
+    const ax = ao.getContext('2d'), img = ax.createImageData(gw, gh), d = img.data;
+    for (let j = 0; j < gh; j++) for (let i = 0; i < gw; i++) {
+      const wx = B.x0 + (i + 0.5) * cs, wz = B.z0 + (j + 0.5) * cs;
+      if (!insideIsland(lv, wx, wz, 0)) continue;
+      const k = insideIsland(lv, wx, wz, 0.9) ? (insideIsland(lv, wx, wz, 1.6) ? 0 : 0.45) : 1, q = (j * gw + i) * 4;
+      d[q] = 26; d[q + 1] = 14; d[q + 2] = 4; d[q + 3] = Math.round(k * 0.2 * 255);
+    }
+    ax.putImageData(img, 0, 0); x.imageSmoothingEnabled = true; x.drawImage(ao, 0, 0, W, H);
+  }
+  for (const p of lv.props) {
+    const h = p.h || 1; if (h < 0.3) continue;
+    const hk = clamp(h / 3, 0.35, 1.4), r = p.fr * (1.2 + 0.35 * hk), a0 = 0.26 + 0.14 * hk;
+    const g = x.createRadialGradient(X(p.x), Z(p.z), 0, X(p.x), Z(p.z), r * ppu);
+    g.addColorStop(0, `rgba(20,10,0,${a0.toFixed(3)})`); g.addColorStop(0.55, `rgba(20,10,0,${(a0 * 0.4).toFixed(3)})`); g.addColorStop(1, 'rgba(20,10,0,0)');
+    x.fillStyle = g; x.beginPath(); x.arc(X(p.x), Z(p.z), r * ppu, 0, TAU); x.fill();
+    if (p.arch && p.p) {
+      // kemer çatısının altı: gökyüzünü göremeyen zemin daha koyu, kenarları yumuşak
+      const P = p.p; x.save(); x.translate(X(p.x), Z(p.z)); x.rotate(-p.yaw);
+      x.shadowColor = 'rgba(20,10,0,0.3)'; x.shadowBlur = 0.35 * ppu; x.fillStyle = 'rgba(20,10,0,0.16)';
+      x.fillRect(-P.w * 0.5 * ppu, -P.l * 0.5 * ppu, P.w * ppu, P.l * ppu); x.restore();
+    }
+  }
   // yol
   const path = lv.path;
   const strokePath = (w, style, blur = 0) => {

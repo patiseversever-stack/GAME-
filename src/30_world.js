@@ -77,7 +77,7 @@ const CHAPTERS = [
   },
   {
     key: 'buz', name: 'Buz Diyarı', roman: 'VI', constellation: 'Kutup Yıldızı',
-    sub: 'Kutup ışıkları altında eriyen buz sütunları.', hint: 'Buz güneşte erir — gölgesi kısalmadan kullan.',
+    sub: 'Kutup ışıkları altında eriyen buz sütunları.', hint: 'Buz güneşte erir; gölgesi kısalmadan kullan.',
     tilt: 50, thMin: 13, features: { melt: true }, light: { sun: 0.82, hemi: 0.95 },
     pal: {
       skyLowZ: '#1b2a5a', skyLowH: '#ff9fbe', skyHighZ: '#2f63b0', skyHighH: '#cdeaff',
@@ -91,7 +91,7 @@ const CHAPTERS = [
   },
   {
     key: 'ayna', name: 'Ayna Sarayı', roman: 'VII', constellation: 'Lale',
-    sub: 'Çini avlular, altın çerçeveli aynalar.', hint: 'Yansıyan ışık gölge tanımaz — ışını Zifir’den uzak tut.',
+    sub: 'Çini avlular, altın çerçeveli aynalar.', hint: 'Yansıyan ışık gölge tanımaz, ışını Zifir’den uzak tut.',
     tilt: 36, thMin: 17, features: { mirrors: true },
     pal: {
       skyLowZ: '#26245e', skyLowH: '#ffaa7a', skyHighZ: '#2a64c4', skyHighH: '#d4eeff',
@@ -105,7 +105,7 @@ const CHAPTERS = [
   },
   {
     key: 'saat', name: 'Gök Saati', roman: 'VIII', constellation: 'Sarkaç',
-    sub: 'Dişliler döner, sarkaç gölgeyi biçer.', hint: 'Dönen gölgeler saat gibi geri gelir — zamanla.',
+    sub: 'Dişliler döner, sarkaç gölgeyi biçer.', hint: 'Dönen gölgeler saat gibi geri gelir. Zamanlamayı iyi ayarla.',
     tilt: 32, thMin: 15, features: { gears: true, pendulum: true }, light: { sun: 0.95, hemi: 0.9 },
     pal: {
       skyLowZ: '#1a2846', skyLowH: '#ff9458', skyHighZ: '#26527e', skyHighH: '#bfe0e6',

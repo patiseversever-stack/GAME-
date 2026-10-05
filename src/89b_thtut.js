@@ -26,7 +26,7 @@ const TH_TUT = {
     { play: 1, ghost: 'v', t: 'Önce sağa sola çevir, sonra yukarı aşağı eğ. Yüzdeyi izle.', until: 'vdrag', auto: 12 },
   ],
   roll: [
-    { spot: 'ring', demo: 'r', t: 'Yeni hamle: parmağını <em>halkanın dışında</em> daire çizer gibi gezdir — heykel yan yatar.' },
+    { spot: 'ring', demo: 'r', t: 'Yeni hamle: parmağını <em>halkanın dışında</em> daire çizer gibi gezdir, heykel yan yatar.' },
     { play: 1, ghost: 'r', t: 'İki parmakla çevirmek de olur. Ortadan sürüklemek yine <em>çevirir</em>.', until: 'roll', auto: 12 },
   ],
 };
@@ -160,12 +160,12 @@ const ThTut = {
 
 /* ---------- fısıltılar: oynarken kısa, değişken, sıcak-soğuk ---------- */
 const TH_WH = {
-  go: ['Perde senin. Gölgeyi uyandır.', 'Hadi bakalım — ışık seni bekliyor.'],
+  go: ['Perde senin. Gölgeyi uyandır.', 'Hadi bakalım, ışık seni bekliyor.'],
   start: ['Heykele dokun ve sürükle…', 'Parmağını heykelin üstünde gezdir…'],
   warm: ['Isınıyor…', 'Gölge kıpırdandı…', 'Bir şey belirmeye başladı…'],
-  hot: ['Gölge seni tanıdı — yavaşla.', 'Çok yakın… ince ayar.', 'Şekil beliriyor, acele etme.'],
+  hot: ['Gölge seni tanıdı, yavaşla.', 'Çok yakın… ince ayar.', 'Şekil beliriyor, acele etme.'],
   release: ['Bırak… kendi otursun.', 'Şimdi parmağını kaldır.'],
-  cold: ['Soğuyor… geri dön.', 'Uzaklaştın — öbür yöne.', 'Hayır, o yöne değil…'],
+  cold: ['Soğuyor… geri dön.', 'Uzaklaştın, öbür yöne dön.', 'Hayır, o yöne değil…'],
   stuck: ['Takıldın mı? Okun gösterdiği yöne dene.', 'Bir de öbür eksene bak…'],
   hint: ['Usta heykeli yarı yola getirdi.'],
   par: ['Üç yıldız için son on saniye!'],

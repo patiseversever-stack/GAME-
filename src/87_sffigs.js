@@ -205,7 +205,7 @@ function SF_WHALE_PERFORM(t, S) {
   k.bub = t - 6.3; k.bx = 260; k.by = 330;
 }
 const SF_WHALE = {
-  key: 'balina', name: 'Balina', line: 'Perdenin içinden bir okyanus geçti — fıskiyesiyle selam verdi, derinlere daldı.', dur: 9.6, fitW: 4.7, fitH: 2.7,
+  key: 'balina', name: 'Balina', line: 'Perdenin içinden bir okyanus geçti. Fıskiyesiyle selam verdi, derinlere daldı.', dur: 9.6, fitW: 4.7, fitH: 2.7,
   bones: {
     whale: [null, 0, 0, 100, 0], head: ['whale', 80, 0, 250, -6], body: ['whale', 80, 0, -60, 0], tail1: ['body', -60, -2, -170, -16], tail2: ['tail1', -170, -16, -258, -2], fluke: ['tail2', -258, -2, -372, -2],
     fin: ['body', 112, 38, 0, 160],
@@ -296,7 +296,7 @@ function SF_EL_PERFORM(t, S) {
   }
 }
 const SF_ELE = {
-  key: 'fil', name: 'Fil', line: 'Hortumunu kaldırıp seslendi — yavrusu koşup kuyruğuna tutundu, birlikte yola koyuldular.', dur: 11.8, fitW: 3.9, fitH: 3.4,
+  key: 'fil', name: 'Fil', line: 'Hortumunu kaldırıp seslendi. Yavrusu koşup kuyruğuna tutundu, birlikte yola koyuldular.', dur: 11.8, fitW: 3.9, fitH: 3.4,
   bones: Object.assign({}, SF_EL_BONES, SF_BABY.B),
   layers: SF_EL_LAYERS.concat(SF_BABY.L),
   perform: SF_EL_PERFORM,

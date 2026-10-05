@@ -229,7 +229,7 @@ const SkyMap = {
   },
   pick(g) {
     if (this.dive) return;
-    if (g > Save.data.unlocked) { audio.clunk(); haptic(10); toast('Bu ada henüz <em>uyanmadı</em> — önceki adayı tamamla.', 2.2); return; }
+    if (g > Save.data.unlocked) { audio.clunk(); haptic(10); toast('Bu ada henüz <em>uyanmadı</em>. Önce bir önceki adayı tamamla.', 2.2); return; }
     const I = this.isl[Math.floor(g / 8)], mk = I.marks[g % 8];
     audio.ui(); audio.whoosh(true, 0.8, 0.07); haptic(12);
     if (Math.round(this.f) !== I.i) { this.go(I.i); }

@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Gündönümü">
-<meta name="description" content="Gündönümü — güneşi sen çevir, gölgeyi sen koru. Yüzen adalarda ışıktan kaçan küçük bir gölgenin yolculuğu.">
+<meta name="description" content="Gündönümü: güneşi sen çevir, gölgeyi sen koru. Yüzen adalarda ışıktan kaçan küçük bir gölgenin yolculuğu.">
 <title>Gündönümü</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -204,6 +204,10 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 .star.shown span{opacity:1}.star.lit span{color:var(--ivory)}
 #complete .actions{display:flex;flex-direction:column;align-items:center;gap:14px;opacity:0;transform:translateY(18px);transition:all .6s cubic-bezier(.2,.9,.2,1)}
 #complete.ready .actions{opacity:1;transform:none}
+#cBirds{display:flex;gap:9px;justify-content:center;align-items:center;margin-top:3.4vh;font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:var(--ivory-dim);opacity:0;transform:translateY(6px);transition:all .6s ease .15s}
+#cBirds svg{width:30px;height:15px;fill:#1a1030;stroke:rgba(190,160,255,.75);stroke-width:1.4;filter:drop-shadow(0 0 6px rgba(150,120,255,.6))}
+#cBirds b{color:var(--ivory);font-weight:600;font-size:13px}#cBirds .rec{color:var(--gold-2)}
+#complete.ready #cBirds{opacity:1;transform:none}
 #complete .row{display:flex;gap:12px}
 
 /* ---------- fail ---------- */
@@ -239,6 +243,14 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #lvlHelp em{font-style:normal}
 #testBadge{display:none;position:absolute;left:50%;top:calc(var(--sat) + 10px);transform:translateX(-50%);padding:5px 12px;border-radius:999px;background:rgba(20,14,34,.6);border:1px solid rgba(185,173,255,.45);font-size:10.5px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:#d9d2ff;white-space:nowrap;pointer-events:none;z-index:5}
 body.testall #testBadge{display:block}
+/* fotoğraf modu: yalnızca düğmeler dokunuş alır, gerisi kameraya gider */
+#photo{pointer-events:none;justify-content:space-between;align-items:center;padding:calc(var(--sat) + 12px) 14px calc(var(--sab) + 26px)}
+#photo .phTop{pointer-events:auto;display:flex;gap:10px;align-items:center;width:100%;max-width:560px}
+#phFilters{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;flex:1}
+#phFilters b{flex:0 0 auto;padding:8px 12px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-b);font-size:12px;font-weight:700;letter-spacing:.04em;cursor:pointer;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+#phFilters b.on{background:rgba(242,196,109,.9);color:#2a1a08;border-color:transparent}
+#photo .phHint{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--ivory-dim);text-shadow:0 1px 8px rgba(0,0,0,.5);margin-top:auto;margin-bottom:12px}
+#photo #phShot{pointer-events:auto}
 #fail .hintbtn{display:none}#fail.offerhint .hintbtn{display:inline-flex}
 
 /* ---------- pause / settings ---------- */
@@ -603,6 +615,7 @@ body.testall #testBadge{display:block}
         <div class="star"><svg viewBox="-30 -30 60 60"><path class="s-off" d="M0-26 6-7 26-6 10 5 16 25 0 13-16 25-10 5-26-6-6-7Z"/><path class="s-on" d="M0-26 6-7 26-6 10 5 16 25 0 13-16 25-10 5-26-6-6-7Z"/></svg><span id="st1">Tüm damlalar</span></div>
         <div class="star"><svg viewBox="-30 -30 60 60"><path class="s-off" d="M0-26 6-7 26-6 10 5 16 25 0 13-16 25-10 5-26-6-6-7Z"/><path class="s-on" d="M0-26 6-7 26-6 10 5 16 25 0 13-16 25-10 5-26-6-6-7Z"/></svg><span id="st2">Lekesiz</span></div>
       </div>
+      <div id="cBirds"><svg viewBox="-24 -12 48 24" aria-hidden="true"><path d="M0 2C-5-3-12-7-22-5-14-3-8 0-4 5L0 9 4 5C8 0 14-3 22-5 12-7 5-3 0 2Z"/></svg><span id="cBirdsT"></span></div>
     </div>
     <div class="actions">
       <button class="btn primary tap" id="btnNext">Sonraki Ada</button>
@@ -622,10 +635,16 @@ body.testall #testBadge{display:block}
     </div>
   </div>
 
+  <div id="photo" class="screen">
+    <div class="phTop"><button class="icon tap" id="phClose" aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button><div id="phFilters"><b>Doğal</b><b>Sıcak</b><b>Sinema</b><b>Rüya</b><b>Siyah-beyaz</b></div></div>
+    <div class="phHint">Sürükle: döndür · iki parmak ya da tekerlek: yaklaş</div>
+    <button class="btn primary tap" id="phShot">Kaydet</button>
+  </div>
   <div id="pause" class="screen">
     <div class="card tap">
       <h4>Duraklatıldı</h4>
       <button class="btn primary tap" id="btnResume">Devam</button>
+      <button class="btn ghost tap" id="btnPhoto">Fotoğraf</button>
       <button class="btn ghost tap" id="btnRestart">Yeniden başla</button>
       <button class="btn ghost tap" id="btnMapP">Gökyüzü</button>
       <button class="btn ghost tap" id="btnHowP">Nasıl oynanır?</button>
@@ -642,6 +661,7 @@ body.testall #testBadge{display:block}
       <button class="toggle tap" data-set="haptics">Titreşim <b>Açık</b></button>
       <button class="toggle tap" data-set="quality">Grafik <b>Otomatik</b></button>
       <button class="toggle tap" data-set="assist">Rahat mod <b>Kapalı</b></button>
+      <button class="toggle tap" data-set="gyro">Eğimle derinlik <b>Açık</b></button>
       <button class="btn ghost tap" id="btnHowS">Nasıl oynanır?</button>
       <button class="btn primary tap" id="btnSetClose">Tamam</button>
       <button class="danger-link tap" id="btnReset">İlerlemeyi sıfırla</button>
@@ -721,7 +741,7 @@ body.testall #testBadge{display:block}
 
   <div id="ending" class="screen">
     <h2>Gündönümü</h2>
-    <p>Sekiz takımyıldızı tamamlandı. Zifir artık geceyi taşıyor — ve güneş, ilk kez, onu yakmadan batıyor.</p>
+    <p>Sekiz takımyıldızı tamamlandı. Zifir artık geceyi taşıyor. Güneş ise ilk kez onu yakmadan batıyor.</p>
     <p style="font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold-2)">Sonsuz Gün seni bekliyor</p>
     <button class="btn primary tap" id="btnEndOk">Gökyüzüne dön</button>
   </div>

@@ -270,6 +270,11 @@ class AudioEngine {
     if (on) { this.bell(1320, t, 0.9, 0.06, { ratio: 1.5, index: 0.8, verb: 0.7 }); this.bell(1980, t + 0.05, 0.8, 0.04, { ratio: 2.5, index: 0.6, verb: 0.6 }); }
     else this.osc('sine', 600, t, 0.25, 0.04, null, { f1: 300 });
   }
+  // rekor / kutlama: yükselen beşli ezgi (pentatonik), yumuşak çan
+  chime() { if (!this.ok) return; const t = this.t; [72, 76, 79, 84].forEach((m, i) => this.bell(mtof(m), t + i * 0.09, 1.1, 0.05, { ratio: 2.0, index: 1.2, verb: 0.8 })); }
+  // gölge kuşu: kanat hışırtısı + kısa iki notalı ötüş (sürü büyüdükçe incelir) · ürküp kaçış
+  shadowBird(n = 0) { if (!this.ok) return; const t = this.t, f = 1050 + (n % 7) * 85; this.noiseHit(t, 0.16, 0.03, { type: 'bandpass', f: 900, f1: 2600, q: 1.4, a: 0.02 }); this.osc('sine', f, t + 0.04, 0.07, 0.02, null, { f1: f * 1.3, verb: 0.4 }); this.osc('sine', f * 1.19, t + 0.13, 0.08, 0.016, null, { f1: f * 1.5, verb: 0.4 }); }
+  shadowFlee() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.28, 0.035, { type: 'bandpass', f: 2200, f1: 700, q: 1.2, a: 0.01 }); }
   closeCall() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.35, 0.08, { type: 'highpass', f: 1200, f1: 9000, a: 0.3 }); this.bell(1760, t + 0.3, 1.2, 0.07, { ratio: 2.0, index: 1.4, verb: 0.9 }); }
   iceCrack() { if (!this.ok) return; const t = this.t; for (let i = 0; i < 4; i++) this.noiseHit(t + i * 0.035 + Math.random() * 0.02, 0.05, 0.05, { type: 'highpass', f: 2500 + Math.random() * 3000, q: 2 }); this.osc('sine', 90, t, 0.3, 0.08, null, { f1: 50 }); this.bell(2637, t + 0.05, 1.4, 0.025, { ratio: 3.01, index: 0.9, verb: 0.9 }); }
   tock(hi) { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.05, 0.06, { f: hi ? 2200 : 1600, q: 9 }); this.osc('sine', hi ? 1040 : 780, t, 0.08, 0.04, null, { f1: hi ? 980 : 720 }); this.osc('sine', 140, t, 0.12, 0.05, null, { f1: 80 }); }

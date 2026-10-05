@@ -22,7 +22,7 @@ const ST_ACTS = [
   { axes: 3, par: 80, riddle: 'Perdenin asıl sahibi', story: 'Usta duraksadı: “Bu gölge benim değil… ama perdeyi benden iyi tanıyor.”', mats: ['ebony', 'brass', 'cini'] },
   // Yaban Hayatı
   { axes: 3, par: 85, riddle: 'Karın altını dinleyen', story: 'Yaban perdesi açıldı. Kar yağıyor; biri karın altındaki tıkırtıyı dinliyor…', mats: ['copper', 'ivory', 'walnut'] },
-  { axes: 3, par: 90, riddle: 'Başında bir orman taşır', story: 'Orman sustu. Bir dal çıtırdadı — başında dallar taşıyan bir gölge yaklaşıyor.', mats: ['walnut', 'brass', 'ivory'] },
+  { axes: 3, par: 90, riddle: 'Başında bir orman taşır', story: 'Orman sustu. Bir dal çıtırdadı. Başında dallar taşıyan bir gölge yaklaşıyor.', mats: ['walnut', 'brass', 'ivory'] },
   { axes: 3, par: 90, riddle: 'Gecenin iki kandili', story: 'Gece çöktü. Karanlıkta iki kandil yanıyor, ama hiçbiri Usta’nın değil.', mats: ['ebony', 'silver', 'cini'] },
   { axes: 2, par: 110, riddle: 'Gökten inen ok, sudan çıkan gümüş', story: 'Bu kez iki kırık heykel var: biri gökten, biri sudan. İkisi de aynı ana bakıyor.', mats: ['brass', 'silver', 'cini'] },
   { axes: 3, par: 100, riddle: 'Rüzgârın kardeşi', story: 'Rüzgâr perdeyi dalgalandırdı; uzaktan nal sesleri yaklaşıyor…', mats: ['copper', 'ebony', 'ivory'] },
@@ -1304,7 +1304,7 @@ const Theater = {
     const sec = Math.floor(this.playT), fm = (x) => `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`, best = (Save.data.thBest || {})[this.idx];
     $('#thStat').innerHTML = `${fm(sec)} · ${this.hints ? this.hints + ' ipucu' : 'ipucusuz'}${this.record ? ' · <b>yeni rekor!</b>' : best && best < sec ? ` · rekor ${fm(best)}` : ''}`;
     if (this.stars < 3) $('#thStat').innerHTML += `<span class="goal">★★★ için: ${fm(this.parOf())} altında, ipucusuz</span>`;
-    $('#thTease').innerHTML = last ? '' : nc ? `Sıradaki: <b>${ST_ROMAN[stChap(this.idx + 1)]}. perde — Destan</b>` : `Sıradaki sahne: <b>“${ST_ACTS[this.idx + 1].riddle}…”</b>`;
+    $('#thTease').innerHTML = last ? '' : nc ? `Sıradaki: <b>${ST_ROMAN[stChap(this.idx + 1)]}. perde: Destan</b>` : `Sıradaki sahne: <b>“${ST_ACTS[this.idx + 1].riddle}…”</b>`;
     $('#theater').classList.add('solved'); stApplause(this.stars); stMus.card(); for (let k = 0; k < this.stars; k++) setTimeout(() => audio.star(k, true), 300 + k * 180);
     this.updateDots();
   },

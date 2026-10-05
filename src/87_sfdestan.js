@@ -235,7 +235,7 @@ const SD_ERGENEKON = (() => {
   const W = sdImport(SF_WOLF, ['earF', 'lff', 'lfh', 'tail', 'body', 'jaw', 'ear', 'lnf', 'lnh'], { tx: -185, ty: -193, sc: 0.62, pre: 'bk' });
   const C = SD_ERG_C;
   return {
-    key: 'ergenekon', name: 'Ergenekon', line: 'Demir dağ eridi, Bozkurt yolu gösterdi — bir millet karanlıktan bahara çıktı.', dur: 12.4, fitW: 4.7, fitH: 3.6, tasvir: 1, cine: 1, ext: 1,
+    key: 'ergenekon', name: 'Ergenekon', line: 'Demir dağ eridi, Bozkurt yolu gösterdi; bir millet karanlıktan bahara çıktı.', dur: 12.4, fitW: 4.7, fitH: 3.6, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.42, 0.1], glowColB: [1.0, 0.84, 0.55],
     caps: [[0.6, 3.3, '<small>Ergenekon · Destan</small>Dört yüz yıl demirden dağların arasında çoğaldılar. Vadi artık onlara dar geliyordu.'], [3.7, 6.9, 'Bir demirci yolu demirde gördü: yetmiş körük birden bastı, dağ kor olup aktı.'], [7.2, 9.8, 'Eriyen dağın gediğinde bir bozkurt belirdi; dönüp baktı, yürüdü…'], [10.0, 12.4, '…ve bir millet, kurdun izinden Ergenekon’dan çıktı. O günü her bahar bayram bildiler.']],
     groups: [['bkearF', 'bklff', 'bklfh', 'bktail', 'bkbody', 'bkjaw', 'bkear', 'bklnf', 'bklnh'], ['mountain']],
@@ -403,7 +403,7 @@ const SD_MALAZGIRT = (() => {
     { id: 'sarm', bind: ['sarm'], pts: [L([-8, -146, 12, -162, 20, -190], 10, 8), L([20, -186, 32, -244], 4.5, 4), sfEllipse(33, -250, 9, 12, -0.2, 14), [24, -248, 18, -254, 26, -258], [42, -252, 48, -256, 40, -260]] },
   ];
   return {
-    key: 'malazgirt', name: 'Malazgirt', line: 'Beyaz elbisesi kefeni olacaktı; akıncılar ok oldu — Anadolu’nun kapısı açıldı.', dur: 11.6, fitW: 4.3, fitH: 3.7, tasvir: 1, cine: 1, ext: 1,
+    key: 'malazgirt', name: 'Malazgirt', line: 'Beyaz elbisesi kefeni olacaktı. Akıncılar ok oldu, Anadolu’nun kapısı açıldı.', dur: 11.6, fitW: 4.3, fitH: 3.7, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.8, 0.45], glowColB: [1.0, 0.86, 0.58],
     caps: [[0.6, 3.1, '<small>Malazgirt · 26 Ağustos 1071 · Cuma</small>Karşısındaki ordu kat kat kalabalıktı. Sultan Alparslan o sabah beyazlar giydi.'], [3.3, 5.8, '“Şehit düşersem, bu beyaz elbise kefenim olsun.”'], [6.1, 8.6, 'Hilal gibi açılan akıncılar, ok gibi ovaya indi…'], [8.9, 11.6, '…ve o akşam Anadolu’nun kapıları bin yıllığına açıldı.']],
     bones: Object.assign({}, H.bones, { sultan: ['hbody', -20, -80, -14, -160], sarm: ['sultan', -8, -146, 20, -190], world: [null, 0, 200, 100, 200] }),
@@ -587,7 +587,7 @@ function SD_FT_PERFORM(t, S) {
 const SD_FETIH = (() => {
   const GX = -176, GY = -26, GR = 0.3;
   return {
-    key: 'fetih', name: 'İstanbul’un Fethi', line: 'Gemiler karadan yürüdü, sancak burca dikildi — İstanbul, bir milletin yurdu oldu.', dur: 14.6, fitW: 4.7, fitH: 3.4, tasvir: 1, cine: 1, ext: 1,
+    key: 'fetih', name: 'İstanbul’un Fethi', line: 'Gemiler karadan yürüdü, sancak burca dikildi. İstanbul, bir milletin yurdu oldu.', dur: 14.6, fitW: 4.7, fitH: 3.4, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.6, 0.25], glowColB: [0.9, 0.92, 1.0],
     caps: [
       [0.5, 3.6, '<small>Galata sırtları · 22 Nisan 1453 gecesi</small>Haliç’in ağzına zincir gerilmişti. Genç Sultan, denizden geçemeyen gemilerine karayı açtı.'],
@@ -661,7 +661,7 @@ function SD_CK_PERFORM(t, S) {
 const SD_CANAKKALE = (() => {
   const L = (p, a, b) => sfStroke(p, a, b, 1, 1);
   return {
-    key: 'canakkale', name: 'Seyit Onbaşı', line: 'Vinç kırıldı, omuz kırılmadı — Çanakkale geçilmez oldu.', dur: 11.6, fitW: 4.7, fitH: 3.6, tasvir: 1, cine: 1, ext: 1,
+    key: 'canakkale', name: 'Seyit Onbaşı', line: 'Vinç kırıldı, omuz kırılmadı. Çanakkale geçilmez oldu.', dur: 11.6, fitW: 4.7, fitH: 3.6, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.55, 0.18], glowColB: [1.0, 0.7, 0.4],
     caps: [[0.6, 3.4, '<small>Çanakkale · 18 Mart 1915</small>Boğaza dünyanın en güçlü donanması girdi. Bataryanın vinci bir isabetle kırıldı.'], [3.6, 5.3, 'Seyit Onbaşı, iki yüz kiloyu aşan mermiyi sırtına aldı…'], [5.5, 8.6, '…merdiveni tek başına çıktı, namluya sürdü. Bir kez daha. Bir kez daha.'], [8.9, 11.6, 'Çanakkale geçilmez!<small style="margin:6px 0 0">18 Mart · Donanmanın geri döndüğü gün</small>']],
     groups: [['syleg1', 'syleg2', 'sybody', 'syshell', 'syarm', 'syarm2'], ['gun', 'barrel']],
@@ -732,7 +732,7 @@ function SD_AK_PERFORM(t, S) {
 const SD_KOCATEPE = (() => {
   const P = sdAkP;
   return {
-    key: 'kocatepe', name: 'Kocatepe', line: 'Şafakla toplar gürledi; Başkomutan’ın gözü ufuktaydı — ordular Akdeniz’e yürüdü.', dur: 12.0, fitW: 4.4, fitH: 4.5, tasvir: 1, cine: 1, ext: 1,
+    key: 'kocatepe', name: 'Kocatepe', line: 'Şafakla toplar gürledi, Başkomutan’ın gözü ufuktaydı. Ordular Akdeniz’e yürüdü.', dur: 12.0, fitW: 4.4, fitH: 4.5, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.62, 0.25], glowColB: [1.0, 0.82, 0.52],
     caps: [[0.6, 3.4, '<small>Kocatepe · 26 Ağustos 1922 · Şafaktan önce</small>Üç yıllık bekleyiş bu sabah bitecekti. Başkomutan ufka bakıyordu.'], [3.7, 6.7, 'Saat 5.30’da toplar gürledi. Büyük Taarruz başladı.'], [7.0, 12.0, '“Ordular! İlk hedefiniz Akdeniz’dir. İleri!”<small style="margin:6px 0 0">Başkomutan Mustafa Kemal Paşa · 1 Eylül 1922</small>']],
     bones: { ak: [null, ...P(250, 626), ...P(250, 500)], akrock: ['ak', ...P(20, 610), ...P(490, 560)], akbody: ['ak', ...P(255, 520), ...P(262, 250)], akcoat: ['akbody', ...P(205, 300), ...P(170, 430)], akhead: ['akbody', ...P(302, 132), ...P(345, 40)] },
@@ -807,7 +807,7 @@ function SD_SM_PERFORM(t, S) {
   k.zoom = kf(t, [[0, 0.1], [4.0, 0.2, 'io'], [6.0, 0.05, 'io'], [9.0, 0.08], [11.8, 0.42, 'io']]); k.zx = t < 9 ? 40 : 160; k.zy = t < 9 ? -40 : -60;
 }
 const SD_SAMSUN = {
-  key: 'samsun', name: 'Samsun’a Çıkış', line: 'Fırtınayı yardı, şafakla Samsun’a vardı — bir milletin uyanışı başladı.', dur: 12.0, fitW: 4.6, fitH: 3.4, tasvir: 1, cine: 1, ext: 1,
+  key: 'samsun', name: 'Samsun’a Çıkış', line: 'Fırtınayı yardı, şafakla Samsun’a vardı. Bir milletin uyanışı başladı.', dur: 12.0, fitW: 4.6, fitH: 3.4, tasvir: 1, cine: 1, ext: 1,
   glowCol: [0.85, 0.9, 1.0], glowColB: [1.0, 0.82, 0.55],
   caps: [[0.6, 3.4, '<small>Karadeniz · 16 Mayıs 1919</small>Yurt işgal altındaydı. Pusulası bozuk, yaşlı bir vapur İstanbul’dan çıktı.'], [3.6, 6.4, 'Fırtına güverteyi dövdü; vapur rotasından dönmedi. Güvertede bir yolcu, ufka bakıyordu.'], [6.7, 9.2, '<small>19 Mayıs 1919</small>Şafakla Samsun göründü. Mustafa Kemal karaya ayak bastı.'], [9.4, 12.0, 'O sabah, bir milletin uyanışı başladı.']],
   bones: { ship: [null, 0, 10, 100, 10] },
@@ -885,9 +885,9 @@ function SD_IN_PERFORM(t, S) {
   k.zoom = kf(t, [[0, 0.18], [3.4, 0.22, 'io'], [4.0, 0.38, 'io'], [6.2, 0.38], [8.0, 0.12, 'io'], [10.0, 0.12], [12.0, 0.4, 'io']]); k.zx = t < 3.6 ? 0 : t < 8 ? -120 : 220; k.zy = t < 8 ? -40 : -60;
 }
 const SD_INEBOLU = {
-  key: 'kagni', name: 'Şerife Bacı', line: 'Yavrusunun yorganını cephaneye örttü — mermiler cepheye kuru ulaştı, o karda kaldı.', dur: 12.4, fitW: 4.7, fitH: 3.3, tasvir: 1, cine: 1, ext: 1,
+  key: 'kagni', name: 'Şerife Bacı', line: 'Yavrusunun yorganını cephaneye örttü. Mermiler cepheye kuru ulaştı, kendisi karda kaldı.', dur: 12.4, fitW: 4.7, fitH: 3.3, tasvir: 1, cine: 1, ext: 1,
   glowCol: [0.85, 0.9, 1.0], glowColB: [1.0, 0.86, 0.6],
-  caps: [[0.6, 3.3, '<small>İnebolu–Kastamonu yolu · Kış 1921</small>Cephe mermi bekliyordu. Kar, yolları yutmuştu.'], [3.6, 6.4, 'Şerife Bacı, yavrusunun yorganını mermilerin üstüne örttü…'], [6.7, 9.3, '…kendisi ayazda, kağnının başında yürüdü.'], [9.6, 12.4, 'Mermiler cepheye kuru ulaştı. O, karın içinde, kağnısının başında kaldı.<small style="margin:6px 0 0">İstiklal’in isimsiz kahramanları için</small>']],
+  caps: [[0.6, 3.3, '<small>İnebolu’dan Kastamonu’ya · Kış 1921</small>Cephe mermi bekliyordu. Kar, yolları yutmuştu.'], [3.6, 6.4, 'Şerife Bacı, yavrusunun yorganını mermilerin üstüne örttü…'], [6.7, 9.3, '…kendisi ayazda, kağnının başında yürüdü.'], [9.6, 12.4, 'Mermiler cepheye kuru ulaştı. O, karın içinde, kağnısının başında kaldı.<small style="margin:6px 0 0">İstiklal’in isimsiz kahramanları için</small>']],
   bones: { cart: [null, -120, SD_IN_GY, 100, SD_IN_GY], woman: [null, 214, SD_IN_GY, 214, 0] },
   k0: { t: 0, ph: 0, wph: 0, shawl: 0, wind: 0.5, snow: 0.7, glowW: 0, gI: 0.7, gIB: 0, sky: 0.95, skyT: [0.2, 0.24, 0.42], skyB: [0.62, 0.64, 0.74], skyY: 0.5, lamp: 0.95 },
   layers: [
@@ -1103,7 +1103,7 @@ const SD_SANCAK = (() => {
   const [HIL, YIL] = SD_SC_EMB, NIGHT = (k) => sdTc([0.15, 0.2, 0.56], 1 - (k.night || 0)), GROUND = [0.07, 0.06, 0.06], RED = [0.86, 0.04, 0.05];
   const holes = (ps, tc) => ps.filter(Boolean).map((p) => { const h = p.slice(); h.hole = 1; h.tc = tc; return h; });
   return {
-    key: 'sancak', name: 'Al Sancak', line: 'Şehit kanında hilal ile yıldızın aksi titredi; son nefer gönderi dikti — al bayrağımız göğe öyle yükseldi.', dur: 15.8, fitW: 2.9, fitH: 2.6, tasvir: 1, cine: 1, ext: 1,
+    key: 'sancak', name: 'Al Sancak', line: 'Şehit kanında hilal ile yıldızın aksi titredi; son nefer gönderi dikti. Al bayrağımız göğe öyle yükseldi.', dur: 15.8, fitW: 2.9, fitH: 2.6, tasvir: 1, cine: 1, ext: 1,
     glowCol: [1.0, 0.97, 0.92], glowColB: [1.0, 0.66, 0.36],
     caps: [
       [0.5, 3.6, '<small>Kurtuluş Savaşı · Bir gece</small>Top sesleri dindi. Bayrağı düşen alaydan geriye bir nefer kaldı.'],

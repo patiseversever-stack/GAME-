@@ -9,7 +9,39 @@ const U = {
   uTime: { value: 0 }, uNightC: { value: new THREE.Vector2() }, uNightR: { value: 0 }, uNightAmt: { value: 0 }, uNightRim: { value: 0 },
   uCamPos: { value: new THREE.Vector3() }, uFogCol: { value: new THREE.Color() }, uFogNear: { value: 70 }, uFogFar: { value: 340 },
   uBelowCol: { value: new THREE.Color() }, uZifir: { value: new THREE.Vector3(0, -100, 0) }, uWind: { value: 1 }, uGlowCol: { value: new THREE.Color(4.0, 2.1, 0.8) },
+  uSoftSh: { value: 0 },
 };
+/* Yumuşak gölge kenarları (Yüksek/Ultra): engelden uzaklaştıkça yumuşayan, temas noktasında keskin kalan gölge (PCSS).
+   Shader'a bir kez eklenir; kalite değişince yalnızca uSoftSh anahtarı değişir (yeniden derleme yok). Dünya malzemeleri
+   dışındaki nesnelerde uniform hiç verilmez (0) ve olağan gölge yolu kullanılır. */
+{
+  const PCSS = `
+  uniform float uSoftSh;
+  const vec2 PCSS_D[8] = vec2[](vec2(0.250,0.000), vec2(-0.319,0.292), vec2(0.049,-0.557), vec2(0.402,0.525), vec2(-0.739,-0.131), vec2(0.700,-0.445), vec2(-0.234,0.870), vec2(-0.446,-0.859));
+  float pcssShadow(sampler2D sm, vec2 smSize, vec4 sc) {
+    // piksel başına döndürülen 8 noktalı Vogel diski (ucuz gürültü), önce engel araması
+    float a = 6.2831853 * fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+    float ca = cos(a), sa = sin(a); mat2 R = mat2(ca, -sa, sa, ca);
+    vec2 tx = 1.0 / smSize;
+    float bs = 0.0, bn = 0.0;
+    for (int i = 0; i < 8; i++) { float d = unpackRGBAToDepth(texture2D(sm, sc.xy + R * PCSS_D[i] * tx * 7.0)); if (d < sc.z) { bs += d; bn += 1.0; } }
+    if (bn < 0.5) return 1.0;   // tam aydınlık: süzme yok
+    if (bn > 7.5) return 0.0;   // tam gölge: süzme yok
+    // yarıgölge: engel-yüzey uzaklığıyla büyür (gölge kamerası 129 m derin, 29 m geniş)
+    float r = clamp(1.0 + (sc.z - bs / bn) * 129.0 * 0.02 * smSize.x / 29.0, 1.0, 5.0); // ince: oynanışta gölge sınırı net kalmalı
+    float s = 0.0;
+    for (int i = 0; i < 8; i++) s += texture2DCompare(sm, sc.xy + R * PCSS_D[i] * tx * r, sc.z);
+    return s * 0.125;
+  }
+`;
+  let ch = THREE.ShaderChunk.shadowmap_pars_fragment;
+  const gi = ch.indexOf('float getShadow('), fi = ch.indexOf('if ( frustumTest ) {', gi);
+  if (gi > 0 && fi > gi && ch.indexOf('#ifdef USE_SHADOWMAP') >= 0) {
+    ch = ch.slice(0, fi) + 'if ( frustumTest && uSoftSh > 0.5 ) { shadow = pcssShadow( shadowMap, shadowMapSize, shadowCoord ); } else if ( frustumTest ) {' + ch.slice(fi + 'if ( frustumTest ) {'.length);
+    ch = ch.slice(0, gi) + PCSS + ch.slice(gi); // texture2DCompare tanımından sonra, getShadow'dan önce
+    THREE.ShaderChunk.shadowmap_pars_fragment = ch;
+  }
+}
 const WORLD_VERT_HEAD = `varying vec3 vNW;\nuniform float uTime; uniform vec3 uZifir; uniform float uWind;\n`;
 const WORLD_FRAG_HEAD = `varying vec3 vNW;
 uniform vec2 uNightC; uniform float uNightR, uNightAmt, uNightRim, uFogNear, uFogFar; uniform vec3 uCamPos, uFogCol, uBelowCol, uGlowCol;

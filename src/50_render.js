@@ -13,45 +13,56 @@ renderer.setClearColor(0x140f24, 1);
 const gl = renderer.getContext();
 
 const QUALITY = [
-  { name: 'Düşük', dpr: 1.0, maxPix: 0.95e6, shadow: 1024, msaa: 0, levels: 4, rays: false, tilt: false, grass: 900, particles: 260, cloudOct: 2, texScale: 0.5, flare: 0.6 },
-  { name: 'Orta', dpr: 1.4, maxPix: 1.7e6, shadow: 1024, msaa: 0, levels: 5, rays: true, tilt: false, grass: 2200, particles: 460, cloudOct: 3, texScale: 0.75, flare: 1 },
-  { name: 'Yüksek', dpr: 1.8, maxPix: 2.7e6, shadow: 2048, msaa: 4, levels: 5, rays: true, tilt: true, grass: 4200, particles: 720, cloudOct: 4, texScale: 1, flare: 1 },
-  { name: 'Ultra', dpr: 2.0, maxPix: 4.2e6, shadow: 2048, msaa: 4, levels: 6, rays: true, tilt: true, grass: 6800, particles: 1000, cloudOct: 5, texScale: 1, flare: 1 },
+  { name: 'Düşük', dpr: 1.0, maxPix: 0.95e6, shadow: 1024, msaa: 0, levels: 4, rays: false, tilt: false, grass: 900, particles: 260, cloudOct: 2, texScale: 0.5, flare: 0.6, amb: 0, life: false, soft: 0 },
+  { name: 'Orta', dpr: 1.4, maxPix: 1.7e6, shadow: 1024, msaa: 0, levels: 5, rays: true, tilt: false, grass: 2200, particles: 460, cloudOct: 3, texScale: 0.75, flare: 1, amb: 110, life: true, soft: 0 },
+  { name: 'Yüksek', dpr: 1.8, maxPix: 2.7e6, shadow: 2048, msaa: 4, levels: 5, rays: true, tilt: true, grass: 4200, particles: 720, cloudOct: 4, texScale: 1, flare: 1, amb: 180, life: true, soft: 1 },
+  { name: 'Ultra', dpr: 2.0, maxPix: 4.2e6, shadow: 2048, msaa: 4, levels: 6, rays: true, tilt: true, grass: 6800, particles: 1000, cloudOct: 5, texScale: 1, flare: 1, amb: 260, life: true, soft: 1 },
 ];
 function guessQuality() {
   let gpu = '';
-  try { const ext = gl.getExtension('WEBGL_debug_renderer_info'); if (ext) gpu = String(gl.getParameter(ext.UNMASKED_RENDERER_WEBGL)); } catch (e) {}
+  // GPU adı: Chrome/Safari'de uzantıdan, Firefox'ta doğrudan RENDERER'dan
+  try { const ext = gl.getExtension('WEBGL_debug_renderer_info'); gpu = String(gl.getParameter(ext ? ext.UNMASKED_RENDERER_WEBGL : gl.RENDERER) || ''); } catch (e) {}
   const g = gpu.toLowerCase();
   const touch = matchMedia('(pointer: coarse)').matches;
-  const mem = navigator.deviceMemory || 4, cores = navigator.hardwareConcurrency || 4;
+  const mem = navigator.deviceMemory || 0, cores = navigator.hardwareConcurrency || 0; // Safari bunları vermeyebilir: bilinmiyorsa kısma yok
   let q = touch ? 1 : 2;
-  if (/swiftshader|llvmpipe|software|mali-4|mali-t|adreno \(tm\) [34]\d\d|powervr sgx|sgx/.test(g)) q = 0;
-  else if (/apple/.test(g) && touch) q = 2;
-  else if (/adreno \(tm\) (6[4-9]\d|7\d\d|8\d\d)|mali-g7[1-9]|mali-g[6-9]\d\d|xclipse|immortalis/.test(g)) q = 2;
-  else if (!touch && /nvidia|geforce|radeon|rtx|gtx|arc|m1|m2|m3|m4/.test(g)) q = 3;
-  if (mem <= 2 || cores <= 4) q = Math.min(q, 1);
+  // zayıf/eski mobil GPU'lar Düşük'ten başlar (kaldırırsa kendiliğinden yükselir)
+  if (/swiftshader|llvmpipe|software|mali-[34]\d\d|mali-t\d|mali-g(31|51|52)\b|adreno \(tm\) ([2-4]\d\d|50\d|51\d|60\d|610)\b|powervr (sgx|rogue ge8)|ge8\d\d\d|sgx/.test(g)) q = 0;
+  else if (/apple/.test(g) && touch) q = 2; // iPhone / iPad
+  // güncel üst seviye telefonlar: Snapdragon 855+ (Adreno 640+), Dimensity/Exynos/Tensor (Mali-G77+, Immortalis, Xclipse)
+  else if (/adreno \(tm\) (6[4-9]\d|7\d\d|8\d\d)|mali-g(77|78|710|715|720|725|610|615|620|625|9\d\d)|xclipse|immortalis|maleoon/.test(g)) q = 2;
+  else if (!touch && /nvidia|geforce|radeon|rtx|gtx|\barc\b|apple m\d/.test(g)) q = 3;
+  else if (!touch && /intel.*\bu?hd graphics/.test(g)) q = 1;
+  if ((mem && mem <= 2) || (cores && cores <= 2)) q = Math.min(q, 1);
   return { q, gpu };
 }
 
 /* ---------- uyarlanabilir kalite ----------
-   Kare süresi izlenir: uzun süre yavaşsa önce çözünürlük, sonra kademe düşer.
+   Kare süresi izlenir: uzun süre yavaşsa önce yumuşak gölge kapanır, sonra çözünürlük, en son kademe düşer.
    60 Hz ekranda kare süresi 16.7 ms'nin altına inemez; bu yüzden yükseltme "deneme" ile yapılır:
    kararlı 60 fps sürerse bir kademe denenir, kaldıramazsa geri dönülür ve tavan olarak hatırlanır.
-   Öğrenilen ayar cihaz (GPU adı) için kaydedilir: sonraki açılış doğru kademeden başlar. */
+   Öğrenilen ayar cihaz (GPU adı) için kaydedilir: sonraki açılış doğru kademeden başlar. Tavan 3 gün sonra unutulur;
+   düşürmenin hiç işe yaramadığı durumlarda (30 fps kilidi, pil tasarrufu) kalite geri verilir ve kaydedilmez. */
 const Perf = {
-  auto: Save.data.settings.quality === 'auto', level: 1, cap: 3, scale: 1, ema: 16.7, jit: 0, slow: 0, fast: 0, stable: 0, lastChange: 0, ups: 0, gpu: '', probe: null, ceil: null, t0: 0, dirty: false,
+  auto: Save.data.settings.quality === 'auto', level: 1, cap: 3, scale: 1, softOk: true, trial: null, capMs: 0, ceilT: 0, ema: 16.7, jit: 0, slow: 0, fast: 0, stable: 0, lastChange: 0, ups: 0, gpu: '', probe: null, ceil: null, t0: 0, dirty: false,
   init() {
-    const g = guessQuality(); this.gpu = g.gpu; this.probe = null; this.stable = 0; this.slow = 0; this.fast = 0;
+    const g = guessQuality(); this.gpu = g.gpu; this.probe = null; this.stable = 0; this.slow = 0; this.fast = 0; this.softOk = true; this.trial = null; this.capMs = 0; this.ceilT = 0;
     if (this.auto) {
       const sv = Save.data.perf;
-      if (sv && sv.gpu === g.gpu && sv.level != null) { this.level = sv.level; this.scale = sv.scale || 1; this.ceil = sv.ceil || null; this.cap = Math.min(3, Math.max(sv.level, g.q) + 1); }
+      if (sv && sv.gpu === g.gpu && sv.level != null) {
+        // öğrenilen tavan 3 gün sonra unutulur: geçici bir yavaşlık (ısınma, pil tasarrufu) kaliteyi kalıcı düşürmesin
+        const fresh = !!sv.ceilT && Date.now() - sv.ceilT < 3 * 864e5;
+        this.softOk = !fresh || sv.soft !== false; this.level = sv.level; this.scale = sv.scale || 1; this.ceil = fresh ? sv.ceil || null : null; this.ceilT = fresh ? sv.ceilT : 0; this.cap = Math.min(3, Math.max(sv.level, g.q) + 1);
+      }
       else { this.level = g.q; this.scale = 1; this.ceil = null; this.cap = Math.min(3, g.q + 1); }
     } else { this.level = { low: 0, mid: 1, high: 2, ultra: 3 }[Save.data.settings.quality] ?? 1; this.scale = 1; }
   },
   get Q() { return QUALITY[this.level]; },
   key() { return this.level * 10 + Math.round(this.scale * 100) / 100; },
-  remember() { if (!this.auto) return; Save.data.perf = { gpu: this.gpu, level: this.level, scale: this.scale, ceil: this.ceil }; Save.save(); this.dirty = false; },
+  remember() { if (!this.auto) return; Save.data.perf = { gpu: this.gpu, level: this.level, scale: this.scale, ceil: this.ceil, soft: this.softOk, ceilT: this.ceilT }; Save.save(); this.dirty = false; },
   down() {
+    // ilk fedakârlık yumuşak gölge: yalnızca bir uniform kapanır (yeniden derleme, çözünürlük değişimi yok); bu GPU için hatırlanır
+    if (this.Q.soft && this.softOk) { this.softOk = false; U.uSoftSh.value = 0; return true; }
     if (this.scale > 0.76) { this.scale = Math.round((this.scale - 0.12) * 100) / 100; onResize(); }
     else if (this.level > 0) { this.level--; this.scale = 0.92; applyQuality(); }
     else return false;
@@ -70,18 +81,27 @@ const Perf = {
     this.ema = lerp(this.ema, ms, 0.06); this.jit = lerp(this.jit, Math.abs(ms - this.ema), 0.06);
     if (!this.auto) return;
     const warm = now - this.t0 < 14, lock = warm ? 0.9 : 2.5; // açılışta (film sırasında) hızlı karar
-    if (now - this.lastChange < lock) return;
+    if (now - this.lastChange < (this.trial ? Math.max(lock, 2) : lock)) return;
+    // düşürme işe yaradı mı? Yaradıysa GPU gerçekten zorlanıyordu: tavan öğrenilir (kaydedilir).
+    if (this.trial && (this.ema < this.trial.ema * 0.86 || this.ema <= 21.5)) { const T = this.trial; this.ceil = this.ceil == null ? T.key : Math.min(this.ceil, T.key); this.ceilT = Date.now(); this.trial = null; this.dirty = true; }
     // deneme yükseltmesi kaldırılamadıysa geri dön, bu kademeyi tavan say
     if (this.probe) {
-      if (this.ema > 18.4) { const p = this.probe; this.probe = null; this.ceil = this.ceil == null ? this.key() : Math.min(this.ceil, this.key()); this.level = p.level; this.scale = p.scale; this.lastChange = now; applyQuality(); this.remember(); return; }
+      if (this.ema > 18.4) { const p = this.probe; this.probe = null; this.ceil = this.ceil == null ? this.key() : Math.min(this.ceil, this.key()); this.ceilT = Date.now(); this.level = p.level; this.scale = p.scale; this.lastChange = now; applyQuality(); this.remember(); return; }
       if (now - this.probe.t > 5) { this.probe = null; this.remember(); }
     }
-    if (this.ema > 21.5) { this.slow += ms / 1000; this.fast = 0; this.stable = 0; } else this.slow = Math.max(0, this.slow - ms / 2000);
+    if (this.ema > 21.5 && (!this.capMs || this.ema > this.capMs * 1.12)) { this.slow += ms / 1000; this.fast = 0; this.stable = 0; } else this.slow = Math.max(0, this.slow - ms / 2000);
     if (this.ema < 13.8) this.fast += ms / 1000; else this.fast = 0;
     if (this.ema < 17.6 && this.jit < 2.2) this.stable += ms / 1000; else this.stable = Math.max(0, this.stable - ms / 500);
     if (this.slow > (warm ? 0.6 : 1.4)) {
       this.slow = 0; this.stable = 0; this.lastChange = now; this.probe = null;
-      const failed = this.key(); if (this.down()) { this.ceil = this.ceil == null ? failed : Math.min(this.ceil, failed); this.dirty = true; }
+      if (!this.trial) this.trial = { ema: this.ema, level: this.level, scale: this.scale, soft: this.softOk, key: this.key(), n: 0 };
+      if (this.down()) this.trial.n++;
+      else {
+        // en alta inildi ve kare süresi hiç değişmedi: sorun grafik değil (pil tasarrufu / ekran 30 fps kilidi ya da işlemci).
+        // Kalite boşuna düşük kalmasın: başlangıç ayarı geri verilir, kaydedilmez; bu oturumda bu hız "normal" sayılır.
+        const T = this.trial; this.trial = null;
+        if (T.n > 0 && this.ema > T.ema * 0.86) { this.level = T.level; this.scale = T.scale; this.softOk = T.soft; this.capMs = this.ema; applyQuality(); }
+      }
     } else if ((this.fast > 6 && this.ups < 3) || (this.stable > 9 && !this.probe && this.ups < 4)) {
       const from = { level: this.level, scale: this.scale };
       this.fast = 0; this.stable = 0;

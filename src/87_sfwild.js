@@ -109,7 +109,7 @@ function SF_FOX_PERFORM(t, S) {
 const SF_FOX = (() => {
   const snow = 'M -320 176 C -300 152 -280 128 -240 122 C -170 112 -110 118 -60 120 C -20 122 20 114 60 116 C 110 118 150 124 210 122 C 270 120 320 134 350 176 Z';
   return {
-    key: 'tilki', name: 'Tilki', line: 'Karın altındaki tıkırtıyı duydu, havalanıp burnunu kara gömdü — ve avıyla çıktı.', dur: 8.4, fitW: 4.6, fitH: 3.0,
+    key: 'tilki', name: 'Tilki', line: 'Karın altındaki tıkırtıyı duydu, havalanıp burnunu kara gömdü ve avıyla çıktı.', dur: 8.4, fitW: 4.6, fitH: 3.0,
     bones: {
       fox: [null, 0, 110, 60, 110], body: ['fox', -60, -10, 60, -20], head: ['body', 92, -30, 162, 14], earF: ['head', 120, -44, 128, -72], earB: ['head', 100, -44, 98, -70],
       tail: ['body', -106, -30, -248, 44],
@@ -174,7 +174,7 @@ function SF_DEER_PERFORM(t, S) {
   }
 }
 const SF_DEER = {
-  key: 'geyik', name: 'Geyik', line: 'Otlarken bir çıtırtı duydu; boynuzlarını silkeleyip böğürdü — ve ormana sekti.', dur: 8.3, fitW: 3.6, fitH: 3.7,
+  key: 'geyik', name: 'Geyik', line: 'Otlarken bir çıtırtı duydu, boynuzlarını silkeleyip böğürdü ve ormana sekti.', dur: 8.3, fitW: 3.6, fitH: 3.7,
   bones: {
     deer: [null, 0, 150, 60, 150], body: ['deer', -40, 0, 50, -20], neck: ['body', 50, -30, 90, -130], head: ['neck', 92, -128, 158, -100], ear: ['head', 88, -136, 62, -160],
     tail: ['body', -128, -24, -132, -6],
@@ -235,7 +235,7 @@ function SF_OWL_PERFORM(t, S) {
   B.branch.r = ring(t, 5.5, 0.03, 2.4, 2.2);
 }
 const SF_OWL = {
-  key: 'baykus', name: 'Baykuş', line: 'Başını ardına çevirdi, gözleri karanlıkta iki kandil gibi yandı — sessizce süzüldü.', dur: 8.2, fitW: 3.4, fitH: 3.6, glowCol: [1.0, 0.78, 0.32],
+  key: 'baykus', name: 'Baykuş', line: 'Başını ardına çevirdi, gözleri karanlıkta iki kandil gibi yandı. Sonra sessizce süzüldü.', dur: 8.2, fitW: 3.4, fitH: 3.6, glowCol: [1.0, 0.78, 0.32],
   bones: { owl: [null, 0, 150, 0, 0], body: ['owl', 0, 120, 0, -40], head: ['body', 0, -30, 0, -150], eyes: ['head', 0, -92, 30, -92], lids: ['eyes', 0, -116, 0, -70], feet: ['owl', 0, 150, 0, 160], branch: [null, -230, 168, 240, 156] },
   k0: { gI: 0.35, wo: 0, wf: 0 },
   layers: [
@@ -312,7 +312,7 @@ function SF_EAGLE_PERFORM(t, S) {
   k.sp1 = t - 0.95; k.sp2 = t - 2.55; k.sp3 = t - catchT;
 }
 const SF_EAGLE = {
-  key: 'kartal', name: 'Kartal', line: 'Gökte daire çizdi, kanatlarını katlayıp ok gibi daldı — balığı havada kaptı.', dur: 7.0, fitW: 4.0, fitH: 3.6,
+  key: 'kartal', name: 'Kartal', line: 'Gökte daire çizdi, kanatlarını katlayıp ok gibi daldı ve balığı havada kaptı.', dur: 7.0, fitW: 4.0, fitH: 3.6,
   groups: [['eagleBody', 'wingL', 'wingR'], ['fish', 'water']],
   bones: { eagle: [null, -30, -170, -30, -240], fish: [null, 40, 40, 110, 40], water: [null, 0, 180, 100, 180] },
   k0: { t: 0, spread: 1, flap: 0, sp1: -1, sp2: -1, sp3: -1 },
@@ -407,7 +407,7 @@ function SF_HORSE_PERFORM(t, S) {
   } else k.d4 = -1;
 }
 const SF_HORSE = {
-  key: 'at', name: 'At', line: 'Yelesini savurdu, şaha kalkıp kişnedi — rüzgârla yarışırcasına dörtnala gitti.', dur: 7.6, fitW: 3.9, fitH: 3.5,
+  key: 'at', name: 'At', line: 'Yelesini savurdu, şaha kalkıp kişnedi ve rüzgârla yarışırcasına dörtnala gitti.', dur: 7.6, fitW: 3.9, fitH: 3.5,
   bones: {
     horse: [null, -115, 150, 60, 150], body: ['horse', -40, 0, 60, -20], neck: ['body', 52, -40, 110, -150], head: ['neck', 108, -140, 180, -70], ear: ['head', 112, -148, 108, -184], earF: ['head', 102, -148, 96, -178],
     tail: ['body', -136, -62, -160, 40],
@@ -523,7 +523,7 @@ function SF_OCT_PERFORM(t, S) {
   } else k.jet = 0;
 }
 const SF_OCTO = {
-  key: 'ahtapot', name: 'Ahtapot', line: 'Sekiz kolu sekiz ayrı dalga gibi kıvrıldı; bir mürekkep bulutu bıraktı — ve yok oldu.', dur: 8.4, fitW: 4.6, fitH: 3.4,
+  key: 'ahtapot', name: 'Ahtapot', line: 'Sekiz kolu sekiz ayrı dalga gibi kıvrıldı; bir mürekkep bulutu bırakıp yok oldu.', dur: 8.4, fitW: 4.6, fitH: 3.4,
   bones: { oct: [null, 0, 94, 0, -40], mantle: ['oct', 0, 20, -30, -120], world: [null, 0, 170, 100, 170] },
   k0: { t: 0, amp: 0, spread: 0, jet: 0, wv: 0, ink: -1, jw: 99 },
   layers: [
@@ -745,7 +745,7 @@ const SF_WOLF = (() => {
   const eye = sfFlat(sfParse('M 110 -133 C 114 -138 121 -139 125 -136 C 121 -132 115 -131 110 -133 Z')).polys[0];
   const ear = (x0, x1, h) => [x0, -144, lerp(x0, x1, 0.25) + 2, -162, (x0 + x1) / 2 + 4, -144 - h, lerp(x0, x1, 0.75) + 3, -160, x1, -142];
   return {
-    key: 'kurt', name: 'Kurt ve Ay', line: 'Dolunay kayalığın ardından yükseldi; kurt başını kaldırıp iki kez uludu — ve geceye karıştı.', dur: 8.4, fitW: 4.4, fitH: 3.7, glowCol: [0.92, 0.9, 0.78],
+    key: 'kurt', name: 'Kurt ve Ay', line: 'Dolunay kayalığın ardından yükseldi; kurt başını kaldırıp iki kez uludu ve geceye karıştı.', dur: 8.4, fitW: 4.4, fitH: 3.7, glowCol: [0.92, 0.9, 0.78],
     bones: {
       wolf: [null, -90, 60, 70, 60], body: ['wolf', -90, -60, 60, -70], neck: ['body', 50, -90, 100, -130], head: ['neck', 96, -126, 156, -116], jaw: ['head', 120, -108, 152, -108],
       ear: ['head', 98, -148, 104, -178], earF: ['head', 84, -146, 86, -174], tail: ['body', -112, -80, -152, 10],
@@ -896,7 +896,7 @@ const SF_DRAGON = (() => {
   };
   SF_DRAGON_BONES = bones;
   return {
-    key: 'ejderha', name: 'Ejderha', line: 'Gözleri kor gibi yandı, kanatlarını açıp ateş püskürdü — alevler perdede dans ederken göğe yükseldi.', dur: 10.0, fitW: 4.4, fitH: 3.5, cxOff: 45,
+    key: 'ejderha', name: 'Ejderha', line: 'Gözleri kor gibi yandı, kanatlarını açıp ateş püskürdü. Alevler perdede dans ederken göğe yükseldi.', dur: 10.0, fitW: 4.4, fitH: 3.5, cxOff: 45,
     glowCol: [1.0, 0.55, 0.18],
     groups: [['lff', 'lfh', 'tail', 'body', 'horns', 'jaw', 'lnf', 'lnh', 'rock'], ['wingF', 'wingN']],
     bones,
@@ -1013,7 +1013,7 @@ function SF_RABBIT_PERFORM(t, S) {
   k.gI = 0.85 + 0.15 * smoothstep(5.4, 6.6, t) * (1 - smoothstep(7.0, 8.0, t)) + 0.04 * Math.sin(t * 1.3);
 }
 const SF_RABBIT = {
-  key: 'tavsan', name: 'Tavşan', line: 'Karahindibayı kemirdi, doğrulup nöbet tuttu — ve bir sıçrayışta ayışığına karıştı.', dur: 8.0, fitW: 4.2, fitH: 3.4,
+  key: 'tavsan', name: 'Tavşan', line: 'Karahindibayı kemirdi, doğrulup nöbet tuttu ve bir sıçrayışta ay ışığına karıştı.', dur: 8.0, fitW: 4.2, fitH: 3.4,
   glowCol: [0.95, 0.92, 0.8],
   bones: {
     rab: [null, -88, 126, 60, 126], body: ['rab', -60, 40, 40, 0], head: ['body', 58, -26, 124, -18], nose: ['head', 121, -20, 127, -19],
@@ -1160,7 +1160,7 @@ function SF_WHALE_OCEAN(t, S) {
 }
 SF_WHALE.perform = SF_WHALE_OCEAN;
 SF_WHALE.layers = SF_WHALE.layers.filter((L) => L.id !== 'bub');
-Object.assign(SF_WHALE, { ext: 1, dur: 11.0, glowCol: [0.95, 0.92, 0.8], line: 'Perdenin içinden bir okyanus geçti — dalgaları yarıp göğe fırladı, kuyruğunu ay ışığına kaldırıp derinlere daldı.' });
+Object.assign(SF_WHALE, { ext: 1, dur: 11.0, glowCol: [0.95, 0.92, 0.8], line: 'Perdenin içinden bir okyanus geçti. Dalgaları yarıp göğe fırladı, kuyruğunu ay ışığına kaldırıp derinlere daldı.' });
 SF_WHALE.k0 = Object.assign({}, SF_WHALE.k0, { t: 0, sea: 999, gI: 0, bub2: -1, bub3: -1, rxE: SF_WHALE_FLUKE_X, flx: 0, fly: 0, su: -1, be: -1, bc: -1, fe: -1, dr: [], wev: [] });
 SF_WHALE.layers.push(
   { id: 'moon', glow: 1, back: 1, show: 1, gen: (k) => (k.sea < 400 ? [sfEllipse(-300, -215, 44, 44, 0, 36)] : []) },
