@@ -293,7 +293,8 @@ function radialSurface(nT: number, ys: number[], r: (t: number, y: number) => nu
   if (capStart) {
     const base = nT * nY, ci = base + nT;
     for (let i = 0; i < nT; i++) for (let a = 0; a < 3; a++) pos[(base + i) * 3 + a] = pos[i * 3 + a];
-    pos[ci * 3] = 0; pos[ci * 3 + 1] = ys[0]; pos[ci * 3 + 2] = 0;
+    // Alın yüzü hafif içbükey (gerçek frezede merkez geride): düz "tıpa" görünümünü kırar
+    pos[ci * 3] = 0; pos[ci * 3 + 1] = ys[0] + 0.22; pos[ci * 3 + 2] = 0;
     for (let i = 0; i < nT; i++) idx.push(ci, base + i, base + ((i + 1) % nT));
   }
   const geo = new THREE.BufferGeometry();

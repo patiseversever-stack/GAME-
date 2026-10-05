@@ -119,6 +119,27 @@ ${label ? `<text x="${fmt(t[0] + (t[0] - cx) * 0.18)}" y="${fmt(t[1] + (t[1] - c
 ${centerline(20, fmt(cy), 180, fmt(cy))}`;
 }
 
+/** 16ER/16IR yatık diş ucu: köşelerde 60° diş, dişin iki yanında boşaltma kanalı.
+ *  cx, cy merkez; R çevrel yarıçap; rot: ilk köşenin açısı (radyan, varsayılan yukarı) */
+function threadInsertPts(cx: number, cy: number, R: number, rot = -Math.PI / 2): Pt[] {
+  const V = [0, 1, 2].map((i) => { const a = rot + (i * 2 * Math.PI) / 3; return [cx + Math.cos(a) * R, cy + Math.sin(a) * R] as Pt; });
+  const side = R * Math.sqrt(3);
+  const out: Pt[] = [];
+  for (let i = 0; i < 3; i++) {
+    const v = V[i], p = V[(i + 2) % 3], q = V[(i + 1) % 3];
+    const dIn = [(v[0] - p[0]) / side, (v[1] - p[1]) / side], dOut = [(q[0] - v[0]) / side, (q[1] - v[1]) / side];
+    // İçe doğru normal (merkeze bakan)
+    const nIn = [cx - (v[0] + p[0]) / 2, cy - (v[1] + p[1]) / 2], nOut = [cx - (v[0] + q[0]) / 2, cy - (v[1] + q[1]) / 2];
+    const ni = Math.hypot(nIn[0], nIn[1]), no = Math.hypot(nOut[0], nOut[1]);
+    const at = (d: number[], n: number[], nl: number, t: number, k: number): Pt => [v[0] + d[0] * t + (n[0] / nl) * k, v[1] + d[1] * t + (n[1] / nl) * k];
+    const u = side / 16.5; // gerçek 16 mm uca göre ölçek
+    out.push(at(dIn, nIn, ni, -4.6 * u, 0), at(dIn, nIn, ni, -4.1 * u, 0.7 * u), at(dIn, nIn, ni, -3.0 * u, 0.7 * u), at(dIn, nIn, ni, -2.6 * u, 0));
+    out.push([v[0] - dIn[0] * 0.25 * u, v[1] - dIn[1] * 0.25 * u], [v[0] + dOut[0] * 0.25 * u, v[1] + dOut[1] * 0.25 * u]);
+    out.push(at(dOut, nOut, no, 2.6 * u, 0), at(dOut, nOut, no, 3.0 * u, 0.7 * u), at(dOut, nOut, no, 4.1 * u, 0.7 * u), at(dOut, nOut, no, 4.6 * u, 0));
+  }
+  return out.map(([x, y]) => [Number(x.toFixed(2)), Number(y.toFixed(2))] as Pt);
+}
+
 function shank(x: number, y: number, w: number, h: number, extra = '') {
   return `<rect x="${x}" y="${y}" width="${w}" height="${h}" rx="1.5" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
 <line x1="${x + 2}" y1="${y + 1.6}" x2="${x + w - 2}" y2="${y + 1.6}" stroke="#cdd2d8" stroke-opacity=".45" stroke-width=".8"/>${extra}`;
@@ -144,23 +165,31 @@ function body(drawing: Drawing, shape: InsertShape | undefined, id: string): str
       return insert(shape ?? 'C', id);
 
     case 'groove-insert':
-      return `${goldPoly([[30, 62], [44, 56], [156, 56], [170, 62], [170, 82], [156, 88], [44, 88], [30, 82]])}
-<polygon points="70,56 100,66 130,56" fill="#0b0c0e" opacity=".45"/>
-<polyline points="30,62 30,82" stroke="#fff3cf" stroke-width="1.8"/><polyline points="170,62 170,82" stroke="#fff3cf" stroke-width="1.8"/>
-${dimH(30, 170, 108, 'MGMN')}${centerline(16, 72, 184, 72)}`;
+      // MGMN300 yan görünüş (boy 20 × yükseklik 5,9 mm): iki uçta talaş kırıcı, ortada sıkma V yuvası
+      return `${goldPoly([[170, 56], [165, 97.3], [35, 97.3], [30, 56], [32.8, 56], [38.4, 58.5], [45.4, 56.8], [62.2, 59.6], [100, 63.1], [137.8, 59.6], [154.6, 56.8], [161.6, 58.5], [167.2, 56]])}
+<polyline points="161.6,58.5 167.2,56 170,56" fill="none" stroke="#fff3cf" stroke-width="1.6" stroke-linecap="round"/>
+<polyline points="38.4,58.5 32.8,56 30,56" fill="none" stroke="#fff3cf" stroke-width="1.6" stroke-linecap="round"/>
+${dimH(30, 170, 118, 'MGMN · 20 mm')}${centerline(16, 76.6, 184, 76.6)}`;
 
     case 'thread-insert':
-      return `${goldPoly([[100, 22], [150, 108], [50, 108]])}
-<polygon points="100,22 108,36 92,36" fill="#fff3cf" opacity=".85"/>
-<circle cx="100" cy="80" r="9" fill="#0b0c0e" stroke="#5e4310"/>
-<text x="100" y="128" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8" fill="#d9a441">60°</text>`;
+      // 16ER üstten görünüş: üçgen, her köşede 60° diş ve iki yanında boşaltma kanalı
+      return `${goldPoly(threadInsertPts(100, 72, 48))}
+<circle cx="100" cy="72" r="9" fill="#0b0c0e" stroke="#5e4310"/>
+<circle cx="100" cy="72" r="12.5" fill="none" stroke="#1a1408" stroke-opacity=".3"/>
+<text x="100" y="134" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8" fill="#d9a441">60°</text>`;
 
     case 'holder-ext':
-      return `${shank(22, 58, 130, 30)}
-<polygon points="150,58 176,52 182,58 182,88 150,88" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
-${goldPoly([[166, 52], [184, 46], [190, 58], [176, 64]])}
-<circle cx="171" cy="70" r="3.4" fill="#0b0c0e" stroke="${LINE}" stroke-width=".5"/>
-${dimH(22, 182, 110, 'h × b × l1')}${centerline(14, 73, 192, 73)}`;
+      // PCLNR üstten görünüş: 95° yanaşma, CNMG 80° köşesi ön-alt köşede, üst pabuç ve vida
+      return `${shank(20, 60, 132, 26)}
+<polygon points="150,60 168,60 182.4,70.4 183.6,88.6 150,88.6 150,86" fill="${STEEL}" stroke="${LINE}" stroke-width=".7" stroke-linejoin="round"/>
+<polygon points="164.4,69.2 182.6,70.6 183.9,90.4 163.6,88.4" fill="#0b0c0e" opacity=".45"/>
+${goldPoly([[182, 88], [180.6, 71.6], [164.2, 70.2], [165.6, 86.6]])}
+<polyline points="168.6,87.3 182,88 181.3,80" fill="none" stroke="#fff3cf" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="173.1" cy="79.1" r="3" fill="#0b0c0e" stroke="#5e4310" stroke-width=".5"/>
+<path d="M158 74 L170 77.5 L170 81 L158 79 Z" fill="#1c1f24" stroke="${LINE}" stroke-width=".5"/>
+<circle cx="157" cy="76.5" r="3.4" fill="#1c1f24" stroke="${LINE}" stroke-width=".5"/><circle cx="157" cy="76.5" r="1.3" fill="#0b0c0e"/>
+<text x="170" y="100" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="6.5" fill="#d9a441">95°</text>
+${dimH(20, 184, 114, 'h × b × l1')}${centerline(10, 73, 192, 73)}`;
 
     case 'holder-groove':
       // MGEHR 2020-3 + MGMN300, 1 mm ≈ 1,3 birim; kesme kenarı sap üst yüzü hizasında (y = 60)
@@ -174,19 +203,25 @@ ${goldPoly([[184, 60], [183.1, 67.7], [158.9, 67.7], [158, 60], [158.5, 60], [15
 ${dimH(16, 184, 106, 'MGEHR · MGMN')}${centerline(10, 73, 192, 73)}`;
 
     case 'holder-thread':
-      return `${shank(22, 58, 130, 30)}
-<polygon points="150,58 178,52 182,58 182,88 150,88" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
-${goldPoly([[174, 44], [192, 52], [176, 62]])}
-<circle cx="168" cy="70" r="3.4" fill="#0b0c0e" stroke="${LINE}" stroke-width=".5"/>
-${dimH(22, 182, 110, 'SER / SNR')}${centerline(14, 73, 192, 73)}`;
+      // SER üstten görünüş: yatık 16ER uç, dişi sap eksenine dik ve sapın dışına taşar
+      return `${shank(20, 60, 132, 26)}
+<polygon points="150,60 170,60 186,70 186,86 150,86" fill="${STEEL}" stroke="${LINE}" stroke-width=".7" stroke-linejoin="round"/>
+<polygon points="162.5,72.2 186.5,72.2 174.5,93" fill="#0b0c0e" opacity=".45"/>
+${goldPoly(threadInsertPts(174.5, 79.2, 13.2, Math.PI / 2))}
+<circle cx="174.5" cy="79.2" r="2.6" fill="#0b0c0e" stroke="#5e4310" stroke-width=".5"/>
+${dimH(20, 186, 114, 'SER / SNR')}${centerline(10, 73, 192, 73)}`;
 
     case 'boring-bar':
-      return `<rect x="16" y="62" width="150" height="20" rx="10" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
-<line x1="24" y1="64.5" x2="160" y2="64.5" stroke="#cdd2d8" stroke-opacity=".45"/>
-<rect x="16" y="76" width="70" height="6" fill="#0b0c0e" opacity=".35"/>
-<polygon points="160,62 180,62 184,70 176,82 160,82" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
-${goldPoly([[176, 56], [188, 58], [186, 68], [176, 66]])}
-${dimH(16, 184, 106, 'Ø d × l1')}${centerline(10, 72, 192, 72)}`;
+      // S..-SCLCR iç çap barası üstten görünüş: silindirik sap (bağlama düzlüğü), uçta 95° CCMT
+      return `<rect x="16" y="61" width="150" height="22" rx="11" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
+<line x1="24" y1="63.6" x2="160" y2="63.6" stroke="#cdd2d8" stroke-opacity=".45"/>
+<rect x="16" y="77" width="72" height="6" fill="#0b0c0e" opacity=".35"/>
+<polygon points="158,61 172,61 183.6,70 184.8,84.6 168,84.6 158,83" fill="${STEEL}" stroke="${LINE}" stroke-width=".7" stroke-linejoin="round"/>
+${goldPoly([[184.2, 84.2], [183.2, 73.2], [172.2, 72.2], [173.2, 83.2]])}
+<polyline points="176.4,83.6 184.2,84.2 183.8,79.2" fill="none" stroke="#fff3cf" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="178.2" cy="78.2" r="2" fill="#0b0c0e" stroke="#5e4310" stroke-width=".5"/>
+<text x="176" y="96" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="6.5" fill="#d9a441">95°</text>
+${dimH(16, 185, 110, 'Ø d × l1')}${centerline(10, 72, 192, 72)}`;
 
     case 'drill-carbide':
     case 'drill-hss': {
@@ -213,11 +248,12 @@ ${goldPoly([[170, 78], [180, 78], [180, 86], [170, 86]])}
 ${dimH(80, 180, 112, '2xD – 5xD')}${centerline(8, 72, 192, 72)}`;
 
     case 'center-drill':
+      // A tipi punta matkabı: iki uçta pilot matkap + 60° havşa
       return `<rect x="48" y="58" width="104" height="28" rx="2" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
-<polygon points="48,58 34,66 26,69 26,75 34,78 48,86" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
-<polygon points="152,58 166,66 174,69 174,75 166,78 152,86" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
-<polyline points="34,66 26,69 26,75 34,78" fill="none" stroke="#fff3cf" stroke-width="1"/>
-${dimH(26, 174, 108, '60°')}${centerline(12, 72, 188, 72)}`;
+<polygon points="48,58 36,66.4 31,69.6 21,69.6 18,72 21,74.4 31,74.4 36,77.6 48,86" fill="${STEEL}" stroke="${LINE}" stroke-width=".7" stroke-linejoin="round"/>
+<polygon points="152,58 164,66.4 169,69.6 179,69.6 182,72 179,74.4 169,74.4 164,77.6 152,86" fill="${STEEL}" stroke="${LINE}" stroke-width=".7" stroke-linejoin="round"/>
+<polyline points="36,66.4 31,69.6 21,69.6 18,72 21,74.4 31,74.4 36,77.6" fill="none" stroke="#fff3cf" stroke-width="1"/>
+${dimH(18, 182, 108, '60°')}${centerline(10, 72, 190, 72)}`;
 
     case 'endmill':
     case 'endmill-ball': {
