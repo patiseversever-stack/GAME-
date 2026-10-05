@@ -1,6 +1,7 @@
 // Kodla üretilmiş uçlu U-matkap (geçici model). Ölçüler mm; dış grup 0.01 ile ölçeklenir (1 birim = 100 mm).
 // Gövde, kullanıcının getireceği GLB ile değiştirilebilir; uçlar, torx vidalar ve soğutma noktaları kodda kalır.
 import * as THREE from 'three';
+import { buildInsert as buildChipbreakerInsert } from '../three/tools3d';
 
 export interface InsertPart {
   /** Uç + vidanın bağlı olduğu yuva (seat) noktası */
@@ -113,7 +114,8 @@ function torxPath(rOuter: number, rInner: number, lobes = 6) {
 }
 
 function makeMaterials() {
-  const body = new THREE.MeshPhysicalMaterial({ color: 0x8e949c, metalness: 1, roughness: 0.34, envMapIntensity: 1.0, vertexColors: true });
+  // Gövde: koyu nikel kaplama; oluk içleri köşe rengiyle daha koyu, taşlanmış pahlar parlak
+  const body = new THREE.MeshPhysicalMaterial({ color: 0x6a7078, metalness: 1, roughness: 0.32, envMapIntensity: 1.1, vertexColors: true, clearcoat: 0.25, clearcoatRoughness: 0.35 });
   const shank = new THREE.MeshPhysicalMaterial({ color: 0x9da3ab, metalness: 1, roughness: 0.25, envMapIntensity: 1.0 });
   const flat = new THREE.MeshPhysicalMaterial({ color: 0x7a8088, metalness: 1, roughness: 0.5 });
   const flute = new THREE.MeshPhysicalMaterial({ color: 0x4f545b, metalness: 1, roughness: 0.3 });
@@ -123,30 +125,15 @@ function makeMaterials() {
   return { body, shank, flat, flute, insert, screw, hole };
 }
 
-function buildInsert(mat: THREE.Material, holeMat: THREE.Material) {
+function buildInsert(mat: THREE.MeshPhysicalMaterial, holeMat: THREE.MeshBasicMaterial, screwMat: THREE.MeshPhysicalMaterial) {
   const size = 8, th = 3.18;
-  const shape = roundedSquare(size, 0.8);
-  const hole = new THREE.Path();
-  hole.absarc(0, 0, 1.75, 0, Math.PI * 2, true);
-  shape.holes.push(hole);
-  const geo = new THREE.ExtrudeGeometry(shape, { depth: th - 0.5, bevelEnabled: true, bevelThickness: 0.25, bevelSize: 0.22, bevelSegments: 3, curveSegments: 24 });
-  geo.translate(0, 0, -(th - 0.5) / 2);
+  const h = size / 2;
   const g = new THREE.Group();
-  const m = new THREE.Mesh(geo, mat);
-  g.add(m);
-  // Talaş kırıcı: üst yüzeyde içe çekik ince çerçeve
-  const land = new THREE.Mesh(
-    new THREE.RingGeometry(2.6, 3.3, 4, 1, Math.PI / 4),
-    new THREE.MeshPhysicalMaterial({ color: 0xa97a2a, metalness: 1, roughness: 0.45 }),
-  );
-  land.position.z = th / 2 + 0.01;
-  land.scale.setScalar(1.12);
-  g.add(land);
-  // Havşa (vida başı oturma yeri)
-  const cs = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 1.75, 0.6, 32, 1, true), holeMat);
-  cs.rotation.x = Math.PI / 2;
-  cs.position.z = th / 2 - 0.3;
-  g.add(cs);
+  // Kare SPMG benzeri uç: kesme kenarı bandı, talaş kırıcı oluğu, plato ve havşalı delik
+  const body = buildChipbreakerInsert([new THREE.Vector2(h, -h), new THREE.Vector2(h, h), new THREE.Vector2(-h, h), new THREE.Vector2(-h, -h)],
+    { rad: 0.8, th, hole: 1.75, land: 0.45, breaker: 1.55 }, { screw: screwMat, hole: holeMat } as any, mat);
+  body.position.z = -th / 2;
+  g.add(body);
   // Körelmiş kenar: üst yüzde tek bir kesme kenarı boyunca turuncu ısı izi
   const wear = new THREE.Mesh(
     new THREE.BoxGeometry(size - 1.6, 0.55, 0.2),
@@ -156,6 +143,23 @@ function buildInsert(mat: THREE.Material, holeMat: THREE.Material) {
   g.add(wear);
   g.userData.wear = wear;
   return g;
+}
+
+/** Markalama: yaka üzerine lazerle yazılmış ölçü (koyu, yarı mat) */
+function markingTexture(text: string) {
+  const c = document.createElement('canvas');
+  c.width = 1024; c.height = 96;
+  const g = c.getContext('2d')!;
+  g.clearRect(0, 0, c.width, c.height);
+  g.font = '600 54px "IBM Plex Mono", ui-monospace, monospace';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillStyle = 'rgba(14,15,17,0.88)';
+  g.fillText(text, c.width / 2, c.height / 2 + 2);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  t.anisotropy = 4;
+  return t;
 }
 
 function buildScrew(mat: THREE.Material, holeMat: THREE.Material) {
@@ -224,15 +228,31 @@ export function buildDrill(): Drill {
   {
     const pos = fg.attributes.position;
     const col = new Float32Array(pos.count * 3);
+    const nrm = fg.attributes.normal;
     for (let i = 0; i < pos.count; i++) {
       const r = Math.hypot(pos.getX(i), pos.getZ(i));
       const k = THREE.MathUtils.smoothstep(r, R - 2.2, R - 0.2);
-      const c = 0.62 + 0.38 * k;
+      let c = 0.58 + 0.42 * k;
+      // Uç yüzü (kesme tarafı) taşlanmış ama koyu: düz "tıpa" görünmesin
+      if (nrm.getY(i) > 0.9 && pos.getY(i) > A_TIP - 1) c = 0.5;
       col[i * 3] = c; col[i * 3 + 1] = c; col[i * 3 + 2] = c * 1.02;
     }
     fg.setAttribute('color', new THREE.BufferAttribute(col, 3));
   }
   body.add(new THREE.Mesh(fg, materials.body));
+
+  // Yaka üzerinde lazer markalama (ön yüz)
+  const mark = new THREE.Mesh(
+    new THREE.CylinderGeometry(22.04, 22.04, 7, 96, 1, true, -0.62, 1.24),
+    new THREE.MeshPhysicalMaterial({ map: markingTexture('Ø25 · 4×D · IC 08'), transparent: true, depthWrite: false, metalness: 0.4, roughness: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
+  );
+  mark.position.y = -51;
+  body.add(mark);
+  // Sap arkasında içten soğutma girişi
+  const inlet = new THREE.Mesh(new THREE.CircleGeometry(3.2, 32), materials.hole);
+  inlet.rotation.x = Math.PI / 2;
+  inlet.position.y = A_END - 0.02;
+  body.add(inlet);
 
   // Uç yüzü: soğutma delikleri
   const coolant: Drill['coolant'] = [];
@@ -255,9 +275,11 @@ export function buildDrill(): Drill {
 
   // Uçlar ve torx vidalar (öne bakan olukta: +Z)
   const inserts: InsertPart[] = [];
+  // Gerçek U-matkaptaki gibi: merkez ucu bir olukta eksene yakın, çevre ucu karşı olukta dış çapta;
+  // kesme kenarları ortada üst üste biner ve uç yüzünden ~0,6 mm öne taşar.
   const seats = [
-    { name: 'cevre', pos: new THREE.Vector3(7.6, A_TIP - 3.6, 5.6), rot: new THREE.Euler(0.08, 0.06, 0.12) },
-    { name: 'merkez', pos: new THREE.Vector3(-1.9, A_TIP - 4.2, 5.4), rot: new THREE.Euler(0.08, -0.04, -0.08) },
+    { name: 'cevre', pos: new THREE.Vector3(8.7, A_TIP - 3.4, -5.5), rot: new THREE.Euler(-0.08, Math.PI + 0.05, -0.1) },
+    { name: 'merkez', pos: new THREE.Vector3(1.0, A_TIP - 3.5, 5.5), rot: new THREE.Euler(0.08, -0.04, -0.06) },
   ];
   for (const s of seats) {
     const seat = new THREE.Group();
@@ -265,15 +287,20 @@ export function buildDrill(): Drill {
     seat.rotation.copy(s.rot);
     scaler.add(seat);
     const ins = new THREE.Group();
-    const insMesh = buildInsert(materials.insert, materials.hole);
+    const insMesh = buildInsert(materials.insert, materials.hole, materials.screw);
     ins.add(insMesh);
     seat.add(ins);
+    // Uç cebi: uçtan biraz büyük karanlık oyuk, kenarlarda gölge çizgisi olarak görünür
+    const pocket = new THREE.Mesh(new THREE.BoxGeometry(9.0, 8.6, 1.3), materials.hole);
+    pocket.position.set(0, -0.75, -2.0);
+    seat.add(pocket);
     const screw = buildScrew(materials.screw, materials.hole);
     screw.position.z = 1.9;
     seat.add(screw);
     inserts.push({ seat, insert: ins, screw, wear: insMesh.userData.wear, liftForward: s.name === 'cevre' ? 1 : 0.6 });
+    // Etiket noktası ucun kendisine bağlı: uç yerinden çıkınca etiket de onunla gider
     const a = new THREE.Object3D();
-    seat.add(a);
+    ins.add(a);
     a.position.set(0, 0, 2);
     anchors[`insert-${s.name}`] = a;
     const sa = new THREE.Object3D();
