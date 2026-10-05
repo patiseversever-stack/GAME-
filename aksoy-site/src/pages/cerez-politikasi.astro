@@ -24,6 +24,15 @@ const storage = [
     sent: 'Hayır, cihazınızda kalır',
   },
   {
+    name: 'aksoy-ses',
+    tech: 'Yerel depolama (localStorage)',
+    purpose: 'Sesli deneyimi açıp kapattığınızda verdiğiniz tercih; sonraki ziyarette aynı kalsın diye',
+    kind: 'İşlevsel (yalnızca ses düğmesine basarsanız oluşur)',
+    party: 'Birinci taraf (yalnızca bu site)',
+    life: 'Siz silene kadar',
+    sent: 'Hayır, cihazınızda kalır',
+  },
+  {
     name: 'aksoy-konum',
     tech: 'Oturum depolaması (sessionStorage)',
     purpose: 'Teklif Sepeti’nde “Konumumu ekle” dediğinizde alınan konum ve yer adı; yalnızca WhatsApp mesajına eklemek için',
@@ -87,7 +96,7 @@ const schema = [
       </nav>
       <span class="eyebrow eyebrow--tin">Yasal · Çerezler ve yerel depolama</span>
       <h1>Çerez Politikası</h1>
-      <p class="lead">Kısa cevap: takip ya da reklam çerezi yok. Tarayıcınızda kalıcı olarak tutulan tek şey, sizin oluşturduğunuz Teklif Sepeti.</p>
+      <p class="lead">Kısa cevap: takip ya da reklam çerezi yok. Tarayıcınızda kalıcı olarak tutulanlar yalnızca sizin oluşturduğunuz Teklif Sepeti ve, düğmeye basarsanız, ses tercihiniz.</p>
       <p class="legal-hero__meta">
         <span>Kapsam: <b>{Astro.site?.host}</b></span>
         <span>Son güncelleme: <b><time datetime={updated}>{trDate(updated)}</time></b></span>
@@ -95,7 +104,7 @@ const schema = [
       <div class="legal-summary" aria-label="Özet">
         <div><Icon name="check" /><b>Takip çerezi yok</b><span>Analiz, reklam ya da sosyal medya pikseli kullanılmaz.</span></div>
         <div><Icon name="shield" /><b>Onay penceresi yok</b><span>Takip amaçlı çerez kullanılmadığı için gösterilmez.</span></div>
-        <div><Icon name="list" /><b>Kalıcı kayıt: yalnızca sepet</b><span>Teklif Sepeti yalnızca tarayıcınızda tutulur.</span></div>
+        <div><Icon name="list" /><b>Kalıcı kayıt: sepet ve ses tercihi</b><span>İkisi de yalnızca tarayıcınızda tutulur.</span></div>
         <div><Icon name="bolt" /><b>Dış istek yok</b><span>Yazı tipleri ve görseller bu siteden yüklenir.</span></div>
       </div>
     </div>
@@ -147,6 +156,7 @@ const schema = [
             <li>aşağıdaki düğmeyle bu cihazdaki sepeti tek seferde silerek,</li>
             <li>tarayıcınızın ayarlarından bu sitenin <strong>çerezlerini ve site verilerini</strong> temizleyerek.</li>
           </ol>
+          <p>Ses tercihi, sayfanın üstündeki ses düğmesiyle sesi kapattığınızda “kapalı” olarak kalır; tamamen silmek için tarayıcınızdaki site verilerini temizleyebilirsiniz.</p>
           <div class="storage-box" data-storage-box>
             <div class="storage-box__state">
               <code>{QUOTE_KEY}</code>

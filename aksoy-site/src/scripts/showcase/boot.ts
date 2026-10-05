@@ -17,7 +17,6 @@ export function initShowcase() {
 
   const num = pre?.querySelector<HTMLElement>('[data-pre-num]');
   const bar = pre?.querySelector<HTMLElement>('[data-pre-bar]');
-  const stateEl = pre?.querySelector<HTMLElement>('[data-pre-state]');
   let target = 0.12, shown = 0, done = false;
   const startedAt = performance.now();
 
@@ -28,8 +27,8 @@ export function initShowcase() {
     done = true;
     try { sessionStorage.setItem('aksoy-pre', '1'); } catch { /* yok say */ }
     if (pre) {
-      if (stateEl) stateEl.textContent = 'HAZIR';
       pre.classList.add('is-done');
+      dispatchEvent(new Event('aksoy:intro'));
       setTimeout(() => pre.remove(), 1300);
       setTimeout(() => { revealHero(); after?.(); }, 380);
     } else {
@@ -46,7 +45,8 @@ export function initShowcase() {
     const v = Math.round(shown * 100);
     if (num) num.textContent = String(v).padStart(3, '0');
     if (bar) bar.style.transform = `scaleX(${shown})`;
-    const minTime = performance.now() - startedAt > 1100;
+    // Açılış canlandırması (işaret, harfler, alt yazı) yaklaşık 3 sn sürer
+    const minTime = performance.now() - startedAt > 3000;
     if (shown >= 1 && minTime) { finishPre(onReady); return; }
     requestAnimationFrame(tick);
   }
@@ -54,7 +54,9 @@ export function initShowcase() {
   // "Hareketi azalt" açık olsa da 3D çalışır (sakin modda); yalnızca WebGL2 yoksa düz görünüm.
   if (!root || !canUse3D()) {
     root?.classList.add('is-static');
-    finishPre();
+    // 3D olmasa da açılış (logo ve yazı) bir kez oynar; yükleme beklenmez
+    if (usePre) { target = 1; requestAnimationFrame(tick); }
+    else finishPre();
     return;
   }
 
@@ -63,8 +65,8 @@ export function initShowcase() {
 
   if (usePre) {
     requestAnimationFrame(tick);
-    // Ağ yavaşsa perdeyi en geç 4,5 sn'de kaldır; poster görünür kalır, 3D hazır olunca devreye girer.
-    setTimeout(() => { target = 1; shown = 1; finishPre(onReady); }, 4500);
+    // Ağ yavaşsa perdeyi en geç 5,5 sn'de kaldır; poster görünür kalır, 3D hazır olunca devreye girer.
+    setTimeout(() => { target = 1; shown = 1; finishPre(onReady); }, 5500);
   }
 
   const go = () =>

@@ -135,6 +135,8 @@ export async function startShowcase(
     lift0: 0, lift1: 0, screw0: 0, screw1: 0, idx0: 0, idx1: 0,
     cDim: 0, cIns: 0, cCool: 0,
   };
+  // Ses modülü kesme, soğutma ve vida durumunu buradan okur (yalnızca okuma)
+  (window as any).__aksoyFx = S;
   // Sinematik kamera: A = bu sahnenin kaydırmaya bağlı kamera hareketi, B = önceki sahneden sönümlenen kalıntı
   type Cam = { rx: number; ry: number; rz: number; px: number; py: number; scale: number; focus: number; env: number };
   const zeroCam = (): Cam => ({ rx: 0, ry: 0, rz: 0, px: 0, py: 0, scale: 0, focus: 0, env: 0 });
@@ -387,6 +389,7 @@ export async function startShowcase(
         L = Ltarget; // yeni bölüm kendi başından (ya da geri gelişte sonundan) başlar
         dimOn = false;
         enter(k, dir);
+        dispatchEvent(new CustomEvent('aksoy:chapter', { detail: { k, dir } }));
       }
       if (hudBar) hudBar.style.transform = `scaleX(${progress})`;
       updateReelRef?.();
