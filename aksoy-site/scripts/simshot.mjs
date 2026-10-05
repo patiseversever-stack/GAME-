@@ -8,7 +8,7 @@ const ctx = await browser.newContext({ viewport: { width: +w, height: +h }, devi
 const page = await ctx.newPage();
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 page.on('console', (m) => { if (m.type() === 'error') console.log('[error]', m.text()); });
-await page.goto(`${url}#${op}`, { waitUntil: 'networkidle' });
+await page.goto(`${url}?gl#${op}`, { waitUntil: 'networkidle' });
 const el = page.locator('[data-sim]');
 await el.evaluate((n) => n.scrollIntoView({ block: 'center' }));
 if (process.env.ISO) await page.locator(`[data-iso][value="${process.env.ISO}"]`).evaluate((n) => { n.checked = true; n.dispatchEvent(new Event('change', { bubbles: true })); });

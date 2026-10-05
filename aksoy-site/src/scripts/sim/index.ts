@@ -4,6 +4,7 @@ import { fmt } from '../tools/format';
 import { ISO_GROUPS } from '../tools/cutting-data';
 import type { Op, Iso } from '../tools/cutting-data';
 import type { SimApi, SimInput } from './sim';
+import { canUse3D } from '../gl';
 
 interface CalcDetail {
   op: Op; iso: Iso; v: Record<string, number>; nEff: number; vcEff: number; vf: number; range: [number, number] | null;
@@ -13,9 +14,6 @@ const stage = document.querySelector<HTMLElement>('[data-sim]');
 const calc = document.querySelector<HTMLElement>('[data-calc]');
 if (stage && calc) init(stage, calc);
 
-function hasWebGL2() {
-  try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
-}
 
 /** Talaşın ve kesmenin durumu: ustanın tezgâh başında gördüğü şey */
 function statusOf(d: CalcDetail, zone: SimInput['zone']): [string, string] {
@@ -41,7 +39,7 @@ function statusOf(d: CalcDetail, zone: SimInput['zone']): [string, string] {
 }
 
 function init(stage: HTMLElement, calc: HTMLElement) {
-  if (!hasWebGL2()) { stage.hidden = true; return; }
+  if (!canUse3D()) { stage.hidden = true; return; }
   // Yerleşim: masaüstünde sonuç sütununun tepesinde (yapışkan), mobilde girişlerin üstünde
   const sticky = calc.querySelector<HTMLElement>('.calc-out__sticky');
   const body = calc.querySelector<HTMLElement>('.calc-body');

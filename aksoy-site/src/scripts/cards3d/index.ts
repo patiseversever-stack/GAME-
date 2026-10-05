@@ -1,9 +1,7 @@
 // Kategori kartı 3D modellerini, ızgara ekrana yaklaşınca yükler. WebGL2 yoksa çizimler kalır.
+import { canUse3D } from '../gl';
 const els = Array.from(document.querySelectorAll<HTMLElement>('[data-model]'));
-function hasWebGL2() {
-  try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
-}
-if (els.length && hasWebGL2()) {
+if (els.length && canUse3D()) {
   const grid = els[0].parentElement!;
   const io = new IntersectionObserver((entries) => {
     if (!entries.some((e) => e.isIntersecting)) return;

@@ -1,6 +1,7 @@
 // Teklif Sepeti: ürünler tarayıcıda (localStorage) tutulur, tek bir WhatsApp mesajına dönüştürülür.
 // Sipariş veya ödeme yoktur; site hiçbir veriyi sunucuya göndermez.
 import { drawingSvg } from '../lib/drawings';
+import { productImage } from '../lib/product-image';
 import { site } from '../data/site';
 import type { Drawing, InsertShape } from '../data/types';
 
@@ -126,7 +127,7 @@ function render() {
         .map((b) => `<option ${b === it.brand ? 'selected' : ''}>${esc(b)}</option>`)
         .join('');
       return `<li class="qitem" data-idx="${idx}">
-        <div class="qitem__thumb">${drawingSvg(it.drawing, it.shape)}</div>
+        <div class="qitem__thumb">${(() => { const im = productImage({ drawing: it.drawing, shape: it.shape, code: it.code, name: it.name }); return im ? `<img src="${im.small}" alt="" width="54" height="54" loading="lazy" />` : drawingSvg(it.drawing, it.shape); })()}</div>
         <div>
           <a class="qitem__code" href="/urun/${it.slug}">${esc(it.code)}</a>
           <div class="qitem__name">${esc(it.name)}</div>

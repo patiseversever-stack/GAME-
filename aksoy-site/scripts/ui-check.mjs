@@ -1,0 +1,21 @@
+// Mobil arayüz kontrolü: menü, teklif sepeti ve arama ekranlarının görüntüsünü alır (önizleme sunucusu 4401).
+import { chromium } from 'playwright-core';
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const ctx = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true });
+const page = await ctx.newPage();
+page.on('pageerror', (e) => console.log('[pageerror]', e.message));
+await page.addInitScript(() => { try { sessionStorage.setItem('aksoy-pre', '1'); } catch {} });
+await page.goto('http://127.0.0.1:4401/urun/cnmg-120408', { waitUntil: 'networkidle' });
+await page.locator('[data-menu-open]').click(); await page.waitForTimeout(900);
+await page.screenshot({ path: '/tmp/claude-0/v/ui-menu.png' });
+await page.locator('[data-menu-close]').click(); await page.waitForTimeout(600);
+await page.locator('.buy [data-quote-add], [data-pdp-add], .pdp [data-quote-add]').first().click().catch((e) => console.log('add fail', e.message));
+await page.waitForTimeout(500);
+await page.evaluate(() => (document.querySelector('.mbar [data-quote-open]') || document.querySelector('[data-quote-open]')).click()); await page.waitForTimeout(900);
+await page.screenshot({ path: '/tmp/claude-0/v/ui-quote.png' });
+await page.keyboard.press('Escape'); await page.waitForTimeout(600);
+await page.goto('http://127.0.0.1:4401/urunler', { waitUntil: 'networkidle' });
+await page.evaluate(() => (document.querySelector('.mbar [data-search-open]') || document.querySelector('[data-search-open]')).click()); await page.waitForTimeout(500);
+await page.keyboard.type('cnmg'); await page.waitForTimeout(900);
+await page.screenshot({ path: '/tmp/claude-0/v/ui-search.png' });
+await browser.close();

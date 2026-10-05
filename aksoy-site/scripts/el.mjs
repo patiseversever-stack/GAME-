@@ -9,7 +9,7 @@ const page = await ctx.newPage();
 page.on('pageerror', (e) => console.log('[pageerror]', e.message));
 page.on('console', (m) => { if (['error', 'warning'].includes(m.type()) && !m.text().includes('Canvas2D')) console.log(`[${m.type()}]`, m.text()); });
 await page.addInitScript(() => { try { sessionStorage.setItem('aksoy-pre', '1'); } catch {} });
-await page.goto(url, { waitUntil: 'networkidle' });
+await page.goto(url + (url.includes('?') ? '&' : '?') + 'gl', { waitUntil: 'networkidle' });
 const el = page.locator(sel).first();
 await el.evaluate((n) => n.scrollIntoView({ block: 'start' }));
 await page.waitForTimeout(+wait);

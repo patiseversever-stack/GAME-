@@ -94,6 +94,9 @@ export async function startShowcase(
   scene.environment = pmrem.fromScene(envScene, 0.035).texture;
   envScene.traverse((o) => { const m = o as THREE.Mesh; if (m.isMesh) { m.geometry.dispose(); (m.material as THREE.Material).dispose(); } });
   opts.onProgress?.(0.5);
+  // Ağır adımlar arasında tarayıcıya nefes aldır (uzun görevler sayfayı kilitlemesin)
+  const breathe = () => new Promise<void>((r) => setTimeout(r, 0));
+  await breathe();
 
   /* ---------- Model ---------- */
   const drill: Drill = buildDrill();
@@ -110,14 +113,17 @@ export async function startShowcase(
   }
   const bakedInserts = !!GLB?.bakedInserts;
   opts.onProgress?.(0.72);
+  await breathe();
 
   /* ---------- Efektler ---------- */
   const coolant = new Coolant(drill.coolant, isMobile());
   scaler.add(coolant.group);
+  await breathe();
   const mach = new Machining(isMobile(), drill.dims.tip);
   focus.add(mach.work);
   scene.add(mach.fx);
   opts.onProgress?.(0.85);
+  await breathe();
 
   /* ---------- Durum ---------- */
   const poses = () => (isMobile() ? MOBILE : DESKTOP);
@@ -534,7 +540,9 @@ export async function startShowcase(
     const { raw, k } = current();
     segFill.forEach((f, i) => { if (f) f.style.transform = `scaleX(${THREE.MathUtils.clamp(raw - i, 0, 1)})`; });
     segBtns.forEach((b, i) => b.classList.toggle('is-on', i === k));
-    if (nextLabel) nextLabel.textContent = k >= N - 1 ? 'Kataloğa geç' : `Sonraki: ${CHAPTERS[k + 1]}`;
+    const nl = k >= N - 1 ? 'Kataloğa geç' : `Sonraki: ${CHAPTERS[k + 1]}`;
+    if (nextLabel) nextLabel.textContent = nl;
+    nextLabel?.parentElement?.setAttribute('aria-label', nl);
   }
   updateReel();
   updateReelRef = updateReel;
