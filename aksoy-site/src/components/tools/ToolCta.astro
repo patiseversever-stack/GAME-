@@ -1,0 +1,26 @@
+---
+// Araç sayfası içi teklif çağrısı: hesaplamadan sonra doğrudan WhatsApp’a.
+import Icon from '../Icon.astro';
+import { waLink } from '../../data/site';
+
+interface Props {
+  title: string;
+  text: string;
+  /** WhatsApp’ta hazır gelecek mesaj */
+  wa: string;
+  /** Analitik için data-wa etiketi */
+  id: string;
+}
+const { title, text, wa, id } = Astro.props;
+---
+<aside class="tl-cta" aria-label="Teklif">
+  <div class="tl-cta__text">
+    <span class="eyebrow eyebrow--tin">Teklif · WhatsApp</span>
+    <h2>{title}</h2>
+    <p>{text}</p>
+  </div>
+  <div class="tl-cta__actions">
+    <a class="btn btn--wa" href={waLink(wa)} target="_blank" rel="noopener" data-wa={id} data-cta-wa><Icon name="whatsapp" /> WhatsApp’tan teklif al</a>
+    <a class="btn btn--ghost" href="/urunler"><Icon name="grid" /> Kataloğa göz at</a>
+  </div>
+</aside>

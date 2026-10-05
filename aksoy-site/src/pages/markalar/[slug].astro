@@ -1,0 +1,119 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { brands } from '../../data/brands';
+import { products } from '../../data/products';
+import { trademarkNotice, waLink } from '../../data/site';
+import { breadcrumbSchema, sortProducts } from '../../lib/catalog';
+import type { Brand } from '../../data/types';
+import '../../styles/catalog.css';
+
+export function getStaticPaths() {
+  return brands.map((b) => ({ params: { slug: b.slug }, props: { b } }));
+}
+
+const { b } = Astro.props as { b: Brand };
+const idx = brands.findIndex((x) => x.slug === b.slug);
+const pad = (n: number) => String(n).padStart(2, '0');
+const items = sortProducts(products.filter((p) => p.brands.includes(b.slug)));
+const others = brands.filter((x) => x.slug !== b.slug);
+const unknownCountry = !b.country || /doğrulanacak/i.test(b.country);
+const host = (u: string) => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
+
+const schema = breadcrumbSchema(
+  [
+    { name: 'Ana sayfa', path: '/' },
+    { name: 'Markalar', path: '/markalar' },
+    { name: b.name, path: `/markalar/${b.slug}` },
+  ],
+  Astro.site,
+);
+const desc = `${b.name} ürünleri Ankara Ostim / İvedik’ten tedarik edilir. ${b.description}`.slice(0, 158).replace(/\s+\S*$/, '') + '…';
+---
+<Base title={`${b.name} ürünleri — ${b.strengths.slice(0, 2).join(', ')}`} description={desc} theme="dark" header="dark" schema={schema}>
+  <section class="page-hero page-hero--dark bdhero" data-mark={b.name.split(' ')[0]}>
+    <div class="wrap bdhero__grid">
+      <div>
+        <ol class="breadcrumbs" aria-label="Konum">
+          <li><a href="/">Ana sayfa</a></li>
+          <li><a href="/markalar">Markalar</a></li>
+          <li aria-current="page">{b.name}</li>
+        </ol>
+        <span class="eyebrow eyebrow--tin">Marka {pad(idx + 1)} / {pad(brands.length)} · {b.segment}</span>
+        <h1 class:list={{ 'is-long': b.name.length > 9 }}>{b.name}</h1>
+        <p class="bdhero__supply"><i aria-hidden="true"></i>{b.name} ürünleri tedarik edilir.</p>
+        <p class="lead">{b.description}</p>
+        <div class="bdhero__actions">
+          {items.length > 0 && <a class="btn btn--tin" href={`/urunler?marka=${b.slug}`}><Icon name="grid" /> Katalogda {b.name} kodları</a>}
+          <a class="btn btn--ghost" href={waLink(`Merhaba, ${b.name} ürünleri için teklif almak istiyorum.`)} target="_blank" rel="noopener" data-wa={`marka-${b.slug}`}><Icon name="whatsapp" /> {b.name} için teklif iste</a>
+        </div>
+      </div>
+
+      <aside class="sheet" aria-label={`${b.name} künyesi`}>
+        <div class="sheet__head"><span>Marka künyesi</span><span>M-{pad(idx + 1)}</span></div>
+        <dl>
+          <div><dt>Menşei</dt><dd>{unknownCountry ? 'Bilgi doğrulanıyor' : b.country}</dd></div>
+          <div><dt>Segment</dt><dd>{b.segment}</dd></div>
+          <div>
+            <dt>Güçlü olduğu alanlar</dt>
+            <dd><ul>{b.strengths.map((s) => <li>{s}</li>)}</ul></dd>
+          </div>
+          <div><dt>Katalogda</dt><dd>{items.length ? `${items.length} kod` : 'Kodlar ekleniyor'}</dd></div>
+          {(b.website || b.catalog) && (
+            <div>
+              <dt>Resmî kaynaklar</dt>
+              <dd class="sheet__links">
+                {b.website && <a href={b.website} target="_blank" rel="noopener nofollow">{host(b.website)} <Icon name="external" /></a>}
+                {b.catalog && <a href={b.catalog} target="_blank" rel="noopener nofollow">E-katalog <Icon name="external" /></a>}
+              </dd>
+            </div>
+          )}
+        </dl>
+        {b.note && <p class="sheet__note"><Icon name="shield" /> <span>{b.note}</span></p>}
+      </aside>
+    </div>
+  </section>
+
+  <section class="section paper-band" aria-labelledby="h-kodlar">
+    <div class="wrap">
+      <div class="section-head section-head--row">
+        <div style="display:grid;gap:16px;max-width:760px">
+          <span class="eyebrow">Katalog · {b.name}</span>
+          <h2 id="h-kodlar">{b.name} olarak tedarik edilebilen kodlar</h2>
+          <p>Kodu sepete ekleyip marka tercihini “{b.name}” seçin; fiyat ve termin WhatsApp’tan gelsin.</p>
+        </div>
+        {items.length > 0 && <a class="link-arrow" href={`/urunler?marka=${b.slug}`}>Filtrelerle aç <Icon name="arrow" /></a>}
+      </div>
+      {items.length > 0 ? (
+        <div class="pgrid pgrid--dense">{items.map((p) => <ProductCard p={p} />)}</div>
+      ) : (
+        <div class="kgroup__empty">
+          <p>Bu marka için kodlar katalog sayfasına ekleniyor. İhtiyacınız olan kodu şimdiden sorabilirsiniz.</p>
+          <a class="btn btn--wa btn--sm" href={waLink(`Merhaba, ${b.name} için teklif almak istiyorum.`)} target="_blank" rel="noopener" data-wa={`marka-bos-${b.slug}`}><Icon name="whatsapp" /> WhatsApp’tan sor</a>
+        </div>
+      )}
+    </div>
+  </section>
+
+  <section class="section section--dark section--tight" aria-labelledby="h-diger">
+    <div class="wrap">
+      <p class="tm-notice" style="margin-bottom:clamp(40px,6vw,72px)"><Icon name="shield" /> <span>{trademarkNotice}</span></p>
+      <div class="section-head section-head--row" style="margin-bottom:24px">
+        <div style="display:grid;gap:14px">
+          <span class="eyebrow">Tedarik edilen diğer markalar</span>
+          <h2 id="h-diger" style="font-size:var(--fs-xl)">Aynı kodu başka segmentten de teklif ederiz.</h2>
+        </div>
+        <a class="link-arrow" href="/markalar">Tüm markalar <Icon name="arrow" /></a>
+      </div>
+      <nav class="bnext" aria-label="Diğer markalar">
+        {others.map((o) => (
+          <a href={`/markalar/${o.slug}`}>
+            <b>{o.name}</b>
+            <span>{o.segment}</span>
+          </a>
+        ))}
+      </nav>
+    </div>
+  </section>
+</Base>

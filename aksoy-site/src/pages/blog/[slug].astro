@@ -1,0 +1,159 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import PostArt from '../../components/content/PostArt.astro';
+import Toc from '../../components/content/Toc.astro';
+import { posts, wordCount, type Post } from '../../data/posts';
+import { site, waLink } from '../../data/site';
+import { breadcrumbSchema, trDate } from '../../lib/content-schema';
+import '../../styles/content.css';
+
+export function getStaticPaths() {
+  return posts.map((post) => ({ params: { slug: post.slug }, props: { post } }));
+}
+
+interface Props { post: Post }
+const { post } = Astro.props;
+
+const url = new URL(`/blog/${post.slug}`, Astro.site).href;
+const toc = post.sections.map((s) => ({ id: s.id, title: s.title }));
+const others = posts.filter((p) => p.slug !== post.slug);
+const wa = waLink(post.waText);
+
+const schema = [
+  breadcrumbSchema(
+    [
+      { name: 'Ana sayfa', path: '/' },
+      { name: 'Blog', path: '/blog' },
+      { name: post.title, path: `/blog/${post.slug}` },
+    ],
+    Astro.site,
+  ),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'BlogPosting',
+    headline: post.title,
+    description: post.description,
+    datePublished: post.date,
+    dateModified: post.updated ?? post.date,
+    inLanguage: 'tr-TR',
+    url,
+    mainEntityOfPage: { '@type': 'WebPage', '@id': url },
+    keywords: post.tags.join(', '),
+    wordCount: wordCount(post),
+    timeRequired: `PT${post.readingMinutes}M`,
+    author: { '@type': 'Organization', name: site.name, url: Astro.site?.href },
+    publisher: { '@type': 'Organization', name: site.name, url: Astro.site?.href },
+  },
+];
+---
+<Base title={post.title} description={post.description} schema={schema} noindex={post.draft}>
+  <div class="read-progress" data-progress aria-hidden="true"></div>
+
+  <header class="page-hero blueprint c-hero article-hero">
+    <div class="wrap">
+      <nav aria-label="Sayfa konumu">
+        <ol class="breadcrumbs">
+          <li><a href="/">Ana sayfa</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li class="crumb-clip" aria-current="page">{post.title}</li>
+        </ol>
+      </nav>
+      <div class="article-hero__grid">
+        <div>
+          <div class="article-hero__top">
+            {post.draft && <span class="draft-badge"><i></i>Taslak · uzman kontrolü bekliyor</span>}
+            <div class="post-card__tags">{post.tags.map((t) => <span class="tag">{t}</span>)}</div>
+          </div>
+          <h1>{post.title}</h1>
+          <p class="lead">{post.description}</p>
+          <dl class="article-meta">
+            <div><dt>Tarih</dt><dd><time datetime={post.date}>{trDate(post.date)}</time></dd></div>
+            <div><dt>Okuma</dt><dd>{post.readingMinutes} dakika</dd></div>
+            <div><dt>Hazırlayan</dt><dd>{site.name}</dd></div>
+          </dl>
+        </div>
+        <div class="art-card">
+          <PostArt art={post.art} title={`${post.title} — teknik çizim`} />
+          <span class="art-card__tl">REF B-{String(posts.indexOf(post) + 1).padStart(2, '0')}</span>
+          <span class="art-card__br">Ölçek 1:1</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap article-layout">
+    <Toc items={toc}>
+      <div class="toc__aside">
+        <p>Kodunuzu ya da sorunuzu yazın; uygun takımı ve teklifi WhatsApp’tan iletelim.</p>
+        <a class="btn btn--wa btn--sm" href={wa} target="_blank" rel="noopener" data-wa={`blog-toc-${post.slug}`}><Icon name="whatsapp" /> WhatsApp’tan sor</a>
+      </div>
+    </Toc>
+
+    <div class="article-main">
+      <Toc items={toc} variant="inline" />
+      <article class="article-body prose">
+        <div class="lead-p" set:html={post.intro} />
+        {post.sections.map((s) => (
+          <section aria-labelledby={s.id}>
+            <h2 id={s.id}>{s.title}</h2>
+            <Fragment set:html={s.html} />
+          </section>
+        ))}
+      </article>
+
+      <footer class="article-end">
+        <div class="wa-cta">
+          <div>
+            <span class="eyebrow">Teklif · WhatsApp</span>
+            <h2>Kodu gönderin, uygun takımı birlikte seçelim.</h2>
+            <p>Malzemenizi, işlemi ve adedi yazmanız yeterli. Fiyat, stok ve termin bilgisiyle dönüş yapılır. {site.hours}; mesai dışında da yazabilirsiniz.</p>
+          </div>
+          <div class="wa-cta__actions">
+            <a class="btn btn--wa" href={wa} target="_blank" rel="noopener" data-wa={`blog-end-${post.slug}`}><Icon name="whatsapp" /> WhatsApp’tan yazın</a>
+            <a class="btn btn--ghost" href={`tel:${site.phoneE164}`}><Icon name="phone" /> {site.phoneDisplay}</a>
+          </div>
+        </div>
+
+        <div>
+          <h2 class="article-end__h">İlgili sayfalar</h2>
+          <div class="related">
+            {post.related.map((r) => (
+              <a href={r.href}><b>{r.label}</b><span>{r.note}</span><Icon name="arrow-up-right" /></a>
+            ))}
+          </div>
+        </div>
+
+        {others.length > 0 && (
+          <div>
+            <h2 class="article-end__h">Diğer yazılar</h2>
+            <div class="more-posts">
+              {others.map((p) => (
+                <a href={`/blog/${p.slug}`}><span>{p.readingMinutes} dk</span><b>{p.title}</b><Icon name="arrow" /></a>
+              ))}
+            </div>
+          </div>
+        )}
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // Okuma ilerleme çubuğu
+    const bar = document.querySelector<HTMLElement>('[data-progress]');
+    const body = document.querySelector<HTMLElement>('.article-body');
+    if (bar && body) {
+      let queued = false;
+      const update = () => {
+        queued = false;
+        const r = body.getBoundingClientRect();
+        const total = r.height - innerHeight * 0.6;
+        const p = total > 0 ? Math.min(1, Math.max(0, -r.top / total)) : 0;
+        bar.style.transform = `scaleX(${p})`;
+      };
+      addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true });
+      addEventListener('resize', update, { passive: true });
+      update();
+    }
+  </script>
+</Base>

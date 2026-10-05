@@ -1,0 +1,29 @@
+---
+// Kısa, açılır-kapanır SSS bölümü. İçerik DOM’da durur (arama motorları okur).
+import type { Qa } from '../../scripts/tools/seo';
+
+interface Props {
+  id: string;
+  title: string;
+  intro?: string;
+  items: Qa[];
+}
+const { id, title, intro, items } = Astro.props;
+---
+<section class="section section--tight tl-faq" aria-labelledby={id}>
+  <div class="wrap tl-faq__grid">
+    <div class="tl-faq__head">
+      <span class="eyebrow">Sık sorulanlar</span>
+      <h2 id={id} class="reveal">{title}</h2>
+      {intro && <p>{intro}</p>}
+    </div>
+    <div class="tl-faq__list">
+      {items.map((it, i) => (
+        <details class="tl-qa" open={i === 0}>
+          <summary><span>{it.q}</span><i aria-hidden="true"></i></summary>
+          <div class="tl-qa__a"><p set:html={it.a} /></div>
+        </details>
+      ))}
+    </div>
+  </div>
+</section>

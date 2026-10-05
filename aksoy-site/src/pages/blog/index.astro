@@ -1,0 +1,82 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import PostArt from '../../components/content/PostArt.astro';
+import { posts } from '../../data/posts';
+import { site } from '../../data/site';
+import { breadcrumbSchema, trDate } from '../../lib/content-schema';
+import '../../styles/content.css';
+
+const title = 'Teknik Blog: Kesici Takım Rehberleri';
+const description =
+  'Torna elmas uç kodları, kesme hızı ve devir hesabı, U-matkap seçimi: CNC atölyeleri için sade, doğru ve uygulanabilir Türkçe teknik yazılar.';
+
+// Henüz yayımlanmış (taslak olmayan) yazı yoksa liste sayfası da arama motorlarına kapalı kalır.
+const allDraft = posts.every((p) => p.draft);
+const totalMinutes = posts.reduce((n, p) => n + p.readingMinutes, 0);
+const num = (i: number) => String(i + 1).padStart(2, '0');
+
+const schema = [
+  breadcrumbSchema([{ name: 'Ana sayfa', path: '/' }, { name: 'Blog', path: '/blog' }], Astro.site),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Blog',
+    name: `${site.name} Teknik Blog`,
+    description,
+    inLanguage: 'tr-TR',
+    url: new URL('/blog', Astro.site).href,
+    publisher: { '@type': 'Organization', name: site.name },
+    blogPost: posts.map((p) => ({ '@type': 'BlogPosting', headline: p.title, url: new URL(`/blog/${p.slug}`, Astro.site).href, datePublished: p.date })),
+  },
+];
+---
+<Base title={title} description={description} schema={schema} noindex={allDraft}>
+  <section class="page-hero blueprint c-hero blog-hero">
+    <div class="wrap">
+      <nav aria-label="Sayfa konumu">
+        <ol class="breadcrumbs">
+          <li><a href="/">Ana sayfa</a></li>
+          <li aria-current="page">Blog</li>
+        </ol>
+      </nav>
+      <div class="blog-hero__row">
+        <div>
+          <span class="eyebrow eyebrow--tin">Teknik notlar · Tezgâh başından</span>
+          <h1>Kodu okuyun, değeri hesaplayın, doğru takımı seçin.</h1>
+          <p class="lead">Elmas uç kodlarından devir hesabına, kılavuzdan U-matkaba: sahada en çok sorulan konuları ustanın diliyle, kısa ve doğru anlatıyoruz.</p>
+        </div>
+        <div class="blog-hero__stats" aria-label="Blog özeti">
+          <div><b>{String(posts.length).padStart(2, '0')}</b><span>Yazı</span></div>
+          <div><b>{totalMinutes}</b><span>Dakika okuma</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap">
+    <div class="posts">
+      {posts.map((p, i) => (
+        <article class:list={['post-card', 'reveal', { 'post-card--feature': i === 0 }]} style={`--d:${i * 80}ms`}>
+          <div class="art-card">
+            <PostArt art={p.art} />
+            <span class="art-card__tl">B-{num(i)}</span>
+            <span class="art-card__br">{p.tags[0]}</span>
+          </div>
+          <div class="post-card__body">
+            {p.draft && <span class="draft-badge"><i></i>Taslak · uzman kontrolü bekliyor</span>}
+            <div class="post-card__meta">
+              <span><time datetime={p.date}>{trDate(p.date)}</time></span>
+              <span>{p.readingMinutes} dk okuma</span>
+            </div>
+            <h2><a href={`/blog/${p.slug}`}>{p.title}</a></h2>
+            <p>{p.description}</p>
+            <div class="post-card__foot">
+              <div class="post-card__tags">{p.tags.map((t) => <span class="tag">{t}</span>)}</div>
+              <span class="post-card__go" aria-hidden="true"><Icon name="arrow-up-right" /></span>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</Base>

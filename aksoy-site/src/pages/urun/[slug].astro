@@ -1,0 +1,228 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { products, productBySlug } from '../../data/products';
+import { categoryBySlug, subcategoryName } from '../../data/categories';
+import { brandBySlug } from '../../data/brands';
+import { site, waLink } from '../../data/site';
+import { drawingSvg } from '../../lib/drawings';
+import { ISO_GROUPS, SHAPES, decodeInsertCode, breadcrumbSchema } from '../../lib/catalog';
+import type { Product } from '../../data/types';
+import '../../styles/catalog.css';
+
+export function getStaticPaths() {
+  return products.map((p) => ({ params: { slug: p.slug }, props: { p } }));
+}
+
+const { p } = Astro.props as { p: Product };
+const cat = categoryBySlug[p.category];
+const catName = cat?.name ?? p.category;
+const subName = subcategoryName(p.category, p.subcategory);
+const brandList = p.brands.map((b) => brandBySlug[b]).filter(Boolean);
+const brandNames = p.brands.map((b) => brandBySlug[b]?.name ?? b);
+const quoteData = JSON.stringify({ slug: p.slug, code: p.code, name: p.name, drawing: p.drawing, shape: p.shape, brands: brandNames });
+const anatomy = p.drawing === 'insert' ? decodeInsertCode(p.code) : null;
+
+// İlgili ürünler: önce elle bağlananlar, sonra aynı alt grup, sonra aynı kategori
+const related: Product[] = [];
+const push = (x?: Product) => { if (x && x.slug !== p.slug && !related.includes(x) && related.length < 4) related.push(x); };
+(p.related ?? []).forEach((s) => push(productBySlug[s]));
+products.filter((x) => x.subcategory === p.subcategory).forEach(push);
+products.filter((x) => x.category === p.category).forEach(push);
+
+const waText = `Merhaba ${site.name}, ${p.code} (${p.name}) için fiyat ve termin bilgisi almak istiyorum.`;
+const label = p.shape && p.drawing === 'insert' ? `ISO ${p.shape} · ${SHAPES[p.shape]?.angle ?? ''}` : p.code;
+
+const schema = breadcrumbSchema(
+  [
+    { name: 'Ana sayfa', path: '/' },
+    { name: 'Ürünler', path: '/urunler' },
+    { name: catName, path: `/kategori/${p.category}` },
+    { name: p.code, path: `/urun/${p.slug}` },
+  ],
+  Astro.site,
+);
+const metaDesc = `${p.code} — ${p.description}`.length > 160 ? `${p.code} — ${p.description}`.slice(0, 157).replace(/\s+\S*$/, '') + '…' : `${p.code} — ${p.description}`;
+---
+<Base title={`${p.code} — ${p.name}`} description={metaDesc} theme="light" header="light" schema={schema}>
+  <article class="pdp" data-pdp>
+    <div class="wrap pdp__grid">
+      <div class="pdp__media">
+        <figure class="stage" style="margin:0">
+          <div class="stage__marks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+          <span class="stage__lbl stage__lbl--tl" aria-hidden="true">REF · {p.code}</span>
+          <span class="stage__lbl stage__lbl--tr" aria-hidden="true">{subName}</span>
+          <span class="stage__lbl stage__lbl--bl" aria-hidden="true">Teknik çizim</span>
+          {p.image ? (
+            <div class="stage__art"><img src={p.image} alt={`${p.code} ${p.name}`} style="width:80%;height:auto;object-fit:contain" /></div>
+          ) : (
+            <div class="stage__art" set:html={drawingSvg(p.drawing, p.shape, { grid: true, label, title: `${p.code} teknik çizimi (temsilî)` })} />
+          )}
+        </figure>
+        <p class="stage__caption"><span>Görsel temsilîdir; ölçüler spesifikasyon tablosundadır.</span><span class="stage__scale">Ölçeksiz</span></p>
+        {anatomy && (
+          <div class="anat" role="group" aria-label={`${p.code} kod anatomisi`}>
+            <div class="anat__head"><span class="tlabel">ISO 1832 kod anatomisi</span><span class="tlabel">{p.code}</span></div>
+            <ol class="anat__list">
+              {anatomy.map((a) => (
+                <li><span class="anat__part">{a.part}</span><span class="anat__lbl">{a.label}</span><span class="anat__val">{a.value}</span></li>
+              ))}
+            </ol>
+          </div>
+        )}
+      </div>
+
+      <div class="pdp__info">
+        <ol class="breadcrumbs" aria-label="Konum">
+          <li><a href="/">Ana sayfa</a></li>
+          <li><a href="/urunler">Ürünler</a></li>
+          <li><a href={`/kategori/${p.category}`}>{catName}</a></li>
+          <li aria-current="page">{p.code}</li>
+        </ol>
+
+        <a class="eyebrow eyebrow--tin" href={`/kategori/${p.category}#${p.subcategory}`}>{subName}</a>
+        <h1 class="pdp__title">
+          <span class="pdp__code">{p.code}</span>
+          <span class="pdp__name">{p.name}</span>
+        </h1>
+
+        <div class="pdp__iso">
+          <span class="tlabel" id="iso-lbl">Uygun malzeme grupları · ISO 513</span>
+          <ul aria-labelledby="iso-lbl">
+            {ISO_GROUPS.map((g) => {
+              const on = p.iso.includes(g.g);
+              return (
+                <li class:list={['isochip', { 'is-off': !on }]} data-g={g.g}>
+                  <b aria-hidden="true">{g.g}</b>
+                  <span>{g.t}<span class="sr-only">{on ? ' — uygun' : ' — önerilmez'}</span></span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+
+        <div class="buy">
+          <div class="buy__row">
+            <div class="field">
+              <label for="pdp-marka">Marka tercihi</label>
+              <select id="pdp-marka">
+                <option>Marka farketmez</option>
+                {brandNames.map((b) => <option>{b}</option>)}
+              </select>
+            </div>
+            <div class="field">
+              <label for="pdp-adet">Adet</label>
+              <div class="qstep">
+                <button type="button" data-step="-1" aria-label="Adedi azalt"><Icon name="minus" /></button>
+                <input id="pdp-adet" type="number" inputmode="numeric" min="1" max="9999" step="1" value="10" />
+                <button type="button" data-step="1" aria-label="Adedi artır"><Icon name="plus" /></button>
+              </div>
+            </div>
+          </div>
+          <div class="buy__actions">
+            <button
+              class="btn btn--tin"
+              type="button"
+              data-pdp-main
+              data-quote-add
+              data-slug={p.slug}
+              data-product={quoteData}
+              data-qty-from="#pdp-adet"
+              data-brand-from="#pdp-marka"
+              data-label-add="Teklif sepetine ekle"
+            >
+              <Icon name="plus" /> <span data-label>Teklif sepetine ekle</span>
+            </button>
+            <a class="btn btn--wa" href={waLink(waText)} target="_blank" rel="noopener" data-wa={`urun-${p.slug}`}><Icon name="whatsapp" /> WhatsApp’tan sor</a>
+          </div>
+          <p class="buy__note"><Icon name="shield" /> Sipariş değil, teklif talebi. Fiyat, stok ve termin WhatsApp’tan bildirilir.</p>
+        </div>
+
+        <p class="note pdp__note"><Icon name="bolt" /> <span>Kalite (grade) ve talaş kırıcı seçimi malzemenize göre teklif aşamasında önerilir.</span></p>
+
+        {anatomy && (
+          <div class="anat" role="group" aria-label={`${p.code} kod anatomisi`}>
+            <div class="anat__head"><span class="tlabel">ISO 1832 kod anatomisi</span><span class="tlabel">{p.code}</span></div>
+            <ol class="anat__list">
+              {anatomy.map((a) => (
+                <li><span class="anat__part">{a.part}</span><span class="anat__lbl">{a.label}</span><span class="anat__val">{a.value}</span></li>
+              ))}
+            </ol>
+          </div>
+        )}
+
+        <section class="pdp__sec" aria-labelledby="h-spec">
+          <h2 id="h-spec">Teknik özellikler <span>{p.code}</span></h2>
+          <table class="spec">
+            <tbody>
+              <tr><th scope="row">Ürün grubu</th><td><a href={`/kategori/${p.category}#${p.subcategory}`}>{catName} · {subName}</a></td></tr>
+              {p.specs.map((s) => <tr><th scope="row">{s.label}</th><td>{s.value}</td></tr>)}
+            </tbody>
+          </table>
+        </section>
+
+        <section class="pdp__sec" aria-labelledby="h-desc">
+          <h2 id="h-desc">Açıklama</h2>
+          <p class="pdp__desc">{p.description}</p>
+        </section>
+
+        {brandList.length > 0 && (
+          <section class="pdp__sec" aria-labelledby="h-brands">
+            <h2 id="h-brands">Bu ürünün tedarik edildiği markalar <span>{brandList.length}</span></h2>
+            <ul class="bsupply">
+              {brandList.map((b) => (
+                <li>
+                  <a href={`/markalar/${b.slug}`}>
+                    <b>{b.name}</b>
+                    <span>{[b.country, b.segment].filter(Boolean).join(' · ')}</span>
+                    <Icon name="arrow-up-right" />
+                  </a>
+                </li>
+              ))}
+            </ul>
+            <p class="bsupply__legal">Marka adları ürünü tanımlamak içindir; aynı kod, stok ve termine göre listedeki markalardan biriyle tedarik edilir.</p>
+          </section>
+        )}
+      </div>
+    </div>
+  </article>
+
+  {related.length > 0 && (
+    <section class="prel" aria-labelledby="h-rel">
+      <div class="wrap">
+        <div class="section-head section-head--row" style="margin-bottom:28px">
+          <div style="display:grid;gap:14px">
+            <span class="eyebrow">{subName}</span>
+            <h2 id="h-rel" style="font-size:var(--fs-xl)">Uyumlu ve benzer ürünler</h2>
+          </div>
+          <a class="link-arrow" href={`/kategori/${p.category}`}>{catName} grubunun tamamı <Icon name="arrow" /></a>
+        </div>
+        <div class="pgrid pgrid--dense">{related.map((r) => <ProductCard p={r} />)}</div>
+      </div>
+    </section>
+  )}
+
+  <div class="pdp-bar" data-pdp-bar aria-hidden="true" inert>
+    <div class="pdp-bar__info">
+      <span class="pdp-bar__code">{p.code}</span>
+      <span class="pdp-bar__qty" data-bar-sum>10 adet · Marka farketmez</span>
+    </div>
+    <button
+      class="btn btn--tin"
+      type="button"
+      data-quote-add
+      data-slug={p.slug}
+      data-product={quoteData}
+      data-qty-from="#pdp-adet"
+      data-brand-from="#pdp-marka"
+      data-label-add="Sepete ekle"
+    >
+      <Icon name="plus" /> <span data-label>Sepete ekle</span>
+    </button>
+  </div>
+
+  <script>
+    import '../../scripts/catalog';
+  </script>
+</Base>

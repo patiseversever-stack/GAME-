@@ -5,6 +5,7 @@ import * as THREE from 'three';
 import gsap from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { buildDrill, type Drill } from './model';
+import { GLB, applyGlb } from './glb';
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -122,6 +123,15 @@ export async function startShowcase(root: HTMLElement, opts: { onProgress?: (p: 
   pivot.add(focus);
   focus.add(drill.root);
   const scaler = drill.frame.children[0] as THREE.Group;
+  // Kullanıcının GLB modeli tanımlıysa gövdeyi onunla değiştir; hata olursa kodla üretilen model kalır.
+  if (GLB) {
+    try {
+      await applyGlb(drill, GLB, (p) => opts.onProgress?.(0.55 + p * 0.2));
+    } catch (err) {
+      console.warn('GLB yüklenemedi, geçici model kullanılıyor.', err);
+    }
+  }
+  const bakedInserts = !!GLB?.bakedInserts;
   opts.onProgress?.(0.75);
 
   /* ---------- Soğutma sıvısı parçacıkları ---------- */
@@ -255,6 +265,11 @@ export async function startShowcase(root: HTMLElement, opts: { onProgress?: (p: 
       ip.screw.position.z = 1.9 + S.screws * 10 + lift * 9;
       ip.screw.position.y = lift * 5.5 * ip.liftForward;
       ip.screw.rotation.z = -S.screws * Math.PI * 5;
+      if (bakedInserts) {
+        const show = lift > 0.02 || S.screws > 0.02;
+        ip.insert.visible = show;
+        ip.screw.visible = show;
+      }
     });
 
     // Kaplama rengi
