@@ -58,7 +58,8 @@ export function resultScreen(host, o, history, historySheet) {
   const metrics = [];
   if (xpGain) metrics.push([`+${xpGain}`, 'XP', 'xp', xpGain]);
   if (r.multiplier > 1) metrics.push([`×${r.multiplier}`, 'Katsayı', 'mult']);
-  metrics.push([sign(myDelta), 'Bu el puanın', myDelta > 0 ? 'up' : myDelta < 0 ? 'down' : 'zero']);
+  if (matchOver && r.totals) metrics.push([String(r.totals[0]), 'Maç toplamın', 'zero']);
+  else metrics.push([sign(myDelta), 'Bu el puanın', myDelta > 0 ? 'up' : myDelta < 0 ? 'down' : 'zero']);
 
   const groups = draw ? [] : r.winningGroups?.length ? r.winningGroups.map(idsOf) : [r.handsAtEnd[r.winner]];
   const eyebrow = matchOver ? 'Maç sonucu' : `${is101 ? '101 Okey' : 'Klasik Okey'} · El ${r.round}`;

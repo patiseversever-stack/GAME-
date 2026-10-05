@@ -78,7 +78,19 @@ function tokensOf(raw) {
 }
 
 // Yalnız küfür / hakaret denetimi (sohbet vb. için de kullanılabilir) → engellenen kök ya da null
+// Zararsız tam sözcükler (kısa kök ekleriyle karışan): sikke (para), sikkeler
+const SAFE_WORDS = new Set(['sikke', 'sikkeler', 'sikkeci']);
+// Türkçe noktasız ı ile yazılınca anlamı değişen kökler: "amına" küfür, "Amina" ad. Ham metinde (ı korunarak) ya da rakam / simge
+// hilesiyle (am1na, am!na) yazılırsa reddedilir.
+const RAW_DOTLESS = ['amın', 'am1n', 'am!n', 'am|n', 'amınk'];
+
 export function findBlocked(raw) {
+  const rawTr = String(raw).toLocaleLowerCase('tr').replace(/[\s._-]+/g, '').replace(/(.)\1+/g, '$1');
+  for (const r of RAW_DOTLESS) if (rawTr.includes(r)) return r;
+  raw = String(raw)
+    .split(/[\s._-]+/)
+    .filter((t) => !SAFE_WORDS.has(letters(t, false).trim()))
+    .join(' ');
   const joined = squeeze(letters(raw).replace(/ /g, ''));
   const joinedNoLeet = squeeze(letters(raw, false).replace(/[^a-z]/g, ''));
   // v→u (fvck), ph→f gibi görsel benzerlikler de denenir

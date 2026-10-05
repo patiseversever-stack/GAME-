@@ -213,7 +213,9 @@ export function openBazaar(o) {
     const prog = s.owned
       ? ''
       : `<div class="bz2-prog"><div class="bz2-prog__bar">${Array.from({ length: s.need }, (_, k) => `<i${k < s.n ? ' class="on"' : ''}></i>`).join('')}</div><span><b>${s.n}</b> / ${s.need} reklam</span></div>`;
-    const alt = s.owned ? '' : `<div class="bz2-alt">${it.level > 1 ? `<span>${icon('lock')}ya da Seviye ${it.level}’de açılır</span>` : ''}<span class="bz2-chip"><i></i>${fmt(it.chips || 0)} çip · <em>yakında</em></span></div>`;
+    // künye şeridi (App Store bilgi satırı gibi): tür, seviye yolu, reklam, çip
+    const fact = (k, v, sub) => `<div><dt>${k}</dt><dd>${v}</dd>${sub ? `<small>${sub}</small>` : ''}</div>`;
+    const alt = `<dl class="bz2-facts">${fact('Tür', esc(kind === 'frame' ? 'Çerçeve' : KIND_NAME[kind]), kind === 'frame' ? esc(it.series) : 'Kozmetik')}${fact('Seviye', it.level > 1 ? it.level : '—', it.level > 1 ? 'ile de açılır' : 'yalnız Çarşı')}${fact('Reklam', s.need || '—', s.owned ? 'koleksiyonda' : `${s.n} izlendi`)}${fact('Çip', `<span class="bz2-chip"><i></i>${fmt(it.chips || 0)}</span>`, 'yakında')}</dl>`;
     sh.querySelector('.bz2-sheet__info').innerHTML = `<span class="bz2-eyebrow">${esc(kind === 'frame' ? it.series : KIND_NAME[kind])}</span><h3>${esc(it.name)}</h3><p class="bz2-desc">${esc(it.desc)}</p>${prog}${cta}<p class="bz2-note">${esc(note)}</p>${alt}`;
   }
   function closeSheet(now) {

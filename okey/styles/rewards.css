@@ -49,7 +49,7 @@
 
 /* ───────── seviye atlama (src/app/levelup.js) ───────── */
 .lv2 { --tx: #f6f2ea; --tx2: rgba(246, 242, 234, .64); --tx3: rgba(246, 242, 234, .4); --gold: #e9c46a; position: fixed; inset: 0; z-index: 9000; overflow: hidden; color: var(--tx); font-family: var(--font-ui); background: rgba(5, 4, 3, 0); cursor: pointer; -webkit-tap-highlight-color: transparent; transition: background .35s ease; }
-.lv2.p-in { background: rgba(5, 4, 3, .94); }
+.lv2.p-in { background: rgba(6, 5, 3, .985); }
 .lv2.is-out { opacity: 0; transition: opacity .35s; }
 .lv2 button { font-family: inherit; }
 .lv2__bg { position: absolute; inset: 0; pointer-events: none; }
@@ -100,7 +100,7 @@
 .lv2-card__front b { font: 600 .74rem/1.15 var(--font-ui); }
 .lv2__actions { position: absolute; z-index: 4; left: 0; right: 0; bottom: max(14px, env(safe-area-inset-bottom)); display: flex; justify-content: center; gap: 10px; opacity: 0; transform: translateY(12px); pointer-events: none; transition: opacity .45s, transform .6s cubic-bezier(.2, .9, .3, 1); }
 .lv2.p-done .lv2__actions { opacity: 1; transform: none; pointer-events: auto; }
-.lv2-btn { height: 40px; min-width: 120px; padding: 0 20px; border: 0; border-radius: 99px; font: 600 .78rem/1 var(--font-ui); color: var(--tx); background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); cursor: pointer; }
+.lv2-btn { height: 40px; min-width: 120px; padding: 0 20px; border: 0; border-radius: 99px; font: 600 .78rem/1 var(--font-ui); color: var(--tx); background: #1d1914; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .1); cursor: pointer; }
 .lv2-btn--go { color: #111; background: #f6f2ea; }
 .lv2-btn:disabled { opacity: .7; }
 .lv2__skip { position: absolute; z-index: 4; right: max(18px, env(safe-area-inset-right)); bottom: max(12px, env(safe-area-inset-bottom)); margin: 0; font: 600 .56rem/1 var(--font-ui); letter-spacing: .16em; text-transform: uppercase; color: var(--tx3); transition: opacity .3s; }
@@ -120,10 +120,11 @@
 .h7hero__ring:has(.has-frame) .h7ring { display: none; }
 .h7v--rew { position: relative; display: flex; flex-direction: column; gap: 12px; }
 .h7rw-next { display: flex; align-items: center; gap: 14px; padding: 12px 16px; }
-.h7rw-next__art { flex: none; display: grid; place-items: center; width: 64px; height: 64px; }
+.h7rw-next__art { flex: none; display: grid; place-items: center; min-width: 64px; max-width: 160px; height: 64px; padding: 0 4px; }
 .h7rw-next__art .fav { --fav: 40px; margin-top: 16px; }
 .h7rw-next__art .rw-fx { width: 52px; height: 52px; }
 .h7rw-next__art .rw-title b { font-size: .95rem; }
+.h7rw-next__art .tpair { --tw: 26px; }
 .h7rw-next__txt { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
 .h7rw-next__txt > b { font: 700 .95rem/1.15 var(--font-display); color: #fff5dc; }
 .h7rw-next__txt > b small { font: 700 .6rem/1 var(--font-ui); letter-spacing: .08em; color: rgba(241, 208, 126, .7); }
