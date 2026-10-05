@@ -4,15 +4,22 @@ Ankette verilen cevapların özeti. Site kurulurken bu dosya esas alınır.
 
 ## Firma
 - **Ad:** Aksoy Kesici Takımlar
-- **Yasal tür:** Şahıs şirketi. Künye için sahibin adı soyadı, vergi dairesi ve numarası, adres ve e-posta eksik.
+- **Yasal tür:** Şahıs şirketi.
+- **Sahibi:** Kemal Aksoy
+- **Konum:** Ankara, Ostim / İvedik OSB
+- **Künyede eksikler:** Vergi dairesi ve numarası, açık adres ve e-posta sonra verilecek.
 - **Satış:** Sanayiye saha satışı yapılıyor, fiziksel dükkân yok.
-- **Hizmet bölgesi:** İç Anadolu ve Ege.
+- **Hizmet bölgesi:** Merkez Ankara; İç Anadolu ve Ege.
 - **WhatsApp:** +90 535 610 19 89
 - **Çalışma saatleri:** Mesai saati yazılacak, yanına "WhatsApp'tan mesai dışında da yazın, ilk fırsatta dönelim" notu eklenecek.
 - **Logo:** Yok. Grafit & TiN tarzında yeni logo tasarlanacak.
 
 ## Markalar ve hukuki ifade
-- **Markalar:** Iscar, Tungaloy, Gühring, Korloy, Kyocera ("kyoto"), DESKAR ("descar"), SANT. "wunher" henüz belirsiz; kullanıcı kutunun fotoğrafını gönderecek.
+- **Markalar:** Iscar, Tungaloy, Gühring, Korloy, KYOTO Cutting Tools, STORM&K, DESKAR ("descar"), SANT.
+  - Kutu fotoğrafı "kyoto"nun Kyocera değil, **KYOTO Cutting Tools** olduğunu gösterdi. Araştırmadaki Kyocera tahmini yanlıştı.
+  - **STORM&K** kutu fotoğrafından eklendi. Kutuda bakır renkli, kare/eşkenar dörtgen uçlar var.
+  - "wunher" hâlâ belirsiz.
+  - KYOTO ve STORM&K'nin menşei ve üreticisi henüz araştırılmadı.
 - **Bayilik:** Hiçbir markayla yazılı bayilik anlaşması yok.
   - Sitede "yetkili bayi" yazılmayacak, yerine "… ürünleri tedarik edilir" denecek.
   - Marka logoları kullanılmayacak.
@@ -45,3 +52,4 @@ Ankette verilen cevapların özeti. Site kurulurken bu dosya esas alınır.
 - **Yayın:**
   - Şimdilik Vercel'in ücretsiz alt alan adında (vercel.app) yayınlanacak, domain sonra alınacak.
   - Uyarı: vercel.app adresleri Türkiye'de erişime engellenmiş olabilir ve Vercel'in ücretsiz planı ticari kullanıma izin vermiyor. Bu adres sadece önizleme amaçlı kullanılacak; müşterilere açmadan önce domain alınacak.
+  - Kullanıcı test adresi olan productviewgsap.vercel.app için "seçiliyor" yazdı; bunu "açılıyor" olarak yorumladım ve kullanıcıya teyit ettirdim.
