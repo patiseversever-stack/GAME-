@@ -1,0 +1,60 @@
+---
+// Ürün görseli üretim sayfası (yalnızca scripts/render-products.mjs çalışırken src/pages/lab altına kopyalanır)
+---
+<html><head><meta charset="utf-8" /><meta name="robots" content="noindex" /><style>html,body{margin:0;background:transparent}canvas{display:block}</style></head>
+<body><canvas id="c" width="1200" height="900"></canvas>
+<script>
+  import * as THREE from 'three';
+  import { buildRenderModel, type RenderKey } from '../../scripts/three/catalog-models';
+  import { studioEnvironment } from '../../scripts/three/studio';
+  const key = new URLSearchParams(location.search).get('key') as RenderKey;
+  const canvas = document.getElementById('c') as HTMLCanvasElement;
+  const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+  r.setPixelRatio(1);
+  r.setSize(1200, 900, false);
+  r.outputColorSpace = THREE.SRGBColorSpace;
+  r.toneMapping = THREE.NeutralToneMapping;
+  r.toneMappingExposure = 1.12;
+  r.setClearColor(0x000000, 0);
+  const scene = new THREE.Scene();
+  scene.environment = studioEnvironment(r);
+  (scene as any).environmentRotation?.set(0, 0.5, 0);
+  const posed = buildRenderModel(key);
+  scene.add(posed.obj);
+  posed.obj.updateMatrixWorld(true);
+  // Kadraj: kutunun 8 köşesi ekranda %80'i kaplayacak şekilde mesafe ve merkez ayarlanır
+  const box = new THREE.Box3().setFromObject(posed.obj);
+  const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3()).length();
+  const cam = new THREE.PerspectiveCamera(22, 1200 / 900, size * 0.01, size * 20);
+  const dir = new THREE.Vector3(0, 0.18, 1).normalize();
+  let dist = size * 2.2;
+  const target = center.clone();
+  const corners = () => { const c: THREE.Vector3[] = []; for (const x of [box.min.x, box.max.x]) for (const y of [box.min.y, box.max.y]) for (const z of [box.min.z, box.max.z]) c.push(new THREE.Vector3(x, y, z)); return c; };
+  // Kutu yerine gerçek köşe noktaları: modelin tüm köşe noktalarından seyrek örnek
+  const pts: THREE.Vector3[] = [];
+  posed.obj.traverse((o) => { const mm = o as THREE.Mesh; if (!mm.isMesh) return; const pa = mm.geometry.attributes.position; const step = Math.max(1, Math.floor(pa.count / 400)); for (let i = 0; i < pa.count; i += step) pts.push(new THREE.Vector3().fromBufferAttribute(pa, i).applyMatrix4(mm.matrixWorld)); });
+  const sample = pts.length ? pts : corners();
+  const fillW = posed.kind === 'insert' ? 0.62 : posed.kind === 'compact' ? 0.7 : 0.86;
+  const fillH = posed.kind === 'insert' ? 0.66 : 0.74;
+  for (let it = 0; it < 6; it++) {
+    cam.position.copy(target).addScaledVector(dir, dist);
+    cam.lookAt(target);
+    cam.updateMatrixWorld();
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (const p of sample) { const q = p.clone().project(cam); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
+    const w = (x1 - x0) / 2, h = (y1 - y0) / 2;
+    const k = Math.max(w / fillW, h / fillH);
+    // Merkezi kaydır (ekran düzleminde)
+    const right = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 0);
+    const up = new THREE.Vector3().setFromMatrixColumn(cam.matrixWorld, 1);
+    const halfH = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * dist;
+    target.addScaledVector(right, ((x0 + x1) / 2) * halfH * cam.aspect).addScaledVector(up, ((y0 + y1) / 2) * halfH);
+    dist *= k;
+  }
+  cam.position.copy(target).addScaledVector(dir, dist);
+  cam.lookAt(target);
+  r.render(scene, cam);
+  (window as any).__png = canvas.toDataURL('image/png');
+  (window as any).__done = true;
+</script></body></html>

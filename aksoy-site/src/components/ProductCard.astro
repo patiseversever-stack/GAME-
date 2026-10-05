@@ -1,6 +1,7 @@
 ---
 import Icon from './Icon.astro';
 import { drawingSvg } from '../lib/drawings';
+import { productImage } from '../lib/product-image';
 import { brandBySlug } from '../data/brands';
 import { subcategoryName } from '../data/categories';
 import type { Product } from '../data/types';
@@ -8,11 +9,14 @@ import type { Product } from '../data/types';
 interface Props { p: Product; dark?: boolean }
 const { p } = Astro.props;
 const brandNames = p.brands.map((b) => brandBySlug[b]?.name ?? b);
+const render = p.image ? null : productImage(p);
 const quoteData = JSON.stringify({ slug: p.slug, code: p.code, name: p.name, drawing: p.drawing, shape: p.shape, brands: brandNames });
 ---
 <article class="pcard" data-product-card data-cat={p.category} data-sub={p.subcategory} data-iso={p.iso.join(' ')} data-brands={p.brands.join(' ')}>
   <div class="pcard__media">
-    {p.image ? <img src={p.image} alt={`${p.code} ${p.name}`} loading="lazy" decoding="async" /> : <Fragment set:html={drawingSvg(p.drawing, p.shape, { grid: true, label: p.shape ? `ISO ${p.shape}` : '' })} />}
+    {p.image ? <img src={p.image} alt={`${p.code} ${p.name}`} loading="lazy" decoding="async" />
+      : render ? <img class="pcard__render" src={render.small} srcset={`${render.small} 600w, ${render.src} 1200w`} sizes="(max-width: 620px) 50vw, (max-width: 1100px) 33vw, 300px" width="600" height="450" alt={`${p.code} — ${p.name} (temsilî görsel)`} loading="lazy" decoding="async" />
+      : <Fragment set:html={drawingSvg(p.drawing, p.shape, { grid: true, label: p.shape ? `ISO ${p.shape}` : '' })} />}
     <span class="pcard__tag">{subcategoryName(p.category, p.subcategory)}</span>
   </div>
   <div class="pcard__body">

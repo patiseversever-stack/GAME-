@@ -144,7 +144,7 @@ function makeMaterials() {
  * WCMX trigon uç köşeleri: altı eşit kenar, köşeler sırayla 80° ve 160°.
  * Yerel eksen: üst kenar (iki 80° köşe arası) kesme kenarıdır, +X çevreye doğru.
  */
-function trigonVerts(ic: number) {
+export function trigonVerts(ic: number) {
   // Dış açıları 20°/100° olan eşit kenarlı altıgen; ardından iç teğet daireye göre ölçekle
   const pts: THREE.Vector2[] = [];
   let x = 0, y = 0, a = 0;

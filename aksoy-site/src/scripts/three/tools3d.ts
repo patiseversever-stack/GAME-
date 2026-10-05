@@ -327,24 +327,28 @@ function fluteDepth(phi: number, z: number, w: number) {
 }
 
 /** Karbür parmak freze (Z ağız, helis açısı derece). Uç y=0. */
-export function buildEndMill(m: ToolMats, o: { D?: number; z?: number; helix?: number; Lf?: number; L?: number; mat?: THREE.Material } = {}) {
+export function buildEndMill(m: ToolMats, o: { D?: number; z?: number; helix?: number; Lf?: number; L?: number; mat?: THREE.Material; ball?: boolean } = {}) {
   const D = o.D ?? 10, z = o.z ?? 4, helix = ((o.helix ?? 38) * Math.PI) / 180, Lf = o.Lf ?? 22, L = o.L ?? 72;
   const R = D / 2;
   const depth = R * (z <= 2 ? 0.52 : z === 3 ? 0.42 : 0.36);
   const w = z <= 2 ? 0.62 : 0.55;
   const twist = Math.tan(helix) / R; // rad/mm
   const g = new THREE.Group();
-  const ys = [...range(0, 0.6, 4), ...range(0.6, Lf + 5, 220).slice(1)];
+  const ball = !!o.ball;
+  const ys = ball
+    ? range(0, Lf + 5, 300, (u) => (u < 0.2 ? (u / 0.2) ** 1.6 * 0.2 : u))
+    : [...range(0, 0.6, 4), ...range(0.6, Lf + 5, 220).slice(1)];
   const geo = radialSurface(z <= 2 ? 180 : 200, ys, (t, y) => {
     const phi = t + y * twist;
     const f = fluteDepth(phi, z, w);
     const run = 1 - smooth(y, Lf, Lf + 5); // oluk çıkışı
     let r = R;
-    if (f.d > 0) r = R - depth * f.d * run;
+    if (f.d > 0) r = R - depth * f.d * run * (ball ? smooth(y, 0, R * 0.9) * 0.85 + 0.15 : 1);
     else r = R - 0.06 - 0.12 * Math.max(0, f.land - 0.15) * run; // kenar payı + boşluk açısı
-    if (y < 0.6) r = Math.min(r, R - 0.35 + y * 0.58); // köşe pahı
+    if (ball) r = Math.min(r, y < R ? Math.sqrt(Math.max(0, R * R - (R - y) ** 2)) : r); // küresel uç
+    else if (y < 0.6) r = Math.min(r, R - 0.35 + y * 0.58); // köşe pahı
     return r;
-  }, true);
+  }, !ball);
   g.add(new THREE.Mesh(geo, o.mat ?? m.altin));
   // Sap
   const shank = new THREE.LatheGeometry([V2(R - 0.02, Lf + 5), V2(R - 0.02, L - 0.6), V2(R - 0.6, L), V2(0, L)], 96);
@@ -354,10 +358,10 @@ export function buildEndMill(m: ToolMats, o: { D?: number; z?: number; helix?: n
 }
 
 /** Karbür matkap: 2 oluk, 140° uç, içten soğutma delikleri. Uç y=0. */
-export function buildDrill(m: ToolMats, o: { D?: number; Lf?: number; L?: number; mat?: THREE.Material } = {}) {
+export function buildDrill(m: ToolMats, o: { D?: number; Lf?: number; L?: number; mat?: THREE.Material; tip?: number; coolant?: boolean; shankMat?: THREE.Material } = {}) {
   const D = o.D ?? 10, Lf = o.Lf ?? 46, L = o.L ?? 90, R = D / 2;
   const twist = Math.tan((30 * Math.PI) / 180) / R;
-  const tipK = Math.tan((70 * Math.PI) / 180); // 140° uç: r ≤ y·tan70°
+  const tipK = Math.tan((((o.tip ?? 140) / 2) * Math.PI) / 180); // uç açısı: r ≤ y·tan(açı/2)
   const g = new THREE.Group();
   const ys = [...range(0, R / tipK + 0.2, 40, (u) => u * u * 0.6 + u * 0.4), ...range(R / tipK + 0.2, Lf + 6, 240).slice(1)];
   const geo = radialSurface(200, ys, (t, y) => {
@@ -371,9 +375,9 @@ export function buildDrill(m: ToolMats, o: { D?: number; Lf?: number; L?: number
   });
   g.add(new THREE.Mesh(geo, o.mat ?? m.tialn));
   const shank = new THREE.LatheGeometry([V2(R - 0.02, Lf + 6), V2(R - 0.02, L - 0.6), V2(R - 0.6, L), V2(0, L)], 96);
-  g.add(new THREE.Mesh(shank, m.carbide));
+  g.add(new THREE.Mesh(shank, o.shankMat ?? m.carbide));
   // Soğutma delikleri: uç yüzeyinde iki küçük koyu delik (açıyla birlikte döner)
-  for (const s of [0, Math.PI]) {
+  if (o.coolant !== false) for (const s of [0, Math.PI]) {
     const r = R * 0.55, y = r / tipK - 0.04;
     const a = s + 0.76 * Math.PI - y * twist; // sırt (flank) yüzeyinin ortası
     const hole = new THREE.Mesh(new THREE.CircleGeometry(0.55, 20), m.hole);
@@ -387,12 +391,13 @@ export function buildDrill(m: ToolMats, o: { D?: number; Lf?: number; L?: number
 }
 
 /** Makine kılavuzu M10×1,5: 3 helis oluk, 60° diş, uç pahı, kare sürücü. Uç y=0. */
-export function buildTap(m: ToolMats, o: { D?: number; P?: number; mat?: THREE.Material } = {}) {
+export function buildTap(m: ToolMats, o: { D?: number; P?: number; mat?: THREE.Material; kind?: 'helis' | 'duz' | 'ovalama' } = {}) {
   const D = o.D ?? 10, P = o.P ?? 1.5, R = D / 2;
+  const kind = o.kind ?? 'helis';
   const h = 0.6134 * P, Rmin = R - h;
   const Lth = 20, Lf = 24, Lneck = 30, L = 80;
-  const twist = Math.tan((35 * Math.PI) / 180) / R;
-  const chamfer = 3 * P;
+  const twist = kind === 'helis' ? Math.tan((35 * Math.PI) / 180) / R : 0;
+  const chamfer = (kind === 'helis' ? 3 : kind === 'duz' ? 5 : 3.5) * P;
   const g = new THREE.Group();
   const ys = range(0, Lf + 3, 480);
   const geo = radialSurface(200, ys, (t, y) => {
@@ -403,11 +408,21 @@ export function buildTap(m: ToolMats, o: { D?: number; P?: number; mat?: THREE.M
     if (y < chamfer) r = Math.min(r, Rmin + 0.15 + (R - Rmin) * (y / chamfer));
     const fade = smooth(y, Lth - 0.5, Lth + 2.5); // diş bitişi → gövde
     r = r * (1 - fade) + (Rmin + 0.05) * fade;
-    // Oluklar
+    if (kind === 'ovalama') {
+      // Ovalama (form) kılavuz: oluksuz; kesitte hafif köşeli (lob) ve yağ kanalları
+      const lobe = 1 - 0.035 * (1 - Math.cos(4 * t)) * 0.5;
+      const groove = fluteDepth(t, 4, 0.06);
+      return r * lobe - (groove.d > 0 ? 0.35 * groove.d : 0);
+    }
+    // Oluklar (helis ya da düz); ucu spiral kılavuzda uç bölgesinde eğik kesik
     const phi = t + y * twist;
-    const f = fluteDepth(phi, 3, 0.36);
+    const f = fluteDepth(phi, 3, kind === 'duz' ? 0.3 : 0.36);
     const run = 1 - smooth(y, Lf, Lf + 3);
     if (f.d > 0) r = Math.min(r, R - (R * 0.62) * f.d * run);
+    if (kind === 'duz' && y < chamfer * 1.6) {
+      const sp = fluteDepth(t - 0.5, 3, 0.22);
+      if (sp.d > 0) r = Math.min(r, R - R * 0.5 * sp.d * (1 - y / (chamfer * 1.6)));
+    }
     return r;
   });
   g.add(new THREE.Mesh(geo, o.mat ?? m.tin));
