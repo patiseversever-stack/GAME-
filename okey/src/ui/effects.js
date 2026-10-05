@@ -277,11 +277,7 @@ export class Celebration {
     this.k = o.scale ?? Math.max(0.6, Math.min(1.25, Math.min(w, h) / 380));
     const n = o.calm ? 0.45 : 1;
     const later = (ms, fn) => this._later(ms, fn);
-    if (id === 'konfeti' || !id) {
-      this.confetti = this.confetti || new Confetti(this.c);
-      [0, 260, 520].forEach((t, i) => later(t, () => this.confetti.burst(w * (0.25 + i * 0.25), h * 0.78, Math.round(46 * n * Math.min(1, this.k + 0.2)))));
-      return;
-    }
+    if (!id) id = 'konfeti';
     const spawn = this['_' + id]?.bind(this);
     if (!spawn) return;
     spawn(n, later);
@@ -345,27 +341,46 @@ export class Celebration {
     this._rain(Math.round(70 * n), 2600, () => {
       const leaf = Math.random() < 0.22;
       const col = leaf ? ['#4fae86', '#1e5e45'] : TULIP_COLS[(Math.random() * TULIP_COLS.length) | 0];
-      return { kind: leaf ? 'petal' : 'tulip', x: Math.random() * W, y: -30, vx: (Math.random() - 0.5) * 30, vy: 70 + Math.random() * 70, s: (leaf ? 10 : 16 + Math.random() * 12) * k, rot: (Math.random() - 0.5) * 0.8, vr: (Math.random() - 0.5) * 1.6, sway: 1 + Math.random() * 1.6, ph: Math.random() * 6.3, col, life: 0, max: 5 + Math.random() * 2, g: 0 };
+      const z = 0.45 + Math.random() * 0.55;
+      return { kind: leaf ? 'petal' : 'tulip', z, x: Math.random() * W, y: -30, vx: (Math.random() - 0.5) * 30, vy: (50 + Math.random() * 60) * (0.6 + z * 0.6), s: (leaf ? 11 : 15 + Math.random() * 14) * k * (0.55 + z * 0.6), rot: (Math.random() - 0.5) * 0.8, vr: (Math.random() - 0.5) * 1.6, sway: 1 + Math.random() * 1.6, ph: Math.random() * 6.3, col, life: 0, max: 5 + Math.random() * 2, g: 0 };
     }, later);
   }
-  // gül yaprakları: kadife kırmızı/pembe, çırpınarak düşer
+  // çini konfeti: ışığı yakalayan metalik folyolar, kıvrılan kurdeleler, çini yıldız ve laleler
+  _konfeti(n, later) {
+    const { W, H, k } = this;
+    const FOIL = [['#fff1c4', '#c9952e'], ['#ffe0d4', '#c07a62'], ['#f4f7fb', '#9aa6b4'], ['#c8f1e8', '#2f9c95'], ['#cfe0ff', '#2c58b8'], ['#ffd2cc', '#c23a2c']];
+    const shot = (cx) => {
+      for (let i = 0; i < Math.round(52 * n); i++) {
+        const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.9,
+          v = (300 + Math.random() * 520) * k * Math.min(1.25, H / 380);
+        const r = Math.random();
+        const base = { x: cx, y: H + 6, vx: Math.cos(a) * v, vy: Math.sin(a) * v, drag: 1.5, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 9, flip: Math.random() * 6.3, vf: 6 + Math.random() * 9, life: 0, max: 3.6 + Math.random() * 1.2, g: 520, col: FOIL[(Math.random() * FOIL.length) | 0] };
+        if (r < 0.14) this.ps.push({ ...base, kind: 'ribbon', s: 1, len: (34 + Math.random() * 30) * k, wid: (3 + Math.random() * 2) * k, ph: Math.random() * 6.3, vr: (Math.random() - 0.5) * 3, drag: 2.2 });
+        else if (r < 0.3) this.ps.push({ ...base, kind: Math.random() < 0.5 ? 'star' : 'tulip', s: (11 + Math.random() * 8) * k, col: Math.random() < 0.5 ? ['#fff3c4', '#d9a33c'] : TULIP_COLS[(Math.random() * TULIP_COLS.length) | 0], vr: base.vr * 0.4 });
+        else this.ps.push({ ...base, kind: 'foil', s: 1, w: (7 + Math.random() * 6) * k, h: (11 + Math.random() * 9) * k, round: Math.random() < 0.22 });
+      }
+    };
+    [0, 240, 480].forEach((t, i) => later(t, () => shot(W * (0.2 + i * 0.3))));
+  }
+  // gül yaprakları: damarlı kadife yapraklar ve arada süzülen bütün güller
   _gul(n, later) {
     const { W, k } = this;
-    const C = [['#c8243c', '#6e0a1a'], ['#e0556c', '#8a1c30'], ['#f08aa0', '#a8455a'], ['#a3122a', '#4c0412']];
-    this._rain(Math.round(90 * n), 2800, () => ({ kind: 'petal', flutter: true, x: Math.random() * W, y: -20, vx: (Math.random() - 0.5) * 40, vy: 60 + Math.random() * 60, s: (11 + Math.random() * 9) * k, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 4, sway: 1.5 + Math.random() * 2, ph: Math.random() * 6.3, col: C[(Math.random() * C.length) | 0], life: 0, max: 5.5, g: 0 }), later);
+    const C = [['#d8304a', '#6e0a1a'], ['#ef6a80', '#8a1c30'], ['#f6a2b4', '#b04a62'], ['#b0182f', '#4c0412']];
+    this._rain(Math.round(64 * n), 2800, () => ({ kind: 'petal', vein: true, flutter: true, x: Math.random() * W, y: -24, vx: (Math.random() - 0.5) * 40, vy: 55 + Math.random() * 55, s: (16 + Math.random() * 12) * k, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 3, sway: 1.4 + Math.random() * 1.8, ph: Math.random() * 6.3, col: C[(Math.random() * C.length) | 0], life: 0, max: 6, g: 0 }), later);
+    this._rain(Math.round(7 * Math.max(0.6, n)), 2400, () => ({ kind: 'rose', x: W * (0.1 + Math.random() * 0.8), y: -30, vx: (Math.random() - 0.5) * 20, vy: 50 + Math.random() * 30, s: (26 + Math.random() * 12) * k, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 1.2, sway: 0.8, ph: Math.random() * 6.3, col: C[(Math.random() * 2) | 0], life: 0, max: 7, g: 0 }), later);
   }
   // altın sikkeler: aşağıdan fışkırır, döne döne düşer; parıltılar
   _altin(n, later) {
     const { W, H, k } = this;
-    const coin = (x, up) => ({ kind: 'coin', x, y: up ? H + 10 : -20, vx: (Math.random() - 0.5) * (up ? 260 : 30), vy: up ? -(420 + Math.random() * 360) * Math.min(1.2, H / 380) : 80 + Math.random() * 80, s: (11 + Math.random() * 6) * k, flip: Math.random() * 6.3, vf: 6 + Math.random() * 8, rot: (Math.random() - 0.5) * 0.6, vr: 0, life: 0, max: 4.2, g: up ? 720 : 140 });
-    [0, 380, 760].forEach((t, i) => later(t, () => { for (let j = 0; j < Math.round(26 * n); j++) this.ps.push(coin(W * (0.22 + i * 0.28) + (Math.random() - 0.5) * 40, true)); }));
-    this._rain(Math.round(40 * n), 2400, () => coin(Math.random() * W, false), later);
+    const coin = (x, up) => ({ kind: 'coin', x, y: up ? H + 10 : -20, vx: (Math.random() - 0.5) * (up ? 260 : 30), vy: up ? -(420 + Math.random() * 360) * Math.min(1.2, H / 380) : 80 + Math.random() * 80, s: (17 + Math.random() * 8) * k, flip: Math.random() * 6.3, vf: 6 + Math.random() * 8, rot: (Math.random() - 0.5) * 0.6, vr: 0, life: 0, max: 4.2, g: up ? 720 : 140 });
+    [0, 380, 760].forEach((t, i) => later(t, () => { for (let j = 0; j < Math.round(18 * n); j++) this.ps.push(coin(W * (0.22 + i * 0.28) + (Math.random() - 0.5) * 40, true)); }));
+    this._rain(Math.round(26 * n), 2400, () => coin(Math.random() * W, false), later);
     this._rain(Math.round(30 * n), 3000, () => ({ kind: 'spark', x: Math.random() * W, y: Math.random() * H * 0.8, s: (6 + Math.random() * 8) * k, life: 0, max: 0.9 + Math.random() * 0.6, vx: 0, vy: 0, g: 0, rot: 0, vr: 0 }), later);
   }
   // nazar boncukları: cam parıltılı, sekerek düşer
   _nazar(n, later) {
     const { W, k } = this;
-    this._rain(Math.round(46 * n), 2400, () => ({ kind: 'nazar', x: Math.random() * W, y: -24, vx: (Math.random() - 0.5) * 60, vy: 40 + Math.random() * 80, s: (19 + Math.random() * 12) * k, flip: Math.random() * 6.3, vf: 1.5 + Math.random() * 2.5, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 2, life: 0, max: 4.6, g: 360, bounce: 0 }), later);
+    this._rain(Math.round(30 * n), 2400, () => ({ kind: 'nazar', x: Math.random() * W, y: -30, vx: (Math.random() - 0.5) * 60, vy: 40 + Math.random() * 80, s: (26 + Math.random() * 16) * k, flip: Math.random() * 6.3, vf: 1.5 + Math.random() * 2.5, rot: Math.random() * 6.3, vr: (Math.random() - 0.5) * 2, life: 0, max: 4.6, g: 360, bounce: 0 }), later);
   }
   // havai fişek: roketler yükselir, ışık kürelerine patlar
   _havai(n, later) {
@@ -381,11 +396,13 @@ export class Celebration {
     this.boom = (p) => {
       const m = Math.round((60 + Math.random() * 40) * Math.max(0.5, n));
       const c2 = COLS[(Math.random() * COLS.length) | 0];
+      const willow = Math.random() < 0.35;
       const sp = (150 + Math.random() * 90) * k;
       for (let j = 0; j < m; j++) {
         const a = (j / m) * Math.PI * 2 + Math.random() * 0.1,
           v = sp * (0.55 + Math.random() * 0.5);
-        this.ps.push({ kind: 'ember', x: p.x, y: p.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, max: 1.3 + Math.random() * 0.7, g: 90, rot: 0, vr: 0, col: j % 3 ? p.col : c2, s: 2.1 * k, tw: Math.random() < 0.35, trail: [] });
+        if (willow) this.ps.push({ kind: 'ember', willow: true, x: p.x, y: p.y, vx: Math.cos(a) * v * 0.8, vy: Math.sin(a) * v * 0.8, life: 0, max: 2.2 + Math.random() * 0.8, g: 150, rot: 0, vr: 0, col: '#ffcf70', s: 1.8 * k, tw: Math.random() < 0.5, trail: [] });
+        else this.ps.push({ kind: 'ember', x: p.x, y: p.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, life: 0, max: 1.3 + Math.random() * 0.7, g: 90, rot: 0, vr: 0, col: j % 3 ? p.col : c2, s: 2.1 * k, tw: Math.random() < 0.35, trail: [] });
       }
       this.ps.push({ kind: 'flash', x: p.x, y: p.y, life: 0, max: 0.35, s: 60 * k, vx: 0, vy: 0, g: 0, rot: 0, vr: 0 });
     };
@@ -544,10 +561,10 @@ export class Celebration {
           p.vy *= 1 - p.drag * 0.6 * dt;
         }
         if (p.kind === 'ember') {
-          p.vx *= 1 - 1.4 * dt;
-          p.vy *= 1 - 1.4 * dt;
+          p.vx *= 1 - (p.willow ? 2.2 : 1.4) * dt;
+          p.vy *= 1 - (p.willow ? 1.2 : 1.4) * dt;
           p.trail.push([p.x, p.y]);
-          if (p.trail.length > 5) p.trail.shift();
+          if (p.trail.length > (p.willow ? 14 : 5)) p.trail.shift();
         }
         if (p.sway) p.x += Math.sin(p.life * p.sway + p.ph) * 26 * dt;
         p.x += p.vx * dt;
@@ -564,7 +581,7 @@ export class Celebration {
       const fade = Math.min(1, (p.max - p.life) / Math.min(0.6, p.max * 0.3));
       ctx.save();
       ctx.setTransform(d, 0, 0, d, p.x * d, p.y * d);
-      ctx.globalAlpha = Math.max(0, fade);
+      ctx.globalAlpha = Math.max(0, fade) * (p.z ? 0.35 + p.z * 0.65 : 1);
       this._draw(ctx, p);
       ctx.restore();
     }
@@ -835,29 +852,137 @@ export class Celebration {
         x.beginPath();
         x.ellipse(-0.1, -0.15, 0.1, 0.22, 0.3, 0, Math.PI * 2);
         x.fill();
+        if (p.vein) {
+          x.strokeStyle = 'rgba(80,0,20,0.35)';
+          x.lineWidth = 0.03;
+          x.beginPath();
+          x.moveTo(0, 0.44);
+          x.quadraticCurveTo(0.04, 0, 0, -0.4);
+          x.moveTo(0.01, 0.1);
+          x.quadraticCurveTo(0.12, -0.05, 0.18, -0.2);
+          x.moveTo(0.01, 0.1);
+          x.quadraticCurveTo(-0.1, -0.05, -0.17, -0.2);
+          x.stroke();
+          x.strokeStyle = 'rgba(255,220,230,0.25)';
+          x.lineWidth = 0.025;
+          x.beginPath();
+          x.moveTo(-0.32, 0.05);
+          x.quadraticCurveTo(-0.3, -0.3, 0, -0.48);
+          x.stroke();
+        }
         break;
       }
       case 'coin': {
         x.rotate(p.rot);
-        const sx = Math.cos(p.flip);
-        x.scale(s * (Math.abs(sx) < 0.12 ? 0.12 : Math.abs(sx)), s);
-        const edge = sx < 0;
+        const sx = Math.cos(p.flip),
+          ax = Math.max(0.08, Math.abs(sx));
+        const lit = 0.55 + 0.45 * Math.abs(Math.sin(p.flip * 0.5 + 0.6));
+        x.scale(s, s);
+        // kalınlık: yan bant
+        const th = 0.09 * (1 - ax) + 0.02;
+        x.fillStyle = '#7a4c10';
+        x.beginPath();
+        x.ellipse(sx >= 0 ? th : -th, 0, 0.5 * ax, 0.5, 0, 0, Math.PI * 2);
+        x.fill();
         const g = x.createLinearGradient(-0.5, -0.5, 0.5, 0.5);
-        g.addColorStop(0, edge ? '#b07a22' : '#fff0b0');
-        g.addColorStop(0.45, '#e2b14a');
-        g.addColorStop(1, '#8a5a14');
+        g.addColorStop(0, `rgb(255,${236 + 19 * lit | 0},${150 + 60 * lit | 0})`);
+        g.addColorStop(0.45, `rgb(${200 + 40 * lit | 0},${150 + 30 * lit | 0},60)`);
+        g.addColorStop(1, '#7a4c10');
         x.fillStyle = g;
         x.beginPath();
-        x.arc(0, 0, 0.5, 0, Math.PI * 2);
+        x.ellipse(0, 0, 0.5 * ax, 0.5, 0, 0, Math.PI * 2);
         x.fill();
-        x.strokeStyle = 'rgba(110,70,10,0.9)';
-        x.lineWidth = 0.06;
+        x.save();
+        x.scale(ax, 1);
+        x.strokeStyle = 'rgba(110,68,10,0.85)';
+        x.lineWidth = 0.05;
         x.beginPath();
-        x.arc(0, 0, 0.38, 0, Math.PI * 2);
+        x.arc(0, 0, 0.4, 0, Math.PI * 2);
         x.stroke();
-        x.fillStyle = 'rgba(120,76,12,0.65)';
+        x.strokeStyle = 'rgba(255,240,190,0.55)';
+        x.lineWidth = 0.03;
+        x.beginPath();
+        x.arc(-0.01, -0.01, 0.43, Math.PI * 1.05, Math.PI * 1.7);
+        x.stroke();
+        x.fillStyle = 'rgba(120,76,12,0.7)';
         x.scale(0.42, 0.42);
         x.fill(this.shapes.star);
+        x.restore();
+        if (ax > 0.93 && lit > 0.85) {
+          x.globalCompositeOperation = 'lighter';
+          x.fillStyle = 'rgba(255,250,220,0.9)';
+          x.beginPath();
+          x.moveTo(-0.2, -0.75);
+          x.quadraticCurveTo(-0.18, -0.2, 0.36, -0.18);
+          x.quadraticCurveTo(-0.18, -0.16, -0.2, 0.38);
+          x.quadraticCurveTo(-0.22, -0.16, -0.76, -0.18);
+          x.quadraticCurveTo(-0.22, -0.2, -0.2, -0.75);
+          x.fill();
+        }
+        break;
+      }
+      case 'foil': {
+        x.rotate(p.rot);
+        const f = Math.cos(p.flip);
+        x.scale(1, Math.max(0.06, Math.abs(f)));
+        const lit = Math.abs(Math.sin(p.flip + p.rot));
+        const g = x.createLinearGradient(-p.w / 2, -p.h / 2, p.w / 2, p.h / 2);
+        g.addColorStop(0, p.col[0]);
+        g.addColorStop(0.5 + 0.3 * (lit - 0.5), p.col[1]);
+        g.addColorStop(1, p.col[0]);
+        x.fillStyle = g;
+        x.beginPath();
+        if (p.round) x.arc(0, 0, p.w * 0.55, 0, Math.PI * 2);
+        else x.rect(-p.w / 2, -p.h / 2, p.w, p.h);
+        x.fill();
+        if (lit > 0.75) {
+          x.globalAlpha *= (lit - 0.75) * 3;
+          x.fillStyle = '#fff';
+          x.fill();
+        }
+        break;
+      }
+      case 'ribbon': {
+        x.rotate(p.rot);
+        const g = x.createLinearGradient(-p.len / 2, 0, p.len / 2, 0);
+        g.addColorStop(0, p.col[1]);
+        g.addColorStop(0.5, p.col[0]);
+        g.addColorStop(1, p.col[1]);
+        x.strokeStyle = g;
+        x.lineWidth = p.wid;
+        x.lineCap = 'round';
+        x.beginPath();
+        for (let i = 0; i <= 16; i++) {
+          const u = -p.len / 2 + (p.len * i) / 16;
+          const yy = Math.sin(i * 0.7 + p.life * 9 + p.ph) * p.wid * 1.6;
+          i ? x.lineTo(u, yy) : x.moveTo(u, yy);
+        }
+        x.stroke();
+        break;
+      }
+      case 'rose': {
+        x.rotate(p.rot);
+        x.scale(s, s);
+        for (let i = 0; i < 9; i++) {
+          const a = i * 2.4,
+            r = 0.12 + i * 0.045;
+          const g = x.createRadialGradient(0, 0, 0, 0, 0, 0.55);
+          g.addColorStop(0, p.col[1]);
+          g.addColorStop(1, p.col[0]);
+          x.fillStyle = g;
+          x.beginPath();
+          x.ellipse(Math.cos(a) * r * 0.5, Math.sin(a) * r * 0.5, r, r * 0.62, a, 0, Math.PI * 2);
+          x.fill();
+          x.strokeStyle = 'rgba(60,0,10,0.35)';
+          x.lineWidth = 0.02;
+          x.stroke();
+        }
+        x.fillStyle = '#3f7a46';
+        for (const a of [0.6, 2.6, 4.4]) {
+          x.beginPath();
+          x.ellipse(Math.cos(a) * 0.5, Math.sin(a) * 0.5, 0.2, 0.08, a, 0, Math.PI * 2);
+          x.fill();
+        }
         break;
       }
       case 'spark': {
@@ -875,26 +1000,54 @@ export class Celebration {
       }
       case 'nazar': {
         x.rotate(p.rot);
-        x.scale(s * (0.75 + 0.25 * Math.abs(Math.cos(p.flip))), s);
-        for (const [r, c] of [
-          [0.5, '#1846a8'],
-          [0.36, '#f4f7fb'],
-          [0.25, '#5fb3e6'],
-          [0.12, '#0b0f1a'],
-        ]) {
-          x.fillStyle = c;
-          x.beginPath();
-          x.arc(0, 0, r, 0, Math.PI * 2);
-          x.fill();
-        }
-        const g = x.createRadialGradient(-0.18, -0.2, 0.02, 0, 0, 0.5);
-        g.addColorStop(0, 'rgba(255,255,255,0.75)');
-        g.addColorStop(0.4, 'rgba(255,255,255,0.08)');
-        g.addColorStop(1, 'rgba(0,0,30,0.25)');
-        x.fillStyle = g;
+        x.scale(s * (0.8 + 0.2 * Math.abs(Math.cos(p.flip))), s);
+        x.shadowColor = 'rgba(0,0,0,0.45)';
+        x.shadowBlur = 6;
+        x.shadowOffsetY = 3;
+        const o = x.createRadialGradient(-0.12, -0.14, 0.1, 0, 0, 0.5);
+        o.addColorStop(0, '#3f7fe8');
+        o.addColorStop(0.7, '#1543a8');
+        o.addColorStop(1, '#0a2766');
+        x.fillStyle = o;
         x.beginPath();
         x.arc(0, 0, 0.5, 0, Math.PI * 2);
         x.fill();
+        x.shadowColor = 'rgba(0,0,0,0)';
+        const w = x.createRadialGradient(-0.05, -0.05, 0.05, 0, 0, 0.34);
+        w.addColorStop(0, '#ffffff');
+        w.addColorStop(1, '#dfe8f6');
+        x.fillStyle = w;
+        x.beginPath();
+        x.arc(0, 0, 0.33, 0, Math.PI * 2);
+        x.fill();
+        const b = x.createRadialGradient(-0.04, -0.05, 0.02, 0, 0, 0.23);
+        b.addColorStop(0, '#9ad6ff');
+        b.addColorStop(1, '#3d8fd6');
+        x.fillStyle = b;
+        x.beginPath();
+        x.arc(0, 0, 0.22, 0, Math.PI * 2);
+        x.fill();
+        x.fillStyle = '#05080f';
+        x.beginPath();
+        x.arc(0, 0, 0.1, 0, Math.PI * 2);
+        x.fill();
+        // cam: geniş yumuşak yansıma, keskin ışık, alttan kırılan ışık
+        const gl = x.createLinearGradient(0, -0.5, 0, 0.1);
+        gl.addColorStop(0, 'rgba(255,255,255,0.55)');
+        gl.addColorStop(1, 'rgba(255,255,255,0)');
+        x.fillStyle = gl;
+        x.beginPath();
+        x.ellipse(-0.06, -0.2, 0.34, 0.24, -0.3, 0, Math.PI * 2);
+        x.fill();
+        x.fillStyle = 'rgba(255,255,255,0.95)';
+        x.beginPath();
+        x.ellipse(-0.2, -0.26, 0.07, 0.045, -0.6, 0, Math.PI * 2);
+        x.fill();
+        x.strokeStyle = 'rgba(150,200,255,0.5)';
+        x.lineWidth = 0.035;
+        x.beginPath();
+        x.arc(0, 0, 0.44, Math.PI * 0.15, Math.PI * 0.85);
+        x.stroke();
         break;
       }
       case 'rocket': {
