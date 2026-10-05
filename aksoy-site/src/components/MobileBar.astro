@@ -1,0 +1,10 @@
+---
+import Icon from './Icon.astro';
+import { waDefault } from '../data/site';
+---
+<nav class="mbar" aria-label="Hızlı erişim">
+  <a href="/urunler"><Icon name="grid" />Katalog</a>
+  <button type="button" data-search-open><Icon name="search" />Ara</button>
+  <button type="button" data-quote-open><Icon name="list" />Teklif<span class="count-badge" data-quote-count>0</span></button>
+  <a class="mbar__wa" href={waDefault} target="_blank" rel="noopener" data-wa="mbar"><Icon name="whatsapp" />WhatsApp</a>
+</nav>

@@ -46,9 +46,10 @@ Ankette verilen cevapların özeti. Site kurulurken bu dosya esas alınır.
   - Vurgu rengi TiN altını (#D9A441).
   - Başlıklarda Space Grotesk, metinlerde IBM Plex Sans kullanılacak.
 - **Altyapı:** Astro ile statik site; ana sayfadaki 3D bölüm three.js + GSAP ScrollTrigger ile yapılacak.
-- **3D model:** Kullanıcı ChatGPT'de görsel üretip Meshy ile GLB dosyasına çevirecek.
-  - Önerilen seçenek: PCLNR kater + CNMG uç.
-  - Uç, vida ve parmak freze kodla üretilecek.
+- **3D model (güncel):** Vitrinde **uçlu U-matkap** (ChatGPT görseli seçildi: koyu çelik gövde, iki düz oluk, iki altın uç, torx vidalar, soğutma delikleri).
+  - Kullanıcı Codex + Meshy MCP ile önce tek görselden 3 varyasyon üretecek, ardından uçsuz/vidasız ("boş cep") 2 varyasyon. Animasyon/rigging kullanılmayacak.
+  - Uçlar ve torx vidalar kodla üretilecek (patlatılmış görünüm); soğutma sıvısı efekti kodla.
+  - Referans görsel: aksoy-site/src/assets/udrill-reference.png
 - **Yayın:**
   - Şimdilik Vercel'in ücretsiz alt alan adında (vercel.app) yayınlanacak, domain sonra alınacak.
   - Uyarı: vercel.app adresleri Türkiye'de erişime engellenmiş olabilir ve Vercel'in ücretsiz planı ticari kullanıma izin vermiyor. Bu adres sadece önizleme amaçlı kullanılacak; müşterilere açmadan önce domain alınacak.

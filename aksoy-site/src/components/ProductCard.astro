@@ -1,0 +1,31 @@
+---
+import Icon from './Icon.astro';
+import { drawingSvg } from '../lib/drawings';
+import { brandBySlug } from '../data/brands';
+import { subcategoryName } from '../data/categories';
+import type { Product } from '../data/types';
+
+interface Props { p: Product; dark?: boolean }
+const { p } = Astro.props;
+const brandNames = p.brands.map((b) => brandBySlug[b]?.name ?? b);
+const quoteData = JSON.stringify({ slug: p.slug, code: p.code, name: p.name, drawing: p.drawing, shape: p.shape, brands: brandNames });
+---
+<article class="pcard" data-product-card data-cat={p.category} data-sub={p.subcategory} data-iso={p.iso.join(' ')} data-brands={p.brands.join(' ')}>
+  <div class="pcard__media">
+    {p.image ? <img src={p.image} alt={`${p.code} ${p.name}`} loading="lazy" decoding="async" /> : <Fragment set:html={drawingSvg(p.drawing, p.shape, { grid: true, label: p.shape ? `ISO ${p.shape}` : '' })} />}
+    <span class="pcard__tag">{subcategoryName(p.category, p.subcategory)}</span>
+  </div>
+  <div class="pcard__body">
+    <a class="pcard__link pcard__code" href={`/urun/${p.slug}`}>{p.code}</a>
+    <p class="pcard__name">{p.name}</p>
+    <div class="iso" aria-label="Uygun malzeme grupları">
+      {(['P', 'M', 'K', 'N', 'S', 'H'] as const).map((g) => <span data-g={g} class={p.iso.includes(g) ? '' : 'off'} title={g}>{g}</span>)}
+    </div>
+    <div class="pcard__meta">
+      <span class="pcard__brands">{brandNames.slice(0, 3).join(' · ')}{brandNames.length > 3 ? ` +${brandNames.length - 3}` : ''}</span>
+      <button class="pcard__add" type="button" data-quote-add data-slug={p.slug} data-product={quoteData} aria-label={`${p.code} teklif sepetine ekle`}>
+        <Icon name="plus" />
+      </button>
+    </div>
+  </div>
+</article>

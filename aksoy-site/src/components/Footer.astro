@@ -1,0 +1,63 @@
+---
+import Icon from './Icon.astro';
+import { site, waDefault, trademarkNotice } from '../data/site';
+import { categories } from '../data/categories';
+import { brands } from '../data/brands';
+
+interface Props { cta?: boolean }
+const { cta = true } = Astro.props;
+const year = new Date().getFullYear();
+---
+<footer class="site-footer">
+  <div class="wrap">
+    {cta && (
+      <div class="footer-cta">
+        <span class="eyebrow eyebrow--tin">Teklif · 7/24 WhatsApp</span>
+        <div class="footer-cta__row" style="margin-top:20px">
+          <h2 class="reveal">Kodu yazın, adedi seçin, gönderin.</h2>
+          <div class="footer-cta__actions reveal" style="--d:120ms">
+            <a class="btn btn--wa" href={waDefault} target="_blank" rel="noopener" data-wa="footer"><Icon name="whatsapp" /> WhatsApp’tan yazın</a>
+            <a class="btn btn--ghost" href={`tel:${site.phoneE164}`}><Icon name="phone" /> {site.phoneDisplay}</a>
+          </div>
+        </div>
+      </div>
+    )}
+
+    <div class="titleblock" aria-label="Firma bilgileri">
+      <div>
+        <h3>Firma</h3>
+        <p><strong style="color:var(--g-100)">{site.name}</strong><br />{site.owner} · {site.legalType}</p>
+        <p class="mono">{site.district}, {site.city}</p>
+        <p>{site.serviceRegions} — sahada destek, hızlı teslim.</p>
+      </div>
+      <div>
+        <h3>Ürünler</h3>
+        <ul>{categories.map((c) => <li><a href={`/kategori/${c.slug}`}>{c.name}</a></li>)}</ul>
+      </div>
+      <div>
+        <h3>Tedarik edilen markalar</h3>
+        <ul>{brands.map((b) => <li><a href={`/markalar/${b.slug}`}>{b.name}</a></li>)}</ul>
+      </div>
+      <div>
+        <h3>İletişim</h3>
+        <ul>
+          <li><a href={waDefault} target="_blank" rel="noopener" data-wa="footer-list">WhatsApp</a></li>
+          <li><a href={`tel:${site.phoneE164}`}>{site.phoneDisplay}</a></li>
+          <li>{site.hours}</li>
+          <li><a href="/teknik-araclar">Teknik araçlar</a></li>
+          <li><a href="/blog">Blog</a></li>
+          <li><a href="/kvkk">KVKK aydınlatma metni</a></li>
+          <li><a href="/cerez-politikasi">Çerez politikası</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <p class="trademark">{trademarkNotice}</p>
+  </div>
+  <div class="footer-mega" aria-hidden="true">AKSOY</div>
+  <div class="wrap footer-base">
+    <span>© {year} {site.name}</span>
+    <span class="mono">ÖLÇEK 1:1 · PAFTA A-01 · REV {year}.1</span>
+    <span>Sipariş ve online satış yapılmaz; teklif WhatsApp üzerinden verilir.</span>
+  </div>
+</footer>

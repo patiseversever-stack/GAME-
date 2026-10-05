@@ -1,0 +1,101 @@
+---
+import '@fontsource-variable/space-grotesk';
+import '@fontsource/ibm-plex-sans/400.css';
+import '@fontsource/ibm-plex-sans/500.css';
+import '@fontsource/ibm-plex-sans/600.css';
+import '@fontsource/ibm-plex-mono/400.css';
+import '@fontsource/ibm-plex-mono/500.css';
+import '../styles/global.css';
+
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import MobileBar from '../components/MobileBar.astro';
+import QuoteDrawer from '../components/QuoteDrawer.astro';
+import SearchPalette from '../components/SearchPalette.astro';
+import { site } from '../data/site';
+
+interface Props {
+  title: string;
+  description?: string;
+  /** dark: karanlık sayfa (ana sayfa, marka); light: katalog ve içerik sayfaları */
+  theme?: 'dark' | 'light';
+  /** Başlık çubuğunun ilk görünümü (sayfa üstünün rengine göre) */
+  header?: 'dark' | 'light';
+  image?: string;
+  schema?: object | object[];
+  noindex?: boolean;
+  footerCta?: boolean;
+}
+
+const {
+  title,
+  description = site.description,
+  theme = 'light',
+  header = theme,
+  image = '/og.png',
+  schema,
+  noindex = false,
+  footerCta = true,
+} = Astro.props;
+
+const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site).href;
+const fullTitle = title === site.name ? `${site.name} — Kesici Takım, Torna ve Freze Elmas Uçları` : `${title} | ${site.name}`;
+const ogImage = new URL(image, Astro.site).href;
+
+const orgSchema = {
+  '@context': 'https://schema.org',
+  '@type': 'Store',
+  name: site.name,
+  description: site.description,
+  url: Astro.site?.href,
+  telephone: site.phoneE164,
+  founder: site.owner,
+  address: { '@type': 'PostalAddress', addressLocality: 'Yenimahalle', addressRegion: 'Ankara', addressCountry: 'TR', streetAddress: site.district },
+  areaServed: site.serviceAreas.map((a) => ({ '@type': 'City', name: a })),
+  contactPoint: { '@type': 'ContactPoint', telephone: site.phoneE164, contactType: 'sales', availableLanguage: 'Turkish' },
+};
+const schemas = [orgSchema, ...(Array.isArray(schema) ? schema : schema ? [schema] : [])];
+---
+<!doctype html>
+<html lang="tr" class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content={theme === 'dark' ? '#0b0c0e' : '#f5f4f0'} />
+    <meta name="format-detection" content="telephone=no" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="tr_TR" />
+    <meta property="og:site_name" content={site.name} />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script is:inline>document.documentElement.classList.replace('no-js', 'js');</script>
+    <script type="application/ld+json" set:html={JSON.stringify(schemas.length === 1 ? schemas[0] : schemas)} />
+    <slot name="head" />
+  </head>
+  <body data-theme={theme}>
+    <a class="skip-link" href="#icerik">İçeriğe geç</a>
+    <Header variant={header} />
+    <main id="icerik">
+      <slot />
+    </main>
+    <Footer cta={footerCta} />
+    <MobileBar />
+    <QuoteDrawer />
+    <SearchPalette />
+    <div class="toast" role="status" aria-live="polite"><i></i><span></span></div>
+    <script>
+      import '../scripts/ui';
+      import '../scripts/quote';
+      import '../scripts/search';
+    </script>
+  </body>
+</html>
