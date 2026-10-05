@@ -22,7 +22,7 @@ const TAU = Math.PI * 2;
 const DESKTOP: Pose[] = [
   { rx: 0.3, ry: -0.9, rz: 0.45, px: 0.36, py: 0.14, scale: 1.15, focus: CENTER, spin: -0.5 },
   { rx: 0.2, ry: 0.5, rz: 0.06, px: 0.3, py: -0.04, scale: 0.92, focus: 22, spin: -0.75 },
-  { rx: 0.3, ry: -0.35, rz: 0.1, px: -0.15, py: 0.02, scale: 3.6, focus: 50, spin: 0.1 },
+  { rx: 0.25, ry: -1.15, rz: 0.1, px: -0.17, py: 0.02, scale: 3.0, focus: 50, spin: -0.5 },
   { rx: 0.22, ry: -0.6, rz: 0.12, px: 0.34, py: 0.02, scale: 1.5, focus: 30, spin: -0.35 },
   { rx: 0.4, ry: -0.5, rz: 0.2, px: -0.2, py: 0.04, scale: 3.3, focus: 50, spin: 0.25 },
   { rx: 0.3, ry: -0.9, rz: 0.45, px: 0.02, py: 0.32, scale: 0.95, focus: CENTER, spin: -0.5 },
@@ -32,7 +32,7 @@ const DESKTOP_DIM: Partial<Pose> = { rx: 0.15, ry: -0.18, rz: 0.04, px: 0.36, py
 const MOBILE: Pose[] = [
   { rx: 0.3, ry: -0.9, rz: 0.9, px: 0.0, py: 0.3, scale: 1.95, focus: CENTER, spin: -0.5 },
   { rx: 0.2, ry: 0.5, rz: 0.5, px: 0.0, py: 0.3, scale: 1.45, focus: 22, spin: -0.75 },
-  { rx: 0.3, ry: -0.35, rz: 0.3, px: 0.04, py: 0.3, scale: 4.6, focus: 50, spin: 0.1 },
+  { rx: 0.25, ry: -1.15, rz: 0.3, px: 0.02, py: 0.3, scale: 3.9, focus: 50, spin: -0.5 },
   { rx: 0.22, ry: -0.6, rz: 0.42, px: -0.04, py: 0.3, scale: 2.5, focus: 30, spin: -0.35 },
   { rx: 0.4, ry: -0.5, rz: 0.36, px: 0.04, py: 0.32, scale: 4.4, focus: 50, spin: 0.25 },
   { rx: 0.3, ry: -0.9, rz: 0.9, px: 0.0, py: 0.4, scale: 1.7, focus: CENTER, spin: -0.5 },
@@ -297,12 +297,12 @@ export async function startShowcase(
       ft({ shake: 0 }, { shake: 0.55, duration: 0.04 }, 3.6);
       ft({ shake: 0.55 }, { shake: 0, duration: 0.35 }, 3.64);
       if (!calm) cam([
-        { at: 0, dur: 0.45, to: { scale: 0.35, ry: 0.08, env: 0.2 } }, // körelmiş kenara yaklaş
-        { at: 0.45, dur: 1.0, to: { scale: 1.15, ry: 0.22, rx: 0.12, focus: 2, env: 0.5 } }, // vida sökülürken makro
-        { at: 1.45, dur: 0.6, ease: 'power2.out', to: { scale: 0.55, ry: 0.55, rx: 0.1, rz: 0.04, env: 0.9 } }, // uç fırlar, kamera döner
-        { at: 2.05, dur: 1.0, to: { scale: 0.7, ry: 0.85, rx: 0.32, rz: 0.06, env: 1.4 } }, // 90° çevirme: üstten bakış
-        { at: 3.05, dur: 0.6, ease: 'power2.in', to: { scale: 1.0, ry: 0.4, rx: 0.12, rz: 0, env: 1.6 } }, // oturma anına dal
-        { at: 3.7, dur: 0.9, to: { scale: 0.2, ry: 0.1, rx: 0.02, env: 1.9 } }, // sıkılırken geri çekil
+        { at: 0, dur: 0.45, to: { scale: 0.3, ry: 0.05, env: 0.2 } }, // körelmiş kenara yaklaş
+        { at: 0.45, dur: 1.0, to: { scale: 0.85, ry: -0.08, rx: 0.1, focus: 2, env: 0.5 } }, // vida sökülürken makro
+        { at: 1.45, dur: 0.6, ease: 'power2.out', to: { scale: 0.45, ry: 0.2, rx: 0.14, rz: 0.04, env: 0.9 } }, // uçlar fırlar, kamera döner
+        { at: 2.05, dur: 1.0, to: { scale: 0.55, ry: 0.42, rx: 0.3, rz: 0.06, env: 1.4 } }, // 90° çevirme: çevre ucuna dön
+        { at: 3.05, dur: 0.6, ease: 'power2.in', to: { scale: 0.8, ry: 0.12, rx: 0.12, rz: 0, env: 1.6 } }, // oturma anına dal
+        { at: 3.7, dur: 0.9, to: { scale: 0.15, ry: 0.03, rx: 0.02, env: 1.9 } }, // sıkılırken geri çekil
       ]);
     }
     if (k === 3) {
@@ -683,7 +683,25 @@ export async function startShowcase(
   // GAP kadar yakınlık da çakışma sayılır
   const overlap = (a: Rect, b: Rect) =>
     Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l) + GAP) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t) + GAP);
+  // Gövdenin arkasında kalan noktaların etiketi gösterilmez (ör. karşı oluktaki uç)
+  const ray = new THREE.Raycaster();
+  const occluded = new Map<string, boolean>();
+  const rv = new THREE.Vector3();
+  let occT = -1;
+  function updateOcclusion() {
+    if (elapsed - occT < 0.1) return;
+    occT = elapsed;
+    for (const p of pins) {
+      if ((S[p.group] as number) < 0.01) continue;
+      drill.anchors[p.anchor].getWorldPosition(rv);
+      const d = rv.distanceTo(camera.position);
+      ray.set(camera.position, rv.sub(camera.position).normalize());
+      ray.far = Math.max(0, d - 0.03);
+      occluded.set(p.anchor, ray.intersectObject(drill.body, true).length > 0);
+    }
+  }
   function layoutPins(dt: number) {
+    updateOcclusion();
     if (elapsed - obstT > 0.25 || obstT < 0) {
       obstT = elapsed;
       const sr = sticky.getBoundingClientRect();
@@ -709,7 +727,7 @@ export async function startShowcase(
     for (const [pi, p] of pins.entries()) {
       const o = S[p.group] as number;
       const P = Ps[pi];
-      const on = o > 0.35 && !P.behind;
+      const on = o > 0.35 && !P.behind && !occluded.get(p.anchor);
       p.el.classList.toggle('is-on', on);
       const st = p.st;
       if (o < 0.01) { st.ci = -1; continue; }
