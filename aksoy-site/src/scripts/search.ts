@@ -1,6 +1,7 @@
 // Arama paleti (Ctrl/⌘+K veya "/"): kodla ve ustanın diliyle arama.
 // "elmas uç" → uç, "klavuz" → kılavuz gibi yazımlar eşleşir; kodlar boşluksuz da bulunur (cnmg120408).
 import { drawingSvg } from '../lib/drawings';
+import { trapTab } from './a11y';
 import type { Drawing, InsertShape } from '../data/types';
 
 interface Row { s: string; u?: string; c: string; n: string; d: Drawing; h?: InsertShape; k: string; sc: string; b: string[]; w: string; i?: string }
@@ -48,10 +49,13 @@ function score(r: Row, q: string, qc: string, terms: string[]) {
   let s = 0;
   if (qc.length >= 2 && code.startsWith(qc)) s += 120 - (code.length - qc.length);
   else if (qc.length >= 3 && code.includes(qc)) s += 70;
-  const hay = norm(`${r.c} ${r.n} ${r.k} ${r.sc} ${r.b.join(' ')} ${r.w}`);
+  const hay = ` ${norm(`${r.c} ${r.n} ${r.k} ${r.sc} ${r.b.join(' ')} ${r.w}`)}`;
+  const head = ` ${norm(`${r.c} ${r.n} ${r.sc}`)}`;
+  // İki harfli terim tam kelime olmalı ("iç" → "için" eşleşmesin)
+  const has = (h: string, t: string) => (t.length > 2 ? h.includes(t) : new RegExp(` ${t}(?![a-z])`).test(h));
   let all = true;
   for (const t of terms) {
-    if (hay.includes(t)) s += t.length > 2 ? 12 : 4;
+    if (has(hay, t)) s += (t.length > 2 ? 12 : 4) + (has(head, t) ? 10 : 0); // adda/grupta geçen terim öne çıkar
     else all = false;
   }
   if (all && terms.length) s += 25;
@@ -87,6 +91,10 @@ async function ensure() {
 
 function draw(q: string) {
   if (!results) return;
+  input?.removeAttribute('aria-activedescendant');
+  input?.setAttribute('aria-expanded', 'false');
+  results.removeAttribute('role'); // ipucu ve "sonuç yok" metni liste öğesi değildir
+  results.removeAttribute('aria-label');
   if (!q.trim()) { results.innerHTML = hintHTML; current = []; return; }
   const ex = expand(q);
   const terms = ex.split(' ').filter(Boolean);
@@ -110,6 +118,10 @@ function draw(q: string) {
       <span class="sres__cat">${r.sc}</span></a>`,
     )
     .join('');
+  results.setAttribute('role', 'listbox');
+  results.setAttribute('aria-label', 'Arama sonuçları');
+  input?.setAttribute('aria-expanded', 'true');
+  input?.setAttribute('aria-activedescendant', 'sr-0');
 }
 
 function move(d: number) {
@@ -117,10 +129,13 @@ function move(d: number) {
   sel = (sel + d + current.length) % current.length;
   results.querySelectorAll('.sres').forEach((el, i) => el.setAttribute('aria-selected', String(i === sel)));
   results.querySelector(`#sr-${sel}`)?.scrollIntoView({ block: 'nearest' });
+  input?.setAttribute('aria-activedescendant', `sr-${sel}`);
 }
 
+let opener: HTMLElement | null = null;
 export async function openSearch(prefill = '') {
   if (!root || !input) return;
+  opener = document.activeElement as HTMLElement | null;
   root.classList.add('is-open');
   root.setAttribute('aria-hidden', 'false');
   (window as any).__lockScroll?.(true);
@@ -133,7 +148,10 @@ function closeSearch() {
   if (!root) return;
   root.classList.remove('is-open');
   root.setAttribute('aria-hidden', 'true');
-  (window as any).__lockScroll?.(false);
+  // Arama, teklif sepeti ya da menü üstünde açıldıysa kaydırma kilidi onlarda kalsın
+  if (!document.querySelector('[data-quote-drawer].is-open, [data-menu].is-open')) (window as any).__lockScroll?.(false);
+  if (opener?.isConnected) opener.focus({ preventScroll: true });
+  opener = null;
 }
 
 document.addEventListener('click', (e) => {
@@ -152,7 +170,8 @@ addEventListener('keydown', (e) => {
     return;
   }
   if (!open) return;
-  if (e.key === 'Escape') closeSearch();
+  if (e.key === 'Escape') { e.preventDefault(); closeSearch(); }
+  else if (e.key === 'Tab' && root) trapTab(e, root);
   else if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
   else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
   else if (e.key === 'Enter' && current[sel]) { e.preventDefault(); location.href = current[sel].u ?? `/urun/${current[sel].s}`; }

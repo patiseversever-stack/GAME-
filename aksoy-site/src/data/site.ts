@@ -16,11 +16,11 @@ export const site = {
   phoneE164: '+905356101989',
   whatsapp: '905356101989',
   hours: 'Hafta içi 08:30–18:30',
-  hoursNote: 'WhatsApp’tan mesai dışında da yazabilirsiniz; ilk fırsatta dönüş yapılır.',
+  hoursNote: 'Mesai dışında da WhatsApp’tan yazabilirsiniz; ilk fırsatta döneriz.',
   serviceAreas: ['Ankara', 'Konya', 'Kayseri', 'Eskişehir', 'Kırıkkale', 'İzmir', 'Manisa', 'Denizli', 'Aydın', 'Uşak'],
   serviceRegions: 'Ankara merkezli; İç Anadolu ve Ege',
   description:
-    'Ankara Ostim / İvedik merkezli kesici takım tedarikçisi. Torna ve freze elmas uçları, karbür matkap, parmak freze, kılavuz ve takım tutucular. Sahada destek, WhatsApp’tan hızlı teklif.',
+    'Ostim / İvedik’te kesici takım tedarikçisi: torna ve freze elmas uçları, karbür matkap, parmak freze, kılavuz ve takım tutucu. WhatsApp’tan aynı gün teklif.',
   tagline: 'Doğru kesici takım, aynı gün teklif.',
 };
 

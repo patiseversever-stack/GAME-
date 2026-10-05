@@ -153,7 +153,7 @@ export async function startShowcase(
   type Dim = { a: string; b: string; ea?: string; eb?: string; label: string; group: Key; off: number; line: SVGPathElement; ext: SVGPathElement; el: HTMLElement };
   type Pin = {
     anchor: string; label: string; sub: string; group: Key; side: 'left' | 'right'; down?: boolean;
-    el: HTMLElement; small: HTMLElement; card: HTMLElement; path: SVGPathElement; st: { ci: number; x: number; y: number; bad: number };
+    el: HTMLElement; small: HTMLElement; card: HTMLElement; path: SVGPathElement; st: { ci: number; x: number; y: number; bad: number; off: number };
   };
   const dims: Dim[] = [
     { a: 'dia-a', b: 'dia-b', label: 'Ø 25 mm', group: 'cDim' as Key, off: 18 },
@@ -173,8 +173,8 @@ export async function startShowcase(
   });
   const pins: Pin[] = [
     { anchor: 'shank', label: 'Weldon sap', sub: 'Ø 32 · sıkma yüzeyi', group: 'cDim' as Key, side: 'left' as const },
-    { anchor: 'insert-cevre', label: 'Çevre uç', sub: 'Kenar 1 / 4', group: 'cIns' as Key, side: 'right' as const },
-    { anchor: 'insert-merkez', label: 'Merkez uç', sub: 'Kenar 1 / 4', group: 'cIns' as Key, side: 'left' as const, down: true },
+    { anchor: 'insert-cevre', label: 'Çevre uç', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'right' as const },
+    { anchor: 'insert-merkez', label: 'Merkez uç', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'left' as const, down: true },
     { anchor: 'screw-cevre', label: 'Torx vida', sub: 'sök · çevir · sık', group: 'cIns' as Key, side: 'right' as const, down: true },
     { anchor: 'cool', label: 'İçten soğutma', sub: 'basınçlı sıvı doğrudan uca', group: 'cCool' as Key, side: 'right' as const },
   ].map((p, i) => {
@@ -182,11 +182,11 @@ export async function startShowcase(
     el.className = `pin${p.side === 'left' ? ' pin--left' : ''}`;
     el.innerHTML = `<i class="pin__dot"></i><svg class="pin__lead" aria-hidden="true"><path pathLength="1"/></svg><div class="pin__card"><span class="pin__num">${String(i + 1).padStart(2, '0')}</span><span class="pin__txt"><b>${p.label}</b><small>${p.sub}</small></span></div>`;
     layer.append(el);
-    return { ...p, el, small: el.querySelector('small')!, card: el.querySelector<HTMLElement>('.pin__card')!, path: el.querySelector('path')!, st: { ci: -1, x: 0, y: 0, bad: 0 } };
+    return { ...p, el, small: el.querySelector('small')!, card: el.querySelector<HTMLElement>('.pin__card')!, path: el.querySelector('path')!, st: { ci: -1, x: 0, y: 0, bad: 0, off: 0 } };
   });
   const setEdge = (n: number) => {
     edge = n;
-    const txt = `Kenar ${((n - 1) % 4) + 1} / 4`;
+    const txt = `Kenar ${((n - 1) % 3) + 1} / 3`;
     pins[1].small.textContent = txt;
     pins[2].small.textContent = txt;
   };
@@ -287,13 +287,13 @@ export async function startShowcase(
       ]);
     }
     if (k === 2) {
-      const i0 = Math.round(S.idx0 * 4) / 4, i1 = Math.round(S.idx1 * 4) / 4;
+      const i0 = Math.round(S.idx0 * 3) / 3, i1 = Math.round(S.idx1 * 3) / 3;
       ft({ wear: 0, cIns: 0 }, { wear: 1, cIns: 1, duration: 0.4 }, 0);
       ft({ screw0: 0 }, { screw0: 1, duration: 1.0, ease: 'power1.inOut' }, 0.4);
       ft({ screw1: 0 }, { screw1: 1, duration: 1.0, ease: 'power1.inOut' }, 0.55);
       ft({ lift0: 0 }, { lift0: 1, duration: 0.7, ease: 'power2.out' }, 1.35);
       ft({ lift1: 0 }, { lift1: 1, duration: 0.7, ease: 'power2.out' }, 1.45);
-      ft({ idx0: i0, idx1: i1 }, { idx0: i0 + 0.25, idx1: i1 + 0.25, duration: 1.0, ease: 'power2.inOut' }, 2.0);
+      ft({ idx0: i0, idx1: i1 }, { idx0: i0 + 1 / 3, idx1: i1 + 1 / 3, duration: 1.0, ease: 'power2.inOut' }, 2.0);
       ft({ wear: 1 }, { wear: 0, duration: 0.3 }, 2.35);
       ft({ lift0: 1, lift1: 1 }, { lift0: 0, lift1: 0, duration: 0.5, ease: 'power3.in' }, 3.1);
       ft({ flash: 0 }, { flash: 1, duration: 0.05 }, 3.6);
@@ -306,7 +306,7 @@ export async function startShowcase(
         { at: 0, dur: 0.45, to: { scale: 0.3, ry: 0.05, env: 0.2 } }, // körelmiş kenara yaklaş
         { at: 0.45, dur: 1.0, to: { scale: 0.85, ry: -0.08, rx: 0.1, focus: 2, env: 0.5 } }, // vida sökülürken makro
         { at: 1.45, dur: 0.6, ease: 'power2.out', to: { scale: 0.45, ry: 0.2, rx: 0.14, rz: 0.04, env: 0.9 } }, // uçlar fırlar, kamera döner
-        { at: 2.05, dur: 1.0, to: { scale: 0.55, ry: 0.42, rx: 0.3, rz: 0.06, env: 1.4 } }, // 90° çevirme: çevre ucuna dön
+        { at: 2.05, dur: 1.0, to: { scale: 0.55, ry: 0.42, rx: 0.3, rz: 0.06, env: 1.4 } }, // 120° çevirme (trigon): çevre ucuna dön
         { at: 3.05, dur: 0.6, ease: 'power2.in', to: { scale: 0.8, ry: 0.12, rx: 0.12, rz: 0, env: 1.6 } }, // oturma anına dal
         { at: 3.7, dur: 0.9, to: { scale: 0.15, ry: 0.03, rx: 0.02, env: 1.9 } }, // sıkılırken geri çekil
       ]);
@@ -535,7 +535,11 @@ export async function startShowcase(
   const stopByUser = () => { if (anim || autoplay) setPlaying(false); };
   addEventListener('wheel', stopByUser, { passive: true });
   addEventListener('touchstart', (e) => { if (!(e.target as HTMLElement).closest('[data-reel]')) stopByUser(); }, { passive: true });
-  addEventListener('keydown', (e) => { if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'Home', 'End'].includes(e.key)) stopByUser(); });
+  addEventListener('keydown', (e) => {
+    // Düğme ve alanlardaki tuşlar kaydırma değildir (Boşluk, odaktaki Oynat düğmesine basar)
+    if ((e.target as HTMLElement).closest?.('button, a, input, select, textarea')) return;
+    if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'Home', 'End'].includes(e.key)) stopByUser();
+  });
   function updateReel() {
     const { raw, k } = current();
     segFill.forEach((f, i) => { if (f) f.style.transform = `scaleX(${THREE.MathUtils.clamp(raw - i, 0, 1)})`; });
@@ -646,7 +650,7 @@ export async function startShowcase(
     m.emissive.setRGB(goldEm.r * fl + heatEm.r * ht, goldEm.g * fl + heatEm.g * ht, goldEm.b * fl + heatEm.b * ht);
     const ci = Math.round(cc);
     coatChips.forEach((li, i) => li.classList.toggle('is-on', i === ci));
-    const e = 1 + Math.round(S.idx0 * 4 + 0.001);
+    const e = 1 + Math.round(S.idx0 * 3 + 0.001);
     if (e !== edge) setEdge(e);
 
     scene.updateMatrixWorld();
@@ -684,7 +688,7 @@ export async function startShowcase(
      belirgin biçimde kötüleşince değişir; geçişler yumuşatılır. */
   type Rect = { l: number; t: number; r: number; b: number };
   let obstacles: Rect[] = [];
-  let obstT = -1;
+  let obstT = -1, obstK = -1;
   const cardSize = new Map<HTMLElement, { w: number; h: number }>();
   addEventListener('resize', () => cardSize.clear());
   const GAP = 8;
@@ -710,8 +714,10 @@ export async function startShowcase(
   }
   function layoutPins(dt: number) {
     updateOcclusion();
-    if (elapsed - obstT > 0.25 || obstT < 0) {
+    // Bölüm değişince hemen yenile: yeni etiketler eski bölümün metnine göre yerleşmesin
+    if (elapsed - obstT > 0.25 || obstT < 0 || obstK !== chapter) {
       obstT = elapsed;
+      obstK = chapter;
       const sr = sticky.getBoundingClientRect();
       obstacles = [panels[chapter], reelEl].filter(Boolean).map((el) => {
         const r = el!.getBoundingClientRect();
@@ -775,7 +781,9 @@ export async function startShowcase(
       for (let i = 0; i < cands.length; i++) { const c = cost(i); if (c < bestC) { bestC = c; best = i; } }
       // Yer bir kez seçilir ve sahne boyunca sabit kalır; yalnızca seçili yer uzun süre
       // (0,7 sn) açıkça kötüyse (ekran dışı, metnin ya da başka etiketin üstü) değişir.
-      const fresh = st.ci < 0;
+      // Gizli etiket (kapanış geçişi bittikten sonra) yerini serbestçe yeniler: göründüğü an doğru yerdedir.
+      st.off = on ? 0 : st.off + dt;
+      const fresh = st.ci < 0 || st.off > 0.45;
       if (fresh) { st.ci = best; st.bad = 0; }
       else if (on && cost(st.ci) > bestC + 3500) { st.bad += dt; if (st.bad > 0.7) { st.ci = best; st.bad = 0; } }
       else st.bad = 0;
@@ -825,7 +833,7 @@ export async function startShowcase(
 
   if (new URLSearchParams(location.search).has('debug')) {
     gsap.ticker.lagSmoothing(0);
-    Object.assign(window as any, { __S: S, __intro: intro, __mats: drill.materials, __renderer: renderer, __frame: frame, __enter: enter, __mach: mach, __camera: camera });
+    Object.assign(window as any, { __S: S, __intro: intro, __mats: drill.materials, __renderer: renderer, __frame: frame, __enter: enter, __mach: mach, __camera: camera, __pins: pins, __obst: () => obstacles });
   }
   frame();
   opts.onProgress?.(1);

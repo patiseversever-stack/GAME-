@@ -22,9 +22,11 @@ const quoteData = JSON.stringify({ slug: p.slug, code: p.code, name: p.name, dra
   <div class="pcard__body">
     <a class="pcard__link pcard__code" href={`/urun/${p.slug}`}>{p.code}</a>
     <p class="pcard__name">{p.name}</p>
-    <div class="iso" aria-label="Uygun malzeme grupları">
-      {(['P', 'M', 'K', 'N', 'S', 'H'] as const).map((g) => <span data-g={g} class={p.iso.includes(g) ? '' : 'off'} title={g}>{g}</span>)}
-    </div>
+    {p.iso.length > 0 ? (
+      <div class="iso" aria-label="Uygun malzeme grupları">
+        {(['P', 'M', 'K', 'N', 'S', 'H'] as const).map((g) => <span data-g={g} class={p.iso.includes(g) ? '' : 'off'} title={g}>{g}</span>)}
+      </div>
+    ) : <p class="iso iso--any">Malzemeden bağımsız</p>}
     <div class="pcard__meta">
       <span class="pcard__brands">{brandNames.slice(0, 3).join(' · ')}{brandNames.length > 3 ? ` +${brandNames.length - 3}` : ''}</span>
       <button class="pcard__add" type="button" data-quote-add data-slug={p.slug} data-product={quoteData} aria-label={`${p.code} teklif sepetine ekle`}>

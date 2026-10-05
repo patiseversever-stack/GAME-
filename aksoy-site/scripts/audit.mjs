@@ -55,6 +55,8 @@ for (const [name, path] of PAGES) {
           if (r.right > vw + 1 && vis(el) && !el.closest('[data-marquee],.marquee,.tl-tablewrap,[aria-hidden="true"]')) overflow.push(`${desc(el)} → ${Math.round(r.right)}px`);
           if (overflow.length > 8) break;
         }
+        // Gizli (aria-hidden) bir süs öğesi de sayfayı yana kaydırabilir: kaynağı bulunamasa da bildir
+        if (!overflow.length) overflow.push(`scrollWidth ${document.documentElement.scrollWidth} > ${vw}`);
       }
       const small = [];
       if (isMobile) {

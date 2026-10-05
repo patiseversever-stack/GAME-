@@ -70,6 +70,9 @@ function initCalc(root: HTMLElement) {
       std.hidden = true;
       notes.innerHTML = '<p class="tl-note tl-note--error">Kırmızı işaretli alanı düzeltin.</p>';
       markRow(NaN, NaN);
+      // Bağlantılar eski (geçerli) değerleri taşımasın
+      speed.href = '/teknik-araclar/kesme-hizi-hesaplama#kilavuz';
+      if (waNumber) wa.href = `https://wa.me/${waNumber}?text=${encodeURIComponent('Merhaba Aksoy Kesici Takımlar, kılavuz ve matkap için teklif almak istiyorum.')}`;
       return;
     }
 
@@ -105,15 +108,20 @@ function initCalc(root: HTMLElement) {
     if (announce) live.textContent = `${nm}: matkap ${f2(sug.drill)} milimetre.`;
   }
 
+  // Kullanıcının kendi seçtiği hatve: çap yazılırken ("1" → "12") ara değerler yüzünden kaybolmasın
+  let userP = parseNum(inP.value);
   inD.addEventListener('input', () => {
     const d = parseNum(inD.value);
-    // Çap standartsa ve mevcut hatve o çapa uymuyorsa kaba hatveyi öner.
+    // Çap standartsa: seçilen hatve o çapa uyuyorsa korunur, uymuyorsa kaba hatve önerilir.
     const list = d > 0 ? pitchesFor(d) : [];
     const p = parseNum(inP.value);
-    if (list.length && !list.some((x) => x.p === p)) inP.value = fmtInput(list[0].p);
+    if (list.length) {
+      if (list.some((x) => x.p === userP)) inP.value = fmtInput(userP);
+      else if (!list.some((x) => x.p === p)) inP.value = fmtInput(list[0].p);
+    }
     update();
   });
-  inP.addEventListener('input', () => update());
+  inP.addEventListener('input', () => { userP = parseNum(inP.value); update(); });
   for (const inp of [inD, inP]) {
     inp.addEventListener('change', () => {
       const v = parseNum(inp.value);
@@ -126,6 +134,7 @@ function initCalc(root: HTMLElement) {
       const d = Number(c.dataset.d);
       inD.value = fmtInput(d);
       inP.value = fmtInput(pitchesFor(d)[0].p);
+      userP = pitchesFor(d)[0].p;
       update(true);
     }),
   );
@@ -133,6 +142,7 @@ function initCalc(root: HTMLElement) {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('[data-p]');
     if (!b) return;
     inP.value = fmtInput(Number(b.dataset.p));
+    userP = Number(b.dataset.p);
     update(true);
   });
   update();

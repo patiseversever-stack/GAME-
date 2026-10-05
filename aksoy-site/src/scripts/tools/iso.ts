@@ -31,7 +31,9 @@ function init(root: HTMLElement) {
     last = d;
     root.dataset.state = d.empty ? 'empty' : d.special ? 'special' : d.complete ? 'complete' : 'partial';
     tiles.innerHTML = d.special && !d.complete ? '' : tilesHtml(d);
-    msg.innerHTML = messagesHtml(d);
+    msg.innerHTML = d.empty && raw.trim()
+      ? '<p class="tl-note tl-note--warn">Kodda yalnızca harf ve rakam olur. Örnek: CNMG 120408 ya da APMT 1135PDER.</p>'
+      : messagesHtml(d);
     grid.hidden = !!d.special && !d.complete;
     rows.innerHTML = rowsHtml(d);
     top.innerHTML = topSvg(d);
@@ -46,7 +48,7 @@ function init(root: HTMLElement) {
     // WhatsApp mesajı
     const text = d.complete
       ? `Merhaba Aksoy Kesici Takımlar, ${d.display} kesici uç için fiyat ve stok bilgisi rica ediyorum.`
-      : `${waBase}${raw.trim().toUpperCase()}`;
+      : d.display ? `${waBase}${d.display}` : 'Merhaba Aksoy Kesici Takımlar, kesici uç için teklif almak istiyorum.';
     if (waNumber) wa.href = `https://wa.me/${waNumber}?text=${encodeURIComponent(text)}`;
 
     live.textContent = d.empty

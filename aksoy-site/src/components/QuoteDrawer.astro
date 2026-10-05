@@ -5,7 +5,7 @@ import Icon from './Icon.astro';
 <aside class="drawer" data-quote-drawer role="dialog" aria-modal="true" aria-labelledby="teklif-baslik" aria-hidden="true">
   <div class="drawer__head">
     <div>
-      <span class="eyebrow">Sipariş değil, teklif talebi</span>
+      <span class="eyebrow">Fiyat sorma listesi</span>
       <h2 id="teklif-baslik">Teklif Sepeti</h2>
     </div>
     <button class="icon-btn" type="button" data-quote-close aria-label="Kapat"><Icon name="close" /></button>
@@ -22,15 +22,52 @@ import Icon from './Icon.astro';
         <label for="q-firma">Firma / ad (isteğe bağlı)</label>
         <input id="q-firma" name="firma" autocomplete="organization" placeholder="Örn. Yıldız Makina" />
       </div>
+      <fieldset class="field qopt">
+        <legend>Teslim</legend>
+        <div class="qseg" data-q-teslim>
+          <label><input type="radio" name="q-teslim" value="Adrese teslim" checked /><span>Adrese teslim</span></label>
+          <label><input type="radio" name="q-teslim" value="Kargo" /><span>Kargo</span></label>
+          <label><input type="radio" name="q-teslim" value="Ostim'den gelip alırım" /><span>Gelip alırım</span></label>
+        </div>
+      </fieldset>
+      <fieldset class="field qopt">
+        <legend>Ne zaman lazım?</legend>
+        <div class="qseg" data-q-termin>
+          <label><input type="radio" name="q-termin" value="Acil (bugün / yarın)" /><span>Acil</span></label>
+          <label><input type="radio" name="q-termin" value="Bu hafta" /><span>Bu hafta</span></label>
+          <label><input type="radio" name="q-termin" value="" checked /><span>Fark etmez</span></label>
+        </div>
+      </fieldset>
+      <div class="qloc" data-q-loc>
+        <button class="qloc__btn" type="button" data-q-loc-btn>
+          <Icon name="pin" />
+          <span><b>Konumumu ekle</b><small>Nereye geleceğimizi mesajda görelim</small></span>
+        </button>
+        <div class="qloc__card" data-q-loc-card hidden>
+          <div class="qloc__map" data-q-loc-map></div>
+          <div class="qloc__info">
+            <b data-q-loc-place>Konum alındı</b>
+            <small data-q-loc-meta></small>
+            <div class="qloc__actions">
+              <a href="#" target="_blank" rel="noopener" data-q-loc-open>Haritada aç</a>
+              <button type="button" data-q-loc-clear>Kaldır</button>
+            </div>
+          </div>
+        </div>
+        <p class="qloc__msg" data-q-loc-msg role="status" aria-live="polite"></p>
+      </div>
       <div class="field">
-        <label for="q-not">Not (malzeme, tezgâh, termin…)</label>
-        <textarea id="q-not" name="not" rows="2" placeholder="Örn. 42CrMo4, kaba tornalama, CNC torna"></textarea>
+        <label for="q-not">Not (malzeme, tezgâh, adres tarifi…)</label>
+        <textarea id="q-not" name="not" rows="2" placeholder="Örn. 42CrMo4 mil, kaba torna. 2. kat, Ahmet Bey'e."></textarea>
       </div>
     </div>
   </div>
   <div class="drawer__foot" data-quote-foot hidden>
     <a class="btn btn--wa btn--block" href="#" target="_blank" rel="noopener" data-quote-send><Icon name="whatsapp" /> WhatsApp’tan teklif iste</a>
-    <button class="btn btn--ghost btn--block" type="button" data-quote-copy><Icon name="copy" /> Listeyi kopyala</button>
-    <p class="drawer__legal">Bu bir sipariş değildir; liste WhatsApp’ta size ait bir mesaj olarak açılır, göndermeden önce düzenleyebilirsiniz. Sitemiz bu bilgileri kaydetmez. <a href="/kvkk">KVKK aydınlatma metni</a></p>
+    <div class="drawer__pair">
+      <button class="btn btn--ghost btn--sm" type="button" data-quote-copy><Icon name="copy" /> Metni kopyala</button>
+      <button class="btn btn--ghost btn--sm" type="button" data-quote-share title="Aynı listeyi satın almaya ya da bir arkadaşınıza bağlantı olarak gönderin"><Icon name="share" /> Listeyi paylaş</button>
+    </div>
+    <p class="drawer__legal">Bu bir sipariş değil; mesaj WhatsApp’ta açılır, göndermeden önce değiştirebilirsiniz. Konum dahil hiçbir bilgiyi biz kaydetmiyoruz. <a href="/kvkk">KVKK aydınlatma metni</a></p>
   </div>
 </aside>

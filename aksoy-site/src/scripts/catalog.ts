@@ -26,6 +26,12 @@ const SYN: [RegExp, string][] = [
   [/\b(klavuz|kalavuz|kilavuz)(u|lar|lari)?\b/g, 'kilavuz'],
   [/\bu ?matkap(lar|lari)?\b/g, 'uclu matkap'],
 ];
+/** Malzeme adıyla arama: "paslanmaz" → ISO M grubuna uygun ürünler */
+const MAT: Record<string, string> = {
+  celik: 'P', paslanmaz: 'M', inox: 'M', dokum: 'K', dokme: 'K', sfero: 'K',
+  aluminyum: 'N', alu: 'N', bakir: 'N', pirinc: 'N', bronz: 'N',
+  titanyum: 'S', inconel: 'S', nikel: 'S', hastelloy: 'S', sertlestirilmis: 'H', hrc: 'H',
+};
 /** Arama terimleri: eş anlamlılar + basit çoğul eki atma ("matkaplar" → "matkap") */
 function terms(q: string) {
   let n = norm(q);
@@ -107,6 +113,9 @@ function initCatalog(root: HTMLElement) {
     if (st.iso.size) u.set('iso', [...st.iso].join(','));
     if (st.shape.size) u.set('sekil', [...st.shape].join(','));
     if (st.q.trim()) u.set('q', st.q.trim());
+    // Paylaşılan teklif listesi (quote.ts okuyup kaldırır) silinmesin
+    const shared = new URLSearchParams(location.search).get('liste');
+    if (shared) u.set('liste', shared);
     const qs = u.toString().replace(/%2C/g, ',');
     history.replaceState(history.state, '', `${location.pathname}${qs ? `?${qs}` : ''}`);
   }
@@ -131,16 +140,22 @@ function initCatalog(root: HTMLElement) {
   }
   setQuery(st.q);
 
+  // Her terim bir kelimenin başında geçmeli: "uc" → "uç" eşleşir, "buc…" eşleşmez.
+  // İki harfli terim tam kelime olmalı: "iç" → "iç çap", ama "için" değil.
+  const hasTerm = (hay: string, t: string) => {
+    if (t.length > 2) return hay.includes(` ${t}`);
+    for (let i = hay.indexOf(` ${t}`); i >= 0; i = hay.indexOf(` ${t}`, i + 1)) if (!/[a-z]/.test(hay[i + t.length + 1] ?? '')) return true;
+    return false;
+  };
   const matchQ = (it: Item) => {
     if (!qTerms.length) return true;
     if (qCompact.length >= 2 && it.code.includes(qCompact)) return true;
-    // Her terim bir kelimenin başında geçmeli: "uc" → "uç" eşleşir, "buc…" eşleşmez
-    return qTerms.every((t) => it.hay.includes(` ${t}`));
+    return qTerms.every((t) => hasTerm(it.hay, t) || (!!MAT[t] && it.iso.includes(MAT[t])));
   };
   /** Sorgu varken alaka sırası: kod başı > kod içi > ad/kodda tüm terimler > yalnızca anahtar kelime */
   const rank = (it: Item) =>
     (qCompact.length >= 2 && it.code.startsWith(qCompact) ? 4 : qCompact.length >= 2 && it.code.includes(qCompact) ? 3 : 0) +
-    (qTerms.length && qTerms.every((t) => it.head.includes(` ${t}`)) ? 2 : 0);
+    (qTerms.length && qTerms.every((t) => hasTerm(it.head, t)) ? 2 : 0);
   let lastOrder = items.map((i) => i.idx).join(',');
   function reorder() {
     const ranked = qTerms.length ? [...items].sort((a, b) => rank(b) - rank(a) || a.idx - b.idx) : items;

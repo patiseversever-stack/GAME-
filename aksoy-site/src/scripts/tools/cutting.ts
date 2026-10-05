@@ -247,13 +247,24 @@ function init(root: HTMLElement) {
   });
 
   /* ---------------- hesap yönü */
+  const modeMemo: Partial<Record<Op, { mode: Mode; wrote: 'n' | 'vc'; wroteV: number; orig: number } | null>> = {};
   function setMode(op: Op, mode: Mode) {
     const prev = state.mode[op];
     if (prev === mode) return;
     // Geçişte karşı alanı mevcut sonuçla doldur: kullanıcı kaldığı yerden devam eder.
-    const out = compute(op, prev, readValues(op));
-    if (mode === 'n2vc' && out.nEff > 0) setValue(op, 'n', Math.round(out.nEff));
-    if (mode === 'vc2n' && out.results[0].value > 0) setValue(op, 'vc', Math.round(out.results[0].value));
+    // Geri dönüşte yuvarlama kaymasın (2000 → 63 m/dk → 2005): karşı alan bizim yazdığımız değerde
+    // duruyorsa, kullanıcının önceki değeri geri gelir.
+    const vals = readValues(op);
+    const out = compute(op, prev, vals);
+    const back = modeMemo[op];
+    if (back && back.mode === mode && Math.abs((vals[back.wrote] ?? NaN) - back.wroteV) < 1e-9) {
+      setValue(op, mode === 'n2vc' ? 'n' : 'vc', back.orig);
+      modeMemo[op] = null;
+    } else {
+      const orig = prev === 'vc2n' ? vals.vc : vals.n;
+      if (mode === 'n2vc' && out.nEff > 0) { const n = Math.round(out.nEff); setValue(op, 'n', n); modeMemo[op] = { mode: prev, wrote: 'n', wroteV: n, orig }; }
+      if (mode === 'vc2n' && out.results[0].value > 0) { const vc = Math.round(out.results[0].value); setValue(op, 'vc', vc); modeMemo[op] = { mode: prev, wrote: 'vc', wroteV: vc, orig }; }
+    }
     state.mode[op] = mode;
     $$<HTMLInputElement>('[data-mode]', opEl(op)).forEach((i) => (i.checked = i.value === mode));
     $$<HTMLElement>('[data-mode-only]', opEl(op)).forEach((el) => (el.hidden = el.dataset.modeOnly !== mode));
@@ -336,4 +347,9 @@ function init(root: HTMLElement) {
   if (qp > 0 && qp <= 6) setValue('kilavuz', 'p', qp);
   syncTapChips();
   setOp(fromHash ?? 'torna', false, false);
+  // Aynı sayfadaki #frezeleme gibi bağlantılar da doğru sekmeyi açsın
+  addEventListener('hashchange', () => {
+    const op = Object.entries(hashFor).find(([, h]) => `#${h}` === location.hash)?.[0] as Op | undefined;
+    if (op) setOp(op, false, false);
+  });
 }

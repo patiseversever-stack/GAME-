@@ -6,7 +6,7 @@ import { breadcrumbSchema } from '../lib/content-schema';
 import '../styles/content.css';
 
 const title = 'İletişim: WhatsApp, Telefon ve Konum';
-const description = `${site.name} ile WhatsApp ya da telefonla (${site.phoneDisplay}) iletişime geçin. ${site.district}, Ankara; İç Anadolu ve Ege’de sahada destek. Form yok, üyelik yok, hızlı teklif.`;
+const description = `WhatsApp ya da telefonla ulaşın: ${site.phoneDisplay}. ${site.district}, Ankara; İç Anadolu ve Ege’de atölyenize geliyoruz. Form ve üyelik yok.`;
 
 // Hizmet bölgeleri: site.serviceAreas sırası korunur, bölgelere ayrılır. Plaka kodu küçük etiket olarak gösterilir.
 const plate: Record<string, string> = {
@@ -25,6 +25,8 @@ for (const city of site.serviceAreas) {
 
 // Harita: gömülü harita yok (çerez ve dış istek olmasın diye); yalnızca Google Haritalar araması açılır.
 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.address)}`;
+// Yol tarifi: başlangıç noktası boş bırakılır, Google Haritalar telefonun konumunu kullanır
+const routeUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(site.address)}`;
 
 // Künye: boş alanlar hiç gösterilmez.
 const kunye = [
@@ -39,8 +41,8 @@ const kunye = [
 const steps = [
   { t: 'Gönderin', p: 'Ürün kodunu, kutu etiketinin fotoğrafını ya da Teklif Sepeti listenizi WhatsApp’tan iletin.' },
   { t: 'Netleştirin', p: 'İşlenen malzeme, adet ve varsa marka tercihi. Gerekirse tezgâh ve işlem bilgisini birlikte konuşuruz.' },
-  { t: 'Teklifi alın', p: 'Fiyat, stok ve termin bilgisiyle dönüş yapılır. Uygun muadil seçenekler de belirtilir.' },
-  { t: 'Teslim', p: 'Onayınızın ardından teslimat, sahada ya da birlikte belirlediğimiz şekilde planlanır.' },
+  { t: 'Teklifi alın', p: 'Fiyat, stok ve terminle size dönüyoruz. Uygun bir muadil varsa onu da yazıyoruz.' },
+  { t: 'Teslim', p: 'Onay verdiğinizde ürünü adresinize getiriyoruz; uzak illere kargoyla gönderiyoruz. İsterseniz Ostim’den gelip alabilirsiniz.' },
 ];
 
 const schema = [
@@ -67,7 +69,7 @@ const schema = [
       <div class="contact-hero__grid">
         <div>
           <span class="eyebrow eyebrow--tin">İletişim · {site.district}</span>
-          <h1>Teklif, tek mesaj uzağınızda.</h1>
+          <h1>Kodu yazın, fiyatı bugün söyleyelim.</h1>
           <p class="lead">Form doldurmanız ya da üye olmanız gerekmez. Kodu, kutunun fotoğrafını ya da çizimi WhatsApp’tan gönderin; fiyat, stok ve termin bilgisiyle dönelim.</p>
         </div>
         <div>
@@ -117,7 +119,8 @@ const schema = [
           <p class="sheet__value">{site.district}</p>
           <p>{site.address}. Saha satışı yaptığımız için uğramadan önce WhatsApp’tan haber vermenizi rica ederiz.</p>
           <div class="sheet__links">
-            <a class="btn btn--ghost btn--sm" href={mapsUrl} target="_blank" rel="noopener"><Icon name="pin" /> Google Haritalar’da aç <span class="sr-only">(yeni sekmede açılır)</span></a>
+            <a class="btn btn--sm" href={routeUrl} target="_blank" rel="noopener"><Icon name="pin" /> Yol tarifi al <span class="sr-only">(Google Haritalar, yeni sekmede açılır)</span></a>
+            <a class="btn btn--ghost btn--sm" href={mapsUrl} target="_blank" rel="noopener">Haritada göster <span class="sr-only">(yeni sekmede açılır)</span></a>
           </div>
         </div>
 
@@ -159,9 +162,9 @@ const schema = [
   <section class="section section--tight" aria-labelledby="nasil-teklif" style="padding-top:0">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Sipariş değil, teklif</span>
-        <h2 id="nasil-teklif">Teklif nasıl verilir?</h2>
-        <p>Sitede online sipariş veya ödeme yoktur. Teklif WhatsApp ya da telefon üzerinden, sizinle konuşularak hazırlanır.</p>
+        <span class="eyebrow">Teklif süreci</span>
+        <h2 id="nasil-teklif">Teklif nasıl hazırlanıyor?</h2>
+        <p>Sitede online sipariş ya da ödeme yok. Teklifi WhatsApp’ta veya telefonda sizinle konuşarak hazırlıyoruz.</p>
       </div>
       <ol class="qsteps">
         {steps.map((s, i) => (
@@ -177,7 +180,7 @@ const schema = [
         <Icon name="shield" />
         <div>
           <b>Bu sayfada form yok.</b>
-          <p>İletişim formu, üyelik ya da online ödeme bulunmaz; site sizden kişisel veri toplamaz. Yazışma, sizin başlattığınız WhatsApp mesajı ya da telefon görüşmesiyle yürür.</p>
+          <p>İletişim formu, üyelik ya da online ödeme yok; site sunucumuza sizden bir bilgi gelmez. Teklif sepetine yazdıklarınız (konum dahil) yalnızca sizin göndereceğiniz WhatsApp mesajına eklenir.</p>
         </div>
         <a class="btn btn--ghost btn--sm" href="/kvkk">KVKK aydınlatma metni</a>
       </div>

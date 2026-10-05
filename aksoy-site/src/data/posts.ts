@@ -74,7 +74,7 @@ const cnmg: Omit<Post, 'readingMinutes'> = {
   slug: 'cnmg-120408-ne-demek',
   title: 'CNMG 120408 ne demek? Torna elmas uç kodunu harf harf okuma',
   description:
-    'CNMG 120408 kodundaki her harf ve rakam bir ölçüyü anlatır. ISO 1832’ye göre şekil, boşluk açısı, tolerans, talaş kırıcı tipi, kenar uzunluğu, kalınlık ve köşe radyüsü tabloyla.',
+    'CNMG 120408 kodundaki her harf ve rakam bir ölçüdür: şekil, boşluk açısı, tolerans, talaş kırıcı, kenar boyu, kalınlık ve köşe radyüsü, ISO 1832 tablosuyla.',
   date: '2026-10-05',
   tags: ['Tornalama', 'ISO 1832', 'Elmas uç'],
   draft: true,
@@ -217,7 +217,7 @@ const vc: Omit<Post, 'readingMinutes'> = {
   slug: 'kesme-hizi-ve-devir-hesaplama',
   title: 'Kesme hızı ve devir nasıl hesaplanır? (Vc, n, f formülleri)',
   description:
-    'Kataloğun verdiği kesme hızını tezgâhın istediği devir ve ilerlemeye çevirin: tornalama, frezeleme, delme ve kılavuz için formüller, birimler, çözülmüş örnekler ve başlangıç değerleri.',
+    'Katalogdaki kesme hızını tezgâha yazılacak devir ve ilerlemeye çevirin: tornalama, frezeleme, delme ve kılavuz için formüller ve çözülmüş örnekler.',
   date: '2026-10-05',
   tags: ['Hesaplama', 'Tornalama', 'Frezeleme'],
   draft: true,
@@ -330,7 +330,7 @@ const udrill: Omit<Post, 'readingMinutes'> = {
   slug: 'u-matkap-nedir',
   title: 'U-matkap (uçlu matkap) nedir, ne zaman tercih edilir?',
   description:
-    'Uçlu U-matkap nasıl çalışır? Merkez ve çevre uçları, 2xD–5xD boy seçimi, içten soğutma, karbür matkapla karşılaştırma ve tornada ya da işleme merkezinde verimli kullanım için ipuçları.',
+    'U-matkap nasıl çalışır? Merkez ve çevre uçları, 2xD–5xD boy seçimi, içten soğutma, karbür matkapla farkı ve tornada ya da işleme merkezinde kullanım ipuçları.',
   date: '2026-10-05',
   tags: ['Delik delme', 'U-matkap'],
   draft: true,

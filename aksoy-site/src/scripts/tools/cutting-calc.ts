@@ -137,6 +137,8 @@ export function compute(op: Op, mode: Mode, v: Record<string, number>): CalcOutp
     }
     need(fd.key);
     if (fd.int && ok(v[fd.key]) && !Number.isInteger(v[fd.key])) errors[fd.key] = 'Tam sayı girin.';
+    // Aralık dışı değer hesaplanır ama uyarılır (ör. D = 99999 mm yazım hatası olabilir)
+    else if (fd.max && ok(v[fd.key]) && v[fd.key] > fd.max * 1.0001) warnings.push(`${fd.label} (${fd.sym}) için ${f(v[fd.key])} ${fd.unit} alışılmış aralığın (en çok ${f(fd.max)} ${fd.unit}) dışında; değeri kontrol edin.`);
   }
 
   const D = v.d;
