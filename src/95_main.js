@@ -402,10 +402,12 @@ canvas.addEventListener('pointermove', (e) => {
 function skipIntroFlight() { if (!Cam.flight) return; Cam.skipFlight(); G.stateT = Math.max(G.stateT, G.introDur - 0.9); if (G.view && !G.view.introDone) G.view.introT = Math.max(G.view.introT, 1.9); audio.ui(); }
 $('#cineBars .cbBot').addEventListener('pointerdown', (e) => { e.stopPropagation(); if (G.state === 'fail') Melt.skip(); else skipIntroFlight(); });
 const endDrag = (e) => { Photo.up(e); if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag || (Theater.ptrs && Theater.ptrs.size)) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
+canvas.addEventListener('wheel', (e) => { if (G.state !== 'map' || Ward3D.on) return; e.preventDefault(); SkyMap.wheel(e); }, { passive: false });
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
 window.addEventListener('keydown', (e) => {
   audio.unlock();
   if (TUT.open) { TUT.key(e); return; }
+  if (Ward3D.on) { if (e.code === 'Escape') Wardrobe.close(); return; }
   if (KH.open || Lore.open) { const o = KH.open ? KH : Lore; if (e.code === 'Escape') o.finish(); else if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') { e.preventDefault(); o.tap(); } return; }
   if (e.repeat && (e.code === 'Space')) return;
   if (G.state === 'film') { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') Film.skip(); return; }
@@ -546,36 +548,78 @@ function buildMap() {
   $('#endlessInfo').textContent = endOk ? (Save.data.endlessBest ? `En iyi ${Save.data.endlessBest}` : 'Yeni') : '16. adada açılır';
   $('#theaterInfo').textContent = `${(Save.data.theater || []).length}/${ST_ACTS.length}`;
   $('#dailyInfo').textContent = dayOk ? (Save.data.daily.date === dateNum() ? `★ ${Save.data.daily.stars}/3` : 'Bugün') : '4. adada açılır';
-  const sk = $('#skins'); sk.innerHTML = '<span>Zifir</span>';
-  SKINS.forEach((s, i) => {
-    const ok = i === 0 || chapterStars(i - 1) === 24;
-    const b = document.createElement('button'); b.className = 'skin tap' + (Save.data.skin === i ? ' sel' : '') + (ok ? '' : ' locked'); b.style.setProperty('--c', s.c); b.style.pointerEvents = 'auto'; b.title = ok ? s.name : `${CHAPTERS[i - 1].name}: 24 yıldız`;
-    b.addEventListener('click', () => { if (!ok) { toast(`<em>${s.name}</em> rengi için ${CHAPTERS[i - 1].name} takımyıldızındaki 24 yıldızı topla.`, 2.8); return; } audio.ui(); Save.data.skin = i; Save.save(); zifir.setSkin(i); buildMap(); if (SkyMap.inited) SkyMap.refresh(); });
-    sk.appendChild(b);
-  });
-  const wb = document.createElement('button'); wb.className = 'skin ward tap'; wb.style.pointerEvents = 'auto'; wb.title = 'Gardırop';
-  wb.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 6a2 2 0 1 1 2 2c-1 0-2 1-2 2M12 10 3 17h18Z"/></svg>'; wb.addEventListener('click', () => Wardrobe.open()); sk.appendChild(wb);
+  // tek Zifir düğmesi: rengi gösterir, yeni kostüm varsa rozet
+  const own = Save.data.costumes || [], seen = Save.data.seenCos || [], fresh = own.some((k) => !seen.includes(k));
+  $('#btnZifir').style.setProperty('--c', (SKINS[Save.data.skin] || SKINS[0]).c); $('#btnZifir').classList.toggle('new', fresh);
 }
-// Zifir'in gardırobu: tiyatroda açılan gölge kostümleri
+const skinOk = (i) => i === 0 || chapterStars(i - 1) === 24;
+// Zifir'in gardırobu: 3B giyinme odası; kilitli olanlar da denenebilir, açık olanlar giyilir
 const Wardrobe = {
-  open() { audio.ui(); this.build(); $('#wardrobe').classList.add('on'); },
-  close() { audio.ui(); $('#wardrobe').classList.remove('on'); Save.data.seenCos = (Save.data.costumes || []).slice(); Save.save(); },
+  tab: 'cos', pick: null,
+  open() {
+    audio.ui(); this.tab = 'cos'; this.pick = { cos: Save.data.costume || '', skin: Save.data.skin || 0 };
+    Ward3D.open(this.pick.cos, this.pick.skin); this.build(); $('#wardrobe').classList.add('on'); document.body.classList.add('ward');
+  },
+  close() {
+    audio.ui(); $('#wardrobe').classList.remove('on'); document.body.classList.remove('ward'); Ward3D.close();
+    Save.data.seenCos = (Save.data.costumes || []).slice(); Save.save(); buildMap(); if (SkyMap.inited) SkyMap.refresh();
+  },
+  setTab(t) { if (this.tab === t) return; audio.ui(); this.tab = t; this.build(); },
+  items() {
+    if (this.tab === 'col') return SKINS.map((s, i) => ({ id: i, name: s.name, color: s.c, ok: skinOk(i), how: i === 0 ? 'Zifir’in kendi rengi' : `${CHAPTERS[i - 1].name} · 24 yıldız` }));
+    const own = Save.data.costumes || [];
+    return [{ key: '', name: 'Kostümsüz', icon: 'M12 5a7 7 0 1 0 0.1 0', how: 'Saf gölge' }, ...COSTUMES].map((c) => ({ id: c.key, name: c.name, icon: c.icon, ok: !c.key || own.includes(c.key),
+      how: c.how || (c.act === 'karagoz' ? 'Tiyatroda Karagöz ile Hacivat’ı izle' : `Tiyatro · “${ST_ACTS[c.act].riddle}” sahnesini çöz`) }));
+  },
   build() {
-    const own = Save.data.costumes || [], seen = Save.data.seenCos || [], grid = $('#wgrid'); grid.innerHTML = '';
-    const items = [{ key: '', name: 'Kostümsüz', icon: 'M12 5a7 7 0 1 0 0.1 0' }, ...COSTUMES];
-    for (const c of items) {
-      const ok = !c.key || own.includes(c.key), el = document.createElement('button');
-      el.className = 'wc tap' + ((Save.data.costume || '') === c.key ? ' sel' : '') + (ok ? '' : ' lock') + (ok && c.key && !seen.includes(c.key) ? ' new' : '');
-      const how = !c.key ? 'saf gölge' : ok ? 'giy' : c.act === 'karagoz' ? 'Karagöz’ü izle' : `Tiyatro · “${ST_ACTS[c.act].riddle}”`;
-      el.innerHTML = `<svg viewBox="0 0 24 24"><path d="${c.icon}"/></svg><b>${c.name}</b><small>${how}</small>`;
-      el.addEventListener('click', () => { if (!ok) { audio.clunk(); toast(c.act === 'karagoz' ? 'Tiyatroda <em>Karagöz ile Hacivat</em>’ı izleyince açılır.' : `Gölge Tiyatrosu’nda <em>“${ST_ACTS[c.act].riddle}”</em> sahnesini çöz.`, 2.6); return; } this.wear(c.key); });
+    const own = Save.data.costumes || [], seen = Save.data.seenCos || [], grid = $('#wgrid'), col = this.tab === 'col'; grid.innerHTML = '';
+    $('#wTabCos').classList.toggle('on', !col); $('#wTabCol').classList.toggle('on', col); grid.classList.toggle('cols', col);
+    const cur = col ? this.pick.skin : this.pick.cos, worn = col ? Save.data.skin || 0 : Save.data.costume || '';
+    for (const it of this.items()) {
+      const el = document.createElement('button');
+      el.className = 'wc tap' + (it.id === cur ? ' sel' : '') + (it.ok ? '' : ' lock') + (it.id === worn ? ' worn' : '') + (!col && it.ok && it.id && !seen.includes(it.id) ? ' new' : '');
+      el.innerHTML = (col ? `<i class="sw" style="--c:${it.color}"></i>` : `<svg viewBox="0 0 24 24"><path d="${it.icon}"/></svg>`) + `<b>${it.name}</b>`;
+      el.addEventListener('click', () => this.select(it.id));
       grid.appendChild(el);
     }
+    this.info();
   },
-  wear(key) { Save.data.costume = key; Save.save(); zifir.setCostume(key); zifir.kick(-2.5); audio.pop(5); this.build(); },
+  select(id) {
+    const col = this.tab === 'col';
+    if ((col ? this.pick.skin : this.pick.cos) === id) { Ward3D.show(); return; }
+    if (col) { this.pick.skin = id; Ward3D.trySkin(id); } else { this.pick.cos = id; Ward3D.tryCostume(id); }
+    this.build();
+  },
+  // seçilenin adı, nasıl açıldığı ve Giy düğmesi
+  info() {
+    const col = this.tab === 'col', id = col ? this.pick.skin : this.pick.cos, it = this.items().find((x) => x.id === id) || this.items()[0];
+    const worn = (col ? Save.data.skin || 0 : Save.data.costume || '') === id, btn = $('#wWear');
+    $('#wiName').textContent = it.name;
+    $('#wiHow').innerHTML = it.ok ? (worn ? 'Zifir şu an bunu giyiyor' : it.how) : `<span class="lk"></span>Deneme · ${it.how}`;
+    btn.className = 'btn primary tap' + (worn ? ' worn' : it.ok ? '' : ' lockd');
+    btn.textContent = worn ? 'Giyili ✓' : it.ok ? 'Giy' : 'Kilitli';
+  },
+  wearPick() {
+    const col = this.tab === 'col', id = col ? this.pick.skin : this.pick.cos, it = this.items().find((x) => x.id === id);
+    if (!it) return;
+    if (!it.ok) { audio.clunk(); haptic(10); toast(`Bunu giymek için: <em>${it.how}</em>`, 2.6); return; }
+    if (col) { Save.data.skin = id; zifir.setSkin(id); if (SkyMap.inited) SkyMap.refresh(); } else { Save.data.costume = id; zifir.setCostume(id); }
+    Save.save(); audio.chime(); Ward3D.dance = { k: 'hop', t: 0, dur: 1.45 }; Ward3D.burst(); this.build();
+  },
+  // tiyatro kartından doğrudan giydirme
+  wear(key) { Save.data.costume = key; Save.save(); zifir.setCostume(key); zifir.kick(-2.5); audio.pop(5); },
 };
 $('#wClose').addEventListener('click', (e) => { e.stopPropagation(); Wardrobe.close(); });
-$('#wardrobe').addEventListener('pointerdown', (e) => { if (e.target.id === 'wardrobe') Wardrobe.close(); });
+$('#wTabCos').addEventListener('click', () => Wardrobe.setTab('cos'));
+$('#wTabCol').addEventListener('click', () => Wardrobe.setTab('col'));
+$('#wWear').addEventListener('click', () => Wardrobe.wearPick());
+$('#btnZifir').addEventListener('click', () => Wardrobe.open());
+{ // sahnede sürükle-çevir, dokununca kıkırdasın
+  const st = $('#wStage');
+  st.addEventListener('pointerdown', (e) => { e.preventDefault(); try { st.setPointerCapture(e.pointerId); } catch (err) {} Ward3D.down(e); });
+  st.addEventListener('pointermove', (e) => Ward3D.move(e));
+  for (const ev of ['pointerup', 'pointercancel']) st.addEventListener(ev, (e) => Ward3D.up(e));
+}
 function refreshToggles() {
   const names = { auto: 'Otomatik', low: 'Düşük', mid: 'Orta', high: 'Yüksek', ultra: 'Ultra' };
   $$('[data-set]').forEach((el) => {
@@ -671,7 +715,7 @@ function onResize() {
   renderer.setPixelRatio(dpr); renderer.setSize(w, h, false);
   const v = renderer.getDrawingBufferSize(new THREE.Vector2());
   post.build(v.x, v.y, Q);
-  camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h); Theater.resize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h); Theater.resize(w, h); if (Ward3D.on) Ward3D.resize(w, h);
   if (G.lv) Cam.fit(G.lv);
   fxAdd.u.uPx.value = fxMix.u.uPx.value = Ambient.u.uPx.value = Fireworks.u.uPx.value = v.y / (2 * Math.tan(deg(camera.fov / 2)));
 }
@@ -745,10 +789,10 @@ function frame(now) {
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
   audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k };
   audio.update(dtR, G.state === 'play');
-  const onMap = G.state === 'map' && SkyMap.active, onTh = G.state === 'theater' && Theater.active;
-  if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
+  const onWard = Ward3D.on, onMap = !onWard && G.state === 'map' && SkyMap.active, onTh = !onWard && G.state === 'theater' && Theater.active;
+  if (onWard) { Ward3D.update(dtR); Ward3D.apply(); } else if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
   // hikâye kartı opakken 3B çizilmez
-  if (!window.__noRender && !Lore.opaque && !KH.opaque && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; if (Photo.shot) Photo.capture(); } catch (e) { reportError(e); } }
+  if (!window.__noRender && !Lore.opaque && !KH.opaque && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onWard ? wardScene : onMap ? mapScene : onTh ? stScene : scene, onWard ? wardCam : onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; if (Photo.shot) Photo.capture(); } catch (e) { reportError(e); } }
   // güvenlik: geçiş perdesi takılı kalmasın
   const fd = $('#fader'); if (fd.classList.contains('on')) { fd.__t = (fd.__t || 0) + dtR; if (fd.__t > 3.5) { fd.classList.remove('on', 'soon'); fd.__t = 0; } } else fd.__t = 0;
 }
@@ -917,7 +961,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),

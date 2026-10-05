@@ -93,6 +93,12 @@ canvas#gl{position:fixed;inset:0;width:100%;height:100%;display:block;touch-acti
 #title .actions{display:flex;flex-direction:column;align-items:center;gap:16px;opacity:0;transform:translateY(20px);transition:all .9s cubic-bezier(.2,.9,.2,1) 1.5s}
 #title.on .actions{opacity:1;transform:none}
 #title .row{display:flex;gap:12px;align-items:center}
+#title .row.minis{gap:30px;margin-top:-2px}
+.mini{display:flex;flex-direction:column;align-items:center;gap:5px;color:var(--ivory)}
+.mini i{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-b);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:transform .2s}
+.mini:active i{transform:scale(.9)}
+.mini svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.mini span{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--ivory-dim)}
 #title .hint{font-size:11px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,244,226,.7);display:flex;align-items:center;gap:10px}
 #title .hint i{display:block;width:34px;height:2px;border-radius:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent);animation:swipe 2.4s ease-in-out infinite}
 @keyframes swipe{0%,100%{transform:translateX(-10px);opacity:.3}50%{transform:translateX(10px);opacity:1}}
@@ -264,24 +270,66 @@ body.cine #hud{opacity:0;pointer-events:none}
 #kh.wide #khK{right:38%}#kh.wide #khGift{left:33%}
 @media (max-height:480px){#khK em{display:none}}
 #khGift b{font-weight:800;letter-spacing:.2em;text-transform:uppercase;font-size:10px;margin-right:8px;opacity:.75}
-/* ---------- gardırop ---------- */
-#wardrobe{position:absolute;inset:0;z-index:40;display:flex;align-items:center;justify-content:center;background:radial-gradient(ellipse at 50% 40%,rgba(30,20,60,.55),rgba(6,4,14,.82));-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);opacity:0;pointer-events:none;transition:opacity .35s}
-#wardrobe.on{opacity:1;pointer-events:auto}
-#wardrobe .wbox{width:min(92vw,540px);max-height:86vh;overflow:auto;padding:24px 18px 18px;border-radius:26px;background:linear-gradient(180deg,rgba(42,30,74,.94),rgba(16,11,30,.97));border:1px solid rgba(255,220,170,.22);box-shadow:0 30px 80px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.08);text-align:center;transform:translateY(16px) scale(.97);transition:transform .5s cubic-bezier(.2,.9,.2,1)}
-#wardrobe.on .wbox{transform:none}
+/* ---------- gardırop: 3B giyinme odası ---------- */
+#wardrobe{position:absolute;inset:0;z-index:40;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .4s ease,visibility 0s linear .4s}
+#wardrobe.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .4s ease}
+#lore.on .tap,#kh.on .tap,#wardrobe.on .tap{pointer-events:auto}
+body.ward #map>*:not(#mapLayer),body.ward #mapLayer{opacity:0!important;pointer-events:none!important;transition:opacity .3s}
+#wStage{position:absolute;left:0;right:0;top:0;height:54%;touch-action:none;cursor:grab}
+#wardrobe .whint{position:absolute;left:50%;top:calc(54% - 30px);transform:translateX(-50%);font-size:9.5px;letter-spacing:.3em;text-transform:uppercase;color:rgba(255,244,226,.42);pointer-events:none;white-space:nowrap}
+#wardrobe .wtop{position:absolute;left:0;right:0;top:0;display:flex;align-items:flex-start;justify-content:space-between;padding:calc(var(--sat) + 16px) calc(var(--sar) + 16px) 0 calc(var(--sal) + 20px);pointer-events:none}
 #wardrobe .wk{font-size:10px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold-2)}
-#wardrobe h3{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(26px,7vw,34px);margin:6px 0 4px;text-shadow:0 0 22px rgba(150,120,255,.5)}
-#wardrobe .wsub{font-size:12px;line-height:1.5;color:var(--ivory-dim);margin:0 auto;max-width:34ch}
-#wgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin:18px 0 16px}
-.wc{display:flex;flex-direction:column;align-items:center;gap:6px;padding:12px 6px 10px;border-radius:18px;background:rgba(255,255,255,.035);border:1px solid rgba(255,255,255,.08);color:var(--ivory);position:relative;transition:transform .2s,border-color .3s,box-shadow .3s}
-.wc:active{transform:scale(.95)}
-.wc svg{width:48px;height:48px;padding:11px;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle at 50% 35%,#33275a,#120d22);fill:none;stroke:#efe6ff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;box-shadow:inset 0 0 0 1px rgba(205,191,255,.32),0 6px 16px rgba(0,0,0,.35)}
-.wc b{font-size:11.5px;font-weight:600;line-height:1.2}
-.wc small{font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ivory-dim);line-height:1.35}
-.wc.sel{border-color:rgba(255,205,130,.85);box-shadow:0 0 0 1px rgba(255,205,130,.6),0 0 22px rgba(255,190,110,.22)}
-.wc.sel svg{stroke:#ffd98a;box-shadow:inset 0 0 0 1px rgba(255,205,130,.7),0 0 18px rgba(255,190,110,.35)}
-.wc.lock{opacity:.42}.wc.lock svg{stroke:#8f86ad}
-.wc.new::after{content:'yeni';position:absolute;top:6px;right:6px;font-size:8px;letter-spacing:.16em;text-transform:uppercase;padding:2px 6px;border-radius:8px;background:var(--gold);color:#2a1a08;font-weight:700}
+#wardrobe h3{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(24px,6.6vw,32px);margin:4px 0 0;text-shadow:0 0 22px rgba(150,120,255,.5)}
+#wardrobe .wsheet{position:absolute;left:0;right:0;bottom:0;height:46%;padding:14px calc(var(--sar) + 16px) calc(var(--sab) + 12px) calc(var(--sal) + 16px);box-sizing:border-box;display:flex;flex-direction:column;gap:12px;
+  background:linear-gradient(180deg,rgba(28,19,52,.82),rgba(11,7,22,.97) 34%);border-top:1px solid rgba(255,220,170,.18);border-radius:26px 26px 0 0;box-shadow:0 -20px 50px rgba(0,0,0,.45);transform:translateY(40px);transition:transform .55s cubic-bezier(.2,.9,.2,1)}
+#wardrobe.on .wsheet{transform:none}
+.wtabs{display:flex;gap:4px;padding:4px;border-radius:999px;background:rgba(255,255,255,.06);align-self:center;border:1px solid rgba(255,255,255,.06)}
+.wtabs button{height:32px;padding:0 18px;border-radius:999px;font-size:10.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--ivory-dim);transition:background .3s,color .3s}
+.wtabs button.on{background:linear-gradient(180deg,#ffe2a6,#f0b55a);color:#2a1806;box-shadow:0 4px 14px rgba(240,170,80,.3)}
+.winfo{display:flex;align-items:center;gap:12px}
+.winfo>div{flex:1;min-width:0}
+.winfo b{display:block;font-family:var(--serif);font-style:italic;font-weight:600;font-size:22px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.winfo small{display:block;margin-top:3px;font-size:11px;letter-spacing:.04em;color:var(--ivory-dim);line-height:1.35}
+.winfo small .lk{color:var(--gold-2);font-weight:700;letter-spacing:.12em}
+#wWear{height:46px;min-width:0;padding:0 26px;font-size:13px;flex:none}
+#wWear.lockd{filter:grayscale(.8);opacity:.55}
+#wWear.worn{background:rgba(255,255,255,.07);color:var(--gold-2);box-shadow:inset 0 0 0 1px rgba(255,214,140,.45)}
+#wgrid{flex:1;min-height:0;overflow-y:auto;display:grid;grid-template-columns:repeat(4,1fr);gap:8px;align-content:start;padding:2px 2px 6px;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#wgrid.cols{grid-template-columns:repeat(5,1fr)}
+.wc{display:flex;flex-direction:column;align-items:center;gap:5px;padding:9px 3px 8px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);color:var(--ivory);position:relative;transition:transform .2s,border-color .3s,box-shadow .3s}
+.wc:active{transform:scale(.94)}
+.wc svg{width:40px;height:40px;padding:9px;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle at 50% 35%,#33275a,#120d22);fill:none;stroke:#efe6ff;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round;box-shadow:inset 0 0 0 1px rgba(205,191,255,.32)}
+.wc .sw{display:block;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 50% 42%,#140e26 52%,var(--c) 100%);box-shadow:0 0 0 1px rgba(255,255,255,.16),0 0 14px var(--c)}
+.wc b{font-size:9.5px;font-weight:600;line-height:1.2;text-align:center}
+.wc.sel{border-color:rgba(255,205,130,.9);background:rgba(255,205,130,.08);box-shadow:0 0 0 1px rgba(255,205,130,.55),0 0 22px rgba(255,190,110,.22)}
+.wc.sel svg{stroke:#ffd98a}
+.wc.lock svg,.wc.lock .sw,.wc.lock b{opacity:.5}
+.wc.lock::before{content:'';position:absolute;top:7px;right:7px;width:9px;height:7px;border-radius:2px;background:rgba(255,226,166,.75)}
+.wc.lock::after{content:'';position:absolute;top:3px;right:8.5px;width:4px;height:5px;border:1.5px solid rgba(255,226,166,.75);border-bottom:0;border-radius:4px 4px 0 0}
+.wc.worn b::after{content:' ✓';color:var(--gold-2)}
+.wc.new::before{content:'yeni';position:absolute;top:5px;right:5px;font-size:7.5px;letter-spacing:.14em;text-transform:uppercase;padding:2px 5px;border-radius:7px;background:var(--gold);color:#2a1a08;font-weight:700}
+@media (orientation:landscape) and (min-aspect-ratio:21/20){
+  #wStage{right:auto;width:52%;height:100%}
+  #wardrobe .whint{left:26%;top:auto;bottom:calc(var(--sab) + 16px)}
+  #wardrobe .wsheet{left:auto;top:0;width:48%;height:auto;border-radius:26px 0 0 26px;border-top:0;border-left:1px solid rgba(255,220,170,.18);padding-top:calc(var(--sat) + 64px);transform:translateX(40px)}
+  #wgrid.cols{grid-template-columns:repeat(4,1fr)}
+}
+/* Gökyüzü: tek Zifir düğmesi (gardırobu açar) */
+#btnZifir{position:absolute;left:50%;bottom:calc(var(--sab) + 10px);transform:translateX(-50%);display:flex;align-items:center;gap:10px;height:46px;padding:0 18px 0 6px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-b);color:var(--ivory);-webkit-backdrop-filter:blur(12px);backdrop-filter:blur(12px);transition:opacity .35s ease}
+#btnZifir .zav{display:block;position:relative;width:34px;height:34px;border-radius:50%;background:radial-gradient(circle at 50% 46%,#120c22 56%,var(--c,#7a6cff) 100%);box-shadow:0 0 14px var(--c,#7a6cff)}
+#btnZifir .zav s{position:absolute;top:12px;width:6px;height:8px;border-radius:50%;background:#fff;animation:zblink 4s infinite}
+#btnZifir .zav s:first-child{left:10px}#btnZifir .zav s:last-child{left:18px}
+@keyframes zblink{0%,46%,50%,100%{transform:none}48%{transform:scaleY(.15)}}
+#btnZifir span{text-align:left}
+#btnZifir b{display:block;font-size:12px;letter-spacing:.24em;text-transform:uppercase}
+#btnZifir small{display:block;margin-top:2px;font-size:9px;letter-spacing:.06em;color:var(--ivory-dim)}
+#btnZifir em{display:none;font-style:normal;font-size:8px;letter-spacing:.16em;text-transform:uppercase;padding:3px 7px;border-radius:8px;background:var(--gold);color:#2a1a08;font-weight:700}
+#btnZifir.new em{display:block}
+#map.diving #btnZifir{opacity:0!important;pointer-events:none!important}
+#mapHint{position:absolute;left:50%;top:calc(var(--sat) + 86px);transform:translateX(-50%);display:flex;align-items:center;gap:10px;font-size:10px;letter-spacing:.26em;text-transform:uppercase;color:rgba(255,244,226,.8);text-shadow:0 1px 10px rgba(0,0,0,.6);white-space:nowrap;opacity:0;pointer-events:none;transition:opacity .6s}
+#mapHint.on{opacity:1}#mapHint i{font-style:normal;font-size:18px;color:var(--gold-2);animation:hintNudge 1.6s ease-in-out infinite}#mapHint i:last-child{animation-direction:reverse}
+@keyframes hintNudge{0%,100%{transform:translateX(0)}50%{transform:translateX(-6px)}}
+body.ward #mapHint,#map.diving #mapHint{opacity:0!important}
 .skin.ward{background:radial-gradient(circle at 50% 35%,#33275a,#120d22);display:flex;align-items:center;justify-content:center}
 .skin.ward svg{width:16px;height:16px;fill:none;stroke:#efe6ff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
 #thCos{display:none;align-items:center;gap:10px;width:fit-content;max-width:100%;box-sizing:border-box;margin:2px auto 12px;padding:5px 5px 5px 6px;border-radius:24px;background:linear-gradient(90deg,rgba(255,214,140,.1),rgba(255,214,140,.03));border:1px solid rgba(255,214,140,.2)}
@@ -291,7 +339,7 @@ body.cine #hud{opacity:0;pointer-events:none}
 #thCos b{font-family:var(--serif);font-style:italic;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 #thCos button{padding:8px 14px;min-height:0;font-size:10px;letter-spacing:.14em;flex:none;margin-left:4px}
 #thCos svg{width:30px;height:30px;padding:6px;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle,#33275a,#120d22);fill:none;stroke:#ffd98a;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
-#toast{position:absolute;left:50%;bottom:calc(var(--sab) + 120px);transform:translate(-50%,16px);max-width:86vw;padding:13px 20px;border-radius:18px;text-align:center;
+#toast{position:absolute;z-index:48;left:50%;bottom:calc(var(--sab) + 120px);transform:translate(-50%,16px);max-width:86vw;padding:13px 20px;border-radius:18px;text-align:center;
   font-size:14px;line-height:1.45;font-weight:600;letter-spacing:.02em;color:var(--ivory);background:rgba(18,13,32,.52);border:1px solid var(--glass-b);
   -webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);opacity:0;transition:opacity .45s,transform .55s cubic-bezier(.2,.9,.2,1)}
 #toast.on{opacity:1;transform:translate(-50%,0)}
@@ -424,7 +472,7 @@ body.testall #testBadge{display:block}
 .mnav{position:absolute;top:44%;width:42px;height:42px;opacity:.85}
 #mapPrev{left:calc(var(--sal) + 10px)}#mapNext{right:calc(var(--sar) + 10px)}
 .mnav.dis{opacity:0;pointer-events:none!important}
-#mapPanel{position:absolute;left:50%;bottom:calc(var(--sab) + 100px);transform:translateX(-50%);width:min(92vw,460px);padding:15px 20px 16px;border-radius:26px;
+#mapPanel{position:absolute;left:50%;bottom:calc(var(--sab) + 120px);transform:translateX(-50%);width:min(92vw,460px);padding:15px 20px 16px;border-radius:26px;
   background:linear-gradient(160deg,rgba(46,32,82,.5),rgba(14,10,30,.66));border:1px solid rgba(255,240,220,.17);-webkit-backdrop-filter:blur(16px) saturate(1.25);backdrop-filter:blur(16px) saturate(1.25);
   box-shadow:0 22px 60px rgba(5,2,15,.55),inset 0 1px 0 rgba(255,255,255,.09)}
 #mapPanel.sw{animation:panelIn .55s cubic-bezier(.2,.9,.2,1)}
@@ -445,7 +493,7 @@ body.testall #testBadge{display:block}
 #mapPanel .mplock svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.8}
 #mapPanel.locked .mprow{display:none}#mapPanel.locked .mplock{display:flex}#mapPanel.locked h6{opacity:.7}
 #map .modes,#map .skins{position:absolute;left:0;right:0}
-#map .modes{bottom:calc(var(--sab) + 50px);margin:0;flex-wrap:nowrap;gap:8px}
+#map .modes{bottom:calc(var(--sab) + 66px);margin:0;flex-wrap:nowrap;gap:8px}
 #map .skins{bottom:calc(var(--sab) + 12px);margin:0;gap:8px}
 #map .mtop,#map .modes,#map .skins,#mapPanel,.mnav,.mtag{transition:opacity .35s ease}
 #map.diving .mtop,#map.diving .modes,#map.diving .skins,#map.diving #mapPanel,#map.diving .mnav,#map.diving .mtag{opacity:0!important;pointer-events:none!important}
@@ -667,6 +715,7 @@ body.testall #testBadge{display:block}
   @keyframes panelInL{0%{opacity:0;transform:translateY(14px)}100%{opacity:1;transform:none}}
   #map .modes{left:auto;right:calc(var(--sar) + 18px);bottom:calc(var(--sab) + 60px);justify-content:flex-end}
   #map .skins{left:auto;right:calc(var(--sar) + 18px);justify-content:flex-end}
+  #btnZifir{left:auto;right:calc(var(--sar) + 18px);transform:none}
   #mapPrev{left:calc(var(--sal) + 12px);top:40%}
   .chap{flex:0 0 min(640px,72vw);max-width:none;flex-direction:row;align-items:stretch;padding:14px 18px 14px 26px;gap:10px}
   .chap .info{display:flex;flex-direction:column;justify-content:center;align-items:flex-start;gap:6px;flex:0 0 36%;text-align:left}
@@ -704,9 +753,11 @@ body.testall #testBadge{display:block}
       <div class="row">
         <button class="btn ghost tap" id="btnMapT">Gökyüzü</button>
         <button class="btn ghost tap" id="btnTheaterT">Tiyatro</button>
-        <button class="icon tap" id="btnLoreT" aria-label="Hikâye"><svg viewBox="0 0 24 24"><path d="M4 5c3-1 6-1 8 1v14c-2-2-5-2-8-1Z"/><path d="M20 5c-3-1-6-1-8 1v14c2-2 5-2 8-1Z"/></svg></button>
-        <button class="icon tap" id="btnHowT" aria-label="Nasıl oynanır"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></button>
-        <button class="icon tap" id="btnSetT" aria-label="Ayarlar"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
+      </div>
+      <div class="row minis">
+        <button class="mini tap" id="btnLoreT" aria-label="Hikâye"><i><svg viewBox="0 0 24 24"><path d="M4 5c3-1 6-1 8 1v14c-2-2-5-2-8-1Z"/><path d="M20 5c-3-1-6-1-8 1v14c2-2 5-2 8-1Z"/></svg></i><span>Hikâye</span></button>
+        <button class="mini tap" id="btnHowT" aria-label="Nasıl oynanır"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></i><span>Nasıl?</span></button>
+        <button class="mini tap" id="btnSetT" aria-label="Ayarlar"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></i><span>Ayarlar</span></button>
       </div>
     </div>
   </div>
@@ -734,7 +785,11 @@ body.testall #testBadge{display:block}
   <div id="lore"><canvas id="loreStars"></canvas><div id="loreSkyW"><canvas id="loreSky"></canvas></div><canvas id="loreArt"></canvas><div class="veil"></div><div class="lbody"><div id="loreK"></div><h2 id="loreT"></h2><div class="orn"><i></i><b></b><i></i></div><p id="loreB"></p></div>
     <div class="lfoot"><button class="tap" id="loreBack" aria-label="Geri">‹</button><div id="loreDots"></div><span class="lhint">dokun · devam ›</span></div><button class="tap" id="loreSkip">Geç ›</button></div>
   <div id="kh"><canvas id="khArt"></canvas><div id="khK">Ara fasıl<em>Karagöz ile Hacivat</em></div><div id="khGift"><b>Yeni kostüm</b>Karagöz Kavuğu</div><div id="khCap"><b id="khName"></b><p id="khTxt"></p><span class="khHint">dokun · devam ›</span></div><button class="tap" id="khSkip">Geç ›</button></div>
-  <div id="wardrobe"><div class="wbox"><div class="wk">Zifir’in Gardırobu</div><h3>Gölge Kostümleri</h3><p class="wsub">Gölge Tiyatrosu’nda canlandırdığın her gölge, Zifir’e kendinden bir parça bırakır.</p><div id="wgrid"></div><button class="btn primary tap" id="wClose">Tamam</button></div></div>
+  <div id="wardrobe"><div id="wStage"></div><div class="whint">sürükle · çevir · dokun</div>
+    <div class="wtop"><div><div class="wk">Zifir’in Gardırobu</div><h3>Gölge Kostümleri</h3></div><button class="icon tap" id="wClose" aria-label="Kapat"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></button></div>
+    <div class="wsheet"><div class="wtabs"><button class="tap on" id="wTabCos">Kostümler</button><button class="tap" id="wTabCol">Renkler</button></div>
+      <div class="winfo"><div><b id="wiName"></b><small id="wiHow"></small></div><button class="btn primary tap" id="wWear">Giy</button></div>
+      <div id="wgrid"></div></div></div>
   <div id="toast"></div>
   <div id="banner"></div>
   <div id="pops"></div>
@@ -809,6 +864,7 @@ body.testall #testBadge{display:block}
       <div class="mtitle"><h5>Gökyüzü</h5><div id="mapDots"></div></div>
       <div class="tot" id="mapTotal">★ 0</div>
     </div>
+    <div id="mapHint"><i>‹</i>kaydır · adaya dokun<i>›</i></div>
     <button class="icon tap mnav" id="mapPrev" aria-label="Önceki takımyıldızı"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button>
     <button class="icon tap mnav" id="mapNext" aria-label="Sonraki takımyıldızı"><svg viewBox="0 0 24 24"><path d="M9 5l7 7-7 7"/></svg></button>
     <div id="mapPanel">
@@ -826,7 +882,7 @@ body.testall #testBadge{display:block}
       <button class="btn ghost tap" id="btnDaily">Günün Adası <small id="dailyInfo"></small></button>
       <button class="btn ghost tap" id="btnTheater">Tiyatro <small id="theaterInfo"></small></button>
     </div>
-    <div class="skins" id="skins"><span>Zifir</span></div>
+    <button class="tap" id="btnZifir"><i class="zav"><s></s><s></s></i><span><b>Zifir</b><small>Gardırop · kostüm ve renk</small></span><em>Yeni</em></button>
   </div>
 
   <div id="theater" class="screen">

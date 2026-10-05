@@ -202,12 +202,20 @@ const SkyMap = {
     // Zifir: sıradaki seviyenin düğümünde
     this.curG = Math.min(un, STORY_LEVELS - 1);
     this.zU.uRim.value.set(SKINS[Save.data.skin]?.c || SKINS[0].c);
+    // haritadaki Zifir de giydiği kostümle bekler
+    const ck = Save.data.costume || '';
+    if (this.zCosKey !== ck) {
+      if (this.zCos) { this.zBody.remove(this.zCos.g); this.zCos.g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); this.zCos = null; }
+      this.zCosKey = ck;
+      if (ck) try { this.zCos = buildCostume(ck, this.zInk || (this.zInk = new THREE.ShaderMaterial({ vertexShader: ZIF_VERT, fragmentShader: ZIF_FRAG, uniforms: this.zU }))); this.zBody.add(this.zCos.g); } catch (e) { this.zCos = null; }
+    }
     this.shown = -1;
   },
   /* ----- açılış / kapanış ----- */
   open() {
     this.init();
-    const un = Save.data.unlocked, cur = Math.min(CHAPTERS.length - 1, Math.floor(Math.min(un, STORY_LEVELS - 1) / 8));
+    // en son oynanan adanın bölümünde açılır (hiç oynanmadıysa sıradaki adanınkinde)
+    const un = Save.data.unlocked, lg = Save.data.lastG, base = lg != null && lg <= un ? lg : Math.min(un, STORY_LEVELS - 1), cur = Math.min(CHAPTERS.length - 1, Math.floor(base / 8));
     const first = !this.active;
     this.active = true; L1.copy(MAP_SUN);
     if (first) { this.f = this.tf = cur; this.fv = 0; this.intro = 0; this.dive = null; }
@@ -215,6 +223,7 @@ const SkyMap = {
     this.refresh(); this.updatePanel(true);
     U.uFogNear.value = 50; U.uFogFar.value = 290;
     if (first) { audio.whoosh(true, 1.4, 0.07); setTimeout(() => this.active && audio.sprite(2), 500); }
+    $('#mapHint').classList.toggle('on', !Save.seen('mapSwipe'));
   },
   deactivate() {
     this.active = false; this.dive = null; this.drag = null; $('#map').classList.remove('diving');
@@ -224,7 +233,7 @@ const SkyMap = {
   },
   go(i) {
     i = clamp(Math.round(i), 0, CHAPTERS.length - 1);
-    if (i !== Math.round(this.tf)) { audio.whoosh(i > this.tf, 0.7, 0.05); haptic(6); }
+    if (i !== Math.round(this.tf)) { audio.whoosh(i > this.tf, 0.7, 0.05); haptic(6); if (!Save.seen('mapSwipe')) { Save.markSeen('mapSwipe'); $('#mapHint').classList.remove('on'); } }
     this.tf = i;
   },
   pick(g) {
@@ -239,20 +248,33 @@ const SkyMap = {
     $('#fader').classList.add('soon');
   },
   /* ----- dokunma ----- */
-  down(e) { this.drag = { id: e.pointerId, x: e.clientX, x0: e.clientX, f0: this.f, t: performance.now(), v: 0 }; this.fv = 0; },
+  // yatay sürükleme: parmağı izler, kenarlarda lastik gibi direnir; bırakınca hıza göre bir (hızlıysa iki) bölüm geçer
+  down(e) { this.drag = { id: e.pointerId, x: e.clientX, x0: e.clientX, y0: e.clientY, f0: this.f, axis: 0, hist: [[e.timeStamp, this.f]] }; this.fv = 0; },
   move(e) {
     const d = this.drag; if (!d || e.pointerId !== d.id) return;
-    const now = performance.now(), W = Math.max(320, innerWidth);
-    const df = -(e.clientX - d.x) / (W * 0.6); d.x = e.clientX;
-    this.f = clamp(this.f + df, -0.35, CHAPTERS.length - 0.65); this.tf = this.f;
-    d.v = lerp(d.v, df / Math.max(1, now - d.t) * 1000, 0.4); d.t = now;
+    if (!d.axis) { const ax = Math.abs(e.clientX - d.x0), ay = Math.abs(e.clientY - d.y0); if (ax < 7 && ay < 7) return; d.axis = ax >= ay * 0.75 ? 1 : 2; d.x = e.clientX; }
+    if (d.axis !== 1) return;
+    const now = e.timeStamp, n = CHAPTERS.length - 1; // olayın gerçek zamanı (kare gecikmesinden bağımsız)
+    let df = -(e.clientX - d.x) / (Math.max(320, innerWidth) * 0.8); d.x = e.clientX;
+    if ((this.f < 0 && df < 0) || (this.f > n && df > 0)) df *= 0.3;
+    this.f = clamp(this.f + df, -0.45, n + 0.45); this.tf = this.f;
+    d.hist.push([now, this.f]); while (d.hist.length > 2 && now - d.hist[0][0] > 110) d.hist.shift();
   },
   up(e) {
     const d = this.drag; if (!d || e.pointerId !== d.id) return; this.drag = null;
-    const fl = performance.now() - d.t < 90 ? clamp(d.v * 0.35, -0.8, 0.8) : 0;
-    let tgt = Math.round(this.f + fl);
-    if (Math.abs(d.x - d.x0) > 24 && tgt === Math.round(d.f0) && Math.abs(fl) > 0.15) tgt += Math.sign(fl);
-    this.go(tgt);
+    const base = Math.round(d.f0);
+    if (d.axis !== 1) { this.go(Math.round(this.f)); return; }
+    const now = e.timeStamp, h = d.hist, A = h[0], B = h[h.length - 1];
+    const v = now - B[0] < 90 && B[0] > A[0] ? (B[1] - A[1]) / ((B[0] - A[0]) / 1000) : 0; // bölüm/sn
+    let tgt = Math.abs(v) > 0.8 ? base + Math.sign(v) * (Math.abs(v) > 5 ? 2 : 1) : Math.round(this.f);
+    if (Math.abs(v) <= 0.8 && Math.abs(this.f - d.f0) > 0.22 && tgt === base) tgt = base + Math.sign(this.f - d.f0);
+    this.go(clamp(tgt, base - 2, base + 2));
+  },
+  // fare tekerleği / dokunmatik yüzey
+  wheel(e) {
+    const now = performance.now(), dl = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    this.wAcc = (now - (this.wT || 0) > 250 ? 0 : this.wAcc || 0) + dl; this.wT = now;
+    if (Math.abs(this.wAcc) > 50 && now - (this.wGo || 0) > 420) { this.wGo = now; this.go(Math.round(this.tf) + Math.sign(this.wAcc)); this.wAcc = 0; }
   },
   /* ----- panel ----- */
   updatePanel(force) {
@@ -291,7 +313,7 @@ const SkyMap = {
     const fc = clamp(this.f, 0, CHAPTERS.length - 1), u = fc / (CHAPTERS.length - 1);
     const P = mapCamCurve.getPoint(u), T = mapTgtCurve.getPoint(u);
     const fr = this.f - Math.floor(this.f), swoop = Math.sin(fr * PI) * 6 * (Math.abs(this.tf - this.f) > 0.02 || this.drag ? 1 : 0);
-    const asp = mapCam.aspect, dk = asp < 0.62 ? 1.3 : asp < 1 ? 1.1 : 0.7;
+    const asp = mapCam.aspect, dk = asp < 0.62 ? 1.17 : asp < 1 ? 1.05 : 0.7;
     P.sub(T).multiplyScalar(dk).add(T); P.y += swoop;
     if (asp > 1.2) { const sh = P.distanceTo(T) * Math.tan(deg(mapCam.fov / 2)) * asp * 0.2; P.x -= sh; T.x -= sh; }
     // hafif el kamerası salınımı
@@ -348,6 +370,7 @@ const SkyMap = {
       this.zif.rotation.y = Math.atan2(mapCam.position.x - p.x, mapCam.position.z - p.z) * 0.8;
       this.zBlink -= dtR; const bl = this.zBlink < 0.12 ? 0.1 : 1; if (this.zBlink < 0) this.zBlink = 2 + Math.random() * 3;
       for (const e of this.zEyes) e.scale.y = 1.25 * bl;
+      if (this.zCos) this.zCos.update(dtR, t, false, hop > 0.05);
       this.beacon.position.copy(p); this.ring.position.set(p.x, p.y + 0.22, p.z);
       const rk = (t * 0.8) % 1; this.ring.scale.setScalar(1 + rk * 2.2); this.ring.material.opacity = (1 - rk) * 0.9;
     }
@@ -370,13 +393,20 @@ const SkyMap = {
       const di = I.i - this.f, focus = Math.abs(di) < 0.5 && !this.dive && this.intro > 0.6;
       // düğüm rozetleri
       const nodeA = I.view && Math.abs(di) < 0.5 ? clamp01(1 - Math.abs(di) * 2.6) * clamp01((this.intro - 0.6) * 3) * (this.dive ? 0 : 1) : 0;
+      const P = [];
       I.btns.forEach((b, k) => {
         if (nodeA <= 0.01 || !I.marks[k]) { if (b.style.display !== 'none') b.style.display = 'none'; return; }
         I.marks[k].n.getWorldPosition(v); v.y += 1.35; v.project(mapCam);
         if (v.z > 1) { b.style.display = 'none'; return; }
-        b.style.display = 'flex'; b.style.opacity = nodeA.toFixed(3);
-        b.style.transform = `translate3d(${((v.x * 0.5 + 0.5) * W).toFixed(1)}px,${((-v.y * 0.5 + 0.5) * H).toFixed(1)}px,0)`;
+        P.push({ b, x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H });
       });
+      // rozetler üst üste binmesin: birbirinden itilir (kendi kaidesinin yakınında kalır)
+      const md = W < 420 ? 40 : 44;
+      for (let it = 0; it < 6; it++) for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
+        const A = P[i], B = P[j], dx = B.x - A.x, dy = B.y - A.y, d = Math.hypot(dx, dy) || 0.01;
+        if (d < md) { const k = (md - d) / 2 / d; A.x -= dx * k; A.y -= dy * k; B.x += dx * k; B.y += dy * k; }
+      }
+      for (const p of P) { p.b.style.display = 'flex'; p.b.style.opacity = nodeA.toFixed(3); p.b.style.transform = `translate3d(${p.x.toFixed(1)}px,${p.y.toFixed(1)}px,0)`; }
       // ada etiketi: yalnızca ilerideki adalar
       const ta = I.view && !focus && !this.dive && di > 0.5 && di < 2.7 ? clamp01(di * 2 - 1) * clamp01(2.7 - di) * clamp01(this.intro * 2 - 0.4) : 0;
       I.tagA = 0;

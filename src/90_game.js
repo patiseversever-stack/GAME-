@@ -707,6 +707,7 @@ function startStory(g) {
   // her dünyanın ilk adasından önce o dünyanın hikâyesi (ilk kez: önsözle birlikte)
   if (g % 8 === 0 && Lore.needWorld(g >> 3) && !window.__noLore) { UI.hideAll(); Lore.play(Lore.worldPages(g >> 3), () => startStory(g)); return; }
   const same = G.lv && G.lv.spec.kind === 'story' && G.lv.spec.g === g;
+  if (Save.data.lastG !== g) { Save.data.lastG = g; Save.save(); } // Gökyüzü bu adanın bölümünde açılır
   if (!same) G.hint = false;
   G.mode = 'story'; UI.hideAll(); UI.hud(true); $('#hud').classList.remove('endless');
   if (same && G.state === 'title') { G.state = 'ready'; G.readyT = 0; G.readyHint = false; G.uT = G.u; resetRun(); zifir.g.visible = !!G.zShown; updateHud(true); return; }

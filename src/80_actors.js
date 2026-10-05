@@ -494,7 +494,7 @@ class Zifir {
     // tütsü gibi yükselen gölge tülü
     this.wispT -= dt;
     if (this.M) this.applyMelt();
-    else if (this.wispT < 0) { this.wispT = st.burn > 0.05 ? 0.03 : 0.22; const wy = (0.62 * this.scaleK + bodyY) * ZIF_SCALE; if (st.burn > 0.05) { FX.smoke(st.x, wy, st.z, 1); if (Math.random() < 0.5) FX.ember(st.x, wy - 0.1, st.z); } else fxMix.spawn(st.x + (Math.random() - 0.5) * 0.1, wy, st.z + (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, 0.35, (Math.random() - 0.5) * 0.1, { c: [0.06, 0.04, 0.1], a: 0.4, s: 0.12, s1: 0.35, life: 1.2, drag: 0.8, t: 1 }); }
+    else if (this.wispT < 0 && !this.preview) { this.wispT = st.burn > 0.05 ? 0.03 : 0.22; const wy = (0.62 * this.scaleK + bodyY) * ZIF_SCALE; if (st.burn > 0.05) { FX.smoke(st.x, wy, st.z, 1); if (Math.random() < 0.5) FX.ember(st.x, wy - 0.1, st.z); } else fxMix.spawn(st.x + (Math.random() - 0.5) * 0.1, wy, st.z + (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, 0.35, (Math.random() - 0.5) * 0.1, { c: [0.06, 0.04, 0.1], a: 0.4, s: 0.12, s1: 0.35, life: 1.2, drag: 0.8, t: 1 }); }
   }
 }
 
