@@ -311,8 +311,8 @@ export const products: Product[] = [
     related: ['tnmg-160408', 'ccmt-09t304'],
   },
   {
-    slug: 'rcmt-1204mo',
-    code: 'RCMT 1204MO',
+    slug: 'rcmt-1204m0',
+    code: 'RCMT 1204M0',
     name: 'Torna elmas uç — yuvarlak, pozitif, Ø12',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
@@ -331,7 +331,7 @@ export const products: Product[] = [
     ],
     description:
       'Yuvarlak pozitif uç; radyüslü profillerde, kopya tornalamada ve kaba tornalamada kullanılır. Köşesi olmadığı için kenarı dayanıklıdır; aşınan bölge, uç döndürülerek yenilenir.',
-    keywords: ['rcmt', 'rcmt1204mo', 'rcmt1204m0', 'rcmt 1204', 'yuvarlak uç', 'elmas uç', 'torna ucu', 'karbür uç', 'insert'],
+    keywords: ['rcmt', 'rcmt1204m0', 'rcmt1204m0', 'rcmt 1204', 'yuvarlak uç', 'elmas uç', 'torna ucu', 'karbür uç', 'insert'],
     related: ['vcmt-160404', 'dnmg-150608'],
   },
 
@@ -1049,8 +1049,8 @@ export const products: Product[] = [
     related: ['alin-frezesi-45-63-mm'],
   },
   {
-    slug: 'rpmt-10t3mo',
-    code: 'RPMT 10T3MO',
+    slug: 'rpmt-10t3m0',
+    code: 'RPMT 10T3M0',
     name: 'Freze elmas uç — yuvarlak, pozitif, Ø10',
     category: 'frezeleme',
     subcategory: 'freze-uclari',
@@ -1069,8 +1069,8 @@ export const products: Product[] = [
     ],
     description:
       'Kopya (yuvarlak uçlu) frezelerde kullanılan Ø10 yuvarlak uç. Kalıp boşaltma, cep ve 3D yüzeylerde kaba işlemede kullanılır; aşınan bölge uç döndürülerek yenilenir.',
-    keywords: ['rpmt', 'rpmt10t3', 'rpmt10t3mo', 'rpmt10t3m0', 'yuvarlak uç', 'kopya ucu', 'freze ucu', 'elmas uç', 'insert', 'emr 5r'],
-    related: ['emr-5r-25-mm', 'rcmt-1204mo'],
+    keywords: ['rpmt', 'rpmt10t3', 'rpmt10t3m0', 'rpmt10t3m0', 'yuvarlak uç', 'kopya ucu', 'freze ucu', 'elmas uç', 'insert', 'emr 5r'],
+    related: ['emr-5r-25-mm', 'rcmt-1204m0'],
   },
 
   // ───────────────────────── FREZELEME · Freze çakıları ─────────────────────────
@@ -1151,12 +1151,12 @@ export const products: Product[] = [
       { label: 'Tip', value: 'Saplı kopya frezesi' },
       { label: 'Kesme çapı', value: '25 mm' },
       { label: 'Profil radyüsü', value: '5 mm' },
-      { label: 'Uyumlu uç', value: 'RPMT 10T3MO' },
+      { label: 'Uyumlu uç', value: 'RPMT 10T3M0' },
     ],
     description:
       'RPMT 10T3 yuvarlak uçlu saplı kopya frezesi. Kalıp ve 3D yüzeylerde kaba işleme, cep boşaltma ve rampalı frezelemede kullanılır.',
     keywords: ['emr', 'emr 5r', 'emr5r', 'kopya frezesi', 'yuvarlak uçlu freze', 'rpmt freze', 'takma uçlu freze', 'kalıp frezesi'],
-    related: ['rpmt-10t3mo', 'er32-pens'],
+    related: ['rpmt-10t3m0', 'er32-pens'],
   },
 
   // ───────────────────────── FREZELEME · Karbür parmak frezeler ─────────────────────────
