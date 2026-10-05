@@ -12,7 +12,7 @@ const DEPTH = 60;
 const HOLE_R = 12.6;
 
 /* ======================= Doku üreticiler ======================= */
-function canvas(w: number, h: number) {
+export function canvas(w: number, h: number) {
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
@@ -20,7 +20,7 @@ function canvas(w: number, h: number) {
 }
 
 /** Yükseklik kanvasından normal haritası üretir */
-function normalFrom(src: HTMLCanvasElement, strength = 2.2) {
+export function normalFrom(src: HTMLCanvasElement, strength = 2.2) {
   const w = src.width, h = src.height;
   const s = src.getContext('2d')!.getImageData(0, 0, w, h).data;
   const [c, g] = canvas(w, h);
@@ -264,7 +264,7 @@ function glowMaterial() {
 
 /* ======================= Talaş geometrisi ======================= */
 /** Yassı, ucu incelen kıvrık şerit (helis boyunca) */
-function chipRibbon(turns: number, radius: number, pitch: number, width: number, taper: number, segs = 56) {
+export function chipRibbon(turns: number, radius: number, pitch: number, width: number, taper: number, segs = 56) {
   const pos: number[] = [];
   const idx: number[] = [];
   for (let i = 0; i <= segs; i++) {
