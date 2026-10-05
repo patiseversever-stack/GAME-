@@ -166,6 +166,7 @@ body:has(.site-header.is-hidden) .ctool { top: 0; padding-top: max(12px, env(saf
   -webkit-appearance: none; appearance: none;
 }
 .ctool__search input::placeholder { color: #8b9098; }
+.ctool__search input:placeholder-shown { padding-right: 12px; }
 .ctool__search input::-webkit-search-cancel-button { display: none; }
 .ctool__search input:focus { outline: none; border-color: var(--tin); box-shadow: 0 0 0 3px rgba(217, 164, 65, 0.25); }
 .ctool__clear { position: absolute; right: 6px; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 10px; display: grid; place-items: center; color: var(--ink-3); }
