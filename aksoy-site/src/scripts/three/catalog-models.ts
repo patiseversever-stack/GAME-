@@ -15,7 +15,8 @@ const smooth = THREE.MathUtils.smoothstep;
 const lathe = (pts: [number, number][], seg = 96) => new THREE.LatheGeometry(pts.map(([r, y]) => V2(r, y)), seg);
 
 /* ======================= Elmas uç şekilleri (ISO 1832) ======================= */
-type Shape = 'C' | 'D' | 'V' | 'S' | 'T' | 'W' | 'R' | 'A';
+export type InsertShape = 'C' | 'D' | 'V' | 'S' | 'T' | 'W' | 'R' | 'A';
+type Shape = InsertShape;
 /** Eşkenar dörtgen: keskin köşe açısı α, iç teğet daire IC. Köşe 0 = keskin köşe (+X). */
 function rhombus(alphaDeg: number, ic: number) {
   const a = (alphaDeg * Math.PI) / 180;
@@ -23,12 +24,12 @@ function rhombus(alphaDeg: number, ic: number) {
   const hx = s * Math.cos(a / 2), hy = s * Math.sin(a / 2);
   return [V2(hx, 0), V2(0, hy), V2(-hx, 0), V2(0, -hy)];
 }
-function regular(n: number, ic: number, rot = 0) {
+export function regular(n: number, ic: number, rot = 0) {
   const R = ic / 2 / Math.cos(Math.PI / n);
   return Array.from({ length: n }, (_, i) => { const a = rot + (i * TAU) / n; return V2(Math.cos(a) * R, Math.sin(a) * R); });
 }
 /** APMT benzeri paralelkenar: kesme kenarı L, genişlik w, köşe açısı 85° */
-function parallelogram(L: number, w: number, deg = 85) {
+export function parallelogram(L: number, w: number, deg = 85) {
   const k = w / Math.tan((deg * Math.PI) / 180);
   const pts = [V2(0, 0), V2(L, 0), V2(L + k, w), V2(k, w)];
   const c = V2((L + k) / 2, w / 2);
@@ -49,7 +50,7 @@ function insertSpec(shape: Shape, positive: boolean): InsertSpec {
   }
 }
 /** Pozitif uçta yan yüzler aşağı doğru içe eğilir (boşluk açısı) */
-function applyClearance(g: THREE.Object3D, th: number, angle: number, minR: number) {
+export function applyClearance(g: THREE.Object3D, th: number, angle: number, minR: number) {
   if (!angle) return;
   const t = Math.tan(angle);
   g.traverse((o) => {
@@ -376,10 +377,10 @@ export const RENDER_KEYS = [
   'insert-C-n', 'insert-C-p', 'insert-D-n', 'insert-D-p', 'insert-V-n', 'insert-V-p', 'insert-S-n', 'insert-S-p',
   'insert-T-n', 'insert-T-p', 'insert-W-n', 'insert-R-p', 'insert-A-p',
   'groove-insert', 'thread-insert',
-  'holder-ext-C', 'holder-ext-D', 'holder-ext-V', 'holder-ext-W', 'holder-ext-T', 'holder-groove', 'holder-thread',
+  'holder-ext-C', 'holder-ext-D', 'holder-ext-V', 'holder-ext-V-s', 'holder-ext-W', 'holder-ext-T', 'holder-groove', 'holder-thread',
   'boring-bar-C', 'boring-bar-D',
   'drill-carbide', 'drill-hss', 'drill-u', 'center-drill', 'reamer',
-  'endmill', 'endmill-ball', 'facemill', 'facemill-shank', 'facemill-round',
+  'endmill', 'endmill-ball', 'facemill', 'facemill-45', 'facemill-shank', 'facemill-round',
   'tap-helis', 'tap-duz', 'tap-ovalama', 'collet', 'chuck-bt', 'pull-stud',
 ] as const;
 export type RenderKey = (typeof RENDER_KEYS)[number];
@@ -413,7 +414,7 @@ export function buildRenderModel(key: RenderKey, m = toolMaterials()): Posed {
     case 'holder-groove': { const g = buildGroovingHolder(m); g.rotation.set(0.42, -0.72, 0.06); wrap.add(g); return { obj: wrap, kind: 'holder' }; }
     case 'holder-thread': { const g = buildThreadHolder(m); g.rotation.set(0.5, -0.95, 0.08); wrap.add(g); return { obj: wrap, kind: 'holder' }; }
     case 'boring-bar-C': case 'boring-bar-D': { const g = buildBoringBar(m, key.slice(-1) as Shape); g.rotation.set(0.45, -0.85, 0.06); wrap.add(g); return { obj: wrap, kind: 'holder' }; }
-    case 'drill-carbide': return rotary(buildDrill(m, { D: 10, Lf: 52, L: 103 }));
+    case 'drill-carbide': return rotary(buildDrill(m, { D: 10, Lf: 52, L: 103, mat: m.altin }));
     case 'drill-hss': return rotary(buildDrill(m, { D: 10, Lf: 87, L: 133, mat: m.tin, shankMat: m.tin, tip: 118, coolant: false }));
     case 'drill-u': {
       const d = buildUDrill();
