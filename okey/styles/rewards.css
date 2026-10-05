@@ -9,6 +9,10 @@
 /* boyanırken yer tutucu pirinç halka */
 .fav::after { content: ''; position: absolute; inset: -6%; border-radius: 50%; border: calc(var(--fav, 48px) * .07) solid #b38a3a; box-shadow: inset 0 0 0 1px rgba(255, 240, 200, .35), 0 2px 6px rgba(0, 0, 0, .5); transition: opacity .35s; pointer-events: none; }
 .fav.is-ready::after { opacity: 0; }
+/* çerçeve boyanırken: dönen ışıklı pirinç halka (düz halka yerine yükleniyor parıltısı) */
+.fav:not(.is-ready)::after { border: 0; background: conic-gradient(#7a5f2c, #f3dc9a 9%, #b38a3a 18%, #6e5427 50%, #8d6d32 75%, #7a5f2c); -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - var(--fav, 48px) * .075), #000 calc(100% - var(--fav, 48px) * .07)); mask: radial-gradient(farthest-side, transparent calc(100% - var(--fav, 48px) * .075), #000 calc(100% - var(--fav, 48px) * .07)); animation: fav-sweep 1.6s linear infinite; }
+@keyframes fav-sweep { to { transform: rotate(1turn); } }
+@media (prefers-reduced-motion: reduce) { .fav:not(.is-ready)::after { animation: none; } }
 
 /* ───────── seviye rozeti tonları ───────── */
 .lvl { display: grid; place-items: center; min-width: 20px; height: 20px; padding: 0 5px; border-radius: 10px; font: 900 .66rem/1 var(--font-ui); font-variant-numeric: tabular-nums; color: #3a2207; background: linear-gradient(180deg, #ffe6b0, #c98a3a); box-shadow: 0 0 0 2px #0a120e, 0 2px 6px rgba(0, 0, 0, .5); }
