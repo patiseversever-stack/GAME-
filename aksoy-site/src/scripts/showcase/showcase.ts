@@ -555,6 +555,17 @@ export async function startShowcase(
     return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H, behind: z > 0 };
   }
 
+  // Bir nesnenin ekran konumu ve r model biriminin ekrandaki piksel karşılığı
+  const sv = new THREE.Vector3();
+  function projectObj(o: THREE.Object3D, r: number) {
+    o.getWorldPosition(v);
+    const dist = -v.clone().applyMatrix4(camera.matrixWorldInverse).z;
+    o.getWorldScale(sv);
+    v.project(camera);
+    const px = (r * sv.x * H) / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * Math.max(0.01, dist));
+    return { x: (v.x * 0.5 + 0.5) * W, y: (-v.y * 0.5 + 0.5) * H, r: px, behind: dist < 0 };
+  }
+
   function apply(dt: number) {
     const k = intro.k;
     L += (Ltarget - L) * Math.min(1, dt * 4);
@@ -685,9 +696,19 @@ export async function startShowcase(
     const off = mob ? 54 : 80, dy = mob ? 26 : 30;
     const ease = 1 - Math.exp(-dt * 11);
     const placed: Rect[] = [];
-    for (const p of pins) {
+    // Örtülmemesi gerekenler: diğer etiketlerin noktaları ve sahnedeki asıl parçalar (uçlar, vidalar)
+    const Ps = pins.map((p) => project(p.anchor));
+    const box = (x: number, y: number, r: number): Rect => ({ l: x - r, t: y - r, r: x + r, b: y + r });
+    const dots = pins.map((p, i) => ((S[p.group] as number) > 0.35 && !Ps[i].behind ? box(Ps[i].x, Ps[i].y, 26) : null));
+    const parts: Rect[] = [];
+    if (S.cIns > 0.35) for (const ip of drill.inserts) {
+      const a = projectObj(ip.insert, 5.2), b = projectObj(ip.screw, 2.4);
+      if (!a.behind) parts.push(box(a.x, a.y, a.r));
+      if (!b.behind) parts.push(box(b.x, b.y, b.r));
+    }
+    for (const [pi, p] of pins.entries()) {
       const o = S[p.group] as number;
-      const P = project(p.anchor);
+      const P = Ps[pi];
       const on = o > 0.35 && !P.behind;
       p.el.classList.toggle('is-on', on);
       const st = p.st;
@@ -699,34 +720,37 @@ export async function startShowcase(
       }
       const { w, h } = sz;
       const L0 = p.side === 'left', v = p.down ? 1 : -1, step = h + GAP;
-      const ys = [v * dy, -v * dy, v * (dy + step), -v * (dy + step), v * (dy + 2 * step), -v * (dy + 2 * step)];
-      const cand = (i: number) => ({ left: Math.floor(i / 2) % 2 ? !L0 : L0, cy: ys[(i % 2) + 2 * Math.floor(i / 4)] });
+      // Adaylar tercih sırasıyla: yakın/uzak çizgi × kat (yükseklik) × taraf × yukarı/aşağı
+      const cands: { left: boolean; cy: number; ox: number }[] = [];
+      for (const ox of [off, off + 70]) for (let k = 0; k < 3; k++) for (const left of [L0, !L0]) for (const sg of [v, -v]) cands.push({ left, cy: sg * (dy + k * step), ox });
       // Kart ekrandan taşacaksa yatayda içeri kaydırılır (çizgi kısalır)
-      const xOf = (left: boolean) => {
-        const x = left ? -off - w : off;
+      const xOf = (c: { left: boolean; ox: number }) => {
+        const x = c.left ? -c.ox - w : c.ox;
         return Math.min(Math.max(x, 8 - P.x), Math.max(8 - P.x, W - 8 - w - P.x));
       };
       const rectOf = (i: number): Rect => {
-        const c = cand(i);
-        const l = P.x + xOf(c.left), t = P.y + c.cy - h / 2;
+        const c = cands[i];
+        const l = P.x + xOf(c), t = P.y + c.cy - h / 2;
         return { l, t, r: l + w, b: t + h };
       };
       const cost = (i: number) => {
-        const r = rectOf(i), c0 = cand(i);
+        const r = rectOf(i), c0 = cands[i];
         let c = i * 80;
         for (const q of placed) c += overlap(r, q) * 5;
         for (const q of obstacles) c += overlap(r, q) * 3;
+        for (const q of parts) c += overlap(r, q) * 3;
+        dots.forEach((q, j) => { if (q && j !== pi) c += overlap(r, q) * 4; });
         c += (Math.max(0, 8 - r.t) + Math.max(0, r.b - (H - 8))) * h * 8;
-        c += Math.abs(xOf(c0.left) - (c0.left ? -off - w : off)) * h * 2;
+        c += Math.abs(xOf(c0) - (c0.left ? -c0.ox - w : c0.ox)) * h * 2;
         if (P.x > r.l - 16 && P.x < r.r + 16 && P.y > r.t - 16 && P.y < r.b + 16) c += 40000; // kart kendi noktasını örtmesin
         return c;
       };
       let best = 0, bestC = Infinity;
-      for (let i = 0; i < 12; i++) { const c = cost(i); if (c < bestC) { bestC = c; best = i; } }
+      for (let i = 0; i < cands.length; i++) { const c = cost(i); if (c < bestC) { bestC = c; best = i; } }
       const fresh = st.ci < 0;
       if (fresh || (on && cost(st.ci) > bestC + 150)) st.ci = best;
-      const { left, cy } = cand(st.ci);
-      const tx = xOf(left), ty = cy - h / 2;
+      const { left, cy } = cands[st.ci];
+      const tx = xOf(cands[st.ci]), ty = cy - h / 2;
       if (fresh) { st.x = tx; st.y = ty; } else { st.x += (tx - st.x) * ease; st.y += (ty - st.y) * ease; }
       p.el.classList.toggle('pin--left', left);
       p.el.style.transform = `translate(${P.x}px, ${P.y}px)`;
