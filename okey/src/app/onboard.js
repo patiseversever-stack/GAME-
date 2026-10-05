@@ -4,6 +4,7 @@ import { ROSTER, avatarSVG } from '../ui/avatars.js';
 import { framedAvatar } from '../ui/frame-ui.js';
 import { checkName, NAME_MAX } from '../meta/name-filter.js';
 import { icon } from '../ui/icons.js';
+import { istanbulSVG } from '../ui/illustrations.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
@@ -22,7 +23,7 @@ export function openOnboarding(o) {
     el.setAttribute('aria-modal', 'true');
     el.setAttribute('aria-label', edit ? 'Profili düzenle' : 'Hoş geldin');
     el.innerHTML = `
-      <div class="ob__bg" aria-hidden="true"><i class="ob-amb"></i><i class="ob-amb ob-amb--2"></i></div>
+      <div class="ob__bg" aria-hidden="true"><i class="ob-amb"></i><i class="ob-amb ob-amb--2"></i><div class="ob-ill">${istanbulSVG()}</div></div>
       <div class="ob__wrap">
         <section class="ob__left">
           <div class="ob-preview"><i class="ob-glow"></i><span class="ob-fav">${framedAvatar(av, frame)}</span><i class="ob-floor"></i></div>

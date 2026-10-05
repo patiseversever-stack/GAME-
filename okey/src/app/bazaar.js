@@ -6,6 +6,7 @@ import { rewardArt, hydrateArt, toneOf } from './reward-art.js';
 import { requestRewardedAd } from './ads.js';
 import { Celebration } from '../ui/effects.js';
 import { icon } from '../ui/icons.js';
+import { arcadeSVG } from '../ui/illustrations.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const fmt = (n) => n.toLocaleString('tr-TR');
@@ -35,6 +36,7 @@ const FEATURED = [
   ['tiles', 'cini', 'Taş takımı'],
   ['frame', 'tezhip', 'Zanaat'],
 ];
+let ARCADE = '';
 const shopList = (kind) => KINDS.find((k) => k[0] === kind)[2].filter((it) => it.ads);
 const ARCH = '<svg viewBox="0 0 40 44" aria-hidden="true"><defs><pattern id="bz2p" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" fill="#1d3e93"/><path d="M4 1l.9 2.1L7 4l-2.1.9L4 7l-.9-2.1L1 4l2.1-.9z" fill="#f4f0e6"/></pattern><linearGradient id="bz2g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".5" stop-color="#d7ac4a"/><stop offset="1" stop-color="#8a6020"/></linearGradient></defs><path d="M2 44V20Q2 6 20 1Q38 6 38 20V44H31V21Q31 11 20 7Q9 11 9 21V44Z" fill="url(#bz2p)" stroke="url(#bz2g)" stroke-width="1.4"/><path d="M9 44V21Q9 11 20 7Q31 11 31 21V44Z" fill="rgba(255,190,90,.22)"/></svg>';
 
@@ -109,7 +111,7 @@ export function openBazaar(o) {
     main.innerHTML = `<section class="bz2-hero" aria-roledescription="vitrin">${FEATURED.map(([k, id, eyebrow], i) => {
       const it = itemOf(k, id);
       const s = status(k, it);
-      return `<article class="bz2-slide${i === heroIdx ? ' is-on' : ''}" data-k="${k}" data-id="${id}" style="${toneVars(k, id)}">
+      return `<article class="bz2-slide${i === heroIdx ? ' is-on' : ''}" data-k="${k}" data-id="${id}" style="${toneVars(k, id)}"><div class="bz2-slide__ill">${ARCADE || (ARCADE = arcadeSVG())}</div>
         <div class="bz2-slide__copy"><span class="bz2-eyebrow">${esc(eyebrow)}</span><h3>${esc(it.name)}</h3><p>${esc(it.desc)}</p>
           <span class="bz2-slide__cta"><span class="bz2-btn">${s.owned ? 'Sende' : 'İncele'}</span>${s.owned ? '' : `<small>${s.n}/${s.need} reklam</small>`}</span></div>
         <div class="bz2-slide__art${k === 'effect' ? ' is-fx' : ''}">${k === 'effect' ? '<canvas></canvas>' : rewardArt(k, it, avatar)}</div></article>`;

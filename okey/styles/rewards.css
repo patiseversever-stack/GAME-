@@ -217,3 +217,4 @@
 .h7hero__edit { position: absolute; z-index: 3; right: -4px; bottom: 2px; width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 0; border-radius: 50%; color: #111; background: #f6f2ea; box-shadow: 0 4px 12px rgba(0, 0, 0, .45); cursor: pointer; }
 .h7hero__edit svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .ob input, .ob input:focus, .ob input:focus-visible { outline: none !important; box-shadow: none !important; }
+.ob-ill { position: absolute; left: 0; right: 0; bottom: 0; height: 34vh; opacity: .5; --sky-far: rgba(84, 52, 22, .85); --sky-near: #120b05; --sky-lit: #ffcc7a; --sky-water: #d89a48; -webkit-mask: linear-gradient(180deg, transparent, #000 40%); mask: linear-gradient(180deg, transparent, #000 40%); }

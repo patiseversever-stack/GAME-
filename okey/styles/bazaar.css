@@ -191,3 +191,6 @@
 .seg [data-v].is-locked { color: rgba(255, 255, 255, .45); }
 .seg [data-v].is-locked svg { width: 11px; height: 11px; margin-right: 4px; vertical-align: -1px; fill: none; stroke: currentColor; stroke-width: 2.4; }
 .home3.h4 .h4-bazaar + .h4-icons { margin-left: 0 !important; }
+/* vitrin: Kapalıçarşı kemerleri (illustrations.js) */
+.bz2-slide__ill { position: absolute; inset: 0; opacity: .34; mix-blend-mode: screen; pointer-events: none; --arc-a: #c0563e; --arc-b: #f3e2c2; --arc-lit: #ffcf7a; -webkit-mask: linear-gradient(90deg, transparent 18%, #000 60%); mask: linear-gradient(90deg, transparent 18%, #000 60%); }
+.bz2-slide__ill .ill-lamp { animation: bz-flick 2.6s ease-in-out infinite; }

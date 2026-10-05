@@ -136,3 +136,16 @@
   .rs3-parts li:nth-child(n + 3) { display: none; }
   .rs3-btn { height: 36px; }
 }
+
+/* İstanbul silueti (illustrations.js) */
+.ill { display: block; width: 100%; height: 100%; }
+.ill-lights rect { animation: ill-twinkle 5s ease-in-out infinite; }
+.ill-water path { animation: ill-shimmer 6s ease-in-out infinite; }
+@keyframes ill-twinkle { 0%, 100% { opacity: .9; } 45% { opacity: .35; } 55% { opacity: 1; } }
+@keyframes ill-shimmer { 0%, 100% { opacity: .15; transform: translateX(0); } 50% { opacity: .55; transform: translateX(14px); } }
+.rs3-ill { position: absolute; left: 0; right: 0; bottom: 0; height: 38vh; opacity: 0; transform: translateY(18px); transition: opacity 1.6s .3s, transform 2s cubic-bezier(.2, .8, .2, 1) .3s;
+  --sky-far: rgba(84, 52, 22, .9); --sky-near: #120b05; --sky-lit: #ffcc7a; --sky-water: #d89a48; -webkit-mask: linear-gradient(180deg, transparent, #000 35%); mask: linear-gradient(180deg, transparent, #000 35%); }
+.rs3--lose .rs3-ill { --sky-far: rgba(30, 62, 78, .95); --sky-near: #050c10; --sky-lit: #9fd8ff; --sky-water: #4a8ab0; }
+.rs3--draw .rs3-ill { --sky-far: rgba(70, 64, 56, .9); --sky-near: #0c0a08; --sky-lit: #f0e2c0; --sky-water: #a89a80; }
+.rs3.is-in .rs3-ill { opacity: .62; transform: none; }
+.rs3.is-calm .ill-lights rect, .rs3.is-calm .ill-water path { animation: none; }

@@ -12,6 +12,7 @@ import { Celebration } from '../ui/effects.js';
 import { icon } from '../ui/icons.js';
 import { levelFromXp } from '../meta/profile.js';
 import { showLevelUp } from './levelup.js';
+import { istanbulSVG } from '../ui/illustrations.js';
 
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 const idsOf = (g) => (g.tiles || g).map((x) => (typeof x === 'object' ? x.t : x));
@@ -110,7 +111,7 @@ export function resultScreen(host, o, history, historySheet) {
   }
 
   el.innerHTML = `
-    <div class="rs3__bg" aria-hidden="true"><i class="rs3-amb"></i><i class="rs3-amb rs3-amb--2"></i><i class="rs3-vig"></i></div>
+    <div class="rs3__bg" aria-hidden="true"><i class="rs3-amb"></i><i class="rs3-amb rs3-amb--2"></i><div class="rs3-ill">${istanbulSVG()}</div><i class="rs3-vig"></i></div>
     <canvas class="rs3__fx" aria-hidden="true"></canvas>
     <header class="rs3__top"><span class="rs3-eyebrow">${esc(eyebrow)}</span>
       <nav class="rs3__dots" aria-label="Sayfalar"><button data-p="0" aria-label="Sonuç"><i></i></button><button data-p="1" aria-label="Puan durumu"><i></i></button></nav></header>
