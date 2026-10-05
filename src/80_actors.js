@@ -295,16 +295,24 @@ function updatePrints(dt) { const a = PRINTS.alpha.array; let ch = false; for (l
 function clearPrints() { PRINTS.alpha.array.fill(0); PRINTS.alpha.needsUpdate = true; }
 
 /* ---------- Zifir ---------- */
-const ZIF_VERT = `uniform float uTime, uWob, uBurn; varying vec3 vN; varying vec3 vV; varying vec3 vP; varying vec3 vL;
+const ZIF_VERT = `uniform float uTime, uWob, uBurn, uMelt; varying vec3 vN; varying vec3 vV; varying vec3 vP; varying vec3 vL;
 void main(){
-  vec3 p = position;
+  vec3 p = position, nn = normal;
   float n = sin(p.x * 11.0 + uTime * 5.3) * sin(p.y * 9.0 + uTime * 4.1) * sin(p.z * 10.0 + uTime * 6.2);
-  p += normal * n * 0.035 * (uWob + uBurn * 1.8);
+  p += normal * n * 0.035 * (uWob + uBurn * 1.8 + uMelt * 2.2);
+  if (uMelt > 0.0) {
+    // erime: gövde çöker, taban jel gibi yayılır, kenarda sarkan loblar
+    float yb = clamp((p.y + 0.3) / 0.6, 0.0, 1.0), ang = atan(p.z, p.x);
+    float lob = 0.5 + 0.5 * sin(ang * 5.0 + 1.3) * sin(ang * 3.0 - uTime * 0.6);
+    p.y = -0.3 + (p.y + 0.3) * mix(1.0, 0.3 + 0.12 * lob, uMelt);
+    p.xz *= 1.0 + uMelt * (1.0 - yb) * (0.3 + 0.35 * lob);
+    nn = normalize(mix(normal, vec3(normal.x * 0.45, 1.0, normal.z * 0.45), uMelt * 0.55));
+  }
   vec4 w = modelMatrix * vec4(p, 1.0);
-  vN = normalize(mat3(modelMatrix) * normal); vV = normalize(cameraPosition - w.xyz); vP = w.xyz; vL = position;
+  vN = normalize(mat3(modelMatrix) * nn); vV = normalize(cameraPosition - w.xyz); vP = w.xyz; vL = position;
   gl_Position = projectionMatrix * viewMatrix * w;
 }`;
-const ZIF_FRAG = `uniform vec3 uRim, uSunDir, uSunCol; uniform float uBurn, uTime, uLit, uFade; varying vec3 vN; varying vec3 vV; varying vec3 vP; varying vec3 vL;
+const ZIF_FRAG = `uniform vec3 uRim, uSunDir, uSunCol; uniform float uBurn, uTime, uLit, uFade, uMelt, uDiss; varying vec3 vN; varying vec3 vV; varying vec3 vP; varying vec3 vL;
 float h(vec3 p){ return fract(sin(dot(p, vec3(12.9898, 78.233, 37.719))) * 43758.5453); }
 float n3(vec3 p){ vec3 i = floor(p), f = fract(p); f = f*f*(3.0-2.0*f);
   return mix(mix(mix(h(i), h(i+vec3(1,0,0)), f.x), mix(h(i+vec3(0,1,0)), h(i+vec3(1,1,0)), f.x), f.y), mix(mix(h(i+vec3(0,0,1)), h(i+vec3(1,0,1)), f.x), mix(h(i+vec3(0,1,1)), h(i+vec3(1,1,1)), f.x), f.y), f.z); }
@@ -312,13 +320,22 @@ void main(){
   vec3 N = normalize(vN), V = normalize(vV);
   float fr = pow(1.0 - max(dot(N, V), 0.0), 2.4);
   vec3 col = vec3(0.012, 0.009, 0.022);
-  col += uRim * fr * 1.6;
-  col += uRim * 0.25 * pow(max(N.y, 0.0), 3.0);
-  vec3 H = normalize(uSunDir + V); float sp = pow(max(dot(N, H), 0.0), 70.0);
-  col += uSunCol * sp * (0.6 + uLit * 2.5);
+  col += uRim * fr * 1.6 * (1.0 - 0.78 * uMelt);
+  col += uRim * 0.25 * pow(max(N.y, 0.0), 3.0) * (1.0 - 0.8 * uMelt);
+  vec3 H = normalize(uSunDir + V); float sp = pow(max(dot(N, H), 0.0), mix(70.0, 260.0, uMelt));
+  col += uSunCol * sp * (0.6 + uLit * 2.5 * (1.0 - 0.75 * uMelt));
   float cr = n3(vL * 9.0 + vec3(0.0, uTime * 0.8, 0.0)) * 0.65 + n3(vL * 21.0 - uTime) * 0.35;
   float crack = smoothstep(0.55, 0.62, cr) * (1.0 - smoothstep(0.62, 0.75, cr));
-  col += vec3(4.0, 1.3, 0.25) * crack * uBurn * 2.2 + vec3(1.5, 0.45, 0.08) * uBurn * fr * 2.0;
+  col += vec3(4.0, 1.3, 0.25) * crack * uBurn * 2.2 * (1.0 - 0.45 * uMelt) + vec3(1.5, 0.45, 0.08) * uBurn * fr * 2.0 * (1.0 - 0.7 * uMelt);
+  if (uMelt > 0.0) { // jel: ıslak parlama ve içten sızan renk
+    vec3 H2 = normalize(V + vec3(0.25, 0.9, 0.15)); col += vec3(0.95, 0.92, 1.0) * pow(max(dot(N, H2), 0.0), 220.0) * 1.5 * uMelt;
+    col += uRim * (1.0 - fr) * 0.16 * uMelt;
+  }
+  if (uDiss > 0.0) { // buharlaşma: gürültülü kenarlarla delinir, kenarlar kor gibi yanar
+    float dn = n3(vL * 13.0 + vec3(0.0, uTime * 0.7, 0.0)) * 0.7 + n3(vL * 31.0) * 0.3, th = uDiss * 1.15 - 0.08;
+    if (dn < th) discard;
+    float e = 1.0 - smoothstep(th, th + 0.07, dn); col += vec3(3.4, 1.05, 0.25) * e * 2.2 + uRim * e * 1.2;
+  }
   gl_FragColor = vec4(col * uFade, 1.0);
 }`;
 const RING_FRAG = `uniform float uV, uA, uTime; varying vec2 vUv;
@@ -342,7 +359,7 @@ void main(){
 class Zifir {
   constructor() {
     this.g = new THREE.Group(); this.k = new THREE.Group(); this.k.scale.setScalar(ZIF_SCALE); this.g.add(this.k); this.body = new THREE.Group(); this.k.add(this.body);
-    this.u = { uTime: U.uTime, uWob: { value: 0.5 }, uBurn: { value: 0 }, uRim: { value: new THREE.Color(SKINS[Save.data.skin]?.c || SKINS[0].c) }, uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color(1, 0.9, 0.7) }, uLit: { value: 0 }, uFade: { value: 1 } };
+    this.u = { uTime: U.uTime, uWob: { value: 0.5 }, uBurn: { value: 0 }, uRim: { value: new THREE.Color(SKINS[Save.data.skin]?.c || SKINS[0].c) }, uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color(1, 0.9, 0.7) }, uLit: { value: 0 }, uFade: { value: 1 }, uMelt: { value: 0 }, uDiss: { value: 0 } };
     this.blob = new THREE.Mesh(new THREE.SphereGeometry(0.3, 40, 28), new THREE.ShaderMaterial({ vertexShader: ZIF_VERT, fragmentShader: ZIF_FRAG, uniforms: this.u }));
     this.blob.position.y = 0.3; this.body.add(this.blob);
     // bir şeyin arkasında kalınca (kemer çatısı, kule, bulut) ince parlak dış çizgisi görünür; dünya nesneleri opak kalır
@@ -374,7 +391,7 @@ class Zifir {
   setCostume(key) {
     if (this.cos) { this.body.remove(this.cos.g); this.cos.g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); this.cos = null; }
     if (!key) return;
-    try { this.cos = buildCostume(key, this.inkMat || (this.inkMat = new THREE.ShaderMaterial({ vertexShader: ZIF_VERT, fragmentShader: ZIF_FRAG, uniforms: this.u }))); this.body.add(this.cos.g); } catch (e) { console.warn('kostüm', e); this.cos = null; }
+    try { this.cos = buildCostume(key, this.inkMat || (this.inkMat = new THREE.ShaderMaterial({ vertexShader: ZIF_VERT, fragmentShader: ZIF_FRAG, uniforms: { ...this.u, uMelt: { value: 0 }, uDiss: (this.cosDiss = { value: 0 }), uBurn: (this.cosBurn = { value: 0 }) } }))); this.body.add(this.cos.g); } catch (e) { console.warn('kostüm', e); this.cos = null; }
   }
   reset() {
     this.phase = 0; this.hop = 0; this.land = 0; this.yaw = 0; this.blinkT = 2; this.blink = 0; this.squash = 0; this.sqV = 0; this.shiver = 0;
@@ -386,6 +403,27 @@ class Zifir {
   kick(v) { this.sqV += v; }
   // kurtulunca sevinç zıplaması (canlılık açıksa)
   relief() { if (Perf.Q.life) this.hopT = 0.55; }
+  // erime sahnesi (Melt kontrol eder): gövde, gözler, ayaklar, mürekkep gölü
+  applyMelt() {
+    const M = this.M, sag = M.sag, dis = M.diss;
+    this.u.uMelt.value = sag; this.u.uDiss.value = dis; this.u.uWob.value = 0.4 + M.boil; this.u.uBurn.value = 1;
+    const sh = M.shiver; this.body.position.set((Math.random() - 0.5) * sh, 0, (Math.random() - 0.5) * sh); this.body.scale.setScalar(1 + M.puff);
+    this.sil.visible = false; this.ringU.uA.value = 0; this.blob.visible = dis < 0.999;
+    for (const f of this.feet) f.scale.set(1, 0.6, 1.35).multiplyScalar(Math.max(0.001, 1 - sag * 2.2));
+    // önce korkuyla açılır, sonra sıkıca kapanır; yüzeyle birlikte aşağı kayar
+    this.eyes.forEach((e, i) => {
+      const sx = i ? 1 : -1, k = Math.max(0.001, 1 - smoothstep(0.15, 0.6, dis));
+      e.position.set(sx * (0.105 + sag * 0.05), lerp(0.38, 0.15, sag), lerp(0.25, 0.43, sag)); e.scale.set(0.95 * k, 1.25 * M.eyes * k, 0.55 * k);
+    });
+    for (const p of this.pupils) p.scale.setScalar(M.eyes > 1 ? 0.55 : 1);
+    this.aura.scale.setScalar((1 + sag * 1.5) * (1 - 0.55 * dis)); this.aura.material.opacity = 0.95 * (1 - Math.pow(clamp01(M.pool), 2));
+  }
+  endMelt() {
+    this.M = null; this.u.uMelt.value = 0; this.u.uDiss.value = 0; this.sil.visible = true; this.blob.visible = true; this.body.scale.setScalar(1);
+    this.eyes.forEach((e, i) => { e.position.set((i ? 1 : -1) * 0.105, 0.38, 0.25); e.scale.set(0.95, 1.25, 0.55); });
+    for (const f of this.feet) f.scale.set(1, 0.6, 1.35);
+    this.aura.scale.setScalar(1); this.aura.material.opacity = 0.85;
+  }
   update(dt, st) {
     // st: {x, z, yaw, moving, speed, burn, meter, look:{x,y,z}|null, mood}
     const g = this.g;
@@ -446,6 +484,7 @@ class Zifir {
     for (const p of this.pupils) { p.position.x = this.lookX - this.idleYaw * 0.03; p.position.y = -0.005 + this.lookY; p.scale.setScalar(st.burn > 0.05 ? 0.7 : 1); }
     // shader
     this.u.uBurn.value = damp(this.u.uBurn.value, st.burn, 14, dt);
+    if (this.cosBurn) this.cosBurn.value = this.M ? Math.max(0.15, 1 - this.M.sag) : this.u.uBurn.value;
     this.u.uLit.value = this.u.uBurn.value;
     this.u.uWob.value = st.moving ? 0.7 : 0.4;
     if (this.cos) this.cos.update(dt, U.uTime.value, st.moving, this.hopT > 0);
@@ -454,7 +493,8 @@ class Zifir {
     this.ringU.uA.value = damp(this.ringU.uA.value, st.meter < 0.995 || st.burn > 0 ? 1 : 0, 6, dt);
     // tütsü gibi yükselen gölge tülü
     this.wispT -= dt;
-    if (this.wispT < 0) { this.wispT = st.burn > 0.05 ? 0.03 : 0.22; const wy = (0.62 * this.scaleK + bodyY) * ZIF_SCALE; if (st.burn > 0.05) { FX.smoke(st.x, wy, st.z, 1); if (Math.random() < 0.5) FX.ember(st.x, wy - 0.1, st.z); } else fxMix.spawn(st.x + (Math.random() - 0.5) * 0.1, wy, st.z + (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, 0.35, (Math.random() - 0.5) * 0.1, { c: [0.06, 0.04, 0.1], a: 0.4, s: 0.12, s1: 0.35, life: 1.2, drag: 0.8, t: 1 }); }
+    if (this.M) this.applyMelt();
+    else if (this.wispT < 0) { this.wispT = st.burn > 0.05 ? 0.03 : 0.22; const wy = (0.62 * this.scaleK + bodyY) * ZIF_SCALE; if (st.burn > 0.05) { FX.smoke(st.x, wy, st.z, 1); if (Math.random() < 0.5) FX.ember(st.x, wy - 0.1, st.z); } else fxMix.spawn(st.x + (Math.random() - 0.5) * 0.1, wy, st.z + (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, 0.35, (Math.random() - 0.5) * 0.1, { c: [0.06, 0.04, 0.1], a: 0.4, s: 0.12, s1: 0.35, life: 1.2, drag: 0.8, t: 1 }); }
   }
 }
 

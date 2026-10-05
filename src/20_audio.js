@@ -276,6 +276,19 @@ class AudioEngine {
   shadowBird(n = 0) { if (!this.ok) return; const t = this.t, f = 1050 + (n % 7) * 85; this.noiseHit(t, 0.16, 0.03, { type: 'bandpass', f: 900, f1: 2600, q: 1.4, a: 0.02 }); this.osc('sine', f, t + 0.04, 0.07, 0.02, null, { f1: f * 1.3, verb: 0.4 }); this.osc('sine', f * 1.19, t + 0.13, 0.08, 0.016, null, { f1: f * 1.5, verb: 0.4 }); }
   // Kuş Kalkanı: kanat girdabı + iki notalı yumuşak ötüş
   flockOn(n = 8) { if (!this.ok) return; const t = this.t; for (let i = 0; i < Math.min(12, n + 3); i++) this.noiseHit(t + i * 0.03, 0.14, 0.028, { type: 'bandpass', f: 900 + Math.random() * 1900, f1: 600, q: 1.6, a: 0.01 }); this.noiseHit(t, 0.7, 0.05, { type: 'lowpass', f: 500, f1: 1800, a: 0.2, verb: 0.4 }); this.osc('sine', 392, t + 0.05, 0.7, 0.035, null, { f1: 523, a: 0.08, verb: 0.7 }); this.osc('sine', 494, t + 0.14, 0.7, 0.028, null, { f1: 659, a: 0.08, verb: 0.7 }); }
+  // Zifir'in eriyişi: cızırtı ve iç çekiş, jel damla şıpırtıları, buhar, son ışığın çanı
+  meltStart() {
+    if (!this.ok) return; const t = this.t;
+    this.noiseHit(t, 1.8, 0.045, { type: 'bandpass', f: 900, f1: 5200, q: 0.8, a: 0.45, verb: 0.3 });
+    this.osc('sine', 240, t + 0.05, 1.7, 0.045, null, { f1: 95, a: 0.18, verb: 0.6 }); this.osc('triangle', 352, t + 0.12, 1.3, 0.02, null, { f1: 150, a: 0.25, verb: 0.6 });
+  }
+  meltPlop(r = 0.05) {
+    if (!this.ok) return; const now = performance.now(); if (now - (this.lastPlop || 0) < 45) return; this.lastPlop = now;
+    const t = this.t, f = Math.max(160, 560 - r * 3400 + Math.random() * 140);
+    this.osc('sine', f, t, 0.13, 0.045, null, { f1: f * 0.38, a: 0.003 }); this.noiseHit(t, 0.03, 0.018, { type: 'bandpass', f: 2600, q: 2 });
+  }
+  meltHiss() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 1.1, 0.035, { type: 'highpass', f: 2800, a: 0.25, verb: 0.25 }); this.noiseHit(t + 0.2, 0.9, 0.02, { type: 'bandpass', f: 6000, f1: 9000, q: 1, a: 0.2 }); }
+  meltSpark() { if (!this.ok) return; const t = this.t; this.bell(mtof(88), t, 2.6, 0.032, { ratio: 2.0, index: 0.9, verb: 0.9 }); this.bell(mtof(95), t + 0.22, 2.4, 0.018, { ratio: 3.0, index: 0.7, verb: 0.9 }); }
   // Karagöz perdesi: nareke (kamış düdük), def, konuşma tıkırtısı, kafa atma
   khNareke() {
     if (!this.ok) return; const t = this.t + 0.05;

@@ -312,6 +312,14 @@ const Cam = {
       if (!F.wh && k > 0.15) { F.wh = true; audio.whoosh(false, 1.4, 0.05); }
       if (k > 0.86 && !F.out) { F.out = true; this.endFlight(); }
       if (F.t >= F.dur) { this.flight = null; this.endFlight(); }
+    } else if (this.death && G.state === 'fail') {
+      // ölüm sahnesi: oyun açısından seçilen yakın plana süzülür, sonra yavaşça yaklaşıp yana döner
+      const D = this.death, P = D.to; D.t += dtR;
+      const a = Ease.inOutSine(clamp01(D.t / D.inT)), dr = clamp01((D.t - D.inT * 0.5) / 3.2);
+      let ty = P.yaw + P.orbit * dr; while (ty - D.from.yaw > PI) ty -= TAU; while (ty - D.from.yaw < -PI) ty += TAU;
+      c.target.set(lerp(D.from.target.x, P.target.x, a), lerp(D.from.target.y, D.ty, a), lerp(D.from.target.z, P.target.z, a));
+      c.dist = lerp(D.from.dist, P.dist * (1 - 0.08 * dr), a); c.pitch = lerp(D.from.pitch, P.pitch - 0.05 * dr, a); c.yaw = lerp(D.from.yaw, ty, a); c.fov = lerp(D.from.fov, P.fov, a);
+      c.yaw += Math.sin(D.t * 1.3) * 0.005 * a; c.pitch += Math.sin(D.t * 1.7 + 1) * 0.004 * a; // hafif el kamerası
     } else if (G.state === 'photo' && G.photo) {
       // fotoğraf modu: serbest yörünge
       const b = this.base, P = G.photo;
@@ -548,6 +556,7 @@ function startPlay() {
   if (lv.sun.twin) tip('t-twin', 'İki güneş: <em>renkli gölge</em> yarı korur. Gerçek karanlık ikisinin kesişimi.', 4.6);
 }
 function retry(fromComplete = false) {
+  Melt.end();
   if (G.mode === 'endless' && !fromComplete) { startEndless(); return; }
   UI.hide('fail'); UI.hide('complete'); UI.hud(true);
   resetRun();
@@ -561,12 +570,12 @@ function retry(fromComplete = false) {
 function failLevel() {
   if (G.state !== 'play') return;
   G.state = 'fail'; G.stateT = 0; G.fShown = false;
-  G.hitStop = 0.12; G.slowT = 0.8; G.slowK = 0.3; G.trauma = 0.6; G.ca = 0.02; G.ecl.active = false;
+  G.hitStop = 0.12; G.slowT = 0.8; G.slowK = 0.3; G.trauma = 0.22; G.ca = 0.02; G.ecl.active = false;
   audio.setSizzle(0); audio.fail(); haptic([30, 40, 70]);
   const x = zifir.g.position.x, z = zifir.g.position.z;
-  FX.burst(x, 0.35, z, 36, { c: [0.04, 0.03, 0.06], a: 0.7, s: 0.32, s1: 1.0, life: 1.4, sp: 2.2, up: 1, drag: 2.2, t: 1 });
-  for (let i = 0; i < 22; i++) FX.ember(x, 0.35, z);
-  Cam.cinema(Cam.pose({ target: new THREE.Vector3(x, 0.4, z), dist: Cam.base.dist * 0.55 }), 0.9, Ease.outCubic);
+  FX.burst(x, 0.35, z, 16, { c: [0.04, 0.03, 0.06], a: 0.6, s: 0.28, s1: 0.9, life: 1.2, sp: 1.6, up: 1, drag: 2.2, t: 1 });
+  for (let i = 0; i < 10; i++) FX.ember(x, 0.35, z);
+  Melt.start(); // sinematik eriyiş: kamera, jel damlalar, buhar
   Marks.died(G.lv, G.s);
   ShadowBirds.scatter();
   G.lastPct = clamp01(G.s / G.lv.length); G.newBest = 0;
@@ -577,6 +586,7 @@ function failLevel() {
   }
 }
 function showFail() {
+  Melt.bars(false);
   const lv = G.lv, pct = Math.round(clamp01(G.s / lv.length) * 100);
   const lines = ['Zifir buharlaştı', 'Güneş acımasızdı', 'Gölge yetmedi', 'Biraz daha karanlık…'];
   if (G.mode === 'endless') {

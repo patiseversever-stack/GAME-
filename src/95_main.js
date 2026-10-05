@@ -270,6 +270,7 @@ function update(dt, dtR) {
     }
   }
   if (G.zShown && G.zPop < 1 && (G.state === 'title' || G.state === 'intro' || G.state === 'ready')) { G.zPop = Math.min(1, G.zPop + dtR / 0.7); zifir.g.scale.setScalar(Math.max(0.001, Ease.outElastic(G.zPop))); }
+  if (Melt.active && G.state !== 'fail') Melt.end();
   switch (G.state) {
     case 'title': case 'intro': {
       const t = G.stateT;
@@ -294,11 +295,9 @@ function update(dt, dtR) {
     case 'play': if (dt > 0) stepPlay(dt, dtR); break;
     case 'complete': updateComplete(dt, dtR); break;
     case 'fail': {
-      const t = G.stateT;
-      const k = clamp01(t / 0.35); zifir.g.scale.setScalar(Math.max(0.001, 1 - Ease.inCubic(k)));
-      if (t > 0.35) zifir.g.visible = false;
-      G.desat = damp(G.desat, 0.45, 4, dtR);
-      if (t > 0.95 && !G.fShown) { G.fShown = true; showFail(); }
+      Melt.update(dtR);
+      G.desat = damp(G.desat, G.fShown ? 0.35 : 0.06, 3, dtR);
+      if (!G.fShown && Melt.t > Melt.cardT) { G.fShown = true; showFail(); }
       break;
     }
     case 'rewind': {
@@ -379,6 +378,7 @@ canvas.addEventListener('pointerdown', (e) => {
   if (G.state === 'intro' && Cam.flight) { skipIntroFlight(); return; }
   requestGyro();
   if (G.state === 'complete') { if (G.compStage < 5 && G.mode !== 'endless') G.ffwd = true; return; }
+  if (G.state === 'fail' && !G.fShown) { Melt.skip(); return; } // ölüm sahnesini atla
   if (G.state === 'fail' && G.fShown) { retry(); return; }
   if (G.drag) return;
   G.drag = { id: e.pointerId, x: e.clientX, t: performance.now(), v: 0 };
@@ -400,7 +400,7 @@ canvas.addEventListener('pointermove', (e) => {
 });
 // sinematik girişi atla: dokunuş (tuval ya da alt şerit), Boşluk/Enter
 function skipIntroFlight() { if (!Cam.flight) return; Cam.skipFlight(); G.stateT = Math.max(G.stateT, G.introDur - 0.9); if (G.view && !G.view.introDone) G.view.introT = Math.max(G.view.introT, 1.9); audio.ui(); }
-$('#cineBars .cbBot').addEventListener('pointerdown', (e) => { e.stopPropagation(); skipIntroFlight(); });
+$('#cineBars .cbBot').addEventListener('pointerdown', (e) => { e.stopPropagation(); if (G.state === 'fail') Melt.skip(); else skipIntroFlight(); });
 const endDrag = (e) => { Photo.up(e); if (G.state === 'map' || SkyMap.drag) SkyMap.up(e); if (Theater.drag || (Theater.ptrs && Theater.ptrs.size)) Theater.up(e); const d = G.drag; if (!d || e.pointerId !== d.id) return; G.uVel = performance.now() - d.t < 70 ? clamp(d.v, -3.5, 3.5) : 0; G.drag = null; };
 canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointercancel', endDrag); canvas.addEventListener('lostpointercapture', endDrag);
 window.addEventListener('keydown', (e) => {
@@ -418,7 +418,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { if (G.state === 'play') act.dash(); }
   else if (e.code === 'KeyF') { if (G.state === 'play') ShadowBirds.release(); }
   else if (e.code === 'ArrowDown' || e.code === 'KeyS') { G.holdWait = true; if (G.state === 'ready') startPlay(); }
-  else if (e.code === 'Space') { if (G.state === 'play') { if (G.lv.spec.eclipse && G.ecl.charge >= 1) triggerEclipse(); else act.dash(); } else if (G.state === 'ready') startPlay(); else if (G.state === 'complete' && G.compStage >= 5) nextFromComplete(); else if (G.state === 'fail' && G.fShown) retry(); else if (G.state === 'title') $('#btnPlay').click(); }
+  else if (e.code === 'Space') { if (G.state === 'play') { if (G.lv.spec.eclipse && G.ecl.charge >= 1) triggerEclipse(); else act.dash(); } else if (G.state === 'ready') startPlay(); else if (G.state === 'complete' && G.compStage >= 5) nextFromComplete(); else if (G.state === 'fail') { if (G.fShown) retry(); else Melt.skip(); } else if (G.state === 'title') $('#btnPlay').click(); }
   else if (e.code === 'Escape' || e.code === 'KeyP') { if (G.state === 'photo') Photo.close(); else if (G.state === 'paused') resume(); else pause(); }
 });
 window.addEventListener('keyup', (e) => { if (['ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD'].includes(e.code)) G.keyDir = 0; if (e.code === 'ArrowDown' || e.code === 'KeyS') G.holdWait = false; });
@@ -917,7 +917,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Wardrobe, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
