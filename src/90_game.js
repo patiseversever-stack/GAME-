@@ -15,6 +15,7 @@ const PATIENCE_MAX = 3.0, PATIENCE_REGEN = 0.18, FLY_DUR = 5.6;
 // güneşin merhameti: aynı adada 2. başarısızlıktan sonra her denemede ışık %10 daha az yakar (en fazla %50), gölgede can daha hızlı dolar
 const helpFor = (lv) => { const n = lv.spec.kind === 'story' ? Save.data.fails[lv.spec.g] || 0 : 0; return n < 2 ? 1 : Math.max(0.5, 1 - 0.1 * (n - 1)); };
 const zifir = new Zifir();
+zifir.setCostume(Save.data.costume || '');
 const drops = new DropViews();
 /* ---------- iz: yandığın yerde kül lekesi, en uzağa gittiğin yerde altın çizgi ----------
    Her kayıp bir ilerleme gibi hissettirsin: oyuncu nerede zorlandığını ve rekorunu yolda görür. */
@@ -72,9 +73,11 @@ const L1 = new THREE.Vector3(), L2 = new THREE.Vector3(), PA = {};
    Zifir gölgede yürüdükçe mürekkepten kuşlar gelip ardında süzülür; ışığa çıkınca birer birer ürküp kaçarlar.
    Kapıya kaç kuşla vardığın bitiş ekranında sayılır (adaya özel rekor). Zorluğu değiştirmez; yalnızca gölgede
    kalmayı ödüllendiren bir sürü. Tek çizim çağrısı (12 örnekli InstancedMesh), kanat çırpma GPU'da. */
-const BIRD_MAX = 12, BIRD_JOIN = 1.2, BIRD_FLEE = 0.3;
+const BIRD_MAX = 12, BIRD_JOIN = 1.2, BIRD_FLEE = 0.3, FLOCK_MIN = 4;
+// Kuş Kalkanı: biriken sürü bir dokunuşla salınır, Zifir'in üstünde dönen bir gölge kubbesi olur (kuş başına süre)
+const flockAvail = (lv) => !!lv && (lv.spec.kind !== 'story' || lv.spec.g >= 2);
 const ShadowBirds = {
-  n: 0, shadeT: 0, lightT: 0, birds: [], last: 0, best: 0, rec: false,
+  n: 0, shadeT: 0, lightT: 0, birds: [], last: 0, best: 0, rec: false, canT: 0, canDur: 0, canN: 0, shK: 0,
   init() {
     // gövde + kuyruk + iki kanat (kanat ucu |x|'e göre GPU'da çırpılır)
     const V = [0, 0, 0.15, -0.035, 0, -0.02, 0.035, 0, -0.02, -0.035, 0, -0.02, 0.035, 0, -0.02, 0, 0, -0.12, 0, 0, -0.07, -0.065, 0, -0.2, 0.065, 0, -0.2];
@@ -88,15 +91,41 @@ const ShadowBirds = {
           if (aWing > 0.5) { float a = sin(aFlap.x) * aFlap.y + 0.12; float k = max(0.0, r - 0.03); p.x = sign(p.x) * (0.03 + k * cos(a)); p.y = k * sin(a); }
           vE = aWing * clamp(r / 0.23, 0.0, 1.0);
           gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(p, 1.0); }`,
-      fragmentShader: `uniform vec3 uRim; varying float vE; void main(){ gl_FragColor = vec4(mix(vec3(0.018, 0.012, 0.035), uRim * 0.35, smoothstep(0.55, 1.0, vE)), 1.0); }`,
-      uniforms: { uRim: zifir.u.uRim }, side: THREE.DoubleSide,
+      fragmentShader: `uniform vec3 uRim; uniform float uGlow; varying float vE; void main(){ gl_FragColor = vec4(mix(vec3(0.018, 0.012, 0.035), uRim * (0.35 + uGlow * 1.6), smoothstep(0.55 - uGlow * 0.3, 1.0, vE)), 1.0); }`,
+      uniforms: { uRim: zifir.u.uRim, uGlow: { value: 0 } }, side: THREE.DoubleSide,
     });
     this.mesh = new THREE.InstancedMesh(g, mat, BIRD_MAX); this.mesh.frustumCulled = false; this.mesh.renderOrder = 5;
     this.mesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
     for (let i = 0; i < BIRD_MAX; i++) this.birds.push({ st: 0, p: new THREE.Vector3(), v: new THREE.Vector3(), a: 0, r: 1, h: 1.5, w: 1, ph: Math.random() * 10, amp: 0, t: 0, yaw: 0, roll: 0 });
+    // kubbenin yere düşen gölgesi (oyuncuya korunduğunu açıkça gösterir)
+    const sc = document.createElement('canvas'); sc.width = sc.height = 128; const sx = sc.getContext('2d'), gr = sx.createRadialGradient(64, 64, 0, 64, 64, 64);
+    gr.addColorStop(0, 'rgba(10,6,22,0.9)'); gr.addColorStop(0.55, 'rgba(10,6,22,0.82)'); gr.addColorStop(0.8, 'rgba(10,6,22,0.35)'); gr.addColorStop(1, 'rgba(10,6,22,0)'); sx.fillStyle = gr; sx.fillRect(0, 0, 128, 128);
+    const stx = new THREE.CanvasTexture(sc);
+    this.shade = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: stx, transparent: true, depthWrite: false, opacity: 0, polygonOffset: true, polygonOffsetFactor: -2 }));
+    this.shade.rotation.x = -PI / 2; this.shade.renderOrder = 3; this.shade.visible = false; scene.add(this.shade);
     this.hideAll(); scene.add(this.mesh);
   },
-  hideAll() { for (const b of this.birds) b.st = 0; this.n = 0; this.shadeT = 0; this.lightT = 0; this.sync(); },
+  hideAll() { for (const b of this.birds) b.st = 0; this.n = 0; this.shadeT = 0; this.lightT = 0; this.canT = 0; this.shK = 0; if (this.shade) this.shade.visible = false; this.sync(); this.hud(true); },
+  // sürüyü sal: kuşlar Zifir'in tepesinde halka olur, süre boyunca güneş onu yakamaz; sonra dağılırlar (sayımdan düşer)
+  release() {
+    if (G.state !== 'play' || this.canT > 0 || !flockAvail(G.lv)) return false;
+    const n = this.count(); if (n < FLOCK_MIN) return false;
+    const z = zifir.g.position; this.canN = n; this.canT = this.canDur = 0.6 + 0.18 * n;
+    let k = 0; const a0 = U.uTime.value * 4.4;
+    for (const b of this.birds) if (b.st === 1 || b.st === 2) { b.st = 4; b.t = 0; b.a = a0 + (k++ / n) * TAU; }
+    this.n = 0; this.shadeT = 0; G.flockUsed = (G.flockUsed || 0) + 1;
+    audio.flockOn && audio.flockOn(n); haptic([10, 24, 10]); zifir.kick(-1.6); this.hud(true);
+    return true;
+  },
+  endCanopy() { this.canT = 0; for (const b of this.birds) if (b.st === 4) this.flee(b); audio.shadowFlee && audio.shadowFlee(); this.hud(true); },
+  hud(force = false) {
+    const el = this._btn || (this._btn = $('#flockBtn')); if (!el) return;
+    const show = flockAvail(G.lv) && (G.state === 'play' || G.state === 'ready'), n = this.canT > 0 ? 0 : this.count(), key = `${show}|${n}|${this.canT > 0}`;
+    if (!force && el.dataset.k === key) return; el.dataset.k = key;
+    el.classList.toggle('show', show); el.classList.toggle('ready', n >= FLOCK_MIN); el.classList.toggle('active', this.canT > 0);
+    el.style.setProperty('--p', (this.canT > 0 ? 1 : n / BIRD_MAX).toFixed(3)); el.querySelector('b').textContent = n;
+    if (show && n >= FLOCK_MIN && G.state === 'play') tip('t-flock', 'Gölge Kuşları sürüne katıldı. Işığa yakalanınca <em>Sürü</em>’ye bas: kanatlarıyla üstünde gölge olurlar. Kullandığın kuşlar sürüden ayrılır. (Klavye: F)', 5);
+  },
   count() { let n = 0; for (const b of this.birds) if (b.st === 1 || b.st === 2) n++; return n; },
   join() {
     const b = this.birds.find((q) => q.st === 0); if (!b) return;
@@ -117,7 +146,8 @@ const ShadowBirds = {
     if (!G.lv || dt <= 0) return;
     if (G.state !== 'play' && !this.birds.some((b) => b.st)) { if (this.dirty) { this.dirty = false; this.sync(); } return; } // sürü yokken iş yok
     this.dirty = true;
-    if (G.state === 'play' && G.T > G.lv.walkDelay) {
+    if (this.canT > 0 && (this.canT -= dt) <= 0) this.endCanopy();
+    if (G.state === 'play' && G.T > G.lv.walkDelay && !(this.canT > 0)) {
       if (G.f > 0.1 && G.breathT <= 0) { this.shadeT = 0; if ((this.lightT += dt) > BIRD_FLEE) { this.lightT = 0; this.fleeOne(); } }
       else { this.lightT = Math.max(0, this.lightT - dt * 0.5); if (G.f === 0 && !G.holding && !G.waiting && (this.shadeT += dt) > BIRD_JOIN) { this.shadeT = 0; this.join(); } }
     }
@@ -127,7 +157,14 @@ const ShadowBirds = {
       if (!b.st) continue;
       b.t += dt;
       if (b.st === 3) { b.v.y += 2.5 * dt; b.v.multiplyScalar(1 + dt * 0.6); if (b.t > 2.4) { b.st = 0; continue; } b.amp = 1.1; }
-      else {
+      else if (b.st === 4) {
+        // kubbe: Zifir'in tepesinde sıkı, hızlı dönen halka
+        b.a += 4.4 * dt;
+        const rr = 0.8 + 0.12 * Math.sin(b.ph * 3.1), tx = z.x + Math.cos(b.a) * rr, ty = 1.3 + Math.sin(t * 7 + b.ph) * 0.09, tz = z.z + Math.sin(b.a) * rr;
+        const k = 1 - Math.exp(-14 * dt), gx = clamp((tx - b.p.x) * 14, -22, 22), gy = clamp((ty - b.p.y) * 14, -22, 22), gz = clamp((tz - b.p.z) * 14, -22, 22);
+        b.v.x += (gx - b.v.x) * k; b.v.y += (gy - b.v.y) * k; b.v.z += (gz - b.v.z) * k;
+        b.amp = 1.25;
+      } else {
         b.a += b.w * dt;
         const tx = cx + Math.cos(b.a) * b.r, ty = b.h + Math.sin(t * 1.3 + b.ph) * 0.12, tz = cz + Math.sin(b.a) * b.r * 0.8;
         const dx = tx - b.p.x, dy = ty - b.p.y, dzz = tz - b.p.z, d = Math.hypot(dx, dy, dzz) || 1e-4;
@@ -142,6 +179,13 @@ const ShadowBirds = {
       if (hs > 0.05) { let dy = Math.atan2(b.v.x, b.v.z) - b.yaw; while (dy > PI) dy -= TAU; while (dy < -PI) dy += TAU; b.yaw += dy * (1 - Math.exp(-8 * dt)); b.roll = damp(b.roll, clamp(-dy * 2.5, -0.7, 0.7), 6, dt); }
       b.ph += dt * (7 + b.amp * 7); if (b.ph > 6283.185) b.ph -= 6283.185;
     }
+    // kubbenin gölgesi: süre azaldıkça daralır (ne kadar kaldığı görülür)
+    const life = this.canT > 0 ? this.canT / this.canDur : 0;
+    this.shK = damp(this.shK, this.canT > 0 ? 1 : 0, this.canT > 0 ? 10 : 5, dt);
+    this.mesh.material.uniforms.uGlow.value = this.shK;
+    if (this.shK > 0.01) { const sh = this.shade; sh.visible = true; sh.position.set(z.x, 0.04, z.z); sh.scale.setScalar((2.4 + 1.3 * life) * (0.94 + 0.06 * Math.sin(t * 9))); sh.material.opacity = 0.78 * this.shK; }
+    else if (this.shade.visible) this.shade.visible = false;
+    this.hud();
     this.sync();
   },
   sync() {
@@ -149,7 +193,7 @@ const ShadowBirds = {
     this.birds.forEach((b, i) => {
       if (!b.st) { m.makeScale(0, 0, 0); this.mesh.setMatrixAt(i, m); this.flap.setXY(i, 0, 0); return; }
       const pitch = clamp(-b.v.y * 0.12, -0.5, 0.5);
-      e.set(pitch, b.yaw, b.roll, 'YXZ'); q.setFromEuler(e); sc.setScalar(b.st === 1 ? Math.min(1, b.t * 2) : 1);
+      e.set(pitch, b.yaw, b.roll, 'YXZ'); q.setFromEuler(e); sc.setScalar(b.st === 1 ? Math.min(1, b.t * 2) : b.st === 4 ? 1.4 : 1);
       m.compose(b.p, q, sc); this.mesh.setMatrixAt(i, m); this.flap.setXY(i, b.ph, b.amp);
     });
     this.mesh.instanceMatrix.needsUpdate = true; this.flap.needsUpdate = true;
@@ -629,7 +673,13 @@ function showComplete() {
 function nextFromComplete() {
   audio.ui();
   if (G.mode === 'daily') { openMap(); return; }
-  const g = G.lv.spec.g;
+  const g = G.lv.spec.g, ch = g >> 3;
+  // takımyıldızı tamamlanınca ninninin yeni dizesi; finalde ninninin tamamı ve son
+  if (G.mode === 'story' && g % 8 === 7 && !Save.seen('lore-c' + ch)) {
+    const pages = ['c' + ch]; if (g === STORY_LEVELS - 1) pages.push('end'); else if (Lore.needWorld(ch + 1)) pages.push('w' + (ch + 1));
+    UI.hide('complete'); Lore.play(pages, () => { if (g === STORY_LEVELS - 1) { UI.show('ending'); G.state = 'ending'; } else { UI.hud(true); enterLevel(levelSpec(g + 1)); } });
+    return;
+  }
   if (g === STORY_LEVELS - 1) { UI.hide('complete'); UI.show('ending'); G.state = 'ending'; return; }
   UI.hide('complete'); UI.hud(true);
   enterLevel(levelSpec(g + 1));
@@ -644,6 +694,8 @@ function startEndless() {
 }
 function startDaily() { G.mode = 'daily'; UI.hideAll(); UI.hud(true); $('#hud').classList.remove('endless'); enterLevel(dailySpec(dateNum()), { quick: true }); }
 function startStory(g) {
+  // her dünyanın ilk adasından önce o dünyanın hikâyesi (ilk kez: önsözle birlikte)
+  if (g % 8 === 0 && Lore.needWorld(g >> 3) && !window.__noLore) { UI.hideAll(); Lore.play(Lore.worldPages(g >> 3), () => startStory(g)); return; }
   const same = G.lv && G.lv.spec.kind === 'story' && G.lv.spec.g === g;
   if (!same) G.hint = false;
   G.mode = 'story'; UI.hideAll(); UI.hud(true); $('#hud').classList.remove('endless');

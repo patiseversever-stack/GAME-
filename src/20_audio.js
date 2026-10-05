@@ -274,6 +274,33 @@ class AudioEngine {
   chime() { if (!this.ok) return; const t = this.t; [72, 76, 79, 84].forEach((m, i) => this.bell(mtof(m), t + i * 0.09, 1.1, 0.05, { ratio: 2.0, index: 1.2, verb: 0.8 })); }
   // gölge kuşu: kanat hışırtısı + kısa iki notalı ötüş (sürü büyüdükçe incelir) · ürküp kaçış
   shadowBird(n = 0) { if (!this.ok) return; const t = this.t, f = 1050 + (n % 7) * 85; this.noiseHit(t, 0.16, 0.03, { type: 'bandpass', f: 900, f1: 2600, q: 1.4, a: 0.02 }); this.osc('sine', f, t + 0.04, 0.07, 0.02, null, { f1: f * 1.3, verb: 0.4 }); this.osc('sine', f * 1.19, t + 0.13, 0.08, 0.016, null, { f1: f * 1.5, verb: 0.4 }); }
+  // Kuş Kalkanı: kanat girdabı + iki notalı yumuşak ötüş
+  flockOn(n = 8) { if (!this.ok) return; const t = this.t; for (let i = 0; i < Math.min(12, n + 3); i++) this.noiseHit(t + i * 0.03, 0.14, 0.028, { type: 'bandpass', f: 900 + Math.random() * 1900, f1: 600, q: 1.6, a: 0.01 }); this.noiseHit(t, 0.7, 0.05, { type: 'lowpass', f: 500, f1: 1800, a: 0.2, verb: 0.4 }); this.osc('sine', 392, t + 0.05, 0.7, 0.035, null, { f1: 523, a: 0.08, verb: 0.7 }); this.osc('sine', 494, t + 0.14, 0.7, 0.028, null, { f1: 659, a: 0.08, verb: 0.7 }); }
+  // Karagöz perdesi: nareke (kamış düdük), def, konuşma tıkırtısı, kafa atma
+  khNareke() {
+    if (!this.ok) return; const t = this.t + 0.05;
+    [[76, 0.13], [79, 0.1], [77, 0.1], [76, 0.13], [74, 0.1], [76, 0.34]].reduce((at, [m, d]) => {
+      const f = mtof(m); this.osc('square', f, at, d + 0.06, 0.016, null, { f1: f * 1.03, a: 0.012, verb: 0.35, detune: 6 }); this.osc('sine', f * 2, at, d + 0.04, 0.012, null, { f1: f * 2.06, a: 0.01, verb: 0.3 });
+      return at + d;
+    }, t);
+    this.khDef(t); this.khDef(t + 0.44, 0.7);
+  }
+  khDef(at = null, k = 1) {
+    if (!this.ok) return; const t = at === null ? this.t : at;
+    this.osc('sine', 120, t, 0.16, 0.07 * k, null, { f1: 70 });
+    this.noiseHit(t, 0.05, 0.03 * k, { type: 'lowpass', f: 700 });
+    for (let i = 0; i < 3; i++) this.noiseHit(t + 0.01 + i * 0.025, 0.12, 0.022 * k, { type: 'bandpass', f: 6200 + i * 900, q: 2.5, verb: 0.2 });
+  }
+  khBlip(who) {
+    if (!this.ok) return; const t = this.t, f = (who === 'K' ? 150 : 225) * (0.92 + Math.random() * 0.2);
+    this.osc('triangle', f, t, 0.055, 0.02, null, { f1: f * (0.9 + Math.random() * 0.25), a: 0.004 });
+  }
+  khBonk() {
+    if (!this.ok) return; const t = this.t;
+    this.osc('sine', 540, t, 0.2, 0.11, null, { f1: 190 }); this.osc('triangle', 820, t, 0.08, 0.04, null, { f1: 400 });
+    this.noiseHit(t, 0.07, 0.07, { type: 'bandpass', f: 1600, q: 1.4 });
+    this.osc('sine', 1500, t + 0.12, 0.6, 0.026, null, { f1: 420, curve: 'lin', a: 0.02, verb: 0.3 });
+  }
   shadowFlee() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 0.28, 0.035, { type: 'bandpass', f: 2200, f1: 700, q: 1.2, a: 0.01 }); }
   // havai fişek: yükselen ıslık, patlama gümbürtüsü (uzaktan, yankılı), çıtırtı
   fwLaunch() { if (!this.ok) return; const t = this.t; this.noiseHit(t, 1.0, 0.02, { type: 'bandpass', f: 800, f1: 3000, q: 7, a: 0.3, verb: 0.35 }); this.osc('sine', 650, t, 0.95, 0.01, null, { f1: 1800, a: 0.35, verb: 0.35 }); }

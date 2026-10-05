@@ -123,6 +123,7 @@ function stepPlay(dt, dtR) {
   const onBridge = lv.bridges.some((b) => G.s > b.s0 + 0.05 && G.s < b.s1);
   let f = 0;
   if (G.T > lv.walkDelay && !onBridge && G.ecl.amt < 0.5) f = exposureNow(lv, PA.x, PA.z, PA.nx, PA.nz);
+  if (ShadowBirds.canT > 0) f = 0; // Kuş Kalkanı: sürünün gölgesi
   G.f = f;
   const dashing = act.dashT > 0, fm = flareMul(lv, G.T) * act.burnMul();
   if (G.auto && G.autoDive && lv.spec.dash && act.canDash() && (f > 0 || wisps.items.some((w) => w.state === 1 && Math.hypot(w.x - PA.x, w.z - PA.z) < 1.4))) act.dash();
@@ -405,6 +406,7 @@ canvas.addEventListener('pointerup', endDrag); canvas.addEventListener('pointerc
 window.addEventListener('keydown', (e) => {
   audio.unlock();
   if (TUT.open) { TUT.key(e); return; }
+  if (KH.open || Lore.open) { const o = KH.open ? KH : Lore; if (e.code === 'Escape') o.finish(); else if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') { e.preventDefault(); o.tap(); } return; }
   if (e.repeat && (e.code === 'Space')) return;
   if (G.state === 'film') { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') Film.skip(); return; }
   if (G.state === 'intro' && Cam.flight && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) { skipIntroFlight(); return; }
@@ -414,6 +416,7 @@ window.addEventListener('keydown', (e) => {
   if (e.code === 'ArrowLeft' || e.code === 'KeyA') { G.keyDir = -1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowRight' || e.code === 'KeyD') { G.keyDir = 1; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { if (G.state === 'play') act.dash(); }
+  else if (e.code === 'KeyF') { if (G.state === 'play') ShadowBirds.release(); }
   else if (e.code === 'ArrowDown' || e.code === 'KeyS') { G.holdWait = true; if (G.state === 'ready') startPlay(); }
   else if (e.code === 'Space') { if (G.state === 'play') { if (G.lv.spec.eclipse && G.ecl.charge >= 1) triggerEclipse(); else act.dash(); } else if (G.state === 'ready') startPlay(); else if (G.state === 'complete' && G.compStage >= 5) nextFromComplete(); else if (G.state === 'fail' && G.fShown) retry(); else if (G.state === 'title') $('#btnPlay').click(); }
   else if (e.code === 'Escape' || e.code === 'KeyP') { if (G.state === 'photo') Photo.close(); else if (G.state === 'paused') resume(); else pause(); }
@@ -550,7 +553,29 @@ function buildMap() {
     b.addEventListener('click', () => { if (!ok) { toast(`<em>${s.name}</em> rengi için ${CHAPTERS[i - 1].name} takımyıldızındaki 24 yıldızı topla.`, 2.8); return; } audio.ui(); Save.data.skin = i; Save.save(); zifir.setSkin(i); buildMap(); if (SkyMap.inited) SkyMap.refresh(); });
     sk.appendChild(b);
   });
+  const wb = document.createElement('button'); wb.className = 'skin ward tap'; wb.style.pointerEvents = 'auto'; wb.title = 'Gardırop';
+  wb.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 6a2 2 0 1 1 2 2c-1 0-2 1-2 2M12 10 3 17h18Z"/></svg>'; wb.addEventListener('click', () => Wardrobe.open()); sk.appendChild(wb);
 }
+// Zifir'in gardırobu: tiyatroda açılan gölge kostümleri
+const Wardrobe = {
+  open() { audio.ui(); this.build(); $('#wardrobe').classList.add('on'); },
+  close() { audio.ui(); $('#wardrobe').classList.remove('on'); Save.data.seenCos = (Save.data.costumes || []).slice(); Save.save(); },
+  build() {
+    const own = Save.data.costumes || [], seen = Save.data.seenCos || [], grid = $('#wgrid'); grid.innerHTML = '';
+    const items = [{ key: '', name: 'Kostümsüz', icon: 'M12 5a7 7 0 1 0 0.1 0' }, ...COSTUMES];
+    for (const c of items) {
+      const ok = !c.key || own.includes(c.key), el = document.createElement('button');
+      el.className = 'wc tap' + ((Save.data.costume || '') === c.key ? ' sel' : '') + (ok ? '' : ' lock') + (ok && c.key && !seen.includes(c.key) ? ' new' : '');
+      const how = !c.key ? 'saf gölge' : ok ? 'giy' : c.act === 'karagoz' ? 'Karagöz’ü izle' : `Tiyatro · “${ST_ACTS[c.act].riddle}”`;
+      el.innerHTML = `<svg viewBox="0 0 24 24"><path d="${c.icon}"/></svg><b>${c.name}</b><small>${how}</small>`;
+      el.addEventListener('click', () => { if (!ok) { audio.clunk(); toast(c.act === 'karagoz' ? 'Tiyatroda <em>Karagöz ile Hacivat</em>’ı izleyince açılır.' : `Gölge Tiyatrosu’nda <em>“${ST_ACTS[c.act].riddle}”</em> sahnesini çöz.`, 2.6); return; } this.wear(c.key); });
+      grid.appendChild(el);
+    }
+  },
+  wear(key) { Save.data.costume = key; Save.save(); zifir.setCostume(key); zifir.kick(-2.5); audio.pop(5); this.build(); },
+};
+$('#wClose').addEventListener('click', (e) => { e.stopPropagation(); Wardrobe.close(); });
+$('#wardrobe').addEventListener('pointerdown', (e) => { if (e.target.id === 'wardrobe') Wardrobe.close(); });
 function refreshToggles() {
   const names = { auto: 'Otomatik', low: 'Düşük', mid: 'Orta', high: 'Yüksek', ultra: 'Ultra' };
   $$('[data-set]').forEach((el) => {
@@ -574,6 +599,7 @@ const bind = (id, fn) => $(id).addEventListener('click', (e) => { e.stopPropagat
 function nextStoryG() { if (TEST_ALL) { for (let g = 0; g < STORY_LEVELS; g++) if (!Save.data.levels[g]) return g; return 0; } return Math.min(Save.data.unlocked, STORY_LEVELS - 1); }
 bind('#btnPlay', () => { audio.ui(); UI.hide('title'); startStory(nextStoryG()); });
 bind('#btnMapT', () => openMap());
+bind('#btnLoreT', () => Lore.openBook());
 bind('#btnSetT', () => { audio.ui(); refreshToggles(); UI.show('settings'); });
 bind('#btnPhoto', () => Photo.open());
 bind('#phClose', () => Photo.close());
@@ -616,7 +642,11 @@ bind('#thReplay', () => Theater.replay());
 bind('#thHint', () => Theater.hint());
 bind('#thHelp', () => Theater.help());
 document.querySelectorAll('#thChips b').forEach((c, k) => c.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); Theater.selectG(k); }));
-bind('#thNext', () => { Theater.cardShown = false; Theater.next(); });
+bind('#thNext', () => {
+  const i = Theater.idx, go = () => Theater.next(); Theater.cardShown = false;
+  // sahne sonrası Karagöz ile Hacivat atışması (bir kez)
+  if (KH.has(i)) { $('#theater').classList.remove('solved'); KH.play(i, go); } else go();
+});
 bind('#mapPrev', () => { audio.ui(); SkyMap.go(Math.round(SkyMap.tf) - 1); });
 bind('#mapNext', () => { audio.ui(); SkyMap.go(Math.round(SkyMap.tf) + 1); });
 let wheelT = 0;
@@ -628,6 +658,7 @@ bind('#btnHowT', () => { audio.ui(); TUT.show('title'); });
 bind('#btnHowS', () => { audio.ui(); TUT.show('settings'); });
 bind('#btnHowP', () => { audio.ui(); TUT.show('pause'); });
 $('#eclipseBtn').addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); triggerEclipse(); });
+$('#flockBtn').addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); if (!ShadowBirds.release() && G.state === 'play') { const b = $('#flockBtn'); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); } });
 $('#dashBtn').addEventListener('pointerdown', (e) => { e.stopPropagation(); audio.unlock(); if (!act.dash() && G.state === 'play') { const b = $('#dashBtn'); b.classList.remove('nope'); void b.offsetWidth; b.classList.add('nope'); } });
 
 /* =====================================================================
@@ -716,7 +747,8 @@ function frame(now) {
   audio.update(dtR, G.state === 'play');
   const onMap = G.state === 'map' && SkyMap.active, onTh = G.state === 'theater' && Theater.active;
   if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
-  if (!window.__noRender && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; if (Photo.shot) Photo.capture(); } catch (e) { reportError(e); } }
+  // hikâye kartı opakken 3B çizilmez
+  if (!window.__noRender && !Lore.opaque && !KH.opaque && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onMap ? mapScene : onTh ? stScene : scene, onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; if (Photo.shot) Photo.capture(); } catch (e) { reportError(e); } }
   // güvenlik: geçiş perdesi takılı kalmasın
   const fd = $('#fader'); if (fd.classList.contains('on')) { fd.__t = (fd.__t || 0) + dtR; if (fd.__t > 3.5) { fd.classList.remove('on', 'soon'); fd.__t = 0; } } else fd.__t = 0;
 }
@@ -885,7 +917,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Wardrobe, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),

@@ -125,6 +125,21 @@ const SKINS = [
   { name: 'Kutup', c: '#9ff0ff' }, { name: 'Lale', c: '#ff4f6a' }, { name: 'Pirinç', c: '#ffb347' },
 ];
 
+// Zifir'in kostümleri: Gölge Tiyatrosu'nda çözülen perdeler açar (gölgeden gelen gölge kostümleri)
+const COSTUMES = [
+  { key: 'gul', name: 'Bülbülün Gülü', act: 0, icon: 'M12 3c3 0 5 2 5 5s-2 5-5 5-5-2-5-5 2-5 5-5Zm0 3c-1 1-2 2 0 3 2-1 1-2 0-3ZM12 13v8M12 17c2-2 4-2 5-1M12 18c-2-2-4-2-5-1' },
+  { key: 'kedi', name: 'Kedi Kulakları', act: 1, icon: 'M5 20V6l5 6h4l5-6v14M8 16h1M15 16h1' },
+  { key: 'tavsan', name: 'Tavşan Kulakları', act: 2, icon: 'M8 21c-2-6-3-13-1-17 2 2 2 9 3 13M16 21c2-6 3-13 1-17-2 2-2 9-3 13' },
+  { key: 'tilki', name: 'Tilki Kuyruğu', act: 6, icon: 'M4 18c4 2 9 2 12-1 3-3 4-8 2-12-1 4-4 6-7 7-3 1-6 2-7 6Zm12-1c2 0 3-1 4-2' },
+  { key: 'geyik', name: 'Geyik Boynuzu', act: 7, icon: 'M9 21V12C7 9 5 7 4 3M7 8 4 7M15 21v-9c2-3 4-5 5-9M17 8l3-1' },
+  { key: 'baykus', name: 'Baykuş Tüyleri', act: 8, icon: 'M5 4l4 5M19 4l-4 5M8 13a2 2 0 1 0 0.1 0M16 13a2 2 0 1 0 0.1 0M12 15l-1 2h2Z' },
+  { key: 'ahtapot', name: 'Ahtapot Kolları', act: 11, icon: 'M12 3c4 0 6 3 6 6 0 2-1 3-2 4 1 2 3 3 4 6M6 13c-1 2-3 3-4 6M9 14c0 3-1 5-2 7M15 14c0 3 1 5 2 7M12 14v7' },
+  { key: 'kurt', name: 'Kurt Kulakları', act: 13, icon: 'M5 20V4l6 7h2l6-7v16M3 20c6-1 12-1 18 0' },
+  { key: 'ejderha', name: 'Ejderha Kanatları', act: 14, icon: 'M12 18V9M12 10C9 5 5 4 2 5c2 2 2 5 4 6 1-2 3-2 4-1M12 10c3-5 7-6 10-5-2 2-2 5-4 6-1-2-3-2-4-1M9 3l3 4 3-4' },
+  { key: 'karagoz', name: 'Karagöz Kavuğu', act: 'karagoz', icon: 'M7 19h10M8 19c-1-6 0-12 5-15 3 2 4 6 2 9-1 2-1 4 0 6' },
+];
+const costumeByAct = (i) => COSTUMES.find((c) => c.act === i);
+
 /* ---------- güneş geometrisi ---------- */
 // u ∈ [0,1]: 0 = sol ufuk, 1 = sağ ufuk. Yay kuzeye (kameradan uzağa) eğik.
 function sunDirInto(u, tilt, thMin, o) {

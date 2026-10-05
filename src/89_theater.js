@@ -1289,6 +1289,8 @@ const Theater = {
     const par = this.parOf(), tt = this.playT, stars = this.hints === 0 && tt <= par ? 3 : this.hints <= 1 && tt <= par * 2.2 ? 2 : 1;
     this.stars = stars; const pe = $('#thPar'); if (pe) { pe.textContent = '★'.repeat(stars); pe.dataset.n = 3; pe.classList.remove('low'); }
     const sv = Save.data.theater || (Save.data.theater = []); if (!sv.includes(this.idx)) sv.push(this.idx);
+    // ana oyunla bağ: bu gölge Zifir'e bir kostüm bırakır
+    const cs = costumeByAct(this.idx), own = Save.data.costumes || (Save.data.costumes = []); this.newCos = cs && !own.includes(cs.key) ? cs : null; if (this.newCos) own.push(cs.key);
     const ss = Save.data.thStars || (Save.data.thStars = {}); ss[this.idx] = Math.max(ss[this.idx] || 0, stars);
     const bt = Save.data.thBest || (Save.data.thBest = {}), sec = Math.max(1, Math.round(tt)); this.record = !!bt[this.idx] && sec < bt[this.idx]; if (!bt[this.idx] || sec < bt[this.idx]) bt[this.idx] = sec; Save.save();
     ThTut.stop(); ThWhisper.reset();
@@ -1305,6 +1307,8 @@ const Theater = {
     $('#thStat').innerHTML = `${fm(sec)} · ${this.hints ? this.hints + ' ipucu' : 'ipucusuz'}${this.record ? ' · <b>yeni rekor!</b>' : best && best < sec ? ` · rekor ${fm(best)}` : ''}`;
     if (this.stars < 3) $('#thStat').innerHTML += `<span class="goal">★★★ için: ${fm(this.parOf())} altında, ipucusuz</span>`;
     $('#thTease').innerHTML = last ? '' : nc ? `Sıradaki: <b>${ST_ROMAN[stChap(this.idx + 1)]}. perde: Destan</b>` : `Sıradaki sahne: <b>“${ST_ACTS[this.idx + 1].riddle}…”</b>`;
+    const ce = $('#thCos'), nc2 = this.newCos; ce.classList.toggle('on', !!nc2);
+    if (nc2) { ce.innerHTML = `<svg viewBox="0 0 24 24"><path d="${nc2.icon}"/></svg><div class="ct"><span>Yeni kostüm</span><b>${nc2.name}</b></div><button class="btn ghost tap small" id="thCosOn">Giydir</button>`; $('#thCosOn').addEventListener('click', (e) => { e.stopPropagation(); Wardrobe.wear(nc2.key); toast(`Zifir artık <em>${nc2.name}</em> taşıyor.`, 2.2); ce.querySelector('button').textContent = 'Giydi ✓'; }); }
     $('#theater').classList.add('solved'); stApplause(this.stars); stMus.card(); for (let k = 0; k < this.stars; k++) setTimeout(() => audio.star(k, true), 300 + k * 180);
     this.updateDots();
   },

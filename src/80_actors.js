@@ -370,6 +370,12 @@ class Zifir {
     this.reset();
   }
   setSkin(i) { this.u.uRim.value.set(SKINS[i].c); }
+  // ---- kostümler: gövdeye bağlı (ezilip zıplarken birlikte esner); mürekkep gölgelendiricisi + küçük renkli ayrıntılar
+  setCostume(key) {
+    if (this.cos) { this.body.remove(this.cos.g); this.cos.g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); this.cos = null; }
+    if (!key) return;
+    try { this.cos = buildCostume(key, this.inkMat || (this.inkMat = new THREE.ShaderMaterial({ vertexShader: ZIF_VERT, fragmentShader: ZIF_FRAG, uniforms: this.u }))); this.body.add(this.cos.g); } catch (e) { console.warn('kostüm', e); this.cos = null; }
+  }
   reset() {
     this.phase = 0; this.hop = 0; this.land = 0; this.yaw = 0; this.blinkT = 2; this.blink = 0; this.squash = 0; this.sqV = 0; this.shiver = 0;
     this.lookX = 0; this.lookY = 0; this.scaleK = 1; this.visible = true; this.mood = 0; this.wispT = 0; this.stepSide = 0;
@@ -442,6 +448,7 @@ class Zifir {
     this.u.uBurn.value = damp(this.u.uBurn.value, st.burn, 14, dt);
     this.u.uLit.value = this.u.uBurn.value;
     this.u.uWob.value = st.moving ? 0.7 : 0.4;
+    if (this.cos) this.cos.update(dt, U.uTime.value, st.moving, this.hopT > 0);
     // metre halkası
     this.ringU.uV.value = st.meter;
     this.ringU.uA.value = damp(this.ringU.uA.value, st.meter < 0.995 || st.burn > 0 ? 1 : 0, 6, dt);
@@ -449,6 +456,106 @@ class Zifir {
     this.wispT -= dt;
     if (this.wispT < 0) { this.wispT = st.burn > 0.05 ? 0.03 : 0.22; const wy = (0.62 * this.scaleK + bodyY) * ZIF_SCALE; if (st.burn > 0.05) { FX.smoke(st.x, wy, st.z, 1); if (Math.random() < 0.5) FX.ember(st.x, wy - 0.1, st.z); } else fxMix.spawn(st.x + (Math.random() - 0.5) * 0.1, wy, st.z + (Math.random() - 0.5) * 0.1, (Math.random() - 0.5) * 0.1, 0.35, (Math.random() - 0.5) * 0.1, { c: [0.06, 0.04, 0.1], a: 0.4, s: 0.12, s1: 0.35, life: 1.2, drag: 0.8, t: 1 }); }
   }
+}
+
+/* ---------- Zifir kostüm modelleri (gövde uzayı: merkez y 0.3, yarıçap 0.3, ön +z) ---------- */
+const _cm = new THREE.Matrix4(), _cq = new THREE.Quaternion(), _ce = new THREE.Euler(), _cv = new THREE.Vector3(), _cs = new THREE.Vector3();
+// incelen tüp: eğri boyunca yarıçap r(s)
+function taperTube(pts, rf, segs = 18, radial = 8) {
+  const curve = new THREE.CatmullRomCurve3(pts.map((p) => new THREE.Vector3(...p)));
+  const g = new THREE.TubeGeometry(curve, segs, 1, radial, false), pos = g.attributes.position, c = new THREE.Vector3();
+  for (let i = 0; i <= segs; i++) { curve.getPointAt(i / segs, c); const r = rf(i / segs); for (let j = 0; j <= radial; j++) { const k = i * (radial + 1) + j; pos.setXYZ(k, c.x + (pos.getX(k) - c.x) * r, c.y + (pos.getY(k) - c.y) * r, c.z + (pos.getZ(k) - c.z) * r); } }
+  g.computeVertexNormals(); return g;
+}
+function cMesh(geo, mat, pos = [0, 0, 0], rot = [0, 0, 0], scl = [1, 1, 1]) { const m = new THREE.Mesh(geo, mat); m.position.set(...pos); m.rotation.set(...rot); m.scale.set(...scl); return m; }
+const C_MATS = {};
+const cAcc = (hex, k = 1) => C_MATS[hex + k] || (C_MATS[hex + k] = new THREE.MeshLambertMaterial({ color: new THREE.Color(hex).multiplyScalar(k), emissive: new THREE.Color(hex).multiplyScalar(0.18 * k) }));
+function buildCostume(key, ink) {
+  const g = new THREE.Group(), anim = [];
+  const pivot = (x, y, z) => { const p = new THREE.Group(); p.position.set(x, y, z); g.add(p); return p; };
+  const ear = (s, w, h, tilt, inner, y = 0.55, back = 0) => { // dört yüzlü kulak (+ iç renk)
+    const p = pivot(s * 0.14, y, back); p.rotation.set(-0.08, 0, -s * tilt);
+    p.add(cMesh(new THREE.ConeGeometry(w, h, 4), ink, [0, h / 2 - 0.02, 0], [0, PI / 4, 0], [1, 1, 0.5]));
+    if (inner) p.add(cMesh(new THREE.ConeGeometry(w * 0.55, h * 0.68, 4), cAcc(inner, 0.9), [0, h * 0.4 - 0.02, w * 0.2], [0, PI / 4, 0], [1, 1, 0.3]));
+    anim.push({ o: p, kind: 'twitch', s, base: -s * tilt, ph: Math.random() * 9 }); return p;
+  };
+  const tail = (pts, rf, tip, sway = 0.3) => { // gövdenin arkasına bağlı kuyruk
+    const p = pivot(0, 0.18, -0.24); const t = new THREE.Mesh(taperTube(pts, rf, 22, 9), ink); p.add(t);
+    if (tip) { const e = pts[pts.length - 1]; p.add(cMesh(new THREE.SphereGeometry(rf(1) * 1.25 + 0.012, 12, 8), cAcc(tip, 1.1), e)); }
+    anim.push({ o: p, kind: 'sway', amp: sway, ph: Math.random() * 9 }); return p;
+  };
+  if (key === 'kedi') {
+    ear(1, 0.11, 0.25, 0.32, '#ff9ccb'); ear(-1, 0.11, 0.25, 0.32, '#ff9ccb');
+    tail([[0, 0, 0], [0, -0.04, -0.16], [0.02, 0.12, -0.3], [0.06, 0.32, -0.3], [0.1, 0.4, -0.22]], (s) => 0.034 - s * 0.012, null, 0.35);
+  } else if (key === 'tavsan') {
+    for (const s of [1, -1]) {
+      const p = pivot(s * 0.09, 0.56, -0.02); p.rotation.z = -s * 0.18;
+      p.add(new THREE.Mesh(taperTube([[0, 0, 0], [s * 0.02, 0.14, -0.02], [s * 0.05, 0.3, -0.05], [s * 0.06, 0.4, -0.06]], (u) => 0.05 * (0.75 + 0.45 * Math.sin(Math.PI * Math.min(1, u * 1.1))), 16, 8), ink));
+      p.add(new THREE.Mesh(taperTube([[0, 0.04, 0.03], [s * 0.02, 0.16, 0.02], [s * 0.045, 0.31, -0.01]], (u) => 0.022 * (1 - u * 0.4), 12, 6), cAcc('#ffb3d4', 0.85)));
+      anim.push({ o: p, kind: 'flop', s, base: -s * 0.18, ph: Math.random() * 9 });
+    }
+    g.add(cMesh(new THREE.SphereGeometry(0.075, 14, 10), cAcc('#f4efff', 1.05), [0, 0.16, -0.3]));
+  } else if (key === 'tilki') {
+    ear(1, 0.12, 0.3, 0.24, '#f6efe4'); ear(-1, 0.12, 0.3, 0.24, '#f6efe4');
+    tail([[0, 0, 0], [0, -0.08, -0.2], [0.06, 0, -0.42], [0.1, 0.22, -0.5], [0.08, 0.38, -0.44]], (s) => 0.05 + 0.075 * Math.sin(Math.PI * Math.min(1, s * 1.05)), '#f6efe4', 0.32);
+  } else if (key === 'geyik') {
+    for (const s of [1, -1]) {
+      const p = pivot(s * 0.1, 0.55, -0.02);
+      p.add(new THREE.Mesh(taperTube([[0, 0, 0], [s * 0.08, 0.14, -0.03], [s * 0.18, 0.3, -0.08], [s * 0.24, 0.46, -0.12]], (u) => 0.03 - u * 0.016, 14, 7), ink));
+      p.add(new THREE.Mesh(taperTube([[s * 0.1, 0.17, -0.04], [s * 0.08, 0.28, 0.04], [s * 0.07, 0.36, 0.08]], (u) => 0.02 - u * 0.012, 8, 6), ink));
+      p.add(new THREE.Mesh(taperTube([[s * 0.19, 0.33, -0.09], [s * 0.15, 0.44, -0.02], [s * 0.14, 0.5, 0.02]], (u) => 0.017 - u * 0.01, 8, 6), ink));
+      p.add(new THREE.Mesh(taperTube([[s * 0.15, 0.25, -0.06], [s * 0.26, 0.3, -0.02], [s * 0.32, 0.31, 0.02]], (u) => 0.017 - u * 0.01, 8, 6), ink));
+    }
+  } else if (key === 'baykus') {
+    for (const s of [1, -1]) { const p = pivot(s * 0.13, 0.55, 0.02); p.rotation.z = -s * 0.55; p.add(cMesh(new THREE.ConeGeometry(0.07, 0.2, 6), ink, [0, 0.08, 0], [0, 0, 0], [1, 1, 0.4])); anim.push({ o: p, kind: 'twitch', s, base: -s * 0.55, ph: Math.random() * 9 }); }
+    for (const s of [1, -1]) g.add(cMesh(new THREE.TorusGeometry(0.083, 0.013, 6, 20), cAcc('#e8d9b4', 1.1), [s * 0.105, 0.38, 0.262], [0, s * 0.35, 0], [0.95, 1.25, 1]));
+    g.add(cMesh(new THREE.ConeGeometry(0.032, 0.085, 8), cAcc('#ffb347', 1.1), [0, 0.31, 0.3], [PI / 2 + 0.45, 0, 0]));
+  } else if (key === 'kurt') {
+    ear(1, 0.11, 0.32, 0.16, '#c9c3d6'); ear(-1, 0.11, 0.32, 0.16, '#c9c3d6');
+    tail([[0, 0, 0], [0, -0.06, -0.22], [0.03, -0.04, -0.46], [0.05, 0.06, -0.6]], (s) => 0.045 + 0.05 * Math.sin(Math.PI * Math.min(1, s * 1.1)), '#d6d2e6', 0.22);
+  } else if (key === 'ejderha') {
+    for (const s of [1, -1]) g.add(new THREE.Mesh(taperTube([[s * 0.1, 0.55, -0.04], [s * 0.15, 0.68, -0.14], [s * 0.17, 0.74, -0.28], [s * 0.15, 0.72, -0.38]], (u) => 0.04 * (1 - u) + 0.004, 14, 7), cAcc('#efe2c8', 1.0)));
+    // yarasa kanadı: üç parmaklı, tırtıklı zar
+    const sh = new THREE.Shape(); sh.moveTo(0, 0); sh.lineTo(0.42, 0.26); sh.quadraticCurveTo(0.36, 0.12, 0.42, 0.02); sh.quadraticCurveTo(0.33, 0.0, 0.34, -0.1); sh.quadraticCurveTo(0.24, -0.06, 0.22, -0.16); sh.quadraticCurveTo(0.12, -0.06, 0, -0.06); sh.lineTo(0, 0);
+    const wg = new THREE.ShapeGeometry(sh, 6), mem = new THREE.MeshLambertMaterial({ color: 0x3a1d5c, emissive: 0x2a0f48, side: THREE.DoubleSide, transparent: true, opacity: 0.92 });
+    for (const s of [1, -1]) {
+      const p = pivot(s * 0.14, 0.4, -0.2); p.rotation.set(0, s > 0 ? -0.5 : PI + 0.5, 0.25 * s);
+      const w = new THREE.Mesh(wg, mem); w.scale.set(1.15, 1.15, 1); p.add(w);
+      for (const [x, y] of [[0.42, 0.26], [0.42, 0.02], [0.34, -0.1]]) p.add(new THREE.Mesh(taperTube([[0, 0, 0], [x * 0.5, y * 0.5 + 0.03, 0], [x * 1.15, y * 1.15, 0]], (u) => 0.016 - u * 0.011, 6, 5), ink));
+      anim.push({ o: p, kind: 'wing', s, base: 0.25 * s, ph: 0 });
+    }
+    const tp = tail([[0, 0, 0], [0, -0.1, -0.22], [0.05, -0.06, -0.48], [0.12, 0.06, -0.66]], (s) => 0.06 * (1 - s) + 0.01, null, 0.2);
+    for (let k = 0; k < 4; k++) { const u = 0.15 + k * 0.2, y = -0.04 - 0.06 * Math.sin(u * 3), z = -u * 0.6; tp.add(cMesh(new THREE.ConeGeometry(0.025 - k * 0.003, 0.07 - k * 0.008, 4), cAcc('#efe2c8', 0.95), [0.02 * k, y + 0.06, z])); }
+  } else if (key === 'karagoz') {
+    // Karagöz'ün işliği: sarı bant, geriye kıvrılan uzun kızıl başlık, uçta püskül
+    const kp = pivot(0, 0.5, -0.04); kp.rotation.x = -0.32;
+    kp.add(cMesh(new THREE.CylinderGeometry(0.2, 0.215, 0.07, 28), cAcc('#e8a72e', 1.05), [0, 0.03, 0]));
+    kp.add(new THREE.Mesh(taperTube([[0, 0.05, 0], [0, 0.22, 0.01], [0, 0.36, -0.03], [0, 0.42, -0.13], [0, 0.36, -0.24], [0, 0.26, -0.27]], (u) => (0.165 * (1 - u * 0.72)) + 0.012, 24, 16), cAcc('#b81d2b', 1.0)));
+    for (let k = 0; k < 3; k++) kp.add(cMesh(new THREE.TorusGeometry(0.152 - k * 0.028, 0.009, 5, 24), cAcc('#e8a72e', 0.95), [0, 0.12 + k * 0.085, 0.004 - k * 0.012], [PI / 2 + 0.05 + k * 0.12, 0, 0]));
+    anim.push({ o: kp, kind: 'twitch', s: 0, base: 0, ph: 0 });
+  } else if (key === 'ahtapot') {
+    for (let k = 0; k < 7; k++) {
+      const a = (k / 7) * TAU + 0.45, dx = Math.cos(a), dz = Math.sin(a), p = pivot(dx * 0.24, 0.12, dz * 0.24);
+      p.add(new THREE.Mesh(taperTube([[0, 0, 0], [dx * 0.1, -0.08, dz * 0.1], [dx * 0.22, -0.07, dz * 0.22], [dx * 0.28, 0.02, dz * 0.28], [dx * 0.24, 0.1, dz * 0.24]], (u) => 0.048 * (1 - u) + 0.008, 16, 7), ink));
+      anim.push({ o: p, kind: 'wave', ax: dz, az: -dx, ph: k * 0.9 });
+    }
+  } else if (key === 'gul') {
+    const r = new THREE.Group(); r.position.set(0.18, 0.5, 0.08); r.rotation.set(0.3, 0, -0.5); g.add(r);
+    const red = cAcc('#d81f3d', 1.05), dark = cAcc('#9e1028', 1.0);
+    r.add(cMesh(new THREE.SphereGeometry(0.035, 10, 8), dark, [0, 0.02, 0]));
+    for (let k = 0; k < 6; k++) { const a = (k / 6) * TAU; r.add(cMesh(new THREE.SphereGeometry(0.04, 10, 8), k % 2 ? red : dark, [Math.cos(a) * 0.04, 0, Math.sin(a) * 0.04], [0, -a, 0.6], [1, 0.55, 0.8])); }
+    for (const s of [1, -1]) r.add(cMesh(new THREE.ConeGeometry(0.03, 0.12, 4), cAcc('#2f8a3e', 0.95), [s * 0.07, -0.04, -0.02], [0, 0, s * 1.7], [1, 1, 0.3]));
+  }
+  const update = (dt, t, moving, hop) => {
+    for (const A of anim) {
+      if (A.kind === 'sway') { A.o.rotation.y = Math.sin(t * (moving ? 5.5 : 2.2) + A.ph) * A.amp; A.o.rotation.x = Math.sin(t * 1.7 + A.ph) * 0.08 - (hop ? 0.3 : 0); }
+      else if (A.kind === 'twitch') { const k = Math.max(0, Math.sin(t * 0.9 + A.ph) - 0.93) * 14; A.o.rotation.z = A.base - A.s * k * 0.25 + Math.sin(t * 2 + A.ph) * 0.03; }
+      else if (A.kind === 'flop') { A.o.rotation.z = A.base - A.s * (0.08 + 0.08 * Math.sin(t * 1.8 + A.ph)); A.o.rotation.x = -0.1 - (moving ? 0.25 : 0.05) - (hop ? 0.35 : 0); }
+      else if (A.kind === 'wing') { const f = Math.sin(t * (moving ? 7 : 2.4)) * (moving ? 0.35 : 0.15) + (hop ? 0.5 : 0); A.o.rotation.z = A.base + A.s * f; }
+      else if (A.kind === 'wave') { const w = Math.sin(t * 2.6 + A.ph) * 0.22; A.o.rotation.x = A.ax * w; A.o.rotation.z = A.az * w; }
+    }
+  };
+  return { g, update };
 }
 
 /* ---------- gece damlaları ---------- */
