@@ -132,6 +132,16 @@ function init(root: HTMLElement) {
 
     updateShare(out);
 
+    // Canlı simülasyon bu olayı dinler
+    const cell = VC[op][state.tool[op]][state.iso];
+    const detail = {
+      op, iso: state.iso, v: readValues(op), nEff: out.nEff, vcEff: out.vcEff,
+      vf: out.results.find((r) => r.key === 'vf')?.value ?? NaN,
+      range: isRange(cell) ? [cell.min, cell.max] : null,
+    };
+    (root as HTMLElement & { calcLast?: typeof detail }).calcLast = detail;
+    root.dispatchEvent(new CustomEvent('calc:update', { detail }));
+
     if (announce) {
       live.textContent = out.results
         .filter((r) => r.text !== '—')

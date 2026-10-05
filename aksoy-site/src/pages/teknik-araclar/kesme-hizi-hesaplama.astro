@@ -133,6 +133,28 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
           </div>
         </div>
 
+        <div class="sim" data-sim role="img" aria-label="Seçilen değerlerle canlı kesme simülasyonu">
+          <canvas class="sim__gl" data-sim-canvas aria-hidden="true"></canvas>
+          <div class="sim__hud" aria-hidden="true">
+            <div class="sim__top">
+              <span class="sim__live"><i></i>Canlı simülasyon</span>
+              <span class="sim__mat" data-sim-mat>P · Çelik</span>
+            </div>
+            <div class="sim__vals">
+              <div><span>n</span><b data-sim-n>—</b><small>dev/dk</small></div>
+              <div><span>Vc</span><b data-sim-vc>—</b><small>m/dk</small></div>
+              <div><span>Vf</span><b data-sim-vf>—</b><small>mm/dk</small></div>
+            </div>
+            <div class="sim__foot">
+              <p class="sim__status" data-sim-status data-zone="in"><i></i><span data-sim-status-t></span></p>
+              <span class="sim__slow" data-sim-slow></span>
+            </div>
+          </div>
+          <button type="button" class="sim__pause" data-sim-pause aria-pressed="false" aria-label="Simülasyonu duraklat">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path class="i-pause" d="M8 5h3v14H8zM13 5h3v14h-3z" /><path class="i-play" d="M8 5l11 7-11 7z" /></svg>
+          </button>
+        </div>
+
         <div class="calc-body" id="calc-panel" role="tabpanel" aria-labelledby="tab-torna" data-panel>
           <div class="calc-in">
             <fieldset class="calc-block">
@@ -291,5 +313,6 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
 
   <script>
     import '../../scripts/tools/cutting';
+    import '../../scripts/sim/index';
   </script>
 </Base>
