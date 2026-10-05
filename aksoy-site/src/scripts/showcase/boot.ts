@@ -57,7 +57,8 @@ export function initShowcase() {
     requestAnimationFrame(tick);
   }
 
-  if (!root || reduce || !hasWebGL2()) {
+  // "Hareketi azalt" açık olsa da 3D çalışır (sakin modda); yalnızca WebGL2 yoksa düz görünüm.
+  if (!root || !hasWebGL2()) {
     root?.classList.add('is-static');
     finishPre();
     return;
@@ -76,7 +77,7 @@ export function initShowcase() {
     import('./showcase')
       .then((m) => {
         target = 0.4;
-        return m.startShowcase(root, { onProgress: (p) => (target = Math.max(target, p)), poster });
+        return m.startShowcase(root, { onProgress: (p) => (target = Math.max(target, p)), poster, reduce });
       })
       .then((api) => {
         target = 1;

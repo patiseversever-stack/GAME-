@@ -3,7 +3,7 @@
    ========================================================================== */
 
 /* ---------- Vitrin (kaydırmaya bağlı 3D) ---------- */
-.showcase { position: relative; height: 760vh; background: var(--g-950); color: var(--g-100); }
+.showcase { position: relative; height: 700vh; background: var(--g-950); color: var(--g-100); }
 .showcase__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
 .showcase__bg {
   position: absolute; inset: 0; pointer-events: none;
@@ -101,7 +101,7 @@
 
 /* Mobil vitrin düzeni: model üstte, metin kartı altta */
 @media (max-width: 860px) {
-  .showcase { height: 720vh; }
+  .showcase { height: 600vh; height: 600svh; }
   .chapter, .chapter[data-side='left'], .chapter[data-side='right'], .chapter[data-side='center'] {
     left: var(--gutter); right: var(--gutter); width: auto; top: auto; bottom: calc(18px + var(--mbar-h)); transform: none; text-align: left;
   }
@@ -302,3 +302,18 @@
 .is-intro .chapter[data-side='hero'] > p,
 .is-intro .chapter[data-side='hero'] > .chapter__actions { opacity: 1; transform: none; }
 .showcase.is-static .chapter .ln > span { transform: none !important; }
+
+/* Büyük bölüm numarası (arka planda, kontur) */
+.showcase__num {
+  position: absolute; z-index: 1; right: 3vw; top: 50%; transform: translateY(-52%);
+  font-family: var(--f-display); font-weight: 700; font-size: clamp(9rem, 30vw, 30rem); line-height: 0.8; letter-spacing: -0.06em;
+  color: transparent; -webkit-text-stroke: 1px rgba(255, 255, 255, 0.07); pointer-events: none; user-select: none; overflow: hidden;
+}
+.showcase__num span { display: block; }
+.showcase__vignette { position: absolute; inset: 0; z-index: 2; pointer-events: none; background: radial-gradient(120% 90% at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%); }
+.js .showcase:not(.is-static) .chapter:not([data-side='hero']) { opacity: 0; visibility: hidden; }
+.chapter .ln { display: block; overflow: hidden; padding-bottom: 0.08em; margin-bottom: -0.08em; }
+.chapter .ln > span { display: inline-block; will-change: transform; transform-origin: 0 100%; }
+@media (max-width: 860px) {
+  .showcase__num { right: -4vw; top: 30%; font-size: 58vw; }
+}

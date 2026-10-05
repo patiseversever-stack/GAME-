@@ -41,16 +41,17 @@ export interface Post {
 /* ---------- Küçük HTML yardımcıları (yazı gövdeleri tutarlı görünsün diye) ---------- */
 
 /**
- * Kaydırılabilir tablo. İlk sütun satır başlığıdır. 4+ sütunlu tablolar (ya da wide: true) mobilde yatay kayar;
- * stick: true ilk sütunu kayarken sabit tutar.
+ * Tablo. İlk sütun satır başlığıdır. 4+ sütunlu tablolar (ya da wide: true) mobilde yatay kayar;
+ * cards: true mobilde her satırı, sütun adlarıyla etiketlenmiş bir karta dönüştürür.
  */
-function table(head: string[], rows: string[][], caption?: string, opts: { wide?: boolean; stick?: boolean } = {}) {
-  const cls = [opts.wide ?? head.length >= 4 ? 't-wide' : '', opts.stick ? 't-stick' : ''].filter(Boolean).join(' ');
+function table(head: string[], rows: string[][], caption?: string, opts: { wide?: boolean; cards?: boolean } = {}) {
+  const cls = [opts.wide ?? head.length >= 4 ? 't-wide' : '', opts.cards ? 't-cards' : ''].filter(Boolean).join(' ');
   const wide = cls ? ` class="${cls}"` : '';
+  const label = (h: string) => h.replace(/<[^>]+>/g, '');
   return `<div class="table-wrap" role="region" aria-label="${(caption ?? head.join(", ")).replace(/<[^>]+>/g, "")}" tabindex="0"><table${wide}>${
     caption ? `<caption>${caption}</caption>` : ''
   }<thead><tr>${head.map((h) => `<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows
-    .map((r) => `<tr>${r.map((c, i) => (i === 0 ? `<th scope="row">${c}</th>` : `<td>${c}</td>`)).join('')}</tr>`)
+    .map((r) => `<tr>${r.map((c, i) => (i === 0 ? `<th scope="row">${c}</th>` : `<td data-label="${label(head[i])}">${c}</td>`)).join('')}</tr>`)
     .join('')}</tbody></table></div>`;
 }
 
@@ -296,7 +297,7 @@ ${table(
     ['H · Sertleştirilmiş', '80–200 (CBN uç)', '60–100 (45–55 HRC)', '30–60'],
   ],
   'Kesme hızı Vc için başlangıç aralıkları (m/dk). Katalog değeri esastır.',
-  { stick: true },
+  { cards: true },
 )}
 <p>Tornada devir başına ilerleme için kaba bir yol haritası: finişte 0,05–0,15 mm/dev, orta işlemede 0,15–0,35 mm/dev, kabada 0,3–0,6 mm/dev. Seçtiğiniz değer talaş kırıcının katalogdaki çalışma aralığının içinde kalmalıdır. Karbür matkapta çelik için devir başına ilerleme genellikle çapın yüzde 1–2’si kadardır; Ø10 matkapta 0,10–0,20 mm/dev gibi. HSS matkaplarda kesme hızı çok daha düşüktür: çelikte yaklaşık 20–30 m/dk.</p>`,
     },
@@ -380,7 +381,7 @@ const udrill: Omit<Post, 'readingMinutes'> = {
           ['Esneklik', 'Tornada X kaydırmayla çap ayarı; eğik yüzeyden giriş mümkün', 'Çap sabit'],
         ],
         'U-matkap ile yekpare karbür matkabın karşılaştırması',
-        { wide: true, stick: true },
+        { wide: true, cards: true },
       )}
 <p>Kısacası: delik Ø20 mm civarı ve üzerindeyse, derinlik 5xD’yi geçmiyorsa ve tolerans çok dar değilse U-matkap genellikle daha ekonomiktir. Daha küçük çaplarda ve derin deliklerde karbür matkap, H7 gibi hassas toleranslarda ise delme sonrası rayba ya da bara daha doğru seçimdir.</p>`,
     },
@@ -426,5 +427,11 @@ export const posts: Post[] = [cnmg, vc, udrill]
 
 export const postBySlug = Object.fromEntries(posts.map((p) => [p.slug, p]));
 
+/** Henüz yayımlanmış yazı yoksa blog listesi de arama motorlarına kapalı kalır. */
+export const blogIndexNoindex = posts.every((p) => p.draft);
+
 /** Arama motorlarına kapalı yazıların yolları (site haritasından çıkarmak için). */
 export const draftPostPaths = posts.filter((p) => p.draft).map((p) => `/blog/${p.slug}`);
+
+/** Site haritasına girmemesi gereken tüm blog yolları (astro.config.mjs → sitemap filter). */
+export const noindexPaths = [...draftPostPaths, ...(blogIndexNoindex ? ['/blog'] : [])];

@@ -10,6 +10,8 @@ export type Mode = 'vc2n' | 'n2vc';
 export interface FieldDef {
   key: string;
   sym: string;
+  /** Simge HTML ile yazılacaksa (alt simge vb.) */
+  symHtml?: string;
   label: string;
   unit: string;
   min: number;
@@ -26,7 +28,7 @@ export interface FieldDef {
 
 const vc = (value: number): FieldDef => ({ key: 'vc', sym: 'Vc', label: 'Kesme hızı', unit: 'm/dk', min: 1, max: 1500, step: 1, value, log: true, mode: 'vc2n' });
 const n = (value: number, max: number): FieldDef => ({ key: 'n', sym: 'n', label: 'Devir', unit: 'dev/dk', min: 10, max, step: 1, value, log: true, int: true, mode: 'n2vc' });
-const nmax: FieldDef = { key: 'nmax', sym: 'nₘₐₓ', label: 'Tezgâh maks. devri', unit: 'dev/dk', min: 1, max: 100000, step: 1, value: NaN, optional: true, slider: false, int: true };
+const nmax: FieldDef = { key: 'nmax', sym: 'nmax', symHtml: 'n<sub>max</sub>', label: 'Tezgâh maks. devri', unit: 'dev/dk', min: 1, max: 100000, step: 1, value: NaN, optional: true, slider: false, int: true };
 
 export const FIELDS: Record<Op, FieldDef[]> = {
   torna: [
@@ -112,6 +114,8 @@ export interface CalcOutput {
 }
 
 const ok = (x: number) => Number.isFinite(x) && x > 0;
+/** Devir 10 dev/dk üstünde tam sayıya yuvarlanır. */
+export const roundRpm = (n: number) => (n >= 10 ? Math.round(n) : Math.round(n * 10) / 10);
 const f = (x: number) => fmt(x);
 
 export function compute(op: Op, mode: Mode, v: Record<string, number>): CalcOutput {
@@ -146,7 +150,8 @@ export function compute(op: Op, mode: Mode, v: Record<string, number>): CalcOutp
   let vcIn = NaN;
   if (mode === 'vc2n') {
     vcIn = v.vc;
-    if (ok(vcIn) && ok(D) && !errors.d) nCalc = rpm(vcIn, D);
+    // Tezgâha tam sayı devir yazılır (S1273); ilerleme bu devirle hesaplanır — kılavuzda F = P × S birebir tutmalı.
+    if (ok(vcIn) && ok(D) && !errors.d) nCalc = roundRpm(rpm(vcIn, D));
   } else {
     nCalc = ok(v.n) && !errors.n ? v.n : NaN;
     if (ok(nCalc) && ok(D)) vcIn = cuttingSpeed(nCalc, D);
@@ -171,7 +176,7 @@ export function compute(op: Op, mode: Mode, v: Record<string, number>): CalcOutp
   if (mode === 'vc2n') {
     push({
       key: 'n', label: 'Devir', sym: 'n', unit: 'dev/dk', value: nEff, primary: true, badge: limited ? 'Tezgâh sınırı' : undefined,
-      formula: ok(nCalc) ? `n = 1000 × Vc / (π × D) = 1000 × ${f(vcIn)} / (π × ${f(D)})${limited ? ` = ${f(nCalc)} → sınır ${f(nm)}` : ''}` : 'n = 1000 × Vc / (π × D)',
+      formula: ok(nCalc) ? `n = 1000 × Vc / (π × D) = 1000 × ${f(vcIn)} / (π × ${f(D)}) ≈ ${f(nCalc)}${limited ? ` → sınır ${f(nm)}` : ''}` : 'n = 1000 × Vc / (π × D)',
     });
   } else {
     push({

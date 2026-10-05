@@ -1,0 +1,189 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import ToolHero from '../../components/tools/ToolHero.astro';
+import ToolFaq from '../../components/tools/ToolFaq.astro';
+import ToolCta from '../../components/tools/ToolCta.astro';
+import { drawingSvg } from '../../lib/drawings';
+import { breadcrumbSchema, faqSchema } from '../../scripts/tools/seo';
+import type { Qa } from '../../scripts/tools/seo';
+import '../../styles/tools.css';
+
+const path = '/teknik-araclar';
+const title = 'Teknik Araçlar: Kesme Hızı, Uç Kodu, Kılavuz Matkap';
+const description =
+  'Tornalama, frezeleme, delme ve kılavuz için kesme hızı–devir hesaplayıcı, ISO 1832 elmas uç kodu çözücü ve M3–M24 kılavuz matkap çapı tablosu. Ücretsiz ve Türkçe.';
+const crumbs = [
+  { name: 'Ana sayfa', path: '/' },
+  { name: 'Teknik Araçlar', path },
+];
+
+const tools = [
+  {
+    href: '/teknik-araclar/kesme-hizi-hesaplama',
+    tag: 'Hesaplayıcı',
+    title: 'Kesme hızı ve devir hesaplama',
+    text: 'Malzeme grubunu ve takımı seçin, çapı girin: devir, ilerleme hızı ve talaş hacmi formülleriyle birlikte. ISO P–H gruplarına göre başlangıç kesme hızları.',
+    chips: ['n = 1000·Vc/πD', 'Vf = fz·z·n', 'Q cm³/dk', 'Torna · Freze · Delme · Kılavuz'],
+    art: 'dial',
+  },
+  {
+    href: '/teknik-araclar/iso-uc-kodu-cozucu',
+    tag: 'ISO 1832',
+    title: 'ISO uç kodu çözücü',
+    text: 'CNMG 120408 gibi elmas uç kodlarını harf harf çözer; şekil, açı, tolerans, boyut, kalınlık ve köşe radyüsü. ANSI kodlarını çevirir.',
+    chips: ['CNMG', 'DCMT', 'WNMG', 'APMT'],
+    art: drawingSvg('insert', 'C', { grid: true, label: 'CNMG 120408' }),
+  },
+  {
+    href: '/teknik-araclar/kilavuz-matkap-tablosu',
+    tag: 'Tablo',
+    title: 'Kılavuz matkap çapı tablosu',
+    text: 'M3–M24 kaba ve ince diş için kılavuz öncesi matkap çapı, 6H iç diş toleransı ve ovalama kılavuz deliği. Aranabilir tablo ve hesaplayıcı.',
+    chips: ['M10 → 8,5', 'M12 → 10,2', 'Ovalama ≈'],
+    art: drawingSvg('tap', undefined, { grid: true, label: 'M10 × 1,5' }),
+  },
+];
+
+const formulas = [
+  { s: 'n', name: 'Devir', f: '1000 × Vc / (π × D)', u: 'dev/dk' },
+  { s: 'Vc', name: 'Kesme hızı', f: 'π × D × n / 1000', u: 'm/dk' },
+  { s: 'Vf', name: 'Tornalama ve delme ilerlemesi', f: 'fn × n', u: 'mm/dk' },
+  { s: 'Vf', name: 'Frezeleme tabla ilerlemesi', f: 'fz × z × n', u: 'mm/dk' },
+  { s: 'Vf', name: 'Kılavuz ilerlemesi', f: 'P × n', u: 'mm/dk' },
+  { s: 'Q', name: 'Tornalama talaş kaldırma', f: 'Vc × ap × fn', u: 'cm³/dk' },
+  { s: 'Q', name: 'Frezeleme talaş kaldırma', f: 'ap × ae × Vf / 1000', u: 'cm³/dk' },
+  { s: 'Ø', name: 'Kılavuz matkap çapı', f: 'D − P', u: 'mm' },
+];
+
+const faq: Qa[] = [
+  {
+    q: 'Bu araçlardaki değerlere ne kadar güvenebilirim?',
+    a: 'Formüller (devir, ilerleme, talaş hacmi) ve ISO kod tabloları standarttır ve kesindir. Malzemeye göre önerilen kesme hızları ise başlangıç değeridir: üretici kataloğuna, takımın bağlanmasına ve tezgâhın durumuna göre ayarlanmalıdır. Tahmini aralıklar sayfada ayrıca işaretlidir.',
+  },
+  {
+    q: 'Araçlar telefonda çalışıyor mu?',
+    a: 'Evet. Tümü tezgâh başında telefondan kullanılmak üzere tasarlandı; internet bağlantısı yalnızca sayfayı açarken gerekir, hesaplar tarayıcınızda yapılır ve hiçbir veri gönderilmez.',
+  },
+  {
+    q: 'Aradığım hesap burada yok, ne yapabilirim?',
+    a: 'WhatsApp’tan yazın; işinizi, malzemeyi ve tezgâhı anlatın. Uygun takımı ve kesme değerlerini birlikte belirleyelim.',
+  },
+];
+
+const schema = [
+  breadcrumbSchema(Astro.site, crumbs),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ItemList',
+    name: 'Teknik araçlar',
+    itemListElement: tools.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: t.title, url: new URL(t.href, Astro.site).href })),
+  },
+  faqSchema(faq),
+];
+---
+<Base title={title} description={description} schema={schema}>
+  <ToolHero
+    crumbs={crumbs}
+    eyebrow="Teknik araçlar · 3 araç"
+    title="Tezgâh başında hızlı karar."
+    lead="Devir ve ilerleme hesabı, elmas uç kodu çözümü ve kılavuz matkap çapı: ustaların her gün sorduğu üç soru, telefonda bir dokunuşla. Formüller açık, değerler doğrulanabilir."
+    tags={['Ücretsiz', 'Türkçe', 'Telefonda çalışır', 'Veri gönderilmez']}
+  >
+    <svg slot="art" class="art art--sheet" viewBox="0 0 440 280" xmlns="http://www.w3.org/2000/svg">
+      <rect x="1" y="1" width="438" height="278" rx="4" class="ln" />
+      <path d="M1 236 H439 M286 236 V279 M378 236 V279" class="ln-thin" />
+      <text x="24" y="44" class="t-small">01 · DEVİR</text>
+      <text x="24" y="80" class="t-formula">n = 1000·Vc / π·D</text>
+      <line x1="24" y1="98" x2="416" y2="98" class="dim" stroke-dasharray="3 4" />
+      <text x="24" y="124" class="t-small">02 · ISO 1832</text>
+      <text x="24" y="160" class="t-formula">C N M G <tspan class="t-gold-strong">12 04 08</tspan></text>
+      <line x1="24" y1="178" x2="416" y2="178" class="dim" stroke-dasharray="3 4" />
+      <text x="24" y="204" class="t-small">03 · KILAVUZ</text>
+      <text x="236" y="204" class="t-formula t-formula--sm">Ø = D − P</text>
+      <text x="16" y="262" class="t-small">AKSOY · TEKNİK ARAÇLAR</text>
+      <text x="298" y="262" class="t-small">ÖLÇEK 1:1</text>
+      <text x="392" y="262" class="t-small">A-03</text>
+    </svg>
+  </ToolHero>
+
+  <section class="section section--tight" aria-label="Araçlar" style="padding-top:clamp(28px,4vw,56px)">
+    <div class="wrap">
+      <div class="tl-cards">
+        {tools.map((t, i) => (
+          <article class="tl-card reveal" style={`--d:${i * 90}ms`} data-glow>
+            <div class="tl-card__top"><span>0{i + 1} / 03</span><span>{t.tag}</span></div>
+            <div class="tl-card__art" aria-hidden="true">
+              {t.art === 'dial' ? (
+                <svg viewBox="0 0 360 230" xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <linearGradient id="dial-g" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#8f6418" /><stop offset="1" stop-color="#f0c266" /></linearGradient>
+                  </defs>
+                  <path d="M52.1 192.6 A130 130 0 1 1 307.9 192.6" fill="none" stroke="#262b31" stroke-width="10" stroke-linecap="round" />
+                  <path class="dial-arc" d="M52.1 192.6 A130 130 0 1 1 307.9 192.6" fill="none" stroke="url(#dial-g)" stroke-width="10" stroke-linecap="round" pathLength="100" />
+                  {Array.from({ length: 21 }, (_, k) => {
+                    const a = ((170 + k * 10) * Math.PI) / 180;
+                    const r1 = k % 5 === 0 ? 104 : 110, r2 = 116;
+                    return <line x1={180 + r1 * Math.cos(a)} y1={170 + r1 * Math.sin(a)} x2={180 + r2 * Math.cos(a)} y2={170 + r2 * Math.sin(a)} stroke={k % 5 === 0 ? '#a9b0b9' : '#59616b'} stroke-width={k % 5 === 0 ? 1.4 : 0.8} />;
+                  })}
+                  {[0, 1, 2, 3, 4].map((k) => {
+                    const a = ((170 + k * 50) * Math.PI) / 180;
+                    return <text x={180 + 88 * Math.cos(a)} y={174 + 88 * Math.sin(a)} text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="#7d858f">{k * 2}</text>;
+                  })}
+                  <g class="dial-needle">
+                    <line x1="180" y1="170" x2={180 + 98 * Math.cos((300 * Math.PI) / 180)} y2={170 + 98 * Math.sin((300 * Math.PI) / 180)} stroke="#f2f3f4" stroke-width="2.4" stroke-linecap="round" />
+                  </g>
+                  <circle cx="180" cy="170" r="9" fill="#0b0c0e" stroke="#d9a441" stroke-width="2" />
+                  <text x="180" y="214" text-anchor="middle" font-family="Space Grotesk Variable, Space Grotesk, sans-serif" font-size="30" font-weight="600" fill="#f2f3f4" letter-spacing="-1">5.199</text>
+                  <text x="180" y="228" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="9" fill="#7d858f" letter-spacing="1">n · DEV/DK</text>
+                  <text x="300" y="214" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="8" fill="#59616b">×1000</text>
+                </svg>
+              ) : (
+                <Fragment set:html={t.art} />
+              )}
+            </div>
+            <div>
+              <h2><a class="tl-card__link" href={t.href}>{t.title}</a></h2>
+              <p>{t.text}</p>
+              <ul>{t.chips.map((c) => <li>{c}</li>)}</ul>
+            </div>
+            <span class="tl-card__go" aria-hidden="true"><Icon name="arrow-up-right" /></span>
+          </article>
+        ))}
+      </div>
+      <ToolCta
+        id="tools-hub"
+        title="Hesap bitti, takım lazım mı?"
+        text="Uç, matkap, parmak freze, kılavuz ya da takım tutucu: kodu veya işi yazın, Ankara Ostim/İvedik’ten fiyat ve termin WhatsApp’tan gelsin."
+        wa="Merhaba Aksoy Kesici Takımlar, teknik araçlar sayfasından geliyorum. Kesici takım teklifi almak istiyorum: "
+      />
+    </div>
+  </section>
+
+  <section class="section section--tight tl-ref" aria-labelledby="formul-ozeti">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Cep kartı</span>
+        <h2 id="formul-ozeti" class="reveal">Formül özeti</h2>
+        <p>Araçların kullandığı temel formüller. D: tornada işlenen çap, freze ve matkapta takım çapı (mm); fn: devir başına ilerleme; fz: diş başına ilerleme; z: ağız sayısı; ap ve ae: kesme derinliği ve genişliği; P: hatve.</p>
+      </div>
+      <div class="tl-formulas" style="margin-top:0">
+        <dl>
+          {formulas.map((f) => <div><dt>{f.s}</dt><dd><b>{f.name}</b> = {f.f} <span>{f.u}</span></dd></div>)}
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <ToolFaq id="sss-araclar" title="Teknik araçlar hakkında" items={faq} />
+
+  <script>
+    document.querySelectorAll<HTMLElement>('.tl-card[data-glow]').forEach((el) => {
+      el.addEventListener('pointermove', (e) => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
+        el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
+      });
+    });
+  </script>
+</Base>

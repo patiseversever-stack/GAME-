@@ -1,0 +1,262 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import ToolHero from '../../components/tools/ToolHero.astro';
+import ToolFaq from '../../components/tools/ToolFaq.astro';
+import ToolCta from '../../components/tools/ToolCta.astro';
+import { TAP_ROWS, minorDia, cutDrill, formDrill, pitchesFor, COARSE, FINE, TD1_6 } from '../../scripts/tools/tap-data';
+import { fmtFixed } from '../../scripts/tools/format';
+import { breadcrumbSchema, faqSchema, toolSchema } from '../../scripts/tools/seo';
+import type { Qa } from '../../scripts/tools/seo';
+import { waLink } from '../../data/site';
+import '../../styles/tools.css';
+
+const path = '/teknik-araclar/kilavuz-matkap-tablosu';
+const title = 'Kılavuz Matkap Çapı Tablosu (M3–M24 Kaba ve İnce Diş)';
+const description =
+  'Metrik kaba ve ince diş için kılavuz öncesi matkap çapları: M6 5 · M8 6,8 · M10 8,5 · M12 10,2 mm. İç diş küçük çapı (6H), ovalama kılavuz delik çapı ve hesaplayıcı.';
+const crumbs = [
+  { name: 'Ana sayfa', path: '/' },
+  { name: 'Teknik Araçlar', path: '/teknik-araclar' },
+  { name: 'Kılavuz Matkap Tablosu', path },
+];
+
+const f2 = (x: number) => fmtFixed(x, 2);
+const f3 = (x: number) => fmtFixed(x, 3);
+const name = (d: number, p: number, coarse: boolean) => (coarse ? `M${d}` : `M${d} × ${fmtFixed(p, 2)}`);
+const rows = TAP_ROWS.slice().sort((a, b) => a.d - b.d || Number(b.coarse) - Number(a.coarse) || b.p - a.p).map((r) => {
+  const md = minorDia(r.d, r.p);
+  return {
+    ...r,
+    label: name(r.d, r.p, r.coarse),
+    key: [`m${r.d}`, `m${r.d}x${r.p}`, `${r.d}x${r.p}`, `${r.drill}`, r.coarse ? 'kaba' : 'ince'].join(' '),
+    calc: cutDrill(r.d, r.p),
+    d1min: md.min,
+    d1max: md.max,
+    form: formDrill(r.d, r.p),
+  };
+});
+
+const sizes = [3, 4, 5, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24];
+const init = { d: 10, p: 1.5 };
+const initMd = minorDia(init.d, init.p);
+
+const faq: Qa[] = [
+  {
+    q: 'Kılavuz matkap çapı nasıl hesaplanır?',
+    a: 'Talaş kaldıran kılavuz için pratik kural: <code>matkap çapı = anma çapı − hatve</code>. M10 × 1,5 → 10 − 1,5 = 8,5 mm. Sonuç en yakın standart matkaba yuvarlanır ve iç diş küçük çapı toleransı (6H) içinde kalmalıdır; tablodaki D1 sütunu bu aralığı gösterir.',
+  },
+  {
+    q: 'Ovalama (form) kılavuz için delik neden daha büyük?',
+    a: 'Ovalama kılavuzu talaş kaldırmaz; malzemeyi iterek dişi şekillendirir. Malzeme diş tepesine doğru aktığı için delik daha büyük delinir, yaklaşık <code>D − 0,45 × P</code>. Bu değer yaklaşıktır; kesin ölçüyü kullandığınız kılavuzun üretici tablosundan alın.',
+  },
+  {
+    q: 'Kör delikte hangi kılavuzu kullanmalıyım?',
+    a: 'Kör delikte talaşı yukarı atan helis kanallı kılavuz, boydan boya (açık) delikte talaşı ileri iten sivri uçlu (düz kanallı) kılavuz tercih edilir. Ovalama kılavuz talaş üretmediği için ikisinde de kullanılabilir; sünek malzemelerde (çelik, alüminyum, paslanmaz) iyi sonuç verir.',
+  },
+  {
+    q: 'Kılavuz neden kırılır?',
+    a: 'En sık nedenler küçük delinmiş delik, eksen kaçıklığı, kör delikte talaş sıkışması ve senkron olmayan ilerlemedir. Doğru matkap çapı ve rijit kılavuz çekmede devir başına ilerlemenin hatveye eşit olması kırılmaların çoğunu önler.',
+  },
+  {
+    q: 'İnce diş ne zaman kullanılır?',
+    a: 'İnce hatve; ince cidarlı parçalarda, hassas ayar gereken bağlantılarda ve titreşimle gevşemenin istenmediği yerlerde tercih edilir. Diş dibi çapı büyük olduğundan aynı anma çapında cıvata daha dayanıklıdır, ancak diş sıyırmaya karşı daha hassastır.',
+  },
+];
+
+const schema = [breadcrumbSchema(Astro.site, crumbs), toolSchema(Astro.site, path, 'Kılavuz matkap çapı hesaplayıcı', description), faqSchema(faq)];
+---
+<Base title={title} description={description} schema={schema}>
+  <ToolHero
+    crumbs={crumbs}
+    eyebrow="Teknik araç 03 · ISO metrik diş"
+    title="Kılavuz matkap çapı tablosu"
+    lead="M3’ten M24’e kaba ve ince diş için kılavuz öncesi delinecek matkap çapı. Ölçüyü seçin ya da yazın; iç diş toleransını ve ovalama kılavuz deliğini de görün."
+  >
+    <svg slot="art" class="art" viewBox="0 0 460 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="art-hatch" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0v7" class="hatch-ln" /></pattern>
+        <marker id="art-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 1 9 5 0 9z" class="arr" /></marker>
+      </defs>
+      {(() => {
+        // ISO metrik iç diş profili: P = 24 px, diş yüksekliği 0,541·P ≈ 13, tepe düzlüğü P/4, dip P/8, 60° yanaklar
+        const P = 24, x0 = 40, xe = 232, yMin = 100, yMaj = 87, m = (y: number) => 280 - y;
+        let top = `M${x0} ${yMaj}`;
+        let bot = `M${x0} ${m(yMaj)}`;
+        for (let x = x0; x < xe; x += P) {
+          top += ` L${x + 1.5} ${yMaj} L${x + 9} ${yMin} L${x + 15} ${yMin} L${x + 22.5} ${yMaj} L${x + 24} ${yMaj}`;
+          bot += ` L${x + 1.5} ${m(yMaj)} L${x + 9} ${m(yMin)} L${x + 15} ${m(yMin)} L${x + 22.5} ${m(yMaj)} L${x + 24} ${m(yMaj)}`;
+        }
+        const drillTop = `L${xe} ${yMin} L300 ${yMin} L324 140`;
+        const drillBot = `L${xe} ${m(yMin)} L300 ${m(yMin)} L324 140`;
+        return (
+          <g>
+            <rect x="40" y="40" width="320" height="200" class="hatch" />
+            <path d={`${top} ${drillTop} L40 140 Z`} class="fill-paper" />
+            <path d={`${bot} ${drillBot} L40 140 Z`} class="fill-paper" />
+            <rect x="40" y="40" width="320" height="200" class="ln" />
+            <path d={`${top} ${drillTop}`} class="ln" />
+            <path d={`${bot} ${drillBot}`} class="ln" />
+            <line x1="20" y1="140" x2="440" y2="140" class="cl" />
+            <line x1="250" y1={yMaj} x2="430" y2={yMaj} class="dim" />
+            <line x1="250" y1={m(yMaj)} x2="430" y2={m(yMaj)} class="dim" />
+            <line x1="330" y1={yMin} x2="378" y2={yMin} class="dim" />
+            <line x1="330" y1={m(yMin)} x2="378" y2={m(yMin)} class="dim" />
+            <line x1="372" y1={yMin} x2="372" y2={m(yMin)} class="dim" marker-start="url(#art-arr)" marker-end="url(#art-arr)" />
+            <line x1="424" y1={yMaj} x2="424" y2={m(yMaj)} class="dim" marker-start="url(#art-arr)" marker-end="url(#art-arr)" />
+            <text x="379" y="132" class="t-big">D1</text>
+            <text x="430" y="166" class="t-big">D</text>
+            <line x1="76" y1="102" x2="76" y2="122" class="dim" /><line x1="100" y1="102" x2="100" y2="122" class="dim" />
+            <line x1="76" y1="117" x2="100" y2="117" class="dim" marker-start="url(#art-arr)" marker-end="url(#art-arr)" />
+            <text x="81" y="136" class="t-big">P</text>
+            <rect x="139" y="66" width="30" height="15" rx="3" fill="#f5f4f0" />
+            <text x="143" y="77" class="t-small">60°</text>
+            <text x="40" y="266" class="t-small">Matkap Ø ≈ D − P · ovalama ≈ D − 0,45 · P</text>
+            <text x="40" y="28" class="t-small">ISO METRİK İÇ DİŞ · 6H</text>
+          </g>
+        );
+      })()}
+    </svg>
+  </ToolHero>
+
+  <section class="tl-stage" aria-label="Kılavuz matkap hesaplayıcı">
+    <div class="wrap">
+      <div class="tl-panel tap" data-tap data-coarse={JSON.stringify(COARSE)} data-fine={JSON.stringify(FINE)}>
+        <div class="tl-panel__bar">
+          <span>Hesap · ISO 261 / ISO 965-1</span>
+          <span class="hide-sm">Metrik diş · mm</span>
+        </div>
+        <div class="calc-body">
+          <div class="calc-in">
+            <div class="calc-op__row calc-op__row--stack">
+              <span class="tl-legend">Hızlı seçim · anma çapı</span>
+              <div class="tl-chips" data-sizes>
+                {sizes.map((m) => <button type="button" class="tl-chip" data-d={m} aria-pressed={m === init.d ? 'true' : 'false'}>M{m}</button>)}
+              </div>
+            </div>
+            <div class="tl-fields">
+              <div class="tl-field" data-field="d">
+                <div class="tl-field__top">
+                  <label for="tap-d"><span class="tl-field__sym">D</span><span>Anma çapı (M)</span></label>
+                  <div class="tl-field__box"><input id="tap-d" type="text" inputmode="decimal" autocomplete="off" value="10" aria-describedby="tap-d-msg" data-input /><span class="tl-field__unit">mm</span></div>
+                </div>
+                <p class="tl-field__msg" id="tap-d-msg" data-msg></p>
+              </div>
+              <div class="tl-field" data-field="p">
+                <div class="tl-field__top">
+                  <label for="tap-p"><span class="tl-field__sym">P</span><span>Hatve</span></label>
+                  <div class="tl-field__box"><input id="tap-p" type="text" inputmode="decimal" autocomplete="off" value="1,5" aria-describedby="tap-p-msg" data-input /><span class="tl-field__unit">mm</span></div>
+                </div>
+                <p class="tl-field__msg" id="tap-p-msg" data-msg></p>
+              </div>
+            </div>
+            <div class="calc-op__row calc-op__row--stack">
+              <span class="tl-legend">Standart hatveler</span>
+              <div class="tl-chips" data-pitches>
+                {pitchesFor(init.d).map((x) => <button type="button" class="tl-chip" data-p={x.p} aria-pressed={x.p === init.p ? 'true' : 'false'}>{fmtFixed(x.p, 2)}{x.coarse && <small>kaba</small>}</button>)}
+              </div>
+            </div>
+            <p class="tap-std" data-std data-kind="coarse"><b>M10</b> — ISO metrik kaba diş, hatve 1,5 mm.</p>
+            <p class="calc-hint"><Icon name="book" /> <span>Değerler 6H iç diş içindir. Önerilen matkap, yaygın standart matkap ölçüsüdür; tablo dışı ölçülerde D − P’ye en yakın ve 6H aralığında kalan 0,1 mm adımlı çap gösterilir.</span></p>
+          </div>
+          <div class="calc-out">
+            <div class="calc-out__sticky">
+              <div class="calc-out__head"><span>Sonuç</span><span data-name>M10 × 1,5</span></div>
+              <div class="res res--primary" data-res="drill">
+                <div class="res__label"><span>Talaş kaldıran kılavuz · matkap</span><span class="res__sym">Ø</span></div>
+                <div class="res__val"><b data-v>8,5</b><span class="res__unit">mm</span></div>
+                <p class="res__formula" data-f>D − P = 10 − 1,5 = 8,5 mm · standart tablo değeri</p>
+              </div>
+              <div class="res-grid">
+                <div class="res" data-res="minor">
+                  <div class="res__label"><span>İç diş küçük çapı (6H)</span><span class="res__sym">D1</span></div>
+                  <div class="res__val"><b data-v>{f3(initMd.min)}–{f3(initMd.max!)}</b><span class="res__unit">mm</span></div>
+                  <p class="res__formula" data-f>D1 min = D − 1,0825 × P · maks = min + TD1(6H)</p>
+                </div>
+                <div class="res" data-res="form">
+                  <div class="res__label"><span>Ovalama kılavuz deliği <span class="tl-approx">yaklaşık</span></span><span class="res__sym">Ø</span></div>
+                  <div class="res__val"><b data-v>≈ {f2(formDrill(init.d, init.p))}</b><span class="res__unit">mm</span></div>
+                  <p class="res__formula" data-f>≈ D − 0,45 × P · üretici tablosu esastır</p>
+                </div>
+              </div>
+              <div class="tl-notes" data-notes></div>
+              <a class="tap-link" href="/teknik-araclar/kesme-hizi-hesaplama?d=10&p=1.5#kilavuz" data-speed-link><span>Bu kılavuz için devir ve ilerleme → <b>Kesme hızı hesaplayıcı</b></span><Icon name="arrow" /></a>
+              <div class="calc-actions">
+                <a class="btn btn--wa btn--sm" href={waLink('Merhaba Aksoy Kesici Takımlar, M10 × 1,5 kılavuz ve 8,5 mm matkap için teklif almak istiyorum.')} target="_blank" rel="noopener" data-wa="tool-tap" data-tap-wa><Icon name="whatsapp" /> Kılavuz + matkap teklifi al</a>
+              </div>
+              <p class="sr-only" aria-live="polite" data-live></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ToolCta
+        id="tool-tap-cta"
+        title="Kılavuz, matkap ve tutucu tek mesajda."
+        text="Helis, sivri uçlu ya da ovalama kılavuz; HSS veya karbür matkap ve kılavuz tutucu. Diş ölçüsünü ve malzemeyi yazın, uygun takımı teklif edelim."
+        wa="Merhaba Aksoy Kesici Takımlar, kılavuz ve matkap teklifi almak istiyorum. Diş ölçüsü ve malzeme: "
+      />
+    </div>
+  </section>
+
+  <section class="section section--tight tl-ref" aria-labelledby="kilavuz-tablo">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Tablo · ISO metrik diş</span>
+        <h2 id="kilavuz-tablo" class="reveal">Kılavuz öncesi matkap çapları</h2>
+        <p>Kaba ve yaygın ince hatveler. “Matkap Ø” talaş kaldıran kılavuz içindir; ovalama kılavuz sütunu yaklaşıktır.</p>
+      </div>
+
+      <div class="tap-tools">
+        <label class="tl-search">
+          <Icon name="search" />
+          <span class="sr-only">Tabloda ara</span>
+          <input type="search" placeholder="Ara: M10, 10x1,25, 8,5…" autocomplete="off" spellcheck="false" data-tap-search />
+        </label>
+        <div class="tl-filter" role="group" aria-label="Diş türü">
+          <button type="button" aria-pressed="true" data-kind="all">Tümü</button>
+          <button type="button" aria-pressed="false" data-kind="kaba">Kaba</button>
+          <button type="button" aria-pressed="false" data-kind="ince">İnce</button>
+        </div>
+        <span class="tap-count" data-tap-count aria-live="polite">{rows.length} satır</span>
+      </div>
+
+      <div class="tl-tablewrap" tabindex="0" role="region" aria-label="Kılavuz matkap çapları tablosu (yatay kaydırılabilir)">
+        <table class="tl-table tl-table--tap">
+          <thead>
+            <tr>
+              <th scope="col" class="sticky-col">Diş</th>
+              <th scope="col">Matkap Ø</th>
+              <th scope="col">Hatve P</th>
+              <th scope="col">Tür</th>
+              <th scope="col">D − P</th>
+              <th scope="col">D1 (6H) min–maks</th>
+              <th scope="col">Ovalama ≈</th>
+            </tr>
+          </thead>
+          <tbody data-tap-rows>
+            {rows.map((r) => (
+              <tr data-key={r.key} data-kind={r.coarse ? 'kaba' : 'ince'} data-d={r.d} data-p={r.p} class={r.d === init.d && r.p === init.p ? 'is-current' : undefined}>
+                <th scope="row" class="sticky-col">{r.label}</th>
+                <td class="num drill">{f2(r.drill)}</td>
+                <td class="num">{fmtFixed(r.p, 2)}</td>
+                <td><span class:list={['kind', { 'kind--coarse': r.coarse }]}>{r.coarse ? 'Kaba' : 'İnce'}</span></td>
+                <td class="num">{f2(r.calc)}</td>
+                <td class="num">{f3(r.d1min)}–{r.d1max !== null ? f3(r.d1max) : '—'}</td>
+                <td class="num">{f2(r.form)}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p class="tap-empty" data-tap-empty hidden>Eşleşen satır yok. Ölçü tabloda değilse yukarıdaki hesaplayıcıya yazın.</p>
+      </div>
+      <p class="tl-legendline">Matkap Ø: yaygın standart matkap ölçüsü (DIN 336 uygulaması). D1: iç diş küçük çapı, ISO 965-1 tolerans sınıfı 6H (min = D − 1,0825·P, maks = min + TD1). Ovalama kılavuz değeri D − 0,45·P formülüyle hesaplanmış yaklaşık değerdir ve 0,05 mm’ye yuvarlanmıştır; kesin değer kılavuz üreticisinin tablosundadır. TD1(6H) tablosu: {Object.entries(TD1_6).filter(([k]) => Number(k) >= 0.35 && Number(k) <= 3).map(([k, v]) => `P ${fmtFixed(Number(k), 2)} → ${fmtFixed(v, 3)}`).join(' · ')} mm.</p>
+    </div>
+  </section>
+
+  <ToolFaq id="sss-kilavuz" title="Kılavuz ve matkap çapı hakkında" items={faq} />
+
+  <script>
+    import '../../scripts/tools/tap';
+  </script>
+</Base>
