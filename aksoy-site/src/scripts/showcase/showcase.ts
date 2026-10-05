@@ -231,7 +231,55 @@ export async function startShowcase(
     }
   }
 
-  /* ---------- Bölüm sekansları ---------- */
+  /* ---------- Bölüm aksiyonları: kaydırma ile ileri-geri sarılır (film gibi) ---------- */
+  let act: gsap.core.Timeline | null = null;
+  function buildAct(k: number) {
+    act?.kill();
+    act = null;
+    if (k < 1 || k > 4) return;
+    const tl = gsap.timeline({ paused: true, defaults: { ease: 'none' } });
+    if (k === 1) {
+      // Delme: iş parçası gelir, matkap hızlanır, dalar; talaş, kıvılcım, duman; çıkar, ölçüler belirir
+      tl.set(S, { hole: 0, plunge: 0 }, 0);
+      tl.to(S, { block: 1, duration: 0.9, ease: 'power3.out' }, 0);
+      tl.to(S, { turns: `+=10`, duration: 4.4, ease: 'power1.inOut' }, 0.3);
+      tl.to(S, { plunge: 1, duration: 2.2, ease: 'power1.inOut' }, 0.9);
+      tl.to(S, { cut: 1, duration: 0.15 }, 1.05).to(S, { cut: 0, duration: 0.3 }, 3.0);
+      tl.to(S, { shake: 1, duration: 0.15 }, 1.05).to(S, { shake: 0, duration: 0.3 }, 3.0);
+      tl.to(S, { heat: 1, duration: 1.0 }, 1.1).to(S, { heat: 0.15, duration: 1.4 }, 3.1);
+      tl.to(S, { hole: 1, duration: 0.05 }, 1.1);
+      tl.to(S, { plunge: 0, duration: 1.0, ease: 'power2.inOut' }, 3.1);
+      tl.to(S, { block: 0, duration: 0.9, ease: 'power2.in' }, 4.3);
+      tl.to(S, { ...dimPose(), duration: 1.1, ease: 'power2.inOut' }, 4.6);
+      tl.to(S, { cDim: 1, duration: 0.6 }, 5.3);
+      tl.to({}, { duration: 0.4 }, 5.9);
+    }
+    if (k === 2) {
+      // Uç çevirme: körelmiş kenar → vidalar sökülür → uçlar fırlar → 90° döner → oturur → sıkılır
+      tl.to(S, { wear: 1, cIns: 1, duration: 0.4 }, 0);
+      tl.to(S, { screw0: 1, duration: 1.0, ease: 'power1.inOut' }, 0.4).to(S, { screw1: 1, duration: 1.0, ease: 'power1.inOut' }, 0.55);
+      tl.to(S, { lift0: 1, duration: 0.7, ease: 'power2.out' }, 1.35).to(S, { lift1: 1, duration: 0.7, ease: 'power2.out' }, 1.45);
+      tl.to(S, { idx0: S.idx0 + 0.25, idx1: S.idx1 + 0.25, duration: 1.0, ease: 'power2.inOut' }, 2.0);
+      tl.to(S, { wear: 0, duration: 0.3 }, 2.35);
+      tl.to(S, { lift0: 0, lift1: 0, duration: 0.5, ease: 'power3.in' }, 3.1);
+      tl.to(S, { flash: 1, duration: 0.05 }, 3.6).to(S, { flash: 0, duration: 0.5 }, 3.65);
+      tl.to(S, { screw0: 0, screw1: 0, duration: 0.9, ease: 'power1.inOut' }, 3.7);
+      tl.to({}, { duration: 0.4 }, 4.6);
+    }
+    if (k === 3) {
+      tl.to(S, { coolant: 1, duration: 0.4 }, 0);
+      tl.fromTo(S, { jet: 0 }, { jet: 1, duration: 1.0, ease: 'power2.out', immediateRender: false }, 0);
+      tl.to(S, { cCool: 1, duration: 0.6 }, 0.6);
+      tl.to({}, { duration: 1.4 }, 1.2);
+    }
+    if (k === 4) {
+      tl.to(S, { lift0: 0.7, duration: 0.8, ease: 'power2.out' }, 0).to(S, { lift1: 0.7, duration: 0.8, ease: 'power2.out' }, 0.1);
+      tl.to({}, { duration: 1.5 }, 0.9);
+    }
+    act = tl;
+  }
+
+  /* ---------- Bölüm geçişleri ---------- */
   let seq: gsap.core.Timeline | null = null;
   function enter(k: number, dir: number) {
     seq?.kill();
@@ -249,43 +297,7 @@ export async function startShowcase(
     if (!calm) tl.to(S, { camZ: -0.22, duration: 1.0, ease: 'sine.inOut' }, 0).to(S, { camZ: 0, duration: 1.3, ease: 'sine.inOut' }, 1.0);
     tl.to(S, { envRot: `+=${dir * 0.9}`, duration: 2.6, ease: 'sine.inOut' }, 0);
 
-    if (k === 1) {
-      // Delme: iş parçası gelir, matkap hızlanır, dalar; talaş, kıvılcım, duman
-      tl.set(S, { hole: 0, plunge: 0 }, 0);
-      tl.to(S, { block: 1, duration: 0.9, ease: 'expo.out' }, 0.65);
-      tl.to(S, { turns: `+=9`, duration: 3.4, ease: 'power1.inOut' }, 0.8);
-      tl.to(S, { plunge: 1, duration: 1.8, ease: 'power1.inOut' }, 1.25);
-      tl.to(S, { cut: 1, duration: 0.18 }, 1.42).to(S, { cut: 0, duration: 0.35 }, 3.0);
-      tl.to(S, { shake: 1, duration: 0.15 }, 1.42).to(S, { shake: 0, duration: 0.4 }, 3.0);
-      tl.to(S, { heat: 1, duration: 1.0 }, 1.5).to(S, { heat: 0, duration: 2.4 }, 3.1);
-      tl.to(S, { hole: 1, duration: 0.1 }, 1.5);
-      tl.to(S, { plunge: 0, duration: 0.8, ease: 'power3.inOut' }, 3.15);
-      tl.to(S, { block: 0, duration: 0.9, ease: 'expo.in' }, 4.15);
-      tl.to(S, { ...dimPose(), duration: 1.2, ease: 'expo.inOut' }, 4.6);
-      tl.to(S, { cDim: 1, duration: 0.7, ease: 'power2.out' }, 5.4);
-    }
-    if (k === 2) {
-      // Uç çevirme: körelmiş kenar → vidalar sökülür → uçlar fırlar → 90° döner → yerine oturur → sıkılır
-      tl.to(S, { wear: 1, duration: 0.45 }, 1.0);
-      tl.to(S, { cIns: 1, duration: 0.4 }, 1.1);
-      tl.to(S, { screw0: 1, duration: 0.95, ease: 'power2.inOut' }, 1.35).to(S, { screw1: 1, duration: 0.95, ease: 'power2.inOut' }, 1.5);
-      tl.to(S, { lift0: 1, duration: 0.65, ease: 'back.out(1.8)' }, 2.2).to(S, { lift1: 1, duration: 0.65, ease: 'back.out(1.8)' }, 2.3);
-      tl.to(S, { idx0: `+=0.25`, idx1: `+=0.25`, duration: 0.85, ease: 'power3.inOut' }, 2.8);
-      tl.to(S, { wear: 0, duration: 0.3 }, 3.1);
-      tl.call(() => setEdge(edge + 1), [], 3.2);
-      tl.to(S, { lift0: 0, lift1: 0, duration: 0.42, ease: 'power4.in' }, 3.75);
-      tl.to(S, { flash: 1, duration: 0.06 }, 4.17).to(S, { flash: 0, duration: 0.6 }, 4.23);
-      tl.to(S, { shake: 0.45, duration: 0.05 }, 4.17).to(S, { shake: 0, duration: 0.3 }, 4.22);
-      tl.to(S, { screw0: 0, screw1: 0, duration: 0.85, ease: 'power2.inOut' }, 4.25);
-    }
-    if (k === 3) {
-      tl.to(S, { coolant: 1, duration: 0.35 }, 0.95);
-      tl.fromTo(S, { jet: 0 }, { jet: 1, duration: 0.75, ease: 'power3.out', immediateRender: false }, 0.95);
-      tl.to(S, { cCool: 1, duration: 0.5 }, 1.45);
-    }
-    if (k === 4) {
-      tl.to(S, { lift0: 0.7, duration: 0.7, ease: 'back.out(1.6)' }, 0.9).to(S, { lift1: 0.7, duration: 0.7, ease: 'back.out(1.6)' }, 1.0);
-    }
+    buildAct(k);
     showPanel(k, dir);
   }
 
@@ -369,6 +381,7 @@ export async function startShowcase(
   function apply(dt: number) {
     const k = intro.k;
     L += (Ltarget - L) * Math.min(1, dt * 2.6);
+    if (act) act.progress(THREE.MathUtils.clamp((L - 0.04) / 0.86, 0, 1));
     pointer.x += (pointer.tx - pointer.x) * Math.min(1, dt * 3);
     pointer.y += (pointer.ty - pointer.y) * Math.min(1, dt * 3);
     velOff *= Math.pow(0.04, dt);
@@ -432,6 +445,8 @@ export async function startShowcase(
     m.emissive.setRGB(goldEm.r * fl + heatEm.r * ht, goldEm.g * fl + heatEm.g * ht, goldEm.b * fl + heatEm.b * ht);
     const ci = Math.round(cc);
     coatChips.forEach((li, i) => li.classList.toggle('is-on', i === ci));
+    const e = 1 + Math.round(S.idx0 * 4 + 0.001);
+    if (e !== edge) setEdge(e);
 
     scene.updateMatrixWorld();
     coolant.update(dt, S.coolant, S.jet);
