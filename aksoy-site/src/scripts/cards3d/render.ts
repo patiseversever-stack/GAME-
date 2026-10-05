@@ -19,11 +19,13 @@ interface Present {
   spin: number;
   /** Kartta modelin oturacağı nokta (0–1) */
   at: [number, number];
+  /** Stüdyo ışığını döndürme (rad): parlak şeridin yüzeye denk gelmesi için */
+  env?: number;
 }
 const PRESENT: Record<ModelKind, Present> = {
   cnmg: { center: [0, 0, 2.4], radius: 10.5, pose: [-0.36, 0.22, 0.5], spinAxis: 'z', spin: 0.32, at: [0.7, 0.43] },
   thread: { center: [0, 0, 1.8], radius: 9.2, pose: [-0.4, 0.2, 0.3], spinAxis: 'z', spin: -0.36, at: [0.68, 0.43] },
-  groove: { center: [-10, -6, 4], radius: 19, pose: [0.5, -1.22, 0.14], spinAxis: 'y', spin: 0, at: [0.72, 0.4] },
+  groove: { center: [-12, -5, 6], radius: 17, pose: [0.46, -1.22, 0.1], spinAxis: 'y', spin: 0, at: [0.75, 0.42], env: 0.8 },
   endmill: { center: [0, 14, 0], radius: 15.5, pose: [0, 0.2, -1.3], spinAxis: 'y', spin: -1.5, at: [0.6, 0.38] },
   drill: { center: [0, 15, 0], radius: 16.5, pose: [0, 0.38, -1.3], spinAxis: 'y', spin: -1.3, at: [0.6, 0.38] },
   tap: { center: [0, 14, 0], radius: 15.5, pose: [0, 0.38, -1.28], spinAxis: 'y', spin: -1.1, at: [0.6, 0.38] },
@@ -188,7 +190,7 @@ export function startCards(els: HTMLElement[]) {
     const fx = aspect < 1.25 ? p.at[0] - 0.06 : p.at[0];
     camera.setViewOffset(w, h, w / 2 - fx * w, h / 2 - p.at[1] * h, w, h);
     camera.updateProjectionMatrix();
-    (scene as any).environmentRotation?.set(0, c.mx * 0.6 + c.hover * Math.sin(performance.now() / 900) * 0.4, 0);
+    (scene as any).environmentRotation?.set(0, (p.env ?? 0) + c.mx * 0.6 + c.hover * Math.sin(performance.now() / 900) * 0.4, 0);
     for (const o of cards) o.presenter.visible = o === c;
     renderer.setViewport(0, 0, w, h);
     renderer.setScissor(0, 0, w, h);

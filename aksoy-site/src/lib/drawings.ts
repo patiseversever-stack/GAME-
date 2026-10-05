@@ -163,12 +163,15 @@ ${goldPoly([[166, 52], [184, 46], [190, 58], [176, 64]])}
 ${dimH(22, 182, 110, 'h × b × l1')}${centerline(14, 73, 192, 73)}`;
 
     case 'holder-groove':
-      return `${shank(20, 60, 118, 26)}
-<polygon points="136,60 160,60 176,40 182,40 182,86 136,86" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
-<path d="M150 74 h22" stroke="#0b0c0e" stroke-width="2.4" stroke-linecap="round"/>
-${goldPoly([[176, 34], [190, 34], [190, 44], [178, 44]])}
-<circle cx="148" cy="68" r="3" fill="#0b0c0e" stroke="${LINE}" stroke-width=".5"/>
-${dimH(20, 182, 108, 'MGEHR')}${centerline(12, 73, 192, 73)}`;
+      // MGEHR 2020-3 + MGMN300, 1 mm ≈ 1,3 birim; kesme kenarı sap üst yüzü hizasında (y = 60)
+      return `${shank(16, 60, 112, 26)}
+<rect x="126" y="49.6" width="27" height="36.4" rx="1.6" fill="${STEEL}" stroke="${LINE}" stroke-width=".7"/>
+<polygon points="152.8,86 167.8,86 178.3,74 180.6,67.7 153.8,67.7 153.8,60.3 168.9,60.9 171,61.3 172.8,61 169.2,53 161.3,50.1 152.8,49.6" fill="${STEEL}" stroke="${LINE}" stroke-width=".7" stroke-linejoin="round"/>
+<rect x="153.8" y="60.3" width="4.4" height="7.4" fill="#0b0c0e"/>
+<path d="M153.8 60.5 H134" stroke="#0b0c0e" stroke-width="1.1"/>
+<circle cx="139" cy="55" r="4.2" fill="#1c1f24" stroke="${LINE}" stroke-width=".5"/><circle cx="139" cy="55" r="1.7" fill="#0b0c0e"/>
+${goldPoly([[184, 60], [183.1, 67.7], [158.9, 67.7], [158, 60], [158.5, 60], [159.6, 60.5], [160.9, 60.2], [164, 60.7], [171, 61.3], [178, 60.7], [181.1, 60.2], [182.4, 60.5], [183.5, 60]])}
+${dimH(16, 184, 106, 'MGEHR · MGMN')}${centerline(10, 73, 192, 73)}`;
 
     case 'holder-thread':
       return `${shank(22, 58, 130, 30)}
