@@ -221,7 +221,7 @@ const vc: Omit<Post, 'readingMinutes'> = {
   date: '2026-10-05',
   tags: ['Hesaplama', 'Tornalama', 'Frezeleme'],
   draft: true,
-  art: { drawing: 'vc', label: 'n = 1000·Vc/π·D' },
+  art: { drawing: 'vc', label: 'n = 1000·Vc/(π·D)' },
   intro: `<p>Uç kutusu ya da katalog size bir <strong>kesme hızı</strong> verir: örneğin 200 m/dk. Tezgâh ise sizden <strong>devir</strong> (S) ve <strong>ilerleme</strong> (F) ister. Bu ikisi arasındaki köprü birkaç basit formülden ibarettir. Bu yazıda formülleri birimleriyle veriyor, her birini atölyeden bir örnekle adım adım hesaplıyoruz.</p>`,
   sections: [
     {
@@ -352,7 +352,7 @@ const udrill: Omit<Post, 'readingMinutes'> = {
       id: 'boy-secimi',
       title: '2xD, 3xD, 4xD, 5xD: boy seçimi',
       html: `<p>U-matkaplar delebildikleri derinliğe göre sınıflanır. <strong>2xD</strong> gövde, matkap çapının iki katı derinliğe kadar deler. Ø25 mm’lik 4xD bir matkap yaklaşık 100 mm derinliğe kadar delik açar. Yaygın boylar 2xD’den 5xD’ye kadardır.</p>
-<p>Kural: işi yapan en kısa boyu seçin. Kısa gövde daha rijittir; daha yüksek ilerlemeyle çalışır, daha düzgün delik açar ve uç ömrü uzar. 4xD ve 5xD gövdelerde talaş tahliyesi ve soğutma çok daha kritik hale gelir. Bu boylarda giriş ve çıkışta ilerlemeyi azaltmak ve soğutma basıncını kontrol etmek gerekir.</p>
+<p>Kural: işi yapan en kısa boyu seçin. Kısa gövde daha rijittir; daha yüksek ilerlemeyle çalışır, daha düzgün delik açar ve uç ömrü uzar. 4xD ve 5xD gövdelerde talaş tahliyesi ve soğutma çok daha kritik hâle gelir. Bu boylarda giriş ve çıkışta ilerlemeyi azaltmak ve soğutma basıncını kontrol etmek gerekir.</p>
 <p>U-matkaplar genellikle Ø12–14 mm civarından başlar; daha küçük çaplarda karbür matkap tek gerçek seçenektir. Saplar çoğunlukla Weldon tipidir: sapın yan yüzeyi düzdür ve tutucuda vidayla sıkılır.</p>`,
     },
     {
@@ -395,7 +395,7 @@ const udrill: Omit<Post, 'readingMinutes'> = {
 <li><strong>Çıkışta oluşan pula dikkat edin.</strong> Tornada boydan boya delerken delik çıkışında ortadan bir disk (pul) kopabilir ve hızla fırlayabilir. Kapı kapalı çalışın.</li>
 <li><strong>Uçları okuyun.</strong> Çevre ucu hızlı aşınıyorsa kesme hızı yüksek olabilir. Merkez ucu ufalanıyor ya da kırılıyorsa ilerleme fazla, hiza bozuk veya soğutma yetersiz olabilir.</li>
 <li><strong>Talaşa bakın.</strong> Kısa ve kıvrık (C şeklinde) talaş iyidir. Uzun, sarılan talaş oluğu tıkar; ilerlemeyi ya da uç geometrisini değiştirin.</li>
-<li><strong>Doğru değerle başlayın.</strong> Çoğu katalog U-matkap için karbür matkaba göre daha yüksek kesme hızı, ama daha düşük devir başı ilerleme verir. Başlangıç değerini uç kutusundan veya katalogdan alın.</li>
+<li><strong>Doğru değerle başlayın.</strong> Çoğu katalog U-matkap için karbür matkaba göre daha yüksek kesme hızı, ama daha düşük devir başına ilerleme verir. Başlangıç değerini uç kutusundan veya katalogdan alın.</li>
 </ol>`,
     },
     {

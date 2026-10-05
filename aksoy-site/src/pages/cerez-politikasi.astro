@@ -87,7 +87,7 @@ const schema = [
       </nav>
       <span class="eyebrow eyebrow--tin">Yasal · Çerezler ve yerel depolama</span>
       <h1>Çerez Politikası</h1>
-      <p class="lead">Kısa cevap: takip ya da reklam çerezi yok. Tarayıcınızda tutulan tek şey, sizin oluşturduğunuz Teklif Sepeti.</p>
+      <p class="lead">Kısa cevap: takip ya da reklam çerezi yok. Tarayıcınızda kalıcı olarak tutulan tek şey, sizin oluşturduğunuz Teklif Sepeti.</p>
       <p class="legal-hero__meta">
         <span>Kapsam: <b>{Astro.site?.host}</b></span>
         <span>Son güncelleme: <b><time datetime={updated}>{trDate(updated)}</time></b></span>
@@ -95,7 +95,7 @@ const schema = [
       <div class="legal-summary" aria-label="Özet">
         <div><Icon name="check" /><b>Takip çerezi yok</b><span>Analiz, reklam ya da sosyal medya pikseli kullanılmaz.</span></div>
         <div><Icon name="shield" /><b>Onay penceresi yok</b><span>Takip amaçlı çerez kullanılmadığı için gösterilmez.</span></div>
-        <div><Icon name="list" /><b>Tek kayıt: sepet</b><span>Teklif Sepeti yalnızca tarayıcınızda tutulur.</span></div>
+        <div><Icon name="list" /><b>Kalıcı kayıt: yalnızca sepet</b><span>Teklif Sepeti yalnızca tarayıcınızda tutulur.</span></div>
         <div><Icon name="bolt" /><b>Dış istek yok</b><span>Yazı tipleri ve görseller bu siteden yüklenir.</span></div>
       </div>
     </div>
@@ -109,7 +109,7 @@ const schema = [
         <section aria-labelledby="kisaca">
           <h2 id="kisaca">{S['kisaca']}</h2>
           <p>{site.name} sitesi, ziyaretinizi izleyen veya sizi başka sitelerde tanımaya yarayan <strong>hiçbir çerez kullanmaz</strong>. Sitede analiz aracı, reklam pikseli, sosyal medya eklentisi ya da gömülü video yok. Bu yüzden çerez onay penceresi göstermiyoruz.</p>
-          <p>Tarayıcınızda kalıcı olarak tutulan tek bilgi, katalogdan seçtiğiniz ürünlerin listesidir (Teklif Sepeti). Sepete konum eklerseniz o da yalnızca açık sekme boyunca saklanır. Bunlar sizin isteğinizle oluşur, cihazınızda kalır ve bize gönderilmez; WhatsApp mesajını siz gönderdiğinizde bize ulaşır.</p>
+          <p>Tarayıcınızda kalıcı olarak tutulan tek bilgi, katalogdan seçtiğiniz ürünlerin listesidir (Teklif Sepeti). Sepete konum eklerseniz o da yalnızca açık sekme boyunca saklanır. Bunlar sizin isteğinizle oluşur ve cihazınızda kalır; bize ancak WhatsApp mesajını siz gönderdiğinizde ulaşır.</p>
         </section>
 
         <section aria-labelledby="cerez-nedir">
@@ -143,7 +143,7 @@ const schema = [
           <h2 id="nasil-silinir">{S['nasil-silinir']}</h2>
           <p>Teklif Sepeti’ni üç yoldan silebilirsiniz:</p>
           <ol>
-            <li>Teklif Sepeti panelinde ürünleri tek tek <strong>“Çıkar”</strong> ile kaldırarak,</li>
+            <li>Teklif Sepeti panelinde ürünleri çöp kutusu simgesiyle tek tek kaldırarak,</li>
             <li>aşağıdaki düğmeyle bu cihazdaki sepeti tek seferde silerek,</li>
             <li>tarayıcınızın ayarlarından bu sitenin <strong>çerezlerini ve site verilerini</strong> temizleyerek.</li>
           </ol>
@@ -167,7 +167,7 @@ const schema = [
         <section aria-labelledby="analitik">
           <h2 id="analitik">{S['analitik']}</h2>
           <p>Ziyaret sayılarını görmek için ileride çerez kullanmayan (cookieless) bir analiz aracı eklenirse; aracın adı, işlediği veriler ve sağlayıcısı bu sayfada listelenecektir.</p>
-          <p>Çerez veya benzeri bir tanımlayıcı kullanan bir araç eklenmesi halinde ise, araç çalışmadan önce açık rızanızı isteyen ve “Kabul et” ile “Reddet” seçeneklerini eşit şekilde sunan bir tercih paneli gösterilecektir.</p>
+          <p>Çerez veya benzeri bir tanımlayıcı kullanan bir araç eklenmesi hâlinde ise, araç çalışmadan önce açık rızanızı isteyen ve “Kabul et” ile “Reddet” seçeneklerini eşit şekilde sunan bir tercih paneli gösterilecektir.</p>
         </section>
 
         <section aria-labelledby="guncelleme">

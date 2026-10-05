@@ -289,8 +289,8 @@ function renderLoc() {
   }
   if (locPlace) locPlace.textContent = loc.place || 'Konumunuz eklendi';
   const km = Math.round(loc.km);
-  const area = loc.inArea === null ? '' : loc.inArea ? ' · Sahada teslim bölgemizde' : ' · Bölge dışı, kargoyla göndeririz';
-  if (locMeta) locMeta.textContent = `Ostim'e yaklaşık ${km < 1 ? '1' : km.toLocaleString('tr-TR')} km${area}`;
+  const area = loc.inArea === null ? '' : loc.inArea ? ' · Gelip teslim ettiğimiz bölgede' : ' · Bölge dışı, kargoyla göndeririz';
+  if (locMeta) locMeta.textContent = `Ostim’e yaklaşık ${km < 1 ? '1' : km.toLocaleString('tr-TR')} km${area}`;
   if (locOpen) locOpen.href = mapsLink(loc);
 }
 async function placeName(lat: number, lng: number) {
@@ -309,7 +309,7 @@ async function placeName(lat: number, lng: number) {
 }
 locBtn?.addEventListener('click', () => {
   if (!locMsg) return;
-  if (!('geolocation' in navigator)) { locMsg.textContent = 'Tarayıcınız konum vermiyor. Adresi not kısmına yazabilirsiniz.'; return; }
+  if (!('geolocation' in navigator)) { locMsg.textContent = 'Tarayıcınız konum paylaşmayı desteklemiyor. Adresi not kısmına yazabilirsiniz.'; return; }
   locBtn.disabled = true;
   locBtn.classList.add('is-busy');
   locMsg.textContent = 'Konumunuz alınıyor…';
@@ -327,7 +327,7 @@ locBtn?.addEventListener('click', () => {
         loc.inArea = p.il ? AREA.some((c) => p.il.toLocaleLowerCase('tr').includes(c)) : km < 60 ? true : null;
         try { sessionStorage.setItem('aksoy-konum', JSON.stringify(loc)); } catch { /* yok say */ }
       }
-      locMsg.textContent = accuracy > 500 ? `Konum yaklaşık (±${Math.round(accuracy)} m). Gerekirse adresi not kısmına ekleyin.` : '';
+      locMsg.textContent = accuracy > 500 ? `Konum yaklaşık olarak alındı (±${Math.round(accuracy)} m). Gerekirse adresi not kısmına ekleyin.` : '';
       renderLoc();
       updateSend();
       locBtn.disabled = false;
@@ -374,7 +374,7 @@ document.querySelector('[data-quote-share]')?.addEventListener('click', async ()
     await navigator.clipboard.writeText(url);
     (window as any).__toast?.('Liste bağlantısı kopyalandı');
   } catch (err) {
-    if ((err as Error)?.name !== 'AbortError') (window as any).__toast?.('Paylaşılamadı, bağlantıyı adres çubuğundan kopyalayın');
+    if ((err as Error)?.name !== 'AbortError') (window as any).__toast?.('Paylaşılamadı; listeyi “Metni kopyala” ile gönderebilirsiniz');
   }
 });
 async function importShared() {

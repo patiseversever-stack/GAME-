@@ -195,7 +195,7 @@ const schema = breadcrumbSchema(
         <div class="ctool__search">
           <Icon name="search" />
           <label class="sr-only" for="katalog-ara">Katalogda ara</label>
-          <input id="katalog-ara" type="search" data-q placeholder="Kod veya ürün: CNMG, elmas uç, klavuz…" data-ph-short="Kod veya ürün ara" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" />
+          <input id="katalog-ara" type="search" data-q placeholder="Kod veya ürün: CNMG, elmas uç, kılavuz…" data-ph-short="Kod veya ürün ara" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" />
           <button class="ctool__clear" type="button" data-q-clear aria-label="Aramayı temizle" hidden><Icon name="close" /></button>
         </div>
         <p class="ctool__count" data-count-live aria-live="polite" aria-atomic="true"><b data-count>{total}</b> <span>ürün</span></p>
@@ -238,7 +238,7 @@ const schema = breadcrumbSchema(
           </svg>
         </div>
         <h2>Bu seçimle eşleşen ürün yok.</h2>
-        <p>Aradığınız kod listede yoksa sorun: katalogda olmayan kodlar da tedarik edilir. Kutunun ya da eski ucun fotoğrafını göndermeniz yeterli.</p>
+        <p>Aradığınız kod katalogda yoksa yine de sorun; listede olmayan kodları da tedarik ediyoruz. Kutunun ya da eski ucun fotoğrafını göndermeniz yeterli.</p>
         <div class="cempty__actions">
           <a class="btn btn--wa" data-empty-wa href={waLink('Merhaba, katalogda bulamadığım bir ürün için teklif almak istiyorum.')} target="_blank" rel="noopener" data-wa="katalog-bos"><Icon name="whatsapp" /> WhatsApp’tan sor</a>
           <button class="btn btn--ghost" type="button" data-clear>Filtreleri temizle</button>

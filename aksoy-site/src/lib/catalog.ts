@@ -97,20 +97,20 @@ export function sortProducts(list: Product[]): Product[] {
 /* ---------- ISO 1832 kod anatomisi (yalnızca tam eşleşen tornalama uçları için) ---------- */
 const CLEARANCE: Record<string, string> = { A: '3°', B: '5°', C: '7°', D: '15°', E: '20°', F: '25°', G: '30°', N: '0°', P: '11°' };
 const TYPE: Record<string, string> = {
-  A: 'Delikli, kırıcısız',
-  B: 'Havşalı delik, kırıcısız',
-  C: 'Çift havşalı, kırıcısız',
-  F: 'Deliksiz, çift yüz kırıcılı',
-  G: 'Delikli, çift yüz kırıcılı',
-  H: 'Havşalı delik, tek yüz kırıcılı',
-  J: 'Çift havşalı, çift yüz kırıcılı',
-  M: 'Delikli, tek yüz kırıcılı',
-  N: 'Deliksiz, kırıcısız',
-  Q: 'Çift havşalı, kırıcısız',
-  R: 'Deliksiz, tek yüz kırıcılı',
-  T: 'Vida delikli, tek yüz kırıcılı',
-  U: 'Çift havşalı, çift yüz kırıcılı',
-  W: 'Vida delikli, kırıcısız',
+  A: 'Delikli, talaş kırıcısız',
+  B: 'Havşalı delikli, talaş kırıcısız',
+  C: 'Çift havşalı delikli, talaş kırıcısız',
+  F: 'Deliksiz, iki yüzü talaş kırıcılı',
+  G: 'Delikli, iki yüzü talaş kırıcılı',
+  H: 'Havşalı delikli, tek yüzü talaş kırıcılı',
+  J: 'Çift havşalı delikli, iki yüzü talaş kırıcılı',
+  M: 'Delikli, tek yüzü talaş kırıcılı',
+  N: 'Deliksiz, talaş kırıcısız',
+  Q: 'Çift havşalı delikli, talaş kırıcısız',
+  R: 'Deliksiz, tek yüzü talaş kırıcılı',
+  T: 'Havşalı delikli, tek yüzü talaş kırıcılı',
+  U: 'Çift havşalı delikli, iki yüzü talaş kırıcılı',
+  W: 'Havşalı delikli, talaş kırıcısız',
 };
 const THICK: Record<string, string> = {
   '01': '1,59', T1: '1,98', '02': '2,38', T2: '2,78', '03': '3,18', T3: '3,97', '04': '4,76', '05': '5,56', '06': '6,35', '07': '7,94', '09': '9,52',
@@ -130,7 +130,7 @@ export function decodeInsertCode(code: string): CodePart[] | null {
     { part: cl, label: 'Boşluk açısı', value: cl === 'N' ? '0° · negatif' : `${CLEARANCE[cl]} · pozitif` },
     { part: tol, label: 'Tolerans', value: `${tol} sınıfı` },
     { part: ty, label: 'Tip', value: TYPE[ty] },
-    { part: size, label: 'Kenar boyu', value: `≈ ${Number(size)} mm` },
+    { part: size, label: 'Kesme kenarı boyu', value: `≈ ${Number(size)} mm` },
     { part: th, label: 'Kalınlık', value: `${THICK[th]} mm` },
     { part: rad, label: 'Köşe radyüsü', value: r === 0 ? 'Keskin köşe' : `${String(r / 10).replace('.', ',')} mm` },
   ];

@@ -40,9 +40,9 @@ const kunye = [
 
 const steps = [
   { t: 'Gönderin', p: 'Ürün kodunu, kutu etiketinin fotoğrafını ya da Teklif Sepeti listenizi WhatsApp’tan iletin.' },
-  { t: 'Netleştirin', p: 'İşlenen malzeme, adet ve varsa marka tercihi. Gerekirse tezgâh ve işlem bilgisini birlikte konuşuruz.' },
+  { t: 'Netleştirin', p: 'İşlenecek malzemeyi, adedi ve varsa marka tercihinizi yazın. Gerekirse tezgâh ve işlem bilgisini birlikte konuşuruz.' },
   { t: 'Teklifi alın', p: 'Fiyat, stok ve terminle size dönüyoruz. Uygun bir muadil varsa onu da yazıyoruz.' },
-  { t: 'Teslim', p: 'Onay verdiğinizde ürünü adresinize getiriyoruz; uzak illere kargoyla gönderiyoruz. İsterseniz Ostim’den gelip alabilirsiniz.' },
+  { t: 'Teslim alın', p: 'Onay verdiğinizde ürünü adresinize getiriyoruz; uzak illere kargoyla gönderiyoruz. İsterseniz Ostim’den gelip alabilirsiniz.' },
 ];
 
 const schema = [
@@ -107,7 +107,7 @@ const schema = [
         <div class="sheet__cell">
           <span class="sheet__label"><span>Telefon · WhatsApp</span></span>
           <a class="sheet__value" href={`tel:${site.phoneE164}`}>{site.phoneDisplay}</a>
-          <p>Aynı numara hem arama hem WhatsApp için geçerlidir. Açamadığımız aramalara en kısa sürede geri dönüş yapılır.</p>
+          <p>Aynı numara hem arama hem WhatsApp için geçerlidir. Açamadığımız aramalara en kısa sürede geri dönüyoruz.</p>
           <div class="sheet__links">
             <a class="btn btn--wa btn--sm" href={waDefault} target="_blank" rel="noopener" data-wa="contact-sheet"><Icon name="whatsapp" /> WhatsApp</a>
             <a class="btn btn--ghost btn--sm" href={`tel:${site.phoneE164}`}><Icon name="phone" /> Ara</a>
@@ -144,7 +144,7 @@ const schema = [
               </div>
             ))}
           </div>
-          <p>Bu illerde sahada ziyaret ve teslim yapılır. Listede olmayan bir ildeyseniz yine yazın; teslim seçeneğini birlikte değerlendirelim.</p>
+          <p>Bu illerde atölyenize gelip teslim ediyoruz. Listede olmayan bir ildeyseniz yine yazın; teslim seçeneğini birlikte değerlendirelim.</p>
         </div>
 
         <div class="sheet__cell">
@@ -180,7 +180,7 @@ const schema = [
         <Icon name="shield" />
         <div>
           <b>Bu sayfada form yok.</b>
-          <p>İletişim formu, üyelik ya da online ödeme yok; site sunucumuza sizden bir bilgi gelmez. Teklif sepetine yazdıklarınız (konum dahil) yalnızca sizin göndereceğiniz WhatsApp mesajına eklenir.</p>
+          <p>İletişim formu, üyelik ya da online ödeme yok; site sunucumuza sizden bir bilgi gelmez. Teklif sepetine yazdıklarınız (konum dâhil) yalnızca sizin göndereceğiniz WhatsApp mesajına eklenir.</p>
         </div>
         <a class="btn btn--ghost btn--sm" href="/kvkk">KVKK aydınlatma metni</a>
       </div>

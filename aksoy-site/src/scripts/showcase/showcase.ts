@@ -173,9 +173,9 @@ export async function startShowcase(
   });
   const pins: Pin[] = [
     { anchor: 'shank', label: 'Weldon sap', sub: 'Ø 32 · sıkma yüzeyi', group: 'cDim' as Key, side: 'left' as const },
-    { anchor: 'insert-cevre', label: 'Çevre uç', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'right' as const },
-    { anchor: 'insert-merkez', label: 'Merkez uç', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'left' as const, down: true },
-    { anchor: 'screw-cevre', label: 'Torx vida', sub: 'sök · çevir · sık', group: 'cIns' as Key, side: 'right' as const, down: true },
+    { anchor: 'insert-cevre', label: 'Çevre ucu', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'right' as const },
+    { anchor: 'insert-merkez', label: 'Merkez ucu', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'left' as const, down: true },
+    { anchor: 'screw-cevre', label: 'Torx vida', sub: 'gevşet · çevir · sık', group: 'cIns' as Key, side: 'right' as const, down: true },
     { anchor: 'cool', label: 'İçten soğutma', sub: 'basınçlı sıvı doğrudan uca', group: 'cCool' as Key, side: 'right' as const },
   ].map((p, i) => {
     const el = document.createElement('div');

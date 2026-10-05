@@ -233,7 +233,7 @@ ${dimH(16, 185, 110, 'Ø d × l1')}${centerline(10, 72, 192, 72)}`;
 <clipPath id="dc-${id}"><polygon points="80,63 166,63 186,72 166,81 80,81"/></clipPath>
 <g clip-path="url(#dc-${id})">${helix(84, 196, 63, 81, 9, -14)}</g>
 <polyline points="166,63 186,72 166,81" fill="none" stroke="#fff3cf" stroke-width="1.2" stroke-linejoin="round"/>
-${dimH(16, 186, 106, isHss ? 'HSS · 118°' : 'VHM · 140°')}${centerline(10, 72, 192, 72)}`;
+${dimH(16, 186, 106, isHss ? 'HSS · 118°' : 'Karbür · 140°')}${centerline(10, 72, 192, 72)}`;
     }
 
     case 'drill-u':
