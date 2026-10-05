@@ -23,6 +23,24 @@ const storage = [
     life: 'Siz silene kadar',
     sent: 'Hayır, cihazınızda kalır',
   },
+  {
+    name: 'aksoy-konum',
+    tech: 'Oturum depolaması (sessionStorage)',
+    purpose: 'Teklif Sepeti’nde “Konumumu ekle” dediğinizde alınan konum ve yer adı; yalnızca WhatsApp mesajına eklemek için',
+    kind: 'İşlevsel (yalnızca siz isterseniz oluşur)',
+    party: 'Birinci taraf (yalnızca bu site)',
+    life: 'Sekmeyi kapatana ya da “Kaldır” diyene kadar',
+    sent: 'Hayır, cihazınızda kalır',
+  },
+  {
+    name: 'aksoy-pre',
+    tech: 'Oturum depolaması (sessionStorage)',
+    purpose: 'Ana sayfadaki açılış animasyonunun aynı oturumda tekrar gösterilmemesi',
+    kind: 'Zorunlu / işlevsel',
+    party: 'Birinci taraf (yalnızca bu site)',
+    life: 'Sekmeyi kapatana kadar',
+    sent: 'Hayır, cihazınızda kalır',
+  },
 ];
 
 const sections = [
@@ -81,14 +99,14 @@ const schema = [
       <article class="legal-body prose">
         <section aria-labelledby="kisaca">
           <h2 id="kisaca">{S['kisaca']}</h2>
-          <p>{site.name} sitesi, ziyaretinizi izleyen veya sizi başka sitelerde tanımaya yarayan <strong>hiçbir çerez kullanmaz</strong>. Sitede analiz aracı, reklam pikseli, sosyal medya eklentisi ya da gömülü harita veya video bulunmaz. Bu yüzden çerez onay penceresi göstermiyoruz.</p>
-          <p>Tarayıcınızda tutulan tek bilgi, katalogdan seçtiğiniz ürünlerin listesidir (Teklif Sepeti). Bu liste sizin isteğinizle oluşur, cihazınızda kalır ve bize gönderilmez.</p>
+          <p>{site.name} sitesi, ziyaretinizi izleyen veya sizi başka sitelerde tanımaya yarayan <strong>hiçbir çerez kullanmaz</strong>. Sitede analiz aracı, reklam pikseli, sosyal medya eklentisi ya da gömülü video yok. Bu yüzden çerez onay penceresi göstermiyoruz.</p>
+          <p>Tarayıcınızda kalıcı olarak tutulan tek bilgi, katalogdan seçtiğiniz ürünlerin listesidir (Teklif Sepeti). Sepete konum eklerseniz o da yalnızca açık sekme boyunca saklanır. Bunlar sizin isteğinizle oluşur, cihazınızda kalır ve bize gönderilmez; WhatsApp mesajını siz gönderdiğinizde bize ulaşır.</p>
         </section>
 
         <section aria-labelledby="cerez-nedir">
           <h2 id="cerez-nedir">{S['cerez-nedir']}</h2>
           <p><strong>Çerez</strong>, bir sitenin tarayıcınıza bıraktığı ve her istekte sunucuya geri gönderilen küçük bir metin dosyasıdır. <strong>Yerel depolama</strong> (localStorage) ise benzer bir tarayıcı özelliğidir; farkı, kaydedilen bilginin sunucuya kendiliğinden gönderilmemesi ve yalnızca sitenin kendi sayfalarında çalışan kod tarafından okunabilmesidir.</p>
-          <p>Kişisel Verileri Koruma Kurumu’nun çerez rehberi çerezleri zorunlu, işlevsel, performans/analiz ve reklam/pazarlama olarak gruplar ve zorunlu olanlar dışındaki çerezler için genel olarak açık rıza arar. Bu sitede yalnızca sizin açıkça başlattığınız bir işlevi (Teklif Sepeti) yerine getiren, kimliğinizi belirleyen bir bilgi içermeyen ve cihazınızdan çıkmayan tek bir kayıt kullanılır.</p>
+          <p>Kişisel Verileri Koruma Kurumu’nun çerez rehberi çerezleri zorunlu, işlevsel, performans/analiz ve reklam/pazarlama olarak gruplar ve zorunlu olanlar dışındaki çerezler için genel olarak açık rıza arar. Bu sitede yalnızca sizin başlattığınız bir işlevi (Teklif Sepeti, konum ekleme) yerine getiren ya da sayfanın düzgün çalışması için gereken, cihazınızdan çıkmayan kayıtlar kullanılır.</p>
         </section>
 
         <section aria-labelledby="kullandiklarimiz">
@@ -108,7 +126,7 @@ const schema = [
               </table>
             </div>
           ))}
-          <p>Sepet panelindeki “Firma / ad” ve “Not” alanları kaydedilmez; yalnızca WhatsApp mesajı oluşturulurken kullanılır. Özel (gizli) pencerede sepet, pencere kapanınca silinir.</p>
+          <p>Sepet panelindeki “Firma / ad”, teslim, termin ve “Not” alanları kaydedilmez; yalnızca WhatsApp mesajı oluşturulurken kullanılır. Özel (gizli) pencerede sepet, pencere kapanınca silinir.</p>
           <p class="fine">Sunucu kayıtları (IP adresi, tarayıcı bilgisi gibi) çerez değildir; barındırma hizmeti tarafından tutulur. Ayrıntılar için <a href="/kvkk#sunucu-kayitlari">KVKK aydınlatma metni</a>.</p>
         </section>
 
@@ -133,6 +151,7 @@ const schema = [
         <section aria-labelledby="disaridaki-hizmetler">
           <h2 id="disaridaki-hizmetler">{S['disaridaki-hizmetler']}</h2>
           <p>Sitedeki bazı bağlantılar sizi başka hizmetlere götürür: WhatsApp (<code>wa.me</code>), Google Haritalar ve marka siteleri gibi. Bu bağlantılar siz tıklayana kadar hiçbir istek göndermez. Tıkladığınızda o hizmetin kendi çerez ve gizlilik politikası geçerli olur.</p>
+          <p>Teklif Sepeti’nde <strong>“Konumumu ekle”</strong> düğmesine basarsanız konumunuz, yer adını bulmak için OpenStreetMap’in Nominatim hizmetine gönderilir ve konum OpenStreetMap haritasıyla gösterilir. Bu istekler yalnızca düğmeye bastığınızda yapılır; harita OpenStreetMap’in kendi gizlilik politikasına tabidir.</p>
           <p>Yazı tipleri, görseller ve kodlar bu sitenin kendi sunucusundan yüklenir; sayfa açılırken Google Fonts veya benzeri üçüncü taraf hizmetlere istek gönderilmez.</p>
         </section>
 

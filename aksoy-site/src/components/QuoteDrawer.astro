@@ -5,7 +5,7 @@ import Icon from './Icon.astro';
 <aside class="drawer" data-quote-drawer role="dialog" aria-modal="true" aria-labelledby="teklif-baslik" aria-hidden="true">
   <div class="drawer__head">
     <div>
-      <span class="eyebrow">Sipariş değil, teklif talebi</span>
+      <span class="eyebrow">Fiyat sorma listesi</span>
       <h2 id="teklif-baslik">Teklif Sepeti</h2>
     </div>
     <button class="icon-btn" type="button" data-quote-close aria-label="Kapat"><Icon name="close" /></button>
@@ -64,7 +64,10 @@ import Icon from './Icon.astro';
   </div>
   <div class="drawer__foot" data-quote-foot hidden>
     <a class="btn btn--wa btn--block" href="#" target="_blank" rel="noopener" data-quote-send><Icon name="whatsapp" /> WhatsApp’tan teklif iste</a>
-    <button class="btn btn--ghost btn--block" type="button" data-quote-copy><Icon name="copy" /> Listeyi kopyala</button>
-    <p class="drawer__legal">Bu bir sipariş değil. Liste WhatsApp’ta sizin mesajınız olarak açılır, göndermeden önce değiştirebilirsiniz. Konum dahil hiçbir bilgiyi biz kaydetmiyoruz. <a href="/kvkk">KVKK aydınlatma metni</a></p>
+    <div class="drawer__pair">
+      <button class="btn btn--ghost btn--sm" type="button" data-quote-copy><Icon name="copy" /> Metni kopyala</button>
+      <button class="btn btn--ghost btn--sm" type="button" data-quote-share title="Aynı listeyi satın almaya ya da bir arkadaşınıza bağlantı olarak gönderin"><Icon name="share" /> Listeyi paylaş</button>
+    </div>
+    <p class="drawer__legal">Bu bir sipariş değil; mesaj WhatsApp’ta açılır, göndermeden önce değiştirebilirsiniz. Konum dahil hiçbir bilgiyi biz kaydetmiyoruz. <a href="/kvkk">KVKK aydınlatma metni</a></p>
   </div>
 </aside>

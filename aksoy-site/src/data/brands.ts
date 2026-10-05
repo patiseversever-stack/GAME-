@@ -31,7 +31,7 @@ export const brands: Brand[] = [
     segment: 'Premium segment',
     strengths: ['Karbür matkaplar', 'Kılavuzlar', 'Parmak frezeler', 'Raybalar'],
     description:
-      'Döner takımlarda — özellikle karbür matkap, kılavuz ve rayba — dünyanın önde gelen üreticilerinden. Türkiye’de 1988’den beri faaliyet gösterir; İzmir’de üretim ve kaplama tesisi bulunur.',
+      'Karbür matkap, kılavuz ve rayba gibi döner takımlarda dünyanın önde gelen üreticilerinden. Türkiye’de 1988’den beri faaliyet gösterir; İzmir’de üretim ve kaplama tesisi bulunur.',
     website: 'https://guehring.com',
   },
   {

@@ -9,7 +9,7 @@ export const products: Product[] = [
   {
     slug: 'cnmg-120408',
     code: 'CNMG 120408',
-    name: 'Torna elmas uç — 80° eşkenar dörtgen, negatif, çift taraflı',
+    name: 'Torna ucu, 80° eşkenar dörtgen, negatif, çift taraflı',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -35,7 +35,7 @@ export const products: Product[] = [
   {
     slug: 'cnmg-120404',
     code: 'CNMG 120404',
-    name: 'Torna elmas uç — 80° eşkenar dörtgen, negatif, 0,4 radyüs',
+    name: 'Torna ucu, 80° eşkenar dörtgen, negatif, 0,4 mm radyüs',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -60,7 +60,7 @@ export const products: Product[] = [
   {
     slug: 'dnmg-150608',
     code: 'DNMG 150608',
-    name: 'Torna elmas uç — 55° eşkenar dörtgen, negatif, çift taraflı',
+    name: 'Torna ucu, 55° eşkenar dörtgen, negatif, çift taraflı',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -78,7 +78,7 @@ export const products: Product[] = [
       { label: 'Kesme kenarı sayısı', value: '4' },
     ],
     description:
-      '55° uç açısıyla profil, kopya ve omuzlu tornalamada kullanılan negatif uç. 6,35 mm kalınlık, 1504 boyuna göre daha yüksek talaş derinliğinde dayanım sağlar.',
+      '55° uç açısıyla profil, kopya ve omuzlu tornalamada kullanılan negatif uç. 6,35 mm kalın olduğu için 4,76 mm’lik DNMG 1504’e göre daha derin pasoya dayanır.',
     keywords: ['dnmg', 'dnmg150608', 'dnmg 1506', 'dnmg 15', 'elmas uç', 'torna ucu', 'karbür uç', 'insert', 'kopya ucu', 'pdjnr'],
     related: ['pdjnr-2525m15', 'vnmg-160408', 'cnmg-120408'],
     featured: true,
@@ -86,7 +86,7 @@ export const products: Product[] = [
   {
     slug: 'wnmg-080408',
     code: 'WNMG 080408',
-    name: 'Torna elmas uç — 80° trigon, negatif, altı kenarlı',
+    name: 'Torna ucu, 80° trigon, negatif, altı kenarlı',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -112,7 +112,7 @@ export const products: Product[] = [
   {
     slug: 'tnmg-160408',
     code: 'TNMG 160408',
-    name: 'Torna elmas uç — 60° üçgen, negatif, altı kenarlı',
+    name: 'Torna ucu, 60° üçgen, negatif, altı kenarlı',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -137,7 +137,7 @@ export const products: Product[] = [
   {
     slug: 'vnmg-160408',
     code: 'VNMG 160408',
-    name: 'Torna elmas uç — 35° eşkenar dörtgen, negatif, kopya',
+    name: 'Torna ucu, 35° eşkenar dörtgen, negatif, kopya için',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -162,7 +162,7 @@ export const products: Product[] = [
   {
     slug: 'snmg-120408',
     code: 'SNMG 120408',
-    name: 'Torna elmas uç — 90° kare, negatif, sekiz kenarlı',
+    name: 'Torna ucu, 90° kare, negatif, sekiz kenarlı',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -187,7 +187,7 @@ export const products: Product[] = [
   {
     slug: 'ccmt-09t304',
     code: 'CCMT 09T304',
-    name: 'Torna elmas uç — 80° eşkenar dörtgen, pozitif, vidalı',
+    name: 'Torna ucu, 80° eşkenar dörtgen, pozitif, vidalı',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -213,7 +213,7 @@ export const products: Product[] = [
   {
     slug: 'dcmt-11t304',
     code: 'DCMT 11T304',
-    name: 'Torna elmas uç — 55° eşkenar dörtgen, pozitif, vidalı',
+    name: 'Torna ucu, 55° eşkenar dörtgen, pozitif, vidalı',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -238,7 +238,7 @@ export const products: Product[] = [
   {
     slug: 'dcmt-070204',
     code: 'DCMT 070204',
-    name: 'Torna elmas uç — 55° eşkenar dörtgen, pozitif, küçük boy',
+    name: 'Torna ucu, 55° eşkenar dörtgen, pozitif, küçük boy',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -263,7 +263,7 @@ export const products: Product[] = [
   {
     slug: 'vcmt-160404',
     code: 'VCMT 160404',
-    name: 'Torna elmas uç — 35° eşkenar dörtgen, pozitif, finiş kopya',
+    name: 'Torna ucu, 35° eşkenar dörtgen, pozitif, ince kopya için',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -288,7 +288,7 @@ export const products: Product[] = [
   {
     slug: 'tcmt-16t304',
     code: 'TCMT 16T304',
-    name: 'Torna elmas uç — 60° üçgen, pozitif, vidalı',
+    name: 'Torna ucu, 60° üçgen, pozitif, vidalı',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -313,7 +313,7 @@ export const products: Product[] = [
   {
     slug: 'rcmt-1204m0',
     code: 'RCMT 1204M0',
-    name: 'Torna elmas uç — yuvarlak, pozitif, Ø12',
+    name: 'Torna ucu, yuvarlak, pozitif, Ø12',
     category: 'tornalama',
     subcategory: 'tornalama-uclari',
     drawing: 'insert',
@@ -339,7 +339,7 @@ export const products: Product[] = [
   {
     slug: 'pclnr-2020k12',
     code: 'PCLNR 2020K12',
-    name: 'Dış çap tornalama kateri — 95°, CNMG 12 için, 20×20 sap',
+    name: '95° dış çap kateri, CNMG 12 uç, 20×20 sap',
     category: 'tornalama',
     subcategory: 'dis-cap-katerleri',
     drawing: 'holder-ext',
@@ -363,7 +363,7 @@ export const products: Product[] = [
   {
     slug: 'pclnr-2525m12',
     code: 'PCLNR 2525M12',
-    name: 'Dış çap tornalama kateri — 95°, CNMG 12 için, 25×25 sap',
+    name: '95° dış çap kateri, CNMG 12 uç, 25×25 sap',
     category: 'tornalama',
     subcategory: 'dis-cap-katerleri',
     drawing: 'holder-ext',
@@ -387,7 +387,7 @@ export const products: Product[] = [
   {
     slug: 'pdjnr-2525m15',
     code: 'PDJNR 2525M15',
-    name: 'Dış çap kopya kateri — 93°, DNMG 15 için, 25×25 sap',
+    name: '93° kopya kateri, DNMG 15 uç, 25×25 sap',
     category: 'tornalama',
     subcategory: 'dis-cap-katerleri',
     drawing: 'holder-ext',
@@ -411,7 +411,7 @@ export const products: Product[] = [
   {
     slug: 'mvjnr-2525m16',
     code: 'MVJNR 2525M16',
-    name: 'Dış çap kopya kateri — 93°, VNMG 16 için, 25×25 sap',
+    name: '93° kopya kateri, VNMG 16 uç, 25×25 sap',
     category: 'tornalama',
     subcategory: 'dis-cap-katerleri',
     drawing: 'holder-ext',
@@ -435,7 +435,7 @@ export const products: Product[] = [
   {
     slug: 'pwlnr-2525m08',
     code: 'PWLNR 2525M08',
-    name: 'Dış çap tornalama kateri — 95°, WNMG 08 için, 25×25 sap',
+    name: '95° dış çap kateri, WNMG 08 uç, 25×25 sap',
     category: 'tornalama',
     subcategory: 'dis-cap-katerleri',
     drawing: 'holder-ext',
@@ -459,7 +459,7 @@ export const products: Product[] = [
   {
     slug: 'ptgnr-2525m16',
     code: 'PTGNR 2525M16',
-    name: 'Dış çap tornalama kateri — 90°, TNMG 16 için, 25×25 sap',
+    name: '90° dış çap kateri, TNMG 16 uç, 25×25 sap',
     category: 'tornalama',
     subcategory: 'dis-cap-katerleri',
     drawing: 'holder-ext',
@@ -483,7 +483,7 @@ export const products: Product[] = [
   {
     slug: 'svjcr-2020k16',
     code: 'SVJCR 2020K16',
-    name: 'Dış çap kopya kateri — 93°, VCMT 16 için, vidalı, 20×20 sap',
+    name: '93° vidalı kopya kateri, VCMT 16 uç, 20×20 sap',
     category: 'tornalama',
     subcategory: 'dis-cap-katerleri',
     drawing: 'holder-ext',
@@ -509,7 +509,7 @@ export const products: Product[] = [
   {
     slug: 's16q-sducr07',
     code: 'S16Q-SDUCR07',
-    name: 'İç çap barası — Ø16, 93°, DCMT 07 için',
+    name: 'İç çap barası Ø16, 93°, DCMT 07 uç',
     category: 'tornalama',
     subcategory: 'ic-cap-baralari',
     drawing: 'boring-bar',
@@ -534,7 +534,7 @@ export const products: Product[] = [
   {
     slug: 's20r-sclcr09',
     code: 'S20R-SCLCR09',
-    name: 'İç çap barası — Ø20, 95°, CCMT 09 için',
+    name: 'İç çap barası Ø20, 95°, CCMT 09 uç',
     category: 'tornalama',
     subcategory: 'ic-cap-baralari',
     drawing: 'boring-bar',
@@ -559,7 +559,7 @@ export const products: Product[] = [
   {
     slug: 's20r-sducr11',
     code: 'S20R-SDUCR11',
-    name: 'İç çap barası — Ø20, 93°, DCMT 11 için',
+    name: 'İç çap barası Ø20, 93°, DCMT 11 uç',
     category: 'tornalama',
     subcategory: 'ic-cap-baralari',
     drawing: 'boring-bar',
@@ -584,7 +584,7 @@ export const products: Product[] = [
   {
     slug: 's25s-pclnr12',
     code: 'S25S-PCLNR12',
-    name: 'İç çap barası — Ø25, 95°, CNMG 12 için',
+    name: 'İç çap barası Ø25, 95°, CNMG 12 uç',
     category: 'tornalama',
     subcategory: 'ic-cap-baralari',
     drawing: 'boring-bar',
@@ -611,7 +611,7 @@ export const products: Product[] = [
   {
     slug: 'mgmn-150',
     code: 'MGMN 150',
-    name: 'Kanal ve kesme ucu — 1,5 mm, çift ağızlı',
+    name: 'Kanal ve kesme ucu, 1,5 mm, çift ağızlı',
     category: 'kanal-kesme',
     subcategory: 'kanal-uclari',
     drawing: 'groove-insert',
@@ -632,7 +632,7 @@ export const products: Product[] = [
   {
     slug: 'mgmn-200',
     code: 'MGMN 200',
-    name: 'Kanal ve kesme ucu — 2 mm, çift ağızlı',
+    name: 'Kanal ve kesme ucu, 2 mm, çift ağızlı',
     category: 'kanal-kesme',
     subcategory: 'kanal-uclari',
     drawing: 'groove-insert',
@@ -654,7 +654,7 @@ export const products: Product[] = [
   {
     slug: 'mgmn-300',
     code: 'MGMN 300',
-    name: 'Kanal ve kesme ucu — 3 mm, çift ağızlı',
+    name: 'Kanal ve kesme ucu, 3 mm, çift ağızlı',
     category: 'kanal-kesme',
     subcategory: 'kanal-uclari',
     drawing: 'groove-insert',
@@ -675,7 +675,7 @@ export const products: Product[] = [
   {
     slug: 'mgmn-400',
     code: 'MGMN 400',
-    name: 'Kanal ve kesme ucu — 4 mm, çift ağızlı',
+    name: 'Kanal ve kesme ucu, 4 mm, çift ağızlı',
     category: 'kanal-kesme',
     subcategory: 'kanal-uclari',
     drawing: 'groove-insert',
@@ -698,7 +698,7 @@ export const products: Product[] = [
   {
     slug: 'mgehr-1616-2',
     code: 'MGEHR 1616-2',
-    name: 'Dış çap kanal ve kesme kateri — 2 mm, 16×16 sap',
+    name: 'Kanal ve kesme kateri, 2 mm, 16×16 sap',
     category: 'kanal-kesme',
     subcategory: 'kanal-katerleri',
     drawing: 'holder-groove',
@@ -712,7 +712,7 @@ export const products: Product[] = [
       { label: 'Uyumlu uç', value: 'MGMN 200' },
     ],
     description:
-      'MGMN 200 uçlar için dış çap kanal açma ve kesme kateri; 16×16 mm kater yuvalı küçük ve orta boy tornalar içindir. Ekonomik SANT gövdeleri Korloy tipi MGMN uçlarla uyumlu olarak sunulur.',
+      'MGMN 200 uçlar için dış çap kanal açma ve kesme kateri; 16×16 mm kater yuvalı küçük ve orta boy tornalar içindir. Ekonomik seçenek olarak SANT gövde de veriyoruz; Korloy tipi MGMN uçlarla çalışır.',
     keywords: ['mgehr', 'mgehr1616-2', 'mgehr16162', 'mgehr 1616', 'kanal kateri', 'kesme kateri', 'kater', 'mgmn kateri'],
     related: ['mgmn-200', 'mgivr-2016-2', 'mgehr-2020-3'],
     featured: true,
@@ -720,7 +720,7 @@ export const products: Product[] = [
   {
     slug: 'mgehr-2020-3',
     code: 'MGEHR 2020-3',
-    name: 'Dış çap kanal ve kesme kateri — 3 mm, 20×20 sap',
+    name: 'Kanal ve kesme kateri, 3 mm, 20×20 sap',
     category: 'kanal-kesme',
     subcategory: 'kanal-katerleri',
     drawing: 'holder-groove',
@@ -741,7 +741,7 @@ export const products: Product[] = [
   {
     slug: 'mgehr-2525-4',
     code: 'MGEHR 2525-4',
-    name: 'Dış çap kanal ve kesme kateri — 4 mm, 25×25 sap',
+    name: 'Kanal ve kesme kateri, 4 mm, 25×25 sap',
     category: 'kanal-kesme',
     subcategory: 'kanal-katerleri',
     drawing: 'holder-groove',
@@ -762,7 +762,7 @@ export const products: Product[] = [
   {
     slug: 'mgivr-2016-2',
     code: 'MGIVR 2016-2',
-    name: 'İç çap kanal barası — 2 mm, MGMN 200 için',
+    name: 'İç çap kanal barası, 2 mm, MGMN 200 uç',
     category: 'kanal-kesme',
     subcategory: 'kanal-katerleri',
     drawing: 'boring-bar',
@@ -782,7 +782,7 @@ export const products: Product[] = [
   {
     slug: 'mgivr-2520-3',
     code: 'MGIVR 2520-3',
-    name: 'İç çap kanal barası — 3 mm, MGMN 300 için',
+    name: 'İç çap kanal barası, 3 mm, MGMN 300 uç',
     category: 'kanal-kesme',
     subcategory: 'kanal-katerleri',
     drawing: 'boring-bar',
@@ -804,7 +804,7 @@ export const products: Product[] = [
   {
     slug: '16er-1-5-iso',
     code: '16ER 1.5ISO',
-    name: 'Dış diş çekme ucu — metrik 60°, 1,5 mm hatve, tam profil',
+    name: 'Dış diş ucu, metrik, 1,5 mm hatve, tam profil',
     category: 'dis-cekme',
     subcategory: 'dis-uclari',
     drawing: 'thread-insert',
@@ -825,7 +825,7 @@ export const products: Product[] = [
   {
     slug: '16er-2-0-iso',
     code: '16ER 2.0ISO',
-    name: 'Dış diş çekme ucu — metrik 60°, 2,0 mm hatve, tam profil',
+    name: 'Dış diş ucu, metrik, 2,0 mm hatve, tam profil',
     category: 'dis-cekme',
     subcategory: 'dis-uclari',
     drawing: 'thread-insert',
@@ -846,7 +846,7 @@ export const products: Product[] = [
   {
     slug: '16ir-1-5-iso',
     code: '16IR 1.5ISO',
-    name: 'İç diş çekme ucu — metrik 60°, 1,5 mm hatve, tam profil',
+    name: 'İç diş ucu, metrik, 1,5 mm hatve, tam profil',
     category: 'dis-cekme',
     subcategory: 'dis-uclari',
     drawing: 'thread-insert',
@@ -867,7 +867,7 @@ export const products: Product[] = [
   {
     slug: '16er-ag60',
     code: '16ER AG60',
-    name: 'Dış diş çekme ucu — 60° kısmi profil, 0,5–3,0 mm hatve',
+    name: 'Dış diş ucu, 60° kısmi profil, 0,5–3,0 mm hatve',
     category: 'dis-cekme',
     subcategory: 'dis-uclari',
     drawing: 'thread-insert',
@@ -888,7 +888,7 @@ export const products: Product[] = [
   {
     slug: '16er-14w',
     code: '16ER 14W',
-    name: 'Dış diş çekme ucu — Whitworth 55°, 14 diş/inç',
+    name: 'Dış diş ucu, Whitworth (BSP), 14 diş/inç',
     category: 'dis-cekme',
     subcategory: 'dis-uclari',
     drawing: 'thread-insert',
@@ -911,7 +911,7 @@ export const products: Product[] = [
   {
     slug: 'ser-2020k16',
     code: 'SER 2020K16',
-    name: 'Dış diş çekme kateri — 16ER uçlar için, 20×20 sap',
+    name: 'Dış diş kateri, 16ER uç, 20×20 sap',
     category: 'dis-cekme',
     subcategory: 'dis-katerleri',
     drawing: 'holder-thread',
@@ -931,7 +931,7 @@ export const products: Product[] = [
   {
     slug: 'ser-2525m16',
     code: 'SER 2525M16',
-    name: 'Dış diş çekme kateri — 16ER uçlar için, 25×25 sap',
+    name: 'Dış diş kateri, 16ER uç, 25×25 sap',
     category: 'dis-cekme',
     subcategory: 'dis-katerleri',
     drawing: 'holder-thread',
@@ -951,7 +951,7 @@ export const products: Product[] = [
   {
     slug: 'snr-0016q16',
     code: 'SNR 0016Q16',
-    name: 'İç diş çekme barası — Ø16, 16IR uçlar için',
+    name: 'İç diş barası Ø16, 16IR uç',
     category: 'dis-cekme',
     subcategory: 'dis-katerleri',
     drawing: 'holder-thread',
@@ -973,7 +973,7 @@ export const products: Product[] = [
   {
     slug: 'apmt-1135pder',
     code: 'APMT 1135PDER',
-    name: 'Freze elmas uç — 85° paralelkenar, pozitif, 11 mm kenar',
+    name: 'Freze ucu, 85° paralelkenar, pozitif, 11 mm',
     category: 'frezeleme',
     subcategory: 'freze-uclari',
     drawing: 'insert',
@@ -999,7 +999,7 @@ export const products: Product[] = [
   {
     slug: 'apmt-1604pder',
     code: 'APMT 1604PDER',
-    name: 'Freze elmas uç — 85° paralelkenar, pozitif, 16 mm kenar',
+    name: 'Freze ucu, 85° paralelkenar, pozitif, 16 mm',
     category: 'frezeleme',
     subcategory: 'freze-uclari',
     drawing: 'insert',
@@ -1024,7 +1024,7 @@ export const products: Product[] = [
   {
     slug: 'sekt-1204aftn',
     code: 'SEKT 1204AFTN',
-    name: 'Freze elmas uç — kare, 45° alın frezesi için, dört kenarlı',
+    name: 'Freze ucu, kare, 45° tarama çakısı için',
     category: 'frezeleme',
     subcategory: 'freze-uclari',
     drawing: 'insert',
@@ -1051,7 +1051,7 @@ export const products: Product[] = [
   {
     slug: 'rpmt-10t3m0',
     code: 'RPMT 10T3M0',
-    name: 'Freze elmas uç — yuvarlak, pozitif, Ø10',
+    name: 'Freze ucu, yuvarlak, pozitif, Ø10',
     category: 'frezeleme',
     subcategory: 'freze-uclari',
     drawing: 'insert',
@@ -1077,7 +1077,7 @@ export const products: Product[] = [
   {
     slug: 'bap-300r-c20-20-150-2t',
     code: 'BAP 300R C20-20-150-2T',
-    name: 'Saplı 90° köşe frezesi — Ø20, APMT 1135 uçlu',
+    name: 'Saplı 90° köşe frezesi Ø20, APMT 1135 uçlu',
     category: 'frezeleme',
     subcategory: 'freze-cakilari',
     drawing: 'facemill',
@@ -1099,7 +1099,7 @@ export const products: Product[] = [
   {
     slug: 'bap-400r-50-22-4t',
     code: 'BAP 400R 50-22-4T',
-    name: 'Kafa tipi 90° köşe frezesi — Ø50, APMT 1604 uçlu',
+    name: '90° köşe freze çakısı Ø50, APMT 1604 uçlu',
     category: 'frezeleme',
     subcategory: 'freze-cakilari',
     drawing: 'facemill',
@@ -1120,7 +1120,7 @@ export const products: Product[] = [
   {
     slug: 'alin-frezesi-45-63-mm',
     code: '45° Alın Frezesi Ø63',
-    name: 'Kafa tipi 45° alın (tarama) frezesi — Ø63, SEKT 1204 uçlu',
+    name: '45° tarama çakısı Ø63, SEKT 1204 uçlu',
     category: 'frezeleme',
     subcategory: 'freze-cakilari',
     drawing: 'facemill',
@@ -1141,7 +1141,7 @@ export const products: Product[] = [
   {
     slug: 'emr-5r-25-mm',
     code: 'EMR 5R Ø25',
-    name: 'Saplı kopya (yuvarlak uçlu) freze — Ø25, RPMT 10T3 uçlu',
+    name: 'Saplı kopya frezesi Ø25, RPMT 10T3 uçlu',
     category: 'frezeleme',
     subcategory: 'freze-cakilari',
     drawing: 'facemill',
@@ -1163,7 +1163,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-parmak-freze-6-mm-4-agiz',
     code: 'Parmak Freze Ø6 Z4',
-    name: 'Karbür parmak freze — Ø6, 4 ağızlı, düz uçlu',
+    name: 'Karbür parmak freze Ø6, 4 ağızlı',
     category: 'frezeleme',
     subcategory: 'karbur-parmak-frezeler',
     drawing: 'endmill',
@@ -1184,7 +1184,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-parmak-freze-10-mm-4-agiz',
     code: 'Parmak Freze Ø10 Z4',
-    name: 'Karbür parmak freze — Ø10, 4 ağızlı, düz uçlu',
+    name: 'Karbür parmak freze Ø10, 4 ağızlı',
     category: 'frezeleme',
     subcategory: 'karbur-parmak-frezeler',
     drawing: 'endmill',
@@ -1198,7 +1198,7 @@ export const products: Product[] = [
       { label: 'Uç formu', value: 'Düz' },
     ],
     description:
-      'Atölyelerin en çok kullandığı ölçüde 4 ağızlı karbür parmak freze. Çelik, paslanmaz ve dökümde omuz, profil ve yan frezelemede kullanılır; tam kanal açmada 2 veya 3 ağızlı frezeler talaşı daha rahat tahliye eder.',
+      'Atölyelerde en çok kullanılan ölçüde 4 ağızlı karbür parmak freze. Çelik, paslanmaz ve dökümde omuz, profil ve yan frezelemede kullanılır; tam kanal açmada 2 veya 3 ağızlı frezeler talaşı daha rahat tahliye eder.',
     keywords: ['parmak freze', 'karbür freze', 'karbür parmak freze', '10 mm freze', 'ø10 freze', '4 ağız freze', 'end mill', 'freze çakısı'],
     related: ['karbur-parmak-freze-12-mm-4-agiz', 'karbur-parmak-freze-hrc55-10-mm', 'er32-pens', 'bt40-er32-70'],
     featured: true,
@@ -1206,7 +1206,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-parmak-freze-12-mm-4-agiz',
     code: 'Parmak Freze Ø12 Z4',
-    name: 'Karbür parmak freze — Ø12, 4 ağızlı, düz uçlu',
+    name: 'Karbür parmak freze Ø12, 4 ağızlı',
     category: 'frezeleme',
     subcategory: 'karbur-parmak-frezeler',
     drawing: 'endmill',
@@ -1227,7 +1227,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-parmak-freze-6-mm-2-agiz',
     code: 'Parmak Freze Ø6 Z2',
-    name: 'Karbür parmak freze — Ø6, 2 ağızlı, kanal frezesi',
+    name: 'Karbür parmak freze Ø6, 2 ağızlı, kanal için',
     category: 'frezeleme',
     subcategory: 'karbur-parmak-frezeler',
     drawing: 'endmill',
@@ -1248,7 +1248,7 @@ export const products: Product[] = [
   {
     slug: 'aluminyum-parmak-freze-10-mm-3-agiz',
     code: 'Alüminyum Freze Ø10 Z3',
-    name: 'Karbür parmak freze — Ø10, 3 ağızlı, alüminyum için',
+    name: 'Karbür parmak freze Ø10, 3 ağızlı, alüminyum için',
     category: 'frezeleme',
     subcategory: 'karbur-parmak-frezeler',
     drawing: 'endmill',
@@ -1269,7 +1269,7 @@ export const products: Product[] = [
   {
     slug: 'kuresel-parmak-freze-r3',
     code: 'Küresel Freze R3 (Ø6)',
-    name: 'Karbür küresel parmak freze — Ø6, R3, 2 ağızlı',
+    name: 'Karbür küresel freze Ø6 (R3), 2 ağızlı',
     category: 'frezeleme',
     subcategory: 'karbur-parmak-frezeler',
     drawing: 'endmill-ball',
@@ -1290,7 +1290,7 @@ export const products: Product[] = [
   {
     slug: 'kuresel-parmak-freze-r5',
     code: 'Küresel Freze R5 (Ø10)',
-    name: 'Karbür küresel parmak freze — Ø10, R5, 2 ağızlı',
+    name: 'Karbür küresel freze Ø10 (R5), 2 ağızlı',
     category: 'frezeleme',
     subcategory: 'karbur-parmak-frezeler',
     drawing: 'endmill-ball',
@@ -1311,7 +1311,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-parmak-freze-hrc55-10-mm',
     code: 'Parmak Freze Ø10 Z4 HRC55',
-    name: 'Karbür parmak freze — Ø10, 4 ağızlı, sertleştirilmiş çelik için',
+    name: 'Karbür parmak freze Ø10, 4 ağızlı, sert çelik için',
     category: 'frezeleme',
     subcategory: 'karbur-parmak-frezeler',
     drawing: 'endmill',
@@ -1325,7 +1325,7 @@ export const products: Product[] = [
       { label: 'Uygun sertlik', value: '55 HRC’ye kadar' },
     ],
     description:
-      'Islah edilmiş ve sertleştirilmiş çelikler için 4 ağızlı karbür parmak freze; 55 HRC’ye kadar malzemede kullanılmak üzere sınıflandırılır. Kalıp çeliklerinde yarı finiş ve finiş için uygundur.',
+      'Islah edilmiş ve sertleştirilmiş çelikler için 4 ağızlı karbür parmak freze; 55 HRC’ye kadar sertleştirilmiş malzemeyi keser. Kalıp çeliklerinde yarı finiş ve finiş için uygundur.',
     keywords: ['hrc55', 'hrc 55', 'sert malzeme frezesi', 'kalıp çeliği frezesi', 'parmak freze', 'karbür freze', '10 mm freze'],
     related: ['karbur-parmak-freze-10-mm-4-agiz', 'kuresel-parmak-freze-r5'],
   },
@@ -1334,7 +1334,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-matkap-5-mm-5xd',
     code: 'Karbür Matkap Ø5 5xD',
-    name: 'Karbür matkap — Ø5,0, 5xD, M6 kılavuz ön deliği',
+    name: 'Karbür matkap Ø5,0, 5xD, M6 ön deliği',
     category: 'delik-delme',
     subcategory: 'karbur-matkaplar',
     drawing: 'drill-carbide',
@@ -1356,7 +1356,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-matkap-6-8-mm-5xd',
     code: 'Karbür Matkap Ø6,8 5xD',
-    name: 'Karbür matkap — Ø6,8, 5xD, M8 kılavuz ön deliği',
+    name: 'Karbür matkap Ø6,8, 5xD, M8 ön deliği',
     category: 'delik-delme',
     subcategory: 'karbur-matkaplar',
     drawing: 'drill-carbide',
@@ -1378,7 +1378,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-matkap-8-5-mm-5xd',
     code: 'Karbür Matkap Ø8,5 5xD',
-    name: 'Karbür matkap — Ø8,5, 5xD, M10 kılavuz ön deliği',
+    name: 'Karbür matkap Ø8,5, 5xD, M10 ön deliği',
     category: 'delik-delme',
     subcategory: 'karbur-matkaplar',
     drawing: 'drill-carbide',
@@ -1400,7 +1400,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-matkap-10-mm-3xd',
     code: 'Karbür Matkap Ø10 3xD',
-    name: 'Karbür matkap — Ø10, 3xD, kısa',
+    name: 'Karbür matkap Ø10, 3xD, kısa boy',
     category: 'delik-delme',
     subcategory: 'karbur-matkaplar',
     drawing: 'drill-carbide',
@@ -1421,7 +1421,7 @@ export const products: Product[] = [
   {
     slug: 'karbur-matkap-10-2-mm-5xd-ic-sogutmali',
     code: 'Karbür Matkap Ø10,2 5xD İç Soğutmalı',
-    name: 'Karbür matkap — Ø10,2, 5xD, içten soğutmalı, M12 ön deliği',
+    name: 'Karbür matkap Ø10,2, 5xD, içten soğutmalı',
     category: 'delik-delme',
     subcategory: 'karbur-matkaplar',
     drawing: 'drill-carbide',
@@ -1443,7 +1443,7 @@ export const products: Product[] = [
   {
     slug: 'nc-punta-matkabi-10-mm-90',
     code: 'NC Punta Matkabı Ø10 90°',
-    name: 'Karbür NC punta matkabı — Ø10, 90°',
+    name: 'Karbür NC punta matkabı Ø10, 90°',
     category: 'delik-delme',
     subcategory: 'karbur-matkaplar',
     drawing: 'center-drill',
@@ -1465,7 +1465,7 @@ export const products: Product[] = [
   {
     slug: 'u-matkap-20-mm-3xd',
     code: 'U-Matkap Ø20 3xD',
-    name: 'Takma uçlu U-matkap — Ø20, 3xD, içten soğutmalı',
+    name: 'U-matkap Ø20, 3xD, takma uçlu',
     category: 'delik-delme',
     subcategory: 'uclu-matkaplar',
     drawing: 'drill-u',
@@ -1486,7 +1486,7 @@ export const products: Product[] = [
   {
     slug: 'u-matkap-25-mm-4xd',
     code: 'U-Matkap Ø25 4xD',
-    name: 'Takma uçlu U-matkap — Ø25, 4xD, içten soğutmalı',
+    name: 'U-matkap Ø25, 4xD, takma uçlu',
     category: 'delik-delme',
     subcategory: 'uclu-matkaplar',
     drawing: 'drill-u',
@@ -1506,7 +1506,7 @@ export const products: Product[] = [
   {
     slug: 'u-matkap-30-mm-3xd',
     code: 'U-Matkap Ø30 3xD',
-    name: 'Takma uçlu U-matkap — Ø30, 3xD, içten soğutmalı',
+    name: 'U-matkap Ø30, 3xD, takma uçlu',
     category: 'delik-delme',
     subcategory: 'uclu-matkaplar',
     drawing: 'drill-u',
@@ -1528,7 +1528,7 @@ export const products: Product[] = [
   {
     slug: 'hss-e-matkap-5-mm',
     code: 'HSS-E Matkap Ø5 DIN 338',
-    name: 'Kobaltlı HSS-E matkap — Ø5, DIN 338, silindirik saplı',
+    name: 'Kobaltlı HSS-E matkap Ø5, DIN 338',
     category: 'delik-delme',
     subcategory: 'hss-matkaplar',
     drawing: 'drill-hss',
@@ -1537,7 +1537,7 @@ export const products: Product[] = [
     specs: [
       { label: 'Takım malzemesi', value: 'HSS-E (kobaltlı)' },
       { label: 'Çap', value: '5,0 mm' },
-      { label: 'Standart', value: 'DIN 338 — silindirik saplı, normal seri' },
+      { label: 'Standart', value: 'DIN 338, silindirik saplı, normal seri' },
       { label: 'Kılavuz ön deliği', value: 'M6 × 1' },
     ],
     description:
@@ -1548,7 +1548,7 @@ export const products: Product[] = [
   {
     slug: 'hss-g-matkap-8-5-mm',
     code: 'HSS-G Matkap Ø8,5 DIN 338',
-    name: 'Taşlanmış HSS-G matkap — Ø8,5, DIN 338, silindirik saplı',
+    name: 'Taşlanmış HSS-G matkap Ø8,5, DIN 338',
     category: 'delik-delme',
     subcategory: 'hss-matkaplar',
     drawing: 'drill-hss',
@@ -1557,7 +1557,7 @@ export const products: Product[] = [
     specs: [
       { label: 'Takım malzemesi', value: 'HSS-G (taşlanmış)' },
       { label: 'Çap', value: '8,5 mm' },
-      { label: 'Standart', value: 'DIN 338 — silindirik saplı, normal seri' },
+      { label: 'Standart', value: 'DIN 338, silindirik saplı, normal seri' },
       { label: 'Kılavuz ön deliği', value: 'M10 × 1,5' },
     ],
     description:
@@ -1568,7 +1568,7 @@ export const products: Product[] = [
   {
     slug: 'punta-matkabi-a2-5',
     code: 'Punta Matkabı A2,5 DIN 333',
-    name: 'HSS punta matkabı — DIN 333 A tipi, 2,5 mm',
+    name: 'HSS punta matkabı 2,5 mm, DIN 333 A',
     category: 'delik-delme',
     subcategory: 'hss-matkaplar',
     drawing: 'center-drill',
@@ -1590,7 +1590,7 @@ export const products: Product[] = [
   {
     slug: 'makine-raybasi-6-mm-h7',
     code: 'Rayba Ø6 H7',
-    name: 'Karbür makine raybası — Ø6, H7',
+    name: 'Karbür makine raybası Ø6 H7',
     category: 'delik-delme',
     subcategory: 'raybalar',
     drawing: 'reamer',
@@ -1610,7 +1610,7 @@ export const products: Product[] = [
   {
     slug: 'makine-raybasi-8-mm-h7',
     code: 'Rayba Ø8 H7',
-    name: 'Karbür makine raybası — Ø8, H7',
+    name: 'Karbür makine raybası Ø8 H7',
     category: 'delik-delme',
     subcategory: 'raybalar',
     drawing: 'reamer',
@@ -1630,7 +1630,7 @@ export const products: Product[] = [
   {
     slug: 'makine-raybasi-10-mm-h7',
     code: 'Rayba Ø10 H7',
-    name: 'Karbür makine raybası — Ø10, H7',
+    name: 'Karbür makine raybası Ø10 H7',
     category: 'delik-delme',
     subcategory: 'raybalar',
     drawing: 'reamer',
@@ -1652,7 +1652,7 @@ export const products: Product[] = [
   {
     slug: 'helis-kilavuz-m6',
     code: 'Helis Kılavuz M6',
-    name: 'Helis oluklu makine kılavuzu — M6 × 1, kör delik',
+    name: 'Helis oluklu makine kılavuzu M6 × 1, kör delik',
     category: 'kilavuz',
     subcategory: 'helis-kilavuzlar',
     drawing: 'tap',
@@ -1673,7 +1673,7 @@ export const products: Product[] = [
   {
     slug: 'helis-kilavuz-m8',
     code: 'Helis Kılavuz M8',
-    name: 'Helis oluklu makine kılavuzu — M8 × 1,25, kör delik',
+    name: 'Helis oluklu makine kılavuzu M8 × 1,25, kör delik',
     category: 'kilavuz',
     subcategory: 'helis-kilavuzlar',
     drawing: 'tap',
@@ -1695,7 +1695,7 @@ export const products: Product[] = [
   {
     slug: 'helis-kilavuz-m10',
     code: 'Helis Kılavuz M10',
-    name: 'Helis oluklu makine kılavuzu — M10 × 1,5, kör delik',
+    name: 'Helis oluklu makine kılavuzu M10 × 1,5, kör delik',
     category: 'kilavuz',
     subcategory: 'helis-kilavuzlar',
     drawing: 'tap',
@@ -1716,7 +1716,7 @@ export const products: Product[] = [
   {
     slug: 'helis-kilavuz-m12',
     code: 'Helis Kılavuz M12',
-    name: 'Helis oluklu makine kılavuzu — M12 × 1,75, kör delik',
+    name: 'Helis oluklu makine kılavuzu M12 × 1,75, kör delik',
     category: 'kilavuz',
     subcategory: 'helis-kilavuzlar',
     drawing: 'tap',
@@ -1739,7 +1739,7 @@ export const products: Product[] = [
   {
     slug: 'ucu-spiral-kilavuz-m6',
     code: 'Ucu Spiral Kılavuz M6',
-    name: 'Ucu spiral makine kılavuzu — M6 × 1, açık delik',
+    name: 'Ucu spiral makine kılavuzu M6 × 1, açık delik',
     category: 'kilavuz',
     subcategory: 'duz-kilavuzlar',
     drawing: 'tap',
@@ -1760,7 +1760,7 @@ export const products: Product[] = [
   {
     slug: 'ucu-spiral-kilavuz-m8',
     code: 'Ucu Spiral Kılavuz M8',
-    name: 'Ucu spiral makine kılavuzu — M8 × 1,25, açık delik',
+    name: 'Ucu spiral makine kılavuzu M8 × 1,25, açık delik',
     category: 'kilavuz',
     subcategory: 'duz-kilavuzlar',
     drawing: 'tap',
@@ -1781,7 +1781,7 @@ export const products: Product[] = [
   {
     slug: 'ucu-spiral-kilavuz-m10',
     code: 'Ucu Spiral Kılavuz M10',
-    name: 'Ucu spiral makine kılavuzu — M10 × 1,5, açık delik',
+    name: 'Ucu spiral makine kılavuzu M10 × 1,5, açık delik',
     category: 'kilavuz',
     subcategory: 'duz-kilavuzlar',
     drawing: 'tap',
@@ -1804,7 +1804,7 @@ export const products: Product[] = [
   {
     slug: 'ovalama-kilavuz-m6',
     code: 'Ovalama Kılavuz M6',
-    name: 'Ovalama (form) kılavuz — M6 × 1, talaşsız',
+    name: 'Ovalama kılavuz M6 × 1, talaşsız',
     category: 'kilavuz',
     subcategory: 'ovalama-kilavuzlar',
     drawing: 'tap',
@@ -1824,7 +1824,7 @@ export const products: Product[] = [
   {
     slug: 'ovalama-kilavuz-m8',
     code: 'Ovalama Kılavuz M8',
-    name: 'Ovalama (form) kılavuz — M8 × 1,25, talaşsız',
+    name: 'Ovalama kılavuz M8 × 1,25, talaşsız',
     category: 'kilavuz',
     subcategory: 'ovalama-kilavuzlar',
     drawing: 'tap',
@@ -1846,7 +1846,7 @@ export const products: Product[] = [
   {
     slug: 'er16-pens',
     code: 'ER16 Pens',
-    name: 'ER16 pens — 1–10 mm bağlama aralığı',
+    name: 'ER16 pens, 1–10 mm bağlama',
     category: 'takim-tutucular',
     subcategory: 'pensler',
     drawing: 'collet',
@@ -1866,7 +1866,7 @@ export const products: Product[] = [
   {
     slug: 'er25-pens',
     code: 'ER25 Pens',
-    name: 'ER25 pens — 1–16 mm bağlama aralığı',
+    name: 'ER25 pens, 1–16 mm bağlama',
     category: 'takim-tutucular',
     subcategory: 'pensler',
     drawing: 'collet',
@@ -1887,7 +1887,7 @@ export const products: Product[] = [
   {
     slug: 'er32-pens',
     code: 'ER32 Pens',
-    name: 'ER32 pens — 2–20 mm bağlama aralığı',
+    name: 'ER32 pens, 2–20 mm bağlama',
     category: 'takim-tutucular',
     subcategory: 'pensler',
     drawing: 'collet',
@@ -1908,7 +1908,7 @@ export const products: Product[] = [
   {
     slug: 'er40-pens',
     code: 'ER40 Pens',
-    name: 'ER40 pens — 3–26 mm bağlama aralığı',
+    name: 'ER40 pens, 3–26 mm bağlama',
     category: 'takim-tutucular',
     subcategory: 'pensler',
     drawing: 'collet',
@@ -1931,7 +1931,7 @@ export const products: Product[] = [
   {
     slug: 'bt40-er32-70',
     code: 'BT40 ER32-70',
-    name: 'BT40 ER32 pens tutucu — 70 mm',
+    name: 'BT40 ER32 pens tutucu, 70 mm',
     category: 'takim-tutucular',
     subcategory: 'pens-tutucular',
     drawing: 'chuck-bt',
@@ -1974,7 +1974,7 @@ export const products: Product[] = [
   {
     slug: 'bt40-fmb22',
     code: 'BT40 FMB22',
-    name: 'BT40 freze çakısı arboru — 22 mm bağlama',
+    name: 'BT40 freze çakısı arboru, 22 mm',
     category: 'takim-tutucular',
     subcategory: 'baglama-aparatlari',
     drawing: 'chuck-bt',

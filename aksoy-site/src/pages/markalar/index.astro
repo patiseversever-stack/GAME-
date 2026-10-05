@@ -15,19 +15,19 @@ const tiers = [
     key: 'premium',
     name: 'Premium',
     level: 100,
-    text: 'Seri üretim, zor malzeme ve uzun takım ömrü gereken işler. Kenar başına maliyet çoğu zaman en düşüktür.',
+    text: 'Seri üretim, zor malzeme, uzun takım ömrü. Uç pahalıdır ama kenar başına maliyet çoğu zaman en düşük olandır.',
   },
   {
     key: 'orta',
     name: 'Orta segment',
     level: 66,
-    text: 'Fiyat ve performans dengesi. Atölye işleri ve orta ölçekli seriler için güvenli tercih.',
+    text: 'Fiyatı ve ömrü dengeli. Atölye işlerinde ve orta adetli serilerde sorunsuz çalışır.',
   },
   {
     key: 'ekonomik',
     name: 'Ekonomik',
     level: 38,
-    text: 'Prototip, tek parça ve kaba işler. Uygun fiyatlı, hızlı tedarik edilen ISO kodları.',
+    text: 'Prototip, tek parça ve kaba işler için. Fiyatı uygun, standart kodlarda çoğu zaman stokta.',
   },
 ] as const;
 
@@ -53,8 +53,8 @@ const schema = breadcrumbSchema(
         <li aria-current="page">Markalar</li>
       </ol>
       <span class="eyebrow eyebrow--tin">Tedarik edilen markalar · {pad(brands.length)}</span>
-      <h1>Aynı kod, farklı segment. İşe göre doğru marka.</h1>
-      <p class="lead">CNMG 120408 her markada aynı ölçüdedir; fark kalitede, kaplamada ve fiyatta. Seri üretimde takım ömrü, atölye işinde fiyat öne çıkar. Teklifte iki seçeneği yan yana koyarız.</p>
+      <h1>Hangi markayı vereceğimizi işiniz belirler.</h1>
+      <p class="lead">CNMG 120408 her markada aynı ölçüdedir; fark kalitede, kaplamada ve fiyattadır. Seri üretimde takım ömrüne, tek seferlik işte fiyata bakarız. İsterseniz teklifte iki markayı yan yana yazarız.</p>
     </div>
   </section>
 
@@ -84,8 +84,8 @@ const schema = breadcrumbSchema(
     <div class="wrap">
       <div class="section-head" style="margin-bottom:32px">
         <span class="eyebrow">Hangi segment?</span>
-        <h2 id="h-seg" style="font-size:var(--fs-2xl)">Marka değil, iş seçer.</h2>
-        <p>Malzemenizi, adedi ve tezgâhınızı yazın; uygun segmenti ve kaliteyi birlikte belirleyelim.</p>
+        <h2 id="h-seg" style="font-size:var(--fs-2xl)">Pahalı uç her zaman daha iyi değildir.</h2>
+        <p>Malzemenizi, adedi ve tezgâhınızı yazın; size uygun segmenti ve kaliteyi birlikte seçelim.</p>
       </div>
       <div class="tiers">
         {tiers.map((t) => {
@@ -113,7 +113,7 @@ const schema = breadcrumbSchema(
 
   <section class="section section--dark section--tight" aria-label="Marka kullanımı hakkında" style="padding-top:0">
     <div class="wrap">
-      <p class="tm-notice"><Icon name="shield" /> <span>{trademarkNotice} Logolar kullanılmaz; ürünler tedarikçi kanallarından, orijinal kutusunda teslim edilir.</span></p>
+      <p class="tm-notice"><Icon name="shield" /> <span>{trademarkNotice} Sitede marka logosu kullanmıyoruz; ürünler tedarikçi kanalından gelir ve orijinal kutusunda teslim edilir.</span></p>
     </div>
   </section>
 </Base>

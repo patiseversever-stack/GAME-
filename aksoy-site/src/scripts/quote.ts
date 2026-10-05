@@ -1,5 +1,5 @@
 // Teklif Sepeti: ürünler tarayıcıda (localStorage) tutulur, tek bir WhatsApp mesajına dönüştürülür.
-// Sipariş veya ödeme yoktur; site hiçbir veriyi sunucuya göndermez.
+// Sipariş veya ödeme yoktur; site hiçbir veriyi sunucuya göndermez. Liste bağlantı olarak paylaşılabilir.
 import { drawingSvg } from '../lib/drawings';
 import { productImage } from '../lib/product-image';
 import { site } from '../data/site';
@@ -200,7 +200,7 @@ note?.addEventListener('input', updateSend);
 document.querySelectorAll('input[name="q-teslim"], input[name="q-termin"]').forEach((r) => r.addEventListener('change', () => { updateSend(); renderLoc(); }));
 
 /* Konum: tarayıcı izin verirse alınır, ilçe adı OpenStreetMap'ten bulunur, haritada gösterilir.
-   Hiçbir yere kaydedilmez; yalnızca kullanıcının göndereceği WhatsApp mesajına eklenir. */
+   Sunucuya gitmez; yalnızca bu sekmede (sessionStorage) tutulur ve kullanıcının göndereceği WhatsApp mesajına eklenir. */
 const locWrap = $<HTMLElement>('[data-q-loc]');
 const locBtn = $<HTMLButtonElement>('[data-q-loc-btn]');
 const locCard = $<HTMLElement>('[data-q-loc-card]');
@@ -296,6 +296,51 @@ document.querySelector('[data-quote-copy]')?.addEventListener('click', async () 
     (window as any).__toast?.('Kopyalanamadı, metni elle seçin');
   }
 });
+/* Paylaşılan liste: ?liste=slug:adet,slug:adet. Usta listeyi hazırlar, satın almaya bağlantı olarak gönderir;
+   bağlantıyı açan kişinin sepetine aynı ürünler eklenir. Ürün bilgisi arama dizininden okunur. */
+function shareUrl() {
+  const q = items.map((it) => { const b = it.brands.indexOf(it.brand) + 1; return `${it.slug}:${it.qty}${b ? `:${b}` : ''}`; }).join(',');
+  return `${location.origin}/urunler?liste=${q}`;
+}
+document.querySelector('[data-quote-share]')?.addEventListener('click', async () => {
+  const url = shareUrl();
+  const text = `Teklif listesi (${items.length} ürün)`;
+  try {
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) { await navigator.share({ title: text, text, url }); return; }
+    await navigator.clipboard.writeText(url);
+    (window as any).__toast?.('Liste bağlantısı kopyalandı');
+  } catch (err) {
+    if ((err as Error)?.name !== 'AbortError') (window as any).__toast?.('Paylaşılamadı, bağlantıyı adres çubuğundan kopyalayın');
+  }
+});
+async function importShared() {
+  const params = new URLSearchParams(location.search);
+  const raw = params.get('liste');
+  if (!raw) return;
+  params.delete('liste');
+  const rest = params.toString();
+  history.replaceState(history.state, '', location.pathname + (rest ? `?${rest}` : '') + location.hash);
+  const want = raw.split(',').map((x) => x.split(':')).filter(([s]) => /^[a-z0-9-]{2,80}$/.test(s ?? ''))
+    .slice(0, 60).map(([s, q, b]) => ({ slug: s, qty: Math.min(9999, Math.max(1, parseInt(q, 10) || 1)), b: parseInt(b, 10) || 0 }));
+  if (!want.length) return;
+  try {
+    const idx: { s: string; c: string; n: string; d: string; h?: string; b: string[] }[] = await (await fetch('/arama.json')).json();
+    let n = 0;
+    for (const w of want) {
+      const p = idx.find((r) => r.s === w.slug);
+      if (!p) continue;
+      const found = items.find((i) => i.slug === p.s);
+      if (found) found.qty = Math.max(found.qty, w.qty);
+      else items.push({ slug: p.s, code: p.c, name: p.n, drawing: p.d as Drawing, shape: p.h as InsertShape | undefined, brands: p.b, brand: p.b[w.b - 1] ?? ANY_BRAND, qty: w.qty });
+      n++;
+    }
+    if (!n) return;
+    save();
+    openQuote();
+    (window as any).__toast?.(`Paylaşılan listeden ${n} ürün sepete eklendi`);
+  } catch { /* dizin alınamadı */ }
+}
+importShared();
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && drawer?.classList.contains('is-open')) closeQuote(); });
 addEventListener('storage', (e) => { if (e.key === KEY) { items = load(); render(); } });
 

@@ -16,7 +16,7 @@ export const site = {
   phoneE164: '+905356101989',
   whatsapp: '905356101989',
   hours: 'Hafta içi 08:30–18:30',
-  hoursNote: 'WhatsApp’tan mesai dışında da yazabilirsiniz; ilk fırsatta dönüş yapılır.',
+  hoursNote: 'Mesai dışında da WhatsApp’tan yazabilirsiniz; ilk fırsatta döneriz.',
   serviceAreas: ['Ankara', 'Konya', 'Kayseri', 'Eskişehir', 'Kırıkkale', 'İzmir', 'Manisa', 'Denizli', 'Aydın', 'Uşak'],
   serviceRegions: 'Ankara merkezli; İç Anadolu ve Ege',
   description:

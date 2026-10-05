@@ -364,6 +364,8 @@ body[data-theme='light'] .site-header:not([data-variant='dark']) .site-header__n
 }
 .field input:focus, .field textarea:focus, .field select:focus { outline: none; border-color: var(--tin); box-shadow: 0 0 0 3px rgba(217, 164, 65, 0.25); }
 .drawer__foot { padding: 16px 22px calc(18px + env(safe-area-inset-bottom)); border-top: 1px solid var(--paper-line); display: grid; gap: 10px; background: var(--paper-2); }
+.drawer__pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.drawer__pair .btn { width: 100%; justify-content: center; padding-inline: 10px; }
 .drawer__legal { font-size: 0.72rem; color: var(--ink-3); line-height: 1.45; }
 .drawer__legal a { text-decoration: underline; }
 
@@ -596,6 +598,9 @@ main > .section, .site-footer { content-visibility: auto; contain-intrinsic-size
   html .eyebrow a, html a.eyebrow, html .pdp__info .eyebrow { display: inline-flex; align-items: center; min-height: 44px; }
   html .tiers ul a, html .sheet__links a { display: inline-flex; align-items: center; min-height: 44px; }
   html .tl-chip { min-width: 44px; justify-content: center; }
+  html .tl-filter button { min-height: 44px; }
+  html .spec td a { display: inline-block; padding: 13px 0; margin: -13px 0; }
+  html a.sheet__value { display: inline-flex; align-items: center; min-height: 44px; }
 }
 
 /* Teklif sepeti: teslim, termin ve konum */

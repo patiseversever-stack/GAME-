@@ -107,6 +107,9 @@ function initCatalog(root: HTMLElement) {
     if (st.iso.size) u.set('iso', [...st.iso].join(','));
     if (st.shape.size) u.set('sekil', [...st.shape].join(','));
     if (st.q.trim()) u.set('q', st.q.trim());
+    // Paylaşılan teklif listesi (quote.ts okuyup kaldırır) silinmesin
+    const shared = new URLSearchParams(location.search).get('liste');
+    if (shared) u.set('liste', shared);
     const qs = u.toString().replace(/%2C/g, ',');
     history.replaceState(history.state, '', `${location.pathname}${qs ? `?${qs}` : ''}`);
   }
