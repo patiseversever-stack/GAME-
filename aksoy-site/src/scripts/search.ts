@@ -3,7 +3,7 @@
 import { drawingSvg } from '../lib/drawings';
 import type { Drawing, InsertShape } from '../data/types';
 
-interface Row { s: string; c: string; n: string; d: Drawing; h?: InsertShape; k: string; sc: string; b: string[]; w: string }
+interface Row { s: string; u?: string; c: string; n: string; d: Drawing; h?: InsertShape; k: string; sc: string; b: string[]; w: string }
 
 const root = document.querySelector<HTMLElement>('[data-search]');
 const input = document.querySelector<HTMLInputElement>('[data-search-input]');
@@ -94,7 +94,7 @@ function draw(q: string) {
   }
   results.innerHTML = current
     .map(
-      (r, i) => `<a class="sres" role="option" id="sr-${i}" aria-selected="${i === sel}" href="/urun/${r.s}">
+      (r, i) => `<a class="sres" role="option" id="sr-${i}" aria-selected="${i === sel}" href="${r.u ?? `/urun/${r.s}`}">
       <span class="sres__thumb">${drawingSvg(r.d, r.h)}</span>
       <span><span class="sres__code">${hl(r.c, q)}</span><br /><span class="sres__name">${hl(r.n, q)}</span></span>
       <span class="sres__cat">${r.sc}</span></a>`,
@@ -145,5 +145,5 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeSearch();
   else if (e.key === 'ArrowDown') { e.preventDefault(); move(1); }
   else if (e.key === 'ArrowUp') { e.preventDefault(); move(-1); }
-  else if (e.key === 'Enter' && current[sel]) { e.preventDefault(); location.href = `/urun/${current[sel].s}`; }
+  else if (e.key === 'Enter' && current[sel]) { e.preventDefault(); location.href = current[sel].u ?? `/urun/${current[sel].s}`; }
 });

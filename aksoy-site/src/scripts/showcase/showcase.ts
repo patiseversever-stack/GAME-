@@ -22,9 +22,9 @@ const TAU = Math.PI * 2;
 const DESKTOP: Pose[] = [
   { rx: 0.3, ry: -0.9, rz: 0.45, px: 0.36, py: 0.14, scale: 1.15, focus: CENTER, spin: -0.5 },
   { rx: 0.2, ry: 0.5, rz: 0.06, px: 0.3, py: -0.04, scale: 0.92, focus: 22, spin: -0.75 },
-  { rx: 0.28, ry: -1.0, rz: 0.12, px: -0.3, py: 0.02, scale: 2.5, focus: 46, spin: -0.15 },
-  { rx: 0.22, ry: -0.6, rz: 0.12, px: 0.06, py: 0.02, scale: 1.75, focus: 30, spin: -0.35 },
-  { rx: 0.42, ry: -0.75, rz: 0.22, px: -0.36, py: 0.04, scale: 2.5, focus: 50, spin: -0.2 },
+  { rx: 0.3, ry: -0.35, rz: 0.1, px: -0.15, py: 0.02, scale: 3.6, focus: 50, spin: 0.1 },
+  { rx: 0.22, ry: -0.6, rz: 0.12, px: 0.34, py: 0.02, scale: 1.5, focus: 30, spin: -0.35 },
+  { rx: 0.4, ry: -0.5, rz: 0.2, px: -0.2, py: 0.04, scale: 3.3, focus: 50, spin: 0.25 },
   { rx: 0.3, ry: -0.9, rz: 0.45, px: 0.02, py: 0.32, scale: 0.95, focus: CENTER, spin: -0.5 },
 ];
 const DESKTOP_DIM: Partial<Pose> = { rx: 0.15, ry: -0.18, rz: 0.04, px: 0.36, py: 0.02, scale: 1.05, focus: CENTER };
@@ -32,9 +32,9 @@ const DESKTOP_DIM: Partial<Pose> = { rx: 0.15, ry: -0.18, rz: 0.04, px: 0.36, py
 const MOBILE: Pose[] = [
   { rx: 0.3, ry: -0.9, rz: 0.9, px: 0.0, py: 0.3, scale: 1.95, focus: CENTER, spin: -0.5 },
   { rx: 0.2, ry: 0.5, rz: 0.5, px: 0.0, py: 0.3, scale: 1.45, focus: 22, spin: -0.75 },
-  { rx: 0.28, ry: -1.0, rz: 0.32, px: 0.06, py: 0.32, scale: 3.6, focus: 46, spin: -0.15 },
+  { rx: 0.3, ry: -0.35, rz: 0.3, px: 0.04, py: 0.3, scale: 4.6, focus: 50, spin: 0.1 },
   { rx: 0.22, ry: -0.6, rz: 0.42, px: -0.04, py: 0.3, scale: 2.5, focus: 30, spin: -0.35 },
-  { rx: 0.4, ry: -0.75, rz: 0.36, px: 0.05, py: 0.34, scale: 3.6, focus: 50, spin: -0.2 },
+  { rx: 0.4, ry: -0.5, rz: 0.36, px: 0.04, py: 0.32, scale: 4.4, focus: 50, spin: 0.25 },
   { rx: 0.3, ry: -0.9, rz: 0.9, px: 0.0, py: 0.4, scale: 1.7, focus: CENTER, spin: -0.5 },
 ];
 const MOBILE_DIM: Partial<Pose> = { rx: 0.15, ry: -0.18, rz: 0.55, px: 0.0, py: 0.34, scale: 1.75, focus: CENTER };
