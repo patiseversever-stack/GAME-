@@ -41,7 +41,8 @@ const {
 } = Astro.props;
 
 const canonical = new URL(Astro.url.pathname.replace(/\/$/, '') || '/', Astro.site).href;
-const fullTitle = title === site.name ? `${site.name} — Kesici Takım, Torna ve Freze Elmas Uçları` : `${title} | ${site.name}`;
+// Arama sonucunda kesilmesin: firma adı ancak başlık kısa kaldıkça eklenir
+const fullTitle = title === site.name ? `${site.name} — Kesici Takım, Torna ve Freze Elmas Uçları` : `${title} | ${site.name}`.length <= 70 ? `${title} | ${site.name}` : title;
 const ogImage = new URL(image, Astro.site).href;
 
 const orgSchema = {

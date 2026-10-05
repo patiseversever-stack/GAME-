@@ -47,7 +47,7 @@ const schema = breadcrumbSchema(
 );
 const metaDesc = clip(`${p.code} — ${p.description}`);
 ---
-<Base title={`${p.code} — ${p.name}`} description={metaDesc} theme="light" header="light" schema={schema} image={render ? `/og/urun/${p.slug}.jpg` : undefined}>
+<Base title={`${p.code} ${p.name}`} description={metaDesc} theme="light" header="light" schema={schema} image={render ? `/og/urun/${p.slug}.jpg` : undefined}>
   <article class="pdp" data-pdp>
     <div class="wrap pdp__grid">
       <div class="pdp__media">
@@ -99,6 +99,9 @@ const metaDesc = clip(`${p.code} — ${p.description}`);
           <span class="pdp__name">{p.name}</span>
         </h1>
 
+        {p.iso.length === 0 ? (
+          <p class="pdp__iso pdp__iso--any"><span class="tlabel">Malzeme grubu</span> Bağlama elemanıdır, işlenen malzemeden bağımsız kullanılır.</p>
+        ) : (
         <div class="pdp__iso">
           <span class="tlabel" id="iso-lbl">Uygun malzeme grupları · ISO 513</span>
           <ul aria-labelledby="iso-lbl">
@@ -113,6 +116,7 @@ const metaDesc = clip(`${p.code} — ${p.description}`);
             })}
           </ul>
         </div>
+        )}
 
         <div class="buy">
           <div class="buy__row">

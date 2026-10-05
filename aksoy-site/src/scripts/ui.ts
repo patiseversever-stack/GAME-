@@ -1,5 +1,6 @@
 // Genel arayüz: başlık çubuğu, mobil menü, kaydırmada belirme, masaüstünde yumuşak kaydırma.
 import Lenis from 'lenis';
+import { trapTab, searchOpen } from './a11y';
 
 const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const finePointer = matchMedia('(pointer: fine)').matches;
@@ -46,11 +47,16 @@ function setMenu(open: boolean) {
   menuBtn?.setAttribute('aria-expanded', String(open));
   lockScroll(open);
   if (open) menu.querySelector<HTMLElement>('nav a')?.focus({ preventScroll: true });
+  else if (menu.contains(document.activeElement) || document.activeElement === document.body) menuBtn?.focus({ preventScroll: true });
 }
 menuBtn?.addEventListener('click', () => setMenu(true));
 document.querySelector('[data-menu-close]')?.addEventListener('click', () => setMenu(false));
 menu?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setMenu(false)));
-addEventListener('keydown', (e) => { if (e.key === 'Escape' && menu?.classList.contains('is-open')) setMenu(false); });
+addEventListener('keydown', (e) => {
+  if (!menu?.classList.contains('is-open') || searchOpen()) return;
+  if (e.key === 'Escape') setMenu(false);
+  else trapTab(e, menu);
+});
 
 /* Kaydırmada belirme */
 const io = new IntersectionObserver(
@@ -65,6 +71,11 @@ const io = new IntersectionObserver(
   { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
 );
 document.querySelectorAll('.reveal, .split-line, [data-reveal]').forEach((el) => io.observe(el));
+// Klavyeyle gelinen öğe henüz belirmediyse hemen göster (görünmez bir öğeye odaklanılmasın)
+addEventListener('focusin', (e) => {
+  const el = (e.target as Element | null)?.closest?.('.reveal:not(.is-in), [data-reveal]:not(.is-in)');
+  if (el) { el.classList.add('is-in'); io.unobserve(el); }
+});
 (window as any).__reveal = (el: Element) => io.observe(el);
 
 /* Küçük bildirim */

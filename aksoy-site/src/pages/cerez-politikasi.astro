@@ -33,6 +33,15 @@ const storage = [
     sent: 'Hayır, cihazınızda kalır',
   },
   {
+    name: 'aksoy-teklif-form',
+    tech: 'Oturum depolaması (sessionStorage)',
+    purpose: 'Teklif Sepeti’ndeki “Firma / ad”, teslim, termin ve “Not” alanları; sayfa değiştirince silinmesin diye',
+    kind: 'İşlevsel (yalnızca siz yazarsanız oluşur)',
+    party: 'Birinci taraf (yalnızca bu site)',
+    life: 'Sekmeyi kapatana kadar',
+    sent: 'Hayır, cihazınızda kalır',
+  },
+  {
     name: 'aksoy-pre',
     tech: 'Oturum depolaması (sessionStorage)',
     purpose: 'Ana sayfadaki açılış animasyonunun aynı oturumda tekrar gösterilmemesi',
@@ -126,7 +135,7 @@ const schema = [
               </table>
             </div>
           ))}
-          <p>Sepet panelindeki “Firma / ad”, teslim, termin ve “Not” alanları kaydedilmez; yalnızca WhatsApp mesajı oluşturulurken kullanılır. Özel (gizli) pencerede sepet, pencere kapanınca silinir.</p>
+          <p>Sepet panelindeki “Firma / ad”, teslim, termin ve “Not” alanları yalnızca açık sekme boyunca tutulur ve WhatsApp mesajı oluşturulurken kullanılır; sekmeyi kapatınca silinir. Özel (gizli) pencerede sepet, pencere kapanınca silinir.</p>
           <p class="fine">Sunucu kayıtları (IP adresi, tarayıcı bilgisi gibi) çerez değildir; barındırma hizmeti tarafından tutulur. Ayrıntılar için <a href="/kvkk#sunucu-kayitlari">KVKK aydınlatma metni</a>.</p>
         </section>
 

@@ -3,6 +3,7 @@
 import { drawingSvg } from '../lib/drawings';
 import { productImage } from '../lib/product-image';
 import { site } from '../data/site';
+import { trapTab, searchOpen } from './a11y';
 import type { Drawing, InsertShape } from '../data/types';
 
 export interface QuoteItem {
@@ -31,10 +32,20 @@ function load(): QuoteItem[] {
 }
 let items: QuoteItem[] = load();
 
-function save() {
+const MAX_QTY = 9999;
+const clampQty = (n: number) => Math.min(MAX_QTY, Math.max(1, Math.round(n) || 1));
+function store() {
   try { localStorage.setItem(KEY, JSON.stringify(items)); } catch { /* gizli sekme: yalnızca bu oturumda tutulur */ }
-  render();
   dispatchEvent(new CustomEvent('quote:change', { detail: items }));
+}
+function save() {
+  store();
+  render();
+}
+/** Adet ve marka değişiminde liste yeniden çizilmez: odak ve imleç yerinde kalır */
+function saveQuiet() {
+  store();
+  updateSend();
 }
 
 const $ = <T extends Element>(s: string) => document.querySelector<T>(s);
@@ -82,9 +93,12 @@ function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: numb
 }
 
 function message() {
-  const lines = items.map((it, i) => {
-    const brand = it.brand && it.brand !== ANY_BRAND ? `, marka: ${it.brand}` : '';
-    return `${i + 1}) ${it.code} (${it.name}) - ${it.qty} adet${brand}`;
+  // Her ürün: kod ve adet ilk satırda, açıklama altında (ad kodu tekrar ediyorsa yazılmaz)
+  const lc = (s: string) => s.toLocaleLowerCase('tr');
+  const lines = items.flatMap((it, i) => {
+    const brand = it.brand && it.brand !== ANY_BRAND ? `, ${it.brand}` : '';
+    const head = `${i + 1}) ${it.code} - ${it.qty} adet${brand}`;
+    return lc(it.name).includes(lc(it.code)) ? [head] : [head, `    ${it.name}`];
   });
   const f = firma?.value.trim();
   const n = note?.value.trim();
@@ -125,7 +139,8 @@ function render() {
     const inList = items.some((i) => i.slug === slug);
     btn.classList.toggle('is-added', inList);
     const lbl = btn.querySelector('[data-label]');
-    if (lbl) lbl.textContent = inList ? 'Sepette ✓' : btn.dataset.labelAdd || 'Teklif sepetine ekle';
+    // Ürün sayfasında ürün sepetteyse düğme, seçilen adet ve markayla sepeti günceller
+    if (lbl) lbl.textContent = inList ? (btn.dataset.qtyFrom ? 'Sepeti güncelle' : 'Sepette ✓') : btn.dataset.labelAdd || 'Teklif sepetine ekle';
   });
   if (!list) return;
   const has = items.length > 0;
@@ -156,10 +171,20 @@ function render() {
 
 export function addToQuote(p: Omit<QuoteItem, 'qty' | 'brand'> & { qty?: number; brand?: string }) {
   const found = items.find((i) => i.slug === p.slug);
-  if (found) found.qty += p.qty ?? 10;
-  else items.push({ ...p, qty: p.qty ?? 10, brand: p.brand ?? ANY_BRAND });
+  const toast = (window as any).__toast;
+  if (found) {
+    // Kartın + düğmesi (adet seçilmeden): ürün zaten sepette, adedi sepette değiştirilir
+    if (p.qty === undefined) { toast?.(`${p.code} zaten sepette; adedi sepetten değiştirebilirsiniz`); return; }
+    // Ürün sayfası: sayfadaki son seçim (adet ve marka) sepettekinin yerine geçer
+    found.qty = clampQty(p.qty);
+    found.brand = p.brand ?? ANY_BRAND;
+    save();
+    toast?.(`${p.code} güncellendi: ${found.qty} adet${found.brand !== ANY_BRAND ? `, ${found.brand}` : ''}`);
+    return;
+  }
+  items.push({ ...p, qty: clampQty(p.qty ?? 10), brand: p.brand ?? ANY_BRAND });
   save();
-  (window as any).__toast?.(`${p.code} teklif sepetine eklendi`);
+  toast?.(`${p.code} teklif sepetine eklendi`);
 }
 
 /* Olay bağlama */
@@ -172,7 +197,7 @@ document.addEventListener('click', (e) => {
       const p = JSON.parse(add.dataset.product || '{}');
       const qtyInput = add.dataset.qtyFrom ? document.querySelector<HTMLInputElement>(add.dataset.qtyFrom) : null;
       const brandSel = add.dataset.brandFrom ? document.querySelector<HTMLSelectElement>(add.dataset.brandFrom) : null;
-      addToQuote({ ...p, qty: qtyInput ? Math.max(1, parseInt(qtyInput.value, 10) || 1) : undefined, brand: brandSel?.value || undefined });
+      addToQuote({ ...p, qty: qtyInput ? clampQty(parseInt(qtyInput.value, 10)) : undefined, brand: brandSel?.value || undefined });
       if (add.dataset.open === 'true') openQuote();
     } catch { /* bozuk veri */ }
     return;
@@ -182,9 +207,21 @@ document.addEventListener('click', (e) => {
   const li = t.closest<HTMLElement>('.qitem');
   if (li) {
     const idx = Number(li.dataset.idx);
-    if (t.closest('[data-inc]')) { items[idx].qty = Math.min(9999, items[idx].qty + 1); save(); }
-    else if (t.closest('[data-dec]')) { items[idx].qty = Math.max(1, items[idx].qty - 1); save(); }
-    else if (t.closest('[data-remove]')) { items.splice(idx, 1); save(); }
+    const qtyEl = li.querySelector<HTMLInputElement>('[data-qty]');
+    if (t.closest('[data-inc]') || t.closest('[data-dec]')) {
+      items[idx].qty = clampQty(items[idx].qty + (t.closest('[data-inc]') ? 1 : -1));
+      if (qtyEl) qtyEl.value = String(items[idx].qty);
+      saveQuiet();
+    } else if (t.closest('[data-remove]')) {
+      const code = items[idx].code;
+      items.splice(idx, 1);
+      save();
+      // Odak kaybolmasın: yerine gelen satıra, liste boşaldıysa kapat düğmesine geç
+      const rows = list?.querySelectorAll<HTMLElement>('.qitem');
+      const next = rows?.[Math.min(idx, rows.length - 1)]?.querySelector<HTMLElement>('.qitem__code');
+      (next ?? drawer?.querySelector<HTMLElement>('[data-quote-close]'))?.focus({ preventScroll: true });
+      (window as any).__toast?.(`${code} sepetten çıkarıldı`);
+    }
   }
 });
 document.addEventListener('change', (e) => {
@@ -192,12 +229,29 @@ document.addEventListener('change', (e) => {
   const li = t.closest<HTMLElement>('.qitem');
   if (!li) return;
   const idx = Number(li.dataset.idx);
-  if (t.matches('[data-qty]')) { items[idx].qty = Math.min(9999, Math.max(1, parseInt((t as HTMLInputElement).value, 10) || 1)); save(); }
-  if (t.matches('[data-brand]')) { items[idx].brand = (t as HTMLSelectElement).value; save(); }
+  if (t.matches('[data-qty]')) { items[idx].qty = clampQty(parseInt((t as HTMLInputElement).value, 10)); (t as HTMLInputElement).value = String(items[idx].qty); saveQuiet(); }
+  if (t.matches('[data-brand]')) { items[idx].brand = (t as HTMLSelectElement).value; saveQuiet(); }
 });
-firma?.addEventListener('input', updateSend);
-note?.addEventListener('input', updateSend);
-document.querySelectorAll('input[name="q-teslim"], input[name="q-termin"]').forEach((r) => r.addEventListener('change', () => { updateSend(); renderLoc(); }));
+/* Firma, not, teslim ve termin sekme açık kaldıkça sayfalar arasında korunur (sessionStorage) */
+const FORM_KEY = 'aksoy-teklif-form';
+function saveForm() {
+  try { sessionStorage.setItem(FORM_KEY, JSON.stringify({ f: firma?.value ?? '', n: note?.value ?? '', t: radio('q-teslim'), z: radio('q-termin') })); } catch { /* yok say */ }
+}
+try {
+  const v = JSON.parse(sessionStorage.getItem(FORM_KEY) || 'null');
+  if (v) {
+    if (firma) firma.value = v.f ?? '';
+    if (note) note.value = v.n ?? '';
+    for (const [name, val] of [['q-teslim', v.t], ['q-termin', v.z]] as const) {
+      const r = [...document.querySelectorAll<HTMLInputElement>(`input[name="${name}"]`)].find((x) => x.value === val);
+      if (r) r.checked = true;
+    }
+    updateSend();
+  }
+} catch { /* yok say */ }
+firma?.addEventListener('input', () => { updateSend(); saveForm(); });
+note?.addEventListener('input', () => { updateSend(); saveForm(); });
+document.querySelectorAll('input[name="q-teslim"], input[name="q-termin"]').forEach((r) => r.addEventListener('change', () => { updateSend(); renderLoc(); saveForm(); }));
 
 /* Konum: tarayıcı izin verirse alınır, ilçe adı OpenStreetMap'ten bulunur, haritada gösterilir.
    Sunucuya gitmez; yalnızca bu sekmede (sessionStorage) tutulur ve kullanıcının göndereceği WhatsApp mesajına eklenir. */
@@ -221,7 +275,8 @@ function renderLoc() {
   const src = `https://www.openstreetmap.org/export/embed.html?bbox=${loc.lng - d * 1.6},${loc.lat - d},${loc.lng + d * 1.6},${loc.lat + d}&layer=mapnik&marker=${loc.lat},${loc.lng}`;
   if (locMap && locMap.dataset.src !== src) {
     locMap.dataset.src = src;
-    locMap.innerHTML = `<iframe title="Konumunuz haritada" src="${src}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+    // Harita yalnızca önizleme: klavye odağı içine girmesin (Haritada aç bağlantısı var)
+    locMap.innerHTML = `<iframe title="Konumunuz haritada" src="${src}" loading="lazy" tabindex="-1" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
   }
   if (locPlace) locPlace.textContent = loc.place || 'Konumunuz eklendi';
   const km = Math.round(loc.km);
@@ -330,7 +385,7 @@ async function importShared() {
       const p = idx.find((r) => r.s === w.slug);
       if (!p) continue;
       const found = items.find((i) => i.slug === p.s);
-      if (found) found.qty = Math.max(found.qty, w.qty);
+      if (found) found.qty = clampQty(Math.max(found.qty, w.qty));
       else items.push({ slug: p.s, code: p.c, name: p.n, drawing: p.d as Drawing, shape: p.h as InsertShape | undefined, brands: p.b, brand: p.b[w.b - 1] ?? ANY_BRAND, qty: w.qty });
       n++;
     }
@@ -341,7 +396,25 @@ async function importShared() {
   } catch { /* dizin alınamadı */ }
 }
 importShared();
-addEventListener('keydown', (e) => { if (e.key === 'Escape' && drawer?.classList.contains('is-open')) closeQuote(); });
+
+/* Ürün sayfası: ürün sepetteyse adet ve marka alanları sepetteki değerle açılır */
+{
+  const main = document.querySelector<HTMLElement>('[data-pdp-main]');
+  const it = main && items.find((i) => i.slug === main.dataset.slug);
+  const qtyIn = document.querySelector<HTMLInputElement>('#pdp-adet');
+  const brandSel = document.querySelector<HTMLSelectElement>('#pdp-marka');
+  if (it && qtyIn) {
+    qtyIn.value = String(it.qty);
+    if (brandSel && [...brandSel.options].some((o) => o.value === it.brand)) brandSel.value = it.brand;
+    qtyIn.dispatchEvent(new Event('input', { bubbles: true }));
+    brandSel?.dispatchEvent(new Event('change', { bubbles: true }));
+  }
+}
+addEventListener('keydown', (e) => {
+  if (!drawer?.classList.contains('is-open') || searchOpen()) return;
+  if (e.key === 'Escape') closeQuote();
+  else trapTab(e, drawer);
+});
 addEventListener('storage', (e) => { if (e.key === KEY) { items = load(); render(); } });
 
 render();

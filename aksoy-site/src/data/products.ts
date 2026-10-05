@@ -15,7 +15,7 @@ export const products: Product[] = [
     drawing: 'insert',
     shape: 'C',
     brands: ['iscar', 'tungaloy', 'korloy', 'kyoto', 'stormk', 'deskar'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Uç şekli', value: 'C — 80° eşkenar dörtgen' },
       { label: 'Boşluk açısı', value: 'N — 0° (negatif)' },
@@ -41,7 +41,7 @@ export const products: Product[] = [
     drawing: 'insert',
     shape: 'C',
     brands: ['iscar', 'tungaloy', 'korloy', 'kyoto', 'stormk', 'deskar'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Uç şekli', value: 'C — 80° eşkenar dörtgen' },
       { label: 'Boşluk açısı', value: 'N — 0° (negatif)' },
@@ -66,7 +66,7 @@ export const products: Product[] = [
     drawing: 'insert',
     shape: 'D',
     brands: ['iscar', 'tungaloy', 'korloy', 'kyoto', 'stormk', 'deskar'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Uç şekli', value: 'D — 55° eşkenar dörtgen' },
       { label: 'Boşluk açısı', value: 'N — 0° (negatif)' },
@@ -143,7 +143,7 @@ export const products: Product[] = [
     drawing: 'insert',
     shape: 'V',
     brands: ['iscar', 'tungaloy', 'korloy', 'kyoto', 'stormk', 'deskar'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Uç şekli', value: 'V — 35° eşkenar dörtgen' },
       { label: 'Boşluk açısı', value: 'N — 0° (negatif)' },
@@ -193,7 +193,7 @@ export const products: Product[] = [
     drawing: 'insert',
     shape: 'C',
     brands: ['iscar', 'tungaloy', 'korloy', 'kyoto', 'stormk', 'deskar'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Uç şekli', value: 'C — 80° eşkenar dörtgen' },
       { label: 'Boşluk açısı', value: 'C — 7° (pozitif)' },
@@ -219,7 +219,7 @@ export const products: Product[] = [
     drawing: 'insert',
     shape: 'D',
     brands: ['iscar', 'tungaloy', 'korloy', 'kyoto', 'stormk', 'deskar'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Uç şekli', value: 'D — 55° eşkenar dörtgen' },
       { label: 'Boşluk açısı', value: 'C — 7° (pozitif)' },
@@ -319,7 +319,7 @@ export const products: Product[] = [
     drawing: 'insert',
     shape: 'R',
     brands: ['iscar', 'korloy', 'kyoto', 'deskar'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Uç şekli', value: 'R — yuvarlak' },
       { label: 'Boşluk açısı', value: 'C — 7° (pozitif)' },
@@ -637,7 +637,7 @@ export const products: Product[] = [
     subcategory: 'kanal-uclari',
     drawing: 'groove-insert',
     brands: ['korloy', 'deskar', 'kyoto', 'sant'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Seri', value: 'MGMN (üretici kodlaması, ISO dışı)' },
       { label: 'Kanal genişliği', value: '2,0 mm' },
@@ -659,7 +659,7 @@ export const products: Product[] = [
     subcategory: 'kanal-uclari',
     drawing: 'groove-insert',
     brands: ['korloy', 'deskar', 'kyoto', 'sant'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Seri', value: 'MGMN (üretici kodlaması, ISO dışı)' },
       { label: 'Kanal genişliği', value: '3,0 mm' },
@@ -979,7 +979,7 @@ export const products: Product[] = [
     drawing: 'insert',
     shape: 'A',
     brands: ['deskar', 'stormk', 'kyoto', 'sant'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Uç şekli', value: 'A — 85° paralelkenar' },
       { label: 'Boşluk açısı', value: 'P — 11° (pozitif)' },
@@ -1057,7 +1057,7 @@ export const products: Product[] = [
     drawing: 'insert',
     shape: 'R',
     brands: ['deskar', 'stormk', 'kyoto', 'sant'],
-    iso: ['P', 'M', 'K'],
+    iso: ['P', 'M', 'K', 'S'],
     specs: [
       { label: 'Uç şekli', value: 'R — yuvarlak' },
       { label: 'Boşluk açısı', value: 'P — 11° (pozitif)' },
@@ -1851,7 +1851,7 @@ export const products: Product[] = [
     subcategory: 'pensler',
     drawing: 'collet',
     brands: ['iscar', 'sant'],
-    iso: ['P', 'M', 'K', 'N', 'S', 'H'],
+    iso: [],
     specs: [
       { label: 'Standart', value: 'ISO 15488 (DIN 6499)' },
       { label: 'Bağlama aralığı', value: '1–10 mm' },
@@ -1871,7 +1871,7 @@ export const products: Product[] = [
     subcategory: 'pensler',
     drawing: 'collet',
     brands: ['iscar', 'sant'],
-    iso: ['P', 'M', 'K', 'N', 'S', 'H'],
+    iso: [],
     specs: [
       { label: 'Standart', value: 'ISO 15488 (DIN 6499)' },
       { label: 'Bağlama aralığı', value: '1–16 mm' },
@@ -1892,7 +1892,7 @@ export const products: Product[] = [
     subcategory: 'pensler',
     drawing: 'collet',
     brands: ['iscar', 'sant'],
-    iso: ['P', 'M', 'K', 'N', 'S', 'H'],
+    iso: [],
     specs: [
       { label: 'Standart', value: 'ISO 15488 (DIN 6499)' },
       { label: 'Bağlama aralığı', value: '2–20 mm' },
@@ -1913,7 +1913,7 @@ export const products: Product[] = [
     subcategory: 'pensler',
     drawing: 'collet',
     brands: ['iscar', 'sant'],
-    iso: ['P', 'M', 'K', 'N', 'S', 'H'],
+    iso: [],
     specs: [
       { label: 'Standart', value: 'ISO 15488 (DIN 6499)' },
       { label: 'Bağlama aralığı', value: '3–26 mm' },
@@ -1936,7 +1936,7 @@ export const products: Product[] = [
     subcategory: 'pens-tutucular',
     drawing: 'chuck-bt',
     brands: ['iscar', 'sant'],
-    iso: ['P', 'M', 'K', 'N', 'S', 'H'],
+    iso: [],
     specs: [
       { label: 'Konik', value: 'BT40 (MAS 403)' },
       { label: 'Pens tipi', value: 'ER32' },
@@ -1957,7 +1957,7 @@ export const products: Product[] = [
     subcategory: 'pens-tutucular',
     drawing: 'chuck-bt',
     brands: ['iscar', 'sant'],
-    iso: ['P', 'M', 'K', 'N', 'S', 'H'],
+    iso: [],
     specs: [
       { label: 'Konik', value: 'BT30 (MAS 403)' },
       { label: 'Pens tipi', value: 'ER32' },
@@ -1979,7 +1979,7 @@ export const products: Product[] = [
     subcategory: 'baglama-aparatlari',
     drawing: 'chuck-bt',
     brands: ['iscar', 'sant'],
-    iso: ['P', 'M', 'K', 'N', 'S', 'H'],
+    iso: [],
     specs: [
       { label: 'Konik', value: 'BT40 (MAS 403)' },
       { label: 'Tip', value: 'Kafa tipi freze bağlama arboru' },
@@ -1999,7 +1999,7 @@ export const products: Product[] = [
     subcategory: 'baglama-aparatlari',
     drawing: 'pull-stud',
     brands: ['iscar', 'sant'],
-    iso: ['P', 'M', 'K', 'N', 'S', 'H'],
+    iso: [],
     specs: [
       { label: 'Konik', value: 'BT40' },
       { label: 'Bağlantı dişi', value: 'M16' },

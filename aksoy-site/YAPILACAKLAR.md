@@ -13,6 +13,10 @@ Site yayında: https://game-aksoy-site.vercel.app (Vercel, varsayılan daldan de
 - [x] Lighthouse: erişilebilirlik, en iyi uygulamalar ve SEO 100; katalog/ürün sayfası performansı 90+
 - [x] Kanonik adres gerçek yayın adresi; robots.txt ve site haritası açık
 - [x] Ekran kartı olmayan cihazlarda 3D yerine hafif statik görünüm
+- [x] Teklif sepeti: konum (harita), teslim şekli, termin; liste bağlantısı paylaşma; form alanları sayfa değişince korunur
+- [x] Tüm ürün adları ve sayfa metinleri sade Türkçeyle yeniden yazıldı
+- [x] Klavye erişimi: menü, arama ve sepette odak pencerede kalır; Esc sırayla kapatır
+- [x] Malzemeyle arama ("paslanmaz", "titanyum"…) ve tutucuların malzeme süzgecinden çıkarılması
 
 ## 3D model (isteğe bağlı GLB)
 - [ ] Gelecekte gerçek tarama/CAD modeli gelirse: `gltf-transform` ile optimize et (meshopt, WebP 1K, ≤ 1,5 MB), `src/scripts/showcase/glb.ts` ayarını doldur

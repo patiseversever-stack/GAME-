@@ -169,6 +169,7 @@
 
 /* 3D yoksa veya hareket azaltılmışsa: düz, okunur akış */
 .showcase.is-static { height: auto; }
+.showcase.is-static { overflow-x: hidden; overflow-x: clip; } /* büyük bölüm numarası sağdan taşmasın */
 .showcase.is-static .showcase__sticky { position: relative; height: auto; overflow: visible; padding: calc(var(--header-h) + 24px) 0 64px; }
 .showcase.is-static .showcase__poster { position: relative; height: 56vh; object-fit: contain; object-position: center; opacity: 1; }
 .showcase.is-static .showcase__canvas, .showcase.is-static .callouts, .showcase.is-static .hud, .showcase.is-static .scroll-hint, .showcase.is-static .showcase__side { display: none; }

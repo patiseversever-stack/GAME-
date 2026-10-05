@@ -20,7 +20,7 @@ export const site = {
   serviceAreas: ['Ankara', 'Konya', 'Kayseri', 'Eskişehir', 'Kırıkkale', 'İzmir', 'Manisa', 'Denizli', 'Aydın', 'Uşak'],
   serviceRegions: 'Ankara merkezli; İç Anadolu ve Ege',
   description:
-    'Ankara Ostim / İvedik merkezli kesici takım tedarikçisi. Torna ve freze elmas uçları, karbür matkap, parmak freze, kılavuz ve takım tutucular. Sahada destek, WhatsApp’tan hızlı teklif.',
+    'Ostim / İvedik’te kesici takım tedarikçisi: torna ve freze elmas uçları, karbür matkap, parmak freze, kılavuz ve takım tutucu. WhatsApp’tan aynı gün teklif.',
   tagline: 'Doğru kesici takım, aynı gün teklif.',
 };
 

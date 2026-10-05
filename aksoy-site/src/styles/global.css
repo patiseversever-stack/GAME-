@@ -220,6 +220,7 @@ ul, ol { margin: 0; padding: 0; list-style: none; }
 .site-header.is-scrolled[data-variant='dark'] { background: rgba(11, 12, 14, 0.94); border-color: rgba(255, 255, 255, 0.06); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); }
 .site-header.is-scrolled[data-variant='light'] { background: rgba(245, 244, 240, 0.95); border-color: var(--paper-line); backdrop-filter: blur(16px) saturate(1.3); -webkit-backdrop-filter: blur(16px) saturate(1.3); }
 .site-header.is-hidden { transform: translateY(-100%); }
+.site-header:focus-within { transform: none; } /* klavyeyle gelinince gizli başlık görünür */
 .site-header__inner { height: 100%; display: flex; align-items: center; gap: 24px; }
 .site-header__nav { display: flex; gap: 4px; margin-left: auto; }
 .site-header__nav a {
@@ -487,6 +488,7 @@ html:has(.drawer.is-open, [data-menu].is-open) .toast.is-on { transform: transla
 
 /* ISO malzeme çipleri */
 .iso { display: inline-flex; flex-wrap: wrap; gap: 6px; }
+.iso--any { font: 500 0.7rem/1.2 var(--f-mono); letter-spacing: 0.04em; color: var(--ink-3); min-height: 22px; align-items: center; }
 .iso span {
   --c: var(--iso-h);
   display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 6px;
@@ -554,7 +556,8 @@ html:has(.drawer.is-open, [data-menu].is-open) .toast.is-on { transform: transla
 .note { padding: 14px 18px; border-radius: 12px; background: rgba(217, 164, 65, 0.12); border: 1px solid rgba(217, 164, 65, 0.35); font-size: var(--fs-sm); color: var(--ink-2); }
 
 /* Ekran dışındaki bölümler ilk açılışta çizilmez (daha hızlı ilk görüntü, daha az yerleşim işi) */
-main > .section, .site-footer { content-visibility: auto; contain-intrinsic-size: auto 900px; }
+/* Alt bilgi hariç: tahmini yüksekliği tutmadığı için sayfa boyu sonradan zıplıyordu */
+main > .section { content-visibility: auto; contain-intrinsic-size: auto 900px; }
 
 /* Kaydırmada beliren öğeler */
 .reveal { opacity: 0; transform: translateY(28px); transition: opacity 900ms var(--ease-out), transform 1100ms var(--ease-out); transition-delay: var(--d, 0ms); }

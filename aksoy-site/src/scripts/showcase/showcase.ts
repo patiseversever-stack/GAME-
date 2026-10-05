@@ -535,7 +535,11 @@ export async function startShowcase(
   const stopByUser = () => { if (anim || autoplay) setPlaying(false); };
   addEventListener('wheel', stopByUser, { passive: true });
   addEventListener('touchstart', (e) => { if (!(e.target as HTMLElement).closest('[data-reel]')) stopByUser(); }, { passive: true });
-  addEventListener('keydown', (e) => { if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'Home', 'End'].includes(e.key)) stopByUser(); });
+  addEventListener('keydown', (e) => {
+    // Düğme ve alanlardaki tuşlar kaydırma değildir (Boşluk, odaktaki Oynat düğmesine basar)
+    if ((e.target as HTMLElement).closest?.('button, a, input, select, textarea')) return;
+    if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'Home', 'End'].includes(e.key)) stopByUser();
+  });
   function updateReel() {
     const { raw, k } = current();
     segFill.forEach((f, i) => { if (f) f.style.transform = `scaleX(${THREE.MathUtils.clamp(raw - i, 0, 1)})`; });
