@@ -210,7 +210,17 @@
 }
 .cat:hover { border-color: var(--g-600); }
 .cat:hover::before { opacity: 1; }
-.cat__num { font: 500 11px/1 var(--f-mono); letter-spacing: 0.1em; color: var(--g-500); }
+.cat__num { position: relative; font: 500 11px/1 var(--f-mono); letter-spacing: 0.1em; color: var(--g-500); }
+/* Canlı 3D model: kartın tamamını kaplar, yazıların arkasında kalır */
+.cat__gl { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; opacity: 0; transition: opacity 900ms var(--ease-out); }
+.cat.is-3d .cat__gl { opacity: 1; }
+/* Modelin arkasında stüdyo ışığı */
+.cat[data-model]::after {
+  content: ''; position: absolute; z-index: -1; inset: 0; pointer-events: none;
+  background: radial-gradient(38% 52% at 70% 42%, rgba(255, 255, 255, 0.055), transparent 72%);
+}
+.cat.is-3d .cat__art { opacity: 0; transition: opacity 500ms; }
+.cat.is-3d:hover .cat__art { transform: none; }
 .cat__art { position: absolute; right: -6%; top: 10%; width: 64%; max-width: 360px; opacity: 0.95; transition: transform 1100ms var(--ease-out); }
 .cat:nth-child(1) .cat__art, .cat:nth-child(2) .cat__art, .cat:nth-child(6) .cat__art, .cat:nth-child(7) .cat__art { width: 54%; right: 0; top: 2%; }
 .cat:hover .cat__art { transform: translate(-3%, -3%) rotate(-3deg) scale(1.04); }
