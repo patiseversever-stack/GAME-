@@ -7,6 +7,7 @@ import { categoryBySlug, subcategoryName } from '../../data/categories';
 import { brandBySlug } from '../../data/brands';
 import { site, waLink } from '../../data/site';
 import { drawingSvg } from '../../lib/drawings';
+import { productImage } from '../../lib/product-image';
 import { ISO_GROUPS, SHAPES, decodeInsertCode, breadcrumbSchema, clip } from '../../lib/catalog';
 import type { Product } from '../../data/types';
 import '../../styles/catalog.css';
@@ -23,6 +24,7 @@ const brandList = p.brands.map((b) => brandBySlug[b]).filter(Boolean);
 const brandNames = p.brands.map((b) => brandBySlug[b]?.name ?? b);
 const quoteData = JSON.stringify({ slug: p.slug, code: p.code, name: p.name, drawing: p.drawing, shape: p.shape, brands: brandNames });
 const anatomy = p.drawing === 'insert' ? decodeInsertCode(p.code) : null;
+const render = p.image ? null : productImage(p);
 
 // İlgili ürünler: önce elle bağlananlar, sonra aynı alt grup, sonra aynı kategori
 const related: Product[] = [];
@@ -53,14 +55,24 @@ const metaDesc = clip(`${p.code} — ${p.description}`);
           <div class="stage__marks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
           <span class="stage__lbl stage__lbl--tl" aria-hidden="true">{p.code}</span>
           <span class="stage__lbl stage__lbl--tr" aria-hidden="true">{subName}</span>
-          <span class="stage__lbl stage__lbl--bl" aria-hidden="true">Teknik çizim</span>
           {p.image ? (
             <div class="stage__art"><img src={p.image} alt={`${p.code} ${p.name}`} style="width:80%;height:auto;object-fit:contain" /></div>
+          ) : render ? (
+            <>
+              <div class="stage__art stage__art--render" data-view="3d">
+                <img src={render.src} srcset={`${render.small} 600w, ${render.src} 1200w`} sizes="(max-width: 960px) 100vw, 640px" width="1200" height="900" alt={`${p.code} — ${p.name} (temsilî görsel)`} fetchpriority="high" decoding="async" />
+              </div>
+              <div class="stage__art" data-view="cizim" hidden set:html={drawingSvg(p.drawing, p.shape, { grid: true, label, title: `${p.code} teknik çizimi (temsilî)` })} />
+              <div class="stage__switch" role="group" aria-label="Görünüm">
+                <button type="button" aria-pressed="true" data-view-btn="3d">3D görünüm</button>
+                <button type="button" aria-pressed="false" data-view-btn="cizim">Teknik çizim</button>
+              </div>
+            </>
           ) : (
             <div class="stage__art" set:html={drawingSvg(p.drawing, p.shape, { grid: true, label, title: `${p.code} teknik çizimi (temsilî)` })} />
           )}
         </figure>
-        <p class="stage__caption"><span>Görsel temsilîdir; ölçüler spesifikasyon tablosundadır.</span><span class="stage__scale">Ölçeksiz çizim</span></p>
+        <p class="stage__caption"><span>Görsel temsilîdir; markaya göre görünüm değişebilir. Ölçüler teknik özellikler tablosundadır.</span></p>
         {anatomy && (
           <div class="anat" role="group" aria-label={`${p.code} kod anatomisi`}>
             <div class="anat__head"><span class="tlabel">ISO 1832 kod anatomisi</span><span class="tlabel">{p.code}</span></div>
@@ -222,6 +234,16 @@ const metaDesc = clip(`${p.code} — ${p.description}`);
     </button>
   </div>
 
+  <script>
+    // Ürün görseli: 3D görünüm ↔ teknik çizim
+    document.querySelectorAll<HTMLButtonElement>('[data-view-btn]').forEach((b) =>
+      b.addEventListener('click', () => {
+        const v = b.dataset.viewBtn;
+        document.querySelectorAll<HTMLElement>('[data-view]').forEach((el) => (el.hidden = el.dataset.view !== v));
+        document.querySelectorAll<HTMLButtonElement>('[data-view-btn]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      }),
+    );
+  </script>
   <script>
     import '../../scripts/catalog';
   </script>

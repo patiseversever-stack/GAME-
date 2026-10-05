@@ -234,12 +234,12 @@
 @media (max-width: 620px) {
   .cats { grid-template-columns: 1fr 1fr; }
   .cats > .cat { grid-column: span 1; min-height: 200px; padding: 16px; }
-  .cats > .cat:nth-child(1), .cats > .cat:nth-child(7) { grid-column: span 2; min-height: 240px; }
+  .cats > .cat:nth-child(1) { grid-column: span 2; min-height: 240px; }
   .cat h3 { font-size: 1.15rem; }
   .cat p { display: none; }
-  .cats > .cat:nth-child(1) p, .cats > .cat:nth-child(7) p { display: block; }
+  .cats > .cat:nth-child(1) p { display: block; }
   .cats > .cat .cat__art { width: 86%; right: -10%; top: 18%; }
-  .cats > .cat:nth-child(1) .cat__art, .cats > .cat:nth-child(7) .cat__art { width: 56%; right: 0; top: 6%; }
+  .cats > .cat:nth-child(1) .cat__art { width: 56%; right: 0; top: 6%; }
   .cat__go { width: 34px; height: 34px; right: 12px; bottom: 12px; }
 }
 

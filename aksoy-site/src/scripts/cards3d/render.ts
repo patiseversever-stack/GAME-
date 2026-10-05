@@ -21,11 +21,13 @@ interface Present {
   at: [number, number];
   /** Stüdyo ışığını döndürme (rad): parlak şeridin yüzeye denk gelmesi için */
   env?: number;
+  /** Dar (mobil) kartta yarıçap çarpanı: uzun modeller kart dışına taşmasın */
+  narrowZoom?: number;
 }
 const PRESENT: Record<ModelKind, Present> = {
   cnmg: { center: [0, 0, 2.4], radius: 10.5, pose: [-0.36, 0.22, 0.5], spinAxis: 'z', spin: 0.32, at: [0.7, 0.43] },
   thread: { center: [0, 0, 1.8], radius: 9.2, pose: [-0.4, 0.2, 0.3], spinAxis: 'z', spin: -0.36, at: [0.68, 0.43] },
-  groove: { center: [-12, -5, 6], radius: 17, pose: [0.46, -1.22, 0.1], spinAxis: 'y', spin: 0, at: [0.75, 0.42], env: 0.8 },
+  groove: { center: [-12, -5, 6], radius: 17, pose: [0.46, -1.22, 0.1], spinAxis: 'y', spin: 0, at: [0.75, 0.42], env: 0.8, narrowZoom: 1.45 },
   endmill: { center: [0, 14, 0], radius: 15.5, pose: [0, 0.2, -1.3], spinAxis: 'y', spin: -1.5, at: [0.6, 0.38] },
   drill: { center: [0, 15, 0], radius: 16.5, pose: [0, 0.38, -1.3], spinAxis: 'y', spin: -1.3, at: [0.6, 0.38] },
   tap: { center: [0, 14, 0], radius: 15.5, pose: [0, 0.38, -1.28], spinAxis: 'y', spin: -1.1, at: [0.6, 0.38] },
@@ -178,8 +180,9 @@ export function startCards(els: HTMLElement[]) {
     const aspect = w / h;
     const fill = w / h < 1.1 ? 0.7 : 0.84; // küre çapının kart yüksekliğine oranı
     const vfov = THREE.MathUtils.degToRad(camera.fov);
-    const visH = (2 * p.radius) / fill;
-    const visW = (2 * p.radius) / (fill * 0.95);
+    const rad = p.radius * (aspect < 1.25 ? p.narrowZoom ?? 1 : 1);
+    const visH = (2 * rad) / fill;
+    const visW = (2 * rad) / (fill * 0.95);
     const dist = Math.max(visH / (2 * Math.tan(vfov / 2)), visW / (2 * Math.tan(vfov / 2) * aspect));
     camera.aspect = aspect;
     camera.position.set(0, 0, dist);
