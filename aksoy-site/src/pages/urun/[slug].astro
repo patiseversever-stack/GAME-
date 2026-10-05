@@ -51,7 +51,7 @@ const metaDesc = clip(`${p.code} — ${p.description}`);
       <div class="pdp__media">
         <figure class="stage" style="margin:0">
           <div class="stage__marks" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
-          <span class="stage__lbl stage__lbl--tl" aria-hidden="true">REF · {p.code}</span>
+          <span class="stage__lbl stage__lbl--tl" aria-hidden="true">{p.code}</span>
           <span class="stage__lbl stage__lbl--tr" aria-hidden="true">{subName}</span>
           <span class="stage__lbl stage__lbl--bl" aria-hidden="true">Teknik çizim</span>
           {p.image ? (
@@ -60,7 +60,7 @@ const metaDesc = clip(`${p.code} — ${p.description}`);
             <div class="stage__art" set:html={drawingSvg(p.drawing, p.shape, { grid: true, label, title: `${p.code} teknik çizimi (temsilî)` })} />
           )}
         </figure>
-        <p class="stage__caption"><span>Görsel temsilîdir; ölçüler spesifikasyon tablosundadır.</span><span class="stage__scale">Ölçeksiz</span></p>
+        <p class="stage__caption"><span>Görsel temsilîdir; ölçüler spesifikasyon tablosundadır.</span><span class="stage__scale">Ölçeksiz çizim</span></p>
         {anatomy && (
           <div class="anat" role="group" aria-label={`${p.code} kod anatomisi`}>
             <div class="anat__head"><span class="tlabel">ISO 1832 kod anatomisi</span><span class="tlabel">{p.code}</span></div>
@@ -107,7 +107,7 @@ const metaDesc = clip(`${p.code} — ${p.description}`);
             <div class="field">
               <label for="pdp-marka">Marka tercihi</label>
               <select id="pdp-marka">
-                <option>Marka farketmez</option>
+                <option>Marka fark etmez</option>
                 {brandNames.map((b) => <option>{b}</option>)}
               </select>
             </div>
@@ -206,7 +206,7 @@ const metaDesc = clip(`${p.code} — ${p.description}`);
   <div class="pdp-bar" data-pdp-bar aria-hidden="true" inert>
     <div class="pdp-bar__info">
       <span class="pdp-bar__code">{p.code}</span>
-      <span class="pdp-bar__qty" data-bar-sum>10 adet · Marka farketmez</span>
+      <span class="pdp-bar__qty" data-bar-sum>10 adet · Marka fark etmez</span>
     </div>
     <button
       class="btn btn--tin"

@@ -147,7 +147,7 @@ export async function startShowcase(
   type Dim = { a: string; b: string; ea?: string; eb?: string; label: string; group: Key; off: number; line: SVGPathElement; ext: SVGPathElement; el: HTMLElement };
   type Pin = {
     anchor: string; label: string; sub: string; group: Key; side: 'left' | 'right'; down?: boolean;
-    el: HTMLElement; small: HTMLElement; card: HTMLElement; path: SVGPathElement; st: { ci: number; x: number; y: number };
+    el: HTMLElement; small: HTMLElement; card: HTMLElement; path: SVGPathElement; st: { ci: number; x: number; y: number; bad: number };
   };
   const dims: Dim[] = [
     { a: 'dia-a', b: 'dia-b', label: 'Ø 25 mm', group: 'cDim' as Key, off: 18 },
@@ -176,7 +176,7 @@ export async function startShowcase(
     el.className = `pin${p.side === 'left' ? ' pin--left' : ''}`;
     el.innerHTML = `<i class="pin__dot"></i><svg class="pin__lead" aria-hidden="true"><path pathLength="1"/></svg><div class="pin__card"><span class="pin__num">${String(i + 1).padStart(2, '0')}</span><span class="pin__txt"><b>${p.label}</b><small>${p.sub}</small></span></div>`;
     layer.append(el);
-    return { ...p, el, small: el.querySelector('small')!, card: el.querySelector<HTMLElement>('.pin__card')!, path: el.querySelector('path')!, st: { ci: -1, x: 0, y: 0 } };
+    return { ...p, el, small: el.querySelector('small')!, card: el.querySelector<HTMLElement>('.pin__card')!, path: el.querySelector('path')!, st: { ci: -1, x: 0, y: 0, bad: 0 } };
   });
   const setEdge = (n: number) => {
     edge = n;
@@ -712,7 +712,7 @@ export async function startShowcase(
     }
     const mob = W <= 860;
     const off = mob ? 54 : 80, dy = mob ? 26 : 30;
-    const ease = 1 - Math.exp(-dt * 11);
+    const ease = 1 - Math.exp(-dt * 5);
     const placed: Rect[] = [];
     // Örtülmemesi gerekenler: diğer etiketlerin noktaları ve sahnedeki asıl parçalar (uçlar, vidalar)
     const Ps = pins.map((p) => project(p.anchor));
@@ -765,8 +765,12 @@ export async function startShowcase(
       };
       let best = 0, bestC = Infinity;
       for (let i = 0; i < cands.length; i++) { const c = cost(i); if (c < bestC) { bestC = c; best = i; } }
+      // Yer bir kez seçilir ve sahne boyunca sabit kalır; yalnızca seçili yer uzun süre
+      // (0,7 sn) açıkça kötüyse (ekran dışı, metnin ya da başka etiketin üstü) değişir.
       const fresh = st.ci < 0;
-      if (fresh || (on && cost(st.ci) > bestC + 150)) st.ci = best;
+      if (fresh) { st.ci = best; st.bad = 0; }
+      else if (on && cost(st.ci) > bestC + 3500) { st.bad += dt; if (st.bad > 0.7) { st.ci = best; st.bad = 0; } }
+      else st.bad = 0;
       const { left, cy } = cands[st.ci];
       const tx = xOf(cands[st.ci]), ty = cy - h / 2;
       if (fresh) { st.x = tx; st.y = ty; } else { st.x += (tx - st.x) * ease; st.y += (ty - st.y) * ease; }

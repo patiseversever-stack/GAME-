@@ -24,7 +24,7 @@ h1 b{color:#d9a441;font-weight:600}
 .f{position:absolute;right:56px;bottom:56px;font-family:M;font-size:14px;color:#7d858f;letter-spacing:.08em}
 </style></head><body><div class="g"></div><img src="${poster}">
 <div class="l"><svg width="40" height="40" viewBox="0 0 32 32"><path d="M16 1.8 29.2 16 16 30.2 2.8 16Z" fill="#d9a441"/><circle cx="16" cy="16" r="3.4" fill="#0b0c0e"/></svg><span>AKSOY<small>KESİCİ TAKIMLAR</small></span></div>
-<div class="t"><div class="e">Ostim / İvedik · Ankara</div><h1>Talaşın ilk temas ettiği <b>yer.</b></h1></div>
+<div class="t"><div class="e">Ostim / İvedik · Ankara</div><h1>Doğru kesici takım, <b>aynı gün</b> teklif.</h1></div>
 <div class="f">ELMAS UÇ · KARBÜR MATKAP · KILAVUZ · WHATSAPP TEKLİF</div></body></html>`;
 const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome' });
 const page = await browser.newPage({ viewport: { width: 1200, height: 630 } });

@@ -97,13 +97,13 @@ const schema = [
   <section class="section section--tight" aria-labelledby="bilgiler">
     <div class="wrap">
       <div class="section-head">
-        <span class="eyebrow">Bilgi bloğu</span>
+        <span class="eyebrow">İletişim bilgileri</span>
         <h2 id="bilgiler">Bize ulaşmanın yolları</h2>
       </div>
 
       <div class="sheet">
         <div class="sheet__cell">
-          <span class="sheet__label"><span>Telefon · WhatsApp</span><b>A1</b></span>
+          <span class="sheet__label"><span>Telefon · WhatsApp</span></span>
           <a class="sheet__value" href={`tel:${site.phoneE164}`}>{site.phoneDisplay}</a>
           <p>Aynı numara hem arama hem WhatsApp için geçerlidir. Açamadığımız aramalara en kısa sürede geri dönüş yapılır.</p>
           <div class="sheet__links">
@@ -113,7 +113,7 @@ const schema = [
         </div>
 
         <div class="sheet__cell">
-          <span class="sheet__label"><span>Konum</span><b>A2</b></span>
+          <span class="sheet__label"><span>Konum</span></span>
           <p class="sheet__value">{site.district}</p>
           <p>{site.address}. Saha satışı yaptığımız için uğramadan önce WhatsApp’tan haber vermenizi rica ederiz.</p>
           <div class="sheet__links">
@@ -122,13 +122,13 @@ const schema = [
         </div>
 
         <div class="sheet__cell">
-          <span class="sheet__label"><span>Çalışma saatleri</span><b>A3</b></span>
+          <span class="sheet__label"><span>Çalışma saatleri</span></span>
           <p class="sheet__value">{site.hours}</p>
           <p>{site.hoursNote}</p>
         </div>
 
         <div class="sheet__cell sheet__cell--8">
-          <span class="sheet__label"><span>Hizmet bölgeleri · {site.serviceRegions}</span><b>B1</b></span>
+          <span class="sheet__label"><span>Hizmet bölgeleri · {site.serviceRegions}</span></span>
           <div class="regions">
             {[...regions].map(([name, cities]) => (
               <div class="region">
@@ -145,7 +145,7 @@ const schema = [
         </div>
 
         <div class="sheet__cell">
-          <span class="sheet__label"><span>Künye</span><b>B2</b></span>
+          <span class="sheet__label"><span>Künye</span></span>
           <dl>
             {kunye.map((r) => (
               <div><dt>{r.k}</dt><dd>{r.href ? <a href={r.href}>{r.v}</a> : r.v}</dd></div>

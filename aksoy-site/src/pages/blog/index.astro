@@ -11,8 +11,6 @@ const title = 'Teknik Blog: Kesici Takım Rehberleri';
 const description =
   'Torna elmas uç kodları, kesme hızı ve devir hesabı, U-matkap seçimi: CNC atölyeleri için sade, doğru ve uygulanabilir Türkçe teknik yazılar.';
 
-const totalMinutes = posts.reduce((n, p) => n + p.readingMinutes, 0);
-const num = (i: number) => String(i + 1).padStart(2, '0');
 
 const schema = [
   breadcrumbSchema([{ name: 'Ana sayfa', path: '/' }, { name: 'Blog', path: '/blog' }], Astro.site),
@@ -45,7 +43,6 @@ const schema = [
         </div>
         <div class="blog-hero__stats" aria-label="Blog özeti">
           <div><b>{String(posts.length).padStart(2, '0')}</b><span>Yazı</span></div>
-          <div><b>{totalMinutes}</b><span>Dakika okuma</span></div>
         </div>
       </div>
     </div>
@@ -57,11 +54,9 @@ const schema = [
         <article class:list={['post-card', 'reveal', { 'post-card--feature': i === 0 }]} style={`--d:${i * 80}ms`}>
           <div class="art-card">
             <PostArt art={p.art} />
-            <span class="art-card__tl">B-{num(i)}</span>
-            <span class="art-card__tr">{p.tags[0]}</span>
+            <span class="art-card__tl">{p.tags[0]}</span>
           </div>
           <div class="post-card__body">
-            {p.draft && <span class="draft-badge"><i></i>Taslak · uzman kontrolü bekliyor</span>}
             <div class="post-card__meta">
               <span><time datetime={p.date}>{trDate(p.date)}</time></span>
               <span>{p.readingMinutes} dk okuma</span>

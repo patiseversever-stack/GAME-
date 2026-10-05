@@ -102,7 +102,7 @@
   width: min(760px, 56vw); opacity: 1; visibility: visible;
 }
 .chapter .eyebrow { color: var(--tin); }
-.chapter h1 { font-size: var(--fs-4xl); letter-spacing: -0.045em; line-height: 0.92; margin-top: 18px; }
+.chapter h1 { font-size: clamp(2.6rem, 4.7vw, 5.2rem); letter-spacing: -0.04em; line-height: 0.95; margin-top: 18px; }
 .chapter h2 { font-size: var(--fs-2xl); margin-top: 16px; }
 .chapter p { color: var(--g-300); font-size: var(--fs-lg); margin-top: 18px; max-width: 46ch; }
 .chapter[data-side='center'] p { margin-inline: auto; }
@@ -146,7 +146,7 @@
     left: var(--gutter); right: var(--gutter); width: auto; top: auto; bottom: calc(18px + var(--mbar-h)); transform: none; text-align: left;
   }
   .chapter[data-side='hero'] { left: var(--gutter); right: var(--gutter); width: auto; bottom: calc(26px + var(--mbar-h)); }
-  .chapter h1 { font-size: clamp(2.7rem, 12.5vw, 4rem); }
+  .chapter h1 { font-size: clamp(2.3rem, 10.6vw, 3.4rem); }
   .chapter h2 { font-size: clamp(1.7rem, 7.4vw, 2.3rem); margin-top: 10px; }
   .chapter p { font-size: 0.98rem; margin-top: 10px; }
   .chapter[data-side='center'] p { margin-inline: 0; }

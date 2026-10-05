@@ -516,11 +516,12 @@ a.sheet__value:hover { color: var(--tin-lo); }
 
 .nf__links { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-top: clamp(40px, 6vw, 80px); border-top: 1px solid var(--g-800); }
 .nf__links a {
-  display: flex; align-items: baseline; justify-content: space-between; gap: 10px; padding: 18px 18px 18px 0;
+  display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px 18px 18px 0; min-height: 56px;
   font-family: var(--f-display); font-weight: 600; font-size: var(--fs-md); color: var(--g-200); transition: color var(--t-fast), padding var(--t-med) var(--ease-out);
 }
 .nf__links a + a { padding-left: 18px; border-left: 1px solid var(--g-800); }
-.nf__links a span { font: 500 10px/1 var(--f-mono); letter-spacing: 0.1em; color: var(--g-500); }
+.nf__links a svg { width: 16px; height: 16px; flex: none; color: var(--g-500); align-self: center; transition: transform var(--t-med) var(--ease-out), color var(--t-fast); }
+.nf__links a:hover svg { color: var(--tin); transform: translateX(4px); }
 .nf__links a:hover { color: var(--tin); }
 
 @media (max-width: 960px) {

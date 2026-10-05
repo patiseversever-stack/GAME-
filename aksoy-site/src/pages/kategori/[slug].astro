@@ -62,7 +62,7 @@ const desc = clip(`${c.name}: ${c.intro}`);
         <span class="stage__lbl stage__lbl--tl">Pafta K-{pad(idx + 1)}</span>
         <span class="stage__lbl stage__lbl--tr">{c.name}</span>
         <span class="stage__lbl stage__lbl--bl">Temsilî çizim</span>
-        <span class="stage__lbl stage__lbl--br">{c.shape ? `ISO ${c.shape}` : 'Ölçeksiz'}</span>
+        <span class="stage__lbl stage__lbl--br">{c.shape ? `ISO ${c.shape}` : 'Ölçeksiz çizim'}</span>
         <div class="stage__art" set:html={drawingSvg(c.drawing, c.shape)} />
       </figure>
     </div>

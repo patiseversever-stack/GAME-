@@ -7,7 +7,7 @@ export const brands: Brand[] = [
     slug: 'iscar',
     name: 'ISCAR',
     country: 'İsrail',
-    segment: 'Premium',
+    segment: 'Premium segment',
     strengths: ['Kesme ve kanal açma', 'Tornalama', 'Frezeleme', 'Delik delme'],
     description:
       'IMC grubunun amiral markası. Kesme ve kanal açma sistemleriyle tanınır; tornalama, frezeleme ve delik delmede geniş bir ürün gamı sunar. Türkiye’de 1996’dan beri resmi şirketiyle (Gebze) faaliyet gösterir.',
@@ -18,7 +18,7 @@ export const brands: Brand[] = [
     slug: 'tungaloy',
     name: 'Tungaloy',
     country: 'Japonya',
-    segment: 'Premium',
+    segment: 'Premium segment',
     strengths: ['Tornalama kaliteleri', 'Freze sistemleri', 'Kesme', 'Uçlu matkaplar'],
     description:
       'IMC grubunda yer alan Japon üretici. CVD/PVD kaplı torna kaliteleri ve çok kenarlı freze uçlarıyla bilinir. Türkiye’de İstanbul merkezli resmi şirketi bulunur.',
@@ -28,7 +28,7 @@ export const brands: Brand[] = [
     slug: 'guhring',
     name: 'Gühring',
     country: 'Almanya',
-    segment: 'Premium',
+    segment: 'Premium segment',
     strengths: ['Karbür matkaplar', 'Kılavuzlar', 'Parmak frezeler', 'Raybalar'],
     description:
       'Döner takımlarda — özellikle karbür matkap, kılavuz ve rayba — dünyanın önde gelen üreticilerinden. Türkiye’de 1988’den beri faaliyet gösterir; İzmir’de üretim ve kaplama tesisi bulunur.',
@@ -48,7 +48,7 @@ export const brands: Brand[] = [
     slug: 'kyoto',
     name: 'KYOTO Cutting Tools',
     country: '',
-    segment: 'Ekonomik / orta segment',
+    segment: 'Ekonomik–orta segment',
     strengths: ['Torna elmas uçları', 'Kanal uçları'],
     description:
       'Kutusunda “KYOTO Cutting Tools — Inspected” etiketiyle gelen kesici uç markası. Japon Kyocera ile karıştırılmamalıdır. Uygun fiyatlı torna ve kanal uçlarında tercih edilir.',
@@ -58,7 +58,7 @@ export const brands: Brand[] = [
     slug: 'stormk',
     name: 'STORM&K',
     country: '',
-    segment: 'Ekonomik / orta segment',
+    segment: 'Ekonomik–orta segment',
     strengths: ['Torna elmas uçları', 'Freze uçları'],
     description:
       'Kutusunda “STORM&K — Inspected” etiketiyle gelen kesici uç markası. Bakır tonlu kaplamalı torna ve freze uçlarında uygun fiyatlı bir seçenek.',
@@ -68,7 +68,7 @@ export const brands: Brand[] = [
     slug: 'deskar',
     name: 'DESKAR',
     country: 'Çin',
-    segment: 'Ekonomik',
+    segment: 'Ekonomik segment',
     strengths: ['Torna elmas uçları', 'Freze uçları', 'Kanal uçları'],
     description:
       'Lifeng Precision Tools (Zhejiang) tarafından üretilen Çin markası. Geniş ISO uç yelpazesi ve uygun fiyatıyla seri üretimde ve genel atölye işlerinde tercih edilir.',
@@ -78,7 +78,7 @@ export const brands: Brand[] = [
     slug: 'sant',
     name: 'SANT',
     country: 'Çin',
-    segment: 'Ekonomik',
+    segment: 'Ekonomik segment',
     strengths: ['Kanal ve kesme katerleri', 'Torna katerleri', 'Takım tutucular'],
     description:
       'Çin merkezli kesici takım ve kater üreticisi (büyük olasılıkla Zhuzhou Sant Cutting Tools). MGEHR kanal katerleri gibi Korloy uçlarıyla uyumlu ekonomik tutucular sunar.',

@@ -16,13 +16,14 @@ export interface QuoteItem {
 }
 
 const KEY = 'aksoy-teklif-v1';
-const ANY_BRAND = 'Marka farketmez';
+const ANY_BRAND = 'Marka fark etmez';
 
 function load(): QuoteItem[] {
   try {
     const raw = localStorage.getItem(KEY);
     const v = raw ? JSON.parse(raw) : [];
-    return Array.isArray(v) ? v : [];
+    // Eski yazım ("farketmez") ile kaydedilmiş sepetler yeni yazıma çevrilir
+    return Array.isArray(v) ? v.map((it: QuoteItem) => (it.brand === 'Marka farketmez' ? { ...it, brand: ANY_BRAND } : it)) : [];
   } catch {
     return [];
   }
