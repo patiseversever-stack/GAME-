@@ -594,4 +594,6 @@ main > .section, .site-footer { content-visibility: auto; contain-intrinsic-size
   html .calc-sug__apply { min-height: 44px; }
   html .dec-actions__link { display: inline-flex; align-items: center; min-height: 44px; }
   html .eyebrow a, html a.eyebrow, html .pdp__info .eyebrow { display: inline-flex; align-items: center; min-height: 44px; }
+  html .tiers ul a, html .sheet__links a { display: inline-flex; align-items: center; min-height: 44px; }
+  html .tl-chip { min-width: 44px; justify-content: center; }
 }
