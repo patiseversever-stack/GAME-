@@ -597,3 +597,34 @@ main > .section, .site-footer { content-visibility: auto; contain-intrinsic-size
   html .tiers ul a, html .sheet__links a { display: inline-flex; align-items: center; min-height: 44px; }
   html .tl-chip { min-width: 44px; justify-content: center; }
 }
+
+/* Teklif sepeti: teslim, termin ve konum */
+.qopt { border: 0; padding: 0; margin: 0; min-width: 0; }
+.qopt legend { padding: 0; margin-bottom: 6px; font-size: var(--fs-xs); font-family: var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--ink-3); }
+.qseg { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 4px; padding: 4px; border-radius: 12px; background: var(--paper-2); border: 1px solid var(--paper-line); }
+.qseg label, .field .qseg label { position: relative; font-family: var(--f-body); font-size: inherit; text-transform: none; letter-spacing: 0; color: inherit; }
+.qseg input { position: absolute; opacity: 0; inset: 0; margin: 0; cursor: pointer; }
+.qseg span { display: grid; place-items: center; min-height: 40px; padding: 0 6px; border-radius: 9px; font-size: 13px; font-weight: 500; color: var(--ink-2); text-align: center; line-height: 1.15; transition: background var(--t-fast), color var(--t-fast), box-shadow var(--t-fast); }
+.qseg input:checked + span { background: #fff; color: var(--ink); box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04), 0 4px 12px -6px rgba(0, 0, 0, 0.25); }
+.qseg input:focus-visible + span { outline: 2px solid var(--tin); outline-offset: 1px; }
+.qloc[hidden] { display: none; }
+.qloc__btn { width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px; min-height: 56px; border-radius: 12px; border: 1px dashed var(--ink-3); background: transparent; text-align: left; color: var(--ink); transition: border-color var(--t-fast), background var(--t-fast); }
+.qloc__btn:hover { border-color: var(--tin-dk); background: rgba(217, 164, 65, 0.08); }
+.qloc__btn svg { width: 22px; height: 22px; flex: none; color: var(--tin-dk); }
+.qloc__btn b { display: block; font-weight: 600; font-size: 14.5px; }
+.qloc__btn small { display: block; font-size: 12.5px; color: var(--ink-3); margin-top: 2px; }
+.qloc__btn.is-busy svg { animation: qpulse 1s ease-in-out infinite; }
+@keyframes qpulse { 50% { transform: translateY(-3px); } }
+.qloc__btn[hidden], .qloc__card[hidden] { display: none; }
+.qloc__card { border-radius: 12px; overflow: hidden; border: 1px solid var(--paper-line); background: #fff; }
+.qloc__map { height: 150px; background: var(--paper-2); }
+.qloc__map iframe { width: 100%; height: 100%; border: 0; display: block; filter: saturate(0.85); }
+.qloc__info { padding: 10px 14px 12px; display: grid; gap: 3px; }
+.qloc__info b { font-size: 14.5px; }
+.qloc__info small { font-size: 12.5px; color: var(--ink-3); }
+.qloc__actions { display: flex; gap: 16px; margin-top: 6px; }
+.qloc__actions a, .qloc__actions button { font-size: 13px; font-weight: 600; color: var(--tin-dk); text-decoration: underline; text-underline-offset: 3px; min-height: 32px; }
+.qloc__actions button { color: var(--ink-3); }
+.qloc__msg { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; }
+.qloc__msg:empty { display: none; }
+@media (pointer: coarse) { .qloc__actions a, .qloc__actions button { min-height: 44px; display: inline-flex; align-items: center; } .qseg span { min-height: 44px; } }

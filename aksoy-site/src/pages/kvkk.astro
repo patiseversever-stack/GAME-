@@ -136,6 +136,7 @@ const schema = [
           <h2 id="teklif-sepeti">{S['teklif-sepeti']}</h2>
           <p>Katalogdan Teklif Sepeti’ne eklediğiniz ürün kodları, adetler ve marka tercihleri yalnızca kendi tarayıcınızın yerel depolama alanında (<code>localStorage</code>, anahtar adı <code>aksoy-teklif-v1</code>) tutulur. Bu bilgiler sunucularımıza gönderilmez, tarafımızdan görülemez ve başka bir cihazla eşleştirilmez.</p>
           <p>Sepet panelindeki “Firma / ad” ve “Not” alanları hiçbir yere kaydedilmez. Bu alanlar yalnızca “WhatsApp’tan teklif iste” düğmesine bastığınızda oluşturulan mesaj metnine eklenir. Mesaj, WhatsApp’ta size ait bir taslak olarak açılır; göndermeden önce düzenleyebilir ya da vazgeçebilirsiniz. Mesajı gönderdiğiniz anda bir sonraki başlıkta anlatılan WhatsApp yazışması başlar.</p>
+          <p><strong>Konum:</strong> Sepetteki “Konumumu ekle” düğmesine basarsanız tarayıcınız sizden izin ister. İzin verirseniz konumunuz yalnızca o sekmede tutulur ve gönderilecek WhatsApp mesajına Google Haritalar bağlantısı olarak eklenir; biz konumunuzu kaydetmeyiz. Konumun ilçe adını bulmak ve haritada göstermek için koordinatlar OpenStreetMap hizmetine (nominatim.openstreetmap.org, openstreetmap.org) gönderilir. Düğmeye basmazsanız konumunuz hiçbir şekilde alınmaz; “Kaldır” ile istediğiniz an silebilirsiniz.</p>
           <p>Sepeti dilediğiniz an boşaltabilir ya da tarayıcınızın site verilerini silerek tamamen kaldırabilirsiniz. Ayrıntılar için <a href="/cerez-politikasi">Çerez Politikası</a>’na bakabilirsiniz.</p>
         </section>
 
@@ -184,6 +185,7 @@ const schema = [
           <p>Kişisel verileriniz satılmaz, kiralanmaz ve reklam amacıyla kimseyle paylaşılmaz. Yalnızca aşağıdaki alıcılarla ve amacın gerektirdiği ölçüde paylaşılabilir:</p>
           <ul>
             <li><strong>WhatsApp hizmet sağlayıcısı:</strong> yazışmayı WhatsApp üzerinden başlattığınızda, mesajlaşmanın teknik olarak gerçekleşmesi için;</li>
+            <li><strong>OpenStreetMap:</strong> yalnızca sepette konumunuzu eklemeyi seçerseniz, ilçe adının bulunması ve haritanın gösterilmesi için;</li>
             <li><strong>Barındırma ve içerik dağıtım hizmeti sağlayıcısı:</strong> sitenin size ulaştırılması ve güvenliği için;</li>
             <li><strong>Mali müşavir ve muhasebe hizmeti:</strong> teklifin satışa dönüşmesi halinde fatura ve kayıt yükümlülükleri için;</li>
             <li><strong>Kargo veya taşıma şirketi:</strong> teslimatın bu yolla yapılması halinde, teslimat için gerekli ad, adres ve telefon bilgisiyle sınırlı olarak;</li>

@@ -67,26 +67,37 @@ export function closeQuote() {
   lastFocus?.focus?.();
 }
 
+/* ---------- Teslim, termin ve konum ---------- */
+const OSTIM = { lat: 39.9805, lng: 32.7495 }; // Ostim / İvedik OSB
+interface Loc { lat: number; lng: number; acc: number; place: string; km: number; inArea: boolean | null }
+let loc: Loc | null = null;
+try { const raw = sessionStorage.getItem('aksoy-konum'); if (raw) loc = JSON.parse(raw); } catch { /* yok say */ }
+const radio = (name: string) => document.querySelector<HTMLInputElement>(`input[name="${name}"]:checked`)?.value ?? '';
+const mapsLink = (l: { lat: number; lng: number }) => `https://maps.google.com/?q=${l.lat.toFixed(6)},${l.lng.toFixed(6)}`;
+function distanceKm(a: { lat: number; lng: number }, b: { lat: number; lng: number }) {
+  const R = 6371, rad = Math.PI / 180;
+  const dLat = (b.lat - a.lat) * rad, dLng = (b.lng - a.lng) * rad;
+  const h = Math.sin(dLat / 2) ** 2 + Math.cos(a.lat * rad) * Math.cos(b.lat * rad) * Math.sin(dLng / 2) ** 2;
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
 function message() {
   const lines = items.map((it, i) => {
-    const brand = it.brand && it.brand !== ANY_BRAND ? ` — Marka: ${it.brand}` : '';
-    return `${i + 1}) ${it.code} — ${it.name}${brand} — ${it.qty} adet`;
+    const brand = it.brand && it.brand !== ANY_BRAND ? `, marka: ${it.brand}` : '';
+    return `${i + 1}) ${it.code} (${it.name}) - ${it.qty} adet${brand}`;
   });
   const f = firma?.value.trim();
   const n = note?.value.trim();
-  return [
-    `Merhaba ${site.name},`,
-    'Aşağıdaki ürünler için teklif rica ediyorum:',
-    '',
-    ...lines,
-    '',
+  const teslim = radio('q-teslim');
+  const termin = radio('q-termin');
+  const meta = [
     f ? `Firma: ${f}` : '',
+    teslim ? `Teslim: ${teslim}` : '',
+    termin ? `Ne zaman lazım: ${termin}` : '',
+    loc && teslim !== "Ostim'den gelip alırım" ? `Konum: ${loc.place ? `${loc.place} ` : ''}${mapsLink(loc)}` : '',
     n ? `Not: ${n}` : '',
-    '(Web sitesi teklif sepeti)',
-  ]
-    .filter((l, i, arr) => !(l === '' && arr[i - 1] === ''))
-    .join('\n')
-    .trim();
+  ].filter(Boolean);
+  return ['Merhaba, aşağıdaki ürünler için fiyat ve termin öğrenmek istiyorum.', '', ...lines, ...(meta.length ? ['', ...meta] : [])].join('\n');
 }
 
 function updateSend() {
@@ -186,12 +197,103 @@ document.addEventListener('change', (e) => {
 });
 firma?.addEventListener('input', updateSend);
 note?.addEventListener('input', updateSend);
+document.querySelectorAll('input[name="q-teslim"], input[name="q-termin"]').forEach((r) => r.addEventListener('change', () => { updateSend(); renderLoc(); }));
+
+/* Konum: tarayıcı izin verirse alınır, ilçe adı OpenStreetMap'ten bulunur, haritada gösterilir.
+   Hiçbir yere kaydedilmez; yalnızca kullanıcının göndereceği WhatsApp mesajına eklenir. */
+const locWrap = $<HTMLElement>('[data-q-loc]');
+const locBtn = $<HTMLButtonElement>('[data-q-loc-btn]');
+const locCard = $<HTMLElement>('[data-q-loc-card]');
+const locMap = $<HTMLElement>('[data-q-loc-map]');
+const locPlace = $<HTMLElement>('[data-q-loc-place]');
+const locMeta = $<HTMLElement>('[data-q-loc-meta]');
+const locOpen = $<HTMLAnchorElement>('[data-q-loc-open]');
+const locMsg = $<HTMLElement>('[data-q-loc-msg]');
+const AREA = site.serviceAreas.map((c) => c.toLocaleLowerCase('tr'));
+function renderLoc() {
+  const pickup = radio('q-teslim') === "Ostim'den gelip alırım";
+  locWrap?.toggleAttribute('hidden', pickup);
+  if (!locCard || !locBtn) return;
+  locCard.hidden = !loc;
+  locBtn.hidden = !!loc;
+  if (!loc) { if (locMap) locMap.innerHTML = ''; return; }
+  const d = 0.008;
+  const src = `https://www.openstreetmap.org/export/embed.html?bbox=${loc.lng - d * 1.6},${loc.lat - d},${loc.lng + d * 1.6},${loc.lat + d}&layer=mapnik&marker=${loc.lat},${loc.lng}`;
+  if (locMap && locMap.dataset.src !== src) {
+    locMap.dataset.src = src;
+    locMap.innerHTML = `<iframe title="Konumunuz haritada" src="${src}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>`;
+  }
+  if (locPlace) locPlace.textContent = loc.place || 'Konumunuz eklendi';
+  const km = Math.round(loc.km);
+  const area = loc.inArea === null ? '' : loc.inArea ? ' · Sahada teslim bölgemizde' : ' · Bölge dışı, kargoyla göndeririz';
+  if (locMeta) locMeta.textContent = `Ostim'e yaklaşık ${km < 1 ? '1' : km.toLocaleString('tr-TR')} km${area}`;
+  if (locOpen) locOpen.href = mapsLink(loc);
+}
+async function placeName(lat: number, lng: number) {
+  try {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 6000);
+    const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=14&accept-language=tr`, { signal: ctrl.signal });
+    clearTimeout(t);
+    const a = (await r.json()).address ?? {};
+    const ilce = a.town || a.county || a.city_district || a.district || a.suburb || '';
+    const il = a.province || a.city || a.state || '';
+    return { place: [a.suburb && a.suburb !== ilce ? a.suburb : '', ilce, il].filter(Boolean).join(', '), il: String(il) };
+  } catch {
+    return { place: '', il: '' };
+  }
+}
+locBtn?.addEventListener('click', () => {
+  if (!locMsg) return;
+  if (!('geolocation' in navigator)) { locMsg.textContent = 'Tarayıcınız konum vermiyor. Adresi not kısmına yazabilirsiniz.'; return; }
+  locBtn.disabled = true;
+  locBtn.classList.add('is-busy');
+  locMsg.textContent = 'Konumunuz alınıyor…';
+  navigator.geolocation.getCurrentPosition(
+    async (pos) => {
+      const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+      const km = distanceKm(OSTIM, { lat, lng });
+      loc = { lat, lng, acc: accuracy, place: '', km, inArea: null };
+      renderLoc();
+      updateSend();
+      locMsg.textContent = 'Konum eklendi, yer adı aranıyor…';
+      const p = await placeName(lat, lng);
+      if (loc) {
+        loc.place = p.place;
+        loc.inArea = p.il ? AREA.some((c) => p.il.toLocaleLowerCase('tr').includes(c)) : km < 60 ? true : null;
+        try { sessionStorage.setItem('aksoy-konum', JSON.stringify(loc)); } catch { /* yok say */ }
+      }
+      locMsg.textContent = accuracy > 500 ? `Konum yaklaşık (±${Math.round(accuracy)} m). Gerekirse adresi not kısmına ekleyin.` : '';
+      renderLoc();
+      updateSend();
+      locBtn.disabled = false;
+      locBtn.classList.remove('is-busy');
+    },
+    (err) => {
+      locMsg.textContent = err.code === err.PERMISSION_DENIED
+        ? 'Konum izni verilmedi. Sorun değil, adresi not kısmına yazabilirsiniz.'
+        : 'Konum alınamadı. Adresi not kısmına yazabilirsiniz.';
+      locBtn.disabled = false;
+      locBtn.classList.remove('is-busy');
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 300000 },
+  );
+});
+$<HTMLButtonElement>('[data-q-loc-clear]')?.addEventListener('click', () => {
+  loc = null;
+  try { sessionStorage.removeItem('aksoy-konum'); } catch { /* yok say */ }
+  if (locMsg) locMsg.textContent = '';
+  renderLoc();
+  updateSend();
+  locBtn?.focus();
+});
+renderLoc();
 document.querySelector('[data-quote-copy]')?.addEventListener('click', async () => {
   try {
     await navigator.clipboard.writeText(message());
     (window as any).__toast?.('Liste panoya kopyalandı');
   } catch {
-    (window as any).__toast?.('Kopyalanamadı — metni elle seçin');
+    (window as any).__toast?.('Kopyalanamadı, metni elle seçin');
   }
 });
 addEventListener('keydown', (e) => { if (e.key === 'Escape' && drawer?.classList.contains('is-open')) closeQuote(); });

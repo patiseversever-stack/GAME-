@@ -25,6 +25,8 @@ for (const city of site.serviceAreas) {
 
 // Harita: gömülü harita yok (çerez ve dış istek olmasın diye); yalnızca Google Haritalar araması açılır.
 const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.address)}`;
+// Yol tarifi: başlangıç noktası boş bırakılır, Google Haritalar telefonun konumunu kullanır
+const routeUrl = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(site.address)}`;
 
 // Künye: boş alanlar hiç gösterilmez.
 const kunye = [
@@ -117,7 +119,8 @@ const schema = [
           <p class="sheet__value">{site.district}</p>
           <p>{site.address}. Saha satışı yaptığımız için uğramadan önce WhatsApp’tan haber vermenizi rica ederiz.</p>
           <div class="sheet__links">
-            <a class="btn btn--ghost btn--sm" href={mapsUrl} target="_blank" rel="noopener"><Icon name="pin" /> Google Haritalar’da aç <span class="sr-only">(yeni sekmede açılır)</span></a>
+            <a class="btn btn--sm" href={routeUrl} target="_blank" rel="noopener"><Icon name="pin" /> Yol tarifi al <span class="sr-only">(Google Haritalar, yeni sekmede açılır)</span></a>
+            <a class="btn btn--ghost btn--sm" href={mapsUrl} target="_blank" rel="noopener">Haritada göster <span class="sr-only">(yeni sekmede açılır)</span></a>
           </div>
         </div>
 
