@@ -62,7 +62,6 @@ const schema = [
       <div class="article-hero__grid">
         <div>
           <div class="article-hero__top">
-            {post.draft && <span class="draft-badge"><i></i>Taslak · uzman kontrolü bekliyor</span>}
             <div class="post-card__tags">{post.tags.map((t) => <span class="tag">{t}</span>)}</div>
           </div>
           <h1>{post.title}</h1>
@@ -75,8 +74,7 @@ const schema = [
         </div>
         <div class="art-card">
           <PostArt art={post.art} title={`${post.title} — teknik çizim`} />
-          <span class="art-card__tl">REF B-{String(posts.indexOf(post) + 1).padStart(2, '0')}</span>
-          <span class="art-card__tr">Ölçek 1:1</span>
+          <span class="art-card__tl">{post.tags[0]}</span>
         </div>
       </div>
     </div>

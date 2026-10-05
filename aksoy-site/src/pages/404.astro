@@ -13,7 +13,7 @@ const links = [
   { href: '/iletisim', label: 'İletişim' },
 ];
 
-// Ölçü kontrol paftası: nominal delik parçanın üzerinde, ölçülen delik paftanın dışında.
+// Süs çizimi: parçanın üzerindeki delik ve olması gereken yerin dışında kalan ölçüm (sayfa yok).
 const grid = Array.from({ length: 25 }, (_, i) => `<line x1="${i * 20}" y1="0" x2="${i * 20}" y2="300"/>`).join('') +
   Array.from({ length: 16 }, (_, i) => `<line x1="0" y1="${i * 20}" x2="480" y2="${i * 20}"/>`).join('');
 ---
@@ -22,10 +22,10 @@ const grid = Array.from({ length: 25 }, (_, i) => `<line x1="${i * 20}" y1="0" x
     <div class="wrap">
       <div class="nf__grid">
         <div>
-          <span class="eyebrow eyebrow--tin">Hata 404 · Ölçü kontrol raporu</span>
+          <span class="eyebrow eyebrow--tin">Hata 404</span>
           <p class="nf__code" aria-hidden="true">404</p>
-          <h1 id="nf-title">Bu ölçü toleransın dışında.</h1>
-          <p class="nf__lead">Aradığınız sayfa taşınmış, kaldırılmış ya da adres yanlış yazılmış olabilir. Ürün kodunu arayın, kataloğa dönün ya da doğrudan bize sorun.</p>
+          <h1 id="nf-title">Bu sayfa bulunamadı.</h1>
+          <p class="nf__lead">Adres yanlış yazılmış ya da sayfa taşınmış olabilir. Ürünü koduyla arayın, kataloğa dönün ya da WhatsApp’tan sorun; aradığınızı birlikte bulalım.</p>
           <div class="nf__actions">
             <a class="btn btn--tin" href="/urunler" data-magnetic><Icon name="grid" /> Kataloğa dön</a>
             <button class="btn btn--ghost" type="button" data-search-open><Icon name="search" /> Kodla ara</button>
@@ -33,7 +33,7 @@ const grid = Array.from({ length: 25 }, (_, i) => `<line x1="${i * 20}" y1="0" x
           </div>
         </div>
 
-        <figure class="nf__sheet" aria-label="Teknik çizim: nominal delik parçanın üzerinde, ölçülen delik paftanın dışında">
+        <figure class="nf__sheet" aria-hidden="true">
           <svg viewBox="0 0 480 300" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
             <g stroke="#ffffff" stroke-opacity=".035" stroke-width=".6" set:html={grid} />
             <!-- Parça -->
@@ -70,32 +70,14 @@ const grid = Array.from({ length: 25 }, (_, i) => `<line x1="${i * 20}" y1="0" x
               <text x="92" y="269">Ø 0,02</text>
               <text x="196" y="269">A</text>
             </g>
-            <text x="470" y="290" text-anchor="end" font-family="IBM Plex Mono, monospace" font-size="9" fill="#59616b" letter-spacing="1">PAFTA 404 · ÖLÇEK 1:1</text>
           </svg>
-          <p class="nf__stamp" aria-hidden="true">Tolerans dışı<small>Red · 404</small></p>
-          <dl class="nf__report">
-            <div><dt>Parça</dt><dd data-nf-path>Bu sayfa</dd></div>
-            <div><dt>Nominal</dt><dd>Mevcut adres</dd></div>
-            <div><dt>Ölçülen</dt><dd class="is-bad">404</dd></div>
-            <div><dt>Sonuç</dt><dd class="is-bad">Red</dd></div>
-          </dl>
         </figure>
       </div>
 
       <nav class="nf__links" aria-label="Sık kullanılan sayfalar">
-        {links.map((l, i) => <a href={l.href}>{l.label}<span>{String(i).padStart(2, '0')}</span></a>)}
+        {links.map((l) => <a href={l.href}>{l.label}<Icon name="arrow" /></a>)}
       </nav>
     </div>
   </section>
 
-  <script>
-    // Raporun "Parça" satırına istenen adresi yaz (yalnızca görüntü, hiçbir yere gönderilmez).
-    const el = document.querySelector<HTMLElement>('[data-nf-path]');
-    if (el && location.pathname && location.pathname !== '/404') {
-      let p = location.pathname;
-      try { p = decodeURIComponent(p); } catch { /* bozuk adres: olduğu gibi göster */ }
-      el.textContent = p.length > 28 ? `${p.slice(0, 27)}…` : p;
-      el.title = p;
-    }
-  </script>
 </Base>

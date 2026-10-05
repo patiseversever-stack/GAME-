@@ -1,7 +1,13 @@
-// Kodla üretilmiş uçlu U-matkap (geçici model). Ölçüler mm; dış grup 0.01 ile ölçeklenir (1 birim = 100 mm).
-// Gövde, kullanıcının getireceği GLB ile değiştirilebilir; uçlar, torx vidalar ve soğutma noktaları kodda kalır.
+// Kodla üretilmiş uçlu U-matkap (Ø25 · 4×D, WCMX trigon uçlu). Ölçüler mm; dış grup 0.01 ile
+// ölçeklenir (1 birim = 100 mm). Piyasadaki SDUM tipi U-matkaplar örnek alındı:
+// - Düz sap (arka yüzde Weldon düzlüğü, ön yüzde lazer markalama), küçük omuz
+// - İki düz oluk; her oluğun bir yüzü düz (uç bu yüze oturur), arkası kavisli; sapa yakın
+//   yerde oluk kıvrılarak biter
+// - Merkez ucu bir olukta eksene yakın, çevre ucu karşı olukta dış çapta; kesme kenarları
+//   ortada üst üste biner ve gövdenin geriye eğik alın yüzünden öne taşar
+// - Alın yüzünde iki soğutma deliği, sap arkasında soğutma girişi
 import * as THREE from 'three';
-import { buildInsert as buildChipbreakerInsert } from '../three/tools3d';
+import { buildInsert as buildChipbreakerInsert, radialSurface } from '../three/tools3d';
 
 export interface InsertPart {
   /** Uç + vidanın bağlı olduğu yuva (seat) noktası */
@@ -30,23 +36,25 @@ export interface Drill {
   dims: { shankEnd: number; tip: number; bodyStart: number; R: number; shankR: number };
 }
 
-const SHANK_R = 16;
-const R = 12.5; // Ø25
+const SHANK_R = 12.5; // Ø25 sap
+const R = 12.5; // Ø25 delik
 const A_END = -120;
-const A_WELDON_0 = -112;
-const A_WELDON_1 = -74;
-const A_BODY0 = -41;
+const A_WELDON_0 = -114;
+const A_WELDON_1 = -80;
+const A_BODY0 = -41; // oluklu gövde başlangıcı (omuz bitişi)
 const A_TIP = 56;
+const WEB = 4.2; // oluğun düz yüzünün eksene uzaklığı (gövde özü yarı kalınlığı)
+const smooth = THREE.MathUtils.smoothstep;
 
 function latheGeo(pts: [number, number][], seg = 96) {
   return new THREE.LatheGeometry(pts.map(([r, a]) => new THREE.Vector2(r, a)), seg);
 }
 
-/** Daireden Weldon düzlüğü kesilmiş kesit */
+/** Daireden Weldon düzlüğü kesilmiş sap kesiti (düzlük y = +WELDON_FLAT) */
+const WELDON_FLAT = 10.6;
 function weldonShape() {
   const s = new THREE.Shape();
-  const yFlat = 13;
-  const t0 = Math.asin(yFlat / SHANK_R); // ~54°
+  const t0 = Math.asin(WELDON_FLAT / SHANK_R);
   const start = Math.PI - t0;
   const end = 2 * Math.PI + t0;
   const n = 96;
@@ -59,45 +67,51 @@ function weldonShape() {
   return s;
 }
 
-/** İki düz talaş oluklu gövde kesiti */
-function fluteShape() {
-  const s = new THREE.Shape();
-  const n = 220;
-  const D = 7.6; // oluk derinliği → ağız kalınlığı ~9.8 mm
-  const w = (58 * Math.PI) / 180;
-  const centers = [Math.PI / 2, (3 * Math.PI) / 2];
-  for (let i = 0; i <= n; i++) {
-    const t = (i / n) * Math.PI * 2;
-    let r = R;
-    for (const c of centers) {
-      let d = Math.abs(t - c);
-      d = Math.min(d, Math.PI * 2 - d);
-      if (d < w) {
-        const u = d / w;
-        // U biçimli oluk: tabanda yassı, ağızda keskin
-        r = Math.min(r, R - D * Math.pow(Math.cos((Math.PI / 2) * Math.pow(u, 3.2)), 0.55));
-      }
-    }
-    const x = Math.cos(t) * r, y = Math.sin(t) * r;
-    i === 0 ? s.moveTo(x, y) : s.lineTo(x, y);
-  }
-  s.closePath();
-  return s;
+/**
+ * Gövde kesiti (eksenden yarıçap, açıya göre). Gerçek U-matkap gibi yuvarlak gövde ve iki
+ * kavisli (dairesel) oluk; uca yakın bölümde uçların oturduğu düz cepler.
+ * Açı θ: x = cos θ, z = sin θ. Oluk A (+Z, merkez ucu) ve oluk B (−Z, çevre ucu).
+ */
+const GROOVE_D = 13.2, GROOVE_R = 8.6; // oluk dairesinin eksene uzaklığı ve yarıçapı → öz kalınlığı ≈ 9,2 mm
+const GROOVES = [(80 * Math.PI) / 180, (260 * Math.PI) / 180];
+/** Işının bir daireye ilk giriş uzaklığı (yoksa ∞) */
+function rayCircle(c: number, s: number, cx: number, cz: number, rad: number) {
+  const b = c * cx + s * cz;
+  const disc = b * b - (cx * cx + cz * cz - rad * rad);
+  if (disc < 0) return Infinity;
+  const t = b - Math.sqrt(disc);
+  return t > 0 ? t : Infinity;
 }
-
-function roundedSquare(size: number, rad: number) {
-  const h = size / 2;
-  const s = new THREE.Shape();
-  s.moveTo(-h + rad, -h);
-  s.lineTo(h - rad, -h);
-  s.quadraticCurveTo(h, -h, h, -h + rad);
-  s.lineTo(h, h - rad);
-  s.quadraticCurveTo(h, h, h - rad, h);
-  s.lineTo(-h + rad, h);
-  s.quadraticCurveTo(-h, h, -h, h - rad);
-  s.lineTo(-h, -h + rad);
-  s.quadraticCurveTo(-h, -h, -h + rad, -h);
-  return s;
+/** Uç cebi: düz taban z = ±WEB, x aralığıyla sınırlı (merkez ucu eksene yakın, çevre ucu dışta) */
+const POCKETS = [
+  { sign: 1, x0: -0.5, x1: 9.4 },
+  { sign: -1, x0: -R - 2, x1: -3.6 },
+];
+function sectionR(theta: number, twist: number, pocket: number) {
+  const c = Math.cos(theta), s = Math.sin(theta);
+  let r = R - 0.1; // gövde sırtı: dış çaptan biraz küçük (boşluk)
+  for (const g of GROOVES) {
+    const a = g + twist;
+    r = Math.min(r, rayCircle(c, s, Math.cos(a) * GROOVE_D, Math.sin(a) * GROOVE_D, GROOVE_R));
+  }
+  if (pocket > 0.001) {
+    // Cep tabanı uca doğru yükselerek (kavisli çıkış) WEB düzlemine iner
+    const web = WEB + (R + 2 - WEB) * (1 - pocket);
+    for (const p of POCKETS) {
+      const ss = s * p.sign;
+      if (ss <= 0) continue;
+      const t = web / ss, x = t * c;
+      if (x >= p.x0 && x <= p.x1) r = Math.min(r, t);
+    }
+  }
+  return r;
+}
+/** Uç burnu: dış kenarda yuvarlatma (oval alın) */
+const NOSE_F = 2.6;
+function noseR(d: number) {
+  if (d >= NOSE_F) return Infinity;
+  const k = NOSE_F - d;
+  return R - NOSE_F + Math.sqrt(Math.max(0, NOSE_F * NOSE_F - k * k));
 }
 
 function torxPath(rOuter: number, rInner: number, lobes = 6) {
@@ -114,48 +128,93 @@ function torxPath(rOuter: number, rInner: number, lobes = 6) {
 }
 
 function makeMaterials() {
-  // Gövde: koyu nikel kaplama; oluk içleri köşe rengiyle daha koyu, taşlanmış pahlar parlak
-  const body = new THREE.MeshPhysicalMaterial({ color: 0x6a7078, metalness: 1, roughness: 0.32, envMapIntensity: 1.1, vertexColors: true, clearcoat: 0.25, clearcoatRoughness: 0.35 });
-  const shank = new THREE.MeshPhysicalMaterial({ color: 0x9da3ab, metalness: 1, roughness: 0.25, envMapIntensity: 1.0 });
-  const flat = new THREE.MeshPhysicalMaterial({ color: 0x7a8088, metalness: 1, roughness: 0.5 });
+  // Gövde: koyu antrasit (siyah oksit/nikel), oluk içleri köşe rengiyle daha koyu
+  const body = new THREE.MeshPhysicalMaterial({ color: 0x5c6168, metalness: 0.95, roughness: 0.4, envMapIntensity: 1.15, vertexColors: true, clearcoat: 0.3, clearcoatRoughness: 0.4 });
+  const shank = new THREE.MeshPhysicalMaterial({ color: 0xb8bdc4, metalness: 1, roughness: 0.22, envMapIntensity: 1.05 });
+  const flat = new THREE.MeshPhysicalMaterial({ color: 0x8a9098, metalness: 1, roughness: 0.42 });
   const flute = new THREE.MeshPhysicalMaterial({ color: 0x4f545b, metalness: 1, roughness: 0.3 });
+  const bodyPlain = new THREE.MeshPhysicalMaterial({ color: 0x5c6168, metalness: 0.95, roughness: 0.38, envMapIntensity: 1.15, clearcoat: 0.3, clearcoatRoughness: 0.4 });
   const insert = new THREE.MeshPhysicalMaterial({ color: 0xd8a64a, metalness: 1, roughness: 0.27, clearcoat: 0.25, clearcoatRoughness: 0.4, envMapIntensity: 1.25 });
   const screw = new THREE.MeshPhysicalMaterial({ color: 0x3c4046, metalness: 1, roughness: 0.36 });
   const hole = new THREE.MeshBasicMaterial({ color: 0x050506 });
-  return { body, shank, flat, flute, insert, screw, hole };
+  return { body, bodyPlain, shank, flat, flute, insert, screw, hole };
 }
 
+/**
+ * WCMX trigon uç köşeleri: altı eşit kenar, köşeler sırayla 80° ve 160°.
+ * Yerel eksen: üst kenar (iki 80° köşe arası) kesme kenarıdır, +X çevreye doğru.
+ */
+function trigonVerts(ic: number) {
+  // Dış açıları 20°/100° olan eşit kenarlı altıgen; ardından iç teğet daireye göre ölçekle
+  const pts: THREE.Vector2[] = [];
+  let x = 0, y = 0, a = 0;
+  for (let i = 0; i < 6; i++) {
+    pts.push(new THREE.Vector2(x, y));
+    x += Math.cos(a); y += Math.sin(a);
+    a += ((i % 2 === 0 ? 20 : 100) * Math.PI) / 180;
+  }
+  const c = pts.reduce((s, p) => s.add(p), new THREE.Vector2()).multiplyScalar(1 / 6);
+  pts.forEach((p) => p.sub(c));
+  let rin = Infinity;
+  for (let i = 0; i < 6; i++) {
+    const p = pts[i], q = pts[(i + 1) % 6];
+    rin = Math.min(rin, Math.abs((q.x - p.x) * p.y - (q.y - p.y) * p.x) / p.distanceTo(q));
+  }
+  pts.forEach((p) => p.multiplyScalar(ic / 2 / rin));
+  // 80° köşelerden ikisini üste, kesme kenarı yatay olacak şekilde döndür
+  const sharp: number[] = [];
+  for (let i = 0; i < 6; i++) {
+    const p = pts[(i + 5) % 6], v = pts[i], q = pts[(i + 1) % 6];
+    const ang = Math.acos(p.clone().sub(v).normalize().dot(q.clone().sub(v).normalize()));
+    if (ang < Math.PI / 2) sharp.push(i);
+  }
+  const mid = pts[sharp[0]].clone().add(pts[sharp[1]]).multiplyScalar(0.5);
+  const rot = Math.PI / 2 - Math.atan2(mid.y, mid.x);
+  pts.forEach((p) => p.rotateAround(new THREE.Vector2(), rot));
+  let area = 0;
+  for (let i = 0; i < 6; i++) { const p = pts[i], q = pts[(i + 1) % 6]; area += p.x * q.y - q.x * p.y; }
+  if (area < 0) pts.reverse();
+  return pts;
+}
+
+const IC = 7.94, TH = 3.18;
+const TRIGON = trigonVerts(IC);
+const TRIGON_TOP = Math.max(...TRIGON.map((p) => p.y));
+const TRIGON_W = Math.max(...TRIGON.map((p) => p.x)) - Math.min(...TRIGON.map((p) => p.x));
+
 function buildInsert(mat: THREE.MeshPhysicalMaterial, holeMat: THREE.MeshBasicMaterial, screwMat: THREE.MeshPhysicalMaterial) {
-  const size = 8, th = 3.18;
-  const h = size / 2;
   const g = new THREE.Group();
-  // Kare SPMG benzeri uç: kesme kenarı bandı, talaş kırıcı oluğu, plato ve havşalı delik
-  const body = buildChipbreakerInsert([new THREE.Vector2(h, -h), new THREE.Vector2(h, h), new THREE.Vector2(-h, h), new THREE.Vector2(-h, -h)],
-    { rad: 0.8, th, hole: 1.75, land: 0.45, breaker: 1.55 }, { screw: screwMat, hole: holeMat } as any, mat);
-  body.position.z = -th / 2;
+  // Talaş kırıcılı pozitif trigon uç (kesme kenarı bandı, oluk, plato, havşalı delik)
+  const body = buildChipbreakerInsert(TRIGON, { rad: 0.8, th: TH, hole: 1.45, land: 0.4, breaker: 1.35 }, { screw: screwMat, hole: holeMat } as any, mat);
+  body.position.z = -TH / 2;
   g.add(body);
-  // Körelmiş kenar: üst yüzde tek bir kesme kenarı boyunca turuncu ısı izi
+  // Körelmiş kenar: üst kesme kenarı boyunca turuncu ısı izi
   const wear = new THREE.Mesh(
-    new THREE.BoxGeometry(size - 1.6, 0.55, 0.2),
+    new THREE.BoxGeometry(TRIGON_W * 0.62, 0.45, 0.2),
     new THREE.MeshBasicMaterial({ color: 0xff6a12, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }),
   );
-  wear.position.set(0, size / 2 - 0.35, th / 2 + 0.05);
+  wear.position.set(0, TRIGON_TOP - 0.35, TH / 2 + 0.05);
   g.add(wear);
   g.userData.wear = wear;
   return g;
 }
 
-/** Markalama: yaka üzerine lazerle yazılmış ölçü (koyu, yarı mat) */
-function markingTexture(text: string) {
+/** Lazer markalama dokusu: koyu, yarı mat yazı; eksen boyunca akar */
+function markingTexture(lines: string[]) {
   const c = document.createElement('canvas');
-  c.width = 1024; c.height = 96;
+  c.width = 160;
+  c.height = 1024;
   const g = c.getContext('2d')!;
   g.clearRect(0, 0, c.width, c.height);
-  g.font = '600 54px "IBM Plex Mono", ui-monospace, monospace';
-  g.textAlign = 'center';
+  g.fillStyle = 'rgba(16,17,19,0.86)';
   g.textBaseline = 'middle';
-  g.fillStyle = 'rgba(14,15,17,0.88)';
-  g.fillText(text, c.width / 2, c.height / 2 + 2);
+  g.textAlign = 'center';
+  g.translate(c.width / 2, c.height / 2);
+  g.rotate(-Math.PI / 2);
+  g.font = '700 62px "Space Grotesk", "IBM Plex Mono", sans-serif';
+  g.fillText(lines[0], 0, -34);
+  g.font = '500 40px "IBM Plex Mono", ui-monospace, monospace';
+  if (lines[1]) g.fillText(lines[1], 0, 30);
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = 4;
@@ -165,18 +224,18 @@ function markingTexture(text: string) {
 function buildScrew(mat: THREE.Material, holeMat: THREE.Material) {
   const g = new THREE.Group();
   const head = new THREE.Shape();
-  head.absarc(0, 0, 2.3, 0, Math.PI * 2, false);
-  head.holes.push(torxPath(1.15, 0.82));
-  const hg = new THREE.ExtrudeGeometry(head, { depth: 1.1, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.2, bevelSegments: 2, curveSegments: 32 });
+  head.absarc(0, 0, 1.75, 0, Math.PI * 2, false);
+  head.holes.push(torxPath(0.9, 0.64));
+  const hg = new THREE.ExtrudeGeometry(head, { depth: 0.8, bevelEnabled: true, bevelThickness: 0.16, bevelSize: 0.16, bevelSegments: 2, curveSegments: 32 });
   const hm = new THREE.Mesh(hg, mat);
-  hm.position.z = -0.6;
+  hm.position.z = -0.5;
   g.add(hm);
-  const recess = new THREE.Mesh(new THREE.CircleGeometry(1.0, 24), holeMat);
-  recess.position.z = -0.35;
+  const recess = new THREE.Mesh(new THREE.CircleGeometry(0.8, 24), holeMat);
+  recess.position.z = -0.28;
   g.add(recess);
-  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(1.25, 1.25, 7, 20), mat);
+  const shaft = new THREE.Mesh(new THREE.CylinderGeometry(0.95, 0.95, 5.5, 20), mat);
   shaft.rotation.x = Math.PI / 2;
-  shaft.position.z = -4.1;
+  shaft.position.z = -3.3;
   g.add(shaft);
   return g;
 }
@@ -195,91 +254,102 @@ export function buildDrill(): Drill {
   body.name = 'body';
   scaler.add(body);
 
-  // Sap ucu
-  body.add(new THREE.Mesh(latheGeo([[0, A_END], [14.6, A_END], [16, A_END + 1.4], [16, A_WELDON_0]]), materials.shank));
-  // Weldon düzlüklü bölüm
+  // Sap ucu (pahlı)
+  body.add(new THREE.Mesh(latheGeo([[0, A_END], [11.6, A_END], [SHANK_R, A_END + 0.9], [SHANK_R, A_WELDON_0]]), materials.shank));
+  // Weldon düzlüklü bölüm (düzlük arka yüzde: -Z)
   const wg = new THREE.ExtrudeGeometry(weldonShape(), { depth: A_WELDON_1 - A_WELDON_0, bevelEnabled: false, curveSegments: 96 });
   wg.rotateX(-Math.PI / 2);
   wg.translate(0, A_WELDON_0, 0);
-  // Düzlük yüzeyini ayrı malzemeyle boya: grup 0 = kapaklar, 1 = yan yüzler; düz yüz yan yüzlerin bir parçası.
   body.add(new THREE.Mesh(wg, [materials.shank, materials.shank]));
-  const flatPlate = new THREE.Mesh(new THREE.PlaneGeometry(2 * Math.sqrt(SHANK_R ** 2 - 13 ** 2) - 0.2, A_WELDON_1 - A_WELDON_0 - 0.2), materials.flat);
-  // Kesitte düzlük y=+13; rotateX(-90°) sonrası z = -13 düzlemi, dışa (-Z) bakar.
-  flatPlate.position.set(0, (A_WELDON_0 + A_WELDON_1) / 2, -13.03);
+  const flatW = 2 * Math.sqrt(SHANK_R ** 2 - WELDON_FLAT ** 2) - 0.2;
+  const flatPlate = new THREE.Mesh(new THREE.PlaneGeometry(flatW, A_WELDON_1 - A_WELDON_0 - 0.2), materials.flat);
+  flatPlate.position.set(0, (A_WELDON_0 + A_WELDON_1) / 2, -WELDON_FLAT - 0.03);
   flatPlate.rotation.set(0, Math.PI, 0);
   body.add(flatPlate);
 
-  // Sap devamı, boyun, flanş (yaka) ve gövdeye geçiş
+  // Sap devamı (parlak) ve gövdeyle aynı koyu renkte kısa omuz Ø31
+  body.add(new THREE.Mesh(latheGeo([[SHANK_R, A_WELDON_1], [SHANK_R, -50.6], [0, -50.6]]), materials.shank));
   body.add(
     new THREE.Mesh(
       latheGeo([
-        [16, A_WELDON_1], [16, -63.2], [15.2, -62], [14, -61.6], [14, -59.8], [20.6, -58], [22, -56.6],
-        [22, -45.4], [20.6, -44], [14.2, -43.4], [12.9, -41.5], [12.9, -40.5], [0, -40.5],
+        [0, -50.6], [SHANK_R, -50.6], [13.4, -49.6], [15.2, -48.7], [15.5, -48.1],
+        [15.5, -44.6], [15.0, -44.0], [13.0, -42.2], [12.45, -41.2], [12.45, A_BODY0], [0, A_BODY0],
       ]),
-      materials.shank,
+      materials.bodyPlain,
     ),
   );
 
-  // Oluklu gövde
-  const fg = new THREE.ExtrudeGeometry(fluteShape(), { depth: A_TIP - A_BODY0, bevelEnabled: true, bevelThickness: 0.5, bevelSize: 0.35, bevelSegments: 2, curveSegments: 220 });
-  fg.rotateX(-Math.PI / 2);
-  fg.translate(0, A_BODY0, 0);
-  // Oluk içini koyulaştır: köşe noktası yarıçapına göre köşe rengi (metal tonu çarpanı)
+  // Oluklu gövde: kesit sectionR; sapa yakın bölümde oluk kıvrılarak ve sığlaşarak biter;
+  // uçta dış kenarı yuvarlatılmış (oval) alın yüzü
+  const RUN0 = A_BODY0 + 1.5, RUN1 = A_BODY0 + 26;
+  const P0 = A_TIP - 15, P1 = A_TIP - 11.5; // uç ceplerinin başladığı bölge
+  const ys = [
+    ...Array.from({ length: 130 }, (_, i) => A_BODY0 + ((RUN1 - A_BODY0) * i) / 129),
+    ...Array.from({ length: 6 }, (_, i) => RUN1 + ((P0 - RUN1) * (i + 1)) / 6),
+    ...Array.from({ length: 70 }, (_, i) => P0 + ((P1 - P0) * (i + 1)) / 70),
+    ...Array.from({ length: 4 }, (_, i) => P1 + ((A_TIP - NOSE_F - P1) * (i + 1)) / 4),
+    ...Array.from({ length: 26 }, (_, i) => A_TIP - NOSE_F + (NOSE_F * (i + 1)) / 26),
+  ];
+  const fg = radialSurface(640, ys, (t, y) => {
+    const k = smooth(y, RUN0, RUN1); // 0: oluk yok (omuz), 1: tam oluk
+    const twist = (1 - k) ** 1.6 * 1.25; // oluk çıkışında kıvrılma
+    const rs = sectionR(t, twist, smooth(y, P0, P1));
+    const r = R - (R - rs) * k;
+    return Math.min(r, noseR(A_TIP - y));
+  }, false, true);
+  // Köşe rengi: oluk içleri koyu, dış çap parlak, alın yüzü taşlanmış ton
   {
     const pos = fg.attributes.position;
-    const col = new Float32Array(pos.count * 3);
     const nrm = fg.attributes.normal;
+    const col = new Float32Array(pos.count * 3);
     for (let i = 0; i < pos.count; i++) {
       const r = Math.hypot(pos.getX(i), pos.getZ(i));
-      const k = THREE.MathUtils.smoothstep(r, R - 2.2, R - 0.2);
-      let c = 0.58 + 0.42 * k;
-      // Uç yüzü (kesme tarafı) taşlanmış ama koyu: düz "tıpa" görünmesin
-      if (nrm.getY(i) > 0.9 && pos.getY(i) > A_TIP - 1) c = 0.5;
+      const k = smooth(r, R - 2.6, R - 0.25);
+      let c = 0.62 + 0.38 * k;
+      if (nrm.getY(i) > 0.8 && pos.getY(i) > A_TIP - 0.01) c = 0.5; // alın yüzü: koyu taşlanmış
       col[i * 3] = c; col[i * 3 + 1] = c; col[i * 3 + 2] = c * 1.02;
     }
     fg.setAttribute('color', new THREE.BufferAttribute(col, 3));
   }
   body.add(new THREE.Mesh(fg, materials.body));
 
-  // Yaka üzerinde lazer markalama (ön yüz)
+  // Sap ön yüzünde lazer markalama (eksen boyunca)
   const mark = new THREE.Mesh(
-    new THREE.CylinderGeometry(22.04, 22.04, 7, 96, 1, true, -0.62, 1.24),
-    new THREE.MeshPhysicalMaterial({ map: markingTexture('Ø25 · 4×D · IC 08'), transparent: true, depthWrite: false, metalness: 0.4, roughness: 0.7, polygonOffset: true, polygonOffsetFactor: -2 }),
+    new THREE.CylinderGeometry(SHANK_R + 0.03, SHANK_R + 0.03, 46, 64, 1, true, -0.5, 1.0),
+    new THREE.MeshPhysicalMaterial({ map: markingTexture(['U-MATKAP Ø25 · 4×D', 'WCMX 050308 · İÇTEN SOĞUTMA']), transparent: true, depthWrite: false, metalness: 0.5, roughness: 0.65, polygonOffset: true, polygonOffsetFactor: -2 }),
   );
-  mark.position.y = -51;
+  mark.position.y = -101;
   body.add(mark);
   // Sap arkasında içten soğutma girişi
-  const inlet = new THREE.Mesh(new THREE.CircleGeometry(3.2, 32), materials.hole);
+  const inlet = new THREE.Mesh(new THREE.CircleGeometry(3.0, 32), materials.hole);
   inlet.rotation.x = Math.PI / 2;
   inlet.position.y = A_END - 0.02;
   body.add(inlet);
 
-  // Uç yüzü: soğutma delikleri
+  // Alın yüzünde soğutma delikleri (gövde sırtlarında, uçların yanında)
   const coolant: Drill['coolant'] = [];
   const anchors: Record<string, THREE.Object3D> = {};
-  const holes = [
-    new THREE.Vector3(3.2, A_TIP + 0.52, -2.4),
-    new THREE.Vector3(-3.2, A_TIP + 0.52, 2.4),
-  ];
-  holes.forEach((p, i) => {
-    const h = new THREE.Mesh(new THREE.CircleGeometry(1.25, 24), materials.hole);
+  const holes: THREE.Vector3[] = [];
+  for (const th of [(168 * Math.PI) / 180, (348 * Math.PI) / 180]) {
+    const r = 6.6;
+    const p = new THREE.Vector3(Math.cos(th) * r, A_TIP + 0.02, Math.sin(th) * r);
+    holes.push(p);
+    const h = new THREE.Mesh(new THREE.CircleGeometry(1.05, 28), materials.hole);
     h.position.copy(p);
     h.rotation.x = -Math.PI / 2;
     body.add(h);
-    const ring = new THREE.Mesh(new THREE.RingGeometry(1.25, 1.6, 24), materials.screw);
-    ring.position.copy(p).add(new THREE.Vector3(0, 0.01, 0));
-    ring.rotation.x = -Math.PI / 2;
-    body.add(ring);
-    coolant.push({ pos: p.clone().add(new THREE.Vector3(0, 0.3, 0)), dir: new THREE.Vector3(i ? -0.05 : 0.05, 1, 0).normalize() });
-  });
+    coolant.push({ pos: p.clone().add(new THREE.Vector3(0, 0.3, 0)), dir: new THREE.Vector3(Math.cos(th) * 0.05, 1, Math.sin(th) * 0.05).normalize() });
+  }
 
-  // Uçlar ve torx vidalar (öne bakan olukta: +Z)
+  // Uçlar ve torx vidalar: merkez ucu A oluğunun düz yüzünde (z = +WEB) eksene yakın,
+  // çevre ucu B oluğunun düz yüzünde (z = -WEB) dış çapta. Kesme kenarı (üst kenar) alın
+  // yüzünden ~0,7 mm öne taşar; iki uç ortada üst üste biner.
   const inserts: InsertPart[] = [];
-  // Gerçek U-matkaptaki gibi: merkez ucu bir olukta eksene yakın, çevre ucu karşı olukta dış çapta;
-  // kesme kenarları ortada üst üste biner ve uç yüzünden ~0,6 mm öne taşar.
+  const zSeat = WEB + TH / 2;
+  const ySeat = A_TIP + 0.7 - TRIGON_TOP;
   const seats = [
-    { name: 'cevre', pos: new THREE.Vector3(8.7, A_TIP - 3.4, -5.5), rot: new THREE.Euler(-0.08, Math.PI + 0.05, -0.1) },
-    { name: 'merkez', pos: new THREE.Vector3(1.0, A_TIP - 3.5, 5.5), rot: new THREE.Euler(0.08, -0.04, -0.06) },
+    { name: 'cevre', pos: new THREE.Vector3(-(R + 0.12 - TRIGON_W / 2), ySeat, -zSeat), rot: new THREE.Euler(-0.07, Math.PI, 0.03) },
+    { name: 'merkez', pos: new THREE.Vector3(TRIGON_W / 2 - 0.9, ySeat - 0.15, zSeat), rot: new THREE.Euler(0.07, 0, -0.03) },
   ];
   for (const s of seats) {
     const seat = new THREE.Group();
@@ -290,12 +360,8 @@ export function buildDrill(): Drill {
     const insMesh = buildInsert(materials.insert, materials.hole, materials.screw);
     ins.add(insMesh);
     seat.add(ins);
-    // Uç cebi: uçtan biraz büyük karanlık oyuk, kenarlarda gölge çizgisi olarak görünür
-    const pocket = new THREE.Mesh(new THREE.BoxGeometry(9.0, 8.6, 1.3), materials.hole);
-    pocket.position.set(0, -0.75, -2.0);
-    seat.add(pocket);
     const screw = buildScrew(materials.screw, materials.hole);
-    screw.position.z = 1.9;
+    screw.position.z = 1.7;
     seat.add(screw);
     inserts.push({ seat, insert: ins, screw, wear: insMesh.userData.wear, liftForward: s.name === 'cevre' ? 1 : 0.6 });
     // Etiket noktası ucun kendisine bağlı: uç yerinden çıkınca etiket de onunla gider
@@ -305,7 +371,7 @@ export function buildDrill(): Drill {
     anchors[`insert-${s.name}`] = a;
     const sa = new THREE.Object3D();
     screw.add(sa);
-    sa.position.set(0, 0, 0.6);
+    sa.position.set(0, 0, 0.5);
     anchors[`screw-${s.name}`] = sa;
   }
 
@@ -323,10 +389,10 @@ export function buildDrill(): Drill {
   add('len-a0', R + 1, -44, 0);
   add('len-b0', R + 1, A_TIP, 0);
   add('shank', -SHANK_R, (A_WELDON_0 + A_WELDON_1) / 2, 4);
-  add('collar', -22, -51, 6);
+  add('collar', -15.5, -46, 6);
   add('cool', holes[0].x, holes[0].y + 2, holes[0].z);
   add('tip', 0, A_TIP, 0);
-  add('flute', 0, 10, 8);
+  add('flute', 6, 10, 8);
 
   return {
     root,

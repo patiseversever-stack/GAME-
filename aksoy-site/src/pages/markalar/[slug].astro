@@ -51,7 +51,7 @@ const desc = clip(`${b.name} ürünleri Ankara Ostim / İvedik’ten tedarik edi
       </div>
 
       <aside class="sheet" aria-label={`${b.name} künyesi`}>
-        <div class="sheet__head"><span>Marka künyesi</span><span>M-{pad(idx + 1)}</span></div>
+        <div class="sheet__head"><span>Marka künyesi</span><span>{idx + 1} / {brands.length}</span></div>
         <dl>
           <div><dt>Menşei</dt><dd>{unknownCountry ? 'Bilgi doğrulanıyor' : b.country}</dd></div>
           <div><dt>Segment</dt><dd>{b.segment}</dd></div>

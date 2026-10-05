@@ -268,9 +268,9 @@ export function buildGroovingHolder(m: ToolMats, insertMat = m.tin) {
  * Ekseni +Y olan, yarıçapı r(θ, y) fonksiyonuyla verilen kapalı yüzey.
  * capStart: y0'da düz kapak (frezenin alın yüzü) eklenir.
  */
-function radialSurface(nT: number, ys: number[], r: (t: number, y: number) => number, capStart = false) {
+export function radialSurface(nT: number, ys: number[], r: (t: number, y: number) => number, capStart = false, capEnd = false) {
   const nY = ys.length;
-  const extra = capStart ? nT + 1 : 0; // kapak için ayrı köşeler (keskin kenar)
+  const extra = (capStart ? nT + 1 : 0) + (capEnd ? nT + 1 : 0); // kapaklar için ayrı köşeler (keskin kenar)
   const pos = new Float32Array((nT * nY + extra) * 3);
   const uv = new Float32Array((nT * nY + extra) * 2);
   for (let j = 0; j < nY; j++) {
@@ -296,6 +296,13 @@ function radialSurface(nT: number, ys: number[], r: (t: number, y: number) => nu
     // Alın yüzü hafif içbükey (gerçek frezede merkez geride): düz "tıpa" görünümünü kırar
     pos[ci * 3] = 0; pos[ci * 3 + 1] = ys[0] + 0.22; pos[ci * 3 + 2] = 0;
     for (let i = 0; i < nT; i++) idx.push(ci, base + i, base + ((i + 1) % nT));
+  }
+  if (capEnd) {
+    // Son satırın kopyası + merkez: düz alın yüzü (kenarı kesitle birebir, tırtıksız)
+    const base = nT * nY + (capStart ? nT + 1 : 0), ci = base + nT, last = (nY - 1) * nT;
+    for (let i = 0; i < nT; i++) for (let a = 0; a < 3; a++) pos[(base + i) * 3 + a] = pos[(last + i) * 3 + a];
+    pos[ci * 3] = 0; pos[ci * 3 + 1] = ys[nY - 1]; pos[ci * 3 + 2] = 0;
+    for (let i = 0; i < nT; i++) idx.push(ci, base + ((i + 1) % nT), base + i);
   }
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
