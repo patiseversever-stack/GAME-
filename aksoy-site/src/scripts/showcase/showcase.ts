@@ -129,6 +129,11 @@ export async function startShowcase(
     lift0: 0, lift1: 0, screw0: 0, screw1: 0, idx0: 0, idx1: 0,
     cDim: 0, cIns: 0, cCool: 0,
   };
+  // Sinematik kamera: A = bu sahnenin kaydırmaya bağlı kamera hareketi, B = önceki sahneden sönümlenen kalıntı
+  type Cam = { rx: number; ry: number; rz: number; px: number; py: number; scale: number; focus: number; env: number };
+  const zeroCam = (): Cam => ({ rx: 0, ry: 0, rz: 0, px: 0, py: 0, scale: 0, focus: 0, env: 0 });
+  const A = zeroCam();
+  const B = zeroCam();
   const intro = { k: opts.poster || calm ? 0 : 1 };
   const pointer = { x: 0, y: 0, tx: 0, ty: 0 };
   let L = 0, Ltarget = 0, coat = 0, edge = 1, dimOn = false;
@@ -140,7 +145,10 @@ export async function startShowcase(
   const NS = 'http://www.w3.org/2000/svg';
   type Key = keyof typeof S;
   type Dim = { a: string; b: string; ea?: string; eb?: string; label: string; group: Key; off: number; line: SVGPathElement; ext: SVGPathElement; el: HTMLElement };
-  type Pin = { anchor: string; label: string; sub: string; group: Key; side: 'left' | 'right'; el: HTMLElement; small: HTMLElement };
+  type Pin = {
+    anchor: string; label: string; sub: string; group: Key; side: 'left' | 'right'; down?: boolean;
+    el: HTMLElement; small: HTMLElement; card: HTMLElement; path: SVGPathElement; st: { ci: number; x: number; y: number };
+  };
   const dims: Dim[] = [
     { a: 'dia-a', b: 'dia-b', label: 'Ø 25 mm', group: 'cDim' as Key, off: 18 },
     { a: 'len-a', b: 'len-b', ea: 'len-a0', eb: 'len-b0', label: '4 × D · 100 mm', group: 'cDim' as Key, off: 16 },
@@ -160,15 +168,15 @@ export async function startShowcase(
   const pins: Pin[] = [
     { anchor: 'shank', label: 'Weldon sap', sub: 'Ø 32 · sıkma yüzeyi', group: 'cDim' as Key, side: 'left' as const },
     { anchor: 'insert-cevre', label: 'Çevre uç', sub: 'Kenar 1 / 4', group: 'cIns' as Key, side: 'right' as const },
-    { anchor: 'insert-merkez', label: 'Merkez uç', sub: 'Kenar 1 / 4', group: 'cIns' as Key, side: 'left' as const },
-    { anchor: 'screw-cevre', label: 'Torx vida', sub: 'sök · çevir · sık', group: 'cIns' as Key, side: 'right' as const },
+    { anchor: 'insert-merkez', label: 'Merkez uç', sub: 'Kenar 1 / 4', group: 'cIns' as Key, side: 'left' as const, down: true },
+    { anchor: 'screw-cevre', label: 'Torx vida', sub: 'sök · çevir · sık', group: 'cIns' as Key, side: 'right' as const, down: true },
     { anchor: 'cool', label: 'İçten soğutma', sub: 'basınçlı sıvı doğrudan uca', group: 'cCool' as Key, side: 'right' as const },
-  ].map((p) => {
+  ].map((p, i) => {
     const el = document.createElement('div');
     el.className = `pin${p.side === 'left' ? ' pin--left' : ''}`;
-    el.innerHTML = `<span>${p.label}<small>${p.sub}</small></span>`;
+    el.innerHTML = `<i class="pin__dot"></i><svg class="pin__lead" aria-hidden="true"><path pathLength="1"/></svg><div class="pin__card"><span class="pin__num">${String(i + 1).padStart(2, '0')}</span><span class="pin__txt"><b>${p.label}</b><small>${p.sub}</small></span></div>`;
     layer.append(el);
-    return { ...p, el, small: el.querySelector('small')! };
+    return { ...p, el, small: el.querySelector('small')!, card: el.querySelector<HTMLElement>('.pin__card')!, path: el.querySelector('path')!, st: { ci: -1, x: 0, y: 0 } };
   });
   const setEdge = (n: number) => {
     edge = n;
@@ -240,6 +248,15 @@ export async function startShowcase(
     // Kaydırmaya bağlı zaman çizelgesi: her tween açık başlangıç değerli (fromTo) → geri sarınca hep aynı kare
     const tl = gsap.timeline({ paused: true, defaults: { ease: 'none', immediateRender: false } });
     const ft = (from: object, to: object, at: number) => tl.fromTo(S, from, { ...to, immediateRender: false }, at);
+    // Kamera anahtar kareleri: her kare bir öncekinden açıkça başlar → kaydırma ile ileri-geri hep aynı yol
+    const cam = (keys: { at: number; dur: number; ease?: string; to: Partial<Cam> }[]) => {
+      let prev: Cam = zeroCam();
+      for (const kf of keys) {
+        const next: Cam = { ...prev, ...kf.to };
+        tl.fromTo(A, { ...prev }, { ...next, duration: kf.dur, ease: kf.ease ?? 'sine.inOut', immediateRender: false }, kf.at);
+        prev = next;
+      }
+    };
     if (k === 1) {
       const t0 = Math.round(S.turns);
       ft({ block: 0 }, { block: 1, duration: 0.9, ease: 'power3.out' }, 0);
@@ -256,6 +273,12 @@ export async function startShowcase(
       ft({ block: 1 }, { block: 0, duration: 0.9, ease: 'power2.in' }, 4.1);
       ft({ cDim: 0 }, { cDim: 1, duration: 0.6 }, 5.0);
       tl.to({}, { duration: 0.6 }, 5.6);
+      if (!calm) cam([
+        { at: 0, dur: 0.9, to: { ry: -0.22, scale: -0.08, env: 0.3 } }, // blok gelirken yan açı
+        { at: 0.9, dur: 2.0, to: { ry: 0.14, rx: 0.08, scale: 0.2, focus: 14, px: 0.11, env: 0.9 } }, // dalarken yaklaş, etrafında dön
+        { at: 2.9, dur: 1.1, to: { ry: 0.05, rx: 0.02, scale: 0.05, focus: 4, px: 0.04, env: 1.2 } }, // çıkarken geri çekil
+        { at: 4.0, dur: 1.0, to: { ry: 0, rx: 0, scale: 0, focus: 0, env: 1.4 } },
+      ]);
     }
     if (k === 2) {
       const i0 = Math.round(S.idx0 * 4) / 4, i1 = Math.round(S.idx1 * 4) / 4;
@@ -271,17 +294,38 @@ export async function startShowcase(
       ft({ flash: 1 }, { flash: 0, duration: 0.5 }, 3.65);
       ft({ screw0: 1, screw1: 1 }, { screw0: 0, screw1: 0, duration: 0.9, ease: 'power1.inOut' }, 3.7);
       tl.to({}, { duration: 0.4 }, 4.6);
+      ft({ shake: 0 }, { shake: 0.55, duration: 0.04 }, 3.6);
+      ft({ shake: 0.55 }, { shake: 0, duration: 0.35 }, 3.64);
+      if (!calm) cam([
+        { at: 0, dur: 0.45, to: { scale: 0.35, ry: 0.08, env: 0.2 } }, // körelmiş kenara yaklaş
+        { at: 0.45, dur: 1.0, to: { scale: 1.15, ry: 0.22, rx: 0.12, focus: 2, env: 0.5 } }, // vida sökülürken makro
+        { at: 1.45, dur: 0.6, ease: 'power2.out', to: { scale: 0.55, ry: 0.55, rx: 0.1, rz: 0.04, env: 0.9 } }, // uç fırlar, kamera döner
+        { at: 2.05, dur: 1.0, to: { scale: 0.7, ry: 0.85, rx: 0.32, rz: 0.06, env: 1.4 } }, // 90° çevirme: üstten bakış
+        { at: 3.05, dur: 0.6, ease: 'power2.in', to: { scale: 1.0, ry: 0.4, rx: 0.12, rz: 0, env: 1.6 } }, // oturma anına dal
+        { at: 3.7, dur: 0.9, to: { scale: 0.2, ry: 0.1, rx: 0.02, env: 1.9 } }, // sıkılırken geri çekil
+      ]);
     }
     if (k === 3) {
-      ft({ coolant: 0 }, { coolant: 1, duration: 0.4 }, 0);
-      ft({ jet: 0 }, { jet: 1, duration: 1.0, ease: 'power2.out' }, 0);
-      ft({ cCool: 0 }, { cCool: 1, duration: 0.6 }, 0.6);
-      tl.to({}, { duration: 1.4 }, 1.2);
+      ft({ coolant: 0 }, { coolant: 1, duration: 0.5 }, 0.3);
+      ft({ jet: 0 }, { jet: 1, duration: 1.2, ease: 'power2.out' }, 0.3);
+      ft({ cCool: 0 }, { cCool: 1, duration: 0.6 }, 1.2);
+      tl.to({}, { duration: 0.4 }, 4.4);
+      if (!calm) cam([
+        { at: 0, dur: 0.6, to: { ry: -0.3, scale: -0.04, px: 0.13 } }, // yan açıdan başla
+        { at: 0.6, dur: 1.6, to: { ry: -0.5, rx: 0.14, scale: 0.36, focus: 18, px: 0.19, rz: -0.05, env: 0.8 } }, // jetler açılırken uca doğru yay
+        { at: 2.2, dur: 1.2, to: { ry: -0.75, rx: 0.2, scale: 0.6, focus: 30, px: 0.2, rz: -0.08, env: 1.3 } }, // jete makro
+        { at: 3.4, dur: 1.4, to: { ry: -0.42, rx: 0.08, scale: -0.06, focus: 10, px: 0.14, rz: 0, env: 1.6 } }, // geniş: spreyin tamamı
+      ]);
     }
     if (k === 4) {
       ft({ lift0: 0 }, { lift0: 0.7, duration: 0.8, ease: 'power2.out' }, 0);
       ft({ lift1: 0 }, { lift1: 0.7, duration: 0.8, ease: 'power2.out' }, 0.1);
-      tl.to({}, { duration: 1.5 }, 0.9);
+      tl.to({}, { duration: 1.5 }, 2.4);
+      if (!calm) cam([
+        { at: 0, dur: 1.2, to: { ry: -0.25, scale: 0.3, env: 0.6 } },
+        { at: 1.2, dur: 1.3, to: { ry: 0.15, rx: 0.12, scale: 0.55, env: 1.4 } },
+        { at: 2.5, dur: 1.4, to: { ry: 0.35, rx: 0.05, scale: 0.25, env: 2.0 } },
+      ]);
     }
     act = tl;
   }
@@ -290,6 +334,11 @@ export async function startShowcase(
   let seq: gsap.core.Timeline | null = null;
   function enter(k: number, dir: number) {
     seq?.kill();
+    act?.kill();
+    act = null;
+    gsap.killTweensOf(B);
+    (Object.keys(A) as (keyof Cam)[]).forEach((key) => { B[key] += A[key]; A[key] = 0; });
+    gsap.to(B, { ...zeroCam(), duration: 1.6, ease: 'power2.inOut' });
     const P = poses()[k];
     const tl = gsap.timeline();
     seq = tl;
@@ -387,7 +436,7 @@ export async function startShowcase(
   const playBtn = root.querySelector<HTMLButtonElement>('[data-reel-play]');
   const prevBtn = root.querySelector<HTMLButtonElement>('[data-reel-prev]');
   // Her sahnenin film süresi (sn): aksiyon zaman çizelgesiyle uyumlu, gerçek zamanlı akış
-  const FILM = [3.0, 7.2, 6.0, 4.2, 4.8, 3.4];
+  const FILM = [3.0, 7.4, 6.6, 6.0, 5.4, 3.4];
   const easeFilm = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
   const yAt = (raw: number) => st.start + (st.end - st.start) * (raw / N);
   let anim: { cancel(): void } | null = null;
@@ -531,10 +580,10 @@ export async function startShowcase(
     const idle = (c === 0 || c === 5) && !opts.poster && !calm ? 1 : 0;
     const wob = Math.sin(elapsed * 0.45) * 0.22 * idle;
 
-    pivot.rotation.set(S.rx + dRx + pointer.y * 0.08 + k * 0.4, S.ry + dRy + pointer.x * 0.12 + k * 1.1, S.rz - k * 0.25);
-    pivot.position.set((S.px * visW) / 2, (S.py * visH) / 2 - k * 0.35 + (idle ? Math.sin(elapsed * 0.9) * 0.012 : 0), 0);
-    pivot.scale.setScalar(S.scale * base * (1 - k * 0.45));
-    focus.position.x = -S.focus * 0.01;
+    pivot.rotation.set(S.rx + A.rx + B.rx + dRx + pointer.y * 0.08 + k * 0.4, S.ry + A.ry + B.ry + dRy + pointer.x * 0.12 + k * 1.1, S.rz + A.rz + B.rz - k * 0.25);
+    pivot.position.set(((S.px + A.px + B.px) * visW) / 2, ((S.py + A.py + B.py) * visH) / 2 - k * 0.35 + (idle ? Math.sin(elapsed * 0.9) * 0.012 : 0), 0);
+    pivot.scale.setScalar(Math.max(0.05, S.scale + A.scale + B.scale) * base * (1 - k * 0.45));
+    focus.position.x = -(S.focus + A.focus + B.focus) * 0.01;
     drill.root.rotation.x = S.spin + S.turns * TAU + dSpin + wob - k * 3.4;
     drill.root.position.x = S.plunge * 0.32;
 
@@ -546,7 +595,7 @@ export async function startShowcase(
       5 + S.camZ,
     );
     camera.rotation.z = sh ? Math.sin(elapsed * 47) * 0.0025 * sh : 0;
-    (scene as any).environmentRotation?.set(0, S.envRot + elapsed * 0.025, 0);
+    (scene as any).environmentRotation?.set(0, S.envRot + A.env + B.env + elapsed * 0.025, 0);
 
     // Vidalar, uçlar, kenar izi
     const lifts = [S.lift0, S.lift1], screws = [S.screw0, S.screw1], idx = [S.idx0, S.idx1];
@@ -607,17 +656,85 @@ export async function startShowcase(
       d.el.style.transform = `translate(${(A.x + B.x) / 2 + nx * d.off * sgn}px, ${(A.y + B.y) / 2 + ny * d.off * sgn}px) translate(-50%, -50%)`;
       d.el.style.opacity = String(Math.max(0, o * 1.6 - 0.6));
     }
+    layoutPins(dt);
+  }
+
+  /* Etiket yerleşimi: her etiket için sağ/sol ve birkaç yükseklik denenir; diğer etiketlere,
+     bölüm metnine, film çubuğuna ve ekran kenarına en az çarpan seçilir. Kalabalıkta kartlar
+     üst üste dizilir, çizgi her karede yeniden çizilir. Titremesin diye mevcut yer ancak
+     belirgin biçimde kötüleşince değişir; geçişler yumuşatılır. */
+  type Rect = { l: number; t: number; r: number; b: number };
+  let obstacles: Rect[] = [];
+  let obstT = -1;
+  const cardSize = new Map<HTMLElement, { w: number; h: number }>();
+  addEventListener('resize', () => cardSize.clear());
+  const GAP = 8;
+  // GAP kadar yakınlık da çakışma sayılır
+  const overlap = (a: Rect, b: Rect) =>
+    Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l) + GAP) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t) + GAP);
+  function layoutPins(dt: number) {
+    if (elapsed - obstT > 0.25 || obstT < 0) {
+      obstT = elapsed;
+      const sr = sticky.getBoundingClientRect();
+      obstacles = [panels[chapter], reelEl].filter(Boolean).map((el) => {
+        const r = el!.getBoundingClientRect();
+        return { l: r.left - sr.left - 6, t: r.top - sr.top - 6, r: r.right - sr.left + 6, b: r.bottom - sr.top + 6 };
+      }).filter((r) => r.r > r.l && r.b > r.t);
+    }
+    const mob = W <= 860;
+    const off = mob ? 54 : 80, dy = mob ? 26 : 30;
+    const ease = 1 - Math.exp(-dt * 11);
+    const placed: Rect[] = [];
     for (const p of pins) {
       const o = S[p.group] as number;
-      if (o < 0.01) { p.el.style.opacity = '0'; continue; }
       const P = project(p.anchor);
-      const w = (p.el as any)._w || ((p.el as any)._w = p.el.offsetWidth || 140);
-      let side = p.side;
-      if (side === 'left' && P.x - w < 8) side = 'right';
-      else if (side === 'right' && P.x + w > W - 8) side = 'left';
-      p.el.classList.toggle('pin--left', side === 'left');
-      p.el.style.transform = `translate(${P.x}px, ${P.y}px) ${side === 'left' ? 'translate(-100%, -50%)' : 'translate(0, -50%)'}`;
-      p.el.style.opacity = P.behind ? '0' : String(o);
+      const on = o > 0.35 && !P.behind;
+      p.el.classList.toggle('is-on', on);
+      const st = p.st;
+      if (o < 0.01) { st.ci = -1; continue; }
+      let sz = cardSize.get(p.el);
+      if (!sz) {
+        sz = { w: p.card.offsetWidth || 150, h: p.card.offsetHeight || 44 };
+        if (p.card.offsetWidth) cardSize.set(p.el, sz);
+      }
+      const { w, h } = sz;
+      const L0 = p.side === 'left', v = p.down ? 1 : -1, step = h + GAP;
+      const ys = [v * dy, -v * dy, v * (dy + step), -v * (dy + step), v * (dy + 2 * step), -v * (dy + 2 * step)];
+      const cand = (i: number) => ({ left: Math.floor(i / 2) % 2 ? !L0 : L0, cy: ys[(i % 2) + 2 * Math.floor(i / 4)] });
+      // Kart ekrandan taşacaksa yatayda içeri kaydırılır (çizgi kısalır)
+      const xOf = (left: boolean) => {
+        const x = left ? -off - w : off;
+        return Math.min(Math.max(x, 8 - P.x), Math.max(8 - P.x, W - 8 - w - P.x));
+      };
+      const rectOf = (i: number): Rect => {
+        const c = cand(i);
+        const l = P.x + xOf(c.left), t = P.y + c.cy - h / 2;
+        return { l, t, r: l + w, b: t + h };
+      };
+      const cost = (i: number) => {
+        const r = rectOf(i), c0 = cand(i);
+        let c = i * 80;
+        for (const q of placed) c += overlap(r, q) * 5;
+        for (const q of obstacles) c += overlap(r, q) * 3;
+        c += (Math.max(0, 8 - r.t) + Math.max(0, r.b - (H - 8))) * h * 8;
+        c += Math.abs(xOf(c0.left) - (c0.left ? -off - w : off)) * h * 2;
+        if (P.x > r.l - 16 && P.x < r.r + 16 && P.y > r.t - 16 && P.y < r.b + 16) c += 40000; // kart kendi noktasını örtmesin
+        return c;
+      };
+      let best = 0, bestC = Infinity;
+      for (let i = 0; i < 12; i++) { const c = cost(i); if (c < bestC) { bestC = c; best = i; } }
+      const fresh = st.ci < 0;
+      if (fresh || (on && cost(st.ci) > bestC + 150)) st.ci = best;
+      const { left, cy } = cand(st.ci);
+      const tx = xOf(left), ty = cy - h / 2;
+      if (fresh) { st.x = tx; st.y = ty; } else { st.x += (tx - st.x) * ease; st.y += (ty - st.y) * ease; }
+      p.el.classList.toggle('pin--left', left);
+      p.el.style.transform = `translate(${P.x}px, ${P.y}px)`;
+      p.card.style.transform = `translate(${st.x}px, ${st.y}px)`;
+      const ax = st.x < -w / 2 ? st.x + w : st.x, ay = st.y + h / 2;
+      const ex = Math.sign(ax) * Math.min(Math.abs(ay), Math.max(0, Math.abs(ax) - 18));
+      p.path.setAttribute('d', `M0 0 L${ex.toFixed(1)} ${ay.toFixed(1)} L${ax.toFixed(1)} ${ay.toFixed(1)}`);
+      if (on) placed.push(rectOf(st.ci));
     }
   }
 
@@ -653,6 +770,7 @@ export async function startShowcase(
   if (chapter > 0) { Object.assign(S, poses()[chapter]); showPanel(chapter, 1); }
 
   if (new URLSearchParams(location.search).has('debug')) {
+    gsap.ticker.lagSmoothing(0);
     Object.assign(window as any, { __S: S, __intro: intro, __mats: drill.materials, __renderer: renderer, __frame: frame, __enter: enter, __mach: mach, __camera: camera });
   }
   frame();
