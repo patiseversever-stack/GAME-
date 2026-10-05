@@ -7,6 +7,7 @@ import { categories } from '../data/categories';
 import { brands } from '../data/brands';
 import { products } from '../data/products';
 import { drawingSvg } from '../lib/drawings';
+import { DRAWING_TO_MODEL } from '../scripts/three/models-map';
 import '../styles/home.css';
 
 const featured = products.filter((p) => p.featured).slice(0, 10);
@@ -133,7 +134,7 @@ const iso = [
       </div>
       <div class="cats">
         {categories.map((c, i) => (
-          <a class="cat reveal" href={`/kategori/${c.slug}`} style={`--d:${(i % 4) * 70}ms`} data-glow>
+          <a class="cat reveal" href={`/kategori/${c.slug}`} style={`--d:${(i % 4) * 70}ms`} data-glow data-model={DRAWING_TO_MODEL[c.drawing]}>
             <span class="cat__num">{String(i + 1).padStart(2, '0')} / {String(categories.length).padStart(2, '0')}</span>
             <div class="cat__art" set:html={drawingSvg(c.drawing, c.shape)} />
             <div>
@@ -272,6 +273,9 @@ const iso = [
   <script>
     import { initShowcase } from '../scripts/showcase/boot';
     initShowcase();
+  </script>
+  <script>
+    import '../scripts/cards3d/index';
   </script>
   <script>
     // Mini hesaplayıcı: n = Vc·1000 / (π·D)
