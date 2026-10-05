@@ -209,7 +209,7 @@ body:has(.site-header.is-hidden) .ctool { top: 0; padding-top: max(12px, env(saf
 
 /* Sonuç ızgarası */
 .cgrid { margin: 0; padding: 0; list-style: none; }
-.cgrid > li { display: flex; min-width: 0; content-visibility: auto; contain-intrinsic-size: auto 420px; }
+.cgrid > li { display: flex; min-width: 0; }
 .cgrid > li > .pcard { flex: 1; min-width: 0; }
 .cgrid[hidden] { display: none; }
 .cgrid > li.is-enter { animation: card-in 520ms var(--ease-out) both; }
@@ -241,7 +241,6 @@ body:has(.site-header.is-hidden) .ctool { top: 0; padding-top: max(12px, env(saf
 /* ---------- Kompakt kart (2 sütunlu mobil ızgara) ---------- */
 @media (max-width: 600px) {
   .cgrid, .pgrid--dense { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  .cgrid > li { contain-intrinsic-size: auto 330px; }
   .cgrid .pcard, .pgrid--dense .pcard { border-radius: 12px; }
   .cgrid .pcard__body, .pgrid--dense .pcard__body { padding: 11px 11px 12px; gap: 6px; }
   .cgrid .pcard__code, .pgrid--dense .pcard__code { font-size: 0.86rem; line-height: 1.25; overflow-wrap: anywhere; }
@@ -446,6 +445,7 @@ body:has(.site-header.is-hidden) .subnav { top: 0; }
 .pdp__grid { display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: clamp(28px, 4.5vw, 72px); align-items: start; }
 .pdp__media { position: sticky; top: calc(var(--header-h) + 20px); display: grid; gap: 14px; transition: top var(--t-med) var(--ease-out); }
 body:has(.site-header.is-hidden) .pdp__media { top: 20px; }
+@media (max-height: 800px) { .pdp__media, body:has(.site-header.is-hidden) .pdp__media { position: relative; top: auto; } }
 .pdp .stage { aspect-ratio: 4 / 3; }
 .pdp .stage__art svg { width: 88%; }
 .stage__caption { font: 500 10.5px/1.4 var(--f-mono); letter-spacing: 0.06em; color: var(--ink-3); display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }

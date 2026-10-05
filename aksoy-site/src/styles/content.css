@@ -370,7 +370,8 @@
 /* --------------------------------------------------------------------------
    Yasal metinler (KVKK, çerez)
    -------------------------------------------------------------------------- */
-.legal-hero h1 { max-width: 14ch; }
+.legal-hero h1 { max-width: 14ch; margin-top: 18px; }
+.legal-main { min-width: 0; }
 .legal-hero__meta { display: flex; flex-wrap: wrap; gap: 8px 22px; margin-top: 24px; font: 500 var(--fs-xs)/1.4 var(--f-mono); color: var(--ink-3); letter-spacing: 0.03em; }
 .legal-hero__meta b { color: var(--ink); font-weight: 500; }
 .template-note { display: flex; gap: 12px; align-items: flex-start; margin-top: 28px; max-width: 72ch; }

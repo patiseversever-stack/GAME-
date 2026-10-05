@@ -253,9 +253,11 @@ function initCatalog(root: HTMLElement) {
     }
   }
 
+  let sheetDirty = false;
   function update(scroll = true) {
     render();
-    if (scroll) toResultsTop();
+    if (sheetOpen) sheetDirty = true;
+    else if (scroll) toResultsTop();
   }
 
   /* ---- Olaylar ---- */
@@ -334,6 +336,8 @@ function initCatalog(root: HTMLElement) {
       sheet.removeAttribute('aria-modal');
       lockScroll(false);
       lastFocus?.focus?.({ preventScroll: true });
+      // Panelde seçim yapıldıysa sonuçların başına dön
+      if (sheetDirty) { sheetDirty = false; requestAnimationFrame(toResultsTop); }
     }
   }
   openBtn?.addEventListener('click', () => setSheet(true));
