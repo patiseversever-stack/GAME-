@@ -8,6 +8,7 @@ import { rewardArt, hydrateArt } from './reward-art.js';
 import { framedAvatar } from '../ui/frame-ui.js';
 import { Celebration } from '../ui/effects.js';
 import { openBazaar } from './bazaar.js';
+import { openOnboarding } from './onboard.js';
 
 let hubData = null;
 // d: { e: profile, h: progress, u: günlük görevler, p: oyuncu adı, Ra: başarım listesi, av: avatar svg }
@@ -207,7 +208,9 @@ function viewProf(D) {
     ring(xp, 'amber', 7) +
     '<div class="h7hero__av has-frame">' +
     framedAvatar(D.av, e.equipped ? e.equipped('frame') : 'sade') +
-    '</div></div>' +
+    '</div><button type="button" class="h7hero__edit" data-edit aria-label="Profili düzenle">' +
+    ic('edit') +
+    '</button></div>' +
     '<div class="h7hero__lv"><small>Seviye</small><b>' +
     pr.level +
     '</b></div></div>' +
@@ -670,6 +673,14 @@ export function openHub(tab, host) {
     if ((b = ev.target.closest('[data-go]'))) return show(b.dataset.go);
     if ((b = ev.target.closest('[data-r]'))) return show('how', b.dataset.r);
     if ((b = ev.target.closest('[data-rs]'))) return show('rew', b.dataset.rs);
+    if (ev.target.closest('[data-edit]') && settingsRef()) {
+      openOnboarding({ host: document.body, settings: settingsRef(), profile: D.e, audio: window.__okey && window.__okey.audio, mode: 'edit' }).then(function (r) {
+        if (!r) return;
+        D = hubData;
+        show('prof');
+      });
+      return;
+    }
     if ((b = ev.target.closest('[data-eq]'))) {
       var kv = b.dataset.eq.split(':');
       if (kv[0] === 'tiles') settingsRef() && settingsRef().set('tiles', kv[1]);

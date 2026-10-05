@@ -35,6 +35,7 @@ export const DEFAULTS = Object.freeze({
   colorFinish: false,
   opening: 'fixed',
   seenHowTo: false,
+  onboarded: false, // ilk açılışta ad ve avatar seçildi mi
 });
 
 export class Settings {

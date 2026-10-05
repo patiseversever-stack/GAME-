@@ -35,6 +35,7 @@ const P = {
   gift: '<rect x="4" y="9" width="16" height="11" rx="1.5"/><path d="M3 9h18M12 9v11"/><path d="M12 9c-1.5-3.5-6-4.2-6-1.6C6 9 9 9 12 9zM12 9c1.5-3.5 6-4.2 6-1.6C18 9 15 9 12 9z"/>',
   // çarşı: sivri kemerli dükkân
   bazaar: '<path d="M4 20V11.5C4 7 8 4.5 12 3c4 1.5 8 4 8 8.5V20"/><path d="M2.5 20h19"/><path d="M9 20v-5.5a3 3 0 0 1 6 0V20"/><path d="M4 11.5h16"/>',
+  edit: '<path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M13.5 6.5l4 4"/>',
   ad: '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M10 8.5v5l4.5-2.5z"/><path d="M8 20h8"/>',
 };
 

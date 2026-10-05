@@ -154,6 +154,14 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
   // çerçeveler menü sakinken arka planda boyanır (IndexedDB'ye yazılır): Ödüller ve Çarşı anında dolu açılır
   const warm = setTimeout(() => FRAME_IDS.forEach((id) => frameURL(id, false)), 2500);
   const offProfile = profile.onChange((ev) => (ev?.equip || ev?.grant || ev?.ad || ev?.adopt) && paintCapsule());
+  // ad / avatar değişince (ilk açılış, profil düzenleme) kapsül ve profil merkezi verisi yenilenir
+  const offSettings = settings.subscribe((k) => {
+    if (k !== 'playerName' && k !== 'playerAvatar') return;
+    paintCapsule();
+    const nm = root.querySelector('.h4-who > b');
+    if (nm) nm.textContent = settings.get('playerName') || 'Oyuncu';
+    setHubData({ e: profile, h: profile.progress(), u: profile.d.daily.goals, p: settings.get('playerName') || 'Oyuncu', Ra: ACHIEVEMENTS, av: avatarSVG(settings.get('playerAvatar')) });
+  });
   audio.setMusicWanted?.(true, 'menu'); // menüde ney ve ud taksimi (ilk dokunuşta başlar)
   setHubData({ e: profile, h: prog, u: goals, p: pname, Ra: ACHIEVEMENTS, av: avatarSVG(roster) });
 
@@ -192,6 +200,7 @@ export function createHome({ host, settings, profile, audio, saved, onStart, onR
     el: root,
     destroy() {
       offProfile();
+      offSettings();
       clearTimeout(warm);
       document.querySelector('.bz2')?.remove();
       menu3d?.destroy();

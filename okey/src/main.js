@@ -5,6 +5,7 @@ import { AudioManager, NullAudio } from './audio/audio-manager.js';
 import { GameController, hasSavedGame, savedSummary, clearSavedGame } from './ui/game-controller.js';
 import { resultScreen, historySheet, settingsSheet } from './app/overlays.js';
 import { createHome, replayIntro, gyroHint } from './app/home.js';
+import { openOnboarding } from './app/onboard.js';
 import { openHub } from './app/hub.js';
 import { pauseScreen } from './app/pause.js';
 import { createCoach } from './app/coach.js';
@@ -133,7 +134,11 @@ if (q.get('resume')) {
   window.__okey.ctl = ctl;
   ctl.resume().then(() => (document.body.dataset.ready = '1'));
 } else if (q.get('mode')) start(q.get('mode'), q.get('difficulty') || 'normal', q.get('seed') ? Number(q.get('seed')) : undefined).catch((e) => { document.body.dataset.error = String(e && e.stack); });
-else home();
+else {
+  home();
+  // ilk açılış: ad ve avatar (yalnız uygulama doğrudan menüyle açıldığında; oyundan menüye dönüşte sorulmaz)
+  if (!settings.get('onboarded')) openOnboarding({ host: app, settings, profile, audio, mode: 'first' });
+}
 
 // skor çiplerine dokununca oyun özeti (tek dokunuş)
 app.addEventListener('click', (e) => {
