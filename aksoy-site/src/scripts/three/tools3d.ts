@@ -219,11 +219,11 @@ export function buildTurningHolder(m: ToolMats, insertMat = m.tin) {
  * İnce bıçak (2,4 mm) ucun genişliğinden (3 mm) dardır: uç boydan boya yanlardan görünür.
  * Bıçak sapın +Z yan yüzüne hizalıdır (aynaya yakın kanal için).
  */
-export function buildGroovingHolder(m: ToolMats, insertMat = m.tin) {
+export function buildGroovingHolder(m: ToolMats, insertMat = m.tin, shankLen = 86) {
   const g = new THREE.Group();
   const zb = 8.6; // bıçak/uç orta düzlemi
-  const shank = new THREE.Mesh(new RoundedBoxGeometry(86, 20, 20, 4, 1.4), m.holder);
-  shank.position.set(-82, -10, 0);
+  const shank = new THREE.Mesh(new RoundedBoxGeometry(shankLen, 20, 20, 4, 1.4), m.holder);
+  shank.position.set(-39 - shankLen / 2, -10, 0);
   g.add(shank);
   const head = new THREE.Mesh(new RoundedBoxGeometry(25, 28, 20, 4, 1.6), m.holder);
   head.position.set(-34.5, -6, 0);

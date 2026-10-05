@@ -13,7 +13,8 @@ export async function buildReal(key: string, pose?: [number, number, number]): P
   const m = toolMaterials();
   const rm = realMats();
   const wrap = new THREE.Group();
-  const holderPose = (g: THREE.Object3D, p: [number, number, number] = [0.5, Math.PI + 0.62, 0.0]) => { const r = new THREE.Group(); r.add(g); r.rotation.set(...(pose ?? p)); wrap.add(r); };
+  // Kater: ekranda çapraz (sap sağ üste) dursun; uzun gövde 4:3 kadrajı daha iyi doldurur
+  const holderPose = (g: THREE.Object3D, p: [number, number, number] = [0.5, Math.PI + 0.62, 0.0], roll = 0.16) => { const r = new THREE.Group(); r.add(g); r.rotation.set(...(pose ?? p)); wrap.add(r); wrap.rotation.z = roll; };
   // Döner takım: eksen (+Y) ekran yatayına, uç solda
   const rotary = (o: THREE.Object3D, tilt = 0.2): RealPosed => {
     const inner = new THREE.Group();

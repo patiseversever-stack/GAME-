@@ -23,15 +23,20 @@ interface Present {
   env?: number;
   /** Dar (mobil) kartta yarıçap çarpanı: uzun modeller kart dışına taşmasın */
   narrowZoom?: number;
+  /** Dar kartta modelin oturacağı nokta (başlık altta kaldığı için daha yukarıda) */
+  atNarrow?: [number, number];
+  /** Orta oranlı (tablet) kartta yarıçap çarpanı ve konum */
+  midZoom?: number;
+  atMid?: [number, number];
 }
 const PRESENT: Record<ModelKind, Present> = {
   cnmg: { center: [0, 0, 2.4], radius: 10.5, pose: [-0.36, 0.22, 0.5], spinAxis: 'z', spin: 0.32, at: [0.7, 0.43] },
   thread: { center: [0, 0, 1.8], radius: 9.2, pose: [-0.4, 0.2, 0.3], spinAxis: 'z', spin: -0.36, at: [0.68, 0.43] },
-  groove: { center: [-9, -3, 5], radius: 18, pose: [0.42, -1.2, -0.28], spinAxis: 'y', spin: 0, at: [0.79, 0.53], env: 0.8, narrowZoom: 1.3 },
+  groove: { center: [-60, -6, 0], radius: 45, pose: [0.3, -0.5, -0.38], spinAxis: 'y', spin: 0, at: [0.68, 0.42], env: 0.8, narrowZoom: 1.05, atNarrow: [0.52, 0.34], midZoom: 1.18, atMid: [0.68, 0.34] },
   endmill: { center: [0, 14, 0], radius: 15.5, pose: [0, 0.2, -1.3], spinAxis: 'y', spin: -1.5, at: [0.6, 0.38] },
   drill: { center: [0, 15, 0], radius: 16.5, pose: [0, 0.38, -1.3], spinAxis: 'y', spin: -1.3, at: [0.6, 0.38] },
   tap: { center: [0, 14, 0], radius: 15.5, pose: [0, 0.38, -1.28], spinAxis: 'y', spin: -1.1, at: [0.6, 0.38] },
-  bt40: { center: [0, 90, 0], radius: 82, pose: [0.25, 0, -0.42], spinAxis: 'y', spin: -0.45, at: [0.72, 0.47] },
+  bt40: { center: [0, 85, 0], radius: 70, pose: [0.3, 0, -0.95], spinAxis: 'y', spin: -0.45, at: [0.7, 0.5], narrowZoom: 1.3, atNarrow: [0.56, 0.33] },
 };
 
 interface Card {
@@ -82,7 +87,7 @@ export function startCards(els: HTMLElement[]) {
     const model = buildModel(kind, mats);
     model.position.set(-p.center[0], -p.center[1], -p.center[2]);
     // Dönüş ekseni merkezden geçsin: döner takımlarda yalnız eksen boyunca kaydır
-    if (p.spinAxis === 'y') { model.position.x = 0; model.position.z = 0; }
+    if (p.spinAxis === 'y' && p.spin !== 0) { model.position.x = 0; model.position.z = 0; }
     spinner.add(model);
     presenter.add(spinner);
     presenter.visible = false;
@@ -180,7 +185,8 @@ export function startCards(els: HTMLElement[]) {
     const aspect = w / h;
     const fill = w / h < 1.1 ? 0.7 : 0.84; // küre çapının kart yüksekliğine oranı
     const vfov = THREE.MathUtils.degToRad(camera.fov);
-    const rad = p.radius * (aspect < 1.25 ? p.narrowZoom ?? 1 : 1);
+    const mid = aspect >= 1.25 && aspect < 1.9;
+    const rad = p.radius * (aspect < 1.25 ? p.narrowZoom ?? 1 : mid ? p.midZoom ?? 1 : 1);
     const visH = (2 * rad) / fill;
     const visW = (2 * rad) / (fill * 0.95);
     const dist = Math.max(visH / (2 * Math.tan(vfov / 2)), visW / (2 * Math.tan(vfov / 2) * aspect));
@@ -190,8 +196,10 @@ export function startCards(els: HTMLElement[]) {
     camera.far = dist * 4;
     camera.lookAt(0, 0, 0);
     // Model merkezini kartta istenen noktaya taşı (dar kartta biraz daha ortaya)
-    const fx = aspect < 1.25 ? p.at[0] - 0.06 : p.at[0];
-    camera.setViewOffset(w, h, w / 2 - fx * w, h / 2 - p.at[1] * h, w, h);
+    const narrow = aspect < 1.25;
+    const fx = narrow ? (p.atNarrow?.[0] ?? p.at[0] - 0.06) : mid ? (p.atMid?.[0] ?? p.at[0]) : p.at[0];
+    const fy = narrow ? (p.atNarrow?.[1] ?? p.at[1]) : mid ? (p.atMid?.[1] ?? p.at[1]) : p.at[1];
+    camera.setViewOffset(w, h, w / 2 - fx * w, h / 2 - fy * h, w, h);
     camera.updateProjectionMatrix();
     (scene as any).environmentRotation?.set(0, (p.env ?? 0) + c.mx * 0.6 + c.hover * Math.sin(performance.now() / 900) * 0.4, 0);
     for (const o of cards) o.presenter.visible = o === c;
