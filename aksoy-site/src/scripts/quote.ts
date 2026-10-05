@@ -46,6 +46,14 @@ function save() {
 function saveQuiet() {
   store();
   updateSend();
+  updateSum();
+}
+/** Başlık altındaki özet: kalem ve toplam adet */
+function updateSum() {
+  const el = document.querySelector<HTMLElement>('[data-quote-sum]');
+  if (!el) return;
+  const pcs = items.reduce((s, i) => s + i.qty, 0);
+  el.textContent = items.length ? `${items.length} kalem · ${pcs.toLocaleString('tr-TR')} adet` : 'Fiyat sorma listesi';
 }
 
 const $ = <T extends Element>(s: string) => document.querySelector<T>(s);
@@ -153,20 +161,21 @@ function render() {
         .map((b) => `<option ${b === it.brand ? 'selected' : ''}>${esc(b)}</option>`)
         .join('');
       return `<li class="qitem" data-idx="${idx}">
-        <div class="qitem__thumb">${(() => { const im = productImage({ drawing: it.drawing, shape: it.shape, code: it.code, name: it.name }); return im ? `<img src="${im.small}" alt="" width="54" height="54" loading="lazy" />` : drawingSvg(it.drawing, it.shape); })()}</div>
-        <div>
+        <div class="qitem__thumb">${(() => { const im = productImage({ drawing: it.drawing, shape: it.shape, code: it.code, name: it.name }); return im ? `<img src="${im.small}" alt="" width="64" height="48" loading="lazy" />` : drawingSvg(it.drawing, it.shape); })()}</div>
+        <div class="qitem__main">
           <a class="qitem__code" href="/urun/${it.slug}">${esc(it.code)}</a>
           <div class="qitem__name">${esc(it.name)}</div>
-          ${it.brands.length ? `<div class="qitem__brand"><select aria-label="Marka tercihi" data-brand>${opts}</select></div>` : ''}
+          <div class="qitem__row">
+            ${it.brands.length ? `<label class="qitem__brand"><span class="sr-only">Marka tercihi</span><select data-brand>${opts}</select></label>` : '<span></span>'}
+            <div class="stepper"><button type="button" data-dec aria-label="Azalt">−</button><input type="number" inputmode="numeric" min="1" max="9999" value="${it.qty}" aria-label="Adet" data-qty /><button type="button" data-inc aria-label="Artır">+</button></div>
+          </div>
         </div>
-        <div class="qitem__right">
-          <div class="stepper"><button type="button" data-dec aria-label="Azalt">−</button><input type="number" inputmode="numeric" min="1" max="9999" value="${it.qty}" aria-label="Adet" data-qty /><button type="button" data-inc aria-label="Artır">+</button></div>
-          <button type="button" class="qitem__remove" data-remove>Çıkar</button>
-        </div>
+        <button type="button" class="qitem__remove" data-remove aria-label="${esc(it.code)} sepetten çıkar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 7h14M10 4h4M7 7l.8 12.2a1.5 1.5 0 0 0 1.5 1.3h5.4a1.5 1.5 0 0 0 1.5-1.3L17 7M10.2 10.5v6.5M13.8 10.5v6.5"/></svg></button>
       </li>`;
     })
     .join('');
   updateSend();
+  updateSum();
 }
 
 export function addToQuote(p: Omit<QuoteItem, 'qty' | 'brand'> & { qty?: number; brand?: string }) {

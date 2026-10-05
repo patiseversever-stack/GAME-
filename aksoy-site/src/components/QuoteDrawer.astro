@@ -4,70 +4,81 @@ import Icon from './Icon.astro';
 <div class="drawer-scrim" data-quote-scrim></div>
 <aside class="drawer" data-quote-drawer role="dialog" aria-modal="true" aria-labelledby="teklif-baslik" aria-hidden="true">
   <div class="drawer__head">
-    <div>
-      <span class="eyebrow">Fiyat sorma listesi</span>
-      <h2 id="teklif-baslik">Teklif Sepeti</h2>
+    <div class="drawer__title">
+      <span class="drawer__badge" aria-hidden="true"><Icon name="list" /></span>
+      <div>
+        <h2 id="teklif-baslik">Teklif Sepeti</h2>
+        <p class="drawer__sum" data-quote-sum>Fiyat sorma listesi</p>
+      </div>
     </div>
-    <button class="icon-btn" type="button" data-quote-close aria-label="Kapat"><Icon name="close" /></button>
+    <button class="drawer__close" type="button" data-quote-close aria-label="Kapat"><Icon name="close" /></button>
   </div>
   <div class="drawer__body">
     <div class="drawer__empty" data-quote-empty>
-      <Icon name="list" />
-      <p>Henüz ürün eklemediniz.<br />Katalogdan kodu seçin, adedi girin; listeyi tek mesajla WhatsApp’tan gönderin.</p>
-      <a class="btn btn--sm" href="/urunler">Kataloğa git</a>
+      <span class="drawer__empty-ico" aria-hidden="true"><Icon name="list" /></span>
+      <b>Sepetiniz boş</b>
+      <p>Katalogdan kodu seçip adedi girin. Liste tek mesaj olarak WhatsApp’tan gider.</p>
+      <a class="btn btn--sm btn--tin" href="/urunler">Kataloğa git <Icon name="arrow" /></a>
     </div>
-    <ul data-quote-list></ul>
+    <ul class="qlist" data-quote-list></ul>
     <div class="drawer__fields" data-quote-fields hidden>
-      <div class="field">
-        <label for="q-firma">Firma / ad (isteğe bağlı)</label>
-        <input id="q-firma" name="firma" autocomplete="organization" placeholder="Örn. Yıldız Makina" />
-      </div>
-      <fieldset class="field qopt">
-        <legend>Teslim</legend>
-        <div class="qseg" data-q-teslim>
-          <label><input type="radio" name="q-teslim" value="Adrese teslim" checked /><span>Adrese teslim</span></label>
-          <label><input type="radio" name="q-teslim" value="Kargo" /><span>Kargo</span></label>
-          <label><input type="radio" name="q-teslim" value="Ostim'den gelip alırım" /><span>Gelip alırım</span></label>
+      <fieldset class="qsec">
+        <legend class="qsec__h"><span class="qsec__n">1</span>Teslim şekli</legend>
+        <div class="qcards" data-q-teslim>
+          <label class="qcard"><input type="radio" name="q-teslim" value="Adrese teslim" checked /><span class="qcard__box"><Icon name="truck" /><b>Adrese teslim</b><small>Atölyeye getiririz</small><i class="qcard__tick"><Icon name="check" /></i></span></label>
+          <label class="qcard"><input type="radio" name="q-teslim" value="Kargo" /><span class="qcard__box"><Icon name="box" /><b>Kargo</b><small>Kargoyla gönderelim</small><i class="qcard__tick"><Icon name="check" /></i></span></label>
+          <label class="qcard"><input type="radio" name="q-teslim" value="Ostim'den gelip alırım" /><span class="qcard__box"><Icon name="store" /><b>Gelip alırım</b><small>Ostim’den teslim</small><i class="qcard__tick"><Icon name="check" /></i></span></label>
         </div>
       </fieldset>
-      <fieldset class="field qopt">
-        <legend>Ne zaman lazım?</legend>
-        <div class="qseg" data-q-termin>
-          <label><input type="radio" name="q-termin" value="Acil (bugün / yarın)" /><span>Acil</span></label>
-          <label><input type="radio" name="q-termin" value="Bu hafta" /><span>Bu hafta</span></label>
-          <label><input type="radio" name="q-termin" value="" checked /><span>Fark etmez</span></label>
+      <fieldset class="qsec">
+        <legend class="qsec__h"><span class="qsec__n">2</span>Ne zaman lazım?</legend>
+        <div class="qcards" data-q-termin>
+          <label class="qcard"><input type="radio" name="q-termin" value="Acil (bugün / yarın)" /><span class="qcard__box"><Icon name="bolt" /><b>Acil</b><small>Bugün ya da yarın</small><i class="qcard__tick"><Icon name="check" /></i></span></label>
+          <label class="qcard"><input type="radio" name="q-termin" value="Bu hafta" /><span class="qcard__box"><Icon name="calendar" /><b>Bu hafta</b><small>Birkaç gün içinde</small><i class="qcard__tick"><Icon name="check" /></i></span></label>
+          <label class="qcard"><input type="radio" name="q-termin" value="" checked /><span class="qcard__box"><Icon name="clock" /><b>Fark etmez</b><small>Termine göre</small><i class="qcard__tick"><Icon name="check" /></i></span></label>
         </div>
       </fieldset>
-      <div class="qloc" data-q-loc>
-        <button class="qloc__btn" type="button" data-q-loc-btn>
-          <Icon name="pin" />
-          <span><b>Konumumu ekle</b><small>Nereye geleceğimizi mesajda görelim</small></span>
-        </button>
-        <div class="qloc__card" data-q-loc-card hidden>
-          <div class="qloc__map" data-q-loc-map></div>
-          <div class="qloc__info">
-            <b data-q-loc-place>Konum alındı</b>
-            <small data-q-loc-meta></small>
-            <div class="qloc__actions">
-              <a href="#" target="_blank" rel="noopener" data-q-loc-open>Haritada aç</a>
-              <button type="button" data-q-loc-clear>Kaldır</button>
+      <div class="qsec">
+        <p class="qsec__h"><span class="qsec__n">3</span>Konum <em>isteğe bağlı</em></p>
+        <div class="qloc" data-q-loc>
+          <button class="qloc__btn" type="button" data-q-loc-btn>
+            <span class="qloc__ico"><Icon name="pin" /></span>
+            <span><b>Konumumu ekle</b><small>Nereye geleceğimizi mesajda görelim</small></span>
+            <Icon name="plus" class="qloc__plus" />
+          </button>
+          <div class="qloc__card" data-q-loc-card hidden>
+            <div class="qloc__map" data-q-loc-map></div>
+            <div class="qloc__info">
+              <b data-q-loc-place>Konum alındı</b>
+              <small data-q-loc-meta></small>
+              <div class="qloc__actions">
+                <a href="#" target="_blank" rel="noopener" data-q-loc-open>Haritada aç</a>
+                <button type="button" data-q-loc-clear>Kaldır</button>
+              </div>
             </div>
           </div>
+          <p class="qloc__msg" data-q-loc-msg role="status" aria-live="polite"></p>
         </div>
-        <p class="qloc__msg" data-q-loc-msg role="status" aria-live="polite"></p>
       </div>
-      <div class="field">
-        <label for="q-not">Not (malzeme, tezgâh, adres tarifi…)</label>
-        <textarea id="q-not" name="not" rows="2" placeholder="Örn. 42CrMo4 mil, kaba torna. 2. kat, Ahmet Bey'e."></textarea>
+      <div class="qsec">
+        <p class="qsec__h"><span class="qsec__n">4</span>Firma ve not <em>isteğe bağlı</em></p>
+        <div class="qinput">
+          <label for="q-firma"><Icon name="building" /><span class="sr-only">Firma ya da ad</span></label>
+          <input id="q-firma" name="firma" autocomplete="organization" placeholder="Firma ya da adınız" />
+        </div>
+        <div class="qinput qinput--area">
+          <label for="q-not"><Icon name="note" /><span class="sr-only">Not</span></label>
+          <textarea id="q-not" name="not" rows="3" placeholder="Malzeme, tezgâh ya da adres tarifi. Örn. 42CrMo4 mil, kaba torna; 2. kat, Ahmet Bey."></textarea>
+        </div>
       </div>
     </div>
   </div>
   <div class="drawer__foot" data-quote-foot hidden>
-    <a class="btn btn--wa btn--block" href="#" target="_blank" rel="noopener" data-quote-send><Icon name="whatsapp" /> WhatsApp’tan teklif iste</a>
+    <a class="btn btn--wa btn--block drawer__send" href="#" target="_blank" rel="noopener" data-quote-send><Icon name="whatsapp" /> WhatsApp’tan teklif iste</a>
     <div class="drawer__pair">
-      <button class="btn btn--ghost btn--sm" type="button" data-quote-copy><Icon name="copy" /> Metni kopyala</button>
-      <button class="btn btn--ghost btn--sm" type="button" data-quote-share title="Aynı listeyi satın almaya ya da bir arkadaşınıza bağlantı olarak gönderin"><Icon name="share" /> Listeyi paylaş</button>
+      <button class="drawer__alt" type="button" data-quote-copy><Icon name="copy" /> Metni kopyala</button>
+      <button class="drawer__alt" type="button" data-quote-share title="Aynı listeyi satın almaya ya da bir arkadaşınıza bağlantı olarak gönderin"><Icon name="share" /> Listeyi paylaş</button>
     </div>
-    <p class="drawer__legal">Bu bir sipariş değil; mesaj WhatsApp’ta açılır, göndermeden önce değiştirebilirsiniz. Konum dahil hiçbir bilgiyi biz kaydetmiyoruz. <a href="/kvkk">KVKK aydınlatma metni</a></p>
+    <p class="drawer__legal">Bu bir sipariş değil. Mesaj WhatsApp’ta açılır, göndermeden önce değiştirebilirsiniz. Konum dahil hiçbir bilgiyi kaydetmiyoruz. <a href="/kvkk">KVKK aydınlatma metni</a></p>
   </div>
 </aside>
