@@ -134,12 +134,24 @@ void main(){ vec2 p = vUv - 0.5; float r = length(p) * 2.0; float a = atan(p.x, 
   gl_FragColor = vec4(c * pulse, band * (fill * 0.95 + 0.12) * uA);
 }`;
 const ZIF_SCALE = 1.55;
+const SIL_VERT = `varying vec3 vN; varying vec3 vV; varying float vY;
+void main(){ vec4 wp = modelMatrix * vec4(position, 1.0); vY = wp.y; vec4 mv = viewMatrix * wp; vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`;
+const SIL_FRAG = `uniform vec3 uRim; uniform float uFade; uniform float uTime; varying vec3 vN; varying vec3 vV; varying float vY;
+void main(){
+  if (vY < 0.07) discard; // zemine değen alt kenar: çizgi yalnızca gerçekten örtülünce görünsün
+  float f = 1.0 - abs(dot(normalize(vN), normalize(vV))), rim = pow(f, 2.2), pulse = 0.88 + 0.12 * sin(uTime * 4.0);
+  vec3 c = mix(vec3(0.62, 0.55, 1.0), uRim, 0.45) * (0.45 + 1.7 * rim) * pulse;
+  gl_FragColor = vec4(c, (0.22 + 0.68 * rim) * uFade);
+}`;
 class Zifir {
   constructor() {
     this.g = new THREE.Group(); this.k = new THREE.Group(); this.k.scale.setScalar(ZIF_SCALE); this.g.add(this.k); this.body = new THREE.Group(); this.k.add(this.body);
     this.u = { uTime: U.uTime, uWob: { value: 0.5 }, uBurn: { value: 0 }, uRim: { value: new THREE.Color(SKINS[Save.data.skin]?.c || SKINS[0].c) }, uSunDir: { value: new THREE.Vector3(0, 1, 0) }, uSunCol: { value: new THREE.Color(1, 0.9, 0.7) }, uLit: { value: 0 }, uFade: { value: 1 } };
     this.blob = new THREE.Mesh(new THREE.SphereGeometry(0.3, 40, 28), new THREE.ShaderMaterial({ vertexShader: ZIF_VERT, fragmentShader: ZIF_FRAG, uniforms: this.u }));
     this.blob.position.y = 0.3; this.body.add(this.blob);
+    // bir şeyin arkasında kalınca (kemer çatısı, kule, bulut) ince parlak dış çizgisi görünür; dünya nesneleri opak kalır
+    this.sil = new THREE.Mesh(this.blob.geometry, new THREE.ShaderMaterial({ vertexShader: SIL_VERT, fragmentShader: SIL_FRAG, uniforms: { uRim: this.u.uRim, uFade: this.u.uFade, uTime: U.uTime }, transparent: true, depthWrite: false, depthFunc: THREE.GreaterDepth }));
+    this.sil.position.y = 0.3; this.sil.scale.setScalar(1.035); this.sil.renderOrder = 30; this.body.add(this.sil);
     // gözler
     const eyeM = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.2, 2.15, 2.0) });
     const pupM = new THREE.MeshBasicMaterial({ color: 0x050308 });

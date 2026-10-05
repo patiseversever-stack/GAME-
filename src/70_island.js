@@ -1022,12 +1022,8 @@ class IslandView {
     for (const pr of lv.props) if (pr.rotor) pr.rotor.rotation.z = -(pr.mover.a0 + pr.mover.w * t);
     for (const mv of this.moverViews) {
       moverPose(mv.m, t, _mp); mv.v.position.set(_mp.x, _mp.y, _mp.z);
-      // Zifir'i örtüyorsa saydamlaş
-      const fade = ctx.occludeFade(mv.v.position, mv.m.kind === 'cloud' ? 4.0 : 2.4);
-      const op = lerp(mv.m.kind === 'cloud' ? 0.88 : 1, mv.m.kind === 'cloud' ? 0.2 : 0.35, fade);
-      if (mv.m.kind === 'cloud') mv.v.userData.mat.opacity = op;
-      else {
-        for (const m of mv.v.userData.mats) m.opacity = op;
+      // bulut/balon adanın arka tarafında dolaşır (üretimde): yolu örtmez, saydamlaştırılmaz
+      if (mv.m.kind !== 'cloud') {
         const ud = mv.v.userData; ud.nextBurn -= dt;
         if (ud.nextBurn < 0) { ud.nextBurn = 3 + Math.random() * 6; ud.burn = 0.9; if (ctx.near(mv.v.position)) audio.burner(); }
         ud.burn = Math.max(0, (ud.burn || 0) - dt); ud.flame.material.opacity = ud.burn > 0 ? 0.6 + Math.random() * 0.4 : 0;

@@ -2,26 +2,7 @@
 /* =====================================================================
    GÜNCELLEME DÖNGÜSÜ
    ===================================================================== */
-const _pa = new THREE.Vector3(), _pb = new THREE.Vector3();
-const _pc = {};
 const viewCtx = {
-  // bulut/balon Zifir'i ya da önündeki yolu (3,5 m'ye kadar) örtüyorsa saydamlaşır: oyuncu ilerisini görebilsin
-  occludeFade(pos, r) {
-    if (!zifir.g.visible) return 0;
-    const lv = G.lv, dObj = camera.position.distanceTo(pos), rs = r / dObj / Math.tan(deg(camera.fov / 2));
-    _pa.copy(pos).project(camera);
-    let best = 0;
-    for (const ahead of [0, 1.5, 3.5]) {
-      let x = zifir.g.position.x, z = zifir.g.position.z;
-      if (ahead && lv) { pathAt(lv.path, Math.min(lv.length, G.s + ahead), _pc); x = _pc.x; z = _pc.z; }
-      _pb.set(x, 0.3, z);
-      if (dObj > camera.position.distanceTo(_pb) - 0.5) continue;
-      _pb.project(camera);
-      const d = Math.hypot((_pa.x - _pb.x) * camera.aspect, _pa.y - _pb.y);
-      best = Math.max(best, (1 - smoothstep(rs * 0.6, rs * 1.25, d)) * (ahead ? 0.85 : 1));
-    }
-    return best;
-  },
   near(pos) { return camera.position.distanceTo(pos) < 48; },
   dim() { return Math.max(G.night, G.ecl.amt); },
 };

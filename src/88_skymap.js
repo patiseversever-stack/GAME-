@@ -422,4 +422,4 @@ const SkyMap = {
   },
   resize(w, h) { mapCam.aspect = w / h; mapCam.updateProjectionMatrix(); },
 };
-const MAP_CTX = { occludeFade: () => 0.45, near: () => false, dim: () => 0.15 };
+const MAP_CTX = { near: () => false, dim: () => 0.15 };

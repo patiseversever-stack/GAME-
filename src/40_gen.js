@@ -573,7 +573,9 @@ function generateLevel(spec, attempt = 0) {
     const x = ch.cx + rng.range(-ch.hx, ch.hx), z = ch.cz + rng.range(-ch.hz, ch.hz);
     const type = rng.weighted(set.deco), fr = propFootprint(type);
     if (!okSpot(x, z, fr, 1.6)) continue;
-    placed.push(makeProp(type, x, z, rng.range(0, TAU), rng)); k++;
+    const pr = makeProp(type, x, z, rng.range(0, TAU), rng);
+    if (hidesPath(lv, pr.cols)) continue; // kameradan yolu gizlemesin
+    placed.push(pr); k++;
   }
   // uzak manzara: yoldan uzak büyük proplar (adayı doldurur)
   for (let k = 0, tries = 0; k < 4 && tries < 120; tries++) {
@@ -581,7 +583,9 @@ function generateLevel(spec, attempt = 0) {
     const x = ch.cx + rng.range(-ch.hx, ch.hx), z = ch.cz + rng.range(-ch.hz, ch.hz);
     const type = rng.weighted(shadeTypes), fr = propFootprint(type);
     if (!okSpot(x, z, fr, 2.8)) continue;
-    placed.push(makeProp(type, x, z, rng.range(0, TAU), rng)); k++;
+    const pr = makeProp(type, x, z, rng.range(0, TAU), rng);
+    if (hidesPath(lv, pr.cols)) continue; // manzara nesnesi yolun önüne düşmesin
+    placed.push(pr); k++;
   }
 
   // ---- bulutlar / balonlar ----
@@ -591,7 +595,7 @@ function generateLevel(spec, attempt = 0) {
     for (let k = 0; k < cnt; k++) {
       const vx = dir * rng.range(0.42, 0.62);
       const crossT = rng.range(0.1, 0.9) * T; // ada üzerinden geçiş zamanı
-      const z0 = rng.range(-7, 7);
+      const z0 = rng.range(-10, -3.5); // arka taraf: gölgesi kameraya doğru adaya düşer, gövdesi yolu örtmez
       const m = { kind: 'cloud', x0: -vx * crossT + rng.range(-3, 3), y0: rng.range(6.8, 8.4), z0, vx, ph: rng.range(0, TAU), parts: [] };
       const R = rng.range(1.5, 2.0);
       const puffs = [[0, 0, 0, R, 0.62], [R * 0.85, -0.15, rng.range(-0.4, 0.4), R * 0.72, 0.6], [-R * 0.85, -0.12, rng.range(-0.4, 0.4), R * 0.75, 0.6]];
@@ -605,7 +609,7 @@ function generateLevel(spec, attempt = 0) {
     for (let k = 0; k < cnt; k++) {
       const vx = rng.sign() * rng.range(0.22, 0.42);
       const crossT = ((k + rng.range(0.1, 0.9)) / cnt) * T;
-      const m = { kind: 'balloon', x0: -vx * crossT + rng.range(-2, 2), y0: rng.range(4.6, 8.6), z0: rng.range(-8, 6), vx, w: rng.range(0.4, 0.7), amp: rng.range(0.25, 0.5), ph: rng.range(0, TAU), parts: [], look: k };
+      const m = { kind: 'balloon', x0: -vx * crossT + rng.range(-2, 2), y0: rng.range(4.6, 8.6), z0: rng.range(-9.5, -3), vx, w: rng.range(0.4, 0.7), amp: rng.range(0.25, 0.5), ph: rng.range(0, TAU), parts: [], look: k };
       m.parts.push({ dx: 0, dy: 0.15, dz: 0, c: cSphere(0, 0, 0, 1.25, 1.12) });
       m.parts.push({ dx: 0, dy: -1.65, dz: 0, c: cSphere(0, 0, 0, 0.32, 0.8) });
       lv.movers.push(m);
@@ -707,18 +711,42 @@ function makeArch(type, PA, rng) {
   return pr;
 }
 // yol noktası s'yi, güneş u'dayken gölgeleyecek bir prop yerleştir (which: 1 ya da 2. güneş)
+// Görüş: oyun kamerası adanın önünde, yukarıda durur (ekran oranına göre z≈14–20). Kameradan yola bakan çizgiyi
+// kesen nesneler yolu ve Zifir'i gizler; yerleştirmede bu çizgiler korunur.
+const VIEW_CAMS = [{ x: 0, y: 30, z: 14 }, { x: 0, y: 30, z: 20 }];
+function hidesPath(lv, cols, maxHidden = 1) {
+  if (!cols || !cols.length) return false;
+  const P = {}, D = {};
+  let hidden = 0;
+  for (let s = 0.3; s < lv.length - 0.2; s += 0.3) {
+    pathAt(lv.path, s, P);
+    for (const C of VIEW_CAMS) {
+      D.x = C.x - P.x; D.y = C.y - 0.2; D.z = C.z - P.z; const n = Math.hypot(D.x, D.y, D.z); D.x /= n; D.y /= n; D.z /= n;
+      if (occluded(cols, P.x, 0.2, P.z, D, -1)) { hidden++; break; }
+    }
+    if (hidden > maxHidden) return true;
+  }
+  return false;
+}
 function placeShadeFor(lv, s, u, type, rng, okSpot, which = 1) {
   const PA = pathAt(lv.path, s, {});
   const L = which === 2 ? sunDirInto(1 - u, lv.sun.tilt2, lv.sun.thMin2, {}) : sunDirInto(u, lv.sun.tilt, lv.sun.thMin, {});
   const lh = Math.hypot(L.x, L.z), dx = L.x / lh, dz = L.z / lh, tanE = L.y / lh;
   const fr = propFootprint(type);
-  for (let t = 0; t < 6; t++) {
+  let alt = null;
+  for (let t = 0; t < 9; t++) {
     const dist = fr + rng.range(0.75, 1.7);
     const x = PA.x + dx * dist, z = PA.z + dz * dist;
     if (!okSpot(x, z, fr)) continue;
     const hNeed = (dist - fr * 0.4) * tanE + 0.45;
     const pr = makeProp(type, x, z, rng.range(0, TAU), rng, hNeed);
     if (pr.h < hNeed * 0.9) continue;
+    // başka bir yol şeridini kameradan gizliyorsa yedekte tut, daha iyi yer ara
+    if (hidesPath(lv, pr.cols, 2)) { if (!alt) alt = pr; continue; }
+    alt = pr; break;
+  }
+  const pr = alt;
+  if (pr) {
     lv.props.push(pr);
     if (lv.spec.features.melt && (type === 'iceSpire' || type === 'iceColumn')) makeMelt(lv, pr, s, rng);
     return pr;
@@ -950,12 +978,12 @@ function placeDrops(lv, rng) {
 // tohumdan ada: çözülemezse yeni deneme. Hikâye adaları deterministik olduğundan
 // geçerli deneme numaraları önceden bilinir (farklı JS motorlarında kayarsa
 // döngü kendiliğinden devam eder — yalnızca hızlandırmadır).
-const ATTEMPT_HINT = [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 3, 0, 0, 0, 0, 1, 0, 0, 0, 0, 56, 58, 3, 59, 1, 1, 19, 2, 1, 0, 0, 2, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 6, 1, 0, 4, 0, 0];
+const ATTEMPT_HINT = [0, 0, 1, 0, 0, 0, 0, 0, 1, 0, 0, 0, 2, 0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 10, 7, 1, 0, 1, 1, 3, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 5, 0, 4, 10, 7, 2];
 // zorluk eğrisi: 64 ada insan profilleriyle ölçülerek kalibre edildi. Yalnızca yakıcılığı ölçekler (ada düzeni değişmez);
 // sertleştirmede plan gerçek oyun hızında yine geçilebilir kalmalı, kalmıyorsa katsayı geri çekilir.
-const BURN_TUNE = [1, 0.56, 0.88, 1, 0.77, 1.24, 1, 1, 1, 0.57, 1.03, 1, 1, 1, 1, 0.93, 0.94, 0.83, 0.91, 1.14, 1.22, 0.9, 1.19, 0.76, 1, 1.18, 0.62, 0.96, 1.03, 1.45, 1.45, 1.08, 0.61, 0.63, 0.5, 0.62, 0.51, 0.72, 0.83, 0.8, 0.69, 1.22, 1, 0.87, 0.6, 1.15, 0.96, 0.79, 1.3, 1.05, 1, 1.35, 0.74, 1.06, 1, 0.96, 1.34, 1.04, 1.1, 0.75, 0.69, 1.1, 1, 1];
+const BURN_TUNE = [0.66, 0.72, 0.67, 1.07, 0.71, 1.45, 0.92, 0.77, 1, 1.09, 1.03, 1.06, 1.22, 1.08, 1.45, 1.01, 1.1, 0.67, 1.41, 1.41, 0.77, 1.45, 0.9, 1.15, 1, 1.18, 0.62, 0.5, 0.97, 1.45, 1.45, 1.16, 0.61, 0.5, 0.7, 0.73, 0.57, 0.8, 0.9, 0.64, 0.82, 0.94, 1.07, 0.96, 0.5, 1.33, 1.04, 1.0, 1.3, 0.65, 1, 1.09, 0.94, 1.45, 1.45, 0.89, 1.39, 0.54, 0.5, 0.67, 0.55, 0.94, 1.07, 1];
 function tuneBurn(lv) {
-  if (lv.spec.kind !== 'story') return;
+  if (lv.spec.kind !== 'story' || !lv.solution) return; // harita önizlemesi (visualOnly) çözümsüzdür
   const b0 = lv.burn; let k = BURN_TUNE[lv.spec.g] || 1;
   lv.burn = b0 * k;
   while (k > 1 && playbackMin(lv, lv.solution) < 0.14) { k = Math.max(1, k - 0.03); lv.burn = b0 * k; }
