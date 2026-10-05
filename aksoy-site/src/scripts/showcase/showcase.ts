@@ -316,6 +316,7 @@ export async function startShowcase(
 
   /* ---------- Kaydırma ---------- */
   let progress = 0;
+  let updateReelRef: (() => void) | null = null;
   const st = ScrollTrigger.create({
     trigger: root,
     start: 'top top',
@@ -333,6 +334,7 @@ export async function startShowcase(
         enter(k, dir);
       }
       if (hudBar) hudBar.style.transform = `scaleX(${progress})`;
+      updateReelRef?.();
       if (hint) hint.style.opacity = progress > 0.01 ? '0' : '';
     },
   });
@@ -375,6 +377,119 @@ export async function startShowcase(
   }, { passive: true });
   addEventListener('touchstart', () => { touching = true; clearTimeout(snapTimer); }, { passive: true });
   addEventListener('touchend', () => { touching = false; clearTimeout(snapTimer); snapTimer = window.setTimeout(doSnap, 160); }, { passive: true });
+
+  /* ---------- Film kontrolü: zaman çizelgesi, oynat, sonraki ---------- */
+  const reelEl = root.querySelector<HTMLElement>('[data-reel]');
+  const segBtns = Array.from(root.querySelectorAll<HTMLButtonElement>('[data-reel-seg]'));
+  const segFill = segBtns.map((b) => b.querySelector<HTMLElement>('b'));
+  const nextBtn = root.querySelector<HTMLButtonElement>('[data-reel-next]');
+  const nextLabel = root.querySelector<HTMLElement>('[data-reel-next-label]');
+  const playBtn = root.querySelector<HTMLButtonElement>('[data-reel-play]');
+  const prevBtn = root.querySelector<HTMLButtonElement>('[data-reel-prev]');
+  // Her sahnenin film süresi (sn): aksiyon zaman çizelgesiyle uyumlu, gerçek zamanlı akış
+  const FILM = [3.0, 7.2, 6.0, 4.2, 4.8, 3.4];
+  const easeFilm = (t: number) => -(Math.cos(Math.PI * t) - 1) / 2;
+  const yAt = (raw: number) => st.start + (st.end - st.start) * (raw / N);
+  let anim: { cancel(): void } | null = null;
+  let autoplay = false;
+  let programmatic = false;
+
+  function cancelAnim() {
+    anim?.cancel();
+    anim = null;
+    programmatic = false;
+  }
+  function animateScroll(y: number, dur: number, done?: () => void) {
+    cancelAnim();
+    programmatic = true;
+    if (lenis) {
+      (lenis as any).scrollTo(y, { duration: dur, easing: easeFilm, force: true, onComplete: () => { anim = null; programmatic = false; done?.(); } });
+      anim = { cancel: () => { (lenis as any).scrollTo(scrollY, { immediate: true, force: true }); } };
+    } else {
+      const y0 = scrollY, t0 = performance.now();
+      let id = 0;
+      const step = (now: number) => {
+        const t = Math.min(1, (now - t0) / (dur * 1000));
+        window.scrollTo(0, y0 + (y - y0) * easeFilm(t));
+        if (t < 1) id = requestAnimationFrame(step);
+        else { anim = null; programmatic = false; done?.(); }
+      };
+      id = requestAnimationFrame(step);
+      anim = { cancel: () => cancelAnimationFrame(id) };
+    }
+  }
+  function setPlaying(on: boolean) {
+    autoplay = on;
+    reelEl?.classList.toggle('is-playing', on);
+    playBtn?.setAttribute('aria-pressed', String(on));
+    playBtn?.setAttribute('aria-label', on ? 'Filmi duraklat' : 'Filmi oynat');
+    if (!on) cancelAnim();
+  }
+  function current() {
+    const raw = st.progress * N;
+    const k = Math.min(N - 1, Math.floor(raw));
+    return { raw, k, l: raw - k };
+  }
+  /** Sahne k'yı baştan sona film gibi oynatır */
+  function playScene(k: number, done?: () => void) {
+    const { raw } = current();
+    const end = Math.min(N - 0.0001, k + 0.94);
+    const startRaw = k + 0.02;
+    // Uzaktaysak önce sahnenin başına süzül, sonra sahneyi gerçek zamanlı oynat
+    if (Math.abs(raw - startRaw) > 0.35 && raw < startRaw) {
+      animateScroll(yAt(startRaw), Math.min(2.2, 0.9 + (startRaw - raw) * 0.6), () => animateScroll(yAt(end), FILM[k] * (end - startRaw) / 0.92, done));
+    } else if (raw > end) {
+      animateScroll(yAt(startRaw), 1.4, () => animateScroll(yAt(end), FILM[k], done));
+    } else {
+      const frac = Math.max(0.15, (end - raw) / 0.92);
+      animateScroll(yAt(end), FILM[k] * frac, done);
+    }
+  }
+  function next() {
+    const { k, l } = current();
+    if (k >= N - 1 && l > 0.6) {
+      setPlaying(false);
+      animateScroll(st.end + innerHeight * 0.85, 1.6);
+      return;
+    }
+    const target = l < 0.12 && k > 0 ? k : Math.min(N - 1, k + 1);
+    playScene(target);
+  }
+  function prev() {
+    const { k, l } = current();
+    const target = l > 0.3 ? k : Math.max(0, k - 1);
+    animateScroll(yAt(target === 0 ? 0 : target + 0.02), 1.6);
+  }
+  function playAll() {
+    const step = () => {
+      if (!autoplay) return;
+      const { k, l } = current();
+      if (k >= N - 1 && l > 0.85) { setPlaying(false); return; }
+      const target = l > 0.85 ? k + 1 : k === 0 && l < 0.02 ? 1 : l < 0.12 ? k : k + 1;
+      playScene(Math.min(N - 1, target), () => setTimeout(step, 450));
+    };
+    const { raw } = current();
+    if (raw > N - 0.2) animateScroll(yAt(0), 1.8, () => setTimeout(step, 300));
+    else step();
+  }
+  nextBtn?.addEventListener('click', () => { setPlaying(false); next(); });
+  prevBtn?.addEventListener('click', () => { setPlaying(false); prev(); });
+  playBtn?.addEventListener('click', () => { if (autoplay) setPlaying(false); else { setPlaying(true); playAll(); } });
+  segBtns.forEach((b, i) => b.addEventListener('click', () => { setPlaying(false); playScene(i); }));
+  // Kullanıcı kendisi kaydırırsa otomatik oynatma durur
+  const stopByUser = () => { if (anim || autoplay) setPlaying(false); };
+  addEventListener('wheel', stopByUser, { passive: true });
+  addEventListener('touchstart', (e) => { if (!(e.target as HTMLElement).closest('[data-reel]')) stopByUser(); }, { passive: true });
+  addEventListener('keydown', (e) => { if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', ' ', 'Home', 'End'].includes(e.key)) stopByUser(); });
+  function updateReel() {
+    const { raw, k } = current();
+    segFill.forEach((f, i) => { if (f) f.style.transform = `scaleX(${THREE.MathUtils.clamp(raw - i, 0, 1)})`; });
+    segBtns.forEach((b, i) => b.classList.toggle('is-on', i === k));
+    if (nextLabel) nextLabel.textContent = k >= N - 1 ? 'Kataloğa geç' : `Sonraki: ${CHAPTERS[k + 1]}`;
+  }
+  updateReel();
+  updateReelRef = updateReel;
+  void programmatic;
 
   /* ---------- Sahneye uygula ---------- */
   const v = new THREE.Vector3();
