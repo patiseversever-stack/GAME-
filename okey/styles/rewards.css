@@ -223,3 +223,5 @@
 .h7hero__edit svg { width: 14px; height: 14px; fill: none; stroke: currentColor; stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
 .ob input, .ob input:focus, .ob input:focus-visible { outline: none !important; box-shadow: none !important; }
 .ob-ill { position: absolute; left: 0; right: 0; bottom: 0; height: 34vh; opacity: .5; --sky-far: rgba(84, 52, 22, .85); --sky-near: #120b05; --sky-lit: #ffcc7a; --sky-water: #d89a48; -webkit-mask: linear-gradient(180deg, transparent, #000 40%); mask: linear-gradient(180deg, transparent, #000 40%); }
+/* seviye kutlaması açıkken arkadaki el sonucu tamamen kaybolur (sızma yok); kapanınca geri gelir */
+body:has(.lv2.p-in:not(.is-out)) .rs3 > * { opacity: 0; transition: opacity .4s; }
