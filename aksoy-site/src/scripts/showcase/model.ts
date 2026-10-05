@@ -8,6 +8,8 @@ export interface InsertPart {
   /** Uçun hareket eden kısmı (havalanma, dönme) */
   insert: THREE.Group;
   screw: THREE.Group;
+  /** Körelmiş kesme kenarı parıltısı (uçla birlikte döner) */
+  wear: THREE.Mesh;
   /** Havalanma yönü (yuva yerel ekseninde +Z) */
   liftForward: number;
 }
@@ -145,6 +147,14 @@ function buildInsert(mat: THREE.Material, holeMat: THREE.Material) {
   cs.rotation.x = Math.PI / 2;
   cs.position.z = th / 2 - 0.3;
   g.add(cs);
+  // Körelmiş kenar: üst yüzde tek bir kesme kenarı boyunca turuncu ısı izi
+  const wear = new THREE.Mesh(
+    new THREE.BoxGeometry(size - 1.6, 0.55, 0.2),
+    new THREE.MeshBasicMaterial({ color: 0xff6a12, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false }),
+  );
+  wear.position.set(0, size / 2 - 0.35, th / 2 + 0.05);
+  g.add(wear);
+  g.userData.wear = wear;
   return g;
 }
 
@@ -255,12 +265,13 @@ export function buildDrill(): Drill {
     seat.rotation.copy(s.rot);
     scaler.add(seat);
     const ins = new THREE.Group();
-    ins.add(buildInsert(materials.insert, materials.hole));
+    const insMesh = buildInsert(materials.insert, materials.hole);
+    ins.add(insMesh);
     seat.add(ins);
     const screw = buildScrew(materials.screw, materials.hole);
     screw.position.z = 1.9;
     seat.add(screw);
-    inserts.push({ seat, insert: ins, screw, liftForward: s.name === 'cevre' ? 1 : 0.6 });
+    inserts.push({ seat, insert: ins, screw, wear: insMesh.userData.wear, liftForward: s.name === 'cevre' ? 1 : 0.6 });
     const a = new THREE.Object3D();
     seat.add(a);
     a.position.set(0, 0, 2);

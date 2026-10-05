@@ -2,7 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import Icon from '../../components/Icon.astro';
 import PostArt from '../../components/content/PostArt.astro';
-import { posts } from '../../data/posts';
+import { posts, blogIndexNoindex } from '../../data/posts';
 import { site } from '../../data/site';
 import { breadcrumbSchema, trDate } from '../../lib/content-schema';
 import '../../styles/content.css';
@@ -11,8 +11,6 @@ const title = 'Teknik Blog: Kesici Takım Rehberleri';
 const description =
   'Torna elmas uç kodları, kesme hızı ve devir hesabı, U-matkap seçimi: CNC atölyeleri için sade, doğru ve uygulanabilir Türkçe teknik yazılar.';
 
-// Henüz yayımlanmış (taslak olmayan) yazı yoksa liste sayfası da arama motorlarına kapalı kalır.
-const allDraft = posts.every((p) => p.draft);
 const totalMinutes = posts.reduce((n, p) => n + p.readingMinutes, 0);
 const num = (i: number) => String(i + 1).padStart(2, '0');
 
@@ -30,7 +28,7 @@ const schema = [
   },
 ];
 ---
-<Base title={title} description={description} schema={schema} noindex={allDraft}>
+<Base title={title} description={description} schema={schema} noindex={blogIndexNoindex}>
   <section class="page-hero blueprint c-hero blog-hero">
     <div class="wrap">
       <nav aria-label="Sayfa konumu">

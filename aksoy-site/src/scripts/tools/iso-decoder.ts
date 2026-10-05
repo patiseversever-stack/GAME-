@@ -80,9 +80,9 @@ const IC_TOL: { ic: number; d: string; m: string }[] = [
 
 export type HoleKind = 'none' | 'cyl' | 'cs1' | 'cs2' | 'special';
 export interface HoleDef { text: string; hole: HoleKind; cs?: string; cb: 0 | 1 | 2 | null; clamp: string }
-const CLAMP_HOLE = 'Silindirik delik: levyeli (P), pim + üst pabuçlu (D) ya da üstten bağlamalı (M) katerlerde';
-const CLAMP_CS = 'Havşalı delik: vidalı (S) katerlerde';
-const CLAMP_NONE = 'Deliksiz: üst pabuçlu (C) katerlerde';
+const CLAMP_HOLE = 'Bağlama: levyeli (P), pim + pabuçlu (D) ya da üstten bağlamalı (M) kater';
+const CLAMP_CS = 'Bağlama: vidalı (S) kater';
+const CLAMP_NONE = 'Bağlama: üstten pabuçlu (C) kater';
 export const HOLE: Record<string, HoleDef> = {
   A: { text: 'Silindirik delikli, talaş kırıcısız', hole: 'cyl', cb: 0, clamp: CLAMP_HOLE },
   B: { text: 'Tek tarafı 70–90° havşalı delikli, talaş kırıcısız', hole: 'cs1', cs: '70–90°', cb: 0, clamp: CLAMP_CS },
@@ -98,7 +98,7 @@ export const HOLE: Record<string, HoleDef> = {
   T: { text: 'Tek tarafı 40–60° havşalı delikli, tek yüzü talaş kırıcılı', hole: 'cs1', cs: '40–60°', cb: 1, clamp: CLAMP_CS },
   U: { text: 'İki tarafı 40–60° havşalı delikli, iki yüzü talaş kırıcılı', hole: 'cs2', cs: '40–60°', cb: 2, clamp: CLAMP_CS },
   W: { text: 'Tek tarafı 40–60° havşalı delikli, talaş kırıcısız', hole: 'cs1', cs: '40–60°', cb: 0, clamp: CLAMP_CS },
-  X: { text: 'Özel tasarım (üretici çizimine bakın)', hole: 'special', cb: null, clamp: 'Üretici kataloğuna bakın' },
+  X: { text: 'Özel tasarım (üretici çizimine bakın)', hole: 'special', cb: null, clamp: 'Bağlama: üretici kataloğuna bakın' },
 };
 
 /** Kalınlık kodları (mm) — inç kökenli standart kalınlıklar */
@@ -347,6 +347,9 @@ export function decode(input: string): Decoded {
   };
   take(5, /^\d\d$/, /^\d$/);
   take(6, /^(\d\d|T\d|S1)$/, /^[\dTS]$/);
+  // Sık yazım hatası: M0 (sıfır) yerine MO (O harfi)
+  const moTypo = compact.slice(i, i + 2) === 'MO';
+  if (moTypo) compact = `${compact.slice(0, i)}M0${compact.slice(i + 2)}`;
   take(7, /^(\d\d|M0|[ADEFPZ][ABCDEFGNPZ])$/, /^[\dMADEFPZ]$/);
   let rest = compact.slice(i);
   const coreOk = [1, 2, 3, 4, 5, 6, 7].every((p) => T[p].state === 'ok');
@@ -456,7 +459,7 @@ export function decode(input: string): Decoded {
   else if (!HOLE[t4.code]) row(4, t4.code, 'Tanınmayan tip harfi', 'error', undefined, `“${t4.code}” geçerli değil. Geçerli harfler: ${list(HOLE)}.`);
   else {
     out.hole = HOLE[t4.code];
-    row(4, t4.code, HOLE[t4.code].text, t4.code === 'X' ? 'warn' : 'ok', HOLE[t4.code].clamp);
+    row(4, t4.code, HOLE[t4.code].text, t4.code === 'X' ? 'warn' : 'ok', undefined, `${HOLE[t4.code].clamp}.`);
   }
 
   rows.push(...rows5);
@@ -485,7 +488,8 @@ export function decode(input: string): Decoded {
   else if (t7.state === 'bad') row(7, t7.code, 'Geçersiz', 'error', undefined, 'Köşe kodu iki rakam (ör. 08), M0 ya da iki harfli silici kenar kodu (ör. PD, AF) olmalı.');
   else if (t7.code === 'M0') {
     out.radius = null;
-    if (shape === 'R' || !shape) row(7, 'M0', 'Yuvarlak uç (metrik) — köşe radyüsü yok', 'ok', '—');
+    if (moTypo) row(7, 'M0', 'Yuvarlak uç (metrik) — köşe radyüsü yok', 'warn', '—', '“MO” (O harfi) yazılmış; ISO kodunda bu konum “M0” (sıfır) olur.');
+    else if (shape === 'R' || !shape) row(7, 'M0', 'Yuvarlak uç (metrik) — köşe radyüsü yok', 'ok', '—');
     else row(7, 'M0', 'Yuvarlak uç kodu', 'warn', '—', 'M0 yalnızca yuvarlak (R) uçlarda kullanılır; şekil harfini kontrol edin.');
   } else if (/^\d\d$/.test(t7.code)) {
     const r = Number(t7.code) / 10;
@@ -509,7 +513,7 @@ export function decode(input: string): Decoded {
   if (p8) row(8, p8, EDGE[p8], 'ok');
   else row(8, '', 'Belirtilmemiş (isteğe bağlı)', 'none');
   // 9 — kesme yönü (isteğe bağlı)
-  if (p9) row(9, p9, HAND[p9], 'ok', p9 === 'N' ? 'Her iki yönde' : `${HAND[p9]} el`);
+  if (p9) row(9, p9, p9 === 'N' ? 'Nötr — sağ ve sol el' : `${HAND[p9]} el`, 'ok');
   else row(9, '', 'Belirtilmemiş (isteğe bağlı)', 'none');
 
   // 10 — üretici eki
@@ -540,10 +544,6 @@ export function decode(input: string): Decoded {
   out.display = `${letters}${nums ? ` ${nums}` : ''}${p8}${p9}${out.chip ? `-${out.chip}` : ''}${out.grade ? ` ${out.grade}` : ''}`.trim();
 
   // Mesajlar
-  if (special && !out.complete) {
-    out.special = special;
-    out.messages.unshift({ type: 'info', text: special });
-  }
   const firstErr = rows.find((r) => r.status === 'error');
   if (firstErr) out.messages.push({ type: 'error', text: `${firstErr.pos}. konum (${firstErr.title.toLowerCase()}): ${firstErr.hint ?? firstErr.meaning}` });
   else {
@@ -552,5 +552,10 @@ export function decode(input: string): Decoded {
   }
   const warn = rows.filter((r) => r.status === 'warn' && r.hint);
   for (const w of warn) out.messages.push({ type: 'warn', text: `${w.pos}. konum: ${w.hint}` });
+  if (special && !out.complete) {
+    // ISO dışı kod: yalnızca yönlendirme mesajı; konum hataları kafa karıştırmasın.
+    out.special = special;
+    out.messages = [{ type: 'info', text: special }];
+  }
   return out;
 }

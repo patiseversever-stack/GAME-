@@ -1,5 +1,6 @@
 import { defineConfig } from 'astro/config';
 import sitemap from '@astrojs/sitemap';
+import { noindexPaths } from './src/data/posts.ts';
 
 // Önizleme adresi. Kendi alan adı alınınca burası değişecek.
 const SITE = process.env.SITE_URL || 'https://aksoy-kesici-takimlar.vercel.app';
@@ -11,7 +12,7 @@ export default defineConfig({
   cacheDir: process.env.ASTRO_CACHE_DIR || './node_modules/.astro',
   trailingSlash: 'never',
   devToolbar: { enabled: false },
-  integrations: [sitemap()],
+  integrations: [sitemap({ filter: (page) => !noindexPaths.includes(new URL(page).pathname.replace(/\/$/, '')) })],
   vite: {
     build: { assetsInlineLimit: 2048 },
   },

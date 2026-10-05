@@ -33,13 +33,13 @@ export const OPS: { id: Op; label: string; short: string }[] = [
   { id: 'kilavuz', label: 'Kılavuz', short: 'Kılavuz' },
 ];
 
-export const ISO_GROUPS: { g: Iso; name: string; ex: string }[] = [
-  { g: 'P', name: 'Çelik', ex: 'St37, C45, 42CrMo4, 16MnCr5' },
-  { g: 'M', name: 'Paslanmaz', ex: '304, 316L, dubleks' },
-  { g: 'K', name: 'Dökme demir', ex: 'GG25, GGG40 (sfero)' },
-  { g: 'N', name: 'Demir dışı', ex: 'Alüminyum, bakır, pirinç' },
-  { g: 'S', name: 'Süper alaşım', ex: 'Inconel, titanyum (Ti6Al4V)' },
-  { g: 'H', name: 'Sertleştirilmiş', ex: '45–65 HRC çelik' },
+export const ISO_GROUPS: { g: Iso; name: string; short: string; ex: string }[] = [
+  { g: 'P', name: 'Çelik', short: 'Çelik', ex: 'St37, C45, 42CrMo4, 16MnCr5' },
+  { g: 'M', name: 'Paslanmaz', short: 'Paslanmaz', ex: '304, 316L, dubleks' },
+  { g: 'K', name: 'Dökme demir', short: 'Döküm', ex: 'GG25, GGG40 (sfero)' },
+  { g: 'N', name: 'Demir dışı', short: 'Demir dışı', ex: 'Alüminyum, bakır, pirinç' },
+  { g: 'S', name: 'Süper alaşım', short: 'Süper alaşım', ex: 'Inconel, titanyum (Ti6Al4V)' },
+  { g: 'H', name: 'Sertleştirilmiş', short: 'Sertleşmiş', ex: '45–65 HRC çelik' },
 ];
 
 export const TOOL_LABEL: Record<Op, Record<ToolMat, string>> = {

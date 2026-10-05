@@ -63,9 +63,16 @@
 .table-wrap:focus-visible { outline-offset: 2px; }
 .prose .table-wrap table { margin: 0; }
 .prose .table-wrap table.t-wide { min-width: 560px; }
+/* Mobilde satır kartları */
 @media (max-width: 640px) {
-  .prose .table-wrap table.t-stick :is(tbody th, thead th:first-child) { position: sticky; left: 0; z-index: 1; min-width: 8.5em; box-shadow: 1px 0 0 var(--paper-line); }
-  .prose .table-wrap table.t-stick tbody th { background: #fff; }
+  .prose .table-wrap table.t-cards { min-width: 0; display: block; }
+  .prose .t-cards thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .prose .t-cards tbody, .prose .t-cards tr, .prose .t-cards caption { display: block; }
+  .prose .t-cards tr { padding: 14px 16px; border-bottom: 1px solid var(--paper-line); }
+  .prose .t-cards tbody tr:hover > * { background: none; }
+  .prose .table-wrap .t-cards tbody th { display: block; padding: 0 0 8px; border: 0; font-size: var(--fs-sm); font-weight: 600; }
+  .prose .table-wrap .t-cards td { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: 12px; padding: 5px 0; border: 0; font-size: var(--fs-sm); }
+  .prose .t-cards td::before { content: attr(data-label); font: 500 10.5px/1.5 var(--f-mono); letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-3); }
 }
 .prose .table-wrap th, .prose .table-wrap td { padding: 11px 14px; vertical-align: top; line-height: 1.45; }
 .prose .table-wrap thead th { background: var(--paper-2); border-bottom: 1px solid var(--paper-line); line-height: 1.35; vertical-align: bottom; }
@@ -211,6 +218,7 @@
 .article-body section:first-of-type h2 { margin-top: 1.6em; }
 .article-body section > * + * { margin-top: 1.1em; }
 .article-body blockquote { color: var(--ink-2); font-size: var(--fs-sm); }
+.article-body code { white-space: nowrap; }
 
 /* Formül ve örnek kutuları */
 .formula {
@@ -448,6 +456,7 @@ a.sheet__value:hover { color: var(--tin-lo); }
   .legal-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 @media (max-width: 560px) {
+  .blog-hero h1 { font-size: clamp(2.1rem, 1.2rem + 4.2vw, 2.6rem); }
   .legal-summary { grid-template-columns: 1fr; }
   .legal-summary > div { grid-template-columns: auto minmax(0, 1fr); column-gap: 14px; }
   .legal-summary svg { grid-row: span 2; }

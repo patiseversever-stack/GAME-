@@ -1,5 +1,5 @@
 // Kesme hızı hesaplayıcısı — tarayıcı tarafı. Hesap ve HTML üretimi cutting-calc.ts’te (saf, test edilir).
-import { OPS, TOOL_LABEL, VC, isRange, midVc } from './cutting-data';
+import { OPS, TOOL_LABEL, VC, ISO_GROUPS, isRange, midVc } from './cutting-data';
 import type { Op, Iso, ToolMat } from './cutting-data';
 import { FIELDS, compute, resultsHtml, notesHtml, suggestHtml, toSlider, fromSlider, sugAxis } from './cutting-calc';
 import type { Mode, FieldDef, CalcOutput } from './cutting-calc';
@@ -62,8 +62,10 @@ function init(root: HTMLElement) {
   }
 
   /* ---------------- öneri */
+  /** Öneri çubuğundaki işaret: gerçekte uygulanan kesme hızı (tezgâh sınırı dahil). */
   function currentVc(): number {
     const out = state.last;
+    if (out && out.vcEff > 0) return out.vcEff;
     if (state.mode[state.op] === 'vc2n') return parseNum(inputOf(state.op, 'vc').value);
     return out ? out.results[0].value : NaN;
   }
@@ -127,6 +129,8 @@ function init(root: HTMLElement) {
     $('[data-dock-u]').textContent = p.unit;
     $('[data-dock-s]').textContent = s ? `${s.sym} ${s.text} ${s.unit}` : '';
 
+    updateShare(out);
+
     if (announce) {
       live.textContent = out.results
         .filter((r) => r.text !== '—')
@@ -134,6 +138,36 @@ function init(root: HTMLElement) {
         .join(', ');
     }
   }
+
+  /* ---------------- paylaşım: kopyala ve WhatsApp */
+  const waBtn = root.querySelector<HTMLAnchorElement>('[data-wa-calc]');
+  const WA_NUMBER = (waBtn?.href.match(/wa\.me\/(\d+)/) ?? [])[1] ?? '';
+  function summary(out: CalcOutput): string {
+    const op = state.op;
+    const g = ISO_GROUPS.find((x) => x.g === state.iso)!;
+    const v = readValues(op);
+    const inputs = FIELDS[op]
+      .filter((f) => (!f.mode || f.mode === state.mode[op]) && Number.isFinite(v[f.key]) && v[f.key] > 0)
+      .map((f) => `${f.sym === 'nmax' ? 'nmax' : f.sym} ${fmt(v[f.key])} ${f.unit}`)
+      .join(' · ');
+    const res = out.results.filter((r) => r.text !== '—').map((r) => `${r.sym} ${r.text} ${r.unit}`).join(' · ');
+    return `${OPS.find((o) => o.id === op)!.label} · ${state.iso} ${g.name} · ${TOOL_LABEL[op][state.tool[op]]}\n${inputs}\n→ ${res}`;
+  }
+  function updateShare(out: CalcOutput) {
+    if (!waBtn || !WA_NUMBER) return;
+    const text = `Merhaba Aksoy Kesici Takımlar, kesme hızı hesaplayıcısından geliyorum. Bu iş için kesici takım önerisi ve teklif rica ediyorum:\n${summary(out)}`;
+    waBtn.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
+  }
+  root.querySelector('[data-copy]')?.addEventListener('click', async () => {
+    if (!state.last) return;
+    const toast = (window as any).__toast as ((m: string) => void) | undefined;
+    try {
+      await navigator.clipboard.writeText(summary(state.last));
+      toast?.('Sonuç panoya kopyalandı');
+    } catch {
+      toast?.('Kopyalanamadı — metni elle seçin');
+    }
+  });
 
   /* ---------------- işlem sekmeleri */
   const hashFor: Record<Op, string> = { torna: 'tornalama', freze: 'frezeleme', delme: 'delme', kilavuz: 'kilavuz' };
@@ -278,7 +312,8 @@ function init(root: HTMLElement) {
     let inputsVisible = false;
     let outVisible = false;
     const sync = () => dock.toggleAttribute('data-hidden', outVisible || !inputsVisible);
-    new IntersectionObserver(([e]) => { outVisible = e.isIntersecting; sync(); }, { threshold: 0.15 }).observe(outWrap);
+    // Sonuç sütununun üstü ekranın alt çeyreğini geçince şerit gizlenir.
+    new IntersectionObserver(([e]) => { outVisible = e.isIntersecting; sync(); }, { rootMargin: '0px 0px -28% 0px' }).observe(outWrap);
     new IntersectionObserver(([e]) => { inputsVisible = e.isIntersecting; sync(); }, { rootMargin: '-30% 0px 0px 0px' }).observe($('.calc-in'));
   }
 

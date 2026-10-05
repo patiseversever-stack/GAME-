@@ -1,0 +1,243 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import ToolHero from '../../components/tools/ToolHero.astro';
+import ToolFaq from '../../components/tools/ToolFaq.astro';
+import ToolCta from '../../components/tools/ToolCta.astro';
+import { decode, SHAPES, CLEARANCE, TOL, HOLE, THICK, EDGE, HAND, FACET_KR, STD_IC, sizeCodeFor } from '../../scripts/tools/iso-decoder';
+import { tilesHtml, rowsHtml, messagesHtml, factsHtml, topSvg, sideSvg } from '../../scripts/tools/iso-render';
+import { fmtFixed } from '../../scripts/tools/format';
+import { breadcrumbSchema, faqSchema, toolSchema } from '../../scripts/tools/seo';
+import type { Qa } from '../../scripts/tools/seo';
+import { products } from '../../data/products';
+import { waLink } from '../../data/site';
+import '../../styles/tools.css';
+
+const path = '/teknik-araclar/iso-uc-kodu-cozucu';
+const title = 'ISO Kesici Uç Kodu Çözücü (CNMG, DCMT, WNMG…)';
+const description =
+  'CNMG 120408 gibi torna ve freze elmas uç kodlarını ISO 1832’ye göre harf harf çözün: uç şekli, boşluk açısı, tolerans, delik tipi, boyut, kalınlık ve köşe radyüsü. ANSI kodlarını da çevirir.';
+const crumbs = [
+  { name: 'Ana sayfa', path: '/' },
+  { name: 'Teknik Araçlar', path: '/teknik-araclar' },
+  { name: 'ISO Uç Kodu Çözücü', path },
+];
+
+const example = 'CNMG 120408-MA';
+const d0 = decode(example);
+const examples = ['CNMG 120408-MA', 'DCMT 11T304', 'WNMG 080408', 'TNMG 160408', 'VBMT 160404', 'CCGT 09T302', 'RCMT 10T3M0', 'APMT 1604PDER', 'SEKN 1203AFTN', 'CNMG 432'];
+
+// Katalogdaki uçlar: 1–7. konumlar (MO → M0 düzeltilerek) ile eşleşme
+const catalog = products
+  .filter((p) => p.drawing === 'insert')
+  .map((p) => {
+    const dd = decode(p.code);
+    return { k: dd.complete ? dd.rows.filter((r) => r.pos <= 7).map((r) => r.code).join('') : '', slug: p.slug, code: p.code };
+  })
+  .filter((x) => x.k);
+const hits0 = catalog.filter((c) => c.k === 'CNMG120408');
+
+const faq: Qa[] = [
+  {
+    q: 'CNMG 120408 ne demek?',
+    a: '<b>C</b> 80° eşkenar dörtgen, <b>N</b> 0° boşluk açısı (negatif uç), <b>M</b> tolerans sınıfı, <b>G</b> delikli ve iki yüzü talaş kırıcılı; <b>12</b> yaklaşık 12,9 mm kesme kenarı (IC 12,7 mm), <b>04</b> 4,76 mm kalınlık, <b>08</b> 0,8 mm köşe radyüsü. İki yüzü kullanıldığı için tipik olarak dört kesme köşesi vardır.',
+  },
+  {
+    q: 'Tireden sonraki harfler (MA, PM, -M) neyi gösterir?',
+    a: 'Talaş kırıcı geometrisinin üretici kodudur; ISO standardında tanımlı değildir. Aynı harfler farklı markalarda farklı anlama gelebilir. Kutudaki markanın talaş kırıcı tablosuna bakın; başka markadan muadilini birlikte bulabiliriz.',
+  },
+  {
+    q: 'Negatif uç ile pozitif uç arasındaki fark nedir?',
+    a: 'İkinci harf <b>N</b> ise uç negatiftir: katere eğik bağlanır, çoğunlukla iki yüzü kullanılır ve kenarı daha dayanıklıdır. <b>C</b> (7°), <b>P</b> (11°) gibi harfler pozitif uçtur: kesme kuvveti düşüktür, ince cidarlı parçalar ve iç çap işleri için uygundur; tek yüzü kullanılır.',
+  },
+  {
+    q: 'Köşe radyüsü nasıl seçilir?',
+    a: 'Büyük radyüs köşeyi güçlendirir ve aynı ilerlemede daha iyi yüzey verir, ancak titreşim eğilimini artırır. Pratik kural olarak ilerleme köşe radyüsünün yarısını geçmemelidir (0,8 mm radyüste fn ≤ 0,4 mm/dev). İnce ve uzun parçalarda 04, genel işte 08, kaba işte 12 yaygındır.',
+  },
+  {
+    q: 'ANSI (inç) kodu ile ISO kodu nasıl eşleşir?',
+    a: '<code>CNMG 432</code> = <code>CNMG 120408</code>. ANSI kodunda ilk rakam iç teğet daireyi 1/8 inç, ikincisi kalınlığı 1/16 inç, üçüncüsü köşe radyüsünü 1/64 inç cinsinden verir. Çözücüye ANSI kodunu yazarsanız ISO karşılığını gösterir.',
+  },
+];
+
+const schema = [breadcrumbSchema(Astro.site, crumbs), toolSchema(Astro.site, path, 'ISO kesici uç kodu çözücü', description), faqSchema(faq)];
+
+const icRows = STD_IC.filter((x) => [6.35, 9.525, 12.7, 15.875, 19.05, 25.4].includes(x.mm));
+const icShapes = ['C', 'D', 'S', 'T', 'V', 'W'];
+const pad = (n: number | null) => (n === null ? '—' : String(n).padStart(2, '0'));
+const radii = ['00', '02', '04', '08', '12', '16', '20', '24', '32'];
+---
+<Base title={title} description={description} schema={schema}>
+  <ToolHero
+    crumbs={crumbs}
+    eyebrow="Teknik araç 02 · ISO 1832"
+    title="ISO uç kodu çözücü"
+    lead="Kutunun üzerindeki kodu yazın; uç şeklinden köşe radyüsüne kadar her harfin ne anlama geldiğini, ölçüleriyle birlikte görün. Tornalama ve frezeleme uçları, ANSI (inç) kodları dahil."
+  >
+    <svg slot="art" class="art" viewBox="0 0 460 220" xmlns="http://www.w3.org/2000/svg">
+      <text x="10" y="22" class="t-small">ISO 1832 · DEĞİŞTİRİLEBİLİR KESİCİ UÇ</text>
+      {[
+        { x: 32, c: 'C', l: 'ŞEKİL', v: '80°' },
+        { x: 82, c: 'N', l: 'AÇI', v: '0°' },
+        { x: 132, c: 'M', l: 'TOL.', v: 'M' },
+        { x: 182, c: 'G', l: 'TİP', v: 'G' },
+        { x: 262, c: '12', l: 'BOYUT', v: '12,9' },
+        { x: 332, c: '04', l: 'KALINLIK', v: '4,76' },
+        { x: 410, c: '08', l: 'KÖŞE', v: 'R0,8' },
+      ].map((g, i) => {
+        const w = g.c.length === 1 ? 26 : 52;
+        return (
+          <g>
+            <text x={g.x} y="84" text-anchor="middle" class="t-code">{g.c}</text>
+            <line x1={g.x - w / 2} y1="98" x2={g.x + w / 2} y2="98" class="gold-ln" />
+            <line x1={g.x} y1="100" x2={g.x} y2="114" class="dim" />
+            <text x={g.x} y="130" text-anchor="middle" class="t-small">{g.l}</text>
+            <text x={g.x} y="148" text-anchor="middle" class="t-gold">{g.v}</text>
+            <text x={g.x} y="44" text-anchor="middle" class="t-small">{i + 1}</text>
+          </g>
+        );
+      })}
+      <path d="M14 168 V176 H200 V168" class="dim" />
+      <text x="107" y="196" text-anchor="middle">Geometri</text>
+      <path d="M228 168 V176 H444 V168" class="dim" />
+      <text x="336" y="196" text-anchor="middle">Ölçüler (mm)</text>
+    </svg>
+  </ToolHero>
+
+  <section class="tl-stage" aria-label="ISO uç kodu çözücü">
+    <div class="wrap">
+      <div class="tl-panel dec" data-dec data-state="complete" data-catalog={JSON.stringify(catalog)}>
+        <div class="tl-panel__bar">
+          <span>Kod çözücü · ISO 1832</span>
+          <span class="hide-sm">Boşluk, tire ve küçük harf fark etmez</span>
+        </div>
+
+        <div class="dec-top">
+          <label class="dec-label" for="dec-in">Uç kodu</label>
+          <div class="dec-field">
+            <input id="dec-in" type="text" value={example} maxlength="40" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done" placeholder="ör. CNMG 120408-MA" aria-describedby="dec-msg" data-dec-input />
+            <button class="dec-clear" type="button" aria-label="Kodu temizle" data-dec-clear><Icon name="close" /></button>
+          </div>
+          <div class="dec-ex" aria-label="Örnek kodlar">
+            <span>Örnek</span>
+            {examples.map((e) => <button type="button" class="tl-chip" data-example={e}>{e}</button>)}
+          </div>
+        </div>
+
+        <div class="dec-tiles" aria-hidden="true" data-tiles set:html={tilesHtml(d0)} />
+        <div class="dec-msg" id="dec-msg" data-msg set:html={messagesHtml(d0)} />
+
+        <div class="dec-grid" data-grid>
+          <figure class="dec-fig">
+            <div class="dec-fig__top" data-top set:html={topSvg(d0)} />
+            <div class="dec-fig__side" data-side set:html={sideSvg(d0)} />
+            <figcaption>Üstten ve yandan görünüş · temsilî, oranlar yaklaşık</figcaption>
+            <ul class="dec-facts" data-facts set:html={factsHtml(d0)} />
+          </figure>
+          <ol class="dec-rows" aria-label="Konum konum açıklama" data-rows set:html={rowsHtml(d0)} />
+        </div>
+
+        <div class="dec-actions">
+          <a class="btn btn--wa" href={waLink(`Merhaba Aksoy Kesici Takımlar, ${example} kesici uç için fiyat ve stok bilgisi rica ediyorum.`)} target="_blank" rel="noopener" data-wa="tool-iso" data-dec-wa data-base="Merhaba Aksoy Kesici Takımlar, kesici uç için teklif almak istiyorum. Kod: "><Icon name="whatsapp" /> Bu uç için teklif al</a>
+          <button type="button" class="btn btn--ghost" data-dec-copy><Icon name="copy" /> Bağlantıyı kopyala</button>
+          <span data-catalog>{hits0.map((h) => <a class="dec-actions__link" href={`/urun/${h.slug}`}>Katalogda: {h.code} →</a>)}</span>
+        </div>
+        <p class="sr-only" aria-live="polite" data-live></p>
+      </div>
+
+      <ToolCta
+        id="tool-iso-cta"
+        title="Kutudaki kod okunmuyor mu?"
+        text="Ucun ya da kutunun fotoğrafını WhatsApp’tan gönderin; kodu birlikte çözelim, aynı geometriyi farklı markalardan teklif edelim."
+        wa="Merhaba Aksoy Kesici Takımlar, kesici ucun fotoğrafını gönderiyorum; kodunu ve muadilini öğrenmek istiyorum."
+      />
+    </div>
+  </section>
+
+  <section class="section section--tight tl-ref" aria-labelledby="iso-tablo">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">ISO 1832 başvuru tablosu</span>
+        <h2 id="iso-tablo" class="reveal">Kesici uç kodu harf harf</h2>
+        <p>Değiştirilebilir kesici uç kodunda ilk yedi konum zorunludur; 8. ve 9. konumlar isteğe bağlıdır. Tireden sonra gelen harfler üreticinin talaş kırıcı kodudur.</p>
+      </div>
+      <div class="ref-grid">
+        <article class="ref-card">
+          <h3><span>1</span>Uç şekli</h3>
+          <table>
+            <thead><tr><th>Harf</th><th>Şekil</th><th>εr</th></tr></thead>
+            <tbody>{Object.entries(SHAPES).map(([k, v]) => <tr><td>{k}</td><td>{v.name}</td><td class="mono">{v.angle ? `${v.angle}°` : '—'}</td></tr>)}</tbody>
+          </table>
+        </article>
+        <article class="ref-card">
+          <h3><span>2</span>Boşluk açısı</h3>
+          <p>N negatif uçtur; diğer harfler pozitif uçlarda yan yüzeyin eğimini verir.</p>
+          <table>
+            <thead><tr><th>Harf</th><th>αn</th></tr></thead>
+            <tbody>{Object.entries(CLEARANCE).map(([k, v]) => <tr><td>{k}</td><td>{v === null ? 'Özel (ayrıca belirtilir)' : `${v}°`}</td></tr>)}</tbody>
+          </table>
+        </article>
+        <article class="ref-card">
+          <h3><span>3</span>Tolerans sınıfı</h3>
+          <p>m: köşe konumu, s: kalınlık, d: iç teğet daire (mm). J–N ve U sınıflarında d ve m aralığı IC’ye göre değişir.</p>
+          <div class="ref-card__scroll">
+            <table>
+              <thead><tr><th>Sınıf</th><th>m</th><th>s</th><th>d</th></tr></thead>
+              <tbody>{Object.entries(TOL).map(([k, v]) => <tr><td>{k}</td><td class="mono">{v.m}</td><td class="mono">{v.s}</td><td class="mono">{v.d}</td></tr>)}</tbody>
+            </table>
+          </div>
+        </article>
+        <article class="ref-card">
+          <h3><span>4</span>Delik ve talaş kırıcı</h3>
+          <table>
+            <thead><tr><th>Harf</th><th>Açıklama</th></tr></thead>
+            <tbody>{Object.entries(HOLE).map(([k, v]) => <tr><td>{k}</td><td>{v.text}</td></tr>)}</tbody>
+          </table>
+        </article>
+        <article class="ref-card">
+          <h3><span>5</span>Boyut kodu ↔ IC</h3>
+          <p>Kod, kesme kenarı uzunluğunun tam sayı kısmıdır; yuvarlak uçta çaptır (RCMT 10 → Ø10). Tablo ISO kuralına göre hesaplanmıştır; her boyut her şekilde üretilmez.</p>
+          <div class="ref-card__scroll">
+            <table>
+              <thead><tr><th>IC (mm)</th>{icShapes.map((s) => <th>{s}</th>)}</tr></thead>
+              <tbody>{icRows.map((r) => <tr><td>{fmtFixed(r.mm, 3)}</td>{icShapes.map((s) => <td class="mono">{pad(sizeCodeFor(s, r.mm))}</td>)}</tr>)}</tbody>
+            </table>
+          </div>
+        </article>
+        <article class="ref-card">
+          <h3><span>6</span>Kalınlık</h3>
+          <table>
+            <thead><tr><th>Kod</th><th>s (mm)</th><th>inç</th></tr></thead>
+            <tbody>{Object.entries(THICK).map(([k, v]) => <tr><td>{k}</td><td class="mono">{fmtFixed(v.mm, 2)}</td><td class="mono">{v.inch || '—'}</td></tr>)}</tbody>
+          </table>
+        </article>
+        <article class="ref-card">
+          <h3><span>7</span>Köşe radyüsü</h3>
+          <p>Kod = radyüs × 10. Yuvarlak metrik uçta M0, keskin köşede 00 yazılır. Silici kenarlı frezeleme uçlarında bu konum iki harftir: ana kesme açısı κr ({Object.entries(FACET_KR).map(([k, v]) => `${k} ${v === null ? 'özel' : `${v}°`}`).join(', ')}) ve silici kenar boşluk açısı (2. konumla aynı harfler).</p>
+          <table>
+            <thead><tr><th>Kod</th><th>rε</th></tr></thead>
+            <tbody>
+              {radii.map((r) => <tr><td>{r}</td><td class="mono">{r === '00' ? 'Keskin köşe' : `${fmtFixed(Number(r) / 10, 1)} mm`}</td></tr>)}
+              <tr><td>M0</td><td>Yuvarlak uç (metrik)</td></tr>
+            </tbody>
+          </table>
+        </article>
+        <article class="ref-card">
+          <h3><span>8</span>Kenar durumu <small class="tl-approx" style="color:var(--ink-3)">isteğe bağlı</small></h3>
+          <table><tbody>{Object.entries(EDGE).map(([k, v]) => <tr><td>{k}</td><td>{v}</td></tr>)}</tbody></table>
+        </article>
+        <article class="ref-card">
+          <h3><span>9</span>Kesme yönü <small class="tl-approx" style="color:var(--ink-3)">isteğe bağlı</small></h3>
+          <table><tbody>{Object.entries(HAND).map(([k, v]) => <tr><td>{k}</td><td>{v}</td></tr>)}</tbody></table>
+          <p>Tireden sonraki ek (ör. -MA, -PM, -M) ISO dışıdır; anlamı markanın talaş kırıcı tablosundadır.</p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <ToolFaq id="sss-iso" title="Elmas uç kodları hakkında" items={faq} />
+
+  <script>
+    import '../../scripts/tools/iso';
+  </script>
+</Base>
