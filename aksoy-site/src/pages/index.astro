@@ -156,18 +156,55 @@ const iso = [
   </section>
 
   <!-- ============ NASIL ÇALIŞIR ============ -->
-  <section class="section section--paper" aria-labelledby="nasil">
+  <section class="howto" aria-labelledby="nasil" data-howto>
     <div class="wrap">
-      <div class="section-head">
+      <header class="howto__head">
         <span class="eyebrow">Nasıl çalışıyoruz?</span>
-        <h2 id="nasil" class="reveal">Üye olmadan, form doldurmadan teklif alın.</h2>
-        <p class="reveal" style="--d:100ms">Sitede satış yok, teklif var. Katalogdan kodu bulun ya da elinizdeki kutunun fotoğrafını gönderin; fiyatı ve termini aynı gün WhatsApp’tan yazalım.</p>
-      </div>
-      <div class="steps">
-        <div class="step reveal"><span class="step__n">01</span><h3>Kodu bulun</h3><p>CNMG, APMT, MGMN gibi kodla ya da “elmas uç”, “klavuz” diye arayın. İsterseniz malzemeye göre süzün.</p></div>
-        <div class="step reveal" style="--d:100ms"><span class="step__n">02</span><h3>Teklif sepetine ekleyin</h3><p>Adedi ve varsa marka tercihinizi seçin. İşlediğiniz malzemeyi ve tezgâhı not olarak yazın.</p></div>
-        <div class="step reveal" style="--d:200ms"><span class="step__n">03</span><h3>WhatsApp’tan gönderin</h3><p>Liste tek mesaj olarak hazırlanır. Fiyat, stok ve terminle size dönüyoruz; onaylarsanız adrese getiriyor ya da kargoluyoruz.</p></div>
-      </div>
+        <h2 id="nasil" class="howto__title reveal">Üye olmadan, form doldurmadan teklif alın. <span>Kodu bulun, sepete ekleyin, WhatsApp’tan gönderin.</span></h2>
+        <p class="howto__lead reveal" style="--d:100ms">Sitede satış yok, teklif var. Katalogdan kodu bulun ya da elinizdeki kutunun fotoğrafını gönderin; fiyatı ve termini aynı gün WhatsApp’tan yazalım.</p>
+      </header>
+      <ol class="howto__steps">
+        <li class="hstep reveal" data-hstep="search">
+          <div class="hstep__vis" aria-hidden="true">
+            <div class="mock mock--search">
+              <div class="mock__field">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="6.5" /><path d="m16 16 4 4" stroke-linecap="round" /></svg>
+                <span class="mock__typed" data-typed>elmas uç</span><i class="mock__caret"></i>
+              </div>
+              <ul class="mock__list" data-results>
+                <li class="is-hit"><b>CNMG 120408</b><span>Tornalama · P M K</span></li>
+                <li><b>CNMG 120404</b><span>Finiş · P M</span></li>
+                <li><b>DNMG 150608</b><span>Profil · P M</span></li>
+              </ul>
+            </div>
+          </div>
+          <div class="hstep__txt"><span class="hstep__n">01</span><h3>Kodu bulun</h3><p>CNMG, APMT, MGMN gibi kodla ya da “elmas uç”, “klavuz” diye arayın. İsterseniz malzemeye göre süzün.</p></div>
+        </li>
+        <li class="hstep reveal" style="--d:120ms" data-hstep="cart">
+          <div class="hstep__vis" aria-hidden="true">
+            <div class="mock mock--cart">
+              <div class="mock__row"><img src="/img/urun/insert-C-n-s.webp" alt="" width="600" height="450" loading="lazy" decoding="async" /><div><b>CNMG 120408</b><small>Marka fark etmez</small></div><div class="mock__qty"><i>−</i><output data-qty="10">10</output><i>+</i></div></div>
+              <div class="mock__row"><img src="/img/urun/insert-A-p-s.webp" alt="" width="600" height="450" loading="lazy" decoding="async" /><div><b>APMT 1604</b><small>Karbür · PVD</small></div><div class="mock__qty"><i>−</i><output data-qty="20">20</output><i>+</i></div></div>
+              <div class="mock__note">Not: AISI 304 · CNC torna</div>
+            </div>
+          </div>
+          <div class="hstep__txt"><span class="hstep__n">02</span><h3>Teklif sepetine ekleyin</h3><p>Adedi ve varsa marka tercihinizi seçin. İşlediğiniz malzemeyi ve tezgâhı not olarak yazın.</p></div>
+        </li>
+        <li class="hstep reveal" style="--d:240ms" data-hstep="chat">
+          <div class="hstep__vis" aria-hidden="true">
+            <div class="mock mock--chat">
+              <div class="bubble bubble--out">Merhaba, teklif rica ediyorum:<br />CNMG 120408 × 10<br />APMT 1604 × 20<span class="bubble__t">10:42 <svg viewBox="0 0 18 10" fill="none" stroke="currentColor" stroke-width="1.6"><path d="m1 5 3 3 6-7M8 8l1 0 6-7" /></svg></span></div>
+              <div class="bubble bubble--in"><span class="bubble__dots"><i></i><i></i><i></i></span><span class="bubble__msg">İkisi de stokta, fiyatlar ekte. Onaylarsanız adrese getiriyoruz.<span class="bubble__t">10:51</span></span></div>
+            </div>
+          </div>
+          <div class="hstep__txt"><span class="hstep__n">03</span><h3>WhatsApp’tan gönderin</h3><p>Liste tek mesaj olarak hazırlanır. Fiyat, stok ve terminle size dönüyoruz; onaylarsanız adrese getiriyor ya da kargoluyoruz.</p></div>
+        </li>
+      </ol>
+      <ul class="howto__facts">
+        <li><b>Aynı gün</b><span>fiyat ve termin</span></li>
+        <li><b>Üyelik yok</b><span>form yok, kart bilgisi yok</span></li>
+        <li><b>Adrese teslim</b><span>ya da kargo</span></li>
+      </ul>
     </div>
   </section>
 
@@ -283,6 +320,9 @@ const iso = [
   </script>
   <script>
     import '../scripts/cards3d/index';
+  </script>
+  <script>
+    import '../scripts/home/howto';
   </script>
   <script>
     // Mini hesaplayıcı: n = Vc·1000 / (π·D)

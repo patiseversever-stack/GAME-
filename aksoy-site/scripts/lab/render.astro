@@ -46,8 +46,9 @@
   const pts: THREE.Vector3[] = [];
   posed.obj.traverse((o) => { const mm = o as THREE.Mesh; if (!mm.isMesh) return; const pa = mm.geometry.attributes.position; const step = Math.max(1, Math.floor(pa.count / 400)); for (let i = 0; i < pa.count; i += step) pts.push(new THREE.Vector3().fromBufferAttribute(pa, i).applyMatrix4(mm.matrixWorld)); });
   const sample = pts.length ? pts : corners();
-  const fillW = posed.kind === 'insert' ? 0.62 : posed.kind === 'compact' ? 0.7 : 0.86;
-  const fillH = posed.kind === 'insert' ? 0.66 : 0.74;
+  // Çapraz duran kater: kutunun köşeleri boş kaldığı için kadrajı daha çok doldurabilir
+  const fillW = posed.kind === 'insert' ? 0.62 : posed.kind === 'compact' ? 0.7 : posed.kind === 'holder' ? 0.9 : 0.86;
+  const fillH = posed.kind === 'insert' ? 0.66 : posed.kind === 'holder' ? 0.84 : 0.74;
   for (let it = 0; it < 6; it++) {
     cam.position.copy(target).addScaledVector(dir, dist);
     cam.lookAt(target);
