@@ -1,7 +1,7 @@
 // Kesme hızı hesaplayıcısı: alan tanımları, kaydırıcı ölçekleri ve saf hesap fonksiyonu.
 // Sayfa ilk durumu sunucuda bu fonksiyonla üretir; tarayıcı betiği aynı fonksiyonla günceller.
-import type { Op } from './cutting-data';
-import { rpm, cuttingSpeed, feedRev, feedMill, feedTap, mrrTurn, mrrMill, mrrDrill } from './cutting-data';
+import type { Op, Iso, ToolMat } from './cutting-data';
+import { rpm, cuttingSpeed, feedRev, feedMill, feedTap, mrrTurn, mrrMill, mrrDrill, VC, TOOL_LABEL, ISO_GROUPS, isRange, midVc } from './cutting-data';
 import { fmt, fmtFixed } from './format';
 import { isStandard } from './tap-data';
 
@@ -216,4 +216,62 @@ export function compute(op: Op, mode: Mode, v: Record<string, number>): CalcOutp
     }
   }
   return { results, errors, warnings, infos, nEff, vcEff };
+}
+
+/* --------------------------------------------------------------- HTML (sunucu + tarayıcı) */
+
+const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+function resCard(r: ResultItem, cls = ''): string {
+  const empty = !(Number.isFinite(r.value) && r.value > 0);
+  return `<div class="res ${cls}" data-key="${r.key}"${empty ? ' data-empty' : ''}>
+<div class="res__label"><span>${esc(r.label)}</span><span class="res__sym">${esc(r.sym)}</span></div>
+<div class="res__val"><b>${esc(r.text)}</b><span class="res__unit">${esc(r.unit)}</span>${r.badge ? `<span class="res__badge">${esc(r.badge)}</span>` : ''}</div>
+<p class="res__formula">${esc(r.formula)}</p>
+</div>`;
+}
+
+export function resultsHtml(out: CalcOutput): string {
+  const [primary, ...rest] = out.results;
+  return `${resCard(primary, 'res--primary')}<div class="res-grid">${rest.map((r) => resCard(r)).join('')}</div>`;
+}
+
+export function notesHtml(out: CalcOutput): string {
+  const errs = Object.keys(out.errors).length
+    ? [`<p class="tl-note tl-note--error">Kırmızı işaretli alanları düzeltin; ilgili sonuçlar “—” olarak gösteriliyor.</p>`]
+    : [];
+  return [
+    ...errs,
+    ...out.warnings.map((w) => `<p class="tl-note tl-note--warn">${esc(w)}</p>`),
+    ...out.infos.map((w) => `<p class="tl-note tl-note--info">${esc(w)}</p>`),
+  ].join('');
+}
+
+/* --------------------------------------------------------------- Öneri kutusu */
+
+export const EST_TITLE = 'Bu aralık yayınlanmış bir katalog tablosuyla birebir doğrulanmadı; tahmini başlangıç değeridir.';
+
+/** Öneri çubuğunun ekseni: 0 … maks × 1,3 (doğrusal) */
+export const sugAxis = (max: number) => max * 1.3;
+
+export function suggestHtml(op: Op, tool: ToolMat, iso: Iso): string {
+  const cell = VC[op][tool][iso];
+  const g = ISO_GROUPS.find((x) => x.g === iso)!;
+  const ctx = `<p class="calc-sug__ctx"><span class="calc-sug__iso" data-g="${iso}">${iso}</span>${esc(g.name)} · ${esc(TOOL_LABEL[op][tool])}</p>`;
+  const disc = `<p class="calc-sug__disc">Başlangıç değeri; üretici kataloğuna ve tezgâha göre ayarlayın.</p>`;
+  if (!isRange(cell)) {
+    return `<div class="calc-sug__head"><span class="tl-legend">Önerilen başlangıç Vc</span></div>${ctx}<p class="calc-sug__none">${esc(cell.none)}</p>${disc}`;
+  }
+  const hi = sugAxis(cell.max);
+  const a = (cell.min / hi) * 100;
+  const b = (cell.max / hi) * 100;
+  const mid = midVc(cell);
+  return `<div class="calc-sug__head"><span class="tl-legend">Önerilen başlangıç Vc</span>${
+    cell.est ? `<span class="tl-est" title="${EST_TITLE}">≈ Tahmini</span>` : '<span class="tl-src">Katalog özetinden</span>'
+  }</div>
+${ctx}
+<p class="calc-sug__range"><span>${fmt(cell.min)}–${fmt(cell.max)}</span> <small>m/dk</small></p>
+<div class="calc-sug__bar" style="--a:${a.toFixed(2)}%;--b:${b.toFixed(2)}%" data-min="${cell.min}" data-max="${cell.max}" data-hi="${hi}"><i></i><b data-marker></b></div>
+<div class="calc-sug__foot"><span class="calc-sug__status" data-sug-status></span><button type="button" class="calc-sug__apply" data-apply="${mid}">Orta değeri yaz · ${fmt(mid)} m/dk</button></div>
+${cell.note ? `<p class="calc-sug__note">${esc(cell.note)}</p>` : ''}${disc}`;
 }

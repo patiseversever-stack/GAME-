@@ -47,7 +47,7 @@ const schema = [
   },
 ];
 ---
-<Base title={post.title} description={post.description} schema={schema} noindex={post.draft}>
+<Base title={post.title} description={post.description} schema={schema} noindex={post.draft} footerCta={false}>
   <div class="read-progress" data-progress aria-hidden="true"></div>
 
   <header class="page-hero blueprint c-hero article-hero">
@@ -83,12 +83,7 @@ const schema = [
   </header>
 
   <div class="wrap article-layout">
-    <Toc items={toc}>
-      <div class="toc__aside">
-        <p>Kodunuzu ya da sorunuzu yazın; uygun takımı ve teklifi WhatsApp’tan iletelim.</p>
-        <a class="btn btn--wa btn--sm" href={wa} target="_blank" rel="noopener" data-wa={`blog-toc-${post.slug}`}><Icon name="whatsapp" /> WhatsApp’tan sor</a>
-      </div>
-    </Toc>
+    <Toc items={toc} />
 
     <div class="article-main">
       <Toc items={toc} variant="inline" />
@@ -136,6 +131,23 @@ const schema = [
         )}
       </footer>
     </div>
+
+    <aside class="article-aside" aria-label="Teklif ve araçlar">
+      <div class="aside-card">
+        <span class="eyebrow">Soru · Teklif</span>
+        <p>Kodunuzu, malzemenizi ve adedi yazın; uygun takımı ve teklifi WhatsApp’tan iletelim.</p>
+        <a class="btn btn--wa btn--sm" href={wa} target="_blank" rel="noopener" data-wa={`blog-aside-${post.slug}`}><Icon name="whatsapp" /> WhatsApp’tan sor</a>
+        <a class="aside-card__tel" href={`tel:${site.phoneE164}`}><Icon name="phone" /> {site.phoneDisplay}</a>
+      </div>
+      <a class="aside-link" href="/teknik-araclar">
+        <Icon name="calc" />
+        <span><b>Teknik araçlar</b><small>Devir, ilerleme ve ISO kod çözücü</small></span>
+      </a>
+      <a class="aside-link" href="/urunler">
+        <Icon name="grid" />
+        <span><b>Katalog</b><small>Kodla arayın, teklif sepetine ekleyin</small></span>
+      </a>
+    </aside>
   </div>
 
   <script>

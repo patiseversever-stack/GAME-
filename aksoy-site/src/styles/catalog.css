@@ -371,7 +371,7 @@ body:has(.site-header.is-hidden) .ctool { top: 0; padding-top: max(12px, env(saf
 .stage__marks i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; }
 .stage__marks i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; }
 .stage__marks i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; }
-.stage__lbl { position: absolute; font: 500 10px/1 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-400); white-space: nowrap; }
+.stage__lbl { position: absolute; max-width: calc(50% - 56px); overflow: hidden; text-overflow: ellipsis; font: 500 10px/1.2 var(--f-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-400); white-space: nowrap; }
 .stage__lbl--tl { top: 24px; left: 42px; }
 .stage__lbl--tr { top: 24px; right: 42px; color: var(--tin); }
 .stage__lbl--bl { bottom: 24px; left: 42px; }
@@ -466,6 +466,8 @@ body:has(.site-header.is-hidden) .pdp__media { top: 20px; }
 .pdp__info .breadcrumbs { margin-bottom: 18px; }
 .pdp__title { margin-top: 14px; display: grid; gap: 12px; }
 .pdp__code { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-family: var(--f-mono); font-weight: 500; font-size: clamp(2.1rem, 1.4rem + 2.6vw, 3.6rem); letter-spacing: -0.02em; line-height: 1; }
+.pdp__code { overflow-wrap: anywhere; }
+.pdp__code.is-long { font-size: clamp(1.7rem, 1.2rem + 1.5vw, 2.5rem); letter-spacing: -0.03em; line-height: 1.08; }
 .pdp__copy { width: 36px; height: 36px; border-radius: 10px; display: inline-grid; place-items: center; color: var(--ink-3); border: 1px solid var(--paper-line); transition: color var(--t-fast), border-color var(--t-fast); }
 .pdp__copy:hover { color: var(--ink); border-color: var(--ink-3); }
 .pdp__copy svg { width: 16px; height: 16px; }
@@ -563,6 +565,7 @@ body:has(.site-header.is-hidden) .pdp__media { top: 20px; }
   .stage__lbl--bl, .stage__lbl--br { bottom: 18px; }
   .stage__marks { inset: 10px; }
   .pdp__code { font-size: clamp(1.9rem, 9vw, 2.6rem); }
+  .pdp__code.is-long { font-size: clamp(1.45rem, 6.4vw, 2rem); }
 }
 @media (min-width: 861px) { .pdp__info .anat { display: none; } }
 @media (max-width: 560px) {

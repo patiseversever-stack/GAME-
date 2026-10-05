@@ -43,7 +43,7 @@ export interface Post {
 /** Kaydırılabilir tablo. İlk sütun satır başlığıdır. 4+ sütunlu tablolar mobilde yatay kaydırılır. */
 function table(head: string[], rows: string[][], caption?: string) {
   const wide = head.length >= 4 ? ' class="t-wide"' : '';
-  return `<div class="table-wrap" role="region" aria-label="${caption ?? head.join(', ')}" tabindex="0"><table${wide}>${
+  return `<div class="table-wrap" role="region" aria-label="${(caption ?? head.join(", ")).replace(/<[^>]+>/g, "")}" tabindex="0"><table${wide}>${
     caption ? `<caption>${caption}</caption>` : ''
   }<thead><tr>${head.map((h) => `<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows
     .map((r) => `<tr>${r.map((c, i) => (i === 0 ? `<th scope="row">${c}</th>` : `<td>${c}</td>`)).join('')}</tr>`)
@@ -121,7 +121,7 @@ ${table(
       title: '3. harf, M: tolerans sınıfı',
       html: `<p>Üçüncü harf ucun ne kadar hassas üretildiğini gösterir. Tolerans üç ölçü için verilir: köşenin konumu (m), iç teğet daire çapı (d) ve kalınlık (s).</p>
 ${table(
-  ['Sınıf', 'Köşe konumu (m)', 'İç teğet daire (d)', 'Kalınlık (s)'],
+  ['Sınıf', 'Köşe konumu (<span class="nc">m</span>)', 'İç teğet daire (<span class="nc">d</span>)', 'Kalınlık (<span class="nc">s</span>)'],
   [
     ['G', '±0,025 mm', '±0,025 mm', '±0,13 mm'],
     ['M', '±0,08 – 0,18 mm*', '±0,05 – 0,15 mm*', '±0,13 mm'],
@@ -216,7 +216,7 @@ const vc: Omit<Post, 'readingMinutes'> = {
   date: '2026-10-05',
   tags: ['Hesaplama', 'Tornalama', 'Frezeleme'],
   draft: true,
-  art: { drawing: 'vc', label: 'n = 1000·Vc / π·D' },
+  art: { drawing: 'vc', label: 'n = 1000·Vc/π·D' },
   intro: `<p>Uç kutusu ya da katalog size bir <strong>kesme hızı</strong> verir: örneğin 200 m/dk. Tezgâh ise sizden <strong>devir</strong> (S) ve <strong>ilerleme</strong> (F) ister. Bu ikisi arasındaki köprü birkaç basit formülden ibarettir. Bu yazıda formülleri birimleriyle veriyor, her birini atölyeden bir örnekle adım adım hesaplıyoruz.</p>`,
   sections: [
     {
@@ -282,7 +282,7 @@ ${formula('Vf = P × n', 'mm/dk', 'P: hatve')}
       title: 'Tipik başlangıç değerleri',
       html: `<p class="note"><strong>Yalnızca başlangıç noktası.</strong> Aşağıdaki aralıklar kaba bir yol haritasıdır. Kullandığınız ucun kutusunda veya markanın kataloğunda yazan değer her zaman önceliklidir. Tezgâhın rijitliği, bağlama, soğutma ve uç kalitesi doğru değeri ciddi biçimde değiştirir.</p>
 ${table(
-  ['Malzeme grubu', 'Tornalama (kaplamalı karbür uç)', 'Frezeleme (karbür parmak freze)', 'Delme (karbür matkap)'],
+  ['Malzeme grubu', 'Tornalama · kaplamalı karbür uç', 'Frezeleme · karbür parmak freze', 'Delme · karbür matkap'],
   [
     ['P · Çelik', '150–300', '80–180', '70–120'],
     ['M · Paslanmaz', '100–200', '60–100', '40–70'],

@@ -136,6 +136,12 @@ export function decodeInsertCode(code: string): CodePart[] | null {
   ];
 }
 
+/** Meta açıklama için metni kelime sınırında kısaltır */
+export function clip(text: string, n = 158) {
+  const t = text.replace(/\s+/g, ' ').trim();
+  return t.length <= n ? t : `${t.slice(0, n - 1).replace(/\s+\S*$/, '')}…`;
+}
+
 /* ---------- Yapısal veri ---------- */
 export function breadcrumbSchema(items: { name: string; path: string }[], site: URL | undefined) {
   return {

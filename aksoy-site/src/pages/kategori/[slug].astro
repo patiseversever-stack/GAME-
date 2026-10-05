@@ -6,7 +6,7 @@ import { categories } from '../../data/categories';
 import { products } from '../../data/products';
 import { waLink } from '../../data/site';
 import { drawingSvg } from '../../lib/drawings';
-import { sortProducts, breadcrumbSchema } from '../../lib/catalog';
+import { sortProducts, breadcrumbSchema, clip } from '../../lib/catalog';
 import type { Category } from '../../data/types';
 import '../../styles/catalog.css';
 
@@ -33,7 +33,7 @@ const schema = breadcrumbSchema(
   ],
   Astro.site,
 );
-const desc = `${c.name}: ${c.intro}`.slice(0, 158).replace(/\s+\S*$/, '') + '…';
+const desc = clip(`${c.name}: ${c.intro}`);
 ---
 <Base title={`${c.name} — ${c.summary}`} description={desc} theme="light" header="dark" schema={schema}>
   <section class="page-hero page-hero--dark khero">
@@ -61,7 +61,7 @@ const desc = `${c.name}: ${c.intro}`.slice(0, 158).replace(/\s+\S*$/, '') + '…
         <div class="stage__marks"><i></i><i></i><i></i><i></i></div>
         <span class="stage__lbl stage__lbl--tl">Pafta K-{pad(idx + 1)}</span>
         <span class="stage__lbl stage__lbl--tr">{c.name}</span>
-        <span class="stage__lbl stage__lbl--bl">Teknik çizim · temsilî</span>
+        <span class="stage__lbl stage__lbl--bl">Temsilî çizim</span>
         <span class="stage__lbl stage__lbl--br">{c.shape ? `ISO ${c.shape}` : 'Ölçeksiz'}</span>
         <div class="stage__art" set:html={drawingSvg(c.drawing, c.shape)} />
       </figure>

@@ -7,7 +7,7 @@ import { categoryBySlug, subcategoryName } from '../../data/categories';
 import { brandBySlug } from '../../data/brands';
 import { site, waLink } from '../../data/site';
 import { drawingSvg } from '../../lib/drawings';
-import { ISO_GROUPS, SHAPES, decodeInsertCode, breadcrumbSchema } from '../../lib/catalog';
+import { ISO_GROUPS, SHAPES, decodeInsertCode, breadcrumbSchema, clip } from '../../lib/catalog';
 import type { Product } from '../../data/types';
 import '../../styles/catalog.css';
 
@@ -32,7 +32,7 @@ products.filter((x) => x.subcategory === p.subcategory).forEach(push);
 products.filter((x) => x.category === p.category).forEach(push);
 
 const waText = `Merhaba ${site.name}, ${p.code} (${p.name}) için fiyat ve termin bilgisi almak istiyorum.`;
-const label = p.shape && p.drawing === 'insert' ? `ISO ${p.shape} · ${SHAPES[p.shape]?.angle ?? ''}` : p.code;
+const label = p.shape && p.drawing === 'insert' ? `ISO ${p.shape} · ${SHAPES[p.shape]?.angle ?? ''}` : `ISO ${p.iso.join('·')}`;
 
 const schema = breadcrumbSchema(
   [
@@ -43,7 +43,7 @@ const schema = breadcrumbSchema(
   ],
   Astro.site,
 );
-const metaDesc = `${p.code} — ${p.description}`.length > 160 ? `${p.code} — ${p.description}`.slice(0, 157).replace(/\s+\S*$/, '') + '…' : `${p.code} — ${p.description}`;
+const metaDesc = clip(`${p.code} — ${p.description}`);
 ---
 <Base title={`${p.code} — ${p.name}`} description={metaDesc} theme="light" header="light" schema={schema}>
   <article class="pdp" data-pdp>
@@ -83,7 +83,7 @@ const metaDesc = `${p.code} — ${p.description}`.length > 160 ? `${p.code} — 
 
         <a class="eyebrow eyebrow--tin" href={`/kategori/${p.category}#${p.subcategory}`}>{subName}</a>
         <h1 class="pdp__title">
-          <span class="pdp__code">{p.code}</span>
+          <span class:list={['pdp__code', { 'is-long': p.code.length > 16 }]}>{p.code}</span>
           <span class="pdp__name">{p.name}</span>
         </h1>
 

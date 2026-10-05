@@ -5,7 +5,7 @@ import ProductCard from '../../components/ProductCard.astro';
 import { brands } from '../../data/brands';
 import { products } from '../../data/products';
 import { trademarkNotice, waLink } from '../../data/site';
-import { breadcrumbSchema, sortProducts } from '../../lib/catalog';
+import { breadcrumbSchema, sortProducts, clip } from '../../lib/catalog';
 import type { Brand } from '../../data/types';
 import '../../styles/catalog.css';
 
@@ -29,7 +29,7 @@ const schema = breadcrumbSchema(
   ],
   Astro.site,
 );
-const desc = `${b.name} ürünleri Ankara Ostim / İvedik’ten tedarik edilir. ${b.description}`.slice(0, 158).replace(/\s+\S*$/, '') + '…';
+const desc = clip(`${b.name} ürünleri Ankara Ostim / İvedik’ten tedarik edilir. ${b.description}`);
 ---
 <Base title={`${b.name} ürünleri — ${b.strengths.slice(0, 2).join(', ')}`} description={desc} theme="dark" header="dark" schema={schema}>
   <section class="page-hero page-hero--dark bdhero" data-mark={b.name.split(' ')[0]}>
