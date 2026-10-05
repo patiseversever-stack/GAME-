@@ -449,8 +449,8 @@ class Zifir {
         this.kick(-2.2); audio.step();
         this.stepSide ^= 1; const f = this.feet[this.stepSide];
         const wx = st.x + Math.cos(this.yaw) * (this.stepSide ? 0.12 : -0.12), wz = st.z - Math.sin(this.yaw) * (this.stepSide ? 0.12 : -0.12);
-        addPrint(wx, wz, this.yaw);
-        if (st.burn > 0.05) FX.smoke(st.x, 0.1, st.z, 0.6);
+        if (this.preview) { if (this.onStep) this.onStep(wx, wz, st); }
+        else { addPrint(wx, wz, this.yaw); if (st.burn > 0.05) FX.smoke(st.x, 0.1, st.z, 0.6); }
       }
       sy = 1 + Math.sin(ph * PI) * 0.06;
       for (let i = 0; i < 2; i++) { const fp = (this.phase + i * 0.5) % 1; this.feet[i].position.z = 0.02 + Math.sin(fp * TAU) * 0.09; this.feet[i].position.y = 0.04 + Math.max(0, Math.sin(fp * TAU)) * 0.05; }

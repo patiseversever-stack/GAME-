@@ -656,50 +656,72 @@ body.testall #testBadge{display:block}
 #ending p{font-size:15px;line-height:1.6;color:var(--ivory);max-width:340px;text-shadow:0 1px 10px rgba(0,0,0,.5)}
 
 
-/* ---------- öğretici ---------- */
-#tutorial{position:absolute;inset:0;z-index:12;display:flex;flex-direction:column;align-items:center;padding:calc(var(--sat) + 12px) 18px calc(var(--sab) + 14px);
-  background:radial-gradient(130% 80% at 50% 36%,rgba(54,38,102,.8) 0%,rgba(16,11,32,.94) 60%,rgba(8,6,16,.97) 100%);
-  opacity:0;visibility:hidden;pointer-events:none;transition:opacity .55s ease,visibility 0s linear .55s}
-#tutorial.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .55s ease,visibility 0s}
+/* ---------- öğretici: canlı 3B gösteri + cam kart ---------- */
+#tutorial{position:absolute;inset:0;z-index:12;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .5s ease,visibility 0s linear .5s;overflow:hidden}
+#tutorial.on{opacity:1;visibility:visible;pointer-events:auto;transition:opacity .5s ease,visibility 0s}
 #tutorial.on .tap{pointer-events:auto}
-#tutorial::before{content:"";position:absolute;inset:0;pointer-events:none;opacity:.5;
-  background-image:radial-gradient(1px 1px at 12% 18%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 78% 12%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 88% 46%,#ffe9b8 50%,transparent 51%),radial-gradient(1px 1px at 24% 72%,#fff 50%,transparent 51%),radial-gradient(1px 1px at 64% 86%,#fff 50%,transparent 51%),radial-gradient(1.5px 1.5px at 8% 52%,#d8c8ff 50%,transparent 51%);
-  animation:twinkle 4s ease-in-out infinite alternate}
-@keyframes twinkle{from{opacity:.25}to{opacity:.6}}
-#tutorial .tbar{width:100%;max-width:560px;display:flex;align-items:center;gap:12px;position:relative}
+#tutorial::before{content:"";position:absolute;left:0;right:0;top:0;height:calc(var(--sat) + 120px);pointer-events:none;background:linear-gradient(180deg,rgba(8,6,18,.62),rgba(8,6,18,0))}
+#tutorial::after{content:"";position:absolute;inset:0;pointer-events:none;background:#07050f;opacity:0}
+#tutorial.on::after{animation:tFade .9s ease-out both}
+@keyframes tFade{from{opacity:1}to{opacity:0}}
+#tutorial .tbar{position:absolute;left:0;right:0;top:0;z-index:3;display:flex;align-items:center;gap:12px;padding:calc(var(--sat) + 12px) calc(var(--sar) + 16px) 0 calc(var(--sal) + 16px);max-width:620px;margin:0 auto}
 #tSegs{flex:1;display:flex;gap:5px}
 #tutorial .seg{flex:1;height:22px;padding:9px 0;cursor:pointer}
-#tutorial .seg i{display:block;height:4px;border-radius:4px;background:rgba(255,255,255,.16);position:relative;overflow:hidden}
+#tutorial .seg i{display:block;height:4px;border-radius:4px;background:rgba(255,255,255,.2);position:relative;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.25)}
 #tutorial .seg i::after{content:"";position:absolute;left:0;top:0;bottom:0;width:calc(var(--p,0)*100%);background:linear-gradient(90deg,#ffe9b8,#f2c46d);border-radius:4px;box-shadow:0 0 8px rgba(242,196,109,.75)}
 #tutorial.held .seg.cur i::after{background:linear-gradient(90deg,#d8c8ff,#9d8cff);box-shadow:0 0 8px rgba(157,140,255,.8)}
-#tSkip{height:34px;padding:0 16px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--ivory);background:rgba(255,255,255,.08);border:1px solid var(--glass-b);transition:transform .18s cubic-bezier(.3,1.6,.5,1)}
+#tSkip{height:34px;padding:0 16px;border-radius:999px;font-size:11px;font-weight:800;letter-spacing:.22em;text-transform:uppercase;color:var(--ivory);background:rgba(12,8,26,.42);border:1px solid rgba(255,255,255,.16);transition:transform .18s cubic-bezier(.3,1.6,.5,1)}
 #tSkip:active{transform:scale(.92)}
-#tStage{flex:1;width:100%;max-width:560px;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2vh;cursor:pointer;position:relative}
-#tIllu{width:min(94vw,440px,calc(50vh * 1.111));aspect-ratio:400/360;position:relative;flex-shrink:1}
-#tIllu svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-#tutorial .ttext{text-align:center;max-width:390px;padding:0 6px}
-#tK{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--gold-2);font-weight:800}
-#tT{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(30px,8.4vw,46px);line-height:1.04;margin-top:8px;text-shadow:0 0 26px rgba(150,120,255,.5)}
-#tB{font-size:clamp(14px,3.9vw,16px);line-height:1.58;color:rgba(255,244,226,.86);margin-top:12px}
+#tStage{position:absolute;inset:0;z-index:0;cursor:pointer;touch-action:none}
+#tutorial .thint{position:absolute;left:0;right:0;top:calc(var(--sat) + 44px);font-size:9px;letter-spacing:.2em;white-space:nowrap;text-transform:uppercase;color:rgba(255,244,226,.55);text-align:center;pointer-events:none;text-shadow:0 1px 6px rgba(0,0,0,.6);transition:opacity .4s}
+#tutorial.held .thint{opacity:0}
+#tHeld{position:absolute;left:50%;top:calc(var(--sat) + 70px);transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(20,14,44,.6);border:1px solid rgba(190,170,255,.4);font-size:10px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:#d8ccff;opacity:0;transition:opacity .25s;pointer-events:none}
+#tutorial.held #tHeld{opacity:1}
+/* dikey: kart altta, gösteri üstte */
+#tCard{position:absolute;left:0;right:0;bottom:0;z-index:2;padding:30px calc(var(--sar) + 22px) calc(var(--sab) + 16px) calc(var(--sal) + 22px);box-sizing:border-box;display:flex;flex-direction:column;align-items:center;text-align:center;
+  background:linear-gradient(180deg,rgba(14,9,30,0) 0,rgba(14,9,30,.7) 22%,rgba(10,7,22,.93) 60%,rgba(8,5,18,.97));pointer-events:none}
+#tCard .tc{width:100%;max-width:440px;display:flex;flex-direction:column;align-items:center}
+#tK{font-size:10.5px;letter-spacing:.38em;text-transform:uppercase;color:var(--gold-2);font-weight:800;text-shadow:0 1px 8px rgba(0,0,0,.5)}
+#tT{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(28px,8vw,42px);line-height:1.04;margin-top:7px;text-shadow:0 0 24px rgba(150,120,255,.45),0 2px 14px rgba(0,0,0,.5)}
+#tB{font-size:clamp(13.5px,3.8vw,15.5px);line-height:1.55;color:rgba(255,244,226,.88);margin-top:10px;max-width:400px}
 #tB em{font-style:normal;color:var(--gold-2);font-weight:700}
-#tutorial .tnav{width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-top:1.2vh}
+#tChips{display:flex;flex-wrap:wrap;justify-content:center;gap:7px;margin-top:14px;min-height:30px}
+.tchip{display:inline-flex;align-items:center;gap:7px;height:30px;padding:0 13px 0 4px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:rgba(255,244,226,.72);font-size:10.5px;letter-spacing:.06em;transition:background .35s,border-color .35s,color .35s,box-shadow .35s,transform .35s cubic-bezier(.3,1.6,.5,1)}
+.tchip svg{width:22px;height:22px;padding:3.5px;box-sizing:border-box;border-radius:50%;background:radial-gradient(circle at 50% 35%,#33275a,#120d22);fill:none;stroke:#efe6ff;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;transition:background .35s,stroke .35s}
+.tchip b{font-weight:700}
+.tchip.on{background:linear-gradient(180deg,rgba(255,226,166,.95),rgba(240,181,90,.95));border-color:rgba(255,230,180,.9);color:#2a1806;box-shadow:0 0 18px rgba(255,190,100,.45),0 4px 12px rgba(0,0,0,.3);transform:translateY(-2px) scale(1.06)}
+.tchip.on svg{background:#2a1806;stroke:#ffe2a6}
+#tutorial .tnav{width:100%;max-width:420px;display:flex;align-items:center;justify-content:space-between;margin-top:16px;pointer-events:auto}
 #tutorial .tnav .btn{min-width:190px}
 #tutorial .tspacer{width:46px;height:46px}
-#tutorial .thint{margin-top:10px;font-size:9.5px;letter-spacing:.16em;white-space:nowrap;text-transform:uppercase;color:rgba(255,244,226,.42);text-align:center}
-#tStage.out #tIllu,#tStage.out .ttext>*{animation:tOut .23s ease-in forwards}
-#tStage.in #tIllu{animation:tIn .7s cubic-bezier(.2,.9,.2,1) both}
-#tStage.in #tK{animation:tIn .6s .08s cubic-bezier(.2,.9,.2,1) both}
-#tStage.in #tT{animation:tIn .65s .14s cubic-bezier(.2,.9,.2,1) both}
-#tStage.in #tB{animation:tIn .65s .22s cubic-bezier(.2,.9,.2,1) both}
-@keyframes tIn{from{opacity:0;transform:translateX(var(--dx,44px)) scale(.96);filter:blur(6px)}to{opacity:1;transform:none;filter:none}}
-@keyframes tOut{to{opacity:0;transform:translateX(calc(var(--dx,44px) * -.6)) scale(.97);filter:blur(4px)}}
-#tutorial.on #tStage{animation:tPop .8s cubic-bezier(.2,1.1,.3,1) both}
-@keyframes tPop{from{transform:scale(.94);opacity:0}to{transform:none;opacity:1}}
-@media (max-height:640px){#tB{font-size:13.5px;line-height:1.48}#tutorial .thint{display:none}#tT{font-size:clamp(26px,7vw,36px)}}
-@media (min-aspect-ratio: 5/4){
-  #tStage{flex-direction:row;gap:5vw;max-width:1000px}
-  #tIllu{width:min(52vw,calc(68vh * 1.111))}
-  #tutorial .ttext{text-align:left;max-width:400px}
+#tCard.out .tc>*{animation:tOut .2s ease-in forwards}
+#tCard.in #tK{animation:tIn .55s .02s cubic-bezier(.2,.9,.2,1) both}
+#tCard.in #tT{animation:tIn .6s .08s cubic-bezier(.2,.9,.2,1) both}
+#tCard.in #tB{animation:tIn .6s .15s cubic-bezier(.2,.9,.2,1) both}
+#tCard.in #tChips{animation:tIn .6s .22s cubic-bezier(.2,.9,.2,1) both}
+@keyframes tIn{from{opacity:0;transform:translateX(var(--dx,36px));filter:blur(5px)}to{opacity:1;transform:none;filter:none}}
+@keyframes tOut{to{opacity:0;transform:translateX(calc(var(--dx,36px) * -.5));filter:blur(4px)}}
+/* parmak: güneşi çevirme hareketi (gösteriyle eşzamanlı) */
+#tHand{position:absolute;left:50%;top:44%;z-index:1;width:0;height:0;opacity:0;transition:opacity .35s;pointer-events:none}
+#tHand.on{opacity:1}
+#tHand i{position:absolute;left:-22px;top:-22px;width:44px;height:44px;border-radius:50%;background:radial-gradient(circle,rgba(255,236,190,.95) 0 22%,rgba(255,206,120,.35) 40%,rgba(255,190,90,0) 70%);box-shadow:0 0 22px rgba(255,200,120,.55)}
+#tHand i::before{content:"";position:absolute;inset:-9px;border-radius:50%;border:1.5px solid rgba(255,230,180,.7);animation:tRing 1.2s ease-out infinite}
+#tHand s{position:absolute;left:-120px;top:-1px;width:240px;height:2px;border-radius:2px;background:linear-gradient(90deg,rgba(255,226,166,0),rgba(255,226,166,.45) 25%,rgba(255,226,166,.45) 75%,rgba(255,226,166,0))}
+#tHand s::before,#tHand s::after{content:"";position:absolute;top:-4px;width:7px;height:7px;border-top:2px solid rgba(255,226,166,.6);border-left:2px solid rgba(255,226,166,.6)}
+#tHand s::before{left:16px;transform:rotate(-45deg)}
+#tHand s::after{right:16px;transform:rotate(135deg)}
+@keyframes tRing{from{transform:scale(.6);opacity:.9}to{transform:scale(1.5);opacity:0}}
+@media (max-height:640px){#tB{font-size:13px;line-height:1.45}#tT{font-size:clamp(24px,7vw,34px)}#tChips{margin-top:10px}#tutorial .tnav{margin-top:10px}}
+/* yatay: gösteri solda, kart sağda */
+@media (orientation:landscape) and (min-aspect-ratio:21/20){
+  #tCard{left:auto;top:0;width:min(46%,520px);justify-content:center;text-align:left;align-items:flex-start;padding:calc(var(--sat) + 60px) calc(var(--sar) + 34px) calc(var(--sab) + 22px) 64px;
+    background:linear-gradient(90deg,rgba(14,9,30,0) 0,rgba(14,9,30,.72) 24%,rgba(10,7,22,.93) 62%,rgba(8,5,18,.97))}
+  #tCard .tc{align-items:flex-start}
+  #tChips{justify-content:flex-start}
+  #tutorial .tbar{max-width:none;margin:0}
+  #tutorial .thint{right:auto;width:54%}
+  #tHeld{left:27%}
+  #tHand{left:27%;top:62%}
 }
 #rotateNote{display:none}
 @media (min-aspect-ratio: 5/4){
@@ -921,13 +943,15 @@ body.testall #testBadge{display:block}
   <div id="chapterCard"><div class="cn" id="ccNum">I</div><div class="ct" id="ccTitle"></div><div class="line"></div><div class="cs" id="ccSub"></div></div>
 
   <div id="tutorial" aria-label="Nasıl oynanır">
+    <div id="tStage"></div>
+    <div id="tHand"><s></s><i></i></div>
     <div class="tbar"><div id="tSegs"></div><button class="tap" id="tSkip">Atla</button></div>
-    <div id="tStage">
-      <div id="tIllu"></div>
-      <div class="ttext"><div id="tK"></div><div id="tT"></div><div id="tB"></div></div>
-    </div>
-    <div class="tnav"><button class="icon tap" id="tPrev" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="btn primary tap" id="tNext">İleri</button><span class="tspacer"></span></div>
     <div class="thint">Dokun: ileri · Kaydır: gez · Basılı tut: durdur</div>
+    <div id="tHeld">Durduruldu</div>
+    <div id="tCard">
+      <div class="tc"><div id="tK"></div><div id="tT"></div><div id="tB"></div><div id="tChips"></div></div>
+      <div class="tnav"><button class="icon tap" id="tPrev" aria-label="Geri"><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></button><button class="btn primary tap" id="tNext">İleri</button><span class="tspacer"></span></div>
+    </div>
   </div>
 
   <div id="ending" class="screen">

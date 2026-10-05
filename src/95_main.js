@@ -715,7 +715,7 @@ function onResize() {
   renderer.setPixelRatio(dpr); renderer.setSize(w, h, false);
   const v = renderer.getDrawingBufferSize(new THREE.Vector2());
   post.build(v.x, v.y, Q);
-  camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h); Theater.resize(w, h); if (Ward3D.on) Ward3D.resize(w, h);
+  camera.aspect = w / h; camera.updateProjectionMatrix(); SkyMap.resize(w, h); Theater.resize(w, h); if (Ward3D.on) Ward3D.resize(w, h); if (TutStage.on) TutStage.resize(w, h);
   if (G.lv) Cam.fit(G.lv);
   fxAdd.u.uPx.value = fxMix.u.uPx.value = Ambient.u.uPx.value = Fireworks.u.uPx.value = v.y / (2 * Math.tan(deg(camera.fov / 2)));
 }
@@ -789,10 +789,10 @@ function frame(now) {
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
   audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k };
   audio.update(dtR, G.state === 'play');
-  const onWard = Ward3D.on, onMap = !onWard && G.state === 'map' && SkyMap.active, onTh = !onWard && G.state === 'theater' && Theater.active;
-  if (onWard) { Ward3D.update(dtR); Ward3D.apply(); } else if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
+  const onWard = Ward3D.on, onTut = !onWard && TUT.open && TutStage.on, onMap = !onWard && !onTut && G.state === 'map' && SkyMap.active, onTh = !onWard && !onTut && G.state === 'theater' && Theater.active;
+  if (onWard) { Ward3D.update(dtR); Ward3D.apply(); } else if (onTut) TutStage.apply(dtR); else if (onMap) SkyMap.apply(); else if (onTh) Theater.apply();
   // hikâye kartı opakken 3B çizilmez
-  if (!window.__noRender && !Lore.opaque && !KH.opaque && (!TUT.open || (frameNo++ & 1) === 0)) { try { post.render(onWard ? wardScene : onMap ? mapScene : onTh ? stScene : scene, onWard ? wardCam : onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; if (Photo.shot) Photo.capture(); } catch (e) { reportError(e); } }
+  if (!window.__noRender && !Lore.opaque && !KH.opaque) { try { post.render(onWard ? wardScene : onTut ? tutScene : onMap ? mapScene : onTh ? stScene : scene, onWard ? wardCam : onTut ? tutCam : onMap ? mapCam : onTh ? stCam : camera); renderedFrames++; if (Photo.shot) Photo.capture(); } catch (e) { reportError(e); } }
   // güvenlik: geçiş perdesi takılı kalmasın
   const fd = $('#fader'); if (fd.classList.contains('on')) { fd.__t = (fd.__t || 0) + dtR; if (fd.__t > 3.5) { fd.classList.remove('on', 'soon'); fd.__t = 0; } } else fd.__t = 0;
 }
@@ -961,7 +961,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, TutStage, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
