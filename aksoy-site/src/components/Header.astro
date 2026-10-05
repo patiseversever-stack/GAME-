@@ -16,6 +16,9 @@ const isActive = (href: string) =>
       {nav.map((n) => <a href={n.href} aria-current={isActive(n.href) ? 'page' : undefined}>{n.label}</a>)}
     </nav>
     <div class="site-header__actions">
+      <button class="icon-btn sound-btn" type="button" data-sound-toggle aria-pressed="false" aria-label="Sesli deneyim" title="Sesli deneyim">
+        <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      </button>
       <button class="icon-btn" type="button" data-search-open aria-label="Ürün ara (Ctrl+K)">
         <Icon name="search" />
       </button>

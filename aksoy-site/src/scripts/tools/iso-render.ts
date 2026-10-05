@@ -61,7 +61,7 @@ export function factsHtml(d: Decoded): string {
   if (d.edges) f.push({ t: `${d.edges} kesme köşesi (tipik)` });
   if (d.hole) {
     const k = d.hole.hole;
-    f.push({ t: k === 'cyl' ? 'Levyeli / üstten bağlamalı kater' : k === 'cs1' || k === 'cs2' ? 'Vidalı kater' : k === 'none' ? 'Üst pabuçlu kater' : 'Özel bağlama' });
+    f.push({ t: k === 'cyl' ? 'Manivelalı / üstten bağlamalı kater' : k === 'cs1' || k === 'cs2' ? 'Vidalı kater' : k === 'none' ? 'Üst pabuçlu kater' : 'Özel bağlama' });
   }
   if (d.ansi) f.push({ t: `ANSI ${d.ansi.input}` });
   return f.map((x) => `<li${x.tin ? ' class="is-tin"' : ''}>${esc(x.t)}</li>`).join('');

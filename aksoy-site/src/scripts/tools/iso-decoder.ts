@@ -80,7 +80,7 @@ const IC_TOL: { ic: number; d: string; m: string }[] = [
 
 export type HoleKind = 'none' | 'cyl' | 'cs1' | 'cs2' | 'special';
 export interface HoleDef { text: string; hole: HoleKind; cs?: string; cb: 0 | 1 | 2 | null; clamp: string }
-const CLAMP_HOLE = 'Bağlama: levyeli (P), pim + pabuçlu (D) ya da üstten bağlamalı (M) kater';
+const CLAMP_HOLE = 'Bağlama: manivelalı (P), pim + pabuçlu (D) ya da üstten bağlamalı (M) kater';
 const CLAMP_CS = 'Bağlama: vidalı (S) kater';
 const CLAMP_NONE = 'Bağlama: üstten pabuçlu (C) kater';
 export const HOLE: Record<string, HoleDef> = {
@@ -274,7 +274,7 @@ function nonIsoHint(compact: string): string | null {
     return `MGMN kanal açma ucu ISO 1832 kodu değil, üretici kodudur: MGMN ${compact.slice(4, 7)} ≈ ${fmtFixed(w, 2)} mm kanal genişliği. Uyumlu kater MGEHR/MGEHL (dış) ya da MGIVR/MGIVL (iç) serisidir.`;
   }
   if (/^\d{2}(ER|EL|IR|IL)/.test(compact)) {
-    return 'Bu bir diş açma ucu kodu (ör. 16ER 1.5 ISO): 16 uç boyu, E dış / I iç diş, R/L kesme yönü, ardından hatve (mm) ve profil (ISO = metrik 60°). Bu araç ISO 1832 tornalama ve frezeleme uçlarını çözer.';
+    return 'Bu bir diş çekme ucu kodu (ör. 16ER 1.5 ISO): 16 uç boyu, E dış / I iç diş, R/L kesme yönü, ardından hatve (mm) ve profil (ISO = metrik 60°). Bu araç ISO 1832 tornalama ve frezeleme uçlarını çözer.';
   }
   const h = compact.match(/^([CMPSD])([A-Z])([A-Z])([A-Z])([RLN])(\d{2})(\d{2})([A-Z])(\d{2})/);
   if (h && SHAPES[h[2]] && h[4] in CLEARANCE) {

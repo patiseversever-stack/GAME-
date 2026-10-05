@@ -45,7 +45,7 @@ export const categories: Category[] = [
     name: 'Frezeleme',
     summary: 'Freze uçları, freze çakıları ve karbür parmak frezeler',
     intro:
-      'APMT, SEKT, RPMT freze elmas uçları; BAP 300R / 400R ve 45° alın freze çakıları; 2, 3 ve 4 ağızlı karbür parmak frezeler, küresel ve alüminyum frezeleri.',
+      'APMT, SEKT, RPMT freze elmas uçları; BAP 300R / 400R ve 45° alın freze çakıları; 2, 3 ve 4 ağızlı karbür parmak frezeler; küresel frezeler ve alüminyum frezeleri.',
     drawing: 'endmill',
     children: [
       { slug: 'freze-uclari', name: 'Freze Elmas Uçları' },
@@ -58,7 +58,7 @@ export const categories: Category[] = [
     name: 'Delik Delme',
     summary: 'Karbür matkaplar, uçlu U-matkaplar, raybalar ve punta matkapları',
     intro:
-      'İçten soğutmalı ve soğutmasız karbür matkaplar, 2xD–5xD uçlu U-matkaplar (takma uçlu matkap), HSS matkaplar, punta matkapları ve makine raybaları.',
+      'İçten ve dıştan soğutmalı karbür matkaplar, 2xD–5xD uçlu U-matkaplar (takma uçlu matkap), HSS matkaplar, punta matkapları ve makine raybaları.',
     drawing: 'drill-u',
     children: [
       { slug: 'karbur-matkaplar', name: 'Karbür Matkaplar' },
@@ -83,9 +83,9 @@ export const categories: Category[] = [
   {
     slug: 'takim-tutucular',
     name: 'Takım Tutucular',
-    summary: 'ER pensler, BT40 / BT30 pens tutucular ve çektirme civataları',
+    summary: 'ER pensler, BT40 / BT30 pens tutucular ve çektirme cıvataları',
     intro:
-      'ER16, ER25, ER32 ve ER40 pensler; BT30 ve BT40 ER pens tutucular, freze bağlama arborları ve çektirme civataları (pull stud).',
+      'ER16, ER25, ER32 ve ER40 pensler; BT30 ve BT40 ER pens tutucular, freze bağlama arborları ve çektirme cıvataları (pull stud).',
     drawing: 'chuck-bt',
     children: [
       { slug: 'pensler', name: 'ER Pensler' },

@@ -1,5 +1,6 @@
 ---
 import Icon from './Icon.astro';
+import Logo from './Logo.astro';
 import { site, waDefault, trademarkNotice } from '../data/site';
 import { categories } from '../data/categories';
 import { brands } from '../data/brands';
@@ -23,41 +24,71 @@ const year = new Date().getFullYear();
       </div>
     )}
 
-    <div class="titleblock" aria-label="Firma bilgileri">
-      <div>
-        <h3>Firma</h3>
-        <p><strong style="color:var(--g-100)">{site.name}</strong><br />{site.owner} · {site.legalType}</p>
-        <p class="mono">{site.district}, {site.city}</p>
-        <p>{site.serviceRegions}. Atölyenize gelip teslim ediyoruz.</p>
+    <div class="fnav">
+      <div class="fnav__brand">
+        <Logo class="fnav__logo" />
+        <p class="fnav__lead">Ostim / İvedik’te kesici takım tedarikçisi. Torna ve freze uçları, matkap, kılavuz ve takım tutucu.</p>
+        <p class="fnav__status" data-open-status><i aria-hidden="true"></i><span>{site.hours}</span></p>
+        <div class="fnav__contact">
+          <a class="fchip fchip--wa" href={waDefault} target="_blank" rel="noopener" data-wa="footer-list"><Icon name="whatsapp" /> WhatsApp</a>
+          <a class="fchip" href={`tel:${site.phoneE164}`}><Icon name="phone" /> {site.phoneDisplay}</a>
+        </div>
+        <div class="fnav__area">
+          <span class="fnav__label"><Icon name="pin" /> {site.district}, {site.city}</span>
+          <p class="fnav__cap" id="teslim-iller">Atölyeye gelip teslim ettiğimiz iller</p>
+          <ul aria-labelledby="teslim-iller">{site.serviceAreas.map((c) => <li>{c}</li>)}</ul>
+        </div>
       </div>
-      <div>
-        <h3>Ürünler</h3>
-        <ul>{categories.map((c) => <li><a href={`/kategori/${c.slug}`}>{c.name}</a></li>)}</ul>
-      </div>
-      <div>
-        <h3>Tedarik edilen markalar</h3>
-        <ul>{brands.map((b) => <li><a href={`/markalar/${b.slug}`}>{b.name}</a></li>)}</ul>
-      </div>
-      <div>
-        <h3>İletişim</h3>
-        <ul>
-          <li><a href={waDefault} target="_blank" rel="noopener" data-wa="footer-list">WhatsApp</a></li>
-          <li><a href={`tel:${site.phoneE164}`}>{site.phoneDisplay}</a></li>
-          <li>{site.hours}</li>
-          <li><a href="/teknik-araclar">Teknik araçlar</a></li>
-          <li><a href="/blog">Blog</a></li>
-          <li><a href="/kvkk">KVKK aydınlatma metni</a></li>
-          <li><a href="/cerez-politikasi">Çerez politikası</a></li>
-        </ul>
-      </div>
+      <nav class="fnav__cols" aria-label="Alt bilgi bağlantıları">
+        <div>
+          <h3>Ürünler</h3>
+          <ul>{categories.map((c) => <li><a href={`/kategori/${c.slug}`}>{c.name}</a></li>)}</ul>
+        </div>
+        <div>
+          <h3>Tedarik edilen markalar</h3>
+          <ul>{brands.map((b) => <li><a href={`/markalar/${b.slug}`}>{b.name}</a></li>)}</ul>
+        </div>
+        <div>
+          <h3>Aksoy</h3>
+          <ul>
+            <li><a href="/urunler">Tüm ürünler</a></li>
+            <li><a href="/teknik-araclar">Teknik araçlar</a></li>
+            <li><a href="/blog">Blog</a></li>
+            <li><a href="/iletisim">İletişim</a></li>
+            <li><a href="/kvkk">KVKK aydınlatma metni</a></li>
+            <li><a href="/cerez-politikasi">Çerez politikası</a></li>
+          </ul>
+        </div>
+      </nav>
     </div>
 
     <p class="trademark">{trademarkNotice}</p>
   </div>
-  <div class="footer-mega" aria-hidden="true">AKSOY</div>
+  <div class="footer-mega" data-mega aria-hidden="true"><span class="footer-mega__txt">AKSOY</span></div>
   <div class="wrap footer-base">
     <span>© {year} {site.name}</span>
-    <span class="mono">{site.serviceRegions}</span>
-    <span>Sipariş ve online satış yapılmaz; teklif WhatsApp üzerinden verilir.</span>
+    <span>Sitede online satış yapılmaz; teklif WhatsApp üzerinden verilir.</span>
   </div>
 </footer>
+
+<script>
+  // Mesai durumu (İstanbul saatiyle, hafta içi 08:30–18:30)
+  const st = document.querySelector<HTMLElement>('[data-open-status]');
+  if (st) {
+    const now = new Date(new Date().toLocaleString('en-US', { timeZone: 'Europe/Istanbul' }));
+    const d = now.getDay(), m = now.getHours() * 60 + now.getMinutes();
+    const open = d >= 1 && d <= 5 && m >= 510 && m < 1110;
+    st.classList.toggle('is-open', open);
+    st.querySelector('span')!.textContent = open ? 'Şu an mesai saatinde · 18:30’a kadar' : 'Mesai dışında · WhatsApp’tan yazın, ilk fırsatta dönelim';
+  }
+  // Dev AKSOY: alt bilgiye yaklaşınca 3D sahneyi yükle (veri tasarrufu açıksa yükleme)
+  const host = document.querySelector<HTMLElement>('[data-mega]');
+  if (host && !(navigator as any).connection?.saveData) {
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      import('../scripts/footer/mega3d').then((m) => m.initMega(host)).catch(() => {});
+    }, { rootMargin: '700px' });
+    io.observe(host);
+  }
+</script>

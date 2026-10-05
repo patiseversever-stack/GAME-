@@ -39,7 +39,7 @@ export const ISO_GROUPS: { g: Iso; name: string; short: string; ex: string }[] =
   { g: 'K', name: 'Dökme demir', short: 'Döküm', ex: 'GG25, GGG40 (sfero)' },
   { g: 'N', name: 'Demir dışı', short: 'Demir dışı', ex: 'Alüminyum, bakır, pirinç' },
   { g: 'S', name: 'Süper alaşım', short: 'Süper alaşım', ex: 'Inconel, titanyum (Ti6Al4V)' },
-  { g: 'H', name: 'Sertleştirilmiş', short: 'Sertleşmiş', ex: '45–65 HRC çelik' },
+  { g: 'H', name: 'Sertleştirilmiş', short: 'Sert çelik', ex: '45–65 HRC çelik' },
 ];
 
 export const TOOL_LABEL: Record<Op, Record<ToolMat, string>> = {

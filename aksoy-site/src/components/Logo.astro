@@ -1,24 +1,25 @@
 ---
-// AKSOY işareti: 80° eşkenar dörtgen kesici uç + merkez deliği + kesme kenarında TiN parıltısı.
+// AKSOY işareti: "A" biçiminde üçgen kesici uç. Sivri burun kesme köşesi, bacak arası bağlama
+// boşluğu, sayaç deliği bağlama vidası; sol kenarda TiN kaplama parıltısı.
+// Kelime ve alt satır aynı genişliğe yaslanır (textLength), işaretle birlikte tek blok okunur.
 interface Props { sub?: boolean; class?: string }
 const { sub = true, class: cls } = Astro.props;
+const uid = 'lg' + Math.random().toString(36).slice(2, 8);
 ---
 <a href="/" class:list={['logo', cls]} aria-label="Aksoy Kesici Takımlar — ana sayfa">
-  <svg class="logo__mark" viewBox="0 0 32 32" aria-hidden="true">
+  <svg class="logo__svg" viewBox="0 0 140 40" aria-hidden="true" focusable="false">
     <defs>
-      <linearGradient id="lg-tin" x1="0" y1="0" x2="1" y2="1">
-        <stop offset="0" stop-color="#f6d27e" />
-        <stop offset=".55" stop-color="#d9a441" />
-        <stop offset="1" stop-color="#9c6f1f" />
+      <linearGradient id={uid} x1="6" y1="3" x2="34" y2="37" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#ffe1a0" />
+        <stop offset=".42" stop-color="#e2ac48" />
+        <stop offset=".75" stop-color="#b9842c" />
+        <stop offset="1" stop-color="#8a5f17" />
       </linearGradient>
     </defs>
-    <path d="M16 1.8 29.2 16 16 30.2 2.8 16Z" fill="url(#lg-tin)" />
-    <path d="M16 6.4 24.6 16 16 25.6 7.4 16Z" fill="none" stroke="#1a1408" stroke-opacity=".35" stroke-width="1" />
-    <circle cx="16" cy="16" r="3.4" fill="#0b0c0e" />
-    <path d="M16 1.8 29.2 16" stroke="#fff6dc" stroke-width="1.2" stroke-linecap="round" opacity=".9" />
+    <path fill={`url(#${uid})`} stroke={`url(#${uid})`} stroke-width="2.6" stroke-linejoin="round" fill-rule="evenodd" d="M20 4 36.2 34.6H27.4L24.6 28.4H15.4L12.6 34.6H3.8Z M20 13.8a3.5 3.5 0 1 0 .001 0Z" />
+    <path d="M8.6 30.2 20 8.6 31.4 30.2" stroke="#5a3d0c" stroke-opacity=".3" stroke-width=".6" fill="none" />
+    <path d="M19.3 3.3 2.9 34.6" stroke="#fff4d6" stroke-width="1.1" stroke-linecap="round" opacity=".85" />
+    <text class="logo__w" x="49" y={sub ? 21.5 : 27.5} textLength="89" lengthAdjust="spacing" fill="currentColor">AKSOY</text>
+    {sub && <text class="logo__s" x="49.4" y="34.6" textLength="88.4" lengthAdjust="spacing" fill="currentColor">KESİCİ TAKIMLAR</text>}
   </svg>
-  <span>
-    <span class="logo__word">AKSOY</span>
-    {sub && <span class="logo__sub">KESİCİ TAKIMLAR</span>}
-  </span>
 </a>

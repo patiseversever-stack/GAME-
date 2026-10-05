@@ -23,7 +23,7 @@ const tools = [
     href: '/teknik-araclar/kesme-hizi-hesaplama',
     tag: 'Hesaplayıcı',
     title: 'Kesme hızı ve devir hesaplama',
-    text: 'Malzeme grubunu ve takımı seçin, çapı girin: devir, ilerleme hızı ve talaş hacmi formülleriyle birlikte. ISO P–H gruplarına göre başlangıç kesme hızları.',
+    text: 'Malzeme grubunu ve takımı seçin, çapı girin; devir, ilerleme hızı ve talaş hacmi formülleriyle birlikte hesaplanır. Başlangıç kesme hızları ISO P–H gruplarına göre verilir.',
     chips: ['n = 1000·Vc/πD', 'Vf = fz·z·n', 'Q cm³/dk', 'Torna · Freze · Delme · Kılavuz'],
     art: 'dial',
   },
@@ -31,7 +31,7 @@ const tools = [
     href: '/teknik-araclar/iso-uc-kodu-cozucu',
     tag: 'ISO 1832',
     title: 'ISO uç kodu çözücü',
-    text: 'CNMG 120408 gibi elmas uç kodlarını harf harf çözer; şekil, açı, tolerans, boyut, kalınlık ve köşe radyüsü. ANSI kodlarını çevirir.',
+    text: 'CNMG 120408 gibi elmas uç kodlarını harf harf çözer: şekil, boşluk açısı, tolerans, boyut, kalınlık ve köşe radyüsü. ANSI (inç) kodlarını da ISO’ya çevirir.',
     chips: ['CNMG', 'DCMT', 'WNMG', 'APMT'],
     art: drawingSvg('insert', 'C', { grid: true, label: 'CNMG 120408' }),
   },
@@ -39,7 +39,7 @@ const tools = [
     href: '/teknik-araclar/kilavuz-matkap-tablosu',
     tag: 'Tablo',
     title: 'Kılavuz matkap çapı tablosu',
-    text: 'M3–M24 kaba ve ince diş için kılavuz öncesi matkap çapı, 6H iç diş toleransı ve ovalama kılavuz deliği. Aranabilir tablo ve hesaplayıcı.',
+    text: 'M3–M24 kaba ve ince diş için kılavuz öncesi matkap çapı, 6H iç diş toleransı ve ovalama kılavuzu için delik çapı. Aranabilir tablo ve hesaplayıcı.',
     chips: ['M10 → 8,5', 'M12 → 10,2', 'Ovalama ≈'],
     art: drawingSvg('tap', undefined, { grid: true, label: 'M10 × 1,5' }),
   },
@@ -94,7 +94,7 @@ const schema = [
       <rect x="1" y="1" width="438" height="278" rx="4" class="ln" />
       <path d="M1 236 H439 M286 236 V279 M378 236 V279" class="ln-thin" />
       <text x="24" y="44" class="t-small">01 · DEVİR</text>
-      <text x="24" y="80" class="t-formula">n = 1000·Vc / π·D</text>
+      <text x="24" y="80" class="t-formula">n = 1000·Vc / (π·D)</text>
       <line x1="24" y1="98" x2="416" y2="98" class="dim" stroke-dasharray="3 4" />
       <text x="24" y="124" class="t-small">02 · ISO 1832</text>
       <text x="24" y="160" class="t-formula">C N M G <tspan class="t-gold-strong">12 04 08</tspan></text>

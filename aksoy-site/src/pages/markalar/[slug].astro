@@ -53,7 +53,7 @@ const desc = clip(`${b.name} ürünleri Ankara Ostim / İvedik’ten tedarik edi
       <aside class="sheet" aria-label={`${b.name} künyesi`}>
         <div class="sheet__head"><span>Marka künyesi</span><span>{idx + 1} / {brands.length}</span></div>
         <dl>
-          <div><dt>Menşei</dt><dd>{unknownCountry ? 'Bilgi doğrulanıyor' : b.country}</dd></div>
+          <div><dt>Menşe</dt><dd>{unknownCountry ? 'Bilgi doğrulanıyor' : b.country}</dd></div>
           <div><dt>Segment</dt><dd>{b.segment}</dd></div>
           <div>
             <dt>Güçlü olduğu alanlar</dt>
@@ -80,8 +80,8 @@ const desc = clip(`${b.name} ürünleri Ankara Ostim / İvedik’ten tedarik edi
       <div class="section-head section-head--row">
         <div style="display:grid;gap:16px;max-width:760px">
           <span class="eyebrow">Katalog · {b.name}</span>
-          <h2 id="h-kodlar">{b.name} olarak tedarik edilebilen kodlar</h2>
-          <p>Kodu sepete ekleyip marka tercihini “{b.name}” seçin; fiyat ve termin WhatsApp’tan gelsin.</p>
+          <h2 id="h-kodlar">{b.name} markasıyla tedarik edilebilen kodlar</h2>
+          <p>Kodu sepete ekleyin, marka tercihi olarak “{b.name}” seçin; fiyat ve termin WhatsApp’tan gelsin.</p>
         </div>
         {items.length > 0 && <a class="link-arrow" href={`/urunler?marka=${b.slug}`}>Filtrelerle aç <Icon name="arrow" /></a>}
       </div>

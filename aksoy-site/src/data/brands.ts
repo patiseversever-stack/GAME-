@@ -52,7 +52,7 @@ export const brands: Brand[] = [
     strengths: ['Torna elmas uçları', 'Kanal uçları'],
     description:
       'Kutusunda “KYOTO Cutting Tools — Inspected” etiketiyle gelen kesici uç markası. Japon Kyocera ile karıştırılmamalıdır. Uygun fiyatlı torna ve kanal uçlarında tercih edilir.',
-    note: 'Kutu fotoğrafından doğrulandı; üretici ve menşei bilgisi eklenecek.',
+    note: 'Marka adı kutu etiketinden doğrulandı; üretici ve menşe bilgisi eklenecek.',
   },
   {
     slug: 'stormk',
@@ -62,7 +62,7 @@ export const brands: Brand[] = [
     strengths: ['Torna elmas uçları', 'Freze uçları'],
     description:
       'Kutusunda “STORM&K — Inspected” etiketiyle gelen kesici uç markası. Bakır tonlu kaplamalı torna ve freze uçlarında uygun fiyatlı bir seçenek.',
-    note: 'Kutu fotoğrafından doğrulandı; üretici ve menşei bilgisi eklenecek.',
+    note: 'Marka adı kutu etiketinden doğrulandı; üretici ve menşe bilgisi eklenecek.',
   },
   {
     slug: 'deskar',
@@ -82,7 +82,7 @@ export const brands: Brand[] = [
     strengths: ['Kanal ve kesme katerleri', 'Torna katerleri', 'Takım tutucular'],
     description:
       'Çin merkezli kesici takım ve kater üreticisi (büyük olasılıkla Zhuzhou Sant Cutting Tools). MGEHR kanal katerleri gibi Korloy uçlarıyla uyumlu ekonomik tutucular sunar.',
-    note: 'Üretici eşleşmesi yaklaşık; ürün fotoğrafındaki logodan.',
+    note: 'Üretici bilgisi ürün fotoğrafındaki logodan çıkarıldı; kesin değildir.',
   },
 ];
 

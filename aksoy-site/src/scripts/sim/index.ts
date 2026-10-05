@@ -21,15 +21,15 @@ function statusOf(d: CalcDetail, zone: SimInput['zone']): [string, string] {
   if (zone === 'none') return ['warn', 'Bu takım malzemesi bu grup için önerilmez; katalog değerine bakın.'];
   if (zone === 'above') {
     if (d.iso === 'N') return ['hot', 'Vc aralığın üstünde: talaş uca yapışabilir, uç ömrü kısalır.' + sync];
-    return ['hot', 'Vc aralığın üstünde: talaş maviye döner, ısı ve kıvılcım artar, uç çabuk aşınır.' + sync];
+    return ['hot', 'Vc aralığın üstünde: talaş maviye döner, uç fazla ısınır ve çabuk aşınır.' + sync];
   }
   if (zone === 'below') {
-    if (d.iso === 'N') return ['cold', 'Vc düşük: alüminyumda sıvanma (yığıntı talaş), yüzey matlaşır.' + sync];
-    return ['cold', 'Vc aralığın altında: yığıntı talaş (BUE) riski, yüzey bozulur, verim düşer.' + sync];
+    if (d.iso === 'N') return ['cold', 'Vc aralığın altında: alüminyum uca sıvanır (yığıntı talaş), yüzey matlaşır.' + sync];
+    return ['cold', 'Vc aralığın altında: yığıntı talaş oluşabilir, yüzey bozulur, verim düşer.' + sync];
   }
   const ok: Record<Iso, string> = {
-    P: 'Talaş saman sarısı, kısa kıvrık: kesme dengeli.',
-    M: 'Uzun, sünek talaş: ilerlemeyi düşürmeyin, yüzey sertleşir.',
+    P: 'Talaş saman sarısı, kısa ve kıvrık: kesme dengeli.',
+    M: 'Uzun, sünek talaş: ilerlemeyi fazla düşürmeyin, yoksa yüzey pekleşir.',
     K: 'Kırık talaş ve grafit tozu: dökümde normal.',
     N: 'Uzun parlak talaş: alüminyumda yüksek hız uygun.',
     S: 'Kısa ve sıcak talaş: ısı uçta toplanır, bol soğutma şart.',

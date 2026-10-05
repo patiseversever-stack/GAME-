@@ -135,6 +135,8 @@ export async function startShowcase(
     lift0: 0, lift1: 0, screw0: 0, screw1: 0, idx0: 0, idx1: 0,
     cDim: 0, cIns: 0, cCool: 0,
   };
+  // Ses modülü kesme, soğutma ve vida durumunu buradan okur (yalnızca okuma)
+  (window as any).__aksoyFx = S;
   // Sinematik kamera: A = bu sahnenin kaydırmaya bağlı kamera hareketi, B = önceki sahneden sönümlenen kalıntı
   type Cam = { rx: number; ry: number; rz: number; px: number; py: number; scale: number; focus: number; env: number };
   const zeroCam = (): Cam => ({ rx: 0, ry: 0, rz: 0, px: 0, py: 0, scale: 0, focus: 0, env: 0 });
@@ -173,9 +175,9 @@ export async function startShowcase(
   });
   const pins: Pin[] = [
     { anchor: 'shank', label: 'Weldon sap', sub: 'Ø 32 · sıkma yüzeyi', group: 'cDim' as Key, side: 'left' as const },
-    { anchor: 'insert-cevre', label: 'Çevre uç', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'right' as const },
-    { anchor: 'insert-merkez', label: 'Merkez uç', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'left' as const, down: true },
-    { anchor: 'screw-cevre', label: 'Torx vida', sub: 'sök · çevir · sık', group: 'cIns' as Key, side: 'right' as const, down: true },
+    { anchor: 'insert-cevre', label: 'Çevre ucu', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'right' as const },
+    { anchor: 'insert-merkez', label: 'Merkez ucu', sub: 'Kenar 1 / 3', group: 'cIns' as Key, side: 'left' as const, down: true },
+    { anchor: 'screw-cevre', label: 'Torx vida', sub: 'gevşet · çevir · sık', group: 'cIns' as Key, side: 'right' as const, down: true },
     { anchor: 'cool', label: 'İçten soğutma', sub: 'basınçlı sıvı doğrudan uca', group: 'cCool' as Key, side: 'right' as const },
   ].map((p, i) => {
     const el = document.createElement('div');
@@ -387,6 +389,7 @@ export async function startShowcase(
         L = Ltarget; // yeni bölüm kendi başından (ya da geri gelişte sonundan) başlar
         dimOn = false;
         enter(k, dir);
+        dispatchEvent(new CustomEvent('aksoy:chapter', { detail: { k, dir } }));
       }
       if (hudBar) hudBar.style.transform = `scaleX(${progress})`;
       updateReelRef?.();
