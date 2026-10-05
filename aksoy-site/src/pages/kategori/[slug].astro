@@ -1,0 +1,129 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { categories } from '../../data/categories';
+import { products } from '../../data/products';
+import { waLink } from '../../data/site';
+import { drawingSvg } from '../../lib/drawings';
+import { sortProducts, breadcrumbSchema, clip } from '../../lib/catalog';
+import type { Category } from '../../data/types';
+import '../../styles/catalog.css';
+
+export function getStaticPaths() {
+  return categories.map((c) => ({ params: { slug: c.slug }, props: { c } }));
+}
+
+const { c } = Astro.props as { c: Category };
+const idx = categories.findIndex((x) => x.slug === c.slug);
+const pad = (n: number) => String(n).padStart(2, '0');
+const items = sortProducts(products.filter((p) => p.category === c.slug));
+const groups = c.children.map((s) => ({ ...s, items: items.filter((p) => p.subcategory === s.slug) }));
+// Ağaçta olmayan alt kategori slug'ı taşıyan ürünler kaybolmasın
+const orphans = items.filter((p) => !c.children.some((s) => s.slug === p.subcategory));
+if (orphans.length) groups.push({ slug: 'diger', name: 'Diğer', items: orphans });
+const brandCount = new Set(items.flatMap((p) => p.brands)).size;
+const others = categories.filter((x) => x.slug !== c.slug);
+
+const schema = breadcrumbSchema(
+  [
+    { name: 'Ana sayfa', path: '/' },
+    { name: 'Ürünler', path: '/urunler' },
+    { name: c.name, path: `/kategori/${c.slug}` },
+  ],
+  Astro.site,
+);
+const desc = clip(`${c.name}: ${c.intro}`);
+---
+<Base title={`${c.name} — ${c.summary}`} description={desc} theme="light" header="dark" schema={schema}>
+  <section class="page-hero page-hero--dark khero">
+    <div class="wrap khero__grid">
+      <div>
+        <ol class="breadcrumbs" aria-label="Konum">
+          <li><a href="/">Ana sayfa</a></li>
+          <li><a href="/urunler">Ürünler</a></li>
+          <li aria-current="page">{c.name}</li>
+        </ol>
+        <span class="eyebrow eyebrow--tin">Ürün grubu {pad(idx + 1)} / {pad(categories.length)}</span>
+        <h1>{c.name}</h1>
+        <p class="lead">{c.intro}</p>
+        <ul class="khero__facts" aria-label="Grup özeti">
+          <li><b>{items.length}</b> kod</li>
+          <li><b>{c.children.length}</b> alt grup</li>
+          {brandCount > 0 && <li><b>{brandCount}</b> marka</li>}
+        </ul>
+        <div class="khero__actions">
+          <a class="btn btn--tin" href={`/urunler?kategori=${c.slug}`}><Icon name="grid" /> Katalogda süz</a>
+          <a class="btn btn--ghost" href={waLink(`Merhaba, ${c.name} grubunda bir ürün için teklif almak istiyorum.`)} target="_blank" rel="noopener" data-wa={`kategori-${c.slug}`}><Icon name="whatsapp" /> Kodu sorun</a>
+        </div>
+      </div>
+      <figure class="stage" aria-hidden="true" style="margin:0">
+        <div class="stage__marks"><i></i><i></i><i></i><i></i></div>
+        <span class="stage__lbl stage__lbl--tl">Pafta K-{pad(idx + 1)}</span>
+        <span class="stage__lbl stage__lbl--tr">{c.name}</span>
+        <span class="stage__lbl stage__lbl--bl">Temsilî çizim</span>
+        <span class="stage__lbl stage__lbl--br">{c.shape ? `ISO ${c.shape}` : 'Ölçeksiz'}</span>
+        <div class="stage__art" set:html={drawingSvg(c.drawing, c.shape)} />
+      </figure>
+    </div>
+  </section>
+
+  <nav class="subnav" data-subnav aria-label={`${c.name} alt grupları`}>
+    <div class="wrap subnav__track" data-subnav-track>
+      {groups.map((g) => (
+        <a href={`#${g.slug}`}>{g.name}<span>{g.items.length}</span></a>
+      ))}
+      <a class="subnav__all" href={`/urunler?kategori=${c.slug}`}>Filtrelerle aç <Icon name="arrow" /></a>
+    </div>
+  </nav>
+
+  <div class="wrap kgroups">
+    {groups.map((g, i) => (
+      <section class="kgroup" id={g.slug} aria-labelledby={`h-${g.slug}`}>
+        <header class="kgroup__head">
+          <span class="kgroup__num" aria-hidden="true">{pad(i + 1)}</span>
+          <div>
+            <h2 id={`h-${g.slug}`}>{g.name}</h2>
+            <p>{g.items.length ? `${g.items.length} kod` : 'Yakında'}</p>
+          </div>
+          {g.items.length > 0 && g.slug !== 'diger' && (
+            <a class="link-arrow" href={`/urunler?kategori=${c.slug}&alt=${g.slug}`}>Katalogda süz <Icon name="arrow" /></a>
+          )}
+        </header>
+        {g.items.length > 0 ? (
+          <div class="pgrid pgrid--dense">{g.items.map((p) => <ProductCard p={p} />)}</div>
+        ) : (
+          <div class="kgroup__empty">
+            <p>Bu gruptaki kodlar katalog sayfasına ekleniyor. Aradığınız ürünü şimdiden sorabilirsiniz.</p>
+            <a class="btn btn--wa btn--sm" href={waLink(`Merhaba, ${g.name} için teklif almak istiyorum.`)} target="_blank" rel="noopener" data-wa={`kategori-bos-${g.slug}`}><Icon name="whatsapp" /> WhatsApp’tan sor</a>
+          </div>
+        )}
+      </section>
+    ))}
+
+    <section aria-labelledby="diger-gruplar">
+      <div class="section-head section-head--row" style="margin-bottom:24px">
+        <div style="display:grid;gap:14px">
+          <span class="eyebrow">Katalog</span>
+          <h2 id="diger-gruplar" style="font-size:var(--fs-xl)">Diğer ürün grupları</h2>
+        </div>
+        <a class="link-arrow" href="/urunler">Tüm katalog <Icon name="arrow" /></a>
+      </div>
+      <div class="kother">
+        {others.map((o) => (
+          <a href={`/kategori/${o.slug}`}>
+            <span>
+              <small>{pad(categories.indexOf(o) + 1)} / {pad(categories.length)}</small>
+              <b>{o.name}</b>
+            </span>
+            <span class="kother__art" aria-hidden="true" set:html={drawingSvg(o.drawing, o.shape)} />
+          </a>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script>
+    import '../../scripts/catalog';
+  </script>
+</Base>

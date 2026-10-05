@@ -1,0 +1,119 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import { brands } from '../../data/brands';
+import { products } from '../../data/products';
+import { trademarkNotice, waLink } from '../../data/site';
+import { breadcrumbSchema, segmentTier } from '../../lib/catalog';
+import '../../styles/catalog.css';
+
+const pad = (n: number) => String(n).padStart(2, '0');
+const countOf = (slug: string) => products.filter((p) => p.brands.includes(slug)).length;
+
+const tiers = [
+  {
+    key: 'premium',
+    name: 'Premium',
+    level: 100,
+    text: 'Seri üretim, zor malzeme ve uzun takım ömrü gereken işler. Kenar başına maliyet çoğu zaman en düşüktür.',
+  },
+  {
+    key: 'orta',
+    name: 'Orta segment',
+    level: 66,
+    text: 'Fiyat ve performans dengesi. Atölye işleri ve orta ölçekli seriler için güvenli tercih.',
+  },
+  {
+    key: 'ekonomik',
+    name: 'Ekonomik',
+    level: 38,
+    text: 'Prototip, tek parça ve kaba işler. Uygun fiyatlı, hızlı tedarik edilen ISO kodları.',
+  },
+] as const;
+
+const schema = breadcrumbSchema(
+  [
+    { name: 'Ana sayfa', path: '/' },
+    { name: 'Markalar', path: '/markalar' },
+  ],
+  Astro.site,
+);
+---
+<Base
+  title="Tedarik Edilen Markalar — ISCAR, Tungaloy, Gühring, KORLOY ve diğerleri"
+  description="Aksoy Kesici Takımlar’ın tedarik ettiği kesici takım markaları: premium, orta segment ve ekonomik seçenekler. Aynı ISO kodunu işinize uygun segmentten teklif ediyoruz."
+  theme="dark"
+  header="dark"
+  schema={schema}
+>
+  <section class="page-hero page-hero--dark bhero">
+    <div class="wrap">
+      <ol class="breadcrumbs" aria-label="Konum">
+        <li><a href="/">Ana sayfa</a></li>
+        <li aria-current="page">Markalar</li>
+      </ol>
+      <span class="eyebrow eyebrow--tin">Tedarik edilen markalar · {pad(brands.length)}</span>
+      <h1>Aynı kod, farklı segment. İşe göre doğru marka.</h1>
+      <p class="lead">CNMG 120408 her markada aynı ölçüdedir; fark kalitede, kaplamada ve fiyatta. Seri üretimde takım ömrü, atölye işinde fiyat öne çıkar. Teklifte iki seçeneği yan yana koyarız.</p>
+    </div>
+  </section>
+
+  <section class="section section--dark section--tight" aria-label="Marka listesi" style="padding-top:0">
+    <div class="wrap">
+      <ol class="blist">
+        {brands.map((b, i) => {
+          const n = countOf(b.slug);
+          return (
+            <li>
+              <a href={`/markalar/${b.slug}`}>
+                <span class="blist__idx" aria-hidden="true">{pad(i + 1)}</span>
+                <span class:list={['blist__name', { 'is-long': b.name.length > 12 }]}>{b.name}</span>
+                <span class="blist__meta"><b>{b.segment}</b>{b.country && <span>{b.country}</span>}</span>
+                <span class="blist__str">{b.strengths.slice(0, 3).join(' · ')}</span>
+                <span class="blist__n"><b>{n}</b>kod</span>
+                <Icon name="arrow-up-right" />
+              </a>
+            </li>
+          );
+        })}
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section--dark section--tight" aria-labelledby="h-seg">
+    <div class="wrap">
+      <div class="section-head" style="margin-bottom:32px">
+        <span class="eyebrow">Hangi segment?</span>
+        <h2 id="h-seg" style="font-size:var(--fs-2xl)">Marka değil, iş seçer.</h2>
+        <p>Malzemenizi, adedi ve tezgâhınızı yazın; uygun segmenti ve kaliteyi birlikte belirleyelim.</p>
+      </div>
+      <div class="tiers">
+        {tiers.map((t) => {
+          const list = brands.filter((b) => segmentTier(b.segment) === t.key);
+          return (
+            <div>
+              <div class="tiers__bar" aria-hidden="true"><i style={`width:${t.level}%`}></i></div>
+              <h3>{t.name}</h3>
+              <p>{t.text}</p>
+              {list.length > 0 && (
+                <ul aria-label={`${t.name} markalar`}>
+                  {list.map((b) => <li><a href={`/markalar/${b.slug}`}>{b.name}</a></li>)}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:12px;margin-top:28px">
+        <a class="btn btn--wa" href={waLink('Merhaba, aynı kod için farklı markalardan teklif almak istiyorum.')} target="_blank" rel="noopener" data-wa="markalar"><Icon name="whatsapp" /> İki seçenekli teklif iste</a>
+        <a class="btn btn--ghost" href="/urunler"><Icon name="grid" /> Kataloğa git</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--dark section--tight" aria-label="Marka kullanımı hakkında" style="padding-top:0">
+    <div class="wrap">
+      <p class="tm-notice"><Icon name="shield" /> <span>{trademarkNotice} Logolar kullanılmaz; ürünler tedarikçi kanallarından, orijinal kutusunda teslim edilir.</span></p>
+    </div>
+  </section>
+</Base>

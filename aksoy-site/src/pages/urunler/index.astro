@@ -1,0 +1,261 @@
+---
+import Base from '../../layouts/Base.astro';
+import Icon from '../../components/Icon.astro';
+import ProductCard from '../../components/ProductCard.astro';
+import { products } from '../../data/products';
+import { categories, categoryBySlug, subcategoryName } from '../../data/categories';
+import { brands, brandBySlug } from '../../data/brands';
+import { waLink } from '../../data/site';
+import { ISO_GROUPS, SHAPES, SHAPE_ORDER, shapeIcon, sortProducts, breadcrumbSchema } from '../../lib/catalog';
+import '../../styles/catalog.css';
+
+const list = sortProducts(products);
+const total = list.length;
+const usedBrands = brands.filter((b) => list.some((p) => p.brands.includes(b.slug)));
+const usedShapes = SHAPE_ORDER.filter((s) => list.some((p) => p.drawing === 'insert' && p.shape === s));
+const countCat = (slug: string) => list.filter((p) => p.category === slug).length;
+
+// Aramada eşleşecek metin: kod, ad, anahtar kelimeler, kategori/alt kategori ve marka adları
+const hay = (p: (typeof list)[number]) =>
+  [
+    p.code,
+    p.name,
+    ...(p.keywords ?? []),
+    categoryBySlug[p.category]?.name ?? '',
+    subcategoryName(p.category, p.subcategory),
+    ...p.brands.map((b) => brandBySlug[b]?.name ?? b),
+    p.shape ? `ISO ${p.shape}` : '',
+  ].join(' ');
+
+const sliders =
+  '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2.2"/><circle cx="10" cy="17" r="2.2"/></svg>';
+
+const schema = breadcrumbSchema(
+  [
+    { name: 'Ana sayfa', path: '/' },
+    { name: 'Ürünler', path: '/urunler' },
+  ],
+  Astro.site,
+);
+---
+<Base
+  title="Ürün Kataloğu — Torna, Freze, Matkap, Kılavuz"
+  description="Torna ve freze elmas uçları, karbür matkap, parmak freze, kılavuz ve takım tutucular. Kodla arayın, malzeme grubuna ve markaya göre süzün; WhatsApp’tan teklif isteyin."
+  theme="light"
+  header="light"
+  schema={schema}
+>
+  <section class="page-hero chero">
+    <div class="chero__grid-bg blueprint" aria-hidden="true"></div>
+    <svg class="chero__art" viewBox="0 0 460 300" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1">
+      <g transform="rotate(-14 200 150)">
+        <polygon class="chero__draw" pathLength="1" points="80,150 200,49.3 320,150 200,250.7" stroke-width="1.3" />
+        <polygon points="104,150 200,69.4 296,150 200,230.6" stroke-dasharray="3 4" opacity=".6" />
+        <circle cx="200" cy="150" r="77" stroke-dasharray="2 5" opacity=".5" />
+        <circle cx="200" cy="150" r="17" />
+        <circle cx="200" cy="150" r="25" opacity=".5" />
+        <path d="M40 150h320M200 20v260" stroke-dasharray="14 4 2 4" opacity=".45" />
+        <path class="chero__edge" d="M80 150 L120 116.4 M80 150 L120 183.6" stroke-width="2.2" stroke-linecap="round" />
+        <path d="M108 126.5 A36 36 0 0 1 108 173.5" />
+        <path d="M200 150 L254.4 95.6" opacity=".8" />
+        <path d="M250 92 l4.4 3.6 -1.6 -5.4" opacity=".8" />
+      </g>
+      <g font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" stroke="none" letter-spacing=".6">
+        <text x="64" y="190">80°</text>
+        <text x="268" y="74">IC 12,7</text>
+        <text x="190" y="292">CNMG 120408 · ISO 1832</text>
+      </g>
+      <g opacity=".85">
+        <rect x="392" y="62" width="20" height="176" rx="1" />
+        <path d="M392 82h20M392 218h20" stroke-dasharray="2 3" opacity=".6" />
+        <path d="M392 252v10M412 252v10M384 257h36" opacity=".7" />
+        <text x="402" y="276" text-anchor="middle" font-family="IBM Plex Mono, monospace" font-size="10" fill="currentColor" stroke="none">s 4,76</text>
+      </g>
+    </svg>
+    <div class="wrap">
+      <ol class="breadcrumbs" aria-label="Konum">
+        <li><a href="/">Ana sayfa</a></li>
+        <li aria-current="page">Ürünler</li>
+      </ol>
+      <div class="chero__row">
+        <div>
+          <span class="eyebrow eyebrow--tin">Katalog · ISO kodlarıyla</span>
+          <h1>Kesici takım kataloğu</h1>
+          <p class="lead">Kodla arayın, malzemenize göre süzün. Adedi seçip teklif sepetine ekleyin; fiyat ve termin WhatsApp’tan gelsin.</p>
+        </div>
+        <dl class="cstats" aria-label="Katalog özeti">
+          <div><dt>Kod</dt><dd>{total}</dd></div>
+          <div><dt>Ürün grubu</dt><dd>{categories.length}</dd></div>
+          <div><dt>Marka</dt><dd>{usedBrands.length || brands.length}</dd></div>
+        </dl>
+      </div>
+
+      <div class="cquick" role="group" aria-label="Ürün grubuna göre süz">
+        {categories.map((c) => (
+          <button type="button" class="cquick__btn" data-f="cat" data-v={c.slug} data-label={c.name} aria-pressed="false">
+            {c.name}<span data-n>{countCat(c.slug)}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <div class="catalog wrap" data-catalog data-total={total}>
+    <div class="flt-scrim" data-flt-scrim></div>
+    <aside class="flt" id="filtreler" data-flt aria-labelledby="flt-baslik">
+      <div class="flt__head">
+        <h2 id="flt-baslik">Filtreler</h2>
+        <button class="flt__clear-top" type="button" data-clear>Temizle</button>
+        <button class="icon-btn flt__close" type="button" data-flt-close aria-label="Filtreleri kapat"><Icon name="close" /></button>
+      </div>
+
+      <div class="flt__body">
+        <section class="fgroup" aria-labelledby="fg-kat">
+          <h3 class="fgroup__title" id="fg-kat">Ürün grubu</h3>
+          <ul class="fcat">
+            <li>
+              <button type="button" class="fopt" data-f="cat" data-v="" aria-pressed="true">
+                <span>Tümü</span><span class="fopt__n" data-n>{total}</span>
+              </button>
+            </li>
+            {categories.map((c) => (
+              <li>
+                <button type="button" class="fopt" data-f="cat" data-v={c.slug} data-label={c.name} aria-pressed="false">
+                  <span>{c.name}</span><span class="fopt__n" data-n>{countCat(c.slug)}</span>
+                </button>
+                <ul class="fsub" data-sub-of={c.slug} hidden>
+                  {c.children.map((s) => (
+                    <li>
+                      <button type="button" class="fopt fopt--sub" data-f="sub" data-v={s.slug} data-parent={c.slug} data-label={s.name} aria-pressed="false">
+                        <span>{s.name}</span><span class="fopt__n" data-n></span>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section class="fgroup" aria-labelledby="fg-iso">
+          <h3 class="fgroup__title" id="fg-iso">Malzeme <small>ISO 513</small></h3>
+          <div class="fiso">
+            {ISO_GROUPS.map((m) => (
+              <button type="button" class="fiso__btn" data-f="iso" data-v={m.g} data-g={m.g} data-label={`${m.g} · ${m.t}`} aria-pressed="false" aria-label={`${m.g} — ${m.t}: ${m.s}`} title={`${m.t}: ${m.s}`}>
+                <b aria-hidden="true">{m.g}</b>
+                <span class="fiso__t" aria-hidden="true">{m.k}</span>
+                <span class="fopt__n" data-n></span>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {usedShapes.length > 0 && (
+          <section class="fgroup" aria-labelledby="fg-sekil">
+            <h3 class="fgroup__title" id="fg-sekil">Uç şekli <small>ISO 1832</small></h3>
+            <div class="fshape">
+              {usedShapes.map((s) => (
+                <button type="button" class="fshape__btn" data-f="shape" data-v={s} data-label={`${s} · ${SHAPES[s].name}`} aria-pressed="false" aria-label={`${s} — ${SHAPES[s].name}`} title={SHAPES[s].name}>
+                  <Fragment set:html={shapeIcon(s)} />
+                  <b>{s}</b>
+                  <span>{SHAPES[s].angle}</span>
+                </button>
+              ))}
+            </div>
+            <p class="fgroup__hint">Kodun ilk harfi: CNMG → C, DCMT → D.</p>
+          </section>
+        )}
+
+        {usedBrands.length > 0 && (
+          <section class="fgroup" aria-labelledby="fg-marka">
+            <h3 class="fgroup__title" id="fg-marka">Marka</h3>
+            <ul class="fbrand">
+              {usedBrands.map((b) => (
+                <li>
+                  <button type="button" class="fopt fopt--check" data-f="brand" data-v={b.slug} data-label={b.name} aria-pressed="false">
+                    <i class="fcheck" aria-hidden="true"><Icon name="check" /></i>
+                    <span>{b.name}</span><span class="fopt__n" data-n></span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <p class="fgroup__hint">Aynı kod çoğu zaman birden fazla markadan tedarik edilir. <a href="/markalar">Markalar hakkında</a></p>
+          </section>
+        )}
+      </div>
+
+      <div class="flt__foot">
+        <button class="btn btn--ghost" type="button" data-clear>Temizle</button>
+        <button class="btn btn--tin" type="button" data-flt-close data-flt-show>Sonuçları göster</button>
+      </div>
+    </aside>
+
+    <div class="cres">
+      <div class="ctool" data-ctool>
+        <div class="ctool__search">
+          <Icon name="search" />
+          <label class="sr-only" for="katalog-ara">Katalogda ara</label>
+          <input id="katalog-ara" type="search" data-q placeholder="Kod veya ürün: CNMG, elmas uç, klavuz…" data-ph-short="Kod veya ürün ara" autocomplete="off" autocapitalize="off" spellcheck="false" enterkeyhint="search" />
+          <button class="ctool__clear" type="button" data-q-clear aria-label="Aramayı temizle" hidden><Icon name="close" /></button>
+        </div>
+        <p class="ctool__count" data-count-live aria-live="polite" aria-atomic="true"><b data-count>{total}</b> <span>ürün</span></p>
+        <button class="ctool__fbtn" type="button" data-flt-open aria-controls="filtreler" aria-expanded="false">
+          <Fragment set:html={sliders} />
+          <span>Filtrele</span>
+          <span class="ctool__badge" data-fcount hidden>0</span>
+        </button>
+      </div>
+
+      <div class="cmeta">
+        <p class="cmeta__count" aria-hidden="true"><b data-count>{total}</b> / {total} ürün</p>
+        <ul class="cmeta__chips" data-chips aria-label="Etkin filtreler"></ul>
+        <button class="cmeta__clear" type="button" data-clear hidden>Tümünü temizle</button>
+      </div>
+
+      <ul class="pgrid cgrid" data-grid>
+        {list.map((p) => (
+          <li
+            data-item
+            data-cat={p.category}
+            data-sub={p.subcategory}
+            data-brands={p.brands.join(' ')}
+            data-iso={p.iso.join(' ')}
+            data-shape={p.drawing === 'insert' && p.shape ? p.shape : ''}
+            data-code={p.code}
+            data-text={hay(p)}
+          >
+            <ProductCard p={p} />
+          </li>
+        ))}
+      </ul>
+
+      <div class="cempty" data-empty hidden>
+        <div class="cempty__art" aria-hidden="true">
+          <svg viewBox="0 0 120 90" fill="none" stroke="currentColor" stroke-width="1">
+            <polygon points="18,45 60,12 102,45 60,78" stroke-dasharray="4 4" />
+            <circle cx="60" cy="45" r="7" />
+            <path d="M0 45h120M60 0v90" stroke-dasharray="8 3 1.5 3" opacity=".5" />
+          </svg>
+        </div>
+        <h2>Bu seçimle eşleşen ürün yok.</h2>
+        <p>Aradığınız kod listede yoksa sorun: katalogda olmayan kodlar da tedarik edilir. Kutunun ya da eski ucun fotoğrafını göndermeniz yeterli.</p>
+        <div class="cempty__actions">
+          <a class="btn btn--wa" data-empty-wa href={waLink('Merhaba, katalogda bulamadığım bir ürün için teklif almak istiyorum.')} target="_blank" rel="noopener" data-wa="katalog-bos"><Icon name="whatsapp" /> WhatsApp’tan sor</a>
+          <button class="btn btn--ghost" type="button" data-clear>Filtreleri temizle</button>
+        </div>
+      </div>
+
+      <aside class="cband" aria-label="Listede olmayan ürünler">
+        <div>
+          <span class="eyebrow">Listede yok mu?</span>
+          <p>Katalog en çok sorulan kodları içerir. Aradığınız kod listede yoksa sorun; muadilini de önerelim.</p>
+        </div>
+        <a class="btn btn--wa" href={waLink('Merhaba, katalogda göremediğim bir kod için teklif almak istiyorum: ')} target="_blank" rel="noopener" data-wa="katalog-band"><Icon name="whatsapp" /> Kodu WhatsApp’tan sor</a>
+      </aside>
+    </div>
+  </div>
+
+  <script>
+    import '../../scripts/catalog';
+  </script>
+</Base>

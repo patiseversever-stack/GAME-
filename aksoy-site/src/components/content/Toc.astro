@@ -1,0 +1,54 @@
+---
+// İçindekiler: masaüstünde yapışkan yan sütun, mobilde açılır kapanır liste.
+// variant="side" yan sütun, variant="inline" mobil açılır liste. Etkin bölüm kaydırmayla işaretlenir.
+interface Props { items: { id: string; title: string }[]; label?: string; variant?: 'side' | 'inline' }
+const { items, label = 'İçindekiler', variant = 'side' } = Astro.props;
+const num = (i: number) => String(i + 1).padStart(2, '0');
+---
+{variant === 'side' ? (
+  <nav class="toc" aria-label={label}>
+    <span class="eyebrow">{label}</span>
+    <ol>
+      {items.map((it, i) => <li><a href={`#${it.id}`} data-toc-link><span>{num(i)}</span>{it.title}</a></li>)}
+    </ol>
+    <slot />
+  </nav>
+) : (
+  <details class="toc-m" data-toc-m>
+    <summary><span class="eyebrow">{label}</span><span class="toc-m__count">{items.length} bölüm</span></summary>
+    <ol>
+      {items.map((it, i) => <li><a href={`#${it.id}`} data-toc-link><span>{num(i)}</span>{it.title}</a></li>)}
+    </ol>
+  </details>
+)}
+
+<script>
+  // Etkin bölümü işaretle: ekranın üst üçte birini geçen son başlık etkindir.
+  const links = [...document.querySelectorAll<HTMLAnchorElement>('[data-toc-link]')];
+  const ids = [...new Set(links.map((a) => decodeURIComponent(a.hash.slice(1))))];
+  const targets = ids.map((id) => document.getElementById(id)).filter((el): el is HTMLElement => !!el);
+  let active = '';
+  let queued = false;
+  function update() {
+    queued = false;
+    const line = innerHeight * 0.3;
+    let cur = '';
+    for (const t of targets) if (t.getBoundingClientRect().top - line <= 0) cur = t.id;
+    if (cur === active) return;
+    active = cur;
+    for (const a of links) {
+      const on = a.hash === `#${cur}`;
+      a.classList.toggle('is-active', on);
+      if (on) a.setAttribute('aria-current', 'location');
+      else a.removeAttribute('aria-current');
+    }
+  }
+  if (targets.length) {
+    addEventListener('scroll', () => { if (!queued) { queued = true; requestAnimationFrame(update); } }, { passive: true });
+    update();
+  }
+  // Mobil listede bir başlığa dokununca listeyi kapat.
+  document.querySelectorAll<HTMLDetailsElement>('[data-toc-m]').forEach((d) => {
+    d.addEventListener('click', (e) => { if ((e.target as HTMLElement).closest('a')) d.open = false; });
+  });
+</script>

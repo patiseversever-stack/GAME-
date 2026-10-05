@@ -1,0 +1,193 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import Toc from '../components/content/Toc.astro';
+import { site } from '../data/site';
+import { breadcrumbSchema, trDate } from '../lib/content-schema';
+import '../styles/content.css';
+
+const title = 'Çerez Politikası';
+const description =
+  'Bu sitede takip ve reklam çerezi kullanılmaz. Teklif Sepeti yalnızca tarayıcınızda (localStorage) tutulur; ne sakladığını ve nasıl silineceğini bu sayfada bulabilirsiniz.';
+const updated = '2026-10-05';
+
+// Sitede tarayıcıda tutulan her veri burada listelenmelidir. Yeni bir anahtar eklenirse bu tabloya da eklenir.
+const QUOTE_KEY = 'aksoy-teklif-v1';
+const storage = [
+  {
+    name: QUOTE_KEY,
+    tech: 'Yerel depolama (localStorage)',
+    purpose: 'Teklif Sepeti’ne eklediğiniz ürün kodları, adetler ve marka tercihleri',
+    kind: 'İşlevsel (sizin isteğinizle çalışır)',
+    party: 'Birinci taraf (yalnızca bu site)',
+    life: 'Siz silene kadar',
+    sent: 'Hayır, cihazınızda kalır',
+  },
+];
+
+const sections = [
+  { id: 'kisaca', title: 'Kısaca' },
+  { id: 'cerez-nedir', title: 'Çerez ve yerel depolama nedir?' },
+  { id: 'kullandiklarimiz', title: 'Bu sitede tarayıcınızda tutulanlar' },
+  { id: 'nasil-silinir', title: 'Nasıl silinir?' },
+  { id: 'disaridaki-hizmetler', title: 'Bağlantı verdiğimiz hizmetler' },
+  { id: 'analitik', title: 'İleride analiz aracı eklenirse' },
+  { id: 'guncelleme', title: 'Güncelleme' },
+];
+const S = Object.fromEntries(sections.map((s) => [s.id, s.title]));
+
+const schema = [
+  breadcrumbSchema([{ name: 'Ana sayfa', path: '/' }, { name: title, path: '/cerez-politikasi' }], Astro.site),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    description,
+    inLanguage: 'tr-TR',
+    url: new URL('/cerez-politikasi', Astro.site).href,
+    dateModified: updated,
+  },
+];
+---
+<Base title={title} description={description} schema={schema}>
+  <header class="page-hero blueprint c-hero legal-hero">
+    <div class="wrap">
+      <nav aria-label="Sayfa konumu">
+        <ol class="breadcrumbs">
+          <li><a href="/">Ana sayfa</a></li>
+          <li aria-current="page">Çerez politikası</li>
+        </ol>
+      </nav>
+      <span class="eyebrow eyebrow--tin">Yasal · Çerezler ve yerel depolama</span>
+      <h1>Çerez Politikası</h1>
+      <p class="lead">Kısa cevap: takip ya da reklam çerezi yok. Tarayıcınızda tutulan tek şey, sizin oluşturduğunuz Teklif Sepeti.</p>
+      <p class="legal-hero__meta">
+        <span>Kapsam: <b>{Astro.site?.host}</b></span>
+        <span>Son güncelleme: <b><time datetime={updated}>{trDate(updated)}</time></b></span>
+      </p>
+      <div class="legal-summary" aria-label="Özet">
+        <div><Icon name="check" /><b>Takip çerezi yok</b><span>Analiz, reklam ya da sosyal medya pikseli kullanılmaz.</span></div>
+        <div><Icon name="shield" /><b>Onay penceresi yok</b><span>Takip amaçlı çerez kullanılmadığı için gösterilmez.</span></div>
+        <div><Icon name="list" /><b>Tek kayıt: sepet</b><span>Teklif Sepeti yalnızca tarayıcınızda tutulur.</span></div>
+        <div><Icon name="bolt" /><b>Dış istek yok</b><span>Yazı tipleri ve görseller bu siteden yüklenir.</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap legal-layout">
+    <Toc items={sections} label="Bölümler" />
+    <div class="legal-main">
+      <Toc items={sections} label="Bölümler" variant="inline" />
+      <article class="legal-body prose">
+        <section aria-labelledby="kisaca">
+          <h2 id="kisaca">{S['kisaca']}</h2>
+          <p>{site.name} sitesi, ziyaretinizi izleyen veya sizi başka sitelerde tanımaya yarayan <strong>hiçbir çerez kullanmaz</strong>. Sitede analiz aracı, reklam pikseli, sosyal medya eklentisi ya da gömülü harita veya video bulunmaz. Bu yüzden çerez onay penceresi göstermiyoruz.</p>
+          <p>Tarayıcınızda tutulan tek bilgi, katalogdan seçtiğiniz ürünlerin listesidir (Teklif Sepeti). Bu liste sizin isteğinizle oluşur, cihazınızda kalır ve bize gönderilmez.</p>
+        </section>
+
+        <section aria-labelledby="cerez-nedir">
+          <h2 id="cerez-nedir">{S['cerez-nedir']}</h2>
+          <p><strong>Çerez</strong>, bir sitenin tarayıcınıza bıraktığı ve her istekte sunucuya geri gönderilen küçük bir metin dosyasıdır. <strong>Yerel depolama</strong> (localStorage) ise benzer bir tarayıcı özelliğidir; farkı, kaydedilen bilginin sunucuya kendiliğinden gönderilmemesi ve yalnızca sitenin kendi sayfalarında çalışan kod tarafından okunabilmesidir.</p>
+          <p>Kişisel Verileri Koruma Kurumu’nun çerez rehberi çerezleri zorunlu, işlevsel, performans/analiz ve reklam/pazarlama olarak gruplar ve zorunlu olanlar dışındaki çerezler için genel olarak açık rıza arar. Bu sitede yalnızca sizin açıkça başlattığınız bir işlevi (Teklif Sepeti) yerine getiren, kimliğinizi belirleyen bir bilgi içermeyen ve cihazınızdan çıkmayan tek bir kayıt kullanılır.</p>
+        </section>
+
+        <section aria-labelledby="kullandiklarimiz">
+          <h2 id="kullandiklarimiz">{S['kullandiklarimiz']}</h2>
+          {storage.map((s) => (
+            <div class="table-wrap" role="region" aria-label={`${s.name} kaydının ayrıntıları`} tabindex="0">
+              <table>
+                <tbody>
+                  <tr><td><strong>Ad</strong></td><td><code>{s.name}</code></td></tr>
+                  <tr><td><strong>Teknoloji</strong></td><td>{s.tech}</td></tr>
+                  <tr><td><strong>Amaç</strong></td><td>{s.purpose}</td></tr>
+                  <tr><td><strong>Tür</strong></td><td>{s.kind}</td></tr>
+                  <tr><td><strong>Taraf</strong></td><td>{s.party}</td></tr>
+                  <tr><td><strong>Süre</strong></td><td>{s.life}</td></tr>
+                  <tr><td><strong>Sunucuya gönderilir mi?</strong></td><td>{s.sent}</td></tr>
+                </tbody>
+              </table>
+            </div>
+          ))}
+          <p>Sepet panelindeki “Firma / ad” ve “Not” alanları kaydedilmez; yalnızca WhatsApp mesajı oluşturulurken kullanılır. Özel (gizli) pencerede sepet, pencere kapanınca silinir.</p>
+          <p class="fine">Sunucu kayıtları (IP adresi, tarayıcı bilgisi gibi) çerez değildir; barındırma hizmeti tarafından tutulur. Ayrıntılar için <a href="/kvkk#sunucu-kayitlari">KVKK aydınlatma metni</a>.</p>
+        </section>
+
+        <section aria-labelledby="nasil-silinir">
+          <h2 id="nasil-silinir">{S['nasil-silinir']}</h2>
+          <p>Teklif Sepeti’ni üç yoldan silebilirsiniz:</p>
+          <ol>
+            <li>Teklif Sepeti panelinde ürünleri tek tek <strong>“Çıkar”</strong> ile kaldırarak,</li>
+            <li>aşağıdaki düğmeyle bu cihazdaki sepeti tek seferde silerek,</li>
+            <li>tarayıcınızın ayarlarından bu sitenin <strong>çerezlerini ve site verilerini</strong> temizleyerek.</li>
+          </ol>
+          <div class="storage-box" data-storage-box>
+            <div class="storage-box__state">
+              <code>{QUOTE_KEY}</code>
+              <b data-storage-state>Bu cihazdaki sepet kontrol ediliyor…</b>
+              <span>Yalnızca bu tarayıcıdaki kayıt silinir; başka cihazlar etkilenmez.</span>
+            </div>
+            <button class="btn btn--tin" type="button" data-storage-clear disabled><Icon name="close" /> Sepeti bu cihazdan sil</button>
+          </div>
+        </section>
+
+        <section aria-labelledby="disaridaki-hizmetler">
+          <h2 id="disaridaki-hizmetler">{S['disaridaki-hizmetler']}</h2>
+          <p>Sitedeki bazı bağlantılar sizi başka hizmetlere götürür: WhatsApp (<code>wa.me</code>), Google Haritalar ve marka siteleri gibi. Bu bağlantılar siz tıklayana kadar hiçbir istek göndermez. Tıkladığınızda o hizmetin kendi çerez ve gizlilik politikası geçerli olur.</p>
+          <p>Yazı tipleri, görseller ve kodlar bu sitenin kendi sunucusundan yüklenir; sayfa açılırken Google Fonts veya benzeri üçüncü taraf hizmetlere istek gönderilmez.</p>
+        </section>
+
+        <section aria-labelledby="analitik">
+          <h2 id="analitik">{S['analitik']}</h2>
+          <p>Ziyaret sayılarını görmek için ileride çerez kullanmayan (cookieless) bir analiz aracı eklenirse; aracın adı, işlediği veriler ve sağlayıcısı bu sayfada listelenecektir.</p>
+          <p>Çerez veya benzeri bir tanımlayıcı kullanan bir araç eklenmesi halinde ise, araç çalışmadan önce açık rızanızı isteyen ve “Kabul et” ile “Reddet” seçeneklerini eşit şekilde sunan bir tercih paneli gösterilecektir.</p>
+        </section>
+
+        <section aria-labelledby="guncelleme">
+          <h2 id="guncelleme">{S['guncelleme']}</h2>
+          <p>Bu politika, sitede kullanılan teknolojiler değiştiğinde güncellenir. Son güncelleme: <time datetime={updated}>{trDate(updated)}</time>. Sorularınız için <a href="/iletisim">iletişim</a> sayfasından bize ulaşabilirsiniz.</p>
+        </section>
+      </article>
+    </div>
+  </div>
+
+  <script>
+    // Teklif Sepeti kaydını göster ve istenirse bu cihazdan sil.
+    const KEY = 'aksoy-teklif-v1';
+    const state = document.querySelector<HTMLElement>('[data-storage-state]');
+    const btn = document.querySelector<HTMLButtonElement>('[data-storage-clear]');
+
+    function count(): number | null {
+      try {
+        const raw = localStorage.getItem(KEY);
+        const v = raw ? JSON.parse(raw) : [];
+        return Array.isArray(v) ? v.length : 0;
+      } catch {
+        return null;
+      }
+    }
+    function render() {
+      if (!state || !btn) return;
+      const n = count();
+      if (n === null) {
+        state.textContent = 'Bu tarayıcıda yerel depolama kapalı; sepet kaydedilmiyor.';
+        btn.disabled = true;
+      } else if (n === 0) {
+        state.textContent = 'Bu cihazda kayıtlı sepet yok.';
+        btn.disabled = true;
+      } else {
+        state.textContent = `Bu cihazda ${n} kalemlik bir sepet kayıtlı.`;
+        btn.disabled = false;
+      }
+    }
+    btn?.addEventListener('click', () => {
+      try { localStorage.removeItem(KEY); } catch { /* erişim yok */ }
+      // Aynı sekmedeki Teklif Sepeti'nin de güncellenmesi için depolama olayını tetikle.
+      dispatchEvent(new StorageEvent('storage', { key: KEY }));
+      render();
+      (window as any).__toast?.('Teklif Sepeti bu cihazdan silindi');
+    });
+    addEventListener('storage', (e) => { if (e.key === KEY || e.key === null) render(); });
+    addEventListener('quote:change', render);
+    render();
+  </script>
+</Base>

@@ -1,0 +1,186 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import { site, waDefault } from '../data/site';
+import { breadcrumbSchema } from '../lib/content-schema';
+import '../styles/content.css';
+
+const title = 'İletişim ve Teklif: WhatsApp, Telefon, Konum';
+const description = `${site.name} ile WhatsApp ya da telefonla (${site.phoneDisplay}) iletişime geçin. ${site.district}, Ankara; İç Anadolu ve Ege’de sahada destek. Form yok, üyelik yok, hızlı teklif.`;
+
+// Hizmet bölgeleri: site.serviceAreas sırası korunur, bölgelere ayrılır. Plaka kodu küçük etiket olarak gösterilir.
+const plate: Record<string, string> = {
+  Ankara: '06', Konya: '42', Kayseri: '38', Eskişehir: '26', Kırıkkale: '71',
+  İzmir: '35', Manisa: '45', Denizli: '20', Aydın: '09', Uşak: '64',
+};
+const regionOf: Record<string, string> = {
+  Ankara: 'İç Anadolu', Konya: 'İç Anadolu', Kayseri: 'İç Anadolu', Eskişehir: 'İç Anadolu', Kırıkkale: 'İç Anadolu',
+  İzmir: 'Ege', Manisa: 'Ege', Denizli: 'Ege', Aydın: 'Ege', Uşak: 'Ege',
+};
+const regions = new Map<string, string[]>();
+for (const city of site.serviceAreas) {
+  const r = regionOf[city] ?? 'Diğer';
+  regions.set(r, [...(regions.get(r) ?? []), city]);
+}
+
+// Harita: gömülü harita yok (çerez ve dış istek olmasın diye); yalnızca Google Haritalar araması açılır.
+const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(site.address)}`;
+
+// Künye: boş alanlar hiç gösterilmez.
+const kunye = [
+  { k: 'Unvan', v: site.name },
+  { k: 'İşletme sahibi', v: site.owner },
+  { k: 'İşletme türü', v: site.legalType },
+  { k: 'E-posta', v: site.email, href: site.email ? `mailto:${site.email}` : undefined },
+  { k: 'Vergi dairesi', v: site.taxOffice },
+  { k: 'Vergi no', v: site.taxNumber },
+].filter((r) => r.v);
+
+const steps = [
+  { t: 'Gönderin', p: 'Ürün kodunu, kutu etiketinin fotoğrafını ya da Teklif Sepeti listenizi WhatsApp’tan iletin.' },
+  { t: 'Netleştirin', p: 'İşlenen malzeme, adet ve varsa marka tercihi. Gerekirse tezgâh ve işlem bilgisini birlikte konuşuruz.' },
+  { t: 'Teklifi alın', p: 'Fiyat, stok ve termin bilgisiyle dönüş yapılır. Uygun muadil seçenekler de belirtilir.' },
+  { t: 'Teslim', p: 'Onayınızın ardından teslimat, sahada ya da birlikte belirlediğimiz şekilde planlanır.' },
+];
+
+const schema = [
+  breadcrumbSchema([{ name: 'Ana sayfa', path: '/' }, { name: 'İletişim', path: '/iletisim' }], Astro.site),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'ContactPage',
+    name: title,
+    description,
+    inLanguage: 'tr-TR',
+    url: new URL('/iletisim', Astro.site).href,
+  },
+];
+---
+<Base title={title} description={description} schema={schema} header="dark">
+  <section class="page-hero page-hero--dark blueprint c-hero contact-hero">
+    <div class="wrap">
+      <nav aria-label="Sayfa konumu">
+        <ol class="breadcrumbs">
+          <li><a href="/">Ana sayfa</a></li>
+          <li aria-current="page">İletişim</li>
+        </ol>
+      </nav>
+      <div class="contact-hero__grid">
+        <div>
+          <span class="eyebrow eyebrow--tin">İletişim · {site.district}</span>
+          <h1>Teklif, tek mesaj uzağınızda.</h1>
+          <p class="lead">Form doldurmanız ya da üye olmanız gerekmez. Kodu, kutunun fotoğrafını ya da çizimi WhatsApp’tan gönderin; fiyat, stok ve termin bilgisiyle dönelim.</p>
+        </div>
+        <div>
+          <a class="wa-big" href={waDefault} target="_blank" rel="noopener" data-wa="contact-hero">
+            <Icon name="whatsapp" class="wa-big__mark" />
+            <span class="wa-big__top">
+              <span class="wa-big__live"><i></i>WhatsApp</span>
+              <span>{site.hours}</span>
+            </span>
+            <span class="wa-big__bottom">
+              <span>
+                <span class="wa-big__title">WhatsApp’tan<br />yazın</span>
+                <span class="wa-big__num">{site.phoneDisplay}</span>
+              </span>
+              <span class="wa-big__go" aria-hidden="true"><Icon name="arrow-up-right" /></span>
+            </span>
+          </a>
+          <div class="contact-alt">
+            <a class="btn btn--ghost" href={`tel:${site.phoneE164}`}><Icon name="phone" /> Telefonla arayın</a>
+            <a class="btn btn--ghost" href="/urunler"><Icon name="grid" /> Kataloğa göz atın</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight" aria-labelledby="bilgiler">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Bilgi bloğu</span>
+        <h2 id="bilgiler">Bize ulaşmanın yolları</h2>
+      </div>
+
+      <div class="sheet">
+        <div class="sheet__cell">
+          <span class="sheet__label"><span>Telefon · WhatsApp</span><b>A1</b></span>
+          <a class="sheet__value" href={`tel:${site.phoneE164}`}>{site.phoneDisplay}</a>
+          <p>Aynı numara hem arama hem WhatsApp için geçerlidir. Açamadığımız aramalara en kısa sürede geri dönüş yapılır.</p>
+          <div class="sheet__links">
+            <a class="btn btn--wa btn--sm" href={waDefault} target="_blank" rel="noopener" data-wa="contact-sheet"><Icon name="whatsapp" /> WhatsApp</a>
+            <a class="btn btn--ghost btn--sm" href={`tel:${site.phoneE164}`}><Icon name="phone" /> Ara</a>
+          </div>
+        </div>
+
+        <div class="sheet__cell">
+          <span class="sheet__label"><span>Konum</span><b>A2</b></span>
+          <p class="sheet__value">{site.district}</p>
+          <p>{site.address}. Saha satışı yaptığımız için uğramadan önce WhatsApp’tan haber vermenizi rica ederiz.</p>
+          <div class="sheet__links">
+            <a class="btn btn--ghost btn--sm" href={mapsUrl} target="_blank" rel="noopener"><Icon name="pin" /> Google Haritalar’da aç <span class="sr-only">(yeni sekmede açılır)</span></a>
+          </div>
+        </div>
+
+        <div class="sheet__cell">
+          <span class="sheet__label"><span>Çalışma saatleri</span><b>A3</b></span>
+          <p class="sheet__value">{site.hours}</p>
+          <p>{site.hoursNote}</p>
+        </div>
+
+        <div class="sheet__cell sheet__cell--8">
+          <span class="sheet__label"><span>Hizmet bölgeleri · {site.serviceRegions}</span><b>B1</b></span>
+          <div class="regions">
+            {[...regions].map(([name, cities]) => (
+              <div class="region">
+                <h3>{name}</h3>
+                <ul>
+                  {cities.map((c) => (
+                    <li class:list={{ 'is-hq': c === site.city }}>{plate[c] && <b aria-hidden="true">{plate[c]}</b>}{c}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+          <p>Bu illerde sahada ziyaret ve teslim yapılır. Listede olmayan bir ildeyseniz yine yazın; teslim seçeneğini birlikte değerlendirelim.</p>
+        </div>
+
+        <div class="sheet__cell">
+          <span class="sheet__label"><span>Künye</span><b>B2</b></span>
+          <dl>
+            {kunye.map((r) => (
+              <div><dt>{r.k}</dt><dd>{r.href ? <a href={r.href}>{r.v}</a> : r.v}</dd></div>
+            ))}
+          </dl>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section section--tight" aria-labelledby="nasil-teklif" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Sipariş değil, teklif</span>
+        <h2 id="nasil-teklif">Teklif nasıl verilir?</h2>
+        <p>Sitede online sipariş veya ödeme yoktur. Teklif WhatsApp ya da telefon üzerinden, sizinle konuşularak hazırlanır.</p>
+      </div>
+      <ol class="qsteps">
+        {steps.map((s, i) => (
+          <li class="qstep reveal" style={`--d:${i * 90}ms`}>
+            <span class="qstep__n" aria-hidden="true">{String(i + 1).padStart(2, '0')}</span>
+            <h3>{s.t}</h3>
+            <p>{s.p}</p>
+          </li>
+        ))}
+      </ol>
+
+      <div class="privacy-strip">
+        <Icon name="shield" />
+        <div>
+          <b>Bu sayfada form yok.</b>
+          <p>İletişim formu, üyelik ya da online ödeme bulunmaz; site sizden kişisel veri toplamaz. Yazışma, sizin başlattığınız WhatsApp mesajı ya da telefon görüşmesiyle yürür.</p>
+        </div>
+        <a class="btn btn--ghost btn--sm" href="/kvkk">KVKK aydınlatma metni</a>
+      </div>
+    </div>
+  </section>
+</Base>

@@ -1,0 +1,228 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import Toc from '../components/content/Toc.astro';
+import { site, waDefault } from '../data/site';
+import { breadcrumbSchema, trDate } from '../lib/content-schema';
+import '../styles/content.css';
+
+// ŞABLON: Bu metin bir hukukçu tarafından kontrol edilmeden yayına alınmamalıdır.
+// Eksikler: açık posta adresi, (varsa) e-posta / KEP adresi, barındırma sağlayıcısının adı.
+
+const title = 'KVKK Aydınlatma Metni';
+const description = `6698 sayılı KVKK kapsamında ${site.name} aydınlatma metni: hangi verilerin, hangi amaçla ve nerede işlendiği, aktarımlar ve haklarınız.`;
+const updated = '2026-10-05';
+
+const sections = [
+  { id: 'veri-sorumlusu', title: 'Veri sorumlusu' },
+  { id: 'kapsam', title: 'Bu sitede neler işlenir, neler işlenmez?' },
+  { id: 'teklif-sepeti', title: 'Teklif Sepeti: yalnızca sizin cihazınızda' },
+  { id: 'whatsapp-telefon', title: 'WhatsApp ve telefon görüşmeleri' },
+  { id: 'sunucu-kayitlari', title: 'Barındırma ve sunucu kayıtları' },
+  { id: 'amac-hukuki-sebep', title: 'İşleme amaçları ve hukuki sebepler' },
+  { id: 'aktarim', title: 'Aktarım ve yurt dışına aktarım' },
+  { id: 'saklama', title: 'Saklama süresi' },
+  { id: 'haklar', title: 'KVKK 11. madde kapsamındaki haklarınız' },
+  { id: 'basvuru', title: 'Başvuru yöntemi' },
+  { id: 'degisiklikler', title: 'Değişiklikler' },
+];
+const S = Object.fromEntries(sections.map((s) => [s.id, s.title]));
+
+const purposes = [
+  {
+    t: 'Teklif talebinizi almak, teklifi hazırlamak ve size iletmek',
+    d: 'Telefon numarası, profil adı, firma adı, mesaj içeriği, ürün listesi, gönderdiğiniz fotoğraf ve çizimler',
+    l: 'm.5/2-c: sözleşmenin kurulması veya ifasıyla doğrudan doğruya ilgili olması',
+  },
+  {
+    t: 'Teklifin kabulü halinde satış, teslimat ve fatura süreçleri',
+    d: 'Kimlik, iletişim, adres ve fatura bilgileri',
+    l: 'm.5/2-c: sözleşmenin ifası; m.5/2-ç: hukuki yükümlülüğün yerine getirilmesi (vergi ve ticaret mevzuatı)',
+  },
+  {
+    t: 'Yazışma geçmişinin tutulması ve olası uyuşmazlıklarda hakların korunması',
+    d: 'Yazışma ve arama kayıtları',
+    l: 'm.5/2-e: bir hakkın tesisi, kullanılması veya korunması; m.5/2-f: meşru menfaat',
+  },
+  {
+    t: 'Sitenin güvenliği ve hizmetin sürdürülmesi',
+    d: 'Sunucu kayıtları (IP adresi, tarih ve saat, istenen sayfa, tarayıcı bilgisi)',
+    l: 'm.5/2-f: veri sorumlusunun meşru menfaati',
+  },
+];
+
+const rights = [
+  ['a', 'Kişisel verilerinizin işlenip işlenmediğini öğrenme,'],
+  ['b', 'Kişisel verileriniz işlenmişse buna ilişkin bilgi talep etme,'],
+  ['c', 'Kişisel verilerinizin işlenme amacını ve bunların amacına uygun kullanılıp kullanılmadığını öğrenme,'],
+  ['ç', 'Yurt içinde veya yurt dışında kişisel verilerinizin aktarıldığı üçüncü kişileri bilme,'],
+  ['d', 'Kişisel verilerinizin eksik veya yanlış işlenmiş olması hâlinde bunların düzeltilmesini isteme ve bu kapsamda yapılan işlemin kişisel verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme,'],
+  ['e', 'KVKK’nın 7. maddesinde öngörülen şartlar çerçevesinde kişisel verilerinizin silinmesini veya yok edilmesini isteme ve bu kapsamda yapılan işlemin kişisel verilerin aktarıldığı üçüncü kişilere bildirilmesini isteme,'],
+  ['f', 'İşlenen verilerin münhasıran otomatik sistemler vasıtasıyla analiz edilmesi suretiyle aleyhinize bir sonucun ortaya çıkmasına itiraz etme,'],
+  ['g', 'Kişisel verilerinizin kanuna aykırı olarak işlenmesi sebebiyle zarara uğramanız hâlinde zararın giderilmesini talep etme.'],
+];
+
+const schema = [
+  breadcrumbSchema([{ name: 'Ana sayfa', path: '/' }, { name: title, path: '/kvkk' }], Astro.site),
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebPage',
+    name: title,
+    description,
+    inLanguage: 'tr-TR',
+    url: new URL('/kvkk', Astro.site).href,
+    dateModified: updated,
+  },
+];
+---
+<Base title={title} description={description} schema={schema}>
+  <header class="page-hero blueprint c-hero legal-hero">
+    <div class="wrap">
+      <nav aria-label="Sayfa konumu">
+        <ol class="breadcrumbs">
+          <li><a href="/">Ana sayfa</a></li>
+          <li aria-current="page">KVKK aydınlatma metni</li>
+        </ol>
+      </nav>
+      <span class="eyebrow eyebrow--tin">Yasal · 6698 sayılı Kanun</span>
+      <h1>KVKK Aydınlatma Metni</h1>
+      <p class="lead">Bu sitede form, üyelik ya da takip çerezi yok. Yine de hangi verilerin, nerede ve hangi amaçla işlendiğini açıkça yazmak istiyoruz.</p>
+      <p class="legal-hero__meta">
+        <span>Veri sorumlusu: <b>{site.owner}</b></span>
+        <span>Son güncelleme: <b><time datetime={updated}>{trDate(updated)}</time></b></span>
+      </p>
+      <p class="note template-note" role="note">
+        <Icon name="shield" />
+        <span><strong>Bu metin şablondur; yayın öncesi bir hukukçuya kontrol ettirilmesi önerilir.</strong> Açık posta adresi ve barındırma sağlayıcısının adı gibi bilgiler kesinleştiğinde metne eklenecektir.</span>
+      </p>
+      <div class="legal-summary" aria-label="Özet">
+        <div><Icon name="list" /><b>Form yok</b><span>İletişim formu, bülten ya da online ödeme bulunmaz.</span></div>
+        <div><Icon name="user" /><b>Üyelik yok</b><span>Hesap açmanız, giriş yapmanız gerekmez.</span></div>
+        <div><Icon name="grid" /><b>Sepet cihazınızda</b><span>Teklif Sepeti yalnızca tarayıcınızda tutulur, bize gönderilmez.</span></div>
+        <div><Icon name="check" /><b>Takip çerezi yok</b><span>Analiz, reklam veya sosyal medya takibi kullanılmaz.</span></div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap legal-layout">
+    <Toc items={sections} label="Bölümler" />
+    <div class="legal-main">
+      <Toc items={sections} label="Bölümler" variant="inline" />
+      <article class="legal-body prose">
+        <section aria-labelledby="veri-sorumlusu">
+          <h2 id="veri-sorumlusu">{S['veri-sorumlusu']}</h2>
+          <p>6698 sayılı Kişisel Verilerin Korunması Kanunu (“KVKK”) kapsamında veri sorumlusu, <strong>{site.name}</strong> adıyla faaliyet gösteren şahıs işletmesinin sahibi <strong>{site.owner}</strong> olup bu metin, KVKK’nın 10. maddesi uyarınca sizi bilgilendirmek amacıyla hazırlanmıştır.</p>
+          <div class="legal-cards">
+            <div><b>Veri sorumlusu</b><p>{site.owner}<br />{site.name} ({site.legalType.toLocaleLowerCase('tr')})</p></div>
+            <div><b>Adres</b><p>{site.address}<br /><span class="fine">Açık posta adresi eklenecektir.</span></p></div>
+            <div><b>Telefon ve WhatsApp</b><p><a href={`tel:${site.phoneE164}`}>{site.phoneDisplay}</a></p></div>
+            {site.email && <div><b>E-posta</b><p><a href={`mailto:${site.email}`}>{site.email}</a></p></div>}
+          </div>
+        </section>
+
+        <section aria-labelledby="kapsam">
+          <h2 id="kapsam">{S['kapsam']}</h2>
+          <p>Bu site bir ürün kataloğudur. Sitede:</p>
+          <ul>
+            <li>iletişim formu, üyelik veya kullanıcı hesabı, bülten aboneliği <strong>bulunmaz</strong>;</li>
+            <li>online sipariş ve ödeme <strong>alınmaz</strong>;</li>
+            <li>ziyaretçileri izleyen analiz, reklam veya sosyal medya takip araçları (çerez, piksel ve benzerleri) <strong>kullanılmaz</strong>;</li>
+            <li>gömülü harita, video veya üçüncü taraf yazı tipi gibi, sayfa açılırken başka sunuculara istek gönderen içerikler <strong>bulunmaz</strong>.</li>
+          </ul>
+          <p>Kişisel verileriniz yalnızca aşağıda açıklanan durumlarda ve açıklanan sınırlar içinde işlenir.</p>
+        </section>
+
+        <section aria-labelledby="teklif-sepeti">
+          <h2 id="teklif-sepeti">{S['teklif-sepeti']}</h2>
+          <p>Katalogdan Teklif Sepeti’ne eklediğiniz ürün kodları, adetler ve marka tercihleri yalnızca kendi tarayıcınızın yerel depolama alanında (<code>localStorage</code>, anahtar adı <code>aksoy-teklif-v1</code>) tutulur. Bu bilgiler sunucularımıza gönderilmez, tarafımızdan görülemez ve başka bir cihazla eşleştirilmez.</p>
+          <p>Sepet panelindeki “Firma / ad” ve “Not” alanları hiçbir yere kaydedilmez. Bu alanlar yalnızca “WhatsApp’tan teklif iste” düğmesine bastığınızda oluşturulan mesaj metnine eklenir. Mesaj, WhatsApp’ta size ait bir taslak olarak açılır; göndermeden önce düzenleyebilir ya da vazgeçebilirsiniz. Mesajı gönderdiğiniz anda bir sonraki başlıkta anlatılan WhatsApp yazışması başlar.</p>
+          <p>Sepeti dilediğiniz an boşaltabilir ya da tarayıcınızın site verilerini silerek tamamen kaldırabilirsiniz. Ayrıntılar için <a href="/cerez-politikasi">Çerez Politikası</a>’na bakabilirsiniz.</p>
+        </section>
+
+        <section aria-labelledby="whatsapp-telefon">
+          <h2 id="whatsapp-telefon">{S['whatsapp-telefon']}</h2>
+          <p>Sitedeki WhatsApp düğmeleri sizi <code>wa.me</code> adresi üzerinden WhatsApp uygulamasına veya WhatsApp Web’e yönlendirir. Yazışmayı başlatmak tamamen sizin tercihinizdir; dilerseniz teklif talebinizi telefonla da iletebilirsiniz.</p>
+          <p>Bize WhatsApp’tan yazdığınızda veya telefonla ulaştığınızda şu veriler işlenir:</p>
+          <ul>
+            <li><strong>Kimlik ve iletişim:</strong> telefon numaranız, WhatsApp profil adınız ve paylaşırsanız firma adınız;</li>
+            <li><strong>Talep bilgisi:</strong> mesaj içeriği, ürün listesi, adetler, notlar ve gönderdiğiniz fotoğraf veya çizimler;</li>
+            <li><strong>İşlem bilgisi:</strong> yazışma ve arama tarih ve saatleri.</li>
+          </ul>
+          <p>WhatsApp, Meta grubuna bağlı bir şirket tarafından sunulan bir hizmettir. Mesajlarınız bu hizmetin altyapısında, WhatsApp’ın kendi gizlilik politikası ve kullanım koşulları çerçevesinde işlenir. WhatsApp’ın kendi sistemlerinde yaptığı işlemler bu metnin ve veri sorumlusunun kontrolü dışındadır.</p>
+        </section>
+
+        <section aria-labelledby="sunucu-kayitlari">
+          <h2 id="sunucu-kayitlari">{S['sunucu-kayitlari']}</h2>
+          <p>Site, sunucuları yurt dışında bulunan bir barındırma (hosting) ve içerik dağıtım hizmeti üzerinden yayınlanır. Siteyi ziyaret ettiğinizde, sayfaların size iletilebilmesi için tarayıcınız bu sağlayıcının sunucularına bağlanır. Sağlayıcı, hizmetin güvenliği ve sürekliliği amacıyla bu sırada otomatik olarak teknik kayıtlar (log) tutabilir:</p>
+          <ul>
+            <li>IP adresi,</li>
+            <li>ziyaret tarihi ve saati,</li>
+            <li>istenen sayfanın adresi,</li>
+            <li>tarayıcı ve cihaz bilgisi (user agent),</li>
+            <li>varsa yönlendiren sayfanın adresi.</li>
+          </ul>
+          <p>Bu kayıtlar sağlayıcının sistemlerinde, sağlayıcının saklama politikasına göre tutulur. Bu kayıtlar sizi tanımak, profil çıkarmak veya reklam amacıyla kullanılmaz.</p>
+        </section>
+
+        <section aria-labelledby="amac-hukuki-sebep">
+          <h2 id="amac-hukuki-sebep">{S['amac-hukuki-sebep']}</h2>
+          <p>Kişisel verileriniz aşağıdaki amaçlarla ve KVKK’nın 5. maddesinin 2. fıkrasındaki hukuki sebeplere dayanılarak işlenir. Bu işlemler için açık rızanıza başvurulmaz.</p>
+          <div class="legal-cards">
+            {purposes.map((p) => (
+              <div>
+                <b>{p.t}</b>
+                <p><strong>Veriler:</strong> {p.d}</p>
+                <p><strong>Hukuki sebep:</strong> {p.l}</p>
+              </div>
+            ))}
+          </div>
+          <p class="fine">Kişisel verileriniz otomatik sistemlerle analiz edilerek hakkınızda karar verilmesi amacıyla kullanılmaz.</p>
+        </section>
+
+        <section aria-labelledby="aktarim">
+          <h2 id="aktarim">{S['aktarim']}</h2>
+          <p>Kişisel verileriniz satılmaz, kiralanmaz ve reklam amacıyla kimseyle paylaşılmaz. Yalnızca aşağıdaki alıcılarla ve amacın gerektirdiği ölçüde paylaşılabilir:</p>
+          <ul>
+            <li><strong>WhatsApp hizmet sağlayıcısı:</strong> yazışmayı WhatsApp üzerinden başlattığınızda, mesajlaşmanın teknik olarak gerçekleşmesi için;</li>
+            <li><strong>Barındırma ve içerik dağıtım hizmeti sağlayıcısı:</strong> sitenin size ulaştırılması ve güvenliği için;</li>
+            <li><strong>Mali müşavir ve muhasebe hizmeti:</strong> teklifin satışa dönüşmesi halinde fatura ve kayıt yükümlülükleri için;</li>
+            <li><strong>Kargo veya taşıma şirketi:</strong> teslimatın bu yolla yapılması halinde, teslimat için gerekli ad, adres ve telefon bilgisiyle sınırlı olarak;</li>
+            <li><strong>Yetkili kamu kurum ve kuruluşları:</strong> mevzuattan doğan bir talep veya yükümlülük bulunması halinde.</li>
+          </ul>
+          <h3>Yurt dışına aktarım</h3>
+          <p>WhatsApp ile barındırma hizmetinin sunucuları yurt dışında bulunabilir; bu hizmetleri kullandığınızda verilerinizin bir kısmı yurt dışında işlenebilir. KVKK’nın yurt dışına aktarımı düzenleyen 9. maddesi, 7499 sayılı Kanun ile 2024 yılında değiştirilmiştir. Güncel düzenlemeye göre yurt dışına aktarım; yeterlilik kararı bulunması, Kanun’da sayılan uygun güvencelerden birinin (örneğin standart sözleşme) sağlanması ya da Kanun’da sayılan arızi hallerden birinin bulunması durumunda yapılabilir.</p>
+          <p>Bu aktarımlar, ilgili hizmet sağlayıcıların sözleşme koşulları ve KVKK’nın 9. maddesindeki şartlar çerçevesinde yürütülür. WhatsApp üzerinden yazışma başlatmak isteğe bağlıdır; verilerinizin yurt dışında işlenmesini istemiyorsanız teklif talebinizi telefonla iletebilirsiniz.</p>
+        </section>
+
+        <section aria-labelledby="saklama">
+          <h2 id="saklama">{S['saklama']}</h2>
+          <p>Kişisel verileriniz, işleme amacının gerektirdiği süre ve ilgili mevzuatta öngörülen süreler boyunca saklanır. Teklife dönüşmeyen yazışmalar, amacın ortadan kalkmasıyla silinir. Satışa dönüşen işlemlere ait fatura ve muhasebe kayıtları, vergi ve ticaret mevzuatındaki saklama süreleri boyunca tutulur. Süre dolduğunda veriler silinir, yok edilir veya anonim hale getirilir.</p>
+          <p>Teklif Sepeti verisi siz silene kadar yalnızca cihazınızda kalır. Sunucu kayıtları, barındırma sağlayıcısının saklama süresine tabidir.</p>
+        </section>
+
+        <section aria-labelledby="haklar">
+          <h2 id="haklar">{S['haklar']}</h2>
+          <p>KVKK’nın 11. maddesi uyarınca veri sorumlusuna başvurarak:</p>
+          <ol class="alpha">
+            {rights.map(([k, v]) => <li><span aria-hidden="true">{k})</span><span>{v}</span></li>)}
+          </ol>
+          <p>haklarına sahipsiniz.</p>
+        </section>
+
+        <section aria-labelledby="basvuru">
+          <h2 id="basvuru">{S['basvuru']}</h2>
+          <p>Haklarınıza ilişkin taleplerinizi, Veri Sorumlusuna Başvuru Usul ve Esasları Hakkında Tebliğ’de belirtilen şekilde, yazılı olarak ya da Tebliğ’de sayılan elektronik yöntemlerle iletebilirsiniz. Yazılı başvurular için açık posta adresimiz bu metne eklenecektir.</p>
+          <p>Talebinizi önceden bildirmek veya başvuru hakkında bilgi almak için <a href={waDefault} target="_blank" rel="noopener">WhatsApp</a> ya da <a href={`tel:${site.phoneE164}`}>{site.phoneDisplay}</a> numaralı telefon hattını kullanabilirsiniz. Kimliğinizi doğrulamak için ek bilgi istenebilir.</p>
+          <p>Başvurunuzda adınız, soyadınız ve başvuru yazılıysa imzanız; T.C. kimlik numaranız (yabancılar için uyruk ve pasaport ya da kimlik numarası); tebligata esas yerleşim yeri veya iş yeri adresiniz; varsa bildirime esas e-posta adresiniz ve telefon numaranız ile talebinizin konusu yer almalıdır.</p>
+          <p>Başvurunuz, talebin niteliğine göre en kısa sürede ve en geç 30 gün içinde ücretsiz olarak sonuçlandırılır. İşlemin ayrıca bir maliyet gerektirmesi halinde, Kişisel Verileri Koruma Kurulunca belirlenen tarifedeki ücret alınabilir. Başvurunuzun reddedilmesi, verilen cevabı yetersiz bulmanız veya süresinde cevap verilmemesi halinde; cevabı öğrendiğiniz tarihten itibaren 30 gün ve her halde başvuru tarihinden itibaren 60 gün içinde Kişisel Verileri Koruma Kurulu’na şikâyette bulunabilirsiniz.</p>
+        </section>
+
+        <section aria-labelledby="degisiklikler">
+          <h2 id="degisiklikler">{S['degisiklikler']}</h2>
+          <p>Bu metin; site, kullanılan hizmetler veya mevzuat değiştiğinde güncellenir. Güncel sürüm her zaman bu sayfada yayımlanır. Son güncelleme: <time datetime={updated}>{trDate(updated)}</time>.</p>
+          <p>Tarayıcınızda tutulan veriler ve çerezler hakkında: <a href="/cerez-politikasi">Çerez Politikası</a>. Bize ulaşmak için: <a href="/iletisim">İletişim</a>.</p>
+        </section>
+      </article>
+    </div>
+  </div>
+</Base>

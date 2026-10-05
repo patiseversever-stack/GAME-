@@ -1,0 +1,47 @@
+---
+import Logo from './Logo.astro';
+import Icon from './Icon.astro';
+import { nav, site, waDefault } from '../data/site';
+
+interface Props { variant?: 'dark' | 'light' }
+const { variant = 'light' } = Astro.props;
+const path = Astro.url.pathname;
+const isActive = (href: string) => path === href || path.startsWith(href + '/');
+---
+<header class="site-header" data-variant={variant} data-header>
+  <div class="wrap site-header__inner">
+    <Logo />
+    <nav class="site-header__nav" aria-label="Ana menü">
+      {nav.map((n) => <a href={n.href} aria-current={isActive(n.href) ? 'page' : undefined}>{n.label}</a>)}
+    </nav>
+    <div class="site-header__actions">
+      <button class="icon-btn" type="button" data-search-open aria-label="Ürün ara (Ctrl+K)">
+        <Icon name="search" />
+      </button>
+      <button class="icon-btn" type="button" data-quote-open aria-label="Teklif Sepeti">
+        <Icon name="list" />
+        <span class="count-badge" data-quote-count>0</span>
+      </button>
+      <a class="btn btn--wa btn--sm hide-md" href={waDefault} target="_blank" rel="noopener" data-wa="header">
+        <Icon name="whatsapp" /> WhatsApp
+      </a>
+      <button class="icon-btn menu-btn" type="button" data-menu-open aria-label="Menüyü aç" aria-expanded="false" aria-controls="mobil-menu">
+        <Icon name="menu" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<div class="mobile-menu" id="mobil-menu" data-menu aria-hidden="true">
+  <button class="icon-btn mobile-menu__close" type="button" data-menu-close aria-label="Menüyü kapat"><Icon name="close" /></button>
+  <span class="eyebrow eyebrow--tin">Menü</span>
+  <nav aria-label="Mobil menü">
+    <a href="/">Ana sayfa <span>00</span></a>
+    {nav.map((n, i) => <a href={n.href} style={`transition-delay:${80 + i * 60}ms`}>{n.label} <span>{String(i + 1).padStart(2, '0')}</span></a>)}
+  </nav>
+  <div class="mobile-menu__foot">
+    <a class="btn btn--wa btn--block" href={waDefault} target="_blank" rel="noopener" data-wa="menu"><Icon name="whatsapp" /> WhatsApp’tan teklif al</a>
+    <a class="btn btn--ghost btn--block" href={`tel:${site.phoneE164}`}><Icon name="phone" /> {site.phoneDisplay}</a>
+    <p class="mono">{site.district} · {site.city}</p>
+  </div>
+</div>

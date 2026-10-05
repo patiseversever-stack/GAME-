@@ -1,0 +1,285 @@
+---
+import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { site, waDefault } from '../data/site';
+import { categories } from '../data/categories';
+import { brands } from '../data/brands';
+import { products } from '../data/products';
+import { drawingSvg } from '../lib/drawings';
+import '../styles/home.css';
+
+const featured = products.filter((p) => p.featured).slice(0, 10);
+const codes = ['CNMG 120408', 'DNMG 150608', 'WNMG 080408', 'TNMG 160408', 'VNMG 160408', 'APMT 1604PDER', 'MGMN 300', 'SPMG 090408', 'CCMT 09T304', '16ER 1.5ISO', 'RPMT 10T3', 'SEKT 1204'];
+const iso = [
+  { g: 'P', t: 'Çelik', s: 'Yapı, ıslah, takım çeliği' },
+  { g: 'M', t: 'Paslanmaz', s: 'Östenitik, dubleks' },
+  { g: 'K', t: 'Dökme demir', s: 'Gri, sfero döküm' },
+  { g: 'N', t: 'Demir dışı', s: 'Alüminyum, bakır, pirinç' },
+  { g: 'S', t: 'Süper alaşım', s: 'Titanyum, Inconel' },
+  { g: 'H', t: 'Sertleştirilmiş', s: '45–65 HRC çelik' },
+];
+---
+<Base title={site.name} theme="dark" header="dark">
+  <!-- ============ 3D VİTRİN ============ -->
+  <section class="showcase" data-showcase aria-label="Uçlu U-matkap tanıtımı">
+    <div class="showcase__sticky">
+      <div class="showcase__bg"></div>
+      <div class="showcase__grid"></div>
+      <picture>
+        <source media="(max-width: 860px)" srcset="/img/udrill-poster-m.webp" width="780" height="1688" />
+        <img class="showcase__poster" src="/img/udrill-poster.webp" alt="Uçlu U-matkap: koyu çelik gövde, düz talaş olukları ve iki adet altın renkli TiN kaplı karbür uç" width="1440" height="900" fetchpriority="high" decoding="async" data-poster />
+      </picture>
+      <canvas class="showcase__canvas" data-showcase-canvas aria-hidden="true"></canvas>
+      <div class="callouts" data-callouts aria-hidden="true">
+        <svg data-callout-svg></svg>
+      </div>
+
+      <article class="chapter" data-side="hero" data-chapter="0">
+        <span class="eyebrow">{site.district} · {site.city}</span>
+        <h1><span class="ln"><span>Talaşın ilk</span></span><span class="ln"><span>temas ettiği <em class="tin" style="font-style:normal">yer.</em></span></span></h1>
+        <p>Torna ve freze elmas uçlarından karbür matkaba, kılavuzdan takım tutucuya: doğru kesici takım, sahada destek ve tek mesajla teklif.</p>
+        <div class="chapter__actions">
+          <a class="btn btn--tin" href="/urunler" data-magnetic><Icon name="grid" /> Kataloğu incele</a>
+          <a class="btn btn--ghost" href={waDefault} target="_blank" rel="noopener" data-wa="hero"><Icon name="whatsapp" /> WhatsApp’tan teklif al</a>
+        </div>
+      </article>
+
+      <article class="chapter" data-side="left" data-chapter="1">
+        <span class="eyebrow">02 — Gövde</span>
+        <h2>Sert gövde, düz oluk.<br />Talaş beklemez.</h2>
+        <p>Uçlu U-matkap tek gövdeyle 2xD’den 5xD’ye kadar delik deler. Geniş, düz oluklar talaşı kesme bölgesinden hızla uzaklaştırır.</p>
+        <ul class="chapter__specs"><li>Ø 25 mm</li><li>4 × D</li><li>Weldon sap</li><li>İçten soğutma</li></ul>
+      </article>
+
+      <article class="chapter" data-side="right" data-chapter="2">
+        <span class="eyebrow">03 — Uçlar</span>
+        <h2>Bir uç,<br />dört kenar.</h2>
+        <p>Merkez ve çevre uçları torx vidayla bağlanır. Kenar körelince matkabı bilemeye göndermezsiniz: ucu çevirin, yeni kenarla devam edin.</p>
+      </article>
+
+      <article class="chapter" data-side="left" data-chapter="3">
+        <span class="eyebrow">04 — Soğutma</span>
+        <h2>Soğutma tam<br />kesme noktasında.</h2>
+        <p>Gövdenin içinden geçen kanallar soğutma sıvısını doğrudan uçlara taşır. Isı düşer, talaş kolay atılır, uç ömrü uzar.</p>
+      </article>
+
+      <article class="chapter" data-side="right" data-chapter="4">
+        <span class="eyebrow">05 — Kaplama</span>
+        <h2>Kaplama süs değil,<br />kimlik.</h2>
+        <p>CVD kalın ve aşınmaya dayanıklıdır; PVD ince ve keskindir. Malzemenize göre doğru kaliteyi birlikte seçelim.</p>
+        <ul class="coat-chips" data-coat-chips>
+          <li style="--c:#d9a441"><i></i>TiN</li>
+          <li style="--c:#34373d"><i></i>TiAlN</li>
+          <li style="--c:#7b6b86"><i></i>TiCN</li>
+        </ul>
+      </article>
+
+      <article class="chapter" data-side="center" data-chapter="5">
+        <span class="eyebrow">06 — Teklif</span>
+        <h2>Doğru takım, doğru teklif.</h2>
+        <p>Kodu yazın, adedi seçin, WhatsApp’tan gönderin. {site.serviceRegions} sahada destek.</p>
+        <div class="chapter__actions">
+          <a class="btn btn--tin" href="/urunler" data-magnetic><Icon name="grid" /> Kataloğu incele</a>
+          <a class="btn btn--wa" href={waDefault} target="_blank" rel="noopener" data-wa="showcase-end"><Icon name="whatsapp" /> WhatsApp’tan teklif al</a>
+        </div>
+      </article>
+
+      <div class="hud" aria-hidden="true">
+        <span class="hud__name" data-hud-name>Giriş</span>
+        <span class="hud__bar"><i data-hud-bar></i></span>
+        <span class="hud__count"><b data-hud-n>01</b> / 06</span>
+      </div>
+      <div class="scroll-hint" data-scroll-hint aria-hidden="true"><span>Kaydırın</span><i></i></div>
+      <div class="showcase__side" aria-hidden="true">U-DRILL · Ø25 · 4×D · REF A-01</div>
+    </div>
+  </section>
+
+  <!-- ============ KOD BANDI ============ -->
+  <div class="marquee" aria-hidden="true">
+    <div class="marquee__track">
+      {[0, 1].map(() => <span>{codes.map((c) => <span>{c}</span>)}</span>)}
+    </div>
+  </div>
+
+  <!-- ============ ÜRÜN GRUPLARI ============ -->
+  <section class="section section--dark" aria-labelledby="gruplar">
+    <div class="wrap">
+      <div class="section-head section-head--row">
+        <div style="display:grid;gap:18px;max-width:760px">
+          <span class="eyebrow eyebrow--tin">Ürün grupları</span>
+          <h2 id="gruplar" class="reveal">Tornalamadan frezelemeye, delmeden diş açmaya.</h2>
+        </div>
+        <a class="link-arrow" href="/urunler">Tüm katalog <Icon name="arrow" /></a>
+      </div>
+      <div class="cats">
+        {categories.map((c, i) => (
+          <a class="cat reveal" href={`/kategori/${c.slug}`} style={`--d:${(i % 4) * 70}ms`} data-glow>
+            <span class="cat__num">{String(i + 1).padStart(2, '0')} / {String(categories.length).padStart(2, '0')}</span>
+            <div class="cat__art" set:html={drawingSvg(c.drawing, c.shape)} />
+            <div>
+              <h3>{c.name}</h3>
+              <p>{c.summary}</p>
+            </div>
+            <span class="cat__go"><Icon name="arrow-up-right" /></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ NASIL ÇALIŞIR ============ -->
+  <section class="section section--paper" aria-labelledby="nasil">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Sipariş değil, teklif</span>
+        <h2 id="nasil" class="reveal">Üç adımda teklif. Formsuz, üyeliksiz.</h2>
+        <p class="reveal" style="--d:100ms">Katalogdan kodu bulun ya da elinizdeki kutunun fotoğrafını gönderin. Fiyat ve termin WhatsApp’tan, aynı gün içinde.</p>
+      </div>
+      <div class="steps">
+        <div class="step reveal"><span class="step__n">01</span><h3>Kodu bulun</h3><p>CNMG, APMT, MGMN… Kodla, “elmas uç” ya da “klavuz” diye arayın; malzeme grubuna göre süzün.</p></div>
+        <div class="step reveal" style="--d:100ms"><span class="step__n">02</span><h3>Teklif sepetine ekleyin</h3><p>Adedi ve marka tercihinizi seçin. Malzeme ve tezgâh notunuzu ekleyin.</p></div>
+        <div class="step reveal" style="--d:200ms"><span class="step__n">03</span><h3>WhatsApp’tan gönderin</h3><p>Liste tek mesaj olarak açılır. Fiyat, stok ve termin bilgisiyle dönüş yapılır; sahada teslim edilir.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MALZEME GRUPLARI ============ -->
+  <section class="section section--tight section--paper" aria-labelledby="malzeme" style="padding-top:0">
+    <div class="wrap">
+      <div class="section-head section-head--row">
+        <div style="display:grid;gap:18px;max-width:760px">
+          <span class="eyebrow">ISO 513 malzeme grupları</span>
+          <h2 id="malzeme" class="reveal">Ne işliyorsunuz?</h2>
+        </div>
+        <p style="max-width:44ch;color:var(--ink-2)">Uç kutularındaki renk kodunu tanırsınız. Malzemenizi seçin, uygun uçları görün.</p>
+      </div>
+      <div class="isostrip">
+        {iso.map((m) => (
+          <a href={`/urunler?iso=${m.g}`} data-g={m.g}>
+            <b>{m.g}</b>
+            <span>{m.t}<small>{m.s}</small></span>
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ ÖNE ÇIKANLAR ============ -->
+  {featured.length > 0 && (
+    <section class="section section--paper" aria-labelledby="one-cikan" style="padding-top:0">
+      <div class="wrap">
+        <div class="section-head section-head--row">
+          <div style="display:grid;gap:18px">
+            <span class="eyebrow">En çok sorulanlar</span>
+            <h2 id="one-cikan" class="reveal">Atölyelerin her gün kullandığı kodlar.</h2>
+          </div>
+          <a class="link-arrow" href="/urunler">Kataloğa git <Icon name="arrow" /></a>
+        </div>
+        <div class="hscroll">{featured.map((p) => <ProductCard p={p} />)}</div>
+      </div>
+    </section>
+  )}
+
+  <!-- ============ MİNİ HESAPLAYICI ============ -->
+  <section class="section section--dark" aria-labelledby="hesap">
+    <div class="wrap minicalc">
+      <div class="section-head" style="margin:0">
+        <span class="eyebrow eyebrow--tin">Teknik araçlar</span>
+        <h2 id="hesap" class="reveal">Kesme hızından devire, bir kaydırmada.</h2>
+        <p class="reveal" style="--d:100ms">Kesme hızı (Vc) ve çapı girin; tezgâhta yazmanız gereken devri anında görün. Freze, delme, kılavuz ve ISO kod çözücü teknik araçlar sayfasında.</p>
+        <div><a class="btn btn--ghost" href="/teknik-araclar"><Icon name="calc" /> Tüm teknik araçlar</a></div>
+      </div>
+      <div class="minicalc__card reveal" data-minicalc>
+        <div class="minicalc__row">
+          <label for="mc-vc">Kesme hızı Vc <output data-out="vc">200 m/dk</output></label>
+          <input id="mc-vc" type="range" min="20" max="600" step="5" value="200" data-in="vc" />
+        </div>
+        <div class="minicalc__row">
+          <label for="mc-d">Çap D <output data-out="d">50 mm</output></label>
+          <input id="mc-d" type="range" min="2" max="300" step="1" value="50" data-in="d" />
+        </div>
+        <div class="minicalc__result">
+          <b data-out="n">1273</b>
+          <span>devir/dk<br />(n, d/dk)</span>
+        </div>
+        <p class="minicalc__formula">n = (Vc × 1000) / (π × D)</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ MARKALAR ============ -->
+  <section class="section section--ink" aria-labelledby="markalar">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow eyebrow--tin">Tedarik edilen markalar</span>
+        <h2 id="markalar" class="reveal">Premiumdan ekonomiğe, işe göre doğru marka.</h2>
+        <p class="reveal" style="--d:100ms">Aynı kodu farklı segmentlerden tedarik ediyoruz; seri üretimde ömür, atölye işinde fiyat öne çıkar.</p>
+      </div>
+      <div class="brandlist">
+        {brands.map((b) => (
+          <a class="brandrow" href={`/markalar/${b.slug}`}>
+            <span class="brandrow__name">{b.name}</span>
+            <span class="brandrow__meta">{b.country ? `${b.country} · ` : ''}{b.segment}</span>
+            <span class="brandrow__str">{b.strengths.slice(0, 3).join(' · ')}</span>
+            <Icon name="arrow-up-right" />
+          </a>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <!-- ============ GÜVEN ============ -->
+  <section class="section section--dark section--tight" aria-label="Neden Aksoy">
+    <div class="wrap">
+      <div class="trust">
+        <div><Icon name="pin" /><b>Ostim / İvedik</b><p>Ankara merkezli; İç Anadolu ve Ege’de sahada ziyaret ve teslim.</p></div>
+        <div><Icon name="bolt" /><b>Hızlı teklif</b><p>WhatsApp’tan liste gönderin; fiyat ve termin aynı gün.</p></div>
+        <div><Icon name="shield" /><b>Orijinal ürün</b><p>Ürünler tedarikçi kanallarından, kutusunda ve etiketli teslim edilir.</p></div>
+        <div><Icon name="user" /><b>Ustadan ustaya</b><p>Malzemenize ve tezgâhınıza göre uç, kalite ve kesme değeri önerisi.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="preloader" data-preloader aria-hidden="true">
+    <div class="preloader__inner">
+      <div class="preloader__row"><span>AKSOY · KESİCİ TAKIMLAR</span><span>ANKARA</span></div>
+      <div class="preloader__num" data-pre-num>000</div>
+      <div class="preloader__bar"><i data-pre-bar></i></div>
+      <div class="preloader__row"><span>U-DRILL Ø25 · 4×D</span><span data-pre-state>YÜKLENİYOR</span></div>
+    </div>
+  </div>
+
+  <script>
+    import { initShowcase } from '../scripts/showcase/boot';
+    initShowcase();
+  </script>
+  <script>
+    // Mini hesaplayıcı: n = Vc·1000 / (π·D)
+    const root = document.querySelector<HTMLElement>('[data-minicalc]');
+    if (root) {
+      const vc = root.querySelector<HTMLInputElement>('[data-in="vc"]')!;
+      const d = root.querySelector<HTMLInputElement>('[data-in="d"]')!;
+      const out = (k: string) => root.querySelector<HTMLElement>(`[data-out="${k}"]`)!;
+      const fmt = new Intl.NumberFormat('tr-TR');
+      const upd = () => {
+        const v = +vc.value, dd = +d.value;
+        out('vc').textContent = `${v} m/dk`;
+        out('d').textContent = `${dd} mm`;
+        out('n').textContent = fmt.format(Math.round((v * 1000) / (Math.PI * dd)));
+        for (const el of [vc, d]) el.style.setProperty('--p', `${((+el.value - +el.min) / (+el.max - +el.min)) * 100}%`);
+      };
+      vc.addEventListener('input', upd);
+      d.addEventListener('input', upd);
+      upd();
+    }
+    // Kategori kartlarında imleci izleyen ışık
+    document.querySelectorAll<HTMLElement>('[data-glow]').forEach((el) => {
+      el.addEventListener('pointermove', (e) => {
+        const r = el.getBoundingClientRect();
+        el.style.setProperty('--mx', `${((e.clientX - r.left) / r.width) * 100}%`);
+        el.style.setProperty('--my', `${((e.clientY - r.top) / r.height) * 100}%`);
+      });
+    });
+  </script>
+</Base>

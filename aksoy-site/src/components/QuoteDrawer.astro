@@ -1,0 +1,36 @@
+---
+import Icon from './Icon.astro';
+---
+<div class="drawer-scrim" data-quote-scrim></div>
+<aside class="drawer" data-quote-drawer role="dialog" aria-modal="true" aria-labelledby="teklif-baslik" aria-hidden="true">
+  <div class="drawer__head">
+    <div>
+      <span class="eyebrow">Sipariş değil, teklif talebi</span>
+      <h2 id="teklif-baslik">Teklif Sepeti</h2>
+    </div>
+    <button class="icon-btn" type="button" data-quote-close aria-label="Kapat"><Icon name="close" /></button>
+  </div>
+  <div class="drawer__body">
+    <div class="drawer__empty" data-quote-empty>
+      <Icon name="list" />
+      <p>Henüz ürün eklemediniz.<br />Katalogdan kodu seçin, adedi girin; listeyi tek mesajla WhatsApp’tan gönderin.</p>
+      <a class="btn btn--sm" href="/urunler">Kataloğa git</a>
+    </div>
+    <ul data-quote-list></ul>
+    <div class="drawer__fields" data-quote-fields hidden>
+      <div class="field">
+        <label for="q-firma">Firma / ad (isteğe bağlı)</label>
+        <input id="q-firma" name="firma" autocomplete="organization" placeholder="Örn. Yıldız Makina" />
+      </div>
+      <div class="field">
+        <label for="q-not">Not (malzeme, tezgâh, termin…)</label>
+        <textarea id="q-not" name="not" rows="2" placeholder="Örn. 42CrMo4, kaba tornalama, CNC torna"></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="drawer__foot" data-quote-foot hidden>
+    <a class="btn btn--wa btn--block" href="#" target="_blank" rel="noopener" data-quote-send><Icon name="whatsapp" /> WhatsApp’tan teklif iste</a>
+    <button class="btn btn--ghost btn--block" type="button" data-quote-copy><Icon name="copy" /> Listeyi kopyala</button>
+    <p class="drawer__legal">Bu bir sipariş değildir; liste WhatsApp’ta size ait bir mesaj olarak açılır, göndermeden önce düzenleyebilirsiniz. Sitemiz bu bilgileri kaydetmez. <a href="/kvkk">KVKK aydınlatma metni</a></p>
+  </div>
+</aside>

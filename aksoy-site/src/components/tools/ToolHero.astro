@@ -1,0 +1,31 @@
+---
+// Teknik araç sayfalarının üst bölümü: konum yolu, başlık, giriş ve sağda teknik çizim.
+import type { Crumb } from '../../scripts/tools/seo';
+
+interface Props {
+  crumbs: Crumb[];
+  eyebrow: string;
+  title: string;
+  lead: string;
+  tags?: string[];
+}
+const { crumbs, eyebrow, title, lead, tags = [] } = Astro.props;
+---
+<section class="page-hero tl-hero blueprint">
+  <div class="wrap tl-hero__inner">
+    <div class="tl-hero__text">
+      <nav aria-label="Sayfa konumu">
+        <ol class="breadcrumbs">
+          {crumbs.map((c, i) => (
+            <li>{i < crumbs.length - 1 ? <a href={c.path}>{c.name}</a> : <span aria-current="page">{c.name}</span>}</li>
+          ))}
+        </ol>
+      </nav>
+      <span class="eyebrow">{eyebrow}</span>
+      <h1>{title}</h1>
+      <p class="lead">{lead}</p>
+      {tags.length > 0 && <ul class="tl-tags">{tags.map((t) => <li>{t}</li>)}</ul>}
+    </div>
+    {Astro.slots.has('art') && <div class="tl-hero__art" aria-hidden="true"><slot name="art" /></div>}
+  </div>
+</section>
