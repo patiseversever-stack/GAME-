@@ -211,39 +211,51 @@ export function buildTurningHolder(m: ToolMats, insertMat = m.tin) {
   return g;
 }
 
-/** MGEHR kanal kateri + MGMN kanal ucu. Uç ön kenarı orijinde (kesme yüzü +Y), kater -X'e uzanır.
- *  Bıçak, sapın +Z yan yüzüne hizalıdır (aynaya yakın kanal için). */
+/**
+ * MGEHR 2020-3 kanal kateri + MGMN300 kanal ucu (ölçüler katalog oranlarında).
+ * Uç ön kesme köşesi orijinde, kesme kenarı yüksekliği = sap üst yüzü (y = 0); kater -X'e uzanır.
+ * İnce bıçak (2,4 mm) ucun genişliğinden (3 mm) dardır: uç boydan boya yanlardan görünür.
+ * Bıçak sapın +Z yan yüzüne hizalıdır (aynaya yakın kanal için).
+ */
 export function buildGroovingHolder(m: ToolMats, insertMat = m.tin) {
   const g = new THREE.Group();
-  const zb = 8.3; // bıçak/uç orta düzlemi
-  const shank = new THREE.Mesh(new RoundedBoxGeometry(92, 20, 20, 4, 1.4), m.black);
-  shank.position.set(-78, -10, 0);
+  const zb = 8.6; // bıçak/uç orta düzlemi
+  const shank = new THREE.Mesh(new RoundedBoxGeometry(86, 20, 20, 4, 1.4), m.black);
+  shank.position.set(-82, -10, 0);
   g.add(shank);
-  const head = new THREE.Mesh(new RoundedBoxGeometry(24, 30, 20, 4, 1.6), m.black);
-  head.position.set(-26, -7, 0);
+  const head = new THREE.Mesh(new RoundedBoxGeometry(25, 28, 20, 4, 1.6), m.black);
+  head.position.set(-34.5, -6, 0);
   g.add(head);
-  // Bıçak: alt çene, uç yuvası, esnek üst sıkma çenesi
+  // Bıçak (yan profil): alt çene ucu taşır, üst çene ucun arka yarısını V sırtıyla sıkar,
+  // ucun arkasında esneme yarığı kalır.
   const blade = new THREE.Shape([
-    V2(-16, -20), V2(-6, -20), V2(-1.2, -9.5), V2(-1.2, -6.2), V2(-17, -6.2), V2(-17, -0.4), V2(-4.4, -0.4), V2(-7.6, 6.4), V2(-16, 7.6),
+    V2(-24, -20), V2(-12.5, -20), V2(-4.4, -10.8), V2(-2.6, -5.95), V2(-23.2, -5.95), V2(-23.2, -0.25),
+    V2(-11.6, -0.72), V2(-10, -1.02), V2(-8.6, -0.78), V2(-11.4, 5.4), V2(-17.5, 7.6), V2(-24, 8),
   ]);
-  const bladeGeo = new THREE.ExtrudeGeometry(blade, { depth: 2.6, bevelEnabled: true, bevelThickness: 0.3, bevelSize: 0.3, bevelSegments: 3 });
-  bladeGeo.translate(0, 0, zb - 1.3);
+  const bladeGeo = new THREE.ExtrudeGeometry(blade, { depth: 2.0, bevelEnabled: true, bevelThickness: 0.2, bevelSize: 0.2, bevelSegments: 3 });
+  bladeGeo.translate(0, 0, zb - 1.0);
   g.add(new THREE.Mesh(bladeGeo, m.black));
-  // Sıkma vidası (başlığın yan yüzünde)
-  const screw = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 1.8, 32), m.screw);
+  // Esneme yarığı başlık yan yüzünde devam eder
+  const slit = new THREE.Mesh(new THREE.BoxGeometry(15, 0.5, 0.3), m.hole);
+  slit.position.set(-29.5, -0.45, 10.02);
+  g.add(slit);
+  // Sıkma vidası (başlığın yan yüzünde, üst çeneyi çeker)
+  const screw = new THREE.Mesh(new THREE.CylinderGeometry(3.3, 3.3, 1.6, 36), m.screw);
   screw.rotation.x = Math.PI / 2;
-  screw.position.set(-26, 2.5, 10.7);
+  screw.position.set(-33, 3.4, 10.6);
   g.add(screw);
-  const tx = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, 0.4, 6), m.hole);
+  const tx = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.45, 0.4, 6), m.hole);
   tx.rotation.x = Math.PI / 2;
-  tx.position.set(-26, 2.5, 11.5);
+  tx.position.set(-33, 3.4, 11.3);
   g.add(tx);
-  // MGMN ucu: iki uçlu "köpek kemiği", genişlik 3 mm; üstte talaş kırıcı çukuru
+  // MGMN300: boy 20, genişlik 3, yükseklik ~5,9 mm; iki uçlu, uçlarda 7° boşluk ve talaş kırıcı,
+  // ortada üst çenenin oturduğu V yuvası.
   const ins = new THREE.Shape([
-    V2(0, -0.2), V2(-0.5, -5.6), V2(-10, -6.1), V2(-19.5, -5.6), V2(-20, -0.2), V2(-17, 0.1), V2(-10, -0.9), V2(-3, 0.1),
+    V2(0, 0), V2(-0.72, -5.9), V2(-19.28, -5.9), V2(-20, 0),
+    V2(-19.6, 0), V2(-18.8, -0.36), V2(-17.8, -0.12), V2(-15.4, -0.52), V2(-10, -1.02), V2(-4.6, -0.52), V2(-2.2, -0.12), V2(-1.2, -0.36), V2(-0.4, 0),
   ]);
-  const insGeo = new THREE.ExtrudeGeometry(ins, { depth: 2.8, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.1, bevelSegments: 2 });
-  insGeo.translate(0, 0, zb - 1.5);
+  const insGeo = new THREE.ExtrudeGeometry(ins, { depth: 2.84, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.08, bevelSegments: 2 });
+  insGeo.translate(0, 0, zb - 1.42);
   const insert = new THREE.Mesh(insGeo, insertMat);
   g.add(insert);
   g.userData.insert = insert;
