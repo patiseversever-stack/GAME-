@@ -3,7 +3,7 @@
    ========================================================================== */
 
 /* ---------- Vitrin (kaydırmaya bağlı 3D) ---------- */
-.showcase { position: relative; height: 700vh; background: var(--g-950); color: var(--g-100); }
+.showcase { position: relative; height: 1150vh; background: var(--g-950); color: var(--g-100); }
 .showcase__sticky { position: sticky; top: 0; height: 100vh; height: 100svh; overflow: hidden; }
 .showcase__bg {
   position: absolute; inset: 0; pointer-events: none;
@@ -101,7 +101,7 @@
 
 /* Mobil vitrin düzeni: model üstte, metin kartı altta */
 @media (max-width: 860px) {
-  .showcase { height: 600vh; height: 600svh; }
+  .showcase { height: 950vh; height: 950svh; }
   .chapter, .chapter[data-side='left'], .chapter[data-side='right'], .chapter[data-side='center'] {
     left: var(--gutter); right: var(--gutter); width: auto; top: auto; bottom: calc(18px + var(--mbar-h)); transform: none; text-align: left;
   }

@@ -7,7 +7,7 @@ const finePointer = matchMedia('(pointer: fine)').matches;
 /* Yumuşak kaydırma: yalnızca masaüstü fare/trackpad; dokunmatikte yerel kaydırma korunur. */
 let lenis: Lenis | null = null;
 if (finePointer && !reduce) {
-  lenis = new Lenis({ autoRaf: true, lerp: 0.1, wheelMultiplier: 1, anchors: { offset: -80 } });
+  lenis = new Lenis({ autoRaf: true, lerp: 0.075, wheelMultiplier: 0.8, anchors: { offset: -80 } });
 }
 (window as any).__lenis = lenis;
 

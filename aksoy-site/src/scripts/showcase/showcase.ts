@@ -211,7 +211,7 @@ export async function startShowcase(
     panels.forEach((el, i) => {
       if (i !== k && el.dataset.on === '1') {
         el.dataset.on = '0';
-        gsap.to(el, { autoAlpha: 0, y: -dir * 34, duration: 0.38, ease: 'power2.in', overwrite: true });
+        gsap.to(el, { autoAlpha: 0, y: -dir * 34, duration: 0.55, ease: 'power2.in', overwrite: true });
       }
     });
     const el = panels[k];
@@ -221,8 +221,8 @@ export async function startShowcase(
     gsap.set(el, { autoAlpha: 1, y: 0 });
     const lines = el.querySelectorAll('.ln > span');
     const rest = el.querySelectorAll(':scope > .eyebrow, :scope > p, .chapter__specs li, .coat-chips li, .chapter__actions > *');
-    gsap.fromTo(lines, { yPercent: 118, rotate: 1.5 }, { yPercent: 0, rotate: 0, duration: 1.05, ease: 'expo.out', stagger: 0.08, delay: 0.28, overwrite: true });
-    gsap.fromTo(rest, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 0.8, ease: 'power3.out', stagger: 0.05, delay: 0.42, overwrite: true });
+    gsap.fromTo(lines, { yPercent: 118, rotate: 1.5 }, { yPercent: 0, rotate: 0, duration: 1.4, ease: 'expo.out', stagger: 0.12, delay: 0.45, overwrite: true });
+    gsap.fromTo(rest, { autoAlpha: 0, y: 18 }, { autoAlpha: 1, y: 0, duration: 1.1, ease: 'power3.out', stagger: 0.07, delay: 0.65, overwrite: true });
     if (hudN) hudN.textContent = String(k + 1).padStart(2, '0');
     if (hudName) hudName.textContent = CHAPTERS[k];
     if (bigNum) {
@@ -245,9 +245,9 @@ export async function startShowcase(
     if (k !== 1) tl.to(S, { block: 0, plunge: 0, hole: 0, duration: 0.55, ease: 'power2.in' }, 0);
     if (k !== 2 && k !== 4) tl.to(S, { lift0: 0, lift1: 0, screw0: 0, screw1: 0, duration: 0.5, ease: 'power3.inOut' }, 0);
     // Kamera hareketi: hızlı, kararlı, hafif "nefes"
-    tl.to(S, { ...P, duration: 1.3, ease: 'expo.inOut' }, 0);
-    if (!calm) tl.to(S, { camZ: -0.32, duration: 0.6, ease: 'power2.in' }, 0).to(S, { camZ: 0, duration: 0.9, ease: 'power3.out' }, 0.6);
-    tl.to(S, { envRot: `+=${dir * 0.9}`, duration: 1.8, ease: 'power2.inOut' }, 0);
+    tl.to(S, { ...P, duration: 2.1, ease: 'power3.inOut' }, 0);
+    if (!calm) tl.to(S, { camZ: -0.22, duration: 1.0, ease: 'sine.inOut' }, 0).to(S, { camZ: 0, duration: 1.3, ease: 'sine.inOut' }, 1.0);
+    tl.to(S, { envRot: `+=${dir * 0.9}`, duration: 2.6, ease: 'sine.inOut' }, 0);
 
     if (k === 1) {
       // Delme: iş parçası gelir, matkap hızlanır, dalar; talaş, kıvılcım, duman
@@ -325,8 +325,9 @@ export async function startShowcase(
       setTimeout(() => (snapping = false), 700);
     }
   }
+  const SNAP = false; // film gibi akış: bölüm sıçraması kapalı
   function doSnap() {
-    if (touching || snapping || opts.poster) return;
+    if (!SNAP || touching || snapping || opts.poster) return;
     const p = st.progress;
     if (p <= 0.0005 || p >= 0.9995) return;
     const raw = p * N;
@@ -367,7 +368,7 @@ export async function startShowcase(
 
   function apply(dt: number) {
     const k = intro.k;
-    L += (Ltarget - L) * Math.min(1, dt * 5);
+    L += (Ltarget - L) * Math.min(1, dt * 2.6);
     pointer.x += (pointer.tx - pointer.x) * Math.min(1, dt * 3);
     pointer.y += (pointer.ty - pointer.y) * Math.min(1, dt * 3);
     velOff *= Math.pow(0.04, dt);
@@ -375,12 +376,12 @@ export async function startShowcase(
     // Bölüm içi kaydırma hareketi
     let dRy = 0, dRx = 0, dSpin = 0;
     const c = chapter;
-    if (c === 0) { dRy = L * 0.35; dSpin = L * 0.9; }
-    else if (c === 1) { dRy = (L - 0.5) * 0.18; }
-    else if (c === 2) { dRy = (L - 0.5) * 0.35; dRx = (L - 0.5) * 0.1; }
-    else if (c === 3) { dRy = (L - 0.5) * 0.4; }
-    else if (c === 4) { dRy = (L - 0.5) * 0.3; }
-    else if (c === 5) { dRy = L * 0.3; dSpin = L * 0.6; }
+    if (c === 0) { dRy = L * 0.5; dSpin = L * 1.2; }
+    else if (c === 1) { dRy = (L - 0.5) * 0.25; }
+    else if (c === 2) { dRy = (L - 0.5) * 0.45; dRx = (L - 0.5) * 0.12; }
+    else if (c === 3) { dRy = (L - 0.5) * 0.5; }
+    else if (c === 4) { dRy = (L - 0.5) * 0.4; }
+    else if (c === 5) { dRy = L * 0.4; dSpin = L * 0.8; }
     const idle = (c === 0 || c === 5) && !opts.poster && !calm ? 1 : 0;
     const wob = Math.sin(elapsed * 0.45) * 0.22 * idle;
 
