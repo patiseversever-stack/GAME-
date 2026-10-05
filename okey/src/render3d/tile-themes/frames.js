@@ -1,8 +1,8 @@
 // Avatar çerçeveleri: taş takımlarıyla aynı boya motoru (sır, metal varak, ebru mermerleme) ile prosedürel boyanır.
 // Seriler: İznik çini (kobalt/turkuaz/mercan sır), Ebru + telkari (mermerli kâğıt, bükülmüş gümüş/altın tel, granül),
-// Nişan (çelenk, sorguç). 480 px kare tuval; avatar dairesi yarıçapı 150 px (kutunun %62.5'i). Sonuç blob URL olarak
+// Zanaat (sedef kakma, kilim, bakır, tezhip, kehribar), Nişan (çelenk, sorguç). 480×560 tuval; avatar dairesi yarıçapı 150 px (kutunun %62.5'i). Sonuç blob URL olarak
 // bellekte ve IndexedDB'de saklanır.
-import { TAU, rng, canvas, idle, buildTextures, TEX, pathShape, paintGlaze, metalPaint, poly, bez, star8Path, rosettePath, leafPath, crackle, drop, tine, wave, marble } from './paint.js';
+import { TAU, rng, canvas, idle, buildTextures, TEX, makeNoise, ramp, hsl, pathShape, paintGlaze, metalPaint, poly, bez, rosettePath, leafPath, crackle, drop, tine, wave, marble } from './paint.js';
 import { C1, ciniTulip, ciniCarnation, sazPath } from './cini.js';
 import { DB } from './store.js';
 
@@ -404,6 +404,52 @@ function battalDrops(R, ops, rr, n, pal, rmin, rmax) {
   }
 }
 
+/* ───────────── kutupsal piksel boyacı: bant bir şerit gibi tasarlanır, halkaya sarılır ───────────── */
+// fn(u, v, o, L): u yay uzunluğu (0..L, tepeden saat yönünde), v bant içi konum (0 iç → 1 dış), o = [r, g, b]
+async function polarBand(x, r0, r1, fn) {
+  const c = canvas(S, SH),
+    g = c.getContext('2d'),
+    img = g.createImageData(S, SH),
+    d = img.data,
+    Rm = (r0 + r1) / 2,
+    L = TAU * Rm,
+    o = [0, 0, 0];
+  let t0 = performance.now();
+  for (let j = Math.floor(CY - r1 - 2); j < Math.ceil(CY + r1 + 2); j++) {
+    if (j < 0 || j >= SH) continue;
+    for (let i = Math.floor(CX - r1 - 2); i < Math.ceil(CX + r1 + 2); i++) {
+      if (i < 0 || i >= S) continue;
+      const dx = i + 0.5 - CX,
+        dy = j + 0.5 - CY,
+        r = Math.hypot(dx, dy);
+      if (r < r0 - 1 || r > r1 + 1) continue;
+      const cov = Math.max(0, Math.min(1, r1 + 0.5 - r)) * Math.max(0, Math.min(1, r - r0 + 0.5));
+      if (!cov) continue;
+      const ang = (Math.atan2(dy, dx) + Math.PI / 2 + TAU) % TAU;
+      fn(ang * Rm, Math.max(0, Math.min(1, (r - r0) / (r1 - r0))), o, L);
+      const q = (j * S + i) * 4;
+      d[q] = o[0];
+      d[q + 1] = o[1];
+      d[q + 2] = o[2];
+      d[q + 3] = 255 * cov;
+    }
+    if (performance.now() - t0 > 30) {
+      await idle();
+      t0 = performance.now();
+    }
+  }
+  g.putImageData(img, 0, 0);
+  x.drawImage(c, 0, 0);
+}
+// halka üstünde (u, v) → tuval noktası; Rm orta yarıçap, v merkezden dışa sapma
+const polarPt = (Rm) => (u, v) => P(Rm + v, -Math.PI / 2 + u / Rm);
+const sstep = (a, b, t) => {
+  const k = Math.max(0, Math.min(1, (t - a) / (b - a)));
+  return k * k * (3 - 2 * k);
+};
+// tekrar sayısı tam olsun diye periyodu çevreye uydurur
+const fitPeriod = (L, p) => L / Math.max(1, Math.round(L / p));
+
 /* ───────────── tasarımlar ───────────── */
 const DESIGNS = {
   // Pirinç halka: dövme izleri, iki ince kazıma
@@ -470,20 +516,6 @@ const DESIGNS = {
     metalRing(x, 146, 7, 'brass');
     metalRing(x, 199, 8, 'brass');
     return 143;
-  },
-
-  // Gelgit ebru: battal zemin, dalga akışı, gümüş tel kenarlar
-  async gelgit(x) {
-    const R = rng(404),
-      ops = [];
-    battalDrops(R, ops, [130, 215], 170, [EB.indigo, EB.indigo, EB.rose, EB.ochre, EB.cream, EB.cream, EB.slate], 8, 20);
-    ops.push(wave(0.4, 7, 48), wave(2.1, 5, 36));
-    for (let k = 0; k < 14; k++) ops.push(tine(...P(172, (k * TAU) / 14), (k * TAU) / 14 + Math.PI / 2, 10, 5));
-    await ebruBand(x, ops, EB.cream, 150, 196);
-    gloss(x, 150, 196, 0.45);
-    wire(x, [circleLine(148)], 5.5, 'silver', true);
-    wire(x, [circleLine(198)], 5.5, 'silver', true);
-    return 145;
   },
 
   // Rumi çini: turkuaz zemin, kobalt saz yaprakları, beyaz rozetler
@@ -710,45 +742,6 @@ const DESIGNS = {
     return 139;
   },
 
-  // Gece çinisi: lacivert sır, altın sekiz köşe yıldızlar
-  async gece(x) {
-    glazeBand(x, 146, 202, '#14275f', { seed: 52, crackColor: 'rgba(255,255,255,0.06)' });
-    const N = 10;
-    metalPaint(
-      x,
-      (g) => {
-        for (let k = 0; k < N; k++) {
-          star8Path(g, ...P(174, (k * TAU) / N - Math.PI / 2), 14, (k * TAU) / N);
-          g.fill();
-        }
-      },
-      'gold',
-      { leaf: 0.2, shadow: 'rgba(0,0,0,0.5)', shadowBlur: 3, shadowY: 1.5 },
-    );
-    x.save();
-    for (let k = 0; k < N; k++) {
-      const [sx, sy] = P(174, (k * TAU) / N - Math.PI / 2);
-      x.fillStyle = '#14275f';
-      star8Path(x, sx, sy, 7.5, (k * TAU) / N);
-      x.fill();
-      x.fillStyle = C1.turq;
-      x.beginPath();
-      x.arc(sx, sy, 3, 0, TAU);
-      x.fill();
-      x.fillStyle = 'rgba(240,210,120,0.9)';
-      for (const d of [-7, 0, 7]) {
-        x.beginPath();
-        x.arc(...P(174 + d, ((k + 0.5) * TAU) / N - Math.PI / 2), d ? 1.6 : 2.6, 0, TAU);
-        x.fill();
-      }
-    }
-    x.restore();
-    gloss(x, 146, 202);
-    metalRing(x, 146, 7, 'gold');
-    metalRing(x, 203, 8, 'gold');
-    return 143;
-  },
-
   // Gül ebru: lacivert zeminde gül ve yaprak damlaları, gümüş tel
   async gul(x) {
     const R = rng(818),
@@ -779,33 +772,582 @@ const DESIGNS = {
     return 145;
   },
 
-  // Firuze telkari: firuze mine, gümüş filigran, mercan granül
-  async firuze(x) {
-    glazeBand(x, 146, 200, '#2aa3a0', { seed: 61, mottle: 0.22, crackle: false });
-    const lines = [];
-    const N = 12;
-    for (let k = 0; k < N; k++) lines.push(...lyre(161, (k * TAU) / N, 9.5));
-    wire(x, lines, 2.6, 'silver');
-    gloss(x, 146, 200, 0.85);
-    wire(x, [circleLine(146)], 6, 'silver', true);
-    wire(x, [circleLine(200)], 6, 'silver', true);
-    const cor = [];
-    for (let k = 0; k < N; k++) cor.push(P(186, ((k + 0.5) * TAU) / N));
-    x.save();
-    for (const [px, py] of cor) {
-      const g = x.createRadialGradient(px - 1.5, py - 1.5, 0.5, px, py, 5);
-      g.addColorStop(0, '#ffb3a6');
-      g.addColorStop(0.5, '#d2402f');
-      g.addColorStop(1, '#6e130a');
-      x.fillStyle = g;
-      x.beginPath();
-      x.arc(px, py, 5, 0, TAU);
-      x.fill();
+  // Gelgit ebru: renk kuşakları üstüne ileri-geri tarak (gel-git) — kıvrımlı şerit deseni, gümüş tel ve granül
+  async gelgit(x) {
+    const ops = [];
+    const pal = [EB.indigo, EB.cream, EB.rose, EB.cream, EB.ochre, EB.cream, EB.sage, EB.cream, EB.slate, EB.cream];
+    let k = 0;
+    for (let y = CY - 262; y < CY + 262; y += 9) {
+      const c = pal[k++ % pal.length];
+      for (let xx = 0; xx < 480; xx += 11) {
+        const d = Math.hypot(xx - CX, y - CY);
+        if (d > 112 && d < 244) ops.push(drop(xx + (k % 2) * 5, y, 7.5, c));
+      }
     }
-    x.restore();
-    granules(x, Array.from({ length: 36 }, (_, k) => P(209, (k * TAU) / 36)), 3, 'silver');
+    for (let xg = 0, i = 0; xg < 480; xg += 14, i++) ops.push(tine(xg, 0, i % 2 ? -Math.PI / 2 : Math.PI / 2, 26, 6));
+    for (let yg = CY - 230, i = 0; yg < CY + 230; yg += 46, i++) ops.push(tine(0, yg, i % 2 ? Math.PI : 0, 10, 10));
+    await ebruBand(x, ops, EB.cream, 150, 196, false);
+    gloss(x, 150, 196, 0.42);
+    wire(x, [circleLine(148)], 6, 'silver', true);
+    wire(x, [circleLine(198)], 6, 'silver', true);
+    granules(x, Array.from({ length: 40 }, (_, i) => P(207, (i * TAU) / 40)), 2.8, 'silver');
+    return 145;
+  },
+
+  // Bakır dövme: çekiç izleri (ışığı yakalayan çukurlar), kenarlarda yeşil patina, iki kazıma çizgisi
+  async bakir(x) {
+    const n = makeNoise(77),
+      H = 50;
+    const base = ramp([
+      [0, '#4a1d0b'],
+      [0.35, '#8c3b17'],
+      [0.6, '#c8693a'],
+      [0.82, '#ee9d6a'],
+      [1, '#ffd2b0'],
+    ]);
+    const pat = [79, 165, 143];
+    const lx = -0.55,
+      ly = -0.62;
+    await polarBand(x, 147, 197, (u, v, o) => {
+      const py = v * H;
+      // dövme çukurları: titrek ızgarada en yakın merkez
+      const cs = 12;
+      const gx = Math.floor(u / cs),
+        gy = Math.floor(py / cs);
+      let best = 1e9,
+        bx = 0,
+        by = 0;
+      for (let a = -1; a <= 1; a++)
+        for (let b = -1; b <= 1; b++) {
+          const cx = (gx + a) * cs + cs * (0.5 + 0.38 * n.n2((gx + a) * 3.1, (gy + b) * 1.7)),
+            cy = (gy + b) * cs + cs * (0.5 + 0.38 * n.n2((gx + a) * 1.3, (gy + b) * 2.9));
+          const dd = (u - cx) * (u - cx) + (py - cy) * (py - cy);
+          if (dd < best) {
+            best = dd;
+            bx = cx;
+            by = cy;
+          }
+        }
+      const dist = Math.sqrt(best) / (cs * 0.75);
+      const nx = (u - bx) / cs,
+        ny = (py - by) / cs;
+      const sh = Math.max(-1, Math.min(1, -(nx * lx + ny * ly) * 3)) * (1 - Math.min(1, dist) * 0.6);
+      const bev = Math.sin(v * Math.PI);
+      let t = 0.52 + sh * 0.36 + n.fbm(u * 0.03, py * 0.05, 3) * 0.1 + (bev - 0.75) * 0.3;
+      base(t, o);
+      if (sh > 0.55) {
+        const sp = (sh - 0.55) * 1.6;
+        o[0] = Math.min(255, o[0] + 90 * sp);
+        o[1] = Math.min(255, o[1] + 70 * sp);
+        o[2] = Math.min(255, o[2] + 55 * sp);
+      }
+      // kazıma çizgileri
+      for (const ev of [0.17, 0.83]) {
+        const e = Math.abs(v - ev) * H;
+        if (e < 1.1) {
+          o[0] *= 0.45;
+          o[1] *= 0.42;
+          o[2] *= 0.4;
+        } else if (e < 2) {
+          o[0] = Math.min(255, o[0] * 1.25);
+          o[1] = Math.min(255, o[1] * 1.2);
+          o[2] = Math.min(255, o[2] * 1.15);
+        }
+      }
+      // patina: kenarlarda ve çukur diplerinde
+      const edge = Math.max(sstep(0.22, 0.02, v), sstep(0.78, 0.98, v));
+      const blot = sstep(0.15, 0.55, n.fbm(u * 0.025 + 9, py * 0.06, 4) + 0.1);
+      const pk = Math.min(1, edge * 0.85 * (0.4 + blot) + blot * 0.35 * Math.min(1, dist * 1.4));
+      o[0] += (pat[0] - o[0]) * pk;
+      o[1] += (pat[1] - o[1]) * pk;
+      o[2] += (pat[2] - o[2]) * pk;
+    });
+    gloss(x, 147, 197, 0.5);
+    metalRing(x, 146, 5, 'copper');
+    metalRing(x, 198, 6, 'copper');
     return 143;
   },
+
+  // Kilim: yün dokuma; elibelinde ve göz motifleri, kurt ağzı bordür, dış kenarda püsküller
+  async kilim(x) {
+    const n = makeNoise(31);
+    const C = { r: [158, 44, 38], i: [36, 56, 104], o: [214, 156, 58], c: [238, 226, 200], b: [58, 32, 22], g: [77, 122, 90] };
+    const ELI = ['.....o.....', '....oio....', '.....o.....', '.iiiiiiiii.', 'i..icccci..i', 'ii..ici..ii', 'i..icccci..i', '.iiiiiiiii.', '.....o.....', '....oio....', '.....o.....'];
+    const H = 54,
+      cell = 3;
+    let period = 0;
+    await polarBand(x, 147, 201, (u, v, o, L) => {
+      if (!period) period = fitPeriod(L, 66);
+      const cu = Math.floor(u / cell),
+        cv = Math.floor((v * H) / cell);
+      const rows = Math.round(H / cell);
+      const pc = Math.round(period / cell);
+      const lu = ((cu % pc) + pc) % pc;
+      let col = C.r;
+      if (cv <= 1 || cv >= rows - 2) {
+        // kurt ağzı: dişli üçgenler
+        const k = lu % 6,
+          up = cv <= 1 ? cv : rows - 1 - cv;
+        col = (up === 0 ? k < 6 : k >= 1 && k <= 4) ? (Math.floor(lu / 6) % 2 ? C.i : C.b) : C.c;
+      } else if (cv === 2 || cv === rows - 3) col = C.c;
+      else {
+        const fv = cv - 3 - Math.floor((rows - 6 - 11) / 2);
+        const half = pc / 2;
+        const isEli = Math.floor(cu / half) % 2 === 0;
+        const fu = Math.floor((lu % half) - (half - 11) / 2);
+        if (isEli && fv >= 0 && fv < 11 && fu >= 0 && fu < 11) {
+          const ch = ELI[fv][fu];
+          col = ch === 'i' ? C.i : ch === 'o' ? C.o : ch === 'c' ? C.c : C.r;
+        } else if (!isEli) {
+          const dx = Math.abs((lu % half) - half / 2 + 0.5),
+            dy = Math.abs(cv - rows / 2 + 0.5);
+          const m = dx + dy * 1.15;
+          col = m < 1.5 ? C.o : m < 3 ? C.i : m < 4.2 ? C.c : m < 5.6 ? C.g : m < 6.8 ? C.b : C.r;
+        }
+      }
+      // yün dokusu: atkı çizgileri, ilmek ve tüy
+      const py = v * H;
+      const weft = 0.86 + 0.14 * Math.sin((py / cell) * Math.PI * 2);
+      const warp = 0.95 + 0.05 * Math.sin((u / cell) * Math.PI * 2 + (cv % 2) * Math.PI);
+      const fuzz = 0.93 + n.n2(u * 0.9, py * 0.9) * 0.1 + n.fbm(u * 0.05, py * 0.1, 2) * 0.08;
+      const lit = 1.06 - v * 0.12;
+      const k = weft * warp * fuzz * lit;
+      o[0] = Math.min(255, col[0] * k);
+      o[1] = Math.min(255, col[1] * k);
+      o[2] = Math.min(255, col[2] * k);
+    });
+    // püsküller
+    x.save();
+    x.lineCap = 'round';
+    const R = rng(55);
+    for (let k = 0; k < 72; k++) {
+      const a = (k / 72) * TAU + R() * 0.01;
+      const len = 8 + R() * 4;
+      const [ax, ay] = P(200, a),
+        [bx, by] = P(200 + len, a + (R() - 0.5) * 0.02);
+      x.strokeStyle = 'rgba(30,14,6,0.35)';
+      x.lineWidth = 3.6;
+      x.beginPath();
+      x.moveTo(ax + 1, ay + 1.5);
+      x.lineTo(bx + 1, by + 1.5);
+      x.stroke();
+      x.strokeStyle = k % 6 < 1 ? '#b8452e' : '#eadfc4';
+      x.lineWidth = 3;
+      x.beginPath();
+      x.moveTo(ax, ay);
+      x.lineTo(bx, by);
+      x.stroke();
+    }
+    x.restore();
+    x.save();
+    x.strokeStyle = 'rgba(40,18,10,0.85)';
+    x.lineWidth = 2;
+    x.beginPath();
+    x.arc(CX, CY, 147, 0, TAU);
+    x.stroke();
+    x.restore();
+    metalRing(x, 145, 5, 'brass');
+    return 143;
+  },
+
+  // Gece çinisi: lacivert sır, altın varak geçmeli (girih) yıldız zinciri, turkuaz göbekler, altın inci dizisi
+  async gece(x) {
+    glazeBand(x, 145, 205, '#0f1f52', { seed: 52, crackColor: 'rgba(255,255,255,0.05)', mottle: 0.32 });
+    const Rm = 175,
+      N = 12,
+      M = polarPt(Rm),
+      L = TAU * Rm,
+      per = L / N;
+    const star = (cu, r) => Array.from({ length: 17 }, (_, i) => {
+      const a = -Math.PI / 2 + (i * Math.PI) / 8,
+        q = i % 2 ? r * 0.62 : r;
+      return M(cu + Math.cos(a) * q, Math.sin(a) * q);
+    });
+    // geçme bant: yıldızların uçlarından komşuya uzanan iki zikzak
+    const zig = (off) => {
+      const pts = [];
+      for (let k = 0; k <= N * 2; k++) pts.push(M((k * per) / 2, k % 2 ? off : -off));
+      return pts;
+    };
+    // turkuaz göbek ve sekizgen dolgu
+    for (let k = 0; k < N; k++) {
+      const cu = k * per;
+      const fill = pathShape((p) => poly(p, star(cu, 15)));
+      paintGlaze(x, fill, '#1d8e8a', { bb: BOX, contourW: 0, pool: 2, mottle: 0.2 });
+      x.save();
+      x.fillStyle = '#f2ead6';
+      x.beginPath();
+      x.arc(...M(cu, 0), 3.2, 0, TAU);
+      x.fill();
+      x.restore();
+      // ara: küçük beyaz dört köşe
+      const [sx, sy] = M(cu + per / 2, 0);
+      x.save();
+      x.fillStyle = 'rgba(242,234,214,0.9)';
+      x.beginPath();
+      for (let i = 0; i < 8; i++) {
+        const a = (i * Math.PI) / 4,
+          q = i % 2 ? 2 : 6;
+        i ? x.lineTo(sx + Math.cos(a) * q, sy + Math.sin(a) * q) : x.moveTo(sx + Math.cos(a) * q, sy + Math.sin(a) * q);
+      }
+      x.fill();
+      x.restore();
+    }
+    const lines = [zig(19), zig(-19)];
+    for (let k = 0; k < N; k++) lines.push(star(k * per, 15));
+    // koyu kontur + altın şerit
+    x.save();
+    x.strokeStyle = 'rgba(5,10,30,0.9)';
+    x.lineWidth = 5.2;
+    x.lineJoin = 'round';
+    for (const l of lines) {
+      poly(x, l, false);
+      x.stroke();
+    }
+    x.restore();
+    metalPaint(
+      x,
+      (g) => {
+        g.lineWidth = 3;
+        g.lineJoin = 'round';
+        for (const l of lines) {
+          poly(g, l, false);
+          g.stroke();
+        }
+      },
+      'gold',
+      { leaf: 0.25 },
+    );
+    gloss(x, 145, 205);
+    metalRing(x, 144, 6, 'gold');
+    metalRing(x, 206, 6, 'gold');
+    beads(x, 216, 48, 3.1, 'gold');
+    return 141;
+  },
+
+  // Firuze telkari: firuze mine bant, oyma gümüş sarmaşık, dilimli gümüş dış kenar (içi mineli), mercan kabaşonlar
+  async firuze(x) {
+    glazeBand(x, 146, 202, '#169c9b', { seed: 61, mottle: 0.22, crackle: false, pool: 6 });
+    // dilimli kenar: 16 yaprak, mineli iç, gümüş tel çevre
+    const NL = 16;
+    const lobe = (k) => {
+      const th = (k * TAU) / NL;
+      const B = bend(204, th);
+      const pts = [];
+      for (let i = 0; i <= 24; i++) {
+        const t = i / 24,
+          a = Math.PI * t;
+        pts.push(B(-Math.cos(a) * 21, Math.sin(a) * 20 - 2));
+      }
+      return pts;
+    };
+    for (let k = 0; k < NL; k++) {
+      const sh = pathShape((p) => poly(p, lobe(k)));
+      paintGlaze(x, sh, '#1fb2ae', { bb: BOX, contourW: 0, pool: 3, mottle: 0.18 });
+    }
+    wire(x, Array.from({ length: NL }, (_, k) => lobe(k)), 3.2, 'silver');
+    // oyma sarmaşık: dalga sap + her dalgada kıvrım
+    const Rm = 174,
+      M = polarPt(Rm),
+      L = TAU * Rm,
+      W = 24,
+      per = L / W;
+    const stem = [];
+    for (let i = 0; i <= 600; i++) {
+      const u = (i / 600) * L;
+      stem.push(M(u, Math.sin((u / per) * TAU) * 9));
+    }
+    const curls = [];
+    for (let k = 0; k < W; k++) {
+      const u0 = k * per + per * 0.25,
+        side = 1;
+      const sp = spiral(0, 0, 8, 1.15, Math.PI / 2, side, 30).map(([a, b]) => M(u0 + a + 4, 9 + b - 8));
+      const sp2 = spiral(0, 0, 8, 1.15, -Math.PI / 2, -side, 30).map(([a, b]) => M(u0 + per / 2 + a + 4, -9 + b + 8));
+      curls.push(sp, sp2);
+    }
+    wire(x, [stem], 2.6, 'silver');
+    wire(x, curls, 2, 'silver');
+    granules(x, Array.from({ length: 64 }, (_, i) => P(150, (i * TAU) / 64)), 1.9, 'silver');
+    granules(x, Array.from({ length: 64 }, (_, i) => P(198, (i * TAU) / 64 + TAU / 128)), 1.9, 'silver');
+    gloss(x, 146, 202, 0.75);
+    wire(x, [circleLine(145)], 6, 'silver', true);
+    wire(x, [circleLine(203)], 6.5, 'silver', true);
+    // mercan kabaşonlar: lob göbeklerinde ve bant üstünde
+    const coral = (cx, cy, r) => {
+      metalPaint(x, (g) => (g.beginPath(), g.arc(cx, cy, r + 2.6, 0, TAU), g.fill()), 'silver', { leaf: 0.08, shadow: 'rgba(0,0,0,0.5)', shadowBlur: 3, shadowY: 1.5 });
+      x.save();
+      const gr = x.createRadialGradient(cx - r * 0.35, cy - r * 0.4, r * 0.1, cx, cy, r);
+      gr.addColorStop(0, '#ffc2b2');
+      gr.addColorStop(0.45, '#e04a35');
+      gr.addColorStop(1, '#6a1408');
+      x.fillStyle = gr;
+      x.beginPath();
+      x.arc(cx, cy, r, 0, TAU);
+      x.fill();
+      x.fillStyle = 'rgba(255,255,255,0.85)';
+      x.beginPath();
+      x.ellipse(cx - r * 0.35, cy - r * 0.38, r * 0.28, r * 0.16, -0.6, 0, TAU);
+      x.fill();
+      x.restore();
+    };
+    for (let k = 0; k < NL; k++) coral(...P(212, (k * TAU) / NL), 4.2);
+    for (let k = 0; k < 8; k++) coral(...P(174, (k * TAU) / 8 + TAU / 16), 6);
+    return 142;
+  },
+
+  // Sedef kakma: ceviz üstünde sedef sekiz köşe yıldızlar ve baklavalar, kemik fitiller, ince pirinç
+  async sedef(x) {
+    const n = makeNoise(91),
+      H = 50;
+    const wood = ramp([
+      [0, '#1d0f07'],
+      [0.4, '#3d2211'],
+      [0.7, '#5c351a'],
+      [1, '#7b4a25'],
+    ]);
+    let per = 0;
+    const sq = (a, b, s) => Math.max(Math.abs(a), Math.abs(b)) - s;
+    const rq = (a, b, s) => Math.max(Math.abs(a + b), Math.abs(a - b)) / Math.SQRT2 - s;
+    const pearl = (u, py, o, k) => {
+      const h = (n.n2(u * 0.07, py * 0.11) * 0.5 + 0.5) * 360 + u * 0.8;
+      const hue = [0, 0, 0];
+      hsl(h, 0.7, 0.74, hue);
+      const sheen = 0.9 + 0.12 * Math.sin(u * 0.21 + py * 0.33 + n.n2(u * 0.2, py * 0.2) * 3);
+      o[0] = Math.min(255, (246 + (hue[0] - 246) * 0.5) * sheen * k);
+      o[1] = Math.min(255, (244 + (hue[1] - 244) * 0.5) * sheen * k);
+      o[2] = Math.min(255, (238 + (hue[2] - 238) * 0.5) * sheen * k);
+    };
+    await polarBand(x, 147, 197, (u, v, o, L) => {
+      if (!per) per = fitPeriod(L, 54);
+      const py = v * H;
+      // ceviz: teğet yönde lifler
+      const g = n.fbm(u * 0.012, py * 0.22, 4);
+      const fib = Math.abs(Math.sin(py * 0.9 + g * 6 + n.n2(u * 0.05, py * 0.05) * 2));
+      wood(0.45 + g * 0.35 + fib * 0.12, o);
+      const lu = (u % per) - per / 2,
+        lv = py - H / 2;
+      // kemik fitiller
+      for (const ev of [5, H - 5]) {
+        const e = Math.abs(py - ev);
+        if (e < 1.6) {
+          o[0] = 226;
+          o[1] = 214;
+          o[2] = 188;
+          return;
+        }
+        if (e < 2.4) {
+          o[0] *= 0.5;
+          o[1] *= 0.5;
+          o[2] *= 0.5;
+        }
+      }
+      // yıldız: iki karenin birleşimi; içinde küçük ceviz sekizgen
+      const d = Math.min(sq(lu, lv, 13), rq(lu, lv, 13));
+      const dIn = Math.min(sq(lu, lv, 4), rq(lu, lv, 4));
+      // köşelerde baklava
+      const dd = rq(Math.abs(lu) - per / 2, lv, 7);
+      const dsm = Math.min(rq(Math.abs(lu) - per / 2, lv - 15, 2.8), rq(Math.abs(lu) - per / 2, lv + 15, 2.8));
+      const shp = Math.min(d, dd, dsm);
+      if (shp < 0 && !(dIn < 0 && d < 0)) {
+        if (shp > -1.1) {
+          o[0] = 26;
+          o[1] = 16;
+          o[2] = 10;
+        } else pearl(u, py, o, 1);
+      } else if (shp < 1.2 && shp >= 0) {
+        o[0] *= 0.35;
+        o[1] *= 0.33;
+        o[2] *= 0.3;
+      }
+      // cila
+      const lit = 1.05 - v * 0.14;
+      o[0] = Math.min(255, o[0] * lit);
+      o[1] = Math.min(255, o[1] * lit);
+      o[2] = Math.min(255, o[2] * lit);
+    });
+    gloss(x, 147, 197, 0.85);
+    metalRing(x, 146, 4.5, 'brass');
+    metalRing(x, 198, 5, 'brass');
+    return 143;
+  },
+
+  // Tezhip: lacivert zeminde altın rumi sarmaşığı, kırmızı-beyaz hatayi çiçekler, dış kenarda mavi tığlar
+  async tezhip(x) {
+    glazeBand(x, 147, 201, '#16246a', { seed: 71, mottle: 0.18, crackle: false, pool: 4 });
+    const Rm = 174,
+      M = polarPt(Rm),
+      L = TAU * Rm,
+      W = 14,
+      per = L / W;
+    const stem = [];
+    for (let i = 0; i <= 700; i++) {
+      const u = (i / 700) * L;
+      stem.push(M(u, Math.sin((u / per) * TAU) * 10));
+    }
+    // rumi: kıvrık, ucu çatallı yaprak (yerel koordinatta çizilip halkaya bükülür)
+    const rumi = (u0, v0, dir, flip) => {
+      const pts = [];
+      const curve = (t) => [u0 + dir * (t * 21), v0 + flip * (Math.sin(t * Math.PI) * 8 + t * 4)];
+      for (let i = 0; i <= 16; i++) {
+        const [a, b] = curve(i / 16);
+        pts.push(M(a, b + flip * (i / 16) * 2.5));
+      }
+      for (let i = 16; i >= 0; i--) {
+        const [a, b] = curve(i / 16);
+        pts.push(M(a, b - flip * Math.sin((i / 16) * Math.PI) * 6));
+      }
+      return pts;
+    };
+    const leaves = [];
+    const tend = [];
+    for (let k = 0; k < W; k++) {
+      const u0 = k * per;
+      leaves.push(rumi(u0 + per * 0.25, 10, 1, 1), rumi(u0 + per * 0.75, -10, -1, -1));
+      tend.push(spiral(0, 0, 6, 1.3, 0, 1, 26).map(([a, b]) => M(u0 + per * 0.5 + a, b + 1)));
+    }
+    x.save();
+    x.strokeStyle = 'rgba(4,8,30,0.85)';
+    x.lineWidth = 5.4;
+    poly(x, stem, false);
+    x.stroke();
+    x.restore();
+    metalPaint(
+      x,
+      (g) => {
+        g.lineWidth = 3.2;
+        poly(g, stem, false);
+        g.stroke();
+        g.lineWidth = 1.6;
+        for (const t of tend) {
+          poly(g, t, false);
+          g.stroke();
+        }
+        for (const l of leaves) {
+          poly(g, l, true);
+          g.fill();
+        }
+      },
+      'gold',
+      { leaf: 0.3, shadow: 'rgba(0,0,0,0.45)', shadowBlur: 2, shadowY: 1 },
+    );
+    x.save();
+    x.strokeStyle = 'rgba(40,20,0,0.75)';
+    x.lineWidth = 0.8;
+    for (const l of leaves) {
+      poly(x, l, true);
+      x.stroke();
+    }
+    x.restore();
+    // hatayi çiçekler: sapın tepelerinde
+    for (let k = 0; k < W; k++) {
+      for (const [uu, vv, red] of [
+        [k * per + per * 0.25, -11, true],
+        [k * per + per * 0.75, 11, false],
+      ]) {
+        const [cx, cy] = M(uu, vv);
+        x.save();
+        for (let i = 0; i < 5; i++) {
+          const a = (i * TAU) / 5 + k;
+          x.fillStyle = red ? '#c8342a' : '#f3ecdc';
+          x.beginPath();
+          x.ellipse(cx + Math.cos(a) * 3.2, cy + Math.sin(a) * 3.2, 2.9, 1.9, a, 0, TAU);
+          x.fill();
+        }
+        x.fillStyle = '#e8b648';
+        x.beginPath();
+        x.arc(cx, cy, 1.7, 0, TAU);
+        x.fill();
+        x.restore();
+      }
+    }
+    gloss(x, 147, 201, 0.6);
+    // altın cetveller ve tığlar
+    for (const [r, w] of [
+      [146, 4],
+      [202, 4],
+    ])
+      metalRing(x, r, w, 'gold', { leaf: 0.3 });
+    x.save();
+    x.lineCap = 'round';
+    for (let i = 0; i < 180; i++) {
+      const a = (i / 180) * TAU,
+        len = i % 3 ? 6 : 11;
+      x.strokeStyle = i % 3 ? 'rgba(60,110,200,0.8)' : 'rgba(40,80,170,0.95)';
+      x.lineWidth = 1.1;
+      x.beginPath();
+      x.moveTo(...P(206, a));
+      x.lineTo(...P(206 + len, a));
+      x.stroke();
+    }
+    x.restore();
+    granules(x, Array.from({ length: 60 }, (_, i) => P(218, (i * TAU) / 60 + TAU / 360)), 1.7, 'gold');
+    return 143;
+  },
+
+  // Kehribar: koyu kadife üstünde altın tele dizili bal rengi kehribar taneleri, aralarda altın pullar
+  async kehribar(x) {
+    glazeBand(x, 154, 196, '#2a160b', { seed: 81, mottle: 0.35, crackle: false, pool: 3 });
+    metalRing(x, 150, 5, 'gold');
+    metalRing(x, 200, 4, 'gold');
+    wire(x, [circleLine(175)], 2, 'gold', true);
+    const N = 22,
+      R = rng(17);
+    for (let k = 0; k < N; k++) {
+      const a = (k * TAU) / N - Math.PI / 2;
+      const [cx, cy] = P(175, a);
+      const r = 16.5;
+      x.save();
+      x.shadowColor = 'rgba(0,0,0,0.6)';
+      x.shadowBlur = 6;
+      x.shadowOffsetY = 3;
+      const g = x.createRadialGradient(cx - r * 0.3, cy - r * 0.35, r * 0.1, cx, cy, r);
+      const tint = R();
+      g.addColorStop(0, tint > 0.5 ? '#ffe39a' : '#ffd07a');
+      g.addColorStop(0.45, tint > 0.5 ? '#f0a23a' : '#e1801e');
+      g.addColorStop(0.85, '#9a4508');
+      g.addColorStop(1, '#5a2504');
+      x.fillStyle = g;
+      x.beginPath();
+      x.arc(cx, cy, r, 0, TAU);
+      x.fill();
+      x.restore();
+      x.save();
+      x.beginPath();
+      x.arc(cx, cy, r, 0, TAU);
+      x.clip();
+      // iç ışıma (ışığın karşı tarafı)
+      const s = x.createRadialGradient(cx + r * 0.35, cy + r * 0.4, 1, cx + r * 0.35, cy + r * 0.4, r * 0.8);
+      s.addColorStop(0, 'rgba(255,214,120,0.6)');
+      s.addColorStop(1, 'rgba(255,214,120,0)');
+      x.fillStyle = s;
+      x.fillRect(cx - r, cy - r, 2 * r, 2 * r);
+      // kalıntılar ve kabarcıklar
+      for (let i = 0; i < 5; i++) {
+        const px = cx + (R() - 0.5) * r * 1.2,
+          py = cy + (R() - 0.5) * r * 1.2;
+        x.fillStyle = R() < 0.5 ? 'rgba(70,30,5,0.45)' : 'rgba(255,240,200,0.55)';
+        x.beginPath();
+        x.arc(px, py, 0.6 + R() * 1.2, 0, TAU);
+        x.fill();
+      }
+      x.restore();
+      x.save();
+      x.fillStyle = 'rgba(255,255,255,0.9)';
+      x.beginPath();
+      x.ellipse(cx - r * 0.38, cy - r * 0.42, r * 0.26, r * 0.14, -0.7, 0, TAU);
+      x.fill();
+      x.fillStyle = 'rgba(255,255,255,0.4)';
+      x.beginPath();
+      x.arc(cx + r * 0.42, cy + r * 0.3, r * 0.08, 0, TAU);
+      x.fill();
+      x.restore();
+      // altın pul (aralarda)
+      const [gx, gy] = P(175, a + TAU / N / 2);
+      metalPaint(x, (gg) => (gg.beginPath(), gg.ellipse(gx, gy, 3, 6, a + TAU / N / 2, 0, TAU), gg.fill()), 'gold', { leaf: 0.1, shadow: 'rgba(0,0,0,0.5)', shadowBlur: 2, shadowY: 1 });
+    }
+    return 147;
+  },
+
 };
 
 // tüy: kavisli sap, geriye yatık ince lifler, altın uç
@@ -876,7 +1418,7 @@ function feather(x, x0, y0, x1, y1, bendv, w, seed) {
 }
 
 /* ───────────── çıktı ───────────── */
-const VER = 'fr1';
+const VER = 'fr2';
 const urls = new Map();
 const jobs = new Map();
 let queue = Promise.resolve();

@@ -458,6 +458,20 @@ export function brassGrad(x) {
   ].forEach(([t, c]) => g.addColorStop(t, c));
   return g;
 }
+export function copperGrad(x) {
+  const g = x.createLinearGradient(0, 0, MW, MH * 0.74);
+  [
+    [0, '#5a2410'],
+    [0.18, '#c0602e'],
+    [0.32, '#ffc39a'],
+    [0.46, '#a8501f'],
+    [0.62, '#5e2610'],
+    [0.76, '#e08a55'],
+    [0.9, '#ffd6b8'],
+    [1, '#8a3c16'],
+  ].forEach(([t, c]) => g.addColorStop(t, c));
+  return g;
+}
 export function silverGrad(x) {
   const g = x.createLinearGradient(0, 0, MW, MH * 0.74);
   [
@@ -726,7 +740,7 @@ export function metalPaint(x, draw, kind = 'gold', o = {}) {
   const [m, mx] = scratch(5);
   draw(mx);
   mx.globalCompositeOperation = 'source-in';
-  mx.fillStyle = kind === 'brass' ? brassGrad(mx) : kind === 'silver' ? silverGrad(mx) : goldGrad(mx);
+  mx.fillStyle = kind === 'brass' ? brassGrad(mx) : kind === 'silver' ? silverGrad(mx) : kind === 'copper' ? copperGrad(mx) : goldGrad(mx);
   mx.fillRect(0, 0, MW, MH);
   mx.globalCompositeOperation = 'source-atop';
   mx.globalAlpha = o.leaf ?? 0.22;

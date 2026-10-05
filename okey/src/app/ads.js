@@ -17,7 +17,9 @@ function settle(id, rewarded, reason) {
   if (!p) return;
   pending.delete(id);
   clearTimeout(p.timer);
-  p.resolve({ ok: !!rewarded, reason: rewarded ? 'rewarded' : reason || 'dismissed' });
+  // yalnız açık "true" ödül sayılır: reklam yoksa, hata verdiyse ya da yarıda kapatıldıysa hiçbir şey kazanılmaz
+  const ok = rewarded === true || rewarded === 'true';
+  p.resolve({ ok, reason: ok ? 'rewarded' : reason || 'dismissed' });
 }
 // uygulama → oyun
 window.__okeyAdResult = (id, rewarded, reason) => settle(String(id), rewarded, reason);
@@ -43,7 +45,10 @@ export function requestRewardedAd(placement, host = document.body) {
   if (mode === 'host') {
     return Promise.resolve()
       .then(() => window.PatiOkeyHost.showRewardedAd({ placement }))
-      .then((r) => ({ ok: r === true || !!r?.rewarded, reason: r === true || r?.rewarded ? 'rewarded' : r?.reason || 'dismissed' }))
+      .then((r) => {
+        const ok = r === true || r?.rewarded === true;
+        return { ok, reason: ok ? 'rewarded' : r?.reason || 'dismissed' };
+      })
       .catch((e) => ({ ok: false, reason: String(e?.message || 'error') }));
   }
   if (mode === 'bridge') {

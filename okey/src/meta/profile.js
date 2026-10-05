@@ -8,7 +8,10 @@ import { rewardsAt, itemOf, titleFor, DEFAULT_EQUIP } from './progression.js';
 
 const KEY = 'patisever.profile.v1';
 
-export const xpForNext = (level) => 120 + 70 * (level - 1);
+// Seviye eğrisi: ilk seviyeler bir iki günde, Paşa (30) aktif oyuncu için ~5-7 hafta (toplam ≈ 40.900 XP)
+export const xpForNext = (level) => 150 + 90 * (level - 1);
+// Ödüllü reklam sınırları: iki reklam arası bekleme, günlük üst sınır, reklam bulunamazsa yeniden deneme beklemesi
+export const AD_RULES = { cooldownMs: 3 * 60 * 1000, dailyCap: 12, retryMs: 45 * 1000 };
 export function levelFromXp(xp) {
   let level = 1;
   let rest = xp;
@@ -152,6 +155,25 @@ export class Profile {
     this.save();
     this._emit({ ad: { kind, id, count, unlocked } });
     return { count, need: it.ads, unlocked };
+  }
+  // Reklam kapısı: { ready, waitMs, left, cap }. Bekleme yalnız başarıyla izlenen reklamdan sonra başlar;
+  // reklam bulunamazsa / hata olursa kısa bir yeniden deneme beklemesi uygulanır (reklam ağı zorlanmasın).
+  adGate(now = Date.now()) {
+    const t = today();
+    let g = this.d.adGate;
+    if (!g || g.day !== t) g = this.d.adGate = { day: t, n: 0, last: 0, retry: 0 };
+    const waitMs = Math.max(0, Math.max(g.last + AD_RULES.cooldownMs, g.retry || 0) - now);
+    const left = Math.max(0, AD_RULES.dailyCap - g.n);
+    return { ready: left > 0 && waitMs === 0, waitMs, left, cap: AD_RULES.dailyCap };
+  }
+  adResult(ok, now = Date.now()) {
+    this.adGate(now);
+    const g = this.d.adGate;
+    if (ok) {
+      g.n++;
+      g.last = now;
+    } else g.retry = now + AD_RULES.retryMs;
+    this.save();
   }
   // Hesaba bağlanınca sunucuya gidecek / sunucudan gelecek veri
   snapshot() {

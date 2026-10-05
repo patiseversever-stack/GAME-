@@ -6,48 +6,58 @@
 export const TITLES = [
   { id: 'caylak', name: 'Çaylak', level: 1 },
   { id: 'cirak', name: 'Çırak', level: 3 },
-  { id: 'mudavim', name: 'Müdavim', level: 5 },
-  { id: 'masakurdu', name: 'Masa Kurdu', level: 8 },
-  { id: 'usta', name: 'Usta', level: 11 },
-  { id: 'ustat', name: 'Üstat', level: 15 },
-  { id: 'aga', name: 'Ağa', level: 20 },
-  { id: 'bey', name: 'Bey', level: 25 },
+  { id: 'mudavim', name: 'Müdavim', level: 6 },
+  { id: 'masakurdu', name: 'Masa Kurdu', level: 10 },
+  { id: 'usta', name: 'Usta', level: 14 },
+  { id: 'ustat', name: 'Üstat', level: 18 },
+  { id: 'aga', name: 'Ağa', level: 22 },
+  { id: 'bey', name: 'Bey', level: 26 },
   { id: 'pasa', name: 'Paşa', level: 30 },
 ];
 
-// Çerçeve serileri: İznik çini (sır, kobalt, mercan), Ebru + telkari (mermerli kâğıt, gümüş/altın tel işi),
-// ve en üstte ikisini birleştiren nişanlar (çelenk, sorguç).
+// Çerçeve serileri: İznik çini, Ebru ve telkari, Zanaat (sedef, kilim, bakır, tezhip, kehribar), Nişan (çelenk, sorguç)
 export const FRAMES = [
   { id: 'sade', name: 'Pirinç Halka', series: 'Klasik', desc: 'Dövme pirinç, ince bilezik', level: 1 },
   { id: 'lale', name: 'Lale Bordür', series: 'İznik çini', desc: 'Kobalt sır üstünde beyaz laleler', level: 2 },
-  { id: 'gelgit', name: 'Gelgit Ebru', series: 'Ebru ve telkari', desc: 'Battal ebru, gümüş tel kenar', level: 4 },
-  { id: 'rumi', name: 'Rumi Çini', series: 'İznik çini', desc: 'Turkuaz zemin, saz yaprakları', level: 6 },
-  { id: 'sal', name: 'Şal Ebru', series: 'Ebru ve telkari', desc: 'Taraklı şal deseni, gümüş telkari', level: 9 },
-  { id: 'mercan', name: 'Mercan İznik', series: 'İznik çini', desc: 'Mercan kırmızısı lale ve karanfil, altın sırt', level: 12 },
-  { id: 'hatip', name: 'Hatip Ebru', series: 'Ebru ve telkari', desc: 'Hatip ebrusu, altın telkari', level: 16 },
-  { id: 'aga', name: 'Ağa Çelengi', series: 'Nişan', desc: 'Altın telkari, çini madalyonlar, zümrüt', level: 20 },
+  { id: 'bakir', name: 'Bakır Dövme', series: 'Zanaat', desc: 'Çekiçle dövülmüş bakır, yeşil patina', level: 4 },
+  { id: 'gelgit', name: 'Gelgit Ebru', series: 'Ebru ve telkari', desc: 'Taraklı gelgit ebrusu, gümüş tel', level: 5 },
+  { id: 'rumi', name: 'Rumi Çini', series: 'İznik çini', desc: 'Turkuaz zemin, saz yaprakları', level: 8 },
+  { id: 'kilim', name: 'Kilim', series: 'Zanaat', desc: 'Yün dokuma, elibelinde motifi', level: 11 },
+  { id: 'sal', name: 'Şal Ebru', series: 'Ebru ve telkari', desc: 'Taraklı şal deseni, gümüş telkari', level: 13 },
+  { id: 'mercan', name: 'Mercan İznik', series: 'İznik çini', desc: 'Mercan kırmızısı lale ve karanfil, altın sırt', level: 16 },
+  { id: 'hatip', name: 'Hatip Ebru', series: 'Ebru ve telkari', desc: 'Hatip ebrusu, altın telkari', level: 20 },
+  { id: 'aga', name: 'Ağa Çelengi', series: 'Nişan', desc: 'Altın telkari, çini madalyonlar, zümrüt', level: 24 },
   { id: 'pasa', name: 'Paşa Sorgucu', series: 'Nişan', desc: 'Yakut sorguç, altın tel, İznik çini', level: 30 },
-  { id: 'gece', name: 'Gece Çinisi', series: 'İznik çini', desc: 'Lacivert sır, altın sekiz köşe yıldızlar', ads: 3, chips: 2500 },
-  { id: 'gul', name: 'Gül Ebru', series: 'Ebru ve telkari', desc: 'Çiçekli ebru, gümüş tel', ads: 4, chips: 4000 },
-  { id: 'firuze', name: 'Firuze Telkari', series: 'Ebru ve telkari', desc: 'Firuze mine, gümüş filigran', ads: 5, chips: 6000 },
+  { id: 'gece', name: 'Gece Çinisi', series: 'İznik çini', desc: 'Lacivert sır, altın varak geçmeli yıldızlar', ads: 5, chips: 3000 },
+  { id: 'gul', name: 'Gül Ebru', series: 'Ebru ve telkari', desc: 'Çiçekli ebru, gümüş tel', ads: 6, chips: 4500 },
+  { id: 'kehribar', name: 'Kehribar', series: 'Zanaat', desc: 'Bal rengi kehribar taneleri, altın halka', ads: 6, chips: 5000 },
+  { id: 'firuze', name: 'Firuze Telkari', series: 'Ebru ve telkari', desc: 'Firuze mine, oyma gümüş filigran, mercan', ads: 7, chips: 7000 },
+  { id: 'sedef', name: 'Sedef Kakma', series: 'Zanaat', desc: 'Ceviz üstünde sedef geçme yıldızlar', ads: 7, chips: 7500 },
+  { id: 'tezhip', name: 'Tezhip', series: 'Zanaat', desc: 'Lacivert zeminde altın rumi tezhip', ads: 7, chips: 8000 },
 ];
 
 // Kazanınca oynayan kutlama efektleri
 export const EFFECTS = [
   { id: 'konfeti', name: 'Çini Konfeti', desc: 'Altın pullar, lale ve yıldızlar', level: 1 },
   { id: 'lale', name: 'Lale Yağmuru', desc: 'Süzülen İznik laleleri', level: 7 },
-  { id: 'havai', name: 'Havai Fişek', desc: 'Boğaz gecesi gibi patlayan ışıklar', level: 14 },
-  { id: 'altin', name: 'Altın Yağmuru', desc: 'Parlayan altın sikkeler', level: 24 },
-  { id: 'nazar', name: 'Nazar Boncuğu', desc: 'Göz değmesin', ads: 3, chips: 2000 },
-  { id: 'gul', name: 'Gül Yaprakları', desc: 'Kadife gül yaprakları', ads: 3, chips: 2000 },
+  { id: 'varak', name: 'Altın Varak', desc: 'Işıkta dönen altın yaprak pulları', level: 12 },
+  { id: 'havai', name: 'Havai Fişek', desc: 'Boğaz gecesi gibi patlayan ışıklar', level: 15 },
+  { id: 'fener', name: 'Dilek Fenerleri', desc: 'Göğe yükselen sıcak ışıklı fenerler', level: 19 },
+  { id: 'altin', name: 'Altın Yağmuru', desc: 'Parlayan altın sikkeler', level: 25 },
+  { id: 'yildiz', name: 'Yıldız Kayması', desc: 'Gece göğünde kayan yıldızlar', level: 28 },
+  { id: 'nazar', name: 'Nazar Boncuğu', desc: 'Göz değmesin', ads: 5, chips: 2500 },
+  { id: 'gul', name: 'Gül Yaprakları', desc: 'Kadife gül yaprakları', ads: 5, chips: 2500 },
+  { id: 'ebru', name: 'Ebru Damlaları', desc: 'Ekranda açan mürekkep çiçekleri', ads: 6, chips: 4000 },
+  { id: 'kelebek', name: 'Kelebekler', desc: 'Kanat çırpan renkli kelebekler', ads: 6, chips: 4000 },
+  { id: 'mozaik', name: 'Çini Mozaik', desc: 'Dönerek dizilen çini karolar', ads: 7, chips: 5000 },
 ];
 
 // Taş takımları (render3d/tile-themes): fildişi herkese açık; diğerleri seviye ya da Çarşı ile
 export const TILESETS = [
   { id: 'ivory', name: 'Fildişi', desc: 'Klasik sıcak beyaz', level: 1 },
-  { id: 'cini', name: 'İznik Çini', desc: 'Sırlı kobalt ve mercan', level: 10, ads: 3, chips: 10000 },
-  { id: 'ebru', name: 'Ebru', desc: 'Mermerli kâğıt, altın cetvel', level: 18, ads: 4, chips: 12000 },
-  { id: 'yagli', name: 'Yağlı Boya', desc: 'Empasto fırça izi', level: 26, ads: 5, chips: 15000 },
+  { id: 'cini', name: 'İznik Çini', desc: 'Sırlı kobalt ve mercan', level: 9, ads: 7, chips: 12000 },
+  { id: 'ebru', name: 'Ebru', desc: 'Mermerli kâğıt, altın cetvel', level: 17, ads: 7, chips: 12000 },
+  { id: 'yagli', name: 'Yağlı Boya', desc: 'Empasto fırça izi', level: 27, ads: 7, chips: 15000 },
 ];
 
 export const CATALOG = { frame: FRAMES, effect: EFFECTS, tiles: TILESETS, title: TITLES };
