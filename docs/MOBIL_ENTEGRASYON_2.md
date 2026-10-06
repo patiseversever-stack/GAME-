@@ -1,76 +1,10 @@
-# GÖREV: "Gündönümü" mini oyununu mobil uygulamamın oyun arenasına göm, reklamları bağla
+# DEVAM — Gündönümü entegrasyonu, 2. kısım (4–10. bölümler)
 
-Sen bu mobil uygulamanın geliştiricisisin. Ekteki `Gundonumu.html` dosyası tek parça, internetsiz
-çalışan bir HTML5 + WebGL oyunu (yaklaşık 2 MB; kod, yazı tipleri ve 3B motor içinde). Bu oyunu
-uygulamamın **oyun arenasına mini oyun** olarak ekleyeceksin. Oyunun içindeki reklam yerleri hazır;
-sen uygulamamın reklam SDK'sını (AdMob ya da uygulamada hangisi kullanılıyorsa) oyuna bağlayacaksın.
+Önceki belge 3. bölümde kesildi. Bu, kalan kısım. Reklam kurallarını ve testleri oyunun kodundan
+çıkardın; aşağıdakilerle karşılaştır ve **farklı olan her yeri bu belgeye göre düzelt**. Sonra
+9. bölümdeki test listesini uygula ve sonuçları yaz.
 
-Bu belgedeki her maddeyi uygula. Bitince en alttaki **test listesinin tamamını** gerçek cihazda dene
-ve her maddenin sonucunu bana yaz. Açık bırakma: her reklam başarısız olabilir, oyuncu reklamı
-yarıda kapatabilir, internet kopabilir. Bu durumların hepsi aşağıda tanımlı.
-
-> Not: `Gundonumu_Deneme.html` yalnızca test sürümü (64 ada açık). Uygulamaya **`Gundonumu.html`** girer.
-
----
-
-## 1. Dosya ve yükleme
-
-1. `Gundonumu.html` dosyasını uygulama içi varlıklara koy (ör. `assets/games/gundonumu/index.html`).
-   İnternetten indirme; dosya içinde her şey var.
-2. Oyunu **tam ekran bir WebView ekranında** aç (arenadaki oyun kartına dokununca açılan ayrı ekran).
-3. **Kaynak (origin) hep aynı olmalı**, yoksa oyuncunun ilerlemesi silinir. İlerleme WebView'in
-   `localStorage`'ında tutulur (anahtar `gundonumu.v1`).
-   - **Android (yerli WebView):** `WebViewAssetLoader` ile `https://appassets.androidplatform.net/assets/games/gundonumu/index.html`
-     adresinden yükle (`file://` kullanma; bazı sürümlerde localStorage kalıcı olmaz).
-   - **iOS (WKWebView):** `loadFileURL(_:allowingReadAccessTo:)` ile yükle, varsayılan (kalıcı)
-     `WKWebsiteDataStore` kullan. `nonPersistent()` kullanma.
-   - **React Native:** `react-native-webview`; Android'de `file:///android_asset/...`, iOS'ta paket
-     yolu. `domStorageEnabled`, `javaScriptEnabled`, `allowFileAccess` açık.
-   - **Flutter:** `webview_flutter` (`loadFlutterAsset`) ya da `flutter_inappwebview`
-     (`InAppLocalhostServer` ya da asset yolu). DOM storage açık.
-4. Uygulama verisini temizleyen bir "önbellek temizle" akışın varsa bu WebView'in verisini silme.
-
-## 2. WebView ayarları (hepsi gerekli)
-
-- JavaScript açık, DOM storage açık, donanım hızlandırma açık (WebGL için).
-- Medya oynatma için kullanıcı hareketi şartı **kapalı**: Android `setMediaPlaybackRequiresUserGesture(false)`,
-  iOS `mediaTypesRequiringUserActionForPlayback = []`, `allowsInlineMediaPlayback = true`
-  (oyunun müziği Web Audio ile çalışır).
-- Yakınlaştırma kapalı, kaydırma sekmesi (bounce/overscroll) kapalı.
-- WebView arka planı `#0b0818`, böylece açılışta beyaz parlama olmaz.
-- Ekran dönünce WebView **yeniden yüklenmesin**. Android'de Activity için `configChanges`
-  (orientation, screenSize, screenLayout, keyboardHidden) ekle.
-- Oyun dikey ve yatay çalışır. Arena dikeye kilitliyse dikey kalabilir.
-- **Oyun sayfası yüklenmeden önce** (document start) şu satırı çalıştır. Oyunun arenaya gömüldüğünü
-  bildirir: "Arena" dönüş düğmesi görünür, oyunun kendi tarayıcı tam ekranı devre dışı kalır.
-  ```js
-  window.GUNDONUMU_EMBED = true;
-  ```
-  (RN: `injectedJavaScriptBeforeContentLoaded`, iOS: `WKUserScript` `.atDocumentStart`,
-  Android: `WebViewCompat.addDocumentStartJavaScript` ya da sayfa başlamadan `evaluateJavascript`,
-  Flutter InAppWebView: `initialUserScripts` `AT_DOCUMENT_START`.)
-
-## 3. Ekran: durum çubuğu, gezinme çubuğu, güvenli alan
-
-- Oyun ekranı açıkken **durum çubuğunu ve gezinme çubuğunu gizle** (immersive; kenardan kaydırınca
-  geçici görünüp kaybolsun). Oyun ekranından çıkınca arenanın normal çubuklarını **geri getir**.
-  - Android: `WindowInsetsControllerCompat.hide(systemBars())` +
-    `BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE`; çıkışta `show(systemBars())`.
-  - iOS: bu ekranın view controller'ında `prefersStatusBarHidden = true`,
-    `prefersHomeIndicatorAutoHidden = true`, `preferredScreenEdgesDeferringSystemGestures = .all`.
-  - RN: `StatusBar hidden` + Android için immersive modül; Flutter: `SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky)`,
-    çıkışta `edgeToEdge`/eski moda dön.
-- **Güvenli alan (çentik, kamera deliği, alt çizgi):** Oyun CSS `env(safe-area-inset-*)` kullanır.
-  WebView bu değerleri 0 bildirirse ya da WebView ekranın kenarlarına kadar uzanıyorsa, gerçek payları
-  oyuna **CSS piksel** olarak bildir (sayfa yüklendikten sonra ve her ekran dönüşünde):
-  ```js
-  gdSetSafe({ top: 32, bottom: 20, left: 0, right: 0 });
-  ```
-  Fiziksel pikseli yoğunluğa böl (Android `px / density`, iOS zaten pt).
-- WebView'i kendi üst çubuğun ya da sekme çubuğunla küçültürsen oyun kalan alana kendini otomatik
-  uyarlar (her boyuta göre düzen ve kamera kadrajı hesaplanır). Ekstra bir şey gerekmez.
-
-## 3b. Capacitor, https://localhost ve ortak origin
+## 0. Senin kurulumuna göre notlar (Capacitor, https://localhost, ortak origin)
 
 - **Ortak origin uygun.** Oyunun kayıtları yalnızca `gundonumu.v1` (ve test sürümünde
   `gundonumu.deneme.v1`) anahtarlarında; başka oyunlarla çakışmaz. Şartlar:

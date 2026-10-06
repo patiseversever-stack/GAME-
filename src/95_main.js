@@ -1289,11 +1289,14 @@ function bootGame() {
    Oyun kabuğa: { type: 'gd-exit' } (arenaya dön), { type: 'gd-back', handled } (geri tuşunun sonucu), { type: 'gd-event', name, data }.
    Kabuk oyuna: gdBack() → true/false, gdPause(), gdResume(), gdSetSafe({...}), gdSetBannerHeight(px), gdSetNoAds(bool). */
 const Host = {
-  embedded: !!(window.GundonumuHost || window.GUNDONUMU_EMBED || hostChan()),
+  // Capacitor sayfası (https://localhost) ya da arenanın içindeki iframe de gömülü sayılır
+  embedded: !!(window.GundonumuHost || window.GUNDONUMU_EMBED || hostChan() || window.parent !== window || (window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform())),
   exit() {
     audio.ui(); const H = window.GundonumuHost;
     if (H && H.exit) { try { H.exit(); return; } catch (e) {} }
-    if (!hostSend({ type: 'gd-exit' })) toast('Arenaya dönmek için geri tuşunu kullan', 2);
+    if (hostSend({ type: 'gd-exit' })) return;
+    if (history.length > 1) { history.back(); return; } // arena sayfasından bu sayfaya gelindiyse geri dön
+    toast('Arenaya dönmek için geri tuşunu kullan', 2);
   },
   event(name, data) { const H = window.GundonumuHost; try { if (H && H.onEvent) H.onEvent(name, data || {}); else if (this.embedded) hostSend({ type: 'gd-event', name, data: data || {} }); } catch (e) {} },
   // Android geri tuşu: açık pencereyi kapatır, oyunu duraklatır ya da bir önceki ekrana döner; karşılama ekranındaysa false (kabuk oyundan çıkar)
