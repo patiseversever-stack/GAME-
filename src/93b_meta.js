@@ -181,6 +181,7 @@ const Meta = {
   badges() {
     const q = this.claimable(), a = this.d().albumNew || 0, u = this.upgradable(), tot = q + (a > 0 ? 1 : 0);
     const set = (id, n) => { const el = $(id); if (!el) return; el.classList.toggle('on', n > 0); el.textContent = n > 9 ? '9+' : n || ''; };
+    { const own = Save.data.costumes || [], seen = Save.data.seenCos || []; set('#bdW', own.filter((k) => !seen.includes(k)).length); }
     set('#bdQ', q); set('#bdA', a); set('#bdU', u); set('#bdT', tot + (u > 0 ? 1 : 0)); set('#bdM', tot + (u > 0 ? 1 : 0));
   },
   /* ---------- Hazine ekranı ---------- */

@@ -44,6 +44,7 @@ function glintPoints(pos, col, t, size, flow, drift) {
 }
 const mapPx = { value: 600 };
 
+const _mfv = new THREE.Vector3();
 const SkyMap = {
   inited: false, active: false, isl: [], f: 0, tf: 0, fv: 0, t: 0, intro: 1, dive: null, drag: null, buildT: 0, shown: -1,
   init() {
@@ -315,7 +316,9 @@ const SkyMap = {
     const fc = clamp(this.f, 0, CHAPTERS.length - 1), u = fc / (CHAPTERS.length - 1);
     const P = mapCamCurve.getPoint(u), T = mapTgtCurve.getPoint(u);
     const fr = this.f - Math.floor(this.f), swoop = Math.sin(fr * PI) * 6 * (Math.abs(this.tf - this.f) > 0.02 || this.drag ? 1 : 0);
-    const asp = mapCam.aspect, dk = asp < 0.62 ? 1.17 : asp < 1 ? 1.05 : 0.7;
+    // boşluk daralırsa (kısa ekran, banner) kamera biraz geri çekilir: ada ve tüm rozetleri panelin üstüne sığar
+    const band = this._lay ? (this._lay.bot - this._lay.top) / this._lay.h : 0.5, zf = clamp(Math.sqrt(0.5 / Math.max(0.18, band)), 1, 1.55);
+    const asp = mapCam.aspect, dk = (asp < 0.62 ? 1.17 : asp < 1 ? 1.05 : 0.7) * (asp < 1 ? zf : 1);
     P.sub(T).multiplyScalar(dk).add(T); P.y += swoop;
     if (asp > 1.2) { const sh = P.distanceTo(T) * Math.tan(deg(mapCam.fov / 2)) * asp * 0.2; P.x -= sh; T.x -= sh; }
     // hafif el kamerası salınımı
@@ -331,6 +334,7 @@ const SkyMap = {
       if (d.t > 0.8 && !d.done) { d.done = true; const g = d.g; setTimeout(() => { startStory(g); setTimeout(() => $('#fader').classList.remove('on', 'soon'), 60); }, 30); }
     }
     mapCam.position.copy(P); mapCam.lookAt(T);
+    this.frame(dtR);
     mapSky.position.copy(mapCam.position);
     // ışık ve gölge kamerası hedefi izler
     mapSun.target.position.copy(T); mapSun.position.copy(T).addScaledVector(MAP_SUN, 90);
@@ -452,6 +456,22 @@ const SkyMap = {
     pu.uTilt.value = 0.85; pu.uTiltC.value = 0.56; pu.uTiltW.value = 0.22;
     mapPx.value = renderer.domElement.height / (2 * Math.tan(deg(mapCam.fov / 2)));
   },
-  resize(w, h) { mapCam.aspect = w / h; mapCam.updateProjectionMatrix(); },
+  resize(w, h) { mapCam.aspect = w / h; mapCam.updateProjectionMatrix(); this._lay = null; },
+  // kadraj: odaktaki ada, üst çubuk ile panelin arasındaki boşluğun ortasına gelir (objektif kaydırma; perspektif bozulmaz).
+  // Panel uzayınca, banner açılınca ya da ekran kısa olunca ada panelin altında kalmaz.
+  frame(dtR) {
+    const W = innerWidth, H = innerHeight;
+    if (!this._lay || this._lay.w !== W || this._lay.h !== H || (this._lay.t -= dtR) <= 0) {
+      const pn = $('#mapPanel').getBoundingClientRect(), tp = $('#map .mtop').getBoundingClientRect(), land = W > H * 1.2;
+      this._lay = { w: W, h: H, t: 0.4, top: tp.bottom + (land ? 6 : 34), bot: land || !(pn.top > 0) ? H - 40 : pn.top - 6 };
+    }
+    const L = this._lay, I = this.isl[clamp(Math.round(this.f), 0, CHAPTERS.length - 1)];
+    mapCam.updateProjectionMatrix();
+    if (!I || !I.holder) return;
+    I.holder.getWorldPosition(_mfv); _mfv.y += 1.2; _mfv.project(mapCam);
+    const want = 1 - (2 * (L.top + (L.bot - L.top) * 0.56)) / H, s = clamp(want - _mfv.y, -0.7, 0.5);
+    this.lens = this.dive ? this.lens : this.lens == null ? s : damp(this.lens, s, 5, dtR);
+    mapCam.projectionMatrix.elements[9] = -this.lens; mapCam.projectionMatrixInverse.copy(mapCam.projectionMatrix).invert();
+  },
 };
 const MAP_CTX = { near: () => false, dim: () => 0.15 };

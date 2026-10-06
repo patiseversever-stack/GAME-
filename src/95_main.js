@@ -328,8 +328,8 @@ const TitleSky = {
     if (i === 2) this.grand = false;
     const nightFw = (i === 5 && k > 0.5) || i === 6 || i === 7, dusk = i === 3 || i === 4 || i === 5 || i === 8 || i === 0;
     if (nightFw && this.fwT > 1.8) this.fwT = 0.5;
-    if ((this.fwT -= dtR) <= 0) { Fireworks.show(nightFw ? 1 + Math.floor(Math.random() * 2) : 1); this.fwT = nightFw ? 0.9 + Math.random() * 0.8 : dusk ? 2.6 + Math.random() * 1.6 : 4.5 + Math.random() * 3; }
-    if (!this.grand && i === 7 && k > 0.2) { this.grand = true; Fireworks.show(7, true); this.fwT = 3.2; }
+    if (!Ward3D.on && !Meta.open && (this.fwT -= dtR) <= 0) { Fireworks.show(nightFw ? 1 + Math.floor(Math.random() * 2) : 1); this.fwT = nightFw ? 0.9 + Math.random() * 0.8 : dusk ? 2.6 + Math.random() * 1.6 : 4.5 + Math.random() * 3; }
+    if (!this.grand && i === 7 && k > 0.2 && !Ward3D.on && !Meta.open) { this.grand = true; Fireworks.show(7, true); this.fwT = 3.2; }
     const on = G.night > 0.5; if (on !== this.nightOn) { this.nightOn = on; if (on) audio.nightfall && audio.nightfall(); else audio.rise && audio.rise(); }
   },
   // doğal ışığın üstüne alacakaranlık renkleri (applyLighting'den sonra; yalnızca başlık ekranında)
@@ -703,7 +703,7 @@ const Wardrobe = {
   },
   close() {
     audio.ui(); $('#wardrobe').classList.remove('on'); document.body.classList.remove('ward'); Ward3D.close();
-    Save.data.seenCos = (Save.data.costumes || []).slice(); Save.save(); buildMap(); if (SkyMap.inited) SkyMap.refresh();
+    Save.data.seenCos = (Save.data.costumes || []).slice(); Save.save(); buildMap(); if (SkyMap.inited) SkyMap.refresh(); Meta.badges();
   },
   setTab(t) { if (this.tab === t) return; audio.ui(); this.tab = t; this.build(); },
   items() {
@@ -785,6 +785,7 @@ function nextStoryG() { if (TEST_ALL) { for (let g = 0; g < STORY_LEVELS; g++) i
 bind('#btnPlay', () => { audio.ui(); UI.hide('title'); startStory(nextStoryG()); });
 bind('#btnMapT', () => openMap());
 bind('#btnHzT', () => Meta.openHz('title'));
+bind('#btnWardT', () => Wardrobe.open());
 bind('#btnHzM', () => Meta.openHz('map'));
 bind('#hzBack', () => Meta.closeHz());
 $$('#hz .hztabs button').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); audio.ui(); Meta.setTab(b.dataset.t); }));

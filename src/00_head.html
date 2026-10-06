@@ -1026,7 +1026,7 @@ body.playing #find{top:calc(var(--sat) + 150px)}
 #btnHzM{position:relative;width:46px;height:46px}
 #btnHzM svg{width:24px;height:24px;stroke:#ffdf9e}
 #map .mtop .mright{display:flex;align-items:center;gap:10px}
-#mpSecret{display:none;align-items:center;gap:8px;margin-top:10px;font-size:11px;font-weight:700;letter-spacing:.1em;color:var(--ivory-dim)}
+#mpSecret{display:none;align-items:center;gap:8px;margin-top:8px;font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--ivory-dim)}
 #mpSecret.on{display:flex}
 #mpSecret i{width:14px;height:14px;flex:none;background:#b9adff;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.9 6 14 9.1 20 10 14 10.9 10.9 14 10 20 9.1 14 6 10.9 0 10 6 9.1 9.1 6 10 0Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.9 6 14 9.1 20 10 14 10.9 10.9 14 10 20 9.1 14 6 10.9 0 10 6 9.1 9.1 6 10 0Z'/%3E%3C/svg%3E") center/contain no-repeat;opacity:.45}
 #mpSecret.got i{opacity:1;filter:drop-shadow(0 0 5px #b9adff)}
@@ -1064,10 +1064,15 @@ body.adbanner #hz .hzbody{padding-bottom:calc(var(--sab) + 28px + var(--adb))}
 body.adbanner #aSheet{padding-bottom:calc(var(--sab) + 24px + var(--adb))}
 #hz .sh{flex-wrap:wrap;gap:2px 10px}#hz .sh span{white-space:nowrap}
 /* gökyüzü mod düğmeleri: dar ekranda kenardan taşmaz, yatay kayar (sığarsa ortalı kalır) */
-#map .modes{overflow-x:auto;justify-content:flex-start;pointer-events:auto;touch-action:pan-x;scrollbar-width:none;padding:2px 14px;-webkit-overflow-scrolling:touch;scroll-snap-type:x proximity}
-#map .modes::-webkit-scrollbar{display:none}
-#map .modes>:first-child{margin-left:auto}#map .modes>:last-child{margin-right:auto}
-#map .modes .btn{flex:none;scroll-snap-align:center}
+#map .modes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;padding:0 calc(var(--sar) + 12px) 0 calc(var(--sal) + 12px);width:min(100%,520px);left:50%;right:auto;transform:translateX(-50%)}
+#map .modes .btn{min-width:0;height:auto;min-height:46px;padding:6px 4px;font-size:clamp(8.5px,2.45vw,10.5px);letter-spacing:.05em;white-space:normal;text-align:center;line-height:1.15;gap:2px}
+#map .modes .btn small{font-size:clamp(7.5px,2.1vw,8.5px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+@media (orientation:landscape) and (min-aspect-ratio:21/20){#map .modes{width:auto;left:auto;transform:none;right:calc(var(--sar) + 18px);grid-template-columns:repeat(4,auto)}#map .modes .btn{padding:6px 12px}}
+/* başlıkta 5 mini düğme: dar ekranda da tek satır */
+#title .row.minis{gap:clamp(8px,3.2vw,24px)}
+.mini span{letter-spacing:.13em}
+.mini .zav{width:22px;height:22px;stroke:none}
+body.ward #title{opacity:0!important;pointer-events:none!important}
 /* karşılama: başlığın arkasında yumuşak bir karartma (gündüz bulutları önünde de okunur), gece mavi ışıltı */
 #title::before{content:"";position:absolute;left:0;right:0;top:0;height:46%;pointer-events:none;background:radial-gradient(70% 60% at 50% 32%,rgba(12,8,30,.34),rgba(12,8,30,0) 72%);transition:opacity 2s}
 #title .brand,#title .actions{position:relative}
@@ -1075,6 +1080,15 @@ body.tnight #title h1{color:#f6f1ff;text-shadow:0 2px 34px rgba(150,130,255,.75)
 body.tnight #title::before{opacity:.5}
 #title .tag{transition:opacity 1.4s ease 1.2s,color 2s}
 body.tnight #title .tag{color:rgba(225,220,255,.9)}
+/* kısa ekranlarda gökyüzü paneli sıkışır: ada ve rozetler için yer açılır */
+@media (max-height:720px) and (orientation:portrait){
+  #mapPanel{padding:10px 16px 11px;bottom:calc(var(--sab) + 108px)} body.adbanner #mapPanel{bottom:calc(var(--sab) + 108px + var(--adb))}
+  #mapPanel h6{font-size:25px} #mpSub{display:none} #mapPanel .mprow{margin-top:8px} #mapPanel .btn.primary{height:44px}
+  #mpSecret{margin-top:6px} #mpSecT{font-size:10px}
+  #map .modes{bottom:calc(var(--sab) + 58px)} body.adbanner #map .modes{bottom:calc(var(--sab) + 58px + var(--adb))}
+  #map .modes .btn{min-height:40px;padding:4px 3px}
+  #btnZifir{height:40px} #btnZifir small{display:none}
+}
 </style>
 </head>
 <body>
@@ -1109,6 +1123,7 @@ body.tnight #title .tag{color:rgba(225,220,255,.9)}
       <div class="row minis">
         <button class="mini tap" id="btnLoreT" aria-label="Hikâye"><i><svg viewBox="0 0 24 24"><path d="M4 5c3-1 6-1 8 1v14c-2-2-5-2-8-1Z"/><path d="M20 5c-3-1-6-1-8 1v14c2-2 5-2 8-1Z"/></svg></i><span>Hikâye</span></button>
         <button class="mini tap" id="btnHowT" aria-label="Nasıl oynanır"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></i><span>Nasıl?</span></button>
+        <button class="mini tap" id="btnWardT" aria-label="Gardırop"><i><svg class="zav" viewBox="0 0 24 24"><path d="M12 3.6c4.6 0 7.2 3.5 7.2 8.4 0 4.3-3.1 7.6-7.2 7.6S4.8 16.3 4.8 12c0-4.9 2.6-8.4 7.2-8.4z" fill="#120e1f" stroke="#cdbfff" stroke-width="1.4"/><circle cx="9.5" cy="11.4" r="1.9" fill="#fff"/><circle cx="14.5" cy="11.4" r="1.9" fill="#fff"/><circle cx="9.9" cy="11.6" r=".8" fill="#120e1f"/><circle cx="14.9" cy="11.6" r=".8" fill="#120e1f"/></svg><em class="badge" id="bdW"></em></i><span>Gardırop</span></button>
         <button class="mini tap" id="btnHzT" aria-label="Hazine"><i><svg viewBox="0 0 24 24"><path d="M3.5 10.5h17v8.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M3.5 10.5V9a5 5 0 0 1 5-5h7a5 5 0 0 1 5 5v1.5"/><path d="M3.5 13.5h17"/><rect x="10" y="11.8" width="4" height="4" rx="1"/></svg><em class="badge" id="bdT"></em></i><span>Hazine</span></button>
         <button class="mini tap" id="btnSetT" aria-label="Ayarlar"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></i><span>Ayarlar</span></button>
       </div>
