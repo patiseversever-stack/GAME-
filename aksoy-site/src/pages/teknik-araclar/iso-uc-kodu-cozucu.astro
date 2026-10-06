@@ -67,7 +67,7 @@ const icShapes = ['C', 'D', 'S', 'T', 'V', 'W'];
 const pad = (n: number | null) => (n === null ? '—' : String(n).padStart(2, '0'));
 const radii = ['00', '02', '04', '08', '12', '16', '20', '24', '32'];
 ---
-<Base title={title} description={description} schema={schema}>
+<Base title={title} description={description} schema={schema} footerCta={false}>
   <ToolHero
     crumbs={crumbs}
     eyebrow="Teknik araç 02 · ISO 1832"
@@ -159,26 +159,34 @@ const radii = ['00', '02', '04', '08', '12', '16', '20', '24', '32'];
       <div class="section-head">
         <span class="eyebrow">ISO 1832 başvuru tablosu</span>
         <h2 id="iso-tablo" class="reveal">Kesici uç kodu harf harf</h2>
-        <p>Değiştirilebilir kesici uç kodunda ilk yedi konum zorunludur; 8. ve 9. konumlar isteğe bağlıdır. Tireden sonra gelen harfler üreticinin talaş kırıcı kodudur.</p>
+        <p>Kodda ilk yedi konum zorunlu, 8. ve 9. konum isteğe bağlıdır; tireden sonraki harfler üreticinin talaş kırıcı kodudur. Bakmak istediğiniz konuma dokunun.</p>
       </div>
-      <div class="ref-grid">
-        <article class="ref-card">
-          <h3><span>1</span>Uç şekli</h3>
+      <div class="ref-folds">
+        <details class="tl-fold ref-fold">
+          <summary><span><b><em>1</em>Uç şekli</b><small>C, D, S, T, V, W, R… ve köşe açıları</small></span><i aria-hidden="true"></i></summary>
+          <div class="tl-fold__body ref-card">
+          
           <table>
             <thead><tr><th>Harf</th><th>Şekil</th><th>εr</th></tr></thead>
             <tbody>{Object.entries(SHAPES).map(([k, v]) => <tr><td>{k}</td><td>{v.name}</td><td class="mono">{v.angle ? `${v.angle}°` : '—'}</td></tr>)}</tbody>
           </table>
-        </article>
-        <article class="ref-card">
-          <h3><span>2</span>Boşluk açısı</h3>
+          </div>
+        </details>
+        <details class="tl-fold ref-fold">
+          <summary><span><b><em>2</em>Boşluk açısı</b><small>N negatif; diğer harfler pozitif uçlar</small></span><i aria-hidden="true"></i></summary>
+          <div class="tl-fold__body ref-card">
+          
           <p>N negatif uçtur; diğer harfler pozitif uçlarda yan yüzeyin eğimini verir.</p>
           <table>
             <thead><tr><th>Harf</th><th>αn</th></tr></thead>
             <tbody>{Object.entries(CLEARANCE).map(([k, v]) => <tr><td>{k}</td><td>{v === null ? 'Özel (ayrıca belirtilir)' : `${v}°`}</td></tr>)}</tbody>
           </table>
-        </article>
-        <article class="ref-card">
-          <h3><span>3</span>Tolerans sınıfı</h3>
+          </div>
+        </details>
+        <details class="tl-fold ref-fold">
+          <summary><span><b><em>3</em>Tolerans sınıfı</b><small>M, G, E… köşe, kalınlık ve IC toleransı</small></span><i aria-hidden="true"></i></summary>
+          <div class="tl-fold__body ref-card">
+          
           <p>m: köşe konumu, s: kalınlık, d: iç teğet daire (mm). J–N ve U sınıflarında d ve m aralığı IC’ye göre değişir.</p>
           <div class="ref-card__scroll">
             <table>
@@ -186,16 +194,22 @@ const radii = ['00', '02', '04', '08', '12', '16', '20', '24', '32'];
               <tbody>{Object.entries(TOL).map(([k, v]) => <tr><td>{k}</td><td class="mono">{v.m}</td><td class="mono">{v.s}</td><td class="mono">{v.d}</td></tr>)}</tbody>
             </table>
           </div>
-        </article>
-        <article class="ref-card">
-          <h3><span>4</span>Delik ve talaş kırıcı</h3>
+          </div>
+        </details>
+        <details class="tl-fold ref-fold">
+          <summary><span><b><em>4</em>Delik ve talaş kırıcı</b><small>G, M, T, W… delik tipi ve talaş kırıcı</small></span><i aria-hidden="true"></i></summary>
+          <div class="tl-fold__body ref-card">
+          
           <table>
             <thead><tr><th>Harf</th><th>Açıklama</th></tr></thead>
             <tbody>{Object.entries(HOLE).map(([k, v]) => <tr><td>{k}</td><td>{v.text}</td></tr>)}</tbody>
           </table>
-        </article>
-        <article class="ref-card">
-          <h3><span>5</span>Boyut kodu ↔ IC</h3>
+          </div>
+        </details>
+        <details class="tl-fold ref-fold">
+          <summary><span><b><em>5</em>Boyut kodu ↔ IC</b><small>Kesme kenarı uzunluğu ve iç teğet daire</small></span><i aria-hidden="true"></i></summary>
+          <div class="tl-fold__body ref-card">
+          
           <p>Kod, kesme kenarı uzunluğunun tam sayı kısmıdır; yuvarlak uçta çaptır (RCMT 10 → Ø10). Tablo ISO kuralına göre hesaplanmıştır; her boyut her şekilde üretilmez.</p>
           <div class="ref-card__scroll">
             <table>
@@ -203,16 +217,22 @@ const radii = ['00', '02', '04', '08', '12', '16', '20', '24', '32'];
               <tbody>{icRows.map((r) => <tr><td>{fmtFixed(r.mm, 3)}</td>{icShapes.map((s) => <td class="mono">{pad(sizeCodeFor(s, r.mm))}</td>)}</tr>)}</tbody>
             </table>
           </div>
-        </article>
-        <article class="ref-card">
-          <h3><span>6</span>Kalınlık</h3>
+          </div>
+        </details>
+        <details class="tl-fold ref-fold">
+          <summary><span><b><em>6</em>Kalınlık</b><small>04 = 4,76 mm gibi</small></span><i aria-hidden="true"></i></summary>
+          <div class="tl-fold__body ref-card">
+          
           <table>
             <thead><tr><th>Kod</th><th>s (mm)</th><th>inç</th></tr></thead>
             <tbody>{Object.entries(THICK).map(([k, v]) => <tr><td>{k}</td><td class="mono">{fmtFixed(v.mm, 2)}</td><td class="mono">{v.inch || '—'}</td></tr>)}</tbody>
           </table>
-        </article>
-        <article class="ref-card">
-          <h3><span>7</span>Köşe radyüsü</h3>
+          </div>
+        </details>
+        <details class="tl-fold ref-fold">
+          <summary><span><b><em>7</em>Köşe radyüsü</b><small>04 = 0,4 mm, 08 = 0,8 mm</small></span><i aria-hidden="true"></i></summary>
+          <div class="tl-fold__body ref-card">
+          
           <p>Kod = radyüs × 10. Yuvarlak metrik uçta M0, keskin köşede 00 yazılır. Silici kenarlı frezeleme uçlarında bu konum iki harftir: ana kesme açısı κr ({Object.entries(FACET_KR).map(([k, v]) => `${k} ${v === null ? 'özel' : `${v}°`}`).join(', ')}) ve silici kenar boşluk açısı (2. konumla aynı harfler).</p>
           <table>
             <thead><tr><th>Kod</th><th>rε</th></tr></thead>
@@ -221,16 +241,23 @@ const radii = ['00', '02', '04', '08', '12', '16', '20', '24', '32'];
               <tr><td>M0</td><td>Yuvarlak uç (metrik)</td></tr>
             </tbody>
           </table>
-        </article>
-        <article class="ref-card">
-          <h3><span>8</span>Kenar durumu <small class="tl-approx" style="color:var(--ink-3)">isteğe bağlı</small></h3>
+          </div>
+        </details>
+        <details class="tl-fold ref-fold">
+          <summary><span><b><em>8</em>Kenar durumu</b><small>isteğe bağlı · Honlu, pahlı, keskin kenar</small></span><i aria-hidden="true"></i></summary>
+          <div class="tl-fold__body ref-card">
+          
           <table><tbody>{Object.entries(EDGE).map(([k, v]) => <tr><td>{k}</td><td>{v}</td></tr>)}</tbody></table>
-        </article>
-        <article class="ref-card">
-          <h3><span>9</span>Kesme yönü <small class="tl-approx" style="color:var(--ink-3)">isteğe bağlı</small></h3>
+          </div>
+        </details>
+        <details class="tl-fold ref-fold">
+          <summary><span><b><em>9</em>Kesme yönü</b><small>isteğe bağlı · R sağ, L sol, N nötr</small></span><i aria-hidden="true"></i></summary>
+          <div class="tl-fold__body ref-card">
+          
           <table><tbody>{Object.entries(HAND).map(([k, v]) => <tr><td>{k}</td><td>{v}</td></tr>)}</tbody></table>
           <p>Tireden sonraki ek (ör. -MA, -PM, -M) ISO dışıdır; anlamı markanın talaş kırıcı tablosundadır.</p>
-        </article>
+          </div>
+        </details>
       </div>
     </div>
   </section>

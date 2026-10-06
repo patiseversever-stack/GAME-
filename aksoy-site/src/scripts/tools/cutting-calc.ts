@@ -263,22 +263,19 @@ export const sugAxis = (max: number) => max * 1.3;
 
 export function suggestHtml(op: Op, tool: ToolMat, iso: Iso): string {
   const cell = VC[op][tool][iso];
-  const g = ISO_GROUPS.find((x) => x.g === iso)!;
-  const ctx = `<p class="calc-sug__ctx"><span class="calc-sug__iso" data-g="${iso}">${iso}</span>${esc(g.name)} · ${esc(TOOL_LABEL[op][tool])}</p>`;
-  const disc = `<p class="calc-sug__disc">Başlangıç değeri; üretici kataloğuna ve tezgâha göre ayarlayın.</p>`;
+  const head = (est: boolean) =>
+    `<div class="calc-sug__head"><span class="tl-legend">Önerilen kesme hızı · Vc</span>${est ? `<span class="tl-est" title="${EST_TITLE}">≈ Tahmini</span>` : ''}</div>`;
   if (!isRange(cell)) {
-    return `<div class="calc-sug__head"><span class="tl-legend">Önerilen başlangıç Vc</span></div>${ctx}<p class="calc-sug__none">${esc(cell.none)}</p>${disc}`;
+    return `${head(false)}<p class="calc-sug__none">${esc(cell.none)}</p>`;
   }
   const hi = sugAxis(cell.max);
   const a = (cell.min / hi) * 100;
   const b = (cell.max / hi) * 100;
   const mid = midVc(cell);
-  return `<div class="calc-sug__head"><span class="tl-legend">Önerilen başlangıç Vc</span>${
-    cell.est ? `<span class="tl-est" title="${EST_TITLE}">≈ Tahmini</span>` : '<span class="tl-src">Katalog özetinden</span>'
-  }</div>
-${ctx}
-<p class="calc-sug__range"><span>${fmt(cell.min)}–${fmt(cell.max)}</span> <small>m/dk</small></p>
+  return `${head(cell.est)}
+<div class="calc-sug__main"><p class="calc-sug__range"><span>${fmt(cell.min)}–${fmt(cell.max)}</span> <small>m/dk</small></p><button type="button" class="calc-sug__apply" data-apply="${mid}">Ortayı yaz · ${fmt(mid)}</button></div>
 <div class="calc-sug__bar" style="--a:${a.toFixed(2)}%;--b:${b.toFixed(2)}%" data-min="${cell.min}" data-max="${cell.max}" data-hi="${hi}"><i></i><b data-marker></b></div>
-<div class="calc-sug__foot"><span class="calc-sug__status" data-sug-status></span><button type="button" class="calc-sug__apply" data-apply="${mid}">Orta değeri yaz · ${fmt(mid)} m/dk</button></div>
-${cell.note ? `<p class="calc-sug__note">${esc(cell.note)}</p>` : ''}${disc}`;
+<p class="calc-sug__status" data-sug-status></p>
+<p class="calc-sug__disc">Başlangıç değeridir; kullandığınız ucun katalog değeri önceliklidir.${cell.note ? ' ' + esc(cell.note) : ''}</p>`;
 }
+

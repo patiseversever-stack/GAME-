@@ -5,6 +5,11 @@ const root = document.querySelector<HTMLElement>('[data-cband]');
 if (root) {
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   const fine = matchMedia('(pointer: fine)').matches;
+  // Dar ekranda kodlar ekranı çabuk geçmesin: hız ekran genişliğiyle ölçeklenir
+  const pace = () => Math.max(0.42, Math.min(1, innerWidth / 1440));
+  // Parmakla kaydırma büyük adımlar üretir: dokunmatikte ivme etkisi kısılır
+  const push = fine ? 0.5 : 0.08;
+  const maxBoost = fine ? 60 : 24;
   type Row = { el: HTMLElement; track: HTMLElement; items: HTMLAnchorElement[]; dir: number; speed: number; x: number; half: number; offs: number[]; widths: number[] };
   const rows: Row[] = [...root.querySelectorAll<HTMLElement>('[data-cband-row]')].map((el) => {
     const track = el.querySelector<HTMLElement>('.cband__track')!;
@@ -97,13 +102,13 @@ if (root) {
     const dt = Math.min(0.05, (t - (last || t)) / 1000);
     last = t;
     slow += (slowT - slow) * 0.08;
-    const boost = Math.max(-60, Math.min(60, vel));
+    const boost = Math.max(-maxBoost, Math.min(maxBoost, vel));
     vel *= 0.88;
     for (const r of rows) {
-      r.x += r.dir * (r.speed * dt * (1 - slow * 0.85) + boost * 0.5);
+      r.x += r.dir * (r.speed * pace() * dt * (1 - slow * 0.85) + boost * push);
       if (r.x <= -r.half) r.x += r.half;
       if (r.x > 0) r.x -= r.half;
-      const skew = Math.max(-9, Math.min(9, -boost * 0.22 * r.dir));
+      const skew = Math.max(-9, Math.min(9, -boost * (fine ? 0.22 : 0.12) * r.dir));
       r.track.style.transform = `translate3d(${r.x.toFixed(2)}px,0,0) skewX(${skew.toFixed(2)}deg)`;
     }
     lockScan(pick(), 0.2);
