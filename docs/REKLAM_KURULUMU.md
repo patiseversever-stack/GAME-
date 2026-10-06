@@ -74,7 +74,7 @@ window.GUNDONUMU_AD_CONFIG = {
   interstitial: { firstAfterLevels: 5, minLevelsBetween: 3, minIntervalSec: 150, afterRewardedSec: 120, sessionMax: 6, dailyMax: 20 },
   rewarded: { cooldownSec: 2, dailyMax: 25, skipDaily: 3 },
   banner: { enabled: true, screens: ['map', 'hz'], heightPx: 56 },
-  native: { enabled: true, screens: ['title', 'hz'] }
+  native: { enabled: true, screens: ['title', 'hz'], titleHeightPx: 150, overlay: false }
 };
 </script>
 ```
@@ -103,7 +103,10 @@ window.GundonumuAds = {
   async showRewarded(placement) { return true; },     // ödül kazanıldıysa true
   async showInterstitial(placement) {},               // reklam kapanınca çöz
   showBanner(placement) {}, hideBanner() {},
-  async loadNative(placement) { return { title, body, cta, icon, click() {} } } // ya da null
+  async loadNative(placement) { return { title, body, cta, icon, image, click() {} } }, // ya da null
+  // isteğe bağlı: yerel native görünümü karşılama yuvasının üstüne çiz (önerilen; gösterim böyle sayılır)
+  showNativeAt(placement, rect) {},   // rect = { x, y, w, h, dpr } (CSS piksel, sol üstten)
+  hideNativeAt(placement) {}
 };
 ```
 
@@ -176,17 +179,41 @@ Böylece akışın tamamı (ödül, ikiye katlama, bir şans daha) SDK olmadan d
 
 ## 4. Native kartın gösterim sayılması
 
-- **Karşılama kartı (`native_title`):** Açılış filmi bitip karşılama ekranı görününce yüklenir.
-  Ekranın en altında, düğmelerden ayrı durur. Her ekran boyunda kaydırmadan görünür. Oyun her
-  açıldığında bir gösterim fırsatıdır. Karşılama ekranına dönüldüğünde en sık dakikada bir yenilenir.
-- **Hazine kartı (`native_hz`):** Görevlerin altındadır. Küçük ekranlarda ancak aşağı kaydırınca
-  görünür. Gösterim çoğu ağda reklam ekranda görününce sayılır.
-- **Önemli:** Ağlar (AdMob dahil) native reklamın kendi yerel görünümleriyle (NativeAdView)
-  çizilmesini ister. Oyunun HTML kartına yalnızca başlık ve resim yazmak gösterim saydırmayabilir.
-  `@capacitor-community/admob` native desteklemez; bu durumda `loadNative` `null` döner ve kart
-  hiç görünmez (boş yer kalmaz). Native gelir istiyorsan native destekleyen bir eklenti seç
-  (ya da yerel görünümü kartın konumuna yerleştir: kartın yeri `#natT`'nin
-  `getBoundingClientRect()` değeridir).
+### Karşılama ekranı yuvası (`native_title`)
+
+- Ekranın en altında **150 px** yüksekliğinde bir yuva ayrılır (`native.titleHeightPx` ile
+  değişir). Hikâye, Nasıl?, Gardırop, Hazine ve Ayarlar üst çubuktadır. Ana düğmeler yuvanın
+  hemen üstünde sıkı bir blok olur. Ada kamerası başlık ile düğmeler arasında kalan boşluğa
+  sığdırılır, düğmelerin arkasında kalmaz.
+- 720 px'ten kısa dikey ekranlarda "Güneşi sürükle" ipucu gizlenir. 600 px'ten kısa ekranlarda
+  slogan da gizlenir.
+- **Yatay telefonda** (yükseklik 520 px'ten az) yuva gösterilmez, çünkü 150 px adayı ezer. Yatay
+  tablette sağ altta durur.
+
+### Gerçek native reklamı yuvaya koymak (önerilen)
+
+AdMob dahil ağlar native reklamın yerel görünümle (NativeAdView) çizilmesini ister. HTML'e
+yalnızca yazı ve resim koymak gösterim saydırmayabilir. Bu yüzden köprü iki yoldan birini kullanır:
+
+1. **Kaplama (önerilen):** `window.GundonumuAds.showNativeAt` tanımlıysa oyun HTML kart çizmez,
+   yalnızca yeri boş bırakır. Yuva görünür olduğunda `showNativeAt('native_title', rect)` çağrılır.
+   Kabuk yerel reklam görünümünü bu dikdörtgenin üstüne yerleştirir.
+   - Ayarlar, Gardırop, Hazine, hikâye kitabı, ödüllü teklif penceresi açılınca ya da başka
+     ekrana geçilince `hideNativeAt('native_title')` çağrılır. Böylece reklam hiçbir pencerenin
+     üstünde kalmaz.
+   - Konum değişirse (ekran dönmesi) `showNativeAt` yeni dikdörtgenle tekrar çağrılır.
+   - postMessage köprüsünde (`native.overlay: true`) aynı bilgi `action: 'place'` (mesajda
+     `rect`) ve `action: 'hide'` olarak gelir.
+2. **HTML kart:** `loadNative` başlık, metin, düğme yazısı, simge ve görsel (`image`) döndürürse
+   oyun kartı kendisi çizer. Yalnızca bunu destekleyen ağlar için uygundur.
+
+`@capacitor-community/admob` native desteklemez. Onunla `loadNative` `null` döner ve yuva
+gizlenir (yer kaplamaz). Native gelir için native destekleyen bir eklenti seç.
+
+### Hazine kartı (`native_hz`)
+
+Görevlerin altındadır. Küçük ekranlarda ancak aşağı kaydırınca görünür. Bu yüzden gösterimin
+ana kaynağı karşılama yuvasıdır.
 
 ---
 
@@ -206,4 +233,5 @@ banner yüksekliği kullanırsan `banner.heightPx` değerini değiştir.
 - [ ] Google Play'de "Uygulama reklam içeriyor" işaretlendi, içerik derecelendirmesi güncellendi.
 - [ ] `app-ads.txt` dosyası geliştirici sitesinde yayında.
 - [ ] Çocuklara yönelik değilse "Families" politikası dışında kalındı. Yönelikse sertifikalı reklam ağı seçildi.
+- [ ] Native yerel görünümü karşılama yuvasına oturuyor; Ayarlar ve Gardırop açılınca gizleniyor.
 - [ ] Test cihazında her reklam yeri denendi: bir şans daha, toz ×2, sandık ×2, ada aç, Gizli Ada, iki ada arası, haritaya dönüş, banner, karşılama ve Hazine native kartı.

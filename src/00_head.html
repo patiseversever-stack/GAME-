@@ -1134,15 +1134,44 @@ body.tnight #title .tag{color:rgba(225,220,255,.9)}
 #adOffer p{font-size:13px;line-height:1.5;color:var(--ivory-dim)}#adOffer p em{font-style:normal;color:var(--gold-2)}
 #adOffer .btn{width:100%;min-width:0;height:50px}#adOffer .btn.primary{gap:8px}#adOffer .btn.primary svg{width:11px;height:11px;fill:currentColor}
 #adOffer small{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ivory-dim)}#adOffer small:empty{display:none}
-#natT{position:absolute;left:50%;bottom:calc(var(--sab) + 12px);transform:translateX(-50%);width:min(calc(100% - 32px),420px)}
-#natT .nat{padding:8px 10px;gap:10px;background:rgba(14,10,30,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);animation:natIn .6s ease both}
+/* ---------- karşılama ekranı: üst çubuk, kompakt düğmeler, native yuvası ----------
+   Küçük düğmeler üstte; ana düğmeler altta sıkı bir blok; en altta native reklam yuvası (--nath, varsayılan 150px).
+   Ada kamerası bu blokların arasında kalan boşluğa sığdırılır (Cam.fitTitle). */
+:root{--nath:150px}
+#title{padding-top:calc(var(--sat) + max(9vh, 78px))}
+body.testall #title{padding-top:calc(var(--sat) + max(9vh, 78px) + 18px)}
+body.testall #testBadge{top:calc(var(--sat) + 64px)}
+#title .tbar{position:absolute;z-index:3;top:calc(var(--sat) + 10px);left:calc(var(--sal) + 10px);right:calc(var(--sar) + 10px);display:flex;justify-content:space-between;align-items:flex-start;opacity:0;transform:translateY(-8px);transition:opacity .9s ease 1.5s,transform .9s cubic-bezier(.2,.9,.2,1) 1.5s}
+#title.on .tbar{opacity:1;transform:none}
+#title .tbar .grp{display:flex;gap:4px}
+#title .tbar .mini{min-width:46px;gap:4px}
+#title .tbar .mini i{width:40px;height:40px}
+#title .tbar .mini span{font-size:8.5px;letter-spacing:.12em}
+#title .actions{gap:12px}
+#btnPlay{height:54px}
+#title .row .btn{height:46px;min-width:0;padding:0 26px}
+#title .hint{padding:5px 13px}
+body.tnat #title{padding-bottom:calc(var(--sab) + 30px + var(--nath))}
+body.tnat #title .actions{gap:10px}
+body.tnat #btnPlay{height:50px}
+body.tnat #title .row .btn{height:42px}
+@media (max-height:720px) and (orientation:portrait){body.tnat #title .hint{display:none}body.tnat #title .tag{margin-top:10px}body.tnat #title h1{font-size:clamp(40px,11.5vw,64px)}}
+@media (max-height:600px) and (orientation:portrait){body.tnat #title .tag{display:none}}
+/* yatay telefonda 150px yuva adayı ezer: yalnızca yeterince yüksek yatay ekranda (tablet) gösterilir */
+@media (orientation:landscape) and (max-height:520px){#natT{display:none!important}}
+#natT{position:absolute;left:50%;bottom:calc(var(--sab) + 12px);transform:translateX(-50%);width:min(calc(100% - 24px),440px);pointer-events:auto}
+#natT .nat{flex-direction:column;align-items:stretch;gap:8px;height:var(--nath);padding:10px;background:rgba(14,10,30,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);animation:natIn .6s ease both}
 #natT .nat .nk{top:-7px;font-size:8.5px}
-#natT .nat img,#natT .nat>i{width:38px;height:38px;border-radius:10px}
+#natT .nh{display:flex;align-items:center;gap:10px;min-width:0}
+#natT .nh>div{flex:1;min-width:0}
+#natT .nat img,#natT .nh>i{width:38px;height:38px;border-radius:10px;flex:none;background:rgba(255,255,255,.08);object-fit:cover}
 #natT .nat b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#natT .nat small{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 #natT .nat button{height:32px;padding:0 13px;font-size:11px}
+#natT .nm{flex:1;min-height:0;border-radius:12px;background:linear-gradient(135deg,rgba(255,210,150,.16),rgba(150,130,255,.16)) center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,244,226,.45)}
+#natT.slot{height:var(--nath);border-radius:18px;border:1px dashed rgba(255,255,255,.12)}
 @keyframes natIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-body.tnat #title{padding-bottom:calc(var(--sab) + 90px)}
 @media (orientation:landscape) and (min-aspect-ratio:21/20){
+  #title .tbar{left:auto;gap:4px}
   #natT{left:auto;right:calc(var(--sar) + 18px);transform:none;width:min(40vw,380px)}
   body.tnat #title{padding-bottom:calc(var(--sab) + 30px)}
 }
@@ -1166,6 +1195,17 @@ body.tnat #title{padding-bottom:calc(var(--sab) + 90px)}
 
   <div id="title" class="screen">
     <div id="testBadge">Deneme · 64 ada açık</div>
+    <div class="tbar">
+      <div class="grp">
+        <button class="mini tap" id="btnLoreT" aria-label="Hikâye"><i><svg viewBox="0 0 24 24"><path d="M4 5c3-1 6-1 8 1v14c-2-2-5-2-8-1Z"/><path d="M20 5c-3-1-6-1-8 1v14c2-2 5-2 8-1Z"/></svg></i><span>Hikâye</span></button>
+        <button class="mini tap" id="btnHowT" aria-label="Nasıl oynanır"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></i><span>Nasıl?</span></button>
+      </div>
+      <div class="grp">
+        <button class="mini tap" id="btnWardT" aria-label="Gardırop"><i><svg class="zav" viewBox="0 0 24 24"><path d="M12 3.6c4.6 0 7.2 3.5 7.2 8.4 0 4.3-3.1 7.6-7.2 7.6S4.8 16.3 4.8 12c0-4.9 2.6-8.4 7.2-8.4z" fill="#120e1f" stroke="#cdbfff" stroke-width="1.4"/><circle cx="9.5" cy="11.4" r="1.9" fill="#fff"/><circle cx="14.5" cy="11.4" r="1.9" fill="#fff"/><circle cx="9.9" cy="11.6" r=".8" fill="#120e1f"/><circle cx="14.9" cy="11.6" r=".8" fill="#120e1f"/></svg><em class="badge" id="bdW"></em></i><span>Gardırop</span></button>
+        <button class="mini tap" id="btnHzT" aria-label="Hazine"><i><svg viewBox="0 0 24 24"><path d="M3.5 10.5h17v8.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M3.5 10.5V9a5 5 0 0 1 5-5h7a5 5 0 0 1 5 5v1.5"/><path d="M3.5 13.5h17"/><rect x="10" y="11.8" width="4" height="4" rx="1"/></svg><em class="badge" id="bdT"></em></i><span>Hazine</span></button>
+        <button class="mini tap" id="btnSetT" aria-label="Ayarlar"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></i><span>Ayarlar</span></button>
+      </div>
+    </div>
     <div class="brand">
       <h1 id="titleWord"></h1>
       <div class="tag">Güneşi sen çevir · Gölgeyi sen koru</div>
@@ -1176,13 +1216,6 @@ body.tnat #title{padding-bottom:calc(var(--sab) + 90px)}
       <div class="row">
         <button class="btn ghost tap" id="btnMapT">Gökyüzü</button>
         <button class="btn ghost tap" id="btnTheaterT">Tiyatro</button>
-      </div>
-      <div class="row minis">
-        <button class="mini tap" id="btnLoreT" aria-label="Hikâye"><i><svg viewBox="0 0 24 24"><path d="M4 5c3-1 6-1 8 1v14c-2-2-5-2-8-1Z"/><path d="M20 5c-3-1-6-1-8 1v14c2-2 5-2 8-1Z"/></svg></i><span>Hikâye</span></button>
-        <button class="mini tap" id="btnHowT" aria-label="Nasıl oynanır"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></i><span>Nasıl?</span></button>
-        <button class="mini tap" id="btnWardT" aria-label="Gardırop"><i><svg class="zav" viewBox="0 0 24 24"><path d="M12 3.6c4.6 0 7.2 3.5 7.2 8.4 0 4.3-3.1 7.6-7.2 7.6S4.8 16.3 4.8 12c0-4.9 2.6-8.4 7.2-8.4z" fill="#120e1f" stroke="#cdbfff" stroke-width="1.4"/><circle cx="9.5" cy="11.4" r="1.9" fill="#fff"/><circle cx="14.5" cy="11.4" r="1.9" fill="#fff"/><circle cx="9.9" cy="11.6" r=".8" fill="#120e1f"/><circle cx="14.9" cy="11.6" r=".8" fill="#120e1f"/></svg><em class="badge" id="bdW"></em></i><span>Gardırop</span></button>
-        <button class="mini tap" id="btnHzT" aria-label="Hazine"><i><svg viewBox="0 0 24 24"><path d="M3.5 10.5h17v8.5a1.5 1.5 0 0 1-1.5 1.5H5a1.5 1.5 0 0 1-1.5-1.5z"/><path d="M3.5 10.5V9a5 5 0 0 1 5-5h7a5 5 0 0 1 5 5v1.5"/><path d="M3.5 13.5h17"/><rect x="10" y="11.8" width="4" height="4" rx="1"/></svg><em class="badge" id="bdT"></em></i><span>Hazine</span></button>
-        <button class="mini tap" id="btnSetT" aria-label="Ayarlar"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></i><span>Ayarlar</span></button>
       </div>
     </div>
     <div id="natT"></div>

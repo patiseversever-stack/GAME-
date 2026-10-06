@@ -302,8 +302,22 @@ const Cam = {
   fit(lv) {
     const port = innerWidth < innerHeight;
     this.set(this.base, this.solveFit(lv, { yTop: port ? 0.8 : 0.84, yBot: -0.9, xI: 0.9, xO: 0.99 }));
-    const wide = innerWidth / innerHeight > 1.25;
-    this.title = wide ? this.solveFit(lv, { yTop: 0.8, yBot: -0.86, xI: 0.92, xO: 0.98, wx0: -0.02, wx1: 0.96 }) : this.solveFit(lv, { yTop: port ? 0.5 : 0.56, yBot: port ? -0.62 : -0.72, xI: 0.86, xO: 0.97 });
+    this.fitTitle(lv);
+  },
+  // karşılama kadrajı: ada (yay dahil) üstteki başlık ile alttaki düğme/reklam blokları arasındaki boşluğa sığar;
+  // native yuvası açılıp kapanınca ya da ekran dönünce yeniden hesaplanır, kamera yeni kadraja yumuşakça kayar
+  fitTitle(lv) {
+    const W = innerWidth, H = innerHeight, port = W < H, wide = W / H > 1.25, nd = (y) => 1 - (2 * y) / H;
+    const T = $('#title'), br = T && T.querySelector('.brand'), ac = T && T.querySelector('.actions'), tb = T && T.querySelector('.tbar'), nt = $('#natT');
+    const tnat = document.body.classList.contains('tnat') && nt && nt.offsetHeight > 4;
+    if (wide) {
+      const top = tb ? tb.offsetTop + tb.offsetHeight + 8 : 0, bot = tnat ? nt.offsetTop - 10 : H;
+      this.title = this.solveFit(lv, { yTop: Math.min(0.8, nd(top)), yBot: Math.max(-0.86, nd(bot)), xI: 0.92, xO: 0.98, wx0: -0.02, wx1: 0.96 });
+    } else if (port && br && ac && ac.offsetHeight) {
+      // kısa ekranda ada ipucu/ana düğmenin arkasına biraz taşabilir (cam düğmeler), uzun ekranda tamamen açıkta kalır
+      const top = br.offsetTop + br.offsetHeight + 34, bot = ac.offsetTop + (H < 700 ? 18 : 6);
+      this.title = this.solveFit(lv, { yTop: Math.min(0.5, nd(top)), yBot: Math.max(-0.62, nd(bot)), xI: 0.86, xO: 0.97 });
+    } else this.title = this.solveFit(lv, { yTop: port ? 0.5 : 0.56, yBot: port ? -0.62 : -0.72, xI: 0.86, xO: 0.97 });
   },
   cinema(to, dur, ease = Ease.inOutCubic) { this.cine = { from: { target: this.cur.target.clone(), dist: this.cur.dist, pitch: this.cur.pitch, yaw: this.cur.yaw, fov: this.cur.fov }, to, t: 0, dur, ease }; },
   pose(mod = {}) { const b = this.base; return { target: (mod.target || b.target).clone(), dist: mod.dist ?? b.dist, pitch: mod.pitch ?? b.pitch, yaw: mod.yaw ?? b.yaw, fov: mod.fov ?? b.fov }; },

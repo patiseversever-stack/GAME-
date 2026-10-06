@@ -977,6 +977,7 @@ function frame(now) {
   if (G.state === 'paused' || G.state === 'photo') dt = 0;
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
   { const tn = G.state === 'title' && G.night > 0.5; if (tn !== frame.tn) { frame.tn = tn; document.body.classList.toggle('tnight', tn); } }
+  AdBridge.slotTick(dtR);
   { const pl = G.state === 'play'; if (pl !== frame.pl) { frame.pl = pl; document.body.classList.toggle('playing', pl); } const scr = Meta.open ? 'hz' : G.state; if (scr !== frame.scr) { frame.scr = scr; AdBridge.screen(scr); } }
   audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k, dragon: G.state === 'play' && Dragon.on && Dragon.mode === 'chase', boss: Dragon.danger() };
   audio.update(dtR, G.state === 'play');

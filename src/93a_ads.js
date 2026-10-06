@@ -33,7 +33,9 @@ const AD_DEFAULTS = {
   },
   rewarded: { cooldownSec: 2, dailyMax: 25, skipDaily: 3 }, // skipDaily: haritada videoyla açılabilen sıradaki ada sayısı (günlük)
   banner: { enabled: true, screens: ['map', 'hz'], heightPx: 56 }, // yalnızca menü ekranlarında, oyunda asla
-  native: { enabled: true, screens: ['title', 'hz'] }, // title: açılışta görünen karşılama ekranı (her açılışta bir gösterim)
+  // title: açılışta görünen karşılama ekranı (her açılışta bir gösterim). titleHeightPx: karşılama yuvasının yüksekliği.
+  // overlay: postMessage köprüsü yerel native görünümü yuvanın üstüne çiziyorsa true (GundonumuAds.showNativeAt varsa kendiliğinden)
+  native: { enabled: true, screens: ['title', 'hz'], titleHeightPx: 150, overlay: false },
   noAdsKey: 'noAds', // "Reklamları kaldır" satın alınırsa: Save.data.noAds = true → geçiş + banner kapanır, ödüllü kalır
 };
 // oyun içindeki reklam yerleri (köprü bu adlarla çağrılır; raporlama için)
@@ -58,6 +60,7 @@ const AdBridge = {
     if (d.day !== today) { d.day = today; d.int = 0; d.rv = 0; d.skip = 0; }
     d.levels = d.levels || 0; this.st = d;
     this.sess.lastInt = performance.now(); // açılışta hemen geçiş reklamı yok
+    document.documentElement.style.setProperty('--nath', (this.cfg.native.titleHeightPx | 0 || 150) + 'px');
     window.addEventListener('message', (e) => { const m = e.data; if (!m || m.type !== 'gd-ad-result' || !this.wait.has(m.id)) return; const r = this.wait.get(m.id); this.wait.delete(m.id); r(m); });
     const N = this.native(); if (N && N.init) try { N.init(this.cfg, { placements: AD_PLACEMENTS }); } catch (e) { console.warn('reklam köprüsü init', e); }
     this.preload('rewarded'); this.preload('interstitial');
@@ -66,8 +69,8 @@ const AdBridge = {
   rn() { return window.ReactNativeWebView || (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.gdAds) || null; },
   noAds() { return !!Save.data[this.cfg.noAdsKey]; },
   // WebView köprüsüne mesaj: yanıt bekler (zaman aşımı → başarısız)
-  post(action, kind, placement, timeout = 45000) {
-    const id = ++this.seq, msg = { type: 'gd-ad', id, action, kind, placement };
+  post(action, kind, placement, timeout = 45000, extra = null) {
+    const id = ++this.seq, msg = Object.assign({ type: 'gd-ad', id, action, kind, placement }, extra);
     const rn = this.rn();
     return new Promise((res) => {
       this.wait.set(id, res); setTimeout(() => { if (this.wait.has(id)) { this.wait.delete(id); res({ ok: false, timeout: true }); } }, timeout);
@@ -129,9 +132,33 @@ const AdBridge = {
   },
   // karşılama ekranı kartı: ekran her açıldığında yenilenir (en sık dakikada bir); kart dolu kalırsa tekrar yüklenmez
   titleNative() {
-    const now = performance.now(), box = $('#natT');
-    if (!box || (box.childElementCount && now - (this.natT || 0) < 60000)) return;
+    const now = performance.now(), box = $('#natT'), nc = this.cfg.native;
+    if (!box) return;
+    if (this.overlay()) { // yerel görünüm: yuva ayrılır, reklamı köprü yuvanın üstüne çizer (slotTick)
+      const on = this.cfg.enabled && nc.enabled && !this.noAds() && nc.screens.includes('title');
+      box.innerHTML = ''; box.className = on ? 'slot' : ''; box.style.display = on ? '' : 'none'; this.slotOn = on; this._sk = null;
+      this.setTnat(on); return;
+    }
+    if (box.childElementCount && now - (this.natT || 0) < 60000) return;
     this.natT = now; this.fillNative(box, 'native_title');
+  },
+  overlay() { const N = this.native(); return N ? !!N.showNativeAt : this.mode() === 'post' && !!this.cfg.native.overlay; },
+  setTnat(on) { if (document.body.classList.contains('tnat') === on) return; document.body.classList.toggle('tnat', on); if (G.lv) requestAnimationFrame(() => Cam.fitTitle(G.lv)); },
+  // yerel görünüm kaplaması: yuva ekranda ve üstü açıksa konumu köprüye bildirilir; başka ekran ya da pencere örterse gizlenir
+  slotTick(dtR) {
+    if (!this.slotOn || (this._st = (this._st || 0) - dtR) > 0) return; this._st = 0.25;
+    const box = $('#natT'), r = box.getBoundingClientRect();
+    // ekran katmanları dokunuşa kapalı olduğundan (pointer-events) isabet testi yetmez: örten katmanlar açıkça sayılır
+    const cover = document.querySelector('#ui > .screen.on:not(#title), #lore.on, #kh.on, #wardrobe.on, #abil.on, #find.on, #chest.on, #fader.on, #chapterCard.on, #tutorial.on, #adOffer.on, .admock, #loader:not(.off)');
+    const vis = G.state === 'title' && !Ward3D.on && !cover && r.height > 4 && $('#title').classList.contains('on') && +getComputedStyle($('#title')).opacity > 0.6;
+    const rect = { x: Math.round(r.left), y: Math.round(r.top), w: Math.round(r.width), h: Math.round(r.height), dpr: devicePixelRatio };
+    const key = vis ? `${rect.x},${rect.y},${rect.w},${rect.h}` : '';
+    if (key === this._sk) return; this._sk = key;
+    const N = this.native();
+    try {
+      if (N) { if (vis) N.showNativeAt('native_title', rect); else N.hideNativeAt && N.hideNativeAt('native_title'); }
+      else this.post(vis ? 'place' : 'hide', 'native', 'native_title', 1500, vis ? { rect } : null);
+    } catch (e) {}
   },
   // haritada sıradaki kilitli ada videoyla açılabilir mi: yalnızca hemen sonraki ada, aynı dünyada (ejderha adası atlanmaz), günlük sınırla
   canSkip(g) {
@@ -140,13 +167,17 @@ const AdBridge = {
   // native: kutuya sponsorlu kart doldurur (yoksa kutu gizli kalır)
   async fillNative(box, placement) {
     const nc = this.cfg.native; if (!box) return;
-    box.innerHTML = ''; box.style.display = 'none'; if (box.id === 'natT') document.body.classList.remove('tnat');
+    const big = box.id === 'natT';
+    box.innerHTML = ''; box.style.display = 'none'; if (big) { box.className = ''; this.setTnat(false); }
     if (!this.cfg.enabled || !nc.enabled || this.noAds() || !nc.screens.includes(this.scr)) return;
     let ad = null; const m = this.mode();
     try { if (m === 'native' && this.native().loadNative) ad = await this.native().loadNative(placement); else if (m === 'post') { const r = await this.post('load', 'native', placement, 4000); ad = r.ok ? r.data : null; } else if (this.cfg.test) ad = { title: 'Test sponsorlu kart', body: 'Gerçek native reklam bağlanınca burada görünür.', cta: 'İncele', icon: '' }; } catch (e) { ad = null; }
     if (!ad) return;
-    box.style.display = ''; if (box.id === 'natT') document.body.classList.add('tnat');
-    box.innerHTML = `<div class="nat"><span class="nk">Sponsorlu</span>${ad.icon ? `<img src="${String(ad.icon).replace(/"/g, '')}" alt="">` : '<i></i>'}<div><b></b><small></small></div><button class="tap"></button></div>`;
+    box.style.display = ''; if (big) this.setTnat(true);
+    const ico = ad.icon ? `<img src="${String(ad.icon).replace(/"/g, '')}" alt="">` : '<i></i>';
+    box.innerHTML = big ? `<div class="nat"><span class="nk">Sponsorlu</span><div class="nh">${ico}<div><b></b><small></small></div><button class="tap"></button></div><div class="nm">${ad.image ? '' : 'Reklam görseli'}</div></div>`
+      : `<div class="nat"><span class="nk">Sponsorlu</span>${ico}<div><b></b><small></small></div><button class="tap"></button></div>`;
+    if (big && ad.image) box.querySelector('.nm').style.backgroundImage = `url("${String(ad.image).replace(/["\\]/g, '')}")`;
     box.querySelector('b').textContent = ad.title || ''; box.querySelector('small').textContent = ad.body || ''; box.querySelector('button').textContent = ad.cta || 'Aç';
     box.querySelector('button').addEventListener('click', (e) => { e.stopPropagation(); try { ad.click && ad.click(); } catch (er) {} if (m === 'post') this.post('click', 'native', placement, 2000); });
   },
