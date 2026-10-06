@@ -30,13 +30,16 @@ const AD_DEFAULTS = {
     sessionMax: 6, // oturum başına en fazla
     dailyMax: 20,
     placements: ['level_complete', 'to_map'], // izin verilen doğal molalar
+    timeoutSec: 90,
   },
   // limits: her ödüllü yer için günlük üst sınır (dengeli: günde ~10 fırsat)
-  rewarded: { cooldownSec: 2, dailyMax: 25, limits: { skip: 3, rent: 2, piece: 1, shield: 3, gift: 3, reroll: 1 } },
+  // timeoutSec: kabuk bu sürede yanıt vermezse reklam başarısız sayılır (oyun asla kilitli kalmaz)
+  rewarded: { cooldownSec: 2, dailyMax: 25, timeoutSec: 150, limits: { skip: 3, rent: 2, piece: 1, shield: 3, gift: 3, reroll: 1 } },
   banner: { enabled: true, screens: ['map', 'hz'], heightPx: 56 }, // yalnızca menü ekranlarında, oyunda asla
   // title: açılışta görünen karşılama ekranı (her açılışta bir gösterim). titleHeightPx: karşılama yuvasının yüksekliği.
   // overlay: postMessage köprüsü yerel native görünümü yuvanın üstüne çiziyorsa true (GundonumuAds.showNativeAt varsa kendiliğinden)
   native: { enabled: true, screens: ['title', 'hz'], titleHeightPx: 150, overlay: false },
+  gift: { firstMin: 3, minMin: 20, maxMin: 30 }, // Hediye Zifir: ilk geliş ve aralık (dakika); testte küçült
   noAdsKey: 'noAds', // "Reklamları kaldır" satın alınırsa: Save.data.noAds = true → geçiş + banner kapanır, ödüllü kalır
 };
 // oyun içindeki reklam yerleri (köprü bu adlarla çağrılır; raporlama için)
@@ -59,6 +62,27 @@ const AD_PLACEMENTS = {
   native_hz: 'Hazine ekranında sponsorlu kart',
 };
 function adMerge(a, b) { const o = Array.isArray(a) ? a.slice() : Object.assign({}, a); if (!b) return o; for (const k in b) o[k] = b[k] && typeof b[k] === 'object' && !Array.isArray(b[k]) && a[k] && typeof a[k] === 'object' ? adMerge(a[k], b[k]) : b[k]; return o; }
+// Kabuğa mesaj kanalı: React Native, iOS WKWebView, Android/Flutter JavaScript kanalı, flutter_inappwebview ya da iframe
+const hostChan = () => { const w = window, wk = w.webkit && w.webkit.messageHandlers; return w.ReactNativeWebView || (wk && (wk.gundonumu || wk.gdAds)) || w.GundonumuNative || (w.flutter_inappwebview && w.flutter_inappwebview.callHandler ? w.flutter_inappwebview : null) || null; };
+function hostSend(m) {
+  const w = window, s = JSON.stringify(m), wk = w.webkit && w.webkit.messageHandlers;
+  try {
+    if (w.ReactNativeWebView) w.ReactNativeWebView.postMessage(s);
+    else if (wk && (wk.gundonumu || wk.gdAds)) (wk.gundonumu || wk.gdAds).postMessage(s);
+    else if (w.GundonumuNative && w.GundonumuNative.postMessage) w.GundonumuNative.postMessage(s);
+    else if (w.flutter_inappwebview && w.flutter_inappwebview.callHandler) w.flutter_inappwebview.callHandler('gundonumu', s);
+    else if (w.parent !== w) w.parent.postMessage(m, '*');
+    else return false;
+    return true;
+  } catch (e) { return false; }
+}
+// başarısız ödüllü reklamda oyuncuya ne olduğunu söyle
+const AD_FAIL = {
+  closed: 'Ödül için videoyu sonuna kadar izlemelisin.', skipped: 'Ödül için videoyu sonuna kadar izlemelisin.', not_rewarded: 'Ödül için videoyu sonuna kadar izlemelisin.',
+  nofill: 'Şu an uygun reklam yok. Biraz sonra tekrar dene.', no_fill: 'Şu an uygun reklam yok. Biraz sonra tekrar dene.', not_ready: 'Şu an uygun reklam yok. Biraz sonra tekrar dene.',
+  offline: 'İnternet bağlantısı yok. Bağlanınca tekrar dene.', timeout: 'Reklam yanıt vermedi. Biraz sonra tekrar dene.',
+  unknown: 'Ödül verilemedi: video tamamlanmadı ya da şu an reklam yok.', error: 'Reklam açılamadı. Biraz sonra tekrar dene.',
+};
 const AdBridge = {
   cfg: null, st: null, sess: { int: 0, lastInt: 0, lastRv: 0, levels: 0 }, busy: false, seq: 0, wait: new Map(), bannerOn: false, scr: '',
   init() {
@@ -69,20 +93,23 @@ const AdBridge = {
     d.levels = d.levels || 0; this.st = d;
     this.sess.lastInt = performance.now(); // açılışta hemen geçiş reklamı yok
     document.documentElement.style.setProperty('--nath', (this.cfg.native.titleHeightPx | 0 || 150) + 'px');
-    window.addEventListener('message', (e) => { const m = e.data; if (!m || m.type !== 'gd-ad-result' || !this.wait.has(m.id)) return; const r = this.wait.get(m.id); this.wait.delete(m.id); r(m); });
+    const onRes = (m) => { if (typeof m === 'string') try { m = JSON.parse(m); } catch (e) { return; } if (!m || m.type !== 'gd-ad-result' || !this.wait.has(m.id)) return; const r = this.wait.get(m.id); this.wait.delete(m.id); r(m); };
+    window.addEventListener('message', (e) => onRes(e.data));
+    window.gdAdResult = (m) => onRes(Object.assign({ type: 'gd-ad-result' }, typeof m === 'string' ? JSON.parse(m) : m)); // evaluateJavascript ile doğrudan yanıt
+    window.gdSetBannerHeight = (px) => this.setBannerH(px); // kabuk gerçek banner yüksekliğini (CSS px) bildirir; 0 = banner yok
+    window.gdNativeFilled = (placement, ok) => { this.natFill = this.natFill || {}; this.natFill[placement] = !!ok; if (placement === 'native_title') { this._sk = null; this.titleNative(true); } };
     const N = this.native(); if (N && N.init) try { N.init(this.cfg, { placements: AD_PLACEMENTS }); } catch (e) { console.warn('reklam köprüsü init', e); }
     this.preload('rewarded'); this.preload('interstitial');
   },
   native() { return window.GundonumuAds || null; },
-  rn() { return window.ReactNativeWebView || (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.gdAds) || null; },
+  rn() { return hostChan(); },
   noAds() { return !!Save.data[this.cfg.noAdsKey]; },
   // WebView köprüsüne mesaj: yanıt bekler (zaman aşımı → başarısız)
   post(action, kind, placement, timeout = 45000, extra = null) {
     const id = ++this.seq, msg = Object.assign({ type: 'gd-ad', id, action, kind, placement }, extra);
-    const rn = this.rn();
     return new Promise((res) => {
-      this.wait.set(id, res); setTimeout(() => { if (this.wait.has(id)) { this.wait.delete(id); res({ ok: false, timeout: true }); } }, timeout);
-      try { if (rn && rn.postMessage) rn.postMessage(JSON.stringify(msg)); else window.parent.postMessage(msg, '*'); } catch (e) { this.wait.delete(id); res({ ok: false }); }
+      this.wait.set(id, res); setTimeout(() => { if (this.wait.has(id)) { this.wait.delete(id); res({ ok: false, reason: 'timeout', timeout: true }); } }, timeout);
+      if (!hostSend(msg)) { this.wait.delete(id); res({ ok: false, reason: 'error' }); }
     });
   },
   mode() { return this.native() ? 'native' : this.rn() || window.parent !== window ? 'post' : 'mock'; },
@@ -94,20 +121,46 @@ const AdBridge = {
     const now = performance.now();
     if (now - this.sess.lastRv < this.cfg.rewarded.cooldownSec * 1000 && this.sess.lastRv) { toast('Bir an… reklam hazırlanıyor, birkaç saniye sonra tekrar dene.', 2.2); return false; }
     if (this.st.rv >= this.cfg.rewarded.dailyMax) { toast('Bugünlük ödüllü reklam hakkın doldu.', 2.4); return false; }
+    const m = this.mode(), tmo = (this.cfg.rewarded.timeoutSec || 150) * 1000;
+    if (m !== 'mock' && navigator.onLine === false) { this.fail('offline'); return false; }
     this.busy = true; audio.duck && audio.duck(true);
-    let ok = false;
+    let res = { ok: false, reason: 'error' };
     try {
-      const m = this.mode();
-      if (m === 'native') ok = !!(await this.native().showRewarded(placement));
-      else if (m === 'post') ok = !!(await this.post('show', 'rewarded', placement)).ok;
-      else ok = await this.mock('rewarded', placement);
-    } catch (e) { console.warn('ödüllü reklam', e); ok = false; }
-    this.busy = false; audio.duck && audio.duck(false);
+      if (m === 'native') {
+        const N = this.native();
+        if (!(await this.waitReady('rewarded', 6000))) res = { ok: false, reason: 'nofill' };
+        else res = this.norm(await this.within(Promise.resolve(N.showRewarded(placement)), tmo));
+      } else if (m === 'post') res = this.norm(await this.post('show', 'rewarded', placement, tmo));
+      else res = this.norm(await this.mock('rewarded', placement));
+    } catch (e) { console.warn('ödüllü reklam', e); res = { ok: false, reason: 'error' }; }
+    const ok = res.ok;
+    this.busy = false; audio.duck && audio.duck(false); lastT = performance.now();
     this.sess.lastRv = performance.now(); if (ok) { this.st.rv++; this.st.total = (this.st.total || 0) + 1; Save.save(); Wardrobe.glowCheck(); }
     this.preload('rewarded');
-    if (!ok) toast('Reklam şu an hazır değil. Biraz sonra tekrar dene.', 2.4);
+    if (!ok) this.fail(res.reason);
+    this.log('rewarded', placement, ok ? 'rewarded' : res.reason);
     return ok;
   },
+  // kabuğun yanıtı: true/false ya da { ok|rewarded, reason }
+  norm(r) {
+    if (r === true) return { ok: true, reason: '' };
+    if (!r) return { ok: false, reason: r === false ? 'unknown' : 'error' };
+    const ok = !!(r.ok || r.rewarded);
+    return { ok, reason: ok ? '' : r.reason || (r.timeout ? 'timeout' : 'unknown') };
+  },
+  fail(reason) { toast(AD_FAIL[reason] || AD_FAIL.error, 2.8); },
+  within(p, ms) { return Promise.race([p, new Promise((r) => setTimeout(() => r({ ok: false, reason: 'timeout' }), ms))]); },
+  // kabuk hazır değil diyorsa yükletip kısa süre bekle (oyuncuya "hazırlanıyor" der)
+  async waitReady(kind, ms) {
+    const N = this.native(); if (!N || !N.isReady) return true;
+    try { if (N.isReady(kind)) return true; } catch (e) { return true; }
+    try { N.load && N.load(kind); } catch (e) {}
+    toast('Reklam hazırlanıyor…', 1.6);
+    for (let t = 0; t < ms; t += 250) { await new Promise((r) => setTimeout(r, 250)); try { if (N.isReady(kind)) return true; } catch (e) { return true; } }
+    return false;
+  },
+  // test ve analitik için: kabuk dinliyorsa her sonucu bildir
+  log(kind, placement, result) { const N = this.native(); try { if (N && N.onResult) N.onResult(kind, placement, result); else if (this.mode() === 'post') hostSend({ type: 'gd-ad-log', kind, placement, result }); } catch (e) {} },
   // geçiş: yalnızca doğal molada ve sıklık kuralları uygunsa
   canInterstitial(placement) {
     const c = this.cfg.interstitial, now = performance.now();
@@ -121,8 +174,9 @@ const AdBridge = {
   async interstitial(placement) {
     if (!this.canInterstitial(placement)) return false;
     this.busy = true; audio.duck && audio.duck(true);
-    try { const m = this.mode(); if (m === 'native') await this.native().showInterstitial(placement); else if (m === 'post') await this.post('show', 'interstitial', placement); else await this.mock('interstitial', placement); } catch (e) { console.warn('geçiş reklamı', e); }
-    this.busy = false; audio.duck && audio.duck(false);
+    const tmo = (this.cfg.interstitial.timeoutSec || 90) * 1000;
+    try { const m = this.mode(); if (m === 'native') await this.within(Promise.resolve(this.native().showInterstitial(placement)), tmo); else if (m === 'post') await this.post('show', 'interstitial', placement, tmo); else await this.mock('interstitial', placement); } catch (e) { console.warn('geçiş reklamı', e); }
+    this.busy = false; audio.duck && audio.duck(false); lastT = performance.now(); this.log('interstitial', placement, 'shown');
     this.sess.int++; this.sess.levels = 0; this.sess.lastInt = performance.now(); this.st.int++; Save.save(); this.preload('interstitial');
     return true;
   },
@@ -134,20 +188,30 @@ const AdBridge = {
     if (name === 'title') this.titleNative();
     const b = this.cfg.banner, on = this.cfg.enabled && b.enabled && !this.noAds() && b.screens.includes(name);
     if (on === this.bannerOn) return; this.bannerOn = on;
-    document.body.classList.toggle('adbanner', on); document.documentElement.style.setProperty('--adb', on ? b.heightPx + 'px' : '0px');
-    const N = this.native(), m = this.mode();
-    try { if (m === 'native') { if (on) N.showBanner && N.showBanner('banner_menu'); else N.hideBanner && N.hideBanner(); } else if (m === 'post') this.post(on ? 'show' : 'hide', 'banner', 'banner_menu', 2000); else this.mockBanner(on); } catch (e) {}
+    document.body.classList.toggle('adbanner', on && b.heightPx > 0); document.documentElement.style.setProperty('--adb', on ? b.heightPx + 'px' : '0px');
+    const N = this.native(), m = this.mode(), hv = (v) => { if (typeof v === 'number') this.setBannerH(v); else if (v && typeof v.height === 'number') this.setBannerH(v.height); };
+    try {
+      if (m === 'native') { if (on) { const r = N.showBanner && N.showBanner('banner_menu'); if (r && r.then) r.then(hv).catch(() => this.setBannerH(0)); else hv(r); } else N.hideBanner && N.hideBanner(); }
+      else if (m === 'post') this.post(on ? 'show' : 'hide', 'banner', 'banner_menu', 4000).then((r) => { if (on) hv(r); });
+      else this.mockBanner(on);
+    } catch (e) {}
+  },
+  // gerçek banner yüksekliği (CSS px): düğmeler bu kadar yukarı kayar; 0 = banner gelmedi, yer kapanır
+  setBannerH(px) {
+    px = Math.max(0, Math.round(+px || 0)); this.cfg.banner.heightPx = px;
+    if (this.bannerOn) { document.body.classList.toggle('adbanner', px > 0); document.documentElement.style.setProperty('--adb', px + 'px'); }
+    if (SkyMap) SkyMap._lay = null;
   },
   // karşılama ekranı kartı: ekran her açıldığında yenilenir (en sık dakikada bir); kart dolu kalırsa tekrar yüklenmez
-  titleNative() {
+  titleNative(force) {
     const now = performance.now(), box = $('#natT'), nc = this.cfg.native;
     if (!box) return;
     if (this.overlay()) { // yerel görünüm: yuva ayrılır, reklamı köprü yuvanın üstüne çizer (slotTick)
-      const on = this.cfg.enabled && nc.enabled && !this.noAds() && nc.screens.includes('title');
+      const on = this.cfg.enabled && nc.enabled && !this.noAds() && nc.screens.includes('title') && !(this.natFill && this.natFill.native_title === false);
       box.innerHTML = ''; box.className = on ? 'slot' : ''; box.style.display = on ? '' : 'none'; this.slotOn = on; this._sk = null;
       this.setTnat(on); return;
     }
-    if (box.childElementCount && now - (this.natT || 0) < 60000) return;
+    if (!force && box.childElementCount && now - (this.natT || 0) < 60000) return;
     this.natT = now; this.fillNative(box, 'native_title');
   },
   overlay() { const N = this.native(); return N ? !!N.showNativeAt : this.mode() === 'post' && !!this.cfg.native.overlay; },
@@ -192,6 +256,8 @@ const AdBridge = {
   },
   /* ---------- test modu (SDK yokken) ---------- */
   mock(kind, placement) {
+    const to = this.cfg.testOutcome; // 'nofill' | 'error' | 'timeout' | 'closed': başarısız durumları kabuk olmadan dene
+    if (kind === 'rewarded' && to && to !== 'ok') return new Promise((r) => setTimeout(() => r({ ok: false, reason: to }), 600));
     return new Promise((res) => {
       const el = document.createElement('div'); el.className = 'admock';
       const rv = kind === 'rewarded'; let n = rv ? 3 : 2;
@@ -200,7 +266,7 @@ const AdBridge = {
       let done = false;
       const fin = (ok) => { if (done) return; done = true; clearInterval(tm); el.classList.remove('on'); setTimeout(() => el.remove(), 400); res(ok); };
       const tm = setInterval(() => { n--; el.querySelector('i').textContent = n > 0 ? n : '✓'; if (n <= 0) fin(rv ? true : undefined); }, 1000);
-      el.querySelector('button').addEventListener('click', (e) => { e.stopPropagation(); fin(rv ? false : undefined); });
+      el.querySelector('button').addEventListener('click', (e) => { e.stopPropagation(); fin(rv ? { ok: false, reason: 'closed' } : undefined); });
     });
   },
   mockBanner(on) {

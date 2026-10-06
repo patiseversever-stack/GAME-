@@ -824,8 +824,9 @@ const Wardrobe = {
    dokununca kısa bir pencere, isterse video ve paket: ışık tozu ya da bir gölge parçası. Kaçırılırsa birkaç dakika sonra döner. */
 const Gift = {
   on: false, t: 0, dur: 24, wait: 2.5, x: 0, y: 0,
-  last() { const a = Save.data.ads; if (a.giftLast == null) { a.giftLast = Date.now() - 17 * 60000; a.giftGap = 20 * 60000; Save.save(); } return a.giftLast; },
-  due() { return Date.now() - this.last() > (Save.data.ads.giftGap || 20 * 60000) && AdBridge.left('gift') > 0 && !AdBridge.busy; },
+  C() { return AdBridge.cfg.gift || { firstMin: 3, minMin: 20, maxMin: 30 }; },
+  last() { const a = Save.data.ads, C = this.C(); if (a.giftLast == null) { a.giftLast = Date.now() - (C.minMin - C.firstMin) * 60000; a.giftGap = C.minMin * 60000; Save.save(); } return a.giftLast; },
+  due() { const gap = Math.min(Save.data.ads.giftGap || 1e12, this.C().maxMin * 60000); return Date.now() - this.last() > gap && AdBridge.left('gift') > 0 && !AdBridge.busy; },
   ok() { return G.state === 'map' && SkyMap.active && !SkyMap.dive && SkyMap.intro >= 1 && !Meta.open && !Ward3D.on && !$('#adOffer').classList.contains('on') && !$('#map').classList.contains('diving'); },
   update(dtR) {
     const el = $('#giftZ');
@@ -841,7 +842,7 @@ const Gift = {
     else if (t > this.dur - tOut) { const e = Ease.inCubic(clamp01((t - (this.dur - tOut)) / tOut)); x = lerp(mx, -90, e); y = lerp(my, cy - 50, e); }
     const vx = x - this.x; this.x = x; this.y = y;
     el.style.transform = `translate3d(${(x - 34).toFixed(1)}px,${(y - 36).toFixed(1)}px,0) rotate(${clamp(vx * 0.9, -14, 14).toFixed(1)}deg)`;
-    if (t >= this.dur) { this.hide(false); Save.data.ads.giftLast = Date.now() - (Save.data.ads.giftGap || 20 * 60000) + 6 * 60000; Save.save(); } // kaçtı: ~6 dk sonra yine gelir
+    if (t >= this.dur) { this.hide(false); const a = Save.data.ads, C = this.C(); a.giftGap = C.minMin * 60000; a.giftLast = Date.now() - a.giftGap + Math.min(6, C.minMin * 0.3) * 60000; Save.save(); } // kaçtı: ~6 dk sonra yine gelir
   },
   spawn() { this.on = true; this.held = false; this.t = 0; this.x = innerWidth + 70; $('#giftZ').classList.add('on'); audio.whoosh && audio.whoosh(true, 0.5, 0.05); },
   hide(quick) { this.on = false; this.held = false; this.wait = 2.5; const el = $('#giftZ'); el.classList.remove('on'); if (quick) el.style.transform = 'translate3d(-200px,-200px,0)'; },
@@ -855,7 +856,7 @@ const Gift = {
   },
   leave() { if (!this.on) return; this.held = false; this.t = Math.max(this.t, this.dur - 2.4); },
   reward() {
-    const a = Save.data.ads; a.giftLast = Date.now(); a.giftGap = (20 + Math.random() * 10) * 60000; AdBridge.spend('gift');
+    const a = Save.data.ads, C = this.C(); a.giftLast = Date.now(); a.giftGap = (C.minMin + Math.random() * (C.maxMin - C.minMin)) * 60000; AdBridge.spend('gift');
     this.hide(false);
     const own = Save.data.costumes || [], P = Save.data.pieces || {}, cand = COSTUMES.filter((c) => pieceable(c.key) && !own.includes(c.key));
     if (cand.length && Math.random() < 0.3) {
@@ -906,7 +907,7 @@ $$('[data-set]').forEach((el) => el.addEventListener('click', () => {
    iPad Safari). Oyuncu geri hareketiyle çıkarsa sonraki dokunuşta yeniden girer. iPhone Safari bu
    API'yi desteklemez; mağaza uygulamasında çubukları kabuk gizler (docs/YAYIN_KURULUMU.md). */
 const FullScr = {
-  native: !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || !!window.GUNDONUMU_NATIVE,
+  native: !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || !!window.GUNDONUMU_NATIVE || !!window.GundonumuHost || !!window.GUNDONUMU_EMBED || !!hostChan(),
   auto: matchMedia('(pointer: coarse)').matches, t: -1e9,
   ok() { const d = document; return !this.native && !!(d.fullscreenEnabled || d.webkitFullscreenEnabled) && !matchMedia('(display-mode: fullscreen)').matches; },
   on() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
@@ -1277,13 +1278,58 @@ function bootGame() {
   const ld = $('#loader');
   const lift = () => {
     if (renderedFrames < 3 || performance.now() < 1100) { requestAnimationFrame(lift); return; }
-    window.__gdBooted = true; Film.begin(); ld.classList.add('off');
+    window.__gdBooted = true; Film.begin(); ld.classList.add('off'); Host.event('ready');
     setTimeout(() => { ld.style.display = 'none'; }, 1000);
   };
   requestAnimationFrame(lift);
 }
 // test/hata ayıklama kancası (görünmez)
-window.__gd = { Wardrobe, Rent, AdOffer, Gift,
+/* ---------- ana uygulamaya gömülü mini oyun (oyun arenası) ----------
+   Kabuk isteğe bağlı window.GundonumuHost = { exit(), haptic(ms), onEvent(name, data) } verir ya da mesaj kanalı açar.
+   Oyun kabuğa: { type: 'gd-exit' } (arenaya dön), { type: 'gd-back', handled } (geri tuşunun sonucu), { type: 'gd-event', name, data }.
+   Kabuk oyuna: gdBack() → true/false, gdPause(), gdResume(), gdSetSafe({...}), gdSetBannerHeight(px), gdSetNoAds(bool). */
+const Host = {
+  embedded: !!(window.GundonumuHost || window.GUNDONUMU_EMBED || hostChan()),
+  exit() {
+    audio.ui(); const H = window.GundonumuHost;
+    if (H && H.exit) { try { H.exit(); return; } catch (e) {} }
+    if (!hostSend({ type: 'gd-exit' })) toast('Arenaya dönmek için geri tuşunu kullan', 2);
+  },
+  event(name, data) { const H = window.GundonumuHost; try { if (H && H.onEvent) H.onEvent(name, data || {}); else if (this.embedded) hostSend({ type: 'gd-event', name, data: data || {} }); } catch (e) {} },
+  // Android geri tuşu: açık pencereyi kapatır, oyunu duraklatır ya da bir önceki ekrana döner; karşılama ekranındaysa false (kabuk oyundan çıkar)
+  back() {
+    const on = (q) => { const e = $(q); return !!e && e.classList.contains('on'); }, click = (q) => { const e = $(q); if (e) e.click(); };
+    if (AdBridge.busy) return true;
+    if (on('#adOffer')) { AdOffer.dismiss(); return true; }
+    if (on('#chest')) { if (Meta.chestStage >= 2) Meta.chestClose(); return true; }
+    if (TUT.open) { TUT.close(false); return true; }
+    if (Ward3D.on) { Wardrobe.close(); return true; }
+    if (KH.open || Lore.open) { (KH.open ? KH : Lore).finish(); return true; }
+    if (Abil.open) { Abil.next(); return true; }
+    if (on('#aSheet')) { $('#aSheet').classList.remove('on'); return true; }
+    if (Meta.open) { Meta.closeHz(); return true; }
+    if (on('#settings')) { click('#btnSetClose'); return true; }
+    const st = G.state;
+    if (st === 'film') { Film.skip(); return true; }
+    if (st === 'intro' && Cam.flight) { skipIntroFlight(); return true; }
+    if (st === 'play' || st === 'ready') { pause(); return true; }
+    if (st === 'paused') { resume(); return true; }
+    if (st === 'photo') { Photo.close(); return true; }
+    if (st === 'map') { if (!SkyMap.dive) click('#btnMapBack'); return true; }
+    if (st === 'theater') { click('#thBack'); return true; }
+    if (st === 'fail') { click('#btnMapF'); return true; }
+    if (st === 'complete') { click('#btnMapC'); return true; }
+    if (st === 'ending') { click('#btnEndOk'); return true; }
+    return st !== 'title'; // karşılama: oyun bunu işlemez, kabuk arenaya döner
+  },
+};
+window.gdBack = () => { const h = Host.back(); if (Host.embedded && !window.GundonumuHost) hostSend({ type: 'gd-back', handled: h }); return h; };
+window.gdPause = () => { if (G.state === 'play' || G.state === 'ready') pause(); audio.suspend(); };
+window.gdResume = () => { audio.resume(); lastT = performance.now(); };
+window.gdSetNoAds = (v) => { Save.data[AdBridge.cfg.noAdsKey] = !!v; Save.save(); AdBridge.bannerOn = !v && AdBridge.bannerOn; AdBridge.screen(AdBridge.scr || G.state); AdBridge.titleNative(true); };
+if (Host.embedded) document.body.classList.add('embed');
+bind('#btnExitT', () => Host.exit());
+window.__gd = { Wardrobe, Rent, AdOffer, Gift, Host,
   G, Save, Perf, Abil, Meta, Secret, AdBridge, TitleSky, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, TutStage, Dragon, Life, NightAct, nightSpec, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), bonus: (ch) => startBonus(ch), endless: (n, seed = 12345) => { startEndless(); G.endless.n = n; G.endless.seed = seed; enterLevel(endlessSpec(n, seed), { quick: true }); }, auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },

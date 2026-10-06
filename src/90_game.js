@@ -232,7 +232,13 @@ const UI = {
   hideAll() { for (const s of this.screens) this.hide(s); },
   hud(on) { $('#hud').classList.toggle('on', on); },
 };
-function haptic(p) { if (Save.data.settings.haptics && navigator.vibrate) try { navigator.vibrate(p); } catch (e) {} }
+// titreşim: kabuk sağlıyorsa onunki (iOS'ta navigator.vibrate yok), yoksa tarayıcınınki
+function haptic(p) {
+  if (!Save.data.settings.haptics) return;
+  const H = window.GundonumuHost;
+  if (H && H.haptic) { try { H.haptic(Array.isArray(p) ? p.reduce((a, b, i) => a + (i % 2 ? 0 : b), 0) : p); } catch (e) {} return; }
+  if (navigator.vibrate) try { navigator.vibrate(p); } catch (e) {}
+}
 let toastTimer = 0;
 function toast(html, dur = 3.2) { const t = $('#toast'); t.innerHTML = html; t.classList.add('on'); clearTimeout(toastTimer); if (dur > 0) toastTimer = setTimeout(() => t.classList.remove('on'), dur * 1000); }
 function hideToast() { clearTimeout(toastTimer); $('#toast').classList.remove('on'); }
@@ -612,6 +618,7 @@ function retry(fromComplete = false) {
 function failLevel() {
   if (G.state !== 'play') return;
   G.state = 'fail'; G.stateT = 0; G.fShown = false;
+  Host.event('level_fail', { mode: G.mode, g: G.lv && G.lv.spec.g });
   G.hitStop = 0.12; G.slowT = 0.8; G.slowK = 0.3; G.trauma = 0.22; G.ca = 0.02; G.ecl.active = false;
   audio.setSizzle(0); audio.fail(); haptic([30, 40, 70]);
   const x = zifir.g.position.x, z = zifir.g.position.z;
@@ -704,6 +711,7 @@ function saveStory() {
   return { chapterDone: g % 8 === 7, newSkin: before < 24 && after === 24 ? ch + 1 : 0, firstClear, fails: d.fails[g] || 0, flow: d.flow, newStars: G.stars.filter((s, i) => s && !prev.stars[i]).length };
 }
 function showComplete() {
+  Host.event('level_complete', { mode: G.mode, g: G.lv && G.lv.spec.g });
   const lv = G.lv, sp = lv.spec;
   let res = { chapterDone: false, newSkin: 0 };
   if (G.mode === 'story') res = saveStory();

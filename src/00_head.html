@@ -1220,6 +1220,11 @@ body.tnat #title .row .btn{height:42px}
 .qc .qt small .qrr svg{width:7px;height:7px;fill:currentColor}
 .qc.fresh{animation:qFresh .8s ease}
 @keyframes qFresh{0%{transform:scale(.96);box-shadow:0 0 0 2px rgba(159,240,255,.7)}100%{transform:none}}
+/* ---------- ana uygulamaya gömülü: arenaya dönüş ---------- */
+#btnExitT{display:none}
+body.embed #btnExitT{display:flex}
+#btnExitT i{background:rgba(255,236,205,.16)!important;border-color:rgba(255,236,205,.45)!important}
+@media (max-width:370px){body.embed #title .tbar .mini{min-width:40px}body.embed #title .tbar .mini span{font-size:8px;letter-spacing:.06em}body.embed #title .tbar .grp{gap:2px}}
 </style>
 </head>
 <body>
@@ -1242,6 +1247,7 @@ body.tnat #title .row .btn{height:42px}
     <div id="testBadge">Deneme · 64 ada açık</div>
     <div class="tbar">
       <div class="grp">
+        <button class="mini tap" id="btnExitT" aria-label="Arenaya dön"><i><svg viewBox="0 0 24 24"><path d="M15 5l-7 7 7 7"/></svg></i><span>Arena</span></button>
         <button class="mini tap" id="btnLoreT" aria-label="Hikâye"><i><svg viewBox="0 0 24 24"><path d="M4 5c3-1 6-1 8 1v14c-2-2-5-2-8-1Z"/><path d="M20 5c-3-1-6-1-8 1v14c2-2 5-2 8-1Z"/></svg></i><span>Hikâye</span></button>
         <button class="mini tap" id="btnHowT" aria-label="Nasıl oynanır"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9.3a2.5 2.5 0 0 1 4.8.9c0 1.7-2.4 2.2-2.4 3.6"/><path d="M12 17.2h.01"/></svg></i><span>Nasıl?</span></button>
       </div>
