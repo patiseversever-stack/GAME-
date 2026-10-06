@@ -315,8 +315,9 @@ const Cam = {
       this.title = this.solveFit(lv, { yTop: Math.min(0.8, nd(top)), yBot: Math.max(-0.86, nd(bot)), xI: 0.92, xO: 0.98, wx0: -0.02, wx1: 0.96 });
     } else if (port && br && ac && ac.offsetHeight) {
       // kısa ekranda ada ipucu/ana düğmenin arkasına biraz taşabilir (cam düğmeler), uzun ekranda tamamen açıkta kalır
-      const top = br.offsetTop + br.offsetHeight + 34, bot = ac.offsetTop + (H < 700 ? 18 : 6);
-      this.title = this.solveFit(lv, { yTop: Math.min(0.5, nd(top)), yBot: Math.max(-0.62, nd(bot)), xI: 0.86, xO: 0.97 });
+      // yay sloganın hemen altından başlar; ada ipucu şeridine çok az değebilir (yarı saydam)
+      const top = br.offsetTop + br.offsetHeight + 10, bot = ac.offsetTop + (H < 700 ? 18 : 14);
+      this.title = this.solveFit(lv, { yTop: Math.min(0.72, nd(top)), yBot: Math.max(-0.62, nd(bot)), xI: 0.86, xO: 0.97 });
     } else this.title = this.solveFit(lv, { yTop: port ? 0.5 : 0.56, yBot: port ? -0.62 : -0.72, xI: 0.86, xO: 0.97 });
   },
   cinema(to, dur, ease = Ease.inOutCubic) { this.cine = { from: { target: this.cur.target.clone(), dist: this.cur.dist, pitch: this.cur.pitch, yaw: this.cur.yaw, fov: this.cur.fov }, to, t: 0, dur, ease }; },

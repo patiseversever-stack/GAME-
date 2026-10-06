@@ -905,9 +905,11 @@ body.testall #testBadge{display:block}
 .dpill{display:inline-flex;align-items:center;gap:7px;height:36px;padding:0 13px 0 11px;border-radius:999px;background:linear-gradient(180deg,rgba(60,40,20,.55),rgba(30,18,10,.6));border:1px solid rgba(255,214,140,.45);
   font-weight:800;font-size:14px;letter-spacing:.04em;color:#ffe9bd;box-shadow:0 4px 16px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,240,200,.15);font-variant-numeric:tabular-nums}
 .dpill.bump{animation:bump .45s cubic-bezier(.3,1.8,.5,1)}
-.badge{position:absolute;top:-3px;right:-3px;min-width:18px;height:18px;padding:0 5px;border-radius:9px;background:linear-gradient(180deg,#ff8a5c,#e8503a);color:#fff;font-size:10.5px;font-weight:800;line-height:18px;text-align:center;box-shadow:0 0 0 2px rgba(20,12,30,.9),0 0 12px rgba(255,110,70,.7);display:none;font-style:normal}
-.badge.on{display:block;animation:badgeP 1.6s ease-in-out infinite}
-@keyframes badgeP{50%{transform:scale(1.15)}}
+.badge{position:absolute;top:-4px;right:-4px;min-width:19px;height:19px;padding:0 5px;border-radius:10px;background:linear-gradient(180deg,#ff8f72,#ec4a4f);color:#fff;font-size:10.5px;font-weight:800;line-height:19px;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:0;text-shadow:0 1px 1px rgba(120,20,20,.45);box-shadow:0 0 0 2px rgba(22,13,38,.92),0 3px 10px rgba(236,74,79,.55),inset 0 1px 0 rgba(255,255,255,.35);display:none;font-style:normal}
+.badge.on{display:block;animation:badgeIn .55s cubic-bezier(.3,1.7,.5,1) both}
+.badge.on::after{content:"";position:absolute;inset:0;border-radius:inherit;box-shadow:0 0 0 2px rgba(255,120,95,.75);animation:badgePing 2.6s ease-out .8s infinite;pointer-events:none}
+@keyframes badgeIn{from{transform:scale(0)}to{transform:scale(1)}}
+@keyframes badgePing{0%{transform:scale(1);opacity:.9}70%,100%{transform:scale(1.9);opacity:0}}
 #hz{justify-content:flex-start;padding:calc(var(--sat) + 12px) 0 0;background:radial-gradient(120% 70% at 50% 0%,rgba(60,42,110,.9),rgba(16,11,32,.97) 55%,#0b0818 100%)}
 #hz .hztop{width:100%;display:flex;align-items:center;justify-content:space-between;padding:0 calc(var(--sar) + 16px) 0 calc(var(--sal) + 16px)}
 #hz .hzt{text-align:center}#hz .hzt small{display:block;font-size:10px;font-weight:800;letter-spacing:.42em;text-transform:uppercase;color:var(--gold-2)}
@@ -1141,17 +1143,19 @@ body.tnight #title .tag{color:rgba(225,220,255,.9)}
 #title{padding-top:calc(var(--sat) + max(9vh, 78px))}
 body.testall #title{padding-top:calc(var(--sat) + max(9vh, 78px) + 18px)}
 body.testall #testBadge{top:calc(var(--sat) + 64px)}
-#title .tbar{position:absolute;z-index:3;top:calc(var(--sat) + 10px);left:calc(var(--sal) + 10px);right:calc(var(--sar) + 10px);display:flex;justify-content:space-between;align-items:flex-start;opacity:0;transform:translateY(-8px);transition:opacity .9s ease 1.5s,transform .9s cubic-bezier(.2,.9,.2,1) 1.5s}
+#title .tbar{position:absolute;z-index:3;top:calc(var(--sat) + 10px);left:calc(var(--sal) + 12px);right:calc(var(--sar) + 12px);display:flex;justify-content:space-between;align-items:flex-start;opacity:0;transform:translateY(-8px);transition:opacity .9s ease 1.5s,transform .9s cubic-bezier(.2,.9,.2,1) 1.5s}
 #title.on .tbar{opacity:1;transform:none}
 #title .tbar .grp{display:flex;gap:4px}
 #title .tbar .mini{min-width:46px;gap:4px}
-#title .tbar .mini i{width:40px;height:40px}
-#title .tbar .mini span{font-size:8.5px;letter-spacing:.12em}
+#title .tbar .mini i{width:42px;height:42px;background:rgba(24,15,44,.52);border:1px solid rgba(255,236,205,.3);box-shadow:0 4px 14px rgba(12,6,28,.3),inset 0 1px 0 rgba(255,255,255,.14);-webkit-backdrop-filter:blur(14px) saturate(1.3);backdrop-filter:blur(14px) saturate(1.3)}
+#title .tbar .mini svg{stroke:#fff3dc;width:20px;height:20px}
+#title .tbar .mini span{font-size:9px;font-weight:800;letter-spacing:.12em;color:#fff7ea;text-shadow:0 1px 2px rgba(18,8,36,.85),0 0 10px rgba(18,8,36,.6)}
+#title .tbar .mini:active i{transform:scale(.9);background:rgba(24,15,44,.7)}
 #title .actions{gap:12px}
 #btnPlay{height:54px}
 #title .row .btn{height:46px;min-width:0;padding:0 26px}
 #title .hint{padding:5px 13px}
-body.tnat #title{padding-bottom:calc(var(--sab) + 30px + var(--nath))}
+body.tnat #title{padding-bottom:calc(var(--sab) + 38px + var(--nath))}
 body.tnat #title .actions{gap:10px}
 body.tnat #btnPlay{height:50px}
 body.tnat #title .row .btn{height:42px}

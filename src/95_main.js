@@ -271,7 +271,8 @@ const TLOOK = {}; for (const k in TLOOK_DEF) { const d = TLOOK_DEF[k]; TLOOK[k] 
 // kamera koreografisi (zaman oranı φ: yaw rad · eğim derece · uzaklık çarpanı · hedef yüksekliği)
 // gün doğumu: soldan alçak → öğle: yüksek geniş → gün batımı: sağdan alçak, dramatik → mavi saat ve gece: geri çekilip
 // göğe açılır (havai fişeklere yer) → tan: sola süzülür
-const TCAM = [[0, -0.3, -6, 0.93, 0.15], [0.31, 0, 4, 1.05, 0], [0.6, 0.3, -7, 0.92, 0], [0.71, 0.24, -3, 0.98, 0.3], [0.85, 0.02, 1.5, 1.07, 0.6], [0.95, -0.22, -3, 1.0, 0.35], [1, -0.3, -6, 0.93, 0.15]];
+// [döngü anı, yaw, pitch°, uzaklık, hedef yüksekliği]: altın saatte yaklaşır, gün batımında en yakın, gecede geniş plan
+const TCAM = [[0, -0.3, -6, 0.88, 0.1], [0.31, 0, 4, 1.04, 0], [0.6, 0.3, -7, 0.84, 0], [0.71, 0.24, -3, 0.94, 0.15], [0.85, 0.02, 1.5, 1.08, 0.3], [0.95, -0.22, -3, 0.97, 0.2], [1, -0.3, -6, 0.88, 0.1]];
 const _tsc = new THREE.Color(), _tsv = new THREE.Vector3();
 const TitleSky = {
   c: -1, fwT: 1.2, grand: false, lastDrag: -99, nightOn: false, glow: 0,
@@ -286,6 +287,7 @@ const TitleSky = {
   camPose() {
     const o = this.camAt(this.c >= 0 ? this.c : this.timeForU(G.u), this._o || (this._o = {})), t = U.uTime.value;
     o.yaw += Math.sin(t * 0.23) * 0.015; o.pitch += deg(Math.sin(t * 0.17 + 1) * 0.6);
+    o.dist *= 1 + Math.sin(t * 0.21) * 0.035; // yavaş nefes: kamera hafifçe yaklaşıp uzaklaşır
     return o;
   },
   camAt(c, o = {}) {
