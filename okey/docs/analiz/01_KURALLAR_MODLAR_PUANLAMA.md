@@ -194,7 +194,7 @@ Ayrıca bildirimlerin kalitesine bak:
 
 ## 1.8 Botlar
 
-- Botlar her zaman geçerli hamle mi yapıyor? 200 maçlık otomatik koşuda reddedilen hamle sayısını ölç.
+- Botlar her zaman geçerli hamle mi yapıyor? Uzun koşu testindeki (1.9) maçlarda reddedilen hamle sayısını ölç; ayrı koşu gerekmez.
 - 101'de botlar açabiliyor ve işleyebiliyor mu? Gereksiz yere açmadan mı bekliyorlar? Okey geri alma ve cezalardan
   kaçınmayı biliyorlar mı?
 - Zorluk seviyeleri gerçekten farklı mı? Galibiyet oranlarını ölç.
@@ -212,7 +212,7 @@ Ayrıca bildirimlerin kalitesine bak:
   - zamanlayıcılar
 - Uygulama kapanıp açılınca oyun kaldığı yerden devam ediyor mu (kayıt / geri yükleme)?
 - Maçtan çıkma, yeniden başlatma, duraklatma.
-- **Uzun koşu testi:** Her mod için 100 maçı tamamen botlarla, ekransız ya da hızlandırılmış oynatan bir betik yaz.
+- **Uzun koşu testi:** Her mod için 100 maçı tamamen botlarla, **ekransız** (`src/game/sim.js` içindeki `playMatch` ile) oynatan bir betik yaz. Toplam birkaç dakikayı geçmemeli.
   Her adımda şunları denetle:
   - taş sayısı her an 106
   - hiçbir taş çift değil ya da kaybolmamış

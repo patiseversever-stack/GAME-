@@ -12,6 +12,17 @@ Her parça ayrı bir görevdir. Sana hangi parça verildiyse **yalnız onu** yap
 
 Elinde yarım bir iş varsa (ör. çevrim içi ekranlar), analize başlamadan önce onu bitir, testleri çalıştır ve commit et.
 
+## Süre sınırı (önemli)
+
+Bu analiz **hızlı ve derin** olmalı. Hedef: bir parça en fazla **60–90 dakika** sürsün.
+- **Toplu testleri ekransız çalıştır.** Kural motorunu doğrudan kullan, ekran çizme. Örnek: `src/game/sim.js`
+  içindeki `playMatch`. Ölçüm: 100 maç klasikte yaklaşık 40 sn, 101'de yaklaşık 13 sn sürüyor.
+  Saf fonksiyon testleri (dizme, toplam hesabı) 10.000 elde bile saniyeler sürer.
+- **Ekranlı (tarayıcı) denemeleri az ve hedefli yap.** Her soru için 1–3 örnek ve ekran görüntüsü yeterli.
+  Tarayıcıda uzun maç oynatma; gereken ana gelmek için oyunun test kancalarını (`window.__okey`) kullan.
+- Uzun süren işleri arka planda başlat, beklerken kodu incele.
+- Bir test 5 dakikayı geçerse durdur, nedenini rapora yaz ve devam et.
+
 ## Kurallar
 
 1. **Bu bir analizdir.**

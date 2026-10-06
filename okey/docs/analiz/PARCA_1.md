@@ -17,6 +17,17 @@ Sana yalnız bu parça verildi; **yalnız bunu** yap. Bu dosya kendi başına ek
 
 Elinde yarım bir iş varsa (ör. çevrim içi ekranlar), analize başlamadan önce onu bitir, testleri çalıştır ve commit et.
 
+## Süre sınırı (önemli)
+
+Bu analiz **hızlı ve derin** olmalı. Hedef: bir parça en fazla **60–90 dakika** sürsün.
+- **Toplu testleri ekransız çalıştır.** Kural motorunu doğrudan kullan, ekran çizme. Örnek: `src/game/sim.js`
+  içindeki `playMatch`. Ölçüm: 100 maç klasikte yaklaşık 40 sn, 101'de yaklaşık 13 sn sürüyor.
+  Saf fonksiyon testleri (dizme, toplam hesabı) 10.000 elde bile saniyeler sürer.
+- **Ekranlı (tarayıcı) denemeleri az ve hedefli yap.** Her soru için 1–3 örnek ve ekran görüntüsü yeterli.
+  Tarayıcıda uzun maç oynatma; gereken ana gelmek için oyunun test kancalarını (`window.__okey`) kullan.
+- Uzun süren işleri arka planda başlat, beklerken kodu incele.
+- Bir test 5 dakikayı geçerse durdur, nedenini rapora yaz ve devam et.
+
 ## Kurallar
 
 1. **Bu bir analizdir.**
@@ -285,7 +296,7 @@ Ayrıca bildirimlerin kalitesine bak:
 
 ## 1.8 Botlar
 
-- Botlar her zaman geçerli hamle mi yapıyor? 200 maçlık otomatik koşuda reddedilen hamle sayısını ölç.
+- Botlar her zaman geçerli hamle mi yapıyor? Uzun koşu testindeki (1.9) maçlarda reddedilen hamle sayısını ölç; ayrı koşu gerekmez.
 - 101'de botlar açabiliyor ve işleyebiliyor mu? Gereksiz yere açmadan mı bekliyorlar? Okey geri alma ve cezalardan
   kaçınmayı biliyorlar mı?
 - Zorluk seviyeleri gerçekten farklı mı? Galibiyet oranlarını ölç.
@@ -303,7 +314,7 @@ Ayrıca bildirimlerin kalitesine bak:
   - zamanlayıcılar
 - Uygulama kapanıp açılınca oyun kaldığı yerden devam ediyor mu (kayıt / geri yükleme)?
 - Maçtan çıkma, yeniden başlatma, duraklatma.
-- **Uzun koşu testi:** Her mod için 100 maçı tamamen botlarla, ekransız ya da hızlandırılmış oynatan bir betik yaz.
+- **Uzun koşu testi:** Her mod için 100 maçı tamamen botlarla, **ekransız** (`src/game/sim.js` içindeki `playMatch` ile) oynatan bir betik yaz. Toplam birkaç dakikayı geçmemeli.
   Her adımda şunları denetle:
   - taş sayısı her an 106
   - hiçbir taş çift değil ya da kaybolmamış
