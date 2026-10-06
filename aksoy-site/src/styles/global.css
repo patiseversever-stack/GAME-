@@ -249,11 +249,22 @@ body[data-theme='light'] .site-header:not([data-variant='dark']) .site-header__n
 .count-badge.bump { animation: bump 500ms var(--ease-out); }
 @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.45); } 100% { transform: scale(1); } }
 
-.logo { display: inline-flex; align-items: center; flex: none; }
-.logo__svg { display: block; height: 40px; width: auto; aspect-ratio: 140 / 40; overflow: visible; }
-.logo__w { font-family: var(--f-display); font-weight: 700; font-size: 24px; }
-.logo__s { font-family: var(--f-display); font-weight: 600; font-size: 7.6px; opacity: 0.62; }
-@media (max-width: 560px) { .logo__svg { height: 34px; } }
+.logo { --lh: 48px; display: inline-flex; align-items: center; gap: 10px; flex: none; }
+/* Dönen takım: yatay kare şeridi adım adım kayar */
+.logo__3d { position: relative; width: var(--lh); height: var(--lh); flex: none; filter: drop-shadow(0 6px 10px rgba(0, 0, 0, 0.28)); }
+.lm {
+  position: absolute; inset: 0; background-repeat: no-repeat; background-size: auto 100%; background-position: 0 0;
+  animation: lm-spin var(--d) steps(var(--n)) infinite;
+  opacity: 0; transform: scale(0.55) rotate(-30deg); transition: opacity 420ms var(--ease-out), transform 620ms var(--ease-out);
+}
+.lm.is-on { opacity: 1; transform: none; }
+@keyframes lm-spin { to { background-position-x: calc(100% * var(--n) / (var(--n) - 1)); } }
+/* İri yazı: AKSOY ve altında aynı genişlikte KESİCİ TAKIMLAR */
+.logo__type { display: block; height: var(--lh); width: auto; aspect-ratio: 104 / 40; overflow: visible; }
+.logo__w { font-family: var(--f-display); font-weight: 700; font-size: 34px; fill: currentColor; stroke: currentColor; stroke-width: 0.7px; stroke-linejoin: round; paint-order: stroke; }
+.logo__s { font-family: var(--f-display); font-weight: 600; font-size: 8.6px; fill: currentColor; opacity: 0.66; }
+@media (max-width: 560px) { .logo { --lh: 40px; gap: 8px; } }
+@media (prefers-reduced-motion: reduce) { .lm { animation: none; transition: none; } }
 
 .menu-btn { display: none; }
 /* Ses düğmesi: kapalıyken alçak sabit çubuklar, açıkken ekolayzır gibi oynar */
@@ -537,7 +548,7 @@ html:has(.drawer.is-open, [data-menu].is-open) .toast.is-on { transform: transla
 }
 .fnav__brand::before { content: ''; position: absolute; inset: -1px; border-radius: inherit; pointer-events: none; padding: 1px; background: linear-gradient(140deg, rgba(217, 164, 65, 0.45), transparent 35%, transparent 70%, rgba(255, 255, 255, 0.08)); -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor; mask-composite: exclude; }
 .fnav__logo { justify-self: start; color: var(--g-50); }
-.fnav__logo .logo__svg { height: 46px; }
+.fnav__logo { --lh: 52px; }
 .fnav__lead { font-size: var(--fs-sm); line-height: 1.6; color: var(--g-300); max-width: 42ch; }
 .fnav__status { display: inline-flex; align-items: center; gap: 10px; justify-self: start; padding: 7px 14px 7px 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--g-800); font-size: 13px; color: var(--g-200); }
 .fnav__status i { width: 8px; height: 8px; border-radius: 50%; background: var(--g-500); flex: none; }

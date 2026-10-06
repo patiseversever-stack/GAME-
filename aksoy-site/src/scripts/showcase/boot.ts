@@ -38,6 +38,7 @@ export function initShowcase() {
   }
 
   let onReady: (() => void) | undefined;
+  if (usePre && pre) film(pre, () => done, () => finishPre(onReady));
   function tick() {
     if (done) return;
     shown += (target - shown) * 0.08;
@@ -45,8 +46,8 @@ export function initShowcase() {
     const v = Math.round(shown * 100);
     if (num) num.textContent = String(v).padStart(3, '0');
     if (bar) bar.style.transform = `scaleX(${shown})`;
-    // Açılış canlandırması (işaret, harfler, alt yazı) yaklaşık 3 sn sürer
-    const minTime = performance.now() - startedAt > 3000;
+    // Açılış filmi (çizim, gerçek uç, logo) yaklaşık 4,8 sn sürer
+    const minTime = performance.now() - startedAt > 4800 && !(window as any).__pfFreeze;
     if (shown >= 1 && minTime) { finishPre(onReady); return; }
     requestAnimationFrame(tick);
   }
@@ -65,8 +66,8 @@ export function initShowcase() {
 
   if (usePre) {
     requestAnimationFrame(tick);
-    // Ağ yavaşsa perdeyi en geç 5,5 sn'de kaldır; poster görünür kalır, 3D hazır olunca devreye girer.
-    setTimeout(() => { target = 1; shown = 1; finishPre(onReady); }, 5500);
+    // Ağ yavaşsa perdeyi en geç 7,5 sn'de kaldır; poster görünür kalır, 3D hazır olunca devreye girer.
+    setTimeout(() => { target = 1; shown = 1; finishPre(onReady); }, 7500);
   }
 
   const go = () =>
@@ -90,4 +91,60 @@ export function initShowcase() {
   if (usePre || poster) go();
   else if ('requestIdleCallback' in window) (window as any).requestIdleCallback(go, { timeout: 600 });
   else setTimeout(go, 200);
+}
+
+/**
+ * Açılış filminin zamanlaması: imleç koordinatları okunur, gerçek uç çizimin üstünde belirir
+ * ve logodaki yerine uçar. "Geç" düğmesi filmi bitirir.
+ */
+function film(pre: HTMLElement, isDone: () => boolean, skip: () => void) {
+  const svg = pre.querySelector<SVGSVGElement>('[data-pf-draw]');
+  const cursor = pre.querySelector<SVGGElement>('[data-pf-cursor]');
+  const real = pre.querySelector<HTMLElement>('[data-pf-real]');
+  const slot = pre.querySelector<HTMLElement>('[data-pf-slot]');
+  const xEl = pre.querySelector<HTMLElement>('[data-pf-x]');
+  const yEl = pre.querySelector<HTMLElement>('[data-pf-y]');
+  pre.querySelector('[data-pf-skip]')?.addEventListener('click', skip);
+  if (!svg || !real || !slot) return;
+  // Telefonda kadraj önden ve yandan görünüşe yaklaşır (pafta kenarları dışarıda kalır)
+  if (matchMedia('(max-width: 700px)').matches) svg.setAttribute('viewBox', '150 105 650 440');
+  const t0 = performance.now();
+  const fmt = (v: number) => (v < 0 ? '−' : '') + Math.abs(v).toFixed(3).replace('.', ',').padStart(7, '0');
+  // İmleç konumu (çizim birimi) → mm: önden görünüş merkezi sıfır, 14 birim = 1 mm
+  const readout = () => {
+    if (isDone() || performance.now() - t0 > 3600) return;
+    if (cursor && xEl && yEl) {
+      const m = new DOMMatrix(getComputedStyle(cursor).transform);
+      xEl.textContent = fmt((m.e - 360) / 14);
+      yEl.textContent = fmt((300 - m.f) / 14);
+    }
+    requestAnimationFrame(readout);
+  };
+  requestAnimationFrame(readout);
+  const place = (x: number, y: number, size: number) => {
+    real.style.setProperty('--rx', `${x}px`);
+    real.style.setProperty('--ry', `${y}px`);
+    real.style.setProperty('--rs', `${size}px`);
+  };
+  // Gerçek uç: önden görünüşün merkezinde, çizilen uç boyunda
+  const showReal = () => {
+    if (isDone()) return;
+    const ctm = svg.getScreenCTM();
+    if (ctm) {
+      const p = new DOMPoint(360, 300).matrixTransform(ctm);
+      place(p.x, p.y, 360 * ctm.a);
+    }
+    pre.classList.add('is-real');
+  };
+  // Logoya uçuş ve AKSOY
+  const lock = () => {
+    if (isDone()) return;
+    const r = slot.getBoundingClientRect();
+    place(r.left + r.width / 2, r.top + r.height / 2, r.width);
+    pre.classList.add('is-lock');
+  };
+  // Test kancası: zamanlayıcılar kurulmaz, adımlar elle çağrılır
+  if ((window as any).__pfFreeze) { (window as any).__pf = { showReal, lock }; return; }
+  setTimeout(showReal, 2650);
+  setTimeout(lock, 3350);
 }

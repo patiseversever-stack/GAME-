@@ -1,0 +1,157 @@
+---
+// Açılış filmi: siyah pafta üzerinde CNMG 120408 ucunun teknik çizimi kendini çizer
+// (merkez çizgileri, önden ve yandan görünüş, ölçü okları, antet), CAD imleci koordinat okuyarak merkeze gelir;
+// çizimin üstünde gerçek altın uç belirip döner, logonun yerine uçar ve iri AKSOY yazısı yükselir.
+// Ölçek: 1 mm = 14 birim. Önden görünüş merkezi (360, 300).
+
+const K = 14;
+const C = { x: 360, y: 300 };
+const IC = 12.7 * K; // iç teğet daire
+const side = IC / Math.sin((80 * Math.PI) / 180); // kenar uzunluğu
+const hl = side * Math.cos((40 * Math.PI) / 180); // uzun yarım köşegen (80° köşeler)
+const hs = side * Math.sin((40 * Math.PI) / 180); // kısa yarım köşegen
+const rN = 0.8 * K; // köşe radyüsü
+
+type P = { x: number; y: number };
+const f = (n: number) => +n.toFixed(1);
+/** Köşeleri yarıçaplı kapalı çokgen yolu */
+function roundedPoly(v: P[], r: number) {
+  const n = v.length;
+  let d = '';
+  for (let i = 0; i < n; i++) {
+    const p0 = v[(i - 1 + n) % n], p1 = v[i], p2 = v[(i + 1) % n];
+    const a = { x: p0.x - p1.x, y: p0.y - p1.y }, b = { x: p2.x - p1.x, y: p2.y - p1.y };
+    const la = Math.hypot(a.x, a.y), lb = Math.hypot(b.x, b.y);
+    const ang = Math.acos((a.x * b.x + a.y * b.y) / (la * lb));
+    const t = r / Math.tan(ang / 2);
+    const s = { x: p1.x + (a.x / la) * t, y: p1.y + (a.y / la) * t };
+    const e = { x: p1.x + (b.x / lb) * t, y: p1.y + (b.y / lb) * t };
+    const cross = a.x * b.y - a.y * b.x;
+    d += `${i === 0 ? 'M' : 'L'}${f(s.x)} ${f(s.y)} A${f(r)} ${f(r)} 0 0 ${cross < 0 ? 1 : 0} ${f(e.x)} ${f(e.y)} `;
+  }
+  return d + 'Z';
+}
+const rhombus = (l: number, s: number): P[] => [
+  { x: C.x - l, y: C.y }, { x: C.x, y: C.y + s }, { x: C.x + l, y: C.y }, { x: C.x, y: C.y - s },
+];
+const outer = roundedPoly(rhombus(hl, hs), rN);
+const o = 1.25 * K; // talaş kırıcı iç çizgisi
+const inner = roundedPoly(rhombus(hl - o / Math.sin((40 * Math.PI) / 180), hs - o / Math.sin((50 * Math.PI) / 180)), rN * 0.7);
+const holeR = (5.16 / 2) * K;
+const sinkR = holeR + 0.9 * K;
+
+// Kenar ölçüsü (sol alt kenara paralel)
+const L = { x: C.x - hl, y: C.y }, B = { x: C.x, y: C.y + hs };
+const dir = { x: (B.x - L.x) / side, y: (B.y - L.y) / side };
+const nrm = { x: -dir.y, y: dir.x }; // dışa (sol aşağı)
+const off = 38;
+const e1 = { x: L.x + nrm.x * off, y: L.y + nrm.y * off }, e2 = { x: B.x + nrm.x * off, y: B.y + nrm.y * off };
+const edgeMid = { x: (e1.x + e2.x) / 2 + nrm.x * 16, y: (e1.y + e2.y) / 2 + nrm.y * 16 };
+const edgeAng = (Math.atan2(dir.y, dir.x) * 180) / Math.PI;
+
+// 80° açı yayı (sol köşe)
+const aR = 74;
+const ang = (deg: number) => ({ x: L.x + aR * Math.cos((deg * Math.PI) / 180), y: L.y + aR * Math.sin((deg * Math.PI) / 180) });
+const a1 = ang(-40), a2 = ang(40);
+
+// Yandan görünüş: kalınlık s = 4,76 mm, yükseklik kısa köşegen
+const sv = { x: 690, w: 4.76 * K, top: C.y - hs, bot: C.y + hs };
+const fx = (n: number) => f(n);
+---
+<div class="preloader" data-preloader>
+  <div class="pf__grid" aria-hidden="true"></div>
+  <svg class="pf__draw" viewBox="0 0 1000 600" preserveAspectRatio="xMidYMid meet" aria-hidden="true" data-pf-draw>
+    <defs>
+      <marker id="pf-arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 1.5 9 5 0 8.5z" fill="#d9a441" /></marker>
+    </defs>
+    <!-- Pafta çerçevesi ve bölge işaretleri -->
+    <g class="pf-frame">
+      <rect class="pf-ln pf-d0" x="20" y="20" width="960" height="560" pathLength="1" />
+      {[1, 2, 3, 4, 5].map((i) => <line class="pf-tick" x1={20 + i * 160} y1="20" x2={20 + i * 160} y2="30" />)}
+      {[1, 2, 3].map((i) => <line class="pf-tick" x1="20" y1={20 + i * 140} x2="30" y2={20 + i * 140} />)}
+      {['A', 'B', 'C', 'D', 'E', 'F'].map((t, i) => <text class="pf-zone" x={100 + i * 160} y="16">{t}</text>)}
+    </g>
+    <!-- Merkez çizgileri -->
+    <line class="pf-cl pf-d1" x1="120" y1={C.y} x2={fx(sv.x + sv.w + 60)} y2={C.y} pathLength="1" />
+    <line class="pf-cl pf-d1b" x1={C.x} y1="90" x2={C.x} y2="510" pathLength="1" />
+    <line class="pf-cl pf-d1b" x1={fx(sv.x + sv.w / 2)} y1="150" x2={fx(sv.x + sv.w / 2)} y2="450" pathLength="1" />
+    <!-- Önden görünüş -->
+    <path class="pf-ln pf-strong pf-d2" d={outer} pathLength="1" />
+    <path class="pf-ln pf-thin pf-d3" d={inner} pathLength="1" />
+    <circle class="pf-ln pf-strong pf-d3" cx={C.x} cy={C.y} r={fx(holeR)} pathLength="1" />
+    <circle class="pf-ln pf-thin pf-d3b" cx={C.x} cy={C.y} r={fx(sinkR)} pathLength="1" />
+    <circle class="pf-ln pf-hid pf-d4" cx={C.x} cy={C.y} r={fx(IC / 2)} pathLength="1" />
+    <!-- Ölçüler -->
+    <g class="pf-dim pf-d5">
+      <line x1={fx(L.x)} y1={fx(L.y)} x2={fx(e1.x + nrm.x * 8)} y2={fx(e1.y + nrm.y * 8)} />
+      <line x1={fx(B.x)} y1={fx(B.y)} x2={fx(e2.x + nrm.x * 8)} y2={fx(e2.y + nrm.y * 8)} />
+      <line x1={fx(e1.x)} y1={fx(e1.y)} x2={fx(e2.x)} y2={fx(e2.y)} marker-start="url(#pf-arr)" marker-end="url(#pf-arr)" />
+      <text class="pf-num" transform={`translate(${fx(edgeMid.x)} ${fx(edgeMid.y)}) rotate(${fx(edgeAng)})`} text-anchor="middle">12,9</text>
+    </g>
+    <g class="pf-dim pf-d6">
+      <path d={`M${fx(a1.x)} ${fx(a1.y)} A${aR} ${aR} 0 0 1 ${fx(a2.x)} ${fx(a2.y)}`} marker-start="url(#pf-arr)" marker-end="url(#pf-arr)" />
+      <text class="pf-num" x={fx(L.x + aR + 16)} y={fx(L.y + 6)}>80°</text>
+    </g>
+    <g class="pf-dim pf-d6b">
+      <line x1={fx(C.x + IC / 2 * Math.cos(-0.8))} y1={fx(C.y + IC / 2 * Math.sin(-0.8))} x2={fx(C.x + 150)} y2={fx(C.y - 150)} marker-start="url(#pf-arr)" />
+      <line x1={fx(C.x + 150)} y1={fx(C.y - 150)} x2={fx(C.x + 230)} y2={fx(C.y - 150)} />
+      <text class="pf-num" x={fx(C.x + 156)} y={fx(C.y - 158)}>IC Ø12,70</text>
+    </g>
+    <g class="pf-dim pf-d7">
+      <line x1={fx(C.x + hl - 4)} y1={fx(C.y + 4)} x2={fx(C.x + hl + 50)} y2={fx(C.y + 70)} marker-start="url(#pf-arr)" />
+      <line x1={fx(C.x + hl + 50)} y1={fx(C.y + 70)} x2={fx(C.x + hl + 112)} y2={fx(C.y + 70)} />
+      <text class="pf-num" x={fx(C.x + hl + 54)} y={fx(C.y + 62)}>rε 0,8</text>
+    </g>
+    <!-- İzdüşüm çizgileri ve yandan görünüş -->
+    <line class="pf-proj pf-d7" x1={fx(C.x + 14)} y1={fx(sv.top)} x2={fx(sv.x - 8)} y2={fx(sv.top)} pathLength="1" />
+    <line class="pf-proj pf-d7" x1={fx(C.x + 14)} y1={fx(sv.bot)} x2={fx(sv.x - 8)} y2={fx(sv.bot)} pathLength="1" />
+    <rect class="pf-ln pf-strong pf-d8" x={fx(sv.x)} y={fx(sv.top)} width={fx(sv.w)} height={fx(sv.bot - sv.top)} pathLength="1" />
+    <line class="pf-ln pf-hid pf-d8b" x1={fx(sv.x)} y1={fx(C.y - holeR)} x2={fx(sv.x + sv.w)} y2={fx(C.y - holeR)} pathLength="1" />
+    <line class="pf-ln pf-hid pf-d8b" x1={fx(sv.x)} y1={fx(C.y + holeR)} x2={fx(sv.x + sv.w)} y2={fx(C.y + holeR)} pathLength="1" />
+    <g class="pf-dim pf-d9">
+      <line x1={fx(sv.x)} y1={fx(sv.top - 6)} x2={fx(sv.x)} y2={fx(sv.top - 44)} />
+      <line x1={fx(sv.x + sv.w)} y1={fx(sv.top - 6)} x2={fx(sv.x + sv.w)} y2={fx(sv.top - 44)} />
+      <line x1={fx(sv.x)} y1={fx(sv.top - 36)} x2={fx(sv.x + sv.w)} y2={fx(sv.top - 36)} marker-start="url(#pf-arr)" marker-end="url(#pf-arr)" />
+      <text class="pf-num" x={fx(sv.x + sv.w / 2)} y={fx(sv.top - 44)} text-anchor="middle">s 4,76</text>
+      <text class="pf-num pf-num--sm" x={fx(sv.x + sv.w + 18)} y={fx(C.y + 4)}>0°</text>
+    </g>
+    <text class="pf-label pf-d5" x={C.x} y="548" text-anchor="middle">ÖNDEN GÖRÜNÜŞ</text>
+    <text class="pf-label pf-d8" x={fx(sv.x + sv.w / 2)} y="548" text-anchor="middle">YANDAN</text>
+    <!-- Antet -->
+    <g class="pf-title pf-d10">
+      <rect x="760" y="470" width="220" height="110" />
+      <line x1="760" y1="506" x2="980" y2="506" /><line x1="760" y1="543" x2="980" y2="543" /><line x1="870" y1="506" x2="870" y2="580" />
+      <text x="772" y="494" class="pf-tt">AKSOY KESİCİ TAKIMLAR</text>
+      <text x="772" y="529" class="pf-ts">CNMG 120408</text>
+      <text x="882" y="529" class="pf-ts">ISO 1832</text>
+      <text x="772" y="566" class="pf-ts">ÖLÇEK 14:1</text>
+      <text x="882" y="566" class="pf-ts">PAFTA 01/01</text>
+    </g>
+    <!-- CAD imleci -->
+    <g class="pf-cursor" data-pf-cursor>
+      <line x1="-1000" y1="0" x2="1000" y2="0" /><line x1="0" y1="-700" x2="0" y2="700" />
+      <rect x="-7" y="-7" width="14" height="14" />
+    </g>
+  </svg>
+  <div class="pf__coords" aria-hidden="true"><span>X <b data-pf-x>000,000</b></span><span>Y <b data-pf-y>000,000</b></span><span>Z <b>000,000</b></span></div>
+  <div class="pf__real" aria-hidden="true" data-pf-real><i class="lm is-on" style="--n:30;--d:1.5s;background-image:url(/img/logo/insert.webp)"></i></div>
+  <div class="pre__flare" aria-hidden="true"></div>
+  <div class="pf__lock" aria-hidden="true">
+    <span class="pf__slot" data-pf-slot></span>
+    <div class="pre__type">
+      <div class="pre__word">{'AKSOY'.split('').map((c, i) => <span style={`--i:${i}`}><b>{c}</b></span>)}</div>
+      <div class="pre__sub"><i></i><span>KESİCİ TAKIMLAR</span><i></i></div>
+    </div>
+  </div>
+  <p class="sr-only">Aksoy Kesici Takımlar yükleniyor</p>
+  <button class="pf__skip" type="button" data-pf-skip>Geç</button>
+  <div class="pre__foot">
+    <span class="pre__meta">OSTİM · ANKARA</span>
+    <button class="pre__sound" type="button" data-sound-toggle aria-pressed="false" data-on="Ses açık" data-off="Sesi aç">
+      <span class="sound-bars" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span data-sound-label>Sesi aç</span>
+    </button>
+    <span class="pre__meta pre__num"><span data-pre-num>000</span></span>
+  </div>
+  <div class="pre__bar" aria-hidden="true"><i data-pre-bar></i></div>
+</div>
