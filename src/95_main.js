@@ -242,8 +242,22 @@ function ambient(dtR) {
    Şafak → öğle → gün batımı → gece (havai fişek, kayan yıldız, kutup ışığı, yanan pencereler) → şafak.
    Oyuncu güneşi sürüklerse döngü durur, gündüze döner; 5 sn sonra kaldığı yerden sürer. */
 const TCYC = { D: 24, K: 4, N: 13, W: 4 };
+// kamera koreografisi (döngü oranı φ: yaw rad · eğim derece · uzaklık çarpanı · hedef yüksekliği)
+// şafak: soldan alçak ve yakın → öğle: yüksek geniş plan → gün batımı: sağdan alçak, dramatik → gece: geri çekilir,
+// göğe bakar (havai fişeklere yer) ve yavaşça karşı yana süzülür → final → şafak
+const TCAM = [[0, -0.3, -6, 0.93, 0], [0.25, 0, 4, 1.05, 0], [0.52, 0.3, -7, 0.93, 0], [0.62, 0.26, -3, 1.0, 0.35], [0.8, 0.02, 1.5, 1.08, 0.7], [0.91, -0.22, -2, 1.03, 0.4], [1, -0.3, -6, 0.93, 0]];
 const TitleSky = {
   c: -1, fwT: 1.2, grand: false, lastDrag: -99, nightOn: false,
+  // kamera duruşu: döngünün o anına göre (güneş elle sürüklenirken kamera da güneşi izler)
+  camPose() {
+    const { D, K, N, W } = TCYC, P = D + K + N + W, c = this.c >= 0 ? this.c : (D * (clamp(G.u, 0.04, 0.96) - 0.04)) / 0.92, f = (c / P) % 1;
+    let i = 0; while (i < TCAM.length - 2 && f > TCAM[i + 1][0]) i++;
+    const A = TCAM[i], B = TCAM[i + 1], k = Ease.inOutSine(clamp01((f - A[0]) / (B[0] - A[0]))), t = U.uTime.value;
+    const o = this._o || (this._o = {});
+    o.yaw = lerp(A[1], B[1], k) + Math.sin(t * 0.23) * 0.015; o.pitch = deg(lerp(A[2], B[2], k) + Math.sin(t * 0.17 + 1) * 0.6);
+    o.dist = lerp(A[3], B[3], k) * (1 + Math.abs(o.yaw) * 0.12); o.ty = lerp(A[4], B[4], k);
+    return o;
+  },
   step(dtR) {
     const { D, K, N, W } = TCYC, P = D + K + N + W, now = U.uTime.value;
     if (now - (this.lastStep ?? -9) > 0.6) this.c = -1; // başlığa yeni dönüldü: döngü güneşin şimdiki yerinden sürer

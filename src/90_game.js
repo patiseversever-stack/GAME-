@@ -346,9 +346,11 @@ const Cam = {
     } else if (G.state !== 'film') {
       const ttl = G.state === 'title' && this.title, b = ttl ? this.title : this.base; const fz = G.state === 'play' || G.state === 'ready';
       const tx = b.target.x + this.follow.x * (fz ? 0.26 : 0), tz = b.target.z + this.follow.z * (fz ? 0.22 : 0);
-      c.target.x = damp(c.target.x, tx, 3, dtR); c.target.y = damp(c.target.y, b.target.y, 3, dtR); c.target.z = damp(c.target.z, tz, 3, dtR);
-      c.dist = damp(c.dist, b.dist * this.zoom, 2.5, dtR); c.pitch = damp(c.pitch, b.pitch, 3, dtR); c.fov = damp(c.fov, b.fov, 3, dtR);
-      c.yaw = damp(c.yaw, b.yaw + clamp(G.uSV * 0.012, -0.03, 0.03) + Math.sin(U.uTime.value * 0.11) * 0.012, 4, dtR);
+      // karşılama: gün döngüsüne bağlı sinematik kamera (yörünge, vinç, yaklaşma); oyunda sabit
+      const K = ttl ? TitleSky.camPose() : null, kd = ttl ? 1.1 : 1;
+      c.target.x = damp(c.target.x, tx, 3 * kd, dtR); c.target.y = damp(c.target.y, b.target.y + (K ? K.ty : 0), 3 * kd, dtR); c.target.z = damp(c.target.z, tz, 3 * kd, dtR);
+      c.dist = damp(c.dist, b.dist * this.zoom * (K ? K.dist : 1), 2.5 * kd, dtR); c.pitch = damp(c.pitch, b.pitch + (K ? K.pitch : 0), 3 * kd, dtR); c.fov = damp(c.fov, b.fov, 3, dtR);
+      c.yaw = damp(c.yaw, b.yaw + (K ? K.yaw : 0) + clamp(G.uSV * 0.012, -0.03, 0.03) + Math.sin(U.uTime.value * 0.11) * 0.012, 4 * kd, dtR);
     }
     const pose = { target: c.target.clone(), dist: c.dist, pitch: c.pitch, yaw: c.yaw, fov: c.fov + G.fovKick };
     // eğimsiz duruşun konumu: ön plan derinlik katmanı buna göre kayar (gözlüksüz 3B)
