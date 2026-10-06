@@ -72,7 +72,7 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
   return isRange(c) ? { text: `${fmt(c.min)}–${fmt(c.max)}`, est: c.est, note: c.note } : { text: '—', est: false, note: c.none };
 };
 ---
-<Base title={title} description={description} schema={schema}>
+<Base title={title} description={description} schema={schema} footerCta={false}>
   <ToolHero
     crumbs={crumbs}
     eyebrow="Teknik araç 01 · Hesaplayıcı"
@@ -158,7 +158,7 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
         <div class="calc-body" id="calc-panel" role="tabpanel" aria-labelledby="tab-torna" data-panel>
           <div class="calc-in">
             <fieldset class="calc-block">
-              <legend class="tl-legend">İşlenen malzeme · ISO 513</legend>
+              <legend class="tl-legend">1 · İşlenen malzeme</legend>
               <div class="iso-pick">
                 {ISO_GROUPS.map((g, i) => (
                   <label data-g={g.g} title={g.ex}>
@@ -170,7 +170,7 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
             </fieldset>
 
             <fieldset class="calc-block">
-              <legend class="tl-legend">Takım malzemesi</legend>
+              <legend class="tl-legend">2 · Takım malzemesi</legend>
               <div class="tl-seg tl-seg--wide">
                 <label><input type="radio" name="calc-tool" value="karbur" checked data-tool /><span data-tool-label="karbur">{TOOL_LABEL.torna.karbur}</span></label>
                 <label><input type="radio" name="calc-tool" value="hss" data-tool /><span data-tool-label="hss">{TOOL_LABEL.torna.hss}</span></label>
@@ -182,7 +182,7 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
             {OPS.map((o) => (
               <div class="calc-op" data-op={o.id} hidden={o.id !== 'torna'}>
                 <div class="calc-op__row">
-                  <span class="tl-legend">Hesap yönü</span>
+                  <span class="tl-legend">3 · Ölçüler</span>
                   <div class="tl-seg" role="radiogroup" aria-label="Hesap yönü">
                     <label><input type="radio" name={`${o.id}-mode`} value="vc2n" checked data-mode /><span>Vc’den devir</span></label>
                     <label><input type="radio" name={`${o.id}-mode`} value="n2vc" data-mode /><span>Devirden Vc</span></label>
@@ -259,13 +259,12 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
     </div>
   </section>
 
-  <section class="section section--tight tl-ref" aria-labelledby="vc-tablo">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="eyebrow">Referans</span>
-        <h2 id="vc-tablo" class="reveal">Başlangıç kesme hızları (m/dk)</h2>
-        <p>Hesaplayıcının malzeme seçiminde önerdiği aralıklar. Değerler kaplamalı karbür ve HSS takımlar için genel başlangıç noktasıdır; kullandığınız markanın katalog değeri her zaman önceliklidir.</p>
-      </div>
+  <section class="section section--tight tl-ref" aria-label="Başvuru: kesme hızları ve formüller">
+    <div class="wrap tl-folds">
+      <details class="tl-fold">
+        <summary><span><b id="vc-tablo">Başlangıç kesme hızları tablosu</b><small>Malzeme grubuna göre karbür ve HSS için m/dk</small></span><i aria-hidden="true"></i></summary>
+        <div class="tl-fold__body">
+          <p class="tl-fold__lead">Hesaplayıcının önerdiği aralıklar. Kaplamalı karbür ve HSS takımlar için genel başlangıç noktasıdır; kullandığınız markanın katalog değeri her zaman önceliklidir.</p>
       <div class="tl-tablewrap" tabindex="0" role="region" aria-label="Başlangıç kesme hızları tablosu (yatay kaydırılabilir)">
         <table class="tl-table tl-table--vc">
           <thead>
@@ -292,8 +291,12 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
       </div>
       <p class="tl-legendline"><span class="est-mark">≈</span> işaretli hücreler tahmini başlangıç değeridir; yayınlanmış bir katalog tablosuyla birebir doğrulanmamıştır. “—”: bu takım malzemesi o grup için önerilmez ya da değer markaya göre çok değiştiği için katalogdan alınmalıdır. Hücrelerin üzerine gelince not görünür.</p>
 
+        </div>
+      </details>
+      <details class="tl-fold">
+        <summary><span><b>Formüller ve birimler</b><small>Devir, kesme hızı, ilerleme ve talaş hacmi</small></span><i aria-hidden="true"></i></summary>
+        <div class="tl-fold__body">
       <div class="tl-formulas">
-        <h3>Formüller ve birimler</h3>
         <dl>
           <div><dt>n</dt><dd><b>Devir</b> = 1000 × Vc / (π × D) <span>dev/dk</span></dd></div>
           <div><dt>Vc</dt><dd><b>Kesme hızı</b> = π × D × n / 1000 <span>m/dk</span></dd></div>
@@ -306,6 +309,8 @@ const cellText = (op: Op, t: ToolMat, g: Iso) => {
         </dl>
         <p>D: tornada işlenen çap, freze ve matkapta takım çapı (mm) · fn: devir başına ilerleme (mm/dev) · fz: diş başına ilerleme (mm/diş) · z: ağız sayısı · ap: kesme derinliği (mm) · ae: radyal kesme genişliği (mm) · P: hatve (mm).</p>
       </div>
+        </div>
+      </details>
     </div>
   </section>
 

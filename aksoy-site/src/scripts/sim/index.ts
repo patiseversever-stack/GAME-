@@ -40,12 +40,13 @@ function statusOf(d: CalcDetail, zone: SimInput['zone']): [string, string] {
 
 function init(stage: HTMLElement, calc: HTMLElement) {
   if (!canUse3D()) { stage.hidden = true; return; }
-  // Yerleşim: masaüstünde sonuç sütununun tepesinde (yapışkan), mobilde girişlerin üstünde
+  // Yerleşim: masaüstünde sonuç sütununun tepesinde; mobilde sonuç sayılarının hemen altında
+  // (ekrana yapışmaz, girişlerin üstüne binmez)
   const sticky = calc.querySelector<HTMLElement>('.calc-out__sticky');
-  const body = calc.querySelector<HTMLElement>('.calc-body');
+  const notes = calc.querySelector<HTMLElement>('[data-notes]');
   const mq = matchMedia('(max-width: 960px)');
   const place = () => {
-    if (mq.matches) body?.before(stage);
+    if (mq.matches) notes?.before(stage);
     else sticky?.prepend(stage);
   };
   place();

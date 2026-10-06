@@ -66,7 +66,7 @@ const faq: Qa[] = [
 
 const schema = [breadcrumbSchema(Astro.site, crumbs), toolSchema(Astro.site, path, 'Kılavuz matkap çapı hesaplayıcı', description), faqSchema(faq)];
 ---
-<Base title={title} description={description} schema={schema}>
+<Base title={title} description={description} schema={schema} footerCta={false}>
   <ToolHero
     crumbs={crumbs}
     eyebrow="Teknik araç 03 · ISO metrik diş"
@@ -128,8 +128,8 @@ const schema = [breadcrumbSchema(Astro.site, crumbs), toolSchema(Astro.site, pat
         </div>
         <div class="calc-body">
           <div class="calc-in">
-            <div class="calc-op__row calc-op__row--stack">
-              <span class="tl-legend">Hızlı seçim · anma çapı</span>
+            <div class="calc-op__row calc-op__row--stack tap-sizes">
+              <span class="tl-legend">1 · Diş ölçüsünü seçin</span>
               <div class="tl-chips" data-sizes>
                 {sizes.map((m) => <button type="button" class="tl-chip" data-d={m} aria-pressed={m === init.d ? 'true' : 'false'}>M{m}</button>)}
               </div>
@@ -151,13 +151,13 @@ const schema = [breadcrumbSchema(Astro.site, crumbs), toolSchema(Astro.site, pat
               </div>
             </div>
             <div class="calc-op__row calc-op__row--stack">
-              <span class="tl-legend">Standart hatveler</span>
+              <span class="tl-legend">Hatve (ince diş için değiştirin)</span>
               <div class="tl-chips" data-pitches>
                 {pitchesFor(init.d).map((x) => <button type="button" class="tl-chip" data-p={x.p} aria-pressed={x.p === init.p ? 'true' : 'false'}>{fmtFixed(x.p, 2)}{x.coarse && <small>kaba</small>}</button>)}
               </div>
             </div>
             <p class="tap-std" data-std data-kind="coarse"><b>M10</b> — ISO metrik kaba diş, hatve 1,5 mm.</p>
-            <p class="calc-hint"><Icon name="book" /> <span>Değerler 6H iç diş içindir. Önerilen matkap, yaygın standart matkap ölçüsüdür; tablo dışı ölçülerde D − P’ye en yakın ve 6H aralığında kalan 0,1 mm adımlı çap gösterilir.</span></p>
+            <p class="calc-hint"><Icon name="book" /> <span>Değerler 6H iç diş içindir. Önerilen matkap standart matkap ölçüsüdür; tablo dışı ölçülerde D − P’ye en yakın uygun çap gösterilir.</span></p>
           </div>
           <div class="calc-out">
             <div class="calc-out__sticky">

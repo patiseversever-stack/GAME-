@@ -82,12 +82,12 @@ const schema = [
   faqSchema(faq),
 ];
 ---
-<Base title={title} description={description} schema={schema}>
+<Base title={title} description={description} schema={schema} footerCta={false}>
   <ToolHero
     crumbs={crumbs}
     eyebrow="Teknik araçlar · 3 araç"
     title="Tezgâh başında işinize yarayacak üç araç."
-    lead="Devir ve ilerleme hesabı, elmas uç kodunun anlamı ve kılavuz öncesi matkap çapı. Atölyede en sık sorulan bu üç şeyi telefonda rahat açılacak şekilde topladık; formüller de altında yazılı."
+    lead="Devir ve ilerleme hesabı, uç kodunun anlamı ve kılavuz öncesi matkap çapı. Atölyede en sık sorulan üç şey, telefonda rahatça açılır."
     tags={['Ücretsiz', 'Türkçe', 'Telefonda çalışır', 'Veri gönderilmez']}
   >
     <svg slot="art" class="art art--sheet" viewBox="0 0 440 280" xmlns="http://www.w3.org/2000/svg">
@@ -158,18 +158,19 @@ const schema = [
     </div>
   </section>
 
-  <section class="section section--tight tl-ref" aria-labelledby="formul-ozeti">
-    <div class="wrap">
-      <div class="section-head">
-        <span class="eyebrow">Cep kartı</span>
-        <h2 id="formul-ozeti" class="reveal">Formül özeti</h2>
-        <p>Araçların kullandığı temel formüller. D: tornada işlenen çap, freze ve matkapta takım çapı (mm); fn: devir başına ilerleme; fz: diş başına ilerleme; z: ağız sayısı; ap ve ae: kesme derinliği ve genişliği; P: hatve.</p>
-      </div>
-      <div class="tl-formulas" style="margin-top:0">
-        <dl>
-          {formulas.map((f) => <div><dt>{f.s}</dt><dd><b>{f.name}</b> = {f.f} <span>{f.u}</span></dd></div>)}
-        </dl>
-      </div>
+  <section class="section section--tight tl-ref" aria-label="Formül özeti">
+    <div class="wrap tl-folds">
+      <details class="tl-fold">
+        <summary><span><b id="formul-ozeti">Formül özeti</b><small>Araçların kullandığı temel formüller, tek bakışta</small></span><i aria-hidden="true"></i></summary>
+        <div class="tl-fold__body">
+          <p class="tl-fold__lead">D: tornada işlenen çap, freze ve matkapta takım çapı (mm); fn: devir başına ilerleme; fz: diş başına ilerleme; z: ağız sayısı; ap ve ae: kesme derinliği ve genişliği; P: hatve.</p>
+          <div class="tl-formulas">
+            <dl>
+              {formulas.map((f) => <div><dt>{f.s}</dt><dd><b>{f.name}</b> = {f.f} <span>{f.u}</span></dd></div>)}
+            </dl>
+          </div>
+        </div>
+      </details>
     </div>
   </section>
 
