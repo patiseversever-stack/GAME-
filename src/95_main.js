@@ -284,13 +284,26 @@ const TitleSky = {
   },
   // kamera duruşu: döngünün o anına göre (güneş elle sürüklenirken kamera da güneşi izler)
   camPose() {
-    const c = this.c >= 0 ? this.c : this.timeForU(G.u), f = (c / TCYC_P) % 1;
-    let i = 0; while (i < TCAM.length - 2 && f > TCAM[i + 1][0]) i++;
-    const A = TCAM[i], B = TCAM[i + 1], k = Ease.inOutSine(clamp01((f - A[0]) / (B[0] - A[0]))), t = U.uTime.value;
-    const o = this._o || (this._o = {});
-    o.yaw = lerp(A[1], B[1], k) + Math.sin(t * 0.23) * 0.015; o.pitch = deg(lerp(A[2], B[2], k) + Math.sin(t * 0.17 + 1) * 0.6);
-    o.dist = lerp(A[3], B[3], k) * (1 + Math.abs(o.yaw) * 0.12); o.ty = lerp(A[4], B[4], k);
+    const o = this.camAt(this.c >= 0 ? this.c : this.timeForU(G.u), this._o || (this._o = {})), t = U.uTime.value;
+    o.yaw += Math.sin(t * 0.23) * 0.015; o.pitch += deg(Math.sin(t * 0.17 + 1) * 0.6);
     return o;
+  },
+  camAt(c, o = {}) {
+    const f = (((c / TCYC_P) % 1) + 1) % 1;
+    let i = 0; while (i < TCAM.length - 2 && f > TCAM[i + 1][0]) i++;
+    const A = TCAM[i], B = TCAM[i + 1], k = Ease.inOutSine(clamp01((f - A[0]) / (B[0] - A[0])));
+    o.yaw = lerp(A[1], B[1], k); o.pitch = deg(lerp(A[2], B[2], k)); o.dist = lerp(A[3], B[3], k) * (1 + Math.abs(o.yaw) * 0.12); o.ty = lerp(A[4], B[4], k);
+    return o;
+  },
+  // döngünün verilen anını sahneye uygula: görünüm, güneşin yeri, gece; segment no ve içindeki oran döner
+  drive(c) {
+    const L = this.look; let i = 0; while (i < TSEG.length - 1 && c >= TSEG_T[i + 1]) i++;
+    const [d, u0, u1, a, b] = TSEG[i], k = clamp01((c - TSEG_T[i]) / d);
+    this.blend(TLOOK[a], TLOOK[b], smooth(k));
+    G.u = G.uT = lerp(u0, u1, k); G.uSV = 0;
+    G.night = L.n; U.uNightAmt.value = G.night; U.uNightR.value = 60; U.uNightRim.value = 0; U.uNightC.value.set(0, 0);
+    this.seg = i; this.segK = k;
+    return i;
   },
   blend(A, B, k) {
     const L = this.look;
@@ -310,23 +323,19 @@ const TitleSky = {
       this.c = this.timeForU(G.u); this.nightOn = false; return;
     }
     this.c = (this.c + dtR) % TCYC_P; const c = this.c;
-    let i = 0; while (i < TSEG.length - 1 && c >= TSEG_T[i + 1]) i++;
-    const [d, u0, u1, a, b] = TSEG[i], k = clamp01((c - TSEG_T[i]) / d);
-    this.blend(TLOOK[a], TLOOK[b], smooth(k));
-    G.u = G.uT = lerp(u0, u1, k); G.uSV = 0;
-    G.night = L.n; U.uNightAmt.value = G.night;
-    // havai fişek: mavi saatin ikinci yarısından gece bitene dek; gecenin ortasında büyük final
+    const i = this.drive(c), k = this.segK;
+    // havai fişek her an: gündüz seyrek (5–8 sn), alacakaranlıkta daha sık, gece yoğun; gecenin ortasında büyük final
     if (i === 2) this.grand = false;
-    if ((i === 5 && k > 0.5) || i === 6 || i === 7) {
-      if ((this.fwT -= dtR) <= 0) { Fireworks.show(1 + Math.floor(Math.random() * 2)); this.fwT = 0.9 + Math.random() * 0.8; }
-      if (!this.grand && i === 7 && k > 0.2) { this.grand = true; Fireworks.show(7, true); this.fwT = 3.2; }
-    }
+    const nightFw = (i === 5 && k > 0.5) || i === 6 || i === 7, dusk = i === 3 || i === 4 || i === 5 || i === 8 || i === 0;
+    if (nightFw && this.fwT > 1.8) this.fwT = 0.5;
+    if ((this.fwT -= dtR) <= 0) { Fireworks.show(nightFw ? 1 + Math.floor(Math.random() * 2) : 1); this.fwT = nightFw ? 0.9 + Math.random() * 0.8 : dusk ? 2.6 + Math.random() * 1.6 : 4.5 + Math.random() * 3; }
+    if (!this.grand && i === 7 && k > 0.2) { this.grand = true; Fireworks.show(7, true); this.fwT = 3.2; }
     const on = G.night > 0.5; if (on !== this.nightOn) { this.nightOn = on; if (on) audio.nightfall && audio.nightfall(); else audio.rise && audio.rise(); }
   },
   // doğal ışığın üstüne alacakaranlık renkleri (applyLighting'den sonra; yalnızca başlık ekranında)
   applyLook() {
     const L = this.look, lv = G.lv; this.glow = 0;
-    if (G.state !== 'title' || !lv || G.stateT <= G.introDur) return;
+    if (!lv || !((G.state === 'title' && G.stateT > G.introDur) || (G.state === 'film' && Film.active))) return;
     this.glow = L.glow; const w = L.w;
     if (w > 0.001) {
       skyU.uZen.value.lerp(L.zen, w); skyU.uHor.value.lerp(L.hor, w); skyU.uBelow.value.lerp(L.below, w); skyU.uSunCol.value.lerp(L.sun, w);
@@ -479,7 +488,7 @@ function update(dt, dtR) {
   pu.uExposure.value = 1.0 - ecl * 0.06 + G.night * 0.15 + flare.k * 0.1;
   pu.uNight.value = G.night;
   pu.uBloomAdd.value = 0.35 + G.night * 0.4 + ecl * 0.3 + flare.k * 0.45 + flare.warnK * 0.12;
-  if (G.state === 'title') { pu.uBloomAdd.value += TitleSky.glow * 0.9; }
+  if (G.state === 'title' || G.state === 'film') { pu.uBloomAdd.value += TitleSky.glow * 0.9; }
   pu.uRays.value = 0.5 * (1 - G.night) * (1 - ecl) * (orb.g.visible ? 1 : 0);
   const danger = G.state === 'play' ? Math.max(G.breathT > 0 ? 1.45 + Math.sin(U.uTime.value * 18) * 0.25 : G.f > 0 ? 0.35 + (1 - G.meter) * 0.8 : G.meter < 0.35 ? 0.2 + Math.sin(U.uTime.value * 8) * 0.08 : 0, Dragon.danger() * (0.55 + Math.sin(U.uTime.value * 7) * 0.12)) : 0;
   pu.uDanger.value = damp(pu.uDanger.value, danger, 8, dtR);
@@ -975,6 +984,7 @@ function crScalar(keys, t, get, settle) {
   const u2 = u * u, u3 = u2 * u;
   return (2 * u3 - 3 * u2 + 1) * p1 + (u3 - 2 * u2 + u) * m1 + (-2 * u3 + 3 * u2) * p2 + (u3 - u2) * m2;
 }
+const FILM_C0 = TSEG_T[8] + 0.5; // açılış filmi döngünün tan bölümünden başlar
 const Film = {
   active: false, started: false, t: 0, dur: 5.6, keys: null, clouds: [], flashed: false, popped: false, uiShown: false,
   // motor ayağa kalkarken: sahneyi gece başlangıcına kur (henüz zaman akmaz)
@@ -988,10 +998,12 @@ const Film = {
       { t: 4.3, x: 0, y: 0, z: 0, d: 1.17, p: tp.pitch + deg(3), w: -0.12, f: tp.fov },
       { t: 5.6, x: 0, y: 0, z: 0, d: 1, p: tp.pitch, w: 0, f: tp.fov },
     ];
+    // son kare, karşılama kamerasının döngüdeki duruşuyla birebir aynı: film bitince kamera sıçramaz
+    { const K = TitleSky.camAt(FILM_C0 + this.dur), e = this.keys[4], m = this.keys[3]; e.d = K.dist; e.p = tp.pitch + K.pitch; e.w = tp.yaw + K.yaw; e.y = K.ty; m.w = lerp(m.w, e.w, 0.5); m.p = lerp(m.p, e.p, 0.5); }
     this.T = T.clone(); this.D = tp.dist;
     this.active = true; this.started = false; this.t = 0; this.flashed = false; this.popped = false; this.uiShown = false;
     G.state = 'film'; G.stateT = 0; G.userSun = false; G.zShown = false; zifir.g.visible = false;
-    G.u = G.uT = 0; G.night = 0.72; G.ecl.amt = 0;
+    G.ecl.amt = 0; TitleSky.c = FILM_C0; TitleSky.drive(FILM_C0);
     if (G.view) G.view.introT = -0.15; // ada bulut denizinden hemen yükselmeye başlar
     Cam.cine = null; this.pose(0);
     orb.g.visible = false; arc1.g.visible = false; arc2.g.visible = orb2.g.visible = false;
@@ -1029,21 +1041,13 @@ const Film = {
     // ışık senaryosu (gece güneş görünmez)
     const sunUp = t > 0.95, twin = !!(lv && lv.sun.twin);
     orb.g.visible = sunUp; arc1.g.visible = sunUp; arc2.g.visible = orb2.g.visible = twin && sunUp;
-    G.night = 0.72 * (1 - smoothstep(0.8, 2.6, t)); // mavi saat → şafak
-    G.u = G.uT = lerp(0, 0.44, Ease.outCubic(clamp01((t - 1.0) / 2.6)));
-    const e = smoothstep(3.55, 3.95, t) * (1 - smoothstep(4.55, 5.05, t));
-    G.ecl.amt = e;
-    U.uNightAmt.value = Math.max(G.night, e * 0.72); U.uNightR.value = 999; U.uNightRim.value = 0;
-    // tutulmada Zifir karanlıkta belirir
-    if (t > 3.9 && !this.popped) { this.popped = true; popZifir(); }
+    // ışık senaryosu karşılama döngüsünün kendisi: gece → mor tan → şeftali gün doğumu → sabah
+    TitleSky.c = (FILM_C0 + t) % TCYC_P; TitleSky.lastStep = U.uTime.value; TitleSky.drive(TitleSky.c);
+    const e = 0; G.ecl.amt = 0;
+    // ilk ışık: güneş ufku aşınca Zifir belirir, yumuşak sıcak bir parıltı
+    if (t > 3.4 && !this.popped) { this.popped = true; popZifir(); G.flash = Math.max(G.flash, 0.22); G.flashCol.set(1.0, 0.8, 0.6); const p = orb.g.position; FX.burst(p.x, p.y, p.z, 30, { add: true, c: [2.6, 1.8, 1.2], a: 1, s: 0.22, s1: 0.03, life: 1.0, sp: 4, drag: 1.6, t: 2 }); }
     if (G.zShown && G.zPop < 1) { G.zPop = Math.min(1, G.zPop + dtR / 0.7); zifir.g.scale.setScalar(Math.max(0.001, Ease.outElastic(G.zPop))); }
     if (G.zShown) { pathAt(lv.path, 0, PA); zifir.update(dtR, { x: PA.x, z: PA.z, yaw: Math.atan2(PA.tx, PA.tz), moving: false, speed: 0, burn: 0, meter: 1, look: camera.position, mood: e > 0.5 ? 1 : 0 }); }
-    if (e > 0.6 && Math.random() < dtR * 18) { const p = orb.g.position; FX.sparkle(p.x + (Math.random() - 0.5) * 2.4, p.y + (Math.random() - 0.5) * 2.4, p.z, [1.5, 1.4, 2.6], 0.3); }
-    // elmas yüzük: ışık geri döner
-    if (t > 4.62 && !this.flashed) {
-      this.flashed = true; G.flash = 0.55; G.flashCol.set(1.0, 0.86, 0.62); G.trauma = Math.max(G.trauma, 0.14);
-      const p = orb.g.position; FX.burst(p.x, p.y, p.z, 36, { add: true, c: [2.6, 2.2, 1.6], a: 1, s: 0.24, s1: 0.03, life: 1.0, sp: 5, drag: 1.6, t: 2 });
-    }
     // bulutlar: geceden şafağa renklenir, kamera içlerinden geçer, sonra dağılır
     const fade = 1 - smoothstep(2.9, 4.1, t);
     for (const g of this.clouds) {
@@ -1069,9 +1073,10 @@ const Film = {
     $('#filmSkip').classList.remove('on');
     if (external) return; // oyuncu filmi beklemeden bir moda geçti: yalnızca görselleri geri ver
     if (!this.uiShown) { this.uiShown = true; this.showUi(); }
-    G.state = 'title'; G.stateT = 99; G.userSun = true; G.uT = G.u; G.night = 0; G.ecl.amt = 0; U.uNightAmt.value = 0;
+    // döngü filmin kaldığı yerden kesintisiz sürer (ışık, güneş ve kamera aynı karede)
+    G.state = 'title'; G.stateT = 99; G.userSun = true; G.uT = G.u; G.ecl.amt = 0; TitleSky.lastStep = U.uTime.value;
     if (G.view) G.view.introT = Math.max(G.view.introT, 3.5);
-    Cam.set(Cam.cur, Cam.title); refreshEnvSoon = 0.2;
+    refreshEnvSoon = 0.2;
   },
 };
 function popZifir() {
