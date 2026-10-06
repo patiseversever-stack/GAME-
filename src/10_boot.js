@@ -94,7 +94,7 @@ const Save = {
   data: null,
   defaults() {
     return { v: 1, levels: {}, unlocked: 0, endlessBest: 0, endlessBestIslands: 0, daily: { date: '', stars: 0 },
-      settings: { sfx: true, music: true, haptics: true, quality: 'auto', assist: false, gyro: true }, seen: {}, skin: 0, fails: {}, finished: false, theater: [], costumes: [], costume: '' };
+      settings: { sfx: true, music: true, haptics: true, quality: 'auto', assist: false, gyro: true, full: true }, seen: {}, skin: 0, fails: {}, finished: false, theater: [], costumes: [], costume: '' };
   },
   load() {
     let d = null;

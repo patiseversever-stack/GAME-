@@ -324,7 +324,7 @@ body.ward #map>*:not(#mapLayer),body.ward #mapLayer{opacity:0!important;pointer-
 @keyframes zblink{0%,46%,50%,100%{transform:none}48%{transform:scaleY(.15)}}
 #btnZifir span{text-align:left}
 #btnZifir b{display:block;font-size:12px;letter-spacing:.24em;text-transform:uppercase}
-#btnZifir small{display:block;margin-top:2px;font-size:9px;letter-spacing:.06em;color:var(--ivory-dim)}
+#btnZifir small{display:block;margin-top:2px;font-size:9px;letter-spacing:.06em;color:var(--ivory-dim);white-space:nowrap}
 #btnZifir em{display:none;font-style:normal;font-size:8px;letter-spacing:.16em;text-transform:uppercase;padding:3px 7px;border-radius:8px;background:var(--gold);color:#2a1a08;font-weight:700}
 #btnZifir.new em{display:block}
 #map.diving #btnZifir{opacity:0!important;pointer-events:none!important}
@@ -585,6 +585,12 @@ body.testall #testBadge{display:block}
 .toggle b{font-weight:700;color:var(--gold-2);font-size:12px;letter-spacing:.16em;text-transform:uppercase}
 .toggle.off b{color:var(--ivory-dim)}
 .danger-link{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,160,140,.75);padding:8px;align-self:center}
+/* kısa ekranda kart sıkışır; yine sığmazsa kendi içinde kayar (düğmeler ekran dışına taşmaz) */
+.card{max-height:calc(100% - var(--sat) - var(--sab) - 20px);overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.card::-webkit-scrollbar{display:none}
+.card>*{flex-shrink:0}
+@media (max-height:780px){.card{gap:8px;padding:18px 18px 14px}.card h4{font-size:27px;margin-bottom:2px}.toggle{height:42px}.card .btn{height:48px}}
+@media (max-height:600px){.card{gap:6px;padding:14px 16px 10px}.card h4{font-size:24px}.toggle{height:38px}.card .btn{height:42px;font-size:14px}.danger-link{padding:4px}}
 
 /* ---------- map ---------- */
 #map{justify-content:flex-start;padding:calc(var(--sat) + 14px) 0 calc(var(--sab) + 14px);background:linear-gradient(180deg,rgba(10,6,26,.6),rgba(10,6,26,0) 20%,rgba(10,6,26,0) 52%,rgba(10,6,26,.55) 78%,rgba(10,6,26,.8))}
@@ -1026,6 +1032,8 @@ body.playing #find{top:calc(var(--sat) + 150px)}
 #btnHzM{position:relative;width:46px;height:46px}
 #btnHzM svg{width:24px;height:24px;stroke:#ffdf9e}
 #map .mtop .mright{display:flex;align-items:center;gap:10px}
+/* çok dar ekran (katlanabilir kapak ekranı, 320px telefonlar): üst çubuk ve sekmeler tek satırda kalsın */
+@media (max-width:340px){#map .mtop{padding:0 calc(var(--sar) + 10px) 0 calc(var(--sal) + 10px)}#map .mtop h5{font-size:23px}#map .mtop .tot{font-size:11px;letter-spacing:.06em;white-space:nowrap}#map .mtop .mright{gap:6px}#hz .hztabs{gap:2px}#hz .hztabs button{padding:0 11px;font-size:11px;letter-spacing:.07em}}
 #mpSecret{display:none;align-items:center;gap:8px;margin-top:8px;font-size:10.5px;font-weight:700;letter-spacing:.1em;color:var(--ivory-dim)}
 #mpSecret.on{display:flex}
 #mpSecret i{width:14px;height:14px;flex:none;background:#b9adff;-webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.9 6 14 9.1 20 10 14 10.9 10.9 14 10 20 9.1 14 6 10.9 0 10 6 9.1 9.1 6 10 0Z'/%3E%3C/svg%3E") center/contain no-repeat;mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cpath d='M10 0C10.9 6 14 9.1 20 10 14 10.9 10.9 14 10 20 9.1 14 6 10.9 0 10 6 9.1 9.1 6 10 0Z'/%3E%3C/svg%3E") center/contain no-repeat;opacity:.45}
@@ -1088,6 +1096,23 @@ body.tnight #title .tag{color:rgba(225,220,255,.9)}
   #map .modes{bottom:calc(var(--sab) + 58px)} body.adbanner #map .modes{bottom:calc(var(--sab) + 58px + var(--adb))}
   #map .modes .btn{min-height:40px;padding:4px 3px}
   #btnZifir{height:40px} #btnZifir small{display:none}
+}
+/* yatay ekran (telefon, tablet, masaüstü): panel, modlar ve Zifir solda tek sütun; ada sağdaki boşlukta tek başına */
+@media (orientation:landscape) and (min-aspect-ratio:21/20){
+  #mapPanel,body.adbanner #mapPanel{left:calc(var(--sal) + 18px);right:auto;transform:none;width:min(40vw,380px);bottom:calc(var(--sab) + 130px + var(--adb))}
+  #map .modes,body.adbanner #map .modes{left:calc(var(--sal) + 18px);right:auto;transform:none;width:min(40vw,380px);padding:0;grid-template-columns:repeat(4,minmax(0,1fr));bottom:calc(var(--sab) + 72px + var(--adb))}
+  #map .modes .btn{padding:6px 4px}
+  #btnZifir,body.adbanner #btnZifir{left:calc(var(--sal) + 18px);right:auto;transform:none;bottom:calc(var(--sab) + 18px + var(--adb))}
+  #mapPrev{left:calc(var(--sal) + 28px + min(40vw,380px))}
+  #mapHint{left:calc(50% + min(20vw,190px) + var(--sal) / 2 + 9px)}
+}
+@media (orientation:landscape) and (min-aspect-ratio:21/20) and (max-height:560px){
+  #mapPanel,body.adbanner #mapPanel{padding:9px 14px 10px;bottom:calc(var(--sab) + 122px + var(--adb))}
+  #mapPanel h6{font-size:23px} #mpSub{display:none} #mapPanel .mprow{margin-top:6px} #mapPanel .btn.primary{height:40px}
+  #mpSecret{margin-top:5px} #mpSecT{font-size:10px}
+  #map .modes,body.adbanner #map .modes{bottom:calc(var(--sab) + 62px + var(--adb))}
+  #map .modes .btn{min-height:40px;padding:4px 3px}
+  #btnZifir,body.adbanner #btnZifir{height:38px;bottom:calc(var(--sab) + 14px + var(--adb))} #btnZifir small{display:none}
 }
 </style>
 </head>
@@ -1243,6 +1268,7 @@ body.tnight #title .tag{color:rgba(225,220,255,.9)}
       <button class="toggle tap" data-set="quality">Grafik <b>Otomatik</b></button>
       <button class="toggle tap" data-set="assist">Rahat mod <b>Kapalı</b></button>
       <button class="toggle tap" data-set="gyro">Eğimle derinlik <b>Açık</b></button>
+      <button class="toggle tap" data-set="full">Tam ekran <b>Açık</b></button>
       <button class="btn ghost tap" id="btnHowS">Nasıl oynanır?</button>
       <button class="btn primary tap" id="btnSetClose">Tamam</button>
       <button class="danger-link tap" id="btnReset">İlerlemeyi sıfırla</button>

@@ -776,9 +776,38 @@ $$('[data-set]').forEach((el) => el.addEventListener('click', () => {
     Perf.auto = s.quality === 'auto'; Perf.scale = 1; Perf.ups = 0;
     if (Perf.auto) Perf.init(); else Perf.level = { low: 0, mid: 1, high: 2, ultra: 3 }[s.quality];
     applyQuality();
-  } else { s[k] = !s[k]; if (k === 'sfx') audio.setSfx(s[k]); if (k === 'music') audio.setMusic(s[k]); if (k === 'haptics' && s[k]) haptic(20); }
+  } else { s[k] = !s[k]; if (k === 'sfx') audio.setSfx(s[k]); if (k === 'music') audio.setMusic(s[k]); if (k === 'haptics' && s[k]) haptic(20); if (k === 'full') { if (s[k]) FullScr.enter(); else FullScr.exit(); } }
   Save.save(); audio.ui(); refreshToggles();
 }));
+/* Tam ekran: dokunmatik cihazda dokununca durum çubuğu ve gezinme çubuğu gizlenir (Android Chrome,
+   iPad Safari). Oyuncu geri hareketiyle çıkarsa sonraki dokunuşta yeniden girer. iPhone Safari bu
+   API'yi desteklemez; mağaza uygulamasında çubukları kabuk gizler (docs/YAYIN_KURULUMU.md). */
+const FullScr = {
+  native: !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform()) || !!window.GUNDONUMU_NATIVE,
+  auto: matchMedia('(pointer: coarse)').matches, t: -1e9,
+  ok() { const d = document; return !this.native && !!(d.fullscreenEnabled || d.webkitFullscreenEnabled) && !matchMedia('(display-mode: fullscreen)').matches; },
+  on() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
+  quiet(p) { if (p && p.catch) p.catch(() => {}); },
+  enter() {
+    if (!this.ok() || this.on() || performance.now() - this.t < 1200) return;
+    this.t = performance.now();
+    const e = document.documentElement, f = e.requestFullscreen || e.webkitRequestFullscreen;
+    try { this.quiet(f && f.call(e, { navigationUI: 'hide' })); } catch (err) { /* iframe vb. */ }
+  },
+  exit() { const d = document, f = d.exitFullscreen || d.webkitExitFullscreen; if (this.on() && f) try { this.quiet(f.call(d)); } catch (err) {} },
+};
+for (const ev of ['pointerup', 'keydown']) window.addEventListener(ev, (e) => {
+  if (!FullScr.auto || !Save.data.settings.full || (e.target && e.target.closest && e.target.closest('[data-set="full"]'))) return;
+  FullScr.enter();
+}, true);
+if (!FullScr.ok()) $('[data-set="full"]').style.display = 'none';
+// mağaza kabuğu çentik/kamera payını bildirir: gdSetSafe({ top: 32 }) (CSS piksel)
+window.gdSetSafe = (o = {}) => {
+  const r = document.documentElement.style;
+  for (const [k, v] of [['top', 'sat'], ['bottom', 'sab'], ['left', 'sal'], ['right', 'sar']]) r.setProperty('--' + v, `max(env(safe-area-inset-${k}, 0px), ${Math.max(0, +o[k] || 0)}px)`);
+  dispatchEvent(new Event('resize'));
+};
+if (window.GUNDONUMU_SAFE) window.gdSetSafe(window.GUNDONUMU_SAFE);
 const bind = (id, fn) => $(id).addEventListener('click', (e) => { e.stopPropagation(); audio.unlock(); fn(e); });
 // sıradaki ada (deneme sürümünde: henüz oynanmamış ilk ada)
 function nextStoryG() { if (TEST_ALL) { for (let g = 0; g < STORY_LEVELS; g++) if (!Save.data.levels[g]) return g; return 0; } return Math.min(Save.data.unlocked, STORY_LEVELS - 1); }
