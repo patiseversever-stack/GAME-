@@ -346,6 +346,37 @@ void main(){ vec2 p = vUv - 0.5; float r = length(p) * 2.0; float a = atan(p.x, 
   float pulse = uV < 0.3 ? 0.6 + 0.4 * sin(uTime * 18.0) : 1.0;
   gl_FragColor = vec4(c * pulse, band * (fill * 0.95 + 0.12) * uA);
 }`;
+/* Işıltılar (yalnızca ödüllü videoyla açılır): Zifir'in çevresinde tek çizim çağrılı parçacıklar.
+   Konumlar tamamen gölgelendiricide zamana göre hesaplanır (işlemciye yük yok). */
+const GLOWS = [
+  { key: 'kivilcim', name: 'Kıvılcım', need: 5, mode: 0, n: 26, c1: [2.8, 1.6, 0.55], c2: [2.6, 0.95, 0.3], ui: '#ffb45c' },
+  { key: 'aytozu', name: 'Ay Tozu', need: 15, mode: 1, n: 36, c1: [1.5, 1.75, 2.8], c2: [2.4, 2.4, 2.8], ui: '#bcd2ff' },
+  { key: 'atesbocegi', name: 'Ateş Böceği', need: 30, mode: 2, n: 14, c1: [1.5, 2.8, 0.6], c2: [2.4, 2.6, 0.9], ui: '#c8ff6a' },
+];
+const GLOW_VERT = `attribute vec4 aR; uniform float uTime, uMode, uScale; varying float vA; varying float vM;
+void main(){
+  float t = uTime, r1 = aR.x, r2 = aR.y, r3 = aR.z, r4 = aR.w, a; vec3 p;
+  if (uMode < 0.5) { // kıvılcım: çevreden yükselip söner
+    float life = fract(t * (0.32 + r2 * 0.3) + r1), ang = r1 * 6.2831 + t * 0.5 * (r3 - 0.5), rad = 0.26 + r3 * 0.16 + life * 0.1;
+    p = vec3(cos(ang) * rad, 0.08 + life * 0.8, sin(ang) * rad);
+    a = smoothstep(0.0, 0.12, life) * (1.0 - smoothstep(0.5, 1.0, life));
+  } else if (uMode < 1.5) { // ay tozu: eğik bir halkada yavaşça dönen toz
+    float ang = r1 * 6.2831 + t * (0.45 + r2 * 0.35), rad = 0.4 + r3 * 0.12;
+    p = vec3(cos(ang) * rad, 0.34 + sin(ang + r4 * 6.28) * 0.07 + (r3 - 0.5) * 0.1 + cos(ang) * 0.08, sin(ang) * rad * 0.85);
+    a = 0.5 + 0.5 * sin(t * 3.0 + r4 * 20.0);
+  } else { // ateş böceği: çevrede gezinir, yanıp söner
+    p = vec3(sin(t * (0.45 + r1 * 0.4) + r2 * 6.28) * (0.42 + r3 * 0.22), 0.36 + 0.26 * sin(t * (0.6 + r2 * 0.5) + r1 * 9.0), cos(t * (0.4 + r3 * 0.35) + r4 * 6.28) * (0.42 + r1 * 0.22));
+    a = smoothstep(0.15, 0.85, sin(t * (1.5 + r4 * 1.2) + r2 * 30.0));
+  }
+  vA = a; vM = r4;
+  vec4 mv = modelViewMatrix * vec4(p, 1.0);
+  gl_Position = projectionMatrix * mv;
+  gl_PointSize = min(64.0, uScale * (uMode > 1.5 ? 0.085 : uMode > 0.5 ? 0.05 : 0.06) / max(0.3, -mv.z));
+}`;
+const GLOW_FRAG = `uniform vec3 uC1, uC2; uniform float uK; varying float vA; varying float vM;
+void main(){ vec2 q = gl_PointCoord * 2.0 - 1.0; float d = dot(q, q); if (d > 1.0 || vA < 0.01) discard;
+  float c = exp(-d * 4.5) + 0.3 * exp(-d * 1.3); gl_FragColor = vec4(mix(uC1, uC2, vM) * c * vA * uK, 1.0); }`;
+const _gsz = new THREE.Vector2();
 const ZIF_SCALE = 1.55;
 const SIL_VERT = `varying vec3 vN; varying vec3 vV; varying float vY;
 void main(){ vec4 wp = modelMatrix * vec4(position, 1.0); vY = wp.y; vec4 mv = viewMatrix * wp; vN = normalize(normalMatrix * normal); vV = normalize(-mv.xyz); gl_Position = projectionMatrix * mv; }`;
@@ -387,6 +418,19 @@ class Zifir {
     this.reset();
   }
   setSkin(i) { this.u.uRim.value.set(SKINS[i].c); }
+  // ışıltı: '' ya da GLOWS anahtarı
+  setGlow(key) {
+    if (this.glow) { this.k.remove(this.glow.pts); this.glow.pts.geometry.dispose(); this.glow.pts.material.dispose(); this.glow = null; }
+    const G0 = GLOWS.find((x) => x.key === key); if (!G0) return;
+    const R = new Float32Array(G0.n * 4), rng = new RNG(G0.n * 977 + G0.mode);
+    for (let i = 0; i < R.length; i++) R[i] = rng.next();
+    const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(G0.n * 3), 3)); g.setAttribute('aR', new THREE.BufferAttribute(R, 4));
+    const u = { uTime: U.uTime, uMode: { value: G0.mode }, uScale: { value: 600 }, uK: { value: 1 }, uC1: { value: new THREE.Color(...G0.c1) }, uC2: { value: new THREE.Color(...G0.c2) } };
+    const pts = new THREE.Points(g, new THREE.ShaderMaterial({ vertexShader: GLOW_VERT, fragmentShader: GLOW_FRAG, uniforms: u, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    pts.frustumCulled = false; pts.renderOrder = 12;
+    pts.onBeforeRender = (r, sc, cam) => { r.getDrawingBufferSize(_gsz); u.uScale.value = (_gsz.y / (2 * Math.tan(deg(cam.fov || 45) / 2))) * ZIF_SCALE; };
+    this.k.add(pts); this.glow = { pts, u };
+  }
   // ---- kostümler: gövdeye bağlı (ezilip zıplarken birlikte esner); mürekkep gölgelendiricisi + küçük renkli ayrıntılar
   setCostume(key) {
     if (this.cos) { this.body.remove(this.cos.g); this.cos.g.traverse((o) => { if (o.geometry) o.geometry.dispose(); }); this.cos = null; }
@@ -488,6 +532,7 @@ class Zifir {
     this.u.uLit.value = this.u.uBurn.value;
     this.u.uWob.value = st.moving ? 0.7 : 0.4;
     if (this.cos) this.cos.update(dt, U.uTime.value, st.moving, this.hopT > 0);
+    if (this.glow) this.glow.u.uK.value = this.M ? 0 : this.u.uFade.value * (this.u.uDiss.value > 0 ? 0 : 1);
     // metre halkası
     this.ringU.uV.value = st.meter;
     this.ringU.uA.value = damp(this.ringU.uA.value, st.meter < 0.995 || st.burn > 0 ? 1 : 0, 6, dt);

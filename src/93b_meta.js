@@ -181,7 +181,7 @@ const Meta = {
   badges() {
     const q = this.claimable(), a = this.d().albumNew || 0, u = this.upgradable(), tot = q + (a > 0 ? 1 : 0);
     const set = (id, n) => { const el = $(id); if (!el) return; el.classList.toggle('on', n > 0); el.textContent = n > 9 ? '9+' : n || ''; };
-    { const own = Save.data.costumes || [], seen = Save.data.seenCos || []; set('#bdW', own.filter((k) => !seen.includes(k)).length); }
+    { const own = Save.data.costumes || [], seen = Save.data.seenCos || []; set('#bdW', own.filter((k) => !seen.includes(k)).length + (Save.data.glowNew ? 1 : 0)); }
     set('#bdQ', q); set('#bdA', a); set('#bdU', u); set('#bdT', tot + (u > 0 ? 1 : 0)); set('#bdM', tot + (u > 0 ? 1 : 0));
   },
   /* ---------- Hazine ekranı ---------- */
@@ -202,15 +202,30 @@ const Meta = {
     const Q = this.quests(), box = $('#qList');
     const ms = new Date(); ms.setHours(24, 0, 0, 0); const left = ms - new Date(), h = Math.floor(left / 3600000), mi = Math.floor((left % 3600000) / 60000);
     $('#qReset').textContent = `${h} sa ${mi} dk sonra yenilenir`;
+    const rr = AdBridge.left('reroll') > 0;
     box.innerHTML = Q.list.map((q, i) => {
       const def = QUESTS.find((d) => d.id === q.id), done = q.prog >= q.goal;
-      return `<div class="qc${q.got ? ' got' : done ? ' done' : ''}" data-i="${i}"><div class="qi">${aSvg(def.ic)}</div><div class="qt"><b>${def.t(q.goal)}</b><div class="qbar"><i style="width:${((q.prog / q.goal) * 100).toFixed(0)}%"></i></div><small>${q.got ? 'alındı' : `${q.prog} / ${q.goal}`}</small></div><button class="qr tap">${q.got ? '✓' : done ? `Al <i class="dico"></i>${def.r}` : `<i class="dico"></i>${def.r}`}</button></div>`;
+      return `<div class="qc${q.got ? ' got' : done ? ' done' : ''}" data-i="${i}"><div class="qi">${aSvg(def.ic)}</div><div class="qt"><b>${def.t(q.goal)}</b><div class="qbar"><i style="width:${((q.prog / q.goal) * 100).toFixed(0)}%"></i></div><small>${q.got ? 'alındı' : `${q.prog} / ${q.goal}`}${!q.got && !done && rr ? '<button class="qrr tap"><svg viewBox="0 0 10 10"><path d="M2.5 1.5v7l6-3.5z"/></svg>Değiştir</button>' : ''}</small></div><button class="qr tap">${q.got ? '✓' : done ? `Al <i class="dico"></i>${def.r}` : `<i class="dico"></i>${def.r}`}</button></div>`;
     }).join('');
     box.querySelectorAll('.qc.done .qr').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); this.claim(+b.closest('.qc').dataset.i, b); }));
+    box.querySelectorAll('.qrr').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); const i = +b.closest('.qc').dataset.i;
+      AdOffer.open({ placement: 'rv_reroll', title: 'Görevi değiştir', cta: 'Değiştir', text: 'Bu görev bugün sana göre değil mi? Kısa bir video izle, yerine yeni bir görev gelsin.', note: 'Günde bir kez', done: () => this.reroll(i) }); }));
     const all = Q.list.every((q) => q.got), cb = $('#qChest');
     cb.classList.toggle('ready', all && !Q.chest); cb.classList.toggle('opened', !!Q.chest);
     $('#qChestT').textContent = Q.chest ? 'Bugünün sandığı açıldı. Yarın yenisi gelir.' : all ? 'Hazır! Dokun ve aç.' : `Üç görevi bitir, sandığı aç · ${Q.list.filter((q) => q.got).length}/3`;
     if (!cb.querySelector('svg')) cb.querySelector('.chico').innerHTML = CHEST_SVG(0.62);
+  },
+  // görevi yenisiyle değiştir (listede olmayan, oyuncunun açtığı yeteneklere uygun bir görev)
+  reroll(i) {
+    const Q = this.quests(), q = Q.list[i]; if (!q || q.got) return;
+    const un = Save.data.unlocked | 0, have = Q.list.map((x) => x.id);
+    const ok = QUESTS.filter((d) => !have.includes(d.id) && (!d.ab || Save.seen('ab-' + d.ab)) && (d.min == null || un >= d.min));
+    if (!ok.length) { toast('Şu an başka görev yok', 2); return; }
+    const d = ok[Math.floor(Math.random() * ok.length)];
+    Q.list[i] = { id: d.id, goal: d.n[Math.floor(Math.random() * d.n.length)], prog: 0, got: false }; AdBridge.spend('reroll'); Save.save();
+    this.renderQ(); this.badges(); audio.chime && audio.chime();
+    const el = $(`#qList .qc[data-i="${i}"]`); if (el) { el.classList.add('fresh'); setTimeout(() => el.classList.remove('fresh'), 900); }
+    toast(`Yeni görev: <em>${d.t(Q.list[i].goal)}</em>`, 2.6);
   },
   claim(i, btn) {
     const Q = this.quests(), q = Q.list[i]; if (!q || q.got || q.prog < q.goal) return;
@@ -329,6 +344,7 @@ const Secret = {
     const sp = lv.spec; if (sp.kind !== 'story' || sp.night || sp.i !== SECRET_I[sp.ch] || Meta.d().secrets[sp.ch] || !lv.solution) return;
     const pos = this.place(lv); if (!pos) return;
     this.on = true; this.x = pos.x; this.y = pos.y; this.z = pos.z; this.s = pos.s; this.ch = sp.ch; this.lv = lv;
+    const md = Meta.d(); this.cmp = !!(md.compass && md.compass[sp.ch]); this.cmpTold = false;
     this.g.position.set(this.x, this.y, this.z);
   },
   // çözücünün planında Zifir oradan geçerken yıldızın noktası gölgede kalsın (her zaman alınabilir)
@@ -362,7 +378,9 @@ const Secret = {
     // görünürlük: ışıkta yok denecek kadar soluk bir kıpırtı, gölgede parlar
     const shaded = occluded(G.lv.cols, this.x, this.y, this.z, L1, -1) || Life.occ(this.x, this.y, this.z, L1) || G.ecl.amt > 0.5;
     this.k = damp(this.k, shaded ? 1 : 0, shaded ? 5 : 8, dtR);
-    const tw = 0.85 + Math.sin(t * 6.3) * 0.15, faint = 0.05 + 0.05 * Math.max(0, Math.sin(t * 2.1));
+    // pusula açıksa ışıkta da belirgin bir kıpırtı olur ve ilk adımda haber verilir
+    const tw = 0.85 + Math.sin(t * 6.3) * 0.15, faint = this.cmp ? 0.3 + 0.2 * Math.max(0, Math.sin(t * 2.6)) : 0.05 + 0.05 * Math.max(0, Math.sin(t * 2.1));
+    if (this.cmp && !this.cmpTold && st === 'play') { this.cmpTold = true; toast('<span class="tsun"></span>Pusula: <em>gizli yıldız</em> bu adada, gölgede parlar', 3); }
     this.g.visible = true;
     this.g.position.y = this.y + Math.sin(t * 1.7) * 0.06;
     this.core.material.opacity = Math.max(faint, this.k) * tw; this.halo.material.opacity = this.k * 0.85 * tw; this.rays.material.opacity = this.k * 0.9;

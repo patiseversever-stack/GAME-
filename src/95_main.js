@@ -174,6 +174,12 @@ function stepPlay(dt, dtR) {
   }
   G.minMeter = Math.min(G.minMeter ?? 1, G.meter); if (G.waiting) G.waitT = (G.waitT || 0) + dt;
   // Son Nefes: can bittiği an, adada bir kez, zaman yavaşlar ve kısa bir kurtulma penceresi açılır
+  // gölge kalkanı: bir yanışı affeder (Son Nefes'ten önce)
+  if (G.meter <= 0 && G.shield) {
+    G.shield = 0; $('#hud').classList.remove('shield'); G.meter = 0.55; G.reviveT = 1.8; G.slowT = 0.45; G.slowK = 0.4; G.trauma = Math.max(G.trauma, 0.25);
+    banner('Gölge kalkanı!', 'bir yanışı affetti'); audio.closeCall(); haptic([20, 30, 20]); zifir.kick(3); zifir.relief();
+    for (let i = 0; i < 22; i++) { const a = (i / 22) * TAU; FX.sparkle(PA.x + Math.cos(a) * 0.55, 0.35 + Math.random() * 0.4, PA.z + Math.sin(a) * 0.55, [1.5, 1.3, 2.8], 0.35); }
+  }
   if (G.meter <= 0 && !G.breathT) {
     if (G.breathUsed) { G.meter = 0; failLevel(); return; }
     G.breathUsed = true; G.breathT = LAST_BREATH; G.slowT = LAST_BREATH + 0.15; G.slowK = 0.32; G.trauma = Math.max(G.trauma, 0.3);
@@ -696,65 +702,180 @@ function buildMap() {
   $('#btnZifir').style.setProperty('--c', (SKINS[Save.data.skin] || SKINS[0]).c); $('#btnZifir').classList.toggle('new', fresh);
 }
 const skinOk = (i) => i === 0 || chapterStars(i - 1) === 24;
-// Zifir'in gardırobu: 3B giyinme odası; kilitli olanlar da denenebilir, açık olanlar giyilir
+// Zifir'in gardırobu: 3B giyinme odası; kilitli olanlar da denenebilir, açık olanlar giyilir.
+// Videolu yollar: kilitli kostüm/renk 24 saat giyilir (Rent), bazı kostümler 3 gölge parçasıyla kalıcı açılır,
+// ışıltılar yalnızca toplam ödüllü video sayısıyla açılır.
+const PIECE_NO = ['karagoz', 'ejderha']; // hikâye ve en zor perde ödülleri yalnızca kendi yoluyla açılır
+const pieceable = (k) => !!k && !PIECE_NO.includes(k);
+const adTotal = () => (Save.data.ads && Save.data.ads.total) || 0;
+const hm = (ms) => { const m = Math.max(1, Math.round(ms / 60000)); return m >= 60 ? `${Math.floor(m / 60)} sa ${m % 60} dk` : `${m} dk`; };
 const Wardrobe = {
-  tab: 'cos', pick: null,
+  tab: 'cos', pick: null, tk: 0,
   open() {
-    audio.ui(); this.tab = 'cos'; this.pick = { cos: Save.data.costume || '', skin: Save.data.skin || 0 };
-    Ward3D.open(this.pick.cos, this.pick.skin); this.build(); $('#wardrobe').classList.add('on'); document.body.classList.add('ward');
+    audio.ui(); this.tab = 'cos'; this.pick = { cos: Save.data.costume || '', skin: Save.data.skin || 0, glow: Save.data.glow || '' };
+    Ward3D.open(this.pick.cos, this.pick.skin); Ward3D.tryGlow(this.pick.glow, true); this.build(); $('#wardrobe').classList.add('on'); document.body.classList.add('ward');
   },
   close() {
     audio.ui(); $('#wardrobe').classList.remove('on'); document.body.classList.remove('ward'); Ward3D.close();
     Save.data.seenCos = (Save.data.costumes || []).slice(); Save.save(); buildMap(); if (SkyMap.inited) SkyMap.refresh(); Meta.badges();
   },
-  setTab(t) { if (this.tab === t) return; audio.ui(); this.tab = t; this.build(); },
+  setTab(t) { if (this.tab === t) return; audio.ui(); this.tab = t; if (t === 'glow' && Save.data.glowNew) { Save.data.glowNew = 0; Save.save(); Meta.badges(); } this.build(); },
+  kind() { return this.tab === 'col' ? 'col' : 'cos'; },
   items() {
-    if (this.tab === 'col') return SKINS.map((s, i) => ({ id: i, name: s.name, color: s.c, ok: skinOk(i), how: i === 0 ? 'Zifir’in kendi rengi' : `${CHAPTERS[i - 1].name} · 24 yıldız` }));
-    const own = Save.data.costumes || [];
-    return [{ key: '', name: 'Kostümsüz', icon: 'M12 5a7 7 0 1 0 0.1 0', how: 'Saf gölge' }, ...COSTUMES].map((c) => ({ id: c.key, name: c.name, icon: c.icon, ok: !c.key || own.includes(c.key),
-      how: c.how || (c.act === 'karagoz' ? 'Tiyatroda Karagöz ile Hacivat’ı izle' : `Tiyatro · “${ST_ACTS[c.act].riddle}” sahnesini çöz`) }));
+    if (this.tab === 'glow') {
+      const n = adTotal();
+      return [{ id: '', name: 'Işıltısız', ok: true, how: 'Sade gölge', ui: '' }, ...GLOWS.map((g) => ({ id: g.key, name: g.name, ok: n >= g.need, ui: g.ui, need: g.need, how: `Toplam ${g.need} ödüllü video · ${Math.min(n, g.need)}/${g.need}` }))];
+    }
+    if (this.tab === 'col') return SKINS.map((s, i) => ({ id: i, name: s.name, color: s.c, ok: skinOk(i), rent: !skinOk(i) && Rent.has('col', i), how: i === 0 ? 'Zifir’in kendi rengi' : `${CHAPTERS[i - 1].name} · 24 yıldız` }));
+    const own = Save.data.costumes || [], pcs = Save.data.pieces || {};
+    return [{ key: '', name: 'Kostümsüz', icon: 'M12 5a7 7 0 1 0 0.1 0', how: 'Saf gölge' }, ...COSTUMES].map((c) => {
+      const ok = !c.key || own.includes(c.key);
+      return { id: c.key, name: c.name, icon: c.icon, ok, rent: !ok && Rent.has('cos', c.key), pc: !ok && pieceable(c.key) ? pcs[c.key] || 0 : -1,
+        how: c.how || (c.act === 'karagoz' ? 'Tiyatroda Karagöz ile Hacivat’ı izle' : `Tiyatro · “${ST_ACTS[c.act].riddle}” sahnesini çöz`) };
+    });
   },
+  cur() { return this.tab === 'col' ? this.pick.skin : this.tab === 'glow' ? this.pick.glow : this.pick.cos; },
+  worn() { return this.tab === 'col' ? Save.data.skin || 0 : this.tab === 'glow' ? Save.data.glow || '' : Save.data.costume || ''; },
   build() {
-    const own = Save.data.costumes || [], seen = Save.data.seenCos || [], grid = $('#wgrid'), col = this.tab === 'col'; grid.innerHTML = '';
-    $('#wTabCos').classList.toggle('on', !col); $('#wTabCol').classList.toggle('on', col); grid.classList.toggle('cols', col);
-    const cur = col ? this.pick.skin : this.pick.cos, worn = col ? Save.data.skin || 0 : Save.data.costume || '';
+    const seen = Save.data.seenCos || [], grid = $('#wgrid'), col = this.tab === 'col', gl = this.tab === 'glow'; grid.innerHTML = '';
+    $('#wTabCos').classList.toggle('on', this.tab === 'cos'); $('#wTabCol').classList.toggle('on', col); $('#wTabGlow').classList.toggle('on', gl); grid.classList.toggle('cols', col || gl);
+    $('#bdG').classList.toggle('on', !!Save.data.glowNew); $('#bdG').textContent = '';
+    const cur = this.cur(), worn = this.worn();
     for (const it of this.items()) {
       const el = document.createElement('button');
-      el.className = 'wc tap' + (it.id === cur ? ' sel' : '') + (it.ok ? '' : ' lock') + (it.id === worn ? ' worn' : '') + (!col && it.ok && it.id && !seen.includes(it.id) ? ' new' : '');
-      el.innerHTML = (col ? `<i class="sw" style="--c:${it.color}"></i>` : `<svg viewBox="0 0 24 24"><path d="${it.icon}"/></svg>`) + `<b>${it.name}</b>`;
+      el.className = 'wc tap' + (it.id === cur ? ' sel' : '') + (it.ok || it.rent ? '' : ' lock') + (it.rent ? ' rent' : '') + (it.id === worn ? ' worn' : '') + (this.tab === 'cos' && it.ok && it.id && !seen.includes(it.id) ? ' new' : '');
+      el.innerHTML = (col ? `<i class="sw" style="--c:${it.color}"></i>` : gl ? `<i class="gl${it.id ? '' : ' none'}" style="--c:${it.ui || '#fff'}"></i>` : `<svg viewBox="0 0 24 24"><path d="${it.icon}"/></svg>`) + `<b>${it.name}</b>` +
+        (it.pc > 0 ? `<em class="pc">${[0, 1, 2].map((k) => `<s class="${k < it.pc ? 'on' : ''}"></s>`).join('')}</em>` : '');
       el.addEventListener('click', () => this.select(it.id));
       grid.appendChild(el);
     }
     this.info();
   },
   select(id) {
-    const col = this.tab === 'col';
-    if ((col ? this.pick.skin : this.pick.cos) === id) { Ward3D.show(); return; }
-    if (col) { this.pick.skin = id; Ward3D.trySkin(id); } else { this.pick.cos = id; Ward3D.tryCostume(id); }
+    if (this.cur() === id) { Ward3D.show(); return; }
+    if (this.tab === 'col') { this.pick.skin = id; Ward3D.trySkin(id); } else if (this.tab === 'glow') { this.pick.glow = id; Ward3D.tryGlow(id); } else { this.pick.cos = id; Ward3D.tryCostume(id); }
     this.build();
   },
-  // seçilenin adı, nasıl açıldığı ve Giy düğmesi
+  // seçilenin adı, nasıl açıldığı, Giy düğmesi ve videolu yollar
   info() {
-    const col = this.tab === 'col', id = col ? this.pick.skin : this.pick.cos, it = this.items().find((x) => x.id === id) || this.items()[0];
-    const worn = (col ? Save.data.skin || 0 : Save.data.costume || '') === id, btn = $('#wWear');
+    const id = this.cur(), it = this.items().find((x) => x.id === id) || this.items()[0];
+    const worn = this.worn() === id, btn = $('#wWear'), can = it.ok || it.rent, gl = this.tab === 'glow';
     $('#wiName').textContent = it.name;
-    $('#wiHow').innerHTML = it.ok ? (worn ? 'Zifir şu an bunu giyiyor' : it.how) : `<span class="lk"></span>Deneme · ${it.how}`;
-    btn.className = 'btn primary tap' + (worn ? ' worn' : it.ok ? '' : ' lockd');
-    btn.textContent = worn ? 'Giyili ✓' : it.ok ? 'Giy' : 'Kilitli';
+    $('#wiHow').innerHTML = it.rent ? `<span class="rt"></span>24 saatlik · ${hm(Rent.left(this.kind()))} kaldı` : it.ok ? (worn ? 'Zifir şu an bunu giyiyor' : it.how) : `<span class="lk"></span>${gl ? '' : 'Deneme · '}${it.how}`;
+    btn.className = 'btn primary tap' + (worn ? ' worn' : can ? '' : ' lockd');
+    btn.textContent = worn ? 'Giyili ✓' : can ? 'Giy' : 'Kilitli';
+    // videolu yollar (yalnızca kilitliyse): 24 saat giy, gölge parçası
+    const vid = $('#wVid'), rentB = $('#wRent'), pcB = $('#wPiece');
+    const showRent = !can && !gl && AdBridge.left('rent') > 0, showPc = !can && it.pc >= 0 && AdBridge.left('piece') > 0;
+    rentB.style.display = showRent ? '' : 'none'; pcB.style.display = showPc ? '' : 'none';
+    if (showPc) pcB.lastChild.textContent = `Gölge parçası ${it.pc}/3`;
+    const noPc = !can && it.pc >= 0 && !showPc;
+    $('#wVidN').textContent = noPc ? 'Yarın yeni bir gölge parçası' : !can && !gl && !showRent && AdBridge.cfg.enabled ? 'Bugünlük deneme hakkı bitti' : '';
+    vid.classList.toggle('on', showRent || showPc || !!$('#wVidN').textContent);
   },
   wearPick() {
-    const col = this.tab === 'col', id = col ? this.pick.skin : this.pick.cos, it = this.items().find((x) => x.id === id);
+    const id = this.cur(), it = this.items().find((x) => x.id === id);
     if (!it) return;
-    if (!it.ok) { audio.clunk(); haptic(10); toast(`Bunu giymek için: <em>${it.how}</em>`, 2.6); return; }
-    if (col) { Save.data.skin = id; zifir.setSkin(id); if (SkyMap.inited) SkyMap.refresh(); } else { Save.data.costume = id; zifir.setCostume(id); }
+    if (!it.ok && !it.rent) { audio.clunk(); haptic(10); toast(this.tab === 'glow' ? `Bu ışıltı için: <em>${it.how}</em>` : `Bunu giymek için: <em>${it.how}</em> ya da videoyla 24 saat dene`, 2.8); return; }
+    if (this.tab === 'col') { Save.data.skin = id; zifir.setSkin(id); if (SkyMap.inited) SkyMap.refresh(); }
+    else if (this.tab === 'glow') { Save.data.glow = id; zifir.setGlow(id); }
+    else { Save.data.costume = id; zifir.setCostume(id); }
     Save.save(); audio.chime(); Ward3D.dance = { k: 'hop', t: 0, dur: 1.45 }; Ward3D.burst(); this.build();
+  },
+  // ▶ 24 saat giy: seçili kilitli kostüm ya da renk kiralanır ve hemen giyilir
+  async rent() {
+    const kind = this.kind(), id = this.cur(), it = this.items().find((x) => x.id === id);
+    if (!it || it.ok || it.rent || AdBridge.left('rent') <= 0) return;
+    if (!(await AdBridge.rewarded('rv_rent'))) return;
+    AdBridge.spend('rent'); Rent.set(kind, id); this.wearPick();
+    toast(`<em>${it.name}</em> 24 saat senin`, 2.6);
+  },
+  // ▶ gölge parçası: üç parça birleşince kostüm kalıcı açılır
+  async piece() {
+    const key = this.pick.cos, it = this.items().find((x) => x.id === key);
+    if (!it || it.ok || it.pc < 0 || AdBridge.left('piece') <= 0) return;
+    if (!(await AdBridge.rewarded('rv_piece'))) return;
+    AdBridge.spend('piece'); const n = this.addPiece(key);
+    if (n >= 3) { toast(`<em>Kostüm tamamlandı!</em> ${it.name} artık senin`, 3); Ward3D.dance = { k: 'hop', t: 0, dur: 1.45 }; Ward3D.burst(); audio.chime && audio.chime(); }
+    else { toast(`Gölge parçası <em>${n}/3</em> · yarın bir tane daha`, 2.6); Ward3D.burst(); audio.pop && audio.pop(6); }
+    this.build();
+  },
+  // kostüme bir gölge parçası ekler; üçüncüde kostüm kalıcı açılır (3 döner)
+  addPiece(key) {
+    const P = Save.data.pieces || (Save.data.pieces = {}); P[key] = (P[key] || 0) + 1; const n = P[key];
+    if (n >= 3) { delete P[key]; (Save.data.costumes || (Save.data.costumes = [])).push(key); }
+    Save.save(); Meta.badges(); return n;
+  },
+  // ödüllü video sayısı bir ışıltı eşiğine ulaştıysa haber ver
+  glowCheck() {
+    const n = adTotal(), g = GLOWS.find((x) => x.need === n); if (!g) return;
+    Save.data.glowNew = 1; Save.save(); Meta.badges();
+    setTimeout(() => toast(`<span class="tsun"></span>Yeni ışıltı açıldı: <em>${g.name}</em> · Gardırop’ta`, 3.2), 900);
+  },
+  // kiralık süre dolunca giyilen çıkarılır (oyun açıkken de)
+  tick(dtR) {
+    if ((this.tk -= dtR) > 0) return; this.tk = 20;
+    if (Rent.sweep()) { zifir.setCostume(Save.data.costume || ''); zifir.setSkin(Save.data.skin || 0); toast('Kiralık giysinin <em>24 saati</em> doldu', 2.6); if ($('#wardrobe').classList.contains('on')) this.build(); }
   },
   // tiyatro kartından doğrudan giydirme
   wear(key) { Save.data.costume = key; Save.save(); zifir.setCostume(key); zifir.kick(-2.5); audio.pop(5); },
 };
+/* Hediye Zifir: haritada 20-30 dakikada bir küçük bir Zifir paketle uçarak geçer. Oyuncu kendi yakalar;
+   dokununca kısa bir pencere, isterse video ve paket: ışık tozu ya da bir gölge parçası. Kaçırılırsa birkaç dakika sonra döner. */
+const Gift = {
+  on: false, t: 0, dur: 24, wait: 2.5, x: 0, y: 0,
+  last() { const a = Save.data.ads; if (a.giftLast == null) { a.giftLast = Date.now() - 17 * 60000; a.giftGap = 20 * 60000; Save.save(); } return a.giftLast; },
+  due() { return Date.now() - this.last() > (Save.data.ads.giftGap || 20 * 60000) && AdBridge.left('gift') > 0 && !AdBridge.busy; },
+  ok() { return G.state === 'map' && SkyMap.active && !SkyMap.dive && SkyMap.intro >= 1 && !Meta.open && !Ward3D.on && !$('#adOffer').classList.contains('on') && !$('#map').classList.contains('diving'); },
+  update(dtR) {
+    const el = $('#giftZ');
+    if (!this.on) { if (this.ok() && this.due()) { if ((this.wait -= dtR) <= 0) this.spawn(); } else this.wait = 2.5; return; }
+    if (!this.ok() && !this.held) { this.hide(true); return; }
+    if (this.held) return; // teklif penceresi açıkken yerinde süzülür
+    this.t += dtR;
+    const W = innerWidth, H = innerHeight, L = SkyMap._lay, l = L ? L.l : 0, r = L ? L.r : W, top = L ? L.top : H * 0.12;
+    const cx = (l + r) / 2, cy = top + Math.min(70, (L ? L.bot - L.top : H * 0.4) * 0.18), amp = (r - l) * 0.28;
+    const tIn = 2.2, tOut = 2.4, t = this.t, mx = cx + Math.sin(t * 0.55) * amp, my = cy + Math.sin(t * 1.15) * 16;
+    let x = mx, y = my;
+    if (t < tIn) { const e = Ease.outCubic(t / tIn); x = lerp(W + 70, mx, e); y = lerp(cy - 40, my, e); }
+    else if (t > this.dur - tOut) { const e = Ease.inCubic(clamp01((t - (this.dur - tOut)) / tOut)); x = lerp(mx, -90, e); y = lerp(my, cy - 50, e); }
+    const vx = x - this.x; this.x = x; this.y = y;
+    el.style.transform = `translate3d(${(x - 34).toFixed(1)}px,${(y - 36).toFixed(1)}px,0) rotate(${clamp(vx * 0.9, -14, 14).toFixed(1)}deg)`;
+    if (t >= this.dur) { this.hide(false); Save.data.ads.giftLast = Date.now() - (Save.data.ads.giftGap || 20 * 60000) + 6 * 60000; Save.save(); } // kaçtı: ~6 dk sonra yine gelir
+  },
+  spawn() { this.on = true; this.held = false; this.t = 0; this.x = innerWidth + 70; $('#giftZ').classList.add('on'); audio.whoosh && audio.whoosh(true, 0.5, 0.05); },
+  hide(quick) { this.on = false; this.held = false; this.wait = 2.5; const el = $('#giftZ'); el.classList.remove('on'); if (quick) el.style.transform = 'translate3d(-200px,-200px,0)'; },
+  tap() {
+    if (!this.on || this.held) return; this.held = true; haptic(10); audio.pop && audio.pop(7);
+    AdOffer.open({
+      placement: 'rv_gift', title: 'Hediye Zifir!', cta: 'Paketi aç',
+      text: 'Küçük bir Zifir sana bir paket getirdi. Kısa bir video izle, içinde ne var bak: ışık tozu ya da bir gölge parçası.',
+      done: () => this.reward(), onClose: () => this.leave(),
+    });
+  },
+  leave() { if (!this.on) return; this.held = false; this.t = Math.max(this.t, this.dur - 2.4); },
+  reward() {
+    const a = Save.data.ads; a.giftLast = Date.now(); a.giftGap = (20 + Math.random() * 10) * 60000; AdBridge.spend('gift');
+    this.hide(false);
+    const own = Save.data.costumes || [], P = Save.data.pieces || {}, cand = COSTUMES.filter((c) => pieceable(c.key) && !own.includes(c.key));
+    if (cand.length && Math.random() < 0.3) {
+      cand.sort((p, q) => (P[q.key] || 0) - (P[p.key] || 0)); const c = (P[cand[0].key] || 0) > 0 ? cand[0] : cand[Math.floor(Math.random() * cand.length)];
+      const n = Wardrobe.addPiece(c.key);
+      toast(n >= 3 ? `Paketten son parça çıktı: <em>${c.name}</em> artık senin!` : `Paketten <em>${c.name}</em> için gölge parçası · ${n}/3`, 3.2);
+    } else {
+      const d = Math.random() < 0.15 ? 90 : 25 + Math.round(Math.random() * 30);
+      Meta.addDust(d); toast(`Paketten <em>${d} ışık tozu</em> çıktı`, 2.8);
+    }
+    audio.chime && audio.chime(); haptic([10, 30, 10]);
+  },
+};
+$('#giftZ').addEventListener('click', (e) => { e.stopPropagation(); Gift.tap(); });
 $('#wClose').addEventListener('click', (e) => { e.stopPropagation(); Wardrobe.close(); });
 $('#wTabCos').addEventListener('click', () => Wardrobe.setTab('cos'));
 $('#wTabCol').addEventListener('click', () => Wardrobe.setTab('col'));
+$('#wTabGlow').addEventListener('click', () => Wardrobe.setTab('glow'));
+$('#wRent').addEventListener('click', (e) => { e.stopPropagation(); Wardrobe.rent(); });
+$('#wPiece').addEventListener('click', (e) => { e.stopPropagation(); Wardrobe.piece(); });
 $('#wWear').addEventListener('click', () => Wardrobe.wearPick());
 $('#btnZifir').addEventListener('click', () => Wardrobe.open());
 { // sahnede sürükle-çevir, dokununca kıkırdasın
@@ -825,12 +946,19 @@ $('#chest').addEventListener('click', (e) => { e.stopPropagation(); if (Meta.che
 bind('#chTake', () => Meta.chestClose());
 bind('#chDouble', () => Meta.chestDouble());
 bind('#aSheet', () => $('#aSheet').classList.remove('on'));
-bind('#mpBonusAd', () => AdOffer.bonus(Math.round(SkyMap.tf)));
+bind('#mpBonusAd', () => AdOffer.secret(Math.round(SkyMap.tf)));
+bind('#aoAlt', () => AdOffer.alt());
 bind('#aoYes', () => AdOffer.yes());
-bind('#aoNo', () => { audio.ui(); AdOffer.close(); });
-bind('#adOffer', () => AdOffer.close());
+bind('#aoNo', () => { audio.ui(); AdOffer.dismiss(); });
+bind('#adOffer', () => AdOffer.dismiss());
 $('#adOffer .ao').addEventListener('click', (e) => e.stopPropagation());
 bind('#mpBonus', () => { const ci = Math.round(SkyMap.tf), md = Meta.d(); if (!md.secrets[ci] && !(md.adOpen && md.adOpen[ci])) return; audio.ui(); $('#fader').classList.add('on'); setTimeout(() => { SkyMap.close && SkyMap.close(); startBonus(ci); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); });
+bind('#btnShield', async () => {
+  if (G.state !== 'fail' || AdBridge.left('shield') <= 0) return;
+  if (!(await AdBridge.rewarded('rv_shield'))) return;
+  AdBridge.spend('shield'); retry(); G.shield = 1; $('#hud').classList.add('shield');
+  setTimeout(() => banner('Gölge kalkanı seninle', 'ilk yanışın affedilecek'), 300);
+});
 bind('#btnRevive', async () => { if (G.state !== 'fail' || G.revived) return; const ok = await AdBridge.rewarded('rv_revive'); if (ok) revive(); });
 bind('#btnDouble', async () => { if (G.dustDoubled || !(G.dustWon > 0)) return; $('#complete').classList.remove('candouble'); const ok = await AdBridge.rewarded('rv_dust_double'); if (ok) { G.dustDoubled = true; Meta.addDust(G.dustWon); const b = $('#cDust b'); b.textContent = `+${G.dustWon * 2}`; $('#cDust').classList.remove('on'); void b.offsetWidth; $('#cDust').classList.add('on'); audio.chime && audio.chime(); } });
 bind('#btnLoreT', () => Lore.openBook());
@@ -980,6 +1108,7 @@ function frame(now) {
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
   { const tn = G.state === 'title' && G.night > 0.5; if (tn !== frame.tn) { frame.tn = tn; document.body.classList.toggle('tnight', tn); } }
   AdBridge.slotTick(dtR);
+  Wardrobe.tick(dtR); Gift.update(dtR);
   { const pl = G.state === 'play'; if (pl !== frame.pl) { frame.pl = pl; document.body.classList.toggle('playing', pl); } const scr = Meta.open ? 'hz' : G.state; if (scr !== frame.scr) { frame.scr = scr; AdBridge.screen(scr); } }
   audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k, dragon: G.state === 'play' && Dragon.on && Dragon.mode === 'chase', boss: Dragon.danger() };
   audio.update(dtR, G.state === 'play');
@@ -1154,7 +1283,7 @@ function bootGame() {
   requestAnimationFrame(lift);
 }
 // test/hata ayıklama kancası (görünmez)
-window.__gd = {
+window.__gd = { Wardrobe, Rent, AdOffer, Gift,
   G, Save, Perf, Abil, Meta, Secret, AdBridge, TitleSky, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, TutStage, Dragon, Life, NightAct, nightSpec, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), bonus: (ch) => startBonus(ch), endless: (n, seed = 12345) => { startEndless(); G.endless.n = n; G.endless.seed = seed; enterLevel(endlessSpec(n, seed), { quick: true }); }, auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },

@@ -110,3 +110,19 @@ const Save = {
 };
 Save.load();
 if (TEST_ALL) { Save.data.unlocked = 63; Save.data.seen.tutorial = 1; }
+// Videoyla 24 saatliğine giyilen (kiralık) kostüm ve renk. Süre dolunca giyilen kendiliğinden çıkarılır.
+const Rent = {
+  H: 24 * 3600 * 1000,
+  get(kind) { const r = (Save.data.rent || {})[kind]; return r && r.until > Date.now() ? r : null; },
+  has(kind, id) { const r = this.get(kind); return !!r && r.id === id; },
+  set(kind, id) { (Save.data.rent || (Save.data.rent = {}))[kind] = { id, until: Date.now() + this.H }; Save.save(); },
+  left(kind) { const r = this.get(kind); return r ? r.until - Date.now() : 0; },
+  // süresi dolmuş kiralık giyiliyse çıkar; bir şey değiştiyse true
+  sweep() {
+    const d = Save.data; let ch = false;
+    if (d.costume && !(d.costumes || []).includes(d.costume) && !this.has('cos', d.costume)) { d.costume = ''; ch = true; }
+    if (d.skin && chapterStars(d.skin - 1) < 24 && !this.has('col', d.skin)) { d.skin = 0; ch = true; }
+    if (ch) Save.save();
+    return ch;
+  },
+};

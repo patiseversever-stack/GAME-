@@ -188,7 +188,8 @@ const SkyMap = {
       I.tag.innerHTML = `<small>${I.ch.roman}</small>${I.ch.name}<em>${locked ? 'kilitli' : `★ ${chapterStars(I.i)}`}</em>`;
       I.btns.forEach((b, k) => {
         const g = I.i * 8 + k, d = Save.data.levels[g], open = g <= un;
-        b.className = 'mnode tap' + (d ? ' done' : open ? ' open' : ' lk') + (g === un && !d ? ' cur' : '') + (AdBridge.canSkip(g) ? ' vid' : '');
+        const md = Meta.d(), sec = md.compass && md.compass[I.i] && !md.secrets[I.i] && k === SECRET_I[I.i];
+        b.className = 'mnode tap' + (d ? ' done' : open ? ' open' : ' lk') + (g === un && !d ? ' cur' : '') + (AdBridge.canSkip(g) ? ' vid' : '') + (sec ? ' sec' : '');
         b.querySelectorAll('s').forEach((s, q) => s.classList.toggle('on', !!(d && d.stars[q])));
       });
       // takımyıldızı
@@ -293,7 +294,9 @@ const SkyMap = {
     $('#mpPlay').innerHTML = locked ? 'Kilitli' : Save.data.levels[g] ? `Ada ${g + 1} <small>yıldız topla</small>` : `Ada ${g + 1} <small>${g === un ? 'sıradaki' : 'oyna'}</small>`;
     { const md = Meta.d(), sec = !!md.secrets[ci], ao = !sec && !!(md.adOpen && md.adOpen[ci]), el = $('#mpSecret'), vid = !sec && !ao && AdBridge.cfg.enabled;
       el.classList.toggle('on', !locked); el.classList.toggle('got', sec); el.classList.toggle('open', ao); el.classList.toggle('vid', vid);
-      $('#mpSecT').textContent = md.bonus[ci] ? `Gizli Ada · ${'★'.repeat(md.bonus[ci])}` : sec ? 'Gizli yıldız bulundu!' : ao ? 'Gizli Ada açık · yıldız hâlâ saklı' : vid ? 'Gölgede bir yıldız saklı' : 'Bu dünyada gölgede parlayan bir yıldız saklı'; }
+      const cmp = !sec && md.compass && md.compass[ci];
+      $('#mpSecT').textContent = md.bonus[ci] ? `Gizli Ada · ${'★'.repeat(md.bonus[ci])}` : sec ? 'Gizli yıldız bulundu!' : ao ? 'Gizli Ada açık · yıldız hâlâ saklı' : cmp ? `Pusula · yıldız Ada ${ci * 8 + SECRET_I[ci] + 1} içinde` : vid ? 'Gölgede bir yıldız saklı' : 'Bu dünyada gölgede parlayan bir yıldız saklı';
+      $('#mpBonusAd').lastChild.textContent = cmp ? 'Gizli Ada' : 'İpucu'; }
     this.dots.forEach((d, i) => { d.classList.toggle('on', i === ci); d.classList.toggle('lk', un < i * 8); });
     $('#mapPrev').classList.toggle('dis', ci === 0); $('#mapNext').classList.toggle('dis', ci === CHAPTERS.length - 1);
   },

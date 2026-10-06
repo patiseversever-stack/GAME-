@@ -31,7 +31,8 @@ const AD_DEFAULTS = {
     dailyMax: 20,
     placements: ['level_complete', 'to_map'], // izin verilen doğal molalar
   },
-  rewarded: { cooldownSec: 2, dailyMax: 25, skipDaily: 3 }, // skipDaily: haritada videoyla açılabilen sıradaki ada sayısı (günlük)
+  // limits: her ödüllü yer için günlük üst sınır (dengeli: günde ~10 fırsat)
+  rewarded: { cooldownSec: 2, dailyMax: 25, limits: { skip: 3, rent: 2, piece: 1, shield: 3, gift: 3, reroll: 1 } },
   banner: { enabled: true, screens: ['map', 'hz'], heightPx: 56 }, // yalnızca menü ekranlarında, oyunda asla
   // title: açılışta görünen karşılama ekranı (her açılışta bir gösterim). titleHeightPx: karşılama yuvasının yüksekliği.
   // overlay: postMessage köprüsü yerel native görünümü yuvanın üstüne çiziyorsa true (GundonumuAds.showNativeAt varsa kendiliğinden)
@@ -45,6 +46,12 @@ const AD_PLACEMENTS = {
   rv_chest_double: 'Günün sandığını ikiye katla',
   rv_skip: 'Haritada sıradaki kilitli adayı aç',
   rv_bonus: 'Gizli Adayı yıldızı bulmadan aç',
+  rv_compass: 'Gizli yıldız pusulası (adayı ve yeri gösterir)',
+  rv_rent: 'Kilitli kostümü ya da rengi 24 saat giy',
+  rv_piece: 'Kostüm için gölge parçası topla',
+  rv_shield: 'Gölge kalkanıyla yeniden dene',
+  rv_gift: 'Hediye Zifir’in paketini aç',
+  rv_reroll: 'Günlük görevi değiştir',
   int_level_complete: 'Sonraki adaya geçerken (doğal mola)',
   int_to_map: 'Gökyüzü haritasına dönerken',
   banner_menu: 'Gökyüzü ve Hazine ekranlarının altı',
@@ -57,7 +64,8 @@ const AdBridge = {
   init() {
     this.cfg = adMerge(AD_DEFAULTS, window.GUNDONUMU_AD_CONFIG || {});
     const today = dateNum(), d = Save.data.ads || (Save.data.ads = {});
-    if (d.day !== today) { d.day = today; d.int = 0; d.rv = 0; d.skip = 0; }
+    if (d.day !== today) { d.day = today; d.int = 0; d.rv = 0; d.use = {}; }
+    d.use = d.use || {}; d.total = d.total || 0;
     d.levels = d.levels || 0; this.st = d;
     this.sess.lastInt = performance.now(); // açılışta hemen geçiş reklamı yok
     document.documentElement.style.setProperty('--nath', (this.cfg.native.titleHeightPx | 0 || 150) + 'px');
@@ -95,7 +103,7 @@ const AdBridge = {
       else ok = await this.mock('rewarded', placement);
     } catch (e) { console.warn('ödüllü reklam', e); ok = false; }
     this.busy = false; audio.duck && audio.duck(false);
-    this.sess.lastRv = performance.now(); if (ok) { this.st.rv++; Save.save(); }
+    this.sess.lastRv = performance.now(); if (ok) { this.st.rv++; this.st.total = (this.st.total || 0) + 1; Save.save(); Wardrobe.glowCheck(); }
     this.preload('rewarded');
     if (!ok) toast('Reklam şu an hazır değil. Biraz sonra tekrar dene.', 2.4);
     return ok;
@@ -161,9 +169,10 @@ const AdBridge = {
     } catch (e) {}
   },
   // haritada sıradaki kilitli ada videoyla açılabilir mi: yalnızca hemen sonraki ada, aynı dünyada (ejderha adası atlanmaz), günlük sınırla
-  canSkip(g) {
-    return this.cfg.enabled && !TEST_ALL && g === Save.data.unlocked + 1 && g % 8 !== 0 && g < STORY_LEVELS && (this.st.skip || 0) < this.cfg.rewarded.skipDaily && this.st.rv < this.cfg.rewarded.dailyMax;
-  },
+  canSkip(g) { return !TEST_ALL && g === Save.data.unlocked + 1 && g % 8 !== 0 && g < STORY_LEVELS && this.left('skip') > 0; },
+  // bir ödüllü yerin bugün kalan hakkı (genel günlük sınır da sayılır)
+  left(kind) { if (!this.cfg.enabled || this.st.rv >= this.cfg.rewarded.dailyMax) return 0; const L = this.cfg.rewarded.limits || {}; return L[kind] == null ? 99 : Math.max(0, L[kind] - (this.st.use[kind] || 0)); },
+  spend(kind) { this.st.use[kind] = (this.st.use[kind] || 0) + 1; Save.save(); },
   // native: kutuya sponsorlu kart doldurur (yoksa kutu gizli kalır)
   async fillNative(box, placement) {
     const nc = this.cfg.native; if (!box) return;
@@ -208,12 +217,17 @@ const AdOffer = {
   o: null,
   open(o) {
     this.o = o; $('#aoT').innerHTML = o.title; $('#aoP').innerHTML = o.text; $('#aoN').textContent = o.note || '';
+    $('#aoYes').lastChild.textContent = o.cta || 'İzle · Aç';
+    const alt = $('#aoAlt'); alt.style.display = o.alt ? '' : 'none'; if (o.alt) alt.lastChild.textContent = o.alt.cta;
     $('#adOffer').classList.add('on'); audio.ui(); haptic(8);
   },
+  async alt() { const o = this.o, a = o && o.alt; this.o = null; this.close(); if (a && (await AdBridge.rewarded(a.placement))) a.done(); else if (o && o.onClose) o.onClose(); },
   close() { $('#adOffer').classList.remove('on'); },
+  // izlemeden kapatılırsa (Şimdi değil / dışına dokun) teklif sahibine haber verilir
+  dismiss() { const o = this.o; this.o = null; this.close(); if (o && o.onClose) o.onClose(); },
   async yes() {
     const o = this.o; this.o = null; this.close(); if (!o) return;
-    if (await AdBridge.rewarded(o.placement)) o.done();
+    if (await AdBridge.rewarded(o.placement)) o.done(); else if (o.onClose) o.onClose();
   },
   skip(g) {
     const left = this.skipLeft();
@@ -222,13 +236,29 @@ const AdOffer = {
       text: `Kısa bir video izle, bu ada hemen uyansın. <em>Ada ${g}</em> seni bekliyor olacak; yıldızlarını sonra toplarsın.`,
       note: `Bugün ${left} hakkın var`,
       done: () => {
-        Save.data.unlocked = Math.max(Save.data.unlocked, g); AdBridge.st.skip = (AdBridge.st.skip || 0) + 1; Save.save();
+        Save.data.unlocked = Math.max(Save.data.unlocked, g); AdBridge.spend('skip'); Save.save();
         SkyMap.refresh(); SkyMap.updatePanel(true); audio.chime && audio.chime(); haptic(18);
         toast(`Ada ${g + 1} <em>uyandı</em>.`, 2.4);
       },
     });
   },
-  skipLeft() { return Math.max(0, AdBridge.cfg.rewarded.skipDaily - (AdBridge.st.skip || 0)); },
+  skipLeft() { return AdBridge.left('skip'); },
+  // gizli yıldız: önce pusula (keşif kalır), yanında doğrudan açma seçeneği
+  secret(ci) {
+    const md = Meta.d(), bonusDone = () => { (md.adOpen || (md.adOpen = {}))[ci] = 1; Save.save(); SkyMap.updatePanel(true); audio.chime && audio.chime(); haptic(18); toast('<em>Gizli Ada</em> açıldı.', 2.4); };
+    if (md.compass && md.compass[ci]) return this.bonus(ci);
+    const g = ci * 8 + SECRET_I[ci];
+    this.open({
+      placement: 'rv_compass', title: 'Gizli yıldız', cta: 'Pusula',
+      text: `Pusula, yıldızın <em>hangi adada</em> ve nerede saklandığını gösterir. Bulunca Gizli Ada açılır, albüme işlenir.`,
+      note: 'ya da Gizli Ada’yı hemen aç',
+      done: () => {
+        (md.compass || (md.compass = {}))[ci] = 1; Save.save(); SkyMap.refresh(); SkyMap.updatePanel(true); audio.chime && audio.chime(); haptic(18);
+        toast(`Pusula açıldı: yıldız <em>Ada ${g + 1}</em> içinde, gölgede parlar`, 3);
+      },
+      alt: { cta: 'Gizli Ada’yı aç', placement: 'rv_bonus', done: bonusDone },
+    });
+  },
   bonus(ci) {
     this.open({
       placement: 'rv_bonus', title: 'Gizli Ada',

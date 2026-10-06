@@ -57,6 +57,7 @@ const Ward3D = {
   },
   close() { this.on = false; this.drag = null; },
   tryCostume(key, quiet) { this.z.setCostume(key || ''); if (!quiet) this.show(); },
+  tryGlow(key, quiet) { this.z.setGlow(key || ''); if (!quiet) this.show(); },
   trySkin(i, quiet) { const c = (SKINS[i] || SKINS[0]).c; this.z.setSkin(i); this.bgU.uCol.value.set(c); this.ringM.color.set(c).multiplyScalar(2.6); this.glowM.color.set(c).multiplyScalar(0.7); if (!quiet) this.show(); },
   // yeni bir şey denenince: dönerek zıplar, parıltı saçar
   show() { this.dance = { k: 'show', t: 0, dur: 0.95 }; this.burst(); audio.pop(5); haptic(8); },

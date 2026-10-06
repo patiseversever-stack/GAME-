@@ -15,7 +15,7 @@ const PATIENCE_MAX = 3.0, PATIENCE_REGEN = 0.18, FLY_DUR = 5.6;
 // güneşin merhameti: aynı adada 2. başarısızlıktan sonra her denemede ışık %10 daha az yakar (en fazla %50), gölgede can daha hızlı dolar
 const helpFor = (lv) => { const n = lv.spec.night ? NightAct.data().fails[lv.spec.g] || 0 : lv.spec.kind === 'story' ? Save.data.fails[lv.spec.g] || 0 : 0; return n < 2 ? 1 : Math.max(0.5, 1 - 0.1 * (n - 1)); };
 const zifir = new Zifir();
-zifir.setCostume(Save.data.costume || '');
+Rent.sweep(); zifir.setCostume(Save.data.costume || ''); zifir.setSkin(Save.data.skin || 0); zifir.setGlow(Save.data.glow || '');
 const drops = new DropViews();
 /* ---------- iz: yandığın yerde kül lekesi, en uzağa gittiğin yerde altın çizgi ----------
    Her kayıp bir ilerleme gibi hissettirsin: oyuncu nerede zorlandığını ve rekorunu yolda görür. */
@@ -487,6 +487,7 @@ function prebuildBg(spec) {
 function nextSpecOf(spec) { if (!spec) return null; if (spec.kind === 'story') return spec.g < STORY_LEVELS - 1 ? (spec.night ? nightSpec(spec.g + 1) : levelSpec(spec.g + 1)) : null; if (spec.kind === 'endless' && G.endless) return endlessSpec(spec.n + 1, G.endless.seed); return null; }
 function resetRun() {
   const lv = G.lv;
+  G.shield = 0; $('#hud').classList.remove('shield');
   G.helpK = helpFor(lv); G.breathUsed = false; G.breathT = 0; G.passedBest = false;
   G.T = 0; G.s = 0; G.meter = 1; G.minMeter = 1; G.waitT = 0; G.patience = Meta.val('wait'); G.revived = false; G.reviveT = 0; G.holding = false; G.holdT = 0; G.expTotal = 0; G.f = 0; G.burnEp = 0; G.epMin = 1; G.waiting = false; G.dropsGot = 0; G.combo = 0;
   G.ecl.active = false; G.ecl.t = 0; G.ecl.amt = 0; G.ecl.charge = lv.spec.eclipse ? 1 : 0;
@@ -647,6 +648,8 @@ function showFail() {
   showMercy(lv);
   $('#fail').classList.toggle('offerhint', G.mode === 'story' && (Save.data.fails[lv.spec.g] || 0) >= 3 && !G.hint);
   $('#fail').classList.toggle('canrevive', !G.revived && G.lastPct > 0.12 && AdBridge.ready('rewarded'));
+  // gölge kalkanı: aynı adada 2. kayıptan sonra, 'bir şans daha' yoksa (iki video düğmesi yan yana çıkmaz)
+  $('#fail').classList.toggle('canshield', !$('#fail').classList.contains('canrevive') && (G.mode === 'story' || G.mode === 'night') && failsOn(lv) >= 2 && AdBridge.left('shield') > 0);
   UI.hud(false); UI.show('fail');
 }
 // Güneşin merhameti kartı: yardım açıkça ve cesaret verici bir dille gösterilir; ipuçları da burada

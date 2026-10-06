@@ -22,7 +22,13 @@ Oyuncuyu rahatsız etmeyecek, gösterim oranı yüksek yerler seçildi.
 | `rv_dust_double`     | Ödüllü   | Ada bitince, "Tozu ikiye katla"                              | O adanın ışık tozu ×2             |
 | `rv_chest_double`    | Ödüllü   | Günün sandığı açılınca, "İzle · ikiye katla"                 | Sandık ödülü ×2                   |
 | `rv_skip`            | Ödüllü   | Gökyüzü haritasında ▶ rozetli sıradaki kilitli adaya dokununca | O ada hemen açılır               |
-| `rv_bonus`           | Ödüllü   | Gökyüzü panelinde "▶ Gizli Ada" (gizli yıldız bulunmadıysa)  | O dünyanın Gizli Adası açılır     |
+| `rv_compass`         | Ödüllü   | Gökyüzü panelinde "▶ İpucu" (gizli yıldız bulunmadıysa)      | Yıldızın adası ve yeri gösterilir |
+| `rv_bonus`           | Ödüllü   | Aynı pencerede "Gizli Ada'yı aç" seçeneği                    | O dünyanın Gizli Adası açılır     |
+| `rv_rent`            | Ödüllü   | Gardırop'ta kilitli kostüm/renk seçiliyken "▶ 24 saat giy"   | 24 saat giyilir                   |
+| `rv_piece`           | Ödüllü   | Gardırop'ta "▶ Gölge parçası n/3" (bazı kostümler)           | 3 parçada kostüm kalıcı açılır    |
+| `rv_shield`          | Ödüllü   | Aynı adada 2. kayıptan sonra "▶ Kalkanla dene"               | İlk yanış bir kez affedilir       |
+| `rv_gift`            | Ödüllü   | Haritada uçan Hediye Zifir'e dokununca                       | Işık tozu ya da gölge parçası     |
+| `rv_reroll`          | Ödüllü   | Hazine'de görev kartında "▶ Değiştir"                        | Görev yenisiyle değişir           |
 | `int_level_complete` | Geçiş    | "Sonraki Ada"ya basınca, iki ada arasında                    | –                                 |
 | `int_to_map`         | Geçiş    | Ada bitince ya da kaybedince Gökyüzü haritasına dönünce      | –                                 |
 | `banner_menu`        | Banner   | Yalnızca Gökyüzü haritası ve Hazine ekranında, altta         | –                                 |
@@ -35,9 +41,27 @@ Oyuncuyu rahatsız etmeyecek, gösterim oranı yüksek yerler seçildi.
   altın ▶ rozeti görünür. Dokununca kısa bir pencere ne kazanacağını söyler. Oyuncu "Şimdi değil"
   derse hiçbir şey olmaz.
 - **Sınırlar:** Dünyanın son adası (Güneş Ejderhası) atlanamaz, dünyalar arası geçilemez. Günde
-  en fazla 3 kez (`rewarded.skipDaily`). Atlanan ada açık kalır, yıldızları sonra toplanır.
-- **Gizli Ada:** Gölgedeki yıldızı bulamayan oyuncu Gizli Adayı videoyla açabilir. Yıldız yerinde
-  kalır, albüm için yine bulunabilir.
+  en fazla 3 kez (`rewarded.limits.skip`). Atlanan ada açık kalır, yıldızları sonra toplanır.
+- **Gizli yıldız:** "▶ İpucu" önce **pusula** sunar: haritada yıldızın adası ✦ ile işaretlenir, o
+  adada yıldız ışıkta da hafifçe görünür. Aynı pencerede Gizli Ada'yı doğrudan açma seçeneği de
+  vardır. Yıldız yerinde kalır, albüm için yine bulunabilir.
+
+### Gardırop
+
+- **24 saat giy:** Kilitli kostüm ya da renk videoyla 24 saat giyilir. Süre dolunca kendiliğinden
+  çıkarılır. Kalıcı açmanın yolu (tiyatro, 24 yıldız) değişmez.
+- **Gölge parçaları:** Karagöz Kavuğu ve Ejderha Kanatları dışındaki kostümler 3 parçayla kalıcı
+  açılır. Günde 1 parça videoyla alınır; Hediye Zifir'den de parça çıkabilir.
+- **Işıltılar:** Yalnızca ödüllü video sayısıyla açılır: Kıvılcım (toplam 5), Ay Tozu (15),
+  Ateş Böceği (30). Zifir'in çevresinde parçacık olarak görünür.
+
+### Oyun içi ve harita
+
+- **Gölge kalkanı:** Aynı adada 2. kayıptan sonra, "Bir şans daha" yoksa kayıp ekranında çıkar.
+  Ada baştan başlar; ilk yanış bir kez affedilir (HUD'da "Kalkan" rozeti).
+- **Hediye Zifir:** Haritada 20–30 dakikada bir paketle uçarak geçer. Dokunup izleyen ışık tozu ya
+  da gölge parçası kazanır. Kaçırılırsa birkaç dakika sonra yine gelir. Günde en fazla 3.
+- **Görev yenile:** Hazine'de bitmemiş görevi yenisiyle değiştirir. Günde 1.
 
 Ödüllü reklamlar **her zaman oyuncunun isteğiyle** açılır. Değerli bir ödül verdikleri
 için izlenme oranları yüksek olur. Oyun sırasında (Zifir yürürken) **hiçbir reklam çıkmaz**.
@@ -72,7 +96,7 @@ window.GUNDONUMU_AD_CONFIG = {
     ios:     { appId: '', rewarded: '', interstitial: '', banner: '', native: '' }
   },
   interstitial: { firstAfterLevels: 5, minLevelsBetween: 3, minIntervalSec: 150, afterRewardedSec: 120, sessionMax: 6, dailyMax: 20 },
-  rewarded: { cooldownSec: 2, dailyMax: 25, skipDaily: 3 },
+  rewarded: { cooldownSec: 2, dailyMax: 25, limits: { skip: 3, rent: 2, piece: 1, shield: 3, gift: 3, reroll: 1 } },
   banner: { enabled: true, screens: ['map', 'hz'], heightPx: 56 },
   native: { enabled: true, screens: ['title', 'hz'], titleHeightPx: 150, overlay: false }
 };
@@ -234,4 +258,4 @@ banner yüksekliği kullanırsan `banner.heightPx` değerini değiştir.
 - [ ] `app-ads.txt` dosyası geliştirici sitesinde yayında.
 - [ ] Çocuklara yönelik değilse "Families" politikası dışında kalındı. Yönelikse sertifikalı reklam ağı seçildi.
 - [ ] Native yerel görünümü karşılama yuvasına oturuyor; Ayarlar ve Gardırop açılınca gizleniyor.
-- [ ] Test cihazında her reklam yeri denendi: bir şans daha, toz ×2, sandık ×2, ada aç, Gizli Ada, iki ada arası, haritaya dönüş, banner, karşılama ve Hazine native kartı.
+- [ ] Test cihazında her reklam yeri denendi: bir şans daha, kalkan, toz ×2, sandık ×2, ada aç, pusula, Gizli Ada, 24 saat giy, gölge parçası, Hediye Zifir, görev yenile, iki ada arası, haritaya dönüş, banner, karşılama ve Hazine native kartı.
