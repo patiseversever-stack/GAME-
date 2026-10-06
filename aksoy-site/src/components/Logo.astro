@@ -1,29 +1,45 @@
 ---
-// AKSOY logosu: solda gerçek 3D modellerden üretilmiş, kendi ekseni etrafında dönen takımlar
-// (CNMG uç → 45° freze çakısı → ER pens, sırayla), sağda iri AKSOY yazısı.
-// Dönüş önceden üretilmiş kare şeritleriyle yapılır (WebGL yok, cihazı yormaz).
+// AKSOY logosu: solda kategori kartlarındaki 3D takımlar sırayla, kendi ekseni etrafında döner
+// (CNMG uç → kanal kateri → diş çekme ucu → parmak freze → matkap → kılavuz → BT40 tutucu);
+// sağda krom AKSOY yazısı, üzerinden ara ara ışık geçer.
+// Dönüş önceden üretilmiş kare şeritleriyle yapılır (scripts/render-logo.mjs): WebGL yok, cihazı yormaz.
 interface Props { sub?: boolean; class?: string }
 const { sub = true, class: cls } = Astro.props;
+const uid = 'lg' + Math.random().toString(36).slice(2, 8);
 const spins = [
-  { src: '/img/logo/insert.webp', n: 30, d: 1.5 },
-  { src: '/img/logo/mill.webp', n: 24, d: 1.25 },
-  { src: '/img/logo/collet.webp', n: 16, d: 1.1 },
+  { k: 'cnmg', n: 30, d: 1.5 },
+  { k: 'groove', n: 32, d: 2.6 },
+  { k: 'thread', n: 28, d: 1.3 },
+  { k: 'endmill', n: 20, d: 0.8 },
+  { k: 'drill', n: 28, d: 1.2 },
+  { k: 'tap', n: 32, d: 2.4 },
+  { k: 'bt40', n: 32, d: 1.8 },
 ];
 ---
 <a href="/" class:list={['logo', cls]} aria-label="Aksoy Kesici Takımlar — ana sayfa">
   <span class="logo__3d" aria-hidden="true" data-logo3d>
     {spins.map((s, i) => (
-      <i class:list={['lm', { 'is-on': i === 0 }]} style={`--n:${s.n};--d:${s.d}s;${i === 0 ? `background-image:url(${s.src})` : ''}`} data-bg={s.src}></i>
+      <i class:list={['lm', { 'is-on': i === 0 }]} style={`--n:${s.n};--d:${s.d}s;${i === 0 ? `background-image:url(/img/logo/${s.k}.webp)` : ''}`} data-bg={`/img/logo/${s.k}.webp`}></i>
     ))}
   </span>
   <svg class="logo__type" viewBox="0 0 104 40" aria-hidden="true" focusable="false">
-    <text class="logo__w" x="0" y={sub ? 26.5 : 31} textLength="104" lengthAdjust="spacingAndGlyphs">AKSOY</text>
+    <defs>
+      <linearGradient id={`${uid}-c`} x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" class="ch1" /><stop offset="0.34" class="ch2" /><stop offset="0.53" class="ch3" /><stop offset="0.6" class="ch4" /><stop offset="1" class="ch5" />
+      </linearGradient>
+      <linearGradient id={`${uid}-s`} x1="0" y1="0" x2="1" y2="0.35" gradientTransform="translate(-1 0)">
+        <stop offset="0.36" stop-color="#fff" stop-opacity="0" /><stop offset="0.5" stop-color="#fff" stop-opacity="0.95" /><stop offset="0.64" stop-color="#fff" stop-opacity="0" />
+        <animateTransform attributeName="gradientTransform" type="translate" values="-1 0; 1.1 0; 1.1 0" keyTimes="0; 0.28; 1" dur="6s" repeatCount="indefinite" />
+      </linearGradient>
+    </defs>
+    <text class="logo__w" x="0" y={sub ? 26.5 : 31} textLength="104" lengthAdjust="spacingAndGlyphs" fill={`url(#${uid}-c)`} stroke={`url(#${uid}-c)`}>AKSOY</text>
+    <text class="logo__w logo__sheen" x="0" y={sub ? 26.5 : 31} textLength="104" lengthAdjust="spacingAndGlyphs" fill={`url(#${uid}-s)`}>AKSOY</text>
     {sub && <text class="logo__s" x="0.6" y="38" textLength="103" lengthAdjust="spacing">KESİCİ TAKIMLAR</text>}
   </svg>
 </a>
 
 <script>
-  // Takımlar sırayla değişir; sonraki şerit önceden yüklenir. Hareket azaltılmışsa ilk takım sabit durur.
+  // Takımlar sırayla değişir; sıradaki şerit önceden yüklenir. Hareket azaltılmışsa ilk takım sabit durur.
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   document.querySelectorAll<HTMLElement>('[data-logo3d]').forEach((box) => {
     const items = [...box.querySelectorAll<HTMLElement>('.lm')];
@@ -37,6 +53,8 @@ const spins = [
       items[j].classList.add('is-on');
       i = j;
     };
-    addEventListener('load', () => { load(items[1]); setInterval(() => { if (!document.hidden) next(); }, 3600); }, { once: true });
+    const start = () => { load(items[1]); setInterval(() => { if (!document.hidden) next(); }, 2900); };
+    if (document.readyState === 'complete') start();
+    else addEventListener('load', start, { once: true });
   });
 </script>
