@@ -19,7 +19,11 @@ Elinde yarım bir iş varsa (ör. çevrim içi ekranlar), analize başlamadan ö
 
 ## Süre sınırı (önemli)
 
-Bu analiz **hızlı ve derin** olmalı. Hedef: bir parça en fazla **60–90 dakika** sürsün.
+Bu analiz **hızlı ve derin** olmalı.
+- **Üst sınır 60 dakika.** Bu bir hedef değil, tavandır. İş 15 dakikada bitiyorsa 15 dakikada bitir; süreyi doldurmak
+  için oyalanma, gereksiz ek test ya da tekrar yapma.
+- Her soruyu cevaplayacak kadar kanıt topla, fazlasını değil. Cevap netleştiyse sonraki maddeye geç.
+- 60 dakikaya yaklaşırsan kalan maddeleri hızlıca bitir; doğrulayamadıklarını `BİLİNMİYOR` diye işaretle ve raporu yaz.
 - **Toplu testleri ekransız çalıştır.** Kural motorunu doğrudan kullan, ekran çizme. Örnek: `src/game/sim.js`
   içindeki `playMatch`. Ölçüm: 100 maç klasikte yaklaşık 40 sn, 101'de yaklaşık 13 sn sürüyor.
   Saf fonksiyon testleri (dizme, toplam hesabı) 10.000 elde bile saniyeler sürer.
