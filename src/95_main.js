@@ -238,6 +238,36 @@ function ambient(dtR) {
     else { const c = sunLight.color; FX.mote(x, 0.5 + Math.random() * 3, z, [c.r * 1.2, c.g * 1.1, c.b * 0.9]); }
   }
 }
+/* ---------- karşılama ekranı: sürekli gün döngüsü ----------
+   Şafak → öğle → gün batımı → gece (havai fişek, kayan yıldız, kutup ışığı, yanan pencereler) → şafak.
+   Oyuncu güneşi sürüklerse döngü durur, gündüze döner; 5 sn sonra kaldığı yerden sürer. */
+const TCYC = { D: 24, K: 4, N: 13, W: 4 };
+const TitleSky = {
+  c: -1, fwT: 1.2, grand: false, lastDrag: -99, nightOn: false,
+  step(dtR) {
+    const { D, K, N, W } = TCYC, P = D + K + N + W, now = U.uTime.value;
+    if (now - (this.lastStep ?? -9) > 0.6) this.c = -1; // başlığa yeni dönüldü: döngü güneşin şimdiki yerinden sürer
+    this.lastStep = now;
+    if (G.drag) this.lastDrag = now;
+    const fromU = () => (D * (clamp(G.u, 0.04, 0.96) - 0.04)) / 0.92;
+    if (this.c < 0) this.c = fromU();
+    U.uNightR.value = 60; U.uNightRim.value = 0; U.uNightC.value.set(0, 0);
+    if (now - this.lastDrag < 5) { G.night = damp(G.night, 0, 2.5, dtR); U.uNightAmt.value = G.night; this.c = fromU(); this.nightOn = false; return; }
+    this.c = (this.c + dtR) % P; const c = this.c;
+    let u, n;
+    if (c < D) { const k = c / D; u = 0.04 + 0.92 * (k * 0.86 + 0.14 * smooth(k)); n = 0; this.grand = false; }
+    else if (c < D + K) { const k = (c - D) / K; u = 0.96 + 0.04 * k; n = smooth(k); }
+    else if (c < D + K + N) {
+      u = 1; n = 1;
+      // gece gösterisi: ara ara roketler, şafaktan önce büyük final
+      if ((this.fwT -= dtR) <= 0) { Fireworks.show(1 + Math.floor(Math.random() * 3)); this.fwT = 1.5 + Math.random() * 1.9; }
+      if (!this.grand && c > D + K + N - 4.2) { this.grand = true; Fireworks.show(7, true); this.fwT = 4; }
+    } else { const k = (c - D - K - N) / W; u = 0.04 * k; n = 1 - smooth(k); }
+    G.u = G.uT = u; G.uSV = 0;
+    G.night = damp(G.night, n, 3.5, dtR); U.uNightAmt.value = G.night;
+    const on = G.night > 0.5; if (on !== this.nightOn) { this.nightOn = on; if (on) audio.nightfall && audio.nightfall(); else audio.rise && audio.rise(); }
+  },
+};
 function updateZifirView(dtR) {
   const lv = G.lv; if (!lv || !zifir.g.visible || G.state === 'complete') return;
   pathAt(lv.path, G.s, PA);
@@ -276,8 +306,11 @@ function update(dt, dtR) {
   switch (G.state) {
     case 'title': case 'intro': {
       const t = G.stateT;
-      if (!G.userSun) G.u = G.uT = lerp(0.02, G.state === 'title' ? 0.3 : lv.spec.sunStart, Ease.inOutCubic(clamp01((t - 0.15) / (G.introDur * 0.8))));
-      G.night = damp(G.night, 0, 2.2, dtR); U.uNightAmt.value = G.night; U.uNightRim.value = 0;
+      if (G.state === 'title' && t > G.introDur) TitleSky.step(dtR); // karşılama: sürekli gün döngüsü
+      else {
+        if (!G.userSun) G.u = G.uT = lerp(0.02, G.state === 'title' ? 0.3 : lv.spec.sunStart, Ease.inOutCubic(clamp01((t - 0.15) / (G.introDur * 0.8))));
+        G.night = damp(G.night, 0, 2.2, dtR); U.uNightAmt.value = G.night; U.uNightRim.value = 0;
+      }
       if (G.state === 'intro' && t > G.introDur) {
         G.state = 'ready'; G.readyT = 0; G.readyHint = false; G.uT = G.u;
         if (refreshEnvSoon > 0) { refreshEnv(); refreshEnvSoon = -1; }
@@ -813,6 +846,7 @@ function frame(now) {
   if (G.slowT > 0) { G.slowT -= dtR; dt *= lerp(1, G.slowK, smoothstep(0, 0.2, G.slowT)); }
   if (G.state === 'paused' || G.state === 'photo') dt = 0;
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
+  { const tn = G.state === 'title' && G.night > 0.5; if (tn !== frame.tn) { frame.tn = tn; document.body.classList.toggle('tnight', tn); } }
   { const pl = G.state === 'play'; if (pl !== frame.pl) { frame.pl = pl; document.body.classList.toggle('playing', pl); } const scr = Meta.open ? 'hz' : G.state; if (scr !== frame.scr) { frame.scr = scr; AdBridge.screen(scr); } }
   audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k, dragon: G.state === 'play' && Dragon.on && Dragon.mode === 'chase', boss: Dragon.danger() };
   audio.update(dtR, G.state === 'play');
@@ -968,6 +1002,9 @@ function bootGame() {
   applyQuality();
   const word = 'Gündönümü';
   $('#titleWord').innerHTML = [...word].map((c, i) => `<span class="ch" style="transition-delay:${0.35 + i * 0.07}s">${c}</span>`).join('');
+  // başlık her ekranda tek satır: sığmazsa yazı boyu küçülür
+  const fitTitle = () => { const h = $('#titleWord'); h.style.fontSize = ''; const max = Math.min(innerWidth - 40, 640); if (h.scrollWidth > max) h.style.fontSize = (parseFloat(getComputedStyle(h).fontSize) * max / h.scrollWidth).toFixed(1) + 'px'; };
+  fitTitle(); addEventListener('resize', fitTitle); if (document.fonts && document.fonts.ready) document.fonts.ready.then(fitTitle);
   $('#btnPlay').textContent = Save.data.unlocked > 0 ? 'Devam Et' : 'Başla';
   const g = Math.min(Save.data.unlocked, STORY_LEVELS - 1);
   enterLevel(levelSpec(g), { title: true });
@@ -989,7 +1026,7 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, Abil, Meta, Secret, AdBridge, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, TutStage, Dragon, Life, NightAct, nightSpec, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  G, Save, Perf, Abil, Meta, Secret, AdBridge, TitleSky, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, TutStage, Dragon, Life, NightAct, nightSpec, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
   start: (g) => startStory(g), bonus: (ch) => startBonus(ch), endless: (n, seed = 12345) => { startEndless(); G.endless.n = n; G.endless.seed = seed; enterLevel(endlessSpec(n, seed), { quick: true }); }, auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),

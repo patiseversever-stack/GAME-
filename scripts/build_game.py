@@ -23,6 +23,22 @@ if not os.path.isdir(os.path.join(BUILD, 'node_modules', 'three')):
 head = open(os.path.join(SRC, '00_head.html'), encoding='utf8').read()
 head = re.sub(r'<link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>\n', '', head)
 head = re.sub(r'<link rel="modulepreload"[^\n]*\n', '', head)
+# yazı tipleri dosyaya gömülür (internetsiz ve uygulama içi görüntüleyicide de aynı görünüm)
+import base64
+FONTS = os.path.join(ROOT, 'fonts')
+if os.path.exists(os.path.join(FONTS, 'fonts.json')):
+    faces = json.load(open(os.path.join(FONTS, 'fonts.json'), encoding='utf8'))
+    # değişken yazı tipi: aynı dosya tüm ağırlıkları taşır → her dosya bir kez, ağırlık aralığıyla
+    groups = {}
+    for f in faces:
+        g = groups.setdefault(f['file'], dict(f, w=[]))
+        g['w'].append(int(f['wt']))
+    css = []
+    for file, f in groups.items():
+        data = base64.b64encode(open(os.path.join(FONTS, file), 'rb').read()).decode('ascii')
+        css.append("@font-face{font-family:'%s';font-style:%s;font-weight:%d %d;font-display:swap;src:url(data:font/woff2;base64,%s) format('woff2');unicode-range:%s}" % (f['fam'], f['st'], min(f['w']), max(f['w']), data, f['ur']))
+    head = re.sub(r'<link rel="preconnect" href="https://fonts\.g[^\n]*\n', '', head)
+    head = re.sub(r'<link href="https://fonts\.googleapis\.com[^\n]*\n', '<style>' + ''.join(css) + '</style>\n', head)
 
 js = ''.join(open(os.path.join(SRC, p), encoding='utf8').read() for p in PARTS)
 js = js.replace('<script type="module">', '', 1).replace('</script>\n</body>\n</html>', '')
