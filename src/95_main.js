@@ -823,7 +823,12 @@ $('#chest').addEventListener('click', (e) => { e.stopPropagation(); if (Meta.che
 bind('#chTake', () => Meta.chestClose());
 bind('#chDouble', () => Meta.chestDouble());
 bind('#aSheet', () => $('#aSheet').classList.remove('on'));
-bind('#mpBonus', () => { const ci = Math.round(SkyMap.tf); if (!Meta.d().secrets[ci]) return; audio.ui(); $('#fader').classList.add('on'); setTimeout(() => { SkyMap.close && SkyMap.close(); startBonus(ci); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); });
+bind('#mpBonusAd', () => AdOffer.bonus(Math.round(SkyMap.tf)));
+bind('#aoYes', () => AdOffer.yes());
+bind('#aoNo', () => { audio.ui(); AdOffer.close(); });
+bind('#adOffer', () => AdOffer.close());
+$('#adOffer .ao').addEventListener('click', (e) => e.stopPropagation());
+bind('#mpBonus', () => { const ci = Math.round(SkyMap.tf), md = Meta.d(); if (!md.secrets[ci] && !(md.adOpen && md.adOpen[ci])) return; audio.ui(); $('#fader').classList.add('on'); setTimeout(() => { SkyMap.close && SkyMap.close(); startBonus(ci); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); });
 bind('#btnRevive', async () => { if (G.state !== 'fail' || G.revived) return; const ok = await AdBridge.rewarded('rv_revive'); if (ok) revive(); });
 bind('#btnDouble', async () => { if (G.dustDoubled || !(G.dustWon > 0)) return; $('#complete').classList.remove('candouble'); const ok = await AdBridge.rewarded('rv_dust_double'); if (ok) { G.dustDoubled = true; Meta.addDust(G.dustWon); const b = $('#cDust b'); b.textContent = `+${G.dustWon * 2}`; $('#cDust').classList.remove('on'); void b.offsetWidth; $('#cDust').classList.add('on'); audio.chime && audio.chime(); } });
 bind('#btnLoreT', () => Lore.openBook());

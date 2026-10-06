@@ -21,10 +21,23 @@ Oyuncuyu rahatsız etmeyecek, gösterim oranı yüksek yerler seçildi.
 | `rv_revive`          | Ödüllü   | Zifir yanınca, kayıp ekranında "Bir şans daha"               | Kaldığı yerden devam, 2 sn koruma |
 | `rv_dust_double`     | Ödüllü   | Ada bitince, "Tozu ikiye katla"                              | O adanın ışık tozu ×2             |
 | `rv_chest_double`    | Ödüllü   | Günün sandığı açılınca, "İzle · ikiye katla"                 | Sandık ödülü ×2                   |
+| `rv_skip`            | Ödüllü   | Gökyüzü haritasında ▶ rozetli sıradaki kilitli adaya dokununca | O ada hemen açılır               |
+| `rv_bonus`           | Ödüllü   | Gökyüzü panelinde "▶ Gizli Ada" (gizli yıldız bulunmadıysa)  | O dünyanın Gizli Adası açılır     |
 | `int_level_complete` | Geçiş    | "Sonraki Ada"ya basınca, iki ada arasında                    | –                                 |
 | `int_to_map`         | Geçiş    | Ada bitince ya da kaybedince Gökyüzü haritasına dönünce      | –                                 |
 | `banner_menu`        | Banner   | Yalnızca Gökyüzü haritası ve Hazine ekranında, altta         | –                                 |
+| `native_title`       | Native   | Karşılama ekranının en altında "Sponsorlu" kart (her açılışta) | –                               |
 | `native_hz`          | Native   | Hazine ekranında, görevlerin altında "Sponsorlu" kart        | –                                 |
+
+### Videoyla açılan kilitler (Gökyüzü haritası)
+
+- **Sıradaki ada:** Yalnızca oyuncunun bulunduğu adanın hemen sonrasındaki ada. Üstünde küçük
+  altın ▶ rozeti görünür. Dokununca kısa bir pencere ne kazanacağını söyler. Oyuncu "Şimdi değil"
+  derse hiçbir şey olmaz.
+- **Sınırlar:** Dünyanın son adası (Güneş Ejderhası) atlanamaz, dünyalar arası geçilemez. Günde
+  en fazla 3 kez (`rewarded.skipDaily`). Atlanan ada açık kalır, yıldızları sonra toplanır.
+- **Gizli Ada:** Gölgedeki yıldızı bulamayan oyuncu Gizli Adayı videoyla açabilir. Yıldız yerinde
+  kalır, albüm için yine bulunabilir.
 
 Ödüllü reklamlar **her zaman oyuncunun isteğiyle** açılır. Değerli bir ödül verdikleri
 için izlenme oranları yüksek olur. Oyun sırasında (Zifir yürürken) **hiçbir reklam çıkmaz**.
@@ -59,9 +72,9 @@ window.GUNDONUMU_AD_CONFIG = {
     ios:     { appId: '', rewarded: '', interstitial: '', banner: '', native: '' }
   },
   interstitial: { firstAfterLevels: 5, minLevelsBetween: 3, minIntervalSec: 150, afterRewardedSec: 120, sessionMax: 6, dailyMax: 20 },
-  rewarded: { cooldownSec: 8, dailyMax: 25 },
+  rewarded: { cooldownSec: 2, dailyMax: 25, skipDaily: 3 },
   banner: { enabled: true, screens: ['map', 'hz'], heightPx: 56 },
-  native: { enabled: true, screens: ['hz'] }
+  native: { enabled: true, screens: ['title', 'hz'] }
 };
 </script>
 ```
@@ -161,7 +174,23 @@ Böylece akışın tamamı (ödül, ikiye katlama, bir şans daha) SDK olmadan d
 
 ---
 
-## 4. Banner payı
+## 4. Native kartın gösterim sayılması
+
+- **Karşılama kartı (`native_title`):** Açılış filmi bitip karşılama ekranı görününce yüklenir.
+  Ekranın en altında, düğmelerden ayrı durur. Her ekran boyunda kaydırmadan görünür. Oyun her
+  açıldığında bir gösterim fırsatıdır. Karşılama ekranına dönüldüğünde en sık dakikada bir yenilenir.
+- **Hazine kartı (`native_hz`):** Görevlerin altındadır. Küçük ekranlarda ancak aşağı kaydırınca
+  görünür. Gösterim çoğu ağda reklam ekranda görününce sayılır.
+- **Önemli:** Ağlar (AdMob dahil) native reklamın kendi yerel görünümleriyle (NativeAdView)
+  çizilmesini ister. Oyunun HTML kartına yalnızca başlık ve resim yazmak gösterim saydırmayabilir.
+  `@capacitor-community/admob` native desteklemez; bu durumda `loadNative` `null` döner ve kart
+  hiç görünmez (boş yer kalmaz). Native gelir istiyorsan native destekleyen bir eklenti seç
+  (ya da yerel görünümü kartın konumuna yerleştir: kartın yeri `#natT`'nin
+  `getBoundingClientRect()` değeridir).
+
+---
+
+## 5. Banner payı
 
 Banner açıkken `body` öğesine `adbanner` sınıfı eklenir ve `--adb` CSS değişkeni
 banner yüksekliğini alır (varsayılan 56 px). Haritanın alt düğmeleri ve Hazine'nin
@@ -170,11 +199,11 @@ banner yüksekliği kullanırsan `banner.heightPx` değerini değiştir.
 
 ---
 
-## 5. Kontrol listesi (mağazaya çıkmadan önce)
+## 6. Kontrol listesi (mağazaya çıkmadan önce)
 
 - [ ] `test: false` yapıldı ve gerçek reklam birimi kimlikleri girildi.
 - [ ] AB'deki oyuncular için GDPR/UMP onay penceresi kabukta gösteriliyor.
 - [ ] Google Play'de "Uygulama reklam içeriyor" işaretlendi, içerik derecelendirmesi güncellendi.
 - [ ] `app-ads.txt` dosyası geliştirici sitesinde yayında.
 - [ ] Çocuklara yönelik değilse "Families" politikası dışında kalındı. Yönelikse sertifikalı reklam ağı seçildi.
-- [ ] Test cihazında her reklam yeri denendi: bir şans daha, toz ×2, sandık ×2, iki ada arası, haritaya dönüş, banner, native.
+- [ ] Test cihazında her reklam yeri denendi: bir şans daha, toz ×2, sandık ×2, ada aç, Gizli Ada, iki ada arası, haritaya dönüş, banner, karşılama ve Hazine native kartı.

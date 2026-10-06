@@ -1114,6 +1114,38 @@ body.tnight #title .tag{color:rgba(225,220,255,.9)}
   #map .modes .btn{min-height:40px;padding:4px 3px}
   #btnZifir,body.adbanner #btnZifir{height:38px;bottom:calc(var(--sab) + 14px + var(--adb))} #btnZifir small{display:none}
 }
+/* ---------- videoyla açılan kilitler ve karşılama ekranı sponsorlu kartı ---------- */
+.mnode.vid b{position:relative;box-shadow:0 0 0 1px rgba(255,210,122,.55),0 0 12px rgba(255,190,90,.35);color:rgba(255,236,200,.75)}
+.mnode.vid b::after{content:"";position:absolute;right:-7px;top:-7px;width:16px;height:16px;border-radius:50%;background:#ffd27a url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cpath d='M3 1.8v6.4l5.2-3.2z' fill='%232a1a08'/%3E%3C/svg%3E") 55% 50%/9px no-repeat;box-shadow:0 0 10px rgba(255,190,90,.9);animation:vidP 2.2s ease-in-out infinite}
+@keyframes vidP{0%,100%{transform:scale(1)}50%{transform:scale(1.14)}}
+#mpBonusAd{display:none;margin-left:auto;height:32px;padding:0 12px 0 10px;border-radius:999px;align-items:center;gap:6px;font-size:10.5px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#e4ddff;background:rgba(185,173,255,.12);border:1px solid rgba(185,173,255,.5);flex:none}
+#mpBonusAd svg{width:9px;height:9px;fill:currentColor}
+#mpSecret.vid #mpBonusAd{display:inline-flex}
+#mpSecret.open #mpBonus{display:inline-flex;align-items:center}
+#mpSecret.open i{opacity:.75}
+#mpSecT{min-width:0}
+#adOffer{position:absolute;inset:0;z-index:85;display:flex;align-items:center;justify-content:center;padding:0 16px;background:rgba(6,4,16,.6);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s linear .3s;pointer-events:auto}
+#adOffer.on{opacity:1;visibility:visible;transition:opacity .3s,visibility 0s}
+#adOffer .ao{width:min(340px,100%);padding:24px 22px 16px;border-radius:26px;text-align:center;display:flex;flex-direction:column;align-items:center;gap:10px;background:linear-gradient(160deg,rgba(52,36,92,.92),rgba(16,11,32,.96));border:1px solid rgba(255,240,220,.16);box-shadow:0 30px 80px rgba(0,0,0,.5);transform:translateY(14px) scale(.97);transition:transform .4s cubic-bezier(.2,1.2,.3,1)}
+#adOffer.on .ao{transform:none}
+#adOffer .aoi{width:46px;height:46px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 40% 35%,#fff3d6,#f2c46d);box-shadow:0 0 26px rgba(255,190,90,.6)}
+#adOffer .aoi svg{width:18px;height:18px;fill:#2a1a08;margin-left:3px}
+#adOffer h5{font-family:var(--serif);font-style:italic;font-weight:600;font-size:25px;line-height:1.1}
+#adOffer p{font-size:13px;line-height:1.5;color:var(--ivory-dim)}#adOffer p em{font-style:normal;color:var(--gold-2)}
+#adOffer .btn{width:100%;min-width:0;height:50px}#adOffer .btn.primary{gap:8px}#adOffer .btn.primary svg{width:11px;height:11px;fill:currentColor}
+#adOffer small{font-size:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--ivory-dim)}#adOffer small:empty{display:none}
+#natT{position:absolute;left:50%;bottom:calc(var(--sab) + 12px);transform:translateX(-50%);width:min(calc(100% - 32px),420px)}
+#natT .nat{padding:8px 10px;gap:10px;background:rgba(14,10,30,.55);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);animation:natIn .6s ease both}
+#natT .nat .nk{top:-7px;font-size:8.5px}
+#natT .nat img,#natT .nat>i{width:38px;height:38px;border-radius:10px}
+#natT .nat b{font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#natT .nat small{font-size:10.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#natT .nat button{height:32px;padding:0 13px;font-size:11px}
+@keyframes natIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+body.tnat #title{padding-bottom:calc(var(--sab) + 90px)}
+@media (orientation:landscape) and (min-aspect-ratio:21/20){
+  #natT{left:auto;right:calc(var(--sar) + 18px);transform:none;width:min(40vw,380px)}
+  body.tnat #title{padding-bottom:calc(var(--sab) + 30px)}
+}
 </style>
 </head>
 <body>
@@ -1153,6 +1185,7 @@ body.tnight #title .tag{color:rgba(225,220,255,.9)}
         <button class="mini tap" id="btnSetT" aria-label="Ayarlar"><i><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></i><span>Ayarlar</span></button>
       </div>
     </div>
+    <div id="natT"></div>
   </div>
 
   <div id="hud">
@@ -1293,7 +1326,7 @@ body.tnight #title .tag{color:rgba(225,220,255,.9)}
         <div class="mpst"><div class="mpbar"><i id="mpFill"></i></div><span><b id="mpStars">0</b>/24 yıldız</span></div>
         <button class="btn primary tap" id="mpPlay">Oyna</button>
       </div>
-      <div id="mpSecret"><i></i><span id="mpSecT">Gizli yıldız saklı</span><button class="tap" id="mpBonus">Gizli Ada</button></div>
+      <div id="mpSecret"><i></i><span id="mpSecT">Gizli yıldız saklı</span><button class="tap" id="mpBonus">Gizli Ada</button><button class="tap" id="mpBonusAd"><svg viewBox="0 0 10 10"><path d="M2.5 1.5v7l6-3.5z"/></svg>Gizli Ada</button></div>
       <div class="mplock"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Önceki takımyıldızını tamamla</div>
     </div>
     <div class="modes">
@@ -1304,6 +1337,13 @@ body.tnight #title .tag{color:rgba(225,220,255,.9)}
     </div>
     <button class="tap" id="btnZifir"><i class="zav"><s></s><s></s></i><span><b>Zifir</b><small>Gardırop · kostüm ve renk</small></span><em>Yeni</em></button>
   </div>
+
+  <div id="adOffer" class="tap"><div class="ao">
+    <i class="aoi"><svg viewBox="0 0 10 10"><path d="M2.5 1.5v7l6-3.5z"/></svg></i>
+    <h5 id="aoT"></h5><p id="aoP"></p>
+    <button class="btn primary tap" id="aoYes"><svg viewBox="0 0 10 10"><path d="M2.5 1.5v7l6-3.5z"/></svg>İzle · Aç</button>
+    <button class="btn ghost tap" id="aoNo">Şimdi değil</button><small id="aoN"></small>
+  </div></div>
 
   <div id="theater" class="screen">
     <div class="ttop">

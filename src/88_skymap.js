@@ -188,7 +188,7 @@ const SkyMap = {
       I.tag.innerHTML = `<small>${I.ch.roman}</small>${I.ch.name}<em>${locked ? 'kilitli' : `★ ${chapterStars(I.i)}`}</em>`;
       I.btns.forEach((b, k) => {
         const g = I.i * 8 + k, d = Save.data.levels[g], open = g <= un;
-        b.className = 'mnode tap' + (d ? ' done' : open ? ' open' : ' lk') + (g === un && !d ? ' cur' : '');
+        b.className = 'mnode tap' + (d ? ' done' : open ? ' open' : ' lk') + (g === un && !d ? ' cur' : '') + (AdBridge.canSkip(g) ? ' vid' : '');
         b.querySelectorAll('s').forEach((s, q) => s.classList.toggle('on', !!(d && d.stars[q])));
       });
       // takımyıldızı
@@ -239,7 +239,7 @@ const SkyMap = {
   },
   pick(g) {
     if (this.dive) return;
-    if (g > Save.data.unlocked) { audio.clunk(); haptic(10); toast('Bu ada henüz <em>uyanmadı</em>. Önce bir önceki adayı tamamla.', 2.2); return; }
+    if (g > Save.data.unlocked) { if (AdBridge.canSkip(g)) { AdOffer.skip(g); return; } audio.clunk(); haptic(10); toast('Bu ada henüz <em>uyanmadı</em>. Önce bir önceki adayı tamamla.', 2.2); return; }
     const I = this.isl[Math.floor(g / 8)], mk = I.marks[g % 8];
     audio.ui(); audio.whoosh(true, 0.8, 0.07); haptic(12);
     if (Math.round(this.f) !== I.i) { this.go(I.i); }
@@ -291,8 +291,9 @@ const SkyMap = {
     if (g < 0) g = ci * 8;
     this.playG = g;
     $('#mpPlay').innerHTML = locked ? 'Kilitli' : Save.data.levels[g] ? `Ada ${g + 1} <small>yıldız topla</small>` : `Ada ${g + 1} <small>${g === un ? 'sıradaki' : 'oyna'}</small>`;
-    { const md = Meta.d(), sec = !!md.secrets[ci], el = $('#mpSecret'); el.classList.toggle('on', !locked); el.classList.toggle('got', sec);
-      $('#mpSecT').textContent = sec ? (md.bonus[ci] ? `Gizli Ada · ${'★'.repeat(md.bonus[ci])}` : 'Gizli yıldız bulundu!') : 'Bu dünyada gölgede parlayan bir yıldız saklı'; }
+    { const md = Meta.d(), sec = !!md.secrets[ci], ao = !sec && !!(md.adOpen && md.adOpen[ci]), el = $('#mpSecret'), vid = !sec && !ao && AdBridge.cfg.enabled;
+      el.classList.toggle('on', !locked); el.classList.toggle('got', sec); el.classList.toggle('open', ao); el.classList.toggle('vid', vid);
+      $('#mpSecT').textContent = md.bonus[ci] ? `Gizli Ada · ${'★'.repeat(md.bonus[ci])}` : sec ? 'Gizli yıldız bulundu!' : ao ? 'Gizli Ada açık · yıldız hâlâ saklı' : vid ? 'Gölgede bir yıldız saklı' : 'Bu dünyada gölgede parlayan bir yıldız saklı'; }
     this.dots.forEach((d, i) => { d.classList.toggle('on', i === ci); d.classList.toggle('lk', un < i * 8); });
     $('#mapPrev').classList.toggle('dis', ci === 0); $('#mapNext').classList.toggle('dis', ci === CHAPTERS.length - 1);
   },
