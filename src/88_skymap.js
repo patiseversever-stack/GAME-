@@ -290,6 +290,8 @@ const SkyMap = {
     if (g < 0) g = ci * 8;
     this.playG = g;
     $('#mpPlay').innerHTML = locked ? 'Kilitli' : Save.data.levels[g] ? `Ada ${g + 1} <small>yıldız topla</small>` : `Ada ${g + 1} <small>${g === un ? 'sıradaki' : 'oyna'}</small>`;
+    { const md = Meta.d(), sec = !!md.secrets[ci], el = $('#mpSecret'); el.classList.toggle('on', !locked); el.classList.toggle('got', sec);
+      $('#mpSecT').textContent = sec ? (md.bonus[ci] ? `Gizli Ada · ${'★'.repeat(md.bonus[ci])}` : 'Gizli yıldız bulundu!') : 'Bu dünyada gölgede parlayan bir yıldız saklı'; }
     this.dots.forEach((d, i) => { d.classList.toggle('on', i === ci); d.classList.toggle('lk', un < i * 8); });
     $('#mapPrev').classList.toggle('dis', ci === 0); $('#mapNext').classList.toggle('dis', ci === CHAPTERS.length - 1);
   },

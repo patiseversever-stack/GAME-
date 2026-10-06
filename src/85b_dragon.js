@@ -368,7 +368,8 @@ const Dragon = {
     if (this.gap > 0.6) this.warned = false;
     return f;
   },
-  defeat() { if (!this.on || this.mode === 'off') return; this.mode = 'defeat'; this.t = 0; this.F.st = 'idle'; this.roar(1.2); audio.dragonDie && audio.dragonDie(); audio.setDragon && audio.setDragon(0, 0); },
+  revive() { if (!this.on) return; this.mode = 'chase'; this.t = 0; this.gap = DR_GAP0; this.F = { st: 'idle', t: 0, next: 3.5, safe: false, kind: 'path', hitShown: false }; },
+  defeat() { if (!this.on || this.mode === 'off') return; if (this.lv && this.lv.chap && (G.mode === 'story' || G.mode === 'night')) Meta.find('d:' + this.lv.chap.key); this.mode = 'defeat'; this.t = 0; this.F.st = 'idle'; this.roar(1.2); audio.dragonDie && audio.dragonDie(); audio.setDragon && audio.setDragon(0, 0); },
   onFail() { if (!this.on || this.mode === 'off') return; this.mode = 'leave'; this.t = 0; this.F.st = 'idle'; this.roar(0.9); audio.setDragon && audio.setDragon(0, 0); },
   // görseller (her kare)
   update(dt, dtR) {

@@ -97,10 +97,10 @@ const flare = {
 const act = {
   dashCd: 0, dashT: 0, diveK: 0, shadeT: 0, streak: 0, best: 0, eaten: 0, litT: 0, dives: 0,
   reset() { this.dashCd = 0; this.dashT = 0; this.diveK = 0; this.dives = 0; this.shadeT = 0; this.streak = 0; this.best = 0; this.eaten = 0; this.litT = 0; this.hud(true); },
-  canDash() { const lv = G.lv; return !!(lv && lv.spec.dash) && G.state === 'play' && G.T > lv.walkDelay && this.dashCd <= 0 && !G.waiting; },
+  canDash() { const lv = G.lv; return !!(lv && lv.spec.dash) && Abil.shown('dash') && G.state === 'play' && G.T > lv.walkDelay && this.dashCd <= 0 && !G.waiting; },
   dash() {
     if (!this.canDash()) return false;
-    this.dashT = DASH_DUR; this.dashCd = DASH_CD; this.dives++;
+    this.dashT = DASH_DUR; this.dashCd = Meta.val('dash'); this.dives++; Abil.used('dash'); if (G.f > 0) Meta.ev('dashSave');
     audio.dash(); haptic(14); zifir.kick(-3.2); G.fovKick = -2; G.ca = Math.max(G.ca, 0.008);
     const x = zifir.g.position.x, z = zifir.g.position.z;
     // mürekkep sıçraması
@@ -125,7 +125,7 @@ const act = {
       this.shadeT += dt; this.litT = 0;
       const lvl = Math.min(9, Math.floor(this.shadeT / 4));
       if (lvl > this.streak) {
-        this.streak = lvl; this.best = Math.max(this.best, lvl); audio.streak(lvl);
+        this.streak = lvl; this.best = Math.max(this.best, lvl); audio.streak(lvl); Meta.ev('streak', lvl + 1); if (lvl >= 9) Meta.find('m:streak');
         const x = zifir.g.position.x, z = zifir.g.position.z;
         popText(x, 1.05, z, `gölge ×${lvl + 1}`);
         FX.burst(x, 0.4, z, 10 + lvl * 2, { add: true, c: [0.9, 0.6, 2.4], a: 0.9, s: 0.12, s1: 0.02, life: 0.7, sp: 2, up: 1, drag: 2.5, t: 2 });
@@ -140,9 +140,9 @@ const act = {
   },
   hud(force = false) {
     const lv = G.lv; if (!lv) return;
-    const b = $('#dashBtn'), show = !!lv.spec.dash;
+    const b = $('#dashBtn'), show = !!lv.spec.dash && Abil.shown('dash');
     if (force || b.dataset.s !== String(show)) { b.dataset.s = String(show); b.classList.toggle('show', show); }
-    const p = (1 - this.dashCd / DASH_CD).toFixed(2);
+    const p = (1 - this.dashCd / Meta.val('dash')).toFixed(2);
     if (force || b.dataset.p !== p) { b.dataset.p = p; b.style.setProperty('--p', p); b.classList.toggle('ready', this.dashCd <= 0); }
     const st = $('#streak'), n = this.streak;
     if (force || st.dataset.n !== String(n)) { st.dataset.n = String(n); st.classList.toggle('on', n > 0); $('#streakTxt').textContent = `×${n + 1}`; if (n > 0) { st.classList.remove('bump'); void st.offsetWidth; st.classList.add('bump'); } }

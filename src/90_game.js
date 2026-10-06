@@ -75,7 +75,7 @@ const L1 = new THREE.Vector3(), L2 = new THREE.Vector3(), PA = {};
    kalmayı ödüllendiren bir sürü. Tek çizim çağrısı (12 örnekli InstancedMesh), kanat çırpma GPU'da. */
 const BIRD_MAX = 12, BIRD_JOIN = 1.2, BIRD_FLEE = 0.3, FLOCK_MIN = 4;
 // Kuş Kalkanı: biriken sürü bir dokunuşla salınır, Zifir'in üstünde dönen bir gölge kubbesi olur (kuş başına süre)
-const flockAvail = (lv) => !!lv && (lv.spec.kind !== 'story' || lv.spec.g >= 2);
+const flockAvail = (lv) => !!lv && (lv.spec.kind !== 'story' || lv.spec.g >= 9);
 const ShadowBirds = {
   n: 0, shadeT: 0, lightT: 0, birds: [], last: 0, best: 0, rec: false, canT: 0, canDur: 0, canN: 0, shK: 0,
   init() {
@@ -108,23 +108,22 @@ const ShadowBirds = {
   hideAll() { for (const b of this.birds) b.st = 0; this.n = 0; this.shadeT = 0; this.lightT = 0; this.canT = 0; this.shK = 0; if (this.shade) this.shade.visible = false; this.sync(); this.hud(true); },
   // sürüyü sal: kuşlar Zifir'in tepesinde halka olur, süre boyunca güneş onu yakamaz; sonra dağılırlar (sayımdan düşer)
   release() {
-    if (G.state !== 'play' || this.canT > 0 || !flockAvail(G.lv)) return false;
+    if (G.state !== 'play' || this.canT > 0 || !flockAvail(G.lv) || !Abil.shown('flock')) return false;
     const n = this.count(); if (n < FLOCK_MIN) return false;
-    const z = zifir.g.position; this.canN = n; this.canT = this.canDur = 0.6 + 0.18 * n;
+    const z = zifir.g.position; this.canN = n; this.canT = this.canDur = 0.6 + Meta.val('flock') * n;
     let k = 0; const a0 = U.uTime.value * 4.4;
     for (const b of this.birds) if (b.st === 1 || b.st === 2) { b.st = 4; b.t = 0; b.a = a0 + (k++ / n) * TAU; }
-    this.n = 0; this.shadeT = 0; G.flockUsed = (G.flockUsed || 0) + 1;
+    this.n = 0; this.shadeT = 0; G.flockUsed = (G.flockUsed || 0) + 1; Abil.used('flock'); Meta.ev('flock');
     audio.flockOn && audio.flockOn(n); haptic([10, 24, 10]); zifir.kick(-1.6); this.hud(true);
     return true;
   },
   endCanopy() { this.canT = 0; for (const b of this.birds) if (b.st === 4) this.flee(b); audio.shadowFlee && audio.shadowFlee(); this.hud(true); },
   hud(force = false) {
     const el = this._btn || (this._btn = $('#flockBtn')); if (!el) return;
-    const show = flockAvail(G.lv) && (G.state === 'play' || G.state === 'ready'), n = this.canT > 0 ? 0 : this.count(), key = `${show}|${n}|${this.canT > 0}`;
+    const show = flockAvail(G.lv) && Abil.shown('flock') && (G.state === 'play' || G.state === 'ready'), n = this.canT > 0 ? 0 : this.count(), key = `${show}|${n}|${this.canT > 0}`;
     if (!force && el.dataset.k === key) return; el.dataset.k = key;
     el.classList.toggle('show', show); el.classList.toggle('ready', n >= FLOCK_MIN); el.classList.toggle('active', this.canT > 0);
     el.style.setProperty('--p', (this.canT > 0 ? 1 : n / BIRD_MAX).toFixed(3)); el.querySelector('b').textContent = n;
-    if (show && n >= FLOCK_MIN && G.state === 'play') tip('t-flock', 'Gölge Kuşları sürüne katıldı. Işığa yakalanınca <em>Sürü</em>’ye bas: kanatlarıyla üstünde gölge olurlar. Kullandığın kuşlar sürüden ayrılır. (Klavye: F)', 5);
   },
   count() { let n = 0; for (const b of this.birds) if (b.st === 1 || b.st === 2) n++; return n; },
   join() {
@@ -144,7 +143,7 @@ const ShadowBirds = {
   scatter() { for (const b of this.birds) if (b.st === 1 || b.st === 2) this.flee(b); this.n = 0; },
   update(dt) {
     if (!G.lv || dt <= 0) return;
-    if (G.state !== 'play' && !this.birds.some((b) => b.st)) { if (this.dirty) { this.dirty = false; this.sync(); } return; } // sürü yokken iş yok
+    if (G.state !== 'play' && !this.birds.some((b) => b.st)) { if (this.dirty) { this.dirty = false; this.sync(); } this.hud(); return; } // sürü yokken iş yok (düğme hazırlıkta da görünür)
     this.dirty = true;
     if (this.canT > 0 && (this.canT -= dt) <= 0) this.endCanopy();
     if (G.state === 'play' && G.T > G.lv.walkDelay && !(this.canT > 0)) {
@@ -208,11 +207,26 @@ const ShadowBirds = {
 const PB = {}, _bm = new THREE.Matrix4(), _bq = new THREE.Quaternion(), _be = new THREE.Euler(), _bs = new THREE.Vector3();
 ShadowBirds.init();
 const ghost = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: new THREE.Color(0.8, 0.9, 1.6), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 }));
-ghost.scale.setScalar(2.2); scene.add(ghost);
+ghost.scale.setScalar(2.2); ghost.visible = false; scene.add(ghost);
+/* ---------- ışık izi: zorlanınca (aynı adada 2 kayıptan sonra) kendiliğinden açılır ----------
+   Çözücünün planındaki güneş, yayın üstünde parlayan bir hayalet ve önünde sönümlenen bir kuyruk olarak görünür;
+   oyuncunun güneşi plandan uzaklaştıkça iz belirginleşir. */
+const ghostTrail = [];
+for (let i = 0; i < 6; i++) { const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: TEX.glow, color: new THREE.Color(1.1, 0.95, 1.7), blending: THREE.AdditiveBlending, transparent: true, depthWrite: false, opacity: 0 })); s.scale.setScalar(1.15 - i * 0.12); s.visible = false; scene.add(s); ghostTrail.push(s); }
+function updateHint(lv, on) {
+  if (!on || !lv.solution) { if (ghost.visible) { ghost.visible = false; ghost.material.opacity = 0; for (const s of ghostTrail) s.visible = false; } return; }
+  if (!ghost.visible) { ghost.visible = true; for (const s of ghostTrail) s.visible = true; }
+  const sol = lv.solution, t = U.uTime.value, at = (a) => sol.traj[Math.min(sol.K - 1, Math.max(0, Math.round((G.T + a) / sol.dt)))];
+  const u0 = at(0.45), far = Math.min(1, Math.abs(G.u - u0) * 6);
+  orbPosInto(u0, lv.sun.tilt, lv.sun.thMin, ghost.position);
+  ghost.material.opacity = (0.42 + Math.sin(t * 5) * 0.12) * (0.75 + far * 0.45); ghost.scale.setScalar(2.1 + far * 0.7 + Math.sin(t * 5) * 0.12);
+  ghostTrail.forEach((s, i) => { orbPosInto(at(0.8 + i * 0.32), lv.sun.tilt, lv.sun.thMin, s.position); s.material.opacity = 0.34 * (1 - i / 6.5) * (0.7 + 0.3 * Math.sin(t * 4 - i * 0.9)); });
+}
+const failsOn = (lv) => (lv.spec.night ? NightAct.data().fails[lv.spec.g] || 0 : lv.spec.kind === 'story' ? Save.data.fails[lv.spec.g] || 0 : 0);
 
 /* ---------- arayüz yardımcıları ---------- */
 const UI = {
-  screens: ['title', 'complete', 'fail', 'pause', 'settings', 'map', 'ending', 'theater', 'photo'],
+  screens: ['title', 'complete', 'fail', 'pause', 'settings', 'map', 'ending', 'theater', 'photo', 'hz'],
   show(id) { $('#' + id).classList.add('on'); },
   hide(id) { $('#' + id).classList.remove('on'); },
   hideAll() { for (const s of this.screens) this.hide(s); },
@@ -246,7 +260,7 @@ const Cam = {
   // ada önizleme uçuşu: kamera yolu baştan kapıya alçaktan izler, sonra yerine oturur (dokununca atlanır)
   fly(lv, dur) {
     this.flight = { t: 0, dur, lv, side: lv.spec.seed % 2 ? 1 : -1, wh: false }; this.cine = null;
-    const sp = lv.spec; $('#cbTitle').textContent = sp.kind === 'daily' ? 'Günün Adası' : `Ada ${sp.g + 1}`; $('#cbSub').textContent = lv.chap.name;
+    const sp = lv.spec; $('#cbTitle').textContent = sp.kind === 'daily' ? 'Günün Adası' : sp.kind === 'bonus' ? 'Gizli Ada' : `Ada ${sp.g + 1}`; $('#cbSub').textContent = lv.chap.name;
     $('#cineBars').classList.add('on'); document.body.classList.add('cine');
   },
   endFlight() { $('#cineBars').classList.remove('on'); document.body.classList.remove('cine'); },
@@ -337,11 +351,13 @@ const Cam = {
       c.yaw = damp(c.yaw, b.yaw + clamp(G.uSV * 0.012, -0.03, 0.03) + Math.sin(U.uTime.value * 0.11) * 0.012, 4, dtR);
     }
     const pose = { target: c.target.clone(), dist: c.dist, pitch: c.pitch, yaw: c.yaw, fov: c.fov + G.fovKick };
+    // eğimsiz duruşun konumu: ön plan derinlik katmanı buna göre kayar (gözlüksüz 3B)
+    { const A = this.anchor || (this.anchor = new THREE.Object3D()), cp = Math.cos(pose.pitch), sp = Math.sin(pose.pitch); A.position.set(pose.target.x + Math.sin(pose.yaw) * cp * pose.dist, pose.target.y + sp * pose.dist, pose.target.z + Math.cos(pose.yaw) * cp * pose.dist); }
     // açılış filmi ve başlıkta eğim/fare paralaksı (gerçek 3B derinlik)
     // eğimle derinlik: başlıkta fare/eğim, oyunda telefonun eğimi (yavaşça yeni duruşa alışır, kaymaz)
     const big = G.state === 'film' || G.state === 'title', gy = !big && Tilt.gyro && Save.data.settings.gyro !== false && G.state !== 'photo' && G.state !== 'map' && G.state !== 'theater';
     Tilt.x = damp(Tilt.x, big ? Tilt.tx : gy ? Tilt.rx : 0, 2.5, dtR); Tilt.y = damp(Tilt.y, big ? Tilt.ty : gy ? Tilt.ry : 0, 2.5, dtR);
-    pose.yaw += Tilt.x * (big ? 0.075 : 0.05); pose.pitch -= Tilt.y * (big ? 0.04 : 0.028);
+    pose.yaw += Tilt.x * (big ? 0.075 : 0.062); pose.pitch -= Tilt.y * (big ? 0.04 : 0.034);
     const tr = G.trauma * G.trauma, t = U.uTime.value;
     if (tr > 0.0001) { pose.target.x += Math.sin(t * 47.1) * tr * 0.3; pose.target.y += Math.sin(t * 39.3 + 1.7) * tr * 0.25; pose.target.z += Math.sin(t * 43.7 + 4.1) * tr * 0.3; }
     this.place(camera, pose);
@@ -402,6 +418,7 @@ function applyLighting(dt) {
   if (lv.sun.twin) { sunLight2.position.copy(L2).multiplyScalar(60); sunLight2.target.position.set(0, 0, 0); sunLight2.intensity = 2.0 * (1 - ecl * 0.94); sunLight.intensity *= 0.8; }
   hemi.color.copy(scA.hemiS).lerp(_cc.set('#3a4a9a'), ecl * 0.7); hemi.groundColor.copy(scA.hemiG).lerp(_cc.set('#1a1830'), ecl * 0.7);
   hemi.intensity = lerp(0.62, 0.85, k) * LK.hemi * (1 - ecl * 0.55) * IBLK.hemi;
+  U.uSunW.value.copy(L1); U.uSunC.value.copy(scA.sun).multiplyScalar(clamp(sunLight.intensity / 3.9, 0, 1.4)); U.uSkyC.value.copy(hemi.color).multiplyScalar(hemi.intensity);
   // küreler
   orbPosInto(G.u, lv.sun.tilt, lv.sun.thMin, orb.g.position);
   orb.u.uCol.value.copy(scA.sun).lerp(_cc.set('#fff4dc'), 0.4);
@@ -454,9 +471,10 @@ function nextSpecOf(spec) { if (!spec) return null; if (spec.kind === 'story') r
 function resetRun() {
   const lv = G.lv;
   G.helpK = helpFor(lv); G.breathUsed = false; G.breathT = 0; G.passedBest = false;
-  G.T = 0; G.s = 0; G.meter = 1; G.minMeter = 1; G.waitT = 0; G.patience = PATIENCE_MAX; G.holding = false; G.holdT = 0; G.expTotal = 0; G.f = 0; G.burnEp = 0; G.epMin = 1; G.waiting = false; G.dropsGot = 0; G.combo = 0;
+  G.T = 0; G.s = 0; G.meter = 1; G.minMeter = 1; G.waitT = 0; G.patience = Meta.val('wait'); G.revived = false; G.reviveT = 0; G.holding = false; G.holdT = 0; G.expTotal = 0; G.f = 0; G.burnEp = 0; G.epMin = 1; G.waiting = false; G.dropsGot = 0; G.combo = 0;
   G.ecl.active = false; G.ecl.t = 0; G.ecl.amt = 0; G.ecl.charge = lv.spec.eclipse ? 1 : 0;
   Marks.reset(lv);
+  Abil.reset();
   ShadowBirds.hideAll();
   Fireworks.stop();
   G.timeScale = 1; G.slowT = 0; G.hitStop = 0; G.trauma = 0; G.desat = 0; G.ca = 0; G.readyT = 0;
@@ -495,6 +513,7 @@ function enterLevel(spec, opts = {}) {
   Dragon.setup(lv);
   Life.setup(lv, opts);
   NightAct.setup(lv);
+  Secret.setup(lv);
   Ambient.setWorld(lv.chap && lv.chap.key);
   { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const c of lv.chunks) for (const [x, z] of c.pts) { x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
     seaU.uIsl.value.set((x0 + x1) / 2, (z0 + z1) / 2, (x1 - x0) / 2, (z1 - z0) / 2); } // adanın bulutlara düşen gölgesi
@@ -505,7 +524,7 @@ function enterLevel(spec, opts = {}) {
   G.state = 'intro'; G.stateT = 0; G.userSun = false; G.zShown = false; G.zPop = 0;
   G.introDur = opts.title ? 3.2 : spec.finale ? 3.4 : spec.kind === 'story' && spec.i === 0 && !opts.quick ? 3.0 : 2.0;
   // ilk girişte önizleme uçuşu (yeniden denemelerde yok; final kendi süzülüşünü yapar)
-  const fk = specKey(spec), doFly = !opts.title && !opts.keepCam && !spec.finale && (spec.kind === 'story' || spec.kind === 'daily') && !G.flown.has(fk);
+  const fk = specKey(spec), doFly = !opts.title && !opts.keepCam && !spec.finale && (spec.kind === 'story' || spec.kind === 'daily' || spec.kind === 'bonus') && !G.flown.has(fk);
   if (doFly) { G.flown.add(fk); G.introDur = Math.max(G.introDur, FLY_DUR + 0.45); }
   G.u = G.uT = 0.0; G.uSV = 0;
   refreshEnvSoon = 0.3;
@@ -537,21 +556,18 @@ function showChapterCard(ch) {
   const c = $('#chapterCard'); c.classList.add('on'); setTimeout(() => c.classList.remove('on'), 2700);
 }
 function startPlay() {
-  if (G.state !== 'ready') return;
+  if (G.state !== 'ready' || Abil.gate()) return;
   G.state = 'play'; G.stateT = 0; hideToast();
   zifir.kick(1.6); audio.whoosh(true, 0.35, 0.05);
   Dragon.start();
   const lv = G.lv, g = lv.spec.g;
   if (g === 0) setTimeout(() => { if (G.state === 'play') tip('t-keep', 'Zifir ışıkta <em>buharlaşır</em>.<br>Gölgeyi onun üstüne düşür.', 3.6); }, 900);
   if (lv.drops.length && g >= 1) setTimeout(() => { if (G.state === 'play') tip('t-drops', 'Gece damlaları Zifir yaklaşınca <em>uyanır</em> ve ışıkta erir.', 4); }, 2500);
-  if (lv.spec.eclipse && g >= 3) setTimeout(() => { if (G.state === 'play') tip('t-eclipse', '<em>Tutulma</em>: 2 saniyelik karanlık. Damlalar onu yeniden doldurur.', 4.2); }, 1200);
   if (lv.props.some((p) => p.arch) && g >= 1) setTimeout(() => { if (G.state === 'play') tip('t-arch', 'Çardak altı güvenlidir ama <em>alçak güneş</em> yandan sızar.', 3.8); }, 4200);
   if (lv.spec.features.clouds) tip('t-clouds', '<em>Bulutların</em> gölgesini yakala. Rüzgârla kayarlar.', 4);
   if (lv.spec.features.windmills && lv.movers.some((m) => m.kind === 'sails')) setTimeout(() => { if (G.state === 'play') tip('t-mill', 'Değirmen kanatları gölgeyi <em>böler</em>.', 3.5); }, 5000);
   if (lv.spec.features.balloons) tip('t-balloon', 'Balonlar yüksekte: <em>alçak güneş</em> gölgelerini uzağa savurur.', 4.2);
   if (lv.bridges.length) tip('t-bridge', 'Köprü yalnızca <em>kristal ışıktayken</em> belirir. Zifir köprüyü bekler, sen de onu gölgede tut!', 4.6);
-  if (lv.spec.wait && (g >= 4 || g < 0)) setTimeout(() => { if (G.state === 'play') tip('t-wait2', '<em>Bekle</em>: basılı tut, Zifir olduğu yerde durur. Bulutun, sarkacın ya da patlamanın geçmesini gölgede bekle. Sabrı sınırlı; yürüdükçe dolar. (Klavye: ↓)', 5.2); }, 2600);
-  if (lv.spec.dash && g >= 2) setTimeout(() => { if (G.state === 'play') tip('t-dash', '<em>Dal</em>: Zifir bir an mürekkebe gömülür, ışık neredeyse işlemez. Sol alttaki düğme ya da ↑', 4.4); }, 1800);
   if (lv.sprites && lv.sprites.length) setTimeout(() => { if (G.state === 'play') tip('t-wisp', '<em>Işık perileri</em> Zifir’e süzülür: gölgedeyken ya da <em>dalarken</em> yut, ışıkta yakar!', 4.6); }, Math.max(0, (lv.sprites[0].t - 1.2) * 1000));
   if (lv.flares) setTimeout(() => { if (G.state === 'play') tip('t-flare', '<em>Güneş patlaması</em>: uyarı çubuğu dolunca ışık iki kat yakar. Önceden gölgeye gir!', 4.4); }, Math.max(0, (lv.flares[0].w - 0.3) * 1000));
   if (lv.movers.some((m) => m.kind === 'melt')) tip('t-melt', '<em>Buz sütunları</em> güneşte erir, gölgeleri giderek kısalır.', 4.2);
@@ -565,7 +581,10 @@ function retry(fromComplete = false) {
   if (G.mode === 'endless' && !fromComplete) { startEndless(); return; }
   UI.hide('fail'); UI.hide('complete'); UI.hud(true);
   resetRun();
-  if (G.helpK < 1) toast(`<span class="tsun"></span>Güneş yumuşadı: ışık artık <em>%${Math.round((1 - G.helpK) * 100)}</em> daha az yakıyor`, 2.8);
+  const trail = !G.hint && failsOn(G.lv) >= 2; if (trail) G.hint = true;
+  const soft = G.helpK < 1 ? `<span class="tsun"></span>Güneş yumuşadı: ışık artık <em>%${Math.round((1 - G.helpK) * 100)}</em> daha az yakıyor` : '';
+  if (trail) toast((soft ? soft + '<br>' : '') + '<em>Işık izi</em> açıldı: yaydaki parlak güneşi takip et', 3.6);
+  else if (soft) toast(soft, 2.8);
   updateHud(true);
   G.state = 'rewind'; G.stateT = 0; G.rewFrom = G.u;
   zifir.g.visible = true; zifir.g.scale.setScalar(0.001);
@@ -599,7 +618,7 @@ function showFail() {
   if (G.mode === 'endless') {
     const e = G.endless;
     $('#fTitle').textContent = 'Sonsuz Gün bitti';
-    $('#fSub').textContent = `${e.n} ada · ${e.score} puan · En iyi ${Math.max(Save.data.endlessBest, e.score)}`;
+    $('#fSub').textContent = `${e.n} ada · ${e.score} puan · En iyi ${Math.max(Save.data.endlessBest, e.score)}` + (e.dust ? ` · +${e.dust} ışık tozu` : '');
     if (e.score > Save.data.endlessBest) { Save.data.endlessBest = e.score; Save.data.endlessBestIslands = e.n; Save.save(); $('#fSub').textContent = `${e.n} ada · ${e.score} puan · Yeni rekor!`; }
     $('#fProg').style.width = '100%';
   } else {
@@ -610,6 +629,7 @@ function showFail() {
   }
   showMercy(lv);
   $('#fail').classList.toggle('offerhint', G.mode === 'story' && (Save.data.fails[lv.spec.g] || 0) >= 3 && !G.hint);
+  $('#fail').classList.toggle('canrevive', !G.revived && G.lastPct > 0.12 && AdBridge.ready('rewarded'));
   UI.hud(false); UI.show('fail');
 }
 // Güneşin merhameti kartı: yardım açıkça ve cesaret verici bir dille gösterilir; ipuçları da burada
@@ -622,7 +642,7 @@ function showMercy(lv) {
   $('#fMercyS').innerHTML = max ? `Işık artık <em>%${pct}</em> daha az yakıyor. Gölgede kal, bu sefer olacak!` : `Bir sonraki denemede ışık <em>%${pct}</em> daha az yakacak.`;
   $$('#fMercyLv i').forEach((el, i) => el.classList.toggle('on', i < lvl));
   let t = max ? 'Yıldızlar yine sayılır.' : 'Her denemede biraz daha yumuşar · yıldızlar yine sayılır.';
-  if (lv.spec.dash && act.dives === 0) t = 'İpucu: ışığa yakalanınca <em>Dal</em>’a bas, yanma %85 azalır.';
+  if (lv.spec.dash && Abil.shown('dash') && act.dives === 0) t = 'İpucu: ışığa yakalanınca <em>Dal</em>’a bas, yanma %85 azalır.';
   else if (nf >= 5 && !Save.data.settings.assist) t = 'Daha da rahat istersen: <em>Ayarlar → Rahat mod</em>.';
   $('#fMercyTip').innerHTML = t;
   void card.offsetWidth; card.classList.add('on');
@@ -635,6 +655,14 @@ function reachGate() {
   const lv = G.lv;
   G.stars = [true, G.dropsGot >= lv.drops.length, G.expTotal <= lv.flawless + 1e-6];
   G.birdsN = ShadowBirds.finish();
+  // görevler ve albüm
+  Meta.ev('clear'); Meta.ev('star', G.stars.filter(Boolean).length); Meta.ev('birds', G.birdsN || 0);
+  if (G.stars[2]) { Meta.ev('flawless'); Meta.find('m:flawless'); }
+  if ((G.birdsN || 0) >= BIRD_MAX) Meta.find('m:flock');
+  if (act.eaten >= 3) Meta.find('m:wisp');
+  if (G.mode === 'daily') Meta.ev('daily');
+  if (G.mode === 'endless') { Meta.ev('endless'); G.endless.dust = (G.endless.dust || 0) + 6; Meta.addDust(6); }
+  AdBridge.levelDone();
   if (G.mode === 'endless') {
     const e = G.endless, add = 100 + G.dropsGot * 25 + (G.stars[2] ? 60 : 0) + act.best * 15 + act.eaten * 20;
     e.score += add; e.n++; updateHud(true);
@@ -653,17 +681,19 @@ function saveStory() {
   const after = [0, 1, 2, 3, 4, 5, 6, 7].reduce((a, i) => a + Save.stars(ch * 8 + i), 0);
   Save.save();
   d.flow = (d.flow || 0) + 1; if (d.best) delete d.best[g]; Save.save();
-  return { chapterDone: g % 8 === 7, newSkin: before < 24 && after === 24 ? ch + 1 : 0, firstClear, fails: d.fails[g] || 0, flow: d.flow };
+  return { chapterDone: g % 8 === 7, newSkin: before < 24 && after === 24 ? ch + 1 : 0, firstClear, fails: d.fails[g] || 0, flow: d.flow, newStars: G.stars.filter((s, i) => s && !prev.stars[i]).length };
 }
 function showComplete() {
   const lv = G.lv, sp = lv.spec;
   let res = { chapterDone: false, newSkin: 0 };
   if (G.mode === 'story') res = saveStory();
   if (G.mode === 'night') res = NightAct.save();
+  if (G.mode === 'bonus') { const b = Meta.d().bonus, ch = G.bonusCh, old = b[ch] || 0; res = { firstClear: !old, newStars: Math.max(0, G.stars.filter(Boolean).length - old) }; b[ch] = Math.max(old, G.stars.filter(Boolean).length); Save.save(); }
+  if (G.mode === 'daily') { res.firstToday = Save.data.daily.date !== dateNum(); }
   if (G.mode === 'daily') { const today = dateNum(); Save.data.daily = { date: today, stars: Math.max(Save.data.daily.date === today ? Save.data.daily.stars : 0, G.stars.filter(Boolean).length) }; Save.save(); }
   const lanAll = G.mode === 'night' && NightAct.lan.length > 1 && NightAct.lit === NightAct.lan.length;
   $('#cKicker').textContent = lanAll ? 'Fener alayı · bütün fenerler yandı' : G.mode === 'night' ? (res.chapterDone ? `${lv.chap.constellation} gecesi tamamlandı` : 'Ay battı') : res.chapterDone ? `${lv.chap.constellation} takımyıldızı tamamlandı` : 'Gece düştü';
-  $('#cTitle').textContent = G.mode === 'daily' ? 'Günün Adası' : G.mode === 'night' ? `Gece · Ada ${sp.g + 1}` : `Ada ${sp.g + 1}`;
+  $('#cTitle').textContent = G.mode === 'bonus' ? 'Gizli Ada' : G.mode === 'daily' ? 'Günün Adası' : G.mode === 'night' ? `Gece · Ada ${sp.g + 1}` : `Ada ${sp.g + 1}`;
   $('#cSub').textContent = lv.chap.name;
   $('#st0').textContent = 'Kapıya ulaştı';
   $('#st1').textContent = lv.drops.length ? `Damlalar ${G.dropsGot}/${lv.drops.length}` : 'Damlalar';
@@ -676,7 +706,11 @@ function showComplete() {
   bEl.style.display = bn > 0 ? '' : 'none';
   if (bn > 0) $('#cBirdsT').innerHTML = `<b>${bn}</b> gölge kuşu` + (ShadowBirds.rec ? ' · <span class="rec">rekor!</span>' : G.mode === 'story' && ShadowBirds.prev > bn ? ` · en çok ${ShadowBirds.prev}` : bn >= BIRD_MAX ? ' · <span class="rec">tam sürü!</span>' : '');
   const last = sp.g === STORY_LEVELS - 1;
-  $('#btnNext').textContent = G.mode === 'daily' ? 'Gökyüzü' : last ? (G.mode === 'night' ? 'Şafak' : 'Final') : res.chapterDone ? 'Yeni takımyıldızı' : 'Sonraki Ada';
+  if (lanAll) Meta.find('m:lantern');
+  // ışık tozu: tamamlama ekranında sayarak belirir; ödüllü reklamla ikiye katlanabilir
+  { const n = Meta.levelReward(G.mode, res, lv); G.dustWon = n; G.dustDoubled = false; const cd = $('#cDust'); cd.classList.toggle('on', n > 0); cd.querySelector('b').textContent = '+' + n; if (n > 0) Meta.addDust(n);
+    $('#complete').classList.toggle('candouble', n >= 10 && AdBridge.ready('rewarded')); }
+  $('#btnNext').textContent = G.mode === 'daily' || G.mode === 'bonus' ? 'Gökyüzü' : last ? (G.mode === 'night' ? 'Şafak' : 'Final') : res.chapterDone ? 'Yeni takımyıldızı' : 'Sonraki Ada';
   $('#complete').classList.remove('ready');
   UI.hud(false); UI.show('complete');
   G.compRes = res;
@@ -690,9 +724,11 @@ function showComplete() {
   }
   if (G.mode === 'story' && !last && !GenW.ok) setTimeout(() => { if (G.state === 'complete') prebuild(levelSpec(sp.g + 1)); }, 3800);
 }
-function nextFromComplete() {
+function nextFromComplete(afterAd = false) {
   audio.ui();
-  if (G.mode === 'daily') { openMap(); return; }
+  // doğal mola: sıklık kuralları uygunsa adalar arasında geçiş reklamı (oyun sırasında asla)
+  if (!afterAd && G.mode !== 'daily' && G.mode !== 'bonus' && AdBridge.canInterstitial('level_complete')) { AdBridge.interstitial('level_complete').then(() => nextFromComplete(true)); return; }
+  if (G.mode === 'daily' || G.mode === 'bonus') { openMap(); return; }
   if (G.mode === 'night') { const g = G.lv.spec.g; UI.hide('complete'); if (g >= STORY_LEVELS - 1) { showEnding(true); return; } UI.hud(true); enterLevel(nightSpec(g + 1)); return; }
   const g = G.lv.spec.g, ch = g >> 3;
   // takımyıldızı tamamlanınca ninninin yeni dizesi; finalde ninninin tamamı ve son
@@ -738,7 +774,7 @@ function startStory(g) {
 let hudCache = {};
 function updateHud(force = false) {
   const lv = G.lv; if (!lv) return;
-  const title = G.mode === 'endless' ? 'Sonsuz Gün' : G.mode === 'daily' ? 'Günün Adası' : G.mode === 'night' ? `Gece · Ada ${lv.spec.g + 1}` : `Ada ${lv.spec.g + 1}`;
+  const title = G.mode === 'endless' ? 'Sonsuz Gün' : G.mode === 'daily' ? 'Günün Adası' : G.mode === 'bonus' ? 'Gizli Ada' : G.mode === 'night' ? `Gece · Ada ${lv.spec.g + 1}` : `Ada ${lv.spec.g + 1}`;
   const sub = G.mode === 'endless' ? `${lv.chap.name} · ${G.endless.n + 1}. ada` : lv.chap.name;
   const dt = `${G.dropsGot}/${lv.drops.length}`;
   if (force || hudCache.title !== title) { $('#lvlTitle').textContent = title; hudCache.title = title; }
@@ -747,11 +783,11 @@ function updateHud(force = false) {
   if (G.endless && (force || hudCache.score !== G.endless.score)) { $('#scoreTxt').textContent = G.endless.score; hudCache.score = G.endless.score; }
   const hp = G.mode === 'story' && G.helpK < 1 ? Math.round((1 - G.helpK) * 100) : 0;
   if (force || hudCache.hp !== hp) { const el = $('#lvlHelp'); el.classList.toggle('on', hp > 0); el.querySelector('em').textContent = `Işık −%${hp}`; hudCache.hp = hp; }
-  const wb = $('#waitBtn'), ws = !!lv.spec.wait && G.state !== 'complete';
+  const wb = $('#waitBtn'), ws = !!lv.spec.wait && Abil.shown('wait') && G.state !== 'complete';
   if (force || hudCache.ws !== ws) { wb.classList.toggle('show', ws); hudCache.ws = ws; }
-  const wp = Math.round((G.patience ?? PATIENCE_MAX) / PATIENCE_MAX * 50) / 50;
+  const pm = Meta.val('wait'), wp = Math.round((G.patience ?? pm) / pm * 50) / 50;
   if (force || hudCache.wp !== wp) { wb.style.setProperty('--p', wp); wb.classList.toggle('empty', wp < 0.08); hudCache.wp = wp; }
-  const eb = $('#eclipseBtn'), show = lv.spec.eclipse;
+  const eb = $('#eclipseBtn'), show = !!lv.spec.eclipse && Abil.shown('ecl');
   if (force || hudCache.ecl !== show) { eb.classList.toggle('show', show); hudCache.ecl = show; }
   const p = Math.round(G.ecl.charge * 100) / 100;
   if (force || hudCache.p !== p) { eb.style.setProperty('--p', p); hudCache.p = p; }
@@ -759,9 +795,26 @@ function updateHud(force = false) {
   if (force || hudCache.ready !== ready) { eb.classList.toggle('ready', ready); hudCache.ready = ready; }
 }
 
+/* ---------- bir şans daha (ödüllü reklam) ----------
+   Zifir kaldığı yerden döner; 2,2 sn boyunca güneş ona dokunamaz. Adada bir kez. */
+function revive() {
+  if (G.state !== 'fail' || G.revived) return;
+  G.revived = true; G.reviveT = 2.2;
+  UI.hide('fail'); UI.hud(true); Melt.end();
+  G.state = 'play'; G.stateT = 0; G.meter = 0.6; G.breathUsed = false; G.breathT = 0; G.desat = 0; G.slowT = 0; G.hitStop = 0; G.drag = null;
+  zifir.g.visible = true; zifir.g.scale.setScalar(1); zifir.kick(3);
+  Dragon.revive && Dragon.revive();
+  Cam.cinema(Cam.pose(), 0.8, Ease.outCubic);
+  audio.closeCall(); haptic([20, 30, 20]);
+  pathAt(G.lv.path, G.s, PA); for (let i = 0; i < 16; i++) FX.sparkle(PA.x + (Math.random() - 0.5) * 0.9, 0.3 + Math.random() * 0.6, PA.z + (Math.random() - 0.5) * 0.9, [1.4, 1.2, 2.6], 0.35);
+  setTimeout(() => banner('Bir şans daha!', 'güneş bir an sana dokunamaz'), 200);
+  updateHud(true);
+}
+
 /* ---------- tutulma ---------- */
 function triggerEclipse() {
-  if (G.state !== 'play' || G.ecl.active || G.ecl.charge < 1 || !G.lv.spec.eclipse) return;
+  if (G.state !== 'play' || G.ecl.active || G.ecl.charge < 1 || !G.lv.spec.eclipse || !Abil.shown('ecl')) return;
+  Abil.used('ecl'); Meta.ev('eclipse');
   G.ecl.charge = 0; G.ecl.active = true; G.ecl.t = 0;
   audio.eclipse(); haptic(35); G.trauma = Math.max(G.trauma, 0.35); G.fovKick = -2.5;
   FX.burst(orb.g.position.x, orb.g.position.y, orb.g.position.z, 30, { add: true, c: [1.6, 1.5, 2.4], a: 1, s: 0.25, s1: 0.05, life: 1.2, sp: 4, drag: 1.5, t: 2 });

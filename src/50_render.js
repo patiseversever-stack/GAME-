@@ -158,7 +158,7 @@ vec3 march(vec2 sun){
 void main(){ vec3 c = march(uSun); if (uSun2On > 0.5) c += march(uSun2) * vec3(0.7, 0.9, 1.2); gl_FragColor = vec4(c, 1.0); }`;
 const COMP_FRAG = /* glsl */`
 uniform sampler2D tScene; uniform sampler2D tBloom; uniform sampler2D tBlurA; uniform sampler2D tBlurB; uniform sampler2D tRays;
-uniform float uBloomMix, uBloomAdd, uRays, uExposure, uVignette, uGrain, uTime, uSat, uContrast, uCA, uDesat, uFlash, uDanger, uAspect, uTilt, uTiltC, uTiltW, uNight, uFlare, uLevels;
+uniform float uBloomMix, uBloomAdd, uRays, uExposure, uVignette, uGrain, uTime, uSat, uContrast, uCA, uDesat, uFlash, uDanger, uAspect, uTilt, uTiltC, uTiltW, uNight, uFlare, uLevels, uClarity, uSplit;
 uniform vec3 uFlashCol, uLift, uGamma, uGain, uHeat, uFlareCol;
 uniform vec2 uSunUV, uRes; uniform float uSunVis;
 varying vec2 vUv;
@@ -176,6 +176,8 @@ void main(){
   else col = texture2D(tScene, uv).rgb;
   if (any(isnan(col))) col = vec3(0.0);
   col = clamp(col, 0.0, 60.0);
+  // netlik: yarım çözünürlüklü kopyaya göre yerel karşıtlık (doku ve kenarlar belirginleşir, parlak hale yapmaz)
+  if (uClarity > 0.0) { vec3 bl = texture2D(tBlurA, uv).rgb; float lb = dot(col, vec3(0.3, 0.59, 0.11)); col = max(col + clamp(col - bl, -0.22, 0.22) * uClarity * (1.0 - smoothstep(1.2, 4.0, lb)), 0.0); }
 #ifdef TILT
   float ty = abs(uv.y - uTiltC);
   float b = smoothstep(uTiltW, uTiltW + 0.34, ty) * uTilt;
@@ -206,6 +208,9 @@ void main(){
   float l = dot(col, vec3(0.299, 0.587, 0.114));
   col = mix(vec3(l), col, uSat * (1.0 - uDesat));
   col = (col - 0.5) * uContrast + 0.5;
+  // ışık/gölge ayrımı: gölgeler serin mor-mavi, ışık sıcak (oyunda da gölge daha okunur)
+  { float lt = dot(col, vec3(0.299, 0.587, 0.114)); vec3 tone = mix(vec3(0.86, 0.88, 1.08), vec3(1.07, 1.0, 0.9), smoothstep(0.12, 0.72, lt)); col *= mix(vec3(1.0), tone, uSplit);
+    float sat = max(col.r, max(col.g, col.b)) - min(col.r, min(col.g, col.b)); col = mix(vec3(lt), col, 1.0 + uSplit * 0.22 * (1.0 - sat)); } // canlılık: soluk renkleri öne çıkarır
   // gece tonu (soğuk)
   col = mix(col, col * vec3(0.82, 0.9, 1.18), uNight * 0.35);
   vec2 vd = (vUv - 0.5) * vec2(uAspect * 0.8, 1.0);
@@ -227,7 +232,7 @@ class Post {
       tScene: { value: null }, tBloom: { value: null }, tBlurA: { value: null }, tBlurB: { value: null }, tRays: { value: null },
       uBloomMix: { value: 0.045 }, uBloomAdd: { value: 0.35 }, uRays: { value: 0.55 }, uExposure: { value: 1.0 }, uVignette: { value: 0.55 }, uGrain: { value: 0.03 },
       uTime: { value: 0 }, uSat: { value: 1 }, uContrast: { value: 1 }, uCA: { value: 0 }, uDesat: { value: 0 }, uFlash: { value: 0 }, uDanger: { value: 0 },
-      uAspect: { value: 1 }, uTilt: { value: 1 }, uTiltC: { value: 0.45 }, uTiltW: { value: 0.2 }, uNight: { value: 0 }, uFlare: { value: 1 }, uLevels: { value: 5 },
+      uAspect: { value: 1 }, uTilt: { value: 1 }, uTiltC: { value: 0.45 }, uTiltW: { value: 0.2 }, uNight: { value: 0 }, uFlare: { value: 1 }, uLevels: { value: 5 }, uClarity: { value: 0.55 }, uSplit: { value: 0.75 },
       uFlashCol: { value: new THREE.Color(1, 0.9, 0.7) }, uLift: { value: new THREE.Vector3() }, uGamma: { value: new THREE.Vector3(1, 1, 1) }, uGain: { value: new THREE.Vector3(1, 1, 1) },
       uHeat: { value: new THREE.Vector3() }, uFlareCol: { value: new THREE.Color(1, 0.8, 0.55) }, uSunUV: { value: new THREE.Vector2(0.5, 0.8) }, uRes: { value: new THREE.Vector2(1, 1) }, uSunVis: { value: 0 },
     };

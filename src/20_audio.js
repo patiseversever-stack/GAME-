@@ -155,6 +155,8 @@ class AudioEngine {
   get t() { return this.ctx ? this.ctx.currentTime : 0; }
   setSfx(on) { this.sfxOn = on; if (!this.ctx) return; const t = this.t; this.sfx.gain.setTargetAtTime(on ? 1 : 0, t, 0.05); this.amb.gain.setTargetAtTime(on ? 1 : 0, t, 0.05); this.verbSfx.gain.setTargetAtTime(on ? 1 : 0, t, 0.05); }
   setMusic(on) { this.musicOn = on; if (!this.ctx) return; const t = this.t; this.mus.gain.setTargetAtTime(on ? 0.75 : 0, t, 0.1); this.verbMus.gain.setTargetAtTime(on ? 1 : 0, t, 0.1); }
+  // reklam oynarken oyunun sesi kısılır (SDK kendi sesini çalar)
+  duck(on) { if (!this.ctx || !this.master) return; this.master.gain.setTargetAtTime(on ? 0 : 0.9, this.t, 0.08); }
   suspend() { if (this.ctx && this.ctx.state === 'running') this.ctx.suspend().catch(() => {}); }
   resume() { if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume().catch(() => {}); }
 
@@ -271,6 +273,29 @@ class AudioEngine {
     else this.osc('sine', 600, t, 0.25, 0.04, null, { f1: 300 });
   }
   // rekor / kutlama: yükselen beşli ezgi (pentatonik), yumuşak çan
+  // yeni yetenek: derinden yükselen nefes, parıltılı arpej, uzun bir akor
+  abilityReveal() {
+    if (!this.ok) return; const t = this.t;
+    this.noiseHit(t, 2.2, 0.055, { type: 'bandpass', f: 280, f1: 4200, q: 0.9, a: 1.3, verb: 0.7 });
+    this.osc('sine', 55, t, 2.4, 0.15, null, { f1: 110, a: 0.9, verb: 0.3 });
+    [72, 76, 79, 83, 86, 91].forEach((m, i) => this.bell(mtof(m), t + 0.5 + i * 0.075, 1.9, 0.038, { ratio: 2.0, index: 1.1, verb: 0.85, dly: 0.25 }));
+    [48, 55, 64, 71].forEach((m, i) => this.osc('triangle', mtof(m), t + 0.95 + i * 0.03, 2.8, 0.018, null, { a: 0.55, verb: 0.9 }));
+  }
+  // amblem düğmeye oturur: yumuşak vuruş + parlak çan kümesi
+  abilityLand() { if (!this.ok) return; const t = this.t; this.osc('sine', 98, t, 0.4, 0.2, null, { f1: 55 }); this.noiseHit(t, 0.5, 0.045, { type: 'highpass', f: 2500, f1: 8000, a: 0.01, verb: 0.6 }); [79, 83, 86, 91].forEach((m, i) => this.bell(mtof(m), t + i * 0.035, 1.6, 0.034, { ratio: 2.0, index: 1.0, verb: 0.9 })); }
+  coach() { if (!this.ok) return; const t = this.t; this.bell(mtof(84), t, 0.8, 0.04, { ratio: 2, index: 0.8, verb: 0.6 }); this.bell(mtof(91), t + 0.09, 0.9, 0.03, { ratio: 2, index: 0.8, verb: 0.6 }); }
+  // albüme yeni kayıt: iki parlak çan + ince parıltı
+  findChime() { if (!this.ok) return; const t = this.t; this.bell(mtof(88), t, 1.2, 0.034, { ratio: 2, index: 0.9, verb: 0.8 }); this.bell(mtof(95), t + 0.11, 1.4, 0.03, { ratio: 3, index: 0.7, verb: 0.85 }); this.noiseHit(t, 0.5, 0.025, { type: 'highpass', f: 5000, f1: 9000, a: 0.05, verb: 0.6 }); }
+  // sandık: tahta takırtısı · açılış: derin vuruş + altın akor + parıltı yağmuru
+  chestShake() { if (!this.ok) return; const t = this.t; for (let i = 0; i < 6; i++) { this.noiseHit(t + i * 0.13, 0.06, 0.07, { f: 900 + Math.random() * 500, q: 5 }); this.osc('sine', 150 + Math.random() * 40, t + i * 0.13, 0.08, 0.05, null, { f1: 90 }); } }
+  chestOpen() {
+    if (!this.ok) return; const t = this.t;
+    this.osc('sine', 80, t, 0.6, 0.24, null, { f1: 45 }); this.noiseHit(t, 0.9, 0.08, { type: 'bandpass', f: 600, f1: 5000, q: 0.8, a: 0.02, verb: 0.6 });
+    [60, 64, 67, 72, 76, 79, 84].forEach((m, i) => this.bell(mtof(m + 12), t + 0.05 + i * 0.06, 2.2, 0.036, { ratio: 2, index: 1.1, verb: 0.9, dly: 0.3 }));
+    for (let i = 0; i < 14; i++) this.noiseHit(t + 0.3 + Math.random() * 1.2, 0.03, 0.015, { type: 'highpass', f: 5000 + Math.random() * 4000, q: 2, verb: 0.6 });
+  }
+  // gizli yıldız: yükselen, büyülü bir dizi
+  secretStar() { if (!this.ok) return; const t = this.t; [74, 78, 81, 86, 90, 93, 98].forEach((m, i) => this.bell(mtof(m), t + i * 0.07, 1.8, 0.034, { ratio: 3.0, index: 0.8, verb: 0.9, dly: 0.35 })); this.osc('sine', 110, t, 1.8, 0.1, null, { f1: 220, a: 0.4, verb: 0.6 }); }
   chime() { if (!this.ok) return; const t = this.t; [72, 76, 79, 84].forEach((m, i) => this.bell(mtof(m), t + i * 0.09, 1.1, 0.05, { ratio: 2.0, index: 1.2, verb: 0.8 })); }
   // gölge kuşu: kanat hışırtısı + kısa iki notalı ötüş (sürü büyüdükçe incelir) · ürküp kaçış
   shadowBird(n = 0) { if (!this.ok) return; const t = this.t, f = 1050 + (n % 7) * 85; this.noiseHit(t, 0.16, 0.03, { type: 'bandpass', f: 900, f1: 2600, q: 1.4, a: 0.02 }); this.osc('sine', f, t + 0.04, 0.07, 0.02, null, { f1: f * 1.3, verb: 0.4 }); this.osc('sine', f * 1.19, t + 0.13, 0.08, 0.016, null, { f1: f * 1.5, verb: 0.4 }); }
@@ -429,71 +454,13 @@ class AudioEngine {
   // tiyatro modu: dış dünya müziği ve rüzgârı susar, tiyatronun kendi topluluğu çalar
   setTheater(on) { this.thMode = on; if (!this.ok) return; this.windG.gain.setTargetAtTime(on ? 0 : 0.05, this.t, on ? 0.4 : 2.0); }
   // ezgi sesi: yumuşak, nefesli (üçgen + sinüs, titreşimli, alçak geçiren)
-  lead(f, t0, dur, g) {
-    const c = this.ctx, o1 = c.createOscillator(), o2 = c.createOscillator(), lp = c.createBiquadFilter(), e = c.createGain(), vib = c.createOscillator(), vg = c.createGain();
-    o1.type = 'triangle'; o2.type = 'sine'; o1.frequency.value = f; o2.frequency.value = f * 2.003; lp.type = 'lowpass'; lp.frequency.value = Math.min(4200, f * 4.5);
-    vib.frequency.value = 5.2; vg.gain.value = f * 0.006; vib.connect(vg); vg.connect(o1.frequency); vg.connect(o2.frequency);
-    const g2 = c.createGain(); g2.gain.value = 0.22; o1.connect(lp); o2.connect(g2); g2.connect(lp); lp.connect(e);
-    e.gain.setValueAtTime(0.0001, t0); e.gain.linearRampToValueAtTime(g, t0 + 0.09); e.gain.setTargetAtTime(g * 0.7, t0 + 0.1, dur * 0.4); e.gain.setTargetAtTime(0.0001, t0 + dur, 0.12);
-    e.connect(this.mus); const v = c.createGain(); v.gain.value = 0.55; e.connect(v); v.connect(this.verbMus); const d = c.createGain(); d.gain.value = 0.35; e.connect(d); d.connect(this.dlyIn);
-    const end = t0 + dur + 0.7; for (const o of [o1, o2, vib]) { o.start(t0); o.stop(end); }
-  }
-  // uyarlanabilir katmanlar: gölgede ezgi, ışıkta bas nabzı, seride üst çanlar, finalde/patlamada vurmalı
-  layers(t, m, playing) {
-    const md = this.mood || {}, beat = 60 / (70 + m.tempo * 50);
-    if (!this.nextBeat || this.nextBeat < t - 1) this.nextBeat = t + 0.1;
-    if (t > this.nextBeat - 0.12) {
-      const bt = this.nextBeat, k = (this.beatN = (this.beatN || 0) + 1), root = m.chords[(this.chordIdx + m.chords.length - 1) % m.chords.length][0];
-      const tens = playing ? this.intensity : 0;
-      // ışıkta: alçak bas nabzı (kalp gibi), yoğunlukla güçlenir
-      if (tens > 0.25) { this.osc('sine', mtof(root - 12 + (k % 4 === 2 ? 7 : 0)), bt, beat * 0.7, 0.07 * tens, this.mus, { a: 0.01, f1: mtof(root - 12) * 0.9 }); if (k % 2 === 0) this.noiseHit(bt, 0.12, 0.02 * tens, { type: 'lowpass', f: 220, dest: this.mus }); }
-      // final ya da güneş patlaması: davul deseni (düm-tek)
-      const drum = playing && (md.finale || md.flare > 0.2) ? Math.max(md.flare > 0.2 ? 1 : 0.6, md.dragon ? 0.75 + (md.boss || 0) * 0.35 : 0) : 0;
-      // ejderha: alçak, uğursuz nabız (yaklaştıkça güçlenir)
-      if (playing && md.dragon && k % 2 === 0) this.osc('triangle', mtof(root - 12), bt, beat * 1.7, 0.03 + (md.boss || 0) * 0.04, this.mus, { a: 0.05, f1: mtof(root - 12) * 0.985 });
-      if (drum > 0) { const pat = [1, 0, 0.5, 0, 1, 0.5, 0, 0.5][k % 8]; if (pat) { this.osc('sine', pat > 0.7 ? 92 : 150, bt, 0.22, 0.06 * pat * drum, this.mus, { a: 0.003, f1: pat > 0.7 ? 46 : 90 }); this.noiseHit(bt, 0.06, 0.018 * pat * drum, { f: pat > 0.7 ? 900 : 2600, q: 2, dest: this.mus }); } }
-      // gölge serisi: üst çanlar seyrek parıldar
-      if (playing && (md.streak || 0) >= 2 && k % 2 === 1 && Math.random() < 0.55) this.bell(mtof(m.root + 36 + m.scale[(k * 3) % m.scale.length]), bt, 1.2, 0.012 + Math.min(0.012, md.streak * 0.002), { ratio: 3.0, index: 0.8, dest: this.mus, verb: 0.8 });
-      this.nextBeat = bt + beat;
-    }
-    // ezgi: sakin (gölge) anlarda, ~16 sn'de bir; her dönüşte biraz değişir
-    if (t > (this.nextMotif || 0) && this.intensity < 0.2) {
-      const mot = MOTIFS[this.chapter % MOTIFS.length], var_ = (this.motifN = (this.motifN || 0) + 1) % 3, sc = m.scale, n = sc.length;
-      const d = beat * (var_ === 2 ? 0.75 : 1);
-      let at = Math.max(t + 0.1, this.nextBeat || t);
-      mot.forEach((deg, i) => {
-        const dd = var_ === 1 ? (i === mot.length - 1 ? deg : deg + 1) : deg, o = Math.floor(dd / n), idx = ((dd % n) + n) % n;
-        const note = m.root + 12 + o * 12 + sc[idx], step = d * (i % 3 === 2 ? 1.5 : 1), len = i === mot.length - 1 ? d * 2.6 : step;
-        this.lead(mtof(note), at, len, playing ? 0.026 : 0.02);
-        at += step;
-      });
-      this.nextMotif = t + 15 + Math.random() * 6;
-    }
-  }
   update(dt, playing) {
     if (!this.ok || this.ctx.state !== 'running') return;
     if (this.thMode) return;
     const t = this.t, m = MUSIC[this.chapter];
-    if (this.musicOn) this.layers(t, m, playing);
+    if (this.musicOn) this.score(t, m, playing);
     // rüzgâr
     if (Math.random() < dt * 0.5) this.windF.frequency.setTargetAtTime(300 + Math.random() * 700, t, 1.2);
-    // akorlar
-    if (t > this.nextChord - 0.3) {
-      const start = Math.max(t + 0.05, this.nextChord);
-      const ch = m.chords[this.chordIdx++ % m.chords.length];
-      this.padChord(ch, start, 9.5);
-      this.nextChord = start + 8;
-    }
-    // arpej
-    if (t > this.nextArp - 0.2) {
-      const start = Math.max(t + 0.05, this.nextArp);
-      const sc = m.scale; const oct = Math.random() < 0.3 ? 36 : 24;
-      const n = m.root + oct + sc[Math.floor(Math.random() * sc.length)];
-      const g = (0.028 + Math.random() * 0.02) * (playing ? 1 : 0.8);
-      this.bell(mtof(n), start, 1.6 + Math.random(), g, { ratio: 2.0, index: 1.1 * m.bright, dest: this.mus, verb: 0.7, dly: 0.55 });
-      const dens = 1 + this.intensity * 1.5;
-      this.nextArp = start + (0.5 + Math.random() * 1.1) * (1 / m.tempo) * 0.6 / dens;
-    }
     // dünya ambiyansı
     if (m.clock && t > (this.nextClock || 0)) { this.nextClock = Math.max(t, this.nextClock || 0) + 1.0; const hi = (this.clockN = (this.clockN || 0) + 1) % 2; this.noiseHit(this.nextClock, 0.03, 0.022, { f: hi ? 3000 : 2200, q: 10, dest: this.amb }); }
     if (m.ice && Math.random() < dt * 0.25) this.bell(mtof(m.root + 36 + m.scale[Math.floor(Math.random() * m.scale.length)]), t + 0.05, 2.4, 0.012, { ratio: 3.5, index: 0.6, dest: this.amb, verb: 0.9 });
@@ -503,19 +470,6 @@ class AudioEngine {
       const base = 2600 + Math.random() * 1400, n = 2 + Math.floor(Math.random() * 4);
       for (let i = 0; i < n; i++) this.osc('sine', base, t + i * 0.09, 0.07, 0.012, this.amb, { f1: base * (1.25 + Math.random() * 0.3) });
     }
-  }
-  padChord(notes, t0, dur) {
-    const c = this.ctx, f = c.createBiquadFilter(), g = c.createGain();
-    f.type = 'lowpass'; f.frequency.value = 650 + MUSIC[this.chapter].bright * 300; f.Q.value = 0.5;
-    g.gain.setValueAtTime(0.0001, t0); g.gain.linearRampToValueAtTime(0.03, t0 + 2.6); g.gain.setValueAtTime(0.03, t0 + dur - 3.2); g.gain.linearRampToValueAtTime(0.0001, t0 + dur);
-    f.connect(g); g.connect(this.mus);
-    const v = c.createGain(); v.gain.value = 0.9; g.connect(v); v.connect(this.verbMus);
-    for (const n of notes) for (const det of [-7, 6]) {
-      const o = c.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(n); o.detune.value = det + (Math.random() * 4 - 2);
-      const og = c.createGain(); og.gain.value = 0.25; o.connect(og); og.connect(f); o.start(t0); o.stop(t0 + dur + 0.1);
-    }
-    // bas
-    this.osc('sine', mtof(notes[0] - 12), t0, dur * 0.8, 0.05, this.mus, { a: 1.5 });
   }
 }
 const audio = new AudioEngine();

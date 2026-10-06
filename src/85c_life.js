@@ -271,7 +271,7 @@ const Life = {
     return false;
   },
   startle(c, Z) {
-    c.cool = 5 + Math.random() * 2;
+    c.cool = 5 + Math.random() * 2; if (G.state === 'play') Meta.find('c:' + c.kind);
     if (c.kind === 'turtle') { c.mode = 'hide'; c.t = 2.6 + Math.random() * 1.5; return; }
     const ok = this.pickTarget(c, 3.4, Z);
     if (c.kind === 'cat') { c.hop = 1; c.sit = 0; if (Math.random() < 0.6) audio.meow(0.9); }
@@ -313,7 +313,7 @@ const Life = {
     }
     this.wk = damp(this.wk, tk, tk > this.wk ? 0.9 : 0.42, dtR); if (this.wk < 0.002 && tk === 0) this.wk = 0;
     const w = this.wk, rainy = P.wx === 'rain' || P.wx === 'storm', storm = P.wx === 'storm';
-    if (P.wx && !this.bannered && (st === 'intro' || st === 'ready') && G.stateT > 1.1) { this.bannered = true; banner(WX_INFO[P.wx][0], WX_INFO[P.wx][1]); }
+    if (P.wx && !this.bannered && (st === 'intro' || st === 'ready') && G.stateT > 1.1) { this.bannered = true; banner(WX_INFO[P.wx][0], WX_INFO[P.wx][1]); setTimeout(() => Meta.find('w:' + P.wx), 1800); }
     // yağmur + sıçrayan damlalar + ıslak zemin
     const rk = rainy ? w * (storm ? 1.25 : 1) : 0;
     this.rain.visible = rk > 0.01;
@@ -342,7 +342,7 @@ const Life = {
     }
     // gökkuşağı: yağmur dinince bulut denizinde, güneşin karşısına kayık bir halka
     this.rb = damp(this.rb, P.rainbow && this.cleared && st !== 'title' ? 1 : 0, 0.55, dtR);
-    if (this.cleared && P.rainbow && !this.rbPlayed && this.rb > 0.25) { this.rbPlayed = true; audio.rainbow && audio.rainbow(); }
+    if (this.cleared && P.rainbow && !this.rbPlayed && this.rb > 0.25) { this.rbPlayed = true; audio.rainbow && audio.rainbow(); setTimeout(() => Meta.find('w:rainbow'), 1500); }
     this.bow.visible = this.rb * (1 - G.night) > 0.01;
     if (this.bow.visible) {
       const lh = Math.hypot(L1.x, L1.z) || 1, off = 4 + 3 * (1 - Math.max(0, L1.y)); this.bow.position.set(this.cx - (L1.x / lh) * off, -15.4, this.cz - (L1.z / lh) * off);
@@ -385,6 +385,7 @@ const Life = {
     if (this.boltNear > 0.75) haptic(18);
   },
   startComet() {
+    setTimeout(() => Meta.find('w:comet'), 2600);
     this.cometDone = true; this.cometT = 0; this.cDir = Math.random() < 0.5 ? -1 : 1; this.cY = 0.6 + Math.random() * 0.06;
     G.meter = Math.min(1, G.meter + 0.3); const Z = zifir.g.position;
     for (let i = 0; i < 14; i++) FX.sparkle(Z.x + (Math.random() - 0.5) * 0.8, 0.3 + Math.random() * 0.7, Z.z + (Math.random() - 0.5) * 0.8, [1.6, 2.0, 3.0], 0.35);
@@ -498,7 +499,7 @@ const Life = {
     const ang = c.flap ? Math.sin(t * 12 + c.seed) * 0.6 : 0.1 + Math.sin(t * 1.6 + c.seed) * 0.05;
     c.wl.rotation.z = ang; c.wr.rotation.z = -ang;
     c.sph.x = x; c.sph.y = y; c.sph.z = z;
-    if (c.lead && (G.state === 'play' || G.state === 'ready')) { c.callT -= dt; if (c.callT <= 0) { c.callT = 9 + Math.random() * 12; audio.gull && audio.gull(); } }
+    if (c.lead && (G.state === 'play' || G.state === 'ready')) { c.callT -= dt; if (c.callT <= 0) { c.callT = 9 + Math.random() * 12; audio.gull && audio.gull(); if (G.state === 'play') Meta.find('c:gull'); } }
   },
   // gökyüzü, ışık ve sis (applyLighting'ten hemen sonra)
   applyLook() {
@@ -527,7 +528,7 @@ const Life = {
     // bazı zafer gecelerinde kutup ışıkları
     if (P.aurora && G.state === 'complete' && G.mode !== 'endless') {
       skyU.uAurora.value = Math.max(skyU.uAurora.value, G.night * 0.95);
-      if (G.night > 0.6 && !this.aurPlayed) { this.aurPlayed = true; audio.aurora && audio.aurora(); }
+      if (G.night > 0.6 && !this.aurPlayed) { this.aurPlayed = true; audio.aurora && audio.aurora(); setTimeout(() => Meta.find('w:aurora'), 2500); }
     }
   },
   // son işlem ayarları (güneş huzmeleri, havadaki tozlar)

@@ -1285,6 +1285,7 @@ const Theater = {
   solve() {
     this.state = 'solved'; for (const G of this.grp) { G.lock = true; G.q.copy(this.symQ(G)); G.yaw = 0; G.pitch = 0; G.w.set(0, 0); G.root.quaternion.copy(G.q); G.hl = 0; for (const m of G.mats) if (this.grp.length > 1) m.emissive.setRGB(0, 0, 0); } this.drag = null;
     this.solvedT = this.t; this.perfT = -1; this.evI = 0; $('#thMsg').classList.remove('on');
+    Meta.ev('theater'); { const md = Meta.d(); if (!md.th[this.idx]) { md.th[this.idx] = 1; Meta.addDust(15); } }
     audio.theaterSolve(); stMus.solve(); haptic([20, 40, 20]); G.flash = 0.3; G.flashCol.set(1.0, 0.78, 0.48); G.trauma = Math.max(G.trauma, 0.25);
     const par = this.parOf(), tt = this.playT, stars = this.hints === 0 && tt <= par ? 3 : this.hints <= 1 && tt <= par * 2.2 ? 2 : 1;
     this.stars = stars; const pe = $('#thPar'); if (pe) { pe.textContent = '★'.repeat(stars); pe.dataset.n = 3; pe.classList.remove('low'); }

@@ -142,7 +142,14 @@ function buildPropVisual(pr, key, rng) {
         if (P.h < 1.45 && y > 1) continue;
         parts.push(part(new THREE.BoxGeometry(0.42, 0.44, 0.05), blue, { pos: [x, y, z], rot: [0, ry, 0], scale: [1, 1, 1] }));
         const gw = new THREE.BoxGeometry(0.3, 0.32, 0.05); gw.rotateY(ry); gw.translate(x + Math.sin(ry) * 0.03, y, z + Math.cos(ry) * 0.03); W(gw);
+        // pencere pervazı ve üst lento (ayrıntı: gölgede kalan küçük çıkıntılar)
+        parts.push(part(new THREE.BoxGeometry(0.52, 0.05, 0.12), wall, { pos: [x + Math.sin(ry) * 0.05, y - 0.25, z + Math.cos(ry) * 0.05], rot: [0, ry, 0] }));
+        parts.push(part(new THREE.BoxGeometry(0.5, 0.06, 0.07), '#d8cdb8', { pos: [x + Math.sin(ry) * 0.03, y + 0.26, z + Math.cos(ry) * 0.03], rot: [0, ry, 0] }));
       }
+      // taş temel bandı, kapı basamağı, köşe pilastırları
+      parts.push(part(new THREE.BoxGeometry(P.w + 0.06, 0.16, P.d + 0.06), '#b9ab95', { pos: [0, 0.08, 0], vary: 0.06, seed: 5 }));
+      parts.push(part(new THREE.BoxGeometry(0.62, 0.07, 0.22), '#cfc2aa', { pos: [-P.w * 0.18, 0.035, P.d / 2 + 0.11] }));
+      for (const sx of [-1, 1]) for (const sz of [-1, 1]) parts.push(part(new THREE.BoxGeometry(0.08, P.h - 0.1, 0.08), '#e9e1d2', { pos: [sx * (P.w / 2 + 0.005), P.h / 2 + 0.03, sz * (P.d / 2 + 0.005)] }));
       if (P.dome) smooth.push(part(new THREE.SphereGeometry(P.dr, 18, 9, 0, TAU, 0, PI / 2), key === 'ikiz' ? '#5f4bb8' : '#2f6ed2', { pos: [0, P.h + 0.06, 0], flat: false }));
       if (P.chim) parts.push(part(new THREE.BoxGeometry(0.28, 0.6, 0.28), wall, { pos: [P.w * 0.28, P.h + 0.3, -P.d * 0.25] }));
       if (key === 'ege' && rng.chance(0.6)) { // begonvil
@@ -160,7 +167,10 @@ function buildPropVisual(pr, key, rng) {
       const h = P.h, r = P.r, c0 = pr.type === 'cypress' ? '#22401f' : '#4f8a32', c1 = pr.type === 'cypress' ? '#3f6634' : '#8cc157';
       parts.push(part(new THREE.CylinderGeometry(0.11, 0.13, h * 0.14, 6), '#5a4532', { pos: [0, h * 0.07, 0] }));
       const prof = [[0.0, h * 0.11], [r * 0.75, h * 0.12], [r * 0.97, h * 0.3], [r, h * 0.38], [r * 0.9, h * 0.55], [r * 0.62, h * 0.72], [r * 0.33, h * 0.86], [0.03, h]];
-      parts.push(part(lathe(prof, 9), c0, { jit: 0.05, seed: Math.floor(pr.x * 10), top: c1, y0: h * 0.1, y1: h, vary: 0.12 }));
+      parts.push(part(lathe(prof, 11), c0, { jit: 0.05, seed: Math.floor(pr.x * 10), top: c1, y0: h * 0.1, y1: h, vary: 0.12 }));
+      // yaprak kümeleri: gövde siluetinin içinde kalan, açık tonlu kabarıklar (gölge değişmez)
+      for (let k = 0; k < 5; k++) { const yy = h * (0.3 + k * 0.12), rr = r * (1 - Math.abs(yy / h - 0.42) * 1.1) * 0.78, a = k * 2.4 + pr.x; if (rr < 0.06) continue;
+        parts.push(part(new THREE.IcosahedronGeometry(rr * 0.42, 0), k % 2 ? c1 : c0, { pos: [Math.cos(a) * rr * 0.62, yy, Math.sin(a) * rr * 0.62], scale: [1, 1.5, 1], jit: rr * 0.06, vary: 0.15, seed: k + 7 })); }
       break;
     }
     case 'olive': case 'apricot': {
@@ -168,7 +178,12 @@ function buildPropVisual(pr, key, rng) {
       const tr = new THREE.CylinderGeometry(0.1, 0.14, P.trunk + 0.3, 6, 3); jitterGeo(tr, 0.06, 5);
       parts.push(part(tr, trunkC, { pos: [0, (P.trunk + 0.3) / 2, 0], rot: [0.08, 0, -0.06] }));
       const cs = pr.type === 'olive' ? ['#8c9c6c', '#7b8d5d', '#9aa878'] : ['#6f9a45', '#5f8a3c', '#83ac52'];
-      for (const b of P.blobs) smooth.push(part(new THREE.IcosahedronGeometry(b[3], 1), rng.pick(cs), { pos: [b[0], b[1], b[2]], scale: [1, b[4], 1], jit: 0.06 * s, seed: Math.floor(b[0] * 50), vary: 0.1 }));
+      for (const b of P.blobs) {
+        smooth.push(part(new THREE.IcosahedronGeometry(b[3], 1), rng.pick(cs), { pos: [b[0], b[1], b[2]], scale: [1, b[4], 1], jit: 0.06 * s, seed: Math.floor(b[0] * 50), vary: 0.1 }));
+        // üstte güneşe bakan açık yaprak kümeleri (blob'un içinde: gölge aynı kalır)
+        for (let k = 0; k < 3; k++) { const a = rng.range(0, TAU), rr = b[3] * rng.range(0.3, 0.42), d = b[3] - rr * 1.05;
+          smooth.push(part(new THREE.IcosahedronGeometry(rr, 1), cs[2], { pos: [b[0] + Math.cos(a) * d * 0.7, b[1] + b[3] * b[4] * 0.45, b[2] + Math.sin(a) * d * 0.7], scale: [1, 0.8, 1], jit: 0.04 * s, vary: 0.12, seed: k + 3 })); }
+      }
       if (pr.type === 'apricot') for (let k = 0; k < 6; k++) { const b = rng.pick(P.blobs), a = rng.range(0, TAU); smooth.push(part(new THREE.IcosahedronGeometry(0.07, 0), '#f39a3a', { pos: [b[0] + Math.cos(a) * b[3] * 0.92, b[1] + rng.range(-0.2, 0.2), b[2] + Math.sin(a) * b[3] * 0.92] })); }
       break;
     }
@@ -704,7 +719,7 @@ function buildCloud(m, rng) {
   const g = new THREE.Group();
   const pre = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ colorWrite: false, depthWrite: true, transparent: true }));
   pre.renderOrder = 10;
-  const mat = worldMat({ vertexColors: true, roughness: 1, metalness: 0, emissive: 0xfff2e6, emissiveIntensity: 0.16, transparent: true, opacity: 0.9, depthWrite: false }, { noFog: true });
+  const mat = worldMat({ vertexColors: true, roughness: 1, metalness: 0, emissive: 0xfff2e6, emissiveIntensity: 0.16, transparent: true, opacity: 0.9, depthWrite: false }, { noFog: true, detail: false });
   const vis = new THREE.Mesh(geo, mat); vis.renderOrder = 11; vis.castShadow = true;
   g.add(pre, vis);
   g.userData.mat = mat;

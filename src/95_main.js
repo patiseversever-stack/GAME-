@@ -55,7 +55,7 @@ function updateCrystals(dt) {
   }
 }
 function collectDrop(d) {
-  d.state = 1; G.dropsGot++; G.combo++;
+  d.state = 1; G.dropsGot++; G.combo++; Meta.ev('drop');
   audio.collect(G.combo - 1); haptic(12);
   FX.burst(d.x, 0.35, d.z, 18, { add: true, c: [0.9, 0.65, 2.4], a: 1, s: 0.16, s1: 0.02, life: 0.7, sp: 2.6, up: 1, drag: 2.5, t: 2 });
   FX.burst(d.x, 0.3, d.z, 10, { c: [0.03, 0.02, 0.06], a: 0.85, s: 0.12, s1: 0.3, life: 0.6, sp: 1.6, up: 1.6, g: -5, drag: 1 });
@@ -68,7 +68,7 @@ function collectDrop(d) {
 function onWisp(ev) {
   const w = ev.w;
   if (ev.kind === 'eat') {
-    act.eaten++; G.meter = Math.min(1, G.meter + 0.15); G.combo++;
+    act.eaten++; G.meter = Math.min(1, G.meter + 0.15); G.combo++; Meta.ev('wisp');
     audio.sprite(3); haptic(16); zifir.kick(1.8); G.flash = Math.max(G.flash, 0.12); G.flashCol.set(0.7, 0.55, 1.0);
     popText(w.x, 1.0, w.z, 'peri yutuldu ✦');
   } else if (ev.kind === 'hit') {
@@ -83,7 +83,7 @@ function endEpisode() {
     const x = zifir.g.position.x, z = zifir.g.position.z;
     for (let i = 0; i < 10; i++) { const a = Math.random() * TAU; fxMix.spawn(x + Math.cos(a) * 0.9, 0.3 + Math.random() * 0.4, z + Math.sin(a) * 0.9, -Math.cos(a) * 2.2, 0, -Math.sin(a) * 2.2, { c: [0.03, 0.02, 0.07], a: 0.6, s: 0.2, s1: 0.05, life: 0.42, drag: 0.5, t: 1 }); }
     if (G.epMin < 0.3) {
-      banner('Kıl payı!', 'gölgeye döndü'); audio.closeCall(); haptic(25); zifir.relief();
+      banner('Kıl payı!', 'gölgeye döndü'); audio.closeCall(); haptic(25); zifir.relief(); Meta.ev('close'); Meta.find('m:close');
       G.slowT = 0.55; G.slowK = 0.4; G.fovKick = -3;
     }
     if (G.burnEp > 0.35) G.combo = 0;
@@ -99,14 +99,14 @@ function stepPlay(dt, dtR) {
   updateCrystals(dt);
   // ilerleme (köprüde bekleme)
   // Bekle: basılı tutulurken Zifir durur; sabır azalır, yürürken yavaşça dolar
-  const wantHold = !!(G.holdWait && lv.spec.wait && G.T > lv.walkDelay && !G.waiting && G.s < lv.length - 0.6);
+  const wantHold = !!(G.holdWait && lv.spec.wait && Abil.shown('wait') && G.T > lv.walkDelay && !G.waiting && G.s < lv.length - 0.6);
   if (wantHold && G.patience > 0) {
-    if (!G.holding) { G.holding = true; zifir.kick(-2.6); audio.tock(true); haptic(8); }
+    if (!G.holding) { G.holding = true; zifir.kick(-2.6); audio.tock(true); haptic(8); Abil.used('wait'); Meta.ev('hold'); }
     G.patience = Math.max(0, G.patience - dt); G.holdT += dt;
     if (G.patience <= 0) { G.holding = false; zifir.kick(3); audio.pop(4); popText(PA.x, 1.0, PA.z, 'sabrı tükendi'); }
   } else {
     if (G.holding) { G.holding = false; zifir.kick(2.4); }
-    if (!G.waiting && G.T > lv.walkDelay) G.patience = Math.min(PATIENCE_MAX, G.patience + PATIENCE_REGEN * dt);
+    if (!G.waiting && G.T > lv.walkDelay) G.patience = Math.min(Meta.val('wait'), G.patience + PATIENCE_REGEN * dt);
   }
   if (G.T > lv.walkDelay && !G.holding) {
     let ns = G.s + lv.speed * act.speedMul() * dt;
@@ -125,6 +125,7 @@ function stepPlay(dt, dtR) {
   if (G.T > lv.walkDelay && !onBridge && G.ecl.amt < 0.5) f = exposureNow(lv, PA.x, PA.z, PA.nx, PA.nz);
   if (ShadowBirds.canT > 0) f = 0; // Kuş Kalkanı: sürünün gölgesi
   { const fd = Dragon.step(dt, G.T <= lv.walkDelay || (!G.waiting && !G.holding), G.ecl.amt, ShadowBirds.canT > 0); if (fd > f) f = fd; } // ejderha nefesi gölge tanımaz
+  if (G.reviveT > 0) { G.reviveT -= dt; f = 0; if (Math.random() < dt * 30) FX.sparkle(PA.x + (Math.random() - 0.5) * 0.7, 0.2 + Math.random() * 0.5, PA.z + (Math.random() - 0.5) * 0.7, [1.3, 1.1, 2.6], 0.3); } // bir şans daha: kısa koruma
   G.f = f;
   const dashing = act.dashT > 0, fm = flareMul(lv, G.T) * act.burnMul();
   if (G.auto && G.autoDive && lv.spec.dash && act.canDash() && (f > 0 || wisps.items.some((w) => w.state === 1 && Math.hypot(w.x - PA.x, w.z - PA.z) < 1.4))) act.dash();
@@ -167,8 +168,8 @@ function stepPlay(dt, dtR) {
   // tutulma
   if (G.ecl.active) {
     G.ecl.t += dt; const t = G.ecl.t;
-    G.ecl.amt = t < 0.22 ? t / 0.22 : t < 2.1 ? 1 : Math.max(0, 1 - (t - 2.1) / 0.5);
-    if (t > 2.6) { G.ecl.active = false; G.ecl.amt = 0; }
+    const eh = Meta.val('ecl'); G.ecl.amt = t < 0.22 ? t / 0.22 : t < eh ? 1 : Math.max(0, 1 - (t - eh) / 0.5);
+    if (t > eh + 0.5) { G.ecl.active = false; G.ecl.amt = 0; }
     if (Math.random() < dtR * 20) { const p = orb.g.position; FX.sparkle(p.x + (Math.random() - 0.5) * 2, p.y + (Math.random() - 0.5) * 2, p.z, [1.4, 1.4, 2.4], 0.25); }
   }
   G.minMeter = Math.min(G.minMeter ?? 1, G.meter); if (G.waiting) G.waitT = (G.waitT || 0) + dt;
@@ -182,7 +183,7 @@ function stepPlay(dt, dtR) {
     G.meter = Math.max(G.meter, 0.001);
     if (f === 0) {
       G.breathT = 0; G.meter = 0.14; G.slowT = 0.5; G.slowK = 0.45; G.fovKick = -3;
-      banner('Son nefes!', 'gölge seni kurtardı'); audio.closeCall(); haptic([20, 30, 20]); zifir.kick(3); zifir.relief();
+      banner('Son nefes!', 'gölge seni kurtardı'); Meta.find('m:breath'); audio.closeCall(); haptic([20, 30, 20]); zifir.kick(3); zifir.relief();
       for (let i = 0; i < 12; i++) FX.sparkle(PA.x + (Math.random() - 0.5) * 0.8, 0.3 + Math.random() * 0.5, PA.z + (Math.random() - 0.5) * 0.8, [1.4, 1.2, 2.6], 0.3);
     } else if ((G.breathT -= dtR) <= 0) { G.breathT = 0; G.meter = 0; failLevel(); return; }
   }
@@ -287,7 +288,8 @@ function update(dt, dtR) {
     }
     case 'ready': {
       G.readyT += dtR;
-      if (!G.readyHint && G.mode === 'story' && lv.spec.g === 0) { G.readyHint = true; toast('<span class="hand"></span>Güneşi <em>sürükle</em>. Gölgeler döner, Zifir yola çıkar.', 0); }
+      if (Abil.open) G.readyT = 0;
+      else if (!G.readyHint && G.mode === 'story' && lv.spec.g === 0) { G.readyHint = true; toast('<span class="hand"></span>Güneşi <em>sürükle</em>. Gölgeler döner, Zifir yola çıkar.', 0); }
       else if (!G.readyHint && G.readyT > 4.5) { G.readyHint = true; toast('<span class="hand"></span>Hazır olunca güneşi sürükle', 0); }
       sunDirs(G.u, lv.sun, L1, L2); if (lv.crystals.length) updateCrystals(dtR);
       G.night = damp(G.night, 0, 3, dtR); U.uNightAmt.value = G.night;
@@ -333,14 +335,11 @@ function update(dt, dtR) {
     NightAct.applyLook();
     Dragon.applyLook();
     Life.applyLook();
-    if (G.hint && (G.state === 'play' || G.state === 'ready')) {
-      const sol = lv.solution, k = Math.min(sol.K - 1, Math.round((G.T + 0.45) / sol.dt));
-      orbPosInto(sol.traj[k], lv.sun.tilt, lv.sun.thMin, ghost.position); ghost.material.opacity = 0.45 + Math.sin(U.uTime.value * 5) * 0.15;
-    } else ghost.material.opacity = 0;
+    updateHint(lv, G.hint && (G.state === 'play' || G.state === 'ready'));
   }
   Life.update(dt, dtR); NightAct.update(dt, dtR);
   arc1.update(dtR); arc2.update(dtR);
-  ambient(dtR); Ambient.update(dt, G.night); ShadowBirds.update(dt); Fireworks.update(dt); Shoot.update(dt, skyU.uStars.value); updateBirds(dtR); updateFar(U.uTime.value);
+  ambient(dtR); Ambient.update(dt, G.night); ShadowBirds.update(dt); Abil.update(dtR); Secret.update(dt, dtR); Fireworks.update(dt); Shoot.update(dt, skyU.uStars.value); updateBirds(dtR); updateFar(U.uTime.value);
   fxAdd.update(dtR); fxMix.update(dtR); updatePrints(dtR); updatePops(dtR);
   // efekt sönümleri
   G.orbPulse = Math.max(0, (G.orbPulse || 0) - dtR * 4);
@@ -349,6 +348,7 @@ function update(dt, dtR) {
   Cam.zoom = G.state === 'play' ? lerp(0.86, 1.0, G.ecl.amt) : G.state === 'ready' ? 0.93 : 1;
   Cam.update(dt, dtR);
   U.uCamPos.value.copy(camera.position);
+  Bokeh.update(dtR);
   // gölge haritası: yalnızca gerektiğinde
   const moved = Math.abs(G.u - (G.shU ?? -1)) > 1e-5;
   if (moved || (lv && lv.hasMovers && G.state === 'play') || G.state === 'intro' || G.state === 'title' || G.state === 'film') { renderer.shadowMap.needsUpdate = true; G.shU = G.u; }
@@ -368,6 +368,8 @@ function update(dt, dtR) {
   pu.uHeat.value.set(_pv.x * 0.5 + 0.5, _pv.y * 0.5 + 0.5, G.state === 'play' ? G.f * 0.9 : 0);
   const focusY = G.state === 'title' || G.state === 'map' || G.state === 'film' ? 0.42 : clamp(_pv.y * 0.5 + 0.5, 0.25, 0.65);
   pu.uTiltC.value = damp(pu.uTiltC.value, focusY, 2, dtR); pu.uTiltW.value = 0.3; pu.uTilt.value = 0.7;
+  { const main = G.state !== 'map' && G.state !== 'theater' && !Ward3D.on && !(TUT.open && TutStage.on); // tiyatro/harita kendi ışığını korur
+    pu.uClarity.value = (main ? 0.55 : 0.25) * U.uDetail.value * (1 - G.night * 0.5); pu.uSplit.value = main ? 0.75 * (1 - G.night * 0.6) * (1 - ecl * 0.5) : 0; }
   NightAct.post(pu); Life.post(pu);
   if (G.state === 'photo' && G.photo) Photo.apply(pu);
 }
@@ -416,6 +418,7 @@ window.addEventListener('keydown', (e) => {
   if (TUT.open) { TUT.key(e); return; }
   if (Ward3D.on) { if (e.code === 'Escape') Wardrobe.close(); return; }
   if (KH.open || Lore.open) { const o = KH.open ? KH : Lore; if (e.code === 'Escape') o.finish(); else if (e.code === 'Space' || e.code === 'Enter' || e.code === 'ArrowRight') { e.preventDefault(); o.tap(); } return; }
+  if (Abil.open) { if (e.code === 'Enter' || e.code === 'Space') { e.preventDefault(); Abil.next(); } return; }
   if (e.repeat && (e.code === 'Space')) return;
   if (G.state === 'film') { if (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape') Film.skip(); return; }
   if (G.state === 'intro' && Cam.flight && (e.code === 'Space' || e.code === 'Enter' || e.code === 'Escape')) { skipIntroFlight(); return; }
@@ -427,7 +430,7 @@ window.addEventListener('keydown', (e) => {
   else if (e.code === 'ArrowUp' || e.code === 'KeyW' || e.code === 'ShiftLeft' || e.code === 'ShiftRight') { if (G.state === 'play') act.dash(); }
   else if (e.code === 'KeyF') { if (G.state === 'play') ShadowBirds.release(); }
   else if (e.code === 'ArrowDown' || e.code === 'KeyS') { G.holdWait = true; if (G.state === 'ready') startPlay(); }
-  else if (e.code === 'Space') { if (G.state === 'play') { if (G.lv.spec.eclipse && G.ecl.charge >= 1) triggerEclipse(); else act.dash(); } else if (G.state === 'ready') startPlay(); else if (G.state === 'complete' && G.compStage >= 5) nextFromComplete(); else if (G.state === 'fail') { if (G.fShown) retry(); else Melt.skip(); } else if (G.state === 'title') $('#btnPlay').click(); }
+  else if (e.code === 'Space') { if (G.state === 'play') { if (G.lv.spec.eclipse && Abil.shown('ecl') && G.ecl.charge >= 1) triggerEclipse(); else act.dash(); } else if (G.state === 'ready') startPlay(); else if (G.state === 'complete' && G.compStage >= 5) nextFromComplete(); else if (G.state === 'fail') { if (G.fShown) retry(); else Melt.skip(); } else if (G.state === 'title') $('#btnPlay').click(); }
   else if (e.code === 'Escape' || e.code === 'KeyP') { if (G.state === 'photo') Photo.close(); else if (G.state === 'paused') resume(); else pause(); }
 });
 window.addEventListener('keyup', (e) => { if (['ArrowLeft', 'KeyA', 'ArrowRight', 'KeyD'].includes(e.code)) G.keyDir = 0; if (e.code === 'ArrowDown' || e.code === 'KeyS') G.holdWait = false; });
@@ -493,13 +496,15 @@ const Photo = {
   },
 };
 function pause() {
-  if (G.state !== 'play' && G.state !== 'ready') return;
+  if ((G.state !== 'play' && G.state !== 'ready') || Abil.open) return;
   G.pausedFrom = G.state; G.state = 'paused'; G.drag = null; G.keyDir = 0;
   audio.setSizzle(0); audio.setHum(0, G.u); refreshToggles(); UI.show('pause');
 }
 function resume() { if (G.state !== 'paused') return; UI.hide('pause'); G.state = G.pausedFrom || 'play'; }
 function openMap() {
   audio.ui(); hideToast();
+  const brk = G.state === 'complete' || G.state === 'fail'; // ada bitince haritaya dönüş: doğal mola
+  if (brk) setTimeout(() => { if (G.state === 'map') AdBridge.interstitial('to_map'); }, 900);
   G.mapNight = G.night > 0.5 ? 1 : 0.55;
   const fresh = G.state !== 'map';
   if (fresh) { const f = $('#fader'); f.classList.add('on'); }
@@ -651,6 +656,18 @@ const bind = (id, fn) => $(id).addEventListener('click', (e) => { e.stopPropagat
 function nextStoryG() { if (TEST_ALL) { for (let g = 0; g < STORY_LEVELS; g++) if (!Save.data.levels[g]) return g; return 0; } return Math.min(Save.data.unlocked, STORY_LEVELS - 1); }
 bind('#btnPlay', () => { audio.ui(); UI.hide('title'); startStory(nextStoryG()); });
 bind('#btnMapT', () => openMap());
+bind('#btnHzT', () => Meta.openHz('title'));
+bind('#btnHzM', () => Meta.openHz('map'));
+bind('#hzBack', () => Meta.closeHz());
+$$('#hz .hztabs button').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); audio.ui(); Meta.setTab(b.dataset.t); }));
+bind('#qOpen', () => Meta.openChest());
+$('#chest').addEventListener('click', (e) => { e.stopPropagation(); if (Meta.chestStage === 0) Meta.chestTap(); });
+bind('#chTake', () => Meta.chestClose());
+bind('#chDouble', () => Meta.chestDouble());
+bind('#aSheet', () => $('#aSheet').classList.remove('on'));
+bind('#mpBonus', () => { const ci = Math.round(SkyMap.tf); if (!Meta.d().secrets[ci]) return; audio.ui(); $('#fader').classList.add('on'); setTimeout(() => { SkyMap.close && SkyMap.close(); startBonus(ci); requestAnimationFrame(() => requestAnimationFrame(() => $('#fader').classList.remove('on'))); }, 260); });
+bind('#btnRevive', async () => { if (G.state !== 'fail' || G.revived) return; const ok = await AdBridge.rewarded('rv_revive'); if (ok) revive(); });
+bind('#btnDouble', async () => { if (G.dustDoubled || !(G.dustWon > 0)) return; $('#complete').classList.remove('candouble'); const ok = await AdBridge.rewarded('rv_dust_double'); if (ok) { G.dustDoubled = true; Meta.addDust(G.dustWon); const b = $('#cDust b'); b.textContent = `+${G.dustWon * 2}`; $('#cDust').classList.remove('on'); void b.offsetWidth; $('#cDust').classList.add('on'); audio.chime && audio.chime(); } });
 bind('#btnLoreT', () => Lore.openBook());
 bind('#btnSetT', () => { audio.ui(); refreshToggles(); UI.show('settings'); });
 bind('#btnPhoto', () => Photo.open());
@@ -731,7 +748,7 @@ function onResize() {
 function applyQuality() {
   const Q = Perf.Q;
   setShadowSize(Q.shadow); buildSeaMat(Q.cloudOct); setParticleCap(Q.particles);
-  post.u.uFlare.value = Q.flare;
+  post.u.uFlare.value = Q.flare; U.uDetail.value = [0, 0.85, 1, 1][Perf.level] ?? 1; // Düşük kalitede ek ayrıntı kapalı (zayıf cihaz kasmasın)
   U.uSoftSh.value = Q.soft && Perf.softOk ? 1 : 0; Ambient.setCount(Q.amb); Fireworks.k = [0.45, 0.7, 1, 1.2][Perf.level]; // yumuşak gölge ve hava parçacıkları: Düşük'te kapalı; yük artarsa gölge ilk kapanan
   if (G.view) G.view.setGrass(Q);
   onResize();
@@ -747,7 +764,7 @@ function warmShaders() {
     const cv = document.createElement('canvas'); cv.width = cv.height = 4; const tex = new THREE.CanvasTexture(cv); tex.colorSpace = THREE.SRGBColorSpace;
     const tmp = [
       worldMat({ vertexColors: true, roughness: 0.92, metalness: 0, flatShading: true }), worldMat({ map: tex, roughness: 0.95, metalness: 0 }),
-      worldMat({ vertexColors: true, roughness: 1, metalness: 0, emissive: 0xfff2e6, emissiveIntensity: 0.16, transparent: true, opacity: 0.9, depthWrite: false }, { noFog: true }),
+      worldMat({ vertexColors: true, roughness: 1, metalness: 0, emissive: 0xfff2e6, emissiveIntensity: 0.16, transparent: true, opacity: 0.9, depthWrite: false }, { noFog: true, detail: false }),
       worldMat({ vertexColors: true, roughness: 0.62, metalness: 0, transparent: true, opacity: 1 }, { noFog: true }), worldMat({ color: 0x7a5636, roughness: 0.9, transparent: true }, { noFog: true }),
       envMat(new THREE.MeshStandardMaterial({ color: 0xc8b8ff, emissive: 0x8a6cff, roughness: 0.15, metalness: 0.1 })),
       envMat(new THREE.MeshStandardMaterial({ color: 0x3a2f5a, roughness: 0.2, metalness: 0.3, transparent: true, opacity: 0.55, emissive: 0x2a1e5a })),
@@ -796,6 +813,7 @@ function frame(now) {
   if (G.slowT > 0) { G.slowT -= dtR; dt *= lerp(1, G.slowK, smoothstep(0, 0.2, G.slowT)); }
   if (G.state === 'paused' || G.state === 'photo') dt = 0;
   try { update(dt, dtR); TUT.update(dtR); } catch (e) { reportError(e); }
+  { const pl = G.state === 'play'; if (pl !== frame.pl) { frame.pl = pl; document.body.classList.toggle('playing', pl); } const scr = Meta.open ? 'hz' : G.state; if (scr !== frame.scr) { frame.scr = scr; AdBridge.screen(scr); } }
   audio.mood = { streak: act.streak, finale: !!(G.lv && G.lv.spec.finale), flare: flare.k, dragon: G.state === 'play' && Dragon.on && Dragon.mode === 'chase', boss: Dragon.danger() };
   audio.update(dtR, G.state === 'play');
   const onWard = Ward3D.on, onTut = !onWard && TUT.open && TutStage.on, onMap = !onWard && !onTut && G.state === 'map' && SkyMap.active, onTh = !onWard && !onTut && G.state === 'theater' && Theater.active;
@@ -945,6 +963,7 @@ function popZifir() {
 
 function bootGame() {
   if (TEST_ALL) document.body.classList.add('testall');
+  AdBridge.init(); Meta.quests(); Meta.badges();
   GenW.init();
   applyQuality();
   const word = 'Gündönümü';
@@ -970,8 +989,8 @@ function bootGame() {
 }
 // test/hata ayıklama kancası (görünmez)
 window.__gd = {
-  G, Save, Perf, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, TutStage, Dragon, Life, NightAct, nightSpec, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
-  start: (g) => startStory(g), endless: (n, seed = 12345) => { startEndless(); G.endless.n = n; G.endless.seed = seed; enterLevel(endlessSpec(n, seed), { quick: true }); }, auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
+  G, Save, Perf, Abil, Meta, Secret, AdBridge, levelSpec, buildLevel, STORY_LEVELS, scene, camera, post, U, renderer, Ambient, ShadowBirds, zifir, Fireworks, SKYTEX, seaU, Cam, Lore, KH, Melt, Wardrobe, Ward3D, TUT, TutStage, Dragon, Life, NightAct, nightSpec, Theater, SkyMap, Film, audio, stSfx, stApplause, ST_FIGS, THREE, stScene, stCam, stMus, stAmb, ThTut, ThWhisper,
+  start: (g) => startStory(g), bonus: (ch) => startBonus(ch), endless: (n, seed = 12345) => { startEndless(); G.endless.n = n; G.endless.seed = seed; enterLevel(endlessSpec(n, seed), { quick: true }); }, auto: (on = true, dive = false) => { G.auto = on; G.autoDive = dive; }, noWisps: (on) => { window.__noWisps = on; }, act: () => ({ eaten: act.eaten, dives: act.dives, best: act.best }), setU: (u) => { G.uT = u; },
   step: (sec, h = 1 / 30) => { for (let t = 0; t < sec; t += h) { let dt = h; if (G.hitStop > 0) { G.hitStop -= h; dt = 0; } if (G.slowT > 0) { G.slowT -= h; dt *= G.slowK; } if (G.state === 'paused') dt = 0; update(dt, h); } },
   stats: () => ({ minMeter: G.minMeter, exp: G.expTotal, flawless: G.lv && G.lv.flawless, dropsTotal: G.lv && G.lv.drops.length, waited: G.waitT }),
   info: () => ({ state: G.state, u: G.u, s: G.s, len: G.lv && G.lv.length, meter: G.meter, T: G.T, drops: G.dropsGot, quality: Perf.level, scale: Perf.scale, ema: Perf.ema }),

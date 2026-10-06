@@ -24,7 +24,7 @@ function levelSpec(g) {
     margin: lerp(0.62, 0.3, clamp01(gp * 0.75 + d * 0.35)),
     drops: Math.min(7, 2 + Math.round(d * 3 + gp * 2)),
     features: Object.assign({}, chap.features),
-    eclipse: g >= 3,
+    eclipse: g >= 4,
     sunStart: 0.5,
     sunSpeed: g < 8 ? 0.62 : 0.75,
   };
@@ -51,7 +51,7 @@ function levelSpec(g) {
   if (finale && ch >= 2) spec.sprites += 1;
   spec.flares = (finale && ch >= 1) || (ch >= 5 && i >= 4);
   spec.dash = g >= 2;
-  spec.wait = g >= 4;
+  spec.wait = g >= 6;
   spec.boss = finale; // dünyanın son adası: Güneş Ejderhası kovalar
   // çeşitlilik: ada biçimi ve yol düzeni (dünyanın ilk adası her zaman tanıdık oval + zikzak)
   const bridges = !!spec.features.bridges;

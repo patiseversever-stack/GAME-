@@ -11,8 +11,8 @@ import subprocess
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, 'src')
 BUILD = os.path.join(ROOT, '.build')
-PARTS = ['10_boot.js', '20_audio.js', '21_thmusic.js', '30_world.js', '40_gen.js', '50_render.js', '60_env.js',
-         '70_island.js', '80_actors.js', '85_action.js', '85b_dragon.js', '85c_life.js', '85d_night.js', '86_sfcore.js', '87_sffigs.js', '87_sfwild.js', '87_sfdestan.js', '88_skymap.js', '89_theater.js', '89b_thtut.js', '89c_karagoz.js', '90_game.js', '91_melt.js', '92a_tutstage.js', '92_tutorial.js', '93_lore.js', '94_wardrobe.js', '95_main.js']
+PARTS = ['10_boot.js', '20_audio.js', '21_thmusic.js', '22_score.js', '30_world.js', '40_gen.js', '50_render.js', '60_env.js',
+         '70_island.js', '80_actors.js', '85_action.js', '85b_dragon.js', '85c_life.js', '85d_night.js', '86_sfcore.js', '87_sffigs.js', '87_sfwild.js', '87_sfdestan.js', '88_skymap.js', '89_theater.js', '89b_thtut.js', '89c_karagoz.js', '89d_abil.js', '90_game.js', '90a_depth.js', '91_melt.js', '92a_tutstage.js', '92_tutorial.js', '93_lore.js', '93a_ads.js', '93b_meta.js', '94_wardrobe.js', '95_main.js']
 
 os.makedirs(BUILD, exist_ok=True)
 if not os.path.isdir(os.path.join(BUILD, 'node_modules', 'three')):

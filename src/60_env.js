@@ -10,6 +10,8 @@ const U = {
   uCamPos: { value: new THREE.Vector3() }, uFogCol: { value: new THREE.Color() }, uFogNear: { value: 70 }, uFogFar: { value: 340 },
   uBelowCol: { value: new THREE.Color() }, uZifir: { value: new THREE.Vector3(0, -100, 0) }, uWind: { value: 1 }, uGlowCol: { value: new THREE.Color(4.0, 2.1, 0.8) },
   uSoftSh: { value: 0 },
+  // dünya ayrıntısı: güneş yönü/rengi, gök rengi, ayrıntı gücü (kaliteye göre)
+  uSunW: { value: new THREE.Vector3(0, 1, 0) }, uSunC: { value: new THREE.Color(1, 1, 1) }, uSkyC: { value: new THREE.Color(0.6, 0.7, 1) }, uDetail: { value: 1 },
 };
 /* Yumuşak gölge kenarları (Yüksek/Ultra): engelden uzaklaştıkça yumuşayan, temas noktasında keskin kalan gölge (PCSS).
    Shader'a bir kez eklenir; kalite değişince yalnızca uSoftSh anahtarı değişir (yeniden derleme yok). Dünya malzemeleri
@@ -42,9 +44,12 @@ const U = {
     THREE.ShaderChunk.shadowmap_pars_fragment = ch;
   }
 }
-const WORLD_VERT_HEAD = `varying vec3 vNW;\nuniform float uTime; uniform vec3 uZifir; uniform float uWind;\n`;
+const WORLD_VERT_HEAD = `varying vec3 vNW;\nuniform float uTime; uniform vec3 uZifir; uniform float uWind, uDetail;\n`;
 const WORLD_FRAG_HEAD = `varying vec3 vNW;
-uniform vec2 uNightC; uniform float uNightR, uNightAmt, uNightRim, uFogNear, uFogFar; uniform vec3 uCamPos, uFogCol, uBelowCol, uGlowCol;
+uniform vec2 uNightC; uniform float uNightR, uNightAmt, uNightRim, uFogNear, uFogFar, uDetail; uniform vec3 uCamPos, uFogCol, uBelowCol, uGlowCol, uSunW, uSunC, uSkyC;
+// dünya ayrıntısı: dünya uzayında değer gürültüsü (dokusuz yüzeylere doğal benek ve lekeler)
+float wdH(vec2 p){ vec3 p3 = fract(vec3(p.xyx) * 0.1031); p3 += dot(p3, p3.yzx + 33.33); return fract((p3.x + p3.y) * p3.z); }
+float wdN(vec2 p){ vec2 i = floor(p), f = fract(p); f = f * f * (3.0 - 2.0 * f); return mix(mix(wdH(i), wdH(i + vec2(1.0, 0.0)), f.x), mix(wdH(i + vec2(0.0, 1.0)), wdH(i + vec2(1.0, 1.0)), f.x), f.y); }
 float nightInside(){ float nd = length(vNW.xz - uNightC); return max(1.0 - smoothstep(uNightR - 2.5, uNightR, nd), smoothstep(18.0, 34.0, uNightR) * smoothstep(38.0, 50.0, length(vNW.xz))) * uNightAmt; }
 `;
 function injectWorld(sh, flags) {
@@ -67,6 +72,15 @@ function injectWorld(sh, flags) {
       mvPosition = viewMatrix * wpos;
       gl_Position = projectionMatrix * mvPosition;`);
   } else {
+    if (flags.sway !== false) sh.vertexShader = sh.vertexShader.replace('#include <begin_vertex>', `#include <begin_vertex>
+      #ifdef USE_COLOR
+      { float leafy = clamp((color.g - max(color.r, color.b)) * 7.0, 0.0, 1.0);
+        if (leafy > 0.0 && uWind > 0.0 && uDetail > 0.0) {
+          vec4 sw0 = modelMatrix * vec4(transformed, 1.0); float hh = max(0.0, sw0.y - 0.3);
+          float ph = uTime * 1.5 + sw0.x * 0.55 + sw0.z * 0.4;
+          transformed.x += (sin(ph) * 0.7 + sin(ph * 2.3 + 1.3) * 0.3) * 0.022 * hh * leafy * uWind;
+          transformed.z += cos(ph * 0.9 + 0.5) * 0.014 * hh * leafy * uWind; } }
+      #endif`);
     sh.vertexShader = sh.vertexShader.replace('#include <project_vertex>', `#include <project_vertex>
       vec4 nw4 = vec4(transformed, 1.0);
       #ifdef USE_INSTANCING
@@ -75,6 +89,26 @@ function injectWorld(sh, flags) {
       vNW = (modelMatrix * nw4).xyz;`);
   }
   sh.fragmentShader = WORLD_FRAG_HEAD + sh.fragmentShader;
+  if (flags.detail !== false) {
+    sh.fragmentShader = sh.fragmentShader.replace('#include <color_fragment>', `#include <color_fragment>
+      if (uDetail > 0.0) {
+        float wm = wdN(vNW.xz * 0.3 + 7.0), wf = wdN(vNW.xz * 5.2 + vNW.y * 2.3) * 0.6 + wdN(vNW.zx * 12.5 - vNW.y * 4.1) * 0.4;
+        diffuseColor.rgb *= mix(1.0, (0.86 + 0.28 * wm) * (0.88 + 0.24 * wf), uDetail);
+      }`);
+    sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+      if (uDetail > 0.0) {
+        vec3 Nw = inverseTransformDirection(normal, viewMatrix), Vw = normalize(uCamPos - vNW);
+        float fr = pow(1.0 - clamp(dot(Nw, Vw), 0.0, 1.0), 3.0), day = 1.0 - uNightAmt;
+        // gök kenar ışığı + güneş tarafında altın kenar: modeller arka plandan ayrılır
+        totalEmissiveRadiance += (uSkyC * 0.08 + uSunC * max(dot(Nw, uSunW), 0.0) * 0.6) * fr * diffuseColor.rgb * 2.4 * day * uDetail;
+        #ifdef USE_COLOR
+        // yapraklar: güneş arkadayken ışığı geçirir (ince yaprak parıltısı)
+        float leafy = clamp((vColor.g - max(vColor.r, vColor.b)) * 7.0, 0.0, 1.0);
+        if (leafy > 0.0) { float back = max(dot(-Nw, uSunW), 0.0), bl = pow(max(dot(-Vw, uSunW), 0.0), 3.0);
+          totalEmissiveRadiance += diffuseColor.rgb * uSunC * (back * 0.42 + bl * 0.9) * leafy * day * uDetail; }
+        #endif
+      }`);
+  }
   if (flags.glow) sh.fragmentShader = sh.fragmentShader.replace('#include <emissivemap_fragment>', '#include <emissivemap_fragment>\n totalEmissiveRadiance += uGlowCol * nightInside();');
   sh.fragmentShader = sh.fragmentShader.replace('#include <dithering_fragment>', `{
       // gece hesabı yalnızca gece/tutulma varken (gündüz tüm dünya piksellerinde atlanır)
@@ -92,7 +126,7 @@ function injectWorld(sh, flags) {
 function worldMat(opts, flags = {}) {
   const m = new THREE.MeshStandardMaterial(opts);
   m.onBeforeCompile = (sh) => injectWorld(sh, flags);
-  const key = 'W' + (flags.grass ? 'g' : '') + (flags.glow ? 'l' : '') + (flags.noFog ? 'n' : '');
+  const key = 'W' + (flags.grass ? 'g' : '') + (flags.glow ? 'l' : '') + (flags.noFog ? 'n' : '') + (flags.detail === false ? 'd' : '') + (flags.sway === false ? 's' : '');
   m.customProgramCacheKey = () => key;
   return m;
 }
