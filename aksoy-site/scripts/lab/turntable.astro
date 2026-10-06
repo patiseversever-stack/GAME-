@@ -1,0 +1,86 @@
+---
+// Logo için dönen takım kare dizisi üretir (yalnızca scripts/render-logo.mjs çalışırken src/pages/lab altına kopyalanır).
+// Takım kendi ekseni etrafında, simetri açısı kadar döndürülür; son kare ilkine bağlanır, döngü kesintisizdir.
+---
+<html><head><meta charset="utf-8" /><meta name="robots" content="noindex" /><style>html,body{margin:0;background:transparent}</style></head>
+<body><canvas id="c"></canvas>
+<script>
+  import * as THREE from 'three';
+  import { buildIsoInsert } from '../../scripts/three/catalog-models';
+  import { buildThreadInsert, toolMaterials } from '../../scripts/three/tools3d';
+  import { studioEnvironment } from '../../scripts/three/studio';
+  import { realMats } from '../../scripts/three/real/kit';
+  import { buildMillReal } from '../../scripts/three/real/mills';
+  import { buildColletReal } from '../../scripts/three/real/rotary';
+  import { bakeAO } from '../../scripts/three/real/ao';
+  const qs = new URLSearchParams(location.search);
+  const key = qs.get('key')!;
+  const N = +(qs.get('n') ?? 24);
+  const period = (+(qs.get('period') ?? 360) * Math.PI) / 180;
+  const S = +(qs.get('size') ?? 96);
+  const SS = 3; // her kare 3 kat büyük çizilip küçültülür (kenar yumuşaklığı)
+  (async () => {
+    const canvas = document.getElementById('c') as HTMLCanvasElement;
+    const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+    r.setPixelRatio(1);
+    r.setSize(S * SS, S * SS, false);
+    r.outputColorSpace = THREE.SRGBColorSpace;
+    r.toneMapping = THREE.NeutralToneMapping;
+    r.toneMappingExposure = +(qs.get('exp') ?? 1.1);
+    r.setClearColor(0x000000, 0);
+    const scene = new THREE.Scene();
+    scene.environment = studioEnvironment(r, true);
+    (scene as any).environmentRotation?.set(0, +(qs.get('env') ?? 0.5), 0);
+    const m = toolMaterials();
+    const rm = realMats();
+    // spinner: takımın kendi ekseni; tilt: ekrana eğim
+    let model: THREE.Object3D;
+    let axis: 'y' | 'z' = 'y';
+    let ao: { dist?: number } | null = null;
+    switch (key) {
+      case 'insert-C': model = buildIsoInsert(m, 'C', false); axis = 'z'; break;
+      case 'insert-W': model = buildIsoInsert(m, 'W', false); axis = 'z'; break;
+      case 'thread': model = buildThreadInsert(m); axis = 'z'; break;
+      case 'facemill-45': model = await buildMillReal(m, rm, { type: 'shell', D: 63, z: 5, insert: 'SEKT1204', H: 40, bore: 22 }); ao = { dist: 9 }; break;
+      case 'collet': model = await buildColletReal(rm); ao = { dist: 4 }; break;
+      default: throw new Error('anahtar yok: ' + key);
+    }
+    // Modeli dönüş eksenine göre ortala
+    const holder = new THREE.Group();
+    holder.add(model);
+    holder.updateMatrixWorld(true);
+    const b0 = new THREE.Box3().setFromObject(holder);
+    const c0 = b0.getCenter(new THREE.Vector3());
+    model.position.sub(c0);
+    const spinner = new THREE.Group();
+    spinner.add(holder);
+    const tilt = new THREE.Group();
+    tilt.add(spinner);
+    tilt.rotation.set(+(qs.get('rx') ?? 0), +(qs.get('ry') ?? 0), +(qs.get('rz') ?? 0));
+    scene.add(tilt);
+    if (ao) { bakeAO(holder, ao); }
+    // Sabit kadraj: tüm dönüş boyunca kapsayan küre
+    const sph = new THREE.Box3().setFromObject(holder).getBoundingSphere(new THREE.Sphere());
+    const fill = +(qs.get('fill') ?? 0.94);
+    const cam = new THREE.PerspectiveCamera(20, 1, 0.1, 10000);
+    const dist = sph.radius / Math.sin(THREE.MathUtils.degToRad(10)) / fill;
+    cam.position.set(0, 0, dist);
+    cam.lookAt(0, 0, 0);
+    cam.near = dist * 0.2; cam.far = dist * 3; cam.updateProjectionMatrix();
+
+    const strip = document.createElement('canvas');
+    strip.width = S * N; strip.height = S;
+    const g = strip.getContext('2d')!;
+    g.imageSmoothingQuality = 'high';
+    for (let i = 0; i < N; i++) {
+      const a = (i / N) * period;
+      spinner.rotation.set(0, 0, 0);
+      spinner.rotation[axis] = -a;
+      r.render(scene, cam);
+      g.drawImage(canvas, i * S, 0, S, S);
+    }
+    (window as any).__png = strip.toDataURL('image/png');
+    (window as any).__done = true;
+  })().catch((e) => { (window as any).__err = String(e?.stack || e); (window as any).__done = true; });
+</script>
+</body></html>
