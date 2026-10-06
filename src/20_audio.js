@@ -376,6 +376,22 @@ class AudioEngine {
   meow(k = 1) { if (!this.ok) return; const t = this.t, p = 0.9 + Math.random() * 0.25; this.voice(t, { dur: 0.55, f: [[0, 480 * p], [0.12, 720 * p], [0.5, 430 * p]], F: [[0, [650, 1700, 3000]], [0.14, [1150, 1900, 3300]], [0.5, [520, 1100, 2700]]], q: [7, 9, 11], src: 'sawtooth', breath: 0.15, vib: [6, 18], g: 0.045 * k, a: 0.05, r: 0.2, verb: 0.25 }); }
   gull() { if (!this.ok) return; const t = this.t, n = 2 + (Math.random() * 2 | 0), p = 0.9 + Math.random() * 0.2; for (let i = 0; i < n; i++) this.voice(t + i * 0.26, { dur: 0.22, f: [[0, 1150 * p], [0.05, 1550 * p], [0.2, 950 * p]], F: [[0, [1300, 2300, 3500]], [0.2, [1000, 1900, 3100]]], q: [6, 8, 9], src: 'sawtooth', rough: [70, 0.35], g: 0.022 * (1 - i * 0.2), a: 0.02, r: 0.1, verb: 0.5 }); }
   honk(low = 0) { if (!this.ok) return; const t = this.t, f0 = low ? 300 : 520; this.voice(t, { dur: 0.3, f: [[0, f0], [0.08, f0 * 1.2], [0.28, f0 * 0.85]], F: [[0, [700, 1300, 2600]], [0.28, [600, 1100, 2400]]], q: [5, 7, 9], src: 'sawtooth', rough: [40, 0.3], g: 0.035, a: 0.02, r: 0.12, verb: 0.3 }); }
+  // alev öncesi: derinden yükselen hırıltı ve içe çekilen nefes
+  dragonCharge() {
+    if (!this.ok) return; const t = this.t;
+    this.voice(t, { dur: 0.8, f: [[0, 70], [0.7, 120]], F: [[0, [420, 1000, 2400]], [0.7, [650, 1400, 2800]]], q: [5, 7, 9], amp: [0.8, 0.5, 0.25], src: 'sawtooth', breath: 0.5, rough: [38, 0.55], g: 0.05, a: 0.15, r: 0.1, verb: 0.35 });
+    this.noiseHit(t, 0.75, 0.07, { type: 'bandpass', f: 2400, f1: 500, q: 0.8, a: 0.5, verb: 0.3 });
+  }
+  // alev püskürtme: kükreyen ateş uğultusu, alçak gümbürtü ve çıtırtılar
+  dragonFire() {
+    if (!this.ok) return; const t = this.t;
+    this.noiseHit(t, 1.45, 0.24, { type: 'bandpass', f: 320, f1: 1300, q: 0.55, a: 0.06, verb: 0.45 });
+    this.noiseHit(t + 0.04, 1.35, 0.14, { type: 'lowpass', f: 1100, f1: 180, a: 0.08 });
+    this.noiseHit(t, 0.5, 0.1, { type: 'highpass', f: 3000, f1: 1200, a: 0.01 });
+    this.osc('sawtooth', 62, t, 1.2, 0.05, null, { f1: 40, a: 0.05 });
+    this.osc('sine', 48, t, 1.3, 0.16, null, { f1: 30, a: 0.04 });
+    for (let i = 0; i < 16; i++) this.noiseHit(t + 0.1 + Math.random() * 1.15, 0.02, 0.05, { type: 'highpass', f: 2500 + Math.random() * 4500, q: 2 });
+  }
   // ejderha ışığa dağılır: inen çan sağanağı + derin nefes
   dragonDie() {
     if (!this.ok) return; const t = this.t, m = MUSIC[this.chapter];

@@ -331,6 +331,7 @@ function update(dt, dtR) {
     updateZifirView(dtR);
     applyLighting(dtR);
     NightAct.applyLook();
+    Dragon.applyLook();
     Life.applyLook();
     if (G.hint && (G.state === 'play' || G.state === 'ready')) {
       const sol = lv.solution, k = Math.min(sol.K - 1, Math.round((G.T + 0.45) / sol.dt));
