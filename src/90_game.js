@@ -406,7 +406,7 @@ function applyLighting(dt) {
   skyU.uSunDir.value.copy(L1); skyU.uSunCol.value.copy(scA.sun);
   skyU.uTwin.value = lv.sun.twin ? 1 : 0; skyU.uSun2Dir.value.copy(L2);
   skyU.uStars.value = Math.max(night, ecl * 0.85); skyU.uEclipse.value = ecl; skyU.uNight.value = night;
-  const aur = (lv.chap.key === 'buz' ? 0.45 + night * 0.55 : 0) + (G.state === 'ending' || G.state === 'title' ? night * 0.9 : 0);
+  const aur = (lv.chap.key === 'buz' ? 0.45 + night * 0.55 : 0) + (G.state === 'ending' ? night * 0.9 : G.state === 'title' ? smoothstep(0.75, 1, night) * 0.85 : 0);
   skyU.uAurora.value = damp(skyU.uAurora.value, Math.max(aur, ecl * (lv.chap.key === 'buz' ? 1 : 0)), 2, dt);
   const nE = Math.max(night, ecl * 0.8);
   seaU.uIslK.value = 1; seaU.uLit.value.copy(scA.below).multiplyScalar(1.12).lerp(NIGHT.sea, nE * 0.6); seaU.uDeep.value.copy(scA.deep).lerp(NIGHT.sea, nE);

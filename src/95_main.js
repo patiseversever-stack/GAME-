@@ -241,16 +241,50 @@ function ambient(dtR) {
 /* ---------- karşılama ekranı: sürekli gün döngüsü ----------
    Şafak → öğle → gün batımı → gece (havai fişek, kayan yıldız, kutup ışığı, yanan pencereler) → şafak.
    Oyuncu güneşi sürüklerse döngü durur, gündüze döner; 5 sn sonra kaldığı yerden sürer. */
-const TCYC = { D: 24, K: 4, N: 13, W: 4 };
-// kamera koreografisi (döngü oranı φ: yaw rad · eğim derece · uzaklık çarpanı · hedef yüksekliği)
-// şafak: soldan alçak ve yakın → öğle: yüksek geniş plan → gün batımı: sağdan alçak, dramatik → gece: geri çekilir,
-// göğe bakar (havai fişeklere yer) ve yavaşça karşı yana süzülür → final → şafak
-const TCAM = [[0, -0.3, -6, 0.93, 0], [0.25, 0, 4, 1.05, 0], [0.52, 0.3, -7, 0.93, 0], [0.62, 0.26, -3, 1.0, 0.35], [0.8, 0.02, 1.5, 1.08, 0.7], [0.91, -0.22, -2, 1.03, 0.4], [1, -0.3, -6, 0.93, 0]];
+// zaman çizelgesi: [süre sn, güneş u0, u1, görünüm A, görünüm B]. Düz gündüz ve gece kısa; geçişler uzun ve renkli
+const TSEG = [
+  [3.0, 0.0, 0.06, 'predawn', 'sunrise'], // gün doğumu: mor tandan şeftaliye
+  [2.5, 0.06, 0.14, 'sunrise', 'day'], // sabah
+  [9.0, 0.14, 0.8, 'day', 'day'], // gündüz
+  [3.0, 0.8, 0.92, 'day', 'golden'], // altın saat
+  [3.2, 0.92, 1.0, 'golden', 'sunset'], // gün batımı: kızıl, güneş ufka değer
+  [3.2, 1.0, 1.0, 'sunset', 'blue'], // mavi saat: ufuk pembe-mor, ilk yıldızlar, pencereler yanar
+  [1.6, 1.0, 1.0, 'blue', 'night'], // gece çöker
+  [4.6, 1.0, 1.0, 'night', 'night'], // gece: havai fişek
+  [2.6, 0.0, 0.0, 'night', 'predawn'], // tan
+];
+const TSEG_T = []; { let t = 0; for (const sg of TSEG) { TSEG_T.push(t); t += sg[0]; } TSEG_T.push(t); }
+const TCYC_P = TSEG_T[TSEG_T.length - 1];
+// görünümler: w ağırlık (0 = adanın kendi doğal ışığı), n gece, renkler gök/ufuk/alt/ışık/güneş küresi/gök ışığı,
+// si/hi güneş ve gök ışığı çarpanı, gain/sat renk dengesi, glow parlama, sink güneşin ufkun altına inişi
+const TLOOK_DEF = {
+  golden: { w: 0.55, n: 0, zen: '#6d86c8', hor: '#ffc07a', below: '#f0a070', sun: '#ffb468', orb: '#ffcf7a', hs: '#e8c49a', hg: '#5a4630', si: 0.95, hi: 1.0, gain: [1.06, 1.0, 0.88], sat: 1.1, glow: 0.15, sink: 0 },
+  sunset: { w: 0.9, n: 0.1, zen: '#5a5a9e', hor: '#ff7d3e', below: '#c25a72', sun: '#ff7432', orb: '#ff6a2a', hs: '#d28a8e', hg: '#3a2236', si: 0.62, hi: 0.9, gain: [1.07, 0.95, 0.88], sat: 1.1, glow: 0.4, sink: 0.3 },
+  blue: { w: 1, n: 0.6, zen: '#191c5a', hor: '#c2507a', below: '#3a2858', sun: '#8a4a9a', orb: '#ff4a3a', hs: '#5a56a8', hg: '#1c1430', si: 0.22, hi: 0.75, gain: [0.94, 0.94, 1.1], sat: 1.06, glow: 0.18, sink: 1 },
+  predawn: { w: 1, n: 0.72, zen: '#181b52', hor: '#7c5a9e', below: '#2c2652', sun: '#9a6ab4', orb: '#ff7a5a', hs: '#5e5aa8', hg: '#1c1630', si: 0.25, hi: 0.75, gain: [0.95, 0.95, 1.08], sat: 1.04, glow: 0.1, sink: 1 },
+  sunrise: { w: 0.88, n: 0.12, zen: '#5468b0', hor: '#ff9a6e', below: '#d4848e', sun: '#ff9a5e', orb: '#ff9a5a', hs: '#d8a0a6', hg: '#3a2a3a', si: 0.72, hi: 0.95, gain: [1.08, 0.97, 0.9], sat: 1.12, glow: 0.32, sink: 0.25 },
+};
+// doğal ışığa dönen uçlar: renkleri komşusundan alır, yalnızca ağırlığı sıfırdır (karışım çamurlaşmaz)
+TLOOK_DEF.day = Object.assign({}, TLOOK_DEF.golden, { w: 0, n: 0, glow: 0, sink: 0 });
+TLOOK_DEF.night = Object.assign({}, TLOOK_DEF.blue, { w: 0, n: 1, glow: 0, sink: 1 });
+const TLOOK = {}; for (const k in TLOOK_DEF) { const d = TLOOK_DEF[k]; TLOOK[k] = { ...d, zen: new THREE.Color(d.zen), hor: new THREE.Color(d.hor), below: new THREE.Color(d.below), sun: new THREE.Color(d.sun), orb: new THREE.Color(d.orb), hs: new THREE.Color(d.hs), hg: new THREE.Color(d.hg) }; }
+// kamera koreografisi (zaman oranı φ: yaw rad · eğim derece · uzaklık çarpanı · hedef yüksekliği)
+// gün doğumu: soldan alçak → öğle: yüksek geniş → gün batımı: sağdan alçak, dramatik → mavi saat ve gece: geri çekilip
+// göğe açılır (havai fişeklere yer) → tan: sola süzülür
+const TCAM = [[0, -0.3, -6, 0.93, 0.15], [0.31, 0, 4, 1.05, 0], [0.6, 0.3, -7, 0.92, 0], [0.71, 0.24, -3, 0.98, 0.3], [0.85, 0.02, 1.5, 1.07, 0.6], [0.95, -0.22, -3, 1.0, 0.35], [1, -0.3, -6, 0.93, 0.15]];
+const _tsc = new THREE.Color(), _tsv = new THREE.Vector3();
 const TitleSky = {
-  c: -1, fwT: 1.2, grand: false, lastDrag: -99, nightOn: false,
+  c: -1, fwT: 1.2, grand: false, lastDrag: -99, nightOn: false, glow: 0,
+  look: { w: 0, n: 0, zen: new THREE.Color(), hor: new THREE.Color(), below: new THREE.Color(), sun: new THREE.Color(), orb: new THREE.Color(), hs: new THREE.Color(), hg: new THREE.Color(), si: 1, hi: 1, gain: [1, 1, 1], sat: 1, glow: 0, sink: 0 },
+  // güneşin yerinden zaman çizelgesindeki an (yeniden eşitleme ve elle sürükleme için)
+  timeForU(u) {
+    u = clamp(u, 0, 1); if (u >= 1) return TSEG_T[5];
+    for (let i = 0; i < 5; i++) { const [d, u0, u1] = TSEG[i]; if (u <= u1) return TSEG_T[i] + clamp01((u - u0) / (u1 - u0)) * d; }
+    return TSEG_T[5];
+  },
   // kamera duruşu: döngünün o anına göre (güneş elle sürüklenirken kamera da güneşi izler)
   camPose() {
-    const { D, K, N, W } = TCYC, P = D + K + N + W, c = this.c >= 0 ? this.c : (D * (clamp(G.u, 0.04, 0.96) - 0.04)) / 0.92, f = (c / P) % 1;
+    const c = this.c >= 0 ? this.c : this.timeForU(G.u), f = (c / TCYC_P) % 1;
     let i = 0; while (i < TCAM.length - 2 && f > TCAM[i + 1][0]) i++;
     const A = TCAM[i], B = TCAM[i + 1], k = Ease.inOutSine(clamp01((f - A[0]) / (B[0] - A[0]))), t = U.uTime.value;
     const o = this._o || (this._o = {});
@@ -258,28 +292,64 @@ const TitleSky = {
     o.dist = lerp(A[3], B[3], k) * (1 + Math.abs(o.yaw) * 0.12); o.ty = lerp(A[4], B[4], k);
     return o;
   },
+  blend(A, B, k) {
+    const L = this.look;
+    L.w = lerp(A.w, B.w, k); L.n = lerp(A.n, B.n, k); L.si = lerp(A.si, B.si, k); L.hi = lerp(A.hi, B.hi, k); L.sat = lerp(A.sat, B.sat, k); L.glow = lerp(A.glow, B.glow, k); L.sink = lerp(A.sink, B.sink, k);
+    for (const key of ['zen', 'hor', 'below', 'sun', 'orb', 'hs', 'hg']) L[key].copy(A[key]).lerp(B[key], k);
+    for (let i = 0; i < 3; i++) L.gain[i] = lerp(A.gain[i], B.gain[i], k);
+  },
   step(dtR) {
-    const { D, K, N, W } = TCYC, P = D + K + N + W, now = U.uTime.value;
+    const now = U.uTime.value, L = this.look;
     if (now - (this.lastStep ?? -9) > 0.6) this.c = -1; // başlığa yeni dönüldü: döngü güneşin şimdiki yerinden sürer
     this.lastStep = now;
     if (G.drag) this.lastDrag = now;
-    const fromU = () => (D * (clamp(G.u, 0.04, 0.96) - 0.04)) / 0.92;
-    if (this.c < 0) this.c = fromU();
+    if (this.c < 0) this.c = this.timeForU(G.u);
     U.uNightR.value = 60; U.uNightRim.value = 0; U.uNightC.value.set(0, 0);
-    if (now - this.lastDrag < 5) { G.night = damp(G.night, 0, 2.5, dtR); U.uNightAmt.value = G.night; this.c = fromU(); this.nightOn = false; return; }
-    this.c = (this.c + dtR) % P; const c = this.c;
-    let u, n;
-    if (c < D) { const k = c / D; u = 0.04 + 0.92 * (k * 0.86 + 0.14 * smooth(k)); n = 0; this.grand = false; }
-    else if (c < D + K) { const k = (c - D) / K; u = 0.96 + 0.04 * k; n = smooth(k); }
-    else if (c < D + K + N) {
-      u = 1; n = 1;
-      // gece gösterisi: ara ara roketler, şafaktan önce büyük final
-      if ((this.fwT -= dtR) <= 0) { Fireworks.show(1 + Math.floor(Math.random() * 3)); this.fwT = 1.5 + Math.random() * 1.9; }
-      if (!this.grand && c > D + K + N - 4.2) { this.grand = true; Fireworks.show(7, true); this.fwT = 4; }
-    } else { const k = (c - D - K - N) / W; u = 0.04 * k; n = 1 - smooth(k); }
-    G.u = G.uT = u; G.uSV = 0;
-    G.night = damp(G.night, n, 3.5, dtR); U.uNightAmt.value = G.night;
+    if (now - this.lastDrag < 5) { // oyuncu güneşle oynuyor: döngü durur, doğal gündüze döner
+      G.night = damp(G.night, 0, 2.5, dtR); U.uNightAmt.value = G.night; L.w = damp(L.w, 0, 2.5, dtR); L.glow = damp(L.glow, 0, 2.5, dtR); L.sink = 0;
+      this.c = this.timeForU(G.u); this.nightOn = false; return;
+    }
+    this.c = (this.c + dtR) % TCYC_P; const c = this.c;
+    let i = 0; while (i < TSEG.length - 1 && c >= TSEG_T[i + 1]) i++;
+    const [d, u0, u1, a, b] = TSEG[i], k = clamp01((c - TSEG_T[i]) / d);
+    this.blend(TLOOK[a], TLOOK[b], smooth(k));
+    G.u = G.uT = lerp(u0, u1, k); G.uSV = 0;
+    G.night = L.n; U.uNightAmt.value = G.night;
+    // havai fişek: mavi saatin ikinci yarısından gece bitene dek; gecenin ortasında büyük final
+    if (i === 2) this.grand = false;
+    if ((i === 5 && k > 0.5) || i === 6 || i === 7) {
+      if ((this.fwT -= dtR) <= 0) { Fireworks.show(1 + Math.floor(Math.random() * 2)); this.fwT = 0.9 + Math.random() * 0.8; }
+      if (!this.grand && i === 7 && k > 0.2) { this.grand = true; Fireworks.show(7, true); this.fwT = 3.2; }
+    }
     const on = G.night > 0.5; if (on !== this.nightOn) { this.nightOn = on; if (on) audio.nightfall && audio.nightfall(); else audio.rise && audio.rise(); }
+  },
+  // doğal ışığın üstüne alacakaranlık renkleri (applyLighting'den sonra; yalnızca başlık ekranında)
+  applyLook() {
+    const L = this.look, lv = G.lv; this.glow = 0;
+    if (G.state !== 'title' || !lv || G.stateT <= G.introDur) return;
+    this.glow = L.glow; const w = L.w;
+    if (w > 0.001) {
+      skyU.uZen.value.lerp(L.zen, w); skyU.uHor.value.lerp(L.hor, w); skyU.uBelow.value.lerp(L.below, w); skyU.uSunCol.value.lerp(L.sun, w);
+      U.uFogCol.value.copy(skyU.uHor.value); U.uBelowCol.value.copy(skyU.uBelow.value);
+      seaU.uLit.value.lerp(_tsc.copy(L.below).multiplyScalar(1.1), w); seaU.uDeep.value.lerp(_tsc.copy(L.below).multiplyScalar(0.5), w);
+      sunLight.color.lerp(L.sun, w); sunLight.intensity *= lerp(1, L.si, w);
+      hemi.color.lerp(L.hs, w); hemi.groundColor.lerp(L.hg, w); hemi.intensity *= lerp(1, L.hi, w);
+      U.uSunC.value.copy(sunLight.color).multiplyScalar(clamp(sunLight.intensity / 3.9, 0, 1.4)); U.uSkyC.value.copy(hemi.color).multiplyScalar(hemi.intensity);
+      const pu = post.u; pu.uGain.value.x *= lerp(1, L.gain[0], w); pu.uGain.value.y *= lerp(1, L.gain[1], w); pu.uGain.value.z *= lerp(1, L.gain[2], w); pu.uSat.value *= lerp(1, L.sat, w);
+      pu.uFlareCol.value.lerp(L.orb, w);
+    }
+    // güneş küresi: batarken büyür, kızarır ve ufkun altına iner; tanda alttan yükselir
+    const so = Math.max(w, L.glow);
+    if (so > 0.001) {
+      orb.u.uCol.value.lerp(L.orb, so); orb.halo.material.color.lerp(_tsc.copy(L.orb).multiplyScalar(1.6), so * (1 - G.night)); orb.rays.material.color.lerp(L.orb, so); orb.crownU.uCol.value.lerp(_tsc.copy(L.orb).multiplyScalar(1.5), so);
+      orb.g.scale.multiplyScalar(1 + L.glow * 0.7);
+    }
+    // ufkun altına inen güneş söner (gece ufukta kızıl nokta kalmasın)
+    if (L.sink > 0.4) { const h = 1 - smoothstep(0.4, 0.95, L.sink); orb.g.scale.multiplyScalar(Math.max(0.001, h)); post.u.uSunVis.value *= h; }
+    if (L.sink > 0.001) {
+      orbPosInto(G.u < 0.5 ? -L.sink * 0.12 : 1 + L.sink * 0.12, lv.sun.tilt, lv.sun.thMin, orb.g.position);
+      _tsv.copy(orb.g.position).project(camera); post.u.uSunUV.value.set(_tsv.x * 0.5 + 0.5, _tsv.y * 0.5 + 0.5); post.rays.uniforms.uSun.value.copy(post.u.uSunUV.value);
+    }
   },
 };
 function updateZifirView(dtR) {
@@ -382,6 +452,7 @@ function update(dt, dtR) {
     NightAct.applyLook();
     Dragon.applyLook();
     Life.applyLook();
+    TitleSky.applyLook();
     updateHint(lv, G.hint && (G.state === 'play' || G.state === 'ready'));
   }
   Life.update(dt, dtR); NightAct.update(dt, dtR);
@@ -408,6 +479,7 @@ function update(dt, dtR) {
   pu.uExposure.value = 1.0 - ecl * 0.06 + G.night * 0.15 + flare.k * 0.1;
   pu.uNight.value = G.night;
   pu.uBloomAdd.value = 0.35 + G.night * 0.4 + ecl * 0.3 + flare.k * 0.45 + flare.warnK * 0.12;
+  if (G.state === 'title') { pu.uBloomAdd.value += TitleSky.glow * 0.9; }
   pu.uRays.value = 0.5 * (1 - G.night) * (1 - ecl) * (orb.g.visible ? 1 : 0);
   const danger = G.state === 'play' ? Math.max(G.breathT > 0 ? 1.45 + Math.sin(U.uTime.value * 18) * 0.25 : G.f > 0 ? 0.35 + (1 - G.meter) * 0.8 : G.meter < 0.35 ? 0.2 + Math.sin(U.uTime.value * 8) * 0.08 : 0, Dragon.danger() * (0.55 + Math.sin(U.uTime.value * 7) * 0.12)) : 0;
   pu.uDanger.value = damp(pu.uDanger.value, danger, 8, dtR);
