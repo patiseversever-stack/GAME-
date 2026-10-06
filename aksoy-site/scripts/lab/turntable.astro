@@ -1,24 +1,23 @@
 ---
 // Logo için dönen takım kare dizisi üretir (yalnızca scripts/render-logo.mjs çalışırken src/pages/lab altına kopyalanır).
-// Takım kendi ekseni etrafında, simetri açısı kadar döndürülür; son kare ilkine bağlanır, döngü kesintisizdir.
+// kind=… : kategori kartlarındaki modelin aynısı, kartla aynı duruş ve dönüş ekseni.
+// Takım kendi ekseni etrafında simetri açısı kadar döndürülür; son kare ilkine bağlanır, döngü kesintisizdir.
 ---
 <html><head><meta charset="utf-8" /><meta name="robots" content="noindex" /><style>html,body{margin:0;background:transparent}</style></head>
 <body><canvas id="c"></canvas>
 <script>
   import * as THREE from 'three';
-  import { buildIsoInsert } from '../../scripts/three/catalog-models';
-  import { buildThreadInsert, toolMaterials } from '../../scripts/three/tools3d';
+  import { buildModel, toolMaterials } from '../../scripts/three/tools3d';
+  import type { ModelKind } from '../../scripts/three/tools3d';
+  import { PRESENT } from '../../scripts/cards3d/render';
   import { studioEnvironment } from '../../scripts/three/studio';
-  import { realMats } from '../../scripts/three/real/kit';
-  import { buildMillReal } from '../../scripts/three/real/mills';
-  import { buildColletReal } from '../../scripts/three/real/rotary';
-  import { bakeAO } from '../../scripts/three/real/ao';
   const qs = new URLSearchParams(location.search);
-  const key = qs.get('key')!;
+  const kind = qs.get('kind') as ModelKind;
   const N = +(qs.get('n') ?? 24);
   const period = (+(qs.get('period') ?? 360) * Math.PI) / 180;
+  const sway = qs.has('sway') ? +qs.get('sway')! : 0; // sıfırdan farklıysa ileri-geri salınım (rad)
   const S = +(qs.get('size') ?? 96);
-  const SS = 3; // her kare 3 kat büyük çizilip küçültülür (kenar yumuşaklığı)
+  const SS = 3;
   (async () => {
     const canvas = document.getElementById('c') as HTMLCanvasElement;
     const r = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
@@ -29,53 +28,73 @@
     r.toneMappingExposure = +(qs.get('exp') ?? 1.1);
     r.setClearColor(0x000000, 0);
     const scene = new THREE.Scene();
-    scene.environment = studioEnvironment(r, true);
-    (scene as any).environmentRotation?.set(0, +(qs.get('env') ?? 0.5), 0);
-    const m = toolMaterials();
-    const rm = realMats();
-    // spinner: takımın kendi ekseni; tilt: ekrana eğim
-    let model: THREE.Object3D;
-    let axis: 'y' | 'z' = 'y';
-    let ao: { dist?: number } | null = null;
-    switch (key) {
-      case 'insert-C': model = buildIsoInsert(m, 'C', false); axis = 'z'; break;
-      case 'insert-W': model = buildIsoInsert(m, 'W', false); axis = 'z'; break;
-      case 'thread': model = buildThreadInsert(m); axis = 'z'; break;
-      case 'facemill-45': model = await buildMillReal(m, rm, { type: 'shell', D: 63, z: 5, insert: 'SEKT1204', H: 40, bore: 22 }); ao = { dist: 9 }; break;
-      case 'collet': model = await buildColletReal(rm); ao = { dist: 4 }; break;
-      default: throw new Error('anahtar yok: ' + key);
-    }
-    // Modeli dönüş eksenine göre ortala
-    const holder = new THREE.Group();
-    holder.add(model);
-    holder.updateMatrixWorld(true);
-    const b0 = new THREE.Box3().setFromObject(holder);
-    const c0 = b0.getCenter(new THREE.Vector3());
-    model.position.sub(c0);
+    scene.environment = studioEnvironment(r, qs.has('bright'));
+    const p = PRESENT[kind];
+    (scene as any).environmentRotation?.set(0, +(qs.get('env') ?? p.env ?? 0), 0);
+    const model = buildModel(kind, toolMaterials());
+    model.position.set(-p.center[0], -p.center[1], -p.center[2]);
+    if (p.spinAxis === 'y' && p.spin !== 0) { model.position.x = 0; model.position.z = 0; }
     const spinner = new THREE.Group();
-    spinner.add(holder);
-    const tilt = new THREE.Group();
-    tilt.add(spinner);
-    tilt.rotation.set(+(qs.get('rx') ?? 0), +(qs.get('ry') ?? 0), +(qs.get('rz') ?? 0));
-    scene.add(tilt);
-    if (ao) { bakeAO(holder, ao); }
-    // Sabit kadraj: tüm dönüş boyunca kapsayan küre
-    const sph = new THREE.Box3().setFromObject(holder).getBoundingSphere(new THREE.Sphere());
-    const fill = +(qs.get('fill') ?? 0.94);
-    const cam = new THREE.PerspectiveCamera(20, 1, 0.1, 10000);
-    const dist = sph.radius / Math.sin(THREE.MathUtils.degToRad(10)) / fill;
-    cam.position.set(0, 0, dist);
-    cam.lookAt(0, 0, 0);
-    cam.near = dist * 0.2; cam.far = dist * 3; cam.updateProjectionMatrix();
+    spinner.add(model);
+    const presenter = new THREE.Group();
+    presenter.add(spinner);
+    const pose = qs.has('pose') ? qs.get('pose')!.split(',').map(Number) : p.pose;
+    presenter.rotation.set(pose[0], pose[1], pose[2]);
+    scene.add(presenter);
+    const axis = p.spinAxis;
+    const setAngle = (i: number) => {
+      spinner.rotation.set(0, 0, 0);
+      const a = sway ? sway * Math.sin((i / N) * Math.PI * 2) : (i / N) * period * Math.sign(p.spin || 1);
+      spinner.rotation[sway ? 'y' : axis] = a;
+      presenter.updateMatrixWorld(true);
+    };
+    // Kadraj: birkaç dönüş açısında köşe noktalarının ekran izdüşümü kareye sığar
+    const cam = new THREE.PerspectiveCamera(22, 1, 0.1, 100000);
+    const pts: THREE.Vector3[] = [];
+    // Yakın çekim: yalnızca modelin belirli bir bölümü (ör. kesici kısım) kadraja alınır
+    const fa = (qs.get('fa') ?? '') as 'x' | 'y' | 'z' | '';
+    const fmin = qs.has('fmin') ? +qs.get('fmin')! : -Infinity;
+    const fmax = qs.has('fmax') ? +qs.get('fmax')! : Infinity;
+    const collect = () => {
+      const inv = new THREE.Matrix4().copy(model.matrixWorld).invert();
+      model.traverse((o) => {
+        const mm = o as THREE.Mesh;
+        if (!mm.isMesh) return;
+        const pa = mm.geometry.attributes.position;
+        const step = Math.max(1, Math.floor(pa.count / 500));
+        for (let i = 0; i < pa.count; i += step) {
+          const w = new THREE.Vector3().fromBufferAttribute(pa, i).applyMatrix4(mm.matrixWorld);
+          if (fa) { const l = w.clone().applyMatrix4(inv)[fa]; if (l < fmin || l > fmax) continue; }
+          pts.push(w);
+        }
+      });
+    };
+    for (const k of [0, Math.floor(N / 4), Math.floor(N / 2), Math.floor((3 * N) / 4)]) { setAngle(k); collect(); }
+    const box = new THREE.Box3().setFromPoints(pts);
+    const target = box.getCenter(new THREE.Vector3());
+    let dist = box.getSize(new THREE.Vector3()).length() * 2;
+    const fill = +(qs.get('fill') ?? 0.9);
+    for (let it = 0; it < 8; it++) {
+      cam.position.set(target.x, target.y, target.z + dist);
+      cam.lookAt(target);
+      cam.updateMatrixWorld();
+      let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+      for (const q0 of pts) { const q = q0.clone().project(cam); x0 = Math.min(x0, q.x); x1 = Math.max(x1, q.x); y0 = Math.min(y0, q.y); y1 = Math.max(y1, q.y); }
+      const halfH = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2)) * dist;
+      target.x += ((x0 + x1) / 2) * halfH;
+      target.y += ((y0 + y1) / 2) * halfH;
+      dist *= Math.max((x1 - x0) / 2, (y1 - y0) / 2) / fill;
+    }
+    cam.position.set(target.x, target.y, target.z + dist);
+    cam.lookAt(target);
+    cam.near = dist * 0.1; cam.far = dist * 10; cam.updateProjectionMatrix();
 
     const strip = document.createElement('canvas');
     strip.width = S * N; strip.height = S;
     const g = strip.getContext('2d')!;
     g.imageSmoothingQuality = 'high';
     for (let i = 0; i < N; i++) {
-      const a = (i / N) * period;
-      spinner.rotation.set(0, 0, 0);
-      spinner.rotation[axis] = -a;
+      setAngle(i);
       r.render(scene, cam);
       g.drawImage(canvas, i * S, 0, S, S);
     }

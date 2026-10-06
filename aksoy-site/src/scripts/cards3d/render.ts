@@ -29,7 +29,7 @@ interface Present {
   midZoom?: number;
   atMid?: [number, number];
 }
-const PRESENT: Record<ModelKind, Present> = {
+export const PRESENT: Record<ModelKind, Present> = {
   cnmg: { center: [0, 0, 2.4], radius: 10.5, pose: [-0.36, 0.22, 0.5], spinAxis: 'z', spin: 0.32, at: [0.7, 0.43] },
   thread: { center: [0, 0, 1.8], radius: 9.2, pose: [-0.4, 0.2, 0.3], spinAxis: 'z', spin: -0.36, at: [0.68, 0.43] },
   groove: { center: [-60, -6, 0], radius: 45, pose: [0.3, -0.5, -0.38], spinAxis: 'y', spin: 0, at: [0.68, 0.42], env: 0.8, narrowZoom: 1.05, atNarrow: [0.52, 0.34], midZoom: 1.18, atMid: [0.68, 0.34] },

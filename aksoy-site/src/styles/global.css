@@ -261,7 +261,13 @@ body[data-theme='light'] .site-header:not([data-variant='dark']) .site-header__n
 @keyframes lm-spin { to { background-position-x: calc(100% * var(--n) / (var(--n) - 1)); } }
 /* İri yazı: AKSOY ve altında aynı genişlikte KESİCİ TAKIMLAR */
 .logo__type { display: block; height: var(--lh); width: auto; aspect-ratio: 104 / 40; overflow: visible; }
-.logo__w { font-family: var(--f-display); font-weight: 700; font-size: 34px; fill: currentColor; stroke: currentColor; stroke-width: 0.7px; stroke-linejoin: round; paint-order: stroke; }
+.logo__w { font-family: var(--f-display); font-weight: 700; font-size: 34px; stroke-width: 0.7px; stroke-linejoin: round; paint-order: stroke; }
+.logo__sheen { stroke: none; opacity: 0.8; }
+/* Krom yazı: açık zeminde koyu çelik, koyu zeminde parlak krom */
+.logo { --ch1: #737b86; --ch2: #2a2f37; --ch3: #050608; --ch4: #3f4650; --ch5: #7d8692; }
+.site-header[data-variant='dark'] .logo, .fnav__logo, .on-dark .logo { --ch1: #ffffff; --ch2: #e6e9ed; --ch3: #858d98; --ch4: #cfd4da; --ch5: #ffffff; }
+.logo .ch1 { stop-color: var(--ch1); } .logo .ch2 { stop-color: var(--ch2); } .logo .ch3 { stop-color: var(--ch3); } .logo .ch4 { stop-color: var(--ch4); } .logo .ch5 { stop-color: var(--ch5); }
+@media (prefers-reduced-motion: reduce) { .logo__sheen { display: none; } }
 .logo__s { font-family: var(--f-display); font-weight: 600; font-size: 8.6px; fill: currentColor; opacity: 0.66; }
 @media (max-width: 560px) { .logo { --lh: 40px; gap: 8px; } }
 @media (prefers-reduced-motion: reduce) { .lm { animation: none; transition: none; } }
