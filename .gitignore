@@ -7,3 +7,4 @@ out/
 verify-out/
 # oyuna gömülecek ara video çıktıları (node scripts/render-film.mjs oyun|test ile yeniden üretilir)
 game/media/
+.build/
