@@ -53,7 +53,7 @@ export const TR = {
 
   // ---- main menu ----
   'menu.continue': 'Devam',
-  'menu.continueSub': '{world} · Rota {n}',
+  'menu.continueSub': '{world}\u00A0· Rota\u00A0{n}',
   'menu.firstFlight': 'İlk uçuş',
   'menu.firstFlightSub': 'Kapadokya şafağında balon sepetinden atla',
   'menu.daily': 'Günün Rotası',
@@ -206,7 +206,7 @@ export const TR = {
   'daily.none': 'Bugün henüz uçmadın',
   'daily.attempts': '{n} deneme',
   'daily.botTime': 'Usta süresi',
-  'daily.rules': 'Süre atlayıştan ayak temasına kadar. Kaçırılan her kapı +2,0 sn.',
+  'daily.rules': 'Süre atlayıştan ayak temasına kadar. Kaçırılan her kapı +2,0\u00A0sn.',
   'daily.next': 'Yeni rota gece yarısı (TSİ)',
   'daily.gates': '{n} kapı',
   'daily.dayOfWeek': 'Zorluk {n}',

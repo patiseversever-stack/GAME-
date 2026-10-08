@@ -49,7 +49,7 @@ export const EN: Record<StringKey, string> = {
   'tip.9': 'Nobody gets eaten in SÜRÜ.io: close the ring, win the flock over.',
 
   'menu.continue': 'Continue',
-  'menu.continueSub': '{world} · Route {n}',
+  'menu.continueSub': '{world}\u00A0· Route\u00A0{n}',
   'menu.firstFlight': 'First flight',
   'menu.firstFlightSub': 'Jump from a balloon basket at Cappadocia dawn',
   'menu.daily': 'Daily Route',
@@ -195,7 +195,7 @@ export const EN: Record<StringKey, string> = {
   'daily.none': 'Not flown today',
   'daily.attempts': '{n, plural, one {# attempt} other {# attempts}}',
   'daily.botTime': 'Master time',
-  'daily.rules': 'Timed from jump to touchdown. Each missed gate adds 2.0 s.',
+  'daily.rules': 'Timed from jump to touchdown. Each missed gate adds 2.0\u00A0s.',
   'daily.next': 'New route at midnight (Türkiye time)',
   'daily.gates': '{n} gates',
   'daily.dayOfWeek': 'Difficulty {n}',

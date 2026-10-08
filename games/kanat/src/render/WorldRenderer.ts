@@ -288,6 +288,14 @@ export class WorldRenderer {
     else this.ensurePost();
   }
 
+  /**
+   * Cloud immersion 0..1 at a world position (Karadeniz cloud sea / volumes; 0 elsewhere). Cheap and
+   * allocation-free: feed audio.setFlight({ inCloud }) and HUD/camera white-out every frame.
+   */
+  cloudImmersion(x: number, y: number, z: number): number {
+    return this.clouds ? this.clouds.immersion(x, y, z) : 0;
+  }
+
   setDebugMagenta(on: boolean): void {
     this.debugMagenta = on;
     setAtmosphereDebugMagenta(on);

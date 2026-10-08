@@ -49,7 +49,7 @@ export const menuScreen: ScreenDef<MenuProps> = {
     const cont = p.continueRoute;
     const world = cont ? routeWorld(cont.routeId) : p.world ?? 'kapadokya';
     const heroTitle = cont ? routeName(cont.routeId) : t('menu.firstFlight');
-    const heroSub = cont ? t('menu.continueSub', { world: tk(`world.${world}`), n: Number(cont.routeId.charAt(3)) }) : t('menu.firstFlightSub');
+    const heroSub = cont ? t('menu.continueSub', { world: tk(`worldShort.${world}`), n: Number(cont.routeId.charAt(3)) }) : t('menu.firstFlightSub');
     const play = h('span', { class: 'kn-hero-play' }, ic('play'));
     const hero = h(
       'div',

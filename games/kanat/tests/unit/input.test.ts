@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it } from 'vitest';
-import { defaultGestureMath, effectiveExpo, setGestureMath, shapeStick, STICK_TUNING } from '../../src/input/gesture.ts';
+import { defaultGestureMath, effectiveExpo, setGestureMath, STICK_TUNING } from '../../src/input/gesture.ts';
+import * as inputQuant from '../../src/sim/inputQuant.ts';
 import { GyroInput } from '../../src/input/gyro.ts';
 import { InputManager } from '../../src/input/InputManager.ts';
 import { RelativeStick } from '../../src/input/stick.ts';
@@ -32,14 +33,21 @@ function run(m: InputManager, from: number, n: number): Command[] {
 }
 
 describe('gesture math', () => {
+  it('uses the shared sim math (src/sim/inputQuant.ts) by default', () => {
+    expect(defaultGestureMath.shapeStick).toBe(inputQuant.shapeStick);
+    expect(defaultGestureMath.quantizeAxis).toBe(inputQuant.quantizeAxis);
+    expect(STICK_TUNING.deadzone).toBe(inputQuant.STICK_DEADZONE);
+  });
+
   it('radial deadzone rescales from 0 (no jump) and saturates at the unit circle', () => {
     const o = new Float64Array(2);
-    defaultGestureMath.radialDeadzone(0.079, 0, 0.08, o);
-    expect([o[0], o[1]]).toEqual([0, 0]);
-    defaultGestureMath.radialDeadzone(0.0801, 0, 0.08, o);
+    const lin = { expoRoll: 0, expoPitch: 0 };
+    defaultGestureMath.shapeStick(0.079, 0, lin, o);
+    expect([o[0], Math.abs(o[1])]).toEqual([0, 0]);
+    defaultGestureMath.shapeStick(0.0801, 0, lin, o);
     expect(o[0]).toBeGreaterThan(0);
     expect(o[0]).toBeLessThan(0.001);
-    defaultGestureMath.radialDeadzone(3, 4, 0.08, o);
+    defaultGestureMath.shapeStick(0.6, -0.8, lin, o); // |v| = 1 → full magnitude
     expect(Math.hypot(o[0], o[1])).toBeCloseTo(1, 9);
   });
 
@@ -50,7 +58,7 @@ describe('gesture math', () => {
     expect(e(0.5, 0.5)).toBeCloseTo(0.5 * 0.125 + 0.5 * 0.5, 12);
     expect(e(0.2, 0.5)).toBeLessThan(0.2); // finer around zero
     expect(effectiveExpo(0.35, 0)).toBe(0.35);
-    expect(effectiveExpo(0.35, 0.7)).toBeCloseTo(0.35 + 0.7 * 0.65, 12);
+    expect(effectiveExpo(0.35, 0.7)).toBeCloseTo(0.95, 12); // sim: base + slider, capped at 0.95
   });
 
   it('quantize to [-31, 31], never -0', () => {
@@ -290,10 +298,16 @@ describe('gyro', () => {
     expect(c.args[1]).toBeGreaterThan(0);
   });
 
-  it('shapeStick honours the expo parameters per axis', () => {
-    const o = new Float64Array(2);
-    shapeStick(0.6, -0.6, { deadzone: 0, expoX: 0, expoY: 1, sensitivity: 1, invertY: false }, o);
-    expect(o[0]).toBeCloseTo(0.6, 12);
-    expect(o[1]).toBeCloseTo(0.216, 12);
+  it('live input quantizes exactly like inputQuant.quantizeStick (live play == replay == bots)', () => {
+    const m = mgr({ sensitivity: 1.2, expo: 0.3, controlDir: 'pilot' });
+    const ref = [0, 0];
+    for (const [dx, dy] of [[0.3, -0.2], [0.9, 0.4], [-0.5, 0.95], [0.05, 0.02]]) {
+      m.pointerDown(1, 200, 500);
+      m.pointerMove(1, 200 + dx * R, 500 + dy * R);
+      const [c] = run(m, 0, 1);
+      inputQuant.quantizeStick(dx, dy, { sensitivity: 1.2, expoExtra: 0.3, controlDir: 'pilot' }, ref);
+      expect(c.args).toEqual(ref);
+      m.pointerUp(1);
+    }
   });
 });

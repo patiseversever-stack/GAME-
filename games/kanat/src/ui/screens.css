@@ -351,7 +351,8 @@
 .kn-witem-check svg { width: 14px; height: 14px; }
 .kn-witem.is-locked .kn-witem-sw > svg { filter: saturate(0.15) brightness(0.45); }
 .kn-witem-lock { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: var(--kn-text-dim); }
-.kn-witem-name { font-size: 13px; font-weight: 600; }
+.kn-witem-name { font-size: 13px; font-weight: 600; line-height: 1.25; }
+.kn-witem-name.kn-ellipsis { white-space: normal; }
 .kn-witem-src { font-size: 11px; line-height: 1.3; color: var(--kn-text-faint); min-height: 14px; }
 .kn-witem-src.kn-ellipsis { white-space: normal; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
 .kn-badges { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 10px; }
@@ -509,12 +510,13 @@
   .kn-wardrobe { flex-direction: row; align-items: flex-start; }
   .kn-pilot-preview { width: 40%; flex: none; height: calc(100vh - 150px - var(--kn-safe-top) - var(--kn-safe-bottom)); position: sticky; top: 0; }
   .kn-wardrobe-side { flex: 1; min-width: 0; }
-  .kn-wgrid { grid-template-columns: repeat(4, 1fr); }
+  .kn-wgrid { grid-template-columns: repeat(3, 1fr); }
   .kn-badges { grid-template-columns: repeat(5, 1fr); }
 
   .kn-photo-panel { left: auto; width: min(520px, calc(100% - 24px)); }
   .kn-photo-frame { top: calc(var(--kn-safe-top) + 64px); bottom: calc(var(--kn-safe-bottom) + 14px); }
   .kn-photo-found { top: calc(var(--kn-safe-top) + 76px); }
+  .kn-photo:not(.is-hidden) .kn-photo-logo { top: 18px; bottom: auto; }
 
   .kn-cardlayer { align-items: center; }
   .kn-card-top { align-items: flex-start; padding-top: calc(var(--kn-safe-top) + 16px); }

@@ -11,8 +11,8 @@
 // they keep longer than the current tick (the replay Recorder copies into typed arrays).
 
 import type { Command } from '../sim/types.ts';
-import type { StickShape } from './gesture.ts';
-import { effectiveExpo, gestureMath, shapeStick, STICK_TUNING } from './gesture.ts';
+import type { StickOptions } from './gesture.ts';
+import { effectiveExpo, gestureMath, stickRadius, STICK_TUNING } from './gesture.ts';
 import type { GyroMode } from './gyro.ts';
 import { GyroInput, requestGyroPermission } from './gyro.ts';
 import { RelativeStick } from './stick.ts';
@@ -76,6 +76,10 @@ const KEYMAP: Record<string, number> = {
   Space: K_SPACE,
 };
 
+function clamp1(v: number): number {
+  return v > 1 ? 1 : v < -1 ? -1 : v;
+}
+
 /** Digital key → analog axis: press ramps in ~0.2 s, release in ~0.12 s. */
 function rampKey(cur: number, target: number, dt: number): number {
   const rate = target === 0 ? 8 : 5;
@@ -138,7 +142,10 @@ export class InputManager {
   private readonly pool: Command[] = [];
   private poolIdx = 0;
   private readonly out2 = new Float64Array(2);
-  private readonly shape: StickShape = { deadzone: STICK_TUNING.deadzone, expoX: 0.35, expoY: 0.5, sensitivity: 1, invertY: false };
+  /** Options for the shared sim math (src/sim/inputQuant.ts shapeStick). Mutated in place, never replaced. */
+  private readonly flightOpts: StickOptions = { sensitivity: 1, controlDir: 'natural', expoExtra: 0 };
+  private readonly suruOpts: StickOptions = { deadzone: STICK_TUNING.deadzoneSuru, expoRoll: 0, expoPitch: 0, expoExtra: 0, sensitivity: 1, controlDir: 'natural' };
+  private readonly out2b = new Float64Array(2);
   private el: HTMLElement | null = null;
   private win: Window | null = null;
   private readonly ignoreSelector: string;
@@ -186,7 +193,7 @@ export class InputManager {
   setViewport(w: number, h: number): void {
     this.viewW = Math.max(1, w);
     this.viewH = Math.max(1, h);
-    this.visual.radius = STICK_TUNING.radiusFrac * Math.min(this.viewW, this.viewH);
+    this.visual.radius = stickRadius(Math.min(this.viewW, this.viewH));
     this.updateTwoThumb();
   }
 
@@ -201,12 +208,10 @@ export class InputManager {
   }
 
   private applyShape(): void {
-    const suru = this.scheme === 'suru';
-    this.shape.deadzone = suru ? STICK_TUNING.deadzoneSuru : STICK_TUNING.deadzone;
-    this.shape.expoX = suru ? 0 : effectiveExpo(STICK_TUNING.expoRoll, this.cfg.expo);
-    this.shape.expoY = suru ? 0 : effectiveExpo(STICK_TUNING.expoPitch, this.cfg.expo);
-    this.shape.sensitivity = suru ? 1 : this.cfg.sensitivity;
-    this.shape.invertY = !suru && this.cfg.controlDir === 'pilot';
+    // SÜRÜ steering (suruOpts) is a direction: no expo, no sensitivity, no pilot inversion.
+    this.flightOpts.sensitivity = this.cfg.sensitivity;
+    this.flightOpts.controlDir = this.cfg.controlDir;
+    this.flightOpts.expoExtra = this.cfg.expo;
   }
 
   // ---- pointer API (DOM-free, used by attach() and tests) ------------------------------------
@@ -362,22 +367,32 @@ export class InputManager {
     }
 
     if (this.scheme === 'flight') {
-      shapeStick(rx, ry, this.shape, o);
-      let x = o[0];
-      let y = o[1];
+      let x: number;
+      let y: number;
+      if (two && touchActive) {
+        // each half drives one axis: per-axis dead zone (radial on a 1-D vector)
+        m.shapeStick(rx, 0, this.flightOpts, o);
+        x = o[0];
+        m.shapeStick(0, ry, this.flightOpts, this.out2b);
+        y = this.out2b[1];
+      } else {
+        m.shapeStick(rx, ry, this.flightOpts, o);
+        x = o[0];
+        y = o[1];
+      }
       if (this.gyro.mode !== 'off' && this.gyro.hasData) {
-        const s = this.shape;
-        const gx = m.expo(Math.max(-1, Math.min(1, this.gyro.roll * s.sensitivity)), s.expoX);
-        x = this.gyro.mode === 'roll' ? gx : Math.max(-1, Math.min(1, x + gx));
+        const sens = this.cfg.sensitivity;
+        const gx = clamp1(m.expo(this.gyro.roll, effectiveExpo(STICK_TUNING.expoRoll, this.cfg.expo)) * sens);
+        x = this.gyro.mode === 'roll' ? gx : clamp1(x + gx);
         if (this.gyro.mode === 'full') {
-          const gp = s.invertY ? -this.gyro.pitch : this.gyro.pitch;
-          y = Math.max(-1, Math.min(1, y + m.expo(Math.max(-1, Math.min(1, gp * s.sensitivity)), s.expoY)));
+          const gp = this.cfg.controlDir === 'pilot' ? -this.gyro.pitch : this.gyro.pitch;
+          y = clamp1(y + clamp1(m.expo(gp, effectiveExpo(STICK_TUNING.expoPitch, this.cfg.expo)) * sens));
         }
         if (!touchActive && !keyActive) this.visual.source = 'gyro';
       }
       this.emitAxis(tick, actorId, x, y, out);
     } else if (this.scheme === 'canopy') {
-      shapeStick(rx, 0, this.shape, o);
+      m.shapeStick(rx, 0, this.flightOpts, o);
       const turn = this.gyro.mode !== 'off' && this.gyro.hasData && !touchActive ? this.gyro.roll : o[0];
       this.emitAxis(tick, actorId, turn, 0, out);
       // downward drag = flare (dy > 0 in screen space); keyboard: Down arrow or Space
@@ -391,7 +406,7 @@ export class InputManager {
       }
     } else {
       // suru: direction, deadzone 0.10, no expo, +y = screen up
-      shapeStick(rx, ry, this.shape, o);
+      m.shapeStick(rx, ry, this.suruOpts, o);
       this.emitAxis(tick, actorId, o[0], o[1], out);
       const tight = this.isHolding() ? 1 : 0;
       this.visual.holding = tight === 1;

@@ -334,13 +334,17 @@ export class Clouds {
     return this.inside;
   }
 
+  /** Cloud immersion 0..1 at a world position (cloud-sea band; 0 when the world has none). Allocation-free. */
+  immersion(_x: number, y: number, _z: number): number {
+    const band = this.band;
+    if (!band) return 0;
+    const ramp = 60;
+    return Math.min(1, Math.max(0, Math.min((y - (band[0] - 20)) / ramp, (band[1] + 20 - y) / ramp)));
+  }
+
   update(time: number, camera: THREE.Camera): void {
-    const y = camera.position.y;
-    let inside = 0;
+    const inside = this.immersion(camera.position.x, camera.position.y, camera.position.z);
     if (this.band) {
-      const [b, t] = this.band;
-      const ramp = 60;
-      inside = Math.min(1, Math.max(0, Math.min((y - (b - 20)) / ramp, (t + 20 - y) / ramp)));
       for (const m of [this.seaTop, this.seaBottom]) {
         if (!m) continue;
         const u = m.material.uniforms;
