@@ -51,12 +51,11 @@ export const defaultGestureMath: GestureMath = {
   },
   quantizeAxis(x) {
     const c = x > 1 ? 1 : x < -1 ? -1 : x;
-    const q = Math.round(c * AXIS_MAX);
-    return q === 0 ? 0 : q; // no -0
+    return Math.round(c * AXIS_MAX) | 0; // `| 0` → never -0 (replay contract)
   },
   quantizeFlare(x) {
     const c = x > 1 ? 1 : x < 0 ? 0 : x;
-    return Math.round(c * AXIS_MAX);
+    return Math.round(c * AXIS_MAX) | 0;
   },
 };
 

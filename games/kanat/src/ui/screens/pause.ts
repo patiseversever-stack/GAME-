@@ -1,6 +1,6 @@
 // Pause: blurred backdrop over the frozen frame; Devam, Yeniden, Foto Modu (only where allowed), Ayarlar, Çık.
 import { h, ic } from '../dom.ts';
-import { t, tk, fmtInt, fmtTime, routeName } from '../i18n.ts';
+import { t, tk, fmtTime, routeName } from '../i18n.ts';
 import type { PauseProps } from '../types.ts';
 import type { ScreenDef } from './screen.ts';
 import { accentStyle, eyebrow } from './common.ts';
@@ -51,4 +51,3 @@ export const pauseScreen: ScreenDef<PauseProps> = {
   },
 };
 
-export { fmtInt };

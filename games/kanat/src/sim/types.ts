@@ -43,7 +43,9 @@ export type SimEvent =
   | { type: 'enterLandingZone'; tick: number }
   | { type: 'parachuteOpen'; tick: number; heightAGL: number; auto: boolean }
   | { type: 'landed'; tick: number; distToTarget: number; soft: boolean; points: number }
-  | { type: 'halfFlight'; tick: number };
+  | { type: 'halfFlight'; tick: number }
+  /** Collision warning (assist 'low'/'full', §2.10): predicted impact in `tau` s; side −1 left / +1 right of heading. */
+  | { type: 'warning'; tick: number; tau: number; side: -1 | 1; pos: [number, number, number] };
 
 /** Read-only snapshot of the flight sim that render/UI/audio consume each frame. */
 export interface FlightState {
@@ -71,6 +73,12 @@ export interface FlightState {
   canopyOpen: boolean;
   assist: 'full' | 'low' | 'off';
   energy: number; // specific energy ½V²+gy
+  /** 0..1 stall amount (0 above 33 m/s) — HUD/audio cue. Optional extension (always set by FlightSim). */
+  stall?: number;
+  /** True while the canopy is still opening (1.2 s). Optional extension. */
+  canopyOpening?: boolean;
+  /** Assist intervened at least once this flight (ghost/share flag 🛟). Optional extension. */
+  assistUsed?: boolean;
 }
 
 /** Collision primitives for props. All props exist on every tier (canonical placement rule). */

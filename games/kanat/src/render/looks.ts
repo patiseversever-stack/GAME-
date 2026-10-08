@@ -81,6 +81,12 @@ export interface WorldLook {
   /** Cloud layer: impostor tint, coverage, cloud-sea height (Karadeniz). */
   clouds: { coverage: number; tint: string; seaTop: number | null; seaThickness: number };
   water: { shallow: string; deep: string; foam: string } | null;
+  /** Terrain surface character: tuff strata (world-y banding) and erosion rills. */
+  terrain: { strata: number; strataPeriod: number; strataRose: number; rills: number };
+  /** Exposure scale applied to the pre-lit macro colour maps (display-referred bake → linear HDR scene). */
+  prelit: number;
+  /** Contrast gamma on the pre-lit macro (linear space; >1 deepens shadows and restores saturation). */
+  prelitGamma: number;
   /** Accent colour (UI §3.5) - handy for debug overlays. */
   accent: string;
 }
@@ -91,14 +97,14 @@ export const LOOKS: Record<WorldId, WorldLook> = {
   // 1 Kapadokya Şafağı — sunrise +10 min, 7° east, 3400 K / 9000 K. Warm gold, purple shadows, golden valley fog.
   kapadokya: {
     id: 'kapadokya',
-    sun: { azimuthDeg: 95, elevationDeg: 7, kelvin: 3400, intensity: 4.6, discScale: 1.6 },
+    sun: { azimuthDeg: 95, elevationDeg: 7, kelvin: 3400, intensity: 4.6, discScale: 2.2 },
     skyKelvin: 9000,
     sky: {
       zenith: '#3E5F8A', mid: '#9DA9BC', horizon: '#D9B9B4', horizonSun: '#F6C48E', ground: '#B89A86',
       curve: 0.42, midStop: 0.32, sunSideSharpness: 2.2, exposure: 1.25, aureole: 0.10,
     },
-    fog: { density: 1.3e-4, falloff: 1 / 900, baseOffset: 0, halo: 0.10, tint: '#FFFFFF' },
-    groundFog: { thickness: 55, density: 0.0055, color: '#F4D9A6', patchiness: 0.6 },
+    fog: { density: 7e-5, falloff: 1 / 900, baseOffset: 0, halo: 0.10, tint: '#FFFFFF' },
+    groundFog: { thickness: 55, density: 0.008, color: '#F4D9A6', patchiness: 0.7 },
     ambient: 1.0,
     groundAlbedo: '#B8977C',
     grade: {
@@ -109,6 +115,9 @@ export const LOOKS: Record<WorldId, WorldLook> = {
     },
     clouds: { coverage: 0.25, tint: '#F6D6C0', seaTop: null, seaThickness: 0 },
     water: null,
+    terrain: { strata: 0.16, strataPeriod: 3.6, strataRose: 0.45, rills: 1.0 },
+    prelit: 1.75,
+    prelitGamma: 1.4,
     accent: '#F2A541',
   },
   // 2 Likya Kıyısı — afternoon, 32° WSW, 5200 K / 8000 K. Clean turquoise, slightly warm, thin blue haze.
@@ -132,6 +141,9 @@ export const LOOKS: Record<WorldId, WorldLook> = {
     },
     clouds: { coverage: 0.15, tint: '#FFFFFF', seaTop: null, seaThickness: 0 },
     water: { shallow: '#2BB3B1', deep: '#0B4F6C', foam: '#F2F7F5' },
+    terrain: { strata: 0.05, strataPeriod: 2.2, strataRose: 0.0, rills: 0.45 },
+    prelit: 1.5,
+    prelitGamma: 1.25,
     accent: '#2EC4C6',
   },
   // 3 Karadeniz Yaylası — morning between clouds, 22° SE (diffuse), 6200 K / 7000 K. Cool green-grey, soft contrast.
@@ -155,6 +167,9 @@ export const LOOKS: Record<WorldId, WorldLook> = {
     },
     clouds: { coverage: 0.6, tint: '#F2F4F2', seaTop: 1650, seaThickness: 220 },
     water: null,
+    terrain: { strata: 0.0, strataPeriod: 3.0, strataRose: 0.0, rills: 0.35 },
+    prelit: 1.5,
+    prelitGamma: 1.25,
     accent: '#8DB580',
   },
   // 4 Erciyes Karı — winter afternoon, 11° SW, 4600 K / 12000 K. Blue-white, saturated blue shadows, very clear.
@@ -178,6 +193,9 @@ export const LOOKS: Record<WorldId, WorldLook> = {
     },
     clouds: { coverage: 0.1, tint: '#FFFFFF', seaTop: null, seaThickness: 0 },
     water: null,
+    terrain: { strata: 0.04, strataPeriod: 5.0, strataRose: 0.0, rills: 0.6 },
+    prelit: 1.3,
+    prelitGamma: 1.2,
     accent: '#9FD3F0',
   },
   // 5 Pamukkale Gün Batımı — sunset −10 min, 4° W, 2800 K / 8500 K. Red-orange, lavender shadows, warm haze.
@@ -201,6 +219,9 @@ export const LOOKS: Record<WorldId, WorldLook> = {
     },
     clouds: { coverage: 0.3, tint: '#FFC9A0', seaTop: null, seaThickness: 0 },
     water: { shallow: '#49C6C9', deep: '#2C7F92', foam: '#FFF4EA' },
+    terrain: { strata: 0.08, strataPeriod: 1.6, strataRose: 0.0, rills: 0.3 },
+    prelit: 1.7,
+    prelitGamma: 1.35,
     accent: '#F2795C',
   },
 };

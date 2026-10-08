@@ -100,9 +100,8 @@ export const resultsScreen: ScreenDef<ResultsProps> = {
       panel.appendChild(row);
     });
     if (p.tasksDone?.length) {
-      for (const task of p.tasksDone) panel.appendChild(h('div', { class: 'kn-res-row kn-res-task' }, h('span', { class: 'kn-res-l' }, ic('check'), h('span', { text: taskLabel(task.type, task.count, task.value) })), h('span', { class: 'kn-res-v kn-eyebrow', text: upper(t('routes.tasks').split(' ')[0]) })));
+      for (const task of p.tasksDone) panel.appendChild(h('div', { class: 'kn-res-row kn-res-task' }, h('span', { class: 'kn-res-l' }, ic('check'), h('span', { text: taskLabel(task.type, task.count, task.value) })), h('span', { class: 'kn-res-v kn-eyebrow', text: upper(t('results.taskDone')) })));
     }
-    if (p.strip) panel.appendChild(h('div', { class: 'kn-res-row kn-res-strip' }, h('span', { class: 'kn-res-l', text: t('share.prox') }), strip(p.strip, 'kn-strip kn-strip--lg')));
 
     // Actions
     const action = (label: string, icon: string, cls: string, fn: (() => void) | undefined, disabled = false): HTMLButtonElement => {
@@ -130,7 +129,7 @@ export const resultsScreen: ScreenDef<ResultsProps> = {
           'div',
           { class: 'kn-results-left' },
           h('header', { class: 'kn-res-head' }, eyebrow(eyebrowText), h('h1', { class: 'kn-h2 kn-res-title', text: where }), h('span', { class: `kn-res-status ${p.half ? 'is-half' : ''}`.trim(), text: p.half ? t('results.half') : t('results.complete') })),
-          h('div', { class: 'kn-res-hero' }, eyebrow(timeMode ? t('common.time') : t('common.score')), big, chips, starsEl),
+          h('div', { class: 'kn-res-hero' }, eyebrow(timeMode ? t('common.time') : t('common.score')), big, chips, starsEl, p.strip ? h('div', { class: 'kn-res-strip' }, eyebrow(t('share.prox')), strip(p.strip, 'kn-strip kn-strip--lg')) : null),
           h('div', { class: 'kn-res-actions' }, retry, h('div', { class: 'kn-res-actions-row' }, share, code, next)),
         ),
         h('div', { class: 'kn-results-right kn-scroll' }, panel),

@@ -87,6 +87,46 @@ export const atmosphereFog = new THREE.Fog(0xffffff, 1, 2);
 // GLSL
 // ---------------------------------------------------------------------------------------------------------------
 
+/**
+ * Shared grade function (display-referred, after AgX). Requires uniforms kGradeA..F, kScreen, kAtmoTime and
+ * kHash12(). Used in-material on Low and by the post GradeEffect on Medium+ (identical maths on every tier).
+ */
+export const GRADE_FUNC_GLSL = /* glsl */ `
+// Shared grade (display-referred, after AgX). Used in-material on Low and by the post GradeEffect on Medium+.
+// All-zero uniforms = identity.
+vec3 kanatGradeFinish( vec3 c, vec2 fragCoord ) {
+  vec3 p = pow( max( c, vec3( 0.0 ) ), vec3( 1.0 / 2.2 ) );
+  p = p * ( 1.0 + kGradeC.rgb ) + kGradeA.rgb * ( 1.0 - p );
+  p = pow( max( p, vec3( 0.0 ) ), 1.0 / max( 1.0 + kGradeB.rgb, vec3( 0.05 ) ) );
+  p = ( p - 0.45 ) * ( 1.0 + kGradeB.w ) + 0.45;
+  float l = dot( p, vec3( 0.2126, 0.7152, 0.0722 ) );
+  p = mix( vec3( l ), p, 1.0 + kGradeA.w );
+  float bal = max( kGradeD.w, 0.05 );
+  float wS = 1.0 - smoothstep( 0.0, bal * 1.6, l );
+  float wH = smoothstep( bal * 0.6, 1.0, l );
+  p += kGradeD.rgb * wS + kGradeE.rgb * wH;
+  vec2 uv = fragCoord * kScreen.zw;
+  vec2 d = uv - 0.5;
+  d.x *= kScreen.x * kScreen.w;
+  float vig = 1.0 - kGradeF.x * smoothstep( 0.12, 0.85, dot( d, d ) * 1.6 );
+  p *= vig;
+  float n1 = kHash12( fragCoord + fract( kAtmoTime.x * 7.13 ) * 113.0 );
+  float n2 = kHash12( fragCoord * 1.37 + 17.0 + fract( kAtmoTime.x * 3.71 ) * 71.0 );
+  float tri = n1 + n2 - 1.0;
+  p += tri * ( kGradeF.y * ( 0.35 + 0.65 * ( 1.0 - abs( l - 0.5 ) * 2.0 ) ) * 0.5 + kGradeF.z );
+  return pow( max( p, vec3( 0.0 ) ), vec3( 2.2 ) );
+}
+`;
+
+/** Hash used by the grade (exported for the post effect). */
+export const HASH_GLSL = /* glsl */ `
+float kHash12( vec2 p ) {
+  vec3 p3 = fract( vec3( p.xyx ) * 0.1031 );
+  p3 += dot( p3, p3.yzx + 33.33 );
+  return fract( ( p3.x + p3.y ) * p3.z );
+}
+`;
+
 /** Uniform declarations + sky/fog/SH/grade functions. Guarded, so it can be included more than once. */
 export const ATMOSPHERE_GLSL = /* glsl */ `
 #ifndef KANAT_ATMO_PARS
@@ -169,11 +209,13 @@ vec3 kanatSunDisc( vec3 dir ) {
   return kSunColor.rgb * ( disc * kSkyHorizonSun.w );
 }
 
-// Mean of exp(-b*h) along a linear height segment h0 -> h1 (stable for h1≈h0, i.e. dir_y≈0).
+// Mean of exp(-b*h) along a linear height segment h0 -> h1 (stable for h1≈h0, i.e. dir_y≈0, and never 0·inf).
 float kMeanExp( float b, float h0, float h1 ) {
-  float k = b * ( h1 - h0 );
-  float e0 = exp( -b * h0 );
-  return abs( k ) > 1e-3 ? e0 * ( 1.0 - exp( -k ) ) / k : e0 * ( 1.0 - 0.5 * k );
+  float x0 = clamp( -b * h0, -80.0, 80.0 );
+  float x1 = clamp( -b * h1, -80.0, 80.0 );
+  float k = x0 - x1;
+  float e0 = exp( x0 );
+  return abs( k ) > 1e-3 ? ( e0 - exp( x1 ) ) / k : e0 * ( 1.0 - 0.5 * k );
 }
 
 // Optical depths along camera-relative ray 'rel' (world metres): x = main height fog, y = ground fog, z = cloud.
@@ -238,30 +280,7 @@ vec3 kanatIrradiance( vec3 n ) {
   return max( r, vec3( 0.0 ) );
 }
 
-// Shared grade (display-referred, after AgX). Used in-material on Low and by the post GradeEffect on Medium+.
-// All-zero uniforms = identity.
-vec3 kanatGradeFinish( vec3 c, vec2 fragCoord ) {
-  vec3 p = pow( max( c, vec3( 0.0 ) ), vec3( 1.0 / 2.2 ) );
-  p = p * ( 1.0 + kGradeC.rgb ) + kGradeA.rgb * ( 1.0 - p );
-  p = pow( max( p, vec3( 0.0 ) ), 1.0 / max( 1.0 + kGradeB.rgb, vec3( 0.05 ) ) );
-  p = ( p - 0.45 ) * ( 1.0 + kGradeB.w ) + 0.45;
-  float l = dot( p, vec3( 0.2126, 0.7152, 0.0722 ) );
-  p = mix( vec3( l ), p, 1.0 + kGradeA.w );
-  float bal = max( kGradeD.w, 0.05 );
-  float wS = 1.0 - smoothstep( 0.0, bal * 1.6, l );
-  float wH = smoothstep( bal * 0.6, 1.0, l );
-  p += kGradeD.rgb * wS + kGradeE.rgb * wH;
-  vec2 uv = fragCoord * kScreen.zw;
-  vec2 d = uv - 0.5;
-  d.x *= kScreen.x * kScreen.w;
-  float vig = 1.0 - kGradeF.x * smoothstep( 0.12, 0.85, dot( d, d ) * 1.6 );
-  p *= vig;
-  float n1 = kHash12( fragCoord + fract( kAtmoTime.x * 7.13 ) * 113.0 );
-  float n2 = kHash12( fragCoord * 1.37 + 17.0 + fract( kAtmoTime.x * 3.71 ) * 71.0 );
-  float tri = n1 + n2 - 1.0;
-  p += tri * ( kGradeF.y * ( 0.35 + 0.65 * ( 1.0 - abs( l - 0.5 ) * 2.0 ) ) * 0.5 + kGradeF.z );
-  return pow( max( p, vec3( 0.0 ) ), vec3( 2.2 ) );
-}
+${GRADE_FUNC_GLSL}
 #endif
 `;
 
@@ -382,7 +401,8 @@ export function installAtmosphere(): void {
   chunks.fog_fragment = FOG_FRAGMENT;
   chunks.tonemapping_fragment = TONEMAPPING_FRAGMENT;
   // Grade functions must exist whenever TONE_MAPPING is defined (also for fog:false materials on Low).
-  chunks.tonemapping_pars_fragment = `${chunks.tonemapping_pars_fragment}\n${ATMOSPHERE_GLSL}`;
+  // KANAT AgX look (inside the AgX sigmoid, like Blender's "Punchy" but milder) — identical in the post path.
+  chunks.tonemapping_pars_fragment = `${chunks.tonemapping_pars_fragment.replace('color = AgXOutsetMatrix * color;', AGX_LOOK_GLSL + '\n\tcolor = AgXOutsetMatrix * color;')}\n${ATMOSPHERE_GLSL}`;
   const lib = THREE.ShaderLib as unknown as Record<string, { uniforms: Record<string, THREE.IUniform> }>;
   const shared: Record<string, THREE.IUniform> = {};
   for (const [k, v] of Object.entries(atmosphereUniforms)) {
@@ -430,6 +450,13 @@ function tintOffset(hex: string, strength: number, out: Float32Array): void {
   out[2] = (b / l - 1) * strength * 0.12;
 }
 
+export const AGX_PUNCH_SAT = 1.04;
+export const AGX_PUNCH_CONTRAST = 1.02;
+/** AgX look applied after the sigmoid (before outset), in every tone-mapping path. */
+export const AGX_LOOK_POWER = 1.15;
+export const AGX_LOOK_SAT = 1.22;
+export const AGX_LOOK_GLSL = `color = pow( max( color, vec3( 0.0 ) ), vec3( ${AGX_LOOK_POWER.toFixed(3)} ) ); { float kl = dot( color, vec3( 0.2126, 0.7152, 0.0722 ) ); color = kl + ${AGX_LOOK_SAT.toFixed(3)} * ( color - kl ); }`;
+
 /** Write grade params into the shared grade uniforms (used in-material on Low and by the post GradeEffect). */
 export function setGrade(g: GradeParams): void {
   atmosphereState.grade = g;
@@ -439,8 +466,10 @@ export function setGrade(g: GradeParams): void {
   const D = atmosphereUniforms.kGradeD.value;
   const E = atmosphereUniforms.kGradeE.value;
   const F = atmosphereUniforms.kGradeF.value;
-  A[0] = g.lift[0]; A[1] = g.lift[1]; A[2] = g.lift[2]; A[3] = g.saturation - 1;
-  B[0] = g.gamma[0] - 1; B[1] = g.gamma[1] - 1; B[2] = g.gamma[2] - 1; B[3] = g.contrast - 1;
+  // AgX desaturates and flattens; a constant 'punchy' compensation (like Blender's AgX Punchy look) is folded
+  // into every world grade so per-world values stay relative to a neutral AgX baseline.
+  A[0] = g.lift[0]; A[1] = g.lift[1]; A[2] = g.lift[2]; A[3] = g.saturation * AGX_PUNCH_SAT - 1;
+  B[0] = g.gamma[0] - 1; B[1] = g.gamma[1] - 1; B[2] = g.gamma[2] - 1; B[3] = g.contrast * AGX_PUNCH_CONTRAST - 1;
   C[0] = g.gain[0] - 1; C[1] = g.gain[1] - 1; C[2] = g.gain[2] - 1; C[3] = 0;
   tintOffset(g.shadowTint, g.shadowStrength, tmp3);
   D[0] = tmp3[0]; D[1] = tmp3[1]; D[2] = tmp3[2]; D[3] = g.balance;

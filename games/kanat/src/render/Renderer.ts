@@ -178,7 +178,7 @@ export class KanatRenderer {
     const r = this.renderer;
     r.outputColorSpace = THREE.SRGBColorSpace;
     r.autoClear = true;
-    r.info.autoReset = true;
+    r.info.autoReset = false;
     r.shadowMap.enabled = false;
     r.shadowMap.type = THREE.PCFShadowMap;
     this.applyToneMapping();

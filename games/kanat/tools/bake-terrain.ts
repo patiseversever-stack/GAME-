@@ -16,6 +16,7 @@ import { TileCache, sampleTerrariumGrid, geoToLocal, metersPerPixel } from './te
 import { sampleSyntheticGrid } from './terrain/synthetic.ts';
 import { erode } from './terrain/erosion.ts';
 import {
+  binomial3,
   blur,
   clamp01,
   dilate,
@@ -221,6 +222,8 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
   // 1. raw heights (m, unscaled)
   const core0 = await sampleSource(def, args, cache, def.zoomCore, CORE_RES, CORE_SPACING, CORE_ORIGIN);
   const far0 = await sampleSource(def, args, cache, def.zoomFar, FAR_RES, FAR_SPACING, FAR_ORIGIN);
+  binomial3(core0, CORE_RES);
+  binomial3(far0, FAR_RES);
   for (const d of [core0, far0]) for (let i = 0; i < d.length; i++) if (d[i] < def.bathyMin) d[i] = def.bathyMin;
   if (def.hasSea) {
     const a = rebuildSea(makeGrid(CORE_RES, CORE_SPACING, CORE_ORIGIN, CORE_ORIGIN, core0), 4000);
@@ -298,8 +301,12 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
   const hFn = combinedHeight(core, far);
   const macro = makeGrid(MACRO_RES, CORE_SIZE / MACRO_RES, -CORE_SIZE / 2 + CORE_SIZE / MACRO_RES / 2, -CORE_SIZE / 2 + CORE_SIZE / MACRO_RES / 2);
   resample(core, macro);
+  // Pamukkale: the macro keeps the smooth core surface (1.8 m terraces would alias at 4 m); pools are painted instead.
+  let poolM: Float32Array | null = null;
   if (patchRes) {
+    poolM = new Float32Array(MACRO_RES * MACRO_RES);
     const p = patchRes.patch;
+    const wg = patchRes.water;
     const pe = (p.res - 1) * p.spacing;
     for (let r = 0; r < MACRO_RES; r++) {
       const z = macro.originZ + r * macro.spacing;
@@ -307,7 +314,13 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
       for (let c = 0; c < MACRO_RES; c++) {
         const x = macro.originX + c * macro.spacing;
         if (x < p.originX || x > p.originX + pe) continue;
-        macro.data[r * MACRO_RES + c] = sampleBilinear(p, x, z);
+        let wet = 0;
+        for (let k = 0; k < 4; k++) {
+          const sx = x + ((k & 1) - 0.5) * 2;
+          const sz = z + ((k >> 1) - 0.5) * 2;
+          if (sampleBilinear(wg, sx, sz) > sampleBilinear(p, sx, sz) + 0.05) wet += 0.25;
+        }
+        poolM[r * MACRO_RES + c] = wet;
       }
     }
   }
@@ -316,13 +329,13 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
   const convS = convexity(macro, 4);
   const relH = convexity(macro, 64);
   const gMax = Math.max(stats.max, minMax(far.data).max);
-  const [aoCore, drainCore, shadowM] = fieldCache(
+  const [aoCore, drainCore, shadowRaw] = fieldCache(
     def.id,
-    JSON.stringify({ v: 3, sum: checksum(macro.data, far.data), sun: def.sun }),
+    JSON.stringify({ v: 4, sum: checksum(macro.data, far.data), sun: def.sun }),
     () => [
       horizonAO(core, hFn, 12, 18, 900),
       drainage(core),
-      sunShadow(macro, hFn, def.sun.azimuthDeg, def.sun.elevationDeg, 16000, gMax),
+      sunShadow(macro, hFn, def.sun.azimuthDeg, def.sun.elevationDeg, 16000, gMax, def.sun.elevationDeg < 8 ? 2.2 : 1.5),
     ],
   );
   const up = (src: Float32Array) => {
@@ -335,7 +348,18 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
     return out;
   };
   const aoM = up(aoCore);
-  const drainM = up(blur(dilate(drainCore, CORE_RES, 2), CORE_RES, 2, 2));
+  const shStr = def.bake.shadowStrength;
+  const shadowM = shStr >= 1 ? shadowRaw : shadowRaw.map((v) => 1 - (1 - v) * shStr);
+  // Valley-floor field: width grows with log flow (multi-scale dilation), softened. 0..1.
+  const valleyCore = (() => {
+    const d1 = dilate(drainCore, CORE_RES, 1);
+    const d3 = dilate(drainCore, CORE_RES, 3);
+    const d6 = dilate(drainCore, CORE_RES, 6);
+    const v = new Float32Array(drainCore.length);
+    for (let i = 0; i < v.length; i++) v[i] = Math.max(smoothstep(0.5, 0.6, d1[i]), smoothstep(0.6, 0.7, d3[i]), smoothstep(0.69, 0.8, d6[i]));
+    return blur(v, CORE_RES, 2, 2);
+  })();
+  const drainM = up(valleyCore);
   let coastM: Float32Array | null = null;
   if (def.hasSea) {
     const dist = distanceToBoundary(MACRO_RES, macro.spacing, (i) => macro.data[i] >= 0);
@@ -384,6 +408,7 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
     coast: coastM,
     zone,
     zone2,
+    pool: poolM,
     stats,
     far: false,
   };
@@ -436,6 +461,7 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
     relH: convexity(farCol, 6),
     drain: (() => {
       const d = blur(drainage(far), FAR_RES, 1, 1);
+      for (let i = 0; i < d.length; i++) d[i] = smoothstep(0.5, 0.68, d[i]);
       const g = makeGrid(FAR_RES, FAR_SPACING, FAR_ORIGIN, FAR_ORIGIN, d);
       const out = new Float32Array(FARCOL_RES * FARCOL_RES);
       for (let r = 0; r < FARCOL_RES; r++)
@@ -451,14 +477,16 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
       : null,
     zone: null,
     zone2: null,
+    pool: null,
     stats,
     far: true,
   };
   const farFn = (x: number, z: number) => sampleBilinear(far, x, z);
-  const [aoF, shF] = fieldCache(`${def.id}-far`, JSON.stringify({ v: 3, sum: checksum(farCol.data), sun: def.sun }), () => [
+  const [aoF, shFRaw] = fieldCache(`${def.id}-far`, JSON.stringify({ v: 3, sum: checksum(farCol.data), sun: def.sun }), () => [
     horizonAO(farCol, farFn, 8, 12, 4000),
     sunShadow(farCol, farFn, def.sun.azimuthDeg, def.sun.elevationDeg, 20000, minMax(far.data).max, 1.0),
   ]);
+  const shF = shStr >= 1 ? shFRaw : shFRaw.map((v) => 1 - (1 - v) * shStr);
   const NF = FARCOL_RES * FARCOL_RES;
   const colorF = u8(NF * 3);
   for (let r = 0; r < FARCOL_RES; r++) {
@@ -529,7 +557,7 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
   for (let k = 0; k < 4; k++) {
     const ch = new Float32Array(NM);
     for (let i = 0; i < NM; i++) ch[i] = splatM[i * 4 + k];
-    splat1.push(downsample2(ch, MACRO_RES));
+    splat1.push(blur(downsample2(ch, MACRO_RES), CORE_RES, 1, 1));
   }
   for (let r = 0; r < CORE_RES; r++) {
     for (let c = 0; c < CORE_RES; c++) {
@@ -537,18 +565,19 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
       // splat: quantize so the 4 weights sum to exactly 255
       const ws = [splat1[0][i], splat1[1][i], splat1[2][i], splat1[3][i]];
       const tot = ws[0] + ws[1] + ws[2] + ws[3] || 1;
-      const q = ws.map((w) => Math.floor((w / tot) * 255));
-      let rem = 255 - (q[0] + q[1] + q[2] + q[3]);
-      const order = [0, 1, 2, 3].sort((a, b) => (ws[b] / tot) * 255 - q[b] - ((ws[a] / tot) * 255 - q[a]));
+      // 51 levels (step 5) keep the PNG small; weights still sum to exactly 255
+      const q = ws.map((w) => Math.floor((w / tot) * 51));
+      let rem = 51 - (q[0] + q[1] + q[2] + q[3]);
+      const order = [0, 1, 2, 3].sort((a, b) => (ws[b] / tot) * 51 - q[b] - ((ws[a] / tot) * 51 - q[a]));
       for (let k = 0; rem > 0; k = (k + 1) % 4, rem--) q[order[k]]++;
-      for (let k = 0; k < 4; k++) splatImg[i * 4 + k] = q[k];
+      for (let k = 0; k < 4; k++) splatImg[i * 4 + k] = q[k] * 5;
       // rock mask fades to 0 in the outer 64 m (D continuity at the core edge)
       const d = insideCore(CORE_ORIGIN + c * CORE_SPACING, CORE_ORIGIN + r * CORE_SPACING);
       const rk = rock1[i] * smoothstep(0, 64, d);
-      rockU8[i] = toU8(rk);
+      rockU8[i] = Math.min(255, Math.round(rk * 63) * 4 + (rk > 0.995 ? 3 : 0));
       shadowImg[i * 4] = toU8(shadow1[i]);
       shadowImg[i * 4 + 1] = toU8(aoCore[i]);
-      shadowImg[i * 4 + 2] = toU8(cav1[i]);
+      shadowImg[i * 4 + 2] = Math.min(255, Math.round(cav1[i] * 31) * 8);
       shadowImg[i * 4 + 3] = rockU8[i];
     }
   }
@@ -558,7 +587,7 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
       for (let k = 0; k < 4; k++) {
         let acc = 0;
         for (let dr = 0; dr < 4; dr++) for (let dc = 0; dc < 4; dc++) acc += masksM[((r * 4 + dr) * MACRO_RES + c * 4 + dc) * 4 + k];
-        maskU8[(r * MASK_RES + c) * 4 + k] = toU8(acc / 16);
+        maskU8[(r * MASK_RES + c) * 4 + k] = Math.min(255, Math.round((acc / 16) * 63) * 4 + (acc / 16 > 0.995 ? 3 : 0));
       }
     }
   }
@@ -731,11 +760,12 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
       skyColorLinear: round3(bl.ambCol),
       shadowColorLinear: round3(bl.shadowCol),
       shadowTint: bl.shadowTint,
+      shadowStrength: def.bake.shadowStrength,
       sunStrength: round3([bl.sunStrength * bl.norm, 0, 0])[0],
       ambientStrength: round3([bl.ambStrength * bl.norm, 0, 0])[0],
       formula:
         'w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); ' +
-        'skyShape=0.62+0.22*n.y+0.16*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); ' +
+        'skyShape=0.5+0.3*n.y+0.2*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); ' +
         `wrap=${bl.wrap}, ndl0=${bl.ndl0.toFixed(4)}, k=${bl.k.toFixed(4)}; soft shoulder above 0.8; sRGB encode`,
     },
     props: def.props,

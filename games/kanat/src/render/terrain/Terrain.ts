@@ -175,11 +175,17 @@ export class TerrainRenderer {
     const u = this.mesh.material.uniforms;
     u.uShadowAo.value = t ?? this.data.shadowAo;
     (u.uHas.value as THREE.Vector4).x = t ? 1 : this.data.has.shadowAo ? 1 : 0;
+    (u.uHasV.value as THREE.Vector4).x = (u.uHas.value as THREE.Vector4).x;
   }
 
   /** Pre-lit macro exposure scale and sky weight of the near relight ratio. */
-  setPrelit(scale: number, skyWeight: number): void {
-    (this.mesh.material.uniforms.uPrelit.value as THREE.Vector4).set(scale, skyWeight, 0, 0);
+  setPrelit(scale: number, skyWeight: number, gamma = 1): void {
+    (this.mesh.material.uniforms.uPrelit.value as THREE.Vector4).set(scale, skyWeight, gamma, 0);
+  }
+
+  /** Erosion rills strength (0..1.5) and fade distance (m). */
+  setRills(strength: number, fadeDist: number): void {
+    (this.mesh.material.uniforms.uRill.value as THREE.Vector4).set(strength, fadeDist, 0, 0);
   }
 
   /** Kapadokya tuff strata (world-y banding). */

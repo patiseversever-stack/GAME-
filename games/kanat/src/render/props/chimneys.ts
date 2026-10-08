@@ -8,11 +8,11 @@ import { InstanceTable, LodDrawer } from './InstanceTable.ts';
 import type { LodUniforms } from './InstanceTable.ts';
 import { patchMaterial } from './patch.ts';
 import { GLSL_NOISE, GLSL_DITHER, glslInstanceFetch, GLSL_LOD_VERT, GLSL_LOD_FRAG } from './glsl.ts';
-import { fitLathe } from './fit.ts';
+import { fitLathe, primRadiusAt } from './fit.ts';
 import { detailTexture } from './textures.ts';
 import type { PropTierConfig } from './tiers.ts';
 
-const BODY_TEXELS = 4;
+const BODY_TEXELS = 3;
 const CAP_TEXELS = 3;
 
 /** Unit lathe: position.xz = (cos, sin) of the ring angle, position.y = t (−skirt..1), aDome = dome param 0..1. */
@@ -93,22 +93,21 @@ varying float vKBaseY;
 `;
 
 const BODY_VERT_PRE = /* glsl */ `
-  vec4 i0 = instFetch(0); vec4 i1 = instFetch(1); vec4 i2 = instFetch(2); vec4 i3 = instFetch(3);
-  float kH = i3.x; float kSeed = i3.y; float kStyle = i3.z;
+  // texel0 = base.xyz + yaw · texel1 = (r0, r1, r2, h0) · texel2 = (h1, seed, style, windows)
+  vec4 i0 = instFetch(0); vec4 i1 = instFetch(1); vec4 i2 = instFetch(2);
+  float kH0 = max(i1.w, 0.01), kH1 = max(i2.x, 0.01);
+  float kH = kH0 + kH1;
+  float kSeed = i2.y; float kStyle = i2.z;
   float kt = position.y;
-  float tt = clamp(kt, 0.0, 1.0) * 7.0;
-  float kk = min(floor(tt), 6.0);
-  float kf = tt - kk;
-  float rs0 = kk < 0.5 ? i1.x : kk < 1.5 ? i1.y : kk < 2.5 ? i1.z : kk < 3.5 ? i1.w : kk < 4.5 ? i2.x : kk < 5.5 ? i2.y : i2.z;
-  float rs1 = kk < 0.5 ? i1.y : kk < 1.5 ? i1.z : kk < 2.5 ? i1.w : kk < 3.5 ? i2.x : kk < 4.5 ? i2.y : kk < 5.5 ? i2.z : i2.w;
-  float kr = mix(rs0, rs1, kf);
-  float kdrdy = (rs1 - rs0) * 7.0 / max(kH, 0.5);
-  float ky = kt * kH;
+  // rings 0..0.5 cover the lower segment, 0.5..1 the upper one → the profile kink always sits on a ring
+  float ky; float kr; float kdrdy;
+  if (kt <= 0.5) { float u = max(kt, 0.0) / 0.5; ky = u * kH0; kr = mix(i1.x, i1.y, u); kdrdy = (i1.y - i1.x) / kH0; }
+  else { float u = (kt - 0.5) / 0.5; ky = kH0 + u * kH1; kr = mix(i1.y, i1.z, u); kdrdy = (i1.z - i1.y) / kH1; }
   vec3 kdir = vec3(position.x, 0.0, position.z);
-  if (kt < 0.0) { kr = i1.x * (1.0 - kt * 1.5) + 0.3; kdrdy = -0.6; }
+  if (kt < 0.0) { ky = kt * 30.0; kr = i1.x * (1.0 - kt * 1.5) + 0.3; kdrdy = -0.6; }
   float kDomeN = 0.0;
   if (aDome > 0.0) {
-    float rTop = i2.w;
+    float rTop = i1.z;
     float dh = min(rTop * 0.9, 3.0);
     float a = aDome * 1.5707963;
     ky = kH + dh * sin(a);
@@ -122,7 +121,7 @@ const BODY_VERT_PRE = /* glsl */ `
   float flutes = 0.0;
   if (kStyle > 0.5 && kStyle < 1.5) flutes = sin(atan(kdir.z, kdir.x) * (7.0 + floor(kSeed * 5.0)) + kn * 2.0) * 0.12;
   if (kStyle > 2.5 && kStyle < 3.5) flutes = (sin(ky * 0.9 + kSeed * 6.0) * 0.5) * 0.14;
-  float kdisp = clamp(kn * 0.42 + flutes, -0.32, 0.32) * smoothstep(0.0, 0.6, kr) * (1.0 - kDomeN * 0.6);
+  float kdisp = clamp(kn * 0.4 + flutes, -0.3, 0.3) * smoothstep(0.0, 0.6, kr) * (1.0 - kDomeN * 0.6);
   kr = max(kr + kdisp, 0.0);
   float kc = cos(i0.w), ks = sin(i0.w);
   vec3 kLocal = vec3(kdir.x * kr, ky, kdir.z * kr);
@@ -133,7 +132,7 @@ const BODY_VERT_PRE = /* glsl */ `
   // LOD fade on the instance centre (mid-height)
   vec3 kCenter = i0.xyz + vec3(0.0, kH * 0.5, 0.0);
   float kVis = kLodPrepare(distance(kCenter, cameraPosition));
-  vKWorld = kP; vKDir = kdir; vKInst = vec4(kH, kSeed, kStyle, i3.w); vKRad = kr; vKYaw = i0.w; vKNrmW = kN; vKBaseY = i0.y;
+  vKWorld = kP; vKDir = kdir; vKInst = vec4(kH, kSeed, kStyle, i2.w); vKRad = kr; vKYaw = i0.w; vKNrmW = kN; vKBaseY = i0.y;
 `;
 
 const BODY_FRAG_PARS = /* glsl */ `
@@ -286,7 +285,7 @@ const CAP_VERT_PRE = /* glsl */ `
     float a = lat * 3.14159265;
     float sy = -cos(a);
     float sr = sin(a);
-    float kFl = sy < 0.0 ? 0.55 : 1.0;
+    float kFl = sy < 0.0 ? max(0.55, 1.0 - 0.3 / max(i1.y, 0.3)) : 1.0;
     kLocal = vec3(kdir.x * sr * i1.x, sy * i1.y * kFl, kdir.z * sr * i1.z);
     kNl = normalize(vec3(kdir.x * sr / i1.x, sy * kFl / i1.y, kdir.z * sr / i1.z));
     vKUnder = smoothstep(0.1, -0.4, sy);
@@ -302,7 +301,7 @@ const CAP_VERT_PRE = /* glsl */ `
   }
   float kn = kNoise3(kLocal * 0.45 + i2.x * 9.1) - 0.5;
   kn += 0.5 * (kNoise3(kLocal * 1.3 + i2.x * 3.1) - 0.5);
-  kLocal += kNl * clamp(kn * 0.65, -0.32, 0.32);
+  kLocal += kNl * clamp(kn * 0.6, -0.25, 0.25);
   float kc = cos(i0.w), ks = sin(i0.w);
   vec3 kP = kRotY(kLocal, kc, ks) + i0.xyz;
   vec3 kN = kRotY(kNl, kc, ks);
@@ -449,20 +448,19 @@ export class ChimneyLayer {
     const capPrims: { p: PropPrimitive; seed: number }[] = [];
     for (const inst of chimneys) {
       if (nb >= this.body.capacity) break;
-      const fit = fitLathe(inst, true, 8);
-      const seed = hashSeed(inst.id);
+      const c = chimneyParams(inst);
+      const seed = c.seed;
       const style = Math.floor(inst.variant ?? 0) % 6;
-      const r = fit.radii;
-      const windows = (r[2] > 2.4 && hashSeed(inst.id * 7 + 3) > 0.45) ? 1 + Math.floor(hashSeed(inst.id * 13 + 1) * 3.2) : 0;
-      this.body.write(nb, 0, fit.x, fit.y, fit.z, inst.yaw);
-      this.body.write(nb, 1, r[0], r[1], r[2], r[3]);
-      this.body.write(nb, 2, r[4], r[5], r[6], r[7]);
-      this.body.write(nb, 3, fit.h, seed, style, windows);
-      const rmax = Math.max(...r) + 1;
-      this.body.bounds(nb, fit.x, fit.y + fit.h * 0.5, fit.z, Math.hypot(fit.h * 0.5, rmax));
+      const windows = (c.r0 > 3.2 && hashSeed(inst.id * 7 + 3) > 0.45) ? 1 + Math.floor(hashSeed(inst.id * 13 + 1) * 3.2) : 0;
+      this.body.write(nb, 0, inst.pos[0], inst.pos[1], inst.pos[2], inst.yaw);
+      this.body.write(nb, 1, c.r0, c.r1, c.r2, c.h0);
+      this.body.write(nb, 2, c.h1, seed, style, windows);
+      const H = c.h0 + c.h1;
+      const rmax = Math.max(c.r0, c.r1, c.r2) + 1;
+      this.body.bounds(nb, inst.pos[0], inst.pos[1] + H * 0.5, inst.pos[2], Math.hypot(H * 0.5 + 2, rmax));
       nb++;
-      if (fit.cap) capPrims.push({ p: fit.cap, seed });
-      maxErr = Math.max(maxErr, 0);
+      if (c.cap) capPrims.push({ p: c.cap, seed });
+      maxErr = Math.max(maxErr, c.err);
     }
     for (const inst of caps) for (const p of inst.prims) capPrims.push({ p, seed: hashSeed(inst.id) });
     for (const { p, seed } of capPrims) {
@@ -502,7 +500,7 @@ export class ChimneyLayer {
     const shadows = cfg.heroShadows;
     // Body: LOD0 28×26 (+skirt, dome) ≈ 1.7k tris, LOD1 10×7 ≈ 200 tris.
     const g0 = buildLatheUnit(28, 26, 2, 4);
-    const g1 = buildLatheUnit(10, 7, 1, 2);
+    const g1 = buildLatheUnit(10, 8, 1, 2);
     const u0 = LodDrawer.makeUniforms(this.body, 0);
     const u1 = LodDrawer.makeUniforms(this.body, 1);
     this.bodyDrawer = new LodDrawer(this.body, [
@@ -559,6 +557,41 @@ export class ChimneyLayer {
     this.body.dispose();
     this.caps.dispose();
   }
+}
+
+/** Chimney lathe parameters: the sim's params (h0, h1, r0, r1, r2, capR/capH/capY) or a fit of the prims. */
+export function chimneyParams(inst: PropInstance): { r0: number; r1: number; r2: number; h0: number; h1: number; cap: PropPrimitive | null; seed: number; err: number } {
+  const P = inst.params ?? {};
+  const seed = typeof P.seed === 'number' ? hashSeed(P.seed * 7919 + 13) : hashSeed(inst.id * 31 + 7);
+  let cap: PropPrimitive | null = null;
+  for (const p of inst.prims) if (p.kind === 'ellipsoid') cap = p;
+  if (typeof P.h0 === 'number' && typeof P.r0 === 'number') {
+    const r = { r0: P.r0, r1: P.r1 ?? P.r0, r2: P.r2 ?? P.r1 ?? P.r0, h0: P.h0, h1: P.h1 ?? 0.01, cap, seed, err: 0 };
+    // measured deviation of the (noise-free) visual profile from the collision cones
+    let err = 0;
+    for (let k = 1; k < 40; k++) {
+      const y = inst.pos[1] + (r.h0 + r.h1) * (k / 40);
+      let pr = -1;
+      for (const p of inst.prims) if (p.kind === 'cone') pr = Math.max(pr, primRadiusAt(p, y, inst.pos[0], inst.pos[2]));
+      const yy = y - inst.pos[1];
+      const vr = yy <= r.h0 ? r.r0 + (r.r1 - r.r0) * (yy / r.h0) : r.r1 + (r.r2 - r.r1) * ((yy - r.h0) / Math.max(r.h1, 1e-3));
+      if (pr >= 0) err = Math.max(err, Math.abs(vr - pr));
+    }
+    r.err = err;
+    return r;
+  }
+  const cones = inst.prims.filter((p): p is Extract<PropPrimitive, { kind: 'cone' }> => p.kind === 'cone').sort((a, b) => a.base[1] - b.base[1]);
+  if (cones.length >= 2) {
+    const a = cones[0], b = cones[cones.length - 1];
+    return { r0: a.r0, r1: a.r1, r2: b.r1, h0: a.h, h1: b.base[1] + b.h - (a.base[1] + a.h), cap, seed, err: 0 };
+  }
+  if (cones.length === 1) {
+    const a = cones[0];
+    const rm = (a.r0 + a.r1) / 2;
+    return { r0: a.r0, r1: rm, r2: a.r1, h0: a.h / 2, h1: a.h / 2, cap, seed, err: 0 };
+  }
+  const f = fitLathe(inst, true, 3);
+  return { r0: f.radii[0], r1: f.radii[1], r2: f.radii[2], h0: f.h / 2, h1: f.h / 2, cap: f.cap, seed, err: 0 };
 }
 
 export function hashSeed(n: number): number {

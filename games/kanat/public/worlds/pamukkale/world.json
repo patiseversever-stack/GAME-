@@ -28,8 +28,8 @@
    "originZ": -4092,
    "spacing": 8,
    "res": 1024,
-   "min": 199.67,
-   "max": 1399.014
+   "min": 199.924,
+   "max": 1398.206
   },
   "far": {
    "file": "height_far.u16.z",
@@ -37,17 +37,17 @@
    "originZ": -24528,
    "spacing": 96,
    "res": 512,
-   "min": 160.806,
-   "max": 2751.903
+   "min": 161.41,
+   "max": 2731.492
   },
   "patch": {
    "file": "height_patch.u16.z",
-   "originX": -1292,
-   "originZ": 124,
+   "originX": -1512,
+   "originZ": 135,
    "spacing": 1,
    "res": 1024,
-   "min": 300.064,
-   "max": 457.732
+   "min": 277.087,
+   "max": 442.475
   },
   "rock": {
    "file": "rock_core.u8.z",
@@ -89,26 +89,26 @@
    "maxZ": 3772
   },
   "heightRange": {
-   "min": 199.67,
-   "max": 1399.014
+   "min": 199.924,
+   "max": 1398.206
   },
   "patchInfo": {
    "terraceRect": {
-    "minX": -1101,
-    "maxX": -461,
-    "minZ": 131,
-    "maxZ": 1139
+    "minX": -1321,
+    "maxX": -681,
+    "minZ": 142,
+    "maxZ": 1150
    },
    "baseLowerM": 0.5,
    "poolDepthM": 0.35,
    "water": {
     "file": "water_patch.u16.z",
-    "originX": -1292,
-    "originZ": 124,
+    "originX": -1512,
+    "originZ": 135,
     "spacing": 2,
     "res": 512,
-    "min": 299.064,
-    "max": 456.594
+    "min": 276.098,
+    "max": 441.458
    }
   }
  },
@@ -131,8 +131,8 @@
     "size": 49152
    },
    "patch": {
-    "minX": -1292.5,
-    "minZ": 123.5,
+    "minX": -1512.5,
+    "minZ": 134.5,
     "size": 1024
    }
   }
@@ -242,17 +242,24 @@
  "bakeLighting": {
   "sunColorLinear": [
    1,
-   0.6721,
-   0.5134
+   0.6354,
+   0.3395
   ],
   "skyColorLinear": [
-   0.3231,
-   0.2747,
-   0.5271
+   0.3968,
+   0.3663,
+   0.5647
   ],
-  "sunStrength": 1.1268,
-  "ambientStrength": 0.6146,
-  "formula": "lit = albedo * (sunColor*sunStrength*shadow*B(ndl) + skyColor*ambientStrength*ao*(0.8+0.2*n.y)); w=max(0,(ndl+wrap)/(1+wrap)), B=w/(w+k)*(ndl0+k)/ndl0, wrap=0.12, ndl0=0.1694, k=0.2563; soft shoulder above 0.8; sRGB encode"
+  "shadowColorLinear": [
+   0.3238,
+   0.3872,
+   0.5722
+  ],
+  "shadowTint": 0.8,
+  "shadowStrength": 1,
+  "sunStrength": 0.927,
+  "ambientStrength": 0.7585,
+  "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.5+0.3*n.y+0.2*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); wrap=0.12, ndl0=0.1694, k=0.2563; soft shoulder above 0.8; sRGB encode"
  },
  "props": {
   "columns": {

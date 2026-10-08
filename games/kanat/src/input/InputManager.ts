@@ -325,14 +325,19 @@ export class InputManager {
   }
 
   /**
-   * Called by the mode once per sim tick BEFORE stepping the sim. Pushes this tick's commands
-   * (queued actions every tick; axis/flare/tight on 30 Hz sample ticks).
+   * Called by the mode once per sim tick BEFORE stepping the sim. Pushes this tick's commands:
+   * on 30 Hz sample ticks (every 2nd tick at 60 Hz) one `axis` (always, on the grid — matches
+   * src/sim/replay/recorder.ts), then `flare`/`tight` when they changed; queued actions every tick.
    */
   sample(tick: number, out: Command[], actorId = 0): void {
+    // Order inside a tick matters for the replay Recorder: axis (stream) first, then events
+    // (flare / tight / parachute). An axis after an event in the same tick would leave the stream.
+    if (this.scheme !== 'menu' && tick % this.ticksPerSample === 0) this.sampleAxes(tick, out, actorId);
     for (const a of this.actions) out.push(this.take(tick, actorId, a.cmd));
     this.actions.length = 0;
-    if (this.scheme === 'menu') return;
-    if (tick % this.ticksPerSample !== 0) return;
+  }
+
+  private sampleAxes(tick: number, out: Command[], actorId: number): void {
     this.stepKeys();
     const m = gestureMath();
     const two = this.visual.twoThumb;
@@ -344,7 +349,6 @@ export class InputManager {
     if (two) {
       rx = this.leftStick.vx;
       ry = this.scheme === 'suru' ? this.leftStick.vy : this.rightStick.vy;
-      if (this.scheme === 'canopy') ry = this.rightStick.vy;
     } else {
       rx = this.stick.vx;
       ry = this.stick.vy;

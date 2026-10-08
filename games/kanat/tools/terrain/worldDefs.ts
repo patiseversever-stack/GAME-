@@ -62,6 +62,8 @@ export interface WorldDef {
     wrap: number;
     /** Overall exposure of the pre-lit maps. */
     exposure: number;
+    /** 0..1 cast-shadow strength (diffuse/overcast worlds < 1). Applied to shadow_ao.R too. */
+    shadowStrength: number;
   };
   props: Record<string, { count?: number; mask?: string; seed?: number }>;
   /** Pamukkale: travertine patch definition (geo center of the terrace area). */
@@ -119,7 +121,7 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     layerColors: ['#D49A8A', '#E4D5BF', '#A8956A', '#5E5250'],
     layerRoughness: [0.9, 0.88, 0.95, 0.75],
     maskNames: ['chimney', 'trees', 'flat', 'drainage'],
-    bake: { sunStrength: 1.0, ambientStrength: 1.2, ambientColor: '#B5B2C8', shadowColor: '#6B4E5E', shadowTint: 0.75, wrap: 0.12, exposure: 1.0 },
+    bake: { sunStrength: 1.0, ambientStrength: 1.55, ambientColor: '#B9B8CC', shadowColor: '#6B4E5E', shadowTint: 0.3, wrap: 0.12, exposure: 1.0, shadowStrength: 1 },
     props: {
       chimneys: { count: 1200, mask: 'chimney', seed: 11 },
       balloons: { count: 40, seed: 7 },
@@ -170,7 +172,7 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     layerColors: ['#CFC6B4', '#3F5B3A', '#E9D8B4', '#86805A'],
     layerRoughness: [0.7, 0.9, 0.85, 0.9],
     maskNames: ['tomb', 'trees', 'flat', 'coast'],
-    bake: { sunStrength: 1.0, ambientStrength: 0.55, ambientColor: '#A8CBE6', shadowColor: '#6A8FB8', shadowTint: 0.5, wrap: 0.05, exposure: 1.0 },
+    bake: { sunStrength: 1.0, ambientStrength: 0.55, ambientColor: '#A8CBE6', shadowColor: '#6A8FB8', shadowTint: 0.5, wrap: 0.05, exposure: 1.0, shadowStrength: 1 },
     props: {
       tombs: { count: 14, mask: 'tomb', seed: 21 },
       pines: { count: 6000, mask: 'trees', seed: 23 },
@@ -229,7 +231,7 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     layerColors: ['#1F3B2C', '#6E8B3D', '#5F5D58', '#EEF0EE'],
     layerRoughness: [0.92, 0.9, 0.5, 0.6],
     maskNames: ['house', 'trees', 'flat', 'drainage'],
-    bake: { sunStrength: 0.85, ambientStrength: 0.7, ambientColor: '#BCC8CC', shadowColor: '#8EA3AE', shadowTint: 0.5, wrap: 0.25, exposure: 1.0 },
+    bake: { sunStrength: 0.6, ambientStrength: 1.4, ambientColor: '#C4CED0', shadowColor: '#8EA3AE', shadowTint: 0.35, wrap: 0.3, exposure: 1.05, shadowStrength: 0.45 },
     props: {
       houses: { count: 60, mask: 'house', seed: 31 },
       spruces: { count: 9000, mask: 'trees', seed: 33 },
@@ -279,7 +281,7 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     layerColors: ['#F4F2EE', '#BFE6F2', '#4A4642', '#6E5E52'],
     layerRoughness: [0.6, 0.15, 0.7, 0.9],
     maskNames: ['cornice', 'trees', 'flat', 'snow'],
-    bake: { sunStrength: 1.0, ambientStrength: 0.6, ambientColor: '#B4C6E2', shadowColor: '#A9C2E0', shadowTint: 0.9, wrap: 0.06, exposure: 0.8 },
+    bake: { sunStrength: 1.0, ambientStrength: 0.85, ambientColor: '#B4C6E2', shadowColor: '#A9C2E0', shadowTint: 0.9, wrap: 0.06, exposure: 0.82, shadowStrength: 1 },
     props: {
       cornices: { count: 80, mask: 'cornice', seed: 41 },
       rocks: { count: 400, mask: 'cornice', seed: 43 },
@@ -330,13 +332,13 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     layerColors: ['#F5EDE4', '#B0906F', '#7F8350', '#C9A27E'],
     layerRoughness: [0.5, 0.9, 0.92, 0.6],
     maskNames: ['ruins', 'trees', 'flat', 'travertine'],
-    bake: { sunStrength: 1.1, ambientStrength: 0.9, ambientColor: '#A9A3C6', shadowColor: '#9AA7C7', shadowTint: 0.8, wrap: 0.12, exposure: 1.0 },
+    bake: { sunStrength: 1.0, ambientStrength: 1.5, ambientColor: '#B2ACC8', shadowColor: '#9AA7C7', shadowTint: 0.6, wrap: 0.12, exposure: 1.0, shadowStrength: 1 },
     props: {
       columns: { count: 120, mask: 'ruins', seed: 51 },
       walls: { count: 60, mask: 'ruins', seed: 53 },
       theater: { count: 1, mask: 'ruins', seed: 55 },
       junipers: { count: 1800, mask: 'trees', seed: 57 },
     },
-    patch: { lat: 37.9215, lon: 29.1225, widthM: 1024, depthM: 640, res: 1024 },
+    patch: { lat: 37.9214, lon: 29.12, widthM: 1024, depthM: 640, res: 1024 },
   },
 };

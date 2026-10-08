@@ -59,12 +59,16 @@ const DOME_FRAG = /* glsl */ `
 ${ATMOSPHERE_GLSL}
 uniform samplerCube uSkyCube;
 uniform float uSunDiscOn;
+uniform float uGlow;
 varying vec3 vDir;
 void main() {
   vec3 dir = normalize( vDir );
   if ( kAtmoTime.w > 0.5 ) { gl_FragColor = vec4( 1.0, 0.0, 1.0, 1.0 ); return; }
   vec3 col = textureLod( uSkyCube, dir, 0.0 ).rgb;
   col += kanatSunDisc( dir ) * uSunDiscOn;
+  // Painterly sun glow (Low has no bloom; on Medium+ bloom adds on top of this subtle base).
+  float mu = max( dot( dir, kSun.xyz ), 0.0 );
+  col += kSunColor.rgb * ( pow( mu, 900.0 ) * 0.9 + pow( mu, 90.0 ) * 0.10 ) * uSunDiscOn * uGlow;
   // Inside-cloud white-out also covers the sky.
   col = mix( col, vec3( kGroundFogColor.w ), clamp( kFogFade.z, 0.0, 1.0 ) );
   // Triangular dither in linear space before quantisation (sky gradients never band).
@@ -110,7 +114,7 @@ export class Sky {
     this.bakeScene.add(this.cubeCam);
 
     const domeMat = new THREE.ShaderMaterial({
-      uniforms: { ...atmosphereUniforms, uSkyCube: { value: this.cubeRT.texture }, uSunDiscOn: { value: 1 } },
+      uniforms: { ...atmosphereUniforms, uSkyCube: { value: this.cubeRT.texture }, uSunDiscOn: { value: 1 }, uGlow: { value: 1 } },
       vertexShader: DOME_VERT,
       fragmentShader: DOME_FRAG,
       side: THREE.BackSide,

@@ -1,7 +1,7 @@
 // Pre-rendered music sources: Karplus-Strong strings (guitar, ud-like, soft pluck, bass), additive
 // bells and Anatolian-flavoured percussion (darbuka düm/tek/ka, bendir, davul, tef, shaker, wood).
 // Pure; rendered once at load, transposed at runtime with playbackRate (≤ ±6 semitones).
-import { Biquad, GEN_SR, Noise, OnePole, TAU, bellInto, envAD, fadeEdges, karplus, makePcm, normalizePeak } from '../dsp.ts';
+import { Biquad, GEN_SR, Noise, OnePole, TAU, bellInto, decimate2, envAD, fadeEdges, karplus, makePcm, normalizePeak } from '../dsp.ts';
 import type { Pcm } from '../dsp.ts';
 import { Rng } from '../rng.ts';
 import { midiToHz } from '../scales.ts';
@@ -66,13 +66,15 @@ export function renderInstrument(inst: PcmInst, refMidi: number): Pcm {
     for (let i = 0; i < o.length; i++) {
       const t = i / SR;
       o[i] = lp.process(o[i]) + 0.35 * Math.sin(ph) * envAD(t, 0.004, 0.35);
+      if (ph > TAU) ph -= TAU;
       ph += (TAU * f) / SR;
     }
   } else {
     bellInto(o, f, [1, 2.0, 2.76, 4.07, 5.4, 6.8], [1, 0.4, 0.45, 0.2, 0.12, 0.06], [1.6, 0.9, 0.7, 0.45, 0.3, 0.2], 0, 0.6, r);
   }
   fadeEdges(p, 0.0008, 0.08);
-  return normalizePeak(p, -3);
+  // 24 kHz is plenty for plucked strings / bells transposed ≤ ±6 semitones (halves memory).
+  return normalizePeak(decimate2(p), -3);
 }
 
 export function renderDrum(id: DrumId): Pcm {

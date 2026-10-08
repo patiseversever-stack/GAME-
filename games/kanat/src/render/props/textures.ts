@@ -48,7 +48,8 @@ export type DetailKind = 'tuff' | 'stone' | 'snow' | 'wood' | 'bark';
 export function makeDetailTexture(kind: DetailKind, size = 256, seed = 7): DataTexture {
   const rnd = mulberry32(seed * 7919 + kind.length * 31);
   const n4 = new PNoise(4, 4, rnd), n8 = new PNoise(8, 8, rnd), n16 = new PNoise(16, 16, rnd), n32 = new PNoise(32, 32, rnd), n64 = new PNoise(64, 64, rnd);
-  const rill = new PNoise(24, 3, rnd), rill2 = new PNoise(48, 6, rnd);
+  const rill = new PNoise(10, 3, rnd), rill2 = new PNoise(22, 5, rnd);
+  const patch = new PNoise(3, 2, rnd);
   const layer = new PNoise(2, 12, rnd);
   const grainA = new PNoise(4, 64, rnd), grainB = new PNoise(8, 128, rnd);
   const cellN = new PNoise(6, 6, rnd);
@@ -60,15 +61,17 @@ export function makeDetailTexture(kind: DetailKind, size = 256, seed = 7): DataT
       let val = 0;
       let low = 0;
       if (kind === 'tuff') {
-        // soft powdery tuff: broad undulation, straight vertical rain rills, faint horizontal ledges, pores
-        const base = 0.42 * n4.at(u, v) + 0.24 * n8.at(u, v) + 0.12 * n16.at(u, v) + 0.06 * n32.at(u, v);
-        const r = 1 - Math.abs(rill.at(u + 0.02 * n8.at(u, v), v) * 2 - 1);
-        const r2 = 1 - Math.abs(rill2.at(u + 0.015 * n16.at(u, v), v) * 2 - 1);
+        // soft powdery tuff: broad undulation, meandering vertical rain runnels in patches, faint ledges, pits
+        const base = 0.40 * n4.at(u, v) + 0.24 * n8.at(u, v) + 0.16 * n16.at(u, v) + 0.1 * n32.at(u, v) + 0.06 * n64.at(u, v);
+        const wu = u + 0.06 * (n8.at(u, v) - 0.5) + 0.03 * (n16.at(u, v) - 0.5);
+        const r = 1 - Math.abs(rill.at(wu, v) * 2 - 1);
+        const r2 = 1 - Math.abs(rill2.at(wu + 0.02 * n32.at(u, v), v) * 2 - 1);
+        const pm = Math.max(0, Math.min(1, (patch.at(u, v) - 0.35) * 3));
         const lv = v * 10 + 0.35 * n4.at(u, v);
         const ledge = Math.pow(lv - Math.floor(lv), 3.0);
-        const pore = Math.max(0, n64.at(u, v) - 0.72) * 2.2;
-        val = base - 0.24 * Math.pow(r, 2.5) - 0.1 * Math.pow(r2, 3) + 0.08 * ledge - 0.12 * pore + 0.04 * n64.at(u, v);
-        low = 0.42 * n4.at(u, v) + 0.24 * n8.at(u, v);
+        const pore = Math.max(0, n64.at(u, v) - 0.7) * 2.4;
+        val = base - pm * (0.22 * Math.pow(r, 3) + 0.08 * Math.pow(r2, 3)) + 0.06 * ledge - 0.14 * pore;
+        low = 0.40 * n4.at(u, v) + 0.24 * n8.at(u, v);
       } else if (kind === 'stone') {
         const c = cellN.at(u, v);
         const crack = Math.abs(n16.at(u, v) - 0.5) < 0.03 ? -0.35 : 0;

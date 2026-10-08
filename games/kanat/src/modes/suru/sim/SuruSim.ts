@@ -171,8 +171,9 @@ export class SuruSim implements FlockRenderSource {
   private readonly lagTicks = new Float64Array(FMAX);
   private readonly rLat = new Float64Array(FMAX);
   private readonly maxSpd = new Float64Array(FMAX);
-  private readonly cenX = new Float64Array(FMAX);
-  private readonly cenZ = new Float64Array(FMAX);
+  /** follower centroid per flock (leader position when it has none) */
+  readonly cenX = new Float64Array(FMAX);
+  readonly cenZ = new Float64Array(FMAX);
   private readonly flockNightGroup = new Int16Array(FMAX);
   private readonly flockNightGroupTick = new Int32Array(FMAX);
   readonly trail = new Float32Array(FMAX * TL * 2);
@@ -201,9 +202,13 @@ export class SuruSim implements FlockRenderSource {
   readonly hawks: HawkView[] = [];
   private hawkNext = 0;
   private hawkDiveTick = 0;
-  private hawkTargetBird = -1;
-  private hawkDirX = 0;
-  private hawkDirZ = 0;
+  private readonly hawkTarget = new Int32Array(3);
+  private readonly hawkDirX = new Float64Array(3);
+  private readonly hawkDirZ = new Float64Array(3);
+  private readonly hawkSideX = new Float64Array(3);
+  private readonly hawkSideZ = new Float64Array(3);
+  private readonly hawkDiveX = new Float64Array(3);
+  private readonly hawkDiveZ = new Float64Array(3);
   readonly storm = { active: false, x: 0, z: 0, prevX: 0, prevZ: 0, radius: SURU.STORM_RADIUS, wx: 0, wz: 0 };
   readonly gust = { phase: 0, dirX: 1, dirZ: 0, offset: 0, width: SURU.GUST_WIDTH, phaseTick: 0, next: 0 };
   ringRadius: number = SURU.RING_R0;
@@ -278,7 +283,7 @@ export class SuruSim implements FlockRenderSource {
     for (let f = 0; f < FMAX; f++) {
       this.sieges.push({ target: f, attacker: 0, coverage01: 0, hold01: 0, binsLo: 0, binsHi: 0, radius: 0, cascading: false, cascadeStartTick: 0 });
     }
-    this.hawks.push({ phase: 0, x: 0, z: 0, prevX: 0, prevZ: 0, targetFlock: 0, phaseTick: 0 });
+    for (let k = 0; k < 3; k++) this.hawks.push({ phase: 0, x: 0, z: 0, prevX: 0, prevZ: 0, targetFlock: 0, phaseTick: 0 });
 
     if (options.custom) {
       this.flockCount = options.custom.flocks.length;
@@ -612,9 +617,11 @@ export class SuruSim implements FlockRenderSource {
     this.prevZ.set(this.posZ);
     this.leaderPrevX.set(this.leaderX);
     this.leaderPrevZ.set(this.leaderZ);
-    const hk = this.hawks[0];
-    hk.prevX = hk.x;
-    hk.prevZ = hk.z;
+    for (let k = 0; k < this.hawks.length; k++) {
+      const hk = this.hawks[k];
+      hk.prevX = hk.x;
+      hk.prevZ = hk.z;
+    }
     this.storm.prevX = this.storm.x;
     this.storm.prevZ = this.storm.z;
     const flags = this.flags;
@@ -669,7 +676,8 @@ export class SuruSim implements FlockRenderSource {
   // ======================================================================================
 
   private timeline(T: number): void {
-    const t = T / HZ;
+    // timeline state describes the end of this tick (the ring is exactly 110 m when the round ends)
+    const t = (T + 1) / HZ;
     // sunset ring
     if (this.opts.ring) {
       const ts = SURU.RING_START_SEC;
@@ -948,10 +956,19 @@ export class SuruSim implements FlockRenderSource {
     const lhX = lh.x;
     const lhZ = lh.z;
     const lhR = SURU.LIGHTHOUSE_R + 3;
-    const hk = this.hawks[0];
-    const hawkDive = hk.phase === 2;
-    const hkX = hk.x;
-    const hkZ = hk.z;
+    // diving hawks (up to 3) → startle swirl around each
+    let nDive = 0;
+    const hdx = this.hawkDiveX;
+    const hdz = this.hawkDiveZ;
+    for (let k = 0; k < this.hawks.length; k++) {
+      const h = this.hawks[k];
+      if (h.phase === 2) {
+        hdx[nDive] = h.x;
+        hdz[nDive] = h.z;
+        nDive++;
+      }
+    }
+    const hawkDive = nDive > 0;
     const gustOn = this.gust.phase === 2;
     const maxA = SURU.MAX_ACCEL;
     const sepW = SURU.W_SEP * 28;
@@ -1035,6 +1052,8 @@ export class SuruSim implements FlockRenderSource {
       const rot = (i * 7 + T) & 0xff;
       let n = 0;
       let tn = 0;
+      let tMax = -1;
+      let tMaxK = 0;
       let sxs = 0;
       let szs = 0;
       let frontier = false;
@@ -1060,24 +1079,27 @@ export class SuruSim implements FlockRenderSource {
             szs += dz * ww;
           }
           if (oj === o) {
+            // K nearest same-owner candidates (topological neighbours): unsorted set + running max
             if (tn < K) {
-              let k = tn++;
-              while (k > 0 && topoD[k - 1] > d2) {
-                topoD[k] = topoD[k - 1];
-                topoP[k] = topoP[k - 1];
-                k--;
+              topoD[tn] = d2;
+              topoP[tn] = q;
+              if (d2 > tMax) {
+                tMax = d2;
+                tMaxK = tn;
               }
-              topoD[k] = d2;
-              topoP[k] = q;
-            } else if (d2 < topoD[K - 1]) {
-              let k = K - 1;
-              while (k > 0 && topoD[k - 1] > d2) {
-                topoD[k] = topoD[k - 1];
-                topoP[k] = topoP[k - 1];
-                k--;
+              tn++;
+            } else if (d2 < tMax) {
+              topoD[tMaxK] = d2;
+              topoP[tMaxK] = q;
+              tMax = topoD[0];
+              tMaxK = 0;
+              for (let k = 1; k < K; k++) {
+                const v = topoD[k];
+                if (v > tMax) {
+                  tMax = v;
+                  tMaxK = k;
+                }
               }
-              topoD[k] = d2;
-              topoP[k] = q;
             }
           }
           if (oj !== 0) {
@@ -1122,7 +1144,8 @@ export class SuruSim implements FlockRenderSource {
               m = f;
             }
           }
-          if (m !== o && sum > 0) {
+          // a flock that is being encircled (cascading) cannot win birds back
+          if (m !== o && sum > 0 && this.flockCascading[m] === 0) {
             const share = wm / sum;
             if (share >= SURU.CONV_SHARE) {
               const lambda = SURU.CONV_RATE * (share - 0.5);
@@ -1171,8 +1194,8 @@ export class SuruSim implements FlockRenderSource {
       let maxSpeed: number;
       if (isF) {
         // follower: leader trail point at lag + slot offset rotated into the trail frame (§4.G.10)
-        const lag = lagTicks[o] * ((rank[i] + 0.5) / 65536);
-        const li = Math.floor(lag);
+        const lag = lagTicks[o] * ((rank[i] + 0.5) * (1 / 65536));
+        const li = lag | 0;
         const fr = lag - li;
         const tb = o * TL * 2;
         const i0 = tb + ((T - li) & TL_MASK) * 2;
@@ -1189,8 +1212,9 @@ export class SuruSim implements FlockRenderSource {
         const tvx = fx * HZ;
         const tvz = fz * HZ;
         if (fl > 1e-4) {
-          fx /= fl;
-          fz /= fl;
+          const ifl = 1 / fl;
+          fx *= ifl;
+          fz *= ifl;
         } else {
           fx = leaderHX[o];
           fz = leaderHZ[o];
@@ -1243,14 +1267,16 @@ export class SuruSim implements FlockRenderSource {
         az += (this.rStorm.next() - 0.5) * 2 * SURU.STORM_NUDGE * 3;
       }
       if (hawkDive) {
-        const hx = x - hkX;
-        const hz = z - hkZ;
-        const h2 = hx * hx + hz * hz;
-        if (h2 < 100 && h2 > 1e-4) {
-          const hd = Math.sqrt(h2);
-          const ww = (SURU.W_FLEE * 10 * (1 - hd / 10)) / hd;
-          ax += (hx - hz * 0.6) * ww;
-          az += (hz + hx * 0.6) * ww;
+        for (let k = 0; k < nDive; k++) {
+          const hx = x - hdx[k];
+          const hz = z - hdz[k];
+          const h2 = hx * hx + hz * hz;
+          if (h2 < 100 && h2 > 1e-4) {
+            const hd = Math.sqrt(h2);
+            const ww = (SURU.W_FLEE * 10 * (1 - hd / 10)) / hd;
+            ax += (hx - hz * 0.6) * ww;
+            az += (hz + hx * 0.6) * ww;
+          }
         }
       }
       {
@@ -1414,59 +1440,91 @@ export class SuruSim implements FlockRenderSource {
     return bc >= SURU.HAWK_MIN_FOLLOWERS ? best : 0;
   }
 
-  private edgeBird(f: number): number {
-    // follower farthest from its flock centroid (an exposed edge bird)
+  /** Exposed edge bird of flock f on the side `dir` (farthest along dir from the follower centroid). */
+  private edgeBird(f: number, dx0: number, dz0: number): number {
     const cx = this.cenX[f];
     const cz = this.cenZ[f];
     let best = -1;
-    let bd = -1;
+    let bd = -1e18;
     for (let i = 0; i < N; i++) {
       if (this.owner[i] !== f) continue;
       const dx = this.posX[i] - cx;
       const dz = this.posZ[i] - cz;
-      const d2 = dx * dx + dz * dz;
-      if (d2 > bd) {
-        bd = d2;
+      // farthest from the centroid, biased toward this hawk's side
+      const sc = dx * dx + dz * dz + 6 * (dx * dx0 + dz * dz0);
+      if (sc > bd) {
+        bd = sc;
         best = i;
       }
     }
     return best;
   }
 
+  /**
+   * Hawk waves: first arrival 0:40, then every 30 ± 5 s (§2). 1–3 hawks per wave (§4.G) — the count grows
+   * with the largest flock (≥ 220 → 2, ≥ 420 → 3); all target the largest flock from different sides.
+   */
   private updateHawk(T: number): void {
     if (!this.opts.hawks) return;
-    const hk = this.hawks[0];
     const warnTicks = Math.round(SURU.HAWK_WARN_SEC * HZ);
-    if (hk.phase === 0) {
-      if (T >= this.hawkNext) {
-        const f = this.largestFlock();
-        if (f === 0) {
-          this.hawkNext = T + 5 * HZ;
-          return;
+    let anyActive = false;
+    for (let k = 0; k < this.hawks.length; k++) if (this.hawks[k].phase !== 0) anyActive = true;
+    if (!anyActive && T >= this.hawkNext) {
+      const f = this.largestFlock();
+      if (f === 0) {
+        this.hawkNext = T + 5 * HZ;
+      } else {
+        const n = this.flockCountArr[f];
+        const count = 1 + (n >= SURU.HAWK_2_AT ? 1 : 0) + (n >= SURU.HAWK_3_AT ? 1 : 0);
+        for (let k = 0; k < count; k++) {
+          const hk = this.hawks[k];
+          hk.phase = 4; // scheduled
+          hk.phaseTick = T + k * SURU.HAWK_STAGGER_TICKS;
+          hk.targetFlock = f;
         }
-        hk.phase = 1;
-        hk.phaseTick = T;
-        hk.targetFlock = f;
-        this.hawkTargetBird = this.edgeBird(f);
-        const b = this.hawkTargetBird;
-        // the hawk circles high above; its shadow on the water is the warning
-        hk.x = b >= 0 ? this.posX[b] : this.leaderX[f];
-        hk.z = b >= 0 ? this.posZ[b] : this.leaderZ[f];
-        hk.prevX = hk.x;
-        hk.prevZ = hk.z;
-        this.events.push({ type: 'hawkWarn', tick: T, hawk: 0, target: f, x: hk.x, z: hk.z });
       }
+    }
+    for (let k = 0; k < this.hawks.length; k++) this.updateOneHawk(T, k, warnTicks);
+  }
+
+  private updateOneHawk(T: number, k: number, warnTicks: number): void {
+    const hk = this.hawks[k];
+    if (hk.phase === 0) return;
+    const f = hk.targetFlock;
+    if (hk.phase === 4) {
+      if (T < hk.phaseTick) return;
+      if (!this.flockAlive[f] || this.flockCountArr[f] === 0) {
+        hk.phase = 0;
+        return;
+      }
+      // side of attack: behind the flock, rotated 120° per hawk
+      const a = DET_PI + (k * DET_TAU) / 3;
+      const c = detCos(a);
+      const s = detSin(a);
+      const hx = this.leaderHX[f];
+      const hz = this.leaderHZ[f];
+      this.hawkSideX[k] = hx * c - hz * s;
+      this.hawkSideZ[k] = hx * s + hz * c;
+      this.hawkTarget[k] = this.edgeBird(f, this.hawkSideX[k], this.hawkSideZ[k]);
+      const b = this.hawkTarget[k];
+      hk.phase = 1;
+      hk.phaseTick = T;
+      // the hawk circles high above; its shadow on the water is the warning
+      hk.x = b >= 0 ? this.posX[b] : this.leaderX[f];
+      hk.z = b >= 0 ? this.posZ[b] : this.leaderZ[f];
+      hk.prevX = hk.x;
+      hk.prevZ = hk.z;
+      this.events.push({ type: 'hawkWarn', tick: T, hawk: k, target: f, x: hk.x, z: hk.z });
       return;
     }
-    const f = hk.targetFlock;
     if (hk.phase === 1) {
       if (!this.flockAlive[f] || this.flockCountArr[f] === 0) {
         hk.phase = 3;
         hk.phaseTick = T;
         return;
       }
-      if ((T - hk.phaseTick) % 6 === 0) this.hawkTargetBird = this.edgeBird(f);
-      const b = this.hawkTargetBird;
+      if ((T - hk.phaseTick) % 6 === 0) this.hawkTarget[k] = this.edgeBird(f, this.hawkSideX[k], this.hawkSideZ[k]);
+      const b = this.hawkTarget[k];
       if (b >= 0) {
         // shadow glides toward the predicted strike point
         const tx = this.posX[b] + this.velX[b] * 0.6;
@@ -1477,23 +1535,23 @@ export class SuruSim implements FlockRenderSource {
       if (T - hk.phaseTick >= warnTicks) {
         hk.phase = 2;
         hk.phaseTick = T;
-        this.hawkDiveTick = T;
+        if (k === 0) this.hawkDiveTick = T;
         const back = 46;
-        this.hawkDirX = this.leaderHX[f];
-        this.hawkDirZ = this.leaderHZ[f];
-        hk.x -= this.hawkDirX * back;
-        hk.z -= this.hawkDirZ * back;
+        this.hawkDirX[k] = -this.hawkSideX[k];
+        this.hawkDirZ[k] = -this.hawkSideZ[k];
+        hk.x -= this.hawkDirX[k] * back;
+        hk.z -= this.hawkDirZ[k] * back;
         hk.prevX = hk.x;
         hk.prevZ = hk.z;
-        this.events.push({ type: 'hawkDive', tick: T, hawk: 0, target: f, x: hk.x, z: hk.z });
+        this.events.push({ type: 'hawkDive', tick: T, hawk: k, target: f, x: hk.x, z: hk.z });
       }
       return;
     }
     if (hk.phase === 2) {
-      let b = this.hawkTargetBird;
+      let b = this.hawkTarget[k];
       if (b < 0 || this.owner[b] !== f) {
-        b = this.edgeBird(f);
-        this.hawkTargetBird = b;
+        b = this.edgeBird(f, this.hawkSideX[k], this.hawkSideZ[k]);
+        this.hawkTarget[k] = b;
       }
       let strike = T - hk.phaseTick >= SURU.HAWK_MAX_DIVE_SEC * HZ || b < 0;
       if (b >= 0) {
@@ -1514,31 +1572,33 @@ export class SuruSim implements FlockRenderSource {
           dz /= d;
           hk.x += dx * step;
           hk.z += dz * step;
-          this.hawkDirX = dx;
-          this.hawkDirZ = dz;
+          this.hawkDirX[k] = dx;
+          this.hawkDirZ[k] = dz;
         }
       }
       if (strike) {
-        if (this.flockAlive[f] && this.flockCountArr[f] > 0) this.hawkScatter(T, f);
+        if (this.flockAlive[f] && this.flockCountArr[f] > 0) this.hawkScatter(T, f, k);
         hk.phase = 3;
         hk.phaseTick = T;
       }
       return;
     }
     // phase 3: leaving
-    hk.x += this.hawkDirX * SURU.HAWK_SPEED * 0.8 * DT;
-    hk.z += this.hawkDirZ * SURU.HAWK_SPEED * 0.8 * DT;
+    hk.x += this.hawkDirX[k] * SURU.HAWK_SPEED * 0.8 * DT;
+    hk.z += this.hawkDirZ[k] * SURU.HAWK_SPEED * 0.8 * DT;
     if (T - hk.phaseTick >= 2 * HZ) {
       hk.phase = 0;
       hk.phaseTick = T;
-      // next arrival 30 ± 5 s after this dive; hawkNext is the warning start (2 s earlier)
-      const gap = Math.round(this.rHawk.range(SURU.HAWK_EVERY_SEC - SURU.HAWK_JITTER_SEC, SURU.HAWK_EVERY_SEC + SURU.HAWK_JITTER_SEC) * HZ);
-      this.hawkNext = Math.max(T + 1, this.hawkDiveTick + gap - warnTicks);
+      if (k === 0) {
+        // next wave arrives 30 ± 5 s after this dive; hawkNext is the first warning (2 s earlier)
+        const gap = Math.round(this.rHawk.range(SURU.HAWK_EVERY_SEC - SURU.HAWK_JITTER_SEC, SURU.HAWK_EVERY_SEC + SURU.HAWK_JITTER_SEC) * HZ);
+        this.hawkNext = Math.max(T + 1, this.hawkDiveTick + gap - warnTicks);
+      }
     }
   }
 
-  private hawkScatter(T: number, f: number): void {
-    const hk = this.hawks[0];
+  private hawkScatter(T: number, f: number, k: number): void {
+    const hk = this.hawks[k];
     const n = this.flockCountArr[f];
     let frac = this.rHawk.range(SURU.HAWK_FRAC_MIN, SURU.HAWK_FRAC_MAX);
     if (this.flockMode[f] === 1) frac *= SURU.HAWK_TIGHT_MUL; // "Sıkı Dizi" halves the scatter (counter-play)
@@ -1560,8 +1620,8 @@ export class SuruSim implements FlockRenderSource {
     let oz = hk.z - this.cenZ[f];
     let ol = Math.sqrt(ox * ox + oz * oz);
     if (ol < 1e-3) {
-      ox = this.hawkDirX;
-      oz = this.hawkDirZ;
+      ox = this.hawkDirX[k];
+      oz = this.hawkDirZ[k];
       ol = 1;
     }
     ox /= ol;
@@ -1577,8 +1637,8 @@ export class SuruSim implements FlockRenderSource {
     const g = this.allocGroup(ax, az, T + Math.round(SURU.SCATTER_IMMUNE_SEC * HZ));
     let sx = 0;
     let sz = 0;
-    for (let k = 0; k < count; k++) {
-      const i = sub[k] % 2048;
+    for (let q = 0; q < count; q++) {
+      const i = sub[q] % 2048;
       this.owner[i] = 0;
       this.group[i] = g;
       this.lastConv[i] = T > 0 ? T : 1;
@@ -1594,7 +1654,7 @@ export class SuruSim implements FlockRenderSource {
       sx += this.posX[i];
       sz += this.posZ[i];
     }
-    this.events.push({ type: 'hawkScatter', tick: T, hawk: 0, flock: f, count, x: sx / count, z: sz / count });
+    this.events.push({ type: 'hawkScatter', tick: T, hawk: k, flock: f, count, x: sx / count, z: sz / count });
   }
 
   // ======================================================================================
@@ -2181,7 +2241,8 @@ export class SuruSim implements FlockRenderSource {
       }
       grid[c] = best;
     }
-    const hk = this.hawks[0];
+    const hawks: { x: number; z: number; phase: number; target: number }[] = [];
+    for (const hk of this.hawks) if (hk.phase > 0 && hk.phase < 4) hawks.push({ x: hk.x, z: hk.z, phase: hk.phase, target: hk.targetFlock });
     return {
       tick: this.tick,
       timeSec: this.timeSec,
@@ -2189,7 +2250,7 @@ export class SuruSim implements FlockRenderSource {
       ringActive: this.ringActive,
       flocks,
       ownerGrid: grid,
-      hawks: hk.phase > 0 ? [{ x: hk.x, z: hk.z, phase: hk.phase, target: hk.targetFlock }] : [],
+      hawks,
       storm: { active: this.storm.active, x: this.storm.x, z: this.storm.z, radius: this.storm.radius },
       gust: { phase: this.gust.phase, dirX: this.gust.dirX, dirZ: this.gust.dirZ, offset: this.gust.offset, width: this.gust.width },
       hash: this.hashState(),

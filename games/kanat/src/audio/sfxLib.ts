@@ -11,9 +11,11 @@ import {
   bellInto,
   bump,
   clamp,
+  decimate2,
   envAD,
   expMap,
   fadeEdges,
+  fsin,
   karplus,
   makePcm,
   makeSeamless,
@@ -163,8 +165,9 @@ function addTone(out: F32, start: number, dur: number, freq: (t: number) => numb
     let v = 0;
     for (let k = 0; k < partials.length; k++) {
       const fk = f * (k + 1);
-      if (fk < SR * 0.45) v += partials[k] * Math.sin(ph[k]);
+      if (fk < SR * 0.45 && partials[k] !== 0) v += partials[k] * fsin(ph[k]);
       ph[k] += (TAU * fk) / SR;
+      if (ph[k] > TAU) ph[k] -= TAU;
     }
     out[s0 + i] += v * e * gain;
   }
@@ -212,8 +215,9 @@ function sine(out: F32, start: number, dur: number, f0: number, f1: number, env:
   for (let i = 0; i < len; i++) {
     const u = i / len;
     const f = expMap(f0, f1, u);
-    out[s0 + i] += Math.sin(ph) * env(i / SR) * gain;
+    out[s0 + i] += fsin(ph) * env(i / SR) * gain;
     ph += (TAU * f) / SR;
+    if (ph > TAU) ph -= TAU;
   }
 }
 
@@ -234,6 +238,11 @@ function seamless(sec: number, fade: number, fill: (out: F32) => void): Pcm {
   return makeSeamless(p, fade);
 }
 
+/** Halve the rate of dark/long material (memory), keep peak normalization. */
+function half(p: Pcm, loop = false): Pcm {
+  return normalizePeak(decimate2(p, loop), -3);
+}
+
 const BELL_RATIOS = [1, 2.0, 2.76, 4.07, 5.4];
 const BELL_AMPS = [1, 0.35, 0.5, 0.2, 0.15];
 
@@ -247,7 +256,7 @@ function wingsOpen(r: Rng): Pcm {
   addNoise(o, r, 0, 0.4, 'pink', { type: 'lp', f0: 420, q: 0.7 }, (t) => envAD(t, 0.01, 0.12), 0.9);
   sine(o, 0, 0.25, 88, 52, (t) => envAD(t, 0.003, 0.07), 0.7);
   addNoise(o, r, 0.03, 0.5, 'white', { type: 'bp', f0: 900, q: 1.5 }, (t) => {
-    const f = 0.5 + 0.5 * Math.sin(TAU * 28 * t);
+    const f = 0.5 + 0.5 * fsin(TAU * 28 * t);
     return f * f * Math.exp(-t / 0.12);
   }, 0.45);
   return finish(p);
@@ -287,7 +296,7 @@ function graze(r: Rng): Pcm {
     o[i] += x * envAD(t, 0.004, 0.12) * (0.55 + 0.6 * crack);
   }
   // Whistle.
-  addTone(o, 0.01, 0.6, (t) => expMap(2900, 1500, clamp(t / 0.45, 0, 1)) * (1 + 0.015 * Math.sin(TAU * 9 * t)), [1, 0.12], (t) => envAD(t, 0.02, 0.18), 0.28, r);
+  addTone(o, 0.01, 0.6, (t) => expMap(2900, 1500, clamp(t / 0.45, 0, 1)) * (1 + 0.015 * fsin(TAU * 9 * t)), [1, 0.12], (t) => envAD(t, 0.02, 0.18), 0.28, r);
   // Pressure thump.
   sine(o, 0, 0.12, 72, 45, (t) => envAD(t, 0.002, 0.04), 0.35);
   return finish(p);
@@ -381,8 +390,8 @@ function thermalHum(r: Rng): Pcm {
   for (let i = 0; i < o.length; i++) {
     const t = i / SR;
     let v = 0;
-    for (const [f, a] of parts) v += a * Math.sin(TAU * f * t);
-    o[i] += v * (0.85 + 0.15 * Math.sin(TAU * 0.5 * t));
+    for (const [f, a] of parts) v += a * fsin(TAU * f * t);
+    o[i] += v * (0.85 + 0.15 * fsin(TAU * 0.5 * t));
   }
   return normalizePeak(p, -3);
 }
@@ -522,7 +531,7 @@ function collisionBeep(r: Rng): Pcm {
 
 function halfFlight(r: Rng): Pcm {
   const p = mono(1.0);
-  addTone(p.ch[0], 0, 1.0, (t) => expMap(660, 440, clamp(t / 0.7, 0, 1)) * (1 + 0.006 * Math.sin(TAU * 5 * t)), [1, 0.2, 0.05], (t) => envAD(t, 0.03, 0.32), 0.7, r);
+  addTone(p.ch[0], 0, 1.0, (t) => expMap(660, 440, clamp(t / 0.7, 0, 1)) * (1 + 0.006 * fsin(TAU * 5 * t)), [1, 0.2, 0.05], (t) => envAD(t, 0.03, 0.32), 0.7, r);
   fadeEdges(p, 0.001, 0.05);
   return normalizePeak(bakeReverb(p, 0.3, 1.5, 0.6), -3);
 }
@@ -606,7 +615,7 @@ function murmur(r: Rng): Pcm {
   for (let i = 0; i < o.length; i++) {
     const t = i / SR;
     let am = 0;
-    for (let k = 0; k < fq.length; k++) am += Math.sin(TAU * fq[k] * t + ph[k]);
+    for (let k = 0; k < fq.length; k++) am += fsin(TAU * fq[k] * t + ph[k]);
     o[i] *= 1 + 0.12 * am;
   }
   const flaps = makePcm(sec, 1);
@@ -635,7 +644,7 @@ function convertTicks(r: Rng): Pcm {
     const s0 = Math.round(t0 * SR);
     for (let i = 0; i < tmp.ch[0].length && s0 + i < p.ch[0].length; i++) {
       p.ch[0][s0 + i] += tmp.ch[0][i] * Math.cos(a);
-      p.ch[1][s0 + i] += tmp.ch[0][i] * Math.sin(a);
+      p.ch[1][s0 + i] += tmp.ch[0][i] * fsin(a);
     }
   }
   return finish(p, 0.0005, 0.02);
@@ -674,7 +683,7 @@ function hawkWhistle(r: Rng): Pcm {
   const o = p.ch[0];
   const fc = (t: number) => {
     const base = t < 0.1 ? expMap(2900, 3200, t / 0.1) : expMap(3200, 2100, clamp((t - 0.1) / 0.7, 0, 1));
-    return base * (1 + 0.018 * Math.sin(TAU * 24 * t));
+    return base * (1 + 0.018 * fsin(TAU * 24 * t));
   };
   const env: Env = (t) => (t < 0.03 ? t / 0.03 : t < 0.55 ? 1 : Math.max(0, 1 - (t - 0.55) / 0.35));
   addTone(o, 0, 0.95, fc, [1, 0.3, 0.1], env, 0.7, r);
@@ -710,7 +719,7 @@ function storm(r: Rng): Pcm {
   const o = p.ch[0];
   for (let i = 0; i < o.length; i++) {
     const t = i / SR;
-    o[i] *= 0.8 + 0.2 * Math.sin(TAU * 0.5 * t) * Math.sin((TAU * t) / 6);
+    o[i] *= 0.8 + 0.2 * fsin(TAU * 0.5 * t) * fsin((TAU * t) / 6);
   }
   return normalizePeak(p, -3);
 }
@@ -757,7 +766,7 @@ function gull(r: Rng, variant: 1 | 2): Pcm {
     addTone(o, start, len, (t) => {
       const u = t / len;
       const f = u < 0.15 ? expMap(f0, fPeak, u / 0.15) : expMap(fPeak, fEnd, (u - 0.15) / 0.85);
-      return f * (1 + 0.02 * Math.sin(TAU * 13 * t));
+      return f * (1 + 0.02 * fsin(TAU * 13 * t));
     }, [1, 0.55, 0.32, 0.18, 0.1], (t) => bump(t, len), 0.4, r);
     addNoise(o, r, start, len, 'white', { type: 'bp', f0: fPeak * 1.5, q: 2 }, (t) => bump(t, len), 0.06);
   };
@@ -813,7 +822,7 @@ function trickle(r: Rng): Pcm {
         for (let i = 0; i < Math.round(len * SR) && s0 + i < o.length; i++) {
           const tt = i / SR;
           const f = f0 * (1 + (2.2 * tt) / len);
-          o[s0 + i] += Math.sin(ph) * Math.exp(-tt / (len * 0.4)) * a;
+          o[s0 + i] += fsin(ph) * Math.exp(-tt / (len * 0.4)) * a;
           ph += (TAU * f) / SR;
         }
       }
@@ -823,14 +832,19 @@ function trickle(r: Rng): Pcm {
 }
 
 function roundEnd(r: Rng): Pcm {
-  const p = mono(2.6);
+  const p = mono(2.2);
   const o = p.ch[0];
   [53, 57, 60, 65, 69].forEach((m, k) => {
-    addTone(o, k * 0.03, 2.5, () => midiToHz(m), [1, 0.3, 0.12, 0.05], (t) => (t < 0.35 ? t / 0.35 : Math.exp(-(t - 0.35) / 0.7)), 0.3, r);
+    bellInto(o, midiToHz(m), [1, 2, 3], [1, 0.3, 0.1], [0.9, 0.5, 0.3], Math.round(k * 0.03 * SR), 0.3, r);
   });
+  // Slow swell over the struck chord.
+  for (let i = 0; i < o.length; i++) {
+    const t = i / SR;
+    o[i] *= t < 0.3 ? 0.55 + 0.45 * (t / 0.3) : 1;
+  }
   bellInto(o, midiToHz(84), BELL_RATIOS, BELL_AMPS, [0.8, 0.5, 0.35, 0.2, 0.12], Math.round(0.05 * SR), 0.2, r);
   fadeEdges(p, 0.002, 0.2);
-  return normalizePeak(bakeReverb(p, 0.35, 2.2, 1.2), -3);
+  return normalizePeak(bakeReverb(p, 0.35, 2.2, 1.0), -3);
 }
 
 function eliminated(r: Rng): Pcm {
@@ -853,61 +867,61 @@ function breathEmpty(r: Rng): Pcm {
 // Table
 
 export const SFX: Readonly<Record<SfxId, SfxDef>> = {
-  wingsOpen: { gen: wingsOpen, bus: 'sfx', db: -6, prio: 3 },
-  jump: { gen: jump, bus: 'sfx', db: -10, prio: 2 },
-  graze: { gen: graze, bus: 'sfx', db: -5, prio: 3 },
-  flyRock: { gen: (r) => flyBy(r, 'rock'), bus: 'amb', db: -6, prio: 2 },
-  flyTree: { gen: (r) => flyBy(r, 'tree'), bus: 'amb', db: -7, prio: 2 },
-  flyWater: { gen: (r) => flyBy(r, 'water'), bus: 'amb', db: -7, prio: 2 },
-  mult1: { gen: (r) => multTone(r, 72), bus: 'sfx', db: -12, prio: 2 },
-  mult2: { gen: (r) => multTone(r, 76), bus: 'sfx', db: -12, prio: 2 },
-  mult3: { gen: (r) => multTone(r, 79), bus: 'sfx', db: -12, prio: 2 },
-  mult5: { gen: (r) => multTone(r, 84), bus: 'sfx', db: -11, prio: 3 },
-  comboBreak: { gen: comboBreak, bus: 'sfx', db: -13, prio: 2 },
-  gateChime: { gen: gateChime, bus: 'sfx', db: -9, prio: 3 },
-  gateMiss: { gen: gateMiss, bus: 'sfx', db: -16, prio: 1 },
-  thermalHum: { gen: thermalHum, bus: 'amb', db: -13, loop: true, prio: 2 },
-  burner: { gen: (r) => burner(r, false), bus: 'sfx', db: -8, prio: 3 },
-  burnerFar: { gen: (r) => burner(r, true), bus: 'amb', db: -18, prio: 1 },
-  warmChime: { gen: warmChime, bus: 'sfx', db: -11, prio: 3 },
-  parachutePat: { gen: parachutePat, bus: 'sfx', db: -6, prio: 3 },
-  silkRustle: { gen: silkRustle, bus: 'sfx', db: -12, prio: 2 },
-  landThud: { gen: landThud, bus: 'sfx', db: -6, prio: 3 },
-  landSoft: { gen: landSoft, bus: 'sfx', db: -9, prio: 3 },
-  starTok: { gen: starTok, bus: 'ui', db: -5, prio: 3 },
-  crashVumf: { gen: crashVumf, bus: 'sfx', db: -5, prio: 4 },
-  bounceScrape: { gen: bounceScrape, bus: 'sfx', db: -8, prio: 3 },
-  bounceWater: { gen: bounceWater, bus: 'sfx', db: -9, prio: 3 },
-  landingCue: { gen: landingCue, bus: 'sfx', db: -15, prio: 2 },
-  collisionBeep: { gen: collisionBeep, bus: 'sfx', db: -14, prio: 3 },
-  halfFlight: { gen: halfFlight, bus: 'sfx', db: -14, prio: 2 },
-  uiTap: { gen: uiTap, bus: 'ui', db: -16, prio: 1 },
-  uiSwish: { gen: uiSwish, bus: 'ui', db: -18, prio: 1 },
-  uiConfirm: { gen: (r) => twoNotes(r, 79, 84, 0.07, 0.12, 0.45), bus: 'ui', db: -14, prio: 2 },
-  uiBack: { gen: (r) => twoNotes(r, 76, 72, 0.06, 0.09, 0.35), bus: 'ui', db: -16, prio: 2 },
-  uiToggle: { gen: uiToggle, bus: 'ui', db: -17, prio: 1 },
-  tallyTick: { gen: tallyTick, bus: 'ui', db: -19, prio: 1 },
-  tallyEnd: { gen: tallyEnd, bus: 'ui', db: -13, prio: 2 },
-  reward: { gen: reward, bus: 'ui', db: -12, prio: 2 },
-  photoShutter: { gen: photoShutter, bus: 'ui', db: -12, prio: 2 },
-  murmur: { gen: murmur, bus: 'amb', db: -10, loop: true, prio: 3 },
-  joinFlutter: { gen: joinFlutter, bus: 'sfx', db: -13, prio: 1 },
-  convertTicks: { gen: convertTicks, bus: 'sfx', db: -14, prio: 2 },
-  kusatmaRise: { gen: kusatmaRise, bus: 'sfx', db: -8, prio: 3 },
-  kusatmaChord: { gen: kusatmaChord, bus: 'sfx', db: -6, prio: 4 },
-  hawkWhistle: { gen: hawkWhistle, bus: 'sfx', db: -12, prio: 3 },
-  gustWhoosh: { gen: gustWhoosh, bus: 'amb', db: -9, prio: 2 },
-  storm: { gen: storm, bus: 'amb', db: -12, loop: true, prio: 2 },
-  rain: { gen: rain, bus: 'amb', db: -20, loop: true, prio: 1 },
-  thunder: { gen: thunder, bus: 'amb', db: -10, prio: 2 },
-  sunsetBell: { gen: sunsetBell, bus: 'sfx', db: -9, prio: 3 },
-  gull1: { gen: (r) => gull(r, 1), bus: 'amb', db: -22, prio: 0 },
-  gull2: { gen: (r) => gull(r, 2), bus: 'amb', db: -22, prio: 0 },
-  waves: { gen: waves, bus: 'amb', db: -17, loop: true, prio: 1 },
-  trickle: { gen: trickle, bus: 'amb', db: -24, loop: true, prio: 1 },
-  roundEnd: { gen: roundEnd, bus: 'sfx', db: -9, prio: 3 },
-  eliminated: { gen: eliminated, bus: 'sfx', db: -12, prio: 2 },
-  breathEmpty: { gen: breathEmpty, bus: 'sfx', db: -16, prio: 1 },
+  wingsOpen: { gen: wingsOpen, bus: 'sfx', db: 5, prio: 3 },
+  jump: { gen: jump, bus: 'sfx', db: -3, prio: 2 },
+  graze: { gen: graze, bus: 'sfx', db: 4, prio: 3 },
+  flyRock: { gen: (r) => flyBy(r, 'rock'), bus: 'amb', db: 3, prio: 2 },
+  flyTree: { gen: (r) => flyBy(r, 'tree'), bus: 'amb', db: 2, prio: 2 },
+  flyWater: { gen: (r) => flyBy(r, 'water'), bus: 'amb', db: 2, prio: 2 },
+  mult1: { gen: (r) => multTone(r, 72), bus: 'sfx', db: -4, prio: 2 },
+  mult2: { gen: (r) => multTone(r, 76), bus: 'sfx', db: -3, prio: 2 },
+  mult3: { gen: (r) => multTone(r, 79), bus: 'sfx', db: -3, prio: 2 },
+  mult5: { gen: (r) => multTone(r, 84), bus: 'sfx', db: -2, prio: 3 },
+  comboBreak: { gen: comboBreak, bus: 'sfx', db: -5, prio: 2 },
+  gateChime: { gen: gateChime, bus: 'sfx', db: -2, prio: 3 },
+  gateMiss: { gen: gateMiss, bus: 'sfx', db: -9, prio: 1 },
+  thermalHum: { gen: (r) => half(thermalHum(r), true), bus: 'amb', db: -9, loop: true, prio: 2 },
+  burner: { gen: (r) => burner(r, false), bus: 'sfx', db: 0, prio: 3 },
+  burnerFar: { gen: (r) => half(burner(r, true)), bus: 'amb', db: -12, prio: 1 },
+  warmChime: { gen: warmChime, bus: 'sfx', db: -4, prio: 3 },
+  parachutePat: { gen: parachutePat, bus: 'sfx', db: 6, prio: 3 },
+  silkRustle: { gen: silkRustle, bus: 'sfx', db: -4, prio: 2 },
+  landThud: { gen: landThud, bus: 'sfx', db: 2, prio: 3 },
+  landSoft: { gen: landSoft, bus: 'sfx', db: -2, prio: 3 },
+  starTok: { gen: starTok, bus: 'ui', db: 6, prio: 3 },
+  crashVumf: { gen: (r) => half(crashVumf(r)), bus: 'sfx', db: 1, prio: 4 },
+  bounceScrape: { gen: bounceScrape, bus: 'sfx', db: 3, prio: 3 },
+  bounceWater: { gen: bounceWater, bus: 'sfx', db: 1, prio: 3 },
+  landingCue: { gen: landingCue, bus: 'sfx', db: -10, prio: 2 },
+  collisionBeep: { gen: collisionBeep, bus: 'sfx', db: -6, prio: 3 },
+  halfFlight: { gen: halfFlight, bus: 'sfx', db: -7, prio: 2 },
+  uiTap: { gen: uiTap, bus: 'ui', db: -7, prio: 1 },
+  uiSwish: { gen: uiSwish, bus: 'ui', db: -12, prio: 1 },
+  uiConfirm: { gen: (r) => twoNotes(r, 79, 84, 0.07, 0.12, 0.45), bus: 'ui', db: -8, prio: 2 },
+  uiBack: { gen: (r) => twoNotes(r, 76, 72, 0.06, 0.09, 0.35), bus: 'ui', db: -10, prio: 2 },
+  uiToggle: { gen: uiToggle, bus: 'ui', db: -9, prio: 1 },
+  tallyTick: { gen: tallyTick, bus: 'ui', db: -11, prio: 1 },
+  tallyEnd: { gen: tallyEnd, bus: 'ui', db: -6, prio: 2 },
+  reward: { gen: reward, bus: 'ui', db: -6, prio: 2 },
+  photoShutter: { gen: photoShutter, bus: 'ui', db: -5, prio: 2 },
+  murmur: { gen: (r) => half(murmur(r), true), bus: 'amb', db: -9, loop: true, prio: 3 },
+  joinFlutter: { gen: joinFlutter, bus: 'sfx', db: -6, prio: 1 },
+  convertTicks: { gen: convertTicks, bus: 'sfx', db: -7, prio: 2 },
+  kusatmaRise: { gen: kusatmaRise, bus: 'sfx', db: -1, prio: 3 },
+  kusatmaChord: { gen: (r) => half(kusatmaChord(r)), bus: 'sfx', db: 0, prio: 4 },
+  hawkWhistle: { gen: hawkWhistle, bus: 'sfx', db: -10, prio: 3 },
+  gustWhoosh: { gen: (r) => half(gustWhoosh(r)), bus: 'amb', db: -3, prio: 2 },
+  storm: { gen: (r) => half(storm(r), true), bus: 'amb', db: -12, loop: true, prio: 2 },
+  rain: { gen: (r) => half(rain(r), true), bus: 'amb', db: -17, loop: true, prio: 1 },
+  thunder: { gen: (r) => half(thunder(r)), bus: 'amb', db: -5, prio: 2 },
+  sunsetBell: { gen: (r) => half(sunsetBell(r)), bus: 'sfx', db: -5, prio: 3 },
+  gull1: { gen: (r) => gull(r, 1), bus: 'amb', db: -16, prio: 0 },
+  gull2: { gen: (r) => gull(r, 2), bus: 'amb', db: -16, prio: 0 },
+  waves: { gen: (r) => half(waves(r), true), bus: 'amb', db: -13, loop: true, prio: 1 },
+  trickle: { gen: (r) => half(trickle(r), true), bus: 'amb', db: -20, loop: true, prio: 1 },
+  roundEnd: { gen: (r) => half(roundEnd(r)), bus: 'sfx', db: -4, prio: 3 },
+  eliminated: { gen: eliminated, bus: 'sfx', db: -6, prio: 2 },
+  breathEmpty: { gen: breathEmpty, bus: 'sfx', db: -9, prio: 1 },
 };
 
 export const SFX_IDS = Object.keys(SFX) as SfxId[];
@@ -931,15 +945,15 @@ export type NoiseLoopId = 'pinkLoop' | 'brownLoop' | 'whiteLoop';
 export function generateNoiseLoop(id: NoiseLoopId): Pcm {
   const r = new Rng(sfxSeed(id));
   const n = new Noise(r);
-  const sec = id === 'whiteLoop' ? 3 : 8;
+  const sec = id === 'whiteLoop' ? 3 : 6;
   const p = seamless(sec, 0.7, (o) => {
     for (let i = 0; i < o.length; i++) o[i] = id === 'pinkLoop' ? n.pink() : id === 'brownLoop' ? n.brown() : n.white() * 0.5;
   });
-  // Remove DC (brown noise wanders) then normalize.
+  // Remove DC (brown noise wanders), halve the rate (wind tops out at 6 kHz), normalize.
   const o = p.ch[0];
   let mean = 0;
   for (let i = 0; i < o.length; i++) mean += o[i];
   mean /= o.length;
   for (let i = 0; i < o.length; i++) o[i] -= mean;
-  return normalizePeak(p, -3);
+  return half(p, true);
 }

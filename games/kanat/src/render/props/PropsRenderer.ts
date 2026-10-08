@@ -1,7 +1,8 @@
 // Props renderer: fairy chimneys, balloons, trees (+octahedral impostors), world-specific props, waterfalls.
 // All collidable props exist on every tier; tiers only change LOD/impostor distances and shader detail (§4.G.4, §5.G).
 // Visuals are fitted to the sim's collision primitives (±0.4 m); balloon positions come from the sim's balloonPos().
-import { Group, Vector3 } from 'three';
+import { Group } from 'three';
+import type { Vector3 } from 'three';
 import type { Camera, Object3D, WebGLRenderer } from 'three';
 import type { QualityTier } from '../../core/settings.ts';
 import type { BalloonDef, PropInstance, WorldId } from '../../sim/types.ts';
@@ -24,6 +25,24 @@ export interface PropsExtras {
   renderer?: WebGLRenderer;
   /** Sun direction (unit, toward the sun) used for impostor baking / pre-lighting. */
   sunDir?: [number, number, number];
+}
+
+/** Sim 'waterfall' instance (pos = top lip, params width/height, flow = local +z) → ribbon definition. */
+export function waterfallFromInstance(w: PropInstance, sampler: TerrainSampler | null): WaterfallDef {
+  const width = w.params?.width ?? 10;
+  const height = w.params?.height ?? 40;
+  const dx = Math.sin(w.yaw), dz = Math.cos(w.yaw);
+  const top: [number, number, number] = [w.pos[0], w.pos[1], w.pos[2]];
+  let throwD = Math.min(8, height * 0.12);
+  let by = top[1] - height;
+  if (sampler) {
+    // walk downstream until the terrain has dropped by the fall height → plunge point
+    for (let d = 2; d <= 120; d += 2) {
+      const h = sampler.height(top[0] + dx * d, top[2] + dz * d);
+      if (h <= top[1] - height * 0.92) { throwD = d; by = h; break; }
+    }
+  }
+  return { top, bottom: [top[0] + dx * throwD, by, top[2] + dz * throwD], width };
 }
 
 export interface PropsPerf {
@@ -103,9 +122,11 @@ export class PropsRenderer {
       this.misc = new MiscLayer(this.group, this.cfg, worldId);
       this.misc.build(misc, sampler);
     }
-    if (extras.waterfalls && extras.waterfalls.length > 0) {
+    const falls: WaterfallDef[] = [...(extras.waterfalls ?? [])];
+    for (const w of byType.get('waterfall') ?? []) falls.push(waterfallFromInstance(w, sampler));
+    if (falls.length > 0) {
       this.waterfalls = new WaterfallLayer(this.group, this.cfg);
-      this.waterfalls.build(extras.waterfalls);
+      this.waterfalls.build(falls);
     }
   }
 

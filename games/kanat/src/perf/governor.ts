@@ -55,6 +55,9 @@ export class Governor {
   private readonly intervals = new SlidingWindow(180);
   private readonly cpu = new SlidingWindow(180);
   private readonly costs = new SlidingWindow(30);
+  /** Short windows (~0.5–1 s) so the LPM cap is recognised before the 2 s emergency rule fires. */
+  private readonly recent = new SlidingWindow(30);
+  private readonly recentCpu = new SlidingWindow(30);
   private readonly pOut = new Float64Array(3);
   p10 = NaN;
   p50 = NaN;
@@ -66,6 +69,7 @@ export class Governor {
   private lastEval = -Infinity;
   private lastResChange = -Infinity;
   private lastResDown = -Infinity;
+  private pressureSince = -1;
   private overDropSince = -1;
   private emergSince = -1;
   private reliefApplied = false;
@@ -128,6 +132,7 @@ export class Governor {
   /** Ignore samples for a while (state transitions, shader warm-up, world streaming). */
   grace(nowMs: number, ms: number): void {
     this.graceUntil = Math.max(this.graceUntil, nowMs + ms);
+    this.pressureSince = -1;
     this.overDropSince = -1;
     this.emergSince = -1;
   }
@@ -142,6 +147,8 @@ export class Governor {
     if (nowMs < this.graceUntil) return;
     this.intervals.push(intervalMs);
     this.cpu.push(cpuMs);
+    this.recent.push(intervalMs);
+    this.recentCpu.push(cpuMs);
     if (!Number.isNaN(costMs)) this.costs.push(costMs);
     this.activeMsInTier += Math.min(intervalMs, 250);
     this.thermalSample(nowMs, Number.isNaN(costMs) ? -1 : costMs, cpuMs, intervalMs);
@@ -161,16 +168,22 @@ export class Governor {
     this.costP90 = this.costs.size >= 5 ? this.costs.percentile(0.9) : NaN;
 
     // iOS Low Power Mode trap: rAF capped at 30 Hz, steady 33 ms, little CPU work → a constraint,
-    // not a performance problem. Pace thresholds for 30 fps instead of dropping.
+    // not a performance problem. Pace thresholds for 30 fps instead of dropping. Judged on the short
+    // window (≤30 frames ≈ 1 s) so it wins the race against the 2 s emergency rule.
+    this.recent.percentiles(P, this.pOut);
+    const r10 = this.pOut[0];
+    const r90 = this.pOut[2];
     const lpm =
       targetMs < 20 &&
-      this.p50 >= 30.5 &&
-      this.p50 <= 36 &&
-      this.p90 - this.p10 <= 3 &&
-      this.cpuP90 <= 12 &&
+      this.recent.size >= 20 &&
+      r10 >= 30.5 &&
+      r90 <= 36 &&
+      r90 - r10 <= 3 &&
+      this.recentCpu.percentile(0.9) <= 12 &&
       (Number.isNaN(this.costP90) || this.costP90 <= 26);
     if (lpm !== this.constraint) {
       this.constraint = lpm;
+      this.pressureSince = -1;
       this.overDropSince = -1;
       this.emergSince = -1;
       this.emit({ type: 'constraint', active: lpm });
@@ -199,12 +212,15 @@ export class Governor {
       return;
     }
     if (this.p90 > target * 1.1) {
-      if (!this.atFloor) {
+      // debounce 1 s: single hitch bursts and the iOS 30 Hz cap (recognised within ~1 s) never cost resolution
+      if (this.pressureSince < 0) this.pressureSince = now;
+      if (now - this.pressureSince >= 1000 && !this.atFloor) {
         this.setMp(Math.max(this.mpFloor, this.mp * (1 - step)), now, 'pressure');
         this.lastResDown = now;
       }
       return;
     }
+    this.pressureSince = -1;
     // Headroom: all frames on time and the probed cost leaves ≥25 % margin. No probe data → no raise.
     const headroom =
       this.p90 <= target * 1.05 && !Number.isNaN(this.costP90) && this.costP90 < target * 0.75 && now - this.lastResDown >= 4000;
@@ -308,6 +324,7 @@ export class Governor {
     this.mp = reason === 'drop' || reason === 'emergency' ? hi : reason === 'raise' ? lo : (lo + hi) / 2;
     this.pendingDrop = false;
     this.reliefApplied = false;
+    this.pressureSince = -1;
     this.overDropSince = -1;
     this.emergSince = -1;
     this.raiseOkSince = -1;
@@ -319,6 +336,8 @@ export class Governor {
     this.intervals.clear();
     this.cpu.clear();
     this.costs.clear();
+    this.recent.clear();
+    this.recentCpu.clear();
     this.lastResChange = now;
     this.emit({ type: 'tier', from, to, reason });
     this.emit({ type: 'resolution', mp: this.mp, reason: 'tier' });

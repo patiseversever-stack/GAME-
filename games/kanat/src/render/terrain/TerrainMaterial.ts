@@ -30,6 +30,7 @@ uniform vec4 uCovCore;
 uniform vec4 uRoot;
 uniform vec4 uTFlags; // x skirt depth, y has splat, z detail D on, w patch lower
 uniform vec4 uSplatRule; // fallback splat rule params
+uniform vec4 uSplatRule2; // x bare-ground patch amount
 uniform mat4 uSplatMap; // semantic (flat, steep, mid, high) -> layer weights
 uniform float uSplatVar; // 1: redistribute layers 0/1 with low-frequency noise (pink / white tuff)
 varying vec3 vRel;
@@ -37,6 +38,9 @@ varying vec3 vNormal;
 varying vec4 vSplat;
 varying vec3 vTerr; // x morph k, y lod, z skirt
 varying float vRock;
+varying vec2 vShadow;
+uniform sampler2D uShadowAo;
+uniform vec4 uHasV;
 ${TERRAIN_GLSL}
 #include <fog_pars_vertex>
 ${ATMOSPHERE_GLSL}
@@ -90,6 +94,11 @@ void main() {
     float var = kValueNoise( xz / 41.0 );
     vec4 sem = vec4( ( 1.0 - steep - mid ) * ( 1.0 - high ), steep, mid * ( 1.0 - high ), ( 1.0 - steep ) * high );
     sem = max( sem, vec4( 0.0 ) );
+    // Bare-ground patches on flats/mid slopes (breaks large uniform vegetation fields).
+    float bare = smoothstep( 0.5, 0.78, kValueNoise( xz / 27.0 ) * 0.7 + kValueNoise( xz / 9.0 ) * 0.3 ) * uSplatRule2.x;
+    sem.y += ( sem.x + sem.z ) * bare;
+    sem.x *= 1.0 - bare;
+    sem.z *= 1.0 - bare;
     vec4 w = uSplatMap * sem;
     // Low-frequency variation between the first two layers (e.g. pink / white tuff).
     w.xy = mix( w.xy, vec2( w.x + w.y ) * vec2( var, 1.0 - var ), uSplatVar );
@@ -108,6 +117,8 @@ void main() {
   vNormal = n;
   vTerr = vec3( k, float( lod ), skirt );
   vRock = rock;
+  vShadow = vec2( 1.0 );
+  if ( uHasV.x > 0.5 && inCore > 0.5 ) vShadow = texture( uShadowAo, ( xz - uCovCore.xy ) * uCovCore.z ).rg;
   #include <fog_vertex>
 }
 `;
@@ -132,19 +143,21 @@ uniform vec4 uStrata; // x period, y strength, z rose mix, w unused
 uniform vec3 uRoseTint;
 uniform vec4 uTDebug; // x magenta skirts
 uniform vec4 uPrelit; // x macro exposure scale, y sky weight in the relight ratio
+uniform vec4 uRill; // x strength, y fade distance
 varying vec3 vRel;
 varying vec3 vNormal;
 varying vec4 vSplat;
 varying vec3 vTerr;
 varying float vRock;
+varying vec2 vShadow;
 ${TERRAIN_GLSL}
 #include <fog_pars_fragment>
 ${ATMOSPHERE_GLSL}
 
 #define PROJ PROJ_MODE
 
-vec4 sampleLayerPlanar( vec3 wp, vec3 n, int L ) {
-  float ts = 1.0 / uLayerP[ L ].x;
+vec4 sampleLayerPlanar( vec3 wp, vec3 n, int L, float sc ) {
+  float ts = sc / uLayerP[ L ].x;
   vec3 an = abs( n );
   // Single projection; switch to vertical projection on steep faces with a narrow blend band.
   float wTop = smoothstep( 0.5, 0.62, an.y );
@@ -156,9 +169,9 @@ vec4 sampleLayerPlanar( vec3 wp, vec3 n, int L ) {
   return c;
 }
 
-vec4 sampleLayerBiplanar( vec3 wp, vec3 n, int L ) {
+vec4 sampleLayerBiplanar( vec3 wp, vec3 n, int L, float sc ) {
   // Inigo Quilez biplanar mapping: 2 samples (major + median axis).
-  float ts = 1.0 / uLayerP[ L ].x;
+  float ts = sc / uLayerP[ L ].x;
   vec3 p = wp * ts;
   vec3 an = abs( n );
   ivec3 ma = ( an.x > an.y && an.x > an.z ) ? ivec3( 0, 1, 2 ) : ( an.y > an.z ) ? ivec3( 1, 2, 0 ) : ivec3( 2, 0, 1 );
@@ -172,8 +185,8 @@ vec4 sampleLayerBiplanar( vec3 wp, vec3 n, int L ) {
   return ( x * w.x + y * w.y ) / max( w.x + w.y, 1e-4 );
 }
 
-vec4 sampleLayerTriplanar( vec3 wp, vec3 n, int L ) {
-  float ts = 1.0 / uLayerP[ L ].x;
+vec4 sampleLayerTriplanar( vec3 wp, vec3 n, int L, float sc ) {
+  float ts = sc / uLayerP[ L ].x;
   vec3 w = pow( abs( n ), vec3( 4.0 ) );
   w /= max( w.x + w.y + w.z, 1e-4 );
   vec4 c = vec4( 0.0 );
@@ -183,14 +196,21 @@ vec4 sampleLayerTriplanar( vec3 wp, vec3 n, int L ) {
   return c / max( ( w.x > 0.02 ? w.x : 0.0 ) + ( w.y > 0.02 ? w.y : 0.0 ) + ( w.z > 0.02 ? w.z : 0.0 ), 1e-4 );
 }
 
-vec4 sampleLayer( vec3 wp, vec3 n, int L ) {
+vec4 sampleLayer( vec3 wp, vec3 n, int L, float sc ) {
 #if PROJ == 0
-  return sampleLayerPlanar( wp, n, L );
+  return sampleLayerPlanar( wp, n, L, sc );
 #elif PROJ == 1
-  return sampleLayerBiplanar( wp, n, L );
+  return sampleLayerBiplanar( wp, n, L, sc );
 #else
-  return sampleLayerTriplanar( wp, n, L );
+  return sampleLayerTriplanar( wp, n, L, sc );
 #endif
+}
+
+// Dominant layer: two incommensurate scales multiplied → no visible repetition (mean preserved).
+vec4 sampleLayerDual( vec3 wp, vec3 n, int L ) {
+  vec4 a = sampleLayer( wp, n, L, 1.0 );
+  vec4 b = sampleLayer( wp.zyx + vec3( 17.3, 0.0, 41.9 ), n.zyx, L, 0.283 );
+  return vec4( a.rgb * b.rgb * 2.0, a.a * 0.65 + b.a * 0.35 );
 }
 
 float strataBand( vec3 wp ) {
@@ -200,6 +220,26 @@ float strataBand( vec3 wp ) {
   float b = sin( y * 6.2831 / ( uStrata.x * 0.43 ) + 1.7 );
   float c = sin( y * 6.2831 / ( uStrata.x * 2.71 ) + 0.4 );
   return a * 0.5 + b * 0.3 + c * 0.2;
+}
+
+// Erosion rills (badlands): grooves along the fall line of steep tuff/rock slopes. Returns (dh/du, groove 0..1)
+// where u runs across the slope (contour direction). Two octaves, wobbling with height so grooves merge/branch.
+vec2 rills( vec3 wp, vec2 contour, float octaves ) {
+  float u = dot( wp.xz, contour );
+  float v = wp.y;
+  float wob = ( kValueNoise( vec2( u * 0.021, v * 0.045 ) ) - 0.5 ) * 9.0;
+  vec3 n1 = kanatValueNoiseGrad( vec2( ( u + wob ) / 7.5, v / 23.0 ), 0x51ed27u );
+  float r1 = 1.0 - abs( n1.x );
+  float d1 = -sign( n1.x ) * n1.y / 7.5;
+  float dh = d1 * 1.6;
+  float groove = r1;
+  if ( octaves > 1.5 ) {
+    vec3 n2 = kanatValueNoiseGrad( vec2( ( u + wob * 0.4 ) / 2.6, v / 9.0 ), 0x2545f491u );
+    float r2 = 1.0 - abs( n2.x );
+    dh += -sign( n2.x ) * n2.y / 2.6 * 0.55;
+    groove = groove * 0.7 + r2 * 0.3;
+  }
+  return vec2( dh, groove );
 }
 
 void main() {
@@ -220,21 +260,26 @@ void main() {
   // ---- sun visibility / AO (GPU-baked from the same heights) ----
   float shadow = 1.0;
   float ao = 1.0;
+#if PROJ == 0
+  shadow = vShadow.x;
+  ao = vShadow.y;
+#else
   if ( uHas.x > 0.5 && inCore ) {
     vec4 sa = texture( uShadowAo, ( wp.xz - uCovCore.xy ) * uCovCore.z );
     shadow = sa.r;
     ao = sa.g;
   }
+#endif
 
   // ---- base radiance: pre-lit macro colour (core 4 m/texel, far ring 48 m/texel) ----
   vec4 w = vSplat;
   vec3 base;
   bool prelit = false;
   if ( uHas.y > 0.5 && inCore ) {
-    base = texture( uMacro, ( wp.xz - uCovCore.xy ) * uCovCore.z ).rgb * uPrelit.x;
+    base = pow( texture( uMacro, ( wp.xz - uCovCore.xy ) * uCovCore.z ).rgb, vec3( uPrelit.z ) ) * uPrelit.x;
     prelit = true;
   } else if ( uHas.z > 0.5 ) {
-    base = texture( uFarColor, ( wp.xz - uCovFar.xy ) * uCovFar.z ).rgb * uPrelit.x;
+    base = pow( texture( uFarColor, ( wp.xz - uCovFar.xy ) * uCovFar.z ).rgb, vec3( uPrelit.z ) ) * uPrelit.x;
     prelit = true;
   } else {
     vec3 splatCol = uLayerCol[ 0 ] * w.x + uLayerCol[ 1 ] * w.y + uLayerCol[ 2 ] * w.z + uLayerCol[ 3 ] * w.w;
@@ -253,6 +298,29 @@ void main() {
     base = mix( base, base * uRoseTint, clamp( band * 0.5 + 0.5, 0.0, 1.0 ) * s * uStrata.z * 4.0 );
   }
 
+  // ---- erosion rills on steep tuff / rock (Kapadokya signature), visible from 3 m to ~1.5 km ----
+  float rillAO = 1.0;
+  float dbgRw = 0.0;
+  if ( uRill.x > 0.0 ) {
+    float rockish = 0.0;
+    for ( int i = 0; i < 4; i ++ ) rockish += ( uLayerP[ i ].z < 1.5 ? 1.0 : 0.0 ) * w[ i ];
+    float slopeW = ( 1.0 - smoothstep( 0.80, 0.97, N0.y ) ) * rockish;
+    float fadeD = 1.0 - smoothstep( uRill.y * 0.5, uRill.y, dist );
+    float rw = slopeW * fadeD * uRill.x;
+    dbgRw = rw;
+    if ( rw > 0.01 ) {
+      vec2 g = normalize( N0.xz + vec2( 1e-5 ) );
+      vec2 contour = vec2( -g.y, g.x );
+      // Anti-alias: drop the fine octave when it gets smaller than ~2 px.
+      float px = length( fwidth( wp.xz ) );
+      vec2 r = rills( wp, contour, px < 0.9 ? 2.0 : 1.0 );
+      float aa = 1.0 - smoothstep( 1.5, 4.0, px );
+      vec3 c3 = vec3( contour.x, 0.0, contour.y );
+      N = normalize( N - c3 * r.x * rw * aa * 1.4 );
+      rillAO = 1.0 - ( 1.0 - r.y ) * 0.32 * rw;
+    }
+  }
+
   // ---- near detail (top-2 splat layers, continuous re-weighting, height blend, derivative bump) ----
   vec3 albedoMod = vec3( 1.0 );
   float detailW = 1.0 - smoothstep( uDetailP.x, uDetailP.y, dist );
@@ -269,8 +337,8 @@ void main() {
     for ( int i = 0; i < 4; i ++ ) if ( i != i0 && i != i1 ) w3 = max( w3, w[ i ] );
     float a0 = max( w[ i0 ] - w3, 0.0 );
     float a1 = max( w[ i1 ] - w3, 0.0 );
-    vec4 d0 = sampleLayer( wp, N0, i0 );
-    vec4 d1 = a1 > 0.001 ? sampleLayer( wp, N0, i1 ) : d0;
+    vec4 d0 = sampleLayerDual( wp, N0, i0 );
+    vec4 d1 = a1 > 0.001 ? sampleLayer( wp, N0, i1, 1.0 ) : d0;
     float hb0 = d0.a + a0 * 1.2;
     float hb1 = d1.a + a1 * 1.2;
     float hm = max( hb0, hb1 ) - 0.25;
@@ -280,7 +348,7 @@ void main() {
     b0 /= bs; b1 /= bs;
     vec3 detailRel = d0.rgb * 2.0 * b0 + d1.rgb * 2.0 * b1;
     float height = d0.a * b0 + d1.a * b1;
-    albedoMod = mix( vec3( 1.0 ), detailRel, detailW );
+    albedoMod = mix( vec3( 1.0 ), detailRel, detailW * 0.75 );
     float bumpS = ( uLayerP[ i0 ].y * b0 + uLayerP[ i1 ].y * b1 ) * detailW * 0.06;
     vec3 dpx = dFdx( wp );
     vec3 dpy = dFdy( wp );
@@ -309,14 +377,24 @@ void main() {
     vec3 l0 = sunC * dl0 + sky0 * uPrelit.y;
     vec3 l1 = sunC * dl1 + sky1 * uPrelit.y;
     vec3 ratio = clamp( l1 / max( l0, vec3( 1e-3 ) ), vec3( 0.2 ), vec3( 3.0 ) );
-    col = base * albedoMod * ratio * aoD;
+    col = base * albedoMod * ratio * aoD * rillAO;
   } else {
     float diff = clamp( ( dot( bumpN, L ) + wrap ) / ( 1.0 + wrap ), 0.0, 1.0 );
     vec3 sky = kanatIrradiance( bumpN ) * ao;
-    col = base * albedoMod * ( sunC * diff + sky ) * 0.31830988 * aoD;
+    col = base * albedoMod * ( sunC * diff + sky ) * 0.31830988 * aoD * rillAO;
   }
 
   if ( uTDebug.x > 0.5 && vTerr.z > 0.001 ) col = vec3( 1.0, 0.0, 1.0 ) * 50.0;
+  if ( uTDebug.y > 0.5 ) {
+    // 1: rill weight / shadow / slope, 2: splat weights, 3: normals, 4: lod
+    int m = int( uTDebug.y + 0.5 );
+    if ( m == 1 ) col = vec3( dbgRw, shadow, 1.0 - N0.y );
+    else if ( m == 2 ) col = w.xyz + vec3( w.w );
+    else if ( m == 3 ) col = N * 0.5 + 0.5;
+    else col = vec3( fract( lod * 0.37 ), fract( lod * 0.71 ), k );
+    gl_FragColor = vec4( col, 1.0 );
+    return;
+  }
   gl_FragColor = vec4( col, 1.0 );
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
@@ -364,9 +442,12 @@ export function createTerrainMaterial(opts: TerrainMaterialOptions): THREE.Shade
       uStrata: { value: new THREE.Vector4(3.4, 0, 0.5, 0) },
       uRoseTint: { value: new THREE.Color(1.08, 0.86, 0.82) },
       uTDebug: { value: new THREE.Vector4(0, 0, 0, 0) },
-      uPrelit: { value: new THREE.Vector4(1.4, 1.0, 0, 0) },
+      uHasV: { value: new THREE.Vector4(0, 0, 0, 0) },
+      uRill: { value: new THREE.Vector4(0, 1500, 0, 0) },
+      uPrelit: { value: new THREE.Vector4(1.4, 1.0, 1.0, 0) },
       uSplatMap: { value: new THREE.Matrix4() },
       uSplatVar: { value: 0 },
+      uSplatRule2: { value: new THREE.Vector4(0.6, 0, 0, 0) },
     },
     vertexShader: VERT,
     fragmentShader: FRAG.replace('PROJ_MODE', String(proj)),

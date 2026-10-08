@@ -126,16 +126,17 @@ void main() {
     c = vec3( v ) * 0.5;
     c = mix( c, c * vec3( 1.1, 1.08, 0.86 ), lichen * 0.7 );
   } else if ( uKind == 2 ) {
-    // Dry grass: anisotropic blades in clumps, gaps show soil.
-    vec2 w = worley( uv, 14.0 );
-    float clump = 1.0 - smoothstep( 0.2, 0.75, w.x );
-    float blades = pn( vec2( uv.x * 180.0, uv.y * 22.0 ), 180.0 ) * 0.6 + pn( vec2( uv.x * 90.0 + 3.0, uv.y * 14.0 ), 90.0 ) * 0.4;
-    float n = fbm( uv, 5.0, 4 );
-    h = clump * 0.6 + blades * 0.35;
-    float v = 0.72 + blades * 0.35 + clump * 0.12 + ( n - 0.5 ) * 0.25;
-    vec3 tint = mix( vec3( 1.08, 1.0, 0.8 ), vec3( 0.9, 1.04, 0.92 ), fbm( uv + 7.0, 3.0, 3 ) );
+    // Dry grass: anisotropic blades, irregular tufts (fbm, not cellular), soil gaps.
+    float n = fbm( uv, 5.0, 5 );
+    float tuft = smoothstep( 0.38, 0.62, fbm( uv + 2.3, 9.0, 4 ) );
+    float blades = pn( vec2( uv.x * 220.0, uv.y * 26.0 ), 220.0 ) * 0.55 + pn( vec2( uv.x * 110.0 + 3.0, uv.y * 15.0 ), 110.0 ) * 0.45;
+    float cross2 = pn( vec2( uv.y * 200.0, uv.x * 24.0 ), 200.0 );
+    float b2 = mix( blades, cross2, step( 0.5, fbm( uv + 5.0, 6.0, 2 ) ) );
+    h = tuft * 0.55 + b2 * 0.35 + n * 0.1;
+    float v = 0.86 + ( b2 - 0.5 ) * 0.28 + ( n - 0.5 ) * 0.22 + tuft * 0.06;
+    vec3 tint = mix( vec3( 1.06, 1.0, 0.84 ), vec3( 0.93, 1.03, 0.93 ), fbm( uv + 7.0, 3.0, 3 ) );
     c = vec3( v ) * tint * 0.5;
-    c = mix( c * vec3( 0.75, 0.68, 0.6 ), c, smoothstep( 0.05, 0.35, clump ) );
+    c = mix( c * vec3( 0.86, 0.8, 0.74 ), c, 0.4 + 0.6 * tuft );
   } else if ( uKind == 3 ) {
     // Soil / gravel: granular with pebbles.
     float g = h21( floor( uv * 512.0 ) ) * 0.5 + fbm( uv, 32.0, 4 ) * 0.5;

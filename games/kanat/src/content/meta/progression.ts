@@ -358,7 +358,11 @@ export function fnv1a32(text: string): number {
 export function weeklyFor(weekIndex: number): { weekIndex: number; modifier: WeeklyModifier; routeId: string; tintId: string; windSide: 1 | -1 } {
   const k = Math.max(0, Math.floor(weekIndex));
   const modifier = WEEKLY_MODIFIERS[k % WEEKLY_MODIFIERS.length];
-  const pick = fnv1a32(`${WEEKLY_RULES.seedPrefix}${k}`) % modifier.eligible.length;
+  // Each modifier walks its eligible routes with stride 7 (coprime with 20 and 8) from a seeded offset,
+  // so a modifier never repeats a route before it has visited all of them.
+  const len = modifier.eligible.length;
+  const cycle = Math.floor(k / WEEKLY_MODIFIERS.length);
+  const pick = (fnv1a32(`${WEEKLY_RULES.seedPrefix}${modifier.id}`) + cycle * 7) % len;
   return {
     weekIndex: k,
     modifier,

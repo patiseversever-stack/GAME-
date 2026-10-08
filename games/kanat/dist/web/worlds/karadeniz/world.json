@@ -1,0 +1,253 @@
+{
+ "id": "karadeniz",
+ "version": 1,
+ "name": {
+  "tr": "Karadeniz Yaylası",
+  "en": "Black Sea Highlands"
+ },
+ "accent": "#8DB580",
+ "geo": {
+  "lat": 40.9626,
+  "lon": 41.1,
+  "zoomCore": 13,
+  "zoomFar": 11,
+  "coreSizeM": 8192,
+  "coreRes": 1024,
+  "farSizeM": 49152,
+  "farRes": 512,
+  "verticalScale": 1,
+  "source": "terrarium",
+  "note": "Ayder (Uzungöl yerine) ~1,4 km K’ye kaydırıldı: D-B uzanan derin vadiler ve sırtlar; güneydeki SRTM boşluk-dolgu basamağı çekirdek dışında kalır."
+ },
+ "hasSea": false,
+ "seaLevel": 0,
+ "terrain": {
+  "core": {
+   "file": "height_core.u16.z",
+   "originX": -4092,
+   "originZ": -4092,
+   "spacing": 8,
+   "res": 1024,
+   "min": 655.357,
+   "max": 2658.079
+  },
+  "far": {
+   "file": "height_far.u16.z",
+   "originX": -24528,
+   "originZ": -24528,
+   "spacing": 96,
+   "res": 512,
+   "min": -4.942,
+   "max": 3872.612
+  },
+  "patch": null,
+  "rock": {
+   "file": "rock_core.u8.z",
+   "res": 1024
+  },
+  "masks": {
+   "file": "masks_core.u8.z",
+   "originX": -4088,
+   "originZ": -4088,
+   "spacing": 16,
+   "res": 512,
+   "channels": 4,
+   "names": [
+    "house",
+    "trees",
+    "flat",
+    "drainage"
+   ]
+  },
+  "detail": {
+   "amp": [
+    1.2,
+    0.5
+   ],
+   "wavelength": [
+    24,
+    9
+   ],
+   "normalOnly": {
+    "amp": 0.25,
+    "wavelength": 3.5
+   }
+  },
+  "coreBlendM": 256,
+  "playBounds": {
+   "minX": -3772,
+   "maxX": 3772,
+   "minZ": -3772,
+   "maxZ": 3772
+  },
+  "heightRange": {
+   "min": 655.357,
+   "max": 2658.079
+  },
+  "patchInfo": null
+ },
+ "textures": {
+  "normal": "normal_core.png",
+  "splat": "splat_core.png",
+  "shadowAo": "shadow_ao.png",
+  "colorMacro": "color_macro.webp",
+  "colorMacroKtx2": "color_macro.ktx2",
+  "colorFar": "color_far.webp",
+  "coverage": {
+   "core": {
+    "minX": -4096,
+    "minZ": -4096,
+    "size": 8192
+   },
+   "far": {
+    "minX": -24576,
+    "minZ": -24576,
+    "size": 49152
+   },
+   "patch": null
+  }
+ },
+ "layers": [
+  "ladin",
+  "cayir",
+  "kaya",
+  "kar"
+ ],
+ "layerColors": [
+  "#1F3B2C",
+  "#6E8B3D",
+  "#5F5D58",
+  "#EEF0EE"
+ ],
+ "layerRoughness": [
+  0.92,
+  0.9,
+  0.5,
+  0.6
+ ],
+ "sun": {
+  "azimuthDeg": 135,
+  "elevationDeg": 22,
+  "dir": [
+   0.65562,
+   0.37461,
+   0.65562
+  ],
+  "kelvin": 6200,
+  "color": "#fff9f2",
+  "colorLinear": [
+   1,
+   0.9509,
+   0.8902
+  ],
+  "intensity": 2.2
+ },
+ "sky": {
+  "kelvin": 7000,
+  "zenith": "#6F93AE",
+  "horizon": "#DDE3E0",
+  "sunGlow": "#F4F1E6",
+  "ground": "#3B4A3C",
+  "ambientIntensity": 0.8
+ },
+ "fog": {
+  "a": 0.00022,
+  "b": 0.0009,
+  "baseY": 999,
+  "color": "#DDE3E0",
+  "sunColor": "#F4F1E6",
+  "hgG": 0.76,
+  "maxViewM": 22000,
+  "groundFog": null,
+  "cloudSea": {
+   "bottom": 1644,
+   "top": 1749,
+   "density": 0.03,
+   "color": "#E8ECEA"
+  }
+ },
+ "palette": {
+  "spruce": "#1F3B2C",
+  "meadow": "#6E8B3D",
+  "mist": "#DDE3E0",
+  "wood": "#5A3B26",
+  "tinRoof": "#8A8F93",
+  "cloudShadow": "#A9B6BC"
+ },
+ "grading": {
+  "exposure": 1,
+  "lift": [
+   0.008,
+   0.012,
+   0.012
+  ],
+  "gamma": [
+   1,
+   1,
+   1
+  ],
+  "gain": [
+   0.98,
+   1.01,
+   1
+  ],
+  "saturation": 0.95,
+  "contrast": 0.96,
+  "splitShadow": "#2C4A48",
+  "splitHighlight": "#EEF2E6",
+  "splitBalance": -0.1,
+  "vignette": 0.22
+ },
+ "water": {
+  "enabled": false,
+  "level": 0,
+  "shallow": "#5E8C84",
+  "deep": "#22433F",
+  "depthFalloffM": 2,
+  "foam": "#F2F5F2",
+  "roughness": 0.15,
+  "kind": "none"
+ },
+ "wind": {
+  "dirDeg": 320,
+  "speed": 5
+ },
+ "bakeLighting": {
+  "sunColorLinear": [
+   1,
+   0.9751,
+   0.9435
+  ],
+  "skyColorLinear": [
+   0.5029,
+   0.5776,
+   0.6038
+  ],
+  "shadowColorLinear": [
+   0.4356,
+   0.5897,
+   0.6816
+  ],
+  "shadowTint": 0.5,
+  "sunStrength": 0.6483,
+  "ambientStrength": 0.5339,
+  "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.5+0.3*n.y+0.2*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); wrap=0.25, ndl0=0.4997, k=9.9937; soft shoulder above 0.8; sRGB encode"
+ },
+ "props": {
+  "houses": {
+   "count": 60,
+   "mask": "house",
+   "seed": 31
+  },
+  "spruces": {
+   "count": 9000,
+   "mask": "trees",
+   "seed": 33
+  },
+  "waterfalls": {
+   "count": 4,
+   "mask": "drainage",
+   "seed": 35
+  }
+ }
+}

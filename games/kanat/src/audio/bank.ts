@@ -1,36 +1,10 @@
 // Sound bank: pre-generates every PCM clip once (during loading, chunked to keep frames smooth),
 // then wraps clips into AudioBuffers per AudioContext. No decodeAudioData anywhere (§5.5).
-import { GEN_SR, synthIR } from './dsp.ts';
-import type { Pcm } from './dsp.ts';
-import { Rng } from './rng.ts';
-import { SFX_IDS, generateNoiseLoop, generateSfx } from './sfxLib.ts';
-import type { NoiseLoopId } from './sfxLib.ts';
-import { DRUM_IDS, PCM_INSTS, PCM_REFS, renderDrum, renderInstrument } from './music/pcm.ts';
+import { bankJobs } from './bankJobs.ts';
+import { GEN_SR, resampleLinear } from './dsp.ts';
+import type { F32, Pcm } from './dsp.ts';
 
-export const NOISE_LOOPS: readonly NoiseLoopId[] = ['pinkLoop', 'brownLoop', 'whiteLoop'];
-
-export function instKey(inst: string, ref: number): string {
-  return `inst:${inst}:${ref}`;
-}
-
-export function drumKey(id: string): string {
-  return `drum:${id}`;
-}
-
-export const IR_KEY = 'ir:music';
-
-type Job = [string, () => Pcm];
-
-function jobs(): Job[] {
-  const out: Job[] = [];
-  // Wind & instrument noise first: the wind bed must be ready before anything else.
-  for (const id of NOISE_LOOPS) out.push([id, () => generateNoiseLoop(id)]);
-  out.push([IR_KEY, () => synthIR(2.6, 2.2, new Rng(0x6b616e61))]);
-  for (const id of SFX_IDS) out.push([id, () => generateSfx(id)]);
-  for (const inst of PCM_INSTS) for (const ref of PCM_REFS[inst]) out.push([instKey(inst, ref), () => renderInstrument(inst, ref)]);
-  for (const d of DRUM_IDS) out.push([drumKey(d), () => renderDrum(d)]);
-  return out;
-}
+export { IR_KEY, NOISE_LOOPS, bankJobs, drumKey, instKey } from './bankJobs.ts';
 
 function frameYield(): Promise<void> {
   return new Promise((res) => {
@@ -50,41 +24,95 @@ export class SoundBank {
   readonly pcm = new Map<string, Pcm>();
   private pending: Promise<void> | null = null;
   ready = false;
-  /** Total generation time (ms), for diagnostics. */
+  /** Main-thread generation time (ms) and worker wall time (ms), for diagnostics. */
   genMs = 0;
+  workerMs = 0;
 
   /** Generate everything synchronously (tests, offline tools). */
   generateSync(): void {
     if (this.ready) return;
     const t0 = nowMs();
-    for (const [k, fn] of jobs()) if (!this.pcm.has(k)) this.pcm.set(k, fn());
+    for (const [k, fn] of bankJobs()) if (!this.pcm.has(k)) this.pcm.set(k, fn());
     this.genMs += nowMs() - t0;
     this.ready = true;
   }
 
   /**
-   * Generate in small slices (≤ `sliceMs` of work per frame) so loading screens stay smooth.
+   * Generate everything off the main thread (inline Web Worker, transferable buffers); falls back to
+   * main-thread generation in small slices (≤ `sliceMs` per frame) if workers are unavailable.
    * Idempotent: concurrent callers share one promise.
    */
   prepare(sliceMs = 12, onProgress?: (k: number) => void): Promise<void> {
     if (this.ready) return Promise.resolve();
     if (this.pending) return this.pending;
-    this.pending = (async () => {
-      const list = jobs();
-      let i = 0;
-      while (i < list.length) {
-        const t0 = nowMs();
-        while (i < list.length && nowMs() - t0 < sliceMs) {
-          const [k, fn] = list[i++];
-          if (!this.pcm.has(k)) this.pcm.set(k, fn());
-        }
-        this.genMs += nowMs() - t0;
-        onProgress?.(i / list.length);
-        if (i < list.length) await frameYield();
-      }
-      this.ready = true;
-    })();
+    this.pending = this.viaWorker(onProgress).then((ok) => (ok ? undefined : this.viaMainThread(sliceMs, onProgress)));
     return this.pending;
+  }
+
+  private async viaWorker(onProgress?: (k: number) => void): Promise<boolean> {
+    if (typeof Worker === 'undefined' || typeof window === 'undefined') return false;
+    let Ctor: new () => Worker;
+    try {
+      Ctor = (await import('./bankWorker.ts?worker&inline')).default;
+    } catch {
+      return false;
+    }
+    const total = bankJobs().length;
+    const t0 = nowMs();
+    return new Promise<boolean>((resolve) => {
+      let w: Worker;
+      try {
+        w = new Ctor();
+      } catch {
+        resolve(false);
+        return;
+      }
+      let got = 0;
+      const fail = () => {
+        clearTimeout(timer);
+        w.terminate();
+        resolve(false);
+      };
+      const timer = setTimeout(fail, 30000);
+      w.onmessage = (e: MessageEvent) => {
+        const d = e.data as { k?: string; sr?: number; ch?: F32[]; done?: boolean };
+        if (d.done) {
+          clearTimeout(timer);
+          w.terminate();
+          this.workerMs = nowMs() - t0;
+          this.ready = true;
+          resolve(true);
+          return;
+        }
+        if (d.k && d.ch && d.sr) {
+          this.pcm.set(d.k, { sr: d.sr, ch: d.ch });
+          onProgress?.(++got / total);
+        }
+      };
+      w.onerror = fail;
+      w.postMessage('go');
+    });
+  }
+
+  private async viaMainThread(sliceMs: number, onProgress?: (k: number) => void): Promise<void> {
+    const list = bankJobs();
+    let i = 0;
+    while (i < list.length) {
+      const t0 = nowMs();
+      while (i < list.length && nowMs() - t0 < sliceMs) {
+        const [k, fn] = list[i++];
+        if (!this.pcm.has(k)) this.pcm.set(k, fn());
+      }
+      this.genMs += nowMs() - t0;
+      onProgress?.(i / list.length);
+      if (i < list.length) await frameYield();
+    }
+    this.ready = true;
+  }
+
+  /** Drop the JS-side PCM of a clip once it lives in an AudioBuffer (halves memory). */
+  release(key: string): void {
+    this.pcm.delete(key);
   }
 
   get(key: string): Pcm | undefined {
@@ -104,10 +132,13 @@ export class BufferCache {
   private readonly ctx: BaseAudioContext;
   private readonly bank: SoundBank;
   private readonly cache = new Map<string, AudioBuffer>();
+  private readonly releasePcm: boolean;
 
-  constructor(ctx: BaseAudioContext, bank: SoundBank) {
+  /** `releasePcm`: drop JS copies after upload (single real-time context; not for shared banks). */
+  constructor(ctx: BaseAudioContext, bank: SoundBank, releasePcm = false) {
     this.ctx = ctx;
     this.bank = bank;
+    this.releasePcm = releasePcm;
   }
 
   get(key: string): AudioBuffer | null {
@@ -118,11 +149,27 @@ export class BufferCache {
     const buf = this.ctx.createBuffer(p.ch.length, p.ch[0].length, p.sr || GEN_SR);
     for (let c = 0; c < p.ch.length; c++) buf.copyToChannel(p.ch[c], c);
     this.cache.set(key, buf);
+    if (this.releasePcm) this.bank.release(key);
+    return buf;
+  }
+
+  /** Buffer resampled to the context rate (ConvolverNode requires a matching rate). */
+  getAtContextRate(key: string): AudioBuffer | null {
+    const ck = `${key}@${this.ctx.sampleRate}`;
+    const hit = this.cache.get(ck);
+    if (hit) return hit;
+    const p = this.bank.get(key);
+    if (!p) return null;
+    const r = resampleLinear(p, this.ctx.sampleRate);
+    const buf = this.ctx.createBuffer(r.ch.length, r.ch[0].length, r.sr);
+    for (let c = 0; c < r.ch.length; c++) buf.copyToChannel(r.ch[c], c);
+    this.cache.set(ck, buf);
+    if (this.releasePcm) this.bank.release(key);
     return buf;
   }
 
   /** Convert everything up-front (avoids first-use memcpy during play). */
   warm(): void {
-    for (const k of this.bank.pcm.keys()) this.get(k);
+    for (const k of [...this.bank.pcm.keys()]) this.get(k);
   }
 }

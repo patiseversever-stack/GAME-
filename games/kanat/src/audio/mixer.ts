@@ -4,12 +4,13 @@
 //   sfx  : one-shots → sfxVol ──────────────────────────────────────────────────────────────────────┤
 //   ui   : taps, tallies → uiVol(sfx volume) ───────────────────────────────────────────────────────┤
 //   masterIn → masterVol(master × mute) → glue compressor → trim → safety shaper (ceiling) → out
-// The WaveShaper ceiling makes it impossible for a sample to exceed −1.3 dBFS (spec: ≤ −1 dBFS).
+// Safety stage = WaveShaper with a tanh knee into a −1.5 dBFS ceiling, run at 4× oversampling so it
+// acts on inter-sample peaks too (measured true peak ≤ −1.5 dBFS even with +6 dBFS input; §1: ≤ −1).
 import { dbToGain, limiterCurve } from './dsp.ts';
 
 export const LIMIT_PRE = 0.5;
 export const LIMIT_KNEE_DB = -6;
-export const LIMIT_CEILING_DB = -1.3;
+export const LIMIT_CEILING_DB = -1.5;
 
 /** Static make-up compensation for Web Audio's automatic compressor make-up gain (measured). */
 const COMP_TRIM_DB = -3;
@@ -59,7 +60,8 @@ export class Mixer {
       return n;
     };
     this.masterIn = g();
-    this.musicIn = g();
+    // Music trim (+3 dB): themes are written with headroom; this sets their level in the mix.
+    this.musicIn = g(1.4);
     this.verbIn = g();
     this.ambIn = g();
     this.sfxIn = g();
@@ -82,7 +84,7 @@ export class Mixer {
 
     this.convolver = ctx.createConvolver();
     this.convolver.normalize = true;
-    if (ir) this.convolver.buffer = ir;
+    if (ir && ir.sampleRate === ctx.sampleRate) this.convolver.buffer = ir;
     this.verbOut = g(0.55);
 
     this.comp = ctx.createDynamicsCompressor();
@@ -95,7 +97,7 @@ export class Mixer {
     this.pre = g(LIMIT_PRE);
     this.shaper = ctx.createWaveShaper();
     this.shaper.curve = limiterCurve(4096, LIMIT_PRE, LIMIT_KNEE_DB, LIMIT_CEILING_DB);
-    this.shaper.oversample = 'none';
+    this.shaper.oversample = '4x';
 
     // music
     this.verbIn.connect(this.convolver).connect(this.verbOut).connect(this.musicLP);

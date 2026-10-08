@@ -162,6 +162,8 @@ export interface WorldConfig {
     /** Fill hue inside shadows (luminance-matched to skyColor). */
     shadowColorLinear: Vec3;
     shadowTint: number;
+    /** Cast-shadow strength already applied to shadow_ao.R (Karadeniz diffuse light < 1). */
+    shadowStrength: number;
     sunStrength: number;
     ambientStrength: number;
     /** Exact formula with constants (see tools/terrain/paint.ts light()). */

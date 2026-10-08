@@ -67,7 +67,7 @@ export class WindEngine {
       return g;
     };
 
-    this.out = gain(1);
+    this.out = gain(1.45);
     this.windLP = bq('lowpass', 600, 0.5);
     this.windLP.connect(this.out).connect(dest);
 

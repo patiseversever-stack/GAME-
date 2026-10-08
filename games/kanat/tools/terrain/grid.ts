@@ -241,3 +241,19 @@ export function dilate(src: Float32Array, res: number, radius: number): Float32A
   }
   return out;
 }
+
+/** In-place 3x3 binomial ([1,2,1]/4 separable) smoothing; removes resampling phase stripes. */
+export function binomial3(d: Float32Array, res: number): void {
+  const t = new Float32Array(d.length);
+  for (let r = 0; r < res; r++) {
+    for (let c = 0; c < res; c++) {
+      const i = r * res + c;
+      t[i] = 0.25 * d[r * res + clampi(c - 1, 0, res - 1)] + 0.5 * d[i] + 0.25 * d[r * res + clampi(c + 1, 0, res - 1)];
+    }
+  }
+  for (let r = 0; r < res; r++) {
+    for (let c = 0; c < res; c++) {
+      d[r * res + c] = 0.25 * t[clampi(r - 1, 0, res - 1) * res + c] + 0.5 * t[r * res + c] + 0.25 * t[clampi(r + 1, 0, res - 1) * res + c];
+    }
+  }
+}

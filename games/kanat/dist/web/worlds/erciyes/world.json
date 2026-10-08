@@ -1,0 +1,243 @@
+{
+ "id": "erciyes",
+ "version": 1,
+ "name": {
+  "tr": "Erciyes Karı",
+  "en": "Erciyes Snow"
+ },
+ "accent": "#9FD3F0",
+ "geo": {
+  "lat": 38.53,
+  "lon": 35.4431,
+  "zoomCore": 13,
+  "zoomFar": 11,
+  "coreSizeM": 8192,
+  "coreRes": 1024,
+  "farSizeM": 49152,
+  "farRes": 512,
+  "verticalScale": 1,
+  "source": "terrarium",
+  "note": "Zirve çekirdeğin ortasına gelecek şekilde ~600 m B’ye kaydırıldı; doğudaki buzul vadisi ve güneydoğu lav akıntıları dahil."
+ },
+ "hasSea": false,
+ "seaLevel": 0,
+ "terrain": {
+  "core": {
+   "file": "height_core.u16.z",
+   "originX": -4092,
+   "originZ": -4092,
+   "spacing": 8,
+   "res": 1024,
+   "min": 2266.1,
+   "max": 3861.198
+  },
+  "far": {
+   "file": "height_far.u16.z",
+   "originX": -24528,
+   "originZ": -24528,
+   "spacing": 96,
+   "res": 512,
+   "min": 1029.074,
+   "max": 3845.492
+  },
+  "patch": null,
+  "rock": {
+   "file": "rock_core.u8.z",
+   "res": 1024
+  },
+  "masks": {
+   "file": "masks_core.u8.z",
+   "originX": -4088,
+   "originZ": -4088,
+   "spacing": 16,
+   "res": 512,
+   "channels": 4,
+   "names": [
+    "cornice",
+    "trees",
+    "flat",
+    "snow"
+   ]
+  },
+  "detail": {
+   "amp": [
+    1.2,
+    0.5
+   ],
+   "wavelength": [
+    24,
+    9
+   ],
+   "normalOnly": {
+    "amp": 0.25,
+    "wavelength": 3.5
+   }
+  },
+  "coreBlendM": 256,
+  "playBounds": {
+   "minX": -3772,
+   "maxX": 3772,
+   "minZ": -3772,
+   "maxZ": 3772
+  },
+  "heightRange": {
+   "min": 2266.1,
+   "max": 3861.198
+  },
+  "patchInfo": null
+ },
+ "textures": {
+  "normal": "normal_core.png",
+  "splat": "splat_core.png",
+  "shadowAo": "shadow_ao.png",
+  "colorMacro": "color_macro.webp",
+  "colorMacroKtx2": "color_macro.ktx2",
+  "colorFar": "color_far.webp",
+  "coverage": {
+   "core": {
+    "minX": -4096,
+    "minZ": -4096,
+    "size": 8192
+   },
+   "far": {
+    "minX": -24576,
+    "minZ": -24576,
+    "size": 49152
+   },
+   "patch": null
+  }
+ },
+ "layers": [
+  "kar",
+  "buz",
+  "kaya",
+  "toprak"
+ ],
+ "layerColors": [
+  "#F4F2EE",
+  "#BFE6F2",
+  "#4A4642",
+  "#6E5E52"
+ ],
+ "layerRoughness": [
+  0.6,
+  0.15,
+  0.7,
+  0.9
+ ],
+ "sun": {
+  "azimuthDeg": 225,
+  "elevationDeg": 11,
+  "dir": [
+   -0.69412,
+   0.19081,
+   0.69412
+  ],
+  "kelvin": 4600,
+  "color": "#ffdcbf",
+  "colorLinear": [
+   1,
+   0.7136,
+   0.523
+  ],
+  "intensity": 2.8
+ },
+ "sky": {
+  "kelvin": 12000,
+  "zenith": "#1F4E8C",
+  "horizon": "#CFE3F5",
+  "sunGlow": "#FFE2C2",
+  "ground": "#B9C6D6",
+  "ambientIntensity": 0.7
+ },
+ "fog": {
+  "a": 0.00005,
+  "b": 0.0005,
+  "baseY": 2434,
+  "color": "#BFD6EE",
+  "sunColor": "#FFE2C2",
+  "hgG": 0.76,
+  "maxViewM": 45000,
+  "groundFog": null,
+  "cloudSea": null
+ },
+ "palette": {
+  "snowLit": "#FFF6EC",
+  "snowShadow": "#A9C2E0",
+  "ice": "#BFE6F2",
+  "rock": "#4A4642",
+  "skyTop": "#1F4E8C",
+  "skyHorizon": "#CFE3F5"
+ },
+ "grading": {
+  "exposure": 0.95,
+  "lift": [
+   0,
+   0.006,
+   0.02
+  ],
+  "gamma": [
+   1,
+   1,
+   0.98
+  ],
+  "gain": [
+   1.02,
+   1,
+   1
+  ],
+  "saturation": 1.05,
+  "contrast": 1.08,
+  "splitShadow": "#3A6AA8",
+  "splitHighlight": "#FFF1E0",
+  "splitBalance": -0.15,
+  "vignette": 0.22
+ },
+ "water": {
+  "enabled": false,
+  "level": 0,
+  "shallow": "#9CC7D6",
+  "deep": "#3E6E86",
+  "depthFalloffM": 2,
+  "foam": "#FFFFFF",
+  "roughness": 0.1,
+  "kind": "none"
+ },
+ "wind": {
+  "dirDeg": 300,
+  "speed": 7
+ },
+ "bakeLighting": {
+  "sunColorLinear": [
+   1,
+   0.8448,
+   0.7232
+  ],
+  "skyColorLinear": [
+   0.4564,
+   0.5647,
+   0.7605
+  ],
+  "shadowColorLinear": [
+   0.4208,
+   0.5722,
+   0.7907
+  ],
+  "shadowTint": 0.9,
+  "sunStrength": 0.6207,
+  "ambientStrength": 0.3724,
+  "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.5+0.3*n.y+0.2*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); wrap=0.06, ndl0=0.2366, k=0.4492; soft shoulder above 0.8; sRGB encode"
+ },
+ "props": {
+  "cornices": {
+   "count": 80,
+   "mask": "cornice",
+   "seed": 41
+  },
+  "rocks": {
+   "count": 400,
+   "mask": "cornice",
+   "seed": 43
+  }
+ }
+}

@@ -373,7 +373,10 @@ export function karplus(out: F32, freq: number, opts: KsOpts, rng: Rng, sr = GEN
   }
 }
 
-/** Additive bell / chime: partial ratios + per-partial decay. */
+/**
+ * Additive bell / chime: partial ratios + per-partial exponential decay.
+ * Uses a rotating-phasor oscillator and multiplicative decay (no per-sample sin/exp).
+ */
 export function bellInto(
   out: F32,
   freq: number,
@@ -385,21 +388,91 @@ export function bellInto(
   rng: Rng,
   sr = GEN_SR,
 ): void {
+  const att = Math.max(1, Math.round(0.002 * sr));
   for (let k = 0; k < ratios.length; k++) {
     const f = freq * ratios[k];
     if (f >= sr * 0.45) continue;
     const w = (TAU * f) / sr;
-    let ph = rng.next() * TAU;
+    const cw = Math.cos(w);
+    const sw = Math.sin(w);
+    const ph = rng.next() * TAU;
+    let sn = Math.sin(ph);
+    let cs = Math.cos(ph);
     const a = amps[k] * gain;
-    const d = decays[k];
-    const len = Math.min(out.length - start, Math.round(d * 7 * sr));
+    const dk = Math.exp(-1 / (decays[k] * sr));
+    const len = Math.min(out.length - start, Math.round(decays[k] * 7 * sr));
+    let e = 1;
     for (let i = 0; i < len; i++) {
-      const t = i / sr;
-      const e = t < 0.002 ? t / 0.002 : Math.exp(-t / d);
-      out[start + i] += a * e * Math.sin(ph);
-      ph += w;
+      const env = i < att ? i / att : (e *= dk);
+      out[start + i] += a * env * sn;
+      const ns = sn * cw + cs * sw;
+      cs = cs * cw - sn * sw;
+      sn = ns;
+      if ((i & 1023) === 0) {
+        const m = 1 / Math.sqrt(sn * sn + cs * cs);
+        sn *= m;
+        cs *= m;
+      }
     }
   }
+}
+
+// Fast table sine for load-time synthesis (linear interpolation, phase in radians, any range ≥ 0).
+const SIN_N = 4096;
+const SIN_T = new Float64Array(SIN_N + 1);
+for (let i = 0; i <= SIN_N; i++) SIN_T[i] = Math.sin((TAU * i) / SIN_N);
+const SIN_K = SIN_N / TAU;
+
+export function fsin(ph: number): number {
+  const x = ph * SIN_K;
+  const i = Math.floor(x);
+  const f = x - i;
+  const j = i & (SIN_N - 1);
+  return SIN_T[j] + (SIN_T[j + 1] - SIN_T[j]) * f;
+}
+
+/**
+ * Halve the sample rate of a clip (31-tap windowed-sinc half-band low-pass, cutoff ≈ 0.45·new Nyquist).
+ * `loop` = circular filtering so seamless loops stay seamless. Used for long, dark beds to halve memory.
+ */
+export function decimate2(p: Pcm, loop = false): Pcm {
+  const taps = 31;
+  const h = new Float64Array(taps);
+  const mid = (taps - 1) / 2;
+  let sum = 0;
+  for (let i = 0; i < taps; i++) {
+    const x = i - mid;
+    const sinc = x === 0 ? 1 : Math.sin(Math.PI * 0.45 * x) / (Math.PI * 0.45 * x);
+    const w = 0.42 - 0.5 * Math.cos((TAU * i) / (taps - 1)) + 0.08 * Math.cos((2 * TAU * i) / (taps - 1));
+    h[i] = sinc * w;
+    sum += h[i];
+  }
+  for (let i = 0; i < taps; i++) h[i] /= sum;
+  const n = pcmLength(p);
+  const m = Math.floor(n / 2);
+  const ch: F32[] = [];
+  for (const c of p.ch) {
+    const o = new Float32Array(m);
+    for (let k = 0; k < m; k++) {
+      const base = 2 * k - mid;
+      let acc = 0;
+      if (base >= 0 && base + taps <= n) {
+        for (let t = 0; t < taps; t++) acc += c[base + t] * h[t];
+      } else {
+        for (let t = 0; t < taps; t++) {
+          let j = base + t;
+          if (j < 0 || j >= n) {
+            if (!loop) continue;
+            j = ((j % n) + n) % n;
+          }
+          acc += c[j] * h[t];
+        }
+      }
+      o[k] = acc;
+    }
+    ch.push(o);
+  }
+  return { sr: p.sr / 2, ch };
 }
 
 /**
@@ -473,6 +546,31 @@ export function synthIR(sec: number, rt60: number, rng: Rng, sr = GEN_SR): Pcm {
   }
   fadeEdges(p, 0, 0.05);
   return p;
+}
+
+/**
+ * Linear-interpolation resampler (used for the reverb IR: a ConvolverNode buffer must match the
+ * context sample rate, which is 44.1 or 48 kHz depending on the device).
+ */
+export function resampleLinear(p: Pcm, sr: number): Pcm {
+  if (p.sr === sr) return p;
+  const n = pcmLength(p);
+  const m = Math.max(1, Math.round((n * sr) / p.sr));
+  const k = p.sr / sr;
+  const ch: F32[] = [];
+  for (const c of p.ch) {
+    const o = new Float32Array(m);
+    for (let i = 0; i < m; i++) {
+      const x = i * k;
+      const j = Math.floor(x);
+      const f = x - j;
+      const a = c[Math.min(j, n - 1)];
+      const b = c[Math.min(j + 1, n - 1)];
+      o[i] = a + (b - a) * f;
+    }
+    ch.push(o);
+  }
+  return { sr, ch };
 }
 
 // ---------------------------------------------------------------------------------------------

@@ -14,6 +14,7 @@ import { GLSL_NOISE, GLSL_DITHER, glslInstanceFetch, GLSL_LOD_VERT, GLSL_LOD_FRA
 import { hexLinear, hashSeed } from './chimneys.ts';
 import type { PropTierConfig } from './tiers.ts';
 import { setWarmLight } from '../vfx/shared.ts';
+import { balloonPos } from '../../sim/world/balloons.ts';
 
 const TEXELS = 3;
 export const BALLOON_GORES = 24;
@@ -34,19 +35,26 @@ export const BALLOON_PALETTES: [string, string, string][] = [
   ['#F06B5C', '#2DB3B0', '#F7D046'],
 ];
 
-/** Normalised inverted-drop profile: t = 0 mouth … 1 crown, radius 1 at the equator (t = EQ). */
-export const ENVELOPE = { eq: 0.56, mouth: 0.24, skirtT: -0.075, topExp: 2.15, lowExp: 1.75 };
+/**
+ * Normalised envelope profile: t = 0 mouth (= bottom pole of the sim's collision ellipsoid) … 1 crown, radius 1 at
+ * mid-height. Above t = 0.35 it IS the collision ellipsoid (radii R, H/2, R) so the silhouette matches collision
+ * exactly where the pilot can reach it; below, a C1 Hermite taper forms the throat (hot-air balloon read).
+ */
+export const ENVELOPE = { blendT: 0.35, mouth: 0.22, mouthSlope: 2.6, skirtT: -0.03 };
 
 export function envelopeRadius(t: number): number {
-  const { eq, mouth, topExp, lowExp } = ENVELOPE;
+  const { blendT, mouth, mouthSlope } = ENVELOPE;
   if (t <= 0) return mouth;
   if (t >= 1) return 0;
-  if (t >= eq) {
-    const s = (t - eq) / (1 - eq);
-    return Math.pow(Math.max(0, 1 - Math.pow(s, topExp)), 0.5);
-  }
-  const s = t / eq;
-  return mouth + (1 - mouth) * (1 - Math.pow(1 - s, lowExp));
+  const e = 2 * t - 1;
+  if (t >= blendT) return Math.sqrt(Math.max(0, 1 - e * e));
+  const eb = 2 * blendT - 1;
+  const p1 = Math.sqrt(1 - eb * eb);
+  const d1 = (-eb * 2) / p1;
+  const u = t / blendT;
+  const u2 = u * u, u3 = u2 * u;
+  const m0 = mouthSlope * blendT, m1 = d1 * blendT;
+  return (2 * u3 - 3 * u2 + 1) * mouth + (u3 - 2 * u2 + u) * m0 + (-2 * u3 + 3 * u2) * p1 + (u3 - u2) * m1;
 }
 
 /** Unit envelope: segs per gore, rings over t∈[0,1] + skirt rings. uv = (gore coord 0..GORES, t). */
@@ -54,6 +62,7 @@ export function buildEnvelopeUnit(segPerGore: number, rings: number, bulge: numb
   const G = BALLOON_GORES;
   const segs = G * segPerGore;
   const ts: number[] = [ENVELOPE.skirtT, ENVELOPE.skirtT * 0.5];
+  // ring spacing: uniform in arc length-ish (denser at the crown and throat)
   for (let r = 0; r <= rings; r++) {
     // denser rings near the crown and mouth
     const u = r / rings;
@@ -104,8 +113,11 @@ export function buildEnvelopeUnit(segPerGore: number, rings: number, bulge: numb
   return g;
 }
 
-/** Gear relative to the mouth (y = 0): load frame at −2.0, burner above it, basket rim −3.4, floor −4.5. */
-export const GEAR = { frameY: -2.0, rimY: -3.4, floorY: -4.5, burnerTop: -1.55, basketW: 1.25, basketD: 1.1 };
+/**
+ * Gear relative to the mouth (y = 0) — matches the sim's basket box: centre 2.5 m below the envelope bottom,
+ * half extents (0.8, 0.6, 0.8) (TUNING.balloon). Load frame + twin burner sit between the rim and the mouth.
+ */
+export const GEAR = { frameY: -0.72, rimY: -1.9, floorY: -3.1, burnerTop: -0.36, basketW: 1.56, basketD: 1.56 };
 
 interface GeoAcc { pos: number[]; nrm: number[]; uv: number[]; mat: number[]; top: number[]; idx: number[] }
 
@@ -164,7 +176,7 @@ function addTube(a: GeoAcc, p0: number[], p1: number[], r: number, sides: number
   }
   for (let i = 0; i < sides; i++) {
     const i1 = (i + 1) % sides;
-    a.idx.push(base + i, base + sides + i, base + i1, base + i1, base + sides + i, base + sides + i1);
+    a.idx.push(base + i, base + i1, base + sides + i, base + i1, base + sides + i1, base + sides + i);
   }
 }
 
@@ -200,7 +212,7 @@ export function buildGearGeometry(): BufferGeometry {
   addBox(a, hw, rimY + rt * 0.5, 0, rt, rt, hd + rt, 1);
   addBox(a, -hw, rimY + rt * 0.5, 0, rt, rt, hd + rt, 1);
   // uprights (suede covered) from rim corners to the frame
-  const fx = 0.42, fz = 0.38;
+  const fx = 0.5, fz = 0.46;
   const corners = [[hw - 0.05, hd - 0.05, fx, fz], [-hw + 0.05, hd - 0.05, -fx, fz], [hw - 0.05, -hd + 0.05, fx, -fz], [-hw + 0.05, -hd + 0.05, -fx, -fz]];
   for (const [bx, bz, tx, tz] of corners) addTube(a, [bx, rimY + 0.1, bz], [tx, frameY, tz], 0.03, 6, 4, 0);
   // load frame (square, steel)
@@ -211,8 +223,8 @@ export function buildGearGeometry(): BufferGeometry {
   // twin burner cans + coil rings
   addCylinderY(a, 0.17, frameY + 0.02, GEAR.burnerTop, 0, 0.14, 12, 2);
   addCylinderY(a, -0.17, frameY + 0.02, GEAR.burnerTop, 0, 0.14, 12, 2);
-  addCylinderY(a, 0.17, frameY + 0.12, frameY + 0.2, 0, 0.165, 12, 5);
-  addCylinderY(a, -0.17, frameY + 0.12, frameY + 0.2, 0, 0.165, 12, 5);
+  addCylinderY(a, 0.17, frameY + 0.1, frameY + 0.17, 0, 0.165, 12, 5);
+  addCylinderY(a, -0.17, frameY + 0.1, frameY + 0.17, 0, 0.165, 12, 5);
   // flying wires: two per frame corner up to the mouth ring (top end: x/z multiplied by mouth radius in shader)
   for (let k = 0; k < 8; k++) {
     const ang = (k / 8) * Math.PI * 2 + Math.PI / 8;
@@ -581,7 +593,7 @@ export class BalloonLayer {
   private burn: Float32Array = new Float32Array(0);
   private cfg: PropTierConfig;
   private readonly parent: Object3D;
-  private posFn: BalloonPosFn = balloonPosFallback;
+  private posFn: BalloonPosFn = balloonPos;
   anchor: BalloonAnchor = { mode: 'center', centerFrac: 0.5 };
   /** Last computed mouth positions (world), 3 floats per balloon. */
   readonly mouths: Float32Array;

@@ -38,14 +38,14 @@ export function erode(h: Float32Array, res: number, spacing: number, o: ErosionO
   const t0 = Date.now();
   const strength = o.strength ?? 1;
   const maxLife = o.maxLifetime ?? 48;
-  const inertia = o.inertia ?? 0.06;
+  const inertia = o.inertia ?? 0.25;
   const capFactor = 0.9 * strength;
   const minCap = o.minCapacity ?? 0.002;
   const erodeSpeed = o.erodeSpeed ?? 0.25;
-  const depositSpeed = o.depositSpeed ?? 0.25;
+  const depositSpeed = o.depositSpeed ?? 0.12;
   const evaporate = o.evaporate ?? 0.02;
   const gravity = o.gravity ?? 4;
-  const radius = o.radius ?? 3;
+  const radius = o.radius ?? 4;
   const floor = (o.floorM ?? -1e9) / spacing;
   const budget = o.timeBudgetMs ?? 90000;
 
@@ -149,9 +149,9 @@ export function erode(h: Float32Array, res: number, spacing: number, o: ErosionO
   // change field: smooth a little, clamp, fade at edges, apply
   const delta = new Float32Array(n);
   for (let i = 0; i < n; i++) delta[i] = (map[i] - orig[i]) * spacing;
-  const sm = blur(delta, res, 1, 1);
-  const maxE = o.maxErodeM ?? 14;
-  const maxD = o.maxDepositM ?? 6;
+  const sm = blur(delta, res, 1, 2);
+  const maxE = o.maxErodeM ?? 10;
+  const maxD = o.maxDepositM ?? 3;
   const fade = o.edgeFadeCells ?? 40;
   let mE = 0;
   let mD = 0;
@@ -161,7 +161,7 @@ export function erode(h: Float32Array, res: number, spacing: number, o: ErosionO
       const ec = Math.min(c, res - 1 - c);
       const e = Math.min(1, Math.min(er, ec) / fade);
       const i = r * res + c;
-      let d = 0.6 * delta[i] + 0.4 * sm[i];
+      let d = 0.3 * delta[i] + 0.7 * sm[i];
       d = d < -maxE ? -maxE : d > maxD ? maxD : d;
       d *= e * e * (3 - 2 * e);
       if (orig[i] * spacing < (o.floorM ?? -1e9)) d = 0;

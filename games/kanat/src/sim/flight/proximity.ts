@@ -18,7 +18,7 @@
 
 import { TUNING } from '../data/tuning.ts';
 import { atan, DEG } from '../math/detMath.ts';
-import type { TerrainSampler } from '../terrain/types.ts';
+import type { HeightGrid, TerrainSampler } from '../terrain/types.ts';
 import type { BalloonDef, SurfaceClass } from '../types.ts';
 import { balloonPos } from '../world/balloons.ts';
 import { newPropHit, type PropHit, type PropIndex } from '../world/propIndex.ts';
@@ -27,12 +27,35 @@ import { sdBox, sdEllipsoid } from '../world/sdf.ts';
 const P = TUNING.prox;
 const BODY_R = TUNING.body.radius;
 
-/** Flat water surfaces. Infinite plane (sea) when r is omitted, else a disc pool. */
+/**
+ * Flat water surfaces. Sea: { y } (infinite plane). Disc pool: { y, x, z, r }. Pool grid (Pamukkale
+ * world.json terrain.patchInfo.water decoded as a HeightGrid): { y: 0, grid } — water exists where the
+ * grid's surface height is above the terrain.
+ */
 export interface WaterBody {
   y: number;
   x?: number;
   z?: number;
   r?: number;
+  grid?: HeightGrid;
+}
+
+function gridSample(g: HeightGrid, x: number, z: number): number {
+  const gx = (x - g.originX) / g.spacing;
+  const gz = (z - g.originZ) / g.spacing;
+  const last = g.res - 1;
+  if (!(gx >= 0 && gz >= 0 && gx <= last && gz <= last)) return -Infinity;
+  let ix = Math.floor(gx);
+  let iz = Math.floor(gz);
+  if (ix > last - 1) ix = last - 1;
+  if (iz > last - 1) iz = last - 1;
+  const tx = gx - ix;
+  const tz = gz - iz;
+  const d = g.data;
+  const i = iz * g.res + ix;
+  const a = d[i] + (d[i + 1] - d[i]) * tx;
+  const b = d[i + g.res] + (d[i + g.res + 1] - d[i + g.res]) * tx;
+  return a + (b - a) * tz;
 }
 
 /** Mutable query result (one per caller, reused). */
@@ -133,7 +156,7 @@ export class Proximity {
     this.balloons = balloons;
     this.water = water;
     let sea = false;
-    for (let i = 0; i < water.length; i++) if (water[i].r === undefined) sea = true;
+    for (let i = 0; i < water.length; i++) if (water[i].r === undefined && water[i].grid === undefined) sea = true;
     this.hasSea = sea;
     this.balloonCenters = new Float64Array(balloons.length * 3);
     this.balloonBound = new Float64Array(balloons.length);
@@ -332,7 +355,25 @@ export class Proximity {
       let d: number;
       let px = x;
       let pz = z;
-      if (w.r === undefined) {
+      if (w.grid !== undefined) {
+        const wy = gridSample(w.grid, x, z);
+        if (!(wy > this.sampler.height(x, z) + 0.02)) continue;
+        d = y - wy;
+        if (d < out.dc) {
+          out.dc = d;
+          out.cls = 'water';
+          out.px = x;
+          out.py = wy;
+          out.pz = z;
+          out.nx = 0;
+          out.ny = 1;
+          out.nz = 0;
+          out.propId = -1;
+          out.flat = true;
+          out.slopeDeg = 0;
+        }
+        continue;
+      } else if (w.r === undefined) {
         d = y - w.y;
       } else {
         const dx = x - (w.x ?? 0);
@@ -367,7 +408,7 @@ export class Proximity {
   }
 
   /** Static props + balloons within maxD: writes into out if closer than out.dc. */
-  private objectQuery(x: number, y: number, z: number, maxD: number, out: ProxResult): void {
+  private objectQuery(x: number, y: number, z: number, maxD: number, out: ProxResult, withBalloons: boolean): void {
     const lim = out.dc < maxD ? out.dc : maxD;
     if (this.props) {
       const h = this.hit;
@@ -387,7 +428,8 @@ export class Proximity {
       }
     }
     const bc = this.balloonCenters;
-    for (let i = 0; i < this.balloons.length; i++) {
+    const nb = withBalloons ? this.balloons.length : 0;
+    for (let i = 0; i < nb; i++) {
       const cx = bc[i * 3];
       const cy = bc[i * 3 + 1];
       const cz = bc[i * 3 + 2];
@@ -440,7 +482,7 @@ export class Proximity {
     this.terrain(x, y, z, maxD, out);
     this.waterQuery(x, y, z, out);
     if (this.hasSea && y < out.agl) out.agl = y;
-    this.objectQuery(x, y, z, maxD, out);
+    this.objectQuery(x, y, z, maxD, out, true);
     if (!(out.dc < maxD)) {
       out.dc = Infinity;
       out.cls = 'none';
@@ -450,29 +492,32 @@ export class Proximity {
   }
 
   /**
-   * Collision probe for one substep position: center distance to the nearest surface if anything could be
-   * within `r + margin`, else +Infinity (cheap path). Fills `out` only when a candidate is found.
+   * Collision probe for one substep position: center distance to the nearest surface when something could be
+   * within `r + margin`, else +Infinity (cheap path, `out` untouched except dc). With the cheap path the true
+   * center distance is guaranteed ≥ r + margin (terrain: vertical clearance > (r + margin)(1 + L)).
    */
-  contact(x: number, y: number, z: number, r: number, out: ProxResult): number {
+  contact(x: number, y: number, z: number, r: number, margin: number, withBalloons: boolean, out: ProxResult): number {
     const s = this.sampler;
     const H0 = s.height(x, z);
     const dv = y - H0;
+    const lim = r + margin;
     let found = false;
     out.dc = Infinity;
-    if (dv < (r + 0.25) * (1 + P.lipschitz)) {
+    out.cls = 'none';
+    out.propId = -1;
+    if (dv < lim * (1 + P.lipschitz)) {
       this.terrain(x, y, z, 8, out);
-      found = true;
+      found = out.dc < lim;
     }
     if (this.water.length > 0) {
       const before = out.dc;
       this.waterQuery(x, y, z, out);
-      if (out.dc < before) found = true;
+      if (out.dc < before && out.dc < lim) found = true;
     }
-    const lim = r + 1;
     const before = out.dc;
-    this.objectQuery(x, y, z, lim, out);
+    this.objectQuery(x, y, z, lim, out, withBalloons);
     if (out.dc < before) found = true;
-    return found ? out.dc : Infinity;
+    return found && out.dc < lim ? out.dc : Infinity;
   }
 }
 

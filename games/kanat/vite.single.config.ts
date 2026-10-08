@@ -1,5 +1,5 @@
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { basename, dirname, join } from 'node:path';
 import { defineConfig } from 'vite';
 import type { Plugin } from 'vite';
 import { viteSingleFile } from 'vite-plugin-singlefile';
@@ -45,7 +45,8 @@ function kanatPack(): Plugin {
           `[kanat-pack] ${file}: ${r.files} files (${mb(r.rawBytes)} MB raw) → ${r.inlineFiles} inline, ${r.overflowFiles} in ${res.packs.length} pack(s); html ${mb(r.htmlBytes)} MB (budget ${mb(SINGLE_HTML_BUDGET)} MB)`,
         );
         if (r.htmlBytes > SINGLE_HTML_BUDGET) throw new Error(`[kanat-pack] ${file} is ${mb(r.htmlBytes)} MB > budget`);
-        writeFileSync(join(dirname(file), 'pack-report.json'), JSON.stringify(r, null, 2));
+        // report next to (not inside) the deliverable folder: dist/single-pack-report.json
+        writeFileSync(join(outDir, '..', `${basename(outDir)}-pack-report.json`), JSON.stringify(r, null, 2));
       }
     },
   };

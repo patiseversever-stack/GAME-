@@ -277,6 +277,14 @@ export class UIController {
   }
 
   private syncHud(): void {
+    // Screens fully covered by a page above them are hidden (no stacked blur cost, no bleed-through).
+    let covered = false;
+    for (let i = this.stack.length - 1; i >= 0; i--) {
+      const e = this.stack[i];
+      e.el.classList.toggle('is-covered', covered);
+      const layer = (SCREENS[e.id] as ScreenDef<unknown>).layer;
+      if (layer === 'page') covered = true;
+    }
     if (!this.hud) return;
     const root = this.stack[0];
     const top = this.stack[this.stack.length - 1];

@@ -47,9 +47,11 @@ export class SlidingWindow {
   }
 
   percentile(p: number): number {
-    const o = [0];
-    this.percentiles([p], o);
-    return o[0];
+    if (this.n === 0) return NaN;
+    const s = this.scratch.subarray(0, this.n);
+    s.set(this.n === this.buf.length ? this.buf : this.buf.subarray(0, this.n));
+    s.sort();
+    return s[Math.min(this.n - 1, Math.max(0, Math.round(p * (this.n - 1))))];
   }
 
   mean(): number {

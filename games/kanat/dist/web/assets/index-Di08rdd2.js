@@ -1,0 +1,1 @@
+import"./modulepreload-polyfill-P2Xu9kJm.js";var e=document.getElementById(`app`);e&&(e.textContent=``);

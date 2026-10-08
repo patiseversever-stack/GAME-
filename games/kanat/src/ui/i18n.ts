@@ -147,7 +147,7 @@ export function possessive(name: string, lang: Lang = current): string {
 
 /** Long date: "8 Ekim 2026" / "8 October 2026". */
 export function fmtDate(y: number, month: number, day: number, lang: Lang = current): string {
-  return formatMessage(TABLES[lang]['date.long'], { d: day, month: TABLES[lang][`month.${month}`] ?? String(month), y }, lang);
+  return formatMessage(TABLES[lang]['date.long'], { d: String(day), month: TABLES[lang][`month.${month}`] ?? String(month), y: String(y) }, lang);
 }
 
 // ---------------------------------------------------------------- message formatter

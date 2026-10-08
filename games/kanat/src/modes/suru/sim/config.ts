@@ -117,6 +117,10 @@ export const SURU = {
   HAWK_TIGHT_MUL: 0.5,
   HAWK_SCATTER_DIST: 40,
   HAWK_MIN_FOLLOWERS: 12,
+  /** §4.G "1–3 hawks": a second / third hawk joins the wave when the largest flock reaches these sizes */
+  HAWK_2_AT: 220,
+  HAWK_3_AT: 420,
+  HAWK_STAGGER_TICKS: 24,
 
   // ---- wind gusts (§2) ----
   GUST_FIRST_MIN_SEC: 20,

@@ -203,7 +203,7 @@ const karadeniz: ThemeDef = {
   id: 'karadeniz',
   stepDur: 0.15,
   stepsPerBar: 7,
-  gain: 0.85,
+  gain: 0.95,
   ambience: ['rain'],
   idle: [false, false, false],
   sections: [
@@ -272,7 +272,7 @@ const erciyes: ThemeDef = {
   id: 'erciyes',
   stepDur: 0.2,
   stepsPerBar: 16,
-  gain: 0.9,
+  gain: 1.25,
   ambience: [],
   idle: [false, false, false],
   sections: [
@@ -329,7 +329,7 @@ const pamukkale: ThemeDef = {
   id: 'pamukkale',
   stepDur: 0.19,
   stepsPerBar: 9,
-  gain: 0.9,
+  gain: 1.05,
   ambience: ['trickle'],
   idle: [false, false, false],
   sections: [

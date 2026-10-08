@@ -13,12 +13,14 @@ import { mix } from '../art.ts';
 /** Deterministic fallback line (when route geometry is not provided). */
 function fallbackLine(i: number): [number, number][] {
   const pts: [number, number][] = [];
-  const a = 0.6 + i * 0.37;
+  const x0 = 0.1 + i * 0.07;
+  const y0 = 0.12 + (i % 2) * 0.1 + i * 0.04;
+  const x1 = 0.78 + (i % 2) * 0.08;
+  const y1 = 0.62 + i * 0.07;
   for (let k = 0; k <= 24; k++) {
     const s = k / 24;
-    const x = 0.12 + s * 0.76 + Math.sin(s * 5.2 + a * 2.1) * 0.06;
-    const y = 0.18 + i * 0.05 + s * 0.6 + Math.sin(s * 3.3 + a) * 0.1;
-    pts.push([x, y]);
+    const bend = Math.sin(s * Math.PI) * (0.1 + i * 0.05) * (i % 2 ? 1 : -1);
+    pts.push([x0 + (x1 - x0) * s + Math.sin(s * 6 + i) * 0.025, y0 + (y1 - y0) * s + bend]);
   }
   return pts;
 }

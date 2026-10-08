@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>KANAT · ses laboratuvarı</title>
+    <style>
+      :root { color-scheme: dark; --bg: #11161c; --fg: #e8e2d6; --mute: #8a93a0; --acc: #e0a34a; --ok: #6cc27a; --bad: #e0675a; }
+      body { margin: 0; background: var(--bg); color: var(--fg); font: 14px/1.4 system-ui, sans-serif; padding: 16px; }
+      h1 { font-size: 18px; margin: 0 0 8px; }
+      h2 { font-size: 15px; margin: 18px 0 6px; color: var(--acc); }
+      button { background: #1f2833; color: var(--fg); border: 1px solid #33404f; border-radius: 6px; padding: 6px 10px; margin: 2px; font: inherit; }
+      button.on { background: #3b4f2c; }
+      .row { display: flex; flex-wrap: wrap; gap: 4px; align-items: center; }
+      label { color: var(--mute); margin-right: 6px; }
+      table { border-collapse: collapse; font: 12px/1.3 ui-monospace, monospace; margin-top: 8px; }
+      td, th { border-bottom: 1px solid #263240; padding: 2px 8px; text-align: right; }
+      td:first-child, th:first-child { text-align: left; }
+      .pass { color: var(--ok); } .fail { color: var(--bad); }
+      #status { color: var(--mute); }
+    </style>
+  </head>
+  <body>
+    <h1>KANAT · ses laboratuvarı (port 5186)</h1>
+    <div id="status">Dokun → ses açılır. <code>?measure=1</code> → OfflineAudioContext ölçümü.</div>
+    <div id="app"></div>
+    <script type="module" src="./audio.ts"></script>
+  </body>
+</html>
