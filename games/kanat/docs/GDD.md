@@ -1,7 +1,7 @@
 # KANAT — Oyun Tasarım Belgesi (GDD)
 
 > Sürüm 1.1 · Oyun Tasarımcısı ajanı · Kaynak: `docs/BRIEF.md` (§1, §2, §2.10, §4.G.7, §9.G).
-> **1.1 = F1 incelemesi uygulandı** (Kırmızı Takım + Oyuncu Paneli, 56 bulgu): kararların tamamı `docs/decisions/f1-review.md`, persona yanıtları `docs/PANEL.md`. Yeni kararlar K-17…K-28, S-14 (§10).
+> **1.1 = F1 incelemesi uygulandı** (Kırmızı Takım + Oyuncu Paneli, 64 bulgu): kararların tamamı `docs/decisions/f1-review.md`, persona yanıtları `docs/PANEL.md`. Yeni kararlar K-17…K-28, S-14 (§10).
 > Bu belge brifin uygulanabilir özetidir. Sayıların **tek kaynağı veri dosyalarıdır**; belge onları açıklar:
 >
 > | Veri | Dosya | Sahibi |

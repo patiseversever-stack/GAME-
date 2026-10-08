@@ -40,6 +40,12 @@ Kapsam: `src/ui/**`, `public/fonts/**`, `tools/fonts-fetch.ts`, `dev/ui.*`, `tes
 - **Karar:** `intro`/`jump` evresinde HUD göstergeleri gizlenir, yalnız FTUE katmanı ve duraklat kalır (ilk 30 saniye filmi: tek ipucu "Atla").
 - **Karar:** Olay yazıları ekranın üst üçte birinde (merkez %40 boş), 1,4 sn ömür; çarpma uyarısı kenar nabzı 1 Hz (≤ 3 Hz ışık kuralı).
 
+## Entegrasyon kancaları (yapımcı isteği)
+- **Karar:** UI sesleri `callbacks.onSound(e)` ile, doğrudan `audio.event(e)`'ye verilebilecek nesneler olarak yayınlanır: `uiTap`, `uiSwish` (sayfa açılışı), `uiConfirm` (Uç/Tekrar/Devam/Yarış), `uiBack`, `uiToggle`, `{type:'tally', i}` (döküm satırı başına), `tallyEnd`, `{type:'star', index}` (0 tabanlı), `reward` (yeni rekor, açılış kartı), `photo` (deklanşör). Yıldız haptiği ses motorunda olduğu için UI ayrıca haptik göndermez.
+- **Karar:** Sürüm etiketi `callbacks.onVersionLabel(el)` ile entegratöre verilir (`return attachVersionTapTrigger(el)`); kanca yoksa UI kendi 5-dokunuş sayacıyla `openPerfPanel()` çağırır — çift tetik yok.
+- **Karar:** "Devam" katmanı `UI.show('resume')`; dokunuş → `onResumeTap()`; platform `resumePrompt {show:false}` gelince `UI.close('resume')`.
+- **Karar:** Async işleyiciler (düello doğrulama) ekranın canlı kopyasını kararlı `key` ile bulur; dil değişimi sırasında yeniden çizilen ekran kaybolmaz.
+
 ## Paylaşım
 - **Karar:** Metin kartları §2.8/§2.6 birebir; 🛟/🐢 birinci satırın sonuna, düello kodu ikinci satıra. TR'de sıra "1./15", EN "1st/15". Birim testleri `tests/unit/ui-share.test.ts`.
 - **Karar:** Görsel kart 1080×1350 canvas → varsayılan JPEG 0,9 dataURL (foto ağırlıklı kart PNG'de 2–3 MB olur). Kahraman kare verilmezse dünya sanatı kullanılır.

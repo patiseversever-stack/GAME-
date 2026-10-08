@@ -43,23 +43,25 @@ void main() {
   int lo = int(uMaskLo + 0.5);
   int hi = int(uMaskHi + 0.5);
   float covered = bin < 18 ? float((lo >> bin) & 1) : float((hi >> (bin - 18)) & 1);
-  float gap = smoothstep(0.0, 0.08, fract(fb)) * smoothstep(1.0, 0.92, fract(fb));
-  float w = 0.75 + 0.5 * uHold;
-  float line = 1.0 - smoothstep(w * 0.4, w, abs(d - uRadius));
-  float glow = exp(-pow((d - uRadius) / (2.5 + 3.0 * uHold), 2.0));
-  float a = line * mix(0.12 * step(0.5, fract(fb * 2.0)), 1.0, covered) * mix(1.0, gap, 0.6);
-  a += glow * covered * (0.25 + 0.5 * uHold);
+  float gap = smoothstep(0.0, 0.12, fract(fb)) * smoothstep(1.0, 0.88, fract(fb));
+  float w = 0.22 + 0.18 * uHold;
+  float line = 1.0 - smoothstep(w * 0.5, w, abs(d - uRadius));
+  float glow = exp(-pow((d - uRadius) / (0.9 + 1.4 * uHold), 2.0));
+  // covered 10° bins: solid light line; open bins: faint dots marking the gap to close
+  float dots = (1.0 - smoothstep(0.12, 0.3, length(vec2(fract(fb * 3.0) - 0.5, (d - uRadius) / 0.6)))) * 0.35;
+  float a = mix(dots, line * gap * (0.75 + 0.25 * uHold), covered);
+  a += glow * covered * (0.12 + 0.3 * uHold);
   // cascade: the ring collapses inward as a bright wave
   if (uCascade > 0.0) {
     float rr = uRadius * (1.0 - uCascade);
-    a = max(a * (1.0 - uCascade), exp(-pow((d - rr) / 2.2, 2.0)) * (1.0 - uCascade * 0.5));
+    a = max(a * (1.0 - uCascade), exp(-pow((d - rr) / 1.4, 2.0)) * 0.8 * (1.0 - uCascade * 0.6));
   }
   // FTUE ghost arc: soft white dashed guide circle
   if (uGhost > 0.0) {
     float dash = step(0.5, fract(fb * 1.5 - uTime * 0.6));
     a = max(a, line * dash * 0.55 * uGhost + glow * 0.12 * uGhost);
   }
-  vec3 col = mix(uColor, vec3(1.0), 0.25 * uHold + 0.4 * uCascade) * (1.3 + uHold);
+  vec3 col = mix(uColor, vec3(1.0), 0.15 * uHold + 0.3 * uCascade) * (0.9 + 0.6 * uHold);
   if (uGhost > 0.0 && covered < 0.5) col = mix(col, vec3(1.0, 0.95, 0.85), uGhost);
   if (a < 0.003) discard;
   gl_FragColor = vec4(agx(col) * a, a);
@@ -75,11 +77,11 @@ varying vec3 vWorld;
 void main() {
   float d = length(vLocal);
   float R = 8.0 + 62.0 * (1.0 - pow(1.0 - uK, 2.2));
-  float ring = exp(-pow((d - R) / (1.6 + 3.0 * uK), 2.0));
-  float inner = exp(-pow((d - R * 0.82) / 4.0, 2.0)) * 0.35;
-  float a = (ring + inner) * (1.0 - uK) * 0.95;
+  float ring = exp(-pow((d - R) / (0.7 + 1.6 * uK), 2.0));
+  float inner = exp(-pow((d - R * 0.85) / 3.0, 2.0)) * 0.18;
+  float a = (ring + inner) * pow(1.0 - uK, 1.4) * 0.75;
   if (a < 0.003) discard;
-  vec3 col = mix(vec3(1.0, 0.97, 0.9), uColor, 0.55) * 1.6;
+  vec3 col = mix(vec3(1.0, 0.95, 0.85), uColor, 0.7) * 1.2;
   gl_FragColor = vec4(agx(col) * a, a);
 }
 `;
@@ -203,12 +205,12 @@ void main() {
   float a = smoothstep(1.0, 0.25, r + (n - 0.5) * 0.7) * uStormPos.z;
   if (a < 0.004) discard;
   // lit top (warm sunset edge), cold heavy belly
-  float top = clamp(vQ.y * 0.5 + 0.5 + (n - 0.5) * 0.6, 0.0, 1.0);
-  vec3 belly = vec3(0.035, 0.04, 0.06);
-  vec3 lit = mix(uSkyLow * 0.35, uSunColor * 0.45, 0.4);
-  vec3 col = mix(belly, lit, top * 0.7) + vec3(0.7, 0.78, 1.0) * uLightning * (0.6 + 0.4 * n);
+  float top = clamp(vQ.y * 0.5 + 0.5 + (n - 0.5) * 0.8, 0.0, 1.0);
+  vec3 belly = vec3(0.012, 0.014, 0.022);
+  vec3 lit = mix(uSkyMid * 0.25, uSunColor * 0.12, 0.35);
+  vec3 col = mix(belly, lit, top * top * 0.8) + vec3(0.6, 0.68, 0.9) * uLightning * (0.35 + 0.4 * n);
   col = applyNight(col, nightMask(vWorld.xz) * 0.6);
-  gl_FragColor = vec4(agx(col) * a * 0.8, a * 0.8);
+  gl_FragColor = vec4(agx(col) * a * 0.72, a * 0.72);
 }
 `;
 

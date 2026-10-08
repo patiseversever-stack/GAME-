@@ -175,8 +175,8 @@ export class SuruRenderer {
     // 3200 K → 2200 K, dimming as the sun touches the horizon
     const kc = Math.min(1, p);
     const sun = g.uSunColor.value;
+    // THREE.Color parses hex as sRGB and stores linear values (ColorManagement) — no extra conversion
     lerpColor(sun, '#FFB46B', '#FF932C', kc);
-    sun.convertSRGBToLinear();
     const sunI = 2.6 * (0.12 + 0.88 * smooth(-0.025, 0.09, Math.sin(el)));
     sun.multiplyScalar(sunI);
     // sky palette: warm sunset → blue hour
@@ -185,11 +185,9 @@ export class SuruRenderer {
     lerpColor(g.uSkyMid.value, '#6B3F69', '#2B2E5C', kb);
     lerpColor(g.uSkyLow.value, '#E0735A', '#594A80', kb);
     lerpColor(g.uSkyHorizon.value, '#FFC48A', '#C98670', kb);
-    for (const c of [g.uSkyZenith.value, g.uSkyMid.value, g.uSkyLow.value, g.uSkyHorizon.value]) c.convertSRGBToLinear();
     g.uSkyHorizon.value.multiplyScalar(1.35 - 0.55 * kb);
     g.uSkyLow.value.multiplyScalar(1.1 - 0.3 * kb);
     lerpColor(g.uSea.value, '#2A3550', '#1B2440', kb);
-    g.uSea.value.convertSRGBToLinear();
     g.uNight.value = smooth(0.72, 1.04, p);
     g.uExposure.value = 1.0 + 0.55 * smooth(0.6, 1.05, p);
   }

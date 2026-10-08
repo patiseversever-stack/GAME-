@@ -1,0 +1,632 @@
+{
+ "v": 1,
+ "allowedLicenses": [
+  "Original work (KANAT, procedural, generated in-repo)",
+  "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+  "SIL Open Font License 1.1",
+  "Metadata (generated)"
+ ],
+ "files": [
+  {
+   "path": "fonts/OFL.txt",
+   "bytes": 13698,
+   "sha256": "7e5a4fda64663bc22484de01fb341e26fa51194cf9ee5260456c17acab9aa190",
+   "source": "https://github.com/google/fonts (ofl/*/OFL.txt)",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (licence text shipped with the fonts as OFL requires)",
+   "generator": "tools/fonts-fetch.ts"
+  },
+  {
+   "path": "fonts/barlow-condensed-600-latin-ext.woff2",
+   "bytes": 14516,
+   "sha256": "aef7edf54f79a5329fbca9c065b56dcec3852c680d58cf89a9ef2db6940ca4b3",
+   "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B4873z3jWuZEC.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/barlow-condensed-600-latin.woff2",
+   "bytes": 22308,
+   "sha256": "215a93c696f442034a46fbb382958f753fda60e30490683aeea6b235fcbb2b66",
+   "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B4873z3bWuQ.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/barlow-condensed-700-latin-ext.woff2",
+   "bytes": 14640,
+   "sha256": "9d351bd9222bfab90f943850f8039aa73cdb40e0a6cfe4127308a48bef59d5f5",
+   "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B46r2z3jWuZEC.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/barlow-condensed-700-latin.woff2",
+   "bytes": 22444,
+   "sha256": "3787a5a419171630e6890cfa47c4da067474d005cd0ff8dc11ec090fdc3ee2b8",
+   "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxwL3I-JCGChYJ8VI-L6OO_au7B46r2z3bWuQ.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/barlow-condensed-italic-600-latin-ext.woff2",
+   "bytes": 15272,
+   "sha256": "8808b5d4e993e16aa4fb0c17725d83a33eac1a38790b221da3aab3cf44dbcfce",
+   "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxyL3I-JCGChYJ8VI-L6OO_au7B6xTrB3XmtYkGUrs.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/barlow-condensed-italic-600-latin.woff2",
+   "bytes": 23896,
+   "sha256": "b0f01d0751e8eacf09ca2f00e2cac351ecbd2df661b334bbcc63d070c4b95cc2",
+   "source": "https://fonts.gstatic.com/s/barlowcondensed/v13/HTxyL3I-JCGChYJ8VI-L6OO_au7B6xTrB3Xmu4kG.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/fonts.json",
+   "bytes": 7056,
+   "sha256": "9165da7dc5e05b41cb701a71f51b841ffb042acc5543fcc4cc9e4a7ab304646b",
+   "source": "tools/fonts*.ts (Google Fonts CSS2 API response, parsed)",
+   "license": "Metadata (generated)",
+   "modification": "none",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/inter-var-latin-ext.woff2",
+   "bytes": 85068,
+   "sha256": "34b9c504cab7a73e37b746343a449132e56cf7b5481af2cb81dc74dcff25c956",
+   "source": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa25L7SUc.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/inter-var-latin.woff2",
+   "bytes": 48256,
+   "sha256": "3100e775e8616cd2611beecfa23a4263d7037586789b43f035236a2e6fbd4c62",
+   "source": "https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa1ZL7.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/playfair-display-italic-var-latin-ext.woff2",
+   "bytes": 23380,
+   "sha256": "b9dff4aec6d8ef27af595330c808c455fcc3ff46881642aa6028ed4e27a96f89",
+   "source": "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFkD-vYSZviVYUb_rj3ij__anPXDTnojEk72xU.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "fonts/playfair-display-italic-var-latin.woff2",
+   "bytes": 38804,
+   "sha256": "54af24bd0f911f0fd7399d5445ea2023ff501d6a69f2d728f1213072f977ab14",
+   "source": "https://fonts.gstatic.com/s/playfairdisplay/v40/nuFkD-vYSZviVYUb_rj3ij__anPXDTnogkk7.woff2",
+   "license": "SIL Open Font License 1.1",
+   "modification": "none (Google Fonts latin / latin-ext subset as served)",
+   "generator": "tools/fonts*.ts"
+  },
+  {
+   "path": "worlds/erciyes/color_far.webp",
+   "bytes": 106600,
+   "sha256": "70f014d8e7f9e88f83ad45841914bc75f7bb01767f9da81bbee4335a4986601d",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/color_macro.ktx2",
+   "bytes": 508696,
+   "sha256": "58859857b0f8c3b8e3f84bd91ee715610d10461768ef145715d7a83f66c3fab3",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/color_macro.webp",
+   "bytes": 103328,
+   "sha256": "145b3a7212097bf2bdab5633b671355e0e2dcbea03ecded55a1cd65b4c85e99c",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/height_core.u16.z",
+   "bytes": 651199,
+   "sha256": "ca44495f743ca55ea0a9a2a043be7ba27f6e460bce01ee0efaa65d0ac13416d3",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/height_far.u16.z",
+   "bytes": 274599,
+   "sha256": "4587cb3c949def2876a94021733e53aea3c63d9f7ab95aecf8362e5bd5742d7a",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/masks_core.u8.z",
+   "bytes": 145246,
+   "sha256": "337f85c94197251a84eb44f3c307592039c34c4ca727ea79b0cd0baa72a1b6ad",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/normal_core.png",
+   "bytes": 611257,
+   "sha256": "cbc0c7b7d6711eee934d97339540e8b0b596b5c1049c194e245cc1804b58c14e",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/rock_core.u8.z",
+   "bytes": 87544,
+   "sha256": "29cc3f95a16f46c41c59e0de2d44e04e8f614511fc46e74a832cf3014eec71ce",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/shadow_ao.png",
+   "bytes": 629710,
+   "sha256": "e6b79b2aa86f0e63a840707d8bcfeb900042da08e7fcafdaf3f2d17197b923ee",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/splat_core.png",
+   "bytes": 243308,
+   "sha256": "90e706f38d12f74507590486a6f944066b8828b2f8766edea69be6d0dd1c16c8",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/erciyes/world.json",
+   "bytes": 4141,
+   "sha256": "fc936fb9a068f6937937a85ea116994ec5b3e445fad6984e0151f81660f71279",
+   "source": "tools/terrain/worldDefs.ts + bake outputs",
+   "license": "Original work (KANAT, procedural, generated in-repo)",
+   "modification": "n/a",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/color_far.webp",
+   "bytes": 137090,
+   "sha256": "487f71a309796766ef6ab90336ef66af68eb8f1770ee18cc24818cd23a0deb4e",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/color_macro.ktx2",
+   "bytes": 715362,
+   "sha256": "29b2c207e8ff7a89603bf7ae9233cb7b8444dc25707dfeacbcb9fa545c239d10",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/color_macro.webp",
+   "bytes": 191058,
+   "sha256": "69af5104a4d24b2b1edfba743290e6652ba3cb3e3c336f8d5da4d54d66da89d5",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/height_core.u16.z",
+   "bytes": 776108,
+   "sha256": "e41458d60af72e5bebe2257e84f2bb2a5e483b3a2a3b9b1cb54ddc0b354ca038",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/height_far.u16.z",
+   "bytes": 309994,
+   "sha256": "daa622febaa36f5509ff42fb552d7c64d9baf96057e38d65ad5c5ae9f2683662",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/masks_core.u8.z",
+   "bytes": 343905,
+   "sha256": "6af60c446b53d7cbb03fb6f2c8e8b768c47ca040d6e55cd81281a17bd703cf23",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/normal_core.png",
+   "bytes": 535883,
+   "sha256": "a6e996ccfa8cb8ff9d7208a6fae561ee34287cc701784c907580ce567b3bfd6a",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/rock_core.u8.z",
+   "bytes": 263283,
+   "sha256": "6a0c7086fab3f88721aa9b72ea931927835cf72f647f2193914162cdf290238a",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/shadow_ao.png",
+   "bytes": 772033,
+   "sha256": "0bc8c73be99861b2fdfc17330a620f90b5a128c785bb1600309980999f933548",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/splat_core.png",
+   "bytes": 416040,
+   "sha256": "572d24e8c7b607b45a34239efe6b20c6a176135fb90780472b3b566df8587541",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/kapadokya/world.json",
+   "bytes": 4321,
+   "sha256": "a384603ce4e7d6e9816b00edf717c1a7fde8a437666c9163cba342589609574e",
+   "source": "tools/terrain/worldDefs.ts + bake outputs",
+   "license": "Original work (KANAT, procedural, generated in-repo)",
+   "modification": "n/a",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/color_far.webp",
+   "bytes": 138084,
+   "sha256": "37ff84beb1730a2c2a4e1a4186b9561d908a37d872d39e2e5dc40bf4db37d23b",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/color_macro.ktx2",
+   "bytes": 633068,
+   "sha256": "7e916edb0d91564ed4a10cda2f6e37f506a4ae5e7b5a1b4d72ed52718f58f5e9",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/color_macro.webp",
+   "bytes": 106594,
+   "sha256": "876447640b9b8ca77b81ec657d7f6c709b5cdc672a61586c07225175ca87b903",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/height_core.u16.z",
+   "bytes": 731301,
+   "sha256": "4c5023e9205152863736ee29bb0a156088f74aad265b7bd8eb88deaf5bea08fa",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/height_far.u16.z",
+   "bytes": 307318,
+   "sha256": "907a01c267d5d3f1d6e81a263cd72365731526654db9e2b2f3e980025941e111",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/masks_core.u8.z",
+   "bytes": 125390,
+   "sha256": "d7d06a1ed780ad63e54b555f2904f76f2e3e0fdbc3bb1243bae441f66a3a2bc8",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/normal_core.png",
+   "bytes": 772762,
+   "sha256": "11007c3bd5a1a3ec1ee0dffe7dd52ea8ffc6d10b4d9ee61e21440e2e3d7898b4",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/rock_core.u8.z",
+   "bytes": 4587,
+   "sha256": "26c82f7f6e9907372e46212698af1fe459e5b8450f509efbf0942490c3f7cf11",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/shadow_ao.png",
+   "bytes": 748707,
+   "sha256": "6a793e1fe2c48c07380d4c9469dc292bef6b992bd50c6d77db9b432f79771705",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/splat_core.png",
+   "bytes": 133912,
+   "sha256": "74ac03c663cfea6bae5ea8b3cce357d7223b26f01b364cc67fac2bf06abac487",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/karadeniz/world.json",
+   "bytes": 4327,
+   "sha256": "6022d5645f1d124cc0fcf5671203415d54af9e33edda8a4f2330405a134d46c1",
+   "source": "tools/terrain/worldDefs.ts + bake outputs",
+   "license": "Original work (KANAT, procedural, generated in-repo)",
+   "modification": "n/a",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/color_far.webp",
+   "bytes": 100284,
+   "sha256": "d379ec4c5d81b09e3f0cd62877d83c9b9e7afbe41d0a3562bd83d2066624f45c",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/color_macro.ktx2",
+   "bytes": 676277,
+   "sha256": "b9f09a1572cf47f188b4cf98510db596d3dddaa6baab8c81a31ad3776123ce70",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/color_macro.webp",
+   "bytes": 327900,
+   "sha256": "d300f584ac4d4fd80775955280787b4b2ae556179dcfa64f8be4965572edb324",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/height_core.u16.z",
+   "bytes": 678124,
+   "sha256": "8406d4e8f3813e9213f271bde8d401634c95def594e3bd60292280863e694273",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/height_far.u16.z",
+   "bytes": 240010,
+   "sha256": "2e962accae1e57587baf3455dc7bb62f3784b4e4f1be37bd34cf7696e991d8b7",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/masks_core.u8.z",
+   "bytes": 258808,
+   "sha256": "50c1a670e97e47fb00f4a1d0e9e89aeedc611e9f7f7d4173084ae3c8d313ceca",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/normal_core.png",
+   "bytes": 636916,
+   "sha256": "5fde66062e16ced62b8f2b9d672f5304989a72ff430770fd8770b18de8bfc610",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/rock_core.u8.z",
+   "bytes": 210531,
+   "sha256": "9ab21b9ced28599f43c1d904654a4d5dc2fc433d3b114354c5435dbf2b07f136",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/shadow_ao.png",
+   "bytes": 696256,
+   "sha256": "3373a4430ab7f644626fc887b08184ee1dee922dbe135f00df77a50e019bf554",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/splat_core.png",
+   "bytes": 590014,
+   "sha256": "74d8cf1a51c3af30ac85eb07616a8bbd3c9961f0cdddb04ff425b009786a09ca",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/likya/world.json",
+   "bytes": 4318,
+   "sha256": "c81860c1b2e30151db782bdbcc1d19613b392d023b24ff72cfcc033a42caec5b",
+   "source": "tools/terrain/worldDefs.ts + bake outputs",
+   "license": "Original work (KANAT, procedural, generated in-repo)",
+   "modification": "n/a",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/color_far.webp",
+   "bytes": 121402,
+   "sha256": "5c9b9e0d1b2754e2978940a58bf20b04a1852133b22940f5a0a4f891a1fe66ba",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/color_macro.ktx2",
+   "bytes": 602031,
+   "sha256": "b34412dc0e61dd82c1cc8c8233997c6f0cf16bab04e477d2afc1d3eb103fd194",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/color_macro.webp",
+   "bytes": 138046,
+   "sha256": "40d705a5629d3ef285ddb0a37b073b6a31d0a15d54b0cb4252ee102a7e623a15",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/height_core.u16.z",
+   "bytes": 621339,
+   "sha256": "9eae224f80d4cdb1ad9a58d3066eef9f99eed07c3ed5408221b6c6295409abb1",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/height_far.u16.z",
+   "bytes": 300283,
+   "sha256": "135c54a6731369c43eecaae6759652765591c1684e0fc698a34099cd91d609f1",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/height_patch.u16.z",
+   "bytes": 828884,
+   "sha256": "37bf51e496f10976ad1b0921a7146902ed20f4b33dd991ebb9dd52c47678a107",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/masks_core.u8.z",
+   "bytes": 271740,
+   "sha256": "072416e312523bcf2f6f38ec8f70a0502680f52868e7463ec13496aff6a0551f",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/normal_core.png",
+   "bytes": 523070,
+   "sha256": "9d48db9a5c999349ea0f70bb034d2a4cc14e36407043e66d014f335725a973f8",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/rock_core.u8.z",
+   "bytes": 48977,
+   "sha256": "61246127ac6a051e187a82fcf9373027777c915e126ed314d65d53508eab359d",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/shadow_ao.png",
+   "bytes": 530123,
+   "sha256": "955b41e49285924b076428fddfd620c128207a9bc8e76fa53dc66cf0a167d682",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/splat_core.png",
+   "bytes": 157109,
+   "sha256": "3e13d02e6b2b22ea02b3e4deb7dc852c987a37cc181c3bf22d930ee44db4b668",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/water_patch.u16.z",
+   "bytes": 251378,
+   "sha256": "9ceb92e06bd292f9687ccd57398a2f85239d2dc817db2c40de5c882c0c37e63c",
+   "source": "https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png (z13 core, z11 far)",
+   "license": "Derived from AWS Terrain Tiles — attribution required (docs/credits/terrain.md)",
+   "modification": "bicubic resample, binomial filter, seeded hydraulic erosion, vertical scale, coastal bathymetry, procedural travertine patch; derived normal/splat/shadow-AO/colour maps",
+   "generator": "tools/bake-terrain.ts"
+  },
+  {
+   "path": "worlds/pamukkale/world.json",
+   "bytes": 4883,
+   "sha256": "4eccab651c5f5544122bc5f26da33d72d7801ecee4db4a3375fdd286c4e4659a",
+   "source": "tools/terrain/worldDefs.ts + bake outputs",
+   "license": "Original work (KANAT, procedural, generated in-repo)",
+   "modification": "n/a",
+   "generator": "tools/bake-terrain.ts"
+  }
+ ]
+}

@@ -145,5 +145,15 @@
   .kn-hud-alt { transform: translateY(-62%); }
 }
 
+/* big HUD: keep the zoomed parachute clear of the zoomed proximity ring */
+.kn-big .kn-hud-chute { bottom: calc(var(--kn-safe-bottom) + 150px); }
+.kn-big .kn-ftue-chute { bottom: calc(var(--kn-safe-bottom) + 162px); }
+.kn-big .kn-hud-alt { transform: translateY(-66%); }
+@media (orientation: landscape) and (max-height: 560px) {
+  .kn-big .kn-hud-chute { bottom: calc(var(--kn-safe-bottom) + 12px); }
+  .kn-big .kn-ftue-chute { bottom: calc(var(--kn-safe-bottom) + 24px); }
+  .kn-big .kn-hud-alt { transform: translateY(-74%); }
+}
+
 /* intro / jump: only the FTUE layer and pause are shown (first-30-seconds film: no instrument clutter) */
 .kn-hud.is-intro > :not(.kn-hud-ftue):not(.kn-hud-pause):not(.kn-hud-warn) { opacity: 0; transition: opacity var(--kn-t-slow) var(--kn-ease); }

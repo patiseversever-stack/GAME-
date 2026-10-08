@@ -139,6 +139,7 @@ precision highp float;
 precision highp int;
 precision highp sampler2D;
 precision highp sampler2DArray;
+float gDetailBias = 0.0;
 uniform sampler2D uShadowAo;
 uniform sampler2D uMacro;
 uniform sampler2D uFarColor;
@@ -176,9 +177,9 @@ vec4 sampleLayerPlanar( vec3 wp, vec3 n, int L, float sc ) {
   float wTop = smoothstep( 0.5, 0.62, an.y );
   vec2 uvSide = an.x > an.z ? wp.zy : wp.xy;
   vec4 c;
-  if ( wTop >= 0.999 ) c = texture( uDetail, vec3( wp.xz * ts, float( L ) ) );
-  else if ( wTop <= 0.001 ) c = texture( uDetail, vec3( uvSide * ts, float( L ) ) );
-  else c = mix( texture( uDetail, vec3( uvSide * ts, float( L ) ) ), texture( uDetail, vec3( wp.xz * ts, float( L ) ) ), wTop );
+  if ( wTop >= 0.999 ) c = texture( uDetail, vec3( wp.xz * ts, float( L ) ), gDetailBias );
+  else if ( wTop <= 0.001 ) c = texture( uDetail, vec3( uvSide * ts, float( L ) ), gDetailBias );
+  else c = mix( texture( uDetail, vec3( uvSide * ts, float( L ) ), gDetailBias ), texture( uDetail, vec3( wp.xz * ts, float( L ) ), gDetailBias ), wTop );
   return c;
 }
 
@@ -190,8 +191,8 @@ vec4 sampleLayerBiplanar( vec3 wp, vec3 n, int L, float sc ) {
   ivec3 ma = ( an.x > an.y && an.x > an.z ) ? ivec3( 0, 1, 2 ) : ( an.y > an.z ) ? ivec3( 1, 2, 0 ) : ivec3( 2, 0, 1 );
   ivec3 mi = ( an.x < an.y && an.x < an.z ) ? ivec3( 0, 1, 2 ) : ( an.y < an.z ) ? ivec3( 1, 2, 0 ) : ivec3( 2, 0, 1 );
   ivec3 me = ivec3( 3 ) - mi - ma;
-  vec4 x = texture( uDetail, vec3( vec2( p[ ma.y ], p[ ma.z ] ), float( L ) ) );
-  vec4 y = texture( uDetail, vec3( vec2( p[ me.y ], p[ me.z ] ), float( L ) ) );
+  vec4 x = texture( uDetail, vec3( vec2( p[ ma.y ], p[ ma.z ] ), float( L ) ), gDetailBias );
+  vec4 y = texture( uDetail, vec3( vec2( p[ me.y ], p[ me.z ] ), float( L ) ), gDetailBias );
   vec2 w = vec2( an[ ma.x ], an[ me.x ] );
   w = clamp( ( w - 0.5773 ) / ( 1.0 - 0.5773 ), 0.0, 1.0 );
   w = pow( w, vec2( 4.0 ) );
@@ -203,9 +204,9 @@ vec4 sampleLayerTriplanar( vec3 wp, vec3 n, int L, float sc ) {
   vec3 w = pow( abs( n ), vec3( 4.0 ) );
   w /= max( w.x + w.y + w.z, 1e-4 );
   vec4 c = vec4( 0.0 );
-  if ( w.x > 0.02 ) c += texture( uDetail, vec3( wp.zy * ts, float( L ) ) ) * w.x;
-  if ( w.y > 0.02 ) c += texture( uDetail, vec3( wp.xz * ts, float( L ) ) ) * w.y;
-  if ( w.z > 0.02 ) c += texture( uDetail, vec3( wp.xy * ts, float( L ) ) ) * w.z;
+  if ( w.x > 0.02 ) c += texture( uDetail, vec3( wp.zy * ts, float( L ) ), gDetailBias ) * w.x;
+  if ( w.y > 0.02 ) c += texture( uDetail, vec3( wp.xz * ts, float( L ) ), gDetailBias ) * w.y;
+  if ( w.z > 0.02 ) c += texture( uDetail, vec3( wp.xy * ts, float( L ) ), gDetailBias ) * w.z;
   return c / max( ( w.x > 0.02 ? w.x : 0.0 ) + ( w.y > 0.02 ? w.y : 0.0 ) + ( w.z > 0.02 ? w.z : 0.0 ), 1e-4 );
 }
 
@@ -222,7 +223,9 @@ vec4 sampleLayer( vec3 wp, vec3 n, int L, float sc ) {
 // Dominant layer: two incommensurate scales multiplied → no visible repetition (mean preserved).
 vec4 sampleLayerDual( vec3 wp, vec3 n, int L ) {
   vec4 a = sampleLayer( wp, n, L, 1.0 );
+  gDetailBias = 3.0; // large scale = soft tonal variation only (no giant pattern copies)
   vec4 b = sampleLayer( wp.zyx + vec3( 17.3, 0.0, 41.9 ), n.zyx, L, 0.283 );
+  gDetailBias = 0.0;
   return vec4( a.rgb * b.rgb * 2.0, a.a * 0.65 + b.a * 0.35 );
 }
 

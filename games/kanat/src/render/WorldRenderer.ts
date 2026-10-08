@@ -14,6 +14,8 @@ import {
   atmosphereState,
   setAtmosphere,
   setAtmosphereDebugMagenta,
+  setFogVisibility,
+  setGrade,
   setAtmosphereViewDistance,
   updateAtmosphereFrame,
   type WorldConfigLike,
@@ -24,6 +26,7 @@ import { TerrainRenderer } from './terrain/Terrain.ts';
 import { bakeTerrainShadow } from './terrain/ShadowBake.ts';
 import { hexToLinear } from './color.ts';
 import { PostPipeline } from './post/PostPipeline.ts';
+import { PHOTO_FILTERS, type GradeParams } from './looks.ts';
 import { Water } from './water/Water.ts';
 import { Clouds } from './sky/Clouds.ts';
 
@@ -297,6 +300,56 @@ export class WorldRenderer {
     }
     if (this.world) await this.loadWorld(this.world);
     else this.ensurePost();
+  }
+
+  /** Weekly "Sis Perdesi" modifier: main-fog visibility in metres (2.5 % transmittance), null = world default. */
+  setFogOverride(visibilityM: number | null): void {
+    setFogVisibility(visibilityM);
+  }
+
+  /**
+   * Menu-scene light variant (rank reward). In-game lighting stays fixed; this only re-grades the menu shot
+   * (terrain lighting is baked for the world's single sun, so the sun itself never moves): 'default' | 'golden'
+   * (warmer, softer) | 'blue' (blue-hour: cooler, darker, lifted shadows). Call with 'default' when leaving the menu.
+   */
+  setMenuLighting(variant: 'default' | 'golden' | 'blue'): void {
+    const base = atmosphereState.look.grade;
+    if (variant === 'golden') {
+      setGrade({ ...base, exposure: base.exposure * 1.08, highlightTint: '#FFC27A', highlightStrength: 0.38, shadowTint: '#7A5A6E', shadowStrength: 0.3, saturation: base.saturation * 1.06 });
+    } else if (variant === 'blue') {
+      setGrade({ ...base, exposure: base.exposure * 0.62, highlightTint: '#BFD6FF', highlightStrength: 0.25, shadowTint: '#2F4A86', shadowStrength: 0.5, saturation: base.saturation * 0.85, lift: [0.004, 0.008, 0.02] });
+    } else setGrade({ ...base });
+    this.kr.setExposure(atmosphereState.grade.exposure);
+  }
+
+  /**
+   * HUD-free hero frame for the share card (§2.8): renders the current view at w×h with the "Belgesel" grade and
+   * returns a PNG Blob. The canvas is resized for one frame and restored (hide it behind the results UI).
+   */
+  async captureFrame(w = 1080, h = 1350, camera: THREE.PerspectiveCamera = this.camera, gradeOverride: Partial<GradeParams> = PHOTO_FILTERS.belgesel): Promise<Blob> {
+    const r = this.renderer;
+    const prevPr = r.getPixelRatio();
+    const prevSize = r.getSize(new THREE.Vector2());
+    const prevAspect = camera.aspect;
+    const prevGrade = { ...atmosphereState.grade };
+    setGrade({ ...prevGrade, ...gradeOverride });
+    r.setPixelRatio(1);
+    r.setSize(w, h, false);
+    this.post?.setSize();
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    this.render(0, camera);
+    const canvas = r.domElement;
+    const blob = await new Promise<Blob>((resolve, reject) => {
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('captureFrame: toBlob failed'))), 'image/png');
+    });
+    setGrade(prevGrade);
+    camera.aspect = prevAspect;
+    camera.updateProjectionMatrix();
+    r.setPixelRatio(prevPr);
+    r.setSize(prevSize.x, prevSize.y, false);
+    this.post?.setSize();
+    return blob;
   }
 
   /**

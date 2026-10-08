@@ -50,8 +50,11 @@ export interface RenderTierParams {
 
 const LEVEL: Record<QualityTier, 0 | 1 | 2 | 3> = { low: 0, medium: 1, high: 2, ultra: 3 };
 
-/** Far-ring data is 49 km wide (±24.5 km), core play area ±3.8 km → edge never closer than ~20.5 km. */
-export const MAX_VIEW_DISTANCE = 19_500;
+/**
+ * Far-ring data is 49 km wide (±24.5 km), core play area ±3.8 km → the far-ring edge is never closer than
+ * ~20.5 km. Brief §4.G.2: far ring ≥ 1.3 × fog distance → fog fade end ≤ 15.5 km on every tier.
+ */
+export const MAX_VIEW_DISTANCE = 15_500;
 
 export function renderTierParams(tier: QualityTier): RenderTierParams {
   const t = TIERS[tier];

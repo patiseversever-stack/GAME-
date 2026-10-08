@@ -97,6 +97,8 @@ void main() {
   vec3 body = uSea * (0.95 + 0.35 * fbm(xz * 0.004 + t * 0.01)) + uSkyMid * 0.03;
   body *= 1.0 - 0.35 * uNight;
   vec3 col = mix(body, refl, clamp(F * 1.15, 0.0, 1.0));
+  // painterly sheen: slopes facing the camera catch a little of the high sky (reads the swell everywhere)
+  col += skyColor(normalize(vec3(R.x, max(R.y, 0.25), R.z))) * 0.045 * (0.6 + 0.4 * clamp(dot(N.xz, -V.xz) * 8.0, -1.0, 1.0));
   // --- sun path (#FFD7A0): painterly glitter band along the sun azimuth, stronger toward the horizon ---
   vec3 L = normalize(uSunDir);
   float sunUp = smoothstep(-0.05, 0.04, L.y);
@@ -142,12 +144,16 @@ void main() {
   }
   // --- storm: darker, rain rings ---
   if (sm > 0.0) {
-    vec2 cell = floor(xz * 0.5);
-    vec2 f = fract(xz * 0.5) - 0.5;
-    float ph = fract(t * 1.4 + hash12(cell) * 7.0);
-    float ring = smoothstep(0.06, 0.0, abs(length(f) - ph * 0.45)) * (1.0 - ph);
+    // rain rings: jittered cells, random phases (no visible grid)
+    vec2 q = xz * 0.6;
+    vec2 cell = floor(q);
+    vec2 jit = vec2(hash12(cell), hash12(cell + 7.3)) * 0.6 + 0.2;
+    vec2 f = fract(q) - jit;
+    float ph = fract(t * (0.9 + 0.5 * hash12(cell + 3.1)) + hash12(cell) * 7.0);
+    float ring = smoothstep(0.05, 0.0, abs(length(f) - ph * 0.35)) * (1.0 - ph) * step(0.35, hash12(cell + 11.0));
     col = applyStorm(col, sm);
-    col += vec3(0.5, 0.58, 0.7) * ring * 0.12 * sm;
+    col *= 1.0 - 0.18 * sm;
+    col += vec3(0.4, 0.46, 0.56) * ring * 0.06 * sm * (1.0 - smoothstep(80.0, 200.0, dist));
   }
   // --- foam at islets / rocks / lighthouse ---
   for (int k = 0; k < ${MAX_FOAM}; k++) {

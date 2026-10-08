@@ -516,6 +516,7 @@ export function setAtmosphere(input: AtmosphereInput): AtmosphereState {
   const floorY = input.floorY ?? cfg?.look?.floorY ?? 0;
   st.fogBaseY = floorY + look.fog.baseOffset;
   U.kFog.value.set([look.fog.density, look.fog.falloff, st.fogBaseY, look.fog.halo]);
+  baseFogDensity = -1;
   setRGB(U.kFogTint, look.fog.tint, 1, 0);
 
   const gf = look.groundFog;
@@ -546,6 +547,19 @@ export function setAtmosphere(input: AtmosphereInput): AtmosphereState {
   }
   setGrade({ ...look.grade, ...(cfg?.look?.grade ?? {}), ...(input.grade ?? {}) });
   return st;
+}
+
+let baseFogDensity = -1;
+
+/**
+ * Weekly "Sis Perdesi" modifier: override the main fog so terrain reaches 2.5 % transmittance at `visibilityM`
+ * (at the fog base height). null restores the world value. Cheap (uniform write).
+ */
+export function setFogVisibility(visibilityM: number | null): void {
+  const f = atmosphereUniforms.kFog.value;
+  if (baseFogDensity < 0) baseFogDensity = f[0];
+  f[0] = visibilityM === null ? baseFogDensity : 3.7 / Math.max(50, visibilityM);
+  if (visibilityM === null) baseFogDensity = -1;
 }
 
 /** Tier view distance: fog blends to the exact sky colour between start and end (no terrain edge, no pop). */

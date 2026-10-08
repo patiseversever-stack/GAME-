@@ -131,6 +131,49 @@ async function main(): Promise<void> {
     console.log('RUN valley ' + best.toFixed(1) + ' at ' + bx.toFixed(0) + ',' + bz.toFixed(0) + ' yaw ' + bestYaw.toFixed(0));
   }
   const dt = Number(q.get('t') ?? 0);
+  if (q.get('horizon')) {
+    // §9.G-3: N deterministic random cameras inside the play bounds (+ edges), background & skirts magenta.
+    wr.setDebugMagenta(true);
+    const n = Number(q.get('horizon'));
+    const gl = wr.renderer.getContext();
+    const w = gl.drawingBufferWidth, h = gl.drawingBufferHeight;
+    const px = new Uint8Array(w * h * 4);
+    let seed = 1234567;
+    const rnd = () => ((seed = (seed * 1664525 + 1013904223) >>> 0) / 4294967296);
+    let worst = 0, total = 0, bad = 0;
+    const b = sm.bounds;
+    for (let i = 0; i < n; i++) {
+      const x = b.minX + rnd() * (b.maxX - b.minX);
+      const z = b.minZ + rnd() * (b.maxZ - b.minZ);
+      const agl = [3, 8, 30, 120, 400, 1200][i % 6];
+      const yaw = rnd() * 360;
+      const pitch = -25 + rnd() * 35;
+      const gy = Math.max(sm.height(x, z), world.terrain.hasSea ? 0 : -1e9);
+      applyBookmark(cam, { name: 'h', pos: [x, gy + agl, z], yaw, pitch, fov: 86 });
+      wr.render(1 / 60);
+      gl.readPixels(0, 0, w, h, gl.RGBA, gl.UNSIGNED_BYTE, px);
+      // Magenta below the horizon line only counts as a hole; sky magenta is expected above the horizon.
+      let m = 0;
+      const horizonRow = (() => {
+        // Ground point at the fog-fade distance along the view heading: rays below it must hit terrain.
+        const fe = wr.params.terrain.viewDistance;
+        const yr = (yaw * Math.PI) / 180;
+        const v = new THREE.Vector3(cam.position.x + Math.sin(yr) * fe, gy, cam.position.z - Math.cos(yr) * fe).project(cam);
+        return Math.round((v.y * 0.5 + 0.5) * h);
+      })();
+      for (let yy = 0; yy < Math.min(h, horizonRow - 2); yy++) {
+        for (let xx = 0; xx < w; xx++) {
+          const o = (yy * w + xx) * 4;
+          if (px[o] > 230 && px[o + 1] < 40 && px[o + 2] > 230) m++;
+        }
+      }
+      total += m;
+      if (m > 0) bad++;
+      worst = Math.max(worst, m);
+    }
+    console.log('HORIZON ' + JSON.stringify({ world: worldId, tier, cams: n, badCams: bad, magentaPixels: total, worst }));
+    wr.setDebugMagenta(false);
+  }
   if (q.get('perf')) {
     const rows: Record<string, unknown>[] = [];
     for (const b of bms) {

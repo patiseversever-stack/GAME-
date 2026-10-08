@@ -262,8 +262,8 @@ void main() {
     float f = fract(ang / 6.2831853 * n) - 0.5;
     pat = 1.0 - smoothstep(0.12, 0.26, abs(f) * (6.2831853 * R / n) / max(ringW * 1.6, 0.6));
   }
-  float soft = exp(-pow(max(d - R * 0.15, 0.0) / max(R, 1.0), 2.0) * 2.2) * 0.35;
-  float aura = ring * pat * 0.85 + soft * 0.25;
+  float soft = exp(-pow(d / max(R, 1.0), 2.0) * 1.6);
+  float aura = ring * pat * 0.6 + soft * 0.55;
   // leader marker shape (circle / triangle / square / diamond)
   vec2 q = vLocal;
   float ms = 2.1;
@@ -274,11 +274,11 @@ void main() {
   else { vec2 r = vec2(q.x + q.y, q.x - q.y) * 0.70710678; vec2 b = abs(r) - vec2(ms * 0.8); sd = abs(length(max(b, 0.0)) + min(max(b.x, b.y), 0.0)); }
   float mark = 1.0 - smoothstep(0.18, 0.4, sd);
   float lonePulse = vS.y > 0.5 ? 0.6 + 0.4 * sin(uTime * 9.0) : 1.0;
-  float a = (aura * 0.18 + mark * 0.7) * lonePulse;
+  float a = (aura * 0.18 + mark * 0.6) * lonePulse;
   a *= 1.0 - nightMask(vWorld.xz) * 0.35;
-  vec3 col = vC * (1.0 + mark * 0.6);
+  vec3 col = vC * (1.0 + mark * 0.4);
   if (a < 0.003) discard;
-  gl_FragColor = vec4(agx(col * 1.4) * a, a);
+  gl_FragColor = vec4(agx(col * 1.1) * a, a);
 }
 `;
 

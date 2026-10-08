@@ -205,8 +205,8 @@ void main() {
   // slow aurora drift (<0.3 Hz, never strobes)
   float band = 0.5 + 0.5 * sin(vW.y * 2.2 + vW.x * 1.3 + uTime * 1.2);
   vec3 col = mix(uColA, uColB, band);
-  float a = (0.08 + 0.95 * rim) * uOpacity;
-  gl_FragColor = vec4(col * a * 1.8, a * 0.35);
+  float a = (0.035 + 0.9 * rim) * uOpacity;
+  gl_FragColor = vec4(col * a * 1.3, a * 0.12);
   #include <tonemapping_fragment>
   #include <colorspace_fragment>
 }

@@ -6,7 +6,7 @@
   "description": "KANAT — Anadolu manzaralarında wingsuit yakınlık uçuşu + SÜRÜ.io",
   "scripts": {
     "dev": "vite",
-    "build": "npm run build:web && npm run build:single",
+    "build": "npm run manifest && npm run build:web && npm run build:single",
     "build:web": "vite build --config vite.config.ts",
     "build:single": "vite build --config vite.single.config.ts",
     "preview": "vite preview --port 4173 --strictPort",
@@ -15,7 +15,8 @@
     "test:unit": "vitest run --config vitest.config.ts",
     "test:jsc": "bun tests/jsc/run-determinism.ts",
     "test:e2e": "node tests/e2e/run-all.mjs",
-    "bake:terrain": "node tools/bake-terrain.ts"
+    "bake:terrain": "node tools/bake-terrain.ts",
+    "manifest": "node tools/gen-manifest.ts"
   },
   "dependencies": {
     "fflate": "0.8.3",
