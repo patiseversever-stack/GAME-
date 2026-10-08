@@ -3,9 +3,9 @@
 // (1–2 rolls → seated, §2.13), ghost "aurora" variant with rim glow + thin trail, projected decal shadow (all tiers).
 import {
   Group, SkinnedMesh, MeshStandardMaterial, ShaderMaterial, Color, Vector3, Quaternion, Euler, DoubleSide, FrontSide,
-  CustomBlending, OneFactor, OneMinusSrcAlphaFactor, Matrix4,
+  CustomBlending, OneFactor, OneMinusSrcAlphaFactor, Matrix4, Vector4,
 } from 'three';
-import type { Object3D, Camera, WebGLRenderer, Bone, Skeleton, Material } from 'three';
+import type { Object3D, Camera, WebGLRenderer, Bone, Skeleton, Material, Mesh } from 'three';
 import type { QualityTier } from '../../core/settings.ts';
 import type { FlightState, SimEvent } from '../../sim/types.ts';
 import type { TerrainSampler } from '../../sim/terrain/types.ts';
@@ -226,7 +226,7 @@ export class Pilot {
   private readonly skeleton: Skeleton;
   private readonly mat: Material;
   private readonly uniforms = {
-    uFlutter: { value: new Vector3(0, 0, 0) as unknown as { x: number; y: number; z: number; w: number } },
+    uFlutter: { value: new Vector4(0, 6, 0, 1) },
     uPattern: { value: 0 },
     uPalA: { value: new Color() }, uPalB: { value: new Color() }, uPalC: { value: new Color() },
     uHelmet: { value: new Color('#EDEBE6') }, uVisor: { value: new Color(0.62, 0.48, 0.22) },
@@ -264,7 +264,7 @@ export class Pilot {
   private sampler: TerrainSampler | null;
   private renderer: WebGLRenderer | null = null;
   private lod = 0;
-  private readonly flutter = { x: 0, y: 6, z: 0, w: 1 };
+  private get flutter(): Vector4 { return this.uniforms.uFlutter.value; }
   private readonly _hand = new Vector3();
 
   constructor(parent: Object3D, tier: QualityTier, opts: PilotOptions = {}) {
@@ -276,7 +276,6 @@ export class Pilot {
     const { root, bones, skeleton } = makeSkeleton();
     this.bones = bones;
     this.skeleton = skeleton;
-    this.uniforms.uFlutter.value = this.flutter;
     if (this.ghost) {
       if (opts.ghostColor) this.ghostU.uColA.value.set(opts.ghostColor);
       this.mat = new ShaderMaterial({
@@ -547,13 +546,13 @@ export class Pilot {
     }
   }
 
-  private readonly casterList: SkinnedMesh[] = [];
-  private shadowCasters(): import('three').Mesh[] {
+  private readonly casterList: Mesh[] = [];
+  private shadowCasters(): Mesh[] {
     this.casterList.length = 0;
-    this.casterList.push(this.meshes[Math.min(2, this.lod + 1)] ?? this.meshes[2]);
-    const out = this.casterList as unknown as import('three').Mesh[];
-    if (this.canopy.group.visible) (out as unknown as import('three').Mesh[]).push(this.canopy.mesh);
-    return out;
+    // a cheaper LOD is enough for a 128² silhouette; it must be visible for the mask pass
+    this.casterList.push(this.meshes[this.lod]);
+    if (this.canopy.group.visible) this.casterList.push(this.canopy.mesh);
+    return this.casterList;
   }
 
   private updateCanopy(dt: number, yaw: number): void {

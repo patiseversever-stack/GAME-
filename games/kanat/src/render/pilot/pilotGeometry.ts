@@ -37,6 +37,8 @@ export function makeSkeleton(): { root: Bone; bones: Bone[]; skeleton: Skeleton 
     bones[i].position.set(d.head[0] - p[0], d.head[1] - p[1], d.head[2] - p[2]);
     if (d.parent >= 0) bones[d.parent].add(bones[i]);
   }
+  // bone world matrices must be valid before the Skeleton computes its inverse bind matrices
+  bones[0].updateMatrixWorld(true);
   return { root: bones[0], bones, skeleton: new Skeleton(bones) };
 }
 

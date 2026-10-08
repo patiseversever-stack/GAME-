@@ -172,7 +172,7 @@ function run(): Record<string, unknown> {
 
 async function runReal(out: Record<string, unknown>): Promise<void> {
   if (out.real !== 'pending') return;
-  const mod = (await import('../../tools/terrain/loadNode.ts')) as { loadWorldNode: (id: 'kapadokya') => { config: Record<string, unknown>; sampler: TerrainSampler } };
+  const mod = (await import('../../tools/terrain/loadNode.ts')) as unknown as { loadWorldNode: (id: 'kapadokya') => { config: Record<string, unknown>; sampler: TerrainSampler } };
   const W = mod.loadWorldNode('kapadokya');
   const s = W.sampler;
   const props = buildProps('kapadokya', s, W.config as Parameters<typeof buildProps>[2]);

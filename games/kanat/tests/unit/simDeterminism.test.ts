@@ -135,7 +135,7 @@ const haveReal = existsSync(KAP) && existsSync(LOADER);
 
 describe.skipIf(!haveReal)('real terrain (public/worlds/kapadokya)', () => {
   it('loads, places props/balloons, proximity matches brute force, flies deterministically', async () => {
-    const mod = (await import('../../tools/terrain/loadNode.ts')) as { loadWorldNode: (id: 'kapadokya') => { config: Record<string, unknown>; sampler: TerrainSampler } };
+    const mod = (await import('../../tools/terrain/loadNode.ts')) as unknown as { loadWorldNode: (id: 'kapadokya') => { config: Record<string, unknown>; sampler: TerrainSampler } };
     const W = mod.loadWorldNode('kapadokya');
     const s = W.sampler;
     const t0 = performance.now();
