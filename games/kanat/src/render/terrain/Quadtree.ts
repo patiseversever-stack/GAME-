@@ -128,13 +128,17 @@ export class CdlodSelector {
 
   private readonly mm = new Float64Array(2);
 
-  constructor(
-    readonly layout: QuadtreeLayout,
-    readonly bounds: HeightBounds,
-    readonly maxInstances: number,
-    /** Added above max (detail noise) / below min. */
-    readonly margin: number,
-  ) {
+  readonly layout: QuadtreeLayout;
+  readonly bounds: HeightBounds;
+  readonly maxInstances: number;
+  /** Added above max (detail noise) / below min. */
+  readonly margin: number;
+
+  constructor(layout: QuadtreeLayout, bounds: HeightBounds, maxInstances: number, margin: number) {
+    this.layout = layout;
+    this.bounds = bounds;
+    this.maxInstances = maxInstances;
+    this.margin = margin;
     this.ranges = new Float64Array(layout.levels);
     this.instances = new Float32Array(maxInstances * 4);
     this.perLod = new Int32Array(layout.levels);

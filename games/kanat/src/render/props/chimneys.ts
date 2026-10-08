@@ -208,16 +208,16 @@ function bodyFragColor(octaves: number): string {
     kBaseY = vKBaseY;
     // cylindrical detail coordinates in metres
     vec2 cuv = vec2(theta * max(vKRad, 0.6), hgt);
-    vec4 d1 = texture2D(uDetail, cuv * vec2(0.22, 0.16) + seed * 3.7);
+    vec4 d1 = texture2D(uDetail, cuv * vec2(0.13, 0.085) + seed * 3.7);
     vec4 d2 = d1;
-    ${octaves >= 2 ? 'd2 = texture2D(uDetail, cuv * vec2(0.85, 0.7) + seed * 1.3);' : ''}
+    ${octaves >= 2 ? 'd2 = texture2D(uDetail, cuv * vec2(0.55, 0.42) + seed * 1.3);' : ''}
     kCav = mix(d1.a, d1.a * d2.a, ${octaves >= 2 ? '0.6' : '0.0'});
     kDetailN = vec3((d1.xy * 2.0 - 1.0) * 1.0 + ${octaves >= 2 ? '(d2.xy * 2.0 - 1.0) * 0.6' : 'vec2(0.0)'}, 1.0);
     // world-y tuff banding: broad cream/ochre layers, occasional rose zone, thin ash seams
     float yb = hgt * 0.16 + (kNoise2(vec2(theta * 1.3, hgt * 0.05) + seed) - 0.5) * 0.6 + seed * 0.37;
     float band = kNoise2(vec2(yb, 3.1));
     float band2 = kNoise2(vec2(yb * 0.6 + 11.0, 7.9 + seed));
-    vec3 col = mix(uTuffB, uTuffA, smoothstep(0.35, 0.8, band) * 0.85);
+    vec3 col = mix(uTuffB, uTuffA, 0.35 + 0.6 * smoothstep(0.3, 0.8, band));
     col = mix(col, uTuffRose, smoothstep(0.62, 0.92, band2) * 0.45);
     col *= 1.0 - 0.10 * smoothstep(0.9, 0.98, kNoise2(vec2(hgt * 0.9 + seed * 5.0, 1.7)));
     // faint vertical weathering stains (desert varnish) from the cap/top downwards

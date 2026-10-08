@@ -31,6 +31,7 @@ uniform vec4 uRoot;
 uniform vec4 uTFlags; // x skirt depth, y has splat, z detail D on, w patch lower
 uniform vec4 uSplatRule; // fallback splat rule params
 uniform mat4 uSplatMap; // semantic (flat, steep, mid, high) -> layer weights
+uniform float uSplatVar; // 1: redistribute layers 0/1 with low-frequency noise (pink / white tuff)
 varying vec3 vRel;
 varying vec3 vNormal;
 varying vec4 vSplat;
@@ -91,7 +92,7 @@ void main() {
     sem = max( sem, vec4( 0.0 ) );
     vec4 w = uSplatMap * sem;
     // Low-frequency variation between the first two layers (e.g. pink / white tuff).
-    w.xy = vec2( w.x + w.y ) * vec2( var, 1.0 - var ) * 0.999 + w.xy * 0.001;
+    w.xy = mix( w.xy, vec2( w.x + w.y ) * vec2( var, 1.0 - var ), uSplatVar );
     vSplat = w / max( dot( w, vec4( 1.0 ) ), 1e-4 );
   }
   if ( skirt > 0.5 ) {
@@ -365,6 +366,7 @@ export function createTerrainMaterial(opts: TerrainMaterialOptions): THREE.Shade
       uTDebug: { value: new THREE.Vector4(0, 0, 0, 0) },
       uPrelit: { value: new THREE.Vector4(1.4, 1.0, 0, 0) },
       uSplatMap: { value: new THREE.Matrix4() },
+      uSplatVar: { value: 0 },
     },
     vertexShader: VERT,
     fragmentShader: FRAG.replace('PROJ_MODE', String(proj)),

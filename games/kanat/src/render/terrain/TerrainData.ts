@@ -102,14 +102,21 @@ const placeholder = (() => {
 })();
 
 export class TerrainBoundsCombined implements HeightBounds {
-  constructor(
-    private core: MinMaxMip,
-    private far: MinMaxMip,
-    private coreMinX: number,
-    private coreMinZ: number,
-    private coreMaxX: number,
-    private coreMaxZ: number,
-  ) {}
+  private core: MinMaxMip;
+  private far: MinMaxMip;
+  private coreMinX: number;
+  private coreMinZ: number;
+  private coreMaxX: number;
+  private coreMaxZ: number;
+
+  constructor(core: MinMaxMip, far: MinMaxMip, coreMinX: number, coreMinZ: number, coreMaxX: number, coreMaxZ: number) {
+    this.core = core;
+    this.far = far;
+    this.coreMinX = coreMinX;
+    this.coreMinZ = coreMinZ;
+    this.coreMaxX = coreMaxX;
+    this.coreMaxZ = coreMaxZ;
+  }
 
   rect(x0: number, z0: number, x1: number, z1: number, out: Float64Array): void {
     const ix0 = Math.max(x0, this.coreMinX);

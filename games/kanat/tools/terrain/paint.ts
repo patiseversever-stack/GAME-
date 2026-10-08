@@ -410,6 +410,9 @@ export interface BakeLight {
   sunDir: [number, number, number];
   sunCol: RGB;
   ambCol: RGB;
+  /** Ambient hue used where the sun does not reach (same luminance as ambCol). */
+  shadowCol: RGB;
+  shadowTint: number;
   sunStrength: number;
   ambStrength: number;
   wrap: number;
@@ -418,33 +421,62 @@ export interface BakeLight {
   norm: number;
 }
 
+function lum(c: RGB): number {
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+
 export function makeBakeLight(def: WorldDef): BakeLight {
   const az = (def.sun.azimuthDeg * Math.PI) / 180;
   const el = (def.sun.elevationDeg * Math.PI) / 180;
   const sunDir: [number, number, number] = [Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)];
-  // Slightly desaturated black body so the albedo still reads (artistic).
-  const kl = kelvinToLinear(def.sun.kelvin);
   // Desaturate the black body in linear space by a power curve (keeps a golden hue instead of drifting pink).
+  const kl = kelvinToLinear(def.sun.kelvin);
   const sunCol: RGB = [kl[0] ** 0.5, kl[1] ** 0.5, kl[2] ** 0.5];
   const ambCol = hexToLinear(def.bake.ambientColor);
+  const st = hexToLinear(def.bake.shadowColor);
+  const sl = lum(st);
+  const al = lum(ambCol);
+  const shadowCol: RGB = [(st[0] / sl) * al, (st[1] / sl) * al, (st[2] / sl) * al];
   const wrap = def.bake.wrap;
   const ndl0 = (Math.sin(el) + wrap) / (1 + wrap);
   const k = ndl0 / Math.max(1 - 2 * ndl0, 0.05);
-  const lumSun = 0.2126 * sunCol[0] + 0.7152 * sunCol[1] + 0.0722 * sunCol[2];
-  const lumAmb = 0.2126 * ambCol[0] + 0.7152 * ambCol[1] + 0.0722 * ambCol[2];
-  const norm = 0.92 / (def.bake.sunStrength * lumSun + def.bake.ambientStrength * lumAmb * 0.95);
-  return { sunDir, sunCol, ambCol, sunStrength: def.bake.sunStrength, ambStrength: def.bake.ambientStrength, wrap, ndl0, k, norm };
+  const norm = (0.92 * def.bake.exposure) / (def.bake.sunStrength * lum(sunCol) + def.bake.ambientStrength * al * 0.95);
+  return {
+    sunDir,
+    sunCol,
+    ambCol,
+    shadowCol,
+    shadowTint: def.bake.shadowTint,
+    sunStrength: def.bake.sunStrength,
+    ambStrength: def.bake.ambientStrength,
+    wrap,
+    ndl0,
+    k,
+    norm,
+  };
 }
 
-/** Pre-lit color (linear) for one texel. */
+/**
+ * Pre-lit color (linear) for one texel:
+ *   sunVis = shadow * min(1, B(ndl));  ambient hue = mix(sky, shadowHue, (1 - sunVis) * shadowTint)
+ *   lit = albedo * (sun * sunStrength * shadow * B + ambHue * ambStrength * ao * skyShape)
+ * skyShape gives shadows form: faces turned toward the bright (sun-side) sky and up-facing faces get more fill.
+ */
 export function light(bl: BakeLight, albedo: RGB, nx: number, ny: number, nz: number, shadow: number, ao: number, out: RGB): void {
-  const ndl = nx * bl.sunDir[0] + ny * bl.sunDir[1] + nz * bl.sunDir[2];
+  const sd = bl.sunDir;
+  const ndl = nx * sd[0] + ny * sd[1] + nz * sd[2];
   const w = Math.max(0, (ndl + bl.wrap) / (1 + bl.wrap));
   const B = (w / (w + bl.k)) * ((bl.ndl0 + bl.k) / bl.ndl0);
   const sunT = bl.sunStrength * shadow * B * bl.norm;
-  const ambT = bl.ambStrength * ao * (0.8 + 0.2 * ny) * bl.norm;
+  const hl = Math.sqrt(sd[0] * sd[0] + sd[2] * sd[2]) || 1;
+  const toward = (nx * sd[0] + nz * sd[2]) / hl; // -1..1 horizontal facing toward the sun azimuth
+  const skyShape = 0.62 + 0.22 * ny + 0.16 * toward;
+  const ambT = bl.ambStrength * ao * skyShape * bl.norm;
+  const sunVis = Math.min(1, shadow * Math.min(1, B));
+  const t = (1 - sunVis) * bl.shadowTint;
   for (let c = 0; c < 3; c++) {
-    let v = albedo[c] * (bl.sunCol[c] * sunT + bl.ambCol[c] * ambT);
+    const amb = bl.ambCol[c] + (bl.shadowCol[c] - bl.ambCol[c]) * t;
+    let v = albedo[c] * (bl.sunCol[c] * sunT + amb * ambT);
     // soft shoulder above 0.8
     if (v > 0.8) v = 0.8 + (v - 0.8) / (1 + (v - 0.8) * 2.5);
     out[c] = v;

@@ -67,7 +67,7 @@ export function makeDetailTexture(kind: DetailKind, size = 256, seed = 7): DataT
         const lv = v * 10 + 0.35 * n4.at(u, v);
         const ledge = Math.pow(lv - Math.floor(lv), 3.0);
         const pore = Math.max(0, n64.at(u, v) - 0.72) * 2.2;
-        val = base - 0.14 * Math.pow(r, 3) - 0.07 * Math.pow(r2, 4) + 0.07 * ledge - 0.12 * pore + 0.04 * n64.at(u, v);
+        val = base - 0.24 * Math.pow(r, 2.5) - 0.1 * Math.pow(r2, 3) + 0.08 * ledge - 0.12 * pore + 0.04 * n64.at(u, v);
         low = 0.42 * n4.at(u, v) + 0.24 * n8.at(u, v);
       } else if (kind === 'stone') {
         const c = cellN.at(u, v);

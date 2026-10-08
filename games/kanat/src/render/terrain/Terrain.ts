@@ -64,6 +64,32 @@ export function buildNodeGeometry(N: number, maxInstances: number): THREE.Instan
   return g;
 }
 
+// Semantic affinity (flat, steep, mid-slope, high) per material kind → automatic splat rules when the baked splat
+// is unavailable. Columns of the resulting mat4 = semantic classes, rows = layers.
+const AFFINITY: Record<LayerKind, [number, number, number, number]> = {
+  tuff: [0.35, 1.0, 0.7, 0.6],
+  rock: [0.05, 0.9, 0.35, 0.7],
+  grass: [1.0, 0.0, 0.6, 0.15],
+  soil: [0.7, 0.05, 0.5, 0.1],
+  snow: [0.6, 0.1, 0.5, 1.0],
+  travertine: [0.9, 0.3, 0.6, 0.4],
+  forest: [0.4, 0.05, 1.0, 0.05],
+  sand: [0.9, 0.0, 0.1, 0.0],
+};
+
+export function autoSplatMap(kinds: LayerKind[], out: THREE.Matrix4): THREE.Matrix4 {
+  const e = out.elements;
+  for (let sem = 0; sem < 4; sem++) {
+    const sc = kinds.map((k) => AFFINITY[k][sem]);
+    const mx = Math.max(...sc, 1e-3);
+    // Keep only strong candidates so detail patterns stay legible.
+    const w = sc.map((v) => (v >= mx * 0.6 ? v : 0));
+    const sum = w.reduce((a, b) => a + b, 0) || 1;
+    for (let l = 0; l < 4; l++) e[sem * 4 + l] = w[l] / sum;
+  }
+  return out;
+}
+
 export interface TerrainLayerSpec {
   ids: string[];
   colors: string[];
@@ -139,7 +165,21 @@ export class TerrainRenderer {
       const k = this.kinds[i];
       lp[i].set(LAYER_TILE_M[k], LAYER_BUMP[k], LAYER_KIND_INDEX[k], 0.85);
     }
+    autoSplatMap(this.kinds, u.uSplatMap.value as THREE.Matrix4);
+    u.uSplatVar.value = this.kinds[0] === this.kinds[1] ? 1 : 0;
     this.applyMorph();
+  }
+
+  /** Use an externally baked shadow/AO texture (R = sun visibility, G = AO) over the core coverage. */
+  setShadowTexture(t: THREE.Texture | null): void {
+    const u = this.mesh.material.uniforms;
+    u.uShadowAo.value = t ?? this.data.shadowAo;
+    (u.uHas.value as THREE.Vector4).x = t ? 1 : this.data.has.shadowAo ? 1 : 0;
+  }
+
+  /** Pre-lit macro exposure scale and sky weight of the near relight ratio. */
+  setPrelit(scale: number, skyWeight: number): void {
+    (this.mesh.material.uniforms.uPrelit.value as THREE.Vector4).set(scale, skyWeight, 0, 0);
   }
 
   /** Kapadokya tuff strata (world-y banding). */
