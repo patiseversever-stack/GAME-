@@ -18,7 +18,7 @@ import { hexToLinear, ownerStyle } from './palette.ts';
 const NB = 1500;
 const NF = 17;
 const TRAIL_PTS = 22;
-export const BIRD_SCALE = 2.6;
+export const BIRD_SCALE = 3.0;
 const LEADER_SCALE = 1.8;
 export const SHOW_SHAPES = ['kalp', 'sarmal', 'dalga', 'lale', 'kanat', 'sonsuzluk'] as const;
 export type ShowShape = (typeof SHOW_SHAPES)[number];
@@ -33,11 +33,13 @@ uniform float uAlpha;
 uniform float uScale;
 uniform float uLeader;
 uniform vec3 uPalette[${NF}];
+uniform vec3 uPaletteD[${NF}];
 uniform vec4 uShow;      // x blend, y flock, z shape, w scale
 uniform vec2 uShowC;
 uniform float uLeaderAlt[${NF}];
 varying vec3 vWorld;
 varying vec3 vOwnerCol;
+varying vec3 vOwnerD;
 varying float vOwned;
 varying float vFlash;
 varying float vPh;
@@ -118,6 +120,7 @@ void main() {
   vWorld = wp;
   vOwned = owner > 0.5 ? 1.0 : 0.0;
   vOwnerCol = uPalette[int(owner + 0.5)];
+  vOwnerD = uPaletteD[int(owner + 0.5)];
   float conv = aVO.w;
   vFlash = conv > 0.5 ? exp(-max(uTickF - conv, 0.0) / 6.0) : 0.0;
   vPh = aPh;
@@ -131,6 +134,7 @@ uniform float uLeader;
 uniform float uIri;
 varying vec3 vWorld;
 varying vec3 vOwnerCol;
+varying vec3 vOwnerD;
 varying float vOwned;
 varying float vFlash;
 varying float vPh;
@@ -140,16 +144,14 @@ void main() {
   if (dot(N, V) < 0.0) N = -N;
   vec3 L = normalize(uSunDir);
   float sunUp = smoothstep(-0.06, 0.03, L.y);
-  vec3 base = vec3(0.0075, 0.008, 0.0103); // #15161A
-  vec3 oc = vOwnerCol;
-  vec3 albedo = mix(base * 1.6, mix(base, oc, 0.6), vOwned);
-  vec3 amb = mix(uSkyZenith, uSkyHorizon, 0.45 + 0.3 * N.y) * 0.75;
+  // starling body: near black #15161A, sky-lit, warm rim when backlit by the low sun
+  vec3 base = vec3(0.0075, 0.008, 0.0103);
+  vec3 amb = mix(uSkyZenith, uSkyHorizon, 0.45 + 0.3 * N.y) * 0.8;
   float wrap = clamp((dot(N, L) + 0.45) / 1.45, 0.0, 1.0);
-  vec3 col = albedo * (amb + uSunColor * wrap * 0.9 * sunUp);
+  vec3 col = base * 1.5 * (amb + uSunColor * wrap * 0.9 * sunUp);
   float back = 0.35 + 0.65 * max(dot(-V, L), 0.0);
   float fr = pow(1.0 - max(dot(N, V), 0.0), 2.2);
-  col += fr * back * (uSunColor * 0.22 * sunUp * (1.0 - 0.6 * vOwned) + oc * 0.6 * vOwned + uSkyHorizon * 0.1);
-  col += oc * vOwned * (0.34 + uLeader * 0.5);
+  col += fr * back * (uSunColor * 0.2 * sunUp + uSkyHorizon * 0.08);
   // iridescent starling sheen (#3A5C6E ↔ #5B3A6E)
   if (uIri > 0.5) {
     vec3 H = normalize(L + V);
@@ -157,11 +159,19 @@ void main() {
     vec3 iri = mix(vec3(0.041, 0.107, 0.155), vec3(0.105, 0.041, 0.155), 0.5 + 0.5 * sin(dot(N, V) * 14.0 + vPh * 30.0));
     col += iri * sp * 3.0 * (0.4 + 0.6 * sunUp);
   }
+  float sm = stormMask(vWorld.xz);
+  float nm = nightMask(vWorld.xz);
+  col = applyNight(applyStorm(col, sm), nm);
+  vec3 outc = finalColor(col, gl_FragCoord.xy);
+  // owner colour applied in display space so it matches the HUD swatch exactly (readability = gameplay):
+  // 60 % owner tone + brighter owner rim; leaders glow
+  float tint = vOwned * (0.6 + 0.25 * fr + 0.25 * uLeader);
+  vec3 oc = vOwnerD * (0.82 + 0.3 * fr * back + 0.25 * uLeader);
+  oc *= 1.0 - 0.45 * nm - 0.3 * sm;
+  outc = mix(outc, oc, clamp(tint, 0.0, 1.0));
   // conversion flash: white, then the new owner colour
-  col = mix(col, vec3(2.6, 2.5, 2.3), clamp(vFlash * 1.25, 0.0, 1.0) * 0.85);
-  col = applyStorm(col, stormMask(vWorld.xz));
-  col = applyNight(col, nightMask(vWorld.xz));
-  gl_FragColor = vec4(finalColor(col, gl_FragCoord.xy), 1.0);
+  outc = mix(outc, vec3(1.0, 0.98, 0.94), clamp(vFlash * 1.25, 0.0, 1.0) * 0.9);
+  gl_FragColor = vec4(outc, 1.0);
 }
 `;
 
@@ -382,6 +392,7 @@ export class BirdLayer {
   private readonly haloMat: THREE.ShaderMaterial;
   private readonly bgMat: THREE.ShaderMaterial;
   private readonly palette: THREE.Vector3[] = [];
+  private readonly paletteD: THREE.Vector3[] = [];
   // instance data
   private readonly aPC = new Float32Array(NB * 4);
   private readonly aVO = new Float32Array(NB * 4);
@@ -421,8 +432,11 @@ export class BirdLayer {
     for (let f = 0; f < NF; f++) {
       const c = f === 0 ? [0.02, 0.02, 0.025] : hexToLinear(ownerStyle(f).color);
       this.palette.push(new THREE.Vector3(c[0], c[1], c[2]));
+      const hex = f === 0 ? '#202024' : ownerStyle(f).color;
+      const n = parseInt(hex.slice(1), 16);
+      this.paletteD.push(new THREE.Vector3(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255));
     }
-    const shared = { ...g, uAlpha: { value: 0 }, uPalette: { value: this.palette }, uTickF: { value: 0 } };
+    const shared = { ...g, uAlpha: { value: 0 }, uPalette: { value: this.palette }, uPaletteD: { value: this.paletteD }, uTickF: { value: 0 } };
     // ---- sim birds ----
     const geo = new THREE.InstancedBufferGeometry();
     const src = buildStarling(2);

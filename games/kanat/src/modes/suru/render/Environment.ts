@@ -42,7 +42,7 @@ void main() {
   float wrap = clamp((dot(N, L) + 0.12) / 1.12, 0.0, 1.0);
   vec3 col = alb * (amb * 0.8 + uSunColor * wrap * 0.32 * sunUp);
   float fr = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-  col += fr * uSunColor * (0.2 + 0.8 * pow(max(dot(-V, L), 0.0), 2.0)) * 0.22 * sunUp;
+  col += fr * (uSunColor * 0.05 + uSkyHorizon * 0.05) * (0.2 + 0.8 * pow(max(dot(-V, L), 0.0), 2.0)) * sunUp;
   col += vCol * uEmissive;
   col = applyStorm(col, stormMask(vWorld.xz));
   col = applyNight(col, nightMask(vWorld.xz));
