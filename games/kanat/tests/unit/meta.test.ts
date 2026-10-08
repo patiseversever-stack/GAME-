@@ -75,6 +75,7 @@ function flight(over: Partial<FlightStats> = {}): FlightStats {
     x5TotalSec: 0,
     maxX5StreakSec: 0,
     x3PlusTotalSec: 0,
+    maxX3StreakSec: 0,
     balloonThreads: 0,
     maxThreadChain: 0,
     gatesTotal: 10,
@@ -89,6 +90,7 @@ function flight(over: Partial<FlightStats> = {}): FlightStats {
     autoParachute: false,
     waterSkimSec: 0,
     assist: 'off',
+    assistUsed: false,
     slowMode: false,
     ...over,
   };
@@ -110,6 +112,7 @@ function profile(over: Partial<ProfileStats> = {}): ProfileStats {
     photosSaved: 0,
     rankLevel: 1,
     leagueIndex: 0,
+    suruRounds: 0,
     dailyThreeStars: 0,
     worldStars: zero,
     worldRoutesLanded: zero,
@@ -130,7 +133,9 @@ describe('routes meta', () => {
       expect(ROUTE_DIFFICULTY[r.id]).toBe(r.difficulty);
       expect(r.name.tr.length).toBeGreaterThan(2);
       expect(r.name.en.length).toBeGreaterThan(2);
-      expect(r.targetDurationSec[0]).toBeGreaterThanOrEqual(60);
+      // §2.5 60–120 s; the single logged exception is w1r1 = the §1 FTUE film (K-19).
+      if (r.id === 'w1r1') expect(r.targetDurationSec).toEqual([45, 55]);
+      else expect(r.targetDurationSec[0]).toBeGreaterThanOrEqual(60);
       expect(r.targetDurationSec[1]).toBeLessThanOrEqual(120);
     }
   });
@@ -165,7 +170,7 @@ describe('routes meta', () => {
           expect(r.features).toContain('balloons');
           expect(r.minBalloonPairs).toBeGreaterThanOrEqual(t.value + 2);
         }
-        if (t.type === 'gatesChain') expect(r.minGates).toBeGreaterThanOrEqual(t.value + 2);
+        if (t.type === 'gateChain') expect(r.minGates).toBeGreaterThanOrEqual(t.value + 2);
         if (t.type === 'scoreOver' || t.type === 'timeUnder') {
           expect(t.value).toBeGreaterThan(0.85);
           expect(t.value).toBeLessThanOrEqual(1.1);
@@ -239,7 +244,7 @@ describe('cosmetics', () => {
       expect(c.name.tr.length).toBeGreaterThan(1);
       expect(c.name.en.length).toBeGreaterThan(1);
       const s = c.source;
-      expect(['start', 'usta', 'rank', 'postcards', 'weekly', 'log']).toContain(s.kind);
+      expect(['start', 'usta', 'rank', 'postcards', 'weekly', 'log', 'suru', 'postcardCount']).toContain(s.kind);
       if (s.kind === 'usta') {
         expect(s.taskIds.length).toBeGreaterThan(0);
         for (const id of s.taskIds) {
@@ -422,14 +427,13 @@ describe('progression', () => {
   });
 
   it('weekly rotation is deterministic and respects eligibility', () => {
-    expect(WEEKLY_MODIFIERS.map((m) => m.id)).toEqual(['ruzgarliGun', 'sisPerdesi', 'tersYon', 'termalAvi']);
+    expect(WEEKLY_MODIFIERS.map((m) => m.id)).toEqual(['ruzgarliGun', 'sisPerdesi', 'termalAvi']); // Ters Yön cut (K-24)
     const seen = new Map<string, string[]>();
     for (let k = 0; k < 104; k++) {
       const a = weeklyFor(k);
       const b = weeklyFor(k);
       expect(a.routeId).toBe(b.routeId);
       expect(a.modifier.eligible).toContain(a.routeId);
-      if (a.modifier.id === 'tersYon') expect(['kapadokya', 'pamukkale']).toContain(ROUTE_META.find((r) => r.id === a.routeId)?.world);
       const list = seen.get(a.modifier.id) ?? [];
       list.push(a.routeId);
       seen.set(a.modifier.id, list);

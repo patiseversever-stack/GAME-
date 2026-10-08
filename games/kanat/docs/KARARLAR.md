@@ -26,3 +26,6 @@ Kullanıcı uyurken verilen her kararın kaydı. Biçim: **Karar** — gerekçe.
 
 ### Süre
 - Kullanıcı 2–3 saat kesintisiz çalışma istedi; brif 4–5 saat planlıyor. **Karar:** Öncelik sırası: (1) Kapadokya dikey dilimi hedef kalitede uçtan uca, (2) 5 gerçek arazi + 20 rota, (3) SÜRÜ.io, (4) Günün Rotası + Hayalet Düello, (5) Serbest Uçuş/Foto, (6) test ve belgeler. Yetişmeyen içerik çirkin hâliyle değil, kapsam dışı olarak raporlanır (§6.G kuralı).
+
+### Geliştirme sırasında `dist/`
+- **Karar:** `dist/` geliştirme boyunca `.gitignore`'da; her build ~45 MB ve her ara commit'te depo geçmişini şişiriyordu. Brif gereği teslim edilen `dist/web` ve `dist/single` **son teslim commit'inde** `git add -f` ile eklenir.

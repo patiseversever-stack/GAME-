@@ -51,8 +51,53 @@ export function layoutFor(setup: RoundSetup): SuruLayout {
   return HAND_LAYOUTS[(setup.seed >>> 0) % HAND_LAYOUTS.length];
 }
 
+/** FTUE playground (§2.6 "SÜRÜ.io FTUE", 45 s, textless): wild groups ahead, a sleeping small timid flock. */
+export const FTUE_SPOTS = {
+  wildA: { x: 0, z: 40 },
+  wildB1: { x: -26, z: -30 },
+  wildB2: { x: 26, z: -30 },
+  wildC: { x: 0, z: -75 },
+  sleeper: { x: 0, z: -150 },
+} as const;
+
+function createFtueRound(setup: RoundSetup): Round {
+  const layout = layoutById('sazlik');
+  const seed = (setup.seed >>> 0) ^ 0xf7e;
+  const S = FTUE_SPOTS;
+  const sim = new SuruSim({
+    seed,
+    layout,
+    roundSec: 120,
+    hawks: false,
+    storm: false,
+    gusts: false,
+    ring: false,
+    lastStanding: false,
+    custom: {
+      flocks: [
+        { x: 0, z: 110, hx: 0, hz: -1, followers: 15 },
+        { x: S.sleeper.x, z: S.sleeper.z, hx: 1, hz: 0, followers: 10 },
+      ],
+      wild: [
+        { x: S.wildA.x, z: S.wildA.z, count: 14 },
+        { x: S.wildB1.x, z: S.wildB1.z, count: 14 },
+        { x: S.wildB2.x, z: S.wildB2.z, count: 14 },
+        { x: S.wildC.x, z: S.wildC.z, count: 22 },
+      ],
+      parkRadius: 270,
+    },
+  });
+  const bots = new SuruBots(sim, [{ flock: 2, personality: 'urkek', league: 0, policy: 'sleep' }], seed);
+  const meta: FlockMeta[] = [
+    { flock: 1, isBot: false, personality: null, name: { tr: 'Sen', en: 'You' } },
+    { flock: 2, isBot: true, personality: 'urkek', name: BOT_NAMES[5] },
+  ];
+  return { setup, layout, sim, bots, meta };
+}
+
 export function createRound(setup: RoundSetup): Round {
   const sub = setup.subMode ?? 'league';
+  if (sub === 'ftue') return createFtueRound(setup);
   const layout = layoutFor(setup);
   // daily: everything (layout, wild, wind, storm path, AI mix) comes from the day seed
   const seed = sub === 'daily' ? (layout.seed ^ 0x5eed) >>> 0 : setup.seed >>> 0;
