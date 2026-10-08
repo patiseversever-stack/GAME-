@@ -83,7 +83,7 @@ export const duelScreen: ScreenDef<DuelProps> = {
         return;
       }
       if (!ctx.cb.onDuelSubmit) return;
-      ctx.rerender({ ...p, code, verifying: true, error: undefined, ghost: undefined });
+      ctx.rerender({ ...p, code, verifying: true, autoSubmit: false, error: undefined, ghost: undefined });
       const res = await ctx.cb.onDuelSubmit(code);
       ctx.rerender(res.ok ? { code, ghost: res.ghost } : { code, error: res.error });
     };
@@ -122,6 +122,9 @@ export const duelScreen: ScreenDef<DuelProps> = {
         g.oneTime ? h('p', { class: 'kn-caption', text: t('duel.oneTime') }) : null,
         race,
       );
+    }
+    if (p.autoSubmit && p.code && !p.ghost && !p.error && !p.verifying) {
+      queueMicrotask(() => void submit());
     }
     return page(ctx, {
       title: t('duel.title'),

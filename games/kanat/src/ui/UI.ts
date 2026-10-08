@@ -59,10 +59,17 @@ export class UIController {
     if (opts.settings) this.setSettings(opts.settings);
     if (opts.safeArea) this.setSafeArea(opts.safeArea);
     this.unsubLang = onLangChange(() => this.refreshAll());
+    window.addEventListener('keydown', this.onKey);
     this.fontsReady = loadFonts();
   }
 
+  /** Desktop convenience: Escape behaves like Android back. */
+  private onKey = (e: KeyboardEvent): void => {
+    if (e.key === 'Escape' && !e.repeat) this.back();
+  };
+
   destroy(): void {
+    window.removeEventListener('keydown', this.onKey);
     for (const e of this.stack) this.disposeEntry(e);
     this.stack = [];
     this.unsubLang?.();

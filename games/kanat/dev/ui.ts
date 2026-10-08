@@ -27,7 +27,7 @@ registerAssetPack(async (path) => {
 });
 
 const q = new URLSearchParams(location.search);
-const screen = (q.get('screen') ?? 'index') as ScreenId | 'index' | 'hud' | 'share' | 'fonts' | 'icons';
+const screen = (q.get('screen') ?? 'index') as ScreenId | 'index' | 'hud' | 'share' | 'fonts' | 'icons' | 'toast';
 const variant = q.get('variant') ?? '';
 const lang = (q.get('lang') === 'en' ? 'en' : 'tr') as 'tr' | 'en';
 const stage = document.getElementById('stage') as HTMLElement;

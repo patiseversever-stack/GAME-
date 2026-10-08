@@ -91,7 +91,14 @@ export interface GhostVM {
 }
 export type DuelError = 'invalid' | 'version' | 'empty' | 'clipboard';
 export type DuelLookup = { ok: true; ghost: GhostVM } | { ok: false; error: 'invalid' | 'version' };
-export interface DuelProps { code?: string; ghost?: GhostVM; error?: DuelError; verifying?: boolean }
+export interface DuelProps {
+  code?: string;
+  ghost?: GhostVM;
+  error?: DuelError;
+  verifying?: boolean;
+  /** Deep link: validate `code` immediately on open. */
+  autoSubmit?: boolean;
+}
 
 export interface SuruProps { league: number; lp: number; dayN: number; dayBestPlace?: number; dayFlocks?: number }
 

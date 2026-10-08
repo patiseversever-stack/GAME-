@@ -568,7 +568,7 @@ export class Effects {
   }
 }
 
-/** Deterministic visual lightning: ≤ 0.5 Hz flashes (double flicker), never above 3 Hz (§2.13). */
+/** Deterministic visual lightning: single flashes at ≤ 0.5 Hz (period ≥ 3.1 s), no flicker (§2.13 ≤ 3 Hz). */
 export function lightningAt(time: number, active: boolean): number {
   if (!active) return 0;
   const period = 3.1;
@@ -576,6 +576,6 @@ export function lightningAt(time: number, active: boolean): number {
   const h = Math.abs(Math.sin(k * 12.9898) * 43758.5453) % 1;
   if (h < 0.35) return 0;
   const t = time - k * period - h * 1.2;
-  if (t < 0 || t > 0.4) return 0;
-  return Math.max(0, Math.exp(-t * 18) + (t > 0.18 ? Math.exp(-(t - 0.18) * 22) * 0.7 : 0));
+  if (t < 0 || t > 0.6) return 0;
+  return Math.exp(-t * 9);
 }

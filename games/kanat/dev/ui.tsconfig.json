@@ -1,0 +1,5 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": { "noEmit": true },
+  "include": ["ui.ts", "../src/ui", "../tests/unit/ui-*.test.ts", "../tools/fonts-fetch.ts"]
+}

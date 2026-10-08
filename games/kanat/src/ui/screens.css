@@ -418,7 +418,8 @@
 .kn-option-text b { font-weight: 600; font-size: 15.5px; }
 .kn-option-text small { font-size: 12.5px; color: var(--kn-text-dim); }
 .kn-card-help .kn-modal-actions { margin-top: 4px; }
-.kn-card-top { align-items: flex-start; padding-top: calc(var(--kn-safe-top) + 64px); }
+.kn-card-top { align-items: flex-start; padding-top: calc(var(--kn-safe-top) + 64px); pointer-events: none; }
+.kn-card-top .kn-modal { pointer-events: auto; }
 .kn-card-top .kn-cardlayer-dim { background: transparent; pointer-events: none; }
 .kn-card-top .kn-modal { width: min(100%, 360px); padding: 14px; gap: 0; }
 .kn-inv { display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; }

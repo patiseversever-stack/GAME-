@@ -7,7 +7,9 @@ import type { WorldId } from '../../sim/types.ts';
 import type {
   CosmeticRef,
   FlightStats,
+  LiftSource,
   RouteBenchmarks,
+  RouteEnergy,
   RouteFeature,
   RouteMeta,
   StartType,
@@ -34,6 +36,7 @@ export const WORLD_META: readonly WorldMeta[] = [
     windSpeed: 0,
     accent: '#F2A541',
     signaturePattern: 'periBacasi',
+    thermalLengthM: 260,
   },
   {
     id: 'likya',
@@ -48,6 +51,7 @@ export const WORLD_META: readonly WorldMeta[] = [
     windSpeed: 1.5,
     accent: '#2EC4C6',
     signaturePattern: 'turkuaz',
+    thermalLengthM: 230,
   },
   {
     id: 'karadeniz',
@@ -62,6 +66,7 @@ export const WORLD_META: readonly WorldMeta[] = [
     windSpeed: 3,
     accent: '#8DB580',
     signaturePattern: 'ladin',
+    thermalLengthM: 200,
   },
   {
     id: 'erciyes',
@@ -76,6 +81,7 @@ export const WORLD_META: readonly WorldMeta[] = [
     windSpeed: 4,
     accent: '#9FD3F0',
     signaturePattern: 'karKristali',
+    thermalLengthM: 180,
   },
   {
     id: 'pamukkale',
@@ -90,6 +96,7 @@ export const WORLD_META: readonly WorldMeta[] = [
     windSpeed: 4,
     accent: '#F2795C',
     signaturePattern: 'traverten',
+    thermalLengthM: 160,
   },
 ];
 
@@ -125,7 +132,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Peri Bacaları Slalomu', en: 'Fairy Chimney Slalom' },
     features: ['chimneys', 'canyon'],
     reward: 'pattern:kilim',
-    tasks: [['grazes', 2], ['gatesChain', 6], ['x5Seconds', 2]],
+    tasks: [['grazeCount', 2], ['gateChain', 6], ['mult5Hold', 2]],
   },
   {
     id: 'w1r3',
@@ -133,7 +140,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Balon Yolu', en: 'Balloon Road' },
     features: ['balloons', 'chimneys'],
     reward: 'pattern:balonSeridi',
-    tasks: [['braveOpening', 1], ['balloonThread', 5], ['noContact3Stars', 3]],
+    tasks: [['boldOpen', 1], ['balloonThread', 5], ['noContact3Stars', 3]],
   },
   {
     id: 'w1r4',
@@ -141,7 +148,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Güvercinlik Kanyonu', en: 'Pigeon Valley Canyon' },
     features: ['canyon', 'chimneys'],
     reward: 'pattern:guvercin',
-    tasks: [['proximityTotal', 15], ['grazes', 3], ['x5Seconds', 4]],
+    tasks: [['prox3Time', 15], ['grazeCount', 3], ['mult5Hold', 4]],
   },
   // ---- W2 Likya Kıyısı (cliff top) ----
   {
@@ -150,7 +157,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Yalıyar Süzülüşü', en: 'Cliffside Glide' },
     features: ['seaCliff', 'water'],
     reward: ['palette:zeytin', 'trail:turkuazKopuk', 'palette:turkuaz'],
-    tasks: [['softLanding', 1], ['proximityTotal', 15], ['landWithin', 5]],
+    tasks: [['softLanding', 1], ['prox3Time', 15], ['landWithin', 5]],
   },
   {
     id: 'w2r2',
@@ -158,7 +165,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Gulet Koyu', en: 'Gulet Cove' },
     features: ['water', 'gulets', 'seaCliff'],
     reward: 'pattern:yakamoz',
-    tasks: [['gatesChain', 6], ['proximityTotal', 25], ['noThermal', 0]],
+    tasks: [['gateChain', 6], ['prox3Time', 25], ['noThermal', 0]],
   },
   {
     id: 'w2r3',
@@ -166,7 +173,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Kaya Kemeri', en: 'Rock Arch' },
     features: ['rockArch', 'water', 'seaCliff'],
     reward: 'pattern:dalga',
-    tasks: [['braveOpening', 1], ['grazes', 2], ['x5Seconds', 3]],
+    tasks: [['boldOpen', 1], ['grazeCount', 2], ['mult5Hold', 3]],
   },
   {
     id: 'w2r4',
@@ -174,7 +181,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Mezar Cepheleri Hattı', en: 'Tomb Façade Line' },
     features: ['tombs', 'seaCliff', 'lighthouse'],
     reward: 'pattern:cini',
-    tasks: [['grazes', 3], ['scoreOver', 0.95], ['noContact3Stars', 3]],
+    tasks: [['grazeCount', 3], ['scoreOver', 0.95], ['noContact3Stars', 3]],
   },
   // ---- W3 Karadeniz Yaylası (ridge ledge) ----
   {
@@ -183,7 +190,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Bulut Denizi', en: 'Sea of Clouds' },
     features: ['cloudSea', 'spruce', 'waterfall'],
     reward: ['palette:yayla', 'trail:sisTulu', 'trail:ebruAkisi'],
-    tasks: [['softLanding', 1], ['gatesChain', 6], ['landWithin', 5]],
+    tasks: [['softLanding', 1], ['gateChain', 6], ['landWithin', 5]],
   },
   {
     id: 'w3r2',
@@ -191,7 +198,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Ladin Koridoru', en: 'Spruce Corridor' },
     features: ['spruce'],
     reward: 'pattern:pusula',
-    tasks: [['proximityTotal', 20], ['grazes', 3], ['timeUnder', 1.0]],
+    tasks: [['prox3Time', 20], ['grazeCount', 3], ['timeUnder', 1.0]],
   },
   {
     id: 'w3r3',
@@ -199,7 +206,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Şelale Perdesi', en: 'Waterfall Curtain' },
     features: ['waterfall', 'spruce'],
     reward: 'pattern:ebru',
-    tasks: [['braveOpening', 1], ['x5Seconds', 3], ['scoreOver', 1.0]],
+    tasks: [['boldOpen', 1], ['mult5Hold', 3], ['scoreOver', 1.0]],
   },
   {
     id: 'w3r4',
@@ -207,7 +214,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Yayla Alçak Geçişi', en: 'Highland Low Pass' },
     features: ['highlandHouses', 'spruce'],
     reward: 'pattern:kontur',
-    tasks: [['gatesChain', 8], ['noThermal', 0], ['landWithin', 2]],
+    tasks: [['gateChain', 8], ['noThermal', 0], ['landWithin', 2]],
   },
   // ---- W4 Erciyes Karı (summit ridge) ----
   {
@@ -216,7 +223,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Kar Sırtı', en: 'Snow Ridge' },
     features: ['snowRidge'],
     reward: ['palette:lavanta', 'trail:buzKristali', 'palette:buzul'],
-    tasks: [['softLanding', 1], ['grazes', 2], ['x5Seconds', 3]],
+    tasks: [['softLanding', 1], ['grazeCount', 2], ['mult5Hold', 3]],
   },
   {
     id: 'w4r2',
@@ -224,7 +231,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Korniş Kenarı', en: 'Cornice Edge' },
     features: ['cornice', 'snowRidge'],
     reward: 'pattern:sirt',
-    tasks: [['proximityTotal', 25], ['grazes', 4], ['noContact3Stars', 3]],
+    tasks: [['prox3Time', 25], ['grazeCount', 4], ['noContact3Stars', 3]],
   },
   {
     id: 'w4r3',
@@ -232,7 +239,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Buzul Oluğu', en: 'Glacier Gully' },
     features: ['gully', 'snowRidge'],
     reward: 'pattern:geceYarisi',
-    tasks: [['gatesChain', 8], ['x5Seconds', 5], ['timeUnder', 0.98]],
+    tasks: [['gateChain', 8], ['mult5Hold', 5], ['timeUnder', 0.98]],
   },
   {
     id: 'w4r4',
@@ -240,7 +247,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Zirve İnişi', en: 'Summit Descent' },
     features: ['summit', 'snowRidge', 'cornice'],
     reward: 'pattern:safak',
-    tasks: [['braveOpening', 1], ['landWithin', 2], ['scoreOver', 1.0]],
+    tasks: [['boldOpen', 1], ['landWithin', 2], ['scoreOver', 1.0]],
   },
   // ---- W5 Pamukkale Gün Batımı (balloon basket) ----
   {
@@ -257,7 +264,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Antik Tiyatro Üstü', en: 'Over the Ancient Theatre' },
     features: ['theatre', 'columns', 'travertine'],
     reward: 'pattern:lale',
-    tasks: [['grazes', 3], ['gatesChain', 10], ['x5Seconds', 5]],
+    tasks: [['grazeCount', 3], ['gateChain', 10], ['mult5Hold', 5]],
   },
   {
     id: 'w5r3',
@@ -265,7 +272,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Ayna Havuzlar', en: 'Mirror Pools' },
     features: ['pools', 'travertine', 'balloons'],
     reward: 'pattern:mehtap',
-    tasks: [['proximityTotal', 40], ['balloonThread', 4], ['noContact3Stars', 3]],
+    tasks: [['prox3Time', 40], ['balloonThread', 4], ['noContact3Stars', 3]],
   },
   {
     id: 'w5r4',
@@ -273,7 +280,7 @@ const ROWS: readonly RouteRow[] = [
     name: { tr: 'Gün Batımı Finali', en: 'Sunset Finale' },
     features: ['balloons', 'travertine', 'pools', 'columns'],
     reward: 'pattern:kizilUfuk',
-    tasks: [['balloonThread', 6], ['x5Seconds', 6], ['scoreOver', 1.05]],
+    tasks: [['balloonThread', 6], ['mult5Hold', 6], ['scoreOver', 1.05]],
   },
 ];
 
@@ -282,6 +289,57 @@ export function targetDurationFor(difficulty: number): readonly [number, number]
   const lo = 60 + (difficulty - 1) * 5;
   return [lo, Math.min(120, lo + 20)];
 }
+
+/** Logged exceptions to §2.5's 60–120 s (K-19): w1r1 IS the §1 FTUE film (jump 6 s → touchdown ≈ 52 s). */
+export const DURATION_EXCEPTIONS: Readonly<Record<string, readonly [number, number]>> = {
+  w1r1: [45, 55],
+};
+
+// ---------------------------------------------------------------------------------------------
+// Energy model (K-19). A wingsuit sinks ~9 m/s at trim and ~10–11 m/s on a fast proximity line, so the
+// route's duration is bought with start height + lift. The route tool must keep (start − landing) inside
+// `startAboveLandingM`; the Kılavuz bot proves the budget by flying it.
+// ---------------------------------------------------------------------------------------------
+
+export const ENERGY_MODEL = {
+  /** Mean sink on an expert proximity line (m/s). */
+  lineSinkMs: 10,
+  jumpSec: 0.8,
+  /** Typical manual opening height above the landing ground (inside the 60–90 m Cesur window). */
+  canopyOpenAglM: 80,
+  canopySinkMs: 5,
+  canopyOpenSec: 1.2,
+  /** Reference airspeed for the thermal street gain estimate (trim, m/s). */
+  refSpeedMs: 42,
+} as const;
+
+/** Equivalent height from one centred pass along a thermal street: w0 · (L + R·√π) / V. */
+export function thermalStreetGainM(w0: number, radius: number, lengthM: number): number {
+  return Math.round((w0 * (lengthM + radius * 1.7724538509)) / ENERGY_MODEL.refSpeedMs);
+}
+
+export function energyBudgetFor(
+  duration: readonly [number, number],
+  thermalCount: number,
+  streetGainM: number,
+  liftSources: readonly LiftSource[],
+): RouteEnergy {
+  const e = ENERGY_MODEL;
+  const canopySec = e.canopyOpenSec + e.canopyOpenAglM / e.canopySinkMs;
+  const w0 = duration[0] - e.jumpSec - canopySec;
+  const w1 = duration[1] - e.jumpSec - canopySec;
+  const hi = Math.round(e.lineSinkMs * w1 + e.canopyOpenAglM);
+  const lo = Math.max(e.canopyOpenAglM + 60, Math.round(e.lineSinkMs * w0 + e.canopyOpenAglM - thermalCount * streetGainM));
+  return {
+    wingsuitSec: [Math.round(w0 * 10) / 10, Math.round(w1 * 10) / 10],
+    startAboveLandingM: [lo, hi],
+    streetGainM,
+    liftSources,
+  };
+}
+
+/** Task types that only count without a physics-changing assist intervention (K-20). */
+const UNASSISTED_ONLY: ReadonlySet<UstaType> = new Set<UstaType>(['noContact3Stars', 'scoreOver', 'timeUnder']);
 
 const WORLD_BY_INDEX: readonly WorldId[] = WORLD_META.map((w) => w.id);
 
@@ -292,15 +350,19 @@ function buildRoute(row: RouteRow): RouteMeta {
   const tasks = row.tasks.map(([type, value], i): UstaTask => {
     const slot = (i + 1) as 1 | 2 | 3;
     const unlocks: CosmeticRef = typeof row.reward === 'string' ? row.reward : row.reward[i];
-    return { id: `${row.id}-u${slot}`, routeId: row.id, slot, type, value, unlocks };
+    return { id: `${row.id}-u${slot}`, routeId: row.id, slot, type, value, unlocks, unassistedOnly: UNASSISTED_ONLY.has(type) };
   }) as unknown as readonly [UstaTask, UstaTask, UstaTask];
   let chain = 0;
   let threads = 0;
   for (const t of tasks) {
-    if (t.type === 'gatesChain') chain = Math.max(chain, t.value);
+    if (t.type === 'gateChain') chain = Math.max(chain, t.value);
     if (t.type === 'balloonThread') threads = Math.max(threads, t.value);
   }
   const hasBalloons = row.features.includes('balloons');
+  const duration = DURATION_EXCEPTIONS[row.id] ?? targetDurationFor(row.difficulty);
+  const streetGain = thermalStreetGainM(world.thermalW0, world.thermalRadius, world.thermalLengthM);
+  const lift: LiftSource[] = ['start', 'thermalStreet'];
+  if (world.windSpeed > 0) lift.push('ridge');
   return {
     id: row.id,
     world: WORLD_BY_INDEX[worldIndex - 1],
@@ -315,10 +377,12 @@ function buildRoute(row: RouteRow): RouteMeta {
     thermalW0: world.thermalW0,
     windSpeed: world.windSpeed,
     guideWindDefault: worldIndex === 1 && index <= 3,
-    targetDurationSec: targetDurationFor(row.difficulty),
+    targetDurationSec: duration,
     features: row.features,
     minGates: Math.max(6 + row.difficulty, chain + 2),
     minBalloonPairs: threads > 0 ? threads + 2 : hasBalloons ? 2 : 0,
+    thermalLengthM: world.thermalLengthM,
+    energy: energyBudgetFor(duration, world.thermalCount, streetGain, lift),
     usta: tasks,
   };
 }
@@ -365,13 +429,14 @@ export function resolveUstaTarget(task: UstaTask, bench?: RouteBenchmarks): numb
 /** True when the flight that just ended completes the task. Every task requires a real landing (route done). */
 export function checkUsta(task: UstaTask, s: FlightStats, bench?: RouteBenchmarks): boolean {
   if (s.routeId !== task.routeId || !USTA_MODES.has(s.mode) || !s.landed || s.halfFlight) return false;
+  if (task.unassistedOnly && s.assistUsed) return false;
   const v = task.value;
   switch (task.type) {
     case 'balloonThread':
       return s.balloonThreads >= v;
-    case 'x5Seconds':
+    case 'mult5Hold':
       return s.maxX5StreakSec >= v;
-    case 'grazes':
+    case 'grazeCount':
       return s.grazes >= v;
     case 'noContact3Stars':
       return s.stars >= v && s.contacts === 0;
@@ -379,7 +444,7 @@ export function checkUsta(task: UstaTask, s: FlightStats, bench?: RouteBenchmark
       return s.landingDist <= v;
     case 'noThermal':
       return s.thermalsEntered <= v;
-    case 'gatesChain':
+    case 'gateChain':
       return s.maxGateChain >= v;
     case 'timeUnder': {
       const t = resolveUstaTarget(task, bench);
@@ -389,39 +454,54 @@ export function checkUsta(task: UstaTask, s: FlightStats, bench?: RouteBenchmark
       const t = resolveUstaTarget(task, bench);
       return t !== null && s.score >= t;
     }
-    case 'braveOpening':
+    case 'boldOpen':
       return s.braveOpening && !s.autoParachute;
     case 'softLanding':
       return s.softLanding;
-    case 'proximityTotal':
+    case 'prox3Time':
       return s.x3PlusTotalSec >= v;
   }
 }
 
-/** i18n key in src/ui/strings (usta.*) + params; both `count` and `value` are provided. */
+/** i18n key in src/ui/strings: the task type IS the key suffix (`usta.<type>`), no alias layer (F1 review). */
 export const USTA_I18N_KEY: Readonly<Record<UstaType, string>> = {
   balloonThread: 'usta.balloonThread',
-  x5Seconds: 'usta.mult5Hold',
-  grazes: 'usta.grazeCount',
+  mult5Hold: 'usta.mult5Hold',
+  grazeCount: 'usta.grazeCount',
   noContact3Stars: 'usta.noContact3Stars',
   landWithin: 'usta.landWithin',
   noThermal: 'usta.noThermal',
-  gatesChain: 'usta.gateChain',
+  gateChain: 'usta.gateChain',
   timeUnder: 'usta.timeUnder',
   scoreOver: 'usta.scoreOver',
-  braveOpening: 'usta.boldOpen',
+  boldOpen: 'usta.boldOpen',
   softLanding: 'usta.softLanding',
-  proximityTotal: 'usta.prox3Time',
+  prox3Time: 'usta.prox3Time',
 };
 
-export function ustaI18n(task: UstaTask, bench?: RouteBenchmarks): { key: string; params: { count: number; value: number } } {
-  const target = resolveUstaTarget(task, bench);
-  const n = target === null ? task.value : target;
-  return { key: USTA_I18N_KEY[task.type], params: { count: n, value: n } };
-}
+/** Relative wording when the Kılavuz benchmark is not known yet (dev builds): never "1 puanı geç". */
+export const USTA_I18N_KEY_RELATIVE: Readonly<Partial<Record<UstaType, string>>> = {
+  scoreOver: 'usta.scoreOverRel',
+  timeUnder: 'usta.timeUnderRel',
+};
 
-/** Shape stored in RouteDef.ustaGorevleri (src/sim/types.ts). */
+/**
+ * Display data for a task. `value` is the EXACT threshold checkUsta uses (timeUnder: seconds floored to 0.1 →
+ * format with the `time` formatter, e.g. 1:18.4; scoreOver: integer points). `pct` = the ratio as a percentage
+ * (relative wording). `unassisted` → append "(yardımsız)" (string key usta.unassistedSuffix).
+ */
+export function ustaI18n(
+  task: UstaTask,
+  bench?: RouteBenchmarks,
+): { key: string; params: { count: number; value: number; pct: number }; ready: boolean; unassisted: boolean } {
+  const target = resolveUstaTarget(task, bench);
+  const ready = target !== null;
+  const n = ready ? target : task.value;
+  const rel = USTA_I18N_KEY_RELATIVE[task.type];
+  const key = !ready && rel ? rel : USTA_I18N_KEY[task.type];
+  return { key, params: { count: n, value: n, pct: Math.round(task.value * 100) }, ready, unassisted: task.unassistedOnly };
+}/** Shape stored in RouteDef.ustaGorevleri (src/sim/types.ts). */
 export function toRouteDefUsta(task: UstaTask): { id: string; type: string; count?: number; value?: number } {
-  const counted = task.type === 'balloonThread' || task.type === 'grazes' || task.type === 'gatesChain';
+  const counted = task.type === 'balloonThread' || task.type === 'grazeCount' || task.type === 'gateChain';
   return counted ? { id: task.id, type: task.type, count: task.value } : { id: task.id, type: task.type, value: task.value };
 }

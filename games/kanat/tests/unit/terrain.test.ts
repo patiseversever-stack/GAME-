@@ -17,10 +17,13 @@ describe('terrarium decode (9.G-1)', () => {
     expect(terrariumDecode(0, 0, 0)).toBe(-32768);
     expect(terrariumDecode(255, 255, 255)).toBeCloseTo(32767.996, 3);
   });
-  it('tile math matches the brief formula (Göreme z13)', () => {
+  it('tile math matches the brief formula', () => {
     // brief §4.G.1: tileX = floor((lon+180)/360·2^z), tileY = floor((1 − ln(tan φ + 1/cos φ)/π)/2·2^z)
-    expect(Math.floor(lonToTileXf(34.83, 13))).toBe(4888);
-    expect(Math.floor(latToTileYf(38.64, 13))).toBe(3175);
+    expect(Math.floor(lonToTileXf(34.83, 13))).toBe(4888); // Göreme
+    expect(Math.floor(latToTileYf(38.64, 13))).toBe(3141); // Göreme
+    expect(latToTileYf(0, 13)).toBeCloseTo(4096, 9); // equator = middle row
+    expect(latToTileYf(85.0511287798, 2)).toBeCloseTo(0, 6); // Web Mercator limit = top edge
+    expect(lonToTileXf(-180, 5)).toBe(0);
   });
   it('geo <-> local roundtrip', () => {
     const g = localToGeo(38.6, 34.8, 3000, -2500);

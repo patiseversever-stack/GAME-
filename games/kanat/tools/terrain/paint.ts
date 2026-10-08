@@ -161,7 +161,9 @@ const paintKapadokya: Painter = (f, i, x, z, o) => {
   const n1 = fbm(x / 140, z / 140, 3, 3);
   // valley bottoms only (multi-scale flow field), broken by noise, gentle ground
   const brk = smoothstep(-0.35, 0.15, fbm(x / 120, z / 120, 4, 3) + 0.2 * vnoise(x / 30, z / 30, 5));
-  const valley = smoothstep(0.3, 0.75, dr + 0.12 * n1) * smoothstep(15, 5, s) * smoothstep(15, -5, rel) * brk;
+  const valley = smoothstep(0.25, 0.65, dr + 0.12 * n1) * smoothstep(15, 5, s) * smoothstep(18, -5, rel) * brk;
+  // orchards / vineyards on low gentle ground near the valleys (apricot, vine): soft sage patches
+  const orchardZone = smoothstep(f.stats.p50, f.stats.p5, h) * smoothstep(8, 3, s) * smoothstep(0.1, 0.45, 0.5 + 0.5 * fbm(x / 260, z / 260, 6, 3));
   const expo = smoothstep(6, 15, s + 5 * n1) * (1 - valley * 0.7);
   // tuff strata by elevation: rose (#D49A8A) and warm white (#D9B48F) bands, warped so they never read as contours
   const warp = 18 * fbm(x / 500, z / 500, 9, 3) + 6 * vnoise(x / 90, z / 90, 10);
@@ -187,6 +189,7 @@ const paintKapadokya: Painter = (f, i, x, z, o) => {
   // valley floors: desaturated sage orchards/vineyards with poplar clumps
   const trees = 0.5 + 0.5 * vnoise(x / 9, z / 9, 29);
   const valleyCol = mix3(mix3(K.orchard, K.vineyard, 0.5 + 0.5 * vnoise(x / 40, z / 40, 30)), K.poplarDark, smoothstep(0.6, 0.9, trees) * 0.55);
+  ground = mix3(ground, mix3(K.vineyard, K.orchard, 0.5 + 0.5 * vnoise(x / 35, z / 35, 8)), orchardZone * 0.45 * (1 - valley));
   ground = mix3(ground, valleyCol, valley * 0.8);
   let a = mix3(ground, tuff, expo);
   a = mix3(a, K.basalt, cap);

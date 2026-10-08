@@ -2,7 +2,7 @@
 // Usta tasks, badges and XP. Defines every stat precisely so UI, save and tests agree. No allocation per tick.
 
 import type { WorldId, FlightState, SimEvent } from '../../sim/types.ts';
-import type { FlightMode, FlightStats } from './types.ts';
+import type { AssistLevel, FlightMode, FlightStats } from './types.ts';
 import { TUNING } from '../../sim/data/tuning.ts';
 
 export interface FlightStatsInit {
@@ -10,7 +10,7 @@ export interface FlightStatsInit {
   world: WorldId;
   mode: FlightMode;
   gatesTotal: number;
-  assist: 'full' | 'low' | 'off';
+  assist: AssistLevel;
   slowMode: boolean;
 }
 
@@ -25,6 +25,9 @@ export interface FlightStatsTracker {
 
 const WATER_SKIM_D = 4; // m — "suyun 4 m üstünde" (badge turquoiseShadow)
 
+/** landingDist when the flight did not land (JSON-safe sentinel instead of Infinity → null). */
+export const LANDING_DIST_NONE = 999;
+
 export function createFlightStatsTracker(init: FlightStatsInit): FlightStatsTracker {
   const threadWindowTicks = Math.round(TUNING.score.threadChainWindowSec * TUNING.sim.hz);
   const braveMin = TUNING.score.braveOpenMin;
@@ -35,6 +38,9 @@ export function createFlightStatsTracker(init: FlightStatsInit): FlightStatsTrac
   let x5Streak = 0;
   let maxX5Streak = 0;
   let x3Total = 0;
+  let x3Streak = 0;
+  let maxX3Streak = 0;
+  let assistUsed = false;
   let waterSkim = 0;
   let grazes = 0;
   let threads = 0;
@@ -51,7 +57,7 @@ export function createFlightStatsTracker(init: FlightStatsInit): FlightStatsTrac
   let crashed = false;
   let halfFlight = false;
   let sawLanded = false;
-  let landingDist = Number.POSITIVE_INFINITY;
+  let landingDist = LANDING_DIST_NONE;
   let softLanding = false;
   let braveOpening = false;
   let autoParachute = false;
@@ -65,8 +71,12 @@ export function createFlightStatsTracker(init: FlightStatsInit): FlightStatsTrac
       }
       const dt = t - prevT;
       prevT = t;
+      if (s.assistUsed === true) assistUsed = true;
       if (!(dt > 0) || s.phase !== 'flying') {
-        if (s.phase !== 'flying') x5Streak = 0;
+        if (s.phase !== 'flying') {
+          x5Streak = 0;
+          x3Streak = 0;
+        }
         return;
       }
       const m = s.prox.mult;
@@ -77,7 +87,13 @@ export function createFlightStatsTracker(init: FlightStatsInit): FlightStatsTrac
       } else {
         x5Streak = 0;
       }
-      if (m >= 3) x3Total += dt;
+      if (m >= 3) {
+        x3Total += dt;
+        x3Streak += dt;
+        if (x3Streak > maxX3Streak) maxX3Streak = x3Streak;
+      } else {
+        x3Streak = 0;
+      }
       if (s.prox.cls === 'water' && s.prox.d < WATER_SKIM_D) waterSkim += dt;
     },
 
@@ -146,6 +162,7 @@ export function createFlightStatsTracker(init: FlightStatsInit): FlightStatsTrac
         x5TotalSec: x5Total,
         maxX5StreakSec: maxX5Streak,
         x3PlusTotalSec: x3Total,
+        maxX3StreakSec: maxX3Streak,
         balloonThreads: threads,
         maxThreadChain,
         gatesTotal: init.gatesTotal,
@@ -154,12 +171,13 @@ export function createFlightStatsTracker(init: FlightStatsInit): FlightStatsTrac
         maxGateChain,
         thermalsEntered: thermals,
         contacts,
-        landingDist: landed ? landingDist : Number.POSITIVE_INFINITY,
+        landingDist: landed ? landingDist : LANDING_DIST_NONE,
         softLanding: landed && softLanding,
         braveOpening: landed && braveOpening,
         autoParachute,
         waterSkimSec: waterSkim,
         assist: init.assist,
+        assistUsed,
         slowMode: init.slowMode,
       };
     },

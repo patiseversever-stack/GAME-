@@ -56,7 +56,9 @@ export const CORE_ORIGIN = -CORE_SIZE / 2 + CORE_SPACING / 2; // -4092
 export const FAR_RES = 512;
 export const FAR_SPACING = 96;
 export const FAR_SIZE = FAR_RES * FAR_SPACING; // 49152
-export const FAR_ORIGIN = -FAR_SIZE / 2 + FAR_SPACING / 2; // -24528
+// Far knots must coincide with core samples (origins congruent mod 8 m): then the core edge — set equal to the far
+// bilinear surface — is reproduced exactly by the core's own bilinear interpolation (seam-free sampler). Shift +4 m.
+export const FAR_ORIGIN = -FAR_SIZE / 2 + FAR_SPACING / 2 + 4; // -24524
 const MACRO_RES = 2048;
 const FARCOL_RES = 1024;
 const MASK_RES = 512;
@@ -446,7 +448,8 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
   }
 
   // 8. far ring color @ 1024 (48 m)
-  const farCol = makeGrid(FARCOL_RES, FAR_SIZE / FARCOL_RES, -FAR_SIZE / 2 + FAR_SIZE / FARCOL_RES / 2, -FAR_SIZE / 2 + FAR_SIZE / FARCOL_RES / 2);
+  const farMin = FAR_ORIGIN - FAR_SPACING / 2;
+  const farCol = makeGrid(FARCOL_RES, FAR_SIZE / FARCOL_RES, farMin + FAR_SIZE / FARCOL_RES / 2, farMin + FAR_SIZE / FARCOL_RES / 2);
   resample(far, farCol);
   const nF = computeNormals(farCol);
   const fFields: PaintFields = {
@@ -698,7 +701,7 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
       colorFar: 'color_far.webp',
       coverage: {
         core: { minX: -CORE_SIZE / 2, minZ: -CORE_SIZE / 2, size: CORE_SIZE },
-        far: { minX: -FAR_SIZE / 2, minZ: -FAR_SIZE / 2, size: FAR_SIZE },
+        far: { minX: FAR_ORIGIN - FAR_SPACING / 2, minZ: FAR_ORIGIN - FAR_SPACING / 2, size: FAR_SIZE },
         patch: patchMeta ? { minX: patchMeta.originX - 0.5, minZ: patchMeta.originZ - 0.5, size: patchMeta.res * patchMeta.spacing } : null,
       },
     },

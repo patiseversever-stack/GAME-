@@ -28,6 +28,8 @@ const tier = (q.get('tier') ?? 'low') as QualityTier;
 const canvas = document.getElementById('c') as HTMLCanvasElement;
 const hud = document.getElementById('hud') as HTMLDivElement;
 
+let propsUpdate: ((t: number) => void) | null = null;
+
 async function main(): Promise<void> {
   const t0 = performance.now();
   const wr = WorldRenderer.create(canvas, tier, { preserveDrawingBuffer: true });
@@ -40,6 +42,27 @@ async function main(): Promise<void> {
   await wr.loadWorld(world);
   const tReady = performance.now();
   if (q.get('debug') === 'magenta') wr.setDebugMagenta(true);
+  if (q.get('props')) {
+    try {
+      const [{ PropsRenderer }, { buildProps }, { balloonsFor, balloonPos }] = await Promise.all([
+        import('../src/render/props/PropsRenderer.ts'),
+        import('../src/sim/world/props.ts'),
+        import('../src/sim/world/balloons.ts'),
+      ]);
+      const pr = new PropsRenderer(wr.propsRoot, tier);
+      const props = buildProps(worldId, world.sampler, world.config as never);
+      const seed = (world.config.props?.balloons?.seed as number | undefined) ?? 7;
+      const balloons = balloonsFor(worldId, world.sampler, seed);
+      pr.setBalloonPositionFn(balloonPos as never);
+      const sd = atmosphereState.sunDirection;
+      pr.build(worldId, props, balloons, world.sampler, { renderer: wr.renderer, sunDir: [sd.x, sd.y, sd.z] });
+      (window as unknown as { __props: unknown }).__props = pr;
+      propsUpdate = (t: number) => pr.update(t, wr.camera, 1 / 60);
+      await wr.warmup();
+    } catch (e) {
+      console.error('props failed', e);
+    }
+  }
   // Look overrides for tuning: &prelit= &fogd= &gfd= &exp= &sun=
   const U = atmosphereUniforms;
   if (q.get('fogd')) U.kFog.value[0] = Number(q.get('fogd'));
@@ -65,6 +88,7 @@ async function main(): Promise<void> {
     const rows: Record<string, unknown>[] = [];
     for (const b of bms) {
       applyBookmark(cam, b);
+      propsUpdate?.(2);
       wr.render(1 / 60);
       const p = wr.perf();
       rows.push({ bm: b.name, calls: p.calls, tris: p.triangles, nodes: p.terrainNodes, programs: p.programs, textures: p.textures, texMB: Math.round(p.textureMB * 10) / 10, mp: Math.round(p.megapixels * 100) / 100 });
@@ -73,7 +97,9 @@ async function main(): Promise<void> {
     console.log('PERF ' + JSON.stringify({ world: worldId, tier, rows }));
     applyBookmark(cam, bms[0]);
   }
+  propsUpdate?.(dt + 2);
   wr.render(dt + 1 / 60);
+  propsUpdate?.(dt + 2);
   wr.render(1 / 60);
   const p = wr.perf();
   const info = `${worldId} ${tier} calls ${p.calls} tris ${p.triangles} nodes ${p.terrainNodes} prog ${p.programs} tex ${p.textures} ~${p.textureMB.toFixed(0)}MB  ${p.megapixels.toFixed(2)}MP  load ${(tLoad - t0).toFixed(0)}ms build ${(tReady - tLoad).toFixed(0)}ms`;

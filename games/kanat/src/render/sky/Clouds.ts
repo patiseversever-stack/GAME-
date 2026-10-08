@@ -67,7 +67,7 @@ void main() {
       if ( q.x < 0.0 || q.y < 0.0 || q.x > 1.0 || q.y > 1.0 ) break;
       acc += dens( q, id );
     }
-    T[ k ] = exp( -acc * 0.55 );
+    T[ k ] = exp( -acc * 0.16 );
   }
   gl_FragColor = vec4( d, T );
 }
@@ -120,7 +120,7 @@ void main() {
   vec2 cell = vec2( mod( id, 4.0 ), floor( id / 4.0 ) );
   vec4 a = texture( uAtlas, ( cell + clamp( vUv, 0.01, 0.99 ) ) / 4.0 );
   float dens = a.r;
-  float alpha = smoothstep( 0.0, 0.55, dens ) * 0.92 * vFade;
+  float alpha = smoothstep( 0.0, 0.75, dens ) * 0.9 * vFade;
   vec2 s = vSunScr;
   float wl = max( -s.x, 0.0 ), wr = max( s.x, 0.0 ), wt = max( s.y, 0.0 );
   float ws = wl + wr + wt + 1e-3;
@@ -129,9 +129,10 @@ void main() {
   float mu = dot( -V, kSun.xyz );
   // Back-lit: thin edges glow (silver lining); front-lit: directional transmittance.
   float back = smoothstep( 0.2, 1.0, mu );
-  float lit = mix( 0.35 + 0.65 * trans, ( 1.0 - dens ) * 1.6 + 0.25, back * 0.7 );
-  vec3 sunC = kSunColor.rgb * ( lit * 0.55 + kHG( mu, 0.6 ) * 0.9 * ( 1.0 - dens ) );
-  vec3 skyC = kanatIrradiance( vec3( 0.0, 1.0, 0.0 ) ) * 0.42 * ( 0.75 + 0.25 * a.a );
+  float lit = 0.45 + 0.55 * trans;
+  lit = mix( lit, 0.55 + ( 1.0 - dens ) * 0.6, back * 0.3 );
+  vec3 sunC = kSunColor.rgb * ( lit * 0.5 + kHG( mu, 0.6 ) * 0.5 * ( 1.0 - dens ) );
+  vec3 skyC = kanatIrradiance( vec3( 0.0, 1.0, 0.0 ) ) * 0.4 * ( 0.7 + 0.3 * a.a );
   vec3 col = uTint * ( sunC + skyC );
   gl_FragColor = vec4( col, alpha );
   #include <tonemapping_fragment>
