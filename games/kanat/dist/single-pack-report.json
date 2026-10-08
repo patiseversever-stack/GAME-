@@ -1,11 +1,11 @@
 {
-  "files": 67,
-  "inlineFiles": 54,
+  "files": 68,
+  "inlineFiles": 55,
   "overflowFiles": 13,
-  "rawBytes": 23098592,
-  "htmlBytes": 24429930,
+  "rawBytes": 20684496,
+  "htmlBytes": 21725323,
   "packBytes": [
-    6381093
+    5867373
   ],
   "groups": {
     "fonts": {
@@ -15,27 +15,27 @@
     },
     "worlds/erciyes": {
       "files": 11,
-      "bytes": 3818367,
+      "bytes": 3365377,
       "where": "inline"
     },
     "worlds/kapadokya": {
-      "files": 10,
-      "bytes": 4188932,
+      "files": 11,
+      "bytes": 4477651,
       "where": "inline"
     },
     "worlds/karadeniz": {
       "files": 11,
-      "bytes": 4924045,
+      "bytes": 3707543,
       "where": "inline"
     },
     "worlds/likya": {
       "files": 11,
-      "bytes": 5066264,
+      "bytes": 4418240,
       "where": "inline"
     },
     "worlds/pamukkale": {
       "files": 13,
-      "bytes": 4785344,
+      "bytes": 4400045,
       "where": "packs/kanat-pack-1.js"
     }
   }

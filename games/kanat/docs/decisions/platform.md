@@ -109,14 +109,16 @@ Biçim: **Karar** — gerekçe. Ana ajan bu dosyayı `docs/KARARLAR.md` ile birl
 - **Eksen komutu 30 Hz ızgarada her örnekte gönderilir** (60 Hz sim'de her 2. tick), yalnız değiştiğinde değil. Aynı tick içinde önce eksen, sonra olaylar (`flare`, `tight`, `parachute`) gelir. Gerekçe: Replay kaydedicisinin (`src/sim/replay/recorder.ts`) akış ve olay sıralamasıyla birebir uyum; canlı oyun = replay.
 - **Kuantalama `Math.round(x·31) | 0`.** −0 asla üretilmez (replay ajanının ARAYÜZ isteği).
 - **Komut nesneleri 64'lük bir halka havuzdan gelir.** Uçuşta tahsis yok. Tüketici, tick'ten uzun tuttuğu komutu kopyalamalıdır; kaydedici zaten typed array'e kopyalar.
-- **Şekillendirme sırası:** radyal ölü bölge (yeniden ölçekli) → hassasiyet (kırpılır) → eksen başına expo.
-  - Kullanıcı expo'su: `e = e_taban + expo·(1 − e_taban)`, en fazla 0,95.
-  - Hassasiyet < 1 ise tam sapma 31'e ulaşmaz; bu bilinçli bir seçim (kullanıcı "yumuşak" istedi).
+- **Şekillendirme sırası paylaşılan sim fonksiyonundan gelir** (`src/sim/inputQuant.ts` → `shapeStick`): radyal ölü bölge (yeniden ölçekli) → eksen başına expo → hassasiyet → [−1, 1] kırpma → doğal/pilot eşlemesi → `quantizeAxis`.
+  - Kullanıcı expo'su: `e = e_taban + kaydırıcı`, en fazla 0,95.
+  - Hassasiyet < 1 ise tam sapma 31'e ulaşmaz (ör. 0,6 → 19). Bu bilinçli bir seçim: kullanıcı "yumuşak" istedi.
+  - Birim test, canlı girdinin `inputQuant.quantizeStick` ile birebir aynı tamsayıları ürettiğini doğrular. Böylece canlı oyun, bot ve replay aynıdır.
+- **İki Başparmak:** Her yarı tek bir ekseni sürer. Ölü bölge eksen başına uygulanır; aynı `shapeStick` tek boyutlu vektörle çağrılır.
 - **SÜRÜ.io yönü:** ölü bölge 0,10, expo yok, hassasiyet yok, Pilot ters çevirmesi yok. Ekranda yukarı = +y. Gerekçe: Yön vektörü bir kontrol yüzeyi değil, bir istikamet.
 - **Kanopi:** 1 R aşağı sürükleme = tam flare (31). `flare` yalnız değişince olay olarak gönderilir.
 - **Klavye:** Yön tuşları/WASD ~0,2 sn'de rampayla gelir, ~0,12 sn'de bırakılır. Space, uçuşta paraşüt; kanopide flare; SÜRÜ'de Sıkı Dizi. P paraşüt. Esc geri.
 - **Jiroskop eksenleri** ekran açısına (0/90/180/270) göre yeniden eşlenir. Alçak geçiren filtre tek kutuplu, 8 Hz. Jiroskop çıktısı ölü bölgeden geçmez (kendi 3°'si var), hassasiyet ve expo uygulanır. Yalpa modunda yalpa ekseni dokunmatiğe değil jiroskopa aittir.
-- **Paylaşılan matematik:** `src/sim/inputQuant.ts` bu oturumda henüz yoktu. Ölü bölge, expo ve kuantalama `src/input/gesture.ts` içinde aynı formüllerle yazıldı ve `setGestureMath()` ile değiştirilebilir. Entegrasyonda sim'deki fonksiyonlar takılmalı (ARAYÜZ İSTEĞİ).
+- **Paylaşılan matematik bağlandı:** Ölü bölge, expo, hassasiyet, kuantalama ve yüzen çapa (`updateAnchor`) `src/sim/inputQuant.ts`'ten çağrılır. `src/input/gesture.ts` yalnızca bir bağlantı noktasıdır: `setGestureMath()` ile testlerde değiştirilebilir. Kanopi flare'i (`quantizeFlare`) ve SÜRÜ seçenekleri (ölü bölge 0,10, expo 0) bu katmandadır.
 
 ## Tek dosya build'i ve asset'ler
 

@@ -25,7 +25,11 @@ export type CosmeticKind =
   | 'suruShow'
   | 'ghostTint'
   | 'menuTime'
-  | 'photoFilter';
+  | 'photoFilter'
+  /** Ram-air canopy colour scheme (two alternating cell colours) — F1 review: flight-side rank rewards. */
+  | 'canopy'
+  /** Frame drawn around the shared image card / duel card (UI only) — F1 review: flight-side rank rewards. */
+  | 'cardFrame';
 
 /** Globally unique reference "kind:id" (ids are only unique per kind, e.g. pattern:turkuaz vs palette:turkuaz). */
 export type CosmeticRef = `${CosmeticKind}:${string}`;
@@ -40,7 +44,13 @@ export type UnlockSource =
   /** First Haftanın Rotası completion (§2.7 weekly reward). */
   | { kind: 'weekly' }
   /** Uçuş Günlüğü stamps (§2.7: 7 stamps = cosmetic; stamps need not be consecutive). */
-  | { kind: 'log'; stamps: number };
+  | { kind: 'log'; stamps: number }
+  /** SÜRÜ.io track (F1 review K-23): finished SÜRÜ rounds and/or league reached (0 Bronz … 4 Elmas). */
+  | { kind: 'suru'; rounds?: number; league?: number }
+  /** Number of postcards collected (Photo Mode filters, F1 review K-23). */
+  | { kind: 'postcardCount'; count: number }
+  /** Fallback when a feature is cut (features.ts): all 4 routes of the world landed. */
+  | { kind: 'worldComplete'; world: WorldId };
 
 export interface CosmeticBase {
   kind: CosmeticKind;
@@ -71,13 +81,19 @@ export interface TrailDef extends CosmeticBase {
 }
 
 export interface SimpleCosmeticDef extends CosmeticBase {
-  kind: 'suruGlow' | 'suruAura' | 'suruTrail' | 'suruShow' | 'ghostTint' | 'menuTime' | 'photoFilter';
+  kind: 'suruGlow' | 'suruAura' | 'suruTrail' | 'suruShow' | 'ghostTint' | 'menuTime' | 'photoFilter' | 'cardFrame';
   /** Optional colour (glows, ghost tints) or short render hint. */
   color?: string;
   hint?: string;
 }
 
-export type CosmeticDef = PatternDef | PaletteDef | TrailDef | SimpleCosmeticDef;
+export interface CanopyDef extends CosmeticBase {
+  kind: 'canopy';
+  /** [cell A, cell B] — canopy cells alternate A/B; earthy, never neon. */
+  colors: readonly [string, string];
+}
+
+export type CosmeticDef = PatternDef | PaletteDef | TrailDef | SimpleCosmeticDef | CanopyDef;
 
 // ---------------------------------------------------------------------------------------------
 // Routes + Usta Görevleri
@@ -85,19 +101,31 @@ export type CosmeticDef = PatternDef | PaletteDef | TrailDef | SimpleCosmeticDef
 
 export type StartType = 'balon' | 'ucurum' | 'sirt';
 
+// ---------------------------------------------------------------------------------------------
+// Shared enums (F1 review P2 "enums disagree"): import these instead of re-declaring string unions.
+// ---------------------------------------------------------------------------------------------
+
+/** Flight assist tiers. 'guide' = Rehber Rüzgâr (W1 R1–R3 default): Tam + bounce instead of crash (K-09). */
+export type AssistLevel = 'off' | 'low' | 'full' | 'guide';
+/** Top-level game modes (UI GameMode / HudMode / save keys). */
+export type GameModeId = 'career' | 'daily' | 'duel' | 'weekly' | 'free' | 'practice' | 'suru';
+/** SÜRÜ.io sub-modes (UI SuruSub must use these ids; 'daily' = Sürü Günü). */
+export type SuruSubMode = 'league' | 'daily' | 'practice';
+
+/** Usta task types. Ids are IDENTICAL to the UI string keys `usta.<type>` (F1 review P1: no alias layer). */
 export type UstaType =
   | 'balloonThread' // ≥ value Balloon Threads in the flight
-  | 'x5Seconds' // longest unbroken ×5 streak ≥ value s
-  | 'grazes' // ≥ value Sıyırma in the flight
-  | 'noContact3Stars' // 3 stars and zero contacts (bounces); value = 3
+  | 'mult5Hold' // longest unbroken ×5 streak ≥ value s
+  | 'grazeCount' // ≥ value Sıyırma in the flight
+  | 'noContact3Stars' // 3 stars and zero contacts (bounces); value = 3; unassisted only (K-20)
   | 'landWithin' // touchdown ≤ value m from target centre
   | 'noThermal' // thermal entries ≤ value (always 0)
-  | 'gatesChain' // longest gate chain ≥ value
-  | 'timeUnder' // jump→touchdown ≤ value × expert bot time (value is a RATIO)
-  | 'scoreOver' // score ≥ value × expert bot score (value is a RATIO)
-  | 'braveOpening' // manual canopy opening at 60–90 m AGL; value = 1
+  | 'gateChain' // longest gate chain ≥ value
+  | 'timeUnder' // jump→touchdown ≤ value × Kılavuz (expert bot) time (value is a RATIO); unassisted only
+  | 'scoreOver' // score ≥ value × Kılavuz (expert bot) score (value is a RATIO); unassisted only
+  | 'boldOpen' // manual canopy opening at 60–90 m AGL; value = 1
   | 'softLanding' // flare landing; value = 1
-  | 'proximityTotal'; // total seconds at ×3 or higher ≥ value
+  | 'prox3Time'; // total seconds at ×3 or higher ≥ value
 
 export interface UstaTask {
   /** `${routeId}-u${slot}`, e.g. "w1r2-u3". */
@@ -109,6 +137,8 @@ export interface UstaTask {
   value: number;
   /** The cosmetic this task unlocks (alone, or together with its route siblings — see UnlockSource 'usta'). */
   unlocks: CosmeticRef;
+  /** Counts only when no physics-changing assist intervened (FlightStats.assistUsed === false) — K-20. */
+  unassistedOnly: boolean;
 }
 
 /** Named landscape features a route is built around (route tooling + task feasibility checks). */
@@ -159,7 +189,23 @@ export interface RouteMeta {
   minGates: number;
   /** Minimum eligible balloon pairs (centres ≤ 35 m) along the line (≥ balloonThread task + 2, else 0). */
   minBalloonPairs: number;
+  /** Thermal STREET core length (m) — capsule lift along the route line (K-19). 0 = round thermal. */
+  thermalLengthM: number;
+  /** Energy budget the route tool must respect (K-19). */
+  energy: RouteEnergy;
   usta: readonly [UstaTask, UstaTask, UstaTask];
+}
+
+export type LiftSource = 'start' | 'thermalStreet' | 'ridge';
+
+export interface RouteEnergy {
+  /** Wingsuit phase length implied by targetDurationSec (jump + canopy subtracted). */
+  wingsuitSec: readonly [number, number];
+  /** Start height above the landing target (m): [all streets used, none used]. */
+  startAboveLandingM: readonly [number, number];
+  /** Equivalent height gained by one centred pass along one thermal street (m). */
+  streetGainM: number;
+  liftSources: readonly LiftSource[];
 }
 
 export interface WorldMeta {
@@ -177,19 +223,26 @@ export interface WorldMeta {
   accent: string;
   /** Signature pattern granted by the world's 5-postcard set. */
   signaturePattern: string;
+  /** Thermal street core length (K-19). */
+  thermalLengthM: number;
 }
 
-/** Expert-bot benchmarks produced by the route tooling (§2.5 stars, §9.G bots). */
+/** Kılavuz Pilot (expert bot) benchmarks produced by the route tooling (§2.5 stars, §9.G bots). */
 export interface RouteBenchmarks {
   expertScore: number;
   expertTimeSec: number;
+  /** K1 ghost code of the benchmark flight: Kılavuz ghost, Rehber Hat, e2e playback, score verification. */
+  expertGhost?: string;
+  /** SIM_VERSION the ghost verified against (any tuning change invalidates it → re-run the tool). */
+  simVersion?: number;
 }
 
 // ---------------------------------------------------------------------------------------------
 // Flight / round / profile statistics (inputs for Usta tasks, badges and XP)
 // ---------------------------------------------------------------------------------------------
 
-export type FlightMode = 'career' | 'daily' | 'duel' | 'weekly' | 'free';
+/** 'practice' = "Bu bölümü çalış" (start at the last gate; no stars, records or XP — flightRules.ts). */
+export type FlightMode = 'career' | 'daily' | 'duel' | 'weekly' | 'free' | 'practice';
 
 export interface FlightStats {
   routeId: string;
@@ -206,6 +259,8 @@ export interface FlightStats {
   x5TotalSec: number;
   maxX5StreakSec: number;
   x3PlusTotalSec: number;
+  /** Longest unbroken streak at ×3 or higher (badge mirrorFlight, K-21). */
+  maxX3StreakSec: number;
   balloonThreads: number;
   maxThreadChain: number;
   gatesTotal: number;
@@ -215,7 +270,7 @@ export interface FlightStats {
   thermalsEntered: number;
   /** Bounces (sürtünme teması). */
   contacts: number;
-  /** Distance from target centre at touchdown, Infinity when not landed. */
+  /** Distance from target centre at touchdown; LANDING_DIST_NONE (999) when not landed (JSON-safe). */
   landingDist: number;
   softLanding: boolean;
   /** Manual opening at 60–90 m AGL (auto parachute never counts). */
@@ -223,7 +278,9 @@ export interface FlightStats {
   autoParachute: boolean;
   /** Seconds with nearest surface = water and d < 4 m. */
   waterSkimSec: number;
-  assist: 'full' | 'low' | 'off';
+  assist: AssistLevel;
+  /** A physics-changing assist actually intervened (push, nose lift, gate magnet, guide push) — 🛟 and K-20. */
+  assistUsed: boolean;
   slowMode: boolean;
 }
 
@@ -253,6 +310,8 @@ export interface ProfileStats {
   photosSaved: number;
   rankLevel: number;
   leagueIndex: number; // 0 Bronz … 4 Elmas
+  /** Finished SÜRÜ.io rounds (any sub-mode) — SÜRÜ cosmetic track (K-23). */
+  suruRounds: number;
   dailyThreeStars: number;
   worldStars: Readonly<Record<WorldId, number>>;
   worldRoutesLanded: Readonly<Record<WorldId, number>>;
@@ -271,6 +330,7 @@ export type FlightStatKey =
   | 'x5TotalSec'
   | 'maxX5StreakSec'
   | 'x3PlusTotalSec'
+  | 'maxX3StreakSec'
   | 'balloonThreads'
   | 'maxThreadChain'
   | 'gatesPassed'
@@ -282,7 +342,8 @@ export type FlightStatKey =
   | 'waterSkimSec'
   | 'landed'
   | 'softLanding'
-  | 'braveOpening';
+  | 'braveOpening'
+  | 'assistUsed';
 
 export type RoundStatKey = 'placement' | 'peakSize' | 'converted' | 'wildCollected' | 'sieges' | 'survivedToSunset' | 'survivalSec';
 
@@ -300,6 +361,7 @@ export type ProfileStatKey =
   | 'photosSaved'
   | 'rankLevel'
   | 'leagueIndex'
+  | 'suruRounds'
   | 'dailyThreeStars';
 
 export type BadgeCondition =
@@ -324,6 +386,9 @@ export type BadgeCondition =
 
 export type BadgeCategory = 'ucus' | 'kariyer' | 'koleksiyon' | 'suru' | 'sosyal';
 
+/** Optional features a reward/badge may depend on (src/content/meta/features.ts). */
+export type FeatureId = 'freeFlight' | 'photo' | 'daily' | 'duel' | 'weekly' | 'suru' | 'highlightVideo' | 'weeklyDuel';
+
 export interface BadgeDef {
   id: string;
   name: Bilingual;
@@ -331,6 +396,10 @@ export interface BadgeDef {
   icon: string;
   category: BadgeCategory;
   condition: BadgeCondition;
+  /** Features that must ALL be enabled for the badge to exist (hidden otherwise, never "yakında"). */
+  requires?: readonly FeatureId[];
+  /** Highest world index the badge needs (hidden when fewer worlds ship). */
+  needsWorld?: number;
 }
 
 export interface BadgeContext {

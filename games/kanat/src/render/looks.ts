@@ -204,8 +204,8 @@ export const LOOKS: Record<WorldId, WorldLook> = {
     sun: { azimuthDeg: 268, elevationDeg: 4, kelvin: 2800, intensity: 4.0, discScale: 1.8 },
     skyKelvin: 8500,
     sky: {
-      zenith: '#2B2D5B', mid: '#B8607A', horizon: '#C7A2B8', horizonSun: '#FFC27A', ground: '#B08A80',
-      curve: 0.4, midStop: 0.22, sunSideSharpness: 2.4, exposure: 1.2, aureole: 0.16,
+      zenith: '#2B2D5B', mid: '#8E5A7A', horizon: '#C9A6B4', horizonSun: '#FFC27A', ground: '#B08A80',
+      curve: 0.55, midStop: 0.18, sunSideSharpness: 1.8, exposure: 1.1, aureole: 0.16,
     },
     fog: { density: 1.6e-4, falloff: 1 / 800, baseOffset: 0, halo: 0.18, tint: '#FFE1C8' },
     groundFog: { thickness: 30, density: 0.0018, color: '#F3C9A8', patchiness: 0.4 },

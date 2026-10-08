@@ -35,17 +35,18 @@ float vn( vec2 p ) { vec2 i = floor( p ); vec2 f = fract( p ); vec2 u = f * f * 
 float fbm( vec2 p ) { float s = 0.0, a = 0.5; for ( int i = 0; i < 5; i ++ ) { s += a * vn( p ); p *= 2.07; a *= 0.5; } return s; }
 float dens( vec2 p, float id ) {
   float d = 0.0;
-  for ( int i = 0; i < 7; i ++ ) {
-    float fi = float( i ) + id * 7.0;
-    vec2 c = vec2( 0.5 + ( h11( fi ) - 0.5 ) * 0.5, 0.42 + ( h11( fi + 3.3 ) - 0.5 ) * 0.22 + float( i ) * 0.012 );
-    float r = 0.13 + h11( fi + 7.7 ) * 0.14;
+  for ( int i = 0; i < 11; i ++ ) {
+    float fi = float( i ) + id * 11.0;
+    vec2 c = vec2( 0.5 + ( h11( fi ) - 0.5 ) * 0.56, 0.38 + h11( fi + 3.3 ) * 0.2 );
+    float r = 0.09 + h11( fi + 7.7 ) * 0.15;
     // Flat bottoms (cumulus base), towering tops.
     vec2 q = p - c;
-    q.y *= q.y < 0.0 ? 2.4 : 0.95;
-    d = max( d, 1.0 - length( q ) / r );
+    q.y *= q.y < 0.0 ? 2.2 : 0.9;
+    float b = 1.0 - length( q ) / r;
+    d = d + max( b, 0.0 ) * 0.7;
   }
-  float n = fbm( p * 7.0 + id * 13.0 );
-  d = d * 1.25 - ( 1.0 - n ) * 0.42;
+  float n = fbm( p * 6.0 + id * 13.0 );
+  d = smoothstep( 0.0, 1.0, d ) * 1.15 - ( 1.0 - n ) * 0.38;
   return clamp( d, 0.0, 1.0 );
 }
 void main() {
@@ -119,7 +120,7 @@ void main() {
   vec2 cell = vec2( mod( id, 4.0 ), floor( id / 4.0 ) );
   vec4 a = texture( uAtlas, ( cell + clamp( vUv, 0.01, 0.99 ) ) / 4.0 );
   float dens = a.r;
-  float alpha = smoothstep( 0.02, 0.5, dens ) * vFade;
+  float alpha = smoothstep( 0.0, 0.55, dens ) * 0.92 * vFade;
   vec2 s = vSunScr;
   float wl = max( -s.x, 0.0 ), wr = max( s.x, 0.0 ), wt = max( s.y, 0.0 );
   float ws = wl + wr + wt + 1e-3;
@@ -162,7 +163,7 @@ void main() {
   float e = 4.0;
   float bx = billow( p + vec2( e / 420.0, 0.0 ) );
   float bz = billow( p + vec2( 0.0, e / 420.0 ) );
-  float amp = 70.0;
+  float amp = 120.0;
   float h = uSea.z + uSide * ( b - 0.45 ) * amp;
   vec3 n = normalize( vec3( -( bx - b ) * amp / e * uSide, 1.0, -( bz - b ) * amp / e * uSide ) );
   vN = uSide > 0.0 ? n : vec3( n.x, -n.y, n.z );
@@ -187,13 +188,14 @@ ${ATMOSPHERE_GLSL}
 void main() {
   vec3 N = normalize( vN );
   vec3 L = kSun.xyz;
-  float ndl = clamp( dot( N, L ) * 0.6 + 0.4, 0.0, 1.0 );
   vec3 col;
   if ( uSide > 0.0 ) {
     vec3 V = normalize( -vRel );
     float mu = dot( -V, L );
-    col = uTint * ( kSunColor.rgb * ndl * 0.42 + kanatIrradiance( N ) * 0.34 ) * ( 0.8 + 0.25 * vH );
-    col += kSunColor.rgb * kHG( mu, 0.7 ) * 0.25 * ( 1.0 - vH );
+    float dl = clamp( dot( N, L ) * 0.85 + 0.15, 0.0, 1.0 );
+    float ao = 0.55 + 0.45 * smoothstep( 0.25, 0.85, vH );
+    col = uTint * ( kSunColor.rgb * dl * 0.5 + kanatIrradiance( N ) * 0.3 * ao ) * ( 0.75 + 0.3 * vH );
+    col += kSunColor.rgb * kHG( mu, 0.7 ) * 0.2 * ( 1.0 - vH );
   } else {
     col = uTint * kanatIrradiance( vec3( 0.0, -1.0, 0.0 ) ) * ( 0.28 + 0.12 * vH );
   }
@@ -228,7 +230,7 @@ export class Clouds {
   constructor(renderer: THREE.WebGLRenderer, params: RenderTierParams, opts: CloudsOptions) {
     this.object.name = 'kanat-clouds';
     // Atlas generation (once per world).
-    this.atlas = new THREE.WebGLRenderTarget(1024, 1024, {
+    this.atlas = new THREE.WebGLRenderTarget(512, 512, {
       type: THREE.UnsignedByteType,
       generateMipmaps: true,
       minFilter: THREE.LinearMipmapLinearFilter,
@@ -266,11 +268,11 @@ export class Clouds {
       const base = Math.max(opts.maxY + 500, (opts.seaTop ?? 0) + 250);
       for (let i = 0; i < n; i++) {
         const ang = r() * Math.PI * 2;
-        const rad = 2500 + Math.pow(r(), 0.7) * 16000;
+        const rad = 3500 + Math.pow(r(), 0.6) * 15000;
         a1[i * 4] = Math.cos(ang) * rad;
         a1[i * 4 + 1] = base + r() * 900;
         a1[i * 4 + 2] = Math.sin(ang) * rad;
-        a1[i * 4 + 3] = 380 + r() * 700;
+        a1[i * 4 + 3] = 900 + r() * 1500;
         a2[i * 2] = Math.floor(r() * 16);
         a2[i * 2 + 1] = 0;
       }

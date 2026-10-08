@@ -28,8 +28,8 @@
    "originZ": -4092,
    "spacing": 8,
    "res": 1024,
-   "min": 1124.941,
-   "max": 1583.012
+   "min": 1125.772,
+   "max": 1581.31
   },
   "far": {
    "file": "height_far.u16.z",
@@ -37,8 +37,8 @@
    "originZ": -24528,
    "spacing": 96,
    "res": 512,
-   "min": 1030.328,
-   "max": 2257.86
+   "min": 1032.235,
+   "max": 2251.389
   },
   "patch": null,
   "rock": {
@@ -81,8 +81,8 @@
    "maxZ": 3772
   },
   "heightRange": {
-   "min": 1124.941,
-   "max": 1583.012
+   "min": 1125.772,
+   "max": 1581.31
   },
   "patchInfo": null
  },
@@ -91,7 +91,7 @@
   "splat": "splat_core.png",
   "shadowAo": "shadow_ao.png",
   "colorMacro": "color_macro.webp",
-  "colorMacroKtx2": null,
+  "colorMacroKtx2": "color_macro.ktx2",
   "colorFar": "color_far.webp",
   "coverage": {
    "core": {
@@ -228,9 +228,10 @@
    0.584
   ],
   "shadowTint": 0.3,
+  "shadowStrength": 1,
   "sunStrength": 0.6211,
   "ambientStrength": 0.9627,
-  "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.5+0.3*n.y+0.2*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); wrap=0.12, ndl0=0.2160, k=0.3801; soft shoulder above 0.8; sRGB encode"
+  "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.62+0.22*n.y+0.16*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*(0.35+0.65*ao)*skyShape); wrap=0.12, ndl0=0.2160, k=0.3801; soft shoulder above 0.8; sRGB encode"
  },
  "props": {
   "chimneys": {

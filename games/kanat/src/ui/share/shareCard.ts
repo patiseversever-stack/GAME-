@@ -194,7 +194,7 @@ export async function drawShareCard(canvas: HTMLCanvasElement, o: ShareCardInput
   }
 
   // Mini route line
-  const box = { x: W - PAD - 300, y: 1094, w: 300, h: 130 };
+  const box = { x: W - PAD - 300, y: 1090, w: 300, h: 100 };
   if (o.line && o.line.length > 1) {
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
     for (const [x, y] of o.line) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }

@@ -28,8 +28,8 @@
    "originZ": -4092,
    "spacing": 8,
    "res": 1024,
-   "min": 199.67,
-   "max": 1399.014
+   "min": 199.924,
+   "max": 1398.206
   },
   "far": {
    "file": "height_far.u16.z",
@@ -37,8 +37,8 @@
    "originZ": -24528,
    "spacing": 96,
    "res": 512,
-   "min": 160.806,
-   "max": 2751.903
+   "min": 161.41,
+   "max": 2731.492
   },
   "patch": {
    "file": "height_patch.u16.z",
@@ -46,8 +46,8 @@
    "originZ": 135,
    "spacing": 1,
    "res": 1024,
-   "min": 277.037,
-   "max": 442.466
+   "min": 277.087,
+   "max": 442.475
   },
   "rock": {
    "file": "rock_core.u8.z",
@@ -89,8 +89,8 @@
    "maxZ": 3772
   },
   "heightRange": {
-   "min": 199.67,
-   "max": 1399.014
+   "min": 199.924,
+   "max": 1398.206
   },
   "patchInfo": {
    "terraceRect": {
@@ -107,8 +107,8 @@
     "originZ": 135,
     "spacing": 2,
     "res": 512,
-    "min": 276.051,
-    "max": 441.45
+    "min": 276.098,
+    "max": 441.458
    }
   }
  },
@@ -246,19 +246,20 @@
    0.3395
   ],
   "skyColorLinear": [
-   0.3968,
-   0.3663,
-   0.5647
+   0.4452,
+   0.4125,
+   0.5776
   ],
   "shadowColorLinear": [
-   0.3238,
-   0.3872,
-   0.5722
+   0.3609,
+   0.4315,
+   0.6378
   ],
-  "shadowTint": 0.8,
-  "sunStrength": 0.927,
-  "ambientStrength": 0.7585,
-  "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.5+0.3*n.y+0.2*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); wrap=0.12, ndl0=0.1694, k=0.2563; soft shoulder above 0.8; sRGB encode"
+  "shadowTint": 0.95,
+  "shadowStrength": 1,
+  "sunStrength": 0.6346,
+  "ambientStrength": 1.174,
+  "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.62+0.22*n.y+0.16*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*(0.35+0.65*ao)*skyShape); wrap=0.12, ndl0=0.1694, k=0.2563; soft shoulder above 0.8; sRGB encode"
  },
  "props": {
   "columns": {
