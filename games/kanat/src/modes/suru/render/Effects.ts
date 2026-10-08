@@ -111,10 +111,10 @@ void main() {
   float a = pow(1.0 - y, 2.6) * streak * uOn;
   a += exp(-y * 30.0) * 0.4 * uOn;
   // a vertical light curtain: strong when seen edge-on, faint from straight above
+  // a vertical light curtain: glows when seen from low angles, nearly a hairline from steep views
   vec3 toCam = normalize(cameraPosition - vWorld);
-  vec3 nrm = normalize(vec3(vWorld.x, 0.0, vWorld.z));
-  float edgeOn = 1.0 - abs(dot(toCam, nrm));
-  a *= 0.25 + 0.75 * edgeOn * edgeOn;
+  float steep = abs(toCam.y);
+  a *= 0.12 + 0.88 * (1.0 - steep) * (1.0 - steep);
   vec3 c = mix(vec3(1.0, 0.70, 0.42), vec3(1.0, 0.88, 0.7), exp(-y * 12.0));
   gl_FragColor = vec4(c * a * 0.3, 1.0);
 }
@@ -224,8 +224,10 @@ attribute vec4 aR; // offset x, z, width, seed
 uniform vec3 uStormPos;
 varying vec2 vUv;
 varying float vSeed;
+varying float vSteep;
 void main() {
   vec3 base = vec3(uStormPos.x + aR.x, 0.0, uStormPos.y + aR.y);
+  vSteep = abs(normalize(cameraPosition - base).y);
   vec4 mv = viewMatrix * vec4(base + vec3(0.0, position.y * 30.0, 0.0), 1.0);
   mv.x += position.x * aR.z;
   vUv = vec2(position.x * 0.5 + 0.5, position.y);
@@ -239,6 +241,7 @@ uniform float uTime;
 uniform vec3 uStormPos;
 varying vec2 vUv;
 varying float vSeed;
+varying float vSteep;
 float h1(vec2 p) { return fract(sin(dot(p, vec2(12.9898, 78.233))) * 43758.5453); }
 void main() {
   float col = floor(vUv.x * 60.0);
@@ -246,7 +249,8 @@ void main() {
   float y = fract(vUv.y * 3.0 + uTime * 1.6 * sp + h1(vec2(col, vSeed + 1.0)));
   float streak = smoothstep(0.0, 0.05, y) * smoothstep(0.35, 0.06, y) * step(0.45, h1(vec2(col, vSeed + 2.0)));
   float edge = smoothstep(0.0, 0.25, vUv.x) * smoothstep(1.0, 0.75, vUv.x) * smoothstep(1.0, 0.7, vUv.y);
-  float a = streak * edge * 0.22 * uStormPos.z;
+  // rain curtains read at low angles; from the steep gameplay view the rain rings on the water carry it
+  float a = streak * edge * 0.2 * uStormPos.z * pow(1.0 - vSteep, 1.5);
   gl_FragColor = vec4(vec3(0.55, 0.6, 0.72) * a, 1.0);
 }
 `;

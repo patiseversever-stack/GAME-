@@ -50,6 +50,9 @@ export const SURU = {
   LAG_MAX: 8.0,
   /** Tight formation shortens the comet (compact punch); Wide keeps the full stream for encircling. */
   LAG_TIGHT_MUL: 0.6,
+  /** formation lateral spread vs the rule radius r = k√N (capture radius keeps k√N): Wide birds fly a bit
+   *  closer than the capture envelope so an open flock still reads as a murmuration */
+  FORM_SPREAD_WIDE: 0.8,
   TRAIL_LEN: 256,
   SEP_R_TIGHT: 1.2,
   SEP_R_WIDE: 2.0,

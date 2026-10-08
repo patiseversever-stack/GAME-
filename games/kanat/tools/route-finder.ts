@@ -51,21 +51,24 @@ export interface RouteSpec {
   gateCount?: number;
   rMin?: number;
   thermalFractions?: number[];
+  /** A* glide-fit weight (0 = off) and target glide. */
+  wGlide?: number;
 }
 
 /** Designer input (see docs/decisions/routes.md for the reasoning per route). Coordinates: x east, z south (m). */
 export const ROUTE_SPECS: Record<WorldId, RouteSpec[]> = {
   kapadokya: [],
   likya: [
-    // Yalıyar Süzülüşü: from the Bezirgan rim straight down the big SW slope to the Kalkan-side terrace
-    { id: 'w2r1', start: [-300, -2300], via: [[-1150, -1500]], land: [-2116, -704], mode: 'valley', lineClearance: 14, needClearance: 9, glideNeed: 4.2 },
-    // Gulet Koyu: summit → SW gully → over the cove with the gulets → coastal terrace
-    { id: 'w2r2', start: [1000, -1150], via: [[0, 0], [-700, 1000]], land: [-1350, 808], mode: 'valley', lineClearance: 11, needClearance: 7, glideNeed: 4.2 },
+    // Yalıyar Süzülüşü: Bezirgan rim → traverses down the big SW slope → Kalkan-side terrace
+    { id: 'w2r1', start: [-300, -2300], via: [], land: [-2116, -704], mode: 'free', lineClearance: 14, needClearance: 9, glideNeed: 4.2, wGlide: 3 },
+    // Gulet Koyu: summit → SW gullies → the cove with the gulets and tombs → coastal terrace
+    { id: 'w2r2', start: [1000, -1150], via: [[-500, 1050]], land: [-1350, 808], mode: 'valley', lineClearance: 11, needClearance: 7, glideNeed: 4.2, wGlide: 3 },
     // Kaya Kemeri: east summit → south valley → the rock arch → east bay
-    { id: 'w2r3', start: [2450, -250], via: [[1700, 900], [900, 1700]], land: [1052, 2396], mode: 'valley', lineClearance: 9, needClearance: 6, glideNeed: 4.2 },
-    // Mezar Cepheleri: plateau → west slope → the lighthouse cape → terrace
-    { id: 'w2r4', start: [-600, -2900], via: [[-1700, -1900], [-2350, -1450]], land: [-2548, 272], mode: 'valley', lineClearance: 8, needClearance: 5, glideNeed: 4.2 },
+    { id: 'w2r3', start: [2450, -250], via: [[900, 1750]], land: [1052, 2396], mode: 'valley', lineClearance: 9, needClearance: 6, glideNeed: 4.2, wGlide: 3 },
+    // Mezar Cepheleri Hattı: high summit spur → long westward descent along the cliffs → west terrace
+    { id: 'w2r4', start: [600, -1450], via: [[-1500, 0]], land: [-2032, 492], mode: 'free', lineClearance: 8, needClearance: 5, glideNeed: 4.2, wGlide: 3 },
   ],
+
   karadeniz: [],
   erciyes: [],
   pamukkale: [],
@@ -148,7 +151,7 @@ export function planPath(W: NodeWorld, F: Features, spec: RouteSpec, startType: 
   }
   for (const v of spec.via) pts.push(v);
   pts.push(app);
-  const cost = COST[spec.mode];
+  const cost: AStarCost = { ...COST[spec.mode], wGlide: spec.wGlide ?? 0, glide: spec.glideNeed };
   const out: number[] = [];
   for (let k = 0; k < pts.length - 1; k++) {
     const seg = astar(F, pts[k][0], pts[k][1], pts[k + 1][0], pts[k + 1][1], cost);

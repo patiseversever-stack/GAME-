@@ -117,7 +117,8 @@ export class Scene3D {
 
   private applySuit(): void {
     this.pilot.setSuit(suitSpec(this.suit));
-    this.vfx.setTrailStyle(this.suit.trail || 'dumanBeyazi');
+    // soft alpha: the ribbons pass right by the follow camera (no near-camera fade yet — ARAYÜZ İSTEĞİ render-props)
+    this.vfx.setTrailStyle(this.suit.trail || 'dumanBeyazi', 0.16);
   }
 
   /** Clear the wingtip/vapour ribbons (new attempt / teleport) — VFX has no public reset yet (ARAYÜZ İSTEĞİ). */

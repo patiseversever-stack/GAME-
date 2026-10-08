@@ -943,7 +943,9 @@ export class SuruSim implements FlockRenderSource {
       this.trail[base + 1] = this.leaderZ[f];
       // per-flock follower parameters for this tick
       this.lagTicks[f] = this.lagFor(size, this.flockLagMul[f]) * HZ;
-      this.rLat[f] = this.flockSpreadK[f] * Math.sqrt(size);
+      // lateral spread: Tight k = 0.6 as is, Wide k = 1.3 × 0.8 (eased with the formation blend)
+      const wideness = (this.flockSpreadK[f] - SURU.R_K_TIGHT) / (SURU.R_K_WIDE - SURU.R_K_TIGHT);
+      this.rLat[f] = this.flockSpreadK[f] * (1 - (1 - SURU.FORM_SPREAD_WIDE) * wideness) * Math.sqrt(size);
       this.maxSpd[f] = sp * SURU.FOLLOWER_SPEED_MUL;
     }
   }

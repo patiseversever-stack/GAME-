@@ -175,6 +175,9 @@ export interface AStarCost {
   wRelief: number;
   /** Cells to avoid (water, or a custom predicate). */
   avoidWater: boolean;
+  /** Glide fit: penalty × |ΔH + len/glide| per step — terrain that falls at the glide slope keeps the line low. */
+  wGlide?: number;
+  glide?: number;
 }
 
 const DX8 = [0, 1, 1, 1, 0, -1, -1, -1];
@@ -279,7 +282,12 @@ export function astar(F: Features, ax: number, az: number, bx: number, bz: numbe
       const up = F.H[nk] - F.H[j * n + i];
       const rel = Math.min(1, F.relief[nk] / 150);
       const wet = c.avoidWater && F.water[nk] ? 1.5 : 0;
-      const cost = len * (1 + c.wFeature * feat + c.wRelief * (1 - rel) + wet) + (up > 0 ? c.wUp * up : 0) + (t !== 0 ? c.wTurn : 0);
+      let fit = 0;
+      if (c.wGlide) {
+        const dev = up + len / (c.glide ?? 4.2);
+        fit = c.wGlide * (dev < 0 ? -dev : dev);
+      }
+      const cost = len * (1 + c.wFeature * feat + c.wRelief * (1 - rel) + wet) + (up > 0 ? c.wUp * up : 0) + (t !== 0 ? c.wTurn : 0) + fit;
       const ns = nk * 8 + nd;
       const ng = g[s] + cost;
       if (ng < g[ns]) {

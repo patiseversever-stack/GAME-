@@ -60,6 +60,8 @@ export interface PilotParams {
   hardMin: number;
   /** 0..1: how much of the energy surplus is spent below the line (0 = stay on/above the line). */
   energyUse: number;
+  /** May fly this much below the line where the line itself is close to the surface (m). */
+  lineDrop: number;
   /** Reference airspeed of the line's energy budget (m/s). */
   vRef: number;
   /** Aim this fraction of the gate radius below the centre. */
@@ -87,6 +89,7 @@ export const PILOT_PARAMS: Readonly<Record<'careful' | 'expert' | 'average', Pil
     offset: 18,
     hardMin: 9,
     energyUse: 0,
+    lineDrop: 0,
     vRef: 44,
     gateAim: 0,
     openAgl: 110,
@@ -102,6 +105,7 @@ export const PILOT_PARAMS: Readonly<Record<'careful' | 'expert' | 'average', Pil
     offset: 4,
     hardMin: 2.2,
     energyUse: 1,
+    lineDrop: 25,
     vRef: 46,
     gateAim: 0.45,
     openAgl: 78,
@@ -117,6 +121,7 @@ export const PILOT_PARAMS: Readonly<Record<'careful' | 'expert' | 'average', Pil
     offset: 10,
     hardMin: 5,
     energyUse: 0.6,
+    lineDrop: 10,
     vRef: 46,
     gateAim: 0.2,
     openAgl: 95,
@@ -397,7 +402,7 @@ export class PilotBot implements BotController {
     const surplus = eBot - eRef;
     const nearEnd = s > endS - 520;
     const k = nearEnd ? 0 : p.energyUse;
-    let yT = yLineAim - k * (surplus > 0 ? surplus : 0) + wanderV;
+    let yT = yLineAim - k * (surplus > 0 ? surplus : 0) - (nearEnd ? 0 : p.lineDrop) + wanderV;
     let mLine = (yT - y) / Lv;
     if (approach) {
       const gy = this.surface(this.landX, this.landZ) + p.openAgl;
@@ -407,6 +412,7 @@ export class PilotBot implements BotController {
     // gate: aim through the ring (below the centre for the Kılavuz)
     const gi = st.gateIndex;
     let gateLat = false;
+    let gateNear = false;
     if (gi < this.route.gates.length) {
       const g = this.route.gates[gi];
       const dg = this.gateS[gi] - s;
@@ -416,6 +422,8 @@ export class PilotBot implements BotController {
         const w = dg < 130 ? 1 : (220 - dg) / 90;
         mLine = mLine * (1 - w) + mGate * w;
         if (dg < 140) gateLat = true;
+        // the ring is ≥ 4 m clear of every surface: inside its approach only the hard floor applies
+        if (dg < 110) gateNear = true;
       }
     }
 
@@ -436,7 +444,7 @@ export class PilotBot implements BotController {
     }
 
     // ── obstacle clearance over the look-ahead window ──
-    const offEff = p.offset + (V < 40 ? (40 - V) * 0.8 : 0);
+    const offEff = (gateNear ? p.hardMin : p.offset) + (V < 40 ? (40 - V) * 0.8 : 0);
     const D = clamp(V * p.clearLookSec, 60, 170);
     let mClear = -10;
     for (let j = this.idx + 1; j < L.n; j++) {
@@ -474,7 +482,7 @@ export class PilotBot implements BotController {
       if (m > cap && m > mSafe) m = mSafe > cap ? mSafe : cap;
     }
     let gD = atan(m);
-    gD = clamp(gD, -42 * DEG, 30 * DEG);
+    gD = clamp(gD, -55 * DEG, 30 * DEG);
     // sinking toward the ground with little energy: arrest the sink (emergency-chute guard)
     const hE = agl + ((V * V - 42 * 42) > 0 ? (V * V - 42 * 42) / (2 * G) : 0);
     if (agl < 22 && hE < 28 && st.vel[1] < -2) {
