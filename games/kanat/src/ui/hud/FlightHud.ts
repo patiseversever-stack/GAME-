@@ -108,11 +108,11 @@ export class FlightHud {
   private vMult = -1;
   private vAngle = -1;
   private vCombo = -1;
-  private vChute = false;
-  private vZone = false;
+  private vChute = -1; // -1 = unknown (forces a write), 0/1
+  private vZone = -1;
   private vGates = -1;
   private vArrow = NaN;
-  private vIntro = false;
+  private vIntro = -1;
   private popIdx = 0;
   private deltaTimer = 0;
   private pulseTimer = 0;
@@ -239,9 +239,9 @@ export class FlightHud {
     this.vAngle = -1;
     this.vCombo = -1;
     this.vGates = -1;
-    this.vIntro = !this.vIntro;
-    this.vChute = !this.vChute;
-    this.vZone = !this.vZone;
+    this.vIntro = -1;
+    this.vChute = -1;
+    this.vZone = -1;
     this.nDelta.classList.remove('is-on');
     for (const p of this.nPops) p.classList.remove('is-on');
   }
@@ -254,10 +254,10 @@ export class FlightHud {
 
   /** Per-frame update. No allocation unless a displayed value changes. */
   update(s: FlightState): void {
-    const intro = s.phase === 'intro' || s.phase === 'jump';
+    const intro = s.phase === 'intro' || s.phase === 'jump' ? 1 : 0;
     if (intro !== this.vIntro) {
       this.vIntro = intro;
-      this.el.classList.toggle('is-intro', intro);
+      this.el.classList.toggle('is-intro', intro === 1);
     }
     // --- top: score or time
     if (this.cfg.metric === 'time') {
@@ -321,15 +321,16 @@ export class FlightHud {
     }
     // --- parachute button (contextual; Free Flight: always while flying)
     const flying = s.phase === 'flying';
-    const showChute = flying && !s.canopyOpen && (s.inLandingZone || this.cfg.mode === 'free');
+    const showChute = flying && !s.canopyOpen && (s.inLandingZone || this.cfg.mode === 'free') ? 1 : 0;
     if (showChute !== this.vChute) {
       this.vChute = showChute;
-      this.nChute.classList.toggle('is-on', showChute);
-      this.nChute.classList.toggle('is-pulse', showChute && this.cfg.mode !== 'free');
+      this.nChute.classList.toggle('is-on', showChute === 1);
+      this.nChute.classList.toggle('is-pulse', showChute === 1 && this.cfg.mode !== 'free');
     }
-    if (s.inLandingZone !== this.vZone) {
-      this.vZone = s.inLandingZone;
-      this.nAlt.classList.toggle('is-zone', s.inLandingZone);
+    const zone = s.inLandingZone ? 1 : 0;
+    if (zone !== this.vZone) {
+      this.vZone = zone;
+      this.nAlt.classList.toggle('is-zone', zone === 1);
     }
   }
 
@@ -362,7 +363,7 @@ export class FlightHud {
       case 'parachuteOpen':
         if (e.auto && e.heightAGL < 30) this.popup(t('hud.emergency'), 0, 'miss');
         else if (e.heightAGL >= 60 && e.heightAGL <= 90) this.popup(t('hud.bold'), 300, 'gate');
-        this.vChute = !this.vChute;
+        this.vChute = -1;
         break;
       case 'landed':
         if (e.soft) this.popup(t('hud.soft'), 300, 'gate');

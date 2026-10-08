@@ -101,6 +101,8 @@ export class SuruCamera {
     outPos.set(cx - this.fwd.x * back, h, cz - this.fwd.y * back);
   }
 
+  private readonly tmpA = new THREE.Vector3();
+  private readonly tmpB = new THREE.Vector3();
   private readonly pPos = new THREE.Vector3();
   private readonly pLook = new THREE.Vector3();
 
@@ -115,20 +117,20 @@ export class SuruCamera {
       // from just above the water, looking toward the low sun across the bay, rising into the play pose
       const ox = x - this.fwd.x * 55;
       const oz = z - this.fwd.y * 55;
-      const from = new THREE.Vector3(ox + 6, 3.5, oz);
-      const fromLook = new THREE.Vector3(x + this.fwd.x * 220, 18, z + this.fwd.y * 220);
-      this.cam.position.lerpVectors(from, this.pPos, e);
-      this.look.lerpVectors(fromLook, this.pLook, e);
+      this.tmpA.set(ox + 6, 3.5, oz);
+      this.tmpB.set(x + this.fwd.x * 220, 18, z + this.fwd.y * 220);
+      this.cam.position.lerpVectors(this.tmpA, this.pPos, e);
+      this.look.lerpVectors(this.tmpB, this.pLook, e);
       if (k >= 1) this.mode = 'play';
     } else if (this.mode === 'end' && endCenter) {
       this.endT += dt;
       const k = Math.min(1, this.endT / 3);
       const e = k * k * (3 - 2 * k);
       const H = Math.max(90, endCenter.scale * 3.4);
-      const to = new THREE.Vector3(endCenter.x - this.fwd.x * H * 0.32, H, endCenter.z - this.fwd.y * H * 0.32);
-      const toLook = new THREE.Vector3(endCenter.x, 18, endCenter.z);
-      this.cam.position.lerpVectors(this.endFrom, to, e);
-      this.look.lerpVectors(this.endLookFrom, toLook, e);
+      this.tmpA.set(endCenter.x - this.fwd.x * H * 0.32, H, endCenter.z - this.fwd.y * H * 0.32);
+      this.tmpB.set(endCenter.x, 18, endCenter.z);
+      this.cam.position.lerpVectors(this.endFrom, this.tmpA, e);
+      this.look.lerpVectors(this.endLookFrom, this.tmpB, e);
     } else {
       this.cam.position.copy(this.pPos);
       this.look.copy(this.pLook);

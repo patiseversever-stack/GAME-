@@ -78,8 +78,9 @@ export const settingsScreen: ScreenDef<SettingsProps> = {
         ctx.sound('toggle');
         const next = setPath(s, path, value);
         ctx.cb.onSettingsChange?.(next, path);
-        ctx.applySettings(next);
+        // Re-render first (stack props updated), then apply: a language change re-renders the whole stack.
         ctx.rerender({ ...p, settings: next });
+        ctx.applySettings(next);
       },
     };
     const pct = (v: number): string => `${Math.round(v * 100)}`;
