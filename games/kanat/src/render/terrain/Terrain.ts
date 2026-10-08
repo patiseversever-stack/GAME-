@@ -225,7 +225,7 @@ export class TerrainRenderer {
     (this.mesh.material.uniforms.uTDebug.value as THREE.Vector4).x = on ? 1 : 0;
   }
 
-  private applyMorph(): void {
+  applyMorph(): void {
     const m = this.mesh.material.uniforms.uMorph.value as THREE.Vector4[];
     const r = this.selector.ranges;
     for (let l = 0; l < MAX_TERRAIN_LEVELS; l++) {

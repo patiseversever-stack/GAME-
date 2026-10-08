@@ -207,7 +207,6 @@ export class KanatRenderer {
 
   /** Change tier: only at natural breaks (program recompiles). */
   setTier(tier: QualityTier): void {
-    if (tier === this.params.tier) return;
     this.params = renderTierParams(tier);
     this.applyToneMapping();
     this.renderer.shadowMap.enabled = this.params.shadowMapSize > 0;
@@ -231,13 +230,27 @@ export class KanatRenderer {
 
   /** Directly request a megapixel target (clamped to the tier range). */
   setMegapixels(mp: number): void {
+    this.explicitPr = null;
     const nativeMp = (this.cssW * this.cssH * this.deviceDpr * this.deviceDpr) / 1e6;
     const [lo, hi] = mpRange(this.params.tier, nativeMp);
     this.renderScale = hi > lo ? (Math.min(hi, Math.max(lo, mp)) - lo) / (hi - lo) : 1;
     this.applySize();
   }
 
+  private explicitPr: number | null = null;
+
+  /** Explicit pixel ratio (e.g. from PerformanceDirector.pixelRatioFor), clamped to the tier DPR cap; null = MP-driven. */
+  setPixelRatio(pr: number | null): void {
+    this.explicitPr = pr;
+    this.applySize();
+  }
+
   private applySize(): void {
+    if (this.explicitPr !== null) {
+      this.renderer.setPixelRatio(Math.max(0.25, Math.min(this.explicitPr, this.params.dprCap)));
+      this.renderer.setSize(this.cssW, this.cssH, false);
+      return;
+    }
     const nativeMp = (this.cssW * this.cssH * this.deviceDpr * this.deviceDpr) / 1e6;
     const [lo, hi] = mpRange(this.params.tier, nativeMp);
     const mp = lo + (hi - lo) * this.renderScale;

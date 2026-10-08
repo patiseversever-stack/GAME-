@@ -34,7 +34,7 @@ async function main(): Promise<void> {
   const t0 = performance.now();
   const wr = WorldRenderer.create(canvas, tier, { preserveDrawingBuffer: true });
   window.__rw = wr;
-  wr.setSize(window.innerWidth, window.innerHeight, window.devicePixelRatio || 1);
+  wr.setSize(window.innerWidth, window.innerHeight);
   if (q.get('scale')) wr.kr.setRenderScale(Number(q.get('scale')));
   else wr.kr.setRenderScale(1);
   const world = await loadWorld(worldId, { ktx2: false });
