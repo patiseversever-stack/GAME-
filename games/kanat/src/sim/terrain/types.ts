@@ -20,6 +20,20 @@ export interface WorldTerrain {
   rockMask?: Float32Array;
   /** Sea level is y=0 when hasSea. */
   hasSea: boolean;
+  /** Optional low-res placement/material masks (props, vegetation, water). Extension of the original contract. */
+  masks?: MaskGrid;
+}
+
+/** Interleaved multi-channel u8 grid (values 0..255), row-major, same sample convention as HeightGrid. */
+export interface MaskGrid {
+  originX: number;
+  originZ: number;
+  spacing: number;
+  res: number;
+  channels: number;
+  /** Channel names, e.g. ['chimney', 'trees', 'flat', 'drainage'] — see world.json terrain.masks.names. */
+  names: string[];
+  data: Uint8Array; // length res*res*channels
 }
 
 /** Deterministic gameplay surface H(x,z) = base_bilinear(x,z) + D(x,z). Used by sim, bots and render-side CPU queries. */
