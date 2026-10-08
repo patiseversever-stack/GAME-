@@ -8,8 +8,10 @@ Bağlam: `docs/analiz/FINAL_DURUM.md`. Oyun kodu büyük ölçüde hazır. Bu tu
 3. Seviyeleri birleştirme
 4. Ücretsiz planda güvenli botlar
 5. Küçük düzeltmeler
-6. Test sunucusu ve gerçek telefonla deneme
-7. Canlıya alma ve mağaza formları
+6. Test sunucusu ve otomatik deneme
+7. Canlıya alma (yalnız sunucu) ve mağaza formları
+
+**Telefon sürümü üretilmeyecek.** APK, AAB, EAS build ya da TestFlight yok. Sahip uygulama paketini (AAB) ileride kendisi alacak. Bu turda uygulama tarafında yalnız kod hazırlanır, derlenmiş oyun uygulamaya aktarılır ve testler çalıştırılır.
 
 ---
 
@@ -30,7 +32,7 @@ Bağlam: `docs/analiz/FINAL_DURUM.md`. Oyun kodu büyük ölçüde hazır. Bu tu
    - deploy (Cloudflare staging / production, Vercel)
    - canlı veritabanına migration ya da SQL
    - eski anahtarları kapatma ya da silme
-   - EAS build / submit, OTA güncellemesi
+   - OTA güncellemesi (EAS build / submit bu turda **yapılmaz**)
    - `ONLINE_DEFAULT = true` olan derlemenin uygulamaya girmesi
 
    Mağaza formlarını sen hazırlarsın, sahip gönderir.
@@ -132,9 +134,11 @@ Kurallar:
     kapatılamaz. Güvenli sıra:
     1. Projede yeni API anahtarlarını (publishable + secret) ve gerekiyorsa JWT imza anahtarlarını etkinleştir.
     2. Sunucu tarafındaki kullanımları yeni secret'a geçir.
-    3. Uygulama ve web yeni publishable anahtarla çalışsın. Bu, Okey sürümüyle aynı güncellemede yapılır (EAS build;
-       mümkünse OTA ile mevcut kurulumlara da).
-    4. Güncel sürüm yayıldıktan sonra, sahibin onayıyla eski anahtarlar kapatılır.
+    3. Uygulama ve web yeni publishable anahtarla çalışsın. Uygulama kodunu buna hazırla, böylece sahibin ileride alacağı
+       AAB yeni anahtarla çıkar. Web (Vercel) yeni anahtara hemen geçebilir.
+    4. Eski anahtarlar ancak yeni uygulama sürümü yayıldıktan sonra, sahibin onayıyla kapatılır. Bu turda kapatılmaz;
+       raporun "Kalan işler" bölümüne tarihsiz bir adım olarak yaz ("Yeni sürüm yayıldıktan sonra eski Supabase anahtarlarını
+       kapat").
 
     Eski anahtarları kapatmak eski uygulama sürümlerinin girişini etkiler; zorunlu güncelleme gerekiyorsa sahibe
     söyle. Adımları Supabase'in güncel belgesinden doğrula.
@@ -220,7 +224,7 @@ Bu davranış için kalıcı test ekle.
 
 Görsel denetim 3 boyut × 2 temada yapılsın; çakışma 0 olmalı.
 
-### Adım 6 — Test sunucusu ve gerçek telefon denemesi (sahiple birlikte; ≤ 90 dk)
+### Adım 6 — Test sunucusu ve otomatik deneme (≤ 60 dk)
 
 1. **Hazırlık** (onaylı):
    - Cloudflare'de staging Worker ve staging D1 (ücretsiz plan).
@@ -229,37 +233,41 @@ Görsel denetim 3 boyut × 2 temada yapılsın; çakışma 0 olmalı.
    - `ONLINE_MODE=on`.
    - Alan adı: `patisever.tr` Cloudflare'de mi, kontrol et. Değilse sahibe en basit yolu tarif et.
 2. **Gerçek giriş:** Gerçek bir Supabase hesabıyla giriş (JWKS) çalışıyor mu?
-3. **Test derlemeleri:** Staging sunucusuna bağlanan bir Android derlemesi (EAS preview) ve bir iPhone derlemesi
-   (TestFlight ya da geliştirme derlemesi). Sahip ikisini iki telefona kurar.
-4. **Sahibe deneme listesi** (her madde tek cümle):
-   1. Klasik maç oyna.
-   2. 101 maç oyna.
-   3. Eşli maç oyna.
-   4. Oda linkini WhatsApp'tan paylaş, diğer telefonla gir.
-   5. Uçak moduyla önce 10 sn, sonra 60 sn kop ve geri dön.
-   6. Uygulamayı arka plana at, geri dön.
-   7. Biri çıkınca yerine botun oturduğunu gör.
-   8. Çipli masada oyna, sonra "Hareketler"e bak.
-   9. Sıralamada görün.
-   10. Seviyenin iki telefonda aynı göründüğünü kontrol et.
-   11. Panelde maçın göründüğünü kontrol et.
-5. **Ölç ve rapora yaz:**
+3. **Otomatik iki oyunculu deneme** (telefon yok). Staging sunucusuna karşı, gerçek internet üzerinden iki ayrı tarayıcı
+   istemcisiyle (`?online=…` ile staging'e bağlanan oyun) ve mevcut uçtan uca betiklerle şunları dene:
+   1. Klasik maç.
+   2. 101 maç.
+   3. Eşli maç.
+   4. Oda linkiyle ikinci istemcinin girmesi.
+   5. 10 sn ve 60 sn bağlantı kopması, geri dönüş.
+   6. Sekmenin arka plana alınıp geri gelmesi.
+   7. Biri çıkınca yerine botun oturması.
+   8. Çipli masa ve "Hareketler" (defter = cüzdan).
+   9. Sıralamada görünme.
+   10. Seviyenin iki istemcide aynı görünmesi.
+   11. Panelde maçın görünmesi.
+4. **Ölç ve rapora yaz:**
    - `exceededCpu` sayısı, Workers Logs ya da `wrangler tail` ile (hedef 0)
    - DO işlemci süresi p99
    - maç başına DO süresi (GB-s): hibernation çalışıyor mu? (`FINAL_DURUM.md` §4.3'teki 5,2 $ / 14 $ modeline göre)
    - hata sayısı
    - ortalama gidiş-dönüş süresi
-6. **İzleme:** Cloudflare kullanım bildirimi (kota %80) ve ücretsiz bir dış izleme (her 5 dakikada `/api/health`).
+5. **İzleme:** Cloudflare kullanım bildirimi (kota %80) ve ücretsiz bir dış izleme (her 5 dakikada `/api/health`).
    Kurulumu sen yap ya da sahibe 3 adımda tarif et.
-7. **iPhone'da ayrıca:**
-   - 3B masa
+6. **Sonraya telefon deneme listesi:** `docs/CIHAZ_DENEME.md` dosyasını yaz. Sahip ileride AAB'yi alınca telefonda
+   (ve iPhone sürümü olursa iPhone'da) bunu uygulayacak. Liste sade Türkçe, her madde tek cümle olsun:
+   - 3. maddedeki 11 deneme
+   - uçak modu
+   - uygulamayı arka plana atma
+   - 3B masa akıcılığı
    - yön kilidi
    - titreşim
-   - reklam köprüsü (test reklamı)
+   - test reklamı
    - hesap silme
-8. **Geçiş kapısı.** Aşağıdakilerin hepsi tamamsa Adım 7'ye geç:
+   - yeni Supabase anahtarıyla giriş
+7. **Geçiş kapısı.** Aşağıdakilerin hepsi tamamsa Adım 7'ye geç:
    - `exceededCpu` = 0
-   - deneme listesinin 11 maddesi de geçti
+   - 3. maddedeki 11 denemenin hepsi geçti
    - P0/P1 hata yok
 
    Biri bile eksikse **dur.** `FINAL_7_RAPOR.md` dosyasını o ana kadarki sonuçlarla yaz ve sahibe söyle.
@@ -269,8 +277,10 @@ Görsel denetim 3 boyut × 2 temada yapılsın; çakışma 0 olmalı.
 1. Production Worker, D1, secrets ve alan adı: `FINAL_DURUM.md` §7.2 adımları.
 2. **Doğrula:** `/api/health`, MFA'lı `/admin` girişi ve bir canlı maç.
 3. **Oyun:** `ONLINE_DEFAULT = true` → `npm test` → `npm run build` → uygulamaya aktar → uygulama testleri → commit.
-4. **Uygulama:** Yeni Supabase anahtarları bu sürüme girer (Adım 2-C1). Onaylı EAS production build. Sahip mağazaya
-   gönderir.
+4. **Uygulama:** Derlenmiş oyun uygulamaya aktarılır, yeni Supabase anahtar ayarı uygulama koduna girer (Adım 2-C1),
+   uygulama testleri çalıştırılır ve Okey dosyaları `okey-yayin` dalına commit edilir. **AAB / APK / EAS build üretme.**
+   Sahibe kısa bir not bırak: "AAB'yi alırken ne yapmalı" (`docs/AAB_NOTU.md`; 5–6 madde: hangi dal, hangi komut, önce
+   `CIHAZ_DENEME.md`).
 5. **Mağaza formları:** `docs/MAGAZA_FORMLARI.md` dosyasına, sahibin kopyala-yapıştır yapabileceği hazır cevaplar yaz:
    - **Google Play:**
      - İçerik derecelendirmesi (IARC): simüle kumar evet (sanal çip, gerçek para yok, çip satılmaz).
@@ -291,8 +301,8 @@ Görsel denetim 3 boyut × 2 temada yapılsın; çakışma 0 olmalı.
   - Hangi anahtarlar yenilendi, hangileri kaldı (yalnız adları).
   - Web paneli ve bildirim tablosunun durumu.
 - **Staging ölçümleri tablosu:** işlemci, `exceededCpu`, maç başına GB-s, gidiş-dönüş süresi, hatalar.
-- **Gerçek cihaz deneme sonuçları:** Android ve iPhone.
-- **Canlı durum:** Worker sürümü, `ONLINE_DEFAULT`, uygulama sürümü, mağaza durumu.
+- **Otomatik iki oyunculu deneme sonuçları** (11 madde) ve `CIHAZ_DENEME.md` dosyasının yolu.
+- **Canlı durum:** Worker sürümü, `ONLINE_DEFAULT`, uygulamaya aktarılan oyun sürümü, `AAB_NOTU.md` yolu.
 - **Kalan işler:** Sahibin işleri ve sonrası, en fazla 10 madde.
 - **Git durumu:** İki depo, dallar, push edildi mi.
 
