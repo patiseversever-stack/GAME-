@@ -30,6 +30,7 @@ uniform vec4 uCovCore;
 uniform vec4 uRoot;
 uniform vec4 uTFlags; // x skirt depth, y has splat, z detail D on, w patch lower
 uniform vec4 uSplatRule; // fallback splat rule params
+uniform mat4 uSplatMap; // semantic (flat, steep, mid, high) -> layer weights
 varying vec3 vRel;
 varying vec3 vNormal;
 varying vec4 vSplat;
@@ -84,7 +85,13 @@ void main() {
     float slope = 1.0 - n.y;
     float steep = smoothstep( uSplatRule.x, uSplatRule.y, slope );
     float high = smoothstep( uSplatRule.z, uSplatRule.w, h );
-    vec4 w = vec4( ( 1.0 - steep ) * ( 1.0 - high ) * 0.6, steep, ( 1.0 - steep ) * ( 1.0 - high ) * 0.4, ( 1.0 - steep ) * high );
+    float mid = smoothstep( uSplatRule.x * 0.4, uSplatRule.x, slope ) * ( 1.0 - steep );
+    float var = kValueNoise( xz / 41.0 );
+    vec4 sem = vec4( ( 1.0 - steep - mid ) * ( 1.0 - high ), steep, mid * ( 1.0 - high ), ( 1.0 - steep ) * high );
+    sem = max( sem, vec4( 0.0 ) );
+    vec4 w = uSplatMap * sem;
+    // Low-frequency variation between the first two layers (e.g. pink / white tuff).
+    w.xy = vec2( w.x + w.y ) * vec2( var, 1.0 - var ) * 0.999 + w.xy * 0.001;
     vSplat = w / max( dot( w, vec4( 1.0 ) ), 1e-4 );
   }
   if ( skirt > 0.5 ) {
@@ -123,6 +130,7 @@ uniform vec4 uDetailP; // x detail fade start, y fade end, z macro variation, w 
 uniform vec4 uStrata; // x period, y strength, z rose mix, w unused
 uniform vec3 uRoseTint;
 uniform vec4 uTDebug; // x magenta skirts
+uniform vec4 uPrelit; // x macro exposure scale, y sky weight in the relight ratio
 varying vec3 vRel;
 varying vec3 vNormal;
 varying vec4 vSplat;
@@ -196,7 +204,8 @@ float strataBand( vec3 wp ) {
 void main() {
   vec3 wp = cameraPosition + vRel;
   float dist = length( vRel );
-  vec3 N = normalize( vNormal );
+  vec3 N0 = normalize( vNormal );
+  vec3 N = N0;
   float k = vTerr.x;
   float lod = vTerr.y;
   bool inCore = kanatInGrid( wp.xz, uCoreGrid );
@@ -207,47 +216,48 @@ void main() {
     N = normalize( N - vec3( g.x, 0.0, g.y ) );
   }
 
-  // ---- baked shadow / AO / cavity ----
+  // ---- sun visibility / AO (GPU-baked from the same heights) ----
   float shadow = 1.0;
   float ao = 1.0;
-  float cavity = 0.5;
   if ( uHas.x > 0.5 && inCore ) {
     vec4 sa = texture( uShadowAo, ( wp.xz - uCovCore.xy ) * uCovCore.z );
     shadow = sa.r;
     ao = sa.g;
-    cavity = sa.b;
   }
 
-  // ---- macro albedo ----
+  // ---- base radiance: pre-lit macro colour (core 4 m/texel, far ring 48 m/texel) ----
   vec4 w = vSplat;
-  vec3 splatCol = uLayerCol[ 0 ] * w.x + uLayerCol[ 1 ] * w.y + uLayerCol[ 2 ] * w.z + uLayerCol[ 3 ] * w.w;
-  vec3 macro = splatCol;
-  float mv = kValueNoise( wp.xz / 61.0 ) * 0.6 + kValueNoise( wp.xz / 233.0 ) * 0.4;
-  macro *= 1.0 + ( mv - 0.5 ) * uDetailP.z;
+  vec3 base;
+  bool prelit = false;
   if ( uHas.y > 0.5 && inCore ) {
-    vec3 m = texture( uMacro, ( wp.xz - uCovCore.xy ) * uCovCore.z ).rgb;
-    macro = m;
-  } else if ( uHas.z > 0.5 && !inCore ) {
-    macro = texture( uFarColor, ( wp.xz - uCovFar.xy ) * uCovFar.z ).rgb;
+    base = texture( uMacro, ( wp.xz - uCovCore.xy ) * uCovCore.z ).rgb * uPrelit.x;
+    prelit = true;
+  } else if ( uHas.z > 0.5 ) {
+    base = texture( uFarColor, ( wp.xz - uCovFar.xy ) * uCovFar.z ).rgb * uPrelit.x;
+    prelit = true;
+  } else {
+    vec3 splatCol = uLayerCol[ 0 ] * w.x + uLayerCol[ 1 ] * w.y + uLayerCol[ 2 ] * w.z + uLayerCol[ 3 ] * w.w;
+    float mv = kValueNoise( wp.xz / 61.0 ) * 0.6 + kValueNoise( wp.xz / 233.0 ) * 0.4;
+    base = splatCol * ( 1.0 + ( mv - 0.5 ) * uDetailP.z );
   }
 
   // ---- strata (tuff: world-y banding, strongest on steep faces) ----
-  float steep = 1.0 - smoothstep( 0.55, 0.9, N.y );
+  float steep = 1.0 - smoothstep( 0.55, 0.9, N0.y );
   if ( uStrata.y > 0.0 ) {
     float tuffW = 0.0;
     for ( int i = 0; i < 4; i ++ ) tuffW += ( uLayerP[ i ].z < 0.5 ? 1.0 : 0.0 ) * w[ i ];
     float band = strataBand( wp );
-    float s = uStrata.y * tuffW * ( 0.35 + 0.65 * steep ) * ( 1.0 - smoothstep( 1500.0, 3500.0, dist ) );
-    macro *= 1.0 + band * s;
-    macro = mix( macro, macro * uRoseTint, clamp( band * 0.5 + 0.5, 0.0, 1.0 ) * s * uStrata.z );
+    float s = uStrata.y * tuffW * ( 0.25 + 0.75 * steep ) * ( 1.0 - smoothstep( 1200.0, 3000.0, dist ) );
+    base *= 1.0 + band * s;
+    base = mix( base, base * uRoseTint, clamp( band * 0.5 + 0.5, 0.0, 1.0 ) * s * uStrata.z * 4.0 );
   }
 
-  // ---- near detail (top-2 splat layers, continuous re-weighting) ----
-  vec3 albedo = macro;
+  // ---- near detail (top-2 splat layers, continuous re-weighting, height blend, derivative bump) ----
+  vec3 albedoMod = vec3( 1.0 );
   float detailW = 1.0 - smoothstep( uDetailP.x, uDetailP.y, dist );
   vec3 bumpN = N;
+  float aoD = 1.0;
   if ( detailW > 0.0 ) {
-    // Find the two largest weights and the third (subtracting it keeps the blend continuous at re-ordering).
     int i0 = 0; int i1 = 1;
     if ( w[ 1 ] > w[ 0 ] ) { i0 = 1; i1 = 0; }
     for ( int i = 2; i < 4; i ++ ) {
@@ -258,9 +268,8 @@ void main() {
     for ( int i = 0; i < 4; i ++ ) if ( i != i0 && i != i1 ) w3 = max( w3, w[ i ] );
     float a0 = max( w[ i0 ] - w3, 0.0 );
     float a1 = max( w[ i1 ] - w3, 0.0 );
-    vec4 d0 = sampleLayer( wp, N, i0 );
-    vec4 d1 = a1 > 0.001 ? sampleLayer( wp, N, i1 ) : d0;
-    // Height blend.
+    vec4 d0 = sampleLayer( wp, N0, i0 );
+    vec4 d1 = a1 > 0.001 ? sampleLayer( wp, N0, i1 ) : d0;
     float hb0 = d0.a + a0 * 1.2;
     float hb1 = d1.a + a1 * 1.2;
     float hm = max( hb0, hb1 ) - 0.25;
@@ -270,10 +279,8 @@ void main() {
     b0 /= bs; b1 /= bs;
     vec3 detailRel = d0.rgb * 2.0 * b0 + d1.rgb * 2.0 * b1;
     float height = d0.a * b0 + d1.a * b1;
-    // Detail modulates the macro albedo (macro carries the 4 m colour; detail adds cm-scale variation).
-    albedo = mix( macro, macro * detailRel, detailW );
-    // Derivative bump from the blended layer height (works for every projection).
-    float bumpS = ( uLayerP[ i0 ].y * b0 + uLayerP[ i1 ].y * b1 ) * detailW;
+    albedoMod = mix( vec3( 1.0 ), detailRel, detailW );
+    float bumpS = ( uLayerP[ i0 ].y * b0 + uLayerP[ i1 ].y * b1 ) * detailW * 0.06;
     vec3 dpx = dFdx( wp );
     vec3 dpy = dFdy( wp );
     float dhx = dFdx( height );
@@ -282,20 +289,31 @@ void main() {
     vec3 r2 = cross( N, dpx );
     float det = dot( dpx, r1 );
     vec3 grad = sign( det ) * ( dhx * r1 + dhy * r2 );
-    bumpN = normalize( abs( det ) * N - grad * bumpS );
-    bumpN = normalize( mix( N, bumpN, step( 1e-7, abs( det ) ) ) );
-    ao *= mix( 1.0, 0.75 + 0.25 * smoothstep( 0.1, 0.7, height ), detailW );
+    vec3 nb = abs( det ) > 1e-9 ? normalize( abs( det ) * N - grad * bumpS ) : N;
+    bumpN = normalize( mix( N, nb, detailW ) );
+    aoD = mix( 1.0, 0.7 + 0.3 * smoothstep( 0.05, 0.6, height ), detailW );
   }
-  ao *= mix( 0.85, 1.15, cavity );
 
-  // ---- lighting: sun N·L × baked shadow + sky SH × AO ----
+  // ---- lighting ----
   vec3 L = kSun.xyz;
-  float ndl = dot( bumpN, L );
   float wrap = uDetailP.w;
-  float diff = clamp( ( ndl + wrap ) / ( 1.0 + wrap ), 0.0, 1.0 );
-  vec3 sun = kSunColor.rgb * diff * shadow;
-  vec3 sky = kanatIrradiance( bumpN ) * ao;
-  vec3 col = albedo * ( sun + sky ) * 0.31830988;
+  vec3 sunC = kSunColor.rgb * shadow;
+  vec3 col;
+  if ( prelit ) {
+    // Keep the baked look; add only the near-detail lighting change as a ratio (seamless with the far ring).
+    float dl0 = clamp( ( dot( N0, L ) + wrap ) / ( 1.0 + wrap ), 0.0, 1.0 );
+    float dl1 = clamp( ( dot( bumpN, L ) + wrap ) / ( 1.0 + wrap ), 0.0, 1.0 );
+    vec3 sky0 = kanatIrradiance( N0 );
+    vec3 sky1 = kanatIrradiance( bumpN );
+    vec3 l0 = sunC * dl0 + sky0 * uPrelit.y;
+    vec3 l1 = sunC * dl1 + sky1 * uPrelit.y;
+    vec3 ratio = clamp( l1 / max( l0, vec3( 1e-3 ) ), vec3( 0.2 ), vec3( 3.0 ) );
+    col = base * albedoMod * ratio * aoD;
+  } else {
+    float diff = clamp( ( dot( bumpN, L ) + wrap ) / ( 1.0 + wrap ), 0.0, 1.0 );
+    vec3 sky = kanatIrradiance( bumpN ) * ao;
+    col = base * albedoMod * ( sunC * diff + sky ) * 0.31830988 * aoD;
+  }
 
   if ( uTDebug.x > 0.5 && vTerr.z > 0.001 ) col = vec3( 1.0, 0.0, 1.0 ) * 50.0;
   gl_FragColor = vec4( col, 1.0 );
@@ -345,6 +363,8 @@ export function createTerrainMaterial(opts: TerrainMaterialOptions): THREE.Shade
       uStrata: { value: new THREE.Vector4(3.4, 0, 0.5, 0) },
       uRoseTint: { value: new THREE.Color(1.08, 0.86, 0.82) },
       uTDebug: { value: new THREE.Vector4(0, 0, 0, 0) },
+      uPrelit: { value: new THREE.Vector4(1.4, 1.0, 0, 0) },
+      uSplatMap: { value: new THREE.Matrix4() },
     },
     vertexShader: VERT,
     fragmentShader: FRAG.replace('PROJ_MODE', String(proj)),

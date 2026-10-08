@@ -41,6 +41,7 @@ import {
 } from './terrain/derive.ts';
 import { PAINTERS, light, makeBakeLight, type PaintFields, type TexelOut } from './terrain/paint.ts';
 import { bakePatch } from './terrain/patch.ts';
+import { rebuildSea } from './terrain/coast.ts';
 import { toU8, writeKtx2, writePng, writePreview, writeWebp } from './terrain/images.ts';
 import { hexToLinear, kelvinToLinear, kelvinToSrgb, linearToSrgb, mix3, round3, srgbToHex, type RGB } from './terrain/color.ts';
 
@@ -221,6 +222,11 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
   const core0 = await sampleSource(def, args, cache, def.zoomCore, CORE_RES, CORE_SPACING, CORE_ORIGIN);
   const far0 = await sampleSource(def, args, cache, def.zoomFar, FAR_RES, FAR_SPACING, FAR_ORIGIN);
   for (const d of [core0, far0]) for (let i = 0; i < d.length; i++) if (d[i] < def.bathyMin) d[i] = def.bathyMin;
+  if (def.hasSea) {
+    const a = rebuildSea(makeGrid(CORE_RES, CORE_SPACING, CORE_ORIGIN, CORE_ORIGIN, core0), 4000);
+    const b = rebuildSea(makeGrid(FAR_RES, FAR_SPACING, FAR_ORIGIN, FAR_ORIGIN, far0), 400);
+    log(`   sea rebuilt: core ${a.seaCells} cells, far ${b.seaCells} cells`);
+  }
   const raw = minMax(core0);
   log(`   raw core ${raw.min.toFixed(1)}..${raw.max.toFixed(1)} m  (${((Date.now() - t0) / 1000).toFixed(1)} s, tiles dl ${cache.downloaded} cached ${cache.cached})`);
 
