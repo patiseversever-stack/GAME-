@@ -115,7 +115,8 @@ if (item === 'balloon') {
   else if (view === 'far') lookFrom(p[0] + 16, p[1] + 6, p[2] + 20, p[0], p[1] - 3, p[2], 45);
   else if (view === 'side') lookFrom(p[0] + 4.5, p[1] + 0.6, p[2], p[0], p[1], p[2], 50);
   else if (st === 'canopy') lookFrom(p[0] + 6, p[1] + 2.5, p[2] + 8, p[0], p[1] + 2.2, p[2], 60);
-  else if (st === 'landed' || st === 'crash') lookFrom(p[0] + 3.5, 1.6, p[2] + 4.5, p[0], 0.8, p[2], 55);
+  else if (st === 'landed') lookFrom(p[0] + 3.5, 1.6, p[2] + 4.5, p[0], 0.8, p[2], 55);
+  else if (st === 'crash') { const o = pilot.object.position; lookFrom(o.x + 3.5, 1.6, o.z + 4.5, o.x, 0.6, o.z, 55); }
   else lookFrom(p[0] + 0.6, p[1] + 1.4, p[2] + 4.6, p[0], p[1] + 0.1, p[2] - 3, 70);
   if (ghost) ghost.object.position.x += 1.4;
 } else {
@@ -154,5 +155,5 @@ function frame(): void {
   if (frames === 6) window.__shotReady = true;
   requestAnimationFrame(frame);
 }
-window.__kanatDev = { props, scene, camera, renderer, cfg };
+window.__kanatDev = { props, scene, camera, renderer, cfg, pilot: () => pilot, vfx: () => vfx };
 requestAnimationFrame(frame);

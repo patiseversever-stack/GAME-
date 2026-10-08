@@ -32,7 +32,7 @@ function suruButtons(ctx: ScreenCtx, dayN: number): HTMLElement {
     const b = h('button', { class: 'kn-subbtn', type: 'button' }, ic(icon), h('span', { text: label }));
     b.addEventListener('click', (e) => {
       e.stopPropagation();
-      ctx.sound('tap');
+      ctx.sound('confirm');
       ctx.cb.onSuru?.(sub);
     });
     return b;
@@ -46,7 +46,7 @@ function freeWorlds(ctx: ScreenCtx, worlds: WorldId[]): HTMLElement {
     const b = h('button', { class: 'kn-wchip', type: 'button', style: `--kn-accent:${WORLD_ACCENT[w]}` }, h('i'), h('span', { text: worldShort(w) }));
     b.addEventListener('click', (e) => {
       e.stopPropagation();
-      ctx.sound('tap');
+      ctx.sound('confirm');
       ctx.cb.onFreeFlight?.(w);
     });
     row.appendChild(b);

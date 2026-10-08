@@ -95,8 +95,11 @@ export const settingsScreen: ScreenDef<SettingsProps> = {
     // Version label: 5 taps → hidden perf panel (§5.6).
     let taps = 0;
     let tapTimer = 0;
-    const version = h('button', { class: 'kn-version kn-eyebrow', type: 'button', text: t('about.version', { v: p.version }) });
-    version.addEventListener('click', (e) => {
+    const version = h('button', { class: 'kn-version kn-eyebrow', type: 'button', text: t('about.version', { v: p.version }), 'data-kanat-version': '' });
+    if (ctx.cb.onVersionLabel) {
+      const off = ctx.cb.onVersionLabel(version);
+      if (off) ctx.onCleanup(off);
+    } else version.addEventListener('click', (e) => {
       e.stopPropagation();
       taps++;
       clearTimeout(tapTimer);

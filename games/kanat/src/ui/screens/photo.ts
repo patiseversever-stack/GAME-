@@ -160,7 +160,7 @@ export const photoScreen: ScreenDef<PhotoState> = {
     const shutter = h('button', { class: 'kn-shutter', type: 'button', 'aria-label': t('photo.save') }, h('i'));
     shutter.addEventListener('click', (e) => {
       e.stopPropagation();
-      ctx.sound('tap');
+      ctx.sound('photo');
       ctx.cb.onPhotoSave?.();
       ctx.toast(t('photo.saved'), { icon: 'save', ms: 2200 });
     });

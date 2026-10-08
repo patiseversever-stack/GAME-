@@ -134,7 +134,7 @@ const FRAG_COLOR = /* glsl */ `
     else if (m == ${MAT.shoe}) { col = vec3(0.04, 0.04, 0.045); kRough = 0.72; }
     else if (m == ${MAT.helmet}) { col = uHelmet; kRough = 0.26; }
     else if (m == ${MAT.visor}) { col = uVisor; kRough = 0.05; kMetal = 1.0; }
-    else { col = vec3(0.045, 0.047, 0.052); kRough = 0.82; kRip = 0.8; }
+    else { col = mix(uPalA, vec3(0.03), 0.75); kRough = 0.8; kRip = 0.8; }
     diffuseColor.rgb = col;
   }
 `;
@@ -144,7 +144,9 @@ const FRAG_NORMAL = /* glsl */ `
     // ripstop grid (5 mm) + soft fold creases, perturbing the view-space normal with screen derivatives
     vec2 q = vKPat * 190.0;
     float gx = abs(fract(q.x) - 0.5), gy = abs(fract(q.y) - 0.5);
-    float rip = (smoothstep(0.42, 0.5, gx) + smoothstep(0.42, 0.5, gy)) * 0.5;
+    // fade the 5 mm grid out before it aliases (screen-space frequency check)
+    float ripFade = 1.0 - smoothstep(0.25, 0.6, max(fwidth(q.x), fwidth(q.y)));
+    float rip = (smoothstep(0.42, 0.5, gx) + smoothstep(0.42, 0.5, gy)) * 0.5 * ripFade;
     float fold = kVN(vKPat * vec2(9.0, 3.0)) - 0.5;
     vec3 dpx = dFdx(vKWorld), dpy = dFdy(vKWorld);
     float h = rip * 0.0015 + fold * 0.01 * vKCloth + fold * 0.004;

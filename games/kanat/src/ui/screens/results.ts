@@ -79,20 +79,23 @@ export const resultsScreen: ScreenDef<ResultsProps> = {
         starsEl.appendChild(s);
       }
       const steps = els.slice(0, p.stars).map((s, i) => ({
-        at: (anim ? 1350 : 0) + i * (anim ? 420 : 0),
+        at: (anim ? 1500 : 0) + i * (anim ? 420 : 0),
         run: () => {
           s.classList.add('is-on');
-          if (anim) {
-            ctx.sound('star');
-            cb.onHaptic?.('medium');
-          }
+          if (anim) ctx.sound('star', i);
         },
       }));
+      if (anim && p.newBest) steps.push({ at: 1500 + p.stars * 420 + 120, run: () => ctx.sound('reward') });
       ctx.onCleanup(sequence(steps));
     }
 
-    // Breakdown panel
+    // Breakdown panel (each row ticks as it starts counting; tallyEnd when the big number lands)
     const panel = h('div', { class: 'kn-res-panel kn-panel' });
+    if (anim) {
+      const ticks = p.rows.map((_, i) => ({ at: 250 + i * 70, run: () => ctx.sound('tally', i) }));
+      ticks.push({ at: 250 + 1100, run: () => ctx.sound('tallyEnd') });
+      ctx.onCleanup(sequence(ticks));
+    }
     p.rows.forEach((r, i) => {
       const v = h('span', { class: 'kn-res-v kn-num' });
       const row = h('div', { class: 'kn-res-row', style: anim ? `animation-delay:${200 + i * 70}ms` : '' }, h('span', { class: 'kn-res-l', text: rowLabel(r) }), v);
@@ -108,7 +111,7 @@ export const resultsScreen: ScreenDef<ResultsProps> = {
       const b = h('button', { class: `kn-btn ${cls}`.trim(), type: 'button', disabled }, ic(icon), h('span', { class: 'kn-btn-label', text: label }));
       b.addEventListener('click', (e) => {
         e.stopPropagation();
-        ctx.sound('tap');
+        ctx.sound(cls.includes('kn-btn--primary') ? 'confirm' : 'tap');
         fn?.();
       });
       return b;

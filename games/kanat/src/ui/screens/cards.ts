@@ -43,6 +43,7 @@ export const unlockCard: ScreenDef<UnlockProps> = {
       h('div', { class: 'kn-modal-actions' }, btn(t('common.ok'), 'kn-btn--primary kn-btn--block kn-btn--lg', done, ctx)),
     );
     el.setAttribute('style', accentStyle(p.world));
+    if (!ctx.refresh) ctx.sound('reward');
     return el;
   },
 };
@@ -126,7 +127,7 @@ export const resumeOverlay: ScreenDef<Record<string, never>> = {
     const el = h('section', { class: 'kn-resume' }, h('div', { class: 'kn-scrim' }), h('div', { class: 'kn-resume-inner' }, play, h('div', { class: 'kn-h2', text: t('resume.title') }), h('p', { class: 'kn-caption', text: t('resume.sub') })));
     el.addEventListener('click', (e) => {
       e.stopPropagation();
-      ctx.sound('tap');
+      ctx.sound('confirm');
       go();
     });
     return el;

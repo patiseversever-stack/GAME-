@@ -82,14 +82,14 @@ const CSS = /* css */ `
   -webkit-font-smoothing: antialiased; user-select: none; -webkit-user-select: none; font-variant-numeric: tabular-nums; }
 .sr-num { font-family: 'Barlow Condensed', 'Kanat Fallback Condensed', 'Arial Narrow', 'Roboto Condensed', sans-serif; font-weight: 700; letter-spacing: 0.01em; }
 .sr-panel { background: rgba(14,20,28,0.55); border: 1px solid #FFFFFF22; border-radius: 12px; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); }
-.sr-top { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; opacity: 0.92; }
-.sr-sun { width: 168px; height: 50px; display: block; }
+.sr-top { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 8px); left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; opacity: 0.92; }
+.sr-sun { width: 132px; height: 40px; display: block; }
 .sr-time { font-size: 15px; margin-top: -6px; opacity: 0.78; }
-.sr-size { display: flex; align-items: baseline; gap: 6px; margin-top: 2px; }
-.sr-size b { font-size: 40px; line-height: 1; color: #FFC23D; }
+.sr-size { position: absolute; left: 12px; top: calc(env(safe-area-inset-top, 0px) + 60px); display: flex; align-items: baseline; gap: 5px; }
+.sr-size b { font-size: 38px; line-height: 1; color: #FFC23D; }
 .sr-size span { font-size: 13px; opacity: 0.7; font-weight: 600; }
-.sr-top3 { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 10px; padding: 7px 9px 6px; min-width: 128px; max-width: 46vw; opacity: 0.92; }
-.sr-row { display: flex; align-items: center; gap: 6px; height: 22px; font-size: 12px; }
+.sr-top3 { position: absolute; top: calc(env(safe-area-inset-top, 0px) + 10px); right: 10px; padding: 6px 8px 5px; width: 148px; opacity: 0.9; }
+.sr-row { display: flex; align-items: center; gap: 5px; height: 21px; font-size: 11.5px; }
 .sr-row.me .sr-name { color: #FFC23D; font-weight: 600; }
 .sr-rk { width: 12px; font-size: 13px; opacity: 0.7; }
 .sr-sw { width: 13px; height: 13px; border-radius: 4px; flex: none; box-sizing: border-box; }
@@ -202,9 +202,9 @@ export class SuruHud {
     const top = document.createElement('div');
     top.className = 'sr-top';
     const s = svg('svg', { class: 'sr-sun', viewBox: '0 0 168 50' }) as SVGSVGElement;
-    s.appendChild(svg('line', { x1: 6, y1: 46, x2: 162, y2: 46, stroke: '#FFFFFF44', 'stroke-width': 1 }));
-    this.sunPath = svg('path', { d: 'M14 46 A70 40 0 0 1 154 46', fill: 'none', stroke: '#FFFFFF2a', 'stroke-width': 2 }) as SVGPathElement;
-    this.sunDone = svg('path', { d: 'M14 46 A70 40 0 0 1 154 46', fill: 'none', stroke: '#FFC48A', 'stroke-width': 2, 'stroke-linecap': 'round' }) as SVGPathElement;
+    s.appendChild(svg('line', { x1: 6, y1: 46, x2: 162, y2: 46, stroke: '#FFFFFF66', 'stroke-width': 1.2 }));
+    this.sunPath = svg('path', { d: 'M14 46 A70 40 0 0 1 154 46', fill: 'none', stroke: '#FFFFFF40', 'stroke-width': 2 }) as SVGPathElement;
+    this.sunDone = svg('path', { d: 'M14 46 A70 40 0 0 1 154 46', fill: 'none', stroke: '#FFC48A', 'stroke-width': 3, 'stroke-linecap': 'round' }) as SVGPathElement;
     this.sunRing = svg('path', { d: 'M14 46 A70 40 0 0 1 154 46', fill: 'none', stroke: '#FFB36B', 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0.0 }) as SVGPathElement;
     this.sunDot = svg('circle', { cx: 14, cy: 46, r: 5.5, fill: '#FFD7A0' }) as SVGCircleElement;
     s.append(this.sunPath, this.sunDone, this.sunRing, this.sunDot);
@@ -219,8 +219,8 @@ export class SuruHud {
     const sl = document.createElement('span');
     sl.textContent = this.t('birds');
     size.append(this.sizeEl, sl);
-    top.appendChild(size);
     root.appendChild(top);
+    root.appendChild(size);
     // top 3
     this.top3 = document.createElement('div');
     this.top3.className = 'sr-top3 sr-panel';

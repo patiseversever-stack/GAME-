@@ -16,7 +16,7 @@ import { PropIndex } from '../../sim/world/propIndex.ts';
 import { TUNING } from '../../sim/data/tuning.ts';
 import type { TerrainSampler } from '../../sim/terrain/types.ts';
 import type { BalloonDef, PropInstance, RouteDef, WorldId } from '../../sim/types.ts';
-import { generateRoute } from './routeGen.ts';
+import { generateRoute, type LaunchRock } from './routeGen.ts';
 import { PROVISIONAL_BENCH } from './provisionalBench.ts';
 
 /** The world.json subset this module reads (WorldConfig fits). */
@@ -72,7 +72,7 @@ export function startBalloonDef(id: number, startPos: readonly [number, number, 
   };
 }
 
-function routeFromMeta(meta: RouteMeta, sampler: TerrainSampler, cfg: WorldContentConfig, avoid: { x: number; z: number; r: number }[]): RouteDef {
+function routeFromMeta(meta: RouteMeta, sampler: TerrainSampler, cfg: WorldContentConfig, avoid: { x: number; z: number; r: number }[]): { route: RouteDef; rock: LaunchRock | null } {
   const bench = PROVISIONAL_BENCH[meta.id];
   const g = generateRoute(sampler, {
     id: meta.id,
@@ -94,7 +94,7 @@ function routeFromMeta(meta: RouteMeta, sampler: TerrainSampler, cfg: WorldConte
     ustaGorevleri: meta.usta.map((t) => toRouteDefUsta(t)),
     postcards: POSTCARDS.filter((p) => p.world === meta.world && (p as unknown as { placement?: { nearRoute?: string } }).placement?.nearRoute === meta.id).map((p) => p.id),
   });
-  return g.route;
+  return { route: g.route, rock: g.launchRock };
 }
 
 function lerp3(a: readonly number[], b: readonly number[], t: number): [number, number, number] {
@@ -185,6 +185,7 @@ export function buildWorldContent(world: WorldId, sampler: TerrainSampler, cfg: 
   const routes: RouteDef[] = [];
   const provisional: Record<string, boolean> = {};
   const avoid: { x: number; z: number; r: number }[] = [];
+  const rocks: LaunchRock[] = [];
   for (const meta of metas) {
     const json = opts.json?.[meta.id];
     let r: RouteDef;
@@ -192,7 +193,9 @@ export function buildWorldContent(world: WorldId, sampler: TerrainSampler, cfg: 
       r = json;
       provisional[meta.id] = false;
     } else {
-      r = routeFromMeta(meta, sampler, cfg, avoid);
+      const g = routeFromMeta(meta, sampler, cfg, avoid);
+      r = g.route;
+      if (g.rock) rocks.push(g.rock);
       provisional[meta.id] = true;
     }
     avoid.push({ x: r.start.pos[0], z: r.start.pos[2], r: 700 });
@@ -241,6 +244,19 @@ export function buildWorldContent(world: WorldId, sampler: TerrainSampler, cfg: 
     clear.push({ x: r.start.pos[0], z: r.start.pos[2], r: 25 });
   }
   const props = buildProps(world, sampler, { props: cfg.props, hasSea: cfg.hasSea, wind: cfg.wind, clear });
+  // launch rock towers of generated ridge/cliff routes (collidable + rendered from the same prims)
+  for (const k of rocks) {
+    props.push({
+      id: props.length,
+      type: 'rock',
+      variant: 0,
+      pos: [k.x, k.baseY, k.z],
+      yaw: 0,
+      scale: 1,
+      prims: [{ kind: 'cone', base: [k.x, k.baseY, k.z], h: Math.round((k.topY - k.baseY) * 100) / 100, r0: k.r0, r1: k.r1 }],
+      params: { rx: k.r0, ry: (k.topY - k.baseY) * 0.5, rz: k.r0, seed: props.length },
+    });
+  }
   const propIndex = new PropIndex(props);
 
   const bench: Record<string, RouteBench> = {};

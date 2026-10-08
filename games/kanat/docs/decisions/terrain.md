@@ -29,7 +29,11 @@ CREDITS'te "sanatsal abartı" olarak belirtildi.
 
 ## Izgaralar ve dosya biçimi
 - Çekirdek 1024² @ 8 m, örnekler hücre merkezinde: `originX = originZ = -4092`, doku kapsamı tam **[-4096, 4096]**
-  (tüm çekirdek dokuları için `uv = (x + 4096) / 8192`). Uzak 512² @ 96 m, kapsam [-24576, 24576].
+  (tüm çekirdek dokuları için `uv = (x + 4096) / 8192`). Uzak 512² @ 96 m, `originX = originZ = -24524`, kapsam
+  [-24572, 24580]. **Uzak ızgara 4 m kaydırıldı** ki uzak düğümler çekirdek örnekleriyle çakışsın (köken farkı 8'in katı):
+  böylece çekirdek kenarı (uzak bilineere eşitlenen) çekirdeğin kendi bilineer interpolasyonuyla birebir üretilir.
+  İlk sürümde (köken −24528) uzak düğümün kırığı iki çekirdek örneği arasına düşüyor, kenarda 1,1 m'ye varan
+  basamak oluşuyordu; birim test yakaladı.
   Maskeler 512² @ 16 m (aynı kapsam). Pamukkale yaması 1024² @ 1 m (HeightGrid sözleşmesi kare olduğu için
   1024×640 m teras alanı kare yamanın içinde; yama kenarı çekirdek bilineer yüzeyine birebir oturur).
 - Görüntü satırı 0 = kuzey (min z). ImageBitmap'ler `flipY=false` ile yüklenmeli.
@@ -83,3 +87,10 @@ CREDITS'te "sanatsal abartı" olarak belirtildi.
   Koordinat dakika hassasiyetinde olduğundan 900 m yarıçapta eğimi < 20° olan arazinin medyanı karşılaştırılır.
 - Pamukkale: traverten oluşumu "160 m yüksek" (en.wikipedia.org/wiki/Pamukkale); Hierapolis (37°55′30″K 29°07′33″D)
   ile batıdaki ova tabanı arasındaki fark ±60 m.
+
+## Görsel QA araçları
+- `node tools/terrain/preview.ts <id> view x,y,z,yaw,pitch <ad>` — CPU ışın yürütmeli eğik görünüm (makro/uzak renk +
+  yükseklik + sis); `... hillshade [c0,r0,size]` — çekirdek hillshade. Çıktı `tests/out/terrain/`.
+- `node tools/terrain/probe.ts <id> x0,z0,x1,z1 [n]` — yükseklik profili.
+- `dev/terrain.html` (port 5181) — gerçek tarayıcı yükleyicisiyle (`loadWorld`) tüm dokular + CPU örnekleyici.
+- Kalıcı önizlemeler: `docs/shots/terrain/<id>.webp` (makro, üstten) ve `<id>_view.webp` (eğik görünüm).

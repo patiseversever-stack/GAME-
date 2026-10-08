@@ -63,11 +63,13 @@ vec2 waveGrad(vec2 p, float t) {
     g += d3 * cos(dot(d3, p) * 0.93 + t * 2.9) * 0.93 * 0.022;
   }
   if (uDetail > 1.5) {
-    // fine noise ripples (finite-difference of value noise)
-    vec2 q = p * 0.65 + vec2(t * 0.35, -t * 0.22);
-    float e = 0.35;
-    float n0 = vnoise(q);
-    g += vec2(vnoise(q + vec2(e, 0.0)) - n0, vnoise(q + vec2(0.0, e)) - n0) * 0.55;
+    // fine ripples: a few short irrational-direction sines (smooth, no value-noise grid)
+    vec2 d4 = normalize(vec2(0.62, 0.78));
+    vec2 d5 = normalize(vec2(-0.91, 0.41));
+    vec2 d6 = normalize(vec2(0.17, -0.98));
+    g += d4 * cos(dot(d4, p) * 1.71 + t * 3.9) * 1.71 * 0.009;
+    g += d5 * cos(dot(d5, p) * 2.63 + t * 4.7) * 2.63 * 0.0055;
+    g += d6 * cos(dot(d6, p) * 3.37 + t * 5.3 + sin(p.x * 0.11) * 2.0) * 3.37 * 0.004;
   }
   return g;
 }
@@ -91,23 +93,32 @@ void main() {
   vec3 refl = skyColor(R);
   float ndv = max(dot(N, V), 0.0);
   float F = 0.02 + 0.98 * pow(1.0 - ndv, 5.0);
-  // water body: deep bay colour lit by the sky dome and a little by the low sun
-  vec3 body = uSea * (0.42 + 0.25 * uSkyMid.r) + uSkyZenith * 0.12;
-  body *= 1.0 - 0.45 * uNight;
-  vec3 col = mix(body, refl, F);
-  // --- sun path: Beckmann glitter for a rough sea (σ broad) + sharp glints from the actual normal ---
-  vec3 L = normalize(uSunDir + vec3(0.0, 0.03, 0.0));
-  float sunUp = smoothstep(-0.06, 0.03, uSunDir.y);
-  vec3 H = normalize(V + L);
-  float tan2 = (H.x * H.x + H.z * H.z) / max(H.y * H.y, 1e-4);
-  float sig = 0.34;
-  float beck = exp(-tan2 / (sig * sig)) / (3.14159 * sig * sig * pow(max(H.y, 0.05), 4.0));
-  float pathF = 0.02 + 0.98 * pow(1.0 - max(dot(V, H), 0.0), 5.0);
-  col += uSunColor * beck * pathF * 1.15 * sunUp;
-  vec3 Hn = normalize(V + L);
-  float glint = pow(max(dot(N, Hn), 0.0), 900.0);
-  float sparkle = step(0.82, vnoise(xz * 1.7 + t * 1.3));
-  col += uSunColor * glint * (2.2 + 6.0 * sparkle) * sunUp * (1.0 - far);
+  // water body: the bay's deep blue-violet (#2A3550), faintly lit by the sky dome
+  vec3 body = uSea * (0.95 + 0.35 * fbm(xz * 0.004 + t * 0.01)) + uSkyMid * 0.03;
+  body *= 1.0 - 0.35 * uNight;
+  vec3 col = mix(body, refl, clamp(F * 1.15, 0.0, 1.0));
+  // --- sun path (#FFD7A0): painterly glitter band along the sun azimuth, stronger toward the horizon ---
+  vec3 L = normalize(uSunDir);
+  float sunUp = smoothstep(-0.05, 0.04, L.y);
+  vec3 ray = -V;                                // camera → water
+  vec2 rh = normalize(ray.xz + 1e-5);
+  vec2 sh = normalize(L.xz + 1e-5);
+  float lat = 1.0 - dot(rh, sh);                // 0 on the sun's azimuth
+  float toward = smoothstep(-0.98, -0.05, ray.y);
+  float width = mix(0.0012, 0.0075, toward);
+  float band = exp(-lat / width) * toward * toward;
+  // break the band into glints with the wave normals (noise fades with distance → no aliasing)
+  float gl = pow(max(dot(N, normalize(V + vec3(L.x, abs(L.y) + 0.35, L.z))), 0.0), 60.0);
+  float spark = mix(fbm(xz * vec2(0.55, 1.4) + vec2(t * 0.35, -t * 0.7)), 0.5, smoothstep(120.0, 420.0, dist));
+  float glitter = band * (0.35 + 1.3 * smoothstep(0.42, 0.85, spark) + 1.8 * gl * (1.0 - far));
+  vec3 path = vec3(1.0, 0.72, 0.42) * glitter * 0.5 * sunUp;
+  col += path;
+  // broad warm sheen around the path (reflection of the glow around the sun)
+  col += uSunColor * exp(-lat / (width * 9.0)) * toward * 0.035 * sunUp;
+  // sharp sparkles anywhere the wave faces the sun (sparse, small)
+  vec3 Hs = normalize(V + L);
+  float sparkle = pow(max(dot(N, Hs), 0.0), 700.0) * step(0.86, vnoise(xz * 2.3 + t * 2.0)) * (1.0 - smoothstep(60.0, 200.0, dist));
+  col += uSunColor * sparkle * 1.2 * sunUp;
   // --- ownership aura (alpha 0.18 glow in the owner colour) + soft grounded shadow ---
   if (uOwnOn > 0.5) {
     vec4 own = texture2D(uOwn, xz * uOwnScale + 0.5);
@@ -144,8 +155,8 @@ void main() {
     vec4 fo = uFoam[k];
     float d = length(xz - fo.xy) - fo.z;
     float n = vnoise(xz * 0.45 + t * 0.3);
-    float foam = smoothstep(2.4 + n * 1.5, 0.2, d) * smoothstep(-1.5, 0.3, d);
-    col = mix(col, mix(uSkyHorizon, vec3(0.9), 0.5) * 0.55, foam * 0.45 * (0.5 + 0.5 * n));
+    float foam = smoothstep(1.6 + n * 1.2, 0.1, d) * smoothstep(-1.2, 0.2, d);
+    col = mix(col, mix(uSkyHorizon * 0.35, vec3(0.32), 0.5), foam * 0.32 * (0.35 + 0.65 * n));
   }
   // --- lighthouse: warm reflection streak toward the camera when lit ---
   if (uLighthouse.z > 0.01) {

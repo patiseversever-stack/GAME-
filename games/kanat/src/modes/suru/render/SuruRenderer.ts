@@ -170,7 +170,7 @@ export class SuruRenderer {
     const p = Math.min(1.08, Math.max(0, (this.timeOfDayOverride ?? simTime) / 180));
     // sun 6° → −1° over the round (keeps sinking a little after 3:00 during the show)
     const el = (6 - 7 * p) * DEG;
-    const az = -17 * DEG; // a little left of screen-up (north)
+    const az = -3 * DEG; // straight up the screen: the glitter path runs behind the flocks
     g.uSunDir.value.set(Math.sin(az) * Math.cos(el), Math.sin(el), -Math.cos(az) * Math.cos(el)).normalize();
     // 3200 K → 2200 K, dimming as the sun touches the horizon
     const kc = Math.min(1, p);

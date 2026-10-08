@@ -234,7 +234,8 @@ export class LineBot {
       const hh = this.sampler.height(hx, hz);
       if (hh > hMax) hMax = hh;
     }
-    let ty = hMax + this.p.offset;
+    // slow (just after the wings opened from a ridge): stay well clear until the suit has flying speed
+    let ty = hMax + this.p.offset + (st.speed < 40 ? (40 - st.speed) * 1.5 : 0);
     const floorLine = lineY - this.p.lineDrop;
     if (ty < floorLine) ty = floorLine;
     // gates: aim through the next gate centre when it is close ahead
@@ -266,7 +267,9 @@ export class LineBot {
     let gDes = atan2(ty - y, dh > 1 ? dh : 1);
     gDes = clamp(gDes, -38 * DEG, 14 * DEG);
     let sy = ((gDes - st.gamma) / (9 * DEG)) * 31;
-    if (st.speed < 31 && sy > 0) sy = 0;
+    // energy management: never trade the last of the airspeed for height (stall → sink)
+    if (sy > 0 && st.speed < 38) sy *= clamp((st.speed - 31) / 7, 0, 1);
+    if (st.speed < 33 && sy > -6) sy = -6;
     this.emit(tick, sx, sy);
   }
 

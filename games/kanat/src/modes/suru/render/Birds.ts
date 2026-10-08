@@ -18,7 +18,7 @@ import { hexToLinear, ownerStyle } from './palette.ts';
 const NB = 1500;
 const NF = 17;
 const TRAIL_PTS = 22;
-export const BIRD_SCALE = 1.9;
+export const BIRD_SCALE = 2.6;
 const LEADER_SCALE = 1.8;
 export const SHOW_SHAPES = ['kalp', 'sarmal', 'dalga', 'lale', 'kanat', 'sonsuzluk'] as const;
 export type ShowShape = (typeof SHOW_SHAPES)[number];
@@ -146,10 +146,10 @@ void main() {
   vec3 amb = mix(uSkyZenith, uSkyHorizon, 0.45 + 0.3 * N.y) * 0.75;
   float wrap = clamp((dot(N, L) + 0.45) / 1.45, 0.0, 1.0);
   vec3 col = albedo * (amb + uSunColor * wrap * 0.9 * sunUp);
-  float back = 0.45 + 0.55 * max(dot(-V, L), 0.0);
+  float back = 0.35 + 0.65 * max(dot(-V, L), 0.0);
   float fr = pow(1.0 - max(dot(N, V), 0.0), 2.2);
-  col += fr * back * (uSunColor * 0.55 * sunUp + oc * 0.55 * vOwned + uSkyHorizon * 0.12);
-  col += oc * vOwned * (0.16 + uLeader * 0.55);
+  col += fr * back * (uSunColor * 0.22 * sunUp * (1.0 - 0.6 * vOwned) + oc * 0.6 * vOwned + uSkyHorizon * 0.1);
+  col += oc * vOwned * (0.34 + uLeader * 0.5);
   // iridescent starling sheen (#3A5C6E ↔ #5B3A6E)
   if (uIri > 0.5) {
     vec3 H = normalize(L + V);
@@ -243,7 +243,7 @@ void main() {
   float d = length(vLocal);
   float ang = atan(vLocal.y, vLocal.x);
   // patterned aura ring around the flock (solid / dashed / dotted)
-  float ringW = 0.55 + R * 0.012;
+  float ringW = 0.32 + R * 0.008;
   float ring = 1.0 - smoothstep(ringW * 0.5, ringW, abs(d - R));
   float pat = 1.0;
   if (vI.z > 0.5 && vI.z < 1.5) pat = step(0.42, fract(ang / 6.2831853 * max(8.0, floor(R * 0.9))));
@@ -256,15 +256,15 @@ void main() {
   float aura = ring * pat * 0.85 + soft * 0.25;
   // leader marker shape (circle / triangle / square / diamond)
   vec2 q = vLocal;
-  float ms = 2.6;
+  float ms = 2.1;
   float sd;
   if (vI.w < 0.5) sd = abs(length(q) - ms);
   else if (vI.w < 1.5) sd = abs(sdTri(vec2(q.x, -q.y), ms * 1.05));
   else if (vI.w < 2.5) { vec2 b = abs(q) - vec2(ms * 0.85); sd = abs(length(max(b, 0.0)) + min(max(b.x, b.y), 0.0)); }
   else { vec2 r = vec2(q.x + q.y, q.x - q.y) * 0.70710678; vec2 b = abs(r) - vec2(ms * 0.8); sd = abs(length(max(b, 0.0)) + min(max(b.x, b.y), 0.0)); }
-  float mark = 1.0 - smoothstep(0.3, 0.62, sd);
+  float mark = 1.0 - smoothstep(0.18, 0.4, sd);
   float lonePulse = vS.y > 0.5 ? 0.6 + 0.4 * sin(uTime * 9.0) : 1.0;
-  float a = (aura * 0.2 + mark * 0.85) * lonePulse;
+  float a = (aura * 0.18 + mark * 0.7) * lonePulse;
   a *= 1.0 - nightMask(vWorld.xz) * 0.35;
   vec3 col = vC * (1.0 + mark * 0.6);
   if (a < 0.003) discard;
@@ -284,7 +284,7 @@ void main() {
   vec2 c = mix(aL.xy, aL.zw, uAlpha);
   vec3 center = vec3(c.x, aI.w, c.y);
   vec4 mv = viewMatrix * vec4(center, 1.0);
-  float size = 4.2;
+  float size = 3.6;
   mv.xy += position.xy * size;
   vQ = position.xy;
   vC = uPalette[int(aI.x + 0.5)];
@@ -300,10 +300,10 @@ varying vec3 vC;
 varying float vLone;
 void main() {
   float r = length(vQ);
-  float g = exp(-r * r * 4.5) * 0.85 + exp(-r * r * 40.0) * 0.9;
-  float pulse = vLone > 0.5 ? 0.55 + 0.45 * sin(uTime * 9.0) : 0.88 + 0.12 * sin(uTime * 2.3);
-  vec3 c = mix(vC, vec3(1.0, 0.95, 0.85), exp(-r * r * 30.0)) * g * pulse;
-  gl_FragColor = vec4(c * 0.85, 1.0);
+  float g = exp(-r * r * 5.0) * 0.5 + exp(-r * r * 26.0) * 0.45;
+  float pulse = vLone > 0.5 ? 0.55 + 0.45 * sin(uTime * 9.0) : 0.9 + 0.1 * sin(uTime * 2.3);
+  vec3 c = mix(vC, vec3(1.0, 0.93, 0.8), exp(-r * r * 40.0) * 0.6) * g * pulse;
+  gl_FragColor = vec4(c * 0.6, 1.0);
 }
 `;
 

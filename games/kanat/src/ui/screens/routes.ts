@@ -107,7 +107,7 @@ function routeCard(r: RouteVM, index: number, selected: boolean, ctx: ScreenCtx,
   const fly = h('button', { class: 'kn-btn kn-btn--primary kn-btn--lg kn-btn--block', type: 'button' }, ic('play'), h('span', { text: t('routes.fly') }));
   fly.addEventListener('click', (e) => {
     e.stopPropagation();
-    ctx.sound('tap');
+    ctx.sound('confirm');
     ctx.cb.onPlayRoute?.(r.id);
   });
   el.append(

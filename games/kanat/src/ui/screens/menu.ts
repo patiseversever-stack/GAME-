@@ -64,7 +64,10 @@ export const menuScreen: ScreenDef<MenuProps> = {
       ),
       play,
     );
-    tappable(hero, () => cb.onContinue?.(), ctx, `${t('menu.continue')} · ${heroTitle}`);
+    tappable(hero, () => {
+      ctx.sound('confirm');
+      cb.onContinue?.();
+    }, ctx, `${t('menu.continue')} · ${heroTitle}`);
 
     // Daily
     const d = p.daily;
@@ -95,7 +98,6 @@ export const menuScreen: ScreenDef<MenuProps> = {
     settingsBtn.appendChild(ic('settings'));
     settingsBtn.addEventListener('click', (e) => {
       e.stopPropagation();
-      ctx.sound('open');
       const sp = cb.getSettings?.();
       if (sp) ctx.show('settings', sp);
     });

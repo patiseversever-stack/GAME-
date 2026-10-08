@@ -186,6 +186,13 @@ export interface PhotoProps {
   world?: WorldId;
 }
 
+export type UiSoundEvent =
+  | { type: 'uiTap' | 'uiSwish' | 'uiConfirm' | 'uiBack' | 'uiToggle' | 'tallyEnd' | 'reward' | 'photo' }
+  | { type: 'tally'; i: number }
+  | { type: 'star'; index: number };
+/** Short cue names used inside screens (mapped to UiSoundEvent by the controller). */
+export type UiCue = 'tap' | 'open' | 'confirm' | 'back' | 'toggle' | 'tally' | 'tallyEnd' | 'star' | 'reward' | 'photo';
+
 export interface UnlockProps { kind: 'daily' | 'suru' | 'duel' | 'free' | 'weekly' | 'world'; world?: WorldId }
 export interface ToastOpts { id?: string; action?: string; ms?: number; icon?: string }
 
@@ -253,9 +260,14 @@ export interface UICallbacks {
   // ---- platform hooks ----
   /** Bridge-aware clipboard read (falls back to navigator.clipboard). */
   readClipboard?(): Promise<string>;
-  /** UI sound cue (audio agent maps to procedural clicks). */
-  onUiSound?(cue: 'tap' | 'back' | 'open' | 'star' | 'tick' | 'toggle'): void;
+  /** UI sound event — shaped for `audio.event(e)` (uiTap, uiSwish, uiConfirm, uiBack, uiToggle, tally{i}, tallyEnd, star{index}, reward, photo). */
+  onSound?(e: UiSoundEvent): void;
   onHaptic?(pattern: 'light' | 'medium' | 'heavy' | 'success' | 'warning' | 'error'): void;
+  /**
+   * Settings "Sürüm" label element. When provided the integrator wires the hidden perf panel
+   * (e.g. `return attachVersionTapTrigger(el)`); otherwise the UI counts 5 taps and calls openPerfPanel().
+   */
+  onVersionLabel?(el: HTMLElement): void | (() => void);
   /** Optional 3D relief mini-map; return a cleanup fn. When absent the UI draws an SVG top-down map. */
   mountMiniMap?(el: HTMLElement, world: WorldId, selectedRoute: string | undefined): void | (() => void);
   /** Optional live pilot preview in the wardrobe; return a cleanup fn. */

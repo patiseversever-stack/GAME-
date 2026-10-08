@@ -1,6 +1,7 @@
 // Ribbon trails with a 64-point ring buffer (wingtip trails, cosmetic trail effects, high-G vapour, ghost trail).
 // CPU rewrites 128 vertices per frame in age order (≈1.5 KB upload), zero allocations.
 import {
+  BufferAttribute,
   BufferGeometry, Float32BufferAttribute, Mesh, ShaderMaterial, CustomBlending, OneFactor, OneMinusSrcAlphaFactor,
   DynamicDrawUsage, Color, DoubleSide, Vector3,
 } from 'three';
@@ -108,7 +109,7 @@ export class RibbonTrail {
       if (i < TRAIL_POINTS - 1) { const a = i * 2; idx.push(a, a + 1, a + 2, a + 2, a + 1, a + 3); }
     }
     const g = new BufferGeometry();
-    const pa = new Float32BufferAttribute(this.pos, 3);
+    const pa = new BufferAttribute(this.pos, 3);
     pa.setUsage(DynamicDrawUsage);
     g.setAttribute('position', pa);
     g.setAttribute('aAge', new Float32BufferAttribute(age, 1));

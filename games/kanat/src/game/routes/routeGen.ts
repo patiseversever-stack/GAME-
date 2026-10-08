@@ -6,7 +6,7 @@
 // Algorithm (docs/decisions/integrator.md "Geçici rota üreteci"):
 //   1. Candidate paths: seeded start points/headings; each path follows the valley floor (cost = terrain height
 //      ahead) with a bounded turn rate (radius ≥ 220 m), 40 m steps, length = wingsuit time × 44 m/s.
-//   2. Energy line ("need"): backward pass need(s) = max(H(s) + c, need(s + ds) + ds / G) with G = 4.4 and the
+//   2. Energy line ("need"): backward pass need(s) = max(H(s) + c, need(s + ds) + ds / G) with G = 3.9 and the
 //      opening point at H + 85 m. A glider can always follow it (it only has to sink ≥ 1/G).
 //   3. Start: ridge/cliff = standing on the terrain (path rejected when the terrain cannot feed need(0));
 //      balloon = max(need(0), H + 140). Forward pass dives from the start at 1:2 until it meets need(s).
@@ -44,11 +44,14 @@ export interface RouteGenOptions {
 }
 
 const STEP = 40;
-const GLIDE = 4.4;
+const GLIDE = 3.9;
 const DIVE = 2.0;
 const OPEN_AGL = 85;
 const CANOPY_RUN = 140;
 const TURN_R = 220;
+/** Ridge/cliff starts: height of the rock tower the pilot jumps from (a wingsuit needs ~50 m to fly). */
+export const LAUNCH_ROCK_H = 72;
+const LAUNCH_ROCK_H_RELAXED = 90;
 const EXPERT_GROUND_SPEED = 44;
 
 const r2 = (v: number): number => Math.round(v * 100) / 100;
@@ -114,7 +117,7 @@ function surf(s: TerrainSampler, hasSea: boolean, h: number): number {
   return hasSea && h < 0 ? 0 : h;
 }
 
-function evaluate(s: TerrainSampler, p: Path, o: RouteGenOptions, hasSea: boolean, clearance: number, need: Float64Array, line: Float64Array): Eval {
+function evaluate(s: TerrainSampler, p: Path, o: RouteGenOptions, hasSea: boolean, clearance: number, need: Float64Array, line: Float64Array, tol: number, rockH: number): Eval {
   const n = p.n;
   const last = n - 1;
   const hEnd = surf(s, hasSea, p.h[last]);
@@ -129,13 +132,14 @@ function evaluate(s: TerrainSampler, p: Path, o: RouteGenOptions, hasSea: boolea
   if (o.startType === 'balon') {
     y0 = need[0] > h0 + 140 ? need[0] : h0 + 140;
   } else {
-    y0 = h0 + 2;
+    // standing on a rock tower at the launch edge: the wings open well above the 20 m emergency-chute floor
+    y0 = h0 + rockH;
   }
   let cost = 0;
   let minClear = Infinity;
   for (let i = 0; i < n; i++) {
     // the pilot gliding from the start at 1:G must never be asked to be above the energy line (cliff/ridge drop)
-    if (need[i] > y0 - (i * STEP) / GLIDE + 15) return { feasible: false, cost: Infinity, y0, line };
+    if (need[i] > y0 - (i * STEP) / GLIDE + tol) return { feasible: false, cost: Infinity, y0, line };
     const dive = y0 - (i * STEP) / DIVE;
     const y = dive > need[i] ? dive : need[i];
     line[i] = y;
@@ -155,7 +159,7 @@ function evaluate(s: TerrainSampler, p: Path, o: RouteGenOptions, hasSea: boolea
   const drop = y0 - hEnd;
   const budget = (o.wingsuitSec * EXPERT_GROUND_SPEED) / GLIDE + OPEN_AGL;
   if (drop > budget * 1.6) cost += (drop - budget * 1.6) * 0.5;
-  if (o.startType !== 'balon' && drop < budget * 0.55) return { feasible: false, cost: Infinity, y0, line };
+  if (o.startType !== 'balon' && tol < 40 && drop < budget * 0.55) return { feasible: false, cost: Infinity, y0, line };
   return { feasible: minClear >= clearance - 1, cost, y0, line };
 }
 
@@ -163,8 +167,19 @@ function seedOf(o: RouteGenOptions): number {
   return o.seed >>> 0;
 }
 
+export interface LaunchRock {
+  x: number;
+  z: number;
+  baseY: number;
+  topY: number;
+  r0: number;
+  r1: number;
+}
+
 export interface GeneratedRoute {
   route: RouteDef;
+  /** Ridge/cliff starts: the rock tower under route.start (added to the world props as a 'rock'). */
+  launchRock: LaunchRock | null;
   /** Wingsuit line length (m) and estimated expert time (s, jump → touchdown). */
   lineLength: number;
   estTimeSec: number;
@@ -172,9 +187,27 @@ export interface GeneratedRoute {
 
 /** Generate a route. Throws only when the terrain offers no feasible path at all (never for the baked worlds). */
 export function generateRoute(s: TerrainSampler, o: RouteGenOptions): GeneratedRoute {
+  // Relaxation ladder: full length & strict cliff energy check first, then shorter lines / looser checks.
+  const ladder: readonly [number, number][] = [
+    [1, 15],
+    [0.85, 30],
+    [0.72, 45],
+    [0.6, 70],
+    [0.6, Infinity],
+  ];
+  for (const [scale, tol] of ladder) {
+    const r = generateOnce(s, o, scale, tol);
+    if (r) return r;
+  }
+  throw new Error(`routeGen: no feasible path for ${o.id}`);
+}
+
+function generateOnce(s: TerrainSampler, o: RouteGenOptions, scale: number, tol: number): GeneratedRoute | null {
   const hasSea = (s as unknown as { terrain?: { hasSea?: boolean } }).terrain?.hasSea ?? o.world === 'likya';
   const clearance = o.clearance ?? o.gateRadius + 7;
-  const length = o.wingsuitSec * EXPERT_GROUND_SPEED;
+  const length = o.wingsuitSec * EXPERT_GROUND_SPEED * scale;
+  const rockH = tol < 40 ? LAUNCH_ROCK_H : LAUNCH_ROCK_H_RELAXED;
+  const minEdgeSlope = tol < 40 ? 0.55 : 0.32;
   const steps = Math.max(12, Math.round(length / STEP));
   const rng = new Rng(seedOf(o), 11);
   const b = s.bounds;
@@ -234,8 +267,32 @@ export function generateRoute(s: TerrainSampler, o: RouteGenOptions): GeneratedR
         }
       }
     }
+    if (o.startType !== 'balon') {
+      // walk down the fall line to the launch edge: first point whose next 25 m drop ≥ 35° (or the steepest seen)
+      const fx = sin(hd);
+      const fz = -cos(hd);
+      let bestS = -Infinity;
+      let ex = x;
+      let ez = z;
+      for (let k = 0; k < 30; k++) {
+        const qx = x + fx * 10 * k;
+        const qz = z + fz * 10 * k;
+        const sl = (s.height(qx, qz) - s.height(qx + fx * 25, qz + fz * 25)) / 25;
+        if (sl > bestS) {
+          bestS = sl;
+          ex = qx;
+          ez = qz;
+        }
+        if (sl >= 0.7) break;
+      }
+      x = ex;
+      z = ez;
+      // the fall line must really fall: steep edge and ≥ 70 m lower within 160 m (or the suit never gets flying)
+      if (bestS < minEdgeSlope) continue;
+      if (s.height(x, z) - s.height(x + fx * 160, z + fz * 160) < (tol < 40 ? 70 : 45)) continue;
+    }
     if (!tracePath(s, x, z, hd, steps, pa)) continue;
-    const ev = evaluate(s, pa, o, hasSea, clearance, need, line);
+    const ev = evaluate(s, pa, o, hasSea, clearance, need, line, tol, rockH);
     if (!ev.feasible) continue;
     if (ev.cost < bestCost) {
       bestCost = ev.cost;
@@ -247,7 +304,7 @@ export function generateRoute(s: TerrainSampler, o: RouteGenOptions): GeneratedR
       bestLine.set(line);
     }
   }
-  if (best.n === 0) throw new Error(`routeGen: no feasible path for ${o.id}`);
+  if (best.n === 0) return null;
   return buildRoute(s, o, best, bestLine, bestY0, hasSea, clearance);
 }
 
@@ -298,6 +355,24 @@ function buildRoute(s: TerrainSampler, o: RouteGenOptions, p: Path, lineY: Float
   }
 
   const startHeading = atan2(p.x[1] - p.x[0], -(p.z[1] - p.z[0]));
+  let sx = p.x[0];
+  let sy = y0;
+  let sz = p.z[0];
+  let launchRock: LaunchRock | null = null;
+  if (o.startType !== 'balon') {
+    const r1 = 3.2;
+    const r0 = 7.5;
+    let low = p.h[0];
+    for (let a = 0; a < 8; a++) {
+      const hh = s.height(p.x[0] + sin(a * 0.7853981633974483) * r0, p.z[0] - cos(a * 0.7853981633974483) * r0);
+      if (hh < low) low = hh;
+    }
+    launchRock = { x: r2(p.x[0]), z: r2(p.z[0]), baseY: r2(low - 4), topY: r2(y0), r0, r1 };
+    // pilot on the lip of the tower top, facing the drop
+    sx = p.x[0] + sin(startHeading) * (r1 + 0.7);
+    sz = p.z[0] - cos(startHeading) * (r1 + 0.7);
+    sy = y0 + 0.2;
+  }
   const hd = Math.round((startHeading / DEG) * 100) / 100;
   const lineLength = last * STEP;
   const estTimeSec = 0.8 + lineLength / EXPERT_GROUND_SPEED + 1.2 + OPEN_AGL / 5.5;
@@ -310,9 +385,9 @@ function buildRoute(s: TerrainSampler, o: RouteGenOptions, p: Path, lineY: Float
     name: o.name,
     start: {
       type: o.startType,
-      pos: [r2(p.x[0]), r2(y0), r2(p.z[0])],
+      pos: [r2(sx), r2(sy), r2(sz)],
       headingDeg: hd < 0 ? r2(hd + 360) : hd,
-      speedKmh: o.startType === 'balon' ? 18 : 24,
+      speedKmh: o.startType === 'balon' ? 18 : 30,
     },
     line: pts,
     gates,
@@ -324,7 +399,7 @@ function buildRoute(s: TerrainSampler, o: RouteGenOptions, p: Path, lineY: Float
     ustaGorevleri: o.ustaGorevleri ?? [],
     postcards: o.postcards ?? [],
   };
-  return { route, lineLength, estTimeSec };
+  return { route, launchRock, lineLength, estTimeSec };
 }
 
 /**

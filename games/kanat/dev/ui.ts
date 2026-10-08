@@ -17,7 +17,7 @@ import type {
 } from '../src/ui/types.ts';
 
 declare global {
-  interface Window { __shotReady?: boolean; __ui?: typeof UI }
+  interface Window { __shotReady?: boolean; __ui?: typeof UI; __sounds?: { type: string }[] }
 }
 
 // Vite serves public/ at the server root; the gallery lives under /dev/, so resolve assets from '/'.
@@ -197,6 +197,9 @@ const cb: UICallbacks = {
   onContinue: () => UI.show('loading', { progress: 0.42, world: 'kapadokya' }),
   openPerfPanel: () => UI.toast('perf panel'),
   onResultsShare: () => UI.toast(t('toast.copied'), { icon: 'copy' }),
+  onSound: (e) => {
+    (window.__sounds ??= []).push(e);
+  },
 };
 
 // ---------------------------------------------------------------- HUD mock

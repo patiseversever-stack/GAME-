@@ -95,6 +95,9 @@ export function enabledModes(f: FeatureSet = FEATURES): MetaMode[] {
  * world is not shipped). Rank items never depend on optional features (K-23), so every level keeps one reward.
  */
 export function effectiveSource(def: CosmeticDef, f: FeatureSet = FEATURES): UnlockSource | null {
+  // Items that only render inside a cut mode disappear with it (starters included).
+  if (def.kind.startsWith('suru') && !featureOn('suru', f)) return null;
+  if (def.kind === 'photoFilter' && !featureOn('photo', f)) return null;
   const s = def.source;
   switch (s.kind) {
     case 'start':
@@ -106,8 +109,12 @@ export function effectiveSource(def: CosmeticDef, f: FeatureSet = FEATURES): Unl
     case 'postcards':
       if (!worldOn(s.world, f)) return null;
       return featureOn('photo', f) ? s : { kind: 'worldComplete', world: s.world };
-    case 'postcardCount':
-      return featureOn('photo', f) ? s : null; // photo filters live only inside Photo Mode
+    case 'postcardCount': {
+      // Photo filters live only inside Photo Mode; with fewer worlds the count is capped by what exists.
+      if (!featureOn('photo', f)) return null;
+      const cap = postcardsAvailable(f);
+      return s.count <= cap ? s : { kind: 'postcardCount', count: cap };
+    }
     case 'weekly':
       return featureOn('weekly', f) ? s : { kind: 'log', stamps: WEEKLY_TRAIL_FALLBACK_STAMPS };
     case 'suru':

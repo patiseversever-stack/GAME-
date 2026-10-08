@@ -3,6 +3,7 @@
 // contact hardening (crisp near the ground, softer and lighter with height). Multiplicative blend → no lighting
 // mismatch, no shadow maps needed on Low.
 import {
+  BufferAttribute,
   WebGLRenderTarget, OrthographicCamera, Mesh, BufferGeometry, Float32BufferAttribute, ShaderMaterial, Matrix4, Vector3,
   CustomBlending, ZeroFactor, SrcColorFactor, LinearFilter, LinearMipmapLinearFilter, RGBAFormat, UnsignedByteType,
   MeshBasicMaterial, DoubleSide, DynamicDrawUsage, Color,
@@ -78,7 +79,7 @@ export class PilotShadow {
       idx.push(a, a + GRID + 1, a + 1, a + 1, a + GRID + 1, a + GRID + 2);
     }
     const g = new BufferGeometry();
-    const pa = new Float32BufferAttribute(this.pos, 3);
+    const pa = new BufferAttribute(this.pos, 3);
     pa.setUsage(DynamicDrawUsage);
     g.setAttribute('position', pa);
     g.setAttribute('uv', new Float32BufferAttribute(uv, 2));
@@ -86,7 +87,7 @@ export class PilotShadow {
     this.mat = new ShaderMaterial({
       vertexShader: VERT, fragmentShader: FRAG,
       uniforms: { uMask: { value: this.rt.texture }, uShadowMat: { value: this.shadowMat }, uStrength: { value: 0.75 }, uBlur: { value: 0 }, uTint: { value: tint } },
-      transparent: true, depthWrite: false, blending: CustomBlending, blendSrc: ZeroFactor, blendDst: SrcColorFactor,
+      transparent: true, depthWrite: false, side: DoubleSide, blending: CustomBlending, blendSrc: ZeroFactor, blendDst: SrcColorFactor,
       polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4, toneMapped: false, fog: false,
     });
     this.mesh = new Mesh(g, this.mat);

@@ -206,8 +206,12 @@ describe('routes meta', () => {
       expect(checkUsta(score, f, { expertScore: 40000, expertTimeSec: 90 })).toBe(true);
       expect(ustaI18n(score, { expertScore: 40000, expertTimeSec: 90 }).params.value).toBe(Math.ceil(score.value * 40000));
     }
-    const brave = USTA_TASKS.find((t) => t.type === 'braveOpening');
-    if (brave) expect(checkUsta(brave, flight({ routeId: brave.routeId, braveOpening: true, autoParachute: true }))).toBe(false);
+    const brave = USTA_TASKS.find((t) => t.type === 'boldOpen');
+    expect(brave).toBeDefined();
+    if (brave) {
+      expect(checkUsta(brave, flight({ routeId: brave.routeId, braveOpening: true, autoParachute: true }))).toBe(false);
+      expect(checkUsta(brave, flight({ routeId: brave.routeId, braveOpening: true }))).toBe(true);
+    }
   });
 });
 

@@ -1,6 +1,7 @@
 // Procedural ram-air parachute: 9 cells (10 ribs), anhedral arc, inflated cell tops, open cell mouths, line cascade
 // to four risers. 1.2 s inflation animation driven by `inflate` (0 packed → 1 flying) in the vertex shader.
 import {
+  BufferAttribute,
   BufferGeometry, Float32BufferAttribute, Mesh, MeshStandardMaterial, DoubleSide, LineSegments, LineBasicMaterial,
   Group, Vector3, Color, DynamicDrawUsage,
 } from 'three';
@@ -187,7 +188,7 @@ export class Canopy {
     this.lineCount = this.attach.length;
     this.linePos = new Float32Array(this.lineCount * 6);
     const lg = new BufferGeometry();
-    const la = new Float32BufferAttribute(this.linePos, 3);
+    const la = new BufferAttribute(this.linePos, 3);
     la.setUsage(DynamicDrawUsage);
     lg.setAttribute('position', la);
     this.lines = new LineSegments(lg, new LineBasicMaterial({ color: 0x2a2a2a, transparent: true, opacity: 0.75 }));

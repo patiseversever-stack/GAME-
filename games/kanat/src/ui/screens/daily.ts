@@ -43,7 +43,7 @@ export const dailyScreen: ScreenDef<DailyProps> = {
     const fly = h('button', { class: 'kn-btn kn-btn--primary kn-btn--lg kn-grow', type: 'button' }, ic('play'), h('span', { text: t('common.play') }));
     fly.addEventListener('click', (e) => {
       e.stopPropagation();
-      ctx.sound('tap');
+      ctx.sound('confirm');
       ctx.cb.onPlayDaily?.();
     });
     const share = h('button', { class: 'kn-btn kn-btn--lg', type: 'button', disabled: !hasBest }, ic('share'), h('span', { text: t('common.share') }));
@@ -112,7 +112,7 @@ export const duelScreen: ScreenDef<DuelProps> = {
       const race = h('button', { class: 'kn-btn kn-btn--primary kn-btn--lg kn-btn--block', type: 'button' }, ic('play'), h('span', { text: t('duel.race') }));
       race.addEventListener('click', (e) => {
         e.stopPropagation();
-        ctx.sound('tap');
+        ctx.sound('confirm');
         ctx.cb.onDuelStart?.(input.value.trim());
       });
       card = h(

@@ -111,7 +111,7 @@ vec3 skyColor(vec3 dir) {
   vec2 hs = normalize(vec2(sd.x, sd.z) + 1e-5);
   float az = dot(hz, hs) * 0.5 + 0.5;
   float sunVis = smoothstep(-0.07, 0.02, sd.y);
-  c += uSunColor * (pow(az, 6.0) * (1.0 - t2) * 0.55 * (0.35 + 0.65 * sunVis));
+  c += uSunColor * (pow(az, 8.0) * exp(-max(h, 0.0) * 9.0) * 0.5 * (0.35 + 0.65 * sunVis));
   c += uSunColor * pow(max(mu, 0.0), 220.0) * 2.2 * sunVis;
   c += uSunColor * pow(max(mu, 0.0), 18.0) * 0.38 * (0.4 + 0.6 * sunVis);
   // sun disc (clipped by the horizon)

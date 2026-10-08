@@ -38,11 +38,11 @@ void main() {
   vec3 alb = vCol * (0.75 + 0.5 * n);
   // wet dark band at the waterline
   alb *= mix(0.55, 1.0, smoothstep(0.0, uWetLine, vWorld.y));
-  vec3 amb = mix(uSkyZenith * 0.9, uSkyHorizon * 0.55, 0.5 - 0.5 * N.y) + uSea * 0.25;
-  float wrap = clamp((dot(N, L) + 0.3) / 1.3, 0.0, 1.0);
-  vec3 col = alb * (amb * 0.9 + uSunColor * wrap * 1.15 * sunUp);
+  vec3 amb = mix(uSkyZenith * 1.3, uSkyMid * 0.45, 0.5 - 0.5 * N.y) + uSea * 0.35;
+  float wrap = clamp((dot(N, L) + 0.12) / 1.12, 0.0, 1.0);
+  vec3 col = alb * (amb * 0.8 + uSunColor * wrap * 0.32 * sunUp);
   float fr = pow(1.0 - max(dot(N, V), 0.0), 3.0);
-  col += fr * uSunColor * (0.35 + 0.65 * max(dot(-V, L), 0.0)) * 0.5 * sunUp;
+  col += fr * uSunColor * (0.2 + 0.8 * pow(max(dot(-V, L), 0.0), 2.0)) * 0.22 * sunUp;
   col += vCol * uEmissive;
   col = applyStorm(col, stormMask(vWorld.xz));
   col = applyNight(col, nightMask(vWorld.xz));
@@ -228,7 +228,7 @@ export class Environment {
     this.clear();
     const rnd = seeded(layout.seed ^ 0x51ed);
     // ---- reed islets ----
-    const reedCount = this.tier === 'low' ? 260 : this.tier === 'medium' ? 520 : this.tier === 'high' ? 820 : 1100;
+    const reedCount = this.tier === 'low' ? 420 : this.tier === 'medium' ? 800 : this.tier === 'high' ? 1300 : 1800;
     const blades: number[][] = [];
     for (const isl of layout.islets) {
       this.group.add(this.mound(isl.x, isl.z, isl.r, rnd));
@@ -237,7 +237,7 @@ export class Environment {
         const rr = Math.sqrt(rnd()) * isl.r * (0.95 + 0.1 * Math.sin(a * 3 + isl.x));
         const edge = rr / isl.r;
         const h = (2.2 + rnd() * 2.6) * (1 - edge * 0.35);
-        blades.push([isl.x + Math.cos(a) * rr, isl.z + Math.sin(a) * rr, h, rnd() * Math.PI, rnd() * 6.28, (rnd() - 0.5) * 0.6 + edge * 0.4, rnd(), 0.07 + rnd() * 0.05]);
+        blades.push([isl.x + Math.cos(a) * rr, isl.z + Math.sin(a) * rr, h, rnd() * Math.PI, rnd() * 6.28, (rnd() - 0.5) * 0.6 + edge * 0.4, rnd(), 0.22 + rnd() * 0.18]);
       }
     }
     // ---- far shore: land silhouettes + reed fringe (layers by tier) ----
@@ -250,7 +250,7 @@ export class Environment {
         const ang = sh.from + rnd() * (sh.to - sh.from);
         const rr = sh.dist - 4 + rnd() * 10 * layers;
         // ψ convention: x = sin, z = −cos
-        blades.push([Math.sin(ang) * rr, -Math.cos(ang) * rr, 2.5 + rnd() * 3.2, rnd() * Math.PI, rnd() * 6.28, (rnd() - 0.5) * 0.5, rnd(), 0.09 + rnd() * 0.06]);
+        blades.push([Math.sin(ang) * rr, -Math.cos(ang) * rr, 2.5 + rnd() * 3.2, rnd() * Math.PI, rnd() * 6.28, (rnd() - 0.5) * 0.5, rnd(), 0.3 + rnd() * 0.2]);
       }
     }
     this.group.add(this.reeds(blades));
@@ -291,7 +291,7 @@ export class Environment {
     g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
     g.setIndex(idx);
     g.computeVertexNormals();
-    colorAttr(g, '#3B3A2A', 0.25, rnd);
+    colorAttr(g, '#2A2A1E', 0.25, rnd);
     this.disposables.push(g);
     const m = new THREE.Mesh(g, this.litMat);
     m.position.set(x, 0, z);
@@ -355,18 +355,22 @@ export class Environment {
   }
 
   private rock(x: number, z: number, r: number, rnd: () => number): THREE.Mesh {
-    const g = new THREE.IcosahedronGeometry(r, 2);
+    // indexed sphere → smooth normals after displacement (weathered boulder, not low-poly shards)
+    const g = new THREE.SphereGeometry(r, 18, 12);
     const p = g.getAttribute('position') as THREE.BufferAttribute;
     const ph = rnd() * 100;
     for (let i = 0; i < p.count; i++) {
       const vx = p.getX(i);
       const vy = p.getY(i);
       const vz = p.getZ(i);
-      const n = 1 + 0.18 * Math.sin(vx * 0.9 + ph) * Math.cos(vz * 1.1 + ph) + 0.08 * Math.sin(vy * 2.3 + ph * 2);
-      p.setXYZ(i, vx * n, vy * n * 0.55 - r * 0.18, vz * n);
+      const u = vx / r;
+      const v = vy / r;
+      const w = vz / r;
+      const n = 1 + 0.16 * Math.sin(u * 2.7 + ph) * Math.cos(w * 3.1 + ph) + 0.07 * Math.sin(v * 5.3 + ph * 2) + 0.05 * Math.sin((u + w) * 7.0 + ph);
+      p.setXYZ(i, vx * n, Math.max(vy * n * 0.5, -r * 0.3) - r * 0.12, vz * n);
     }
     g.computeVertexNormals();
-    colorAttr(g, '#5C5249', 0.3, rnd);
+    colorAttr(g, '#4A4743', 0.3, rnd);
     this.disposables.push(g);
     const m = new THREE.Mesh(g, this.litMat);
     m.position.set(x, 0, z);

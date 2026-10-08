@@ -10,7 +10,7 @@ import { getLang, onLangChange, setLang, type Lang } from './i18n.ts';
 import { applyRootFlags, setSafeArea as applySafeArea, type SafeArea } from './theme.ts';
 import { loadFonts } from './fonts.ts';
 import { h } from './dom.ts';
-import type { ScreenId, ToastOpts, UICallbacks } from './types.ts';
+import type { ScreenId, ToastOpts, UICallbacks, UiCue, UiSoundEvent } from './types.ts';
 import type { ScreenCtx, ScreenDef } from './screens/screen.ts';
 import { FlightHud } from './hud/FlightHud.ts';
 import { SCREENS } from './screens/index.ts';
@@ -115,6 +115,7 @@ export class UIController {
       for (const e of this.stack.splice(existing)) this.removeEntry(e, false);
     }
     const entry = this.build(screen, props, false);
+    if (def.layer === 'page') this.sound('open');
     this.stack.push(entry);
     this.screensLayer.appendChild(entry.el);
     this.syncHud();
@@ -207,8 +208,21 @@ export class UIController {
   }
 
   // ------------------------------------------------------------------ internals
-  private sound(cue: 'tap' | 'back' | 'open' | 'star' | 'tick' | 'toggle'): void {
-    this.cb.onUiSound?.(cue);
+  private sound(cue: UiCue, n = 0): void {
+    const f = this.cb.onSound;
+    if (!f) return;
+    let e: UiSoundEvent;
+    switch (cue) {
+      case 'tap': e = { type: 'uiTap' }; break;
+      case 'open': e = { type: 'uiSwish' }; break;
+      case 'confirm': e = { type: 'uiConfirm' }; break;
+      case 'back': e = { type: 'uiBack' }; break;
+      case 'toggle': e = { type: 'uiToggle' }; break;
+      case 'tally': e = { type: 'tally', i: n }; break;
+      case 'star': e = { type: 'star', index: n }; break;
+      default: e = { type: cue };
+    }
+    f(e);
   }
 
   private ctxFor(entry: Entry): ScreenCtx {
@@ -222,7 +236,7 @@ export class UIController {
         if (idx >= 0) this.replaceEntry(idx, p);
       },
       toast: (text, o) => this.toast(text, o),
-      sound: (c) => this.sound(c),
+      sound: (c, n) => this.sound(c, n),
       applySettings: (s) => this.setSettings(s),
       onCleanup: (fn) => entry.cleanups.push(fn),
       refresh: false,

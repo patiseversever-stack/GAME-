@@ -3,6 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- assets.ts resolves ./worlds/... relative to the document: serve them from the project root -->
+<base href="../" />
 <title>KANAT — terrain dev</title>
 <style>
   body { margin: 0; background: #0e141c; color: #f5f1e8; font: 13px/1.4 system-ui, sans-serif; }
@@ -22,6 +24,6 @@
 </header>
 <div id="grid"></div>
 <div id="info"></div>
-<script type="module" src="./terrain.ts"></script>
+<script type="module" src="./dev/terrain.ts"></script>
 </body>
 </html>

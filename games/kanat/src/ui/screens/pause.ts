@@ -16,7 +16,7 @@ export const pauseScreen: ScreenDef<PauseProps> = {
       const b = h('button', { class: `kn-btn kn-btn--block ${cls}`.trim(), type: 'button' }, ic(icon), h('span', { text: label }));
       b.addEventListener('click', (e) => {
         e.stopPropagation();
-        ctx.sound('tap');
+        ctx.sound(cls.includes('kn-btn--primary') ? 'confirm' : 'tap');
         fn();
       });
       return b;

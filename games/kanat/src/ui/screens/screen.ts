@@ -1,6 +1,6 @@
 // Screen module contract used by the UI controller.
 import type { Settings } from '../../core/settings.ts';
-import type { UICallbacks, ScreenId, ToastOpts } from '../types.ts';
+import type { UICallbacks, ScreenId, ToastOpts, UiCue } from '../types.ts';
 
 /** root: replaces the whole stack · page: full-screen push · overlay: full-screen layer over the game · card: small modal. */
 export type LayerKind = 'root' | 'page' | 'overlay' | 'card';
@@ -14,7 +14,8 @@ export interface ScreenCtx {
   /** Re-render this screen with new props (keeps scroll position where possible). */
   rerender(props: unknown): void;
   toast(text: string, opts?: ToastOpts): void;
-  sound(cue: 'tap' | 'back' | 'open' | 'star' | 'tick' | 'toggle'): void;
+  /** UI sound cue; `n` = row index for 'tally', star index (0-based) for 'star'. */
+  sound(cue: UiCue, n?: number): void;
   /** Apply settings to the UI immediately (language, mirroring, big HUD, colour-blind, reduce motion). */
   applySettings(s: Settings): void;
   /** Register a cleanup for timers / rAF / mounted hooks. */

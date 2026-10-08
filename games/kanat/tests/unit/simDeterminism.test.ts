@@ -90,12 +90,15 @@ describe('determinism', () => {
   });
   it('prop placement is deterministic and < 300 ms per world (analytic sampler)', () => {
     for (const w of WORLD_IDS) {
-      const t0 = performance.now();
+      // CPU time of this process (not wall time: parallel test workers / other jobs share the cores);
+      // min of a cold and a warm call (the first call also pays JIT warm-up).
+      const c0 = process.cpuUsage();
       const a = buildProps(w, terrain, {});
-      const t1 = performance.now();
+      const c1 = process.cpuUsage(c0);
+      const c2 = process.cpuUsage();
       const b = buildProps(w, terrain, {});
-      // warm timing (the first call also pays JIT warm-up; parallel test workers add noise)
-      const ms = Math.min(t1 - t0, performance.now() - t1);
+      const c3 = process.cpuUsage(c2);
+      const ms = Math.min(c1.user + c1.system, c3.user + c3.system) / 1000;
       expect(JSON.stringify(b)).toBe(JSON.stringify(a));
       expect(ms).toBeLessThan(300);
       expect(a.length).toBeGreaterThan(100);
@@ -138,11 +141,13 @@ describe.skipIf(!haveReal)('real terrain (public/worlds/kapadokya)', () => {
     const mod = (await import('../../tools/terrain/loadNode.ts')) as unknown as { loadWorldNode: (id: 'kapadokya') => { config: Record<string, unknown>; sampler: TerrainSampler } };
     const W = mod.loadWorldNode('kapadokya');
     const s = W.sampler;
-    const t0 = performance.now();
+    const c0 = process.cpuUsage();
     const rProps = buildProps('kapadokya', s, W.config as Parameters<typeof buildProps>[2]);
-    const t1 = performance.now();
+    const c1 = process.cpuUsage(c0);
+    const c2 = process.cpuUsage();
     buildProps('kapadokya', s, W.config as Parameters<typeof buildProps>[2]);
-    const placeMs = Math.min(t1 - t0, performance.now() - t1);
+    const c3 = process.cpuUsage(c2);
+    const placeMs = Math.min(c1.user + c1.system, c3.user + c3.system) / 1000;
     expect(placeMs).toBeLessThan(300);
     expect(rProps.filter((p) => p.type === 'chimney').length).toBeGreaterThan(1000);
     const rBalloons = balloonsFor('kapadokya', s, 7);

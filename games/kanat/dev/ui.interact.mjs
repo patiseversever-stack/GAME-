@@ -82,6 +82,8 @@ try {
   await ready(`${base}?screen=results&lang=tr`);
   const stamped = await page.evaluate(() => document.querySelectorAll('.kn-res-star.is-on').length);
   check('results stars stamped', stamped === 3, String(stamped));
+  const sounds = await page.evaluate(() => (window.__sounds ?? []).map((e) => e.type + (e.index ?? e.i ?? '')).join(','));
+  check('results sound events (tally/star/reward)', sounds.includes('tally0') && sounds.includes('tallyEnd') && sounds.includes('star0') && sounds.includes('star2') && sounds.includes('reward'), sounds);
 
   check('no page errors', errors.length === 0, errors.join(' | '));
 } finally {

@@ -224,7 +224,8 @@ export function buildPilotGeometry(level: 0 | 1 | 2): BufferGeometry {
       { c: new Vector3(s * 0.24, 0.025, -0.43), a1, a2, r1: 0.065, r2: 0.06, w: [[up, 1]], mat: MAT.suit },
       { c: new Vector3(s * 0.46, 0.025, -0.415), a1, a2, r1: 0.052, r2: 0.05, w: [[up, 0.65], [fo, 0.35]], mat: MAT.suit },
       { c: new Vector3(s * 0.55, 0.025, -0.405), a1, a2, r1: 0.048, r2: 0.046, w: [[fo, 1]], mat: MAT.suit },
-      { c: new Vector3(s * 0.76, 0.02, -0.385), a1, a2, r1: 0.04, r2: 0.036, w: [[fo, 0.8], [ha, 0.2]], mat: MAT.trim },
+      { c: new Vector3(s * 0.765, 0.02, -0.385), a1, a2, r1: 0.04, r2: 0.036, w: [[fo, 0.8], [ha, 0.2]], mat: MAT.suit },
+      { c: new Vector3(s * 0.785, 0.02, -0.382), a1, a2, r1: 0.042, r2: 0.037, w: [[fo, 0.3], [ha, 0.7]], mat: MAT.trim },
       { c: new Vector3(s * 0.8, 0.02, -0.38), a1, a2, r1: 0.04, r2: 0.032, w: [[ha, 1]], mat: MAT.glove },
       { c: new Vector3(s * 0.88, 0.015, -0.375), a1, a2, r1: 0.05, r2: 0.024, w: [[ha, 1]], mat: MAT.glove },
       { c: new Vector3(s * 0.96, 0.01, -0.37), a1, a2, r1: 0.04, r2: 0.016, w: [[ha, 1]], mat: MAT.glove },
@@ -256,7 +257,7 @@ export function buildPilotGeometry(level: 0 | 1 | 2): BufferGeometry {
   {
     const p = newPart();
     const secs: Section[] = [];
-    for (const [z, rx, ry] of [[-0.03, 0.12, 0.03], [0.0, 0.155, 0.07], [-0.36, 0.165, 0.075], [-0.39, 0.12, 0.03]] as [number, number, number][]) {
+    for (const [z, rx, ry] of [[-0.06, 0.1, 0.025], [-0.08, 0.13, 0.055], [-0.33, 0.14, 0.06], [-0.36, 0.1, 0.025]] as [number, number, number][]) {
       secs.push({ c: new Vector3(0, 0.12 + ry * 0.4, z), a1: X, a2: Y, r1: rx, r2: ry, w: [[B.chest, 0.6], [B.spine, 0.4]], mat: MAT.container });
     }
     loft(p, secs, Math.max(6, D.radial - 2), true, true);
