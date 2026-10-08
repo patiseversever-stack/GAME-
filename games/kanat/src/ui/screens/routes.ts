@@ -34,7 +34,7 @@ function miniMap(world: WorldId, routes: RouteVM[], selected: string | undefined
   const lines = routes.map((r, i) => (r.line && r.line.length > 1 ? r.line : null) ?? fallbackLine(i));
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
   for (const l of lines) for (const [x, y] of l) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
-  const span = Math.max(maxX - minX, (maxY - minY) * (W / H), 1e-6);
+  const span = Math.max(maxX - minX, (maxY - minY) * (W / H) * 1.3, 1e-6);
   const sx = (W - 48) / span;
   const ox = (W - (maxX - minX) * sx) / 2;
   const oy = (H - (maxY - minY) * sx) / 2;

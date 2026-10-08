@@ -91,7 +91,7 @@
   "splat": "splat_core.png",
   "shadowAo": "shadow_ao.png",
   "colorMacro": "color_macro.webp",
-  "colorMacroKtx2": null,
+  "colorMacroKtx2": "color_macro.ktx2",
   "colorFar": "color_far.webp",
   "coverage": {
    "core": {

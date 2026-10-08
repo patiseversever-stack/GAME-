@@ -133,7 +133,9 @@
 @keyframes kn-warn { from { opacity: 0.15; } to { opacity: 1; } }
 
 @media (orientation: landscape) and (max-height: 560px) {
-  .kn-hud-pops { top: calc(var(--kn-safe-top) + 12vh); }
+  .kn-hud-pops { top: calc(var(--kn-safe-top) + 78px); }
+  .kn-hud-ring { zoom: 0.84; }
+  .kn-big .kn-hud > .kn-hud-ring { zoom: 1.02; }
   .kn-hud-speed { top: 58%; }
   .kn-alt-bar { height: 156px; }
   .kn-hud-ring { bottom: calc(var(--kn-safe-bottom) + 6px); }

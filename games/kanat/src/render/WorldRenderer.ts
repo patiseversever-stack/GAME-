@@ -3,7 +3,10 @@
 // setTier(t) only at natural breaks; perf(); dispose() frees everything (world change).
 import * as THREE from 'three';
 import type { QualityTier } from '../core/settings.ts';
-import type { LoadedWorld } from '../content/worlds.ts';
+import { worldFile, type LoadedWorld } from '../content/worlds.ts';
+import { fetchAsset } from '../core/assets.ts';
+import { decodeHeightGrid } from '../sim/terrain/decode.ts';
+import type { HeightGrid } from '../sim/terrain/types.ts';
 import type { WorldId } from '../sim/types.ts';
 import { KanatRenderer, type RendererPerf, type RenderTierParams } from './Renderer.ts';
 import {
@@ -65,6 +68,8 @@ export class WorldRenderer {
   readonly lightProbe = new THREE.LightProbe();
   readonly sky: Sky;
   terrain: TerrainRenderer | null = null;
+  /** Pamukkale 1 m travertine patch (third terrain draw call). */
+  terrainPatch: TerrainRenderer | null = null;
   terrainData: TerrainData | null = null;
   /** GPU-baked sun visibility (R) + AO (G) over the core; props may sample it. */
   terrainShadow: THREE.WebGLRenderTarget | null = null;
@@ -167,6 +172,19 @@ export class WorldRenderer {
     terrain.setDebugMagenta(this.debugMagenta);
     this.terrain = terrain;
     this.scene.add(terrain.mesh);
+    if (data.hPatch) {
+      const patch = new TerrainRenderer(this.renderer, data, p, {
+        ids: cfg.layers ?? ['rock', 'rock', 'grass', 'soil'],
+        colors: cfg.layerColors ?? ['#9A8A7A', '#8A7F76', '#8F8A5A', '#8A7460'],
+      }, { kind: 'patch', detail: terrain.detail });
+      patch.setShadowTexture(this.terrainShadow.texture);
+      patch.setPrelit(look.prelit, 1.0, look.prelitGamma);
+      patch.setStrata(look.terrain.strataPeriod, look.terrain.strata, look.terrain.strataRose);
+      patch.setRills(look.terrain.rills, 1600);
+      patch.setDebugMagenta(this.debugMagenta);
+      this.terrainPatch = patch;
+      this.scene.add(patch.mesh);
+    }
     for (const t of data.textures()) this.kr.trackTexture(t, false);
     this.kr.trackTexture(terrain.detail.texture, true);
     this.kr.trackRenderTarget(terrain.detail.rt);
@@ -188,16 +206,28 @@ export class WorldRenderer {
     this.applyEnvironment();
 
     // Water (Likya sea, Pamukkale pools).
-    const wcfg = cfg.water as unknown as { enabled?: boolean; kind?: string; level?: number; shallow?: string; deep?: string; foam?: string } | undefined;
-    if (wcfg?.enabled && (wcfg.kind === 'sea' || wcfg.kind === 'pools')) {
+    const wcfg = cfg.water as unknown as { enabled?: boolean; kind?: string; level?: number; shallow?: string; deep?: string; foam?: string; depthFalloffM?: number } | undefined;
+    let poolGrid: HeightGrid | null = null;
+    const pinfo = cfg.terrain?.patchInfo;
+    if (wcfg?.kind === 'pools' && pinfo?.water) {
+      try {
+        const bytes = new Uint8Array(await fetchAsset(worldFile(cfg.id, pinfo.water.file)));
+        poolGrid = decodeHeightGrid(bytes, pinfo.water);
+      } catch (e) {
+        console.warn('pool water grid unavailable', e);
+      }
+    }
+    if ((wcfg?.enabled || poolGrid) && (wcfg?.kind === 'sea' || wcfg?.kind === 'pools')) {
       this.water = new Water(this.renderer, this.kr.params, {
-        kind: wcfg.kind,
+        kind: wcfg.kind as 'sea' | 'pools',
         level: wcfg.level ?? 0,
         shallow: wcfg.shallow ?? look.water?.shallow ?? '#2BB3B1',
         deep: wcfg.deep ?? look.water?.deep ?? '#0B4F6C',
         foam: wcfg.foam ?? look.water?.foam ?? '#F2F7F5',
         terrain: data,
         pools: [],
+        poolGrid,
+        depthFalloff: wcfg.depthFalloffM ?? 3,
         skyCube: this.sky.cubeRT.texture,
       });
       this.scene.add(this.water.object);
@@ -262,6 +292,7 @@ export class WorldRenderer {
     this.debugMagenta = on;
     setAtmosphereDebugMagenta(on);
     this.terrain?.setDebugMagenta(on);
+    this.terrainPatch?.setDebugMagenta(on);
   }
 
   /** Per-frame: dt in seconds (render time, may be slowed in replays). */
@@ -274,6 +305,7 @@ export class WorldRenderer {
     camera.updateMatrixWorld();
     this.sky.update(camera);
     this.terrain?.update(camera);
+    this.terrainPatch?.update(camera);
     this.water?.update(this.time, camera);
     this.clouds?.update(this.time, camera);
     if (this.post) this.post.render(dt, camera);
@@ -282,7 +314,7 @@ export class WorldRenderer {
 
   perf(): WorldRenderPerf {
     const base = this.kr.perf();
-    const nodes = this.terrain?.nodeCount ?? 0;
+    const nodes = (this.terrain?.nodeCount ?? 0) + (this.terrainPatch?.nodeCount ?? 0);
     return {
       ...base,
       terrainNodes: nodes,
@@ -339,6 +371,11 @@ export class WorldRenderer {
   }
 
   private disposeWorld(): void {
+    if (this.terrainPatch) {
+      this.scene.remove(this.terrainPatch.mesh);
+      this.terrainPatch.dispose();
+      this.terrainPatch = null;
+    }
     if (this.terrain) {
       this.scene.remove(this.terrain.mesh);
       this.kr.untrackTexture(this.terrain.detail.texture);

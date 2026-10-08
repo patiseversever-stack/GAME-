@@ -53,21 +53,25 @@ export class Ambience {
   }
 
   setScene(ids: readonly AmbienceId[]): void {
+    const same = ids.length === this.scene.length && ids.every((id, i) => this.scene[i] === id);
     this.scene = ids;
+    this.applyLevels();
+    if (same) return;
+    if (!ids.includes('suru')) this.setStorm(false);
+    const now = this.ctx.currentTime;
+    this.nextGull = now + 3 + this.rng.next() * 5;
+    this.nextBurner = now + 1.0 + this.rng.next() * 2;
+  }
+
+  private applyLevels(): void {
+    const ids = this.scene;
     const has = (id: AmbienceId) => ids.includes(id);
     const k = 1 - 0.5 * this.windMask;
     this.sea.set(has('sea') || has('suru') ? dbToGain(SFX.waves.db) * k : 0, 1.2);
     this.rain.set(has('rain') ? dbToGain(SFX.rain.db) * k : 0, 1.2);
     this.trickle.set(has('trickle') ? dbToGain(SFX.trickle.db) * k : 0, 1.2);
-    if (!has('suru')) {
-      this.murmur.set(0, 1.0);
-      this.setStorm(false);
-    } else {
-      this.applySuru();
-    }
-    const now = this.ctx.currentTime;
-    this.nextGull = now + 3 + this.rng.next() * 5;
-    this.nextBurner = now + 1.0 + this.rng.next() * 2;
+    if (has('suru')) this.applySuru();
+    else this.murmur.set(0, 1.0);
   }
 
   /** High flight speed masks distant beds (they stay, just recede). */
@@ -75,7 +79,7 @@ export class Ambience {
     const m = clamp(k, 0, 1);
     if (Math.abs(m - this.windMask) < 0.05) return;
     this.windMask = m;
-    this.setScene(this.scene);
+    this.applyLevels();
   }
 
   setSuru(s: SuruAudioState): void {

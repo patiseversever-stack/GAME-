@@ -334,7 +334,7 @@ function scatter(
       let tries = 0;
       while (acc > next && placed < count) {
         next += stepW;
-        if (tries++ > 2) continue;
+        if (tries++ > 3) continue; // at most 4 candidates per cell
         const x = x0 + (i + 0.1 + 0.8 * rng.next()) * cell;
         const z = z0 + (j + 0.1 + 0.8 * rng.next()) * cell;
         if (ctx.blocked(x, z)) continue;
@@ -539,7 +539,7 @@ function buildKapadokya(ctx: Ctx, cfg: PropBuildConfig, gseed: number): void {
     ctx,
     rngT,
     scaled(hp.count, cfg),
-    9,
+    16,
     roiT,
     (x, z) => {
       const f = centerFalloff(ctx, x, z, roiT);
@@ -732,7 +732,7 @@ function buildLikya(ctx: Ctx, cfg: PropBuildConfig, gseed: number): void {
     ctx,
     rngT,
     scaled(hp.count, cfg),
-    9,
+    16,
     roiT,
     (x, z) => {
       const f = centerFalloff(ctx, x, z, roiT);
@@ -847,7 +847,7 @@ function buildKaradeniz(ctx: Ctx, cfg: PropBuildConfig, gseed: number): void {
     ctx,
     rngT,
     scaled(hs.count, cfg),
-    8,
+    16,
     roiT,
     (x, z) => {
       const f = centerFalloff(ctx, x, z, roiT);
@@ -1098,7 +1098,7 @@ function buildPamukkale(ctx: Ctx, cfg: PropBuildConfig, gseed: number): void {
     ctx,
     rngT,
     scaled(hj.count, cfg),
-    14,
+    18,
     roiT,
     (x, z) => {
       const f = centerFalloff(ctx, x, z, roiT);

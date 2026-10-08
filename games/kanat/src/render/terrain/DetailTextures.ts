@@ -16,7 +16,7 @@ export function layerKind(id: string): LayerKind {
   if (s.includes('trav')) return 'travertine';
   if (s.includes('kar') || s.includes('snow') || s.includes('buz') || s.includes('ice')) return 'snow';
   if (s.includes('kum') || s.includes('sand') || s.includes('sahil') || s.includes('plaj')) return 'sand';
-  if (s.includes('cam') || s.includes('çam') || s.includes('ladin') || s.includes('orman') || s.includes('igne') || s.includes('forest') || s.includes('ardic')) return 'forest';
+  if (s.includes('cam') || s.includes('çam') || s.includes('ladin') || s.includes('orman') || s.includes('igne') || s.includes('forest') || s.includes('ardic') || s.includes('maki')) return 'forest';
   if (s.includes('ot') || s.includes('cayir') || s.includes('çayır') || s.includes('grass') || s.includes('meadow') || s.includes('bag') || s.includes('bağ')) return 'grass';
   if (s.includes('toprak') || s.includes('soil') || s.includes('dirt') || s.includes('tarla')) return 'soil';
   return 'rock';

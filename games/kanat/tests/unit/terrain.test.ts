@@ -216,7 +216,7 @@ describe('baked data textures', () => {
         const path = join(worldDir(id), file);
         const meta = await sharp(path).metadata();
         expect(meta.isPalette ?? false, `${file} palette`).toBe(false);
-        expect(meta.paletteBitDepth, `${file} paletteBitDepth`).toBeUndefined();
+        expect((meta as { paletteBitDepth?: number }).paletteBitDepth, `${file} paletteBitDepth`).toBeUndefined();
         expect(meta.channels).toBe(channels);
         expect(meta.width).toBe(1024);
         const { data } = await sharp(path).raw().toBuffer({ resolveWithObject: true });

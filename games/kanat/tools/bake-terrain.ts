@@ -765,7 +765,7 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
       ambientStrength: round3([bl.ambStrength * bl.norm, 0, 0])[0],
       formula:
         'w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); ' +
-        'skyShape=0.5+0.3*n.y+0.2*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); ' +
+        'skyShape=0.62+0.22*n.y+0.16*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*(0.35+0.65*ao)*skyShape); ' +
         `wrap=${bl.wrap}, ndl0=${bl.ndl0.toFixed(4)}, k=${bl.k.toFixed(4)}; soft shoulder above 0.8; sRGB encode`,
     },
     props: def.props,

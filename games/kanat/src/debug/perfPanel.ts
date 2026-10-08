@@ -86,14 +86,13 @@ export function openPerfPanel(onClose?: () => void): void {
     'border:1px solid rgba(255,255,255,0.15)',
     'border-radius:8px',
     'padding:8px 10px',
-    'pointer-events:auto',
-    'user-select:text',
-    '-webkit-user-select:text',
+    // the overlay never steals game input; only its close button is interactive
+    'pointer-events:none',
   ].join(';');
   el.innerHTML =
     '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">' +
     '<b style="letter-spacing:.08em">PERF</b>' +
-    '<button type="button" data-input-ignore aria-label="Kapat" style="all:unset;cursor:pointer;padding:2px 8px;border:1px solid rgba(255,255,255,.3);border-radius:4px">×</button>' +
+    '<button type="button" data-input-ignore aria-label="Kapat" style="all:unset;pointer-events:auto;cursor:pointer;padding:2px 8px;border:1px solid rgba(255,255,255,.3);border-radius:4px">×</button>' +
     '</div><table style="border-collapse:collapse;width:100%"><tbody></tbody></table>';
   const style = document.createElement('style');
   style.textContent = '#kanat-perf-panel th{text-align:left;font-weight:600;padding:1px 8px 1px 0;white-space:nowrap;color:#9fb3c8;vertical-align:top}#kanat-perf-panel td{padding:1px 0;word-break:break-word}';

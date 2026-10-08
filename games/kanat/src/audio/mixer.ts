@@ -48,6 +48,9 @@ export class Mixer {
   private readonly shaper: WaveShaperNode;
   private readonly convolver: ConvolverNode;
   private readonly verbOut: GainNode;
+  private readonly musicMuffle: BiquadFilterNode;
+  private cloudK = 0;
+  private muffled = false;
   private duckUntil = 0;
   private duckDepth = 0;
   private crashOn = false;
@@ -102,7 +105,11 @@ export class Mixer {
     // music
     this.verbIn.connect(this.convolver).connect(this.verbOut).connect(this.musicLP);
     this.musicIn.connect(this.musicLP);
-    this.musicLP.connect(this.musicDuck).connect(this.musicVol).connect(this.masterIn);
+    this.musicMuffle = ctx.createBiquadFilter();
+    this.musicMuffle.type = 'lowpass';
+    this.musicMuffle.frequency.value = 20000;
+    this.musicMuffle.Q.value = 0.5;
+    this.musicLP.connect(this.musicDuck).connect(this.musicMuffle).connect(this.musicVol).connect(this.masterIn);
     // ambience / sfx / ui
     this.ambIn.connect(this.ambLP).connect(this.ambVol).connect(this.masterIn);
     this.sfxIn.connect(this.sfxVol).connect(this.masterIn);
@@ -165,8 +172,26 @@ export class Mixer {
 
   /** Cloud interior muffling (0..1) on the ambience bus. */
   cloud(k: number): void {
+    this.cloudK = Math.max(0, Math.min(1, k));
+    this.applyAmbFilter();
+  }
+
+  /**
+   * Pause-menu muffle: music and world sounds recede behind a low-pass (UI stays crisp) instead of
+   * going silent; use the engine's suspend() for real background/host pauses.
+   */
+  muffle(on: boolean): void {
+    if (on === this.muffled) return;
+    this.muffled = on;
     const t = this.ctx.currentTime;
-    const f = 20000 * Math.pow(900 / 20000, Math.max(0, Math.min(1, k)));
+    this.musicMuffle.frequency.setTargetAtTime(on ? 700 : 20000, t, on ? 0.12 : 0.25);
+    this.applyAmbFilter();
+  }
+
+  private applyAmbFilter(): void {
+    const t = this.ctx.currentTime;
+    let f = 20000 * Math.pow(900 / 20000, this.cloudK);
+    if (this.muffled) f = Math.min(f, 700);
     this.ambLP.frequency.setTargetAtTime(f, t, 0.15);
   }
 

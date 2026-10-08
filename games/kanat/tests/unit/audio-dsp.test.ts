@@ -139,12 +139,14 @@ describe('DSP primitives', () => {
 });
 
 describe('metering (BS.1770)', () => {
-  it('1 kHz sine at −20 dBFS in both channels reads −23.0 LUFS', () => {
+  it('calibration: 997 Hz sine at 0 dBFS in one channel reads −3.01 LUFS; −20 dBFS stereo reads −20', () => {
     const n = GEN_SR * 3;
     const a = new Float32Array(n);
-    for (let i = 0; i < n; i++) a[i] = 0.1 * Math.sin((2 * Math.PI * 997 * i) / GEN_SR);
-    const l = loudness([a, a], GEN_SR);
-    expect(l.integrated).toBeCloseTo(-23.0, 0);
+    const z = new Float32Array(n);
+    for (let i = 0; i < n; i++) a[i] = Math.sin((2 * Math.PI * 997 * i) / GEN_SR);
+    expect(loudness([a, z], GEN_SR).integrated).toBeCloseTo(-3.01, 1);
+    for (let i = 0; i < n; i++) a[i] *= 0.1;
+    expect(loudness([a, a], GEN_SR).integrated).toBeCloseTo(-20.0, 1);
   });
 
   it('true peak sees inter-sample overs that sample peak misses', () => {

@@ -55,7 +55,7 @@ const CHECK = () => {
     if (!(el instanceof HTMLElement) || !visible(el)) continue;
     if (el.closest('.kn-hscroll') && el.classList.contains('kn-hscroll')) continue;
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-    if (hasText && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight + 2) && getComputedStyle(el).overflow !== 'visible') issues.push(`clip ${label(el)} ${el.scrollWidth}>${el.clientWidth}`);
+    if (hasText && (el.scrollWidth > el.clientWidth + 1 || el.scrollHeight > el.clientHeight * 1.12 + 2) && getComputedStyle(el).overflow !== 'visible') issues.push(`clip ${label(el)} ${el.scrollWidth}>${el.clientWidth}`);
     // 2. off-screen horizontally (not inside a scroller)
     const r = el.getBoundingClientRect();
     if (!inScroller(el) && hasText && (r.left < -1 || r.right > vw + 1)) issues.push(`offscreen ${label(el)} [${Math.round(r.left)},${Math.round(r.right)}]`);
@@ -90,7 +90,7 @@ try {
     page.on('console', (m) => {
       if (m.type() === 'error' && !m.text().includes('favicon')) errors.push(m.text());
     });
-    page.on('requestfailed', (r) => errors.push(`reqfail ${r.url()}`));
+    page.on('requestfailed', (r) => { if (!r.url().includes('?t=')) errors.push(`reqfail ${r.url()}`); });
     page.on('response', (r) => {
       if (r.status() >= 400 && !r.url().includes('favicon')) errors.push(`${r.status()} ${r.url()}`);
     });

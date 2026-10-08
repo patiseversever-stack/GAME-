@@ -402,8 +402,8 @@ const P = {
   travGray: L('#DCD3C8'),
   soil: L('#B0906F'),
   soilDark: L('#8E6E52'),
-  grass: L('#7F8350'),
-  grassDry: L('#A39A6B'),
+  grass: L('#8C8858'),
+  grassDry: L('#B0A274'),
   olive: L('#5F6A3E'),
   ruin: L('#C9A27E'),
   pool: L('#49C6C9'),
@@ -433,7 +433,7 @@ const paintPamukkale: Painter = (f, i, x, z, o) => {
   const travCol = mix3(mix3(P.trav, P.travWarm, 0.35 + 0.3 * fbm(x / 120, z / 120, 115, 3)), P.travGray, 0.2 * vnoise(x / 20, z / 20, 117));
   a = mix3(a, travCol, trav);
   const pool = f.pool ? f.pool[i] : 0;
-  a = mix3(a, mix3(P.pool, P.trav, 0.35), pool * 0.75);
+  a = mix3(a, mix3(P.pool, P.trav, 0.3), pool * 0.6);
   o.albedo = a;
   o.w[0] = trav;
   o.w[1] = (1 - trav) * (plain * 0.6 + rockW * 0.5);
@@ -520,8 +520,8 @@ export function light(bl: BakeLight, albedo: RGB, nx: number, ny: number, nz: nu
   const sunT = bl.sunStrength * shadow * B * bl.norm;
   const hl = Math.sqrt(sd[0] * sd[0] + sd[2] * sd[2]) || 1;
   const toward = (nx * sd[0] + nz * sd[2]) / hl; // -1..1 horizontal facing toward the sun azimuth
-  const skyShape = 0.5 + 0.3 * ny + 0.2 * toward;
-  const ambT = bl.ambStrength * ao * skyShape * bl.norm;
+  const skyShape = 0.62 + 0.22 * ny + 0.16 * toward;
+  const ambT = bl.ambStrength * (0.35 + 0.65 * ao) * skyShape * bl.norm;
   const sunVis = Math.min(1, shadow * Math.min(1, B));
   const t = (1 - sunVis) * bl.shadowTint;
   for (let c = 0; c < 3; c++) {

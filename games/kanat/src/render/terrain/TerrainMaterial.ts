@@ -26,6 +26,9 @@ uniform sampler2D uNFar;
 uniform sampler2D uSplat;
 uniform vec4 uCoreGrid;
 uniform vec4 uFarGrid;
+uniform vec4 uRockGrid;
+uniform vec4 uLowerRect; // minX, minZ, maxX, maxZ: core lowered inside (patch sits on top)
+uniform float uLowerAmt;
 uniform vec4 uCovCore;
 uniform vec4 uRoot;
 uniform vec4 uTFlags; // x skirt depth, y has splat, z detail D on, w patch lower
@@ -39,6 +42,7 @@ varying vec4 vSplat;
 varying vec3 vTerr; // x morph k, y lod, z skirt
 varying float vRock;
 varying vec2 vShadow;
+varying vec3 vNormalRef;
 uniform sampler2D uShadowAo;
 uniform vec4 uHasV;
 ${TERRAIN_GLSL}
@@ -76,8 +80,9 @@ void main() {
   vec2 xz = aNode.xy + lm * size;
   float h = terrainBase( xz );
   float rock = 0.0;
-  if ( lod == 0 && uTFlags.z > 0.5 && kanatInGrid( xz, uCoreGrid ) ) {
-    rock = kanatGridBilinear( uRock, xz, uCoreGrid );
+  if ( xz.x > uLowerRect.x && xz.y > uLowerRect.y && xz.x < uLowerRect.z && xz.y < uLowerRect.w ) h -= uLowerAmt;
+  if ( lod == 0 && uTFlags.z > 0.5 && kanatInGrid( xz, uRockGrid ) ) {
+    rock = kanatGridBilinear( uRock, xz, uRockGrid );
     h += kanatDetail( xz, rock ) * ( 1.0 - k );
   }
   float inCore;
@@ -115,6 +120,12 @@ void main() {
   gl_Position = projectionMatrix * mvPosition;
   vRel = rel;
   vNormal = n;
+#ifdef KANAT_TERRAIN_PATCH
+  // Patch: lighting reference = the coarse core normal the macro colour was baked with.
+  { vec2 uvr = ( ( xz - uFarGrid.xy ) / uFarGrid.z + 0.5 ) / uFarGrid.w; vNormalRef = normalize( texture( uNFar, uvr ).xyz * 2.0 - 1.0 ); }
+#else
+  vNormalRef = n;
+#endif
   vTerr = vec3( k, float( lod ), skirt );
   vRock = rock;
   vShadow = vec2( 1.0 );
@@ -150,6 +161,8 @@ varying vec4 vSplat;
 varying vec3 vTerr;
 varying float vRock;
 varying vec2 vShadow;
+varying vec3 vNormalRef;
+uniform vec4 uCoreExt; // core grid extent for macro / shadow lookups (minX, minZ, maxX, maxZ)
 ${TERRAIN_GLSL}
 #include <fog_pars_fragment>
 ${ATMOSPHERE_GLSL}
@@ -249,7 +262,7 @@ void main() {
   vec3 N = N0;
   float k = vTerr.x;
   float lod = vTerr.y;
-  bool inCore = kanatInGrid( wp.xz, uCoreGrid );
+  bool inCore = wp.x >= uCoreExt.x && wp.z >= uCoreExt.y && wp.x <= uCoreExt.z && wp.z <= uCoreExt.w;
 
   // ---- analytic detail-noise slope near the camera (LOD0 ring incl. normal-only 3rd octave) ----
   if ( lod < 0.5 && vRock > 0.0 ) {
@@ -370,9 +383,10 @@ void main() {
   vec3 col;
   if ( prelit ) {
     // Keep the baked look; add only the near-detail lighting change as a ratio (seamless with the far ring).
-    float dl0 = clamp( ( dot( N0, L ) + wrap ) / ( 1.0 + wrap ), 0.0, 1.0 );
+    vec3 NR = normalize( vNormalRef );
+    float dl0 = clamp( ( dot( NR, L ) + wrap ) / ( 1.0 + wrap ), 0.0, 1.0 );
     float dl1 = clamp( ( dot( bumpN, L ) + wrap ) / ( 1.0 + wrap ), 0.0, 1.0 );
-    vec3 sky0 = kanatIrradiance( N0 );
+    vec3 sky0 = kanatIrradiance( NR );
     vec3 sky1 = kanatIrradiance( bumpN );
     vec3 l0 = sunC * dl0 + sky0 * uPrelit.y;
     vec3 l1 = sunC * dl1 + sky1 * uPrelit.y;
@@ -405,6 +419,7 @@ void main() {
 export interface TerrainMaterialOptions {
   projection: TerrainProjection;
   vertexFog: boolean;
+  patch?: boolean;
 }
 
 export function createTerrainMaterial(opts: TerrainMaterialOptions): THREE.ShaderMaterial {
@@ -429,6 +444,10 @@ export function createTerrainMaterial(opts: TerrainMaterialOptions): THREE.Shade
       uFarColor: { value: null },
       uDetail: { value: null },
       uCoreGrid: { value: new THREE.Vector4() },
+      uRockGrid: { value: new THREE.Vector4() },
+      uCoreExt: { value: new THREE.Vector4() },
+      uLowerRect: { value: new THREE.Vector4(1e9, 1e9, -1e9, -1e9) },
+      uLowerAmt: { value: 0 },
       uFarGrid: { value: new THREE.Vector4() },
       uCovCore: { value: new THREE.Vector4() },
       uCovFar: { value: new THREE.Vector4() },
@@ -457,6 +476,7 @@ export function createTerrainMaterial(opts: TerrainMaterialOptions): THREE.Shade
   });
   mat.defines = { KANAT_TERRAIN: '' };
   if (opts.vertexFog) mat.defines.KANAT_FOG_VERTEX = '';
+  if (opts.patch) mat.defines.KANAT_TERRAIN_PATCH = '';
   mat.extensions = { clipCullDistance: false, multiDraw: false };
   return mat;
 }

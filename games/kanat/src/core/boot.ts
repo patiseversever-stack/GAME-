@@ -50,6 +50,11 @@ export interface BootOptions {
   bridge?: GameBridge;
   /** Force the test API even without ?test=1 (dev pages). */
   forceTestApi?: boolean;
+  /**
+   * Optional audio hooks (src/audio/AudioEngine): wired to suspend/unsuspend, the first user gesture
+   * (unlock) and the effective mute (user setting OR host `mute`).
+   */
+  audio?: { suspend?(): void; resume?(): void; unlock?(): void; setMuted?(muted: boolean): void };
 }
 
 export interface LoopHandlers {
@@ -101,6 +106,7 @@ export async function boot(opts: BootOptions): Promise<App> {
   const urlParams = bridge.urlParams;
   const testMode = opts.forceTestApi === true || isTestMode();
   const modes = opts.modes ?? [...MODE_IDS];
+  bridge.loading(0); // the host can show progress right away
 
   // ---- errors → host ----
   if (typeof window !== 'undefined') {
@@ -163,7 +169,9 @@ export async function boot(opts: BootOptions): Promise<App> {
   };
   const emitMute = (): void => {
     const s = settings.value;
-    bus.emit('mute', { muted: s.muted, hostMuted: runtime.hostMuted, effective: s.muted || runtime.hostMuted });
+    const effective = s.muted || runtime.hostMuted;
+    opts.audio?.setMuted?.(effective);
+    bus.emit('mute', { muted: s.muted, hostMuted: runtime.hostMuted, effective });
   };
 
   // ---- apply settings ----
@@ -184,6 +192,8 @@ export async function boot(opts: BootOptions): Promise<App> {
     if (changed.includes('haptics')) bridge.setHapticLevel(s.haptics);
     if (changed.includes('muted')) emitMute();
     if (changed.some((k) => k.startsWith('kanat.'))) input.configure(s.kanat);
+    // Settings toggles run inside the click handler → still a user gesture for the iOS motion prompt.
+    if (changed.includes('kanat.gyro') && s.kanat.gyro !== 'off') void input.requestGyroPermission();
     bus.emit('settings', { settings: s, changed });
   });
 
@@ -223,12 +233,20 @@ export async function boot(opts: BootOptions): Promise<App> {
   bus.on('suspend', () => {
     loop.stop();
     input.releaseAll();
+    opts.audio?.suspend?.();
     void flush();
   });
   bus.on('unsuspend', () => {
     if (readyCalled) loop.start();
+    opts.audio?.resume?.();
     perf.grace(1500);
   });
+  if (typeof window !== 'undefined') {
+    onFirstGesture(() => {
+      opts.audio?.unlock?.();
+      if (settings.value.kanat.gyro !== 'off') void input.requestGyroPermission();
+    });
+  }
   bus.on('pause', syncSim);
   bus.on('resume', syncSim);
   bus.on('resumePrompt', syncSim);
@@ -241,7 +259,10 @@ export async function boot(opts: BootOptions): Promise<App> {
   });
   bus.on('orientation', ({ width, height }) => input.setViewport(width, height));
   perf.on('report', (r) => bridge.perf(r.tier, r.fpsP50, r.fpsP90));
-  perf.on('tier', (e) => bridge.perf(e.to, perf.snapshot().fpsP50, perf.snapshot().fpsP90));
+  perf.on('tier', (e) => {
+    const snap = perf.snapshot();
+    bridge.perf(e.to, snap.fpsP50, snap.fpsP90);
+  });
 
   const flush = async (): Promise<void> => {
     await Promise.all([settings.flush(), save.flush()]);
@@ -360,7 +381,7 @@ export async function boot(opts: BootOptions): Promise<App> {
   };
 
   fsm.go('loading');
-  bridge.loading(0);
+  emitMute();
   const bootMs = (typeof performance !== 'undefined' ? performance.now() : 0) - t0;
   markTime('boot');
   if (typeof document !== 'undefined') document.documentElement.dataset.kanatBoot = 'ok';

@@ -60,7 +60,7 @@ function patternDef(id: string, pal: readonly [string, string, string], scale = 
 }
 
 function patternSvg(id: string, pal: readonly [string, string, string]): string {
-  const [defs, fill] = patternDef(id, pal, 1.2);
+  const [defs, fill] = patternDef(id, pal, 0.75);
   return `<svg viewBox="0 0 60 60" aria-hidden="true"><defs>${defs}</defs><rect width="60" height="60" fill="${fill}"/></svg>`;
 }
 
@@ -74,7 +74,7 @@ function trailSvg(col: string): string {
 
 /** Fallback wingsuit preview (top view): suit body + arm wings + leg wing with the equipped pattern and palette. */
 function pilotSvg(patternId: string, pal: readonly [string, string, string], trail: string): string {
-  const [defs, fill] = patternDef(patternId, pal, 0.9);
+  const [defs, fill] = patternDef(patternId, pal, 0.55);
   const wingL = 'M112 50 C90 54 54 66 30 76 C25 78 26 84 31 84 C58 86 86 92 104 100 Z';
   const wingR = 'M128 50 C150 54 186 66 210 76 C215 78 214 84 209 84 C182 86 154 92 136 100 Z';
   const legs = 'M104 98 C106 118 110 132 114 146 L120 140 L126 146 C130 132 134 118 136 98 Z';

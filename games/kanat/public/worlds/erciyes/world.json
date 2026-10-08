@@ -227,7 +227,7 @@
   "shadowStrength": 1,
   "sunStrength": 0.5725,
   "ambientStrength": 0.4866,
-  "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.5+0.3*n.y+0.2*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); wrap=0.06, ndl0=0.2366, k=0.4492; soft shoulder above 0.8; sRGB encode"
+  "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.62+0.22*n.y+0.16*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*(0.35+0.65*ao)*skyShape); wrap=0.06, ndl0=0.2366, k=0.4492; soft shoulder above 0.8; sRGB encode"
  },
  "props": {
   "cornices": {

@@ -86,7 +86,7 @@ export function balloonsFor(worldId: WorldId, sampler: TerrainSampler, seed: num
       const r = spread * Math.sqrt(rng.next());
       x = cx + r * cos(ang);
       z = cz + r * sin(ang);
-      baseY = -Infinity;
+      baseY = sampler.height(x, z) + rng.range(90, 320);
     }
     if (x < b.minX + 200 || x > b.maxX - 200 || z < b.minZ + 200 || z > b.maxZ - 200) continue;
     let blocked = false;
@@ -105,22 +105,27 @@ export function balloonsFor(worldId: WorldId, sampler: TerrainSampler, seed: num
     const rise = rng.range(0, 0.25);
     const lineAng = rng.range(0, 6.283185307179586);
     const tri = n >= 3 && rng.chance(0.5);
+    let lx = x;
+    let lz = z;
     for (let k = 0; k < n; k++) {
       const spacing = rng.range(24, 29);
       let mx: number;
       let mz: number;
       if (tri && k > 0) {
+        // members 1..3 on a ring around the first one, 60° / 180° apart → neighbours ≤ 29 m
         const a = lineAng + (k - 1) * 1.0471975511965976 + (k > 2 ? 2.0943951023931953 : 0);
         mx = x + spacing * cos(a);
         mz = z + spacing * sin(a);
       } else {
-        mx = x + k * spacing * cos(lineAng);
-        mz = z + k * spacing * sin(lineAng);
+        mx = k === 0 ? x : lx + spacing * cos(lineAng);
+        mz = k === 0 ? z : lz + spacing * sin(lineAng);
       }
+      lx = mx;
+      lz = mz;
       const ground = sampler.height(mx, mz);
       const minY = ground + 70;
-      let y = baseY === -Infinity ? ground + rng.range(90, 320) : baseY + rng.range(-4, 4);
-      if (y < minY) y = minY + rng.range(0, 20);
+      let y = baseY + rng.range(-4, 4);
+      if (y < minY) y = minY + rng.range(0, 6);
       const envelopeH = rng.range(18, 22);
       out.push({
         id: id++,

@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>KANAT — terrain dev</title>
+<style>
+  body { margin: 0; background: #0e141c; color: #f5f1e8; font: 13px/1.4 system-ui, sans-serif; }
+  header { padding: 8px 12px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  select, button { background: #1b2430; color: #f5f1e8; border: 1px solid #ffffff22; padding: 4px 8px; }
+  #grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 6px; padding: 6px 12px; }
+  figure { margin: 0; } figcaption { opacity: 0.7; font-size: 11px; }
+  canvas { width: 100%; image-rendering: pixelated; background: #000; }
+  #info { padding: 6px 12px; white-space: pre-wrap; font-family: ui-monospace, monospace; font-size: 11px; }
+</style>
+</head>
+<body>
+<header>
+  <strong>terrain</strong>
+  <select id="world"></select>
+  <span id="probe">—</span>
+</header>
+<div id="grid"></div>
+<div id="info"></div>
+<script type="module" src="./terrain.ts"></script>
+</body>
+</html>

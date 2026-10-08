@@ -25,6 +25,7 @@ import { SFX } from './sfxLib.ts';
 import type { SfxId } from './sfxLib.ts';
 import { VoicePool } from './voices.ts';
 import { WindEngine } from './wind.ts';
+import type { WindInput } from './wind.ts';
 
 export type { SuruAudioState } from './ambience.ts';
 export type { MusicWorld } from './music/patterns.ts';
@@ -200,6 +201,7 @@ export class AudioEngine {
   private lastPumpCtx = 0;
   private musicDirty = true;
   private hasFlight = false;
+  private pauseMuffled = false;
   private readonly rng = new Rng(0x41554449);
 
   constructor(opts: { haptics?: Haptics; bank?: SoundBank } = {}) {
@@ -212,7 +214,7 @@ export class AudioEngine {
   // ===========================================================================================
   // Lifecycle
 
-  /** Pre-generate every sound (call during loading; chunked, ~1–2 frames of work per slice). */
+  /** Pre-generate every sound (call during loading): inline Web Worker, main-thread slices as fallback. */
   prepare(onProgress?: (k: number) => void): Promise<void> {
     return this.bank.prepare(12, onProgress);
   }
@@ -305,6 +307,7 @@ export class AudioEngine {
       this.musicEng = new MusicEngine(ctx, cache, mixer.musicIn, mixer.verbIn);
       if (this.instantMusic) this.musicEng.fadeIn = 0;
       mixer.setVolumes(this.vol);
+      if (this.pauseMuffled) mixer.muffle(true);
       this.built = true;
       this.musicDirty = true;
       this.updateWind();
@@ -420,6 +423,12 @@ export class AudioEngine {
     this.haptics.setMode(s.haptics);
   }
 
+  /** Pause overlay: music + world sounds muffled (not silent); UI sounds stay clear. */
+  setPauseMuffle(on: boolean): void {
+    this.pauseMuffled = on;
+    this.mixer?.muffle(on);
+  }
+
   setHapticSink(sink: HapticSink | null): void {
     this.haptics.setSink(sink);
   }
@@ -459,10 +468,17 @@ export class AudioEngine {
     if (ctxNow - this.lastPumpCtx > 0.05) this.pump();
   }
 
+  private readonly windIn: WindInput = { speedMs: 0, bankRate: 0, canopy: false, cloud: 0 };
+
   private updateWind(): void {
     const w = this.wind;
     if (!w) return;
-    w.update({ speedMs: this.speed, bankRate: this.bankRate, canopy: this.canopy, cloud: this.cloud });
+    const wi = this.windIn;
+    wi.speedMs = this.speed;
+    wi.bankRate = this.bankRate;
+    wi.canopy = this.canopy;
+    wi.cloud = this.cloud;
+    w.update(wi);
     this.ambience?.setWindMask(clamp((this.speed - 20) / 40, 0, 1));
   }
 

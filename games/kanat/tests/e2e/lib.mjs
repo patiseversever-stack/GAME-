@@ -108,10 +108,10 @@ export async function waitGameReady(target, timeout = 45000) {
   try {
     await target.waitForFunction(() => document.documentElement.dataset.kanatBoot === 'ok', null, { timeout });
   } catch {
-    throw new Error('boot() never completed: document.documentElement.dataset.kanatBoot !== "ok" — is src/main.ts calling boot() from src/core/boot.ts?');
+    throw fatal('boot() never completed: document.documentElement.dataset.kanatBoot !== "ok" — is src/main.ts calling boot() from src/core/boot.ts?');
   }
   const hasApi = await target.evaluate(() => typeof window.__game === 'object');
-  if (!hasApi) throw new Error('window.__game missing although ?test=1 was given (installTestApi not reached)');
+  if (!hasApi) throw fatal('window.__game missing although ?test=1 was given (installTestApi not reached)');
   await target.evaluate(() => window.__game.ready());
 }
 
@@ -125,6 +125,13 @@ export async function requireHandlers(target, names) {
     );
   }
   return have;
+}
+
+/** An error that makes the rest of the suite pointless (the game never booted). */
+export function fatal(message) {
+  const e = new Error(message);
+  e.fatal = true;
+  return e;
 }
 
 export function assert(cond, message) {
@@ -157,7 +164,13 @@ export async function run(suite) {
   let failed = 0;
   const t0 = Date.now();
   console.log(`\n# ${suite}`);
+  let abort = null;
   for (const t of tests) {
+    if (abort) {
+      failed++;
+      console.log(`  ✗ ${t.name} (not run: ${abort})`);
+      continue;
+    }
     const s = Date.now();
     try {
       await t.fn();
@@ -165,6 +178,7 @@ export async function run(suite) {
     } catch (err) {
       failed++;
       console.log(`  ✗ ${t.name} (${Date.now() - s} ms)\n      ${String(err && err.stack ? err.stack : err).split('\n').slice(0, 6).join('\n      ')}`);
+      if (err && err.fatal) abort = 'earlier fatal failure';
     }
   }
   console.log(`# ${suite}: ${tests.length - failed}/${tests.length} passed in ${((Date.now() - t0) / 1000).toFixed(1)} s`);

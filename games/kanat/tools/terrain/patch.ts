@@ -57,7 +57,9 @@ export function bakePatch(core: Grid, cx: number, cz: number, res: number, width
         const lip = lipH * (1 - smoothstep(0.0, 0.08, fr));
         const terraced = ref + stepH * (k + riser) + lip + 0.03 * vnoise(x / 1.7, z / 1.7, 406);
         h = smooth + (terraced - smooth) * w;
-        if (w > 0.6 && fr > 0.08 && fr < 0.8) wl[r * res + c] = ref + stepH * k + poolLevel;
+        // pools: only on part of the floors (outer half near the lip) and in noise-selected basins
+        const basin = vnoise(x / 70, z / 70, 407) + 0.35 * vnoise(x / 23, z / 23, 408);
+        if (w > 0.6 && fr > 0.09 && fr < 0.5 && basin > -0.1) wl[r * res + c] = ref + stepH * k + poolLevel;
       }
       // exact bilinear core at the patch border, smooth + terraces inside
       const edge = Math.min(c, r, res - 1 - c, res - 1 - r) * spacing;

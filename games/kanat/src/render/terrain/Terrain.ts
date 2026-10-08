@@ -95,6 +95,13 @@ export interface TerrainLayerSpec {
   colors: string[];
 }
 
+export interface TerrainRendererOptions {
+  /** 'patch': draws the 1 m Pamukkale patch (primary = patch grid, secondary = core). */
+  kind?: 'main' | 'patch';
+  /** Share an existing detail texture array (patch reuses the main terrain's). */
+  detail?: DetailTextures;
+}
+
 export class TerrainRenderer {
   readonly mesh: THREE.Mesh<THREE.InstancedBufferGeometry, THREE.ShaderMaterial>;
   readonly layout: QuadtreeLayout;
@@ -108,28 +115,39 @@ export class TerrainRenderer {
   private readonly maxInstances = 4096;
   private readonly gridN: number;
 
-  constructor(renderer: THREE.WebGLRenderer, data: TerrainData, params: RenderTierParams, layers: TerrainLayerSpec) {
+  readonly kind: 'main' | 'patch';
+  readonly lod0Radius: number;
+  private readonly ownsDetail: boolean;
+
+  constructor(renderer: THREE.WebGLRenderer, data: TerrainData, params: RenderTierParams, layers: TerrainLayerSpec, opts: TerrainRendererOptions = {}) {
     this.data = data;
     this.params = params;
+    this.kind = opts.kind ?? 'main';
+    const isPatch = this.kind === 'patch' && data.terrain.patch !== undefined;
     const N = params.terrain.grid;
     this.gridN = N;
-    const nodeBase = (N - 1) * LOD0_SPACING;
-    const far = data.terrain.far;
-    const farExt = (far.res - 1) * far.spacing;
+    const spacing0 = isPatch ? 1.0 : LOD0_SPACING;
+    const nodeBase = (N - 1) * spacing0;
+    const root = isPatch ? data.terrain.patch! : data.terrain.far;
+    const rootExt = (root.res - 1) * root.spacing;
     let levels = 1;
-    while (nodeBase * Math.pow(2, levels - 1) < farExt) levels++;
+    while (nodeBase * Math.pow(2, levels - 1) < rootExt) levels++;
     levels = Math.min(levels, MAX_TERRAIN_LEVELS);
     const rootSize = nodeBase * Math.pow(2, levels - 1);
-    this.layout = { rootMinX: far.originX, rootMinZ: far.originZ, rootSize, levels };
-    this.selector = new CdlodSelector(this.layout, data.bounds, this.maxInstances, 4);
-    this.selector.setRanges(params.terrain.lod0Radius);
+    this.layout = { rootMinX: root.originX, rootMinZ: root.originZ, rootSize, levels };
+    const bounds = isPatch && data.patchBounds ? data.patchBounds : data.bounds;
+    this.selector = new CdlodSelector(this.layout, bounds, this.maxInstances, 4);
+    // Patch (1 m data): scale the LOD0 radius with the spacing so its triangle count matches the main ring.
+    this.lod0Radius = params.terrain.lod0Radius * (isPatch ? 0.55 : 1);
+    this.selector.setRanges(this.lod0Radius);
 
     this.kinds = layers.ids.slice(0, 4).map(layerKind);
     while (this.kinds.length < 4) this.kinds.push('rock');
-    this.detail = new DetailTextures(renderer, this.kinds, 512, params.anisotropy);
+    this.ownsDetail = !opts.detail;
+    this.detail = opts.detail ?? new DetailTextures(renderer, this.kinds, 512, params.anisotropy);
 
     const geo = buildNodeGeometry(N, this.maxInstances);
-    const mat = createTerrainMaterial({ projection: params.terrain.projection, vertexFog: params.level === 0 });
+    const mat = createTerrainMaterial({ projection: params.terrain.projection, vertexFog: params.level === 0, patch: isPatch });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.name = 'kanat-terrain';
     this.mesh.frustumCulled = false;
@@ -137,18 +155,28 @@ export class TerrainRenderer {
     this.mesh.renderOrder = -10;
     const u = mat.uniforms;
     u.uGridQuads.value = N - 1;
-    u.uHCore.value = data.hCore;
-    u.uHFar.value = data.hFar;
+    u.uHCore.value = isPatch ? data.hPatch : data.hCore;
+    u.uHFar.value = isPatch ? data.hCore : data.hFar;
     u.uRock.value = data.rock;
-    u.uNCore.value = data.nCore;
-    u.uNFar.value = data.nFar;
+    u.uNCore.value = isPatch ? data.nPatch : data.nCore;
+    u.uNFar.value = isPatch ? data.nCore : data.nFar;
     u.uSplat.value = data.splat;
     u.uShadowAo.value = data.shadowAo;
     u.uMacro.value = data.colorMacro;
     u.uFarColor.value = data.colorFar;
     u.uDetail.value = this.detail.texture;
-    (u.uCoreGrid.value as THREE.Vector4).copy(data.coreGrid);
-    (u.uFarGrid.value as THREE.Vector4).copy(data.farGrid);
+    (u.uCoreGrid.value as THREE.Vector4).copy(isPatch && data.patchGrid ? data.patchGrid : data.coreGrid);
+    (u.uFarGrid.value as THREE.Vector4).copy(isPatch ? data.coreGrid : data.farGrid);
+    (u.uRockGrid.value as THREE.Vector4).copy(data.coreGrid);
+    (u.uCoreExt.value as THREE.Vector4).copy(data.coreExt);
+    if (isPatch) this.mesh.renderOrder = -9;
+    // Main terrain sits 0.5 m lower under the patch; the patch's own skirts hide the step.
+    if (!isPatch && data.patchGrid && data.terrain.patch) {
+      const pg = data.patchGrid;
+      const ext = (pg.w - 1) * pg.z;
+      (u.uLowerRect.value as THREE.Vector4).set(pg.x + 2, pg.y + 2, pg.x + ext - 2, pg.y + ext - 2);
+      u.uLowerAmt.value = 0.5;
+    }
     (u.uCovCore.value as THREE.Vector4).copy(data.covCore);
     (u.uCovFar.value as THREE.Vector4).copy(data.covFar);
     (u.uRoot.value as THREE.Vector4).set(this.layout.rootMinX, this.layout.rootMinZ, rootSize, HORIZON_SKIRT);
@@ -243,6 +271,6 @@ export class TerrainRenderer {
   dispose(): void {
     this.mesh.geometry.dispose();
     this.mesh.material.dispose();
-    this.detail.dispose();
+    if (this.ownsDetail) this.detail.dispose();
   }
 }

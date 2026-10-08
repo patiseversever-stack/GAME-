@@ -332,7 +332,7 @@ export const WORLD_DEFS: Record<WorldId, WorldDef> = {
     layerColors: ['#F5EDE4', '#B0906F', '#7F8350', '#C9A27E'],
     layerRoughness: [0.5, 0.9, 0.92, 0.6],
     maskNames: ['ruins', 'trees', 'flat', 'travertine'],
-    bake: { sunStrength: 1.0, ambientStrength: 1.5, ambientColor: '#B2ACC8', shadowColor: '#9AA7C7', shadowTint: 0.6, wrap: 0.12, exposure: 1.0, shadowStrength: 1 },
+    bake: { sunStrength: 1.0, ambientStrength: 1.85, ambientColor: '#B2ACC8', shadowColor: '#9AA7C7', shadowTint: 0.6, wrap: 0.12, exposure: 1.0, shadowStrength: 1 },
     props: {
       columns: { count: 120, mask: 'ruins', seed: 51 },
       walls: { count: 60, mask: 'ruins', seed: 53 },

@@ -115,38 +115,32 @@ interface Bq {
   a2: number;
 }
 
-/** BS.1770 K-weighting coefficients for any sample rate (pyloudnorm derivation). */
+/**
+ * BS.1770 K-weighting for any sample rate (libebur128 derivation; reproduces the ITU 48 kHz
+ * reference coefficients exactly).
+ */
 function kWeighting(sr: number): [Bq, Bq] {
-  // Stage 1: high shelf (+4 dB above ~1.7 kHz). Stage 2: RLB high-pass (~38 Hz).
+  // Stage 1: high shelf (+4 dB above ~1.7 kHz).
+  let f0 = 1681.974450955533;
   const G = 3.999843853973347;
-  const Q1 = 0.7071752369554196;
-  const fc1 = 1681.974450955533;
-  const A = Math.pow(10, G / 40);
-  let w0 = (2 * Math.PI * fc1) / sr;
-  let alpha = Math.sin(w0) / (2 * Q1);
-  let c = Math.cos(w0);
-  const sA = 2 * Math.sqrt(A) * alpha;
-  let a0 = A + 1 - (A - 1) * c + sA;
+  let Q = 0.7071752369554196;
+  let K = Math.tan((Math.PI * f0) / sr);
+  const Vh = Math.pow(10, G / 20);
+  const Vb = Math.pow(Vh, 0.4996667741545416);
+  let a0 = 1 + K / Q + K * K;
   const shelf: Bq = {
-    b0: (A * (A + 1 + (A - 1) * c + sA)) / a0,
-    b1: (-2 * A * (A - 1 + (A + 1) * c)) / a0,
-    b2: (A * (A + 1 + (A - 1) * c - sA)) / a0,
-    a1: (2 * (A - 1 - (A + 1) * c)) / a0,
-    a2: (A + 1 - (A - 1) * c - sA) / a0,
+    b0: (Vh + (Vb * K) / Q + K * K) / a0,
+    b1: (2 * (K * K - Vh)) / a0,
+    b2: (Vh - (Vb * K) / Q + K * K) / a0,
+    a1: (2 * (K * K - 1)) / a0,
+    a2: (1 - K / Q + K * K) / a0,
   };
-  const Q2 = 0.5003270373238773;
-  const fc2 = 38.13547087602444;
-  w0 = (2 * Math.PI * fc2) / sr;
-  alpha = Math.sin(w0) / (2 * Q2);
-  c = Math.cos(w0);
-  a0 = 1 + alpha;
-  const hp: Bq = {
-    b0: (1 + c) / 2 / a0,
-    b1: -(1 + c) / a0,
-    b2: (1 + c) / 2 / a0,
-    a1: (-2 * c) / a0,
-    a2: (1 - alpha) / a0,
-  };
+  // Stage 2: RLB high-pass (~38 Hz).
+  f0 = 38.13547087602444;
+  Q = 0.5003270373238773;
+  K = Math.tan((Math.PI * f0) / sr);
+  a0 = 1 + K / Q + K * K;
+  const hp: Bq = { b0: 1, b1: -2, b2: 1, a1: (2 * (K * K - 1)) / a0, a2: (1 - K / Q + K * K) / a0 };
   return [shelf, hp];
 }
 

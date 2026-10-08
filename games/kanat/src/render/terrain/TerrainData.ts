@@ -146,6 +146,12 @@ export class TerrainData {
   readonly covCore: THREE.Vector4;
   readonly covFar: THREE.Vector4;
   readonly bounds: TerrainBoundsCombined;
+  /** Pamukkale 1 m patch (null elsewhere). */
+  readonly hPatch: THREE.DataTexture | null = null;
+  readonly nPatch: THREE.DataTexture | null = null;
+  readonly patchGrid: THREE.Vector4 | null = null;
+  readonly patchBounds: MinMaxMip | null = null;
+  readonly coreExt: THREE.Vector4;
   readonly terrain: WorldTerrain;
   /** 10th percentile of core heights (fog base). */
   readonly floorY: number;
@@ -164,6 +170,14 @@ export class TerrainData {
     this.nFar = normalTexture(far);
     this.rock = rockTexture(terrain.rockMask, core.res);
     this.owned.push(this.hCore, this.hFar, this.nCore, this.nFar, this.rock);
+    const patch = terrain.patch;
+    if (patch) {
+      this.hPatch = heightTexture(patch);
+      this.nPatch = normalTexture(patch);
+      this.patchGrid = new THREE.Vector4(patch.originX, patch.originZ, patch.spacing, patch.res);
+      this.patchBounds = new MinMaxMip(patch.data, patch.res, patch.originX, patch.originZ, patch.spacing);
+      this.owned.push(this.hPatch, this.nPatch);
+    }
     const im = desc.images ?? {};
     this.has = { splat: !!im.splat, shadowAo: !!im.shadowAo, macro: !!im.colorMacro, far: !!im.colorFar };
     this.splat = im.splat ? this.own(imageTexture(im.splat, false, false)) : placeholder;
@@ -177,6 +191,7 @@ export class TerrainData {
     this.covCore = new THREE.Vector4(cc.minX, cc.minZ, 1 / cc.size, 0);
     this.covFar = new THREE.Vector4(cf.minX, cf.minZ, 1 / cf.size, 0);
     const coreExt = (core.res - 1) * core.spacing;
+    this.coreExt = new THREE.Vector4(core.originX, core.originZ, core.originX + coreExt, core.originZ + coreExt);
     this.bounds = new TerrainBoundsCombined(
       new MinMaxMip(core.data, core.res, core.originX, core.originZ, core.spacing),
       new MinMaxMip(far.data, far.res, far.originX, far.originZ, far.spacing),
