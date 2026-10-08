@@ -159,9 +159,12 @@ export interface WorldConfig {
   bakeLighting: {
     sunColorLinear: Vec3;
     skyColorLinear: Vec3;
+    /** Fill hue inside shadows (luminance-matched to skyColor). */
+    shadowColorLinear: Vec3;
+    shadowTint: number;
     sunStrength: number;
     ambientStrength: number;
-    /** litRGB = albedo * (ambientStrength*skyColor*ao + sunStrength*sunColor*shadow*ndlRel) where ndlRel = wrap(N·L)/sin(elev). */
+    /** Exact formula with constants (see tools/terrain/paint.ts light()). */
     formula: string;
   };
   /** Prop/vegetation hints consumed by src/sim/world/props.ts (flight agent) — counts and mask channel names. */

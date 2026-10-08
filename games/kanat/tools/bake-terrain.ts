@@ -728,11 +728,14 @@ async function bakeWorld(def: WorldDef, args: Args, cache: TileCache): Promise<v
     wind: def.wind,
     bakeLighting: {
       sunColorLinear: round3(bl.sunCol),
-      skyColorLinear: round3(hexToLinear(def.bake.ambientColor)),
+      skyColorLinear: round3(bl.ambCol),
+      shadowColorLinear: round3(bl.shadowCol),
+      shadowTint: bl.shadowTint,
       sunStrength: round3([bl.sunStrength * bl.norm, 0, 0])[0],
       ambientStrength: round3([bl.ambStrength * bl.norm, 0, 0])[0],
       formula:
-        'lit = albedo * (sunColor*sunStrength*shadow*B(ndl) + skyColor*ambientStrength*ao*(0.8+0.2*n.y)); w=max(0,(ndl+wrap)/(1+wrap)), B=w/(w+k)*(ndl0+k)/ndl0, ' +
+        'w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); ' +
+        'skyShape=0.62+0.22*n.y+0.16*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); ' +
         `wrap=${bl.wrap}, ndl0=${bl.ndl0.toFixed(4)}, k=${bl.k.toFixed(4)}; soft shoulder above 0.8; sRGB encode`,
     },
     props: def.props,
