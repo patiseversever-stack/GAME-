@@ -8,12 +8,13 @@ import { WorldRenderer } from '../render/WorldRenderer.ts';
 import { PropsRenderer } from '../render/props/PropsRenderer.ts';
 import { Pilot } from '../render/pilot/Pilot.ts';
 import { VFX } from '../render/vfx/VFX.ts';
+import { RouteMarkers } from '../render/vfx/markers/RouteMarkers.ts';
 import { atmosphereState } from '../render/shaders/atmosphere.ts';
 import { balloonPos } from '../sim/world/balloons.ts';
 import type { BalloonDef } from '../sim/types.ts';
 import type { WorldId } from '../sim/types.ts';
 import type { WorldContent } from './routes/worldContent.ts';
-import { suitSpec, trailStyle } from './cosmetics.ts';
+import { suitSpec } from './cosmetics.ts';
 import type { EquippedSuit } from './cosmetics.ts';
 
 export const GHOST_COLORS = ['#7FE3FF', '#FFB86B', '#C9A7FF'] as const;
@@ -25,6 +26,7 @@ export class Scene3D {
   pilot: Pilot;
   readonly ghosts: Pilot[] = [];
   vfx: VFX;
+  readonly markers: RouteMarkers;
   worldId: WorldId | null = null;
   content: WorldContent | null = null;
   private loaded: LoadedWorld | null = null;
@@ -36,6 +38,7 @@ export class Scene3D {
     this.pilot = new Pilot(this.wr.scene, tier, {});
     this.pilot.setRenderer(this.wr.renderer);
     this.vfx = new VFX(this.wr.scene, tier);
+    this.markers = new RouteMarkers(this.wr.scene, null);
     for (let i = 0; i < 3; i++) {
       const g = new Pilot(this.wr.scene, tier, { ghost: true, ghostColor: GHOST_COLORS[i], name: '' });
       g.visible = false;
@@ -64,6 +67,9 @@ export class Scene3D {
     this.pilot.setSunDirection(sd.x, sd.y, sd.z);
     this.vfx.setWorld(loaded.config.id, loaded.sampler);
     this.vfx.attachProps(this.props);
+    this.markers.setSampler(loaded.sampler);
+    this.markers.attachBalloons(this.props);
+    this.markers.build(null, this.wr.tier);
     this.applySuit();
   }
 
@@ -93,14 +99,15 @@ export class Scene3D {
     this.vfx.setTier(t);
     this.buildProps();
     this.vfx.attachProps(this.props);
+    this.markers.attachBalloons(this.props);
     await this.warmup();
   }
 
   /** WebGL context restored: everything generated on the GPU is rebuilt (impostor atlases, world bakes). */
   async rebuildAfterContextLoss(): Promise<void> {
-    await this.wr.rebuild();
     this.buildProps();
     this.vfx.attachProps(this.props);
+    this.markers.attachBalloons(this.props);
   }
 
   setSuit(s: EquippedSuit): void {
@@ -110,7 +117,13 @@ export class Scene3D {
 
   private applySuit(): void {
     this.pilot.setSuit(suitSpec(this.suit));
-    this.vfx.setTrailStyle(trailStyle(this.suit.trail));
+    this.vfx.setTrailStyle(this.suit.trail || 'dumanBeyazi');
+  }
+
+  /** Clear the wingtip/vapour ribbons (new attempt / teleport) — VFX has no public reset yet (ARAYÜZ İSTEĞİ). */
+  resetTrails(): void {
+    const v = this.vfx as unknown as Record<string, { reset?: () => void } | undefined>;
+    for (const k of ['trailL', 'trailR', 'vapourL', 'vapourR']) v[k]?.reset?.();
   }
 
   setSize(w: number, h: number, pixelRatio: number): void {
@@ -138,7 +151,8 @@ export class Scene3D {
       terrainNodes: p.terrainNodes,
       tier: p.tier,
       props: pp ? { calls: pp.calls, triangles: pp.triangles, instances: pp.instances } : null,
-      particles: vp.particles,
+      particles: vp.particlesCap,
+      markerCalls: this.markers.perf().calls,
       vfxCalls: vp.calls,
     };
   }
@@ -146,6 +160,7 @@ export class Scene3D {
   dispose(): void {
     this.props?.dispose();
     this.vfx.dispose();
+    this.markers.dispose();
     this.pilot.dispose();
     for (const g of this.ghosts) g.dispose();
     this.wr.dispose();

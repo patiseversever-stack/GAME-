@@ -5,6 +5,10 @@ import { t, upper, fmtDec, tk } from '../i18n.ts';
 import { worldArtSvg, type ArtOpts } from '../art.ts';
 import { WORLD_ACCENT, WORLD_GEO } from '../theme.ts';
 import type { ScreenCtx } from './screen.ts';
+import type { UstaTaskVM } from '../types.ts';
+import { taskText } from '../usta.ts';
+import { cosmetic } from '../../content/meta/cosmetics.ts';
+import { getLang } from '../i18n.ts';
 
 export function accentStyle(world: WorldId | undefined): string {
   return world ? `--kn-accent:${WORLD_ACCENT[world]};` : '';
@@ -102,9 +106,22 @@ export function starCount(n: number, total: number): HTMLElement {
   return h('span', { class: 'kn-starcount kn-num' }, ic('starFill', 'kn-icon is-on'), h('span', { text: t('common.starsOf', { n, total }) }));
 }
 
-/** Translated usta-task label from a template id + params. */
-export function taskLabel(type: string, count?: number, value?: number): string {
-  return tk(`usta.${type}`, { count, value }, t('usta.generic'));
+/** Usta task label (meta ustaI18n when the task id is known; exact thresholds when benchmarks are given). */
+export function taskLabel(task: UstaTaskVM): string {
+  return taskText(task);
+}
+
+/** Display name of a meta cosmetic ref ("pattern:kilim") in the current language. */
+export function cosmeticName(ref: string): string {
+  const def = cosmetic(ref as Parameters<typeof cosmetic>[0]);
+  if (def) return def.name[getLang()];
+  const [kind, id] = ref.split(':');
+  return tk(`${kind}.${id}`, undefined, id);
+}
+
+/** "Desen", "Kanopi", … for a cosmetic ref or kind. */
+export function cosmeticKindLabel(refOrKind: string): string {
+  return tk(`kind.${refOrKind.split(':')[0]}`, undefined, '');
 }
 
 /** Tap target wrapper making a whole card a button. */

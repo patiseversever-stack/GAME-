@@ -182,7 +182,7 @@ float kSunSide( vec3 dir ) {
   vec2 s = kSun.xz;
   float l = length( d ) * length( s );
   float c = l > 1e-5 ? dot( d, s ) / l : 0.0;
-  return pow( c * 0.5 + 0.5, max( kSkyHorizon.w, 0.01 ) );
+  return pow( clamp( c * 0.5 + 0.5, 0.0, 1.0 ), max( kSkyHorizon.w, 0.01 ) );
 }
 
 // Art-directed analytic sky radiance (linear). Palette stops (§3.2) with a Preetham-like shape:
@@ -253,7 +253,8 @@ vec3 kanatFogApplyTau( vec3 col, vec3 rel, vec3 tau ) {
   vec3 skyDir = normalize( vec3( dir.x, max( dir.y, 0.0 ), dir.z ) + vec3( 0.0, 1e-4, 0.0 ) );
   vec3 skyCol = kanatSky( skyDir );
   vec3 cM = ( skyCol + kSunColor.rgb * ( kFog.w * hg ) ) * kFogTint.rgb;
-  vec3 cG = kGroundFogColor.rgb * ( 1.0 + 2.0 * kFog.w * hg );
+  // Ground fog glows toward the sun (forward scattering of low light in the valley mist).
+  vec3 cG = kGroundFogColor.rgb * ( 0.85 + 5.0 * kFog.w * hg );
   vec3 cC = vec3( kGroundFogColor.w ) * ( 0.8 + 0.2 * hg );
   vec3 inC = ( cM * tau.x + cG * tau.y + cC * tau.z ) / max( tauSum, 1e-6 );
   // Distance fade blends to the exact sky colour (matches the dome at the horizon: no visible terrain edge).
@@ -621,7 +622,7 @@ export function skyRadiance(dx: number, dy: number, dz: number, out: Float32Arra
   const m = Math.min(0.98, Math.max(0.02, M[3]));
   const l = Math.hypot(dx, dz) * Math.hypot(S[0], S[2]);
   const c = l > 1e-5 ? (dx * S[0] + dz * S[2]) / l : 0;
-  const side = Math.pow(c * 0.5 + 0.5, Math.max(H[3], 0.01));
+  const side = Math.pow(Math.min(1, Math.max(0, c * 0.5 + 0.5)), Math.max(H[3], 0.01));
   const s1 = smooth(0, m, e);
   const s2 = smooth(m, 1, e);
   const sg = smooth(0, 0.3, -y);
@@ -660,7 +661,8 @@ function computeSkySH(sh: THREE.SphericalHarmonics3, look: WorldLook): void {
   }
   // E_sky(up) = 2π · mean(L·cosθ) over the hemisphere (uniform sampling).
   const eSky = [(2 * Math.PI * skyAvg0) / nUp, (2 * Math.PI * skyAvg1) / nUp, (2 * Math.PI * skyAvg2) / nUp];
-  const bounce = [0, 1, 2].map((k) => (ground[k] * (SC[k] * sunY * 0.7 + eSky[k] * 0.8)) / Math.PI);
+  // Terrain is partly self-occluded: 0.75 of the ideal infinite-plane bounce.
+  const bounce = [0, 1, 2].map((k) => (0.75 * ground[k] * (SC[k] * sunY * 0.7 + eSky[k] * 0.8)) / Math.PI);
   const w = (4 * Math.PI) / N;
   for (let i = 0; i < N; i++) {
     const y = 1 - (2 * (i + 0.5)) / N;

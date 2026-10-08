@@ -12,6 +12,8 @@ export const SURU = {
   N_BIRDS: 1500,
   MAX_FLOCKS: 16,
   FOLLOWERS_AT_SPAWN: 15,
+  /** flock ids whose owner colour (#E69F00) is nearest to the player's gold: they spawn opposite the player */
+  SPAWN_FAR_FLOCKS: [8, 15],
   /** Round length: 3:00 sim time. */
   ROUND_SEC: 180,
   /** Arena (bay) radius and spatial hash bounds (640 × 640 m, 6 m cells → 107² cells). */
@@ -19,6 +21,8 @@ export const SURU = {
   HASH_HALF: 320,
   CELL: 6,
   MAX_CAND: 32,
+  /** on a bird's movement-only ticks (conversion is evaluated every 2nd tick per bird, staggered) */
+  MAX_CAND_MOVE: 20,
   TOPO_K: 7,
 
   // ---- leader (§4.G base speed, §2 multipliers & turn rate) ----
@@ -70,8 +74,8 @@ export const SURU = {
   CAPTURE_PAD: 4,
   CAPTURE_CONTACT_WIDE: 3.5,
   CAPTURE_CONTACT_TIGHT: 1.5,
-  /** Scattered birds cannot be recaptured for this long (s) — otherwise a Wide flock would swallow them instantly. */
-  SCATTER_IMMUNE_SEC: 2.0,
+  /** S-14: birds scattered by a hawk / storm / night cannot rejoin their FORMER owner for 7 s (others may). */
+  SCATTER_OWNER_IMMUNE_SEC: 7,
   GROUP_MERGE_DIST: 12,
 
   // ---- contact conversion (§2 thresholds/rates, §4.G kernel + frontier) ----
@@ -96,6 +100,8 @@ export const SURU = {
   SIEGE_INSIDE_FRAC: 0.7,
   SIEGE_HOLD_SEC: 0.5,
   SIEGE_CASCADE_SEC: 1.5,
+  /** S-14: a successful KUŞATMA empties the attacker's breath (Sıkı locked until 25) + 6 s before its next siege */
+  SIEGE_COOLDOWN_SEC: 6,
 
   // ---- elimination ----
   LONE_SEC: 5,
@@ -115,11 +121,12 @@ export const SURU = {
   HAWK_FRAC_MIN: 0.06,
   HAWK_FRAC_MAX: 0.12,
   HAWK_TIGHT_MUL: 0.5,
+  /** S-14: scattered birds land 40 m beyond the flock EDGE (r_f + 40 from the leader), away from the owner */
   HAWK_SCATTER_DIST: 40,
   HAWK_MIN_FOLLOWERS: 12,
-  /** §4.G "1–3 hawks": a second / third hawk joins the wave when the largest flock reaches these sizes */
-  HAWK_2_AT: 220,
-  HAWK_3_AT: 420,
+  /** §4.G allows 1–3 hawks; ruling S-09 fixes ONE hawk per wave → extra hawks disabled (code path kept) */
+  HAWK_2_AT: 1e9,
+  HAWK_3_AT: 1e9,
   HAWK_STAGGER_TICKS: 24,
 
   // ---- wind gusts (§2) ----

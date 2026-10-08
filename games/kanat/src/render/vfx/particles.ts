@@ -89,8 +89,9 @@ void main() {
   if (kind == 0 || kind == 6 || kind == 7) {
     float n = kNoise2(p * 2.2 + vSeed * 31.0 + vT * 1.5) * 0.65 + kNoise2(p * 5.0 - vSeed * 7.0) * 0.35;
     float a = smoothstep(1.0, 0.15, r + (n - 0.5) * 0.55) * vCol.a * fade;
-    float lit = 0.55 + 0.45 * smoothstep(0.2, 0.8, n + p.y * 0.3);
-    vec3 col = vCol.rgb * (uAmb + uSun * lit);
+    float lit = 0.45 + 0.4 * smoothstep(0.2, 0.8, n + p.y * 0.3);
+    vec3 base = mix(vCol.rgb, vec3(dot(vCol.rgb, vec3(0.3, 0.59, 0.11))), 0.3);
+    vec3 col = base * (uAmb + uSun * lit);
     o = vec4(col * a, a);
   } else if (kind == 1) {
     float a = smoothstep(1.0, 0.6, r) * vCol.a * fade;

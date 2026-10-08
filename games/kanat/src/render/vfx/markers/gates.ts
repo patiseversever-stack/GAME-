@@ -2,8 +2,8 @@
 // ring expands and dissolves (the VFX system emits light streaks), miss → fades out. One instanced draw for all gates.
 import { InstancedBufferGeometry, InstancedBufferAttribute, Float32BufferAttribute, Mesh, ShaderMaterial, CustomBlending, OneFactor, OneMinusSrcAlphaFactor, DynamicDrawUsage, DoubleSide } from 'three';
 import type { Object3D } from 'three';
-import type { RouteGate } from '../../sim/types.ts';
-import { GLSL_NOISE } from '../props/glsl.ts';
+import type { RouteGate } from '../../../sim/types.ts';
+import { GLSL_NOISE } from '../../props/glsl.ts';
 
 const SEG = 72, TUBE = 6;
 

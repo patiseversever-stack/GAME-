@@ -16,13 +16,13 @@ void main() {
   float life = fract(uTime * (0.9 + aSeed.z * 1.6) + aSeed.y);
   vec2 dir = vec2(cos(ang), sin(ang));
   // radial position in "aspect-corrected" units; starts outside the central ellipse
-  float r0 = 0.62 + 0.25 * aSeed.y;
-  float r = r0 + life * 1.1;
+  float r0 = 0.6 + 0.2 * aSeed.y;
+  float r = r0 + life * 0.75;
   float len = (0.08 + 0.22 * aSeed.w) * (0.6 + uIntensity);
   float along = position.y > 0.0 ? r + len : r;
   vec2 p = dir * along;
   vec2 side = vec2(-dir.y, dir.x);
-  float wPx = 1.2 + 1.6 * aSeed.w;
+  float wPx = 2.0 + 2.2 * aSeed.w;
   // width in pixels → NDC per axis (positions live directly in NDC: an ellipse that matches the screen)
   p += side * position.x * wPx * 2.0 * uPx;
   vA = uIntensity * smoothstep(0.0, 0.15, life) * (1.0 - life) * (0.5 + 0.5 * aSeed.w);
@@ -35,8 +35,8 @@ const FRAG = /* glsl */ `
 varying float vA;
 varying float vU;
 void main() {
-  float a = vA * (0.35 + 0.65 * vU);
-  gl_FragColor = vec4(vec3(1.0, 0.97, 0.92) * a * 0.55, 0.0);
+  float a = vA * (0.25 + 0.75 * vU);
+  gl_FragColor = vec4(vec3(1.0, 0.97, 0.92) * a * 0.7, 0.0);
 }
 `;
 

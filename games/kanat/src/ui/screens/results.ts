@@ -4,9 +4,10 @@
 import { h, ic, strip } from '../dom.ts';
 import { t, tk, fmtInt, fmtIntDelta, fmtDelta, fmtTime, fmtDec, routeName, upper } from '../i18n.ts';
 import { countUp, sequence } from '../anim.ts';
-import type { ResultRowVM, ResultsProps } from '../types.ts';
+import type { ResultRowVM, ResultsProps, ShareKind } from '../types.ts';
 import type { ScreenCtx, ScreenDef } from './screen.ts';
-import { accentStyle, eyebrow, taskLabel } from './common.ts';
+import { accentStyle, cosmeticName, eyebrow, taskLabel } from './common.ts';
+import { cosmeticSwatch } from '../swatch.ts';
 import { iconSvg } from '../icons.ts';
 
 function rowLabel(r: ResultRowVM): string {
@@ -63,7 +64,7 @@ export const resultsScreen: ScreenDef<ResultsProps> = {
     if (p.ghostDelta !== undefined && !p.duel) {
       chips.appendChild(h('span', { class: `kn-chip ${p.ghostDelta <= 0 ? 'kn-chip--pos' : 'kn-chip--neg'}` }, ic('ghost'), h('span', { text: t('results.ghostDelta', { d: fmtDelta(p.ghostDelta, 2) }) })));
     }
-    if (p.assisted) chips.appendChild(h('span', { class: 'kn-chip' }, ic('lifebuoy'), h('span', { text: t('results.assist') })));
+    if (p.assisted) chips.appendChild(h('span', { class: 'kn-chip' }, ic('lifebuoy'), h('span', { text: !p.half && p.newBest ? t('results.assistRecord') : t('results.assist') })));
     if (p.slow) chips.appendChild(h('span', { class: 'kn-chip' }, ic('turtle'), h('span', { text: t('results.slow') })));
 
     // Stars
@@ -103,7 +104,7 @@ export const resultsScreen: ScreenDef<ResultsProps> = {
       panel.appendChild(row);
     });
     if (p.tasksDone?.length) {
-      for (const task of p.tasksDone) panel.appendChild(h('div', { class: 'kn-res-row kn-res-task' }, h('span', { class: 'kn-res-l' }, ic('check'), h('span', { text: taskLabel(task.type, task.count, task.value) })), h('span', { class: 'kn-res-v kn-eyebrow', text: upper(t('results.taskDone')) })));
+      for (const task of p.tasksDone) panel.appendChild(h('div', { class: 'kn-res-row kn-res-task' }, h('span', { class: 'kn-res-l' }, ic('check'), h('span', { text: taskLabel(task) })), h('span', { class: 'kn-res-v kn-eyebrow', text: upper(t('results.taskDone')) })));
     }
 
     // Actions
@@ -117,13 +118,87 @@ export const resultsScreen: ScreenDef<ResultsProps> = {
       return b;
     };
     const retry = action(t('results.retry'), 'retry', 'kn-btn--primary kn-btn--lg kn-btn--block kn-res-retry', cb.onResultsRetry);
-    const share = action(t('results.share'), 'share', '', cb.onResultsShare, p.half);
+    const kinds: ShareKind[] = p.shareKinds?.length ? p.shareKinds : ['card', 'text'];
+    const root = h('section', { class: `kn-results ${p.half ? 'is-half' : ''} ${p.compact ? 'is-compact' : ''}`.trim(), style: accentStyle(p.world) });
+    const openShare = (): void => {
+      if (kinds.length === 1) {
+        cb.onResultsShare?.(kinds[0]);
+        return;
+      }
+      const close = (): void => sheet.remove();
+      const opts = h('div', { class: 'kn-sharesheet-opts' });
+      const ICON: Record<ShareKind, string> = { clip: 'play', card: 'frame', text: 'copy' };
+      for (const k of kinds) {
+        const b = h('button', { class: 'kn-option', type: 'button' }, h('span', { class: 'kn-option-icon' }, ic(ICON[k])), h('span', { class: 'kn-option-text' }, h('b', { text: t(`results.share.${k}` as 'results.share.card') }), h('small', { text: t(`results.share.${k}Sub` as 'results.share.cardSub') })));
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          ctx.sound('confirm');
+          close();
+          cb.onResultsShare?.(k);
+        });
+        opts.appendChild(b);
+      }
+      const sheet = h('div', { class: 'kn-sharesheet' }, h('div', { class: 'kn-cardlayer-dim' }), h('div', { class: 'kn-modal kn-panel kn-panel-strong kn-anim-sheet' }, h('h2', { class: 'kn-h2 kn-modal-title', text: t('results.share.title') }), opts, h('div', { class: 'kn-modal-actions' }, (() => {
+        const c = h('button', { class: 'kn-btn kn-btn--quiet kn-btn--block', type: 'button' }, h('span', { text: t('common.cancel') }));
+        c.addEventListener('click', (e) => {
+          e.stopPropagation();
+          ctx.sound('back');
+          close();
+        });
+        return c;
+      })())));
+      sheet.addEventListener('click', (e) => {
+        if (e.target === sheet || (e.target as HTMLElement).classList.contains('kn-cardlayer-dim')) close();
+      });
+      root.appendChild(sheet);
+    };
+    const share = action(t('results.share'), 'share', '', openShare, p.half);
     const code = p.duel ? action(t('results.rematch'), 'duel', '', cb.onRematchCode) : action(t('results.duelCode'), 'duel', '', cb.onResultsDuelCode, p.half || p.mode === 'free');
     const next = action(t('results.next'), 'next', '', cb.onResultsNext, !p.hasNext);
 
-    return h(
-      'section',
-      { class: `kn-results ${p.half ? 'is-half' : ''}`.trim(), style: accentStyle(p.world) },
+    // Progress: XP bar + Usta n/3 + stars to the next world + reward chip.
+    let xpBlock: HTMLElement | null = null;
+    if (p.xp) {
+      const x = p.xp;
+      const fill = h('i', { style: `transform:scaleX(${anim ? x.fromFrac : x.toFrac})` });
+      const gained = h('span', { class: 'kn-xp-gain kn-num' });
+      ctx.onCleanup(countUp(gained, x.gained, (v) => t('results.xp', { n: Math.round(v) }), { ms: anim ? 900 : 0, delay: anim ? 1300 : 0 }));
+      if (anim) {
+        const id = window.setTimeout(() => (fill.style.transform = `scaleX(${x.toFrac})`), 1300);
+        ctx.onCleanup(() => clearTimeout(id));
+      }
+      xpBlock = h('div', { class: 'kn-xp' }, h('span', { class: 'kn-xp-level kn-display-600', text: t('results.rankLevel', { n: x.level }) }), h('span', { class: 'kn-xp-bar' }, fill), gained);
+    }
+    const metaChips: HTMLElement[] = [];
+    if (p.ustaProgress) metaChips.push(h('span', { class: 'kn-chip' }, ic('task'), h('span', { text: t('results.ustaProgress', { done: p.ustaProgress.done, total: p.ustaProgress.total }) })));
+    if (p.nextWorld && p.nextWorld.missing > 0) metaChips.push(h('span', { class: 'kn-chip' }, ic('starFill', 'kn-icon kn-chip-star'), h('span', { text: t('results.nextWorld', { place: tk(`worldTo.${p.nextWorld.world}`), n: p.nextWorld.missing }) })));
+    let rewardEl: HTMLElement | null = null;
+    if (p.reward) {
+      const ref = p.reward.ref;
+      const [kind, id] = ref.split(':');
+      const equip = h('button', { class: 'kn-btn kn-reward-equip', type: 'button' }, h('span', { text: t('results.equip') }));
+      equip.addEventListener('click', (e) => {
+        e.stopPropagation();
+        ctx.sound('confirm');
+        cb.onEquip?.(kind as 'pattern', id);
+        equip.replaceChildren(ic('check'), h('span', { text: t('collection.equipped') }));
+        equip.setAttribute('disabled', '');
+      });
+      rewardEl = h('div', { class: 'kn-reward-chip kn-reward-chip--res' }, h('span', { class: 'kn-reward-sw', html: cosmeticSwatch(ref) }), h('span', { class: 'kn-reward-text' }, h('b', { text: t('results.reward', { name: cosmeticName(ref) }) }), h('small', { text: tk(`kind.${kind}`, undefined, '') })), cb.onEquip ? equip : null);
+      if (anim) ctx.onCleanup(sequence([{ at: 2600, run: () => ctx.sound('reward') }]));
+    }
+    const meta = xpBlock || metaChips.length ? h('div', { class: 'kn-res-meta' }, xpBlock, metaChips.length ? h('div', { class: 'kn-res-metachips' }, ...metaChips) : null) : null;
+
+    if (p.compact) {
+      const cont = action(t('results.continue'), 'play', 'kn-btn--primary kn-btn--lg kn-btn--block', cb.onResultsContinue);
+      root.append(
+        h('div', { class: 'kn-results-scrim' }),
+        h('div', { class: 'kn-results-compact kn-safe' }, h('div', { class: 'kn-modal kn-panel kn-panel-strong kn-anim-sheet' }, eyebrow(eyebrowText), h('h1', { class: 'kn-h2 kn-modal-title', text: where }), starsEl, h('div', { class: 'kn-res-compact-score kn-display kn-num' }, big), metaChips.length ? h('div', { class: 'kn-res-metachips' }, ...metaChips) : null, rewardEl, h('div', { class: 'kn-modal-actions' }, cont))),
+      );
+      return root;
+    }
+
+    root.append(
       h('div', { class: 'kn-results-scrim' }),
       h(
         'div',
@@ -133,11 +208,13 @@ export const resultsScreen: ScreenDef<ResultsProps> = {
           { class: 'kn-results-left' },
           h('header', { class: 'kn-res-head' }, eyebrow(eyebrowText), h('h1', { class: 'kn-h2 kn-res-title', text: where }), h('span', { class: `kn-res-status ${p.half ? 'is-half' : ''}`.trim(), text: p.half ? t('results.half') : t('results.complete') })),
           h('div', { class: 'kn-res-hero' }, eyebrow(timeMode ? t('common.time') : t('common.score')), big, chips, starsEl, p.strip ? h('div', { class: 'kn-res-strip' }, eyebrow(t('share.prox')), strip(p.strip, 'kn-strip kn-strip--lg')) : null),
+          meta,
           h('div', { class: 'kn-res-actions' }, retry, h('div', { class: 'kn-res-actions-row' }, share, code, next)),
         ),
-        h('div', { class: 'kn-results-right kn-scroll' }, panel),
+        h('div', { class: 'kn-results-right kn-scroll' }, rewardEl, panel),
       ),
     );
+    return root;
   },
 };
 

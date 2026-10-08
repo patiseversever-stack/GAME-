@@ -127,9 +127,12 @@ varying vec2 vUv;
 void main() {
   float along = vUv.x;
   float across = abs(vUv.y - 0.5) * 2.0;
-  float a = (1.0 - across * across) * pow(1.0 - along, 1.6) * uOn;
-  a *= 0.85 + 0.15 * sin(uTime * 3.0 + along * 20.0);
-  gl_FragColor = vec4(vec3(1.0, 0.82, 0.52) * a * 0.55, 1.0);
+  float a = (1.0 - across * across) * pow(1.0 - along, 2.2) * uOn;
+  // a beam is only visible through haze at grazing angles: fade it out when looked at from above
+  vec3 toCam = normalize(cameraPosition - vWorld);
+  float grazing = 1.0 - abs(toCam.y);
+  a *= grazing * grazing * grazing;
+  gl_FragColor = vec4(vec3(1.0, 0.82, 0.52) * a * 0.32, 1.0);
 }
 `;
 
@@ -430,7 +433,7 @@ export class Environment {
       const bg = new THREE.PlaneGeometry(170, 9, 1, 1);
       bg.translate(85, 0, 0);
       this.disposables.push(bg);
-      for (const tilt of [0, Math.PI / 2]) {
+      for (const tilt of [Math.PI / 2]) {
         const bm = new THREE.Mesh(bg, this.beamMat);
         bm.rotation.set(tilt, s, -0.035);
         bm.frustumCulled = false;

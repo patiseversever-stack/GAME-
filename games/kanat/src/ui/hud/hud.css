@@ -1,8 +1,9 @@
 /* Flight HUD. 85 % opacity, centre 40 % empty, left-hand mirroring via .kn-left, big HUD via .kn-big (zoom). */
-.kn-hud { position: absolute; inset: 0; pointer-events: none; opacity: var(--kn-hud-opacity); transition: opacity var(--kn-t-base) var(--kn-ease), visibility 0s; color: var(--kn-text); font-family: var(--kn-font-display); }
+.kn-hud { position: absolute; inset: 0; pointer-events: none; opacity: var(--kn-hud-opacity); text-shadow: 0 0 10px rgba(8, 12, 18, 0.5), 0 1px 2px rgba(8, 12, 18, 0.45); transition: opacity var(--kn-t-base) var(--kn-ease), visibility 0s; color: var(--kn-text); font-family: var(--kn-font-display); }
 .kn-hud.is-hidden { opacity: 0; visibility: hidden; transition: opacity var(--kn-t-fast) var(--kn-ease), visibility 0s linear var(--kn-t-fast); }
 .kn-hud button { pointer-events: auto; }
-.kn-big .kn-hud > :not(.kn-hud-warn):not(.kn-hud-arrow) { zoom: 1.25; }
+.kn-big .kn-hud > :not(.kn-hud-warn):not(.kn-hud-arrow):not(.kn-hud-land) { zoom: 1.2; }
+.kn-ts-3 .kn-hud > :not(.kn-hud-warn):not(.kn-hud-arrow):not(.kn-hud-land) { zoom: 1.35; }
 
 /* pause (44 pt) */
 .kn-hud-pause { position: absolute; top: calc(var(--kn-safe-top) + 10px); left: calc(var(--kn-safe-left) + 10px); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(14, 20, 28, 0.42); border: 1px solid var(--kn-hair); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); }
@@ -15,7 +16,7 @@
 .kn-hud-score { font-size: 38px; line-height: 1; letter-spacing: 0.01em; }
 .kn-hud.is-free .kn-hud-score { display: none; }
 .kn-hud-sub { display: flex; align-items: center; gap: 8px; min-height: 22px; }
-.kn-hud-gates { font-weight: 600; font-size: 14px; letter-spacing: 0.06em; color: var(--kn-text-dim); }
+.kn-hud-gates { font-family: var(--kn-font-body); font-weight: 600; font-size: 13px; letter-spacing: 0.04em; color: var(--kn-text-dim); }
 .kn-hud-gates:empty { display: none; }
 .kn-hud-delta { font-weight: 600; font-size: 19px; padding: 0 8px; border-radius: 6px; color: #FF8A8D; background: rgba(14, 20, 28, 0.4); opacity: 0; transform: translateY(-4px); transition: opacity var(--kn-t-base) var(--kn-ease), transform var(--kn-t-base) var(--kn-ease); }
 .kn-hud-delta.is-ahead { color: #7FE0AE; }
@@ -40,7 +41,7 @@
 /* left: speed */
 .kn-hud-speed { position: absolute; left: calc(var(--kn-safe-left) + 14px); top: 62%; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
 .kn-hud-speed b { font-size: 30px; line-height: 1; }
-.kn-hud-unit { font-weight: 600; font-size: 11.5px; letter-spacing: 0.12em; color: var(--kn-text-dim); }
+.kn-hud-unit { font-family: var(--kn-font-body); font-weight: 600; font-size: 13px; letter-spacing: 0.04em; color: var(--kn-text-dim); }
 .kn-left .kn-hud-speed { left: auto; right: calc(var(--kn-safe-right) + 14px); align-items: flex-end; }
 
 /* right: altitude AGL bar */
@@ -85,7 +86,7 @@
 .kn-ring-combo { display: flex; align-items: center; gap: 8px; height: 14px; }
 .kn-combo-bar { position: relative; display: block; width: 88px; height: 3px; border-radius: 3px; background: var(--kn-hair-strong); overflow: hidden; }
 .kn-combo-bar i { position: absolute; inset: 0; background: var(--kn-text); transform-origin: left; transform: scaleX(0); will-change: transform; }
-.kn-combo-txt { font-weight: 600; font-size: 13px; min-width: 30px; color: var(--kn-text-dim); }
+.kn-combo-txt { font-family: var(--kn-font-body); font-weight: 600; font-size: 13px; min-width: 30px; color: var(--kn-text-dim); }
 
 /* gate edge arrow */
 .kn-hud-arrow { position: absolute; left: 50%; top: 50%; width: 30px; height: 30px; margin: -15px 0 0 -15px; opacity: 0; transition: opacity var(--kn-t-base) var(--kn-ease); will-change: transform; }
@@ -97,7 +98,7 @@
 .kn-hud .kn-hud-chute { pointer-events: none; }
 .kn-hud .kn-hud-chute.is-on { opacity: 1; transform: none; pointer-events: auto; }
 .kn-hud-chute svg { width: 36px; height: 36px; }
-.kn-chute-label { font-weight: 600; font-size: 11px; letter-spacing: 0.1em; }
+.kn-chute-label { font-family: var(--kn-font-body); font-weight: 700; font-size: 13px; letter-spacing: 0.03em; }
 .kn-chute-ring { position: absolute; inset: -2px; border-radius: 50%; border: 2px solid var(--kn-text); opacity: 0; pointer-events: none; }
 .kn-hud-chute.is-pulse { animation: kn-pulse 1000ms ease-in-out infinite; }
 .kn-hud-chute.is-pulse .kn-chute-ring { animation: kn-ring 1000ms ease-out infinite; }
@@ -157,3 +158,19 @@
 
 /* intro / jump: only the FTUE layer and pause are shown (first-30-seconds film: no instrument clutter) */
 .kn-hud.is-intro > :not(.kn-hud-ftue):not(.kn-hud-pause):not(.kn-hud-warn) { opacity: 0; transition: opacity var(--kn-t-slow) var(--kn-ease); }
+
+/* practice label (ANTRENMAN) under the score */
+.kn-hud-practice { position: absolute; top: calc(var(--kn-safe-top) + 64px); left: 50%; transform: translateX(-50%); font-family: var(--kn-font-body); font-weight: 700; font-size: 13px; letter-spacing: 0.08em; padding: 3px 10px; border-radius: 6px; border: 1px solid var(--kn-hair-strong); background: rgba(14, 20, 28, 0.45); display: none; }
+.kn-hud.is-practice .kn-hud-practice { display: block; }
+
+/* proximity ring: shifts up when the stick anchor sits on it (RING_PLACEMENT), or "Orta" position */
+.kn-hud-ring { transition: bottom 250ms var(--kn-ease); }
+.kn-hud.is-ring-up .kn-hud-ring, .kn-hud.is-ring-middle .kn-hud-ring { bottom: calc(var(--kn-safe-bottom) + 104px); }
+.kn-hud.is-ring-middle.is-ring-up .kn-hud-ring { bottom: calc(var(--kn-safe-bottom) + 194px); }
+
+/* landing wayfinding: edge arrow (parachute target) + "İNİŞ 820 m" */
+.kn-hud-land { position: absolute; left: 50%; top: 50%; width: 0; height: 0; opacity: 0; transition: opacity var(--kn-t-base) var(--kn-ease); will-change: transform; }
+.kn-hud-land.is-on { opacity: 1; }
+.kn-hud-land-arrow { position: absolute; left: -17px; top: -17px; width: 34px; height: 34px; }
+.kn-hud-land-arrow svg { width: 34px; height: 34px; fill: var(--kn-p2); stroke: #0E141C; stroke-width: 1; }
+.kn-hud-land-label { position: absolute; left: 50%; top: 22px; transform: translateX(-50%); white-space: nowrap; font-family: var(--kn-font-body); font-weight: 700; font-size: 13px; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 6px; background: rgba(14, 20, 28, 0.5); }

@@ -86,8 +86,10 @@ export class UIController {
   /** Apply persisted settings: language, left-hand mirroring, big HUD, colour-blind, reduce motion. */
   setSettings(s: Settings): void {
     this.settings = s;
-    applyRootFlags({ leftHanded: s.leftHanded, bigHud: s.kanat.bigHud, colorBlind: s.kanat.colorBlind, reduceMotion: s.reduceMotion, lang: s.lang });
-    this.hud?.configure({ colorBlind: s.kanat.colorBlind, leftHanded: s.leftHanded, bigHud: s.kanat.bigHud });
+    const textScale = (s as Settings & { textScale?: number }).textScale ?? (s.kanat.bigHud ? 1.2 : 1);
+    applyRootFlags({ leftHanded: s.leftHanded, bigHud: s.kanat.bigHud || textScale > 1, colorBlind: s.kanat.colorBlind, reduceMotion: s.reduceMotion, lang: s.lang, textScale });
+    const ring = (s.kanat as Settings['kanat'] & { ringPosition?: 'bottom' | 'middle' }).ringPosition;
+    this.hud?.configure({ colorBlind: s.kanat.colorBlind, leftHanded: s.leftHanded, bigHud: s.kanat.bigHud || textScale > 1, ringPosition: ring ?? 'bottom' });
     if (s.lang !== getLang()) setLang(s.lang);
   }
 
@@ -151,7 +153,7 @@ export class UIController {
         this.cb.onPause?.();
         return true;
       }
-      if (top.id === 'results') {
+      if (top.id === 'results' || top.id === 'suruResults') {
         this.sound('back');
         this.cb.onQuitToMenu?.();
         return true;

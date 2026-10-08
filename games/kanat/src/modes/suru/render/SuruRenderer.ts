@@ -125,11 +125,13 @@ export class SuruRenderer {
 
   /** follow another flock (spectating after elimination); 0 = player */
   setSpectate(flock: number): void {
+    if (flock !== this.spectate) this.camera.snap();
     this.spectate = flock;
   }
 
   skipOpening(): void {
     if (this.camera.mode === 'opening') this.camera.mode = 'play';
+    this.camera.snap();
   }
 
   /** start the winner's Sürü Gösterisi (render-only morph + rising camera) */
@@ -235,6 +237,9 @@ export class SuruRenderer {
     const vz = (src.leaderZ[f] - src.leaderPrevZ[f]) * 30;
     this.camera.update(dt, lx, lz, vx, vz, src.flockRadius(f), this.showActive ? { x: this.show.x, z: this.show.z, scale: this.show.scale } : undefined);
     g.uCamPos.value.copy(this.camera.cam.position);
+    // keep birds readable in pixels as the camera rises (visual only)
+    const hk = Math.min(1.7, Math.max(1, this.camera.heightNow / 75));
+    this.birds.setViewScale(Math.pow(hk, 0.65));
     // lighthouse uniform for the water reflection
     g.uLighthouse.value.set(this.lighthousePos.x, this.lighthousePos.y, this.lighthouseOn, 0);
     this.skyWater.follow(this.camera.cam.position);

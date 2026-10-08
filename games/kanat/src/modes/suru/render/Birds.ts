@@ -273,6 +273,11 @@ void main() {
   else if (vI.w < 2.5) { vec2 b = abs(q) - vec2(ms * 0.85); sd = abs(length(max(b, 0.0)) + min(max(b.x, b.y), 0.0)); }
   else { vec2 r = vec2(q.x + q.y, q.x - q.y) * 0.70710678; vec2 b = abs(r) - vec2(ms * 0.8); sd = abs(length(max(b, 0.0)) + min(max(b.x, b.y), 0.0)); }
   float mark = 1.0 - smoothstep(0.18, 0.4, sd);
+  // the player's leader wears a double ring (producer review Ü-9: recognise your own flock)
+  if (vS.w > 0.5) {
+    float r2 = abs(length(q) - ms * 1.75);
+    mark = max(mark, (1.0 - smoothstep(0.16, 0.36, r2)) * 0.9);
+  }
   float lonePulse = vS.y > 0.5 ? 0.6 + 0.4 * sin(uTime * 9.0) : 1.0;
   float a = (aura * 0.18 + mark * 0.6) * lonePulse;
   a *= 1.0 - nightMask(vWorld.xz) * 0.35;
@@ -604,6 +609,12 @@ export class BirdLayer {
     this.bg.frustumCulled = false;
     scene.add(this.bg);
     this.triangles = triangleCount(src);
+  }
+
+  /** readability scale (≥ 1) applied on top of the physical bird size */
+  setViewScale(k: number): void {
+    this.birdMat.uniforms.uScale.value = BIRD_SCALE * k;
+    this.leaderMat.uniforms.uScale.value = BIRD_SCALE * LEADER_SCALE * k;
   }
 
   setTier(t: QualityTier): void {

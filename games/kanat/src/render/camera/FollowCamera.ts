@@ -187,6 +187,9 @@ export class FollowCamera {
     cam.quaternion.multiply(this.q);
     this.v3.set(this.shake.offset[0], this.shake.offset[1], 0).applyQuaternion(cam.quaternion);
     cam.position.add(this.v3);
+    // Clearance rule holds after shake too.
+    const g2 = this.groundAt(cam.position.x, cam.position.z) + 1.5;
+    if (cam.position.y < g2) cam.position.y = g2;
     cam.fov = this.fov;
     cam.updateProjectionMatrix();
     cam.updateMatrixWorld();

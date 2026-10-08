@@ -26,6 +26,7 @@ export const SURU_SIM_VERSION = 1;
 const N = SURU.N_BIRDS;
 const FMAX = SURU.MAX_FLOCKS + 1; // flock ids 1..16, index 0 = wild
 const CAP = SURU.MAX_CAND;
+const CAP_MOVE = SURU.MAX_CAND_MOVE;
 const DT = SURU.DT;
 const HZ = SURU.TICK_HZ;
 const TL = SURU.TRAIL_LEN; // power of two
@@ -100,12 +101,14 @@ export interface SuruSimOptions {
   capture?: boolean;
   /** end the round when ≤ 1 flock is alive (default true; single-flock scenarios disable it) */
   lastStanding?: boolean;
+  /** wild groups wander between islets (default true; the FTUE keeps them where the ghost thumb points) */
+  wildWander?: boolean;
 }
 
 export class SuruSim implements FlockRenderSource {
   readonly birdCount = N;
   readonly maxFlocks = SURU.MAX_FLOCKS;
-  readonly opts: Required<Pick<SuruSimOptions, 'seed' | 'roundSec' | 'hawks' | 'storm' | 'gusts' | 'ring' | 'freezeMotion' | 'conversion' | 'capture' | 'lastStanding'>>;
+  readonly opts: Required<Pick<SuruSimOptions, 'seed' | 'roundSec' | 'hawks' | 'storm' | 'gusts' | 'ring' | 'freezeMotion' | 'conversion' | 'capture' | 'lastStanding' | 'wildWander'>>;
   readonly layout: SuruLayout;
   readonly roundTicks: number;
   flockCount: number;
@@ -189,19 +192,25 @@ export class SuruSim implements FlockRenderSource {
   readonly gCX = new Float32Array(G);
   readonly gCZ = new Float32Array(G);
   readonly gImmune = new Int32Array(G);
+  /** S-14: former owner that may not recapture this group before gBlockUntil */
+  readonly gBlockOwner = new Uint8Array(G);
+  readonly gBlockUntil = new Int32Array(G);
   private readonly gNextWander = new Int32Array(G);
   private readonly gLX = new Float32Array(G);
   private readonly gLZ = new Float32Array(G);
   private readonly gCapF = new Uint8Array(G);
   private readonly gCapD = new Float32Array(G);
   private readonly capAcc = new Float64Array(G * 3);
-  private stormGroup = -1;
-  private stormGroupTick = -1000;
+  private readonly flockStormGroup = new Int16Array(FMAX).fill(-1);
+  private readonly flockStormGroupTick = new Int32Array(FMAX);
+  /** S-14: no new siege by this attacker before this tick */
+  readonly flockSiegeCooldown = new Int32Array(FMAX);
 
   // ---- events / hazards ----
   readonly hawks: HawkView[] = [];
   private hawkNext = 0;
   private hawkDiveTick = 0;
+  private hawkWave = 0;
   private readonly hawkTarget = new Int32Array(3);
   private readonly hawkDirX = new Float64Array(3);
   private readonly hawkDirZ = new Float64Array(3);
@@ -235,8 +244,8 @@ export class SuruSim implements FlockRenderSource {
   private readonly convMul = new Float64Array(FMAX);
   private readonly capR2 = new Float64Array(FMAX);
   private readonly waveAcc = new Float64Array(FMAX * FMAX * 3);
-  private readonly topoD = new Float64Array(SURU.TOPO_K);
-  private readonly topoI = new Int32Array(SURU.TOPO_K);
+  /** per-bird adaptive neighbourhood radius² (≈ 7 topological neighbours) */
+  private readonly topoR2 = new Float32Array(N).fill(4);
 
   // ---- rng streams ----
   private readonly rWild: Rng;
@@ -263,6 +272,7 @@ export class SuruSim implements FlockRenderSource {
       conversion: options.conversion ?? true,
       capture: options.capture ?? true,
       lastStanding: options.lastStanding ?? true,
+      wildWander: options.wildWander ?? true,
     };
     this.layout = options.layout ?? LAYOUT_SAZLIK;
     this.roundTicks = Math.round(this.opts.roundSec * HZ);
@@ -402,9 +412,31 @@ export class SuruSim implements FlockRenderSource {
     const F = this.flockCount;
     const lay = this.layout;
     const a0 = rl.next() * DET_TAU;
+    // spawn slots around the bay; slot 0 = player. Flocks in SPAWN_FAR_FLOCKS take the slots farthest away.
+    const slotOf = new Int32Array(F + 1);
+    const taken = new Uint8Array(F);
+    taken[0] = 1;
+    slotOf[1] = 0;
+    const far: number[] = [];
+    for (let k = 1; k < F; k++) far.push(k);
+    far.sort((p, q) => Math.min(q, F - q) - Math.min(p, F - p) || p - q);
+    let fi = 0;
+    for (const f of SURU.SPAWN_FAR_FLOCKS) {
+      if (f > F) continue;
+      slotOf[f] = far[fi];
+      taken[far[fi]] = 1;
+      fi++;
+    }
+    let nextSlot = 1;
+    for (let f = 2; f <= F; f++) {
+      if ((SURU.SPAWN_FAR_FLOCKS as readonly number[]).includes(f)) continue;
+      while (taken[nextSlot]) nextSlot++;
+      slotOf[f] = nextSlot;
+      taken[nextSlot] = 1;
+    }
     let next = 0;
     for (let f = 1; f <= F; f++) {
-      const a = a0 + ((f - 1) / F) * DET_TAU;
+      const a = a0 + (slotOf[f] / F) * DET_TAU;
       const r = lay.spawnRadius * (0.92 + 0.16 * rl.next());
       const x = detSin(a) * r;
       const z = -detCos(a) * r;
@@ -547,6 +579,8 @@ export class SuruSim implements FlockRenderSource {
     this.gOmega[g] = dir * this.rWild.int(10, 22); // ≈ 0.46–1.0 rad/s
     this.gOrbit[g] = 7 + this.rWild.next() * 9;
     this.gImmune[g] = immuneUntil;
+    this.gBlockOwner[g] = 0;
+    this.gBlockUntil[g] = 0;
     this.gNextWander[g] = this.tick + Math.round(this.rWild.range(6, 14) * HZ);
     this.gCount[g] = 0;
     this.gCX[g] = ax;
@@ -938,8 +972,7 @@ export class SuruSim implements FlockRenderSource {
     const owner = this.owner;
     const flags = this.flags;
     const trail = this.trail;
-    const topoD = this.topoD;
-    const topoP = this.topoI;
+    const topoR2 = this.topoR2;
     const K = SURU.TOPO_K;
     const R2 = SURU.CONV_R * SURU.CONV_R;
     const invR2 = 1 / R2;
@@ -1050,15 +1083,30 @@ export class SuruSim implements FlockRenderSource {
       }
       const nr = hash.cellRanges(x, z, rs, re);
       const rot = (i * 7 + T) & 0xff;
+      // contact conversion is evaluated at 15 Hz per bird (parity-staggered, probability for 2·Δt):
+      // conversion ticks scan up to 32 candidates, movement-only ticks up to 20 (nearest cells first)
+      const convTick = ((i + T) & 1) === 0;
+      const cap = convTick ? CAP : CAP_MOVE;
+      const isFC = isF && convTick;
       let n = 0;
       let tn = 0;
-      let tMax = -1;
-      let tMaxK = 0;
+      const r7 = topoR2[i];
+      let avx = 0;
+      let avz = 0;
+      let apx = 0;
+      let apz = 0;
       let sxs = 0;
       let szs = 0;
       let frontier = false;
       let mask = 0;
-      for (let r = 0; r < nr && n < CAP; r++) {
+      let wOwn = 0;
+      let blockOwner = 0;
+      let blockActive = false;
+      if (capOK) {
+        blockOwner = this.gBlockOwner[g];
+        blockActive = this.gBlockUntil[g] > T;
+      }
+      for (let r = 0; r < nr && n < cap; r++) {
         const s0 = rs[r];
         const e0 = re[r];
         const len = e0 - s0;
@@ -1079,33 +1127,23 @@ export class SuruSim implements FlockRenderSource {
             szs += dz * ww;
           }
           if (oj === o) {
-            // K nearest same-owner candidates (topological neighbours): unsorted set + running max
-            if (tn < K) {
-              topoD[tn] = d2;
-              topoP[tn] = q;
-              if (d2 > tMax) {
-                tMax = d2;
-                tMaxK = tn;
-              }
+            // topological neighbourhood (~7): same-owner birds inside this bird's adaptive radius
+            if (d2 < r7) {
+              avx += svx[q];
+              avz += svz[q];
+              apx += sx[q];
+              apz += sz[q];
               tn++;
-            } else if (d2 < tMax) {
-              topoD[tMaxK] = d2;
-              topoP[tMaxK] = q;
-              tMax = topoD[0];
-              tMaxK = 0;
-              for (let k = 1; k < K; k++) {
-                const v = topoD[k];
-                if (v > tMax) {
-                  tMax = v;
-                  tMaxK = k;
-                }
-              }
             }
-          }
-          if (oj !== 0) {
-            if (isF) {
-              if (oj !== o) frontier = true;
-              // contact weight: poly6-like kernel × per-bird multiplier
+            if (isFC) {
+              // own-owner contact weight kept in a scalar (the common case)
+              const kq = 1 - d2 * invR2;
+              wOwn += kq * kq * sW[q];
+            }
+          } else if (oj !== 0) {
+            if (isFC) {
+              frontier = true;
+              // contact weight: poly6-like kernel × per-bird multiplier (Tight ×1.6, near own leader ×1.3)
               const kq = 1 - d2 * invR2;
               const kw = kq * kq * sW[q];
               const bit = 1 << oj;
@@ -1113,25 +1151,24 @@ export class SuruSim implements FlockRenderSource {
                 mask |= bit;
                 w[oj] = kw;
               } else w[oj] += kw;
-            } else if (capOK && d2 < capR2[oj]) {
+            } else if (isF) {
+              frontier = true;
+            } else if (capOK && d2 < capR2[oj] && !(oj === blockOwner && blockActive)) {
               if (d2 < capD[g] || (d2 === capD[g] && oj < capF[g])) {
                 capD[g] = d2;
                 capF[g] = oj;
               }
             }
           }
-          if (n >= CAP) break;
+          if (n >= cap) break;
         }
       }
       // --- contact conversion decision (frontier followers only; applied at tick end) ---
       if (frontier) {
         flags[i] |= FL_FRONTIER;
-        if (doConv && (flags[i] & FL_CASCADE) === 0) {
-          const selfW = sW[qi];
-          if ((mask & (1 << o)) === 0) {
-            mask |= 1 << o;
-            w[o] = selfW;
-          } else w[o] += selfW;
+        if (isFC && doConv && (flags[i] & FL_CASCADE) === 0) {
+          mask |= 1 << o;
+          w[o] = wOwn + sW[qi];
           let sum = 0;
           let m = 0;
           let wm = -1;
@@ -1149,7 +1186,7 @@ export class SuruSim implements FlockRenderSource {
             const share = wm / sum;
             if (share >= SURU.CONV_SHARE) {
               const lambda = SURU.CONV_RATE * (share - 0.5);
-              const pc = 1 - detExp(-lambda * DT);
+              const pc = 1 - detExp(-lambda * 2 * DT);
               if (this.rConv.next() < pc) {
                 pend[i] = m;
                 this.pendCount++;
@@ -1175,18 +1212,10 @@ export class SuruSim implements FlockRenderSource {
       }
       ax += sxs * sepW * sepMul;
       az += szs * sepW * sepMul;
+      // adapt the radius so ≈ 7 neighbours stay inside (starlings' topological interaction count)
+      if (tn > K) topoR2[i] = r7 * 0.82 > 0.04 ? r7 * 0.82 : 0.04;
+      else if (tn < K) topoR2[i] = r7 * 1.22 < R2 ? r7 * 1.22 : R2;
       if (tn > 0) {
-        let avx = 0;
-        let avz = 0;
-        let apx = 0;
-        let apz = 0;
-        for (let k = 0; k < tn; k++) {
-          const q = topoP[k];
-          avx += svx[q];
-          avz += svz[q];
-          apx += sx[q];
-          apz += sz[q];
-        }
         const inv = 1 / tn;
         ax += (avx * inv - vx[i]) * aliW + (apx * inv - x) * cohW;
         az += (avz * inv - vz[i]) * aliW + (apz * inv - z) * cohW;
@@ -1384,6 +1413,7 @@ export class SuruSim implements FlockRenderSource {
       const cz = this.gCZ[g];
       for (let f = 1; f <= this.flockCount; f++) {
         if (!this.flockAlive[f]) continue;
+        if (f === this.gBlockOwner[g] && this.gBlockUntil[g] > T) continue;
         const r = this.flockRadius(f) + SURU.CAPTURE_PAD;
         const dx = this.leaderX[f] - cx;
         const dz = this.leaderZ[f] - cz;
@@ -1440,24 +1470,39 @@ export class SuruSim implements FlockRenderSource {
     return bc >= SURU.HAWK_MIN_FOLLOWERS ? best : 0;
   }
 
-  /** Exposed edge bird of flock f on the side `dir` (farthest along dir from the follower centroid). */
+  /**
+   * Exposed edge bird of flock f (§4.G: the largest flock's edge bird, in sight): among followers within
+   * 28 m of the leader, the one farthest from the flight axis on the hawk's side `dir`. Keeping the strike near
+   * the leader keeps the 2 s shadow warning where the owner is looking.
+   */
   private edgeBird(f: number, dx0: number, dz0: number): number {
-    const cx = this.cenX[f];
-    const cz = this.cenZ[f];
+    const lx = this.leaderX[f];
+    const lz = this.leaderZ[f];
+    const hx = this.leaderHX[f];
+    const hz = this.leaderHZ[f];
     let best = -1;
     let bd = -1e18;
+    let fallback = -1;
+    let fd = 1e18;
     for (let i = 0; i < N; i++) {
       if (this.owner[i] !== f) continue;
-      const dx = this.posX[i] - cx;
-      const dz = this.posZ[i] - cz;
-      // farthest from the centroid, biased toward this hawk's side
-      const sc = dx * dx + dz * dz + 6 * (dx * dx0 + dz * dz0);
+      const dx = this.posX[i] - lx;
+      const dz = this.posZ[i] - lz;
+      const d2 = dx * dx + dz * dz;
+      if (d2 < fd) {
+        fd = d2;
+        fallback = i;
+      }
+      if (d2 > 28 * 28) continue;
+      const lat = -dx * hz + dz * hx; // signed distance from the flight axis
+      const side = dx * dx0 + dz * dz0;
+      const sc = lat * lat + 4 * side;
       if (sc > bd) {
         bd = sc;
         best = i;
       }
     }
-    return best;
+    return best >= 0 ? best : fallback;
   }
 
   /**
@@ -1476,6 +1521,7 @@ export class SuruSim implements FlockRenderSource {
       } else {
         const n = this.flockCountArr[f];
         const count = 1 + (n >= SURU.HAWK_2_AT ? 1 : 0) + (n >= SURU.HAWK_3_AT ? 1 : 0);
+        this.hawkWave++;
         for (let k = 0; k < count; k++) {
           const hk = this.hawks[k];
           hk.phase = 4; // scheduled
@@ -1497,8 +1543,8 @@ export class SuruSim implements FlockRenderSource {
         hk.phase = 0;
         return;
       }
-      // side of attack: behind the flock, rotated 120° per hawk
-      const a = DET_PI + (k * DET_TAU) / 3;
+      // side of attack: the flock's flank (alternating left/right per wave), rotated 120° per extra hawk
+      const a = DET_PI * 0.5 * (this.hawkWave & 1 ? 1 : -1) + (k * DET_TAU) / 3;
       const c = detCos(a);
       const s = detSin(a);
       const hx = this.leaderHX[f];
@@ -1616,25 +1662,29 @@ export class SuruSim implements FlockRenderSource {
     }
     const sub = keys.subarray(0, m);
     sub.sort();
-    let ox = hk.x - this.cenX[f];
-    let oz = hk.z - this.cenZ[f];
+    // away from the owner: from the leader through the strike point; land 40 m beyond the flock edge
+    let ox = hk.x - this.leaderX[f];
+    let oz = hk.z - this.leaderZ[f];
     let ol = Math.sqrt(ox * ox + oz * oz);
     if (ol < 1e-3) {
       ox = this.hawkDirX[k];
       oz = this.hawkDirZ[k];
-      ol = 1;
+      ol = Math.sqrt(ox * ox + oz * oz) || 1;
     }
     ox /= ol;
     oz /= ol;
-    let ax = hk.x + ox * SURU.HAWK_SCATTER_DIST;
-    let az = hk.z + oz * SURU.HAWK_SCATTER_DIST;
+    const reach = this.flockRadius(f) + SURU.HAWK_SCATTER_DIST;
+    let ax = this.leaderX[f] + ox * reach;
+    let az = this.leaderZ[f] + oz * reach;
     const ar = Math.sqrt(ax * ax + az * az);
     const lim = (this.ringActive ? this.ringRadius : SURU.ARENA_RADIUS) - 15;
     if (ar > lim) {
       ax *= lim / ar;
       az *= lim / ar;
     }
-    const g = this.allocGroup(ax, az, T + Math.round(SURU.SCATTER_IMMUNE_SEC * HZ));
+    const g = this.allocGroup(ax, az, 0);
+    this.gBlockOwner[g] = f;
+    this.gBlockUntil[g] = T + Math.round(SURU.SCATTER_OWNER_IMMUNE_SEC * HZ);
     let sx = 0;
     let sz = 0;
     for (let q = 0; q < count; q++) {
@@ -1677,11 +1727,15 @@ export class SuruSim implements FlockRenderSource {
       const z = this.posZ[i];
       if (stormOn && (flags[i] & FL_STORM) !== 0) {
         if (this.rDrift.next() < pStorm) {
-          if (this.stormGroup < 0 || T - this.stormGroupTick > HZ || !this.gActive[this.stormGroup]) {
-            this.stormGroup = this.allocGroup(this.storm.x, this.storm.z, T + Math.round(SURU.SCATTER_IMMUNE_SEC * HZ));
-            this.stormGroupTick = T;
+          let g = this.flockStormGroup[o];
+          if (g < 0 || T - this.flockStormGroupTick[o] > HZ || !this.gActive[g]) {
+            g = this.allocGroup(this.storm.x, this.storm.z, 0);
+            this.gBlockOwner[g] = o;
+            this.gBlockUntil[g] = T + Math.round(SURU.SCATTER_OWNER_IMMUNE_SEC * HZ);
+            this.flockStormGroup[o] = g;
+            this.flockStormGroupTick[o] = T;
           }
-          this.toWild(i, this.stormGroup, T);
+          this.toWild(i, g, T);
           continue;
         }
       }
@@ -1691,7 +1745,9 @@ export class SuruSim implements FlockRenderSource {
           let g = this.flockNightGroup[o];
           if (g < 0 || T - this.flockNightGroupTick[o] > HZ || !this.gActive[g]) {
             const r = Math.sqrt(x * x + z * z) || 1;
-            g = this.allocGroup(x / r * (this.ringRadius - 25), z / r * (this.ringRadius - 25), T + Math.round(SURU.SCATTER_IMMUNE_SEC * HZ));
+            g = this.allocGroup(x / r * (this.ringRadius - 25), z / r * (this.ringRadius - 25), 0);
+            this.gBlockOwner[g] = o;
+            this.gBlockUntil[g] = T + Math.round(SURU.SCATTER_OWNER_IMMUNE_SEC * HZ);
             this.flockNightGroup[o] = g;
             this.flockNightGroupTick[o] = T;
           }
@@ -1760,7 +1816,7 @@ export class SuruSim implements FlockRenderSource {
       let bestR = 0;
       for (let a = 1; a <= F; a++) {
         const key = a * FMAX + b;
-        if (a === b || !this.flockAlive[a] || tally[a] < SURU.SIEGE_CAND_MIN) {
+        if (a === b || !this.flockAlive[a] || tally[a] < SURU.SIEGE_CAND_MIN || this.flockSiegeCooldown[a] > T) {
           this.siegeStart[key] = -1;
           continue;
         }
@@ -1870,6 +1926,10 @@ export class SuruSim implements FlockRenderSource {
     sv.cascadeStartTick = T;
     for (let x = 1; x <= this.flockCount; x++) this.siegeStart[x * FMAX + b] = -1;
     this.flockSieges[a]++;
+    // S-14: the encircling effort costs all the attacker's breath and blocks a new siege for 6 s
+    this.flockBreath[a] = 0;
+    this.flockBreathless[a] = 1;
+    this.flockSiegeCooldown[a] = T + Math.round(SURU.SIEGE_COOLDOWN_SEC * HZ);
     this.events.push({ type: 'siege', tick: T, attacker: a, target: b, count: m, x: lx, z: lz });
   }
 
@@ -1967,7 +2027,7 @@ export class SuruSim implements FlockRenderSource {
     for (let g = 0; g < G; g++) {
       if (!this.gActive[g]) continue;
       // wander: anchors drift between reed islets and open water
-      if (T >= this.gNextWander[g]) {
+      if (T >= this.gNextWander[g] && this.opts.wildWander) {
         this.gNextWander[g] = T + Math.round(this.rWild.range(7, 15) * HZ);
         let nx: number;
         let nz: number;
@@ -2014,9 +2074,9 @@ export class SuruSim implements FlockRenderSource {
     if (T % 15 === 7) {
       const md2 = SURU.GROUP_MERGE_DIST * SURU.GROUP_MERGE_DIST;
       for (let a = 0; a < G; a++) {
-        if (!this.gActive[a] || this.gImmune[a] > T) continue;
+        if (!this.gActive[a] || this.gImmune[a] > T || this.gBlockUntil[a] > T) continue;
         for (let b = a + 1; b < G; b++) {
-          if (!this.gActive[b] || this.gImmune[b] > T) continue;
+          if (!this.gActive[b] || this.gImmune[b] > T || this.gBlockUntil[b] > T) continue;
           if (this.gCount[a] + this.gCount[b] > SURU.WILD_GROUP_MAX) continue;
           const dx = this.gCX[a] - this.gCX[b];
           const dz = this.gCZ[a] - this.gCZ[b];

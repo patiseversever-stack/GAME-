@@ -10,13 +10,16 @@ import type { TerrainSampler } from '../../sim/terrain/types.ts';
 import { tierConfig } from './tiers.ts';
 import type { PropTierConfig } from './tiers.ts';
 import { ChimneyLayer } from './chimneys.ts';
-import { BalloonLayer } from './balloons.ts';
+import { BalloonLayer, GEAR } from './balloons.ts';
 import type { BalloonPosFn, BalloonAnchor } from './balloons.ts';
 import { TreeLayer } from './trees.ts';
 import { MiscLayer } from './misc.ts';
 import type { WaterfallDef } from './waterfall.ts';
 import { WaterfallLayer } from './waterfall.ts';
 import { sharedUniforms } from '../vfx/shared.ts';
+
+/** BalloonDef.id of the static start balloon (fireBurner(START_BALLOON_ID) for the intro "fuuu"). */
+export const START_BALLOON_ID = -1;
 
 export interface PropsExtras {
   /** Waterfalls (Karadeniz) — not collidable, so they are not PropInstances. */
@@ -67,6 +70,8 @@ export class PropsRenderer {
   private renderTime = 0;
   private lastSim = 0;
   private counts: Record<string, number> = {};
+  private simBalloons: BalloonDef[] = [];
+  private startBalloon: BalloonDef | null = null;
 
   constructor(scene: Object3D, tier: QualityTier) {
     this.scene = scene;
@@ -104,12 +109,8 @@ export class PropsRenderer {
       this.chimneys = new ChimneyLayer(this.group, this.cfg, Math.max(ch.length, caps.length + ch.length));
       this.chimneys.build(ch, caps);
     }
-    if (balloons.length > 0) {
-      this.balloons = new BalloonLayer(this.group, this.cfg, Math.max(64, balloons.length));
-      if (this.posFn) this.balloons.setPositionFn(this.posFn);
-      if (this.anchor) this.balloons.anchor = this.anchor;
-      this.balloons.build(balloons);
-    }
+    this.simBalloons = balloons.slice();
+    this.rebuildBalloons();
     const trees = byType.get('tree') ?? [];
     if (trees.length > 0) {
       this.trees = new TreeLayer(this.group, this.cfg, worldId);
@@ -128,6 +129,34 @@ export class PropsRenderer {
       this.waterfalls = new WaterfallLayer(this.group, this.cfg);
       this.waterfalls.build(falls);
     }
+  }
+
+  private rebuildBalloons(): void {
+    const all = this.startBalloon ? [...this.simBalloons, this.startBalloon] : this.simBalloons;
+    if (this.balloons) { this.balloons.dispose(); this.balloons = null; }
+    if (all.length === 0) return;
+    this.balloons = new BalloonLayer(this.group, this.cfg, Math.max(64, all.length));
+    if (this.posFn) this.balloons.setPositionFn(this.posFn);
+    if (this.anchor) this.balloons.anchor = this.anchor;
+    this.balloons.build(all);
+  }
+
+  /**
+   * Static start balloon for 'balon' routes (FTUE opening shot): the pilot stands on the basket floor at
+   * `pilotPos` (body centre, as in FlightState.pos during 'intro'); `yaw` = three.js rotation.y of the basket
+   * (use −route heading so a rim edge faces the jump). Visual only (id START_BALLOON_ID). null removes it.
+   */
+  setStartBalloon(pilotPos: [number, number, number] | null, yaw = 0, pattern = 0, envelopeH = 20): void {
+    if (!pilotPos) { this.startBalloon = null; this.rebuildBalloons(); return; }
+    const floor = pilotPos[1] - 1.12;
+    const mouthY = floor - GEAR.floorY;
+    // the pilot stands near the front rim (heading = local −z after yaw): basket centre 0.35 m behind the pilot
+    const bx = pilotPos[0] + Math.sin(yaw) * 0.35, bz = pilotPos[2] + Math.cos(yaw) * 0.35;
+    this.startBalloon = {
+      id: START_BALLOON_ID, p0: [bx, mouthY + envelopeH / 2, bz], drift: [0, 0, 0], amp: [0, 0, 0],
+      omega: 0, phase: yaw, rise: 0, pattern, envelopeH, envelopeR: envelopeH * 0.4,
+    };
+    this.rebuildBalloons();
   }
 
   /** Per frame. `simTimeSec` drives balloons (must equal the sim clock for collision parity). */

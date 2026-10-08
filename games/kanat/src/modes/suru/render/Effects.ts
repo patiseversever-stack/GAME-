@@ -108,10 +108,15 @@ void main() {
   float y = vUv.y;
   float ang = atan(vWorld.z, vWorld.x);
   float streak = 0.6 + 0.4 * sin(ang * 90.0 + uTime * 0.8) * sin(ang * 37.0 - uTime * 0.5);
-  float a = pow(1.0 - y, 2.2) * streak * uOn;
-  a += exp(-y * 30.0) * 0.6 * uOn;
+  float a = pow(1.0 - y, 2.6) * streak * uOn;
+  a += exp(-y * 30.0) * 0.4 * uOn;
+  // a vertical light curtain: strong when seen edge-on, faint from straight above
+  vec3 toCam = normalize(cameraPosition - vWorld);
+  vec3 nrm = normalize(vec3(vWorld.x, 0.0, vWorld.z));
+  float edgeOn = 1.0 - abs(dot(toCam, nrm));
+  a *= 0.25 + 0.75 * edgeOn * edgeOn;
   vec3 c = mix(vec3(1.0, 0.70, 0.42), vec3(1.0, 0.88, 0.7), exp(-y * 12.0));
-  gl_FragColor = vec4(c * a * 0.42, 1.0);
+  gl_FragColor = vec4(c * a * 0.3, 1.0);
 }
 `;
 

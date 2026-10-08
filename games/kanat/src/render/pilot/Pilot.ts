@@ -10,7 +10,8 @@ import type { QualityTier } from '../../core/settings.ts';
 import type { FlightState, SimEvent } from '../../sim/types.ts';
 import type { TerrainSampler } from '../../sim/terrain/types.ts';
 import { buildPilotGeometry, makeSkeleton, B, MAT } from './pilotGeometry.ts';
-import { GLSL_SUIT_PATTERNS, SUIT_PALETTES, SUIT_PATTERN_NAMES } from './suitPatterns.ts';
+import { GLSL_SUIT_PATTERNS, SUIT_PALETTES, SUIT_PATTERN_NAMES, COSMETIC_PATTERN_INDEX, PLAIN_PATTERN } from './suitPatterns.ts';
+import { PALETTES, CANOPIES, GHOST_TINTS } from '../../content/meta/cosmetics.ts';
 import { Canopy } from './canopy.ts';
 import { PilotShadow } from './shadow.ts';
 import { patchMaterial } from '../props/patch.ts';
@@ -28,7 +29,17 @@ export interface PilotOptions {
   name?: string;
 }
 
-export interface SuitSpec { pattern: number; palette: number; colors?: [string, string, string]; helmet?: string }
+/**
+ * Suit cosmetics. `pattern`: cosmetic id from content (e.g. 'kilim', null = plain) or a shader index 0..30;
+ * `palette`: cosmetic id ('safak'…) or index 0..11 of SUIT_PALETTES, or explicit colours; `canopy`: CANOPIES id or
+ * [cellA, cellB]; `helmet`: hex override.
+ */
+export interface SuitSpec {
+  pattern: number | string | null;
+  palette: number | string | readonly [string, string, string];
+  canopy?: string | readonly [string, string];
+  helmet?: string;
+}
 
 type Mode = 'stand' | 'jump' | 'fly' | 'canopy' | 'landed' | 'crash';
 
@@ -58,6 +69,36 @@ const P_SIT = pose([
   [B.head, 0.1, 0, 0], [B.spine, 0.25, 0, 0], [B['upperArm.L'], 0.75, 1.15, 0.1], [B['upperArm.R'], 0.75, -1.15, -0.1], [B['foreArm.L'], 0.2, 0.5, 0], [B['foreArm.R'], 0.2, -0.5, 0],
   [B['thigh.L'], 1.5, 0.18, 0], [B['thigh.R'], 1.5, -0.18, 0], [B['shin.L'], -1.45, 0, 0], [B['shin.R'], -1.45, 0, 0], [B['foot.L'], -0.9, 0, 0], [B['foot.R'], -0.9, 0, 0],
 ]);
+/**
+ * FTUE opening shot (§1 "first 30 s"): standing in the basket, left glove resting on the front rim roll.
+ * Two-bone IK solved once in bind (model) space: upright frame → world up = model −Z, forward = −Y, left = −X.
+ */
+export const INTRO_HAND_TARGET = new Vector3(-0.2, -0.42, -0.21); // model space, relative to the pilot origin (belly)
+const P_INTRO = (() => {
+  const p = P_STAND.slice();
+  const S = new Vector3(-0.19, 0.02, -0.43);
+  const T = INTRO_HAND_TARGET;
+  const a = 0.31, b = 0.36;
+  const dST = T.clone().sub(S);
+  const d = Math.min(a + b - 1e-3, dST.length());
+  const dir = dST.normalize();
+  const cosA = (a * a + d * d - b * b) / (2 * a * d);
+  const pole = new Vector3(-1, 0.25, 0.6);
+  pole.addScaledVector(dir, -pole.dot(dir)).normalize();
+  const E = S.clone().addScaledVector(dir, a * cosA).addScaledVector(pole, a * Math.sqrt(Math.max(0, 1 - cosA * cosA)));
+  const bindDir = new Vector3(-1, 0, 0);
+  const qU = new Quaternion().setFromUnitVectors(bindDir, E.clone().sub(S).normalize());
+  const qFw = new Quaternion().setFromUnitVectors(bindDir, T.clone().sub(E).normalize());
+  const qF = qU.clone().invert().multiply(qFw);
+  const eU = new Euler().setFromQuaternion(qU, 'XYZ');
+  const eF = new Euler().setFromQuaternion(qF, 'XYZ');
+  p[B['upperArm.L'] * 3] = eU.x; p[B['upperArm.L'] * 3 + 1] = eU.y; p[B['upperArm.L'] * 3 + 2] = eU.z;
+  p[B['foreArm.L'] * 3] = eF.x; p[B['foreArm.L'] * 3 + 1] = eF.y; p[B['foreArm.L'] * 3 + 2] = eF.z;
+  // palm down on the roll, fingers draped over the outside
+  p[B['hand.L'] * 3] = -1.2; p[B['hand.L'] * 3 + 1] = 0.0; p[B['hand.L'] * 3 + 2] = 0.15;
+  p[B.head * 3] = 0.12;
+  return p;
+})();
 const P_TUCK = pose([
   [B.head, 0.6, 0, 0], [B.spine, 0.35, 0, 0], [B['upperArm.L'], 0.8, 0.9, 0], [B['upperArm.R'], 0.8, -0.9, 0], [B['foreArm.L'], 0, 1.2, 0], [B['foreArm.R'], 0, -1.2, 0],
   [B['thigh.L'], 1.3, 0.1, 0], [B['thigh.R'], 1.3, -0.1, 0], [B['shin.L'], -1.7, 0, 0], [B['shin.R'], -1.7, 0, 0],
@@ -149,7 +190,7 @@ const FRAG_NORMAL = /* glsl */ `
     float rip = (smoothstep(0.42, 0.5, gx) + smoothstep(0.42, 0.5, gy)) * 0.5 * ripFade;
     float fold = kVN(vKPat * vec2(9.0, 3.0)) - 0.5;
     vec3 dpx = dFdx(vKWorld), dpy = dFdy(vKWorld);
-    float h = rip * 0.0015 + fold * 0.01 * vKCloth + fold * 0.004;
+    float h = rip * 0.0008 + fold * 0.01 * vKCloth + fold * 0.004;
     float hx = dFdx(h), hy = dFdy(h);
     vec3 Nw = normalize(vKNrmW);
     vec3 r1 = cross(dpy, Nw), r2 = cross(Nw, dpx);
@@ -220,7 +261,7 @@ const UP = new Vector3(0, 1, 0);
 export class Pilot {
   readonly object = new Group();
   readonly body = new Group();
-  readonly suit: SuitSpec = { pattern: 0, palette: 0 };
+  readonly suit: { pattern: number; palette: SuitSpec['palette'] } = { pattern: 0, palette: 0 };
   readonly ghost: boolean;
   name: string;
   private readonly meshes: SkinnedMesh[] = [];
@@ -321,23 +362,47 @@ export class Pilot {
     if (this.shadow) this.shadow.addTo(parent);
     this.trail = this.ghost ? new RibbonTrail('ghost', sharedUniforms.uTime) : null;
     if (this.trail) { this.trail.width = 0.06; this.trail.alpha = 0.55; this.trail.setStyle('ghost', opts.ghostColor); this.trail.addTo(parent); }
-    this.setSuit({ pattern: 0, palette: 0 });
+    this.setSuit({ pattern: null, palette: 'safak', canopy: 'safak' });
+    if (this.ghost) this.setGhostTint(opts.ghostColor ?? 'aurora');
     for (let i = 0; i < NB * 3; i++) this.cur[i] = P_STAND[i];
     this.applyPose();
   }
 
-  /** Suit cosmetics: pattern 0..26 (SUIT_PATTERN_NAMES), palette 0..11 (SUIT_PALETTES) or explicit colours. */
+  /** Suit cosmetics (see SuitSpec). Unknown ids fall back to the plain suit / starter palette. */
   setSuit(spec: SuitSpec): void {
-    this.suit.pattern = ((spec.pattern % SUIT_PATTERN_NAMES.length) + SUIT_PATTERN_NAMES.length) % SUIT_PATTERN_NAMES.length;
-    this.suit.palette = ((spec.palette % SUIT_PALETTES.length) + SUIT_PALETTES.length) % SUIT_PALETTES.length;
-    const cols = spec.colors ?? SUIT_PALETTES[this.suit.palette];
-    this.uniforms.uPattern.value = this.suit.pattern;
+    const NP = SUIT_PATTERN_NAMES.length;
+    let pat: number;
+    if (spec.pattern === null || spec.pattern === undefined) pat = PLAIN_PATTERN;
+    else if (typeof spec.pattern === 'string') pat = COSMETIC_PATTERN_INDEX[spec.pattern] ?? Math.max(0, (SUIT_PATTERN_NAMES as readonly string[]).indexOf(spec.pattern));
+    else pat = ((spec.pattern % NP) + NP) % NP;
+    let cols: readonly [string, string, string];
+    if (Array.isArray(spec.palette)) cols = spec.palette as readonly [string, string, string];
+    else if (typeof spec.palette === 'string') cols = (PALETTES.find((p) => p.id === spec.palette) ?? PALETTES[0]).colors;
+    else cols = SUIT_PALETTES[((spec.palette as number % SUIT_PALETTES.length) + SUIT_PALETTES.length) % SUIT_PALETTES.length];
+    this.suit.pattern = pat;
+    this.suit.palette = spec.palette;
+    this.uniforms.uPattern.value = pat;
     this.uniforms.uPalA.value.set(cols[0]);
     this.uniforms.uPalB.value.set(cols[1]);
     this.uniforms.uPalC.value.set(cols[2]);
-    this.uniforms.uHelmet.value.set(spec.helmet ?? (this.suit.palette === 6 ? '#2B2D33' : cols[1]));
-    // canopy wears the suit palette
-    this.canopy.setColors(hex(cols[0]), hex(cols[1]), hex(cols[2]));
+    // helmet: light accent unless the accent is too dark to read
+    const acc = new Color(cols[2]);
+    const lum = 0.2126 * acc.r + 0.7152 * acc.g + 0.0722 * acc.b;
+    this.uniforms.uHelmet.value.set(spec.helmet ?? (lum > 0.12 ? cols[2] : '#E8E4DA'));
+    this.setCanopy(spec.canopy ?? 'safak');
+  }
+
+  /** Canopy scheme: CANOPIES id ('safak', 'klasik'…) or explicit [cellA, cellB]. */
+  setCanopy(c: string | readonly [string, string]): void {
+    const cols = typeof c === 'string' ? (CANOPIES.find((d) => d.id === c) ?? CANOPIES[0]).colors : c;
+    const a = hex(cols[0]), b = hex(cols[1]);
+    this.canopy.setColors(a, b, a.clone().lerp(b, 0.5).multiplyScalar(0.8));
+  }
+
+  /** Ghost tint: GHOST_TINTS id ('aurora'…) or hex. */
+  setGhostTint(t: string): void {
+    const def = GHOST_TINTS.find((g) => g.id === t);
+    this.setGhostColor(def?.color ?? t);
   }
 
   setGhostColor(c: string): void {
@@ -464,7 +529,7 @@ export class Pilot {
       taut = 0.2;
       upright = k;
     } else {
-      this.blendInto(P_STAND, 1);
+      this.blendInto(P_INTRO, 1);
       taut = 0.15;
       upright = 1;
     }
@@ -513,7 +578,7 @@ export class Pilot {
         _q.setFromEuler(_e);
         _q.slerp(_q2, upright);
       } else _q.copy(_q2);
-      if (m === 'landed' || m === 'stand') {
+      if (m === 'landed') {
         const gy = this.sampler ? this.ground : this.pos.y;
         this.object.position.set(this.pos.x, gy + (m === 'landed' && !this.landedSoft ? 0.28 : 1.12), this.pos.z);
       } else this.object.position.copy(this.pos);
@@ -594,6 +659,24 @@ export class Pilot {
     outL.addScaledVector(_v.copy(outL).sub(this._hand).normalize(), 0.16);
     this.bones[B['foreArm.R']].getWorldPosition(this._hand);
     outR.addScaledVector(_v.copy(outR).sub(this._hand).normalize(), 0.16);
+  }
+
+  /** World position of the left glove (FTUE opening close-up: glove on the basket rim). */
+  handAnchor(out: Vector3): Vector3 {
+    this.bones[B['hand.L']].getWorldPosition(out);
+    this.bones[B['foreArm.L']].getWorldPosition(this._hand);
+    return out.addScaledVector(_v.copy(out).sub(this._hand).normalize(), 0.08);
+  }
+
+  /**
+   * Suggested camera for the opening glove close-up: from the pilot's right, just outside the front rim, looking
+   * across the rim at the glove so the dawn valley and balloons fill the background.
+   */
+  introCamera(outPos: Vector3, outTarget: Vector3): void {
+    this.handAnchor(outTarget);
+    const fx = Math.sin(this.psi), fz = -Math.cos(this.psi); // forward (heading)
+    const rx = -fz, rz = fx; // right
+    outPos.set(outTarget.x + rx * 0.32 + fx * 0.42, outTarget.y + 0.14, outTarget.z + rz * 0.32 + fz * 0.42);
   }
 
   /** Anchor above the helmet for the ghost name label (UI projects it). */

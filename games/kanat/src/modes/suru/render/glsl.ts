@@ -112,11 +112,12 @@ vec3 skyColor(vec3 dir) {
   float az = dot(hz, hs) * 0.5 + 0.5;
   float sunVis = smoothstep(-0.07, 0.02, sd.y);
   c += uSunColor * (pow(az, 8.0) * exp(-max(h, 0.0) * 9.0) * 0.5 * (0.35 + 0.65 * sunVis));
-  c += uSunColor * pow(max(mu, 0.0), 220.0) * 2.2 * sunVis;
-  c += uSunColor * pow(max(mu, 0.0), 18.0) * 0.38 * (0.4 + 0.6 * sunVis);
+  c += uSunColor * pow(max(mu, 0.0), 260.0) * 1.6 * sunVis;
+  c += uSunColor * pow(max(mu, 0.0), 40.0) * 0.22 * (0.4 + 0.6 * sunVis);
+  c += uSunColor * pow(max(mu, 0.0), 8.0) * 0.05 * (0.4 + 0.6 * sunVis);
   // sun disc (clipped by the horizon)
-  float disc = smoothstep(0.99955, 0.99975, mu) * smoothstep(-0.004, 0.004, y);
-  c += uSunColor * disc * 14.0 * sunVis;
+  float disc = smoothstep(0.99962, 0.9998, mu) * smoothstep(-0.004, 0.004, y);
+  c += uSunColor * disc * 9.0 * sunVis;
   // below the horizon: sea haze colour
   c = mix(c, mix(uSea * 1.2, uSkyHorizon * 0.55, 0.35), smoothstep(0.0, -0.08, y));
   return c;
@@ -153,6 +154,9 @@ vec3 grade(vec3 c) {
   c *= mix(shadowTint, highTint, smoothstep(0.1, 0.7, l));
   float sat = mix(1.06, 0.9, uNight);
   c = mix(vec3(l), c, sat);
+  // gentle S-curve: deeper water/sky darks, crisper glints (AgX alone reads a little flat at dusk)
+  c = clamp(c, 0.0, 1.0);
+  c = mix(c, c * c * (3.0 - 2.0 * c), 0.3);
   return c;
 }
 

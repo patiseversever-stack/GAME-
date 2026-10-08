@@ -196,9 +196,10 @@ export function demoBalloons(n: number, seed = 11): BalloonDef[] {
 }
 
 export function demoFlightState(state: string, t: number): FlightState {
-  const phase = state === 'jump' ? 'jump' : state === 'canopy' ? 'canopy' : state === 'landed' ? 'landed' : state === 'crash' ? 'crashed' : 'flying';
+  const phase = state === 'intro' ? 'intro' : state === 'jump' ? 'jump' : state === 'canopy' ? 'canopy' : state === 'landed' ? 'landed' : state === 'crash' ? 'crashed' : 'flying';
   const speed = phase === 'flying' ? 50 : phase === 'jump' ? 25 : phase === 'canopy' ? 10 : 0;
   const y = phase === 'landed' || phase === 'crashed' ? 0 : 12;
+  if (phase === 'intro') return { ...demoFlightState('fly', t), phase: 'intro', speed: 0, vel: [0, 0, 0], phi: 0, gamma: 0 };
   return {
     tick: Math.round(t * 60), phase, pos: [0, y, 0], prevPos: [0, y, speed / 60], vel: [0, -speed * 0.3, -speed],
     speed, gamma: phase === 'flying' ? -0.3 : 0, psi: 0, phi: phase === 'flying' ? 0.35 : 0, cl: 0.7, heightAGL: y,

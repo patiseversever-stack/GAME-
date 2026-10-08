@@ -57,6 +57,12 @@ export class SuruCamera {
     this.cam.updateProjectionMatrix();
   }
 
+  /** dev/screenshots: jump the 4 s opening shot to `sec` */
+  setOpeningTime(sec: number): void {
+    this.mode = 'opening';
+    this.openingT = sec;
+  }
+
   startOpening(): void {
     this.mode = 'opening';
     this.openingT = 0;
@@ -71,6 +77,11 @@ export class SuruCamera {
     this.endLookFrom.copy(this.look);
   }
 
+  /** jump straight to the current subject's pose on the next update (after a cut / fast-forward) */
+  snap(): void {
+    this.initialised = false;
+  }
+
   kusatmaPunch(): void {
     this.punchTarget = 0.08;
     this.punch.v += 0.9;
@@ -78,7 +89,10 @@ export class SuruCamera {
 
   /** gameplay pose for a subject (leader position + velocity + flock radius) */
   private playPose(x: number, z: number, vx: number, vz: number, radius: number, outPos: THREE.Vector3, outLook: THREE.Vector3, snap: boolean, dt: number): void {
-    const H = Math.min(160, Math.max(45, 45 + 2.2 * radius));
+    // §3.8 height 45 m + 2.2·R (45–160 m); narrow portrait screens get a proportional lift so the flock's
+    // flanks (and a hawk on them) stay in frame — horizontal coverage matches a ~4:3 view
+    const aspectLift = Math.min(1.35, Math.max(1, Math.sqrt(0.78 / Math.max(0.3, this.cam.aspect))));
+    const H = Math.min(160, Math.max(45, 45 + 2.2 * radius)) * aspectLift;
     const lx = x + vx * 0.8;
     const lz = z + vz * 0.8;
     const sx = snap ? (this.tx.snap(lx), lx) : this.tx.step(lx, dt);

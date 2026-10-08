@@ -12,7 +12,7 @@ import { fitLathe, primRadiusAt } from './fit.ts';
 import { detailTexture } from './textures.ts';
 import type { PropTierConfig } from './tiers.ts';
 
-const BODY_TEXELS = 3;
+const BODY_TEXELS = 4;
 const CAP_TEXELS = 3;
 
 /** Unit lathe: position.xz = (cos, sin) of the ring angle, position.y = t (−skirt..1), aDome = dome param 0..1. */
@@ -90,11 +90,12 @@ varying float vKRad;    // local radius at this height
 varying float vKYaw;
 varying vec3 vKNrmW;
 varying float vKBaseY;
+varying vec2 vKCap;
 `;
 
 const BODY_VERT_PRE = /* glsl */ `
   // texel0 = base.xyz + yaw · texel1 = (r0, r1, r2, h0) · texel2 = (h1, seed, style, windows)
-  vec4 i0 = instFetch(0); vec4 i1 = instFetch(1); vec4 i2 = instFetch(2);
+  vec4 i0 = instFetch(0); vec4 i1 = instFetch(1); vec4 i2 = instFetch(2); vec4 i3 = instFetch(3);
   float kH0 = max(i1.w, 0.01), kH1 = max(i2.x, 0.01);
   float kH = kH0 + kH1;
   float kSeed = i2.y; float kStyle = i2.z;
@@ -132,7 +133,7 @@ const BODY_VERT_PRE = /* glsl */ `
   // LOD fade on the instance centre (mid-height)
   vec3 kCenter = i0.xyz + vec3(0.0, kH * 0.5, 0.0);
   float kVis = kLodPrepare(distance(kCenter, cameraPosition));
-  vKWorld = kP; vKDir = kdir; vKInst = vec4(kH, kSeed, kStyle, i2.w); vKRad = kr; vKYaw = i0.w; vKNrmW = kN; vKBaseY = i0.y;
+  vKWorld = kP; vKDir = kdir; vKInst = vec4(kH, kSeed, kStyle, i2.w); vKRad = kr; vKYaw = i0.w; vKNrmW = kN; vKBaseY = i0.y; vKCap = i3.xy;
 `;
 
 const BODY_FRAG_PARS = /* glsl */ `
@@ -148,7 +149,8 @@ varying float vKRad;
 varying float vKYaw;
 varying vec3 vKNrmW;
 varying float vKBaseY;
-float kWin;      // 1 inside a carved opening
+varying vec2 vKCap;
+float kWin; float kUnderCap; float kFlute;      // 1 inside a carved opening
 float kRim;      // opening rim
 float kCav;      // detail cavity
 vec3 kDetailN;   // tangent-space detail normal
@@ -212,16 +214,27 @@ function bodyFragColor(octaves: number): string {
     ${octaves >= 2 ? 'd2 = texture2D(uDetail, cuv * vec2(0.55, 0.42) + seed * 1.3);' : ''}
     kCav = mix(d1.a, d1.a * d2.a, ${octaves >= 2 ? '0.6' : '0.0'});
     kDetailN = vec3((d1.xy * 2.0 - 1.0) * 1.0 + ${octaves >= 2 ? '(d2.xy * 2.0 - 1.0) * 0.6' : 'vec2(0.0)'}, 1.0);
-    // world-y tuff banding: broad cream/ochre layers, occasional rose zone, thin ash seams
+    // world-y tuff banding: broad cream / ochre layers, occasional rose zone, thin dark ash seams
     float yb = hgt * 0.16 + (kNoise2(vec2(theta * 1.3, hgt * 0.05) + seed) - 0.5) * 0.6 + seed * 0.37;
     float band = kNoise2(vec2(yb, 3.1));
     float band2 = kNoise2(vec2(yb * 0.6 + 11.0, 7.9 + seed));
-    vec3 col = mix(uTuffB, uTuffA, 0.35 + 0.6 * smoothstep(0.3, 0.8, band));
-    col = mix(col, uTuffRose, smoothstep(0.62, 0.92, band2) * 0.45);
-    col *= 1.0 - 0.10 * smoothstep(0.9, 0.98, kNoise2(vec2(hgt * 0.9 + seed * 5.0, 1.7)));
-    // faint vertical weathering stains (desert varnish) from the cap/top downwards
-    float streak = smoothstep(0.6, 0.95, kNoise2(vec2(theta * max(vKRad, 1.0) * 0.9, hgt * 0.03 + seed * 3.0)));
-    col *= 1.0 - 0.07 * streak;
+    vec3 col = mix(uTuffB, uTuffA, 0.25 + 0.75 * smoothstep(0.25, 0.85, band));
+    col = mix(col, uTuffRose, smoothstep(0.6, 0.9, band2) * 0.5);
+    col *= 1.0 - 0.16 * smoothstep(0.86, 0.97, kNoise2(vec2(hgt * 0.9 + seed * 5.0, 1.7)));
+    float rel = (hgt - kBaseY) / max(vKInst.x, 1.0);
+    // ochre/brown staining in the lower third, cleaner cream higher up
+    col = mix(col, col * vec3(0.86, 0.74, 0.62), (1.0 - smoothstep(0.05, 0.4, rel)) * 0.45);
+    // vertical erosion fluting (gullies) and desert-varnish streaks running down from the top
+    float nfl = max(3.0, floor(6.2831853 * max(vKRad, 0.5) / 1.3));
+    float fwob = kNoise2(vec2(theta * 2.0 + seed * 9.0, hgt * 0.07)) * 3.0;
+    kFlute = sin(theta * nfl + fwob) * (0.35 + 0.65 * kHash11(seed * 13.0));
+    float streak = smoothstep(0.55, 0.92, kNoise2(vec2(theta * max(vKRad, 1.0) * 0.9, hgt * 0.025 + seed * 3.0)));
+    float capF = vKCap.x > 0.0 ? 1.0 : 0.4;
+    col *= 1.0 - (0.08 + 0.1 * capF) * streak * smoothstep(0.1, 0.7, rel);
+    col *= 1.0 - 0.08 * smoothstep(0.3, 1.0, -kFlute);
+    // the neck under a basalt cap is darker and sooty (overhang AO + run-off)
+    kUnderCap = vKCap.x > 0.0 ? smoothstep(vKInst.x - 3.2, vKInst.x + 0.2, hgt - kBaseY) : 0.0;
+    col = mix(col, col * vec3(0.62, 0.55, 0.52), kUnderCap * 0.55);
     // micro albedo variation + soft cavity darkening (mauve tint only in the deepest pockets)
     col *= 0.94 + 0.12 * (d1.b - 0.5) + 0.06;
     col = mix(col * mix(vec3(1.0), uMauve * 4.0, 0.35), col, smoothstep(0.35, 0.8, kCav));
@@ -247,7 +260,7 @@ const BODY_FRAG_NORMAL = /* glsl */ `
     vec3 T = vec3(c * tl.x + s * tl.z, 0.0, -s * tl.x + c * tl.z);
     vec3 B = normalize(cross(Nw, T));
     float strength = mix(1.0, 0.25, kWin);
-    vec3 pn = normalize(Nw + (T * kDetailN.x + B * kDetailN.y) * 0.7 * strength);
+    vec3 pn = normalize(Nw + (T * (kDetailN.x * 0.7 + cos(atan(vKDir.z, vKDir.x) * 1.0) * 0.0 + kFlute * 0.45) + B * kDetailN.y * 0.7) * strength);
     // rim of openings: bevel inward
     pn = normalize(mix(pn, -Nw * 0.3 + vec3(0.0, 0.6, 0.0), kRim * 0.35));
     normal = normalize((viewMatrix * vec4(pn, 0.0)).xyz);
@@ -255,8 +268,8 @@ const BODY_FRAG_NORMAL = /* glsl */ `
 `;
 
 const BODY_FRAG_LIGHT = /* glsl */ `
-  reflectedLight.indirectDiffuse *= mix(0.65, 1.0, kCav) * (1.0 - 0.85 * kWin);
-  reflectedLight.directDiffuse *= mix(0.85, 1.0, kCav) * (1.0 - 0.9 * kWin);
+  reflectedLight.indirectDiffuse *= mix(0.65, 1.0, kCav) * (1.0 - 0.85 * kWin) * (1.0 - 0.45 * kUnderCap);
+  reflectedLight.directDiffuse *= mix(0.85, 1.0, kCav) * (1.0 - 0.9 * kWin) * (1.0 - 0.35 * kUnderCap);
 `;
 
 const BODY_VERT_END = /* glsl */ `
@@ -337,7 +350,7 @@ const CAP_FRAG_COLOR = /* glsl */ `
     float n2 = kNoise3(vKWorld * 2.3 + vKSeed * 3.0);
     vec3 col = uBasalt * (0.7 + 0.35 * n + 0.2 * n2) * mix(0.8, 1.15, d.b);
     // dust settled on the top surface, darker weathered underside
-    col = mix(col, col * 1.6 + vec3(0.04, 0.03, 0.02), smoothstep(0.6, 0.95, vKNrmW.y) * 0.35);
+    col = mix(col, col * 1.3 + vec3(0.02, 0.015, 0.01), smoothstep(0.6, 0.95, vKNrmW.y) * 0.3);
     col *= mix(1.0, 0.75, vKUnder);
     diffuseColor.rgb = col;
   }
@@ -364,7 +377,7 @@ function linear(hex: string): Vector3 {
 export { linear as hexLinear };
 
 interface ChimneyPalette { a: string; b: string; rose: string; mauve: string; soil: string; basalt: string }
-const KAPADOKYA: ChimneyPalette = { a: '#D9B48F', b: '#E9DDCB', rose: '#D49A8A', mauve: '#6B4E5E', soil: '#B8977C', basalt: '#4A423D' };
+const KAPADOKYA: ChimneyPalette = { a: '#D9B48F', b: '#E9DDCB', rose: '#D49A8A', mauve: '#6B4E5E', soil: '#B8977C', basalt: '#3B3532' };
 
 function bodyMaterial(u: LodUniforms, cfg: PropTierConfig, pal: ChimneyPalette, depth: boolean): MeshStandardMaterial | MeshDepthMaterial {
   const uniforms = {
@@ -455,6 +468,8 @@ export class ChimneyLayer {
       this.body.write(nb, 0, inst.pos[0], inst.pos[1], inst.pos[2], inst.yaw);
       this.body.write(nb, 1, c.r0, c.r1, c.r2, c.h0);
       this.body.write(nb, 2, c.h1, seed, style, windows);
+      const capP = c.cap && c.cap.kind === 'ellipsoid' ? c.cap : null;
+      this.body.write(nb, 3, capP ? capP.r[0] : 0, capP ? capP.r[1] : 0, 0, 0);
       const H = c.h0 + c.h1;
       const rmax = Math.max(c.r0, c.r1, c.r2) + 1;
       this.body.bounds(nb, inst.pos[0], inst.pos[1] + H * 0.5, inst.pos[2], Math.hypot(H * 0.5 + 2, rmax));

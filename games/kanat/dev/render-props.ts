@@ -10,6 +10,7 @@ import { tierConfig } from '../src/render/props/tiers.ts';
 import { Pilot } from '../src/render/pilot/Pilot.ts';
 import { SUIT_PATTERN_NAMES } from '../src/render/pilot/suitPatterns.ts';
 import { VFX } from '../src/render/vfx/VFX.ts';
+import { RouteMarkers } from '../src/render/vfx/markers/RouteMarkers.ts';
 import { flatSampler, demoProps, demoBalloons, demoFlightState, demoRoute } from './render-props.demo.ts';
 
 declare global {
@@ -20,7 +21,7 @@ const params = new URLSearchParams(location.search);
 const item = params.get('item') ?? 'balloon';
 const tier = (params.get('tier') ?? 'high') as QualityTier;
 const tParam = Number(params.get('t') ?? '0');
-const view = params.get('view') ?? 'mid';
+const view = params.get('view') ?? (params.get('item') === 'intro' ? 'near' : 'mid');
 const worldParam = (params.get('world') ?? '') as WorldId | '';
 
 const canvas = document.getElementById('c') as HTMLCanvasElement;
@@ -49,6 +50,7 @@ const props = new PropsRenderer(scene, tier);
 let pilot: Pilot | null = null;
 let ghost: Pilot | null = null;
 let vfx: VFX | null = null;
+let markers: RouteMarkers | null = null;
 let simTime = tParam;
 
 function lookFrom(px: number, py: number, pz: number, tx: number, ty: number, tz: number, fov = 60): void {
@@ -59,7 +61,7 @@ function lookFrom(px: number, py: number, pz: number, tx: number, ty: number, tz
 }
 
 const propList: PropInstance[] = demoProps(item, sampler);
-const balloons: BalloonDef[] = item === 'balloon' || item === 'all' || item === 'vfx' ? demoBalloons(item === 'balloon' ? 9 : item === 'vfx' ? 6 : 40) : [];
+const balloons: BalloonDef[] = item === 'balloon' || item === 'all' || item === 'vfx' || item === 'intro' ? demoBalloons(item === 'balloon' ? 9 : item === 'vfx' ? 6 : 40) : [];
 props.build(worldId, propList, balloons, sampler, { renderer, sunDir: [sunDir.x, sunDir.y, sunDir.z] });
 
 if (item === 'balloon') {
@@ -68,7 +70,10 @@ if (item === 'balloon') {
   else if (view === 'far') lookFrom(-380, 60, 260, 0, 30, 0, 45);
   else lookFrom(60, 8, 70, 0, 18, 0, 55);
 } else if (item === 'chimney') {
-  if (view === 'near') lookFrom(4.2, 2.2, 6.2, 0, 4.5, 0, 70);
+  if (view === 'near') lookFrom(3.6, 2.0, 5.2, 0, 4.0, 0, 70); // ~3 m from the surface
+  else if (view === 'm30') lookFrom(22, 9, 24, 0, 9, 0, 60);  // ~30 m
+  else if (view === 'm30x') lookFrom(-6, 8, -30, 0, 9, 0, 60); // ~30 m, cross-lit from the north
+  else if (view === 'nearx') lookFrom(-1.5, 2.2, -5.6, 0, 4.0, 0, 70); // 3 m, cross-lit
   else if (view === 'far') lookFrom(-150, 70, 240, 0, 10, 0, 45);
   else if (view === 'back') lookFrom(-60, 12, 30, 20, 14, 0, 55);
   else lookFrom(46, 14, 58, 0, 12, 0, 55);
@@ -76,6 +81,22 @@ if (item === 'balloon') {
   if (view === 'near') lookFrom(9, 4, 14, 0, 6, 0, 60);
   else if (view === 'far') lookFrom(-200, 60, 200, 0, 10, 0, 45);
   else lookFrom(42, 12, 48, 0, 9, 0, 55);
+} else if (item === 'intro') {
+  // FTUE opening: glove on the basket rim of the start balloon at dawn, 40 balloons around
+  pilot = new Pilot(scene, tier, { sampler });
+  pilot.setRenderer(renderer);
+  pilot.setSunDirection(sunDir.x, sunDir.y, sunDir.z);
+  pilot.setSuit({ pattern: null, palette: 'safak', canopy: 'safak' });
+  const fs = demoFlightState('intro', 0);
+  fs.pos = [0, 140, 0]; fs.prevPos = [0, 140, 0]; fs.psi = -1.4;
+  props.setStartBalloon(fs.pos, 1.4, 3);
+  pilot.setState(fs, 1);
+  for (let k = 0; k < 60; k++) pilot.update(1 / 30, camera);
+  const cp = new THREE.Vector3(), ct = new THREE.Vector3();
+  pilot.introCamera(cp, ct);
+  if (view === 'wide') lookFrom(cp.x - 30, cp.y + 6, cp.z + 25, ct.x, ct.y + 4, ct.z, 55);
+  else if (view === 'mid') lookFrom(cp.x + 1.6, cp.y + 0.9, cp.z + 1.4, ct.x, ct.y + 0.2, ct.z, 55);
+  else lookFrom(cp.x, cp.y, cp.z, ct.x, ct.y, ct.z, 55);
 } else if (item === 'pilot' || item === 'vfx' || item === 'all') {
   const st = params.get('state') ?? 'fly';
   pilot = new Pilot(scene, tier, { sampler });
@@ -91,7 +112,11 @@ if (item === 'balloon') {
     vfx.setWorld(worldId, sampler);
     vfx.attachProps(props);
     vfx.setViewport(renderer.domElement.width, renderer.domElement.height);
-    vfx.setRoute(demoRoute());
+    markers = new RouteMarkers(scene, sampler);
+    markers.build(demoRoute(), tier);
+    markers.attachBalloons(props);
+    markers.setGuideLine(params.get('guide') === '1');
+    markers.setPostcards([{ id: 'w1p2', pos: [-14, 14, -60] }]);
   }
   // warm-up: run the animation state machine for t seconds so poses / canopy inflation are at the right moment
   const mode = st === 'ghost' ? 'fly' : st === 'pop' ? 'jump' : st;
@@ -142,9 +167,9 @@ function frame(): void {
     fsv.speed = 60; fsv.prox.d = 2.2; fsv.prox.nearest = [2.5, 11, -2]; fsv.prox.normal = [-1, 0.3, 0];
     if (frames === 1) {
       vfx.event({ type: 'graze', tick: 0, points: 250, strength: 1, pos: [2.2, 11.5, -3], cls: 'rock', side: 1 });
-      vfx.event({ type: 'gate', tick: 0, index: 0, points: 500, chain: 1 });
     }
     vfx.update(Math.max(dt, 0.08), simTime, camera, fsv, pilot);
+    markers?.update(fsv, frames === 1 ? [{ type: 'gate', tick: 0, index: 0, points: 500, chain: 1 }] : null, camera, Math.max(dt, 0.08));
   }
   bd.update(camera, now / 1000, renderer.domElement.width, renderer.domElement.height);
   renderer.render(scene, camera);

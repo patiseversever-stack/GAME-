@@ -20,6 +20,8 @@ export const SCREENS = [
   'results&variant=duel', 'settings', 'collection', 'collection&variant=wardrobe', 'collection&variant=badges', 'photo', 'photo&variant=filter',
   'unlock', 'unlock&variant=world', 'help', 'inverted', 'assistOff', 'resume', 'toast', 'hud', 'hud&variant=zone', 'hud&variant=daily',
   'hud&variant=ftue-jump', 'hud&variant=ftue-drag', 'hud&variant=ftue-chute', 'hud&variant=ftue-flare', 'hud&variant=warn', 'hud&variant=x0',
+  'menu&variant=newmodes', 'weekly', 'suruResults', 'suruResults&variant=daily', 'levelUp', 'levelUp&variant=title', 'results&variant=share',
+  'results&variant=compact', 'unlock&variant=multi', 'collection&variant=canopy', 'hud&variant=practice', 'hud&variant=landing', 'hud&variant=ringup',
 ];
 
 const CHECK = () => {

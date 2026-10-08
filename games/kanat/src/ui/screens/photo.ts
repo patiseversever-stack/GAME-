@@ -134,10 +134,11 @@ export const photoScreen: ScreenDef<PhotoState> = {
     if (tool === 'filter') {
       control = h('div', { class: 'kn-photo-filters kn-hscroll' });
       for (const f of PHOTO_FILTERS) {
-        const b = h('button', { class: `kn-filter ${f === params.filter ? 'is-on' : ''}`.trim(), type: 'button', 'aria-pressed': String(f === params.filter) }, h('i', { style: `background:${FILTER_TINT[f]}` }), h('span', { text: t(`filter.${f}` as 'filter.natural') }));
+        const lock = p.lockedFilters?.find((x) => x.id === f);
+        const b = h('button', { class: `kn-filter ${f === params.filter ? 'is-on' : ''} ${lock ? 'is-locked' : ''}`.trim(), type: 'button', 'aria-pressed': String(f === params.filter), disabled: !!lock }, h('i', { style: `background:${FILTER_TINT[f]}` }, lock ? ic('lock') : null), h('span', { text: lock ? t('photo.filterLocked', { n: lock.postcards }) : t(`filter.${f}` as 'filter.natural') }));
         b.addEventListener('click', (e) => {
           e.stopPropagation();
-          set({ filter: f });
+          if (!lock) set({ filter: f });
         });
         control.appendChild(b);
       }

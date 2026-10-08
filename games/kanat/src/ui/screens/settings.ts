@@ -10,6 +10,12 @@ import { eyebrow, page } from './common.ts';
 
 type Path = string;
 
+/** Settings fields added by the F1 review (Ü-8). Read defensively until src/core/settings.ts carries them. */
+type SettingsExt = Settings & {
+  textScale?: number;
+  kanat: Settings['kanat'] & { flareHint?: boolean; ringPosition?: 'bottom' | 'middle' };
+};
+
 function setPath(s: Settings, path: Path, value: unknown): Settings {
   const next: Settings = { ...s, kanat: { ...s.kanat } };
   const [a, b] = path.split('.');
@@ -62,6 +68,29 @@ function slider(ctl: Ctl, path: Path, label: string, value: number, min: number,
   return h('div', { class: 'kn-set kn-set--slider' }, h('div', { class: 'kn-set-row' }, rowHead(label, sub), out), input);
 }
 
+/** Slider described in words ("Daha sakin / Daha çevik") instead of numbers (GDD §3.4). */
+function wordSlider(ctl: Ctl, path: Path, label: string, value: number, min: number, max: number, step: number, sub?: string, invert = false): HTMLElement {
+  const shown = invert ? max + min - value : value;
+  const input = h('input', { class: 'kn-range', type: 'range', min: String(min), max: String(max), step: String(step), value: String(shown), 'aria-label': label });
+  const fill = (v: number): void => input.style.setProperty('--kn-fill', `${(((v - min) / (max - min)) * 100).toFixed(1)}%`);
+  fill(shown);
+  input.addEventListener('input', () => fill(Number(input.value)));
+  input.addEventListener('change', () => {
+    const v = Number(input.value);
+    ctl.apply(path, Math.round((invert ? max + min - v : v) * 100) / 100);
+  });
+  return h('div', { class: 'kn-set kn-set--slider' }, h('div', { class: 'kn-set-row' }, rowHead(label, sub)), input, h('div', { class: 'kn-set-ends' }, h('span', { text: t('settings.calmer') }), h('span', { text: t('settings.sharper') })));
+}
+
+function actionRow(label: string, sub: string, button: string, fn: () => void): HTMLElement {
+  const b = h('button', { class: 'kn-btn kn-set-action', type: 'button' }, h('span', { text: button }));
+  b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    fn();
+  });
+  return h('div', { class: 'kn-set kn-set--toggle' }, rowHead(label, sub), b);
+}
+
 function group(title: string, ...rows: (HTMLElement | null)[]): HTMLElement {
   return h('section', { class: 'kn-set-group' }, eyebrow(title, 'kn-set-group-title'), h('div', { class: 'kn-set-card kn-card' }, ...rows));
 }
@@ -71,12 +100,17 @@ const TIER_KEY: Record<QualityTier, StringKey> = { ultra: 'settings.q.ultra', hi
 export const settingsScreen: ScreenDef<SettingsProps> = {
   layer: 'page',
   render(p, ctx) {
-    const s = p.settings;
+    const s = p.settings as SettingsExt;
     const k = s.kanat;
+    const textScale = s.textScale ?? (k.bigHud ? 1.2 : 1);
+    // AssistLevel 'guide' (Rehber Rüzgâr, W1 R1–R3) shows as Tam in the picker.
+    const assistUi = (k.flightAssist as string) === 'guide' ? 'full' : k.flightAssist;
     const ctl: Ctl = {
       apply(path, value) {
         ctx.sound('toggle');
-        const next = setPath(s, path, value);
+        let next = setPath(s, path, value);
+        // "Büyük yazı ve göstergeler" replaces Büyük HUD: keep the legacy flag in step for older consumers.
+        if (path === 'textScale') next = setPath(next, 'kanat.bigHud', Number(value) > 1);
         ctx.cb.onSettingsChange?.(next, path);
         // Re-render first (stack props updated), then apply: a language change re-renders the whole stack.
         ctx.rerender({ ...p, settings: next });
@@ -85,7 +119,7 @@ export const settingsScreen: ScreenDef<SettingsProps> = {
     };
     const pct = (v: number): string => `${Math.round(v * 100)}`;
     const qOpts: { v: QualitySetting; label: string; sub?: string; grow?: number }[] = [
-      { v: 'auto', label: t('settings.q.auto'), sub: t('settings.q.autoNow', { tier: t(TIER_KEY[p.currentTier]) }), grow: 1.7 },
+      { v: 'auto', label: t('settings.q.auto'), sub: t('settings.q.autoNow', { tier: t(TIER_KEY[p.currentTier]) }), grow: 2.1 },
       { v: 'ultra', label: t('settings.q.ultra') },
       { v: 'high', label: t('settings.q.high') },
       { v: 'medium', label: t('settings.q.medium') },
@@ -140,9 +174,25 @@ export const settingsScreen: ScreenDef<SettingsProps> = {
         slider(ctl, 'sfxVolume', t('settings.sfx'), s.sfxVolume, 0, 1, 0.05, pct),
       ),
       group(
-        t('settings.sec.access'),
+        t('settings.sec.a11y'),
+        seg(ctl, 'textScale', t('settings.textScale'), textScale, [
+          { v: 1, label: t('settings.textScale.1') },
+          { v: 1.2, label: t('settings.textScale.2') },
+          { v: 1.4, label: t('settings.textScale.3') },
+        ]),
         toggle(ctl, 'reduceMotion', t('settings.reduceMotion'), s.reduceMotion, t('settings.reduceMotionSub')),
         toggle(ctl, 'leftHanded', t('settings.leftHanded'), s.leftHanded, t('settings.leftHandedSub')),
+        toggle(ctl, 'kanat.comfortCamera', t('settings.comfortCamera'), k.comfortCamera, t('settings.comfortCameraSub')),
+        toggle(ctl, 'kanat.colorBlind', t('settings.colorBlind'), k.colorBlind, t('settings.colorBlindSub')),
+        h('div', { class: 'kn-set-swatches', 'aria-hidden': 'true' }, ...[1, 2, 3, 5].map((tier) => h('span', { class: 'kn-swatch-prox' }, h('i', { style: `background:var(--kn-p${tier})` }), h('b', { class: 'kn-display kn-num', text: `×${tier}` })))),
+        toggle(ctl, 'kanat.autoParachute', t('settings.autoParachute'), k.autoParachute, t('settings.autoParachuteSub')),
+        toggle(ctl, 'kanat.slowMode', t('settings.slowMode'), k.slowMode, t('settings.slowModeSub'), 'turtle'),
+        toggle(ctl, 'kanat.flareHint', t('settings.flareHint'), k.flareHint ?? true, t('settings.flareHintSub')),
+        seg(ctl, 'kanat.ringPosition', t('settings.ringPosition'), k.ringPosition ?? 'bottom', [
+          { v: 'bottom', label: t('settings.ring.bottom') },
+          { v: 'middle', label: t('settings.ring.middle') },
+        ]),
+        ctx.cb.onCalmControls ? actionRow(t('settings.calmControls'), t('settings.calmControlsSub'), t('common.apply'), () => ctx.cb.onCalmControls?.()) : null,
       ),
       // ---------- KANAT ----------
       group(
@@ -158,8 +208,8 @@ export const settingsScreen: ScreenDef<SettingsProps> = {
           ],
           k.controlDir === 'natural' ? t('settings.controlDir.naturalSub') : t('settings.controlDir.pilotSub'),
         ),
-        slider(ctl, 'kanat.sensitivity', t('settings.sensitivity'), k.sensitivity, 0.6, 1.5, 0.05, (v) => `${fmtDec(v, 2)}×`),
-        slider(ctl, 'kanat.expo', t('settings.expo'), k.expo, 0, 0.7, 0.05, (v) => fmtDec(v, 2), t('settings.expoSub')),
+        wordSlider(ctl, 'kanat.sensitivity', t('settings.sensitivity'), k.sensitivity, 0.6, 1.5, 0.05),
+        wordSlider(ctl, 'kanat.expo', t('settings.expo'), k.expo, 0, 0.7, 0.05, t('settings.expoSub'), true),
         seg(ctl, 'kanat.gyro', t('settings.gyro'), k.gyro, [
           { v: 'off', label: t('settings.gyro.off') },
           { v: 'roll', label: t('settings.gyro.roll') },
@@ -175,10 +225,6 @@ export const settingsScreen: ScreenDef<SettingsProps> = {
           { v: 'far', label: t('settings.cam.far') },
         ]),
         toggle(ctl, 'kanat.helmetCam', t('settings.helmetCam'), k.helmetCam, t('settings.helmetCamSub')),
-        toggle(ctl, 'kanat.comfortCamera', t('settings.comfortCamera'), k.comfortCamera, t('settings.comfortCameraSub')),
-        toggle(ctl, 'kanat.bigHud', t('settings.bigHud'), k.bigHud),
-        toggle(ctl, 'kanat.colorBlind', t('settings.colorBlind'), k.colorBlind, t('settings.colorBlindSub')),
-        h('div', { class: 'kn-set-swatches', 'aria-hidden': 'true' }, ...[1, 2, 3, 5].map((tier) => h('span', { class: 'kn-swatch-prox' }, h('i', { style: `background:var(--kn-p${tier})` }), h('b', { class: 'kn-display kn-num', text: `×${tier}` })))),
       ),
       group(
         t('settings.sec.assist'),
@@ -186,16 +232,14 @@ export const settingsScreen: ScreenDef<SettingsProps> = {
           ctl,
           'kanat.flightAssist',
           t('settings.flightAssist'),
-          k.flightAssist,
+          assistUi,
           [
             { v: 'full', label: t('settings.assist.full') },
             { v: 'low', label: t('settings.assist.low') },
             { v: 'off', label: t('settings.assist.off') },
           ],
-          t('settings.assistSub', { a: k.flightAssist }),
+          t('settings.assistSub', { a: assistUi }),
         ),
-        toggle(ctl, 'kanat.autoParachute', t('settings.autoParachute'), k.autoParachute, t('settings.autoParachuteSub')),
-        toggle(ctl, 'kanat.slowMode', t('settings.slowMode'), k.slowMode, t('settings.slowModeSub'), 'turtle'),
       ),
       // ---------- about ----------
       h(

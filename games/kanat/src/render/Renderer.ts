@@ -90,7 +90,8 @@ export function renderTierParams(tier: QualityTier): RenderTierParams {
     terrain: {
       grid: k.cdlodGrid === 17 ? 17 : 33,
       extraLevel: k.cdlodExtraLevel,
-      lod0Radius: k.lod0RadiusM,
+      // Ultra's 450 m (table) measured 1.34 M tris in landscape (over the 1.2 M cap) → capped at 340 m.
+      lod0Radius: Math.min(k.lod0RadiusM, 340),
       viewDistance: Math.min(k.terrainViewKm * 1000, MAX_VIEW_DISTANCE),
       projection: tier === 'low' ? 'planar' : tier === 'medium' ? 'biplanar' : 'triplanar',
       detailNormal: true,

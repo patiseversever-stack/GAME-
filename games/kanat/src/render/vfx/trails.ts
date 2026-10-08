@@ -10,9 +10,14 @@ import { GLSL_NOISE } from '../props/glsl.ts';
 
 export const TRAIL_POINTS = 64;
 
-/** 10 cosmetic trail styles (§2.7 "iz efektleri") + 'vapour' (high G) + 'ghost'. */
+/** Built-in looks (§2.7 "iz efektleri") + 'vapour' (high G) + 'ghost'. Cosmetic trails from content use setStyleDef. */
 export const TRAIL_STYLES = ['dumanBeyazi', 'altinToz', 'ebruAkisi', 'buzKristali', 'kirlangic', 'gunBatimi', 'turkuazSerit', 'geceMavisi', 'lale', 'safak', 'vapour', 'ghost'] as const;
 export type TrailStyle = typeof TRAIL_STYLES[number];
+
+/** Content TrailStyle (src/content/meta/types.ts) → shader branch. */
+export const TRAIL_SHADER_STYLE: Record<string, number> = {
+  smoke: 0, dust: 1, marbled: 2, crystal: 3, feather: 4, glow: 5, foam: 6, ribbon: 7, petal: 8, mist: 9, vapour: 10, ghost: 11,
+};
 
 const STYLE_COLORS: Record<TrailStyle, [string, string]> = {
   dumanBeyazi: ['#F4F2EE', '#C9CDD2'],
@@ -69,6 +74,16 @@ void main() {
   } else if (uStyle == 7) { // night blue with stars
     float st = step(0.94, kNoise2(vec2(vAge * 120.0, vSide * 9.0)));
     col = mix(col, vec3(1.0), st);
+  } else if (uStyle == 5) { // glow: warm burner light core
+    a *= 1.0 + 1.2 * smoothstep(0.4, 1.0, edge); col *= 1.6;
+  } else if (uStyle == 6) { // foam: bubbly blotches
+    float b = smoothstep(0.45, 0.7, kNoise2(vec2(vAge * 45.0, vSide * 3.0 + 7.0)));
+    a *= 0.4 + 0.9 * b; col = mix(uColA, uColB, b);
+  } else if (uStyle == 8) { // petals: scattered soft flakes
+    float pt = smoothstep(0.62, 0.8, kNoise2(vec2(vAge * 70.0, vSide * 5.0)));
+    a *= 0.15 + 1.4 * pt;
+  } else if (uStyle == 9) { // mist veil: wide and very soft
+    a *= 0.55 * (0.7 + 0.3 * kNoise2(vec2(vAge * 10.0 - uTime * 0.5, vSide)));
   } else if (uStyle == 10) { // vapour: soft, dense, short
     a *= 0.8 + 0.4 * kNoise2(vec2(vAge * 20.0 - uTime * 2.0, vSide * 2.0));
   }
@@ -132,6 +147,13 @@ export class RibbonTrail {
     (this.mat.uniforms.uColA.value as Color).set(colorOverride ?? c[0]);
     (this.mat.uniforms.uColB.value as Color).set(c[1]);
     this.mat.uniforms.uStyle.value = TRAIL_STYLES.indexOf(style);
+  }
+
+  /** Content trail cosmetic: style name (smoke/dust/…) + [head, tail] colours. */
+  setStyleDef(style: string, colors: readonly [string, string]): void {
+    (this.mat.uniforms.uColA.value as Color).set(colors[0]);
+    (this.mat.uniforms.uColB.value as Color).set(colors[1]);
+    this.mat.uniforms.uStyle.value = TRAIL_SHADER_STYLE[style] ?? 0;
   }
 
   set alpha(a: number) { this.mat.uniforms.uAlpha.value = a; }

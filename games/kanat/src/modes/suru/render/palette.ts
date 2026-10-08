@@ -3,12 +3,21 @@
 // diamond). Owner colours are gameplay (readability), never cosmetics.
 
 export const PLAYER_GOLD = '#FFC23D';
-export const RIVAL_COLORS = ['#56B4E9', '#E69F00', '#009E73', '#0072B2', '#D55E00', '#CC79A7', '#F2F2F2'] as const;
+/** #E69F00 is the closest to the player's gold → assigned last (producer review Ü-9); those flocks also spawn
+ *  far from the player (SURU.SPAWN_FAR_FLOCKS). */
+export const RIVAL_COLORS = ['#56B4E9', '#009E73', '#0072B2', '#D55E00', '#CC79A7', '#F2F2F2', '#E69F00'] as const;
 export const AURA_PATTERNS = ['solid', 'dashed', 'dotted'] as const;
 export const LEADER_MARKS = ['circle', 'triangle', 'square', 'diamond'] as const;
 
 export type AuraPattern = (typeof AURA_PATTERNS)[number];
 export type LeaderMark = (typeof LEADER_MARKS)[number];
+
+/**
+ * Leader marker per rival colour, chosen so every colour pair closer than ΔE2000 15 under protanopia /
+ * deuteranopia / tritanopia (sky/green, green/blue, blue/purple, sky/purple, vermilion/purple,
+ * vermilion/orange, purple/orange) wears a different shape (§9.G-28). Circle stays the player's shape.
+ */
+const MARK_BY_COLOR = [1, 2, 1, 2, 3, 2, 1] as const;
 
 export interface OwnerStyle {
   flock: number;
@@ -23,7 +32,9 @@ export interface OwnerStyle {
 export function ownerStyle(f: number): OwnerStyle {
   if (f <= 1) return { flock: f, color: PLAYER_GOLD, pattern: 0, mark: 0 };
   const r = f - 2; // 0..14
-  return { flock: f, color: RIVAL_COLORS[r % RIVAL_COLORS.length], pattern: Math.floor(r / RIVAL_COLORS.length) % 3, mark: (r + 1) % 4 };
+  const ci = r % RIVAL_COLORS.length;
+  const cycle = Math.floor(r / RIVAL_COLORS.length);
+  return { flock: f, color: RIVAL_COLORS[ci], pattern: cycle % 3, mark: (MARK_BY_COLOR[ci] + cycle) % 4 };
 }
 
 /** sRGB hex → linear float triple. */

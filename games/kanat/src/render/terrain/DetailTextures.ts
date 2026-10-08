@@ -118,7 +118,8 @@ void main() {
     // Rock: cracked, faceted, lichen speckles.
     float r = ridged( uv, 3.0, 6 );
     vec2 w = worley( uv + fbm( uv, 6.0, 3 ) * 0.04, 9.0 );
-    float crack = 1.0 - smoothstep( 0.0, 0.06, w.y - w.x );
+    // Sparse, irregular fissures (masked network), not a full cellular grid.
+    float crack = ( 1.0 - smoothstep( 0.0, 0.035, w.y - w.x ) ) * smoothstep( 0.52, 0.72, fbm( uv + 1.7, 5.0, 4 ) );
     float n = fbm( uv, 8.0, 5 );
     float lichen = smoothstep( 0.62, 0.75, fbm( uv + 3.1, 12.0, 4 ) );
     h = 0.35 + r * 0.55 - crack * 0.25 + ( n - 0.5 ) * 0.2;

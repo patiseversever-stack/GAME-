@@ -24,11 +24,11 @@ function rankBadge(p: MenuProps, ctx: ScreenCtx): HTMLElement {
   return tappable(el, () => ctx.cb.onRankTap?.(), ctx, `${t('rank.label')} ${level}`);
 }
 
-function card(cls: string, icon: string, title: string, sub: string, onTap: (() => void) | null, ctx: ScreenCtx, extra?: HTMLElement | null, locked?: string): HTMLElement {
+function card(cls: string, icon: string, title: string, sub: string, onTap: (() => void) | null, ctx: ScreenCtx, extra?: HTMLElement | null, locked?: string, isNew = false): HTMLElement {
   const el = h(
     'div',
     { class: `kn-mcard ${cls} ${locked ? 'is-locked' : ''}`.trim() },
-    h('span', { class: 'kn-mcard-icon' }, ic(locked ? 'lock' : icon)),
+    isNew && !locked ? h('span', { class: 'kn-new', text: upper(t('menu.newBadge')) }) : h('span', { class: 'kn-mcard-icon' }, ic(locked ? 'lock' : icon)),
     h('span', { class: 'kn-mcard-text' }, eyebrow(title, 'kn-mcard-title'), extra ?? null, h('span', { class: 'kn-mcard-sub', text: locked ?? sub })),
   );
   if (onTap && !locked) tappable(el, onTap, ctx, title);
@@ -81,6 +81,7 @@ export const menuScreen: ScreenDef<MenuProps> = {
       ctx,
       d.unlocked ? dailyNum : null,
       d.unlocked ? undefined : lockText(d.lockRoute),
+      p.newModes?.includes('daily'),
     );
     daily.setAttribute('style', accentStyle(d.world));
 
@@ -89,9 +90,17 @@ export const menuScreen: ScreenDef<MenuProps> = {
     const league = Math.max(0, Math.min(LEAGUE_COUNT - 1, s.league));
     const leagueName = tk(`league.${league}`);
     const suruBig = h('span', { class: 'kn-mcard-big kn-display', style: `color:${LEAGUE_COLORS[league]}` }, ic('league', 'kn-icon kn-league-icon'), h('span', { text: upper(leagueName) }));
-    const suru = card('kn-mcard--suru', 'flock', t('menu.suru'), t('suru.lp', { n: s.lp }), open(cb.getSuru, 'suru'), ctx, s.unlocked ? suruBig : null, s.unlocked ? undefined : lockText(s.lockRoute));
+    const suru = card('kn-mcard--suru', 'flock', t('menu.suru'), t('suru.lp', { n: s.lp }), open(cb.getSuru, 'suru'), ctx, s.unlocked ? suruBig : null, s.unlocked ? undefined : lockText(s.lockRoute), p.newModes?.includes('suru'));
 
-    const modes = card('kn-mcard--row', 'compass', t('menu.modes'), t('menu.modesSub'), open(cb.getModes, 'modes'), ctx);
+    const modesNew = !!p.newModes?.some((m) => m === 'duel' || m === 'free' || m === 'weekly');
+    const modes = card('kn-mcard--row', 'compass', t('menu.modes'), t('menu.modesSub'), open(cb.getModes, 'modes'), ctx, null, undefined, modesNew);
+    const worldsLink = h('button', { class: 'kn-menu-link', type: 'button' }, ic('map'), h('span', { text: t('menu.worldsRoutes') }), ic('chevron', 'kn-icon kn-menu-link-chev'));
+    worldsLink.addEventListener('click', (e) => {
+      e.stopPropagation();
+      ctx.sound('tap');
+      const wp = cb.getWorlds?.();
+      if (wp) ctx.show('worlds', wp);
+    });
     const coll = card('kn-mcard--row', 'collection', t('menu.collection'), t('menu.collectionSub', { postcards: p.collection.postcards, badges: p.collection.badges }), open(cb.getCollection, 'collection'), ctx);
 
     const settingsBtn = h('button', { class: 'kn-btn kn-btn--icon', type: 'button', 'aria-label': t('common.settings') });
@@ -113,8 +122,9 @@ export const menuScreen: ScreenDef<MenuProps> = {
         h('header', { class: 'kn-menu-top' }, h('div', { class: 'kn-wordmark kn-wordmark--sm', text: t('app.name') }), h('div', { class: 'kn-menu-top-right' }, settingsBtn, rankBadge(p, ctx))),
         h(
           'div',
-          { class: 'kn-sheet kn-panel' },
+          { class: 'kn-sheet kn-panel kn-scroll' },
           hero,
+          worldsLink,
           h('div', { class: 'kn-mgrid' }, daily, suru),
           h('div', { class: 'kn-mgrid kn-mgrid--rows' }, modes, coll),
         ),

@@ -226,12 +226,29 @@ export function buildPilotGeometry(level: 0 | 1 | 2): BufferGeometry {
       { c: new Vector3(s * 0.55, 0.025, -0.405), a1, a2, r1: 0.048, r2: 0.046, w: [[fo, 1]], mat: MAT.suit },
       { c: new Vector3(s * 0.765, 0.02, -0.385), a1, a2, r1: 0.04, r2: 0.036, w: [[fo, 0.8], [ha, 0.2]], mat: MAT.suit },
       { c: new Vector3(s * 0.785, 0.02, -0.382), a1, a2, r1: 0.042, r2: 0.037, w: [[fo, 0.3], [ha, 0.7]], mat: MAT.trim },
-      { c: new Vector3(s * 0.8, 0.02, -0.38), a1, a2, r1: 0.04, r2: 0.032, w: [[ha, 1]], mat: MAT.glove },
-      { c: new Vector3(s * 0.88, 0.015, -0.375), a1, a2, r1: 0.05, r2: 0.024, w: [[ha, 1]], mat: MAT.glove },
-      { c: new Vector3(s * 0.96, 0.01, -0.37), a1, a2, r1: 0.04, r2: 0.016, w: [[ha, 1]], mat: MAT.glove },
+      { c: new Vector3(s * 0.8, 0.02, -0.38), a1, a2, r1: 0.038, r2: 0.03, w: [[ha, 1]], mat: MAT.glove },
+      { c: new Vector3(s * 0.845, 0.018, -0.377), a1, a2, r1: 0.048, r2: 0.024, w: [[ha, 1]], mat: MAT.glove },
+      { c: new Vector3(s * 0.885, 0.014, -0.375), a1, a2, r1: 0.05, r2: 0.022, w: [[ha, 1]], mat: MAT.glove },
     ];
     void sx;
-    loft(p, secs, D.radial, false, true);
+    loft(p, secs, D.radial, false, false);
+    // fingers: four gloved fingers as one rounded block with knuckle grooves, slightly curled (palm side = −y)
+    const fingers: Section[] = [];
+    const fn = 5;
+    for (let k = 0; k <= fn; k++) {
+      const t = k / fn;
+      const ang = t * 0.55; // curl
+      const x = s * (0.885 + 0.095 * Math.sin(Math.PI / 2 * t) * (1 - 0.15 * t));
+      const y = 0.014 - 0.05 * (1 - Math.cos(ang));
+      fingers.push({ c: new Vector3(x, y, -0.375), a1, a2, r1: 0.05 - 0.012 * t * t, r2: 0.019 - 0.006 * t * t, w: [[ha, 1]], mat: MAT.glove });
+    }
+    loft(p, fingers, D.radial, false, true);
+    // thumb (toward the head side, −z)
+    loft(p, [
+      { c: new Vector3(s * 0.83, 0.0, -0.405), a1: X, a2: Y, r1: 0.016, r2: 0.014, w: [[ha, 1]], mat: MAT.glove },
+      { c: new Vector3(s * 0.86, -0.012, -0.435), a1: X, a2: Y, r1: 0.014, r2: 0.012, w: [[ha, 1]], mat: MAT.glove },
+      { c: new Vector3(s * 0.89, -0.02, -0.445), a1: X, a2: Y, r1: 0.011, r2: 0.01, w: [[ha, 1]], mat: MAT.glove },
+    ], Math.max(5, D.radial - 4), false, true);
     parts.push(toGeometry(p));
   }
   // --- legs, shoes

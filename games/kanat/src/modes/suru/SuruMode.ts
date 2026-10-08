@@ -10,12 +10,14 @@ import type { FlockStats, SuruCommand, SuruEvent } from './sim/types.ts';
 import { createRound, FTUE_SPOTS } from './round.ts';
 import type { Round, SuruSubMode } from './round.ts';
 import { LEAGUE_NAMES } from './ai/personalities.ts';
+import { LEAGUE_RULES, lpForPlacement } from '../../content/meta/progression.ts';
 import type { League } from './ai/personalities.ts';
 import { SuruRenderer } from './render/SuruRenderer.ts';
 import type { ShowShape } from './render/Birds.ts';
 import { SuruHud } from './hud/SuruHud.ts';
 import type { Lang } from './hud/SuruHud.ts';
 import { SuruInput } from './input.ts';
+import { Vector3 } from 'three';
 
 export type { ShowShape } from './render/Birds.ts';
 export type { SuruSubMode } from './round.ts';
@@ -79,7 +81,9 @@ export interface SuruModeDeps {
   onRoundEnd?: (r: SuruRoundResult) => void;
   onFtueDone?: () => void;
   onExit?: () => void;
-  /** dev / test only */
+  /** host drives frames via handle.renderFrame(dt) (no internal requestAnimationFrame) */
+  externalLoop?: boolean;
+  /** dev / test only (`noLoop` = legacy alias of externalLoop) */
   dev?: { autopilot?: boolean; hideHud?: boolean; noLoop?: boolean };
 }
 
@@ -154,6 +158,7 @@ export function mount(container: HTMLElement, deps: SuruModeDeps = {}): SuruMode
   let highlightTick = 0;
   let highlightScore = 0;
   const dir = { x: 0, y: 0 };
+  const proj = new Vector3();
   // FTUE
   let ftueStep = 0;
   let ftueT = 0;
@@ -337,7 +342,11 @@ export function mount(container: HTMLElement, deps: SuruModeDeps = {}): SuruMode
     const all = sim.stats();
     const me = all[0];
     const place = me.rank || sim.flockCount;
-    const lpDelta = round.setup.subMode === 'ftue' || round.setup.subMode === 'practice' ? 0 : SuruSim.leaguePoints(place, me.sieges);
+    // LP exactly as the meta layer awards it (12–16 flocks mapped onto the 16-slot table + siege bonus, §2.6)
+    const lpDelta =
+      round.setup.subMode === 'ftue' || round.setup.subMode === 'practice'
+        ? 0
+        : lpForPlacement(place, sim.flockCount) + Math.min(LEAGUE_RULES.siegeLp * me.sieges, LEAGUE_RULES.siegeLpCap);
     const title = round.setup.subMode === 'daily' ? `${hud.t('daily')} #${round.setup.dayIndex ?? 0}` : place === 1 ? hud.t('winner') : round.layout.name[lang];
     const share = buildShare(place, sim.flockCount, me, round.setup.subMode ?? 'league', round.setup.dayIndex ?? 0, lang, !me.eliminated);
     hud.showResults(
@@ -451,8 +460,15 @@ export function mount(container: HTMLElement, deps: SuruModeDeps = {}): SuruMode
     const alpha = sim.roundOver ? 1 : Math.min(1, acc / SURU.DT);
     renderer.frame(alpha, paused ? 0 : dt, sim.timeSec + alpha * SURU.DT);
     hud.update(sim, 1, now, sim.roundTicks / SURU.TICK_HZ, { x: renderer.camera.fwd.x, z: renderer.camera.fwd.y });
-    const st = input.state;
-    hud.showBreath(st.touching && !playerOut && !paused, st.anchorX - canvas.getBoundingClientRect().left, st.anchorY - canvas.getBoundingClientRect().top, sim.flockBreath[1] / 100, sim.flockBreathless[1] === 1);
+    // player's leader overlay (Nefes arc around the leader, "SEN", off-screen arrow) — GDD §5.5
+    const rect = canvas.getBoundingClientRect();
+    const lx = sim.leaderPrevX[1] + (sim.leaderX[1] - sim.leaderPrevX[1]) * alpha;
+    const lz = sim.leaderPrevZ[1] + (sim.leaderZ[1] - sim.leaderPrevZ[1]) * alpha;
+    proj.set(lx, 14, lz).project(renderer.camera.cam);
+    const px = (proj.x * 0.5 + 0.5) * rect.width;
+    const py = (-proj.y * 0.5 + 0.5) * rect.height;
+    const inView = proj.z < 1 && px > 8 && px < rect.width - 8 && py > 8 && py < rect.height - 8;
+    hud.updateLeader(px, py, inView, sim.flockAlive[1] === 1 && !playerOut, sim.flockBreath[1] / 100, sim.flockBreathless[1] === 1, sim.timeSec < 7.5 && round.setup.subMode !== 'ftue', rect.width, rect.height);
     ftueUpdate(dt);
     // results: after the 3 s Sürü Gösterisi, or right away when the player is out (watch option)
     if (!resultsShown && round.setup.subMode !== 'ftue') {
@@ -569,7 +585,7 @@ export function mount(container: HTMLElement, deps: SuruModeDeps = {}): SuruMode
   renderer.resize();
   setupRound();
   renderer.warmup();
-  if (!deps.dev?.noLoop) raf = requestAnimationFrame(loop);
+  if (!deps.externalLoop && !deps.dev?.noLoop) raf = requestAnimationFrame(loop);
   return handle;
 }
 

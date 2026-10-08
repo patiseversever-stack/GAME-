@@ -7,12 +7,24 @@ import type { WorldCardVM, WorldsProps } from '../types.ts';
 import type { ScreenCtx, ScreenDef } from './screen.ts';
 import { accentStyle, eyebrow, geoCaption, page, starCount, tappable, worldArt, worldIndexLabel } from './common.ts';
 
+/** Real world image (previewUrl or the integrator's mountWorldPreview hook); painted art only as a loading placeholder. */
+function worldArtWithHook(w: WorldCardVM, ctx: ScreenCtx): HTMLElement {
+  const el = worldArt(w.id, 'kn-art kn-wcard-art', { url: w.previewUrl, w: 360, h: 480, id: 'wc' });
+  if (!w.previewUrl && ctx.cb.mountWorldPreview) {
+    const layer = h('div', { class: 'kn-art kn-wcard-real' });
+    el.appendChild(layer);
+    const c = ctx.cb.mountWorldPreview(layer, w.id);
+    if (c) ctx.onCleanup(c);
+  }
+  return el;
+}
+
 function worldCard(w: WorldCardVM, total: number, ctx: ScreenCtx): HTMLElement {
   const locked = !w.unlocked;
   const card = h(
     'article',
     { class: `kn-wcard ${locked ? 'is-locked' : ''}`.trim(), style: accentStyle(w.id), 'data-world': w.id },
-    worldArt(w.id, 'kn-art kn-wcard-art', { url: w.previewUrl, w: 360, h: 480, id: 'wc' }),
+    worldArtWithHook(w, ctx),
     h('div', { class: 'kn-wcard-shade' }),
     h('div', { class: 'kn-wcard-top' }, eyebrow(worldIndexLabel(w.id)), h('span', { class: 'kn-wcard-geo kn-eyebrow', text: geoCaption(w.id, w.geo) })),
     locked

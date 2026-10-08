@@ -110,6 +110,8 @@ export interface RootFlags {
   colorBlind?: boolean;
   reduceMotion?: boolean;
   lang?: 'tr' | 'en';
+  /** "Büyük yazı ve göstergeler": 1.0 / 1.2 / 1.4 (GDD §3.4). */
+  textScale?: number;
 }
 
 /** Root class names toggled by settings. Any subtree under an element carrying these reacts in CSS. */
@@ -119,6 +121,8 @@ export const ROOT_CLASS = {
   big: 'kn-big',
   cb: 'kn-cb',
   rm: 'kn-rm',
+  ts2: 'kn-ts-2',
+  ts3: 'kn-ts-3',
 } as const;
 
 /** Applies settings-driven flags to a root element (default: <html>). */
@@ -128,6 +132,12 @@ export function applyRootFlags(flags: RootFlags, el: HTMLElement = document.docu
   if (flags.colorBlind !== undefined) el.classList.toggle(ROOT_CLASS.cb, flags.colorBlind);
   if (flags.reduceMotion !== undefined) el.classList.toggle(ROOT_CLASS.rm, flags.reduceMotion);
   if (flags.lang) el.setAttribute('lang', flags.lang);
+  if (flags.textScale !== undefined) {
+    const ts = flags.textScale >= 1.3 ? 1.4 : flags.textScale >= 1.1 ? 1.2 : 1;
+    el.classList.toggle(ROOT_CLASS.ts2, ts === 1.2);
+    el.classList.toggle(ROOT_CLASS.ts3, ts === 1.4);
+    el.style.setProperty('--kn-text-scale', String(ts));
+  }
 }
 
 /**

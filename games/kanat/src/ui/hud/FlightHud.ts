@@ -10,7 +10,7 @@ import { iconSvg } from '../icons.ts';
 import { PROX_CB_WIDTH } from '../theme.ts';
 
 export type FtueKind = 'jump' | 'drag' | 'parachute' | 'flare';
-export type HudMode = 'career' | 'daily' | 'duel' | 'free';
+export type HudMode = 'career' | 'daily' | 'duel' | 'free' | 'weekly' | 'practice';
 export interface HudConfig {
   mode?: HudMode;
   colorBlind?: boolean;
@@ -19,6 +19,8 @@ export interface HudConfig {
   /** Daily/duel-on-daily: show time instead of score. */
   metric?: 'score' | 'time';
   gatesTotal?: number;
+  /** Settings.kanat.ringPosition: 'middle' lifts the proximity ring permanently. */
+  ringPosition?: 'bottom' | 'middle';
 }
 export interface HudCallbacks {
   onPause(): void;
@@ -99,6 +101,11 @@ export class FlightHud {
   private nPops: HTMLElement[] = [];
   private nFtue!: HTMLElement;
   private nWarn!: HTMLElement;
+  private nLand!: HTMLElement;
+  private nLandLabel!: HTMLElement;
+  private vLandDist = -1;
+  private vLandAng = NaN;
+  private ringUp = false;
   // last written values (sentinels force first write)
   private vScore = NaN;
   private vTenths = -1;
@@ -164,6 +171,8 @@ export class FlightHud {
 <div class="kn-hud-ring"><svg viewBox="0 0 240 130" aria-hidden="true"><path class="kn-ring-ticks" d="${ticks}"/>${slices}<g class="kn-ring-needle"><circle cx="${CX - R}" cy="${CY}" r="5.5"/></g></svg><div class="kn-ring-center"><div class="kn-ring-mult kn-display kn-num"></div><div class="kn-ring-combo"><span class="kn-combo-bar"><i></i></span><span class="kn-combo-txt kn-num"></span></div></div></div>
 <div class="kn-hud-arrow">${iconSvg('arrow')}</div>
 <button class="kn-hud-chute" type="button"><span class="kn-chute-ring"></span>${iconSvg('parachute')}<span class="kn-chute-label"></span></button>
+<div class="kn-hud-practice"></div>
+<div class="kn-hud-land"><span class="kn-hud-land-arrow">${iconSvg('arrow')}</span><span class="kn-hud-land-label"></span></div>
 <div class="kn-hud-ftue"></div>
 <div class="kn-hud-warn"></div>`;
     const q = <T extends Element>(s: string): T => el.querySelector(s) as T;
@@ -190,6 +199,8 @@ export class FlightHud {
     this.nPops = Array.from(el.querySelectorAll<HTMLElement>('.kn-pop'));
     this.nFtue = q('.kn-hud-ftue');
     this.nWarn = q('.kn-hud-warn');
+    this.nLand = q('.kn-hud-land');
+    this.nLandLabel = q('.kn-hud-land-label');
     this.nPause.addEventListener('click', (e) => {
       e.stopPropagation();
       this.cb.onPause();
@@ -209,6 +220,8 @@ export class FlightHud {
     this.nSpeedUnit.textContent = t('hud.speedUnit');
     this.nChuteLabel.textContent = upper(t('hud.parachute'));
     this.nChute.setAttribute('aria-label', t('hud.parachute'));
+    (this.el.querySelector('.kn-hud-practice') as HTMLElement).textContent = upper(t('practice.label'));
+    this.vLandDist = -1;
     if (this.ftueKind) this.ftue(this.ftueKind);
   }
 
@@ -222,6 +235,8 @@ export class FlightHud {
     if (c.bigHud !== undefined) this.cfg.bigHud = c.bigHud;
     if (c.gatesTotal !== undefined) this.cfg.gatesTotal = c.gatesTotal;
     this.el.classList.toggle('is-free', this.cfg.mode === 'free');
+    this.el.classList.toggle('is-practice', this.cfg.mode === 'practice');
+    if (c.ringPosition !== undefined) this.el.classList.toggle('is-ring-middle', c.ringPosition === 'middle');
     this.el.classList.toggle('is-time', this.cfg.metric === 'time');
     // Colour-blind: slice thickness grows with tier.
     for (let i = 0; i < this.nSlices.length; i++) this.nSlices[i].style.strokeWidth = this.cfg.colorBlind ? String(PROX_CB_WIDTH[TIERS[i]]) : '';
@@ -407,6 +422,55 @@ export class FlightHud {
     const y = -Math.cos(a) * ry;
     this.nArrow.style.transform = `translate(${x.toFixed(1)}px, ${y.toFixed(1)}px) rotate(${a.toFixed(3)}rad)`;
     this.nArrow.classList.add('is-on');
+  }
+
+  /**
+   * Landing wayfinding (LANDING_WAYFINDING): after the last gate (or within 1.5 km) the edge arrow points to the
+   * landing target with "İNİŞ 820 m". `angleRad` as in setArrow (screen-space, 0 = up); null hides it.
+   * While active the gate arrow is hidden.
+   */
+  setLanding(angleRad: number | null, distM = 0): void {
+    if (angleRad === null) {
+      if (this.vLandAng === this.vLandAng) {
+        this.vLandAng = NaN;
+        this.nLand.classList.remove('is-on');
+      }
+      return;
+    }
+    this.setArrow(null);
+    const d = Math.max(0, Math.round(distM / 10) * 10);
+    if (d !== this.vLandDist) {
+      this.vLandDist = d;
+      this.nLandLabel.textContent = t('hud.landingDist', { value: fmtInt(d) });
+    }
+    const a = Math.round(angleRad * 100) / 100;
+    if (a === this.vLandAng) return;
+    this.vLandAng = a;
+    const rx = this.vw / 2 - 48;
+    const ry = this.vh / 2 - 120;
+    this.nLand.style.transform = `translate(${(Math.sin(a) * rx).toFixed(1)}px, ${(-Math.cos(a) * ry).toFixed(1)}px)`;
+    (this.nLand.firstElementChild as HTMLElement).style.transform = `rotate(${a.toFixed(3)}rad)`;
+    this.nLand.classList.add('is-on');
+  }
+
+  /**
+   * Stick anchor in CSS px (or null when the finger lifts). When the anchor falls inside the ring's rectangle the
+   * ring eases ~90 px up so it is never under the thumb (RING_PLACEMENT).
+   */
+  setStickAnchor(x: number | null, y = 0): void {
+    let up = false;
+    if (x !== null) {
+      const r = this.nRing.getBoundingClientRect();
+      up = x >= r.left - 24 && x <= r.right + 24 && y >= r.top - 24 && y <= r.bottom + 24;
+      if (this.ringUp && !up) {
+        // keep lifted while the thumb stays where the ring used to be (hysteresis: original rect is 90 px lower)
+        up = x >= r.left - 24 && x <= r.right + 24 && y >= r.top - 24 && y <= r.bottom + 114;
+      }
+    }
+    if (up !== this.ringUp) {
+      this.ringUp = up;
+      this.el.classList.toggle('is-ring-up', up);
+    }
   }
 
   /** Assist "Az": edge pulse on the obstacle side (≤ 2 Hz). null clears. */

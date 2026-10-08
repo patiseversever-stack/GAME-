@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { careerShareText, dailyShareText, proxStripEmoji, suruShareText } from '../../src/ui/share/shareText.ts';
+import { careerShareText, dailyShareText, duelShareText, proxStripEmoji, suruShareText } from '../../src/ui/share/shareText.ts';
 
 describe('share text (BRIEF §2.8 exact formats)', () => {
   it('daily card matches the brief example byte for byte', () => {
@@ -25,6 +25,14 @@ describe('share text (BRIEF §2.8 exact formats)', () => {
     expect(suruShareText({ sub: 'day', n: 214, place: 1, flocks: 15, peak: 486, encircles: 2, survived: true }, 'tr')).toBe('KANAT · SÜRÜ.io · Sürü Günü #214 🐦 1./15 · Zirve 486 kuş · 🌀 Kuşatma ×2 · 🌅 Gün batımına kadar ayakta');
     expect(suruShareText({ sub: 'league', place: 3, flocks: 14, peak: 1204, encircles: 0, survived: false }, 'tr')).toBe('KANAT · SÜRÜ.io · Lig Maçı 🐦 3./14 · Zirve 1.204 kuş');
     expect(suruShareText({ sub: 'day', n: 214, place: 2, flocks: 15, peak: 486, encircles: 1, survived: true }, 'en')).toBe('KANAT · SÜRÜ.io · Flock Day #214 🐦 2nd/15 · Peak 486 birds · 🌀 Encircle ×1 · 🌅 Survived to sunset');
+  });
+
+  it('duel invite is a human sentence with the deep link (GDD §5.3)', () => {
+    const link = 'https://kanat.example/?c=KNT1-G214-abc';
+    expect(duelShareText({ name: 'Ayşe', route: { kind: 'daily', n: 214 }, metric: { kind: 'time', sec: 127.46 }, link }, 'tr')).toBe(`Ayşe seni KANAT’ta düelloya çağırdı · Günün Rotası #214 · 2:07.4 → ${link}`);
+    expect(duelShareText({ route: { kind: 'career', routeId: 'w1r3' }, metric: { kind: 'score', value: 48210 }, link }, 'en')).toBe(`Up for a KANAT duel? · Balloon Road · 48,210 → ${link}`);
+    expect(dailyShareText({ n: 214, timeSec: 127.46, strip: [2, 2, 3, 5, 5], stars: 3, duelCode: 'KNT1-x', duelLink: link }, 'tr').split('\n')).toEqual(['KANAT · Günün Rotası #214 🪂 2:07.4 · Yakınlık 🟨🟨🟧🟥🟥 · ⭐⭐⭐', `Düello: ${link}`]);
+    expect(suruShareText({ sub: 'daily', n: 214, place: 1, flocks: 15, peak: 486, encircles: 2, survived: true }, 'tr')).toBe('KANAT · SÜRÜ.io · Sürü Günü #214 🐦 1./15 · Zirve 486 kuş · 🌀 Kuşatma ×2 · 🌅 Gün batımına kadar ayakta');
   });
 
   it('proximity strip maps tiers and pads to five segments', () => {

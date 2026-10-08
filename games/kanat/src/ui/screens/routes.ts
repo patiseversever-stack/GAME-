@@ -2,28 +2,14 @@
 // difficulty, stars, best score/time and 3 usta tasks (check state). Selected route expands with "Uç".
 import type { WorldId } from '../../sim/types.ts';
 import { h, ic, stars } from '../dom.ts';
-import { t, tk, fmtInt, fmtTime, routeName } from '../i18n.ts';
+import { t, tk, fmtInt, fmtTime, routeName, upper } from '../i18n.ts';
 import { STARS_PER_WORLD } from '../content.ts';
 import { WORLD_ACCENT, WORLD_ART } from '../theme.ts';
 import type { RouteVM, RoutesProps } from '../types.ts';
 import type { ScreenCtx, ScreenDef } from './screen.ts';
-import { difficultyPips, eyebrow, page, starCount, taskLabel, tappable, worldIndexLabel } from './common.ts';
+import { cosmeticKindLabel, cosmeticName, difficultyPips, eyebrow, page, starCount, taskLabel, tappable, worldIndexLabel } from './common.ts';
+import { cosmeticSwatch } from '../swatch.ts';
 import { mix } from '../art.ts';
-
-/** Deterministic fallback line (when route geometry is not provided). */
-function fallbackLine(i: number): [number, number][] {
-  const pts: [number, number][] = [];
-  const x0 = 0.1 + i * 0.07;
-  const y0 = 0.12 + (i % 2) * 0.1 + i * 0.04;
-  const x1 = 0.78 + (i % 2) * 0.08;
-  const y1 = 0.62 + i * 0.07;
-  for (let k = 0; k <= 24; k++) {
-    const s = k / 24;
-    const bend = Math.sin(s * Math.PI) * (0.1 + i * 0.05) * (i % 2 ? 1 : -1);
-    pts.push([x0 + (x1 - x0) * s + Math.sin(s * 6 + i) * 0.025, y0 + (y1 - y0) * s + bend]);
-  }
-  return pts;
-}
 
 function miniMap(world: WorldId, routes: RouteVM[], selected: string | undefined): string {
   const W = 360;
@@ -31,9 +17,11 @@ function miniMap(world: WorldId, routes: RouteVM[], selected: string | undefined
   const acc = WORLD_ACCENT[world];
   const art = WORLD_ART[world];
   // Normalise all provided lines into a shared box (top-down x→right, z→down).
-  const lines = routes.map((r, i) => (r.line && r.line.length > 1 ? r.line : null) ?? fallbackLine(i));
+  // Only real route geometry is drawn (F1 review: no invented lines). Routes without a line are skipped.
+  const lines = routes.map((r) => (r.line && r.line.length > 1 ? r.line : null));
+  const real = lines.filter((l): l is [number, number][] => l !== null);
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-  for (const l of lines) for (const [x, y] of l) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
+  for (const l of real) for (const [x, y] of l) { minX = Math.min(minX, x); maxX = Math.max(maxX, x); minY = Math.min(minY, y); maxY = Math.max(maxY, y); }
   const span = Math.max(maxX - minX, (maxY - minY) * (W / H) * 1.3, 1e-6);
   const sx = (W - 48) / span;
   const ox = (W - (maxX - minX) * sx) / 2;
@@ -57,6 +45,7 @@ function miniMap(world: WorldId, routes: RouteVM[], selected: string | undefined
   let marks = '';
   routes.forEach((r, i) => {
     const l = lines[i];
+    if (!l) return;
     const d = l.map(([x, y], k) => `${k ? 'L' : 'M'}${P(x, y)}`).join(' ');
     const sel = r.id === selected;
     paths += sel
@@ -73,7 +62,7 @@ function miniMap(world: WorldId, routes: RouteVM[], selected: string | undefined
   return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${bg}${grid}${contours}${paths}${marks}${north}</svg>`;
 }
 
-function routeCard(r: RouteVM, index: number, selected: boolean, ctx: ScreenCtx, select: (id: string) => void): HTMLElement {
+function routeCard(r: RouteVM, index: number, selected: boolean, ctx: ScreenCtx, select: (id: string) => void, onGhost: (id: string, g: 'none' | 'best' | 'guide') => void): HTMLElement {
   const name = routeName(r.id);
   const head = h(
     'div',
@@ -96,12 +85,42 @@ function routeCard(r: RouteVM, index: number, selected: boolean, ctx: ScreenCtx,
     { class: 'kn-rcard-best' },
     h('span', { class: 'kn-rstat' }, eyebrow(t('routes.bestScore')), h('b', { class: 'kn-display kn-num', text: r.bestScore !== undefined ? fmtInt(r.bestScore) : '—' })),
     h('span', { class: 'kn-rstat' }, eyebrow(t('routes.bestTime')), h('b', { class: 'kn-display kn-num', text: r.bestTimeSec !== undefined ? fmtTime(r.bestTimeSec) : '—' })),
-    r.slow ? h('span', { class: 'kn-rstat kn-rstat--icon', title: t('settings.slowMode') }, ic('turtle')) : null,
+    r.slow || r.bestAssisted ? h('span', { class: 'kn-rstat kn-rstat--icon' }, r.bestAssisted ? ic('lifebuoy') : null, r.slow ? ic('turtle') : null) : null,
   );
+  const rewardChip = r.reward
+    ? h(
+        'div',
+        { class: 'kn-reward-chip' },
+        h('span', { class: 'kn-reward-sw', html: cosmeticSwatch(r.reward.ref) }),
+        h('span', { class: 'kn-reward-text' }, h('b', { text: t('routes.rewardProgress', { name: cosmeticName(r.reward.ref), done: r.reward.done, total: r.reward.total }) }), h('small', { text: cosmeticKindLabel(r.reward.ref) })),
+      )
+    : null;
+  const ghostSeg = ctx.cb.onGhostChoice
+    ? h(
+        'div',
+        { class: 'kn-ghostpick' },
+        h('span', { class: 'kn-eyebrow', text: upper(t('routes.ghost')) }),
+        (() => {
+          const seg = h('div', { class: 'kn-seg kn-seg--sm', role: 'radiogroup', 'aria-label': t('routes.ghost') });
+          for (const g of ['none', 'best', 'guide'] as const) {
+            const on = (r.ghost ?? 'none') === g;
+            const b = h('button', { type: 'button', role: 'radio', 'aria-pressed': String(on), 'aria-checked': String(on) }, h('span', { text: t(`routes.ghost.${g}` as 'routes.ghost.none') }));
+            b.addEventListener('click', (e) => {
+              e.stopPropagation();
+              ctx.sound('toggle');
+              ctx.cb.onGhostChoice?.(r.id, g);
+              onGhost(r.id, g);
+            });
+            seg.appendChild(b);
+          }
+          return seg;
+        })(),
+      )
+    : null;
   const tasks = h('ul', { class: 'kn-tasks' });
   for (const task of r.tasks.slice(0, 3)) {
     tasks.appendChild(
-      h('li', { class: `kn-task ${task.done ? 'is-done' : ''}`.trim() }, h('span', { class: 'kn-task-check' }, task.done ? ic('check') : null), h('span', { class: 'kn-task-text', text: taskLabel(task.type, task.count, task.value) })),
+      h('li', { class: `kn-task ${task.done ? 'is-done' : ''}`.trim() }, h('span', { class: 'kn-task-check' }, task.done ? ic('check') : null), h('span', { class: 'kn-task-text', text: taskLabel(task) })),
     );
   }
   const fly = h('button', { class: 'kn-btn kn-btn--primary kn-btn--lg kn-btn--block', type: 'button' }, ic('play'), h('span', { text: t('routes.fly') }));
@@ -111,7 +130,7 @@ function routeCard(r: RouteVM, index: number, selected: boolean, ctx: ScreenCtx,
     ctx.cb.onPlayRoute?.(r.id);
   });
   el.append(
-    h('div', { class: 'kn-rcard-body' }, r.startType ? h('div', { class: 'kn-caption kn-rcard-jump' }, ic('jump'), h('span', { text: tk('routes.jumpFrom', { type: r.startType }) })) : null, best, eyebrow(t('routes.tasks'), 'kn-tasks-title'), tasks, fly),
+    h('div', { class: 'kn-rcard-body' }, r.startType ? h('div', { class: 'kn-caption kn-rcard-jump' }, ic('jump'), h('span', { text: tk('routes.jumpFrom', { type: r.startType }) })) : null, best, eyebrow(t('routes.tasks'), 'kn-tasks-title'), tasks, rewardChip, ghostSeg, fly),
   );
   return el;
 }
@@ -121,22 +140,25 @@ export const routesScreen: ScreenDef<RoutesProps> = {
   render(p, ctx) {
     const selected = p.selected ?? p.routes.find((r) => !r.locked && r.stars < 3)?.id ?? p.routes[0]?.id;
     const select = (id: string): void => ctx.rerender({ ...p, selected: id });
-    const map = h('div', { class: 'kn-minimap' });
+    const onGhost = (id: string, g: 'none' | 'best' | 'guide'): void => ctx.rerender({ ...p, selected: id, routes: p.routes.map((x) => (x.id === id ? { ...x, ghost: g } : x)) });
+    let map: HTMLElement | null = h('div', { class: 'kn-minimap' });
     if (ctx.cb.mountMiniMap) {
       const cleanup = ctx.cb.mountMiniMap(map, p.world, selected);
       if (cleanup) ctx.onCleanup(cleanup);
-    } else {
+    } else if (p.routes.some((r) => r.line && r.line.length > 1)) {
       map.innerHTML = miniMap(p.world, p.routes, selected);
+    } else {
+      map = null; // no real geometry → no map (never an invented one)
     }
     const list = h('div', { class: 'kn-rlist' });
-    p.routes.forEach((r, i) => list.appendChild(routeCard(r, i, r.id === selected, ctx, select)));
+    p.routes.forEach((r, i) => list.appendChild(routeCard(r, i, r.id === selected, ctx, select, onGhost)));
     return page(ctx, {
       title: tk(`world.${p.world}`),
       eyebrow: worldIndexLabel(p.world),
       right: starCount(p.stars, STARS_PER_WORLD),
       world: p.world,
       cls: 'kn-page--routes',
-      body: h('div', { class: 'kn-routes-layout' }, h('div', { class: 'kn-routes-map' }, map), list),
+      body: h('div', { class: `kn-routes-layout ${map ? '' : 'is-nomap'}`.trim() }, map ? h('div', { class: 'kn-routes-map' }, map) : null, list),
     });
   },
 };

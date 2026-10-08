@@ -1,10 +1,12 @@
-// VFX orchestrator: graze dust/snow/spray/leaves, proximity wake, speed lines, wingtip trails (cosmetic styles),
-// high-G vapour, gates (highlight + dissolve into light streaks), thermals, Balloon Thread arcs + burner salute,
-// landing rings + zone marker, crash "vumf" dust (no gore). Every flicker ≤ 3 Hz; premultiplied, small sprites.
+// Flight VFX: graze dust/snow/spray/leaves, proximity wake, speed lines, wingtip trails (cosmetic styles),
+// high-G vapour, Balloon Thread sparkles, landing/bounce dust, crash "vumf" dust (no gore).
+// Route visuals (gates, thermals, landing rings + beam, guide line, thread arcs, postcards) live in
+// ./markers/RouteMarkers.ts. Every flicker ≤ 3 Hz; premultiplied alpha, small sprites, tier-capped pools.
 import { Group, Vector3, Color, DirectionalLight } from 'three';
 import type { Camera, Object3D } from 'three';
 import type { QualityTier } from '../../core/settings.ts';
-import type { FlightState, RouteDef, SimEvent, SurfaceClass, WorldId } from '../../sim/types.ts';
+import type { FlightState, SimEvent, SurfaceClass, WorldId } from '../../sim/types.ts';
+import { TRAILS } from '../../content/meta/cosmetics.ts';
 import type { TerrainSampler } from '../../sim/terrain/types.ts';
 import { tierConfig } from '../props/tiers.ts';
 import type { PropTierConfig } from '../props/tiers.ts';
@@ -12,8 +14,6 @@ import { ParticlePool, PK } from './particles.ts';
 import { SpeedLines } from './speedLines.ts';
 import { RibbonTrail } from './trails.ts';
 import type { TrailStyle } from './trails.ts';
-import { GateRings } from './gates.ts';
-import { Thermals, ThreadArcs, LandingMarkers } from './markers.ts';
 import { sharedUniforms } from './shared.ts';
 import type { PropsRenderer } from '../props/PropsRenderer.ts';
 import type { Pilot } from '../pilot/Pilot.ts';
@@ -34,7 +34,7 @@ const _a = new Vector3(), _b = new Vector3(), _c = new Vector3(), _d = new Vecto
 const _sun = new Color(), _amb = new Color();
 const SNOW: RGB = [0.95, 0.97, 1.0];
 
-export interface VfxPerf { calls: number; particles: number; speedLines: number; trails: number }
+export interface VfxPerf { calls: number; particlesCap: number; speedLines: number; trails: number }
 
 export class VFX {
   readonly group = new Group();
@@ -46,10 +46,6 @@ export class VFX {
   private readonly trailR: RibbonTrail;
   private readonly vapourL: RibbonTrail;
   private readonly vapourR: RibbonTrail;
-  readonly gates = new GateRings();
-  readonly thermals = new Thermals();
-  readonly arcs = new ThreadArcs(8);
-  readonly landing = new LandingMarkers();
   private world: WorldId = 'kapadokya';
   private fx: WorldFx = WORLD_FX.kapadokya;
   private sampler: TerrainSampler | null = null;
@@ -64,11 +60,6 @@ export class VFX {
   private viewH = 844;
   private reduceMotion = false;
   private trailBase = 0.45;
-  private readonly arcA = new Float32Array(8 * 3);
-  private readonly arcB = new Float32Array(8 * 3);
-  private readonly arcS = new Float32Array(8);
-  private readonly arcD = new Float32Array(8);
-  private readonly pilotPos = new Vector3();
 
   constructor(scene: Object3D, tier: QualityTier) {
     this.scene = scene;
@@ -85,10 +76,6 @@ export class VFX {
     this.vapourR = new RibbonTrail('vapour', sharedUniforms.uTime);
     for (const t of [this.trailL, this.trailR]) { t.width = 0.07; t.addTo(this.group); }
     for (const t of [this.vapourL, this.vapourR]) { t.width = 0.16; t.interval = 1 / 45; t.addTo(this.group); }
-    this.gates.addTo(this.group);
-    this.thermals.addTo(this.group);
-    this.arcs.addTo(this.group);
-    this.landing.addTo(this.group);
     scene.add(this.group);
   }
 
@@ -100,20 +87,14 @@ export class VFX {
     this.scene.traverse((o) => { if (!this.sunLight && (o as DirectionalLight).isDirectionalLight) this.sunLight = o as DirectionalLight; });
   }
 
-  /** Route visuals: gates, thermal columns, landing target + zone marker. */
-  setRoute(route: RouteDef | null): void {
-    if (!route) { this.gates.setGates([]); this.thermals.setThermals([], null, 0); return; }
-    this.gates.setGates(route.gates);
-    this.thermals.setThermals(route.thermals, this.sampler, [16, 28, 44, 64][this.cfg.level]);
-    this.landing.set(route.landing.center, route.landing.zoneRadius, this.sampler);
-  }
-
   /** Link to the props renderer: Balloon Thread arcs + burner salute on the event. */
   attachProps(p: PropsRenderer | null): void { this.props = p; }
 
-  /** Cosmetic wingtip trail (one of TRAIL_STYLES); base alpha 0..1. */
-  setTrailStyle(style: TrailStyle, alpha = 0.45): void {
-    this.trailL.setStyle(style); this.trailR.setStyle(style);
+  /** Cosmetic wingtip trail: TRAILS id from content ('dumanBeyazi', 'altinToz'…) or a built-in TrailStyle. */
+  setTrailStyle(id: string, alpha = 0.45): void {
+    const def = TRAILS.find((t) => t.id === id);
+    if (def) { this.trailL.setStyleDef(def.style, def.colors); this.trailR.setStyleDef(def.style, def.colors); }
+    else { this.trailL.setStyle(id as TrailStyle); this.trailR.setStyle(id as TrailStyle); }
     this.trailBase = alpha;
   }
 
@@ -178,12 +159,12 @@ export class VFX {
       const kind = snow ? PK.snow : big ? PK.vumf : PK.dust;
       const life = big ? 2.2 + this.r() * 1.2 : 1.1 + this.r() * 0.9;
       const s0 = big ? 0.8 : snow ? 0.25 : 0.3;
-      const s1 = big ? 3.2 + this.r() * 1.6 : snow ? 1.4 : 1.5 + this.r();
+      const s1 = big ? 3.2 + this.r() * 1.6 : snow ? 1.4 : 1.0 + this.r() * 0.8;
       const c = snow ? SNOW : col;
       this.particles.emit(
         x + dx * 0.3, y + 0.2, z + dz * 0.3,
         vx * 0.3 + nx * sp + dx * sp * out, ny * sp * 0.6 + this.r() * 1.5, vz * 0.3 + nz * sp + dz * sp * out,
-        life, s0, s1, kind, c[0], c[1], c[2], big ? 0.55 : 0.6, this.r(),
+        life, s0, s1, kind, c[0], c[1], c[2], big ? 0.45 : 0.4, this.r(),
       );
     }
     if (!snow) for (let i = 0; i < this.n(big ? 10 : 6) * s; i++) {
@@ -203,37 +184,14 @@ export class VFX {
       }
       case 'bounce': this.burst(e.cls, e.pos[0], e.pos[1], e.pos[2], 0.8); break;
       case 'crash': this.burst('vumf', e.pos[0], e.pos[1], e.pos[2], 1.2); break;
-      case 'gate': this.gatePassed(e.index); break;
-      case 'gateMissed': this.gates.miss(e.index); break;
-      case 'balloonThread': this.threadSalute(e.a, e.b); break;
+      case 'balloonThread': this.threadSparkles(e.a, e.b); break;
       case 'landed': if (this.lastState) this.burst('ground', this.lastState.pos[0], this.lastState.pos[1] - 1, this.lastState.pos[2], e.soft ? 0.3 : 0.7); break;
       default: break;
     }
   }
 
-  private gatePassed(i: number): void {
-    const g = this.gates.gate(i);
-    this.gates.pass(i);
-    if (!g) return;
-    // ring dissolves into light streaks: outward + forward along the gate normal
-    const N = _a.set(g.normal[0], g.normal[1], g.normal[2]).normalize();
-    const U = _b.set(0, 1, 0).cross(N);
-    if (U.lengthSq() < 1e-4) U.set(1, 0, 0);
-    U.normalize();
-    const V = _c.copy(N).cross(U).normalize();
-    const n = this.n(40);
-    for (let k = 0; k < n; k++) {
-      const an = (k / n) * Math.PI * 2 + this.r() * 0.2;
-      const cx = Math.cos(an), sx = Math.sin(an);
-      const px = g.pos[0] + (U.x * cx + V.x * sx) * g.radius, py = g.pos[1] + (U.y * cx + V.y * sx) * g.radius, pz = g.pos[2] + (U.z * cx + V.z * sx) * g.radius;
-      const out = 3 + this.r() * 4, fwd = 6 + this.r() * 8;
-      this.particles.emit(px, py, pz, (U.x * cx + V.x * sx) * out + N.x * fwd, (U.y * cx + V.y * sx) * out + N.y * fwd, (U.z * cx + V.z * sx) * out + N.z * fwd, 0.7 + this.r() * 0.4, 0.07, 0.03, PK.streak, 1.0, 0.85, 0.55, 1, this.r());
-    }
-  }
-
-  private threadSalute(a: number, b: number): void {
-    this.props?.fireBurner(a, 1.8);
-    this.props?.fireBurner(b, 1.8);
+  /** Sparkles along the threaded segment (the burner salute itself is fired by RouteMarkers). */
+  private threadSparkles(a: number, b: number): void {
     const bl = this.props?.balloonLayer();
     if (!bl) return;
     let ia = -1, ib = -1;
@@ -252,12 +210,11 @@ export class VFX {
     const t = this.time;
     // particle lighting from the scene sun
     if (this.sunLight) {
-      _sun.copy(this.sunLight.color).multiplyScalar(Math.min(2.5, this.sunLight.intensity * 0.35));
+      _sun.copy(this.sunLight.color).multiplyScalar(Math.min(1.2, this.sunLight.intensity * 0.17));
       _amb.setRGB(this.fx.amb[0], this.fx.amb[1], this.fx.amb[2]);
       this.particles.setLighting(_sun, _amb);
     }
     if (state) {
-      this.pilotPos.set(state.pos[0], state.pos[1], state.pos[2]);
       const flying = state.phase === 'flying' || state.phase === 'jump';
       // ---- speed lines
       this.speedLines.update(t, flying ? state.speed : 0, this.viewW, this.viewH, this.reduceMotion ? 0.5 : 1);
@@ -303,59 +260,16 @@ export class VFX {
           } else {
             const snow = this.world === 'erciyes';
             const c = snow ? SNOW : this.fx.dust;
-            this.particles.emit(x, y, z, state.vel[0] * 0.18 + nx * (1 + this.r() * 2), ny * 1.5 + this.r(), state.vel[2] * 0.18 + nz * (1 + this.r() * 2), 1.0 + this.r() * 0.6, 0.2, 1.2, snow ? PK.snow : PK.dust, c[0], c[1], c[2], 0.45, this.r());
+            this.particles.emit(x, y, z, state.vel[0] * 0.18 + nx * (1 + this.r() * 2), ny * 1.5 + this.r(), state.vel[2] * 0.18 + nz * (1 + this.r() * 2), 1.0 + this.r() * 0.6, 0.2, 0.9, snow ? PK.snow : PK.dust, c[0], c[1], c[2], 0.3, this.r());
           }
         }
       } else this.emitAcc = 0;
-      // ---- route markers
-      this.gates.setNext(state.gateIndex);
-      this.thermals.setActive(state.inThermal);
-      this.landing.update(t, this.pilotPos, state.inLandingZone);
     } else {
       this.speedLines.update(t, 0, this.viewW, this.viewH);
       this.trailL.alpha = this.trailR.alpha = this.vapourL.alpha = this.vapourR.alpha = 0;
-      this.landing.update(t, null, false);
     }
-    this.gates.update(t);
-    this.thermals.update(t);
-    this.updateArcs(state);
-    this.arcs.update(t);
     this.particles.update(t);
     void simTime;
-  }
-
-  /** Dashed light arcs between threadable balloon pairs (centres ≤ 35 m) near the pilot. */
-  private updateArcs(state: FlightState | null): void {
-    const bl = this.props?.balloonLayer();
-    if (!bl || !state || (state.phase !== 'flying' && state.phase !== 'jump')) { this.arcs.set(0, this.arcA, this.arcB, this.arcS); return; }
-    let n = 0;
-    const px = state.pos[0], py = state.pos[1], pz = state.pos[2];
-    for (let i = 0; i < bl.count; i++) {
-      bl.centerOf(i, _a);
-      const di = Math.hypot(_a.x - px, _a.y - py, _a.z - pz);
-      if (di > 420) continue;
-      for (let j = i + 1; j < bl.count; j++) {
-        bl.centerOf(j, _b);
-        const dd = _a.distanceTo(_b);
-        if (dd > 35) continue;
-        const mx = (_a.x + _b.x) / 2 - px, my = (_a.y + _b.y) / 2 - py, mz = (_a.z + _b.z) / 2 - pz;
-        const dm = Math.hypot(mx, my, mz);
-        if (dm > 400) continue;
-        // keep the 8 nearest pairs (insertion into a small sorted list)
-        let slot = n < 8 ? n : -1;
-        if (slot < 0) { let worst = 0; for (let k = 1; k < 8; k++) if (this.arcD[k] > this.arcD[worst]) worst = k; if (this.arcD[worst] > dm) slot = worst; }
-        if (slot < 0) continue;
-        // arc from envelope surface to envelope surface (through the threading segment)
-        _c.copy(_b).sub(_a).normalize();
-        const ri = bl.defAt(i).envelopeR * 0.92, rj = bl.defAt(j).envelopeR * 0.92;
-        this.arcA[slot * 3] = _a.x + _c.x * ri; this.arcA[slot * 3 + 1] = _a.y + _c.y * ri; this.arcA[slot * 3 + 2] = _a.z + _c.z * ri;
-        this.arcB[slot * 3] = _b.x - _c.x * rj; this.arcB[slot * 3 + 1] = _b.y - _c.y * rj; this.arcB[slot * 3 + 2] = _b.z - _c.z * rj;
-        this.arcS[slot] = Math.min(1, 1.3 - dm / 400);
-        this.arcD[slot] = dm;
-        if (n < 8) n++;
-      }
-    }
-    this.arcs.set(n, this.arcA, this.arcB, this.arcS);
   }
 
   perf(): VfxPerf {
@@ -366,11 +280,7 @@ export class VFX {
     if (this.trailR.mesh.visible) calls++;
     if (this.vapourL.mesh.visible) calls++;
     if (this.vapourR.mesh.visible) calls++;
-    if (this.gates.mesh.visible) calls++;
-    if (this.thermals.column.visible) calls += 2;
-    if (this.arcs.mesh.visible) calls++;
-    if (this.landing.mesh.visible) calls++;
-    return { calls, particles: this.particles.cap, speedLines: this.cfg.speedLines, trails: 4 };
+    return { calls, particlesCap: this.particles.cap, speedLines: this.cfg.speedLines, trails: 4 };
   }
 
   dispose(): void {
@@ -378,9 +288,5 @@ export class VFX {
     this.particles.dispose();
     this.speedLines.dispose();
     for (const tr of [this.trailL, this.trailR, this.vapourL, this.vapourR]) tr.dispose();
-    this.gates.dispose();
-    this.thermals.dispose();
-    this.arcs.dispose();
-    this.landing.dispose();
   }
 }

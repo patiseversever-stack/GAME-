@@ -13,7 +13,8 @@ import { resultsScreen } from './results.ts';
 import { settingsScreen } from './settings.ts';
 import { collectionScreen } from './collection.ts';
 import { photoScreen } from './photo.ts';
-import { assistOffCard, helpCard, invertedCard, resumeOverlay, unlockCard } from './cards.ts';
+import { assistOffCard, helpCard, invertedCard, levelUpCard, resumeOverlay, unlockCard } from './cards.ts';
+import { suruResultsScreen, weeklyScreen } from './extra.ts';
 
 /** In-flight root: empty layer, the HUD (separate layer) is visible. */
 const flightScreen: ScreenDef<Record<string, never>> = {
@@ -43,4 +44,7 @@ export const SCREENS: Record<ScreenId, ScreenDef<never>> = {
   assistOff: assistOffCard,
   resume: resumeOverlay,
   flight: flightScreen,
+  levelUp: levelUpCard,
+  weekly: weeklyScreen,
+  suruResults: suruResultsScreen,
 } as Record<ScreenId, ScreenDef<never>>;

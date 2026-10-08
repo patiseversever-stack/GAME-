@@ -2,6 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { TR } from '../../src/ui/strings/tr.ts';
 import { EN } from '../../src/ui/strings/en.ts';
 import { fmtDate, fmtDec, fmtDelta, fmtInt, fmtTime, formatMessage, getLang, ordinal, possessive, setLang, t, tk, upper } from '../../src/ui/i18n.ts';
+import { BADGES, USTA_TASKS, USTA_I18N_KEY, USTA_I18N_KEY_RELATIVE } from '../../src/content/meta/index.ts';
+import { taskText } from '../../src/ui/usta.ts';
 import { BADGE_IDS, PALETTE_IDS, PATTERN_IDS, POSTCARD_IDS, ROUTE_IDS, TRAIL_IDS, FLOCK_NAME_COUNT, LOADING_TIP_COUNT } from '../../src/ui/content.ts';
 
 describe('i18n tables', () => {
@@ -50,8 +52,43 @@ describe('i18n tables', () => {
     expect(TR['route.w5r4']).toBe('Gün Batımı Finali');
     expect(TR['ftue.jump']).toBe('Atla');
     expect(TR['help.title']).toBe('Bu bölümde yardım?');
-    expect(TR['inverted.title']).toBe('Ters mi?');
+    expect(TR['inverted.title']).toBe('Yukarı çekince burun insin mi?'); // GDD §9 / INVERT_CARD (F1 review)
+    expect(TR['ftue.pull']).toBe('Aşağı çek');
     expect(TR['toast.mediumSuggested']).toBe('Akıcılık için Orta önerilir');
+  });
+});
+
+describe('meta sync (F1 review Ü-10)', () => {
+  it('badge names and descriptions match src/content/meta/badges.ts', () => {
+    expect(BADGES.map((b) => b.id).sort()).toEqual([...BADGE_IDS].sort());
+    for (const b of BADGES) {
+      expect(TR[`badge.${b.id}` as keyof typeof TR], b.id).toBe(b.name.tr);
+      expect(EN[`badge.${b.id}` as keyof typeof EN], b.id).toBe(b.name.en);
+      expect(TR[`badge.${b.id}.desc` as keyof typeof TR], b.id).toBe(b.desc.tr);
+      expect(EN[`badge.${b.id}.desc` as keyof typeof EN], b.id).toBe(b.desc.en);
+    }
+  });
+
+  it('every usta key exists and none of the 60 tasks falls back to the generic label', () => {
+    for (const k of [...Object.values(USTA_I18N_KEY), ...Object.values(USTA_I18N_KEY_RELATIVE)]) {
+      expect(k in TR, k).toBe(true);
+      expect(k in EN, k).toBe(true);
+    }
+    expect(USTA_TASKS.length).toBe(60);
+    for (const task of USTA_TASKS) {
+      for (const lang of ['tr', 'en'] as const) {
+        const txt = taskText({ id: task.id, type: task.type, value: task.value, done: false }, lang);
+        expect(txt, task.id).not.toBe(lang === 'tr' ? TR['usta.generic'] : EN['usta.generic']);
+        expect(txt, task.id).not.toMatch(/\{|undefined|NaN/);
+      }
+    }
+  });
+
+  it('ratio tasks use relative wording without benchmarks and real numbers with them', () => {
+    const t = USTA_TASKS.find((x) => x.type === 'timeUnder');
+    if (!t) return;
+    expect(taskText({ id: t.id, type: t.type, value: t.value, done: false }, 'tr')).toMatch(/Kılavuz süresinin %\d+ kadarında bitir/);
+    expect(taskText({ id: t.id, type: t.type, value: t.value, done: false, bench: { expertScore: 50000, expertTimeSec: 98.47 } }, 'tr')).toMatch(/^\d:\d\d\.\d altında bitir/);
   });
 });
 

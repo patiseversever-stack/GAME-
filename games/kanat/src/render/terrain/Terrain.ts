@@ -147,6 +147,9 @@ export class TerrainRenderer {
     this.detail = opts.detail ?? new DetailTextures(renderer, this.kinds, 512, params.anisotropy);
 
     const geo = buildNodeGeometry(N, this.maxInstances);
+    // Share the selector's instance buffer with the attribute (no per-frame copy / view allocation).
+    const nodeAttr = geo.getAttribute('aNode') as THREE.InstancedBufferAttribute;
+    nodeAttr.array = this.selector.instances;
     const mat = createTerrainMaterial({ projection: params.terrain.projection, vertexFog: params.level === 0, patch: isPatch });
     this.mesh = new THREE.Mesh(geo, mat);
     this.mesh.name = 'kanat-terrain';
@@ -248,7 +251,6 @@ export class TerrainRenderer {
     const n = this.selector.select(p.x, p.y, p.z, this.planes, this.params.terrain.viewDistance);
     const geo = this.mesh.geometry;
     const attr = geo.getAttribute('aNode') as THREE.InstancedBufferAttribute;
-    (attr.array as Float32Array).set(this.selector.instances.subarray(0, n * 4));
     attr.clearUpdateRanges();
     attr.addUpdateRange(0, n * 4);
     attr.needsUpdate = true;

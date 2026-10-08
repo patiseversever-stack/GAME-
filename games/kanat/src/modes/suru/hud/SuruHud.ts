@@ -8,6 +8,14 @@ import { ownerStyle } from '../render/palette.ts';
 
 export type Lang = 'tr' | 'en';
 
+const GHOST_PRESS =
+  '<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="rgba(245,241,232,0.10)" stroke="#F5F1E8" stroke-opacity="0.55" stroke-width="1.5"/>' +
+  '<rect x="19" y="21" width="20" height="17" rx="6" fill="#F5F1E8" fill-opacity="0.8"/><path d="M23 21v-2M28 21v-3M33 21v-2" stroke="#F5F1E8" stroke-opacity="0.8" stroke-width="3" stroke-linecap="round"/></svg>';
+const GHOST_OPEN =
+  '<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="rgba(245,241,232,0.06)" stroke="#F5F1E8" stroke-opacity="0.4" stroke-width="1.5" stroke-dasharray="4 4"/>' +
+  '<path d="M21 36c0-6 1-9 2-12M25 34V17M29 34V15M33 34V17M37 35c1-4 3-6 5-8" stroke="#F5F1E8" stroke-opacity="0.8" stroke-width="3" stroke-linecap="round" fill="none"/>' +
+  '<path d="M21 36c2 4 6 6 10 6s7-3 7-7" stroke="#F5F1E8" stroke-opacity="0.8" stroke-width="3" stroke-linecap="round" fill="none"/></svg>';
+
 const STR = {
   tr: {
     birds: 'kuş',
@@ -109,16 +117,24 @@ const CSS = /* css */ `
 .sr-ann div.on { opacity: 1; transform: none; }
 .sr-breath { position: absolute; width: 96px; height: 96px; margin: -48px 0 0 -48px; opacity: 0; transition: opacity 180ms ease-out; }
 .sr-breath.on { opacity: 1; }
+.sr-lb { position: absolute; width: 84px; height: 84px; margin: -42px 0 0 -42px; opacity: 0; transition: opacity 200ms ease-out; }
+.sr-lb.on { opacity: 0.95; }
+.sr-sen { position: absolute; transform: translate(-50%, -100%); margin-top: -40px; font-family: 'Barlow Condensed', 'Kanat Fallback Condensed', 'Arial Narrow', sans-serif; font-weight: 700;
+  font-size: 15px; letter-spacing: 0.16em; color: #1A1408; background: #FFC23D; padding: 2px 7px 1px 9px; border-radius: 6px; opacity: 0; transition: opacity 240ms ease-out; }
+.sr-sen.on { opacity: 1; }
+.sr-off { position: absolute; width: 34px; height: 34px; margin: -17px 0 0 -17px; opacity: 0; transition: opacity 160ms ease-out; }
+.sr-off.on { opacity: 0.95; }
 .sr-ghost { position: absolute; width: 58px; height: 58px; margin: -29px 0 0 -29px; opacity: 0; transition: opacity 260ms ease-out; }
 .sr-ghost.on { opacity: 0.85; }
 .sr-label { position: absolute; left: 50%; bottom: calc(env(safe-area-inset-bottom, 0px) + 18px); transform: translateX(-50%); font-size: 11px; letter-spacing: 0.06em; opacity: 0.55; white-space: nowrap; }
-.sr-res { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(6,9,13,0.35); pointer-events: auto; opacity: 0; transition: opacity 240ms ease-out; }
+.sr-res { position: absolute; inset: 0; display: grid; place-items: end center; padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 18px);
+  background: linear-gradient(to bottom, rgba(6,9,13,0) 35%, rgba(6,9,13,0.55)); pointer-events: auto; opacity: 0; transition: opacity 240ms ease-out; }
 .sr-res.on { opacity: 1; }
-.sr-card { width: min(340px, 88vw); padding: 18px 18px 16px; }
-.sr-card h2 { margin: 0; font-family: 'Barlow Condensed', 'Kanat Fallback Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 64px; line-height: 0.95; color: #FFC23D; }
+.sr-card { width: min(340px, 88vw); padding: 14px 16px 14px; }
+.sr-card h2 { margin: 0; font-family: 'Barlow Condensed', 'Kanat Fallback Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 54px; line-height: 0.95; color: #FFC23D; }
 .sr-card h2 small { font-size: 26px; color: #F5F1E8; opacity: 0.6; font-weight: 600; }
 .sr-card .sub { font-size: 13px; opacity: 0.75; margin: 4px 0 12px; }
-.sr-kv { display: flex; justify-content: space-between; align-items: baseline; height: 27px; border-top: 1px solid #FFFFFF18; font-size: 13px; }
+.sr-kv { display: flex; justify-content: space-between; align-items: baseline; height: 24px; border-top: 1px solid #FFFFFF18; font-size: 13px; }
 .sr-kv b { font-family: 'Barlow Condensed', 'Kanat Fallback Condensed', 'Arial Narrow', sans-serif; font-weight: 600; font-size: 20px; }
 .sr-lp { margin: 10px 0 2px; font-size: 13px; opacity: 0.85; display: flex; justify-content: space-between; }
 .sr-lp b { font-family: 'Barlow Condensed', 'Kanat Fallback Condensed', 'Arial Narrow', sans-serif; font-weight: 700; font-size: 22px; color: #4CC38A; }
@@ -180,6 +196,10 @@ export class SuruHud {
   private readonly breath: HTMLDivElement;
   private readonly breathArc: SVGCircleElement;
   private readonly ghost: HTMLDivElement;
+  private readonly leaderBreath: HTMLDivElement;
+  private readonly leaderArc: SVGCircleElement;
+  private readonly sen: HTMLDivElement;
+  private readonly offArrow: HTMLDivElement;
   private readonly label: HTMLDivElement;
   private readonly res: HTMLDivElement;
   private lastTop3 = '';
@@ -268,11 +288,38 @@ export class SuruHud {
     bs.appendChild(this.breathArc);
     this.breath.appendChild(bs);
     root.appendChild(this.breath);
+    // Nefes arc around the player's leader (GDD §5.5), "SEN" tag, off-screen arrow
+    this.leaderBreath = document.createElement('div');
+    this.leaderBreath.className = 'sr-lb';
+    const ls = svg('svg', { width: 84, height: 84, viewBox: '0 0 84 84' }) as SVGSVGElement;
+    ls.appendChild(svg('circle', { cx: 42, cy: 42, r: 34, fill: 'none', stroke: '#0E141C', 'stroke-opacity': 0.35, 'stroke-width': 4 }));
+    this.leaderArc = svg('circle', {
+      cx: 42,
+      cy: 42,
+      r: 34,
+      fill: 'none',
+      stroke: '#FFC23D',
+      'stroke-width': 2.5,
+      'stroke-linecap': 'round',
+      'stroke-dasharray': `${2 * Math.PI * 34}`,
+      transform: 'rotate(-90 42 42)',
+    }) as SVGCircleElement;
+    ls.appendChild(this.leaderArc);
+    this.leaderBreath.appendChild(ls);
+    root.appendChild(this.leaderBreath);
+    this.sen = document.createElement('div');
+    this.sen.className = 'sr-sen';
+    this.sen.textContent = this.t('you').toLocaleUpperCase(lang === 'tr' ? 'tr-TR' : 'en-US');
+    root.appendChild(this.sen);
+    this.offArrow = document.createElement('div');
+    this.offArrow.className = 'sr-off';
+    this.offArrow.innerHTML =
+      '<svg width="34" height="34" viewBox="0 0 34 34"><circle cx="17" cy="17" r="15" fill="rgba(14,20,28,0.55)" stroke="#FFFFFF33"/><path d="M11 21 L17 10 L23 21 Z" fill="#FFC23D"/></svg>';
+    root.appendChild(this.offArrow);
     // FTUE ghost thumb
     this.ghost = document.createElement('div');
     this.ghost.className = 'sr-ghost';
-    this.ghost.innerHTML =
-      '<svg width="58" height="58" viewBox="0 0 58 58"><circle cx="29" cy="29" r="26" fill="rgba(245,241,232,0.10)" stroke="#F5F1E8" stroke-opacity="0.55" stroke-width="1.5"/><circle cx="29" cy="29" r="11" fill="#F5F1E8" fill-opacity="0.75"/></svg>';
+    this.ghost.innerHTML = GHOST_PRESS;
     root.appendChild(this.ghost);
     // AI label (§2.6: bots labelled everywhere)
     this.label = document.createElement('div');
@@ -317,9 +364,54 @@ export class SuruHud {
     this.breathArc.setAttribute('stroke-opacity', breathless ? '0.45' : '1');
   }
 
+  /**
+   * Player's leader overlay: Nefes arc around the leader (red when out of breath), "SEN" tag during the first
+   * seconds, and an edge arrow when the leader is off-screen. (x, y) = projected leader in CSS px.
+   */
+  updateLeader(x: number, y: number, inView: boolean, alive: boolean, breath01: number, breathless: boolean, showSen: boolean, w: number, h: number): void {
+    const visible = alive && inView;
+    this.leaderBreath.classList.toggle('on', visible);
+    if (visible) {
+      this.leaderBreath.style.left = `${x}px`;
+      this.leaderBreath.style.top = `${y}px`;
+      const c = 2 * Math.PI * 34;
+      const b = Math.max(0, Math.min(1, breath01));
+      this.leaderArc.setAttribute('stroke-dashoffset', `${c * (1 - (breathless ? Math.max(b, 0.02) : b))}`);
+      this.leaderArc.setAttribute('stroke', breathless ? '#E5484D' : '#FFC23D');
+      this.leaderBreath.style.opacity = b > 0.985 && !breathless ? '0.35' : '';
+    }
+    this.sen.classList.toggle('on', visible && showSen);
+    if (visible && showSen) {
+      this.sen.style.left = `${x}px`;
+      this.sen.style.top = `${y}px`;
+    }
+    const off = alive && !inView;
+    this.offArrow.classList.toggle('on', off);
+    if (off) {
+      const cx = w / 2;
+      const cy = h / 2;
+      let dx = x - cx;
+      let dy = y - cy;
+      const l = Math.hypot(dx, dy) || 1;
+      dx /= l;
+      dy /= l;
+      const m = 30;
+      const k = Math.min((w / 2 - m) / Math.max(Math.abs(dx), 1e-3), (h / 2 - m) / Math.max(Math.abs(dy), 1e-3));
+      this.offArrow.style.left = `${cx + dx * k}px`;
+      this.offArrow.style.top = `${cy + dy * k}px`;
+      this.offArrow.style.transform = `rotate(${(Math.atan2(dy, dx) * 180) / Math.PI + 90}deg)`;
+    }
+  }
+
   ghostAt(on: boolean, x = 0, y = 0, pressed = false): void {
     this.ghost.classList.toggle('on', on);
     if (!on) return;
+    // fist = hold (Sıkı Dizi), open hand = release (Geniş Kanat) — textless FTUE (GDD §5.5)
+    const want = pressed ? 'p' : 'r';
+    if (this.ghost.dataset.k !== want) {
+      this.ghost.dataset.k = want;
+      this.ghost.innerHTML = pressed ? GHOST_PRESS : GHOST_OPEN;
+    }
     this.ghost.style.left = `${x}px`;
     this.ghost.style.top = `${y}px`;
     this.ghost.style.transform = pressed ? 'scale(0.86)' : 'scale(1)';

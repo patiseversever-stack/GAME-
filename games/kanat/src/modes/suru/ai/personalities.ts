@@ -1,6 +1,8 @@
 // SÜRÜ.io AI data: personalities (§4.G.10 table), league scaling (Bronz → Elmas) and nature-word names.
 // Data module (pure). Bots are labelled "YZ" everywhere (§2.6).
 
+import { LEAGUES } from '../../../content/meta/progression.ts';
+
 export type PersonalityId = 'toplayici' | 'avci' | 'urkek' | 'kusatici' | 'firsatci';
 
 export interface Personality {
@@ -50,15 +52,27 @@ export interface LeagueScale {
   hawkResponse: number;
   /** overall decision quality: multiplies greed/aggr/ring/opp utilities (Bronz bots are clumsy, Elmas sharp) */
   skill: number;
+  /** probability to answer enemy contact with Sıkı Dizi (§4.G "Sıkı: temasta ve Nefes > 25") */
+  defend: number;
 }
 
-export const LEAGUE_SCALE: readonly LeagueScale[] = [
-  { reactionAddMs: 150, noiseDeg: 15, ringMul: 0.5, decisionTicks: 7, mistake: 0.35, breathReserve: 0, hawkResponse: 0.2, skill: 0.55 },
-  { reactionAddMs: 90, noiseDeg: 11, ringMul: 0.7, decisionTicks: 6, mistake: 0.2, breathReserve: 8, hawkResponse: 0.45, skill: 0.7 },
-  { reactionAddMs: 40, noiseDeg: 8, ringMul: 0.9, decisionTicks: 5, mistake: 0.1, breathReserve: 15, hawkResponse: 0.65, skill: 0.85 },
-  { reactionAddMs: 0, noiseDeg: 6, ringMul: 1.05, decisionTicks: 4, mistake: 0.05, breathReserve: 22, hawkResponse: 0.8, skill: 0.95 },
-  { reactionAddMs: -50, noiseDeg: 4, ringMul: 1.2, decisionTicks: 3, mistake: 0.0, breathReserve: 28, hawkResponse: 0.95, skill: 1.0 },
+/**
+ * Per-league AI scaling. Reaction offset, decision interval, steering noise and ring multiplier come from the
+ * single source `LEAGUES[]` (src/content/meta/progression.ts, ruling S-13); the SÜRÜ-only extras (mistake rate,
+ * breath reserve, hawk response, utility skill) live here.
+ */
+const LEAGUE_EXTRAS: readonly Pick<LeagueScale, 'mistake' | 'breathReserve' | 'hawkResponse' | 'skill' | 'defend'>[] = [
+  { mistake: 0.35, breathReserve: 0, hawkResponse: 0.2, skill: 0.55, defend: 0.12 },
+  { mistake: 0.2, breathReserve: 8, hawkResponse: 0.45, skill: 0.7, defend: 0.35 },
+  { mistake: 0.1, breathReserve: 15, hawkResponse: 0.65, skill: 0.85, defend: 0.6 },
+  { mistake: 0.05, breathReserve: 22, hawkResponse: 0.8, skill: 0.95, defend: 0.8 },
+  { mistake: 0.0, breathReserve: 28, hawkResponse: 0.95, skill: 1.0, defend: 0.95 },
 ];
+
+export const LEAGUE_SCALE: readonly LeagueScale[] = LEAGUE_EXTRAS.map((x, k) => {
+  const L = LEAGUES[Math.min(k, LEAGUES.length - 1)];
+  return { reactionAddMs: L.aiReactionOffsetMs, noiseDeg: L.aiNoiseDeg, ringMul: L.aiRingMul, decisionTicks: L.aiDecisionEveryTicks, ...x };
+});
 
 /** Bot flock names from nature words — never real people (§2.6). */
 export const BOT_NAMES: readonly { tr: string; en: string }[] = [

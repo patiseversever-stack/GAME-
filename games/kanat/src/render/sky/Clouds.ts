@@ -348,7 +348,8 @@ export class Clouds {
   update(time: number, camera: THREE.Camera): void {
     const inside = this.immersion(camera.position.x, camera.position.y, camera.position.z);
     if (this.band) {
-      for (const m of [this.seaTop, this.seaBottom]) {
+      for (let i = 0; i < 2; i++) {
+        const m = i === 0 ? this.seaTop : this.seaBottom;
         if (!m) continue;
         const u = m.material.uniforms;
         const s = u.uSea.value as THREE.Vector4;

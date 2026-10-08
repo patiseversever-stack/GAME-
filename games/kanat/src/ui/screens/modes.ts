@@ -37,7 +37,7 @@ function suruButtons(ctx: ScreenCtx, dayN: number): HTMLElement {
     });
     return b;
   };
-  return h('div', { class: 'kn-subbtns' }, mk('league', t('mode.suruLeague'), 'league'), mk('day', `${t('mode.suruDay')} ${t('daily.number', { n: dayN })}`, 'calendar'), mk('practice', t('mode.suruPractice'), 'flock'));
+  return h('div', { class: 'kn-subbtns' }, mk('league', t('mode.suruLeague'), 'league'), mk('daily', `${t('mode.suruDay')} ${t('daily.number', { n: dayN })}`, 'calendar'), mk('practice', t('mode.suruPractice'), 'flock'));
 }
 
 function freeWorlds(ctx: ScreenCtx, worlds: WorldId[]): HTMLElement {
@@ -85,6 +85,18 @@ export const modesScreen: ScreenDef<ModesProps> = {
         },
       }),
       modeCard(ctx, { icon: 'duel', title: t('mode.duel'), desc: t('mode.duelDesc'), locked: p.duel.unlocked ? undefined : lockText(p.duel.lockRoute), onTap: () => ctx.show('duel', {}) }),
+      p.weekly
+        ? modeCard(ctx, {
+            icon: 'wind',
+            title: t('mode.weekly'),
+            desc: t('mode.weeklyDesc'),
+            locked: p.weekly.unlocked ? undefined : lockText(p.weekly.lockRoute),
+            onTap: () => {
+              const w = cb.getWeekly?.();
+              if (w) ctx.show('weekly', w);
+            },
+          })
+        : null,
       modeCard(ctx, { icon: 'glide', title: t('mode.free'), desc: t('mode.freeDesc'), locked: p.free.unlocked ? undefined : lockText(p.free.lockRoute), extra: p.free.worlds?.length ? freeWorlds(ctx, p.free.worlds) : null }),
       modeCard(ctx, {
         icon: 'flock',
@@ -129,7 +141,7 @@ export const suruScreen: ScreenDef<SuruProps> = {
       h('p', { class: 'kn-serif kn-suru-tag', text: t('suru.tagline') }),
       leaguePanel,
       option('league', 'league', t('mode.suruLeague'), t('suru.leagueDesc')),
-      option('day', 'calendar', `${t('mode.suruDay')} ${t('daily.number', { n: p.dayN })}`, t('suru.dayDesc', { n: p.dayN })),
+      option('daily', 'calendar', `${t('mode.suruDay')} ${t('daily.number', { n: p.dayN })}`, t('suru.dayDesc', { n: p.dayN })),
       option('practice', 'flock', t('mode.suruPractice'), t('suru.practiceDesc')),
       h('div', { class: 'kn-ai-note' }, h('span', { class: 'kn-ai-tag', text: t('common.ai') }), h('span', { class: 'kn-caption', text: t('suru.aiLabel') })),
     );

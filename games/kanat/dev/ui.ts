@@ -12,6 +12,7 @@ import { BADGE_IDS, PALETTE_IDS, PATTERN_IDS, POSTCARD_IDS, ROUTE_DIFFICULTY, TR
 import { getLang, t } from '../src/ui/i18n.ts';
 import { careerShareText, dailyShareText, suruShareText, drawShareCard } from '../src/ui/share/index.ts';
 import { loadFonts } from '../src/ui/fonts.ts';
+import { WEEKLY_TINTS, CANOPIES, CARD_FRAMES, ROUTE_META } from '../src/content/meta/index.ts';
 import type {
   CollectionProps, DailyProps, DuelProps, GhostVM, MenuProps, ModesProps, PauseProps, PhotoProps, ResultsProps, RoutesProps, ScreenId, SettingsProps, SuruProps, UICallbacks, WorldsProps,
 } from '../src/ui/types.ts';
@@ -46,6 +47,7 @@ const settings: Settings = {
   reduceMotion: q.get('rm') === '1',
   kanat: { ...DEFAULT_SETTINGS.kanat, bigHud: q.get('big') === '1', colorBlind: q.get('cb') === '1' },
 };
+if (q.get('ts')) (settings as Settings & { textScale?: number }).textScale = Number(q.get('ts'));
 
 // ---------------------------------------------------------------- backdrop
 const bgParam = q.get('bg');
@@ -66,6 +68,7 @@ const menuProps = (): MenuProps => ({
   modes: { duel: variant !== 'new', free: variant !== 'new' },
   collection: { postcards: 7, badges: 9 },
   world: 'kapadokya',
+  newModes: variant === 'newmodes' ? ['daily', 'suru', 'weekly'] : undefined,
 });
 const worldsProps = (): WorldsProps => ({
   totalStars: 23,
@@ -78,12 +81,16 @@ const worldsProps = (): WorldsProps => ({
   ],
   focus: (variant as WorldId) || undefined,
 });
-const TASKS: Record<string, { type: string; count?: number; value?: number }[]> = {
-  r1: [{ type: 'gateChain', count: 6 }, { type: 'softLanding' }, { type: 'landWithin', value: 5 }],
-  r2: [{ type: 'grazeCount', count: 3 }, { type: 'mult5Hold', value: 4 }, { type: 'noBounce' }],
-  r3: [{ type: 'balloonThread', count: 5 }, { type: 'mult5Hold', value: 4 }, { type: 'landWithin', value: 2 }],
-  r4: [{ type: 'noContact3Stars' }, { type: 'noThermal' }, { type: 'boldOpen' }],
-};
+/** Gallery-only route polylines (the real ones come from src/content/routes). */
+function mockLine(seed: number): [number, number][] {
+  const pts: [number, number][] = [];
+  const a = (seed % 7) * 0.9;
+  for (let k = 0; k <= 30; k++) {
+    const s = k / 30;
+    pts.push([-800 + (seed % 4) * 140 + s * 1500 + Math.sin(s * 4 + a) * 160, -600 + (seed % 3) * 120 + s * 1000 + Math.cos(s * 3 + a) * 140]);
+  }
+  return pts;
+}
 const routesProps = (world: WorldId = 'kapadokya'): RoutesProps => {
   const w = WORLDS.indexOf(world) + 1;
   const stars = world === 'kapadokya' ? [3, 3, 2, 3] : world === 'likya' ? [3, 3, 2, 1] : [2, 1, 0, 0];
@@ -92,12 +99,16 @@ const routesProps = (world: WorldId = 'kapadokya'): RoutesProps => {
     stars: stars.reduce((a, b) => a + b, 0),
     selected: variant === 'r1' ? `w${w}r1` : undefined,
     routes: [1, 2, 3, 4].map((r, i) => ({
+      line: mockLine(w * 10 + r),
+      reward: { ref: ['pattern:kilim', 'pattern:cini', 'palette:tuf', 'trail:altinToz'][i], done: Math.min(3, stars[i]), total: 3 },
+      ghost: i === 2 ? 'best' as const : 'none' as const,
+      bestAssisted: i === 0,
       id: `w${w}r${r}`,
       difficulty: ROUTE_DIFFICULTY[`w${w}r${r}`],
       stars: stars[i],
       bestScore: stars[i] ? [32410, 41275, 48210, 52980][i] : undefined,
       bestTimeSec: stars[i] ? [71.3, 84.9, 96.4, 104.2][i] : undefined,
-      tasks: TASKS[`r${r}`].map((tk, k) => ({ id: `t${k}`, ...tk, done: k < stars[i] - (i === 2 ? 1 : 0) })),
+      tasks: (ROUTE_META.find((m) => m.id === `w${w}r${r}`)?.usta ?? []).map((task, k) => ({ id: task.id, type: task.type, value: task.value, done: k < stars[i] - (i === 2 ? 1 : 0), bench: k === 2 ? { expertScore: 52000, expertTimeSec: 98.4 } : undefined })),
       locked: world === 'karadeniz' && r === 4,
       startType: world === 'likya' ? 'ucurum' : world === 'karadeniz' ? 'sirt' : 'balon',
       slow: i === 1 && world === 'kapadokya',
@@ -112,6 +123,7 @@ const modesProps = (): ModesProps => {
     duel: { unlocked: !locked, lockRoute: 2 },
     free: { unlocked: !locked, lockRoute: 3, worlds: ['kapadokya', 'likya', 'karadeniz'] },
     suru: { unlocked: !locked, lockRoute: 1, league: 2, lp: 145, dayN: 214 },
+    weekly: { unlocked: !locked, lockRoute: 4 },
   };
 };
 const dailyProps = (): DailyProps => ({
@@ -144,25 +156,38 @@ const resultsProps = (): ResultsProps => {
       { kind: 'bold', value: 300 },
     ],
     strip: [1, 2, 3, 3, 5], pbDelta: 1240, newBest: true, hasNext: true,
-    tasksDone: [{ id: 't0', type: 'balloonThread', count: 5, done: true }],
+    tasksDone: [{ id: 'w1r3-u1', type: 'balloonThread', count: 5, done: true }],
+    ustaProgress: { done: 2, total: 3 },
+    xp: { gained: 1240, level: 12, fromFrac: 0.42, toFrac: 0.78 },
+    nextWorld: { world: 'karadeniz', missing: 3 },
+    reward: { ref: 'pattern:kilim' },
+    shareKinds: ['clip', 'card', 'text'],
   };
+  if (variant === 'compact') return { ...base, compact: true, world: 'kapadokya', routeId: 'w1r1', score: 12480, stars: 3, prevStars: 0, ustaProgress: { done: 2, total: 3 }, reward: { ref: 'palette:safak' }, xp: undefined, nextWorld: undefined };
   if (variant === 'daily') return { ...base, mode: 'daily', routeId: undefined, dailyN: 214, world: 'likya', timeSec: 127.46, score: 0, stars: 3, prevStars: 2, rows: [{ kind: 'flight', value: 123.46 }, { kind: 'missed', value: 4, n: 2 }], strip: [2, 2, 3, 5, 5], pbDelta: -1.3, newBest: true, ghostDelta: -0.42, tasksDone: [] };
   if (variant === 'half') return { ...base, half: true, score: 9640, stars: 0, prevStars: 0, rows: [{ kind: 'proximity', value: 7840 }, { kind: 'grazes', value: 500, n: 2 }, { kind: 'gates', value: 1300, a: 3, b: 14 }], strip: [1, 2, 0, 0, 0], newBest: false, pbDelta: undefined, tasksDone: [] };
   if (variant === 'duel') return { ...base, mode: 'duel', routeId: undefined, dailyN: 214, world: 'likya', timeSec: 126.66, stars: 3, rows: [{ kind: 'flight', value: 126.66 }, { kind: 'missed', value: 0, n: 0 }], duel: { won: true, deltaSec: 0.8, opponent: 'Ayşe' }, newBest: false, pbDelta: undefined, tasksDone: [] };
   return base;
 };
+const levelUpProps = () => (variant === 'title' ? { level: 17, rewards: [{ kind: 'title' as const, title: 'siyirici' }] } : { level: 13, rewards: [{ kind: 'cosmetic' as const, ref: 'cardFrame:pul' }] });
+const weeklyProps = () => ({ weekIndex: 41, routeId: 'w2r2', modifier: 'sisPerdesi' as const, daysLeft: 3, attempts: 2, bestScore: 39880, stars: 2, tint: WEEKLY_TINTS[0], swallowOwned: false });
+const suruResultsProps = () => ({ sub: (variant === 'daily' ? 'daily' : 'league') as 'league' | 'daily', dayN: 214, place: variant === 'daily' ? 1 : 2, flocks: 15, peak: 486, converted: 212, wild: 138, sieges: 2, survivalSec: 180, survived: true, lpDelta: variant === 'daily' ? undefined : 22, league: 2, lp: 167, aiPct: 18, xpGained: 320, canWatch: variant !== 'daily', leagueUp: false });
+
 const CREDITS_TR = 'Yükseklik verisi: Mapzen Terrain Tiles (AWS Open Data) — © OpenStreetMap katkıda bulunanlar, USGS, SRTM, EU-DEM\nYazı tipleri: Barlow Condensed, Inter, Playfair Display — SIL Open Font License 1.1\nMüzik ve sesler: prosedürel sentez (Web Audio)';
 const CREDITS_EN = 'Elevation data: Mapzen Terrain Tiles (AWS Open Data) — © OpenStreetMap contributors, USGS, SRTM, EU-DEM\nTypefaces: Barlow Condensed, Inter, Playfair Display — SIL Open Font License 1.1\nMusic and sound: procedural synthesis (Web Audio)';
 const settingsProps = (): SettingsProps => ({ settings: currentSettings, currentTier: 'high', ultraCapable: true, version: '0.1.0 · sim 1', credits: getLang() === 'tr' ? CREDITS_TR : CREDITS_EN });
 const collectionProps = (): CollectionProps => {
   const gotPc = new Set(['w1p1', 'w1p2', 'w1p4', 'w1p5', 'w2p1', 'w2p3', 'w3p1']);
   return {
-    tab: (['postcards', 'wardrobe', 'badges'] as const).find((x) => x === variant) ?? 'postcards',
+    tab: variant === 'canopy' ? 'wardrobe' : (['postcards', 'wardrobe', 'badges'] as const).find((x) => x === variant) ?? 'postcards',
     postcards: POSTCARD_IDS.map((id) => ({ id, world: WORLDS[Number(id.charAt(1)) - 1], got: gotPc.has(id), date: gotPc.has(id) ? { y: 2026, m: 10, d: 2 + id.charCodeAt(3) % 6 } : undefined })),
     patterns: PATTERN_IDS.map((id, i) => ({ id, unlocked: i < 7, source: i < 2 ? { kind: 'start' } : i < 7 ? undefined : i % 3 === 0 ? { kind: 'usta', routeId: ROUTE_IDS_FOR(i) } : i % 3 === 1 ? { kind: 'rank', n: 8 + i } : { kind: 'postcards', world: WORLDS[i % 5] } })),
     palettes: PALETTE_IDS.map((id, i) => ({ id, unlocked: i < 5, source: i < 5 ? undefined : { kind: i % 2 ? 'rank' : 'weekly', n: 10 + i } })),
     trails: TRAIL_IDS.map((id, i) => ({ id, unlocked: i < 3, source: i < 3 ? undefined : { kind: i % 2 ? 'log' : 'usta', routeId: 'w2r3' } })),
-    equipped: { pattern: 'kilim', palette: 'safak', trail: 'altinToz' },
+    canopies: CANOPIES.map((c, i) => ({ id: c.id, unlocked: i < 3, source: c.source.kind === 'rank' ? { kind: 'rank' as const, n: c.source.level } : { kind: 'start' as const } })),
+    frames: CARD_FRAMES.map((c, i) => ({ id: c.id, unlocked: i < 2, source: c.source.kind === 'rank' ? { kind: 'rank' as const, n: c.source.level } : { kind: 'start' as const } })),
+    wardrobeTab: variant === 'canopy' ? 'canopy' : undefined,
+    equipped: { pattern: 'kilim', palette: 'safak', trail: 'altinToz', canopy: 'safak', cardFrame: 'sade' },
     badges: BADGE_IDS.map((id, i) => ({ id, got: [0, 1, 3, 6, 9, 10, 17, 18, 29].includes(i) })),
   };
 };
@@ -175,6 +200,7 @@ const photoProps = (): PhotoProps & { _tool?: string } => ({
   date: today,
   world: 'kapadokya',
   _tool: variant === 'filter' ? 'filter' : variant === 'aperture' ? 'aperture' : undefined,
+  lockedFilters: [{ id: 'coldMorning', postcards: 7 }, { id: 'bw', postcards: 10 }],
 });
 
 let currentSettings = settings;
@@ -237,6 +263,15 @@ function showHud(): void {
   }
   if (variant === 'balloon') UI.hud.onEvent({ type: 'balloonThread', tick: 1, a: 1, b: 2, points: 750, mult: 1 });
   if (variant === 'warn') UI.hud.setWarning('left');
+  if (variant === 'practice') UI.hud.configure({ mode: 'practice' });
+  if (variant === 'landing') {
+    UI.hud.update(flightState({ gatesPassed: 14, gateIndex: 14, heightAGL: 320, prox: { ...s.prox, d: 40, mult: 0 }, combo: 1 }));
+    UI.hud.setLanding(0.6, 823);
+  }
+  if (variant === 'ringup') {
+    const r = document.querySelector('.kn-hud-ring')?.getBoundingClientRect();
+    if (r) UI.hud.setStickAnchor(r.left + r.width / 2, r.top + r.height / 2);
+  }
   if (variant === 'ftue-jump') UI.hud.ftue('jump');
   if (variant === 'ftue-drag') UI.hud.ftue('drag');
   if (variant === 'ftue-chute') UI.hud.ftue('parachute');
@@ -313,19 +348,25 @@ async function boot(): Promise<void> {
     case 'daily': UI.show('menu', menuProps()); UI.show('daily', dailyProps()); break;
     case 'duel': UI.show('menu', menuProps()); UI.show('duel', duelProps()); break;
     case 'pause': showHud(); UI.show('pause', pauseProps()); break;
-    case 'results': UI.show('results', resultsProps()); break;
+    case 'results':
+      UI.show('results', resultsProps());
+      if (variant === 'share') setTimeout(() => (document.querySelector('.kn-res-actions-row .kn-btn') as HTMLElement | null)?.click(), 300);
+      break;
     case 'settings': UI.show('menu', menuProps()); UI.show('settings', settingsProps()); break;
     case 'collection': UI.show('menu', menuProps()); UI.show('collection', collectionProps()); break;
     case 'photo': UI.show('flight', {}); UI.show('photo', photoProps()); break;
-    case 'unlock': UI.show('menu', menuProps()); UI.show('unlock', variant === 'world' ? { kind: 'world', world: 'likya' } : { kind: (variant as 'daily') || 'daily' }); break;
+    case 'unlock': UI.show('menu', menuProps()); UI.show('unlock', variant === 'world' ? { kind: 'world', world: 'likya' } : variant === 'multi' ? { kind: 'daily', modes: ['daily', 'suru'] } : { kind: (variant as 'daily') || 'daily' }); break;
     case 'help': showHud(); UI.show('help', {}); break;
     case 'inverted': showHud(); UI.show('inverted', {}); break;
     case 'assistOff': UI.show('results', resultsProps()); UI.show('assistOff', {}); break;
     case 'resume': showHud(); UI.show('resume', {}); break;
+    case 'levelUp': UI.show('results', resultsProps()); UI.show('levelUp', levelUpProps()); break;
+    case 'weekly': UI.show('menu', menuProps()); UI.show('weekly', weeklyProps()); break;
+    case 'suruResults': UI.show('suruResults', suruResultsProps()); break;
     case 'toast': UI.show('menu', menuProps()); UI.toast(t('toast.mediumSuggested'), { id: 'medium', action: t('common.apply'), icon: 'speed', ms: 60000 }); break;
     default: indexPage();
   }
-  const settle = screen === 'results' || screen === 'assistOff' ? 3200 : 900;
+  const settle = screen === 'results' || screen === 'assistOff' || screen === 'levelUp' ? 3400 : 900;
   setTimeout(() => {
     window.__shotReady = true;
   }, settle);

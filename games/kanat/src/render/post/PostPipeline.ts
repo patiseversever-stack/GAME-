@@ -134,6 +134,7 @@ export class KanatGradeEffect extends Effect {
 }
 
 const tmpV = new THREE.Vector3();
+const tmpV2 = new THREE.Vector2();
 
 export class PostPipeline {
   readonly composer: EffectComposer;
@@ -230,7 +231,7 @@ export class PostPipeline {
         tmpV.copy(atmosphereState.sunDirection).multiplyScalar(10000).add(camera.position);
         tmpV.project(camera);
         const onScreen = tmpV.z < 1 && Math.abs(tmpV.x) < 1.3 && Math.abs(tmpV.y) < 1.3;
-        const s = this.kr.renderer.getDrawingBufferSize(new THREE.Vector2());
+        const s = this.kr.renderer.getDrawingBufferSize(tmpV2);
         sun.set(tmpV.x * 0.5 + 0.5, tmpV.y * 0.5 + 0.5, onScreen ? 0.55 : 0, s.x / Math.max(1, s.y));
         const sc = atmosphereState.sunColor;
         (g.uniforms.get('uSunTint')!.value as THREE.Color).setRGB(sc.r, sc.g, sc.b);

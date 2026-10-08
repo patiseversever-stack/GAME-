@@ -4,8 +4,16 @@
 export const SUIT_PATTERN_NAMES = [
   'serit', 'chevron', 'gradyan', 'kilim', 'cini', 'ebru', 'takimyildiz', 'periBacasi', 'turkuaz', 'geceYarisi',
   'balonSeridi', 'karKristali', 'topografya', 'ikiRenk', 'yarisSeridi', 'petek', 'dalga', 'tuy', 'dama', 'gunes',
-  'simsek', 'benek', 'kanatUcu', 'kaplan', 'lale', 'pusula', 'kirlangic',
+  'simsek', 'benek', 'kanatUcu', 'kaplan', 'lale', 'pusula', 'kirlangic', 'traverten', 'mehtap', 'yakamoz', 'duz',
 ] as const;
+
+/** Cosmetic pattern ids (src/content/meta/cosmetics.ts SUIT_PATTERNS) → shader pattern index. null = plain suit. */
+export const COSMETIC_PATTERN_INDEX: Record<string, number> = {
+  kilim: 3, cini: 4, ebru: 5, periBacasi: 7, turkuaz: 8, geceYarisi: 9, balonSeridi: 10, karKristali: 11, lale: 24,
+  traverten: 27, ladin: 1, dalga: 16, kontur: 12, pusula: 25, guvercin: 17, yakamoz: 29, mehtap: 28, kizilUfuk: 2,
+  sirt: 20, safak: 19, duz: 30,
+};
+export const PLAIN_PATTERN = 30;
 
 /** UI labels (TR / EN) — UI owns i18n; these are suggestions. */
 export const SUIT_PATTERN_LABELS: Record<string, [string, string]> = {
@@ -16,7 +24,8 @@ export const SUIT_PATTERN_LABELS: Record<string, [string, string]> = {
   yarisSeridi: ['Yarış Şeridi', 'Racing Stripe'], petek: ['Petek', 'Honeycomb'], dalga: ['Dalga', 'Wave'], tuy: ['Tüy', 'Feather'],
   dama: ['Dama', 'Harlequin'], gunes: ['Güneş', 'Sunburst'], simsek: ['Şimşek', 'Lightning'], benek: ['Benek', 'Dots'],
   kanatUcu: ['Kanat Ucu', 'Wingtip'], kaplan: ['Kaplan', 'Tiger'], lale: ['Lale', 'Tulip'], pusula: ['Pusula', 'Compass'],
-  kirlangic: ['Kırlangıç', 'Swallow'],
+  kirlangic: ['Kırlangıç', 'Swallow'], traverten: ['Traverten', 'Travertine'], mehtap: ['Mehtap', 'Moonpath'],
+  yakamoz: ['Yakamoz', 'Sea Sparkle'], duz: ['Düz', 'Plain'],
 };
 
 /** 12 suit palettes (A main, B secondary, C accent). Saturated but never neon (§1 avoid list). */
@@ -198,6 +207,29 @@ vec3 kSuitPattern(int id, vec2 P) {
     float star = 1.0 - kAa(0.42 * pow(abs(cos(a * 2.0)), 6.0) + 0.06, r);
     float ring = kBand(r * 5.0, 0.06) * kAa(0.2, r);
     return kW(star, ring);
+  } else if (id == 27) { // traverten: terrace scallops, soft gradient top → bottom
+    vec2 q = vec2(P.x * 3.0, P.y * 4.5);
+    float row = floor(q.y);
+    float sc = abs(fract(q.x + row * 0.5) - 0.5);
+    float lip = fract(q.y) - (0.25 + sc * sc * 1.6);
+    float edge = 1.0 - kAa(0.06, abs(lip));
+    float t = smoothstep(0.8, -1.0, P.y);
+    return kW(clamp(t * 0.8, 0.0, 1.0), edge * 0.8);
+  } else if (id == 28) { // mehtap: one moonpath of broken light across a dark tone
+    float d = P.y * 0.8 - P.x * 0.45 + 0.1;
+    float band = exp(-d * d * 22.0);
+    float glints = step(0.55, kVN(vec2(P.x * 30.0, d * 60.0)));
+    return kW(0.0, band * (0.35 + 0.65 * glints));
+  } else if (id == 29) { // yakamoz: scattered phosphor sparkles on the dark sea tone
+    vec2 q = P * 22.0;
+    vec2 i = floor(q);
+    float sp = step(0.86, kH21(i)) * (1.0 - kAa(0.16, length(fract(q) - 0.5)));
+    float drift = smoothstep(0.3, 0.8, kVN(P * 2.0));
+    return kW(drift * 0.25, sp);
+  } else if (id == 30) { // duz: plain suit — A body, B side panels, C piping
+    float panel = kAa(0.55, ax) + (1.0 - kAa(-0.55, P.y)) * 0.0;
+    float pipe = kBand(ax * 1.0 - 0.55 + 0.5, 0.012);
+    return kW(panel, pipe);
   } else { // kirlangic: swallow silhouettes
     vec2 q = vec2(P.x * 2.5, P.y * 3.0);
     vec2 i = floor(q);

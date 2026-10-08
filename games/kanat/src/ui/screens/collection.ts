@@ -8,6 +8,9 @@ import { WORLD_ACCENT } from '../theme.ts';
 import type { CollectionProps, CosmeticKind, CosmeticVM, CosmeticSourceVM } from '../types.ts';
 import type { ScreenCtx, ScreenDef } from './screen.ts';
 import { eyebrow, page, tappable, worldArt } from './common.ts';
+import { canopySvg, frameSvg, paletteSvg, patternDef, patternSvg, trailSvg } from '../swatch.ts';
+import { cosmetic } from '../../content/meta/cosmetics.ts';
+import { getLang } from '../i18n.ts';
 
 const SIGNATURE: Record<WorldId, string> = { kapadokya: 'periBacasi', likya: 'turkuaz', karadeniz: 'ladin', erciyes: 'karKristali', pamukkale: 'traverten' };
 
@@ -20,60 +23,17 @@ function sourceText(s: CosmeticSourceVM | undefined): string {
     case 'postcards': return t('source.postcards', { world: s.world ? worldShort(s.world) : '' });
     case 'weekly': return t('source.weekly');
     case 'log': return t('source.log');
+    case 'postcardCount': return t('source.postcardCount', { n: s.n ?? 1 });
+    case 'suru': return s.league !== undefined ? t('source.suruLeague', { league: tk(`league.${s.league}`) }) : t('source.suruRounds', { n: s.n ?? 1 });
+    case 'worldComplete': return t('source.worldComplete', { world: s.world ? worldShort(s.world) : '' });
   }
 }
 
-let uid = 0;
-
-/** Fabric tile motif (20×20 user units) for each of the 20 suit patterns. B = motif, C = accent. */
-function motif(id: string, B: string, C: string): string {
-  switch (id) {
-    case 'kilim': return `<path d="M10 1 L19 10 L10 19 L1 10Z" fill="none" stroke="${B}" stroke-width="1.6"/><path d="M10 6.5 L13.5 10 L10 13.5 L6.5 10Z" fill="${C}"/>`;
-    case 'cini': return `<circle cx="10" cy="10" r="2.2" fill="${C}"/><g fill="${B}"><ellipse cx="10" cy="4.6" rx="1.6" ry="2.6"/><ellipse cx="10" cy="15.4" rx="1.6" ry="2.6"/><ellipse cx="4.6" cy="10" rx="2.6" ry="1.6"/><ellipse cx="15.4" cy="10" rx="2.6" ry="1.6"/></g>`;
-    case 'ebru': return `<path d="M0 7 Q5 2 10 7 T20 7" stroke="${B}" stroke-width="2" fill="none"/><path d="M0 15 Q5 10 10 15 T20 15" stroke="${C}" stroke-width="1.2" fill="none"/>`;
-    case 'periBacasi': return `<path d="M6.5 18 L8.6 8.5 L11.4 8.5 L13.5 18Z" fill="${B}"/><ellipse cx="10" cy="8.4" rx="3" ry="1.3" fill="${C}"/>`;
-    case 'turkuaz': return `<path d="M-2 6 L6 -2 M-2 14 L14 -2 M-2 22 L22 -2 M6 22 L22 6 M14 22 L22 14" stroke="${B}" stroke-width="1.6"/><path d="M-2 18 L18 -2" stroke="${C}" stroke-width="0.8"/>`;
-    case 'geceYarisi': return `<circle cx="4" cy="5" r="0.9" fill="${C}"/><circle cx="14" cy="3" r="0.6" fill="${B}"/><circle cx="11" cy="12" r="1.1" fill="${C}"/><circle cx="3" cy="16" r="0.6" fill="${B}"/><circle cx="17" cy="17" r="0.8" fill="${B}"/>`;
-    case 'balonSeridi': return `<rect x="0" width="5" height="20" fill="${B}"/><rect x="10" width="5" height="20" fill="${C}" opacity="0.8"/>`;
-    case 'karKristali': return `<path d="M10 3 V17 M4 6.5 L16 13.5 M4 13.5 L16 6.5" stroke="${B}" stroke-width="1.2"/><circle cx="10" cy="10" r="1.4" fill="${C}"/>`;
-    case 'lale': return `<path d="M10 16 C6 13 6 8 7 5 L10 8 L13 5 C14 8 14 13 10 16Z" fill="${B}"/><path d="M10 16 V19" stroke="${C}" stroke-width="1.2"/>`;
-    case 'traverten': return `<path d="M0 6 Q10 2 20 6 M0 12 Q10 8 20 12 M0 18 Q10 14 20 18" stroke="${B}" stroke-width="1.6" fill="none"/><path d="M4 7.5 Q10 5 16 7.5" stroke="${C}" stroke-width="1" fill="none"/>`;
-    case 'ladin': return `<path d="M10 3 L14 10 L12 10 L15.5 16 L4.5 16 L8 10 L6 10Z" fill="${B}"/><rect x="9.3" y="16" width="1.4" height="2.5" fill="${C}"/>`;
-    case 'dalga': return `<path d="M0 10 C4 4 8 4 10 10 S16 16 20 10" stroke="${B}" stroke-width="2.4" fill="none"/>`;
-    case 'kontur': return `<circle cx="10" cy="10" r="3" fill="none" stroke="${C}" stroke-width="1"/><circle cx="10" cy="10" r="6.5" fill="none" stroke="${B}" stroke-width="1"/><circle cx="10" cy="10" r="10" fill="none" stroke="${B}" stroke-width="1" opacity="0.6"/>`;
-    case 'pusula': return `<path d="M10 2 L11.6 10 L10 18 L8.4 10Z" fill="${B}"/><path d="M2 10 L10 8.6 L18 10 L10 11.4Z" fill="${C}"/>`;
-    case 'guvercin': return `<path d="M4 9 Q6.5 6.5 9 9 Q11.5 6.5 14 9" stroke="${B}" stroke-width="1.5" fill="none"/><path d="M9 16 Q10.5 14.5 12 16 Q13.5 14.5 15 16" stroke="${C}" stroke-width="1.1" fill="none"/>`;
-    case 'yakamoz': return `<circle cx="5" cy="5" r="1.6" fill="${B}"/><circle cx="15" cy="9" r="1" fill="${C}"/><circle cx="8" cy="15" r="1.2" fill="${B}" opacity="0.7"/><circle cx="17" cy="17" r="0.6" fill="${C}"/>`;
-    case 'mehtap': return `<path d="M12 4 A6 6 0 1 0 12 16 A4.6 4.6 0 1 1 12 4Z" fill="${B}"/><circle cx="16" cy="5" r="0.8" fill="${C}"/>`;
-    case 'kizilUfuk': return `<rect y="4" width="20" height="3" fill="${B}"/><rect y="10" width="20" height="1.6" fill="${C}"/><rect y="15" width="20" height="0.8" fill="${B}" opacity="0.7"/>`;
-    case 'sirt': return `<path d="M0 14 L5 7 L9 11 L14 4 L20 12" stroke="${B}" stroke-width="1.6" fill="none"/><path d="M0 18 L6 13 L11 16 L20 10" stroke="${C}" stroke-width="0.9" fill="none"/>`;
-    default: return `<path d="M10 18 L10 6 M10 18 L3 9 M10 18 L17 9" stroke="${B}" stroke-width="1.4"/><circle cx="10" cy="18" r="2.2" fill="${C}"/>`;
-  }
-}
-
-/** <pattern> definition for a suit pattern in a palette; returns [defs, fillUrl]. */
-function patternDef(id: string, pal: readonly [string, string, string], scale = 1): [string, string] {
-  const pid = `kp${++uid}`;
-  const k = PATTERN_IDS.indexOf(id as (typeof PATTERN_IDS)[number]);
-  const rot = k < 0 ? 0 : [0, 0, 0, 0, 0, 0, 90, 0, 0, 0, 0, 0, 0, 45, 0, 0, 0, 0, 0, 0][k];
-  return [`<pattern id="${pid}" width="${20 * scale}" height="${20 * scale}" patternUnits="userSpaceOnUse" patternTransform="rotate(${rot})"><rect width="${20 * scale}" height="${20 * scale}" fill="${pal[1]}"/><g transform="scale(${scale})">${motif(id, pal[0], pal[2])}</g></pattern>`, `url(#${pid})`];
-}
-
-function patternSvg(id: string, pal: readonly [string, string, string]): string {
-  const [defs, fill] = patternDef(id, pal, 0.75);
-  return `<svg viewBox="0 0 60 60" aria-hidden="true"><defs>${defs}</defs><rect width="60" height="60" fill="${fill}"/></svg>`;
-}
-
-function paletteSvg(pal: readonly [string, string, string]): string {
-  return `<svg viewBox="0 0 60 60" aria-hidden="true"><rect width="60" height="60" fill="${pal[1]}"/><circle cx="30" cy="30" r="17" fill="${pal[0]}"/><path d="M13 30 A17 17 0 0 0 47 30Z" fill="${pal[2]}" opacity="0.9"/><circle cx="30" cy="30" r="17" fill="none" stroke="#FFFFFF33"/></svg>`;
-}
-
-function trailSvg(col: string): string {
-  return `<svg viewBox="0 0 60 60" aria-hidden="true"><rect width="60" height="60" fill="#121922"/><path d="M6 48 C20 42 30 24 52 14" stroke="${col}" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.18"/><path d="M6 48 C20 42 30 24 52 14" stroke="${col}" stroke-width="2.2" stroke-linecap="round" fill="none" stroke-dasharray="1 5" /><path d="M24 36 C32 28 40 20 52 14" stroke="${col}" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="52" cy="14" r="3.2" fill="${col}"/></svg>`;
-}
+let uid = 1000;
 
 /** Fallback wingsuit preview (top view): suit body + arm wings + leg wing with the equipped pattern and palette. */
 function pilotSvg(patternId: string, pal: readonly [string, string, string], trail: string): string {
+  uid++;
   const [defs, fill] = patternDef(patternId, pal, 0.55);
   const wingL = 'M112 50 C90 54 54 66 30 76 C25 78 26 84 31 84 C58 86 86 92 104 100 Z';
   const wingR = 'M128 50 C150 54 186 66 210 76 C215 78 214 84 209 84 C182 86 154 92 136 100 Z';
@@ -133,6 +93,8 @@ function wardrobeTab(p: CollectionProps, ctx: ScreenCtx): HTMLElement {
   }
   const tabs = h('div', { class: 'kn-seg kn-seg--sm', role: 'tablist' });
   const tabDefs: [CosmeticKind, string][] = [['pattern', t('collection.patterns')], ['palette', t('collection.palettes')], ['trail', t('collection.trails')]];
+  if (p.canopies?.length) tabDefs.push(['canopy', t('collection.canopies')]);
+  if (p.frames?.length) tabDefs.push(['cardFrame', t('collection.frames')]);
   for (const [k, label] of tabDefs) {
     const b = h('button', { type: 'button', role: 'tab', 'aria-pressed': String(k === sub) }, h('span', { text: label }));
     b.addEventListener('click', (e) => {
@@ -141,24 +103,31 @@ function wardrobeTab(p: CollectionProps, ctx: ScreenCtx): HTMLElement {
     });
     tabs.appendChild(b);
   }
-  const items: CosmeticVM[] = sub === 'pattern' ? p.patterns : sub === 'palette' ? p.palettes : p.trails;
-  const equippedId = sub === 'pattern' ? p.equipped.pattern : sub === 'palette' ? p.equipped.palette : p.equipped.trail;
+  const items: CosmeticVM[] = sub === 'pattern' ? p.patterns : sub === 'palette' ? p.palettes : sub === 'trail' ? p.trails : sub === 'canopy' ? p.canopies ?? [] : p.frames ?? [];
+  const equippedId = (sub === 'pattern' ? p.equipped.pattern : sub === 'palette' ? p.equipped.palette : sub === 'trail' ? p.equipped.trail : sub === 'canopy' ? p.equipped.canopy : p.equipped.cardFrame) ?? '';
   const grid = h('div', { class: 'kn-wgrid' });
   for (const it of items) {
-    const sw = sub === 'pattern' ? patternSvg(it.id, pal) : sub === 'palette' ? paletteSvg(PALETTES[it.id] ?? PALETTES.safak) : trailSvg(TRAILS[it.id] ?? '#F5F1E8');
+    const meta = cosmetic(`${sub}:${it.id}` as Parameters<typeof cosmetic>[0]);
+    const sw =
+      sub === 'pattern' ? patternSvg(it.id, pal)
+      : sub === 'palette' ? paletteSvg(PALETTES[it.id] ?? PALETTES.safak)
+      : sub === 'trail' ? trailSvg(TRAILS[it.id] ?? '#F5F1E8')
+      : sub === 'canopy' ? canopySvg(meta && 'colors' in meta && meta.colors.length === 2 ? (meta.colors as readonly [string, string]) : ['#F2A541', '#F6E7D0'])
+      : frameSvg(it.id);
+    const itemName = sub === 'canopy' || sub === 'cardFrame' ? meta?.name[getLang()] ?? it.id : tk(`${sub}.${it.id}`);
     const on = it.id === equippedId;
     const el = h(
       'div',
       { class: `kn-witem ${on ? 'is-on' : ''} ${it.unlocked ? '' : 'is-locked'}`.trim() },
       h('span', { class: 'kn-witem-sw', html: sw }, on ? h('span', { class: 'kn-witem-check' }, ic('check')) : null, it.unlocked ? null : h('span', { class: 'kn-witem-lock' }, ic('lock'))),
-      h('span', { class: 'kn-witem-name kn-ellipsis', text: tk(`${sub}.${it.id}`) }),
+      h('span', { class: 'kn-witem-name kn-ellipsis', text: itemName }),
       h('span', { class: 'kn-witem-src kn-ellipsis', text: it.unlocked ? (on ? t('collection.equipped') : '') : sourceText(it.source) }),
     );
     if (it.unlocked && !on) {
       tappable(el, () => {
         ctx.cb.onEquip?.(sub, it.id);
         ctx.rerender({ ...p, equipped: { ...p.equipped, [sub]: it.id } });
-      }, ctx, `${t('collection.equip')} · ${tk(`${sub}.${it.id}`)}`);
+      }, ctx, `${t('collection.equip')} · ${itemName}`);
     }
     grid.appendChild(el);
   }

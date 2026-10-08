@@ -9,6 +9,13 @@ import { Rng } from '../sim/rng.ts';
 import type { SuruSim } from '../sim/SuruSim.ts';
 import type { SuruCommand } from '../sim/types.ts';
 import { LEAGUE_SCALE, PERSONALITIES } from './personalities.ts';
+
+/**
+ * "Ortalama oyuncu" (average human) profile for balance tests: a sensible all-rounder with human pacing —
+ * 300 ms reaction, ±10° steering noise, ~4 Hz decisions, rarely sieges on purpose, decent breath control.
+ */
+const AVERAGE_HUMAN: LeagueScale = { reactionAddMs: 0, noiseDeg: 10, ringMul: 0.35, decisionTicks: 7, mistake: 0.08, breathReserve: 10, hawkResponse: 0.5, skill: 1.0, defend: 0.7 };
+const AVERAGE_PERSONALITY: Personality = { id: 'toplayici', name: { tr: 'Ortalama oyuncu', en: 'Average player' }, greed: 1.2, aggr: 0.9, courage: 0.6, ring: 0.5, opp: 0.5, reactionMs: 300 };
 import type { League, LeagueScale, Personality, PersonalityId } from './personalities.ts';
 
 /** utility = §4.G utility AI · average = "ortalama oyuncu" balance bot · sleep = FTUE target (circles in place) · idle = no input */
@@ -52,6 +59,9 @@ class Bot {
   tightOn = false;
   hawkSeen = -1;
   hawkTight = false;
+  siegeBest = 0;
+  bannedTarget = -1;
+  bannedUntil = 0;
   // reaction-delay queue (ring buffer)
   readonly qTick = new Int32Array(Q);
   readonly qSX = new Int16Array(Q);
@@ -65,15 +75,14 @@ class Bot {
 
   constructor(spec: BotSpec, seed: number, index: number) {
     this.flock = spec.flock;
-    this.pers = PERSONALITIES[spec.personality];
-    this.scale = LEAGUE_SCALE[spec.league];
     this.policy = spec.policy ?? 'utility';
+    this.pers = this.policy === 'average' ? AVERAGE_PERSONALITY : PERSONALITIES[spec.personality];
+    this.scale = this.policy === 'average' ? AVERAGE_HUMAN : LEAGUE_SCALE[spec.league];
     this.rng = new Rng(seed, 1000 + spec.flock);
     let rt = this.pers.reactionMs + this.scale.reactionAddMs;
-    if (this.policy === 'average') rt = 300;
     if (rt < 60) rt = 60;
     this.reactionTicks = Math.round((rt / 1000) * SURU.TICK_HZ);
-    this.interval = this.policy === 'average' ? 7 : this.scale.decisionTicks;
+    this.interval = this.scale.decisionTicks;
     // stagger decisions across bots (5 Hz ≈ tick % 6 by flock index)
     this.nextDecision = (index * 2 + spec.flock) % this.interval;
   }
@@ -112,7 +121,6 @@ export class SuruBots {
       if (T >= b.nextDecision) {
         b.nextDecision = T + b.interval;
         if (b.policy === 'sleep') this.decideSleep(b);
-        else if (b.policy === 'average') this.decideAverage(b, T);
         else this.decideUtility(b, T);
         // reaction delay buffer
         if (b.qLen < Q) {
@@ -178,7 +186,7 @@ export class SuruBots {
       this.setDir(this.dirX * (1 - w) - (ax / r) * w * 1.5, this.dirZ * (1 - w) - (az / r) * w * 1.5);
     }
     // seeded steering noise (league: Bronz ±15° … Elmas ±4°)
-    const nd = b.policy === 'average' ? 10 : b.scale.noiseDeg;
+    const nd = b.scale.noiseDeg;
     const a = (b.rng.next() - 0.5) * 2 * nd * DEG;
     const c = detCos(a);
     const s = detSin(a);
@@ -204,7 +212,7 @@ export class SuruBots {
       b.tightOn = false;
       return false;
     }
-    const reserve = b.policy === 'average' ? 6 : b.scale.breathReserve;
+    const reserve = b.scale.breathReserve;
     if (want) {
       if (!b.tightOn && br > Math.max(minBreath, reserve + 10)) b.tightOn = true;
       else if (b.tightOn && br < reserve) b.tightOn = false;
@@ -220,7 +228,7 @@ export class SuruBots {
         // one reaction roll per wave (keyed by the first warning tick)
         if (hk.phase === 1 && k === 0 && b.hawkSeen !== hk.phaseTick) {
           b.hawkSeen = hk.phaseTick;
-          const resp = b.policy === 'average' ? 0.5 : b.scale.hawkResponse;
+          const resp = b.scale.hawkResponse;
           b.hawkTight = b.rng.next() < resp;
         }
         return b.hawkTight;
@@ -310,13 +318,14 @@ export class SuruBots {
       const c = sim.gCount[g];
       if (c === 0) continue;
       if (sim.gImmune[g] > T + 20) continue;
+      if (sim.gBlockOwner[g] === f && sim.gBlockUntil[g] > T + 20) continue; // my own scattered birds (S-14)
       const gx = sim.gCX[g];
       const gz = sim.gCZ[g];
       if (sim.ringActive && gx * gx + gz * gz > sim.ringRadius * sim.ringRadius) continue;
       const d = this.dist(lx, lz, gx, gz);
       let u = (c / (d + 40)) * (1 - threat) * p.greed * 3.2 * sc.skill;
       if (sim.gImmune[g] > T - 90 && p.opp > 1) u *= 1.8; // opportunist: freshly scattered birds
-      if (p.ring > 1 && n < 80) u *= 1.4; // encircler grows first: it needs a size edge to close rings
+      if (p.ring > 1 && n < 110) u *= 1.6; // encircler grows first: it needs a size edge to close rings
       consider(A_COLLECT, g, u);
     }
     for (let e = 1; e <= F; e++) {
@@ -331,13 +340,13 @@ export class SuruBots {
         let band = 1;
         if (p.aggr > 1.2) {
           const ratio = ne / n;
-          band = ratio >= 0.6 && ratio <= 0.9 ? 1.25 : 0.5;
+          band = ratio >= 0.6 && ratio <= 0.9 ? 1.0 : 0.45;
           k = Math.max(k, 0.3);
         }
         consider(A_ATTACK, e, k * detExp(-d / 120) * p.aggr * band * 0.8 * sc.skill);
       }
-      // siege (needs a clear size advantage)
-      if (n >= 1.6 * ne && n >= 80 && sim.flockCountArr[e] > 0) {
+      // siege (needs a clear size advantage; targets that resisted recently are skipped)
+      if (n >= 1.6 * ne && n >= 80 && sim.flockCountArr[e] > 0 && !(b.bannedTarget === e && T < b.bannedUntil)) {
         const de = this.dist(lx, lz, sim.leaderX[e], sim.leaderZ[e]);
         consider(A_SIEGE, e, detExp(-de / 80) * p.ring * sc.ringMul * sc.skill);
       }
@@ -365,7 +374,20 @@ export class SuruBots {
         bestT = b.target;
       }
     }
+    // a siege that has not closed beyond 60 % after 6 s is abandoned (the encircler goes back to growing)
+    if (b.action === A_SIEGE && valid) {
+      const cov = sim.sieges[b.target] && sim.sieges[b.target].attacker === f ? sim.sieges[b.target].coverage01 : 0;
+      if (cov > b.siegeBest) b.siegeBest = cov;
+      if (T - b.actionTick > 6 * SURU.TICK_HZ && b.siegeBest < 0.6) {
+        b.bannedTarget = b.target;
+        b.bannedUntil = T + 10 * SURU.TICK_HZ;
+        b.action = A_NONE;
+        bestA = A_CENTER;
+        bestT = -1;
+      }
+    }
     if (bestA !== b.action || bestT !== b.target) {
+      if (bestA === A_SIEGE) b.siegeBest = 0;
       b.action = bestA;
       b.target = bestT;
       b.actionTick = T;
@@ -420,6 +442,7 @@ export class SuruBots {
       const s = detSin(a);
       this.setDir(this.dirX * c - this.dirZ * s, this.dirX * s + this.dirZ * c);
     }
+    if (!want && b.action !== A_SIEGE && this.inContact(b) && b.rng.next() < sc.defend) want = true;
     if (this.hawkOnMe(b, T)) {
       want = true;
       minBreath = 8;
@@ -428,11 +451,24 @@ export class SuruBots {
     this.applyNoiseAndEdge(b, T);
   }
 
+  /** an enemy flock body overlaps ours (centroid distance < R_me + R_e + 12 m) */
+  private inContact(b: Bot): boolean {
+    const sim = this.sim;
+    const f = b.flock;
+    const rf = sim.flockRadius(f);
+    for (let e = 1; e <= sim.flockCount; e++) {
+      if (e === f || !sim.flockAlive[e] || sim.flockCountArr[e] < 10) continue;
+      const d = this.dist(sim.cenX[f], sim.cenZ[f], sim.cenX[e], sim.cenZ[e]);
+      if (d < rf + sim.flockRadius(e) + 12) return true;
+    }
+    return false;
+  }
+
   private actionValid(b: Bot, T: number): boolean {
     const sim = this.sim;
     switch (b.action) {
       case A_COLLECT:
-        return b.target >= 0 && sim.gActive[b.target] === 1 && sim.gCount[b.target] > 0 && sim.gImmune[b.target] <= T + 20;
+        return b.target >= 0 && sim.gActive[b.target] === 1 && sim.gCount[b.target] > 0 && sim.gImmune[b.target] <= T + 20 && !(sim.gBlockOwner[b.target] === b.flock && sim.gBlockUntil[b.target] > T + 20);
       case A_ATTACK:
       case A_OPP:
       case A_SIEGE:
@@ -475,75 +511,6 @@ export class SuruBots {
     this.setDir(tanX - rx * k, tanZ - rz * k);
   }
 
-  // ------------------------------------------------------------------------------------------
-  // "Ortalama oyuncu" (average player) policy for balance tests (§2.10, 9.G-26)
-  // ------------------------------------------------------------------------------------------
-
-  private decideAverage(b: Bot, T: number): void {
-    const sim = this.sim;
-    const f = b.flock;
-    const lx = sim.leaderX[f];
-    const lz = sim.leaderZ[f];
-    const n = sim.flockCountArr[f] + 1;
-    const F = sim.flockCount;
-    // 1) run from clearly bigger flocks that are close
-    let fleeX = 0;
-    let fleeZ = 0;
-    let danger = false;
-    let preyD = 1e9;
-    let prey = -1;
-    for (let e = 1; e <= F; e++) {
-      if (e === f || !sim.flockAlive[e]) continue;
-      const ne = sim.flockCountArr[e] + 1;
-      const d = this.dist(lx, lz, sim.cenX[e], sim.cenZ[e]);
-      if (ne > n * 1.3 && d < 65) {
-        danger = true;
-        fleeX += (lx - sim.cenX[e]) / (d + 1);
-        fleeZ += (lz - sim.cenZ[e]) / (d + 1);
-      } else if (ne < n * 0.75 && d < 110 && d < preyD) {
-        preyD = d;
-        prey = e;
-      }
-    }
-    let want = false;
-    let minBreath = 25;
-    if (danger) {
-      this.setDir(fleeX, fleeZ);
-      want = true;
-      minBreath = 40;
-      b.action = A_FLEE;
-    } else if (prey > 0 && sim.flockCountArr[prey] > 0) {
-      this.setDir(sim.cenX[prey] - lx, sim.cenZ[prey] - lz);
-      want = preyD < sim.flockRadius(f) + sim.flockRadius(prey) + 14;
-      b.action = A_ATTACK;
-      b.target = prey;
-    } else {
-      // nearest worthwhile wild group
-      let bg = -1;
-      let bs = -1;
-      for (let g = 0; g < SURU.MAX_GROUPS; g++) {
-        if (!sim.gActive[g] || sim.gCount[g] === 0 || sim.gImmune[g] > T + 20) continue;
-        const gx = sim.gCX[g];
-        const gz = sim.gCZ[g];
-        if (sim.ringActive && gx * gx + gz * gz > sim.ringRadius * sim.ringRadius) continue;
-        const sc = sim.gCount[g] / (this.dist(lx, lz, gx, gz) + 30);
-        if (sc > bs) {
-          bs = sc;
-          bg = g;
-        }
-      }
-      if (bg >= 0) this.setDir(sim.gCX[bg] - lx, sim.gCZ[bg] - lz);
-      else this.setDir(-lx, -lz);
-      b.action = A_COLLECT;
-      b.target = bg;
-    }
-    if (this.hawkOnMe(b, T)) {
-      want = true;
-      minBreath = 8;
-    }
-    this.wantTight = this.tight(b, want, minBreath);
-    this.applyNoiseAndEdge(b, T);
-  }
 }
 
 /** Seeded personality mix for a round (equal counts, shuffled). */

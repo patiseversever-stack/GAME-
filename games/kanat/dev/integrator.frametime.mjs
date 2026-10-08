@@ -1,0 +1,11 @@
+import { chromium } from 'playwright-core';
+const browser = await chromium.launch({ executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-angle=swiftshader','--enable-unsafe-swiftshader','--ignore-gpu-blocklist'], headless: true });
+const page = await (await browser.newContext({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true })).newPage();
+page.on('console', (m) => { if (m.type() !== 'debug') console.log(`[${m.type()}] ${m.text()}`); });
+await page.goto('http://localhost:5173/?test=1', { waitUntil: 'load' });
+await page.waitForFunction(() => window.__game && document.documentElement.dataset.kanatBoot === 'ok', null, { timeout: 60000 });
+await page.evaluate(() => window.__game.ready());
+const t = await page.evaluate(() => new Promise((res) => { const ts = []; let n = 0; const f = (x) => { ts.push(x); if (++n < 6) requestAnimationFrame(f); else res(ts.map((v, i) => i ? Math.round(v - ts[i - 1]) : 0)); }; requestAnimationFrame(f); }));
+console.log('frame deltas', t);
+console.log(JSON.stringify(await page.evaluate(() => window.__game.perf())).slice(0, 800));
+await browser.close();

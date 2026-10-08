@@ -51,7 +51,7 @@ export function paletteColors(id: string): [string, string, string] {
 }
 
 export function suitSpec(s: EquippedSuit): SuitSpec {
-  return { pattern: patternIndex(s.pattern), palette: 0, colors: paletteColors(s.palette) };
+  return { pattern: s.pattern ? s.pattern : null, palette: s.palette || 'safak' };
 }
 
 export function trailStyle(id: string): TrailStyle {

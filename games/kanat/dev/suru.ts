@@ -23,7 +23,7 @@ declare global {
 const q = new URLSearchParams(location.search);
 const num = (k: string, d: number): number => (q.has(k) ? Number(q.get(k)) : d);
 const tier = (q.get('tier') ?? 'high') as QualityTier;
-const shot = q.has('t') || q.has('event') || q.has('shot');
+const shot = q.has('t') || q.has('event') || q.has('shot') || q.has('opening');
 const app = document.getElementById('app') as HTMLElement;
 
 const handle = mount(app, {
@@ -78,9 +78,12 @@ if (shot) {
     if (hit.type === 'stormSpawn') handle.follow(nearestToStorm());
   }
   if (q.has('follow')) handle.follow(num('follow', 1));
+  if (q.has('opening')) handle.renderer.camera.setOpeningTime(num('opening', 1));
   const frames = num('frames', q.get('shot') === 'results' ? 40 : 3);
   // settle the camera with a few frames (visual time only; sim is stepped by frame dt)
   for (let k = 0; k < frames; k++) handle.renderFrame(q.get('shot') === 'results' ? 0.12 : 1 / 60);
   console.log('[suru] stats', JSON.stringify(handle.renderer.stats()), 't', handle.round.sim.timeSec.toFixed(2));
+  const sim = handle.round.sim;
+  console.log('[suru] hawks', JSON.stringify(sim.hawks.map((h) => ({ p: h.phase, x: +h.x.toFixed(1), z: +h.z.toFixed(1), f: h.targetFlock }))), 'leader1', sim.leaderX[1].toFixed(1), sim.leaderZ[1].toFixed(1), 'cam', handle.renderer.camera.cam.position.toArray().map((v) => v.toFixed(1)).join(','));
   window.__shotReady = true;
 }

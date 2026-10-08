@@ -54,9 +54,9 @@ export function layoutFor(setup: RoundSetup): SuruLayout {
 /** FTUE playground (§2.6 "SÜRÜ.io FTUE", 45 s, textless): wild groups ahead, a sleeping small timid flock. */
 export const FTUE_SPOTS = {
   wildA: { x: 0, z: 40 },
-  wildB1: { x: -26, z: -30 },
-  wildB2: { x: 26, z: -30 },
-  wildC: { x: 0, z: -75 },
+  wildB1: { x: -9, z: -28 },
+  wildB2: { x: 9, z: -34 },
+  wildC: { x: 4, z: -78 },
   sleeper: { x: 0, z: -150 },
 } as const;
 
@@ -73,6 +73,7 @@ function createFtueRound(setup: RoundSetup): Round {
     gusts: false,
     ring: false,
     lastStanding: false,
+    wildWander: false,
     custom: {
       flocks: [
         { x: 0, z: 110, hx: 0, hz: -1, followers: 15 },

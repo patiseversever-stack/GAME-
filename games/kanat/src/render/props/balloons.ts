@@ -205,12 +205,15 @@ export function buildGearGeometry(): BufferGeometry {
   const hw = basketW / 2, hd = basketD / 2;
   // basket body (slight taper toward the floor) — wicker
   addBox(a, 0, (rimY + floorY) / 2, 0, hw, (rimY - floorY) / 2, hd, 0, 0.94);
-  // padded leather rim
-  const rt = 0.07;
-  addBox(a, 0, rimY + rt * 0.5, hd, hw + rt, rt, rt, 1);
-  addBox(a, 0, rimY + rt * 0.5, -hd, hw + rt, rt, rt, 1);
-  addBox(a, hw, rimY + rt * 0.5, 0, rt, rt, hd + rt, 1);
-  addBox(a, -hw, rimY + rt * 0.5, 0, rt, rt, hd + rt, 1);
+  // padded leather rim: rounded rolls along the four edges (the FTUE close-up frames the glove on it)
+  const rr = 0.065, ry = rimY + 0.02;
+  const rc: [number, number][] = [[hw, hd], [-hw, hd], [-hw, -hd], [hw, -hd]];
+  for (let k = 0; k < 4; k++) {
+    const p0 = rc[k], p1 = rc[(k + 1) % 4];
+    addTube(a, [p0[0], ry, p0[1]], [p1[0], ry, p1[1]], rr, 10, 1, 0);
+    // corner knuckle
+    addTube(a, [p0[0], ry - rr * 0.9, p0[1]], [p0[0], ry + rr * 0.9, p0[1]], rr * 1.02, 10, 1, 0);
+  }
   // uprights (suede covered) from rim corners to the frame
   const fx = 0.5, fz = 0.46;
   const corners = [[hw - 0.05, hd - 0.05, fx, fz], [-hw + 0.05, hd - 0.05, -fx, fz], [hw - 0.05, -hd + 0.05, fx, -fz], [-hw + 0.05, -hd + 0.05, -fx, -fz]];
@@ -446,14 +449,18 @@ const GEAR_FRAG_COLOR = /* glsl */ `
     int m = int(vKMat + 0.5);
     vec3 col; kRough = 0.8; kMetal = 0.0; kWeave = 0.0;
     if (m == 0) {
-      // wicker weave: over-under strands
-      vec2 q = vKUv2 * vec2(22.0, 14.0);
-      float row = floor(q.y);
-      float w = sin((q.x + row * 0.5) * 3.14159);
-      float strand = abs(fract(q.y) - 0.5);
-      kWeave = smoothstep(0.5, 0.2, strand) * (0.6 + 0.4 * w);
-      col = mix(vec3(0.20, 0.12, 0.055), vec3(0.42, 0.28, 0.14), kWeave);
-      col *= 0.85 + 0.3 * kNoise2(vKUv2 * 3.0);
+      // wicker: horizontal weavers (~2.2 cm) passing over/under vertical stakes (5 cm), gaps between rows
+      float rowF = vKUv2.y * 46.0;
+      float row = floor(rowF);
+      float fr = fract(rowF);
+      float over = sin((vKUv2.x * 20.0 + row * 0.5) * 3.14159265);
+      float strand = smoothstep(0.0, 0.18, fr) * smoothstep(1.0, 0.82, fr);
+      float bulge = 0.55 + 0.45 * abs(over);
+      float stake = smoothstep(0.25, 0.0, abs(fract(vKUv2.x * 20.0) - 0.5)) * (1.0 - step(0.0, over));
+      kWeave = strand * bulge;
+      col = mix(vec3(0.07, 0.04, 0.02), vec3(0.46, 0.31, 0.16), kWeave);
+      col = mix(col, vec3(0.3, 0.2, 0.1), stake * 0.4);
+      col *= 0.85 + 0.3 * kNoise2(vec2(row * 3.1, vKUv2.x * 2.0));
       kRough = 0.85;
     } else if (m == 1) { col = vec3(0.10, 0.055, 0.03); kRough = 0.55; }
     else if (m == 2) { col = vec3(0.62, 0.63, 0.64); kRough = 0.32; kMetal = 1.0; }
@@ -777,7 +784,8 @@ export class BalloonLayer {
       if (this.anchor.mode === 'center') my -= d.envelopeH * this.anchor.centerFrac;
       this.mouths[i * 3] = mx; this.mouths[i * 3 + 1] = my; this.mouths[i * 3 + 2] = mz;
       // slow deterministic spin (balloons rotate a few degrees per second at most)
-      const yaw = (hashSeed(d.id) * 6.283 + simTime * (0.02 + 0.03 * hashSeed(d.id + 99))) % 6.2831853;
+      // static balloons (omega 0, e.g. the start balloon) use `phase` as their yaw
+      const yaw = d.omega === 0 ? d.phase : (hashSeed(d.id) * 6.283 + simTime * (0.02 + 0.03 * hashSeed(d.id + 99))) % 6.2831853;
       // burner: event-driven salute + ambient cosmetic burns (smooth envelope, ≤2.2 Hz modulation → no strobe)
       let b = 0;
       if (simTime < this.burnUntil[i]) {
