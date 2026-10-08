@@ -45,6 +45,7 @@ if (!isMainThread) {
         sieges: res.stats.reduce((a, s) => a + s.sieges, 0),
         eliminated: res.stats.filter((s) => s.eliminated).length,
         winnerSize: res.stats.find((s) => s.flock === res.winner)?.size ?? 0,
+        perFlock: res.stats.map((s) => ({ p: round.meta[s.flock - 1].personality, rank: s.rank, size: s.size, peak: s.peakSize, sieges: s.sieges, elim: s.eliminated ? 1 : 0, conv: s.converted, wild: s.wildCollected })),
       });
     } else if (task.kind === 'contact') {
       const sim = new SuruSim({
@@ -127,8 +128,16 @@ if (!isMainThread) {
   const eq = results.filter((r) => r.task.kind === 'contact' && r.task.nA === 75);
   const eqDecided = eq.filter((r) => r.a !== r.b);
   const ticks = results.filter((r) => r.task.kind === 'round').map((r) => r.msPerTick).sort((a, b) => a - b);
+  const byP = {};
+  for (const r of ai) for (const f of r.perFlock) {
+    if (!f.p) continue;
+    const b = (byP[f.p] ??= { n: 0, rank: 0, size: 0, peak: 0, sieges: 0, elim: 0, conv: 0, wild: 0 });
+    b.n++; b.rank += f.rank; b.size += f.size; b.peak += f.peak; b.sieges += f.sieges; b.elim += f.elim; b.conv += f.conv; b.wild += f.wild;
+  }
+  const perPersonality = Object.fromEntries(Object.entries(byP).map(([k, b]) => [k, { meanRank: +(b.rank / b.n).toFixed(2), meanSize: +(b.size / b.n).toFixed(1), meanPeak: +(b.peak / b.n).toFixed(1), siegesPerRound: +(b.sieges / b.n).toFixed(2), elimRate: +(b.elim / b.n).toFixed(2), conv: +(b.conv / b.n).toFixed(1), wild: +(b.wild / b.n).toFixed(1) }]));
   const summary = {
     rounds: ai.length,
+    perPersonality,
     personalityWinShare: share,
     personalityWinPerAppearanceNormalised: perAppearance,
     firstMinuteLeaderWins: +snow.toFixed(3),

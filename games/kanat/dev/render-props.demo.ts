@@ -1,6 +1,6 @@
 // Demo data for the render-props dev page. Uses the SAME params/prims formats as src/sim/world/props.ts
 // (see its header) on a flat studio ground, so the dev page exercises the real render path.
-import type { BalloonDef, FlightState, PropInstance, PropPrimitive, PropType } from '../src/sim/types.ts';
+import type { BalloonDef, FlightState, PropInstance, PropPrimitive, PropType, RouteDef } from '../src/sim/types.ts';
 import type { TerrainSampler } from '../src/sim/terrain/types.ts';
 
 export function flatSampler(h0: number): TerrainSampler {
@@ -205,5 +205,23 @@ export function demoFlightState(state: string, t: number): FlightState {
     prox: { d: 8, cls: 'rock', nearest: [3, y, 0], normal: [-1, 0, 0], mult: 2, propId: -1 },
     score: 0, combo: 1, comboTime: 0, timeSec: t, gateIndex: 0, gatesPassed: 0, gatesMissed: 0, inThermal: -1,
     inLandingZone: false, canopyOpen: phase === 'canopy', assist: 'full', energy: 0,
+  };
+}
+
+/** Small demo route in front of the pilot (flying toward −z from the origin at y = 12). */
+export function demoRoute(): RouteDef {
+  return {
+    id: 'demo', world: 'kapadokya', index: 1, difficulty: 1, name: { tr: 'Demo', en: 'Demo' },
+    start: { type: 'balon', pos: [0, 12, 0], headingDeg: 0, speedKmh: 150 },
+    line: [[0, 12, 0], [0, 10, -200]],
+    gates: [
+      { t: 0.1, pos: [0, 11, -4], normal: [0, 0, -1], radius: 7, kind: 'normal' },
+      { t: 0.2, pos: [3, 8, -38], normal: [0, 0, -1], radius: 7, kind: 'normal' },
+      { t: 0.4, pos: [-6, 6, -95], normal: [0.2, 0, -1], radius: 7, kind: 'normal' },
+      { t: 0.8, pos: [4, 5, -180], normal: [0, 0, -1], radius: 7, kind: 'final' },
+    ],
+    thermals: [{ pos: [-40, -120], radius: 22, w0: 7, top: 160 }],
+    landing: { center: [10, 0, -260], radius: 10, zoneRadius: 120 },
+    wind: { dirDeg: 0, speed: 0 }, stars: [0, 1000, 2000], expertScore: 3000, ustaGorevleri: [], postcards: [],
   };
 }

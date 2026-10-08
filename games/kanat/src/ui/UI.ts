@@ -18,6 +18,8 @@ import { iconSvg } from './icons.ts';
 
 interface Entry {
   id: ScreenId;
+  /** Stable across re-renders of the same shown screen (so async handlers can re-render the live entry). */
+  key: number;
   props: unknown;
   el: HTMLElement;
   cleanups: (() => void)[];
@@ -31,6 +33,7 @@ export class UIController {
   private hudLayer!: HTMLElement;
   private toastLayer!: HTMLElement;
   private stack: Entry[] = [];
+  private nextKey = 1;
   private unsubLang: (() => void) | null = null;
   private toastTimer = 0;
   private settings: Settings | null = null;
@@ -215,7 +218,7 @@ export class UIController {
       back: () => this.back(),
       close: (s) => this.close(s),
       rerender: (p) => {
-        const idx = this.stack.indexOf(entry);
+        const idx = this.stack.findIndex((e) => e.key === entry.key);
         if (idx >= 0) this.replaceEntry(idx, p);
       },
       toast: (text, o) => this.toast(text, o),
@@ -226,9 +229,9 @@ export class UIController {
     };
   }
 
-  private build(id: ScreenId, props: unknown, refresh: boolean): Entry {
+  private build(id: ScreenId, props: unknown, refresh: boolean, key = this.nextKey++): Entry {
     const def = SCREENS[id] as ScreenDef<unknown>;
-    const entry: Entry = { id, props, el: document.createElement('div'), cleanups: [] };
+    const entry: Entry = { id, key, props, el: document.createElement('div'), cleanups: [] };
     const ctx = this.ctxFor(entry);
     ctx.refresh = refresh;
     const el = def.render(props, ctx);
@@ -243,7 +246,7 @@ export class UIController {
     const old = this.stack[idx];
     const scrollers = Array.from(old.el.querySelectorAll<HTMLElement>('.kn-scroll, .kn-hscroll')).map((s) => [s.scrollTop, s.scrollLeft]);
     this.disposeEntry(old);
-    const next = this.build(old.id, props, true);
+    const next = this.build(old.id, props, true, old.key);
     old.el.replaceWith(next.el);
     this.stack[idx] = next;
     const newScrollers = next.el.querySelectorAll<HTMLElement>('.kn-scroll, .kn-hscroll');

@@ -5,6 +5,7 @@ import type {
   BadgeCondition,
   BadgeContext,
   BadgeDef,
+  FeatureId,
   FlightStatKey,
   FlightStats,
   ProfileStats,
@@ -21,8 +22,12 @@ function b(
   icon: string,
   category: BadgeDef['category'],
   condition: BadgeCondition,
+  gate?: { requires?: readonly FeatureId[]; needsWorld?: number },
 ): BadgeDef {
-  return { id, name: { tr, en }, desc: { tr: descTr, en: descEn }, icon, category, condition };
+  const def: BadgeDef = { id, name: { tr, en }, desc: { tr: descTr, en: descEn }, icon, category, condition };
+  if (gate?.requires) def.requires = gate.requires;
+  if (gate?.needsWorld) def.needsWorld = gate.needsWorld;
+  return def;
 }
 
 export const BADGES: readonly BadgeDef[] = [
@@ -32,7 +37,7 @@ export const BADGES: readonly BadgeDef[] = [
     stat: 'routesLanded',
     atLeast: 1,
   }),
-  b('threeMetre', '3 Metre Kulübü', '3 Metre Club', 'Tek uçuşta toplam 10 sn ×5.', '10 s total at ×5 in one flight.', 'proximity', 'ucus', {
+  b('threeMetre', '3 Metre Kulübü', '3 Metre Club', 'Tek uçuşta toplam 10 sn yüzeye 3 m’den yakın uç (×5).', 'Fly 10 s in total closer than 3 m to the surface (×5) in one flight.', 'proximity', 'ucus', {
     kind: 'flight',
     min: { x5TotalSec: 10 },
   }),
@@ -40,35 +45,35 @@ export const BADGES: readonly BadgeDef[] = [
     kind: 'routeStars',
     routeId: 'w3r1',
     atLeast: 3,
-  }),
-  b('zeroContact', 'Sıfır Temas', 'Zero Contact', 'Hiç temas etmeden üç yıldız al.', 'Earn three stars without a touch.', 'shield', 'ucus', {
+  }, { needsWorld: 3 }),
+  b('zeroContact', 'Sıfır Temas', 'Zero Contact', 'Hiç temas etmeden, yardımsız üç yıldız al.', 'Earn three stars without a touch and without assist.', 'shield', 'ucus', {
     kind: 'flight',
     min: { stars: 3, landed: 1 },
-    max: { contacts: 0 },
+    max: { contacts: 0, assistUsed: 0 },
   }),
   b('sunsetPilot', 'Gün Batımı Pilotu', 'Sunset Pilot', 'Pamukkale’nin dört rotasını bitir.', 'Finish all four Pamukkale routes.', 'sun', 'kariyer', {
     kind: 'worldRoutesLanded',
     world: 'pamukkale',
     atLeast: 4,
-  }),
+  }, { needsWorld: 5 }),
   b('postcardHunter', 'Kartpostal Avcısı', 'Postcard Hunter', '25 kartpostalın hepsini topla.', 'Collect all 25 postcards.', 'postcard', 'koleksiyon', {
     kind: 'profile',
     stat: 'postcards',
     atLeast: 25,
-  }),
+  }, { requires: ['freeFlight', 'photo'], needsWorld: 5 }),
   b('flockLeader', 'Sürü Lideri', 'Flock Leader', 'SÜRÜ.io’da bir turu birinci bitir.', 'Finish first in a SÜRÜ.io round.', 'flock', 'suru', {
     kind: 'round',
     max: { placement: 1 },
-  }),
+  }, { requires: ['suru'] }),
   b('encircleMaster', 'Kuşatma Ustası', 'Encircle Master', 'Tek turda üç Kuşatma yap.', 'Encircle three times in one round.', 'encircle', 'suru', {
     kind: 'round',
     min: { sieges: 3 },
-  }),
+  }, { requires: ['suru'] }),
   b('diamondWing', 'Elmas Kanat', 'Diamond Wing', 'Elmas lige yüksel.', 'Reach the Diamond league.', 'diamond', 'suru', {
     kind: 'profile',
     stat: 'leagueIndex',
     atLeast: 4,
-  }),
+  }, { requires: ['suru'] }),
   b('balloonFriend', 'Balon Dostu', 'Balloon Friend', 'Tek uçuşta beş Balon İlmeği.', 'Five Balloon Threads in one flight.', 'balloon', 'ucus', {
     kind: 'flight',
     min: { balloonThreads: 5 },
@@ -92,22 +97,22 @@ export const BADGES: readonly BadgeDef[] = [
     world: 'likya',
     min: { waterSkimSec: 5 },
     allowFree: true,
-  }),
+  }, { needsWorld: 2 }),
   b('highlandWind', 'Yayla Rüzgârı', 'Highland Wind', 'Karadeniz’in 12 yıldızını topla.', 'Collect all 12 Black Sea stars.', 'wind', 'kariyer', {
     kind: 'worldStars',
     world: 'karadeniz',
     atLeast: 12,
-  }),
+  }, { needsWorld: 3 }),
   b('snowBird', 'Kar Kuşu', 'Snow Bird', 'Erciyes’in 12 yıldızını topla.', 'Collect all 12 Erciyes stars.', 'snow', 'kariyer', {
     kind: 'worldStars',
     world: 'erciyes',
     atLeast: 12,
-  }),
-  b('mirrorFlight', 'Ayna Uçuşu', 'Mirror Flight', 'Ayna Havuzlar’da ×5 ile 3 sn uç.', 'Hold ×5 for 3 s over the Mirror Pools.', 'mirror', 'ucus', {
+  }, { needsWorld: 4 }),
+  b('mirrorFlight', 'Ayna Uçuşu', 'Mirror Flight', 'Ayna Havuzlar’da 4 sn kesintisiz yüzeye 7 m’den yakın uç (×3).', 'Over the Mirror Pools, stay closer than 7 m (×3) for 4 s unbroken.', 'mirror', 'ucus', {
     kind: 'flight',
     routeId: 'w5r3',
-    min: { maxX5StreakSec: 3 },
-  }),
+    min: { maxX3StreakSec: 4 },
+  }, { needsWorld: 5 }),
   // ---- landing ----
   b('bullseye', 'Tam Ortası', 'Bullseye', 'Hedefin 2 m içine in.', 'Land within 2 m of the target.', 'target', 'ucus', {
     kind: 'flight',
@@ -134,28 +139,28 @@ export const BADGES: readonly BadgeDef[] = [
     kind: 'profile',
     stat: 'dailyThreeStars',
     atLeast: 1,
-  }),
+  }, { requires: ['daily'] }),
   b('duelist', 'Düellocu', 'Duelist', 'Bir Hayalet Düello kazan.', 'Win a Ghost Duel.', 'duel', 'sosyal', {
     kind: 'profile',
     stat: 'duelWins',
     atLeast: 1,
-  }),
+  }, { requires: ['duel'] }),
   b('rematch', 'Rövanş', 'Rematch', 'Rövanş koduyla bir düello kazan.', 'Win a duel with a rematch code.', 'rematch', 'sosyal', {
     kind: 'profile',
     stat: 'rematchWins',
     atLeast: 1,
-  }),
+  }, { requires: ['duel'] }),
   // ---- completion ----
   b('sixtyStars', 'Altmış Yıldız', 'Sixty Stars', '60 yıldızın hepsini topla.', 'Collect all 60 stars.', 'star', 'kariyer', {
     kind: 'profile',
     stat: 'totalStars',
     atLeast: 60,
-  }),
+  }, { needsWorld: 5 }),
   b('masterHands', 'Usta Eller', 'Master Hands', '60 Usta Görevi’nin hepsini bitir.', 'Complete all 60 Master Tasks.', 'task', 'kariyer', {
     kind: 'profile',
     stat: 'ustaDone',
     atLeast: 60,
-  }),
+  }, { needsWorld: 5 }),
   b('legend', 'Efsane', 'Legend', 'Pilot Rütbesi 44’e ulaş.', 'Reach Pilot Rank 44.', 'rank', 'koleksiyon', {
     kind: 'profile',
     stat: 'rankLevel',
@@ -165,16 +170,16 @@ export const BADGES: readonly BadgeDef[] = [
     kind: 'profile',
     stat: 'freeFlightSec',
     atLeast: 600,
-  }),
+  }, { requires: ['freeFlight'] }),
   b('shutterbug', 'Objektif', 'Shutterbug', 'Foto Modu’nda ilk kareni kaydet.', 'Save your first Photo Mode shot.', 'camera', 'koleksiyon', {
     kind: 'profile',
     stat: 'photosSaved',
     atLeast: 1,
-  }),
+  }, { requires: ['photo'] }),
   b('untilSunset', 'Gün Batımına Kadar', 'Until Sunset', 'SÜRÜ.io’da gün batımına kadar ayakta kal.', 'Stay in a SÜRÜ.io round until sunset.', 'sunset', 'suru', {
     kind: 'round',
     min: { survivedToSunset: 1 },
-  }),
+  }, { requires: ['suru'] }),
 ];
 
 const BY_ID = new Map<string, BadgeDef>(BADGES.map((x) => [x.id, x]));
@@ -218,6 +223,7 @@ export function checkBadge(def: BadgeDef, ctx: BadgeContext): boolean {
     case 'flight': {
       const f = ctx.flight;
       if (!f) return false;
+      if (f.mode === 'practice') return false; // "Bu bölümü çalış" never writes records or badges
       if (f.mode === 'free' && !c.allowFree) return false;
       if (c.routeId && f.routeId !== c.routeId) return false;
       if (c.world && f.world !== c.world) return false;

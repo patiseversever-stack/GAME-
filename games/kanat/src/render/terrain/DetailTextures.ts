@@ -121,8 +121,8 @@ void main() {
     float crack = 1.0 - smoothstep( 0.0, 0.06, w.y - w.x );
     float n = fbm( uv, 8.0, 5 );
     float lichen = smoothstep( 0.62, 0.75, fbm( uv + 3.1, 12.0, 4 ) );
-    h = 0.35 + r * 0.55 - crack * 0.35 + ( n - 0.5 ) * 0.2;
-    float v = 0.82 + r * 0.32 - crack * 0.4 + ( n - 0.5 ) * 0.25;
+    h = 0.35 + r * 0.55 - crack * 0.25 + ( n - 0.5 ) * 0.2;
+    float v = 0.86 + r * 0.26 - crack * 0.16 + ( n - 0.5 ) * 0.22;
     c = vec3( v ) * 0.5;
     c = mix( c, c * vec3( 1.1, 1.08, 0.86 ), lichen * 0.7 );
   } else if ( uKind == 2 ) {

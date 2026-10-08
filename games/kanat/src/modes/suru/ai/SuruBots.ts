@@ -314,8 +314,9 @@ export class SuruBots {
       const gz = sim.gCZ[g];
       if (sim.ringActive && gx * gx + gz * gz > sim.ringRadius * sim.ringRadius) continue;
       const d = this.dist(lx, lz, gx, gz);
-      let u = (c / (d + 40)) * (1 - threat) * p.greed * 3.2;
+      let u = (c / (d + 40)) * (1 - threat) * p.greed * 3.2 * sc.skill;
       if (sim.gImmune[g] > T - 90 && p.opp > 1) u *= 1.8; // opportunist: freshly scattered birds
+      if (p.ring > 1 && n < 80) u *= 1.4; // encircler grows first: it needs a size edge to close rings
       consider(A_COLLECT, g, u);
     }
     for (let e = 1; e <= F; e++) {
@@ -326,20 +327,27 @@ export class SuruBots {
       if (n > ne) {
         let k = (n - ne) / n;
         if (k > 1) k = 1;
-        consider(A_ATTACK, e, k * detExp(-d / 120) * p.aggr);
+        // hunters dive on flocks 0.6–0.9× their size (§2.6); much smaller prey is less interesting to them
+        let band = 1;
+        if (p.aggr > 1.2) {
+          const ratio = ne / n;
+          band = ratio >= 0.6 && ratio <= 0.9 ? 1.25 : 0.5;
+          k = Math.max(k, 0.3);
+        }
+        consider(A_ATTACK, e, k * detExp(-d / 120) * p.aggr * band * 0.8 * sc.skill);
       }
       // siege (needs a clear size advantage)
       if (n >= 1.6 * ne && n >= 80 && sim.flockCountArr[e] > 0) {
         const de = this.dist(lx, lz, sim.leaderX[e], sim.leaderZ[e]);
-        consider(A_SIEGE, e, detExp(-de / 80) * p.ring * sc.ringMul);
+        consider(A_SIEGE, e, detExp(-de / 80) * p.ring * sc.ringMul * sc.skill);
       }
       // opportunity: a flock that is bleeding birds right now
       const lost = sim.countHist[e * 8 + 6] - sim.flockCountArr[e];
       if (lost > 2 && n >= 0.6 * ne) {
-        consider(A_OPP, e, (lost / ne) * p.opp * 2.5 * detExp(-d / 150));
+        consider(A_OPP, e, (lost / ne) * p.opp * 1.7 * detExp(-d / 150) * sc.skill);
       }
     }
-    consider(A_FLEE, -1, threat * (1 - p.courage) * 1.6);
+    consider(A_FLEE, -1, threat * (1 - p.courage) * 1.35);
     {
       const R = sim.ringActive ? sim.ringRadius : SURU.ARENA_RADIUS;
       const r = Math.sqrt(lx * lx + lz * lz);

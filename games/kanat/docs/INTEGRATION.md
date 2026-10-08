@@ -600,17 +600,19 @@ Bağımlılık: `implementation("androidx.webkit:webkit:1.12.1")`.
 
 | Çıktı | Boyut |
 |---|---|
-| `dist/web` toplam | 23,11 MB |
-| ├ `worlds/kapadokya` | 4,19 MB |
-| ├ `worlds/likya` | 5,07 MB |
-| ├ `worlds/karadeniz` | 4,92 MB |
-| ├ `worlds/erciyes` | 3,82 MB |
-| ├ `worlds/pamukkale` | 4,79 MB |
+| `dist/web` toplam | 20,70 MB |
+| ├ `worlds/kapadokya` | 4,48 MB |
+| ├ `worlds/likya` | 4,42 MB |
+| ├ `worlds/karadeniz` | 3,71 MB |
+| ├ `worlds/erciyes` | 3,37 MB |
+| ├ `worlds/pamukkale` | 4,40 MB |
 | ├ `fonts` | 0,32 MB |
 | └ JS/HTML (iskelet) | < 0,02 MB |
-| **İlk yük** (`index.html` + JS + fontlar + Kapadokya) | ≈ 4,5 MB (hedef ≤ 10 MB) |
-| `dist/single/kanat.html` | 24,43 MB (bütçe 25,00 MB). Gzip ile 18,46 MB. |
-| `dist/single/packs/kanat-pack-1.js` | 6,38 MB (Pamukkale) |
+| **İlk yük** (`index.html` + JS + fontlar + Kapadokya) | ≈ 4,8 MB (hedef ≤ 10 MB) |
+| `dist/single/kanat.html` | 21,73 MB (bütçe 25,00 MB). Gzip ile 16,41 MB. |
+| `dist/single/packs/kanat-pack-1.js` | 5,87 MB (Pamukkale) |
+
+Dünya verileri arazi ajanı tarafından hâlâ güncelleniyor. Bu yüzden rakamlar build'den build'e birkaç MB oynayabilir.
 
 Yeniden ölçmek için:
 

@@ -28,17 +28,17 @@
    "originZ": -4092,
    "spacing": 8,
    "res": 1024,
-   "min": 199.924,
+   "min": 199.926,
    "max": 1398.206
   },
   "far": {
    "file": "height_far.u16.z",
-   "originX": -24528,
-   "originZ": -24528,
+   "originX": -24524,
+   "originZ": -24524,
    "spacing": 96,
    "res": 512,
-   "min": 161.41,
-   "max": 2731.492
+   "min": 161.408,
+   "max": 2731.236
   },
   "patch": {
    "file": "height_patch.u16.z",
@@ -89,7 +89,7 @@
    "maxZ": 3772
   },
   "heightRange": {
-   "min": 199.924,
+   "min": 199.926,
    "max": 1398.206
   },
   "patchInfo": {
@@ -126,8 +126,8 @@
     "size": 8192
    },
    "far": {
-    "minX": -24576,
-    "minZ": -24576,
+    "minX": -24572,
+    "minZ": -24572,
     "size": 49152
    },
    "patch": {

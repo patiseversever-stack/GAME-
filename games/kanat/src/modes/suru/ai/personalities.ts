@@ -48,14 +48,16 @@ export interface LeagueScale {
   breathReserve: number;
   /** probability to answer a hawk warning with Sıkı Dizi */
   hawkResponse: number;
+  /** overall decision quality: multiplies greed/aggr/ring/opp utilities (Bronz bots are clumsy, Elmas sharp) */
+  skill: number;
 }
 
 export const LEAGUE_SCALE: readonly LeagueScale[] = [
-  { reactionAddMs: 150, noiseDeg: 15, ringMul: 0.5, decisionTicks: 7, mistake: 0.3, breathReserve: 0, hawkResponse: 0.25 },
-  { reactionAddMs: 90, noiseDeg: 11, ringMul: 0.7, decisionTicks: 6, mistake: 0.18, breathReserve: 8, hawkResponse: 0.45 },
-  { reactionAddMs: 40, noiseDeg: 8, ringMul: 0.9, decisionTicks: 5, mistake: 0.1, breathReserve: 15, hawkResponse: 0.65 },
-  { reactionAddMs: 0, noiseDeg: 6, ringMul: 1.05, decisionTicks: 4, mistake: 0.05, breathReserve: 22, hawkResponse: 0.8 },
-  { reactionAddMs: -50, noiseDeg: 4, ringMul: 1.2, decisionTicks: 3, mistake: 0.0, breathReserve: 28, hawkResponse: 0.95 },
+  { reactionAddMs: 150, noiseDeg: 15, ringMul: 0.5, decisionTicks: 7, mistake: 0.35, breathReserve: 0, hawkResponse: 0.2, skill: 0.55 },
+  { reactionAddMs: 90, noiseDeg: 11, ringMul: 0.7, decisionTicks: 6, mistake: 0.2, breathReserve: 8, hawkResponse: 0.45, skill: 0.7 },
+  { reactionAddMs: 40, noiseDeg: 8, ringMul: 0.9, decisionTicks: 5, mistake: 0.1, breathReserve: 15, hawkResponse: 0.65, skill: 0.85 },
+  { reactionAddMs: 0, noiseDeg: 6, ringMul: 1.05, decisionTicks: 4, mistake: 0.05, breathReserve: 22, hawkResponse: 0.8, skill: 0.95 },
+  { reactionAddMs: -50, noiseDeg: 4, ringMul: 1.2, decisionTicks: 3, mistake: 0.0, breathReserve: 28, hawkResponse: 0.95, skill: 1.0 },
 ];
 
 /** Bot flock names from nature words — never real people (§2.6). */

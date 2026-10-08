@@ -241,16 +241,19 @@ vec2 rills( vec3 wp, vec2 contour, float octaves ) {
   float u = dot( wp.xz, contour );
   float v = wp.y;
   float wob = ( kValueNoise( vec2( u * 0.021, v * 0.045 ) ) - 0.5 ) * 9.0;
-  vec3 n1 = kanatValueNoiseGrad( vec2( ( u + wob ) / 7.5, v / 23.0 ), 0x51ed27u );
-  float r1 = 1.0 - abs( n1.x );
-  float d1 = -sign( n1.x ) * n1.y / 7.5;
-  float dh = d1 * 1.6;
-  float groove = r1;
+  // Narrow grooves at the zero crossings of value noise; profile p = 0 in the groove, 1 on the ribs.
+  vec3 n1 = kanatValueNoiseGrad( vec2( ( u + wob ) / 6.5, v / 23.0 ), 0x51ed27u );
+  float a1 = abs( n1.x );
+  float p1 = smoothstep( 0.0, 0.32, a1 );
+  float dp1 = ( a1 < 0.32 ? 6.0 * ( a1 / 0.32 ) * ( 1.0 - a1 / 0.32 ) / 0.32 : 0.0 ) * sign( n1.x ) * n1.y / 6.5;
+  float dh = dp1 * 1.1;
+  float groove = 1.0 - p1;
   if ( octaves > 1.5 ) {
-    vec3 n2 = kanatValueNoiseGrad( vec2( ( u + wob * 0.4 ) / 2.6, v / 9.0 ), 0x2545f491u );
-    float r2 = 1.0 - abs( n2.x );
-    dh += -sign( n2.x ) * n2.y / 2.6 * 0.55;
-    groove = groove * 0.7 + r2 * 0.3;
+    vec3 n2 = kanatValueNoiseGrad( vec2( ( u + wob * 0.4 ) / 2.3, v / 9.0 ), 0x2545f491u );
+    float a2 = abs( n2.x );
+    float p2 = smoothstep( 0.0, 0.3, a2 );
+    dh += ( a2 < 0.3 ? 6.0 * ( a2 / 0.3 ) * ( 1.0 - a2 / 0.3 ) / 0.3 : 0.0 ) * sign( n2.x ) * n2.y / 2.3 * 0.45;
+    groove = max( groove, ( 1.0 - p2 ) * 0.6 );
   }
   return vec2( dh, groove );
 }
@@ -329,8 +332,8 @@ void main() {
       vec2 r = rills( wp, contour, px < 0.9 ? 2.0 : 1.0 );
       float aa = 1.0 - smoothstep( 1.5, 4.0, px );
       vec3 c3 = vec3( contour.x, 0.0, contour.y );
-      N = normalize( N - c3 * r.x * rw * aa * 1.4 );
-      rillAO = 1.0 - ( 1.0 - r.y ) * 0.32 * rw;
+      N = normalize( N - c3 * r.x * rw * aa * 0.8 );
+      rillAO = 1.0 - r.y * 0.5 * min( rw, 1.0 ) * aa;
     }
   }
 
@@ -466,7 +469,7 @@ export function createTerrainMaterial(opts: TerrainMaterialOptions): THREE.Shade
       uPrelit: { value: new THREE.Vector4(1.4, 1.0, 1.0, 0) },
       uSplatMap: { value: new THREE.Matrix4() },
       uSplatVar: { value: 0 },
-      uSplatRule2: { value: new THREE.Vector4(0.6, 0, 0, 0) },
+      uSplatRule2: { value: new THREE.Vector4(0.3, 0, 0, 0) },
     },
     vertexShader: VERT,
     fragmentShader: FRAG.replace('PROJ_MODE', String(proj)),

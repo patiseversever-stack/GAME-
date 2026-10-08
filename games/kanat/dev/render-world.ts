@@ -83,6 +83,53 @@ async function main(): Promise<void> {
     const b = bms[Number(q.get('bm') ?? 0)] ?? bms[0];
     applyBookmark(cam, { ...b, fov: Number(q.get('fov') ?? b.fov) });
   }
+  // Generic shot finders: &cliff=1 → 3 m from the steepest nearby face; &run=1 → 5 m AGL along a valley floor.
+  const sm = world.sampler;
+  const cx = Number(q.get('cx') ?? 0);
+  const cz = Number(q.get('cz') ?? 0);
+  const R = Number(q.get('r') ?? 2200);
+  if (q.get('cliff')) {
+    let best = -1, bx = cx, bz = cz;
+    for (let z = cz - R; z <= cz + R; z += 20) for (let x = cx - R; x <= cx + R; x += 20) {
+      if (x < sm.bounds.minX || x > sm.bounds.maxX || z < sm.bounds.minZ || z > sm.bounds.maxZ) continue;
+      if (world.terrain.hasSea && sm.height(x, z) < 2) continue;
+      const sd = sm.slopeDeg(x, z);
+      if (sd > best) { best = sd; bx = x; bz = z; }
+    }
+    const n = [0, 0, 0];
+    sm.normal(bx, bz, n);
+    const hl = Math.hypot(n[0], n[2]) || 1;
+    const px = bx + (n[0] / hl) * 3.5, pz = bz + (n[2] / hl) * 3.5;
+    const py = Math.max(sm.height(bx, bz) + 1.0, sm.height(px, pz) + 1.5);
+    // Look along the face (tangent), slightly toward it.
+    const tx = -n[2] / hl, tz = n[0] / hl;
+    const lx = tx * 0.94 - (n[0] / hl) * 0.34, lz = tz * 0.94 - (n[2] / hl) * 0.34;
+    const yaw = (Math.atan2(lx, -lz) * 180) / Math.PI;
+    applyBookmark(cam, { name: 'cliff', pos: [px, py, pz], yaw, pitch: 4, fov: Number(q.get('fov') ?? 80) });
+    console.log('CLIFF slope ' + best.toFixed(1) + ' at ' + bx.toFixed(0) + ',' + bz.toFixed(0));
+  } else if (q.get('run')) {
+    let best = Infinity, bx = cx, bz = cz;
+    for (let z = cz - R; z <= cz + R; z += 40) for (let x = cx - R; x <= cx + R; x += 40) {
+      if (x < sm.bounds.minX + 300 || x > sm.bounds.maxX - 300 || z < sm.bounds.minZ + 300 || z > sm.bounds.maxZ - 300) continue;
+      const h0 = sm.height(x, z);
+      if (world.terrain.hasSea && h0 < 3) continue;
+      // Valley-ness: surrounding terrain at 150 m much higher than here.
+      let ring = 0;
+      for (let k = 0; k < 8; k++) ring += sm.height(x + Math.cos(k * 0.785) * 150, z + Math.sin(k * 0.785) * 150);
+      const score = h0 - ring / 8;
+      if (score < best) { best = score; bx = x; bz = z; }
+    }
+    // Heading that stays lowest over 250 m.
+    let bestYaw = 0, bestH = Infinity;
+    for (let k = 0; k < 24; k++) {
+      const a = (k / 24) * Math.PI * 2;
+      let mx = -Infinity;
+      for (let d = 30; d <= 250; d += 30) mx = Math.max(mx, sm.height(bx + Math.sin(a) * d, bz - Math.cos(a) * d));
+      if (mx < bestH) { bestH = mx; bestYaw = (a * 180) / Math.PI; }
+    }
+    applyBookmark(cam, { name: 'run', pos: [bx, sm.height(bx, bz) + 5, bz], yaw: bestYaw, pitch: -2, fov: Number(q.get('fov') ?? 84) });
+    console.log('RUN valley ' + best.toFixed(1) + ' at ' + bx.toFixed(0) + ',' + bz.toFixed(0) + ' yaw ' + bestYaw.toFixed(0));
+  }
   const dt = Number(q.get('t') ?? 0);
   if (q.get('perf')) {
     const rows: Record<string, unknown>[] = [];

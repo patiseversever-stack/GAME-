@@ -153,6 +153,50 @@ export function careerStars(landed: boolean, score: number, expertScore: number)
   return 1;
 }
 
+/** Score thresholds derived from the Kılavuz benchmark at load time (never stored twice — F1 review P3). */
+export function careerStarThresholds(expertScore: number): readonly [number, number, number] {
+  return [0, Math.ceil(CAREER_STARS.star2Ratio * expertScore), Math.ceil(CAREER_STARS.star3Ratio * expertScore)];
+}
+
+/**
+ * Star calibration acceptance (F1 review K-25: progression wall). The brief fixes the ratios (0.50 / 0.85) and the
+ * locks (6/15/26/38); what we calibrate is the Kılavuz benchmark. The "average player" bot (§9.G) must:
+ *  - reach ⭐⭐ within `star2Tries` attempts on EVERY route of W1–W3 (brief §2.10 says W1; extended),
+ *  - reach ⭐⭐ on ≥ `star2ShareLateWorlds` of W4–W5 routes,
+ *  - with best-of-`lockTries` attempts per route, cross every world lock while playing the previous worlds only
+ *    (Σ W1 ≥ 6, Σ W1–2 ≥ 15, Σ W1–3 ≥ 26, Σ W1–4 ≥ 38) → nobody hits a 1⭐ wall before the sunset finale.
+ * If the gate fails, raise the benchmark clearance (+4 m → up to +6 m) and/or use the median of `expertRuns`
+ * Kılavuz runs as expertScore — never touch the ratios or the locks.
+ */
+export const STAR_CALIBRATION = {
+  star2Tries: 3,
+  star2ShareLateWorlds: 0.5,
+  lockTries: 5,
+  expertClearanceM: [4, 6] as readonly number[],
+  expertRuns: 5,
+  benchmark: 'median',
+} as const;
+
+/** For each locked world: stars available from earlier worlds (best per route) vs the lock. */
+export function lockProgressCheck(bestStars: Readonly<Record<string, number>>): { world: WorldId; need: number; have: number; ok: boolean }[] {
+  const out: { world: WorldId; need: number; have: number; ok: boolean }[] = [];
+  for (const w of WORLD_META) {
+    if (w.unlockStars <= 0) continue;
+    let have = 0;
+    for (const r of ROUTE_META) if (r.worldIndex < w.index) have += bestStars[r.id] ?? 0;
+    out.push({ world: w.id, need: w.unlockStars, have, ok: have >= w.unlockStars });
+  }
+  return out;
+}
+
+/** Results/menu helper: "n ⭐ to Likya". Null when every world is open. */
+export function nextWorldLock(totalStars: number): { world: WorldId; need: number; missing: number } | null {
+  for (const w of WORLD_META) {
+    if (totalStars < w.unlockStars) return { world: w.id, need: w.unlockStars, missing: w.unlockStars - totalStars };
+  }
+  return null;
+}
+
 export const WORLD_UNLOCK_STARS: Readonly<Record<WorldId, number>> = {
   kapadokya: WORLD_META[0].unlockStars,
   likya: WORLD_META[1].unlockStars,
@@ -191,7 +235,8 @@ export function modeUnlocked(mode: MetaMode, routesLanded: number, incomingDuelC
   return u !== undefined && routesLanded >= u.afterRoutes;
 }
 
-/** Modes whose one-sentence intro card should show right after landing route #`routesLanded` for the first time. */
+/** Modes whose one-sentence intro should show right after landing route #`routesLanded` for the first time.
+ *  F1 review: modes unlocked together share ONE card (one line each, one "Tamam") — never back-to-back cards. */
 export function modesUnlockedAt(routesLanded: number): MetaMode[] {
   return MODE_UNLOCKS.filter((m) => m.afterRoutes === routesLanded && m.afterRoutes > 0).map((m) => m.mode);
 }
@@ -203,12 +248,33 @@ export function modesUnlockedAt(routesLanded: number): MetaMode[] {
 export const DAILY_RULES = {
   seedPrefix: 'KANAT-GR-',
   utcOffsetHours: 3,
-  /** Monday … Sunday (index 0 = Monday): 3 → 7. */
+  /** Monday … Sunday (index 0 = Monday): 3 → 7. Expressed through LINE aggressiveness only (K-18). */
   difficultyByWeekday: [3, 4, 4, 5, 6, 6, 7] as readonly number[],
   gates: [12, 20] as readonly number[],
   gateSpacingSec: [6, 12] as readonly number[],
   thermals: [1, 3] as readonly number[],
-  windMax: 6,
+  /** K-18: fixed accessible ruleset in every world (a day-1 player may get any world). Brief envelope 0–6. */
+  windMax: 3,
+  /** K-18: W1 gate radius in every world (gates are mandatory, +2 s each). */
+  gateRadius: 14,
+  /** Like duel codes, the daily ignores world locks — a taste of the next world, same route for everyone. */
+  ignoresWorldLock: true,
+  /** Offered (not forced) on a player's first daily attempts; 🛟 only if it actually intervened (K-20). */
+  assistOffer: 'full',
+  /** Difficulty d (3..7) → line aggressiveness (lerp lo→hi over d = 3..7). */
+  lineByDifficulty: {
+    /** Fraction of the spline routed below 15 m AGL (canyon/ridge/treeline) — ×2 or better. */
+    lowShare: [0.25, 0.55] as readonly number[],
+    /** Max heading change between consecutive gates (deg). */
+    gateTurnDeg: [25, 60] as readonly number[],
+    /** Minimum clearance of the line from the surface at proximity chances (m). */
+    lineClearanceM: [12, 6] as readonly number[],
+  },
+  /** Generate during loading or in a Worker (never on the menu thread); cache route + bot time per date key. */
+  generateIn: 'loading',
+  cacheKey: 'daily:<yyyymmdd>:<SIM_VERSION>',
+  /** Bot acceptance: average bot finishes (≥ ⭐) all 365 consecutive dailies; expert bot ≥ ⭐ (brief 9.G-15). */
+  avgBotMinStars: 1,
   botTimeSec: [90, 150] as readonly number[],
   minProximityChances: 3,
   minGateClearanceM: 4,
@@ -275,6 +341,37 @@ export interface LeagueState {
   lp: number; // LP inside the current league (Elmas: unbounded rating)
 }
 
+/** SÜRÜ cosmetic track (K-23): items whose source is `suru` and that this rounds/league state unlocks. */
+export function suruTrackUnlocked(rounds: number, league: number): CosmeticRef[] {
+  const out: CosmeticRef[] = [];
+  for (const c of ALL_COSMETICS) {
+    const src = c.source;
+    if (src.kind !== 'suru') continue;
+    const okRounds = src.rounds === undefined || rounds >= src.rounds;
+    const okLeague = src.league === undefined || league >= src.league;
+    if (okRounds && okLeague) out.push(cosmeticRef(c));
+  }
+  return out;
+}
+
+/**
+ * Skill read-out next to the league badge (F1 review P3): mean placement of the last `window` Lig Maçı rounds,
+ * normalised to a 16-flock field (1 = always first). It can go down; the league badge never does.
+ */
+export const SKILL_INDEX = { window: 20, minRounds: 5 } as const;
+
+export function skillIndex(recent: readonly { placement: number; flocks: number }[]): number | null {
+  const xs = recent.slice(-SKILL_INDEX.window);
+  if (xs.length < SKILL_INDEX.minRounds) return null;
+  let sum = 0;
+  for (const r of xs) {
+    const n = Math.min(16, Math.max(2, r.flocks));
+    const p = Math.min(Math.max(1, r.placement), n);
+    sum += 1 + ((p - 1) * 15) / (n - 1);
+  }
+  return Math.round((sum / xs.length) * 10) / 10;
+}
+
 /** Apply one Lig Maçı result. No demotion, LP never below 0 inside a league, overflow carries on promotion. */
 export function applySuruRound(state: LeagueState, placement: number, flocks: number, sieges: number): LeagueState {
   const siegeBonus = Math.min(LEAGUE_RULES.siegeLp * Math.max(0, sieges), LEAGUE_RULES.siegeLpCap);
@@ -291,13 +388,14 @@ export function applySuruRound(state: LeagueState, placement: number, flocks: nu
 // Haftanın Rotası (§2.7): a career route + a modifier that needs no new art. Week k starts Monday 00:00 TRT.
 // ---------------------------------------------------------------------------------------------
 
-export type WeeklyModifierId = 'ruzgarliGun' | 'sisPerdesi' | 'tersYon' | 'termalAvi';
+/** Ters Yön is CUT for v1 (K-24): it needs new gates, a new Kılavuz run and an uphill start per route. */
+export type WeeklyModifierId = 'ruzgarliGun' | 'sisPerdesi' | 'termalAvi';
 
 export interface WeeklyModifier {
   id: WeeklyModifierId;
   name: Bilingual;
   desc: Bilingual;
-  /** Routes the modifier may run on (Ters Yön needs a balloon start at the old landing → W1/W5 only). */
+  /** Routes the modifier may run on. */
   eligible: readonly string[];
   params: Readonly<Record<string, number>>;
 }
@@ -321,13 +419,6 @@ export const WEEKLY_MODIFIERS: readonly WeeklyModifier[] = [
     params: { visibilityM: 250 },
   },
   {
-    id: 'tersYon',
-    name: { tr: 'Ters Yön', en: 'Reverse Run' },
-    desc: { tr: 'Rota tersten, yeni kapılarla.', en: 'The route in reverse, with new gates.' },
-    eligible: ROUTE_META.filter((r) => r.startType === 'balon').map((r) => r.id),
-    params: { reversed: 1 },
-  },
-  {
     id: 'termalAvi',
     name: { tr: 'Termal Avı', en: 'Thermal Hunt' },
     desc: { tr: '+2 termal, her girişte ×3 bonus.', en: '+2 thermals, ×3 bonus on every entry.' },
@@ -343,7 +434,22 @@ export const WEEKLY_RULES = {
   firstReward: 'trail:kirlangic' as CosmeticRef,
   /** Weekly routes ignore world locks (a taste of the next world, like duel codes). */
   ignoresWorldLock: true,
+  /** Stars use the Kılavuz bot flown UNDER the modifier (route tool writes weekly benchmarks per modifier). */
+  benchmarkUnderModifier: true,
+  /** Weekly duels: ghost code mode 3 + modifierId + weekIndex (FEATURES.weeklyDuel; button hidden if off). */
+  duelMode: 3,
 } as const;
+
+function gcd(x: number, y: number): number {
+  return y === 0 ? x : gcd(y, x % y);
+}
+
+/** Smallest stride ≥ 7 coprime with n (20 routes → 7, 8 routes → 7, 12 → 7, 16 → 7). */
+function strideFor(n: number): number {
+  let st = 7;
+  while (n > 1 && gcd(st, n) !== 1) st++;
+  return st;
+}
 
 /** FNV-1a 32-bit (deterministic, integer-only). */
 export function fnv1a32(text: string): number {
@@ -355,18 +461,24 @@ export function fnv1a32(text: string): number {
   return h >>> 0;
 }
 
-export function weeklyFor(weekIndex: number): { weekIndex: number; modifier: WeeklyModifier; routeId: string; tintId: string; windSide: 1 | -1 } {
+/** `worlds` = career worlds shipped (features.ts); the pick never lands in a cut world. */
+export function weeklyFor(
+  weekIndex: number,
+  worlds = 5,
+): { weekIndex: number; modifier: WeeklyModifier; routeId: string; tintId: string; windSide: 1 | -1 } {
   const k = Math.max(0, Math.floor(weekIndex));
   const modifier = WEEKLY_MODIFIERS[k % WEEKLY_MODIFIERS.length];
-  // Each modifier walks its eligible routes with stride 7 (coprime with 20 and 8) from a seeded offset,
+  const eligible = modifier.eligible.filter((id) => Number(id.charAt(1)) <= worlds);
+  // Each modifier walks its eligible routes with a stride coprime with their count, from a seeded offset,
   // so a modifier never repeats a route before it has visited all of them.
-  const len = modifier.eligible.length;
+  const len = eligible.length;
+  const stride = strideFor(len);
   const cycle = Math.floor(k / WEEKLY_MODIFIERS.length);
-  const pick = (fnv1a32(`${WEEKLY_RULES.seedPrefix}${modifier.id}`) + cycle * 7) % len;
+  const pick = (fnv1a32(`${WEEKLY_RULES.seedPrefix}${modifier.id}`) + cycle * stride) % len;
   return {
     weekIndex: k,
     modifier,
-    routeId: modifier.eligible[pick],
+    routeId: eligible[pick],
     tintId: WEEKLY_TINTS[k % WEEKLY_TINTS.length].id,
     windSide: k % 2 === 0 ? 1 : -1,
   };

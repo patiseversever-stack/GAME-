@@ -10,7 +10,7 @@ import { tierConfig } from '../src/render/props/tiers.ts';
 import { Pilot } from '../src/render/pilot/Pilot.ts';
 import { SUIT_PATTERN_NAMES } from '../src/render/pilot/suitPatterns.ts';
 import { VFX } from '../src/render/vfx/VFX.ts';
-import { flatSampler, demoProps, demoBalloons, demoFlightState } from './render-props.demo.ts';
+import { flatSampler, demoProps, demoBalloons, demoFlightState, demoRoute } from './render-props.demo.ts';
 
 declare global {
   interface Window { __shotReady?: boolean; __kanatDev?: unknown }
@@ -59,7 +59,7 @@ function lookFrom(px: number, py: number, pz: number, tx: number, ty: number, tz
 }
 
 const propList: PropInstance[] = demoProps(item, sampler);
-const balloons: BalloonDef[] = item === 'balloon' || item === 'all' || item === 'vfx' ? demoBalloons(item === 'balloon' ? 9 : 40) : [];
+const balloons: BalloonDef[] = item === 'balloon' || item === 'all' || item === 'vfx' ? demoBalloons(item === 'balloon' ? 9 : item === 'vfx' ? 6 : 40) : [];
 props.build(worldId, propList, balloons, sampler, { renderer, sunDir: [sunDir.x, sunDir.y, sunDir.z] });
 
 if (item === 'balloon') {
@@ -76,32 +76,48 @@ if (item === 'balloon') {
   if (view === 'near') lookFrom(9, 4, 14, 0, 6, 0, 60);
   else if (view === 'far') lookFrom(-200, 60, 200, 0, 10, 0, 45);
   else lookFrom(42, 12, 48, 0, 9, 0, 55);
-} else if (item === 'pilot') {
-  pilot = new Pilot(scene, tier, { sampler });
-  const pat = Number(params.get('pattern') ?? '0');
-  const pal = Number(params.get('palette') ?? '0');
-  pilot.setSuit({ pattern: pat, palette: pal });
+} else if (item === 'pilot' || item === 'vfx' || item === 'all') {
   const st = params.get('state') ?? 'fly';
+  pilot = new Pilot(scene, tier, { sampler });
+  pilot.setRenderer(renderer);
+  pilot.setSunDirection(sunDir.x, sunDir.y, sunDir.z);
+  pilot.setSuit({ pattern: Number(params.get('pattern') ?? '3'), palette: Number(params.get('palette') ?? '0') });
   if (st === 'ghost') {
     ghost = new Pilot(scene, tier, { ghost: true, ghostColor: '#7FE3FF', sampler });
+    ghost.setRenderer(renderer);
   }
-  const fs = demoFlightState(st === 'ghost' ? 'fly' : st, simTime);
-  pilot.setState(fs, tParam);
-  ghost?.setState(fs, tParam);
+  if (item !== 'pilot') {
+    vfx = new VFX(scene, tier);
+    vfx.setWorld(worldId, sampler);
+    vfx.attachProps(props);
+    vfx.setViewport(renderer.domElement.width, renderer.domElement.height);
+    vfx.setRoute(demoRoute());
+  }
+  // warm-up: run the animation state machine for t seconds so poses / canopy inflation are at the right moment
+  const mode = st === 'ghost' ? 'fly' : st === 'pop' ? 'jump' : st;
+  let fs = demoFlightState(mode, 0);
+  pilot.setState(fs, 1);
+  ghost?.setState(fs, 1);
+  if (st === 'canopy') pilot.event({ type: 'parachuteOpen', tick: 0, heightAGL: 80, auto: false });
+  if (st === 'landed') pilot.event({ type: 'landed', tick: 0, distToTarget: 1, soft: params.get('soft') !== '0', points: 0 });
+  if (st === 'crash') pilot.event({ type: 'crash', tick: 0, pos: fs.pos, cls: 'ground' });
+  const steps = Math.round(Math.max(0, tParam) * 30);
+  for (let k = 0; k < Math.max(steps, 45); k++) {
+    if (st === 'pop' && k === Math.round(0.3 * 30)) { fs = demoFlightState('fly', k / 30); pilot.setState(fs, 1); pilot.event({ type: 'wingsOpen', tick: k }); }
+    pilot.update(1 / 30, camera);
+    ghost?.update(1 / 30, camera);
+  }
   const p = fs.pos;
-  if (ghost) ghost.object.position.x += 1.2;
-  if (view === 'near') lookFrom(p[0] + 2.4, p[1] + 1.4, p[2] + 2.6, p[0], p[1], p[2], 50);
-  else if (view === 'top') lookFrom(p[0] + 0.01, p[1] + 4.2, p[2] + 0.5, p[0], p[1], p[2], 55);
-  else if (view === 'far') lookFrom(p[0] + 18, p[1] + 9, p[2] + 22, p[0], p[1] - 4, p[2], 45);
+  if (item === 'all') lookFrom(p[0] + 1.2, p[1] + 1.7, p[2] + 5.4, p[0], p[1] - 0.6, p[2] - 8, 74);
+  else if (item === 'vfx') lookFrom(p[0] + 1.0, p[1] + 1.5, p[2] + 5.0, p[0], p[1] - 0.4, p[2] - 8, 74);
+  else if (view === 'near') lookFrom(p[0] + 1.9, p[1] + 1.2, p[2] - 1.6, p[0], p[1], p[2], 50);
+  else if (view === 'top') lookFrom(p[0] + 0.01, p[1] + 3.6, p[2] + 0.3, p[0], p[1], p[2], 60);
+  else if (view === 'far') lookFrom(p[0] + 16, p[1] + 6, p[2] + 20, p[0], p[1] - 3, p[2], 45);
+  else if (view === 'side') lookFrom(p[0] + 4.5, p[1] + 0.6, p[2], p[0], p[1], p[2], 50);
+  else if (st === 'canopy') lookFrom(p[0] + 6, p[1] + 2.5, p[2] + 8, p[0], p[1] + 2.2, p[2], 60);
+  else if (st === 'landed' || st === 'crash') lookFrom(p[0] + 3.5, 1.6, p[2] + 4.5, p[0], 0.8, p[2], 55);
   else lookFrom(p[0] + 0.6, p[1] + 1.4, p[2] + 4.6, p[0], p[1] + 0.1, p[2] - 3, 70);
-} else if (item === 'vfx') {
-  pilot = new Pilot(scene, tier, { sampler });
-  vfx = new VFX(scene, tier);
-  vfx.setWorld(worldId, sampler);
-  vfx.attachProps(props);
-  const fs = demoFlightState('fly', simTime);
-  pilot.setState(fs, tParam);
-  lookFrom(fs.pos[0] + 1.2, fs.pos[1] + 1.6, fs.pos[2] + 5.2, fs.pos[0], fs.pos[1], fs.pos[2] - 6, 74);
+  if (ghost) ghost.object.position.x += 1.4;
 } else {
   if (view === 'near') lookFrom(14, 6, 18, 0, 4, 0, 60);
   else if (view === 'far') lookFrom(-220, 90, 260, 0, 10, 0, 45);
@@ -118,9 +134,17 @@ function frame(): void {
   last = now;
   if (params.get('anim') === '1') simTime += dt;
   props.update(simTime, camera, dt);
-  if (pilot) pilot.update(dt, camera);
-  if (ghost) ghost.update(dt, camera);
-  if (vfx && pilot) vfx.update(dt, simTime, camera, demoFlightState('fly', simTime), pilot);
+  if (pilot) pilot.update(dt, camera, renderer);
+  if (ghost) { ghost.update(dt, camera, renderer); ghost.object.position.x += 1.4; }
+  if (vfx && pilot) {
+    const fsv = demoFlightState('fly', simTime);
+    fsv.speed = 60; fsv.prox.d = 2.2; fsv.prox.nearest = [2.5, 11, -2]; fsv.prox.normal = [-1, 0.3, 0];
+    if (frames === 1) {
+      vfx.event({ type: 'graze', tick: 0, points: 250, strength: 1, pos: [2.2, 11.5, -3], cls: 'rock', side: 1 });
+      vfx.event({ type: 'gate', tick: 0, index: 0, points: 500, chain: 1 });
+    }
+    vfx.update(Math.max(dt, 0.08), simTime, camera, fsv, pilot);
+  }
   bd.update(camera, now / 1000, renderer.domElement.width, renderer.domElement.height);
   renderer.render(scene, camera);
   frames++;

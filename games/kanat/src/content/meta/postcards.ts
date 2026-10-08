@@ -96,3 +96,48 @@ export function postcardSetReward(world: WorldId): CosmeticRef {
 export function postcardSetComplete(world: WorldId, collected: ReadonlySet<string>): boolean {
   return postcardsOfWorld(world).every((p) => collected.has(p.id));
 }
+
+// ---------------------------------------------------------------------------------------------
+// World positions (F1 review P2 "postcard anchors have no positions"): the terrain agent / route tool emits
+// public/worlds/<id>/postcards.json = PostcardAnchorPos[]; this validator is the contract both sides test.
+// ---------------------------------------------------------------------------------------------
+
+export interface PostcardAnchorPos {
+  id: string;
+  /** Subject centre, world metres (1u = 1 m, +y up). */
+  pos: readonly [number, number, number];
+  subjectRadiusM: number;
+  /** A camera position that satisfies the capture rules (≤ 120 m, clear line of sight) — the glint sits here. */
+  idealCam: readonly [number, number, number];
+}
+
+/** Returns human-readable errors (empty = valid). `groundAt` (optional) = terrain height sampler. */
+export function validatePostcardAnchors(
+  world: WorldId,
+  anchors: readonly PostcardAnchorPos[],
+  groundAt?: (x: number, z: number) => number,
+): string[] {
+  const errors: string[] = [];
+  const expected = postcardsOfWorld(world).map((p) => p.id);
+  const got = anchors.map((a) => a.id);
+  for (const id of expected) if (!got.includes(id)) errors.push(`${world}: missing ${id}`);
+  for (const id of got) if (!expected.includes(id)) errors.push(`${world}: unknown ${id}`);
+  for (const a of anchors) {
+    const all = [...a.pos, ...a.idealCam, a.subjectRadiusM];
+    if (!all.every((v) => Number.isFinite(v))) {
+      errors.push(`${a.id}: non-finite value`);
+      continue;
+    }
+    if (a.subjectRadiusM <= 0) errors.push(`${a.id}: subjectRadiusM must be > 0`);
+    const dx = a.idealCam[0] - a.pos[0];
+    const dy = a.idealCam[1] - a.pos[1];
+    const dz = a.idealCam[2] - a.pos[2];
+    const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+    if (dist > POSTCARD_RULES.captureMaxDistM) errors.push(`${a.id}: idealCam ${dist.toFixed(0)} m > ${POSTCARD_RULES.captureMaxDistM} m`);
+    if (groundAt) {
+      if (a.pos[1] + a.subjectRadiusM < groundAt(a.pos[0], a.pos[2])) errors.push(`${a.id}: subject buried below terrain`);
+      if (a.idealCam[1] < groundAt(a.idealCam[0], a.idealCam[2]) + 2) errors.push(`${a.id}: idealCam below terrain + 2 m`);
+    }
+  }
+  return errors;
+}
