@@ -1,0 +1,39 @@
+{
+  "name": "kanat",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "KANAT — Anadolu manzaralarında wingsuit yakınlık uçuşu + SÜRÜ.io",
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run build:web && npm run build:single",
+    "build:web": "vite build --config vite.config.ts",
+    "build:single": "vite build --config vite.single.config.ts",
+    "preview": "vite preview --port 4173 --strictPort",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "npm run typecheck && npm run test:unit && npm run test:jsc && npm run test:e2e",
+    "test:unit": "vitest run --config vitest.config.ts",
+    "test:jsc": "bun tests/jsc/run-determinism.ts",
+    "test:e2e": "node tests/e2e/run-all.mjs",
+    "bake:terrain": "node tools/bake-terrain.ts"
+  },
+  "dependencies": {
+    "fflate": "0.8.3",
+    "postprocessing": "6.39.5",
+    "three": "0.186.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.15.30",
+    "@types/three": "0.186.0",
+    "bun": "1.4.2",
+    "ktx2-encoder": "0.6.0",
+    "pixelmatch": "8.0.0",
+    "playwright-core": "1.56.1",
+    "pngjs": "7.0.0",
+    "sharp": "0.35.5",
+    "typescript": "7.0.2",
+    "vite": "8.3.3",
+    "vite-plugin-singlefile": "2.3.3",
+    "vitest": "5.0.3"
+  }
+}
