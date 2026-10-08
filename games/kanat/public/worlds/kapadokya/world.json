@@ -1,0 +1,245 @@
+{
+ "id": "kapadokya",
+ "version": 1,
+ "name": {
+  "tr": "Kapadokya Şafağı",
+  "en": "Cappadocia Dawn"
+ },
+ "accent": "#F2A541",
+ "geo": {
+  "lat": 38.6508,
+  "lon": 34.8415,
+  "zoomCore": 13,
+  "zoomFar": 11,
+  "coreSizeM": 8192,
+  "coreRes": 1024,
+  "farSizeM": 49152,
+  "farRes": 512,
+  "verticalScale": 1.15,
+  "source": "terrarium",
+  "note": "Göreme’nin ~1,2 km KD’su: Aktepe sırtı, Kızılçukur/Güllüdere (Kızıl/Gül) vadileri, Güvercinlik vadisi, Göreme, Çavuşin ve Uçhisar aynı çekirdekte."
+ },
+ "hasSea": false,
+ "seaLevel": 0,
+ "terrain": {
+  "core": {
+   "file": "height_core.u16.z",
+   "originX": -4092,
+   "originZ": -4092,
+   "spacing": 8,
+   "res": 1024,
+   "min": 1124.941,
+   "max": 1583.012
+  },
+  "far": {
+   "file": "height_far.u16.z",
+   "originX": -24528,
+   "originZ": -24528,
+   "spacing": 96,
+   "res": 512,
+   "min": 1030.328,
+   "max": 2257.86
+  },
+  "patch": null,
+  "rock": {
+   "file": "rock_core.u8.z",
+   "res": 1024
+  },
+  "masks": {
+   "file": "masks_core.u8.z",
+   "originX": -4088,
+   "originZ": -4088,
+   "spacing": 16,
+   "res": 512,
+   "channels": 4,
+   "names": [
+    "chimney",
+    "trees",
+    "flat",
+    "drainage"
+   ]
+  },
+  "detail": {
+   "amp": [
+    1.2,
+    0.5
+   ],
+   "wavelength": [
+    24,
+    9
+   ],
+   "normalOnly": {
+    "amp": 0.25,
+    "wavelength": 3.5
+   }
+  },
+  "coreBlendM": 256,
+  "playBounds": {
+   "minX": -3772,
+   "maxX": 3772,
+   "minZ": -3772,
+   "maxZ": 3772
+  },
+  "heightRange": {
+   "min": 1124.941,
+   "max": 1583.012
+  },
+  "patchInfo": null
+ },
+ "textures": {
+  "normal": "normal_core.png",
+  "splat": "splat_core.png",
+  "shadowAo": "shadow_ao.png",
+  "colorMacro": "color_macro.webp",
+  "colorMacroKtx2": null,
+  "colorFar": "color_far.webp",
+  "coverage": {
+   "core": {
+    "minX": -4096,
+    "minZ": -4096,
+    "size": 8192
+   },
+   "far": {
+    "minX": -24576,
+    "minZ": -24576,
+    "size": 49152
+   },
+   "patch": null
+  }
+ },
+ "layers": [
+  "tuf_pembe",
+  "tuf_beyaz",
+  "kuru_ot",
+  "bazalt"
+ ],
+ "layerColors": [
+  "#D49A8A",
+  "#E4D5BF",
+  "#A8956A",
+  "#5E5250"
+ ],
+ "layerRoughness": [
+  0.9,
+  0.88,
+  0.95,
+  0.75
+ ],
+ "sun": {
+  "azimuthDeg": 95,
+  "elevationDeg": 7,
+  "dir": [
+   0.98877,
+   0.12187,
+   0.08651
+  ],
+  "kelvin": 3400,
+  "color": "#ffbe87",
+  "colorLinear": [
+   1,
+   0.5128,
+   0.243
+  ],
+  "intensity": 2.6
+ },
+ "sky": {
+  "kelvin": 9000,
+  "zenith": "#3E5F8A",
+  "horizon": "#F6C48E",
+  "sunGlow": "#FFD49A",
+  "ground": "#8C6E5E",
+  "ambientIntensity": 0.55
+ },
+ "fog": {
+  "a": 0.00012,
+  "b": 0.0011,
+  "baseY": 1168,
+  "color": "#E9C9A4",
+  "sunColor": "#F6C48E",
+  "hgG": 0.76,
+  "maxViewM": 30000,
+  "groundFog": {
+   "top": 1228,
+   "density": 0.02,
+   "color": "#F4D9A6"
+  },
+  "cloudSea": null
+ },
+ "palette": {
+  "skyTop": "#3E5F8A",
+  "horizon": "#F6C48E",
+  "tuffLit": "#D9B48F",
+  "roseTuff": "#D49A8A",
+  "purpleShadow": "#6B4E5E",
+  "goldFog": "#F4D9A6"
+ },
+ "grading": {
+  "exposure": 1,
+  "lift": [
+   0.012,
+   0,
+   0.022
+  ],
+  "gamma": [
+   1,
+   1,
+   1.02
+  ],
+  "gain": [
+   1.06,
+   1,
+   0.93
+  ],
+  "saturation": 1.08,
+  "contrast": 1.06,
+  "splitShadow": "#6B4E5E",
+  "splitHighlight": "#F6C48E",
+  "splitBalance": 0.1,
+  "vignette": 0.25
+ },
+ "water": {
+  "enabled": false,
+  "level": 0,
+  "shallow": "#5FA8A0",
+  "deep": "#2E5E62",
+  "depthFalloffM": 3,
+  "foam": "#F2EEE6",
+  "roughness": 0.2,
+  "kind": "none"
+ },
+ "wind": {
+  "dirDeg": 250,
+  "speed": 4
+ },
+ "bakeLighting": {
+  "sunColorLinear": [
+   1,
+   0.732,
+   0.5836
+  ],
+  "skyColorLinear": [
+   0.4287,
+   0.3663,
+   0.6038
+  ],
+  "sunStrength": 0.7148,
+  "ambientStrength": 0.965,
+  "formula": "lit = albedo * (sunColor*sunStrength*shadow*B(ndl) + skyColor*ambientStrength*ao*(0.8+0.2*n.y)); w=max(0,(ndl+wrap)/(1+wrap)), B=w/(w+k)*(ndl0+k)/ndl0, wrap=0.12, ndl0=0.2160, k=0.3801; soft shoulder above 0.8; sRGB encode"
+ },
+ "props": {
+  "chimneys": {
+   "count": 1200,
+   "mask": "chimney",
+   "seed": 11
+  },
+  "balloons": {
+   "count": 40,
+   "seed": 7
+  },
+  "poplars": {
+   "count": 2500,
+   "mask": "trees",
+   "seed": 13
+  }
+ }
+}

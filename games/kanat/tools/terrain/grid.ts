@@ -214,3 +214,30 @@ export function ridged(x: number, y: number, seed: number, octaves = 5, lac = 2.
   }
   return sum / norm;
 }
+
+/** Separable max filter (dilation) with the given radius in samples. */
+export function dilate(src: Float32Array, res: number, radius: number): Float32Array {
+  const tmp = new Float32Array(src.length);
+  const out = new Float32Array(src.length);
+  for (let r = 0; r < res; r++) {
+    for (let c = 0; c < res; c++) {
+      let m = -Infinity;
+      for (let k = -radius; k <= radius; k++) {
+        const v = src[r * res + clampi(c + k, 0, res - 1)];
+        if (v > m) m = v;
+      }
+      tmp[r * res + c] = m;
+    }
+  }
+  for (let c = 0; c < res; c++) {
+    for (let r = 0; r < res; r++) {
+      let m = -Infinity;
+      for (let k = -radius; k <= radius; k++) {
+        const v = tmp[clampi(r + k, 0, res - 1) * res + c];
+        if (v > m) m = v;
+      }
+      out[r * res + c] = m;
+    }
+  }
+  return out;
+}

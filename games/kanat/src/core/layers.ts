@@ -34,7 +34,7 @@ export function pushLayer(name: string, close: () => void | boolean): LayerHandl
 export function closeTopLayer(): boolean {
   const top = stack[stack.length - 1];
   if (!top) return false;
-  let result: void | boolean;
+  let result: void | boolean = undefined;
   try {
     result = top.close();
   } catch (err) {

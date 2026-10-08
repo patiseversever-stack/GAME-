@@ -210,6 +210,8 @@ export const TR = {
   'daily.next': 'Yeni rota gece yarısı (TSİ)',
   'daily.gates': '{n} kapı',
   'daily.dayOfWeek': 'Zorluk {n}',
+  'daily.attemptsLabel': 'Deneme',
+  'daily.difficultyLabel': 'Zorluk',
 
   // ---- duel ----
   'duel.title': 'Hayalet Düello',

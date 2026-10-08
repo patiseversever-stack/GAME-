@@ -64,8 +64,8 @@ export interface WorldConfig {
       baseLowerM: number;
       /** Water level offset above the terrace floor (pools are flat meshes). */
       poolDepthM: number;
-      /** Pool water surfaces (flat), from the terrace bake. */
-      pools: { x: number; z: number; y: number; r: number }[];
+      /** Pool water surface heights (2 m grid, same codec as heights). Water exists where water > patch terrain. */
+      water: GridFileMeta;
     } | null;
   };
   textures: {

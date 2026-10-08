@@ -145,13 +145,16 @@ export class LodDrawer {
   /** Extra frustum margin (m) — shadow casters / animated props. */
   cullMargin = 4;
   private readonly grid: CellGrid;
+  /** Linear scan instead of the cell grid (moving instances such as balloons). */
+  private readonly linear: boolean;
   private readonly frustum = new Frustum();
   visibleCounts: number[] = [];
   trisPerLevel: number[] = [];
 
   constructor(table: InstanceTable, levels: LodLevelDef[], name: string, cellSize = 256) {
     this.table = table;
-    this.grid = new CellGrid(cellSize);
+    this.linear = cellSize <= 0;
+    this.grid = new CellGrid(Math.max(1, cellSize));
     for (let L = 0; L < levels.length; L++) {
       const def = levels[L];
       const geo = new InstancedBufferGeometry();
@@ -252,28 +255,16 @@ export class LodDrawer {
     const g = this.grid;
     const maxD = this.maxDist;
     const margin = this.cullMargin;
-    for (let c = 0; c < g.keys.length; c++) {
+    if (this.linear) {
+      for (let i = 0; i < t.count; i++) this.consider(i, planes, px, py, pz, maxD, margin);
+    } else for (let c = 0; c < g.keys.length; c++) {
       const dx = g.ccx[c] - px, dy = g.ccy[c] - py, dz = g.ccz[c] - pz;
       const dc = Math.sqrt(dx * dx + dy * dy + dz * dz);
       if (dc - g.ccr[c] > maxD) continue;
       if (!sphereInFrustum(planes, g.ccx[c], g.ccy[c], g.ccz[c], g.ccr[c] + margin)) continue;
       const s = g.starts[c];
       const e = s + g.counts[c];
-      for (let k = s; k < e; k++) {
-        const i = g.order[k];
-        const ix = t.cx[i] - px, iy = t.cy[i] - py, iz = t.cz[i] - pz;
-        const d = Math.sqrt(ix * ix + iy * iy + iz * iz);
-        if (d > maxD) continue;
-        if (!sphereInFrustum(planes, t.cx[i], t.cy[i], t.cz[i], t.cr[i] + margin)) continue;
-        // Which levels see this instance (cross-fade bands overlap).
-        for (let L = 0; L < n; L++) {
-          const lo = L > 0 ? this.switches[L - 1] : -1;
-          const hi = L < n - 1 ? this.switches[L] * (1 + this.fadeFrac) : maxD;
-          if (d >= lo && d <= hi) {
-            this.idx[L][this.visibleCounts[L]++] = i;
-          }
-        }
-      }
+      for (let k = s; k < e; k++) this.consider(g.order[k], planes, px, py, pz, maxD, margin);
     }
     for (let L = 0; L < n; L++) {
       const cnt = this.visibleCounts[L];
@@ -286,6 +277,21 @@ export class LodDrawer {
         attr.needsUpdate = true;
       }
       this.meshes[L].visible = cnt > 0;
+    }
+  }
+
+  private consider(i: number, planes: Frustum['planes'], px: number, py: number, pz: number, maxD: number, margin: number): void {
+    const t = this.table;
+    const ix = t.cx[i] - px, iy = t.cy[i] - py, iz = t.cz[i] - pz;
+    const d = Math.sqrt(ix * ix + iy * iy + iz * iz);
+    if (d > maxD) return;
+    if (!sphereInFrustum(planes, t.cx[i], t.cy[i], t.cz[i], t.cr[i] + margin)) return;
+    // Which levels see this instance (cross-fade bands overlap).
+    const n = this.meshes.length;
+    for (let L = 0; L < n; L++) {
+      const lo = L > 0 ? this.switches[L - 1] : -1;
+      const hi = L < n - 1 ? this.switches[L] * (1 + this.fadeFrac) : maxD;
+      if (d >= lo && d <= hi) this.idx[L][this.visibleCounts[L]++] = i;
     }
   }
 

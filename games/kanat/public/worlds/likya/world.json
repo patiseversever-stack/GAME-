@@ -1,0 +1,248 @@
+{
+ "id": "likya",
+ "version": 1,
+ "name": {
+  "tr": "Likya Kıyısı",
+  "en": "Lycian Coast"
+ },
+ "accent": "#2EC4C6",
+ "geo": {
+  "lat": 36.2435,
+  "lon": 29.4444,
+  "zoomCore": 13,
+  "zoomFar": 11,
+  "coreSizeM": 8192,
+  "coreRes": 1024,
+  "farSizeM": 49152,
+  "farRes": 512,
+  "verticalScale": 1.1,
+  "source": "terrarium",
+  "note": "Kaputaş’ın ~1,5 km K’si: Kalkan koyu, Kaputaş plajı/kanyonu, kıyı falezleri ve Bezirgan platosunun yamacı; çekirdeğin güney ~%30’u deniz."
+ },
+ "hasSea": true,
+ "seaLevel": 0,
+ "terrain": {
+  "core": {
+   "file": "height_core.u16.z",
+   "originX": -4092,
+   "originZ": -4092,
+   "spacing": 8,
+   "res": 1024,
+   "min": -6.796,
+   "max": 1206.738
+  },
+  "far": {
+   "file": "height_far.u16.z",
+   "originX": -24528,
+   "originZ": -24528,
+   "spacing": 96,
+   "res": 512,
+   "min": -11.691,
+   "max": 2355.186
+  },
+  "patch": null,
+  "rock": {
+   "file": "rock_core.u8.z",
+   "res": 1024
+  },
+  "masks": {
+   "file": "masks_core.u8.z",
+   "originX": -4088,
+   "originZ": -4088,
+   "spacing": 16,
+   "res": 512,
+   "channels": 4,
+   "names": [
+    "tomb",
+    "trees",
+    "flat",
+    "coast"
+   ]
+  },
+  "detail": {
+   "amp": [
+    1.2,
+    0.5
+   ],
+   "wavelength": [
+    24,
+    9
+   ],
+   "normalOnly": {
+    "amp": 0.25,
+    "wavelength": 3.5
+   }
+  },
+  "coreBlendM": 256,
+  "playBounds": {
+   "minX": -3772,
+   "maxX": 3772,
+   "minZ": -3772,
+   "maxZ": 3772
+  },
+  "heightRange": {
+   "min": -6.796,
+   "max": 1206.738
+  },
+  "patchInfo": null
+ },
+ "textures": {
+  "normal": "normal_core.png",
+  "splat": "splat_core.png",
+  "shadowAo": "shadow_ao.png",
+  "colorMacro": "color_macro.webp",
+  "colorMacroKtx2": null,
+  "colorFar": "color_far.webp",
+  "coverage": {
+   "core": {
+    "minX": -4096,
+    "minZ": -4096,
+    "size": 8192
+   },
+   "far": {
+    "minX": -24576,
+    "minZ": -24576,
+    "size": 49152
+   },
+   "patch": null
+  }
+ },
+ "layers": [
+  "kirectasi",
+  "cam",
+  "kum",
+  "maki"
+ ],
+ "layerColors": [
+  "#CFC6B4",
+  "#3F5B3A",
+  "#E9D8B4",
+  "#86805A"
+ ],
+ "layerRoughness": [
+  0.7,
+  0.9,
+  0.85,
+  0.9
+ ],
+ "sun": {
+  "azimuthDeg": 247.5,
+  "elevationDeg": 32,
+  "dir": [
+   -0.78349,
+   0.52992,
+   0.32453
+  ],
+  "kelvin": 5200,
+  "color": "#ffe8d5",
+  "colorLinear": [
+   1,
+   0.8063,
+   0.6632
+  ],
+  "intensity": 3.2
+ },
+ "sky": {
+  "kelvin": 8000,
+  "zenith": "#8EC9F0",
+  "horizon": "#E8F4FB",
+  "sunGlow": "#FFF1D6",
+  "ground": "#6E7E68",
+  "ambientIntensity": 0.6
+ },
+ "fog": {
+  "a": 0.00007,
+  "b": 0.0006,
+  "baseY": 0,
+  "color": "#CFE4F2",
+  "sunColor": "#FFF1D6",
+  "hgG": 0.76,
+  "maxViewM": 40000,
+  "groundFog": null,
+  "cloudSea": null
+ },
+ "palette": {
+  "skyTop": "#8EC9F0",
+  "skyHorizon": "#E8F4FB",
+  "shallowWater": "#2BB3B1",
+  "deepWater": "#0B4F6C",
+  "limestone": "#CFC6B4",
+  "pine": "#3F5B3A",
+  "sand": "#E9D8B4"
+ },
+ "grading": {
+  "exposure": 1,
+  "lift": [
+   0,
+   0.006,
+   0.012
+  ],
+  "gamma": [
+   1,
+   1,
+   1
+  ],
+  "gain": [
+   1.03,
+   1.01,
+   0.98
+  ],
+  "saturation": 1.1,
+  "contrast": 1.04,
+  "splitShadow": "#1F5F78",
+  "splitHighlight": "#FFE9C8",
+  "splitBalance": 0,
+  "vignette": 0.2
+ },
+ "water": {
+  "enabled": true,
+  "level": 0,
+  "shallow": "#2BB3B1",
+  "deep": "#0B4F6C",
+  "depthFalloffM": 28,
+  "foam": "#F4FBFB",
+  "roughness": 0.08,
+  "kind": "sea"
+ },
+ "wind": {
+  "dirDeg": 290,
+  "speed": 6
+ },
+ "bakeLighting": {
+  "sunColorLinear": [
+   1,
+   0.8935,
+   0.8148
+  ],
+  "skyColorLinear": [
+   0.3325,
+   0.5776,
+   0.8228
+  ],
+  "sunStrength": 0.8559,
+  "ambientStrength": 0.4279,
+  "formula": "lit = albedo * (sunColor*sunStrength*shadow*B(ndl) + skyColor*ambientStrength*ao*(0.8+0.2*n.y)); w=max(0,(ndl+wrap)/(1+wrap)), B=w/(w+k)*(ndl0+k)/ndl0, wrap=0.05, ndl0=0.5523, k=11.0461; soft shoulder above 0.8; sRGB encode"
+ },
+ "props": {
+  "tombs": {
+   "count": 14,
+   "mask": "tomb",
+   "seed": 21
+  },
+  "pines": {
+   "count": 6000,
+   "mask": "trees",
+   "seed": 23
+  },
+  "gulets": {
+   "count": 7,
+   "mask": "coast",
+   "seed": 25
+  },
+  "lighthouse": {
+   "count": 1,
+   "mask": "coast",
+   "seed": 27
+  }
+ }
+}

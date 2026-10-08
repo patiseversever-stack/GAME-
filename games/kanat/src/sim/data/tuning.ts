@@ -28,7 +28,9 @@ export const TUNING = {
     clMax: 1.2,
     clMin: -0.1, // full push
     /** Trim CL: gives V≈42 m/s, sink≈9.0 m/s, L/D≈4.53 in steady glide (§4.G.5 targets). */
-    clTrim: 0.62,
+    clTrim: 0.635,
+    /** Induced-drag factor on the path-curving part of the lift (see model.ts). 1 = textbook polar. */
+    zoomEta: 0,
   },
   control: {
     axisMax: 31, // 6-bit quantized stick
@@ -46,6 +48,8 @@ export const TUNING = {
      *  nose returns to best glide (§2.2 "bırakmak her zaman güvenlidir"). */
     releaseGammaGain: 1.6,
     releaseClSpan: 0.35,
+    /** Body g-limit on lift (n = L/W). Keeps zoom climbs efficient (9.G-10 energy recovery 75–95 %). */
+    loadFactorMax: 4.5,
   },
   stall: {
     onset: 33, // §4.G.5 below this the CL ceiling softly drops and a nose-down moment is added

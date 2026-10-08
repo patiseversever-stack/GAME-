@@ -60,13 +60,15 @@ export function makeDetailTexture(kind: DetailKind, size = 256, seed = 7): DataT
       let val = 0;
       let low = 0;
       if (kind === 'tuff') {
-        const base = 0.45 * n4.at(u, v) + 0.25 * n8.at(u, v) + 0.15 * n16.at(u, v) + 0.08 * n32.at(u, v) + 0.05 * n64.at(u, v);
-        const r = 1 - Math.abs(rill.at(u + 0.1 * n8.at(u, v), v) * 2 - 1);
-        const r2 = 1 - Math.abs(rill2.at(u + 0.05 * n16.at(u, v), v) * 2 - 1);
-        const ly = Math.sin((v * 12 + 0.6 * n4.at(u, v) + 0.25 * layer.at(u, v)) * Math.PI * 2) * 0.5 + 0.5;
-        const pore = n64.at(u * 1.0, v) > 0.78 ? -0.25 : 0;
-        val = base * 0.65 - 0.28 * Math.pow(r, 6) - 0.12 * Math.pow(r2, 8) + 0.1 * ly + pore * 0.4;
-        low = 0.45 * n4.at(u, v) + 0.25 * n8.at(u, v);
+        // soft powdery tuff: broad undulation, straight vertical rain rills, faint horizontal ledges, pores
+        const base = 0.42 * n4.at(u, v) + 0.24 * n8.at(u, v) + 0.12 * n16.at(u, v) + 0.06 * n32.at(u, v);
+        const r = 1 - Math.abs(rill.at(u + 0.02 * n8.at(u, v), v) * 2 - 1);
+        const r2 = 1 - Math.abs(rill2.at(u + 0.015 * n16.at(u, v), v) * 2 - 1);
+        const lv = v * 10 + 0.35 * n4.at(u, v);
+        const ledge = Math.pow(lv - Math.floor(lv), 3.0);
+        const pore = Math.max(0, n64.at(u, v) - 0.72) * 2.2;
+        val = base - 0.14 * Math.pow(r, 3) - 0.07 * Math.pow(r2, 4) + 0.07 * ledge - 0.12 * pore + 0.04 * n64.at(u, v);
+        low = 0.42 * n4.at(u, v) + 0.24 * n8.at(u, v);
       } else if (kind === 'stone') {
         const c = cellN.at(u, v);
         const crack = Math.abs(n16.at(u, v) - 0.5) < 0.03 ? -0.35 : 0;
@@ -98,7 +100,7 @@ export function makeDetailTexture(kind: DetailKind, size = 256, seed = 7): DataT
   for (let i = 0; i < h.length; i++) { mn = Math.min(mn, h[i]); mx = Math.max(mx, h[i]); }
   const sc = 1 / Math.max(1e-6, mx - mn);
   const out = new Uint8Array(size * size * 4);
-  const strength = kind === 'snow' ? 2.0 : kind === 'wood' ? 2.5 : 4.0;
+  const strength = kind === 'snow' ? 2.0 : kind === 'wood' ? 2.5 : kind === 'tuff' ? 3.0 : 4.0;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       const i = y * size + x;

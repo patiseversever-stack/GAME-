@@ -1,3 +1,331 @@
 <!doctype html>
-<html lang="tr"><head><meta charset="UTF-8" /><title>KANAT host demo</title></head>
-<body><iframe id="game" src="./index.html" style="width:390px;height:844px;border:0"></iframe></body></html>
+<html lang="tr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#11161d" />
+    <title>KANAT · Host demo</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #11161d;
+        --panel: #1a222c;
+        --line: #2b3746;
+        --text: #e6edf5;
+        --muted: #8da0b5;
+        --accent: #f2a65a;
+        --in: #7cc4ff;
+        --out: #9be39b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 13px/1.4 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+        display: flex;
+        gap: 16px;
+        padding: 16px;
+        min-height: 100vh;
+        flex-wrap: wrap;
+      }
+      .device {
+        flex: none;
+        border: 10px solid #000;
+        border-radius: 36px;
+        overflow: hidden;
+        background: #000;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+      }
+      iframe {
+        display: block;
+        border: 0;
+        background: #0e141c;
+      }
+      .side {
+        flex: 1 1 360px;
+        min-width: 300px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      fieldset {
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        background: var(--panel);
+        margin: 0;
+        padding: 8px 10px 10px;
+      }
+      legend {
+        color: var(--muted);
+        padding: 0 4px;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+      }
+      button {
+        font: inherit;
+        color: var(--text);
+        background: #253142;
+        border: 1px solid #344458;
+        border-radius: 7px;
+        padding: 5px 10px;
+        margin: 3px 3px 0 0;
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--accent);
+      }
+      button[aria-pressed='true'] {
+        background: #3b2a17;
+        border-color: var(--accent);
+      }
+      input[type='text'] {
+        font: inherit;
+        color: var(--text);
+        background: #0f141a;
+        border: 1px solid #344458;
+        border-radius: 6px;
+        padding: 4px 6px;
+        width: 140px;
+      }
+      #log {
+        flex: 1;
+        min-height: 240px;
+        max-height: 60vh;
+        overflow: auto;
+        background: #0b0f14;
+        border: 1px solid var(--line);
+        border-radius: 10px;
+        padding: 8px;
+        font: 11px/1.45 ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      #log div {
+        white-space: pre-wrap;
+        word-break: break-all;
+        border-bottom: 1px solid #151c25;
+        padding: 2px 0;
+      }
+      .in {
+        color: var(--in);
+      }
+      .out {
+        color: var(--out);
+      }
+      .muted {
+        color: var(--muted);
+      }
+      #status {
+        color: var(--muted);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="device" id="device"><iframe id="game" title="KANAT" allow="autoplay; fullscreen; clipboard-write; web-share"></iframe></div>
+    <div class="side">
+      <div id="status">Oyun yükleniyor…</div>
+      <fieldset>
+        <legend>Yaşam döngüsü</legend>
+        <button data-cmd="pause">Duraklat (pause)</button>
+        <button data-cmd="resume">Devam (resume)</button>
+        <button data-cmd="back">Geri (back)</button>
+        <button id="reload">Oyunu yeniden yükle</button>
+      </fieldset>
+      <fieldset>
+        <legend>Ses ve dil</legend>
+        <button id="mute" aria-pressed="false">Sessiz (mute)</button>
+        <button data-lang="tr">TR</button>
+        <button data-lang="en">EN</button>
+      </fieldset>
+      <fieldset>
+        <legend>Kalite (setQuality)</legend>
+        <button data-tier="auto">Otomatik</button>
+        <button data-tier="ultra">Ultra</button>
+        <button data-tier="high">Yüksek</button>
+        <button data-tier="medium">Orta</button>
+        <button data-tier="low">Düşük</button>
+      </fieldset>
+      <fieldset>
+        <legend>Güvenli alan ve cihaz</legend>
+        <button data-safe="47,0,34,0">Çentikli (47/34)</button>
+        <button data-safe="24,0,0,0">Durum çubuğu (24)</button>
+        <button data-safe="0,0,0,0">Sıfır</button>
+        <button data-size="390x844">Dikey 390×844</button>
+        <button data-size="844x390">Yatay 844×390</button>
+      </fieldset>
+      <fieldset>
+        <legend>Profil ve depolama</legend>
+        <input type="text" id="name" value="Ayşe" aria-label="Görünen ad" />
+        <button id="profile">setProfile</button>
+        <button id="hoststorage" aria-pressed="true">Host depolama: açık</button>
+        <button id="roundtrip">Depolama gidiş-dönüş (yeniden yükle)</button>
+        <button id="clearstorage">Host depolamayı sil</button>
+      </fieldset>
+      <fieldset>
+        <legend>Log</legend>
+        <button id="clear">Temizle</button>
+        <span class="muted">yeşil = oyun → host · mavi = host → oyun</span>
+      </fieldset>
+      <div id="log" aria-live="polite"></div>
+    </div>
+    <script type="module">
+      // Stand-in for the native app: implements the host side of the §7.2 bridge over postMessage.
+      const STORE_KEY = 'hostDemo.storage';
+      const params = new URLSearchParams(location.search);
+      const src = params.get('src') || './index.html';
+      params.delete('src');
+      const iframe = document.getElementById('game');
+      const logEl = document.getElementById('log');
+      const statusEl = document.getElementById('status');
+      const loadStore = () => {
+        try {
+          return new Map(Object.entries(JSON.parse(localStorage.getItem(STORE_KEY) || '{}')));
+        } catch {
+          return new Map();
+        }
+      };
+      const state = {
+        log: [],
+        storage: loadStore(),
+        hostStorage: true,
+        muted: false,
+        ready: null,
+      };
+      const persist = () => {
+        try {
+          localStorage.setItem(STORE_KEY, JSON.stringify(Object.fromEntries(state.storage)));
+        } catch {}
+      };
+      const setSize = (w, h) => {
+        iframe.style.width = w + 'px';
+        iframe.style.height = h + 'px';
+      };
+      setSize(390, 844);
+      const qs = params.toString();
+      iframe.src = src + (qs ? (src.includes('?') ? '&' : '?') + qs : '');
+
+      const line = (dir, obj) => {
+        const entry = { dir, at: Math.round(performance.now()), msg: obj };
+        state.log.push(entry);
+        const d = document.createElement('div');
+        d.className = dir;
+        d.textContent = `${String(entry.at).padStart(6)} ${dir === 'out' ? '→ host' : '→ oyun'}  ${JSON.stringify(obj)}`;
+        logEl.appendChild(d);
+        while (logEl.childElementCount > 400) logEl.firstElementChild.remove();
+        logEl.scrollTop = logEl.scrollHeight;
+      };
+
+      const send = (type, payload = {}, id) => {
+        const env = { v: 1, game: 'kanat', type, payload };
+        if (id !== undefined) env.id = id;
+        line('in', env);
+        iframe.contentWindow.postMessage(JSON.stringify(env), '*');
+        return env;
+      };
+
+      window.addEventListener('message', (e) => {
+        if (e.source !== iframe.contentWindow) return;
+        let msg = e.data;
+        if (typeof msg === 'string') {
+          try {
+            msg = JSON.parse(msg);
+          } catch {
+            return;
+          }
+        }
+        if (!msg || msg.v !== 1) return;
+        line('out', msg);
+        const p = msg.payload || {};
+        switch (msg.type) {
+          case 'ready':
+            state.ready = msg;
+            statusEl.textContent = `Hazır · sürüm ${p.version} · modlar: ${(p.modes || []).join(', ')}`;
+            break;
+          case 'loading':
+            statusEl.textContent = `Yükleniyor… %${Math.round((p.progress || 0) * 100)}`;
+            break;
+          case 'storage:set':
+            if (state.hostStorage) {
+              state.storage.set(p.key, p.value);
+              persist();
+            }
+            break;
+          case 'storage:get':
+            if (state.hostStorage) {
+              const v = state.storage.has(p.key) ? state.storage.get(p.key) : null;
+              send('storage:value', { id: p.id ?? msg.id, value: v }, p.id ?? msg.id);
+            }
+            break;
+          case 'exit':
+            statusEl.textContent = 'Oyun çıkış istedi (exit)';
+            break;
+          case 'haptic':
+            if (navigator.vibrate) navigator.vibrate(typeof p.pattern === 'string' ? 25 : p.pattern);
+            break;
+        }
+      });
+
+      document.querySelectorAll('[data-cmd]').forEach((b) => b.addEventListener('click', () => send(b.dataset.cmd)));
+      document.querySelectorAll('[data-lang]').forEach((b) => b.addEventListener('click', () => send('setLocale', { lang: b.dataset.lang })));
+      document.querySelectorAll('[data-tier]').forEach((b) => b.addEventListener('click', () => send('setQuality', { tier: b.dataset.tier })));
+      document.querySelectorAll('[data-safe]').forEach((b) =>
+        b.addEventListener('click', () => {
+          const [top, right, bottom, left] = b.dataset.safe.split(',').map(Number);
+          send('setSafeArea', { top, right, bottom, left });
+        }),
+      );
+      document.querySelectorAll('[data-size]').forEach((b) =>
+        b.addEventListener('click', () => {
+          const [w, h] = b.dataset.size.split('x').map(Number);
+          setSize(w, h);
+        }),
+      );
+      const muteBtn = document.getElementById('mute');
+      muteBtn.addEventListener('click', () => {
+        state.muted = !state.muted;
+        muteBtn.setAttribute('aria-pressed', String(state.muted));
+        send('mute', { muted: state.muted });
+      });
+      document.getElementById('profile').addEventListener('click', () =>
+        send('setProfile', { displayName: document.getElementById('name').value }),
+      );
+      const hsBtn = document.getElementById('hoststorage');
+      hsBtn.addEventListener('click', () => {
+        state.hostStorage = !state.hostStorage;
+        hsBtn.setAttribute('aria-pressed', String(state.hostStorage));
+        hsBtn.textContent = `Host depolama: ${state.hostStorage ? 'açık' : 'kapalı'}`;
+      });
+      const reload = () => {
+        statusEl.textContent = 'Oyun yeniden yükleniyor…';
+        state.ready = null;
+        iframe.contentWindow.location.reload();
+      };
+      document.getElementById('reload').addEventListener('click', reload);
+      document.getElementById('roundtrip').addEventListener('click', reload);
+      document.getElementById('clearstorage').addEventListener('click', () => {
+        state.storage.clear();
+        persist();
+      });
+      document.getElementById('clear').addEventListener('click', () => {
+        state.log.length = 0;
+        logEl.textContent = '';
+      });
+
+      // Programmatic surface for tests/e2e.
+      window.hostDemo = {
+        state,
+        send,
+        reload,
+        setSize,
+        setHostStorage(on) {
+          state.hostStorage = !!on;
+        },
+        messages(type) {
+          return state.log.filter((e) => e.dir === 'out' && (!type || e.msg.type === type)).map((e) => e.msg);
+        },
+      };
+    </script>
+  </body>
+</html>

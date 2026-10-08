@@ -82,7 +82,8 @@ export type PropPrimitive =
 
 export type PropType =
   | 'chimney' | 'chimneyCap' | 'balloon' | 'basket' | 'tree' | 'house' | 'gulet' | 'column' | 'wall' | 'theater'
-  | 'cornice' | 'lighthouse' | 'tomb' | 'arch' | 'rock';
+  | 'cornice' | 'lighthouse' | 'tomb' | 'arch' | 'rock'
+  | 'waterfall'; // waterfall: visual only (prims = []), see src/sim/world/props.ts header for params
 
 export interface PropInstance {
   id: number;

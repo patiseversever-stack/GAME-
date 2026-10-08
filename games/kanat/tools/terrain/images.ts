@@ -8,7 +8,7 @@ type Channels = 1 | 2 | 3 | 4;
 
 export async function encodePng(data: Uint8Array, w: number, h: number, channels: Channels): Promise<Buffer> {
   return sharp(Buffer.from(data.buffer, data.byteOffset, data.byteLength), { raw: { width: w, height: h, channels } })
-    .png({ compressionLevel: 9, adaptiveFiltering: true, effort: 10 })
+    .png({ compressionLevel: 9, adaptiveFiltering: true, palette: false })
     .toBuffer();
 }
 
