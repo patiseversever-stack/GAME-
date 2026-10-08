@@ -203,9 +203,9 @@ export class SuruHud {
     top.className = 'sr-top';
     const s = svg('svg', { class: 'sr-sun', viewBox: '0 0 168 50' }) as SVGSVGElement;
     s.appendChild(svg('line', { x1: 6, y1: 46, x2: 162, y2: 46, stroke: '#FFFFFF44', 'stroke-width': 1 }));
-    this.sunPath = svg('path', { d: 'M14 46 A70 70 0 0 1 154 46', fill: 'none', stroke: '#FFFFFF2a', 'stroke-width': 2 }) as SVGPathElement;
-    this.sunDone = svg('path', { d: 'M14 46 A70 70 0 0 1 154 46', fill: 'none', stroke: '#FFC48A', 'stroke-width': 2, 'stroke-linecap': 'round' }) as SVGPathElement;
-    this.sunRing = svg('path', { d: 'M14 46 A70 70 0 0 1 154 46', fill: 'none', stroke: '#FFB36B', 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0.0 }) as SVGPathElement;
+    this.sunPath = svg('path', { d: 'M14 46 A70 40 0 0 1 154 46', fill: 'none', stroke: '#FFFFFF2a', 'stroke-width': 2 }) as SVGPathElement;
+    this.sunDone = svg('path', { d: 'M14 46 A70 40 0 0 1 154 46', fill: 'none', stroke: '#FFC48A', 'stroke-width': 2, 'stroke-linecap': 'round' }) as SVGPathElement;
+    this.sunRing = svg('path', { d: 'M14 46 A70 40 0 0 1 154 46', fill: 'none', stroke: '#FFB36B', 'stroke-width': 3, 'stroke-linecap': 'round', opacity: 0.0 }) as SVGPathElement;
     this.sunDot = svg('circle', { cx: 14, cy: 46, r: 5.5, fill: '#FFD7A0' }) as SVGCircleElement;
     s.append(this.sunPath, this.sunDone, this.sunRing, this.sunDot);
     top.appendChild(s);

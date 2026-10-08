@@ -28,17 +28,17 @@
    "originZ": -4092,
    "spacing": 8,
    "res": 1024,
-   "min": -171.08,
+   "min": -171.161,
    "max": 1206.514
   },
   "far": {
    "file": "height_far.u16.z",
-   "originX": -24528,
-   "originZ": -24528,
+   "originX": -24524,
+   "originZ": -24524,
    "spacing": 96,
    "res": 512,
    "min": -418,
-   "max": 2350.375
+   "max": 2350.515
   },
   "patch": null,
   "rock": {
@@ -81,7 +81,7 @@
    "maxZ": 3772
   },
   "heightRange": {
-   "min": -171.08,
+   "min": -171.161,
    "max": 1206.514
   },
   "patchInfo": null
@@ -100,8 +100,8 @@
     "size": 8192
    },
    "far": {
-    "minX": -24576,
-    "minZ": -24576,
+    "minX": -24572,
+    "minZ": -24572,
     "size": 49152
    },
    "patch": null
