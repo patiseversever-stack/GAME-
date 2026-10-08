@@ -7,9 +7,10 @@ Bağlam: `docs/analiz/FINAL_DURUM.md`. Oyun kodu büyük ölçüde hazır. Bu tu
 2. Güvenlik
 3. Seviyeleri birleştirme
 4. Ücretsiz planda güvenli botlar
-5. Küçük düzeltmeler
-6. Test sunucusu ve otomatik deneme
-7. Canlıya alma (yalnız sunucu) ve mağaza formları
+5. **Maliyet: ölçüm, optimizasyon ve panelde canlı "Maliyet" sayfası**
+6. Küçük düzeltmeler ve mağaza zorunlulukları (web hesap silme sayfası, web metinleri)
+7. Test sunucusu, otomatik deneme ve gerçek maliyet ölçümü
+8. Canlıya alma (yalnız sunucu) ve mağaza formları
 
 **Telefon sürümü üretilmeyecek.** APK, AAB, EAS build ya da TestFlight yok. Sahip uygulama paketini (AAB) ileride kendisi alacak. Bu turda uygulama tarafında yalnız kod hazırlanır, derlenmiş oyun uygulamaya aktarılır ve testler çalıştırılır.
 
@@ -62,6 +63,13 @@ Bağlam: `docs/analiz/FINAL_DURUM.md`. Oyun kodu büyük ölçüde hazır. Bu tu
     olarak güncellenir.
   - Çipli masalar sonradan yeniden açılacaksa, açılmadan **önce** form yeniden güncellenmelidir.
 - **F11 — Seviyeler birleşsin.** Oyuncunun tek bir seviyesi, unvanı ve koleksiyonu olur (Adım 3).
+- **F12 — Maliyet en düşük olsun.** Hedef: 5 $'lık plan içinde olabildiğince çok maç; ücretsiz planda da olabildiğince çok
+  maç. Maliyetle ilgili gereken her şey yapılsın (Adım 4B). Sahip, yönetim panelinde gerçek verilerle şunları görmek
+  istiyor:
+  - bugün kaç maç daha oynanabilir
+  - şu anki yük
+  - ay sonu tahmini fatura
+  - ne zaman ücretli plana geçmeli
 
 ---
 
@@ -210,6 +218,88 @@ uygulanır.
 
 Bu davranış için kalıcı test ekle.
 
+### Adım 4B — Maliyet: ölçüm, optimizasyon ve panelde "Maliyet" sayfası (≤ 120 dk; toplu oda gerekirse + 90 dk)
+
+**Hedefler** (F12):
+- **Ücretsiz plan:** Günde en az **300** maç (1 insan + 3 bot ve 4 insanlı masalar karışık), hiçbir günlük sınıra
+  takılmadan. Mümkünse 500.
+- **5 $'lık plan:** 5 $'ın içinde kalarak ayda olabildiğince çok maç. En az **15.000 maç/ay** (günde 500) 5–6 $'ı
+  geçmesin.
+- **Uyanık kalma hedefi:** Maç başına en çok ~25 GB-s (128 MB'de yaklaşık 3,5 dakika uyanık). Bu değer, ayda 15.000 maçın
+  ücretli planın dahil süresine sığması için gerekiyor. Güncel dahil miktara göre yeniden hesapla.
+- Cloudflare'in **güncel** fiyat ve sınır değerlerini resmi belgelerden doğrula. Bu değerleri koda gömme: config
+  tablosunda dursunlar ki fiyat değişirse panelden güncellenebilsin.
+
+**1. Yerel ölçüm** (`wrangler dev`, ekransız istemcilerle). Maç başına ölç:
+- Klasik, 101 ve eşli; "1 insan + 3 bot" ve "4 insan".
+- Ölçülecekler:
+  - Worker istekleri
+  - DO istekleri (WebSocket mesajları 20:1 sayılır; alarmlar ayrı sayılır)
+  - DO depolamasına yazılan satır
+  - D1 okunan ve yazılan satır (taranan satırlar dahil)
+  - uyanık kalma süresi
+  - mesaj sayısı ve boyutu
+- Sonucu bir tabloya koy: "Hangi sınır önce doluyor, günde kaç maç?"
+
+**2. Optimizasyonlar.** Ölçüme göre gerekenleri uygula. Her birinin önce/sonra değerini yaz:
+1. **Ping/pong uyandırmasın:** WebSocket otomatik cevabı (`setWebSocketAutoResponse`) kullanılsın; canlılık
+   kontrolü DO'yu uyandırmasın.
+2. **Durum kaydı tek satır olsun:**
+   - Masa durumu her kayıtta tek bir anahtar ve tek bir satır olarak yazılsın.
+   - Gereksiz ara kayıtlar kalksın; kayıt el sonunda ve kritik anlarda yapılsın.
+   - Hibernation sonrası durum kaybı olmamalı; bunu test et.
+3. **Bot hamleleri:**
+   - Ücretsiz planda (`BOT_CPU_MODE=free`) her alarmda tek bot hamlesi (işlemci sınırı).
+   - Ücretli planda (`full`): Ardışık bot hamleleri tek çağrıda hesaplanıp istemcilere zamanlı oynatma bilgisiyle
+     (`playAt`) gönderilsin. İstemci animasyonu bekleyerek oynatır, DO uyuyabilir. Bu, istek sayısını ve uyanık kalma
+     süresini düşürür. Ekranda botların oynayış hızı ve hissi değişmemeli.
+4. **Toplu oda** (karar ölçüme bağlı): Staging'de maç başına uyanık kalma süresi hedefin üstündeyse (Adım 6-4) bir DO
+   içinde çok masa çalıştıran yapıya geç (lobi masaları dolu olmayan toplu odaya yerleştirir). Altındaysa geçme;
+   gerekçesini rapora yaz.
+5. **D1:**
+   - Maç sonu yazımları tek toplu işlemde (batch) yapılsın.
+   - Her sorgu indeks kullansın, tam tablo taraması olmasın (`EXPLAIN QUERY PLAN` ile kanıtla).
+   - Sıralama ve config önbellekten gelsin (Cache API).
+   - Sayım için `COUNT(*)` taraması yerine sayaç kullanılsın.
+6. **Lobi ve açık masalar:** İstemci listeyi yalnız ekran açıkken ve en sık 10–15 sn'de bir istesin, ya da değişiklik
+   WebSocket üzerinden gelsin. Arka planda istek olmasın.
+7. **Uygulama açılışı:** Gereksiz istek olmasın. `config` bir kez alınsın, ETag/304 kullanılsın.
+8. **Loglar:** Örnekleme oranı ayarlansın, gereksiz log olmasın.
+9. **`/api/health` ucuz olsun:** D1'e gitmesin.
+10. **Aklına gelen başka her şey:** Maliyeti düşüren ama oyun hissini bozmayan her iyileştirme.
+
+**3. Panelde "Maliyet" sayfası** (yeni sekme, mevcut tasarım dilinde, telefonda da çalışır).
+- **Veri kaynağı:** Cloudflare GraphQL Analytics API.
+  - Yeni ve **yalnız okuma izinli** bir API anahtarı kullanılsın; dağıtım anahtarından ayrı olsun (Account Analytics:
+    Read, gerekiyorsa D1 okuma).
+  - Anahtar Worker secret'ında durur (`CF_API_TOKEN`, `CF_ACCOUNT_ID`).
+  - Sahibe bu anahtarı oluşturması için 5 adımlık sade bir tarif ver.
+  - API sonuçları 5 dk önbellekte tutulsun.
+  - API'ye ulaşılamazsa sunucunun kendi sayaçlarına düşülsün ve ekranda "tahmini" yazsın.
+- **Gösterilecekler** (sade Türkçe, büyük rakamlar):
+  - **Plan:** Ücretsiz / Ücretli. Panelden ayar olarak seçilir.
+  - **Bugünkü kullanım,** günlük ücretsiz sınırlara göre yüzde ve çubuk olarak: Worker istekleri, DO istekleri, DO
+    süresi, DO depolama yazımı, D1 okuma/yazma, depolama.
+  - **Ay başından beri kullanım,** ücretli planın dahil miktarlarına göre.
+  - **Maç başına ortalama maliyet:** Bugünkü kullanım ÷ bugünkü maç sayısı.
+  - **"Bugün kalan tahmini maç: N".** İlk dolacak sınıra göre hesaplanır ve o sınırın adı yazılır.
+  - **"Ay sonu tahmini fatura: X $"** ve "5 $ içinde kalır / aşar".
+  - **Anlık yük:** Açık masa, çevrim içi oyuncu, son 1 saatte ve bugün oynanan maç.
+  - **30 günlük grafik:** Günlük maç ve kullanım.
+  - **Uyarılar:**
+    - %70'te sarı, %90'da kırmızı.
+    - "Son 7 günde X kez sınıra yaklaşıldı" durumunda "Ücretli plana geçme zamanı" önerisi ve 3 adımlık geçiş tarifi.
+  - **Hızlı bağlantılar:** Kapasite sınırları, acil kapatma.
+- **Testler:** Sahte API cevaplarıyla birim testleri; staging'de gerçek API ile bir kez doğrulama.
+
+**4. Ücretliye geçiş belgesi:** `docs/OPERASYON.md` §7b'ye eklenecekler:
+- `BOT_CPU_MODE=full`
+- toplu bot hamlesi
+- `[limits]` ayarı
+- panelde plan ayarı
+
+Geçiş sahibe "ücretli plana geçtim" demekten ibaret olsun; gerisini araç yapsın.
+
 ### Adım 5 — Küçük düzeltmeler (≤ 45 dk)
 
 `FINAL_DURUM.md` §6'daki şu hatalar:
@@ -224,7 +314,17 @@ Bu davranış için kalıcı test ekle.
 
 Görsel denetim 3 boyut × 2 temada yapılsın; çakışma 0 olmalı.
 
-### Adım 6 — Test sunucusu ve otomatik deneme (≤ 60 dk)
+### Adım 5B — Mağaza zorunlulukları (≤ 30 dk)
+
+1. **Web hesap silme sayfası.** Google Play, hesap açılan uygulamalar için web'den hesap silme bağlantısı istiyor.
+   - patisever-web'e sade bir sayfa ekle: giriş yap → "Hesabımı sil" → onay. Mevcut silme akışını kullan (Okey verisi
+     dahil).
+   - Bağlantıyı `MAGAZA_FORMLARI.md` dosyasına yaz.
+2. **Web gizlilik ve kullanım koşulları:** `privacy.html` ve `terms.html` uygulama içindeki güncel metinlerle aynı
+   olsun (çip maddesi, veri saklama, hesap silme). Rapora "hukukçu kontrolü önerilir" notunu düş.
+3. **Şikayet kayıtlarının saklama süresi** (D9): 12 ay. Gece görevinde eski kayıtlar silinsin; metinlerde de yazsın.
+
+### Adım 6 — Test sunucusu, otomatik deneme ve gerçek maliyet ölçümü (≤ 90 dk)
 
 1. **Hazırlık** (onaylı):
    - Cloudflare'de staging Worker ve staging D1 (ücretsiz plan).
@@ -252,9 +352,21 @@ Görsel denetim 3 boyut × 2 temada yapılsın; çakışma 0 olmalı.
    - maç başına DO süresi (GB-s): hibernation çalışıyor mu? (`FINAL_DURUM.md` §4.3'teki 5,2 $ / 14 $ modeline göre)
    - hata sayısı
    - ortalama gidiş-dönüş süresi
-5. **İzleme:** Cloudflare kullanım bildirimi (kota %80) ve ücretsiz bir dış izleme (her 5 dakikada `/api/health`).
+   - **Gerçek maliyet ölçümü** (Adım 4B). En az 10 maç oynat (klasik, 101, eşli; botlu ve iki istemcili), sonra
+     Cloudflare'in kendi sayılarından (GraphQL API) maç başına değerleri çıkar:
+     - istekler
+     - DO istekleri ve süresi
+     - DO yazımı
+     - D1 okuma/yazma
+   - Bu değerlerle ücretsiz planda günde kaç maç ve 5 $ içinde ayda kaç maç oynanabileceğini hesapla.
+   - Yerel ölçümle karşılaştır.
+   - Uyanık kalma süresi hedefi aşıyorsa Adım 4B-2.4'ü (toplu oda) şimdi uygula ve yeniden ölç.
+   - Panelin "Maliyet" sayfasını staging'in gerçek verisiyle aç, ekran görüntüsünü al.
+5. **Yedekten geri dönüş provası:** Staging D1'de Time Travel ile bir geri dönüşü dene. Adımları `docs/OPERASYON.md`
+   dosyasına sade dille yaz (canlıda yalnız sahibin onayıyla kullanılır).
+6. **İzleme:** Cloudflare kullanım bildirimi (kota %80) ve ücretsiz bir dış izleme (her 5 dakikada `/api/health`).
    Kurulumu sen yap ya da sahibe 3 adımda tarif et.
-6. **Sonraya telefon deneme listesi:** `docs/CIHAZ_DENEME.md` dosyasını yaz. Sahip ileride AAB'yi alınca telefonda
+7. **Sonraya telefon deneme listesi:** `docs/CIHAZ_DENEME.md` dosyasını yaz. Sahip ileride AAB'yi alınca telefonda
    (ve iPhone sürümü olursa iPhone'da) bunu uygulayacak. Liste sade Türkçe, her madde tek cümle olsun:
    - 3. maddedeki 11 deneme
    - uçak modu
@@ -265,10 +377,13 @@ Görsel denetim 3 boyut × 2 temada yapılsın; çakışma 0 olmalı.
    - test reklamı
    - hesap silme
    - yeni Supabase anahtarıyla giriş
-7. **Geçiş kapısı.** Aşağıdakilerin hepsi tamamsa Adım 7'ye geç:
+8. **Geçiş kapısı.** Aşağıdakilerin hepsi tamamsa Adım 7'ye geç:
    - `exceededCpu` = 0
    - 3. maddedeki 11 denemenin hepsi geçti
    - P0/P1 hata yok
+   - maliyet hedefleri tuttu (ücretsiz planda günde ≥ 300 maç, 5 $ içinde ayda ≥ 15.000 maç), ya da tutmayan hedef
+     gerekçesiyle rapora yazıldı ve sahip yine de devam et dedi
+   - panelin "Maliyet" sayfası gerçek veriyi gösteriyor
 
    Biri bile eksikse **dur.** `FINAL_7_RAPOR.md` dosyasını o ana kadarki sonuçlarla yaz ve sahibe söyle.
 
@@ -301,6 +416,13 @@ Görsel denetim 3 boyut × 2 temada yapılsın; çakışma 0 olmalı.
   - Hangi anahtarlar yenilendi, hangileri kaldı (yalnız adları).
   - Web paneli ve bildirim tablosunun durumu.
 - **Staging ölçümleri tablosu:** işlemci, `exceededCpu`, maç başına GB-s, gidiş-dönüş süresi, hatalar.
+- **Maliyet tablosu:**
+  - Maç başına her kalem: yerel ölçüm ve Cloudflare'in gerçek değeri, optimizasyon öncesi ve sonrası.
+  - Ücretsiz planda günde kaç maç oynanabilir; ilk dolan sınır hangisi.
+  - 5 $ içinde ayda kaç maç oynanabilir.
+  - Günde 100 / 500 / 2.000 maç için aylık tahmini fatura.
+  - Hangi optimizasyonlar yapıldı ve hangileri gerekçesiyle yapılmadı (toplu oda dahil).
+  - Panelin "Maliyet" sayfasının ekran görüntüleri (masaüstü ve telefon).
 - **Otomatik iki oyunculu deneme sonuçları** (11 madde) ve `CIHAZ_DENEME.md` dosyasının yolu.
 - **Canlı durum:** Worker sürümü, `ONLINE_DEFAULT`, uygulamaya aktarılan oyun sürümü, `AAB_NOTU.md` yolu.
 - **Kalan işler:** Sahibin işleri ve sonrası, en fazla 10 madde.
