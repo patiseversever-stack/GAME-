@@ -23,39 +23,70 @@ function sourceText(s: CosmeticSourceVM | undefined): string {
   }
 }
 
-/** Small SVG preview of a suit pattern in the equipped palette. */
-function patternSvg(id: string, pal: readonly [string, string, string]): string {
-  const [a, b, c] = pal;
-  const idx = (PATTERN_IDS as readonly string[]).indexOf(id);
-  const k = idx < 0 ? 0 : idx;
-  let motif = '';
-  switch (k % 5) {
-    case 0: motif = `<path d="M0 30 L15 15 L30 30 L45 15 L60 30 L60 60 L0 60Z" fill="${b}"/><path d="M0 30 L15 15 L30 30 L45 15 L60 30" stroke="${c}" stroke-width="2" fill="none"/>`; break;
-    case 1: motif = `<circle cx="30" cy="30" r="14" fill="none" stroke="${b}" stroke-width="5"/><circle cx="30" cy="30" r="4" fill="${c}"/>`; break;
-    case 2: motif = `<path d="M0 22 Q15 8 30 22 T60 22 M0 38 Q15 24 30 38 T60 38" stroke="${b}" stroke-width="5" fill="none"/>`; break;
-    case 3: motif = `<path d="M30 6 L36 30 L30 54 L24 30Z" fill="${b}"/><path d="M6 30 L30 24 L54 30 L30 36Z" fill="${c}" opacity="0.8"/>`; break;
-    default: motif = `<path d="M0 0 L60 60 M20 0 L60 40 M0 20 L40 60" stroke="${b}" stroke-width="4"/>`;
+let uid = 0;
+
+/** Fabric tile motif (20×20 user units) for each of the 20 suit patterns. B = motif, C = accent. */
+function motif(id: string, B: string, C: string): string {
+  switch (id) {
+    case 'kilim': return `<path d="M10 1 L19 10 L10 19 L1 10Z" fill="none" stroke="${B}" stroke-width="1.6"/><path d="M10 6.5 L13.5 10 L10 13.5 L6.5 10Z" fill="${C}"/>`;
+    case 'cini': return `<circle cx="10" cy="10" r="2.2" fill="${C}"/><g fill="${B}"><ellipse cx="10" cy="4.6" rx="1.6" ry="2.6"/><ellipse cx="10" cy="15.4" rx="1.6" ry="2.6"/><ellipse cx="4.6" cy="10" rx="2.6" ry="1.6"/><ellipse cx="15.4" cy="10" rx="2.6" ry="1.6"/></g>`;
+    case 'ebru': return `<path d="M0 7 Q5 2 10 7 T20 7" stroke="${B}" stroke-width="2" fill="none"/><path d="M0 15 Q5 10 10 15 T20 15" stroke="${C}" stroke-width="1.2" fill="none"/>`;
+    case 'periBacasi': return `<path d="M6.5 18 L8.6 8.5 L11.4 8.5 L13.5 18Z" fill="${B}"/><ellipse cx="10" cy="8.4" rx="3" ry="1.3" fill="${C}"/>`;
+    case 'turkuaz': return `<path d="M-2 6 L6 -2 M-2 14 L14 -2 M-2 22 L22 -2 M6 22 L22 6 M14 22 L22 14" stroke="${B}" stroke-width="1.6"/><path d="M-2 18 L18 -2" stroke="${C}" stroke-width="0.8"/>`;
+    case 'geceYarisi': return `<circle cx="4" cy="5" r="0.9" fill="${C}"/><circle cx="14" cy="3" r="0.6" fill="${B}"/><circle cx="11" cy="12" r="1.1" fill="${C}"/><circle cx="3" cy="16" r="0.6" fill="${B}"/><circle cx="17" cy="17" r="0.8" fill="${B}"/>`;
+    case 'balonSeridi': return `<rect x="0" width="5" height="20" fill="${B}"/><rect x="10" width="5" height="20" fill="${C}" opacity="0.8"/>`;
+    case 'karKristali': return `<path d="M10 3 V17 M4 6.5 L16 13.5 M4 13.5 L16 6.5" stroke="${B}" stroke-width="1.2"/><circle cx="10" cy="10" r="1.4" fill="${C}"/>`;
+    case 'lale': return `<path d="M10 16 C6 13 6 8 7 5 L10 8 L13 5 C14 8 14 13 10 16Z" fill="${B}"/><path d="M10 16 V19" stroke="${C}" stroke-width="1.2"/>`;
+    case 'traverten': return `<path d="M0 6 Q10 2 20 6 M0 12 Q10 8 20 12 M0 18 Q10 14 20 18" stroke="${B}" stroke-width="1.6" fill="none"/><path d="M4 7.5 Q10 5 16 7.5" stroke="${C}" stroke-width="1" fill="none"/>`;
+    case 'ladin': return `<path d="M10 3 L14 10 L12 10 L15.5 16 L4.5 16 L8 10 L6 10Z" fill="${B}"/><rect x="9.3" y="16" width="1.4" height="2.5" fill="${C}"/>`;
+    case 'dalga': return `<path d="M0 10 C4 4 8 4 10 10 S16 16 20 10" stroke="${B}" stroke-width="2.4" fill="none"/>`;
+    case 'kontur': return `<circle cx="10" cy="10" r="3" fill="none" stroke="${C}" stroke-width="1"/><circle cx="10" cy="10" r="6.5" fill="none" stroke="${B}" stroke-width="1"/><circle cx="10" cy="10" r="10" fill="none" stroke="${B}" stroke-width="1" opacity="0.6"/>`;
+    case 'pusula': return `<path d="M10 2 L11.6 10 L10 18 L8.4 10Z" fill="${B}"/><path d="M2 10 L10 8.6 L18 10 L10 11.4Z" fill="${C}"/>`;
+    case 'guvercin': return `<path d="M4 9 Q6.5 6.5 9 9 Q11.5 6.5 14 9" stroke="${B}" stroke-width="1.5" fill="none"/><path d="M9 16 Q10.5 14.5 12 16 Q13.5 14.5 15 16" stroke="${C}" stroke-width="1.1" fill="none"/>`;
+    case 'yakamoz': return `<circle cx="5" cy="5" r="1.6" fill="${B}"/><circle cx="15" cy="9" r="1" fill="${C}"/><circle cx="8" cy="15" r="1.2" fill="${B}" opacity="0.7"/><circle cx="17" cy="17" r="0.6" fill="${C}"/>`;
+    case 'mehtap': return `<path d="M12 4 A6 6 0 1 0 12 16 A4.6 4.6 0 1 1 12 4Z" fill="${B}"/><circle cx="16" cy="5" r="0.8" fill="${C}"/>`;
+    case 'kizilUfuk': return `<rect y="4" width="20" height="3" fill="${B}"/><rect y="10" width="20" height="1.6" fill="${C}"/><rect y="15" width="20" height="0.8" fill="${B}" opacity="0.7"/>`;
+    case 'sirt': return `<path d="M0 14 L5 7 L9 11 L14 4 L20 12" stroke="${B}" stroke-width="1.6" fill="none"/><path d="M0 18 L6 13 L11 16 L20 10" stroke="${C}" stroke-width="0.9" fill="none"/>`;
+    default: return `<path d="M10 18 L10 6 M10 18 L3 9 M10 18 L17 9" stroke="${B}" stroke-width="1.4"/><circle cx="10" cy="18" r="2.2" fill="${C}"/>`;
   }
-  const rot = (k * 37) % 90;
-  return `<svg viewBox="0 0 60 60" aria-hidden="true"><rect width="60" height="60" fill="${a}"/><g transform="rotate(${rot} 30 30)">${motif}</g></svg>`;
+}
+
+/** <pattern> definition for a suit pattern in a palette; returns [defs, fillUrl]. */
+function patternDef(id: string, pal: readonly [string, string, string], scale = 1): [string, string] {
+  const pid = `kp${++uid}`;
+  const k = PATTERN_IDS.indexOf(id as (typeof PATTERN_IDS)[number]);
+  const rot = k < 0 ? 0 : [0, 0, 0, 0, 0, 0, 90, 0, 0, 0, 0, 0, 0, 45, 0, 0, 0, 0, 0, 0][k];
+  return [`<pattern id="${pid}" width="${20 * scale}" height="${20 * scale}" patternUnits="userSpaceOnUse" patternTransform="rotate(${rot})"><rect width="${20 * scale}" height="${20 * scale}" fill="${pal[1]}"/><g transform="scale(${scale})">${motif(id, pal[0], pal[2])}</g></pattern>`, `url(#${pid})`];
+}
+
+function patternSvg(id: string, pal: readonly [string, string, string]): string {
+  const [defs, fill] = patternDef(id, pal, 1.2);
+  return `<svg viewBox="0 0 60 60" aria-hidden="true"><defs>${defs}</defs><rect width="60" height="60" fill="${fill}"/></svg>`;
 }
 
 function paletteSvg(pal: readonly [string, string, string]): string {
-  return `<svg viewBox="0 0 60 60" aria-hidden="true"><rect width="60" height="60" fill="${pal[0]}"/><rect y="34" width="60" height="26" fill="${pal[1]}"/><rect y="28" width="60" height="6" fill="${pal[2]}"/></svg>`;
+  return `<svg viewBox="0 0 60 60" aria-hidden="true"><rect width="60" height="60" fill="${pal[1]}"/><circle cx="30" cy="30" r="17" fill="${pal[0]}"/><path d="M13 30 A17 17 0 0 0 47 30Z" fill="${pal[2]}" opacity="0.9"/><circle cx="30" cy="30" r="17" fill="none" stroke="#FFFFFF33"/></svg>`;
 }
 
 function trailSvg(col: string): string {
-  return `<svg viewBox="0 0 60 60" aria-hidden="true"><rect width="60" height="60" fill="#121922"/><path d="M6 46 C20 40 30 22 54 14" stroke="${col}" stroke-width="7" stroke-linecap="round" fill="none" opacity="0.25"/><path d="M6 46 C20 40 30 22 54 14" stroke="${col}" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="54" cy="14" r="3.4" fill="${col}"/></svg>`;
+  return `<svg viewBox="0 0 60 60" aria-hidden="true"><rect width="60" height="60" fill="#121922"/><path d="M6 48 C20 42 30 24 52 14" stroke="${col}" stroke-width="9" stroke-linecap="round" fill="none" opacity="0.18"/><path d="M6 48 C20 42 30 24 52 14" stroke="${col}" stroke-width="2.2" stroke-linecap="round" fill="none" stroke-dasharray="1 5" /><path d="M24 36 C32 28 40 20 52 14" stroke="${col}" stroke-width="2.4" stroke-linecap="round" fill="none"/><circle cx="52" cy="14" r="3.2" fill="${col}"/></svg>`;
 }
 
-/** Fallback wingsuit preview (top view) tinted with palette + pattern band. */
-function pilotSvg(pal: readonly [string, string, string], trail: string): string {
-  return `<svg viewBox="0 0 240 150" aria-hidden="true"><defs><linearGradient id="tr" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${trail}" stop-opacity="0"/><stop offset="1" stop-color="${trail}" stop-opacity="0.55"/></linearGradient></defs>
-<path d="M104 128 L98 150 M136 128 L142 150" stroke="url(#tr)" stroke-width="10" stroke-linecap="round"/>
-<path d="M120 18 C128 18 131 26 131 34 L136 52 L206 92 C210 95 208 100 203 99 L140 90 L138 122 L126 120 L120 128 L114 120 L102 122 L100 90 L37 99 C32 100 30 95 34 92 L104 52 L109 34 C109 26 112 18 120 18Z" fill="${pal[0]}"/>
-<path d="M136 52 L206 92 C210 95 208 100 203 99 L140 90Z M104 52 L34 92 C30 95 32 100 37 99 L100 90Z" fill="${pal[1]}"/>
-<path d="M60 86 L180 86" stroke="${pal[2]}" stroke-width="3" opacity="0.9"/>
-<ellipse cx="120" cy="30" rx="9" ry="10" fill="#1A1F26"/><ellipse cx="120" cy="27" rx="6" ry="4" fill="#5A6B7A" opacity="0.8"/></svg>`;
+/** Fallback wingsuit preview (top view): suit body + arm wings + leg wing with the equipped pattern and palette. */
+function pilotSvg(patternId: string, pal: readonly [string, string, string], trail: string): string {
+  const [defs, fill] = patternDef(patternId, pal, 0.9);
+  const wingL = 'M112 50 C90 54 54 66 30 76 C25 78 26 84 31 84 C58 86 86 92 104 100 Z';
+  const wingR = 'M128 50 C150 54 186 66 210 76 C215 78 214 84 209 84 C182 86 154 92 136 100 Z';
+  const legs = 'M104 98 C106 118 110 132 114 146 L120 140 L126 146 C130 132 134 118 136 98 Z';
+  const body = 'M120 34 C129 34 133 42 133 52 L136 98 C130 104 110 104 104 98 L107 52 C107 42 111 34 120 34 Z';
+  return `<svg viewBox="0 0 240 170" aria-hidden="true"><defs>${defs}<linearGradient id="trl${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${trail}" stop-opacity="0.65"/><stop offset="1" stop-color="${trail}" stop-opacity="0"/></linearGradient><linearGradient id="sh${uid}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity="0.28"/><stop offset="0.5" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.28"/></linearGradient></defs>
+<path d="M28 82 C22 110 18 140 14 170 L40 170 C38 140 34 110 31 84Z M212 82 C218 110 222 140 226 170 L200 170 C202 140 206 110 209 84Z" fill="url(#trl${uid})"/>
+<g stroke="#0E141C" stroke-opacity="0.55" stroke-width="1.2" stroke-linejoin="round"><path d="${wingL}" fill="${fill}"/><path d="${wingR}" fill="${fill}"/><path d="${legs}" fill="${fill}"/><path d="${body}" fill="${pal[1]}"/></g>
+<path d="${wingL} ${wingR} ${legs}" fill="url(#sh${uid})"/>
+<path d="M31 84 C58 86 86 92 104 100 M209 84 C182 86 154 92 136 100" stroke="${pal[2]}" stroke-width="1.6" fill="none" opacity="0.85"/>
+<path d="M114 52 L126 52 L124 96 L116 96Z" fill="${pal[0]}" opacity="0.9"/>
+<ellipse cx="120" cy="27" rx="9.5" ry="10.5" fill="#1A1F26"/><path d="M113 24 Q120 19 127 24 Q124 29 120 29 Q116 29 113 24Z" fill="#8FA6B8" opacity="0.85"/>
+<path d="M112 146 L114 152 M128 146 L126 152" stroke="#1A1F26" stroke-width="3" stroke-linecap="round"/></svg>`;
 }
 
 function postcardsTab(p: CollectionProps): HTMLElement {
@@ -98,7 +129,7 @@ function wardrobeTab(p: CollectionProps, ctx: ScreenCtx): HTMLElement {
     const c = ctx.cb.mountPilotPreview(preview, p.equipped);
     if (c) ctx.onCleanup(c);
   } else {
-    preview.innerHTML = `<div class="kn-pilot-pattern">${patternSvg(p.equipped.pattern, pal)}</div>${pilotSvg(pal, TRAILS[p.equipped.trail] ?? '#F5F1E8')}`;
+    preview.innerHTML = `<div class="kn-pilot-grid"></div>${pilotSvg(p.equipped.pattern, pal, TRAILS[p.equipped.trail] ?? '#F5F1E8')}`;
   }
   const tabs = h('div', { class: 'kn-seg kn-seg--sm', role: 'tablist' });
   const tabDefs: [CosmeticKind, string][] = [['pattern', t('collection.patterns')], ['palette', t('collection.palettes')], ['trail', t('collection.trails')]];

@@ -340,9 +340,8 @@
 .kn-wardrobe { display: flex; flex-direction: column; gap: 14px; }
 .kn-wardrobe-side { display: flex; flex-direction: column; gap: 12px; }
 .kn-pilot-preview { position: relative; height: 196px; border-radius: 18px; overflow: hidden; border: 1px solid var(--kn-hair); background: radial-gradient(120% 90% at 50% 30%, #2A3442 0%, #121820 70%); display: flex; align-items: center; justify-content: center; }
-.kn-pilot-preview > svg { position: relative; width: 78%; max-width: 300px; height: auto; }
-.kn-pilot-pattern { position: absolute; inset: 0; opacity: 0.08; }
-.kn-pilot-pattern svg { width: 100%; height: 100%; }
+.kn-pilot-preview > svg { position: relative; width: 82%; max-width: 320px; height: auto; margin-top: 18px; }
+.kn-pilot-grid { position: absolute; inset: 0; background-image: linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px); background-size: 24px 24px; background-position: center; mask-image: radial-gradient(closest-side, #000, transparent); -webkit-mask-image: radial-gradient(closest-side, #000, transparent); }
 .kn-wgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 10px; }
 .kn-witem { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
 .kn-witem-sw { position: relative; aspect-ratio: 1; border-radius: 14px; overflow: hidden; border: 1px solid var(--kn-hair); }

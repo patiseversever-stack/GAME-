@@ -91,7 +91,7 @@
   "splat": "splat_core.png",
   "shadowAo": "shadow_ao.png",
   "colorMacro": "color_macro.webp",
-  "colorMacroKtx2": null,
+  "colorMacroKtx2": "color_macro.ktx2",
   "colorFar": "color_far.webp",
   "coverage": {
    "core": {
@@ -225,8 +225,8 @@
   ],
   "shadowTint": 0.9,
   "shadowStrength": 1,
-  "sunStrength": 0.6207,
-  "ambientStrength": 0.3724,
+  "sunStrength": 0.5725,
+  "ambientStrength": 0.4866,
   "formula": "w=max(0,(ndl+wrap)/(1+wrap)); B=w/(w+k)*(ndl0+k)/ndl0; sunVis=shadow*min(1,B); amb=mix(skyColor,shadowColor,(1-sunVis)*shadowTint); skyShape=0.5+0.3*n.y+0.2*dot(n.xz,normalize(sunDir.xz)); lit=albedo*(sunColor*sunStrength*shadow*B + amb*ambientStrength*ao*skyShape); wrap=0.06, ndl0=0.2366, k=0.4492; soft shoulder above 0.8; sRGB encode"
  },
  "props": {
