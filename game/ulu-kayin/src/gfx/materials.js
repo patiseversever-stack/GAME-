@@ -179,6 +179,8 @@ void main() {
 const LEAF_FS = /* glsl */ `
 // yaprak kartları üst üste biner: yıldız kırıntısı burada atlanır (yalnızca mürekkep parıltısı)
 #define NO_SHADE_STARS
+// yaprak gölgede de doygun kalır (zümrüt, gül, kehribar), griye çekilmez
+#define SHADE_DESAT 0.0
 ${COMMON}
 ${SHADOW}
 ${LIGHT}
@@ -209,7 +211,7 @@ void main() {
 	float ao = mix(0.5, 1.0, smoothstep(0.15, 0.95, vDepthAO));
 	float sh = shadowAt(vW + uSunDir * 0.45, N);
 	vec3 c = shadeLit(alb, N, V, ao * 1.3, sh, 0.65, 0.55);
-	c += alb * uGround * 0.3 * (1.0 - sh);
+	c += alb * uGround * 0.5 * (1.0 - sh);
 	// Yarı saydamlık: güneş yaprağın arkasındayken ışık içinden geçer; renk doygunlaşarak
 	// yanar (vitray gibi), kümenin dış kabuğu daha çok ışır.
 	float tr = pow(max(dot(-V, uSunDir), 0.0), 2.5);

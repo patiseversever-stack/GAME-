@@ -101,6 +101,9 @@ export const LIGHT = /* glsl */ `
 // Stilize ışık: iki bantlı yumuşak rampa, yarı küre gök ışığı, doygun serin gölge,
 // gölge sınırında sıcak ince hat, kontra ışıkta kenar parlaması ve gölgede yaşayan gece.
 // Hepsi birkaç çarpma; doku okuması yok.
+#ifndef SHADE_DESAT
+#define SHADE_DESAT 0.32
+#endif
 vec3 skyAmbient(vec3 N) {
 	float up = N.y * 0.5 + 0.5;
 	vec3 a = mix(uGround, uSkyHor, smoothstep(0.0, 0.55, up));
@@ -147,7 +150,7 @@ vec3 shadeLit(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float wrapK, floa
 	// mavi gök ışığıyla çarpılınca zeytin-griye düşmesin diye gölgede yerel renk biraz
 	// parlaklığa çekilir; gölgeyi mevsimin gök rengi boyar.
 	vec3 shadeCol = mix(uShadeTint, vec3(1.0), lit);
-	vec3 albS = mix(albedo, vec3(dot(albedo, vec3(0.2126, 0.7152, 0.0722))), 0.32 * (1.0 - lit));
+	vec3 albS = mix(albedo, vec3(dot(albedo, vec3(0.2126, 0.7152, 0.0722))), SHADE_DESAT * (1.0 - lit));
 	vec3 c = albS * amb * shadeCol + albedo * uSunCol * lit;
 	// gölge sınırı: aydınlık tarafta ince, sıcak, ışıyan hat (oyunun asıl çizgisi)
 	float e = max(sh * (1.0 - sh) * 4.0, gShEdge);
