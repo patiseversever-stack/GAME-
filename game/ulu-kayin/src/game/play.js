@@ -427,11 +427,13 @@ export class Game {
 		const fromPlay = cont && this.level && this.li === i - 1;
 		const prevS = this.s;
 		// toplanmış kuşlar bir sonraki bölüme taşınır; yenilgiden sonra kuşlar yardıma gelir
-		const carry = fromPlay ? this._carryBirds || 0 : 0;
+		// tekrar denemede bölüme hangi kuşlarla başlandıysa onlar geri gelir
+		const carry = fromPlay ? this._carryBirds || 0 : retry && this.li === i ? this._startBirds || 0 : 0;
 		this._setupLevelData(i);
 		const mercyBirds = this.fails > 0 ? Math.min(GATHER, this.fails + 1) : 0;
 		this._birds0 = Math.max(carry, mercyBirds);
 		this._mercyBirds = mercyBirds > carry;
+		this._startBirds = carry;
 		this.zifir.reset();
 		this.zifir.g.visible = true;
 		this.fx.clear();
@@ -677,7 +679,7 @@ export class Game {
 		if (st !== 'title' && st !== 'levels') beam = this.beams.update(dt, time, p.y, this.sunDir, this.tester, this.zp);
 		if (this.flock.active > 0) beam = 0;
 		if (beam > 0 && active && this._hintQueue[0] !== 'crystal' && !this.prog.seen.crystal) this._queueFront('crystal');
-		if (this.beams.active.length && active && this._hintQueue[0] === 'crystal') this._showHint(this._hintQueue.shift(), 5);
+		if (this.beams.active.length && active && this._hintQueue[0] === 'crystal' && (!this._hintKey || beam > 0)) this._showHint(this._hintQueue.shift(), 5);
 		if (beam > 0.3 && active && !this._beamHit) this.app.rig.shake = Math.max(this.app.rig.shake, 0.07);
 		this._beamHit = beam > 0.3;
 		lit = Math.max(lit, beam);

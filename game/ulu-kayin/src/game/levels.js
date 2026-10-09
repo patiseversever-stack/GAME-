@@ -49,7 +49,8 @@ export const DESIGN = [
 		gust: { every: 11, dur: 2.2, power: 0.5, from: 6 },
 		crystals: [[0.8, 1, 4.6, 3.2]],
 		locks: [0.45],
-		hints: ['drops', 'bridge', 'crystal'],
+		// damla ipucu ilk damla eriyince gelir; bölüm başında Sürü ipucu (kuşlar birinci bölümden taşınır)
+		hints: ['bridge', 'crystal'],
 	},
 	{
 		// Yaz I: tepede güneş, kısa gölgeler; üstteki patika katının gölgesi işe yarar.
