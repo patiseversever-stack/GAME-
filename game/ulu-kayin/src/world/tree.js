@@ -107,6 +107,20 @@ export function buildTree(curve, tier) {
 		return [lerp(1, 0.5, k) * w, lerp(0.99, 0.35, k) * w, lerp(0.97, 0.3, k) * w, lerp(0.86, 1, t)];
 	};
 
+	/**
+	 * Dal olukları: gövdedeki gibi burulmuş, yumuşak sırtlar (kalın dallarda). Ortalaması bir:
+	 * oynanış kapsülleri değişmez. Uca doğru ve gövdenin içinde söner.
+	 */
+	const fluteFn = (lobes, amp, twist) => {
+		const ph0 = VR() * TAU;
+		return (i, t, ang, v, out) => {
+			const a = amp * (1 - t) * smoothstep(0.02, 0.12, t);
+			const ph = lobes * ang + v * twist + ph0;
+			out[0] = 1 + a * Math.sin(ph);
+			out[1] = a * lobes * Math.cos(ph);
+		};
+	};
+
 	/** Gövdeden çıkan bir noktanın dışarıda olup olmadığı. */
 	const outside = (p) => Math.hypot(p.x, p.z) > trunkSurfaceR(Math.atan2(p.z, p.x), p.y) - 0.05;
 
@@ -138,6 +152,7 @@ export function buildTree(curve, tier) {
 		branches.tube(pts, rad, segs, barkCol(r0), {
 			uvScale: 0.6,
 			sway: (i, t) => branches.setSway(anchor.x, anchor.y, anchor.z, lerp(w0, w1, Math.pow(t, 1.6))),
+			shape: r0 > 0.3 ? fluteFn(r0 > 1 ? 4 : 3, r0 > 1 ? 0.09 : 0.12, 4) : null,
 		});
 		if (opt.noCaps !== true) {
 			for (let i = 0; i < n - 1; i += 2) {
@@ -227,7 +242,7 @@ export function buildTree(curve, tier) {
 		const tip = ctrl[5];
 		const sw = L / 8;
 		const r0 = lerp(0.42, 0.7, (L - 4.5) / 5);
-		const pts = addBranch(ctrl, r0, 0.05, tip, 0, sw, 8, { per: 4 });
+		const pts = addBranch(ctrl, r0, 0.05, tip, 0, sw, 9, { per: 4 });
 		sb.r0 = r0;
 		// alt dallar
 		const nTw = winter ? 2 : R.range(1, 3.6) | 0;
@@ -369,7 +384,7 @@ export function buildTree(curve, tier) {
 				const tc = Math.max(0, (i - iExit) / (n - 1));
 				return (0.05 + (rr0 - 0.05) * Math.pow(1 - t, 0.9)) * (1 + 0.5 * Math.exp(-tc * 9)) * (1 + 0.06 * noise1(i * 0.6));
 			});
-			branches.tube(p, rad, 8, barkCol(rr0), { uvScale: 0.6 });
+			branches.tube(p, rad, 9, barkCol(rr0), { uvScale: 0.6, shape: fluteFn(3, 0.12, 4) });
 			for (let i = 0; i < n - 1; i += 2) {
 				const j = Math.min(n - 1, i + 2);
 				if (rad[i] < 0.1) break;
