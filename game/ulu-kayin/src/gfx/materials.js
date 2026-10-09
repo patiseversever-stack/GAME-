@@ -22,7 +22,7 @@ const defs = (extra = {}) => ({ SHADOW_TAPS: TAPS, ...extra });
 // Kamera ile Zifir arasına giren dal ve yapraklar titreşimli desenle oyulur (görüş kapanmaz).
 const CUTOUT = /* glsl */ `
 uniform vec4 uFocus; // xyz odak (Zifir), w açıklık yarıçapı
-void cutout(vec3 wp) {
+void cutout(vec3 wp, float nearR) {
 	vec3 ab = uFocus.xyz - cameraPosition;
 	float L = length(ab);
 	vec3 dir = ab / max(L, 1e-3);
@@ -34,7 +34,7 @@ void cutout(vec3 wp) {
 		float rad = uFocus.w * (0.55 + 0.45 * smoothstep(0.0, 4.0, t));
 		k = smoothstep(rad, rad * 0.55, d);
 	}
-	k = max(k, smoothstep(7.0, 3.0, length(ap))); // kameraya çok yakın dal ve yaprak
+	k = max(k, smoothstep(nearR, nearR * 0.45, length(ap))); // kameraya çok yakın dal ve yaprak
 	float ign = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
 	if (k > ign) discard;
 }
@@ -88,7 +88,7 @@ uniform sampler2D uMap;
 #endif
 void main() {
 #ifdef CUTOUT
-	cutout(vW);
+	cutout(vW, 7.0);
 #endif
 	vec3 N = normalize(vN);
 	if (!gl_FrontFacing) N = -N;
@@ -188,7 +188,7 @@ varying float vDepthAO;
 void main() {
 	vec4 t = texture2D(uMap, vUv);
 	if (t.a < uAlphaCut) discard;
-	cutout(vW);
+	cutout(vW, 11.0);
 	vec3 N = normalize(vN);
 	vec3 V = normalize(cameraPosition - vW);
 	vec3 alb = t.rgb * vTint;

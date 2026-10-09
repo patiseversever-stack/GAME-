@@ -209,7 +209,7 @@ export function buildSunGlare(glowTex, G) {
 				vec3 c = uSunGlow * (t * t * t * 0.32 + streak) * uK;
 				gl_FragColor = vec4(c, 1.0);
 			}`,
-		uniforms: { uSunDir: G.uSunDir, uSunGlow: G.uSunGlow, uMap: { value: glowTex }, uSize: { value: 120 }, uK: { value: 1 } },
+		uniforms: { uSunDir: G.uSunDir, uSunGlow: G.uSunGlow, uMap: { value: glowTex }, uSize: { value: 80 }, uK: { value: 1 } },
 		transparent: true,
 		depthWrite: false,
 		blending: THREE.AdditiveBlending,

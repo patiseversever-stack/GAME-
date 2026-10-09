@@ -64,7 +64,7 @@ export class Beams {
 		scene.add(this.mesh);
 		const pts = Array.from({ length: MAXB }, () => new THREE.Vector3(0, -999, 0));
 		this.spots = glowSprites(pts, tex.glow, G, 1.2, 0xfff0c0);
-		this.glints = glowSprites(pts, tex.glow, G, 1.6, 0xfff4dc);
+		this.glints = glowSprites(pts, tex.glow, G, 1.0, 0xfff4dc);
 		this.spots.mesh.geometry.instanceCount = 0;
 		this.glints.mesh.geometry.instanceCount = 0;
 		scene.add(this.spots.mesh, this.glints.mesh);
@@ -127,11 +127,11 @@ export class Beams {
 				S[n * 4] = c.hx;
 				S[n * 4 + 1] = c.hy + 0.05;
 				S[n * 4 + 2] = c.hz;
-				S[n * 4 + 3] = c.hitT < 39 ? 1.3 * c.lit : 0;
+				S[n * 4 + 3] = c.hitT < 39 ? 1.0 * c.lit : 0;
 				Gl[n * 4] = c.cx;
 				Gl[n * 4 + 1] = c.cy;
 				Gl[n * 4 + 2] = c.cz;
-				Gl[n * 4 + 3] = 1.7 * c.lit;
+				Gl[n * 4 + 3] = 0.9 * c.lit;
 				n++;
 			}
 			if (on) {

@@ -117,6 +117,10 @@ export function crystalMaterial(G, count) {
 			varying vec3 vN; varying vec3 vW; varying vec3 vTint; varying float vIdx;
 			vec3 hue(float h) { return clamp(abs(fract(h + vec3(0.0, 0.333, 0.667)) * 6.0 - 3.0) - 1.0, 0.0, 1.0); }
 			void main() {
+				// kameraya çok yakınsa titreşimli desenle sön
+				float dc = length(vW - cameraPosition);
+				float ign = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+				if (smoothstep(6.0, 2.5, dc) > ign) discard;
 				vec3 N = normalize(vN);
 				if (!gl_FrontFacing) N = -N;
 				vec3 V = normalize(cameraPosition - vW);
@@ -126,7 +130,7 @@ export function crystalMaterial(G, count) {
 				c += hue(dot(N, V) * 1.7 + dot(N, uSunDir) * 0.6) * fr * 0.9;
 				float sp = pow(max(dot(N, normalize(uSunDir + V)), 0.0), 60.0);
 				c += uSunCol * sp * (0.4 + lit * 2.0);
-				c += vTint * vec3(1.6, 1.4, 1.1) * lit * (0.6 + 0.4 * sin(uTime * 6.0 + vIdx));
+				c += vTint * vec3(0.9, 0.8, 0.6) * lit * (0.6 + 0.4 * sin(uTime * 6.0 + vIdx));
 				gl_FragColor = finish(applyFog(c, vW), 1.0);
 			}`,
 		uniforms: { ...G, uLit: { value: new Array(Math.max(1, count)).fill(0) } },

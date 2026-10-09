@@ -29,15 +29,15 @@ export const CSS = /* css */ `
 .uk-ico svg{width:20px;height:20px;stroke:var(--ivory);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 
 /* ---- başlık ---- */
-.uk-title{justify-content:space-between;padding:calc(var(--sat) + 18px) 20px calc(var(--sab) + 30px)}
+.uk-title{justify-content:flex-start;padding:calc(var(--sat) + 18px) 20px calc(var(--sab) + 30px);background:linear-gradient(180deg,rgba(20,14,40,.45) 0%,rgba(20,14,40,0) 34%)}
 .uk-title .top{width:100%;display:flex;justify-content:space-between}
-.uk-brand{text-align:center;margin-top:3vh}
+.uk-brand{text-align:center;margin-top:1vh}
 .uk-brand .k{font-size:11px;letter-spacing:.42em;text-transform:uppercase;color:var(--gold2);opacity:.9}
 .uk-brand h1{font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(54px,15vw,92px);line-height:.95;margin-top:10px;
   background:linear-gradient(180deg,#fffaf0 0%,#ffe2a6 60%,#f0b25e 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   text-shadow:0 6px 40px rgba(255,190,110,.25)}
 .uk-brand .tag{margin-top:14px;font-family:var(--serif);font-style:italic;font-size:19px;color:var(--ivory-dim)}
-.uk-title .acts{display:flex;flex-direction:column;align-items:center;gap:12px}
+.uk-title .acts{display:flex;flex-direction:column;align-items:center;gap:12px;margin-top:auto}
 .uk-title .row{display:flex;gap:10px}
 
 /* ---- bölümler ---- */

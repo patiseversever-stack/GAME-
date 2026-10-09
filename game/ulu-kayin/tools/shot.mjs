@@ -36,6 +36,7 @@ for (const v of views) {
 			const fix = (x) => (x && x.__v3 ? new a.V3(...x.__v3) : x);
 			a[call](...args.map(fix));
 		}, [v.call, v.args || []]);
+	if (v.wait) await page.waitForTimeout(v.wait);
 	await page.screenshot({ path: join(outDir, v.name + '.png') });
 	const st = await page.evaluate(() => window.__uk.app.stats());
 	console.log(`${v.name}: ${((Date.now() - t1) / 1000).toFixed(1)} sn  çizim=${st.calls} üçgen=${st.tris} program=${st.programs}`);

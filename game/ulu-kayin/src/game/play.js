@@ -78,6 +78,7 @@ export class Game {
 		this.envDur = 1;
 		this._titleSeason = 0;
 
+		this._onStep = () => this.sfx.step();
 		this._bindInput();
 		this.ui.setToggles(this.settings);
 		this.ui.setPlayLabel(this.prog.unlocked > 0 || this.prog.intro ? 'Devam Et' : 'Başla');
@@ -173,7 +174,7 @@ export class Game {
 			this.envFrom = this.envTo = 'spring';
 			this.envT = 1;
 		} else this.envTo2('spring', 1.5);
-		this._orbit = { a: 0.6, r: 92, y: 20, ly: 30 };
+		this._orbit = { a: 0.6, r: 84, y: 16, ly: 25 };
 	}
 
 	goLevels() {
@@ -188,7 +189,7 @@ export class Game {
 		this.beams.hide();
 		this.locks.hide();
 		this.app.gov.menu = true;
-		if (!this._orbit) this._orbit = { a: 0.6, r: 92, y: 20, ly: 30 };
+		if (!this._orbit) this._orbit = { a: 0.6, r: 84, y: 16, ly: 25 };
 	}
 
 	action(a) {
@@ -631,24 +632,10 @@ export class Game {
 		else if (active && this.s >= this.s1) this._win();
 
 		// --- Zifir ve kamera (buharlaşırken ve kapıya girerken kendi animasyonu yürür)
-		if (st !== 'dying' && st !== 'gate')
-			this.zifir.update(
-			dt,
-			time,
-			{
-				x: p.x,
-				y: p.y,
-				z: p.z,
-				yaw: Math.atan2(p.tx, p.tz),
-				moving,
-				speed: moving ? Math.max(this.speed, 1.2) : 0,
-				hold: st === 'play' && (this.hold || this.keyHold),
-				burn: active ? lit : 0,
-				lit,
-				meter: this.meter,
-			},
-			() => this.sfx.step()
-		);
+		if (st !== 'dying' && st !== 'gate') {
+			const zs = this._zstate(p, moving, moving ? Math.max(this.speed, 1.2) : 0, st === 'play' && (this.hold || this.keyHold), active ? lit : 0, lit, this.meter);
+			this.zifir.update(dt, time, zs, this._onStep);
+		}
 		const rig = this.app.rig;
 		if (rig.mode === 'follow') rig.followTarget(this.zp, this._ahead);
 
@@ -695,6 +682,22 @@ export class Game {
 		this._arcOn = true;
 	}
 
+	/** Zifir'in kare durumu: her kare aynı nesne doldurulur (çöp toplayıcıya iş çıkmasın). */
+	_zstate(p, moving, speed, hold, burn, lit, meter) {
+		const z = this._zs || (this._zs = {});
+		z.x = p.x;
+		z.y = p.y;
+		z.z = p.z;
+		z.yaw = Math.atan2(p.tx, p.tz);
+		z.moving = moving;
+		z.speed = speed;
+		z.hold = hold;
+		z.burn = burn;
+		z.lit = lit;
+		z.meter = meter;
+		return z;
+	}
+
 	_commonFx(dt) {
 		this.fx.update(dt);
 		this.petals.update(dt);
@@ -706,9 +709,7 @@ export class Game {
 	_updateZifirOnly(dt, time, frozen) {
 		if (frozen) return;
 		const p = this.curve.sample(this.s, this._smp);
-		if (this.state === 'complete' || this.state === 'ending') {
-			this.zifir.update(dt, time, { x: p.x, y: p.y, z: p.z, yaw: Math.atan2(p.tx, p.tz), moving: false, speed: 0, hold: false, burn: 0, lit: 0, meter: 1 });
-		}
+		if (this.state === 'complete' || this.state === 'ending') this.zifir.update(dt, time, this._zstate(p, false, 0, false, 0, 0, 1));
 		this._commonFx(dt);
 	}
 
@@ -751,7 +752,7 @@ export class Game {
 		if (t > 10.6) this.ui.lore(null);
 		const p = this.curve.sample(this.s, this._smp);
 		this.zp.set(p.x, p.y, p.z);
-		this.zifir.update(dt, time, { x: p.x, y: p.y, z: p.z, yaw: Math.atan2(p.tx, p.tz), moving: false, speed: 0, hold: false, burn: 0, lit: 0, meter: 1 });
+		this.zifir.update(dt, time, this._zstate(p, false, 0, false, 0, 0, 1));
 		this.sunAz += dt * 0.12;
 		this.elev = 34;
 		this.app.sunAz = this.sunAz;

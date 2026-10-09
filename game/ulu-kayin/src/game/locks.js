@@ -105,14 +105,50 @@ function iceMaterial(G) {
 			void main() {
 				vec3 N = normalize(vN), V = normalize(cameraPosition - vW);
 				float fr = pow(1.0 - abs(dot(N, V)), 2.2);
-				vec3 c = vec3(0.32, 0.5, 0.72) * (skyAmbient(N) * 0.9 + 0.12) + vec3(0.7, 0.9, 1.2) * fr * 0.9;
+				// buz: derin mavi çekirdek, açık turkuaz kenar, keskin parlama
+				vec3 c = vec3(0.12, 0.26, 0.46) * (skyAmbient(N) * 1.1 + 0.08) + vec3(0.5, 0.78, 1.0) * fr * 0.8;
 				float sp = pow(max(dot(N, normalize(uSunDir + V)), 0.0), 80.0);
-				c += uSunCol * sp * 0.9;
-				c += vec3(1.4, 1.2, 0.9) * uCharge * (0.6 + 0.4 * sin(uTime * 8.0));
+				c += uSunCol * sp * 0.7;
+				// erirken içinden altın ışık sızar
+				c += vec3(0.9, 0.6, 0.3) * uCharge * (0.16 + 0.08 * sin(uTime * 8.0)) * (1.0 - fr * 0.6);
 				gl_FragColor = finish(applyFog(c, vW), 1.0);
 			}`,
 		uniforms: { ...G, uCharge: { value: 0 } },
 	});
+}
+
+/** Buz duvarı: patikanın enine dizilmiş, uçları sivri altıgen buz sarkıtları (düz yüzeyli, ışıltılı). */
+function iceShards() {
+	const pos = [];
+	const shard = (x, z, h, r, tilt, rot) => {
+		const ring = [];
+		const top = new THREE.Vector3(Math.sin(tilt) * h * 0.3, h, 0).applyAxisAngle(new THREE.Vector3(0, 1, 0), rot);
+		for (let k = 0; k < 6; k++) {
+			const a = (k / 6) * Math.PI * 2;
+			ring.push([Math.cos(a) * r, Math.sin(a) * r * 0.8]);
+		}
+		const mid = h * 0.72;
+		for (let k = 0; k < 6; k++) {
+			const [ax, az] = ring[k];
+			const [bx, bz] = ring[(k + 1) % 6];
+			const b0 = [x + ax, 0, z + az];
+			const b1 = [x + bx, 0, z + bz];
+			const m0 = [x + ax * 0.9 + top.x * 0.7, mid, z + az * 0.9 + top.z * 0.7];
+			const m1 = [x + bx * 0.9 + top.x * 0.7, mid, z + bz * 0.9 + top.z * 0.7];
+			const t = [x + top.x, h, z + top.z];
+			pos.push(...b0, ...b1, ...m1, ...b0, ...m1, ...m0, ...m0, ...m1, ...t);
+		}
+	};
+	const R = [0.31, 0.77, 0.13, 0.55, 0.92, 0.4, 0.66];
+	for (let i = 0; i < 7; i++) {
+		const x = -0.95 + (i / 6) * 1.9;
+		const h = 0.9 + R[i] * 1.1 + (i === 3 ? 0.4 : 0);
+		shard(x, (R[(i + 2) % 7] - 0.5) * 0.35, h, 0.17 + R[(i + 4) % 7] * 0.1, (R[i] - 0.5) * 0.7, R[(i + 1) % 7] * 6);
+	}
+	const g = new THREE.BufferGeometry();
+	g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+	g.computeVertexNormals();
+	return g;
 }
 
 export class Locks {
@@ -131,17 +167,7 @@ export class Locks {
 			for (const [k, [a, b]] of Object.entries(palettes)) m[k] = petalMaterial(G, a, b);
 			return m;
 		};
-		const iceGeo = new THREE.IcosahedronGeometry(1, 1);
-		const P = iceGeo.getAttribute('position');
-		for (let i = 0; i < P.count; i++) {
-			const x = P.getX(i);
-			const y = P.getY(i);
-			const z = P.getZ(i);
-			const k = 1 + 0.18 * Math.sin(x * 7 + y * 3) * Math.cos(z * 5);
-			P.setXYZ(i, x * k * 0.95, y * k * 1.05, z * k * 0.55);
-		}
-		this.iceGeo = iceGeo;
-		this.iceGeo.computeVertexNormals();
+		this.iceGeo = iceShards();
 		for (let i = 0; i < MAXL; i++) {
 			const mats = makeMats();
 			const petals = new THREE.InstancedMesh(this.petalGeo, mats.spring, PETALS);
@@ -153,7 +179,7 @@ export class Locks {
 			this.items.push({ petals, ice, mats, s: 0, charge: 0, open: 0, state: 'off', x: 0, y: 0, z: 0, tx: 0, tz: 0, sx: 0, sz: 0, kind: 'bud' });
 		}
 		const pts = Array.from({ length: MAXL }, () => new THREE.Vector3(0, -999, 0));
-		this.glow = glowSprites(pts, tex.glow, G, 1.8, 0xffe2a0);
+		this.glow = glowSprites(pts, tex.glow, G, 1.0, 0xffe2a0);
 		this.glow.mesh.geometry.instanceCount = 0;
 		scene.add(this.glow.mesh);
 		this._m = new THREE.Matrix4();
@@ -180,7 +206,7 @@ export class Locks {
 			it.kind = season === 'winter' ? 'ice' : 'bud';
 			if (it.kind === 'ice') {
 				it.ice.visible = true;
-				it.ice.position.set(p.x, p.y + 0.85, p.z);
+				it.ice.position.set(p.x, p.y - 0.02, p.z);
 				it.ice.rotation.set(0, Math.atan2(p.tx, p.tz), 0);
 				it.ice.scale.setScalar(1);
 			} else {
@@ -263,7 +289,7 @@ export class Locks {
 			A[i * 4] = it.x;
 			A[i * 4 + 1] = it.y + 1.1;
 			A[i * 4 + 2] = it.z;
-			A[i * 4 + 3] = it.state === 'open' ? 0 : 0.6 + it.charge * 1.6;
+			A[i * 4 + 3] = it.state === 'open' ? 0 : 0.25 + it.charge * 1.3;
 			i++;
 		}
 		this.glow.attr.needsUpdate = true;

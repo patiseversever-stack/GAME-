@@ -259,12 +259,12 @@ export function buildTree(curve, tier) {
 		const wTip = leafType === 3 ? 0.4 : 0.75;
 		const opts = addBranch(over, 0.5, 0.08, tip, 0, wTip, 7);
 		// halatlar: köprünün uzak kısmını yukarıdaki dala asar (iki yandan)
-		for (let k = 0; k < 4; k++) {
-			const s = lerp(s0, s1, 0.18 + k * 0.21);
+		for (let k = 0; k < 2; k++) {
+			const s = lerp(s0, s1, 0.32 + k * 0.36);
 			curve.sample(s, tmp);
 			const off = Math.hypot(tmp.x, tmp.z) - trunkRadius(tmp.y);
 			if (off < 3.0) continue;
-			const p = opts[Math.round(lerp(0.45, 0.9, k / 3) * (opts.length - 1))];
+			const p = opts[Math.round(lerp(0.55, 0.9, k) * (opts.length - 1))];
 			for (const side of [-1, 1]) {
 				const a = V3(tmp.x + tmp.sx * 0.85 * side, tmp.y + 0.72, tmp.z + tmp.sz * 0.85 * side);
 				extras.tube([a, p.clone().add(V3(0, -0.15, 0))], [0.026, 0.026], 4, () => [0.62, 0.5, 0.36, 1], { capEnd: false });
