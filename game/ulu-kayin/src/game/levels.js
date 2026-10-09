@@ -32,6 +32,7 @@ export const DESIGN = [
 		wind: 0.28,
 		elev: [34, 30],
 		sunStart: Math.PI,
+		burn: 0.9,
 		drops: [
 			[0.22, 0.4],
 			[0.5, 0.0],
@@ -49,6 +50,7 @@ export const DESIGN = [
 		wind: 0.25,
 		elev: [62, 56],
 		sunStart: Math.PI,
+		burn: 1.0,
 		drops: [
 			[0.18, 0.5],
 			[0.47, 0.2],
@@ -69,6 +71,7 @@ export const DESIGN = [
 		wind: 0.3,
 		elev: [56, 48],
 		sunStart: Math.PI,
+		burn: 1.05,
 		drops: [
 			[0.2, -0.3],
 			[0.5, 0.3],
@@ -90,6 +93,7 @@ export const DESIGN = [
 		wind: 0.3,
 		elev: [30, 24],
 		sunStart: Math.PI,
+		burn: 1.1,
 		drops: [
 			[0.16, 0.4],
 			[0.36, -0.3],
@@ -111,6 +115,7 @@ export const DESIGN = [
 		wind: 0.38,
 		elev: [24, 18],
 		sunStart: Math.PI,
+		burn: 1.15,
 		// damlalar kilitlerin hemen ardına yığılmaz: biri risk (kilidi çabuk aç), gerisi adil
 		drops: [
 			[0.16, 0.3],
@@ -134,6 +139,7 @@ export const DESIGN = [
 		wind: 0.18,
 		elev: [16, 11],
 		sunStart: Math.PI,
+		burn: 1.2,
 		drops: [
 			[0.2, 0.45],
 			[0.4, -0.2],
@@ -155,6 +161,7 @@ export const DESIGN = [
 		wind: 0.15,
 		elev: [10, 4],
 		sunStart: Math.PI,
+		burn: 1.2,
 		drops: [
 			[0.15, 0.4],
 			[0.35, -0.3],
