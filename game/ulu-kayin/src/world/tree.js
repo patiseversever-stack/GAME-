@@ -56,7 +56,7 @@ export function trunkSurfaceR(th, y) {
 			crown += Math.exp(-(d * d) / 0.07);
 		}
 		// kolların arası içe çöker, kollar dışa taşar: gövde çatallanır
-		crown = k * (crown * 1.35 - 0.55) - smoothstep(53.5, 55.8, y) * 1.1;
+		crown = k * (crown * 1.35 - 0.55) - smoothstep(53.2, 55.6, y) * 1.8;
 	}
 	return R * fl + bt + crown;
 }
@@ -294,7 +294,7 @@ export function buildTree(curve, tier) {
 			polar(L, az + 0.26, TRUNK_TOP + up * 0.8),
 		];
 		const tip = ctrl[4];
-		const pts = addBranch(ctrl, 1.3, 0.12, tip, 0, 0.9, hi ? 10 : 8, { fromTrunk: false, collar: 0.1, taper: 1.2 });
+		const pts = addBranch(ctrl, 1.75, 0.12, tip, 0, 0.9, hi ? 10 : 8, { fromTrunk: false, collar: 0.08, taper: 1.0 });
 		// her koldan ikincil dallar ve bol çiçek
 		for (let k = 0; k < 5; k++) {
 			const t = 0.32 + k * 0.15;
@@ -622,13 +622,17 @@ export function buildTree(curve, tier) {
 	};
 	// büyük gözler
 	let nEyes = 0;
-	for (let tries = 0; tries < 400 && nEyes < (hi ? 34 : 26); tries++) {
+	const eyes = [];
+	for (let tries = 0; tries < 600 && nEyes < (hi ? 30 : 24); tries++) {
 		const th = VR() * TAU;
-		const y = VR.range(4, 49.5);
+		const y = VR.range(4, 46.5);
 		if (pathNear(th, y, 0.4)) continue;
 		let clash = false;
-		for (const b of bases) if (Math.abs(b.y - y) < 1.4 && Math.abs(Math.atan2(Math.sin(th - b.az), Math.cos(th - b.az))) < 0.5) clash = true;
+		for (const b of bases) if (Math.abs(b.y - y) < 1.6 && Math.abs(Math.atan2(Math.sin(th - b.az), Math.cos(th - b.az))) < 0.6) clash = true;
+		// iki göz yan yana gelmesin (yüz gibi görünmesin)
+		for (const e of eyes) if (Math.abs(e.y - y) < 2.2 && Math.abs(Math.atan2(Math.sin(th - e.th), Math.cos(th - e.th))) < 1.0) clash = true;
 		if (clash) continue;
+		eyes.push({ th, y });
 		const w = VR.range(0.45, 0.95) * (VR() < 0.2 ? 1.5 : 1);
 		decalLens(th, y, w, w * VR.range(0.3, 0.42), DARK, 0.035, 0.9);
 		if (w > 0.6) decalLens(th, y + w * 0.02, w * 0.42, w * 0.1, KNOT, 0.05, 0.6);
