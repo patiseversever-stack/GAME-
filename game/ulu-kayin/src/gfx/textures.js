@@ -34,9 +34,34 @@ function finishTex(c, { srgb = true, repeat = true, aniso = 1, mips = true } = {
 	return t;
 }
 
+/** '#rrggbb' + saydamlık → canvas rengi. */
+function rgba(hex, a) {
+	const n = parseInt(hex.slice(1), 16);
+	return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${a})`;
+}
+
+/** İki rengi karıştırır ('#rrggbb'). */
+function mixHex(a, b, t) {
+	const A = parseInt(a.slice(1), 16);
+	const B = parseInt(b.slice(1), 16);
+	const ch = (s) => Math.round(((A >> s) & 255) * (1 - t) + ((B >> s) & 255) * t);
+	return `rgb(${ch(16)},${ch(8)},${ch(0)})`;
+}
+
+/** Uçları sivri yatay mercek (kovucuk, kağıt şerit, göz). */
+function lensPath(g, x, y, len, th, bend = 0) {
+	g.beginPath();
+	g.moveTo(x - len / 2, y);
+	g.quadraticCurveTo(x, y - th + bend, x + len / 2, y);
+	g.quadraticCurveTo(x, y + th * 0.85 + bend, x - len / 2, y);
+	g.closePath();
+}
+
 // ---------------------------------------------------------------------------------------------
-// Ak kayın kabuğu: gümüşi beyaz zemin, yatay kovucuklar (lentisel), siyah elmas izler,
-// soyulmuş kağıt katmanları ve altından görünen pembe-turuncu iç kabuk.
+// Ak kayın kabuğu: resimsi, büyük biçimler. Sıcak fildişi zemin, dalgalı yumuşak yatay kuşaklar,
+// parlak soyulmuş kağıt şeritleri (altlarında ince gölge), seyrek ama belirgin koyu kovucuklar.
+// Büyük koyu "gözler" dokuda değil, gövde geometrisinde tek tek yerleştirilir (tekrar etmesin).
+// Döşenir: yatayda gövdenin çevresi boyunca, dikeyde yükseklik boyunca.
 // ---------------------------------------------------------------------------------------------
 export function barkTexture(size, aniso) {
 	const W = size;
@@ -45,322 +70,392 @@ export function barkTexture(size, aniso) {
 	const R = rng(7);
 	const k = W / 512;
 
-	const base = g.createLinearGradient(0, 0, W, 0);
-	base.addColorStop(0, '#e8e3da');
-	base.addColorStop(0.5, '#efebe3');
-	base.addColorStop(1, '#e8e3da');
-	g.fillStyle = base;
+	g.fillStyle = '#ece5d8';
 	g.fillRect(0, 0, W, H);
 
-	// geniş, yumuşak ton dalgalanmaları
-	const tones = ['#f6f3ed', '#ddd6cc', '#e9e1d6', '#efe2dc', '#e2e2e4', '#f2ede2'];
-	for (let i = 0; i < 70; i++) {
-		const x = R() * W;
+	// 1) dalgalı, yumuşak kenarlı yatay kuşaklar (tam genişlik: yatayda dikişsiz)
+	const bandCols = ['#f8f3ea', '#e0dbd3', '#f2e6d6', '#dbd7d2', '#f5eee2', '#e9ddcc', '#e6e2dc'];
+	for (let i = 0; i < 16; i++) {
 		const y = R() * H;
-		const rx = R.range(30, 120) * k;
-		const ry = rx * R.range(0.12, 0.4);
-		g.globalAlpha = R.range(0.18, 0.4);
-		g.fillStyle = R.pick(tones);
-		wrapDraw(W, H, x, y, rx, (xx, yy) => {
+		const h = R.range(10, 54) * k;
+		const col = R.pick(bandCols);
+		const ph1 = R() * TAU;
+		const ph2 = R() * TAU;
+		const n1 = 1 + ((R() * 3) | 0);
+		const n2 = 1 + ((R() * 3) | 0);
+		const amp = R.range(2, 9) * k;
+		const a = R.range(0.4, 0.85);
+		for (const dy of [-H, 0, H]) {
+			const y0 = y + dy;
+			if (y0 + h + amp < 0 || y0 - h - amp > H) continue;
+			const gr = g.createLinearGradient(0, y0 - h / 2 - amp, 0, y0 + h / 2 + amp);
+			gr.addColorStop(0, rgba(col, 0));
+			gr.addColorStop(0.3, rgba(col, a));
+			gr.addColorStop(0.7, rgba(col, a));
+			gr.addColorStop(1, rgba(col, 0));
+			g.fillStyle = gr;
 			g.beginPath();
-			g.ellipse(xx, yy, rx, ry, 0, 0, TAU);
+			for (let x = 0; x <= W + 0.1; x += 8 * k) {
+				const yy = y0 - h / 2 - amp + Math.sin((x / W) * TAU * n1 + ph1) * amp;
+				if (x === 0) g.moveTo(x, yy);
+				else g.lineTo(x, yy);
+			}
+			for (let x = W; x >= -0.1; x -= 8 * k) g.lineTo(x, y0 + h / 2 + amp + Math.sin((x / W) * TAU * n2 + ph2) * amp);
+			g.closePath();
 			g.fill();
-		});
-	}
-
-	// ince dikey lif çizgileri
-	g.globalAlpha = 0.06;
-	g.strokeStyle = '#8c8076';
-	g.lineWidth = 1 * k;
-	for (let i = 0; i < 90; i++) {
-		const x = R() * W;
-		const y = R() * H;
-		const len = R.range(20, 90) * k;
-		wrapDraw(W, H, x, y, len, (xx, yy) => {
-			g.beginPath();
-			g.moveTo(xx, yy);
-			g.lineTo(xx + R.range(-2, 2) * k, yy + len);
-			g.stroke();
-		});
-	}
-
-	// soyulmuş kağıt katmanları: açık renkli yatay şeritler, altta ince gölge
-	for (let i = 0; i < 26; i++) {
-		const x = R() * W;
-		const y = R() * H;
-		const w = R.range(40, 160) * k;
-		const h = R.range(3, 9) * k;
-		wrapDraw(W, H, x, y, w, (xx, yy) => {
-			g.globalAlpha = 0.5;
-			g.fillStyle = '#fbf9f4';
-			g.beginPath();
-			g.ellipse(xx, yy, w / 2, h / 2, 0, 0, TAU);
-			g.fill();
-			g.globalAlpha = 0.18;
-			g.fillStyle = '#7d6e66';
-			g.beginPath();
-			g.ellipse(xx, yy + h * 0.55, w / 2.1, h / 4, 0, 0, TAU);
-			g.fill();
-		});
-	}
-
-	// soyulmuş yerlerden görünen sıcak iç kabuk
-	for (let i = 0; i < 9; i++) {
-		const x = R() * W;
-		const y = R() * H;
-		const w = R.range(18, 50) * k;
-		const h = R.range(5, 12) * k;
-		wrapDraw(W, H, x, y, w, (xx, yy) => {
-			g.globalAlpha = 0.55;
-			g.fillStyle = R() < 0.5 ? '#d39a7c' : '#c98468';
-			g.beginPath();
-			g.ellipse(xx, yy, w / 2, h / 2, 0, 0, TAU);
-			g.fill();
-			g.globalAlpha = 0.7;
-			g.strokeStyle = '#f7f1e8';
-			g.lineWidth = 1.5 * k;
-			g.stroke();
-		});
-	}
-
-	// yatay kovucuklar (lentisel): sıralar halinde koyu kısa çizgiler
-	for (let row = 0; row < 34; row++) {
-		const y0 = R() * H;
-		const n = R.range(3, 9) | 0;
-		let x = R() * W;
-		for (let i = 0; i < n; i++) {
-			const len = R.range(5, 34) * k;
-			const th = R.range(1.2, 3.2) * k;
-			const yy0 = y0 + R.range(-4, 4) * k;
-			wrapDraw(W, H, x, yy0, len, (xx, yy) => {
-				g.globalAlpha = R.range(0.55, 0.9);
-				g.fillStyle = R() < 0.7 ? '#3b3330' : '#5a4a44';
-				g.beginPath();
-				g.ellipse(xx, yy, len / 2, th / 2, 0, 0, TAU);
-				g.fill();
-			});
-			x += len + R.range(4, 30) * k;
 		}
 	}
 
-	// siyah elmas izler (dal izleri): kenarları pürüzlü koyu yamalar
-	for (let i = 0; i < 11; i++) {
+	// 2) çok hafif dikey lif dokusu (yakında belli, uzakta kaybolur)
+	g.globalAlpha = 0.035;
+	g.strokeStyle = '#6d6058';
+	g.lineWidth = 1.2 * k;
+	for (let i = 0; i < 60; i++) {
 		const x = R() * W;
 		const y = R() * H;
-		const w = R.range(18, 64) * k;
-		const h = w * R.range(0.35, 0.8);
-		wrapDraw(W, H, x, y, w, (xx, yy) => {
-			g.globalAlpha = 0.85;
-			g.fillStyle = '#1f1b1a';
+		const len = R.range(30, 110) * k;
+		wrapDraw(W, H, x, y, len, (xx, yy) => {
 			g.beginPath();
-			const steps = 18;
-			for (let s = 0; s <= steps; s++) {
-				const a = (s / steps) * TAU;
-				const rr = 1 + R.range(-0.25, 0.2);
-				// elmas biçimi: yatayda sivri
-				const ex = Math.cos(a) * w * 0.5 * rr;
-				const ey = Math.sin(a) * h * 0.5 * rr * (0.55 + 0.45 * Math.abs(Math.cos(a)));
-				if (s === 0) g.moveTo(xx + ex, yy + ey);
-				else g.lineTo(xx + ex, yy + ey);
-			}
-			g.closePath();
+			g.moveTo(xx, yy);
+			g.quadraticCurveTo(xx + R.range(-3, 3) * k, yy + len * 0.5, xx + R.range(-2, 2) * k, yy + len);
+			g.stroke();
+		});
+	}
+	g.globalAlpha = 1;
+
+	// 3) soyulmuş kağıt şeritleri: parlak, uzun; altında ince sıcak gölge, bazen kıvrık uç
+	for (let i = 0; i < 18; i++) {
+		const x = R() * W;
+		const y = R() * H;
+		const len = R.range(70, 230) * k;
+		const th = R.range(5, 12) * k;
+		const curl = R() < 0.4;
+		wrapDraw(W, H, x, y, len, (xx, yy) => {
+			g.fillStyle = rgba('#8d7a6c', 0.22);
+			lensPath(g, xx + 3 * k, yy + th * 0.75, len * 0.92, th * 0.55);
 			g.fill();
-			g.globalAlpha = 0.25;
-			g.strokeStyle = '#6e625c';
-			g.lineWidth = 3 * k;
+			g.fillStyle = rgba('#fdfbf6', 0.85);
+			lensPath(g, xx, yy, len, th);
+			g.fill();
+			if (curl) {
+				// kıvrılmış kağıt ucu: küçük sıcak iç kabuk + koyu kenar
+				const cx = xx + len * 0.42;
+				g.fillStyle = rgba('#d9a387', 0.8);
+				g.beginPath();
+				g.ellipse(cx, yy + th * 0.3, th * 1.1, th * 0.75, 0, 0, TAU);
+				g.fill();
+				g.fillStyle = rgba('#fffaf2', 0.95);
+				g.beginPath();
+				g.ellipse(cx - th * 0.3, yy - th * 0.2, th * 0.9, th * 0.55, -0.3, 0, TAU);
+				g.fill();
+			}
+		});
+	}
+
+	// 4) iç kabuğun göründüğü birkaç sıcak yama
+	for (let i = 0; i < 6; i++) {
+		const x = R() * W;
+		const y = R() * H;
+		const len = R.range(26, 60) * k;
+		const th = R.range(7, 13) * k;
+		wrapDraw(W, H, x, y, len, (xx, yy) => {
+			g.fillStyle = rgba(R() < 0.5 ? '#d8a086' : '#cf8f74', 0.7);
+			lensPath(g, xx, yy, len, th);
+			g.fill();
+			g.strokeStyle = rgba('#fbf6ee', 0.9);
+			g.lineWidth = 2 * k;
 			g.stroke();
 		});
 	}
 
-	g.globalAlpha = 1;
+	// 5) kovucuklar (lentisel): sıralar halinde, az ama belirgin, uçları sivri koyu çizgiler
+	const lentCols = ['#3a312d', '#463b36', '#54463f', '#2f2825'];
+	for (let row = 0; row < 24; row++) {
+		const y0 = R() * H;
+		const n = 1 + ((R() * 3.2) | 0);
+		let x = R() * W;
+		for (let i = 0; i < n; i++) {
+			const len = R.range(14, 64) * k;
+			const th = R.range(2.6, 6) * k;
+			const yy0 = y0 + R.range(-3, 3) * k;
+			const col = R.pick(lentCols);
+			const a = R.range(0.6, 0.88);
+			const bend = R.range(-1.5, 1.5) * k;
+			wrapDraw(W, H, x, yy0, len, (xx, yy) => {
+				// açık alt dudak: kabuğun kabarıklığı
+				g.fillStyle = rgba('#fbf7f0', 0.6);
+				lensPath(g, xx, yy + th * 0.55, len * 0.9, th * 0.5);
+				g.fill();
+				g.fillStyle = rgba(col, a);
+				lensPath(g, xx, yy, len, th, bend);
+				g.fill();
+			});
+			x += len + R.range(10, 70) * k;
+		}
+	}
+
+	// 6) küçük koyu elmas izler (dalların dokusunda da kayın kimliği kalsın)
+	for (let i = 0; i < 3; i++) {
+		const x = R() * W;
+		const y = R() * H;
+		const len = R.range(40, 70) * k;
+		const th = len * R.range(0.32, 0.45);
+		wrapDraw(W, H, x, y, len, (xx, yy) => {
+			g.fillStyle = rgba('#2a2321', 0.88);
+			lensPath(g, xx, yy, len, th * 2);
+			g.fill();
+			g.fillStyle = rgba('#6e5d54', 0.6);
+			lensPath(g, xx, yy - th * 0.1, len * 0.45, th * 0.5);
+			g.fill();
+		});
+	}
+
 	return finishTex(c, { aniso });
 }
 
 // ---------------------------------------------------------------------------------------------
-// Patika tahtaları: bal rengi tahtalar, damar çizgileri, aralarda koyu ek yerleri, çiviler.
-// u: yürüme yönü (döşenir), v: patika genişliği.
+// Patika tahtaları: dört ayrı tahta deseni üst üste (her tahta geometride ayrı kutudur, kendi
+// desenini seçer). u: tahtanın boyu (patikanın enine), v: tahtanın eni (yürüme yönü).
+// Açık, sıcak sedir-bal tonları; uzun yumuşak damarlar, kenarda pah ışığı, uçlarda çivi.
 // ---------------------------------------------------------------------------------------------
 export function plankTexture(w, h, aniso) {
 	const [c, g] = canvas(w, h);
 	const R = rng(11);
 	const k = w / 512;
-	g.fillStyle = '#b07c50';
-	g.fillRect(0, 0, w, h);
-	const planks = 8;
-	const pw = w / planks;
-	const woods = ['#d6a473', '#c99563', '#deb07c', '#cc9a66', '#d3a06c', '#c08c5c'];
-	for (let i = 0; i < planks; i++) {
-		const x0 = i * pw;
-		g.fillStyle = R.pick(woods);
-		g.fillRect(x0 + 1.5 * k, 0, pw - 3 * k, h);
-		// uçtan uca hafif ton geçişi
-		const gr = g.createLinearGradient(0, 0, 0, h);
-		gr.addColorStop(0, 'rgba(60,30,10,0.18)');
-		gr.addColorStop(0.15, 'rgba(255,230,190,0.06)');
-		gr.addColorStop(0.85, 'rgba(255,230,190,0.04)');
-		gr.addColorStop(1, 'rgba(60,30,10,0.22)');
-		g.fillStyle = gr;
-		g.fillRect(x0, 0, pw, h);
-		// damarlar: tahta boyunca (v yönünde) dalgalı ince çizgiler
-		for (let l = 0; l < 9; l++) {
-			const xx = x0 + R.range(4, pw - 4) * 1;
-			g.globalAlpha = R.range(0.12, 0.3);
-			g.strokeStyle = R() < 0.5 ? '#6e4426' : '#d9a875';
-			g.lineWidth = R.range(0.8, 2) * k;
+	const N = 4;
+	const bh = h / N;
+	const woods = [
+		['#e8c08a', '#d9a96f', '#c48d58'],
+		['#efc994', '#deb07a', '#c9945f'],
+		['#e2b47c', '#d3a067', '#bb8551'],
+		['#ecc390', '#dcaa72', '#c79059'],
+	];
+	for (let b = 0; b < N; b++) {
+		const y0 = b * bh;
+		const [lt, md, dk] = woods[b];
+		// enine yumuşak geçiş: orta açık, uçlar hafif koyu (yıpranma)
+		const gx = g.createLinearGradient(0, 0, w, 0);
+		gx.addColorStop(0, dk);
+		gx.addColorStop(0.08, md);
+		gx.addColorStop(0.35, lt);
+		gx.addColorStop(0.65, md);
+		gx.addColorStop(0.92, lt);
+		gx.addColorStop(1, dk);
+		g.fillStyle = gx;
+		g.fillRect(0, y0, w, bh);
+		// boyuna damarlar: uzun, yumuşak, az
+		for (let l = 0; l < 7; l++) {
+			const yy = y0 + R.range(0.15, 0.85) * bh;
+			g.strokeStyle = rgba(R() < 0.6 ? '#9c6a3e' : '#f6dcb0', R.range(0.18, 0.34));
+			g.lineWidth = R.range(1, 2.4) * k;
 			g.beginPath();
-			for (let y = 0; y <= h; y += 8 * k) {
-				const off = Math.sin(y * 0.03 / k + l * 1.7 + i) * 2.2 * k;
-				if (y === 0) g.moveTo(xx + off, y);
-				else g.lineTo(xx + off, y);
+			const ph = R() * TAU;
+			const fr = R.range(1.5, 3.5);
+			for (let x = 0; x <= w; x += 8 * k) {
+				const off = Math.sin((x / w) * TAU * fr + ph) * bh * 0.06;
+				if (x === 0) g.moveTo(x, yy + off);
+				else g.lineTo(x, yy + off);
 			}
 			g.stroke();
 		}
-		// budak
-		if (R() < 0.45) {
-			const kx = x0 + R.range(8, pw - 8);
-			const ky = R.range(0.2, 0.8) * h;
-			g.globalAlpha = 0.5;
-			g.fillStyle = '#5c381e';
+		// budak: damarların etrafından dolandığı koyu göz
+		if (b % 2 === 0) {
+			const kx = R.range(0.25, 0.75) * w;
+			const ky = y0 + bh * R.range(0.35, 0.65);
+			g.fillStyle = rgba('#8a5a33', 0.55);
 			g.beginPath();
-			g.ellipse(kx, ky, 3 * k, 7 * k, 0, 0, TAU);
+			g.ellipse(kx, ky, 11 * k, bh * 0.2, 0, 0, TAU);
+			g.fill();
+			g.fillStyle = rgba('#5c3a20', 0.7);
+			g.beginPath();
+			g.ellipse(kx, ky, 5 * k, bh * 0.1, 0, 0, TAU);
 			g.fill();
 		}
-		// çiviler
-		g.globalAlpha = 0.8;
-		g.fillStyle = '#3a2a22';
-		for (const yy of [h * 0.12, h * 0.88]) {
-			g.beginPath();
-			g.arc(x0 + pw * 0.5, yy, 2.2 * k, 0, TAU);
-			g.fill();
+		// pah: üst kenarda ışık, alt kenarda koyu çizgi (tahta kenarı yuvarlatılmış gibi)
+		const gy = g.createLinearGradient(0, y0, 0, y0 + bh);
+		gy.addColorStop(0, 'rgba(255,240,210,0.55)');
+		gy.addColorStop(0.1, 'rgba(255,240,210,0.0)');
+		gy.addColorStop(0.86, 'rgba(70,40,20,0.0)');
+		gy.addColorStop(1, 'rgba(70,40,20,0.5)');
+		g.fillStyle = gy;
+		g.fillRect(0, y0, w, bh);
+		// çiviler: iki uçta ikişer
+		for (const xx of [0.06, 0.94]) {
+			for (const f of [0.32, 0.68]) {
+				g.fillStyle = 'rgba(60,40,30,0.85)';
+				g.beginPath();
+				g.arc(xx * w, y0 + bh * f, 2.4 * k, 0, TAU);
+				g.fill();
+				g.fillStyle = 'rgba(255,235,200,0.5)';
+				g.beginPath();
+				g.arc(xx * w - 0.7 * k, y0 + bh * f - 0.7 * k, 0.9 * k, 0, TAU);
+				g.fill();
+			}
 		}
-		g.globalAlpha = 1;
 	}
-	// tahta araları
-	g.fillStyle = '#4a2e1c';
-	for (let i = 0; i <= planks; i++) g.fillRect(i * pw - 1.6 * k, 0, 3.2 * k, h);
-	// kenarlarda aşınma
-	const edge = g.createLinearGradient(0, 0, 0, h);
-	edge.addColorStop(0, 'rgba(40,20,8,0.35)');
-	edge.addColorStop(0.06, 'rgba(40,20,8,0)');
-	edge.addColorStop(0.94, 'rgba(40,20,8,0)');
-	edge.addColorStop(1, 'rgba(40,20,8,0.35)');
-	g.fillStyle = edge;
-	g.fillRect(0, 0, w, h);
-	return finishTex(c, { aniso });
+	return finishTex(c, { aniso, repeat: false });
 }
 
 // ---------------------------------------------------------------------------------------------
 // Yaprak atlası (2×2): 0 kiraz çiçeği, 1 yaz yaprağı, 2 güz yaprağı, 3 kar topağı.
-// Her hücre yuvarlak bir küme; merkezde yoğun, kenarda seyrek ki kartlar üst üste
-// binince doğal, kabarık bir taç oluşsun.
+// Her hücre dolgun, resimsi bir öbek: içi dolu (kartlar üst üste binince delik/kumlanma olmasın),
+// kenarı yaprak biçimli tırtıklı; üstü açık ve sıcak, altı koyu ve serin (yumuşak değer geçişi).
+// Kartlar neredeyse dik durur (dönüş ±20°), bu yüzden ışık geçişi her kartta yukarıdan aşağıya.
 // ---------------------------------------------------------------------------------------------
 export function leafAtlas(size) {
 	const [c, g] = canvas(size, size);
 	const cell = size / 2;
 	const R = rng(23);
+	const k = cell / 256;
 
-	const leaf = (x, y, len, wid, ang, fill, vein) => {
+	// yaprak: sivri uçlu badem; bir yarısı biraz açık (orta damar ışığı)
+	const leaf = (x, y, len, wid, ang, fill, light) => {
 		g.save();
 		g.translate(x, y);
 		g.rotate(ang);
 		g.fillStyle = fill;
 		g.beginPath();
 		g.moveTo(0, -len * 0.5);
-		g.quadraticCurveTo(wid, -len * 0.1, 0, len * 0.5);
-		g.quadraticCurveTo(-wid, -len * 0.1, 0, -len * 0.5);
+		g.bezierCurveTo(wid * 0.75, -len * 0.3, wid * 0.62, len * 0.22, 0, len * 0.5);
+		g.bezierCurveTo(-wid * 0.62, len * 0.22, -wid * 0.75, -len * 0.3, 0, -len * 0.5);
 		g.fill();
-		if (vein) {
-			g.strokeStyle = vein;
-			g.lineWidth = Math.max(0.6, wid * 0.08);
+		if (light) {
+			g.fillStyle = light;
 			g.beginPath();
-			g.moveTo(0, -len * 0.42);
-			g.lineTo(0, len * 0.42);
-			g.stroke();
+			g.moveTo(0, -len * 0.46);
+			g.bezierCurveTo(wid * 0.62, -len * 0.28, wid * 0.5, len * 0.2, 0, len * 0.44);
+			g.closePath();
+			g.fill();
 		}
 		g.restore();
 	};
 
-	const scatter = (cx, cy, n, fn) => {
+	// öbek yerleşimi: kenara yakın yapraklar dışa bakar (tırtıklı siluet), içtekiler serbest
+	const clumpPts = (n, rad) => {
+		const P = [];
 		for (let i = 0; i < n; i++) {
 			const a = R() * TAU;
-			const rr = Math.sqrt(R()) * cell * 0.4;
-			const x = cx + Math.cos(a) * rr;
-			const y = cy + Math.sin(a) * rr * 0.92;
-			// küme üstü daha açık: yukarıdan ışık alan yapraklar
-			const up = 1 - (y - (cy - cell * 0.4)) / (cell * 0.8);
-			fn(x, y, up, rr / (cell * 0.4));
+			const rr = Math.pow(R(), 0.6) * rad;
+			P.push({ a, rr, x: Math.cos(a) * rr, y: Math.sin(a) * rr * 0.9 });
+		}
+		// aşağıdan yukarı çiz: üstteki (açık) yapraklar en üstte kalsın
+		P.sort((p, q) => q.y - p.y);
+		return P;
+	};
+	// dikey değer: 0 üst, 1 alt
+	const vy = (y, rad) => Math.min(1, Math.max(0, (y / rad) * 0.5 + 0.5));
+
+	// içi dolu gölge çekirdeği (birkaç örtüşen daire)
+	const core = (cx, cy, rad, top, bot) => {
+		const gr = g.createLinearGradient(0, cy - rad, 0, cy + rad);
+		gr.addColorStop(0, top);
+		gr.addColorStop(1, bot);
+		g.fillStyle = gr;
+		for (let i = 0; i < 9; i++) {
+			const a = (i / 9) * TAU + R() * 0.4;
+			const d = i === 0 ? 0 : rad * R.range(0.25, 0.5);
+			g.beginPath();
+			g.arc(cx + Math.cos(a) * d, cy + Math.sin(a) * d * 0.9, rad * R.range(0.42, 0.58), 0, TAU);
+			g.fill();
 		}
 	};
-	const k = cell / 256;
 
-	// 0) kiraz çiçekleri: beş taçyapraklı pembe-beyaz çiçekler + birkaç taze yaprak
+	const leafyCell = (cx, cy, pal, n, lenR) => {
+		const rad = cell * 0.36;
+		core(cx, cy, rad * 0.78, pal.coreTop, pal.coreBot);
+		for (const p of clumpPts(n, rad)) {
+			const t = vy(p.y, rad);
+			const edge = p.rr / rad;
+			// kenardakiler dışa, içtekiler hafif aşağı sarkık
+			const ang = edge > 0.55 ? p.a + Math.PI / 2 + R.range(-0.35, 0.35) : R.range(-0.9, 0.9) + Math.PI;
+			const len = R.range(lenR[0], lenR[1]) * k;
+			const col = pal.ramp(t, R());
+			leaf(cx + p.x, cy + p.y, len, len * R.range(0.42, 0.52), ang, col, pal.hi(t));
+		}
+	};
+
+	const ramp3 = (a, b, c2) => (t, r) => {
+		const j = (r - 0.5) * 0.22;
+		const tt = Math.min(1, Math.max(0, t + j));
+		return tt < 0.5 ? mixHex(a, b, tt * 2) : mixHex(b, c2, (tt - 0.5) * 2);
+	};
+
+	// 0) kiraz çiçeği: beş taçyapraklı iri çiçekler; üstte neredeyse beyaz, altta gül-mor
 	{
 		const cx = cell * 0.5;
 		const cy = cell * 0.5;
-		scatter(cx, cy, 40, (x, y, up) => {
-			leaf(x, y, R.range(20, 30) * k, R.range(7, 10) * k, R() * TAU, up > 0.5 ? '#9fc56a' : '#76a24e', null);
-		});
-		const pinks = ['#ffd3e2', '#ffc2d6', '#ffe6ee', '#f7a9c4', '#ffdbe6'];
-		scatter(cx, cy, 120, (x, y, up) => {
-			const r = R.range(8, 13) * k;
-			const col = R.pick(pinks);
+		const rad = cell * 0.36;
+		core(cx, cy, rad * 0.8, '#f4c6d6', '#b9789c');
+		// kenarda birkaç taze yaprak
+		for (let i = 0; i < 12; i++) {
+			const a = R() * TAU;
+			const rr = rad * R.range(0.72, 0.95);
+			const x = cx + Math.cos(a) * rr;
+			const y = cy + Math.sin(a) * rr * 0.9;
+			const t = vy(y - cy, rad);
+			leaf(x, y, R.range(30, 42) * k, R.range(13, 17) * k, a + Math.PI / 2, mixHex('#a6cf6c', '#5e8f45', t), 'rgba(230,255,190,0.25)');
+		}
+		const flower = (x, y, r, t) => {
 			const a0 = R() * TAU;
-			g.fillStyle = col;
+			const petal = mixHex('#fff4f8', '#ffc3d8', Math.min(1, t * 1.3));
+			const petal2 = mixHex('#ffc3d8', '#d98aae', Math.max(0, t * 1.4 - 0.4));
+			const col = t < 0.55 ? petal : petal2;
+			const edge = mixHex('#ffd7e5', '#c06f98', t);
 			for (let p = 0; p < 5; p++) {
 				const a = a0 + (p / 5) * TAU;
+				g.fillStyle = edge;
 				g.beginPath();
-				g.ellipse(x + Math.cos(a) * r * 0.55, y + Math.sin(a) * r * 0.55, r * 0.55, r * 0.38, a, 0, TAU);
+				g.ellipse(x + Math.cos(a) * r * 0.56, y + Math.sin(a) * r * 0.56, r * 0.56, r * 0.42, a, 0, TAU);
+				g.fill();
+				g.fillStyle = col;
+				g.beginPath();
+				g.ellipse(x + Math.cos(a) * r * 0.5, y + Math.sin(a) * r * 0.5, r * 0.46, r * 0.34, a, 0, TAU);
 				g.fill();
 			}
-			g.fillStyle = up > 0.5 ? '#fff3c8' : '#e88aa8';
+			g.fillStyle = t < 0.5 ? '#f7d26a' : '#e2789f';
 			g.beginPath();
-			g.arc(x, y, r * 0.22, 0, TAU);
+			g.arc(x, y, r * 0.2, 0, TAU);
 			g.fill();
-			// alt taraf gölgeli
-			if (up < 0.4) {
-				g.globalAlpha = 0.25;
-				g.fillStyle = '#a0507a';
-				g.beginPath();
-				g.arc(x, y, r * 0.9, 0, TAU);
-				g.fill();
-				g.globalAlpha = 1;
-			}
-		});
+		};
+		for (const p of clumpPts(64, rad)) {
+			const t = vy(p.y, rad);
+			flower(cx + p.x, cy + p.y, R.range(17, 24) * k, Math.min(1, Math.max(0, t + R.range(-0.12, 0.12))));
+		}
 	}
-	// 1) yaz: zümrüt tonlarında yapraklar
-	{
-		const cx = cell * 1.5;
-		const cy = cell * 0.5;
-		const greens = ['#4f8f3a', '#5fa040', '#3f7a32', '#6db24a', '#477f35', '#7cbc54'];
-		scatter(cx, cy, 190, (x, y, up) => {
-			const col = up > 0.65 && R() < 0.6 ? '#8ccc5e' : R.pick(greens);
-			leaf(x, y, R.range(22, 34) * k, R.range(8, 12) * k, R() * TAU, col, 'rgba(30,60,20,0.45)');
-		});
-	}
-	// 2) güz: altın, turuncu, kızıl
-	{
-		const cx = cell * 0.5;
-		const cy = cell * 1.5;
-		const golds = ['#f2b233', '#f7c440', '#e8932c', '#f0a030', '#d9702a', '#c8512a', '#ffd65a'];
-		scatter(cx, cy, 170, (x, y, up) => {
-			const col = up > 0.6 && R() < 0.5 ? '#ffd86a' : R.pick(golds);
-			leaf(x, y, R.range(22, 34) * k, R.range(9, 13) * k, R() * TAU, col, 'rgba(120,50,10,0.4)');
-		});
-	}
-	// 3) kar topağı: yumuşak beyaz yuvarlaklar, altları mavi gölgeli
+	// 1) yaz: zümrüt; üstte sarımsı ışık, altta mavi-yeşil gölge
+	leafyCell(cell * 1.5, cell * 0.5, {
+		coreTop: '#4e8a3a',
+		coreBot: '#1f4a30',
+		ramp: ramp3('#b4dd6e', '#5fa344', '#2a6136'),
+		hi: (t) => (t < 0.5 ? 'rgba(240,255,190,0.28)' : 'rgba(200,240,170,0.12)'),
+	}, 70, [38, 54]);
+	// 2) güz: altın sarısı, kehribar, birkaç kızıl
+	leafyCell(cell * 0.5, cell * 1.5, {
+		coreTop: '#e0a23a',
+		coreBot: '#9a4a22',
+		ramp: (t, r) => (r < 0.1 ? mixHex('#e0683a', '#a8402a', t) : ramp3('#ffe58a', '#f4b23c', '#c96a2a')(t, r)),
+		hi: (t) => (t < 0.5 ? 'rgba(255,250,210,0.32)' : 'rgba(255,220,150,0.14)'),
+	}, 66, [38, 54]);
+	// 3) kar topağı: kabarık yuvarlak öbekler; üstü bembeyaz, altı lavanta-mavi
 	{
 		const cx = cell * 1.5;
 		const cy = cell * 1.5;
-		scatter(cx, cy, 70, (x, y, up) => {
-			const r = R.range(12, 26) * k;
-			const gr = g.createRadialGradient(x - r * 0.3, y - r * 0.4, r * 0.1, x, y, r);
-			gr.addColorStop(0, up > 0.4 ? '#ffffff' : '#eef2ff');
-			gr.addColorStop(1, up > 0.4 ? '#d8e2f6' : '#b8c4e8');
+		const rad = cell * 0.36;
+		const P = clumpPts(34, rad * 0.85);
+		for (const p of P) {
+			const t = vy(p.y, rad);
+			const r = R.range(26, 46) * k * (1 - 0.3 * (p.rr / rad));
+			const x = cx + p.x;
+			const y = cy + p.y;
+			const gr = g.createRadialGradient(x - r * 0.25, y - r * 0.45, r * 0.15, x, y, r);
+			gr.addColorStop(0, mixHex('#ffffff', '#e6ecfb', t));
+			gr.addColorStop(0.7, mixHex('#f3f6fe', '#c9d3f0', t));
+			gr.addColorStop(1, mixHex('#d9e1f6', '#aab6e0', t));
 			g.fillStyle = gr;
 			g.beginPath();
 			g.arc(x, y, r, 0, TAU);
 			g.fill();
-		});
+		}
 	}
 	return finishTex(c, { repeat: false });
 }
