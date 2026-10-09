@@ -1210,17 +1210,17 @@ export class Game {
 	/** Zafer anı: kamera Zifir'in önüne süzülür (yüzünü gördüğümüz bir kahraman çekimi). */
 	_heroCam() {
 		const rig = this.app.rig;
-		const p = this.curve.sample(this.s, {});
+		// patikanın biraz ilerisinden, tahtaların üstünden geriye, Zifir'in yüzüne bakar (korkuluk araya girmez)
+		// Zifir ekranın alt üçte birinde kalır: ortadaki sonuç kartının altında görünür
+		const q = this.curve.sample(Math.min(this.curve.length, this.s + 3.6), {});
 		const zp = this.zp;
-		const r = Math.hypot(p.x, p.z) || 1;
-		const ox = p.x / r;
-		const oz = p.z / r;
-		const pos = V3(zp.x + p.tx * 2.6 + ox * 2.4, zp.y + 1.25, zp.z + p.tz * 2.6 + oz * 2.4);
-		const look = V3(zp.x, zp.y + 0.55, zp.z);
+		const r = Math.hypot(q.x, q.z) || 1;
+		const pos = V3(q.x + (q.x / r) * 0.35, q.y + 1.7, q.z + (q.z / r) * 0.35);
+		const look = V3(zp.x, zp.y + 1.35, zp.z);
 		rig.play(
 			[
 				{ t: 0, pos: rig.pos.clone(), look: rig.look.clone() },
-				{ t: 3.1, pos, look, fov: (rig.baseFov || 54) - 8 },
+				{ t: 3.1, pos, look },
 			],
 			null
 		);
