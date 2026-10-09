@@ -23,6 +23,8 @@ export const CSS = /* css */ `
 .uk-scr{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;opacity:0;visibility:hidden;transition:opacity .45s ease,visibility 0s linear .45s}
 .uk-scr.on{opacity:1;visibility:visible;transition:opacity .45s ease,visibility 0s}
 .uk-scr.on .uk-tap{pointer-events:auto}
+/* kaybolurken (opaklık geçişi sürerken) ikinci dokunuş tetiklenmesin */
+.uk-scr:not(.on) button,.uk-scr:not(.on) .uk-list,.uk-hud:not(.on) button{pointer-events:none}
 
 /* ---- düğmeler ---- */
 .uk-btn{position:relative;height:60px;min-width:240px;padding:0 32px;border-radius:999px;font-weight:800;font-size:16px;letter-spacing:.13em;text-transform:uppercase;white-space:nowrap;
@@ -130,7 +132,7 @@ export const CSS = /* css */ `
 .uk-hud{--cw:clamp(118px,33vw,140px);position:absolute;inset:0;opacity:0;visibility:hidden;transition:opacity .4s,visibility 0s linear .4s;pointer-events:none}
 .uk-hud.on{opacity:1;visibility:visible;transition:opacity .4s,visibility 0s}
 .uk-hud .top{position:absolute;left:0;right:0;top:0;padding:calc(var(--sat) + 12px) calc(var(--sar) + 14px) 0 calc(var(--sal) + 14px);display:flex;align-items:flex-start;justify-content:space-between;pointer-events:none}
-.uk-hud .lvl{position:absolute;left:50%;top:calc(var(--sat) + 10px);transform:translateX(-50%);min-width:150px;max-width:calc(100% - 196px);padding:6px 18px 9px;border-radius:18px;text-align:center;
+.uk-hud .lvl{position:absolute;left:50%;top:calc(var(--sat) + 10px);transform:translateX(-50%);width:max-content;min-width:150px;max-width:calc(100% - 196px);padding:6px 18px 9px;border-radius:18px;text-align:center;
   background:var(--panel);border:1px solid var(--line);box-shadow:var(--pshadow)}
 .uk-hud[data-season=spring]{--sc:#ffb3cf}.uk-hud[data-season=summer]{--sc:#a8e57c}.uk-hud[data-season=autumn]{--sc:#ffc361}.uk-hud[data-season=winter]{--sc:#cfe0ff}
 .uk-hud .lvl::before{content:"";position:absolute;left:22%;right:22%;top:-1px;height:2px;border-radius:2px;background:var(--sc,var(--gold2))}
@@ -250,7 +252,7 @@ export const CSS = /* css */ `
 .uk-gust.on svg{animation:ukGustI .6s ease-in-out infinite alternate}
 @keyframes ukGustI{0%{transform:translateX(-2px)}100%{transform:translateX(3px)}}
 
-.uk-toast{text-wrap:balance;position:absolute;left:50%;top:calc(var(--sat) + 82px);max-width:calc(100% - 32px);padding:11px 18px;border-radius:16px;font-size:15px;font-weight:700;line-height:1.35;text-align:center;
+.uk-toast{text-wrap:balance;position:absolute;left:50%;top:calc(var(--sat) + 82px);width:max-content;max-width:calc(100% - 32px);padding:11px 18px;border-radius:16px;font-size:15px;font-weight:700;line-height:1.35;text-align:center;
   background:var(--panel);border:1px solid var(--line2);box-shadow:var(--pshadow);opacity:0;transform:translate(-50%,-8px);transition:opacity .3s,transform .3s}
 .uk-toast.on{opacity:1;transform:translate(-50%,0)}
 
