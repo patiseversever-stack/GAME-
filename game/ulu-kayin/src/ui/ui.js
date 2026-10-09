@@ -158,6 +158,7 @@ export class UI {
 						<g transform="translate(0 30)"><circle class="halo" r="13"/><circle class="zif" r="7.5"/><circle class="eye" cx="-2.6" cy="-1.2" r="1.5"/><circle class="eye" cx="2.6" cy="-1.2" r="1.5"/></g>
 						<g class="sun"><g transform="translate(0 53)"><circle class="glow" r="15"/><path class="ray" d="M0-11.5v-3.5M0 11.5v3.5M-11.5 0h-3.5M11.5 0h3.5M-8.1-8.1l-2.5-2.5M8.1 8.1l2.5 2.5M-8.1 8.1l-2.5 2.5M8.1-8.1l2.5-2.5"/><circle class="disc" r="8"/></g></g>
 					</svg>
+					<i class="zh"></i>
 					<div class="cs">Gölgede</div>
 				</div>
 				<button class="uk-ab" data-a="ability:flock" aria-label="Yetenek"><span class="ai"></span><small class="al"></small><span class="pp"><i></i><i></i><i></i><i></i></span></button>
@@ -523,11 +524,11 @@ export class UI {
 				<span class="cd"><span class="tx"><small>${i + 1}. bölüm${L.finale ? ' · son' : ''}</small><b>${L.title}</b></span>${right}</span></button>`;
 		};
 		this.$('.uk-list').innerHTML = groups
-			.map((g) => {
+			.map((g, gi) => {
 				const S = SEASON[g.s] || { name: g.s, sub: '', icon: ICON.sun };
 				const got = g.items.reduce((a, i) => a + (stars[i] || 0), 0);
 				const open = g.items[0] <= prog.unlocked;
-				return `<section class="uk-ssn${open ? '' : ' lock'}" data-s="${g.s}">
+				return `<section class="uk-ssn${open ? '' : ' lock'}" data-s="${g.s}" style="--d:${gi * 70}ms">
 					<header><i class="ic">${S.icon}</i><span class="nm"><b>${S.name}</b><span>${S.sub}</span></span><em>${ICON.star}${got}/${g.items.length * 3}</em></header>
 					${g.items.map(cardHtml).join('')}</section>`;
 			})

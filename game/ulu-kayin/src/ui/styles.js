@@ -69,6 +69,9 @@ export const CSS = /* css */ `
 .uk-brand h1::before{content:attr(data-t);position:absolute;left:0;right:0;top:0;padding:inherit;color:transparent;text-shadow:0 3px 0 rgba(70,34,6,.75),0 8px 30px rgba(6,3,16,.85),0 0 60px rgba(255,180,90,.35)}
 .uk-brand h1 span{position:relative;display:block;background:linear-gradient(180deg,#fffbf2 10%,#ffe6b0 45%,#f5b964 75%,#dd8c3a 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 .uk-brand .tag{margin-top:4px;font-family:var(--serif);font-style:italic;font-weight:600;font-size:clamp(20px,5.8vw,25px);color:var(--ivory);text-shadow:var(--tsh)}
+.uk-title.on .uk-brand{animation:ukRise 1s cubic-bezier(.2,.9,.3,1) both}
+.uk-title.on .acts{animation:ukRise 1s cubic-bezier(.2,.9,.3,1) .18s both}
+@keyframes ukRise{0%{opacity:0;transform:translateY(18px)}100%{opacity:1;transform:none}}
 .uk-title .acts{position:relative;display:flex;flex-direction:column;align-items:center;gap:14px;margin-top:auto}
 .uk-title .row{display:flex;gap:12px}
 .uk-title .row .uk-btn{min-width:140px}
@@ -84,6 +87,7 @@ export const CSS = /* css */ `
 .uk-list{flex:1;min-height:0;width:100%;max-width:560px;overflow-y:auto;overflow-x:hidden;padding:10px 0 calc(var(--sab) + 22px);pointer-events:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;scrollbar-width:none}
 .uk-list::-webkit-scrollbar{display:none}
 .uk-ssn{position:relative;padding-bottom:8px}
+.uk-levels.on .uk-ssn{animation:ukRise .6s cubic-bezier(.2,.9,.3,1) both;animation-delay:var(--d,0s)}
 .uk-ssn[data-s=spring]{--sc:#ffb3cf;--sc2:#ff86b0}.uk-ssn[data-s=summer]{--sc:#a8e57c;--sc2:#6cc048}
 .uk-ssn[data-s=autumn]{--sc:#ffc361;--sc2:#f0902c}.uk-ssn[data-s=winter]{--sc:#cfe0ff;--sc2:#93b2ee}
 .uk-ssn::before{content:"";position:absolute;left:22px;top:44px;bottom:0;width:2px;margin-left:-1px;background:linear-gradient(180deg,var(--sc),rgba(255,246,232,.14))}
@@ -128,6 +132,8 @@ export const CSS = /* css */ `
 .uk-hud .top{position:absolute;left:0;right:0;top:0;padding:calc(var(--sat) + 12px) calc(var(--sar) + 14px) 0 calc(var(--sal) + 14px);display:flex;align-items:flex-start;justify-content:space-between;pointer-events:none}
 .uk-hud .lvl{position:absolute;left:50%;top:calc(var(--sat) + 10px);transform:translateX(-50%);min-width:150px;max-width:calc(100% - 196px);padding:6px 18px 9px;border-radius:18px;text-align:center;
   background:var(--panel);border:1px solid var(--line);box-shadow:var(--pshadow)}
+.uk-hud[data-season=spring]{--sc:#ffb3cf}.uk-hud[data-season=summer]{--sc:#a8e57c}.uk-hud[data-season=autumn]{--sc:#ffc361}.uk-hud[data-season=winter]{--sc:#cfe0ff}
+.uk-hud .lvl::before{content:"";position:absolute;left:22%;right:22%;top:-1px;height:2px;border-radius:2px;background:var(--sc,var(--gold2))}
 .uk-hud .lvl small{display:block;font-size:11px;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--gold2);white-space:nowrap}
 .uk-hud .lvl b{display:block;font-family:var(--serif);font-style:italic;font-weight:700;font-size:22px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .uk-hud .pg{position:relative;height:4px;margin-top:5px;border-radius:4px;background:rgba(255,246,232,.14);display:none}
@@ -178,13 +184,14 @@ export const CSS = /* css */ `
 .uk-compass .eye{fill:#fff6e8}
 .uk-compass .halo{fill:#b3a6ff;opacity:.28}
 .uk-compass.hot .zif{stroke:#ff8a4c}
-.uk-compass.hot .halo{fill:#ff8a4c;animation:ukHot .5s ease-in-out infinite alternate}
-@keyframes ukHot{0%{opacity:.25}100%{opacity:.85}}
+.uk-compass.hot .halo{fill:#ff8a4c;opacity:.55}
+/* yanma uyarısı: SVG yerine HTML halkası (birleştirici katmanda, yeniden boyama yok) */
+.uk-compass .zh{position:absolute;left:50%;top:73.44%;width:26%;height:26%;margin:-13% 0 0 -13%;border-radius:50%;border:2.5px solid var(--ember);opacity:0;pointer-events:none}
+.uk-compass.hot .zh{animation:ukRing .8s ease-out infinite}
 .uk-compass .sun .glow{fill:#ffd36e;opacity:.3}
 .uk-compass .sun .disc{fill:#ffd66e;stroke:#fff4cc;stroke-width:2}
 .uk-compass .sun .ray{stroke:#ffcf6a;stroke-width:2.6}
-.uk-compass .win{fill:none;stroke:#ffe0a0;stroke-width:8;stroke-linecap:round;animation:ukWin 1.1s ease-in-out infinite}
-@keyframes ukWin{0%,100%{opacity:.45}50%{opacity:1}}
+.uk-compass .win{fill:none;stroke:#ffe9b8;stroke-width:8;stroke-linecap:round}
 .uk-compass .cs{position:absolute;left:50%;top:-38px;transform:translateX(-50%);padding:4px 12px 5px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;
   background:#1d1540;border:1.5px solid #b3a6ff;color:#e6e0ff;box-shadow:0 4px 12px rgba(6,3,16,.5)}
 .uk-compass.hot .cs{background:#47190b;border-color:var(--ember);color:#ffd9bf}
@@ -396,11 +403,12 @@ export const CSS = /* css */ `
   .uk-card .ct{padding-top:0;border-top:0}
 }
 @media (prefers-reduced-motion:reduce){
-  .uk-btn.pri::after,.uk-title .sky i,.uk-lv.cur .no::after,.uk-compass .win,.uk-compass.hot .halo,.uk-hud.gst .uk-wait::after,.uk-ab.ready::after,
+  .uk-btn.pri::after,.uk-title .sky i,.uk-lv.cur .no::after,.uk-compass.hot .zh,.uk-hud.gst .uk-wait::after,.uk-ab.ready::after,
   .uk-sheet .rays svg,.uk-gust.on svg,.uk-hand.on .fg{animation:none}
   .uk-pop.a,.uk-pop.b{animation-name:ukFadeOnly}
   @keyframes ukFadeOnly{0%{opacity:0;transform:translate(-50%,0)}15%,75%{opacity:1;transform:translate(-50%,0)}100%{opacity:0;transform:translate(-50%,0)}}
   .uk-streak.p0 b,.uk-streak.p1 b,.uk-pill.pop0,.uk-pill.pop1,.uk-pill.bad0,.uk-pill.bad1,.uk-star.on .sh::after,.uk-dust.done,.uk-lore p.a,.uk-lore p.b{animation:none}
   .uk-star .sh b{transform:none}
+  .uk-title.on .uk-brand,.uk-title.on .acts,.uk-levels.on .uk-ssn{animation:none}
 }
 `;
