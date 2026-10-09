@@ -138,6 +138,7 @@ export class Sfx {
 
 	setOn(on) {
 		this.on = on;
+		this._sz = this._wk = this._mf = -1;
 		if (this.master) this.master.gain.setTargetAtTime(on ? 0.9 : 0, this.ctx.currentTime, 0.05);
 	}
 
@@ -551,11 +552,23 @@ export class Sfx {
 	tick(dt, burn, windK, playing, meter = 1) {
 		if (!this.ctx || !this.on) return;
 		const t = this.ctx.currentTime;
-		this.sizz.g.gain.setTargetAtTime(playing ? burn * 0.09 : 0, t, 0.05);
-		this.wind.g.gain.setTargetAtTime(0.025 + windK * 0.05, t, 0.3);
-		this.wind.f.frequency.setTargetAtTime(380 + windK * 500, t, 0.3);
+		// otomasyon olayları yalnızca değer belirgin değişince eklenir (zayıf cihazda ses iş parçacığı rahat)
+		const sz = playing ? burn * 0.09 : 0;
+		if (Math.abs(sz - (this._sz ?? -1)) > 0.004) {
+			this._sz = sz;
+			this.sizz.g.gain.setTargetAtTime(sz, t, 0.05);
+		}
+		if (Math.abs(windK - (this._wk ?? -1)) > 0.02) {
+			this._wk = windK;
+			this.wind.g.gain.setTargetAtTime(0.025 + windK * 0.05, t, 0.3);
+			this.wind.f.frequency.setTargetAtTime(380 + windK * 500, t, 0.3);
+		}
 		// yanarken müzik boğuklaşır, can azaldıkça kalp atar
-		this.musF.frequency.setTargetAtTime(playing && burn > 0.05 ? 900 + meter * 900 : 5200, t, 0.12);
+		const mf = playing && burn > 0.05 ? 900 + meter * 900 : 5200;
+		if (Math.abs(mf - (this._mf ?? -1)) > 40) {
+			this._mf = mf;
+			this.musF.frequency.setTargetAtTime(mf, t, 0.12);
+		}
 		if (playing && meter < 0.45 && burn > 0.05 && t > this._hbT) {
 			this._thump(t, 0.22);
 			this._thump(t + 0.17, 0.13);

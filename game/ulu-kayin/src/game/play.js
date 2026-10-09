@@ -410,6 +410,7 @@ export class Game {
 		this._beamHit = false;
 		this._allDrops = false;
 		this._lkOn = false;
+		this._pend = null;
 		this._progU = -1;
 		this.ui.streak?.(0);
 		this.sfx.streakReset();
@@ -508,6 +509,13 @@ export class Game {
 		this.store.set('progress', this.prog);
 	}
 
+	/** İpucu sırası: ekranda başka bir ipucu varsa o bitince gösterilir. */
+	_hintLater(key, dur = 4.5) {
+		if (this.prog.seen[key]) return;
+		if (!this._hintKey) this._showHint(key, dur);
+		else this._pend = [key, dur];
+	}
+
 	_begin() {
 		this._set('play');
 		this.ui.hudOn(true);
@@ -586,6 +594,7 @@ export class Game {
 						this._mercyBirds = false;
 					}
 					if (this._hintQueue.length && this._hintQueue[0] !== 'gust' && this._hintQueue[0] !== 'bridge') this._showHint(this._hintQueue.shift(), 4.5);
+					if (this.flock.ready && this.li >= 1) this._hintLater('flock', 5.5);
 				}
 			}
 		} else if (st === 'ready') {
@@ -750,6 +759,11 @@ export class Game {
 			this.ui.hint(null);
 			this._hintKey = null;
 		}
+		if (this._pend && !this._hintKey && active) {
+			const [k, dd] = this._pend;
+			this._pend = null;
+			if (!this.prog.seen[k]) this._showHint(k, dd);
+		}
 
 		// --- bitiş kontrolü
 		if (active && dead) this._die();
@@ -905,7 +919,7 @@ export class Game {
 			this.haptic(big ? [12, 30, 12] : 10);
 			if (big) burstSparkle(this.fx, this.zp.x, this.zp.y + 0.9, this.zp.z, 14, [1.2, 1.0, 2.4]);
 			if (n === 10) this.app.hooks.onStreak?.(n);
-			if (n === 5 && !this.prog.seen.streak) this._showHint('streak', 4);
+			if (n === 5) this._hintLater('streak', 4.5);
 		} else if (n >= 3) this.sfx.streak(n);
 	}
 
@@ -919,7 +933,8 @@ export class Game {
 			this._pop('Sürü hazır!', 'gold');
 			this.sfx.flockReady();
 			this.haptic([10, 20, 10]);
-			if (!this.prog.seen.flock) this._showHint('flock', 5.5);
+			// ilk bölümde yalnızca kutlanır; ipucu, işe yarayacağı ikinci bölümde gelir
+			if (this.li >= 1) this._hintLater('flock', 5.5);
 		}
 	}
 
