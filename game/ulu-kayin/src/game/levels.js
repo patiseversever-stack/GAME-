@@ -111,13 +111,14 @@ export const DESIGN = [
 		wind: 0.38,
 		elev: [24, 18],
 		sunStart: Math.PI,
+		// damlalar kilitlerin hemen ardına yığılmaz: biri risk (kilidi çabuk aç), gerisi adil
 		drops: [
-			[0.2, 0.3],
-			[0.42, 0.5],
-			[0.5, -0.2],
-			[0.57, 0.45],
-			[0.8, -0.3],
-			[0.93, 0.4],
+			[0.16, 0.3],
+			[0.26, -0.2],
+			[0.45, 0.5],
+			[0.58, -0.2],
+			[0.64, 0.4],
+			[0.97, 0.3],
 		],
 		gust: { every: 6, dur: 3.0, power: 1.55, from: 2.5 },
 		crystals: [
@@ -158,8 +159,8 @@ export const DESIGN = [
 			[0.15, 0.4],
 			[0.35, -0.3],
 			[0.52, 0.5],
-			[0.68, 0.0],
-			[0.84, 0.45],
+			[0.76, 0.0],
+			[0.88, 0.45],
 		],
 		crystals: [
 			[0.28, 1, 4.6, 3.0],
