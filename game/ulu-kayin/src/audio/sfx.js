@@ -243,8 +243,8 @@ export class Sfx {
 	step() {
 		if (!this._ok('step')) return;
 		const t = this.ctx.currentTime;
-		if (this.season === 'winter') this._burst(t, 0.09, 1400 + Math.random() * 500, 0.05, 'lowpass');
-		else this._burst(t, 0.05, 900 + Math.random() * 500, 0.045);
+		if (this.season === 'winter') this._burst(t, 0.09, 1400 + Math.random() * 500, 0.07, 'lowpass');
+		else this._burst(t, 0.05, 900 + Math.random() * 500, 0.065);
 	}
 
 	drop() {
@@ -280,7 +280,7 @@ export class Sfx {
 		if (!this._ok('streak', n)) return;
 		const t = this.ctx.currentTime;
 		const i = 5 + (this._streakN++ % 8);
-		this._tone(this._note(i, 1), t, 0.35, 0.022 + Math.min(0.02, n * 0.001), 'sine', 0, 0.3);
+		this._tone(this._note(i, 1), t, 0.35, 0.034 + Math.min(0.02, n * 0.001), 'sine', 0, 0.3);
 	}
 
 	/** Seri eşiği (×5, ×10, ...): parlak, yükselen üç nota ve pırıltı. */
@@ -467,7 +467,7 @@ export class Sfx {
 
 	_musBase() {
 		if (this._hostMusic) return 0;
-		return { title: 0.55, play: 0.8, soft: 0.45, off: 0 }[this.musMode] ?? 0.6;
+		return { title: 0.75, play: 1.0, soft: 0.5, off: 0 }[this.musMode] ?? 0.6;
 	}
 
 	/** Müzik kipi: title | play | soft | off. */
@@ -599,3 +599,5 @@ export class Sfx {
 		if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
 	}
 }
+
+Sfx.SCALES = SCALES;

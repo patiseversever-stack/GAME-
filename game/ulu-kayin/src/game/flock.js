@@ -15,6 +15,11 @@ const MAXB = 12; // 4 toplanan + 8 eşlikçi (yalnızca sürü uçarken)
 export const GATHER = 4; // Sürü için gereken kuş
 const SHIELD_D = 1.75; // girdabın Zifir'den güneşe doğru uzaklığı
 const SHIELD_R = 1.05; // oyun için gölge küresinin yarıçapı
+// sürü düzeni: [yarıçap, başlangıç açısı, açısal hız]. 0-3: toplananlar (iç halka), 4-5: orta, 6-11: dış halka
+const SLOTS = [];
+for (let k = 0; k < 4; k++) SLOTS.push([0.8, (k / 4) * TAU, 1.9]);
+for (let k = 0; k < 2; k++) SLOTS.push([0.22, k * Math.PI, 2.6]);
+for (let k = 0; k < 6; k++) SLOTS.push([1.38, (k / 6) * TAU + 0.4, 1.35]);
 
 /** Kırlangıç silueti: sivri, geriye yatık kanatlar ve çatal kuyruk. aW: kanat ağırlığı, uç gecikmesi, kenar parıltısı. */
 function swallowGeometry() {
@@ -104,7 +109,7 @@ export class Flock {
 				varying vec3 vW; varying float vRim;
 				void main() {
 					// mürekkep siluet; kanat uçlarında Zifir'in mor kenar ışığı, güneş arkadaysa altın sızıntı
-					vec3 c = vec3(0.03, 0.022, 0.06) + vec3(0.36, 0.27, 0.9) * vRim * 0.55;
+					vec3 c = vec3(0.03, 0.022, 0.06) + vec3(0.36, 0.27, 0.9) * vRim * 0.35;
 					vec3 V = normalize(cameraPosition - vW);
 					c += uSunCol * pow(max(dot(-V, uSunDir), 0.0), 6.0) * vRim * 0.25;
 					gl_FragColor = finish(applyFog(c, vW), 1.0);
@@ -162,14 +167,14 @@ export class Flock {
 		const b = this.birds[this.count++];
 		b.st = 'orbit';
 		b.t = 0;
-		b.tsc = 0.5;
+		b.tsc = 0.68;
 		if (instant) {
 			const a = (b.i / GATHER) * TAU;
 			b.x = zp.x + Math.cos(a) * 1.3;
 			b.y = zp.y + 1.8;
 			b.z = zp.z + Math.sin(a) * 1.3;
 			b.vx = b.vy = b.vz = 0;
-			b.sc = 0.5;
+			b.sc = 0.68;
 		} else {
 			// gökten, rastgele bir yönden süzülerek
 			const a = Math.random() * TAU;
@@ -179,7 +184,7 @@ export class Flock {
 			b.vx = -Math.cos(a) * 4;
 			b.vy = -2;
 			b.vz = -Math.sin(a) * 4;
-			b.sc = 0.5;
+			b.sc = 0.68;
 		}
 		this.mesh.visible = true;
 		return true;
@@ -208,7 +213,7 @@ export class Flock {
 			}
 			b.st = 'shield';
 			b.t = 0;
-			b.tsc = b.i < GATHER ? 0.85 : 0.72;
+			b.tsc = b.i < GATHER ? 0.95 : 0.85;
 		}
 		this.mesh.visible = true;
 		if (this.shadowMesh) this.shadowMesh.visible = true;
@@ -271,10 +276,18 @@ export class Flock {
 			c.x *= tr / rr;
 			c.z *= tr / rr;
 		}
-		const e1 = this._e1.set(-L.z, 0, L.x);
+		// dönüş düzlemi: güneş yönü ile yukarının ortası (alçak güneşte de kuşlar doğal yatışla döner)
+		let nx = L.x;
+		let ny = L.y + 1;
+		let nz = L.z;
+		const nl = Math.hypot(nx, ny, nz);
+		nx /= nl;
+		ny /= nl;
+		nz /= nl;
+		const e1 = this._e1.set(-nz, 0, nx);
 		if (e1.lengthSq() < 1e-4) e1.set(1, 0, 0);
 		e1.normalize();
-		const e2 = this._e2.crossVectors(e1, L).normalize();
+		const e2 = this._e2.set(ny * e1.z - nz * e1.y, nz * e1.x - nx * e1.z, nx * e1.y - ny * e1.x).normalize();
 
 		const was = this.active;
 		if (this.active > 0) {
@@ -309,9 +322,9 @@ export class Flock {
 			if (b.st === 'orbit') {
 				// Zifir'in tepesinde gevşek bir halka
 				const a = time * 1.25 + (b.i / GATHER) * TAU;
-				const r = 1.2 + 0.18 * Math.sin(time * 0.9 + b.i * 2.1);
+				const r = 1.35 + 0.2 * Math.sin(time * 0.9 + b.i * 2.1);
 				tx = zp.x + Math.cos(a) * r;
-				ty = zp.y + 1.75 + 0.25 * Math.sin(time * 1.7 + b.i * 1.3);
+				ty = zp.y + 2.0 + 0.3 * Math.sin(time * 1.7 + b.i * 1.3);
 				tz = zp.z + Math.sin(a) * r;
 				fx = -Math.sin(a);
 				fz = Math.cos(a);
@@ -321,26 +334,26 @@ export class Flock {
 				acc = b.t < 2.5 ? 3 : 7;
 				flap = 8 + (b.t < 2.5 ? 6 : 0);
 			} else if (b.st === 'shield') {
-				// iki zıt yönlü halka: güneşin önünde dönen yoğun bir gölge
-				const ring = b.i % 2;
-				const k = b.i >> 1;
-				const dir = ring ? -1 : 1;
-				const a = time * (ring ? 3.4 : 2.7) * dir + (k / 6) * TAU;
-				const r = (ring ? 0.95 : 0.5) * (0.75 + 0.25 * this.strength);
-				const off = ring ? 0.18 : -0.12;
+				// güneşin önünde, eğik bir düzlemde birlikte dönen kuşlar: içte toplananlar,
+				// ortada iki kuş (Zifir'in tam üstüne gölge düşer), dışta eşlikçiler
+				const sl = SLOTS[b.i];
+				const w = sl[2];
+				const a = time * w + sl[1];
+				const r = sl[0] * (0.7 + 0.3 * this.strength) + 0.08 * Math.sin(time * 1.3 + b.i * 2.7);
+				const bob = 0.14 * Math.sin(time * 2.1 + b.i * 1.9);
 				const ca = Math.cos(a);
 				const sa = Math.sin(a);
-				tx = c.x + e1.x * ca * r + e2.x * sa * r + L.x * off;
-				ty = c.y + e1.y * ca * r + e2.y * sa * r + L.y * off;
-				tz = c.z + e1.z * ca * r + e2.z * sa * r + L.z * off;
+				tx = c.x + e1.x * ca * r + e2.x * sa * r + nx * bob;
+				ty = c.y + e1.y * ca * r + e2.y * sa * r + ny * bob;
+				tz = c.z + e1.z * ca * r + e2.z * sa * r + nz * bob;
 				// halkanın teğeti yönünde uç
-				fx = (-e1.x * sa + e2.x * ca) * dir;
-				fz = (-e1.z * sa + e2.z * ca) * dir;
+				fx = -e1.x * sa + e2.x * ca;
+				fz = -e1.z * sa + e2.z * ca;
 				tang = b.t > 0.35 ? 1 : 0;
-				bank = 0.7 * dir;
-				maxV = 16;
-				acc = b.t < 0.4 ? 5 : 14;
-				flap = 15;
+				bank = 0.55;
+				maxV = 14;
+				acc = b.t < 0.5 ? 4 : 12;
+				flap = 10;
 			} else {
 				// dağıl: yukarı ve dışarı süzül, küçülerek kaybol
 				tx = b.x + b.ox;
@@ -390,7 +403,7 @@ export class Flock {
 			F[n * 4 + 2] = b.hz;
 			F[n * 4 + 3] = b.ph;
 			B[n * 2] = b.bank;
-			B[n * 2 + 1] = b.st === 'shield' ? 0.9 : this.glow;
+			B[n * 2 + 1] = b.st === 'shield' ? 0.6 : this.glow;
 			n++;
 		}
 		this.geo.instanceCount = n;
