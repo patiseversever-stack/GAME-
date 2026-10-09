@@ -773,7 +773,7 @@ export function buildTree(curve, tier) {
 	// ------------------------------------------------------------------------------------------
 	const nest = extras;
 	for (const n of nests) {
-		const straw = (v) => (VR() < 0.35 ? [0.82 * v, 0.66 * v, 0.42 * v, 0.95] : [0.55 * v, 0.4 * v, 0.28 * v, 0.9]);
+		const straw = (v) => (VR() < 0.4 ? [0.95 * v, 0.74 * v, 0.4 * v, 0.95] : [0.66 * v, 0.43 * v, 0.24 * v, 0.9]);
 		for (let ring2 = 0; ring2 < 11; ring2++) {
 			const pts = [];
 			const f = ring2 / 10;

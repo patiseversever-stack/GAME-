@@ -170,9 +170,10 @@ export function buildWalkway(curve) {
 		const flip = R() < 0.5;
 		const tint = R.range(0.92, 1.05);
 		const grey = R() < 0.12 ? R.range(0.8, 0.9) : 1;
-		const cr = tint * grey;
-		const cg = tint * (grey < 1 ? grey * 0.99 : 0.99);
-		const cb = tint * (grey < 1 ? grey * 1.02 : 0.97);
+		// sıcak bal tonu (gölgede griye kaçmasın); arada bir eskimiş gümüşi tahta
+		const cr = tint * grey * 1.02;
+		const cg = tint * (grey < 1 ? grey * 0.99 : 0.96);
+		const cb = tint * (grey < 1 ? grey * 1.02 : 0.88);
 		// köşeler: a (s başı) / b (s sonu), i (iç) / o (dış)
 		const corner = (smp, w, hgt) => [smp.x + smp.sx * w, smp.y + hgt, smp.z + smp.sz * w];
 		const ai = corner(tmp, -inA, dz - tilt);
