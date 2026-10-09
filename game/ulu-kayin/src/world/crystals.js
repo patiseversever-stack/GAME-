@@ -63,29 +63,71 @@ export function buildCrystals(curve, levels) {
 			twigs.tube(pts, pts.map((_, i) => lerp(0.2, 0.05, Math.pow(i / 14, 0.7))), 6, (i, t) => [lerp(1, 0.55, t), lerp(1, 0.42, t), lerp(1, 0.36, t), 0.9], {
 				sway: (i, t) => twigs.setSway(C.x, C.y, C.z, 0.45 * Math.pow(t, 1.6)),
 			});
-			// kristal: altıgen çift piramit, geniş yüzü ayna normaline bakar
+			// kristal: kesilmiş taş. Düz tabla ayna normaline bakar (ışını o yansıtır), çevresinde
+			// taç yüzeyleri, kuşak ve arkada sivri bir alt gövde; arkasında küçük prizma kristaller.
 			const a = Math.abs(n.y) > 0.9 ? V3(1, 0, 0) : V3(0, 1, 0);
 			const e1 = V3().crossVectors(n, a).normalize();
 			const e2 = V3().crossVectors(n, e1).normalize();
-			const ring = [];
-			for (let k = 0; k < 6; k++) {
-				const ang = (k / 6) * Math.PI * 2 + 0.26;
-				ring.push(C.clone().addScaledVector(e1, Math.cos(ang) * 0.4).addScaledVector(e2, Math.sin(ang) * 0.62));
-			}
-			const front = C.clone().addScaledVector(n, 0.16);
-			const back = C.clone().addScaledVector(n, -0.2);
+			const K = 8;
+			const ringAt = (s, d) => {
+				const out = [];
+				for (let k = 0; k < K; k++) {
+					const ang = (k / K) * Math.PI * 2 + 0.2;
+					out.push(C.clone().addScaledVector(e1, Math.cos(ang) * 0.42 * s).addScaledVector(e2, Math.sin(ang) * 0.64 * s).addScaledVector(n, d));
+				}
+				return out;
+			};
+			const girdle = ringAt(1, 0);
+			const girdle2 = ringAt(1, -0.05);
+			const table = ringAt(0.56, 0.15);
+			const front = C.clone().addScaledVector(n, 0.15);
+			const back = C.clone().addScaledVector(n, -0.36);
 			const idx = list.length;
 			gems.setSway(C.x, C.y, C.z, 0.45); // kristal, dalının ucuyla birlikte sallanır
 			const face = (p0, p1, p2) => {
 				const nn = V3().crossVectors(V3().subVectors(p1, p0), V3().subVectors(p2, p0)).normalize();
+				// normal taşın merkezinden dışa baksın
+				const cen = V3().add(p0).add(p1).add(p2).multiplyScalar(1 / 3).sub(C);
+				if (nn.dot(cen) < 0) {
+					nn.negate();
+					const t = p1;
+					p1 = p2;
+					p2 = t;
+				}
 				for (const p of [p0, p1, p2]) gems.vert(p.x, p.y, p.z, nn.x, nn.y, nn.z, tint[0], tint[1], tint[2], idx, 0, 0);
 				gems.tri(gems.count - 3, gems.count - 2, gems.count - 1);
 			};
-			for (let k = 0; k < 6; k++) {
-				const r0 = ring[k];
-				const r1 = ring[(k + 1) % 6];
-				face(front, r0, r1);
-				face(back, r1, r0);
+			for (let k = 0; k < K; k++) {
+				const k1 = (k + 1) % K;
+				face(front, table[k], table[k1]);
+				face(table[k], girdle[k], girdle[k1]);
+				face(table[k], girdle[k1], table[k1]);
+				face(girdle[k], girdle2[k], girdle2[k1]);
+				face(girdle[k], girdle2[k1], girdle[k1]);
+				face(back, girdle2[k1], girdle2[k]);
+			}
+			// arkadaki küçük prizmalar (süs; aynı ışıkla yanar)
+			for (let q = 0; q < 3; q++) {
+				const ang = q * 2.1 + 0.6;
+				const base = C.clone().addScaledVector(n, -0.22).addScaledVector(e1, Math.cos(ang) * 0.18).addScaledVector(e2, Math.sin(ang) * 0.3);
+				const dir = V3().copy(n).multiplyScalar(-0.35).addScaledVector(e1, Math.cos(ang)).addScaledVector(e2, Math.sin(ang) * 1.2).normalize();
+				const len = 0.38 + q * 0.07;
+				const f1 = V3().crossVectors(dir, n).normalize();
+				const f2 = V3().crossVectors(dir, f1).normalize();
+				const hex = [];
+				for (let k = 0; k < 5; k++) {
+					const aa = (k / 5) * Math.PI * 2;
+					hex.push([Math.cos(aa) * 0.07, Math.sin(aa) * 0.07]);
+				}
+				const at = (t, h) => base.clone().addScaledVector(dir, t).addScaledVector(f1, h[0]).addScaledVector(f2, h[1]);
+				const tipP = base.clone().addScaledVector(dir, len + 0.12);
+				for (let k = 0; k < 5; k++) {
+					const h0 = hex[k];
+					const h1 = hex[(k + 1) % 5];
+					face(at(0, h0), at(len, h0), at(len, h1));
+					face(at(0, h0), at(len, h1), at(0, h1));
+					face(at(len, h0), tipP, at(len, h1));
+				}
 			}
 			list.push({ c: C, n, target: T, level: li, anchor: C.clone(), w: 0.45, tint, season: L.season });
 		}

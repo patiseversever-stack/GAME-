@@ -49,8 +49,11 @@ export class Builder {
 	/**
 	 * Bir eğri boyunca boru (dal, kök, halat). Çerçeve paralel taşımayla ilerler, burulma olmaz.
 	 * pts: Vector3 dizisi, rad: her noktadaki yarıçap, col(i, t, angle) → [r,g,b,a].
+	 * shape(i, t, angle, v, out): isteğe bağlı çevresel biçim; out[0] yarıçap çarpanı, out[1] onun
+	 * açıya göre türevi (oluklu, burulmuş dallar). Normal türeve göre eğilir, gölgelemede okunur.
 	 */
-	tube(pts, rad, segs, col, { uvScale = 1, capEnd = true, capStart = false, sway = null } = {}) {
+	tube(pts, rad, segs, col, { uvScale = 1, capEnd = true, capStart = false, sway = null, shape = null } = {}) {
+		const sh = [1, 0];
 		const n = pts.length;
 		const T = new THREE.Vector3();
 		const N = new THREE.Vector3();
@@ -80,9 +83,25 @@ export class Builder {
 				const nx = N.x * cx + B.x * sy;
 				const ny = N.y * cx + B.y * sy;
 				const nz = N.z * cx + B.z * sy;
-				const r = rad[i];
-				const cc = col(i, i / (n - 1), ang, nx, ny, nz);
-				this.vert(pts[i].x + nx * r, pts[i].y + ny * r, pts[i].z + nz * r, nx, ny, nz, cc[0], cc[1], cc[2], cc[3], s / segs, v);
+				let r = rad[i];
+				let mx = nx;
+				let my = ny;
+				let mz = nz;
+				if (shape) {
+					shape(i, i / (n - 1), ang, v, sh);
+					r *= sh[0];
+					// yüzey normali: radyal yön − (m'/m) · çevresel teğet
+					const k = sh[1] / sh[0];
+					mx = nx - k * (B.x * cx - N.x * sy);
+					my = ny - k * (B.y * cx - N.y * sy);
+					mz = nz - k * (B.z * cx - N.z * sy);
+					const l = Math.hypot(mx, my, mz) || 1;
+					mx /= l;
+					my /= l;
+					mz /= l;
+				}
+				const cc = col(i, i / (n - 1), ang, mx, my, mz);
+				this.vert(pts[i].x + nx * r, pts[i].y + ny * r, pts[i].z + nz * r, mx, my, mz, cc[0], cc[1], cc[2], cc[3], s / segs, v);
 			}
 		}
 		const ring = segs + 1;
