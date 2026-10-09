@@ -24,6 +24,10 @@ export function groundY(x, z) {
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
 
+function smoothPts(ctrl, per) {
+	return new THREE.CatmullRomCurve3(ctrl, false, 'centripetal').getPoints((ctrl.length - 1) * per);
+}
+
 /** θ'da periyodik, yumuşak gürültü (dikişsiz). */
 function ringNoise(th, seed) {
 	return (
@@ -107,8 +111,9 @@ export function buildIsland(gateTheta) {
 	const baseR = (t) => (ISLAND_R + 0.3) * Math.pow(1 - t, 1.25) * (t < 0.04 ? 1 + (0.04 - t) * 2 : 1);
 	const prof = (t, k, u, th) => {
 		const A = 0.07 + 0.03 * Math.sin(k * 2.3);
-		const saw = 0.55 - u * (1 + 0.15 * ringNoise(th, k + 7)); // tabaka üstü dışa taşar, altı içe
-		const lobes = 1 + 0.08 * ringNoise(th, k * 0.37 + t * 2) + 0.035 * Math.sin(17 * th + k * 3.1);
+		const saw = 0.55 - u * (1 + 0.12 * ringNoise(th, k + 7)); // tabaka üstü dışa taşar, altı içe
+		// loblar t ile sürekli değişir (tabaka sınırında sıçramaz): seki her yerde pozitif genişlikte
+		const lobes = 1 + 0.08 * ringNoise(th, t * 2.5) + 0.03 * Math.sin(17 * th + t * 6);
 		return Math.max(0.15, baseR(t) * lobes * (1 + A * saw * (t > 0.02 ? 1 : 0)));
 	};
 	const rock0 = rock.count;
@@ -190,25 +195,27 @@ export function buildIsland(gateTheta) {
 		const t = LAYERS[li] + 0.005;
 		const r = prof(t, li, 0.9, th) * 0.94;
 		const y0 = -0.75 - t * DEPTH;
-		const L = VR.range(5, 15);
+		const L = VR.range(4, 11);
 		const pts = [];
 		let x = Math.cos(th) * r;
 		let z = Math.sin(th) * r;
-		const drift = VR.range(-0.5, 0.5);
+		const tg = V3(-Math.sin(th), 0, Math.cos(th));
+		const sw = VR.range(0.5, 1.1) * VR.sign();
 		for (let s = 0; s <= 8; s++) {
 			const f = s / 8;
-			pts.push(V3(x, y0 - f * L - Math.sin(f * 3) * 0.3, z));
-			const a = th + drift * f + Math.sin(f * 5 + k) * 0.4;
-			x += Math.cos(a) * VR.range(0.05, 0.4);
-			z += Math.sin(a) * VR.range(0.05, 0.4);
+			// önce dışa kıvrılıp sonra yerçekimiyle sarkar, yana dalgalanır
+			const out = Math.sin(Math.min(1, f * 2.2) * Math.PI * 0.5) * 0.9;
+			const wv = Math.sin(f * 7 + k) * sw * f;
+			pts.push(V3(x + Math.cos(th) * out + tg.x * wv, y0 - Math.pow(f, 1.3) * L, z + Math.sin(th) * out + tg.z * wv));
 		}
-		const r0k = VR.range(0.22, 0.42);
-		rock.tube(pts, pts.map((_, i) => lerp(r0k, 0.03, Math.pow(i / 8, 0.8))), 5, rootCol);
+		const r0k = VR.range(0.13, 0.26);
+		const sp = smoothPts(pts, 2);
+		rock.tube(sp, sp.map((_, i) => lerp(r0k, 0.02, Math.pow(i / (sp.length - 1), 0.7))), 5, rootCol);
 		// yan kökçük
 		if (VR() < 0.6) {
 			const p0 = pts[3];
-			const q = [p0, p0.clone().add(V3(VR.range(-0.6, 0.6), -1.4, VR.range(-0.6, 0.6))), p0.clone().add(V3(VR.range(-1, 1), -L * 0.4, VR.range(-1, 1)))];
-			rock.tube(q, [r0k * 0.4, r0k * 0.25, 0.02], 4, rootCol);
+			const q = [p0, p0.clone().add(V3(VR.range(-0.7, 0.7), -1.2, VR.range(-0.7, 0.7))), p0.clone().add(V3(VR.range(-1.2, 1.2), -L * 0.35, VR.range(-1.2, 1.2)))];
+			rock.tube(smoothPts(q, 3), [r0k * 0.45, r0k * 0.4, r0k * 0.3, r0k * 0.22, r0k * 0.15, r0k * 0.08, 0.015], 4, rootCol);
 		}
 	}
 	// mor kristal kümeleri: Tün Ana'nın mürekkebi kayanın içinde donmuş
@@ -237,14 +244,14 @@ export function buildIsland(gateTheta) {
 			const L = VR.range(0.4, 2.4) * (q === 0 ? 1.3 : 0.7);
 			const p0 = V3(Math.cos(th) * r, -0.9, Math.sin(th) * r);
 			const p1 = p0.clone().add(V3(0, -L, 0));
-			rock.tube([p0, p0.clone().lerp(p1, 0.4), p1], [VR.range(0.09, 0.17), 0.07, 0.006], 5, () => [0.8, 0.92, 1.06, 1]);
+			rock.tube([p0, p0.clone().lerp(p1, 0.4), p1], [VR.range(0.09, 0.17), 0.07, 0.006], 4, () => [0.8, 0.92, 1.06, 1]);
 		}
 	}
 	rock.fixWinding();
 
 	// ---- kayalar (kar şapkalı) ----
 	const boulder = (c, s, sq = 0.65) => {
-		const g = new THREE.IcosahedronGeometry(1, 2);
+		const g = new THREE.IcosahedronGeometry(1, s < 1 ? 1 : 2);
 		const Pp = g.getAttribute('position');
 		const base = props.count;
 		const seed = R() * 100;

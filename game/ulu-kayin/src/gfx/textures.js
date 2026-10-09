@@ -74,7 +74,7 @@ export function barkTexture(size, aniso) {
 	g.fillRect(0, 0, W, H);
 
 	// 1) dalgalı, yumuşak kenarlı yatay kuşaklar (tam genişlik: yatayda dikişsiz)
-	const bandCols = ['#f8f3ea', '#e0dbd3', '#f2e6d6', '#dbd7d2', '#f5eee2', '#e9ddcc', '#e6e2dc'];
+	const bandCols = ['#faf6ee', '#d9d5cf', '#f2e5d3', '#d4d1ce', '#f7f0e4', '#e7d8c4', '#e2ded8'];
 	for (let i = 0; i < 16; i++) {
 		const y = R() * H;
 		const h = R.range(10, 54) * k;
@@ -84,7 +84,7 @@ export function barkTexture(size, aniso) {
 		const n1 = 1 + ((R() * 3) | 0);
 		const n2 = 1 + ((R() * 3) | 0);
 		const amp = R.range(2, 9) * k;
-		const a = R.range(0.4, 0.85);
+		const a = R.range(0.5, 0.95);
 		for (const dy of [-H, 0, H]) {
 			const y0 = y + dy;
 			if (y0 + h + amp < 0 || y0 - h - amp > H) continue;
@@ -129,7 +129,7 @@ export function barkTexture(size, aniso) {
 		const y = R() * H;
 		const len = R.range(70, 230) * k;
 		const th = R.range(5, 12) * k;
-		const curl = R() < 0.4;
+		const curl = false;
 		wrapDraw(W, H, x, y, len, (xx, yy) => {
 			g.fillStyle = rgba('#8d7a6c', 0.22);
 			lensPath(g, xx + 3 * k, yy + th * 0.75, len * 0.92, th * 0.55);
@@ -428,14 +428,14 @@ export function leafAtlas(size) {
 		coreBot: '#1f4a30',
 		ramp: ramp3('#b4dd6e', '#5fa344', '#2a6136'),
 		hi: (t) => (t < 0.5 ? 'rgba(240,255,190,0.28)' : 'rgba(200,240,170,0.12)'),
-	}, 70, [38, 54]);
+	}, 84, [36, 50]);
 	// 2) güz: altın sarısı, kehribar, birkaç kızıl
 	leafyCell(cell * 0.5, cell * 1.5, {
 		coreTop: '#e0a23a',
 		coreBot: '#9a4a22',
-		ramp: (t, r) => (r < 0.1 ? mixHex('#e0683a', '#a8402a', t) : ramp3('#ffe58a', '#f4b23c', '#c96a2a')(t, r)),
+		ramp: (t, r) => (r < 0.06 ? mixHex('#ea8a3e', '#b9512c', t) : ramp3('#ffe58a', '#f4b23c', '#c96a2a')(t, r)),
 		hi: (t) => (t < 0.5 ? 'rgba(255,250,210,0.32)' : 'rgba(255,220,150,0.14)'),
-	}, 66, [38, 54]);
+	}, 80, [36, 50]);
 	// 3) kar topağı: kabarık yuvarlak öbekler; üstü bembeyaz, altı lavanta-mavi
 	{
 		const cx = cell * 1.5;

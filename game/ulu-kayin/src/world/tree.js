@@ -129,7 +129,7 @@ export function buildTree(curve, tier) {
 		const collar = opt.collar ?? 0.55;
 		const rad = pts.map((_, i) => {
 			const t = i / (n - 1);
-			const taper = r1 + (r0 - r1) * Math.pow(1 - t, 1.15);
+			const taper = r1 + (r0 - r1) * Math.pow(1 - t, opt.taper ?? 1.7);
 			const knob = 1 + 0.07 * noise1(i * 0.55 + ph) * (1 - t * 0.6);
 			const tc = Math.max(0, t - tExit);
 			const fl = 1 + collar * Math.exp(-tc * 9) * (t < tExit ? 1 : 1);
@@ -161,8 +161,8 @@ export function buildTree(curve, tier) {
 	/** İnce sürgün (oynanışa girmez): kümelerin içine uzanan çıplak dal uçları. */
 	const addTwig = (a, b, r, anchor, w0, w1) => {
 		const mid = a.clone().lerp(b, 0.5).add(V3(VR.range(-0.25, 0.25), VR.range(0.05, 0.3), VR.range(-0.25, 0.25)));
-		const pts = smoothPts([a, mid, b], 3);
-		branches.tube(pts, pts.map((_, i) => lerp(r, 0.025, i / (pts.length - 1))), 4, () => [0.55, 0.4, 0.33, 1], {
+		const pts = smoothPts([a, mid, b], 2);
+		branches.tube(pts, pts.map((_, i) => lerp(r, 0.022, i / (pts.length - 1))), 3, () => [0.55, 0.4, 0.33, 1], {
 			uvScale: 0.6,
 			sway: (i, t) => branches.setSway(anchor.x, anchor.y, anchor.z, lerp(w0, w1, t)),
 		});
@@ -175,7 +175,7 @@ export function buildTree(curve, tier) {
 
 	/** Kümeye birkaç çıplak sürgün: yaprak arasından dal iskeleti görünsün. */
 	const twigsInto = (from, c, r, anchor, w) => {
-		const nT = r > 1.4 ? 3 : 2;
+		const nT = r > 1.1 ? 2 : 1;
 		for (let k = 0; k < nT; k++) {
 			const end = c.clone().add(V3(VR.range(-0.7, 0.7) * r, VR.range(-0.1, 0.5) * r, VR.range(-0.7, 0.7) * r));
 			addTwig(from, end, 0.06, anchor, w * 0.8, w);
@@ -227,7 +227,7 @@ export function buildTree(curve, tier) {
 		const tip = ctrl[5];
 		const sw = L / 8;
 		const r0 = lerp(0.42, 0.7, (L - 4.5) / 5);
-		const pts = addBranch(ctrl, r0, 0.05, tip, 0, sw, 8);
+		const pts = addBranch(ctrl, r0, 0.05, tip, 0, sw, 8, { per: 4 });
 		sb.r0 = r0;
 		// alt dallar
 		const nTw = winter ? 2 : R.range(1, 3.6) | 0;
@@ -294,7 +294,7 @@ export function buildTree(curve, tier) {
 			polar(L, az + 0.26, TRUNK_TOP + up * 0.8),
 		];
 		const tip = ctrl[4];
-		const pts = addBranch(ctrl, 1.3, 0.12, tip, 0, 0.9, hi ? 10 : 8, { fromTrunk: false, collar: 0.1 });
+		const pts = addBranch(ctrl, 1.3, 0.12, tip, 0, 0.9, hi ? 10 : 8, { fromTrunk: false, collar: 0.1, taper: 1.2 });
 		// her koldan ikincil dallar ve bol çiçek
 		for (let k = 0; k < 5; k++) {
 			const t = 0.32 + k * 0.15;
@@ -309,7 +309,7 @@ export function buildTree(curve, tier) {
 			addCluster(mid.clone().add(V3(0, 1.0, 0)), R.range(1.8, 2.4), tip, 0.9);
 			// aşağı sarkan salkım: tacın altını doldurur
 			if (R() < 0.6) addCluster(end.clone().add(V3(0, -1.6, 0)), R.range(1.4, 1.9), tip, 1.1, -1, 1.25);
-			twigsInto(mid, end, cr * 0.5, tip, 1.0);
+			void cr;
 		}
 		addCluster(tip.clone().add(V3(0, 0.6, 0)), R.range(2.6, 3.3), tip, 0.9);
 		addCluster(pts[Math.round(pts.length * 0.6)].clone().add(V3(0, 1.5, 0)), R.range(2.4, 3.0), tip, 0.6);
@@ -452,7 +452,7 @@ export function buildTree(curve, tier) {
 	const SEG = hi ? 84 : 60;
 	const Y0 = -4;
 	const Y1 = TRUNK_TOP + 2.6;
-	const dy = hi ? 0.4 : 0.5;
+	const dy = hi ? 0.48 : 0.6;
 	const rings = Math.ceil((Y1 - Y0) / dy) + 1;
 	const N = new THREE.Vector3();
 	const UT = 3; // dokunun çevredeki tekrar sayısı
@@ -555,7 +555,7 @@ export function buildTree(curve, tier) {
 	/** Yüzeye oturan çokgen: yerel (s yatay yay, t dikey) noktalardan merkezli halkalar. */
 	const decalLens = (thC, yC, hw, hh, col, off, pointed = 0.8) => {
 		const rC = trunkSurfaceR(thC, yC);
-		const K = 18;
+		const K = 14;
 		const center = trunk.count;
 		const put = (s, t, cl) => {
 			const th = thC + s / rC;
@@ -636,17 +636,18 @@ export function buildTree(curve, tier) {
 	}
 	// dal diplerinin üstünde kaşlar
 	for (const b of sideBranches) {
-		if (pathNear(b.az, b.y + 0.6, 0)) continue;
+		if (VR() < 0.35 || pathNear(b.az, b.y + 0.6, 0)) continue;
 		const r0 = b.r0 || 0.5;
-		const yA = b.y + r0 * 1.6 + 0.25;
-		const span = r0 * 2.6 + 0.4;
+		const yA = b.y + r0 * 1.45 + 0.2;
+		const span = r0 * 1.9 + 0.3;
+		const tilt = VR.range(-0.08, 0.08);
 		for (const sg of [-1, 1]) {
 			const P = [];
-			for (let k = 0; k <= 6; k++) {
-				const t = k / 6;
-				P.push([sg * span * t, -t * r0 * 1.5 + Math.sin(t * Math.PI) * 0.18]);
+			for (let k = 0; k <= 5; k++) {
+				const t = k / 5;
+				P.push([sg * span * t, -t * r0 * 0.95 + Math.sin(t * Math.PI) * 0.1 + tilt * sg * t]);
 			}
-			decalStroke(b.az, yA, P, 0.15 + r0 * 0.12, 0.025, DARK, 0.035);
+			decalStroke(b.az, yA, P, 0.06 + r0 * 0.07, 0.012, DARK, 0.035);
 		}
 	}
 	trunk.fixWinding();

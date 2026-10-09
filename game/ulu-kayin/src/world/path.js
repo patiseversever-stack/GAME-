@@ -281,9 +281,7 @@ export function buildWalkway(curve) {
 			const k = R.range(0.9, 1.05);
 			rail.tube([p0, p1], [0.06, 0.052], 6, wood(k), { capEnd: false });
 			// topuz
-			const kn0 = p1.clone();
-			const kn1 = p1.clone().add(V(0, 0.09, 0));
-			rail.tube([kn0.clone().add(V(0, -0.015, 0)), kn0.clone().add(V(0, 0.035, 0)), kn1], [0.062, 0.072, 0.03], 6, wood(k * 0.92), { capEnd: true });
+			rail.tube([p1.clone().add(V(0, -0.01, 0)), p1.clone().add(V(0, 0.08, 0))], [0.072, 0.03], 6, wood(k * 0.92), { capEnd: true });
 			posts.push({ s, side, top: p1.clone(), bridge });
 		}
 	}
@@ -298,7 +296,7 @@ export function buildWalkway(curve) {
 			const pts = [];
 			const A = a.top.clone().add(V(0, -0.04, 0));
 			const B = b.top.clone().add(V(0, -0.04, 0));
-			for (let t = 0; t <= 1.0001; t += 0.2) {
+			for (let t = 0; t <= 1.0001; t += 0.25) {
 				const p = A.clone().lerp(B, t);
 				p.y -= Math.sin(t * Math.PI) * 0.11;
 				pts.push(p);
@@ -318,8 +316,8 @@ export function buildWalkway(curve) {
 		const rs = trunkSurfaceR(tmp.th, yB - 0.95) - 0.12;
 		const b = V(Math.cos(tmp.th) * rs, yB - 0.95, Math.sin(tmp.th) * rs);
 		const m = a.clone().lerp(b, 0.5).add(V(tmp.sx * 0.12, -0.12, tmp.sz * 0.12));
-		const pts = [a, a.clone().lerp(m, 0.6), m, m.clone().lerp(b, 0.5), b];
-		rail.tube(pts, [0.085, 0.08, 0.075, 0.08, 0.1], 6, wood(0.85), { capEnd: true, capStart: true });
+		const pts = [a, a.clone().lerp(m, 0.55), m.clone().lerp(b, 0.45), b];
+		rail.tube(pts, [0.085, 0.078, 0.08, 0.1], 6, wood(0.85), { capEnd: true, capStart: true });
 	}
 
 	// fenerler: dış dikmelerin bir kısmında, kıvrık bir askıdan sarkar (camı ayrı, kendi ışığıyla)
@@ -386,7 +384,7 @@ export function buildWalkway(curve) {
 	let nextC = 3;
 	for (const r of ropes) {
 		if (r.s < nextC) continue;
-		nextC = r.s + (r.bridge ? R.range(1.5, 2.5) : R.range(4, 7.5));
+		nextC = r.s + (r.bridge ? R.range(1.5, 2.5) : R.range(3.5, 6.5));
 		const t = R.range(0.3, 0.7);
 		const p = r.a.clone().lerp(r.b, t);
 		p.y -= Math.sin(t * Math.PI) * 0.11 + 0.02;
@@ -395,7 +393,7 @@ export function buildWalkway(curve) {
 		const c0 = (R() * CAPUT.length) | 0;
 		for (let k = 0; k < cnt; k++) {
 			const pp = p.clone().addScaledVector(tdir.clone().normalize(), (k - (cnt - 1) / 2) * 0.07);
-			ribbon(pp, tdir, R.range(0.22, 0.4), R.range(0.05, 0.075), CAPUT[(c0 + k * 2) % CAPUT.length], R.range(0.03, 0.08));
+			ribbon(pp, tdir, R.range(0.32, 0.56), R.range(0.075, 0.1), CAPUT[(c0 + k * 2) % CAPUT.length], R.range(0.04, 0.1));
 		}
 		// düğüm
 		rail.box(p.clone().add(V(0, 0.01, 0)), V(0.035, 0, 0), V(0, 0.03, 0), V(0, 0, 0.035), () => [0.9, 0.85, 0.75, 1]);
@@ -440,7 +438,7 @@ export function buildWalkway(curve) {
 		}
 		// beyaz benekler
 		if (dots) {
-			for (let k = 0; k < 4; k++) {
+			for (let k = 0; k < 3; k++) {
 				const a = R() * TAU;
 				const d = capR * R.range(0.2, 0.6);
 				const q = c.clone().add(V(Math.cos(a) * d, h + capR * 0.55 * (0.95 - (d / capR) * 0.6) + 0.006, Math.sin(a) * d));
