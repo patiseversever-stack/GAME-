@@ -110,6 +110,8 @@ vec3 skyAmbient(vec3 N) {
 // Gölgede yaşayan gece: Tün Ana'nın dağılmış yıldızları. Bakış yönüne bağlı (sonsuzdaki gök
 // gibi), bu yüzden gölge bir pencere gibi gece göğünü gösterir. Ekranda ~7 css pikselde bir hücre.
 vec3 nightInShade(vec3 V, float ndv, float k) {
+	// aydınlık yerde hiç hesaplanmaz (gölge ekranda bütün halinde durur, dallanma tutarlı)
+	if (k < 0.002) return vec3(0.0);
 	vec3 d = -V;
 	float K = 61.0 * max(uRes.y / max(uRes.x, 1.0), 1.0);
 	vec2 q = vec2(atan(d.z, d.x) * K, d.y * K * 1.05);
@@ -148,11 +150,11 @@ vec3 shadeLit(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float wrapK, floa
 	float e = max(sh * (1.0 - sh) * 4.0, gShEdge);
 	float t = diff * (1.0 - diff) * 4.0;
 	vec3 glowAlb = albedo * 0.6 + 0.4;
-	c += uTermCol * glowAlb * (e * e * diff + t * t * sh * 0.22) * uShadeFx.z;
+	c += uTermCol * glowAlb * (e * e * diff * uShadeFx.z + t * t * sh * 0.16);
 	// kontra ışık: güneş nesnenin arkasındayken siluet kenarı ışık renginde yanar
 	float fres = pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 3.0);
 	float back = clamp(dot(-V, uSunDir) * 0.6 + 0.4, 0.0, 1.0);
-	c += uSunCol * fres * back * rimK * (0.25 + 0.75 * sh) * ao;
+	c += uSunCol * fres * (back * back * 1.6 + 0.15) * rimK * (0.3 + 0.7 * sh) * ao;
 	// gece gölgede yaşar
 	float shade = smoothstep(0.35, 0.9, 1.0 - lit);
 	c += nightInShade(V, clamp(dot(N, V), 0.0, 1.0), shade * min(ao, 1.0));
