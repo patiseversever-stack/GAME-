@@ -157,7 +157,7 @@ export const CSS = /* css */ `
 @keyframes ukPopA{0%{transform:scale(1.8)}100%{transform:scale(1)}}@keyframes ukPopB{0%{transform:scale(1.8)}100%{transform:scale(1)}}
 
 /* uçan geri bildirim */
-.uk-pop{position:absolute;left:50%;top:calc(var(--sat) + 94px);padding:7px 18px;border-radius:999px;font-size:18px;font-weight:800;letter-spacing:.02em;white-space:nowrap;
+.uk-pop{position:absolute;left:50%;top:calc(var(--sat) + 136px);padding:7px 18px;border-radius:999px;font-size:18px;font-weight:800;letter-spacing:.02em;white-space:nowrap;
   background:var(--panel);border:1.5px solid rgba(179,166,255,.7);color:#e9e4ff;box-shadow:var(--pshadow);opacity:0;transform:translate(-50%,0);pointer-events:none}
 .uk-pop.gold{border-color:var(--gold2);color:var(--gold2);box-shadow:0 0 20px rgba(255,200,110,.4),var(--pshadow)}
 .uk-pop.bad{border-color:var(--ember);color:var(--ember2);background:linear-gradient(180deg,rgba(70,26,14,.95),rgba(36,12,8,.95))}
@@ -185,7 +185,7 @@ export const CSS = /* css */ `
 .uk-compass .sun .ray{stroke:#ffcf6a;stroke-width:2.6}
 .uk-compass .win{fill:none;stroke:#ffe0a0;stroke-width:8;stroke-linecap:round;animation:ukWin 1.1s ease-in-out infinite}
 @keyframes ukWin{0%,100%{opacity:.45}50%{opacity:1}}
-.uk-compass .cs{position:absolute;left:50%;top:-13px;transform:translateX(-50%);padding:4px 12px 5px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;
+.uk-compass .cs{position:absolute;left:50%;top:-38px;transform:translateX(-50%);padding:4px 12px 5px;border-radius:999px;font-size:12px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;white-space:nowrap;
   background:#1d1540;border:1.5px solid #b3a6ff;color:#e6e0ff;box-shadow:0 4px 12px rgba(6,3,16,.5)}
 .uk-compass.hot .cs{background:#47190b;border-color:var(--ember);color:#ffd9bf}
 
@@ -216,7 +216,7 @@ export const CSS = /* css */ `
 .uk-ab.active{background:radial-gradient(circle at 50% 35%,#6a55c0,#251a4a);border-color:#d6ceff;color:#fff}
 
 /* ipucu kartı: kontrollerin hemen üstünde, simgeli tek cümle */
-.uk-hint{position:absolute;left:50%;bottom:calc(var(--sab) + var(--cw) + 34px);width:min(calc(100% - 24px),440px);display:flex;align-items:center;gap:14px;padding:13px 18px 13px 13px;border-radius:20px;
+.uk-hint{position:absolute;left:50%;bottom:calc(var(--sab) + var(--cw) + 56px);width:min(calc(100% - 24px),440px);display:flex;align-items:center;gap:14px;padding:13px 18px 13px 13px;border-radius:20px;
   background:var(--panel);border:1px solid var(--line2);box-shadow:0 14px 34px rgba(6,3,16,.55),inset 0 1px 0 rgba(255,240,210,.1);
   opacity:0;transform:translate(-50%,12px);transition:opacity .35s,transform .45s cubic-bezier(.2,1.4,.4,1);pointer-events:none}
 .uk-hint.on{opacity:1;transform:translate(-50%,0)}
@@ -224,7 +224,7 @@ export const CSS = /* css */ `
 .uk-hint .hi svg{width:28px;height:28px;stroke-width:2.1}
 .uk-hint p{text-wrap:balance;font-size:16px;line-height:1.38;font-weight:500;color:var(--ivory)}
 .uk-hint em{font-style:normal;color:var(--gold2);font-weight:800}
-.uk-hand{position:absolute;left:50%;bottom:calc(var(--sab) + var(--cw) + 150px);width:200px;height:56px;margin-left:-100px;opacity:0;transition:opacity .3s;pointer-events:none}
+.uk-hand{position:absolute;left:50%;bottom:calc(var(--sab) + var(--cw) + 176px);width:200px;height:56px;margin-left:-100px;opacity:0;transition:opacity .3s;pointer-events:none}
 .uk-hand.on{opacity:1}
 .uk-hand .tr{position:absolute;left:10px;right:10px;top:50%;height:3px;margin-top:-1.5px;border-radius:3px;background:linear-gradient(90deg,rgba(255,224,160,0),rgba(255,224,160,.9) 30%,rgba(255,224,160,.9) 70%,rgba(255,224,160,0))}
 .uk-hand .tr::before,.uk-hand .tr::after{content:"";position:absolute;top:50%;width:11px;height:11px;margin-top:-6px;border:solid var(--gold2);border-width:0 0 3px 3px;transform:rotate(45deg)}
