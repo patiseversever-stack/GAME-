@@ -289,7 +289,6 @@ export class Flock {
 		e1.normalize();
 		const e2 = this._e2.set(ny * e1.z - nz * e1.y, nz * e1.x - nx * e1.z, nx * e1.y - ny * e1.x).normalize();
 
-		const was = this.active;
 		if (this.active > 0) {
 			this.active -= dt;
 			if (this.active <= 0) {
@@ -297,7 +296,6 @@ export class Flock {
 				this.release(false);
 			}
 		}
-		void was;
 		this.glow = damp(this.glow, this.ready ? 1 : 0.25, 4, dt);
 
 		const P = this.aP.array;

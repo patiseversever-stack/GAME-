@@ -406,9 +406,7 @@ export class Game {
 		this.timeScale = 1;
 		this._tutShade = i !== 0;
 		this._flockOn = false;
-		this._gustWarned = -1;
 		this._beamHit = false;
-		this._allDrops = false;
 		this._lkOn = false;
 		this._pend = null;
 		(this._dropWarn || (this._dropWarn = new Uint8Array(16))).fill(0);
