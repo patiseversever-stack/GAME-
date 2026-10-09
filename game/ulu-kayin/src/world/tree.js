@@ -175,6 +175,7 @@ export function buildTree(curve, tier) {
 
 	/** İnce sürgün (oynanışa girmez): kümelerin içine uzanan çıplak dal uçları. */
 	const addTwig = (a, b, r, anchor, w0, w1) => {
+		if (!hi) return; // düşük kademede süs sürgünleri yok
 		const mid = a.clone().lerp(b, 0.5).add(V3(VR.range(-0.25, 0.25), VR.range(0.05, 0.3), VR.range(-0.25, 0.25)));
 		const pts = smoothPts([a, mid, b], 2);
 		branches.tube(pts, pts.map((_, i) => lerp(r, 0.022, i / (pts.length - 1))), 3, () => [0.55, 0.4, 0.33, 1], {
@@ -318,7 +319,7 @@ export function buildTree(curve, tier) {
 			const len = R.range(3.8, 6.5);
 			const end = p.clone().add(V3(Math.cos(a2) * len, R.range(0.6, 3.4), Math.sin(a2) * len));
 			const mid = p.clone().lerp(end, 0.5).add(V3(0, 0.6, 0));
-			addBranch([p, mid, end], lerp(1.3, 0.14, t) * 0.5, 0.05, tip, 0.9 * t, 1.1, 6, { fromTrunk: false, collar: 0.3 });
+			addBranch([p, mid, end], lerp(1.3, 0.14, t) * 0.5, 0.05, tip, 0.9 * t, 1.1, 6, { fromTrunk: false, collar: 0.3, per: 3 });
 			const cr = R.range(2.3, 3.1);
 			addCluster(end, cr, tip, 1.1);
 			addCluster(mid.clone().add(V3(0, 1.0, 0)), R.range(1.8, 2.4), tip, 0.9);
@@ -452,7 +453,7 @@ export function buildTree(curve, tier) {
 				polar(Rt + L * 0.82, az + da * 2.2, 0.0),
 				polar(Rt + L, az + da * 2.5, -0.5),
 			];
-			addBranch(ctrl, R.range(0.6, 0.8) * (0.85 + BUTTRESS_K[bi] * 0.12), 0.14, ctrl[5], 0, 0, 9, { fromTrunk: false, collar: 0.2 });
+			addBranch(ctrl, R.range(0.6, 0.8) * (0.85 + BUTTRESS_K[bi] * 0.12), 0.14, ctrl[5], 0, 0, 9, { fromTrunk: false, collar: 0.2, per: 3 });
 		}
 	}
 
@@ -464,7 +465,7 @@ export function buildTree(curve, tier) {
 	// geniş gümüşi/kremsi lekeler; tabanda toprak ve yaşlı kabuğun koyuluğu.
 	// ------------------------------------------------------------------------------------------
 	const trunk = new Builder();
-	const SEG = hi ? 84 : 60;
+	const SEG = hi ? 72 : 56;
 	const Y0 = -4;
 	const Y1 = TRUNK_TOP + 2.6;
 	const dy = hi ? 0.48 : 0.6;
@@ -638,17 +639,17 @@ export function buildTree(curve, tier) {
 	// büyük gözler
 	let nEyes = 0;
 	const eyes = [];
-	for (let tries = 0; tries < 600 && nEyes < (hi ? 30 : 24); tries++) {
+	for (let tries = 0; tries < 600 && nEyes < (hi ? 22 : 18); tries++) {
 		const th = VR() * TAU;
 		const y = VR.range(4, 46.5);
 		if (pathNear(th, y, 0.4)) continue;
 		let clash = false;
 		for (const b of bases) if (Math.abs(b.y - y) < 1.6 && Math.abs(Math.atan2(Math.sin(th - b.az), Math.cos(th - b.az))) < 0.6) clash = true;
 		// iki göz yan yana gelmesin (yüz gibi görünmesin)
-		for (const e of eyes) if (Math.abs(e.y - y) < 2.2 && Math.abs(Math.atan2(Math.sin(th - e.th), Math.cos(th - e.th))) < 1.0) clash = true;
+		for (const e of eyes) if (Math.abs(e.y - y) < 3.2 && Math.abs(Math.atan2(Math.sin(th - e.th), Math.cos(th - e.th))) < 1.2) clash = true;
 		if (clash) continue;
 		eyes.push({ th, y });
-		const w = VR.range(0.45, 0.95) * (VR() < 0.2 ? 1.5 : 1);
+		const w = VR.range(0.38, 0.75) * (VR() < 0.18 ? 1.5 : 1);
 		decalLens(th, y, w, w * VR.range(0.3, 0.42), DARK, 0.035, 0.9);
 		if (w > 0.6) decalLens(th, y + w * 0.02, w * 0.42, w * 0.1, KNOT, 0.05, 0.6);
 		nEyes++;

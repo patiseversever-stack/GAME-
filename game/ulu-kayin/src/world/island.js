@@ -209,7 +209,7 @@ export function buildIsland(gateTheta) {
 			pts.push(V3(x + Math.cos(th) * out + tg.x * wv, y0 - Math.pow(f, 1.3) * L, z + Math.sin(th) * out + tg.z * wv));
 		}
 		const r0k = VR.range(0.13, 0.26);
-		const sp = smoothPts(pts, 2);
+		const sp = smoothPts(pts, 1);
 		rock.tube(sp, sp.map((_, i) => lerp(r0k, 0.02, Math.pow(i / (sp.length - 1), 0.7))), 5, rootCol);
 		// yan kökçük
 		if (VR() < 0.6) {
