@@ -43,10 +43,10 @@ export const CSS = /* css */ `
 
 /* ---- başlık ---- */
 .uk-title{justify-content:flex-start;padding:calc(var(--sat) + 14px) 20px calc(var(--sab) + 30px)}
-.uk-title .sky{position:absolute;left:0;right:0;top:0;height:50%;pointer-events:none;
+.uk-title .sky{position:absolute;left:0;right:0;top:0;height:calc(var(--sat) + 440px);pointer-events:none;
   background:radial-gradient(1px 1px at 12% 18%,#fff 60%,transparent),radial-gradient(1.2px 1.2px at 84% 12%,#fff 60%,transparent),radial-gradient(1px 1px at 70% 30%,#fff 60%,transparent),
   radial-gradient(1px 1px at 26% 36%,#fff 60%,transparent),radial-gradient(1.4px 1.4px at 92% 40%,#ffe9c0 60%,transparent),radial-gradient(1px 1px at 6% 44%,#fff 60%,transparent),
-  linear-gradient(180deg,rgba(11,7,25,.95) 0%,rgba(11,7,25,.88) 42%,rgba(11,7,25,.5) 66%,rgba(11,7,25,.14) 86%,rgba(11,7,25,0) 100%)}
+  linear-gradient(180deg,rgba(11,7,25,.95) 0%,rgba(11,7,25,.9) 50%,rgba(11,7,25,.66) 70%,rgba(11,7,25,.24) 86%,rgba(11,7,25,0) 100%)}
 .uk-title .sky i{position:absolute;width:3px;height:3px;border-radius:50%;background:#fff6e0;box-shadow:0 0 6px 1px rgba(255,236,190,.8);animation:ukTw 3.2s ease-in-out infinite}
 .uk-title .sky i:nth-child(1){left:18%;top:9%}.uk-title .sky i:nth-child(2){left:78%;top:22%;animation-delay:-1.1s}.uk-title .sky i:nth-child(3){left:9%;top:30%;animation-delay:-2.3s}
 .uk-title .sky i:nth-child(4){left:90%;top:6%;animation-delay:-.6s}.uk-title .sky i:nth-child(5){left:60%;top:5%;animation-delay:-1.8s}.uk-title .sky i:nth-child(6){left:36%;top:46%;animation-delay:-2.8s;opacity:.6}
@@ -62,8 +62,8 @@ export const CSS = /* css */ `
 .emb .ed{fill:#f5c66e}
 .emb .et{stroke:#fff6e8;stroke-width:2.4}
 .emb .eo{fill:none;stroke:var(--gold2);stroke-width:1.6}
-.uk-brand .k{display:flex;align-items:center;gap:12px;margin-top:14px;font-size:12px;font-weight:800;letter-spacing:.32em;text-transform:uppercase;color:var(--gold2);text-shadow:var(--tsh)}
-.uk-brand .k i{width:30px;height:1.5px;background:linear-gradient(90deg,rgba(255,224,160,0),var(--gold))}
+.uk-brand .k{display:flex;align-items:center;gap:10px;margin-top:14px;font-size:12px;font-weight:800;letter-spacing:.28em;white-space:nowrap;text-transform:uppercase;color:var(--gold2);text-shadow:var(--tsh)}
+.uk-brand .k i{width:clamp(12px,6vw,30px);height:1.5px;background:linear-gradient(90deg,rgba(255,224,160,0),var(--gold))}
 .uk-brand .k i:last-child{transform:scaleX(-1)}
 .uk-brand h1{position:relative;font-family:var(--serif);font-style:italic;font-weight:700;font-size:clamp(64px,20vw,112px);line-height:1.02;margin-top:2px;padding:0 .1em;letter-spacing:-.005em;white-space:nowrap}
 .uk-brand h1::before{content:attr(data-t);position:absolute;left:0;right:0;top:0;padding:inherit;color:transparent;text-shadow:0 3px 0 rgba(70,34,6,.75),0 8px 30px rgba(6,3,16,.85),0 0 60px rgba(255,180,90,.35)}
@@ -363,7 +363,7 @@ export const CSS = /* css */ `
 }
 @media (orientation:landscape) and (max-height:520px){
   .uk-title{padding-top:calc(var(--sat) + 10px);padding-bottom:calc(var(--sab) + 16px)}
-  .uk-title .sky{height:70%}.uk-title .foot{height:50%}
+  .uk-title .sky{height:calc(var(--sat) + 300px)}.uk-title .foot{height:34%}
   .uk-brand{margin-top:-30px}.emb{width:46px;height:46px}.uk-brand .k{margin-top:6px}
   .uk-brand h1{font-size:72px}.uk-brand .tag{font-size:20px;margin-top:0}
   .uk-title .acts{flex-direction:row;gap:12px}.uk-title .acts .uk-btn.pri{min-width:220px}
@@ -385,8 +385,9 @@ export const CSS = /* css */ `
   .uk-end{justify-content:center}
   .uk-sheet{width:min(100%,660px);margin-top:0;padding:16px 22px 16px;display:grid;grid-template-columns:1fr 1fr;column-gap:22px;row-gap:4px;align-items:center}
   .uk-sheet .rays,.uk-sheet .med{display:none}
-  .uk-sheet > *{grid-column:1}
-  .uk-sheet .acts,.uk-sheet .uk-mercy{grid-column:2;grid-row:1 / span 6;margin:0}
+  .uk-sheet > *{grid-column:1;justify-self:center}
+  .uk-sheet .acts,.uk-sheet .uk-mercy{grid-column:2;grid-row:1 / span 6;margin:0;justify-self:stretch}
+  .uk-pop{top:calc(var(--sat) + 84px)}
   .uk-sheet .uk-mercy{grid-row:1 / span 2;align-self:end}
   .uk-end.fail .uk-sheet .acts{grid-row:3 / span 4;align-self:start}
   .uk-end h2{font-size:40px}.uk-stars{margin:4px 0 0}.uk-star .sh{width:46px;height:46px}.uk-star.s1 .sh{width:56px;height:56px}
