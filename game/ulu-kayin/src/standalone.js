@@ -11,5 +11,7 @@ createUluKayin({
 	debug: params.has('debug'),
 }).then((mode) => {
 	window.__uk = mode;
+	const boot = document.getElementById('uk-boot');
+	if (boot) boot.remove();
 	if (!params.has('debug')) mode.open();
 });

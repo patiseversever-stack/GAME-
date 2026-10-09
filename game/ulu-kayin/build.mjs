@@ -7,6 +7,7 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
+const kb = (n) => (n / 1024).toFixed(0) + ' KB';
 const dev = process.argv.includes('--dev');
 const dist = join(root, 'dist');
 mkdirSync(dist, { recursive: true });
@@ -62,6 +63,26 @@ const tpl = readFileSync(join(root, 'test/template.html'), 'utf8');
 const html = tpl.replace('/*__FONTS__*/', () => fontFaces()).replace('/*__APP__*/', () => js);
 writeFileSync(join(dist, 'UluKayin_Test.html'), html);
 
+// 1b) İsteğe bağlı: paylaşılabilir sayfa sürümü (iskeletsiz; yayın ortamı doctype/head/body ekler)
+const artArg = process.argv.find((a) => a.startsWith('--artifact='));
+if (artArg) {
+	const out = artArg.slice('--artifact='.length);
+	const page = `<title>Ulu Kayın</title>
+<meta name="theme-color" content="#16122a">
+<style>${fontFaces()}
+:root{color-scheme:dark;--bg:#16122a;--fg:#fff4e2;--dim:rgba(255,244,226,.6)}
+html,body{height:100%;width:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+body{position:fixed;inset:0}
+#uk-boot{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;text-align:center;padding-inline:16px}
+#uk-boot b{font-size:44px;font-weight:600;color:#ffe2a6}
+#uk-boot span{font-family:'Manrope',system-ui,sans-serif;font-style:normal;font-size:12px;letter-spacing:.3em;text-transform:uppercase;color:var(--dim)}
+</style>
+<div id="uk-boot"><b>Ulu Kayın</b><span>Hayat Ağacı yükleniyor</span></div>
+<script>${js}</script>`;
+	writeFileSync(out, page);
+	console.log(`paylaşım sayfası: ${out} ${kb(Buffer.byteLength(page))}`);
+}
+
 // 2) Ana oyuna bağlamak için modül: three dışarıdan gelir (ana oyunun kendi three kopyası kullanılır).
 await build({
 	...common,
@@ -71,5 +92,4 @@ await build({
 	outfile: join(dist, 'ulu-kayin.esm.js'),
 });
 
-const kb = (n) => (n / 1024).toFixed(0) + ' KB';
 console.log(`UluKayin_Test.html ${kb(Buffer.byteLength(html))}${dev ? ' (dev)' : ''}`);
