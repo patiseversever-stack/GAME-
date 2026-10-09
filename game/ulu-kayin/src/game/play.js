@@ -13,12 +13,25 @@ import { DropSet } from './drops.js';
 import { Beams } from './beams.js';
 import { Locks } from './locks.js';
 import { FxPool, puffSteam, burstSparkle } from './fx.js';
+import { Flock, GATHER } from './flock.js';
 import { damp, clamp, wrapAngle, lerp, smoothstep, TAU } from '../core/math.js';
 
 const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
-const SUN_SPEED = 3.6; // güneşin en hızlı dönüşü (radyan/sn)
+const SUN_SPEED = 4.0; // güneşin en hızlı dönüşü (radyan/sn)
 const BURN = 0.42; // tam ışıkta saniyede kaybedilen mürekkep
-const REGEN = 0.2; // gölgede saniyede geri kazanılan
+const REGEN = 0.22; // gölgede saniyede geri kazanılan
+const RUN_K = 1.35; // ışıkta Zifir telaşla koşar (ışıktan çabuk çıkar)
+const STREAK_STEP = 1.0; // gölgede yürünen her 1 birim: gölge serisi +1
+const BIRD_STEP = 4.2; // gölgede yürünen her 4.2 birim: Sürü'ye bir kuş
+const FLOCK_DUR = 5.0; // Sürü'nün gölgelediği süre (sn)
+const LAST_STAND = 1.1; // son nefes: mürekkep bitince gölgeye kaçmak için tanınan süre (bölümde bir kez)
+const NEAR = 0.3; // bu seviyenin altından gölgeye dönmek "kıl payı" sayılır
+
+// Arayüzde karşılığı olmayan yeni ipuçları (metin olarak gönderilir)
+const HINT_TEXT = {
+	streak: 'Gölgede yürüdükçe <em>gölge serisi</em> büyür. Seri, Zifir’e gölge kuşları toplar.',
+	flock: '<em>Sürü hazır!</em> Dokun: kuşlar güneşin önünde dönüp Zifir’i birkaç saniye gölgeler.',
+};
 
 export class Game {
 	constructor(app, ui, sfx) {
@@ -41,6 +54,19 @@ export class Game {
 		this.fx = new FxPool(app.G, w.tex.particles, { additive: true });
 		this.petals = new FxPool(app.G, w.tex.particles, { additive: false });
 		w.scene.add(this.fx.mesh, this.petals.mesh);
+		// Sürü: gölge kuşları. Zifir'in ışınları ve yakın damlalar için ek bir gölgeleyici.
+		this.flock = new Flock(app.G, w.scene, app.shadow && app.shadow.scene);
+		this._ft = { blocked: (x, y, z, L) => this.flock.blocks(x, y, z, L) || this.tester.blocked(x, y, z, L) };
+		this.streak = 0;
+		this.best = 0;
+		this.score = 0;
+		this.nearN = 0;
+		this.timeScale = 1;
+		this._slowT = 0;
+		this._slowK = 1;
+		this._popT = -9;
+		this._abKey = -1;
+		this._progU = -1;
 
 		this.prog = Object.assign({ unlocked: 0, stars: [], dust: 0, fails: {}, seen: {}, intro: false }, this.store.get('progress') || {});
 		this.settings = Object.assign({ sound: true, haptics: true, quality: 'auto', power: 'auto' }, this.store.get('settings') || {});
@@ -115,6 +141,7 @@ export class Game {
 			if (e.repeat && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
 			if (e.key === 'ArrowLeft') this.drag(-0.06);
 			else if (e.key === 'ArrowRight') this.drag(0.06);
+			else if ((e.key === 'f' || e.key === 'F' || e.key === 'Enter') && e.type === 'keydown') this.callFlock();
 			else if (e.key === ' ') {
 				this.keyHold = e.type === 'keydown';
 				e.preventDefault();
@@ -194,6 +221,7 @@ export class Game {
 
 	action(a) {
 		this.sfx.unlock();
+		if (a === 'ability:flock') return this.callFlock();
 		this.sfx.ui();
 		if (a === 'play') {
 			if (!this.prog.intro) this.startIntro();
