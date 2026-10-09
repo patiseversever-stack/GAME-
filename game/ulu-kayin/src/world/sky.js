@@ -34,14 +34,19 @@ export function buildSky(G, tex, tier) {
 				float d = a * 0.62 + b * 0.38;
 				// güneşe doğru kaydırılmış örnekle sahte hacim ışığı: tepe güneş tarafında parlar
 				float dl = texture2D(uNoise, uv + uSunDir.xz * 0.012).r * 0.62 + b * 0.38;
-				float lit = clamp((d - dl) * 7.0 + 0.55, 0.0, 1.0);
-				float dens = smoothstep(0.28, 0.72, d);
-				vec3 c = mix(uCloudShade, uCloudCol, dens * (0.55 + 0.45 * lit));
+				float lit = clamp((d - dl) * 8.0 + 0.5, 0.0, 1.0);
+				float dens = smoothstep(0.3, 0.7, d);
+				// tepeler ışıkta parlar, aralar mevsimin doygun gölge renginde
+				vec3 c = mix(uCloudShade, uCloudCol, dens * (0.4 + 0.6 * lit));
+				// kabarık tepelerin güneşe bakan kenarı ışıkla yanar
+				c += uSunCol * 0.12 * lit * dens * (1.0 - dens) * 4.0;
 				vec3 v = normalize(vW - cameraPosition);
 				float sd = max(dot(v, uSunDir), 0.0);
-				c += uFogSun * pow(sd, 6.0) * 0.45 * (0.4 + dens);
+				// güneş yolu: güneşe bakınca bulut denizi altın gibi ışıldar
+				c += uFogSun * (pow(sd, 5.0) * 0.45 + pow(sd, 28.0) * 0.7) * (0.3 + dens);
 				float dist = length(vW.xz - cameraPosition.xz);
-				c = mix(c, mix(uFogCol, uFogSun, pow(sd, 4.0)), smoothstep(160.0, 640.0, dist) * 0.92);
+				// uzakta göğün ufkuyla aynı renge karışır (dikişsiz ufuk)
+				c = mix(c, mix(uFogCol, uFogSun, pow(sd, 4.0)), smoothstep(140.0, 600.0, dist) * 0.96);
 				gl_FragColor = finish(c, 1.0);
 			}`,
 		uniforms: { ...G, uNoise: { value: tex.cloudNoise } },
@@ -100,10 +105,11 @@ export function buildSky(G, tex, tier) {
 				vec3 v = normalize(vW - cameraPosition);
 				float sd = max(dot(v, uSunDir), 0.0);
 				vec3 c = mix(uCloudShade, uCloudCol, t.g);
-				// kontra ışıkta kenarlar altın renginde yanar
-				c += uFogSun * pow(sd, 5.0) * (1.0 - a) * 1.6;
+				// kontra ışıkta kenarlar ışık renginde yanar
+				c += uFogSun * pow(sd, 5.0) * (1.0 - a) * 1.8;
+				c += uSunCol * 0.1 * t.g * (1.0 - a);
 				float dist = length(vW - cameraPosition);
-				c = mix(c, uFogCol, smoothstep(120.0, 420.0, dist) * 0.6);
+				c = mix(c, mix(uFogCol, uFogSun, pow(sd, 4.0)), smoothstep(120.0, 420.0, dist) * 0.55);
 				vec4 o = finish(c, 1.0);
 				gl_FragColor = vec4(o.rgb * clamp(a, 0.0, 1.0), clamp(a, 0.0, 1.0));
 			}`,

@@ -82,6 +82,7 @@ uniform float uWrap;
 uniform float uRim;
 uniform float uSnow;     // yukarı bakan yüzeylerde kar (kışın)
 uniform float uSnowY;    // karın başladığı yükseklik
+uniform float uAerial;   // hava perspektifi çarpanı (uzak adalar sise daha çok gömülür)
 #ifdef USE_MAP
 varying vec2 vUv;
 uniform sampler2D uMap;
@@ -102,14 +103,14 @@ void main() {
 #endif
 	// Kar: aşağıda (kış katında) yukarı bakan yüzeyleri örter.
 	float snow = uSnow * smoothstep(uSnowY + 2.0, uSnowY - 2.0, vW.y) * smoothstep(0.35, 0.75, N.y);
-	alb = mix(alb, vec3(0.92, 0.94, 1.0), snow);
+	alb = mix(alb, vec3(0.93, 0.95, 1.0), snow);
 	float sh = shadowAt(vW, N);
 	vec3 c = shadeLit(alb, N, V, ao, sh, uWrap, uRim);
-	c = applyFog(c, vW);
+	c = applyFogK(c, vW, uAerial);
 	gl_FragColor = finish(c, 1.0);
 }`;
 
-export function litMaterial({ map = null, repeat = [1, 1], wrap = 0.3, rim = 0.35, snow = 0, snowY = 14, side = THREE.FrontSide, wind = false, cutout = false } = {}) {
+export function litMaterial({ map = null, repeat = [1, 1], wrap = 0.3, rim = 0.35, snow = 0, snowY = 14, aerial = 1, side = THREE.FrontSide, wind = false, cutout = false } = {}) {
 	const d = {};
 	if (map) d.USE_MAP = 1;
 	if (wind) d.WIND = 1;
@@ -126,6 +127,7 @@ export function litMaterial({ map = null, repeat = [1, 1], wrap = 0.3, rim = 0.3
 			uRim: { value: rim },
 			uSnow: { value: snow },
 			uSnowY: { value: snowY },
+			uAerial: { value: aerial },
 		},
 		side,
 	});
@@ -194,13 +196,14 @@ void main() {
 	vec3 alb = t.rgb * vTint;
 	// İç kısım daha koyu: kümeye hacim hissi. Yapraklar ışığı saçar: gölgede bile
 	// gök ışığını daha çok alır (gölgedeki çiçekler morarmasın).
-	float ao = mix(0.55, 1.0, smoothstep(0.15, 0.95, vDepthAO));
+	float ao = mix(0.5, 1.0, smoothstep(0.15, 0.95, vDepthAO));
 	float sh = shadowAt(vW + uSunDir * 0.45, N);
-	vec3 c = shadeLit(alb, N, V, ao * 1.35, sh, 0.65, 0.55);
-	c += alb * uGround * 0.35 * (1.0 - sh);
-	// Yarı saydamlık: güneş yaprağın arkasındayken ışık içinden geçer.
-	float tr = pow(max(dot(-V, uSunDir), 0.0), 3.0);
-	c += alb * uSunCol * tr * 0.9 * sh * (0.5 + 0.5 * ao);
+	vec3 c = shadeLit(alb, N, V, ao * 1.3, sh, 0.65, 0.55);
+	c += alb * uGround * 0.3 * (1.0 - sh);
+	// Yarı saydamlık: güneş yaprağın arkasındayken ışık içinden geçer; renk doygunlaşarak
+	// yanar (vitray gibi), kümenin dış kabuğu daha çok ışır.
+	float tr = pow(max(dot(-V, uSunDir), 0.0), 2.5);
+	c += (alb * alb * 1.6 + alb * 0.25) * uSunCol * tr * sh * (0.35 + 0.65 * ao);
 	c = applyFog(c, vW);
 #ifdef A2C
 	gl_FragColor = finish(c, smoothstep(uAlphaCut, 0.75, t.a));
@@ -296,8 +299,9 @@ export function emissiveMaterial(color = 0xffffff, intensity = 1) {
 }
 
 // ---------------------------------------------------------------------------------------------
-// Gökyüzü: degrade, güneş halesi ve diski, ufuk pusu, gece yıldızları. Opak nesnelerden sonra
-// en uzak derinlikte çizilir: yalnızca boş kalan pikseller hesaplanır.
+// Gökyüzü: üç duraklı degrade, güneş tarafında ufuk parlaması, katmanlı hale ve keskin disk,
+// alacakaranlık ve gecede kıpırdayan yıldızlar. Opak nesnelerden sonra en uzak derinlikte
+// çizilir: yalnızca boş kalan pikseller hesaplanır. Tek doku okuması (yıldızlar).
 // ---------------------------------------------------------------------------------------------
 export function skyMaterial(starTex) {
 	return new THREE.ShaderMaterial({
@@ -311,28 +315,39 @@ export function skyMaterial(starTex) {
 		fragmentShader: /* glsl */ `
 			${COMMON}
 			${FINISH}
-			uniform vec3 uZenith, uHorizon, uSunGlow, uSunDisc;
+			uniform vec3 uZenith, uSkyMid, uHorizon, uSunGlow, uSunDisc;
 			uniform float uNight;
 			uniform sampler2D uStars;
 			varying vec3 vDir;
 			void main() {
 				vec3 v = normalize(vDir);
 				float h = v.y;
-				vec3 c = mix(uHorizon, uZenith, pow(clamp(h, 0.0, 1.0), 0.55));
-				// ufkun altı: bulut denizinin sisine karışır
-				c = mix(c, uFogCol * 0.95, smoothstep(0.02, -0.18, h));
-				float sd = max(dot(v, uSunDir), 0.0);
-				// güneş tarafında sıcak ufuk bandı
-				float band = exp(-abs(h - 0.02) * 9.0);
-				c += uSunGlow * band * pow(sd, 3.0) * 0.55;
-				c += uSunGlow * (pow(sd, 10.0) * 0.55 + pow(sd, 90.0) * 1.6);
-				c += uSunDisc * smoothstep(0.99935, 0.99965, sd) * 26.0;
+				float hp = max(h, 0.0);
+				// ufuk → orta → tepe
+				vec3 c = mix(uHorizon, uSkyMid, smoothstep(0.0, 0.3, hp));
+				c = mix(c, uZenith, smoothstep(0.16, 0.9, hp));
+				// güneşin bulunduğu yanda ufuk sıcak parlar, karşı yanı serin ve derin
+				vec2 sa = normalize(uSunDir.xz + vec2(1e-4, 0.0));
+				vec2 va = normalize(v.xz + vec2(1e-4, 0.0));
+				float az = dot(sa, va) * 0.5 + 0.5;
+				float hor = exp(-abs(h) * 6.0);
+				c += uSunGlow * hor * az * az * az * uAtmo.z;
+				c *= mix(0.8, 1.0, az);
+				// katmanlı hale ve keskin disk (boyalı güneş)
+				float sd = dot(v, uSunDir);
+				float a = max(sd, 0.0);
+				c += uSunGlow * (pow(a, 7.0) * 0.32 + pow(a, 48.0) * 0.6 + pow(a, 420.0) * 1.6);
+				float disc = smoothstep(0.99952, 0.99968, sd);
+				c = mix(c, uSunDisc * 10.0, disc);
+				// ufkun altı: bulut denizinin pusu (bulut denizi ile dikişsiz birleşir)
+				c = mix(c, mix(uFogCol, uFogSun, pow(a, 4.0)), smoothstep(0.015, -0.16, h));
 				// yıldızlar (alacakaranlık ve gece)
 				if (uNight > 0.01) {
 					vec2 suv = vec2(atan(v.z, v.x) / 6.2831853 * 3.0, v.y * 1.5);
 					vec3 st = texture2D(uStars, suv).rgb;
-					float tw = 0.65 + 0.35 * sin(uTime * 2.0 + st.g * 40.0);
-					c += st.r * tw * uNight * smoothstep(0.02, 0.35, h) * vec3(0.9, 0.95, 1.1) * 2.2;
+					float tw = 0.6 + 0.4 * sin(uTime * (1.5 + st.b * 3.0) + st.g * 40.0);
+					float up = smoothstep(0.03, 0.4, h) * (1.0 - smoothstep(0.9, 0.995, a));
+					c += st.r * tw * uNight * up * mix(uInkCol, vec3(1.0), 0.5) * 2.4;
 				}
 				gl_FragColor = finish(c, 1.0);
 			}`,
