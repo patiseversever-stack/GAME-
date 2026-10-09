@@ -201,7 +201,7 @@ export function glowSprites(points, glowTex, G, size, color) {
 			uniform sampler2D uMap; uniform vec3 uColor; uniform float uK; uniform vec4 uFogP;
 			varying vec2 vUv; varying vec3 vW;
 			void main() {
-				float t = texture2D(uMap, vUv).r;
+				float t = texture2D(uMap, vUv).a;
 				float f = exp(-length(vW - cameraPosition) * uFogP.x * 0.8);
 				vec3 c = uColor * t * uK * f;
 				gl_FragColor = vec4(c / (1.0 + c * 0.3), 1.0);

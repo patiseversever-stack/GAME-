@@ -164,7 +164,8 @@ void main() {
 	float r = iData.y + sin(uTime * 2.3 + iData.w * 40.0) * 0.06 * (uWind.z + uWind.w * 2.0);
 	vec2 q = position.xy;
 	vec2 rq = vec2(q.x * cos(r) - q.y * sin(r), q.x * sin(r) + q.y * cos(r));
-	vec3 w = c + (right * rq.x + up * rq.y) * s;
+	// gölge geçişinde kart ışık yönünde geri itilir: kendi yaprağına gölge düşürmez, gölgenin yeri değişmez
+	vec3 w = c + (right * rq.x + up * rq.y) * s - uFaceDir * s * 0.55 * (1.0 - uFacing);
 	vW = w;
 	vec3 rel = c - iCluster.xyz;
 	vN = normalize(rel / max(iCluster.w, 0.01) + (right * rq.x + up * rq.y) * 0.6 + vec3(0.0, 0.25, 0.0));
