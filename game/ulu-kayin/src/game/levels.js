@@ -9,17 +9,24 @@
 //             noktasına yansıtacak açıyla durur: oyuncu güneşi gövdenin arkasında tutarken ışını
 //             Zifir'den uzak tutacak açıyı bulmalı. yan: +1 Zifir'in önünde, -1 arkasında.
 //   locks:    [u] ışık kilitleri: yolu kapatan tomurcuk / buz. Güneş değince açılır.
+//   speed:    Zifir'in yürüyüşü (birim/sn). Işıkta telaşla %35 hızlı koşar (play.js RUN_K).
+//   burn:     yanma çarpanı; bölümler ilerledikçe artar (yenilgiden sonra merhamet azaltır).
+//
+// Tempo: her bölüm 15-30 sn. Her 2-3 saniyede bir olay olmalı (seri eşiği, damla, kilit, rüzgâr,
+// kristal, kuş). Damlalar bir kilidin hemen ardına (Zifir beklerken 9 birim içine) yığılmamalı:
+// kilidi açarken güneş onları eritir. En fazla biri bilerek riskli konur.
 
 import { LEVELS } from '../world/layout.js';
 
 export const DESIGN = [
 	{
-		// Bahar I: öğretici. Taç gölgesinde başlar; güneşi gövdenin arkasına saklamayı öğretir.
-		speed: 1.25,
+		// Bahar I: öğretici, ~15 sn. İlk kaydırma güneşi döndürür, ilk gölge kutlanır (Gölgede!),
+		// ×5 seride seri ipucu, sonlara doğru dört kuş toplanır (Sürü ipucu ikinci bölümde gelir).
+		speed: 1.55,
 		wind: 0.22,
 		elev: [40, 34],
 		sunStart: Math.PI * 0.55,
-		burn: 0.8,
+		burn: 0.7,
 		drops: [
 			[0.42, -0.2],
 			[0.78, 0.3],
@@ -28,10 +35,11 @@ export const DESIGN = [
 	},
 	{
 		// Bahar II: ilk asma köprü; çiçekli dalın gölgesi ve damlaların ışıkta erimesi.
-		speed: 1.3,
+		speed: 1.6,
 		wind: 0.28,
 		elev: [34, 30],
 		sunStart: Math.PI,
+		burn: 0.9,
 		drops: [
 			[0.22, 0.4],
 			[0.5, 0.0],
@@ -41,14 +49,16 @@ export const DESIGN = [
 		gust: { every: 11, dur: 2.2, power: 0.5, from: 6 },
 		crystals: [[0.8, 1, 4.6, 3.2]],
 		locks: [0.45],
-		hints: ['drops', 'bridge', 'crystal'],
+		// damla ipucu ilk damla eriyince gelir; bölüm başında Sürü ipucu (kuşlar birinci bölümden taşınır)
+		hints: ['bridge', 'crystal'],
 	},
 	{
 		// Yaz I: tepede güneş, kısa gölgeler; üstteki patika katının gölgesi işe yarar.
-		speed: 1.35,
+		speed: 1.65,
 		wind: 0.25,
 		elev: [62, 56],
 		sunStart: Math.PI,
+		burn: 1.0,
 		drops: [
 			[0.18, 0.5],
 			[0.47, 0.2],
@@ -65,10 +75,11 @@ export const DESIGN = [
 	},
 	{
 		// Yaz II: kuş yuvası köprüsü, gövdeden en uzak nokta. Bekle'yi öğretir.
-		speed: 1.35,
+		speed: 1.65,
 		wind: 0.3,
 		elev: [56, 48],
 		sunStart: Math.PI,
+		burn: 1.05,
 		drops: [
 			[0.2, -0.3],
 			[0.5, 0.3],
@@ -86,10 +97,11 @@ export const DESIGN = [
 	},
 	{
 		// Güz I: alçak altın güneş, uzun gölgeler; sert rüzgâr yaprakları savurur.
-		speed: 1.4,
+		speed: 1.7,
 		wind: 0.3,
 		elev: [30, 24],
 		sunStart: Math.PI,
+		burn: 1.1,
 		drops: [
 			[0.16, 0.4],
 			[0.36, -0.3],
@@ -107,17 +119,19 @@ export const DESIGN = [
 	},
 	{
 		// Güz II: fırtına. Sık ve güçlü rüzgâr, köprüde yapraklara güvenmek zor.
-		speed: 1.4,
+		speed: 1.72,
 		wind: 0.38,
 		elev: [24, 18],
 		sunStart: Math.PI,
+		burn: 1.15,
+		// damlalar kilitlerin hemen ardına yığılmaz: biri risk (kilidi çabuk aç), gerisi adil
 		drops: [
-			[0.2, 0.3],
-			[0.42, 0.5],
-			[0.5, -0.2],
-			[0.57, 0.45],
-			[0.8, -0.3],
-			[0.93, 0.4],
+			[0.16, 0.3],
+			[0.26, -0.2],
+			[0.45, 0.5],
+			[0.58, -0.2],
+			[0.64, 0.4],
+			[0.97, 0.3],
 		],
 		gust: { every: 6, dur: 3.0, power: 1.55, from: 2.5 },
 		crystals: [
@@ -129,10 +143,11 @@ export const DESIGN = [
 	},
 	{
 		// Kış I: çıplak dallar, az yaprak; kar topaklarının küçük gölgeleri ve çok uzun gövde gölgesi.
-		speed: 1.45,
+		speed: 1.75,
 		wind: 0.18,
 		elev: [16, 11],
 		sunStart: Math.PI,
+		burn: 1.2,
 		drops: [
 			[0.2, 0.45],
 			[0.4, -0.2],
@@ -150,16 +165,17 @@ export const DESIGN = [
 	},
 	{
 		// Kış II: gün batımı. Kökler, kayalar ve çamlar adaya uzun gölgeler serer. Kök Kapısı.
-		speed: 1.4,
+		speed: 1.7,
 		wind: 0.15,
 		elev: [10, 4],
 		sunStart: Math.PI,
+		burn: 1.2,
 		drops: [
 			[0.15, 0.4],
 			[0.35, -0.3],
 			[0.52, 0.5],
-			[0.68, 0.0],
-			[0.84, 0.45],
+			[0.76, 0.0],
+			[0.88, 0.45],
 		],
 		crystals: [
 			[0.28, 1, 4.6, 3.0],

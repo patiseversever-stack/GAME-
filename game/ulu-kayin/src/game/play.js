@@ -13,12 +13,25 @@ import { DropSet } from './drops.js';
 import { Beams } from './beams.js';
 import { Locks } from './locks.js';
 import { FxPool, puffSteam, burstSparkle } from './fx.js';
+import { Flock, GATHER } from './flock.js';
 import { damp, clamp, wrapAngle, lerp, smoothstep, TAU } from '../core/math.js';
 
 const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
-const SUN_SPEED = 3.6; // güneşin en hızlı dönüşü (radyan/sn)
+const SUN_SPEED = 4.0; // güneşin en hızlı dönüşü (radyan/sn)
 const BURN = 0.42; // tam ışıkta saniyede kaybedilen mürekkep
-const REGEN = 0.2; // gölgede saniyede geri kazanılan
+const REGEN = 0.22; // gölgede saniyede geri kazanılan
+const RUN_K = 1.35; // ışıkta Zifir telaşla koşar (ışıktan çabuk çıkar)
+const STREAK_STEP = 1.0; // gölgede yürünen her 1 birim: gölge serisi +1
+const BIRD_STEP = 4.2; // gölgede yürünen her 4.2 birim: Sürü'ye bir kuş
+const FLOCK_DUR = 5.0; // Sürü'nün gölgelediği süre (sn)
+const LAST_STAND = 1.1; // son nefes: mürekkep bitince gölgeye kaçmak için tanınan süre (bölümde bir kez)
+const NEAR = 0.3; // bu seviyenin altından gölgeye dönmek "kıl payı" sayılır
+
+// Arayüzde karşılığı olmayan yeni ipuçları (metin olarak gönderilir)
+const HINT_TEXT = {
+	streak: 'Gölgede yürüdükçe <em>gölge serisi</em> büyür. Seri, Zifir’e gölge kuşları toplar.',
+	flock: '<em>Sürü hazır!</em> Dokun: kuşlar güneşin önünde dönüp Zifir’i birkaç saniye gölgeler.',
+};
 
 export class Game {
 	constructor(app, ui, sfx) {
@@ -41,6 +54,19 @@ export class Game {
 		this.fx = new FxPool(app.G, w.tex.particles, { additive: true });
 		this.petals = new FxPool(app.G, w.tex.particles, { additive: false });
 		w.scene.add(this.fx.mesh, this.petals.mesh);
+		// Sürü: gölge kuşları. Zifir'in ışınları ve yakın damlalar için ek bir gölgeleyici.
+		this.flock = new Flock(app.G, w.scene, app.shadow && app.shadow.scene);
+		this._ft = { blocked: (x, y, z, L) => this.flock.blocks(x, y, z, L) || this.tester.blocked(x, y, z, L) };
+		this.streak = 0;
+		this.best = 0;
+		this.score = 0;
+		this.nearN = 0;
+		this.timeScale = 1;
+		this._slowT = 0;
+		this._slowK = 1;
+		this._popT = -9;
+		this._abKey = -1;
+		this._progU = -1;
 
 		this.prog = Object.assign({ unlocked: 0, stars: [], dust: 0, fails: {}, seen: {}, intro: false }, this.store.get('progress') || {});
 		this.settings = Object.assign({ sound: true, haptics: true, quality: 'auto', power: 'auto' }, this.store.get('settings') || {});
@@ -115,6 +141,7 @@ export class Game {
 			if (e.repeat && e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
 			if (e.key === 'ArrowLeft') this.drag(-0.06);
 			else if (e.key === 'ArrowRight') this.drag(0.06);
+			else if ((e.key === 'f' || e.key === 'F' || e.key === 'Enter') && e.type === 'keydown') this.callFlock();
 			else if (e.key === ' ') {
 				this.keyHold = e.type === 'keydown';
 				e.preventDefault();
@@ -169,6 +196,10 @@ export class Game {
 		this.drops.hideAll();
 		this.beams.hide();
 		this.locks.hide();
+		this.flock.hide();
+		this.sfx.lockCharge(null);
+		this.sfx.music('title');
+		this.ui.ability?.('flock', { count: 0, max: GATHER, ready: false, active: false });
 		this.app.gov.menu = true;
 		if (first) {
 			this.envFrom = this.envTo = 'spring';
@@ -188,12 +219,15 @@ export class Game {
 		this.drops.hideAll();
 		this.beams.hide();
 		this.locks.hide();
+		this.flock.hide();
+		this.sfx.music('title');
 		this.app.gov.menu = true;
 		if (!this._orbit) this._orbit = { a: 0.6, r: 84, y: 16, ly: 25 };
 	}
 
 	action(a) {
 		this.sfx.unlock();
+		if (a === 'ability:flock') return this.callFlock();
 		this.sfx.ui();
 		if (a === 'play') {
 			if (!this.prog.intro) this.startIntro();
@@ -251,6 +285,8 @@ export class Game {
 		this.ui.$('[data-s=pause] [data-a=levels]').style.display = '';
 		this.ui.show('pause');
 		this.sfx.tick(0, 0, 0, false);
+		this.sfx.lockCharge(null);
+		this.sfx.music('soft');
 	}
 
 	resume() {
@@ -262,6 +298,7 @@ export class Game {
 		if (this.state !== 'paused') return;
 		this.ui.show(null);
 		this._set(this._paused || 'play');
+		this.sfx.music('play');
 	}
 
 	haptic(p) {
@@ -286,6 +323,7 @@ export class Game {
 		this.envT = 1;
 		const L = levelInfo(0);
 		this._setupLevelData(0);
+		this._birds0 = 0;
 		const p = this.curve.sample(this.s, this._smp);
 		const a = this.curve.sample(this.s + 3, this._smp2);
 		const rig = this.app.rig;
@@ -346,8 +384,35 @@ export class Game {
 		this.got = 0;
 		this.lostN = 0;
 		const fails = this.prog.fails[i] || 0;
+		this.fails = fails;
 		this.mercy = Math.max(0.55, 1 - 0.12 * fails);
 		this.burnK = (L.burn || 1) * this.mercy;
+		// seri, puan, kıl payı, son nefes
+		this.streak = 0;
+		this.best = 0;
+		this.score = 0;
+		this.nearN = 0;
+		this.unlocks = 0;
+		this._shadeD = 0;
+		this._birdD = 0;
+		this._litT = 0;
+		this._shadeT = 0;
+		this._wasLit = false;
+		this._expMin = 1;
+		this._scared = false;
+		this._lastStand = 0;
+		this._lastUsed = false;
+		this._slowT = 0;
+		this.timeScale = 1;
+		this._tutShade = i !== 0;
+		this._flockOn = false;
+		this._beamHit = false;
+		this._lkOn = false;
+		this._pend = null;
+		(this._dropWarn || (this._dropWarn = new Uint8Array(16))).fill(0);
+		this._progU = -1;
+		this.ui.streak?.(0);
+		this.sfx.streakReset();
 		this.elev = L.elev[0];
 		wind.str = L.wind;
 		wind.gust = 0;
@@ -360,7 +425,14 @@ export class Game {
 	startLevel(i, { retry = false, cont = false } = {}) {
 		const fromPlay = cont && this.level && this.li === i - 1;
 		const prevS = this.s;
+		// toplanmış kuşlar bir sonraki bölüme taşınır; yenilgiden sonra kuşlar yardıma gelir
+		// tekrar denemede bölüme hangi kuşlarla başlandıysa onlar geri gelir
+		const carry = fromPlay ? this._carryBirds || 0 : retry && this.li === i ? this._startBirds || 0 : 0;
 		this._setupLevelData(i);
+		const mercyBirds = this.fails > 0 ? Math.min(GATHER, this.fails + 1) : 0;
+		this._birds0 = Math.max(carry, mercyBirds);
+		this._mercyBirds = mercyBirds > carry;
+		this._startBirds = carry;
 		this.zifir.reset();
 		this.zifir.g.visible = true;
 		this.fx.clear();
@@ -409,9 +481,17 @@ export class Game {
 			rig.snap();
 		} else rig.mode = 'follow';
 		this.ui.card(L.kicker, L.title, L.finale ? 'Son bölüm' : '');
-		this._cardT = 2.4;
+		// tekrar denemede kart kısa: oyuncu hemen oyuna döner
+		this._cardT = retry ? 1.3 : 2.4;
 		this.ui.setDrops(0, L.drops.length);
 		this._queueHints(L.hints || []);
+		// Sürü: taşınan ya da yardıma gelen kuşlar Zifir'in tepesinde hazır
+		const zp0 = this.curve.sample(this.s, this._smp);
+		this.zp.set(zp0.x, zp0.y, zp0.z);
+		this.flock.reset(this._birds0 || 0, this.zp);
+		this._abil();
+		this.sfx.music('play');
+		this.sfx.lockCharge(null);
 	}
 
 	_queueFront(h) {
@@ -423,11 +503,18 @@ export class Game {
 	}
 
 	_showHint(key, dur = 4.5) {
-		this.ui.hint(key);
+		this.ui.hint(HINT_TEXT[key] || key);
 		this._hintUntil = this.levelT + dur;
 		this._hintKey = key;
 		this.prog.seen[key] = true;
 		this.store.set('progress', this.prog);
+	}
+
+	/** İpucu sırası: ekranda başka bir ipucu varsa o bitince gösterilir. */
+	_hintLater(key, dur = 4.5) {
+		if (this.prog.seen[key]) return;
+		if (!this._hintKey) this._showHint(key, dur);
+		else this._pend = [key, dur];
 	}
 
 	_begin() {
@@ -460,17 +547,29 @@ export class Game {
 		this.app.idle = false;
 
 		const L = this.level;
-		this.levelT += st === 'play' ? dt : 0;
 		const curve = this.curve;
 
-		// --- güneş: hedefe sınırlı hızla yaklaşır (anında ışınlanmaz, plan gerektirir)
+		// --- güneş: hedefe sınırlı hızla yaklaşır (anında ışınlanmaz, plan gerektirir).
+		// Ağır çekimde de gerçek zamanla döner: oyuncu hızlı, dünya yavaş.
 		const d = this.sunTarget - this.sunAz;
 		const maxStep = SUN_SPEED * dt;
 		this.sunAz += clamp(d, -maxStep, maxStep);
 
+		// --- ağır çekim (kıl payı, son nefes, zafer)
+		if (this._slowT > 0) this._slowT -= dt;
+		this.timeScale = damp(this.timeScale, this._slowT > 0 ? this._slowK : 1, this._slowT > 0 ? 16 : 4, dt);
+		dt *= this.timeScale;
+		this.levelT += st === 'play' ? dt : 0;
+
 		// --- rüzgâr
 		wind.gust = st === 'play' ? gustAt(L.gust, this.levelT) : 0;
-		this.ui.gust(st === 'play' && gustIn(L.gust, this.levelT) < 1.6 && wind.gust < 0.05);
+		const gustSoon = st === 'play' && gustIn(L.gust, this.levelT) < 1.6 && wind.gust < 0.05;
+		this.ui.gust(gustSoon);
+		if (gustSoon && !this._gustSoon) {
+			this.sfx.gustWarn();
+			this.haptic(6);
+		}
+		this._gustSoon = gustSoon;
 		if (st === 'play' && L.gust && gustIn(L.gust, this.levelT) < 1.6 && this._hintQueue[0] === 'gust') this._showHint(this._hintQueue.shift(), 4);
 
 		// --- Zifir yürür
@@ -479,7 +578,7 @@ export class Game {
 			this._cardT -= dt;
 			if (this._cardT < 0.4) this.ui.card(null);
 			if (this._walkFrom != null && this.s < this.s0) {
-				this.s = Math.min(this.s0, this.s + 1.4 * dt);
+				this.s = Math.min(this.s0, this.s + 1.6 * dt);
 				moving = true;
 			}
 			const rig = this.app.rig;
@@ -491,7 +590,12 @@ export class Game {
 					this._showHint(this._hintQueue.shift() || 'drag', 999);
 				} else {
 					this._set('play');
+					if (this._mercyBirds) {
+						this._pop('Kuşlar yardıma geldi', 'good');
+						this._mercyBirds = false;
+					}
 					if (this._hintQueue.length && this._hintQueue[0] !== 'gust' && this._hintQueue[0] !== 'bridge') this._showHint(this._hintQueue.shift(), 4.5);
+					if (this.flock.ready && this.li >= 1) this._hintLater('flock', 5.5);
 				}
 			}
 		} else if (st === 'ready') {
@@ -503,14 +607,16 @@ export class Game {
 			const atLock = this.s >= lim - 0.05;
 			// kilide yaklaşınca yavaşlayıp tam önünde durur
 			const brake = clamp((lim - this.s) / 0.7, 0, 1);
-			const target = holding ? 0 : L.speed * brake;
+			// ışıkta telaşla koşar: yanlış bir anda ışığa yakalanmak ölüm değil, kaçış
+			const run = this.expo > 0.3 ? RUN_K : 1;
+			const target = holding ? 0 : L.speed * brake * run;
 			this.speed = damp(this.speed, target, holding ? 14 : 5, dt);
 			this.s = Math.min(this.s + this.speed * dt, Math.max(this.s, lim));
 			moving = this.speed > 0.15;
 			if (atLock && !this.prog.seen.lock) this._showHint('lock', 6);
-			// kilidin önünde uzun süre takılırsa pusulada doğru aralığı göster
+			// kilidin önünde takılırsa pusulada doğru aralığı göster (ilk bölümlerde daha erken)
 			this._lockT = atLock ? (this._lockT || 0) + dt : 0;
-			if (this._lockT > 4) this._lockAssist();
+			if (this._lockT > (this.li <= 1 ? 2.5 : 4)) this._lockAssist();
 			else if (this._arcOn) {
 				this.ui.lockArc(null);
 				this._arcOn = false;
@@ -536,7 +642,15 @@ export class Game {
 		this.elev = lerp(L.elev[0], L.elev[1], u);
 		sunVector(this.sunAz, this.elev, this.sunDir);
 
-		// --- gölge testi
+		// --- Sürü (gölge kuşları): girdap merkezi bu karenin güneşine göre
+		this.flock.update(dt, time, this.zp, this.sunDir);
+		if (this._flockOn && this.flock.active <= 0) {
+			this._flockOn = false;
+			this.sfx.flockEnd();
+			this._abil();
+		}
+
+		// --- gölge testi (Sürü uçarken onun gölgesi de sayılır)
 		const active = st === 'play';
 		this.tester.setTime(time);
 		let lit = 0;
@@ -552,35 +666,28 @@ export class Game {
 			pts[3].set(p.x - sx * 0.3, p.y + 0.36, p.z - sz * 0.3);
 			pts[4].set(p.x + fx * 0.3, p.y + 0.36, p.z + fz * 0.3);
 			pts[5].set(p.x - fx * 0.3, p.y + 0.36, p.z - fz * 0.3);
+			const T = this._ft;
 			for (let k = 0; k < this.rays; k++) {
 				const q = pts[k];
-				if (!this.tester.blocked(q.x, q.y, q.z, this.sunDir)) lit++;
+				if (!T.blocked(q.x, q.y, q.z, this.sunDir)) lit++;
 			}
 			lit /= this.rays;
 		}
-		// kristal ışınları: güneş gibi yakar
+		// kristal ışınları: güneş gibi yakar (Sürü ışını da yutar)
 		let beam = 0;
 		if (st !== 'title' && st !== 'levels') beam = this.beams.update(dt, time, p.y, this.sunDir, this.tester, this.zp);
+		if (this.flock.active > 0) beam = 0;
 		if (beam > 0 && active && this._hintQueue[0] !== 'crystal' && !this.prog.seen.crystal) this._queueFront('crystal');
-		if (this.beams.active.length && active && this._hintQueue[0] === 'crystal') this._showHint(this._hintQueue.shift(), 5);
+		if (this.beams.active.length && active && this._hintQueue[0] === 'crystal' && (!this._hintKey || beam > 0)) this._showHint(this._hintQueue.shift(), 5);
+		if (beam > 0.3 && active && !this._beamHit) this.app.rig.shake = Math.max(this.app.rig.shake, 0.07);
+		this._beamHit = beam > 0.3;
 		lit = Math.max(lit, beam);
 		this.expo = damp(this.expo, lit, 18, dt);
 
-		// --- mürekkep (can)
-		if (active) {
-			if (lit > 0.01) {
-				this.meter -= lit * BURN * this.burnK * dt;
-				this.burnTotal += lit * dt;
-				if (this._wasSafe) this.haptic(8);
-				this._wasSafe = false;
-				if (Math.random() < dt * 22 * lit) puffSteam(this.fx, p.x, p.y + 0.7, p.z, 0.9);
-			} else {
-				this.meter = Math.min(1, this.meter + REGEN * dt);
-				this._wasSafe = true;
-			}
-			this.minMeter = Math.min(this.minMeter, this.meter);
-		}
-		this.G.uDanger.value = damp(this.G.uDanger.value, active ? lit * 0.8 + (1 - this.meter) * 0.4 * lit : 0, 8, dt);
+		// --- mürekkep, gölge serisi, kuşlar, kıl payı, son nefes
+		let dead = false;
+		if (active) dead = this._feel(dt, lit, p, moving);
+		this.G.uDanger.value = damp(this.G.uDanger.value, active ? lit * 0.8 + (1 - this.meter) * 0.4 * lit + (this._lastStand > 0 ? 0.5 : 0) : 0, 8, dt);
 
 		// --- damlalar
 		this.drops.update(
@@ -588,30 +695,58 @@ export class Game {
 			time,
 			this.s,
 			this.zp,
-			this.tester,
+			this._ft,
 			this.sunDir,
 			this.fx,
 			() => {
 				this.got++;
+				this.score += 25;
 				this.ui.setDrops(this.got, this.drops.total, 'pop');
 				this.sfx.drop();
 				this.haptic(12);
+				this.zifir.react?.('drop');
+				if (this.got === this.drops.total && !this.lostN && this.drops.total > 1) {
+					this._pop('Bütün damlalar!', 'gold');
+					this.score += 50;
+				}
 			},
 			() => {
 				this.lostN++;
 				this.ui.setDrops(this.got, this.drops.total, 'bad');
 				this.sfx.dropLost();
 				this.haptic(40);
+				this.app.rig.shake = Math.max(this.app.rig.shake, 0.06);
+				this._pop('Damla eridi', 'bad');
 				if (this.prog.seen.drops !== true) this._showHint('drops', 4);
 			},
 			active
 		);
+
+		// erimeye başlayan damla: bir kez uyar (oyuncu güneşi kaydırıp kurtarabilir)
+		if (active) {
+			const W = this._dropWarn;
+			for (const dr of this.drops.list) {
+				if (dr.state === 'idle' && dr.melt > 0.18 && !W[dr.i]) {
+					W[dr.i] = 1;
+					this.sfx.dropWarn();
+					this._pop('Damla eriyor!', 'bad');
+				}
+			}
+		}
 
 		// --- ışık kilitleri
 		if (active || st === 'ready')
 			this.locks.update(dt, this.s, this.sunDir, this.tester, this.beams, this.fx, () => {
 				this.sfx.unlockOpen ? this.sfx.unlockOpen() : this.sfx.win();
 				this.haptic([15, 30, 15]);
+				this.app.rig.shake = Math.max(this.app.rig.shake, 0.14);
+				this.zifir.hop();
+				this.zifir.react?.('safe');
+				this.unlocks++;
+				this.score += 30;
+				const quick = this._lockT < 3;
+				this._pop(quick ? 'Çabuk açtın!' : 'Açıldı!', 'good');
+				if (quick) this.score += 20;
 				if (this._hintKey === 'lock') {
 					this.ui.hint(null);
 					this._hintKey = null;
@@ -619,16 +754,32 @@ export class Game {
 				this.ui.lockArc(null);
 				this._arcOn = false;
 				this._lockT = 0;
+				this._lkC = 0;
 			});
+		// kilit dolarken yükselen ton (yalnızca dolarken)
+		const lk = active ? this.locks.pending(this.s) : null;
+		if (lk && lk.charge > (this._lkC || 0) + 1e-5) {
+			this.sfx.lockCharge(lk.charge);
+			this._lkOn = true;
+		} else if (this._lkOn) {
+			this.sfx.lockCharge(null);
+			this._lkOn = false;
+		}
+		this._lkC = lk ? lk.charge : 0;
 
 		// --- ipucu süresi
 		if (this._hintKey && this._hintKey !== 'drag' && this.levelT > this._hintUntil) {
 			this.ui.hint(null);
 			this._hintKey = null;
 		}
+		if (this._pend && !this._hintKey && active) {
+			const [k, dd] = this._pend;
+			this._pend = null;
+			if (!this.prog.seen[k]) this._showHint(k, dd);
+		}
 
 		// --- bitiş kontrolü
-		if (active && this.meter <= 0) this._die();
+		if (active && dead) this._die();
 		else if (active && this.s >= this.s1) this._win();
 
 		// --- Zifir ve kamera (buharlaşırken ve kapıya girerken kendi animasyonu yürür)
@@ -640,8 +791,209 @@ export class Game {
 		if (rig.mode === 'follow') rig.followTarget(this.zp, this._ahead);
 
 		this.ui.compass(wrapAngle(this.sunAz - zAz), lit > 0.01);
-		this.sfx.tick(dt, active ? lit : 0, wind.str + wind.gust, active);
+		if (active && Math.abs(u - this._progU) > 0.004) {
+			this._progU = u;
+			this.ui.progress?.(u);
+		}
+		// müzik: gölge serisi uzadıkça zenginleşir
+		this.sfx.intensity = damp(this.sfx.intensity, active ? clamp((this.streak - 2) / 14, 0, 1) : 0, 1.2, dt);
+		this.sfx.tick(dt, active ? lit : 0, wind.str + wind.gust, active, this.meter);
 		this._commonFx(dt);
+	}
+
+	/** Mürekkep, gölge serisi, kuşlar, kıl payı ve son nefes. Döndürür: Zifir buharlaştı mı. */
+	_feel(dt, lit, p, moving) {
+		const shaded = lit < 0.01;
+		if (!shaded) {
+			this.meter -= lit * BURN * this.burnK * dt;
+			this.burnTotal += lit * dt;
+			if (Math.random() < dt * 22 * lit) puffSteam(this.fx, p.x, p.y + 0.7, p.z, 0.9);
+		} else this.meter = Math.min(1, this.meter + REGEN * dt);
+
+		// ışığa giriş ve çıkış (kenarda bir anlık titreşimleri yok say)
+		if (lit > 0.15) {
+			this._litT += dt;
+			this._shadeT = 0;
+		} else if (shaded) {
+			this._shadeT += dt;
+			this._litT = 0;
+		}
+		if (!this._wasLit && this._litT > 0.12) this._enterLight();
+		else if (this._wasLit && this._shadeT > 0.1) this._exitLight();
+		if (this._wasLit) {
+			this._expMin = Math.min(this._expMin, this.meter);
+			if (!this._scared && this.meter < 0.3) {
+				this._scared = true;
+				this.zifir.react?.('scared');
+				this.haptic([20, 30, 20]);
+			}
+		}
+
+		// eğitim: ilk gölge anı kutlanır
+		if (!this._tutShade && shaded && this._shadeT > 0.3) {
+			this._tutShade = true;
+			this._pop('Gölgede!', 'gold');
+			this.sfx.milestone(5);
+			this.zifir.react?.('safe');
+		}
+
+		// gölgede yürüdükçe: seri büyür, kuşlar toplanır
+		if (shaded && moving) {
+			const ds = this.speed * dt;
+			this._shadeD += ds;
+			while (this._shadeD >= STREAK_STEP) {
+				this._shadeD -= STREAK_STEP;
+				this._streakUp();
+			}
+			if (this.flock.count < GATHER && this.flock.active <= 0) {
+				this._birdD += ds;
+				if (this._birdD >= BIRD_STEP) {
+					this._birdD = 0;
+					this._birdJoin();
+				}
+			}
+		}
+
+		// son nefes: mürekkep bitince bir kez, kısa bir kaçış süresi
+		if (this._lastStand > 0) {
+			this._lastStand -= dt;
+			if (shaded) {
+				this._lastStand = 0;
+				this._wasLit = false;
+				this._slowT = 0;
+				this.meter = Math.max(this.meter, 0.15); // gölge bir yudum mürekkep verir
+				this._nearMiss(true);
+			} else {
+				this.meter = Math.max(this.meter, 0.001);
+				if (this._lastStand <= 0) return true;
+			}
+		} else if (this.meter <= 0) {
+			if (this._lastUsed) return true;
+			this._lastUsed = true;
+			this._lastStand = LAST_STAND;
+			this.meter = 0.001;
+			this._slow(0.45, 0.9);
+			this.sfx.lastStand();
+			this._pop('Son nefes!', 'bad');
+			this.haptic([40, 30, 60]);
+			this.app.rig.shake = Math.max(this.app.rig.shake, 0.18);
+			this.zifir.react?.('scared');
+		}
+		this.minMeter = Math.min(this.minMeter, this.meter);
+		return false;
+	}
+
+	_enterLight() {
+		this._wasLit = true;
+		this._expMin = this.meter;
+		this._scared = false;
+		this.sfx.burnStart();
+		this.haptic(10);
+		this.app.rig.shake = Math.max(this.app.rig.shake, 0.05);
+		this.zifir.react?.('burn');
+		if (this.streak >= 5) {
+			this._pop('Seri bozuldu', 'bad');
+			this.sfx.streakBreak(this.streak);
+		} else this.sfx.streakReset();
+		if (this.streak) {
+			this.streak = 0;
+			this.ui.streak?.(0);
+		}
+		this._shadeD = 0;
+	}
+
+	_exitLight() {
+		this._wasLit = false;
+		if (this._expMin < NEAR) this._nearMiss(false);
+		else this.zifir.react?.('safe');
+	}
+
+	_nearMiss(big) {
+		this.nearN++;
+		this.score += big ? 40 : 15;
+		this._pop(big ? 'Kıl payı!!' : 'Kıl payı!', 'gold');
+		this.sfx.nearMiss();
+		this.haptic([20, 40, 30]);
+		this.zifir.react?.('safe');
+		this._slow(0.35, big ? 0.55 : 0.35);
+		this.app.rig.shake = Math.max(this.app.rig.shake, 0.08);
+		burstSparkle(this.fx, this.zp.x, this.zp.y + 0.7, this.zp.z, big ? 26 : 16, [1.4, 1.1, 2.6]);
+	}
+
+	_streakUp() {
+		const n = ++this.streak;
+		if (n > this.best) this.best = n;
+		this.score += 1 + Math.floor(n / 10);
+		this.ui.streak?.(n);
+		if (n % 5 === 0) {
+			const big = n % 10 === 0;
+			this._pop(`Gölge serisi ×${n}`, big ? 'gold' : 'good');
+			this.sfx.milestone(n);
+			this.haptic(big ? [12, 30, 12] : 10);
+			if (big) burstSparkle(this.fx, this.zp.x, this.zp.y + 0.9, this.zp.z, 14, [1.2, 1.0, 2.4]);
+			if (n === 10) this.app.hooks.onStreak?.(n);
+			if (n === 5) this._hintLater('streak', 4.5);
+		} else if (n >= 3) this.sfx.streak(n);
+	}
+
+	_birdJoin() {
+		if (!this.flock.add(this.zp)) return;
+		const c = this.flock.count;
+		this.sfx.birdJoin(c);
+		this.haptic(6);
+		this._abil();
+		if (c === GATHER) {
+			this._pop('Sürü hazır!', 'gold');
+			this.sfx.flockReady();
+			this.haptic([10, 20, 10]);
+			// ilk bölümde yalnızca kutlanır; ipucu, işe yarayacağı ikinci bölümde gelir
+			if (this.li >= 1) this._hintLater('flock', 5.5);
+		}
+	}
+
+	/** Sürü yeteneği: dört kuş toplanınca dokun, kuşlar Zifir'i birkaç saniye gölgelesin. */
+	callFlock() {
+		if (this.state !== 'play') return;
+		if (!this.flock.ready) {
+			if (this.flock.active > 0) return;
+			this.sfx.ui();
+			this._pop(`Sürü toplanıyor ${this.flock.count}/${GATHER}`, 'bad');
+			return;
+		}
+		this.flock.activate(FLOCK_DUR, this.zp);
+		this._flockOn = true;
+		this.sfx.flockGo();
+		this.haptic([15, 25, 15, 25, 40]);
+		this.app.rig.shake = Math.max(this.app.rig.shake, 0.1);
+		this._pop('Sürü!', 'gold');
+		this.zifir.react?.('safe');
+		if (this._hintKey === 'flock') {
+			this.ui.hint(null);
+			this._hintKey = null;
+		}
+		this._abil();
+	}
+
+	/** Yetenek düğmesinin durumu (yalnızca değişince arayüze gider). */
+	_abil() {
+		const f = this.flock;
+		const key = f.count * 4 + (f.ready ? 1 : 0) + (f.active > 0 ? 2 : 0);
+		if (key === this._abKey) return;
+		this._abKey = key;
+		this.ui.ability?.('flock', { count: f.count, max: GATHER, ready: f.ready, active: f.active > 0, dur: FLOCK_DUR });
+	}
+
+	/** Kısa yazı (seri, kıl payı...). Altın olmayanlar sık gelirse atlanır: ekran kalabalıklaşmasın. */
+	_pop(text, kind = 'good') {
+		const t = this.app.time;
+		if (kind !== 'gold' && t - this._popT < 0.7) return;
+		this._popT = t;
+		this.ui.pop?.(text, kind);
+	}
+
+	_slow(k, t) {
+		this._slowK = k;
+		this._slowT = t;
 	}
 
 	/** Kilit yardımı: güneşin tomurcuğu aydınlatıp Zifir'i gölgede bıraktığı açı aralığını bul. */
@@ -710,6 +1062,7 @@ export class Game {
 		if (frozen) return;
 		const p = this.curve.sample(this.s, this._smp);
 		if (this.state === 'complete' || this.state === 'ending') this.zifir.update(dt, time, this._zstate(p, false, 0, false, 0, 0, 1));
+		this.flock.update(dt, time, this.zp, this.sunDir);
 		this._commonFx(dt);
 	}
 
@@ -736,6 +1089,8 @@ export class Game {
 		this.elev = null;
 		this.app.sunAz = this.sunAz;
 		this.app.elev = null;
+		this.sfx.season = this.envTo === 'night' ? 'night' : this.envTo;
+		this.sfx.tick(dt, 0, 0.25, false);
 		this.app.focus.set(0, 30, 0);
 		this.app.idle = false;
 		this.fx.update(dt);
@@ -774,8 +1129,16 @@ export class Game {
 		this.ui.hudOn(false);
 		this.ui.hint(null);
 		this.ui.gust(false);
+		this.ui.streak?.(0);
 		this.sfx.fail();
+		this.sfx.lockCharge(null);
+		this.sfx.music('soft');
 		this.haptic([30, 40, 60]);
+		this.app.rig.shake = Math.max(this.app.rig.shake, 0.32);
+		this.flock.release(false);
+		this._flockOn = false;
+		this._slowT = 0;
+		this.timeScale = 1;
 		this.prog.fails[this.li] = (this.prog.fails[this.li] || 0) + 1;
 		this.store.set('progress', this.prog);
 		const t0 = performance.now();
@@ -803,32 +1166,48 @@ export class Game {
 		this.ui.hint(null);
 		this.ui.gust(false);
 		this.G.uDanger.value = 0;
-		this.zifir.hop();
+		if (this.zifir.celebrate) this.zifir.celebrate();
+		else this.zifir.hop();
 		this.sfx.win();
+		this.sfx.lockCharge(null);
+		this.sfx.music('soft');
 		this.haptic([20, 40, 20, 40, 60]);
+		this.app.rig.shake = Math.max(this.app.rig.shake, 0.12);
+		// kuşlar kutlama uçuşuyla göğe dağılır (kullanılmadıysa sonraki bölümde geri gelir), an bir nefes ağırlaşır
+		this._carryBirds = this.flock.active > 0 ? 0 : this.flock.count;
+		this.flock.release(true);
+		this._flockOn = false;
+		this._slow(0.5, 0.45);
+		this.ui.streak?.(0);
 		// çiçek/yaprak yağmuru
 		const p = this.zp;
 		const cell = { spring: 0, summer: 3, autumn: 1, winter: 2 }[L.season];
-		for (let i = 0; i < 46; i++) {
+		for (let i = 0; i < 60; i++) {
 			const a = Math.random() * TAU;
-			const r = Math.random() * 3;
-			this.petals.emit(p.x + Math.cos(a) * r, p.y + 3 + Math.random() * 3, p.z + Math.sin(a) * r, (Math.random() - 0.5) * 1.2, -0.3 - Math.random() * 0.6, (Math.random() - 0.5) * 1.2, 3 + Math.random() * 1.5, 0.22, 0.2, 0.25, 0.6, 1, 1, 1, 1, cell, (Math.random() - 0.5) * 4);
+			const r = Math.random() * 3.4;
+			this.petals.emit(p.x + Math.cos(a) * r, p.y + 3 + Math.random() * 3.5, p.z + Math.sin(a) * r, (Math.random() - 0.5) * 1.2, -0.3 - Math.random() * 0.6, (Math.random() - 0.5) * 1.2, 3 + Math.random() * 1.5, 0.22, 0.2, 0.25, 0.6, 1, 1, 1, 1, cell, (Math.random() - 0.5) * 4);
 		}
-		burstSparkle(this.fx, p.x, p.y + 0.8, p.z, 30, [2.6, 2.0, 0.9]);
+		burstSparkle(this.fx, p.x, p.y + 0.8, p.z, 36, [2.6, 2.0, 0.9]);
+		burstSparkle(this.fx, p.x, p.y + 0.5, p.z, 18, [1.4, 1.1, 2.6]);
+		if (!L.finale) this._heroCam();
 
 		const drops = this.drops.total;
 		const stars = [true, drops === 0 || this.got === drops, this.minMeter > 0.9];
 		const nStars = stars.filter(Boolean).length;
+		this.score += 50 + (stars[2] ? 50 : 0);
 		const prev = this.prog.stars[this.li] || 0;
-		const dust = 10 + this.got * 5 + (stars[2] ? 10 : 0) + (nStars === 3 ? 10 : 0);
+		// ışık tozu: bitirmek, damlalar, lekesizlik, en uzun gölge serisi, kıl payları
+		const dust = 10 + this.got * 5 + (stars[2] ? 10 : 0) + (nStars === 3 ? 10 : 0) + Math.floor(this.best / 5) * 2 + this.nearN * 3;
 		const gain = nStars > prev ? dust : Math.round(dust * 0.25);
 		this.prog.stars[this.li] = Math.max(prev, nStars);
 		this.prog.unlocked = Math.min(LEVEL_COUNT - 1, Math.max(this.prog.unlocked, this.li + 1));
 		this.prog.dust += gain;
 		this.prog.fails[this.li] = 0;
+		const bestPrev = (this.prog.best || [])[this.li] || 0;
+		(this.prog.best || (this.prog.best = []))[this.li] = Math.max(bestPrev, this.best);
 		this.store.set('progress', this.prog);
-		if (this.app.hooks.onReward) this.app.hooks.onReward({ level: this.li, stars: nStars, dust: gain, drops: this.got });
-		this._result = { title: L.title, kicker: L.kicker, stars, dust: gain, last: this.li === LEVEL_COUNT - 1 };
+		if (this.app.hooks.onReward) this.app.hooks.onReward({ level: this.li, stars: nStars, dust: gain, drops: this.got, streak: this.best });
+		this._result = { title: L.title, kicker: L.kicker, stars, dust: gain, last: this.li === LEVEL_COUNT - 1, best: this.best, record: this.best > bestPrev && bestPrev > 0, score: this.score, near: this.nearN, unlocks: this.unlocks };
 
 		if (L.finale) this._gateSeq();
 		else
@@ -837,6 +1216,25 @@ export class Game {
 				this._set('complete');
 				this.ui.showComplete(this._result);
 			}, 1500);
+	}
+
+	/** Zafer anı: kamera Zifir'in önüne süzülür (yüzünü gördüğümüz bir kahraman çekimi). */
+	_heroCam() {
+		const rig = this.app.rig;
+		// patikanın biraz ilerisinden, tahtaların üstünden geriye, Zifir'in yüzüne bakar (korkuluk araya girmez)
+		// Zifir ekranın alt üçte birinde kalır: ortadaki sonuç kartının altında görünür
+		const q = this.curve.sample(Math.min(this.curve.length, this.s + 3.6), {});
+		const zp = this.zp;
+		const r = Math.hypot(q.x, q.z) || 1;
+		const pos = V3(q.x + (q.x / r) * 0.35, q.y + 1.7, q.z + (q.z / r) * 0.35);
+		const look = V3(zp.x, zp.y + 1.35, zp.z);
+		rig.play(
+			[
+				{ t: 0, pos: rig.pos.clone(), look: rig.look.clone() },
+				{ t: 3.1, pos, look },
+			],
+			null
+		);
 	}
 
 	/** Son bölüm: Zifir Kök Kapısı'ndan içeri girer, gece çöker, yıldızlar yanar. */
@@ -856,6 +1254,7 @@ export class Game {
 			null
 		);
 		this.envTo2('night', 5);
+		this.sfx.season = 'night';
 		const t0 = performance.now();
 		const zf = this.zifir;
 		const tick = () => {
