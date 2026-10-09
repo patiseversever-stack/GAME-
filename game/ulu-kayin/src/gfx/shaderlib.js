@@ -98,15 +98,16 @@ vec3 nightInShade(vec3 V, float fres, float k) {
 	vec3 d = -V;
 	float K = 61.0 * max(uRes.y / max(uRes.x, 1.0), 1.0);
 	vec2 q = vec2(atan(d.z, d.x) * K, d.y * K * 1.05);
-	vec2 i = floor(q);
-	vec2 f = fract(q) - 0.5;
-	float h = hash12(i);
-	vec2 o = vec2(fract(h * 37.1), fract(h * 91.7)) - 0.5;
-	float r = length(f - o * 0.6);
-	float star = smoothstep(0.24, 0.05, r) * step(0.9, h);
+	float h = hash12(floor(q));
+	vec2 o = vec2(fract(h * 37.1), fract(h * 91.7)) * 0.4 - 0.2;
+	vec2 p = abs(fract(q) - 0.5 - o);
 	float tw = 0.5 + 0.5 * sin(uTime * (1.4 + h * 4.0) + h * 91.0);
-	star *= tw * tw * (0.45 + 0.55 * fract(h * 13.7));
-	vec3 c = uInkCol * star * uShadeFx.x * 1.6;
+	// küçük yıldızlar nokta, nadir olanlar dört kollu ışıltı
+	float star = step(0.92, h) * smoothstep(0.19, 0.03, length(p)) * (0.4 + 0.6 * fract(h * 13.7));
+	float arm = 1.0 - max(p.x, p.y) * 2.1;
+	star += step(0.986, h) * smoothstep(0.08, 0.0, min(p.x, p.y)) * arm * arm * 1.4;
+	vec3 sc = mix(uInkCol, vec3(1.0, 0.86, 0.62), step(0.75, fract(h * 5.3)) * 0.55);
+	vec3 c = sc * star * tw * tw * uShadeFx.x * 1.8;
 	// ince mürekkep parıltısı: gölgedeki kenarlar Zifir'inki gibi mor-mavi ışır
 	c += uInkCol * vec3(0.55, 0.5, 1.0) * fres * uShadeFx.y * 0.45;
 	return c * k;
@@ -121,9 +122,12 @@ vec3 shadeLit(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float wrapK, floa
 	float diff = mix(soft, band, uShadeFx.w);
 	float lit = diff * sh;
 	vec3 amb = skyAmbient(N) * ao;
-	// gölge: doygun, serin, temiz (bulanık mor değil)
+	// gölge: doygun, serin, temiz (bulanık mor değil). Sıcak renkli yüzey (tahta, altın yaprak)
+	// mavi gök ışığıyla çarpılınca zeytin-griye düşmesin diye gölgede yerel renk biraz
+	// parlaklığa çekilir; gölgeyi mevsimin gök rengi boyar.
 	vec3 shadeCol = mix(uShadeTint, vec3(1.0), lit);
-	vec3 c = albedo * (amb * shadeCol + uSunCol * lit);
+	vec3 albS = mix(albedo, vec3(dot(albedo, vec3(0.2126, 0.7152, 0.0722))), 0.32 * (1.0 - lit));
+	vec3 c = albS * amb * shadeCol + albedo * uSunCol * lit;
 	// gölge sınırı: aydınlık tarafta ince, sıcak, ışıyan hat (oyunun asıl çizgisi)
 	float e = sh * (1.0 - sh) * 4.0;
 	float t = diff * (1.0 - diff) * 4.0;
