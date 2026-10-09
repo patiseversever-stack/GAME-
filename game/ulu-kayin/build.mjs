@@ -16,6 +16,7 @@ mkdirSync(dist, { recursive: true });
 const FONTS = [
 	['cormorant-garamond', '500-italic'],
 	['cormorant-garamond', '600-italic'],
+	['cormorant-garamond', '700-italic'],
 	['manrope', '500'],
 	['manrope', '700'],
 	['manrope', '800'],

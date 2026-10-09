@@ -10,7 +10,7 @@ const ICON = {
 	back: sv('<path d="M15 5l-7 7 7 7"/>'),
 	pause: sv('<path d="M9 6.5v11M15 6.5v11"/>'),
 	play: sv('<path d="M8.5 5.8v12.4c0 .7.8 1.1 1.4.7l9.2-6.2c.5-.4.5-1.1 0-1.4L9.9 5.1c-.6-.4-1.4 0-1.4.7z"/>', 'f'),
-	path: sv('<path d="M6.5 20.5c0-4.5 11-3.5 11-8.5s-11-3.5-11-8.5"/><circle cx="6.5" cy="3.5" r="1.8" class="f"/><circle cx="17.5" cy="12" r="1.8" class="f"/><circle cx="6.5" cy="20.5" r="1.8" class="f"/>'),
+	path: sv('<path d="M12 21.5v-9M12 15.5l-3-2.5M12 13.5l3.5-3"/><path d="M12 12.5c-4.6 0-7.5-2.4-7.5-5.4S7.9 2.5 12 2.5s7.5 1.6 7.5 4.6-2.9 5.4-7.5 5.4z"/><path d="M8.5 21.5h7"/>'),
 	gear: sv('<circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1A1.7 1.7 0 0 0 9 19.4a1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1A1.7 1.7 0 0 0 4.6 9a1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
 	retry: sv('<path d="M4.5 12a7.5 7.5 0 1 0 2.3-5.4"/><path d="M4.5 4v4.5H9"/>'),
 	next: sv('<path d="M5 12h13M13 6l6 6-6 6"/>'),
@@ -155,7 +155,6 @@ export class UI {
 						<circle class="gnd" r="44"/>
 						<g clip-path="url(#uk-cc)"><g class="bandg"><path class="band" d="M-13.5 0H13.5L17 48H-17Z"/></g></g>
 						<circle class="trunk" r="13"/>
-						<path class="bark" d="M-6-4h4M2 3h5M-4 7h3"/>
 						<g transform="translate(0 30)"><circle class="halo" r="13"/><circle class="zif" r="7.5"/><circle class="eye" cx="-2.6" cy="-1.2" r="1.5"/><circle class="eye" cx="2.6" cy="-1.2" r="1.5"/></g>
 						<g class="sun"><g transform="translate(0 53)"><circle class="glow" r="15"/><path class="ray" d="M0-11.5v-3.5M0 11.5v3.5M-11.5 0h-3.5M11.5 0h3.5M-8.1-8.1l-2.5-2.5M8.1 8.1l2.5 2.5M-8.1 8.1l-2.5 2.5M8.1-8.1l2.5-2.5"/><circle class="disc" r="8"/></g></g>
 					</svg>
