@@ -177,6 +177,8 @@ void main() {
 }`;
 
 const LEAF_FS = /* glsl */ `
+// yaprak kartları üst üste biner: yıldız kırıntısı burada atlanır (yalnızca mürekkep parıltısı)
+#define NO_SHADE_STARS
 ${COMMON}
 ${SHADOW}
 ${LIGHT}

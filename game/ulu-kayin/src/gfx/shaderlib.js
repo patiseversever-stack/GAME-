@@ -112,6 +112,8 @@ vec3 skyAmbient(vec3 N) {
 vec3 nightInShade(vec3 V, float ndv, float k) {
 	// aydınlık yerde hiç hesaplanmaz (gölge ekranda bütün halinde durur, dallanma tutarlı)
 	if (k < 0.002) return vec3(0.0);
+	vec3 c = vec3(0.0);
+#ifndef NO_SHADE_STARS
 	vec3 d = -V;
 	float K = 61.0 * max(uRes.y / max(uRes.x, 1.0), 1.0);
 	vec2 q = vec2(atan(d.z, d.x) * K, d.y * K * 1.05);
@@ -124,7 +126,8 @@ vec3 nightInShade(vec3 V, float ndv, float k) {
 	float arm = 1.0 - max(p.x, p.y) * 2.1;
 	star += step(0.986, h) * smoothstep(0.08, 0.0, min(p.x, p.y)) * arm * arm * 1.4;
 	vec3 sc = mix(uInkCol, vec3(1.0, 0.86, 0.62), step(0.75, fract(h * 5.3)) * 0.55);
-	vec3 c = sc * star * tw * tw * uShadeFx.x * 1.8;
+	c = sc * star * tw * tw * uShadeFx.x * 1.8;
+#endif
 	// ince mürekkep parıltısı: gölgedeki kenarlar Zifir'inki gibi mor-mavi ışır
 	float sheen = (1.0 - ndv) * (1.0 - ndv);
 	c += uInkCol * vec3(0.5, 0.45, 1.0) * sheen * uShadeFx.y * 0.4;

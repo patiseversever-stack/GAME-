@@ -157,9 +157,11 @@ function portalMaterial(G) {
 				float r = length(p);
 				float a = atan(p.y, p.x);
 				float sw = sin(a * 3.0 + r * 5.5 - uTime * 1.4) * 0.5 + 0.5;
-				vec3 c = vec3(0.012, 0.008, 0.03) + vec3(0.22, 0.14, 0.55) * sw * sw * (1.0 - smoothstep(0.0, 1.4, r)) * (0.35 + uOpen);
+				// içte dönen mürekkep: koyu çivit girdap, açılınca mor-eflatun ışır
+				vec3 c = vec3(0.012, 0.008, 0.03) + mix(vec3(0.12, 0.08, 0.5), vec3(0.6, 0.2, 0.9), sw) * sw * sw * (1.0 - smoothstep(0.0, 1.4, r)) * (0.3 + 1.2 * uOpen);
 				float rim = 1.0 - smoothstep(0.0, 0.32, d);
-				c += mix(vec3(0.55, 0.42, 1.6), vec3(2.2, 1.5, 0.6), 0.35 + 0.35 * sin(uTime * 2.0 + a * 2.0)) * rim * (0.5 + 1.6 * uOpen);
+				// kenar: Tün Ana mor, Kün Ata altın; ikisi kemer boyunca birbirine akar
+				c += mix(vec3(0.5, 0.32, 1.5), vec3(2.0, 1.2, 0.4), 0.3 + 0.4 * sin(uTime * 1.6 + a * 2.0)) * rim * rim * (0.5 + 1.0 * uOpen);
 				float sp = step(0.985, fract(sin(dot(floor(vec2(a * 9.0, r * 14.0 - uTime * 0.8)), vec2(12.9, 78.2))) * 43758.5));
 				c += vec3(1.4, 1.3, 2.2) * sp * (1.0 - smoothstep(0.2, 1.2, r)) * 0.6;
 				gl_FragColor = finish(applyFog(c, vW), 1.0);
