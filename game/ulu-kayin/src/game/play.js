@@ -411,6 +411,7 @@ export class Game {
 		this._allDrops = false;
 		this._lkOn = false;
 		this._pend = null;
+		(this._dropWarn || (this._dropWarn = new Uint8Array(16))).fill(0);
 		this._progU = -1;
 		this.ui.streak?.(0);
 		this.sfx.streakReset();
@@ -722,6 +723,18 @@ export class Game {
 			},
 			active
 		);
+
+		// erimeye başlayan damla: bir kez uyar (oyuncu güneşi kaydırıp kurtarabilir)
+		if (active) {
+			const W = this._dropWarn;
+			for (const dr of this.drops.list) {
+				if (dr.state === 'idle' && dr.melt > 0.18 && !W[dr.i]) {
+					W[dr.i] = 1;
+					this.sfx.dropWarn();
+					this._pop('Damla eriyor!', 'bad');
+				}
+			}
+		}
 
 		// --- ışık kilitleri
 		if (active || st === 'ready')

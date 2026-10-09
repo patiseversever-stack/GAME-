@@ -271,6 +271,26 @@ export class Sfx {
 		this._tone(this._note(1), t + 0.12, 0.6, 0.06, 'triangle');
 	}
 
+	/** Bir damla erimeye başladı: kısa, inen bir ıslık ve tıslama. */
+	dropWarn() {
+		if (!this._ok('dropWarn')) return;
+		const t = this.ctx.currentTime;
+		const o = this.ctx.createOscillator();
+		const g = this.ctx.createGain();
+		const f = this._note(12);
+		o.type = 'sine';
+		o.frequency.setValueAtTime(f, t);
+		o.frequency.exponentialRampToValueAtTime(f * 0.7, t + 0.35);
+		g.gain.setValueAtTime(0, t);
+		g.gain.linearRampToValueAtTime(0.05, t + 0.02);
+		g.gain.exponentialRampToValueAtTime(0.0001, t + 0.4);
+		o.connect(g);
+		g.connect(this.master);
+		o.start(t);
+		o.stop(t + 0.45);
+		this._burst(t, 0.3, 4500, 0.04, 'highpass');
+	}
+
 	ui() {
 		if (!this._ok('ui')) return;
 		this._tone(this._note(7), this.ctx.currentTime, 0.14, 0.05, 'sine', 2);
