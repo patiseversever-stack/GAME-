@@ -28,11 +28,6 @@ const LAST_STAND = 1.1; // son nefes: mürekkep bitince gölgeye kaçmak için t
 const NEAR = 0.3; // bu seviyenin altından gölgeye dönmek "kıl payı" sayılır
 
 // Arayüzde karşılığı olmayan yeni ipuçları (metin olarak gönderilir)
-const HINT_TEXT = {
-	streak: 'Gölgede yürüdükçe <em>gölge serisi</em> büyür. Seri, Zifir’e gölge kuşları toplar.',
-	flock: '<em>Sürü hazır!</em> Dokun: kuşlar güneşin önünde dönüp Zifir’i birkaç saniye gölgeler.',
-};
-
 export class Game {
 	constructor(app, ui, sfx) {
 		this.app = app;
@@ -503,7 +498,7 @@ export class Game {
 	}
 
 	_showHint(key, dur = 4.5) {
-		this.ui.hint(HINT_TEXT[key] || key);
+		this.ui.hint(key);
 		this._hintUntil = this.levelT + dur;
 		this._hintKey = key;
 		this.prog.seen[key] = true;

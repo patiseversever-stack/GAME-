@@ -67,6 +67,8 @@ const HINTS = {
 	gate: ['gate', 'Güneş batıyor. Zifir’i <em>Kök Kapısı</em>’na ulaştır!'],
 	crystal: ['crystal', '<em>Kristaller</em> ışığı yansıtır. Işın Zifir’e değmesin.'],
 	lock: ['bud', 'Tomurcuk ışıkla açılır: ona <em>ışık</em>, Zifir’e <em>gölge</em> düşür.'],
+	streak: ['shade', 'Gölgede yürüdükçe <em>gölge serisi</em> büyür. Seri, Zifir’e gölge kuşları toplar.'],
+	flock: ['birds', '<em>Sürü hazır!</em> Dokun: kuşlar güneşin önünde dönüp Zifir’i birkaç saniye gölgeler.'],
 };
 
 const SEASON = {
