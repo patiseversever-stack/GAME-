@@ -3,7 +3,7 @@
 
 import * as THREE from 'three';
 import { Builder } from '../gfx/builder.js';
-import { COMMON, LIGHT, FINISH } from '../gfx/shaderlib.js';
+import { COMMON, SHADOW, LIGHT, FINISH } from '../gfx/shaderlib.js';
 import { rng, TAU, lerp, noise1, smoothstep } from '../core/math.js';
 
 const V3 = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -188,13 +188,33 @@ export function buildSky(G, tex, tier) {
 	return { group, dome, farGeo: far.build() };
 }
 
-/** Güneş parlaması: güneş yönünde dev bir hale; gövdenin arkasına girince derinlik testi gizler. */
+/**
+ * Güneş parlaması: güneşin etrafında yumuşak ışık taşması, ince parlak çekirdek, hafif halka ve
+ * yatay ışık çizgisi. Derinlik testi yoktur: güneş gövdenin kenarından sıyrılınca ışık ağacın
+ * siluetinin üstüne taşar. Güneşin görünüp görünmediği, gölge haritasında kameranın kendi
+ * konumuna bakılarak köşe shader'ında bulunur (4 köşe × 4 okuma; piksel başına maliyet yok):
+ * kamera gölgedeyse güneş gövdenin ya da yaprakların ardındadır ve parlama söner.
+ */
 export function buildSunGlare(glowTex, G) {
 	const mat = new THREE.ShaderMaterial({
 		vertexShader: /* glsl */ `
-			uniform vec3 uSunDir; uniform float uSize;
+			${COMMON}
+			${SHADOW}
+			uniform float uSize;
 			varying vec2 vUv;
+			varying float vVis;
+			float sunVis(vec3 p) {
+				vec4 sc = uShadowMat * vec4(p, 1.0);
+				vec2 e = abs(sc.xy - 0.5);
+				if (max(e.x, e.y) > 0.49 || sc.z > 1.0) return trunkShadow(p);
+				return texture(uShadowMap, vec3(sc.xy, sc.z - uShadowP.z));
+			}
 			void main() {
+				vec3 r0 = normalize(cross(uSunDir, vec3(0.0, 1.0, 0.0)) + vec3(1e-4, 0.0, 0.0));
+				vec3 u0 = cross(r0, uSunDir);
+				float v = sunVis(cameraPosition + r0 * 0.3) + sunVis(cameraPosition - r0 * 0.3);
+				v += sunVis(cameraPosition + u0 * 0.3) + sunVis(cameraPosition - u0 * 0.3);
+				vVis = v * 0.25;
 				vec3 c = cameraPosition + uSunDir * 420.0;
 				vec3 toCam = normalize(cameraPosition - c);
 				vec3 right = normalize(cross(vec3(0.0, 1.0, 0.0), toCam));
@@ -205,19 +225,24 @@ export function buildSunGlare(glowTex, G) {
 				gl_Position = p.xyww;
 			}`,
 		fragmentShader: /* glsl */ `
-			uniform sampler2D uMap; uniform vec3 uSunGlow; uniform float uK;
+			uniform vec3 uSunGlow, uSunDisc; uniform float uK;
 			varying vec2 vUv;
+			varying float vVis;
 			void main() {
-				float t = texture2D(uMap, vUv).r;
 				vec2 q = vUv - 0.5;
-				// ince yatay ışık çizgisi (anamorfik)
-				float streak = exp(-abs(q.y) * 90.0) * exp(-abs(q.x) * 3.0) * 0.22;
-				vec3 c = uSunGlow * (t * t * t * 0.32 + streak) * uK;
-				gl_FragColor = vec4(c, 1.0);
+				float r = length(q) * 2.0;
+				float fall = max(1.0 - r, 0.0);
+				float core = exp(-r * 18.0);
+				float halo = exp(-r * 4.5) * fall * fall;
+				float ring = exp(-(r - 0.6) * (r - 0.6) * 300.0) * fall;
+				float streak = exp(-abs(q.y) * 150.0) * fall * fall;
+				vec3 c = uSunGlow * (halo * 0.3 + ring * 0.035 + streak * 0.2) + uSunDisc * core * 0.85;
+				gl_FragColor = vec4(c * vVis * uK, 1.0);
 			}`,
-		uniforms: { uSunDir: G.uSunDir, uSunGlow: G.uSunGlow, uMap: { value: glowTex }, uSize: { value: 80 }, uK: { value: 1 } },
+		uniforms: { ...G, uSize: { value: 140 }, uK: { value: 1 } },
 		transparent: true,
 		depthWrite: false,
+		depthTest: false,
 		blending: THREE.AdditiveBlending,
 	});
 	const m = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), mat);
