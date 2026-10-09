@@ -15,11 +15,11 @@ import { LEVELS } from '../world/layout.js';
 export const DESIGN = [
 	{
 		// Bahar I: öğretici. Taç gölgesinde başlar; güneşi gövdenin arkasına saklamayı öğretir.
-		speed: 1.25,
+		speed: 1.55,
 		wind: 0.22,
 		elev: [40, 34],
 		sunStart: Math.PI * 0.55,
-		burn: 0.8,
+		burn: 0.7,
 		drops: [
 			[0.42, -0.2],
 			[0.78, 0.3],
@@ -28,7 +28,7 @@ export const DESIGN = [
 	},
 	{
 		// Bahar II: ilk asma köprü; çiçekli dalın gölgesi ve damlaların ışıkta erimesi.
-		speed: 1.3,
+		speed: 1.6,
 		wind: 0.28,
 		elev: [34, 30],
 		sunStart: Math.PI,
@@ -45,7 +45,7 @@ export const DESIGN = [
 	},
 	{
 		// Yaz I: tepede güneş, kısa gölgeler; üstteki patika katının gölgesi işe yarar.
-		speed: 1.35,
+		speed: 1.65,
 		wind: 0.25,
 		elev: [62, 56],
 		sunStart: Math.PI,
@@ -65,7 +65,7 @@ export const DESIGN = [
 	},
 	{
 		// Yaz II: kuş yuvası köprüsü, gövdeden en uzak nokta. Bekle'yi öğretir.
-		speed: 1.35,
+		speed: 1.65,
 		wind: 0.3,
 		elev: [56, 48],
 		sunStart: Math.PI,
@@ -86,7 +86,7 @@ export const DESIGN = [
 	},
 	{
 		// Güz I: alçak altın güneş, uzun gölgeler; sert rüzgâr yaprakları savurur.
-		speed: 1.4,
+		speed: 1.7,
 		wind: 0.3,
 		elev: [30, 24],
 		sunStart: Math.PI,
@@ -107,7 +107,7 @@ export const DESIGN = [
 	},
 	{
 		// Güz II: fırtına. Sık ve güçlü rüzgâr, köprüde yapraklara güvenmek zor.
-		speed: 1.4,
+		speed: 1.72,
 		wind: 0.38,
 		elev: [24, 18],
 		sunStart: Math.PI,
@@ -129,7 +129,7 @@ export const DESIGN = [
 	},
 	{
 		// Kış I: çıplak dallar, az yaprak; kar topaklarının küçük gölgeleri ve çok uzun gövde gölgesi.
-		speed: 1.45,
+		speed: 1.75,
 		wind: 0.18,
 		elev: [16, 11],
 		sunStart: Math.PI,
@@ -150,7 +150,7 @@ export const DESIGN = [
 	},
 	{
 		// Kış II: gün batımı. Kökler, kayalar ve çamlar adaya uzun gölgeler serer. Kök Kapısı.
-		speed: 1.4,
+		speed: 1.7,
 		wind: 0.15,
 		elev: [10, 4],
 		sunStart: Math.PI,
