@@ -65,7 +65,7 @@ export function createGlobals() {
 export const ENVS = {
 	// İlkbahar şafağı: gül-şeftali ışık, turkuaz-camgöbeği gök, serin mavi gölgeler.
 	spring: {
-		elev: 34,
+		elev: 27,
 		sun: C('#ffc9a0', 2.25),
 		zenith: C('#1c8fc4'), skyMid: C('#5fcfe0'), horizon: C('#ffcfb4'),
 		sunGlow: C('#ffb08a', 1.25), sunDisc: C('#fff4e4', 1),
