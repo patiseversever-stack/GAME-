@@ -65,7 +65,7 @@ export function createWorld({ G, tier, shadow, aniso, msaa }) {
 		rock: litMaterial({ map: tex.rock, wrap: 0.3, rim: 0.3 }),
 		props: litMaterial({ wrap: 0.3, rim: 0.3, cutout: true }),
 		pond: litMaterial({ wrap: 0.2, rim: 0.9 }),
-		far: litMaterial({ wrap: 0.5, rim: 0.4 }),
+		far: litMaterial({ wrap: 0.5, rim: 0.6, aerial: 1.45 }),
 		sky: skyMaterial(tex.stars),
 	};
 

@@ -27,6 +27,9 @@ uniform vec3 uTermCol;  // gölge sınırındaki sıcak hat
 uniform vec3 uInkCol;   // gölgedeki yıldızların rengi
 uniform vec3 uVigCol;   // vinyet tonu (ekran uzayında çarpan)
 uniform vec4 uAtmo;     // x karesel sis, y en çok sis, z ufuk parlaması, w ışık tarafı sıcaklığı
+// shadowAt() son çağrıda gölge kenarının ham (keskinleştirilmemiş) yakınlığını buraya yazar;
+// shadeLit() gölge sınırındaki sıcak hattı bununla çizer (ek doku okuması yok).
+float gShEdge = 0.0;
 
 float hash12(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -62,11 +65,19 @@ float trunkShadow(vec3 p) {
 	float R = 3.05 + 0.95 * (1.0 - yy / 52.0) + 1.9 * exp(-max(y, 0.0) / 2.3);
 	return smoothstep(R - 0.25, R + 0.35, length(p.xz + L * t));
 }
+// kenar yakınlığı: en yüksek değer gölgenin aydınlık yanında (ham değer 2/3 iken 1)
+float shEdge(float s) {
+	return 6.75 * s * s * (1.0 - s);
+}
 float shadowAt(vec3 wp, vec3 n) {
 	vec4 sc = uShadowMat * vec4(wp + n * uShadowP.y, 1.0);
 	vec3 p = sc.xyz;
 	vec2 e = abs(p.xy - 0.5);
-	if (max(e.x, e.y) > 0.497 || p.z > 1.0) return trunkShadow(wp);
+	if (max(e.x, e.y) > 0.497 || p.z > 1.0) {
+		float ts = trunkShadow(wp);
+		gShEdge = shEdge(ts);
+		return ts;
+	}
 	p.z -= uShadowP.z;
 #if SHADOW_TAPS > 1
 	float o = uShadowP.x * 1.35;
@@ -74,10 +85,14 @@ float shadowAt(vec3 wp, vec3 n) {
 	s += texture(uShadowMap, vec3(p.xy + vec2(0.35 * o, -o), p.z));
 	s += texture(uShadowMap, vec3(p.xy + vec2(o, 0.35 * o), p.z));
 	s += texture(uShadowMap, vec3(p.xy + vec2(-0.35 * o, o), p.z));
+	s *= 0.25;
+	gShEdge = shEdge(s);
 	// dört örnek arası yumuşak ama net bir kenar: gölge çizgisi oyunun kendisi
-	return smoothstep(0.08, 0.92, s * 0.25);
+	return smoothstep(0.08, 0.92, s);
 #else
-	return texture(uShadowMap, p);
+	float s = texture(uShadowMap, p);
+	gShEdge = shEdge(s);
+	return s;
 #endif
 }
 `;
@@ -94,7 +109,7 @@ vec3 skyAmbient(vec3 N) {
 
 // Gölgede yaşayan gece: Tün Ana'nın dağılmış yıldızları. Bakış yönüne bağlı (sonsuzdaki gök
 // gibi), bu yüzden gölge bir pencere gibi gece göğünü gösterir. Ekranda ~7 css pikselde bir hücre.
-vec3 nightInShade(vec3 V, float fres, float k) {
+vec3 nightInShade(vec3 V, float ndv, float k) {
 	vec3 d = -V;
 	float K = 61.0 * max(uRes.y / max(uRes.x, 1.0), 1.0);
 	vec2 q = vec2(atan(d.z, d.x) * K, d.y * K * 1.05);
@@ -109,7 +124,8 @@ vec3 nightInShade(vec3 V, float fres, float k) {
 	vec3 sc = mix(uInkCol, vec3(1.0, 0.86, 0.62), step(0.75, fract(h * 5.3)) * 0.55);
 	vec3 c = sc * star * tw * tw * uShadeFx.x * 1.8;
 	// ince mürekkep parıltısı: gölgedeki kenarlar Zifir'inki gibi mor-mavi ışır
-	c += uInkCol * vec3(0.55, 0.5, 1.0) * fres * uShadeFx.y * 0.45;
+	float sheen = (1.0 - ndv) * (1.0 - ndv);
+	c += uInkCol * vec3(0.5, 0.45, 1.0) * sheen * uShadeFx.y * 0.4;
 	return c * k;
 }
 
@@ -129,7 +145,7 @@ vec3 shadeLit(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float wrapK, floa
 	vec3 albS = mix(albedo, vec3(dot(albedo, vec3(0.2126, 0.7152, 0.0722))), 0.32 * (1.0 - lit));
 	vec3 c = albS * amb * shadeCol + albedo * uSunCol * lit;
 	// gölge sınırı: aydınlık tarafta ince, sıcak, ışıyan hat (oyunun asıl çizgisi)
-	float e = sh * (1.0 - sh) * 4.0;
+	float e = max(sh * (1.0 - sh) * 4.0, gShEdge);
 	float t = diff * (1.0 - diff) * 4.0;
 	vec3 glowAlb = albedo * 0.6 + 0.4;
 	c += uTermCol * glowAlb * (e * e * diff + t * t * sh * 0.22) * uShadeFx.z;
@@ -139,7 +155,7 @@ vec3 shadeLit(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float wrapK, floa
 	c += uSunCol * fres * back * rimK * (0.25 + 0.75 * sh) * ao;
 	// gece gölgede yaşar
 	float shade = smoothstep(0.35, 0.9, 1.0 - lit);
-	c += nightInShade(V, fres, shade * min(ao, 1.0));
+	c += nightInShade(V, clamp(dot(N, V), 0.0, 1.0), shade * min(ao, 1.0));
 	return c;
 }
 

@@ -235,8 +235,7 @@ export function buildSunGlare(glowTex, G) {
 				float core = exp(-r * 18.0);
 				float halo = exp(-r * 4.5) * fall * fall;
 				float ring = exp(-(r - 0.6) * (r - 0.6) * 300.0) * fall;
-				float streak = exp(-abs(q.y) * 150.0) * fall * fall;
-				vec3 c = uSunGlow * (halo * 0.3 + ring * 0.035 + streak * 0.2) + uSunDisc * core * 0.85;
+				vec3 c = uSunGlow * (halo * 0.3 + ring * 0.035) + uSunDisc * core * 0.85;
 				gl_FragColor = vec4(c * vVis * uK, 1.0);
 			}`,
 		uniforms: { ...G, uSize: { value: 140 }, uK: { value: 1 } },
