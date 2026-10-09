@@ -427,7 +427,7 @@ export class Game {
 		const fromPlay = cont && this.level && this.li === i - 1;
 		const prevS = this.s;
 		// toplanmış kuşlar bir sonraki bölüme taşınır; yenilgiden sonra kuşlar yardıma gelir
-		const carry = fromPlay ? this.flock.count : 0;
+		const carry = fromPlay ? this._carryBirds || 0 : 0;
 		this._setupLevelData(i);
 		const mercyBirds = this.fails > 0 ? Math.min(GATHER, this.fails + 1) : 0;
 		this._birds0 = Math.max(carry, mercyBirds);
@@ -1160,7 +1160,8 @@ export class Game {
 		this.sfx.music('soft');
 		this.haptic([20, 40, 20, 40, 60]);
 		this.app.rig.shake = Math.max(this.app.rig.shake, 0.12);
-		// kuşlar kutlama uçuşuyla göğe dağılır, an bir nefes ağırlaşır
+		// kuşlar kutlama uçuşuyla göğe dağılır (kullanılmadıysa sonraki bölümde geri gelir), an bir nefes ağırlaşır
+		this._carryBirds = this.flock.active > 0 ? 0 : this.flock.count;
 		this.flock.release(true);
 		this._flockOn = false;
 		this._slow(0.5, 0.45);
@@ -1240,6 +1241,7 @@ export class Game {
 			null
 		);
 		this.envTo2('night', 5);
+		this.sfx.season = 'night';
 		const t0 = performance.now();
 		const zf = this.zifir;
 		const tick = () => {

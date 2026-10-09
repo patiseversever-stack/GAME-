@@ -9,12 +9,19 @@
 //             noktasına yansıtacak açıyla durur: oyuncu güneşi gövdenin arkasında tutarken ışını
 //             Zifir'den uzak tutacak açıyı bulmalı. yan: +1 Zifir'in önünde, -1 arkasında.
 //   locks:    [u] ışık kilitleri: yolu kapatan tomurcuk / buz. Güneş değince açılır.
+//   speed:    Zifir'in yürüyüşü (birim/sn). Işıkta telaşla %35 hızlı koşar (play.js RUN_K).
+//   burn:     yanma çarpanı; bölümler ilerledikçe artar (yenilgiden sonra merhamet azaltır).
+//
+// Tempo: her bölüm 15-30 sn. Her 2-3 saniyede bir olay olmalı (seri eşiği, damla, kilit, rüzgâr,
+// kristal, kuş). Damlalar bir kilidin hemen ardına (Zifir beklerken 9 birim içine) yığılmamalı:
+// kilidi açarken güneş onları eritir. En fazla biri bilerek riskli konur.
 
 import { LEVELS } from '../world/layout.js';
 
 export const DESIGN = [
 	{
-		// Bahar I: öğretici. Taç gölgesinde başlar; güneşi gövdenin arkasına saklamayı öğretir.
+		// Bahar I: öğretici, ~15 sn. İlk kaydırma güneşi döndürür, ilk gölge kutlanır (Gölgede!),
+		// ×5 seride seri ipucu, sonlara doğru dört kuş toplanır (Sürü ipucu ikinci bölümde gelir).
 		speed: 1.55,
 		wind: 0.22,
 		elev: [40, 34],
