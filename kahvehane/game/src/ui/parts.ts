@@ -1,8 +1,8 @@
-// Ortak parçalar: modal iskeleti, bildirim, "Yakında" penceresi, avatar/seviye/jeton kapsülü HTML'i.
+// Ortak parçalar: arena zemini, kod çizimi logo, modal iskeleti, bildirim, "Yakında" penceresi, avatar/seviye/jeton kapsülü HTML'i.
 import type {Profile, Sounds} from './types';
 import {EASE, Scope, ANIM, esc, fmt, h, initials, play, q} from './dom';
 import {ASSETS} from './assets';
-import {I} from './icons';
+import {I, SUIT, SUIT_TILE} from './icons';
 import type {Fx} from './fx';
 import {g3} from './fx';
 
@@ -10,6 +10,55 @@ export interface Ctx {
   layer: HTMLElement;
   sounds: Sounds;
   fx: Fx;
+}
+
+// Arena deseni CSS değişkeni olarak bir kez kurulur (masa katmanı da var(--suit-tile) ile kullanabilir).
+if (typeof document !== 'undefined') document.documentElement.style.setProperty('--suit-tile', SUIT_TILE);
+
+/**
+ * Arena zemini: merkezde mavi ışık → kenarda gece mavisi, yavaş dönen ışık hüzmeleri (yalnız transform),
+ * düşük kontrastlı dağınık takım deseni, kenar karartması. `cls` ile ekran özel ayar (ör. ışık merkezi).
+ */
+export const arenaHtml = (cls = ''): string =>
+  `<div class="kh-arena ${cls}"><i class="kh-arena__rays"></i><i class="kh-arena__suits"></i><i class="kh-arena__vig"></i></div>`;
+
+let wmSeq = 0;
+/**
+ * Kod çizimi logo (satır içi SVG): tıknaz "PİŞTİ" — harfler sırayla eğik, sarı→turuncu dolgu, beyaz iç şerit,
+ * kalın lacivert kontur + alt gölge, üst yarıda parlak cila; altında kırmızı "KAHVEHANE" kurdelesi ve dört takım süsü.
+ * Kıvılcımlar HTML'dir (SVG dışı): dönen/yanıp sönen yalnız transform + opacity.
+ */
+export function wordmarkHtml(cls = ''): string {
+  const id = 'khwm' + ++wmSeq;
+  const word = `<text id="${id}t" x="180" y="118" text-anchor="middle" font-family="'Lilita One', Nunito, sans-serif" font-size="112" letter-spacing="2" rotate="-7 5 -4 6 -6" dy="0 -3 4 -4 3">PİŞTİ</text>`;
+  const st = 'stroke-linejoin="round" stroke-linecap="round"';
+  const suit = (k: keyof typeof SUIT, x: number, y: number, r: number, c: string) =>
+    `<g transform="translate(${x} ${y}) rotate(${r}) scale(.78) translate(-12 -12)"><g fill="#0a1033" stroke="#0a1033" stroke-width="5" ${st}>${SUIT[k]}</g><g fill="${c}">${SUIT[k]}</g></g>`;
+  return `<div class="kh-wm ${cls}" role="img" aria-label="Kahvehane Pişti">
+    <svg class="kh-wm__svg" viewBox="0 0 360 196" aria-hidden="true">
+      <defs>
+        ${word}
+        <linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbe0"/><stop offset=".22" stop-color="#fff27a"/><stop offset=".46" stop-color="#ffd23f"/><stop offset=".47" stop-color="#ffbe1c"/><stop offset=".78" stop-color="#ff9f1a"/><stop offset="1" stop-color="#ff7a0a"/></linearGradient>
+        <linearGradient id="${id}g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".9"/><stop offset=".44" stop-color="#fff" stop-opacity=".18"/><stop offset=".45" stop-color="#fff" stop-opacity="0"/></linearGradient>
+        <linearGradient id="${id}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a8e"/><stop offset=".45" stop-color="#ff2e4d"/><stop offset="1" stop-color="#c40a2f"/></linearGradient>
+        <path id="${id}p" d="M84 166 Q180 184 276 166"/>
+      </defs>
+      <g class="kh-wm__rib">
+        <path d="M92 148 L46 146 L62 162 L44 180 L96 178 Z" fill="#a8001e" stroke="#0a1033" stroke-width="5" ${st}/>
+        <path d="M268 148 L314 146 L298 162 L316 180 L264 178 Z" fill="#a8001e" stroke="#0a1033" stroke-width="5" ${st}/>
+        <path d="M72 144 Q180 162 288 144 L288 176 Q180 194 72 176 Z" fill="url(#${id}r)" stroke="#0a1033" stroke-width="5" ${st}/>
+        <path d="M78 149 Q180 166 282 149" fill="none" stroke="#fff" stroke-opacity=".45" stroke-width="3" stroke-linecap="round"/>
+        <text font-family="'Lilita One', Nunito, sans-serif" font-size="21" letter-spacing="5" fill="#fff" stroke="#0a1033" stroke-width="5" paint-order="stroke" ${st}><textPath href="#${id}p" startOffset="50%" text-anchor="middle">KAHVEHANE</textPath></text>
+      </g>
+      <use href="#${id}t" fill="#0a1033" stroke="#0a1033" stroke-width="26" ${st} transform="translate(0 9)"/>
+      <use href="#${id}t" fill="#0a1033" stroke="#0a1033" stroke-width="26" ${st}/>
+      <use href="#${id}t" fill="#fff" stroke="#fff" stroke-width="9" ${st}/>
+      <use href="#${id}t" fill="url(#${id}f)"/>
+      <use href="#${id}t" fill="url(#${id}g)"/>
+      ${suit('s', 26, 116, -16, '#1f7bff')}${suit('h', 334, 112, 14, '#ff2e4d')}
+    </svg>
+    <i class="kh-wm__spark is-a"></i><i class="kh-wm__spark is-b"></i><i class="kh-wm__spark is-c"></i>
+  </div>`;
 }
 
 export const avatarHtml = (name: string, cls = ''): string =>
@@ -31,8 +80,7 @@ export const capsuleHtml = (coins: number, plus = false, cls = ''): string =>
   `<div class="kh-capsule ${cls}" data-coins><img class="kh-capsule__ico" src="${ASSETS.icon_coin}" alt=""><b class="kh-capsule__val kh-num">${fmt(coins)}</b>${
     plus ? `<button class="kh-plus" data-act="shop" aria-label="Jeton al">${I.plus}</button>` : ''}</div>`;
 
-export const titleHtml = (text: string, cls = ''): string => `<div class="kh-title ${cls}">${g3(text)}</div>`;
-export const ruleHtml = (): string => `<div class="kh-rule"><i></i>${I.tulip}<i></i></div>`;
+export const titleHtml = (text: string, cls = '', g3cls = ''): string => `<div class="kh-title ${cls}">${g3(text, g3cls)}</div>`;
 
 export interface ModalHandle {
   el: HTMLElement;
@@ -50,7 +98,7 @@ export function openModal(ctx: Ctx, o: {cls: string; title?: string; body: strin
   el.innerHTML = `<div class="kh-modal__scrim"></div>
     <div class="kh-modal__panel kh-panel" role="dialog" aria-modal="true">
       ${o.onX ? `<button class="kh-iconbtn kh-modal__x" data-act="x" aria-label="Kapat">${I.close}</button>` : ''}
-      ${o.title ? `<div class="kh-modal__head">${titleHtml(o.title, 'kh-modal__title')}${ruleHtml()}</div>` : ''}
+      ${o.title ? `<div class="kh-modal__head">${titleHtml(o.title, 'kh-modal__title')}</div>` : ''}
       ${o.body}
     </div>`;
   ctx.layer.append(el);
@@ -131,7 +179,7 @@ export function soon(ctx: Ctx, title: string, icon: string, text: string): Promi
       cls: 'kh-soon',
       title,
       onX: done,
-      body: `<img class="kh-soon__ico" src="${icon}" alt="">
+      body: `<div class="kh-soon__ico"><img src="${icon}" alt=""></div>
         <div class="kh-soon__t">${esc(text)}</div>
         <button class="kh-btn kh-btn--1" data-act="ok">Tamam</button>`,
     });
