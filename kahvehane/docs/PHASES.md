@@ -91,11 +91,12 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
-**16 Ekim (gece):** Yön yeniden değişti → **PİŞTİ ARENA** (UNO kalitesinde modern, canlı, hızlı). Ayrıntı: `docs/STIL_ARENA.md`. Önizleme (sürüm 5): https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
-- 3D masa (Three.js) oyundan çıktı; yerine hızlı 2B masa: `src/table2d/` (WAAPI, yalnız transform/opacity). Paket 5.2 MB → 2.4 MB.
-- Deste: **Yıldızlı Gece** (Van Gogh esintili, karaktersiz; Papaz=hilal ay+taç, Kız=yıldız+taç, Vale=servi). `src/skins/yildizli.ts`; atlas `src/render/skinAtlas.ts`. Yeni satılık deste = yeni Skin dosyası (`src/skins/contract.ts`). Eski dört renk deste `src/render/cardAtlas.ts` kullanılmıyor. Diğer denenmiş tarzlar: `dev/skins/` (reddedildi).
-- Tüm ekranlar Arena dilinde (lobi, giriş, HUD, PİŞTİ efekti, sonuç, pencereler), kod ile çizilmiş yeni logo.
-- Oynanış: tek dokunuş (veya yukarı kaydırma) ile kart atma, alan kartlar parlar, hızlı tempo, her atışta renkli halka + kıvılcım.
-- Eski 3D kodu (`src/render/stage.ts`, `env.ts`, `cards.ts`, `input/hand.ts`, `game/table.ts`) depoda duruyor ama oyunda kullanılmıyor.
-- Test: `?auto=1` kendi oynar, `?seed=2` erken pişti.
-- Sıradaki: kullanıcı geri bildirimi; seslendirme; 4 kişilik mod.
+**16 Ekim (gece) — "Tam paket" çalışması sürüyor.** Önizleme: https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+Kullanıcının isteği: her ekran ve oynanış "milyon dolarlık stüdyo" kalitesinde; efsane animasyonlar; tek oyuncu 1'e 1 / 4 kişi / eşli; ileride çok oyunculu (ana ekran buna göre); ilk açılışta hikâyeli hediye karakter seçimi (galeri, kaydırmalı, ücretsiz); market.
+- Temel (bitti): `assets/chars/` 4 karakter × 10 hâl (WebP), `src/game/roster.ts` (hikâyeler, fiyatlar), `profile.ts` (jeton/XP/envanter/kuşanma/istatistik/günlük/sandık), `catalog.ts` (karakter, deste, masa, pişti efekti, çerçeve), `types.ts` (Mode, SeatPlayer, MatchSetup), `themes/contract.ts`, `skins/index.ts`.
+- Ajan A (oyun içi): 4 koltuk + eşli, karakter rozetleri (göz kırpma, tepki, pişti kutlaması), pişti efektleri (klasik/havai/yıldız/altın), Table2D.setAtlas/setTheme.
+- Ajan B (meta): açılış hikâyesi + hediye galerisi, yeni ana ekran, market, profil, N oyunculu VS ve sonuç, app.ts akışı.
+- Ajan C1 (desteler): İznik Çinisi, Büyük Dalga, Ayçiçekleri.
+- Ajan C2 (çevre): masa temaları (Yıldızlı Gece, Çini Salon, Kızıl, Zümrüt) + avatar çerçeveleri.
+- Deste: **Yıldızlı Gece** (varsayılan). Diğer kart tarzı denemeleri reddedildi.
+- Test: `?auto=1`, `?seed=2`, `?reset=1` (profili sıfırla), `?skipintro=1`.
