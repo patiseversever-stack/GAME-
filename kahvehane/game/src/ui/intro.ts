@@ -2,7 +2,7 @@
 import type {Opponent, Profile} from './types';
 import {ANIM, EASE, Scope, esc, fmt, h, play, q} from './dom';
 import {ASSETS, isCutout} from './assets';
-import {avatarHtml, type Ctx} from './parts';
+import {arenaHtml, avatarHtml, wordmarkHtml, type Ctx} from './parts';
 import {g3} from './fx';
 
 const TIPS = [
@@ -12,7 +12,7 @@ const TIPS = [
   'Karo 10 tam 3 puan eder, gözünü dört aç.',
   'Sinek 2, 2 puan getirir.',
   'En çok kartı toplayan 3 puan kapar.',
-  'Kartı parmağınla masaya fırlatabilir ya da iki kez dokunabilirsin.',
+  'Kartına bir kez dokun ya da yukarı kaydır: masaya gider.',
   'Rakibin hangi kartları attığını aklında tut.',
   'Valeyi erken harcama; büyük yığına sakla.',
 ];
@@ -20,18 +20,18 @@ const TIPS = [
 export function splash(ctx: Ctx): {progress(p: number): void; done(): Promise<void>} {
   const scope = new Scope();
   const el = h('div', 'kh-screen kh-splash');
-  el.innerHTML = `<div class="kh-splash__glow"></div>${ASSETS.logo ? `<img class="kh-splash__logo" src="${ASSETS.logo}" alt="Kahvehane Pişti">` : `<div class="kh-title" style="font-size:calc(var(--u)*4)">${g3('Kahvehane Pişti')}</div>`}
+  el.innerHTML = `${arenaHtml()}<div class="kh-splash__glow"></div>${wordmarkHtml('kh-splash__logo')}
     <div class="kh-progress"><i class="kh-progress__fill"></i></div>
-    <div class="kh-splash__tip"><b>İpucu:</b> <span></span></div>`;
+    <div class="kh-splash__tip"><p><b>İpucu:</b> <span></span></p></div>`;
   ctx.layer.append(el);
   const fill = q(el, '.kh-progress__fill');
   const tipEl = q(el, '.kh-splash__tip');
   const tipTxt = q(tipEl, 'span');
   let tip = Math.floor(Math.random() * TIPS.length);
   tipTxt.textContent = TIPS[tip];
-  const logo = el.children[1] as HTMLElement;
-  play(q(el, '.kh-splash__glow'), [{transform: 'rotate(0deg) scale(.7)', opacity: 0}, {transform: 'rotate(8deg) scale(1)', opacity: 1}], {duration: 1400, easing: EASE.out, fill: 'backwards'});
-  play(logo, [{transform: 'scale(.82)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 700, easing: EASE.spring, fill: 'backwards'});
+  const logo = q(el, '.kh-splash__logo');
+  play(q(el, '.kh-splash__glow'), [{transform: 'scale(.6)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 1200, easing: EASE.out, fill: 'backwards'});
+  play(logo, [{transform: 'scale(.6) rotate(-4deg)', opacity: 0}, {transform: 'scale(1.06) rotate(1deg)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 720, easing: EASE.out, fill: 'backwards'});
   play(tipEl, [{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'none'}], {duration: 400, delay: 300, easing: EASE.out, fill: 'backwards'});
   const rotate = () => {
     scope.timeout(() => {
@@ -77,7 +77,7 @@ export function versus(ctx: Ctx, p: Profile, o: Opponent, stake: number): Promis
       <div class="kh-vs__medal">${avatarHtml(p.name)}</div>
       <div class="kh-vs__plate"><div class="kh-vs__name">${esc(p.name)}</div><div class="kh-vs__sub">Seviye ${p.level}</div></div>
     </div>
-    <div class="kh-vs__emblem"><div class="kh-title">${g3('VS')}</div></div>
+    <div class="kh-vs__emblem"><div class="kh-title">${g3('VS', 'is-white')}</div></div>
     <div class="kh-vs__stake"><span>Masa</span><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(stake)}</b></div>
     <div class="kh-vs__flash"></div>`;
   ctx.layer.append(el);

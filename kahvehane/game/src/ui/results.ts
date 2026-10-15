@@ -5,7 +5,7 @@ import type {SideScore} from '../core/types';
 import {ANIM, EASE, Scope, center, countUp, esc, h, play, q, signed} from './dom';
 import {ASSETS, OPTIONAL_ART} from './assets';
 import {I} from './icons';
-import {capsuleHtml, gemHtml, onAct, oppLevel, type Ctx} from './parts';
+import {arenaHtml, capsuleHtml, gemHtml, onAct, oppLevel, type Ctx} from './parts';
 import {g3} from './fx';
 
 const ROWS: [string, (s: SideScore) => number][] = [
@@ -37,7 +37,7 @@ export function results(ctx: Ctx, d: ResultsData): Promise<'again' | 'lobby'> {
   const el = h('div', `kh-screen kh-results is-${outcome}`);
   const defLine = outcome === 'win' ? 'Bu sefer sen kazandın… Rövanş isterim!' : outcome === 'lose' ? 'Ustaya saygı evlat! Bir el daha?' : 'Berabere! Bir el daha oynayalım.';
   const toNext = Math.max(0, p.xpNext - p.xp);
-  el.innerHTML = `<div class="kh-results__scrim"></div>
+  el.innerHTML = `${arenaHtml('kh-results__scrim')}
     <div class="kh-results__col">
       <div class="kh-results__top">${capsuleHtml(startCoins, false, 'kh-results__coins')}</div>
       <header class="kh-results__head">
@@ -84,6 +84,15 @@ export function results(ctx: Ctx, d: ResultsData): Promise<'again' | 'lobby'> {
   play(g('.kh-reward'), [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 220, easing: EASE.out, fill: 'backwards'});
   play(g('.kh-results__btns'), [{transform: 'translateY(40px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, delay: 280, easing: EASE.spring, fill: 'backwards'});
   play(g('.kh-results__coins'), [{transform: 'translateY(-30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 360, delay: 260, easing: EASE.spring, fill: 'backwards'});
+  // Kazanınca iki köşeden dört renk konfeti (başlık iner inmez; sonra ortadan küçük bir dalga)
+  if (outcome === 'win') {
+    const r = el.getBoundingClientRect();
+    scope.timeout(() => {
+      ctx.fx.burst({x: r.width * 0.06, y: r.height * 0.3}, {coins: 0, confetti: 20, power: 0.95});
+      ctx.fx.burst({x: r.width * 0.94, y: r.height * 0.3}, {coins: 0, confetti: 20, power: 0.95});
+    }, 300);
+    scope.timeout(() => ctx.fx.burst({x: r.width / 2, y: r.height * 0.14}, {coins: 0, confetti: 24, power: 0.8}), 950);
+  }
   const lvlStart = levelUp ? Math.min(1, Math.max(0, (xpBefore + p.xpNext) / p.xpNext)) : Math.max(0, xpBefore / Math.max(1, p.xpNext));
   xpFill.style.transition = 'none';
   xpFill.style.transform = `scaleX(${ANIM ? lvlStart : p.xp / Math.max(1, p.xpNext)})`;

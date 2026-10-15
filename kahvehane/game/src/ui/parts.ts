@@ -28,14 +28,18 @@ let wmSeq = 0;
  * kalın lacivert kontur + alt gölge, üst yarıda parlak cila; altında kırmızı "KAHVEHANE" kurdelesi ve dört takım süsü.
  * Kıvılcımlar HTML'dir (SVG dışı): dönen/yanıp sönen yalnız transform + opacity.
  */
-export function wordmarkHtml(cls = ''): string {
+export function wordmarkHtml(cls = '', fan = true): string {
   const id = 'khwm' + ++wmSeq;
   const word = `<text id="${id}t" x="180" y="118" text-anchor="middle" font-family="'Lilita One', Nunito, sans-serif" font-size="112" letter-spacing="2" rotate="-7 5 -4 6 -6" dy="0 -3 4 -4 3">PİŞTİ</text>`;
   const st = 'stroke-linejoin="round" stroke-linecap="round"';
-  const suit = (k: keyof typeof SUIT, x: number, y: number, r: number, c: string) =>
-    `<g transform="translate(${x} ${y}) rotate(${r}) scale(.78) translate(-12 -12)"><g fill="#0a1033" stroke="#0a1033" stroke-width="5" ${st}>${SUIT[k]}</g><g fill="${c}">${SUIT[k]}</g></g>`;
-  return `<div class="kh-wm ${cls}" role="img" aria-label="Kahvehane Pişti">
-    <svg class="kh-wm__svg" viewBox="0 0 360 196" aria-hidden="true">
+  // Harflerin arkasından yelpaze gibi açılan dört kart (♣ ♦ ♥ ♠): dört renk kimliği
+  const card = (k: keyof typeof SUIT, a: number, c: string) =>
+    `<g transform="rotate(${a} 180 176)"><rect x="149" y="-38" width="62" height="88" rx="10" fill="#fff" stroke="#0a1033" stroke-width="5.5"/>
+      <rect x="155.5" y="-31.5" width="49" height="75" rx="6" fill="none" stroke="${c}" stroke-opacity=".4" stroke-width="2.5"/>
+      <g transform="translate(180 -6) scale(1.35) translate(-12 -12)" fill="${c}">${SUIT[k]}</g></g>`;
+  const vb = fan ? '0 -46 360 242' : '0 0 360 196';
+  return `<div class="kh-wm ${cls}" role="img" aria-label="Kahvehane Pişti" style="aspect-ratio:${vb.split(' ').slice(2).join('/')}">
+    <svg class="kh-wm__svg" viewBox="${vb}" aria-hidden="true">
       <defs>
         ${word}
         <linearGradient id="${id}f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbe0"/><stop offset=".22" stop-color="#fff27a"/><stop offset=".46" stop-color="#ffd23f"/><stop offset=".47" stop-color="#ffbe1c"/><stop offset=".78" stop-color="#ff9f1a"/><stop offset="1" stop-color="#ff7a0a"/></linearGradient>
@@ -43,6 +47,7 @@ export function wordmarkHtml(cls = ''): string {
         <linearGradient id="${id}r" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff7a8e"/><stop offset=".45" stop-color="#ff2e4d"/><stop offset="1" stop-color="#c40a2f"/></linearGradient>
         <path id="${id}p" d="M84 166 Q180 184 276 166"/>
       </defs>
+      ${fan ? `<g class="kh-wm__fan">${card('c', -36, '#16c45b')}${card('d', -12, '#ffb400')}${card('h', 12, '#ff2e4d')}${card('s', 36, '#1f7bff')}</g>` : ''}
       <g class="kh-wm__rib">
         <path d="M92 148 L46 146 L62 162 L44 180 L96 178 Z" fill="#a8001e" stroke="#0a1033" stroke-width="5" ${st}/>
         <path d="M268 148 L314 146 L298 162 L316 180 L264 178 Z" fill="#a8001e" stroke="#0a1033" stroke-width="5" ${st}/>
@@ -55,7 +60,6 @@ export function wordmarkHtml(cls = ''): string {
       <use href="#${id}t" fill="#fff" stroke="#fff" stroke-width="9" ${st}/>
       <use href="#${id}t" fill="url(#${id}f)"/>
       <use href="#${id}t" fill="url(#${id}g)"/>
-      ${suit('s', 26, 116, -16, '#1f7bff')}${suit('h', 334, 112, 14, '#ff2e4d')}
     </svg>
     <i class="kh-wm__spark is-a"></i><i class="kh-wm__spark is-b"></i><i class="kh-wm__spark is-c"></i>
   </div>`;

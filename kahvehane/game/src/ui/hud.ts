@@ -1,5 +1,5 @@
-// Oyun içi arayüz (3B masanın üstünde, şeffaf) · DİKEY: oyuncu rozetleri, jeton, duraklat, deste sayacı, ipucu,
-// konuşma balonu + rozet içinde duygu yüzü, PİŞTİ damgası, afiş, puan baloncukları. Ortadaki masa alanı boş kalır.
+// Oyun içi arayüz (masanın üstünde, tamamen saydam; zemin/karartma yok) · DİKEY: oyuncu rozetleri, jeton, duraklat,
+// deste sayacı, ipucu, konuşma balonu + rozet içinde duygu yüzü, PİŞTİ damgası, afiş, puan baloncukları. Ortadaki masa alanı boş kalır.
 import type {GameHud, HudLayout, HudPlayer, Mood, Opponent, Profile} from './types';
 import {ANIM, EASE, Scope, countUp, esc, fmt, h, initials, play, q} from './dom';
 import {ASSETS, OPTIONAL_ART, isCutout} from './assets';
@@ -11,7 +11,7 @@ import type {Fx} from './fx';
 type Pos = 'top' | 'bottom' | 'left' | 'right' | 'me4';
 const POS4: Pos[] = ['me4', 'right', 'top', 'left'];
 
-/** Tek oyuncu rozeti: altın çerçeveli yuvarlak portre, seviye taşı, isim şeridi, sayaç, sıra halkası, balon. */
+/** Tek oyuncu rozeti: beyaz kalın çemberli yuvarlak portre, dönen sıra halkası, seviye taşı, isim hapı, sayaç hapları, balon. */
 class Badge {
   readonly el: HTMLElement;
   private scope = new Scope();
@@ -155,8 +155,7 @@ export class HudView implements GameHud {
   private visible = false;
 
   constructor(parent: HTMLElement, private fx: Fx) {
-    this.el.innerHTML = `<div class="kh-hud__vig"></div>
-      <div class="kh-capsule kh-hud__coins" data-coins><img class="kh-capsule__ico" src="${ASSETS.icon_coin}" alt=""><b class="kh-capsule__val kh-num">0</b></div>
+    this.el.innerHTML = `<div class="kh-capsule kh-hud__coins" data-coins><img class="kh-capsule__ico" src="${ASSETS.icon_coin}" alt=""><b class="kh-capsule__val kh-num">0</b></div>
       <button class="kh-iconbtn kh-menu" aria-label="Duraklat">${I.pause}</button>
       <div class="kh-deck" style="display:none">${I.cards}<b class="kh-num">0</b></div>
       <div class="kh-hint"><span class="kh-hint__glow"></span>${I.hand}<span class="kh-hint__t"></span></div>`;

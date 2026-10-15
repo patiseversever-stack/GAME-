@@ -72,9 +72,9 @@
   /* ---- 3B parlak yazı (PİŞTİ!, Kazandın!, başlıklar): lacivert kontur, beyaz iç şerit, sarı→turuncu dolgu ---- */
   --g3-fill: linear-gradient(180deg, #fffbe0 0%, #fff27a 30%, #ffe14a 44%, #ffc21c 45%, #ffa51a 70%, #ff7d0a 100%);
   --g3-edge: var(--navy);
-  --g3-edge-w: .2em;
+  --g3-edge-w: .24em;
   --g3-rim: #ffffff;
-  --g3-rim-w: .075em;
+  --g3-rim-w: .08em;
   --g3-shadow: 0 .07em 0 var(--navy), 0 .12em 0 var(--navy), 0 .18em .18em rgba(4, 7, 30, .55);
   --g3-fill-lose: linear-gradient(180deg, #ffffff 0%, #eef2ff 40%, #c8d2f5 41%, #9aa8e0 75%, #c9d3ff 100%);
   --g3-fill-white: linear-gradient(180deg, #ffffff 0%, #ffffff 44%, #e6ebff 45%, #c9d3ff 100%);
@@ -84,7 +84,7 @@
   --bg-app: var(--arena-deep);
   --bg-arena: radial-gradient(ellipse 95% 62% at 50% 40%, #4a66ff 0%, #2f47e0 16%, #1d30b0 34%, #14228a 52%, #0c1660 74%, #070b2e 100%);
   --bg-arena-vig: radial-gradient(ellipse 120% 90% at 50% 42%, rgba(7, 11, 46, 0) 55%, rgba(7, 11, 46, .7) 100%);
-  --arena-rays: repeating-conic-gradient(from 0deg, rgba(190, 205, 255, .16) 0deg 6deg, rgba(190, 205, 255, 0) 6deg 18deg);
+  --arena-rays: repeating-conic-gradient(from 0deg, rgba(190, 205, 255, .2) 0deg 6deg, rgba(190, 205, 255, 0) 6deg 18deg);
   --arena-rays-mask: radial-gradient(circle, rgba(0, 0, 0, .9) 0%, rgba(0, 0, 0, .55) 30%, rgba(0, 0, 0, 0) 68%);
   --arena-suits-opacity: .055;
   --bg-splash: var(--bg-arena);
@@ -245,7 +245,7 @@
     var(--suit-s) 67.5deg 74.5deg, rgba(0, 0, 0, 0) 74.5deg 90deg);
   --stamp-rays-mask: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, .95) 14%, rgba(0, 0, 0, .8) 34%, rgba(0, 0, 0, 0) 66%);
   --stamp-glow: radial-gradient(circle, rgba(255, 236, 140, .85) 0%, rgba(255, 196, 60, .45) 26%, rgba(255, 159, 26, .14) 46%, rgba(255, 159, 26, 0) 64%);
-  --stamp-wheel-mask: radial-gradient(circle, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 52%, #000 56%, #000 66%, rgba(0, 0, 0, 0) 70%);
+  --stamp-wheel-mask: radial-gradient(circle closest-side, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 0) 66%, #000 70%, #000 92%, rgba(0, 0, 0, 0) 100%);
   --flash: radial-gradient(circle at 50% 46%, rgba(255, 226, 120, .62) 0%, rgba(255, 190, 70, .3) 18%, rgba(90, 120, 255, .16) 40%, rgba(61, 91, 255, 0) 64%);
   --fx-1: var(--suit-h);
   --fx-2: var(--suit-d);

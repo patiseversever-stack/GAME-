@@ -1,13 +1,17 @@
-// Ekran efektleri: beyaz parlama, altın/konfeti patlaması (havuzlu DOM), uçan jetonlar, PİŞTİ damgası, afiş, puan baloncuğu.
+// Ekran efektleri: yumuşak renkli ışık patlaması, jeton + dört renk konfeti (havuzlu DOM), uçan jetonlar,
+// PİŞTİ damgası (dört renk hüzme, valede dört renk çark), afiş, puan baloncuğu.
 // Yalnız transform + opacity; düğümler havuzdan gelir, iş bitince gizlenir (yeni düğüm üretilmez).
 import {ANIM, EASE, esc, h, play} from './dom';
 import {ASSETS, OPTIONAL_ART} from './assets';
+import {suitSvg, type SuitKey} from './icons';
 
 type Pt = {x: number; y: number};
 
 const N_COIN = 18;
 const N_CONF = 40;
+const N_SUIT = 12;
 const N_POP = 6;
+const SUITS: SuitKey[] = ['h', 'd', 'c', 's'];
 
 export function g3(text: string, cls = ''): string {
   const t = esc(text);
@@ -19,6 +23,7 @@ export class Fx {
   private flashEl = h('div', 'kh-flash');
   private coins: HTMLElement[] = [];
   private confs: HTMLElement[] = [];
+  private suits: HTMLElement[] = [];
   private pops: HTMLElement[] = [];
   private stampEl = h('div', 'kh-stamp');
   private bannerEl = h('div', 'kh-banner');
@@ -27,6 +32,7 @@ export class Fx {
   private popIdx = 0;
 
   constructor(parent: HTMLElement) {
+    this.el.style.setProperty('--coin-img', `url("${ASSETS.icon_coin}")`);
     this.el.append(this.flashEl, this.stampEl, this.bannerEl);
     parent.append(this.el);
   }
@@ -46,20 +52,23 @@ export class Fx {
     n.style.display = 'none';
   }
 
-  /** Tam ekran kısa parlama (yalnız opaklık). */
+  /** Tam ekran kısa, yumuşak renkli ışık patlaması (yalnız opaklık; beyaz patlama yok). */
   flash(peak = 0.8, ms = 340): void {
     play(this.flashEl, [{opacity: 0}, {opacity: peak, offset: 0.12}, {opacity: 0}], {duration: ms, easing: 'ease-out'}, 1);
   }
 
-  /** Altın sikke + konfeti patlaması. */
+  /** Jeton + dört renk konfeti patlaması (konfetinin bir kısmı küçük takım şekli). */
   burst(at: Pt, o: {coins?: number; confetti?: number; power?: number; up?: number} = {}): void {
     const power = o.power ?? 1;
     const nc = o.coins ?? 12, nf = o.confetti ?? 26;
+    const ns = Math.round(nf * 0.22);
     const u = parseFloat(getComputedStyle(this.el).fontSize) || 15;
     const spawn = (kind: 'coin' | 'conf', i: number) => {
       const n = kind === 'coin'
         ? this.node(this.coins, N_COIN, () => h('i', 'kh-p kh-p--coin'))
-        : this.node(this.confs, N_CONF, () => h('i', `kh-p kh-p--conf kh-p--c${1 + (this.confs.length % 5)}`));
+        : i < ns
+          ? this.node(this.suits, N_SUIT, () => h('i', 'kh-p kh-p--conf kh-p--suit', suitSvg(SUITS[this.suits.length % 4])))
+          : this.node(this.confs, N_CONF, () => h('i', `kh-p kh-p--conf kh-p--c${1 + (this.confs.length % 4)}`));
       if (!n) return;
       n.dataset.busy = '1';
       n.style.display = 'block';
@@ -129,17 +138,23 @@ export class Fx {
     });
   }
 
-  /** PİŞTİ! damgası: 1.4 → 1 ölçek + hafif dönme, bekle, yukarı süzülerek kaybol. */
+  /**
+   * PİŞTİ! damgası: 1.4 → 1 ölçek + hafif dönme, bekle, yukarı süzülerek kaybol. Arkada dönen dört renk hüzme;
+   * vale piştide ek olarak dışa doğru açılan dört renk çark halkası.
+   */
   stamp(jack: boolean, points: number): void {
     clearTimeout(this.stampTimer);
     const img = jack ? OPTIONAL_ART.vale_pisti_text : OPTIONAL_ART.pisti_text;
     const word = jack ? 'VALE PİŞTİ!' : 'PİŞTİ!';
     this.stampEl.className = 'kh-stamp is-on' + (jack ? ' is-jack' : '');
-    this.stampEl.innerHTML = `<div class="kh-stamp__in"><div class="kh-stamp__glow"></div><div class="kh-stamp__rays"></div>
-      <div class="kh-stamp__word">${img ? `<img class="kh-g3img" src="${img}" alt="${word}">` : jack ? g3('VALE', 'is-sm') + g3('PİŞTİ!') : g3(word)}</div>
-      <div class="kh-stamp__pts">${g3('+' + points)}</div></div>`;
+    this.stampEl.innerHTML = `<div class="kh-stamp__in"><div class="kh-stamp__glow"></div><div class="kh-stamp__rays"></div>${jack ? '<div class="kh-stamp__wheel"></div>' : ''}
+      <div class="kh-stamp__word">${img ? `<img class="kh-g3img" src="${img}" alt="${word}">` : jack ? g3('VALE', 'is-sm is-white') + g3('PİŞTİ!') : g3(word)}</div>
+      <div class="kh-stamp__pts">${g3('+' + points, 'is-white')}</div></div>`;
     const inn = this.stampEl.firstElementChild as HTMLElement;
-    const [glow, rays, , pts] = Array.from(inn.children) as HTMLElement[];
+    const glow = inn.querySelector('.kh-stamp__glow') as HTMLElement;
+    const rays = inn.querySelector('.kh-stamp__rays') as HTMLElement;
+    const pts = inn.querySelector('.kh-stamp__pts') as HTMLElement;
+    const wheel = inn.querySelector<HTMLElement>('.kh-stamp__wheel');
     const D = 1750;
     play(inn, [
       {transform: 'scale(1.45) rotate(-9deg)', opacity: 0},
@@ -148,8 +163,11 @@ export class Fx {
       {transform: 'scale(1) rotate(-2deg)', opacity: 1, offset: 0.7},
       {transform: 'translateY(-34px) scale(1.06) rotate(-2deg)', opacity: 0},
     ], {duration: D, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both'}, 0.45);
-    play(rays, [{transform: 'rotate(0deg) scale(.6)', opacity: 0}, {transform: 'rotate(14deg) scale(1)', opacity: 1, offset: 0.2}, {transform: 'rotate(40deg) scale(1.08)', opacity: 0}],
+    play(rays, [{transform: 'rotate(0deg) scale(.5)', opacity: 0}, {transform: 'rotate(18deg) scale(1)', opacity: 1, offset: 0.18}, {transform: 'rotate(42deg) scale(1.04)', opacity: 0.9, offset: 0.7}, {transform: 'rotate(56deg) scale(1.1)', opacity: 0}],
       {duration: D, easing: 'ease-out', fill: 'both'}, 0.45);
+    if (wheel)
+      play(wheel, [{transform: 'rotate(-30deg) scale(.2)', opacity: 0}, {transform: 'rotate(40deg) scale(.95)', opacity: 1, offset: 0.2}, {transform: 'rotate(110deg) scale(1.08)', opacity: 1, offset: 0.55}, {transform: 'rotate(170deg) scale(1.5)', opacity: 0}],
+        {duration: D * 0.85, easing: 'ease-out', fill: 'both'}, 0.4);
     play(glow, [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.1)', opacity: 1, offset: 0.14}, {transform: 'scale(1)', opacity: 0.8, offset: 0.6}, {transform: 'scale(1.2)', opacity: 0}],
       {duration: D, easing: 'ease-out', fill: 'both'}, 0.45);
     play(pts, [{transform: 'scale(0) rotate(8deg)'}, {transform: 'scale(0) rotate(8deg)', offset: 0.1}, {transform: 'scale(1.18) rotate(0deg)', offset: 0.2}, {transform: 'scale(1) rotate(0deg)', offset: 0.26}, {transform: 'scale(1)'}],
@@ -161,7 +179,7 @@ export class Fx {
   banner(text: string, sub?: string, ms = 1500): void {
     clearTimeout(this.bannerTimer);
     this.bannerEl.className = 'kh-banner is-on';
-    this.bannerEl.innerHTML = `<div class="kh-banner__in"><div class="kh-banner__t">${g3(text)}</div>${sub ? `<div class="kh-banner__s">${esc(sub)}</div>` : ''}</div>`;
+    this.bannerEl.innerHTML = `<div class="kh-banner__in"><div class="kh-banner__t">${g3(text, 'is-white')}</div>${sub ? `<div class="kh-banner__s">${esc(sub)}</div>` : ''}</div>`;
     const inn = this.bannerEl.firstElementChild as HTMLElement;
     const D = ms + 500;
     const hold = ms / D;

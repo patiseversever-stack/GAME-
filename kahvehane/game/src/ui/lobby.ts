@@ -3,8 +3,8 @@
 import type {LobbyAction, Opponent, Profile} from './types';
 import {ANIM, EASE, Scope, center, countUp, esc, fmt, h, play, q} from './dom';
 import {ASSETS, isCutout} from './assets';
-import {I} from './icons';
-import {avatarHtml, capsuleHtml, levelHtml, onAct, soon, toast, type Ctx} from './parts';
+import {I, suitSvg, type SuitKey} from './icons';
+import {arenaHtml, avatarHtml, capsuleHtml, levelHtml, onAct, soon, toast, wordmarkHtml, type Ctx} from './parts';
 
 /** Masa bahisleri ve açıldıkları seviye. */
 export const STAKES: {v: number; lvl: number}[] = [
@@ -13,6 +13,9 @@ export const STAKES: {v: number; lvl: number}[] = [
   {v: 1000, lvl: 4},
   {v: 5000, lvl: 7},
 ];
+
+/** Rakip kartlarının takım rengi (sırayla ♥ ♠ ♣ ♦): kart çerçevesi + filigran. */
+const CARD_SUITS: SuitKey[] = ['h', 's', 'c', 'd'];
 
 const MODES: {id: string; label: string; locked: boolean}[] = [
   {id: '1v1', label: "1'e 1", locked: false},
@@ -33,10 +36,10 @@ export class LobbyView {
 
   constructor(private ctx: Ctx, p: Profile, opps: Opponent[], dailyReady: boolean, stake: number) {
     this.stake = stake;
-    this.el.innerHTML = `<div class="kh-lobby__photo" style="background-image:url('${ASSETS.lobby_bg}')"></div><div class="kh-lobby__tint"></div>
+    this.el.innerHTML = `${arenaHtml()}
       <div class="kh-lobby__col">
         <header class="kh-topbar"></header>
-        ${ASSETS.logo ? `<img class="kh-logo" src="${ASSETS.logo}" alt="Kahvehane Pişti">` : ''}
+        ${wordmarkHtml('kh-logo', false)}
         <section class="kh-hero"><div class="kh-hero__stage"></div>
           <button class="kh-iconbtn kh-hero__arrow is-l" data-act="prev" aria-label="Önceki rakip">${I.chevL}</button>
           <button class="kh-iconbtn kh-hero__arrow is-r" data-act="next" aria-label="Sonraki rakip">${I.chevR}</button>
@@ -50,10 +53,10 @@ export class LobbyView {
         </div>
         <button class="kh-btn kh-btn--1 kh-btn--xl kh-shine kh-play" data-act="play">Oyna</button>
         <nav class="kh-dock">
-          <button class="kh-dock__btn" data-act="daily"><img src="${ASSETS.icon_gift}" alt=""><span>Günlük Ödül</span><i class="kh-dot"></i></button>
-          <button class="kh-dock__btn" data-act="quests"><img src="${ASSETS.icon_star}" alt=""><span>Görevler</span></button>
-          <button class="kh-dock__btn" data-act="shop"><img src="${ASSETS.icon_chest}" alt=""><span>Mağaza</span></button>
-          <button class="kh-dock__btn" data-act="profile"><img src="${ASSETS.icon_trophy}" alt=""><span>Profil</span></button>
+          <button class="kh-dock__btn" data-act="daily"><span class="kh-dock__ico"><img src="${ASSETS.icon_gift}" alt=""></span><span>Günlük Ödül</span><i class="kh-dot"></i></button>
+          <button class="kh-dock__btn" data-act="quests"><span class="kh-dock__ico"><img src="${ASSETS.icon_star}" alt=""></span><span>Görevler</span></button>
+          <button class="kh-dock__btn" data-act="shop"><span class="kh-dock__ico"><img src="${ASSETS.icon_chest}" alt=""></span><span>Mağaza</span></button>
+          <button class="kh-dock__btn" data-act="profile"><span class="kh-dock__ico"><img src="${ASSETS.icon_trophy}" alt=""></span><span>Profil</span></button>
         </nav>
       </div>`;
     ctx.layer.append(this.el);
@@ -126,8 +129,9 @@ export class LobbyView {
       .map((o, i) => {
         const cut = isCutout(o.portrait);
         const dots = [1, 2, 3].map(d => `<i class="${d <= o.difficulty ? 'on' : ''}"></i>`).join('');
-        return `<div class="kh-oc ${cut ? 'is-cutout' : 'is-photo'}${o.locked ? ' is-locked' : ''}" data-i="${i}">
-          <div class="kh-oc__card"></div>
+        const k = CARD_SUITS[i % CARD_SUITS.length];
+        return `<div class="kh-oc ${cut ? 'is-cutout' : 'is-photo'}${o.locked ? ' is-locked' : ''}" data-i="${i}" style="--oc-c1:var(--suit-${k});--oc-c2:var(--suit-${k}-dk)">
+          <div class="kh-oc__card"><span class="kh-oc__suit">${suitSvg(k)}</span></div>
           <div class="kh-oc__fig"><img class="kh-oc__img" src="${o.portrait}" alt=""></div>
           <div class="kh-oc__plate"><div class="kh-oc__name">${esc(o.name)}</div><div class="kh-oc__title">${esc(o.title)}</div>
             <div class="kh-oc__diff"><span>Zorluk</span>${dots}</div></div>
@@ -267,7 +271,7 @@ export class LobbyView {
 
   private enter(): void {
     const g = (sel: string) => q(this.el, sel);
-    play(g('.kh-lobby__photo'), [{transform: 'scale(1.08)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'backwards'});
+    play(g('.kh-arena'), [{transform: 'scale(1.08)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'backwards'});
     play(g('.kh-topbar'), [{transform: 'translateY(-24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 60, easing: EASE.out, fill: 'backwards'});
     const logo = this.el.querySelector('.kh-logo');
     if (logo) play(logo, [{transform: 'scale(.55) rotate(-6deg)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 560, delay: 120, easing: EASE.spring, fill: 'backwards'});

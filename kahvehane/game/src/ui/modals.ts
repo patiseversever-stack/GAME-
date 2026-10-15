@@ -2,7 +2,7 @@
 import type {Settings} from './types';
 import {ANIM, EASE, center, esc, fmt, play, q} from './dom';
 import {ASSETS} from './assets';
-import {I} from './icons';
+import {I, suitSvg, type SuitKey} from './icons';
 import {onAct, openModal, type Ctx, type ModalHandle} from './parts';
 
 // ---------------------------------------------------------------- Mola
@@ -83,9 +83,10 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
 }
 
 // ---------------------------------------------------------------- Nasıl Oynanır
-const RED = new Set(['♥', '♦']);
+// Mini iskambil: dört renk takım (♥ kırmızı, ♦ sarı, ♣ yeşil, ♠ mavi), takımlar SVG (yazı tipinden bağımsız).
+const SK: Record<string, SuitKey> = {'♥': 'h', '♦': 'd', '♣': 'c', '♠': 's'};
 const mc = (r: string, s: string, cls = '', style = '') =>
-  `<span class="kh-mc${RED.has(s) ? ' is-red' : ''} ${cls}" style="${style}"><span class="kh-mc__r">${r}<small>${s}</small></span><span class="kh-mc__s">${s}</span></span>`;
+  `<span class="kh-mc is-${SK[s]} ${cls}" style="${style}"><span class="kh-mc__r">${r}${suitSvg(SK[s])}</span><span class="kh-mc__s">${suitSvg(SK[s])}</span></span>`;
 const back = (style = '') => `<span class="kh-mc is-back" style="${style}"></span>`;
 const fan = (cards: string[]) =>
   `<span class="kh-pile">${cards.map((c, i) => c.replace('style="', `style="transform:rotate(${(i - (cards.length - 1) / 2) * 11}deg) translateX(${(i - (cards.length - 1) / 2) * 6}px);`)).join('')}</span>`;
@@ -112,7 +113,7 @@ export function rules(ctx: Ctx): Promise<void> {
       body: `<div class="kh-steps">${steps
         .map((s, i) => `<div class="kh-step kh-card${s.art ? '' : ' is-wide'}">${s.art ? `<div class="kh-step__art">${s.art}</div>` : ''}<div><div class="kh-step__hd"><span class="kh-step__n">${i + 1}</span><span class="kh-step__t">${s.t}</span></div><div class="kh-step__d">${s.d}</div></div></div>`)
         .join('')}</div>
-        <div class="kh-rules__foot"><span>${I.hand}Kartı parmağınla masaya fırlat ya da iki kez dokun.</span><button class="kh-btn kh-btn--1 kh-btn--lg kh-btn--block" data-act="ok">Anladım</button></div>`,
+        <div class="kh-rules__foot"><span>${I.hand}Kartına bir kez dokun ya da yukarı kaydır.</span><button class="kh-btn kh-btn--1 kh-btn--lg kh-btn--block" data-act="ok">Anladım</button></div>`,
     });
     m.panel.querySelectorAll<HTMLElement>('.kh-step').forEach((s, i) =>
       play(s, [{transform: 'translateX(-20px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: 120 + i * 70, easing: EASE.out, fill: 'backwards'}));
@@ -199,7 +200,7 @@ export function daily(ctx: Ctx, day: number, rewards: number[], target?: {at(): 
       btn.disabled = false;
       btn.dataset.act = 'ok';
       btn.classList.remove('kh-shine');
-      btn.classList.replace('kh-btn--1', 'kh-btn--2');
+      btn.classList.replace('kh-btn--1', 'kh-btn--5');
       btn.innerHTML = 'Harika!';
       if (ANIM) play(btn, [{transform: 'scale(.9)'}, {transform: 'scale(1)'}], {duration: 260, easing: EASE.spring});
     });
