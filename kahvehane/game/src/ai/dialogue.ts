@@ -98,7 +98,7 @@ const RIZA: CharSpec = {
       [5, '[chuckles] Gözlüğümü taktım evlat, kaçarın yok.'],
     ],
     myTurnIdle: [
-      [1, '[sighs] Kart atıyoruz evlat, kız istemiyoruz!', null, {weight: 1.3}],
+      [1, '[sighs] Kart atıyoruz evlat, kız istemiyoruz!', undefined, {weight: 1.3}],
       [2, '[sighs] Evlat… çayım soğudu.'],
       [3, '[grumbling] Tespihi üç tur çektim, hâlâ düşünüyor!'],
       [4, '[chuckles] Hadi yeğenim, kahvehane kapanacak!'],
@@ -113,7 +113,7 @@ const RIZA: CharSpec = {
       [5, '[whispers] İki vale çıktı… bir as gitti…'],
     ],
     botPisti: [
-      [1, '[laughs] Pişti! Çaylar senden evlat!', null, {weight: 1.2}],
+      [1, '[laughs] Pişti! Çaylar senden evlat!', undefined, {weight: 1.2}],
       [2, '[excited] Pişti! Ustaya saygı, delikanlı!'],
       [3, '[laughs] Fırından yeni çıktı, sıcak sıcak pişti!'],
       [4, '[chuckles] Ders bir: Pişti. Not al evlat.'],
@@ -166,7 +166,7 @@ const RIZA: CharSpec = {
     playerDumpedValuable: [
       [1, '[laughs] Hediye mi bu? Sağ ol evlat!'],
       [2, '[chuckles] O kart masada bırakılır mı hiç?'],
-      [3, '[laughs] Bayram değil seyran değil, bu ikram niye?', null, {weight: 1.2}],
+      [3, '[laughs] Bayram değil seyran değil, bu ikram niye?', undefined, {weight: 1.2}],
       [4, '[laughs] Kırk yıldır böyle cömert rakip görmedim!'],
     ],
     botLuckyCapture: [
@@ -181,7 +181,7 @@ const RIZA: CharSpec = {
     ],
     botLeading: [
       [1, '[chuckles] Skora bakma evlat, üzülürsün.'],
-      [2, '[chuckles] Üzülme, ben de yetmiş dörtte bir kere kaybettim.', null, {weight: 0.7}],
+      [2, '[chuckles] Üzülme, ben de yetmiş dörtte bir kere kaybettim.', undefined, {weight: 0.7}],
       [3, '[proudly] Dursun, gel bak! Ders veriyorum.'],
     ],
     playerLeading: [
@@ -262,7 +262,7 @@ const CEM: CharSpec = {
     playerFastThrow: [[1, '[surprised] Yok artık! Bu ne atış kanka?']],
     comeback: [[1, '[excited] Geri döndüm kanka, arkadan geldim!']],
     botWin: [
-      [1, '[laughs] Ci ci kanka. Biraz kolay oldu.', null, {text: 'GG kanka. Biraz kolay oldu.'}],
+      [1, '[laughs] Ci ci kanka. Biraz kolay oldu.', undefined, {text: 'GG kanka. Biraz kolay oldu.'}],
       [2, '[mischievously] Algoritma bir, insanlık sıfır.'],
     ],
     playerWin: [[1, '[annoyed] Rövanş kanka! Daha yeni ısınıyordum.']],
@@ -511,7 +511,8 @@ export class DialogueDirector {
 
   /**
    * Anın repliklerinden birini seçer. Karakterin son HISTORY repliği tekrar edilmez; anın bütün replikleri yakın
-   * zamanda kullanıldıysa en eski kullanılan yarısından seçilir (son söylenen asla hemen tekrar etmez).
+   * zamanda kullanıldıysa (havuz ≤ 6) en uzun süredir söylenmeyen üçte birinden seçilir: havuz ≤ 5 ise tam sıra,
+   * 6 ise en az 4 replik arayla tekrar; son söylenen asla hemen tekrar etmez.
    * Çok kullanılan replikler daha az seçilir. Her zaman konuşulan anlar (pişti, el başı/sonu) shouldSpeak'ten
    * geçmeden de çağrılabilir: seçilince konuşma zamanı yine kaydedilir, böylece boş laflar hemen arkasından gelmez.
    */
@@ -526,8 +527,7 @@ export class DialogueDirector {
     let cand = pool.filter(l => !hist.includes(l.id));
     if (!cand.length) {
       const byAge = [...pool].sort((a, b) => hist.indexOf(a.id) - hist.indexOf(b.id)); // en eski önce
-      cand = byAge.slice(0, Math.max(1, Math.ceil(pool.length / 2)));
-      if (pool.length > 1) cand = cand.filter(l => l.id !== hist[hist.length - 1]);
+      cand = byAge.slice(0, Math.max(1, Math.floor(pool.length / 3)));
     }
     let total = 0;
     const w = cand.map(l => {

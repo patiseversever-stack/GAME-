@@ -6,7 +6,8 @@
  * - Düşük cihaz dostu: önden toplu yükleme yok. Bir replik ilk çalındığında indirilir + çözülür; çözülmüş tamponlar
  *   küçük bir LRU'da (12) tutulur, sıkıştırılmış baytlar ayrı bir LRU'da (32, ~12 KB/replik). Kapatınca serbest.
  * - Asla üst üste konuşmaz: yüksek öncelik çalanı yumuşakça keser; eşit öncelik, çalan bitmek üzereyse sıraya
- *   girer (tek yer), değilse düşer; düşük öncelik düşer. Geç kalan (bayatlayan) tepki çalınmaz.
+ *   girer (tek yer), değilse düşer — en üst öncelikte (3: pişti, el sonu) ise yenisi keser; düşük öncelik düşer.
+ *   Geç kalan (bayatlayan) tepki çalınmaz.
  * - Her başarılı `play` için `onEnd` tam bir kez çağrılır (bitti, kesildi, düştü ya da çözülemedi).
  */
 
@@ -17,6 +18,8 @@ export interface VoiceEntry {
   dur: number;
   /** Üretildiği tts metninin özeti (dialogue.ts → ttsHash). */
   h?: string;
+  /** Varsayılan öncelik (dialogue.ts → momentPriority); play() önceliği verilmezse kullanılır. */
+  p?: number;
 }
 
 export interface VoicePlayOpts {
@@ -24,7 +27,7 @@ export interface VoicePlayOpts {
   onEnd?: () => void;
   /** Konuşma başlarken duck(miktar 0..1), bitince duck(0): ortam/müzik kısmak için. */
   duck?: (amount: number) => void;
-  /** 1 boş laf, 2 olay tepkisi, 3 pişti / el sonu (dialogue.ts → momentPriority). Varsayılan 2. */
+  /** 1 boş laf, 2 olay tepkisi, 3 pişti / el sonu. Verilmezse manifestteki `p`, o da yoksa 2. */
   priority?: number;
   /** İstekten başlangıca izin verilen en uzun gecikme (ms; çözme + sıra). Varsayılan 1500. */
   maxDelayMs?: number;
@@ -36,6 +39,7 @@ const QUEUE_MAX_S = 1.0; // eşit öncelik: çalanın kalan süresi bundan azsa 
 const MAX_DELAY_MS = 1500; // sıra bekleme dahil; daha geç gelen tepki bayattır
 const FADE_S = 0.05;
 const DUCK = 0.5;
+const TOP_PRIO = 3; // bu öncelikte eşit öncelikli yeni replik çalanı keser (pişti tepkisi kaybolmasın)
 
 interface Job {
   id: string;
@@ -151,11 +155,16 @@ export class VoicePlayer {
     if (!manifest || typeof manifest !== 'object') return;
     for (const [id, e] of Object.entries(manifest as Record<string, unknown>)) {
       if (!e || typeof e !== 'object') continue;
-      const {url, dur, h} = e as Partial<VoiceEntry>;
+      const {url, dur, h, p} = e as Partial<VoiceEntry>;
       if (typeof url !== 'string' || !url) continue;
       const full = resolve ? resolve(url) : resolveUrl(url, manifestUrl);
       if (!full) continue;
-      this.entries.set(id, {url: full, dur: typeof dur === 'number' && dur > 0 ? dur : 0, h: typeof h === 'string' ? h : undefined});
+      this.entries.set(id, {
+        url: full,
+        dur: typeof dur === 'number' && dur > 0 ? dur : 0,
+        h: typeof h === 'string' ? h : undefined,
+        p: typeof p === 'number' ? p : undefined,
+      });
     }
   }
 
@@ -187,11 +196,11 @@ export class VoicePlayer {
     if (!e) return false;
     const c = this.liveCtx();
     if (!c) return false;
-    const prio = opts.priority ?? 2;
+    const prio = opts.priority ?? e.p ?? 2;
     const cur = this.cur;
     if (cur) {
       if (prio < cur.job.prio) return false;
-      if (prio === cur.job.prio && cur.endsAt - c.currentTime > QUEUE_MAX_S) return false;
+      if (prio === cur.job.prio && prio < TOP_PRIO && cur.endsAt - c.currentTime > QUEUE_MAX_S) return false;
     }
     if (this.next) {
       if (prio < this.next.prio) return false;
@@ -339,9 +348,16 @@ export class VoicePlayer {
       this.finish(job);
       return;
     }
-    if (this.cur) {
-      if (job.prio > this.cur.job.prio) this.stopCur();
-      else return; // eşit öncelik: çalan bitince ended() → pump()
+    const cur = this.cur;
+    if (cur) {
+      const left = cur.endsAt - c.currentTime;
+      const preempt = job.prio > cur.job.prio || (job.prio === cur.job.prio && job.prio >= TOP_PRIO && left > QUEUE_MAX_S);
+      if (preempt) this.stopCur();
+      else if (job.prio < cur.job.prio) {
+        this.next = null;
+        this.finish(job);
+        return;
+      } else return; // eşit öncelik, çalan bitmek üzere: bitince ended() → pump()
     }
     this.next = null;
     this.start(job, c);

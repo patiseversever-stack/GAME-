@@ -1,0 +1,7 @@
+# ham ElevenLabs indirmeleri, ses tasarım önizlemeleri ve üretilmiş dışa aktarım
+.raw/
+previews/
+lines.json
+*.part
+*.part.mp3
+*.bak
