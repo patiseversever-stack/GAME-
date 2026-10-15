@@ -99,7 +99,6 @@ export async function runApp(d: AppDeps): Promise<void> {
       };
       current = new Match({...d, hud: screens.hud, speak, personality: opp.personality, think: opp.think});
       dealer = 1 - dealer;
-      sfx.startAmbience();
       const res = await current.play(dealer, SEED ?? undefined);
       current = null;
       if (!res) {
@@ -129,7 +128,7 @@ export async function runApp(d: AppDeps): Promise<void> {
         sfx.win();
         haptic('success');
       } else if (win === 1) sfx.lose();
-      await d.stage.time.waitReal(1.6);
+      await new Promise(r => setTimeout(r, 1400));
       const choice = await screens.results({result: res, meSide: 0, opp, coinsDelta: delta, coinsAfter: saved.coins, xpGain, profile: profile()});
       if (choice === 'lobby') {
         screens.hud.hide();

@@ -1,26 +1,13 @@
-// Giriş noktası: sahne, masa, kartlar, sesler, ekranlar ve uygulama akışını kurar.
-import '@fontsource/inter/500.css';
-import '@fontsource/inter/700.css';
-import '@fontsource/inter/800.css';
-import '@fontsource/inter/900.css';
-import '@fontsource/playfair-display/900.css';
-
-import {Stage} from './render/stage';
-import {buildEnvironment} from './render/env';
+// Giriş noktası: 2B Pişti Arena masası, kart atlası, sesler, ekranlar ve uygulama akışı.
 import {buildCardAtlas} from './render/cardAtlas';
-import {CardSystem} from './render/cards';
-import {CAMERA, makeLayout} from './game/layout';
-import {HandInput} from './input/hand';
-import {TableView} from './game/table';
-import {Sparks} from './fx/particles';
-import {Shockwave} from './fx/ring';
+import {Table2D} from './table2d/table';
 import {Sfx} from './audio/sfx';
 import {VoicePlayer} from './audio/voice';
 import {Screens, type Settings} from './ui/screens';
 import {ASSETS} from './ui/assets';
 import {runApp, type OpponentDef} from './game/app';
-import {detectTier, qualityFor, type Tier} from './quality';
-import {haptic, setHaptics, store} from './platform/bridge';
+import {detectTier, type Tier} from './quality';
+import {setHaptics, store} from './platform/bridge';
 
 const AUTO = new URLSearchParams(location.search).has('auto');
 
@@ -29,71 +16,46 @@ function opponents(): OpponentDef[] {
   const moods = {kahkaha: a.riza_kahkaha, kizgin: a.riza_kizgin, saskin: a.riza_saskin, uzgun: a.riza_uzgun};
   return [
     {id: 'riza', name: 'Rıza Amca', title: 'Kırk yıllık usta', portrait: a.riza_portrait, blink: a.riza_blink, moods, difficulty: 2,
-      personality: {memory: 0.88, skill: 0.85, jackPatience: 0.75}, think: [0.7, 1.5]},
+      personality: {memory: 0.88, skill: 0.85, jackPatience: 0.75}, think: [0.45, 0.95]},
     {id: 'cem', name: 'Cem', title: 'Algoritması var', portrait: a.cem_avatar, moods, difficulty: 1, locked: true,
-      personality: {memory: 0.7, skill: 0.7, jackPatience: 0.5}, think: [0.5, 1.1]},
+      personality: {memory: 0.7, skill: 0.7, jackPatience: 0.5}, think: [0.35, 0.7]},
     {id: 'dursun', name: 'Kahveci Dursun', title: 'Çaylar ondan', portrait: a.dursun_avatar, moods, difficulty: 1, locked: true,
-      personality: {memory: 0.6, skill: 0.6, jackPatience: 0.5}, think: [0.6, 1.3]},
+      personality: {memory: 0.6, skill: 0.6, jackPatience: 0.5}, think: [0.4, 0.8]},
     {id: 'defne', name: 'Defne', title: 'Poker yüzü', portrait: a.defne_avatar, moods, difficulty: 3, locked: true,
-      personality: {memory: 0.97, skill: 0.95, jackPatience: 0.85}, think: [0.9, 1.8]},
+      personality: {memory: 0.97, skill: 0.95, jackPatience: 0.85}, think: [0.5, 1.0]},
   ];
 }
 
-/** Şov ışığı: tepeden süzülen ışık huzmeleri ve havada asılı altın tozlar (yalnız CSS; 3B sahne yeniden çizilmez). */
-function ambience(host: HTMLElement, tier: Tier): void {
-  const el = document.createElement('div');
-  el.className = 'kh-ambient';
-  const motes = tier === 'low' ? 0 : tier === 'mid' ? 10 : 16;
-  let html = '<i class="kh-beam is-l"></i><i class="kh-beam is-r"></i>';
-  for (let i = 0; i < motes; i++) {
-    const x = 18 + Math.random() * 64, y = 8 + Math.random() * 70, s = 2 + Math.random() * 3;
-    html += `<b class="kh-mote" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;width:${s.toFixed(1)}px;height:${s.toFixed(1)}px;animation-delay:${(-Math.random() * 14).toFixed(1)}s;animation-duration:${(10 + Math.random() * 8).toFixed(1)}s"></b>`;
-  }
-  el.innerHTML = html;
-  host.appendChild(el);
+/** Atlas genişliği: eldeki kart ekranda kaç fiziksel piksel kaplıyorsa ona yetecek kadar (bellek sınırlı). */
+function atlasWidth(tier: Tier): number {
+  const dpr = Math.min(3, window.devicePixelRatio || 1);
+  const handCss = Math.min(innerWidth * 0.245, innerHeight * 0.138);
+  const need = Math.ceil((handCss * dpr * 8) / 256) * 256;
+  return Math.max(1024, Math.min(tier === 'low' ? 1536 : tier === 'mid' ? 2048 : 2560, need));
 }
 
 async function boot(): Promise<void> {
   const settings = store.get<Settings>('settings2', {sfx: true, voice: true, music: true, haptics: true, quality: 'auto'});
   const forced = new URLSearchParams(location.search).has('q');
   const tier: Tier = settings.quality === 'auto' || forced ? detectTier() : settings.quality;
-  const q = qualityFor(tier);
   const sfx = new Sfx();
   const voice = new VoicePlayer(() => sfx.context);
   const screens = new Screens(document.body, {tap: () => sfx.uiTap(), whoosh: () => sfx.cardThrow(0.4), coin: n => sfx.coin(n), reward: () => sfx.win()});
   const splash = screens.splash();
-  splash.progress(0.1);
+  splash.progress(0.15);
 
-  const app = document.getElementById('app')!;
-  const stage = new Stage(app, q, CAMERA);
-  const layout = makeLayout(2);
-  await buildEnvironment(stage, layout.pile);
-  ambience(app, tier);
-  splash.progress(0.4);
-  const atlas = await buildCardAtlas(q.atlasWidth);
-  const cards = new CardSystem(stage, atlas);
-  splash.progress(0.7);
-  const hand = new HandInput(stage, cards, () => layout.pile);
-  const table = new TableView(stage, cards, layout, hand, {
+  const atlas = await buildCardAtlas(atlasWidth(tier));
+  splash.progress(0.6);
+  const table = new Table2D(document.getElementById('app')!, atlas, {
     deal: () => sfx.deal(),
     land: i => sfx.cardLand(i),
     flip: () => sfx.cardFlip(),
-    throwWhoosh: p => sfx.cardThrow(p),
-  });
-  hand.onPick = () => {
-    sfx.cardSlide(0.8);
-    haptic('light');
-  };
-  hand.onSelect = () => sfx.cardSlide(0.5);
-  window.addEventListener('resize', () => setTimeout(() => hand.layout(false), 60));
-  const sparks = new Sparks(stage, q.particles);
-  const ring = new Shockwave(stage);
-  table.reset(2);
-  stage.onRender(() => {
-    const o = {x: 0, y: 0};
-    table.topScreen('deck', o);
-    screens.hud.setDeck(table.deck.length, o.x, o.y + 44);
-  });
+    slide: () => sfx.cardSlide(0.6),
+    whoosh: p => sfx.cardThrow(p),
+  }, tier === 'low');
+  table.onDeck = (n, x, y) => screens.hud.setDeck(n, x, y);
+  table.reset();
+  splash.progress(0.8);
   try {
     await voice.load(ASSETS.voiceManifest ?? '');
   } catch {
@@ -111,7 +73,6 @@ async function boot(): Promise<void> {
   applySettings({...settings});
   splash.progress(1);
   document.getElementById('boot')?.remove();
-  stage.invalidate();
   await splash.done();
   // ilk dokunuşta ses motorunu aç (iOS)
   const unlock = () => {
@@ -119,8 +80,8 @@ async function boot(): Promise<void> {
     window.removeEventListener('pointerdown', unlock);
   };
   window.addEventListener('pointerdown', unlock);
-  (window as unknown as {__kh: unknown}).__kh = {stage, table, hand, cards, q, screens};
-  await runApp({stage, table, hand, sparks, ring, sfx, voice, screens, opponents: opponents(), settings, applySettings, auto: AUTO});
+  (window as unknown as {__kh: unknown}).__kh = {table, screens, tier};
+  await runApp({table, sfx, voice, screens, opponents: opponents(), settings, applySettings, auto: AUTO});
 }
 
 boot().catch(err => {
