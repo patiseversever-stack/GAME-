@@ -1,5 +1,6 @@
 // Oyun içi arayüz (masanın üstünde, tamamen saydam; zemin/karartma yok) · DİKEY: oyuncu rozetleri, jeton, duraklat,
 // deste sayacı, ipucu, konuşma balonu + rozet içinde duygu yüzü, PİŞTİ damgası, afiş, puan baloncukları. Ortadaki masa alanı boş kalır.
+import './hud.css';
 import type {GameHud, HudLayout, HudPlayer, Mood, Opponent, Profile} from './types';
 import {ANIM, EASE, Scope, countUp, esc, fmt, h, initials, play, q} from './dom';
 import {ASSETS, OPTIONAL_ART, isCutout} from './assets';

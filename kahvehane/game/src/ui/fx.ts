@@ -1,6 +1,7 @@
 // Ekran efektleri: yumuşak renkli ışık patlaması, jeton + dört renk konfeti (havuzlu DOM), uçan jetonlar,
 // PİŞTİ damgası (dört renk hüzme, valede dört renk çark), afiş, puan baloncuğu.
 // Yalnız transform + opacity; düğümler havuzdan gelir, iş bitince gizlenir (yeni düğüm üretilmez).
+import './fx.css';
 import {ANIM, EASE, esc, h, play} from './dom';
 import {ASSETS, OPTIONAL_ART} from './assets';
 import {suitSvg, type SuitKey} from './icons';

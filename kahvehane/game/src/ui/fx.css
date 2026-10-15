@@ -1,0 +1,39 @@
+/* Pişti Arena — ekran efektleri (parçacık, damga, afiş, puan). Yalnız transform/opacity animasyonu. */
+/* =================== EFEKTLER =================== */
+.kh-fx { position: absolute; inset: 0; z-index: 45; pointer-events: none; overflow: hidden; }
+.kh-flash { position: absolute; inset: 0; background: var(--flash); opacity: 0; will-change: opacity; }
+.kh-p { position: absolute; left: 0; top: 0; display: none; will-change: transform, opacity; }
+.kh-p--conf { z-index: 3; }   /* konfeti damganın önünde, jeton arkasında (yazı okunur kalsın) */
+.kh-p--coin { width: calc(var(--u) * 1.7); height: calc(var(--u) * 1.7); margin: calc(var(--u) * -.85) 0 0 calc(var(--u) * -.85); border-radius: 50%;
+  background: var(--coin-img, var(--fx-coin)) center / contain no-repeat; }
+.kh-p--conf { width: calc(var(--u) * .55); height: calc(var(--u) * .9); margin: calc(var(--u) * -.45) 0 0 calc(var(--u) * -.27); border-radius: 2px;
+  box-shadow: inset 0 2px 0 rgba(255, 255, 255, .45); }
+.kh-p--c1 { background: var(--fx-1); } .kh-p--c2 { background: var(--fx-2); } .kh-p--c3 { background: var(--fx-3); } .kh-p--c4 { background: var(--fx-4); } .kh-p--c5 { background: var(--fx-5); }
+.kh-p--suit { width: calc(var(--u) * 1.1); height: calc(var(--u) * 1.1); margin: calc(var(--u) * -.55) 0 0 calc(var(--u) * -.55); box-shadow: none; background: none; border-radius: 0; }
+.kh-p--suit .kh-suit { width: 100%; height: 100%; }
+
+.kh-stamp { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding-bottom: var(--kh-stamp-lift, 6vh); visibility: hidden; }
+.kh-stamp.is-on { visibility: visible; }
+.kh-stamp__in { position: relative; display: flex; flex-direction: column; align-items: center; will-change: transform, opacity; }
+.kh-stamp__glow { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 26); height: calc(var(--u) * 26); margin: calc(var(--u) * -13) 0 0 calc(var(--u) * -13);
+  border-radius: 50%; background: var(--stamp-glow); will-change: transform, opacity; }
+.kh-stamp__rays { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 40); height: calc(var(--u) * 40); margin: calc(var(--u) * -20) 0 0 calc(var(--u) * -20);
+  border-radius: 50%; background: var(--stamp-rays); -webkit-mask: var(--stamp-rays-mask); mask: var(--stamp-rays-mask); will-change: transform, opacity; }
+.kh-stamp__wheel { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 21); height: calc(var(--u) * 21); margin: calc(var(--u) * -10.5) 0 0 calc(var(--u) * -10.5);
+  border-radius: 50%; background: var(--wheel); -webkit-mask: var(--stamp-wheel-mask); mask: var(--stamp-wheel-mask); will-change: transform, opacity; }
+.kh-stamp__word { position: relative; display: flex; flex-direction: column; align-items: center; font-size: calc(var(--u) * 5.6); line-height: 1; }
+.kh-stamp__word .kh-g3.is-sm { font-size: .5em; margin-bottom: -.06em; }
+.kh-stamp__word img { width: calc(var(--u) * 19); height: auto; }
+.kh-stamp__pts { position: relative; margin-top: calc(var(--u) * .1); font-size: calc(var(--u) * 3.6); will-change: transform; }
+
+.kh-banner { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding-bottom: 18vh; visibility: hidden; }
+.kh-banner.is-on { visibility: visible; }
+.kh-banner__in { position: relative; display: flex; flex-direction: column; align-items: center; max-width: calc(100% - var(--u) * 2); padding: calc(var(--u) * .55) calc(var(--u) * 2.2) calc(var(--u) * .75);
+  border-radius: var(--r-lg); background: var(--banner-fill); box-shadow: var(--banner-shadow); will-change: transform, opacity; }
+.kh-banner__in::before { content: ''; position: absolute; left: 6px; right: 6px; top: 4px; height: 42%; border-radius: calc(var(--r-lg) - 5px) calc(var(--r-lg) - 5px) 40% 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .45), rgba(255, 255, 255, .04)); pointer-events: none; }
+.kh-banner__t { position: relative; font-size: calc(var(--u) * 2.4); }
+.kh-banner__s { position: relative; margin-top: calc(var(--u) * .05); color: #fff; font-size: calc(var(--u) * .98); font-weight: var(--w-black); white-space: nowrap; text-shadow: var(--outline-thin); }
+
+.kh-pop { position: absolute; z-index: 3; left: 0; top: 0; display: none; font-size: calc(var(--u) * 2.3); will-change: transform, opacity; }
+
