@@ -23,7 +23,7 @@ export class Sparks {
       uniforms: {uScale: {value: 1}},
       vertexShader: `attribute float aLife; varying float vL; uniform float uScale;
         void main(){ vL = aLife; vec4 mv = modelViewMatrix * vec4(position,1.0); gl_Position = projectionMatrix * mv;
-        gl_PointSize = aLife > 0.0 ? (6.0 + 10.0 * aLife) * uScale / -mv.z * 0.12 : 0.0; }`,
+        gl_PointSize = aLife > 0.0 ? min(64.0, (6.0 + 10.0 * aLife) * uScale / -mv.z * 0.0014) : 0.0; }`,
       fragmentShader: `varying float vL; void main(){ vec2 d = gl_PointCoord - 0.5; float r = length(d); if (r > 0.5) discard;
         float a = smoothstep(0.5, 0.0, r) * vL; gl_FragColor = vec4(mix(vec3(1.0,0.55,0.12), vec3(1.0,0.93,0.65), vL) * a * 1.6, a); }`,
     });

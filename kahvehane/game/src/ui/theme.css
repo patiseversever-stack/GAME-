@@ -232,9 +232,9 @@
 
   /* ---- PİŞTİ damgası, parlama, konfeti ---- */
   --stamp-rays: repeating-conic-gradient(from 0deg, rgba(255, 220, 110, .5) 0deg 4deg, rgba(255, 220, 110, 0) 4deg 13deg);
-  --stamp-glow: radial-gradient(circle, rgba(255, 236, 150, .95) 0%, rgba(255, 200, 70, .5) 26%, rgba(255, 180, 50, 0) 60%);
+  --stamp-glow: radial-gradient(circle, rgba(255, 214, 110, .72) 0%, rgba(255, 184, 64, .34) 30%, rgba(255, 170, 40, 0) 62%);
   --stamp-rays-mask: radial-gradient(circle, #000 0%, #000 22%, transparent 66%);
-  --flash: radial-gradient(circle at 50% 46%, #fff8e0 0%, rgba(255, 222, 150, .75) 32%, rgba(255, 196, 96, .18) 62%, rgba(255, 190, 90, 0) 80%);
+  --flash: radial-gradient(circle at 50% 46%, rgba(255, 246, 220, .9) 0%, rgba(255, 220, 150, .5) 16%, rgba(255, 200, 110, .16) 38%, rgba(255, 190, 90, 0) 62%);
   --fx-1: #3fa9f5;
   --fx-2: #5ad94c;
   --fx-3: #ff4d6d;

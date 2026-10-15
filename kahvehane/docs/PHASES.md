@@ -91,7 +91,10 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
-**16 Ekim:** Yön kilitlendi: **DİKEY**, hedef ekran `docs/_dikey_hedef.jpg` (+ "daha sinematik"). MVP ilk önizleme yayında: https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
-- Bitti: kural motoru + bot (74 test), ses efektleri, 150 Türkçe replik + seslendirme altyapısı (ElevenLabs anahtarı bekliyor), kart atlası (resimli kart görsel hattı hazır), dikey 3D masa (ray + maun çerçeve), sinematik kamera, tüm ekranlar (açılış, lobi, giriş, HUD + rozetler, pişti damgası, duraklat, sonuç, ayarlar, kurallar, günlük ödül), ilerleme (seviye/XP/jeton/günlük ödül).
-- Bekleyen (kullanıcıdan): `KARAKTER_GORSELLERI.md` → 60 karakter + 3 resimli kart görseli (ChatGPT). Gelince: `assets/art/` (portreler) ve `assets/cards/` (jacks/queens/kings.png) içine işlenecek.
-- Sıradaki: görseller gelince entegrasyon + hedefle karşılaştırma; seslendirme; 4 kişilik mod (Adım 2).
+**16 Ekim:** Yön kilitlendi: **DİKEY**. Önizleme: https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro (sürüm 3)
+- Sürüm 3: **tam ekran şov alanı** (kenarsız desenli çuha, spot ışık havuzu, altın "KAHVEHANE / PİŞTİ" arenası, ışık huzmeleri + altın tozlar), **yeni kartlar** (iri köşe indeksi, tek büyük sembol, madalyonlu aslar, karakterli resimli kartlar: Papaz Rıza, Kız Defne, Vale Cem; bordo-altın arka), pişti kartları destenin altından görünür, el kartı geniş ekranda sınırlı, kıvılcım boyutu hatası düzeltildi.
+- Sürüm 2: yayın betiği `<header>` etiketlerini siliyordu → lobi yarım kalıyordu; düzeltildi.
+- Bitti: kural motoru + bot (74 test), ses efektleri, 150 Türkçe replik + seslendirme altyapısı (ElevenLabs anahtarı bekliyor), tüm ekranlar, ilerleme (seviye/XP/jeton/günlük ödül).
+- Bekleyen (kullanıcıdan): `KARAKTER_GORSELLERI.md` görselleri (ChatGPT). Defne'nin portresi burnun altında kesik; daha uzun bir portre gelirse Kız kartı da düzelir.
+- Test: `?seed=2` ilk turlarda pişti çıkarır, `?auto=1` kendi kendine oynar.
+- Sıradaki: kullanıcı geri bildirimi; seslendirme; 4 kişilik mod (Adım 2).

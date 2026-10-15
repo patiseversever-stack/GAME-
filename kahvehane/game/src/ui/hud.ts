@@ -293,7 +293,7 @@ export class HudView implements GameHud {
   }
 
   pisti(jack: boolean, points: number): void {
-    this.fx.flash(jack ? 0.9 : 0.75);
+    this.fx.flash(jack ? 0.75 : 0.6);
     this.fx.stamp(jack, points);
     const r = this.el.getBoundingClientRect();
     this.fx.burst({x: r.width / 2, y: r.height * 0.46}, {coins: jack ? 14 : 10, confetti: jack ? 40 : 30, power: jack ? 1.15 : 1});
