@@ -14,12 +14,12 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 
 .kh-ui { position: fixed; inset: 0; z-index: 60; pointer-events: none; font-family: var(--font-ui); font-weight: var(--w-body);
   font-size: var(--u); line-height: 1.25; color: var(--c-text); }
-.kh-ui button { font: inherit; color: inherit; appearance: none; -webkit-appearance: none; background: none; border: 0; padding: 0; margin: 0;
+:where(.kh-ui) button { font: inherit; color: inherit; appearance: none; -webkit-appearance: none; background: none; border: 0; padding: 0; margin: 0;
   cursor: pointer; pointer-events: auto; touch-action: manipulation; text-align: center; }
-.kh-ui button:disabled { cursor: default; }
-.kh-ui img { -webkit-user-drag: none; user-select: none; pointer-events: none; display: block; }
-.kh-ui :focus { outline: none; }
-.kh-ui :focus-visible { outline: 2px solid var(--c-accent); outline-offset: 3px; }
+:where(.kh-ui) button:disabled { cursor: default; }
+:where(.kh-ui) img { -webkit-user-drag: none; user-select: none; pointer-events: none; display: block; }
+:where(.kh-ui) :focus { outline: none; }
+:where(.kh-ui) :focus-visible { outline: 2px solid var(--c-accent); outline-offset: 3px; }
 .kh-layer { position: absolute; inset: 0; pointer-events: none; }
 .kh-screen { position: absolute; inset: 0; pointer-events: auto; overflow: hidden; }
 .kh-num { font-variant-numeric: tabular-nums; font-feature-settings: 'tnum' 1; }
@@ -182,7 +182,7 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 
 .kh-hero { grid-column: 1; grid-row: 2; position: relative; min-height: 0; }
 .kh-hero__stage { position: absolute; inset: 0; }
-.kh-hero__arrow { position: absolute; top: calc(50% + var(--u) * 1.2); z-index: 5; transform: translateY(-50%); }
+.kh-hero__arrow { position: absolute; top: calc(50% + var(--u) * 1.2); z-index: 20; transform: translateY(-50%); }
 .kh-hero__arrow:active:not(:disabled) { transform: translateY(-50%) scale(.92); }
 .kh-hero__arrow.is-l { left: 0; }
 .kh-hero__arrow.is-r { right: 0; }
