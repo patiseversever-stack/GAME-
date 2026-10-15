@@ -45,6 +45,16 @@ Yeni oturum bu dosyayı okuyup devam edebilsin diye tutulur.
 - Tur 2 (`konsept/_riza_yuz_tur2.jpg`): **D = Meshy 7.1 image-to-3d, geometry 2k, 4K doku + PBR, remesh yok (664k üçgen) → gltf-transform weld+simplify ile 30k'ya** en iyi sonuç (ham modelle neredeyse aynı). Karakter başı ~44 kredi (9 görsel + 35 model).
 - Düşük seviye cihaz için aynı modelden ~12k üçgen + küçültülmüş doku (LOD) üretilecek.
 
+## Yüz ifadeleri
+- Meshy yüz ifadesi/yüz iskeleti üretmiyor (yalnız gövde iskeleti).
+- Kendi kurduğum 3D ifade altyapısı (`tools/build_rig.py`: MediaPipe yüz noktaları → morph hedefleri, çene ayrımı, göz kapağı/bakış kabuğu) denendi: kaş ve göz idare ediyor, ağız açma yapay. Kullanıcı beğenmedi → **durduruldu**.
+- Alternatif deneme: **tepki kartları** (karakterin duygulu 2B görseli, oyunda 1-2 sn beliren kart). `konsept/_riza_tepki_kartlari.jpg`. Karar bekleniyor.
+
+## Optimizasyon hattı (`tools/`)
+- `decimate.mjs`: kafa + eller öncelikli sadeleştirme (meshoptimizer).
+- `bake.py`: xatlas ile yeni doku haritası (kafa ~%45 pay), yüksek modelden ışınla renk + normal aktarımı.
+- `assemble.mjs`: GLB üretimi. Rıza: 664k → 29k üçgen, 2K doku, görsel fark çok az.
+
 ## Ses
 - Karakter replikleri: ElevenLabs (Türkçe, duygu etiketleri) ile üretim önerildi; ana karakterler ileride gerçek seslendirmenle yapılabilir.
 - Ortam sesi: gerçek kahvehane kaydı veya lisanslı paket.
