@@ -1,9 +1,10 @@
 // Kart atlası önizlemesi: ?w=1024|1536|2048
-import {ATLAS_COLS, BACK_INDEX, CARD_ASPECT, CORNER_RADIUS, buildCardAtlas, type CardAtlas} from '../src/render/cardAtlas';
+import {ATLAS_COLS, BACK_INDEX, CARD_ASPECT, CORNER_RADIUS, buildCardAtlas, type CardArtUrls, type CardAtlas} from '../src/render/cardAtlas';
 import {cardId, type Suit} from '../src/core/types';
 
 const params = new URLSearchParams(location.search);
 const W = Number(params.get('w')) || 2048;
+const TEST_ART = params.get('art') === 'test';
 
 const info = document.getElementById('info')!;
 const c = (s: Suit, r: number) => cardId(s, r);
@@ -139,16 +140,81 @@ function drawLarge(a: CardAtlas): void {
   ids.forEach((id, i) => drawCard(ctx, a, id, 30 + big + 30 + i * (mid + 24), 30, mid));
 }
 
+// ?art=test: gerçek assets/cards görselleri yerine sentetik test sayfaları (kırpma/sığdırma hattını sınamak için)
+async function testArt(): Promise<CardArtUrls> {
+  const toUrl = async (c: HTMLCanvasElement) => URL.createObjectURL(await new Promise<Blob>((r) => c.toBlob((b) => r(b!), 'image/png')));
+  const sheet = (letter: string, hue: number) => {
+    const c = document.createElement('canvas');
+    c.width = 1024;
+    c.height = 1400;
+    const g = c.getContext('2d')!;
+    g.fillStyle = '#efe6d2'; // krem zemin (kırpılmalı)
+    g.fillRect(0, 0, c.width, c.height);
+    ['♠', '♥', '♦', '♣'].forEach((sym, q) => {
+      const qx = (q % 2) * 512, qy = Math.floor(q / 2) * 700;
+      const x = qx + 60, y = qy + 50, w = 392, h = 600; // kenarlarda krem pay
+      const bg = g.createLinearGradient(x, y, x, y + h);
+      bg.addColorStop(0, `hsl(${hue + q * 20} 45% 45%)`);
+      bg.addColorStop(1, `hsl(${hue + q * 20} 55% 18%)`);
+      g.fillStyle = bg;
+      g.fillRect(x, y, w, h);
+      g.fillStyle = '#f1c27d';
+      g.beginPath();
+      g.arc(x + w / 2, y + 190, 80, 0, Math.PI * 2);
+      g.fill();
+      g.fillStyle = '#7a1a2c';
+      g.fillRect(x + w / 2 - 90, y + 80, 180, 50);
+      g.fillStyle = '#2a2a3a';
+      g.beginPath();
+      g.moveTo(x + 60, y + h);
+      g.lineTo(x + w / 2, y + 290);
+      g.lineTo(x + w - 60, y + h);
+      g.fill();
+      g.fillStyle = '#fff';
+      g.font = 'bold 90px serif';
+      g.fillText(`${letter}${sym}`, x + 20, y + h - 30);
+    });
+    return c;
+  };
+  const back = document.createElement('canvas');
+  back.width = 600;
+  back.height = 900;
+  const bg = back.getContext('2d')!;
+  bg.fillStyle = '#26315c';
+  bg.fillRect(0, 0, 600, 900);
+  bg.strokeStyle = '#e3c26b';
+  bg.lineWidth = 14;
+  bg.strokeRect(30, 30, 540, 840);
+  bg.fillStyle = '#e3c26b';
+  bg.font = 'bold 120px serif';
+  bg.fillText('TEST', 150, 480);
+  const ace = document.createElement('canvas');
+  ace.width = ace.height = 600;
+  const ag = ace.getContext('2d')!;
+  ag.fillStyle = '#123';
+  ag.font = '560px serif';
+  ag.textAlign = 'center';
+  ag.fillText('♠', 300, 500);
+  return {
+    jacks: await toUrl(sheet('J', 30)),
+    queens: await toUrl(sheet('Q', 220)),
+    kings: await toUrl(sheet('K', 350)),
+    back: await toUrl(back),
+    aceSpade: await toUrl(ace),
+  };
+}
+
 async function main(): Promise<void> {
+  const art = TEST_ART ? await testArt() : undefined;
   const t0 = performance.now();
-  const atlas = await buildCardAtlas(W);
+  const atlas = await buildCardAtlas(W, art);
   atlas.canvas.getContext('2d')!.getImageData(0, 0, 1, 1);
   const t1 = performance.now();
   // ikinci kurulum: fontlar hazırken saf çizim süresi
   const times: number[] = [];
   for (let i = 0; i < 3; i++) {
     const s = performance.now();
-    const tmp = await buildCardAtlas(W);
+    const tmp = await buildCardAtlas(W, art);
     // GPU kuyruğunu boşalt: gerçek rasterleştirme süresi de ölçülsün
     tmp.canvas.getContext('2d')!.getImageData(0, 0, 1, 1);
     times.push(performance.now() - s);

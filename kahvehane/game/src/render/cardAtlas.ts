@@ -1,7 +1,12 @@
 // Kart yüzleri ve arka yüz: Canvas 2D ile prosedürel çizilen doku atlası.
-// 8 × 7 hücre; hücre indeksi = kart id (0..51), 52 = arka yüz, 53..55 boş.
+// 8 × 7 hücre; hücre indeksi = kart id (0..51), 52 = arka yüz, 53..55 boş (saydam).
 // Bütün çizim "tasarım birimi" uzayında yapılır: kart genişliği 100, yüksekliği 100 / 0.7.
-import '@fontsource/inter/latin-800.css';
+//
+// İsteğe bağlı görseller (assets/cards/*.png; varsa kullanılır, yoksa prosedürel yedek çizilir):
+//   jacks.png / queens.png / kings.png  2×2 ızgara: sol üst maça, sağ üst kupa, sol alt karo, sağ alt sinek
+//                                       (krem zemin otomatik kırpılır)
+//   back.png       kart arkası (2:3), hücreyi kenardan kenara doldurur
+//   ace_spade.png  saydam zeminli süslü maça (maça ası ortası)
 import '@fontsource/playfair-display/latin-900.css';
 import {SUITS, type Suit} from '../core/types';
 
@@ -18,6 +23,30 @@ export interface CardAtlas {
   cellH: number;
 }
 
+/** Görsel URL'leri. Normalde assets/cards klasöründen otomatik bulunur; geliştirme sayfası test için verebilir. */
+export interface CardArtUrls {
+  jacks?: string;
+  queens?: string;
+  kings?: string;
+  back?: string;
+  aceSpade?: string;
+}
+
+const ART_FILES = import.meta.glob('../../assets/cards/*.png', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
+
+function discoverArt(): CardArtUrls {
+  const out: CardArtUrls = {};
+  for (const [path, url] of Object.entries(ART_FILES)) {
+    const name = (path.split('/').pop() ?? '').replace(/\.png$/i, '').toLowerCase();
+    if (name === 'jacks') out.jacks = url;
+    else if (name === 'queens') out.queens = url;
+    else if (name === 'kings') out.kings = url;
+    else if (name === 'back') out.back = url;
+    else if (name === 'ace_spade') out.aceSpade = url;
+  }
+  return out;
+}
+
 type Ctx = CanvasRenderingContext2D;
 type Fill = string | CanvasGradient | CanvasPattern;
 
@@ -31,36 +60,72 @@ const CR = CORNER_RADIUS * UW; // 7.5
 const INK_RED = '#b0122c';
 const INK_BLACK = '#171311';
 const GOLD = '#c9a24a';
-const GOLD_DARK = '#8a6420';
-const BURGUNDY = '#5e1220';
 
 const SERIF = '"Playfair Display", Georgia, "Times New Roman", serif';
-const SANS = 'Inter, "Helvetica Neue", Arial, sans-serif';
 
 // Köşe indeksi (sol üst; sağ altta 180° döndürülmüş kopyası)
 const IDX = {
-  family: SANS,
-  weight: 800,
-  cx: 15.8, // indeks sütununun ekseni
-  left: 4.6, // geniş etiketin ("10") sol kenarı
+  cx: 17, // indeks sütununun ekseni
+  left: 4.8, // geniş etiketin ("10") sol kenarı
   top: 6.2, // rakam/harf mürekkebinin üstü
-  capH: 27.5, // rakam yüksekliği (≈ %27.5 kart genişliği)
-  maxW: 23, // tek karakter için azami mürekkep genişliği
-  maxW10: 26.6, // "10" için azami genişlik
-  gap: 3.3, // rakam ile takım işareti arası
-  pipW: 14.6, // indeks takım işareti genişliği
+  capH: 24.5, // rakam yüksekliği (≈ %24.5 kart genişliği)
+  maxW: 25, // tek karakter için azami mürekkep genişliği
+  maxW10: 27, // "10" için azami genişlik
+  gap: 3.6, // rakam ile takım işareti arası
+  pipW: 13, // indeks takım işareti genişliği
 };
+const IDX_BOTTOM = IDX.top + IDX.capH + IDX.gap + IDX.pipW; // indeks bloğunun alt sınırı (≈ 47)
 
 // Sayı kartlarındaki takım işaretleri alanı
 const FIELD = {
-  dx: 13, // yan sütunların merkezden uzaklığı
-  top: 46, // en üst sıranın merkezi
-  pipW: 12.9,
+  dx: 15.8, // yan sütunların merkezden uzaklığı
+  top: 43, // en üst sıranın merkezi
+  pipW: 14.8,
 };
+
+// Saray kartı resim çerçevesi: indeks köşelerinde (sol üst, sağ alt) çentikli dikdörtgen
+const FRAME = {inset: 8.6, notchX: 31.5, notchY: IDX_BOTTOM + 2.6, r: 2.6};
 
 const RANK_LABEL = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 
 // ───────────────────────── yardımcılar ─────────────────────────
+
+function insetPath(inset: number, r?: number): Path2D {
+  const p = new Path2D();
+  rrect(p, inset, inset, UW - inset * 2, UH - inset * 2, r ?? Math.max(0.5, CR - inset));
+  return p;
+}
+
+/** Köşeleri yuvarlatılmış çokgen (iç bükey köşeler dahil). */
+function roundedPoly(pts: [number, number][], r: number): Path2D {
+  const p = new Path2D();
+  const n = pts.length;
+  const [ax, ay] = pts[n - 1], [bx, by] = pts[0];
+  p.moveTo((ax + bx) / 2, (ay + by) / 2);
+  for (let i = 0; i < n; i++) {
+    const [x1, y1] = pts[i];
+    const [x2, y2] = pts[(i + 1) % n];
+    p.arcTo(x1, y1, x2, y2, r);
+  }
+  p.closePath();
+  return p;
+}
+
+/** Saray kartı resim çerçevesi; d > 0 içe doğru küçültür. */
+function framePath(d: number): Path2D {
+  const L = FRAME.inset + d, T = FRAME.inset + d, R = UW - FRAME.inset - d, B = UH - FRAME.inset - d;
+  const nx = FRAME.notchX + d, ny = FRAME.notchY + d;
+  return roundedPoly(
+    [[nx, T], [R, T], [R, UH - ny], [UW - nx, UH - ny], [UW - nx, B], [L, B], [L, ny], [nx, ny]],
+    Math.max(0.6, FRAME.r - d * 0.5),
+  );
+}
+
+function frameBox(): {x: number; y: number; w: number; h: number} {
+  return {x: FRAME.inset, y: FRAME.inset, w: UW - FRAME.inset * 2, h: UH - FRAME.inset * 2};
+}
+
+// ───────────────────────── takım şekilleri (birim kutu, merkez 0,0) ─────────────────────────
 function rrect(p: Path2D | Ctx, x: number, y: number, w: number, h: number, r: number): void {
   const rr = Math.max(0, Math.min(r, w / 2, h / 2));
   p.moveTo(x + rr, y);
@@ -75,12 +140,6 @@ function rrect(p: Path2D | Ctx, x: number, y: number, w: number, h: number, r: n
   p.closePath();
 }
 
-function insetPath(inset: number, r?: number): Path2D {
-  const p = new Path2D();
-  rrect(p, inset, inset, UW - inset * 2, UH - inset * 2, r ?? Math.max(0.5, CR - inset));
-  return p;
-}
-
 function mulberry32(seed: number): () => number {
   let a = seed | 0;
   return () => {
@@ -91,7 +150,6 @@ function mulberry32(seed: number): () => number {
   };
 }
 
-// ───────────────────────── takım şekilleri (birim kutu, merkez 0,0) ─────────────────────────
 function heartPath(): Path2D {
   const p = new Path2D();
   p.moveTo(0, 0.5);
@@ -153,7 +211,6 @@ function clubPath(): Path2D {
   return p;
 }
 
-/** Osmanlı lalesi (birim: yükseklik ≈ 1.2, merkez çanağın ortası). */
 function tulipPath(): Path2D {
   const p = new Path2D();
   p.moveTo(0, 0.5);
@@ -169,109 +226,140 @@ function tulipPath(): Path2D {
   return p;
 }
 
-/** Sekiz köşeli yıldız (iki kare), dış yarıçap 1. */
-function star8Path(p: Path2D, cx: number, cy: number, R: number, rot = 0): void {
-  const rin = R * (Math.SQRT1_2 / Math.cos(Math.PI / 8));
-  for (let k = 0; k < 16; k++) {
-    const a = rot + (k * Math.PI) / 8 - Math.PI / 2;
-    const rad = k % 2 === 0 ? R : rin;
-    const x = cx + Math.cos(a) * rad, y = cy + Math.sin(a) * rad;
-    if (k === 0) p.moveTo(x, y);
-    else p.lineTo(x, y);
-  }
-  p.closePath();
-}
-
 interface Shapes {
   suit: Record<Suit, Path2D>;
+  flip: Record<Suit, Path2D>; // 180° döndürülmüş kopyalar (ışık hep yukarıdan gelsin diye)
   tulip: Path2D;
 }
 
+function rotated180(p: Path2D): Path2D {
+  const q = new Path2D();
+  q.addPath(p, new DOMMatrix([-1, 0, 0, -1, 0, 0]));
+  return q;
+}
+
 function makeShapes(): Shapes {
+  const suit: Record<Suit, Path2D> = {S: spadePath(), H: heartPath(), D: diamondPath(), C: clubPath()};
   return {
-    suit: {S: spadePath(), H: heartPath(), D: diamondPath(), C: clubPath()},
+    suit,
+    flip: {S: rotated180(suit.S), H: rotated180(suit.H), D: rotated180(suit.D), C: rotated180(suit.C)},
     tulip: tulipPath(),
   };
 }
 
 // ───────────────────────── yazı ölçümü ─────────────────────────
-interface Label {
+// Playfair Display'in varsayılan rakamları "eski üslup"tur (3, 4, 5, 7, 9 aşağı sarkar; 0, 1, 2 küçük).
+// İndekslerde her rakam kendi mürekkep kutusuna göre ölçeklenip büyük harf yüksekliğine oturtulur.
+interface Glyph {
+  ch: string;
   font: string;
-  glyphs: {ch: string; x: number}[];
+  x: number;
+  base: number; // etiketin üstünden baseline'a uzaklık
+}
+interface Label {
+  glyphs: Glyph[];
   scaleX: number;
   width: number; // ölçeklenmiş mürekkep genişliği
 }
 
-function layoutLabel(ctx: Ctx, text: string, family: string, weight: number, capH: number, maxW: number, track: number): Label {
-  ctx.font = `${weight} 100px ${family}`;
+/** inkFit: her karakter kendi mürekkep kutusuyla capH'a oturur (indeksler: J/Q kuyrukları takım işaretine taşmaz).
+ *  Aksi hâlde yalnız rakamlar mürekkebe, harfler büyük harf yüksekliğine göre ölçeklenir. */
+function layoutLabel(ctx: Ctx, text: string, family: string, weight: number, capH: number, maxW: number, track: number, inkFit: boolean): Label {
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
-  // yükseklik: karakterlerin baseline üstündeki mürekkebi (Q'nun kuyruğu hariç)
-  let asc = 0;
-  for (const ch of text) asc = Math.max(asc, ctx.measureText(ch).actualBoundingBoxAscent);
-  if (!(asc > 1)) asc = 72;
-  const size = (capH / asc) * 100;
-  const font = `${weight} ${size.toFixed(3)}px ${family}`;
-  ctx.font = font;
+  ctx.font = `${weight} 100px ${family}`;
+  const capRef = ctx.measureText('H').actualBoundingBoxAscent || 70;
   const parts = [...text].map((ch) => {
+    ctx.font = `${weight} 100px ${family}`;
+    const m0 = ctx.measureText(ch);
+    const fit = inkFit || (ch >= '0' && ch <= '9');
+    const ink = m0.actualBoundingBoxAscent + m0.actualBoundingBoxDescent;
+    const size = fit && ink > 1 ? (capH / ink) * 100 : (capH / capRef) * 100;
+    const font = `${weight} ${size.toFixed(3)}px ${family}`;
+    ctx.font = font;
     const m = ctx.measureText(ch);
-    return {ch, l: m.actualBoundingBoxLeft, r: m.actualBoundingBoxRight};
+    return {ch, font, l: m.actualBoundingBoxLeft, r: m.actualBoundingBoxRight, base: fit ? m.actualBoundingBoxAscent : capH};
   });
   const gap = track * capH;
   const total = parts.reduce((s, q) => s + q.l + q.r, 0) + gap * (parts.length - 1);
   const scaleX = Math.min(1, maxW / total);
   let x = -total / 2;
   const glyphs = parts.map((q) => {
-    const g = {ch: q.ch, x: x + q.l};
+    const g = {ch: q.ch, font: q.font, x: x + q.l, base: q.base};
     x += q.l + q.r + gap;
     return g;
   });
-  return {font, glyphs, scaleX, width: total * scaleX};
+  return {glyphs, scaleX, width: total * scaleX};
 }
 
-function drawLabel(ctx: Ctx, L: Label, cx: number, baseline: number, fill: Fill): void {
+/** Etiketi, mürekkebinin üstü `top` olacak şekilde `cx` etrafında ortalar. */
+function drawLabel(ctx: Ctx, L: Label, cx: number, top: number, fill: Fill): void {
   ctx.save();
-  ctx.translate(cx, baseline);
+  ctx.translate(cx, top);
   ctx.scale(L.scaleX, 1);
-  ctx.font = L.font;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'alphabetic';
   ctx.fillStyle = fill;
-  for (const g of L.glyphs) ctx.fillText(g.ch, g.x, 0);
+  for (const g of L.glyphs) {
+    ctx.font = g.font;
+    ctx.fillText(g.ch, g.x, g.base);
+  }
   ctx.restore();
 }
 
 // ───────────────────────── çizim bağlamı ─────────────────────────
+interface Rect {
+  x: number;
+  y: number;
+  w: number;
+  h: number;
+}
+interface Art {
+  courts: Partial<Record<number, {img: HTMLImageElement; rects: Record<Suit, Rect>}>>; // rank (11..13) → sayfa
+  back: HTMLImageElement | null;
+  aceSpade: HTMLImageElement | null;
+}
+
 interface Kit {
   ctx: Ctx;
   shapes: Shapes;
-  paths: {
-    border3_1: Path2D;
-    border3_3: Path2D;
-    border4_5: Path2D;
-    archOuter: Path2D;
-    archInner: Path2D;
-    archHair: Path2D;
-    rosettes: Path2D;
-  };
   labels: Label[]; // rank → indeks etiketi
   courtLetters: Record<string, Label>;
-  wordmark: Label;
-  ink: Record<'red' | 'black', CanvasGradient>;
+  gloss: Record<'red' | 'black', CanvasGradient>; // birim uzayda dikey parlak mürekkep
+  sheen: CanvasGradient; // birim uzayda üstten beyaz parıltı
+  goldEdge: CanvasGradient; // tasarım uzayında metalik altın
+  paths: {edge: Path2D; frame: Path2D; frameInner: Path2D; frameOuter: Path2D; lattice: Path2D};
+  art: Art;
 }
 
 function isRed(s: Suit): boolean {
   return s === 'H' || s === 'D';
 }
 
-function pip(k: Kit, suit: Suit, x: number, y: number, w: number, flip = false, fill?: Fill): void {
+/** Düz mürekkep takım işareti (indeksler). */
+function pip(k: Kit, suit: Suit, x: number, y: number, w: number, fill: Fill): void {
   const {ctx} = k;
   ctx.save();
   ctx.translate(x, y);
-  if (flip) ctx.rotate(Math.PI);
   ctx.scale(w, w);
-  ctx.fillStyle = fill ?? k.ink[isRed(suit) ? 'red' : 'black'];
+  ctx.fillStyle = fill;
   ctx.fill(k.shapes.suit[suit]);
+  ctx.restore();
+}
+
+/** Parlak baskı takım işareti: dikey gradyan + üstte yumuşak parıltı. */
+function glossPip(k: Kit, suit: Suit, x: number, y: number, w: number, flip = false): void {
+  const {ctx} = k;
+  const path = (flip ? k.shapes.flip : k.shapes.suit)[suit];
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(w, w);
+  ctx.fillStyle = k.gloss[isRed(suit) ? 'red' : 'black'];
+  ctx.fill(path);
+  ctx.translate(0, -0.045);
+  ctx.scale(0.8, 0.8);
+  ctx.fillStyle = k.sheen;
+  ctx.fill(path);
   ctx.restore();
 }
 
@@ -319,44 +407,75 @@ function makeGrainTile(): HTMLCanvasElement {
   return c;
 }
 
-/** Kâğıt dokusu: bir hücre boyutunda (2 px taşmalı) bir kez çizilir, her yüze tam piksel konumda kopyalanır. */
+
+/** Kâğıt: sıcak fildişi gradyan + doku + kenarlarda yumuşak iç gölge (kalın kart hissi).
+ *  Bir hücre boyutunda (2 px taşmalı) bir kez çizilir, her yüze tam piksel konumda kopyalanır. */
 function makePaperTile(cw: number, ch: number, grain: HTMLCanvasElement): HTMLCanvasElement {
   const w = Math.ceil(cw) + 2, h = Math.ceil(ch) + 2;
+  const s = cw / UW;
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
   const g = c.getContext('2d', {willReadFrequently: true})!;
-  const lg = g.createLinearGradient(0, 0, cw * 0.35, ch);
-  lg.addColorStop(0, '#f8f1e0');
-  lg.addColorStop(1, '#efe3c9');
+  const lg = g.createLinearGradient(0, 0, cw * 0.45, ch);
+  lg.addColorStop(0, '#fcf7ea');
+  lg.addColorStop(0.55, '#f5ecd8');
+  lg.addColorStop(1, '#eadcbd');
   g.fillStyle = lg;
   g.fillRect(0, 0, w, h);
-  const v = g.createRadialGradient(cw * 0.45, ch * 0.4, cw * 0.2, cw * 0.5, ch * 0.5, ch * 0.75);
-  v.addColorStop(0, 'rgba(255,250,236,0.35)');
-  v.addColorStop(0.6, 'rgba(255,250,236,0)');
-  v.addColorStop(1, 'rgba(120,80,30,0.10)');
+  const v = g.createRadialGradient(cw * 0.38, ch * 0.3, cw * 0.05, cw * 0.45, ch * 0.4, ch * 0.8);
+  v.addColorStop(0, 'rgba(255,253,244,0.55)');
+  v.addColorStop(0.55, 'rgba(255,250,236,0)');
+  v.addColorStop(1, 'rgba(130,90,40,0.10)');
   g.fillStyle = v;
   g.fillRect(0, 0, w, h);
-  g.globalAlpha = 0.7;
+  g.globalAlpha = 0.6;
   g.fillStyle = g.createPattern(grain, 'repeat')!;
   g.fillRect(0, 0, w, h);
+  g.globalAlpha = 1;
+  // iç gölge: kart şeklinin dışını doldur, gölgesi içeri düşsün
+  const card = new Path2D();
+  rrect(card, 0, 0, cw, ch, CR * s);
+  const ring = new Path2D();
+  ring.rect(-40 * s, -40 * s, cw + 80 * s, ch + 80 * s);
+  ring.addPath(card);
+  g.save();
+  g.clip(card);
+  g.shadowColor = 'rgba(92,60,22,0.5)';
+  g.shadowBlur = 4.5 * s;
+  g.fillStyle = '#000';
+  g.fill(ring, 'evenodd');
+  g.restore();
   return c;
 }
 
-function innerBorder(k: Kit, jack: boolean): void {
+// ───────────────────────── indeksler ─────────────────────────
+function indexCorner(k: Kit, rank: number, suit: Suit): void {
   const {ctx} = k;
-  if (jack) {
-    ctx.strokeStyle = 'rgba(176,132,46,0.95)';
-    ctx.lineWidth = 0.9;
-    ctx.stroke(k.paths.border3_1);
-    ctx.strokeStyle = 'rgba(176,132,46,0.7)';
-    ctx.lineWidth = 0.35;
-    ctx.stroke(k.paths.border4_5);
-  } else {
-    ctx.strokeStyle = 'rgba(150,118,62,0.55)';
-    ctx.lineWidth = 0.5;
-    ctx.stroke(k.paths.border3_3);
+  const color = isRed(suit) ? INK_RED : INK_BLACK;
+  const L = k.labels[rank];
+  const pipY = IDX.top + IDX.capH + IDX.gap + IDX.pipW * 0.5;
+  // dar etiketler sabit eksende; "10" sol kenara hizalanır
+  const cx = L.width > IDX.maxW + 0.01 ? IDX.left + L.width / 2 : IDX.cx;
+  for (let i = 0; i < 2; i++) {
+    ctx.save();
+    if (i === 1) {
+      ctx.translate(UW, UH);
+      ctx.rotate(Math.PI);
+    }
+    drawLabel(ctx, L, cx, IDX.top, color);
+    pip(k, suit, Math.min(cx, IDX.cx + 0.6), pipY, IDX.pipW, color);
+    ctx.restore();
   }
+}
+
+function drawGoldEdge(k: Kit, jack: boolean): void {
+  const {ctx} = k;
+  ctx.save();
+  ctx.strokeStyle = k.goldEdge;
+  ctx.lineWidth = jack ? 1.05 : 0.8;
+  ctx.stroke(k.paths.edge);
+  ctx.restore();
 }
 
 // ───────────────────────── sayı kartları ─────────────────────────
@@ -373,216 +492,129 @@ const PIP_LAYOUT: Record<number, [number, number][]> = {
   10: [[-1, 0], [1, 0], [0, 1 / 6], [-1, 1 / 3], [1, 1 / 3], [-1, 2 / 3], [1, 2 / 3], [0, 5 / 6], [-1, 1], [1, 1]],
 };
 
-function archWindow(k: Kit): void {
-  // sayı kartlarında, saray kartlarındaki kemerin ince altın çizgi hâli
-  const {ctx} = k;
-  ctx.save();
-  ctx.fillStyle = 'rgba(201,162,74,0.07)';
-  ctx.fill(k.paths.archOuter);
-  ctx.strokeStyle = 'rgba(170,128,48,0.7)';
-  ctx.lineWidth = 0.55;
-  ctx.stroke(k.paths.archOuter);
-  ctx.strokeStyle = 'rgba(170,128,48,0.42)';
-  ctx.lineWidth = 0.28;
-  ctx.stroke(k.paths.archHair);
-  ctx.fillStyle = 'rgba(170,128,48,0.8)';
-  for (const y of [9.6, UH - 9.6]) {
-    ctx.beginPath();
-    ctx.arc(CX, y, 0.9, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-}
-
 function numberCard(k: Kit, rank: number, suit: Suit): void {
-  archWindow(k);
   const top = FIELD.top, bot = UH - FIELD.top;
   for (const [c, r] of PIP_LAYOUT[rank]) {
-    const x = CX + c * FIELD.dx;
-    const y = top + (bot - top) * r;
-    pip(k, suit, x, y, FIELD.pipW, r > 0.5 + 1e-6);
+    glossPip(k, suit, CX + c * FIELD.dx, top + (bot - top) * r, FIELD.pipW, r > 0.5 + 1e-6);
   }
 }
 
 // ───────────────────────── aslar ─────────────────────────
 function aceCard(k: Kit, suit: Suit): void {
-  const {ctx} = k;
-  if (suit === 'S') return aceOfSpades(k);
-  // arkada ince altın sekiz köşeli yıldız (arka yüzle aynı dil)
-  ctx.save();
-  const st = new Path2D();
-  star8Path(st, CX, CY, 32);
-  ctx.fillStyle = 'rgba(201,162,74,0.08)';
-  ctx.fill(st);
-  ctx.strokeStyle = 'rgba(176,138,60,0.6)';
-  ctx.lineWidth = 0.5;
-  ctx.stroke(st);
-  const st2 = new Path2D();
-  star8Path(st2, CX, CY, 28.6);
-  ctx.lineWidth = 0.28;
-  ctx.stroke(st2);
-  ctx.fillStyle = 'rgba(176,138,60,0.75)';
-  for (let i = 0; i < 8; i++) {
-    const a = (i * Math.PI) / 4 - Math.PI / 2;
-    ctx.beginPath();
-    ctx.arc(CX + Math.cos(a) * 35, CY + Math.sin(a) * 35, 0.75, 0, Math.PI * 2);
-    ctx.fill();
+  if (suit === 'S') {
+    if (k.art.aceSpade) return drawContain(k.ctx, k.art.aceSpade, CX, CY, 70, 82);
+    return aceOfSpades(k);
   }
-  ctx.restore();
-  pip(k, suit, CX, CY + (suit === 'C' ? 0.5 : 0), suit === 'D' ? 41 : 38);
+  glossPip(k, suit, CX, CY + (suit === 'C' ? 0.6 : 0), suit === 'D' ? 50 : 46);
 }
 
-function scroll(ctx: Ctx, mirror: boolean): void {
-  // Sol taraftaki bir C-kıvrımı; mirror = sağ taraf
-  ctx.save();
-  if (mirror) {
-    ctx.translate(UW, 0);
-    ctx.scale(-1, 1);
+function curl(ctx: Ctx, cx: number, cy: number, r: number, a0: number, turns: number, dir: 1 | -1): void {
+  // içe doğru sarmal; (cx, cy) merkez, r başlangıç yarıçapı
+  const n = Math.max(8, Math.round(turns * 28));
+  for (let i = 0; i <= n; i++) {
+    const t = i / n;
+    const a = a0 + dir * t * turns * Math.PI * 2;
+    const rr = r * (1 - 0.78 * t);
+    const x = cx + Math.cos(a) * rr, y = cy + Math.sin(a) * rr;
+    if (i === 0) ctx.moveTo(x, y);
+    else ctx.lineTo(x, y);
   }
-  ctx.beginPath();
-  ctx.moveTo(40, 34);
-  ctx.bezierCurveTo(26, 34, 18, 46, 19, 60);
-  ctx.bezierCurveTo(20, 74, 28, 84, 37, 90);
-  ctx.bezierCurveTo(31, 92, 26, 97, 27.5, 102);
-  ctx.bezierCurveTo(29, 106, 34.5, 105.5, 34.5, 101.5);
-  ctx.bezierCurveTo(34.5, 98.8, 31.3, 98.6, 30.8, 100.8);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(40, 34);
-  ctx.bezierCurveTo(42.5, 30.5, 39.5, 26.2, 36.4, 27.6);
-  ctx.bezierCurveTo(34.2, 28.8, 35.2, 32, 37.6, 31.2);
-  ctx.stroke();
-  // küçük yapraklar
-  const leaf = (x: number, y: number, a: number, l: number) => {
-    ctx.save();
-    ctx.translate(x, y);
-    ctx.rotate(a);
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.quadraticCurveTo(l * 0.5, -l * 0.32, l, 0);
-    ctx.quadraticCurveTo(l * 0.5, l * 0.32, 0, 0);
-    ctx.fill();
-    ctx.restore();
-  };
-  leaf(19.6, 52, -2.5, 6.5);
-  leaf(19.3, 66, 2.7, 6.5);
-  leaf(23, 78, 2.3, 5.5);
-  ctx.restore();
 }
 
 function aceOfSpades(k: Kit): void {
   const {ctx} = k;
-  // süslü grup biraz küçültülüp yukarı alınır; altta yazıya yer kalır
+  const sw = 58, sy = CY - 2;
+  glossPip(k, 'S', CX, sy, sw);
+  // altın iç çizgi ve kakma süsler (maça birim uzayında)
   ctx.save();
-  ctx.translate(CX, 64.5);
-  ctx.scale(0.9, 0.9);
-  ctx.translate(-CX, -(CY - 4));
-  // arkada soluk altın 8 köşeli yıldız rozeti
+  ctx.translate(CX, sy);
+  ctx.scale(sw, sw);
   ctx.save();
-  const st = new Path2D();
-  star8Path(st, CX, CY - 3, 33);
-  ctx.fillStyle = 'rgba(201,162,74,0.13)';
-  ctx.fill(st);
-  ctx.strokeStyle = 'rgba(170,128,48,0.6)';
-  ctx.lineWidth = 0.55;
-  ctx.stroke(st);
-  const st2 = new Path2D();
-  star8Path(st2, CX, CY - 3, 29.5);
-  ctx.lineWidth = 0.3;
-  ctx.stroke(st2);
-  ctx.restore();
-
-  // kıvrımlar
-  ctx.save();
-  ctx.strokeStyle = INK_BLACK;
-  ctx.fillStyle = GOLD_DARK;
-  ctx.lineWidth = 1.05;
-  ctx.lineCap = 'round';
-  scroll(ctx, false);
-  scroll(ctx, true);
-  ctx.restore();
-
-  // büyük maça
-  const sw = 44, sy = CY - 4;
-  pip(k, 'S', CX, sy, sw);
-  // fildişi iç çizgi
-  ctx.save();
-  ctx.translate(CX, sy - 0.6);
-  ctx.scale(sw * 0.86, sw * 0.86);
-  ctx.strokeStyle = 'rgba(242,217,140,0.9)';
-  ctx.lineWidth = 0.55 / (sw * 0.86);
+  ctx.translate(0, 0.005);
+  ctx.scale(0.88, 0.88);
+  ctx.strokeStyle = goldGradient(ctx, -0.5, 0.5);
+  ctx.lineWidth = 0.75 / (sw * 0.88);
   ctx.stroke(k.shapes.suit.S);
   ctx.restore();
-  // içte altın lale
+  const gold = goldGradient(ctx, -0.45, 0.4);
+  ctx.strokeStyle = gold;
+  ctx.fillStyle = gold;
+  ctx.lineWidth = 0.75 / sw;
+  ctx.lineCap = 'round';
+  ctx.lineJoin = 'round';
+  for (const m of [-1, 1] as const) {
+    ctx.save();
+    ctx.scale(m, 1);
+    ctx.beginPath();
+    ctx.moveTo(0.02, 0.24);
+    ctx.bezierCurveTo(0.12, 0.25, 0.3, 0.2, 0.33, 0.06);
+    ctx.bezierCurveTo(0.35, -0.04, 0.27, -0.1, 0.2, -0.06);
+    curl(ctx, 0.235, 0.0, 0.065, -2.2, 1.15, 1);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(0.03, -0.02);
+    ctx.bezierCurveTo(0.1, -0.06, 0.16, -0.14, 0.12, -0.22);
+    curl(ctx, 0.085, -0.19, 0.04, -0.3, 1.1, -1);
+    ctx.stroke();
+    // yapraklar
+    for (const [x, y, a] of [[0.17, 0.215, -0.5], [0.3, 0.13, -1.2], [0.07, -0.08, -2.4]] as const) {
+      ctx.save();
+      ctx.translate(x, y);
+      ctx.rotate(a);
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(0.04, -0.025, 0.08, 0);
+      ctx.quadraticCurveTo(0.04, 0.025, 0, 0);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+  // orta lale ve sap
   ctx.save();
-  ctx.translate(CX, sy - 2.5);
-  ctx.scale(13, 13);
-  ctx.fillStyle = goldGradient(ctx, -0.7, 0.5);
+  ctx.translate(0, -0.2);
+  ctx.scale(0.2, 0.2);
   ctx.fill(k.shapes.tulip);
   ctx.restore();
-  ctx.save();
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 0.9;
   ctx.beginPath();
-  ctx.moveTo(CX, sy + 4);
-  ctx.bezierCurveTo(CX - 0.5, sy + 7, CX + 0.5, sy + 9, CX, sy + 11);
+  ctx.moveTo(0, -0.1);
+  ctx.lineTo(0, 0.25);
   ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0.29, 0.022, 0, Math.PI * 2);
+  ctx.fill();
   ctx.restore();
-  ctx.restore();
+}
 
-  // yazı: KAHVEHANE
-  const by = 112;
-  const hw = k.wordmark.width / 2 + 2.2;
+function drawContain(ctx: Ctx, img: HTMLImageElement, cx: number, cy: number, w: number, h: number): void {
+  const s = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+  const dw = img.naturalWidth * s, dh = img.naturalHeight * s;
   ctx.save();
-  ctx.strokeStyle = 'rgba(150,112,40,0.85)';
-  ctx.lineWidth = 0.4;
-  ctx.beginPath();
-  ctx.moveTo(CX - hw, by - 6.2);
-  ctx.lineTo(CX + hw, by - 6.2);
-  ctx.moveTo(CX - hw, by + 2.4);
-  ctx.lineTo(CX + hw, by + 2.4);
-  ctx.stroke();
-  ctx.fillStyle = GOLD_DARK;
-  for (const x of [CX - hw - 2, CX + hw + 2]) {
-    ctx.beginPath();
-    ctx.moveTo(x, by - 3.9);
-    ctx.lineTo(x + 1.2, by - 1.9);
-    ctx.lineTo(x, by + 0.1);
-    ctx.lineTo(x - 1.2, by - 1.9);
-    ctx.closePath();
-    ctx.fill();
-  }
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, cx - dw / 2, cy - dh / 2, dw, dh);
   ctx.restore();
-  drawLabel(ctx, k.wordmark, CX, by, INK_BLACK);
+}
+
+/** Kaynak dikdörtgeni hedefe "cover" sığdırır (taşan kısım kesilir; dikeyde üst tarafa ağırlık). */
+function drawCover(ctx: Ctx, img: CanvasImageSource, src: Rect, dst: Rect, focusY = 0.35): void {
+  const ta = dst.w / dst.h, sa = src.w / src.h;
+  let {x, y, w, h} = src;
+  if (sa > ta) {
+    const nw = h * ta;
+    x += (w - nw) / 2;
+    w = nw;
+  } else {
+    const nh = w / ta;
+    y += (h - nh) * focusY;
+    h = nh;
+  }
+  ctx.save();
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(img, x, y, w, h, dst.x, dst.y, dst.w, dst.h);
+  ctx.restore();
 }
 
 // ───────────────────────── papaz / kız / vale ─────────────────────────
-interface CourtStyle {
-  top: string;
-  mid: string;
-  bot: string;
-  pattern: string;
-  frame: Fill;
-  letter: 'gold' | 'dark';
-}
-
-function archPath(inset: number): Path2D {
-  const hw = 24.4 - inset;
-  const sh = 15.5;
-  const ap = 12.4 + inset * 1.25;
-  const p = new Path2D();
-  const k1 = 24, k2 = 5.8, k3 = 11.5;
-  p.moveTo(CX - hw, CY + sh);
-  p.lineTo(CX - hw, CY - sh);
-  p.bezierCurveTo(CX - hw, CY - sh - k1, CX - k2, ap + k3, CX, ap);
-  p.bezierCurveTo(CX + k2, ap + k3, CX + hw, CY - sh - k1, CX + hw, CY - sh);
-  p.lineTo(CX + hw, CY + sh);
-  p.bezierCurveTo(CX + hw, CY + sh + k1, CX + k2, UH - ap - k3, CX, UH - ap);
-  p.bezierCurveTo(CX - k2, UH - ap - k3, CX - hw, CY + sh + k1, CX - hw, CY + sh);
-  p.closePath();
-  return p;
-}
-
 function crown(ctx: Ctx, cx: number, cy: number, s: number, gold: Fill): void {
   // Papaz tacı: beş uçlu, mücevherli
   ctx.save();
@@ -808,140 +840,121 @@ function turbanCap(ctx: Ctx, cx: number, cy: number, s: number, gold: Fill): voi
   ctx.restore();
 }
 
-function rosetteLattice(): Path2D {
-  // panel deseni: çapraz ızgarada dört yapraklı küçük çiçekler (tek path)
+
+interface CourtStyle {
+  top: string;
+  bot: string;
+  pattern: string;
+  letter: 'gold' | 'dark';
+}
+
+const COURT_STYLES: Record<number, CourtStyle> = {
+  13: {top: '#8e1f35', bot: '#3a0812', pattern: 'rgba(240,200,110,0.13)', letter: 'gold'},
+  12: {top: '#2d4789', bot: '#0c1634', pattern: 'rgba(240,200,110,0.13)', letter: 'gold'},
+  11: {top: '#ecca72', bot: '#94682a', pattern: 'rgba(90,50,10,0.13)', letter: 'dark'},
+};
+
+function latticePath(): Path2D {
+  // resim alanı için ince elmas ızgara + düğüm noktaları
   const p = new Path2D();
-  const sp = 7;
-  for (let j = 0; j < UH / (sp * 0.9) + 1; j++) {
-    for (let i = 0; i < UW / sp + 1; i++) {
-      const x = CX + (i - Math.round(UW / sp / 2)) * sp + (j % 2 ? sp / 2 : 0);
-      const y = CY + (j - Math.round(UH / (sp * 0.9) / 2)) * sp * 0.9;
-      if (Math.abs(x - CX) > 26 || y < 10 || y > UH - 10) continue;
-      for (let q = 0; q < 4; q++) {
-        const a = (q * Math.PI) / 2, r = 1.9;
-        p.moveTo(x, y);
-        p.quadraticCurveTo(x + Math.cos(a - 0.6) * r, y + Math.sin(a - 0.6) * r, x + Math.cos(a) * r, y + Math.sin(a) * r);
-        p.quadraticCurveTo(x + Math.cos(a + 0.6) * r, y + Math.sin(a + 0.6) * r, x, y);
-      }
+  const sp = 7.5;
+  for (let j = 0; j * sp * 0.9 < UH + sp; j++) {
+    for (let i = -1; i * sp < UW + sp; i++) {
+      const x = i * sp + (j % 2 ? sp / 2 : 0), y = j * sp * 0.9;
+      p.moveTo(x, y - 1.6);
+      p.lineTo(x + 1.1, y);
+      p.lineTo(x, y + 1.6);
+      p.lineTo(x - 1.1, y);
+      p.closePath();
     }
   }
   return p;
 }
 
-const COURT_STYLES: Record<number, CourtStyle> = {
-  13: {top: '#8a1d33', mid: '#6a1326', bot: '#3c0913', pattern: 'rgba(230,190,100,0.16)', frame: GOLD, letter: 'gold'},
-  12: {top: '#2b4384', mid: '#1c2f62', bot: '#0d1838', pattern: 'rgba(230,190,100,0.16)', frame: GOLD, letter: 'gold'},
-  11: {top: '#e9c66e', mid: '#c99a3e', bot: '#8f6522', pattern: 'rgba(80,40,6,0.16)', frame: '#7a5418', letter: 'dark'},
-};
-
 function courtCard(k: Kit, rank: number, suit: Suit): void {
   const {ctx} = k;
-  const st = COURT_STYLES[rank];
   const jack = rank === 11;
-  const outer = k.paths.archOuter;
-  const inner = k.paths.archInner;
+  const sheet = k.art.courts[rank];
+  const box = frameBox();
 
-  // yumuşak gölge (shadowBlur yerine ucuz katmanlı çizgiler)
+  // kartın üzerine hafif oturan gölge
   ctx.save();
-  ctx.translate(0, 0.7);
-  ctx.strokeStyle = 'rgba(80,45,15,0.07)';
-  ctx.lineWidth = 3.6;
-  ctx.stroke(outer);
-  ctx.lineWidth = 2.2;
-  ctx.stroke(outer);
+  ctx.translate(0, 0.6);
+  ctx.strokeStyle = 'rgba(80,45,15,0.10)';
+  ctx.lineWidth = 2.6;
+  ctx.stroke(k.paths.frame);
   ctx.restore();
 
-  // zemin
   ctx.save();
-  ctx.clip(outer);
-  const g = ctx.createLinearGradient(0, 12, 0, UH - 12);
+  ctx.clip(k.paths.frame);
+  if (sheet) {
+    drawCover(ctx, sheet.img, sheet.rects[suit], box);
+  } else {
+    courtFallback(k, rank, suit);
+  }
+  ctx.restore();
+
+  // altın çerçeve (vale: kalın + dış ince hat)
+  ctx.save();
+  ctx.strokeStyle = k.goldEdge;
+  ctx.lineWidth = jack ? 1.5 : 1.1;
+  ctx.stroke(k.paths.frame);
+  ctx.lineWidth = 0.35;
+  ctx.globalAlpha = 0.8;
+  ctx.stroke(k.paths.frameInner);
+  if (jack) {
+    ctx.lineWidth = 0.4;
+    ctx.stroke(k.paths.frameOuter);
+  }
+  ctx.restore();
+  if (jack) sparkle(ctx, IDX.cx + 12, IDX.top + 2, 3.4);
+}
+
+function courtFallback(k: Kit, rank: number, suit: Suit): void {
+  // Görsel yokken: zengin zemin + amblem + büyük harf + takım madalyonu (köşegen kompozisyon)
+  const {ctx} = k;
+  const st = COURT_STYLES[rank];
+  const g = ctx.createLinearGradient(0, FRAME.inset, UW * 0.3, UH - FRAME.inset);
   g.addColorStop(0, st.top);
-  g.addColorStop(0.45, st.mid);
   g.addColorStop(1, st.bot);
   ctx.fillStyle = g;
   ctx.fillRect(0, 0, UW, UH);
-  // desen: çapraz ızgarada dört yapraklı çiçekler
   ctx.fillStyle = st.pattern;
-  ctx.fill(k.paths.rosettes);
-  // lamba ışığı
-  const lg = ctx.createRadialGradient(CX - 6, CY - 26, 2, CX, CY - 10, 60);
-  lg.addColorStop(0, jack ? 'rgba(255,248,215,0.45)' : 'rgba(255,225,170,0.22)');
-  lg.addColorStop(1, 'rgba(255,225,170,0)');
+  ctx.fill(k.paths.lattice);
+  const lg = ctx.createRadialGradient(60, 34, 2, 55, 50, 70);
+  lg.addColorStop(0, rank === 11 ? 'rgba(255,250,220,0.55)' : 'rgba(255,220,160,0.28)');
+  lg.addColorStop(1, 'rgba(255,220,160,0)');
   ctx.fillStyle = lg;
   ctx.fillRect(0, 0, UW, UH);
-  ctx.restore();
 
-  // çerçeve
-  ctx.save();
-  ctx.strokeStyle = st.frame;
-  ctx.lineWidth = jack ? 1.5 : 1.25;
-  ctx.stroke(outer);
-  ctx.lineWidth = 0.45;
-  ctx.strokeStyle = jack ? 'rgba(90,56,12,0.85)' : 'rgba(201,162,74,0.85)';
-  ctx.stroke(inner);
-  ctx.restore();
+  const gold = goldGradient(ctx, 16, 44);
+  if (rank === 13) crown(ctx, 61, 32, 1.1, gold);
+  else if (rank === 12) tulipCrown(k, 61, 33, 1.08, gold);
+  else turbanCap(ctx, 61, 34, 1.12, gold);
 
-  const gold = goldGradient(ctx, 24, 50);
-  // amblem
-  if (rank === 13) crown(ctx, CX, 40.5, 0.98, gold);
-  else if (rank === 12) tulipCrown(k, CX, 41.5, 0.96, gold);
-  else turbanCap(ctx, CX, 42, 1.0, gold);
-
-  // büyük harf
   const L = k.courtLetters[RANK_LABEL[rank]];
-  const base = CY + 15.5;
-  ctx.save();
-  // harf gölgesi: kaydırılmış koyu kopya
-  drawLabel(ctx, L, CX + 0.25, base + 0.8, st.letter === 'gold' ? 'rgba(10,2,4,0.45)' : 'rgba(90,60,10,0.4)');
+  const top = 56;
+  drawLabel(ctx, L, CX + 0.3, top + 0.9, st.letter === 'gold' ? 'rgba(10,2,4,0.45)' : 'rgba(90,60,10,0.4)');
   if (st.letter === 'gold') {
-    drawLabel(ctx, L, CX, base, goldGradient(ctx, base - 30, base));
+    drawLabel(ctx, L, CX, top, goldGradient(ctx, top, top + 32));
   } else {
-    const dg = ctx.createLinearGradient(0, base - 30, 0, base);
+    const dg = ctx.createLinearGradient(0, top, 0, top + 32);
     dg.addColorStop(0, '#4a0f1c');
     dg.addColorStop(1, '#22060c');
-    drawLabel(ctx, L, CX, base, dg);
+    drawLabel(ctx, L, CX, top, dg);
   }
-  ctx.restore();
 
-  // takım madalyonu
-  const my = 105.5;
+  const mx = 38, my = 112;
   ctx.save();
-  ctx.fillStyle = '#f6eedb';
-  ctx.strokeStyle = jack ? '#6d4a12' : GOLD;
+  ctx.fillStyle = '#f7efdc';
+  ctx.strokeStyle = rank === 11 ? '#6d4a12' : GOLD;
   ctx.lineWidth = 1;
   ctx.beginPath();
-  ctx.arc(CX, my, 8.6, 0, Math.PI * 2);
+  ctx.arc(mx, my, 9, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
   ctx.restore();
-  pip(k, suit, CX, my + (suit === 'C' ? 0.2 : 0.3), suit === 'D' ? 11 : 10.2);
-
-  // kemer uçlarında alem (lale goncası)
-  ctx.save();
-  ctx.fillStyle = jack ? '#8a6420' : GOLD;
-  for (let i = 0; i < 2; i++) {
-    ctx.save();
-    if (i === 1) {
-      ctx.translate(UW, UH);
-      ctx.rotate(Math.PI);
-    }
-    ctx.beginPath();
-    ctx.arc(CX, 10.6, 1.05, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(CX, 4.6);
-    ctx.bezierCurveTo(CX + 1.6, 6.4, CX + 1.6, 8.2, CX, 9.3);
-    ctx.bezierCurveTo(CX - 1.6, 8.2, CX - 1.6, 6.4, CX, 4.6);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(CX, 17.5, 0.8, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-  }
-  ctx.restore();
-
-  // vale parıltısı
-  if (jack) sparkle(ctx, IDX.cx + 11.5, IDX.top + 1.5, 3.6);
+  glossPip(k, suit, mx, my + (suit === 'C' ? 0.2 : 0.3), suit === 'D' ? 11.5 : 10.6);
 }
 
 function sparkle(ctx: Ctx, x: number, y: number, r: number): void {
@@ -959,212 +972,267 @@ function sparkle(ctx: Ctx, x: number, y: number, r: number): void {
 
 // ───────────────────────── kart arkası ─────────────────────────
 function cardBack(k: Kit): void {
+  // Krem kenar (kâğıt zemin önceden çizildi) → altın hat → zümrüt yeşili alan, altın bordür ve madalyon
   const {ctx} = k;
-  // zemin
-  const g = ctx.createRadialGradient(CX, CY, 6, CX, CY, 92);
-  g.addColorStop(0, '#7a1a2c');
-  g.addColorStop(0.55, BURGUNDY);
-  g.addColorStop(1, '#3a0912');
+  const panel = insetPath(4.4, 3.4);
+  const g = ctx.createRadialGradient(CX, CY - 8, 6, CX, CY, 88);
+  g.addColorStop(0, '#1f7150');
+  g.addColorStop(0.55, '#0f4a32');
+  g.addColorStop(1, '#06291b');
   ctx.fillStyle = g;
-  ctx.fillRect(-1, -1, UW + 2, UH + 2);
+  ctx.fill(panel);
 
-  const inner = insetPath(8.2, 2.5);
-  // desen: sekiz köşeli yıldız kafesi
+  // ince altın elmas ızgara (bordür içinde)
+  const inner = insetPath(10.2, 1.6);
   ctx.save();
   ctx.clip(inner);
-  const sp = 12.5;
-  const R = sp * 0.4;
-  const stars = new Path2D();
-  const links = new Path2D();
-  const small = new Path2D();
-  const nx = Math.ceil(UW / sp / 2) + 1, ny = Math.ceil(UH / sp / 2) + 1;
-  for (let j = -ny; j <= ny; j++) {
-    for (let i = -nx; i <= nx; i++) {
-      const x = CX + i * sp, y = CY + j * sp;
-      star8Path(stars, x, y, R);
-      // komşu yıldızlara bağlar
-      links.moveTo(x + R, y);
-      links.lineTo(x + sp - R, y);
-      links.moveTo(x, y + R);
-      links.lineTo(x, y + sp - R);
-      // hücre merkezinde küçük dörtlü yıldız
-      const mx = x + sp / 2, my = y + sp / 2;
-      const d = R * Math.SQRT1_2;
-      const q = sp * 0.16;
-      small.moveTo(mx, my - q);
-      small.lineTo(mx + q * 0.4, my - q * 0.4);
-      small.lineTo(mx + q, my);
-      small.lineTo(mx + q * 0.4, my + q * 0.4);
-      small.lineTo(mx, my + q);
-      small.lineTo(mx - q * 0.4, my + q * 0.4);
-      small.lineTo(mx - q, my);
-      small.lineTo(mx - q * 0.4, my - q * 0.4);
-      small.closePath();
-      links.moveTo(x + d, y + d);
-      links.lineTo(mx - q * 0.4, my - q * 0.4);
-      links.moveTo(x + sp - d, y + d);
-      links.lineTo(mx + q * 0.4, my - q * 0.4);
-      links.moveTo(x + d, y + sp - d);
-      links.lineTo(mx - q * 0.4, my + q * 0.4);
-      links.moveTo(x + sp - d, y + sp - d);
-      links.lineTo(mx + q * 0.4, my + q * 0.4);
-    }
-  }
-  ctx.fillStyle = 'rgba(232,180,110,0.07)';
-  ctx.fill(stars);
-  ctx.strokeStyle = 'rgba(214,174,86,0.55)';
-  ctx.lineWidth = 0.55;
-  ctx.stroke(stars);
-  ctx.strokeStyle = 'rgba(214,174,86,0.42)';
-  ctx.lineWidth = 0.45;
-  ctx.stroke(links);
-  ctx.fillStyle = 'rgba(214,174,86,0.5)';
-  ctx.fill(small);
-  // kenarlara doğru koyulaşma (göz merkezde kalsın)
-  const vg = ctx.createRadialGradient(CX, CY, 20, CX, CY, 85);
-  vg.addColorStop(0, 'rgba(40,4,10,0)');
-  vg.addColorStop(1, 'rgba(40,4,10,0.38)');
-  ctx.fillStyle = vg;
-  ctx.fillRect(0, 0, UW, UH);
+  ctx.fillStyle = 'rgba(214,176,90,0.16)';
+  ctx.fill(k.paths.lattice);
   ctx.restore();
 
-  // çerçeve
+  // bordür: dış hat, nokta/elmas dizisi, iç hat
   ctx.save();
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 1.3;
-  ctx.stroke(insetPath(5.4, 3.4));
-  ctx.lineWidth = 0.5;
+  ctx.strokeStyle = k.goldEdge;
+  ctx.lineWidth = 0.95;
+  ctx.stroke(panel);
+  ctx.lineWidth = 0.4;
+  ctx.stroke(insetPath(6.6, 2.4));
+  ctx.lineWidth = 0.7;
   ctx.stroke(inner);
-  ctx.strokeStyle = 'rgba(201,162,74,0.5)';
-  ctx.lineWidth = 0.35;
-  ctx.stroke(insetPath(3.6, 4.2));
+  ctx.fillStyle = 'rgba(222,186,98,0.9)';
+  const band = 8.4;
+  const dot = (x: number, y: number, big: boolean) => {
+    ctx.beginPath();
+    if (big) {
+      ctx.moveTo(x, y - 1.05);
+      ctx.lineTo(x + 0.75, y);
+      ctx.lineTo(x, y + 1.05);
+      ctx.lineTo(x - 0.75, y);
+      ctx.closePath();
+    } else ctx.arc(x, y, 0.38, 0, Math.PI * 2);
+    ctx.fill();
+  };
+  const nxs = 12, nys = 18;
+  for (let i = 0; i <= nxs; i++) {
+    const x = band + ((UW - band * 2) * i) / nxs;
+    dot(x, band, i % 2 === 0);
+    dot(x, UH - band, i % 2 === 0);
+  }
+  for (let i = 1; i < nys; i++) {
+    const y = band + ((UH - band * 2) * i) / nys;
+    dot(band, y, i % 2 === 0);
+    dot(UW - band, y, i % 2 === 0);
+  }
   ctx.restore();
 
-  // köşebentler
+  const gold = goldGradient(ctx, CY - 40, CY + 40);
+  // köşe yelpazeleri
   ctx.save();
-  for (const [x, y, a] of [[8.2, 8.2, 0], [UW - 8.2, 8.2, Math.PI / 2], [UW - 8.2, UH - 8.2, Math.PI], [8.2, UH - 8.2, -Math.PI / 2]] as const) {
+  ctx.strokeStyle = gold;
+  ctx.fillStyle = gold;
+  ctx.lineWidth = 0.6;
+  for (const [x, y, a] of [[10.2, 10.2, 0], [UW - 10.2, 10.2, Math.PI / 2], [UW - 10.2, UH - 10.2, Math.PI], [10.2, UH - 10.2, -Math.PI / 2]] as const) {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(a);
-    const kp = new Path2D();
-    kp.moveTo(0, 0);
-    kp.lineTo(13, 0);
-    kp.bezierCurveTo(12, 6, 6, 12, 0, 13);
-    kp.closePath();
-    ctx.fillStyle = '#4a0d18';
-    ctx.fill(kp);
-    ctx.strokeStyle = GOLD;
-    ctx.lineWidth = 0.6;
-    ctx.stroke(kp);
-    ctx.fillStyle = GOLD;
-    ctx.save();
-    ctx.translate(4.4, 4.4);
-    ctx.rotate(-Math.PI / 4);
-    ctx.scale(6.2, 6.2);
+    ctx.beginPath();
+    ctx.arc(0, 0, 10, 0, Math.PI / 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.arc(0, 0, 7.8, 0, Math.PI / 2);
+    ctx.stroke();
+    ctx.translate(3.6, 3.6);
+    ctx.rotate(-Math.PI * 0.75);
+    ctx.scale(6, 6);
     ctx.fill(k.shapes.tulip);
     ctx.restore();
+  }
+  ctx.restore();
+
+  // madalyon üstü/altı lale demetleri
+  ctx.save();
+  ctx.fillStyle = gold;
+  ctx.strokeStyle = gold;
+  ctx.lineCap = 'round';
+  for (const d of [-1, 1]) {
+    ctx.save();
+    ctx.translate(CX, CY + d * 33);
+    if (d > 0) ctx.rotate(Math.PI);
+    ctx.save();
+    ctx.scale(12, 12);
+    ctx.fill(k.shapes.tulip);
+    ctx.restore();
+    ctx.lineWidth = 0.8;
+    for (const m of [-1, 1]) {
+      ctx.beginPath();
+      ctx.moveTo(0, 7);
+      ctx.bezierCurveTo(m * 6, 9, m * 12, 6, m * 13, 0);
+      curl(ctx, m * 10.6, -0.4, 2.4, m > 0 ? 0 : Math.PI, 0.9, m > 0 ? -1 : 1);
+      ctx.stroke();
+      ctx.save();
+      ctx.translate(m * 6.5, 9.2);
+      ctx.rotate(m * 0.35);
+      ctx.beginPath();
+      ctx.moveTo(-m * 3.4, 0);
+      ctx.quadraticCurveTo(0, -1.6, m * 3.4, 0);
+      ctx.quadraticCurveTo(0, 1.6, -m * 3.4, 0);
+      ctx.fill();
+      ctx.restore();
+    }
     ctx.restore();
   }
   ctx.restore();
 
-  // salbekler (madalyon üstü/altı damla)
+  // merkez madalyon: halka + 12 yapraklı rozet
   ctx.save();
-  for (const d of [-1, 1]) {
-    const p = new Path2D();
-    const y0 = CY + d * 22;
-    p.moveTo(CX - 7, y0);
-    p.bezierCurveTo(CX - 6, y0 + d * 6, CX - 2, y0 + d * 9, CX, y0 + d * 14);
-    p.bezierCurveTo(CX + 2, y0 + d * 9, CX + 6, y0 + d * 6, CX + 7, y0);
-    p.closePath();
-    ctx.fillStyle = '#4a0d18';
-    ctx.fill(p);
-    ctx.strokeStyle = GOLD;
-    ctx.lineWidth = 0.7;
-    ctx.stroke(p);
-    ctx.fillStyle = GOLD;
-    ctx.beginPath();
-    ctx.arc(CX, y0 + d * 7.5, 1.3, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
-
-  // merkez madalyon: 16 dilimli rozet
-  ctx.save();
-  const med = new Path2D();
-  const n = 16, r0 = 21.5, r1 = 24;
-  for (let i = 0; i <= n; i++) {
-    const a = (i / n) * Math.PI * 2 - Math.PI / 2;
-    const am = a + Math.PI / n;
-    const x = CX + Math.cos(a) * r0, y = CY + Math.sin(a) * r0;
-    if (i === 0) med.moveTo(x, y);
-    else med.lineTo(x, y);
-    if (i < n) {
-      med.quadraticCurveTo(CX + Math.cos(am) * r1 * 1.08, CY + Math.sin(am) * r1 * 1.08, CX + Math.cos(a + (2 * Math.PI) / n) * r0, CY + Math.sin(a + (2 * Math.PI) / n) * r0);
-    }
-  }
-  med.closePath();
-  ctx.shadowColor = 'rgba(0,0,0,0.5)';
-  ctx.shadowBlur = 3 * ctx.getTransform().a;
-  const mg = ctx.createRadialGradient(CX, CY - 6, 2, CX, CY, 25);
-  mg.addColorStop(0, '#7e1b2f');
-  mg.addColorStop(1, '#3d0a14');
+  const mg = ctx.createRadialGradient(CX, CY - 4, 2, CX, CY, 19);
+  mg.addColorStop(0, '#16603f');
+  mg.addColorStop(1, '#073020');
   ctx.fillStyle = mg;
-  ctx.fill(med);
-  ctx.shadowColor = 'transparent';
-  ctx.strokeStyle = GOLD;
-  ctx.lineWidth = 1.1;
-  ctx.stroke(med);
-  ctx.lineWidth = 0.45;
   ctx.beginPath();
-  ctx.arc(CX, CY, 18.6, 0, Math.PI * 2);
+  ctx.arc(CX, CY, 18.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = gold;
+  ctx.lineWidth = 1.2;
   ctx.stroke();
-  ctx.restore();
-
-  // lale amblemi
-  ctx.save();
-  const tg = goldGradient(ctx, CY - 15, CY + 14);
-  ctx.fillStyle = tg;
-  ctx.strokeStyle = tg;
-  // sap ve yapraklar
-  ctx.lineWidth = 1.1;
-  ctx.lineCap = 'round';
+  ctx.lineWidth = 0.4;
   ctx.beginPath();
-  ctx.moveTo(CX, CY - 1);
-  ctx.bezierCurveTo(CX - 0.6, CY + 5, CX + 0.6, CY + 9, CX, CY + 13);
+  ctx.arc(CX, CY, 16.4, 0, Math.PI * 2);
   ctx.stroke();
-  for (const m of [-1, 1]) {
+  ctx.fillStyle = gold;
+  for (let i = 0; i < 12; i++) {
+    ctx.save();
+    ctx.translate(CX, CY);
+    ctx.rotate((i * Math.PI) / 6);
     ctx.beginPath();
-    ctx.moveTo(CX, CY + 12);
-    ctx.bezierCurveTo(CX + m * 3, CY + 8, CX + m * 7, CY + 6, CX + m * 10, CY + 1);
-    ctx.bezierCurveTo(CX + m * 8, CY + 7, CX + m * 4, CY + 10, CX, CY + 13.5);
-    ctx.closePath();
+    ctx.moveTo(0, -3.4);
+    ctx.bezierCurveTo(2.6, -6.5, 2.2, -11.5, 0, -14);
+    ctx.bezierCurveTo(-2.2, -11.5, -2.6, -6.5, 0, -3.4);
     ctx.fill();
+    ctx.restore();
   }
-  ctx.translate(CX, CY - 6.5);
-  ctx.scale(14, 14);
-  ctx.fill(k.shapes.tulip);
-  ctx.fillStyle = '#7e1b2f';
+  ctx.fillStyle = '#0a3a27';
   ctx.beginPath();
-  ctx.moveTo(0, 0.3);
-  ctx.bezierCurveTo(-0.09, 0.1, -0.07, -0.3, 0, -0.5);
-  ctx.bezierCurveTo(0.07, -0.3, 0.09, 0.1, 0, 0.3);
+  ctx.arc(CX, CY, 4.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = gold;
+  ctx.beginPath();
+  ctx.arc(CX, CY, 2.6, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
+}
+
+// ───────────────────────── görseller ─────────────────────────
+function loadImage(url: string, timeoutMs: number): Promise<HTMLImageElement | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    let done = false;
+    const finish = (ok: boolean) => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      resolve(ok && img.naturalWidth > 0 ? img : null);
+    };
+    const timer = setTimeout(() => finish(false), timeoutMs);
+    img.onload = () => finish(true);
+    img.onerror = () => finish(false);
+    img.decoding = 'async';
+    img.src = url;
+  });
+}
+
+/** 2×2 sayfayı dörde böler ve her çeyrekte krem zemini kırpar (küçültülmüş kopya üzerinde analiz). */
+function sliceSheet(img: HTMLImageElement): Record<Suit, Rect> {
+  const W = img.naturalWidth, H = img.naturalHeight;
+  const aw = 200, ah = Math.max(8, Math.round((aw * H) / W));
+  const c = document.createElement('canvas');
+  c.width = aw;
+  c.height = ah;
+  const g = c.getContext('2d', {willReadFrequently: true})!;
+  g.drawImage(img, 0, 0, aw, ah);
+  const d = g.getImageData(0, 0, aw, ah).data;
+  c.width = c.height = 0;
+  const out = {} as Record<Suit, Rect>;
+  const order: Suit[] = ['S', 'H', 'D', 'C']; // sol üst, sağ üst, sol alt, sağ alt
+  order.forEach((suit, q) => {
+    const ins = 0.02;
+    const qx = (q % 2) * (aw / 2), qy = Math.floor(q / 2) * (ah / 2), qw = aw / 2, qh = ah / 2;
+    const x0 = Math.round(qx + qw * ins), x1 = Math.round(qx + qw * (1 - ins));
+    const y0 = Math.round(qy + qh * ins), y1 = Math.round(qy + qh * (1 - ins));
+    // zemin rengi: çeyrek kenar halkasının medyanı
+    const rs: number[] = [], gs: number[] = [], bs: number[] = [];
+    const sample = (x: number, y: number) => {
+      const o = (y * aw + x) * 4;
+      rs.push(d[o]);
+      gs.push(d[o + 1]);
+      bs.push(d[o + 2]);
+    };
+    for (let x = x0; x < x1; x += 2) {
+      sample(x, y0);
+      sample(x, y1 - 1);
+    }
+    for (let y = y0; y < y1; y += 2) {
+      sample(x0, y);
+      sample(x1 - 1, y);
+    }
+    const med = (a: number[]) => a.sort((m, n) => m - n)[a.length >> 1];
+    const br = med(rs), bgc = med(gs), bb = med(bs);
+    const cols = new Array<number>(x1 - x0).fill(0), rows = new Array<number>(y1 - y0).fill(0);
+    for (let y = y0; y < y1; y++) {
+      for (let x = x0; x < x1; x++) {
+        const o = (y * aw + x) * 4;
+        const diff = Math.max(Math.abs(d[o] - br), Math.abs(d[o + 1] - bgc), Math.abs(d[o + 2] - bb));
+        if (d[o + 3] > 128 && diff > 38) {
+          cols[x - x0]++;
+          rows[y - y0]++;
+        }
+      }
+    }
+    const span = (arr: number[], min: number): [number, number] => {
+      let a = 0, b = arr.length - 1;
+      while (a < b && arr[a] < min) a++;
+      while (b > a && arr[b] < min) b--;
+      return [a, b + 1];
+    };
+    const [cx0, cx1] = span(cols, Math.max(2, (y1 - y0) * 0.04));
+    const [ry0, ry1] = span(rows, Math.max(2, (x1 - x0) * 0.04));
+    let r: Rect = {x: x0, y: y0, w: x1 - x0, h: y1 - y0};
+    if (cx1 - cx0 > (x1 - x0) * 0.3 && ry1 - ry0 > (y1 - y0) * 0.3) {
+      r = {x: x0 + cx0, y: y0 + ry0, w: cx1 - cx0, h: ry1 - ry0};
+    }
+    // kalan krem kenar için küçük içe pay
+    const px = r.w * 0.015, py = r.h * 0.015;
+    out[suit] = {x: ((r.x + px) * W) / aw, y: ((r.y + py) * H) / ah, w: ((r.w - 2 * px) * W) / aw, h: ((r.h - 2 * py) * H) / ah};
+  });
+  return out;
+}
+
+async function loadArt(urls: CardArtUrls): Promise<Art> {
+  const T = 6000;
+  const [j, q, kk, back, ace] = await Promise.all([
+    urls.jacks ? loadImage(urls.jacks, T) : null,
+    urls.queens ? loadImage(urls.queens, T) : null,
+    urls.kings ? loadImage(urls.kings, T) : null,
+    urls.back ? loadImage(urls.back, T) : null,
+    urls.aceSpade ? loadImage(urls.aceSpade, T) : null,
+  ]);
+  const courts: Art['courts'] = {};
+  for (const [rank, img] of [[11, j], [12, q], [13, kk]] as const) {
+    if (img) courts[rank] = {img, rects: sliceSheet(img)};
+  }
+  return {courts, back, aceSpade: ace};
 }
 
 // ───────────────────────── fontlar ─────────────────────────
 async function ensureFonts(): Promise<void> {
   if (typeof document === 'undefined' || !('fonts' in document)) return;
-  const loads = Promise.all([
-    document.fonts.load(`900 64px "Playfair Display"`, 'AKQJ0123456789'),
-    document.fonts.load(`800 64px Inter`, 'AKQJ0123456789'),
-  ]).catch(() => undefined);
+  const loads = document.fonts.load(`900 64px "Playfair Display"`, 'AKQJ0123456789').catch(() => undefined);
   await Promise.race([loads, new Promise((r) => setTimeout(r, 3000))]);
 }
 
 // ───────────────────────── atlas ─────────────────────────
-export async function buildCardAtlas(width: number): Promise<CardAtlas> {
-  await ensureFonts();
+export async function buildCardAtlas(width: number, artOverride?: CardArtUrls): Promise<CardAtlas> {
+  const [, art] = await Promise.all([ensureFonts(), loadArt({...discoverArt(), ...artOverride})]);
   const W = Math.max(8, Math.round(width));
   const H = Math.round(W * 1.25);
   const canvas = document.createElement('canvas');
@@ -1174,6 +1242,7 @@ export async function buildCardAtlas(width: number): Promise<CardAtlas> {
   // GPU bağlamı kaybında içerik silinmez; WebGL'e normal piksel yüklemesiyle gider.
   const ctx = canvas.getContext('2d', {willReadFrequently: true})!;
   ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
   const cellW = W / ATLAS_COLS;
   const cellH = H / ATLAS_ROWS;
   const sx = cellW / UW, sy = cellH / UH;
@@ -1183,30 +1252,42 @@ export async function buildCardAtlas(width: number): Promise<CardAtlas> {
   const labels: Label[] = [];
   for (let r = 1; r <= 13; r++) {
     const t = RANK_LABEL[r];
-    labels[r] = layoutLabel(ctx, t, IDX.family, IDX.weight, IDX.capH, t.length > 1 ? IDX.maxW10 : IDX.maxW, -0.04);
+    labels[r] = layoutLabel(ctx, t, SERIF, 900, IDX.capH, t.length > 1 ? IDX.maxW10 : IDX.maxW, t.length > 1 ? -0.02 : 0, true);
   }
   const courtLetters: Record<string, Label> = {};
-  for (const t of ['J', 'Q', 'K']) courtLetters[t] = layoutLabel(ctx, t, SERIF, 900, 30.5, 40, 0);
-  const wordmark = layoutLabel(ctx, 'KAHVEHANE', SERIF, 900, 4.4, 32, 0.34);
+  for (const t of ['J', 'Q', 'K']) courtLetters[t] = layoutLabel(ctx, t, SERIF, 900, 31, 40, 0, false);
 
-  const red = ctx.createLinearGradient(0, -0.6, 0, 0.6);
-  red.addColorStop(0, '#c3183a');
-  red.addColorStop(1, '#9c0f26');
-  const black = ctx.createLinearGradient(0, -0.6, 0, 0.6);
-  black.addColorStop(0, '#2a231f');
-  black.addColorStop(1, '#100c0a');
-  // pip() bu gradyanları birim uzayda kullanır (ölçekli dönüşümle); indeks yazıları düz mürekkep rengindedir
+  // birim uzayda (pip ölçeğinde) parlak mürekkep
+  const red = ctx.createLinearGradient(0, -0.55, 0, 0.55);
+  red.addColorStop(0, '#d92a48');
+  red.addColorStop(0.5, '#b3132e');
+  red.addColorStop(1, '#7e0a1d');
+  const black = ctx.createLinearGradient(0, -0.55, 0, 0.55);
+  black.addColorStop(0, '#433a34');
+  black.addColorStop(0.5, '#1a1513');
+  black.addColorStop(1, '#050403');
+  const sheen = ctx.createLinearGradient(0, -0.6, 0, 0.05);
+  sheen.addColorStop(0, 'rgba(255,255,255,0.36)');
+  sheen.addColorStop(1, 'rgba(255,255,255,0)');
+  // tasarım uzayında metalik altın (çapraz)
+  const goldEdge = ctx.createLinearGradient(0, 0, UW, UH);
+  goldEdge.addColorStop(0, '#e9cf7f');
+  goldEdge.addColorStop(0.3, '#b98b36');
+  goldEdge.addColorStop(0.55, '#e6c873');
+  goldEdge.addColorStop(0.8, '#a67b2c');
+  goldEdge.addColorStop(1, '#d9b860');
+
   const kit: Kit = {
-    ctx, shapes, labels, courtLetters, wordmark,
-    ink: {red, black},
+    ctx, shapes, labels, courtLetters, art,
+    gloss: {red, black},
+    sheen,
+    goldEdge,
     paths: {
-      border3_1: insetPath(3.1),
-      border3_3: insetPath(3.3),
-      border4_5: insetPath(4.5),
-      archOuter: archPath(0),
-      archInner: archPath(2.3),
-      archHair: archPath(1.2),
-      rosettes: rosetteLattice(),
+      edge: insetPath(2.9),
+      frame: framePath(0),
+      frameInner: framePath(1.7),
+      frameOuter: framePath(-1.4),
+      lattice: latticePath(),
     },
   };
   const paperTile = makePaperTile(cellW, cellH, grainTile);
@@ -1220,20 +1301,24 @@ export async function buildCardAtlas(width: number): Promise<CardAtlas> {
     ctx.beginPath();
     ctx.rect(px0, py0, Math.round(x0 + cellW) - px0, Math.round(y0 + cellH) - py0);
     ctx.clip();
-    if (id === BACK_INDEX) {
+    if (id === BACK_INDEX && art.back) {
       ctx.setTransform(sx, 0, 0, sy, x0, y0);
-      cardBack(kit);
+      const b = art.back;
+      drawCover(ctx, b, {x: 0, y: 0, w: b.naturalWidth, h: b.naturalHeight}, {x: -0.5, y: -0.5, w: UW + 1, h: UH + 1}, 0.5);
     } else {
-      const suit = SUITS[Math.floor(id / 13)];
-      const rank = (id % 13) + 1;
       ctx.drawImage(paperTile, Math.floor(x0), Math.floor(y0));
       ctx.setTransform(sx, 0, 0, sy, x0, y0);
-      innerBorder(kit, rank === 11);
-      cornerFlourish(kit, rank === 11);
-      if (rank === 1) aceCard(kit, suit);
-      else if (rank <= 10) numberCard(kit, rank, suit);
-      else courtCard(kit, rank, suit);
-      indexCorner(kit, rank, suit, isRed(suit) ? INK_RED : INK_BLACK);
+      if (id === BACK_INDEX) {
+        cardBack(kit);
+      } else {
+        const suit = SUITS[Math.floor(id / 13)];
+        const rank = (id % 13) + 1;
+        drawGoldEdge(kit, rank === 11);
+        if (rank === 1) aceCard(kit, suit);
+        else if (rank <= 10) numberCard(kit, rank, suit);
+        else courtCard(kit, rank, suit);
+        indexCorner(kit, rank, suit);
+      }
     }
     ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -1242,63 +1327,4 @@ export async function buildCardAtlas(width: number): Promise<CardAtlas> {
   grainTile.width = grainTile.height = 0;
   paperTile.width = paperTile.height = 0;
   return {canvas, width: W, height: H, cellW, cellH};
-}
-
-// ───────────────────────── indeksler ─────────────────────────
-function indexCorner(k: Kit, rank: number, suit: Suit, color: string): void {
-  const {ctx} = k;
-  const L = k.labels[rank];
-  const base = IDX.top + IDX.capH;
-  const pipY = base + IDX.gap + IDX.pipW * 0.5;
-  // dar etiketler sabit eksende; "10" sol kenara hizalanır ve takım işareti onun altında ortalanır
-  const cx = L.width > IDX.maxW + 0.01 ? IDX.left + L.width / 2 : IDX.cx;
-  for (let i = 0; i < 2; i++) {
-    ctx.save();
-    if (i === 1) {
-      ctx.translate(UW, UH);
-      ctx.rotate(Math.PI);
-    }
-    drawLabel(ctx, L, cx, base, color);
-    pip(k, suit, Math.min(cx, IDX.cx + 0.6), pipY, IDX.pipW, false, color);
-    ctx.restore();
-  }
-}
-
-/** Boş köşelerde (sağ üst, sol alt) ince altın köşebent. */
-function cornerFlourish(k: Kit, jack: boolean): void {
-  const {ctx} = k;
-  ctx.save();
-  const col = jack ? 'rgba(176,132,46,0.85)' : 'rgba(170,128,48,0.62)';
-  ctx.strokeStyle = col;
-  ctx.fillStyle = col;
-  ctx.lineWidth = 0.5;
-  for (let i = 0; i < 2; i++) {
-    ctx.save();
-    if (i === 1) {
-      ctx.translate(UW, UH);
-      ctx.rotate(Math.PI);
-    }
-    const x = UW - 3.3, y = 3.3;
-    ctx.beginPath();
-    ctx.arc(x, y, 12.5, Math.PI / 2, Math.PI);
-    ctx.stroke();
-    ctx.lineWidth = 0.3;
-    ctx.beginPath();
-    ctx.arc(x, y, 10.6, Math.PI / 2, Math.PI);
-    ctx.stroke();
-    // köşeye bakan küçük lale
-    ctx.save();
-    ctx.translate(x - 5.6, y + 5.6);
-    ctx.rotate(-Math.PI * 0.75);
-    ctx.scale(5.4, 5.4);
-    ctx.fill(k.shapes.tulip);
-    ctx.restore();
-    for (const a of [0.62, 0.88]) {
-      ctx.beginPath();
-      ctx.arc(x + Math.cos(Math.PI / 2 + a * Math.PI / 2) * 14.2, y + Math.sin(Math.PI / 2 + a * Math.PI / 2) * 14.2, 0.55, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-  ctx.restore();
 }

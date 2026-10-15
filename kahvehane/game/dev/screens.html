@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<title>Kahvehane — Ekran Galerisi</title>
+<style>
+  html, body { margin: 0; background: #0d0804; }
+  /* Masa taklidi (yalnız galeri): tam ekran çuha + birkaç CSS kart. Gerçek oyunda 3B masa çizilir. */
+  .mock { position: fixed; inset: 0; overflow: hidden; background: radial-gradient(ellipse 75% 70% at 50% 46%, #2e7a45 0%, #1f6236 45%, #154a28 80%, #0d331b 100%); }
+  .mock::before { content: ''; position: absolute; inset: 0; background: url('../assets/ui/noise.svg'); opacity: .55; }
+  .mock .c { position: absolute; width: 11.5vh; height: 16.3vh; border-radius: 1.2vh; background: linear-gradient(180deg, #fffdf6, #efe5cf);
+    box-shadow: 0 .6vh 1.4vh rgba(0,0,0,.45), inset 0 0 0 1px rgba(80,50,10,.25); font: 900 4.6vh/1 Georgia, serif; color: #16120e; }
+  .mock .c.r { color: #c2202f; }
+  .mock .c b { position: absolute; left: 9%; top: 6%; text-align: center; }
+  .mock .c b small { display: block; font-size: .8em; }
+  .mock .c i { position: absolute; right: 9%; bottom: 6%; font-style: normal; font-size: 6vh; }
+  .mock .c.bk { background: repeating-linear-gradient(45deg, #1f5a35 0 .5vh, #164628 .5vh 1vh); box-shadow: 0 .4vh 1vh rgba(0,0,0,.45), inset 0 0 0 .35vh #e8c06a; }
+  .mock .c.bk > * { display: none; }
+  .mock .hand .c { width: 19vh; height: 27vh; font-size: 7vh; border-radius: 1.8vh; }
+  .mock .hand .c i { font-size: 10vh; }
+  .mock .opp .c { width: 7vh; height: 10vh; }
+  .gal { position: fixed; inset: 0; overflow: auto; padding: 20px; color: #f4e7cc; font: 15px/1.5 system-ui, sans-serif; background: #120a05; touch-action: auto; }
+  .gal a { display: inline-block; margin: 4px 8px 4px 0; padding: 8px 12px; border: 1px solid #c9a24a; border-radius: 8px; color: #f5d27a; text-decoration: none; }
+  .gal h1 { font-size: 18px; margin: 0 0 10px; }
+</style>
+</head>
+<body>
+<script type="module" src="./screens.ts"></script>
+</body>
+</html>

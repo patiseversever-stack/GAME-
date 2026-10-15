@@ -183,7 +183,7 @@
 
   /* ---- başlıklar ---- */
   --title-fill: var(--text-gold);
-  --title-shadow: drop-shadow(0 2px 0 rgba(74, 37, 5, .95)) drop-shadow(0 6px 14px rgba(0, 0, 0, .5));
+  --title-shadow: drop-shadow(0 6px 12px rgba(0, 0, 0, .45));
   --title-stroke: 0px transparent;
 
   /* ---- lobi rakip kartı, alt menü ---- */
