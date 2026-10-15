@@ -327,19 +327,21 @@ const SEAT_NAME = ['Sen', 'Sağ', 'Karşı', 'Sol'];
 /** Kısa ad: "Rıza Amca" → "Rıza", "Kahveci Dursun" → "Dursun". */
 export const shortName = (c: CharDef): string => c.name.replace(/^Kahveci\s+/, '').split(' ')[0];
 
-/** Mod sekmesindeki küçük masa şeması (koltuklar, sıra halkası koltuktan koltuğa geçer). */
+/** Mod sekmesindeki küçük yuvarlak masa şeması (üstten): koltuklar, ortada iki kart; sıra halkası koltuktan koltuğa geçer. */
 function diagram(mode: Mode): string {
-  const P = [[32, 40], [58, 22], [32, 4], [6, 22]]; // alt, sağ, üst, sol (saat yönünün tersine)
+  const P = [[24, 43], [43, 24], [24, 5], [5, 24]]; // alt, sağ, üst, sol (saat yönünün tersine)
   const seats = mode === '1v1' ? [0, 2] : [0, 1, 2, 3];
   const col = (s: number) => (s === 0 ? '#ffd23f' : mode === 'esli' ? (s === 2 ? '#3d93ff' : '#ff4d66') : ['#ffd23f', '#ff4d66', '#16c45b', '#3d93ff'][s]);
-  const ring = mode === 'esli' ? '<path d="M32 9V35" stroke="#7fc0ff" stroke-width="2" stroke-dasharray="3 3" opacity=".8"/>' : '';
-  return `<svg class="kh-dg is-${mode}" viewBox="0 0 64 44" aria-hidden="true">
-    <rect x="13" y="8" width="38" height="28" rx="11" fill="url(#khdgf)" stroke="#0a1033" stroke-width="2.5"/>
-    <rect x="27" y="17" width="6" height="9" rx="1.5" fill="#fff" stroke="#0a1033" stroke-width="1.2" transform="rotate(-10 30 21)"/>
-    <rect x="31" y="17" width="6" height="9" rx="1.5" fill="#fff" stroke="#0a1033" stroke-width="1.2" transform="rotate(8 34 21)"/>
-    ${ring}
-    ${seats.map(s => `<circle cx="${P[s][0]}" cy="${P[s][1]}" r="4.6" fill="${col(s)}" stroke="#0a1033" stroke-width="2"/>`).join('')}
-    <circle class="kh-dg__turn" cx="0" cy="0" r="7.4" fill="none" stroke="#fff" stroke-width="2"/>
+  const link = mode === 'esli' ? '<path d="M24 11V37" stroke="#7fc0ff" stroke-width="2.4" stroke-dasharray="3 2.6" stroke-linecap="round"/>' : '';
+  return `<svg class="kh-dg is-${mode}" viewBox="0 0 48 48" aria-hidden="true">
+    <circle cx="24" cy="24" r="15" fill="url(#khdgf)" stroke="#0a1033" stroke-width="2.6"/>
+    <circle cx="24" cy="24" r="10.5" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.2"/>
+    ${link}
+    <rect x="18.5" y="19" width="6" height="8.6" rx="1.4" fill="#fff" stroke="#0a1033" stroke-width="1.2" transform="rotate(-12 21.5 23.3)"/>
+    <rect x="23.5" y="19.4" width="6" height="8.6" rx="1.4" fill="#fff" stroke="#0a1033" stroke-width="1.2" transform="rotate(10 26.5 23.7)"/>
+    <path d="M26.5 21.6c.9-1.3 2.6-.5 2.1.9-.3.9-2.1 2-2.1 2s-1.8-1.1-2.1-2c-.5-1.4 1.2-2.2 2.1-.9z" fill="#ff2e4d" transform="rotate(10 26.5 23.7)"/>
+    ${seats.map(s => `<circle cx="${P[s][0]}" cy="${P[s][1]}" r="4.8" fill="${col(s)}" stroke="#0a1033" stroke-width="2.2"/>`).join('')}
+    <circle class="kh-dg__turn" cx="0" cy="0" r="7.6" fill="none" stroke="#fff" stroke-width="2.2"/>
   </svg>`;
 }
 
@@ -560,10 +562,10 @@ class HomePage implements Page {
     const p = this.shell.profile.data;
     const partner = charById(this.trio[1]);
     const r1 = charById(this.trio[0]), r2 = charById(this.trio[2]);
-    return `<div class="kh-teams">
-        <div class="kh-team is-blue"><span class="kh-team__avas">${charAvatarHtml(me, p.equipped.frame)}${charAvatarHtml(partner, 'standart')}</span><b>Sen + ${esc(shortName(partner))}</b></div>
-        <span class="kh-teams__vs">VS</span>
-        <div class="kh-team is-red"><span class="kh-team__avas">${charAvatarHtml(r1, 'standart')}${charAvatarHtml(r2, 'standart')}</span><b>${esc(shortName(r1))} + ${esc(shortName(r2))}</b></div>
+    return `<div class="kh-hteams">
+        <div class="kh-hteam is-blue"><span class="kh-hteam__avas">${charAvatarHtml(me, p.equipped.frame)}${charAvatarHtml(partner, 'standart')}</span><b>Sen + ${esc(shortName(partner))}</b></div>
+        <span class="kh-hteams__vs">VS</span>
+        <div class="kh-hteam is-red"><span class="kh-hteam__avas">${charAvatarHtml(r1, 'standart')}${charAvatarHtml(r2, 'standart')}</span><b>${esc(shortName(r1))} + ${esc(shortName(r2))}</b></div>
       </div>
       <button class="kh-iconbtn kh-shuf" data-act="shuffle" aria-label="Ortağını değiştir">${I.shuffle}</button>`;
   }

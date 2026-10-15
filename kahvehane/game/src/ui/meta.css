@@ -5,9 +5,9 @@
    ========================================================================== */
 
 /* ---------- karakter avatarı (çerçeve: themes/frames.css → .kh-frame--<id>) ---------- */
-.kh-ava { --as: calc(var(--u) * 3); --rw: calc(var(--as) * .075); position: relative; flex: none; display: block; width: var(--as); height: var(--as); border-radius: 50%;
-  background: var(--ring-edge); box-shadow: var(--ring-shadow); }
-.kh-ava__clip { position: absolute; inset: var(--rw); border-radius: 50%; overflow: hidden;
+/* Kap halkayı çizmez: çerçeve (frames.css ::before/::after) kabın dışına taşan halkadır; portre kabın dairesinde kırpılır. */
+.kh-ava { --as: calc(var(--u) * 3); position: relative; flex: none; display: block; width: var(--as); height: var(--as); border-radius: 50%; }
+.kh-ava__clip { position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
   background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--c, #3d93ff) 55%, #fff) 0%, var(--c, #3d93ff) 48%, color-mix(in srgb, var(--c, #3d93ff) 55%, #0a1033) 100%);
   box-shadow: 0 0 0 2px var(--navy), inset 0 3px 6px rgba(0, 0, 20, .35); }
 .kh-ava__clip::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;

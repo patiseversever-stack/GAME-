@@ -189,8 +189,7 @@
 .kh-tally__in .kh-i { width: .9em; height: .9em; color: #fff; }
 .kh-tally.is-me .kh-tally__in, .kh-tally.team-a .kh-tally__in { background: linear-gradient(180deg, #3d93ff 0%, #1259d6 100%); }
 .kh-tally.team-b .kh-tally__in { background: linear-gradient(180deg, #ff4d66 0%, #c40a2f 100%); }
-.kh-tally.is-win .kh-tally__in { background: var(--hint-fill); color: var(--navy); box-shadow: var(--hint-shadow), 0 0 26px rgba(255, 210, 63, .8); }
-.kh-tally.is-win .kh-tally__in .kh-i { color: var(--navy); }
+.kh-tally.is-win .kh-tally__in { background: var(--hint-fill); box-shadow: var(--hint-shadow), 0 0 26px rgba(255, 210, 63, .8); }
 .kh-tally__bonus { position: absolute; left: 0; top: 0; display: flex; flex-direction: column; align-items: center; will-change: transform, opacity; font-size: calc(var(--u) * 2.6); line-height: 1; }
 .kh-tally__bonus span { padding: .2em .6em .24em; margin-bottom: .15em; border-radius: var(--r-pill); background: var(--banner-fill); box-shadow: 0 0 0 2px var(--navy), 0 3px 0 var(--navy);
   color: #fff; font-family: var(--font-display); font-size: calc(var(--u) * .8); letter-spacing: .06em; text-shadow: var(--outline-thin); }

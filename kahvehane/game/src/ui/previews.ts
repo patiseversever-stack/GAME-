@@ -157,20 +157,33 @@ export function mountFx(box: HTMLElement, id: string, still = false): FxLoop {
     stage.innerHTML = '';
     const H = stage.clientHeight || box.clientHeight || 120;
     if (id === 'havai') {
-      const cols = ['#ff2e4d', '#ffd23f', '#16c45b', '#3d93ff', '#ffffff'];
-      [[30, 34, 0], [70, 26, 380], [50, 46, 760]].forEach(([x, y, d], k) => {
+      const W = stage.clientWidth || box.clientWidth || 160;
+      const cols = ['#ff2e4d', '#ffd23f', '#16c45b', '#3d93ff', '#ffffff', '#ff8af0'];
+      for (let i = 0; i < 9; i++) {
+        const st = P('is-star');
+        st.style.left = 8 + ((i * 41) % 84) + '%';
+        st.style.top = 6 + ((i * 29) % 50) + '%';
+      }
+      [[28, 30, 0], [72, 22, 380], [50, 40, 760]].forEach(([x, y, d], k) => {
         const rk = P('is-rocket');
         rk.style.left = x + '%';
         const rise = -((100 - y) / 100) * H;
         A(rk, [{transform: 'translate(-50%, 0) scaleY(1)', opacity: 1}, {transform: `translate(-50%, ${rise}px) scaleY(1.6)`, opacity: 1, offset: 0.9}, {transform: `translate(-50%, ${rise}px) scaleY(.4)`, opacity: 0}], {duration: 520, delay: d, easing: 'cubic-bezier(.2,.7,.4,1)'});
-        for (let i = 0; i < 12; i++) {
-          const a = (i / 12) * Math.PI * 2, r = 30 + (i % 2) * 8;
-          const s = P('is-spark');
-          s.style.left = x + '%';
-          s.style.top = y + '%';
-          s.style.background = cols[(i + k) % cols.length];
-          A(s, [{transform: 'translate(-50%,-50%) scale(.2)', opacity: 0}, {transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: 0.12},
-            {transform: `translate(calc(-50% + ${Math.cos(a) * r}px), calc(-50% + ${Math.sin(a) * r + 14}px)) scale(.4)`, opacity: 0}], {duration: 900, delay: d + 480, easing: 'cubic-bezier(.1,.7,.3,1)'});
+        const ring = P('is-ring');
+        ring.style.left = x + '%';
+        ring.style.top = y + '%';
+        ring.style.borderColor = cols[k % cols.length];
+        A(ring, [{transform: 'translate(-50%,-50%) scale(.1)', opacity: 0}, {transform: 'translate(-50%,-50%) scale(.6)', opacity: 1, offset: 0.2}, {transform: 'translate(-50%,-50%) scale(1.3)', opacity: 0}], {duration: 700, delay: d + 480, easing: 'ease-out'});
+        const n = 14, R = W * (0.16 + k * 0.03);
+        for (let i = 0; i < n; i++) {
+          const a = (i / n) * Math.PI * 2, r = R * (i % 2 ? 0.75 : 1);
+          const sp = P('is-spark');
+          sp.style.left = x + '%';
+          sp.style.top = y + '%';
+          sp.style.background = cols[(i + k * 2) % cols.length];
+          sp.style.color = cols[(i + k * 2) % cols.length];
+          A(sp, [{transform: 'translate(-50%,-50%) scale(.3)', opacity: 0}, {transform: 'translate(-50%,-50%) scale(1.1)', opacity: 1, offset: 0.1},
+            {transform: `translate(calc(-50% + ${(Math.cos(a) * r).toFixed(1)}px), calc(-50% + ${(Math.sin(a) * r + R * 0.35).toFixed(1)}px)) scale(.35)`, opacity: 0}], {duration: 1000, delay: d + 480, easing: 'cubic-bezier(.1,.7,.3,1)'});
         }
       });
     } else if (id === 'yildiz') {

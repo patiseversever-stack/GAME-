@@ -92,14 +92,16 @@
 .kh-fxpv__p.is-rays { left: 50%; top: 50%; width: 180%; aspect-ratio: 1; border-radius: 50%; background: var(--stamp-rays); -webkit-mask: var(--stamp-rays-mask); mask: var(--stamp-rays-mask); }
 .kh-fxpv__p.is-word { left: 50%; top: 50%; font-size: calc(var(--u) * 1.6); white-space: nowrap; }
 .kh-fxpv__p.is-conf { left: 50%; top: 50%; width: 6px; height: 9px; border-radius: 1.5px; }
-.kh-fxpv__p.is-rocket { top: 100%; width: 3px; height: 12px; border-radius: 2px; background: linear-gradient(180deg, #fff, rgba(255, 220, 120, 0)); }
-.kh-fxpv__p.is-spark { width: 6px; height: 6px; border-radius: 50%; box-shadow: 0 0 6px currentColor; }
+.kh-fxpv__p.is-rocket { top: 100%; width: 4px; height: 16px; border-radius: 2px; background: linear-gradient(180deg, #fff, rgba(255, 220, 120, 0)); }
+.kh-fxpv__p.is-spark { width: calc(var(--u) * .5); height: calc(var(--u) * .5); border-radius: 50%; box-shadow: 0 0 0 1.5px rgba(10, 16, 51, .5); }
+.kh-fxpv__p.is-ring { width: 40%; aspect-ratio: 1; border-radius: 50%; border: 3px solid; }
+.kh-fxpv__p.is-star { width: 3px; height: 3px; border-radius: 50%; background: #fff; opacity: .7; }
 .kh-fxpv__p.is-shoot { width: 60%; height: 3px; border-radius: 2px; transform-origin: 0 50%; background: linear-gradient(90deg, rgba(255, 255, 255, 0), #fff6c8 80%, #fff); }
 .kh-fxpv__p.is-twinkle { width: 12px; height: 12px; background: #fffbe0; clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
 .kh-fxpv__p.is-coin { top: 0; width: 18%; aspect-ratio: 1; }
 .kh-fxpv__p.is-coin img { width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 2px 0 rgba(10, 16, 51, .6)); }
 .kh-fxpv__p.is-goldglow { inset: 0; background: radial-gradient(ellipse at 50% 80%, rgba(255, 210, 63, .55), transparent 65%); }
-.kh-fxpv.is-havai { background: radial-gradient(ellipse at 50% 100%, rgba(60, 40, 140, .4), transparent 70%); }
+.kh-fxpv.is-havai { background: radial-gradient(ellipse at 50% 110%, rgba(255, 120, 180, .35), transparent 55%), linear-gradient(180deg, #0b0f3a 0%, #24145e 100%); }
 .kh-fxpv.is-yildiz { background: radial-gradient(ellipse at 30% 20%, rgba(255, 230, 160, .18), transparent 60%); }
 .kh-pv__ava { --as: 62%; position: absolute; left: 50%; top: 50%; width: var(--as); height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); }
 .kh-item__pv.is-frame .kh-pv__ava { --as: calc(var(--u) * 6); width: var(--as); height: var(--as); }
