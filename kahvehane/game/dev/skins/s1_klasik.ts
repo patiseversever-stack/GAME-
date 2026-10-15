@@ -4,7 +4,7 @@
 import rizaUrl from '../../assets/riza_avatar.jpg?url';
 import defneUrl from '../../assets/art/defne_avatar.jpg?url';
 import cemUrl from '../../assets/art/cem_avatar.jpg?url';
-import type {Skin, Suit} from './contract';
+import type {Skin, Suit} from '../../src/skins/contract';
 
 const KIRMIZI = '#c4122f';
 const SIYAH = '#15171c';

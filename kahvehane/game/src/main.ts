@@ -1,5 +1,6 @@
 // Giriş noktası: 2B Pişti Arena masası, kart atlası, sesler, ekranlar ve uygulama akışı.
-import {buildCardAtlas} from './render/cardAtlas';
+import {buildSkinAtlas} from './render/skinAtlas';
+import {skin as yildizli} from './skins/yildizli';
 import {Table2D} from './table2d/table';
 import {Sfx} from './audio/sfx';
 import {VoicePlayer} from './audio/voice';
@@ -44,7 +45,7 @@ async function boot(): Promise<void> {
   const splash = screens.splash();
   splash.progress(0.15);
 
-  const atlas = await buildCardAtlas(atlasWidth(tier));
+  const atlas = await buildSkinAtlas(yildizli, atlasWidth(tier));
   splash.progress(0.6);
   const table = new Table2D(document.getElementById('app')!, atlas, {
     deal: () => sfx.deal(),

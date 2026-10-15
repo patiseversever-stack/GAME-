@@ -1,6 +1,6 @@
 // Tarz 3 — "Siyah-Altın VIP": mat siyah yüz, metalik altın çerçeve, art-deco süslemeler.
 // ♠♣ altın, ♥♦ ince altın kontürlü yakut kırmızısı. Saray kartlarında karakterlerimizin altın duotone portreleri.
-import type {Skin, Suit} from './contract';
+import type {Skin, Suit} from '../../src/skins/contract';
 import rizaUrl from '../../assets/riza_avatar.jpg?url';
 import defneUrl from '../../assets/art/defne_avatar.jpg?url';
 import cemUrl from '../../assets/art/cem_avatar.jpg?url';

@@ -9,7 +9,7 @@
 //   · arka yüz: koyu lacivert, ince çizgili geometrik desen, küçük altın "PİŞTİ" monogramı, ince beyaz kenar
 // Bütün çizim "tasarım birimi" uzayında: kart genişliği 100, yüksekliği 100 / 0.7.
 import '@fontsource/inter/900.css';
-import type {Skin, Suit} from './contract';
+import type {Skin, Suit} from '../../src/skins/contract';
 
 type Ctx = CanvasRenderingContext2D;
 type Fill = string | CanvasGradient;

@@ -1,5 +1,5 @@
 // 4 kart tarzını yan yana gösterir: büyük örnekler + telefondaki gerçek boyutta el ve yığın.
-import type {Skin, Suit} from './skins/contract';
+import type {Skin, Suit} from '../src/skins/contract';
 
 const mods = import.meta.glob('./skins/s*.ts', {eager: true}) as Record<string, {skin: Skin}>;
 const only = new URLSearchParams(location.search).get('only'); // ?only=s2 → yalnız o tarz
