@@ -222,10 +222,10 @@ export class TableView {
 
   private pistiPose(seat: number, i: number): Pose {
     const S = this.layout.seats[seat];
-    // pişti kartları yığının içe doğru yanında, açık ve yan yatık sıralanır
-    const p = S.stack.clone().addScaledVector(S.pistiDir, 0.2 + i * 0.045);
-    p.y = TABLE.y + CARD.t * (i + 0.5);
-    return this.pose(p, S.yaw + Math.PI / 2 + Math.sin(i * 2.1) * 0.06, true, 0.78);
+    // pişti kartları yığının altından içe doğru açık uzanır: köşe indeksi görünür, oyuncu yönünde okunur
+    const p = S.stack.clone().addScaledVector(S.pistiDir, 0.07 + i * 0.03);
+    p.y = TABLE.y + CARD.t * (0.2 + i * 0.05);
+    return this.pose(p, -0.16 + Math.sin(i * 2.1) * 0.05, true, 0.86);
   }
 
   /** Yığını topla. pistiCard verilirse o kart açık olarak pişti sırasına gider. */

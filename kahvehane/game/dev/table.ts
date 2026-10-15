@@ -14,7 +14,7 @@ import {detectTier, qualityFor} from '../src/quality';
 
 const q = qualityFor(detectTier());
 const stage = new Stage(document.getElementById('app')!, q, CAMERA);
-await buildEnvironment(stage);
+await buildEnvironment(stage, makeLayout(2).pile);
 const cards = new CardSystem(stage, await buildCardAtlas(q.atlasWidth));
 const layout = makeLayout(2);
 const hand = new HandInput(stage, cards, () => layout.pile);

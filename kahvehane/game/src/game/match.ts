@@ -187,6 +187,7 @@ export class Match {
       await T.wait(0.35);
     } else {
       await landed;
+      ring.fire(slot.pos, cap ? 0.5 : 0.34); // arenada küçük ışık dalgası
       haptic('light');
     }
 

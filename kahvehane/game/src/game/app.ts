@@ -13,6 +13,8 @@ export interface OpponentDef extends Opponent {
 }
 
 const DAILY = [200, 300, 400, 500, 650, 800, 1500];
+/** Test için sabit deste: ?seed=123 */
+const SEED = ((v: string | null) => (v ? Number(v) | 0 : null))(new URLSearchParams(location.search).get('seed'));
 const xpNext = (lvl: number) => Math.round(120 * Math.pow(lvl, 1.35));
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -98,7 +100,7 @@ export async function runApp(d: AppDeps): Promise<void> {
       current = new Match({...d, hud: screens.hud, speak, personality: opp.personality, think: opp.think});
       dealer = 1 - dealer;
       sfx.startAmbience();
-      const res = await current.play(dealer);
+      const res = await current.play(dealer, SEED ?? undefined);
       current = null;
       if (!res) {
         saved.coins += stake; // yarıda bırakılan elin bahsi iade

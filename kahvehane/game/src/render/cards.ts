@@ -285,7 +285,7 @@ export class CardSystem {
       this.mesh.setMatrixAt(s.i, tmpM);
       // gölge: masanın üstündeki yüksekliğe göre büyür ve solar
       const hgt = s.pos.y - TABLE.y;
-      const onTable = Math.abs(s.pos.x) < 0.45 && Math.abs(s.pos.z) < 0.75 && hgt > -0.01 && hgt < 1.2;
+      const onTable = Math.abs(s.pos.x) < 1.5 && Math.abs(s.pos.z) < 1.5 && hgt > -0.01 && hgt < 1.2;
       let a = 0;
       if (onTable) a = s.flight ? clamp(0.42 - (s.pos.y - s.flight.p1.y) * 1.3, 0.05, 0.42) : s.shadow;
       const spread = 1 + clamp(hgt, 0, 0.5) * 1.6;

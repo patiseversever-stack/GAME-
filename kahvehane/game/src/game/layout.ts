@@ -1,20 +1,15 @@
-// DİKEY masa düzeni (metre). Hedef: docs/_dikey_hedef.jpg — oyuncak gibi tok, yastıklı kenarlı masa,
+// DİKEY şov alanı düzeni (metre). Kenarsız, ekranı dolduran çuha; ortada pişti arenası,
 // üstte rakip, altta oyuncunun eli. Kartlar okunurluk için gerçeğin ~2.5 katı.
 import * as THREE from 'three';
 
 export const TABLE = {
   y: 0.742, // çuha yüzeyi
-  feltW: 0.84, // çuha (iç alan)
-  feltD: 1.44,
-  feltR: 0.13, // köşe yarıçapı
-  railR: 0.042, // yastıklı kenarın kalınlığı (yarıçap)
-  woodW: 0.13, // ahşap çerçeve genişliği (rayın dışından)
 };
 
 export const CARD = {w: 0.17, h: 0.17 / 0.7, t: 0.0008};
 
 const target = new THREE.Vector3(0, TABLE.y, 0.06);
-const pitch = THREE.MathUtils.degToRad(63), dist = 2.62;
+const pitch = THREE.MathUtils.degToRad(72), dist = 2.2;
 export const CAMERA = {
   pos: target.clone().add(new THREE.Vector3(0, Math.sin(pitch) * dist, Math.cos(pitch) * dist)),
   target,
@@ -50,10 +45,10 @@ export function makeLayout(seats: 2 | 4): Layout {
   const pile = v(0, -0.02);
   if (seats === 2) {
     return {
-      pile, deck: v(-0.3, 0.02), deckYaw: 0.06, oppScale: 0.72, oppSpread: 0.125,
+      pile, deck: v(-0.33, 0.02), deckYaw: 0.06, oppScale: 0.72, oppSpread: 0.125,
       seats: [
-        {hand: v(0, 0.6), yaw: 0, stack: v(0.3, 0.3), pistiDir: dir(0, -1)},
-        {hand: v(0, -0.44), yaw: Math.PI, stack: v(0.3, -0.3), pistiDir: dir(0, 1)},
+        {hand: v(0, 0.6), yaw: 0, stack: v(0.3, 0.32), pistiDir: dir(-1, 0)},
+        {hand: v(0, -0.44), yaw: Math.PI, stack: v(0.34, -0.3), pistiDir: dir(-1, 0)},
       ],
     };
   }

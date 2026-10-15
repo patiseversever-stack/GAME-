@@ -17,6 +17,7 @@ export interface ThrowInfo {
 
 const HAND_SCALE = 0.75; // eldeki kart boyutu (masadakine göre)
 const HAND_WFRAC = 0.215; // eldeki kartın ekran genişliğindeki payı (dikey ekran)
+const HAND_HFRAC = 0.105; // geniş ekranda sınır: kart genişliği ekran yüksekliğinin bu payını geçmez
 let HAND_DIST = 0.6; // kameradan uzaklık (m), görüş açısına göre hesaplanır
 
 export class HandInput {
@@ -49,7 +50,8 @@ export class HandInput {
     cam.updateMatrixWorld();
     const tanH = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
     // kart genişliği ekran genişliğinin sabit bir payı olacak şekilde mesafe
-    HAND_DIST = (CARD.w * HAND_SCALE) / (HAND_WFRAC * 2 * tanH * cam.aspect);
+    const frac = Math.min(HAND_WFRAC, (HAND_HFRAC * this.stage.height) / Math.max(1, this.stage.width));
+    HAND_DIST = (CARD.w * HAND_SCALE) / (frac * 2 * tanH * cam.aspect);
     const vh = 2 * HAND_DIST * tanH;
     const vw = vh * cam.aspect;
     const spread = Math.min(CARD.w * HAND_SCALE * 0.9, (vw * 0.6) / Math.max(1, n));

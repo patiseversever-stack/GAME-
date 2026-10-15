@@ -11,6 +11,23 @@ html, body { margin: 0; height: 100%; background: var(--bg-app); overflow: hidde
 body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -webkit-font-smoothing: antialiased; -webkit-text-size-adjust: 100%; }
 #app { position: fixed; inset: 0; }
 #app canvas { display: block; }
+/* Şov ışığı (oyun sahnesinin üstünde, arayüzün altında). Yalnız opacity/transform animasyonu. */
+.kh-ambient { position: absolute; inset: 0; pointer-events: none; overflow: hidden; z-index: 1; }
+.kh-beam { position: absolute; top: -12%; width: 46%; height: 92%; opacity: .55; will-change: opacity;
+  background: linear-gradient(180deg, rgba(255, 226, 160, .16), rgba(255, 220, 150, .05) 55%, rgba(255, 220, 150, 0));
+  clip-path: polygon(40% 0, 60% 0, 100% 100%, 0 100%); animation: kh-beam 7s ease-in-out infinite alternate; }
+.kh-beam.is-l { left: 6%; transform: rotate(14deg); transform-origin: 50% 0; }
+.kh-beam.is-r { right: 6%; transform: rotate(-14deg); transform-origin: 50% 0; animation-delay: -3.5s; }
+@keyframes kh-beam { from { opacity: .3; } to { opacity: .7; } }
+.kh-mote { position: absolute; border-radius: 50%; background: radial-gradient(circle, rgba(255, 236, 180, .95), rgba(255, 210, 120, 0) 70%);
+  opacity: 0; will-change: transform, opacity; animation: kh-mote 14s linear infinite; }
+@keyframes kh-mote {
+  0% { transform: translate3d(0, 0, 0) scale(.6); opacity: 0; }
+  15% { opacity: .9; }
+  50% { transform: translate3d(14px, -38px, 0) scale(1); opacity: .6; }
+  85% { opacity: .85; }
+  100% { transform: translate3d(-8px, -80px, 0) scale(.7); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .kh-beam, .kh-mote { animation: none; } }
 
 .kh-ui { position: fixed; inset: 0; z-index: 60; pointer-events: none; font-family: var(--font-ui); font-weight: var(--w-body);
   font-size: var(--u); line-height: 1.25; color: var(--c-text); }

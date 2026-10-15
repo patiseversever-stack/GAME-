@@ -39,6 +39,20 @@ function opponents(): OpponentDef[] {
   ];
 }
 
+/** Şov ışığı: tepeden süzülen ışık huzmeleri ve havada asılı altın tozlar (yalnız CSS; 3B sahne yeniden çizilmez). */
+function ambience(host: HTMLElement, tier: Tier): void {
+  const el = document.createElement('div');
+  el.className = 'kh-ambient';
+  const motes = tier === 'low' ? 0 : tier === 'mid' ? 10 : 16;
+  let html = '<i class="kh-beam is-l"></i><i class="kh-beam is-r"></i>';
+  for (let i = 0; i < motes; i++) {
+    const x = 18 + Math.random() * 64, y = 8 + Math.random() * 70, s = 2 + Math.random() * 3;
+    html += `<b class="kh-mote" style="left:${x.toFixed(1)}%;top:${y.toFixed(1)}%;width:${s.toFixed(1)}px;height:${s.toFixed(1)}px;animation-delay:${(-Math.random() * 14).toFixed(1)}s;animation-duration:${(10 + Math.random() * 8).toFixed(1)}s"></b>`;
+  }
+  el.innerHTML = html;
+  host.appendChild(el);
+}
+
 async function boot(): Promise<void> {
   const settings = store.get<Settings>('settings2', {sfx: true, voice: true, music: true, haptics: true, quality: 'auto'});
   const forced = new URLSearchParams(location.search).has('q');
@@ -52,12 +66,13 @@ async function boot(): Promise<void> {
 
   const app = document.getElementById('app')!;
   const stage = new Stage(app, q, CAMERA);
-  await buildEnvironment(stage);
+  const layout = makeLayout(2);
+  await buildEnvironment(stage, layout.pile);
+  ambience(app, tier);
   splash.progress(0.4);
   const atlas = await buildCardAtlas(q.atlasWidth);
   const cards = new CardSystem(stage, atlas);
   splash.progress(0.7);
-  const layout = makeLayout(2);
   const hand = new HandInput(stage, cards, () => layout.pile);
   const table = new TableView(stage, cards, layout, hand, {
     deal: () => sfx.deal(),

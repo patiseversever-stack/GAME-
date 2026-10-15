@@ -234,7 +234,7 @@
   --stamp-rays: repeating-conic-gradient(from 0deg, rgba(255, 220, 110, .5) 0deg 4deg, rgba(255, 220, 110, 0) 4deg 13deg);
   --stamp-glow: radial-gradient(circle, rgba(255, 236, 150, .95) 0%, rgba(255, 200, 70, .5) 26%, rgba(255, 180, 50, 0) 60%);
   --stamp-rays-mask: radial-gradient(circle, #000 0%, #000 22%, transparent 66%);
-  --flash: #fff8e0;
+  --flash: radial-gradient(circle at 50% 46%, #fff8e0 0%, rgba(255, 222, 150, .75) 32%, rgba(255, 196, 96, .18) 62%, rgba(255, 190, 90, 0) 80%);
   --fx-1: #3fa9f5;
   --fx-2: #5ad94c;
   --fx-3: #ff4d6d;
