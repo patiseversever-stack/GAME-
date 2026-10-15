@@ -56,21 +56,21 @@ class Rng {
 const L = {
   slide: 0.961,
   throw: 0.4186,
-  land: 0.9866,
+  land: 1.133,
   flip: 1.836,
   deal: 0.3425,
   shuffle: 0.8049,
-  capture: 0.3751,
-  pisti: 0.28,
+  capture: 0.3188,
+  pisti: 0.308,
   coin: 0.1867,
   tap: 0.5917,
   win: 0.29,
   lose: 0.6932,
-  bed: 0.025,
-  glass: 0.03256,
-  stir: 0.03723,
-  dice: 0.04419,
-  creak: 0.0958,
+  bed: 0.02813,
+  glass: 0.03282,
+  stir: 0.03721,
+  dice: 0.04417,
+  creak: 0.09656,
 };
 
 // ───────────────────── paylaşılan kaynak üreticiler ─────────────────────
@@ -841,7 +841,7 @@ export class Sfx {
   pisti(jack: boolean): void {
     this.run(() => {
       const r = this.rng;
-      const v = this.voice({wet: 0.22, pan: 0, trim: L.pisti});
+      const v = this.voice({wet: 0.22, pan: 0, trim: L.pisti * (jack ? 1.15 : 1)});
       if (!v) return;
       const big = !!jack;
       this.impactHit(v, 0, 1);
@@ -849,7 +849,7 @@ export class Sfx {
       const brass: Omit<ChordOpts, 'amp' | 'atk' | 'hold' | 'rel'> = {
         sustain: 0.7,
         layers: [['sawtooth', 1, -5, 0.7], ['sawtooth', 1, 6, 0.7], ['square', 2, 0, 0.1]],
-        cutoff: [900, 7000, 0.05, 0.16, 2400],
+        cutoff: [900, 5200, 0.05, 0.16, 1800],
         q: 1.3,
         scoop: 0.972,
       };
@@ -863,7 +863,7 @@ export class Sfx {
       }
       // ışıltı: pentatonik çan dokunuşları, yukarı doğru
       const sc = [1046.5, 1174.7, 1318.5, 1568.0, 1760.0, 2093.0, 2349.3, 2637.0, 3136.0, 3520.0];
-      const nSp = big ? 22 : 15;
+      const nSp = big ? 17 : 12;
       const spark = v.gain(1);
       spark.connect(v.dest);
       v.wetSend(spark, 0.9);
@@ -875,9 +875,9 @@ export class Sfx {
         const a = (0.2 + 0.1 * r.next()) * (1 - 0.55 * u);
         const tau = r.range(0.09, 0.2);
         v.tone('sine', f, ts, 0.0015, tau, a, {dest: spark});
-        v.tone('sine', f * 2.756, ts, 0.001, tau * 0.45, a * 0.28, {dest: spark});
-        if (i % 2 === 0) v.tone('sine', f * 1.0035, ts, 0.0015, tau * 1.2, a * 0.6, {dest: spark});
-        ts += r.range(0.045, 0.085) * (big ? 0.85 : 1);
+        if (i % 3 === 0) v.tone('sine', f * 2.756, ts, 0.001, tau * 0.45, a * 0.3, {dest: spark}); // çan kısmi tonu
+        else if (i % 3 === 1) v.tone('sine', f * 1.0035, ts, 0.0015, tau * 1.2, a * 0.6, {dest: spark}); // ışıltı: vuruşma
+        ts += r.range(0.055, 0.095) * (big ? 0.85 : 1);
       }
       // uzun çan sesi + hava parıltısı
       v.tone('sine', 1568.0, 0.18, 0.004, 0.32, 0.14, {dest: spark});
@@ -922,7 +922,7 @@ export class Sfx {
       lp.connect(v.dest);
       v.dest = lp;
       const f = r.jit(520, 0.06);
-      v.tone('sine', f * 1.3, 0, 0.0006, 0.022, 1.0, {f2: f, bendTau: 0.012});
+      v.tone('sine', f * 1.12, 0, 0.0006, 0.024, 1.0, {f2: f, bendTau: 0.01});
       v.tone('sine', f * 2.45, 0, 0.0005, 0.012, 0.3);
       v.tone('triangle', f * 0.5, 0, 0.001, 0.03, 0.3);
       v.burst('white', 0, 0.004, 1.6, [{type: 'bandpass', f: 1500, q: 1.4}], 0.0004);
@@ -939,7 +939,7 @@ export class Sfx {
       if (!v) return;
       const pad = (amp: number, hold: number, rel: number, cut: number): ChordOpts => ({
         amp, atk: 0.018, hold, rel, sustain: 0.8,
-        layers: [['triangle', 1, 0, 1], ['sine', 2, 0, 0.3], ['sawtooth', 1, 5, 0.1]],
+        layers: [['triangle', 1, 0, 1], ['sine', 2, 0, 0.3]],
         cutoff: [900, cut, 0.06, 0.25, cut * 0.55], q: 0.9, vibHz: 5.2, vibCents: 6, vibDelay: 0.15,
       });
       v.chord(0.0, [174.61, 220.0, 261.63, 349.23, 440.0], pad(0.2, 0.26, 0.2, 2600));  // Fa
@@ -1250,7 +1250,7 @@ export class Sfx {
     const evs: ClickEv[] = [];
     for (let i = 0; i < shake; i++) {
       const u = i / shake;
-      evs.push({dt: 0.5 * Math.pow(u, 0.9) + r.range(0, 0.015), amp: r.range(0.25, 0.8) * a * 0.55, tau: r.range(0.003, 0.006), f: r.range(1300, 2800)});
+      evs.push({dt: 0.5 * Math.pow(u, 0.9) + r.range(0, 0.015), amp: r.range(0.3, 0.9) * a * 1.5, tau: r.range(0.003, 0.006), f: r.range(1300, 2800)});
     }
     evs.sort((x, y) => x.dt - y.dt);
     v.clickTrain(evs, [
@@ -1262,8 +1262,8 @@ export class Sfx {
     const lv = [1, 0.7, 0.5, 0.32, 0.2];
     for (let i = 0; i < 5; i++) {
       const g = a * lv[i];
-      v.burst('white', t, 0.005, 1.5 * g, [{type: 'bandpass', f: r.range(1700, 2500), q: 1.6}], 0.0003);
-      v.tone('sine', r.range(300, 460), t, 0.0008, 0.03, 0.85 * g, {f2: 210, bendTau: 0.02});
+      v.burst('white', t, 0.005, 2.4 * g, [{type: 'bandpass', f: r.range(1700, 2500), q: 1.4}], 0.0003);
+      v.tone('sine', r.range(300, 460), t, 0.0008, 0.03, 0.4 * g, {f2: 210, bendTau: 0.02});
       t += (gaps[i] ?? 0) * r.range(0.85, 1.15);
     }
   }
@@ -1398,6 +1398,8 @@ export class Sfx {
     const now = ctx.currentTime;
     this.sfxLP.frequency.cancelScheduledValues(now);
     this.sfxLP.frequency.setTargetAtTime(f, now, 0.08);
+    this.sfxBus.gain.cancelScheduledValues(now);
+    this.sfxBus.gain.setTargetAtTime(1 + (0.41 * (1 - r)) / 0.85, now, 0.08);
   }
 
   private canPlay(): boolean {

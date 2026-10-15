@@ -49,6 +49,11 @@ const SOUNDS: SoundDef[] = [
   {id: 'capture6', group: 'Kart', label: 'Topla', hint: '6 kart', seconds: 1.2, play: (s) => s.capture(6), tone: 'mid'},
   {id: 'capture14', group: 'Kart', label: 'Topla', hint: '14 kart', seconds: 1.4, play: (s) => s.capture(14), target: -12, tone: 'mid'},
 
+  {
+    id: 'slowmo-shuffle', group: 'Kart', label: 'Karıştır (ağır çekim 0.15)', hint: 'alçak geçiren ~800 Hz', seconds: 2.6,
+    play: (s) => { s.setSlowMo(0.15); s.shuffle(); setTimeout(() => s.setSlowMo(1), 2200); },
+    plan: (s) => { s.setSlowMo(0.15); s.runAt(0.6, () => s.shuffle()); }, tone: 'low',
+  },
   {id: 'pisti', group: 'Büyük anlar', label: 'PİŞTİ!', seconds: 2.6, play: (s) => s.pisti(false), target: -4},
   {id: 'pisti-jack', group: 'Büyük anlar', label: 'VALE PİŞTİ!', hint: 'daha büyük', seconds: 2.8, play: (s) => s.pisti(true), target: -4},
   {id: 'coin1', group: 'Büyük anlar', label: 'Jeton ×1', seconds: 0.8, play: (s) => s.coin(1), tone: 'bright'},
@@ -64,11 +69,11 @@ const SOUNDS: SoundDef[] = [
   {id: 'amb-creak', group: 'Ortam olayları', label: 'Sandalye gıcırtısı', seconds: 1.6, play: (s) => s.ambOnce(3), target: -30},
   {
     id: 'amb-bed', group: 'Ortam olayları', label: 'Yalnız mırıltı yatağı (çevrimdışı 20 sn)', seconds: 20,
-    play: () => undefined, plan: (s) => { s.setAmbEvents(false); s.startAmbience(); }, medTarget: -41, tone: 'mid',
+    play: () => undefined, plan: (s) => { s.setAmbEvents(false); s.startAmbience(); }, medTarget: -42.5, tone: 'mid',
   },
   {
     id: 'ambience', group: 'Ortam olayları', label: 'Ortam: yatak + olaylar (çevrimdışı 40 sn)', seconds: 40,
-    play: () => undefined, plan: (s) => s.startAmbience(), target: -28, medTarget: -41,
+    play: () => undefined, plan: (s) => s.startAmbience(), target: -27, medTarget: -42.5,
   },
 ];
 
@@ -278,6 +283,7 @@ interface FloodMethodReport {
   maxVoices: number;
   maxAmbVoices: number;
   avgCallMs: number;
+  nodesPerCall: number;
   threw: boolean;
 }
 
@@ -350,7 +356,9 @@ async function floodTest(): Promise<FloodReport> {
     ['ambOnce', () => s.ambOnce(Math.floor(rnd() * 4))],
   ];
   for (const [name, fn] of calls) {
-    const m: FloodMethodReport = {method: name, calls: 200, maxVoices: 0, maxAmbVoices: 0, avgCallMs: 0, threw: false};
+    const n0 = s.stats().nodesAlive;
+    fn();
+    const m: FloodMethodReport = {method: name, calls: 200, maxVoices: 0, maxAmbVoices: 0, avgCallMs: 0, nodesPerCall: s.stats().nodesAlive - n0, threw: false};
     const t0 = performance.now();
     try {
       for (let i = 0; i < 200; i++) {
@@ -437,7 +445,7 @@ async function runAuto(): Promise<void> {
     flood = await floodTest();
     console.log(`[SFX] yığın testi: durum=${flood.state} ok=${flood.ok} düşürülen=${flood.droppedTotal} kalan düğüm=${flood.nodesAfterSettle} hata=${flood.errors} ${flood.note}`);
     for (const m of flood.methods) {
-      console.log(`[SFX]   ${m.method.padEnd(10)} 200x maxVoices=${m.maxVoices} maxAmb=${m.maxAmbVoices} ort=${fmt(m.avgCallMs, 3)} ms/çağrı ${m.threw ? 'FIRLATTI' : ''}`);
+      console.log(`[SFX]   ${m.method.padEnd(10)} 200x maxVoices=${m.maxVoices} maxAmb=${m.maxAmbVoices} ort=${fmt(m.avgCallMs, 3)} ms/çağrı düğüm/çağrı=${m.nodesPerCall} ${m.threw ? 'FIRLATTI' : ''}`);
     }
   }
   (window as unknown as {__audioReport: unknown}).__audioReport = {rows, flood};

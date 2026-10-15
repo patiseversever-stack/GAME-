@@ -839,13 +839,14 @@ function courtCard(k: Kit, rank: number, suit: Suit): void {
   const outer = k.paths.archOuter;
   const inner = k.paths.archInner;
 
-  // gölge
+  // yumuşak gölge (shadowBlur yerine ucuz katmanlı çizgiler)
   ctx.save();
-  ctx.shadowColor = 'rgba(60,30,10,0.35)';
-  ctx.shadowBlur = 2.2 * k.ctx.getTransform().a;
-  ctx.shadowOffsetY = 0.7 * k.ctx.getTransform().a;
-  ctx.fillStyle = st.bot;
-  ctx.fill(outer);
+  ctx.translate(0, 0.7);
+  ctx.strokeStyle = 'rgba(80,45,15,0.07)';
+  ctx.lineWidth = 3.6;
+  ctx.stroke(outer);
+  ctx.lineWidth = 2.2;
+  ctx.stroke(outer);
   ctx.restore();
 
   // zemin
@@ -888,9 +889,8 @@ function courtCard(k: Kit, rank: number, suit: Suit): void {
   const L = k.courtLetters[RANK_LABEL[rank]];
   const base = CY + 15.5;
   ctx.save();
-  ctx.shadowColor = 'rgba(0,0,0,0.45)';
-  ctx.shadowBlur = 1.5 * ctx.getTransform().a;
-  ctx.shadowOffsetY = 0.6 * ctx.getTransform().a;
+  // harf gölgesi: kaydırılmış koyu kopya
+  drawLabel(ctx, L, CX + 0.25, base + 0.8, st.letter === 'gold' ? 'rgba(10,2,4,0.45)' : 'rgba(90,60,10,0.4)');
   if (st.letter === 'gold') {
     drawLabel(ctx, L, CX, base, goldGradient(ctx, base - 30, base));
   } else {
