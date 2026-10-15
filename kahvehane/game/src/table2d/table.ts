@@ -209,7 +209,7 @@ export class Table2D {
   }
   private oppPose(i: number, n: number): Pose {
     const o = this.L.opp, k = i - (n - 1) / 2;
-    return {x: o.x + k * o.spread, y: o.y - Math.abs(k) * 3, r: k * 7, s: o.s};
+    return {x: o.x + k * o.spread, y: o.y - Math.abs(k) * 3, r: -k * 7, s: o.s};
   }
   private handPose(i: number, n: number, lift = 0): Pose {
     const h = this.L.hand, w = this.L.cw * h.s;
