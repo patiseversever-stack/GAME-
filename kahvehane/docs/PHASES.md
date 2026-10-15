@@ -91,10 +91,11 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
-**16 Ekim:** Yön kilitlendi: **DİKEY**. Önizleme: https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro (sürüm 3)
-- Sürüm 3: **tam ekran şov alanı** (kenarsız desenli çuha, spot ışık havuzu, altın "KAHVEHANE / PİŞTİ" arenası, ışık huzmeleri + altın tozlar), **yeni kartlar** (iri köşe indeksi, tek büyük sembol, madalyonlu aslar, karakterli resimli kartlar: Papaz Rıza, Kız Defne, Vale Cem; bordo-altın arka), pişti kartları destenin altından görünür, el kartı geniş ekranda sınırlı, kıvılcım boyutu hatası düzeltildi.
-- Sürüm 2: yayın betiği `<header>` etiketlerini siliyordu → lobi yarım kalıyordu; düzeltildi.
-- Bitti: kural motoru + bot (74 test), ses efektleri, 150 Türkçe replik + seslendirme altyapısı (ElevenLabs anahtarı bekliyor), tüm ekranlar, ilerleme (seviye/XP/jeton/günlük ödül).
-- Bekleyen (kullanıcıdan): `KARAKTER_GORSELLERI.md` görselleri (ChatGPT). Defne'nin portresi burnun altında kesik; daha uzun bir portre gelirse Kız kartı da düzelir.
-- Test: `?seed=2` ilk turlarda pişti çıkarır, `?auto=1` kendi kendine oynar.
-- Sıradaki: kullanıcı geri bildirimi; seslendirme; 4 kişilik mod (Adım 2).
+**16 Ekim (gece):** Yön yeniden değişti → **PİŞTİ ARENA** (UNO kalitesinde modern, canlı, hızlı). Ayrıntı: `docs/STIL_ARENA.md`. Önizleme (sürüm 4): https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+- 3D masa (Three.js) oyundan çıktı; yerine hızlı 2B masa: `src/table2d/` (WAAPI, yalnız transform/opacity). Paket 5.2 MB → 2.4 MB.
+- Dört renk deste (♥ kırmızı, ♦ sarı, ♣ yeşil, ♠ mavi), vale özel kart, "PİŞTİ" arkalı yeni kart arkası: `src/render/cardAtlas.ts`.
+- Tüm ekranlar Arena dilinde (lobi, giriş, HUD, PİŞTİ efekti, sonuç, pencereler), kod ile çizilmiş yeni logo.
+- Oynanış: tek dokunuş (veya yukarı kaydırma) ile kart atma, alan kartlar parlar, hızlı tempo, her atışta renkli halka + kıvılcım.
+- Eski 3D kodu (`src/render/stage.ts`, `env.ts`, `cards.ts`, `input/hand.ts`, `game/table.ts`) depoda duruyor ama oyunda kullanılmıyor.
+- Test: `?auto=1` kendi oynar, `?seed=2` erken pişti.
+- Sıradaki: kullanıcı geri bildirimi; seslendirme; 4 kişilik mod.

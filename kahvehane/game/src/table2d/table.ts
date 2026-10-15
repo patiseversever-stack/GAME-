@@ -124,7 +124,7 @@ export class Table2D {
       pile: {x: W / 2, y: pileY},
       deck: {x: Math.max(cw * 0.62, W * 0.155), y: pileY},
       opp: {x: W / 2, y: H * 0.235, s: 0.62, spread: cw * 0.5},
-      hand: {x: W * 0.585, y: H - handW / 0.7 / 2 - Math.max(14, H * 0.022), s: handW / cw, maxW: W * 0.74},
+      hand: {x: W * 0.61, y: H - handW / 0.7 / 2 - Math.max(14, H * 0.022), s: handW / cw, maxW: W * 0.68},
       stacks: [
         {x: W - Math.max(cw * 0.6, W * 0.15), y: H * 0.655, s: 0.78, r: 8},
         {x: W - Math.max(cw * 0.6, W * 0.15), y: H * 0.27, s: 0.78, r: -8},

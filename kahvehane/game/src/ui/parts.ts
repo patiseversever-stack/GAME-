@@ -102,7 +102,7 @@ export function openModal(ctx: Ctx, o: {cls: string; title?: string; body: strin
   el.innerHTML = `<div class="kh-modal__scrim"></div>
     <div class="kh-modal__panel kh-panel" role="dialog" aria-modal="true">
       ${o.onX ? `<button class="kh-iconbtn kh-modal__x" data-act="x" aria-label="Kapat">${I.close}</button>` : ''}
-      ${o.title ? `<div class="kh-modal__head">${titleHtml(o.title, 'kh-modal__title')}</div>` : ''}
+      ${o.title ? `<div class="kh-modal__head">${titleHtml(o.title, 'kh-modal__title', 'is-white')}</div>` : ''}
       ${o.body}
     </div>`;
   ctx.layer.append(el);

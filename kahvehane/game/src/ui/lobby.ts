@@ -276,6 +276,8 @@ export class LobbyView {
     const logo = this.el.querySelector('.kh-logo');
     if (logo) play(logo, [{transform: 'scale(.55) rotate(-6deg)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 560, delay: 120, easing: EASE.spring, fill: 'backwards'});
     play(g('.kh-hero__stage'), [{transform: 'translateY(30px) scale(.9)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 480, delay: 180, easing: EASE.spring, fill: 'backwards'});
+    this.el.querySelectorAll('.kh-hero__arrow').forEach((a, i) =>
+      play(a, [{transform: `translateY(-50%) translateX(${i ? 24 : -24}px)`, opacity: 0}, {transform: 'translateY(-50%)'}], {duration: 360, delay: 300, easing: EASE.out, fill: 'backwards'}));
     play(g('.kh-setup'), [{transform: 'translateY(30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 400, delay: 240, easing: EASE.out, fill: 'backwards'});
     play(g('.kh-play'), [{transform: 'scale(.6)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 300, easing: EASE.spring, fill: 'backwards'});
     play(g('.kh-dock'), [{transform: 'translateY(40px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 400, delay: 340, easing: EASE.out, fill: 'backwards'});

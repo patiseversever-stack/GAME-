@@ -1,6 +1,7 @@
 // Görsel adresleri tek yerde. assets/art/* dosyaları import.meta.glob ile aranır: dosya yoksa derleme bozulmaz,
 // yerine SVG/CSS yedeği kullanılır. Yeni sanat aynı adla klasöre bırakılınca (png/webp/jpg) kendiliğinden devreye girer.
-import kahvehaneBg from '../../assets/kahvehane_bg.jpg';
+// Arena görünümünde logo kodla çizilir (parts.ts → wordmarkHtml), zemin CSS'tir: eski altın logo ve kahvehane
+// fotoğrafı pakete girmez (logo.* globdan dışlanır, kahvehane_bg hiç içe aktarılmaz).
 import rizaAvatar from '../../assets/riza_avatar.jpg';
 import rizaKahkaha from '../../assets/riza_kahkaha.jpg';
 import rizaKizgin from '../../assets/riza_kizgin.jpg';
@@ -8,7 +9,7 @@ import rizaSaskin from '../../assets/riza_saskin.jpg';
 import rizaUzgun from '../../assets/riza_uzgun.jpg';
 import type {Opponent} from './types';
 
-const ART = import.meta.glob('../../assets/art/*', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
+const ART = import.meta.glob(['../../assets/art/*', '!../../assets/art/logo.*'], {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 const UI = import.meta.glob('../../assets/ui/*', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 const VOICE = import.meta.glob('../../assets/voice/manifest.json', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 
@@ -33,7 +34,6 @@ const coinFallback = ui('coin.svg');
 
 /** Oyunun kullandığı tüm görseller (her zaman dolu adres). */
 export const ASSETS = {
-  logo: art('logo') ?? '',
   icon_coin: art('icon_coin') ?? coinFallback,
   icon_chest: art('icon_chest') ?? ui('placeholder.svg'),
   icon_trophy: art('icon_trophy') ?? ui('placeholder.svg'),
@@ -49,8 +49,6 @@ export const ASSETS = {
   cem_avatar: art('cem_avatar') ?? ui('silhouette.svg'),
   dursun_avatar: art('dursun_avatar') ?? ui('silhouette.svg'),
   defne_avatar: art('defne_avatar') ?? ui('silhouette.svg'),
-  lobby_bg: art('lobby_bg') ?? kahvehaneBg,
-  kahvehane_bg: kahvehaneBg,
   silhouette: ui('silhouette.svg'),
   tulip: ui('tulip.svg'),
   voiceManifest: VOICE['../../assets/voice/manifest.json'] as string | undefined,

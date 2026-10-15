@@ -31,7 +31,17 @@ export function splash(ctx: Ctx): {progress(p: number): void; done(): Promise<vo
   tipTxt.textContent = TIPS[tip];
   const logo = q(el, '.kh-splash__logo');
   play(q(el, '.kh-splash__glow'), [{transform: 'scale(.6)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 1200, easing: EASE.out, fill: 'backwards'});
-  play(logo, [{transform: 'scale(.6) rotate(-4deg)', opacity: 0}, {transform: 'scale(1.06) rotate(1deg)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 720, easing: EASE.out, fill: 'backwards'});
+  // Logo SVG yazısı Lilita One ister: soğuk açılışta yedek yazı tipiyle görünmesin diye yazı tipini bekler (en çok 0.8 sn).
+  const showLogo = () => {
+    if (!scope.alive) return;
+    logo.style.opacity = '';
+    play(logo, [{transform: 'scale(.6) rotate(-4deg)', opacity: 0}, {transform: 'scale(1.06) rotate(1deg)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 720, easing: EASE.out, fill: 'backwards'});
+  };
+  const fonts = (document as Document & {fonts?: FontFaceSet}).fonts;
+  if (ANIM && fonts?.check && !fonts.check("40px 'Lilita One'", 'PİŞTİ')) {
+    logo.style.opacity = '0';
+    Promise.race([fonts.load("40px 'Lilita One'", 'PİŞTİ KAHVEHANE').catch(() => undefined), scope.wait(800)]).then(showLogo);
+  } else showLogo();
   play(tipEl, [{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'none'}], {duration: 400, delay: 300, easing: EASE.out, fill: 'backwards'});
   const rotate = () => {
     scope.timeout(() => {

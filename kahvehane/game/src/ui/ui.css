@@ -89,7 +89,7 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
   font-family: var(--font-display); font-weight: var(--w-display); font-size: calc(var(--u) * 1.2); letter-spacing: var(--track-btn); text-transform: var(--case-btn);
   white-space: nowrap; line-height: 1; transition: transform .09s ease-out; will-change: transform; }
 .kh-btn::before { content: ''; position: absolute; left: 5px; right: 5px; top: 3px; height: 44%; z-index: -1; pointer-events: none;
-  border-radius: calc(var(--r-md) - 3px) calc(var(--r-md) - 3px) 45% 45% / calc(var(--r-md) - 3px) calc(var(--r-md) - 3px) 35% 35%; background: var(--btn-gloss); opacity: .6; }
+  border-radius: calc(var(--r-md) - 3px) calc(var(--r-md) - 3px) 45% 45% / calc(var(--r-md) - 3px) calc(var(--r-md) - 3px) 35% 35%; background: var(--btn-gloss); opacity: .55; }
 .kh-btn:active:not(:disabled) { transform: translateY(4px); }
 .kh-btn:disabled { filter: var(--btn-disabled-filter); }
 .kh-btn .kh-i { width: 1.1em; height: 1.1em; filter: drop-shadow(0 2px 0 var(--navy)); }
@@ -134,7 +134,7 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-chip:active { transform: translateY(2px) scale(.97); }
 .kh-chip.is-on { color: var(--chip-on-fg); background: var(--chip-on-fill); box-shadow: var(--chip-on-shadow); }
 .kh-chip.is-on::before { background: linear-gradient(180deg, rgba(255, 255, 255, .6), rgba(255, 255, 255, .06)); }
-.kh-chip.is-locked { color: var(--chip-locked-fg); }
+.kh-chip.is-locked { color: var(--chip-locked-fg); background: linear-gradient(180deg, #33429e 0%, #27358a 55%, #202d7a 100%); }
 .kh-chip.is-locked .kh-chip__ico { opacity: .45; }
 .kh-chip .kh-i { width: .9em; height: .9em; }
 .kh-chip__ico { width: calc(var(--u) * 1.4); height: calc(var(--u) * 1.4); object-fit: contain; filter: drop-shadow(0 1.5px 0 rgba(10, 16, 51, .8)); }
@@ -211,7 +211,7 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-modal__x .kh-i { stroke-width: 3.4; }
 
 /* ---------- bildirim / dönme uyarısı ---------- */
-.kh-toast { position: absolute; left: 50%; top: max(calc(var(--u) * 4.2), env(safe-area-inset-top)); z-index: 70; max-width: calc(100% - var(--u) * 2); transform: translateX(-50%);
+.kh-toast { position: absolute; left: 50%; top: max(calc(var(--u) * 4.2), env(safe-area-inset-top)); z-index: 70; width: max-content; max-width: calc(100% - var(--u) * 2); transform: translateX(-50%);
   display: flex; align-items: center; gap: .5em; padding: .7em 1.15em; border-radius: var(--r-pill); border: 2px solid transparent;
   background: var(--plaque-fill) padding-box, var(--plaque-edge) border-box; box-shadow: var(--plaque-shadow); font-weight: var(--w-black); pointer-events: none; }
 .kh-toast .kh-i { color: var(--c-accent); }
@@ -355,7 +355,8 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-vs__side.is-me { bottom: 0; }
 .kh-vs__side::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 24); height: calc(var(--u) * 24); margin: calc(var(--u) * -12) 0 0 calc(var(--u) * -12);
   border-radius: 50%; background: radial-gradient(circle, rgba(255, 255, 255, .4) 0%, rgba(255, 255, 255, .1) 40%, rgba(255, 255, 255, 0) 68%); }
-.kh-vs__bust { position: absolute; left: 50%; bottom: 4%; height: 82%; width: auto; max-width: none; transform: translateX(-50%); filter: drop-shadow(0 8px 0 rgba(10, 16, 51, .35)); }
+.kh-vs__bust { position: absolute; left: 50%; bottom: 4%; height: 82%; width: auto; max-width: none; transform: translateX(-50%);
+  -webkit-mask: linear-gradient(180deg, #000 78%, transparent 99%); mask: linear-gradient(180deg, #000 78%, transparent 99%); }
 .kh-vs__medal { position: absolute; left: 50%; top: 52%; transform: translate(-50%, -50%); }
 .kh-vs__side.is-opp .kh-vs__medal { top: 46%; }
 .kh-vs__medal .kh-avatar { width: calc(var(--u) * 10); height: calc(var(--u) * 10); border-width: calc(var(--u) * .5); box-shadow: 0 0 0 4px var(--navy), 0 8px 0 var(--navy), 0 18px 30px rgba(2, 4, 24, .5); }
@@ -387,14 +388,14 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-hud.is-hidden { opacity: 0; visibility: hidden; transition: opacity .3s, visibility 0s .3s; }
 .kh-hud.is-dim { opacity: 0; }
 .kh-hud button { pointer-events: auto; }
-.kh-hud__coins { position: absolute; top: max(calc(var(--u) * .8), env(safe-area-inset-top)); left: max(calc(var(--u) * 1.2), env(safe-area-inset-left)); }
+.kh-hud__coins { position: absolute; top: max(calc(var(--u) * .75), env(safe-area-inset-top)); left: max(calc(var(--u) * 1.2), env(safe-area-inset-left)); }
 .kh-hud__coins .kh-capsule__val { min-width: 3.2em; }
 .kh-menu { position: absolute; top: max(calc(var(--u) * .6), env(safe-area-inset-top)); right: max(calc(var(--u) * .7), env(safe-area-inset-right)); }
 .kh-menu .kh-i { width: 42%; height: 42%; }
 
 /* ---- rozet: beyaz kalın çemberli portre + sıra halkası + seviye taşı + isim hapı + sayaç hapları ---- */
 .kh-badge { --bs: calc(var(--u) * 5.2); position: absolute; width: var(--bs); height: var(--bs); }
-.kh-badge.is-top { --bs: calc(var(--u) * 6.4); left: 50%; top: max(calc(var(--u) * .6), env(safe-area-inset-top)); margin-left: calc(var(--bs) / -2); }
+.kh-badge.is-top { --bs: calc(var(--u) * 6.6); left: 50%; top: max(calc(var(--u) * .55), env(safe-area-inset-top)); margin-left: calc(var(--bs) / -2); }
 .kh-badge.is-bottom { left: max(calc(var(--u) * 1.1), env(safe-area-inset-left)); bottom: max(calc(var(--u) * 3.6), calc(env(safe-area-inset-bottom) + var(--u) * 3)); }
 .kh-badge.is-me4 { left: 50%; margin-left: calc(var(--bs) / -2); bottom: var(--kh-me4-bottom, 34%); }
 .kh-badge.is-left { left: max(calc(var(--u) * .9), env(safe-area-inset-left)); top: 30%; }
@@ -418,7 +419,7 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-badge.has-frame .kh-badge__ring::after { display: none; }
 .kh-badge .kh-gemwrap { position: absolute; z-index: 4; left: calc(var(--bs) * -.18); top: calc(var(--bs) * .66); }
 .kh-badge .kh-gem { --gs: calc(var(--bs) * .36); }
-.kh-badge__plate { position: absolute; z-index: 3; left: 50%; top: calc(100% - var(--u) * .6); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+.kh-badge__plate { position: absolute; z-index: 3; left: 50%; top: calc(100% - var(--u) * .7); transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
 .kh-badge__name { min-width: calc(var(--bs) * 1.1); padding: calc(var(--u) * .28) calc(var(--u) * .9) calc(var(--u) * .3); border-radius: var(--r-pill);
   background: var(--name-fill); box-shadow: var(--name-shadow); color: var(--name-fg); font-family: var(--font-display); font-size: calc(var(--u) * 1.1); line-height: 1.1;
   white-space: nowrap; text-align: center; text-shadow: var(--outline-thin); }
@@ -687,7 +688,7 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-soon .kh-modal__panel { max-width: calc(var(--u) * 20); text-align: center; }
 .kh-soon__ico { position: relative; display: grid; place-items: center; width: calc(var(--u) * 7); height: calc(var(--u) * 7); margin: calc(var(--u) * -.2) auto calc(var(--u) * .9);
   border-radius: 50%; background: radial-gradient(circle at 50% 40%, #6a7cff 0%, #2f47e0 55%, #1d30b0 100%); box-shadow: 0 0 0 3px #fff, 0 0 0 5.5px var(--navy), 0 5px 0 5.5px var(--navy); }
-.kh-soon__ico img { height: 78%; width: auto; filter: drop-shadow(0 3px 0 rgba(10, 16, 51, .6)); }
+.kh-soon__ico img { height: calc(var(--u) * 5.3); width: auto; max-width: calc(var(--u) * 7.6); object-fit: contain; filter: drop-shadow(0 3px 0 rgba(10, 16, 51, .6)); }
 .kh-soon__t { color: var(--c-text-2); font-size: calc(var(--u) * 1.02); font-weight: var(--w-strong); line-height: 1.4; margin-bottom: calc(var(--u) * 1.2); }
 .kh-soon .kh-btn { width: 100%; }
 
@@ -704,6 +705,9 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
   .kh-setup__modes { margin-bottom: calc(var(--u) * .6); }
   .kh-setup__win { margin-top: calc(var(--u) * .45); }
   .kh-dock { margin-top: calc(var(--u) * 1.1); }
+}
+/* sonuç ekranı: alçak ya da geniş (yüksekliğe bağlı ölçek) ekranlarda sıkılaşır */
+@media (max-height: 700px), (min-aspect-ratio: 10/17) {
   .kh-results__col { gap: calc(var(--u) * .45); }
   .kh-results__title { font-size: calc(var(--u) * 3.2); }
   .kh-mood { width: calc(var(--u) * 5); height: calc(var(--u) * 5); }
