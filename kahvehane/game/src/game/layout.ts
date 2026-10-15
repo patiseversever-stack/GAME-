@@ -1,22 +1,25 @@
-// Masa ölçüleri (metre) ve koltuklara göre yerleşim. Ekranın tamamı çuha; kamera yukarıdan ~70° bakar.
-// Kartlar okunurluk için gerçeğin ~2 katı.
+// DİKEY masa düzeni (metre). Hedef: docs/_dikey_hedef.jpg — oyuncak gibi tok, yastıklı kenarlı masa,
+// üstte rakip, altta oyuncunun eli. Kartlar okunurluk için gerçeğin ~2.5 katı.
 import * as THREE from 'three';
 
 export const TABLE = {
   y: 0.742, // çuha yüzeyi
-  feltW: 3.2, // çuha düzlemi (görüşten taşacak kadar geniş)
-  feltD: 1.8,
-  feltCenterV: 0.5, // amblemin dokudaki dikey konumu (yığın z = 0)
+  feltW: 0.84, // çuha (iç alan)
+  feltD: 1.44,
+  feltR: 0.13, // köşe yarıçapı
+  railR: 0.042, // yastıklı kenarın kalınlığı (yarıçap)
+  woodW: 0.13, // ahşap çerçeve genişliği (rayın dışından)
 };
 
-export const CARD = {w: 0.125, h: 0.125 / 0.7, t: 0.0007};
+export const CARD = {w: 0.17, h: 0.17 / 0.7, t: 0.0008};
 
-const target = new THREE.Vector3(0, TABLE.y, 0.07);
-const pitch = THREE.MathUtils.degToRad(68), dist = 1.45;
+const target = new THREE.Vector3(0, TABLE.y, 0.06);
+const pitch = THREE.MathUtils.degToRad(63), dist = 2.62;
 export const CAMERA = {
   pos: target.clone().add(new THREE.Vector3(0, Math.sin(pitch) * dist, Math.cos(pitch) * dist)),
   target,
-  fov: 34, // dikey (2:1 ekran için); daha dar ekranlarda yatay kapsama korunur
+  fov: 46, // dikey görüş açısı, tasarım oranı için
+  designAspect: 390 / 844, // tasarım ekranı (dikey telefon); daha dar ekranda yatay kapsama korunur
 };
 
 export interface SeatLayout {
@@ -26,37 +29,41 @@ export interface SeatLayout {
   yaw: number;
   /** Toplanan kartların yığını */
   stack: THREE.Vector3;
+  /** Pişti kartlarının sıralanacağı yön (dünya) */
+  pistiDir: THREE.Vector3;
 }
 
 export interface Layout {
   pile: THREE.Vector3;
   deck: THREE.Vector3;
   deckYaw: number;
-  /** rakip el kartlarının boyutu */
+  /** rakip el kartlarının boyutu ve aralığı */
   oppScale: number;
+  oppSpread: number;
   seats: SeatLayout[];
 }
 
 const v = (x: number, z: number, y = TABLE.y) => new THREE.Vector3(x, y, z);
+const dir = (x: number, z: number) => new THREE.Vector3(x, 0, z);
 
 export function makeLayout(seats: 2 | 4): Layout {
-  const pile = v(0, 0), deck = v(-0.6, 0.02);
+  const pile = v(0, -0.02);
   if (seats === 2) {
     return {
-      pile, deck, deckYaw: 0.12, oppScale: 0.72,
+      pile, deck: v(-0.3, 0.02), deckYaw: 0.06, oppScale: 0.72, oppSpread: 0.125,
       seats: [
-        {hand: v(0, 0.4), yaw: 0, stack: v(0.62, 0.2)},
-        {hand: v(0, -0.27), yaw: Math.PI, stack: v(0.62, -0.22)},
+        {hand: v(0, 0.6), yaw: 0, stack: v(0.3, 0.3), pistiDir: dir(0, -1)},
+        {hand: v(0, -0.44), yaw: Math.PI, stack: v(0.3, -0.3), pistiDir: dir(0, 1)},
       ],
     };
   }
   return {
-    pile, deck: v(-0.66, 0.2), deckYaw: 0.12, oppScale: 0.66,
+    pile, deck: v(-0.28, 0.32), deckYaw: 0.06, oppScale: 0.62, oppSpread: 0.07,
     seats: [
-      {hand: v(0, 0.4), yaw: 0, stack: v(0.66, 0.22)},
-      {hand: v(0.62, -0.02), yaw: Math.PI / 2, stack: v(0.82, -0.3)},
-      {hand: v(0, -0.3), yaw: Math.PI, stack: v(0.4, -0.3)},
-      {hand: v(-0.62, -0.02), yaw: -Math.PI / 2, stack: v(-0.82, -0.3)},
+      {hand: v(0, 0.6), yaw: 0, stack: v(0.3, 0.42), pistiDir: dir(-1, 0)},
+      {hand: v(0.3, -0.06), yaw: Math.PI / 2, stack: v(0.3, -0.36), pistiDir: dir(0, 1)},
+      {hand: v(0, -0.48), yaw: Math.PI, stack: v(-0.3, -0.46), pistiDir: dir(1, 0)},
+      {hand: v(-0.3, -0.06), yaw: -Math.PI / 2, stack: v(-0.3, -0.36), pistiDir: dir(0, 1)},
     ],
   };
 }

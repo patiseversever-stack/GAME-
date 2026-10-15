@@ -15,8 +15,8 @@ export interface ThrowInfo {
   aimX: number;
 }
 
-const HAND_SCALE = 0.8; // eldeki kart boyutu (masadakine göre)
-const HAND_FRAC = 0.4; // eldeki kartın ekran yüksekliğindeki payı
+const HAND_SCALE = 0.75; // eldeki kart boyutu (masadakine göre)
+const HAND_WFRAC = 0.245; // eldeki kartın ekran genişliğindeki payı (dikey ekran)
 let HAND_DIST = 0.6; // kameradan uzaklık (m), görüş açısına göre hesaplanır
 
 export class HandInput {
@@ -48,15 +48,16 @@ export class HandInput {
     const cam = this.stage.camera;
     cam.updateMatrixWorld();
     const tanH = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
-    HAND_DIST = (CARD.h * HAND_SCALE) / (HAND_FRAC * 2 * tanH);
+    // kart genişliği ekran genişliğinin sabit bir payı olacak şekilde mesafe
+    HAND_DIST = (CARD.w * HAND_SCALE) / (HAND_WFRAC * 2 * tanH * cam.aspect);
     const vh = 2 * HAND_DIST * tanH;
     const vw = vh * cam.aspect;
-    const spread = Math.min(CARD.w * 0.84 * HAND_SCALE, (vw * 0.55) / Math.max(1, n));
+    const spread = Math.min(CARD.w * HAND_SCALE * 0.96, (vw * 0.78) / Math.max(1, n));
     const mid = (n - 1) / 2, k = i - mid;
-    const local = new THREE.Vector3(k * spread, -vh / 2 + CARD.h * HAND_SCALE * 0.26 + lift - Math.abs(k) * 0.005, -HAND_DIST + i * 0.002);
+    const local = new THREE.Vector3(k * spread, -vh / 2 + CARD.h * HAND_SCALE * 0.62 + lift - Math.abs(k) * 0.004 * HAND_SCALE, -HAND_DIST + i * 0.002);
     // kart yerelinde +y ön yüz: önce x etrafında kameraya çevir (biraz geriye yatık), sonra görüş ekseninde yelpaze aç
     const tilt = new THREE.Quaternion().setFromAxisAngle(X, Math.PI / 2 - 0.14);
-    const fan = new THREE.Quaternion().setFromAxisAngle(Z, -k * 0.075);
+    const fan = new THREE.Quaternion().setFromAxisAngle(Z, -k * 0.05);
     const pos = local.applyMatrix4(cam.matrixWorld);
     const quat = cam.quaternion.clone().multiply(fan).multiply(tilt);
     return {pos, quat, scale: HAND_SCALE};
@@ -132,8 +133,24 @@ export class HandInput {
     }
   };
 
+  private camKey = [0, 0, 0, 0];
+  /** Kamera hareket ederse (sinematik geçiş, sarsıntı) el kartları ekrana yapışık kalsın. */
+  private stickToCamera(): void {
+    const c = this.stage.camera, k = this.camKey;
+    const nx = c.position.x + c.quaternion.x * 3, ny = c.position.y + c.quaternion.y * 3, nz = c.position.z + c.quaternion.z * 3, nw = c.quaternion.w;
+    if (Math.abs(nx - k[0]) + Math.abs(ny - k[1]) + Math.abs(nz - k[2]) + Math.abs(nw - k[3]) < 1e-6) return;
+    k[0] = nx; k[1] = ny; k[2] = nz; k[3] = nw;
+    const n = this.slots.length;
+    this.slots.forEach((s, i) => {
+      if (s.flight || this.drag?.slot === s) return;
+      const p = this.restPose(i, n, s === this.selected ? 0.035 : this.enabled ? 0.008 : 0);
+      this.cards.setPose(s, p.pos, p.quat, p.scale);
+    });
+  }
+
   /** Sürüklenen kartı parmağa bağla: ekranın altında el düzleminde, yukarıda masa üstünde süzülür. */
   private follow(): void {
+    this.stickToCamera();
     const d = this.drag;
     if (!d || !d.moved) return;
     const cam = this.stage.camera;
@@ -141,7 +158,7 @@ export class HandInput {
     this.ndc.set((x / this.stage.width) * 2 - 1, -(y / this.stage.height) * 2 + 1);
     this.ray.setFromCamera(this.ndc, cam);
     const fy = y / this.stage.height;
-    const m = smoothstep(0.82, 0.58, fy); // 0: elde, 1: masa üstünde
+    const m = smoothstep(0.86, 0.66, fy); // 0: elde, 1: masa üstünde
     const handP = this.ray.ray.at(HAND_DIST * 1.02, tmpA);
     let tableP = handP;
     if (this.ray.ray.intersectPlane(this.plane, this.hit)) tableP = this.hit;
@@ -172,7 +189,7 @@ export class HandInput {
     const vel = new THREE.Vector3((b.x - a.x) / dt, (b.y - a.y) / dt, (b.z - a.z) / dt);
     const fy = this.lastY / this.stage.height;
     const towardTable = -vel.z;
-    if (towardTable > 0.9 || fy < 0.6) {
+    if (towardTable > 0.9 || fy < 0.66) {
       const power = clamp((towardTable - 0.6) / 3.5, 0.15, 1);
       this.release(d.slot, vel, power, clamp((b.x - this.pileAt().x) * 0.25, -0.03, 0.03));
     } else {

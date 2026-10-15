@@ -14,6 +14,7 @@ import type {Sfx} from '../audio/sfx';
 import type {GameHud} from '../ui/screens';
 import {haptic} from '../platform/bridge';
 import {CARD} from './layout';
+import * as THREE from 'three';
 
 /** Rakibin konuşabileceği anlar (diyalog sistemi bunlara replik seçer). */
 export type Moment =
@@ -70,9 +71,14 @@ export class Match {
     table.reset(2);
     this.stats();
     hud.setTurn(-1);
+    // sinematik giriş: kamera yukarıdan ve hafif dönerek masaya süzülür
+    const h = stage.home;
+    stage.rig.pos.set(h.pos.x + 0.35, h.pos.y + 1.1, h.pos.z + 0.9);
+    stage.rig.target.copy(h.target).add(new THREE.Vector3(0, 0, -0.15));
+    const intro = stage.goHome(1.5);
     await stage.time.wait(0.3);
     sfx.shuffle();
-    await table.shuffle();
+    await Promise.all([table.shuffle(), intro]);
     this.d.speak('start', true);
     for (const e of events) {
       if (e.t === 'tableDeal') await table.dealTable(e.cards, e.faceUp);
@@ -162,6 +168,7 @@ export class Match {
       // Yavaş çekim: kart inmeden hemen önce zaman yavaşlar; inişte sarsıntı, titreşim, halka, kıvılcım, damga
       await new Promise<void>(res => T.addTicker(() => (table.remaining(slot) < 0.12 ? (res(), false) : true)));
       sfx.setSlowMo(0.15);
+      void stage.pushTo(table.layout.pile, 0.24, 0.35);
       await T.scaleTo(0.12, 0.07);
       await landed;
       const jack = cap.pisti === 20;
@@ -174,6 +181,7 @@ export class Match {
       hud.pisti(jack, cap.pisti);
       await T.waitReal(0.45);
       sfx.setSlowMo(1);
+      void stage.goHome(0.7);
       await T.scaleTo(1, 0.45);
       this.d.speak(seat === 0 ? (jack ? 'playerJackPisti' : 'playerPisti') : jack ? 'botJackPisti' : 'botPisti', true);
       await T.wait(0.35);

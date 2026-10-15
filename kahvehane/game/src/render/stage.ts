@@ -8,6 +8,8 @@ export interface CameraRig {
   pos: THREE.Vector3;
   target: THREE.Vector3;
   fov: number;
+  /** Tasarım ekran oranı (genişlik/yükseklik). Daha dar ekranda yatay kapsama korunur. */
+  designAspect: number;
 }
 
 export class Stage {
@@ -32,7 +34,8 @@ export class Stage {
   height = 1;
 
   constructor(private host: HTMLElement, readonly q: Quality, rig: CameraRig) {
-    this.rig = {pos: rig.pos.clone(), target: rig.target.clone(), fov: rig.fov};
+    this.rig = {pos: rig.pos.clone(), target: rig.target.clone(), fov: rig.fov, designAspect: rig.designAspect};
+    this.home = {pos: rig.pos.clone(), target: rig.target.clone(), fov: rig.fov, designAspect: rig.designAspect};
     this.renderer = new THREE.WebGLRenderer({antialias: q.antialias && !location.search.includes('aa=0'), powerPreference: 'high-performance', alpha: false, stencil: false});
     this.renderer.outputColorSpace = THREE.SRGBColorSpace;
     this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -46,8 +49,8 @@ export class Stage {
     this.camera = new THREE.PerspectiveCamera(rig.fov, 1, 0.05, 30);
 
     // Işıklar: tavandan sarkan sıcak lamba + oda dolgusu + arka kontur
-    this.lamp = new THREE.SpotLight(0xffd6a0, 6, 5, 1.05, 0.95, 2);
-    this.lamp.position.set(0, 1.85, 0.05);
+    this.lamp = new THREE.SpotLight(0xffd29a, 7, 6, 0.9, 0.85, 2);
+    this.lamp.position.set(0, 2.05, 0.02);
     this.lamp.target.position.set(0, 0.74, 0.0);
     this.scene.add(this.lamp, this.lamp.target);
     this.scene.add(new THREE.HemisphereLight(0xffdcb4, 0x261309, 0.55));
@@ -55,7 +58,7 @@ export class Stage {
     rim.position.set(0.8, 1.8, -2.2);
     this.scene.add(rim);
     // kameradan gelen dolgu: eldeki ve masadaki kartlar net ve parlak okunur
-    const fill = new THREE.DirectionalLight(0xfff1dc, 1.35);
+    const fill = new THREE.DirectionalLight(0xfff1dc, 1.1);
     fill.position.copy(rig.pos).sub(rig.target).normalize().multiplyScalar(3).add(rig.target);
     fill.target.position.copy(rig.target);
     this.scene.add(fill.target);
@@ -91,6 +94,25 @@ export class Stage {
     this.invalidate();
   }
 
+  readonly home: CameraRig;
+
+  /** Sinematik kamera hareketi: rig'i hedef konuma yumuşakça taşır (gerçek zamanda). */
+  moveRig(pos: THREE.Vector3, target: THREE.Vector3, dur: number, ease?: (t: number) => number): Promise<void> {
+    const p0 = this.rig.pos.clone(), t0 = this.rig.target.clone();
+    return this.time.tween(dur, k => {
+      this.rig.pos.lerpVectors(p0, pos, k);
+      this.rig.target.lerpVectors(t0, target, k);
+    }, {real: true, ease});
+  }
+  /** Kamerayı bir noktaya doğru yaklaştır (k: 0 ev, 1 hedefe kadar). */
+  pushTo(at: THREE.Vector3, k: number, dur: number): Promise<void> {
+    const pos = this.home.pos.clone().lerp(at, k), target = this.home.target.clone().lerp(at, k * 0.6);
+    return this.moveRig(pos, target, dur);
+  }
+  goHome(dur: number): Promise<void> {
+    return this.moveRig(this.home.pos, this.home.target, dur);
+  }
+
   shake(amount: number): void {
     this.trauma = clamp(this.trauma + amount, 0, 1);
     this.invalidate();
@@ -112,9 +134,9 @@ export class Stage {
     this.invalidate();
   }
 
-  /** Yatay ekranda tasarlanan kadrajı korur; dar ekranda görüş açısını genişletir. */
+  /** Tasarım kadrajını korur; daha dar ekranda görüş açısını genişletir. */
   private baseFov(): number {
-    const a = this.camera.aspect, design = 2.0;
+    const a = this.camera.aspect, design = this.rig.designAspect;
     if (a >= design) return this.rig.fov;
     const hHalf = Math.tan(THREE.MathUtils.degToRad(this.rig.fov / 2)) * design;
     return THREE.MathUtils.radToDeg(2 * Math.atan(hHalf / a));
@@ -142,10 +164,11 @@ export class Stage {
     this.last = now;
     this.time.step(realDt);
     const dt = realDt * this.time.timeScale;
-    for (const u of this.updaters) u(dt, realDt);
     if (this.trauma > 0) this.trauma = Math.max(0, this.trauma - realDt * 1.6);
     if (this.fovKick !== 0) this.fovKick = Math.abs(this.fovKick) < 0.02 ? 0 : this.fovKick * Math.exp(-realDt * 7);
-    this.applyCamera();
+    this.applyCamera(); // önce kamera: el kartları ve etiketler aynı karede doğru yere otursun
+    this.camera.updateMatrixWorld();
+    for (const u of this.updaters) u(dt, realDt);
     for (const h of this.renderHooks) h();
     this.renderer.render(this.scene, this.camera);
     this.adapt(realDt);

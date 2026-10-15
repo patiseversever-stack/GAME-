@@ -8,7 +8,8 @@
 
 **Kahvehane Pişti**, Türkiye için yapılan premium bir mobil kart oyunu. Oyuncu, sıcak lamba ışığı altındaki yeşil çuhalı bir masada klasik **Pişti** oynuyor. Rakipleri, eski bir İstanbul kahvehanesinin müdavimleri olan esprili karakterler.
 
-- **Görsel tarz:** Sinematik, Pixar kalitesinde 3D animasyon filmi. Sıcak altın ışık, zengin dokular, ifadeli yüzler. Premium ve eğlenceli, ama çocuksu değil.
+- **Görsel tarz:** Supercell / Monopoly GO kalitesinde, sinematik ışıklı 3D çizgi film karakterleri (Pixar'a yakın). Sıcak altın ışık, ifadeli yüzler, hafif abartılı oranlar. Premium ve eğlenceli, ama çocuksu değil.
+- **ÖNEMLİ:** ChatGPT'ye ilk mesajla birlikte **`_dikey_hedef.jpg`** görselini de yükle ve "karakterler bu görseldeki tarzda olsun" de. O görsel onaylanan hedef ekran; Rıza Amca, Cem ve Defne orada nasıl görünüyorsa öyle olmalı.
 - **Karakterler oyunda iki yerde görünür:**
   1. Masadaki **yuvarlak altın çerçeveli oyuncu rozetinde** (portre yuvarlağa kırpılır, bu yüzden yüz ortada olmalı).
   2. Önemli anlarda (pişti, büyük kazanç, kaybetme) rozetin yanında açılan **tepki kartında** (duygulu hâl + konuşma balonu).
@@ -29,7 +30,7 @@
 
 ```
 I'm making a premium Turkish mobile card game called "Kahvehane Pişti". I need character portraits for it, in a consistent series.
-STYLE for every image: cinematic Pixar-quality 3D animated film style, warm dramatic golden lighting from the upper left, soft rim light from the right, rich textures, expressive face, premium, playful but not childish.
+STYLE for every image: stylized 3D cartoon character exactly like the characters in the attached game screenshot (Supercell / Monopoly GO quality, Pixar-like), cinematic warm golden lighting from the upper left, soft rim light from the right, rich textures, very expressive face, slightly exaggerated proportions, premium, playful but not childish.
 FORMAT for every image: 1024x1024 square PNG with a TRANSPARENT background (no background, no floor shadow), bust portrait (head and shoulders), head starting about 10% from the top, eyes at about 38% height, face horizontally centered, slight three-quarter angle, same camera distance in every image of a character. No text, no frame, no watermark.
 For each character I will first ask for a NEUTRAL portrait, then 14 variations. In every variation keep EXACTLY the same character design, outfit, framing, camera and lighting; only change the expression and pose as described.
 ```
@@ -156,8 +157,19 @@ Character: Defne, a composed 34-year-old Turkish woman architect, dark hair in a
 
 ---
 
+## 5. Resimli kartlar (3 görsel): karakterlerimiz kartlarda
+
+Kartın harfini, sembolünü ve çerçevesini ben kodla ekliyorum; burada sadece **karakter figürü** lazım. Her görsel **2×2 ızgara**: sol üst maça, sağ üst kupa, sol alt karo, sağ alt sinek. Kıyafet renkleri karta göre değişir (maça siyah-altın, kupa kırmızı-altın, karo kırmızı-mavi, sinek yeşil-altın).
+
+| # | Dosya adı | Prompt |
+|---|---|---|
+| K1 | kart_papaz | `Four separate half-body portraits in a 2x2 grid with clear gaps, plain cream background: Rıza Amca (72-year-old Turkish grandpa, huge white handlebar mustache) dressed as a playing-card KING with a golden crown, fur-trimmed royal robe and a scepter, proud smile; each quadrant a different color scheme: top-left black and gold, top-right red and gold, bottom-left red and blue, bottom-right green and gold. Same cartoon style as the attached screenshot. No letters, no suit symbols, no card borders.` |
+| K2 | kart_kiz | `... same layout ... Defne (elegant Turkish woman, dark hair in a low bun) dressed as a playing-card QUEEN with a small tiara and flowers, confident smile ...` |
+| K3 | kart_vale | `... same layout ... Cem (cocky young Turkish man, messy dark hair) dressed as a playing-card JACK (page) with a feathered cap and a short cape, cheeky grin ...` |
+
 ## Teslim
 
 - Görselleri bu sohbete **dosya adlarıyla** (örn. `riza_05_kizgin.png`) yükle. Adlandıramazsan karakter karakter, tablodaki sırayla yükle.
 - Saydam arka plan olmazsa da sorun değil, ben temizlerim; ama tek renk düz arka plan tercih et.
-- Kartlar, rozet çerçevesi ve yazılar için ayrı liste: `GORSEL_LISTESI.md` (kart figürleri, kart arkası, PİŞTİ yazısı vb.).
+- Toplam: **60 karakter + 3 kart = 63 görsel.** Öncelik sırası: Rıza Amca'nın 15'i → 3 kart görseli → Cem, Defne, Dursun.
+- Rozet çerçeveleri, butonlar ve PİŞTİ yazısını kodla yapıyorum, onlar için görsel gerekmiyor.
