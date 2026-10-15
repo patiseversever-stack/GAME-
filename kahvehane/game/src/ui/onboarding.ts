@@ -204,7 +204,7 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
     play(q(box, '.kh-gift__lid'), [{transform: 'none', opacity: 1}, {transform: 'translate(40%, -380%) rotate(48deg)', opacity: 1, offset: 0.7}, {transform: 'translate(60%, -520%) rotate(70deg)', opacity: 0}], {duration: 900, easing: EASE.out, fill: 'forwards'});
     const rays = q(box, '.kh-gift__rays');
     play(rays, [{transform: 'scale(0) rotate(0)', opacity: 0}, {transform: 'scale(1.1) rotate(40deg)', opacity: 1, offset: 0.35}, {transform: 'scale(1.3) rotate(120deg)', opacity: 0}], {duration: 1800, easing: 'ease-out', fill: 'forwards'});
-    play(pt.el, [{transform: 'translate(-30%, 22%) scale(.62)'}, {transform: 'translate(-60%, 80%) scale(.62)'}], {duration: 500, delay: 200, easing: EASE.in, fill: 'forwards'});
+    play(pt.el, [{transform: 'translate(-30%, 22%) scale(.62)'}, {transform: 'translate(-75%, 115%) scale(.62)'}], {duration: 420, delay: 120, easing: EASE.in, fill: 'forwards'});
     play(say2, [{opacity: 1}, {opacity: 0}], {duration: 200, fill: 'forwards'});
     await scope.wait(260);
     return true;
@@ -336,7 +336,12 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
         play(inner, [{transform: 'translateY(40%) scale(.8)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 520, delay: 100 + Math.abs(i - start) * 80, easing: EASE.spring, fill: 'backwards'});
       }
     });
-    if (box) scope.timeout(() => box.remove(), 1600);
+    if (box) {
+      // kartlar fırlarken boş kutu küçülüp söner
+      play(q(box, '.kh-gift__in'), [{transform: 'none', opacity: 1}, {transform: 'translateY(12%) scale(.7, .55)', opacity: 0}], {duration: 520, delay: 280, easing: EASE.in, fill: 'forwards'});
+      play(q(box, '.kh-gift__shadow'), [{opacity: 1}, {opacity: 0}], {duration: 400, delay: 300, fill: 'forwards'});
+      scope.timeout(() => box.remove(), 1600);
+    }
 
     return new Promise<CharDef>(res => {
       const take = q(gal, '[data-act=take]') as HTMLButtonElement;
