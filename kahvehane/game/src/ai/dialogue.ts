@@ -385,8 +385,8 @@ for (const c of CHAR_IDS) {
   for (const m of MOMENTS) for (const l of DIALOGUE[c][m] ?? EMPTY) BY_ID.set(l.id, {...l, char: c, moment: m});
 }
 
-export function linesFor(charId: string, moment: Moment): readonly Line[] {
-  const d = (DIALOGUE as Record<string, Partial<Record<Moment, readonly Line[]>> | undefined>)[charId];
+export function linesFor(charId: string, moment: string): readonly Line[] {
+  const d = (DIALOGUE as Record<string, Partial<Record<string, readonly Line[]>> | undefined>)[charId];
   return d?.[moment] ?? EMPTY;
 }
 
@@ -451,8 +451,14 @@ export const MOMENT_RULES: Readonly<Record<Moment, MomentRule>> = {
   playerLeading: {kind: 'chatter', chance: 0.35, prio: 1, selfGapMs: 30_000},
 };
 
-export function momentPriority(m: Moment): 1 | 2 | 3 {
-  return MOMENT_RULES[m].prio;
+/** Bilinmeyen anlar (ileride eklenecek olaylar) sıradan olay tepkisi sayılır. */
+const DEFAULT_RULE: MomentRule = {kind: 'event', chance: 0.4, prio: 2};
+export function ruleFor(m: string): MomentRule {
+  return (MOMENT_RULES as Record<string, MomentRule | undefined>)[m] ?? DEFAULT_RULE;
+}
+
+export function momentPriority(m: string): 1 | 2 | 3 {
+  return ruleFor(m).prio;
 }
 
 const nowMs = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -462,11 +468,13 @@ const nowMs = (): number => (typeof performance !== 'undefined' ? performance.no
  * Masada birden çok bot olsa da sıklık kuralı tek (ortak) olmalı: modül düzeyindeki `dialogue` örneğini kullanın.
  */
 export class DialogueDirector {
+  /** Zaman kaynağı (ms). shouldSpeak'e verilen `now` ile aynı saat olmalı (oyunda performance.now). */
+  clock: () => number = nowMs;
   private recent = new Map<string, string[]>(); // karakter → son HISTORY replik kimliği (eskiden yeniye)
   private uses = new Map<string, number>();
   private lastAt = -Infinity;
-  private lastBy = new Map<Moment, number>();
-  private spoken = new Map<Moment, number[]>();
+  private lastBy = new Map<string, number>();
+  private spoken = new Map<string, number[]>();
 
   reset(): void {
     this.recent.clear();
@@ -477,8 +485,8 @@ export class DialogueDirector {
   }
 
   /** Bu anda konuşulsun mu? true dönerse konuşma kaydedilir (sonraki çağrıların bekleme süresi başlar). */
-  shouldSpeak(moment: Moment, now: number = nowMs(), rnd: () => number = Math.random): boolean {
-    const r = MOMENT_RULES[moment];
+  shouldSpeak(moment: string, now: number = this.clock(), rnd: () => number = Math.random): boolean {
+    const r = ruleFor(moment);
     if (r.kind !== 'always') {
       if (now - this.lastAt < (r.kind === 'chatter' ? CHATTER_GAP_MS : EVENT_GAP_MS)) return false;
       const last = this.lastBy.get(moment);
@@ -488,23 +496,32 @@ export class DialogueDirector {
       if (times) for (const t of times) if (now - t < FATIGUE_WINDOW_MS) recentCount++;
       if (rnd() >= r.chance * Math.pow(FATIGUE, recentCount)) return false;
     }
-    this.lastAt = now;
+    this.note(moment, now);
+    return true;
+  }
+
+  private note(moment: string, now: number): void {
+    this.lastAt = Math.max(this.lastAt, now);
     this.lastBy.set(moment, now);
     const times = this.spoken.get(moment) ?? [];
     times.push(now);
     while (times.length > 8) times.shift();
     this.spoken.set(moment, times);
-    return true;
   }
 
   /**
    * Anın repliklerinden birini seçer. Karakterin son HISTORY repliği tekrar edilmez; anın bütün replikleri yakın
    * zamanda kullanıldıysa en eski kullanılan yarısından seçilir (son söylenen asla hemen tekrar etmez).
-   * Çok kullanılan replikler daha az seçilir.
+   * Çok kullanılan replikler daha az seçilir. Her zaman konuşulan anlar (pişti, el başı/sonu) shouldSpeak'ten
+   * geçmeden de çağrılabilir: seçilince konuşma zamanı yine kaydedilir, böylece boş laflar hemen arkasından gelmez.
    */
-  pickLine(charId: string, moment: Moment, rnd: () => number = Math.random): Line | null {
+  pickLine(charId: string, moment: string, rnd: () => number = Math.random): Line | null {
     const pool = linesFor(charId, moment);
     if (!pool.length) return null;
+    if (ruleFor(moment).kind === 'always') {
+      const t = this.clock();
+      if (t > this.lastAt) this.note(moment, t);
+    }
     const hist = this.recent.get(charId) ?? [];
     let cand = pool.filter(l => !hist.includes(l.id));
     if (!cand.length) {
@@ -537,7 +554,7 @@ export class DialogueDirector {
   }
 
   /** shouldSpeak + pickLine. Karakterin bu an için repliği yoksa sıklık sayacına dokunmaz. */
-  react(charId: string, moment: Moment, now: number = nowMs(), rnd: () => number = Math.random): Line | null {
+  react(charId: string, moment: string, now: number = this.clock(), rnd: () => number = Math.random): Line | null {
     if (!linesFor(charId, moment).length) return null;
     if (!this.shouldSpeak(moment, now, rnd)) return null;
     return this.pickLine(charId, moment, rnd);
@@ -547,15 +564,15 @@ export class DialogueDirector {
 /** Oyunun ortak konuşma durumu. */
 export const dialogue = new DialogueDirector();
 
-export function pickLine(charId: string, moment: Moment, rnd: () => number = Math.random): Line | null {
+export function pickLine(charId: string, moment: string, rnd: () => number = Math.random): Line | null {
   return dialogue.pickLine(charId, moment, rnd);
 }
 
-export function shouldSpeak(moment: Moment, now: number = nowMs(), rnd: () => number = Math.random): boolean {
+export function shouldSpeak(moment: string, now: number = dialogue.clock(), rnd: () => number = Math.random): boolean {
   return dialogue.shouldSpeak(moment, now, rnd);
 }
 
-export function react(charId: string, moment: Moment, now: number = nowMs(), rnd: () => number = Math.random): Line | null {
+export function react(charId: string, moment: string, now: number = dialogue.clock(), rnd: () => number = Math.random): Line | null {
   return dialogue.react(charId, moment, now, rnd);
 }
 

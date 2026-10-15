@@ -1,0 +1,229 @@
+/* ==========================================================================
+   Kahvehane Pişti — TEMA (kaplama)
+   Renk, yazı tipi, köşe, gölge, degrade: hepsi burada, değişken olarak.
+   ui.css yalnız yerleşim/boyut/hareket içerir ve bu değişkenleri kullanır.
+   Yeni bir kaplama = bu dosyanın değerlerini değiştirmek.
+   ========================================================================== */
+:root {
+  /* ---- ölçek ---- */
+  --u: clamp(12px, min(3.85vh, 1.8vw), 22px);
+  --tap: max(44px, calc(var(--u) * 3));
+
+  /* ---- yazı ---- */
+  --font-display: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  --font-ui: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --w-display: 900;
+  --w-body: 600;
+  --w-strong: 800;
+  --w-black: 900;
+  --track-label: .16em;
+  --track-btn: .07em;
+  --case-btn: uppercase;
+  --case-label: uppercase;
+
+  /* ---- köşeler ---- */
+  --r-xs: calc(var(--u) * .35);
+  --r-sm: calc(var(--u) * .55);
+  --r-md: calc(var(--u) * .85);
+  --r-lg: calc(var(--u) * 1.15);
+  --r-pill: 999px;
+
+  /* ---- metin renkleri ---- */
+  --c-text: #f4efe4;
+  --c-text-2: #c4ccc6;
+  --c-text-3: #8d9a92;
+  --c-accent: #f0d48e;          /* bölüm etiketleri, vurgu */
+  --c-ink: #1d1a16;             /* açık zemin üstü */
+  --c-good: #62d394;
+  --c-bad: #f07a6c;
+  --c-red-suit: #c2202f;
+  --c-black-suit: #16120e;
+
+  /* ---- ortak çizgi / degrade ---- */
+  --line: rgba(243, 220, 154, .13);
+  --line-strong: rgba(243, 220, 154, .32);
+  --edge-gold: linear-gradient(180deg, #f6e3a6 0%, #c9a24a 45%, #8a6420 100%);
+  --edge-soft: linear-gradient(180deg, rgba(243, 220, 154, .5), rgba(138, 100, 32, .3));
+  --rule-gold: linear-gradient(90deg, rgba(201, 162, 74, 0), #e8c97a 25%, #f6e3a6 50%, #e8c97a 75%, rgba(201, 162, 74, 0));
+  --text-gold: linear-gradient(180deg, #fff7dc 0%, #f6e0a0 28%, #ddb258 52%, #b17f2c 74%, #e9c777 100%);
+  --text-shadow-soft: 0 1px 2px rgba(0, 0, 0, .55);
+
+  /* ---- ekran zeminleri ---- */
+  --bg-app: #06120c;
+  --bg-splash: radial-gradient(ellipse 70% 80% at 50% 42%, #17402f 0%, #0a1f16 55%, #040b07 100%);
+  --bg-lobby-photo-filter: saturate(.8) brightness(.52);
+  --bg-lobby-tint:
+    radial-gradient(ellipse 34% 62% at 25% 56%, rgba(255, 205, 120, .2), rgba(255, 205, 120, 0) 70%),
+    linear-gradient(90deg, rgba(4, 14, 9, .45) 0%, rgba(4, 14, 9, .15) 38%, rgba(4, 14, 9, .72) 62%, rgba(4, 14, 9, .9) 100%),
+    linear-gradient(180deg, rgba(3, 8, 6, .65) 0%, rgba(3, 8, 6, 0) 24%, rgba(3, 8, 6, 0) 66%, rgba(3, 8, 6, .8) 100%);
+  --scrim: radial-gradient(ellipse at 50% 45%, rgba(3, 12, 8, .66), rgba(1, 5, 3, .9));
+  --scrim-results: radial-gradient(ellipse at 50% 40%, rgba(3, 14, 9, .74), rgba(1, 5, 3, .94));
+  --felt: radial-gradient(ellipse 75% 70% at 50% 46%, #2f8558 0%, #1f6a44 45%, #12482d 80%, #0b311e 100%);
+
+  /* ---- panel (modal, lobi masası) ---- */
+  --panel-fill:
+    linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, 0) 30%),
+    linear-gradient(180deg, #143628 0%, #0d241a 50%, #091a12 100%);
+  --panel-edge: var(--edge-gold);
+  --panel-edge-w: 1.5px;
+  --panel-shadow: 0 18px 44px rgba(0, 0, 0, .55), 0 3px 8px rgba(0, 0, 0, .3), inset 0 1px 0 rgba(255, 255, 255, .07);
+
+  /* ---- iç kart (adım kutuları, günlük ödül, skor satırı) ---- */
+  --card-fill: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .025));
+  --card-edge: var(--edge-soft);
+  --card-shadow: 0 4px 12px rgba(0, 0, 0, .25);
+  --card-hi-fill: linear-gradient(180deg, #2a7556, #18523b 60%, #134430);
+  --card-hi-edge: var(--edge-gold);
+  --card-hi-shadow: 0 0 0 3px rgba(243, 220, 154, .16), 0 8px 18px rgba(0, 0, 0, .35);
+
+  /* ---- yüzen plaka (oyun içi) ---- */
+  --plaque-fill: linear-gradient(180deg, rgba(14, 22, 18, .9), rgba(6, 12, 9, .9));
+  --plaque-edge: var(--edge-gold);
+  --plaque-shadow: 0 8px 20px rgba(0, 0, 0, .45);
+
+  /* ---- butonlar ---- */
+  --btn-gloss: linear-gradient(180deg, rgba(255, 255, 255, .34), rgba(255, 255, 255, 0));
+  --btn-shine: linear-gradient(100deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .6) 50%, rgba(255, 255, 255, 0) 100%);
+  /* birincil (altın) */
+  --btn1-fill: linear-gradient(180deg, #fbe6a2 0%, #efc96c 38%, #d4a23f 70%, #b5832c 100%);
+  --btn1-edge: linear-gradient(180deg, #fff2c4, #a8772a);
+  --btn1-fg: #2b1a05;
+  --btn1-text-shadow: 0 1px 0 rgba(255, 248, 220, .6);
+  --btn1-shadow: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -2px 0 rgba(122, 82, 22, .5), 0 3px 0 #7d5717, 0 9px 18px rgba(0, 0, 0, .42);
+  --btn1-shadow-down: inset 0 1px 0 rgba(255, 255, 255, .9), inset 0 -1px 0 rgba(122, 82, 22, .5), 0 1px 0 #7d5717, 0 4px 10px rgba(0, 0, 0, .4);
+  /* ikincil (zümrüt) */
+  --btn2-fill: linear-gradient(180deg, #2f8461 0%, #1d6046 50%, #13442f 100%);
+  --btn2-edge: var(--edge-gold);
+  --btn2-fg: #f6f0e2;
+  --btn2-text-shadow: 0 1px 1px rgba(0, 0, 0, .4);
+  --btn2-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), 0 3px 0 #082518, 0 8px 16px rgba(0, 0, 0, .4);
+  --btn2-shadow-down: inset 0 1px 0 rgba(255, 255, 255, .22), 0 1px 0 #082518, 0 4px 8px rgba(0, 0, 0, .4);
+  /* tehlike (bordo) */
+  --btn3-fill: linear-gradient(180deg, #a3303f 0%, #7a1f2b 52%, #561320 100%);
+  --btn3-edge: var(--edge-gold);
+  --btn3-fg: #fbefe6;
+  --btn3-shadow: inset 0 1px 0 rgba(255, 210, 210, .25), 0 3px 0 #33080f, 0 8px 16px rgba(0, 0, 0, .4);
+  --btn3-shadow-down: inset 0 1px 0 rgba(255, 210, 210, .25), 0 1px 0 #33080f, 0 4px 8px rgba(0, 0, 0, .4);
+  /* sade (çerçeveli) */
+  --btn4-fill: linear-gradient(180deg, rgba(255, 255, 255, .08), rgba(255, 255, 255, .02));
+  --btn4-edge: var(--edge-soft);
+  --btn4-fg: var(--c-text);
+  --btn-disabled-filter: saturate(.2) brightness(.7);
+
+  /* ---- yuvarlak simge butonu ---- */
+  --iconbtn-fill: radial-gradient(circle at 50% 30%, #22503c, #0c2219 72%);
+  --iconbtn-edge: var(--edge-gold);
+  --iconbtn-fg: #f3dc9a;
+  --iconbtn-shadow: 0 4px 10px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .14);
+
+  /* ---- seçim çipleri ---- */
+  --chip-fill: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02));
+  --chip-edge: linear-gradient(180deg, rgba(243, 220, 154, .4), rgba(138, 100, 32, .28));
+  --chip-fg: #d9d3c4;
+  --chip-on-fill: linear-gradient(180deg, #2c7a59, #18523b 62%, #134430);
+  --chip-on-edge: var(--edge-gold);
+  --chip-on-fg: #fff3d0;
+  --chip-on-shadow: 0 0 0 3px rgba(243, 220, 154, .14), 0 5px 12px rgba(0, 0, 0, .35), inset 0 1px 0 rgba(255, 255, 255, .2);
+  --chip-locked-fg: #7f8a83;
+
+  /* ---- küçük etiket (Yakında, Sv. 5) ---- */
+  --tag-fill: #0a1610;
+  --tag-edge: var(--edge-gold);
+  --tag-fg: #f0d48e;
+
+  /* ---- anahtar / segment ---- */
+  --toggle-track: #08130e;
+  --toggle-track-on: linear-gradient(180deg, #3aa874, #1f7a50);
+  --toggle-ring: 0 0 0 1px rgba(201, 162, 74, .5);
+  --toggle-knob: linear-gradient(180deg, #fff3cf, #e2bb63 55%, #b8862f);
+  --seg-track: #08130e;
+  --seg-on-fill: var(--btn1-fill);
+  --seg-on-fg: var(--btn1-fg);
+  --seg-fg: #cfd5cf;
+
+  /* ---- jeton kapsülü, seviye, XP ---- */
+  --cap-fill: linear-gradient(180deg, rgba(4, 11, 8, .9), rgba(14, 30, 22, .9));
+  --cap-edge: var(--edge-gold);
+  --cap-fg: #fff6dc;
+  --cap-shadow: inset 0 2px 6px rgba(0, 0, 0, .55), 0 4px 12px rgba(0, 0, 0, .35);
+  --plus-fill: var(--btn1-fill);
+  --plus-fg: #2b1a05;
+  --lvl-fill: radial-gradient(circle at 50% 30%, #49c9bb, #1f7f86 60%, #155a60);
+  --lvl-edge: var(--edge-gold);
+  --lvl-fg: #ffffff;
+  --xp-track: #06100c;
+  --xp-fill: linear-gradient(180deg, #7ee6da, #2fb5a8 55%, #1f7f86);
+  --xp-ring: 0 0 0 1px rgba(201, 162, 74, .55);
+
+  /* ---- avatar / portre halkası ---- */
+  --avatar-fill: radial-gradient(circle at 50% 30%, #2a6a4f, #10301f 75%);
+  --avatar-fg: var(--text-gold);
+  --ring-edge: conic-gradient(from 210deg, #8a6420, #f6e3a6, #c9a24a, #8a6420, #f3dc9a, #8a6420);
+  --ring-inner: #0a140f;
+  --ring-turn: conic-gradient(from 0deg, rgba(255, 228, 150, 0) 0deg, rgba(255, 228, 150, 0) 200deg, rgba(255, 236, 170, .95) 320deg, rgba(255, 228, 150, 0) 360deg);
+  --ring-glow: radial-gradient(circle, rgba(255, 214, 120, .55) 0%, rgba(255, 214, 120, .18) 45%, rgba(255, 214, 120, 0) 70%);
+  --portrait-backdrop: radial-gradient(circle at 50% 35%, #3b6a55, #13281e 75%);
+
+  /* ---- başlıklar ---- */
+  --title-fill: var(--text-gold);
+  --title-shadow: drop-shadow(0 2px 0 rgba(60, 36, 8, .9)) drop-shadow(0 6px 14px rgba(0, 0, 0, .45));
+  --title-stroke: 0px transparent;
+
+  /* ---- konuşma balonu, tepki kartı ---- */
+  --bubble-fill: #f7f3ea;
+  --bubble-fg: #1d1a16;
+  --bubble-shadow: 0 10px 24px rgba(0, 0, 0, .38), 0 2px 4px rgba(0, 0, 0, .2);
+  --react-frame: #f7f3ea;
+  --react-shadow: 0 14px 28px rgba(0, 0, 0, .5);
+
+  /* ---- ipucu, deste, afiş ---- */
+  --hint-fill: linear-gradient(180deg, rgba(10, 20, 15, .9), rgba(5, 11, 8, .9));
+  --hint-edge: var(--edge-gold);
+  --hint-fg: #fff6df;
+  --hint-glow: 0 0 22px rgba(255, 210, 120, .45);
+  --deck-fill: rgba(5, 10, 8, .82);
+  --deck-edge: var(--edge-soft);
+  --deck-fg: #f6efdf;
+  --banner-fill: linear-gradient(180deg, rgba(17, 40, 30, .95), rgba(8, 22, 15, .95));
+  --banner-edge: var(--edge-gold);
+  --banner-shadow: 0 14px 30px rgba(0, 0, 0, .5);
+
+  /* ---- PİŞTİ damgası, parlama, konfeti ---- */
+  --stamp-fill: var(--text-gold);
+  --stamp-shadow: drop-shadow(0 3px 0 #5a3a0c) drop-shadow(0 10px 22px rgba(0, 0, 0, .6));
+  --stamp-stroke: 0px transparent;
+  --stamp-rays: repeating-conic-gradient(from 0deg, rgba(255, 226, 150, .22) 0deg 7deg, rgba(255, 226, 150, 0) 7deg 22deg);
+  --stamp-rays-mask: radial-gradient(circle, #000 0%, #000 30%, transparent 70%);
+  --stamp-pill-fill: linear-gradient(180deg, #2c7a59, #134430);
+  --stamp-pill-fg: #fff3d0;
+  --flash: #fff8e6;
+  --fx-1: #f3dc9a;
+  --fx-2: #d9a843;
+  --fx-3: #f7f3ea;
+  --fx-4: #9a2a3a;
+  --fx-5: #2fb5a8;
+  --fx-coin: radial-gradient(circle at 35% 30%, #fff4c8 0%, #f0c75e 35%, #c08a2c 75%, #8a5a17 100%);
+  --fx-coin-edge: #7a4f12;
+  --pop-fill: var(--text-gold);
+  --pop-shadow: drop-shadow(0 2px 0 rgba(40, 24, 4, .95)) drop-shadow(0 4px 8px rgba(0, 0, 0, .55));
+
+  /* ---- karşılaşma girişi ---- */
+  --vs-left: linear-gradient(115deg, #174a35 0%, #0b2419 60%, #06150e 100%);
+  --vs-right: linear-gradient(115deg, #5a1724 0%, #33090f 60%, #1c0508 100%);
+  --vs-seam: linear-gradient(90deg, rgba(243, 220, 154, 0), #f6e3a6 50%, rgba(243, 220, 154, 0));
+  --vs-emblem-fill: radial-gradient(circle at 50% 35%, #1f4a37, #0a1d14 70%);
+  --vs-rays: repeating-conic-gradient(from 0deg, rgba(255, 226, 150, .12) 0deg 6deg, rgba(255, 226, 150, 0) 6deg 18deg);
+
+  /* ---- kural kartları (mini iskambil) ---- */
+  --mcard-fill: linear-gradient(180deg, #fffdf7, #f1eadb);
+  --mcard-edge: rgba(0, 0, 0, .25);
+  --mcard-back: repeating-linear-gradient(45deg, #7a1f2b 0 4px, #5a1420 4px 8px);
+  --mcard-back-edge: #e8c97a;
+  --mcard-shadow: 0 3px 6px rgba(0, 0, 0, .4);
+
+  /* ---- bildirim noktası, kilit örtüsü ---- */
+  --dot-fill: radial-gradient(circle at 35% 30%, #ff9a8a, #d8402f 60%, #8f1d14);
+  --dot-ring: #0a1b14;
+  --locked-filter: grayscale(1) brightness(.42) contrast(1.05);
+  --locked-veil: linear-gradient(180deg, rgba(4, 10, 7, .2), rgba(4, 10, 7, .55));
+}
