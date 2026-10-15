@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Masa ve Çerçeve Önizleme</title>
+<style>
+  html { background: #050826; }
+  body { margin: 0; padding: 20px 24px 40px; color: #fff; font: 600 14px/1.4 system-ui, sans-serif;
+    background: radial-gradient(120% 80% at 50% 30%, #1a2aa0 0%, #101a6e 45%, #050826 100%) fixed; }
+  h1 { font-size: 22px; margin: 0 0 12px; }
+  h2 { font-size: 17px; margin: 26px 0 10px; color: #ffd23f; }
+  .tables { display: flex; flex-wrap: wrap; gap: 22px; align-items: flex-start; }
+  .col { flex: none; }
+  .lab { display: flex; align-items: baseline; gap: 10px; margin: 0 0 8px; }
+  .lab b { font-size: 18px; color: #ffd23f; }
+  .lab small { color: #b9c4ff; font-weight: 500; }
+  .lab i { margin-left: auto; font-style: normal; font: 600 12px ui-monospace, monospace; color: #8fe39a; }
+  .sw { width: 120px; height: 120px; border-radius: 16px; box-shadow: 0 0 0 2px rgba(255,255,255,.25), 0 6px 14px rgba(0,0,20,.5); flex: none; }
+  .sws { display: flex; gap: 18px; flex-wrap: wrap; }
+  .sws figure { margin: 0; text-align: center; font-size: 12px; color: #c8d0ff; }
+  .sws figcaption { margin-top: 6px; }
+
+  /* ── telefon ── */
+  .ph { position: relative; width: 390px; height: 844px; border-radius: 30px; overflow: hidden; box-shadow: 0 0 0 3px #1b2360, 0 20px 40px rgba(0,0,20,.6); isolation: isolate; }
+
+  /* ── Table2D katmanları: gerçek src/table2d/table.css içe aktarılır (themes.ts); burada yalnız telefon geometrisi ezilir
+     (vmax yerine 390×844 telefona göre piksel). ── */
+  .ph .ar { position: absolute; }
+  .ph .ar__glow { width: 1435px; height: 1435px; margin: -717px 0 0 -717px; transition: none; }
+  .ph .ar__rays { width: 1857px; height: 1857px; margin: -928px 0 0 -928px; }
+  .c2 { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; }
+  .c2 canvas { display: block; width: 100%; height: 100%; border-radius: 8% / 5.6%;
+    box-shadow: 0 2px 0 rgba(4, 8, 40, .35), 0 6px 14px rgba(2, 4, 30, .45); }
+  .c2.is-flat canvas { box-shadow: 0 1px 0 rgba(4, 8, 40, .4), 0 2px 5px rgba(2, 4, 30, .35); }
+
+  /* ── HUD taklidi: rozetler ── */
+  .bdg { position: absolute; z-index: 5; }
+  .kh-avatar-ring { position: relative; border-radius: 50%; }
+  .kh-avatar-ring .bk { position: absolute; inset: 0; border-radius: 50%; overflow: hidden;
+    background: radial-gradient(circle at 50% 30%, #ff8a9a 0%, #ff2e4d 45%, #a8001e 100%); }
+  .kh-avatar-ring .bk.is-b { background: radial-gradient(circle at 50% 30%, #8ab4ff 0%, #2e6bff 45%, #0a2a9e 100%); }
+  .kh-avatar-ring img { position: absolute; left: -6%; top: 4%; width: 112%; height: 112%; object-fit: cover; }
+  .name { position: absolute; left: 50%; top: calc(100% - 8px); transform: translateX(-50%); z-index: 3; padding: 3px 14px; border-radius: 99px; white-space: nowrap;
+    background: linear-gradient(#2a3bd0, #16206b); box-shadow: 0 0 0 2px #0a1033, 0 3px 0 #0a1033; font: 800 15px/1.2 system-ui; }
+
+  /* ── çerçeve satırı ── */
+  .frames { display: flex; flex-wrap: wrap; gap: 30px; padding: 26px 30px; border-radius: 22px; background: radial-gradient(120% 120% at 50% 30%, #2638c8, #101a6e 60%, #080d3a); align-items: center; }
+  .frames.is-dark { background: radial-gradient(120% 120% at 50% 30%, #1d1030, #0b0716 70%); }
+  .frames.is-light { background: linear-gradient(#e9ecf7, #c9d0ea); color: #16206b; }
+  .fr { display: flex; flex-direction: column; align-items: center; gap: 14px; min-width: 150px; }
+  .fr .pair { display: flex; align-items: center; gap: 28px; height: 170px; }
+  .fr span { font-size: 13px; }
+</style>
+</head>
+<body>
+<h1>Masa temaları ve avatar çerçeveleri</h1>
+<div class="tables" id="tables"></div>
+<h2>Market küçük resimleri (swatch)</h2>
+<div class="sws" id="sws"></div>
+<h2>Avatar çerçeveleri — 120 px ve 44 px</h2>
+<div id="frames"></div>
+<script type="module" src="./themes.ts"></script>
+</body>
+</html>
