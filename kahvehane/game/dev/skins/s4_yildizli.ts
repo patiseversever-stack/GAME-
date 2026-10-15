@@ -909,11 +909,12 @@ async function doPrepare(): Promise<void> {
   }
   const [riza, defne, cem] = await Promise.all([loadImg(rizaUrl), loadImg(defneUrl), loadImg(cemUrl)]);
   SUIT_PATH = {S: spadePath(), H: heartPath(), D: diamondPath(), C: clubPath()};
-  backArt = paintScene(backScene());
-  frameArt = paintScene(frameScene());
-  creamArt = paintCream();
-  aceArt = paintAceHalo();
-  (['S', 'H', 'D', 'C'] as Suit[]).forEach((s, i) => (suitArt[s] = paintSuit(SUIT_PATH![s], isRed(s), 500 + i)));
+  let T = performance.now(); const lap = (n: string): void => { const t2 = performance.now(); console.log('S4T', n, (t2 - T).toFixed(1)); T = t2; };
+  backArt = paintScene(backScene()); lap('back');
+  frameArt = paintScene(frameScene()); lap('frame');
+  creamArt = paintCream(); lap('cream');
+  aceArt = paintAceHalo(); lap('ace');
+  (['S', 'H', 'D', 'C'] as Suit[]).forEach((s, i) => (suitArt[s] = paintSuit(SUIT_PATH![s], isRed(s), 500 + i))); lap('suits');
   const court: [number, HTMLImageElement | null, number][] = [
     [13, riza, 62],
     [12, defne, 60],
@@ -927,6 +928,7 @@ async function doPrepare(): Promise<void> {
       p = null;
     }
     courtArt[r] = paintCourt(p, LABEL(r), 700 + r);
+    lap('court' + r);
   }
   const [, mg] = makeCanvas(4, 4);
   mg.font = `900 100px ${FONT}`;
