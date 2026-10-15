@@ -104,6 +104,12 @@ export class Scope {
  * Geçici öğeler (afiş, parçacık) için 0.4 gibi bir ara an seçilir.
  */
 export function play(el: Element, kf: Keyframe[], o: KeyframeAnimationOptions, hold = 1): Animation {
+  // Çok kareli animasyonda yumuşatma tüm zaman çizelgesini değil her aralığı etkilesin (aksi hâlde ara kareler kayar).
+  if (kf.length > 2 && o.easing && o.easing !== 'linear') {
+    const e = o.easing;
+    kf = kf.map((k, i) => (i < kf.length - 1 && k.easing === undefined ? {...k, easing: e} : k));
+    o = {...o, easing: 'linear'};
+  }
   const a = el.animate(kf, o);
   if (!ANIM) {
     const d = Number(o.duration) || 0, dl = Number(o.delay) || 0;

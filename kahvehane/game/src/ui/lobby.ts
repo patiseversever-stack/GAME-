@@ -34,33 +34,27 @@ export class LobbyView {
   constructor(private ctx: Ctx, p: Profile, opps: Opponent[], dailyReady: boolean, stake: number) {
     this.stake = stake;
     this.el.innerHTML = `<div class="kh-lobby__photo" style="background-image:url('${ASSETS.lobby_bg}')"></div><div class="kh-lobby__tint"></div>
-      <div class="kh-lobby__grid">
+      <div class="kh-lobby__col">
         <header class="kh-topbar"></header>
+        ${ASSETS.logo ? `<img class="kh-logo" src="${ASSETS.logo}" alt="Kahvehane Pişti">` : ''}
         <section class="kh-hero"><div class="kh-hero__stage"></div>
           <button class="kh-iconbtn kh-hero__arrow is-l" data-act="prev" aria-label="Önceki rakip">${I.chevL}</button>
           <button class="kh-iconbtn kh-hero__arrow is-r" data-act="next" aria-label="Sonraki rakip">${I.chevR}</button>
         </section>
+        <div class="kh-panel kh-setup">
+          <div class="kh-label">Oyun türü</div>
+          <div class="kh-setup__modes">${MODES.map(m => `<button class="kh-chip${m.locked ? ' is-locked' : ' is-on'}" data-act="mode" data-id="${m.id}">${m.locked ? I.lock : ''}${m.label}${m.locked ? '<span class="kh-tag">Yakında</span>' : ''}</button>`).join('')}</div>
+          <div class="kh-label">Masa bahsi</div>
+          <div class="kh-setup__stakes"></div>
+          <div class="kh-setup__win"></div>
+        </div>
+        <button class="kh-btn kh-btn--1 kh-btn--xl kh-shine kh-play" data-act="play">Oyna</button>
         <nav class="kh-dock">
           <button class="kh-dock__btn" data-act="daily"><img src="${ASSETS.icon_gift}" alt=""><span>Günlük Ödül</span><i class="kh-dot"></i></button>
           <button class="kh-dock__btn" data-act="quests"><img src="${ASSETS.icon_star}" alt=""><span>Görevler</span></button>
           <button class="kh-dock__btn" data-act="shop"><img src="${ASSETS.icon_chest}" alt=""><span>Mağaza</span></button>
           <button class="kh-dock__btn" data-act="profile"><img src="${ASSETS.icon_trophy}" alt=""><span>Profil</span></button>
         </nav>
-        <section class="kh-playcol">
-          ${ASSETS.logo ? `<img class="kh-logo" src="${ASSETS.logo}" alt="Kahvehane Pişti">` : ''}
-          <div class="kh-panel kh-setup">
-            <div class="kh-label">Oyun türü</div>
-            <div class="kh-setup__modes">${MODES.map(m => `<button class="kh-chip${m.locked ? ' is-locked' : ' is-on'}" data-act="mode" data-id="${m.id}">${m.locked ? I.lock : ''}${m.label}${m.locked ? '<span class="kh-tag">Yakında</span>' : ''}</button>`).join('')}</div>
-            <div class="kh-label">Masa bahsi</div>
-            <div class="kh-setup__stakes"></div>
-            <div class="kh-setup__win"></div>
-            <button class="kh-btn kh-btn--1 kh-btn--xl kh-shine kh-play" data-act="play">Oyna</button>
-          </div>
-        </section>
-        <div class="kh-lobby__corner">
-          <button class="kh-iconbtn" data-act="rules" aria-label="Nasıl oynanır">${I.book}</button>
-          <button class="kh-iconbtn" data-act="settings" aria-label="Ayarlar">${I.gear}</button>
-        </div>
       </div>`;
     ctx.layer.append(this.el);
     onAct(this.scope, this.el, (a, b) => this.act(a, b));
@@ -87,7 +81,9 @@ export class LobbyView {
     q(this.el, '.kh-topbar').innerHTML = `
       <button class="kh-prof" data-act="profile">${avatarHtml(p.name)}
         <span class="kh-prof__meta"><span class="kh-prof__name">${esc(p.name)}</span>${levelHtml(p)}</span></button>
-      ${capsuleHtml(prevCoins ?? p.coins, true)}`;
+      ${capsuleHtml(prevCoins ?? p.coins, true)}
+      <button class="kh-iconbtn" data-act="rules" aria-label="Nasıl oynanır">${I.book}</button>
+      <button class="kh-iconbtn" data-act="settings" aria-label="Ayarlar">${I.gear}</button>`;
     if (prevCoins !== undefined && prevCoins !== p.coins) countUp(this.scope, q(this.el, '.kh-topbar .kh-capsule__val'), prevCoins, p.coins, 700);
     q(this.el, '.kh-dot').style.display = dailyReady ? '' : 'none';
     (q(this.el, '[data-act=daily]') as HTMLElement).dataset.ready = dailyReady ? '1' : '0';
@@ -270,15 +266,15 @@ export class LobbyView {
   }
 
   private enter(): void {
-    const g = (s: string) => q(this.el, s);
-    play(g('.kh-lobby__photo'), [{transform: 'scale(1.06)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'backwards'});
-    play(g('.kh-topbar'), [{transform: 'translateY(-24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 80, easing: EASE.out, fill: 'backwards'});
-    play(g('.kh-lobby__corner'), [{transform: 'translateY(-24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 120, easing: EASE.out, fill: 'backwards'});
-    play(g('.kh-hero__stage'), [{transform: 'translateY(24px) scale(.94)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 140, easing: EASE.spring, fill: 'backwards'});
-    play(g('.kh-playcol'), [{transform: 'translateX(28px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, delay: 190, easing: EASE.out, fill: 'backwards'});
-    play(g('.kh-dock'), [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 240, easing: EASE.out, fill: 'backwards'});
+    const g = (sel: string) => q(this.el, sel);
+    play(g('.kh-lobby__photo'), [{transform: 'scale(1.08)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'backwards'});
+    play(g('.kh-topbar'), [{transform: 'translateY(-24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 60, easing: EASE.out, fill: 'backwards'});
     const logo = this.el.querySelector('.kh-logo');
-    if (logo) play(logo, [{transform: 'scale(.6) rotate(-6deg)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 520, delay: 260, easing: EASE.spring, fill: 'backwards'});
+    if (logo) play(logo, [{transform: 'scale(.55) rotate(-6deg)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 560, delay: 120, easing: EASE.spring, fill: 'backwards'});
+    play(g('.kh-hero__stage'), [{transform: 'translateY(30px) scale(.9)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 480, delay: 180, easing: EASE.spring, fill: 'backwards'});
+    play(g('.kh-setup'), [{transform: 'translateY(30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 400, delay: 240, easing: EASE.out, fill: 'backwards'});
+    play(g('.kh-play'), [{transform: 'scale(.6)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 300, easing: EASE.spring, fill: 'backwards'});
+    play(g('.kh-dock'), [{transform: 'translateY(40px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 400, delay: 340, easing: EASE.out, fill: 'backwards'});
   }
 
   /** Çıkış (Oyna'ya basınca): kararıp büyüyerek kaybolur. */

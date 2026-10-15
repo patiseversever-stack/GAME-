@@ -58,10 +58,10 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
       cls: 'kh-settings',
       title: 'Ayarlar',
       onX: done,
-      body: `<div class="kh-set__grid">${tog('sfx', 'Ses efektleri', I.sfx)}${tog('music', 'Müzik', I.music)}${tog('voice', 'Konuşmalar', I.voice)}${tog('haptics', 'Titreşim', I.vibrate)}</div>
-        <div class="kh-set__q kh-card"><span class="kh-set__ico">${I.quality}</span><span class="kh-set__lbl">Grafik</span>
-          <div class="kh-seg">${qs.map(([v, n]) => `<button data-act="quality" data-v="${v}" aria-pressed="${cur.quality === v}">${n}</button>`).join('')}</div></div>
-        <div class="kh-set__foot"><span class="kh-set__ver">Kahvehane Pişti · Sürüm ${esc(version)}</span><button class="kh-btn kh-btn--1" data-act="ok">Tamam</button></div>`,
+      body: `<div class="kh-set__list">${tog('sfx', 'Ses efektleri', I.sfx)}${tog('voice', 'Konuşmalar', I.voice)}${tog('music', 'Müzik', I.music)}${tog('haptics', 'Titreşim', I.vibrate)}
+        <div class="kh-set__q kh-card"><div class="kh-set__qh"><span class="kh-set__ico">${I.quality}</span><span class="kh-set__lbl">Grafik</span></div>
+          <div class="kh-seg">${qs.map(([v, n]) => `<button data-act="quality" data-v="${v}" aria-pressed="${cur.quality === v}">${n}</button>`).join('')}</div></div></div>
+        <div class="kh-set__foot"><button class="kh-btn kh-btn--1 kh-btn--lg kh-btn--block" data-act="ok">Tamam</button><span class="kh-set__ver">Kahvehane Pişti · Sürüm ${esc(version)}</span></div>`,
     });
     onAct(m.scope, m.panel, (a, b) => {
       ctx.sounds.tap();
@@ -102,19 +102,20 @@ export function rules(ctx: Ctx): Promise<void> {
       {art: `${fan([back(), back(), mc('7', '♦')])}${arrow}${mc('7', '♠', 'is-glow')}`, t: 'Aynısını at, topla', d: 'Ortadaki <b>üst kartın aynısını</b> atarsan yığının tamamı senin.'},
       {art: `${fan([mc('K', '♥'), mc('4', '♣'), mc('9', '♦')])}${arrow}${mc('J', '♣', 'is-glow')}`, t: 'Vale hepsini alır', d: '<b>Vale</b> atınca ortadaki bütün kartları toplarsın.'},
       {art: `${mc('5', '♥')}${arrow}${mc('5', '♣', 'is-glow')}<span class="kh-step__badge">+10</span>`, t: 'Pişti!', d: 'Tek kartın üstüne aynısı: <b>10 puan</b>. Vale üstüne vale: <b>20 puan</b>.'},
-      {art: `<div class="kh-pts"><div><span>As, Vale (her biri)</span><b>1</b></div><div><span>Sinek 2</span><b>2</b></div><div><span>Karo 10</span><b>3</b></div><div><span>En çok kart</span><b>3</b></div><div><span>Pişti / Vale pişti</span><b>10 / 20</b></div></div>`, t: 'Puanlar', d: 'El bitince <b>puanı yüksek olan</b> kazanır.'},
+      {art: '', t: 'Puanlar', d: `<div class="kh-pts">${[['As', '1'], ['Vale', '1'], ['Sinek 2', '2'], ['Karo 10', '3'], ['En çok kart', '3'], ['Pişti', '10'], ['Vale pişti', '20'], ['Kazanan', 'en yüksek']]
+        .map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('')}</div>`},
     ];
     m = openModal(ctx, {
       cls: 'kh-rules',
       title: 'Nasıl Oynanır',
       onX: done,
       body: `<div class="kh-steps">${steps
-        .map((s, i) => `<div class="kh-step kh-card"><div class="kh-step__art">${s.art}</div><div class="kh-step__hd"><span class="kh-step__n">${i + 1}</span><span class="kh-step__t">${s.t}</span></div><div class="kh-step__d">${s.d}</div></div>`)
+        .map((s, i) => `<div class="kh-step kh-card${s.art ? '' : ' is-wide'}">${s.art ? `<div class="kh-step__art">${s.art}</div>` : ''}<div><div class="kh-step__hd"><span class="kh-step__n">${i + 1}</span><span class="kh-step__t">${s.t}</span></div><div class="kh-step__d">${s.d}</div></div></div>`)
         .join('')}</div>
-        <div class="kh-rules__foot"><span>${I.hand}Kartı parmağınla masaya fırlat ya da iki kez dokun.</span><button class="kh-btn kh-btn--1" data-act="ok">Anladım</button></div>`,
+        <div class="kh-rules__foot"><span>${I.hand}Kartı parmağınla masaya fırlat ya da iki kez dokun.</span><button class="kh-btn kh-btn--1 kh-btn--lg kh-btn--block" data-act="ok">Anladım</button></div>`,
     });
     m.panel.querySelectorAll<HTMLElement>('.kh-step').forEach((s, i) =>
-      play(s, [{transform: 'translateY(16px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: 120 + i * 60, easing: EASE.out, fill: 'backwards'}));
+      play(s, [{transform: 'translateX(-20px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: 120 + i * 70, easing: EASE.out, fill: 'backwards'}));
     onAct(m.scope, m.panel, a => {
       if (a !== 'ok') return;
       ctx.sounds.tap();
@@ -156,9 +157,9 @@ export function daily(ctx: Ctx, day: number, rewards: number[], target?: {at(): 
       cls: 'kh-daily',
       title: 'Günlük Ödül',
       onX: done,
-      body: `<div class="kh-daily__sub">Her gün uğra, ödülün büyüsün. 7. gün sandık seni bekliyor!</div>
+      body: `<div class="kh-daily__sub">Her gün uğra, ödülün büyüsün.<br>7. gün sandık seni bekliyor!</div>
         <div class="kh-daily__row">${tiles}</div>
-        <div class="kh-daily__foot"><button class="kh-btn kh-btn--1 kh-btn--lg kh-shine" data-act="claim">${I.check}Topla</button><div class="kh-daily__next"></div></div>`,
+        <div class="kh-daily__foot"><button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-shine" data-act="claim">Topla</button><div class="kh-daily__next"></div></div>`,
     });
     m.panel.querySelectorAll<HTMLElement>('.kh-day').forEach((t, i) =>
       play(t, [{transform: 'translateY(18px) scale(.9)', opacity: 0}, {transform: t.classList.contains('is-today') ? 'translateY(calc(var(--u) * -.3))' : 'none', opacity: 1}], {duration: 340, delay: 120 + i * 50, easing: EASE.spring, fill: 'backwards'}));
@@ -198,6 +199,7 @@ export function daily(ctx: Ctx, day: number, rewards: number[], target?: {at(): 
       btn.disabled = false;
       btn.dataset.act = 'ok';
       btn.classList.remove('kh-shine');
+      btn.classList.replace('kh-btn--1', 'kh-btn--2');
       btn.innerHTML = 'Harika!';
       if (ANIM) play(btn, [{transform: 'scale(.9)'}, {transform: 'scale(1)'}], {duration: 260, easing: EASE.spring});
     });

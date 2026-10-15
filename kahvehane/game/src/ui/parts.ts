@@ -15,10 +15,17 @@ export interface Ctx {
 export const avatarHtml = (name: string, cls = ''): string =>
   `<span class="kh-avatar ${cls}"><span class="kh-avatar__txt">${esc(initials(name))}</span></span>`;
 
+/** Altıgen seviye taşı (ben: mavi, rakip: mor). */
+export const gemHtml = (level: number, me = true): string =>
+  `<span class="kh-gemwrap"><span class="kh-gem${me ? ' is-me' : ''}"><b class="kh-num">${level}</b></span></span>`;
+
 export const levelHtml = (p: Profile): string => {
   const k = p.xpNext > 0 ? Math.max(0, Math.min(1, p.xp / p.xpNext)) : 0;
-  return `<span class="kh-lvl"><b class="kh-lvl__badge kh-num">${p.level}</b><span class="kh-xp"><i class="kh-xp__fill" style="transform:scaleX(${k.toFixed(3)})"></i></span></span>`;
+  return `<span class="kh-lvl">${gemHtml(p.level)}<span class="kh-xp"><i class="kh-xp__fill" style="transform:scaleX(${k.toFixed(3)})"></i></span></span>`;
 };
+
+/** Rakip seviyesi: verilmişse o, yoksa zorluktan. */
+export const oppLevel = (o: {level?: number; difficulty: number}): number => o.level ?? [9, 18, 28][Math.max(0, Math.min(2, o.difficulty - 1))];
 
 export const capsuleHtml = (coins: number, plus = false, cls = ''): string =>
   `<div class="kh-capsule ${cls}" data-coins><img class="kh-capsule__ico" src="${ASSETS.icon_coin}" alt=""><b class="kh-capsule__val kh-num">${fmt(coins)}</b>${

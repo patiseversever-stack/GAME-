@@ -48,7 +48,7 @@ export class Fx {
 
   /** Tam ekran kısa parlama (yalnız opaklık). */
   flash(peak = 0.8, ms = 340): void {
-    play(this.flashEl, [{opacity: 0}, {opacity: peak, offset: 0.12}, {opacity: 0}], {duration: ms, easing: 'ease-out'}, 0.12);
+    play(this.flashEl, [{opacity: 0}, {opacity: peak, offset: 0.12}, {opacity: 0}], {duration: ms, easing: 'ease-out'}, 1);
   }
 
   /** Altın sikke + konfeti patlaması. */
@@ -136,7 +136,7 @@ export class Fx {
     const word = jack ? 'VALE PİŞTİ!' : 'PİŞTİ!';
     this.stampEl.className = 'kh-stamp is-on' + (jack ? ' is-jack' : '');
     this.stampEl.innerHTML = `<div class="kh-stamp__in"><div class="kh-stamp__glow"></div><div class="kh-stamp__rays"></div>
-      <div class="kh-stamp__word">${img ? `<img class="kh-g3img" src="${img}" alt="${word}">` : g3(word)}</div>
+      <div class="kh-stamp__word">${img ? `<img class="kh-g3img" src="${img}" alt="${word}">` : jack ? g3('VALE', 'is-sm') + g3('PİŞTİ!') : g3(word)}</div>
       <div class="kh-stamp__pts">${g3('+' + points)}</div></div>`;
     const inn = this.stampEl.firstElementChild as HTMLElement;
     const [glow, rays, , pts] = Array.from(inn.children) as HTMLElement[];

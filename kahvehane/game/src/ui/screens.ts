@@ -1,19 +1,11 @@
 // Kahvehane Pişti — tüm ekranların giriş noktası (çerçevesiz DOM + Web Animations API, söz tabanlı).
 // Kullanım: const screens = new Screens(document.body, {tap, whoosh, coin, reward});
-import '@fontsource/inter/latin-500.css';
-import '@fontsource/inter/latin-600.css';
-import '@fontsource/inter/latin-700.css';
-import '@fontsource/inter/latin-800.css';
-import '@fontsource/inter/latin-900.css';
-import '@fontsource/inter/latin-ext-500.css';
-import '@fontsource/inter/latin-ext-600.css';
-import '@fontsource/inter/latin-ext-700.css';
-import '@fontsource/inter/latin-ext-800.css';
-import '@fontsource/inter/latin-ext-900.css';
-import '@fontsource/playfair-display/latin-700.css';
-import '@fontsource/playfair-display/latin-900.css';
-import '@fontsource/playfair-display/latin-ext-700.css';
-import '@fontsource/playfair-display/latin-ext-900.css';
+// Birleşik ağırlık dosyaları (latin + latin-ext ayrı unicode-range ile; yalnız kullanılan alt küme iner)
+import '@fontsource/lilita-one/400.css';
+import '@fontsource/nunito/600.css';
+import '@fontsource/nunito/700.css';
+import '@fontsource/nunito/800.css';
+import '@fontsource/nunito/900.css';
 import './theme.css';
 import './ui.css';
 
@@ -32,6 +24,7 @@ export {STAKES} from './lobby';
 
 export class Screens {
   readonly hud: GameHud;
+  private hudView: HudView;
   /** Ayarlar penceresinde görünen sürüm */
   version = '0.1.0';
   private ctx: Ctx;
@@ -45,9 +38,10 @@ export class Screens {
     root.append(layer);
     const fx = new Fx(layer);
     this.ctx = {layer, sounds, fx};
-    this.hud = new HudView(layer, fx);
-    const rot = h('div', 'kh-rotate', `<div><div class="kh-rotate__phone"></div><div class="kh-rotate__t">Telefonu yan çevir</div>
-      <div class="kh-rotate__s">Kahvehane yatay oynanır</div><button class="kh-btn kh-btn--2">Yine de devam et</button></div>`);
+    this.hudView = new HudView(layer, fx);
+    this.hud = this.hudView;
+    const rot = h('div', 'kh-rotate', `<div><div class="kh-rotate__phone"></div><div class="kh-rotate__t">Telefonu dik tut</div>
+      <div class="kh-rotate__s">Kahvehane dikey oynanır</div><button class="kh-btn kh-btn--2">Yine de devam et</button></div>`);
     q(rot, 'button').addEventListener('click', () => rot.classList.add('is-dismissed'));
     layer.append(rot);
   }
@@ -82,7 +76,11 @@ export class Screens {
   }
 
   results(d: ResultsData): Promise<'again' | 'lobby'> {
-    return results(this.ctx, d);
+    this.hudView.dim(true);
+    return results(this.ctx, d).then(r => {
+      this.hudView.dim(false);
+      return r;
+    });
   }
 
   /** Her değişiklikte onChange çağrılır; pencere kapanınca çözülür. */

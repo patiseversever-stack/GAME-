@@ -1,12 +1,12 @@
 // Ekran galerisi: /dev/screens.html?s=<ekran>[&anim=0][&r=win|lose|draw][&lvl=1][&loop=1]
-// Ekranlar: splash lobby lobby2 versus hud hudopp hud4 pisti pisti20 banner pause pausec results settings rules daily daily2
+// Ekranlar: splash lobby lobby2 versus hud hudopp hudsay hud4 pisti pisti20 banner pause pausec results settings rules daily daily2
 import {Screens, type Profile} from '../src/ui/screens';
 import {demoOpponents} from '../src/ui/assets';
 import type {GameResult} from '../src/core/types';
 
 const P = new URLSearchParams(location.search);
 const S = P.get('s') ?? '';
-const LIST = ['splash', 'lobby', 'lobby2', 'versus', 'hud', 'hudopp', 'hud4', 'pisti', 'pisti20', 'banner', 'pause', 'pausec', 'results', 'settings', 'rules', 'daily', 'daily2'];
+const LIST = ['splash', 'lobby', 'lobby2', 'versus', 'hud', 'hudopp', 'hudsay', 'hud4', 'pisti', 'pisti20', 'banner', 'pause', 'pausec', 'results', 'settings', 'rules', 'daily', 'daily2'];
 
 const log = (n: string) => () => console.debug('[ses]', n);
 const sounds = {tap: log('tap'), whoosh: log('whoosh'), coin: log('coin'), reward: log('reward')};
@@ -15,21 +15,21 @@ const profile: Profile = {name: 'Misafir', level: 3, xp: 180, xpNext: 268, coins
 const opps = demoOpponents();
 const riza = opps[0];
 
-/** Tam ekran çuha + CSS kartlar (3B masa yerine). Destenin ekran konumunu döndürür. */
-function mockTable(): {x: number; y: number} {
+/** Tam ekran çuha + CSS kartlar (3B masa yerine, dikey). Destenin ekran konumunu döndürür. */
+function mockTable(four = false): {x: number; y: number} {
   const m = document.createElement('div');
   m.className = 'mock';
   const card = (r: string, s: string, style: string) => `<div class="c${s === '♥' || s === '♦' ? ' r' : ''}" style="${style}"><b>${r}<small>${s}</small></b><i>${s}</i></div>`;
   const back = (style: string) => `<div class="c bk" style="${style}"><b></b></div>`;
-  m.innerHTML = `
-    <div class="opp">${[0, 1, 2, 3].map(i => back(`left:calc(50% + ${(i - 1.5) * 4.6}vh - 3.5vh);top:31vh;transform:rotate(${(i - 1.5) * 4}deg)`)).join('')}</div>
-    ${[0, 1, 2, 3, 4].map(i => back(`left:calc(27% - 5.75vh + ${i * 0.25}vh);top:calc(43vh - ${i * 0.5}vh);transform:rotate(-8deg)`)).join('')}
-    ${back('left:calc(50% - 5.75vh);top:40vh;transform:rotate(-12deg)')}
-    ${card('9', '♣', 'left:calc(50% - 5vh);top:39vh;transform:rotate(7deg)')}
-    ${card('Q', '♦', 'left:calc(50% - 6.5vh);top:41vh;transform:rotate(-4deg)')}
-    <div class="hand">${[['7', '♥'], ['J', '♣'], ['10', '♦'], ['A', '♠']].map(([r, s], i) => card(r, s, `left:calc(50% + ${(i - 1.5) * 13.5}vh - 9.5vh);top:${71 + Math.abs(i - 1.5) * 2}vh;transform:rotate(${(i - 1.5) * 6}deg);z-index:${i}`)).join('')}</div>`;
+  const oppRow = four ? '' : `<div class="opp">${[0, 1, 2, 3].map(i => back(`left:calc(50% + ${(i - 1.5) * 14}vw - 6.5vw);top:29vh`)).join('')}</div>`;
+  m.innerHTML = `${oppRow}
+    ${[0, 1, 2, 3, 4].map(i => back(`left:calc(${four ? 50 : 16}% - 8.5vw + ${i * 0.35}vw);top:calc(${four ? 41 : 44}vh - ${i * 0.6}vw);transform:rotate(${four ? 0 : -6}deg)`)).join('')}
+    ${four ? '' : back('left:calc(50% - 8.5vw);top:44vh;transform:rotate(-12deg)')}
+    ${card('9', '♣', `left:calc(${four ? 50 : 56}% - 7.5vw);top:${four ? 40 : 43}vh;transform:rotate(7deg)`)}
+    ${card('Q', '♦', `left:calc(${four ? 50 : 56}% - 9.5vw);top:${four ? 41.5 : 44.5}vh;transform:rotate(-4deg)`)}
+    <div class="hand">${[['7', '♥'], ['J', '♣'], ['10', '♦'], ['A', '♠']].map(([r, s], i) => card(r, s, `left:calc(50% + ${(i - 1.5) * 20}vw - 12.5vw);top:${73 + Math.abs(i - 1.5) * 1}vh;transform:rotate(${(i - 1.5) * 5}deg);z-index:${i}`)).join('')}</div>`;
   document.body.prepend(m);
-  return {x: innerWidth * 0.27, y: innerHeight * 0.43 - 0.13 * innerHeight};
+  return {x: innerWidth * (four ? 0.5 : 0.16), y: innerHeight * 0.44 + innerWidth * 0.29};
 }
 
 const result = (r: string): GameResult => {
@@ -81,27 +81,32 @@ async function main(): Promise<void> {
       gameHud(sc);
       sc.hud.setTurn(0);
       sc.hud.showHint('Sıra sende');
-      sc.hud.say('Hay aksi! Bu sefer şans senden yana…', 'kizgin', 60000);
+      sc.hud.say('Pişti! Çaylar senden evlat!', 'kahkaha', 60000);
+      break;
+    case 'hudsay':
+      gameHud(sc);
+      sc.hud.setTurn(-1);
+      sc.hud.say('Hay aksi! Şans senden yana…', 'kizgin', 60000);
       break;
     case 'hudopp':
       gameHud(sc);
       sc.hud.setTurn(1);
-      sc.hud.say('Hımm… Dur bakalım.', undefined, 60000);
+      sc.hud.setStats([{cards: 12, pisti: 1}, {cards: 8, pisti: 1}]);
       break;
     case 'hud4': {
-      mockTable();
+      mockTable(true);
       const ps = [
-        {seat: 0, name: 'Misafir', portrait: '', isMe: true},
-        {seat: 1, name: 'Cem', portrait: opps[1].portrait, moods: riza.moods},
-        {seat: 2, name: 'Rıza Amca', portrait: riza.portrait, blink: riza.blink, moods: riza.moods},
-        {seat: 3, name: 'Defne', portrait: opps[3].portrait, moods: riza.moods},
+        {seat: 0, name: 'Sen', portrait: '', isMe: true, level: 3},
+        {seat: 1, name: 'Defne', portrait: opps[3].portrait, moods: riza.moods, level: 31},
+        {seat: 2, name: 'Rıza Amca', portrait: riza.portrait, blink: riza.blink, moods: riza.moods, level: 28},
+        {seat: 3, name: 'Cem', portrait: opps[1].portrait, moods: riza.moods, level: 12},
       ];
       sc.hud.show(riza, profile);
       sc.hud.setPlayers(ps, '4');
       sc.hud.setStats([{cards: 6, pisti: 0}, {cards: 4, pisti: 1}, {cards: 9, pisti: 0}, {cards: 2, pisti: 0}]);
-      sc.hud.setTurn(3);
-      sc.hud.say('Sıra bende.', undefined, 60000, 3);
-      sc.hud.say('Kahkaha!', 'kahkaha', 60000, 1);
+      sc.hud.setDeck(14, innerWidth * 0.5, innerHeight * 0.4);
+      sc.hud.setTurn(0);
+      sc.hud.say('Algoritmam var kanka!', undefined, 60000, 3);
       break;
     }
     case 'pisti':

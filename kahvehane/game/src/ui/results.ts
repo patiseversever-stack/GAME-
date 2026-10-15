@@ -5,7 +5,7 @@ import type {SideScore} from '../core/types';
 import {ANIM, EASE, Scope, center, countUp, esc, h, play, q, signed} from './dom';
 import {ASSETS, OPTIONAL_ART} from './assets';
 import {I} from './icons';
-import {capsuleHtml, onAct, type Ctx} from './parts';
+import {capsuleHtml, gemHtml, onAct, oppLevel, type Ctx} from './parts';
 import {g3} from './fx';
 
 const ROWS: [string, (s: SideScore) => number][] = [
@@ -35,34 +35,37 @@ export function results(ctx: Ctx, d: ResultsData): Promise<'again' | 'lobby'> {
     `<div class="kh-score__row ${cls}${a === 0 && b === 0 ? ' is-zero' : ''}"><span>${label}</span><b class="kh-num${a > b ? ' is-best' : ''}" data-v="${a}">0</b><b class="kh-num${b > a ? ' is-best' : ''}" data-v="${b}">0</b></div>`;
 
   const el = h('div', `kh-screen kh-results is-${outcome}`);
+  const defLine = outcome === 'win' ? 'Bu sefer sen kazandın… Rövanş isterim!' : outcome === 'lose' ? 'Ustaya saygı evlat! Bir el daha?' : 'Berabere! Bir el daha oynayalım.';
+  const toNext = Math.max(0, p.xpNext - p.xp);
   el.innerHTML = `<div class="kh-results__scrim"></div>
-    <div class="kh-results__grid">
+    <div class="kh-results__col">
+      <div class="kh-results__top">${capsuleHtml(startCoins, false, 'kh-results__coins')}</div>
       <header class="kh-results__head">
         <div class="kh-results__kicker">El bitti</div>
-        <div class="kh-title kh-results__title">${titleImg ? `<img class="kh-g3img" src="${titleImg}" alt="${title}" style="height:calc(var(--u)*3.4);margin:auto">` : g3(title, outcome === 'lose' ? 'is-lose' : '')}</div>
-        ${capsuleHtml(startCoins, false, 'kh-results__coins')}
+        <div class="kh-title kh-results__title">${titleImg ? `<img class="kh-g3img" src="${titleImg}" alt="${title}" style="height:calc(var(--u)*4.6)">` : g3(title, outcome === 'lose' ? 'is-lose' : '')}</div>
       </header>
-      <aside class="kh-results__opp">
-        <div class="kh-mood"><img src="${d.opp.moods[mood]}" alt=""></div>
-        <div class="kh-results__oppname">${esc(d.opp.name)}</div>
-        ${d.line ? `<div class="kh-results__line">${esc(d.line)}</div>` : ''}
-      </aside>
+      <div class="kh-results__opp">
+        <div class="kh-mood"><img src="${d.opp.moods[mood]}" alt="">${gemHtml(oppLevel(d.opp), false)}</div>
+        <div class="kh-results__line"><small>${esc(d.opp.name)}</small>${esc(d.line ?? defLine)}</div>
+      </div>
       <section class="kh-panel kh-score">
         ${outcome !== 'draw' ? `<i class="kh-score__cols ${outcome === 'win' ? 'is-me' : 'is-opp'}"></i>` : ''}
         <div class="kh-score__row is-head"><span></span><b>Sen</b><b>${esc(d.opp.name)}</b></div>
         ${ROWS.map(([l, f]) => row(l, f(me), f(op))).join('')}
         ${row('Toplam', me.total, op.total, 'is-total')}
       </section>
-      <aside class="kh-results__side">
-        <div class="kh-panel kh-reward">
-          <div class="kh-label">${d.coinsDelta >= 0 ? 'Kazanç' : 'Kayıp'}</div>
-          <div class="kh-reward__val ${d.coinsDelta > 0 ? 'is-up' : d.coinsDelta < 0 ? 'is-down' : ''}"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">0</b></div>
-          <div class="kh-reward__xp"><b class="kh-lvl__badge kh-num">${levelUp ? p.level - 1 : p.level}</b><span class="kh-xp"><i class="kh-xp__fill"></i></span><span class="kh-reward__xpt">+${d.xpGain} XP</span></div>
-          <div class="kh-reward__lvlup">Seviye atladın!</div>
+      <div class="kh-panel kh-reward">
+        <div class="kh-label">${d.coinsDelta > 0 ? 'Kazanç' : d.coinsDelta < 0 ? 'Kayıp' : 'Bahis iade'}</div>
+        <div class="kh-reward__val ${d.coinsDelta > 0 ? 'is-up' : d.coinsDelta < 0 ? 'is-down' : ''}"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">0</b></div>
+        <div class="kh-reward__xpbox">
+          <div class="kh-reward__xp">${gemHtml(levelUp ? p.level - 1 : p.level)}<span class="kh-xp"><i class="kh-xp__fill"></i></span></div>
+          <div class="kh-reward__xpt"><b>+${d.xpGain} XP</b><span class="kh-reward__lvlup">Seviye atladın!</span><span class="kh-reward__next">Sv. ${p.level + 1}: ${toNext} XP</span></div>
         </div>
-        <button class="kh-btn kh-btn--1 kh-btn--lg kh-shine" data-act="again">${I.play}Bir El Daha</button>
-        <button class="kh-btn kh-btn--2" data-act="lobby">${I.home}Lobiye Dön</button>
-      </aside>
+      </div>
+      <div class="kh-results__btns">
+        <button class="kh-btn kh-btn--1 kh-btn--xl kh-shine" data-act="again">Bir El Daha</button>
+        <button class="kh-btn kh-btn--4" data-act="lobby">${I.home}Lobiye Dön</button>
+      </div>
     </div>`;
   ctx.layer.append(el);
   const g = (s: string) => q(el, s);
@@ -75,10 +78,11 @@ export function results(ctx: Ctx, d: ResultsData): Promise<'again' | 'lobby'> {
   play(g('.kh-results__scrim'), [{opacity: 0}, {opacity: 1}], {duration: 300, easing: 'ease-out', fill: 'backwards'});
   play(g('.kh-results__title'), [{transform: 'scale(1.5) rotate(-6deg)', opacity: 0}, {transform: 'scale(.96) rotate(-1deg)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 420, delay: 80, easing: EASE.out, fill: 'backwards'});
   play(g('.kh-results__kicker'), [{opacity: 0}, {opacity: 1}], {duration: 300, delay: 60, fill: 'backwards'});
-  play(g('.kh-mood'), [{transform: 'rotate(-14deg) scale(.4)', opacity: 0}, {transform: 'rotate(-1deg) scale(1.05)', opacity: 1, offset: 0.65}, {transform: 'rotate(-3deg) scale(1)', opacity: 1}], {duration: 480, delay: 200, easing: EASE.out, fill: 'backwards'});
-  play(g('.kh-results__opp'), [{transform: 'translateX(-30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 160, easing: EASE.out, fill: 'backwards'});
+  play(g('.kh-mood'), [{transform: 'rotate(-14deg) scale(.4)', opacity: 0}, {transform: 'rotate(2deg) scale(1.06)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 480, delay: 200, easing: EASE.out, fill: 'backwards'});
+  play(g('.kh-results__line'), [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.04)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 380, delay: 380, easing: EASE.out, fill: 'backwards'});
   play(g('.kh-score'), [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 140, easing: EASE.out, fill: 'backwards'});
-  play(g('.kh-results__side'), [{transform: 'translateX(30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 220, easing: EASE.out, fill: 'backwards'});
+  play(g('.kh-reward'), [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 220, easing: EASE.out, fill: 'backwards'});
+  play(g('.kh-results__btns'), [{transform: 'translateY(40px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, delay: 280, easing: EASE.spring, fill: 'backwards'});
   play(g('.kh-results__coins'), [{transform: 'translateY(-30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 360, delay: 260, easing: EASE.spring, fill: 'backwards'});
   const lvlStart = levelUp ? Math.min(1, Math.max(0, (xpBefore + p.xpNext) / p.xpNext)) : Math.max(0, xpBefore / Math.max(1, p.xpNext));
   xpFill.style.transition = 'none';
@@ -124,9 +128,10 @@ export function results(ctx: Ctx, d: ResultsData): Promise<'again' | 'lobby'> {
     if (levelUp) {
       xpFill.style.transform = 'scaleX(1)';
       await scope.wait(560);
-      const badge = g('.kh-reward__xp .kh-lvl__badge');
+      const badge = g('.kh-reward__xp .kh-gem b');
       badge.textContent = String(p.level);
-      play(badge, [{transform: 'scale(1.7)'}, {transform: 'scale(1)'}], {duration: 420, easing: EASE.spring});
+      play(g('.kh-reward__xp .kh-gemwrap'), [{transform: 'scale(1.7)'}, {transform: 'scale(1)'}], {duration: 420, easing: EASE.spring});
+      g('.kh-reward__next').style.display = 'none';
       play(g('.kh-reward__lvlup'), [{opacity: 0, transform: 'translateY(6px)'}, {opacity: 1, transform: 'none'}], {duration: 300, fill: 'forwards'});
       ctx.sounds.reward();
       xpFill.style.transition = 'none';
@@ -136,9 +141,11 @@ export function results(ctx: Ctx, d: ResultsData): Promise<'again' | 'lobby'> {
     }
     xpFill.style.transform = `scaleX(${Math.min(1, p.xp / Math.max(1, p.xpNext)).toFixed(3)})`;
   }, ANIM ? tReward + 200 : 0);
+  if (!levelUp) q(el, '.kh-reward__lvlup').style.display = 'none';
   if (!ANIM && levelUp) {
-    q(el, '.kh-reward__xp .kh-lvl__badge').textContent = String(p.level);
-    (q(el, '.kh-reward__lvlup') as HTMLElement).style.opacity = '1';
+    q(el, '.kh-reward__xp .kh-gem b').textContent = String(p.level);
+    q(el, '.kh-reward__lvlup').style.opacity = '1';
+    q(el, '.kh-reward__next').style.display = 'none';
   }
 
   return new Promise(res => {
