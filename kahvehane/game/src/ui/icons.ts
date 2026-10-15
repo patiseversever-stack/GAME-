@@ -1,6 +1,31 @@
 // Satır içi SVG simgeler (24×24, currentColor). Resimli simgeler (jeton, sandık…) assets.ts'te.
+// Takım şekilleri (♥ ♦ ♣ ♠) tek yerde: simge, arena deseni ve logo süsü bunları kullanır.
 const s = (body: string, fill = false) =>
   `<svg class="kh-i" viewBox="0 0 24 24" aria-hidden="true" ${fill ? 'fill="currentColor"' : 'fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"'}>${body}</svg>`;
+
+/** Takım gövdeleri (24×24 tuval, dolgu). */
+export const SUIT = {
+  h: '<path d="M12 21.3C9.3 19.2 2 14.4 2 8.5 2 5.4 4.4 3 7.3 3c2 0 3.7 1.1 4.7 2.8C13 4.1 14.7 3 16.7 3 19.6 3 22 5.4 22 8.5c0 5.9-7.3 10.7-10 12.8z"/>',
+  d: '<path d="M12 1.6C14.2 5.4 16.8 8.9 19.8 12 16.8 15.1 14.2 18.6 12 22.4 9.8 18.6 7.2 15.1 4.2 12 7.2 8.9 9.8 5.4 12 1.6z"/>',
+  c: '<circle cx="12" cy="7" r="4.4"/><circle cx="6.9" cy="13.6" r="4.4"/><circle cx="17.1" cy="13.6" r="4.4"/><path d="M12 9.5 14.6 21.8H9.4z"/><circle cx="12" cy="12.4" r="2.6"/>',
+  s: '<path d="M12 1.8C14.6 5.6 20.6 8.8 20.6 13.4a4.3 4.3 0 0 1-7.4 3L14.6 21.8H9.4l1.4-5.4a4.3 4.3 0 0 1-7.4-3C3.4 8.8 9.4 5.6 12 1.8z"/>',
+} as const;
+export type SuitKey = keyof typeof SUIT;
+
+/** Tek takım simgesi (renk: currentColor ya da CSS). */
+export const suitSvg = (k: SuitKey, cls = ''): string =>
+  `<svg class="kh-suit kh-suit--${k} ${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">${SUIT[k]}</svg>`;
+
+/** Arena zeminindeki dağınık takım deseni (240 px döşeme, beyaz; saydamlık CSS'te). */
+export const SUIT_TILE = (() => {
+  const items: [SuitKey, number, number, number, number][] = [
+    ['h', 26, 30, 1.5, -18], ['s', 124, 22, 1.1, 14], ['d', 204, 70, 1.3, 8], ['c', 66, 110, 1.25, -10], ['h', 172, 146, 0.95, 22],
+    ['s', 28, 196, 1.35, -6], ['d', 112, 200, 0.95, -24], ['c', 210, 210, 1.3, 12], ['d', 150, 96, 0.75, 0], ['h', 84, 166, 0.75, 30],
+  ];
+  const g = items.map(([k, x, y, sc, r]) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${sc}) translate(-12 -12)">${SUIT[k]}</g>`).join('');
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><g fill="#fff">${g}</g></svg>`;
+  return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
+})();
 
 export const I = {
   gear: s('<circle cx="12" cy="12" r="3.2"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>'),
