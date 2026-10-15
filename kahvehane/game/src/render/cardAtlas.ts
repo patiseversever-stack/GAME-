@@ -1122,7 +1122,7 @@ function courtCard(k: Kit, rank: Court, suit: Suit): void {
   const vg = ctx.createRadialGradient(WIN.x + WIN.w * 0.58, WIN.y + WIN.h * 0.45, WIN.h * 0.3, WIN.x + WIN.w * 0.5, WIN.y + WIN.h * 0.5, WIN.w * 0.72);
   vg.addColorStop(0, 'rgba(0,0,0,0)');
   vg.addColorStop(1, a.dark);
-  ctx.globalAlpha = 0.6;
+  ctx.globalAlpha = 0.5;
   ctx.fillStyle = vg;
   ctx.fillRect(WIN.x, WIN.y, WIN.w, WIN.h);
   ctx.globalAlpha = 1;
@@ -1237,9 +1237,9 @@ function cardBack(k: Kit, lattice: Path2D): void {
   const OUT = 3.2, IN = 9.6;
   const panel = insetPath(OUT, CR - OUT + 0.6);
   const g = ctx.createRadialGradient(CX, CY - 12, 6, CX, CY, 92);
-  g.addColorStop(0, '#7a1630');
+  g.addColorStop(0, '#681327');
   g.addColorStop(0.45, '#5a0f1f');
-  g.addColorStop(1, '#350711');
+  g.addColorStop(1, '#3a0812');
   ctx.fillStyle = g;
   ctx.fill(panel);
 

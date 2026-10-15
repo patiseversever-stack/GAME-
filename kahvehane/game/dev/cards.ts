@@ -103,7 +103,7 @@ function drawPhone(a: CardAtlas): void {
     drawCard(ctx, a, id, gap + col * (cw + gap), gap + row * (ch + gap), cw, 0);
   }
   // (b) el: 88 px, yelpaze; her kartın yalnız sol ≈ %45'i görünür (üstteki hariç)
-  const hw = 88, hh = hw / CARD_ASPECT;
+  const hw = 88;
   const hand = [c('H', 7), c('D', 10), c('S', 11), c('C', 13)];
   const hx = 1.2 * (cw + gap), hy = gridH + 40;
   hand.forEach((id, i) => {
@@ -129,7 +129,6 @@ function drawPhone(a: CardAtlas): void {
   const bx = px + 140;
   for (let i = 0; i < 4; i++) drawCard(ctx, a, BACK_INDEX, bx + i * 24, py, 56, -9 + i * 6);
   label(ctx, 'arka 56 px', bx, hy - 14);
-  void hh;
 }
 
 function drawTable(a: CardAtlas): void {
