@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#120b07">
+<title>Kahvehane Ses Denemesi</title>
+<link rel="icon" href="data:,">
+<style>
+  :root {
+    --bg: #15100c;
+    --panel: #21170f;
+    --line: #3b2a1c;
+    --ink: #f3e6d2;
+    --mute: #b49c80;
+    --accent: #e0a24a;
+    --accent-ink: #1c1208;
+    --ok: #7fc48a;
+    --bad: #e2705f;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.4 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  body { padding: 16px; padding-bottom: 64px; max-width: 980px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 4px 0 2px; }
+  p.sub { margin: 0 0 16px; color: var(--mute); font-size: 14px; }
+  h2 { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); margin: 22px 0 8px; }
+  .grid { display: grid; gap: 10px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  button.snd {
+    min-height: 72px; padding: 10px 12px; border-radius: 14px; border: 1px solid var(--line);
+    background: linear-gradient(180deg, #2c1f14, #21170f); color: var(--ink); font-size: 16px; font-weight: 600;
+    cursor: pointer; touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+  }
+  button.snd:active, button.snd.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+  button.snd small { display: block; font-weight: 400; font-size: 12px; opacity: .7; margin-top: 2px; }
+  .big { grid-column: 1 / -1; min-height: 84px; font-size: 18px; }
+  .ctl { display: flex; flex-wrap: wrap; gap: 14px 24px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; }
+  .ctl label { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--mute); }
+  .ctl input[type=range] { width: 160px; accent-color: var(--accent); }
+  .ctl output { min-width: 3ch; color: var(--ink); font-variant-numeric: tabular-nums; }
+  #status { margin-top: 12px; font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; color: var(--mute); white-space: pre-wrap; }
+  /* otomatik ölçüm tablosu */
+  #report { margin-top: 18px; }
+  .row { background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; }
+  .row h3 { margin: 0 0 6px; font-size: 14px; display: flex; justify-content: space-between; gap: 8px; }
+  .row h3 span.ok { color: var(--ok); }
+  .row h3 span.bad { color: var(--bad); }
+  .row canvas { width: 100%; height: auto; display: block; border-radius: 6px; background: #000; }
+  .row pre { margin: 6px 0 0; font: 12px/1.4 ui-monospace, Menlo, Consolas, monospace; color: var(--mute); white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Kahvehane Pişti — Ses Denemesi</h1>
+<p class="sub">Her düğme tek bir sesi çalar. İlk dokunuş ses motorunu açar. Tamamen prosedürel Web Audio; harici dosya yok.</p>
+<div id="app"></div>
+<div id="report"></div>
+<script type="module" src="./audio.ts"></script>
+</body>
+</html>

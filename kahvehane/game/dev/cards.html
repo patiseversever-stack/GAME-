@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kart Atlası Önizleme</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; padding: 16px; background: #120b07; color: #e8dcc2; font: 14px/1.4 system-ui, sans-serif; }
+  h2 { font-size: 15px; font-weight: 600; margin: 24px 0 8px; color: #d9b968; }
+  #info { font: 13px ui-monospace, monospace; white-space: pre; color: #cfc2a6; }
+  .scroll { overflow-x: auto; }
+  canvas { display: block; }
+  #atlasWrap canvas { max-width: 100%; height: auto; background: repeating-conic-gradient(#2a2420 0 25%, #1d1916 0 50%) 0 0 / 16px 16px; }
+  nav a { color: #d9b968; margin-right: 12px; }
+</style>
+</head>
+<body>
+<nav>Boyut: <a href="?w=1024">1024</a><a href="?w=1536">1536</a><a href="?w=2048">2048</a></nav>
+<div id="info">hazırlanıyor…</div>
+<h2>Masa (gerçek telefon ölçeği: ~70 px ve ~140 px kart genişliği)</h2>
+<div class="scroll"><canvas id="table"></canvas></div>
+<h2>52 kart + arka, 70 px</h2>
+<div class="scroll"><canvas id="small"></canvas></div>
+<h2>Arka yüz (büyük) ve örnek yüzler</h2>
+<div class="scroll"><canvas id="large"></canvas></div>
+<h2>Atlas</h2>
+<div id="atlasWrap"></div>
+<script type="module" src="./cards.ts"></script>
+</body>
+</html>

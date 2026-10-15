@@ -1,0 +1,27 @@
+{
+  "name": "kahvehane-oyun",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Kahvehane: Three.js ile mobil 3D kart oyunları (önce Pişti).",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "tsc --noEmit && vite build",
+    "build:tek": "tsc --noEmit && vite build --mode tek",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "three": "^0.186.1"
+  },
+  "devDependencies": {
+    "@fontsource/inter": "^5.3.0",
+    "@fontsource/playfair-display": "^5.3.0",
+    "@types/three": "^0.186.0",
+    "playwright-core": "^1.56.1",
+    "typescript": "^5.8.3",
+    "vite": "^8.3.4",
+    "vite-plugin-singlefile": "^2.3.3",
+    "vitest": "^5.0.4"
+  }
+}
