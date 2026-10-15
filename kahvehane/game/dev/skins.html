@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Kart Tarzları</title>
+<style>
+  body { margin: 0; padding: 22px 26px 40px; color: #fff; font: 600 15px/1.4 system-ui, sans-serif;
+    background: radial-gradient(120% 80% at 50% 40%, #3149e8 0%, #1a2aa0 30%, #101a6e 55%, #070b2e 100%) fixed; }
+  h1 { font-size: 22px; margin: 0 0 14px; }
+  .row { display: flex; align-items: flex-end; gap: 26px; padding: 16px 0 18px; border-bottom: 1px solid rgba(255,255,255,.12); }
+  .lab { width: 170px; flex: none; align-self: center; }
+  .lab b { display: block; font-size: 30px; color: #ffd23f; line-height: 1; }
+  .lab span { display: block; font-size: 19px; margin: 6px 0 4px; }
+  .lab small { display: block; color: #c8d0ff; font-weight: 500; font-size: 13px; }
+  .big { display: flex; gap: 14px; }
+  canvas { display: block; }
+  .big canvas { filter: drop-shadow(0 6px 10px rgba(0,0,20,.45)); }
+  .phone { position: relative; width: 250px; height: 210px; flex: none; }
+  .phone canvas { position: absolute; filter: drop-shadow(0 3px 5px rgba(0,0,20,.5)); }
+  .phone i { position: absolute; left: 0; top: -2px; font: 600 11px system-ui; color: #9fb0ff; font-style: normal; }
+</style>
+</head>
+<body>
+<h1>Kart tarzları — birini seç</h1>
+<div id="rows"></div>
+<script type="module" src="./skins.ts"></script>
+</body>
+</html>
