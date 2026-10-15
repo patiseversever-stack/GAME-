@@ -165,10 +165,10 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   play(el, [{transform: 'none'}, {transform: 'translate(3px,-2px)'}, {transform: 'translate(-3px,2px)'}, {transform: 'translate(2px,1px)'}, {transform: 'none'}], {duration: 200, delay: tSlam + 200}, 1);
   play(g('.kh-vs__stake'), [{transform: 'translateX(30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: tSlam + 300, easing: EASE.spring, fill: 'backwards'});
   play(g('.kh-vs__mode'), [{transform: 'translateY(-20px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 360, delay: tSlam + 120, easing: EASE.spring, fill: 'backwards'});
-  // damga anında rakipler oyun yüzüne geçer (kısa)
+  // damga anında rakipler oyun yüzüne geçer, takım arkadaşı sana gülümser
   if (ANIM) scope.timeout(() => el.querySelectorAll<HTMLImageElement>('.kh-vs__bust').forEach(img => {
     const p = by(Number(img.dataset.seat));
-    if (p && !p.human) img.src = p.char.poses.kizgin;
+    if (p && !p.human) img.src = p.char.poses[p.team === me.team ? 'kahkaha' : 'kizgin'];
   }), tSlam + 40);
   return new Promise(res => {
     const end = async () => {

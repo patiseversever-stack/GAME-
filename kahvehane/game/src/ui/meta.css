@@ -115,6 +115,9 @@
 .kh-scroll::-webkit-scrollbar { display: none; }
 
 @media (prefers-reduced-motion: reduce) { .kh-rays, .kh-pt.is-breathing .kh-pt__in { animation: none; } }
+/* düşük cihaz: büyük maskeli katmanların sürekli dönüşü ve nefes kapalı (dokunuş/geçiş animasyonları kalır) */
+.kh-low .kh-rays, .kh-low .kh-arena__rays, .kh-low .kh-pt.is-breathing .kh-pt__in, .kh-low .kh-gc.is-center .kh-gc__rays::before,
+.kh-low .kh-deal__rays, .kh-low .kh-playwrap { animation: none; }
 
 /* bildirim noktası (günlük ödül hazır) */
 .kh-dot { position: absolute; top: calc(var(--u) * -.3); right: calc(var(--u) * -.3); z-index: 2; width: calc(var(--u) * 1.05); height: calc(var(--u) * 1.05); border-radius: 50%;

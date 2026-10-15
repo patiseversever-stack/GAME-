@@ -14,30 +14,6 @@ export interface Settings {
   quality: 'auto' | 'low' | 'mid' | 'high';
 }
 
-/** `xp` mevcut seviyedeki puan, `xpNext` bu seviyeyi bitirmek için gereken toplam. */
-export interface Profile {
-  name: string;
-  level: number;
-  xp: number;
-  xpNext: number;
-  coins: number;
-}
-
-export interface Opponent {
-  id: string;
-  name: string;
-  title: string;
-  /** Saydam PNG büst (rozette taşar) ya da kare yüz fotoğrafı */
-  portrait: string;
-  /** Aynı tuvalde gözleri kapalı büst (göz kırpma için) */
-  blink?: string;
-  moods: Record<Mood, string>;
-  locked?: boolean;
-  difficulty: 1 | 2 | 3;
-  /** Rozet taşında görünen seviye (yoksa zorluktan türetilir) */
-  level?: number;
-}
-
 /**
  * Ana ekrandan uygulamaya giden istekler. Market, profil, günlük ödül ve sandık ekran içinde (Profile üzerinden) çözülür;
  * yalnız maç, ayarlar ve kurallar uygulamaya döner.

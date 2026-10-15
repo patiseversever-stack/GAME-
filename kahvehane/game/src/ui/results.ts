@@ -13,6 +13,7 @@ import {arenaHtml, capsuleHtml, charAvatarHtml, gemHtml, onAct, raysHtml, type C
 import {g3} from './fx';
 import {haptic} from '../platform/bridge';
 import {STAKES, shortName} from './lobby';
+import {pickLine} from '../ai/dialogue';
 
 const ROWS: {label: string; get: (s: SideScore) => number; info?: boolean; icon?: string}[] = [
   {label: 'Kart sayısı', get: s => s.cards, info: true},
@@ -55,6 +56,8 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
   }
   const speaker = outcome === 'win' ? small.find(p => !p.human) : big.find(p => !p.human) ?? small.find(p => !p.human);
   const defLine = outcome === 'win' ? 'Bu sefer sen kazandın… Rövanş isterim!' : outcome === 'lose' ? 'Ustaya saygı evlat! Bir el daha?' : 'Berabere! Bir el daha oynayalım.';
+  // konuşanın kendi repliği (karakterin ağzından; seslendirme yok, masada söylenenden farklı seçilir)
+  const said = speaker && !d.line ? pickLine(speaker.char.id, outcome === 'win' ? 'playerWin' : outcome === 'lose' ? 'botWin' : 'draw')?.text : undefined;
   const bigPose = outcome === 'draw' ? 'saskin' : 'zafer';
 
   const colName = (side: SideScore): string => {
@@ -80,7 +83,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
         ${raysHtml(outcome === 'win' ? 'is-gold kh-podium__rays' : 'kh-podium__rays')}
         <div class="kh-podium__big">${big.map((p, i) => `<div class="kh-podium__bust" style="--i:${i}"><img src="${p.char.poses[bigPose]}" alt=""><span class="kh-podium__tag${p.human ? ' is-me' : ''}">${esc(p.human ? p.name : p.char.name)}</span>${outcome !== 'draw' ? `<i class="kh-podium__crown">${I.crown}</i>` : ''}</div>`).join('')}</div>
         <div class="kh-podium__small">${small.map(p => `<div class="kh-podium__sm"><span class="kh-podium__smava">${charAvatarHtml(p.char, p.human ? frame : 'standart', '', outcome === 'draw' ? 'saskin' : 'uzgun')}${mode === '4' ? `<b class="kh-podium__rank">${ranked.indexOf(sideOf(p)) + 1}</b>` : ''}</span><small>${esc(p.human ? 'Sen' : shortName(p.char))}</small></div>`).join('')}</div>
-        ${speaker ? `<div class="kh-say kh-podium__say"><small>${esc(speaker.char.name)}</small>${esc(d.line ?? defLine)}</div>` : ''}
+        ${speaker ? `<div class="kh-say kh-podium__say"><small>${esc(speaker.char.name)}</small>${esc(d.line ?? said ?? defLine)}</div>` : ''}
       </section>
       <section class="kh-panel kh-sc is-c${ordered.length}">
         <div class="kh-sc__row is-head"><span></span>${ordered.map(sd => `<b class="${sd === mySide ? 'is-me' : ''}${winners.has(result.sides.indexOf(sd)) && outcome !== 'draw' ? ' is-win' : ''}"><span class="kh-sc__avas">${colAvas(sd)}</span><em>${esc(colName(sd))}</em></b>`).join('')}</div>

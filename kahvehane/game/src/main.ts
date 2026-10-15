@@ -44,6 +44,8 @@ function atlasWidth(tier: Tier): number {
 async function boot(): Promise<void> {
   const settings = store.get<Settings>('settings2', {sfx: true, voice: true, music: true, haptics: true, quality: 'auto'});
   const tier: Tier = settings.quality === 'auto' || Q.has('q') ? detectTier() : settings.quality;
+  // düşük seviyede meta ekranların süs döngüleri (dönen hüzmeler, nefes) durur
+  if (tier === 'low') document.documentElement.classList.add('kh-low');
   const profile = new Profile();
   if (!profile.data.onboarded && (Q.has('skipintro') || AUTO)) profile.completeOnboarding('riza', profile.data.name);
   const sfx = new Sfx();

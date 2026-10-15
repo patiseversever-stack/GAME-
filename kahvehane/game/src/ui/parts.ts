@@ -1,7 +1,7 @@
-// Ortak parçalar: arena zemini, kod çizimi logo, modal iskeleti, bildirim, "Yakında" penceresi, avatar/seviye/jeton kapsülü HTML'i,
+// Ortak parçalar: arena zemini, kod çizimi logo, modal iskeleti, bildirim, seviye taşı/jeton kapsülü HTML'i,
 // karakter avatarı (çerçeveli), canlı portre (nefes + göz kırpma + poz), kaydırmalı vitrin (momentumlu), alt pencere, dört renk perde geçişi.
-import type {Profile, Sounds} from './types';
-import {EASE, Scope, ANIM, clamp, esc, fmt, h, initials, play, preload, q, rnd} from './dom';
+import type {Sounds} from './types';
+import {EASE, Scope, ANIM, clamp, esc, fmt, h, play, preload, q, rnd} from './dom';
 import {ASSETS} from './assets';
 import {I, SUIT, SUIT_TILE, suitSvg, type SuitKey} from './icons';
 import type {Fx} from './fx';
@@ -68,20 +68,9 @@ export function wordmarkHtml(cls = '', fan = true): string {
   </div>`;
 }
 
-export const avatarHtml = (name: string, cls = ''): string =>
-  `<span class="kh-avatar ${cls}"><span class="kh-avatar__txt">${esc(initials(name))}</span></span>`;
-
 /** Altıgen seviye taşı (ben: mavi, rakip: mor). */
 export const gemHtml = (level: number, me = true): string =>
   `<span class="kh-gemwrap"><span class="kh-gem${me ? ' is-me' : ''}"><b class="kh-num">${level}</b></span></span>`;
-
-export const levelHtml = (p: Profile): string => {
-  const k = p.xpNext > 0 ? Math.max(0, Math.min(1, p.xp / p.xpNext)) : 0;
-  return `<span class="kh-lvl">${gemHtml(p.level)}<span class="kh-xp"><i class="kh-xp__fill" style="transform:scaleX(${k.toFixed(3)})"></i></span></span>`;
-};
-
-/** Rakip seviyesi: verilmişse o, yoksa zorluktan. */
-export const oppLevel = (o: {level?: number; difficulty: number}): number => o.level ?? [9, 18, 28][Math.max(0, Math.min(2, o.difficulty - 1))];
 
 export const capsuleHtml = (coins: number, plus = false, cls = ''): string =>
   `<div class="kh-capsule ${cls}" data-coins><img class="kh-capsule__ico" src="${ASSETS.icon_coin}" alt=""><b class="kh-capsule__val kh-num">${fmt(coins)}</b>${
@@ -172,31 +161,6 @@ export function toast(ctx: Ctx, text: string, icon: string = I.lock): void {
       const a = t.animate([{opacity: 1}, {opacity: 0}], {duration: 220, fill: 'forwards'});
       a.onfinish = () => t.remove();
     }, 1700);
-}
-
-/** "Yakında" penceresi (Mağaza, Görevler, Profil…). */
-export function soon(ctx: Ctx, title: string, icon: string, text: string): Promise<void> {
-  return new Promise(res => {
-    let m: ModalHandle | null = null;
-    const done = () => {
-      m?.close();
-      res();
-    };
-    m = openModal(ctx, {
-      cls: 'kh-soon',
-      title,
-      onX: done,
-      body: `<div class="kh-soon__ico"><img src="${icon}" alt=""></div>
-        <div class="kh-soon__t">${esc(text)}</div>
-        <button class="kh-btn kh-btn--1" data-act="ok">Tamam</button>`,
-    });
-    onAct(m.scope, m.panel, act => {
-      if (act === 'ok') {
-        ctx.sounds.tap();
-        done();
-      }
-    });
-  });
 }
 
 // =====================================================================================================
