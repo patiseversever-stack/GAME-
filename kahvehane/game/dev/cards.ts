@@ -105,7 +105,7 @@ function drawPhone(a: CardAtlas): void {
   // (b) el: 88 px, yelpaze; her kartın yalnız sol ≈ %45'i görünür (üstteki hariç)
   const hw = 88, hh = hw / CARD_ASPECT;
   const hand = [c('H', 7), c('D', 10), c('S', 11), c('C', 13)];
-  const hx = 2 * (cw + gap) + gap, hy = gridH + 40;
+  const hx = 1.2 * (cw + gap), hy = gridH + 40;
   hand.forEach((id, i) => {
     const ang = (i - 1.5) * 5;
     drawCard(ctx, a, id, hx + i * hw * 0.45, hy + Math.abs(i - 1.5) * 3, hw, ang, true, [0.5, 1.6]);
@@ -113,7 +113,7 @@ function drawPhone(a: CardAtlas): void {
   label(ctx, 'el 88 px', hx, hy - 14);
   // ikinci el: as, kız, sayı, papaz
   const hand2 = [c('S', 1), c('H', 12), c('C', 9), c('D', 13)];
-  const h2x = hx + 300;
+  const h2x = hx + 270;
   hand2.forEach((id, i) => {
     const ang = (i - 1.5) * 5;
     drawCard(ctx, a, id, h2x + i * hw * 0.45, hy + Math.abs(i - 1.5) * 3, hw, ang, true, [0.5, 1.6]);
@@ -122,11 +122,11 @@ function drawPhone(a: CardAtlas): void {
   const pw = 72;
   const pile = [c('C', 5), c('H', 1), c('D', 12)];
   const rots = [-13, 9, -4];
-  const px = h2x + 330, py = hy + 6;
+  const px = h2x + 290, py = hy + 6;
   pile.forEach((id, i) => drawCard(ctx, a, id, px + i * 3, py + i * 2, pw, rots[i]));
   label(ctx, 'yığın 72 px', px, hy - 14);
   // rakip eli ve deste (arka yüzün çuha üzerinde seçilmesi)
-  const bx = px + 150;
+  const bx = px + 140;
   for (let i = 0; i < 4; i++) drawCard(ctx, a, BACK_INDEX, bx + i * 24, py, 56, -9 + i * 6);
   label(ctx, 'arka 56 px', bx, hy - 14);
   void hh;

@@ -7,7 +7,7 @@
 //   · sayı kartları: tek büyük parlak takım işareti (klasik pip ızgarası yok)
 //   · aslar: altın halkalı madalyon; maça ası ayrıca altın işlemeli
 //   · saray kartları: karakter portreleri (Papaz = Rıza Amca, Kız = Defne, Vale = Cem), altın çift çerçeve,
-//     takım renginde kurdele ve sağ üstte taç / lale taç / sorguçlu kalpak
+//     takım renginde kurdele ve sağ üstte taç / lale taç / fes
 //   · arka yüz: bordo zemin, altın ogee kafes, Osmanlı cilt kapağı gibi şemse + salbek + köşebent
 //
 // İsteğe bağlı görseller (assets/cards/*.png; varsa kullanılır, yoksa prosedürel çizim):
@@ -97,12 +97,12 @@ const MINI = {s: 0.46, x: 6.2, y: 6.6}; // sağ alt kopya: ölçek ve köşeden 
 
 // Sayı kartlarındaki büyük takım işareti
 const BIG = {cx: 55, cy: 95, w: 52};
-// As madalyonu
-const ACE = {cx: 54, cy: 94, r: 27};
+// As madalyonu (r: altın halka; dilimli rozet r × 1.19'a taşar). Aslarda sağ alt küçük indeks yok.
+const ACE = {cx: 55.5, cy: 96, r: 29};
 // Saray kartı portre penceresi, kurdele ve taç
-const WIN = {x: 8.4, y: 47.5, w: 83.2, h: 70.5, r: 6.5};
-const RIB = {cx: CX, cy: 122.4, w: 70, h: 14.5};
-const CROWN = {cx: 67.5, cy: 31};
+const WIN = {x: 8.4, y: 50.6, w: 83.2, h: 68, r: 6.5};
+const RIB = {cx: CX, cy: 123.2, w: 70, h: 14.5};
+const CROWN = {cx: 67.5, cy: 36.5, s: 1.08};
 
 const RANK_LABEL = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const COURT_TITLE: Record<Court, string> = {13: 'PAPAZ', 12: 'KIZ', 11: 'VALE'};
@@ -116,7 +116,7 @@ interface PortraitSpec {
 }
 const PORTRAITS: Record<Court, PortraitSpec> = {
   13: {file: 'riza_avatar.jpg', cx: 0.53, cy: 0.55, w: 0.95}, // Papaz: Rıza Amca
-  12: {file: 'defne_avatar.jpg', cx: 0.56, cy: 0.62, w: 0.9}, // Kız: Defne
+  12: {file: 'defne_avatar.jpg', cx: 0.54, cy: 0.66, w: 1}, // Kız: Defne
   11: {file: 'cem_avatar.jpg', cx: 0.58, cy: 0.62, w: 0.86}, // Vale: Cem
 };
 
@@ -254,15 +254,18 @@ function tulipPath(): Path2D {
   return p;
 }
 
-/** Dilimli (şemse) elips: kenarı n dilimli, dışa doğru taşan oval madalyon. */
+/** Dilimli (şemse) elips: kenarı n dilimli, dışa doğru taşan oval madalyon.
+ *  Yay tam tur değilse (köşebent) merkezden başlar ve merkeze kapanır (çeyrek dilim). */
 function lobedEllipse(rx: number, ry: number, n: number, depth: number, a0 = 0, a1 = Math.PI * 2): Path2D {
   const p = new Path2D();
+  const full = a1 - a0 >= Math.PI * 2 - 1e-6;
   const steps = Math.max(24, Math.round(n * 10 * ((a1 - a0) / (Math.PI * 2))));
+  if (!full) p.moveTo(0, 0);
   for (let i = 0; i <= steps; i++) {
     const a = a0 + ((a1 - a0) * i) / steps;
     const k = 1 - depth + depth * Math.abs(Math.sin((a * n) / 2));
     const x = Math.cos(a) * rx * k, y = Math.sin(a) * ry * k;
-    if (i === 0) p.moveTo(x, y);
+    if (i === 0 && full) p.moveTo(x, y);
     else p.lineTo(x, y);
   }
   p.closePath();
@@ -276,6 +279,7 @@ interface Shapes {
   shemseIn: Path2D;
   corner: Path2D; // köşebent (çeyrek şemse)
   cornerIn: Path2D;
+  rosette: Path2D; // as madalyonunun dilimli altın dış halkası
 }
 
 function makeShapes(): Shapes {
@@ -284,14 +288,9 @@ function makeShapes(): Shapes {
     tulip: tulipPath(),
     shemse: lobedEllipse(1, 1.4, 18, 0.1),
     shemseIn: lobedEllipse(0.78, 1.14, 18, 0.07),
-    corner: (() => {
-      const q = lobedEllipse(1, 1, 10, 0.12, 0, Math.PI / 2);
-      const p = new Path2D();
-      p.moveTo(0, 0);
-      p.addPath(q);
-      return p;
-    })(),
-    cornerIn: lobedEllipse(0.68, 0.68, 10, 0.1, 0, Math.PI / 2),
+    corner: lobedEllipse(1, 1, 12, 0.1, 0, Math.PI / 2),
+    cornerIn: lobedEllipse(0.74, 0.74, 12, 0.08, 0, Math.PI / 2),
+    rosette: lobedEllipse(1, 1, 16, 0.11),
   };
 }
 
@@ -503,7 +502,9 @@ const SPEC: Record<Suit, [number, number, number]> = {
   C: [-0.07, -0.36, -0.5],
 };
 
-/** Parlak, tok takım işareti: yumuşak gölge + dikey gradyan + koyu iç kenar + üst parlama + küçük speküler nokta. */
+/** Parlak, tok takım işareti: yumuşak gölge + ince koyu dış hat + altta koyu kabartma kenarı + dikey gradyan
+ *  + üst parlama + küçük speküler nokta. Sinek üst üste binen dairelerden oluştuğu için kontur çizgisi
+ *  şeklin İÇİNE çizilmez (iç daire yayları görünürdü); kenarlar yalnız dolgu birleşimiyle elde edilir. */
 function glossSuit(k: Kit, suit: Suit, x: number, y: number, w: number, shadow = true): void {
   const {ctx} = k;
   const path = k.shapes.suit[suit];
@@ -515,13 +516,20 @@ function glossSuit(k: Kit, suit: Suit, x: number, y: number, w: number, shadow =
   ctx.save();
   ctx.translate(x, y);
   ctx.scale(w, w);
+  // dış hat: önce kontur, üstüne dolgu → konturun yalnız dış yarısı kalır
+  ctx.strokeStyle = ink.rim;
+  ctx.lineWidth = 0.04;
+  ctx.lineJoin = 'round';
+  ctx.stroke(path);
+  ctx.fillStyle = ink.rim;
+  ctx.fill(path);
+  // gövde: yukarı kaydırılmış dolgu → altta koyu kabartma hilali
+  ctx.clip(path);
+  ctx.save();
+  ctx.translate(0, -0.045);
   ctx.fillStyle = ink.grad;
   ctx.fill(path);
-  ctx.clip(path);
-  // koyu iç kenar (yalnız şeklin içinde kalan yarısı görünür)
-  ctx.strokeStyle = ink.rim;
-  ctx.lineWidth = 0.075;
-  ctx.stroke(path);
+  ctx.restore();
   // üst yarıda yumuşak parlama
   ctx.translate(0, -0.035);
   ctx.scale(0.86, 0.8);
@@ -561,6 +569,22 @@ function indexBlock(k: Kit, rank: number, suit: Suit, withPip: boolean): void {
   const L = k.labels[rank];
   const wide = L.width > IDX.maxW + 0.01;
   const left = wide ? IDX.left : IDX.cx - L.width / 2;
+  if (rank > 10) {
+    // saray kartı: harf rozet/çerçeveye taşabilir (Q kuyruğu) → kâğıt renginde kontur ile temiz ayrılır
+    ctx.save();
+    ctx.translate(left, IDX.top);
+    ctx.scale(L.scaleX, 1);
+    ctx.textAlign = 'left';
+    ctx.textBaseline = 'alphabetic';
+    ctx.strokeStyle = '#fbf5e8';
+    ctx.lineWidth = 3.2;
+    ctx.lineJoin = 'round';
+    for (const g of L.glyphs) {
+      ctx.font = g.font;
+      ctx.strokeText(g.ch, g.x, g.base + 0.9);
+    }
+    ctx.restore();
+  }
   // tok baskı: altta koyu "kalınlık" kopyası, üstte gradyan
   ctx.save();
   ctx.translate(0, 0.9);
@@ -593,77 +617,80 @@ function numberCard(k: Kit, suit: Suit): void {
 function aceCard(k: Kit, suit: Suit): void {
   const {ctx} = k;
   const {cx, cy, r} = ACE;
+  const R = r * 1.19; // dilimli rozetin dış yarıçapı
   // sıcak altın ışıltı
-  const glow = ctx.createRadialGradient(cx, cy, r * 0.6, cx, cy, r * 1.55);
-  glow.addColorStop(0, 'rgba(244,196,90,0.38)');
-  glow.addColorStop(1, 'rgba(244,196,90,0)');
+  const glow = ctx.createRadialGradient(cx, cy, r * 0.8, cx, cy, R * 1.28);
+  glow.addColorStop(0, 'rgba(244,190,80,0.42)');
+  glow.addColorStop(1, 'rgba(244,190,80,0)');
   ctx.fillStyle = glow;
   ctx.beginPath();
-  ctx.arc(cx, cy, r * 1.55, 0, Math.PI * 2);
+  ctx.arc(cx, cy, R * 1.28, 0, Math.PI * 2);
   ctx.fill();
-  // güneş ışınları (16 kalın üçgen)
+  // madalya: gölge → koyu kontur → dilimli altın rozet → takım renginde ince halka → altın halka → krem disk
   ctx.save();
   ctx.translate(cx, cy);
-  const ray = goldGradient(ctx, -r, -r * 1.4, r, r * 1.4);
-  ctx.fillStyle = ray;
-  ctx.globalAlpha = 0.85;
-  for (let i = 0; i < 16; i++) {
-    ctx.save();
-    ctx.rotate((i * Math.PI) / 8 + Math.PI / 16);
-    const long = i % 2 === 0;
-    ctx.beginPath();
-    ctx.moveTo(-2.3, -r + 1);
-    ctx.lineTo(0, -r - (long ? 9.5 : 6));
-    ctx.lineTo(2.3, -r + 1);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-  }
-  ctx.restore();
-  // madalyon: koyu dış çizgi → altın halka → krem iç disk → ince altın iç halka
   ctx.save();
-  ctx.beginPath();
-  ctx.arc(cx, cy + 0.7, r + 0.4, 0, Math.PI * 2);
-  ctx.fillStyle = 'rgba(90,55,10,0.28)';
-  ctx.fill();
-  ctx.beginPath();
-  ctx.arc(cx, cy, r, 0, Math.PI * 2);
-  ctx.fillStyle = goldGradient(ctx, cx - r, cy - r, cx + r * 0.6, cy + r);
-  ctx.fill();
+  ctx.translate(0, 1.2);
+  ctx.scale(R + 0.6, R + 0.6);
+  ctx.fillStyle = 'rgba(90,50,10,0.3)';
+  ctx.fill(k.shapes.rosette);
+  ctx.restore();
+  ctx.save();
+  ctx.scale(R, R);
   ctx.strokeStyle = GOLD_DARK;
-  ctx.lineWidth = 0.7;
-  ctx.stroke();
-  const disk = ctx.createRadialGradient(cx - r * 0.25, cy - r * 0.35, 1, cx, cy, r);
-  disk.addColorStop(0, '#fffdf5');
-  disk.addColorStop(0.7, '#f7eedb');
-  disk.addColorStop(1, '#e6d3ad');
+  ctx.lineWidth = 1.3 / R;
+  ctx.lineJoin = 'round';
+  ctx.stroke(k.shapes.rosette);
+  ctx.fillStyle = goldGradient(ctx, -1, -1, 0.7, 1);
+  ctx.fill(k.shapes.rosette);
+  ctx.restore();
+  // rozet dilimlerinde ışık çizgileri (16 ince ışın)
+  ctx.strokeStyle = 'rgba(140,90,10,0.45)';
+  ctx.lineWidth = 0.45;
   ctx.beginPath();
-  ctx.arc(cx, cy, r - 3.4, 0, Math.PI * 2);
+  for (let i = 0; i < 16; i++) {
+    const a = (i * Math.PI) / 8;
+    ctx.moveTo(Math.cos(a) * (r + 0.6), Math.sin(a) * (r + 0.6));
+    ctx.lineTo(Math.cos(a) * (R - 1.6), Math.sin(a) * (R - 1.6));
+  }
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(0, 0, r, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD_DARK;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, 0, r - 0.7, 0, Math.PI * 2);
+  ctx.fillStyle = goldGradient(ctx, -r, -r, r * 0.6, r);
+  ctx.fill();
+  const disk = ctx.createRadialGradient(-r * 0.25, -r * 0.35, 1, 0, 0, r);
+  disk.addColorStop(0, '#fffef8');
+  disk.addColorStop(0.65, '#f8f0de');
+  disk.addColorStop(1, '#e4d0a8');
+  ctx.beginPath();
+  ctx.arc(0, 0, r - 3.3, 0, Math.PI * 2);
+  ctx.fillStyle = GOLD_DARK;
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(0, 0, r - 3.8, 0, Math.PI * 2);
   ctx.fillStyle = disk;
   ctx.fill();
-  ctx.strokeStyle = GOLD_DARK;
-  ctx.lineWidth = 0.6;
-  ctx.stroke();
   ctx.beginPath();
-  ctx.arc(cx, cy, r - 5.2, 0, Math.PI * 2);
-  ctx.strokeStyle = 'rgba(200,150,50,0.85)';
+  ctx.arc(0, 0, r - 5.6, 0, Math.PI * 2);
+  ctx.strokeStyle = 'rgba(200,150,50,0.8)';
   ctx.lineWidth = 0.5;
   ctx.stroke();
-  // halka üzerinde inciler
-  ctx.fillStyle = '#fff6dc';
+  // altın halka üzerinde inciler
   for (let i = 0; i < 12; i++) {
-    const a = (i * Math.PI) / 6;
-    ctx.beginPath();
-    ctx.arc(cx + Math.cos(a) * (r - 1.7), cy + Math.sin(a) * (r - 1.7), 0.75, 0, Math.PI * 2);
-    ctx.fill();
+    const a = (i * Math.PI) / 6 + Math.PI / 12;
+    pearl(ctx, Math.cos(a) * (r - 1.9), Math.sin(a) * (r - 1.9), 0.8);
   }
   ctx.restore();
 
   if (suit === 'S') {
-    if (k.art.aceSpade) return drawContain(ctx, k.art.aceSpade, cx, cy, r * 2.2, r * 2.4);
+    if (k.art.aceSpade) return drawContain(ctx, k.art.aceSpade, cx, cy, r * 2.3, r * 2.5);
     return aceOfSpades(k);
   }
-  const w = suit === 'D' ? 37 : suit === 'C' ? 35.5 : 36;
+  const w = suit === 'D' ? 40 : suit === 'C' ? 38 : 39;
   glossSuit(k, suit, cx, cy + (suit === 'H' ? 0.6 : 0), w);
 }
 
@@ -683,7 +710,7 @@ function curl(ctx: Ctx, cx: number, cy: number, r: number, a0: number, turns: nu
 /** Maça ası: halkadan taşan büyük maça + altın iç çizgi ve rumi kıvrımlar. */
 function aceOfSpades(k: Kit): void {
   const {ctx} = k;
-  const sw = 46, sx = ACE.cx, sy = ACE.cy - 1;
+  const sw = 56, sx = ACE.cx, sy = ACE.cy - 1.5;
   glossSuit(k, 'S', sx, sy, sw);
   ctx.save();
   ctx.translate(sx, sy);
@@ -920,61 +947,81 @@ function queenTiara(k: Kit, a: Accent): void {
   ctx.restore();
 }
 
-/** Vale: sorguçlu kalpak (kubbe + kıvrık siper + takım renginde tüy). (0,0) = siperin alt ortası. */
-function jackCap(ctx: Ctx, a: Accent): void {
+/** Vale: fes (kahvehane simgesi) — kırmızı keçe gövde, altın şerit, takım renginde taş, altın püskül. (0,0) = alt orta. */
+function jackFez(ctx: Ctx, a: Accent): void {
   const gold = goldGradient(ctx, -14, -24, 10, 2);
   ctx.save();
-  // tüy (arkada)
-  const plume = new Path2D();
-  plume.moveTo(3, -15);
-  plume.bezierCurveTo(4, -22, 10, -28, 19, -29);
-  plume.bezierCurveTo(15, -25, 14.5, -21, 15.5, -17);
-  plume.bezierCurveTo(12, -15, 8, -13.5, 5, -12);
-  plume.closePath();
-  const pg = ctx.createLinearGradient(4, -29, 14, -12);
-  pg.addColorStop(0, a.light);
-  pg.addColorStop(0.55, a.base);
-  pg.addColorStop(1, a.dark);
-  ctx.strokeStyle = GOLD_DARK;
-  ctx.lineWidth = 2;
   ctx.lineJoin = 'round';
-  ctx.stroke(plume);
-  ctx.fillStyle = pg;
-  ctx.fill(plume);
-  ctx.strokeStyle = 'rgba(255,240,200,0.7)';
-  ctx.lineWidth = 0.6;
+  // gövde: yukarı daralan, hafif şişkin kesik koni
+  const body = new Path2D();
+  body.moveTo(-13.5, -1);
+  body.bezierCurveTo(-13, -9, -11.5, -17, -9.6, -23.2);
+  body.quadraticCurveTo(0, -26, 9.6, -23.2);
+  body.bezierCurveTo(11.5, -17, 13, -9, 13.5, -1);
+  body.quadraticCurveTo(0, 2.2, -13.5, -1);
+  body.closePath();
+  const fg = ctx.createLinearGradient(-13, 0, 13, 0);
+  fg.addColorStop(0, '#7e0a1c');
+  fg.addColorStop(0.3, '#d61f38');
+  fg.addColorStop(0.55, '#c0142d');
+  fg.addColorStop(1, '#6a0716');
+  outlineFill(ctx, body, fg, 2.2);
+  // üst kapak
   ctx.beginPath();
-  ctx.moveTo(5.5, -13.5);
-  ctx.bezierCurveTo(7, -20, 11, -25, 17, -27.5);
-  ctx.stroke();
-  // kubbe
-  const dome = new Path2D();
-  dome.moveTo(-12, -6);
-  dome.bezierCurveTo(-13, -16, -6, -21.5, 0, -21.5);
-  dome.bezierCurveTo(6, -21.5, 13, -16, 12, -6);
-  dome.closePath();
-  const dg = ctx.createLinearGradient(0, -22, 0, -6);
-  dg.addColorStop(0, a.light);
-  dg.addColorStop(0.5, a.base);
-  dg.addColorStop(1, a.dark);
-  outlineFill(ctx, dome, dg, 2.2);
-  ctx.fillStyle = 'rgba(255,255,255,0.22)';
-  ctx.beginPath();
-  ellipse(ctx, -4.5, -15.5, 4, 2.4, -0.5);
+  ellipse(ctx, 0, -23.6, 9.5, 2.2);
+  ctx.fillStyle = '#8c0b1f';
   ctx.fill();
-  // siper (altın, kıvrık)
-  const brim = new Path2D();
-  brim.moveTo(-17, -6.5);
-  brim.quadraticCurveTo(0, -11, 17, -6.5);
-  brim.quadraticCurveTo(18.5, -2, 15, 0);
-  brim.quadraticCurveTo(0, -4, -15, 0);
-  brim.quadraticCurveTo(-18.5, -2, -17, -6.5);
-  brim.closePath();
-  outlineFill(ctx, brim, gold, 2.2);
+  ctx.strokeStyle = GOLD_DARK;
+  ctx.lineWidth = 0.8;
+  ctx.stroke();
+  // sol parlama
+  ctx.fillStyle = 'rgba(255,220,220,0.28)';
+  ctx.beginPath();
+  ctx.moveTo(-9.6, -4);
+  ctx.bezierCurveTo(-9.6, -11, -8.4, -17, -7, -21.4);
+  ctx.lineTo(-5, -21.6);
+  ctx.bezierCurveTo(-6.4, -16, -7, -10, -6.6, -3.4);
+  ctx.closePath();
+  ctx.fill();
+  // altın şerit (alt kenar)
+  const band = new Path2D();
+  band.moveTo(-13.5, -1);
+  band.quadraticCurveTo(0, 2.2, 13.5, -1);
+  band.lineTo(13.1, -5.6);
+  band.quadraticCurveTo(0, -2.6, -13.1, -5.6);
+  band.closePath();
+  outlineFill(ctx, band, gold, 1.4);
   ctx.fillStyle = gold;
-  ctx.fill(brim);
-  // broş
-  gem(ctx, 3.5, -10.5, 2.6, 3, {light: '#fff4c8', base: '#e3b13c', dark: '#8a5a0c'});
+  ctx.fill(band);
+  gem(ctx, 0, -3, 2.4, 2.4, a);
+  // püskül: tepeden sağa sarkan altın kordon ve püskül
+  ctx.strokeStyle = GOLD_DARK;
+  ctx.lineWidth = 2.6;
+  ctx.lineCap = 'round';
+  const cord = new Path2D();
+  cord.moveTo(0, -24);
+  cord.bezierCurveTo(6, -26.5, 12.5, -24, 14.6, -16);
+  ctx.stroke(cord);
+  ctx.strokeStyle = gold;
+  ctx.lineWidth = 1.3;
+  ctx.stroke(cord);
+  const tassel = new Path2D();
+  tassel.moveTo(14.6, -17);
+  tassel.bezierCurveTo(12.4, -13, 12.2, -9.5, 12.6, -6.6);
+  tassel.lineTo(17.6, -6.6);
+  tassel.bezierCurveTo(17.6, -10, 16.8, -13, 14.6, -17);
+  tassel.closePath();
+  outlineFill(ctx, tassel, gold, 1.6);
+  ctx.fillStyle = gold;
+  ctx.fill(tassel);
+  ctx.strokeStyle = 'rgba(120,70,0,0.6)';
+  ctx.lineWidth = 0.45;
+  ctx.beginPath();
+  for (const x of [13.8, 15.1, 16.4]) {
+    ctx.moveTo(x, -12.5);
+    ctx.lineTo(x + (x - 15.1) * 0.25, -7.2);
+  }
+  ctx.stroke();
   ctx.restore();
 }
 
@@ -1108,18 +1155,19 @@ function courtCard(k: Kit, rank: Court, suit: Suit): void {
   ctx.stroke(rrectPath(WIN.x + 3.4, WIN.y + 3.4, WIN.w - 6.8, WIN.h - 6.8, WIN.r - 3));
   ctx.restore();
 
-  // taç / lale taç / kalpak: pencerenin üst kenarına oturur
+  // taç / lale taç / fes: pencerenin üst kenarına oturur
   ctx.save();
   ctx.translate(CROWN.cx, CROWN.cy);
+  ctx.scale(CROWN.s, CROWN.s);
   if (rank === 13) kingCrown(ctx, a);
   else if (rank === 12) queenTiara(k, a);
-  else jackCap(ctx, a);
+  else jackFez(ctx, a);
   ctx.restore();
 
   ribbon(k, a, k.titles[rank]);
 
   // indeksin takım işareti: pencere köşesine taşan rozet
-  const bx = IDX.cx, by = PIP_CY + 0.6, br = 11.2;
+  const bx = IDX.cx, by = WIN.y + 11.6, br = 11.2;
   ctx.save();
   ctx.beginPath();
   ctx.arc(bx, by + 0.9, br + 1.6, 0, Math.PI * 2);
@@ -1242,14 +1290,15 @@ function cardBack(k: Kit, lattice: Path2D): void {
     ctx.save();
     ctx.translate(x, y);
     ctx.rotate(rot);
-    ctx.scale(17, 17);
+    ctx.scale(19, 19);
     ctx.fillStyle = gold;
     ctx.fill(shapes.corner);
     ctx.fillStyle = '#4a0a18';
     ctx.fill(shapes.cornerIn);
-    ctx.translate(0.24, 0.24);
-    ctx.rotate(-Math.PI * 0.75);
-    ctx.scale(0.36, 0.36);
+    // köşeden içe bakan lale
+    ctx.translate(0.3, 0.3);
+    ctx.rotate(Math.PI * 0.75);
+    ctx.scale(0.4, 0.4);
     ctx.fillStyle = gold;
     ctx.fill(shapes.tulip);
     ctx.restore();
@@ -1544,7 +1593,7 @@ export async function buildCardAtlas(width: number, artOverride?: CardArtUrls): 
         if (rank === 1) aceCard(kit, suit);
         else if (rank <= 10) numberCard(kit, suit);
         else courtCard(kit, rank as Court, suit);
-        indexCorners(kit, rank, suit, rank <= 10);
+        indexCorners(kit, rank, suit, rank >= 2 && rank <= 10);
       }
     }
     ctx.restore();
