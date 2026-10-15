@@ -34,7 +34,12 @@ Yeni oturum bu dosyayı okuyup devam edebilsin diye tutulur.
 - Meshy: karakterler, eller, semaver, çay bardağı, tespih, kül tablası.
 - Ağ: api.meshy.ai ve api.elevenlabs.io bu ortamdan erişilebilir (anahtarsız 401).
 - Anahtarlar ortam ayarlarına gizli değişken olarak eklenir: `MESHY_API_KEY`, (ses için) `ELEVENLABS_API_KEY`. Sohbete yapıştırılmaz.
-- Karakter adayları ve promptları: `karakterler.md`.
+- Karakter adayları ve promptları: `karakterler.md`. Görseller: `konsept/`.
+- **Seçilen karakterler:** 1 Rıza Amca, 7 Cem, 8 Kahveci Dursun, 10 Defne. (4 kişilik masada 3'ü oynar, 4.'sü çay servisi yapan seyirci olur.)
+- **Mekân:** A — Eski İstanbul kahvehanesi (ahşap panel, İznik çini, eski fotoğraflar, pirinç semaver).
+- **Oyuncu elleri:** 1 — gerçekçi (damarlı, hafif kıllı, kehribar tespih).
+- Model sayfaları (A-poz, ön/yan/arka) üretildi: `konsept/_model_sayfalari.jpg`.
+- 3D yöntem denemesi (Rıza Amca): A = multi-image Meshy 7.1 (30 kr), B = Smart Topology t2.5 (15 kr). İkisi de ~15k üçgen, 2K doku.
 
 ## Ses
 - Karakter replikleri: ElevenLabs (Türkçe, duygu etiketleri) ile üretim önerildi; ana karakterler ileride gerçek seslendirmenle yapılabilir.

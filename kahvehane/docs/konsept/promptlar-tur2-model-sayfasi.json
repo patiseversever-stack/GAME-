@@ -1,0 +1,34 @@
+[
+ {
+  "id": "01_riza_amca_sheet",
+  "endpoint": "image-to-image",
+  "model": "nano-banana-pro",
+  "multi_view": true,
+  "input_task_id": "01a13fb8-1958-722c-b874-b3e1ff5eed8c",
+  "prompt": "Same character, full body from head to shoes, standing in a relaxed A-pose, empty hands, no props, no table, no chair, plain light grey background, even soft studio lighting, no cast shadows, game-ready character reference sheet, same face, same outfit, same stylized realistic 3D style. Keep the white handlebar mustache, grey flat cap, brown wool vest and amber prayer beads on the wrist."
+ },
+ {
+  "id": "07_cem_sheet",
+  "endpoint": "image-to-image",
+  "model": "nano-banana-pro",
+  "multi_view": true,
+  "input_task_id": "01a13fb8-235a-73ea-a0e7-03c64d1b5ad5",
+  "prompt": "Same character, full body from head to shoes, standing in a relaxed A-pose, empty hands, no props, no table, no chair, plain light grey background, even soft studio lighting, no cast shadows, game-ready character reference sheet, same face, same outfit, same stylized realistic 3D style. Keep the messy dark hair, grey hoodie, jeans and sneakers, wireless earbuds."
+ },
+ {
+  "id": "08_kahveci_dursun_sheet",
+  "endpoint": "image-to-image",
+  "model": "nano-banana-pro",
+  "multi_view": true,
+  "input_task_id": "01a13fb8-24e4-7068-9a83-0bc185864e1d",
+  "prompt": "Same character, full body from head to shoes, standing in a relaxed A-pose, empty hands, no props, no table, no chair, plain light grey background, even soft studio lighting, no cast shadows, game-ready character reference sheet, same face, same outfit, same stylized realistic 3D style. Keep the apron, rolled-up sleeves and mustache, no tray."
+ },
+ {
+  "id": "10_defne_sheet",
+  "endpoint": "image-to-image",
+  "model": "nano-banana-pro",
+  "multi_view": true,
+  "input_task_id": "01a13fb8-27e1-76af-9624-07d92856348f",
+  "prompt": "Same character, full body from head to shoes, standing in a relaxed A-pose, empty hands, no props, no table, no chair, plain light grey background, even soft studio lighting, no cast shadows, game-ready character reference sheet, same face, same outfit, same stylized realistic 3D style. Keep the low bun, black leather jacket, dark trousers and silver earrings."
+ }
+]
