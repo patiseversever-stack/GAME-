@@ -539,6 +539,10 @@ export class Sfx {
   static debug = false;
 
   private ctx: BaseAudioContext | null = null;
+  /** Seslendirme oynatıcısı aynı ses bağlamını kullanır. */
+  get context(): AudioContext | null {
+    return !this.offline && this.ctx instanceof AudioContext ? this.ctx : null;
+  }
   private offline = false;
   private horizon = 0; // çevrimdışı: ortam planı sınırı
   private tOff = 0; // çevrimdışı sahneleme kaydırması (runAt)

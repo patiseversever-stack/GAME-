@@ -156,6 +156,27 @@ export class TableView {
     this.hand.layout(false);
   }
 
+  /** Rakip düşünürken elindeki kartlardan biri kalkıp iner (kararsızlık hissi). */
+  async botThink(seat: number, dur: number): Promise<void> {
+    const list = this.hands[seat];
+    const t0 = performance.now();
+    let k = 0;
+    while (list.length && (performance.now() - t0) / 1000 < dur - 0.3) {
+      const s = list[Math.floor(Math.random() * list.length)];
+      const i = list.indexOf(s);
+      const base = this.oppHandPose(seat, i, list.length);
+      const up = {pos: base.pos.clone().add(new THREE.Vector3(0, 0.03, 0.025)), quat: base.quat, scale: base.scale};
+      await this.cards.fly(s, up, {dur: 0.16, ease: ease.outCubic});
+      await this.stage.time.wait(0.12 + Math.random() * 0.25);
+      if (!list.includes(s)) break;
+      await this.cards.fly(s, this.oppHandPose(seat, list.indexOf(s), list.length), {dur: 0.16});
+      if (++k > 2) break;
+      await this.stage.time.wait(0.08);
+    }
+    const left = dur - (performance.now() - t0) / 1000;
+    if (left > 0) await this.stage.time.wait(left);
+  }
+
   /** Kartın yığına inişi. İnsan için kart zaten elde/parmakta; bot için elinden kalkar. */
   playToPile(seat: number, card: CardId, thr?: ThrowInfo): {slot: Slot; landed: Promise<void>} {
     let s: Slot;

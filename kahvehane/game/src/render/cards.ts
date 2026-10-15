@@ -128,7 +128,8 @@ export class CardSystem {
         .replace('#include <uv_vertex>', `#include <uv_vertex>
           float cell = aFace < 0.5 ? iCell : ${BACK_INDEX.toFixed(1)};
           float col = mod(cell, ${ATLAS_COLS.toFixed(1)}), row = floor(cell / ${ATLAS_COLS.toFixed(1)});
-          vMapUv = vec2((col + uv.x) / ${ATLAS_COLS.toFixed(1)}, 1.0 - (row + 1.0 - uv.y) / ${ATLAS_ROWS.toFixed(1)});
+          vec2 iuv = clamp(uv, 0.004, 0.996); // komşu hücreden renk sızmasın
+          vMapUv = vec2((col + iuv.x) / ${ATLAS_COLS.toFixed(1)}, 1.0 - (row + 1.0 - iuv.y) / ${ATLAS_ROWS.toFixed(1)});
           vFace = aFace; vGlow = iGlow;`);
       sh.fragmentShader = sh.fragmentShader
         .replace('#include <common>', `#include <common>

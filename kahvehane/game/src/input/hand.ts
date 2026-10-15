@@ -65,7 +65,7 @@ export class HandInput {
   layout(animate = true): void {
     const n = this.slots.length;
     this.slots.forEach((s, i) => {
-      const p = this.restPose(i, n, s === this.selected ? 0.03 : 0);
+      const p = this.restPose(i, n, s === this.selected ? 0.035 : this.enabled ? 0.008 : 0);
       if (this.drag?.slot === s) return;
       if (animate) this.cards.fly(s, p, {dur: 0.22, arc: 0});
       else this.cards.setPose(s, p.pos, p.quat, p.scale);
@@ -74,13 +74,14 @@ export class HandInput {
 
   setEnabled(on: boolean): void {
     this.enabled = on;
-    for (const s of this.slots) this.cards.setGlow(s, 0);
+    for (const s of this.slots) this.cards.setGlow(s, on ? 0.22 : 0);
     if (!on) this.select(null);
+    this.layout(true);
   }
 
   select(s: Slot | null): void {
     if (this.selected === s) return;
-    if (this.selected) this.cards.setGlow(this.selected, 0);
+    if (this.selected) this.cards.setGlow(this.selected, this.enabled ? 0.22 : 0);
     this.selected = s;
     if (s) {
       this.cards.setGlow(s, 1);
