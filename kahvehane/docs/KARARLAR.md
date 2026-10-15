@@ -11,12 +11,12 @@ Yeni oturum bu dosyayı okuyup devam edebilsin diye tutulur.
 
 ## Oyun
 - Klasik Pişti puanı: Pişti 10, Vale ile pişti 20, her As/Vale 1, ♣2 = 2, ♦10 = 3, en çok kart +3.
-- **2 kişilik ve 4 kişilik** olacak. (4 kişide eşli mi / tekli mi → açık soru)
+- Modlar: **1'e 1**, **4 kişi tekli** (herkes kendine), **4 kişi eşli** (2'ye 2, karşılıklı ortak).
 - Bakış: birinci şahıs, oturan oyuncunun gözünden, göz hizasının biraz üstü (~45°).
 - Eller görünür: sol el kartları yelpaze tutar (4 kart + başparmak), sağ el kartı alır, kol ortaya uzanıp bırakır/çarpar.
 - Rakipler karşıda 3D (bel üstü), tepkili, komik.
 - Arkadan akıl veren seyirci ("yancı") + kahvehane ortam sesi.
-- Pişti hareketi (masaya vurma vb.) görev/mağazadan açılır. (Sadece görsel mi? → açık soru, öneri: sadece görsel)
+- Pişti hareketi (masaya vurma vb.) görev/mağazadan açılır. **Sadece gösteriş**, puana/oyuna etkisi yok. Online'da en fazla 2 sn, rakip susturabilir.
 
 ## Görsel tarz
 - "Arası": gerçekçi ışık ve malzeme (ahşap, çuha, kumaş, ten) + karaktere göre değişen abartı.
