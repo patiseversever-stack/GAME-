@@ -1,62 +1,62 @@
-// Masa ölçüleri (metre) ve koltuklara göre yerleşim. Kartlar okunurluk için gerçeğin ~2 katı.
+// Masa ölçüleri (metre) ve koltuklara göre yerleşim. Ekranın tamamı çuha; kamera yukarıdan ~70° bakar.
+// Kartlar okunurluk için gerçeğin ~2 katı.
 import * as THREE from 'three';
 
 export const TABLE = {
   y: 0.742, // çuha yüzeyi
-  feltW: 0.86,
-  outerW: 1.0,
-  teaGlasses: [
-    [-0.385, 0.1],
-    [0.36, -0.36],
-  ] as [number, number][],
+  feltW: 3.2, // çuha düzlemi (görüşten taşacak kadar geniş)
+  feltD: 1.8,
+  feltCenterV: 0.5, // amblemin dokudaki dikey konumu (yığın z = 0)
 };
 
 export const CARD = {w: 0.125, h: 0.125 / 0.7, t: 0.0007};
 
+const target = new THREE.Vector3(0, TABLE.y, 0.07);
+const pitch = THREE.MathUtils.degToRad(68), dist = 1.45;
 export const CAMERA = {
-  pos: new THREE.Vector3(0, 1.235, 0.7),
-  target: new THREE.Vector3(0, 0.7, -0.3),
-  fov: 50,
+  pos: target.clone().add(new THREE.Vector3(0, Math.sin(pitch) * dist, Math.cos(pitch) * dist)),
+  target,
+  fov: 34, // dikey (2:1 ekran için); daha dar ekranlarda yatay kapsama korunur
 };
 
 export interface SeatLayout {
   /** El kartlarının masadaki merkezi (rakipler için) */
   hand: THREE.Vector3;
-  /** El kartlarının yön açısı (y ekseni etrafında; kart üst kenarı koltuğa bakar) */
+  /** Yön açısı (y ekseni etrafında; kartın üst kenarı koltuğa bakar) */
   yaw: number;
   /** Toplanan kartların yığını */
   stack: THREE.Vector3;
-  /** Tepki ve isim etiketinin dünya noktası */
-  label: THREE.Vector3;
 }
 
 export interface Layout {
   pile: THREE.Vector3;
   deck: THREE.Vector3;
   deckYaw: number;
+  /** rakip el kartlarının boyutu */
+  oppScale: number;
   seats: SeatLayout[];
 }
 
 const v = (x: number, z: number, y = TABLE.y) => new THREE.Vector3(x, y, z);
 
 export function makeLayout(seats: 2 | 4): Layout {
-  const pile = v(0, -0.07), deck = v(-0.29, -0.05);
+  const pile = v(0, 0), deck = v(-0.6, 0.02);
   if (seats === 2) {
     return {
-      pile, deck, deckYaw: 0.22,
+      pile, deck, deckYaw: 0.12, oppScale: 0.72,
       seats: [
-        {hand: v(0, 0.36), yaw: 0, stack: v(0.3, 0.2), label: v(0, 0.36)},
-        {hand: v(0.02, -0.33), yaw: Math.PI, stack: v(-0.3, -0.31), label: v(0, -0.45, 1.25)},
+        {hand: v(0, 0.4), yaw: 0, stack: v(0.62, 0.2)},
+        {hand: v(0, -0.27), yaw: Math.PI, stack: v(0.62, -0.22)},
       ],
     };
   }
   return {
-    pile, deck: v(-0.25, 0.12), deckYaw: 0.4,
+    pile, deck: v(-0.66, 0.2), deckYaw: 0.12, oppScale: 0.66,
     seats: [
-      {hand: v(0, 0.36), yaw: 0, stack: v(0.3, 0.2), label: v(0, 0.36)},
-      {hand: v(0.33, -0.05), yaw: Math.PI / 2, stack: v(0.31, -0.3), label: v(0.55, -0.1, 1.15)},
-      {hand: v(0.02, -0.33), yaw: Math.PI, stack: v(-0.3, -0.31), label: v(0, -0.45, 1.25)},
-      {hand: v(-0.33, -0.05), yaw: -Math.PI / 2, stack: v(-0.31, 0.2), label: v(-0.55, -0.1, 1.15)},
+      {hand: v(0, 0.4), yaw: 0, stack: v(0.66, 0.22)},
+      {hand: v(0.62, -0.02), yaw: Math.PI / 2, stack: v(0.82, -0.3)},
+      {hand: v(0, -0.3), yaw: Math.PI, stack: v(0.4, -0.3)},
+      {hand: v(-0.62, -0.02), yaw: -Math.PI / 2, stack: v(-0.82, -0.3)},
     ],
   };
 }

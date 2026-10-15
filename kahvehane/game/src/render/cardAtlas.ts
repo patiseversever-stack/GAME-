@@ -46,16 +46,16 @@ const IDX = {
   top: 6.2, // rakam/harf mürekkebinin üstü
   capH: 27.5, // rakam yüksekliği (≈ %27.5 kart genişliği)
   maxW: 23, // tek karakter için azami mürekkep genişliği
-  maxW10: 28.6, // "10" için azami genişlik
+  maxW10: 26.6, // "10" için azami genişlik
   gap: 3.3, // rakam ile takım işareti arası
   pipW: 14.6, // indeks takım işareti genişliği
 };
 
 // Sayı kartlarındaki takım işaretleri alanı
 const FIELD = {
-  dx: 12.8, // yan sütunların merkezden uzaklığı
-  top: 45.8, // en üst sıranın merkezi
-  pipW: 12.4,
+  dx: 13, // yan sütunların merkezden uzaklığı
+  top: 46, // en üst sıranın merkezi
+  pipW: 12.9,
 };
 
 const RANK_LABEL = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
@@ -143,11 +143,12 @@ function clubPath(): Path2D {
   circle(0, -0.255, r);
   circle(-0.262, 0.07, r);
   circle(0.262, 0.07, r);
-  circle(0, 0.0, 0.14);
-  p.moveTo(-0.045, 0.06);
-  p.bezierCurveTo(-0.045, 0.3, -0.1, 0.45, -0.22, 0.53);
-  p.lineTo(0.22, 0.53);
-  p.bezierCurveTo(0.1, 0.45, 0.045, 0.3, 0.045, 0.06);
+  circle(0, 0.03, 0.16);
+  // sap: dairelerle aynı yönde (saat yönü) çizilir ki nonzero dolguda delik kalmasın
+  p.moveTo(0.062, 0.02);
+  p.bezierCurveTo(0.058, 0.3, 0.1, 0.45, 0.22, 0.53);
+  p.lineTo(-0.22, 0.53);
+  p.bezierCurveTo(-0.1, 0.45, -0.058, 0.3, -0.062, 0.02);
   p.closePath();
   return p;
 }
@@ -250,6 +251,7 @@ interface Kit {
     border4_5: Path2D;
     archOuter: Path2D;
     archInner: Path2D;
+    archHair: Path2D;
     rosettes: Path2D;
   };
   labels: Label[]; // rank → indeks etiketi
@@ -317,9 +319,9 @@ function makeGrainTile(): HTMLCanvasElement {
   return c;
 }
 
-/** Kâğıt dokusu: bir hücre boyutunda (1 px taşmalı) bir kez çizilir, her yüze tam piksel konumda kopyalanır. */
+/** Kâğıt dokusu: bir hücre boyutunda (2 px taşmalı) bir kez çizilir, her yüze tam piksel konumda kopyalanır. */
 function makePaperTile(cw: number, ch: number, grain: HTMLCanvasElement): HTMLCanvasElement {
-  const w = Math.ceil(cw) + 1, h = Math.ceil(ch) + 1;
+  const w = Math.ceil(cw) + 2, h = Math.ceil(ch) + 2;
   const c = document.createElement('canvas');
   c.width = w;
   c.height = h;
@@ -380,9 +382,9 @@ function archWindow(k: Kit): void {
   ctx.strokeStyle = 'rgba(170,128,48,0.7)';
   ctx.lineWidth = 0.55;
   ctx.stroke(k.paths.archOuter);
-  ctx.strokeStyle = 'rgba(170,128,48,0.45)';
-  ctx.lineWidth = 0.3;
-  ctx.stroke(k.paths.archInner);
+  ctx.strokeStyle = 'rgba(170,128,48,0.42)';
+  ctx.lineWidth = 0.28;
+  ctx.stroke(k.paths.archHair);
   ctx.fillStyle = 'rgba(170,128,48,0.8)';
   for (const y of [9.6, UH - 9.6]) {
     ctx.beginPath();
@@ -427,7 +429,7 @@ function aceCard(k: Kit, suit: Suit): void {
     ctx.fill();
   }
   ctx.restore();
-  pip(k, suit, CX, CY + (suit === 'C' ? 0.5 : 0), suit === 'D' ? 38 : 35);
+  pip(k, suit, CX, CY + (suit === 'C' ? 0.5 : 0), suit === 'D' ? 41 : 38);
 }
 
 function scroll(ctx: Ctx, mirror: boolean): void {
@@ -565,11 +567,11 @@ interface CourtStyle {
 }
 
 function archPath(inset: number): Path2D {
-  const hw = 23.6 - inset;
+  const hw = 24.4 - inset;
   const sh = 15.5;
   const ap = 12.4 + inset * 1.25;
   const p = new Path2D();
-  const k1 = 19, k2 = 5.8, k3 = 11.5;
+  const k1 = 24, k2 = 5.8, k3 = 11.5;
   p.moveTo(CX - hw, CY + sh);
   p.lineTo(CX - hw, CY - sh);
   p.bezierCurveTo(CX - hw, CY - sh - k1, CX - k2, ap + k3, CX, ap);
@@ -1193,7 +1195,7 @@ export async function buildCardAtlas(width: number): Promise<CardAtlas> {
   const black = ctx.createLinearGradient(0, -0.6, 0, 0.6);
   black.addColorStop(0, '#2a231f');
   black.addColorStop(1, '#100c0a');
-  // indeks ve harfler büyük ölçekte de aynı mürekkep tonunda olsun
+  // pip() bu gradyanları birim uzayda kullanır (ölçekli dönüşümle); indeks yazıları düz mürekkep rengindedir
   const kit: Kit = {
     ctx, shapes, labels, courtLetters, wordmark,
     ink: {red, black},
@@ -1203,22 +1205,20 @@ export async function buildCardAtlas(width: number): Promise<CardAtlas> {
       border4_5: insetPath(4.5),
       archOuter: archPath(0),
       archInner: archPath(2.3),
+      archHair: archPath(1.2),
       rosettes: rosetteLattice(),
     },
   };
   const paperTile = makePaperTile(cellW, cellH, grainTile);
-  // Not: ink gradyanları birim uzayda tanımlı; pip() içinde ölçeklenmiş dönüşümle kullanılır.
-  // Yazılar için düz renk:
-  const textInk = {red: INK_RED, black: INK_BLACK};
 
-  const PROF = (globalThis as unknown as {__prof?: [number, number][]}).__prof;
-  if (PROF) { ctx.getImageData(0, 0, 1, 1); PROF.push([-1, performance.now()]); }
   for (let id = 0; id <= BACK_INDEX; id++) {
     const col = id % ATLAS_COLS, row = Math.floor(id / ATLAS_COLS);
     const x0 = col * cellW, y0 = row * cellH;
+    // Hücre sınırı tam piksele yuvarlanır: komşu hücreler arasında yarı saydam dikiş kalmaz.
+    const px0 = Math.round(x0), py0 = Math.round(y0);
     ctx.save();
     ctx.beginPath();
-    ctx.rect(x0, y0, cellW, cellH);
+    ctx.rect(px0, py0, Math.round(x0 + cellW) - px0, Math.round(y0 + cellH) - py0);
     ctx.clip();
     if (id === BACK_INDEX) {
       ctx.setTransform(sx, 0, 0, sy, x0, y0);
@@ -1233,11 +1233,10 @@ export async function buildCardAtlas(width: number): Promise<CardAtlas> {
       if (rank === 1) aceCard(kit, suit);
       else if (rank <= 10) numberCard(kit, rank, suit);
       else courtCard(kit, rank, suit);
-      indexCorner(kit, rank, suit, textInk[isRed(suit) ? 'red' : 'black']);
+      indexCorner(kit, rank, suit, isRed(suit) ? INK_RED : INK_BLACK);
     }
     ctx.restore();
     ctx.setTransform(1, 0, 0, 1, 0, 0);
-    if (PROF) { ctx.getImageData(0, 0, 1, 1); PROF.push([id, performance.now()]); }
   }
 
   grainTile.width = grainTile.height = 0;
@@ -1260,7 +1259,7 @@ function indexCorner(k: Kit, rank: number, suit: Suit, color: string): void {
       ctx.rotate(Math.PI);
     }
     drawLabel(ctx, L, cx, base, color);
-    pip(k, suit, cx, pipY, IDX.pipW, false, color);
+    pip(k, suit, Math.min(cx, IDX.cx + 0.6), pipY, IDX.pipW, false, color);
     ctx.restore();
   }
 }

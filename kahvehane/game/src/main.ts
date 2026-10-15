@@ -9,7 +9,6 @@ import '@fontsource/inter/latin-ext-900.css';
 import '@fontsource/playfair-display/latin-900.css';
 import '@fontsource/playfair-display/latin-ext-900.css';
 
-import bgUrl from '../assets/kahvehane_bg.jpg';
 import avatar from '../assets/riza_avatar.jpg';
 import mKahkaha from '../assets/riza_kahkaha.jpg';
 import mKizgin from '../assets/riza_kizgin.jpg';
@@ -39,7 +38,7 @@ async function boot(): Promise<void> {
   const q = qualityFor(tier);
   const app = document.getElementById('app')!;
   const stage = new Stage(app, q, CAMERA);
-  await buildEnvironment(stage, bgUrl);
+  await buildEnvironment(stage);
   const atlas = await buildCardAtlas(q.atlasWidth);
   const cards = new CardSystem(stage, atlas);
   const layout = makeLayout(2);

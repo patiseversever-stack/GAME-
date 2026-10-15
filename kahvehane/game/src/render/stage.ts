@@ -46,16 +46,19 @@ export class Stage {
     this.camera = new THREE.PerspectiveCamera(rig.fov, 1, 0.05, 30);
 
     // Işıklar: tavandan sarkan sıcak lamba + oda dolgusu + arka kontur
-    this.lamp = new THREE.SpotLight(0xffc68a, 9, 4, 0.98, 0.9, 2);
-    this.lamp.position.set(0, 1.62, -0.1);
-    this.lamp.target.position.set(0, 0.74, -0.06);
+    this.lamp = new THREE.SpotLight(0xffd6a0, 6, 5, 1.05, 0.95, 2);
+    this.lamp.position.set(0, 1.85, 0.05);
+    this.lamp.target.position.set(0, 0.74, 0.0);
     this.scene.add(this.lamp, this.lamp.target);
     this.scene.add(new THREE.HemisphereLight(0xffdcb4, 0x261309, 0.55));
     const rim = new THREE.DirectionalLight(0x9db5ff, 0.55);
     rim.position.set(0.8, 1.8, -2.2);
     this.scene.add(rim);
-    const fill = new THREE.DirectionalLight(0xffe0bc, 0.25);
-    fill.position.set(0.3, 1.6, 1.6);
+    // kameradan gelen dolgu: eldeki ve masadaki kartlar net ve parlak okunur
+    const fill = new THREE.DirectionalLight(0xfff1dc, 1.35);
+    fill.position.copy(rig.pos).sub(rig.target).normalize().multiplyScalar(3).add(rig.target);
+    fill.target.position.copy(rig.target);
+    this.scene.add(fill.target);
     this.scene.add(fill);
 
     this.time.onActive = () => this.invalidate();

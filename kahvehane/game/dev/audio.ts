@@ -27,12 +27,12 @@ const seq = (s: Sfx, n: number, gap: number, fn: () => void): void => {
 
 const SOUNDS: SoundDef[] = [
   {id: 'slide-soft', group: 'Kart', label: 'Kart al', hint: 'hafif', seconds: 0.6, play: (s) => s.cardSlide(0.3), tone: 'mid'},
-  {id: 'slide', group: 'Kart', label: 'Kart kaydır', seconds: 0.6, play: (s) => s.cardSlide(), tone: 'mid'},
+  {id: 'slide', group: 'Kart', label: 'Kart kaydır', hint: 'orta', seconds: 0.6, play: (s) => s.cardSlide(), tone: 'mid'},
   {id: 'slide-hard', group: 'Kart', label: 'Kart kaydır', hint: 'güçlü', seconds: 0.6, play: (s) => s.cardSlide(1), target: -14, tone: 'bright'},
   {id: 'throw-slow', group: 'Kart', label: 'Fırlat', hint: 'yavaş', seconds: 0.7, play: (s) => s.cardThrow(0.2), tone: 'bright'},
   {id: 'throw-fast', group: 'Kart', label: 'Fırlat', hint: 'hızlı', seconds: 0.7, play: (s) => s.cardThrow(1), target: -14, tone: 'bright'},
   {id: 'land-soft', group: 'Kart', label: 'Düş', hint: 'yumuşak', seconds: 0.6, play: (s) => s.cardLand(0.25), tone: 'mid'},
-  {id: 'land', group: 'Kart', label: 'Düş', seconds: 0.6, play: (s) => s.cardLand(), tone: 'mid'},
+  {id: 'land', group: 'Kart', label: 'Düş', hint: 'orta', seconds: 0.6, play: (s) => s.cardLand(), tone: 'mid'},
   {id: 'land-hard', group: 'Kart', label: 'Düş', hint: 'sert', seconds: 0.6, play: (s) => s.cardLand(1), target: -12, tone: 'mid'},
   {id: 'flip', group: 'Kart', label: 'Kart çevir', seconds: 0.5, play: (s) => s.cardFlip(), target: -13, tone: 'bright'},
   {id: 'deal', group: 'Kart', label: 'Dağıt', hint: '1 kart', seconds: 0.5, play: (s) => s.deal(), target: -13, tone: 'mid'},
@@ -63,6 +63,22 @@ const SOUNDS: SoundDef[] = [
   {id: 'win', group: 'Büyük anlar', label: 'Kazandın', seconds: 3.6, play: (s) => s.win(), target: -8},
   {id: 'lose', group: 'Büyük anlar', label: 'Kaybettin', seconds: 3.2, play: (s) => s.lose(), target: -8},
 
+  {
+    id: 'stress-mix', group: 'Yük testi', label: 'Hepsi aynı anda', hint: 'sınırlayıcı kırpmamalı', seconds: 3.0,
+    play: (s) => {
+      s.pisti(true); s.capture(14); s.coin(8); s.shuffle(); s.win(); s.cardLand(1); s.uiTap();
+      for (let i = 0; i < 8; i++) setTimeout(() => s.deal(), i * 80);
+    },
+    plan: (s) => {
+      s.pisti(true); s.capture(14); s.coin(8); s.shuffle(); s.win(); s.cardLand(1); s.uiTap();
+      seq(s, 8, 0.08, () => s.deal());
+    },
+  },
+  {
+    id: 'stress-land24', group: 'Yük testi', label: '24 sert iniş üst üste', hint: 'voice sınırı', seconds: 1.0,
+    play: (s) => { for (let i = 0; i < 24; i++) s.cardLand(1); },
+    plan: (s) => { for (let i = 0; i < 24; i++) s.cardLand(1); },
+  },
   {id: 'amb-glass', group: 'Ortam olayları', label: 'Çay bardağı', hint: 'ortam olayı', seconds: 1.6, play: (s) => s.ambOnce(0), target: -30},
   {id: 'amb-stir', group: 'Ortam olayları', label: 'Kaşık karıştırma', seconds: 1.6, play: (s) => s.ambOnce(1), target: -30},
   {id: 'amb-dice', group: 'Ortam olayları', label: 'Tavla zarı', seconds: 1.6, play: (s) => s.ambOnce(2), target: -30},

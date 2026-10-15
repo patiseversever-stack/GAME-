@@ -15,8 +15,9 @@ export interface ThrowInfo {
   aimX: number;
 }
 
-const HAND_DIST = 0.4; // kameradan uzaklık (m)
 const HAND_SCALE = 0.8; // eldeki kart boyutu (masadakine göre)
+const HAND_FRAC = 0.4; // eldeki kartın ekran yüksekliğindeki payı
+let HAND_DIST = 0.6; // kameradan uzaklık (m), görüş açısına göre hesaplanır
 
 export class HandInput {
   slots: Slot[] = [];
@@ -46,13 +47,15 @@ export class HandInput {
   restPose(i: number, n: number, lift = 0): {pos: THREE.Vector3; quat: THREE.Quaternion; scale: number} {
     const cam = this.stage.camera;
     cam.updateMatrixWorld();
-    const vh = 2 * HAND_DIST * Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
+    const tanH = Math.tan(THREE.MathUtils.degToRad(cam.fov / 2));
+    HAND_DIST = (CARD.h * HAND_SCALE) / (HAND_FRAC * 2 * tanH);
+    const vh = 2 * HAND_DIST * tanH;
     const vw = vh * cam.aspect;
     const spread = Math.min(CARD.w * 0.84 * HAND_SCALE, (vw * 0.55) / Math.max(1, n));
     const mid = (n - 1) / 2, k = i - mid;
-    const local = new THREE.Vector3(k * spread + vw * 0.04, -vh / 2 + CARD.h * HAND_SCALE * 0.2 + lift - Math.abs(k) * 0.005, -HAND_DIST + i * 0.002);
+    const local = new THREE.Vector3(k * spread, -vh / 2 + CARD.h * HAND_SCALE * 0.26 + lift - Math.abs(k) * 0.005, -HAND_DIST + i * 0.002);
     // kart yerelinde +y ön yüz: önce x etrafında kameraya çevir (biraz geriye yatık), sonra görüş ekseninde yelpaze aç
-    const tilt = new THREE.Quaternion().setFromAxisAngle(X, Math.PI / 2 - 0.42);
+    const tilt = new THREE.Quaternion().setFromAxisAngle(X, Math.PI / 2 - 0.14);
     const fan = new THREE.Quaternion().setFromAxisAngle(Z, -k * 0.075);
     const pos = local.applyMatrix4(cam.matrixWorld);
     const quat = cam.quaternion.clone().multiply(fan).multiply(tilt);

@@ -4,12 +4,23 @@
  * Harici ses dosyası yok: her şey Web Audio ile üretilir (gürültü tamponları, biquad süzgeçler,
  * zarflar, osilatörler, küçük bir evrişim yankısı, ana çıkışta sıkıştırıcı + yumuşak kırpıcı).
  *
+ * Kullanım:
+ *   const sfx = new Sfx();
+ *   window.addEventListener('pointerdown', () => void sfx.unlock(), {once: true}); // ilk jest
+ *   sfx.cardLand(0.8); sfx.pisti(false); sfx.startAmbience(); ...
+ * unlock() öncesi (ya da sessizde / sayfa gizliyken) bütün çağrılar sessizce hiçbir şey yapmaz;
+ * ses seviyesi, sessiz ve ağır çekim ayarları saklanır, unlock'ta uygulanır. startAmbience() unlock
+ * öncesi çağrılırsa ortam sesi unlock'ta başlar.
+ *
  * Performans kuralları:
  *  - Paylaşılan kaynaklar (gürültü tamponları, yankı dürtü yanıtı) bir kez üretilir.
  *  - Her ses kısa ömürlü bir "voice"tur: bitince (onended) bütün düğümleri koparılır.
  *  - Eşzamanlı voice sayısı sınırlıdır (en eski düşürülür). Zamanlayıcı döngüsü yok;
  *    ortam sesi yalnızca seyrek bir setTimeout zinciriyle ileriye doğru planlanır.
- *  - Bağlam yokken / askıdayken / sessizdeyken tüm çağrılar sessizce hiçbir şey yapmaz.
+ *  - Ortam yatağı osilatör-LFO yerine ileriye planlanmış yavaş rastgele eğrilerle (setValueCurveAtTime) oynar.
+ *
+ * Seviyeler (çevrimdışı ölçüm, dev/audio.html?auto=1): kart sesleri ≈ -12..-14 dBFS tepe, pişti ≈ -4,
+ * kazanma/kaybetme ≈ -8, ortam olayları ≈ -30 (yatak RMS ≈ -43). Ana çıkış tavanı ≈ -1.1 dBFS.
  */
 
 // ───────────────────────── yardımcılar ─────────────────────────
@@ -19,10 +30,25 @@ type NoiseKind = 'white' | 'pink' | 'brown';
 const MAX_VOICES = 24; // eşzamanlı efekt voice sınırı
 const MAX_AMB_VOICES = 8; // eşzamanlı ortam olayı sınırı
 const START_LAG = 0.004; // planlama payı (sn)
+/**
+ * Chrome/WebKit DynamicsCompressor'ı bağlam başladıktan sonraki ilk ~100 ms içinde çıkışı yumuşakça açar
+ * (ilk vuruşlar 10+ dB kısık kalır). Bu yüzden hiçbir ses bağlam saatinin bu eşiğinden önce başlamaz;
+ * yalnızca unlock sonrası ilk ses ~120 ms gecikir.
+ */
+const WARM_T = 0.12;
 const AMB_LOOKAHEAD = 1.0; // ortam olaylarını bu kadar önceden planla (sn)
 
 const clamp = (x: number, a: number, b: number): number => (x < a ? a : x > b ? b : x);
 const clamp01 = (x: number): number => (Number.isFinite(x) ? clamp(x, 0, 1) : 0);
+
+/** Biquad parametrelerini k-rate yap: katsayılar örnek başına değil 128'lik blok başına hesaplanır (ciddi CPU tasarrufu). */
+function kRate(p: AudioParam): void {
+  try {
+    p.automationRate = 'k-rate';
+  } catch {
+    /* eski WebKit: desteklenmiyor, a-rate kalır */
+  }
+}
 
 /** Ucuz tohumlanabilir PRNG (mulberry32). */
 class Rng {
@@ -54,23 +80,23 @@ class Rng {
 
 /** Ses seviyesi kırpmaları: çevrimdışı ölçümle ayarlandı (kart ~-12, pişti ~-4, ortam ~-30 dBFS). */
 const L = {
-  slide: 0.961,
-  throw: 0.4186,
-  land: 1.133,
-  flip: 1.836,
-  deal: 0.3425,
-  shuffle: 0.8049,
+  slide: 0.7279,
+  throw: 0.3872,
+  land: 0.2092,
+  flip: 0.6964,
+  deal: 0.2764,
+  shuffle: 0.8052,
   capture: 0.3188,
-  pisti: 0.308,
+  pisti: 0.3163,
   coin: 0.1867,
-  tap: 0.5917,
+  tap: 0.1343,
   win: 0.29,
   lose: 0.6932,
-  bed: 0.02813,
-  glass: 0.03282,
-  stir: 0.03721,
-  dice: 0.04417,
-  creak: 0.09656,
+  bed: 0.03235,
+  glass: 0.01868,
+  stir: 0.03746,
+  dice: 0.06504,
+  creak: 0.09659,
 };
 
 // ───────────────────── paylaşılan kaynak üreticiler ─────────────────────
@@ -285,6 +311,8 @@ class VB {
     n.type = type;
     n.frequency.value = this.F(f);
     n.Q.value = q;
+    kRate(n.frequency);
+    kRate(n.Q);
     return n;
   }
   /** Gürültü kaynağı: tamponun rastgele bir yerinden dur süre kadar çalar. */
@@ -439,10 +467,47 @@ class VB {
   }
 }
 
+/** Ortalamaya dönen yavaş rastgele yürüyüş (≈ ±1, σ ≈ 0.5): LFO yerine, periyodik tekrar duyulmaz. */
+class Wander {
+  private x = 0;
+  private readonly sd: number;
+  constructor(private readonly a: number) {
+    this.sd = 0.577 * Math.sqrt(a / (2 - a));
+  }
+  next(r: Rng): number {
+    this.x += (r.next() * 2 - 1 - this.x) * this.a;
+    return clamp((this.x / this.sd) * 0.5, -1, 1);
+  }
+}
+
+/** Mırıltı yatağı katmanları: [gürültü, döngü başı, döngü sonu, süzgeç, f(Hz), Q, seviye, f derinliği, genlik derinliği, hece payı 0..1] */
+const BED: ReadonlyArray<readonly [NoiseKind, number, number, BiquadFilterType, number, number, number, number, number, number]> = [
+  ['brown', 0, 2.0, 'lowpass', 180, 0.7, 0.2, 0, 0.3, 0], // oda uğultusu (az)
+  ['pink', 0, 3.0, 'bandpass', 480, 0.9, 1.5, 0.22, 0.5, 0.35], // mırıltı: düşük
+  ['pink', 0.37, 2.61, 'bandpass', 900, 1.1, 1.3, 0.28, 0.55, 0.4], // mırıltı: orta
+  ['pink', 0.5, 2.9, 'bandpass', 1600, 1.4, 0.8, 0.22, 0.6, 0.45], // mırıltı: ünsüz bölgesi
+  ['pink', 0.9, 2.2, 'bandpass', 2600, 1.5, 0.3, 0.2, 0.7, 0.4], // cam/su tıkırtısı havası
+];
+const BED_SEG = 8; // sn: her parça tek bir eğri olayı
+const BED_PTS = 12 * BED_SEG + 1; // 12 Hz örnekleme
+
+interface BedLayer {
+  f: BiquadFilterNode;
+  amp: GainNode;
+  cfg: (typeof BED)[number];
+  wf: Wander;
+  wa: Wander;
+  ws: Wander;
+  lastF: number;
+  lastA: number;
+}
+
 interface Bed {
   gain: GainNode;
   nodes: AudioNode[];
   srcs: AudioScheduledSourceNode[];
+  layers: BedLayer[];
+  until: number;
 }
 
 export interface SfxStats {
@@ -618,7 +683,7 @@ export class Sfx {
   ambOnce(kind: number): void {
     this.run(() => {
       const ctx = this.ctx;
-      if (ctx && this.canPlay()) this.ambEvent(ctx.currentTime + START_LAG + this.tOff, clamp(Math.floor(kind), 0, 3));
+      if (ctx && this.canPlay()) this.ambEvent(this.startT(), clamp(Math.floor(kind), 0, 3));
     });
   }
 
@@ -639,7 +704,7 @@ export class Sfx {
     this.run(() => {
       const k = clamp01(intensity);
       const r = this.rng;
-      const v = this.voice({wet: 0.06, pan: r.range(-0.2, 0.2), trim: L.slide * (0.4 + 0.6 * k)});
+      const v = this.voice({wet: 0.06, pan: r.range(-0.2, 0.2), trim: L.slide * (0.35 + 0.65 * Math.pow(k, 1.3))});
       if (!v) return;
       const dur = r.jit(0.21 - 0.08 * k, 0.12);
       const n = v.noiseSrc('white', 0, dur + 0.04);
@@ -684,9 +749,9 @@ export class Sfx {
       v.sweep(a.frequency, 900, 1900 + 2400 * k, 0, dur * 0.4);
       a.frequency.exponentialRampToValueAtTime(v.F(1500), v.T(dur));
       const b = v.filt('bandpass', 3000, 0.8);
-      v.sweep(b.frequency, 3000, 6500, 0, dur * 0.45);
-      b.frequency.exponentialRampToValueAtTime(v.F(4200), v.T(dur));
-      const bg = v.gain(0.55);
+      v.sweep(b.frequency, 2600, 5400, 0, dur * 0.45);
+      b.frequency.exponentialRampToValueAtTime(v.F(3600), v.T(dur));
+      const bg = v.gain(0.45);
       const mix = v.gain(0.8);
       const am = v.osc('sine', r.range(34, 58), 0, dur + 0.04); // kartın titreşimi
       const ag = v.gain(0.2);
@@ -775,14 +840,14 @@ export class Sfx {
           amp = r.range(0.45, 0.9) * (1 - 0.55 * u);
           tau = r.range(0.0008, 0.0014);
         }
-        evs.push({dt: t, amp, tau, f: r.range(2300, 6800)});
+        evs.push({dt: t, amp, tau, f: r.range(2300, 5800)});
         t += (1 / rate) * r.range(0.55, 1.45);
       }
       v.clickTrain(
         evs,
         [
-          {filters: [{type: 'highpass', f: 1500}, {type: 'bandpass', f: 4000, q: 0.9}], level: 1.4, vary: true},
-          {filters: [{type: 'bandpass', f: 1100, q: 0.7}], level: 1.0},
+          {filters: [{type: 'highpass', f: 1500}, {type: 'bandpass', f: 3800, q: 0.9}], level: 0.9, vary: true},
+          {filters: [{type: 'bandpass', f: 1100, q: 0.7}], level: 1.6},
         ],
       );
       // deste oturması
@@ -796,7 +861,7 @@ export class Sfx {
       const n = clamp(Math.round(Number.isFinite(count) ? count : 2), 1, 14);
       const k = n / 14;
       const r = this.rng;
-      const v = this.voice({wet: 0.16, pan: r.range(-0.2, 0.2), trim: L.capture * (0.55 + 0.45 * k)});
+      const v = this.voice({wet: 0.16, pan: r.range(-0.2, 0.2), trim: L.capture * (0.4 + 0.6 * Math.pow(k, 1.2))});
       if (!v) return;
       const dur = 0.3 + 0.28 * k;
       // süpürme: çuha üstünde kayan kartlar
@@ -841,25 +906,25 @@ export class Sfx {
   pisti(jack: boolean): void {
     this.run(() => {
       const r = this.rng;
-      const v = this.voice({wet: 0.22, pan: 0, trim: L.pisti * (jack ? 1.15 : 1)});
+      const v = this.voice({wet: 0.22, pan: 0, trim: L.pisti * (jack ? 1.0 : 1)});
       if (!v) return;
       const big = !!jack;
       this.impactHit(v, 0, 1);
       // pirinç darbesi: Do majör (V → I çözülmesi: jack için "ta-DAA")
       const brass: Omit<ChordOpts, 'amp' | 'atk' | 'hold' | 'rel'> = {
         sustain: 0.7,
-        layers: [['sawtooth', 1, -5, 0.7], ['sawtooth', 1, 6, 0.7], ['square', 2, 0, 0.1]],
+        layers: [['sawtooth', 1, -5, 0.75], ['sawtooth', 1, 6, 0.75]],
         cutoff: [900, 5200, 0.05, 0.16, 1800],
         q: 1.3,
         scoop: 0.972,
       };
       const mk = (amp: number, hold: number, rel: number): ChordOpts => ({amp, atk: 0.012, hold, rel, ...brass});
       if (!big) {
-        v.chord(0.03, [261.63, 329.63, 392.0, 523.25, 659.25, 783.99], mk(0.2, 0.36, 0.3));
+        v.chord(0.03, [261.63, 392.0, 523.25, 659.25, 783.99], mk(0.22, 0.36, 0.3));
       } else {
-        v.chord(0.03, [196.0, 246.94, 293.66, 392.0, 493.88, 587.33], mk(0.17, 0.17, 0.12));
+        v.chord(0.03, [196.0, 293.66, 392.0, 493.88, 587.33], mk(0.19, 0.17, 0.12));
         this.impactHit(v, 0.2, 0.95);
-        v.chord(0.21, [261.63, 329.63, 392.0, 523.25, 659.25, 783.99, 1046.5, 1318.5], mk(0.25, 0.46, 0.4));
+        v.chord(0.21, [261.63, 392.0, 523.25, 659.25, 783.99, 1046.5], mk(0.27, 0.46, 0.4));
       }
       // ışıltı: pentatonik çan dokunuşları, yukarı doğru
       const sc = [1046.5, 1174.7, 1318.5, 1568.0, 1760.0, 2093.0, 2349.3, 2637.0, 3136.0, 3520.0];
@@ -900,7 +965,7 @@ export class Sfx {
       const norm = 1 / Math.sqrt(1 + 0.45 * (cnt - 1)); // çok jetonda üst üste binmeyi dengele
       for (let i = 0; i < cnt; i++) {
         const f = r.range(2500, 3300);
-        const a = r.range(0.6, 1) * norm;
+        const a = r.range(0.75, 1) * norm;
         const dec = r.range(0.8, 1.3);
         v.burst('white', t, 0.0012, 0.9 * a, [{type: 'highpass', f: 4200}], 0.0002);
         v.tone('sine', f, t, 0.0006, 0.085 * dec, 0.55 * a);
@@ -1059,57 +1124,63 @@ export class Sfx {
     bedGain.gain.setValueAtTime(0, t);
     bedGain.gain.linearRampToValueAtTime(L.bed, t + 2.5);
     bedGain.connect(this.ambBus);
-    const sr = ctx.sampleRate;
-    const maxF = sr * 0.45;
-    // [gürültü, döngü başı, döngü sonu, süzgeç, f, q, seviye, süzgeç LFO Hz, derinlik Hz, AM1 Hz, AM1 derinlik, AM2 Hz, AM2 derinlik]
-    const layers: ReadonlyArray<readonly [NoiseKind, number, number, BiquadFilterType, number, number, number, number, number, number, number, number, number]> = [
-      ['brown', 0, 2.0, 'lowpass', 180, 0.7, 0.2, 0.05, 40, 0.09, 0.3, 0.17, 0.15], // oda uğultusu (az)
-      ['pink', 0, 3.0, 'bandpass', 480, 0.9, 1.5, 0.071, 110, 0.31, 0.35, 2.9, 0.12], // mırıltı: düşük
-      ['pink', 0.37, 2.61, 'bandpass', 900, 1.1, 1.3, 0.109, 250, 0.23, 0.4, 3.7, 0.2], // mırıltı: orta
-      ['pink', 0.5, 2.9, 'bandpass', 1600, 1.4, 0.8, 0.083, 350, 0.19, 0.45, 4.3, 0.18], // mırıltı: ünsüz bölgesi
-      ['pink', 0.9, 2.2, 'bandpass', 2600, 1.5, 0.3, 0.053, 500, 0.17, 0.6, 5.3, 0.15], // cam/su tıkırtısı havası
-    ];
-    for (const ly of layers) {
+    const maxF = ctx.sampleRate * 0.45;
+    const layers: BedLayer[] = [];
+    for (const cfg of BED) {
       const src = reg(ctx.createBufferSource());
-      src.buffer = host.noise[ly[0]];
-      src.loop = true;
-      src.loopStart = ly[1];
-      src.loopEnd = ly[2];
-      src.start(t, ly[1] + rng.next() * (ly[2] - ly[1] - 0.05));
+      src.buffer = host.noise[cfg[0]];
+      src.loop = true; // katmanların döngü uzunlukları farklı: birleşik tekrar süresi çok uzun
+      src.loopStart = cfg[1];
+      src.loopEnd = cfg[2];
+      src.start(t, cfg[1] + rng.next() * (cfg[2] - cfg[1] - 0.05));
       srcs.push(src);
       const f = reg(ctx.createBiquadFilter());
-      f.type = ly[3];
-      f.frequency.value = Math.min(ly[4], maxF);
-      f.Q.value = ly[5];
+      f.type = cfg[3];
+      f.frequency.value = Math.min(cfg[4], maxF);
+      f.Q.value = cfg[5];
+      kRate(f.frequency);
+      kRate(f.Q);
       const amp = reg(ctx.createGain());
-      amp.gain.value = ly[6];
+      amp.gain.value = cfg[6];
       src.connect(f);
       f.connect(amp);
       amp.connect(bedGain);
-      // süzgeç merkezini yavaşça gezdir
-      const lfo = reg(ctx.createOscillator());
-      lfo.frequency.value = ly[7];
-      const lg = reg(ctx.createGain());
-      lg.gain.value = ly[8];
-      lfo.connect(lg);
-      lg.connect(f.frequency);
-      lfo.start(t);
-      srcs.push(lfo);
-      // sesler/hece dalgalanması: iki uyumsuz yavaş AM
-      for (const [hz, depth] of [[ly[9], ly[10]], [ly[11], ly[12]]] as const) {
-        const o = reg(ctx.createOscillator());
-        o.frequency.value = hz;
-        const og = reg(ctx.createGain());
-        og.gain.value = ly[6] * depth;
-        o.connect(og);
-        og.connect(amp.gain);
-        o.start(t);
-        srcs.push(o);
-      }
+      layers.push({f, amp, cfg, wf: new Wander(0.02), wa: new Wander(0.04), ws: new Wander(0.5), lastF: Math.min(cfg[4], maxF), lastA: cfg[6]});
     }
-    this.bed = {gain: bedGain, nodes, srcs};
+    const bed: Bed = {gain: bedGain, nodes, srcs, layers, until: t};
+    this.bed = bed;
+    this.bedFill(bed, t + (this.offline ? this.horizon : 12));
     this.ambNext = t + rng.range(2.5, 6);
     if (this.offline) this.ambFill(this.horizon);
+  }
+
+  /**
+   * Yatak katmanlarının süzgeç merkezini ve genliğini `upTo` zamanına kadar yavaş rastgele eğrilerle planla
+   * (osilatör tabanlı LFO'lar yerine: çok daha ucuz ve periyodik değil).
+   */
+  private bedFill(bed: Bed, upTo: number): void {
+    const maxF = (this.ctx ? this.ctx.sampleRate : 44100) * 0.45;
+    const rng = this.rng;
+    while (bed.until < upTo) {
+      const t0 = bed.until;
+      for (const ly of bed.layers) {
+        const [, , , , f0, , level, fDepth, aDepth, syl] = ly.cfg;
+        const cf = new Float32Array(BED_PTS);
+        const ca = new Float32Array(BED_PTS);
+        cf[0] = ly.lastF;
+        ca[0] = ly.lastA;
+        for (let i = 1; i < BED_PTS; i++) {
+          const m = (1 - syl) * ly.wa.next(rng) + syl * ly.ws.next(rng);
+          cf[i] = clamp(f0 * (1 + fDepth * ly.wf.next(rng)), 40, maxF);
+          ca[i] = level * Math.max(0.05, 1 + aDepth * m);
+        }
+        ly.lastF = cf[BED_PTS - 1];
+        ly.lastA = ca[BED_PTS - 1];
+        if (fDepth > 0) ly.f.frequency.setValueCurveAtTime(cf, t0, BED_SEG);
+        ly.amp.gain.setValueCurveAtTime(ca, t0, BED_SEG);
+      }
+      bed.until = t0 + BED_SEG + 0.002; // ardışık eğriler arasında 2 ms boşluk: çakışma hatası olmasın
+    }
   }
 
   private ambStop(): void {
@@ -1162,7 +1233,10 @@ export class Sfx {
     this.ambTimer = undefined;
     const ctx = this.ctx;
     if (!ctx || !this.bed) return;
-    this.run(() => this.ambFill(ctx.currentTime + AMB_LOOKAHEAD));
+    this.run(() => {
+      if (this.bed) this.bedFill(this.bed, ctx.currentTime + 12);
+      this.ambFill(ctx.currentTime + AMB_LOOKAHEAD);
+    });
     this.ambArm();
   };
 
@@ -1421,7 +1495,7 @@ export class Sfx {
     const pool = amb ? this.ambPool : this.pool;
     const cap = amb ? MAX_AMB_VOICES : MAX_VOICES;
     while (pool.length >= cap) this.drop(pool[0]);
-    const t0 = o.at !== undefined ? o.at : now + START_LAG + this.tOff;
+    const t0 = o.at !== undefined ? Math.max(o.at, WARM_T) : this.startT();
     const out = ctx.createGain();
     out.gain.value = o.trim ?? 1;
     const voice: Voice = {out, nodes: [out], srcs: [], pending: 0, endT: t0, pool, done: false};
@@ -1451,6 +1525,12 @@ export class Sfx {
     const p = amb ? 1 : this.pK;
     const s = amb ? 1 : this.sK;
     return new VB(host, voice, t0, p, s, panP);
+  }
+
+  /** Yeni bir sesin başlama zamanı (ısınma eşiği ve çevrimdışı kaydırma dahil). */
+  private startT(): number {
+    const now = this.ctx ? this.ctx.currentTime : 0;
+    return Math.max(now + START_LAG, WARM_T) + this.tOff;
   }
 
   /** En eski voice'u hızla kıs ve kaynaklarını durdur (sınır aşıldığında). */
@@ -1591,9 +1671,10 @@ export async function renderSfxOffline(
   opts: {sampleRate?: number; seed?: number; volume?: number} = {},
 ): Promise<OfflineRender> {
   const sr = opts.sampleRate ?? 44100;
-  const ctx = new OfflineAudioContext(2, Math.ceil(seconds * sr), sr);
+  const total = seconds + WARM_T; // sesler ısınma eşiğinden sonra başlar
+  const ctx = new OfflineAudioContext(2, Math.ceil(total * sr), sr);
   const s = new Sfx();
-  s.attachOffline(ctx, seconds, opts.seed ?? 1);
+  s.attachOffline(ctx, total, opts.seed ?? 1);
   if (opts.volume !== undefined) s.setVolume(opts.volume);
   plan(s);
   const buf = await ctx.startRendering();

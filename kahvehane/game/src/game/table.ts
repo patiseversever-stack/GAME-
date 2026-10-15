@@ -125,9 +125,9 @@ export class TableView {
     const S = this.layout.seats[seat];
     const k = i - (n - 1) / 2;
     const right = new THREE.Vector3(Math.cos(S.yaw), 0, -Math.sin(S.yaw));
-    const p = S.hand.clone().addScaledVector(right, k * 0.058);
+    const p = S.hand.clone().addScaledVector(right, k * 0.075 * this.layout.oppScale);
     p.y = TABLE.y + CARD.t * (i + 0.5);
-    return this.pose(p, S.yaw + k * 0.07, false, 0.92);
+    return this.pose(p, S.yaw + k * 0.07, false, this.layout.oppScale);
   }
 
   async dealHands(deals: {seat: number; card: CardId}[]): Promise<void> {
@@ -201,11 +201,10 @@ export class TableView {
 
   private pistiPose(seat: number, i: number): Pose {
     const S = this.layout.seats[seat];
-    const right = new THREE.Vector3(Math.cos(S.yaw), 0, -Math.sin(S.yaw));
-    const fwd = new THREE.Vector3(-Math.sin(S.yaw), 0, -Math.cos(S.yaw));
-    const p = S.stack.clone().addScaledVector(fwd, -0.13).addScaledVector(right, -0.03 + i * 0.03);
+    // pişti kartları yığının içe doğru yanında, açık ve yan yatık sıralanır
+    const p = S.stack.clone().add(new THREE.Vector3(-0.19 - i * 0.04, 0, 0));
     p.y = TABLE.y + CARD.t * (i + 0.5);
-    return this.pose(p, S.yaw + Math.PI / 2 + Math.sin(i * 2.1) * 0.06, true);
+    return this.pose(p, Math.PI / 2 + Math.sin(i * 2.1) * 0.06, true, 0.9);
   }
 
   /** Yığını topla. pistiCard verilirse o kart açık olarak pişti sırasına gider. */
