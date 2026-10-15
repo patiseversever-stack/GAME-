@@ -1,18 +1,9 @@
 // Giriş noktası: sahne, masa, kartlar, sesler, ekranlar ve uygulama akışını kurar.
-import '@fontsource/inter/latin-500.css';
-import '@fontsource/inter/latin-600.css';
-import '@fontsource/inter/latin-700.css';
-import '@fontsource/inter/latin-800.css';
-import '@fontsource/inter/latin-900.css';
-import '@fontsource/inter/latin-ext-500.css';
-import '@fontsource/inter/latin-ext-600.css';
-import '@fontsource/inter/latin-ext-700.css';
-import '@fontsource/inter/latin-ext-800.css';
-import '@fontsource/inter/latin-ext-900.css';
-import '@fontsource/playfair-display/latin-700.css';
-import '@fontsource/playfair-display/latin-900.css';
-import '@fontsource/playfair-display/latin-ext-700.css';
-import '@fontsource/playfair-display/latin-ext-900.css';
+import '@fontsource/inter/500.css';
+import '@fontsource/inter/700.css';
+import '@fontsource/inter/800.css';
+import '@fontsource/inter/900.css';
+import '@fontsource/playfair-display/900.css';
 
 import {Stage} from './render/stage';
 import {buildEnvironment} from './render/env';
@@ -86,7 +77,7 @@ async function boot(): Promise<void> {
   stage.onRender(() => {
     const o = {x: 0, y: 0};
     table.topScreen('deck', o);
-    screens.hud.setDeck(table.deck.length, o.x, o.y - 18);
+    screens.hud.setDeck(table.deck.length, o.x, o.y + 44);
   });
   try {
     await voice.load(ASSETS.voiceManifest ?? '');

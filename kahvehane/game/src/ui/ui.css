@@ -189,13 +189,14 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-lobby__col { position: absolute; display: flex; flex-direction: column; gap: calc(var(--u) * .6); margin: 0 auto; max-width: var(--content-max);
   inset: max(calc(var(--u) * .55), env(safe-area-inset-top)) max(calc(var(--u) * .7), env(safe-area-inset-right)) max(calc(var(--u) * .55), env(safe-area-inset-bottom)) max(calc(var(--u) * .7), env(safe-area-inset-left)); }
 
-.kh-topbar { flex: none; display: flex; align-items: center; gap: calc(var(--u) * .45); min-width: 0; }
+.kh-topbar { flex: none; display: flex; align-items: center; gap: calc(var(--u) * .4); min-width: 0; }
 .kh-prof { display: flex; align-items: center; gap: calc(var(--u) * .45); min-width: 0; flex: 1; text-align: left; }
 .kh-prof .kh-avatar { width: calc(var(--u) * 2.9); height: calc(var(--u) * 2.9); }
 .kh-prof__meta { display: flex; flex-direction: column; gap: calc(var(--u) * .15); min-width: 0; }
 .kh-prof__name { font-family: var(--font-display); font-size: calc(var(--u) * 1.12); line-height: 1.1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-shadow: var(--outline-thin); }
 .kh-prof .kh-gem { --gs: calc(var(--u) * 1.75); }
-.kh-prof .kh-xp { width: calc(var(--u) * 3.6); }
+.kh-prof .kh-xp { width: calc(var(--u) * 3); }
+.kh-topbar .kh-capsule__val { min-width: 2.9em; }
 .kh-topbar .kh-capsule { margin-left: calc(var(--u) * .55); }
 .kh-topbar .kh-iconbtn { width: calc(var(--u) * 2.9); height: calc(var(--u) * 2.9); min-width: 44px; min-height: 44px; }
 
@@ -216,7 +217,7 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-oc__fig { position: absolute; inset: var(--panel-edge-w); overflow: hidden; border-radius: calc(var(--r-lg) - 3px); }
 .kh-oc.is-cutout .kh-oc__fig { top: calc(var(--u) * -4.2); border-radius: 0 0 calc(var(--r-lg) - 3px) calc(var(--r-lg) - 3px); }
 .kh-oc__img { position: absolute; left: 50%; bottom: calc(var(--u) * -1.6); height: calc(100% + var(--u) * 1.4); width: auto; max-width: none; transform: translateX(-50%); }
-.kh-oc.is-photo .kh-oc__img { inset: 0; width: 100%; height: 100%; transform: none; object-fit: cover; object-position: 50% 30%; }
+.kh-oc.is-photo .kh-oc__img { left: 0; top: 0; right: auto; bottom: auto; width: 100%; height: 80%; transform: none; object-fit: cover; object-position: 50% 32%; }
 .kh-oc.is-locked .kh-oc__img { filter: var(--locked-filter); }
 .kh-oc__plate { position: absolute; left: var(--panel-edge-w); right: var(--panel-edge-w); bottom: var(--panel-edge-w); padding: calc(var(--u) * 2.4) calc(var(--u) * .6) calc(var(--u) * .65);
   border-radius: 0 0 calc(var(--r-lg) - 3px) calc(var(--r-lg) - 3px); background: var(--oc-plate); text-align: center; }
@@ -226,8 +227,8 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-oc__diff span { margin-right: calc(var(--u) * .2); font-size: calc(var(--u) * .72); font-weight: var(--w-black); letter-spacing: var(--track-label); text-transform: uppercase; color: var(--c-text-3); }
 .kh-oc__diff i { width: calc(var(--u) * .7); height: calc(var(--u) * .7); border-radius: 50%; box-shadow: inset 0 0 0 2px var(--c-accent); opacity: .6; }
 .kh-oc__diff i.on { background: var(--btn1-fill); box-shadow: 0 0 0 1.5px #5a2a02; opacity: 1; }
-.kh-oc__lock { position: absolute; left: 50%; top: 36%; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * .4); }
-.kh-lockdisc { display: grid; place-items: center; width: calc(var(--u) * 3.2); height: calc(var(--u) * 3.2); border-radius: 50%; color: var(--c-accent);
+.kh-oc__lock { position: absolute; right: calc(var(--u) * .5); top: calc(var(--u) * .5); display: flex; flex-direction: row-reverse; align-items: center; gap: calc(var(--u) * .3); }
+.kh-lockdisc { display: grid; place-items: center; width: calc(var(--u) * 2.6); height: calc(var(--u) * 2.6); border-radius: 50%; color: var(--c-accent);
   border: 2px solid transparent; background: var(--iconbtn-fill) padding-box, var(--edge-gold) border-box; box-shadow: var(--iconbtn-shadow); }
 .kh-lockdisc .kh-i { width: 46%; height: 46%; }
 .kh-oc__lock .kh-tag { position: static; font-size: calc(var(--u) * .8); }

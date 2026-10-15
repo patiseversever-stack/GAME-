@@ -91,4 +91,7 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
-**16 Ekim:** Yön premium masa oyununa çevrildi. Adım 1 (MVP) başladı. Kural motoru, bot ve kart fiziği hazır. Sanat üretimi, ekranlar, seslendirme ve masa sahnesi yapılıyor.
+**16 Ekim:** Yön kilitlendi: **DİKEY**, hedef ekran `docs/_dikey_hedef.jpg` (+ "daha sinematik"). MVP ilk önizleme yayında: https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+- Bitti: kural motoru + bot (74 test), ses efektleri, 150 Türkçe replik + seslendirme altyapısı (ElevenLabs anahtarı bekliyor), kart atlası (resimli kart görsel hattı hazır), dikey 3D masa (ray + maun çerçeve), sinematik kamera, tüm ekranlar (açılış, lobi, giriş, HUD + rozetler, pişti damgası, duraklat, sonuç, ayarlar, kurallar, günlük ödül), ilerleme (seviye/XP/jeton/günlük ödül).
+- Bekleyen (kullanıcıdan): `KARAKTER_GORSELLERI.md` → 60 karakter + 3 resimli kart görseli (ChatGPT). Gelince: `assets/art/` (portreler) ve `assets/cards/` (jacks/queens/kings.png) içine işlenecek.
+- Sıradaki: görseller gelince entegrasyon + hedefle karşılaştırma; seslendirme; 4 kişilik mod (Adım 2).

@@ -43,6 +43,12 @@ const result = (r: string): GameResult => {
 function gameHud(sc: Screens): void {
   const deck = mockTable();
   sc.hud.show(riza, profile);
+  sc.hud.onMenu = async () => {
+    const r = await sc.pause();
+    if (r === 'settings') await sc.settings({sfx: true, voice: true, music: true, haptics: true, quality: 'auto'}, () => {});
+    else if (r === 'rules') await sc.rules();
+    else if (r === 'leave') sc.hud.hide();
+  };
   sc.hud.setStats([{cards: 12, pisti: 1}, {cards: 8, pisti: 0}]);
   sc.hud.setDeck(24, deck.x, deck.y);
 }

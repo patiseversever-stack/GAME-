@@ -16,7 +16,7 @@ export interface ThrowInfo {
 }
 
 const HAND_SCALE = 0.75; // eldeki kart boyutu (masadakine göre)
-const HAND_WFRAC = 0.245; // eldeki kartın ekran genişliğindeki payı (dikey ekran)
+const HAND_WFRAC = 0.215; // eldeki kartın ekran genişliğindeki payı (dikey ekran)
 let HAND_DIST = 0.6; // kameradan uzaklık (m), görüş açısına göre hesaplanır
 
 export class HandInput {
@@ -52,9 +52,9 @@ export class HandInput {
     HAND_DIST = (CARD.w * HAND_SCALE) / (HAND_WFRAC * 2 * tanH * cam.aspect);
     const vh = 2 * HAND_DIST * tanH;
     const vw = vh * cam.aspect;
-    const spread = Math.min(CARD.w * HAND_SCALE * 0.96, (vw * 0.78) / Math.max(1, n));
+    const spread = Math.min(CARD.w * HAND_SCALE * 0.9, (vw * 0.66) / Math.max(1, n));
     const mid = (n - 1) / 2, k = i - mid;
-    const local = new THREE.Vector3(k * spread, -vh / 2 + CARD.h * HAND_SCALE * 0.62 + lift - Math.abs(k) * 0.004 * HAND_SCALE, -HAND_DIST + i * 0.002);
+    const local = new THREE.Vector3(k * spread + vw * 0.085, -vh / 2 + CARD.h * HAND_SCALE * 0.7 + lift - Math.abs(k) * 0.004 * HAND_SCALE, -HAND_DIST + i * 0.002);
     // kart yerelinde +y ön yüz: önce x etrafında kameraya çevir (biraz geriye yatık), sonra görüş ekseninde yelpaze aç
     const tilt = new THREE.Quaternion().setFromAxisAngle(X, Math.PI / 2 - 0.14);
     const fan = new THREE.Quaternion().setFromAxisAngle(Z, -k * 0.05);

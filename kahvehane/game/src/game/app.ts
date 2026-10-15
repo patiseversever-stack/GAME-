@@ -1,7 +1,6 @@
 // Uygulama akışı: açılış → lobi → karşılaşma girişi → masa → sonuç → lobi.
 // İlerleme (seviye, XP, jeton, günlük ödül) burada; ileride ana uygulama/sunucu tarafına taşınacak.
 import type {Screens, Profile, Opponent, Settings} from '../ui/screens';
-import type {Sfx} from '../audio/sfx';
 import type {VoicePlayer} from '../audio/voice';
 import {pickLine, shouldSpeak} from '../ai/dialogue';
 import {Match, type MatchDeps, type Moment} from './match';

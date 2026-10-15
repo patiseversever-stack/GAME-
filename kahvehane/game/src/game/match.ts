@@ -117,7 +117,7 @@ export class Match {
     const {hand, hud} = this.d;
     return new Promise(res => {
       const first = this.state.round === 1 && this.state.hands[0].length === 4;
-      hud.showHint(first ? 'Kartı parmağınla masaya fırlat ya da iki kez dokun' : 'Sıra sende');
+      hud.showHint(first ? 'Kartı masaya fırlat ya da iki kez dokun' : 'Sıra sende');
       clearTimeout(this.idleTimer);
       this.idleTimer = window.setTimeout(() => this.d.speak('myTurnIdle'), 7000);
       const iv = setInterval(() => {
