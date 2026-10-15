@@ -39,7 +39,11 @@ Yeni oturum bu dosyayı okuyup devam edebilsin diye tutulur.
 - **Mekân:** A — Eski İstanbul kahvehanesi (ahşap panel, İznik çini, eski fotoğraflar, pirinç semaver).
 - **Oyuncu elleri:** 1 — gerçekçi (damarlı, hafif kıllı, kehribar tespih).
 - Model sayfaları (A-poz, ön/yan/arka) üretildi: `konsept/_model_sayfalari.jpg`.
-- 3D yöntem denemesi (Rıza Amca): A = multi-image Meshy 7.1 (30 kr), B = Smart Topology t2.5 (15 kr). İkisi de ~15k üçgen, 2K doku.
+- 3D yöntem denemesi (Rıza Amca): A = multi-image Meshy 7.1 (30 kr), B = Smart Topology t2.5 (15 kr). İkisi de ~15k üçgen, 2K doku. Kullanıcı: yüz detayı yetersiz.
+- Öncelik: **üst gövde ve yüz kalitesi** (oyunda en çok görünen kısım).
+- Sorunun kaynağı: girdi görselde yüz çok küçüktü (~60 px). Çözüm: yüksek çözünürlüklü tek ön görsel (896x1200) + 4K doku + normal map.
+- Tur 2 (`konsept/_riza_yuz_tur2.jpg`): **D = Meshy 7.1 image-to-3d, geometry 2k, 4K doku + PBR, remesh yok (664k üçgen) → gltf-transform weld+simplify ile 30k'ya** en iyi sonuç (ham modelle neredeyse aynı). Karakter başı ~44 kredi (9 görsel + 35 model).
+- Düşük seviye cihaz için aynı modelden ~12k üçgen + küçültülmüş doku (LOD) üretilecek.
 
 ## Ses
 - Karakter replikleri: ElevenLabs (Türkçe, duygu etiketleri) ile üretim önerildi; ana karakterler ileride gerçek seslendirmenle yapılabilir.
