@@ -17,9 +17,9 @@ let capOran = 0.71; // büyük harf yüksekliği / font boyutu (ölçülür)
 
 /** Yüz kırpma: kaynak görselde (256²) yüzün merkezi ve kare kırpma boyu */
 const KIRP: Record<number, {x: number; y: number; s: number}> = {
-  13: {x: 138, y: 130, s: 240}, // Rıza
+  13: {x: 138, y: 138, s: 236}, // Rıza
   12: {x: 136, y: 150, s: 236}, // Defne
-  11: {x: 142, y: 146, s: 226}, // Cem
+  11: {x: 142, y: 162, s: 218}, // Cem
 };
 const UNVAN: Record<number, string> = {11: 'VALE', 12: 'KIZ', 13: 'PAPAZ'};
 
@@ -253,6 +253,20 @@ function cerceve(g: CanvasRenderingContext2D, w: number, h: number): void {
     g.fill();
   }
   g.restore();
+  // uzun kenarların ortasında küçük altın baklava
+  for (const x of [m, w - m]) {
+    g.save();
+    g.translate(x, h * 0.5);
+    g.fillStyle = altin(g, -w * 0.03, -w * 0.05, w * 0.03, w * 0.05, true);
+    g.beginPath();
+    g.moveTo(0, -w * 0.05);
+    g.lineTo(w * 0.016, 0);
+    g.lineTo(0, w * 0.05);
+    g.lineTo(-w * 0.016, 0);
+    g.closePath();
+    g.fill();
+    g.restore();
+  }
   // köşe süsleri: sağ üst ve sol alt
   kose(g, w - b, b, w, -1, 1);
   kose(g, b, h - b, w, 1, -1);
@@ -356,7 +370,7 @@ function indeks(g: CanvasRenderingContext2D, w: number, h: number, s: Suit, r: n
   }
   g.restore();
   // altında takım işareti
-  const tb = w * 0.15;
+  const tb = w * 0.135;
   takim(g, s, cx, taban + h * (yazi === 'Q' ? 0.036 : 0.022) + tb / 2, tb);
 }
 
@@ -384,8 +398,8 @@ const DIZILIM: Record<number, [number, number][]> = {
 };
 
 function sayilar(g: CanvasRenderingContext2D, w: number, h: number, s: Suit, r: number): void {
-  const xs = w * 0.165, y0 = h * 0.25, y1 = h * 0.75;
-  const boy = w * (r >= 9 ? 0.15 : r >= 7 ? 0.165 : 0.18);
+  const xs = w * 0.148, y0 = h * 0.25, y1 = h * 0.75;
+  const boy = w * (r >= 9 ? 0.142 : r >= 7 ? 0.16 : 0.172);
   for (const [cx, cy] of DIZILIM[r]) {
     const x = w * 0.5 + cx * xs;
     const y = y0 + (y1 - y0) * cy;
@@ -592,7 +606,7 @@ function kurdele(g: CanvasRenderingContext2D, cx: number, cy: number, gen: numbe
 }
 
 function saray(g: CanvasRenderingContext2D, w: number, h: number, s: Suit, r: number): void {
-  const cx = w * 0.5, cy = h * 0.435;
+  const cx = w * 0.5, cy = h * 0.45;
   const a = w * 0.28, b = h * 0.2;
   // madalyonun arkası
   g.save();
@@ -668,10 +682,10 @@ function saray(g: CanvasRenderingContext2D, w: number, h: number, s: Suit, r: nu
   }
   g.restore();
   // üstte ve altta takım işareti
-  takim(g, s, cx, h * 0.125, w * 0.13);
-  takim(g, s, cx, h * 0.83, w * 0.13);
+  takim(g, s, cx, h * 0.132, w * 0.13);
+  takim(g, s, cx, h * 0.848, w * 0.13);
   // kurdele
-  kurdele(g, cx, cy + b * 0.93, w * 0.36, h * 0.074, UNVAN[r], w);
+  kurdele(g, cx, cy + b * 1.0, w * 0.36, h * 0.074, UNVAN[r], w);
 }
 
 // ---- arka yüz ----

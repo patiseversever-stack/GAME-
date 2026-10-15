@@ -70,13 +70,14 @@ function drawSuit(g: CanvasRenderingContext2D, s: Suit, cx: number, cy: number, 
     g.fillRect(-50, -50, 100, 100);
     g.restore();
   } else {
-    g.fillStyle = grad(g, -30, -50, 30, 50, GOLD);
-    g.fill(p);
     if (size > 26) {
-      g.lineWidth = 1.2 / k;
-      g.strokeStyle = 'rgba(255,246,205,0.55)';
+      // büyük simgelerde açık renkli dış kontür (dolgu iç çizgileri örter)
+      g.lineWidth = 2.2 / k;
+      g.strokeStyle = 'rgba(255,240,190,0.6)';
       g.stroke(p);
     }
+    g.fillStyle = grad(g, -30, -50, 30, 50, GOLD);
+    g.fill(p);
   }
   g.restore();
 }
@@ -310,7 +311,7 @@ function drawPips(g: CanvasRenderingContext2D, w: number, h: number, suit: Suit,
   const colX = 0.137 * w;
   const y0 = 0.235 * h;
   const y1 = 0.765 * h;
-  const ps = 0.122 * w;
+  const ps = (rank >= 9 ? 0.112 : 0.122) * w;
   for (const [c, r] of PIPS[rank]) {
     drawSuit(g, suit, w / 2 + c * colX, y0 + (y1 - y0) * r, ps, r > 0.5);
   }
@@ -377,7 +378,7 @@ function drawAce(g: CanvasRenderingContext2D, w: number, h: number, suit: Suit):
   g.beginPath();
   g.arc(cx, cy, w * 0.285, 0, Math.PI * 2);
   g.fill();
-  drawSuit(g, suit, cx, cy + w * 0.005, w * 0.4, false, w * 0.012);
+  drawSuit(g, suit, cx, cy + w * 0.005, w * (suit === 'D' ? 0.46 : 0.4), false, w * 0.012);
 }
 
 // ---------- saray kartları: altın duotone portre ----------
@@ -697,7 +698,11 @@ export const skin: Skin = {
       cornerFan(g, w - 0.075 * w, 0.075 * w, -1, 1, w / 150);
       cornerFan(g, 0.075 * w, h - 0.075 * w, 1, -1, w / 150);
       if (rank === 1) drawAce(g, w, h, suit);
-      else drawPips(g, w, h, suit, rank);
+      else {
+        // pip'lerin arkasında çok hafif art-deco ışıma
+        sunburst(g, w / 2, h / 2, w * 0.012, h * 0.42, 32, 0.12);
+        drawPips(g, w, h, suit, rank);
+      }
       drawIndex(g, w, h, suit, rank, false);
       drawIndex(g, w, h, suit, rank, true);
     }
