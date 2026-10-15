@@ -37,12 +37,15 @@ function feltBackground(ctx: CanvasRenderingContext2D, w: number, h: number): vo
   ctx.fillRect(0, 0, w, h);
 }
 
-function drawCard(ctx: CanvasRenderingContext2D, a: CardAtlas, cell: number, x: number, y: number, w: number, rot = 0, shadow = true): void {
+function drawCard(ctx: CanvasRenderingContext2D, a: CardAtlas, cell: number, x: number, y: number, w: number, rot = 0, shadow = true, pivot?: [number, number]): void {
   const h = w / CARD_ASPECT, r = CORNER_RADIUS * w;
   const col = cell % ATLAS_COLS, row = Math.floor(cell / ATLAS_COLS);
   ctx.save();
-  ctx.translate(x + w / 2, y + h / 2);
+  // pivot: kartın kendi kutusunda dönme noktası (0..1); verilmezse merkez
+  const [pu, pv] = pivot ?? [0.5, 0.5];
+  ctx.translate(x + w * pu, y + h * pv);
   ctx.rotate((rot * Math.PI) / 180);
+  ctx.translate(w * (0.5 - pu), h * (0.5 - pv));
   const path = new Path2D();
   path.roundRect(-w / 2, -h / 2, w, h, r);
   if (shadow) {
@@ -74,13 +77,59 @@ function label(ctx: CanvasRenderingContext2D, text: string, x: number, y: number
   ctx.restore();
 }
 
-function setup(id: string, w: number, h: number): CanvasRenderingContext2D {
+function setup(id: string, w: number, h: number, dpr = 1): CanvasRenderingContext2D {
   const cv = document.getElementById(id) as HTMLCanvasElement;
-  cv.width = w;
-  cv.height = h;
+  cv.width = Math.round(w * dpr);
+  cv.height = Math.round(h * dpr);
   cv.style.width = `${w}px`;
   cv.style.height = `${h}px`;
-  return cv.getContext('2d')!;
+  const ctx = cv.getContext('2d')!;
+  ctx.scale(dpr, dpr);
+  return ctx;
+}
+
+/** Telefon benzetimi: CSS pikselinde gerçek boyutlar, cihaz piksel oranında keskin çizim.
+ *  (a) 53 yüz 70 px, (b) 88 px yelpaze el (yalnız sol ≈ %45 görünür), (c) 72 px hafif dönük 3 kartlık yığın. */
+function drawPhone(a: CardAtlas): void {
+  const dpr = window.devicePixelRatio || 1;
+  const cw = 70, ch = cw / CARD_ASPECT, gap = 8;
+  const gridW = 13 * (cw + gap) + gap;
+  const gridH = 5 * (ch + gap) + gap;
+  const w = gridW, h = gridH + 210;
+  const ctx = setup('phone', w, h, dpr);
+  feltBackground(ctx, w, h);
+  for (let id = 0; id <= BACK_INDEX; id++) {
+    const col = id % 13, row = Math.floor(id / 13);
+    drawCard(ctx, a, id, gap + col * (cw + gap), gap + row * (ch + gap), cw, 0);
+  }
+  // (b) el: 88 px, yelpaze; her kartın yalnız sol ≈ %45'i görünür (üstteki hariç)
+  const hw = 88, hh = hw / CARD_ASPECT;
+  const hand = [c('H', 7), c('D', 10), c('S', 11), c('C', 13)];
+  const hx = 2 * (cw + gap) + gap, hy = gridH + 40;
+  hand.forEach((id, i) => {
+    const ang = (i - 1.5) * 5;
+    drawCard(ctx, a, id, hx + i * hw * 0.45, hy + Math.abs(i - 1.5) * 3, hw, ang, true, [0.5, 1.6]);
+  });
+  label(ctx, 'el 88 px', hx, hy - 14);
+  // ikinci el: as, kız, sayı, papaz
+  const hand2 = [c('S', 1), c('H', 12), c('C', 9), c('D', 13)];
+  const h2x = hx + 300;
+  hand2.forEach((id, i) => {
+    const ang = (i - 1.5) * 5;
+    drawCard(ctx, a, id, h2x + i * hw * 0.45, hy + Math.abs(i - 1.5) * 3, hw, ang, true, [0.5, 1.6]);
+  });
+  // (c) yığın: 72 px, 3 kart
+  const pw = 72;
+  const pile = [c('C', 5), c('H', 1), c('D', 12)];
+  const rots = [-13, 9, -4];
+  const px = h2x + 330, py = hy + 6;
+  pile.forEach((id, i) => drawCard(ctx, a, id, px + i * 3, py + i * 2, pw, rots[i]));
+  label(ctx, 'yığın 72 px', px, hy - 14);
+  // rakip eli ve deste (arka yüzün çuha üzerinde seçilmesi)
+  const bx = px + 150;
+  for (let i = 0; i < 4; i++) drawCard(ctx, a, BACK_INDEX, bx + i * 24, py, 56, -9 + i * 6);
+  label(ctx, 'arka 56 px', bx, hy - 14);
+  void hh;
 }
 
 function drawTable(a: CardAtlas): void {
@@ -226,6 +275,7 @@ async function main(): Promise<void> {
     `ilk kurulum (font yükleme dahil): ${(t1 - t0).toFixed(1)} ms   sıcak kurulum: ${warm.toFixed(1)} ms (en iyi / 3: ${times.map((t) => t.toFixed(1)).join(', ')})`;
   (window as unknown as {__atlas: unknown}).__atlas = {first: t1 - t0, warm, times, width: atlas.width, height: atlas.height};
 
+  drawPhone(atlas);
   drawTable(atlas);
   drawSmall(atlas);
   drawLarge(atlas);
