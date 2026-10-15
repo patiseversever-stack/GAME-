@@ -984,21 +984,20 @@ function paintTugra(g: Ctx, rnd: Rnd): void {
   carn(g, 90, 128, 0.18, 26, BOLE, WHITE, TUR, true);
   // beyze: dış ve iç ilmek
   rosette(g, 90, 226, 15, BOLE, WHITE, TUR, 8);
-  calli(g, ellPts(88, 222, 50, 44, 0.42, 0.42 - Math.PI * 1.9, 30), 2.4, 3, gold, 10);
-  calli(g, ellPts(94, 226, 29, 26, 0.5, 0.5 - Math.PI * 1.86, 24), 2, 2.5, gold, 7);
+  calli(g, ellPts(88, 222, 52, 46, 0.42, 0.42 - Math.PI * 1.9, 30), 2.6, 3.2, gold, 13);
+  calli(g, ellPts(94, 226, 30, 27, 0.5, 0.5 - Math.PI * 1.86, 24), 2.2, 2.6, gold, 9);
   // üç tuğ (elif): alttan yukarı incelir, tepede sola kıvrılır
-  calli(g, [118, 240, 119, 170, 120, 112, 118, 76, 112, 62, 104, 60], 10, 2.4, gold);
-  calli(g, [138, 240, 139, 160, 140, 98, 138, 60, 132, 46, 124, 44], 10, 2.4, gold);
-  calli(g, [158, 240, 159, 176, 160, 122, 158, 88, 152, 76, 144, 74], 10, 2.4, gold);
+  calli(g, [118, 240, 119, 170, 120, 112, 118, 76, 112, 62, 104, 60], 12.5, 3, gold);
+  calli(g, [138, 240, 139, 160, 140, 98, 138, 60, 132, 46, 124, 44], 12.5, 3, gold);
+  calli(g, [158, 240, 159, 176, 160, 122, 158, 88, 152, 76, 144, 74], 12.5, 3, gold);
   // zülfeler: tuğları kesen dalgalı bayraklar
-  calli(g, [120, 136, 144, 124, 170, 134, 190, 152, 202, 172], 7, 1.6, gold, 2);
-  calli(g, [140, 114, 162, 104, 184, 114, 198, 132], 6, 1.6, gold, 2);
+  calli(g, [120, 136, 144, 124, 170, 134, 190, 152, 202, 172], 8.5, 1.8, gold, 3);
+  calli(g, [140, 114, 162, 104, 184, 114, 198, 132], 7.5, 1.8, gold, 3);
   // kol: sağa uzanan iki hançer
-  calli(g, [64, 270, 112, 270, 160, 258, 190, 238, 206, 210], 9, 1.4, gold, 3);
-  calli(g, [92, 256, 130, 255, 166, 242, 188, 222, 198, 202], 6, 1.4, gold, 2);
+  calli(g, [64, 270, 112, 270, 160, 258, 190, 238, 206, 210], 11, 1.6, gold, 4);
+  calli(g, [92, 256, 130, 255, 166, 242, 188, 222, 198, 202], 7.5, 1.6, gold, 3);
   // sere
-  calli(g, [120, 252, 134, 246, 148, 252, 158, 264], 5, 2, gold, 1);
-  calli(g, [162, 236, 172, 244, 168, 256], 5, 2, gold);
+  calli(g, [124, 250, 138, 244, 152, 250, 160, 262], 6, 2.2, gold, 1.5);
   for (const [x, y] of [
     [104, 60],
     [124, 44],
@@ -1181,14 +1180,14 @@ function paintMihrab(g: Ctx, rnd: Rnd): void {
   g.stroke(sp);
   stem(g, [cx, base, cx, base - 120, cx, base - 214], 3);
   const buds: [number, number, number, number][] = [
-    [base - 56, -1, 1.0, 24],
-    [base - 92, 1, 1.0, 24],
-    [base - 128, -1, 0.9, 21],
-    [base - 160, 1, 0.9, 21],
+    [base - 54, -1, 1.0, 31],
+    [base - 90, 1, 1.0, 31],
+    [base - 126, -1, 0.9, 27],
+    [base - 158, 1, 0.9, 26],
   ];
   for (const [y, sd, a, sz] of buds) {
-    stem(g, [cx, y + 10, cx + sd * 10, y, cx + sd * 18, y - 6], 1.6);
-    tulip(g, cx + sd * 18, y - 6, sd * a, sz, BOLE, 'rgba(255,240,230,0.9)', true);
+    stem(g, [cx, y + 10, cx + sd * 12, y, cx + sd * 20, y - 6], 1.8);
+    tulip(g, cx + sd * 20, y - 6, sd * a, sz, BOLE, 'rgba(255,240,230,0.9)', true);
   }
   carn(g, cx, base - 212, 0, 70, BOLE, WHITE, TUR, true);
   // köşeliklerde (spandrel) kırmızı göbekler
@@ -1475,9 +1474,9 @@ function drawFace(g: Ctx, w: number, h: number, suit: Suit, rank: number): void 
 
   const cx = w / 2, cy = h / 2;
   if (rank === 1) {
-    const d = 0.78 * w;
+    const d = 0.74 * w;
     g.drawImage(aceArt!, cx - d / 2, cy - d / 2, d, d);
-    const sz = 0.27 * w, sd = sz / 0.84;
+    const sz = 0.255 * w, sd = sz / 0.84;
     g.drawImage(suitArt[suit]!, cx - sd / 2, cy - sd / 2, sd, sd);
   } else if (rank >= 11) {
     const art = courtArt[rank];

@@ -235,18 +235,31 @@ function stemPaint(g: Ctx, pts: number[], lw: number, rnd: Rnd): void {
     brush(g, q, lw * 0.5, jit(pick([OLIVE, OLIVE_D, [140, 150, 60]] as RGB[], rnd), 10, rnd), 0.7);
   }
 }
-/** Yaprak: sivri uçlu, damar yönünde darbelerle. (x,y) sap, a yön, L boy. */
+/** Yaprak: geniş, kalp biçimli, ucu sivri; dolgu + damar yönünde kabartmalı darbeler. (x,y) sap, a yön, L boy. */
 function leaf(g: Ctx, x: number, y: number, a: number, L: number, rnd: Rnd, s = 1): void {
-  const W = L * 0.32;
-  const ca = Math.cos(a), sa = Math.sin(a);
-  for (let i = 0; i < 26; i++) {
-    const t = rnd();
-    const wv = W * Math.sin(Math.PI * Math.pow(t, 0.8)) * (rnd() * 2 - 1);
-    const px = x + ca * L * t - sa * wv, py = y + sa * L * t + ca * wv;
-    const da = a + (wv > 0 ? 0.7 : -0.7) * (1 - t);
-    brush(g, stroke(px, py, da, L * 0.2, 0.2, 3), (4 + rnd() * 2.6) * s, jit(pick([GREEN, OLIVE, OLIVE_D, [150, 160, 64], [96, 130, 60]] as RGB[], rnd), 12, rnd), 0.8);
+  const W = L * 0.36;
+  const ca = Math.cos(a), sa = Math.sin(a), nx = -sa, ny = ca;
+  const P = (t: number, w: number): [number, number] => [x + ca * L * t + nx * w, y + sa * L * t + ny * w];
+  const p = new Path2D();
+  p.moveTo(...P(0, 0));
+  p.bezierCurveTo(...P(0.02, W * 0.9), ...P(0.45, W * 1.15), ...P(1, W * 0.05));
+  p.bezierCurveTo(...P(0.45, -W * 1.15), ...P(0.02, -W * 0.9), ...P(0, 0));
+  p.closePath();
+  g.fillStyle = css(OLIVE_D);
+  g.fill(p);
+  g.save();
+  g.clip(p);
+  const LEAF: RGB[] = [GREEN, OLIVE, [96, 130, 60], [140, 150, 60], [74, 104, 48]];
+  for (let i = 0; i < 22; i++) {
+    const t = 0.08 + rnd() * 0.8, sd = rnd() < 0.5 ? -1 : 1;
+    const [px, py] = P(t, sd * W * 0.15);
+    brush(g, stroke(px, py, a + sd * (0.75 - t * 0.35), W * (0.8 - t * 0.4), sd * 0.3, 3), (4.2 + rnd() * 2.4) * s, jit(pick(LEAF, rnd), 12, rnd), 0.8);
   }
-  brush(g, stroke(x, y, a, L * 0.85, 0.15, 5), 1.6 * s, [190, 190, 90], 0);
+  g.restore();
+  g.strokeStyle = css(darken(OLIVE_D, 0.4));
+  g.lineWidth = 1.2 * s;
+  g.stroke(p);
+  brush(g, [...P(0.02, 0), ...P(0.5, W * 0.04), ...P(0.9, 0)], 1.8 * s, [176, 186, 96], 0);
 }
 
 /** Vazo: yuvarlak gövde, üstte krom sarı, altta turuncu-aşı; arada lacivert bant. */
@@ -334,7 +347,7 @@ function paintFrame(): HTMLCanvasElement {
   // zemin: turkuaz-yeşil arka plan notası (yaprak aralarından görünür)
   g.fillStyle = css([64, 128, 120]);
   g.fillRect(0, 0, PW, PH);
-  weave(g, 0, 0, PW, PH, [TURQ, TURQ_L, [60, 128, 128], [96, 170, 150]], rnd, 9, 0.8);
+  weave(g, 0, 0, PW, PH, [TURQ, TURQ_L, [60, 128, 128], [96, 170, 150]], rnd, 11, 0.9);
   // panel kenarı boyunca örnek noktalar ve dış normaller
   const x0 = bw, y0 = bw, x1 = PW - bw, y1 = PH - bw, rc = bw * 0.6;
   const samples: [number, number, number][] = [];
@@ -357,7 +370,7 @@ function paintFrame(): HTMLCanvasElement {
   for (let layer = 0; layer < 2; layer++) {
     const order = samples.slice().sort(() => rnd() - 0.5);
     for (let k = 0; k < order.length; k++) {
-      if ((k + layer) % 2) continue;
+      if (layer === 1 && k % 3 === 0) continue;
       const [x, y, a] = order[k];
       const aa = a + (rnd() - 0.5) * 0.3;
       const len = bw * (layer ? 0.95 + rnd() * 0.3 : 1.15 + rnd() * 0.3);
@@ -491,16 +504,13 @@ function paintAce(): HTMLCanvasElement {
   const rnd = mulberry(31);
   // üç kat taç yaprak
   for (let layer = 0; layer < 3; layer++) {
-    const n = 26;
+    const n = 20;
     for (let i = 0; i < n; i++) {
-      const a = ((i + layer * 0.33) / n) * Math.PI * 2 + (rnd() - 0.5) * 0.12;
-      const len = R * (0.52 + rnd() * 0.12) * (1 - layer * 0.12);
+      const a = ((i + layer * 0.33) / n) * Math.PI * 2 + (rnd() - 0.5) * 0.1;
+      const len = R * (0.56 + rnd() * 0.1) * (1 - layer * 0.1);
       const pal = layer === 0 ? PETAL_BACK : PETAL_FRONT;
-      const r0 = R * 0.44;
-      for (let k = 0; k < 2; k++) {
-        const aa = a + (k - 0.5) * 0.07;
-        brush(g, stroke(C + Math.cos(aa) * r0, C + Math.sin(aa) * r0, aa + (rnd() - 0.5) * 0.15, len, (rnd() - 0.5) * 0.5), 7 + rnd() * 3, jit(pick(pal, rnd), 14, rnd), 1);
-      }
+      const r0 = R * 0.42;
+      petal(g, C + Math.cos(a) * r0, C + Math.sin(a) * r0, a + (rnd() - 0.5) * 0.12, len, R * 0.2, jit(pick(pal, rnd), 14, rnd), rnd, (rnd() - 0.5) * 0.22);
     }
   }
   // çekirdek halkası
@@ -615,34 +625,41 @@ function paintKing(g: Ctx, rnd: Rnd): void {
 }
 
 function paintQueen(g: Ctx, rnd: Rnd): void {
-  courtBg(g, [[240, 210, 90], [246, 224, 120], [232, 196, 70], [250, 234, 150], [226, 200, 96]], rnd);
+  // Van Gogh'un Paris ayçiçeklerindeki lacivert zemin
+  courtBg(g, [[44, 70, 150], [58, 90, 170], [36, 58, 130], [80, 110, 180], [50, 80, 160]], rnd);
   const cx = CW / 2;
-  stemPaint(g, [cx - 6, CH, cx - 4, CH * 0.8, cx + 4, CH * 0.62, cx + 2, CH * 0.5], 8, rnd);
-  leaf(g, cx - 4, CH * 0.8, -2.65, 78, rnd);
-  leaf(g, cx + 2, CH * 0.7, -0.4, 74, rnd);
-  leaf(g, cx + 3, CH * 0.6, -2.85, 50, rnd);
-  // gonca: yeşil küre üzerinde pul pul sivri brakteler; tepeden taç gibi açılan sarı yapraklar
-  const bx = cx + 2, by = CH * 0.4, R = 40;
-  for (let i = 0; i < 11; i++) {
-    const a = -Math.PI / 2 + (i - 5) * 0.21;
-    petal(g, bx + Math.cos(a) * R * 0.45, by - R * 0.15 + Math.sin(a) * R * 0.45, a + (rnd() - 0.5) * 0.12, R * (0.8 + rnd() * 0.25) * (1 - Math.abs(i - 5) * 0.05), R * 0.3, jit(pick(PETAL_FRONT, rnd), 12, rnd), rnd, (rnd() - 0.5) * 0.2);
-  }
-  g.fillStyle = css([52, 92, 44]);
-  g.beginPath();
-  g.ellipse(bx, by + 4, R * 0.78, R * 0.66, 0, 0, Math.PI * 2);
-  g.fill();
-  // brakteler: alttan üste sıralar, uçları dışa kıvrık
+  stemPaint(g, [cx - 6, CH, cx - 4, CH * 0.8, cx + 4, CH * 0.62, cx + 2, CH * 0.46], 8, rnd);
+  leaf(g, cx - 4, CH * 0.82, -2.55, 86, rnd);
+  leaf(g, cx + 2, CH * 0.72, -0.5, 80, rnd);
+  leaf(g, cx + 3, CH * 0.6, -2.95, 54, rnd);
+  // gonca (önden, hafif eğik): iki kat yeşil, uçları kıvrık brakteler; ortada sıkı kapalı sarı yapraklar
+  const bx = cx + 2, by = CH * 0.37, R = 72;
+  g.save();
+  g.translate(bx, by);
+  g.scale(1, 0.86);
   const GR: RGB[] = [GREEN, OLIVE, [86, 128, 58], [110, 140, 60], OLIVE_D];
-  for (let row = 0; row < 4; row++) {
-    const yy = by + R * (0.55 - row * 0.3);
-    const n = 7 - row;
+  for (let layer = 0; layer < 2; layer++) {
+    const n = 13;
     for (let i = 0; i < n; i++) {
-      const u = (i + 0.5) / n - 0.5;
-      const x = bx + u * R * (1.5 - row * 0.2);
-      const a = -Math.PI / 2 + u * (1.6 + row * 0.2);
-      petal(g, x, yy, a, R * (0.55 - row * 0.05), R * 0.3, jit(pick(GR, rnd), 12, rnd), rnd, u * 0.4);
+      const a = ((i + layer * 0.5) / n) * Math.PI * 2 + (rnd() - 0.5) * 0.12;
+      const len = R * (layer ? 0.62 : 0.86) * (0.9 + rnd() * 0.2);
+      petal(g, Math.cos(a) * R * 0.18, Math.sin(a) * R * 0.18, a, len, R * (layer ? 0.24 : 0.2), jit(pick(GR, rnd), 12, rnd), rnd, (rnd() < 0.5 ? -1 : 1) * (0.25 + rnd() * 0.15));
     }
   }
+  // sıkı kapalı sarı yapraklar: içe doğru eğilen kısa darbeler
+  for (let i = 0; i < 16; i++) {
+    const a = (i / 16) * Math.PI * 2;
+    petal(g, Math.cos(a) * R * 0.36, Math.sin(a) * R * 0.36, a + Math.PI + 0.5, R * 0.3, R * 0.16, jit(pick(PETAL_FRONT, rnd), 12, rnd), rnd, 0.2);
+  }
+  g.fillStyle = css([92, 120, 40]);
+  g.beginPath();
+  g.arc(0, 0, R * 0.12, 0, Math.PI * 2);
+  g.fill();
+  for (let i = 0; i < 18; i++) {
+    const a = rnd() * Math.PI * 2, rr = rnd() * R * 0.11;
+    brush(g, stroke(Math.cos(a) * rr, Math.sin(a) * rr, a + 1.8, 4, 0.3, 2), 2.6, jit(pick([OLIVE, [140, 150, 50], [176, 160, 50]] as RGB[], rnd), 10, rnd), 0.6);
+  }
+  g.restore();
 }
 
 function paintJack(g: Ctx, rnd: Rnd): void {
@@ -773,7 +790,7 @@ function paintBack(): HTMLCanvasElement {
   g.fillRect(0, H - bw, W, bw);
   g.fillRect(0, 0, bw, H);
   g.fillRect(W - bw, 0, bw, H);
-  for (let i = 0; i < 900; i++) {
+  for (let i = 0; i < 560; i++) {
     const side = Math.floor(rnd() * 4);
     let x = 0, y = 0;
     const d = rnd() * (bw - 5) + 2.5;
@@ -906,9 +923,9 @@ function drawFace(g: Ctx, w: number, h: number, suit: Suit, rank: number): void 
 
   const cx = w / 2, cy = h / 2;
   if (rank === 1) {
-    const d = 0.72 * w;
+    const d = 0.68 * w;
     g.drawImage(aceArt!, cx - d / 2, cy - d / 2, d, d);
-    const sz = 0.24 * w, sd = sz / 0.84;
+    const sz = 0.23 * w, sd = sz / 0.84;
     g.drawImage(suitArt[suit]!, cx - sd / 2, cy - sd / 2, sd, sd);
   } else if (rank >= 11) {
     const art = courtArt[rank];

@@ -737,7 +737,7 @@ function paintAce(): HTMLCanvasElement {
     outer.push(C + Math.cos(a) * ro, C + Math.sin(a) * ro);
     inner.push(C + Math.cos(a + 0.05) * ri, C + Math.sin(a + 0.05) * ri);
   }
-  paintWave(g, {outer, inner, foamFrom: 0.3, clawFrom: 0.42, clawN: 9, clawLen: R * 0.2, seed: 5, stripes: 8});
+  paintWave(g, {outer, inner, foamFrom: 0.3, clawFrom: 0.45, clawN: 10, clawLen: R * 0.27, seed: 5, stripes: 5});
   spray(g, rnd, 26, C - R * 0.9, C - R * 0.9, R * 1.8, R * 1.8, 1.8);
   // göbek: krem kâğıt disk (takım işareti buraya)
   const cd = new Path2D();
@@ -1173,9 +1173,9 @@ function drawFace(g: Ctx, w: number, h: number, suit: Suit, rank: number): void 
 
   const cx = w / 2, cy = h / 2;
   if (rank === 1) {
-    const d = 0.76 * w;
+    const d = 0.7 * w;
     g.drawImage(aceArt!, cx - d / 2, cy - d / 2, d, d);
-    const sz = 0.27 * w, sd = sz / 0.84;
+    const sz = 0.25 * w, sd = sz / 0.84;
     g.drawImage(suitArt[suit]!, cx - sd / 2, cy - sd / 2, sd, sd);
   } else if (rank >= 11) {
     const art = courtArt[rank];
