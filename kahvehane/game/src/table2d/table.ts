@@ -244,6 +244,27 @@ export class Table2D {
   setGlow(suit: Suit | null): void {
     const k = suit ?? 'N';
     for (const [s, g] of this.glows) g.classList.toggle('is-on', s === k);
+    this.ring.style.setProperty('--ring', suit ? SUIT_COLOR[suit] : 'rgba(160,180,255,.5)');
+  }
+
+  /** Yığından dışa saçılan kıvılcımlar (takım renginde). */
+  sparkle(color: string, n = 10, power = 1): void {
+    const {x, y} = this.L.pile, R = this.L.cw * (0.9 + 0.7 * power);
+    for (let i = 0; i < n; i++) {
+      const el = document.createElement('i');
+      el.className = 'ar__spark' + (i % 3 === 0 ? ' is-star' : '');
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      el.style.color = i % 4 === 0 ? '#fff4b0' : color;
+      this.fxEl.append(el);
+      const a = (i / n) * Math.PI * 2 + rnd(-0.3, 0.3), d = R * rnd(0.6, 1.15);
+      const dx = Math.cos(a) * d, dy = Math.sin(a) * d * 0.9;
+      el.animate([
+        {transform: 'translate3d(0,0,0) scale(.4)', opacity: 1},
+        {transform: `translate3d(${(dx * 0.75).toFixed(1)}px,${(dy * 0.75).toFixed(1)}px,0) scale(1.1) rotate(90deg)`, opacity: 1, offset: 0.55},
+        {transform: `translate3d(${dx.toFixed(1)}px,${(dy + 10).toFixed(1)}px,0) scale(.2) rotate(160deg)`, opacity: 0},
+      ], {duration: rnd(420, 640) * (0.8 + 0.4 * power), easing: 'cubic-bezier(.15,.75,.35,1)'}).finished.then(() => el.remove(), () => el.remove());
+    }
   }
 
   /** Yığına iniş halkası (takım renginde). */
@@ -273,6 +294,7 @@ export class Table2D {
     bl.animate([{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1)', opacity: 0.85, offset: 0.18}, {transform: 'scale(1.4)', opacity: 0}],
       {duration: 700, easing: 'ease-out'}).finished.then(() => bl.remove(), () => bl.remove());
     this.pulse('#ffe27a', jack ? 2.4 : 2);
+    this.sparkle('#ffd23f', jack ? 26 : 20, jack ? 2.4 : 2);
     setTimeout(() => this.pulse('#ffffff', jack ? 1.6 : 1.3), 120);
     this.shake(jack ? 1 : 0.75);
   }
@@ -481,6 +503,7 @@ export class Table2D {
     void c.el.animate([{transform: tf({...to, s: 1.07}, this.L.cw, this.L.ch)}, {transform: tf(to, this.L.cw, this.L.ch)}], {duration: 140, easing: 'ease-out'});
     this.snd.land(0.7);
     this.pulse(SUIT_COLOR[suitOf(card)], isJack(card) ? 1.3 : 0.85);
+    this.sparkle(SUIT_COLOR[suitOf(card)], isJack(card) ? 14 : 9, isJack(card) ? 1.3 : 0.8);
     this.setGlow(suitOf(card));
   }
 
@@ -504,6 +527,9 @@ export class Table2D {
     this.setGlow(null);
     await Promise.all(fl);
     for (const c of st) c.el.classList.add('is-flat');
+    // deste "yuttu" hissi: üst kart hafifçe zıplar
+    const top = st[st.length - 1];
+    if (top) void top.el.animate([{transform: tf({...top.pose, s: top.pose.s * 1.12}, this.L.cw, this.L.ch)}, {transform: tf(top.pose, this.L.cw, this.L.ch)}], {duration: 220, easing: 'cubic-bezier(.3,1.6,.5,1)'});
   }
 
   /** Oyuncu elindeki alan kartlar (yardım parıltısı için). */
