@@ -92,6 +92,20 @@ const L = {
   tap: 0.1343,
   win: 0.29,
   lose: 0.6932,
+  // oyun içi vurgular (HUD / efekt katmanı)
+  poke: 0.5,
+  tick: 0.16,
+  combo: 0.2,
+  valuable: 0.22,
+  sweep: 0.42,
+  swoosh: 0.34,
+  bonus: 0.24,
+  fwLaunch: 0.16,
+  fwBurst: 0.34,
+  star: 0.2,
+  chime: 0.2,
+  rain: 0.16,
+  drum: 0.42,
   bed: 0.03235,
   glass: 0.01868,
   stir: 0.03746,
@@ -995,6 +1009,272 @@ export class Sfx {
       v.tone('sine', f * 2.45, 0, 0.0005, 0.012, 0.3);
       v.tone('triangle', f * 0.5, 0, 0.001, 0.03, 0.3);
       v.burst('white', 0, 0.004, 1.6, [{type: 'bandpass', f: 1500, q: 1.4}], 0.0004);
+    });
+  }
+
+  // ───────────── oyun içi vurgular (rozet, sayaç, seri, pişti efektleri) ─────────────
+
+  /** Rozete dokunma: çizgi film "boing" (yaylı perde + yalpalama). */
+  poke(): void {
+    this.run(() => {
+      const r = this.rng;
+      const v = this.voice({wet: 0.08, pan: r.range(-0.3, 0.3), trim: L.poke});
+      if (!v) return;
+      const f0 = r.jit(300, 0.08);
+      const o = v.osc('triangle', f0, 0, 0.5);
+      o.frequency.setValueAtTime(v.F(f0), v.T(0));
+      o.frequency.exponentialRampToValueAtTime(v.F(f0 * 2.1), v.T(0.05));
+      o.frequency.exponentialRampToValueAtTime(v.F(f0 * 1.3), v.T(0.42));
+      const lfo = v.osc('sine', 17, 0, 0.5);
+      lfo.frequency.value = 17;
+      const depth = v.gain(0);
+      v.shape(depth.gain, [[0, 0], [0.05, 70], [0.42, 0]]);
+      lfo.connect(depth);
+      depth.connect(o.frequency);
+      v.hit(o, 0, 0.004, 0.13, 0.55);
+      v.burst('white', 0, 0.003, 0.8, [{type: 'bandpass', f: 2200, q: 1.2}], 0.0004);
+    });
+  }
+
+  /** Sayaç tıkı: i arttıkça perde yükselir (kart toplama, el sonu sayımı). */
+  tick(i = 0): void {
+    this.run(() => {
+      const r = this.rng;
+      const v = this.voice({wet: 0.05, pan: r.range(-0.15, 0.15), trim: L.tick});
+      if (!v) return;
+      const f = 820 * Math.pow(2, Math.min(24, Math.max(0, i)) / 24) * r.jit(1, 0.01);
+      v.tone('sine', f, 0, 0.0008, 0.035, 0.9);
+      v.tone('sine', f * 2.01, 0, 0.0006, 0.018, 0.3);
+      v.burst('white', 0, 0.0016, 0.7, [{type: 'highpass', f: 3000}], 0.0002);
+    });
+  }
+
+  /** Seri (x2, x3 …): n büyüdükçe uzayan, yükselen parlak arpej. */
+  combo(n = 2): void {
+    this.run(() => {
+      const v = this.voice({wet: 0.14, pan: 0, trim: L.combo});
+      if (!v) return;
+      const k = Math.max(2, Math.min(6, Math.round(n)));
+      const sc = [523.25, 659.25, 783.99, 1046.5, 1318.5, 1568.0, 2093.0, 2637.0];
+      const base = k - 2;
+      const steps = 2 + Math.min(4, k - 1);
+      for (let i = 0; i < steps; i++) {
+        const f = sc[Math.min(sc.length - 1, base + i)];
+        const t = i * 0.055;
+        const last = i === steps - 1;
+        v.tone('square', f, t, 0.002, last ? 0.16 : 0.05, last ? 0.2 : 0.14);
+        v.tone('sine', f * 2, t, 0.001, last ? 0.2 : 0.06, last ? 0.22 : 0.12);
+      }
+    });
+  }
+
+  /** Değerli kart (♦10, ♣2, As, Vale): çan "ding"; puan büyüdükçe çift nota ve parıltı. */
+  valuable(points = 1): void {
+    this.run(() => {
+      const r = this.rng;
+      const v = this.voice({wet: 0.25, pan: r.range(-0.2, 0.2), trim: L.valuable});
+      if (!v) return;
+      const f = points >= 3 ? 1568.0 : points === 2 ? 1318.5 : 1174.7;
+      const bell = v.gain(1);
+      bell.connect(v.dest);
+      v.wetSend(bell, 0.7);
+      v.tone('sine', f, 0, 0.0015, 0.32, 0.5, {dest: bell});
+      v.tone('sine', f * 2.756, 0, 0.001, 0.12, 0.16, {dest: bell});
+      v.tone('sine', f * 5.4, 0, 0.001, 0.05, 0.06, {dest: bell});
+      if (points >= 2) {
+        v.tone('sine', f * 1.5, 0.08, 0.0015, 0.36, 0.42, {dest: bell});
+        v.tone('sine', f * 1.5 * 2.756, 0.08, 0.001, 0.12, 0.12, {dest: bell});
+      }
+      if (points >= 3) v.tone('sine', f * 2, 0.16, 0.0015, 0.4, 0.34, {dest: bell});
+    });
+  }
+
+  /** "SÜPÜRDÜ!": masayı tarayan büyük hışırtı + alçak vuruş. */
+  sweep(): void {
+    this.run(() => {
+      const r = this.rng;
+      const v = this.voice({wet: 0.16, pan: 0, trim: L.sweep});
+      if (!v) return;
+      const dur = 0.5;
+      if (v.pan) v.shape(v.pan, [[0, -0.6], [dur, 0.6]]);
+      const n = v.noiseSrc('pink', 0, dur + 0.1);
+      const bp = v.filt('bandpass', 500, 0.9);
+      v.sweep(bp.frequency, 380, 4200, 0, dur);
+      const env = v.gain(0);
+      v.shape(env.gain, [[0, 0], [dur * 0.6, 1], [dur, 0]]);
+      n.connect(bp);
+      bp.connect(env);
+      env.connect(v.dest);
+      v.tone('sine', 120, dur * 0.85, 0.003, 0.12, 0.7, {f2: 55, bendTau: 0.05});
+      v.burst('white', dur * 0.85, 0.02, 1.4, [{type: 'bandpass', f: r.jit(1500, 0.1), q: 0.7}], 0.0005);
+    });
+  }
+
+  /** Kahramanın ekrana kayarak girişi: hızlı, alçalan hava sesi. */
+  swoosh(): void {
+    this.run(() => {
+      const r = this.rng;
+      const v = this.voice({wet: 0.1, pan: 0, trim: L.swoosh});
+      if (!v) return;
+      const dur = r.jit(0.32, 0.08);
+      if (v.pan) {
+        const d = r.sign();
+        v.shape(v.pan, [[0, -0.5 * d], [dur, 0.4 * d]]);
+      }
+      const n = v.noiseSrc('white', 0, dur + 0.05);
+      const bp = v.filt('bandpass', 3000, 1.1);
+      v.sweep(bp.frequency, 4200, 700, 0, dur);
+      const env = v.gain(0);
+      v.shape(env.gain, [[0, 0], [dur * 0.25, 1], [dur, 0]]);
+      n.connect(bp);
+      bp.connect(env);
+      env.connect(v.dest);
+    });
+  }
+
+  /** Çoğunluk +3 / el sonu ödülü: parlak çan + jeton. */
+  bonus(): void {
+    this.run(() => {
+      const v = this.voice({wet: 0.22, pan: 0, trim: L.bonus});
+      if (!v) return;
+      const bell = v.gain(1);
+      bell.connect(v.dest);
+      v.wetSend(bell, 0.8);
+      const seq = [1046.5, 1318.5, 1568.0, 2093.0];
+      seq.forEach((f, i) => {
+        v.tone('sine', f, i * 0.06, 0.0015, 0.3, 0.32, {dest: bell});
+        v.tone('sine', f * 2.756, i * 0.06, 0.001, 0.1, 0.08, {dest: bell});
+      });
+      v.tone('triangle', 523.25, 0, 0.004, 0.35, 0.25);
+    });
+  }
+
+  /** Havai fişek kalkışı: yükselen ıslık + barut tıslaması. */
+  fireworkLaunch(): void {
+    this.run(() => {
+      const r = this.rng;
+      const v = this.voice({wet: 0.18, pan: r.range(-0.5, 0.5), trim: L.fwLaunch});
+      if (!v) return;
+      const dur = r.jit(0.55, 0.1);
+      const f0 = r.jit(700, 0.1);
+      const o = v.osc('sine', f0, 0, dur + 0.05);
+      o.frequency.setValueAtTime(v.F(f0), v.T(0));
+      o.frequency.exponentialRampToValueAtTime(v.F(f0 * 2.6), v.T(dur));
+      const env = v.gain(0);
+      v.shape(env.gain, [[0, 0], [0.04, 0.35], [dur * 0.8, 0.5], [dur, 0]]);
+      o.connect(env);
+      env.connect(v.dest);
+      const hs = v.noiseSrc('white', 0, dur + 0.05);
+      const hp = v.filt('highpass', 5200, 0.7);
+      const he = v.gain(0);
+      v.shape(he.gain, [[0, 0], [0.03, 0.9], [dur, 0.1]]);
+      hs.connect(hp);
+      hp.connect(he);
+      he.connect(v.dest);
+    });
+  }
+
+  /** Havai fişek patlaması: gümleme + parlak çatırtı kuyruğu. size 1 = büyük. */
+  fireworkBurst(size = 1): void {
+    this.run(() => {
+      const r = this.rng;
+      const k = clamp01(size);
+      const v = this.voice({wet: 0.35, pan: r.range(-0.45, 0.45), trim: L.fwBurst * (0.6 + 0.4 * k)});
+      if (!v) return;
+      v.tone('sine', 110, 0, 0.002, 0.16, 0.9, {f2: 38, bendTau: 0.06});
+      const boom = v.burst('brown', 0, 0.3, 1.8, [{type: 'lowpass', f: 260}], 0.003);
+      v.wetSend(boom, 0.7);
+      v.burst('white', 0, 0.03, 2.2, [{type: 'bandpass', f: 1800, q: 0.6}], 0.0004);
+      const evs: ClickEv[] = [];
+      let t = 0.1;
+      const end = 0.55 + 0.45 * k;
+      while (t < end) {
+        evs.push({dt: t, amp: r.range(0.3, 1) * (1 - (t / end) * 0.6), tau: r.range(0.0008, 0.002), f: r.range(3000, 7500)});
+        t += r.range(0.006, 0.03);
+      }
+      v.clickTrain(evs, [{filters: [{type: 'highpass', f: 2500}, {type: 'bandpass', f: 5000, q: 0.8}], level: 1.3, vary: true}]);
+    });
+  }
+
+  /** Kayan yıldız: parlak hışırtı + alçalan ışıltı. */
+  shootingStar(): void {
+    this.run(() => {
+      const r = this.rng;
+      const v = this.voice({wet: 0.3, pan: r.range(-0.6, 0.6), trim: L.star});
+      if (!v) return;
+      const dur = r.jit(0.45, 0.1);
+      const n = v.noiseSrc('white', 0, dur + 0.05);
+      const bp = v.filt('bandpass', 6000, 2.2);
+      v.sweep(bp.frequency, 8000, 2600, 0, dur);
+      const env = v.gain(0);
+      v.shape(env.gain, [[0, 0], [0.03, 0.9], [dur, 0]]);
+      n.connect(bp);
+      bp.connect(env);
+      env.connect(v.dest);
+      const f = r.range(2200, 2800);
+      v.tone('sine', f * r.jit(1, 0.05), 0, 0.002, dur * 0.5, 0.18, {f2: f * 0.5, bendTau: dur * 0.6});
+    });
+  }
+
+  /** Yıldız çanı: pentatonik dizide i. nota (yıldız yağmuru boyunca yükselir). */
+  starChime(i = 0): void {
+    this.run(() => {
+      const r = this.rng;
+      const v = this.voice({wet: 0.4, pan: r.range(-0.5, 0.5), trim: L.chime});
+      if (!v) return;
+      const sc = [1046.5, 1174.7, 1318.5, 1568.0, 1760.0, 2093.0, 2349.3, 2637.0, 3136.0];
+      const f = sc[((i % sc.length) + sc.length) % sc.length];
+      const bell = v.gain(1);
+      bell.connect(v.dest);
+      v.wetSend(bell, 0.9);
+      v.tone('sine', f, 0, 0.0015, 0.26, 0.42, {dest: bell});
+      v.tone('sine', f * 1.0035, 0, 0.0015, 0.3, 0.22, {dest: bell});
+      v.tone('sine', f * 2.756, 0, 0.001, 0.08, 0.12, {dest: bell});
+    });
+  }
+
+  /** Altın yağmuru: dur sn boyunca n sikke tıngırtısı (bazıları sekerek iki kez). */
+  coinRain(n = 16, dur = 1.2): void {
+    this.run(() => {
+      const r = this.rng;
+      const cnt = clamp(Math.round(n), 1, 24);
+      const v = this.voice({wet: 0.2, pan: 0, trim: L.rain});
+      if (!v) return;
+      for (let i = 0; i < cnt; i++) {
+        const t = 0.05 + (dur * (i + r.range(0, 0.9))) / cnt;
+        const f = r.range(2400, 3400);
+        const a = r.range(0.55, 1);
+        v.burst('white', t, 0.0012, 0.8 * a, [{type: 'highpass', f: 4200}], 0.0002);
+        v.tone('sine', f, t, 0.0006, 0.07, 0.5 * a);
+        v.tone('sine', f * 1.51, t, 0.0006, 0.05, 0.3 * a);
+        if (r.chance(0.35)) v.tone('sine', f * 1.02, t + r.range(0.06, 0.1), 0.0006, 0.05, 0.28 * a);
+      }
+    });
+  }
+
+  /** "Son el!": trampet tremolosu (kreşendo) + zil ve davul vuruşu (~dur sn). */
+  drumRoll(dur = 1.1): void {
+    this.run(() => {
+      const r = this.rng;
+      const v = this.voice({wet: 0.2, pan: 0, trim: L.drum});
+      if (!v) return;
+      const D = clamp(dur, 0.5, 2);
+      const evs: ClickEv[] = [];
+      let t = 0;
+      while (t < D) {
+        const u = t / D;
+        evs.push({dt: t, amp: (0.25 + 0.75 * u) * r.range(0.75, 1), tau: r.range(0.012, 0.02), f: r.range(1500, 2600)});
+        t += 1 / (24 + 10 * u) * r.range(0.85, 1.15);
+      }
+      v.clickTrain(evs, [
+        {filters: [{type: 'bandpass', f: 2000, q: 0.6}], level: 1.1, vary: true},
+        {filters: [{type: 'bandpass', f: 220, q: 1.2}], level: 0.8},
+      ]);
+      // kapanış: davul + zil
+      v.tone('sine', 95, D, 0.003, 0.2, 0.9, {f2: 52, bendTau: 0.08});
+      v.burst('white', D, 0.03, 1.6, [{type: 'bandpass', f: 1800, q: 0.6}], 0.0005);
+      const cym = v.burst('white', D, 0.35, 0.55, [{type: 'highpass', f: 5500}], 0.002);
+      v.wetSend(cym, 0.5);
     });
   }
 

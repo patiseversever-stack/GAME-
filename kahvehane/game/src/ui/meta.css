@@ -1,0 +1,121 @@
+/* ==========================================================================
+   Meta ekranların ortak parçaları: karakter avatarı, canlı portre, vitrin, alt pencere,
+   dört renk perde, nadirlik rozeti, yıldızlar, ışık hüzmesi, damga.
+   Kural: animasyon yalnız transform/opacity; sonsuz döngüler yalnız görünür, küçük öğelerde.
+   ========================================================================== */
+
+/* ---------- karakter avatarı (çerçeve: themes/frames.css → .kh-frame--<id>) ---------- */
+.kh-ava { --as: calc(var(--u) * 3); --rw: calc(var(--as) * .075); position: relative; flex: none; display: block; width: var(--as); height: var(--as); border-radius: 50%;
+  background: var(--ring-edge); box-shadow: var(--ring-shadow); }
+.kh-ava__clip { position: absolute; inset: var(--rw); border-radius: 50%; overflow: hidden;
+  background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--c, #3d93ff) 55%, #fff) 0%, var(--c, #3d93ff) 48%, color-mix(in srgb, var(--c, #3d93ff) 55%, #0a1033) 100%);
+  box-shadow: 0 0 0 2px var(--navy), inset 0 3px 6px rgba(0, 0, 20, .35); }
+.kh-ava__clip::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: radial-gradient(ellipse 70% 40% at 50% 8%, rgba(255, 255, 255, .35), rgba(255, 255, 255, 0) 70%); }
+.kh-ava__img { position: absolute; left: -28%; top: -3%; width: 156%; height: auto; max-width: none; }
+.kh-ava[data-char=riza] .kh-ava__img { top: 2%; }
+.kh-ava[data-char=cem] .kh-ava__img { left: -30%; top: 0%; }
+.kh-ava[data-char=dursun] .kh-ava__img { top: 1%; }
+.kh-ava[data-char=defne] .kh-ava__img { left: -30%; top: -2%; }
+.kh-ava.is-locked .kh-ava__img { filter: brightness(0) opacity(.55); }
+.kh-ava.is-locked .kh-ava__clip { background: radial-gradient(circle at 50% 30%, #5162c4, #27348e 60%, #141d66); }
+
+/* ---------- canlı portre ---------- */
+.kh-pt { position: relative; pointer-events: none; }
+.kh-pt__in { position: absolute; inset: 0; transform-origin: 50% 100%; will-change: transform; }
+.kh-pt__img { position: absolute; left: 0; bottom: 0; width: 100%; height: auto; max-width: none; }
+.kh-pt__img.is-over { opacity: 0; }
+.kh-pt.is-breathing .kh-pt__in { animation: kh-breath2 3.8s ease-in-out infinite; }
+@keyframes kh-breath2 { 50% { transform: translateY(-.7%) scale(1.012, 1.016); } }
+
+/* ---------- nadirlik rozeti, jeton, yıldızlar ---------- */
+.kh-rar { display: inline-flex; align-items: center; padding: .32em .7em .26em; border-radius: var(--r-pill); color: #fff; white-space: nowrap;
+  font-family: var(--font-display); font-size: calc(var(--u) * .72); letter-spacing: .06em; text-transform: uppercase; line-height: 1; text-shadow: var(--outline-thin);
+  background: var(--rar-common); box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 var(--rar-common-dk), inset 0 1.5px 0 rgba(255, 255, 255, .6); }
+.kh-rar.is-rare { background: var(--rar-rare); box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 var(--rar-rare-dk), inset 0 1.5px 0 rgba(255, 255, 255, .6); }
+.kh-rar.is-epic { background: var(--rar-epic); box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 var(--rar-epic-dk), inset 0 1.5px 0 rgba(255, 255, 255, .6); }
+.kh-rar.is-legendary { background: var(--rar-legendary); box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 var(--rar-legendary-dk), inset 0 1.5px 0 rgba(255, 255, 255, .8); }
+.kh-coins { display: inline-flex; align-items: center; gap: .25em; white-space: nowrap; }
+.kh-coins img { width: 1.35em; height: 1.35em; object-fit: contain; filter: drop-shadow(0 1.5px 0 rgba(10, 16, 51, .8)); }
+.kh-coins b { font-family: var(--font-display); font-weight: var(--w-display); text-shadow: var(--outline-thin); }
+.kh-stars { display: inline-flex; gap: .12em; }
+.kh-stars i { width: 1em; height: 1em; background: rgba(150, 165, 255, .35);
+  clip-path: polygon(50% 0, 63% 33%, 98% 36%, 71% 58%, 80% 94%, 50% 75%, 20% 94%, 29% 58%, 2% 36%, 37% 33%); }
+.kh-stars i.on { background: linear-gradient(180deg, #fff27a, #ffd23f 45%, #ff9f1a); }
+
+/* ---------- dönen ışık hüzmesi ---------- */
+.kh-rays { position: absolute; left: 50%; top: 50%; width: 200%; aspect-ratio: 1; margin: -100% 0 0 -100%; border-radius: 50%; pointer-events: none;
+  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .5) 0deg 8deg, rgba(255, 255, 255, 0) 8deg 22deg);
+  -webkit-mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, .55) 26%, transparent 56%); mask: radial-gradient(circle, #000 0%, rgba(0, 0, 0, .55) 26%, transparent 56%);
+  animation: kh-spin 16s linear infinite; will-change: transform; }
+.kh-rays.is-gold { background: repeating-conic-gradient(from 0deg, rgba(255, 226, 120, .7) 0deg 8deg, rgba(255, 210, 63, 0) 8deg 22deg); }
+.kh-rays.is-suits { background: var(--stamp-rays); }
+
+/* ---------- vitrin ---------- */
+.kh-car { position: relative; perspective: 1100px; touch-action: pan-y; }
+.kh-car__item { position: absolute; left: 50%; top: 0; will-change: transform, opacity; transform-style: flat; }
+
+/* ---------- alt pencere ---------- */
+.kh-sheet { position: absolute; inset: 0; z-index: 35; pointer-events: auto; display: flex; flex-direction: column; justify-content: flex-end; }
+.kh-sheet__scrim { position: absolute; inset: 0; background: var(--scrim); }
+.kh-sheet__panel { position: relative; width: 100%; max-width: calc(var(--u) * 28); margin: 0 auto; max-height: 92%; overflow: auto; overscroll-behavior: contain; touch-action: pan-y;
+  border-radius: calc(var(--r-lg) * 1.4) calc(var(--r-lg) * 1.4) 0 0; border-bottom: 0; scrollbar-width: none;
+  padding: calc(var(--u) * 1.4) calc(var(--u) * 1.1) max(calc(var(--u) * 1.2), env(safe-area-inset-bottom)); will-change: transform; }
+.kh-sheet__panel::-webkit-scrollbar { display: none; }
+.kh-sheet__grip { position: absolute; left: 50%; top: calc(var(--u) * .5); width: calc(var(--u) * 3.2); height: 5px; margin-left: calc(var(--u) * -1.6); border-radius: 3px;
+  background: rgba(200, 210, 255, .35); }
+.kh-sheet__x { position: absolute; top: calc(var(--u) * .7); right: calc(var(--u) * .7); z-index: 3; width: calc(var(--tap) - 6px); height: calc(var(--tap) - 6px);
+  background: var(--btn4-fill); }
+.kh-sheet__x .kh-i { stroke-width: 3.2; }
+
+/* ---------- dört renk perde ---------- */
+.kh-wipe { position: fixed; inset: 0; z-index: 95; pointer-events: auto; overflow: hidden; }
+.kh-wipe__band { position: absolute; top: -12%; bottom: -12%; left: calc(-14% + var(--i) * 27%); width: 36%; transform: translateX(-130vw) skewX(-14deg); overflow: hidden;
+  box-shadow: -6px 0 0 var(--navy), 6px 0 0 var(--navy); will-change: transform; }
+.kh-wipe__band.is-h { background: linear-gradient(170deg, #ff7a8e, #ff2e4d 45%, #b3001f); }
+.kh-wipe__band.is-d { background: linear-gradient(170deg, #ffe07a, #ffb400 45%, #c46a00); }
+.kh-wipe__band.is-c { background: linear-gradient(170deg, #7dffa8, #16c45b 45%, #087a35); }
+.kh-wipe__band.is-s { background: linear-gradient(170deg, #7fc0ff, #1f7bff 45%, #0a3fb0); }
+.kh-wipe__band span { position: absolute; left: 50%; top: 50%; width: 70%; aspect-ratio: 1; transform: translate(-50%, -50%) skewX(14deg); color: #fff; opacity: .16; }
+.kh-wipe__band span .kh-suit { width: 100%; height: 100%; color: inherit; }
+.kh-wipe__emb { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 7); height: calc(var(--u) * 7); margin: calc(var(--u) * -3.5) 0 0 calc(var(--u) * -3.5);
+  display: grid; grid-template-columns: 1fr 1fr; gap: 6%; padding: 10%; border-radius: 50%; opacity: 0;
+  background: #fff; box-shadow: 0 0 0 4px var(--navy), 0 8px 0 var(--navy), 0 18px 30px rgba(2, 4, 24, .45); }
+.kh-wipe__emb .kh-suit { width: 100%; height: 100%; filter: drop-shadow(0 2px 0 var(--navy)); }
+
+/* ---------- damga ---------- */
+.kh-stampw { position: absolute; z-index: 75; pointer-events: none; font-size: calc(var(--u) * 3.6); white-space: nowrap; will-change: transform, opacity; }
+.kh-stampw .kh-title { filter: drop-shadow(0 8px 14px rgba(2, 4, 24, .5)); }
+
+/* ---------- konuşma balonu (meta ekranlar; kuyruk aşağıda) ---------- */
+.kh-say { position: absolute; z-index: 6; max-width: calc(var(--u) * 17); padding: .65em .95em .75em; border-radius: calc(var(--u) * 1.15); border: 2.5px solid var(--bubble-edge);
+  background: var(--bubble-fill); color: var(--bubble-fg); box-shadow: var(--bubble-shadow); font-family: var(--font-bubble); font-weight: var(--w-bubble);
+  font-size: calc(var(--u) * 1.05); line-height: 1.28; text-align: left; pointer-events: none; }
+.kh-say small { display: block; margin-bottom: .1em; font-size: .74em; color: var(--suit-s-dk); letter-spacing: .05em; text-transform: uppercase; }
+.kh-say::before, .kh-say::after { content: ''; position: absolute; border-style: solid; border-color: transparent; }
+.kh-say::before { left: var(--tail, 28%); bottom: -16px; border-width: 16px 11px 0 11px; border-top-color: var(--bubble-edge); }
+.kh-say::after { left: calc(var(--tail, 28%) + 3.5px); bottom: -10.5px; border-width: 11px 7.5px 0 7.5px; border-top-color: var(--bubble-fill); }
+.kh-say.is-up::before { bottom: auto; top: -16px; border-width: 0 11px 16px 11px; border-top-color: transparent; border-bottom-color: var(--bubble-edge); }
+.kh-say.is-up::after { bottom: auto; top: -10.5px; border-width: 0 7.5px 11px 7.5px; border-top-color: transparent; border-bottom-color: var(--bubble-fill); }
+.kh-say__t { min-height: 1.28em; }
+
+/* ---------- "Yakında" kurdelesi (kart köşesi) ---------- */
+.kh-ribbon { position: absolute; top: calc(var(--u) * .9); right: calc(var(--u) * -2.1); z-index: 3; width: calc(var(--u) * 8); padding: .3em 0 .25em; text-align: center; transform: rotate(38deg);
+  background: var(--tag-fill); color: #fff; font-family: var(--font-display); font-size: calc(var(--u) * .7); letter-spacing: .08em; text-transform: uppercase; line-height: 1;
+  text-shadow: var(--outline-thin); box-shadow: 0 0 0 2px var(--navy), 0 3px 0 var(--navy), inset 0 1.5px 0 rgba(255, 255, 255, .5); }
+
+/* ---------- kilit diski ---------- */
+.kh-lockb { display: grid; place-items: center; width: calc(var(--u) * 2); height: calc(var(--u) * 2); border-radius: 50%; color: #fff; background: var(--btn4-fill);
+  box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 #18207a, inset 0 1.5px 0 rgba(255, 255, 255, .35); }
+.kh-lockb .kh-i { width: 52%; height: 52%; }
+
+/* sayfa kaydırma alanı (dikey) */
+.kh-scroll { overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.kh-scroll::-webkit-scrollbar { display: none; }
+
+@media (prefers-reduced-motion: reduce) { .kh-rays, .kh-pt.is-breathing .kh-pt__in { animation: none; } }
+
+/* bildirim noktası (günlük ödül hazır) */
+.kh-dot { position: absolute; top: calc(var(--u) * -.3); right: calc(var(--u) * -.3); z-index: 2; width: calc(var(--u) * 1.05); height: calc(var(--u) * 1.05); border-radius: 50%;
+  background: var(--dot-fill); box-shadow: 0 0 0 2px var(--dot-ring), inset 0 1.5px 0 rgba(255, 255, 255, .6); animation: kh-dotpulse 1.8s ease-in-out infinite; }
+@keyframes kh-dotpulse { 50% { transform: scale(1.22); } }

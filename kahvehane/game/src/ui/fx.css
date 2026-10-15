@@ -1,7 +1,10 @@
-/* Pişti Arena — ekran efektleri (parçacık, damga, afiş, puan). Yalnız transform/opacity animasyonu. */
-/* =================== EFEKTLER =================== */
-.kh-fx { position: absolute; inset: 0; z-index: 45; pointer-events: none; overflow: hidden; }
+/* Pişti Arena — ekran efektleri (parçacık, damga, afiş, puan, seri, pişti efektleri). Yalnız transform/opacity animasyonu;
+   gölge/parıltı sabit (bir kez boyanır), hareket WAAPI ile bileşimcide. */
+.kh-fx { position: absolute; inset: 0; z-index: 45; pointer-events: none; overflow: hidden; perspective: 900px; }
 .kh-flash { position: absolute; inset: 0; background: var(--flash); opacity: 0; will-change: opacity; }
+/* yıldız yağmurunda ışık gece mavisine kısılır */
+.kh-night { position: absolute; inset: 0; z-index: 0; opacity: 0; will-change: opacity; pointer-events: none;
+  background: radial-gradient(120% 80% at 70% 0%, rgba(30, 40, 120, .2) 0%, rgba(6, 10, 40, .55) 60%, rgba(4, 6, 26, .72) 100%); }
 .kh-p { position: absolute; left: 0; top: 0; display: none; will-change: transform, opacity; }
 .kh-p--conf { z-index: 3; }   /* konfeti damganın önünde, jeton arkasında (yazı okunur kalsın) */
 .kh-p--coin { width: calc(var(--u) * 1.7); height: calc(var(--u) * 1.7); margin: calc(var(--u) * -.85) 0 0 calc(var(--u) * -.85); border-radius: 50%;
@@ -12,7 +15,8 @@
 .kh-p--suit { width: calc(var(--u) * 1.1); height: calc(var(--u) * 1.1); margin: calc(var(--u) * -.55) 0 0 calc(var(--u) * -.55); box-shadow: none; background: none; border-radius: 0; }
 .kh-p--suit .kh-suit { width: 100%; height: 100%; }
 
-.kh-stamp { position: absolute; inset: 0; z-index: 2; display: grid; place-items: center; padding-bottom: var(--kh-stamp-lift, 6vh); visibility: hidden; }
+/* PİŞTİ damgası: top = dikey merkez (JS) */
+.kh-stamp { position: absolute; left: 0; right: 0; top: 47%; height: 0; z-index: 2; display: flex; align-items: center; justify-content: center; visibility: hidden; }
 .kh-stamp.is-on { visibility: visible; }
 .kh-stamp__in { position: relative; display: flex; flex-direction: column; align-items: center; will-change: transform, opacity; }
 .kh-stamp__glow { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 26); height: calc(var(--u) * 26); margin: calc(var(--u) * -13) 0 0 calc(var(--u) * -13);
@@ -21,7 +25,9 @@
   border-radius: 50%; background: var(--stamp-rays); -webkit-mask: var(--stamp-rays-mask); mask: var(--stamp-rays-mask); will-change: transform, opacity; }
 .kh-stamp__wheel { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 21); height: calc(var(--u) * 21); margin: calc(var(--u) * -10.5) 0 0 calc(var(--u) * -10.5);
   border-radius: 50%; background: var(--wheel); -webkit-mask: var(--stamp-wheel-mask); mask: var(--stamp-wheel-mask); will-change: transform, opacity; }
+.kh-stamp.is-bare .kh-stamp__rays, .kh-stamp.is-bare .kh-stamp__wheel { display: none; }
 .kh-stamp__word { position: relative; display: flex; flex-direction: column; align-items: center; font-size: calc(var(--u) * 5.6); line-height: 1; }
+.kh-stamp.is-jack .kh-stamp__word { font-size: calc(var(--u) * 6.2); }
 .kh-stamp__word .kh-g3.is-sm { font-size: .5em; margin-bottom: -.06em; }
 .kh-stamp__word img { width: calc(var(--u) * 19); height: auto; }
 .kh-stamp__pts { position: relative; margin-top: calc(var(--u) * .1); font-size: calc(var(--u) * 3.6); will-change: transform; }
@@ -36,4 +42,54 @@
 .kh-banner__s { position: relative; margin-top: calc(var(--u) * .05); color: #fff; font-size: calc(var(--u) * .98); font-weight: var(--w-black); white-space: nowrap; text-shadow: var(--outline-thin); }
 
 .kh-pop { position: absolute; z-index: 3; left: 0; top: 0; display: none; font-size: calc(var(--u) * 2.3); will-change: transform, opacity; }
+.kh-pop.is-big { font-size: calc(var(--u) * 3); }
 
+/* vurgu yazısı (SÜPÜRDÜ!) */
+.kh-shout { position: absolute; z-index: 4; left: 0; top: 0; display: none; }
+.kh-shout__in { position: relative; font-size: calc(var(--u) * 3.3); will-change: transform, opacity; }
+.kh-shout__glow { position: absolute; left: 50%; top: 50%; width: 170%; height: 240%; transform: translate(-50%, -50%); border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(255, 230, 120, .55), rgba(255, 190, 60, .18) 55%, rgba(255, 190, 60, 0)); }
+
+/* seri rozeti: alevli hap */
+.kh-combo { position: absolute; z-index: 4; left: 0; top: 0; display: none; }
+.kh-combo__in { position: relative; display: flex; align-items: center; gap: calc(var(--u) * .35); padding: calc(var(--u) * .3) calc(var(--u) * .75) calc(var(--u) * .35) calc(var(--u) * .65);
+  border-radius: var(--r-pill); background: linear-gradient(180deg, #ff8a3d 0%, #ff4d2e 50%, #d9123a 100%); will-change: transform, opacity;
+  box-shadow: 0 0 0 2.5px var(--navy), inset 0 -3px 0 #a8001e, inset 0 2px 0 rgba(255, 255, 255, .55), 0 4px 0 var(--navy), 0 0 22px rgba(255, 120, 40, .6); }
+.kh-combo__fire { position: absolute; left: 50%; bottom: 55%; width: 120%; height: 150%; transform: translateX(-50%); z-index: -1; border-radius: 50% 50% 40% 40%;
+  background: radial-gradient(60% 70% at 50% 100%, rgba(255, 220, 90, .95) 0%, rgba(255, 120, 30, .7) 40%, rgba(255, 60, 30, 0) 75%); opacity: .0; }
+.kh-combo.is-l3 .kh-combo__fire, .kh-combo.is-l4 .kh-combo__fire { opacity: 1; animation: kh-flame .35s ease-in-out infinite alternate; }
+@keyframes kh-flame { from { transform: translateX(-50%) scale(1, .92); } to { transform: translateX(-50%) scale(1.06, 1.08); } }
+.kh-combo__t { position: relative; color: #fff; font-family: var(--font-display); font-size: calc(var(--u) * 1.15); letter-spacing: .04em; text-shadow: var(--outline-thin); }
+.kh-combo__n { position: relative; display: block; font-size: calc(var(--u) * 1.9); line-height: 1; }
+.kh-combo.is-me .kh-combo__in { font-size: 1.12em; }
+.kh-combo.is-l3 .kh-combo__in { transform: scale(1.12); }
+.kh-combo.is-l4 .kh-combo__in { background: linear-gradient(180deg, #fff27a 0%, #ffb21a 45%, #ff6a1a 100%); }
+
+/* ─── havai fişek ─── */
+.kh-rocket { position: absolute; left: 0; top: 0; display: none; width: 4px; height: calc(var(--u) * 3.4); margin: 0 0 0 -2px; transform-origin: 50% 0; will-change: transform, opacity;
+  background: linear-gradient(180deg, #fffbe0 0%, currentColor 25%, rgba(255, 255, 255, 0) 100%); border-radius: 2px; }
+.kh-rocket b { position: absolute; left: 50%; top: 0; width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: #fff; box-shadow: 0 0 10px 4px currentColor; }
+.kh-fwp { position: absolute; left: 0; top: 0; display: none; width: calc(var(--u) * 1.4); height: 4.5px; margin: -2.25px 0 0 0; border-radius: 3px; transform-origin: 0 50%; will-change: transform, opacity;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, currentColor 45%, #ffffff 100%); box-shadow: 0 0 6px 1px currentColor; }
+.kh-fwflash { position: absolute; left: 0; top: 0; display: none; width: calc(var(--u) * 9); height: calc(var(--u) * 9); margin: calc(var(--u) * -4.5) 0 0 calc(var(--u) * -4.5); border-radius: 50%;
+  background: radial-gradient(circle, #ffffff 0%, currentColor 18%, rgba(255, 255, 255, 0) 62%); opacity: 0; will-change: transform, opacity; }
+.kh-fwflash.is-star { border-radius: 0; background: radial-gradient(circle, #ffffff 0%, currentColor 10%, rgba(255, 255, 255, 0) 30%),
+  conic-gradient(from 0deg, transparent 0 40deg, currentColor 45deg, transparent 50deg 130deg, currentColor 135deg, transparent 140deg 220deg, currentColor 225deg, transparent 230deg 310deg, currentColor 315deg, transparent 320deg);
+  -webkit-mask: radial-gradient(circle, #000 0%, #000 20%, transparent 62%); mask: radial-gradient(circle, #000 0%, #000 20%, transparent 62%); }
+.kh-glit { position: absolute; left: 0; top: 0; display: none; width: 12px; height: 12px; margin: -6px 0 0 -6px; background: #fffbe0; opacity: 0; will-change: transform, opacity;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+
+/* ─── kayan yıldız: baş (dört kollu parıltı) + uzun ışık izi; kap hareket yönüne döner ─── */
+.kh-shoot { position: absolute; left: 0; top: 0; display: none; width: 0; height: 0; transform-origin: 0 0; will-change: transform, opacity; }
+.kh-shoot s { position: absolute; right: 0; top: -2px; width: calc(var(--u) * 14); height: 4px; border-radius: 4px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, currentColor 70%, #ffffff 100%); box-shadow: 0 0 8px 1px currentColor; transform-origin: 100% 50%; }
+.kh-shoot b { position: absolute; left: -9px; top: -9px; width: 18px; height: 18px; background: #ffffff;
+  clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
+.kh-shoot b::after { content: ''; position: absolute; inset: 30%; border-radius: 50%; background: currentColor; }
+.kh-shoot.is-big s { width: calc(var(--u) * 21); height: 6px; top: -3px; }
+.kh-shoot.is-big b { left: -13px; top: -13px; width: 26px; height: 26px; }
+
+/* ─── vale: dört renk ışık hüzmesi ─── */
+.kh-beam4 { position: absolute; left: 0; top: 0; display: none; height: calc(var(--u) * 3.2); margin-top: calc(var(--u) * -1.6); transform-origin: 50% 50%; will-change: transform, opacity; opacity: 0;
+  -webkit-mask: linear-gradient(180deg, transparent, #000 45%, #000 55%, transparent); mask: linear-gradient(180deg, transparent, #000 45%, #000 55%, transparent); }
+@media (prefers-reduced-motion: reduce) { .kh-combo__fire { animation: none !important; } }

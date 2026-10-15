@@ -162,3 +162,92 @@ export function enableActiveStates(): void {
   activeHack = true;
   document.addEventListener('touchstart', () => {}, {passive: true});
 }
+
+export const clamp = (v: number, a: number, b: number): number => (v < a ? a : v > b ? b : v);
+export const lerp = (a: number, b: number, k: number): number => a + (b - a) * k;
+export const rnd = <T>(list: readonly T[]): T => list[Math.floor(Math.random() * list.length)];
+export const sleep = (ms: number): Promise<void> => new Promise(r => window.setTimeout(r, ANIM ? ms : 0));
+
+/** Görselleri önceden indir (poz değişiminde boş kare görünmesin). */
+const preloaded = new Set<string>();
+export function preload(urls: string[]): void {
+  for (const u of urls) {
+    if (!u || preloaded.has(u)) continue;
+    preloaded.add(u);
+    const i = new Image();
+    i.decoding = 'async';
+    i.src = u;
+  }
+}
+
+/**
+ * Buton fiziği: bırakınca yay gibi geri sıçrar (CSS :active basar, bu yaylı çıkışı oynatır).
+ * .kh-btn ve [data-spring] öğelerine tek dinleyiciyle uygulanır. Konumu transform ile verilen öğelere uygulanmaz.
+ */
+let springOn = false;
+export function enableSpringPress(): void {
+  if (springOn || !ANIM) return;
+  springOn = true;
+  document.addEventListener(
+    'pointerup',
+    e => {
+      const b = (e.target as Element | null)?.closest?.<HTMLElement>('.kh-btn, [data-spring]');
+      if (!b || (b as HTMLButtonElement).disabled) return;
+      const down = b.classList.contains('kh-btn') ? 'translateY(4px) scale(.98)' : 'scale(.92)';
+      b.animate([{transform: down}, {transform: 'translateY(-2px) scale(1.04)', offset: 0.45}, {transform: 'translateY(0) scale(.99)', offset: 0.75}, {transform: 'none'}], {
+        duration: 340,
+        easing: 'ease-out',
+      });
+    },
+    {passive: true},
+  );
+}
+
+/** Kısa sallanma (yetersiz jeton, kilitli öğe). */
+export function shake(el: Element, k = 1): Animation {
+  const d = 7 * k;
+  return play(el, [{transform: 'none'}, {transform: `translateX(${-d}px) rotate(-1.5deg)`}, {transform: `translateX(${d}px) rotate(1.5deg)`}, {transform: `translateX(${-d * 0.6}px)`}, {transform: `translateX(${d * 0.4}px)`}, {transform: 'none'}], {duration: 380, easing: 'ease-out'});
+}
+
+/** Küçük zıplama (sayaç arttı, seçildi). */
+export function bump(el: Element, s = 1.12): Animation {
+  return play(el, [{transform: 'scale(1)'}, {transform: `scale(${s})`, offset: 0.35}, {transform: 'scale(1)'}], {duration: 300, easing: EASE.out});
+}
+
+/**
+ * Daktilo yazısı: harf harf yazar. `finish()` metni anında tamamlar; `done` bitince çözülür.
+ * Noktalama işaretlerinde kısa duraksar (konuşma ritmi).
+ */
+export function typewriter(scope: Scope, el: HTMLElement, text: string, cps = 38, onChar?: (i: number) => void): {done: Promise<void>; finish(): void; typing(): boolean} {
+  let i = 0, finished = false, resolve!: () => void;
+  const done = new Promise<void>(r => (resolve = r));
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    el.textContent = text;
+    resolve();
+  };
+  if (!ANIM) {
+    finish();
+    return {done, finish, typing: () => false};
+  }
+  el.textContent = '';
+  const step = () => {
+    if (finished || !scope.alive) return finish();
+    i++;
+    el.textContent = text.slice(0, i);
+    onChar?.(i);
+    if (i >= text.length) return finish();
+    const c = text[i - 1];
+    scope.timeout(step, /[.!?…]/.test(c) ? 260 : c === ',' ? 120 : 1000 / cps);
+  };
+  scope.timeout(step, 120);
+  return {done, finish, typing: () => !finished};
+}
+
+/** Kalan süre: 3725 sn → "01:02:05" */
+export function hms(sec: number): string {
+  const s = Math.max(0, Math.floor(sec));
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(Math.floor(s / 3600))}:${p(Math.floor((s % 3600) / 60))}:${p(s % 60)}`;
+}

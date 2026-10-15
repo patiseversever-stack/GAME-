@@ -1,48 +1,69 @@
-// Uygulama akışı: açılış → lobi → karşılaşma girişi → masa → sonuç → lobi.
-// İlerleme (seviye, XP, jeton, günlük ödül) burada; ileride ana uygulama/sunucu tarafına taşınacak.
-import type {Screens, Profile, Opponent, Settings} from '../ui/screens';
+// Uygulama akışı: açılış → (ilk açılışta hikâye + hediye karakter) → ana ekran döngüsü →
+// oyna: masa kurulumu (MatchSetup) → karşılaşma girişi → el (Match) → bahis/jeton/XP/istatistik (Profile) → sonuç → bir el daha / ana ekran.
+// Bahis elin başında düşülür; el yarıda bırakılırsa iade edilir. Ekonomi Profile'da; ileride sunucuya taşınacak.
+import type {ResultsData, Screens, Settings} from '../ui/screens';
+import {BOT_LEVEL, STAKES, payout} from '../ui/screens';
 import type {VoicePlayer} from '../audio/voice';
-import {pickLine, shouldSpeak} from '../ai/dialogue';
-import {Match, type MatchDeps, type Moment} from './match';
-import {haptic, post, store} from '../platform/bridge';
-import type {BotPersonality} from '../ai/bot';
+import type {Sfx} from '../audio/sfx';
+import type {ItemKind} from './catalog';
+import type {Table2D} from '../table2d/table';
+import {Match} from './match';
+import type {Profile} from './profile';
+import {charById, type CharId} from './roster';
+import {MODE_INFO, type MatchSetup, type Mode, type SeatPlayer} from './types';
+import {haptic, post} from '../platform/bridge';
 
-export interface OpponentDef extends Opponent {
-  personality: BotPersonality;
-  think: [number, number];
-}
-
-const DAILY = [200, 300, 400, 500, 650, 800, 1500];
-/** Test için sabit deste: ?seed=123 */
-const SEED = ((v: string | null) => (v ? Number(v) | 0 : null))(new URLSearchParams(location.search).get('seed'));
-const xpNext = (lvl: number) => Math.round(120 * Math.pow(lvl, 1.35));
-const today = () => new Date().toISOString().slice(0, 10);
-
-interface Saved {
-  name: string;
-  level: number;
-  xp: number;
-  coins: number;
-}
-
-export interface AppDeps extends Omit<MatchDeps, 'speak' | 'personality' | 'think' | 'hud'> {
-  screens: Screens;
+export interface AppDeps {
+  table: Table2D;
+  sfx: Sfx;
   voice: VoicePlayer;
-  opponents: OpponentDef[];
+  screens: Screens;
+  profile: Profile;
   settings: Settings;
   applySettings: (s: Settings) => void;
+  /** Kuşanılan deste/masa oyuna uygulanır (atlas yeniden kurulur, tema değişir). */
+  applyCosmetics: (kind: ItemKind, id: string) => void | Promise<void>;
+  /** ?auto=1: ana ekranda kendiliğinden OYNA, insan koltuğu kendiliğinden oynar (test) */
+  auto?: boolean;
+  /** ?mode=4|esli: otomatik testte oyun türü */
+  autoMode?: Mode;
+  /** ?seed=123: sabit deste (test) */
+  seed?: number;
+}
+
+/** Koltukları kur: 0 = insan (profil adı/seviyesi, kendi karakteri), botlar roster'dan (kişilik, düşünme süresi). */
+export function buildSetup(profile: Profile, mode: Mode, opponents: CharId[], dealer: number, fx: string, seed?: number): MatchSetup {
+  const info = MODE_INFO[mode];
+  const meChar = charById(profile.data.char ?? 'dursun');
+  const players: SeatPlayer[] = [{
+    seat: 0, char: meChar, name: profile.data.name, human: true, team: info.teams[0], level: profile.data.level,
+    personality: meChar.personality, think: meChar.think,
+  }];
+  // kişi sayısı kadar bot (eksikse kadrodan tamamla, insanın karakteri hariç)
+  const pool = opponents.filter(id => id !== meChar.id);
+  for (let s = 1; s < info.seats; s++) {
+    const id = pool[s - 1] ?? (['riza', 'cem', 'dursun', 'defne'] as CharId[]).find(x => x !== meChar.id && !pool.includes(x))!;
+    if (!pool.includes(id)) pool.push(id);
+    const c = charById(id);
+    players.push({seat: s, char: c, name: c.name, human: false, team: info.teams[s], level: BOT_LEVEL[c.id] ?? 10, personality: c.personality, think: c.think});
+  }
+  return {mode, players, dealer, seed, fx};
+}
+
+/** El sonu ödemesi (bahis düşüldükten sonra alınan): 1'e 1/eşli kazanana 2×, 4 kişide pot kazanan(lar)a; beraberlikte iade. */
+function receive(mode: Mode, stake: number, outcome: 'win' | 'lose' | 'draw', winners: number): number {
+  if (mode === '4') return outcome === 'lose' ? 0 : Math.floor(payout(mode, stake) / Math.max(1, winners));
+  return outcome === 'win' ? payout(mode, stake) : outcome === 'draw' ? stake : 0;
 }
 
 export async function runApp(d: AppDeps): Promise<void> {
-  const {screens, sfx} = d;
-  const saved = store.get<Saved>('profile', {name: 'Misafir', level: 1, xp: 0, coins: 2000});
-  const profile = (): Profile => ({name: saved.name, level: saved.level, xp: saved.xp, xpNext: xpNext(saved.level), coins: saved.coins});
-  const save = () => store.set('profile', saved);
-  const daily = store.get('daily', {last: '', day: 0});
-  const dailyReady = () => daily.last !== today();
-  let dealer = 1;
+  const {screens, sfx, profile, table} = d;
   let current: Match | null = null;
+  let dealerBase = 0;
 
+  screens.onCosmeticsChanged = (kind, id) => {
+    d.applyCosmetics(kind, id);
+  };
   screens.hud.onMenu = async () => {
     sfx.uiTap();
     const r = await screens.pause();
@@ -51,8 +72,11 @@ export async function runApp(d: AppDeps): Promise<void> {
     else if (r === 'leave') current?.abort();
   };
 
+  // ilk açılış: hikâye + hediye karakter + ad
+  if (!profile.data.onboarded) await screens.onboarding(profile);
+
   for (;;) {
-    const action = await screens.lobby(profile(), d.opponents, dailyReady());
+    const action = await screens.home(profile, d.auto ? {mode: d.autoMode ?? '1v1'} : undefined);
     if (action.type === 'settings') {
       await screens.settings(d.settings, s => d.applySettings(s));
       continue;
@@ -61,81 +85,65 @@ export async function runApp(d: AppDeps): Promise<void> {
       await screens.rules();
       continue;
     }
-    if (action.type === 'daily') {
-      if (!dailyReady()) continue;
-      const yesterday = new Date(Date.now() - 864e5).toISOString().slice(0, 10);
-      const day = daily.last === yesterday ? (daily.day % 7) + 1 : 1;
-      const got = await screens.daily(day, DAILY);
-      daily.last = today();
-      daily.day = day;
-      store.set('daily', daily);
-      saved.coins += got;
-      save();
-      continue;
-    }
 
-    const opp = d.opponents.find(o => o.id === action.opponentId) ?? d.opponents[0];
-    let stake = Math.min(action.stake, Math.max(100, saved.coins));
-    await screens.versus(profile(), opp, stake);
-
-    // aynı rakiple "Bir El Daha" döngüsü
+    const {mode, opponents} = action;
+    let stake = action.stake;
+    let first = true;
+    // aynı masada "Bir El Daha" döngüsü
     for (;;) {
-      if (saved.coins < stake) {
-        saved.coins += 1000; // önizleme: kasa boşsa takviye
-        save();
+      if (profile.data.coins < stake) {
+        // jeton yetmiyorsa açık ve karşılanabilir en büyük bahse in; hiçbiri yoksa ana ekrana (Dursun'un desteği orada)
+        const ok = STAKES.filter(s => s.lvl <= profile.data.level && s.v <= profile.data.coins).pop();
+        if (!ok) {
+          screens.hud.hide();
+          await screens.cover();
+          break;
+        }
+        stake = ok.v;
       }
-      saved.coins -= stake;
-      save();
-      screens.hud.show(opp, profile());
-      screens.hud.setCoins(saved.coins);
+      const seats = MODE_INFO[mode].seats;
+      const setup = buildSetup(profile, mode, opponents, (seats - 1 + dealerBase++) % seats, profile.data.equipped.fx, d.seed);
+      if (first) await screens.versus(setup, stake);
+      first = false;
+      // bahis düşülür (yarıda kalırsa iade)
+      profile.addCoins(-stake);
       sfx.coin(2);
-      const speak = (m: Moment, force = false) => {
-        const now = performance.now();
-        if (!force && !shouldSpeak(m, now)) return;
-        const line = pickLine(opp.id, m);
-        if (!line) return;
-        screens.hud.say(line.text, line.mood ?? undefined, 2400);
-        d.voice.play(line.id);
-      };
-      current = new Match({...d, hud: screens.hud, speak, personality: opp.personality, think: opp.think});
-      dealer = 1 - dealer;
-      const res = await current.play(dealer, SEED ?? undefined);
+      screens.hud.show(setup.players, mode, profile.data.coins, profile.data.equipped.frame);
+      screens.hud.setCoins(profile.data.coins);
+      current = new Match({table, hud: screens.hud, sfx, voice: d.voice, auto: d.auto});
+      const out = await current.play(setup);
       current = null;
-      if (!res) {
-        saved.coins += stake; // yarıda bırakılan elin bahsi iade
-        save();
+      if (!out) {
+        profile.addCoins(stake);
+        screens.hud.hide();
+        await screens.cover();
+        break;
+      }
+
+      // ---- ekonomi ----
+      const coinsBefore = profile.data.coins;
+      const got = receive(mode, stake, out.outcome, out.result.winners.length);
+      profile.addCoins(got);
+      const before = {level: profile.data.level, xp: profile.data.xp, xpNext: profile.xpNext};
+      const base = out.outcome === 'win' ? 60 : out.outcome === 'draw' ? 30 : 20;
+      const xpGain = Math.round(base * (mode === '4' ? 1.25 : mode === 'esli' ? 1.1 : 1) + out.myPisti * 8 + out.myValePisti * 12);
+      profile.recordMatch(mode, out.outcome, out.myPisti, out.myValePisti);
+      const lv = profile.addXp(xpGain);
+      const after = {level: profile.data.level, xp: profile.data.xp, xpNext: profile.xpNext};
+      post('match:end', {mode, result: out.outcome, delta: got - stake, coins: profile.data.coins});
+      if (out.outcome === 'win') haptic('success');
+
+      const data: ResultsData = {
+        setup, result: out.result, outcome: out.outcome, myPisti: out.myPisti, myValePisti: out.myValePisti,
+        stake, coinsDelta: got - stake, coinsBefore, coinsAfter: profile.data.coins, xpGain, before, after,
+        levelReward: lv.reward, streak: profile.data.stats.streak,
+      };
+      await new Promise(r => setTimeout(r, 900));
+      const choice = await screens.results(data, profile.data.equipped.frame);
+      if (choice === 'home') {
         screens.hud.hide();
         break;
       }
-      const win = res.winners.length === 1 ? res.winners[0] : -1;
-      const delta = win === 0 ? stake : win === -1 ? 0 : -stake;
-      saved.coins += stake + delta;
-      const me = res.sides[0];
-      const xpGain = (win === 0 ? 60 : win === -1 ? 30 : 20) + (me.pisti / 10) * 10;
-      saved.xp += xpGain;
-      while (saved.xp >= xpNext(saved.level)) {
-        saved.xp -= xpNext(saved.level);
-        saved.level++;
-      }
-      save();
-      post('match:end', {result: win === 0 ? 'win' : win === -1 ? 'draw' : 'lose', delta, coins: saved.coins});
-      const endLine = pickLine(opp.id, win === 0 ? 'playerWin' : win === -1 ? 'draw' : 'botWin');
-      if (endLine) {
-        screens.hud.say(endLine.text, endLine.mood ?? undefined, 2600);
-        d.voice.play(endLine.id);
-      }
-      if (win === 0) {
-        sfx.win();
-        haptic('success');
-      } else if (win === 1) sfx.lose();
-      await new Promise(r => setTimeout(r, 1400));
-      const choice = await screens.results({result: res, meSide: 0, opp, coinsDelta: delta, coinsAfter: saved.coins, xpGain, profile: profile()});
-      if (choice === 'lobby') {
-        screens.hud.hide();
-        break;
-      }
-      stake = Math.min(stake, Math.max(100, saved.coins));
     }
   }
 }
-

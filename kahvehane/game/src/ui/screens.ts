@@ -1,5 +1,9 @@
 // Kahvehane Pişti — tüm ekranların giriş noktası (çerçevesiz DOM + Web Animations API, söz tabanlı).
-// Kullanım: const screens = new Screens(document.body, {tap, whoosh, coin, reward});
+// Kullanım: const screens = new Screens(document.body, {tap, whoosh, coin, reward, ...});
+//   screens.onCosmeticsChanged = (kind, id) => …   // markette/koleksiyonda kuşanınca (deste/masa/efekt/çerçeve/karakter)
+//   await screens.onboarding(profile)               // ilk açılış hikâyesi + hediye karakter + ad
+//   const a = await screens.home(profile)           // ana ekran (market, koleksiyon, günlük ödül, sandık içeride çözülür)
+//   await screens.versus(setup, stake); … const r = await screens.results(data)
 // Birleşik ağırlık dosyaları (latin + latin-ext ayrı unicode-range ile; yalnız kullanılan alt küme iner)
 import '@fontsource/lilita-one/400.css';
 import '@fontsource/nunito/600.css';
@@ -8,31 +12,41 @@ import '@fontsource/nunito/800.css';
 import '@fontsource/nunito/900.css';
 import './theme.css';
 import './ui.css';
+import './meta.css';
+import '../themes/frames.css';
 
-import type {GameHud, LobbyAction, Opponent, Profile, ResultsData, Settings, Sounds} from './types';
-import {ANIM, enableActiveStates, h, q} from './dom';
+import type {CosmeticsListener, GameHud, HomeAction, ResultsData, Settings, Sounds} from './types';
+import type {Profile as GameProfile} from '../game/profile';
+import type {MatchSetup, Mode} from '../game/types';
+import {ANIM, enableActiveStates, enableSpringPress, h, q} from './dom';
 import {Fx} from './fx';
 import {HudView} from './hud';
-import {LobbyView} from './lobby';
+import {HomeView, type HomeMemo} from './lobby';
 import {splash, versus} from './intro';
 import {results} from './results';
+import {onboarding} from './onboarding';
 import {daily, pause, rules, settings} from './modals';
-import type {Ctx} from './parts';
+import {suitWipe, type Ctx} from './parts';
 
-export type {GameHud, HudLayout, HudPlayer, LobbyAction, Mood, Opponent, Profile, ResultsData, Settings, Sounds} from './types';
-export {STAKES} from './lobby';
+export type {CosmeticsListener, GameHud, HomeAction, HudLayout, HudPlayer, Mood, ResultsData, Settings, Sounds} from './types';
+export {STAKES, BOT_LEVEL, payout} from './lobby';
 
 export class Screens {
   readonly hud: GameHud;
   private hudView: HudView;
   /** Ayarlar penceresinde görünen sürüm */
-  version = '0.1.0';
+  version = '0.2.0';
+  /** Kuşanma bildirimi: uygulama desteyi (atlas) / masayı (tema) yeniden kurar. */
+  onCosmeticsChanged: CosmeticsListener = () => {};
   private ctx: Ctx;
-  private lobbyView: LobbyView | null = null;
-  private lastStake = 100;
+  private homeView: HomeView | null = null;
+  private memo: HomeMemo = {};
+  /** Perde kapalı bekliyor: bir sonraki ekran kurulunca açılır. */
+  private curtain: {reveal(): Promise<void>} | null = null;
 
   constructor(root: HTMLElement, sounds: Sounds) {
     enableActiveStates();
+    enableSpringPress();
     if (!ANIM) document.documentElement.classList.add('no-anim');
     const layer = h('div', 'kh-ui');
     root.append(layer);
@@ -51,36 +65,67 @@ export class Screens {
     return splash(this.ctx);
   }
 
-  /** Ana menü. Ayarlar/Kurallar/Günlük dönüşünde aynı lobi yeniden kurulmadan güncellenir. */
-  async lobby(p: Profile, opponents: Opponent[], dailyReady: boolean): Promise<LobbyAction> {
-    if (this.lobbyView) this.lobbyView.update(p, opponents, dailyReady);
-    else this.lobbyView = new LobbyView(this.ctx, p, opponents, dailyReady, this.lastStake);
-    const v = this.lobbyView;
+  /** İlk açılış hikâyesi: karşılama, hediye kutusu, karakter galerisi, ad. Sonunda perde kapanır; home() açar. */
+  async onboarding(profile: GameProfile): Promise<void> {
+    const dispose = await onboarding(this.ctx, profile);
+    const w = suitWipe(this.ctx);
+    await w.cover();
+    dispose();
+    this.curtain = w;
+  }
+
+  /** Ana ekran. Ayarlar/kurallar dönüşünde aynı ekran yeniden kurulmadan tazelenir. auto: test için kendiliğinden OYNA. */
+  async home(profile: GameProfile, auto?: {mode: Mode}): Promise<HomeAction> {
+    if (this.homeView) this.homeView.refresh();
+    else this.homeView = new HomeView(this.ctx, profile, (k, id) => this.onCosmeticsChanged(k, id), this.memo);
+    this.openCurtain();
+    const v = this.homeView;
+    if (auto) v.autoPlay(auto.mode);
     const a = await v.wait();
-    this.lastStake = v.selectedStake;
     if (a.type === 'play') {
-      this.lobbyView = null;
-      // Karşılaşma girişi lobinin üstünden süpürür; lobi arkada kapanır.
+      this.homeView = null;
+      // karşılaşma girişi ana ekranın üstünden süpürür; ana ekran arkada kapanır
       window.setTimeout(() => v.leave(), ANIM ? 380 : 0);
     }
     return a;
   }
 
-  /** 1.6 sn sinematik giriş; bitince çözülür. */
-  versus(p: Profile, o: Opponent, stake: number): Promise<void> {
-    return versus(this.ctx, p, o, stake);
+  /** Sinematik giriş (1'e 1 / 4 kişi / eşli); bitince çözülür. */
+  versus(setup: MatchSetup, stake: number): Promise<void> {
+    return versus(this.ctx, setup, stake);
   }
 
   pause(): Promise<'resume' | 'settings' | 'rules' | 'leave'> {
     return pause(this.ctx);
   }
 
-  results(d: ResultsData): Promise<'again' | 'lobby'> {
-    this.hudView.dim(true);
-    return results(this.ctx, d).then(r => {
-      this.hudView.dim(false);
-      return r;
-    });
+  /** El sonu. "Ana Sayfa" seçilirse dört renk perde kapanır (home() açar). */
+  async results(d: ResultsData, frame = 'standart'): Promise<'again' | 'home'> {
+    const dim = (this.hudView as unknown as {dim?: (on: boolean) => void}).dim;
+    dim?.call(this.hudView, true);
+    const r = await results(this.ctx, d, frame);
+    dim?.call(this.hudView, false);
+    if (r === 'home') {
+      const w = suitWipe(this.ctx);
+      await w.cover();
+      this.curtain = w;
+    }
+    return r;
+  }
+
+  /** Perde kapalıysa aç (ör. maç yarıda bırakıldığında ana ekrana dönerken). */
+  private openCurtain(): void {
+    const c = this.curtain;
+    this.curtain = null;
+    if (c) window.setTimeout(() => c.reveal(), ANIM ? 60 : 0);
+  }
+
+  /** Ekran geçişi perdesi (uygulama ara geçişlerde kullanabilir): kapatır, sonraki home() açar. */
+  async cover(): Promise<void> {
+    if (this.curtain) return;
+    const w = suitWipe(this.ctx);
+    await w.cover();
+    this.curtain = w;
   }
 
   /** Her değişiklikte onChange çağrılır; pencere kapanınca çözülür. */
@@ -92,10 +137,9 @@ export class Screens {
     return rules(this.ctx);
   }
 
-  /** day: 1..7, rewards: 7 gün. Toplanan miktarla çözülür (kapatılırsa 0). */
+  /** day: 1..7, rewards: 7 gün. Toplanan miktarla çözülür (kapatılırsa 0). (Ana ekran kendi içinde kullanır; galeri için.) */
   daily(day: number, rewards: number[]): Promise<number> {
-    const lv = this.lobbyView;
-    const target = lv ? {at: () => lv.coinTarget(), add: (n: number) => lv.bumpBy(n)} : undefined;
-    return daily(this.ctx, day, rewards, target);
+    const hv = this.homeView;
+    return daily(this.ctx, day, rewards, hv ? {at: () => hv.coins.target(), add: n => hv.coins.add(n)} : undefined);
   }
 }

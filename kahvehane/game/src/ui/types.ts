@@ -1,5 +1,8 @@
 // Arayüz sözleşmesi (oyun akışı bu tiplerle konuşur). screens.ts bunları dışa aktarır.
 import type {GameResult} from '../core/types';
+import type {MatchSetup, Mode} from '../game/types';
+import type {CharId} from '../game/roster';
+import type {ItemKind} from '../game/catalog';
 
 export type Mood = 'kahkaha' | 'kizgin' | 'saskin' | 'uzgun';
 
@@ -35,67 +38,147 @@ export interface Opponent {
   level?: number;
 }
 
-export type LobbyAction =
-  | {type: 'play'; opponentId: string; stake: number; mode: '1v1'}
+/**
+ * Ana ekrandan uygulamaya giden istekler. Market, profil, günlük ödül ve sandık ekran içinde (Profile üzerinden) çözülür;
+ * yalnız maç, ayarlar ve kurallar uygulamaya döner.
+ * `opponents`: koltuk sırasıyla botlar (1'e 1: [üst]; 4 kişi/eşli: [sağ, karşı, sol] — eşlide karşıdaki ortaktır).
+ */
+export type HomeAction =
+  | {type: 'play'; mode: Mode; stake: number; opponents: CharId[]}
   | {type: 'settings'}
-  | {type: 'daily'}
   | {type: 'rules'};
+
+/** Kozmetik değişti (kuşanıldı): uygulama desteyi/masayı yeniden kurar. */
+export type CosmeticsListener = (kind: ItemKind, id: string) => void;
 
 export interface Sounds {
   tap(): void;
   whoosh(): void;
   coin(n?: number): void;
   reward(): void;
+  /** İsteğe bağlı zengin sesler (yoksa sessiz) */
+  flip?(): void;
+  deal?(): void;
+  shuffle?(): void;
+  /** Ağır vuruş (VS damgası, kutu patlaması) */
+  slam?(): void;
+  /** Büyük kutlama (hediye açılışı, seviye atlama) */
+  fanfare?(): void;
+  lose?(): void;
 }
 
+/** El sonu ekranı verisi (uygulama hesaplar; ekran yalnız gösterir). */
 export interface ResultsData {
+  setup: MatchSetup;
   result: GameResult;
-  meSide: 0;
-  opp: Opponent;
+  /** Oyuncunun (ya da takımının) sonucu */
+  outcome: 'win' | 'lose' | 'draw';
+  myPisti: number;
+  myValePisti: number;
+  stake: number;
+  /** Net kazanç/kayıp (bahis dahil) */
   coinsDelta: number;
-  /** Ödül eklendikten sonraki bakiye */
+  coinsBefore: number;
   coinsAfter: number;
   xpGain: number;
-  /** Maç SONRASI profil (xp kazanç eklenmiş, gerekirse seviye atlamış) */
-  profile: Profile;
-  /** İsteğe bağlı: rakibin son sözü (duygu kartının altında balon) */
+  /** XP eklenmeden önceki ve sonraki seviye durumu */
+  before: {level: number; xp: number; xpNext: number};
+  after: {level: number; xp: number; xpNext: number};
+  /** Seviye ödülü (jeton; coinsAfter'a dahil) */
+  levelReward: number;
+  /** Maç sonrası galibiyet serisi */
+  streak: number;
+  /** İsteğe bağlı: rakibin son sözü */
   line?: string;
 }
 
+// ─────────── Oyun içi HUD sözleşmesi (src/ui/hud.ts uygular, src/game/match.ts kullanır) ───────────
+type HudSeat = import('../game/types').SeatPlayer;
+type HudMode = import('../game/types').Mode;
+/** Rozet hâli (roster Pose): notr, kirpma, gulumseme, kahkaha, kizgin, saskin, uzgun, dusunceli, zafer, pisti */
+export type HudPose = import('../game/roster').Pose;
+
+/** HUD'daki bir koltuk (SeatPlayer'dan kurulur). */
 export interface HudPlayer {
   seat: number;
   name: string;
-  /** Boşsa adın baş harfi gösterilir */
-  portrait: string;
-  blink?: string;
-  isMe?: boolean;
-  moods?: Partial<Record<Mood, string>>;
-  /** Altıgen seviye taşı (yoksa gösterilmez) */
-  level?: number;
-  /** Portre yoksa gösterilecek baş harf(ler) (varsayılan: adın baş harfi) */
-  initials?: string;
+  char: import('../game/roster').CharDef;
+  isMe: boolean;
+  team: number;
+  level: number;
+  /** Avatar çerçevesi (.kh-frame--<id>); yalnız insan oyuncuda */
+  frame?: string;
 }
 
-export type HudLayout = '1v1' | '4';
+/** Rozet yerleşimi = oyun modu. 1v1: 0 sol alt, 1 üst orta. 4/eşli: 0 sol alt, 1 sağ, 2 üst, 3 sol. */
+export type HudLayout = HudMode;
+
+/** HUD/efekt katmanının çaldığı sesler (Sfx bunları sağlar; Match bağlar). */
+export type HudSounds = Pick<import('../audio/sfx').Sfx,
+  'poke' | 'tick' | 'combo' | 'valuable' | 'sweep' | 'swoosh' | 'bonus' | 'fireworkLaunch' | 'fireworkBurst' | 'shootingStar' | 'starChime' | 'coinRain' | 'coin' | 'drumRoll'>;
+
+export interface HudPisti {
+  seat: number;
+  jack: boolean;
+  points: number;
+  /** Kuşanılmış pişti efekti: klasik · havai · yildiz · altin */
+  fx: string;
+  /** Kutlayan karakterin repliği (büyük balonda) */
+  line?: string;
+  /** Efektin çıkış noktası (yığın) */
+  at: {x: number; y: number};
+  low?: boolean;
+}
+
+export interface HudTally {
+  /** Koltuk başına: toplanan kart sayısı ve sayacın duracağı yer (deste üstü) */
+  rows: {seat: number; cards: number; x: number; y: number}[];
+  /** Eşli: [kaynak, hedef] koltuk çiftleri; ortağın sayısı hedefe akıp toplanır */
+  merge?: [number, number][];
+  /** Çoğunluk (+3) alan koltuk (eşlide takımın göstergesi); -1 = kimse */
+  majority: number;
+  /** +3'ün çıkış noktası */
+  from: {x: number; y: number};
+}
 
 export interface GameHud {
-  /** 1'e 1 kısayolu: setPlayers([ben, rakip], '1v1') + jeton */
-  show(o: Opponent, p: Profile): void;
+  /**
+   * Rozetleri kurar ve HUD'u gösterir (aynı oyuncularla tekrar çağrılırsa yeniden kurmaz).
+   * coins / frame verilmezse önceki değer korunur (Match coins vermez; jetonu uygulama setCoins ile yazar).
+   * frame: insan oyuncunun kuşandığı çerçeve id'si.
+   */
+  show(players: readonly HudSeat[], mode: HudMode, coins?: number, frame?: string): void;
   hide(): void;
-  /** Rozetleri kurar. 1v1: 0 = sol alt (ben), 1 = üst orta. 4: 0 alt orta (ben), 1 sağ, 2 üst, 3 sol. */
-  setPlayers(list: HudPlayer[], layout: HudLayout): void;
-  /** Koltuk sırasıyla */
+  /** Sonuç ekranı açıkken HUD'u soldur */
+  dim(on: boolean): void;
+  /** Koltuk sırasıyla (her koltuk kendi sayısı; eşlide takım hapı bunlardan toplanır) */
   setStats(st: {cards: number; pisti: number}[]): void;
+  /** Toplama sırasında kart sayacını tek tek ilerletir (tık sesiyle) */
+  tickCards(seat: number, cards: number): void;
   setCoins(n: number, animate?: boolean): void;
-  /** 0 ben, 1.. rakipler, -1 kimse */
-  setTurn(seat: number): void;
+  /** 0 ben, 1.. rakipler, -1 kimse; thinking: bot düşünüyor (düşünceli hâl) */
+  setTurn(seat: number, thinking?: boolean): void;
   /** Her karede çağrılabilir; yalnız transform yazar */
   setDeck(count: number, x: number, y: number): void;
   showHint(text: string | null): void;
-  /** Rakip konuşur. seat verilmezse ilk rakip (1'e 1'de üstteki). */
-  say(text: string, mood?: Mood, ms?: number, seat?: number): void;
-  pisti(jack: boolean, points: number): void;
-  banner(text: string, sub?: string): void;
-  popScore(x: number, y: number, text: string): void;
+  /** Konuşma balonu + (varsa) tepki hâli. seat verilmezse ilk rakip. */
+  say(text: string, mood?: HudPose | null, ms?: number, seat?: number): void;
+  /** Yalnız yüz ifadesi (yaylı geçiş + küçük çizgi film vurgusu); ms sonra nötre döner */
+  react(seat: number, pose: HudPose, ms?: number): void;
+  /** Kalıcı temel hâl (ör. çok geride kalınca üzgün, el sonunda zafer); null = nötr */
+  mood(seat: number, pose: HudPose | null): void;
+  /** Pişti kutlaması: karakter büyük girer, damga + kuşanılmış efekt. Bitince çözülür. */
+  pisti(o: HudPisti): Promise<void>;
+  /** Seri: "SERİ x2" (koltuğun yanında) */
+  combo(seat: number, n: number, x: number, y: number): void;
+  /** Büyük vurgu yazısı (SÜPÜRDÜ!, SON KARTLAR) */
+  shout(text: string, x: number, y: number, tone?: 'gold' | 'white' | 'blue'): void;
+  banner(text: string, sub?: string, ms?: number): void;
+  popScore(x: number, y: number, text: string, tone?: 'gold' | 'white' | 'blue'): void;
+  /** El sonu sayımı: kart sayaçları, eşlide birleşme, çoğunluk +3 uçuşu. Bitince çözülür. */
+  tally(o: HudTally): Promise<void>;
+  setSounds(s: HudSounds | null): void;
   onMenu: () => void;
+  /** Rakip rozetine dokunuldu (dürtme) */
+  onPoke: (seat: number) => void;
 }

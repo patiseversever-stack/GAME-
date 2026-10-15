@@ -276,4 +276,38 @@
   --dot-fill: radial-gradient(circle at 35% 30%, #ff9db0, #ff2e4d 60%, #b3001f);
   --dot-ring: var(--navy);
   --locked-filter: grayscale(.85) brightness(.75) contrast(1.05);
+
+  /* ---- nadirlik (market, galeri, koleksiyon) ---- */
+  --rar-common: linear-gradient(180deg, #d9e3f0 0%, #9fb3c8 50%, #6e819a 100%);
+  --rar-common-dk: #4d5d74;
+  --rar-rare: linear-gradient(180deg, #a9d2ff 0%, #3d8bff 48%, #1a5fd6 100%);
+  --rar-rare-dk: #0d3f9e;
+  --rar-epic: linear-gradient(180deg, #e3b8ff 0%, #a855f7 48%, #7425c9 100%);
+  --rar-epic-dk: #4f1591;
+  --rar-legendary: linear-gradient(180deg, #fff6b0 0%, #ffd23f 38%, #ffa51a 70%, #e57a00 100%);
+  --rar-legendary-dk: #a85400;
+  /* kart çerçevesi kenarı (border-box degrade) */
+  --rar-edge-common: linear-gradient(180deg, #eef3fa, #8ea2bd);
+  --rar-edge-rare: linear-gradient(180deg, #cfe5ff, #3d8bff 60%, #1a5fd6);
+  --rar-edge-epic: linear-gradient(180deg, #f1dcff, #b26bff 55%, #7425c9);
+  --rar-edge-legendary: linear-gradient(160deg, #fffbe0 0%, #ffd23f 30%, #ff9f1a 55%, #fff27a 75%, #e57a00 100%);
+  /* önizleme zemini */
+  --rar-bg-common: radial-gradient(ellipse 90% 80% at 50% 30%, #5b6f96 0%, #2d3b6b 60%, #1a2350 100%);
+  --rar-bg-rare: radial-gradient(ellipse 90% 80% at 50% 30%, #4f9bff 0%, #1f55c9 55%, #102c80 100%);
+  --rar-bg-epic: radial-gradient(ellipse 90% 80% at 50% 30%, #b77dff 0%, #6a2bc4 55%, #34106e 100%);
+  --rar-bg-legendary: radial-gradient(ellipse 90% 80% at 50% 30%, #ffd86a 0%, #e8890f 50%, #7a3300 100%);
+
+  /* ---- alt menü (ana ekran) ---- */
+  --nav-fill: linear-gradient(180deg, #1c2884 0%, #121a5e 100%);
+  --nav-edge: linear-gradient(180deg, #6a7cff, #2a38b0);
+  --nav-on: linear-gradient(180deg, #fff27a 0%, #ffd23f 35%, #ffa51a 100%);
+  --nav-on-dk: #e57a00;
+
+  /* ---- takımlar (eşli) ---- */
+  --team-blue: linear-gradient(180deg, #7fc0ff 0%, #3d93ff 40%, #1f7bff 70%, #1259d6 100%);
+  --team-red: linear-gradient(180deg, #ff9db0 0%, #ff4d66 40%, #ff2e4d 70%, #c40a2f 100%);
+
+  /* ---- sıcak lamba (açılış hikâyesi) ---- */
+  --lamp-cone: linear-gradient(180deg, rgba(255, 228, 150, .55) 0%, rgba(255, 210, 120, .22) 45%, rgba(255, 200, 110, 0) 100%);
+  --lamp-pool: radial-gradient(ellipse 60% 42% at 50% 62%, rgba(255, 214, 130, .4) 0%, rgba(255, 190, 90, .14) 45%, rgba(255, 190, 90, 0) 75%);
 }
