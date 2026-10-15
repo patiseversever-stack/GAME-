@@ -105,6 +105,7 @@ export class Screens {
     dim?.call(this.hudView, true);
     const r = await results(this.ctx, d, frame);
     dim?.call(this.hudView, false);
+    this.memo.last = {outcome: d.outcome, streak: d.streak, levelUp: d.after.level > d.before.level};
     if (r === 'home') {
       const w = suitWipe(this.ctx);
       await w.cover();
@@ -129,8 +130,8 @@ export class Screens {
   }
 
   /** Her değişiklikte onChange çağrılır; pencere kapanınca çözülür. */
-  settings(s: Settings, onChange: (s: Settings) => void): Promise<void> {
-    return settings(this.ctx, s, onChange, this.version);
+  async settings(s: Settings, onChange: (s: Settings) => void): Promise<void> {
+    if ((await settings(this.ctx, s, onChange, this.version)) === 'rules') await rules(this.ctx);
   }
 
   rules(): Promise<void> {

@@ -432,7 +432,10 @@ export class HudView implements GameHud {
     this.showHint(null);
     this.setDeck(0, 0, 0);
     this.tallyEl.innerHTML = '';
-    if (this.heroEl) this.heroEl.className = 'kh-hero';
+    if (this.heroEl) {
+      this.heroEl.className = 'kh-hero';
+      this.heroEl.getAnimations({subtree: true}).forEach(a => a.cancel());
+    }
   }
 
   /** Sonuç ekranı açıkken HUD'u gizle (oyun durumu değişmez). */
@@ -603,6 +606,7 @@ export class HudView implements GameHud {
     say.style.display = o.line ? '' : 'none';
     await ready(img, 120);
     hero.className = `kh-hero is-on ${left ? 'is-left' : 'is-right'} ${blue ? 'is-blue' : 'is-red'}${o.jack ? ' is-jack' : ''}`;
+    hero.dataset.fx = o.fx;
     const band = q(hero, '.kh-hero__band'), fig = q(hero, '.kh-hero__fig'), shine = q(hero, '.kh-hero__shine'), rays = q(hero, '.kh-hero__rays'), wheel = q(hero, '.kh-hero__wheel');
     const sk = 'skewY(-7deg)';
     const out = 1 - 300 / D;
@@ -638,6 +642,17 @@ export class HudView implements GameHud {
     b.react('pisti', D);
     await this.scope.wait(D + 60);
     hero.className = 'kh-hero';
+    hero.getAnimations({subtree: true}).forEach(a => a.cancel());
+  }
+
+  /** Zafer coşkusu: rozetten jeton + konfeti fışkırır. */
+  cheer(seat: number): void {
+    const b = this.badges.get(seat);
+    if (!b) return;
+    const c = b.center();
+    this.fx.burst(c, {coins: 10, confetti: 28, power: 0.9, up: 1.15});
+    this.snd?.bonus();
+    b.bounce(1.16);
   }
 
   combo(seat: number, n: number, x: number, y: number): void {

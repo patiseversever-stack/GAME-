@@ -91,7 +91,8 @@ export class CollectionPage implements Page {
           ${stat('Oynanan', st.played, I.cards)}${stat('Galibiyet', st.won, I.crown)}${stat('Kazanma', rate, I.star, true)}
           ${stat('Pişti', st.pisti, I.sparkle)}${stat('Vale Pişti', st.valePisti, I.swords)}${stat('En İyi Seri', st.bestStreak, I.flame)}
         </div>
-        <div class="kh-mstats">${(['1v1', '4', 'esli'] as Mode[]).map(m => {
+        ${st.played === 0 ? `<div class="kh-empty">${I.cards}<span>Henüz el oynamadın. İlk zaferin seni bekliyor!</span></div>` : ''}
+        <div class="kh-mstats"${st.played === 0 ? ' hidden' : ''}>${(['1v1', '4', 'esli'] as Mode[]).map(m => {
           const b = st.byMode[m];
           const r = b.played ? b.won / b.played : 0;
           return `<div class="kh-mstat"><span class="kh-mstat__n">${MODE_INFO[m].name}</span><span class="kh-mstat__bar"><i style="transform:scaleX(${r.toFixed(3)})"></i></span>

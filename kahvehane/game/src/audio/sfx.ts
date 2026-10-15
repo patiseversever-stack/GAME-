@@ -94,18 +94,18 @@ const L = {
   lose: 0.6932,
   // oyun içi vurgular (HUD / efekt katmanı)
   poke: 0.5,
-  tick: 0.16,
-  combo: 0.2,
-  valuable: 0.22,
-  sweep: 0.42,
-  swoosh: 0.34,
+  tick: 0.12,
+  combo: 0.6,
+  valuable: 0.13,
+  sweep: 0.33,
+  swoosh: 0.58,
   bonus: 0.24,
   fwLaunch: 0.16,
-  fwBurst: 0.34,
-  star: 0.2,
-  chime: 0.2,
-  rain: 0.16,
-  drum: 0.42,
+  fwBurst: 0.24,
+  star: 0.38,
+  chime: 0.125,
+  rain: 0.27,
+  drum: 0.3,
   bed: 0.03235,
   glass: 0.01868,
   stir: 0.03746,
@@ -1072,7 +1072,7 @@ export class Sfx {
   valuable(points = 1): void {
     this.run(() => {
       const r = this.rng;
-      const v = this.voice({wet: 0.25, pan: r.range(-0.2, 0.2), trim: L.valuable});
+      const v = this.voice({wet: 0.25, pan: r.range(-0.2, 0.2), trim: L.valuable * (0.8 + 0.25 * Math.min(3, points))});
       if (!v) return;
       const f = points >= 3 ? 1568.0 : points === 2 ? 1318.5 : 1174.7;
       const bell = v.gain(1);

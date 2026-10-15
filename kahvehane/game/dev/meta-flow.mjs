@@ -1,0 +1,23 @@
+// Gerçek akış testi: ?auto=1 ile bir el oynanır → sonuç ekranı → (tıkla) → ana ekran. Ekran görüntüleri test-out/meta/flow_*.png
+import {chromium} from 'playwright-core';
+const [,, path = '/?auto=1&seed=3', name = 'flow', after = 'home'] = process.argv;
+const out = new URL('../test-out/meta/', import.meta.url).pathname;
+const b = await chromium.launch({executablePath: '/opt/pw-browsers/chromium-1194/chrome-linux/chrome', args: ['--use-gl=swiftshader', '--enable-unsafe-swiftshader']});
+const p = await b.newPage({viewport: {width: 390, height: 844}, deviceScaleFactor: 2, hasTouch: true, isMobile: true});
+const errs = [];
+p.on('pageerror', e => errs.push('pageerror: ' + e.message));
+p.on('console', m => { if (m.type() === 'error' && !/vibrate|404/.test(m.text())) errs.push(m.text().slice(0, 300)); });
+await p.goto('http://127.0.0.1:5212' + path);
+const t0 = Date.now();
+await p.waitForSelector('.kh-results', {timeout: 240000});
+console.log('sonuç ekranı', ((Date.now() - t0) / 1000).toFixed(1), 'sn');
+await p.waitForTimeout(600);
+await p.screenshot({path: `${out}${name}_res0.png`});
+await p.waitForTimeout(4500);
+await p.screenshot({path: `${out}${name}_res1.png`});
+console.log(await p.evaluate(() => JSON.stringify(JSON.parse(localStorage.getItem('kh.profile3')).stats)));
+await p.click(`.kh-results [data-act=${after}]`);
+await p.waitForTimeout(after === 'home' ? 2200 : 3000);
+await p.screenshot({path: `${out}${name}_after.png`});
+console.log(errs.length ? errs.join('\n') : 'konsol temiz');
+await b.close();

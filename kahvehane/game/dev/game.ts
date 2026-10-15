@@ -91,6 +91,22 @@ hud.shout = (t, x, y, tone) => {
   origShout(t, x, y, tone);
 };
 
+const origBanner = hud.banner.bind(hud);
+hud.banner = (t, sub, ms) => {
+  events.push({t: 'banner:' + t, at: performance.now()});
+  origBanner(t, sub, ms);
+};
+const origPlay = table.play.bind(table);
+table.play = (seat, card) => {
+  events.push({t: 'play', at: performance.now(), seat});
+  return origPlay(seat, card);
+};
+const origVal = table.showValuables.bind(table);
+table.showValuables = cards => {
+  const p = origVal(cards);
+  void p.then(v => v.length && events.push({t: 'valuable', at: performance.now()}));
+  return p;
+};
 const match = new Match({table, hud, sfx, voice, auto: Q.has('auto')});
 const g = {
   table, hud, fx, sfx, match, events, players, ready: false, outcome: null as MatchOutcome | null,
@@ -100,6 +116,8 @@ const g = {
     return hud.pisti({seat, jack, points: jack ? 20 : 10, fx: id, at: table.pilePoint(), low, line: seat ? 'Pişti! Çaylar senden evlat!' : undefined});
   },
   freeze: () => document.getAnimations().forEach(a => a.pause()),
+  theme: (id: string) => table.setTheme(tableById(id)),
+  deck: async (id: string) => table.setAtlas(await buildSkinAtlas(await deckById(id).load(), atlasWidth(low))),
 };
 (window as unknown as {__g: typeof g}).__g = g;
 

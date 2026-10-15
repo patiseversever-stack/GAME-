@@ -10,6 +10,7 @@ const b = await chromium.launch({executablePath: '/opt/pw-browsers/chromium-1194
 const p = await b.newPage({viewport: {width: +(process.env.VW || 390), height: +(process.env.VH || 844)}, deviceScaleFactor: +(process.env.DPR || 2), hasTouch: true, isMobile: true});
 const errs = [];
 p.on('pageerror', e => errs.push('pageerror: ' + e.message));
+p.on('response', r => { if (r.status() >= 400) errs.push(r.status() + ' ' + r.url()); });
 p.on('console', m => { if (m.type() === 'error' || m.type() === 'warning') errs.push(m.type() + ': ' + m.text().slice(0, 300)); });
 if (process.env.STORE) await p.addInitScript(s => { for (const [k, v] of Object.entries(JSON.parse(s))) localStorage.setItem(k, typeof v === 'string' ? v : JSON.stringify(v)); }, process.env.STORE);
 await p.goto('http://127.0.0.1:5212' + path);

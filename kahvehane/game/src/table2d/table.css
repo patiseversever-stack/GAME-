@@ -54,6 +54,18 @@
 .ar__cards { position: absolute; inset: 0; }
 .ar__fx { position: absolute; inset: 0; pointer-events: none; }
 
+/* büyük kazan: halka kızışır + alevli sayaç */
+.ar__ring.is-pot::after { animation: ar-pot .7s ease-in-out infinite alternate; }
+@keyframes ar-pot { from { opacity: .6; } to { opacity: 1; } }
+.ar__pot { position: absolute; left: 0; top: 0; z-index: 2; display: flex; align-items: center; gap: 2px; padding: 3px 9px 3px 5px; border-radius: 999px; pointer-events: none;
+  background: linear-gradient(180deg, #ff8a3d 0%, #ff4d2e 55%, #d9123a 100%); box-shadow: 0 0 0 2.5px #0a1033, inset 0 2px 0 rgba(255, 255, 255, .5), 0 3px 0 #0a1033, 0 0 16px rgba(255, 120, 40, .55);
+  font: 400 calc(var(--cw) * .24)/1 'Lilita One', 'Nunito', sans-serif; color: #fff; opacity: 0; transition: opacity .25s; will-change: transform;
+  text-shadow: 0 2px 0 #0a1033, 1.5px 1.5px 0 #0a1033, -1.5px 1.5px 0 #0a1033, 1.5px -1.5px 0 #0a1033, -1.5px -1.5px 0 #0a1033; }
+.ar__pot.is-on { opacity: 1; }
+.ar__pot svg { display: block; width: 1.25em; height: 1.25em; }
+.ar__ring.is-lone::after { animation: ar-pot .45s ease-in-out infinite alternate; }
+.ar.is-low .ar__ring.is-pot::after, .ar.is-low .ar__ring.is-lone::after { animation: none; }
+
 /* kart */
 .c2 { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; will-change: transform; pointer-events: none; }
 .c2__in { position: absolute; inset: 0; transform-origin: 50% 60%; }

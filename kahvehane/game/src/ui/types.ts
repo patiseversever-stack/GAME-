@@ -169,6 +169,8 @@ export interface GameHud {
   mood(seat: number, pose: HudPose | null): void;
   /** Pişti kutlaması: karakter büyük girer, damga + kuşanılmış efekt. Bitince çözülür. */
   pisti(o: HudPisti): Promise<void>;
+  /** Zafer coşkusu: koltuğun rozetinden jeton + konfeti */
+  cheer(seat: number): void;
   /** Seri: "SERİ x2" (koltuğun yanında) */
   combo(seat: number, n: number, x: number, y: number): void;
   /** Büyük vurgu yazısı (SÜPÜRDÜ!, SON KARTLAR) */

@@ -43,7 +43,11 @@ class Ring {
   }
 }
 
-const hide = (n: HTMLElement) => (n.style.display = 'none');
+/** Parçacığı gizle ve bitmiş animasyonunu bırak (fill: both etkisi listede birikmesin). */
+const hide = (n: HTMLElement) => {
+  n.style.display = 'none';
+  n.getAnimations().forEach(a => a.cancel());
+};
 
 export class Fx {
   readonly el = h('div', 'kh-fx');
@@ -106,6 +110,7 @@ export class Fx {
   private release(n: HTMLElement): void {
     n.dataset.busy = '0';
     n.style.display = 'none';
+    n.getAnimations().forEach(a => a.cancel());
   }
 
   /** Tam ekran kısa, yumuşak renkli ışık patlaması (yalnız opaklık; beyaz patlama yok). */
@@ -271,7 +276,7 @@ export class Fx {
       {transform: p(-58, 0.96), opacity: 0},
     ], {duration: 1100, easing: 'ease-out', fill: 'both'}, 0.4);
     const node = n;
-    if (ANIM) a.onfinish = () => (node.style.display = 'none');
+    if (ANIM) a.onfinish = () => hide(node);
   }
 
   /** Büyük vurgu yazısı (SÜPÜRDÜ!, SON KARTLAR): çarparak gelir, yükselip söner. Ekran kenarına taşmaz. */
@@ -290,7 +295,7 @@ export class Fx {
       {transform: 'translate(-50%,-50%) scale(1) rotate(-4deg)', opacity: 1, offset: 0.74},
       {transform: 'translate(-50%,-80%) scale(1.04) rotate(-4deg)', opacity: 0},
     ], {duration: 1250, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both'}, 0.4);
-    if (ANIM) a.onfinish = () => (n.style.display = 'none');
+    if (ANIM) a.onfinish = () => hide(n);
   }
 
   /** Seri rozeti: "SERİ x2" — alevli hap, sayı nabız gibi atar; seri büyüdükçe daha iri. */
@@ -313,7 +318,7 @@ export class Fx {
     ], {duration: 1300, easing: 'cubic-bezier(.2,.7,.3,1)', fill: 'both'}, 0.4);
     play(inn.querySelector('.kh-combo__n')!, [{transform: 'scale(1)'}, {transform: 'scale(1.5) rotate(8deg)', offset: 0.5}, {transform: 'scale(1)'}],
       {duration: 360, delay: 160, easing: EASE.out}, 1);
-    if (ANIM) a.onfinish = () => (el.style.display = 'none');
+    if (ANIM) a.onfinish = () => hide(el);
   }
 
   /** Jeton ikonu (uçuş hedefleri için kaynak). */

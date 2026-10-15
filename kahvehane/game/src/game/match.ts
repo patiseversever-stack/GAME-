@@ -229,7 +229,8 @@ export class Match {
     const v = viewFor(this.state, 0);
     hud.setTurn(0);
     const first = this.state.round === 1 && this.state.hands[0].length === 4 && this.state.captured.every(c => c.length === 0) && this.state.pile.length === 4;
-    hud.showHint(first ? 'Kartına dokun, masaya gitsin' : 'Sıra sende');
+    const chance = v.pileCount === 1 && v.pileTop !== null && v.hand.some(c => rankOf(c) === rankOf(v.pileTop!));
+    hud.showHint(first ? 'Kartına dokun, masaya gitsin' : chance ? 'Pişti fırsatı!' : 'Sıra sende');
     const w = table.waitPlayer(Table2D.capturing(v.hand, v.pileTop, v.pileCount));
     this.cancelWait = w.cancel;
     const best = Table2D.bestCapture(v.hand, v.pileTop, v.pileCount);
@@ -273,7 +274,7 @@ export class Match {
       this.streak[seat]++;
       if (this.streak[seat] >= 2) {
         const sp = table.stackPoint(seat);
-        hud.combo(seat, this.streak[seat], sp.x, sp.y - table.L.ch * 0.35);
+        hud.combo(seat, this.streak[seat], sp.x, sp.y - table.L.ch * 0.75);
         if (seat === 0) haptic('light');
       }
       this.moods();
@@ -381,7 +382,10 @@ export class Match {
       sfx.sweep();
       hud.shout('SÜPÜRDÜ!', pp.x, pp.y - table.L.ch * 0.95, seat === 0 || this.team(seat) === this.team(0) ? 'gold' : 'white');
       haptic('medium');
-    } else haptic(seat === 0 ? 'medium' : 'light');
+    } else {
+      haptic(seat === 0 ? 'medium' : 'light');
+      if (n >= 4) table.boostRays(3, 700);
+    }
     sfx.capture(n);
     // tepkiler
     const maker = this.bot(seat);
@@ -509,6 +513,9 @@ export class Match {
     const foes = this.foes(0);
     if (outcome === 'win') {
       haptic('success');
+      hud.cheer(0);
+      const m0 = this.mate(0);
+      if (m0 >= 0) window.setTimeout(() => hud.cheer(m0), 250);
       if (foes.length) this.speak(pickOne(foes), 'playerWin', true, 2800);
       const m = this.mate(0);
       if (m >= 0 && this.bot(m)) window.setTimeout(() => this.quip(m, CHEER, 'zafer', 2200), 700);

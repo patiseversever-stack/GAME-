@@ -100,3 +100,9 @@
 .kh-ctile .kh-fxpv__p.is-word { font-size: calc(var(--u) * .9); }
 .kh-coll__shop { flex: none; margin-top: calc(var(--u) * .3); }
 .kh-coll__shop .kh-i { width: 1em; height: 1em; }
+
+/* boş durum (ilk açılış) */
+.kh-empty { display: flex; align-items: center; gap: .6em; padding: calc(var(--u) * .7) calc(var(--u) * .9); border-radius: var(--r-md); background: rgba(10, 16, 51, .35);
+  box-shadow: inset 0 0 0 1.5px rgba(120, 140, 255, .3); color: var(--c-text-2); font-size: calc(var(--u) * .9); font-weight: var(--w-strong); line-height: 1.3; }
+.kh-empty .kh-i { flex: none; width: calc(var(--u) * 1.8); height: calc(var(--u) * 1.8); color: var(--c-accent); }
+.kh-mstats[hidden] { display: none; }

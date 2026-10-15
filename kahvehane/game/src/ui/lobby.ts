@@ -198,7 +198,6 @@ export class HomeView implements Shell {
           <span class="kh-xp kh-top__xp"><i class="kh-xp__fill" style="transform:scaleX(${k.toFixed(3)})"></i></span></span></button>`;
     if (first) {
       top.innerHTML = `${meHtml}${capsuleHtml(p.coins, true, 'kh-top__coins')}
-        <button class="kh-iconbtn" data-act="rules" aria-label="Nasıl oynanır">${I.book}</button>
         <button class="kh-iconbtn" data-act="settings" aria-label="Ayarlar">${I.gear}</button>`;
       this.coins = new CoinMeter(this.scope, q(top, '.kh-top__coins'), this.profile);
     } else {
@@ -303,6 +302,8 @@ export class HomeView implements Shell {
 export interface HomeMemo {
   opp?: CharId;
   trio?: CharId[];
+  /** Son elin sonucu: ana ekranda karakter buna göre karşılar (bir kez) */
+  last?: {outcome: 'win' | 'lose' | 'draw'; streak: number; levelUp: boolean};
 }
 
 // =====================================================================================================
@@ -315,6 +316,13 @@ const POKE: Record<CharId, [Pose, string][]> = {
   dursun: [['gulumseme', 'Çaylar benden, oyun senden!'], ['zafer', 'Taze demledim, buyur!'], ['kahkaha', 'Hahaha! Bugün şanslı günümüz.'], ['dusunceli', 'Defterde senin hanen boş duruyor…'], ['pisti', 'Göz kırptım ama kimseye söyleme.'], ['saskin', 'Aaa, daha masaya oturmadın mı?']],
   defne: [['gulumseme', 'Hazırsan başlayalım.'], ['dusunceli', 'Planım hazır.'], ['pisti', 'Sessiz olan kazanır.'], ['zafer', 'Bir el daha mı? Olur.'], ['kahkaha', 'Hah. Bu iyiydi.'], ['saskin', 'Beni mi bekliyorsun?']],
 };
+/** Ana ekranda uzun süre dokunulmazsa karakterin dürtmesi. */
+const NUDGE: Record<CharId, string[]> = {
+  riza: ['Hadi evlat, çay soğuyor!', 'Valeler seni bekliyor…'],
+  cem: ['Bekleme modundayım… OYNA’ya bas!', 'Ping atıyorum: masa hazır!'],
+  dursun: ['Masa boş kalmasın, gel otur!', 'Çaylar tazelendi, haberin olsun.'],
+  defne: ['Sıra sende.', 'Bekliyorum.'],
+};
 const TICKLE: Record<CharId, string> = {
   riza: 'Yeter be evlat, bıyığım ağrıdı!',
   cem: 'Hey! Ekranım çizilecek!',
@@ -323,6 +331,7 @@ const TICKLE: Record<CharId, string> = {
 };
 
 const SEAT_NAME = ['Sen', 'Sağ', 'Karşı', 'Sol'];
+const rndOf = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
 
 /** Kısa ad: "Rıza Amca" → "Rıza", "Kahveci Dursun" → "Dursun". */
 export const shortName = (c: CharDef): string => c.name.replace(/^Kahveci\s+/, '').split(' ')[0];
@@ -380,7 +389,8 @@ class HomePage implements Page {
         <button class="kh-oc2 is-friends" data-act="friends" data-spring><span class="kh-oc2__ico">${I.friends}</span><span class="kh-oc2__txt"><b>Arkadaşla</b><small>Özel masa kur</small></span><span class="kh-ribbon">Yakında</span></button>
       </div>
       <section class="kh-panel kh-solo">
-        <div class="kh-solo__head"><span class="kh-label">Tek Oyuncu</span><span class="kh-solo__desc"></span></div>
+        <div class="kh-solo__head"><span class="kh-label">Tek Oyuncu</span><span class="kh-solo__desc"></span>
+          <button class="kh-solo__help" data-act="rules" data-spring aria-label="Nasıl oynanır">?</button></div>
         <div class="kh-modes"><i class="kh-modes__ind"></i>${(['1v1', '4', 'esli'] as Mode[]).map(m => `<button class="kh-mode" data-act="mode" data-m="${m}">${diagram(m)}<span>${MODE_INFO[m].name}</span></button>`).join('')}</div>
         <div class="kh-solo__opp"></div>
         <div class="kh-solo__stakes"></div>
@@ -396,6 +406,10 @@ class HomePage implements Page {
     this.setMode(this.mode, false);
     this.tickChest();
     this.refresh();
+    this.scope.add(() => {
+      clearTimeout(this.sayT);
+      clearTimeout(this.nudgeT);
+    });
   }
 
   private me(): CharDef {
@@ -449,8 +463,44 @@ class HomePage implements Page {
       play(w, [{transform: 'translateY(24px) scale(.9)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, delay: 220 + i * 70, easing: EASE.spring, fill: 'backwards'}));
     play(g('.kh-solo'), [{transform: 'translateY(40px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 280, easing: EASE.out, fill: 'backwards'});
     play(g('.kh-playwrap'), [{transform: 'scale(.6)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 520, delay: 380, easing: EASE.spring, fill: 'backwards'});
-    // ilk kez: karakter selam verir
+    // ilk kez: karakter selam verir; sonra uzun sessizlikte ara sıra dürter
     this.scope.timeout(() => this.poke(true), ANIM ? 900 : 0);
+    this.scope.on(this.el, 'pointerdown', () => this.armNudge());
+    this.armNudge();
+  }
+
+  private nudgeT = 0;
+  private nudges = 0;
+  private armNudge(): void {
+    clearTimeout(this.nudgeT);
+    if (!ANIM || this.nudges >= 3) return;
+    this.nudgeT = window.setTimeout(() => {
+      if (!this.scope.alive || !this.visible || !this.el.isConnected) return;
+      const me = this.me();
+      this.nudges++;
+      this.pt.pose('dusunceli', 1400);
+      this.scope.timeout(() => this.say(rndOf(NUDGE[me.id]), 'gulumseme'), 1200);
+      this.armNudge();
+    }, 16000 + Math.random() * 8000);
+  }
+
+  /** Balon + poz (dürtme, karşılama). */
+  private say(line: string, pose: Pose): void {
+    this.pt.pose(pose, 2600);
+    this.pt.pop();
+    const say = q(this.el, '.kh-hero2__say');
+    say.style.visibility = 'visible';
+    play(say, [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.out, fill: 'both'});
+    typewriter(this.scope, q(say, '.kh-say__t'), line, 46);
+    clearTimeout(this.sayT);
+    this.sayT = window.setTimeout(() => {
+      if (!this.scope.alive) return;
+      const a = play(say, [{opacity: 1}, {opacity: 0, transform: 'scale(.9)'}], {duration: 220, fill: 'forwards'});
+      a.onfinish = () => {
+        say.style.visibility = 'hidden';
+        a.cancel();
+      };
+    }, ANIM ? 3000 : 60000);
   }
 
   show(): void {
@@ -632,6 +682,24 @@ class HomePage implements Page {
       line = TICKLE[me.id];
       haptic('warning');
       shake(q(this.el, '.kh-hero2__fig'), 0.8);
+    } else if (greet && this.memo.last) {
+      // maçtan dönüş: sonuca göre karşılar
+      const {outcome, streak, levelUp} = this.memo.last;
+      this.memo.last = undefined;
+      if (levelUp) {
+        pose = 'zafer';
+        line = `Seviye ${this.shell.profile.data.level}! Yeni masalar seni bekliyor.`;
+      } else if (outcome === 'win') {
+        pose = streak >= 3 ? 'kahkaha' : 'zafer';
+        line = streak >= 2 ? `${streak} el üst üste! Bu seri bozulmaz.` : 'Helal olsun! Bir tane daha?';
+      } else if (outcome === 'lose') {
+        pose = 'uzgun';
+        line = 'Olsun be… Rövanşı alırız!';
+        this.scope.timeout(() => this.pt.pose('gulumseme', 1600), ANIM ? 1500 : 0);
+      } else {
+        pose = 'saskin';
+        line = 'Berabere! Kıl payı kaçtı.';
+      }
     } else if (greet) {
       const name = this.shell.profile.data.name;
       const hr = new Date().getHours();
@@ -646,23 +714,8 @@ class HomePage implements Page {
       [pose, line] = list[k];
       haptic('light');
     }
-    this.shell.ctx.sounds.tap();
-    this.pt.pose(pose, 2600);
-    this.pt.pop();
-    const say = q(this.el, '.kh-hero2__say');
-    say.style.visibility = 'visible';
-    play(say, [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.out, fill: 'both'});
-    typewriter(this.scope, q(say, '.kh-say__t'), line, 46);
-    clearTimeout(this.sayT);
-    this.sayT = window.setTimeout(() => {
-      if (!this.scope.alive) return;
-      const a = play(say, [{opacity: 1}, {opacity: 0, transform: 'scale(.9)'}], {duration: 220, fill: 'forwards'});
-      a.onfinish = () => {
-        say.style.visibility = 'hidden';
-        a.cancel();
-      };
-    }, ANIM ? 3000 : 60000);
-    this.scope.add(() => clearTimeout(this.sayT));
+    if (!greet) this.shell.ctx.sounds.tap();
+    this.say(line, pose);
   }
 
   // ---------------------------------------------------------------- sandık

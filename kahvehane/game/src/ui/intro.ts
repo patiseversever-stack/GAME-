@@ -103,7 +103,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
     body = order.map((seat, k) => `<div class="kh-vs__band is-${suits[k]}" style="--k:${k}"><span class="kh-vs__bsuit">${suitSvg(suits[k])}</span></div>`).join('') +
       order.map((seat, k) => {
         const p = by(seat);
-        return `<div class="kh-vs__slot ${k % 2 ? 'is-l' : 'is-r'}${p.human ? ' is-me' : ''}" style="--k:${k}">${bustHtml(p)}${plateHtml(p)}</div>`;
+        return `<div class="kh-vs__slot is-k${k} ${k % 2 ? 'is-l' : 'is-r'}${p.human ? ' is-me' : ''}" style="--k:${k}">${bustHtml(p)}${plateHtml(p)}</div>`;
       }).join('') + `<div class="kh-vs__seams">${[1, 2, 3].map(k => `<i style="--k:${k}"></i>`).join('')}</div>`;
   } else {
     const top = mode === '1v1' ? [by(1)] : [by(1), by(3)];
@@ -164,7 +164,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   play(g('.kh-vs__flash'), [{opacity: 0}, {opacity: 0.65, offset: 0.15}, {opacity: 0}], {duration: 360, delay: tSlam + 180, easing: 'ease-out', fill: 'backwards'}, 0);
   play(el, [{transform: 'none'}, {transform: 'translate(3px,-2px)'}, {transform: 'translate(-3px,2px)'}, {transform: 'translate(2px,1px)'}, {transform: 'none'}], {duration: 200, delay: tSlam + 200}, 1);
   play(g('.kh-vs__stake'), [{transform: 'translateX(30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: tSlam + 300, easing: EASE.spring, fill: 'backwards'});
-  play(g('.kh-vs__mode'), [{transform: 'translate(-50%, -20px)', opacity: 0}, {transform: 'translate(-50%, 0)', opacity: 1}], {duration: 360, delay: tSlam + 120, easing: EASE.spring, fill: 'backwards'});
+  play(g('.kh-vs__mode'), [{transform: 'translateY(-20px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 360, delay: tSlam + 120, easing: EASE.spring, fill: 'backwards'});
   // damga anında rakipler oyun yüzüne geçer (kısa)
   if (ANIM) scope.timeout(() => el.querySelectorAll<HTMLImageElement>('.kh-vs__bust').forEach(img => {
     const p = by(Number(img.dataset.seat));

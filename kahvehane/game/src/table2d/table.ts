@@ -106,6 +106,7 @@ class Pool {
   }
   hide(el: HTMLElement): void {
     el.style.display = 'none';
+    el.getAnimations().forEach(a => a.cancel());
   }
 }
 
@@ -118,6 +119,9 @@ export class Table2D {
   private fxEl: HTMLDivElement;
   private ring: HTMLDivElement;
   private raysEl: HTMLElement;
+  private potEl: HTMLElement;
+  private potNum: HTMLElement;
+  private potShown = 0;
   private tintEl: HTMLElement;
   private paintEl: HTMLCanvasElement | null = null;
   private raysAnim: Animation | null = null;
@@ -145,6 +149,7 @@ export class Table2D {
   private theme: TableTheme | null = null;
   private themeVars: string[] = [];
   private paintTok = 0;
+  private paintKey = '';
   private paintTimer = 0;
   /** Deste/yığın değişince HUD'a haber ver (deste rozetinin yeri) */
   onDeck: (count: number, x: number, y: number) => void = () => {};
@@ -156,7 +161,8 @@ export class Table2D {
     this.root.innerHTML = `<div class="ar__bg"></div>
       ${['N', 'H', 'D', 'C', 'S'].map(s => `<div class="ar__glow" data-s="${s}"></div>`).join('')}
       <div class="ar__tint"></div><div class="ar__rays"></div><div class="ar__pattern"></div><div class="ar__vig"></div><div class="ar__edge"></div>
-      <div class="ar__zoom"><div class="ar__shake"><div class="ar__ring"><i></i></div><div class="ar__cards"></div><div class="ar__fx"></div></div></div>`;
+      <div class="ar__zoom"><div class="ar__shake"><div class="ar__ring"><i></i></div><div class="ar__cards"></div><div class="ar__fx"></div>
+      <div class="ar__pot"><svg viewBox="0 0 24 24"><path d="M12 22c-4 0-7-2.8-7-6.6 0-3.5 2.3-5.6 3.7-7.6.9-1.3 1.3-2.9 1.2-4.3 2.9 1.4 4.4 4 4.5 6.7.8-.6 1.3-1.6 1.4-2.7 2 1.8 3.1 4.4 3.1 7.1 0 4.2-3 7.4-6.9 7.4z" fill="#ffb21a" stroke="#0a1033" stroke-width="2"/><path d="M12 20c-1.8 0-3.1-1.2-3.1-2.9 0-1.6 1.1-2.6 1.8-3.5.4-.6.6-1.3.6-2 1.4.7 2.3 2 2.3 3.3.4-.3.7-.8.7-1.3 1 .9 1.5 2.1 1.5 3.4 0 1.7-1.6 3-3.8 3z" fill="#fff27a"/></svg><b>0</b></div></div></div>`;
     host.append(this.root);
     this.zoomEl = this.root.querySelector('.ar__zoom')!;
     this.shakeEl = this.root.querySelector('.ar__shake')!;
@@ -164,6 +170,8 @@ export class Table2D {
     this.fxEl = this.root.querySelector('.ar__fx')!;
     this.ring = this.root.querySelector('.ar__ring')!;
     this.raysEl = this.root.querySelector('.ar__rays')!;
+    this.potEl = this.root.querySelector('.ar__pot')!;
+    this.potNum = this.potEl.querySelector('b')!;
     this.tintEl = this.root.querySelector('.ar__tint')!;
     this.root.querySelectorAll<HTMLElement>('.ar__glow').forEach(g => this.glows.set(g.dataset.s!, g));
     (this.root.querySelector('.ar__pattern') as HTMLElement).style.backgroundImage = patternUrl();
@@ -218,6 +226,7 @@ export class Table2D {
     if (theme.paint) this.repaint();
     else {
       this.paintTok++;
+      this.paintKey = '';
       this.paintEl?.remove();
       this.paintEl = null;
     }
@@ -226,16 +235,23 @@ export class Table2D {
   private repaint(): void {
     const t = this.theme;
     if (!t?.paint) return;
-    const tok = ++this.paintTok;
     const w = this.root.clientWidth || innerWidth, h = this.root.clientHeight || innerHeight;
     const dpr = Math.min(this.low ? 1.5 : 2, window.devicePixelRatio || 1);
+    // aynı tema + aynı boyut: yeniden çizme (adres çubuğu oynaması gibi küçük değişimlerde de tuval gerilir)
+    const key = `${t.id}|${Math.round(w / 8)}|${Math.round(h / 8)}|${dpr}`;
+    if (key === this.paintKey && this.paintEl) return;
+    this.paintKey = key;
+    const tok = ++this.paintTok;
     Promise.resolve(t.paint(w, h, dpr)).then(cv => {
       if (tok !== this.paintTok || this.theme !== t) return;
       cv.classList.add('ar__paint');
       if (this.paintEl && this.paintEl !== cv) this.paintEl.replaceWith(cv);
       else if (!this.paintEl) this.root.querySelector('.ar__bg')!.after(cv);
       this.paintEl = cv;
-    }, err => console.warn('masa zemini çizilemedi', err));
+    }, err => {
+      if (tok === this.paintTok) this.paintKey = '';
+      console.warn('masa zemini çizilemedi', err);
+    });
   }
 
   // ───────── düzen ─────────
@@ -278,6 +294,7 @@ export class Table2D {
     this.root.style.setProperty('--ch', ch + 'px');
     const rd = cw * 2.25;
     Object.assign(this.ring.style, {width: rd + 'px', height: rd + 'px', left: W / 2 - rd / 2 + 'px', top: pileY - rd / 2 + 'px'});
+    this.potEl.style.transform = `translate3d(${(W / 2 + rd * 0.36).toFixed(1)}px,${(pileY - rd * 0.36).toFixed(1)}px,0) translate(-50%,-50%)`;
     for (const g of this.glows.values()) g.style.top = pileY + 'px';
     this.raysEl.style.top = pileY + 'px';
     this.tintEl.style.top = pileY + 'px';
@@ -316,7 +333,7 @@ export class Table2D {
 
   /**
    * Uçuş: ara karede kalkış (ölçek + yukarı) ile kavis; isteğe bağlı yarıda yüz çevirme, yana bükülme (arc),
-   * havada dönüş (spin) ve hayalet iz (trail: renk).
+   * havada dönüş (spin: 360'ın katı olmalı, yoksa sonda sıçrar) ve hayalet iz (trail: renk).
    */
   private fly(c: Card, to: Pose, o: {ms?: number; lift?: number; flip?: number; z?: number; zEnd?: number; delay?: number; ease?: string; arc?: number; spin?: number; trail?: string} = {}): Promise<void> {
     const ms = o.ms ?? 300, lift = o.lift ?? 0.12;
@@ -445,6 +462,24 @@ export class Table2D {
     this.tintEl.style.background = `radial-gradient(circle, ${color} 0%, ${color}66 22%, ${color}00 46%)`;
     this.tintEl.animate([{opacity: 0, transform: 'scale(.6)'}, {opacity: peak, transform: 'scale(1)', offset: 0.18}, {opacity: 0, transform: 'scale(1.25)'}],
       {duration: ms, easing: 'cubic-bezier(.2,.7,.3,1)'});
+  }
+
+  /** Büyük kazan: yığında 5+ kart varken yığın halkası kızışır ve yanında alevli sayaç görünür (büyük yığın = büyük ödül). */
+  private syncPot(): void {
+    const n = this.pile.length;
+    const on = n >= 5;
+    this.ring.classList.toggle('is-pot', on);
+    // tek kart: pişti kokusu (halka hızlı nabız)
+    this.ring.classList.toggle('is-lone', n === 1);
+    if (!on) {
+      if (this.potShown) this.potEl.classList.remove('is-on');
+      this.potShown = 0;
+      return;
+    }
+    this.potNum.textContent = String(n);
+    if (!this.potShown) this.potEl.classList.add('is-on');
+    (this.potEl.firstElementChild as HTMLElement).animate([{transform: 'scale(1.5) rotate(-10deg)'}, {transform: 'none'}], {duration: 320, easing: 'cubic-bezier(.3,1.6,.5,1)'});
+    this.potShown = n;
   }
 
   /** Son el gerilimi: kenarlarda sıcak, yavaş nabız (CSS döngüsü). */
@@ -579,37 +614,49 @@ export class Table2D {
       this.set(c, {...p, x: p.x - this.L.W * 0.7, r: p.r - 25}, 100 + i);
     });
     this.setGlow(null);
-    this.emitDeck();
+    this.syncPot();
+    // deste sayacı karıştırma bitince görünür
+    this.onDeck(0, this.L.deck.x, this.L.deck.y);
   }
 
-  /** Deste dönerek gelir, ikiye ayrılıp harmanlanır, sonra şelale gibi akıp toplanır. */
+  /**
+   * Karıştırma gösterisi (masanın ortasında): deste dönerek gelir, ikiye ayrılıp fermuar gibi harmanlanır,
+   * köprü kurup şelale gibi akar, sonra deste yerine kayar (~1.4 sn; sfx.shuffle ile aynı uzunlukta).
+   */
   async intro(): Promise<void> {
     const n = this.deck.length;
-    await Promise.all(this.deck.map((c, i) => this.fly(c, this.deckPose(i), {ms: 380, lift: 0.05, delay: i * 3, ease: 'cubic-bezier(.2,.9,.3,1.12)', spin: 0})));
-    this.emitDeck();
-    // harman: iki yarım yana açılır, eğilir, birbirine geçer
+    const {pile, cw, ch} = this.L;
+    const cp = (i: number): Pose => {
+      const k = Math.min(i, 26);
+      return {x: pile.x - k * 0.12, y: pile.y - k * 0.42, r: -3 + Math.sin(i * 3.7) * 0.8, s: 1.06};
+    };
+    // 1) geliş
+    await Promise.all(this.deck.map((c, i) => this.fly(c, cp(i), {ms: 330, lift: 0.05, delay: i * 1.5, ease: 'cubic-bezier(.2,.9,.3,1.1)', spin: 360, z: 100 + i})));
+    // 2) ikiye ayrıl
     const half = n >> 1;
     await Promise.all(this.deck.map((c, i) => {
-      const p = this.deckPose(i % half);
-      p.x += (i < half ? -1 : 1) * this.L.cw * 0.46;
-      p.y -= 6;
-      p.r += i < half ? -10 : 10;
-      return this.fly(c, p, {ms: 150, lift: 0.02});
+      const p = cp(i % half);
+      p.x += (i < half ? -1 : 1) * cw * 0.58;
+      p.y -= 8;
+      p.r += i < half ? -14 : 14;
+      return this.fly(c, p, {ms: 130, lift: 0.02});
     }));
+    // 3) fermuar harmanı: iki yarıdan sırayla birer kart
     const order: Card[] = [];
     for (let k = 0; k < half; k++) order.push(this.deck[k], this.deck[k + half]);
     if (n % 2) order.push(this.deck[n - 1]);
     this.deck = order;
-    await Promise.all(order.map((c, i) => this.fly(c, this.deckPose(i), {ms: 160, lift: 0.02, delay: i * 2, z: 100 + i})));
-    // köprü: üst yarı yay çizerek kalkar ve şelale gibi desteye döner
-    const top = this.deck.slice(half);
-    const up = this.L.ch * 0.9;
-    await Promise.all(top.map((c, j) => {
-      const i = half + j;
-      const p = this.deckPose(i);
-      return this.fly(c, {...p, x: p.x + this.L.cw * 0.25, y: p.y - up * (0.4 + 0.6 * Math.sin((j / top.length) * Math.PI)), r: p.r + 12 - (j / top.length) * 24, s: 1.04}, {ms: 140, lift: 0, delay: j * 3})
-        .then(() => this.fly(c, p, {ms: 150, lift: 0, delay: (top.length - j) * 2, ease: 'cubic-bezier(.5,0,.75,0)'}));
+    await Promise.all(order.map((c, i) => this.fly(c, cp(i), {ms: 120, lift: 0, delay: i * 2.2, z: 100 + i, ease: 'cubic-bezier(.4,0,.6,1)'})));
+    // 4) köprü: deste yay gibi bükülür, sonra yukarıdan aşağı şelale gibi akar
+    await Promise.all(order.map((c, i) => {
+      const u = i / (n - 1);
+      const p = cp(i);
+      return this.fly(c, {x: pile.x + (u - 0.5) * cw * 1.5, y: p.y - Math.sin(u * Math.PI) * ch * 0.42, r: (u - 0.5) * 34, s: 1.06}, {ms: 150, lift: 0, ease: 'cubic-bezier(.3,.7,.4,1)'});
     }));
+    await Promise.all(order.map((c, i) => this.fly(c, cp(i), {ms: 140, lift: 0, delay: (n - 1 - i) * 1.6, ease: 'cubic-bezier(.5,0,.75,0)'})));
+    // 5) deste yerine kayar
+    await Promise.all(order.map((c, i) => this.fly(c, this.deckPose(i), {ms: 240, lift: 0.04, delay: i * 1, ease: 'cubic-bezier(.3,.8,.3,1.05)'})));
+    this.emitDeck();
     this.snd.land(0.35);
     const t = this.deck[this.deck.length - 1];
     void t.inn.animate([{transform: 'translateY(-3px)'}, {transform: 'none'}], {duration: 120, easing: 'ease-out'});
@@ -624,7 +671,7 @@ export class Table2D {
       this.pile.push(c);
       this.snd.deal();
       const to = {x: this.L.pile.x + rnd(-5, 5), y: this.L.pile.y + rnd(-5, 5) - k * 0.3, r: faceUp[k] ? rnd(-8, 8) : rnd(-24, 24), s: 1};
-      const f = this.fly(c, to, {ms: 300, lift: 0.18, flip: faceUp[k] ? c.id : undefined, z: 950, zEnd: 300 + this.pile.length, spin: k % 2 ? 180 : -180});
+      const f = this.fly(c, to, {ms: 300, lift: 0.18, flip: faceUp[k] ? c.id : undefined, z: 950, zEnd: 300 + this.pile.length, spin: k % 2 ? 360 : -360});
       this.emitDeck();
       if (k === cards.length - 1) {
         await f;
@@ -654,7 +701,7 @@ export class Table2D {
       if (d.seat === 0) {
         c.el.classList.add('is-hand');
         fl.push(this.fly(c, this.handPose(i, cnt[0]), {ms: 360, lift: 0.22, flip: c.id, z: 950, zEnd: 500 + i, spin}));
-      } else fl.push(this.fly(c, this.fanPose(d.seat, i, cnt[d.seat]), {ms: 320, lift: 0.1, z: 950, zEnd: 400 + d.seat * 10 + i, spin: spin * 0.5}));
+      } else fl.push(this.fly(c, this.fanPose(d.seat, i, cnt[d.seat]), {ms: 320, lift: 0.1, z: 950, zEnd: 400 + d.seat * 10 + i, spin}));
       this.emitDeck();
       await sleep(gap);
     }
@@ -798,7 +845,7 @@ export class Table2D {
     if (seat === 0) this.layoutHand(true);
     else list.forEach((x, i) => void this.fly(x, this.fanPose(seat, i, list.length), {ms: 220, lift: 0}));
     await this.fly(c, to, {ms: seat === 0 ? 250 : 320, lift: 0.22, flip: seat === 0 ? undefined : card, z: 960, zEnd: 300 + this.pile.length,
-      ease: 'cubic-bezier(.25,.6,.3,1)', trail: SUIT_COLOR[suitOf(card)], spin: seat === 0 ? 0 : seat % 2 ? 180 : 0});
+      ease: 'cubic-bezier(.25,.6,.3,1)', trail: SUIT_COLOR[suitOf(card)]});
     this.snd.land(jack ? 0.95 : 0.7);
     this.landFx(c, jack ? 1.3 : 0.85);
     // alttaki kart çarpmanın etkisiyle hafifçe itilir
@@ -808,6 +855,7 @@ export class Table2D {
     }
     if (jack) this.shake(0.25);
     this.setGlow(suitOf(card));
+    this.syncPot();
   }
 
   /** İniş: ezilip sekme + takım renginde halka + kıvılcım + toz. */
@@ -872,6 +920,7 @@ export class Table2D {
   async collect(seat: number, pistiCard: CardId | null, onArrive?: (i: number, total: number) => void): Promise<void> {
     const list = this.pile;
     this.pile = [];
+    this.syncPot();
     const st = this.stacks[seat];
     const {pile} = this.L;
     // 1) toplanma: kartlar yığın merkezine sıkışır

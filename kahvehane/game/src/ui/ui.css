@@ -304,15 +304,17 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-vs__slot .kh-vs__name { font-size: calc(var(--u) * 1.5); }
 .kh-vs__slot .kh-vs__sub { font-size: calc(var(--u) * .78); }
 .kh-vs__seams i { position: absolute; z-index: 6; left: -20%; right: -20%; top: calc(var(--k) * 25% - 2px); height: 5px; background: var(--vs-seam); transform: skewY(-9deg); box-shadow: 0 0 0 2px rgba(10, 16, 51, .6); }
-.kh-vs.is-4 .kh-vs__slot:nth-child(-n+0) { z-index: 5; }
 .kh-vs.is-4 .kh-vs__emblem { width: calc(var(--u) * 7.4); height: calc(var(--u) * 7.4); margin: calc(var(--u) * -3.7) 0 0 calc(var(--u) * -3.7); z-index: 8; }
 .kh-vs.is-4 .kh-vs__emblem .kh-title { font-size: calc(var(--u) * 3); }
 .kh-vs.is-4 .kh-vs__stake { top: auto; bottom: calc(25% + var(--u) * .2); right: auto; left: calc(var(--u) * 1); z-index: 8; }
 /* mod kurdelesi (üst orta) */
-.kh-vs__mode { position: absolute; z-index: 9; left: 50%; top: max(calc(var(--u) * .8), env(safe-area-inset-top)); transform: translateX(-50%); padding: .4em 1.1em .35em; border-radius: var(--r-pill);
+.kh-vs__mode { position: absolute; z-index: 9; left: 0; right: 0; width: max-content; margin: 0 auto; top: max(calc(var(--u) * .8), env(safe-area-inset-top)); padding: .4em 1.1em .35em; border-radius: var(--r-pill);
   background: rgba(7, 11, 46, .65); box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .5); font-family: var(--font-display); font-size: calc(var(--u) * .95); letter-spacing: .08em; text-transform: uppercase;
   white-space: nowrap; text-shadow: var(--outline-thin); }
 .kh-vs.is-1v1 .kh-vs__mode { display: none; }
+.kh-vs.is-4 .kh-vs__mode { margin-left: calc(var(--u) * 1); }
+.kh-vs__slot.is-k0 .kh-vs__bust { height: 100%; bottom: -5%; }
+.kh-vs__slot.is-k0 .kh-vs__plate { top: 62%; }
 /* VS patlaması: lacivert yıldız (kontur) + sarı yıldız + beyaz VS */
 .kh-vs__emblem { position: absolute; z-index: 7; left: 50%; top: 50%; width: calc(var(--u) * 9); height: calc(var(--u) * 9); margin: calc(var(--u) * -4.5) 0 0 calc(var(--u) * -4.5);
   display: grid; place-items: center; will-change: transform; }
@@ -352,6 +354,9 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-set__lbl { flex: 1; min-width: 0; font-family: var(--font-display); font-size: calc(var(--u) * 1.15); white-space: nowrap; text-shadow: var(--outline-thin); }
 .kh-set__foot { display: flex; flex-direction: column; align-items: stretch; gap: calc(var(--u) * .6); margin-top: calc(var(--u) * 1.1); }
 .kh-set__ver { text-align: center; color: var(--c-text-3); font-size: calc(var(--u) * .82); font-weight: var(--w-strong); }
+.kh-set__rules .kh-set__ico { --ico: var(--btn5-fill); --ico-dk: #087a35; }
+.kh-set__go { display: grid; place-items: center; width: calc(var(--u) * 1.8); height: calc(var(--u) * 1.8); color: var(--c-text-2); }
+.kh-set__go .kh-i { stroke-width: 3; }
 
 /* =================== NASIL OYNANIR =================== */
 .kh-rules .kh-modal__panel { --head-fill: var(--btn5-fill); --head-dk: #087a35; max-width: calc(var(--u) * 25); }

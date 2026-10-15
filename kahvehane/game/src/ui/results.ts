@@ -12,7 +12,7 @@ import {I, suitSvg} from './icons';
 import {arenaHtml, capsuleHtml, charAvatarHtml, gemHtml, onAct, raysHtml, type Ctx} from './parts';
 import {g3} from './fx';
 import {haptic} from '../platform/bridge';
-import {STAKES} from './lobby';
+import {STAKES, shortName} from './lobby';
 
 const ROWS: {label: string; get: (s: SideScore) => number; info?: boolean; icon?: string}[] = [
   {label: 'Kart sayısı', get: s => s.cards, info: true},
@@ -60,7 +60,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
   const colName = (side: SideScore): string => {
     if (side === mySide) return mode === 'esli' ? 'Takımın' : 'Sen';
     if (mode === 'esli') return 'Rakip';
-    return by(side.seats[0]).char.name.split(' ')[0];
+    return shortName(by(side.seats[0]).char);
   };
   const colAvas = (side: SideScore) => side.seats.map(by).map(p => charAvatarHtml(p.char, p.human ? frame : 'standart', 'kh-sc__ava')).join('');
 
@@ -79,7 +79,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
       <section class="kh-podium is-n${big.length}">
         ${raysHtml(outcome === 'win' ? 'is-gold kh-podium__rays' : 'kh-podium__rays')}
         <div class="kh-podium__big">${big.map((p, i) => `<div class="kh-podium__bust" style="--i:${i}"><img src="${p.char.poses[bigPose]}" alt=""><span class="kh-podium__tag${p.human ? ' is-me' : ''}">${esc(p.human ? p.name : p.char.name)}</span>${outcome !== 'draw' ? `<i class="kh-podium__crown">${I.crown}</i>` : ''}</div>`).join('')}</div>
-        <div class="kh-podium__small">${small.map(p => `<div class="kh-podium__sm"><span class="kh-podium__smava">${charAvatarHtml(p.char, p.human ? frame : 'standart', '', outcome === 'draw' ? 'saskin' : 'uzgun')}${mode === '4' ? `<b class="kh-podium__rank">${ranked.indexOf(sideOf(p)) + 1}</b>` : ''}</span><small>${esc(p.human ? 'Sen' : p.char.name.split(' ')[0])}</small></div>`).join('')}</div>
+        <div class="kh-podium__small">${small.map(p => `<div class="kh-podium__sm"><span class="kh-podium__smava">${charAvatarHtml(p.char, p.human ? frame : 'standart', '', outcome === 'draw' ? 'saskin' : 'uzgun')}${mode === '4' ? `<b class="kh-podium__rank">${ranked.indexOf(sideOf(p)) + 1}</b>` : ''}</span><small>${esc(p.human ? 'Sen' : shortName(p.char))}</small></div>`).join('')}</div>
         ${speaker ? `<div class="kh-say kh-podium__say"><small>${esc(speaker.char.name)}</small>${esc(d.line ?? defLine)}</div>` : ''}
       </section>
       <section class="kh-panel kh-sc is-c${ordered.length}">
