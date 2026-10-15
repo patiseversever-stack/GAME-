@@ -2,9 +2,6 @@
 // Hiçbir görsel indirilmez: prepare() içinde, girdaplı bir akış alanı (flow field) boyunca binlerce kısa, kalın,
 // kıvrık fırça darbesiyle kendi "tablolarımızı" BİR KEZ boyayıp saklarız; kart çizimi yalnızca bu tuvalleri kopyalar.
 import type {Skin, Suit} from './contract';
-import rizaUrl from '../../assets/riza_avatar.jpg?url';
-import defneUrl from '../../assets/art/defne_avatar.jpg?url';
-import cemUrl from '../../assets/art/cem_avatar.jpg?url';
 
 type RGB = readonly [number, number, number];
 type Ctx = CanvasRenderingContext2D;
@@ -158,6 +155,7 @@ interface Scene {
   /** yalnız bu bölgeye boya (çerçeve tablosu için hız) */
   mask?: (x: number, y: number) => boolean;
   cell: number; // gök darbeleri arası ızgara
+  bs?: number; // fırça ölçeği (yoksa w / 360)
 }
 
 function skyField(sc: Scene): Field {
@@ -231,7 +229,7 @@ function paintSky(g: Ctx, sc: Scene, rnd: Rnd): void {
     }
   }
   shuffle(pts, rnd);
-  const s = sc.w / 360;
+  const s = sc.bs ?? sc.w / 360;
   for (const [px, py] of pts) {
     const len = (12 + rnd() * 14) * s;
     const lw = (3.6 + rnd() * 2.8) * s;
@@ -513,6 +511,18 @@ function paintScene(sc: Scene): HTMLCanvasElement {
   paintSky(g, sc, rnd);
   for (const st of sc.stars) paintHalo(g, st, rnd, 'star', s);
   if (sc.moon) paintHalo(g, sc.moon, rnd, 'moon', s);
+  // ışıltı: yıldızların ve ayın çevresine yumuşak, ekranla karışan sıcak ışık (servi ve tepeler önünde kalır)
+  g.globalCompositeOperation = 'screen';
+  for (const st of sc.moon ? [...sc.stars, sc.moon] : sc.stars) {
+    const R = st.r * 1.8;
+    const gl = g.createRadialGradient(st.x, st.y, st.r * 0.2, st.x, st.y, R);
+    gl.addColorStop(0, 'rgba(255,236,160,0.42)');
+    gl.addColorStop(0.45, 'rgba(255,214,110,0.16)');
+    gl.addColorStop(1, 'rgba(255,214,110,0)');
+    g.fillStyle = gl;
+    g.fillRect(st.x - R, st.y - R, R * 2, R * 2);
+  }
+  g.globalCompositeOperation = 'source-over';
   if (sc.horizon) paintHills(g, sc, rnd);
   if (sc.village) paintVillage(g, sc, rnd);
   if (sc.cypress) paintCypress(g, sc.cypress, rnd, s);
@@ -547,7 +557,7 @@ function backScene(): Scene {
     horizon: x => H * (0.755 - 0.07 * (x / W)) + H * 0.018 * Math.sin((x / W) * 9 + 1),
     cypress: {x0: W * 0.17, y0: H * 1.02, y1: H * 0.05, w0: W * 0.13},
     village: true,
-    cell: 7.5,
+    cell: 8,
   };
 }
 
@@ -606,6 +616,27 @@ function paintCream(): HTMLCanvasElement {
     brush(g, [x, y, x + Math.cos(a) * len, y + Math.sin(a) * len * 0.6], 4 + rnd() * 4, c2, 0);
   }
   g.globalAlpha = 1;
+  // "Yıldızlı Gece" nefesi: panelin ortasında çok soluk bir girdap (okunurluğu bozmayacak kadar hafif)
+  const cx = PW / 2, cy = PH / 2, Rw = PW * 0.44;
+  const fw: Field = (x, y) => Math.atan2(y - cy, x - cx) + Math.PI / 2 + 0.28 + 0.25 * Math.sin(x * 0.03 - y * 0.02);
+  g.globalAlpha = 0.15;
+  for (let i = 0; i < 420; i++) {
+    const a = rnd() * Math.PI * 2, d = Rw * Math.sqrt(rnd());
+    const x = cx + Math.cos(a) * d, y = cy + Math.sin(a) * d * 1.25;
+    const sp = Math.sin((d / (Rw * 0.3)) * Math.PI * 2 - a);
+    const col: RGB = sp > 0.1 ? [104, 146, 204] : sp > -0.6 ? [170, 194, 220] : [214, 192, 130];
+    brush(g, trace(fw, x, y, 12 + rnd() * 12, 3), 4 + rnd() * 3, jit(col, 10, rnd), 0);
+  }
+  g.globalAlpha = 1;
+  // minik yıldız serpintisi (köşe rozetlerinden uzakta)
+  for (let n = 0, tries = 0; n < 9 && tries < 200; tries++) {
+    const x = PW * (0.12 + rnd() * 0.76), y = PH * (0.08 + rnd() * 0.84);
+    if ((x < PW * 0.42 && y < PH * 0.46) || (x > PW * 0.58 && y > PH * 0.54)) continue;
+    g.globalAlpha = 0.55;
+    tinyStar(g, x, y, 2 + rnd() * 1.6, rnd);
+    g.globalAlpha = 1;
+    n++;
+  }
   // benekler
   for (let i = 0; i < 1600; i++) {
     g.fillStyle = rnd() < 0.5 ? 'rgba(120,96,60,0.07)' : 'rgba(255,255,255,0.12)';
@@ -675,75 +706,164 @@ function clubPath(): Path2D {
   return p;
 }
 const isRed = (s: Suit): boolean => s === 'H' || s === 'D';
+/** Büyük takım işaretinin içindeki değerin dikey yeri (birim şekil koordinatı). */
+const SUIT_TY: Record<Suit, number> = {H: -0.07, C: -0.04, S: 0.02, D: 0};
 
-/** Fırça dokulu büyük takım işareti (tek sefer çizilir, kopyalanır). Birim kutu SPR px'e oturur. */
+/** Minik yıldız: soluk mavi hale + sarı-beyaz çekirdek. */
+function tinyStar(g: Ctx, x: number, y: number, r: number, rnd: Rnd): void {
+  g.fillStyle = 'rgba(120,160,220,0.32)';
+  g.beginPath();
+  g.arc(x, y, r * 2.2, 0, Math.PI * 2);
+  g.fill();
+  for (let i = 0; i < 6; i++) {
+    const a = rnd() * Math.PI * 2;
+    brush(g, arcPts(x, y, r * 1.45, r * 1.45, a, a + 1.1, 3), r * 0.6, jit([248, 220, 104], 10, rnd), 0);
+  }
+  g.fillStyle = css([255, 248, 210]);
+  g.beginPath();
+  g.arc(x, y, r * 0.8, 0, Math.PI * 2);
+  g.fill();
+}
+
+/**
+ * Büyük takım işareti, içi "Yıldızlı Gece" girdabıyla boyanmış (tek sefer çizilir, kopyalanır).
+ * ♠♣: gece laciverti / neredeyse siyah sarmal + birkaç minik sarı yıldız. ♥♦: lal-zincifre sarmal + sıcak sarı ışıltı.
+ * Birim şekil SPR·0.84 px'e oturur; ty: içteki değerin dikey yeri (birim), yıldızlar oradan uzak durur.
+ */
 const SPR = 200;
-function paintSuit(path: Path2D, red: boolean, seed: number): HTMLCanvasElement {
+function paintSuit(path: Path2D, red: boolean, seed: number, ty: number): HTMLCanvasElement {
   const [c, g] = makeCanvas(SPR, SPR);
   const rnd = mulberry(seed);
-  const k = SPR * 0.84;
-  g.translate(SPR / 2, SPR / 2);
-  g.scale(k, k);
-  const base: RGB = red ? [196, 18, 47] : [21, 23, 28];
+  const k = SPR * 0.84, C = SPR / 2;
+  const base: RGB = red ? [194, 18, 46] : [14, 18, 36];
+  g.setTransform(k, 0, 0, k, C, C);
   g.fillStyle = css(base);
   g.fill(path);
   g.save();
   g.clip(path);
   g.setTransform(1, 0, 0, 1, 0, 0);
-  const cols: RGB[] = red
-    ? [[176, 10, 38], [206, 26, 52], [222, 52, 64], [160, 8, 40], [214, 40, 46], [236, 84, 80]]
-    : [[14, 16, 22], [34, 38, 50], [26, 34, 64], [44, 48, 58], [18, 22, 34], [52, 66, 104]];
+  // iç içe iki girdap (tablodaki büyük sarmal gibi)
+  const vs: Vortex[] = [
+    {x: C - SPR * 0.1, y: C - SPR * 0.08, r: SPR * 0.26, s: 1},
+    {x: C + SPR * 0.15, y: C + SPR * 0.12, r: SPR * 0.19, s: -1},
+  ];
   const f: Field = (x, y) => {
-    const dx = x - SPR / 2, dy = y - SPR * 0.46;
-    return Math.atan2(dy, dx) + Math.PI / 2 + 0.35 + 0.4 * Math.sin(x * 0.04 - y * 0.03);
+    let vx = 1, vy = 0.3 * Math.sin(x * 0.05 + y * 0.03);
+    for (const v of vs) {
+      const dx = x - v.x, dy = y - v.y;
+      const d = Math.sqrt(dx * dx + dy * dy) + 1e-3;
+      const q = 3 * Math.exp(-(d * d) / (v.r * v.r));
+      vx += (q * -dy * v.s - q * 0.2 * dx) / d;
+      vy += (q * dx * v.s - q * 0.2 * dy) / d;
+    }
+    return Math.atan2(vy, vx);
   };
-  for (let i = 0; i < 300; i++) {
-    const x = SPR * (0.06 + rnd() * 0.88), y = SPR * (0.04 + rnd() * 0.92);
-    const ci = rnd() < 0.85 ? Math.floor(rnd() * 5) : 5;
-    brush(g, trace(f, x, y, 10 + rnd() * 12, 3), 4 + rnd() * 3, jit(cols[ci], 8, rnd), 0.9);
+  const band = (x: number, y: number): number => {
+    let b = 0.5 + 0.5 * Math.sin(x * 0.06 + y * 0.035);
+    for (const v of vs) {
+      const dx = x - v.x, dy = y - v.y;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      const R = v.r * 1.2;
+      if (d < R) {
+        const t = 1 - d / R;
+        b = b * (1 - t) + t * (0.5 + 0.5 * Math.sin((d / (v.r * 0.32)) * Math.PI * 2 - Math.atan2(dy, dx) * v.s));
+      }
+    }
+    return b;
+  };
+  const DARK: RGB[] = red ? [[178, 10, 38], [196, 20, 46], [166, 12, 44]] : [[10, 13, 26], [16, 21, 42], [12, 16, 34]];
+  const LIGHT: RGB[] = red ? [[216, 42, 44], [228, 62, 48], [206, 30, 58]] : [[24, 38, 84], [32, 54, 114], [20, 44, 72]];
+  const SPARK: RGB[] = red ? [[250, 196, 90], [240, 120, 60]] : [[76, 114, 186], [126, 162, 214]];
+  for (let i = 0; i < 280; i++) {
+    const x = SPR * (0.06 + rnd() * 0.88), y = SPR * (0.03 + rnd() * 0.94);
+    const b = band(x, y) + (rnd() - 0.5) * 0.3;
+    const col = b > (red ? 0.96 : 0.94) ? pick(SPARK, rnd) : b > 0.6 ? pick(LIGHT, rnd) : pick(DARK, rnd);
+    brush(g, trace(f, x, y, 11 + rnd() * 12, 3), 4 + rnd() * 3, jit(col, 8, rnd), 0.9);
+  }
+  if (!red) {
+    // birkaç minik sarı yıldız — değerin bulunduğu orta bölgeden uzakta, kenara taşmadan
+    let n = 0;
+    for (let tries = 0; tries < 300 && n < 5; tries++) {
+      const ux = (rnd() - 0.5) * 0.84, uy = (rnd() - 0.5) * 0.9;
+      if (Math.abs(ux) < 0.24 && Math.abs(uy - ty) < 0.2) continue;
+      const px = C + ux * k, py = C + uy * k, m = 10;
+      g.setTransform(k, 0, 0, k, C, C);
+      const inside = g.isPointInPath(path, px - m, py) && g.isPointInPath(path, px + m, py) && g.isPointInPath(path, px, py - m) && g.isPointInPath(path, px, py + m);
+      g.setTransform(1, 0, 0, 1, 0, 0);
+      if (!inside) continue;
+      tinyStar(g, px, py, 2.6 + rnd() * 2.2, rnd);
+      n++;
+    }
   }
   g.restore();
   // net kenar
+  g.setTransform(k, 0, 0, k, C, C);
   g.lineWidth = 2.2 / k;
-  g.strokeStyle = css(darken(base, red ? 0.35 : 0.2));
+  g.strokeStyle = css(darken(base, red ? 0.35 : 0.1));
   g.stroke(path);
   return c;
 }
 
-/** As: krem tuval üzerinde girdaplı bir yıldız — dışta lacivert sarmal kollar, içte sarı ışık, ortada beyaz çekirdek. */
-function paintAceHalo(): HTMLCanvasElement {
-  const S = 300, C = S / 2, R = S * 0.47;
+/** As: sarmal kollu, ışıl ışıl bir yıldız-girdap (gökada gibi): dışta lacivert kollar, içte altın ışık, ortada beyaz çekirdek. */
+const ACE_S = 320, ACE_R = ACE_S * 0.46;
+function paintAce(): HTMLCanvasElement {
+  const S = ACE_S, C = S / 2, R = ACE_R;
   const [c, g] = makeCanvas(S, S);
   const rnd = mulberry(31);
-  const f: Field = (x, y) => Math.atan2(y - C, x - C) + Math.PI / 2 + 0.3; // içe doğru sarmal
+  // 1) dört sarmal kol
+  const ARM: RGB[] = [[170, 202, 222], [110, 154, 208], [60, 104, 184], [36, 70, 156], [22, 42, 116], [16, 30, 92]];
+  const span = Math.PI * 1.3, dr = (R * 0.55) / span;
+  for (let k = 0; k < 4; k++) {
+    const phi = (k * Math.PI) / 2 + 0.3;
+    for (let i = 0; i < 170; i++) {
+      const t = Math.pow(rnd(), 0.85);
+      const th0 = phi + t * span;
+      const r0 = R * 0.45 + dr * t * span + (rnd() - 0.5) * 2 * (1 - t * 0.55) * 13;
+      const da = (15 + rnd() * 14) / r0;
+      const pts: number[] = [];
+      for (let q = 0; q <= 4; q++) {
+        const th = th0 + (da * q) / 4;
+        const r = r0 + (dr * da * q) / 4;
+        pts.push(C + Math.cos(th) * r, C + Math.sin(th) * r);
+      }
+      const ci = clamp(Math.floor(t * 4.2 + rnd() * 2), 0, ARM.length - 1);
+      const col = rnd() < 0.08 ? TEAL : ARM[ci];
+      brush(g, pts, (6.6 - t * 3) * (0.8 + rnd() * 0.4), jit(col, 12, rnd), 0.9);
+    }
+  }
+  // 2) gövde: lacivert-kobalt girdap diski
+  const f: Field = (x, y) => Math.atan2(y - C, x - C) + Math.PI / 2 + 0.3;
+  for (let i = 0; i < 300; i++) {
+    const a = rnd() * Math.PI * 2, d = R * (0.4 + rnd() * 0.24);
+    const x = C + Math.cos(a) * d, y = C + Math.sin(a) * d;
+    const col = pick<RGB>([[30, 60, 150], [50, 92, 178], [92, 140, 204], [40, 110, 140]], rnd);
+    brush(g, trace(f, x, y, 10 + rnd() * 10, 2.6), 4 + rnd() * 2.6, jit(col, 10, rnd), 0.8);
+  }
+  // 3) açık ışık halkası + altın iç ışık
+  paintRing(g, C, C, R * 0.57, R * 0.57, 5, [234, 232, 182], rnd);
   const arm = (x: number, y: number): number => {
     const dx = x - C, dy = y - C;
-    return 0.5 + 0.5 * Math.sin((Math.hypot(dx, dy) / (R * 0.24)) * Math.PI * 2 - Math.atan2(dy, dx));
+    return 0.5 + 0.5 * Math.sin((Math.hypot(dx, dy) / (R * 0.2)) * Math.PI * 2 - Math.atan2(dy, dx));
   };
-  const OUT: RGB[] = [[20, 38, 112], [38, 74, 158], [80, 126, 198], [156, 192, 216], [52, 122, 140]];
-  const IN: RGB[] = [[242, 196, 56], [250, 220, 100], [254, 240, 168], [232, 172, 50]];
-  for (let i = 0; i < 560; i++) {
-    const a = rnd() * Math.PI * 2, d = R * (0.58 + Math.sqrt(rnd()) * 0.37);
+  const IN: RGB[] = [[240, 192, 52], [250, 218, 96], [254, 240, 166], [232, 166, 46]];
+  for (let i = 0; i < 400; i++) {
+    const a = rnd() * Math.PI * 2, d = R * Math.sqrt(rnd()) * 0.55;
     const x = C + Math.cos(a) * d, y = C + Math.sin(a) * d;
     const b = arm(x, y);
-    const col = rnd() < 0.1 ? OUT[4] : b > 0.66 ? OUT[rnd() < 0.5 ? 3 : 2] : b > 0.33 ? OUT[1] : OUT[0];
-    brush(g, trace(f, x, y, 11 + rnd() * 12, 2.8), 4 + rnd() * 3, jit(col, 12, rnd), 0.8);
-  }
-  // iç ile dış arasında açık bir ışık halkası
-  paintRing(g, C, C, R * 0.68, R * 0.68, 4.5, [236, 232, 176], rnd);
-  for (let i = 0; i < 480; i++) {
-    const a = rnd() * Math.PI * 2, d = R * Math.sqrt(rnd()) * 0.66;
-    const x = C + Math.cos(a) * d, y = C + Math.sin(a) * d;
-    const b = arm(x, y);
-    const col = d < R * 0.2 ? IN[2] : rnd() < 0.08 ? IN[3] : b > 0.5 ? IN[1] : IN[0];
+    const col = d < R * 0.16 ? IN[2] : rnd() < 0.08 ? IN[3] : b > 0.5 ? IN[1] : IN[0];
     brush(g, trace(f, x, y, 9 + rnd() * 10, 2.4), 3.6 + rnd() * 2.6, jit(col, 10, rnd), 0.7);
   }
-  const core = g.createRadialGradient(C, C, 0, C, C, R * 0.26);
-  core.addColorStop(0, 'rgba(255,253,236,1)');
-  core.addColorStop(0.6, 'rgba(255,248,210,0.8)');
+  const core = g.createRadialGradient(C, C, 0, C, C, R * 0.3);
+  core.addColorStop(0, 'rgba(255,254,240,1)');
+  core.addColorStop(0.55, 'rgba(255,248,210,0.75)');
   core.addColorStop(1, 'rgba(255,240,170,0)');
   g.fillStyle = core;
   g.fillRect(0, 0, S, S);
+  // 4) kolların arasında minik yıldızlar
+  for (let i = 0; i < 7; i++) {
+    const a = (i / 7) * Math.PI * 2 + rnd() * 0.4, d = R * (0.78 + rnd() * 0.2);
+    tinyStar(g, C + Math.cos(a) * d, C + Math.sin(a) * d, 3 + rnd() * 2, rnd);
+  }
   return c;
 }
 
@@ -760,137 +880,198 @@ function paintRing(g: Ctx, cx: number, cy: number, rx: number, ry: number, lw: n
   }
 }
 
-// ───────────────────────── portreler ─────────────────────────
-const CW = 240, CH = 350, PAD = 19; // saray kartı tuvali ve girdaplı çerçeve kalınlığı
-const ORX = CW / 2 - PAD, ORY = CH / 2 - PAD; // portre elipsi yarıçapları
+// ───────────────────────── saray kartları: Yıldızlı Gece motifleri ─────────────────────────
+// Papaz = taçlı hilal Ay, Kız = hotozlu büyük yıldız (Venüs), Vale = alev gibi servi (Pişti'de yığını alan kart: en gösterişlisi).
+const CW = 240, CH = 350, PAD = 19; // saray tuvali ve girdaplı çerçeve kalınlığı
+const ORX = CW / 2 - PAD, ORY = CH / 2 - PAD; // iç elips yarıçapları
 
-function grade(c: RGB): RGB {
-  const l = (0.3 * c[0] + 0.59 * c[1] + 0.11 * c[2]) / 255;
-  const L = l * 255;
-  let o: RGB = [L + (c[0] - L) * 1.22, L + (c[1] - L) * 1.22, L + (c[2] - L) * 1.22];
-  if (l < 0.42) o = mix(o, [44, 66, 132], (0.42 - l) * 0.75); // gölgeler laciverte kayar (biraz aydınlatılmış)
-  if (l > 0.62) o = mix(o, [255, 234, 160], (l - 0.62) * 0.55); // ışıklar sarıya
-  return [clamp(o[0], 0, 255), clamp(o[1], 0, 255), clamp(o[2], 0, 255)];
+function goldFill(g: Ctx, y0: number, y1: number): CanvasGradient {
+  const gr = g.createLinearGradient(0, y0, 0, y1);
+  gr.addColorStop(0, '#fff4c2');
+  gr.addColorStop(0.35, '#f2c94e');
+  gr.addColorStop(0.7, '#c98f22');
+  gr.addColorStop(1, '#8a5a12');
+  return gr;
+}
+function jewel(g: Ctx, x: number, y: number, r: number, col: string): void {
+  g.fillStyle = col;
+  g.beginPath();
+  g.arc(x, y, r, 0, Math.PI * 2);
+  g.fill();
+  g.lineWidth = 1.4;
+  g.strokeStyle = '#4a2c06';
+  g.stroke();
+  g.fillStyle = 'rgba(255,255,255,0.85)';
+  g.beginPath();
+  g.arc(x - r * 0.35, y - r * 0.35, r * 0.32, 0, Math.PI * 2);
+  g.fill();
 }
 
-/** Yedek: fırçasız, yalnızca kırpılmış fotoğraf. */
-function plainPortrait(img: HTMLImageElement, sx: number, sy: number, sh: number): HTMLCanvasElement {
-  const OW = ORX * 2, OH = ORY * 2;
-  const [c, g] = makeCanvas(OW, OH);
-  g.drawImage(img, sx, sy, (sh * OW) / OH, sh, 0, 0, OW, OH);
-  return c;
-}
-
-/** Fotoğrafı, renklerinden örneklenen ve kenarlar boyunca akan fırça darbeleriyle yeniden boyar. */
-function paintPortrait(img: HTMLImageElement, sx: number, sy: number, sh: number, seed: number): HTMLCanvasElement {
-  const OW = ORX * 2, OH = ORY * 2;
-  const cropW = (sh * OW) / OH;
-  const SW = 64, SH = Math.round((64 * OH) / OW);
-  const [, sg] = makeCanvas(SW, SH);
-  sg.drawImage(img, sx, sy, cropW, sh, 0, 0, SW, SH);
-  const px = sg.getImageData(0, 0, SW, SH).data;
-  const lum = new Float32Array(SW * SH);
-  for (let i = 0; i < SW * SH; i++) lum[i] = (0.3 * px[i * 4] + 0.59 * px[i * 4 + 1] + 0.11 * px[i * 4 + 2]) / 255;
-  const L = (x: number, y: number): number => lum[clamp(y, 0, SH - 1) * SW + clamp(x, 0, SW - 1)];
-  const cell = (x: number, y: number): [number, number] => [clamp(Math.floor((x / OW) * SW), 0, SW - 1), clamp(Math.floor((y / OH) * SH), 0, SH - 1)];
-  const grad = (x: number, y: number): [number, number] => {
-    const [i, j] = cell(x, y);
-    const gx = L(i + 1, j - 1) + 2 * L(i + 1, j) + L(i + 1, j + 1) - L(i - 1, j - 1) - 2 * L(i - 1, j) - L(i - 1, j + 1);
-    const gy = L(i - 1, j + 1) + 2 * L(i, j + 1) + L(i + 1, j + 1) - L(i - 1, j - 1) - 2 * L(i, j - 1) - L(i + 1, j - 1);
-    return [gx, gy];
-  };
-  const color = (x: number, y: number): RGB => {
-    const [i, j] = cell(x, y);
-    const k = (j * SW + i) * 4;
-    return grade([px[k], px[k + 1], px[k + 2]]);
-  };
-  const [c, g] = makeCanvas(OW, OH);
-  g.filter = 'blur(2px)';
-  g.drawImage(img, sx, sy, cropW, sh, 0, 0, OW, OH);
-  g.filter = 'none';
-  // alt boya da aynı renk düzeltmesini alsın
-  const id = g.getImageData(0, 0, OW, OH);
-  for (let i = 0; i < id.data.length; i += 4) {
-    const o = grade([id.data[i], id.data[i + 1], id.data[i + 2]]);
-    id.data[i] = o[0];
-    id.data[i + 1] = o[1];
-    id.data[i + 2] = o[2];
+/** Altın taç: bant + beş diş, uçlarda inci, bantta mücevherler. by = bandın altı. */
+function drawCrown(g: Ctx, cx: number, by: number, w: number, rnd: Rnd): void {
+  const h = w * 0.62, bandH = w * 0.18, top = by - bandH;
+  const tips = [-0.54, -0.27, 0, 0.27, 0.54].map((u, i) => [cx + u * w, top - h * [0.62, 0.74, 0.98, 0.74, 0.62][i]]);
+  const vals = [-0.4, -0.13, 0.13, 0.4].map((u, i) => [cx + u * w, top - h * [0.2, 0.3, 0.3, 0.2][i]]);
+  const p = new Path2D();
+  p.moveTo(cx - w * 0.5, by);
+  p.lineTo(cx - w * 0.5, top);
+  for (let i = 0; i < 5; i++) {
+    p.lineTo(tips[i][0], tips[i][1]);
+    if (i < 4) p.lineTo(vals[i][0], vals[i][1]);
   }
-  g.putImageData(id, 0, 0);
-  const rnd = mulberry(seed);
-  const layers: [number, number, number, number][] = [
-    // kalınlık, uzunluk, adet, asgari eğim (ayrıntı katmanı yalnız kenarlarda)
-    [6, 15, 380, 0],
-    [3.8, 10, 680, 0],
-    [2.2, 6, 760, 0.35],
-  ];
-  for (const [lw, len, n, minG] of layers) {
-    for (let q = 0; q < n; q++) {
-      let x = rnd() * OW, y = rnd() * OH;
-      const [gx0, gy0] = grad(x, y);
-      if (Math.hypot(gx0, gy0) < minG) continue;
-      const col = jit(color(x, y), 9, rnd);
-      const pts = [x, y];
-      let prev = NaN;
-      const steps = 3;
-      for (let k = 0; k < steps; k++) {
-        const [gx, gy] = grad(x, y);
-        const m = Math.hypot(gx, gy);
-        let a = m > 0.08 ? Math.atan2(gy, gx) + Math.PI / 2 : Math.sin(x * 0.05) + Math.cos(y * 0.04) * 1.5;
-        if (!Number.isNaN(prev) && Math.cos(a - prev) < 0) a += Math.PI;
-        prev = a;
-        x += Math.cos(a) * (len / steps);
-        y += Math.sin(a) * (len / steps);
-        pts.push(x, y);
-      }
-      brush(g, pts, lw * (0.8 + rnd() * 0.4), col, lw > 3 ? 0.45 : 0);
-    }
+  p.lineTo(cx + w * 0.5, top);
+  p.lineTo(cx + w * 0.5, by);
+  p.closePath();
+  g.fillStyle = goldFill(g, top - h, by);
+  g.fill(p);
+  // boyalı ışıltı darbeleri
+  g.save();
+  g.clip(p);
+  for (let i = 0; i < 26; i++) {
+    const x = cx + (rnd() - 0.5) * w, y = by - rnd() * (h + bandH);
+    brush(g, [x, y, x + 4 + rnd() * 6, y - 6 - rnd() * 8], 2 + rnd() * 2, rnd() < 0.5 ? [255, 236, 150] : [206, 150, 40], 0);
   }
-  return c;
+  g.restore();
+  g.lineWidth = 2.2;
+  g.lineJoin = 'round';
+  g.strokeStyle = '#4a2c06';
+  g.stroke(p);
+  // bant çizgisi
+  g.beginPath();
+  g.moveTo(cx - w * 0.5, top);
+  g.lineTo(cx + w * 0.5, top);
+  g.stroke();
+  for (const [x, y] of tips) jewel(g, x, y, w * 0.055, '#fff4d0');
+  jewel(g, cx, by - bandH / 2, w * 0.07, '#c4122f');
+  jewel(g, cx - w * 0.3, by - bandH / 2, w * 0.05, '#2c5fd6');
+  jewel(g, cx + w * 0.3, by - bandH / 2, w * 0.05, '#2c5fd6');
 }
 
-/** Saray kartı: elips portre + çevresinde yıldız halesi gibi girdaplı boyalı çerçeve. */
-function paintCourt(portrait: HTMLCanvasElement | null, letter: string, seed: number): HTMLCanvasElement {
+/** Altın hotoz (tiara): kemerli ince bant, ortada yükselen dişler, uçlarında inciler. by = bandın ortası (alt). */
+function drawTiara(g: Ctx, cx: number, by: number, w: number): void {
+  const arcH = w * 0.14, th = w * 0.075;
+  const baseY = (u: number): number => by - arcH * (1 - u * u);
+  const spikes = [-1, -0.66, -0.33, 0, 0.33, 0.66, 1].map(u => ({u, h: w * (0.07 + 0.36 * Math.pow(1 - Math.abs(u), 1.6))}));
+  const p = new Path2D();
+  const X = (u: number): number => cx + u * w * 0.5;
+  p.moveTo(X(-1), baseY(-1));
+  for (let i = 0; i < spikes.length; i++) {
+    const {u, h} = spikes[i];
+    p.lineTo(X(u) - w * 0.035, baseY(u) - th * 0.6);
+    p.lineTo(X(u), baseY(u) - th - h);
+    p.lineTo(X(u) + w * 0.035, baseY(u) - th * 0.6);
+  }
+  p.lineTo(X(1), baseY(1));
+  for (let u = 1; u >= -1; u -= 0.1) p.lineTo(X(u), baseY(u) + th * 0.4);
+  p.closePath();
+  g.fillStyle = goldFill(g, by - arcH - w * 0.5, by);
+  g.fill(p);
+  g.lineWidth = 2;
+  g.lineJoin = 'round';
+  g.strokeStyle = '#4a2c06';
+  g.stroke(p);
+  for (const {u, h} of spikes) jewel(g, X(u), baseY(u) - th - h, w * (Math.abs(u) < 0.01 ? 0.05 : 0.036), '#fffaf0');
+  jewel(g, cx, baseY(0) - th * 0.2, w * 0.07, '#1f8fb0');
+}
+
+function courtScene(kind: 'K' | 'Q' | 'J'): Scene {
+  const W = CW, H = CH;
+  const inOval = (x: number, y: number): boolean => ((x - W / 2) / (ORX + 8)) ** 2 + ((y - H / 2) / (ORY + 8)) ** 2 < 1;
+  const common = {w: W, h: H, cell: 9, bs: 1, mask: inOval};
+  if (kind === 'K')
+    return {
+      ...common,
+      seed: 1313,
+      band: x => H * 0.3 + H * 0.05 * Math.sin((x / W) * Math.PI * 2),
+      bandW: H * 0.07,
+      vortices: [
+        {x: W * 0.22, y: H * 0.3, r: W * 0.22, s: 1},
+        {x: W * 0.82, y: H * 0.82, r: W * 0.2, s: -1},
+      ],
+      stars: [
+        {x: W * 0.8, y: H * 0.2, r: W * 0.07},
+        {x: W * 0.18, y: H * 0.7, r: W * 0.06},
+        {x: W * 0.3, y: H * 0.92, r: W * 0.05},
+      ],
+      moon: {x: W * 0.5, y: H * 0.6, r: W * 0.34},
+    };
+  if (kind === 'Q')
+    return {
+      ...common,
+      seed: 1212,
+      band: x => H * 0.78 + H * 0.05 * Math.sin((x / W) * Math.PI * 2 + 1),
+      bandW: H * 0.07,
+      vortices: [
+        {x: W * 0.78, y: H * 0.24, r: W * 0.2, s: -1},
+        {x: W * 0.2, y: H * 0.86, r: W * 0.2, s: 1},
+      ],
+      stars: [
+        {x: W * 0.5, y: H * 0.6, r: W * 0.37},
+        {x: W * 0.2, y: H * 0.22, r: W * 0.06},
+        {x: W * 0.82, y: H * 0.86, r: W * 0.06},
+      ],
+    };
+  return {
+    ...common,
+    seed: 1111,
+    band: x => H * 0.46 - H * 0.1 * (x / W),
+    bandW: H * 0.1,
+    vortices: [
+      {x: W * 0.8, y: H * 0.5, r: W * 0.3, s: 1},
+      {x: W * 0.2, y: H * 0.52, r: W * 0.2, s: -1},
+    ],
+    stars: [
+      {x: W * 0.54, y: H * 0.15, r: W * 0.15}, // servinin ucu bu yıldızı deler
+      {x: W * 0.84, y: H * 0.38, r: W * 0.075},
+      {x: W * 0.82, y: H * 0.72, r: W * 0.07},
+      {x: W * 0.16, y: H * 0.68, r: W * 0.065},
+    ],
+    moon: {x: W * 0.19, y: H * 0.32, r: W * 0.12},
+    horizon: x => H * (0.86 - 0.04 * (x / W)) + H * 0.012 * Math.sin((x / W) * 8),
+    cypress: {x0: W * 0.4, y0: H * 1.03, y1: H * 0.07, w0: W * 0.2},
+  };
+}
+
+/** Saray kartı: elips içinde Yıldızlı Gece motifi + çevresinde yıldız halesi gibi girdaplı boyalı çerçeve. */
+function paintCourt(kind: 'K' | 'Q' | 'J', seed: number): HTMLCanvasElement {
   const [c, g] = makeCanvas(CW, CH);
   const rnd = mulberry(seed);
   const cx = CW / 2, cy = CH / 2;
+  const sky = paintScene(courtScene(kind));
   g.save();
   g.beginPath();
   g.ellipse(cx, cy, ORX + 2, ORY + 2, 0, 0, Math.PI * 2);
   g.clip();
-  if (portrait) g.drawImage(portrait, cx - ORX, cy - ORY);
+  g.drawImage(sky, 0, 0);
+  if (kind === 'K') drawCrown(g, cx, CH * 0.6 - CW * 0.34 * 0.5 + 6, CW * 0.46, rnd);
+  else if (kind === 'Q') drawTiara(g, cx, CH * 0.6 - CW * 0.37 * 0.55, CW * 0.42);
   else {
-    // yedek: gece göğü + büyük harf
-    g.drawImage(frameArt!, 0, 0, PW, PH, 0, 0, CW, CH);
-    g.fillStyle = '#f6eedb';
-    g.font = `900 ${CH * 0.42}px ${FONT}`;
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    g.fillText(letter, cx, cy);
+    // servinin kenarına ay ışığı: sağ kenarda sıcak yeşil-altın parıltı darbeleri
+    const cy2 = courtScene('J').cypress!;
+    for (let i = 0; i < 60; i++) {
+      const y = cy2.y0 - (cy2.y0 - cy2.y1) * (0.08 + rnd() * 0.8);
+      const e = cypEdges(cy2, y)!;
+      const x = e[1] - 3 - rnd() * 8;
+      const col: RGB = pick([[70, 108, 58], [92, 128, 62], [58, 96, 70], [150, 150, 78]], rnd);
+      brush(g, [x, y, x + 2 + rnd() * 3, y - 6 - rnd() * 8, x + rnd() * 3, y - 12 - rnd() * 10], 1.8 + rnd() * 1.6, jit(col, 10, rnd), 0.5);
+    }
   }
   g.restore();
   // girdaplı çerçeve: elips halkalar boyunca teğet darbeler
-  const RING: RGB[] = [
-    [242, 206, 74],
-    [26, 46, 120],
-    [52, 92, 176],
-    [150, 188, 214],
-    [246, 226, 136],
-    [44, 80, 160],
-    [22, 40, 108],
-  ];
+  const RING: RGB[] =
+    kind === 'J'
+      ? [[250, 222, 120], [196, 140, 36], [255, 240, 170], [214, 160, 48], [150, 100, 26]]
+      : [[242, 206, 74], [30, 56, 140], [150, 188, 214], [44, 80, 160], [22, 40, 108]];
   const nr = RING.length;
   for (let k = 0; k < nr; k++) {
     const ro = 1 + (k / (nr - 1)) * (PAD - 4);
-    paintRing(g, cx, cy, ORX + ro, ORY + ro, 4.2, RING[k], rnd);
+    paintRing(g, cx, cy, ORX + ro, ORY + ro, 5, RING[k], rnd);
   }
-  // çerçevede küçük yıldızlar
   for (let i = 0; i < 6; i++) {
     const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
     const ro = PAD * 0.5;
     paintHalo(g, {x: cx + Math.cos(a) * (ORX + ro), y: cy + Math.sin(a) * (ORY + ro), r: 11}, rnd, 'star', 0.5);
   }
-  // portre kenarında ince lacivert + altın çizgi
   g.lineWidth = 2.4;
   g.strokeStyle = css([16, 24, 66]);
   g.beginPath();
@@ -913,15 +1094,6 @@ let ready: Promise<void> | null = null;
 
 const LABEL = (r: number): string => (r === 1 ? 'A' : r === 11 ? 'J' : r === 12 ? 'Q' : r === 13 ? 'K' : String(r));
 
-function loadImg(src: string): Promise<HTMLImageElement | null> {
-  return new Promise(res => {
-    const im = new Image();
-    im.onload = () => res(im);
-    im.onerror = () => res(null);
-    im.src = src;
-  });
-}
-
 async function doPrepare(): Promise<void> {
   try {
     await import('@fontsource/playfair-display/900.css');
@@ -929,31 +1101,16 @@ async function doPrepare(): Promise<void> {
   } catch {
     /* yazı tipi yoksa yedek serif */
   }
-  const [riza, defne, cem] = await Promise.all([loadImg(rizaUrl), loadImg(defneUrl), loadImg(cemUrl)]);
   SUIT_PATH = {S: spadePath(), H: heartPath(), D: diamondPath(), C: clubPath()};
   // Tablolar bir kez boyanır (~400 ms); kart çizimi yalnızca bunları kopyalar.
   backArt = paintScene(backScene());
   frameArt = paintScene(frameScene());
   creamArt = paintCream();
-  aceArt = paintAceHalo();
-  (['S', 'H', 'D', 'C'] as Suit[]).forEach((s, i) => (suitArt[s] = paintSuit(SUIT_PATH![s], isRed(s), 500 + i)));
-  // [değer, görsel, kırpma x, kırpma y, kırpma yüksekliği] — yüz elipse ortalansın
-  const court: [number, HTMLImageElement | null, number, number, number][] = [
-    [13, riza, 62, 0, 256],
-    [12, defne, 84, 34, 222],
-    [11, cem, 64, 34, 222],
-  ];
-  for (const [r, im, sx, sy, sh] of court) {
-    let p: HTMLCanvasElement | null = null;
-    if (im) {
-      try {
-        p = paintPortrait(im, sx, sy, sh, 900 + r);
-      } catch {
-        p = plainPortrait(im, sx, sy, sh); // fırça yeniden örneklemesi olmazsa fotoğrafın kendisi
-      }
-    }
-    courtArt[r] = paintCourt(p, LABEL(r), 700 + r);
-  }
+  aceArt = paintAce();
+  (['S', 'H', 'D', 'C'] as Suit[]).forEach((s, i) => (suitArt[s] = paintSuit(SUIT_PATH![s], isRed(s), 500 + i, SUIT_TY[s])));
+  courtArt[13] = paintCourt('K', 713);
+  courtArt[12] = paintCourt('Q', 712);
+  courtArt[11] = paintCourt('J', 711);
   const [, mg] = makeCanvas(4, 4);
   mg.font = `900 100px ${FONT}`;
   capRef = mg.measureText('H').actualBoundingBoxAscent || 71;
@@ -1064,13 +1221,21 @@ function drawFace(g: Ctx, w: number, h: number, suit: Suit, rank: number): void 
 
   const cx = w / 2, cy = h / 2;
   if (rank === 1) {
-    const d = 0.7 * w;
+    const d = 0.74 * w;
     g.drawImage(aceArt!, cx - d / 2, cy - d / 2, d, d);
-    const sz = 0.27 * w;
+    const sz = 0.26 * w;
     g.save();
     g.translate(cx, cy);
     g.scale(sz, sz);
-    g.lineWidth = 0.09;
+    g.lineJoin = 'round';
+    g.lineWidth = 0.15;
+    const gg = g.createLinearGradient(-0.5, -0.55, 0.5, 0.55);
+    gg.addColorStop(0, '#f7e3a0');
+    gg.addColorStop(0.5, '#c8963a');
+    gg.addColorStop(1, '#f3d27a');
+    g.strokeStyle = gg;
+    g.stroke(SUIT_PATH[suit]);
+    g.lineWidth = 0.08;
     g.strokeStyle = '#fbf3dc';
     g.stroke(SUIT_PATH[suit]);
     g.restore();
@@ -1096,10 +1261,8 @@ function drawFace(g: Ctx, w: number, h: number, suit: Suit, rank: number): void 
     const sz = 0.46 * w;
     const d = sz / 0.84;
     g.drawImage(suitArt[suit]!, cx - d / 2, cy - d / 2, d, d);
-    const ty = suit === 'H' ? -0.07 : suit === 'C' ? -0.04 : suit === 'S' ? 0.02 : 0;
     const capH = 0.15 * w;
-    const t = LABEL(rank);
-    drawRank(g, t, cx, cy + ty * sz - capH / 2, capH, (suit === 'D' ? 0.2 : 0.24) * w, '#fbf3dc');
+    drawRank(g, LABEL(rank), cx, cy + SUIT_TY[suit] * sz - capH / 2, capH, (suit === 'D' ? 0.2 : 0.24) * w, '#fbf3dc');
   }
   corners(g, w, h, suit, rank);
   g.restore();
@@ -1130,6 +1293,13 @@ function drawBack(g: Ctx, w: number, h: number): void {
   g.lineWidth = 0.012 * w;
   g.strokeStyle = 'rgba(20,14,4,0.75)';
   g.stroke(inner);
+  // içte ince altın fileto (paspartu çizgisi)
+  const fi = 0.06 * w;
+  const fillet = new Path2D();
+  roundRect(fillet, fi, fi, w - 2 * fi, h - 2 * fi, 0.08 * w - fi * 0.8);
+  g.lineWidth = Math.max(0.6, 0.007 * w);
+  g.strokeStyle = 'rgba(246,214,120,0.7)';
+  g.stroke(fillet);
   g.restore();
 }
 

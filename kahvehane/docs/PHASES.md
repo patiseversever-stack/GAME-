@@ -91,9 +91,9 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
-**16 Ekim (gece):** Yön yeniden değişti → **PİŞTİ ARENA** (UNO kalitesinde modern, canlı, hızlı). Ayrıntı: `docs/STIL_ARENA.md`. Önizleme (sürüm 4): https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+**16 Ekim (gece):** Yön yeniden değişti → **PİŞTİ ARENA** (UNO kalitesinde modern, canlı, hızlı). Ayrıntı: `docs/STIL_ARENA.md`. Önizleme (sürüm 5): https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
 - 3D masa (Three.js) oyundan çıktı; yerine hızlı 2B masa: `src/table2d/` (WAAPI, yalnız transform/opacity). Paket 5.2 MB → 2.4 MB.
-- Dört renk deste (♥ kırmızı, ♦ sarı, ♣ yeşil, ♠ mavi), vale özel kart, "PİŞTİ" arkalı yeni kart arkası: `src/render/cardAtlas.ts`.
+- Deste: **Yıldızlı Gece** (Van Gogh esintili, karaktersiz; Papaz=hilal ay+taç, Kız=yıldız+taç, Vale=servi). `src/skins/yildizli.ts`; atlas `src/render/skinAtlas.ts`. Yeni satılık deste = yeni Skin dosyası (`src/skins/contract.ts`). Eski dört renk deste `src/render/cardAtlas.ts` kullanılmıyor. Diğer denenmiş tarzlar: `dev/skins/` (reddedildi).
 - Tüm ekranlar Arena dilinde (lobi, giriş, HUD, PİŞTİ efekti, sonuç, pencereler), kod ile çizilmiş yeni logo.
 - Oynanış: tek dokunuş (veya yukarı kaydırma) ile kart atma, alan kartlar parlar, hızlı tempo, her atışta renkli halka + kıvılcım.
 - Eski 3D kodu (`src/render/stage.ts`, `env.ts`, `cards.ts`, `input/hand.ts`, `game/table.ts`) depoda duruyor ama oyunda kullanılmıyor.
