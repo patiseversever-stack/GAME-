@@ -15,11 +15,12 @@ const profile: Profile = {name: 'Misafir', level: 3, xp: 180, xpNext: 268, coins
 const opps = demoOpponents();
 const riza = opps[0];
 
-/** Tam ekran çuha + CSS kartlar (3B masa yerine, dikey). Destenin ekran konumunu döndürür. */
+/** Tam ekran arena zemini + CSS kartlar (oyunun masa katmanı yerine, dikey). Destenin ekran konumunu döndürür. */
 function mockTable(four = false): {x: number; y: number} {
   const m = document.createElement('div');
   m.className = 'mock';
-  const card = (r: string, s: string, style: string) => `<div class="c${s === '♥' || s === '♦' ? ' r' : ''}" style="${style}"><b>${r}<small>${s}</small></b><i>${s}</i></div>`;
+  const SC: Record<string, string> = {'♥': 'h', '♦': 'd', '♣': 'cl', '♠': 's'};
+  const card = (r: string, s: string, style: string) => `<div class="c ${SC[s]}" style="${style}"><b>${r}<small>${s}</small></b><i>${s}</i></div>`;
   const back = (style: string) => `<div class="c bk" style="${style}"><b></b></div>`;
   const oppRow = four ? '' : `<div class="opp">${[0, 1, 2, 3].map(i => back(`left:calc(50% + ${(i - 1.5) * 14}vw - 6.5vw);top:29vh`)).join('')}</div>`;
   m.innerHTML = `${oppRow}
@@ -57,7 +58,7 @@ async function main(): Promise<void> {
   if (!S) {
     const g = document.createElement('div');
     g.className = 'gal';
-    g.innerHTML = `<h1>Kahvehane — Ekran Galerisi</h1>${LIST.map(s => `<a href="?s=${s}">${s}</a>`).join('')}
+    g.innerHTML = `<h1>Pişti Arena — Ekran Galerisi</h1>${LIST.map(s => `<a href="?s=${s}">${s}</a>`).join('')}
       <p>Dondurulmuş (ekran görüntüsü): ${LIST.map(s => `<a href="?s=${s}&anim=0">${s}</a>`).join('')}</p>
       <p>Sonuç çeşitleri: <a href="?s=results&r=lose">kaybettin</a><a href="?s=results&r=draw">berabere</a><a href="?s=results&lvl=1">seviye atlama</a> · Döngü: <a href="?s=pisti&loop=1">pişti döngü</a></p>`;
     document.body.append(g);

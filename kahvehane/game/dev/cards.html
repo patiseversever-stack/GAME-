@@ -6,19 +6,19 @@
 <title>Kart Atlası Önizleme</title>
 <style>
   :root { color-scheme: dark; }
-  body { margin: 0; padding: 16px; background: #120b07; color: #e8dcc2; font: 14px/1.4 system-ui, sans-serif; }
-  h2 { font-size: 15px; font-weight: 600; margin: 24px 0 8px; color: #d9b968; }
-  #info { font: 13px ui-monospace, monospace; white-space: pre; color: #cfc2a6; }
+  body { margin: 0; padding: 16px; background: radial-gradient(#3d5bff, #14228a 55%, #070b2e) fixed; color: #e6ebff; font: 14px/1.4 system-ui, sans-serif; }
+  h2 { font-size: 15px; font-weight: 700; margin: 24px 0 8px; color: #ffd23f; }
+  #info { font: 13px ui-monospace, monospace; white-space: pre; color: #c9d2ff; }
   .scroll { overflow-x: auto; }
   canvas { display: block; }
-  #atlasWrap canvas { max-width: 100%; height: auto; background: repeating-conic-gradient(#2a2420 0 25%, #1d1916 0 50%) 0 0 / 16px 16px; }
-  nav a { color: #d9b968; margin-right: 12px; }
+  #atlasWrap canvas { max-width: 100%; height: auto; background: repeating-conic-gradient(#2a2f55 0 25%, #1c2044 0 50%) 0 0 / 16px 16px; }
+  nav a { color: #ffd23f; margin-right: 12px; }
 </style>
 </head>
 <body>
-<nav>Boyut: <a href="?w=1024">1024</a><a href="?w=1536">1536</a><a href="?w=2048">2048</a> · <a href="?w=2048&art=test">test görselleri</a></nav>
+<nav>Boyut: <a href="?w=1024">1024</a><a href="?w=1536">1536</a><a href="?w=2048">2048</a><a href="?w=2560">2560</a> · <a href="?w=2048&art=test">test arka yüz görseli</a></nav>
 <div id="info">hazırlanıyor…</div>
-<h2>Telefon benzetimi (CSS px; cihaz piksel oranında): 70 px yüzler, 88 px yelpaze el, 72 px yığın</h2>
+<h2>Telefon benzetimi (CSS px; cihaz piksel oranında): 70 px yüzler, 90 px yelpaze el, 72 px yığın, 56 px arka</h2>
 <div class="scroll" id="phoneWrap"><canvas id="phone"></canvas></div>
 <h2>Masa (gerçek telefon ölçeği: ~70 px ve ~140 px kart genişliği)</h2>
 <div class="scroll"><canvas id="table"></canvas></div>
