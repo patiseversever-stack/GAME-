@@ -15,7 +15,7 @@ import {ANIM, EASE, Scope, bump, center, clamp, esc, fmt, h, hms, play, q, shake
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toast, type ModalHandle} from './parts';
-import {deferMount, fanHtml, mountFx, paintTableLater, tableSceneHtml, type FxLoop} from './previews';
+import {deferMount, fanHtml, frameJob, mountFx, paintTableLater, tableSceneHtml, type FxLoop} from './previews';
 import {BADGE_NAME, RANK, badgeOf, setOf, setById, setPrice, shopSets, type ShopSet} from './sets';
 import {Spotlight, glint, glintHtml, mountDeckViewer} from './showcase';
 import {openTryOn} from './tryon';
@@ -182,6 +182,9 @@ const secHtml = (title: string, sub = '', icon = ''): string =>
 // =====================================================================================================
 // Sayfa
 // =====================================================================================================
+/** Panel parçası: düz HTML (panelin sonuna) ya da bir kabın içine (ör. şeridin devamı). */
+type Chunk = string | {into: string; html: string};
+
 interface Panel {
   el: HTMLElement;
   sig: string;
@@ -283,41 +286,55 @@ export class ShopPage implements Page {
   private activate(animate: boolean, dir = 0): void {
     this.placeInd();
     this.renderCount();
+    // kaydırma yeri: DOM değişmeden önce oku (düzen temizken ucuz); sonra yalnız gerekiyorsa yaz (zorlanmış düzen)
+    const cur = this.body.scrollTop;
     const sig = this.signature(this.tab);
     let p = this.panels.get(this.tab);
     let fresh = false;
     if (!p || p.sig !== sig) {
       const el = h('div', `kh-shop__panel is-${this.tab}`);
-      el.innerHTML = this.panelHtml(this.tab);
+      // ilk ekran hemen, kalanı kare kare (sekme açılışı tek büyük görev olmasın)
+      const chunks = this.panelChunks(this.tab);
+      el.innerHTML = chunks[0] as string;
       if (p) p.el.replaceWith(el);
       else this.body.append(el);
-      const keep = p?.scroll ?? 0;
-      p = {el, sig, scroll: keep};
+      p = {el, sig, scroll: p?.scroll ?? 0};
       this.panels.set(this.tab, p);
       fresh = true;
+      this.appendChunks(p, chunks.slice(1));
     }
     for (const [t, x] of this.panels) x.el.hidden = t !== this.tab;
-    this.body.scrollTop = p.scroll;
+    if (cur !== p.scroll && !(fresh && p.scroll)) this.body.scrollTop = p.scroll;
     hydrate(p.el);
     clearTimeout(this.dealT);
     if (this.tab === 'featured') this.tickDeal();
-    if (animate && ANIM) {
-      if (dir) play(p.el, [{transform: `translateX(${dir * 9}%)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.outQuart});
-      if (fresh) this.enterCards(p.el);
-    } else if (fresh && ANIM) this.enterCards(p.el);
+    // sekme değişimi: TEK katman (panel) kayar; kart kart giriş yok (her kart ayrı katman + boyama = ilk açılışta takılma)
+    if (animate && ANIM && dir) play(p.el, [{transform: `translateX(${dir * 9}%)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.outQuart});
     this.spot.start(fresh ? 1300 : 700);
   }
 
-  /** Kartlar sırayla yaylanarak gelir (yalnız ilk görünen ~8 kart; geri kalanı zaten ekran dışında). */
-  private enterCards(root: HTMLElement): void {
-    const list = root.querySelectorAll('.kh-deal, .kh-setc, .kh-item, .kh-cprog2');
-    list.forEach((c, k) => {
-      if (k > 9) return;
-      play(c, [{transform: 'translateY(22px) scale(.94)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 30 + k * 40, easing: EASE.spring, fill: 'backwards'});
-    });
+  /** Panelin kalan parçalarını kare başına bir parça ekle (efekt kareleriyle aynı kuyrukta); bitince kaydırma yerini geri koy. */
+  private appendChunks(p: Panel, rest: Chunk[]): void {
+    const gen = ++this.chunkGen;
+    const want = p.scroll;
+    const live = (): boolean => this.scope.alive && p.el.isConnected && gen === this.chunkGen;
+    rest.forEach((c, i) =>
+      frameJob(() => {
+        if (!live()) return;
+        if (typeof c === 'string') p.el.insertAdjacentHTML('beforeend', c);
+        else {
+          const box = p.el.querySelectorAll(c.into);
+          box[box.length - 1]?.insertAdjacentHTML('beforeend', c.html);
+        }
+        hydrate(p.el);
+        if (i === rest.length - 1 && want && this.panels.get(this.tab) === p) this.body.scrollTop = want;
+      }, i === 0),
+    );
+    if (!rest.length && want) requestAnimationFrame(() => live() && (this.body.scrollTop = want));
   }
+  private chunkGen = 0;
 
-  private panelHtml(tab: ShopTab): string {
+  private panelChunks(tab: ShopTab): Chunk[] {
     const me = meOf(this.shell);
     if (tab === 'featured') return this.featuredHtml(me);
     if (tab === 'set') return this.setsHtml(me);
@@ -328,7 +345,7 @@ export class ShopPage implements Page {
     return itemCardHtml(it, me, {owned: this.owns(it.kind, it.id), eq: this.equipped(it.kind, it.id), ...o});
   }
 
-  private featuredHtml(me: Me): string {
+  private featuredHtml(me: Me): Chunk[] {
     const coins = this.shell.profile.data.coins;
     const deal = dealOf(this.owns);
     const shown = new Set<ShopItem>(deal ? [deal.item] : []);
@@ -339,33 +356,51 @@ export class ShopPage implements Page {
       .filter(x => x.p.missing.length >= 2)
       .sort((a, b) => b.p.full - b.p.price - (a.p.full - a.p.price))
       .slice(0, 2);
-    const fresh = unowned.filter(it => badgeOf(it) === 'new' && !shown.has(it)).sort((a, b) => RANK[b.rarity] - RANK[a.rarity] || b.price - a.price);
+    const freshList = unowned.filter(it => badgeOf(it) === 'new' && !shown.has(it)).sort((a, b) => RANK[b.rarity] - RANK[a.rarity] || b.price - a.price);
+    // şerit: türleri karıştır (önce her türün en gözdesi), en çok 8 kart; gerisi kendi sekmesinde
+    const freshAll = freshList.length;
+    const fresh: ShopItem[] = [];
+    for (let round = 0; fresh.length < 8 && round < 8; round++)
+      for (const k of ['deck', 'table', 'fx', 'frame', 'char'] as ItemKind[]) {
+        const it = freshList.filter(x => x.kind === k)[round];
+        if (it && fresh.length < 8) fresh.push(it);
+      }
     fresh.forEach(it => shown.add(it));
     const legend = unowned.filter(it => it.rarity === 'legendary' && !shown.has(it)).sort((a, b) => b.price - a.price).slice(0, 4);
     legend.forEach(it => shown.add(it));
     const rest = unowned.filter(it => !shown.has(it));
     const afford = rest.filter(it => it.price <= coins).sort((a, b) => b.price - a.price).slice(0, 4);
     const goal = afford.length ? [] : rest.slice().sort((a, b) => a.price - b.price).slice(0, 2);
-    let out = dealHtml(deal, me);
-    if (sets.length) out += secHtml('Özel Setler', `Tek tek almaktan <b>%${Math.round(sets[0].s.off * 100)}</b> ucuz`, I.gift) + `<div class="kh-sets">${sets.map(x => setCardHtml(x.s, me, this.owns, coins)).join('')}</div>`;
-    if (fresh.length) out += secHtml('Yeni Gelenler', `${fresh.length} yeni ürün`, I.sparkle) + `<div class="kh-rail kh-noswipe"><div class="kh-rail__in">${fresh.map(it => this.card(it, me, {sub: true, rail: true})).join('')}</div></div>`;
-    if (legend.length) out += secHtml('Efsanevi Vitrin', 'Masada herkes sana bakacak', I.crown) + `<div class="kh-grid">${legend.map(it => this.card(it, me, {sub: true})).join('')}</div>`;
-    if (afford.length) out += secHtml('Hemen Alabileceklerin', `Kasanda ${coinImg()}<b>${fmt(coins)}</b>`, I.check) + `<div class="kh-grid">${afford.map(it => this.card(it, me, {sub: true})).join('')}</div>`;
-    else if (goal.length) out += secHtml('Hedefin', 'Birkaç el kazan, senin olsun', I.target) + `<div class="kh-grid">${goal.map(it => this.card(it, me, {sub: true})).join('')}</div>`;
+    // parça 1: teklif vitrini (ilk görev küçük kalsın); parça 2-3: setler
+    const out: Chunk[] = [dealHtml(deal, me)];
+    sets.forEach((x, i) => out.push((i ? '' : secHtml('Özel Setler', `Paket indirimi <b>-%${Math.round(Math.max(...sets.map(y => y.s.off)) * 100)}</b>`, I.gift)) + `<div class="kh-sets">${setCardHtml(x.s, me, this.owns, coins)}</div>`));
+    if (fresh.length) {
+      out.push(secHtml('Yeni Gelenler', `${freshAll} yeni ürün`, I.sparkle) + `<div class="kh-rail kh-noswipe"><div class="kh-rail__in">${fresh.slice(0, 3).map(it => this.card(it, me, {sub: true, rail: true})).join('')}</div></div>`);
+      for (let i = 3; i < fresh.length; i += 3) out.push({into: '.kh-rail__in', html: fresh.slice(i, i + 3).map(it => this.card(it, me, {sub: true, rail: true})).join('')});
+    }
+    if (legend.length) {
+      out.push(secHtml('Efsanevi Vitrin', 'Masada herkes sana bakacak', I.crown) + `<div class="kh-grid">${legend.slice(0, 2).map(it => this.card(it, me, {sub: true})).join('')}</div>`);
+      if (legend.length > 2) out.push(`<div class="kh-grid">${legend.slice(2).map(it => this.card(it, me, {sub: true})).join('')}</div>`);
+    }
+    if (afford.length) out.push(secHtml('Hemen Alabileceklerin', `Kasanda ${coinImg()}<b>${fmt(coins)}</b>`, I.check) + `<div class="kh-grid">${afford.map(it => this.card(it, me, {sub: true})).join('')}</div>`);
+    else if (goal.length) out.push(secHtml('Hedefin', 'Birkaç el kazan, senin olsun', I.target) + `<div class="kh-grid">${goal.map(it => this.card(it, me, {sub: true})).join('')}</div>`);
     return out;
   }
 
-  private setsHtml(me: Me): string {
+  private setsHtml(me: Me): Chunk[] {
     const coins = this.shell.profile.data.coins;
     const all = shopSets().map(s => ({s, p: setPrice(s, this.owns)}));
     const open = all.filter(x => x.p.missing.length).sort((a, b) => b.p.full - b.p.price - (a.p.full - a.p.price));
     const done = all.filter(x => !x.p.missing.length);
-    return `${secHtml('Tema Setleri', 'Bir temanın tüm parçaları, tek seferde, indirimli', I.gift)}
-      <div class="kh-sets">${open.map(x => setCardHtml(x.s, me, this.owns, coins)).join('')}</div>
-      ${done.length ? secHtml('Tamamladıkların', `${done.length} set`, I.check) + `<div class="kh-sets">${done.map(x => setCardHtml(x.s, me, this.owns, coins)).join('')}</div>` : ''}`;
+    const out = [secHtml('Tema Setleri', 'Bir temanın tüm parçaları, tek seferde, indirimli', I.gift)];
+    for (const x of open) out.push(`<div class="kh-sets">${setCardHtml(x.s, me, this.owns, coins)}</div>`);
+    if (!out[1]) out.push('');
+    out[0] += out.splice(1, 1)[0];
+    if (done.length) out.push(secHtml('Tamamladıkların', `${done.length} set`, I.check) + `<div class="kh-sets">${done.map(x => setCardHtml(x.s, me, this.owns, coins)).join('')}</div>`);
+    return out;
   }
 
-  private kindHtml(kind: ItemKind, me: Me): string {
+  private kindHtml(kind: ItemKind, me: Me): Chunk[] {
     const items = CATALOG.filter(it => it.kind === kind);
     const owned = items.filter(it => this.owns(it.kind, it.id));
     const un = items.filter(it => !this.owns(it.kind, it.id)).sort((a, b) => RANK[b.rarity] - RANK[a.rarity] || b.price - a.price);
@@ -373,11 +408,13 @@ export class ShopPage implements Page {
     const k = items.length ? owned.length / items.length : 0;
     const hero = un[0] && RANK[un[0].rarity] >= 2 ? un[0] : null;
     const grid = hero ? un.slice(1) : un;
-    return `<div class="kh-cprog2"><span class="kh-cprog2__t">${KIND_INFO[kind].plural}</span><span class="kh-cprog2__bar"><i style="transform:scaleX(${k.toFixed(3)})"></i></span><b class="kh-num">${owned.length}/${items.length}</b><small>sende</small></div>
-      ${hero ? `<div class="kh-grid">${this.card(hero, me, {wide: true})}</div>` : ''}
-      ${grid.length ? `<div class="kh-grid">${grid.map(it => this.card(it, me)).join('')}</div>` : ''}
-      ${mine.length ? secHtml('Sende', `${mine.length} parça`, I.check) + `<div class="kh-grid is-mine">${mine.map(it => this.card(it, me)).join('')}</div>` : ''}
-      ${!un.length ? `<div class="kh-shop__all">${I.crown}<span>Bu bölümdeki her şey sende. Usta koleksiyoncu!</span></div>` : ''}`;
+    const out = [`<div class="kh-cprog2"><span class="kh-cprog2__t">${KIND_INFO[kind].plural}</span><span class="kh-cprog2__bar"><i style="transform:scaleX(${k.toFixed(3)})"></i></span><b class="kh-num">${owned.length}/${items.length}</b><small>sende</small></div>
+      ${hero ? `<div class="kh-grid">${this.card(hero, me, {wide: true})}</div>` : ''}${!un.length ? `<div class="kh-shop__all">${I.crown}<span>Bu bölümdeki her şey sende. Usta koleksiyoncu!</span></div>` : ''}`];
+    // ızgara 4'erli parçalar (ilk parça ilk ekranla birlikte)
+    for (let i = 0; i < grid.length; i += 2) out.push(`<div class="kh-grid">${grid.slice(i, i + 2).map(it => this.card(it, me)).join('')}</div>`);
+    if (out[1]) out[0] += out.splice(1, 1)[0];
+    for (let i = 0; i < mine.length; i += 4) out.push((i ? '' : secHtml('Sende', `${mine.length} parça`, I.check)) + `<div class="kh-grid is-mine">${mine.slice(i, i + 4).map(it => this.card(it, me)).join('')}</div>`);
+    return out;
   }
 
   private act(a: string, b: HTMLElement): void {

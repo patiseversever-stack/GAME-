@@ -31,28 +31,32 @@ export function mountDeckFan(box: HTMLElement, id: string, n: 3 | 5 = 3): void {
   box.innerHTML = fanHtml(id, n);
 }
 
-// ---------------------------------------------------------------- sıralı kurulum (ağır önizlemeler: efekt)
-const mountQueue: Array<() => void> = [];
+// ---------------------------------------------------------------- kare işleri (ağır önizlemeler, panel parçaları)
+// Tek kuyruk, kare başına TEK iş: panel parçası ekleme ile efekt karesi kurma aynı karede birleşip uzun görev olmasın.
+const jobs: Array<() => void> = [];
 let pumping = false;
 function pump(): void {
   if (pumping) return;
   pumping = true;
   const step = (): void => {
-    const t0 = performance.now();
-    // kare başına ~6 ms bütçe; en az bir iş
-    do {
-      const f = mountQueue.shift();
-      if (!f) break;
+    const f = jobs.shift();
+    if (f) {
       try {
         f();
       } catch {
         /* tek önizleme bozuksa diğerleri çalışsın */
       }
-    } while (mountQueue.length && performance.now() - t0 < 6);
-    if (mountQueue.length) requestAnimationFrame(step);
+    }
+    if (jobs.length) requestAnimationFrame(step);
     else pumping = false;
   };
   requestAnimationFrame(step);
+}
+/** Bir sonraki boş kareye iş koy (sırayla, kare başına bir iş). first: kuyruğun başına (görünür içerik önce). */
+export function frameJob(fn: () => void, first = false): void {
+  if (first) jobs.unshift(fn);
+  else jobs.push(fn);
+  pump();
 }
 
 /**
@@ -65,10 +69,9 @@ export function deferMount(box: HTMLElement, fn: () => void): void {
     if (done) return;
     done = true;
     io?.disconnect();
-    mountQueue.push(() => {
+    frameJob(() => {
       if (box.isConnected) fn();
     });
-    pump();
   };
   let io: IntersectionObserver | null = null;
   if ('IntersectionObserver' in window) {
@@ -98,6 +101,26 @@ function themeOf(id: string): TableTheme | null {
   return hasTable(id) ? tableById(id) : null;
 }
 
+// masa zeminleri (SVG minyatür, bazıları 14 KB): masa başına BİR CSS kuralı; HTML'de yalnız data-sw kalır.
+// (Önceden her sahnenin satır içi stilinde tekrar ediyordu: Öne Çıkan'da ~150 KB HTML ayrıştırma + 18 kez SVG çözümleme.)
+let swStyle: HTMLStyleElement | null = null;
+const swDone = new Set<string>();
+function swatchRule(id: string): void {
+  if (swDone.has(id)) return;
+  swDone.add(id);
+  if (!swStyle) {
+    swStyle = document.createElement('style');
+    swStyle.dataset.kh = 'swatch';
+    document.head.append(swStyle);
+  }
+  const rule = `.kh-ts__bg[data-sw="${CSS.escape(id)}"]{background:${tableSwatch(id)}}`;
+  try {
+    swStyle.sheet!.insertRule(rule, swStyle.sheet!.cssRules.length);
+  } catch {
+    swStyle.append(rule);
+  }
+}
+
 export interface SceneOpts {
   /** Kartların destesi (kuşanılı deste) */
   deck: string;
@@ -116,12 +139,13 @@ export function tableSceneHtml(id: string, o: SceneOpts): string {
   const glow = t?.vars['--ar-glow-n'] ?? 'rgba(120,150,255,.38)';
   const d = o.deck;
   const full = o.size === 'full';
+  swatchRule(id);
   const pile = `<span class="kh-ts__pile">${deckCardHtml(d, CI.ten, 'kh-ts__c is-p1')}${deckCardHtml(d, CI.queen, 'kh-ts__c is-p2')}</span>`;
   const stack = `<span class="kh-ts__deck">${deckCardHtml(d, CI.back, 'kh-ts__c is-d1')}${deckCardHtml(d, CI.back, 'kh-ts__c is-d2')}</span>`;
   const opp = full ? `<span class="kh-ts__opp">${[0, 1, 2, 3].map(i => deckCardHtml(d, CI.back, 'kh-ts__c', `--i:${i - 1.5}`)).join('')}</span>` : '';
   const hand = full ? `<span class="kh-ts__hand">${[CI.ace, CI.jack, CI.king, CI.ten].map((ci, i) => deckCardHtml(d, ci, 'kh-ts__c', `--i:${i - 1.5}`)).join('')}</span>` : '';
   return `<span class="kh-ts ${full ? 'is-full' : 'is-mini'}${full && t?.paint ? ' is-paint' : ''} ${o.cls ?? ''}" data-table="${id}" style="--ring:${ring};--glow:${glow}">
-    <i class="kh-ts__bg" style="background:${esc(tableSwatch(id))}"></i><i class="kh-ts__glow"></i><i class="kh-ts__ring"></i>
+    <i class="kh-ts__bg" data-sw="${esc(id)}"></i><i class="kh-ts__glow"></i><i class="kh-ts__ring"></i>
     ${opp}${stack}${pile}${hand}<i class="kh-ts__vig"></i></span>`;
 }
 

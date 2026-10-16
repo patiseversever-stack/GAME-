@@ -24,6 +24,13 @@ const DEFS: readonly SetDef[] = [
   {id: 'sultan', name: 'Sultan Seti', tag: 'Altın yağmuru, kızıl kadife', items: [['fx', 'altin'], ['table', 'kizil'], ['frame', 'altin']], off: 0.25, a: '#e0263f', b: '#6d0a1c'},
   {id: 'gosteri', name: 'Gösteri Seti', tag: 'Alev çerçeve, gökte fişekler', items: [['frame', 'ates'], ['fx', 'havai'], ['fx', 'yildiz']], off: 0.2, a: '#ff7a1a', b: '#8a1a5e'},
   {id: 'dalga', name: 'Dalga Seti', tag: 'Hokusai dalgası, zümrüt kadife', items: [['deck', 'dalga'], ['table', 'zumrut']], off: 0.2, a: '#1aa0c4', b: '#0b3d6a'},
+  // parçaları katalogdaki `set` alanından gelenler (ad/renk/söz burada)
+  {id: 'hazine', name: 'Topkapı Hazinesi Seti', tag: 'Kesme taşlar, altın telkâri, hançer ışıltısı', items: [], off: 0.3, a: '#d4a017', b: '#6e0f1e'},
+  {id: 'ebru', name: 'Ebru Seti', tag: 'Suyun üstünde açan lale, akan renkler', items: [], off: 0.3, a: '#13a8a0', b: '#5a1a8a'},
+  {id: 'bogaz', name: 'Boğaz Gecesi Seti', tag: 'Ay ışığı, köprü ışıkları, yakamoz', items: [], off: 0.25, a: '#2a5ad8', b: '#0a1240'},
+  {id: 'neon', name: 'Neon Kahvehane Seti', tag: 'Tuğla duvar, neon çay, gök gürültüsü', items: [], off: 0.3, a: '#ff3ea5', b: '#1b0d4a'},
+  {id: 'kapadokya', name: 'Kapadokya Seti', tag: 'Şafakta balonlar, peri bacaları', items: [], off: 0.25, a: '#ff8a3d', b: '#8a2a6e'},
+  {id: 'nazar', name: 'Nazar Seti', tag: 'Mavi boncuk: nazar değmesin!', items: [], off: 0.2, a: '#1f7bff', b: '#0a2a7a'},
 ];
 
 export interface ShopSet extends SetDef {

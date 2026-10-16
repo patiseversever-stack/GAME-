@@ -1,6 +1,7 @@
 // Ekran efektleri: yumuşak renkli ışık patlaması, jeton + dört renk konfeti (havuzlu DOM), uçan jetonlar,
 // PİŞTİ damgası (dört renk hüzme, valede dört renk çark), afiş, puan baloncuğu, seri rozeti, vurgu yazısı ve
-// kuşanılabilir pişti efektleri: klasik (dört renk patlama) · havai (fişek) · yildiz (kayan yıldız yağmuru) · altin (sikke yağmuru).
+// kuşanılabilir pişti efektleri: klasik (dört renk patlama) · havai (fişek) · yildiz (kayan yıldız yağmuru) · altin (sikke yağmuru)
+// · nazar (nazar boncukları) · lale (lale açar, yaprak yağar) · simsek (yıldırım düşer) · davul (davul zurna) · girdap (dört renk girdap).
 // Yalnız transform + opacity; düğümler havuzdan gelir, iş bitince gizlenir (yeni düğüm üretilmez).
 import {cancelAnims} from '../platform/anim';
 import './fx.css';
@@ -19,6 +20,8 @@ const N_POP = 8;
 const SUITS: SuitKey[] = ['h', 'd', 'c', 's'];
 const SUIT_HEX = ['#ff2e4d', '#ffb400', '#16c45b', '#1f7bff'];
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
+/** Konum dönüşümü (px) */
+const T = (x: number, y: number): string => `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0)`;
 
 export function g3(text: string, cls = ''): string {
   const t = esc(text);
@@ -329,7 +332,7 @@ export class Fx {
 
   // ─────────────── kuşanılabilir pişti efektleri ───────────────
 
-  /** Kuşanılmış efekt: klasik · havai · yildiz · altin. Vale piştide daha uzun ve yoğun. */
+  /** Kuşanılmış efekt: klasik · havai · yildiz · altin · nazar · lale · simsek · davul · girdap. Vale piştide daha yoğun. */
   pistiFx(id: string, jack: boolean, at: Pt, low = false): void {
     if (!ANIM) return;
     const k = low ? 0.55 : 1;
@@ -344,6 +347,21 @@ export class Fx {
       case 'altin':
         this.coinRain(Math.round((jack ? 40 : 26) * k), jack, at);
         this.flash(jack ? 0.75 : 0.55);
+        break;
+      case 'nazar':
+        this.nazarFx(jack, at, low);
+        break;
+      case 'lale':
+        this.laleFx(jack, at, low);
+        break;
+      case 'simsek':
+        this.simsekFx(jack, at, low);
+        break;
+      case 'davul':
+        this.davulFx(jack, at, low);
+        break;
+      case 'girdap':
+        this.girdapFx(jack, at, low);
         break;
       default:
         this.flash(jack ? 0.75 : 0.6);
@@ -523,5 +541,251 @@ export class Fx {
           {duration: 520, delay: delay + fall + 260, easing: 'ease-out', fill: 'both'}).finished.then(() => hide(gl), () => undefined);
       }
     }
+  }
+
+  // ─────────────── koleksiyon efektleri: her biri kendi küçük havuzunda (ilk kullanımda kurulur) ───────────────
+  private fb = new Map<string, Ring>();
+  private fbPool(key: string, max: number, cls: string): Ring {
+    let r = this.fb.get(key);
+    if (!r) {
+      r = new Ring(this.el, max, () => h('i', `kh-fb kh-fb--${cls}`));
+      this.fb.set(key, r);
+    }
+    return r;
+  }
+  /** Havuz düğümünü canlandır; bitince gizle (bölüm başına yumuşatma: play). */
+  private fly(n: HTMLElement, kf: Keyframe[], o: KeyframeAnimationOptions): void {
+    play(n, kf, {fill: 'both', ...o}).finished.then(() => hide(n), () => undefined);
+  }
+  private sparkleAt(x: number, y: number, delay: number, s = 1.4): void {
+    const gl = this.glitter.get();
+    this.fly(gl, [{transform: `${T(x, y)} scale(0) rotate(0deg)`, opacity: 0}, {transform: `${T(x, y)} scale(${s}) rotate(45deg)`, opacity: 1, offset: 0.3}, {transform: `${T(x, y)} scale(0) rotate(90deg)`, opacity: 0}],
+      {duration: 520, delay, easing: 'ease-out'});
+  }
+
+  /** Nazar Boncuğu: mavi parlama, dev nazar gözü belirir, cam dalgalar yayılır, halka hâlinde boncuklar saçılır. */
+  nazarFx(jack: boolean, at: Pt, low: boolean): void {
+    const u = this.u, M = Math.min(this.W, this.H);
+    const fl = this.fbPool('nzF', 1, 'bflash').get();
+    this.fly(fl, [{transform: `${T(at.x, at.y)} scale(.3)`, opacity: 0}, {transform: `${T(at.x, at.y)} scale(1)`, opacity: 1, offset: 0.15}, {transform: `${T(at.x, at.y)} scale(1.25)`, opacity: 0}],
+      {duration: 900, easing: 'ease-out'});
+    const eye = this.fbPool('nzE', 1, 'eye').get();
+    this.fly(eye, [
+      {transform: `${T(at.x, at.y)} scale(.1) rotate(-90deg)`, opacity: 0},
+      {transform: `${T(at.x, at.y)} scale(1.18) rotate(8deg)`, opacity: 1, offset: 0.14},
+      {transform: `${T(at.x, at.y)} scale(.96) rotate(-3deg)`, opacity: 1, offset: 0.24},
+      {transform: `${T(at.x, at.y)} scale(1) rotate(0deg)`, opacity: 1, offset: 0.66},
+      {transform: `${T(at.x, at.y - u * 1.2)} scale(1.5) rotate(0deg)`, opacity: 0},
+    ], {duration: jack ? 1550 : 1350, easing: 'cubic-bezier(.2,.7,.3,1)'});
+    const waves = this.fbPool('nzW', 3, 'wave');
+    for (let i = 0; i < (jack ? 3 : 2); i++)
+      this.fly(waves.get(), [{transform: `${T(at.x, at.y)} scale(.25)`, opacity: 0.95}, {transform: `${T(at.x, at.y)} scale(3.6)`, opacity: 0}], {duration: 850, delay: 80 + i * 210, easing: 'cubic-bezier(.1,.6,.3,1)'});
+    const beads = this.fbPool('nzB', 24, 'bead');
+    const n = Math.round((jack ? 24 : 16) * (low ? 0.5 : 1));
+    for (let i = 0; i < n; i++) {
+      const a = (i / n) * Math.PI * 2 + rnd(-0.15, 0.15), R = M * rnd(0.36, 0.6), cx = Math.cos(a), cy = Math.sin(a);
+      const spin = rnd(-540, 540), s0 = rnd(0.8, 1.3);
+      this.fly(beads.get(), [
+        {transform: `${T(at.x, at.y)} scale(.2) rotate(0deg)`, opacity: 0},
+        {transform: `${T(at.x + cx * R * 0.16, at.y + cy * R * 0.16)} scale(${s0}) rotate(${spin * 0.1}deg)`, opacity: 1, offset: 0.08},
+        {transform: `${T(at.x + cx * R * 0.82, at.y + cy * R * 0.82 + u * 0.6)} scale(${s0}) rotate(${spin * 0.6}deg)`, opacity: 1, offset: 0.55},
+        {transform: `${T(at.x + cx * R, at.y + cy * R + u * 2.6)} scale(${s0 * 0.8}) rotate(${spin}deg)`, opacity: 0},
+      ], {duration: rnd(1100, 1400), delay: 90 + i * 10, easing: 'cubic-bezier(.15,.7,.35,1)'});
+    }
+    for (let i = 0; i < (low ? 4 : 8); i++) {
+      const a = Math.random() * Math.PI * 2, d = M * rnd(0.12, 0.34);
+      this.sparkleAt(at.x + Math.cos(a) * d, at.y + Math.sin(a) * d, 300 + i * 70);
+    }
+    this.snd?.swoosh();
+    for (let i = 0; i < 3; i++) window.setTimeout(() => this.snd?.starChime(i * 2), 120 + i * 170);
+  }
+
+  /** Lale Yağmuru: ortada dev lale açar (yay ile), yapraklar fışkırır, ekrana lale yaprakları süzülerek yağar. */
+  laleFx(jack: boolean, at: Pt, low: boolean): void {
+    const u = this.u, W = this.W, H = this.H;
+    const k = low ? 0.5 : 1;
+    const gl = this.fbPool('lG', 1, 'lglow').get();
+    this.fly(gl, [{transform: `${T(at.x, at.y)} scale(.3)`, opacity: 0}, {transform: `${T(at.x, at.y)} scale(1.1)`, opacity: 0.95, offset: 0.25}, {transform: `${T(at.x, at.y)} scale(1.25)`, opacity: 0}],
+      {duration: 1400, easing: 'ease-out'});
+    const tu = this.fbPool('lT', 1, 'tulip').get();
+    const tx = at.x, ty = at.y + u * 1.2;
+    this.fly(tu, [
+      {transform: `${T(tx, ty)} scale(.3, 0)`, opacity: 0},
+      {transform: `${T(tx, ty)} scale(1.12, 1.22)`, opacity: 1, offset: 0.16},
+      {transform: `${T(tx, ty)} scale(.95, .9)`, opacity: 1, offset: 0.26},
+      {transform: `${T(tx, ty)} scale(1, 1)`, opacity: 1, offset: 0.36},
+      {transform: `${T(tx, ty)} scale(1.03, 1.03)`, opacity: 1, offset: 0.72},
+      {transform: `${T(tx, ty - u * 2)} scale(1.1, 1.1)`, opacity: 0},
+    ], {duration: jack ? 1600 : 1450, easing: 'cubic-bezier(.2,.7,.3,1)'});
+    const pets = this.fbPool('lP', 40, 'pet');
+    const VAR = ['', 'is-b', 'is-c', 'is-d', '', 'is-b', 'is-g'];
+    // lalenin ağzından fışkıran yapraklar
+    const nb = Math.round(8 * k);
+    for (let i = 0; i < nb; i++) {
+      const p = pets.get();
+      p.className = `kh-fb kh-fb--pet ${VAR[i % 4]}`;
+      const a = -Math.PI / 2 + (i / Math.max(1, nb - 1) - 0.5) * 2.4, d = u * rnd(5, 8.5);
+      const x0 = at.x, y0 = at.y - u * 3.2, x1 = x0 + Math.cos(a) * d, y1 = y0 + Math.sin(a) * d;
+      this.fly(p, [
+        {transform: `${T(x0, y0)} rotate(0deg) scale(.4)`, opacity: 0},
+        {transform: `${T((x0 + x1) / 2, (y0 + y1) / 2)} rotate(${rnd(-90, 90)}deg) scale(1.1)`, opacity: 1, offset: 0.3},
+        {transform: `${T(x1, y1 + u * 3)} rotate(${rnd(-260, 260)}deg) scale(.9)`, opacity: 0},
+      ], {duration: 950, delay: 180 + i * 12, easing: 'cubic-bezier(.2,.7,.4,1)'});
+    }
+    // gökten süzülen yapraklar
+    const n = Math.round((jack ? 30 : 24) * k);
+    for (let i = 0; i < n; i++) {
+      const p = pets.get();
+      p.className = `kh-fb kh-fb--pet ${VAR[Math.floor(Math.random() * VAR.length)]}`;
+      const x0 = rnd(-0.05, 1.05) * W, y0 = -u * 2 - rnd(0, H * 0.12), y1 = H * rnd(0.55, 1);
+      const A = u * rnd(1.5, 3.5), ph = Math.random() * 6.28, drift = rnd(-W, W) * 0.08, spin = rnd(-300, 300), flip = rnd(200, 520), s0 = rnd(0.8, 1.35);
+      const kf: Keyframe[] = [];
+      for (const q of [0, 0.25, 0.5, 0.75, 1]) {
+        const x = x0 + drift * q + Math.sin(ph + q * 6.28) * A, y = y0 + (y1 - y0) * q;
+        kf.push({transform: `${T(x, y)} rotate(${(spin * q).toFixed(0)}deg) rotateX(${(flip * q).toFixed(0)}deg) scale(${s0})`, opacity: q === 0 ? 0 : q === 1 ? 0 : 1, offset: q});
+      }
+      kf[1].opacity = 1;
+      this.fly(p, kf, {duration: rnd(950, 1200), delay: rnd(0, 380), easing: 'linear'});
+    }
+    this.snd?.swoosh();
+    window.setTimeout(() => this.snd?.starChime(1), 160);
+    window.setTimeout(() => this.snd?.starChime(4), 420);
+  }
+
+  /** Şimşek: ışık kararır, gök yarılır (beyaz-mavi çakma), yığına yıldırım iner, elektrik halkaları ve kıvılcımlar. */
+  simsekFx(jack: boolean, at: Pt, low: boolean): void {
+    const u = this.u, W = this.W;
+    play(this.nightEl, [{opacity: 0}, {opacity: 1, offset: 0.1}, {opacity: 1, offset: 0.65}, {opacity: 0}], {duration: 1400, easing: 'ease-in-out'}, 0.3);
+    const fl = this.fbPool('sF', 1, 'sflash').get();
+    this.fly(fl, [{opacity: 0}, {opacity: 0.85, offset: 0.05}, {opacity: 0.1, offset: 0.13}, {opacity: 0.7, offset: 0.21}, {opacity: 0, offset: 0.45}, {opacity: 0}],
+      {duration: 1300, delay: 60, easing: 'linear'});
+    const bolts = this.fbPool('sB', 3, 'bolt');
+    const nb = jack ? 3 : 2;
+    for (let i = 0; i < nb; i++) {
+      const b = bolts.get();
+      b.className = `kh-fb kh-fb--bolt is-${(i % 3) + 1}`;
+      const x = i === 0 ? at.x : at.x + (i === 1 ? -1 : 1) * W * rnd(0.18, 0.3), y1 = i === 0 ? at.y : at.y + u * rnd(-4, 4);
+      b.style.height = `${Math.max(40, y1 + u).toFixed(0)}px`;
+      const tr = T(x, -u);
+      this.fly(b, [
+        {transform: `${tr} scaleY(0)`, opacity: 1},
+        {transform: `${tr} scaleY(1)`, opacity: 1, offset: 0.1},
+        {transform: `${tr} scaleY(1)`, opacity: 0.25, offset: 0.18},
+        {transform: `${tr} scaleY(1)`, opacity: 1, offset: 0.26},
+        {transform: `${tr} scaleY(1)`, opacity: 1, offset: 0.42},
+        {transform: `${tr} scaleY(1)`, opacity: 0},
+      ], {duration: 820, delay: 60 + i * 240, easing: 'linear'});
+    }
+    const rings = this.fbPool('sR', 2, 'sring');
+    for (let i = 0; i < 2; i++)
+      this.fly(rings.get(), [{transform: `${T(at.x, at.y)} scale(.2)`, opacity: 1}, {transform: `${T(at.x, at.y)} scale(2.8)`, opacity: 0}], {duration: 650, delay: 140 + i * 170, easing: 'cubic-bezier(.1,.6,.3,1)'});
+    const sparks = this.fbPool('sS', 22, 'spark');
+    const n = Math.round((jack ? 22 : 16) * (low ? 0.5 : 1));
+    for (let i = 0; i < n; i++) {
+      const a = Math.random() < 0.8 ? -Math.PI * rnd(0.05, 0.95) : Math.random() * Math.PI * 2, d = u * rnd(4, 9.5), g = u * 5;
+      const kf: Keyframe[] = [];
+      for (const q of [0, 0.2, 0.5, 1]) {
+        const e = 1 - Math.pow(1 - q, 2.2);
+        const x = at.x + Math.cos(a) * d * e, y = at.y + Math.sin(a) * d * e + g * q * q;
+        const vx = Math.cos(a) * d * (1 - q), vy = Math.sin(a) * d * (1 - q) + 2 * g * q;
+        kf.push({transform: `${T(x, y)} rotate(${((Math.atan2(vy, vx) * 180) / Math.PI).toFixed(0)}deg) scaleX(${q === 0 ? 0.4 : q < 0.3 ? 2 : q < 0.6 ? 1.1 : 0.3})`, opacity: q === 1 ? 0 : 1, offset: q});
+      }
+      this.fly(sparks.get(), kf, {duration: rnd(520, 820), delay: 140 + rnd(0, 140), easing: 'linear'});
+    }
+    for (let i = 0; i < (low ? 3 : 6); i++) {
+      const a = Math.random() * Math.PI * 2, d = u * rnd(2, 5);
+      this.sparkleAt(at.x + Math.cos(a) * d, at.y + Math.sin(a) * d, 200 + i * 90, 1.6);
+    }
+    window.setTimeout(() => this.snd?.fireworkBurst(1.3), 110);
+    window.setTimeout(() => this.snd?.sweep(), 300);
+  }
+
+  /** Davul Zurna: davul belirir ve gümler (her vuruşta şok dalgası + uçuşan notalar), zurna soldan girip çalar, konfeti. */
+  davulFx(jack: boolean, at: Pt, low: boolean): void {
+    const u = this.u, W = this.W, H = this.H;
+    const beats = jack ? [200, 420, 640, 860] : [220, 480, 740];
+    const D = 1550;
+    const dx = at.x, dy = at.y + u * 0.6;
+    const drum = this.fbPool('dD', 1, 'drum').get();
+    const kf: Keyframe[] = [{transform: `${T(dx, dy)} scale(0)`, opacity: 0, offset: 0}, {transform: `${T(dx, dy)} scale(1.12)`, opacity: 1, offset: 120 / D}, {transform: `${T(dx, dy)} scale(1)`, opacity: 1, offset: 180 / D}];
+    for (const b of beats) {
+      kf.push({transform: `${T(dx, dy)} scale(1.14, .84)`, opacity: 1, offset: (b + 30) / D});
+      kf.push({transform: `${T(dx, dy)} scale(1, 1)`, opacity: 1, offset: (b + 130) / D});
+    }
+    kf.push({transform: `${T(dx, dy)} scale(1)`, opacity: 1, offset: 0.82}, {transform: `${T(dx, dy - u)} scale(.85)`, opacity: 0, offset: 1});
+    this.fly(drum, kf, {duration: D, easing: 'ease-out'});
+    const zu = this.fbPool('dZ', 1, 'zurna').get();
+    const zx = at.x - u * 9.5, zy = at.y - u * 3.4;
+    const zk: Keyframe[] = [{transform: `${T(-u * 8, zy - u)} rotate(-24deg)`, opacity: 0, offset: 0}, {transform: `${T(zx, zy)} rotate(-14deg)`, opacity: 1, offset: 0.16}];
+    beats.forEach((b, i) => zk.push({transform: `${T(zx, zy)} rotate(${i % 2 ? -16 : -9}deg)`, opacity: 1, offset: (b + 60) / D}));
+    zk.push({transform: `${T(zx, zy)} rotate(-12deg)`, opacity: 1, offset: 0.8}, {transform: `${T(-u * 9, zy - u * 2)} rotate(-30deg)`, opacity: 0, offset: 1});
+    this.fly(zu, zk, {duration: D, easing: 'ease-in-out'});
+    const waves = this.fbPool('dW', 4, 'dwave');
+    const notes = this.fbPool('dN', 20, 'note');
+    const per = Math.max(2, Math.round((jack ? 5 : 6) * (low ? 0.5 : 1)));
+    beats.forEach((b, bi) => {
+      this.fly(waves.get(), [{transform: `${T(dx, dy)} scale(.35)`, opacity: 0.95}, {transform: `${T(dx, dy)} scale(2.9)`, opacity: 0}], {duration: 520, delay: b, easing: 'cubic-bezier(.1,.6,.3,1)'});
+      for (let j = 0; j < per; j++) {
+        const nt = notes.get();
+        nt.className = `kh-fb kh-fb--note is-${1 + ((bi * per + j) % 4)}`;
+        const x0 = dx + rnd(-u * 2.2, u * 2.2), y0 = dy - u * 2;
+        const x1 = x0 + rnd(-W, W) * 0.34, y1 = y0 - H * rnd(0.16, 0.34);
+        const A = u * rnd(1, 2.4), wob = rnd(12, 26), s1 = rnd(0.9, 1.35);
+        const nk: Keyframe[] = [];
+        for (const q of [0, 0.3, 0.6, 1]) {
+          const x = x0 + (x1 - x0) * q + Math.sin(q * 7) * A, y = y0 + (y1 - y0) * (1 - (1 - q) * (1 - q));
+          nk.push({transform: `${T(x, y)} rotate(${(Math.sin(q * 9) * wob).toFixed(0)}deg) scale(${q === 0 ? 0.3 : q === 1 ? s1 * 0.9 : s1})`, opacity: q === 0 || q === 1 ? 0 : 1, offset: q});
+        }
+        nk[1].opacity = 1;
+        this.fly(nt, nk, {duration: rnd(650, 820), delay: b + j * 25, easing: 'linear'});
+      }
+    });
+    window.setTimeout(() => this.burst({x: at.x, y: at.y}, {coins: 0, confetti: Math.round((jack ? 18 : 12) * (low ? 0.5 : 1)), power: 0.8, up: 1.1}), beats[0]);
+    this.snd?.drumRoll(1.0);
+    beats.forEach((b, i) => window.setTimeout(() => this.snd?.starChime(i + 2), b + 40));
+  }
+
+  /** Dört Renk Girdap: dört renkli ışık kolları dönerek yığına çekilir, sarmal disk küçülür; merkezde yıldız patlar. */
+  girdapFx(jack: boolean, at: Pt, low: boolean): void {
+    const W = this.W, H = this.H;
+    const disc = this.fbPool('gD', 1, 'disc').get();
+    this.fly(disc, [
+      {transform: `${T(at.x, at.y)} scale(1.5) rotate(0deg)`, opacity: 0},
+      {transform: `${T(at.x, at.y)} scale(1.25) rotate(140deg)`, opacity: 0.9, offset: 0.2},
+      {transform: `${T(at.x, at.y)} scale(.8) rotate(360deg)`, opacity: 1, offset: 0.6},
+      {transform: `${T(at.x, at.y)} scale(.08) rotate(600deg)`, opacity: 0},
+    ], {duration: 1250, easing: 'ease-in'});
+    const ps = this.fbPool('gP', 32, 'gp');
+    const n = Math.round((jack ? 32 : 24) * (low ? 0.5 : 1));
+    const maxR = Math.hypot(W, H) * 0.42;
+    for (let i = 0; i < n; i++) {
+      const arm = i % 4, j = Math.floor(i / 4);
+      const p = ps.get();
+      p.style.color = SUIT_HEX[arm];
+      const R0 = maxR * rnd(0.55, 1), a0 = (arm * Math.PI) / 2 + j * 0.32 + rnd(0, 0.2), turns = Math.PI * 2.2;
+      const pos = (e: number): [number, number] => {
+        const r = R0 * Math.pow(1 - e, 1.4), th = a0 + turns * Math.pow(e, 0.8);
+        return [at.x + Math.cos(th) * r, at.y + Math.sin(th) * r * 0.82];
+      };
+      const kf: Keyframe[] = [];
+      for (const q of [0, 0.2, 0.4, 0.6, 0.8, 1]) {
+        const [x, y] = pos(q), [x2, y2] = pos(Math.min(1, q + 0.03));
+        const ang = (Math.atan2(y2 - y, x2 - x) * 180) / Math.PI;
+        kf.push({transform: `${T(x, y)} rotate(${ang.toFixed(0)}deg) scale(${(0.5 + 1.1 * (1 - q)).toFixed(2)})`, opacity: q === 0 ? 0 : q === 1 ? 0 : 1, offset: q});
+      }
+      this.fly(p, kf, {duration: rnd(900, 1100), delay: j * 38 + arm * 14, easing: 'cubic-bezier(.4,0,.8,.6)'});
+    }
+    // merkezde yıldız patlaması + halka + parlama
+    const fl = this.fwFlash.get();
+    fl.style.color = '#fff6c8';
+    fl.classList.add('is-star');
+    this.fly(fl, [{transform: `${T(at.x, at.y)} scale(.1) rotate(0deg)`, opacity: 0}, {transform: `${T(at.x, at.y)} scale(${jack ? 2.6 : 2.1}) rotate(45deg)`, opacity: 1, offset: 0.35}, {transform: `${T(at.x, at.y)} scale(.4) rotate(110deg)`, opacity: 0}],
+      {duration: 560, delay: 980, easing: 'cubic-bezier(.2,.7,.3,1)'});
+    window.setTimeout(() => fl.classList.remove('is-star'), 1600);
+    const ring = this.fbPool('gR', 1, 'sring').get();
+    this.fly(ring, [{transform: `${T(at.x, at.y)} scale(.2)`, opacity: 1}, {transform: `${T(at.x, at.y)} scale(3.2)`, opacity: 0}], {duration: 560, delay: 1000, easing: 'cubic-bezier(.1,.6,.3,1)'});
+    play(this.flashEl, [{opacity: 0}, {opacity: 0.7, offset: 0.25}, {opacity: 0}], {duration: 520, delay: 990, easing: 'ease-out'}, 1);
+    this.snd?.swoosh();
+    window.setTimeout(() => this.snd?.bonus(), 1000);
   }
 }

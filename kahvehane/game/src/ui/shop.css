@@ -128,9 +128,9 @@
   background: radial-gradient(ellipse 50% 50% at 50% 50%, #fff 0%, rgba(255, 244, 200, .8) 30%, rgba(255, 244, 200, 0) 100%); }
 .kh-spark4::after { transform: rotate(90deg); }
 /* ızgarada çerçeve döngüleri durur (çok sayıda dönen halka = takılma); canlısı ürün penceresinde ve teklif vitrininde */
-.kh-item__pv .kh-frame, .kh-item__pv .kh-frame *, .kh-item__pv .kh-frame::before, .kh-item__pv .kh-frame::after, .kh-item__pv .kh-frame *::before, .kh-item__pv .kh-frame *::after,
-.kh-setc__tile .kh-frame, .kh-setc__tile .kh-frame::before, .kh-setc__tile .kh-frame::after, .kh-setc__tile .kh-frame *::before, .kh-setc__tile .kh-frame *::after,
-.kh-sd__pv .kh-frame::before, .kh-sd__pv .kh-frame::after { animation: none !important; }
+/* (yalnız çerçevenin kendi sözde öğeleri: geniş "*" seçicileri her öğede stil eşleşmesini pahalılaştırıyordu) */
+.kh-item__pv .kh-pv__ava.kh-frame::before, .kh-item__pv .kh-pv__ava.kh-frame::after, .kh-setc__tile .kh-pv__ava.kh-frame::before, .kh-setc__tile .kh-pv__ava.kh-frame::after,
+.kh-sd__pv .kh-pv__ava.kh-frame::before, .kh-sd__pv .kh-pv__ava.kh-frame::after { animation: none !important; }
 /* canlanma anı: çerçeve/karakter kısa bir yay ile öne çıkar */
 .kh-pv__ava, .kh-pv__char { transition: transform .5s cubic-bezier(.3, 1.4, .5, 1); }
 .is-live .kh-pv__ava { transform: translate(-50%, -50%) scale(1.08); }
