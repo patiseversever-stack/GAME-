@@ -262,22 +262,27 @@ export class BlofTable {
       const y = H * 0.232;
       seats.push({x: W / 2, y, a: 180, s, spread: cw * s * 0.24, vis: 11, chip: {x: W / 2, y: y + ch * s * 0.5 + u * 1.1}});
     } else if (n === 3) {
-      const s = 0.52;
-      const y = H * 0.245;
-      const dx = W * 0.25;
+      // rozetler üst köşelerde (HUD: data-mode=3), yelpazeler altlarında masaya doğru eğik
+      const s = 0.5;
+      const y = H * 0.285;
+      const dx = W * 0.255;
+      const cy = y + ch * s * 0.5 + u * 1.15;
       seats.push(
-        {x: W / 2 + dx, y, a: -158, s, spread: cw * s * 0.3, vis: 10, chip: {x: W / 2 + dx, y: y + ch * s * 0.52 + u * 0.3}},
-        {x: W / 2 - dx, y, a: 158, s, spread: cw * s * 0.3, vis: 10, chip: {x: W / 2 - dx, y: y + ch * s * 0.52 + u * 0.3}},
+        {x: W / 2 + dx, y, a: -160, s, spread: cw * s * 0.24, vis: 10, chip: {x: W / 2 + dx - u * 0.6, y: cy}},
+        {x: W / 2 - dx, y, a: 160, s, spread: cw * s * 0.24, vis: 10, chip: {x: W / 2 - dx + u * 0.6, y: cy}},
       );
     } else {
       const fh = ch * fs4;
       const side = Math.max(fh * 0.36, Math.min(W * 0.1, fh * 0.62));
-      const sy = pileY - ch * 0.06;
+      const sy = pileY - ch * 0.04;
       const ty = H * 0.205;
+      // yan yelpazenin boyu (görünen kart sayısına göre) → sayaç yelpazenin altında
+      const half = cw * fs4 * 0.3 * 4 + (cw * fs4) / 2;
+      const cy = sy + half + u * 1.3;
       seats.push(
-        {x: W - side, y: sy, a: -90, s: fs4, spread: cw * fs4 * 0.3, vis: 9, chip: {x: W - side - fh * 0.62 - u * 0.6, y: sy}},
-        {x: W / 2, y: ty, a: 180, s: fs4, spread: cw * fs4 * 0.32, vis: 11, chip: {x: W / 2, y: ty + fh * 0.5 + u * 0.3}},
-        {x: side, y: sy, a: 90, s: fs4, spread: cw * fs4 * 0.3, vis: 9, chip: {x: side + fh * 0.62 + u * 0.6, y: sy}},
+        {x: W - side, y: sy, a: -90, s: fs4, spread: cw * fs4 * 0.3, vis: 9, chip: {x: W - Math.max(side, u * 2.4), y: cy}},
+        {x: W / 2, y: ty, a: 180, s: fs4, spread: cw * fs4 * 0.32, vis: 11, chip: {x: W / 2, y: ty + fh * 0.5 + u * 1.05}},
+        {x: side, y: sy, a: 90, s: fs4, spread: cw * fs4 * 0.3, vis: 9, chip: {x: Math.max(side, u * 2.4), y: cy}},
       );
     }
     // tur madalyonu (yığının sağı) ve kenar (solu)
@@ -286,9 +291,11 @@ export class BlofTable {
     let claim = {x: pile.x + pw / 2 + gap + d / 2, y: pileY, d};
     let discard = {x: pile.x - pw / 2 - gap * 1.6 - cw * 0.28, y: pileY - ph * 0.04, s: 0.52};
     if (n === 4) {
-      const inner = seats[1].chip.x - u * 1.8;
-      claim = {x: Math.min(claim.x, inner - d / 2), y: pileY, d};
-      discard = {x: Math.max(discard.x, seats[3].chip.x + u * 1.8 + cw * 0.28), y: pileY + ph * 0.06, s: 0.5};
+      // yan yelpazelerin iç kenarına çarpmasın
+      const fh = ch * fs4;
+      const innerR = seats[1].x - fh / 2 - u * 0.5, innerL = seats[3].x + fh / 2 + u * 0.5;
+      claim = {x: Math.min(claim.x, innerR - d / 2), y: pileY, d};
+      discard = {x: Math.max(discard.x, innerL + cw * 0.52 * 0.5 * 0.7 + u * 0.4), y: pileY - ph * 0.04, s: 0.5};
     }
     this.L = {
       W, H, cw, ch, u, n, pile, claim, discard,

@@ -183,7 +183,8 @@ export class BlofHud {
     this.claim.style.setProperty('--d', L.claim.d + 'px');
     pos(this.last, L.claim.x, L.claim.y + L.claim.d / 2 + L.u * 0.55);
     const pw = L.cw * L.pile.s, ph = L.ch * L.pile.s;
-    pos(this.pileChip, L.pile.x, L.pile.y + ph * 0.5 + L.u * 0.55);
+    // yığın sayacı: destenin sol üst köşesinde rozet
+    pos(this.pileChip, L.pile.x - pw * 0.46, L.pile.y - ph * 0.46);
     pos(this.outChip, L.discard.x, L.discard.y + L.ch * L.discard.s * 0.5 + L.u * 0.75);
     void pw;
     for (let s = 1; s < this.chips.length; s++) {

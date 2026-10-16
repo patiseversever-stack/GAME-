@@ -182,6 +182,7 @@
 .kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-bubble { bottom: auto; top: calc(var(--bs) * -1.25); left: calc(var(--bs) * .35); }
 .kh-hud[data-game="blof"][data-mode="1v1"] .kh-badge.is-top { --bs: calc(var(--u) * 5.6); }
 .kh-hud[data-game="blof"] .kh-hint { bottom: auto; top: calc(var(--bl-bar-y, 80vh) - var(--u) * 3.6); left: 50%; }
-.kh-hud[data-game="blof"].is-b3 { --kh-side-top: calc(max(calc(var(--u) * .75), env(safe-area-inset-top)) + var(--u) * 3.4); }
+.kh-hud[data-game="blof"][data-mode="3"] { --kh-side-top: calc(max(calc(var(--u) * .75), env(safe-area-inset-top)) + var(--u) * 3.5); }
+.kh-hud[data-game="blof"][data-mode="3"] .kh-badge.is-left, .kh-hud[data-game="blof"][data-mode="3"] .kh-badge.is-right { --bs: calc(var(--u) * 5); }
 .kh-badge.is-alert .kh-badge__glow { opacity: 1; background: radial-gradient(circle, rgba(255, 70, 90, .75) 0%, rgba(255, 46, 77, .3) 48%, rgba(255, 46, 77, 0) 70%); }
 .kh-badge.is-alert .kh-badge__ring { box-shadow: var(--ring-shadow), 0 0 0 3px #ff4d66, 0 0 18px 6px rgba(255, 60, 80, .7); }
