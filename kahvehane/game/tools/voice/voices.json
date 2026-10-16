@@ -21,8 +21,8 @@
     },
     "cem": {
       "name": "Cem",
-      "voice_id": "I5l1tJoDVsEhONWrXD9A",
-      "designPrompt": "A 22-year-old Turkish university student from Istanbul. Bright, energetic young male voice, quick and cocky, playful casual tone with light youth slang. Native Turkish speaker, modern Istanbul accent. Expressive, laughs easily. Clean studio recording, close microphone, no background noise.",
+      "voice_id": "U28adzr8bCBvludfl9JM",
+      "designPrompt": "A 20-year-old hyper-energetic Turkish gaming streamer. Bright, expressive young male voice, very excited reactions, hype and laughter, dramatic but likeable, like a popular Turkish Twitch/YouTube streamer. Native Turkish, Istanbul accent.",
       "designPromptTr": "22 yaşında İstanbullu üniversite öğrencisi. Parlak, enerjik genç erkek sesi; hızlı ve kendinden emin, hafif argolu rahat bir ton. Anadil Türkçe, modern İstanbul ağzı. Temiz stüdyo kaydı.",
       "previewText": "Kanka hazır ol, algoritmam ısındı! Olasılıkları hesapladım, bu el kesin benim. Aslında ders çalışmam lazım ama tek el oynarız, sonra hikâyeye atarım. Pişti! Efsane kanka, efsane!",
       "settings": {
@@ -47,7 +47,8 @@
           "generated_voice_id": "ZsRja4dRAG0xJocCOVkR",
           "file": "previews/cem/3.mp3"
         }
-      ]
+      ],
+      "voice_name": "Cem yayıncı (tasarım)"
     },
     "dursun": {
       "name": "Kahveci Dursun",
