@@ -56,11 +56,18 @@ Oyun manifesti ve mp3'leri **index.html'in yanındaki göreli `voice/` klasörü
 
 | Derleme | Komut | Çıktı |
 |---|---|---|
-| Normal | `npx vite build` | `dist/index.html` + `dist/assets/…` + **`dist/voice/`** (manifest.json + `<karakter>/<id>.mp3`) |
-| Tek dosya | `npm run build:tek` → `node scripts/artifact.mjs` | `dist-tek/index.html`, `dist-tek/kahvehane-pisti.html` + **`dist-tek/voice/`** |
-| Geliştirme | `npm run dev` (ve `dev/vite-game.config.ts`) | `/voice/…` (her sayfa yolunun altında) `assets/voice`'tan sunulur |
+| Normal (Expo) | `npx vite build` | `dist/index.html` + `dist/assets/…` + **`dist/voice/`** — dosya başına: manifest.json + `<karakter>/<id>.mp3` (925 dosya) |
+| Tek dosya (yayın önizlemesi) | `npm run build:tek` → `node scripts/artifact.mjs` | `dist-tek/index.html`, `dist-tek/kahvehane-pisti.html` + **`dist-tek/voice/`** — PAKETLİ: manifest.json + `packs/*.bin` (22 dosya) |
+| Geliştirme | `npm run dev` (ve `dev/vite-game.config.ts`) | `/voice/…` (her sayfa yolunun altında) `assets/voice`'tan, dosya başına |
 
 Kopyalamayı `vite.voice.mjs` (Vite eklentisi `khVoice`) yapar: yalnız `manifest.json` ve `<karakter>/<id>.mp3` (yarım `.part` dosyaları atlanır), her derlemede klasör sıfırdan yazılır.
+
+**Paketli düzen (dist-tek):** yayın sunucusu sürüm başına en çok 511 dosya (yayın başına 255, dosya başına 16 MB) kabul ettiği için tek dosya derlemesi sesleri karakter × grup paketlerine koyar (`scripts/voice-pack.mjs`; `khVoice({packed: true})`, `artifact.mjs` de paketli değilse paketler ve dosya sayısını denetler):
+
+- Gruplar: `pisti`, `blof` (masadaki botların oyun replikleri), `bot` (atışma + hızlı sohbet cevapları), `say` (oyuncunun kendi hızlı sohbeti), `meta` (galeri + market). Paket ≤ 2,5 MB; aşan grup eşit parçalara bölünür (`riza-pisti-1/2`). Şu an 21 paket (0,18–2,21 MB) + manifest = 22 dosya, 18,3 MB.
+- Manifest v2: `{v: 2, packs: {ad: {url: "packs/ad.bin", n, char, group}}, clips: {kimlik: {p: paket, o: bayt ofseti, n: bayt uzunluğu, dur, h, prio}}}`. Her klip eksiksiz bir mp3; aralığı kesmek geçerli dosya verir. Paylaşılan (takma ad) sesler her grubun paketine ayrıca konur.
+- Oyun (`VoicePlayer`): paket bir kez bütün olarak iner, klip baytları aralıkla kesilip çözülür. Paket baytları toplam 8 MB'lık LRU'da; maç başında boşta `prepare` masadaki botların oyun paketlerini + oyuncunun `say` paketini + (sığarsa) botların `bot` paketlerini sırayla indirir, masada olmayan karakterlerin paketlerini atar; sığmayan gerekince tembel iner. Galeri / market açılınca dört `meta` paketi (≈ 0,9 MB). Dosya başına düzende `prepare` hiçbir şey yapmaz.
+- Elle: `node scripts/voice-pack.mjs assets/voice dist-tek/voice`. Yayında `voice/manifest.json` ve `voice/packs/*.bin` (içerik türü `application/octet-stream` ya da `audio/mpeg`) sayfanın yanında olmalı.
 
 **Expo / React Native WebView:** `dist-tek/kahvehane-pisti.html` (ya da `dist/`) ile `voice/` klasörünü uygulama paketine **aynı dizinde** koyun ve sayfayı dosya adresinden açın; göreli yol kendiliğinden `voice/manifest.json`'a gider. Örnek: Expo'da `assets/web/index.html` + `assets/web/voice/…` → `expo-asset`/`expo-file-system` ile belge dizinine kopyalayın (ya da Android'de `file:///android_asset/web/`, iOS'ta paket içi `web/` klasörü) ve `<WebView source={{uri: dir + 'index.html'}} originWhitelist={['*']} allowFileAccess allowFileAccessFromFileURLs allowingReadAccessToURL={dir} />` kullanın (`fetch` ile yerel dosya okunabilmesi için Android'de `allowFileAccessFromFileURLs`, iOS'ta `allowingReadAccessToURL` gerekir). `html` string ile (baseUrl'siz) açılırsa göreli yol çözülemez → oyun sessiz (yalnız balon) çalışır; o durumda `source={{html, baseUrl: dir}}` verin. Ses klasörü ayrıca CDN'de de durabilir: sayfa nereden açılıyorsa `voice/` onun yanında olmalı.
 
