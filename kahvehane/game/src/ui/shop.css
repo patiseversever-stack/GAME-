@@ -345,8 +345,19 @@
 .kh-pd__btn { flex: 1; min-width: 0; justify-content: space-between; padding: 0 calc(var(--u) * 1); }
 .kh-pd__btn.is-done, .kh-pd__btn[data-act=equip], .kh-pd__btn[data-act=equipall] { justify-content: center; }
 .kh-pd__btn.is-done:disabled { filter: none; opacity: .85; }
-.kh-pd__try { flex: none; padding: 0 calc(var(--u) * .9); gap: .35em; }
+.kh-pd__btn { font-size: calc(var(--u) * 1.7); }
+.kh-pd__try { flex: none; width: 34%; padding: 0 calc(var(--u) * .5); gap: .3em; font-size: calc(var(--u) * 1.5); }
 .kh-pd__try .kh-i { width: 1.1em; height: 1.1em; }
+/* yetemiyor: soluk mavi, eksik miktar; ölü değil (dokununca yollar çıkar) */
+.kh-pd__btn.is-short { justify-content: center; gap: .4em; color: var(--c-text-2); font-size: calc(var(--u) * 1.45); }
+.kh-pd__btn.is-short .kh-pd__cost { background: rgba(10, 16, 51, .45); color: #fff; }
+.kh-pd__earn { display: flex; flex-direction: column; gap: .45em; }
+.kh-pd__earn b { color: #fff27a; }
+.kh-pd__ways { display: flex; flex-wrap: wrap; gap: .4em; }
+.kh-pd__way { display: inline-flex; align-items: center; gap: .3em; padding: .35em .75em .35em .55em; border-radius: var(--r-pill); background: var(--btn2-fill);
+  box-shadow: 0 0 0 2px var(--navy), 0 2px 0 var(--navy), inset 0 1.5px 0 rgba(255, 255, 255, .5); font-family: var(--font-display); font-size: calc(var(--u) * .8); color: #fff; text-shadow: var(--outline-thin); }
+.kh-pd__way .kh-i { width: 1.1em; height: 1.1em; }
+.kh-pd .kh-sheet__x { z-index: 8; }
 .kh-pd__cost { display: inline-flex; align-items: center; gap: .25em; padding: .18em .5em .18em .25em; border-radius: var(--r-pill); background: rgba(10, 16, 51, .35); font-size: .82em; }
 .kh-pd__cost img { width: 1.15em; height: 1.15em; object-fit: contain; }
 .kh-pd__msg { display: flex; align-items: center; gap: .6em; min-height: calc(var(--u) * .6); margin-top: calc(var(--u) * .7); text-align: left; color: var(--c-text-2);

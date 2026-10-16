@@ -582,10 +582,14 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
   const renderAct = (pop = false): void => {
     const st = state();
     const tryBtn = `<button class="kh-btn kh-btn--4 kh-btn--xl kh-pd__try" data-act="try">${I.eye}<span>Dene</span></button>`;
+    const short = Math.max(0, price - p.data.coins);
     actBox.innerHTML = st === 'buy'
-      ? `<button class="kh-btn kh-btn--1 kh-btn--xl kh-pd__btn" data-act="buy"><span>Satın Al</span><span class="kh-pd__cost">${coinImg()}<b class="kh-num">${fmt(price)}</b></span></button>${tryBtn}`
+      ? short
+        ? // yetemiyor: düğme ölü değil, yumuşak tonda eksik miktarı söyler; dokununca nasıl kazanılacağını gösterir
+          `${tryBtn}<button class="kh-btn kh-btn--4 kh-btn--xl kh-pd__btn is-short" data-act="buy"><span class="kh-pd__cost">${coinImg()}<b class="kh-num">${fmt(short)}</b></span><span>eksik</span></button>`
+        : `${tryBtn}<button class="kh-btn kh-btn--1 kh-btn--xl kh-pd__btn" data-act="buy"><span>Satın Al</span><span class="kh-pd__cost">${coinImg()}<b class="kh-num">${fmt(price)}</b></span></button>`
       : st === 'own'
-        ? `<button class="kh-btn kh-btn--5 kh-btn--xl kh-pd__btn" data-act="equip">${I.check}<span>Kuşan</span></button>${tryBtn}`
+        ? `${tryBtn}<button class="kh-btn kh-btn--5 kh-btn--xl kh-pd__btn" data-act="equip">${I.check}<span>Kuşan</span></button>`
         : `<button class="kh-btn kh-btn--4 kh-btn--xl kh-pd__btn is-done" disabled>${I.check}<span>Kuşanıldı</span></button>`;
     // cüzdan: alınca ne kalır / ne kadar eksik (fiyat çapası + kaygı azaltma)
     const coins = p.data.coins;
@@ -611,6 +615,12 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
       ctx.sounds.tap();
       await m.close();
       setSheet(shell, set, onChange);
+      return;
+    }
+    if (a === 'earn') {
+      ctx.sounds.tap();
+      await m.close();
+      shell.goto(b.dataset.to as 'home' | 'quests');
       return;
     }
     if (a === 'try') {
@@ -644,7 +654,8 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
       shake(b, 1);
       shake(wallet, 0.5);
       const me = charById(p.data.char ?? 'dursun');
-      msg.innerHTML = `<span class="kh-pd__sad"><img src="${me.poses.uzgun}" alt=""></span><span><b>${fmt(price - p.data.coins)} jeton</b> eksik! Birkaç el kazan, kasayı doldur — bu seni bekler.</span>`;
+      msg.innerHTML = `<span class="kh-pd__sad"><img src="${me.poses.uzgun}" alt=""></span><span class="kh-pd__earn"><span><b>${fmt(price - p.data.coins)} jeton</b> daha lazım. Kasayı doldurmanın yolları:</span>
+        <span class="kh-pd__ways"><button class="kh-pd__way" data-act="earn" data-to="home">${I.play}Bir el oyna</button><button class="kh-pd__way" data-act="earn" data-to="quests">${I.target}Görevler</button><button class="kh-pd__way" data-act="earn" data-to="home">${I.gift}Günlük ödül · sandık</button></span></span>`;
       play(msg, [{transform: 'translateY(10px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.spring});
       return;
     }
