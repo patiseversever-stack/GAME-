@@ -6,8 +6,8 @@
   "characters": {
     "riza": {
       "name": "Rıza Amca",
-      "voice_id": "fg8pljYEn5ahwjyOQaro",
-      "designPrompt": "A 72-year-old Turkish man from Istanbul. Deep, slightly raspy, warm voice with a gentle old-man gravel. Speaks native Turkish with a classic Istanbul accent. Playful, proud and a little grumpy, like a beloved uncle teasing you at a coffeehouse card table. Medium-slow pace, very expressive, chuckles easily. Clean studio recording, close microphone, no background noise.",
+      "voice_id": "OFQqTlMjqvqh7H85o8Kj",
+      "designPrompt": "An 80-year-old Turkish grandfather from an old Istanbul neighbourhood. Very old, aged voice: deep but thin with age, raspy and gravelly, slightly breathy, a gentle old-man tremble, unhurried rhythm with small pauses, warm and wise but a bit grumpy and playful. Native Turkish speaker with a classic old Istanbul accent.",
       "designPromptTr": "72 yaşında İstanbullu bir amca. Derin, hafif kısık, sıcak ses; yaşlılığın tatlı pürüzü. İstanbul ağzıyla anadil Türkçe. Oyunbaz, gururlu, biraz huysuz; kahvede masada seni tatlı tatlı iğneleyen sevilen bir amca. Orta-yavaş tempo, çok ifadeli, kolay kıkırdar. Temiz stüdyo kaydı.",
       "previewText": "Otur bakalım evlat. Kırk yıldır bu masadayım, bu kahvede benim bilmediğim oyun yok. Dursun! İki çay, biri açık olsun. Hadi bakalım, kağıtları kar da görelim seni. Pişti! Çaylar senden!",
       "settings": {
@@ -17,7 +17,7 @@
         "use_speaker_boost": true
       },
       "previews": [],
-      "voice_name": "Mustafa Silici (library)"
+      "voice_name": "Rıza Amca yaşlı (tasarım 1)"
     },
     "cem": {
       "name": "Cem",
