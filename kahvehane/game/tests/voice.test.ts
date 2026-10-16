@@ -1,32 +1,64 @@
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {
+  BANTER,
+  BANTER_CTX,
+  BANTER_RULES,
+  BLOF_MOMENTS,
   CHAR_IDS,
   CHATTER_GAP_MS,
   DIALOGUE,
   DialogueDirector,
   EVENT_GAP_MS,
   HISTORY,
+  META_MOMENTS,
   MOMENTS,
   MOMENT_RULES,
+  QUICK_CHAT,
+  SAMPLE_IDS,
   allLines,
+  blofKey,
+  cooldownHands,
   dialogue,
+  freshMemory,
+  groupOf,
+  lineById,
   linesFor,
+  momentPriority,
+  noteBanter,
+  pickBanter,
   pickLine,
+  planQuickReply,
+  quickMenu,
+  quickReply,
+  quickSay,
   resetDialogue,
+  ruleFor,
   shouldSpeak,
+  soundKey,
+  speechSeconds,
+  stabilityFor,
   stripTags,
   ttsHash,
+  type BanterRequest,
+  type TalkMemory,
 } from '../src/ai/dialogue';
+import {BlofTalk, blofPriority} from '../src/ai/blofDialogue';
+import {POSES} from '../src/game/roster';
 import {VoicePlayer} from '../src/audio/voice';
 import {mulberry32} from '../src/core/rng';
 
-const MOODS = new Set(['kahkaha', 'kizgin', 'saskin', 'uzgun']);
-/** Oyunun (app.ts / match.ts) yayınladığı anlar: Rıza'da her biri için en az 2 replik olmalı. */
+const MOODS = new Set<string>(POSES);
+/** Oyunun (app.ts / match.ts) yayınladığı Pişti anları: her karakterde dolu olmalı. */
 const GAME_MOMENTS = [
   'start', 'botThinking', 'botPisti', 'botJackPisti', 'playerPisti', 'playerJackPisti', 'botBigCapture',
-  'playerBigCapture', 'botJackCapture', 'playerJackCapture', 'playerDumpedValuable', 'lastRound', 'botLeading',
-  'playerLeading', 'myTurnIdle', 'tableEmpty', 'playerWin', 'botWin', 'draw',
+  'playerBigCapture', 'botJackCapture', 'playerJackCapture', 'playerDumpedValuable', 'botLuckyCapture', 'lastRound',
+  'botLeading', 'playerLeading', 'comeback', 'myTurnIdle', 'tableEmpty', 'playerWin', 'botWin', 'draw',
 ];
+/** Sık, oyun içi anlar: çok seçenek (sesler dahil), kısa. */
+const FREQUENT = ['botThinking', 'myTurnIdle', 'botBigCapture', 'playerBigCapture', 'botJackCapture', 'playerJackCapture', 'playerDumpedValuable'];
+/** Büyük anlar (oyun zaten duruyor): çok seçenek, uzun espriye izin. */
+const BIG = ['start', 'botPisti', 'playerPisti', 'botWin', 'playerWin'];
+const uniqueSounds = (ls: readonly {id: string}[]): number => new Set(ls.map(l => soundKey(l.id))).size;
 
 describe('replik verisi', () => {
   const all = allLines();
@@ -35,46 +67,77 @@ describe('replik verisi', () => {
     const ids = all.map(l => l.id);
     expect(new Set(ids).size).toBe(ids.length);
     for (const l of all) {
-      expect(l.id).toMatch(/^[a-z]+_[A-Za-z]+_\d+$/);
-      expect(l.id.startsWith(`${l.char}_${l.moment}_`)).toBe(true);
+      if (l.moment === 'banter') expect(l.id).toMatch(/^banter_[a-z]+_[a-z]+_[a-zA-Z]+_\d+[abc]$/);
+      else if (l.moment === 'quickSay') expect(l.id).toMatch(new RegExp(`^qc_${l.char}_[a-z_]+_\\d+$`));
+      else if (l.moment === 'quickReply') expect(l.id).toMatch(new RegExp(`^qr_${l.char}_[a-z]+_\\d+$`));
+      else {
+        expect(l.id).toMatch(/^[a-z]+_[A-Za-z]+_\d+$/);
+        expect(l.id.startsWith(`${l.char}_${l.moment}_`)).toBe(true);
+      }
     }
   });
 
-  it('Rıza: 70-90 replik, her anda en az 2', () => {
-    const riza = all.filter(l => l.char === 'riza');
-    expect(riza.length).toBeGreaterThanOrEqual(70);
-    expect(riza.length).toBeLessThanOrEqual(90);
-    for (const m of new Set([...MOMENTS, ...GAME_MOMENTS])) expect(linesFor('riza', m).length, m).toBeGreaterThanOrEqual(2);
-  });
-
-  it('diğer karakterler 12-20 replik ve temel anlar dolu', () => {
-    for (const c of CHAR_IDS.filter(c => c !== 'riza')) {
-      const n = all.filter(l => l.char === c).length;
-      expect(n, c).toBeGreaterThanOrEqual(12);
-      expect(n, c).toBeLessThanOrEqual(20);
-      for (const m of ['start', 'botPisti', 'playerPisti', 'botWin', 'playerWin', 'draw']) expect(linesFor(c, m).length, `${c}/${m}`).toBeGreaterThan(0);
+  it('her karakter: oyunun her Pişti anında ≥2, sık anlarda ≥10, büyük anlarda ≥7 seçenek', () => {
+    for (const c of CHAR_IDS) {
+      for (const m of GAME_MOMENTS) expect(linesFor(c, m).length, `${c}/${m}`).toBeGreaterThanOrEqual(2);
+      for (const m of FREQUENT) expect(uniqueSounds(linesFor(c, m)), `${c}/${m}`).toBeGreaterThanOrEqual(10);
+      for (const m of BIG) expect(linesFor(c, m).length, `${c}/${m}`).toBeGreaterThanOrEqual(7);
+      // sık anlarda en az 4 "yalnız ses" seçeneği (gülme / homurtu)
+      for (const m of FREQUENT) expect(linesFor(c, m).filter(l => (l.weight ?? 1) >= 1.5).length, `${c}/${m}`).toBeGreaterThanOrEqual(4);
     }
   });
 
-  it('uzunluk sınırları, boş olmayan tts, geçerli duygu ve etiketler', () => {
+  it('her karakter: her Blöf anında ≥2 replik; menü anları dolu', () => {
+    for (const c of CHAR_IDS) {
+      for (const m of BLOF_MOMENTS) expect(linesFor(c, blofKey(m)).length, `${c}/${m}`).toBeGreaterThanOrEqual(2);
+      expect(linesFor(c, 'galleryIntro').length).toBe(2);
+      expect(linesFor(c, 'shopPitch').length).toBe(3);
+      expect(linesFor(c, 'shopBought').length).toBe(2);
+      expect(linesFor(c, 'shopPoor').length).toBeGreaterThanOrEqual(1);
+    }
+  });
+
+  it('bir anın havuzunda aynı ses iki kez yok', () => {
+    for (const c of CHAR_IDS)
+      for (const m of [...MOMENTS, ...META_MOMENTS, ...BLOF_MOMENTS.map(blofKey)]) {
+        const pool = linesFor(c, m);
+        expect(uniqueSounds(pool), `${c}/${m}`).toBe(pool.length);
+      }
+  });
+
+  it('uzunluk sınırları, geçerli duygu ve ses etiketleri', () => {
     for (const l of all) {
       expect(l.text.trim().length, l.id).toBeGreaterThan(0);
-      expect(l.text.length, l.id).toBeLessThanOrEqual(60);
-      expect(l.text.split(/\s+/).length, l.id).toBeLessThanOrEqual(10);
+      expect(l.text.length, l.id).toBeLessThanOrEqual(64);
+      expect(l.text.split(/\s+/).length, l.id).toBeLessThanOrEqual(12);
       expect(l.text, l.id).not.toMatch(/[[\]]/);
-      expect(l.tts.trim().length, l.id).toBeGreaterThan(0);
       expect(l.tts.length, l.id).toBeLessThanOrEqual(120);
       expect(stripTags(l.tts).length, l.id).toBeGreaterThan(0);
-      expect(l.tts, l.id).toMatch(/^\[[a-z ]+\] /); // her replik bir ses etiketiyle başlar
+      const tags = l.tts.match(/\[[^\]]*\]/g) ?? [];
+      expect(tags.length, l.id).toBeLessThanOrEqual(2);
+      for (const t of tags) expect(t, l.id).toMatch(/^\[[a-z ]+\]$/);
+      expect(l.tts, l.id).not.toMatch(/\[(shouting|shouts)\]/.source && l.char === 'defne' ? /\[(shouting|shouts)\]/ : /$^/); // Defne asla bağırmaz
       if (l.mood != null) expect(MOODS.has(l.mood), l.id).toBe(true);
       if (l.weight !== undefined) expect(l.weight, l.id).toBeGreaterThan(0);
     }
   });
 
+  it('konuşma süresi bütçesi: sık anlar kısa, uzun espri yalnız öncelik 3 (oyunun durduğu) anlarda', () => {
+    for (const l of all) {
+      const s = speechSeconds(l.char, l.tts);
+      let max = momentPriority(l.moment) === 3 ? 6 : 3.2;
+      if (FREQUENT.includes(l.moment)) max = 2.7;
+      if (['botPisti', 'playerPisti', 'botJackPisti', 'playerJackPisti'].includes(l.moment)) max = 5;
+      if (l.moment === 'blofCallOut' || l.moment === 'blofPass') max = 2;
+      if (l.moment === 'banter') max = 3.6;
+      if (l.moment === 'quickSay' || l.moment === 'quickReply') max = 3;
+      expect(s, `${l.id} ${l.tts}`).toBeLessThanOrEqual(max);
+    }
+  });
+
   it('balon metni tts\'ten etiketler silinerek çıkar (açık metin verilenler hariç)', () => {
     expect(stripTags('[laughs] Pişti!  Çaylar [sighs] senden !')).toBe('Pişti! Çaylar senden!');
-    const riza = DIALOGUE.riza.botPisti ?? [];
-    for (const l of riza) expect(l.text).toBe(stripTags(l.tts));
+    for (const l of DIALOGUE.riza.botPisti ?? []) expect(l.text).toBe(stripTags(l.tts));
   });
 
   it('pişti ve kazanma anlarında Rıza her zaman bir duygu kartı gösterir', () => {
@@ -89,9 +152,55 @@ describe('replik verisi', () => {
     expect(ttsHash('abc')).toMatch(/^[0-9a-f]{8}$/);
   });
 
-  it('her anın bir kuralı var; pişti anları her zaman konuşur', () => {
+  it('kararlılık (v3 stability) etiketlerden çıkar, satır değeri kazanır; tekrar beklemesi uzunluğa göre', () => {
+    expect(stabilityFor({tts: '[laughs] Pişti!'})).toBe(0);
+    expect(stabilityFor({tts: '[shouting] Blöf!'})).toBe(0);
+    expect(stabilityFor({tts: '[deadpan] Pişti.'})).toBe(1);
+    expect(stabilityFor({tts: '[whispers] Aramızda.'})).toBeNull();
+    expect(stabilityFor({tts: '[laughs] Hah!', stab: 0.5})).toBe(0.5);
+    expect(cooldownHands({tts: '[laughs] Hah!'})).toBe(0);
+    expect(cooldownHands({tts: '[chuckles] Kırk yıllık usta, bu fiyata? Kelepir evlat, kelepir!'})).toBe(25);
+    expect(cooldownHands({tts: 'x', cd: 7})).toBe(7);
+  });
+
+  it('paylaşılan sesler: aynı karakter + aynı tts tek ses anahtarı', () => {
+    const a = linesFor('riza', 'botThinking').find(l => l.tts === '[chuckles] Heh heh…')!;
+    const b = linesFor('riza', 'botJackCapture').find(l => l.tts === '[chuckles] Heh heh…')!;
+    expect(a.id).not.toBe(b.id);
+    expect(soundKey(a.id)).toBe(soundKey(b.id));
+  });
+
+  it('her anın bir kuralı var; pişti anları her zaman konuşur; gruplar', () => {
     for (const m of MOMENTS) expect(MOMENT_RULES[m]).toBeTruthy();
     for (const m of ['botPisti', 'botJackPisti', 'playerPisti', 'playerJackPisti'] as const) expect(MOMENT_RULES[m].kind).toBe('always');
+    for (const m of BLOF_MOMENTS) expect(ruleFor(blofKey(m))).not.toBe(ruleFor('yokBoyleBirAn'));
+    for (const m of META_MOMENTS) expect(momentPriority(m)).toBe(3);
+    expect(momentPriority('blofCallOut')).toBe(3);
+    expect(momentPriority('blofPass')).toBe(1);
+    expect(groupOf({moment: 'blofCatchPlayer'})).toBe('blof');
+    expect(groupOf({moment: 'shopPitch'})).toBe('meta');
+    expect(groupOf({moment: 'botPisti'})).toBe('pisti');
+  });
+
+  it('deneme seçkisi: karakter başına 4 + 2 atışma + hızlı sohbet, ≤ ~1000 karakter', () => {
+    let chars = 0;
+    for (const id of SAMPLE_IDS) {
+      const l = lineById(id);
+      expect(l, id).toBeTruthy();
+      chars += l!.tts.length;
+    }
+    for (const c of CHAR_IDS) expect(SAMPLE_IDS.filter(id => id.startsWith(`${c}_`)).length, c).toBe(4);
+    expect(SAMPLE_IDS.some(id => id.startsWith('qc_'))).toBe(true);
+    expect(SAMPLE_IDS.some(id => id.startsWith('qr_'))).toBe(true);
+    expect(new Set(SAMPLE_IDS.filter(id => id.startsWith('banter_')).map(id => id.slice(0, -1))).size).toBe(2);
+    expect(chars).toBeLessThanOrEqual(1000);
+  });
+
+  it('kredi bütçesi: tekil ses dosyaları toplamı ≤ ~33,5k karakter', () => {
+    const seen = new Set<string>();
+    let chars = 0;
+    for (const l of all) if (!seen.has(soundKey(l.id))) (seen.add(soundKey(l.id)), (chars += l.tts.length));
+    expect(chars).toBeLessThanOrEqual(33_500);
   });
 });
 
@@ -103,21 +212,22 @@ describe('pickLine', () => {
     expect(pickLine('riza', 'boyleBirAnYok')).toBeNull();
   });
 
-  it('karakterin son 6 repliğini tekrar etmez (karışık anlarda)', () => {
+  it(`karakterin son ${HISTORY} sesini tekrar etmez (karışık anlarda, paylaşılan sesler dahil)`, () => {
     const rnd = mulberry32(7);
     const moments = ['botPisti', 'playerPisti', 'botThinking', 'myTurnIdle', 'botBigCapture', 'botWin'];
     const seq: string[] = [];
+    const mom: string[] = [];
     for (let i = 0; i < 400; i++) {
-      const l = pickLine('riza', moments[Math.floor(rnd() * moments.length)], rnd);
+      const m = moments[Math.floor(rnd() * moments.length)];
+      const l = pickLine('riza', m, rnd);
       expect(l).not.toBeNull();
-      seq.push(l!.id);
+      seq.push(soundKey(l!.id));
+      mom.push(m);
     }
     let checked = 0;
     for (let i = 0; i < seq.length; i++) {
-      const pool = linesFor('riza', allLinesMoment(seq[i]));
-      // son 6 replik dışında seçenek varsa, son 6'dan biri tekrar edilmez
       const window = seq.slice(Math.max(0, i - HISTORY), i);
-      if (pool.some(l => !window.includes(l.id))) {
+      if (linesFor('riza', mom[i]).some(l => !window.includes(soundKey(l.id)))) {
         expect(window).not.toContain(seq[i]);
         checked++;
       }
@@ -125,29 +235,26 @@ describe('pickLine', () => {
     expect(checked).toBeGreaterThan(300);
   });
 
-  it('tek anda: hiçbir replik art arda gelmez, havuz büyükse 6 içinde tekrar yok', () => {
+  it('tek anda: hiçbir replik art arda gelmez, küçük havuzda tam sıra; hepsi duyulur', () => {
     const rnd = mulberry32(42);
     for (const m of ['botPisti', 'playerJackPisti', 'draw', 'botLuckyCapture']) {
       resetDialogue();
       const pool = linesFor('riza', m);
       const seq = Array.from({length: 120}, () => pickLine('riza', m, rnd)!.id);
-      // havuz > HISTORY: son 6'da tekrar yok; küçük havuz: en uzun süredir söylenmeyen üçte birden seçilir
       const win = pool.length > HISTORY ? HISTORY : pool.length - Math.max(1, Math.floor(pool.length / 3));
       for (let i = 1; i < seq.length; i++) {
         expect(seq[i]).not.toBe(seq[i - 1]);
         if (win > 0) expect(seq.slice(Math.max(0, i - win), i)).not.toContain(seq[i]);
       }
-      // her replik en az bir kez duyulur
       expect(new Set(seq).size).toBe(pool.length);
     }
   });
 
-  it('tek replikli an yine de döner', () => {
-    expect(pickLine('defne', 'tableEmpty')?.id).toBe('defne_tableEmpty_1');
-    expect(pickLine('defne', 'tableEmpty')?.id).toBe('defne_tableEmpty_1');
+  it('küçük havuz da hep döner', () => {
+    for (let i = 0; i < 6; i++) expect(pickLine('defne', 'blofNearWin')).not.toBeNull();
   });
 
-  it('dağılım: ağırlıklar ve kullanım sayısı repliği tekeline almaz', () => {
+  it('dağılım: ağırlıklar repliği tekeline almaz', () => {
     const rnd = mulberry32(3);
     const counts = new Map<string, number>();
     for (let i = 0; i < 600; i++) {
@@ -159,9 +266,52 @@ describe('pickLine', () => {
   });
 });
 
-function allLinesMoment(id: string): string {
-  return allLines().find(l => l.id === id)!.moment;
-}
+describe('kalıcı hafıza (eller / oturumlar arası)', () => {
+  const memStore = () => {
+    let saved: unknown = null;
+    return {load: () => saved, save: (m: TalkMemory) => (saved = JSON.parse(JSON.stringify(m))), peek: () => saved};
+  };
+
+  it('yeni oturum son replikleri hatırlar; uzun espri ~25 el beklemeden dönmez, kısa ses hemen döner', () => {
+    const store = memStore();
+    const a = new DialogueDirector();
+    a.attach(store);
+    a.newHand(2);
+    const rnd = mulberry32(9);
+    const first = Array.from({length: 4}, () => a.pickLine('riza', 'botWin', rnd)!.id);
+    // yeni oturum (aynı depo): son replikler tekrar edilmez
+    const b = new DialogueDirector();
+    b.attach(store);
+    b.newHand(2);
+    for (let i = 0; i < 3; i++) expect(first).not.toContain(b.pickLine('riza', 'botWin', rnd)!.id);
+    // uzun replik: tekrar beklemesi el sayısıyla
+    const long = linesFor('riza', 'botWin').find(l => cooldownHands(l) >= 25)!;
+    const c = new DialogueDirector();
+    c.attach(store);
+    const mem = c.memory as TalkMemory;
+    mem.heard[soundKey(long.id)] = [mem.hand, ++mem.seq];
+    mem.recent.riza = [];
+    // el başına bir el sonu repliği: havuz tükenmeden uzun espri tekrar seçilmez
+    for (let h = 0; h < 5; h++) {
+      c.newHand(2);
+      expect(c.pickLine('riza', 'botWin', rnd)!.id).not.toBe(long.id);
+    }
+  });
+
+  it('bozuk / eski depo verisi temiz hafızaya düşer; depo hatası yutulur', () => {
+    const d = new DialogueDirector();
+    d.attach({load: () => ({v: 99, hand: 'x'}), save: () => undefined});
+    expect(d.memory.hand).toBe(0);
+    const e = new DialogueDirector();
+    e.attach({load: () => {
+      throw new Error('yok');
+    }, save: () => {
+      throw new Error('dolu');
+    }});
+    e.newHand(4);
+    expect(e.pickLine('cem', 'botPisti')).not.toBeNull();
+  });
+});
 
 describe('shouldSpeak', () => {
   let d: DialogueDirector;
@@ -177,27 +327,34 @@ describe('shouldSpeak', () => {
     expect(d.shouldSpeak('playerJackPisti', 1100, no)).toBe(true);
   });
 
-  it('olay tepkisi ~%40-45 ve en az EVENT_GAP_MS arayla', () => {
+  it('olay tepkisi kuralın olasılığıyla ve en az EVENT_GAP_MS arayla', () => {
     expect(d.shouldSpeak('botBigCapture', 10_000, yes)).toBe(true);
     expect(d.shouldSpeak('playerBigCapture', 10_000 + EVENT_GAP_MS - 1, yes)).toBe(false);
     expect(d.shouldSpeak('playerBigCapture', 10_000 + EVENT_GAP_MS, yes)).toBe(true);
-    // olasılık
     const rnd = mulberry32(11);
     let hit = 0;
     const N = 4000;
-    for (let i = 0; i < N; i++) {
-      const dd = new DialogueDirector();
-      if (dd.shouldSpeak('botJackCapture', 0, rnd)) hit++;
-    }
-    expect(hit / N).toBeGreaterThan(0.33);
-    expect(hit / N).toBeLessThan(0.47);
+    for (let i = 0; i < N; i++) if (new DialogueDirector().shouldSpeak('botJackCapture', 0, rnd)) hit++;
+    expect(Math.abs(hit / N - MOMENT_RULES.botJackCapture.chance)).toBeLessThan(0.04);
   });
 
-  it('boş laf en fazla CHATTER_GAP_MS (~8 sn) arayla', () => {
+  it('kalabalık masa (4 kişi) olasılığı düşürür', () => {
+    const rnd = mulberry32(12);
+    let one = 0;
+    let four = 0;
+    for (let i = 0; i < 4000; i++) {
+      if (new DialogueDirector().shouldSpeak('botBigCapture', 0, rnd)) one++;
+      const q = new DialogueDirector();
+      q.setSeats(4);
+      if (q.shouldSpeak('botBigCapture', 0, rnd)) four++;
+    }
+    expect(four).toBeLessThan(one * 0.75);
+  });
+
+  it('boş laf en fazla CHATTER_GAP_MS arayla', () => {
     expect(d.shouldSpeak('myTurnIdle', 20_000, yes)).toBe(true);
     expect(d.shouldSpeak('tableEmpty', 20_000 + CHATTER_GAP_MS - 1, yes)).toBe(false);
     expect(d.shouldSpeak('tableEmpty', 20_000 + CHATTER_GAP_MS, yes)).toBe(true);
-    // pişti boş laf sayacını da başlatır
     expect(d.shouldSpeak('botPisti', 40_000, yes)).toBe(true);
     expect(d.shouldSpeak('botThinking', 45_000, yes)).toBe(false);
   });
@@ -215,11 +372,10 @@ describe('shouldSpeak', () => {
     const N = 3000;
     for (let i = 0; i < N; i++) {
       const dd = new DialogueDirector();
-      // aynı an 3 kez konuştu (yes), sonra 4.'nün şansı
       dd.shouldSpeak('botBigCapture', 0, yes);
-      dd.shouldSpeak('botBigCapture', 3000, yes);
-      dd.shouldSpeak('botBigCapture', 6000, yes);
-      if (dd.shouldSpeak('botBigCapture', 9000, rnd)) later++;
+      dd.shouldSpeak('botBigCapture', EVENT_GAP_MS, yes);
+      dd.shouldSpeak('botBigCapture', EVENT_GAP_MS * 2, yes);
+      if (dd.shouldSpeak('botBigCapture', EVENT_GAP_MS * 3, rnd)) later++;
       if (new DialogueDirector().shouldSpeak('botBigCapture', 0, rnd)) first++;
     }
     expect(later).toBeLessThan(first * 0.5);
@@ -247,8 +403,107 @@ describe('shouldSpeak', () => {
   });
 
   it('react: repliği olmayan an sayacı bozmaz', () => {
-    expect(d.react('defne', 'comeback', 0, yes)).toBeNull();
+    expect(d.react('defne', 'boyleBirAnYok', 0, yes)).toBeNull();
     expect(d.react('defne', 'botBigCapture', 10, yes)?.id).toBe('defne_botBigCapture_1');
+  });
+});
+
+describe('Blöf konuşması', () => {
+  it('zorunlu anlar her zaman, laf atma seyrek; öncelikler', () => {
+    const t = new BlofTalk();
+    t.begin(3);
+    expect(t.pick('riza', 'callOut', true)?.id).toMatch(/^riza_blofCallOut_\d+$/);
+    expect(t.pick('riza', 'catchPlayer', true)?.mood).toBeTruthy();
+    expect(t.pick('cem', 'pass', false, 0)).toBeNull(); // az önce konuşuldu: olay aralığı dolmadı
+    expect(blofPriority('callOut')).toBe(3);
+    expect(blofPriority('caught')).toBe(2);
+    expect(blofPriority('pass')).toBe(1);
+  });
+});
+
+describe('atışma (banter)', () => {
+  const base: BanterRequest = {game: 'pisti', ctx: 'steal', a: 'riza', b: 'cem', mode: '4', sameTeam: false, calm: true, quietForMs: 10_000, talk: 'voice'};
+  const mem = () => freshMemory().banter;
+
+  it('her yönlü çift en az 3 atışmada; her bağlam dolu; satırlar A–B(–A)', () => {
+    for (const a of CHAR_IDS)
+      for (const b of CHAR_IDS) if (a !== b) expect(BANTER.filter(e => e.a === a && e.b === b).length, `${a}>${b}`).toBeGreaterThanOrEqual(3);
+    for (const c of BANTER_CTX) expect(BANTER.filter(e => e.ctx === c).length, c).toBeGreaterThanOrEqual(3);
+    for (const e of BANTER) {
+      expect(e.lines.length).toBeGreaterThanOrEqual(2);
+      expect(e.lines.length).toBeLessThanOrEqual(3);
+      e.lines.forEach((l, i) => expect(l.char).toBe(i % 2 ? e.b : e.a));
+    }
+  });
+
+  it('kurallar: 1\'e 1 yok, sakin değilse yok, sessizlik ve el aralığı, ses kapalıyken balon, kapalıysa yok', () => {
+    const yes = () => 0;
+    expect(pickBanter(base, 10, mem(), yes)).not.toBeNull();
+    expect(pickBanter({...base, mode: '1v1'}, 10, mem(), yes)).toBeNull();
+    expect(pickBanter({...base, calm: false}, 10, mem(), yes)).toBeNull();
+    expect(pickBanter({...base, quietForMs: BANTER_RULES.quietMs - 1}, 10, mem(), yes)).toBeNull();
+    expect(pickBanter({...base, talk: 'off'}, 10, mem(), yes)).toBeNull();
+    expect(pickBanter({...base, talk: 'bubbles'}, 10, mem(), yes)).not.toBeNull();
+    expect(pickBanter({...base, game: 'blof'}, 10, mem(), yes)).toBeNull(); // steal yalnız Pişti
+    expect(pickBanter({...base, sameTeam: true, mode: 'esli'}, 10, mem(), yes)).toBeNull(); // ortağın yığınını "çalmak" yok
+    expect(pickBanter({...base, ctx: 'mateBlame', a: 'cem', b: 'riza', sameTeam: true, mode: 'esli'}, 10, mem(), yes)).not.toBeNull();
+    expect(pickBanter({...base, ctx: 'mateBlame', a: 'cem', b: 'riza', sameTeam: true, mode: '4'}, 10, mem(), yes)).toBeNull();
+    expect(pickBanter(base, 10, mem(), () => 0.99)).toBeNull(); // olasılık
+  });
+
+  it('art arda iki elde yok; aynı atışma uzun süre tekrar etmez', () => {
+    const yes = () => 0;
+    let m = mem();
+    const ex = pickBanter(base, 10, m, yes)!;
+    m = noteBanter(m, ex, 10);
+    expect(pickBanter(base, 11, m, yes)).toBeNull();
+    const again = pickBanter(base, 12, m, yes);
+    if (again) expect(again.id).not.toBe(ex.id);
+    const only = BANTER.filter(e => e.ctx === base.ctx && e.a === base.a && e.b === base.b);
+    let mm = mem();
+    for (const e of only) mm = noteBanter(mm, e, 20);
+    expect(pickBanter(base, 22, mm, yes)).toBeNull();
+    expect(pickBanter(base, 20 + BANTER_RULES.repeatHands, mm, yes)).not.toBeNull();
+  });
+});
+
+describe('hızlı sohbet', () => {
+  it('menü: kimlikler sabit, etiket oyuncunun karakterine göre 3–4 kelime, Blöf mesajları yalnız Blöf\'te', () => {
+    for (const q of QUICK_CHAT)
+      for (const c of CHAR_IDS) {
+        const lab = q.labels[c];
+        const w = lab.split(/\s+/).length;
+        expect(w, `${q.id}/${c}`).toBeGreaterThanOrEqual(3);
+        expect(w, `${q.id}/${c}`).toBeLessThanOrEqual(4);
+        expect(lab.length, `${q.id}/${c}`).toBeLessThanOrEqual(28);
+        expect(quickSay(c, q.id), `${q.id}/${c}`).not.toBeNull();
+      }
+    expect(quickMenu('cem', 'pisti').some(m => m.id === 'bluffing')).toBe(false);
+    expect(quickMenu('cem', 'blof').find(m => m.id === 'hurry')?.label).toBe('Kanka biraz hızlan');
+    expect(quickMenu('defne', 'pisti').find(m => m.id === 'hurry')?.label).toBe('Acele etsek mi canım?');
+  });
+
+  it('söyleyiş tekrar etmez; cevap ilişkiye uyar', () => {
+    const a = quickSay('riza', 'gg')!;
+    const b = quickSay('riza', 'gg', [a.id])!;
+    expect(b.id).not.toBe(a.id);
+    for (let i = 0; i < 20; i++) {
+      expect(quickReply('dursun', 'oops', 'mate')?.rel).not.toBe('opp');
+      expect(quickReply('dursun', 'oops', 'opp')?.rel).not.toBe('mate');
+    }
+  });
+
+  it('cevap planı: insan cevaplamaz (çevrimiçi), eşlide ortak destek verir, gecikme aralıkta', () => {
+    const yes = () => 0;
+    expect(planQuickReply('gg', [{seat: 1, char: 'cem', human: true, rel: 'opp'}], [], yes)).toBeNull();
+    const mate = planQuickReply('oops', [{seat: 2, char: 'defne', human: false, rel: 'mate'}, {seat: 1, char: 'cem', human: false, rel: 'opp'}], [], yes)!;
+    expect(mate.seat).toBe(2);
+    expect(mate.line.rel).not.toBe('opp');
+    const opp = planQuickReply('lucky', [{seat: 2, char: 'defne', human: false, rel: 'mate'}, {seat: 1, char: 'cem', human: false, rel: 'opp'}], [], yes)!;
+    expect(opp.seat).toBe(1);
+    expect(opp.delayMs).toBeGreaterThanOrEqual(800);
+    expect(opp.delayMs).toBeLessThanOrEqual(1600);
+    expect(planQuickReply('lucky', [{seat: 1, char: 'cem', human: false, rel: 'opp'}], [], () => 0.999)).toBeNull();
   });
 });
 

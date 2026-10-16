@@ -1,6 +1,6 @@
 # Seslendirme (ElevenLabs)
 
-Replikler tek yerde durur: `src/ai/dialogue.ts`. Bu araç o dosyayı okur, her replik için ElevenLabs'te ses üretir ve oyunun okuyacağı dosyaları yazar. Ses dosyası yoksa oyun yine çalışır, replikler yalnızca konuşma balonunda görünür.
+Replikler tek yerde durur: `src/ai/dialogue.ts` (Pişti, Blöf, galeri/market, botlar arası atışma, hızlı sohbet). Bu araç o dosyayı okur, her replik için ElevenLabs'te ses üretir ve oyunun okuyacağı dosyaları yazar. Ses dosyası yoksa oyun yine çalışır, replikler yalnızca konuşma balonunda görünür.
 
 ## 1. Anahtar (sohbete yazmayın)
 
@@ -13,6 +13,8 @@ Replikler tek yerde durur: `src/ai/dialogue.ts`. Bu araç o dosyayı okur, her r
 | Ne | Komut |
 |---|---|
 | Ne üretilecek, kaç kredi? (anahtar gerekmez) | `node tools/voice/generate.mjs --dry` |
+| Ucuz deneme seçkisi (24 replik, ≈ 920 kredi) | `node tools/voice/generate.mjs --samples` |
+| Grup grup üret (pisti, blof, meta, banter, quick) | `node tools/voice/generate.mjs --group pisti,meta` |
 | Karakter seslerini tasarla (önizleme) | `node tools/voice/generate.mjs --design` |
 | Önizlemeyi seç → kalıcı ses | `node tools/voice/generate.mjs --pick riza=2` |
 | Tasarla + ilk önizlemeyi otomatik seç | `node tools/voice/generate.mjs --design --auto` |
@@ -25,7 +27,9 @@ Replikler tek yerde durur: `src/ai/dialogue.ts`. Bu araç o dosyayı okur, her r
 
 - **Sesler:** `tools/voice/voices.json`. `voice_id` boşsa önce `--design` çalıştırın. Önizlemeler `tools/voice/previews/<karakter>/1.mp3, 2.mp3, …` dosyalarına iner; dinleyip `--pick` ile seçin. İsterseniz ElevenLabs Voice Library'den bir sesin kimliğini doğrudan `voice_id` alanına da yazabilirsiniz.
 - **Model:** `eleven_v3` (Türkçe, `[laughs]`, `[sighs]` gibi ses etiketleriyle). `--v2` ile `eleven_multilingual_v2` kullanılır ve etiketler metinden silinir.
-- **Kredi:** 1 karakter yaklaşık 1 kredidir; etiketler de sayılır. Bütün replikler yaklaşık 6.300 kredi tutar (`--dry` kesin sayıyı verir).
+- **Kredi:** 1 karakter yaklaşık 1 kredidir; etiketler de sayılır. Bütün replikler ≈ 33.200 kredi (1012 replik, 925 ses dosyası; `--dry` kesin sayıyı ve grup dökümünü verir). Önce `--samples` ile dinleyin.
+- **Takma ad:** Aynı karakterde birebir aynı tts'li replikler (paylaşılan gülme, homurtu) bir kez üretilir; manifestte diğer kimlikler aynı dosyayı gösterir. Oyunda da tek replik sayılır (tekrar önleme).
+- **Duygu / kararlılık:** Her isteğin v3 kararlılığı satırdan gelir (`dialogue.ts → stabilityFor`: gülme/bağırma/heyecan → 0 Creative, `[deadpan]` → 1 Robust, satır `stab` değeri her zaman kazanır); yoksa `voices.json` ayarı. `--dry` listesinde `s=` sütunu ve tahmini süre görünür.
 - **Güvenli tekrar:** Var olan dosyalar atlanır. Hız sınırında (429) betik bekleyip yeniden dener. Ağ hatası ya da 5xx gibi belirsiz durumlarda istek tekrarlanmadan önce çıktı dosyasına, sonra ElevenLabs geçmişine bakılır; ses orada varsa yeniden üretilmez (iki kez ücret ödenmez).
 
 ## 3. Çıktı ve oyun

@@ -2,11 +2,15 @@
 /**
  * Kahvehane Pişti — ElevenLabs seslendirme üretici (Node 22.18+, ek paket yok).
  *
- * Tek kaynak: src/ai/dialogue.ts. Node 22 bu dosyayı tip ayıklamayla doğrudan import eder; her çalıştırmada
- * tools/voice/lines.json dışa aktarımı da yazılır (inceleme için; elle düzenlenmez).
+ * Tek kaynak: src/ai/dialogue.ts (Pişti + Blöf + galeri/market + atışma + hızlı sohbet). Node 22 bu dosyayı tip
+ * ayıklamayla doğrudan import eder; her çalıştırmada tools/voice/lines.json dışa aktarımı da yazılır (elle düzenlenmez).
+ * Aynı karakterde birebir aynı tts'li replikler (paylaşılan gülme / homurtu) TEK kez üretilir; diğer kimlikler manifestte
+ * aynı dosyaya işaret eder (takma ad). Her isteğin kararlılığı satırdan gelir (dialogue.ts → stabilityFor), yoksa voices.json.
  *
  * Komutlar (game/ klasöründen):
  *   node tools/voice/generate.mjs --dry                      Ne üretileceğini + tahmini karakter (kredi) sayısını yazar. Anahtar gerekmez.
+ *   node tools/voice/generate.mjs --samples [--dry]          Yalnız deneme seçkisi (dialogue.ts → SAMPLE_IDS; ucuz dinleme)
+ *   node tools/voice/generate.mjs --group pisti,meta         Yalnız bu gruplar (pisti | blof | meta | banter | quick)
  *   node tools/voice/generate.mjs --design [--char riza]     voice_id'si boş karakterler için Voice Design önizlemeleri üretir
  *                                                            → tools/voice/previews/<char>/<n>.mp3 (dinleyip seçin)
  *   node tools/voice/generate.mjs --pick riza=2              Seçilen önizlemeden kalıcı ses oluşturur, voice_id'yi voices.json'a yazar
@@ -123,7 +127,7 @@ const backoff = attempt => Math.min(60_000, 2000 * 2 ** (attempt - 1)) + Math.fl
 
 function parseArgs(argv) {
   const a = {
-    dry: false, design: false, auto: false, pick: [], chars: null, only: null, force: false, stale: false,
+    dry: false, design: false, auto: false, pick: [], chars: null, only: null, force: false, stale: false, samples: false, groups: null,
     model: null, designModel: null, concurrency: 2, manifestOnly: false, renorm: false, help: false,
   };
   const list = v => v.split(',').map(s => s.trim()).filter(Boolean);
@@ -145,6 +149,8 @@ function parseArgs(argv) {
       case '--pick': a.pick.push(...list(val())); break;
       case '--char': case '--chars': a.chars = list(val()); break;
       case '--only': a.only = list(val()); break;
+      case '--samples': a.samples = true; break;
+      case '--group': case '--groups': a.groups = list(val()); break;
       case '--force': a.force = true; break;
       case '--stale': a.stale = true; break;
       case '--model': a.model = val(); break;
@@ -235,12 +241,18 @@ async function loadLines() {
   } catch (e) {
     die(`src/ai/dialogue.ts okunamadı. Node 22.18+ gerekir (daha eskisinde: node --experimental-strip-types …). Hata: ${e?.message ?? e}`);
   }
-  const lines = D.allLines().map(l => ({
-    id: l.id, char: l.char, moment: l.moment, text: l.text, tts: l.tts, mood: l.mood ?? null, weight: l.weight ?? 1,
-    hash: D.ttsHash(l.tts), prio: D.momentPriority(l.moment),
-  }));
+  const first = new Map(); // `${char}|${tts}` → ilk kimlik (ses dosyası)
+  const lines = D.allLines().map(l => {
+    const key = `${l.char}|${l.tts}`;
+    if (!first.has(key)) first.set(key, l.id);
+    return {
+      id: l.id, file: first.get(key), char: l.char, moment: l.moment, group: D.groupOf ? D.groupOf(l) : 'pisti', text: l.text, tts: l.tts,
+      mood: l.mood ?? null, weight: l.weight ?? 1, stab: D.stabilityFor ? D.stabilityFor(l) : null,
+      est: D.speechSeconds ? D.speechSeconds(l.char, l.tts) : null, hash: D.ttsHash(l.tts), prio: D.momentPriority(l.moment),
+    };
+  });
   writeJson(LINES_JSON, {_note: 'Üretilmiş dosya — kaynak: src/ai/dialogue.ts. Elle düzenlemeyin.', count: lines.length, lines});
-  return {lines, stripTags: D.stripTags};
+  return {lines, stripTags: D.stripTags, samples: [...(D.SAMPLE_IDS ?? [])]};
 }
 
 const readVoices = () => {
@@ -248,12 +260,25 @@ const readVoices = () => {
   if (!v || !v.characters) die(`${rel(VOICES_JSON)} okunamadı`);
   return v;
 };
-const rawPath = l => path.join(RAW_DIR, l.char, `${l.id}.mp3`);
-const finalPath = l => path.join(OUT_DIR, l.char, `${l.id}.mp3`);
+// takma adlar (aynı karakter + aynı tts) ilk kimliğin dosyasını paylaşır
+const rawPath = l => path.join(RAW_DIR, l.char, `${l.file ?? l.id}.mp3`);
+const finalPath = l => path.join(OUT_DIR, l.char, `${l.file ?? l.id}.mp3`);
+const isAlias = l => !!l.file && l.file !== l.id;
 const creditsPerChar = model => (/flash|turbo/.test(model) ? 0.5 : 1);
 
-function selectLines(lines, a) {
+function selectLines(lines, a, samples = []) {
   let out = lines;
+  if (a.samples) {
+    const bad = samples.filter(id => !lines.some(l => l.id === id));
+    if (bad.length) die(`SAMPLE_IDS'te bilinmeyen replik: ${bad.join(', ')}`);
+    out = out.filter(l => samples.includes(l.id));
+  }
+  if (a.groups) {
+    const known = new Set(lines.map(l => l.group));
+    const bad = a.groups.filter(g => !known.has(g));
+    if (bad.length) die(`Bilinmeyen grup: ${bad.join(', ')} (var olanlar: ${[...known].join(', ')})`);
+    out = out.filter(l => a.groups.includes(l.group));
+  }
   if (a.chars) {
     const bad = a.chars.filter(c => !lines.some(l => l.char === c));
     if (bad.length) die(`Bilinmeyen karakter: ${bad.join(', ')}`);
@@ -263,6 +288,12 @@ function selectLines(lines, a) {
     const bad = a.only.filter(id => !lines.some(l => l.id === id));
     if (bad.length) die(`Bilinmeyen replik: ${bad.join(', ')}`);
     out = out.filter(l => a.only.includes(l.id));
+  }
+  // seçilen takma adların ses dosyası (ilk kimlik) da üretilsin
+  const ids = new Set(out.map(l => l.id));
+  for (const l of out.filter(isAlias)) if (!ids.has(l.file)) {
+    const f = lines.find(x => x.id === l.file);
+    if (f) (out = [...out, f]), ids.add(f.id);
   }
   return out;
 }
@@ -274,8 +305,8 @@ function plan(lines, a, manifest) {
     const hasRaw = fs.existsSync(rawPath(l));
     const old = manifest[l.id];
     const stale = hasFinal && !!old?.h && old.h !== l.hash;
-    const force = a.force || (a.stale && stale);
-    return {line: l, hasFinal, hasRaw, stale, force, synth: force || (!hasFinal && !hasRaw)};
+    const force = !isAlias(l) && (a.force || (a.stale && stale));
+    return {line: l, hasFinal, hasRaw, stale, force, alias: isAlias(l), synth: !isAlias(l) && (force || (!hasFinal && !hasRaw))};
   });
 }
 
@@ -285,11 +316,12 @@ function ttsRequest(l, voice, model, stripTags) {
   const v3 = model === 'eleven_v3';
   const s = voice.settings || {};
   const text = v3 ? l.tts : stripTags(l.tts); // v2 etiketleri sesli okur → sil
-  const st = Number(s.stability ?? 0.5);
+  // satırın kararlılığı (gülme/bağırma → 0 Creative, [deadpan] → 1 Robust) karakter ayarını ezer
+  const st = l.stab ?? Number(s.stability ?? 0.5);
   const body = {text, model_id: model, seed: fnv(l.id)};
   body.voice_settings = v3
     ? {stability: st < 0.25 ? 0 : st > 0.75 ? 1 : 0.5} // v3: 0 Creative, 0.5 Natural, 1 Robust
-    : {stability: st, similarity_boost: s.similarity_boost ?? 0.8, style: s.style ?? 0.3, use_speaker_boost: s.use_speaker_boost ?? true};
+    : {stability: l.stab == null ? st : {0: 0.3, 0.5: 0.5, 1: 0.8}[l.stab] ?? st, similarity_boost: s.similarity_boost ?? 0.8, style: s.style ?? 0.3, use_speaker_boost: s.use_speaker_boost ?? true};
   return {text, body};
 }
 
@@ -471,7 +503,7 @@ function writeManifest(allLines, fresh) {
     const f = finalPath(l);
     if (!fs.existsSync(f)) continue;
     const h = fresh.has(l.id) ? l.hash : old[l.id]?.h ?? l.hash;
-    out[l.id] = {url: `${l.char}/${l.id}.mp3`, dur: duration(f), h, p: l.prio};
+    out[l.id] = {url: `${l.char}/${l.file ?? l.id}.mp3`, dur: duration(f), h, p: l.prio};
     n++;
   }
   const orphans = Object.keys(old).filter(id => !allLines.some(l => l.id === id));
@@ -485,8 +517,9 @@ function writeManifest(allLines, fresh) {
 function dry(rows, voices, model, allLines) {
   const byChar = new Map();
   for (const r of rows) {
-    const c = byChar.get(r.line.char) ?? {total: 0, done: 0, stale: 0, todo: [], chars: 0};
+    const c = byChar.get(r.line.char) ?? {total: 0, done: 0, stale: 0, todo: [], chars: 0, alias: 0};
     c.total++;
+    if (r.alias) c.alias++;
     if (r.hasFinal) c.done++;
     if (r.stale) c.stale++;
     if (r.synth) {
@@ -495,13 +528,25 @@ function dry(rows, voices, model, allLines) {
     }
     byChar.set(r.line.char, c);
   }
-  log(`Model: ${model}  ·  toplam replik: ${allLines.length}\n`);
+  const groups = new Map();
+  for (const l of allLines) {
+    const g = groups.get(l.group) ?? {n: 0, files: 0, chars: 0};
+    g.n++;
+    if (!isAlias(l)) (g.files++, (g.chars += (model === 'eleven_v3' ? l.tts : stripTagsLocal(l.tts)).length));
+    groups.set(l.group, g);
+  }
+  log(`Model: ${model}  ·  toplam replik: ${allLines.length} (ses dosyası: ${allLines.filter(l => !isAlias(l)).length}; gerisi takma ad)`);
+  log(`Gruplar (tamamı): ${[...groups].map(([k, g]) => `${k} ${g.n} replik / ${g.files} dosya / ${g.chars} kr.`).join(' · ')}\n`);
   let sum = 0;
   let todo = 0;
   for (const [char, c] of byChar) {
     const vid = voices.characters[char]?.voice_id;
-    log(`■ ${char}: ${c.total} replik · hazır ${c.done} · metni değişmiş ${c.stale} · üretilecek ${c.todo.length} (${c.chars} karakter) · voice_id: ${vid ? 'var' : 'YOK → önce --design'}`);
-    for (const r of c.todo) log(`   ${r.force ? '↻' : '+'} ${r.line.id.padEnd(30)} ${r.line.tts}`);
+    log(`■ ${char}: ${c.total} replik (${c.alias} takma ad) · hazır ${c.done} · metni değişmiş ${c.stale} · üretilecek ${c.todo.length} (${c.chars} karakter) · voice_id: ${vid ? 'var' : 'YOK → önce --design'}`);
+    for (const r of c.todo) {
+      const st = r.line.stab == null ? '  ·' : `s=${r.line.stab}`.padStart(5);
+      const est = r.line.est == null ? '' : `${r.line.est.toFixed(1)}sn`.padStart(6);
+      log(`   ${r.force ? '↻' : '+'} ${r.line.id.padEnd(34)} ${st} ${est}  ${r.line.tts}`);
+    }
     sum += c.chars;
     todo += c.todo.length;
   }
@@ -641,6 +686,7 @@ function normalizeRows(rows, a, fresh) {
   checkFfmpeg();
   let n = 0;
   for (const r of rows) {
+    if (isAlias(r.line)) continue; // takma ad: dosya ilk kimlikte
     const raw = rawPath(r.line);
     const fin = finalPath(r.line);
     if (!fs.existsSync(raw)) continue;
@@ -663,11 +709,11 @@ async function main() {
   const offline = a.dry || a.manifestOnly || a.renorm;
   if (!offline) ensureProxyEnv();
 
-  const {lines: allLines, stripTags} = await loadLines();
+  const {lines: allLines, stripTags, samples} = await loadLines();
   const voices = readVoices();
   const model = a.model || voices.model || 'eleven_v3';
   const manifest = readJson(MANIFEST, {});
-  const rows = plan(selectLines(allLines, a), a, manifest);
+  const rows = plan(selectLines(allLines, a, samples), a, manifest);
 
   if (a.dry) return dry(rows, voices, model, allLines);
   if (a.manifestOnly) return writeManifest(allLines, new Set());
