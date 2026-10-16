@@ -148,10 +148,11 @@
 .kh-deck .kh-i { width: .95em; height: .95em; color: #fff; stroke-width: 2.6; filter: drop-shadow(0 1.5px 0 var(--navy)); }
 
 /* "Sıra sende" ipucu: sarı parlak hap, çevresinde nabız gibi atan ışık */
-.kh-hint { position: absolute; left: 50%; bottom: var(--kh-hint-bottom, 35%); display: flex; align-items: center; gap: .45em; padding: .5em 1.15em .5em .85em;
+.kh-hint { position: absolute; left: var(--kh-hint-x, 50%); bottom: var(--kh-hint-bottom, 35%); display: flex; align-items: center; gap: .45em; padding: .5em 1.15em .5em .85em;
   border-radius: var(--r-pill); background: var(--hint-fill); box-shadow: var(--hint-shadow); color: var(--hint-fg);
   font-family: var(--font-display); font-size: calc(var(--u) * 1.15); white-space: nowrap; transform: translateX(-50%); opacity: 0; transition: opacity .25s; }
-.kh-hud[data-mode="4"] .kh-hint, .kh-hud[data-mode="esli"] .kh-hint { bottom: var(--kh-hint-bottom4, 19.6%); left: 56%; }
+.kh-hud[data-mode="4"] .kh-hint, .kh-hud[data-mode="esli"] .kh-hint { bottom: var(--kh-hint-bottom4, 19.6%); left: var(--kh-hint-x, 56%); }
+/* --kh-hint-x / --kh-hint-bottom: Pişti masası (Table2D.layout) yazar — hap elin üstünde ortalı, hiçbir karta/desteye binmez */
 .kh-hint .kh-i { position: relative; width: 1.3em; height: 1.3em; color: var(--navy); stroke-width: 2.4; }
 .kh-hint__t { position: relative; }
 .kh-hint__glow { position: absolute; left: -30%; right: -30%; top: -90%; bottom: -90%; border-radius: 50%; background: var(--hint-glow); opacity: 0; z-index: -1; }
