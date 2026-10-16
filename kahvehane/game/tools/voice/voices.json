@@ -67,8 +67,8 @@
     },
     "defne": {
       "name": "Defne",
-      "voice_id": "uvU9jrgGLWNPeNA4NgNT",
-      "designPrompt": "A 34-year-old Turkish woman, an architect. Low, calm, smooth alto voice. Minimal words, dry deadpan delivery with subtle sarcasm, confident and unhurried, never shouts. Native Turkish with an Istanbul accent. Clean studio recording, close microphone, no background noise.",
+      "voice_id": "WvkxYZjNkJfeBCMupWW4",
+      "designPrompt": "A 36-year-old sophisticated Turkish lady, rich and smooth mezzo voice, sultry and self-assured, elegant sarcasm delivered warmly, slow and deliberate with a hint of a smile, classy and a little mysterious. Native Turkish, Istanbul accent.",
       "designPromptTr": "34 yaşında mimar bir kadın. Pes, sakin, pürüzsüz alto ses. Az konuşur; kuru, ifadesiz, hafif iğneleyici; kendinden emin ve acelesiz, asla bağırmaz. İstanbul ağzıyla anadil Türkçe. Temiz stüdyo kaydı.",
       "previewText": "Başlayalım. Kuralları biliyorsun, değil mi? Güzel. Ben az konuşurum, çok hesaplarım. Acele etme… Sadece bu sürede bir bina çizebilirdim. Neyse. Pişti. Planlandığı gibi.",
       "settings": {
@@ -78,7 +78,7 @@
         "use_speaker_boost": true
       },
       "previews": [],
-      "voice_name": "İrem (library)"
+      "voice_name": "Defne hanımefendi (tasarım)"
     }
   }
 }
