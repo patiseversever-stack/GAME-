@@ -80,6 +80,7 @@ export class BlofMatch {
   private autoTimer = 0;
   private tut: {seen: Set<TutStep>; step: TutStep | null; doneTimer: number} | null = null;
   private handMode: HandLayout = 'group';
+  private hintTimer = 0;
 
   constructor(private d: BlofMatchDeps) {}
 
@@ -128,9 +129,10 @@ export class BlofMatch {
     t.onDetach = () => ui.show(false);
     t.onSelect = ids => this.onSelect(ids);
     t.onReject = () => {
-      this.d.hud.showHint('En fazla 4 kart atılır');
+      this.d.hud.showHint('En fazla 4 kart');
       ui.shakePlay();
-      window.setTimeout(() => this.d.hud.showHint(null), 1400);
+      window.clearTimeout(this.hintTimer);
+      this.hintTimer = window.setTimeout(() => this.d.hud.showHint(null), 1500);
     };
     t.onPile = () => this.challenge();
     ui.onPlay = () => this.submit();

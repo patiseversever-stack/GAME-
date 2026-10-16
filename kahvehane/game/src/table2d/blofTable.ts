@@ -982,8 +982,9 @@ export class BlofTable {
   }
 
   /**
-   * Dokunuş: desteye dokunmak o değerden bir kart daha kaldırır; kalkık karta dokunmak onu bırakır (grubun hepsi kalkıksa
-   * hepsini). Basılı tutmak (350 ms) değerin hepsini kaldırır/bırakır; yatay sürükleme geçtiği her gruptan bir kart kaldırır.
+   * Dokunuş (grup düzeni): gruba dokunmak o değerden bir kart daha kaldırır ("2/3"); grubun hepsi kalkıksa hepsi iner.
+   * Basılı tutmak (350 ms) değerin hepsini kaldırır/indirir; yatay sürükleme geçtiği her gruptan bir kart kaldırır.
+   * Yayvan düzende dokunulan kart kalkar/iner.
    */
   private tap(c: BCard): 'sel' | 'desel' | null {
     if (this.mode === 'spread') {
@@ -994,9 +995,15 @@ export class BlofTable {
       }
       return this.selectCard(c) ? 'sel' : null;
     }
-    if (c.sel) {
-      const g = this.groupOf(rankOf(c.id));
-      this.release(c, g.every(x => x.sel));
+    // grup: nereye dokunulursa dokunulsun bir kart daha kalkar; grubun hepsi kalkıksa hepsi iner.
+    // 4 sınırındayken kalkık karta dokunmak onu indirir (kaçış yolu).
+    const g = this.groupOf(rankOf(c.id));
+    if (g.every(x => x.sel)) {
+      this.release(c, true);
+      return 'desel';
+    }
+    if (c.sel && this.hand.filter(x => x.sel).length >= 4) {
+      this.release(c, false);
       return 'desel';
     }
     return this.selectOne(rankOf(c.id)) ? 'sel' : null;
