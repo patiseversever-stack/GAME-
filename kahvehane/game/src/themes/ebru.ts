@@ -48,25 +48,25 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   const [cv, g] = makeCanvas(W, H);
   g.drawImage(tex, 0, 0);
   tex.width = tex.height = 0;
-  // genel kısma: kartlar desenin önünde öne çıksın
-  g.fillStyle = 'rgba(8,10,34,0.2)';
+  // okunurluk: genel kontrast ~%30 düşer (lacivert örtü), orta %60 derin lacivert bir hale ile sakinleşir;
+  // ebru kenarlara ve köşelere doğru güçlenir. Yığının altı ve elin arkası en koyu.
+  g.fillStyle = 'rgba(12,16,52,0.32)';
   g.fillRect(0, 0, W, H);
-  // yığının altı sakin ve koyu (kartlar okunur), kenarlar hafif kararır
-  radial(g, px, py, 0, R * 2.3, [
-    [0, 'rgba(8,10,34,0.72)'],
-    [0.45, 'rgba(8,10,34,0.5)'],
-    [1, 'rgba(8,10,34,0)'],
+  radial(g, W / 2, H * 0.5, 0, Math.max(W, H) * 0.5, [
+    [0, 'rgba(7,10,36,0.78)'],
+    [0.42, 'rgba(7,10,36,0.6)'],
+    [0.72, 'rgba(7,10,36,0.22)'],
+    [1, 'rgba(7,10,36,0)'],
+  ], W / Math.max(W, H) * 1.25, H / Math.max(W, H));
+  radial(g, px, py, 0, R * 2.2, [
+    [0, 'rgba(6,8,30,0.55)'],
+    [1, 'rgba(6,8,30,0)'],
   ]);
-  // elin arkası: alt şerit koyulaşır
-  const gb = g.createLinearGradient(0, H * 0.7, 0, H);
+  const gb = g.createLinearGradient(0, H * 0.72, 0, H);
   gb.addColorStop(0, 'rgba(6,8,28,0)');
-  gb.addColorStop(1, 'rgba(6,8,28,0.55)');
+  gb.addColorStop(1, 'rgba(6,8,28,0.6)');
   g.fillStyle = gb;
-  g.fillRect(0, H * 0.7, W, H * 0.3);
-  radial(g, W / 2, H / 2, Math.min(W, H) * 0.6, Math.max(W, H) * 0.8, [
-    [0, 'rgba(4,6,24,0)'],
-    [1, 'rgba(4,6,24,0.28)'],
-  ]);
+  g.fillRect(0, H * 0.72, W, H * 0.28);
   return cv;
 }
 

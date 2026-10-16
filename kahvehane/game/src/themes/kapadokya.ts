@@ -39,13 +39,20 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
     if (bal.some(([bx, by, br]) => Math.hypot(bx - x, by - y) < (br + r) * 1.6)) continue;
     bal.push([x, y, r]);
   }
+  // kenarlarda birkaç büyük, yakın balon (sahneye derinlik)
+  bal.push([W * 0.06, H * 0.6, M * 0.13], [W * 0.92, H * 0.3, M * 0.095], [W * 0.18, H * 0.17, M * 0.06], [W * 0.82, H * 0.64, M * 0.07]);
   bal.sort((a, b) => a[2] - b[2]);
   for (const [x, y, r] of bal) {
     const far = 1 - Math.min(1, (r / M - 0.02) / 0.08);
     smallBalloon(g, x, y, r, BALLOON_SETS[Math.floor(rnd() * BALLOON_SETS.length)], far * 0.5, [236, 140, 160]);
     if (due()) yield;
   }
-  // yığının altı: yumuşak mor havuz
+  // okunurluk: ortadaki %60 yumuşak mor bir hale ile sakinleşir, yığının altı en koyu
+  radial(g, W / 2, H * 0.48, 0, Math.max(W, H) * 0.5, [
+    [0, 'rgba(46,18,80,0.42)'],
+    [0.55, 'rgba(46,18,80,0.25)'],
+    [1, 'rgba(46,18,80,0)'],
+  ], (W / Math.max(W, H)) * 1.25, H / Math.max(W, H));
   radial(g, S.px, S.py, 0, S.ringR * 2.2, [
     [0, 'rgba(40,16,70,0.45)'],
     [0.6, 'rgba(40,16,70,0.22)'],
