@@ -10,7 +10,7 @@ import {clamp, makeCanvas, mix, mulberry, radial, resScale, smooth, spotOf, type
 /** Arka sırt: ufukta yumuşak, gül rengi tepe çizgisi */
 function ridge(r: Ctx, by: number, h: number): void {
   const W = r.canvas.width / r.getTransform().a;
-  r.fillStyle = '#b8707a';
+  r.fillStyle = '#c47a8a';
   r.beginPath();
   r.moveTo(-10, by + h);
   for (let x = -10; x <= W + 10; x += 6) r.lineTo(x, by - h * (0.5 + 0.5 * Math.sin(x * 0.02) * Math.sin(x * 0.007 + 1)));
@@ -40,10 +40,10 @@ function fairy(r: Ctx, rnd: () => number, x0: number, x1: number, by: number, h:
       continue;
     }
     const gr = r.createLinearGradient(x - ww, 0, x + ww, 0);
-    gr.addColorStop(0, '#ffd6a8');
-    gr.addColorStop(0.42, '#e8a07e');
-    gr.addColorStop(0.62, '#a8607a');
-    gr.addColorStop(1, '#6a3a5a');
+    gr.addColorStop(0, '#ffdcaa');
+    gr.addColorStop(0.4, '#f4a874');
+    gr.addColorStop(0.62, '#a8609a');
+    gr.addColorStop(1, '#5a3a7e');
     r.fillStyle = gr;
     r.fill(body);
     r.fillStyle = '#3e2034';
@@ -82,7 +82,7 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   const rnd = mulberry(0xca7a);
   const hz = H * 0.29; // ufuk (peri bacalarının tabanı)
   const M = Math.min(W, H * 0.5);
-  const sun = {x: W * 0.72, y: hz - H * 0.03, r: M * 0.06};
+  const sun = {x: W * 0.2, y: hz - H * 0.045, r: M * 0.065};
   const calm = tableCalm(W, H);
   const balloons: [number, number, number, string[]][] = [
     [0.13, 0.085, 0.085, ['#d8364a', '#f2c14e']],
@@ -99,23 +99,26 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   // ── referans eskiz ──
   const sketch = (r: Ctx): void => {
     const sky = r.createLinearGradient(0, 0, 0, hz);
-    sky.addColorStop(0, '#2e3478');
-    sky.addColorStop(0.3, '#5a4a92');
-    sky.addColorStop(0.58, '#b0648c');
-    sky.addColorStop(0.82, '#ee9a74');
-    sky.addColorStop(1, '#ffd08a');
+    sky.addColorStop(0, '#24388e');
+    sky.addColorStop(0.28, '#5a4aa8');
+    sky.addColorStop(0.52, '#c0629a');
+    sky.addColorStop(0.76, '#ff9a72');
+    sky.addColorStop(1, '#ffd884');
     r.fillStyle = sky;
     r.fillRect(0, 0, W, hz + 4);
     // yumuşak bulut şeritleri (gülkurusu, şeftali)
     const cr = mulberry(12);
-    for (let i = 0; i < 9; i++) {
-      const y = hz * (0.18 + cr() * 0.72), x = cr() * W, L = W * (0.25 + cr() * 0.4);
-      r.fillStyle = `rgba(${cr() < 0.5 ? '255,190,170' : '255,214,170'},${0.25 + cr() * 0.25})`;
+    for (let i = 0; i < 10; i++) {
+      const y = hz * (0.3 + cr() * 0.62), x = cr() * W, L = W * (0.2 + cr() * 0.35);
+      const tones = ['255,176,170', '255,214,150', '170,170,240', '255,236,200', '230,140,190'];
+      r.fillStyle = `rgba(${tones[Math.floor(cr() * tones.length)]},${0.18 + cr() * 0.18})`;
       r.beginPath();
       r.ellipse(x, y, L, H * (0.006 + cr() * 0.008), 0, 0, Math.PI * 2);
       r.fill();
     }
-    radial(r, sun.x, sun.y, 0, sun.r * 6, [[0, 'rgba(255,246,200,.95)'], [0.2, 'rgba(255,214,140,.6)'], [1, 'rgba(255,170,120,0)']]);
+    // altın ufuk bandı + güneş halesi (sol üst köşe: kart yok)
+    radial(r, sun.x, hz, 0, W * 0.75, [[0, 'rgba(255,214,130,.75)'], [0.4, 'rgba(255,170,110,.35)'], [1, 'rgba(255,150,110,0)']], 1.3, 0.32);
+    radial(r, sun.x, sun.y, 0, sun.r * 7, [[0, 'rgba(255,248,210,1)'], [0.18, 'rgba(255,220,140,.75)'], [0.5, 'rgba(255,170,110,.3)'], [1, 'rgba(255,150,110,0)']]);
     r.fillStyle = '#fff4cc';
     r.beginPath();
     r.arc(sun.x, sun.y, sun.r, 0, Math.PI * 2);
@@ -124,10 +127,10 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
     for (const [x, y, s, cols] of balloons) smallBalloon(r, W * x, H * y, M * s * 1.6, cols, s < 0.03 ? 0.3 : 0, [236, 150, 160]);
     // vadi tabanı: sıcak gül-kahve → koyu erik
     const val = r.createLinearGradient(0, hz, 0, H);
-    val.addColorStop(0, '#a4606a');
-    val.addColorStop(0.12, '#7c4658');
-    val.addColorStop(0.5, '#5a3248');
-    val.addColorStop(1, '#2e1a2c');
+    val.addColorStop(0, '#b4687e');
+    val.addColorStop(0.12, '#86486e');
+    val.addColorStop(0.5, '#5c3260');
+    val.addColorStop(1, '#2c1a36');
     r.fillStyle = val;
     r.fillRect(0, hz, W, H - hz);
     // vadi: yumuşak tepe/tarla bantları (düşük kontrast)
@@ -147,9 +150,9 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
     fairy(r, mulberry(92), W * 0.66, W * 1.02, hz + H * 0.03, H * 0.14, W * 0.065);
     fairy(r, vr, W * 0.3, W * 0.7, hz + H * 0.02, H * 0.05, W * 0.03, 0.55);
     // güneş ışığının vadiye düşen sıcak yansıması (ufka yakın, yığına varmadan söner)
-    radial(r, sun.x, hz + H * 0.02, 0, W * 0.4, [[0, 'rgba(255,190,130,.35)'], [1, 'rgba(255,190,130,0)']], 1.6, 0.4);
+    radial(r, sun.x, hz + H * 0.02, 0, W * 0.5, [[0, 'rgba(255,190,130,.4)'], [1, 'rgba(255,190,130,0)']], 1.6, 0.35);
   };
-  const ref: Ref = makeRef(W, H, 0.5, sketch, calm, [70, 40, 62], 0.45);
+  const ref: Ref = makeRef(W, H, 0.5, sketch, calm, [76, 46, 84], 0.36);
   if (due()) yield;
 
   // ── nesne kimlikleri: balon (1..), peri bacası (200), gök (0), vadi (100) ──
@@ -198,7 +201,12 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   g.fillRect(0, 0, W, H);
   yield* paintLayer(g, ref, rnd, W, H, {cell: 9 * U, len: [18 * U, 30 * U], width: [7 * U, 10 * U], field, edge: 0.25, jitter: 9, relief: 0.06, calm, sizeK});
   yield* paintLayer(g, ref, rnd, W, H, {cell: 5.6 * U, len: [11 * U, 20 * U], width: [3.8 * U, 5.6 * U], field, edge: 0.45, jitter: 18, relief: 0.17, bristle: 0.45, calm, sizeK,
-    tint: (c, x, y, r) => (r() < 0.08 ? mix(c, y < hz ? [255, 214, 190] : [150, 96, 120], 0.3) : c)});
+    // kırık renk: sıcak gökte kobalt/altın, kayada leylak/şeftali benekleri (izlenimci)
+    tint: (c, x, y, r) => {
+      const t = r();
+      if (y < hz + H * 0.03) return t < 0.07 ? mix(c, [70, 110, 220], 0.32) : t < 0.14 ? mix(c, [255, 220, 140], 0.35) : c;
+      return t < 0.06 ? mix(c, [160, 100, 170], 0.3) : c;
+    }});
   yield* paintLayer(g, ref, rnd, W, H, {cell: 3 * U, len: [5 * U, 10 * U], width: [1.8 * U, 2.8 * U], field, edge: 0.5, jitter: 12, relief: 0.22, where: interest, calm, sizeK});
 
   // ── ışık: güneş çevresi, balonların ışıklı yanları, bacaların güneşe bakan kenarları ──
@@ -218,7 +226,7 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   gb.addColorStop(1, 'rgba(20,8,20,.5)');
   g.fillStyle = gb;
   g.fillRect(0, H * 0.72, W, H * 0.28);
-  radial(g, W / 2, H / 2, Math.min(W, H) * 0.55, Math.max(W, H) * 0.8, [[0, 'rgba(16,6,20,0)'], [1, 'rgba(16,6,20,.4)']]);
+  radial(g, W / 2, H * 0.6, Math.min(W, H) * 0.6, Math.max(W, H) * 0.8, [[0, 'rgba(16,6,20,0)'], [1, 'rgba(16,6,20,.28)']]);
   return cv;
 }
 

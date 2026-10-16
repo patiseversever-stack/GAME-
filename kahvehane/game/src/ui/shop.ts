@@ -92,7 +92,7 @@ function pvHtml(it: {kind: ItemKind; id: string}, me: Me, big = false): string {
       return `<span class="kh-pv__table">${tableSceneHtml(it.id, {deck: me.deck, size: 'mini'})}</span>`;
     case 'fx':
       // efekt kendi başına değil, kuşanılı masanın üstünde (bağlam: "pişti yapınca masan böyle olur")
-      return `<span class="kh-pv__fxs">${tableSceneHtml(me.table, {deck: me.deck, size: 'mini'})}</span>${fxStillHtml(it.id, 'kh-pv__fx')}`;
+      return `<span class="kh-pv__fxs">${tableSceneHtml(me.table, {deck: me.deck, size: 'tile'})}</span>${fxStillHtml(it.id, 'kh-pv__fx')}`;
     case 'frame':
       return charAvatarHtml(me.char, it.id, 'kh-pv__ava', big ? 'gulumseme' : 'notr');
     case 'char': {

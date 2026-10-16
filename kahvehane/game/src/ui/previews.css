@@ -27,6 +27,7 @@
 /* yığın halkasını zemin (swatch / boya) kendisi çizer; ikinci halka çakışıyordu */
 .kh-ts__ring { display: none; }
 .kh-ts__vig { background: radial-gradient(ellipse 80% 70% at 50% 46%, transparent 55%, rgba(2, 4, 24, .5)); pointer-events: none; }
+/* küçük sahnelerde ışıma/kenar karartması ayrı öğe değil (öğe sayısı = stil + boyama maliyeti); yalnız büyük sahnede */
 .kh-ts__c { position: absolute; box-shadow: 0 0 0 1px rgba(10, 16, 51, .7), 0 3px 6px rgba(2, 4, 24, .45); }
 /* mini: yığında iki kart, solda deste */
 .kh-ts__pile .kh-ts__c { left: 50%; top: var(--py); width: 26%; }

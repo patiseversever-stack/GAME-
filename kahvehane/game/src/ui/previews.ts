@@ -221,8 +221,8 @@ export function tableSceneHtml(id: string, o: SceneOpts): string {
   const opp = full ? `<span class="kh-ts__opp">${[0, 1, 2, 3].map(i => deckCardHtml(d, CI.back, 'kh-ts__c', `--i:${i - 1.5}`)).join('')}</span>` : '';
   const hand = full ? `<span class="kh-ts__hand">${[CI.ace, CI.jack, CI.king, CI.ten].map((ci, i) => deckCardHtml(d, ci, 'kh-ts__c', `--i:${i - 1.5}`)).join('')}</span>` : '';
   return `<span class="kh-ts ${full ? 'is-full' : 'is-mini'}${full && t?.paint ? ' is-paint' : ''} ${o.cls ?? ''}" data-table="${id}" style="--ring:${ring};--glow:${glow}">
-    <i class="kh-ts__bg" data-sw="${esc(id)}"></i><i class="kh-ts__glow"></i><i class="kh-ts__ring"></i>
-    ${opp}${stack}${pile}${hand}<i class="kh-ts__vig"></i></span>`;
+    <i class="kh-ts__bg" data-sw="${esc(id)}"></i>${full ? '<i class="kh-ts__glow"></i>' : ''}
+    ${opp}${stack}${pile}${hand}${full ? '<i class="kh-ts__vig"></i>' : ''}</span>`;
 }
 
 /** Eski arayüz: kutuya küçük masa kurar (deste verilmezse varsayılan). */
