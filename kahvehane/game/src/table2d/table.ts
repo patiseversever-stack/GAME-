@@ -833,18 +833,23 @@ export class Table2D {
       return el;
     };
     if (kind !== 'big') {
-      const b = mk('ar__burst', cw * (jack ? 6.5 : 5.2));
-      done(b.animate([{transform: 'scale(.2) rotate(0deg)', opacity: 0}, {transform: 'scale(1) rotate(40deg)', opacity: 1, offset: 0.22}, {transform: 'scale(1.25) rotate(120deg)', opacity: 0}],
-        {duration: jack ? 1500 : 1200, easing: 'cubic-bezier(.2,.7,.3,1)'}), b);
+      // ince altın-beyaz hüzmeler açılır, ağır ağır döner ve söner (kısa; vale biraz daha büyük ve uzun)
+      const b = mk('ar__burst', cw * (jack ? 6.4 : 5.2));
+      done(b.animate(seg([
+        {transform: 'scale(.35) rotate(-6deg)', opacity: 0},
+        {transform: 'scale(1) rotate(4deg)', opacity: 1, offset: 0.24},
+        {transform: 'scale(1.12) rotate(14deg)', opacity: 0},
+      ], [OUT, 'cubic-bezier(.4,0,.7,1)']), {duration: jack ? 1050 : 850}), b);
     }
     const bl = mk('ar__bloom', cw * 3.6);
-    done(bl.animate([{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1)', opacity: 0.85, offset: 0.18}, {transform: 'scale(1.4)', opacity: 0}],
-      {duration: 700, easing: 'ease-out'}), bl);
-    this.pulse('#ffe27a', jack ? 2.4 : kind === 'big' ? 1.6 : 2);
-    this.sparkle('#ffd23f', jack ? 26 : 20, jack ? 2.4 : kind === 'big' ? 1.5 : 2);
-    setTimeout(() => this.pulse('#ffffff', jack ? 1.6 : 1.3), 120);
-    if (jack) setTimeout(() => this.pulse('#ff2e4d', 2.8), 240);
-    this.tint(jack ? '#ffd23f' : kind === 'big' ? '#7fb2ff' : '#ffe27a', jack ? 0.95 : 0.7, jack ? 1100 : 800);
+    done(bl.animate(seg([{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1)', opacity: 0.85, offset: 0.18}, {transform: 'scale(1.4)', opacity: 0}], [OUT, 'ease-in']),
+      {duration: 700}), bl);
+    // altın şok halkası, ardından ince beyaz halka; birkaç pırıltı (kalabalık konfeti değil)
+    this.pulse('#ffd36a', jack ? 2.4 : kind === 'big' ? 1.6 : 2);
+    this.sparkle('#ffd23f', jack ? 14 : kind === 'big' ? 10 : 11, jack ? 2.2 : kind === 'big' ? 1.5 : 1.9);
+    setTimeout(() => this.pulse('#fff8e6', jack ? 1.6 : 1.3), 120);
+    if (jack) setTimeout(() => this.pulse('#ffe9a8', 2.9), 240);
+    this.tint(jack ? '#ffcf4a' : kind === 'big' ? '#7fb2ff' : '#ffd970', jack ? 0.62 : 0.5, jack ? 1000 : 800);
     this.boostRays(jack ? 16 : 9, jack ? 1800 : 1200);
     this.shake(jack ? 1 : kind === 'big' ? 0.45 : 0.75);
     this.zoomEl.animate([{transform: 'scale(1)'}, {transform: `scale(${jack ? 1.05 : 1.03})`, offset: 0.25}, {transform: 'scale(1)'}],

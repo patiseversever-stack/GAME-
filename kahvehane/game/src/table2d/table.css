@@ -101,10 +101,12 @@
 /* efekt halkaları */
 .ar__pulse { position: absolute; display: none; border-radius: 50%; border: 5px solid currentColor; opacity: 0; will-change: transform, opacity;
   box-shadow: 0 0 22px currentColor, inset 0 0 18px currentColor; }
+/* pişti / vale: ince sıcak ışık hüzmeleri — 12 beyaz + 12 daha ince altın, yumuşak kenarlı, merkezden yumuşak sönen (gökkuşağı yok) */
 .ar__burst { position: absolute; border-radius: 50%; opacity: 0; will-change: transform, opacity;
-  background: repeating-conic-gradient(from 0deg, #ff2e4d 0 10deg, rgba(0, 0, 0, 0) 10deg 22.5deg, #ffb400 22.5deg 32.5deg, rgba(0, 0, 0, 0) 32.5deg 45deg,
-    #16c45b 45deg 55deg, rgba(0, 0, 0, 0) 55deg 67.5deg, #1f7bff 67.5deg 77.5deg, rgba(0, 0, 0, 0) 77.5deg 90deg);
-  -webkit-mask: radial-gradient(circle, transparent 0 12%, #000 13% 46%, transparent 70%); mask: radial-gradient(circle, transparent 0 12%, #000 13% 46%, transparent 70%); }
+  background: repeating-conic-gradient(from -1deg, rgba(255, 250, 230, 0) 0deg, rgba(255, 250, 230, .95) .7deg, rgba(255, 250, 230, .95) 1.3deg, rgba(255, 250, 230, 0) 2deg,
+    rgba(255, 210, 110, 0) 14.4deg, rgba(255, 206, 96, .75) 14.9deg, rgba(255, 206, 96, .75) 15.3deg, rgba(255, 210, 110, 0) 15.8deg, rgba(255, 210, 110, 0) 30deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 9%, rgba(0, 0, 0, .9) 17%, rgba(0, 0, 0, .55) 34%, rgba(0, 0, 0, .18) 52%, transparent 68%);
+  mask: radial-gradient(circle, transparent 0 9%, rgba(0, 0, 0, .9) 17%, rgba(0, 0, 0, .55) 34%, rgba(0, 0, 0, .18) 52%, transparent 68%); }
 .ar__bloom { position: absolute; border-radius: 50%; opacity: 0; will-change: transform, opacity;
   background: radial-gradient(circle, rgba(255, 255, 255, .9) 0%, rgba(255, 236, 170, .55) 18%, rgba(255, 210, 120, 0) 60%); }
 /* SÜPÜRDÜ: yığının çevresinde dönen ışık yayı */
