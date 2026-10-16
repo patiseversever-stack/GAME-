@@ -13,7 +13,7 @@
 .kh-results__head { flex: none; text-align: center; margin-top: calc(var(--u) * -.8); }
 .kh-results__kicker { display: inline-block; padding: .35em 1em .3em; border-radius: var(--r-pill); background: rgba(7, 11, 46, .5); box-shadow: inset 0 0 0 1.5px rgba(120, 140, 255, .45);
   font-size: calc(var(--u) * .78); font-weight: var(--w-black); letter-spacing: .22em; text-transform: uppercase; color: var(--c-text-2); }
-.kh-results__title { font-size: calc(var(--u) * 3.4); margin-top: calc(var(--u) * .1); }
+.kh-results__title { font-size: calc(var(--u) * 3.4); margin-top: calc(var(--u) * .1); letter-spacing: .045em; }
 .is-mesli .kh-results__title, .kh-results.is-m4.is-lose .kh-results__title { font-size: calc(var(--u) * 2.8); }
 
 /* sahne: kazanan büyük (zafer), diğerleri küçük (üzgün), konuşma balonu */

@@ -11,7 +11,7 @@ import {Match} from './match';
 import type {Profile} from './profile';
 import {charById, type CharId} from './roster';
 import {MODE_INFO, type MatchSetup, type Mode, type SeatPlayer} from './types';
-import {haptic, post} from '../platform/bridge';
+import {post, store} from '../platform/bridge';
 
 export interface AppDeps {
   table: Table2D;
@@ -60,6 +60,12 @@ export async function runApp(d: AppDeps): Promise<void> {
   const {screens, sfx, profile, table} = d;
   let current: Match | null = null;
   let dealerBase = 0;
+  // önceki oturumda yarıda kalan elin bahsi iade
+  const pending = store.get<number>('pendingStake', 0);
+  if (pending > 0) {
+    profile.addCoins(pending);
+    store.set('pendingStake', 0);
+  }
 
   screens.onCosmeticsChanged = (kind, id) => {
     d.applyCosmetics(kind, id);
@@ -107,12 +113,14 @@ export async function runApp(d: AppDeps): Promise<void> {
       first = false;
       // bahis düşülür (yarıda kalırsa iade)
       profile.addCoins(-stake);
+      store.set('pendingStake', stake); // uygulama el ortasında kapanırsa sonraki açılışta iade
       sfx.coin(2);
       screens.hud.show(setup.players, mode, profile.data.coins, profile.data.equipped.frame);
       screens.hud.setCoins(profile.data.coins);
       current = new Match({table, hud: screens.hud, sfx, voice: d.voice, auto: d.auto});
       const out = await current.play(setup);
       current = null;
+      store.set('pendingStake', 0);
       if (!out) {
         profile.addCoins(stake);
         screens.hud.hide();
@@ -131,14 +139,13 @@ export async function runApp(d: AppDeps): Promise<void> {
       const lv = profile.addXp(xpGain);
       const after = {level: profile.data.level, xp: profile.data.xp, xpNext: profile.xpNext};
       post('match:end', {mode, result: out.outcome, delta: got - stake, coins: profile.data.coins});
-      if (out.outcome === 'win') haptic('success');
 
       const data: ResultsData = {
         setup, result: out.result, outcome: out.outcome, myPisti: out.myPisti, myValePisti: out.myValePisti,
         stake, coinsDelta: got - stake, coinsBefore, coinsAfter: profile.data.coins, xpGain, before, after,
         levelReward: lv.reward, streak: profile.data.stats.streak,
       };
-      await new Promise(r => setTimeout(r, 900));
+      await new Promise(r => setTimeout(r, 350));
       const choice = await screens.results(data, profile.data.equipped.frame);
       if (choice === 'home') {
         screens.hud.hide();
