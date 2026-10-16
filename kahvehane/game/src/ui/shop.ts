@@ -657,11 +657,13 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
       msg.innerHTML = `<span class="kh-pd__sad"><img src="${me.poses.uzgun}" alt=""></span><span class="kh-pd__earn"><span><b>${fmt(price - p.data.coins)} jeton</b> daha lazım. Kasayı doldurmanın yolları:</span>
         <span class="kh-pd__ways"><button class="kh-pd__way" data-act="earn" data-to="home">${I.play}Bir el oyna</button><button class="kh-pd__way" data-act="earn" data-to="quests">${I.target}Görevler</button><button class="kh-pd__way" data-act="earn" data-to="home">${I.gift}Günlük ödül · sandık</button></span></span>`;
       play(msg, [{transform: 'translateY(10px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.spring});
+      msg.scrollIntoView({block: 'nearest', behavior: ANIM ? 'smooth' : 'auto'});
       return;
     }
     busy = true;
     (b as HTMLButtonElement).disabled = true;
     msg.innerHTML = '';
+    m.panel.querySelector('.kh-pd__set')?.remove(); // alındıktan sonra "set içinde indirimli" artık geçerli değil
     shell.coins.hold();
     let ok = false;
     if (dealPrice !== undefined) {
@@ -736,7 +738,7 @@ function setSheet(shell: Shell, s: ShopSet, onChange: () => void): ModalHandle {
   const m = openSheet(ctx, {
     cls: 'kh-pd kh-sd is-legendary',
     body: `<div class="kh-pd__stage kh-sd__stage" style="--a:${s.a};--b:${s.b}"><i class="kh-rays is-gold kh-pd__rays"></i>
-        <div class="kh-pd__pv kh-sd__parts">${s.parts.map((it, i) => `<button class="kh-sd__part is-${it.kind} is-${it.rarity}" data-act="part" data-k="${it.kind}" data-id="${it.id}" style="--n:${i - (s.parts.length - 1) / 2}">
+        <div class="kh-pd__pv kh-sd__parts" data-n="${s.parts.length}">${s.parts.map((it, i) => `<button class="kh-sd__part is-${it.kind} is-${it.rarity}" data-act="part" data-k="${it.kind}" data-id="${it.id}" style="--n:${i - (s.parts.length - 1) / 2}">
           <span class="kh-sd__pv"><i class="kh-item__bg"></i>${pvHtml(it, me)}</span><b>${esc(it.name)}</b><small>${KIND_INFO[it.kind].name}</small>
           <span class="kh-sd__st"></span></button>`).join('')}</div></div>
       <div class="kh-pd__meta"><span class="kh-mtag is-limited">${I.gift}Set</span><span class="kh-pd__kind">${s.parts.length} parça</span></div>
