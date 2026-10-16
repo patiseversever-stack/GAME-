@@ -10,7 +10,6 @@
 // Kızıl/Zümrüt gibi sıcak zeminlerde lacivert havuz morumsu durur; Table2D okursa havuz zeminle aynı tonda koyulaşır.
 import type {TableTheme} from './contract';
 import {SWATCH} from './swatches';
-import {SWATCH_B} from './swatches2';
 
 export const TABLES: readonly TableTheme[] = [
   {
@@ -87,23 +86,6 @@ export const TABLES: readonly TableTheme[] = [
     },
     paint: (w, h, dpr) => import('./kadife').then(m => m.paintZumrut(w, h, dpr)),
     swatch: SWATCH.zumrut,
-  },
-  {
-    id: 'ebru',
-    name: 'Ebru Salonu',
-    desc: 'Yığının çevresinde dönen bülbül yuvası ebrusu.',
-    vars: {
-      '--ar-bg': 'radial-gradient(120% 75% at 50% 46%, #1a2870 0%, #0e1850 45%, #080f36 80%, #050a26 100%)',
-      '--ar-rays': 'rgba(255, 226, 160, .05)',
-      '--ar-rays-op': '.3',
-      '--ar-pattern-op': '0',
-      '--ar-vig': 'radial-gradient(120% 90% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(3, 5, 24, .55) 100%)',
-      '--ar-ring': 'rgba(236, 196, 108, .62)',
-      '--ar-glow-n': 'rgba(220, 70, 90, .3)',
-      '--ar-pool': 'rgba(6, 8, 30, .45)',
-    },
-    paint: (w, h, dpr) => import('./ebru').then(m => m.paintEbru(w, h, dpr)),
-    swatch: SWATCH_B.ebru,
   },
 ];
 
