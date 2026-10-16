@@ -8,8 +8,16 @@
  * - Asla üst üste konuşmaz: yüksek öncelik çalanı yumuşakça keser; eşit öncelik, çalan bitmek üzereyse sıraya
  *   girer (tek yer), değilse düşer — en üst öncelikte (3: pişti, el sonu) ise yenisi keser; düşük öncelik düşer.
  *   Geç kalan (bayatlayan) tepki çalınmaz.
- * - Her başarılı `play` için `onEnd` tam bir kez çağrılır (bitti, kesildi, düştü ya da çözülemedi).
+ * - Her başarılı `play` için `onEnd` tam bir kez çağrılır (bitti, kesildi, düştü ya da çözülemedi); nedeni parametrede.
+ * - Önbellekler dosya adresiyle tutulur: paylaşılan sesler (aynı dosyayı gösteren takma adlar) bir kez iner / çözülür.
+ * - `preload`: oyuncunun kendi hızlı sohbet sesleri gibi küçük bir küme sabitlenir (LRU'dan düşmez), gönderince anında çalar.
+ *
+ * Konuşma sırası, balon eşlemesi, atışma (banter) dizileri ve duraklatma bu sınıfın ÜSTÜNDE: src/audio/speech.ts
+ * (SpeechDirector). Oyun kodu doğrudan `play` çağırmaz; tek kanal yöneticisi üzerinden konuşur.
  */
+
+/** onEnd nedeni: doğal bitiş · kesildi (stop / yüksek öncelik) · hiç çalmadı (bayat, çözülemedi, bağlam yok, yerine başkası geldi). */
+export type VoiceEnd = 'ended' | 'cut' | 'dropped';
 
 export interface VoiceEntry {
   /** Manifest dosyasına göreli (ör. "riza/riza_botPisti_1.mp3") ya da mutlak URL. */
@@ -24,7 +32,9 @@ export interface VoiceEntry {
 
 export interface VoicePlayOpts {
   /** Ses bitince / kesilince / düşünce (bir kez). */
-  onEnd?: () => void;
+  onEnd?: (why: VoiceEnd) => void;
+  /** Ses gerçekten başlayınca (çözme + sıra beklemesinden sonra): süre (sn). */
+  onStart?: (durS: number) => void;
   /** Konuşma başlarken duck(miktar 0..1), bitince duck(0): ortam/müzik kısmak için. */
   duck?: (amount: number) => void;
   /** 1 boş laf, 2 olay tepkisi, 3 pişti / el sonu. Verilmezse manifestteki `p`, o da yoksa 2. */
@@ -35,6 +45,8 @@ export interface VoicePlayOpts {
 
 const MAX_DECODED = 12;
 const MAX_BYTES = 32;
+/** Sabitlenmiş (preload) çözülmüş tampon üst sınırı: düşük cihazda bellek ≈ 14 × ~1,6 sn × 192 KB/sn. */
+const MAX_PINNED_DECODED = 14;
 const QUEUE_MAX_S = 1.0; // eşit öncelik: çalanın kalan süresi bundan azsa sıraya gir
 const MAX_DELAY_MS = 1500; // sıra bekleme dahil; daha geç gelen tepki bayattır
 const FADE_S = 0.05;
@@ -109,6 +121,11 @@ export class VoicePlayer {
   private bus: GainNode | null = null;
   private cur: Playing | null = null;
   private next: Job | null = null;
+  /** Sabitlenmiş baytlar / tamponlar (adres → veri): LRU'dan bağımsız, unpin ile bırakılır. */
+  private pinned = new Set<string>();
+  private pinnedBytes = new Map<string, ArrayBuffer>();
+  private pinnedDecoded = new Map<string, AudioBuffer>();
+  private pinTok = 0;
 
   /** @param getCtx oyunun AudioContext'i (ör. `() => sfx.context`); henüz yoksa null. */
   constructor(getCtx: () => AudioContext | null) {
@@ -120,6 +137,7 @@ export class VoicePlayer {
     if (!this.enabled) {
       this.stop();
       this.decoded.clear(); // belleği bırak
+      this.pinnedDecoded.clear();
     }
   }
 
@@ -186,6 +204,11 @@ export class VoicePlayer {
     return !!(this.cur || this.next);
   }
 
+  /** Manifestteki replik sayısı (0: ses yok → yalnız yazı kipi). */
+  get size(): number {
+    return this.entries.size;
+  }
+
   /**
    * Repliği çalar. Ses yoksa, kapalıysa, bağlam yoksa/çalışmıyorsa ya da öncelik yetmiyorsa false (balon yine gösterilir).
    * true: çalındı ya da çözülüp birazdan çalınacak (`onEnd` her durumda bir kez gelir).
@@ -206,11 +229,11 @@ export class VoicePlayer {
       if (prio < this.next.prio) return false;
       const old = this.next;
       this.next = null;
-      this.finish(old);
+      this.finish(old, 'dropped');
     }
     const job: Job = {id, prio, opts, at: nowMs(), buf: null, ducked: false, done: false};
     this.next = job;
-    const hit = this.bufCtx === c ? lruGet(this.decoded, id) : undefined;
+    const hit = this.bufCtx === c ? this.cachedBuf(e.url) : undefined;
     if (hit) {
       job.buf = hit;
       this.pump();
@@ -219,7 +242,7 @@ export class VoicePlayer {
         if (job.done || this.next !== job) return;
         if (!buf) {
           this.next = null;
-          this.finish(job);
+          this.finish(job, 'dropped');
           return;
         }
         job.buf = buf;
@@ -235,17 +258,60 @@ export class VoicePlayer {
     for (const id of ids) if (this.entries.has(id)) await this.fetchBytes(id);
   }
 
-  /** Çalanı ve sıradakini durdurur. */
+  /**
+   * Küçük bir kümeyi sabitler (ör. oyuncunun kendi hızlı sohbet sesleri): baytlar LRU'dan düşmez, ilk `decode` tanesi
+   * ayrıca çözülüp hazır tutulur (bağlam varsa). Önceki sabit küme bırakılır. Sırayla, tek tek iner (ağı boğmaz).
+   */
+  async preload(ids: readonly string[], decode = 0): Promise<void> {
+    const tok = ++this.pinTok;
+    this.unpinAll();
+    if (!this.enabled) return;
+    const urls: string[] = [];
+    for (const id of ids) {
+      const e = this.entries.get(id);
+      if (e && !urls.includes(e.url)) urls.push(e.url);
+    }
+    for (const u of urls) this.pinned.add(u);
+    let n = 0;
+    for (const u of urls) {
+      if (tok !== this.pinTok || !this.enabled) return;
+      const b = await this.fetchUrl(u);
+      if (tok !== this.pinTok || !b) continue;
+      this.pinnedBytes.set(u, b);
+      if (n >= Math.min(decode, MAX_PINNED_DECODED)) continue;
+      const c = this.liveCtx();
+      if (!c) continue;
+      const buf = await this.decodeUrl(u, c);
+      if (tok !== this.pinTok || !buf) continue;
+      this.pinnedDecoded.set(u, buf);
+      n++;
+    }
+  }
+
+  /** Sabit kümeyi bırakır. */
+  unpin(): void {
+    this.pinTok++;
+    this.unpinAll();
+  }
+
+  private unpinAll(): void {
+    this.pinned.clear();
+    this.pinnedBytes.clear();
+    this.pinnedDecoded.clear();
+  }
+
+  /** Çalanı ve sıradakini durdurur (çalan kısa bir sönümle kesilir). */
   stop(): void {
     const n = this.next;
     this.next = null;
-    if (n) this.finish(n);
+    if (n) this.finish(n, 'dropped');
     this.stopCur();
   }
 
   /** Her şeyi bırakır (HMR / çıkış). */
   dispose(): void {
     this.stop();
+    this.unpin();
     this.decoded.clear();
     this.bytes.clear();
     this.entries.clear();
@@ -258,11 +324,13 @@ export class VoicePlayer {
   }
 
   /** @internal test/ölçüm */
-  stats(): {entries: number; decoded: number; bytes: number; playing: string | null; queued: string | null} {
+  stats(): {entries: number; decoded: number; bytes: number; pinned: number; pinnedDecoded: number; playing: string | null; queued: string | null} {
     return {
       entries: this.entries.size,
       decoded: this.decoded.size,
       bytes: this.bytes.size,
+      pinned: this.pinnedBytes.size,
+      pinnedDecoded: this.pinnedDecoded.size,
       playing: this.cur?.job.id ?? null,
       queued: this.next?.id ?? null,
     };
@@ -296,44 +364,65 @@ export class VoicePlayer {
   }
 
   private fetchBytes(id: string): Promise<ArrayBuffer | null> {
-    const hit = lruGet(this.bytes, id);
+    const e = this.entries.get(id);
+    return e ? this.fetchUrl(e.url) : Promise.resolve(null);
+  }
+
+  /** Sıkıştırılmış baytlar (adres anahtarlı: takma adlar aynı dosyayı paylaşır). */
+  private fetchUrl(url: string): Promise<ArrayBuffer | null> {
+    const pin = this.pinnedBytes.get(url);
+    if (pin) return Promise.resolve(pin);
+    const hit = lruGet(this.bytes, url);
     if (hit) return Promise.resolve(hit);
-    let p = this.bytesLoading.get(id);
+    let p = this.bytesLoading.get(url);
     if (!p) {
-      const e = this.entries.get(id);
-      if (!e || typeof fetch !== 'function') return Promise.resolve(null);
-      p = fetch(e.url)
+      if (typeof fetch !== 'function') return Promise.resolve(null);
+      p = fetch(url)
         .then(r => (r.ok ? r.arrayBuffer() : null))
         .then(b => {
-          if (b && b.byteLength) lruSet(this.bytes, id, b, MAX_BYTES);
-          return b && b.byteLength ? b : null;
+          const ok = b && b.byteLength ? b : null;
+          if (ok) {
+            if (this.pinned.has(url)) this.pinnedBytes.set(url, ok);
+            else lruSet(this.bytes, url, ok, MAX_BYTES);
+          }
+          return ok;
         })
         .catch(() => null)
-        .finally(() => this.bytesLoading.delete(id));
-      this.bytesLoading.set(id, p);
+        .finally(() => this.bytesLoading.delete(url));
+      this.bytesLoading.set(url, p);
     }
     return p;
   }
 
+  private cachedBuf(url: string): AudioBuffer | undefined {
+    return this.pinnedDecoded.get(url) ?? lruGet(this.decoded, url);
+  }
+
   private decode(id: string, c: AudioContext): Promise<AudioBuffer | null> {
+    const e = this.entries.get(id);
+    return e ? this.decodeUrl(e.url, c) : Promise.resolve(null);
+  }
+
+  private decodeUrl(url: string, c: AudioContext): Promise<AudioBuffer | null> {
     if (this.bufCtx !== c) {
       this.decoded.clear();
       this.decoding.clear();
+      this.pinnedDecoded.clear();
       this.bufCtx = c;
     }
-    const hit = lruGet(this.decoded, id);
+    const hit = this.cachedBuf(url);
     if (hit) return Promise.resolve(hit);
-    let p = this.decoding.get(id);
+    let p = this.decoding.get(url);
     if (!p) {
-      p = this.fetchBytes(id)
+      p = this.fetchUrl(url)
         .then(b => (b ? decodeAudio(c, b.slice(0)) : null)) // decodeAudioData baytları devralır: kopya ver
         .then(buf => {
-          if (buf && this.bufCtx === c && this.enabled) lruSet(this.decoded, id, buf, MAX_DECODED);
+          if (buf && this.bufCtx === c && this.enabled && !this.pinned.has(url)) lruSet(this.decoded, url, buf, MAX_DECODED);
           return buf;
         })
         .catch(() => null)
-        .finally(() => this.decoding.delete(id));
-      this.decoding.set(id, p);
+        .finally(() => this.decoding.delete(url));
+      this.decoding.set(url, p);
     }
     return p;
   }
@@ -345,7 +434,7 @@ export class VoicePlayer {
     const c = this.liveCtx();
     if (!c || nowMs() - job.at > (job.opts.maxDelayMs ?? MAX_DELAY_MS)) {
       this.next = null;
-      this.finish(job);
+      this.finish(job, 'dropped');
       return;
     }
     const cur = this.cur;
@@ -355,7 +444,7 @@ export class VoicePlayer {
       if (preempt) this.stopCur();
       else if (job.prio < cur.job.prio) {
         this.next = null;
-        this.finish(job);
+        this.finish(job, 'dropped');
         return;
       } else return; // eşit öncelik, çalan bitmek üzere: bitince ended() → pump()
     }
@@ -387,9 +476,14 @@ export class VoicePlayer {
         }
       }
       src.start();
+      try {
+        job.opts.onStart?.(buf.duration);
+      } catch {
+        /* yoksay */
+      }
     } catch {
       if (this.cur && this.cur.job === job) this.ended(this.cur);
-      else this.finish(job);
+      else this.finish(job, 'dropped');
     }
   }
 
@@ -407,7 +501,7 @@ export class VoicePlayer {
   private ended(p: Playing): void {
     if (this.cur === p) this.cur = null;
     this.release(p);
-    this.finish(p.job);
+    this.finish(p.job, 'ended');
     this.pump();
   }
 
@@ -427,10 +521,10 @@ export class VoicePlayer {
     } catch {
       this.release(p);
     }
-    this.finish(p.job);
+    this.finish(p.job, 'cut');
   }
 
-  private finish(job: Job): void {
+  private finish(job: Job, why: VoiceEnd): void {
     if (job.done) return;
     job.done = true;
     job.buf = null;
@@ -442,7 +536,7 @@ export class VoicePlayer {
       }
     }
     try {
-      job.opts.onEnd?.();
+      job.opts.onEnd?.(why);
     } catch {
       /* yoksay */
     }

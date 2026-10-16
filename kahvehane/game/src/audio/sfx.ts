@@ -568,6 +568,7 @@ export class Sfx {
 
   private _muted = false;
   private vol = 1;
+  private ducked = 0; // konuşma sırasında kısma (0..1)
   private slow = 1;
   private pK = 1; // ağır çekimde perde çarpanı
   private sK = 1; // ağır çekimde zaman uzatma çarpanı
@@ -661,6 +662,17 @@ export class Sfx {
   }
   setVolume(v: number): void {
     this.vol = clamp01(v);
+    this.applyVolume();
+  }
+
+  /**
+   * Konuşma kısması (seslendirme oynatıcısının `duck` kancası): 0 normal, 1 en çok. Efektler hafifçe (−%30), ortam
+   * sesi belirgin (−%70) kısılır; yumuşak geçiş, döngü yok (setTargetAtTime).
+   */
+  duck(amount: number): void {
+    const a = clamp01(Number.isFinite(amount) ? amount : 0);
+    if (a === this.ducked) return;
+    this.ducked = a;
     this.applyVolume();
   }
 
@@ -1750,10 +1762,12 @@ export class Sfx {
   private applyVolume(): void {
     const ctx = this.ctx;
     if (!ctx) return;
-    const g = this._muted ? 0 : this.vol;
+    const g = this._muted ? 0 : this.vol * (1 - 0.3 * this.ducked);
     const now = ctx.currentTime;
     this.outGain.gain.cancelScheduledValues(now);
-    this.outGain.gain.setTargetAtTime(g, now, 0.015);
+    this.outGain.gain.setTargetAtTime(g, now, this.ducked ? 0.06 : 0.015);
+    this.ambBus.gain.cancelScheduledValues(now);
+    this.ambBus.gain.setTargetAtTime(1 - 0.6 * this.ducked, now, 0.12);
   }
 
   private applySlow(): void {
