@@ -10,7 +10,7 @@ import type {TableTheme} from '../themes/contract';
 import {ANIM, esc} from './dom';
 import {suitSvg} from './icons';
 import {CI, deckCardHtml, fxStillReady, hasDeck} from './deckpv';
-import {bakedTable} from './tablepv';
+import {TABLE_THUMB, bakedTable, bakedTableFull} from './tablepv';
 import {mountFx, type FxLoop} from './fxpreview';
 
 export {hasDeck};
@@ -197,15 +197,18 @@ function swatchRule(id: string): void {
     swStyle.dataset.kh = 'swatch';
     document.head.append(swStyle);
   }
-  // boyalı masa: pişmiş küçük resim (temanın güncel boyası; ürün penceresindeki canlı boyayla aynı kompozisyon)
-  const pv = bakedTable(id);
-  const bg = pv ? `url("${pv}") 50% 50% / cover no-repeat #0a1033` : tableSwatch(id);
-  const rule = `.kh-ts__bg[data-sw="${CSS.escape(id)}"]{background:${bg}}`;
-  try {
-    swStyle.sheet!.insertRule(rule, swStyle.sheet!.cssRules.length);
-  } catch {
-    swStyle.append(rule);
-  }
+  // boyalı masa: pişmiş SATIŞ küçük resmi (temanın güncel boyası, imzası görünecek kırpım; manzara masalarında üstten
+  // hizalı: daha kare kaplarda alttan kırpılır). Büyük sahnede canlı boyayla aynı kompozisyondaki yer tutucu.
+  const sel = `.kh-ts__bg[data-sw="${CSS.escape(id)}"]`;
+  const pv = bakedTable(id), full = bakedTableFull(id);
+  const rules = [`${sel}{background:${pv ? `url("${pv}") 50% ${TABLE_THUMB[id] === 'top' ? '0%' : '50%'} / cover no-repeat #0a1033` : tableSwatch(id)}}`];
+  if (full) rules.push(`.kh-ts.is-full ${sel}{background:url("${full}") 50% 50% / cover no-repeat #0a1033}`);
+  for (const rule of rules)
+    try {
+      swStyle.sheet!.insertRule(rule, swStyle.sheet!.cssRules.length);
+    } catch {
+      swStyle.append(rule);
+    }
 }
 
 export interface SceneOpts {
@@ -227,8 +230,9 @@ export function tableSceneHtml(id: string, o: SceneOpts): string {
   const d = o.deck;
   const full = o.size === 'full';
   swatchRule(id);
-  // pişmiş boya varsa yığın, boyanın çizdiği halkanın yerinde (%45.5) durur; swatch amblemi ortada (%50)
-  const pt = bakedTable(id) || (full && t?.paint) ? ' is-paint' : '';
+  // yığının yeri: büyük sahnede boyanın halkası (%45.5); küçük resimde desen masalarının halkası ortada (%50, swatch
+  // amblemi de), manzara masalarında manzara üstte kalsın diye aşağıda (.is-scene)
+  const pt = full ? (t?.paint ? ' is-paint' : '') : bakedTable(id) && TABLE_THUMB[id] === 'top' ? ' is-scene' : '';
   if (o.size === 'tile')
     return `<span class="kh-ts is-tile${pt} ${o.cls ?? ''}"><i class="kh-ts__bg" data-sw="${esc(id)}"></i><span class="kh-ts__pile">${deckCardHtml(o.deck, CI.ten, 'kh-ts__c is-p1')}${deckCardHtml(o.deck, CI.queen, 'kh-ts__c is-p2')}</span></span>`;
   const pile = `<span class="kh-ts__pile">${deckCardHtml(d, CI.ten, 'kh-ts__c is-p1')}${deckCardHtml(d, CI.queen, 'kh-ts__c is-p2')}</span>`;

@@ -1,4 +1,5 @@
-// Masa küçük resimlerini pişirir: her boyalı masa için src/ui/tablepv/<id>.webp — temanın GÜNCEL paint() çizimi.
+// Masa resimlerini pişirir: her boyalı masa için temanın GÜNCEL paint() çiziminden src/ui/tablepv/<id>.webp (satış küçük
+// resmi: masanın imzası görünecek kırpım, src/ui/tablepv.ts TABLE_THUMB) ve <id>.full.webp (büyük sahne yer tutucusu).
 // Kullanım: node scripts/bake-tables.mjs [masaId ...]   (kendi geçici Vite sunucusunu açar/kapatır)
 // Ne zaman: yeni masa eklenince ya da bir masanın boyası (src/themes/*) değişince — yoksa market/koleksiyon karoları
 // eski görünüşü gösterir. Kayıttan çıkan masaların resimleri silinir. Boyası olmayan masa (Mavi Arena) swatch kullanır.
@@ -27,13 +28,13 @@ try {
   for (const o of out) {
     if (only.length && !only.includes(o.id)) continue;
     const buf = Buffer.from(o.url.split(',')[1], 'base64');
-    fs.writeFileSync(path.join(dir, `${o.id}.webp`), buf);
+    fs.writeFileSync(path.join(dir, o.file), buf);
     total += buf.length;
-    console.log(`✓ ${o.id.padEnd(12)} ${(buf.length / 1024).toFixed(1).padStart(6)} KB  (çizim ${o.ms.toFixed(0)} ms)`);
+    console.log(`✓ ${o.file.padEnd(20)} ${(buf.length / 1024).toFixed(1).padStart(6)} KB${o.ms ? `  (çizim ${o.ms.toFixed(0)} ms)` : ''}`);
   }
   // kayıttan çıkarılmış (ya da boyası kaldırılmış) masaların resimleri pakette boşuna yer tutmasın
   for (const f of fs.readdirSync(dir))
-    if (f.endsWith('.webp') && !ids.includes(f.slice(0, -5))) {
+    if (f.endsWith('.webp') && !ids.includes(f.replace(/(\.full)?\.webp$/, ''))) {
       fs.unlinkSync(path.join(dir, f));
       console.log(`− ${f} silindi (masa kayıtta yok)`);
     }

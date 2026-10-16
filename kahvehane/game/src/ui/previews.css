@@ -22,6 +22,8 @@
 /* --py: yığının dikey yeri. Swatch amblemi tam ortada (50%); boyalı zemin oyundaki gibi %45.5'te çizer (themes/paint.ts spotOf) */
 .kh-ts { --py: 50%; position: absolute; inset: 0; display: block; overflow: hidden; border-radius: inherit; isolation: isolate; }
 .kh-ts.is-paint { --py: 45.5%; }
+/* manzara masası küçük resmi (src/ui/tablepv.ts TABLE_THUMB: üstten kırpılmış): kartlar aşağıda, manzara üstte görünür */
+.kh-ts.is-scene { --py: 60%; }
 .kh-ts__bg, .kh-ts__paint, .kh-ts__vig, .kh-ts__glow { position: absolute; inset: 0; width: 100%; height: 100%; }
 .kh-ts__glow { left: 50%; top: var(--py); width: 92%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, var(--glow), transparent 64%); }
 /* yığın halkasını zemin (swatch / boya) kendisi çizer; ikinci halka çakışıyordu */

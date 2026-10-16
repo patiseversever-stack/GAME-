@@ -9,7 +9,7 @@ import {ANIM, EASE, esc, h, play} from './dom';
 import {ASSETS, OPTIONAL_ART} from './assets';
 import {suitSvg, type SuitKey} from './icons';
 import type {HudSounds} from './types';
-import {FX, type Stage} from './fxlib';
+import {FX, FX_MS, type Stage} from './fxlib';
 import {spriteSize, spriteUrl, warmSprites} from './fxsprites';
 
 type Pt = {x: number; y: number};
@@ -347,8 +347,10 @@ export class Fx {
     return r.get();
   }
 
-  /** Oyundaki sahne: bu katman, havuz düğümleri, sesler. */
-  private stage(low: boolean): Stage {
+  /** Oyundaki sahne: bu katman, havuz düğümleri, sesler. Kullanılan düğümler efekt bitince TOPLUCA gizlenir
+   * (her düğüm için ayrı bitiş işleyicisi + display değişimi = her karede stil hesabı olurdu). */
+  private tok = 0;
+  private stage(low: boolean, used: HTMLElement[], tok: string): Stage {
     const W = this.W, H = this.H;
     if (!this.qBack.isConnected) {
       // arka katman damganın (z 2) altında, ön katman üstünde; ekran ışığı en arkada
@@ -360,8 +362,15 @@ export class Fx {
       H,
       M: Math.min(W, H),
       low,
-      node: (key, w, hh, front) => this.qnode(key, w, hh, front),
-      run: (n, kf, o) => this.fly(n, kf, o),
+      node: (key, w, hh, front) => {
+        const n = this.qnode(key, w, hh, front);
+        if (n) {
+          n.dataset.tok = tok;
+          used.push(n);
+        }
+        return n;
+      },
+      run: (n, kf, o) => void play(n, kf, {fill: 'both', ...o}),
       flash: (color, peak, ms, delay = 0) => {
         this.qFlash.style.background = color;
         play(this.qFlash, [{opacity: 0}, {opacity: peak, offset: 0.1}, {opacity: peak * 0.3, offset: 0.4}, {opacity: 0}], {duration: ms, delay, easing: 'ease-out'}, 1);
@@ -373,11 +382,6 @@ export class Fx {
     };
   }
 
-  /** Havuz düğümünü canlandır; bitince gizle. */
-  private fly(n: HTMLElement, kf: Keyframe[], o: KeyframeAnimationOptions): void {
-    play(n, kf, {fill: 'both', ...o}).finished.then(() => hide(n), () => undefined);
-  }
-
   /** Kuşanılmış pişti efekti (bkz. src/ui/fxlib.ts). Vale piştide daha yoğun; `low`: yarı parçacık, ikincil katman yok. */
   pistiFx(id: string, jack: boolean, at: Pt, low = false): void {
     if (!ANIM) return;
@@ -385,6 +389,11 @@ export class Fx {
       this.warmed = true;
       warmSprites(id);
     }
-    (FX[id] ?? FX.klasik)(this.stage(low), at, jack);
+    const used: HTMLElement[] = [], tok = String(++this.tok);
+    const fx = FX[id] ? id : 'klasik';
+    FX[fx](this.stage(low, used, tok), at, jack);
+    window.setTimeout(() => {
+      for (const n of used) if (n.dataset.tok === tok) hide(n);
+    }, (FX_MS[fx] ?? 2000) + (jack ? 600 : 300));
   }
 }
