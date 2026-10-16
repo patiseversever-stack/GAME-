@@ -33,7 +33,8 @@ export function openTryOn(shell: Shell, it: ShopItem, o: TryOpts): void {
   const owned = shell.profile.owns(it.kind, it.id);
   const eq = it.kind === 'char' ? d.char === it.id : d.equipped[it.kind as 'deck' | 'table' | 'fx' | 'frame'] === it.id;
   const el = h('div', `kh-try is-${it.kind}`);
-  el.innerHTML = `<div class="kh-try__scene">${tableSceneHtml(table, {deck, size: 'full'})}</div>
+  const short = Math.max(0, o.price - d.coins);
+  el.innerHTML = `<div class="kh-try__col"><div class="kh-try__scene">${tableSceneHtml(table, {deck, size: 'full'})}</div>
     <div class="kh-try__seat is-opp">${charAvatarHtml(opp, 'standart', 'kh-try__ava')}<span class="kh-try__nm">${esc(opp.name)}</span></div>
     <div class="kh-try__seat is-me">${charAvatarHtml(meChar, frame, 'kh-try__ava')}<span class="kh-try__nm">${esc(d.name)}</span></div>
     <div class="kh-try__fx"></div>
@@ -45,8 +46,10 @@ export function openTryOn(shell: Shell, it: ShopItem, o: TryOpts): void {
         ? `<button class="kh-btn kh-btn--4 kh-btn--xl kh-btn--block" data-act="x">${I.check}<span>Kuşanıldı · Kapat</span></button>`
         : owned
           ? `<button class="kh-btn kh-btn--5 kh-btn--xl kh-btn--block" data-act="equip">${I.check}<span>Kuşan</span></button>`
-          : `<button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-try__buy" data-act="buy"><span>Satın Al</span><span class="kh-pd__cost"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(o.price)}</b></span></button>`
-    }</footer>`;
+          : short
+            ? `<button class="kh-btn kh-btn--4 kh-btn--xl kh-btn--block kh-try__buy is-short" data-act="buy"><span class="kh-pd__cost"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(short)}</b></span><span>eksik</span></button>`
+            : `<button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-try__buy" data-act="buy"><span>Satın Al</span><span class="kh-pd__cost"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(o.price)}</b></span></button>`
+    }</footer></div>`;
   ctx.layer.append(el);
   const scene = q(el, '.kh-ts');
   const fxBox = q(el, '.kh-try__fx');
