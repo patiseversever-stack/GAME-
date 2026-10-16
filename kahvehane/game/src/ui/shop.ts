@@ -352,7 +352,7 @@ export class ShopPage implements Page {
   private fillQueued = false;
   /** margin: içerik dibinin ekran altından en çok ne kadar (ekran boyu cinsinden) uzakta olması istenir.
    *  Açılışta küçük (yalnız görünen ekran dolar), kaydırırken büyük (kullanıcı ilerlerken önceden hazırlanır). */
-  private fillMargin = 0.2;
+  private fillMargin = 0;
   private fill(margin?: number): void {
     if (margin !== undefined) this.fillMargin = Math.max(this.fillMargin, margin);
     if (this.fillQueued) return;
@@ -364,7 +364,7 @@ export class ShopPage implements Page {
       if (!this.scope.alive || !p.el.isConnected || this.panels.get(this.tab) !== p || !this.visible) return;
       const b = this.body;
       const need = b.scrollHeight - b.scrollTop - b.clientHeight < b.clientHeight * this.fillMargin || b.scrollHeight < p.scroll + b.clientHeight * 1.5;
-      if (!need) return void (this.fillMargin = 0.2);
+      if (!need) return void (this.fillMargin = 0);
       const c = p.pending.shift()!;
       if (typeof c === 'function') p.el.insertAdjacentHTML('beforeend', c());
       else {

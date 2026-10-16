@@ -154,6 +154,41 @@ export function vapur(g: Ctx, x: number, y: number, s: number): void {
   for (let i = 0; i < 11; i++) g.fillRect(x - L * 0.4 + i * L * 0.075, y - H * 0.8, L * 0.03, H * 0.28);
 }
 
+/** Cami silueti: kasnaklı ana kubbe, iki yarım kubbe, dört ince minare (şerefe + sivri külah). x merkez, by taban, s yükseklik. */
+export function mosque(g: Ctx, x: number, by: number, s: number, body: string, lit = 0, rnd?: Rnd): void {
+  g.fillStyle = body;
+  const bw = s * 0.62, bh = s * 0.2;
+  g.fillRect(x - bw / 2, by - bh, bw, bh);
+  for (const sx of [-1, 1]) {
+    g.beginPath();
+    g.ellipse(x + sx * bw * 0.27, by - bh, bw * 0.17, s * 0.09, 0, Math.PI, 0);
+    g.fill();
+  }
+  const dw = bw * 0.25, dy = by - bh - s * 0.06;
+  g.fillRect(x - dw, dy, dw * 2, s * 0.065);
+  g.beginPath();
+  g.ellipse(x, dy, dw * 1.04, s * 0.17, 0, Math.PI, 0);
+  g.fill();
+  g.fillRect(x - s * 0.007, dy - s * 0.22, s * 0.014, s * 0.06);
+  for (const mx of [-0.5, -0.38, 0.38, 0.5]) {
+    const px = x + mx * bw * 1.08, mh = s * (Math.abs(mx) > 0.45 ? 0.8 : 0.94), mw = s * 0.02;
+    g.fillRect(px - mw, by - mh, mw * 2, mh);
+    g.fillRect(px - mw * 1.9, by - mh * 0.74, mw * 3.8, s * 0.014);
+    g.beginPath();
+    g.moveTo(px - mw * 1.15, by - mh);
+    g.lineTo(px, by - mh - s * 0.11);
+    g.lineTo(px + mw * 1.15, by - mh);
+    g.fill();
+  }
+  if (lit > 0) {
+    for (let i = 0; i < 9; i++) {
+      if (rnd && rnd() > lit) continue;
+      g.fillStyle = css(mix(WIN, [255, 255, 255], 0.2), 0.9);
+      g.fillRect(x - bw * 0.42 + i * bw * 0.105, by - bh * 0.62, bw * 0.035, bh * 0.3);
+    }
+  }
+}
+
 /** Hilal: dolu disk + kaydırılmış gölge diskiyle kesilir (gökyüzü renginde değil, gerçek kesme) */
 export function crescent(g: Ctx, x: number, y: number, r: number, col = '#fff3c8'): void {
   glow(g, x, y, r * 3.2, [255, 230, 160], 0.35);

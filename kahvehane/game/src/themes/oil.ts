@@ -10,7 +10,7 @@
 //      farkı sıkıştırılır, darbe titremesi azalır, ayrıntı katmanı atlanır → krem kartlar ve kart arkaları öne çıkar.
 // Bütün iş dilimli (Job): ~7 ms'lik parçalar; ana iş parçacığı bölünmez.
 import {due, type Job} from '../skins/kit';
-import {clamp, makeCanvas, mix, smooth, spotOf, type Ctx, type RGB, type Rnd} from './paint';
+import {clamp, makeCanvas, mix, mulberry, smooth, spotOf, type Ctx, type RGB, type Rnd} from './paint';
 
 // ───────────────────────── referans ─────────────────────────
 export interface Ref {
@@ -320,4 +320,112 @@ export function tableCalm(W: number, H: number): Calm {
     }
     return q;
   };
+}
+
+// ───────────────────────── küçük resimler (deste kartları) ─────────────────────────
+/** Şekil maskesi: `draw` doldurduğu yer 1, gerisi 0 (tasarım biriminde, en yakın piksel). */
+export function maskOf(W: number, H: number, draw: (g: Ctx) => void, k = 0.5): (x: number, y: number) => number {
+  const [c, g] = makeCanvas(Math.ceil(W * k), Math.ceil(H * k));
+  g.scale(k, k);
+  g.fillStyle = '#fff';
+  draw(g);
+  const w = c.width, h = c.height, d = g.getImageData(0, 0, w, h).data;
+  c.width = c.height = 0;
+  const a = new Uint8Array(w * h);
+  for (let i = 0; i < a.length; i++) a[i] = d[i * 4 + 3] > 40 ? 1 : 0;
+  return (x, y) => {
+    const i = Math.floor(x * k), j = Math.floor(y * k);
+    return i < 0 || j < 0 || i >= w || j >= h ? 0 : a[j * w + i];
+  };
+}
+
+export interface ArtOpts {
+  W: number;
+  H: number;
+  seed: number;
+  sketch: (g: Ctx) => void;
+  field: (x: number, y: number) => number;
+  /** fırça ölçeği (360 px genişlikli kart tuvali = 1) */
+  s?: number;
+  /** referans çözünürlüğü */
+  k?: number;
+  sizeK?: (x: number, y: number) => number;
+  /** boyanacak bölge (0..1); dışına darbe başlamaz */
+  mask?: (x: number, y: number) => number;
+  /** ince ayrıntı katmanı nerede (0..1); yoksa yok */
+  detail?: (x: number, y: number) => number;
+  tint?: Layer['tint'];
+  /** iri astar katmanı (varsayılan var) */
+  under?: boolean;
+  jitter?: number;
+}
+/**
+ * Küçük bir yağlı boya tablo: eskiz → taban (eskizin kendisi, boşluklarda tutarlı renk) → astar → gövde → ayrıntı.
+ * Tuval + referans döner; çağıran ışık dokunuşlarını, çerçeveyi vb. kendisi ekler.
+ */
+export function* oilArt(o: ArtOpts): Job<{cv: HTMLCanvasElement; g: Ctx; ref: Ref; rnd: Rnd}> {
+  const s = o.s ?? 1, W = o.W, H = o.H;
+  const rnd = mulberry(o.seed);
+  const ref = makeRef(W, H, o.k ?? 0.5, o.sketch);
+  if (due()) yield;
+  const [cv, g] = makeCanvas(W, H);
+  const [bc, bg] = makeCanvas(ref.w, ref.h);
+  bg.putImageData(new ImageData(new Uint8ClampedArray(ref.d), ref.w, ref.h), 0, 0);
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(bc, 0, 0, W, H);
+  bc.width = bc.height = 0;
+  const m = o.mask;
+  const j = o.jitter ?? 1;
+  if (o.under !== false) {
+    yield* paintLayer(g, ref, rnd, W, H, {cell: 8 * s, len: [14 * s, 24 * s], width: [6 * s, 8.5 * s], field: o.field, edge: 0.3, jitter: 10 * j, relief: 0.07, where: m, sizeK: o.sizeK});
+  }
+  yield* paintLayer(g, ref, rnd, W, H, {cell: 4.6 * s, len: [10 * s, 18 * s], width: [3.4 * s, 5 * s], field: o.field, edge: 0.6, jitter: 18 * j, relief: 0.18, bristle: 0.4, where: m, sizeK: o.sizeK, tint: o.tint});
+  if (o.detail) {
+    const d = o.detail;
+    yield* paintLayer(g, ref, rnd, W, H, {cell: 2.8 * s, len: [5 * s, 10 * s], width: [1.8 * s, 2.6 * s], field: o.field, edge: 0.85, jitter: 12 * j, relief: 0.2, where: m ? (x, y) => m(x, y) * d(x, y) : d, sizeK: o.sizeK});
+  }
+  return {cv, g, ref, rnd};
+}
+/** Elips boyunca kısa teğet darbelerden bir halka (hale, boyalı çerçeve). */
+export function ringStrokes(oil: Oil, cx: number, cy: number, rx: number, ry: number, lw: number, cols: readonly RGB[], rnd: Rnd, seg = 12, relief = 0.22): void {
+  const per = Math.PI * 2 * Math.sqrt((rx * rx + ry * ry) / 2);
+  const n = Math.ceil(per / (seg * 0.7));
+  const off = rnd() * 6;
+  for (let i = 0; i < n; i++) {
+    const a0 = off + ((i + rnd() * 0.5) / n) * Math.PI * 2;
+    const r = (rnd() - 0.5) * lw * 0.5;
+    const da = (seg * (0.8 + rnd() * 0.5)) / Math.max(rx, ry);
+    const pts: number[] = [];
+    for (let q = 0; q <= 4; q++) pts.push(cx + Math.cos(a0 + (da * q) / 4) * (rx + r), cy + Math.sin(a0 + (da * q) / 4) * (ry + r));
+    oil.add(pts, lw * (0.85 + rnd() * 0.4), cols[Math.floor(rnd() * cols.length)], relief);
+  }
+}
+
+/** Kapalı çoklu çizgi boyunca kısa teğet darbeler (kemer/şekil çerçevesi). pts: [x0,y0,x1,y1,...] */
+export function pathStrokes(oil: Oil, pts: number[], lw: number, cols: readonly RGB[], rnd: Rnd, seg = 12, off = 0, relief = 0.22): void {
+  const n = pts.length >> 1;
+  const cum: number[] = [0];
+  for (let i = 1; i <= n; i++) {
+    const a = (i - 1) * 2, b = (i % n) * 2;
+    cum.push(cum[i - 1] + Math.hypot(pts[b] - pts[a], pts[b + 1] - pts[a + 1]));
+  }
+  const L = cum[n];
+  const at = (d: number): [number, number, number, number] => {
+    d = ((d % L) + L) % L;
+    let i = 1;
+    while (cum[i] < d) i++;
+    const a = (i - 1) * 2, b = (i % n) * 2, t = (d - cum[i - 1]) / (cum[i] - cum[i - 1] || 1);
+    const dx = pts[b] - pts[a], dy = pts[b + 1] - pts[a + 1], e = Math.hypot(dx, dy) || 1;
+    return [pts[a] + dx * t, pts[a + 1] + dy * t, -dy / e, dx / e];
+  };
+  const cnt = Math.ceil(L / (seg * 0.62));
+  for (let i = 0; i < cnt; i++) {
+    const d0 = ((i + rnd() * 0.5) / cnt) * L, len = seg * (0.8 + rnd() * 0.5), o = off + (rnd() - 0.5) * lw * 0.5;
+    const tr: number[] = [];
+    for (let q = 0; q <= 4; q++) {
+      const [x, y, nx, ny] = at(d0 + (len * q) / 4);
+      tr.push(x + nx * o, y + ny * o);
+    }
+    oil.add(tr, lw * (0.85 + rnd() * 0.4), cols[Math.floor(rnd() * cols.length)], relief);
+  }
 }

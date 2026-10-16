@@ -285,8 +285,74 @@ export function warmPreviews(ids: {decks: string[]; tables: string[]; frames: st
   const start = (): void => {
     document.body.append(box);
     for (const g of groups) idleJob(() => box.insertAdjacentHTML('beforeend', g));
+    rasterFrames(ids.frames);
   };
   setTimeout(start, 2500);
+}
+
+// ---------------------------------------------------------------- çerçeve katmanlarını bitmap'e çevir (boşta, bir kez)
+// Çerçeveler (themes/frames.css) büyük SVG veri adresleriyle çizilir; SVG her kapsayıcı boyunda yeniden yerleşir ve
+// boyanır: 12 çerçeveli ızgara / seçim listesi sekme açılışında belirgin stil+boyama maliyeti. Küçük bağlamlarda
+// (market ızgarası, set karoları, koleksiyon seçimi) aynı katman bir kez 320 px WebP'ye çevrilir ve CSS ile değiştirilir.
+// Büyük tekil avatarlar (ürün penceresi, üst çubuk, oyun) SVG'de kalır (keskinlik). frames.css değişince kendiliğinden güncel.
+const FRAME_CTX = ['.kh-item__pv', '.kh-setc__tile', '.kh-sd__pv', '.kh-pick', '.kh-warm'];
+const FRAME_PX = 320;
+function rasterFrames(ids: string[]): void {
+  const want = new Set(ids);
+  const layers: Array<{sel: string; url: string}> = [];
+  const scan = (rules: CSSRuleList): void => {
+    for (const r of Array.from(rules)) {
+      if (r instanceof CSSMediaRule) continue; // azaltılmış hareket / düşük kalite kopyaları
+      if (!(r instanceof CSSStyleRule)) continue;
+      const m = /^\.kh-frame--([\w-]+)::(before|after)$/.exec(r.selectorText.trim());
+      if (!m || !want.has(m[1])) continue;
+      const bg = r.style.backgroundImage;
+      const u = /url\("(data:image\/svg\+xml[\s\S]*?)"\)/.exec(bg);
+      if (u) layers.push({sel: `.kh-frame--${m[1]}::${m[2]}`, url: u[1]});
+    }
+  };
+  for (const sh of Array.from(document.styleSheets)) {
+    try {
+      scan(sh.cssRules);
+    } catch {
+      /* erişilemeyen sayfa */
+    }
+  }
+  for (const L of layers)
+    idleJob(() => {
+      const img = new Image();
+      img.decoding = 'async';
+      img.src = L.url;
+      img
+        .decode()
+        .then(() => {
+          const c = document.createElement('canvas');
+          c.width = c.height = FRAME_PX;
+          const g = c.getContext('2d');
+          if (!g) return;
+          g.drawImage(img, 0, 0, FRAME_PX, FRAME_PX);
+          c.toBlob(b => {
+            c.width = c.height = 0;
+            if (!b) return;
+            const fr = new FileReader();
+            fr.onload = () => {
+              if (!swStyle) {
+                swStyle = document.createElement('style');
+                swStyle.dataset.kh = 'swatch';
+                document.head.append(swStyle);
+              }
+              const rule = `${FRAME_CTX.map(x => `${x} ${L.sel}`).join(',')}{background-image:url("${fr.result as string}")}`;
+              try {
+                swStyle.sheet!.insertRule(rule, swStyle.sheet!.cssRules.length);
+              } catch {
+                /* */
+              }
+            };
+            fr.readAsDataURL(b);
+          }, 'image/webp', 0.85);
+        })
+        .catch(() => undefined);
+    });
 }
 
 // pişti efekti önizlemeleri ayrı dosyada (src/ui/fxpreview.ts)
