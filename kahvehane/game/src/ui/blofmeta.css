@@ -35,7 +35,7 @@
 .kh-vs.is-1v1 .kh-vs__mode { display: flex; } /* iki oyun var: 1'e 1'de de oyun adı görünür */
 .kh-vs.is-3 .kh-vs__band { top: calc(var(--k) * 33.34% - 5%); height: 43%; }
 .kh-vs.is-3 .kh-vs__slot { top: calc(var(--k) * 33.34%); height: 33.34%; }
-.kh-vs.is-3 .kh-vs__seams i { top: calc(var(--k) * 33.34% - 2px); }
+.kh-vs.is-3 .kh-vs__clip { --cut: 85%; } /* (33,34 − 5) / 33,34: bir alttaki şeridin üst kenarı */
 .kh-vs.is-3 .kh-vs__slot .kh-vs__bust { height: 112%; }
 .kh-vs.is-3 .kh-vs__slot.is-k0 .kh-vs__bust { height: 100%; }
 .kh-vs.is-3 .kh-vs__emblem, .kh-vs.is-3 .kh-vs__ring, .kh-vs.is-3 .kh-vs__sparks { top: 66.67%; } /* VS: rakiplerle senin aranda */

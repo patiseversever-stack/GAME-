@@ -294,6 +294,8 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-vs__band.is-c { background: linear-gradient(165deg, #7dffa8 0%, #16c45b 40%, #06672c 100%); z-index: 3; }
 .kh-vs__band.is-s { background: var(--vs-bottom); z-index: 4; }
 .kh-vs__band::after { content: ''; position: absolute; inset: 0; background-image: var(--suit-tile); background-size: calc(var(--u) * 11) calc(var(--u) * 11); opacity: .1; }
+/* şerit sınırı: lacivert kenar (box-shadow, üstte) + beyaz ışık çizgisi + ince gölge — şeridin kendi üst kenarında, onunla birlikte kayar */
+.kh-vs__band::before { content: ''; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: 5px; background: var(--vs-seam); box-shadow: 0 2px 0 rgba(10, 16, 51, .45); }
 .kh-vs__bsuit { position: absolute; top: 18%; width: 30%; aspect-ratio: 1; color: #fff; opacity: .14; }
 .kh-vs__band:nth-of-type(odd) .kh-vs__bsuit { left: 22%; }
 .kh-vs__band:nth-of-type(even) .kh-vs__bsuit { right: 22%; }
@@ -305,7 +307,10 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-vs__slot.is-l .kh-vs__plate { left: auto; right: 5%; }
 .kh-vs__slot .kh-vs__name { font-size: calc(var(--u) * 1.5); }
 .kh-vs__slot .kh-vs__sub { font-size: calc(var(--u) * .78); }
-.kh-vs__seams i { position: absolute; z-index: 6; left: -20%; right: -20%; top: calc(var(--k) * 25% - 2px); height: 5px; background: var(--vs-seam); transform: skewY(-9deg); box-shadow: 0 0 0 2px rgba(10, 16, 51, .6); }
+/* büst kırpması: alt sınır = bir alttaki şeridin üst kenarı (merkezde yuvanın %84'ü; -9° eğimle sola inip sağa çıkar:
+   tan 9° × 50vw = 7,92vw), lacivert kenar çizgisinin hemen üstünde. Üst serbest: baş üstteki şeride taşar. */
+.kh-vs__clip { position: absolute; inset: 0; --cut: 84%; }
+.kh-vs__clip.is-cut { clip-path: polygon(-5% -400%, 105% -400%, 105% calc(var(--cut) - 4px - 8.71vw), -5% calc(var(--cut) - 4px + 8.71vw)); }
 .kh-vs.is-4 .kh-vs__emblem { width: calc(var(--u) * 7.4); height: calc(var(--u) * 7.4); margin: calc(var(--u) * -3.7) 0 0 calc(var(--u) * -3.7); z-index: 8; }
 .kh-vs.is-4 .kh-vs__emblem .kh-title { font-size: calc(var(--u) * 3); }
 .kh-vs.is-4 .kh-vs__stake { top: auto; bottom: calc(25% + var(--u) * .2); right: auto; left: calc(var(--u) * 1); z-index: 8; }

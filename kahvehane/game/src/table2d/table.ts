@@ -68,6 +68,9 @@ const GLOW: Record<string, string> = {
   C: 'radial-gradient(closest-side, rgba(60, 230, 130, .55) 0%, rgba(22, 196, 91, .2) 44%, rgba(22, 196, 91, 0) 100%)',
   S: 'radial-gradient(closest-side, rgba(80, 160, 255, .62) 0%, rgba(31, 123, 255, .22) 44%, rgba(31, 123, 255, 0) 100%)',
 };const EASE_OUT = 'cubic-bezier(.2,.75,.25,1)';
+const OUT = 'cubic-bezier(.2,.8,.3,1)';
+/** Çok kareli animasyonda yumuşatma her aralığa ayrı (WAAPI tek easing'i tüm zaman çizelgesine uygular, tepe noktası kayar). */
+const seg = (kf: Keyframe[], e: string[]): Keyframe[] => kf.map((k, i) => (i < kf.length - 1 ? {...k, easing: e[Math.min(i, e.length - 1)]} : k));
 const D10 = cardId('D', 10);
 const C2 = cardId('C', 2);
 
@@ -716,49 +719,57 @@ export class Table2D {
     const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const pileK = Math.min(1, Math.max(0, this.pile.length - 2) / 8); // 0 → 1: yığın kızıştıkça
     const k = lvl === 0 ? 1 + 0.45 * pileK : [1, 1.45, 1.75, 2.1, 2.5][lvl];
+    const big = lvl >= 3;
     this.stopRing();
-    // 1) kart altı ışık (takım renginde; alış ve piştide altın-beyaz)
-    const key = lvl >= 1 ? 'G' : suit ?? 'N';
-    const bl = this.bloom(key);
+    // 1) kart altı ışık: hızla açılır (~%22), yumuşakça söner (alış ve piştide altın-beyaz)
+    const bl = this.bloom(lvl >= 1 ? 'G' : suit ?? 'N');
     bl.style.display = 'block';
-    const peak = Math.min(1, 0.78 + 0.1 * lvl + 0.15 * pileK);
-    const bms = lvl >= 3 ? 640 : lvl >= 1 ? 480 : 380;
-    bl.animate([{transform: 'scale(.5)', opacity: 0}, {transform: `scale(${(0.92 + 0.06 * k).toFixed(3)})`, opacity: peak, offset: 0.2}, {transform: `scale(${(1.02 + 0.1 * k).toFixed(3)})`, opacity: 0}],
-      {duration: bms, easing: 'cubic-bezier(.2,.7,.3,1)'}).finished.then(() => (bl.style.display = 'none'), () => undefined);
+    const peak = Math.min(1, 0.8 + 0.08 * lvl + 0.15 * pileK);
+    bl.animate(seg([
+      {transform: 'scale(.55)', opacity: 0},
+      {transform: `scale(${(0.9 + 0.05 * k).toFixed(3)})`, opacity: peak, offset: 0.22},
+      {transform: `scale(${(1 + 0.1 * k).toFixed(3)})`, opacity: 0},
+    ], [OUT, 'cubic-bezier(.4,0,.6,1)']), {duration: big ? 700 : lvl >= 1 ? 480 : 380}).finished.then(() => (bl.style.display = 'none'), () => undefined);
     if (reduce) return;
-    // 2) halka vuruşu: hızlı büyür, hafif içe sekip yerine oturur
-    const s1 = 1 + 0.045 * k, s2 = 1 - 0.014 * k;
-    const ms = lvl >= 3 ? 560 : lvl >= 1 ? 440 : 360;
-    this.ringAnims.push(this.ring.animate([{transform: 'scale(1)'}, {transform: `scale(${s1.toFixed(3)})`, offset: 0.22}, {transform: `scale(${s2.toFixed(3)})`, offset: 0.55}, {transform: 'scale(1)'}],
-      {duration: ms, easing: 'cubic-bezier(.25,.7,.35,1)'}));
+    // 2) halka vuruşu: hızla büyür, hafif içe seker, yerine oturur
+    const ms = big ? 560 : lvl >= 1 ? 440 : 360;
+    this.ringAnims.push(this.ring.animate(seg([
+      {transform: 'scale(1)'},
+      {transform: `scale(${(1 + 0.045 * k).toFixed(3)})`, offset: 0.24},
+      {transform: `scale(${(1 - 0.014 * k).toFixed(3)})`, offset: 0.58},
+      {transform: 'scale(1)'},
+    ], [OUT, 'cubic-bezier(.45,0,.55,1)', OUT]), {duration: ms}));
     if (this.low) return;
-    // 3) çentikler: kadran gibi tık (desen 15°'de bir tekrarlar → sonda yerine oturmuş görünür, açı saklanmaz)
-    const notches = lvl === 0 ? 1 : lvl === 1 ? 2 : lvl === 2 ? 3 : lvl === 3 ? 12 : 24;
-    const deg = notches * 15;
-    const over = lvl >= 3 ? 0 : 2.5;
-    this.ringAnims.push(this.ticks.animate([
-      {transform: 'rotate(0deg) scale(1)', opacity: 0.7},
-      {transform: `rotate(${(deg * 0.72).toFixed(1)}deg) scale(${(1 + 0.03 * k).toFixed(3)})`, opacity: 1, offset: 0.3},
-      {transform: `rotate(${(deg + over).toFixed(1)}deg) scale(1)`, opacity: 0.85, offset: 0.7},
-      {transform: `rotate(${deg}deg) scale(1)`, opacity: 0.7},
-    ], {duration: lvl >= 3 ? 760 : ms + 40, easing: lvl >= 3 ? 'cubic-bezier(.15,.8,.25,1)' : 'cubic-bezier(.3,.7,.3,1)'}));
+    // 3) çentikler kadran gibi tıklar (desen 15°'de bir tekrarlar → sonda yerine oturmuş görünür, açı saklanmaz);
+    //    alışta iki-üç çentik, piştide tam tur fırıl
+    const deg = (lvl === 0 ? 1 : lvl === 1 ? 2 : lvl === 2 ? 3 : lvl === 3 ? 12 : 24) * 15;
+    this.ringAnims.push(this.ticks.animate(big
+      ? [{transform: 'rotate(0deg) scale(1)', opacity: 0.7, easing: 'cubic-bezier(.12,.8,.2,1)'}, {transform: `rotate(${deg}deg) scale(1.04)`, opacity: 1, offset: 0.85, easing: OUT}, {transform: `rotate(${deg}deg) scale(1)`, opacity: 0.7}]
+      : seg([
+        {transform: 'rotate(0deg) scale(1)', opacity: 0.7},
+        {transform: `rotate(${(deg + 3).toFixed(1)}deg) scale(${(1 + 0.035 * k).toFixed(3)})`, opacity: 1, offset: 0.4},
+        {transform: `rotate(${deg}deg) scale(1)`, opacity: 0.7},
+      ], ['cubic-bezier(.2,.9,.3,1)', 'cubic-bezier(.4,0,.4,1)']), {duration: big ? 820 : ms + 40}));
     // 4) halka çizgisi parlar (beyaz, takım renginde ışıma)
     const rf = this.ringFlash;
     rf.style.color = lvl >= 1 ? '#ffe9a0' : suit ? SUIT_COLOR[suit] : '#cfd8ff';
     rf.style.display = 'block';
-    const fa = rf.animate([{opacity: 0, transform: 'scale(.97)'}, {opacity: Math.min(1, 0.7 + 0.1 * lvl), transform: `scale(${(1 + 0.012 * k).toFixed(3)})`, offset: 0.18}, {opacity: 0, transform: `scale(${(1.02 + 0.02 * k).toFixed(3)})`}],
-      {duration: ms + 60, easing: 'ease-out'});
+    const fa = rf.animate(seg([
+      {opacity: 0, transform: 'scale(.97)'},
+      {opacity: Math.min(1, 0.75 + 0.08 * lvl), transform: `scale(${(1 + 0.015 * k).toFixed(3)})`, offset: 0.2},
+      {opacity: 0, transform: `scale(${(1.03 + 0.02 * k).toFixed(3)})`},
+    ], [OUT, 'cubic-bezier(.5,0,.7,1)']), {duration: ms + 40});
     fa.finished.then(() => (rf.style.display = 'none'), () => undefined);
     this.ringAnims.push(fa);
-    // 5) dışa dalgalanan çentik halkaları (alış/piştide birden çok, gecikmeli)
+    // 5) çentik halkası dışa dalgalanır (alışta 2, piştide 3; her biri biraz daha uzağa, gecikmeli)
     const waves = lvl === 0 ? 1 : lvl <= 2 ? 2 : 3;
     for (let i = 0; i < waves; i++) {
       const el = this.ripples.get();
-      const to = 1.18 + 0.1 * k + i * 0.14;
+      const to = 1.2 + 0.1 * k + i * 0.15;
       el.animate([{transform: 'rotate(0deg) scale(1)', opacity: 0.9 - i * 0.18}, {transform: `rotate(${7.5 + i * 7.5}deg) scale(${to.toFixed(3)})`, opacity: 0}],
-        {duration: (lvl >= 3 ? 620 : 400) + i * 60, delay: i * 85, easing: 'cubic-bezier(.15,.65,.3,1)', fill: 'backwards'}).finished.then(() => this.ripples.hide(el), () => undefined);
+        {duration: (big ? 620 : 380) + i * 60, delay: i * 85, easing: 'cubic-bezier(.15,.65,.3,1)', fill: 'backwards'}).finished.then(() => this.ripples.hide(el), () => undefined);
     }
-    // 6) alış ve pişti: halkanın dışına ince şok dalgası (pişti zaten impact() ile büyük patlar)
+    // 6) alış: halkanın dışına ince şok dalgası (pişti zaten impact() ile büyük patlar)
     if (lvl === 1 || lvl === 2) setTimeout(() => this.pulse('#fff6d0', lvl === 2 ? 1.75 : 1.4), 70);
   }
 
@@ -767,8 +778,8 @@ export class Table2D {
     if (this.low || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     this.stopRing();
     this.ringAnims = [
-      this.ring.animate([{transform: 'scale(1)'}, {transform: 'scale(.94)', offset: 0.35}, {transform: 'scale(1.015)', offset: 0.75}, {transform: 'scale(1)'}], {duration: 460, easing: 'cubic-bezier(.3,.6,.3,1)'}),
-      this.ticks.animate([{transform: 'rotate(0deg) scale(1)', opacity: 0.7}, {transform: 'rotate(-30deg) scale(.96)', opacity: 0.45, offset: 0.45}, {transform: 'rotate(-45deg) scale(1)', opacity: 0.7}], {duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)'}),
+      this.ring.animate(seg([{transform: 'scale(1)'}, {transform: 'scale(.94)', offset: 0.35}, {transform: 'scale(1.015)', offset: 0.72}, {transform: 'scale(1)'}], ['cubic-bezier(.4,0,.6,1)', OUT, 'ease-in-out']), {duration: 480}),
+      this.ticks.animate(seg([{transform: 'rotate(0deg) scale(1)', opacity: 0.7}, {transform: 'rotate(-38deg) scale(.96)', opacity: 0.45, offset: 0.45}, {transform: 'rotate(-45deg) scale(1)', opacity: 0.7}], ['cubic-bezier(.4,0,.6,1)', OUT]), {duration: 540}),
     ];
   }
 
@@ -784,9 +795,9 @@ export class Table2D {
     if (!el) {
       el = document.createElement('b');
       el.className = 'ar__rb';
-      const c = key === 'G' ? '255, 226, 140' : key === 'N' ? '170, 190, 255' : {H: '255, 70, 100', D: '255, 196, 60', C: '70, 230, 140', S: '90, 160, 255'}[key]!;
-      // beyaz çekirdek kartın kenarlarından taşar (kartın altından sızan ışık), dışı takım renginde söner
-      el.style.background = `radial-gradient(closest-side, rgba(255, 255, 255, .95) 0%, rgba(255, 252, 240, .7) 30%, rgba(${c}, .55) 44%, rgba(${c}, .2) 62%, rgba(${c}, 0) 80%)`;
+      const c = key === 'G' ? '255, 222, 120' : key === 'N' ? '180, 200, 255' : {H: '255, 110, 135', D: '255, 205, 80', C: '110, 240, 165', S: '120, 180, 255'}[key]!;
+      // parlak çekirdek kartın kenarlarından taşar (kartın altından sızan ışık), dışı takım renginde yumuşakça söner
+      el.style.background = `radial-gradient(closest-side, rgba(255, 255, 255, .95) 0%, rgba(255, 253, 244, .82) 34%, rgba(${c}, .62) 46%, rgba(${c}, .26) 62%, rgba(${c}, .08) 74%, rgba(${c}, 0) 86%)`;
       this.ring.prepend(el);
       this.blooms.set(key, el);
     }

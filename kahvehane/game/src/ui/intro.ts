@@ -207,8 +207,11 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
     body = order.map((seat, k) => `<div class="kh-vs__band is-${suits[k]}" style="--k:${k}"><span class="kh-vs__bsuit">${suitSvg(suits[k])}</span></div>`).join('') +
       order.map((seat, k) => {
         const p = by(seat);
-        return `<div class="kh-vs__slot is-k${k} ${k % 2 ? 'is-l' : 'is-r'}${p.human ? ' is-me' : ''}" style="--k:${k}">${bustHtml(p)}${plateHtml(p)}</div>`;
-      }).join('') + `<div class="kh-vs__seams">${order.slice(1).map((_, k) => `<i style="--k:${k + 1}"></i>`).join('')}</div>`;
+        // büst kendi şeridinin alt kenarında kesilir (alttaki şeridin arkasına girer), başı üstteki şeride taşabilir;
+        // şerit sınırındaki beyaz çizgi şeridin kendisinde (::before) → çizgi tam sınırda ve hep büstlerin arkasında
+        const last = k === order.length - 1;
+        return `<div class="kh-vs__slot is-k${k} ${k % 2 ? 'is-l' : 'is-r'}${p.human ? ' is-me' : ''}" style="--k:${k}"><div class="kh-vs__clip${last ? '' : ' is-cut'}">${bustHtml(p)}</div>${plateHtml(p)}</div>`;
+      }).join('');
   } else {
     const top = mode === '1v1' ? [by(1)] : [by(1), by(3)];
     const bot = mode === '1v1' ? [me] : [me, by(2)];
@@ -270,8 +273,6 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
       const from = k % 2 ? -70 : 70;
       play(sl, [{transform: `translateX(${from}%)`, opacity: 0}, {transform: `translateX(${-from * 0.05}%)`, opacity: 1, offset: 0.7}, {transform: 'none', opacity: 1}], {duration: 420, delay: 80 + k * 110, easing: EASE.out, fill: 'backwards'});
     });
-    all('.kh-vs__seams i').forEach((sm, k) =>
-      play(sm, [{opacity: 0, transform: `${sk} scaleX(0)`}, {opacity: 1, transform: `${sk} scaleX(1)`}], {duration: 240, delay: 380 + k * 60, easing: EASE.out, fill: 'backwards'}));
   } else {
     play(g('.kh-vs__half.is-t'), [{transform: `translateY(-115%) ${sk}`}, {transform: `translateY(0) ${sk}`}], {duration: 320, easing: EASE.out, fill: 'backwards'});
     play(g('.kh-vs__half.is-b'), [{transform: `translateY(115%) ${sk}`}, {transform: `translateY(0) ${sk}`}], {duration: 320, easing: EASE.out, fill: 'backwards'});
@@ -416,7 +417,6 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
       if (four) {
         all('.kh-vs__band').forEach((b, k) => go(b, [{transform: `translateX(0) ${sk}`}, {transform: `translateX(${k % 2 ? -125 : 125}%) ${sk}`}], 420, (3 - k) * 50));
         all('.kh-vs__slot').forEach((sl, k) => go(sl, [{transform: 'none'}, {transform: `translateX(${k % 2 ? -130 : 130}%)`}], 420, (3 - k) * 50));
-        all('.kh-vs__seams i').forEach(sm => fade(sm, 160));
       } else {
         go(g('.kh-vs__half.is-t'), [{transform: `translateY(0) ${sk}`}, {transform: `translateY(-125%) ${sk}`}]);
         go(g('.kh-vs__half.is-b'), [{transform: `translateY(0) ${sk}`}, {transform: `translateY(125%) ${sk}`}]);
