@@ -122,6 +122,23 @@ export const TABLES: readonly TableTheme[] = [
     paint: (w, h, dpr) => import('./kapadokya').then(m => m.paintKapadokya(w, h, dpr)),
     swatch: SWATCH_B.kapadokya,
   },
+  {
+    id: 'bogaz',
+    name: 'Boğaz Gecesi',
+    desc: 'Ay ışığında Boğaz: Galata, ışıklı köprü, yakamoz.',
+    vars: {
+      '--ar-bg': 'linear-gradient(180deg, #03061a 0%, #2c2c86 28%, #141a5c 32%, #02041a 100%)',
+      '--ar-rays': 'rgba(200, 220, 255, .05)',
+      '--ar-rays-op': '.3',
+      '--ar-pattern-op': '0',
+      '--ar-vig': 'radial-gradient(120% 90% at 50% 50%, rgba(0, 0, 0, 0) 58%, rgba(1, 2, 14, .5) 100%)',
+      '--ar-ring': 'rgba(255, 226, 150, .62)',
+      '--ar-glow-n': 'rgba(120, 150, 255, .3)',
+      '--ar-pool': 'rgba(2, 4, 24, .42)',
+    },
+    paint: (w, h, dpr) => import('./bogaz').then(m => m.paintBogaz(w, h, dpr)),
+    swatch: SWATCH_B.bogaz,
+  },
 ];
 
 export function tableById(id: string): TableTheme {

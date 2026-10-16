@@ -25,7 +25,7 @@ interface Art {
 
 // ───────────────────────── İstanbul siluet parçaları ─────────────────────────
 /** Galata Kulesi: silindir gövde, pencereli seyir balkonu, konik külah. by = taban, s = yükseklik (külah dahil). */
-function galata(g: Ctx, x: number, by: number, s: number, body: string, lit: boolean): void {
+export function galata(g: Ctx, x: number, by: number, s: number, body: string, lit: boolean): void {
   const w = s * 0.2, bodyH = s * 0.66, top = by - bodyH;
   g.fillStyle = body;
   // gövde (hafif genişleyen taban)
@@ -72,7 +72,7 @@ function galata(g: Ctx, x: number, by: number, s: number, body: string, lit: boo
 }
 
 /** Kız Kulesi: kayalık adacık + kare yapı + ince kule ve fener. by = su seviyesi, s = yükseklik. */
-function kizKulesi(g: Ctx, x: number, by: number, s: number, body: string, lit: boolean): void {
+export function kizKulesi(g: Ctx, x: number, by: number, s: number, body: string, lit: boolean): void {
   g.fillStyle = body;
   // adacık
   g.beginPath();
@@ -109,7 +109,7 @@ function kizKulesi(g: Ctx, x: number, by: number, s: number, body: string, lit: 
 }
 
 /** Asma köprü: iki kule, ana kablo, askılar, tabliye; kablo boyunca renkli ışıklar. */
-function bridge(g: Ctx, x0: number, x1: number, deckY: number, towerH: number, body: string, lights: boolean, rnd: Rnd): void {
+export function bridge(g: Ctx, x0: number, x1: number, deckY: number, towerH: number, body: string, lights: boolean, rnd: Rnd): void {
   const L = x1 - x0;
   const t0 = x0 + L * 0.2, t1 = x1 - L * 0.2;
   const topY = deckY - towerH;
@@ -169,7 +169,7 @@ function bridge(g: Ctx, x0: number, x1: number, deckY: number, towerH: number, b
 }
 
 /** Yalılar: suyun kıyısında ahşap evler, ışıklı pencereler. */
-function yalilar(g: Ctx, x0: number, x1: number, by: number, h: number, body: string, rnd: Rnd, lit = 0.6): void {
+export function yalilar(g: Ctx, x0: number, x1: number, by: number, h: number, body: string, rnd: Rnd, lit = 0.6): void {
   let x = x0;
   while (x < x1) {
     const w = h * (0.6 + rnd() * 0.8), hh = h * (0.5 + rnd() * 0.5);
@@ -191,7 +191,7 @@ function yalilar(g: Ctx, x0: number, x1: number, by: number, h: number, body: st
 }
 
 /** Vapur: beyaz gövde, siyah bant, kamara pencereleri, bacası. x = merkez, y = su hattı, s = boy */
-function vapur(g: Ctx, x: number, y: number, s: number): void {
+export function vapur(g: Ctx, x: number, y: number, s: number): void {
   const L = s, H = s * 0.18;
   g.fillStyle = '#f4f2ea';
   g.beginPath();
@@ -221,7 +221,7 @@ function vapur(g: Ctx, x: number, y: number, s: number): void {
 }
 
 /** Su: koyu degrade + ışık yansıması şeritleri (verilen x'lerde) */
-function water(g: Ctx, w: number, y0: number, y1: number, top: string, bot: string, glints: [number, string, number][], rnd: Rnd): void {
+export function water(g: Ctx, w: number, y0: number, y1: number, top: string, bot: string, glints: [number, string, number][], rnd: Rnd): void {
   g.fillStyle = lin(g, 0, y0, 0, y1, [
     [0, top],
     [1, bot],
@@ -239,7 +239,7 @@ function water(g: Ctx, w: number, y0: number, y1: number, top: string, bot: stri
   g.globalAlpha = 1;
 }
 
-function stars(g: Ctx, w: number, h: number, n: number, rnd: Rnd): void {
+export function stars(g: Ctx, w: number, h: number, n: number, rnd: Rnd): void {
   for (let i = 0; i < n; i++) {
     const x = rnd() * w, y = rnd() * h, r = 0.4 + Math.pow(rnd(), 3) * 1.6;
     g.fillStyle = `rgba(255,255,255,${0.35 + rnd() * 0.6})`;
@@ -251,7 +251,7 @@ function stars(g: Ctx, w: number, h: number, n: number, rnd: Rnd): void {
 }
 
 /** Hilal: dolu disk + kaydırılmış gölge diskiyle kesilir (gökyüzü renginde değil, gerçek kesme) */
-function crescent(g: Ctx, x: number, y: number, r: number, col = '#fff3c8'): void {
+export function crescent(g: Ctx, x: number, y: number, r: number, col = '#fff3c8'): void {
   glow(g, x, y, r * 3.2, [255, 230, 160], 0.35);
   const [c, cg] = makeCanvas(r * 2 + 4, r * 2 + 4);
   const C = r + 2;
