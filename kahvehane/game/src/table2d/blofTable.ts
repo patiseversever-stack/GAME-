@@ -77,6 +77,13 @@ class BCard {
   sel = false;
   /** Yığında: merkeze göre kayma (kart genişliği cinsinden) ve açı */
   off = {x: 0, y: 0, r: 0};
+  /** Son yazılan z-index (değişmediyse yazılmaz: satır içi stil değişimi = stil hesabı) */
+  z = -1;
+  setZ(z: number): void {
+    if (z === this.z) return;
+    this.z = z;
+    this.el.style.zIndex = String(z);
+  }
   constructor() {
     this.el = document.createElement('div');
     this.el.className = 'c2 bl-c';
@@ -391,7 +398,7 @@ export class BlofTable {
     c.anim = null;
     c.pose = {...p};
     c.el.style.transform = tf(p, this.cw, this.ch);
-    if (z !== undefined) c.el.style.zIndex = String(z);
+    if (z !== undefined) c.setZ(z);
   }
 
   private fly(c: BCard, to: Pose, o: {ms?: number; lift?: number; flip?: number; z?: number; zEnd?: number; delay?: number; ease?: string; arc?: number; spin?: number} = {}): Promise<void> {
@@ -410,7 +417,7 @@ export class BlofTable {
     };
     const end: Pose = {...to, r: to.r + spin};
     const {cw, ch} = this;
-    if (o.z !== undefined) c.el.style.zIndex = String(o.z);
+    if (o.z !== undefined) c.setZ(o.z);
     const delay = o.delay ?? 0;
     const kf: Keyframe[] = lift || arc || spin
       ? [{transform: tf(from, cw, ch)}, {transform: tf(mid, cw, ch), offset: 0.5}, {transform: tf(end, cw, ch)}]
@@ -429,7 +436,7 @@ export class BlofTable {
         c.el.style.transform = tf(to, cw, ch);
         a.cancel();
         c.anim = null;
-        if (o.zEnd !== undefined) c.el.style.zIndex = String(o.zEnd);
+        if (o.zEnd !== undefined) c.setZ(o.zEnd);
       },
       () => undefined,
     );
@@ -580,7 +587,7 @@ export class BlofTable {
     this.hand.forEach((c, i) => {
       const p = c.sel ? this.selPose(poses[i]) : poses[i];
       const z = (i < this.rowOf ? 500 : 600) + i;
-      c.el.style.zIndex = String(z);
+      c.setZ(z);
       if (!animate) this.set(c, p);
       else if (pop?.has(c)) void this.fly(c, p, {ms: c.sel ? 230 : 180, lift: 0, ease: c.sel ? SPRING : EASE_OUT});
       else if (Math.abs(c.pose.x - p.x) > 0.3 || Math.abs(c.pose.y - p.y) > 0.3 || Math.abs(c.pose.s - p.s) > 0.001) void this.fly(c, p, {ms, lift: 0});
@@ -600,7 +607,7 @@ export class BlofTable {
     const list = this.opp[seat] ?? [];
     list.forEach((c, i) => {
       const p = this.fanPose(seat, i, list.length);
-      c.el.style.zIndex = String(400 + seat * 60 + i);
+      c.setZ(400 + seat * 60 + i);
       if (animate) void this.fly(c, p, {ms: 240, lift: 0});
       else this.set(c, p);
     });
@@ -840,8 +847,8 @@ export class BlofTable {
 
   /** Elde seçim açık/kapalı (kapalıyken seçim korunur). */
   setSelectable(on: boolean): void {
+    // katmana sınıf yazılmaz (bütün kart alt ağacının stilini yeniden hesaplatırdı); dokunuş JS'te süzülür
     this.selectable = on;
-    this.el.classList.toggle('is-pick', on);
   }
 
   /** Yanlışlıkla seçili kalan (artık elde olmayan) kartlar temizlenir. */
@@ -1033,8 +1040,11 @@ export class BlofTable {
         const z = (i < this.rowOf ? 500 : 600) + i;
         const p = c.sel ? this.selPose(poses[i]) : poses[i];
         if (!list.includes(c)) {
-          c.el.style.zIndex = String(z);
-          void this.fly(c, p, {ms: 300, lift: 0});
+          // eldekiler bir kare sonra kayar (uçuşların başladığı kareye yük binmesin)
+          requestAnimationFrame(() => {
+            c.setZ(z);
+            void this.fly(c, p, {ms: 300, lift: 0});
+          });
           return;
         }
         const k = list.indexOf(c);

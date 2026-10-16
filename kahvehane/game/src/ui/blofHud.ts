@@ -64,6 +64,8 @@ export class BlofHud {
   private pointEl: HTMLElement;
   private state: BarState = {mode: 'off', rank: null, sel: 0, canPass: false};
   private held: number[] = new Array(14).fill(0);
+  private varY = '';
+  private varL = '';
   private suggest = 0;
 
   constructor(parent: HTMLElement, private snd: BlofHudSounds | null = null) {
@@ -191,10 +193,12 @@ export class BlofHud {
     this.selInfo.style.top = y + 'px';
     // seçici çubuğun satırının üstünde (rozetimi örtmez)
     this.picker.style.bottom = Math.max(0, L.H - y + L.u * 2.3) + 'px';
-    document.documentElement.style.setProperty('--bl-bar-y', y + 'px');
+    // HUD kökünde (rozetim de okur). :root'a yazmak tüm belgenin stilini yeniden hesaplatırdı (4× yavaşta ~60 ms).
     // geniş ekranda (tablet) rozet + çubuk ortalanmış bir grup; telefonda sola yaslı
-    const groupW = L.u * 31;
-    document.documentElement.style.setProperty('--bl-row-l', Math.max(L.u * 0.9, (L.W - groupW) / 2) + 'px');
+    const host = this.el.parentElement ?? this.el;
+    const by = y.toFixed(1) + 'px', rl = Math.max(L.u * 0.9, (L.W - L.u * 31) / 2).toFixed(1) + 'px';
+    if (by !== this.varY) host.style.setProperty('--bl-bar-y', (this.varY = by));
+    if (rl !== this.varL) host.style.setProperty('--bl-row-l', (this.varL = rl));
     // BLÖF düğmesi çubuğun yerinde (pencere açıkken çubuk gizlenir)
     pos(this.blof, L.blof.x, L.blof.y);
     this.blof.style.setProperty('--d', L.blof.d + 'px');

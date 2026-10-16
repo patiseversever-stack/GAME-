@@ -3,7 +3,7 @@
 .ar.is-blof .ar__cards, .ar.is-blof .ar__pot { display: none; }
 .bl-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .bl-layer .c2 { pointer-events: none; }
-.bl-layer.is-pick .c2.bl-hand { pointer-events: auto; cursor: pointer; }
+.bl-layer .c2.bl-hand { pointer-events: auto; cursor: pointer; }
 
 /* seçim halkası: altın çerçeve + dış ışık (statik); yeni gelen kart: mavi-beyaz (söner) */
 .bl-c__ring { position: absolute; inset: -3.5%; border-radius: 11%; opacity: 0; pointer-events: none;
