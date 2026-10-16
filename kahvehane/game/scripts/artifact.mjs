@@ -11,3 +11,6 @@ h = h.replace(title, '');
 const theme = `<style>:root{color-scheme:dark;background:#082a1d}html,body{background:#082a1d;color:#f4ead2;height:100%}</style>`;
 fs.writeFileSync(out, `${title}\n${theme}\n${h.trim()}\n`);
 console.log('yazıldı', out, (fs.statSync(out).size / 1048576).toFixed(2), 'MB');
+// sesler pakete gömülmez: sayfa, yanındaki voice/ klasöründen okur (yoksa yalnız balon). Bkz. tools/voice/README.md §5
+const voice = out.replace(/[^/]*$/, '') + 'voice';
+if (fs.existsSync(voice + '/manifest.json')) console.log('ses klasörü (sayfanın YANINDA yayınlanmalı):', voice + '/');
