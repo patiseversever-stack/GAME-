@@ -17,7 +17,7 @@
 .is-mesli .kh-results__title, .kh-results.is-m4.is-lose .kh-results__title { font-size: calc(var(--u) * 2.8); }
 
 /* sahne: kazanan büyük (zafer), diğerleri küçük (üzgün), konuşma balonu */
-.kh-podium { position: relative; flex: none; height: calc(var(--u) * 11.6); }
+.kh-podium { position: relative; flex: 0 1 calc(var(--u) * 11.6); } /* kısa ekranda önce sahne küçülür, tablo kırpılmaz */
 .kh-podium__rays { left: 30%; width: calc(var(--u) * 30); margin: calc(var(--u) * -15) 0 0 calc(var(--u) * -15); opacity: .7; }
 .kh-podium__big { position: absolute; left: -2%; top: 0; bottom: 0; width: 58%; }
 .kh-podium__bust { position: absolute; bottom: 0; left: 0; height: 112%; aspect-ratio: 1; will-change: transform; }
@@ -35,17 +35,21 @@
 .kh-podium__small { position: absolute; right: 0; top: calc(var(--u) * .3); display: flex; gap: calc(var(--u) * .5); justify-content: flex-end; }
 .kh-podium__sm { display: flex; flex-direction: column; align-items: center; gap: .15em; }
 .kh-podium__smava { position: relative; }
-.kh-podium__smava .kh-ava { --as: calc(var(--u) * 4.4); }
-.is-m4 .kh-podium__smava .kh-ava, .is-mesli .kh-podium__smava .kh-ava { --as: calc(var(--u) * 3.6); }
+.kh-podium__smava .kh-ava { --as: calc(var(--u) * 3.6); }
+.is-m4 .kh-podium__smava .kh-ava, .is-mesli .kh-podium__smava .kh-ava { --as: calc(var(--u) * 3.1); }
 .kh-podium__rank { position: absolute; left: calc(var(--u) * -.3); top: calc(var(--u) * -.3); display: grid; place-items: center; width: calc(var(--u) * 1.5); height: calc(var(--u) * 1.5);
   border-radius: 50%; background: var(--btn4-fill); box-shadow: 0 0 0 2px var(--navy); font-family: var(--font-display); font-weight: var(--w-display); font-size: calc(var(--u) * .85); text-shadow: var(--outline-thin); }
 .kh-podium__sm small { font-family: var(--font-display); font-size: calc(var(--u) * .78); white-space: nowrap; text-shadow: var(--outline-thin); color: var(--c-text-2); }
-.kh-podium__say { right: 0; bottom: calc(var(--u) * .2); max-width: 46%; font-size: calc(var(--u) * .92); --tail: 18%; }
+.kh-podium__say { right: 0; top: calc(var(--u) * var(--sh, 4.4)); bottom: auto; max-width: 48%; padding: .5em .75em .6em; font-size: calc(var(--u) * .82); line-height: 1.22; --tail: 18%; } /* balon küçük yüzlerin ALTINDA durur, onları kapatmaz */
+.is-m4 .kh-podium__say, .is-mesli .kh-podium__say { --sh: 3.9; }
+.kh-podium { min-height: calc(var(--u) * 8.4); }
+/* küçük yüzler yalnız avatar (adlar tablonun başlığında zaten var) → balona yer açılır */
+.kh-podium__sm small { display: none; }
 .kh-podium__say::before { left: -16px; top: 40%; bottom: auto; border-width: 10px 16px 10px 0; border-color: transparent var(--bubble-edge) transparent transparent; }
 .kh-podium__say::after { left: -10.5px; top: calc(40% + 3.5px); bottom: auto; border-width: 6.5px 11px 6.5px 0; border-color: transparent var(--bubble-fill) transparent transparent; }
 
 /* puan tablosu */
-.kh-sc { --cw: calc(var(--u) * 4.8); flex: 1 1 auto; display: flex; flex-direction: column; min-height: 0; padding: calc(var(--u) * .35) calc(var(--u) * .65) calc(var(--u) * .55); }
+.kh-sc { --cw: calc(var(--u) * 4.8); flex: 1 1 auto; display: flex; flex-direction: column; min-height: min-content; padding: calc(var(--u) * .35) calc(var(--u) * .65) calc(var(--u) * .55); }
 .kh-sc.is-c4 { --cw: calc(var(--u) * 3.5); }
 .kh-sc__row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) repeat(var(--n, 2), var(--cw)); align-items: center; flex: 1;
   min-height: calc(var(--u) * 1.65); max-height: calc(var(--u) * 2.3); padding: 0 calc(var(--u) * .35); border-bottom: 1.5px solid var(--line); font-size: calc(var(--u) * .98); }
@@ -109,10 +113,10 @@
 .kh-lvlup .kh-btn { min-width: calc(var(--u) * 12); margin-top: calc(var(--u) * .4); }
 
 /* alçak ya da geniş ekran */
-@media (max-height: 700px), (min-aspect-ratio: 10/17) {
+@media (max-height: 880px), (min-aspect-ratio: 10/17) {
   .kh-results__col { gap: calc(var(--u) * .4); }
   .kh-results__title { font-size: calc(var(--u) * 2.9); }
-  .kh-podium { height: calc(var(--u) * 9.4); }
+  .kh-podium { flex: none; height: calc(var(--u) * 9.4); }
   .kh-sc__row { min-height: calc(var(--u) * 1.45); }
   .kh-reward { padding-top: calc(var(--u) * .45); padding-bottom: calc(var(--u) * .45); }
   .kh-results__btns { gap: calc(var(--u) * .55); }
