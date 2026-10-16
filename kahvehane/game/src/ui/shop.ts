@@ -260,7 +260,10 @@ export class ShopPage implements Page {
   show(sub?: string): void {
     this.visible = true;
     if (sub && TABS.some(t => t.id === sub)) this.tab = sub as ShopTab;
-    this.activate(false);
+    // ilk açılış: sayfa kabuğu (başlık, sekmeler) bu karede, içerik bir sonraki karede — sayfa geçişi 60 ms gecikmeli ve
+    // saydam başladığı için görünmez; tıklama görevi ikiye bölünür (tek uzun kare yerine iki kısa kare)
+    if (!this.panels.size && ANIM) frameJob(() => this.scope.alive && this.visible && this.activate(false), true);
+    else this.activate(false);
   }
 
   hide(): void {

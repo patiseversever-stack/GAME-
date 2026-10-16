@@ -32,6 +32,7 @@ export class CollectionPage implements Page {
     // içerik ilk show()'da kurulur
   }
 
+  private queued = false;
   /** Karo kuşağı: yeniden kurulumda eski sıradaki işler boşa düşsün */
   private gen = 0;
   /** Henüz doldurulmamış koleksiyon satırları: ekrana ~1 boy yaklaşınca, kare başına bir satır */
@@ -57,12 +58,30 @@ export class CollectionPage implements Page {
   private sig = '';
 
   show(): void {
-    if (!this.editing && (!this.sig || this.sig !== JSON.stringify(this.shell.profile.data))) this.render(ANIM ? 470 : 0);
+    const need = !this.editing && (!this.sig || this.sig !== JSON.stringify(this.shell.profile.data));
+    // içerik bir sonraki karede kurulur (sayfa geçişi 60 ms gecikmeli ve saydam başlar: görünmez); tıklama görevi bölünür
+    if (need && ANIM) {
+      if (this.queued) return;
+      this.queued = true;
+      frameJob(() => {
+        this.queued = false;
+        if (!this.scope.alive) return;
+        this.render(470);
+        this.enter();
+      }, true);
+      return;
+    }
+    if (need) this.render(0);
+    this.enter();
+  }
+
+  /** Giriş: kart ve ilk bölümler yaylanır, sayaçlar sayar (yalnız ilk ekrandaki bölümler: her biri ayrı katman) */
+  private enter(): void {
     const g = (s: string) => this.el.querySelector(s);
     const card = g('.kh-pcard');
     if (card) play(card, [{transform: 'translateY(-16px) scale(.96)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, easing: EASE.spring, fill: 'backwards'});
     this.el.querySelectorAll('.kh-coll__sec').forEach((s, i) =>
-      play(s, [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 80 + i * 70, easing: EASE.out, fill: 'backwards'}));
+      i < 2 && play(s, [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 80 + i * 70, easing: EASE.out, fill: 'backwards'}));
     // sayaçlar yeniden sayar
     this.el.querySelectorAll<HTMLElement>('.kh-stat b[data-v]').forEach(b => countUp(this.scope, b, 0, Number(b.dataset.v), 700, n => (b.dataset.pct ? `%${n}` : fmt(n))));
     this.el.querySelectorAll<HTMLElement>('.kh-mstat__bar i').forEach((b, i) =>
