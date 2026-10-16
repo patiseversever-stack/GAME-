@@ -430,7 +430,7 @@
 /* =================== DENE (tam ekran) =================== */
 .kh-try { position: absolute; inset: 0; z-index: 45; pointer-events: auto; overflow: hidden; background: #060a30; }
 /* geniş ekranda telefon sütunu (lobi ile aynı his); dar ekranda tam ekran */
-.kh-try__col { position: absolute; top: 0; bottom: 0; left: 50%; width: min(100%, calc(var(--u) * 27)); margin-left: max(-50%, calc(var(--u) * -13.5)); overflow: hidden;
+.kh-try__col { position: absolute; top: 0; bottom: 0; left: 0; right: 0; margin: 0 auto; max-width: max(440px, calc(var(--u) * 27)); overflow: hidden;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, .08), 0 0 60px rgba(0, 0, 0, .5); }
 .kh-try__scene { position: absolute; inset: 0; }
 .kh-try__buy.is-short { justify-content: center; gap: .45em; color: var(--c-text-2); font-size: calc(var(--u) * 1.6); }

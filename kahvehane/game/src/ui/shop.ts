@@ -653,11 +653,7 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
       haptic('warning');
       shake(b, 1);
       shake(wallet, 0.5);
-      const me = charById(p.data.char ?? 'dursun');
-      msg.innerHTML = `<span class="kh-pd__sad"><img src="${me.poses.uzgun}" alt=""></span><span class="kh-pd__earn"><span><b>${fmt(price - p.data.coins)} jeton</b> daha lazım. Kasayı doldurmanın yolları:</span>
-        <span class="kh-pd__ways"><button class="kh-pd__way" data-act="earn" data-to="home">${I.play}Bir el oyna</button><button class="kh-pd__way" data-act="earn" data-to="quests">${I.target}Görevler</button><button class="kh-pd__way" data-act="earn" data-to="home">${I.gift}Günlük ödül · sandık</button></span></span>`;
-      play(msg, [{transform: 'translateY(10px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.spring});
-      msg.scrollIntoView({block: 'nearest', behavior: ANIM ? 'smooth' : 'auto'});
+      showEarn(shell, msg, price - p.data.coins);
       return;
     }
     busy = true;
@@ -688,6 +684,15 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
     busy = false;
   });
   return m;
+}
+
+/** Yetersiz jeton: nazik mesaj + kasayı doldurmanın yolları (dokununca pencere kapanır, ilgili sekmeye gider). */
+function showEarn(shell: Shell, msg: HTMLElement, short: number): void {
+  const me = charById(shell.profile.data.char ?? 'dursun');
+  msg.innerHTML = `<span class="kh-pd__sad"><img src="${me.poses.uzgun}" alt=""></span><span class="kh-pd__earn"><span><b>${fmt(short)} jeton</b> daha lazım. Kasayı doldurmanın yolları:</span>
+    <span class="kh-pd__ways"><button class="kh-pd__way" data-act="earn" data-to="home">${I.play}Bir el oyna</button><button class="kh-pd__way" data-act="earn" data-to="quests">${I.target}Görevler</button><button class="kh-pd__way" data-act="earn" data-to="home">${I.gift}Günlük ödül · sandık</button></span></span>`;
+  play(msg, [{transform: 'translateY(10px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.spring});
+  msg.scrollIntoView({block: 'nearest', behavior: ANIM ? 'smooth' : 'auto'});
 }
 
 /** Jetonlar bakiyeden ürüne uçar (kapsül sayar). Çağıran satın almadan ÖNCE shell.coins.hold() demiş olmalı; burada bırakılır. */
@@ -768,7 +773,10 @@ function setSheet(shell: Shell, s: ShopSet, onChange: () => void): ModalHandle {
       sum.innerHTML = `<span class="kh-sd__row"><span>Tek tek</span><s class="kh-num">${fmt(pr.full)}</s></span>
         <span class="kh-sd__row is-save"><span>Set indirimi</span><b class="kh-num">−${fmt(save)}</b></span>
         ${pr.missing.length < s.parts.length ? `<span class="kh-sd__note">${s.parts.length - pr.missing.length} parça zaten sende; yalnız eksikler ödenir.</span>` : ''}`;
-      actBox.innerHTML = `<button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-pd__btn" data-act="buyset"><span>Seti Al</span><span class="kh-pd__cost">${coinImg()}<b class="kh-num">${fmt(pr.price)}</b></span></button>`;
+      const short = pr.price - p.data.coins;
+      actBox.innerHTML = short > 0
+        ? `<button class="kh-btn kh-btn--4 kh-btn--xl kh-btn--block kh-pd__btn is-short" data-act="buyset"><span class="kh-pd__cost">${coinImg()}<b class="kh-num">${fmt(short)}</b></span><span>eksik</span></button>`
+        : `<button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-pd__btn" data-act="buyset"><span>Seti Al</span><span class="kh-pd__cost">${coinImg()}<b class="kh-num">${fmt(pr.price)}</b></span></button>`;
     }
     if (pop) play(actBox.firstElementChild!, [{transform: 'scale(.6)', opacity: 0}, {transform: 'scale(1.06)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 420, easing: EASE.out});
   };
@@ -794,6 +802,12 @@ function setSheet(shell: Shell, s: ShopSet, onChange: () => void): ModalHandle {
       });
       return;
     }
+    if (a === 'earn') {
+      ctx.sounds.tap();
+      await m.close();
+      shell.goto(b.dataset.to as 'home' | 'quests');
+      return;
+    }
     if (a === 'equipall') {
       ctx.sounds.reward();
       haptic('success');
@@ -816,7 +830,7 @@ function setSheet(shell: Shell, s: ShopSet, onChange: () => void): ModalHandle {
       ctx.sounds.tap();
       haptic('warning');
       shake(b, 1);
-      msg.innerHTML = `<span><b>${fmt(pr.price - p.data.coins)} jeton</b> eksik! Biraz daha biriktir; set seni bekler.</span>`;
+      showEarn(shell, msg, pr.price - p.data.coins);
       return;
     }
     busy = true;
