@@ -4,7 +4,7 @@
   background-image: linear-gradient(180deg, rgba(255, 255, 255, .3), rgba(220, 228, 255, .14)); }
 
 /* yelpaze: kartlar alt-ortadaki eksen etrafında açılır; ortadaki önde */
-.kh-fan { position: absolute; inset: 0; display: block; }
+.kh-fan { position: absolute; inset: 0; z-index: 1; display: block; }
 .kh-fan__c { --cw: 36%; position: absolute; left: 50%; bottom: 9%; width: var(--cw); margin-left: calc(var(--cw) / -2); z-index: var(--z, 1);
   transform-origin: 50% 118%; transform: translateX(calc(var(--i) * 46%)) rotate(calc(var(--i) * 16deg));
   box-shadow: 0 0 0 1.5px rgba(10, 16, 51, .85), 0 5px 10px rgba(2, 4, 24, .45); transition: transform .5s cubic-bezier(.3, 1.35, .5, 1); }
