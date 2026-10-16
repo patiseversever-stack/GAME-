@@ -350,6 +350,7 @@ export class Fx {
   /** Oyundaki sahne: bu katman, havuz düğümleri, sesler. Kullanılan düğümler efekt bitince TOPLUCA gizlenir
    * (her düğüm için ayrı bitiş işleyicisi + display değişimi = her karede stil hesabı olurdu). */
   private tok = 0;
+  private qanim = new WeakMap<HTMLElement, Animation>();
   private stage(low: boolean, used: HTMLElement[], tok: string): Stage {
     const W = this.W, H = this.H;
     if (!this.qBack.isConnected) {
@@ -377,14 +378,14 @@ export class Fx {
         const d = Number(o.delay) || 0;
         if (d < 260) {
           n.style.display = 'block';
-          play(n, kf, {fill: 'both', ...o});
+          this.qanim.set(n, play(n, kf, {fill: 'both', ...o}));
           return;
         }
         const t0 = performance.now();
         window.setTimeout(() => {
           if (n.dataset.tok !== tok) return;
           n.style.display = 'block';
-          play(n, kf, {fill: 'both', ...o, delay: Math.max(0, d - (performance.now() - t0))});
+          this.qanim.set(n, play(n, kf, {fill: 'both', ...o, delay: Math.max(0, d - (performance.now() - t0))}));
         }, d - 180);
       },
       flash: (color, peak, ms, delay = 0) => {
@@ -408,8 +409,17 @@ export class Fx {
     const used: HTMLElement[] = [], tok = String(++this.tok);
     const fx = FX[id] ? id : 'klasik';
     FX[fx](this.stage(low, used, tok), at, jack);
-    window.setTimeout(() => {
-      for (const n of used) if (n.dataset.tok === tok) hide(n);
-    }, (FX_MS[fx] ?? 2000) + (jack ? 600 : 300));
+    // bitince topluca gizle (durdurulmuş/uzamış animasyonu olan düğüm bir süre daha bekler)
+    const sweep = (): void => {
+      let left = 0;
+      for (const n of used) {
+        if (n.dataset.tok !== tok) continue;
+        const a = this.qanim.get(n);
+        if (a && a.playState !== 'finished') left++;
+        else hide(n);
+      }
+      if (left) window.setTimeout(sweep, 600);
+    };
+    window.setTimeout(sweep, (FX_MS[fx] ?? 2000) + (jack ? 600 : 300));
   }
 }

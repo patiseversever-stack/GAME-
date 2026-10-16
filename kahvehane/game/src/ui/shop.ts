@@ -17,7 +17,7 @@ import {I} from './icons';
 import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toast, type ModalHandle} from './parts';
 import {afterFrameJob, fanHtml, frameJob, fxStillHtml, idleJob, mountFx, mountFxStill, paintTableLater, tableSceneHtml, warmPreviews, type FxLoop} from './previews';
 import {BADGE_NAME, RANK, badgeOf, setOf, setById, setPrice, shopSets, type ShopSet} from './sets';
-import {Spotlight, glint, glintHtml, mountDeckViewer, raysGate, spinRaysHtml} from './showcase';
+import {Spotlight, glint, glintHtml, mountDeckViewer, raysGate, spinRaysHtml, warmRays} from './showcase';
 import {deckOr} from './deckpv';
 import {openTryOn} from './tryon';
 import {haptic} from '../platform/bridge';
@@ -946,3 +946,4 @@ warmPreviews({
   tables: CATALOG.filter(i => i.kind === 'table').map(i => i.id),
   frames: CATALOG.filter(i => i.kind === 'frame').map(i => i.id),
 });
+if (typeof window !== 'undefined') window.setTimeout(() => idleJob(warmRays), 2600);

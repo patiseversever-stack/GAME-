@@ -18,6 +18,16 @@ import RAYS_GOLD from './img/rays-gold.webp';
 export const spinRaysHtml = (cls: string, gold = false): string =>
   `<img class="kh-srays kh-keep ${cls}" src="${gold ? RAYS_GOLD : RAYS_WHITE}" alt="" decoding="async" draggable="false">`;
 
+/** Işın görsellerini boşta önceden çöz (ilk market açılışında çözme işi binmesin) */
+export function warmRays(): void {
+  for (const src of [RAYS_WHITE, RAYS_GOLD]) {
+    const img = new Image();
+    img.decoding = 'async';
+    img.src = src;
+    img.decode().catch(() => undefined);
+  }
+}
+
 /**
  * Kaydırma kabındaki ışın çarklarından yalnız görünenler dönsün (katman kalır: yeniden görününce boyama gerekmez, açı
  * korunur). Gözlemci hiç çalışmazsa (bazı gömülü ortamlar) hepsi döner — bozulma yok. Dönüş: yeni içerikte çağrılacak işlev.
