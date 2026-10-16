@@ -10,6 +10,7 @@ import {I} from './icons';
 import {charAvatarHtml, gemHtml, onAct, rarityHtml, toast} from './parts';
 import {fanHtml, frameJob, mountFxStill, tableSceneHtml} from './previews';
 import {setPrice, shopSets} from './sets';
+import {deckOr} from './deckpv';
 import {haptic} from '../platform/bridge';
 import {shortName, type Page, type Shell} from './lobby';
 
@@ -135,7 +136,7 @@ export class CollectionPage implements Page {
         row.innerHTML = CATALOG.filter(i => i.kind === kd).map(it => {
           const own = p.owns(kd, it.id), on = d.equipped[kd as 'deck' | 'table' | 'fx'] === it.id;
           return `<button class="kh-ctile is-${it.rarity}${own ? '' : ' is-locked'}${on ? ' is-on' : ''}" data-act="${own ? 'use' : 'shop'}" data-k="${kd}" data-id="${it.id}" data-spring>
-              <span class="kh-ctile__pv is-${kd}">${tilePv(kd, it.id, d.equipped.deck)}</span>
+              <span class="kh-ctile__pv is-${kd}">${tilePv(kd, it.id, deckOr(d.equipped.deck))}</span>
               <span class="kh-ctile__n">${esc(it.name)}</span>
               ${on ? `<span class="kh-ctile__on">${I.check}</span>` : own ? '' : `<span class="kh-ctile__price"><img src="${ASSETS.icon_coin}" alt="">${fmt(it.price)}</span>`}
               ${rarityHtml(it.rarity, 'kh-ctile__rar')}</button>`;

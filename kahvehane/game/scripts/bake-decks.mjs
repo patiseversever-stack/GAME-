@@ -29,6 +29,13 @@ try {
     total += buf.length;
     console.log(`✓ ${o.id.padEnd(12)} ${(buf.length / 1024).toFixed(1).padStart(6)} KB  (hazırlık ${o.prepMs.toFixed(0)} ms, çizim ${o.drawMs.toFixed(0)} ms)`);
   }
+  // kayıttan çıkarılmış destelerin şeritleri pakette boşuna yer tutmasın (import.meta.glob hepsini gömer)
+  if (!only.length)
+    for (const f of fs.readdirSync(dir))
+      if (f.endsWith('.webp') && !out.some(o => `${o.id}.webp` === f)) {
+        fs.unlinkSync(path.join(dir, f));
+        console.log(`− ${f} silindi (deste kayıtta yok)`);
+      }
   console.log(`toplam ${(total / 1024).toFixed(0)} KB → ${path.relative(root, dir)}/`);
 } finally {
   await b.close();

@@ -139,40 +139,6 @@ export const TABLES: readonly TableTheme[] = [
     paint: (w, h, dpr) => import('./bogaz').then(m => m.paintBogaz(w, h, dpr)),
     swatch: SWATCH_B.bogaz,
   },
-  {
-    id: 'neon',
-    name: 'Neon Kahvehane',
-    desc: 'Tuğla duvar, pembe tabela, buharı tüten neon çay.',
-    vars: {
-      '--ar-bg': 'radial-gradient(120% 75% at 50% 46%, #2a1238 0%, #170a22 50%, #07040d 100%)',
-      '--ar-rays': 'rgba(255, 120, 220, .05)',
-      '--ar-rays-op': '.25',
-      '--ar-pattern-op': '0',
-      '--ar-vig': 'radial-gradient(120% 90% at 50% 50%, rgba(0, 0, 0, 0) 58%, rgba(0, 0, 0, .55) 100%)',
-      '--ar-ring': 'rgba(255, 70, 200, .75)',
-      '--ar-glow-n': 'rgba(255, 60, 190, .3)',
-      '--ar-pool': 'rgba(10, 2, 20, .45)',
-    },
-    paint: (w, h, dpr) => import('./neon').then(m => m.paintNeon(w, h, dpr)),
-    swatch: SWATCH_B.neon,
-  },
-  {
-    id: 'hazine',
-    name: 'Hazine Odası',
-    desc: 'Kızıl kadife, altın telkâri ve köşelerde dört mücevher.',
-    vars: {
-      '--ar-bg': 'radial-gradient(120% 75% at 50% 46%, #8a1030 0%, #5a0620 45%, #2e020e 80%, #180006 100%)',
-      '--ar-rays': 'rgba(255, 214, 140, .06)',
-      '--ar-rays-op': '.35',
-      '--ar-pattern-op': '0',
-      '--ar-vig': 'radial-gradient(120% 90% at 50% 50%, rgba(0, 0, 0, 0) 55%, rgba(16, 0, 4, .58) 100%)',
-      '--ar-ring': 'rgba(255, 210, 120, .68)',
-      '--ar-glow-n': 'rgba(255, 170, 110, .28)',
-      '--ar-pool': 'rgba(40, 2, 12, .4)',
-    },
-    paint: (w, h, dpr) => import('./hazine').then(m => m.paintHazine(w, h, dpr)),
-    swatch: SWATCH_B.hazine,
-  },
 ];
 
 export function tableById(id: string): TableTheme {

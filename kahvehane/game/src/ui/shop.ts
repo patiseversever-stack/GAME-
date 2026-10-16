@@ -18,6 +18,7 @@ import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toas
 import {fanHtml, frameJob, mountFx, mountFxStill, paintTableLater, tableSceneHtml, type FxLoop} from './previews';
 import {BADGE_NAME, RANK, badgeOf, setOf, setById, setPrice, shopSets, type ShopSet} from './sets';
 import {Spotlight, glint, glintHtml, mountDeckViewer} from './showcase';
+import {deckOr} from './deckpv';
 import {openTryOn} from './tryon';
 import {haptic} from '../platform/bridge';
 import {g3} from './fx';
@@ -75,7 +76,7 @@ interface Me {
 }
 function meOf(shell: Shell): Me {
   const d = shell.profile.data;
-  return {char: charById(d.char ?? 'dursun'), deck: d.equipped.deck, table: d.equipped.table, frame: d.equipped.frame, fx: d.equipped.fx, name: d.name, level: d.level};
+  return {char: charById(d.char ?? 'dursun'), deck: deckOr(d.equipped.deck), table: d.equipped.table, frame: d.equipped.frame, fx: d.equipped.fx, name: d.name, level: d.level};
 }
 
 const coinImg = (): string => `<img src="${ASSETS.icon_coin}" alt="">`;

@@ -26,6 +26,8 @@ export const PV_QUALITY = 0.8;
 const baked = import.meta.glob('./deckpv/*.webp', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 
 export const hasDeck = (id: string): boolean => DECKS.some(d => d.id === id);
+/** Kayıtta olmayan (kaldırılmış) bir deste kuşanılıysa önizlemeler varsayılan desteyle çizilir (oyun da öyle yapar). */
+export const deckOr = (id: string): string => (hasDeck(id) ? id : DECKS[0].id);
 
 // ---------------------------------------------------------------- CSS kuralları (deste başına bir kez)
 let styleEl: HTMLStyleElement | null = null;

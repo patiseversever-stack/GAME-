@@ -115,7 +115,8 @@ export function deferMount(box: HTMLElement, fn: () => void, idle = false): void
     io.observe(box);
     let wait = 700;
     const check = (): void => {
-      if (done || !box.isConnected) return;
+      if (done) return;
+      if (!box.isConnected) return io?.disconnect(); // panel yeniden kuruldu: gözlemciyi bırak
       const r = box.getBoundingClientRect();
       if (r.width && r.bottom > -160 && r.top < innerHeight + 160) enqueue();
       else if ((wait *= 2) < 12000) setTimeout(check, wait);

@@ -11,6 +11,7 @@ import {I} from './icons';
 import {charAvatarHtml, onAct, stampWord} from './parts';
 import {mountFx, paintTableLater, tableSceneHtml, type FxLoop} from './previews';
 import {haptic} from '../platform/bridge';
+import {deckOr} from './deckpv';
 import type {Shell} from './lobby';
 
 export interface TryOpts {
@@ -24,7 +25,7 @@ export function openTryOn(shell: Shell, it: ShopItem, o: TryOpts): void {
   const ctx = shell.ctx;
   const d = shell.profile.data;
   const scope = new Scope();
-  const deck = it.kind === 'deck' ? it.id : d.equipped.deck;
+  const deck = it.kind === 'deck' ? it.id : deckOr(d.equipped.deck);
   const table = it.kind === 'table' ? it.id : d.equipped.table;
   const frame = it.kind === 'frame' ? it.id : d.equipped.frame;
   const fxId = it.kind === 'fx' ? it.id : d.equipped.fx;

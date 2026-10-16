@@ -82,39 +82,8 @@ function bogaz(): string {
   );
 }
 
-// ───────── Neon Kahvehane: tuğla duvar, pembe halka, neon işaretler ─────────
-function neon(): string {
-  let br = '';
-  for (let y = 0, r = 0; y < 100; y += 7, r++) for (let x = r % 2 ? -8 : 0; x < 100; x += 16) br += `<rect x='${x + 0.6}' y='${y + 0.6}' width='14.8' height='5.8' rx='1' fill='#1e1028'/>`;
-  const tube = (d: string, c: string): string => `<path d='${d}' fill='none' stroke='${c}' stroke-width='5' opacity='.25' stroke-linecap='round'/><path d='${d}' fill='none' stroke='${c}' stroke-width='2' stroke-linecap='round'/><path d='${d}' fill='none' stroke='#fff' stroke-width='.7' stroke-linecap='round' opacity='.9'/>`;
-  return url(
-    `<rect width='100' height='100' fill='#07040d'/>${br}<rect width='100' height='100' fill='url(#gl)'/>` +
-      tube('M50 36A14 14 0 1 1 49.9 36', '#ff3cbe') +
-      tube('M14 22C14 16 22 16 22 22C22 16 30 16 30 22C30 28 22 32 22 34C22 32 14 28 14 22Z', '#ff2e63') +
-      tube('M80 70L86 78L80 86L74 78Z', '#ffbe28') + tube('M78 14L84 20M84 14L78 20', '#2ec4ff') +
-      `<rect width='100' height='100' fill='url(#vg)'/>`,
-    `<radialGradient id='gl' cx='.5' cy='.5' r='.6'><stop offset='0' stop-color='#ff3cbe' stop-opacity='.25'/><stop offset='1' stop-color='#7a3cff' stop-opacity='.05'/></radialGradient>` +
-      `<radialGradient id='vg'><stop offset='.6' stop-color='#000' stop-opacity='0'/><stop offset='1' stop-color='#000' stop-opacity='.55'/></radialGradient>`,
-  );
-}
-
-// ───────── Hazine Odası: kızıl kadife, altın telkâri, köşe taşları ─────────
-function hazine(): string {
-  const gem = (x: number, y: number, c: string): string => `<circle cx='${x}' cy='${y}' r='4.5' fill='${c}' stroke='#f2c94e' stroke-width='1.4'/><circle cx='${x - 1.4}' cy='${y - 1.4}' r='1.2' fill='#fff' opacity='.85'/>`;
-  return url(
-    `<rect width='100' height='100' fill='url(#vl)'/><rect x='7' y='7' width='86' height='86' rx='6' fill='none' stroke='#f2c94e' stroke-width='1.6'/>` +
-      `<rect x='11' y='11' width='78' height='78' rx='4' fill='none' stroke='#c8962a' stroke-width='.7'/>` +
-      gem(9, 9, '#e0103a') + gem(91, 9, '#ff9f1a') + gem(91, 91, '#10b060') + gem(9, 91, '#1f6bff') +
-      `<circle cx='50' cy='50' r='19' fill='url(#cv)'/><circle cx='50' cy='50' r='13' fill='none' stroke='#f2c94e' stroke-width='1.5'/>`,
-    `<radialGradient id='vl' cx='.45' cy='.4' r='.75'><stop offset='0' stop-color='#b8203e'/><stop offset='.6' stop-color='#6a0820'/><stop offset='1' stop-color='#2a0210'/></radialGradient>` +
-      `<radialGradient id='cv'><stop offset='0' stop-color='#1a0008' stop-opacity='.6'/><stop offset='1' stop-color='#1a0008' stop-opacity='0'/></radialGradient>`,
-  );
-}
-
 export const SWATCH_B: Record<string, string> = {
   ebru: ebru(),
   kapadokya: kapadokya(),
   bogaz: bogaz(),
-  neon: neon(),
-  hazine: hazine(),
 };

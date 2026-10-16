@@ -13,8 +13,6 @@ export const DECKS: readonly DeckEntry[] = [
   {id: 'dalga', load: () => import('./dalga').then(m => m.skin)},
   {id: 'aycicegi', load: () => import('./aycicegi').then(m => m.skin)},
   {id: 'ebru', load: () => import('./ebru').then(m => m.skin)},
-  {id: 'hazine', load: () => import('./hazine').then(m => m.skin)},
-  {id: 'neon', load: () => import('./neon').then(m => m.skin)},
   {id: 'kapadokya', load: () => import('./kapadokya').then(m => m.skin)},
   {id: 'bogaz', load: () => import('./bogaz').then(m => m.skin)},
 ];

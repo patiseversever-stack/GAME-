@@ -1,4 +1,4 @@
-// Deste yapım takımı: yeni koleksiyon desteleri (ebru, kapadokya, bogaz, neon, hazine, tezhip) bunu kullanır.
+// Deste yapım takımı: koleksiyon desteleri (ebru, kapadokya, bogaz) bunu kullanır.
 //
 // · İş (Job): boyamalar üreteç (generator) olarak yazılır; `due()` dilim süresi dolunca `yield` eder. `runJob` her
 //   yield'de ana iş parçacığına nefes verir (dokunuş/animasyon aksamaz, tek görev ≤ ~10 ms), `runJobSync` aynı işi
@@ -206,7 +206,7 @@ export function suitPath(s: Suit): Path2D {
 let OUT: Partial<Record<Suit, Path2D>> = {};
 /**
  * Takımın TEK parça dış hattı (birim yol). Sinek üç daire + saptan oluşur: kontur çizilince içteki kesişim yayları
- * görünür; neon tüp / altın kenar gibi yalnız dış hattı isteyen çizimler için şekil maskeden izlenir (bir kez).
+ * görünür; tüp / altın kenar gibi yalnız dış hattı isteyen çizimler için şekil maskeden izlenir (bir kez).
  */
 export function suitOutline(s: Suit): Path2D {
   const hit = OUT[s];
