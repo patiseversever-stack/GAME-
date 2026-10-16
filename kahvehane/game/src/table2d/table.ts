@@ -85,6 +85,8 @@ interface SeatGeo {
   stack: {x: number; y: number; s: number; r: number};
   /** Pişti kartları yığının hangi yanına dizilir (+1 sağ, -1 sol) */
   pdir: number;
+  /** Pişti sırasının desteye göre dikey kayması (varsayılan 6 px aşağı) */
+  py?: number;
 }
 
 interface Layout {
@@ -363,11 +365,23 @@ export class Table2D {
       hintX = Math.min(maxX, Math.max(hintX, edge + cw * ds + 4 + 5 + half));
       // benim destem halkanın sağ altında, ipucu bandının üstünde; pişti kartları ortaya (sola) dizilir: sağdaki rakibin destesine binmez
       const ms = 0.66;
+      const myY = clear - (ch * ms) / 2 - 5;
+      // sağdaki rakibin pişti sırası (sola, biraz yukarı) ile aynı yüksekliğe denk gelirse destem sola kayar —
+      // ama pişti sıram (solda) halkaya girmeyecek kadar (kısa ekranda yer yoksa en az çakışma)
+      const py = -ch * ss * 0.18, ph = ch * ss * 0.94;
+      const rightPistiL = W - sideStackX - cw * ss * 0.5 - 12 - (cw * ss * 0.94) / 2 - ph * 0.16;
+      const myTop = myY - (ch * ms) / 2 - 4, R = cw * 2.25 * 0.47;
+      let myX = Math.min(W - cw * 0.6, W * 0.71);
+      if (myTop < sideY + py + ph / 2 + 4) {
+        const ringOk = (x: number) => myTop > pileY + R + 4 || x - cw * ms * 1.55 > W / 2 + Math.sqrt(Math.max(0, R * R - (myTop - pileY) ** 2)) + 4;
+        const want = rightPistiL - 6 - (cw * ms) / 2 - 4;
+        for (let x = Math.min(myX, want); x <= myX; x += 2) if (ringOk(x)) { myX = x; break; }
+      }
       seats = [
-        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: Math.min(W - cw * 0.6, W * 0.72), y: Math.min(H * 0.665, clear - (ch * ms) / 2 - 5), s: ms, r: 8}, pdir: -1},
-        {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1},
+        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: myX, y: myY, s: ms, r: 8}, pdir: -1},
+        {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1, py},
         {fan: {x: W / 2, y: H * 0.2, a: 180, s: fs, spread: cw * fs * 0.62}, stack: {x: Math.min(W - cw * 0.9, W / 2 + cw * 1.45), y: H * 0.2, s: ss, r: 6}, pdir: 1},
-        {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1},
+        {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1, py},
       ];
     }
     this.L = {W, H, cw, ch, pile: {x: W / 2, y: pileY}, deck, hand, seats};
@@ -552,7 +566,7 @@ export class Table2D {
   }
   private pistiPose(seat: number, i: number): Pose {
     const g = this.L.seats[seat], s = g.stack;
-    return {x: s.x + g.pdir * (this.L.cw * s.s * 0.5 + i * 12), y: s.y + 6, r: g.pdir * (14 + i * 4), s: s.s * 0.94};
+    return {x: s.x + g.pdir * (this.L.cw * s.s * 0.5 + i * 12), y: s.y + (g.py ?? 6), r: g.pdir * (14 + i * 4), s: s.s * 0.94};
   }
 
   /** Deste sayacı hapının kartın alt kenarına göre dikey kayması (hap kenara biner) */
