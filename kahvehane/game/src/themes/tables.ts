@@ -105,6 +105,23 @@ export const TABLES: readonly TableTheme[] = [
     paint: (w, h, dpr) => import('./ebru').then(m => m.paintEbru(w, h, dpr)),
     swatch: SWATCH_B.ebru,
   },
+  {
+    id: 'kapadokya',
+    name: 'Kapadokya Şafağı',
+    desc: 'Şafakta peri bacalarının üstünde süzülen balonlar.',
+    vars: {
+      '--ar-bg': 'linear-gradient(180deg, #3d2a7a 0%, #8a3f9a 35%, #e0577f 62%, #ff9a5a 80%, #5a2a44 100%)',
+      '--ar-rays': 'rgba(255, 230, 200, .06)',
+      '--ar-rays-op': '.35',
+      '--ar-pattern-op': '0',
+      '--ar-vig': 'radial-gradient(120% 90% at 50% 50%, rgba(0, 0, 0, 0) 58%, rgba(30, 8, 40, .45) 100%)',
+      '--ar-ring': 'rgba(255, 220, 170, .7)',
+      '--ar-glow-n': 'rgba(255, 170, 200, .32)',
+      '--ar-pool': 'rgba(40, 14, 64, .4)',
+    },
+    paint: (w, h, dpr) => import('./kapadokya').then(m => m.paintKapadokya(w, h, dpr)),
+    swatch: SWATCH_B.kapadokya,
+  },
 ];
 
 export function tableById(id: string): TableTheme {

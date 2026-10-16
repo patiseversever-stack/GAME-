@@ -33,8 +33,8 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   ops.push({k: 'tine', x: 0, y: 0, dx: 0, dy: 1, a: 12 * u, l: 2.5 * u, s: 10 * u});
   ops.push({k: 'wave', dx: 1, dy: 0, A: 5 * u, f: 0.05 / u, ph: 0});
   // yığın çevresinde yumuşak girdap: tarak çizgileri kartların çevresinde döner
-  ops.push({k: 'swirl', x: px, y: py, a: 1.6, r: R * 3.6});
-  ops.push({k: 'swirl', x: px, y: py, a: 1.2, r: R * 1.7});
+  ops.push({k: 'swirl', x: px, y: py, a: 1.05, r: R * 3.4});
+  ops.push({k: 'swirl', x: px, y: py, a: 0.9, r: R * 1.6});
   // köşelerde küçük girdaplar
   for (const [x, y, s] of [[0.1, 0.1, -1], [0.9, 0.16, 1], [0.08, 0.66, 1], [0.92, 0.86, -1]] as const) ops.push({k: 'swirl', x: W * x, y: H * y, a: 3 * s, r: 30 * u});
   // iki lale (sol üst, sağ orta) + yeşil yapraklar
@@ -48,6 +48,9 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   const [cv, g] = makeCanvas(W, H);
   g.drawImage(tex, 0, 0);
   tex.width = tex.height = 0;
+  // genel kısma: kartlar desenin önünde öne çıksın
+  g.fillStyle = 'rgba(8,10,34,0.2)';
+  g.fillRect(0, 0, W, H);
   // yığının altı sakin ve koyu (kartlar okunur), kenarlar hafif kararır
   radial(g, px, py, 0, R * 2.3, [
     [0, 'rgba(8,10,34,0.72)'],
@@ -60,9 +63,9 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   gb.addColorStop(1, 'rgba(6,8,28,0.55)');
   g.fillStyle = gb;
   g.fillRect(0, H * 0.7, W, H * 0.3);
-  radial(g, W / 2, H / 2, Math.min(W, H) * 0.5, Math.max(W, H) * 0.75, [
+  radial(g, W / 2, H / 2, Math.min(W, H) * 0.6, Math.max(W, H) * 0.8, [
     [0, 'rgba(4,6,24,0)'],
-    [1, 'rgba(4,6,24,0.5)'],
+    [1, 'rgba(4,6,24,0.28)'],
   ]);
   return cv;
 }

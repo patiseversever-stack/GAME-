@@ -111,7 +111,7 @@ function hydrate(root: ParentNode): void {
 
 const badgeHtml = (it: ShopItem): string => {
   const b = badgeOf(it);
-  return b ? `<span class="kh-tag is-${b}">${BADGE_NAME[b]}</span>` : '';
+  return b ? `<span class="kh-mtag is-${b}">${BADGE_NAME[b]}</span>` : '';
 };
 
 /** Ürün kartı. wide: iki sütunluk vitrin kartı; sub: tür adını göster (karışık listelerde). */
@@ -197,13 +197,28 @@ export class ShopPage implements Page {
   private dealT = 0;
   private visible = false;
   private spot = new Spotlight(() => this.panels.get(this.tab)?.el ?? null);
+  private edges: () => void = () => undefined;
 
   constructor(private shell: Shell) {
     this.el.innerHTML = `<header class="kh-shop__head"><div class="kh-title kh-shop__title">${g3('Market')}</div><button class="kh-shop__count" data-act="coll"></button></header>
-      <div class="kh-shop__tabs kh-noswipe"><div class="kh-shop__track">${TABS.map(t => `<button class="kh-stab" data-act="tab" data-t="${t.id}">${t.icon}<span>${t.name}</span></button>`).join('')}<i class="kh-stab__ind"></i></div></div>
+      <div class="kh-shop__tabsw"><div class="kh-shop__tabs kh-noswipe"><div class="kh-shop__track">${TABS.map(t => `<button class="kh-stab" data-act="tab" data-t="${t.id}">${t.icon}<span>${t.name}</span></button>`).join('')}<i class="kh-stab__ind"></i></div></div></div>
       <div class="kh-shop__body kh-scroll"></div>`;
     this.body = q(this.el, '.kh-shop__body');
     onAct(this.scope, this.el, (a, b) => this.act(a, b));
+    // sekme şeridi kenarları: devamı varsa yumuşak gölge (kesik yazı "devamı var" diye okunur)
+    const tabs = q(this.el, '.kh-shop__tabs'), wrap = q(this.el, '.kh-shop__tabsw');
+    let edgeRaf = 0;
+    const edges = (): void => {
+      edgeRaf = 0;
+      const max = tabs.scrollWidth - tabs.clientWidth;
+      wrap.classList.toggle('is-l', tabs.scrollLeft > 4);
+      wrap.classList.toggle('is-r', tabs.scrollLeft < max - 4);
+    };
+    this.edges = (): void => {
+      if (!edgeRaf) edgeRaf = requestAnimationFrame(edges);
+    };
+    this.scope.on(tabs, 'scroll', this.edges, {passive: true});
+    this.scope.add(() => cancelAnimationFrame(edgeRaf));
     this.scope.add(() => {
       clearTimeout(this.dealT);
       this.spot.stop();
@@ -251,6 +266,11 @@ export class ShopPage implements Page {
     const ind = q(this.el, '.kh-stab__ind');
     ind.style.width = on.offsetWidth + 'px';
     ind.style.transform = `translateX(${on.offsetLeft}px)`;
+    // seçili sekme ortada dursun (ilk açılışta da)
+    const strip = q(this.el, '.kh-shop__tabs');
+    const want = on.offsetLeft + on.offsetWidth / 2 - strip.clientWidth / 2;
+    if (Math.abs(strip.scrollLeft - want) > 2) strip.scrollTo({left: want, behavior: ANIM && this.visible && this.panels.size ? 'smooth' : 'auto'});
+    this.edges();
   }
 
   private renderCount(): void {
@@ -373,7 +393,6 @@ export class ShopPage implements Page {
       this.spot.stop();
       this.tab = t;
       this.activate(true, dir);
-      b.scrollIntoView({behavior: ANIM ? 'smooth' : 'auto', inline: 'center', block: 'nearest'});
     } else if (a === 'item' || a === 'deal') {
       s.tap();
       const it = itemOf(b.dataset.k as ItemKind, b.dataset.id!);
@@ -506,7 +525,7 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
     cls: `kh-pd is-${it.rarity} is-${it.kind}`,
     body: `<div class="kh-pd__stage"><i class="kh-pd__sbg"></i><i class="kh-rays is-gold kh-pd__rays"></i>
         <div class="kh-pd__pv"></div>${hint ? `<span class="kh-pd__hint">${I.hand}${hint}</span>` : ''}</div>
-      <div class="kh-pd__meta">${rarityHtml(it.rarity)}<span class="kh-pd__kind">${KIND_INFO[it.kind].name}</span>${badge && !p.owns(it.kind, it.id) ? `<span class="kh-tag is-${badge}">${BADGE_NAME[badge]}</span>` : ''}${dealPrice ? `<span class="kh-pd__deal">Günün Teklifi -%${Math.round(DEAL_OFF * 100)}</span>` : ''}</div>
+      <div class="kh-pd__meta">${rarityHtml(it.rarity)}<span class="kh-pd__kind">${KIND_INFO[it.kind].name}</span>${badge && !p.owns(it.kind, it.id) ? `<span class="kh-mtag is-${badge}">${BADGE_NAME[badge]}</span>` : ''}${dealPrice ? `<span class="kh-pd__deal">Günün Teklifi -%${Math.round(DEAL_OFF * 100)}</span>` : ''}</div>
       <div class="kh-title kh-pd__name">${g3(it.name, it.rarity === 'legendary' ? '' : 'is-white')}</div>
       <p class="kh-pd__desc">${esc(c ? c.title : it.desc)}</p>
       ${extra}
@@ -671,7 +690,7 @@ function setSheet(shell: Shell, s: ShopSet, onChange: () => void): ModalHandle {
         <div class="kh-pd__pv kh-sd__parts">${s.parts.map((it, i) => `<button class="kh-sd__part is-${it.kind} is-${it.rarity}" data-act="part" data-k="${it.kind}" data-id="${it.id}" style="--n:${i - (s.parts.length - 1) / 2}">
           <span class="kh-sd__pv"><i class="kh-item__bg"></i>${pvHtml(it, me)}</span><b>${esc(it.name)}</b><small>${KIND_INFO[it.kind].name}</small>
           <span class="kh-sd__st"></span></button>`).join('')}</div></div>
-      <div class="kh-pd__meta"><span class="kh-tag is-limited">${I.gift}Set</span><span class="kh-pd__kind">${s.parts.length} parça</span></div>
+      <div class="kh-pd__meta"><span class="kh-mtag is-limited">${I.gift}Set</span><span class="kh-pd__kind">${s.parts.length} parça</span></div>
       <div class="kh-title kh-pd__name">${g3(s.name)}</div>
       <p class="kh-pd__desc">${esc(s.tag)}. Tek tek almaktan <b>%${Math.round(s.off * 100)}</b> ucuz.</p>
       <div class="kh-sd__sum"></div>

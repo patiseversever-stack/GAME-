@@ -11,8 +11,14 @@
 .kh-ring__t { stroke: rgba(10, 16, 51, .7); }
 .kh-ring__f { stroke: #ffd23f; stroke-linecap: round; }
 
-/* sekmeler: yatay kaydırılır, altın gösterge kayar */
-.kh-shop__tabs { flex: none; margin: 0 calc(var(--u) * -.7); padding: calc(var(--u) * .2) calc(var(--u) * .7) calc(var(--u) * .35); overflow-x: auto; overflow-y: hidden;
+/* sekmeler: yatay kaydırılır, altın gösterge kayar; devamı olan kenarda yumuşak gölge */
+.kh-shop__tabsw { position: relative; flex: none; margin: 0 calc(var(--u) * -.7); }
+.kh-shop__tabsw::before, .kh-shop__tabsw::after { content: ''; position: absolute; z-index: 2; top: calc(var(--u) * .2); bottom: calc(var(--u) * .35); width: calc(var(--u) * 2.6); pointer-events: none;
+  opacity: 0; transition: opacity .25s; }
+.kh-shop__tabsw::before { left: 0; background: linear-gradient(90deg, #0b1250 25%, rgba(11, 18, 80, 0)); }
+.kh-shop__tabsw::after { right: 0; background: linear-gradient(270deg, #0b1250 25%, rgba(11, 18, 80, 0)); }
+.kh-shop__tabsw.is-l::before, .kh-shop__tabsw.is-r::after { opacity: 1; }
+.kh-shop__tabs { flex: none; padding: calc(var(--u) * .2) calc(var(--u) * .7) calc(var(--u) * .35); overflow-x: auto; overflow-y: hidden;
   touch-action: pan-x; scrollbar-width: none; overscroll-behavior: contain; }
 .kh-shop__tabs::-webkit-scrollbar { display: none; }
 .kh-shop__track { position: relative; display: flex; gap: calc(var(--u) * .2); width: max-content; padding: 3px; border-radius: var(--r-pill); background: var(--seg-track);
@@ -103,13 +109,14 @@
 .kh-rail__in { display: flex; gap: calc(var(--u) * .6); width: max-content; padding: calc(var(--u) * .25) calc(var(--u) * .7) calc(var(--u) * .7); }
 .kh-item.is-rail { width: calc(var(--u) * 10.4); flex: none; }
 
-/* rozet etiketi (Yeni / Popüler / Sınırlı / Set) */
-.kh-tag { display: inline-flex; align-items: center; gap: .25em; padding: .3em .6em .26em; border-radius: var(--r-sm); white-space: nowrap; transform: rotate(4deg);
+/* rozet etiketi (Yeni / Popüler / Sınırlı / Set). Kartta: sağ üst köşeye taşan çıkartma; pencerede: satır içi */
+.kh-mtag { display: inline-flex; align-items: center; gap: .25em; padding: .3em .6em .26em; border-radius: var(--r-sm); white-space: nowrap; transform: rotate(4deg);
   font-family: var(--font-display); font-size: calc(var(--u) * .66); letter-spacing: .04em; text-transform: uppercase; text-shadow: var(--outline-thin);
   background: var(--btn5-fill); box-shadow: 0 0 0 2px var(--navy), 0 2px 0 var(--navy), inset 0 1.5px 0 rgba(255, 255, 255, .6); }
-.kh-tag.is-hot { background: var(--btn3-fill); }
-.kh-tag.is-limited { background: linear-gradient(180deg, #e4b2ff 0%, #b26bff 35%, #7a2fe0 100%); }
-.kh-tag .kh-i { width: 1.1em; height: 1.1em; }
+.kh-mtag.is-hot { background: var(--btn3-fill); }
+.kh-mtag.is-limited { background: linear-gradient(180deg, #e4b2ff 0%, #b26bff 35%, #7a2fe0 100%); }
+.kh-mtag .kh-i { width: 1.1em; height: 1.1em; }
+.kh-item__top .kh-mtag { position: absolute; right: calc(var(--u) * -.75); top: calc(var(--u) * -1.05); z-index: 5; }
 
 /* =================== PARILTI (tek seferlik, Spotlight) =================== */
 .kh-glint { position: absolute; z-index: 5; top: -20%; bottom: -20%; left: 0; width: 46%; pointer-events: none; opacity: 0; transform: translateX(-120%) skewX(-20deg);

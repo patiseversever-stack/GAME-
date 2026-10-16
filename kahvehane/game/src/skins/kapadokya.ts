@@ -154,7 +154,7 @@ function classicPath(): Path2D {
 }
 let CLASSIC: Path2D | null = null;
 /** Klasik balon (küçük, uzak): x,y zarf merkezi, r yarı boy, alpha uzaklık sisi */
-function smallBalloon(g: Ctx, x: number, y: number, r: number, cols: readonly string[], haze: number, hazeCol: RGB): void {
+export function smallBalloon(g: Ctx, x: number, y: number, r: number, cols: readonly string[], haze: number, hazeCol: RGB): void {
   CLASSIC ??= classicPath();
   g.save();
   g.translate(x, y);
@@ -181,7 +181,7 @@ function suitBalloon(g: Ctx, s: Suit): void {
 
 // ───────────────────────── manzara ─────────────────────────
 /** Peri bacaları sırası: taban `by`, en yüksek `h`, renk; ince uzun koniler, küçük koyu bazalt şapkalar, oyma pencereler */
-function chimneys(g: Ctx, x0: number, x1: number, by: number, h: number, col: RGB, cap: RGB, rnd: Rnd, holes = false): void {
+export function chimneys(g: Ctx, x0: number, x1: number, by: number, h: number, col: RGB, cap: RGB, rnd: Rnd, holes = false): void {
   // yumuşak kaya tepeleri (tabanı doldurur)
   g.fillStyle = css(mix(col, [40, 10, 30], 0.08));
   g.beginPath();
@@ -256,7 +256,7 @@ function chimneys(g: Ctx, x0: number, x1: number, by: number, h: number, col: RG
 }
 
 /** Şafak göğü (koyu, arka yüz ve saray pencereleri için) */
-function dawnSky(g: Ctx, w: number, h: number, horizon: number): void {
+export function dawnSky(g: Ctx, w: number, h: number, horizon: number): void {
   g.fillStyle = lin(g, 0, 0, 0, horizon, [
     [0, '#3d2a7a'],
     [0.35, '#8a3f9a'],
@@ -267,7 +267,7 @@ function dawnSky(g: Ctx, w: number, h: number, horizon: number): void {
   g.fillRect(0, 0, w, h);
 }
 
-const BALLOON_SETS: string[][] = [
+export const BALLOON_SETS: string[][] = [
   ['#e8173f', '#ffd23a'],
   ['#2fa7e0', '#ffffff'],
   ['#7a3fc8', '#ffb43a'],
