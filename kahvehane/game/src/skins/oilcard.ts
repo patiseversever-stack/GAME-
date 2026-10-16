@@ -2,9 +2,9 @@
 // Gece" destesinin düzeni: dış kenarda boyalı tablo şeridi, ortada krem tuval panel + iki köşe rozeti (iri, net
 // dizinler), ortada boyalı takım işareti / As madalyonu / kemerli saray tablosu. Bütün resimler src/themes/oil.ts
 // yağlı boya işleyicisiyle bir kez (dilimli) boyanır; kart çizimi yalnız kopyalar.
-import {oilArt, maskOf, type ArtOpts} from '../themes/oil';
+import {makeRef, maskOf, oilArt, paintLayer, type ArtOpts} from '../themes/oil';
 import {
-  cardPath, corners, edge, gold, makeCanvas, rad, RankFont, roundRect, SUIT_TY, suitOutline, suitPath, withSuit,
+  cardPath, corners, edge, gold, makeCanvas, mulberry, rad, RankFont, roundRect, SUIT_TY, suitOutline, suitPath, withSuit,
   type Ctx, type Job, type Suit,
 } from './kit';
 
@@ -40,34 +40,36 @@ export const stripMask = (x: number, y: number): number => {
 };
 
 // ───────────────────────── krem tuval ─────────────────────────
-/** Krem tuval: çok düşük kontrastlı yağlı boya darbeleri + hafif renkli bulutlar (desteye özgü). */
+/** Krem tuval: çok düşük kontrastlı, geniş ve yumuşak yağlı boya darbeleri + desteye özgü hafif renk bulutları. */
 export function* paintCream(seed: number, c0: string, c1: string, wisps: [number, number, number, string][]): Job<HTMLCanvasElement> {
-  const {cv} = yield* oilArt({
-    W: PW,
-    H: PH,
-    seed,
-    k: 0.25,
-    under: false,
-    jitter: 0.32,
-    sketch: g => {
-      g.fillStyle = rad(g, PW / 2, PH / 2, PW * 0.15, PH * 0.62, [
-        [0, c0],
-        [1, c1],
+  const sketch = (g: Ctx): void => {
+    g.fillStyle = rad(g, PW / 2, PH / 2, PW * 0.15, PH * 0.62, [
+      [0, c0],
+      [1, c1],
+    ]);
+    g.fillRect(0, 0, PW, PH);
+    for (const [x, y, r, col] of wisps) {
+      g.fillStyle = rad(g, PW * x, PH * y, 0, PW * r, [
+        [0, col],
+        [1, 'rgba(0,0,0,0)'],
       ]);
       g.fillRect(0, 0, PW, PH);
-      for (const [x, y, r, col] of wisps) {
-        g.fillStyle = rad(g, PW * x, PH * y, 0, PW * r, [
-          [0, col],
-          [1, 'rgba(0,0,0,0)'],
-        ]);
-        g.fillRect(0, 0, PW, PH);
-      }
-    },
+    }
+  };
+  const [cv, g] = makeCanvas(PW, PH);
+  sketch(g);
+  const ref = makeRef(PW, PH, 0.2, sketch);
+  const rnd = mulberry(seed);
+  yield* paintLayer(g, ref, rnd, PW, PH, {
+    cell: 11,
+    len: [22, 36],
+    width: [9, 13],
     field: (x, y) => 0.5 * Math.sin(x * 0.012 + y * 0.009) + 0.35 * Math.sin(y * 0.02 - x * 0.006),
+    jitter: 5,
+    relief: 0.025,
   });
-  const g = cv.getContext('2d')!;
   // bez dokusu
-  g.globalAlpha = 0.045;
+  g.globalAlpha = 0.04;
   g.fillStyle = '#6b5a3a';
   for (let y = 0; y < PH; y += 3) g.fillRect(0, y, PW, 0.8);
   for (let x = 0; x < PW; x += 3) g.fillRect(x, 0, 0.8, PH);
@@ -80,23 +82,26 @@ export function* paintCream(seed: number, c0: string, c1: string, wisps: [number
  * Takım şeklinin içine boyanmış küçük tablo. `sketch` piksel biriminde (SPR×SPR) çizer; birim şekil SPR·0.84
  * ölçeğinde merkeze oturur. Sonra şekle kırpılır, koyu + altın kenar çizilir.
  */
-export function* suitSprite(s: Suit, o: Omit<ArtOpts, 'W' | 'H' | 'mask'> & {rim?: string; ink?: string}): Job<HTMLCanvasElement> {
+/** Takım şeklinin maskesi (SPR×SPR piksel; boyanacak bölge biraz taşar) */
+export function suitMask(s: Suit): (x: number, y: number) => number {
   const k = SPR * 0.84, C = SPR / 2;
-  const path = suitPath(s);
-  const mask = maskOf(SPR, SPR, g => {
+  return maskOf(SPR, SPR, g => {
     g.translate(C, C);
     g.scale(k * 1.04, k * 1.04);
-    g.fill(path);
+    g.fill(suitPath(s));
   });
-  const {cv: art} = yield* oilArt({W: SPR, H: SPR, mask, ...o});
+}
+/** Boyalı tabloyu (SPR×SPR) takım şekline kırpar; hafif ışık + koyu ve altın kenar. */
+export function clipSuit(s: Suit, art: HTMLCanvasElement, rim?: string, ink = '#140c04'): HTMLCanvasElement {
+  const k = SPR * 0.84, C = SPR / 2;
+  const path = suitPath(s);
   const [c, g] = makeCanvas(SPR, SPR);
   g.setTransform(k, 0, 0, k, C, C);
   g.save();
   g.clip(path);
   g.setTransform(1, 0, 0, 1, 0, 0);
   g.drawImage(art, 0, 0);
-  art.width = art.height = 0;
-  // hafif küre ışığı (cam/ipek parlaklığı değil; boyanın üstüne vurmuş ışık)
+  // boyanın üstüne vurmuş yumuşak ışık (sol üst) ve sağ altta gölge
   g.setTransform(k, 0, 0, k, C, C);
   g.fillStyle = rad(g, -0.2, -0.28, 0.02, 0.85, [
     [0, 'rgba(255,250,230,0.16)'],
@@ -108,12 +113,19 @@ export function* suitSprite(s: Suit, o: Omit<ArtOpts, 'W' | 'H' | 'mask'> & {rim
   const out = suitOutline(s);
   g.lineJoin = 'round';
   g.lineWidth = 0.06;
-  g.strokeStyle = o.ink ?? '#140c04';
+  g.strokeStyle = ink;
   g.stroke(out);
   g.lineWidth = 0.032;
-  g.strokeStyle = o.rim ?? gold(g, -0.5, -0.55, 0.5, 0.55);
+  g.strokeStyle = rim ?? gold(g, -0.5, -0.55, 0.5, 0.55);
   g.stroke(out);
   g.setTransform(1, 0, 0, 1, 0, 0);
+  return c;
+}
+/** Takım şeklinin içine boyanmış küçük tablo (`sketch` piksel biriminde, SPR×SPR; birim şekil SPR·0.84). */
+export function* suitSprite(s: Suit, o: Omit<ArtOpts, 'W' | 'H' | 'mask'>, rim?: string): Job<HTMLCanvasElement> {
+  const {cv} = yield* oilArt({W: SPR, H: SPR, mask: suitMask(s), ...o});
+  const c = clipSuit(s, cv, rim);
+  cv.width = cv.height = 0;
   return c;
 }
 

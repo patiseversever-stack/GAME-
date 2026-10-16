@@ -282,10 +282,12 @@ export class ShopPage implements Page {
   private placeInd(from?: HTMLElement): void {
     const tabs = this.el.querySelectorAll<HTMLElement>('.kh-stab');
     const i = TABS.findIndex(t => t.id === this.tab);
-    tabs.forEach((t, k) => t.classList.toggle('is-on', k === i));
     const on = tabs[i];
-    if (from && from !== on && ANIM) {
-      const dx = from.offsetLeft - on.offsetLeft, sx = from.offsetWidth / Math.max(1, on.offsetWidth);
+    // ölçüm sınıflar değişmeden ÖNCE (düzen temizken ucuz)
+    const dx = from && from !== on && ANIM ? from.offsetLeft - on.offsetLeft : 0;
+    const sx = dx ? from!.offsetWidth / Math.max(1, on.offsetWidth) : 1;
+    tabs.forEach((t, k) => t.classList.toggle('is-on', k === i));
+    if (dx) {
       on.animate([{transform: `translateX(${dx}px) scaleX(${sx.toFixed(3)})`, transformOrigin: '0 50%'}, {transform: 'none', transformOrigin: '0 50%'}], {duration: 380, easing: 'cubic-bezier(.32,1.3,.6,1)', pseudoElement: '::before'});
     }
     const center = (): void => {

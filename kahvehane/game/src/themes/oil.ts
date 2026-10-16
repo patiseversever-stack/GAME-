@@ -75,10 +75,17 @@ export function refAt(r: Ref, x: number, y: number): RGB {
   const f = (o: number): number => (d[a + o] * (1 - tx) + d[a + 4 + o] * tx) * (1 - ty) + (d[b + o] * (1 - tx) + d[b + 4 + o] * tx) * ty;
   return [f(0), f(1), f(2)];
 }
-const lumAt = (r: Ref, x: number, y: number): number => {
-  const c = refAt(r, x, y);
-  return c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11;
-};
+const LUM = new WeakMap<Ref, Float32Array>();
+/** Referansın parlaklık dizisi (bir kez hesaplanır) */
+function lumOf(r: Ref): Float32Array {
+  let L = LUM.get(r);
+  if (!L) {
+    L = new Float32Array(r.w * r.h);
+    for (let i = 0; i < L.length; i++) L[i] = r.d[i * 4] * 0.3 + r.d[i * 4 + 1] * 0.59 + r.d[i * 4 + 2] * 0.11;
+    LUM.set(r, L);
+  }
+  return L;
+}
 
 // ───────────────────────── yağlı boya darbeleri ─────────────────────────
 interface Bin {
@@ -105,9 +112,11 @@ export class Oil {
     this.n++;
     poly(this.bin(c), pts, n, lw * 0.5, 0, 0, 1);
     if (relief > 0) {
+      // ışık sırtı ve gölge oluğu ince: seyreltilmiş noktalar yeter (yol çağrısı yarıya iner)
+      const p2 = n > 3 ? thin(pts, n) : pts, n2 = p2.length >> 1;
       const q = Math.max(0.35, lw * 0.15);
-      poly(this.bin(mix(c, [255, 248, 230], relief)), pts, n, lw * 0.13, -q, -q, 0.8);
-      poly(this.bin(mix(c, [0, 0, 10], relief * 0.9)), pts, n, lw * 0.1, q * 0.9, q * 0.9, 0.7);
+      poly(this.bin(mix(c, [255, 248, 230], relief)), p2, n2, lw * 0.13, -q, -q, 0.8);
+      if (lw >= 3) poly(this.bin(mix(c, [0, 0, 10], relief * 0.9)), p2, n2, lw * 0.1, q * 0.9, q * 0.9, 0.7);
     }
     if (bristle > 0 && lw > 3.2 && rnd && rnd() < bristle) {
       // kıl izleri: gövdenin içinde iki ince, biraz açık/koyu çizgi
@@ -124,6 +133,13 @@ export class Oil {
     this.bins.clear();
     this.n = 0;
   }
+}
+/** Noktaları seyrelt (ilk ve son korunur) */
+function thin(pts: number[], n: number): number[] {
+  const o: number[] = [];
+  for (let i = 0; i < n - 1; i += 2) o.push(pts[i * 2], pts[i * 2 + 1]);
+  o.push(pts[n * 2 - 2], pts[n * 2 - 1]);
+  return o;
 }
 /** Akım çizgisini sivri uçlu fırça çokgeni olarak yola ekler (ortası dolgun). */
 function poly(p: Path2D, pts: number[], n: number, hw: number, ox: number, oy: number, taper: number): void {
@@ -202,11 +218,14 @@ export function* paintLayer(g: Ctx, ref: Ref, rnd: Rnd, W: number, H: number, o:
     pts[j * 2] = ax;
     pts[j * 2 + 1] = ay;
   }
+  const L = lumOf(ref), rw = ref.w, rh = ref.h, rk = ref.k;
   const dirAt = (x: number, y: number): number => {
     const a = o.field(x, y);
     if (edgeK <= 0) return a;
-    const e = 1.2 / ref.k;
-    const gx = lumAt(ref, x + e, y) - lumAt(ref, x - e, y), gy = lumAt(ref, x, y + e) - lumAt(ref, x, y - e);
+    // parlaklık eğimi (önbellekli parlaklık dizisinde merkezi fark)
+    const i = x * rk < 1 ? 1 : x * rk > rw - 2 ? rw - 2 : (x * rk) | 0, j = y * rk < 1 ? 1 : y * rk > rh - 2 ? rh - 2 : (y * rk) | 0;
+    const c = j * rw + i;
+    const gx = (L[c + 1] - L[c - 1]) * 1.2, gy = (L[c + rw] - L[c - rw]) * 1.2;
     const m = Math.sqrt(gx * gx + gy * gy);
     if (m < 6) return a;
     // kenara teğet (iki yön: tasarlanan yöne yakın olanı seç)
@@ -216,6 +235,7 @@ export function* paintLayer(g: Ctx, ref: Ref, rnd: Rnd, W: number, H: number, o:
     return Math.atan2((1 - w) * Math.sin(a) + w * Math.sin(t), (1 - w) * Math.cos(a) + w * Math.cos(t));
   };
   const oil = new Oil();
+  let tJs = 0, tFill = 0, nS = 0, t0 = performance.now();
   for (let i = 0; i < pts.length; i += 2) {
     const px = pts[i], py = pts[i + 1];
     if (o.where && rnd() > o.where(px, py)) continue;
@@ -239,12 +259,30 @@ export function* paintLayer(g: Ctx, ref: Ref, rnd: Rnd, W: number, H: number, o:
     c = [clamp(c[0] + k + (rnd() - 0.5) * jt * 0.5, 0, 255), clamp(c[1] + k + (rnd() - 0.5) * jt * 0.5, 0, 255), clamp(c[2] + k + (rnd() - 0.5) * jt * 0.5, 0, 255)];
     if (o.tint) c = o.tint(c, px, py, rnd);
     oil.add(tr, lw, c, (o.relief ?? 0.16) * (1 - q * 0.5), o.bristle ?? 0, rnd);
-    if (oil.n >= 420) {
+    nS++;
+    if (nS % 64 === 0 && oil.n < 1500 && due()) {
+      tJs += performance.now() - t0;
+      yield;
+      t0 = performance.now();
+    }
+    if (oil.n >= 1500) {
+      const a = performance.now();
+      tJs += a - t0;
       oil.flush(g);
+      g.getImageData(0, 0, 1, 1);
+      t0 = performance.now();
+      tFill += t0 - a;
       if (due()) yield;
+      t0 = performance.now();
     }
   }
+  const a = performance.now();
+  tJs += a - t0;
   oil.flush(g);
+  g.getImageData(0, 0, 1, 1);
+  tFill += performance.now() - a;
+  (globalThis as unknown as {__oilT: number[][]}).__oilT ??= [];
+  (globalThis as unknown as {__oilT: number[][]}).__oilT.push([W, H, o.cell, nS, Math.round(tJs), Math.round(tFill)]);
 }
 
 /** Tuval dokusu: düzensiz bez greni (açık/koyu benekler, hafif çapraz lif) — boyanın altından görünen bez. */
@@ -379,10 +417,10 @@ export function* oilArt(o: ArtOpts): Job<{cv: HTMLCanvasElement; g: Ctx; ref: Re
   if (o.under !== false) {
     yield* paintLayer(g, ref, rnd, W, H, {cell: 8 * s, len: [14 * s, 24 * s], width: [6 * s, 8.5 * s], field: o.field, edge: 0.3, jitter: 10 * j, relief: 0.07, where: m, sizeK: o.sizeK});
   }
-  yield* paintLayer(g, ref, rnd, W, H, {cell: 4.6 * s, len: [10 * s, 18 * s], width: [3.4 * s, 5 * s], field: o.field, edge: 0.6, jitter: 18 * j, relief: 0.18, bristle: 0.4, where: m, sizeK: o.sizeK, tint: o.tint});
+  yield* paintLayer(g, ref, rnd, W, H, {cell: 5 * s, len: [10 * s, 18 * s], width: [3.4 * s, 5 * s], field: o.field, edge: 0.6, jitter: 18 * j, relief: 0.18, bristle: 0.4, where: m, sizeK: o.sizeK, tint: o.tint});
   if (o.detail) {
     const d = o.detail;
-    yield* paintLayer(g, ref, rnd, W, H, {cell: 2.8 * s, len: [5 * s, 10 * s], width: [1.8 * s, 2.6 * s], field: o.field, edge: 0.85, jitter: 12 * j, relief: 0.2, where: m ? (x, y) => m(x, y) * d(x, y) : d, sizeK: o.sizeK});
+    yield* paintLayer(g, ref, rnd, W, H, {cell: 3.1 * s, len: [5 * s, 10 * s], width: [1.8 * s, 2.6 * s], field: o.field, edge: 0.85, jitter: 12 * j, relief: 0.2, where: m ? (x, y) => m(x, y) * d(x, y) : d, sizeK: o.sizeK});
   }
   return {cv, g, ref, rnd};
 }
@@ -427,5 +465,16 @@ export function pathStrokes(oil: Oil, pts: number[], lw: number, cols: readonly 
       tr.push(x + nx * o, y + ny * o);
     }
     oil.add(tr, lw * (0.85 + rnd() * 0.4), cols[Math.floor(rnd() * cols.length)], relief);
+  }
+}
+
+/** Hale: [r0, r1] bandına rastgele dağılmış kısa teğet darbeler (düzenli halka değil, elle sürülmüş ışık). */
+export function haloStrokes(oil: Oil, cx: number, cy: number, r0: number, r1: number, n: number, cols: readonly RGB[], lw: number, rnd: Rnd, seg = 10, relief = 0.22): void {
+  for (let i = 0; i < n; i++) {
+    const rr = r0 + (r1 - r0) * Math.sqrt(rnd()), a0 = rnd() * Math.PI * 2, da = (seg * (0.7 + rnd() * 0.6)) / Math.max(1, rr);
+    const sp = (rnd() - 0.4) * lw * 0.8; // dışa doğru hafif sarmal
+    const pts: number[] = [];
+    for (let q = 0; q <= 4; q++) pts.push(cx + Math.cos(a0 + (da * q) / 4) * (rr + (sp * q) / 4), cy + Math.sin(a0 + (da * q) / 4) * (rr + (sp * q) / 4));
+    oil.add(pts, lw * (0.8 + rnd() * 0.5), cols[Math.floor(rnd() * cols.length)], relief);
   }
 }

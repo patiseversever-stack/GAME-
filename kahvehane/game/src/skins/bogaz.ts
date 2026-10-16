@@ -1,640 +1,541 @@
-// Deste "Boğaz Gecesi": İstanbul'da ay ışığı. Gece mavisi kartlar, altın çizgiler.
-//   · sayılar: takım işareti bir pencere — içinde İstanbul silueti: ♥♦ alacakaranlık (kızıl gök, batan güneş),
-//     ♠♣ gece (lacivert gök, hilal, ışıklı pencereler) · ortada beyaz değer
-//   · As: dev dolunay, ortasında takım silueti; altta suya düşen yansıma
-//   · Papaz = Galata Kulesi · Kız = Kız Kulesi · Vale = Boğaz Köprüsü ve vapur (sivri kemerli altın pencerede)
-//   · arka: Galata, köprü, Kız Kulesi, vapur, hilal ve suda altın yansımalar
-import {
-  cardPath, corners, defineSkin, edge, glow, gold, lin, loadFont, makeCanvas, mix, mulberry, rad, RankFont, rrPath, css, sparkle, SUIT_TY,
-  suitOutline, suitPath, withSuit, due, isRed, type Ctx, type Job, type RGB, type Rnd, type Suit,
-} from './kit';
+// Deste "Boğaz Gecesi" — yağlı boya (Van Gogh ailesi; masa "Boğaz Gecesi" ile aynı fırça, src/themes/oil.ts).
+// Düzen Yıldızlı Gece destesiyle aynı (src/skins/oilcard.ts): boyalı kenar şeridi + krem tuval + iri köşe dizinleri.
+//   · kenar: gece göğü (girdaplı darbeler), sağ üst köşede ay; altta ışıklı kıyı ve su
+//   · sayılar: takım işaretinin içinde küçük bir Boğaz tablosu — ♥♦ alacakaranlık (kızıl gök, batan güneş),
+//     ♠♣ gece (lacivert gök, hilal, ışıklı pencereler); ufukta cami, Galata, yalılar; ortada iri krem değer
+//   · As: dolunay madalyonu (haleli ay, suda yansıma), ortasında düz renkli takım işareti
+//   · Papaz = ışıklı Galata Kulesi · Kız = Kız Kulesi ve dolunay · Vale = ışıklı Boğaz Köprüsü ve vapur
+//   · arka: Boğaz gecesinin tamamı (ay, Galata, cami, köprü, Kız Kulesi, vapur, sudaki yakamoz)
+import {bridge, crescent, galataTower, kizKulesi, mosque, vapur, yalilar} from '../themes/scenes';
+import {canvasWeave, haloStrokes, idAt, lightDabs, makeIdMap, Oil, oilArt, pathStrokes, ringStrokes, type Ref} from '../themes/oil';
+import {radial} from '../themes/paint';
+import {ACE, CH, CW, drawBack, drawFace, ogeePts, clipSuit, paintCream, PH, polyPath, PW, SPR, stripMask, suitMask, type CardArt, type FaceStyle} from './oilcard';
+import {defineSkin, due, loadFont, makeCanvas, mix, mulberry, RankFont, type Ctx, type Job, type RGB, type Rnd, type Suit} from './kit';
 
 const FONT = (px: number): string => `900 ${px}px "Playfair Display", "Times New Roman", Georgia, serif`;
 const RF = new RankFont(FONT);
-const PW = 360, PH = Math.round(PW / 0.7);
-const CORAL = '#ff5470', SNOW = '#f2f5ff';
-const WIN: RGB = [255, 214, 120];
+const STYLE: FaceStyle = {font: RF, red: '#b3122e', ink: '#141a40', line: 'rgba(10,14,44,0.9)', aceSuit: 'solid', roundel: '#f6efdc'};
 
-interface Art {
-  night: HTMLCanvasElement;
-  win: Record<Suit, HTMLCanvasElement>;
-  moon: HTMLCanvasElement;
-  court: Record<number, HTMLCanvasElement>;
-  back: HTMLCanvasElement;
+// ───────────────────────── eskiz parçaları ─────────────────────────
+interface Disc {
+  x: number;
+  y: number;
+  r: number;
 }
-
-// ───────────────────────── İstanbul siluet parçaları ─────────────────────────
-/** Galata Kulesi: silindir gövde, pencereli seyir balkonu, konik külah. by = taban, s = yükseklik (külah dahil). */
-export function galata(g: Ctx, x: number, by: number, s: number, body: string, lit: boolean): void {
-  const w = s * 0.2, bodyH = s * 0.66, top = by - bodyH;
-  g.fillStyle = body;
-  // gövde (hafif genişleyen taban)
-  g.beginPath();
-  g.moveTo(x - w * 0.62, by);
-  g.lineTo(x - w * 0.5, top);
-  g.lineTo(x + w * 0.5, top);
-  g.lineTo(x + w * 0.62, by);
-  g.closePath();
-  g.fill();
-  // balkon bandı
-  g.fillRect(x - w * 0.62, top - s * 0.015, w * 1.24, s * 0.03);
-  const rh = s * 0.1;
-  g.fillRect(x - w * 0.5, top - rh, w, rh);
-  // külah
-  g.beginPath();
-  g.moveTo(x - w * 0.58, top - rh);
-  g.quadraticCurveTo(x - w * 0.2, top - rh - s * 0.12, x, by - s);
-  g.quadraticCurveTo(x + w * 0.2, top - rh - s * 0.12, x + w * 0.58, top - rh);
-  g.closePath();
-  g.fill();
-  g.fillRect(x - s * 0.006, by - s * 1.05, s * 0.012, s * 0.06);
-  if (lit) {
-    // seyir katının kemerli pencereleri
-    g.fillStyle = css(WIN);
-    for (let i = -2; i <= 2; i++) {
-      const wx = x + i * w * 0.19;
-      g.beginPath();
-      g.moveTo(wx - w * 0.055, top - rh * 0.15);
-      g.lineTo(wx - w * 0.055, top - rh * 0.6);
-      g.arc(wx, top - rh * 0.6, w * 0.055, Math.PI, 0);
-      g.lineTo(wx + w * 0.055, top - rh * 0.15);
-      g.fill();
-    }
-    // gövde pencereleri
-    for (let k = 0; k < 4; k++) {
-      const wy = top + bodyH * (0.18 + k * 0.2);
-      for (const dx of [-0.2, 0.2]) {
-        g.fillStyle = css(WIN, k % 2 ? 0.95 : 0.6);
-        g.fillRect(x + dx * w - w * 0.04, wy, w * 0.08, bodyH * 0.07);
+/** Gece göğü: koyu lacivertten ufukta mora; üstünde açık mavi girdap kolları (darbeler bu renklerden doğar) */
+function nightSky(r: Ctx, W: number, hz: number, seed: number, bands = 5): void {
+  const sky = r.createLinearGradient(0, 0, 0, hz);
+  sky.addColorStop(0, '#080c30');
+  sky.addColorStop(0.5, '#16236c');
+  sky.addColorStop(0.85, '#2e3a8e');
+  sky.addColorStop(1, '#5a4790');
+  r.fillStyle = sky;
+  r.fillRect(0, 0, W, hz + 2);
+  const rr = mulberry(seed);
+  for (let i = 0; i < bands; i++) {
+    const y = hz * (0.14 + (i / bands) * 0.72), ph = rr() * 6;
+    r.strokeStyle = i % 2 ? 'rgba(124,166,236,.42)' : 'rgba(70,112,206,.5)';
+    r.lineWidth = hz * 0.04;
+    r.beginPath();
+    for (let x = -10; x <= W + 10; x += 4) r.lineTo(x, y + Math.sin(x * (0.03 * 360) / W + ph) * hz * 0.035);
+    r.stroke();
+  }
+}
+function moonSketch(r: Ctx, m: Disc, halo = 4): void {
+  radial(r, m.x, m.y, 0, m.r * halo, [[0, 'rgba(255,236,170,.95)'], [0.25, 'rgba(250,214,120,.55)'], [0.55, 'rgba(150,170,220,.25)'], [1, 'rgba(120,150,220,0)']]);
+  r.fillStyle = '#fff5cf';
+  r.beginPath();
+  r.arc(m.x, m.y, m.r, 0, Math.PI * 2);
+  r.fill();
+}
+function starSketch(r: Ctx, x: number, y: number, R: number): void {
+  radial(r, x, y, 0, R, [[0, 'rgba(255,246,200,.95)'], [0.4, 'rgba(250,230,150,.4)'], [1, 'rgba(200,210,255,0)']]);
+}
+type Refl = [number, number, string, number]; // x, yarı genişlik, renk "r,g,b", boy (H oranı)
+/** Su: koyu lacivert, yatay dalgacıklar; ışıkların kırık yansıma sütunları */
+function waterSketch(r: Ctx, W: number, H: number, hz: number, top: string, bot: string, refl: Refl[], seed: number): void {
+  const sea = r.createLinearGradient(0, hz, 0, H);
+  sea.addColorStop(0, top);
+  sea.addColorStop(1, bot);
+  r.fillStyle = sea;
+  r.fillRect(0, hz, W, H - hz);
+  const wr = mulberry(seed);
+  const step = Math.max(2, (H - hz) * 0.03);
+  for (let y = hz + 3; y < H; y += step) {
+    const t = (y - hz) / (H - hz);
+    r.strokeStyle = `rgba(${['70,90,180', '40,52,130', '80,64,150', '36,96,130'][Math.floor(wr() * 4)]},${0.5 - t * 0.3})`;
+    r.lineWidth = step * (0.3 + wr() * 0.4);
+    r.beginPath();
+    const ph = wr() * 6;
+    for (let x = -10; x <= W + 10; x += 6) r.lineTo(x, y + Math.sin(x * 0.05 + ph) * step * 0.2);
+    r.stroke();
+  }
+  for (const [x0, hw, col, len] of refl) {
+    const y1 = hz + (H - hz) * len;
+    for (let y = hz + 1; y < y1; y += step * 0.45) {
+      const t = (y - hz) / (y1 - hz);
+      for (let n = 0; n < 2; n++) {
+        const w = hw * (0.6 + t * 0.8);
+        r.fillStyle = `rgba(${col},${(0.85 - t * 0.75) * (0.4 + wr() * 0.6)})`;
+        r.fillRect(x0 + (wr() - 0.5) * w * 2 - w * 0.3, y, w * (0.3 + wr() * 0.6), step * 0.32);
       }
     }
   }
 }
-
-/** Kız Kulesi: kayalık adacık + kare yapı + ince kule ve fener. by = su seviyesi, s = yükseklik. */
-export function kizKulesi(g: Ctx, x: number, by: number, s: number, body: string, lit: boolean): void {
-  g.fillStyle = body;
-  // adacık
-  g.beginPath();
-  g.ellipse(x, by, s * 0.5, s * 0.06, 0, Math.PI, 0);
-  g.fill();
-  // ana yapı
-  g.fillRect(x - s * 0.36, by - s * 0.3, s * 0.62, s * 0.3);
-  g.fillRect(x - s * 0.4, by - s * 0.33, s * 0.7, s * 0.035);
-  // yan küçük kubbe yerine kırma çatı
-  g.beginPath();
-  g.moveTo(x - s * 0.36, by - s * 0.33);
-  g.lineTo(x - s * 0.22, by - s * 0.42);
-  g.lineTo(x - s * 0.08, by - s * 0.33);
-  g.fill();
-  // kule
-  const tw = s * 0.14;
-  g.fillRect(x + s * 0.06, by - s * 0.78, tw, s * 0.46);
-  g.fillRect(x + s * 0.06 - tw * 0.2, by - s * 0.8, tw * 1.4, s * 0.03);
-  // fener odası + külah
-  g.fillRect(x + s * 0.06 + tw * 0.1, by - s * 0.9, tw * 0.8, s * 0.1);
-  g.beginPath();
-  g.moveTo(x + s * 0.06 - tw * 0.05, by - s * 0.9);
-  g.lineTo(x + s * 0.06 + tw * 0.5, by - s);
-  g.lineTo(x + s * 0.06 + tw * 1.05, by - s * 0.9);
-  g.fill();
-  if (lit) {
-    g.fillStyle = css(WIN);
-    for (let i = 0; i < 4; i++) g.fillRect(x - s * 0.3 + i * s * 0.13, by - s * 0.22, s * 0.05, s * 0.08);
-    g.fillRect(x + s * 0.06 + tw * 0.3, by - s * 0.66, tw * 0.4, s * 0.08);
-    // fener ışığı
-    g.fillStyle = 'rgba(255,240,180,1)';
-    g.fillRect(x + s * 0.06 + tw * 0.25, by - s * 0.88, tw * 0.5, s * 0.06);
+/** Gök akışı: dalgalı yatay + ışığın çevresinde dönen girdap */
+function skyFlow(x: number, y: number, s: number, lights: Disc[]): number {
+  let vx = 1, vy = 0.35 * Math.sin((x * 0.03) / s + (y * 0.06) / s) + 0.2 * Math.sin((y * 0.1) / s - (x * 0.015) / s);
+  for (const m of lights) {
+    const dx = x - m.x, dy = y - m.y, d2 = dx * dx + dy * dy, R = m.r * 2.8;
+    if (d2 > R * R * 5) continue;
+    const d = Math.sqrt(d2) + 1e-3, k = 3.4 * Math.exp(-d2 / (R * R));
+    vx += (k * -dy) / d;
+    vy += (k * dx) / d;
   }
+  return Math.atan2(vy, vx);
+}
+const waterFlow = (x: number, y: number, s: number): number => 0.09 * Math.sin((x * 0.05) / s + (y * 0.2) / s);
+
+/** Ay ve yıldızların üstüne kalın, açık teğet darbeler (impasto ışık) */
+function moonDabs(oil: Oil, m: Disc, rnd: Rnd, s: number, haloK = 2.6, n = 1): void {
+  const q = Math.max(0.5, m.r / (24 * s)); // darbe sayısı ayın boyuyla
+  haloStrokes(oil, m.x, m.y, 0, m.r * 0.55, Math.round(12 * q), [[255, 250, 228], [255, 244, 204]], 2.6 * s, rnd, 5 * s, 0.14);
+  haloStrokes(oil, m.x, m.y, m.r * 0.45, m.r * 0.95, Math.round(26 * q), [[255, 246, 212], [252, 234, 168], [255, 250, 232]], 2.6 * s, rnd, 8 * s);
+  haloStrokes(oil, m.x, m.y, m.r * 1.15, m.r * haloK, Math.round(40 * n * q * (haloK - 1)), [[240, 206, 110], [230, 190, 96], [170, 186, 220], [210, 200, 150], [120, 150, 220], [250, 226, 150]], 2.4 * s, rnd, 10 * s);
+}
+function starDabs(oil: Oil, x: number, y: number, R: number, rnd: Rnd, s: number): void {
+  haloStrokes(oil, x, y, 0, R * 0.42, 10, [[255, 250, 226], [255, 238, 170], [252, 226, 120]], 2.2 * s, rnd, 4 * s, 0.12);
+  haloStrokes(oil, x, y, R * 0.4, R * 0.9, 12, [[240, 210, 110], [150, 180, 230], [250, 226, 140]], 1.8 * s, rnd, 7 * s);
+}
+function vignette(g: Ctx, W: number, H: number, a: number): void {
+  radial(g, W / 2, H * 0.45, Math.min(W, H) * 0.35, Math.max(W, H) * 0.75, [[0, 'rgba(4,8,30,0)'], [1, `rgba(4,8,30,${a})`]]);
 }
 
-/** Asma köprü: iki kule, ana kablo, askılar, tabliye; kablo boyunca renkli ışıklar. */
-export function bridge(g: Ctx, x0: number, x1: number, deckY: number, towerH: number, body: string, lights: boolean, rnd: Rnd): void {
-  const L = x1 - x0;
-  const t0 = x0 + L * 0.2, t1 = x1 - L * 0.2;
-  const topY = deckY - towerH;
-  g.strokeStyle = body;
-  g.fillStyle = body;
-  // tabliye
-  g.fillRect(x0, deckY, L, Math.max(1.5, towerH * 0.05));
-  // kuleler (iki bacaklı)
-  for (const tx of [t0, t1]) {
-    const tw = towerH * 0.06;
-    g.fillRect(tx - tw * 1.2, topY, tw * 0.7, towerH * 1.15);
-    g.fillRect(tx + tw * 0.5, topY, tw * 0.7, towerH * 1.15);
-    g.fillRect(tx - tw * 1.2, topY + towerH * 0.3, tw * 2.4, tw * 0.5);
-    g.fillRect(tx - tw * 1.2, topY + towerH * 0.7, tw * 2.4, tw * 0.5);
-  }
-  // ana kablo (zincir eğrisi yaklaşığı)
-  const cable = (xa: number, ya: number, xb: number, yb: number, sag: number): [number, number][] => {
-    const pts: [number, number][] = [];
-    for (let i = 0; i <= 24; i++) {
-      const t = i / 24;
-      pts.push([xa + (xb - xa) * t, ya + (yb - ya) * t + sag * 4 * t * (1 - t)]);
-    }
-    return pts;
-  };
-  const main = cable(t0, topY, t1, topY, towerH * 0.85);
-  const left = cable(x0, deckY - towerH * 0.05, t0, topY, -towerH * 0.1);
-  const right = cable(t1, topY, x1, deckY - towerH * 0.05, -towerH * 0.1);
-  g.lineWidth = Math.max(1, towerH * 0.03);
-  for (const c of [main, left, right]) {
-    g.beginPath();
-    c.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
-    g.stroke();
-  }
-  // askılar
-  g.lineWidth = Math.max(0.5, towerH * 0.008);
-  for (const c of [main, left, right])
-    for (let i = 1; i < c.length - 1; i += 2) {
-      g.beginPath();
-      g.moveTo(c[i][0], c[i][1]);
-      g.lineTo(c[i][0], deckY);
-      g.stroke();
-    }
-  if (lights) {
-    const cols = ['#ff5ab4', '#5ad2ff', '#ffd25a', '#a07aff', '#5aff9e'];
-    let ci = Math.floor(rnd() * cols.length);
-    for (const c of [main, left, right])
-      for (const [x, y] of c) {
-        g.fillStyle = cols[ci++ % cols.length];
-        g.beginPath();
-        g.arc(x, y, Math.max(1, towerH * 0.022), 0, Math.PI * 2);
-        g.fill();
+// ───────────────────────── kenar şeridi ─────────────────────────
+function* paintFrame(): Job<HTMLCanvasElement> {
+  const W = PW, H = PH, hz = H * 0.74;
+  const moon: Disc = {x: W * 0.905, y: W * 0.06, r: W * 0.034};
+  const stars: [number, number, number][] = [[0.55, 0.042 * (W / H), 0.05], [0.958, 0.3, 0.045], [0.042, 0.56, 0.045], [0.72, 0.04 * (W / H), 0.035]];
+  const {cv, g, ref, rnd} = yield* oilArt({
+    W,
+    H,
+    seed: 1453,
+    mask: stripMask,
+    under: false,
+    sketch: r => {
+      nightSky(r, W, hz, 3, 7);
+      moonSketch(r, moon, 3.4);
+      for (const [x, y, q] of stars) starSketch(r, W * x, H * y, W * q);
+      waterSketch(r, W, H, hz, '#26327c', '#070a26', [[moon.x, W * 0.03, '255,226,160', 0.9], [W * 0.1, W * 0.02, '255,196,120', 0.5]], 9);
+      yalilar(r, -10, W + 10, hz + 1, H * 0.03, '#080a26', mulberry(4), 0.75);
+    },
+    field: (x, y) => {
+      if (y > hz) return waterFlow(x, y, 1);
+      // kenara teğet: yan şeritlerde dikey, üstte yatay; ayın çevresinde girdap
+      const side = Math.min(x, W - x) < Math.min(y, H - y);
+      const base = side ? Math.PI / 2 + 0.4 * Math.sin(y * 0.05) : 0.35 * Math.sin(x * 0.04);
+      const dx = x - moon.x, dy = y - moon.y, d2 = dx * dx + dy * dy, R = moon.r * 2.6;
+      if (d2 < R * R * 4) {
+        const t = Math.exp(-d2 / (R * R));
+        return Math.atan2(Math.sin(base) * (1 - t) + (dx / Math.sqrt(d2 + 1)) * t, Math.cos(base) * (1 - t) - (dy / Math.sqrt(d2 + 1)) * t);
       }
-    // tabliye ışıkları
-    g.fillStyle = 'rgba(255,230,160,0.95)';
-    for (let x = x0; x < x1; x += L / 40) g.fillRect(x, deckY - 0.5, Math.max(1, L / 160), Math.max(1, towerH * 0.025));
-  }
+      return base;
+    },
+    detail: (x, y) => (Math.abs(y - hz) < H * 0.03 ? 0.8 : 0),
+  });
+  const oil = new Oil();
+  moonDabs(oil, moon, rnd, 1, 2.2, 1);
+  for (const [x, y, q] of stars) starDabs(oil, W * x, H * y, W * q, rnd, 1);
+  lightDabs(oil, ref, rnd, 0, hz - H * 0.05, W, hz + 2, 150, 2, (x, y) => 1 - stripMask(x, y));
+  oil.flush(g);
+  canvasWeave(g, W, H, rnd, 0.08);
+  return cv;
 }
 
-/** Yalılar: suyun kıyısında ahşap evler, ışıklı pencereler. */
-export function yalilar(g: Ctx, x0: number, x1: number, by: number, h: number, body: string, rnd: Rnd, lit = 0.6): void {
-  let x = x0;
-  while (x < x1) {
-    const w = h * (0.6 + rnd() * 0.8), hh = h * (0.5 + rnd() * 0.5);
-    g.fillStyle = body;
-    g.fillRect(x, by - hh, w, hh);
-    g.beginPath();
-    g.moveTo(x - w * 0.05, by - hh);
-    g.lineTo(x + w / 2, by - hh - h * 0.25);
-    g.lineTo(x + w * 1.05, by - hh);
-    g.fill();
-    for (let wy = by - hh + h * 0.12; wy < by - h * 0.15; wy += h * 0.24)
-      for (let wx = x + w * 0.15; wx < x + w * 0.85; wx += w * 0.24)
-        if (rnd() < lit) {
-          g.fillStyle = css(mix(WIN, [255, 255, 255], rnd() * 0.3), 0.75 + rnd() * 0.25);
-          g.fillRect(wx, wy, w * 0.1, h * 0.1);
+// ───────────────────────── takım işaretleri ─────────────────────────
+const HZ: Record<Suit, number> = {H: 0.26, D: 0.26, S: 0.27, C: 0.2};
+function* paintSuit(s: Suit): Job<HTMLCanvasElement> {
+  const k = SPR * 0.84, C = SPR / 2, hz = C + HZ[s] * k;
+  const red = s === 'H' || s === 'D';
+  const sun: Disc = {x: C + 0.15 * k, y: hz, r: 0.085 * k};
+  const moon: Disc = {x: C + (s === 'C' ? 0.04 : 0) * k, y: C - (s === 'C' ? 0.33 : 0.31) * k, r: 0.075 * k};
+  const sil = red ? '#3a0820' : '#03051a';
+  const {cv} = yield* oilArt({
+    W: SPR,
+    H: SPR,
+    seed: 70 + 'SHDC'.indexOf(s),
+    k: 0.75,
+    s: 0.9,
+    under: false,
+    mask: suitMask(s),
+    sketch: r => {
+      if (red) {
+        const sky = r.createLinearGradient(0, 0, 0, hz);
+        sky.addColorStop(0, '#6a0828');
+        sky.addColorStop(0.35, '#a8102c');
+        sky.addColorStop(0.62, '#d6263a');
+        sky.addColorStop(0.86, '#f2643a');
+        sky.addColorStop(1, '#ffae58');
+        r.fillStyle = sky;
+        r.fillRect(0, 0, SPR, hz + 2);
+        for (let i = 0; i < 3; i++) {
+          r.strokeStyle = i % 2 ? 'rgba(255,140,90,.35)' : 'rgba(150,10,50,.45)';
+          r.lineWidth = SPR * 0.03;
+          r.beginPath();
+          for (let x = 0; x <= SPR; x += 4) r.lineTo(x, hz * (0.25 + i * 0.22) + Math.sin(x * 0.05 + i * 2) * SPR * 0.02);
+          r.stroke();
         }
-    x += w + h * 0.04;
-  }
-}
-
-/** Vapur: beyaz gövde, siyah bant, kamara pencereleri, bacası. x = merkez, y = su hattı, s = boy */
-export function vapur(g: Ctx, x: number, y: number, s: number): void {
-  const L = s, H = s * 0.18;
-  g.fillStyle = '#f4f2ea';
-  g.beginPath();
-  g.moveTo(x - L * 0.5, y - H);
-  g.lineTo(x + L * 0.5, y - H);
-  g.lineTo(x + L * 0.44, y);
-  g.lineTo(x - L * 0.44, y);
-  g.closePath();
-  g.fill();
-  g.fillStyle = '#1a1e2c';
-  g.fillRect(x - L * 0.47, y - H * 0.35, L * 0.94, H * 0.22);
-  g.fillStyle = '#f4f2ea';
-  g.fillRect(x - L * 0.32, y - H * 1.8, L * 0.64, H * 0.85);
-  g.fillStyle = '#dcd8cc';
-  g.fillRect(x - L * 0.36, y - H * 1.85, L * 0.72, H * 0.12);
-  // baca
-  g.fillStyle = '#f4f2ea';
-  g.fillRect(x - L * 0.04, y - H * 2.9, L * 0.08, H * 1.1);
-  g.fillStyle = '#1a1e2c';
-  g.fillRect(x - L * 0.04, y - H * 2.9, L * 0.08, H * 0.28);
-  g.fillStyle = '#d0202e';
-  g.fillRect(x - L * 0.04, y - H * 2.55, L * 0.08, H * 0.14);
-  // pencereler
-  g.fillStyle = css(WIN);
-  for (let i = 0; i < 9; i++) g.fillRect(x - L * 0.28 + i * L * 0.064, y - H * 1.55, L * 0.035, H * 0.38);
-  for (let i = 0; i < 11; i++) g.fillRect(x - L * 0.4 + i * L * 0.075, y - H * 0.8, L * 0.03, H * 0.28);
-}
-
-/** Su: koyu degrade + ışık yansıması şeritleri (verilen x'lerde) */
-export function water(g: Ctx, w: number, y0: number, y1: number, top: string, bot: string, glints: [number, string, number][], rnd: Rnd): void {
-  g.fillStyle = lin(g, 0, y0, 0, y1, [
-    [0, top],
-    [1, bot],
-  ]);
-  g.fillRect(0, y0, w, y1 - y0);
-  const H = y1 - y0;
-  // yakamoz: ışığın altında yumuşak dikey sütun + kırık, dalgalanan parıltı çizgileri (uzaklaştıkça seyrek, soluk, geniş)
-  g.save();
-  g.globalCompositeOperation = 'lighter';
-  for (const [x, col, spread] of glints) {
-    const colA = (a: number): string => col.replace(/,\s*1\)$/, `,${a})`);
-    const col0 = g.createLinearGradient(0, y0, 0, y0 + H * 0.8);
-    col0.addColorStop(0, colA(0.22));
-    col0.addColorStop(1, colA(0));
-    g.fillStyle = col0;
-    g.fillRect(x - spread * 0.6, y0, spread * 1.2, H * 0.8);
-    let y = y0 + 1;
-    while (y < y1) {
-      const t = (y - y0) / H;
-      const fade = Math.pow(1 - t, 1.6);
-      if (fade < 0.03) break;
-      const len = spread * (0.15 + rnd() * 0.75) * (1 + t * 1.5);
-      const jx = (rnd() - 0.5) * spread * (0.4 + t * 1.6);
-      g.fillStyle = col;
-      g.globalAlpha = (0.18 + rnd() * 0.6) * fade;
-      g.beginPath();
-      g.ellipse(x + jx, y, len / 2, 0.5 + rnd() * 0.7 + t, 0, 0, Math.PI * 2);
-      g.fill();
-      y += 1.6 + rnd() * 2.2 + t * 5;
+        radial(r, sun.x, sun.y, 0, sun.r * 4, [[0, 'rgba(255,236,170,.9)'], [0.4, 'rgba(255,170,90,.45)'], [1, 'rgba(255,120,80,0)']]);
+        r.fillStyle = '#ffe9b0';
+        r.beginPath();
+        r.arc(sun.x, sun.y, sun.r, Math.PI, 0);
+        r.fill();
+        waterSketch(r, SPR, SPR, hz, '#8a1a30', '#2e0614', [[sun.x, SPR * 0.045, '255,214,130', 0.85]], 5);
+      } else {
+        const sky = r.createLinearGradient(0, 0, 0, hz);
+        sky.addColorStop(0, '#04071e');
+        sky.addColorStop(0.5, '#0c1652');
+        sky.addColorStop(0.9, '#1e2c7a');
+        sky.addColorStop(1, '#3a4690');
+        r.fillStyle = sky;
+        r.fillRect(0, 0, SPR, hz + 2);
+        for (let i = 0; i < 3; i++) {
+          r.strokeStyle = i % 2 ? 'rgba(90,130,220,.35)' : 'rgba(40,70,170,.45)';
+          r.lineWidth = SPR * 0.03;
+          r.beginPath();
+          for (let x = 0; x <= SPR; x += 4) r.lineTo(x, hz * (0.3 + i * 0.22) + Math.sin(x * 0.05 + i * 2) * SPR * 0.02);
+          r.stroke();
+        }
+        moonSketch(r, moon, 3);
+        for (const [x, y] of [[-0.3, -0.05], [0.32, -0.12], [-0.22, 0.12], [0.3, 0.1]] as const) starSketch(r, C + x * k, C + y * k, k * 0.05);
+        waterSketch(r, SPR, SPR, hz, '#14205e', '#02041a', [[C, SPR * 0.04, '240,236,200', 0.8], [C - 0.2 * k, SPR * 0.02, '255,200,120', 0.5]], 6);
+      }
+      const rr = mulberry(30 + 'SHDC'.indexOf(s));
+      yalilar(r, 0, SPR, hz + 1, k * 0.06, sil, rr, red ? 0.2 : 0.7);
+      mosque(r, C - 0.18 * k, hz + 1, k * 0.24, sil, red ? 0 : 0.7, rr);
+      galataTower(r, C + 0.22 * k, hz + 2, k * 0.3, !red);
+    },
+    field: (x, y) => (y > hz + 1 ? waterFlow(x, y, 0.8) : skyFlow(x, y, 0.8, red ? [] : [moon])),
+    detail: (x, y) => (y < hz + k * 0.06 && y > hz - k * 0.3 ? 0.9 : 0),
+  });
+  if (red) {
+    // batan güneşin ışığı: kalın sıcak darbeler
+    const g = cv.getContext('2d')!, oil = new Oil(), rnd = mulberry(88);
+    g.save();
+    g.beginPath();
+    g.rect(0, 0, SPR, hz);
+    g.clip();
+    haloStrokes(oil, sun.x, sun.y, 0, sun.r * 0.9, 14, [[255, 242, 200], [255, 228, 160]], 2.4, rnd, 5, 0.12);
+    haloStrokes(oil, sun.x, sun.y, sun.r * 1.1, sun.r * 2.4, 22, [[255, 196, 110], [250, 150, 80], [255, 214, 140]], 2.2, rnd, 9);
+    oil.flush(g);
+    g.restore();
+    for (let i = 0; i < 14; i++) {
+      const y = hz + 3 + rnd() * k * 0.18, x = sun.x + (rnd() - 0.5) * k * 0.14, len = 4 + rnd() * 6;
+      oil.add([x - len / 2, y, x + len / 2, y], 1.6 + rnd(), mix([255, 220, 150], [255, 160, 100], rnd()), 0.25);
     }
-  }
-  g.restore();
-}
-
-export function stars(g: Ctx, w: number, h: number, n: number, rnd: Rnd): void {
-  for (let i = 0; i < n; i++) {
-    const x = rnd() * w, y = rnd() * h, r = 0.4 + Math.pow(rnd(), 3) * 1.6;
-    g.fillStyle = `rgba(255,255,255,${0.35 + rnd() * 0.6})`;
-    g.beginPath();
-    g.arc(x, y, r, 0, Math.PI * 2);
-    g.fill();
-    if (r > 1.5) sparkle(g, x, y, r * 3.2, 'rgba(255,255,255,0.6)', 0.18);
-  }
-}
-
-/** Hilal: dolu disk + kaydırılmış gölge diskiyle kesilir (gökyüzü renginde değil, gerçek kesme) */
-export function crescent(g: Ctx, x: number, y: number, r: number, col = '#fff3c8'): void {
-  glow(g, x, y, r * 3.2, [255, 230, 160], 0.35);
-  const [c, cg] = makeCanvas(r * 2 + 4, r * 2 + 4);
-  const C = r + 2;
-  cg.fillStyle = col;
-  cg.beginPath();
-  cg.arc(C, C, r, 0, Math.PI * 2);
-  cg.fill();
-  cg.globalCompositeOperation = 'destination-out';
-  cg.beginPath();
-  cg.arc(C + r * 0.42, C - r * 0.2, r * 0.86, 0, Math.PI * 2);
-  cg.fill();
-  g.drawImage(c, x - C, y - C);
-}
-
-// ───────────────────────── boyamalar ─────────────────────────
-/** Kart yüzü zemini: gece mavisi, yıldızlar, hafif ay ışığı */
-function paintNight(): HTMLCanvasElement {
-  const [c, g] = makeCanvas(PW, PH);
-  const rnd = mulberry(1453);
-  g.fillStyle = lin(g, 0, 0, 0, PH, [
-    [0, '#0a1036'],
-    [0.55, '#142060'],
-    [1, '#1c1c58'],
-  ]);
-  g.fillRect(0, 0, PW, PH);
-  glow(g, PW * 0.5, PH * 0.45, PW * 0.75, [110, 140, 255], 0.22, 1, 1.3);
-  stars(g, PW, PH, 70, rnd);
-  // alt kenarda çok koyu, silik şehir silueti (köşe dizini önünde okunur kalsın diye soluk)
-  const by = PH * 0.965;
-  g.globalAlpha = 0.5;
-  yalilar(g, -10, PW + 10, by, PW * 0.05, '#0c1238', rnd, 0.25);
-  galata(g, PW * 0.6, by, PW * 0.24, '#0c1238', false);
-  g.globalAlpha = 1;
-  return c;
-}
-
-/** Takım penceresi: takım şeklinde kırpılmış küçük İstanbul manzarası + altın çerçeve. */
-const WS = 240;
-function* paintWindows(): Job<Record<Suit, HTMLCanvasElement>> {
-  const out = {} as Record<Suit, HTMLCanvasElement>;
-  for (const s of ['S', 'H', 'D', 'C'] as Suit[]) {
-    const [c, g] = makeCanvas(WS, WS);
-    const rnd = mulberry(70 + 'SHDC'.indexOf(s));
-    const k = WS * 0.8, C = WS / 2;
-    g.setTransform(k, 0, 0, k, C, C);
-    const path = suitPath(s);
-    g.save();
-    g.clip(path);
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    const red = isRed(s);
-    const hz = WS * 0.7;
-    if (red) {
-      g.fillStyle = lin(g, 0, WS * 0.1, 0, hz, [
-        [0, '#7a0f3a'],
-        [0.5, '#e0304a'],
-        [0.85, '#ff8a4a'],
-        [1, '#ffc46a'],
-      ]);
-      g.fillRect(0, 0, WS, WS);
-      glow(g, WS * 0.62, hz, WS * 0.3, [255, 220, 140], 0.9);
-      g.fillStyle = '#fff2c0';
-      g.beginPath();
-      g.arc(WS * 0.62, hz - 2, WS * 0.07, 0, Math.PI * 2);
-      g.fill();
-    } else {
-      g.fillStyle = lin(g, 0, 0, 0, hz, [
-        [0, '#060a26'],
-        [0.6, '#16247a'],
-        [1, '#3a4aa8'],
-      ]);
-      g.fillRect(0, 0, WS, WS);
-      stars(g, WS, hz, 26, rnd);
-      crescent(g, WS * 0.66, WS * 0.3, WS * 0.07);
-    }
-    const sil = red ? '#3a0a24' : '#04061c';
-    water(g, WS, hz, WS, red ? '#7a1a3a' : '#0a1450', red ? '#2a0618' : '#02041a', red ? [[WS * 0.62, 'rgba(255,200,120,1)', WS * 0.12]] : [[WS * 0.66, 'rgba(255,240,190,1)', WS * 0.08]], rnd);
-    yalilar(g, -4, WS + 4, hz, WS * 0.06, sil, rnd, red ? 0.25 : 0.55);
-    galata(g, WS * (s === 'S' || s === 'D' ? 0.32 : 0.7), hz, WS * 0.42, sil, !red);
-    if (s === 'C' || s === 'D') kizKulesi(g, WS * (s === 'C' ? 0.3 : 0.75), hz + WS * 0.03, WS * 0.14, sil, !red);
-    g.restore();
-    // iç gölge + cam parlaması
-    g.setTransform(k, 0, 0, k, C, C);
-    g.save();
-    g.clip(path);
-    g.fillStyle = rad(g, -0.18, -0.25, 0.02, 0.8, [
-      [0, 'rgba(255,255,255,0.22)'],
-      [0.4, 'rgba(255,255,255,0)'],
-      [1, 'rgba(0,0,20,0.35)'],
-    ]);
-    g.fillRect(-1, -1, 2, 2);
-    g.restore();
-    const o = suitOutline(s);
-    g.lineJoin = 'round';
-    g.lineWidth = 0.075;
-    g.strokeStyle = '#1a1004';
-    g.stroke(o);
-    g.lineWidth = 0.045;
-    g.strokeStyle = gold(g, -0.5, -0.55, 0.5, 0.55);
-    g.stroke(o);
-    g.setTransform(1, 0, 0, 1, 0, 0);
-    out[s] = c;
-    if (due()) yield;
-  }
-  return out;
-}
-
-/** Dolunay (As): kraterli disk, ışık halesi */
-function paintMoon(): HTMLCanvasElement {
-  const S = 320, C = S / 2, R = S * 0.36;
-  const [c, g] = makeCanvas(S, S);
-  const rnd = mulberry(29);
-  glow(g, C, C, C, [180, 200, 255], 0.5);
-  g.fillStyle = rad(g, C - R * 0.3, C - R * 0.35, 0, R * 1.2, [
-    [0, '#fffdf2'],
-    [0.6, '#f0ecd8'],
-    [1, '#c9c3ac'],
-  ]);
-  g.beginPath();
-  g.arc(C, C, R, 0, Math.PI * 2);
-  g.fill();
-  g.save();
-  g.clip();
-  for (let i = 0; i < 16; i++) {
-    const a = rnd() * Math.PI * 2, d = R * Math.sqrt(rnd()) * 0.9, r = R * (0.05 + rnd() * 0.14);
-    g.fillStyle = `rgba(150,140,120,${0.12 + rnd() * 0.18})`;
-    g.beginPath();
-    g.arc(C + Math.cos(a) * d, C + Math.sin(a) * d, r, 0, Math.PI * 2);
-    g.fill();
-  }
-  g.fillStyle = rad(g, C + R * 0.5, C + R * 0.5, R * 0.3, R * 1.4, [
-    [0, 'rgba(60,70,120,0)'],
-    [1, 'rgba(60,70,120,0.35)'],
-  ]);
-  g.fillRect(0, 0, S, S);
-  g.restore();
-  return c;
-}
-
-const CW = 240, CH = 350, PAD = 14;
-/** Sivri (Osmanlı) kemer */
-function ogee(x: number, y: number, w: number, h: number): Path2D {
-  const p = new Path2D();
-  const r = w / 2;
-  p.moveTo(x, y + h);
-  p.lineTo(x, y + r * 1.1);
-  p.bezierCurveTo(x, y + r * 0.35, x + r * 0.7, y + r * 0.2, x + r, y);
-  p.bezierCurveTo(x + r * 1.3, y + r * 0.2, x + w, y + r * 0.35, x + w, y + r * 1.1);
-  p.lineTo(x + w, y + h);
-  p.closePath();
-  return p;
-}
-function* paintCourt(kind: 'K' | 'Q' | 'J'): Job<HTMLCanvasElement> {
-  const [c, g] = makeCanvas(CW, CH);
-  const rnd = mulberry(kind.charCodeAt(0) * 3);
-  const inner = ogee(PAD, PAD, CW - 2 * PAD, CH - 2 * PAD);
-  g.save();
-  g.clip(inner);
-  const hz = CH * 0.74;
-  g.fillStyle = lin(g, 0, 0, 0, hz, [
-    [0, '#050822'],
-    [0.6, '#14206a'],
-    [1, kind === 'J' ? '#5a3a9a' : '#2c3c9a'],
-  ]);
-  g.fillRect(0, 0, CW, CH);
-  stars(g, CW, hz, 40, rnd);
-  const sil = '#03051a';
-  if (kind === 'K') {
-    crescent(g, CW * 0.74, CH * 0.2, CW * 0.075);
-    water(g, CW, hz, CH, '#0c1650', '#02041a', [[CW * 0.5, 'rgba(255,214,120,1)', CW * 0.1]], rnd);
-    yalilar(g, -4, CW + 4, hz, CW * 0.07, sil, rnd, 0.6);
-    // kulenin arkasında ışık
-    glow(g, CW * 0.5, hz - CH * 0.3, CW * 0.45, [255, 200, 110], 0.35);
-    galata(g, CW * 0.5, hz + 2, CH * 0.62, sil, true);
-  } else if (kind === 'Q') {
-    // dolunay ve Kız Kulesi, suda uzun yansıma
-    const mx = CW * 0.5, my = CH * 0.3;
-    glow(g, mx, my, CW * 0.55, [200, 210, 255], 0.4);
-    g.fillStyle = rad(g, mx - 10, my - 12, 0, CW * 0.2, [
-      [0, '#fffdf2'],
-      [1, '#d8d2bc'],
-    ]);
-    g.beginPath();
-    g.arc(mx, my, CW * 0.17, 0, Math.PI * 2);
-    g.fill();
-    water(g, CW, hz, CH, '#101a5a', '#02041a', [[mx, 'rgba(240,240,255,1)', CW * 0.2]], rnd);
-    yalilar(g, -4, CW * 0.22, hz, CW * 0.05, sil, rnd, 0.5);
-    yalilar(g, CW * 0.84, CW + 4, hz, CW * 0.05, sil, rnd, 0.5);
-    kizKulesi(g, CW * 0.48, hz + CH * 0.03, CH * 0.4, sil, true);
-    // fener hüzmesi
-    g.save();
-    g.globalCompositeOperation = 'lighter';
-    g.fillStyle = lin(g, CW * 0.55, 0, CW, 0, [
-      [0, 'rgba(255,240,180,0.35)'],
-      [1, 'rgba(255,240,180,0)'],
-    ]);
-    const ly = hz + CH * 0.03 - CH * 0.4 * 0.85;
-    g.beginPath();
-    g.moveTo(CW * 0.55, ly);
-    g.lineTo(CW, ly - CH * 0.08);
-    g.lineTo(CW, ly + CH * 0.05);
-    g.closePath();
-    g.fill();
-    g.restore();
+    oil.flush(g);
   } else {
-    // Boğaz Köprüsü renkli ışıklarla + altında vapur
-    crescent(g, CW * 0.22, CH * 0.18, CW * 0.06);
-    water(g, CW, hz, CH, '#1a1460', '#02041a', [[CW * 0.3, 'rgba(255,90,180,1)', CW * 0.1], [CW * 0.7, 'rgba(90,210,255,1)', CW * 0.1], [CW * 0.5, 'rgba(255,214,120,1)', CW * 0.1]], rnd);
-    bridge(g, -CW * 0.15, CW * 1.15, hz - CH * 0.12, CH * 0.36, sil, true, rnd);
-    yalilar(g, -4, CW + 4, hz, CW * 0.05, sil, rnd, 0.5);
-    vapur(g, CW * 0.5, hz + CH * 0.1, CW * 0.6);
+    const g = cv.getContext('2d')!, oil = new Oil(), rnd = mulberry(89);
+    moonDabs(oil, moon, rnd, 0.8, 1.9, 1);
+    oil.flush(g);
   }
+  // işaretin kendisi: içine bu tablo boyanmış, altın kenarlı
+  const spr = clipSuit(s, cv);
+  cv.width = cv.height = 0;
+  return spr;
+}
+
+// ───────────────────────── As: dolunay madalyonu ─────────────────────────
+function* paintAce(): Job<HTMLCanvasElement> {
+  const S = ACE, C = S / 2, R = S * 0.46, hz = S * 0.78;
+  const moon: Disc = {x: C, y: C, r: S * 0.21};
+  const {cv: art, rnd} = yield* oilArt({
+    W: S,
+    H: S,
+    seed: 29,
+    k: 0.6,
+    s: 1.05,
+    under: false,
+    mask: (x, y) => (Math.hypot(x - C, y - C) < R + 4 ? 1 : 0),
+    sketch: r => {
+      nightSky(r, S, hz, 11, 5);
+      radial(r, C, C, 0, R, [[0.3, 'rgba(250,214,120,.55)'], [0.62, 'rgba(120,150,220,.3)'], [1, 'rgba(120,150,220,0)']]);
+      r.fillStyle = '#fff5d6';
+      r.beginPath();
+      r.arc(C, C, moon.r, 0, Math.PI * 2);
+      r.fill();
+      waterSketch(r, S, S, hz, '#26327c', '#0a0e36', [[C, S * 0.07, '255,236,180', 0.95]], 12);
+      yalilar(r, 0, S * 0.3, hz + 1, S * 0.03, '#070920', mulberry(3), 0.7);
+      yalilar(r, S * 0.72, S, hz + 1, S * 0.03, '#070920', mulberry(4), 0.7);
+    },
+    field: (x, y) => (y > hz ? waterFlow(x, y, 1) : skyFlow(x, y, 1, [{x: C, y: C, r: moon.r * 0.9}])),
+    detail: (x, y) => (y > hz - S * 0.03 && y < hz + S * 0.08 ? 0.8 : 0),
+  });
+  const g = art.getContext('2d')!;
+  const oil = new Oil();
+  // ay yüzeyi: krem/gümüş kalın darbeler (ortadaki takım işaretinin zemini; sakin kalır)
+  for (let i = 0; i < 4; i++) ringStrokes(oil, C, C, moon.r * (0.22 + i * 0.23), moon.r * (0.22 + i * 0.23), 7.5, [[255, 248, 226], [250, 240, 210], [244, 232, 196], [255, 252, 238]], rnd, 18, 0.1);
+  // hale: iç içe sarı / krem / mavi bantlar (yalnız ufkun üstünde)
+  const H1: RGB[][] = [[[250, 214, 92], [244, 188, 66]], [[232, 226, 168], [255, 236, 170]], [[70, 112, 182], [92, 134, 198]], [[160, 196, 196], [226, 198, 114]]];
+  H1.forEach((cols, i) => {
+    for (let j = 0; j < 2; j++) {
+      const rr = moon.r * (1.08 + i * 0.18 + j * 0.08);
+      ringStrokes(oil, C, C, rr, rr, 5.6, cols, rnd, 24);
+    }
+  });
+  // hale halkaları suya taşmasın: yalnız ufkun üstüne
+  g.save();
+  g.beginPath();
+  g.rect(0, 0, S, hz);
+  g.clip();
+  oil.flush(g);
   g.restore();
-  if (due()) yield;
-  // altın kemer çerçeve
-  g.lineJoin = 'round';
-  g.lineWidth = PAD * 0.9;
-  g.strokeStyle = gold(g, 0, 0, CW, CH);
-  g.stroke(ogee(PAD * 0.5, PAD * 0.5, CW - PAD, CH - PAD));
-  g.lineWidth = 1.8;
-  g.strokeStyle = '#1a1004';
-  g.stroke(inner);
-  g.stroke(ogee(1.5, 1.5, CW - 3, CH - 3));
-  // kemer tepesinde küçük alem yerine yıldız
-  sparkle(g, CW / 2, PAD * 0.45, 9, '#fff6d0', 0.25);
+  const [c, cg] = makeCanvas(S, S);
+  cg.save();
+  cg.beginPath();
+  cg.arc(C, C, R, 0, Math.PI * 2);
+  cg.clip();
+  cg.drawImage(art, 0, 0);
+  cg.restore();
+  art.width = art.height = 0;
+  // madalyon kenarı: altın + lacivert boyalı halka
+  const rim = new Oil();
+  ringStrokes(rim, C, C, R + 1, R + 1, 5, [[20, 30, 90], [30, 50, 130]], rnd, 12);
+  ringStrokes(rim, C, C, R + 5, R + 5, 4.4, [[242, 206, 74], [255, 236, 160], [214, 160, 48]], rnd, 12);
+  rim.flush(cg);
   return c;
 }
 
-function* paintBack(): Job<HTMLCanvasElement> {
-  const [c, g] = makeCanvas(PW, PH);
-  const rnd = mulberry(1923);
-  const hz = PH * 0.68;
-  g.fillStyle = lin(g, 0, 0, 0, hz, [
-    [0, '#04071e'],
-    [0.5, '#101a5c'],
-    [0.85, '#3a3a9a'],
-    [1, '#8a5aa8'],
-  ]);
-  g.fillRect(0, 0, PW, PH);
-  stars(g, PW, hz * 0.9, 120, rnd);
-  crescent(g, PW * 0.76, PH * 0.16, PW * 0.085);
-  if (due()) yield;
-  const sil = '#05071e';
-  water(g, PW, hz, PH, '#1a1a6a', '#02041a', [[PW * 0.76, 'rgba(255,240,190,1)', PW * 0.12], [PW * 0.32, 'rgba(255,214,120,1)', PW * 0.08], [PW * 0.6, 'rgba(255,90,180,1)', PW * 0.06]], rnd);
-  // uzak kıyı (soluk mor)
-  yalilar(g, -10, PW + 10, hz - PH * 0.005, PW * 0.04, '#2a2a70', rnd, 0.35);
-  bridge(g, PW * 0.38, PW * 1.3, hz - PH * 0.06, PH * 0.15, '#1a1a52', true, rnd);
-  if (due()) yield;
-  yalilar(g, -10, PW * 0.6, hz, PW * 0.06, sil, rnd, 0.6);
-  galata(g, PW * 0.28, hz + 2, PH * 0.42, sil, true);
-  kizKulesi(g, PW * 0.7, hz + PH * 0.05, PH * 0.14, sil, true);
-  vapur(g, PW * 0.42, hz + PH * 0.19, PW * 0.4);
-  // martılar
-  g.strokeStyle = 'rgba(230,236,255,0.85)';
-  g.lineWidth = 1.6;
-  for (const [x, y, s] of [[0.5, 0.3, 9], [0.58, 0.26, 7], [0.44, 0.36, 6]] as const) {
-    g.beginPath();
-    g.moveTo(PW * x - s, PH * y);
-    g.quadraticCurveTo(PW * x - s * 0.5, PH * y - s * 0.6, PW * x, PH * y);
-    g.quadraticCurveTo(PW * x + s * 0.5, PH * y - s * 0.6, PW * x + s, PH * y);
-    g.stroke();
+// ───────────────────────── saray kartları ─────────────────────────
+const PAD = 15;
+function* paintCourt(kind: 'K' | 'Q' | 'J'): Job<HTMLCanvasElement> {
+  const W = CW, H = CH, hz = H * 0.8, s = 1.1;
+  const inner = ogeePts(PAD, PAD, W - 2 * PAD, H - 2 * PAD);
+  const innerP = polyPath(inner);
+  const moon: Disc = kind === 'Q' ? {x: W * 0.5, y: H * 0.29, r: W * 0.15} : kind === 'K' ? {x: W * 0.76, y: H * 0.21, r: W * 0.075} : {x: W * 0.26, y: H * 0.2, r: W * 0.06};
+  const tx = W * 0.47, th = H * 0.6, tbw = th * 0.125;
+  const ids: Ref | null =
+    kind === 'K'
+      ? makeIdMap(W, H, 0.75, (r, id) => {
+          const gy = hz + 2 - th * 0.7;
+          r.fillStyle = id(1);
+          r.fillRect(tx - tbw * 1.12, gy, tbw * 2.24, hz + 2 - gy);
+          r.fillStyle = id(2);
+          r.beginPath();
+          r.moveTo(tx - tbw * 1.1, gy + 1);
+          r.lineTo(tx, gy - th * 0.3);
+          r.lineTo(tx + tbw * 1.1, gy + 1);
+          r.fill();
+        })
+      : kind === 'J'
+        ? makeIdMap(W, H, 0.75, (r, id) => {
+            r.fillStyle = id(4);
+            r.fillRect(W * 0.18, hz + H * 0.02, W * 0.64, H * 0.1);
+          })
+        : makeIdMap(W, H, 0.75, (r, id) => {
+            r.fillStyle = id(3);
+            r.fillRect(W * 0.3, hz - H * 0.36, W * 0.4, H * 0.4);
+          });
+  const {cv, g, ref, rnd} = yield* oilArt({
+    W,
+    H,
+    seed: kind.charCodeAt(0) * 7,
+    k: 0.75,
+    s,
+    under: false,
+    mask: (x, y) => (x > PAD - 4 && x < W - PAD + 4 && y > PAD - 4 && y < H - PAD + 4 ? 1 : 0),
+    sketch: r => {
+      nightSky(r, W, hz, kind.charCodeAt(0), 4);
+      const rr = mulberry(kind.charCodeAt(0));
+      if (kind === 'K') {
+        moonSketch(r, moon, 3.6);
+        for (const [x, y] of [[0.22, 0.14], [0.36, 0.3], [0.86, 0.42], [0.16, 0.44]] as const) starSketch(r, W * x, H * y, W * 0.05);
+        radial(r, tx, hz - th * 0.35, 0, W * 0.45, [[0, 'rgba(255,190,110,.4)'], [1, 'rgba(255,190,110,0)']]);
+        waterSketch(r, W, H, hz, '#26327c', '#060a26', [[tx, W * 0.06, '255,200,120', 0.9], [moon.x, W * 0.04, '255,236,180', 0.8]], 21);
+        yalilar(r, -4, W + 4, hz + 1, W * 0.07, '#070920', rr, 0.7);
+        galataTower(r, tx, hz + 2, th, true);
+      } else if (kind === 'Q') {
+        moonSketch(r, moon, 2.6);
+        for (const [x, y] of [[0.16, 0.12], [0.84, 0.14], [0.14, 0.5], [0.86, 0.52]] as const) starSketch(r, W * x, H * y, W * 0.045);
+        waterSketch(r, W, H, hz, '#2a3480', '#060a26', [[moon.x, W * 0.12, '250,240,210', 1]], 22);
+        yalilar(r, -4, W * 0.24, hz + 1, W * 0.05, '#0a0c2c', rr, 0.6);
+        yalilar(r, W * 0.8, W + 4, hz + 1, W * 0.05, '#0a0c2c', rr, 0.6);
+        kizKulesi(r, W * 0.5, hz + H * 0.035, H * 0.36, '#0a0b26', true);
+      } else {
+        crescent(r, moon.x, moon.y, moon.r);
+        for (const [x, y] of [[0.5, 0.12], [0.78, 0.2], [0.86, 0.4]] as const) starSketch(r, W * x, H * y, W * 0.045);
+        waterSketch(r, W, H, hz, '#2a2c80', '#060a26', [[W * 0.25, W * 0.04, '255,110,190', 0.8], [W * 0.72, W * 0.04, '110,210,255', 0.8], [W * 0.5, W * 0.05, '255,214,130', 0.9]], 23);
+        yalilar(r, -4, W + 4, hz, W * 0.035, '#20225e', rr, 0.4);
+        mosque(r, W * 0.76, hz, H * 0.12, '#181a50', 0.5, rr);
+        bridge(r, -W * 0.22, W * 1.22, hz - H * 0.13, H * 0.42, '#121438', true, rr);
+        vapur(r, W * 0.5, hz + H * 0.105, W * 0.56);
+      }
+    },
+    field: (x, y) => {
+      const id = ids ? idAt(ids, x, y) : 0;
+      if (id === 1) return -Math.PI / 2 + 0.08 * Math.sin(y * 0.4);
+      if (id === 2) return Math.atan2(hz + 2 - th - y, tx - x);
+      if (id === 4) return 0.05 * Math.sin(x);
+      if (y > hz + 1) return waterFlow(x, y, s);
+      return skyFlow(x, y, s, [moon]);
+    },
+    sizeK: (x, y) => {
+      const id = ids ? idAt(ids, x, y) : 0;
+      return id === 1 || id === 2 ? 0.55 : id ? 0.6 : 1;
+    },
+    detail: (x, y) => (y > hz - H * 0.45 && y < hz + H * 0.12 && Math.abs(x - W / 2) < W * 0.3 ? 0.85 : 0),
+  });
+  // ışıklar
+  const oil = new Oil();
+  moonDabs(oil, moon, rnd, s, kind === 'Q' ? 1.7 : 2.4, 2);
+  lightDabs(oil, ref, rnd, 0, hz - H * 0.62, W, hz + H * 0.02, 160, 2.2);
+  for (let i = 0; i < 26; i++) {
+    const t = Math.pow(rnd(), 1.3), y = hz + 3 + t * H * 0.17, x = (kind === 'J' ? W * 0.5 : moon.x) + (rnd() - 0.5) * W * (0.08 + t * 0.12);
+    oil.add([x - 4, y, x + 4, y + (rnd() - 0.5)], 1.8 + rnd() * 1.2, mix([255, 236, 170], [200, 170, 120], t), 0.25);
   }
+  oil.flush(g);
+  canvasWeave(g, W, H, rnd, 0.08);
+  vignette(g, W, H, 0.3);
+  // kemere kırp + boyalı altın kemer çerçeve
+  const [c, cg] = makeCanvas(W, H);
+  cg.save();
+  cg.clip(innerP);
+  cg.drawImage(cv, 0, 0);
+  cg.restore();
+  cv.width = cv.height = 0;
+  const fr = new Oil();
+  const outer = ogeePts(PAD * 0.45, PAD * 0.45, W - PAD * 0.9, H - PAD * 0.9);
+  pathStrokes(fr, outer, 5, [[150, 100, 26], [196, 140, 36]], rnd, 12, PAD * 0.18);
+  pathStrokes(fr, ogeePts(PAD * 0.6, PAD * 0.6, W - PAD * 1.2, H - PAD * 1.2), 5, [[242, 206, 74], [255, 240, 170], [214, 160, 48]], rnd, 12);
+  pathStrokes(fr, ogeePts(PAD * 0.85, PAD * 0.85, W - PAD * 1.7, H - PAD * 1.7), 4, [[30, 50, 130], [44, 80, 160], [22, 40, 108]], rnd, 10);
+  fr.flush(cg);
+  cg.lineJoin = 'round';
+  cg.lineWidth = 2.2;
+  cg.strokeStyle = '#10163e';
+  cg.stroke(innerP);
   return c;
 }
 
-function* paintAll(): Job<Art> {
-  const night = paintNight();
+// ───────────────────────── arka yüz: Boğaz gecesi ─────────────────────────
+function* paintBackArt(): Job<HTMLCanvasElement> {
+  const W = PW, H = PH, hz = H * 0.6;
+  const moon: Disc = {x: W * 0.74, y: H * 0.16, r: W * 0.066};
+  const stars: [number, number, number][] = [[0.12, 0.07, 0.05], [0.3, 0.14, 0.035], [0.5, 0.05, 0.04], [0.92, 0.32, 0.04], [0.08, 0.3, 0.035], [0.55, 0.26, 0.03]];
+  const tx = W * 0.17, th = H * 0.33, tbw = th * 0.125;
+  const kx = W * 0.74, ks = H * 0.12;
+  const ids = makeIdMap(W, H, 0.75, (r, id) => {
+    const gy = hz + 3 - th * 0.7;
+    r.fillStyle = id(1);
+    r.fillRect(tx - tbw * 1.12, gy, tbw * 2.24, hz + 3 - gy);
+    r.fillStyle = id(2);
+    r.beginPath();
+    r.moveTo(tx - tbw * 1.1, gy + 1);
+    r.lineTo(tx, gy - th * 0.3);
+    r.lineTo(tx + tbw * 1.1, gy + 1);
+    r.fill();
+    r.fillStyle = id(3);
+    r.fillRect(kx - ks * 0.5, hz + H * 0.09 - ks, ks, ks);
+    r.fillStyle = id(4);
+    r.fillRect(W * 0.2, hz + H * 0.13, W * 0.32, H * 0.09);
+    r.fillStyle = id(5);
+    r.fillRect(W * 0.34, hz - H * 0.16, W * 0.2, H * 0.16);
+  });
+  const {cv, g, ref, rnd} = yield* oilArt({
+    W,
+    H,
+    seed: 1923,
+    k: 0.75,
+    under: false,
+    sketch: r => {
+      nightSky(r, W, hz, 19, 6);
+      moonSketch(r, moon, 4.2);
+      for (const [x, y, q] of stars) starSketch(r, W * x, H * y, W * q);
+      radial(r, W * 0.3, hz, 0, W * 0.5, [[0, 'rgba(230,140,110,.32)'], [1, 'rgba(230,140,110,0)']], 1.4, 0.35);
+      waterSketch(r, W, H, hz, '#24307a', '#050820', [[moon.x, W * 0.06, '255,232,170', 0.95], [tx, W * 0.03, '255,196,120', 0.5], [W * 0.44, W * 0.03, '255,206,130', 0.4], [W * 0.66, W * 0.025, '255,110,190', 0.35], [W * 0.9, W * 0.025, '110,210,255', 0.35]], 31);
+      const rr = mulberry(17);
+      yalilar(r, -10, W + 10, hz - 1, H * 0.018, '#2a2c6c', rr, 0.35);
+      bridge(r, W * 0.5, W * 1.3, hz - H * 0.03, H * 0.09, '#1b1c52', true, rr);
+      mosque(r, W * 0.44, hz + 1, H * 0.15, '#0b0d2c', 0.6, rr);
+      yalilar(r, -10, W * 0.34, hz + 2, H * 0.028, '#070920', rr, 0.6);
+      radial(r, tx, hz - th * 0.4, 0, th * 0.5, [[0, 'rgba(255,190,110,.35)'], [1, 'rgba(255,190,110,0)']]);
+      galataTower(r, tx, hz + 3, th, true);
+      kizKulesi(r, kx, hz + H * 0.09, ks, '#0a0b26', true);
+      vapur(r, W * 0.36, hz + H * 0.2, W * 0.28);
+    },
+    field: (x, y) => {
+      const id = idAt(ids, x, y);
+      if (id === 1) return -Math.PI / 2 + 0.08 * Math.sin(y * 0.4);
+      if (id === 2) return Math.atan2(hz + 3 - th - y, tx - x);
+      if (id === 3) return -Math.PI / 2;
+      if (id === 4) return 0;
+      if (id === 5) return -Math.PI / 2 + 0.3 * Math.sin(x * 0.3);
+      if (y > hz + 1) return waterFlow(x, y, 1);
+      return skyFlow(x, y, 1, [moon, ...stars.map(([a, b, q]) => ({x: W * a, y: H * b, r: W * q * 0.6}))]);
+    },
+    sizeK: (x, y) => (idAt(ids, x, y) ? 0.5 : 1),
+    detail: (x, y) => {
+      if (Math.abs(y - hz) < H * 0.06) return 0.9;
+      if (Math.hypot(x - moon.x, y - moon.y) < moon.r * 4) return 0.8;
+      if (y > hz && Math.abs(x - moon.x) < W * 0.1) return 0.7;
+      if (idAt(ids, x, y)) return 1;
+      return 0;
+    },
+  });
+  const oil = new Oil();
+  moonDabs(oil, moon, rnd, 1, 2.8, 3);
+  for (const [x, y, q] of stars) starDabs(oil, W * x, H * y, W * q, rnd, 1);
+  lightDabs(oil, ref, rnd, 0, hz - H * 0.36, W, hz + H * 0.12, 160, 2.2);
+  for (let i = 0; i < 60; i++) {
+    const t = Math.pow(rnd(), 1.3), y = hz + 3 + t * H * 0.34, x = moon.x + (rnd() - 0.5) * W * (0.05 + t * 0.14);
+    const len = (5 + rnd() * 8) * (1 - t * 0.4);
+    oil.add([x - len / 2, y, x, y + (rnd() - 0.5), x + len / 2, y], 1.6 + rnd() * 1.4, mix([255, 236, 170], [200, 170, 120], t), 0.25);
+  }
+  oil.flush(g);
   if (due()) yield;
-  const win = yield* paintWindows();
-  const moon = paintMoon();
-  if (due()) yield;
+  canvasWeave(g, W, H, rnd, 0.09);
+  vignette(g, W, H, 0.34);
+  return cv;
+}
+
+function* paintAll(): Job<CardArt> {
+  const T: [string, number][] = [];
+  let t0 = performance.now();
+  const lap = (n: string): void => {
+    const t = performance.now();
+    T.push([n, Math.round(t - t0)]);
+    t0 = t;
+  };
+  const frame = yield* paintFrame();
+  lap('frame');
+  const cream = yield* paintCream(77, '#f7f2e4', '#e6dcc4', [
+    [0.3, 0.26, 0.42, 'rgba(150,172,214,.2)'],
+    [0.72, 0.74, 0.46, 'rgba(150,172,214,.16)'],
+    [0.62, 0.3, 0.3, 'rgba(236,206,140,.14)'],
+  ]);
+  lap('cream');
+  const suit = {} as Record<Suit, HTMLCanvasElement>;
+  for (const s of ['S', 'H', 'D', 'C'] as Suit[]) suit[s] = yield* paintSuit(s);
+  lap('suits');
+  const ace = yield* paintAce();
+  lap('ace');
   const court: Record<number, HTMLCanvasElement> = {};
   court[13] = yield* paintCourt('K');
   court[12] = yield* paintCourt('Q');
   court[11] = yield* paintCourt('J');
-  const back = yield* paintBack();
+  lap('courts');
+  const back = yield* paintBackArt();
+  lap('back');
+  console.warn('TIMING', JSON.stringify(T));
   RF.measure();
-  return {night, win, moon, court, back};
+  return {frame, cream, suit, ace, court, back};
 }
 
-// ───────────────────────── kart çizimi ─────────────────────────
-const ink = (s: Suit): string => (isRed(s) ? CORAL : SNOW);
-const pipDraw = (g: Ctx, s: Suit, cx: number, cy: number, size: number): void =>
-  withSuit(g, s, cx, cy, size, p => {
-    g.fillStyle = ink(s);
-    g.fill(p);
-  });
-
-function face(g: Ctx, w: number, h: number, s: Suit, r: number, a: Art): void {
-  g.save();
-  g.clip(cardPath(w, h));
-  g.drawImage(a.night, 0, 0, w, h);
-  // ince altın çerçeve (iki çizgi)
-  const m = 0.04 * w;
-  g.lineWidth = 0.012 * w;
-  g.strokeStyle = gold(g, 0, 0, w, h);
-  g.stroke(rrPath(m, m, w - 2 * m, h - 2 * m, 0.05 * w));
-  g.lineWidth = Math.max(0.6, 0.004 * w);
-  g.strokeStyle = 'rgba(240,200,110,0.6)';
-  g.stroke(rrPath(m + 0.018 * w, m + 0.018 * w, w - 2 * m - 0.036 * w, h - 2 * m - 0.036 * w, 0.04 * w));
-  const cx = w / 2, cy = h / 2;
-  if (r === 1) {
-    const d = 0.9 * w;
-    g.drawImage(a.moon, cx - d / 2, cy - d / 2, d, d);
-    withSuit(g, s, cx, cy, 0.3 * w, p => {
-      g.fillStyle = isRed(s) ? '#c8102e' : '#0a1036';
-      g.fill(p);
-      g.lineWidth = 0.05;
-      g.strokeStyle = gold(g, -0.5, -0.5, 0.5, 0.5);
-      g.stroke(p);
-    });
-  } else if (r >= 11) {
-    const dw = 0.58 * w, dh = (dw * CH) / CW;
-    g.drawImage(a.court[r], cx - dw / 2, cy - dh / 2 + 0.01 * w, dw, dh);
-    const ey = cy + dh / 2 + 0.005 * w;
-    g.beginPath();
-    g.arc(cx, ey, 0.055 * w, 0, Math.PI * 2);
-    g.fillStyle = '#0a1036';
-    g.fill();
-    g.lineWidth = 0.012 * w;
-    g.strokeStyle = gold(g, cx - 0.05 * w, ey - 0.05 * w, cx + 0.05 * w, ey + 0.05 * w);
-    g.stroke();
-    pipDraw(g, s, cx, ey + 0.002 * w, 0.062 * w);
-  } else {
-    const sz = 0.52 * w, d = sz / 0.8;
-    g.drawImage(a.win[s], cx - d / 2, cy - d / 2, d, d);
-    const capH = 0.15 * w;
-    RF.draw(g, String(r), cx, cy + SUIT_TY[s] * sz - capH / 2 - 0.02 * w, capH, 0.25 * w, '#ffffff', 'rgba(6,8,30,0.9)', 0.035 * w);
-  }
-  corners(g, w, h, s, r, {
-    font: RF,
-    x: 0.2,
-    top: 0.075,
-    cap: 0.245,
-    pip: 0.165,
-    gap: 0.05,
-    wide: 0.3,
-    rank: (gg, t, x, top, cap, maxW, su) => RF.draw(gg, t, x, top, cap, maxW, ink(su), 'rgba(4,6,30,0.85)', cap * 0.1),
-    pipDraw,
-  });
-  g.restore();
-  edge(g, w, h, 'rgba(0,0,10,0.85)');
-}
-
-function back(g: Ctx, w: number, h: number, a: Art): void {
-  g.save();
-  const card = cardPath(w, h);
-  g.clip(card);
-  g.drawImage(a.back, 0, 0, w, h);
-  g.lineWidth = 0.05 * w;
-  g.strokeStyle = gold(g, 0, 0, w, h);
-  g.stroke(card);
-  g.lineWidth = 0.008 * w;
-  g.strokeStyle = 'rgba(10,6,0,0.85)';
-  g.stroke(cardPath(w, h, 0.025 * w));
-  g.lineWidth = Math.max(0.6, 0.005 * w);
-  g.strokeStyle = 'rgba(255,226,150,0.85)';
-  g.stroke(cardPath(w, h, 0.048 * w));
-  g.restore();
-}
-
-export const skin = defineSkin<Art>({
+export const skin = defineSkin<CardArt>({
   id: 'bogaz',
   name: 'Boğaz Gecesi',
-  desc: 'Galata, Kız Kulesi ve ışıklı köprü: İstanbul\'da ay ışığı.',
+  desc: 'Galata, Kız Kulesi ve ışıklı köprü: İstanbul gecesi, yağlı boya.',
   fonts: () => loadFont(() => import('@fontsource/playfair-display/900.css'), `900 100px "Playfair Display"`),
   paint: paintAll,
-  face,
-  back,
+  face: (g, w, h, s, r, a) => drawFace(g, w, h, s, r, a, STYLE),
+  back: (g, w, h, a) => drawBack(g, w, h, a, 'rgba(255,226,150,0.85)'),
 });
