@@ -862,7 +862,7 @@ export class BlofMatch {
       target = ui.where('picker', best);
     } else if (mode === 'open' && this.openRank && t.selected().length === 0 && !tut.seen.has('select')) {
       step = 'select';
-      text = TUTORIAL.select;
+      text = t.handMode === 'spread' ? TUTORIAL.selectSpread : TUTORIAL.select;
       target = t.handPoint(this.openRank);
     } else if ((mode === 'open' || mode === 'follow') && t.selected().length > 0 && !tut.seen.has('play')) {
       step = 'play';

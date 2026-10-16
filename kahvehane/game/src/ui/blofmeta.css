@@ -68,3 +68,36 @@
 .kh-mcb { --cw: calc(var(--u) * 2.35); flex: none; width: var(--cw); box-shadow: 0 0 0 1.5px rgba(10, 16, 51, .9), 0 3px 6px rgba(2, 4, 24, .45); }
 .kh-pile .kh-mcb { position: absolute; left: 50%; top: 50%; margin: calc(var(--u) * -1.645) 0 0 calc(var(--u) * -1.175); }
 .kh-step__badge.is-red { right: auto; left: calc(var(--u) * .3); } /* K kartının köşe işaretini kapatmasın */
+
+/* ---------- Ayarlar penceresi: alt düğme (TAMAM) hep görünür, gövde gerekirse kayar; kısa ekranda satırlar sıkışır ---------- */
+.kh-settings .kh-modal__panel { display: flex; flex-direction: column; overflow: hidden; }
+.kh-settings .kh-modal__head { flex: none; }
+.kh-settings .kh-set__list { flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; touch-action: pan-y; scrollbar-width: none;
+  padding: 4px 5px 8px; margin: -4px -5px -4px; } /* kart halkaları/gölgeleri kesilmesin */
+.kh-settings .kh-set__list::-webkit-scrollbar { display: none; }
+.kh-settings .kh-set__foot { flex: none; margin-top: calc(var(--u) * .8); }
+/* Grafik: dört seçenek; "Otomatik" daha geniş sütun (dar ekranda pilden taşmasın) */
+.kh-seg.is-q { grid-template-columns: 1.5fr 1fr 1fr 1fr; }
+.kh-seg.is-q button { padding: 0 .1em; white-space: nowrap; }
+@media (max-width: 440px) {
+  .kh-seg.is-q button { font-size: calc(var(--u) * .84); }
+  .kh-seg.is-q button[aria-pressed='true'] { font-size: calc(var(--u) * .9); }
+}
+@media (max-height: 960px) {
+  .kh-settings .kh-modal__head { margin-bottom: calc(var(--u) * .7); padding-top: calc(var(--u) * .55); padding-bottom: calc(var(--u) * .65); }
+  .kh-settings .kh-modal__panel { padding-bottom: calc(var(--u) * .9); }
+  .kh-settings .kh-set__list { gap: calc(var(--u) * .4); }
+  .kh-settings .kh-set__row { min-height: calc(var(--u) * 2.9); }
+  .kh-settings .kh-set__q { gap: calc(var(--u) * .35); padding: calc(var(--u) * .4) calc(var(--u) * .5) calc(var(--u) * .45); }
+  .kh-settings .kh-set__ico { width: calc(var(--u) * 2); height: calc(var(--u) * 2); }
+  .kh-settings .kh-toggle { width: calc(var(--u) * 3.2); height: calc(var(--u) * 1.8); }
+  .kh-settings .kh-toggle::after { width: calc(var(--u) * 1.8 - 6px); height: calc(var(--u) * 1.8 - 6px); }
+  .kh-settings [aria-pressed='true'] > .kh-toggle::after { transform: translateX(calc(var(--u) * 1.4)); }
+  .kh-settings .kh-seg button { min-height: calc(var(--tap) - 10px); }
+  .kh-settings .kh-seg.is-hand button { min-height: 0; padding: calc(var(--u) * .3) calc(var(--u) * .3) calc(var(--u) * .35); gap: calc(var(--u) * .2); }
+  .kh-settings .kh-hthumb { height: calc(var(--u) * 3.3); }
+  .kh-settings .kh-set__cap { margin-top: calc(var(--u) * .1); font-size: calc(var(--u) * .7); }
+  .kh-settings .kh-set__foot { margin-top: calc(var(--u) * .6); gap: calc(var(--u) * .35); }
+  .kh-settings .kh-set__foot .kh-btn { min-height: calc(var(--u) * 3.4); }
+  .kh-settings .kh-set__ver { font-size: calc(var(--u) * .72); }
+}

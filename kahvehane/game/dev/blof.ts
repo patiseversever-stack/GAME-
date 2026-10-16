@@ -6,7 +6,7 @@
 //   ?scene=open                                       (turu sen açıyorsun: değer seçici)
 //   ?scene=window                                     (BLÖF düğmesi + dolan halka)
 //   ?scene=reveal&lie=1                               (blöf anı: çağrı → ağır çekim açılış → damga → yığın uçar)
-// Ortak: &deck=yildizli &table=arena &low=1 &anim=0
+// Ortak: &lay=group|spread (el düzeni) &deck=yildizli &table=arena &low=1 &anim=0
 // Hata ayıklama: window.__b → {table, hud, fx, sfx, match, t, ui, ready, done, outcome, run(name)}
 import '@fontsource/lilita-one/400.css';
 import '@fontsource/nunito/700.css';
@@ -95,6 +95,7 @@ if (!scene) {
     const setup: MatchSetup = {
       game: 'blof', mode, players, dealer: 0, seed, fx: 'klasik',
       difficulty: (Q.get('diff') ?? 'orta') as Difficulty,
+      handLayout: Q.get('lay') === 'spread' ? 'spread' : 'group',
       tutorial: Q.has('tut') ? true : false,
     };
     g.ready = true;
@@ -118,6 +119,7 @@ if (!scene) {
   hud.setSounds(sfx);
   hud.show(players, mode);
   hud.setDeck(0, 0, 0);
+  t.setHandLayout(Q.get('lay') === 'spread' ? 'spread' : 'group');
   t.reset(n);
   ui.reset();
   ui.layout(t.L);

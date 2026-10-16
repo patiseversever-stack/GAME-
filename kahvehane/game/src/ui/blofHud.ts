@@ -208,7 +208,7 @@ export class BlofHud {
     const y = L.barY;
     this.bar.style.top = y + 'px';
     this.selInfo.style.top = y + 'px';
-    this.quick.style.top = y - L.u * 3.25 + 'px';
+    this.quick.style.top = y - L.u * 3.6 + 'px';
     // seçici çubuğun satırının üstünde (rozetimi örtmez)
     this.picker.style.bottom = Math.max(0, L.H - y + L.u * 2.3) + 'px';
     // HUD kökünde (rozetim de okur). :root'a yazmak tüm belgenin stilini yeniden hesaplatırdı (4× yavaşta ~60 ms).

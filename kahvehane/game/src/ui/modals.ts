@@ -76,7 +76,7 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
       onX: () => done(),
       body: `<div class="kh-set__list">${tog('sfx', 'Ses efektleri', I.sfx)}${tog('voice', 'Konuşmalar', I.voice)}${tog('music', 'Müzik', I.music)}${tog('haptics', 'Titreşim', I.vibrate)}
         <div class="kh-set__q kh-card"><div class="kh-set__qh"><span class="kh-set__ico">${I.quality}</span><span class="kh-set__lbl">Grafik</span></div>
-          <div class="kh-seg" style="--n:4">${qs.map(([v, n]) => `<button data-act="quality" data-v="${v}" aria-pressed="${cur.quality === v}">${n}</button>`).join('')}</div></div>
+          <div class="kh-seg is-q" style="--n:4">${qs.map(([v, n]) => `<button data-act="quality" data-v="${v}" aria-pressed="${cur.quality === v}">${n}</button>`).join('')}</div></div>
         ${handRow}
         <button class="kh-set__row kh-card kh-set__rules" data-act="rules"><span class="kh-set__ico">${I.book}</span><span class="kh-set__lbl">Nasıl Oynanır</span><span class="kh-set__go">${I.chevR}</span></button></div>
         <div class="kh-set__foot"><button class="kh-btn kh-btn--1 kh-btn--lg kh-btn--block" data-act="ok">Tamam</button><span class="kh-set__ver">Kahvehane Pişti · Sürüm ${esc(version)}</span></div>`,

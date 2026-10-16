@@ -163,7 +163,8 @@ export class BlofTalk {
 /** Rıza Amca'nın öğretici metinleri (ilk Blöf eli). */
 export const TUTORIAL = {
   open: 'Turu sen açıyorsun evlat! Önce hangi değeri söyleyeceğini seç.',
-  select: 'Bir kart grubuna dokun: o değerden bir kart kalkar. Basılı tut: hepsi. O değerden olmasa da olur… kimse görmüyor!',
+  select: 'Kartına dokun: o değerden bir kart kalkar, basılı tutarsan hepsi. O değerden olmasa da olur… kimse görmüyor!',
+  selectSpread: 'Atmak istediğin kartlara dokun (1–4 kart). O değerden olmasa da olur… kimse görmüyor!',
   play: 'Kartların kalktı! İstersen başka kart da ekle — yalan serbest. Sonra AT\'a bas.',
   blof: 'Kartları kapalı attım. İnanmıyorsan BLÖF de — ya da yığına dokun!',
   blofOther: 'Bu atışa inanıyor musun? İnanmıyorsan BLÖF de — ya da yığına dokun!',
