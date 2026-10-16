@@ -6,12 +6,18 @@
   "characters": {
     "riza": {
       "name": "Rıza Amca",
-      "voice_id": "",
+      "voice_id": "fg8pljYEn5ahwjyOQaro",
       "designPrompt": "A 72-year-old Turkish man from Istanbul. Deep, slightly raspy, warm voice with a gentle old-man gravel. Speaks native Turkish with a classic Istanbul accent. Playful, proud and a little grumpy, like a beloved uncle teasing you at a coffeehouse card table. Medium-slow pace, very expressive, chuckles easily. Clean studio recording, close microphone, no background noise.",
       "designPromptTr": "72 yaşında İstanbullu bir amca. Derin, hafif kısık, sıcak ses; yaşlılığın tatlı pürüzü. İstanbul ağzıyla anadil Türkçe. Oyunbaz, gururlu, biraz huysuz; kahvede masada seni tatlı tatlı iğneleyen sevilen bir amca. Orta-yavaş tempo, çok ifadeli, kolay kıkırdar. Temiz stüdyo kaydı.",
       "previewText": "Otur bakalım evlat. Kırk yıldır bu masadayım, bu kahvede benim bilmediğim oyun yok. Dursun! İki çay, biri açık olsun. Hadi bakalım, kağıtları kar da görelim seni. Pişti! Çaylar senden!",
-      "settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.35, "use_speaker_boost": true},
-      "previews": []
+      "settings": {
+        "stability": 0.5,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "previews": [],
+      "voice_name": "Mustafa Silici (library)"
     },
     "cem": {
       "name": "Cem",
@@ -19,26 +25,59 @@
       "designPrompt": "A 22-year-old Turkish university student from Istanbul. Bright, energetic young male voice, quick and cocky, playful casual tone with light youth slang. Native Turkish speaker, modern Istanbul accent. Expressive, laughs easily. Clean studio recording, close microphone, no background noise.",
       "designPromptTr": "22 yaşında İstanbullu üniversite öğrencisi. Parlak, enerjik genç erkek sesi; hızlı ve kendinden emin, hafif argolu rahat bir ton. Anadil Türkçe, modern İstanbul ağzı. Temiz stüdyo kaydı.",
       "previewText": "Kanka hazır ol, algoritmam ısındı! Olasılıkları hesapladım, bu el kesin benim. Aslında ders çalışmam lazım ama tek el oynarız, sonra hikâyeye atarım. Pişti! Efsane kanka, efsane!",
-      "settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.4, "use_speaker_boost": true},
-      "previews": []
+      "settings": {
+        "stability": 0.5,
+        "similarity_boost": 0.8,
+        "style": 0.4,
+        "use_speaker_boost": true
+      },
+      "previews": [
+        {
+          "n": 1,
+          "generated_voice_id": "NxR2EaMOcYcTA0Gx1utB",
+          "file": "previews/cem/1.mp3"
+        },
+        {
+          "n": 2,
+          "generated_voice_id": "I5l1tJoDVsEhONWrXD9A",
+          "file": "previews/cem/2.mp3"
+        },
+        {
+          "n": 3,
+          "generated_voice_id": "ZsRja4dRAG0xJocCOVkR",
+          "file": "previews/cem/3.mp3"
+        }
+      ]
     },
     "dursun": {
       "name": "Kahveci Dursun",
-      "voice_id": "",
+      "voice_id": "c9eIhSvMHBxtYhLX4oBt",
       "designPrompt": "A 55-year-old Turkish coffeehouse owner. Warm, hearty, booming baritone voice, friendly and curious, talks a little loud as if across a busy coffeehouse. Native Turkish with an Istanbul accent. Jovial and generous, laughs from the belly. Clean studio recording, close microphone, no background noise.",
       "designPromptTr": "55 yaşında kahvehane sahibi. Sıcak, gür, tok bir bariton; güler yüzlü ve meraklı, kalabalık kahvede seslenir gibi biraz yüksek konuşur. İstanbul ağzıyla anadil Türkçe. Cömert, göbekten güler. Temiz stüdyo kaydı.",
       "previewText": "Hoş geldin, hoş geldin! Otur şöyle, tavşan kanı çaylar geliyor. Bu kahvede kimse çaysız oynamaz. Senin kartlara bir baksam… yok yok, ayıp, bakmıyorum! Çaylar benden, oyun sizden!",
-      "settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.35, "use_speaker_boost": true},
-      "previews": []
+      "settings": {
+        "stability": 0.5,
+        "similarity_boost": 0.8,
+        "style": 0.35,
+        "use_speaker_boost": true
+      },
+      "previews": [],
+      "voice_name": "Orcun Togan (library)"
     },
     "defne": {
       "name": "Defne",
-      "voice_id": "",
+      "voice_id": "uvU9jrgGLWNPeNA4NgNT",
       "designPrompt": "A 34-year-old Turkish woman, an architect. Low, calm, smooth alto voice. Minimal words, dry deadpan delivery with subtle sarcasm, confident and unhurried, never shouts. Native Turkish with an Istanbul accent. Clean studio recording, close microphone, no background noise.",
       "designPromptTr": "34 yaşında mimar bir kadın. Pes, sakin, pürüzsüz alto ses. Az konuşur; kuru, ifadesiz, hafif iğneleyici; kendinden emin ve acelesiz, asla bağırmaz. İstanbul ağzıyla anadil Türkçe. Temiz stüdyo kaydı.",
       "previewText": "Başlayalım. Kuralları biliyorsun, değil mi? Güzel. Ben az konuşurum, çok hesaplarım. Acele etme… Sadece bu sürede bir bina çizebilirdim. Neyse. Pişti. Planlandığı gibi.",
-      "settings": {"stability": 0.5, "similarity_boost": 0.8, "style": 0.15, "use_speaker_boost": true},
-      "previews": []
+      "settings": {
+        "stability": 0.5,
+        "similarity_boost": 0.8,
+        "style": 0.15,
+        "use_speaker_boost": true
+      },
+      "previews": [],
+      "voice_name": "İrem (library)"
     }
   }
 }
