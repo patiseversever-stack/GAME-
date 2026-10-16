@@ -8,7 +8,7 @@ import {ANIM, EASE, Scope, bump, clamp, countUp, esc, fmt, h, play, q, shake} fr
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, gemHtml, onAct, rarityHtml, toast} from './parts';
-import {fanHtml, frameJob, fxStillHtml, mountFxStill, tableSceneHtml} from './previews';
+import {afterFrameJob, fanHtml, frameJob, fxStillHtml, mountFxStill, tableSceneHtml} from './previews';
 import {setPrice, shopSets} from './sets';
 import {deckOr} from './deckpv';
 import {haptic} from '../platform/bridge';
@@ -68,12 +68,12 @@ export class CollectionPage implements Page {
     if (need && ANIM) {
       if (this.queued) return;
       this.queued = true;
-      frameJob(() => {
+      afterFrameJob(() => {
         this.queued = false;
         if (!this.scope.alive) return;
         this.render(470);
         this.enter();
-      }, true);
+      });
       return;
     }
     if (need) this.render(0);

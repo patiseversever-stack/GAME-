@@ -60,6 +60,14 @@ export function frameJob(fn: () => void, first = false): void {
   pump();
 }
 
+/**
+ * Tıklamadan SONRAKİ kareye iş (kuyruğun başına). Tıklama görevinde kuyruğa konan iş bir sonraki rAF'ta, yani tıklamanın
+ * kendi DOM değişiklikleriyle AYNI karede çalışır (stil/yerleşim/boyama birleşir). Bu, bir kare daha bekler.
+ */
+export function afterFrameJob(fn: () => void): void {
+  requestAnimationFrame(() => frameJob(fn, true));
+}
+
 // boşta işler: kullanıcı dokunurken/kaydırırken değil, tarayıcı boş kalınca (efekt karesi kurmak 50-200 ms sürebilir)
 const idleJobs: Array<() => void> = [];
 let idling = false;

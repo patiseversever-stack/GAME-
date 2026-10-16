@@ -15,7 +15,7 @@ import {ANIM, EASE, Scope, bump, center, clamp, esc, fmt, h, hms, play, q, shake
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toast, type ModalHandle} from './parts';
-import {fanHtml, frameJob, fxStillHtml, idleJob, mountFx, mountFxStill, paintTableLater, tableSceneHtml, warmPreviews, type FxLoop} from './previews';
+import {afterFrameJob, fanHtml, frameJob, fxStillHtml, idleJob, mountFx, mountFxStill, paintTableLater, tableSceneHtml, warmPreviews, type FxLoop} from './previews';
 import {BADGE_NAME, RANK, badgeOf, setOf, setById, setPrice, shopSets, type ShopSet} from './sets';
 import {Spotlight, glint, glintHtml, mountDeckViewer} from './showcase';
 import {deckOr} from './deckpv';
@@ -270,7 +270,7 @@ export class ShopPage implements Page {
     if (sub && TABS.some(t => t.id === sub)) this.tab = sub as ShopTab;
     // ilk açılış: sayfa kabuğu (başlık, sekmeler) bu karede, içerik bir sonraki karede — sayfa geçişi 60 ms gecikmeli ve
     // saydam başladığı için görünmez; tıklama görevi ikiye bölünür (tek uzun kare yerine iki kısa kare)
-    if (!this.panels.size && ANIM) frameJob(() => this.scope.alive && this.visible && this.activate(false), true);
+    if (!this.panels.size && ANIM) afterFrameJob(() => this.scope.alive && this.visible && this.activate(false));
     else this.activate(false);
   }
 
@@ -644,7 +644,14 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
   });
   const pv = q(m.panel, '.kh-pd__pv');
   const stage = q(m.panel, '.kh-pd__stage');
-  const show = mountStage(shell, it, pv, m.scope);
+  // vitrin (deste gezgini, masa sahnesi, efekt) pencere kabuğundan bir kare SONRA: tıklama karesi kısa kalır. Önizleme
+  // girişi zaten 110 ms gecikmeli ve saydam başlar, fark görünmez.
+  let show: Stage = {cheer: () => undefined, stop: () => undefined};
+  const mount = (): void => {
+    if (m.scope.alive) show = mountStage(shell, it, pv, m.scope);
+  };
+  if (ANIM) afterFrameJob(mount);
+  else mount();
   m.scope.add(() => show.stop());
   const actBox = q(m.panel, '.kh-pd__act');
   const wallet = q(m.panel, '.kh-pd__wallet');
