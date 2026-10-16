@@ -1,28 +1,38 @@
-// MARKET: sekmeler (Öne Çıkan · Karakterler · Desteler · Masalar · Efektler · Çerçeveler), parıltılı "Günün Teklifi" (geri sayım),
-// nadirlik çerçeveli ürün kartları (efsanevi: altın ışıltı), canlı önizlemeler (gerçek kartlar, mini masa, döngülü efekt, portre),
-// satın alma: ürün penceresi → jetonlar bakiyeden ürüne uçar → kilit açılış patlaması → "KUŞAN". Yetersiz jetonda sallanır, nazikçe söyler.
+// MARKET — ürün güç değil GÖRÜNÜŞ satar: her ürün kendi gösterisini yapar.
+//  Sekmeler: Öne Çıkan · Setler · Desteler · Masalar · Efektler · Çerçeveler · Karakterler (her sekme bir kez kurulur,
+//  durum değişmedikçe dönüşte yeniden kurulmaz; kaydırma yeri sekme başına hatırlanır).
+//  Öne Çıkan: Günün Teklifi (dev vitrin, geri sayım, çizili fiyat) → Özel Setler (paket indirimi) → Yeni Gelenler (kaydırmalı
+//  şerit) → Efsanevi Vitrin → Hemen Alabileceklerin / Hedefin. Kategori sekmesi: koleksiyon ilerlemesi, en gözde ürün geniş
+//  kartta, sonra ızgara, en altta "Sende".
+//  Kartlar: nadirlik katmanı (efsanevi: altın folyo), Yeni/Popüler/Sınırlı rozeti, gerçek önizleme (pişmiş deste kartları,
+//  kuşanılı destenle masa, kendi avatarınla çerçeve, donmuş efekt karesi). Kartlar sırayla canlanır (showcase.ts Spotlight).
+//  Ürün penceresi: etkileşimli sahne (deste: kaydır/çevir/ışık; masa: kart at; çerçeve: avatarına dokun; efekt: tekrar),
+//  "Dene" (tam ekran masa sahnesinde dene, tryon.ts), cüzdan satırı (alınca ne kalır / ne kadar eksik), set bağlantısı.
 import './shop.css';
 import {CATALOG, KIND_INFO, itemOf, type ItemKind, type ShopItem} from '../game/catalog';
-import {charById, type Rarity} from '../game/roster';
-import {ANIM, EASE, Scope, bump, center, esc, fmt, h, hms, play, q, shake} from './dom';
+import {charById, type CharDef} from '../game/roster';
+import {ANIM, EASE, Scope, bump, center, clamp, esc, fmt, h, hms, play, q, shake} from './dom';
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toast, type ModalHandle} from './parts';
-import {deferMount, mountDeckFan, mountFx, mountTable, type FxLoop} from './previews';
+import {deferMount, fanHtml, mountFx, paintTableLater, tableSceneHtml, type FxLoop} from './previews';
+import {BADGE_NAME, RANK, badgeOf, setOf, setById, setPrice, shopSets, type ShopSet} from './sets';
+import {Spotlight, glint, glintHtml, mountDeckViewer} from './showcase';
+import {openTryOn} from './tryon';
 import {haptic} from '../platform/bridge';
 import {g3} from './fx';
 import type {Page, Shell} from './lobby';
 
-type ShopTab = 'featured' | ItemKind;
-const TABS: {id: ShopTab; name: string}[] = [
-  {id: 'featured', name: 'Öne Çıkan'},
-  {id: 'char', name: 'Karakterler'},
-  {id: 'deck', name: 'Desteler'},
-  {id: 'table', name: 'Masalar'},
-  {id: 'fx', name: 'Efektler'},
-  {id: 'frame', name: 'Çerçeveler'},
+type ShopTab = 'featured' | 'set' | ItemKind;
+const TABS: {id: ShopTab; name: string; icon: string}[] = [
+  {id: 'featured', name: 'Öne Çıkan', icon: I.star},
+  {id: 'set', name: 'Setler', icon: I.gift},
+  {id: 'deck', name: 'Desteler', icon: I.cards},
+  {id: 'table', name: 'Masalar', icon: I.grid},
+  {id: 'fx', name: 'Efektler', icon: I.sparkle},
+  {id: 'frame', name: 'Çerçeveler', icon: I.crown},
+  {id: 'char', name: 'Karakterler', icon: I.user},
 ];
-const RANK: Record<Rarity, number> = {common: 0, rare: 1, epic: 2, legendary: 3};
 const DEAL_OFF = 0.3;
 
 /** Kuşanınca gösterilen mesaj. */
@@ -39,7 +49,7 @@ function dealOf(owns: (k: ItemKind, id: string) => boolean): {item: ShopItem; pr
   const day = new Date().toISOString().slice(0, 10);
   let seed = 0;
   for (const c of day) seed = (seed * 31 + c.charCodeAt(0)) >>> 0;
-  const pool = CATALOG.filter(i => !i.starter && i.price > 0 && !owns(i.kind, i.id));
+  const pool = CATALOG.filter(i => !i.starter && i.price > 0 && i.kind !== 'char' && !owns(i.kind, i.id));
   const best = pool.filter(i => RANK[i.rarity] >= 2);
   const list = best.length ? best : pool;
   if (!list.length) return null;
@@ -47,64 +57,301 @@ function dealOf(owns: (k: ItemKind, id: string) => boolean): {item: ShopItem; pr
   return {item, price: Math.round((item.price * (1 - DEAL_OFF)) / 50) * 50};
 }
 
-const msToMidnight = () => {
+const msToMidnight = (): number => {
   const n = new Date();
   const m = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
   return m.getTime() - n.getTime();
 };
 
-const FIRST_BATCH = 4, BATCH = 4;
+/** Önizlemelerin "sen" bağlamı: kuşanılı deste/masa/çerçeve ve karakter. */
+interface Me {
+  char: CharDef;
+  deck: string;
+  table: string;
+  frame: string;
+  fx: string;
+  name: string;
+  level: number;
+}
+function meOf(shell: Shell): Me {
+  const d = shell.profile.data;
+  return {char: charById(d.char ?? 'dursun'), deck: d.equipped.deck, table: d.equipped.table, frame: d.equipped.frame, fx: d.equipped.fx, name: d.name, level: d.level};
+}
+
+const coinImg = (): string => `<img src="${ASSETS.icon_coin}" alt="">`;
+
+// =====================================================================================================
+// Önizleme HTML'i (tek dizge; efekt kareleri sonradan sırayla kurulur → hydrate)
+// =====================================================================================================
+function pvHtml(it: {kind: ItemKind; id: string}, me: Me, big = false): string {
+  switch (it.kind) {
+    case 'deck':
+      return fanHtml(it.id, 3);
+    case 'table':
+      return `<span class="kh-pv__table">${tableSceneHtml(it.id, {deck: me.deck, size: 'mini'})}</span>`;
+    case 'fx':
+      return `<span class="kh-pv__fx" data-fx="${it.id}"></span>`;
+    case 'frame':
+      return charAvatarHtml(me.char, it.id, 'kh-pv__ava', big ? 'gulumseme' : 'notr');
+    case 'char': {
+      const c = charById(it.id);
+      return `<i class="kh-pv__glow" style="--c:${c.color}"></i><img class="kh-pv__char" src="${c.poses[big ? 'gulumseme' : 'notr']}" alt="" decoding="async">`;
+    }
+  }
+}
+
+/** Kök altındaki efekt kutularını görünür olunca, sırayla, donmuş kare olarak kur. */
+function hydrate(root: ParentNode): void {
+  root.querySelectorAll<HTMLElement>('[data-fx]:not(.kh-fxpv)').forEach(box => {
+    box.classList.add('kh-fxpv');
+    deferMount(box, () => mountFx(box, box.dataset.fx!, true));
+  });
+}
+
+const badgeHtml = (it: ShopItem): string => {
+  const b = badgeOf(it);
+  return b ? `<span class="kh-tag is-${b}">${BADGE_NAME[b]}</span>` : '';
+};
+
+/** Ürün kartı. wide: iki sütunluk vitrin kartı; sub: tür adını göster (karışık listelerde). */
+function itemCardHtml(it: ShopItem, me: Me, st: {owned: boolean; eq: boolean; wide?: boolean; sub?: boolean; rail?: boolean}): string {
+  const foot = st.eq
+    ? `<span class="kh-item__state is-eq">${I.check}Kuşanıldı</span>`
+    : st.owned
+      ? `<span class="kh-item__state is-own">${I.check}Sende</span>`
+      : `<span class="kh-item__price">${coinImg()}<b class="kh-num">${fmt(it.price)}</b></span>`;
+  const glow = RANK[it.rarity] >= 2 && !st.owned;
+  return `<button class="kh-item is-${it.rarity}${st.owned ? ' is-owned' : ''}${st.eq ? ' is-eq' : ''}${st.wide ? ' is-wide' : ''}${st.rail ? ' is-rail' : ''}" data-act="item" data-k="${it.kind}" data-id="${it.id}"${glow ? ' data-glint' : ''}>
+    <span class="kh-item__pv is-${it.kind}"><i class="kh-item__bg"></i>${pvHtml(it, me, st.wide)}${glow ? glintHtml() : ''}</span>
+    <span class="kh-item__top">${rarityHtml(it.rarity, 'kh-item__rar')}${st.owned ? '' : badgeHtml(it)}</span>
+    <span class="kh-item__name">${esc(it.name)}</span>
+    ${st.sub || st.wide ? `<span class="kh-item__sub">${KIND_INFO[it.kind].name}${st.wide ? ` · ${esc(it.desc)}` : ''}</span>` : ''}
+    ${foot}
+  </button>`;
+}
+
+/** Set kartı: parçaların küçük önizlemeleri üst üste, çizili toplam, set fiyatı, kazanç. */
+function setCardHtml(s: ShopSet, me: Me, owns: (k: ItemKind, id: string) => boolean, coins: number): string {
+  const pr = setPrice(s, owns);
+  const done = !pr.missing.length;
+  const tiles = s.parts.slice(0, 3).map((p, i) => `<span class="kh-setc__tile is-${p.kind} is-${p.rarity}" style="--n:${i}"><i class="kh-item__bg"></i>${pvHtml(p, me)}${owns(p.kind, p.id) ? `<i class="kh-setc__own">${I.check}</i>` : ''}</span>`).join('');
+  const price = done
+    ? `<span class="kh-setc__done">${I.check}Tamamlandı</span>`
+    : `<span class="kh-setc__price"><s class="kh-num">${fmt(pr.full)}</s><span class="kh-setc__now${coins >= pr.price ? '' : ' is-poor'}">${coinImg()}<b class="kh-num">${fmt(pr.price)}</b></span></span>`;
+  return `<button class="kh-setc${done ? ' is-done' : ''}" data-act="set" data-set="${s.id}" style="--a:${s.a};--b:${s.b}"${done ? '' : ' data-glint'}>
+    <i class="kh-setc__rays"></i>
+    <span class="kh-setc__art">${tiles}</span>
+    <span class="kh-setc__info">
+      <span class="kh-setc__kick">${I.gift}Set · ${s.parts.length} parça</span>
+      <b class="kh-setc__name">${esc(s.name)}</b>
+      <span class="kh-setc__tag">${esc(s.tag)}</span>
+      ${price}
+    </span>
+    ${done ? '' : `<span class="kh-setc__off">-%${Math.round(s.off * 100)}</span>`}
+    ${done ? '' : glintHtml()}
+  </button>`;
+}
+
+function dealHtml(deal: {item: ShopItem; price: number} | null, me: Me): string {
+  if (!deal) return `<div class="kh-deal is-done"><span class="kh-deal__info"><span class="kh-deal__kick">${I.crown}Koleksiyon tamam!</span><b class="kh-deal__name">Her şey sende, usta!</b></span></div>`;
+  const it = deal.item;
+  return `<button class="kh-deal is-${it.rarity} is-k-${it.kind}" data-act="deal" data-k="${it.kind}" data-id="${it.id}" data-glint>
+      <i class="kh-deal__rays"></i><i class="kh-deal__dots"></i>
+      <span class="kh-deal__pv is-${it.kind}"><i class="kh-item__bg"></i>${pvHtml(it, me, true)}</span>
+      <span class="kh-deal__info">
+        <span class="kh-deal__kick">${I.sparkle}Günün Teklifi</span>
+        <b class="kh-deal__name">${esc(it.name)}</b>
+        <span class="kh-deal__kind">${rarityHtml(it.rarity)}<small>${KIND_INFO[it.kind].name}</small></span>
+        <span class="kh-deal__price"><s class="kh-num">${fmt(it.price)}</s><span class="kh-coins">${coinImg()}<b class="kh-num">${fmt(deal.price)}</b></span></span>
+        <span class="kh-deal__time">${I.bell}<b class="kh-num">${hms(msToMidnight() / 1000)}</b></span>
+      </span>
+      <span class="kh-deal__off"><small>İndirim</small>-%${Math.round(DEAL_OFF * 100)}</span>
+      ${glintHtml()}
+    </button>`;
+}
+
+const secHtml = (title: string, sub = '', icon = ''): string =>
+  `<div class="kh-sec">${icon ? `<span class="kh-sec__i">${icon}</span>` : ''}<span class="kh-sec__t">${esc(title)}</span>${sub ? `<span class="kh-sec__s">${sub}</span>` : ''}</div>`;
+
+// =====================================================================================================
+// Sayfa
+// =====================================================================================================
+interface Panel {
+  el: HTMLElement;
+  sig: string;
+  scroll: number;
+}
 
 export class ShopPage implements Page {
   readonly el = h('div', 'kh-page kh-shop');
   private scope = new Scope();
   private tab: ShopTab = 'featured';
   private body: HTMLElement;
+  private panels = new Map<ShopTab, Panel>();
   private dealT = 0;
+  private visible = false;
+  private spot = new Spotlight(() => this.panels.get(this.tab)?.el ?? null);
 
   constructor(private shell: Shell) {
-    this.el.innerHTML = `<header class="kh-shop__head"><div class="kh-title kh-shop__title">${g3('Market')}</div><span class="kh-shop__count"></span></header>
-      <div class="kh-shop__tabs kh-noswipe"><div class="kh-shop__track">${TABS.map(t => `<button class="kh-stab" data-act="tab" data-t="${t.id}">${t.name}</button>`).join('')}<i class="kh-stab__ind"></i></div></div>
+    this.el.innerHTML = `<header class="kh-shop__head"><div class="kh-title kh-shop__title">${g3('Market')}</div><button class="kh-shop__count" data-act="coll"></button></header>
+      <div class="kh-shop__tabs kh-noswipe"><div class="kh-shop__track">${TABS.map(t => `<button class="kh-stab" data-act="tab" data-t="${t.id}">${t.icon}<span>${t.name}</span></button>`).join('')}<i class="kh-stab__ind"></i></div></div>
       <div class="kh-shop__body kh-scroll"></div>`;
     this.body = q(this.el, '.kh-shop__body');
     onAct(this.scope, this.el, (a, b) => this.act(a, b));
-    this.scope.add(() => clearTimeout(this.dealT));
-    // içerik ilk show()'da kurulur (kurucuda da kurmak ilk açılışta işi ikiye katlıyordu)
+    this.scope.add(() => {
+      clearTimeout(this.dealT);
+      this.spot.stop();
+    });
+    // içerik ilk show()'da kurulur
   }
 
-  /** Mağazanın göstereceği şeyi belirleyen durum: değişmediyse sekme dönüşünde yeniden kurmaya gerek yok. */
-  private sig = '';
-  private signature(): string {
+  private owns = (k: ItemKind, id: string): boolean => this.shell.profile.owns(k, id);
+  private equipped(k: ItemKind, id: string): boolean {
     const d = this.shell.profile.data;
-    const deal = dealOf(this.owns);
-    return [this.tab, d.char, JSON.stringify(d.equipped), CATALOG.map(it => (this.owns(it.kind, it.id) ? 1 : 0)).join(''), deal ? `${deal.item.kind}:${deal.item.id}:${deal.price}` : '-'].join('|');
+    return k === 'char' ? d.char === id : d.equipped[k] === id;
+  }
+
+  /** Sekme içeriğini belirleyen durum (değişmediyse panel yeniden kurulmaz). */
+  private signature(tab: ShopTab): string {
+    const d = this.shell.profile.data;
+    const base = [d.char, JSON.stringify(d.equipped), CATALOG.map(it => (this.owns(it.kind, it.id) ? 1 : 0)).join('')];
+    if (tab === 'featured') {
+      const deal = dealOf(this.owns);
+      base.push(deal ? `${deal.item.kind}:${deal.item.id}` : '-', String(Math.floor(d.coins / 500)));
+    }
+    if (tab === 'set') base.push(String(Math.floor(d.coins / 500)));
+    return base.join('|');
   }
 
   show(sub?: string): void {
-    if (sub && TABS.some(t => t.id === sub) && sub !== this.tab) this.tab = sub as ShopTab;
-    if (this.sig && this.body.firstChild && this.sig === this.signature()) {
-      this.placeInd();
-      if (this.tab === 'featured') this.tickDeal();
-      return;
-    }
-    this.render(true);
+    this.visible = true;
+    if (sub && TABS.some(t => t.id === sub)) this.tab = sub as ShopTab;
+    this.activate(false);
+  }
+
+  hide(): void {
+    this.visible = false;
+    clearTimeout(this.dealT);
+    this.spot.stop();
+    const p = this.panels.get(this.tab);
+    if (p) p.scroll = this.body.scrollTop;
   }
 
   private placeInd(): void {
     const tabs = this.el.querySelectorAll<HTMLElement>('.kh-stab');
-    const on = tabs[TABS.findIndex(t => t.id === this.tab)];
+    const i = TABS.findIndex(t => t.id === this.tab);
+    tabs.forEach((t, k) => t.classList.toggle('is-on', k === i));
+    const on = tabs[i];
     const ind = q(this.el, '.kh-stab__ind');
     ind.style.width = on.offsetWidth + 'px';
     ind.style.transform = `translateX(${on.offsetLeft}px)`;
   }
-  hide(): void {
-    clearTimeout(this.dealT);
+
+  private renderCount(): void {
+    const owned = CATALOG.filter(it => this.owns(it.kind, it.id)).length;
+    const k = owned / CATALOG.length;
+    q(this.el, '.kh-shop__count').innerHTML = `<svg class="kh-ring" viewBox="0 0 36 36"><circle cx="18" cy="18" r="15" class="kh-ring__t"/><circle cx="18" cy="18" r="15" class="kh-ring__f" style="stroke-dasharray:${(k * 94.25).toFixed(1)} 94.25"/></svg><b class="kh-num">${owned}/${CATALOG.length}</b>`;
   }
 
-  private owns = (k: ItemKind, id: string) => this.shell.profile.owns(k, id);
-  private equipped(k: ItemKind, id: string): boolean {
-    const d = this.shell.profile.data;
-    return k === 'char' ? d.char === id : d.equipped[k] === id;
+  /** Görünen sekmeyi hazırla: panel yoksa ya da durum değiştiyse kur; yoksa yalnız göster. dir: kayma yönü. */
+  private activate(animate: boolean, dir = 0): void {
+    this.placeInd();
+    this.renderCount();
+    const sig = this.signature(this.tab);
+    let p = this.panels.get(this.tab);
+    let fresh = false;
+    if (!p || p.sig !== sig) {
+      const el = h('div', `kh-shop__panel is-${this.tab}`);
+      el.innerHTML = this.panelHtml(this.tab);
+      if (p) p.el.replaceWith(el);
+      else this.body.append(el);
+      const keep = p?.scroll ?? 0;
+      p = {el, sig, scroll: keep};
+      this.panels.set(this.tab, p);
+      fresh = true;
+    }
+    for (const [t, x] of this.panels) x.el.hidden = t !== this.tab;
+    this.body.scrollTop = p.scroll;
+    hydrate(p.el);
+    clearTimeout(this.dealT);
+    if (this.tab === 'featured') this.tickDeal();
+    if (animate && ANIM) {
+      if (dir) play(p.el, [{transform: `translateX(${dir * 9}%)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.outQuart});
+      if (fresh) this.enterCards(p.el);
+    } else if (fresh && ANIM) this.enterCards(p.el);
+    this.spot.start(fresh ? 1300 : 700);
+  }
+
+  /** Kartlar sırayla yaylanarak gelir (yalnız ilk görünen ~8 kart; geri kalanı zaten ekran dışında). */
+  private enterCards(root: HTMLElement): void {
+    const list = root.querySelectorAll('.kh-deal, .kh-setc, .kh-item, .kh-cprog2');
+    list.forEach((c, k) => {
+      if (k > 9) return;
+      play(c, [{transform: 'translateY(22px) scale(.94)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 30 + k * 40, easing: EASE.spring, fill: 'backwards'});
+    });
+  }
+
+  private panelHtml(tab: ShopTab): string {
+    const me = meOf(this.shell);
+    if (tab === 'featured') return this.featuredHtml(me);
+    if (tab === 'set') return this.setsHtml(me);
+    return this.kindHtml(tab, me);
+  }
+
+  private card(it: ShopItem, me: Me, o: {wide?: boolean; sub?: boolean; rail?: boolean} = {}): string {
+    return itemCardHtml(it, me, {owned: this.owns(it.kind, it.id), eq: this.equipped(it.kind, it.id), ...o});
+  }
+
+  private featuredHtml(me: Me): string {
+    const coins = this.shell.profile.data.coins;
+    const deal = dealOf(this.owns);
+    const shown = new Set<ShopItem>(deal ? [deal.item] : []);
+    const unowned = CATALOG.filter(it => !it.starter && !this.owns(it.kind, it.id));
+    // setler: eksik parçası olanlar, kazancı büyük olan önce
+    const sets = shopSets()
+      .map(s => ({s, p: setPrice(s, this.owns)}))
+      .filter(x => x.p.missing.length >= 2)
+      .sort((a, b) => b.p.full - b.p.price - (a.p.full - a.p.price))
+      .slice(0, 2);
+    const fresh = unowned.filter(it => badgeOf(it) === 'new' && !shown.has(it)).sort((a, b) => RANK[b.rarity] - RANK[a.rarity] || b.price - a.price);
+    fresh.forEach(it => shown.add(it));
+    const legend = unowned.filter(it => it.rarity === 'legendary' && !shown.has(it)).sort((a, b) => b.price - a.price).slice(0, 4);
+    legend.forEach(it => shown.add(it));
+    const rest = unowned.filter(it => !shown.has(it));
+    const afford = rest.filter(it => it.price <= coins).sort((a, b) => b.price - a.price).slice(0, 4);
+    const goal = afford.length ? [] : rest.slice().sort((a, b) => a.price - b.price).slice(0, 2);
+    let out = dealHtml(deal, me);
+    if (sets.length) out += secHtml('Özel Setler', `Tek tek almaktan <b>%${Math.round(sets[0].s.off * 100)}</b> ucuz`, I.gift) + `<div class="kh-sets">${sets.map(x => setCardHtml(x.s, me, this.owns, coins)).join('')}</div>`;
+    if (fresh.length) out += secHtml('Yeni Gelenler', `${fresh.length} yeni ürün`, I.sparkle) + `<div class="kh-rail kh-noswipe"><div class="kh-rail__in">${fresh.map(it => this.card(it, me, {sub: true, rail: true})).join('')}</div></div>`;
+    if (legend.length) out += secHtml('Efsanevi Vitrin', 'Masada herkes sana bakacak', I.crown) + `<div class="kh-grid">${legend.map(it => this.card(it, me, {sub: true})).join('')}</div>`;
+    if (afford.length) out += secHtml('Hemen Alabileceklerin', `Kasanda ${coinImg()}<b>${fmt(coins)}</b>`, I.check) + `<div class="kh-grid">${afford.map(it => this.card(it, me, {sub: true})).join('')}</div>`;
+    else if (goal.length) out += secHtml('Hedefin', 'Birkaç el kazan, senin olsun', I.target) + `<div class="kh-grid">${goal.map(it => this.card(it, me, {sub: true})).join('')}</div>`;
+    return out;
+  }
+
+  private setsHtml(me: Me): string {
+    const coins = this.shell.profile.data.coins;
+    const all = shopSets().map(s => ({s, p: setPrice(s, this.owns)}));
+    const open = all.filter(x => x.p.missing.length).sort((a, b) => b.p.full - b.p.price - (a.p.full - a.p.price));
+    const done = all.filter(x => !x.p.missing.length);
+    return `${secHtml('Tema Setleri', 'Bir temanın tüm parçaları, tek seferde, indirimli', I.gift)}
+      <div class="kh-sets">${open.map(x => setCardHtml(x.s, me, this.owns, coins)).join('')}</div>
+      ${done.length ? secHtml('Tamamladıkların', `${done.length} set`, I.check) + `<div class="kh-sets">${done.map(x => setCardHtml(x.s, me, this.owns, coins)).join('')}</div>` : ''}`;
+  }
+
+  private kindHtml(kind: ItemKind, me: Me): string {
+    const items = CATALOG.filter(it => it.kind === kind);
+    const owned = items.filter(it => this.owns(it.kind, it.id));
+    const un = items.filter(it => !this.owns(it.kind, it.id)).sort((a, b) => RANK[b.rarity] - RANK[a.rarity] || b.price - a.price);
+    const mine = owned.sort((a, b) => Number(this.equipped(b.kind, b.id)) - Number(this.equipped(a.kind, a.id)) || RANK[b.rarity] - RANK[a.rarity]);
+    const k = items.length ? owned.length / items.length : 0;
+    const hero = un[0] && RANK[un[0].rarity] >= 2 ? un[0] : null;
+    const grid = hero ? un.slice(1) : un;
+    return `<div class="kh-cprog2"><span class="kh-cprog2__t">${KIND_INFO[kind].plural}</span><span class="kh-cprog2__bar"><i style="transform:scaleX(${k.toFixed(3)})"></i></span><b class="kh-num">${owned.length}/${items.length}</b><small>sende</small></div>
+      ${hero ? `<div class="kh-grid">${this.card(hero, me, {wide: true})}</div>` : ''}
+      ${grid.length ? `<div class="kh-grid">${grid.map(it => this.card(it, me)).join('')}</div>` : ''}
+      ${mine.length ? secHtml('Sende', `${mine.length} parça`, I.check) + `<div class="kh-grid is-mine">${mine.map(it => this.card(it, me)).join('')}</div>` : ''}
+      ${!un.length ? `<div class="kh-shop__all">${I.crown}<span>Bu bölümdeki her şey sende. Usta koleksiyoncu!</span></div>` : ''}`;
   }
 
   private act(a: string, b: HTMLElement): void {
@@ -115,109 +362,45 @@ export class ShopPage implements Page {
       s.tap();
       haptic('light');
       const dir = TABS.findIndex(x => x.id === t) > TABS.findIndex(x => x.id === this.tab) ? 1 : -1;
+      const cur = this.panels.get(this.tab);
+      if (cur) cur.scroll = this.body.scrollTop;
+      this.spot.stop();
       this.tab = t;
-      this.render(true, dir);
+      this.activate(true, dir);
       b.scrollIntoView({behavior: ANIM ? 'smooth' : 'auto', inline: 'center', block: 'nearest'});
     } else if (a === 'item' || a === 'deal') {
       s.tap();
       const it = itemOf(b.dataset.k as ItemKind, b.dataset.id!);
       if (!it) return;
-      bump(b, 0.96);
+      bump(b, 0.97);
       const deal = a === 'deal' ? dealOf(this.owns) : null;
-      productSheet(this.shell, it, deal && deal.item.id === it.id && deal.item.kind === it.kind ? deal.price : undefined, () => this.render(false));
+      productSheet(this.shell, it, deal && deal.item.id === it.id && deal.item.kind === it.kind ? deal.price : undefined, () => this.refresh());
+    } else if (a === 'set') {
+      s.tap();
+      const set = setById(b.dataset.set!);
+      if (!set) return;
+      bump(b, 0.98);
+      setSheet(this.shell, set, () => this.refresh());
+    } else if (a === 'coll') {
+      s.tap();
+      this.shell.goto('profile');
     }
   }
 
-  /** Sekme içeriğini kur. dir: kayma yönü (sekme değişimi). */
-  private render(animate: boolean, dir = 0): void {
-    const tabs = this.el.querySelectorAll<HTMLElement>('.kh-stab');
-    const i = TABS.findIndex(t => t.id === this.tab);
-    tabs.forEach((t, k) => t.classList.toggle('is-on', k === i));
-    this.placeInd();
-    this.sig = this.signature();
-    const owned = CATALOG.filter(it => this.owns(it.kind, it.id)).length;
-    q(this.el, '.kh-shop__count').innerHTML = `${I.grid}<b class="kh-num">${owned}/${CATALOG.length}</b>`;
-    clearTimeout(this.dealT);
-    const html = this.tab === 'featured' ? this.featuredHtml() : this.gridHtml(CATALOG.filter(it => it.kind === this.tab), KIND_INFO[this.tab as ItemKind].plural);
-    this.body.innerHTML = html;
-    this.body.scrollTop = 0;
-    this.mountPreviews();
-    this.flushLater();
-    if (this.tab === 'featured') this.tickDeal();
-    if (animate) {
-      if (dir) play(this.body, [{transform: `translateX(${dir * 12}%)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.outQuart});
-      this.body.querySelectorAll('.kh-item, .kh-deal').forEach((c, k) =>
-        play(c, [{transform: 'translateY(26px) scale(.92)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 40 + Math.min(k, 8) * 45, easing: EASE.spring, fill: 'backwards'}));
-    }
-  }
-
-  private featuredHtml(): string {
-    const deal = dealOf(this.owns);
-    const dealHtml = deal
-      ? `<button class="kh-deal is-${deal.item.rarity}" data-act="deal" data-k="${deal.item.kind}" data-id="${deal.item.id}" data-spring>
-          <i class="kh-deal__shine"></i><i class="kh-deal__rays"></i>
-          <span class="kh-deal__pv" data-pv="${deal.item.kind}:${deal.item.id}"></span>
-          <span class="kh-deal__info">
-            <span class="kh-deal__kick">${I.sparkle}Günün Teklifi</span>
-            <b class="kh-deal__name">${esc(deal.item.name)}</b>
-            <span class="kh-deal__kind">${rarityHtml(deal.item.rarity)}<small>${KIND_INFO[deal.item.kind].name}</small></span>
-            <span class="kh-deal__price"><s class="kh-num">${fmt(deal.item.price)}</s><span class="kh-coins"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(deal.price)}</b></span></span>
-            <span class="kh-deal__time">${I.bell}<b class="kh-num">${hms(msToMidnight() / 1000)}</b></span>
-          </span>
-          <span class="kh-deal__off">-%${Math.round(DEAL_OFF * 100)}</span>
-        </button>`
-      : `<div class="kh-deal is-done"><span class="kh-deal__info"><span class="kh-deal__kick">${I.crown}Koleksiyon tamam!</span><b class="kh-deal__name">Her şey sende, usta!</b></span></div>`;
-    const feat = CATALOG.filter(it => !it.starter && !this.owns(it.kind, it.id) && !(deal && it.id === deal.item.id && it.kind === deal.item.kind))
-      .sort((a, b) => RANK[b.rarity] - RANK[a.rarity] || b.price - a.price)
-      .slice(0, 8);
-    return `${dealHtml}${feat.length ? this.gridHtml(feat, 'Sana Özel') : ''}`;
-  }
-
-  /** Izgaranın ilk parçası hemen, kalanı kare kare (sekme açılışında tek büyük görev olmasın). */
-  private later: string[] = [];
-  private gridHtml(items: readonly ShopItem[], title: string): string {
-    const sorted = items.slice().sort((a, b) => {
-      const ea = this.equipped(a.kind, a.id) ? 2 : this.owns(a.kind, a.id) ? 1 : 0;
-      const eb = this.equipped(b.kind, b.id) ? 2 : this.owns(b.kind, b.id) ? 1 : 0;
-      return eb - ea || a.price - b.price;
-    });
-    const cards = sorted.map(it => itemCardHtml(it, this.owns(it.kind, it.id), this.equipped(it.kind, it.id)));
-    this.later = cards.slice(FIRST_BATCH);
-    return `<div class="kh-shop__sec">${esc(title)}</div><div class="kh-grid">${cards.slice(0, FIRST_BATCH).join('')}</div>`;
-  }
-
-  private flushT = 0;
-  private flushLater(): void {
-    const rest = this.later;
-    this.later = [];
-    cancelAnimationFrame(this.flushT);
-    if (!rest.length) return;
-    const grid = this.body.querySelector('.kh-grid');
-    if (!grid) return;
-    let i = 0;
-    const step = (): void => {
-      if (!this.scope.alive || !grid.isConnected) return;
-      const chunk = rest.slice(i, i + BATCH);
-      i += BATCH;
-      const before = grid.childElementCount;
-      grid.insertAdjacentHTML('beforeend', chunk.join(''));
-      const fresh = Array.from(grid.children).slice(before) as HTMLElement[];
-      fresh.forEach(c => play(c, [{opacity: 0, transform: 'translateY(14px)'}, {opacity: 1, transform: 'none'}], {duration: 240, easing: EASE.out, fill: 'backwards'}));
-      this.mountPreviews();
-      if (i < rest.length) this.flushT = requestAnimationFrame(step);
-    };
-    this.flushT = requestAnimationFrame(step);
-  }
-
-  private mountPreviews(): void {
-    this.body.querySelectorAll<HTMLElement>('[data-pv]:not(.kh-pv)').forEach(pv => mountPreview(pv, this.shell, false));
+  /** Satın alma/kuşanma sonrası: görünen paneli tazele (diğerleri dönüşte imzayla tazelenir). */
+  private refresh(): void {
+    if (!this.visible) return;
+    const p = this.panels.get(this.tab);
+    if (p) p.scroll = this.body.scrollTop;
+    this.activate(false);
   }
 
   private tickDeal(): void {
-    const t = this.body.querySelector('.kh-deal__time b');
+    const p = this.panels.get('featured');
+    const t = p?.el.querySelector('.kh-deal__time b');
     if (!t) return;
     t.textContent = hms(msToMidnight() / 1000);
-    if (ANIM) this.dealT = window.setTimeout(() => this.scope.alive && this.tickDeal(), 1000);
+    if (ANIM && this.visible && this.tab === 'featured') this.dealT = window.setTimeout(() => this.scope.alive && this.tickDeal(), 1000);
   }
 
   destroy(): void {
@@ -226,104 +409,155 @@ export class ShopPage implements Page {
   }
 }
 
-/** Ürün kartı HTML'i (ızgara). */
-function itemCardHtml(it: ShopItem, owned: boolean, eq: boolean): string {
-  const foot = eq
-    ? `<span class="kh-item__state is-eq">${I.check}Kuşanıldı</span>`
-    : owned
-      ? `<span class="kh-item__state is-own">Sende</span>`
-      : `<span class="kh-item__price"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(it.price)}</b></span>`;
-  return `<button class="kh-item is-${it.rarity}${owned ? ' is-owned' : ''}${eq ? ' is-eq' : ''}" data-act="item" data-k="${it.kind}" data-id="${it.id}">
-    <span class="kh-item__pv is-${it.kind}" data-pv="${it.kind}:${it.id}"></span>
-    ${it.rarity === 'legendary' ? '<i class="kh-item__shine"></i><i class="kh-item__spark"></i>' : ''}
-    ${rarityHtml(it.rarity, 'kh-item__rar')}
-    <span class="kh-item__name">${esc(it.name)}</span>
-    ${foot}
-  </button>`;
+// =====================================================================================================
+// Ürün penceresi: etkileşimli sahne + satın alma
+// =====================================================================================================
+interface Stage {
+  /** Satın alma/kuşanma anında sahneyi coştur */
+  cheer(): void;
+  stop(): void;
 }
 
-/** Önizleme kutusunu doldur (tür:id). big: ürün penceresi. */
-function mountPreview(pv: HTMLElement, shell: Shell, big: boolean): FxLoop | null {
-  const [kind, id] = (pv.dataset.pv ?? '').split(':') as [ItemKind, string];
-  pv.classList.add('kh-pv', `is-${kind}`);
-  if (kind === 'char') {
-    const c = charById(id);
-    pv.style.setProperty('--c', c.color);
-    pv.innerHTML = `<i class="kh-pv__glow"></i><img class="kh-pv__char" src="${c.poses[big ? 'gulumseme' : 'notr']}" alt="">`;
-  } else if (kind === 'deck') {
-    const box = h('span', 'kh-pv__fan');
-    pv.append(box);
-    mountDeckFan(box, id, big ? 5 : 3);
-  } else if (kind === 'table') {
-    const box = h('span', 'kh-pv__table');
-    pv.append(box);
-    if (big) requestAnimationFrame(() => mountTable(box, id, true));
-    else deferMount(box, () => mountTable(box, id, false));
-  } else if (kind === 'fx') {
-    const box = h('span', 'kh-pv__fx');
-    pv.append(box);
-    if (!big) {
-      deferMount(box, () => mountFx(box, id, true));
-      return null;
-    }
-    const loop = mountFx(box, id, false);
-    requestAnimationFrame(() => loop.play());
-    return loop;
-  } else if (kind === 'frame') {
-    const d = shell.profile.data;
-    pv.innerHTML = charAvatarHtml(charById(d.char ?? 'dursun'), id, 'kh-pv__ava');
+/** Sahneyi kur (tür başına). */
+function mountStage(shell: Shell, it: ShopItem, pv: HTMLElement, scope: Scope): Stage {
+  const me = meOf(shell);
+  const none: Stage = {cheer: () => bump(pv, 1.08), stop: () => undefined};
+  if (it.kind === 'deck') {
+    const v = mountDeckViewer(pv, it.id, scope, 1);
+    return {cheer: () => v.flip(), stop: () => undefined};
   }
-  return null;
+  if (it.kind === 'table') {
+    pv.innerHTML = `<span class="kh-pd__tbl">${tableSceneHtml(it.id, {deck: me.deck, size: 'full'})}</span>`;
+    const scene = q(pv, '.kh-ts');
+    paintTableLater(scene, it.id);
+    const throwCard = (): void => {
+      const c = scene.querySelector('.kh-ts__hand .kh-ts__c:nth-child(3)');
+      if (!c || !ANIM) return;
+      play(c, [{transform: getComputedStyle(c).transform}, {transform: 'translate(-50%, -205%) rotate(-14deg) scale(.96)', offset: 0.45}, {transform: 'translate(-50%, -205%) rotate(-14deg) scale(.96)', offset: 0.75}, {transform: getComputedStyle(c).transform}], {duration: 1300, easing: EASE.out});
+    };
+    scope.on(pv, 'click', () => {
+      shell.ctx.sounds.tap();
+      throwCard();
+    });
+    return {cheer: throwCard, stop: () => undefined};
+  }
+  if (it.kind === 'frame') {
+    const poses = ['gulumseme', 'kahkaha', 'zafer', 'pisti'] as const;
+    let k = 0;
+    pv.innerHTML = `<span class="kh-pd__frame"><i class="kh-pd__halo"></i>${charAvatarHtml(me.char, it.id, 'kh-pd__ava', 'gulumseme')}
+      <span class="kh-pd__plate"><b>${esc(me.name)}</b><small>Sv. ${me.level}</small></span></span>`;
+    const ava = q(pv, '.kh-pd__ava');
+    const poke = (): void => {
+      k = (k + 1) % poses.length;
+      const img = ava.querySelector<HTMLImageElement>('.kh-ava__img');
+      if (img) img.src = me.char.poses[poses[k]];
+      play(ava, [{transform: 'scale(1)'}, {transform: 'scale(1.12) rotate(-4deg)', offset: 0.35}, {transform: 'scale(.98) rotate(2deg)', offset: 0.7}, {transform: 'none'}], {duration: 520, easing: EASE.out});
+    };
+    scope.on(pv, 'click', () => {
+      shell.ctx.sounds.tap();
+      haptic('light');
+      poke();
+    });
+    return {cheer: poke, stop: () => undefined};
+  }
+  if (it.kind === 'fx') {
+    pv.innerHTML = `<span class="kh-pd__fxs">${tableSceneHtml(me.table, {deck: me.deck, size: 'mini'})}<span class="kh-pd__fxbox"></span></span>`;
+    const box = q(pv, '.kh-pd__fxbox');
+    const loop: FxLoop = mountFx(box, it.id, false);
+    // pencere açılış animasyonu bitince oynat (aynı karede iki ağır iş olmasın)
+    const t = window.setTimeout(() => loop.play(), ANIM ? 480 : 0);
+    scope.add(() => clearTimeout(t));
+    scope.on(pv, 'click', () => {
+      shell.ctx.sounds.tap();
+      loop.play();
+    });
+    return {cheer: () => loop.play(), stop: () => loop.stop()};
+  }
+  pv.innerHTML = pvHtml(it, me, true);
+  return none;
 }
 
-// =====================================================================================================
-// Ürün penceresi + satın alma
-// =====================================================================================================
+function stageHint(kind: ItemKind): string {
+  return kind === 'deck' ? 'Kaydır · dokun: çevir · basılı tut: ışığı gezdir' : kind === 'table' ? 'Dokun: kart at' : kind === 'frame' ? 'Avatarına dokun' : kind === 'fx' ? 'Dokun: tekrar oynat' : '';
+}
+
 function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined, onChange: () => void): ModalHandle {
   const ctx = shell.ctx;
   const p = shell.profile;
   const price = dealPrice ?? it.price;
   const c = it.kind === 'char' ? charById(it.id) : null;
+  const set = setOf(it);
+  const setP = set ? setPrice(set, (k, id) => p.owns(k, id)) : null;
+  const badge = badgeOf(it);
   const extra = c
     ? `<div class="kh-pd__char">
         <div class="kh-pd__tags"><span class="kh-pd__style">${I.sparkle}${esc(c.style)}</span><span class="kh-pd__diff">Zorluk ${starsHtml(c.difficulty)}</span></div>
         <p class="kh-pd__story">${esc(c.story)}</p>
         <div class="kh-pd__quote">${esc(c.quote)}</div></div>`
     : '';
+  const hint = stageHint(it.kind);
   const m = openSheet(ctx, {
     cls: `kh-pd is-${it.rarity} is-${it.kind}`,
-    body: `<div class="kh-pd__stage"><i class="kh-rays is-gold kh-pd__rays"></i><div class="kh-pd__pv" data-pv="${it.kind}:${it.id}"></div>${it.kind === 'fx' ? `<button class="kh-pd__replay" data-act="replay">${I.play}Tekrar</button>` : ''}</div>
-      <div class="kh-pd__meta">${rarityHtml(it.rarity)}<span class="kh-pd__kind">${KIND_INFO[it.kind].name}</span>${dealPrice ? `<span class="kh-pd__deal">Günün Teklifi -%${Math.round(DEAL_OFF * 100)}</span>` : ''}</div>
+    body: `<div class="kh-pd__stage"><i class="kh-pd__sbg"></i><i class="kh-rays is-gold kh-pd__rays"></i>
+        <div class="kh-pd__pv"></div>${hint ? `<span class="kh-pd__hint">${I.hand}${hint}</span>` : ''}</div>
+      <div class="kh-pd__meta">${rarityHtml(it.rarity)}<span class="kh-pd__kind">${KIND_INFO[it.kind].name}</span>${badge && !p.owns(it.kind, it.id) ? `<span class="kh-tag is-${badge}">${BADGE_NAME[badge]}</span>` : ''}${dealPrice ? `<span class="kh-pd__deal">Günün Teklifi -%${Math.round(DEAL_OFF * 100)}</span>` : ''}</div>
       <div class="kh-title kh-pd__name">${g3(it.name, it.rarity === 'legendary' ? '' : 'is-white')}</div>
       <p class="kh-pd__desc">${esc(c ? c.title : it.desc)}</p>
       ${extra}
+      ${set && setP && setP.missing.length >= 2 && setP.missing.includes(it) ? `<button class="kh-pd__set" data-act="toset" style="--a:${set.a};--b:${set.b}">${I.gift}<span><b>${esc(set.name)}</b> içinde: ${set.parts.length} parça <b>%${Math.round(set.off * 100)}</b> indirimli</span>${I.chevR}</button>` : ''}
+      <div class="kh-pd__wallet"></div>
       <div class="kh-pd__act"></div>
       <div class="kh-pd__msg"></div>`,
   });
   const pv = q(m.panel, '.kh-pd__pv');
-  const loop = mountPreview(pv, shell, true);
-  m.scope.add(() => loop?.stop());
+  const stage = q(m.panel, '.kh-pd__stage');
+  const show = mountStage(shell, it, pv, m.scope);
+  m.scope.add(() => show.stop());
   const actBox = q(m.panel, '.kh-pd__act');
-  const state = () => (it.kind === 'char' ? p.data.char === it.id : p.data.equipped[it.kind as Exclude<ItemKind, 'char'>] === it.id) ? 'eq' : p.owns(it.kind, it.id) ? 'own' : 'buy';
-  const renderAct = (pop = false) => {
+  const wallet = q(m.panel, '.kh-pd__wallet');
+  const state = (): 'eq' | 'own' | 'buy' => ((it.kind === 'char' ? p.data.char === it.id : p.data.equipped[it.kind as Exclude<ItemKind, 'char'>] === it.id) ? 'eq' : p.owns(it.kind, it.id) ? 'own' : 'buy');
+  const renderAct = (pop = false): void => {
     const st = state();
+    const tryBtn = `<button class="kh-btn kh-btn--4 kh-btn--xl kh-pd__try" data-act="try">${I.eye}<span>Dene</span></button>`;
     actBox.innerHTML = st === 'buy'
-      ? `<button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-shine kh-pd__btn" data-act="buy"><span>Satın Al</span><span class="kh-pd__cost"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(price)}</b></span></button>`
+      ? `<button class="kh-btn kh-btn--1 kh-btn--xl kh-pd__btn" data-act="buy"><span>Satın Al</span><span class="kh-pd__cost">${coinImg()}<b class="kh-num">${fmt(price)}</b></span></button>${tryBtn}`
       : st === 'own'
-        ? `<button class="kh-btn kh-btn--5 kh-btn--xl kh-btn--block kh-pd__btn" data-act="equip">${I.check}<span>Kuşan</span></button>`
-        : `<button class="kh-btn kh-btn--4 kh-btn--xl kh-btn--block kh-pd__btn is-done" disabled>${I.check}<span>Kuşanıldı</span></button>`;
+        ? `<button class="kh-btn kh-btn--5 kh-btn--xl kh-pd__btn" data-act="equip">${I.check}<span>Kuşan</span></button>${tryBtn}`
+        : `<button class="kh-btn kh-btn--4 kh-btn--xl kh-pd__btn is-done" disabled>${I.check}<span>Kuşanıldı</span></button>`;
+    // cüzdan: alınca ne kalır / ne kadar eksik (fiyat çapası + kaygı azaltma)
+    const coins = p.data.coins;
+    wallet.innerHTML = st !== 'buy'
+      ? ''
+      : coins >= price
+        ? `<span class="kh-pd__wl">Kasan ${coinImg()}<b class="kh-num">${fmt(coins)}</b></span>${I.chevR}<span class="kh-pd__wl is-after">Kalan ${coinImg()}<b class="kh-num">${fmt(coins - price)}</b></span>`
+        : `<span class="kh-pd__need"><span class="kh-pd__needbar"><i style="transform:scaleX(${clamp(coins / price, 0, 1).toFixed(3)})"></i></span><span><b class="kh-num">%${Math.floor((coins / price) * 100)}</b> hazır · <b class="kh-num">${fmt(price - coins)}</b> jeton daha</span></span>`;
     if (pop) play(actBox.firstElementChild!, [{transform: 'scale(.6)', opacity: 0}, {transform: 'scale(1.06)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 420, easing: EASE.out});
   };
   renderAct();
-  const stage = q(m.panel, '.kh-pd__stage');
-  play(pv, [{transform: 'scale(.6) translateY(20px)', opacity: 0}, {transform: 'scale(1.04)', opacity: 1, offset: 0.7}, {transform: 'none', opacity: 1}], {duration: 520, delay: 120, easing: EASE.out, fill: 'backwards'});
+  play(pv, [{transform: 'scale(.7) translateY(16px)', opacity: 0}, {transform: 'scale(1.03)', opacity: 1, offset: 0.7}, {transform: 'none', opacity: 1}], {duration: 480, delay: 110, easing: EASE.out, fill: 'backwards'});
+  // vitrinin ilk ışığı: pencere oturduktan sonra tek süpürme
+  if (RANK[it.rarity] >= 2) {
+    stage.insertAdjacentHTML('beforeend', glintHtml());
+    m.scope.timeout(() => glint(stage, 1200), 650);
+  }
 
   let busy = false;
   onAct(m.scope, m.panel, async (a, b) => {
     if (busy) return;
-    if (a === 'replay') {
+    if (a === 'toset' && set) {
       ctx.sounds.tap();
-      loop?.play();
+      await m.close();
+      setSheet(shell, set, onChange);
+      return;
+    }
+    if (a === 'try') {
+      ctx.sounds.tap();
+      haptic('light');
+      openTryOn(shell, it, {
+        price: state() === 'buy' ? price : 0,
+        onBuy: () => (q(m.panel, '[data-act=buy]') as HTMLElement | null)?.click(),
+        onEquip: () => (m.panel.querySelector('[data-act=equip]') as HTMLElement | null)?.click(),
+      });
       return;
     }
     if (a === 'equip') {
@@ -333,7 +567,7 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
       haptic('success');
       ctx.sounds.reward();
       renderAct(true);
-      bump(pv, 1.08);
+      show.cheer();
       toast(ctx, EQUIP_MSG[it.kind], I.check);
       onChange();
       return;
@@ -345,7 +579,7 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
       ctx.sounds.tap();
       haptic('warning');
       shake(b, 1);
-      shake(q(stage, '.kh-pd__pv'), 0.5);
+      shake(wallet, 0.5);
       const me = charById(p.data.char ?? 'dursun');
       msg.innerHTML = `<span class="kh-pd__sad"><img src="${me.poses.uzgun}" alt=""></span><span><b>${fmt(price - p.data.coins)} jeton</b> eksik! Birkaç el kazan, kasayı doldur — bu seni bekler.</span>`;
       play(msg, [{transform: 'translateY(10px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.spring});
@@ -354,47 +588,25 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
     busy = true;
     (b as HTMLButtonElement).disabled = true;
     msg.innerHTML = '';
-    const meter = shell.coins;
-    meter.hold();
-    const before = p.data.coins;
-    // satın al (Profile); günün teklifinde indirimli fiyat elle düşülür
+    shell.coins.hold();
     let ok = false;
     if (dealPrice !== undefined) {
-      if (before >= price && !p.owns(it.kind, it.id)) {
+      if (p.data.coins >= price && !p.owns(it.kind, it.id)) {
         p.addCoins(-price);
         p.grant(it.kind, it.id);
         ok = true;
       }
     } else ok = p.buy(it.kind, it.id) === 'ok';
     if (!ok) {
-      meter.release();
+      shell.coins.release();
       busy = false;
       renderAct();
       return;
     }
-    // jetonlar bakiyeden ürüne uçar
-    const to = center(pv);
-    const n = Math.min(12, 5 + Math.round(price / 1500));
-    let paid = 0;
-    await ctx.fx.flyCoins(meter.target(), to, n, i => {
-      ctx.sounds.coin(1);
-      const d = i === n - 1 ? price - paid : Math.round(price / n);
-      paid += d;
-      meter.add(-d);
-      bump(pv, 1.05);
-    });
-    meter.release();
+    await payFx(shell, price, pv, m.scope);
     if (!m.scope.alive) return;
-    // kilit açılışı
-    if (ctx.sounds.fanfare) ctx.sounds.fanfare();
-    else ctx.sounds.reward();
-    haptic('success');
-    stage.classList.add('is-unlocked');
-    play(q(stage, '.kh-pd__rays'), [{transform: 'scale(.2) rotate(0)', opacity: 0}, {transform: 'scale(1) rotate(30deg)', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'forwards'});
-    play(pv, [{transform: 'scale(1)'}, {transform: 'scale(1.18) rotate(-3deg)', offset: 0.35}, {transform: 'scale(.97) rotate(1deg)', offset: 0.7}, {transform: 'none'}], {duration: 620, easing: EASE.out});
-    ctx.fx.flash(0.55, 380);
-    ctx.fx.burst(to, {coins: 0, confetti: 30, power: 0.9});
-    stampWord(ctx, 'Açıldı!', {x: to.x, y: to.y}, {size: 3.4, ms: 1300});
+    unlockFx(shell, stage, pv);
+    show.cheer();
     renderAct(true);
     onChange();
     busy = false;
@@ -402,3 +614,147 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
   return m;
 }
 
+/** Jetonlar bakiyeden ürüne uçar (kapsül sayar). Çağıran satın almadan ÖNCE shell.coins.hold() demiş olmalı; burada bırakılır. */
+async function payFx(shell: Shell, price: number, target: Element, scope: Scope): Promise<void> {
+  const ctx = shell.ctx;
+  const meter = shell.coins;
+  const to = center(target);
+  const n = Math.min(12, 5 + Math.round(price / 1500));
+  let paid = 0;
+  try {
+    await ctx.fx.flyCoins(meter.target(), to, n, i => {
+      ctx.sounds.coin(1);
+      const d = i === n - 1 ? price - paid : Math.round(price / n);
+      paid += d;
+      meter.add(-d);
+      if (scope.alive) bump(target, 1.04);
+    });
+  } finally {
+    meter.release();
+  }
+}
+
+/** Kilit açılışı: ışınlar, parlama, konfeti, "Açıldı!" */
+function unlockFx(shell: Shell, stage: HTMLElement, pv: HTMLElement): void {
+  const ctx = shell.ctx;
+  const to = center(pv);
+  if (ctx.sounds.fanfare) ctx.sounds.fanfare();
+  else ctx.sounds.reward();
+  haptic('success');
+  stage.classList.add('is-unlocked');
+  const rays = stage.querySelector('.kh-pd__rays');
+  if (rays) play(rays, [{transform: 'scale(.2) rotate(0)', opacity: 0}, {transform: 'scale(1) rotate(30deg)', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'forwards'});
+  play(pv, [{transform: 'scale(1)'}, {transform: 'scale(1.14) rotate(-3deg)', offset: 0.35}, {transform: 'scale(.97) rotate(1deg)', offset: 0.7}, {transform: 'none'}], {duration: 620, easing: EASE.out});
+  ctx.fx.flash(0.5, 380);
+  ctx.fx.burst(to, {coins: 0, confetti: 30, power: 0.9});
+  stampWord(ctx, 'Açıldı!', {x: to.x, y: to.y}, {size: 3.4, ms: 1300});
+}
+
+// =====================================================================================================
+// Set penceresi
+// =====================================================================================================
+function setSheet(shell: Shell, s: ShopSet, onChange: () => void): ModalHandle {
+  const ctx = shell.ctx;
+  const p = shell.profile;
+  const owns = (k: ItemKind, id: string): boolean => p.owns(k, id);
+  const me = meOf(shell);
+  const pr0 = setPrice(s, owns);
+  const m = openSheet(ctx, {
+    cls: 'kh-pd kh-sd is-legendary',
+    body: `<div class="kh-pd__stage kh-sd__stage" style="--a:${s.a};--b:${s.b}"><i class="kh-rays is-gold kh-pd__rays"></i>
+        <div class="kh-pd__pv kh-sd__parts">${s.parts.map((it, i) => `<button class="kh-sd__part is-${it.kind} is-${it.rarity}" data-act="part" data-k="${it.kind}" data-id="${it.id}" style="--n:${i - (s.parts.length - 1) / 2}">
+          <span class="kh-sd__pv"><i class="kh-item__bg"></i>${pvHtml(it, me)}</span><b>${esc(it.name)}</b><small>${KIND_INFO[it.kind].name}</small>
+          <span class="kh-sd__st"></span></button>`).join('')}</div></div>
+      <div class="kh-pd__meta"><span class="kh-tag is-limited">${I.gift}Set</span><span class="kh-pd__kind">${s.parts.length} parça</span></div>
+      <div class="kh-title kh-pd__name">${g3(s.name)}</div>
+      <p class="kh-pd__desc">${esc(s.tag)}. Tek tek almaktan <b>%${Math.round(s.off * 100)}</b> ucuz.</p>
+      <div class="kh-sd__sum"></div>
+      <div class="kh-pd__act"></div>
+      <div class="kh-pd__msg"></div>`,
+  });
+  hydrate(m.panel);
+  const actBox = q(m.panel, '.kh-pd__act');
+  const sum = q(m.panel, '.kh-sd__sum');
+  const parts = q(m.panel, '.kh-sd__parts');
+  const render = (pop = false): void => {
+    const pr = setPrice(s, owns);
+    m.panel.querySelectorAll<HTMLElement>('.kh-sd__part').forEach(el => {
+      const it = itemOf(el.dataset.k as ItemKind, el.dataset.id!)!;
+      const own = owns(it.kind, it.id);
+      el.classList.toggle('is-own', own);
+      q(el, '.kh-sd__st').innerHTML = own ? `${I.check}Sende` : `<s class="kh-num">${fmt(it.price)}</s>`;
+    });
+    if (!pr.missing.length) {
+      sum.innerHTML = `<span class="kh-sd__all">${I.crown}Setin tamamı sende!</span>`;
+      actBox.innerHTML = `<button class="kh-btn kh-btn--5 kh-btn--xl kh-btn--block kh-pd__btn" data-act="equipall">${I.check}<span>Hepsini Kuşan</span></button>`;
+    } else {
+      const save = pr.full - pr.price;
+      sum.innerHTML = `<span class="kh-sd__row"><span>Tek tek</span><s class="kh-num">${fmt(pr.full)}</s></span>
+        <span class="kh-sd__row is-save"><span>Set indirimi</span><b class="kh-num">−${fmt(save)}</b></span>
+        ${pr.missing.length < s.parts.length ? `<span class="kh-sd__note">${s.parts.length - pr.missing.length} parça zaten sende; yalnız eksikler ödenir.</span>` : ''}`;
+      actBox.innerHTML = `<button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-pd__btn" data-act="buyset"><span>Seti Al</span><span class="kh-pd__cost">${coinImg()}<b class="kh-num">${fmt(pr.price)}</b></span></button>`;
+    }
+    if (pop) play(actBox.firstElementChild!, [{transform: 'scale(.6)', opacity: 0}, {transform: 'scale(1.06)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 420, easing: EASE.out});
+  };
+  render();
+  m.panel.querySelectorAll('.kh-sd__part').forEach((el, i) =>
+    play(el, [{transform: 'translateY(30px) scale(.7)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 140 + i * 90, easing: EASE.spring, fill: 'backwards'}));
+  const stage = q(m.panel, '.kh-sd__stage');
+  if (pr0.missing.length) {
+    stage.insertAdjacentHTML('beforeend', glintHtml());
+    m.scope.timeout(() => glint(stage, 1200), 700);
+  }
+  let busy = false;
+  onAct(m.scope, m.panel, async (a, b) => {
+    if (busy) return;
+    if (a === 'part') {
+      ctx.sounds.tap();
+      const it = itemOf(b.dataset.k as ItemKind, b.dataset.id!);
+      if (!it) return;
+      bump(b, 0.96);
+      productSheet(shell, it, undefined, () => {
+        render();
+        onChange();
+      });
+      return;
+    }
+    if (a === 'equipall') {
+      ctx.sounds.reward();
+      haptic('success');
+      const did = new Set<ItemKind>();
+      for (const it of s.parts) {
+        if (did.has(it.kind) || !owns(it.kind, it.id)) continue;
+        did.add(it.kind);
+        p.equip(it.kind, it.id);
+        shell.cosmetics(it.kind, it.id);
+      }
+      bump(parts, 1.06);
+      toast(ctx, `${s.name} kuşanıldı!`, I.check);
+      onChange();
+      return;
+    }
+    if (a !== 'buyset') return;
+    const pr = setPrice(s, owns);
+    const msg = q(m.panel, '.kh-pd__msg');
+    if (p.data.coins < pr.price) {
+      ctx.sounds.tap();
+      haptic('warning');
+      shake(b, 1);
+      msg.innerHTML = `<span><b>${fmt(pr.price - p.data.coins)} jeton</b> eksik! Biraz daha biriktir; set seni bekler.</span>`;
+      return;
+    }
+    busy = true;
+    (b as HTMLButtonElement).disabled = true;
+    msg.innerHTML = '';
+    shell.coins.hold();
+    p.addCoins(-pr.price);
+    for (const it of pr.missing) p.grant(it.kind, it.id);
+    await payFx(shell, pr.price, parts, m.scope);
+    if (!m.scope.alive) return;
+    unlockFx(shell, stage, parts);
+    render(true);
+    onChange();
+    busy = false;
+  });
+  return m;
+}
