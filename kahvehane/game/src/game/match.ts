@@ -59,20 +59,20 @@ const CHEER: Record<string, string[]> = {
   riza: ['Aferin evlat!', 'İşte benim ortağım!', 'Helal olsun, aynı ben gençken!', 'Çaylar benden evlat!'],
   cem: ['Kanka efsane!', 'Hesapladığım gibi!', 'Takım çalışması!', 'İşte bu, devam!'],
   dursun: ['Oh be! Çaylar benden!', 'Helal ortak!', 'Yaz defterine bunu!', 'Maşallah, maşallah!'],
-  defne: ['Güzel.', 'Tam planladığım gibi.', 'İyi hamle, ortak.', 'Devam.'],
+  defne: ['Bayıldım, ortak!', 'Tam planladığım gibi, canım.', 'Zarif hamle!', 'İşte böyle, tatlım.'],
 };
 const SIGH: Record<string, string[]> = {
   riza: ['Eh be evlat…', 'Valeyi sakla dedim sana!', 'Olur böyle, olur.'],
   cem: ['Kanka o kart gitti ya…', 'İhtimal bizden yana değildi.', 'Sorun yok, toparlarız.'],
   dursun: ['Hay aksi!', 'Eh, bir dahaki ele.', 'Çay iç, kafan açılsın ortak.'],
-  defne: ['Hmm.', 'Sakin. Toparlarız.', 'Not aldım.'],
+  defne: ['Ayy, olsun canım.', 'Sakin, toparlarız.', 'Not aldım, tatlım.'],
 };
 /** Rozete dokununca (dürtme) karakterin tepkisi. */
 const POKE: Record<string, string[]> = {
   riza: ['Dürtme evlat, çayım dökülecek!', 'Hop! Bıyığıma dokunma!', 'Oyununa bak sen.', 'Gıdıklanırım ha!'],
   cem: ['Kanka ping atma!', 'Lag yaptırma beni.', 'Ne var ne var?', 'Dur, hesap yapıyorum!'],
   dursun: ['Çay mı istiyorsun?', 'Hey! Defter düşecek!', 'Gıdı gıdı!', 'Kartına bak kartına!'],
-  defne: ['…', 'Dokunma.', 'Odaklanıyorum.', 'Cidden mi?'],
+  defne: ['Ayy, ojem!', 'Odaklanıyorum, tatlım.', 'Cidden mi, canım?', 'Falına bakarım ha!'],
 };
 const POKE_POSES: HudPose[] = ['saskin', 'kizgin', 'kahkaha', 'gulumseme', 'saskin'];
 

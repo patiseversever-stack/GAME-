@@ -102,12 +102,12 @@ export const ROSTER: readonly CharDef[] = [
   {
     id: 'defne',
     name: 'Defne',
-    title: 'Poker Yüzü',
+    title: 'Kadın Sezgisi',
     age: 34,
     story:
-      'Mimar. Masaya oturduğunda tek kelime etmez, yüzünden hiçbir şey okunmaz. Kartları bir binanın planı gibi kurar, son dağıtıma kadar bekler. Kaybettiğini gören olmadı; kazandığını da çoğu zaman sonradan anlarsın.',
-    quote: 'Sessiz olan kazanır.',
-    style: 'Soğukkanlı stratejist',
+      'Zarif bir mimar. Masaya parfümü ve kahve fincanıyla gelir; kartları bir binanın planı gibi kurar, rakibini kahve falı gibi okur. Kadın sezgisi blöfü uzaktan sezer. Tatlı dille iğneler, kıkırdayarak kazanır.',
+    quote: 'Fincanında üç vale gördüm… ikisi bende.',
+    style: 'Zarif stratejist',
     color: '#9b5cff',
     rarity: 'epic',
     difficulty: 3,

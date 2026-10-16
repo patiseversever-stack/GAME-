@@ -327,13 +327,13 @@ const POKE: Record<CharId, [Pose, string][]> = {
   riza: [['gulumseme', 'Gel otur evlat, bir el atalım.'], ['dusunceli', 'Valeyi sona sakla, demedi deme.'], ['kahkaha', 'Haha! Bıyığımı burdum, masa hazır!'], ['zafer', 'Çayımız geldi. Hadi bakalım!'], ['pisti', 'Bu masada pişti kokusu var.'], ['saskin', 'Ne o, hâlâ oturmadın mı?']],
   cem: [['gulumseme', 'Hazırım. İhtimaller bizden yana.'], ['dusunceli', '52 kart, 4 vale… Hesap tamam.'], ['kahkaha', 'Haha! Algoritma bugün coşkulu.'], ['zafer', 'Seriye bağlayalım, hadi!'], ['pisti', 'Vale bende, pişti kapıda.'], ['saskin', 'Dur, kulaklık… Tamam, buradayım!']],
   dursun: [['gulumseme', 'Çaylar benden, oyun senden!'], ['zafer', 'Taze demledim, buyur!'], ['kahkaha', 'Hahaha! Bugün şanslı günümüz.'], ['dusunceli', 'Defterde senin hanen boş duruyor…'], ['pisti', 'Göz kırptım, kimseye söyleme.'], ['saskin', 'Aaa, daha masaya oturmadın mı?']],
-  defne: [['gulumseme', 'Hazırsan başlayalım.'], ['dusunceli', 'Planım hazır.'], ['pisti', 'Sessiz olan kazanır.'], ['zafer', 'Bir el daha mı? Olur.'], ['kahkaha', 'Hah. Bu iyiydi.'], ['saskin', 'Beni mi bekliyorsun?']],
+  defne: [['gulumseme', 'Hoş geldin canım, kahveler hazır.'], ['dusunceli', 'Fincanında bir vale görüyorum…'], ['pisti', 'Zarif bir pişti, tam bana göre.'], ['zafer', 'Bir el daha mı? Seve seve.'], ['kahkaha', 'Ayy, bu çok iyiydi!'], ['saskin', 'Beni mi bekliyorsun, tatlım?']],
 };
 const TICKLE: Record<CharId, string> = {
   riza: 'Yeter be evlat, bıyığım ağrıdı!',
   cem: 'Hey! Ekranım çizilecek!',
   dursun: 'Yavaş! Çaylar dökülecek!',
-  defne: 'Bir daha dokunursan… pişti yaparım.',
+  defne: 'Ayy, ojem! Bir daha dokunursan pişti yaparım.',
 };
 
 /** Kısa ad: "Rıza Amca" → "Rıza", "Kahveci Dursun" → "Dursun". */

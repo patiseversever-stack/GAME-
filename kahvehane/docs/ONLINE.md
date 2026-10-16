@@ -72,15 +72,22 @@ Botlar `BotBrain` arayüzünü uygular: `observe(süzülmüş olay)` + `decide(g
 
 ## 4. Protokol (src/net/protocol.ts)
 
-İstemci → ev sahibi: `join` · `action {cseq, action}` · `ack {seq}` · `resync` · `ping` · `leave`
+İstemci → ev sahibi: `join` · `action {cseq, action}` · `ack {seq}` · `resync` · `ping` · `chat {msg}` · `leave`
 Ev sahibi → istemci: `welcome {seat, seats}` · `seats` · `events {seq, events, view, actor, tell?}` · `sync {view, timer, reason}` ·
-`timer {key, kind, ms, deadline}` · `timerCleared` · `rejected {cseq, error, code}` · `queued {cseq}` · `timeout {seat}` · `pong` · `closed`
+`timer {key, kind, ms, deadline}` · `timerCleared` · `rejected {cseq, error, code}` · `queued {cseq}` · `timeout {seat}` · `pong` ·
+`chat {seat, msg}` · `closed`
 
 - `seq` masada ortak ve artandır; her `events` mesajı o hamleden sonraki **tam görünümü** de taşır → istemci durum tutmaz,
   kayıp mesajda `resync` yeter.
 - **Tempo (`ack`):** yerelde ev sahibi, insan arayüzü olayları sunup `ack` gönderene dek pencere sayacını başlatmaz ve botları
   uyandırmaz (en çok `paceMaxMs`, varsayılan 6 sn). Böylece 5 sn'lik halka, atış animasyonu bittiğinde dolmaya başlar.
   Çevrimiçinde aynı mekanizma kısa bir üst sınırla (ör. 1,5 sn) kullanılmalı; yavaş istemci masayı bekletmesin.
+- **Hızlı sohbet (`chat`):** `msg` yalnız `QUICK_CHAT` kimliğidir (src/ai/dialogue.ts; serbest metin yok → küfür/moderasyon
+  sorunu yok). Ev sahibi `ChatGate` ile kimliği doğrular ve koltuk başına hız sınırı uygular (4 sn − 0,5 sn ağ payı, dakikada 6;
+  src/net/chat.ts), geçerse **gönderen dahil** herkese `chat {seat, msg}` yayar; geçersiz/hızlı mesaj sessizce düşer. Oyun durumunu
+  ve `seq`'i değiştirmez. Her istemci söyleyişi gönderenin karakter sesiyle kendisi çalar (aynı kimlik → aynı replik havuzu).
+  Bot cevapları bugün yalnız mesajı gönderen cihazda planlanır (yerel oyun); çevrimiçinde uzak insan koltukları otomatik cevap
+  vermez. Pişti (ev sahibi yok) aynı kapıyı `ChatRelay` ile kullanır.
 - **Saat:** `timer.deadline` ev sahibi saatindedir; istemci kalan süreyi `client.timeLeft()` ile hesaplar
   (alındığı andan bu yana geçen yerel süreyi düşer). Çevrimiçinde `ping/pong` ile saat farkı ölçülür.
 

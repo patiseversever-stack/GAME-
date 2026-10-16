@@ -804,9 +804,14 @@ export class BlofMatch {
       hud.cheer(ME);
       const m = this.mate(ME);
       if (m >= 0) window.setTimeout(() => hud.cheer(m), 250);
+      // rakibin son sözü + (eşlide) ortağın sevinci: tek dizi, üst üste binmez
       const f = this.foes(ME);
-      if (f.length) this.say(pickOne(f), 'playerWin', true, 2800);
-      if (m >= 0 && this.bot(m)) window.setTimeout(() => this.say(m, 'mateCheer', true, 2000), 700);
+      const lines: Utter[] = [];
+      const lose = f.length ? this.utterFor(pickOne(f), 'playerWin', true, 2800) : null;
+      if (lose) lines.push(lose);
+      const cheer = m >= 0 && this.bot(m) ? this.utterFor(m, 'mateCheer', true, 2000, undefined, true) : null;
+      if (cheer) lines.push(cheer);
+      if (lines.length) this.speech.exchange(lines, {prio: 3, tag: 'match', gapMs: 250});
     } else {
       const w = this.bot(winner) ? winner : this.foes(ME).find(s => this.team(s) === this.team(winner));
       if (w !== undefined && w >= 0) this.say(w, 'botWin', true, 2800);
