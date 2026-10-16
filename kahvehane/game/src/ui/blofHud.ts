@@ -457,6 +457,8 @@ export class BlofHud {
   call(from: {x: number; y: number}, to: {x: number; y: number}): Promise<void> {
     const el = this.callEl;
     el.style.display = 'block';
+    // patlama yığının köşesindeki sayaç hapının üstüne gelebilir: hap patlama boyunca söner (ardından açılış zaten gizler)
+    this.el.classList.add('is-calling');
     const inn = el.firstElementChild as HTMLElement;
     const mx = from.x + (to.x - from.x) * 0.55, my = from.y + (to.y - from.y) * 0.55;
     const W = this.L?.W ?? innerWidth;
@@ -473,6 +475,7 @@ export class BlofHud {
     return new Promise(res => {
       const end = () => {
         el.style.display = 'none';
+        this.el.classList.remove('is-calling');
         res();
       };
       if (ANIM) a.finished.then(end, end);
