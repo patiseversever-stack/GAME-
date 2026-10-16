@@ -8,7 +8,7 @@ import {EASE, Scope, bump, clamp, countUp, esc, fmt, h, play, q, shake} from './
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, gemHtml, onAct, rarityHtml, toast} from './parts';
-import {mountDeckFan, mountFx, tableSwatch} from './previews';
+import {deferMount, mountDeckFan, mountFx, tableSwatch} from './previews';
 import {haptic} from '../platform/bridge';
 import {shortName, type Page, type Shell} from './lobby';
 
@@ -22,11 +22,14 @@ export class CollectionPage implements Page {
     this.el.innerHTML = `<div class="kh-coll__in kh-scroll"></div>`;
     this.inner = q(this.el, '.kh-coll__in');
     onAct(this.scope, this.el, (a, b) => this.act(a, b));
-    this.render();
+    // içerik ilk show()'da kurulur
   }
 
+  /** Son kurulumdaki profil durumu: aynıysa sekme dönüşünde sayfa yeniden kurulmaz. */
+  private sig = '';
+
   show(): void {
-    if (!this.editing) this.render();
+    if (!this.editing && (!this.sig || this.sig !== JSON.stringify(this.shell.profile.data))) this.render();
     const g = (s: string) => this.el.querySelector(s);
     const card = g('.kh-pcard');
     if (card) play(card, [{transform: 'translateY(-16px) scale(.96)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, easing: EASE.spring, fill: 'backwards'});
@@ -41,6 +44,7 @@ export class CollectionPage implements Page {
   private render(): void {
     const p = this.shell.profile;
     const d = p.data;
+    this.sig = JSON.stringify(d);
     const me = charById(d.char ?? 'dursun');
     const st = d.stats;
     const rate = st.played ? Math.round((st.won / st.played) * 100) : 0;
@@ -118,7 +122,7 @@ export class CollectionPage implements Page {
       const kd = pv.dataset.k as ItemKind, id = pv.dataset.id!;
       if (kd === 'deck') mountDeckFan(pv, id, 3);
       else if (kd === 'table') pv.style.background = tableSwatch(id);
-      else if (kd === 'fx') mountFx(pv, id, true);
+      else if (kd === 'fx') deferMount(pv, () => mountFx(pv, id, true));
     });
     const input = q<HTMLInputElement>(this.inner, '.kh-pcard__input');
     this.scope.on(input, 'keydown', e => {

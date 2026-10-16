@@ -93,6 +93,48 @@ export function mountDeckFan(box: HTMLElement, id: string, n: 3 | 5 = 3): void {
   } else go();
 }
 
+// ---------------------------------------------------------------- sıralı kurulum
+const mountQueue: Array<() => void> = [];
+let pumping = false;
+function pump(): void {
+  if (pumping) return;
+  pumping = true;
+  const step = (): void => {
+    const f = mountQueue.shift();
+    if (f) {
+      try {
+        f();
+      } catch {
+        /* tek önizleme bozuksa diğerleri çalışsın */
+      }
+    }
+    if (mountQueue.length) requestAnimationFrame(step);
+    else pumping = false;
+  };
+  requestAnimationFrame(step);
+}
+/**
+ * Ağır önizlemeyi (efekt, vb.) görünür olunca ve kare başına BİR tane kur: sayfa açılırken 8-10 önizlemenin
+ * tek görevde kurulup ekranı donduran (zayıf telefonda ~250 ms) hâli olmasın.
+ */
+export function deferMount(box: HTMLElement, fn: () => void): void {
+  const enqueue = (): void => {
+    mountQueue.push(() => {
+      if (box.isConnected) fn();
+    });
+    pump();
+  };
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver(es => {
+      if (es.some(e => e.isIntersecting)) {
+        io.disconnect();
+        enqueue();
+      }
+    }, {rootMargin: '120px'});
+    io.observe(box);
+  } else enqueue();
+}
+
 // ---------------------------------------------------------------- masa
 const TABLE_FALLBACK: Record<string, string> = {
   kizil: 'repeating-conic-gradient(from 0deg at 50% 46%, rgba(255,220,160,.07) 0deg 7deg, rgba(255,255,255,0) 7deg 18deg), radial-gradient(120% 75% at 50% 46%, #e8334a 0%, #a8142c 32%, #6e0a1e 62%, #3a0512 100%)',
@@ -235,6 +277,20 @@ export function mountFx(box: HTMLElement, id: string, still = false): FxLoop {
         const t = (a.effect?.getTiming().delay as number) ?? 0;
         a.currentTime = t + (Number(a.effect?.getTiming().duration) || 0) * (id === 'altin' ? 0.8 : id === 'havai' ? 0.35 : 0.4);
       });
+      // donmuş kare: değerleri satır içi yaz, animasyonları bırak (küçük resimde canlı animasyon/katman kalmasın)
+      const frozen: Array<[HTMLElement, Record<string, string>]> = [];
+      for (const a of anims) {
+        const eff = a.effect as KeyframeEffect | null;
+        const el = eff?.target as HTMLElement | null | undefined;
+        if (!el) continue;
+        const cs = getComputedStyle(el);
+        const vals: Record<string, string> = {};
+        for (const kf of eff!.getKeyframes()) for (const k of Object.keys(kf)) if (!['offset', 'easing', 'composite', 'computedOffset'].includes(k)) vals[k] = (cs as unknown as Record<string, string>)[k];
+        frozen.push([el, vals]);
+      }
+      anims.forEach(a => a.cancel());
+      anims.length = 0;
+      for (const [el, vals] of frozen) Object.assign(el.style, vals);
     }
   };
   const cycle = () => {

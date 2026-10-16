@@ -88,7 +88,7 @@
 .kh-pv__fx { position: absolute; inset: 0; }
 .kh-fxpv { overflow: hidden; }
 .kh-fxpv__in { position: absolute; inset: 0; }
-.kh-fxpv__p { position: absolute; display: block; will-change: transform, opacity; }
+.kh-fxpv__p { position: absolute; display: block; } /* will-change yok: animasyon başlayınca zaten katmanlanır; donmuş küçük resimde 70+ boş katman olmasın */
 .kh-fxpv__p.is-rays { left: 50%; top: 50%; width: 180%; aspect-ratio: 1; border-radius: 50%; background: var(--stamp-rays); -webkit-mask: var(--stamp-rays-mask); mask: var(--stamp-rays-mask); }
 .kh-fxpv__p.is-word { left: 50%; top: 50%; font-size: calc(var(--u) * 1.6); white-space: nowrap; }
 .kh-fxpv__p.is-conf { left: 50%; top: 50%; width: 6px; height: 9px; border-radius: 1.5px; }

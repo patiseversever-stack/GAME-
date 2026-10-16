@@ -8,7 +8,7 @@ import {ANIM, EASE, Scope, bump, center, esc, fmt, h, hms, play, q, shake} from 
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toast, type ModalHandle} from './parts';
-import {mountDeckFan, mountFx, mountTable, type FxLoop} from './previews';
+import {deferMount, mountDeckFan, mountFx, mountTable, type FxLoop} from './previews';
 import {haptic} from '../platform/bridge';
 import {g3} from './fx';
 import type {Page, Shell} from './lobby';
@@ -66,13 +66,34 @@ export class ShopPage implements Page {
       <div class="kh-shop__body kh-scroll"></div>`;
     this.body = q(this.el, '.kh-shop__body');
     onAct(this.scope, this.el, (a, b) => this.act(a, b));
-    this.render(false);
     this.scope.add(() => clearTimeout(this.dealT));
+    // içerik ilk show()'da kurulur (kurucuda da kurmak ilk açılışta işi ikiye katlıyordu)
+  }
+
+  /** Mağazanın göstereceği şeyi belirleyen durum: değişmediyse sekme dönüşünde yeniden kurmaya gerek yok. */
+  private sig = '';
+  private signature(): string {
+    const d = this.shell.profile.data;
+    const deal = dealOf(this.owns);
+    return [this.tab, d.char, JSON.stringify(d.equipped), CATALOG.map(it => (this.owns(it.kind, it.id) ? 1 : 0)).join(''), deal ? `${deal.item.kind}:${deal.item.id}:${deal.price}` : '-'].join('|');
   }
 
   show(sub?: string): void {
     if (sub && TABS.some(t => t.id === sub) && sub !== this.tab) this.tab = sub as ShopTab;
+    if (this.sig && this.body.firstChild && this.sig === this.signature()) {
+      this.placeInd();
+      if (this.tab === 'featured') this.tickDeal();
+      return;
+    }
     this.render(true);
+  }
+
+  private placeInd(): void {
+    const tabs = this.el.querySelectorAll<HTMLElement>('.kh-stab');
+    const on = tabs[TABS.findIndex(t => t.id === this.tab)];
+    const ind = q(this.el, '.kh-stab__ind');
+    ind.style.width = on.offsetWidth + 'px';
+    ind.style.transform = `translateX(${on.offsetLeft}px)`;
   }
   hide(): void {
     clearTimeout(this.dealT);
@@ -110,10 +131,8 @@ export class ShopPage implements Page {
     const tabs = this.el.querySelectorAll<HTMLElement>('.kh-stab');
     const i = TABS.findIndex(t => t.id === this.tab);
     tabs.forEach((t, k) => t.classList.toggle('is-on', k === i));
-    const on = tabs[i];
-    const ind = q(this.el, '.kh-stab__ind');
-    ind.style.width = on.offsetWidth + 'px';
-    ind.style.transform = `translateX(${on.offsetLeft}px)`;
+    this.placeInd();
+    this.sig = this.signature();
     const owned = CATALOG.filter(it => this.owns(it.kind, it.id)).length;
     q(this.el, '.kh-shop__count').innerHTML = `${I.grid}<b class="kh-num">${owned}/${CATALOG.length}</b>`;
     clearTimeout(this.dealT);
@@ -209,12 +228,16 @@ function mountPreview(pv: HTMLElement, shell: Shell, big: boolean): FxLoop | nul
     const box = h('span', 'kh-pv__table');
     pv.append(box);
     if (big) requestAnimationFrame(() => mountTable(box, id, true));
-    else mountTable(box, id, false);
+    else deferMount(box, () => mountTable(box, id, false));
   } else if (kind === 'fx') {
     const box = h('span', 'kh-pv__fx');
     pv.append(box);
-    const loop = mountFx(box, id, !big);
-    if (big) requestAnimationFrame(() => loop.play());
+    if (!big) {
+      deferMount(box, () => mountFx(box, id, true));
+      return null;
+    }
+    const loop = mountFx(box, id, false);
+    requestAnimationFrame(() => loop.play());
     return loop;
   } else if (kind === 'frame') {
     const d = shell.profile.data;

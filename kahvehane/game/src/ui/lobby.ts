@@ -884,8 +884,7 @@ class QuestsPage implements Page {
   private timer = 0;
 
   constructor(private shell: Shell) {
-    this.render();
-    onAct(this.scope, this.el, (a, b) => this.act(a, b));
+    onAct(this.scope, this.el, (a, b) => this.act(a, b)); // içerik ilk show()'da kurulur
   }
 
   private render(): void {

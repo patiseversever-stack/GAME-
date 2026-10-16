@@ -123,6 +123,7 @@ export function initCalm(o: {always: boolean; idleMs?: number}): void {
   window.setInterval(() => {
     if (document.hidden) return;
     if (!calm && performance.now() - last > idleMs) sleep();
-    else if (!calm) sweep();
+    // süpürme stil/yerleşim hesabını zorlar: kullanıcı dokunurken (geçişler) ve maç sırasında yapılmaz
+    else if (!calm && performance.now() - last > 1200 && !document.querySelector('.ar:not(.is-off)')) sweep();
   }, 800);
 }
