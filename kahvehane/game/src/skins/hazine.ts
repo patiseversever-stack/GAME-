@@ -181,6 +181,28 @@ function paintIvory(): HTMLCanvasElement {
       g.fill();
     }
   grain(g, PW, PH, rnd, 0.035);
+  // köşebent: dizinlerin olmadığı iki köşede (sağ üst, sol alt) altın kıvrım + küçük yakut
+  const cornerPiece = (x: number, y: number, rot: number): void => {
+    g.save();
+    g.translate(x, y);
+    g.rotate(rot);
+    scroll(g, -30, 8, 13, 0, -1);
+    scroll(g, -8, 30, 13, Math.PI / 2, 1);
+    g.beginPath();
+    g.moveTo(0, 0);
+    g.quadraticCurveTo(-26, 4, -34, 30);
+    g.quadraticCurveTo(-8, 22, 0, 0);
+    g.fillStyle = gold(g, -34, 0, 0, 30);
+    g.fill();
+    g.lineWidth = 1;
+    g.strokeStyle = '#3a2206';
+    g.stroke();
+    roundGem(g, -14, 14, 6, GEM.H, 61);
+    g.restore();
+  };
+  const m = PW * (F + 0.045);
+  cornerPiece(PW - m, m, 0);
+  cornerPiece(m, PH - m, Math.PI);
   return c;
 }
 
@@ -240,9 +262,10 @@ function paintRosette(): HTMLCanvasElement {
     g.save();
     g.rotate((i / 8) * Math.PI * 2);
     g.beginPath();
-    g.moveTo(0, -C * 0.2);
-    g.quadraticCurveTo(C * 0.36, -C * 0.72, 0, -C * 0.96);
-    g.quadraticCurveTo(-C * 0.36, -C * 0.72, 0, -C * 0.2);
+    g.rotate(Math.PI / 8);
+    g.moveTo(0, -C * 0.3);
+    g.quadraticCurveTo(C * 0.3, -C * 0.74, 0, -C * 0.98);
+    g.quadraticCurveTo(-C * 0.3, -C * 0.74, 0, -C * 0.3);
     g.fillStyle = gold(g, -C * 0.3, -C, C * 0.3, 0);
     g.fill();
     g.lineWidth = 1.6;
@@ -251,7 +274,7 @@ function paintRosette(): HTMLCanvasElement {
     g.restore();
   }
   g.beginPath();
-  g.arc(0, 0, C * 0.6, 0, Math.PI * 2);
+  g.arc(0, 0, C * 0.66, 0, Math.PI * 2);
   g.fillStyle = rad(g, -C * 0.2, -C * 0.25, 0, C * 0.7, [
     [0, '#fffdf4'],
     [1, '#eadcb8'],
@@ -263,13 +286,13 @@ function paintRosette(): HTMLCanvasElement {
   g.lineWidth = 1.4;
   g.strokeStyle = '#3a2206';
   g.beginPath();
-  g.arc(0, 0, C * 0.65, 0, Math.PI * 2);
+  g.arc(0, 0, C * 0.72, 0, Math.PI * 2);
   g.stroke();
   for (let i = 0; i < 20; i++) {
     const a = (i / 20) * Math.PI * 2;
     g.fillStyle = '#fff6d8';
     g.beginPath();
-    g.arc(Math.cos(a) * C * 0.6, Math.sin(a) * C * 0.6, 1.5, 0, Math.PI * 2);
+    g.arc(Math.cos(a) * C * 0.66, Math.sin(a) * C * 0.66, 1.6, 0, Math.PI * 2);
     g.fill();
   }
   return c;
@@ -595,14 +618,14 @@ function* paintBack(): Job<HTMLCanvasElement> {
     for (let i = 0; i < n; i++) {
       const t = (i + 0.5) / n;
       const x = x0 + (x1 - x0) * t, y = y0 + (y1 - y0) * t;
-      scroll(g, x, y, 9.5, Math.atan2(y1 - y0, x1 - x0), i % 2 ? 1 : -1);
+      scroll(g, x, y, 12, Math.atan2(y1 - y0, x1 - x0), i % 2 ? 1 : -1);
     }
   };
   const e = m + 11;
-  along(e + 30, e, W - e - 30, e, 7);
-  along(e + 30, H - e, W - e - 30, H - e, 7);
-  along(e, e + 30, e, H - e - 30, 11);
-  along(W - e, e + 30, W - e, H - e - 30, 11);
+  along(e + 30, e, W - e - 30, e, 6);
+  along(e + 30, H - e, W - e - 30, H - e, 6);
+  along(e, e + 30, e, H - e - 30, 9);
+  along(W - e, e + 30, W - e, H - e - 30, 9);
   if (due()) yield;
   // köşelerde dört renk taş
   const cs: Suit[] = ['H', 'D', 'C', 'S'];
@@ -611,18 +634,18 @@ function* paintBack(): Job<HTMLCanvasElement> {
     roundGem(g, x, y, 11, GEM[cs[i]], 400 + i);
   });
   // orta rozet: altın yıldız + pırlanta
-  glow(g, cx, cy, 150, [255, 200, 120], 0.35);
+  glow(g, cx, cy, 170, [255, 190, 110], 0.42);
   g.save();
   g.translate(cx, cy);
   for (let i = 0; i < 16; i++) {
     g.save();
     g.rotate((i / 16) * Math.PI * 2);
-    const L = i % 2 ? 72 : 100;
+    const L = i % 2 ? 96 : 134;
     g.beginPath();
     g.moveTo(0, -L);
-    g.quadraticCurveTo(14, -L * 0.5, 0, -30);
-    g.quadraticCurveTo(-14, -L * 0.5, 0, -L);
-    g.fillStyle = gold(g, -14, -L, 14, -30);
+    g.quadraticCurveTo(17, -L * 0.5, 0, -36);
+    g.quadraticCurveTo(-17, -L * 0.5, 0, -L);
+    g.fillStyle = gold(g, -17, -L, 17, -36);
     g.fill();
     g.lineWidth = 1.4;
     g.strokeStyle = '#2a1604';
@@ -630,15 +653,15 @@ function* paintBack(): Job<HTMLCanvasElement> {
     g.restore();
   }
   g.beginPath();
-  g.arc(0, 0, 58, 0, Math.PI * 2);
-  g.fillStyle = gold(g, -58, -58, 58, 58);
+  g.arc(0, 0, 68, 0, Math.PI * 2);
+  g.fillStyle = gold(g, -68, -68, 68, 68);
   g.fill();
   g.lineWidth = 2;
   g.strokeStyle = '#2a1604';
   g.stroke();
   for (let i = 0; i < 12; i++) {
     const a = (i / 12) * Math.PI * 2;
-    pearl(g, Math.cos(a) * 50, Math.sin(a) * 50, 4.2);
+    pearl(g, Math.cos(a) * 59, Math.sin(a) * 59, 4.8);
   }
   g.restore();
   // büyük pırlanta (yuvarlak, 32 yüzey)
@@ -646,7 +669,7 @@ function* paintBack(): Job<HTMLCanvasElement> {
   p.arc(0, 0, 0.5, 0, Math.PI * 2);
   g.save();
   g.translate(cx, cy);
-  g.scale(84, 84);
+  g.scale(98, 98);
   cutGem(g, p, DIAMOND, 999);
   g.restore();
   // pırlantada gökkuşağı ateşi
@@ -654,11 +677,11 @@ function* paintBack(): Job<HTMLCanvasElement> {
   g.globalCompositeOperation = 'overlay';
   g.translate(cx, cy);
   for (const [a, col] of [[0.4, '#ff3a6a'], [1.6, '#3affc0'], [2.8, '#ffd23a'], [4, '#3a8aff'], [5.2, '#c03aff']] as const) {
-    g.fillStyle = rad(g, Math.cos(a) * 20, Math.sin(a) * 20, 0, 22, [
+    g.fillStyle = rad(g, Math.cos(a) * 24, Math.sin(a) * 24, 0, 26, [
       [0, col],
       [1, 'rgba(0,0,0,0)'],
     ]);
-    g.fillRect(-42, -42, 84, 84);
+    g.fillRect(-49, -49, 98, 98);
   }
   g.restore();
   sparkle(g, cx - 18, cy - 20, 26);
@@ -734,24 +757,25 @@ function face(g: Ctx, w: number, h: number, s: Suit, r: number, a: Art): void {
     drawGem(g, a, s, x0 + sl.x * k, y0 + sl.y * k, sl.d * k);
   } else {
     // broş: n taş halka hâlinde, ortada altın rozet + değer
-    const R = 0.185 * w;
-    const sz = Math.min(0.13 * w, (0.92 * 2 * Math.PI * R) / r);
+    const R = 0.205 * w;
+    const sz = Math.min(0.135 * w, (0.9 * 2 * Math.PI * R) / r);
+    const rd = 0.122 * w;
+    g.drawImage(a.rosette, cx - rd, cy - rd, rd * 2, rd * 2);
     for (let i = 0; i < r; i++) {
       const an = -Math.PI / 2 + (i / r) * Math.PI * 2;
       drawGem(g, a, s, cx + Math.cos(an) * R, cy + Math.sin(an) * R, sz);
     }
-    const rd = 0.21 * w;
-    g.drawImage(a.rosette, cx - rd, cy - rd, rd * 2, rd * 2);
-    const capH = 0.105 * w;
-    RF.draw(g, String(r), cx, cy - capH / 2, capH, 0.15 * w, GEM[s].ink);
+    const capH = 0.085 * w;
+    RF.draw(g, String(r), cx, cy - capH / 2, capH, 0.12 * w, GEM[s].ink);
   }
   corners(g, w, h, s, r, {
     font: RF,
-    x: 0.2,
-    top: 0.085,
-    cap: 0.24,
-    pip: 0.16,
-    gap: 0.05,
+    x: 0.215,
+    top: 0.09,
+    cap: 0.23,
+    pip: 0.155,
+    gap: 0.045,
+    wide: 0.27,
     rank: (gg, t, x, top, cap, maxW, su) => RF.draw(gg, t, x, top, cap, maxW, GEM[su].ink),
     pipDraw: (gg, su, x, y, size) =>
       withSuit(gg, su, x, y, size, p => {
