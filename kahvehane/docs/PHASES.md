@@ -91,12 +91,18 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
-**16 Ekim sabahı — "Tam paket" yayında (sürüm 7):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
-- **İlk açılış:** lamba yanar, Kahveci Dursun karşılar, hediye kutusu patlar → kaydırmalı galeriden hikâyeli karakter seçimi (ücretsiz) → ad → hoş geldin. (`src/ui/onboarding.ts`)
-- **Ana ekran:** yaşayan karakter (nefes, göz kırpma, dokununca tepki), günlük ödül + bedava sandık, Çevrimiçi / Arkadaşla (yakında tanıtımları), Tek Oyuncu: 1'e 1 · 4 Kişi · Eşli, rakip seçimi, bahis. (`src/ui/lobby.ts`)
+**16 Ekim öğleden sonra — "Sakin ve akıcı" turu (sürüm 9):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+- **Sadeleşen ana ekran:** karakter + iki yuvarlak buton (günlük ödül, bedava sandık) + tek satır "Çevrimiçi" + tek maç kartı (1'e 1 · 4 Kişi · Eşli, rakip/masa şeridi, 4 bahis) + OYNA. "Arkadaşla" artık Çevrimiçi'nin içinde ("Arkadaşınla" sekmesi). (`src/ui/lobby.ts`, `home.css`)
+- **Karakter ekranlarında tek resim:** poz/duygu değişimi ve çapraz geçiş yok (hayalet yüz bitti); yalnız nefes. Konuşma balonu hep yüzün üstünde/yanında (`placeBubble`), sonuç ekranında küçük yüzlerin altında. (`src/ui/parts.ts`, `onboarding.ts`, `results.css`)
+- **Performans (ölçülen):** boşta kare/sn ≈ 0 (onboarding, ana ekran, koleksiyon, oyun); sekme açılışında stil hesabı 53/sn → 3/sn (ekran dışı döngüler durur, `src/platform/calm.ts`); masa kartları 52 canvas yerine tek atlas görseli + pişirilmiş gölge (çizim geçişi/kare 108 → 3, `src/table2d/table.ts`); parçacık havuzlarında zorlanmış stil hesabı yok (`src/platform/anim.ts`); ses motoru boşta kurulur (ilk dokunuş takılması yok); market/koleksiyon bir kez kurulur, önizlemeler kare başına bir tane, donmuş efekt küçük resimleri.
+- **Ölçüm araçları:** `scripts/perf.mjs` (ekran başına boşta kare/boyama/stil), `scripts/jank.mjs` (geçiş/atış kare süreleri), `scripts/boot.mjs`. Gerçek telefonda henüz ölçülmedi (hepsi başsız Chromium + yazılım GL, 4× yavaş CPU).
+- **Sonuç ekranı:** 4 kişi/eşli tablo artık kırpılmıyor (TOPLAM satırı görünür), 412×839, 360×640, 360×800, 393×873 boyutlarında doğrulandı.
+
+**16 Ekim sabahı — "Tam paket" (sürüm 7):**
+- **İlk açılış:** lamba yanar, Kahveci Dursun karşılar, hediye kutusu → kaydırmalı galeriden hikâyeli karakter seçimi (ücretsiz) → ad → hoş geldin. (`src/ui/onboarding.ts`)
 - **Oyun:** 2/4 koltuk + eşli; karakter rozetleri 10 hâl (`assets/chars/`), büyük pişti kutlaması, değerli kart parıltısı, SERİ/SÜPÜRDÜ, son el, el sonu sayımı; pişti efektleri klasik/havai/yıldız/altın. (`src/table2d/`, `src/game/match.ts`, `src/ui/hud.ts`, `fx.ts`)
 - **Market:** karakterler, desteler (Yıldızlı Gece, İznik Çinisi, Büyük Dalga, Ayçiçekleri), masalar (Mavi Arena, Yıldızlı Gece, Çini Salon, Kızıl Salon, Zümrüt Kadife), efektler, çerçeveler; günün teklifi; canlı önizleme. (`src/ui/shop.ts`, `src/skins/`, `src/themes/`)
 - **Koleksiyon/Profil**, **Günlük Görevler** (3 görev + Günün Sandığı), N oyunculu VS ve sayarak akan sonuç ekranı, seviye atlama.
-- Ekonomi ve kayıt: `src/game/profile.ts` (jeton, XP, envanter, görevler, istatistik). Katalog: `src/game/catalog.ts`. Karakterler: `src/game/roster.ts`.
-- Test: `?auto=1` (+`&mode=4|esli`), `?seed=N`, `?reset=1`, `?skipintro=1`; geliştirici sayfaları `dev/game.html`, `dev/screens.html`, `dev/skins.html`, `dev/themes.html`.
+- Ekonomi ve kayıt: `src/game/profile.ts`. Katalog: `src/game/catalog.ts`. Karakterler: `src/game/roster.ts`.
+- Test: `?auto=1` (+`&mode=4|esli`), `?seed=N`, `?reset=1`, `?skipintro=1`, `?q=low|mid|high`, `?idle=ms`, `?calm=0`; geliştirici sayfaları `dev/game.html`, `dev/screens.html` (ör. `?s=results&mode=4&anim=0`), `dev/skins.html`, `dev/themes.html`.
 - Henüz yok / sıradaki: gerçek telefonda performans ölçümü, seslendirme (ElevenLabs anahtarı), çevrimiçi oyun, uygulamaya gömme (Adım 6).
