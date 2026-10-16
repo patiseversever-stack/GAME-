@@ -26,6 +26,9 @@ export function glint(card: Element, ms = 1050): void {
     });
 }
 
+// geliştirme: ekran görüntüsü betikleri parıltıyı elle tetikleyebilsin
+if (import.meta.env.DEV) (window as unknown as {__khGlint: typeof glint}).__khGlint = glint;
+
 /** Parıltı öğeleri (kartın içine, taşma kırpılan kutuya konur). */
 export const glintHtml = (spark = true): string => `<i class="kh-glint"></i>${spark ? '<i class="kh-spark4"></i>' : ''}`;
 
