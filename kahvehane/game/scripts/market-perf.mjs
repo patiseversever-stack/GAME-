@@ -69,10 +69,13 @@ const lt = await longtasks(t0);
 console.log(`ilk market açılışı: uzun görev ${lt.length} adet | en uzun ${Math.max(0, ...lt)} ms | toplam ${lt.reduce((a, c) => a + c, 0)} ms`);
 
 // 2) boşta: her alt sekmede 6.5 sn dokunuşsuz bekle, sonra 3 sn ölç
+//    (ilk ziyaret: sekme açılışındaki uzun görevler de yazılır — eski sürümde deste önizlemesi burada saniyelerce donduruyordu)
 for (const t of ['featured', 'set', 'deck', 'table', 'fx', 'frame', 'char']) {
+  const s0 = await p.evaluate(() => performance.now());
   await click(`.kh-stab[data-t=${t}]`, 6500);
+  const l = await longtasks(s0);
   const f = await frames(3000);
-  console.log(`${f.draw > 3 ? '⚠' : '✓'} boşta ${t.padEnd(9)} kare/sn ${f.draw.toFixed(1).padStart(5)} | boyama/sn ${f.paint.toFixed(1).padStart(5)} | stil/sn ${f.style.toFixed(1).padStart(5)} | düzen/sn ${f.layout.toFixed(1)}`);
+  console.log(`${f.draw > 3 ? '⚠' : '✓'} boşta ${t.padEnd(9)} kare/sn ${f.draw.toFixed(1).padStart(5)} | boyama/sn ${f.paint.toFixed(1).padStart(5)} | stil/sn ${f.style.toFixed(1).padStart(5)} | düzen/sn ${f.layout.toFixed(1)} | açılış uzun görev: ${l.length ? `${l.length} adet, en uzun ${Math.max(...l)} ms, toplam ${l.reduce((a, c) => a + c, 0)} ms` : 'yok'}`);
 }
 // görünürken (ilk 5 sn): kare/sn — parıltı tek seferlik olduğundan düşük kalmalı
 await click('.kh-stab[data-t=deck]', 600);
