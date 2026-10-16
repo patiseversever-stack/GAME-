@@ -326,10 +326,14 @@ export class Table2D {
     const hintBottom = handTop - (22 + handH * 0.035) - u * 0.45;
     const clear = hintBottom - u * 2.65 - u * 0.4;
     const edge = Math.max(7, W * 0.018) + 4; // ekran kenarı payı (+ destenin -5° eğikliği)
+    // ipucu hapı elin ortasına hizalı; en uzun metin ("Kartına dokun, masaya gitsin" ≈ 18,7u) ekrandan taşmasın
+    const half = u * 9.5;
+    const maxX = W - half - Math.max(6, W * 0.015);
     // deste sayacı hapı kartın alt kenarına biner (yarısı dışarıda): dikeyde ~0,8u taşar
     const pillOut = u * 0.8;
     let seats: SeatGeo[];
     let deck: {x: number; y: number; s: number};
+    let hintX = Math.max(half + 6, Math.min(hand.x, maxX));
     if (this.n === 2) {
       // kalan deste sol kenara çekilir (halka ile arasında nefes payı), biraz küçük: ortadaki sahne öne çıkar
       const ds = 0.9;
@@ -351,11 +355,16 @@ export class Table2D {
       const slotTop = sideY + (ch * ss) / 2 + 3 + u * 0.45;
       const slotBot = H - u * 10.1 - u * 0.3; // alt rozet (kafa taşması dahil)
       const need = (s: number) => ch * s + 10.9 * s + pillOut; // kart + 26 kartlık yığın kayması + hap taşması
-      const ds = Math.max(0.56, Math.min(0.8, (slotBot - slotTop - pillOut) / (ch + 10.9)));
+      // deste ipucu hapının solunda kalır: hap sağa kayar (en çok maxX), sığmazsa deste küçülür
+      const byHint = (maxX - half - 5 - 4 - edge) / cw;
+      const ds = Math.max(0.56, Math.min(0.8, byHint, (slotBot - slotTop - pillOut) / (ch + 10.9)));
       const top = slotTop + Math.max(0, (slotBot - slotTop - need(ds)) / 2);
       deck = {x: edge + (cw * ds) / 2, y: top + 10.9 * ds + (ch * ds) / 2, s: ds};
+      hintX = Math.min(maxX, Math.max(hintX, edge + cw * ds + 4 + 5 + half));
+      // benim destem halkanın sağ altında, ipucu bandının üstünde; pişti kartları ortaya (sola) dizilir: sağdaki rakibin destesine binmez
+      const ms = 0.66;
       seats = [
-        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: Math.min(W - cw * 0.6, W * 0.72), y: Math.min(H * 0.665, clear - (ch * 0.7) / 2 - 5), s: 0.7, r: 8}, pdir: 1},
+        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: Math.min(W - cw * 0.6, W * 0.72), y: Math.min(H * 0.665, clear - (ch * ms) / 2 - 5), s: ms, r: 8}, pdir: -1},
         {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1},
         {fan: {x: W / 2, y: H * 0.2, a: 180, s: fs, spread: cw * fs * 0.62}, stack: {x: Math.min(W - cw * 0.9, W / 2 + cw * 1.45), y: H * 0.2, s: ss, r: 6}, pdir: 1},
         {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1},
@@ -364,11 +373,12 @@ export class Table2D {
     this.L = {W, H, cw, ch, pile: {x: W / 2, y: pileY}, deck, hand, seats};
     this.pillDy = -u * 0.15;
     // ipucu hapının yeri HUD'a CSS değişkeniyle (hud.css: var(--kh-hint-bottom…)); Blöf kendi yerini kullanır
-    const hb = `${Math.max(0, H - hintBottom).toFixed(1)}px`;
+    const hb = `${Math.max(0, H - hintBottom).toFixed(1)}px`, hx = `${hintX.toFixed(1)}px`;
     const rs = document.documentElement.style;
-    if (rs.getPropertyValue('--kh-hint-bottom') !== hb) {
+    if (rs.getPropertyValue('--kh-hint-bottom') !== hb || rs.getPropertyValue('--kh-hint-x') !== hx) {
       rs.setProperty('--kh-hint-bottom', hb);
       rs.setProperty('--kh-hint-bottom4', hb);
+      rs.setProperty('--kh-hint-x', hx);
     }
     for (const c of this.all) {
       c.el.style.width = cw + 'px';
