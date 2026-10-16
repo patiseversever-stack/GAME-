@@ -91,6 +91,16 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
+**16 Ekim gece — sürüm 14 (Blöf geldi):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+- **İkinci oyun Blöf** — kurallar `docs/BLOF.md` (anketle kararlaştırıldı). Modlar 1'e 1 · 3 Kişi · 4 Kişi · Eşli; 5 sn blöf penceresi (BLÖF düğmesi/yığına dokun/Geç), ağır çekim açılış, YAKALANDI!/DOĞRU ÇIKTI!, yığın kaybedene uçar, karakter lafları (`src/ai/blofDialogue.ts`), Rıza Amca öğreticisi (ilk Blöf eli).
+- **Motor ve çevrimiçi altyapı** (`src/core/blofTypes.ts`, `blof.ts`, `game.ts` GameEngine arayüzü, `pistiEngine.ts`; `src/net/` LocalHost/GameClient/LocalTransport, protokol, `remote.ts` WebSocket iskeleti). Oyun bugün telefonda yerel sunucuyla koşuyor; gerçek sunucuya taşınınca istemci kodu değişmez. Mimari ve yapılacaklar: `docs/ONLINE.md`. Pişti adaptörü hazır ama `match.ts` henüz host üzerinden oynamıyor.
+- **Botlar** `src/ai/blofBot.ts` kolay/orta/zor (yalnız kendi görünümü + açık olaylar; zor her kartı hatırlar). Gerçek oyuncuya karşı denge oynanarak ayarlanmalı.
+- **Masa/oynanış** `src/table2d/blofTable.ts`, `src/ui/blofHud.ts`, `src/game/blofMatch.ts` (Match ile aynı şekil). **El düzeni oyuncu seçimi:** Gruplu (değere göre yığınlar, ≥47 px dokunma) / Klasik (iki sıra); ilk Blöf'te bölünmüş ekran seçici (`src/ui/handchooser.ts`), Ayarlar'da "Blöf el düzeni" (oyun içinde canlı değişir). Hızlı seçim "7'lerini seç", değer seçilince kartlar otomatik seçilir.
+- **Uygulama:** ana ekranda Pişti | Blöf seçici + zorluk hapı, 3 koltuklu VS/sonuç, profil v4 (oyun başına istatistik, `settings.blofHand`), 6 Blöf görevi, kurallar sekmeleri. Ekonomi `src/game/setup.ts`.
+- **Test:** vitest 173/173; tam otomatik oyunlar (statik derleme) Pişti 1v1/4 + Blöf 1v1/3/4/eşli, iki el düzeni — hepsi sonuç ekranına, konsol temiz. Kancalar: `?auto=1&game=blof&mode=3&diff=zor&hand=spread`, `?blof=0`; geliştirici: `dev/blof.html?scene=table|open|window|reveal`, `scripts/blof-perf.mjs`.
+- **Performans (başsız, 4× yavaş CPU):** boşta 0 kare; oynanış p95 17 ms, blöf anı 17–33 ms, dağıtımda ara sıra 67–117 ms tek kare. Gerçek telefonda ölçülmedi.
+- **Sıradaki:** gerçek cihaz ölçümü; Blöf seslendirmesi; çevrimiçi (oda/eşleşme/kimlik, sunucu tarafı ekonomi); Okey; 52 kart karıştırma patlamasını karelere bölmek.
+
 **16 Ekim akşamı — sürüm 13 (premium efektler):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
 - **Pişti efektleri baştan** (`src/ui/fx.ts`, `fxsprites.ts`, `fxlib.ts`, `fxpreview.ts`): ~45 sprite (parlama, lens, yıldız pırıltısı, gerçek yıldırım, lale, cam nazar, altın taç, galaksi, 3D takım amblemleri…) açılıştan ~2,5 sn sonra boşta bir kez çizilir; efektler yalnız transform/opacity, ≤ ~40 düğüm, ≤ 2 sn, tam ekran beyaz parlama yok. 9 efekt: Zafer Işığı (ücretsiz, eski klasik), Altın Yağmuru, Havai Fişek, Yıldız Yağmuru, Şimşek, Lale Rüzgârı, Nazar, Taç Giyme (yeni; Davul Zurna kaldırıldı), Kozmik Girdap. Kahraman kutlamasında efekt karakterin arkasında (yüz açık), taç şapkanın üstünde.
 - **Dönen ışınlar** geri: arena (`src/ui/img/arena-rays.webp`) ve market önizlemeleri (`rays-white/gold.webp`, `scripts/bake-rays.mjs`) — işlenmiş görsel + yalnız transform dönüşü, `.kh-keep` (calm.ts durdurmaz).
