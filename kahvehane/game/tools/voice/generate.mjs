@@ -444,7 +444,7 @@ function checkFfmpeg() {
 function measure(src) {
   const r = spawnSync(
     FFMPEG,
-    ['-hide_banner', '-nostdin', '-i', src, '-af', `${TRIM},loudnorm=I=${LOUD.I}:TP=${LOUD.TP}:LRA=${LOUD.LRA}:print_format=json`, '-f', 'null', '-'],
+    ['-hide_banner', '-nostdin', '-i', src, '-af', `loudnorm=I=${LOUD.I}:TP=${LOUD.TP}:LRA=${LOUD.LRA}:print_format=json`, '-f', 'null', '-'],
     {encoding: 'utf8', timeout: 30_000},
   );
   const s = r.stderr || '';
@@ -462,29 +462,44 @@ function measure(src) {
 }
 
 function normalize(src, dst) {
-  const m = measure(src);
+  // İki ayrı ffmpeg: önce kırp → geçici WAV, sonra ölç + loudnorm. Kırpma (areverse) ile loudnorm'un doğrusal
+  // modu aynı filtre zincirinde bazı kısa kliplerde ffmpeg'i kilitliyordu.
+  fs.mkdirSync(path.dirname(dst), {recursive: true});
+  const wav = `${dst}.${process.pid}.trim.wav`;
+  const tmp = `${dst}.${process.pid}.part.mp3`;
+  const clean = () => {
+    for (const f of [wav, tmp]) {
+      try {
+        fs.unlinkSync(f);
+      } catch {
+        /* yoksay */
+      }
+    }
+  };
+  const t = spawnSync(FFMPEG, ['-hide_banner', '-nostdin', '-loglevel', 'error', '-y', '-i', src, '-af', TRIM, '-ac', '1', '-ar', '44100', wav],
+    {encoding: 'utf8', timeout: 30_000});
+  if (t.status !== 0 || !fs.existsSync(wav)) {
+    clean();
+    throw new Error(`ffmpeg kırpma: ${(t.stderr || '').trim().split('\n').pop()}`);
+  }
+  const m = measure(wav);
   let ln = `loudnorm=I=${LOUD.I}:TP=${LOUD.TP}:LRA=${LOUD.LRA}`;
   if (m) {
     ln += `:measured_I=${m.input_i}:measured_TP=${m.input_tp}:measured_LRA=${m.input_lra}`;
     ln += `:measured_thresh=${m.input_thresh}:offset=${m.target_offset}:linear=true`;
   }
-  fs.mkdirSync(path.dirname(dst), {recursive: true});
-  const tmp = `${dst}.${process.pid}.part.mp3`;
   const r = spawnSync(
     FFMPEG,
-    ['-hide_banner', '-nostdin', '-loglevel', 'error', '-y', '-i', src, '-af', `${TRIM},${ln},aresample=44100`,
+    ['-hide_banner', '-nostdin', '-loglevel', 'error', '-y', '-i', wav, '-af', `${ln},aresample=44100`,
       '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '64k', '-map_metadata', '-1', tmp],
     {encoding: 'utf8', timeout: 30_000},
   );
   if (r.status !== 0 || !fs.existsSync(tmp)) {
-    try {
-      fs.unlinkSync(tmp);
-    } catch {
-      /* yoksay */
-    }
+    clean();
     throw new Error(`ffmpeg: ${(r.stderr || '').trim().split('\n').pop()}`);
   }
   fs.renameSync(tmp, dst);
+  clean();
 }
 
 function duration(file) {
