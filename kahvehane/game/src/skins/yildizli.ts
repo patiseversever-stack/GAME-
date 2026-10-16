@@ -1,6 +1,7 @@
 // Tarz 4 — "Yıldızlı Gece": Van Gogh'un "Yıldızlı Gece" (1889, kamu malı) tablosundan esinlenen koleksiyon destesi.
 // Hiçbir görsel indirilmez: prepare() içinde, girdaplı bir akış alanı (flow field) boyunca binlerce kısa, kalın,
 // kıvrık fırça darbesiyle kendi "tablolarımızı" BİR KEZ boyayıp saklarız; kart çizimi yalnızca bu tuvalleri kopyalar.
+import {makeTick} from '../platform/sched';
 import type {Skin, Suit} from './contract';
 
 type RGB = readonly [number, number, number];
@@ -504,13 +505,19 @@ function vignette(g: Ctx, w: number, h: number, a: number): void {
   g.fillRect(0, 0, w, h);
 }
 
-function paintScene(sc: Scene): HTMLCanvasElement {
+async function paintScene(sc: Scene): Promise<HTMLCanvasElement> {
+  const tick = makeTick();
   const [c, g] = makeCanvas(sc.w, sc.h);
   const rnd = mulberry(sc.seed);
   const s = sc.w / 360;
   paintSky(g, sc, rnd);
-  for (const st of sc.stars) paintHalo(g, st, rnd, 'star', s);
+  await tick();
+  for (const st of sc.stars) {
+    paintHalo(g, st, rnd, 'star', s);
+    await tick();
+  }
   if (sc.moon) paintHalo(g, sc.moon, rnd, 'moon', s);
+  await tick();
   // ışıltı: yıldızların ve ayın çevresine yumuşak, ekranla karışan sıcak ışık (servi ve tepeler önünde kalır)
   g.globalCompositeOperation = 'screen';
   for (const st of sc.moon ? [...sc.stars, sc.moon] : sc.stars) {
@@ -524,8 +531,11 @@ function paintScene(sc: Scene): HTMLCanvasElement {
   }
   g.globalCompositeOperation = 'source-over';
   if (sc.horizon) paintHills(g, sc, rnd);
+  await tick();
   if (sc.village) paintVillage(g, sc, rnd);
+  await tick();
   if (sc.cypress) paintCypress(g, sc.cypress, rnd, s);
+  await tick();
   vignette(g, sc.w, sc.h, 0.32);
   return c;
 }
@@ -1033,11 +1043,11 @@ function courtScene(kind: 'K' | 'Q' | 'J'): Scene {
 }
 
 /** Saray kartı: elips içinde Yıldızlı Gece motifi + çevresinde yıldız halesi gibi girdaplı boyalı çerçeve. */
-function paintCourt(kind: 'K' | 'Q' | 'J', seed: number): HTMLCanvasElement {
+async function paintCourt(kind: 'K' | 'Q' | 'J', seed: number): Promise<HTMLCanvasElement> {
   const [c, g] = makeCanvas(CW, CH);
   const rnd = mulberry(seed);
   const cx = CW / 2, cy = CH / 2;
-  const sky = paintScene(courtScene(kind));
+  const sky = await paintScene(courtScene(kind));
   g.save();
   g.beginPath();
   g.ellipse(cx, cy, ORX + 2, ORY + 2, 0, 0, Math.PI * 2);
@@ -1102,15 +1112,26 @@ async function doPrepare(): Promise<void> {
     /* yazı tipi yoksa yedek serif */
   }
   SUIT_PATH = {S: spadePath(), H: heartPath(), D: diamondPath(), C: clubPath()};
-  // Tablolar bir kez boyanır (~400 ms); kart çizimi yalnızca bunları kopyalar.
-  backArt = paintScene(backScene());
-  frameArt = paintScene(frameScene());
+  // Tablolar bir kez boyanır (~400 ms); kart çizimi yalnızca bunları kopyalar. Adımlar arasında nefes: arayüz donmaz.
+  const tick = makeTick(6);
+  backArt = await paintScene(backScene());
+  await tick();
+  frameArt = await paintScene(frameScene());
+  await tick();
   creamArt = paintCream();
+  await tick();
   aceArt = paintAce();
-  (['S', 'H', 'D', 'C'] as Suit[]).forEach((s, i) => (suitArt[s] = paintSuit(SUIT_PATH![s], isRed(s), 500 + i, SUIT_TY[s])));
-  courtArt[13] = paintCourt('K', 713);
-  courtArt[12] = paintCourt('Q', 712);
-  courtArt[11] = paintCourt('J', 711);
+  await tick();
+  for (const [i, s] of (['S', 'H', 'D', 'C'] as Suit[]).entries()) {
+    suitArt[s] = paintSuit(SUIT_PATH![s], isRed(s), 500 + i, SUIT_TY[s]);
+    await tick();
+  }
+  courtArt[13] = await paintCourt('K', 713);
+  await tick();
+  courtArt[12] = await paintCourt('Q', 712);
+  await tick();
+  courtArt[11] = await paintCourt('J', 711);
+  await tick();
   const [, mg] = makeCanvas(4, 4);
   mg.font = `900 100px ${FONT}`;
   capRef = mg.measureText('H').actualBoundingBoxAscent || 71;

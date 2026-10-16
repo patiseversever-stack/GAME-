@@ -2,6 +2,7 @@
 // Tüm hareket WAAPI ile transform/opacity üzerinden (bileşimci iş parçacığında akar; ana iş parçacığı meşgulken bile akıcı).
 // Kart yüzleri atlas tuvalinden her kartın kendi küçük tuvaline bir kez kopyalanır (kodlama/indirme yok).
 // Efekt düğümleri (kıvılcım, halka, iz, toz) havuzdan gelir; boşta hiçbir JS çalışmaz (yalnız ucuz CSS/WAAPI döngüleri).
+import {yieldToMain} from '../platform/sched';
 import './table.css';
 import {ATLAS_COLS, BACK_INDEX, CORNER_RADIUS, type CardAtlas} from '../render/cardAtlas';
 import {cardId, isJack, rankOf, suitOf, type CardId, type Suit} from '../core/types';
@@ -54,6 +55,15 @@ const tf = (p: Pose, cw: number, ch: number) =>
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 const done = (a: Animation, el?: HTMLElement) => a.finished.then(() => el?.remove(), () => el?.remove());
+/** Açılışta kullanılan ufacık yer tutucu atlas: gerçek deste arka planda çizilir. */
+function tinyAtlas(): CardAtlas {
+  const cellW = 18, cellH = 26;
+  const canvas = document.createElement('canvas');
+  canvas.width = cellW * ATLAS_COLS;
+  canvas.height = cellH * 7;
+  return {canvas, width: canvas.width, height: canvas.height, cellW, cellH};
+}
+
 export const SUIT_COLOR: Record<Suit, string> = {H: '#ff2e4d', D: '#ffb400', C: '#16c45b', S: '#1f7bff'};
 
 /** Yığın ışığı gradyanları (closest-side: 100% = katmanın yarıçapı). N = yığın boşken nötr (tema rengi). */
@@ -132,8 +142,9 @@ export class Table2D {
   private potShown = 0;
   private tintEl: HTMLElement;
   private paintEl: HTMLCanvasElement | null = null;
+  /** Işın hüzmeleri artık sürekli dönmez (büyük maskeli katmanın her karede yeniden birleştirilmesi pahalıydı); yalnız büyük anlarda kısa dönüş yapar. */
+  private raysAngle = 0;
   private raysAnim: Animation | null = null;
-  private raysTimers: number[] = [];
   /** Yığın ışığı: iki küçük katman çapraz geçişle renk değiştirir (eskiden 5 dev katmandı; telefon GPU belleğini aşıyordu) */
   private glowEls: HTMLElement[] = [];
   private glowCur = 0;
@@ -167,7 +178,15 @@ export class Table2D {
   /** Deste/yığın değişince HUD'a haber ver (deste rozetinin yeri) */
   onDeck: (count: number, x: number, y: number) => void = () => {};
 
-  constructor(host: HTMLElement, private atlas: CardAtlas, private snd: TableSounds, low: boolean) {
+  private atlas: CardAtlas;
+  /** Deste atlası hazır olunca çözülür (açılışta masa boş kartlarla kurulur, atlas arka planda çizilir). */
+  ready: Promise<void> = Promise.resolve();
+  private atlasTok = 0;
+  private paintDirty = false;
+
+  constructor(host: HTMLElement, atlas0: CardAtlas | null, private snd: TableSounds, low: boolean) {
+    const atlas = atlas0 ?? tinyAtlas();
+    this.atlas = atlas;
     this.low = low;
     this.root = document.createElement('div');
     this.root.className = 'ar' + (low ? ' is-low' : '');
@@ -201,8 +220,6 @@ export class Table2D {
     }
     this.layout();
     this.setGlow(null);
-    if (!low && !matchMedia('(prefers-reduced-motion: reduce)').matches)
-      this.raysAnim = this.raysEl.animate([{transform: 'rotate(0deg)'}, {transform: 'rotate(360deg)'}], {duration: 90000, iterations: Infinity});
     window.addEventListener('resize', () => this.relayout());
     window.visualViewport?.addEventListener('resize', () => this.relayout());
     this.cardsEl.addEventListener('pointerdown', this.down);
@@ -213,15 +230,21 @@ export class Table2D {
 
   // ───────── tema / deste ─────────
 
-  /** Yeni deste atlası: bütün kartlar (açık/kapalı hâliyle) yeniden çizilir. */
-  setAtlas(atlas: CardAtlas): void {
+  /** Yeni deste atlası: bütün kartlar (açık/kapalı hâliyle) yeniden çizilir; beş kartta bir nefes verir (arayüz donmaz). */
+  async setAtlas(atlas: CardAtlas): Promise<void> {
     this.atlas = atlas;
-    for (const c of this.all) {
+    const tok = ++this.atlasTok;
+    for (let i = 0; i < this.all.length; i++) {
+      const c = this.all[i];
       if (c.cv.width !== atlas.cellW || c.cv.height !== atlas.cellH) {
         c.cv.width = atlas.cellW;
         c.cv.height = atlas.cellH;
       }
       this.draw(c, c.cell);
+      if (i % 5 === 4) {
+        await yieldToMain();
+        if (tok !== this.atlasTok) return; // daha yeni bir atlas geldi
+      }
     }
   }
 
@@ -248,6 +271,10 @@ export class Table2D {
   private repaint(): void {
     const t = this.theme;
     if (!t?.paint) return;
+    if (!this.active) {
+      this.paintDirty = true; // menülerde boyalı zemin çizilmez; masa açılınca çizilir
+      return;
+    }
     const w = this.root.clientWidth || innerWidth, h = this.root.clientHeight || innerHeight;
     const dpr = Math.min(this.low ? 1.5 : 2, window.devicePixelRatio || 1);
     // aynı tema + aynı boyut: yeniden çizme (adres çubuğu oynaması gibi küçük değişimlerde de tuval gerilir)
@@ -474,19 +501,30 @@ export class Table2D {
     if (on === this.active) return;
     this.active = on;
     this.root.classList.toggle('is-off', !on);
-    if (on) this.raysAnim?.play();
-    else this.raysAnim?.pause();
-    if (on) this.relayout();
+    if (on) {
+      if (this.paintDirty) {
+        this.paintDirty = false;
+        this.repaint();
+      }
+      this.relayout();
+    }
   }
 
-  /** Hüzmeler bir an hızlanır, sonra kademeli yavaşlar (pişti, büyük an). */
+  /** Hüzmeler bir an döner ve yavaşça durur (pişti, büyük an). Boşta hiç animasyon yok. */
   boostRays(k = 10, ms = 1200): void {
-    const a = this.raysAnim;
-    if (!a) return;
-    this.raysTimers.forEach(clearTimeout);
-    this.raysTimers = [];
-    const steps = [1, 0.55, 0.3, 0.14, 0];
-    steps.forEach((f, i) => this.raysTimers.push(window.setTimeout(() => a.updatePlaybackRate(1 + (k - 1) * f), (ms * i) / (steps.length - 1))));
+    if (this.low || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const el = this.raysEl;
+    this.raysAnim?.cancel();
+    const from = this.raysAngle, to = from + k * 4.5;
+    this.raysAngle = to;
+    const a = el.animate([{transform: `rotate(${from}deg)`}, {transform: `rotate(${to}deg)`}], {duration: ms * 1.6, easing: 'cubic-bezier(.12,.75,.25,1)', fill: 'forwards'});
+    this.raysAnim = a;
+    a.finished.then(() => {
+      if (this.raysAnim !== a) return;
+      el.style.transform = `rotate(${to}deg)`;
+      a.cancel();
+      this.raysAnim = null;
+    }, () => undefined);
   }
 
   /** Zemine renkli ışık dalgası (yalnız opaklık). */

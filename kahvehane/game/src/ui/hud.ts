@@ -146,6 +146,8 @@ class Badge {
 
   private blink(): void {
     if (this.basePose !== 'notr' || this.reacting || document.hidden) return;
+    const cl = document.documentElement.classList;
+    if (cl.contains('kh-calm') || cl.contains('kh-low')) return;
     const dbl = Math.random() < 0.18;
     const kf: Keyframe[] = dbl
       ? [{opacity: 0}, {opacity: 1, offset: 0.08}, {opacity: 1, offset: 0.3}, {opacity: 0, offset: 0.4}, {opacity: 0, offset: 0.55}, {opacity: 1, offset: 0.63}, {opacity: 1, offset: 0.9}, {opacity: 0}]
@@ -169,8 +171,6 @@ class Badge {
       next.getAnimations().forEach(a => a.cancel());
       next.style.opacity = '1';
       cur.style.opacity = '0';
-      play(next, [{opacity: 0}, {opacity: 1}], {duration: 170, easing: 'ease-out'});
-      play(cur, [{opacity: 1}, {opacity: 0}], {duration: 170, easing: 'ease-in'});
       this.front = 1 - this.front;
     });
   }
@@ -192,8 +192,6 @@ class Badge {
       img.style.opacity = '1';
       this.baseWrap.style.opacity = '0';
       this.reacting = true;
-      play(img, [{opacity: 0}, {opacity: 1}], {duration: 90, easing: 'linear'});
-      play(this.baseWrap, [{opacity: 1}, {opacity: 0}], {duration: 90, easing: 'linear'});
       this.bounce(pose === 'kizgin' || pose === 'saskin' ? 1.14 : 1.1);
       const a = ACCENT[pose];
       if (a) this.accent(a);
@@ -207,8 +205,6 @@ class Badge {
     const img = this.reactImg;
     img.style.opacity = '0';
     this.baseWrap.style.opacity = '1';
-    play(img, [{opacity: 1}, {opacity: 0}], {duration: 220, easing: 'ease-in'});
-    play(this.baseWrap, [{opacity: 0}, {opacity: 1}], {duration: 220, easing: 'ease-out'});
     this.scope.timeout(() => {
       if (tok === this.reactTok) this.reacting = false;
     }, 230);

@@ -48,7 +48,7 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 /* ---------- arena zemini (açılış, lobi, giriş, sonuç) ---------- */
 .kh-arena { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: var(--bg-arena); }
 .kh-arena__rays { position: absolute; left: 50%; top: var(--arena-cy, 40%); width: 180vmin; height: 180vmin; margin: -90vmin 0 0 -90vmin; border-radius: 50%;
-  background: var(--arena-rays); -webkit-mask: var(--arena-rays-mask); mask: var(--arena-rays-mask); will-change: transform; animation: kh-spin 90s linear infinite; }
+  background: var(--arena-rays); -webkit-mask: var(--arena-rays-mask); mask: var(--arena-rays-mask); }
 .kh-arena__suits { position: absolute; inset: 0; background-image: var(--suit-tile); background-size: calc(var(--u) * 15.4) calc(var(--u) * 15.4);
   background-position: 50% 0; opacity: var(--arena-suits-opacity); }
 .kh-arena__vig { position: absolute; inset: 0; background: var(--bg-arena-vig); }
@@ -108,7 +108,7 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-btn--lg::before, .kh-btn--xl::before { border-radius: calc(var(--r-lg) - 4px) calc(var(--r-lg) - 4px) 45% 45% / calc(var(--r-lg) - 4px) calc(var(--r-lg) - 4px) 35% 35%; }
 .kh-btn--block { display: flex; width: 100%; }
 .kh-shine::after { content: ''; position: absolute; top: -30%; bottom: -30%; left: 0; width: 22%; pointer-events: none; z-index: 1; background: var(--btn-shine);
-  transform: translateX(-160%) skewX(-18deg); animation: kh-shine 3.8s cubic-bezier(.4, 0, .2, 1) 1s infinite; will-change: transform; }
+  transform: translateX(-160%) skewX(-18deg); animation: kh-shine 3.8s cubic-bezier(.4, 0, .2, 1) 1s infinite; }
 .kh-shine:disabled::after { display: none; }
 @keyframes kh-shine { 0% { transform: translateX(-160%) skewX(-18deg); } 30%, 100% { transform: translateX(620%) skewX(-18deg); } }
 

@@ -3,6 +3,7 @@
 import {ATLAS_COLS, ATLAS_ROWS, BACK_INDEX, CARD_ASPECT, type CardAtlas} from './cardAtlas';
 import {SUITS} from '../core/types';
 import type {Skin} from '../skins/contract';
+import {yieldToMain} from '../platform/sched';
 
 export async function buildSkinAtlas(skin: Skin, width: number): Promise<CardAtlas> {
   await skin.prepare();
@@ -21,6 +22,7 @@ export async function buildSkinAtlas(skin: Skin, width: number): Promise<CardAtl
     if (id === BACK_INDEX) skin.drawBack(g, cellW, cellH);
     else skin.drawFace(g, cellW, cellH, SUITS[Math.floor(id / 13)], (id % 13) + 1);
     g.restore();
+    if (id % 6 === 5) await yieldToMain(); // 53 kart tek görevde çizilmesin (zayıf telefonda donma)
   }
   return {canvas, width: canvas.width, height: canvas.height, cellW, cellH};
 }

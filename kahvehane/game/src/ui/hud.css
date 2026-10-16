@@ -26,7 +26,7 @@
 .kh-badge.is-bottom { --bs: calc(var(--u) * 5.4); left: max(calc(var(--u) * 1.1), env(safe-area-inset-left)); bottom: max(calc(var(--u) * 3.6), calc(env(safe-area-inset-bottom) + var(--u) * 3)); }
 .kh-badge.is-left { --bs: calc(var(--u) * 4.6); left: max(calc(var(--u) * .8), env(safe-area-inset-left)); top: var(--kh-side-top, 24.5%); }
 .kh-badge.is-right { --bs: calc(var(--u) * 4.6); right: max(calc(var(--u) * .8), env(safe-area-inset-right)); top: var(--kh-side-top, 24.5%); }
-.kh-badge__pop { position: absolute; inset: 0; transform-origin: 50% 75%; will-change: transform; }
+.kh-badge__pop { position: absolute; inset: 0; transform-origin: 50% 75%; }
 .kh-badge__glow { position: absolute; inset: -42%; border-radius: 50%; background: var(--ring-glow); opacity: 0; transition: opacity .35s; }
 .kh-badge__turn { position: absolute; inset: calc(var(--u) * -.66); border-radius: 50%; background: var(--ring-turn); opacity: 0; transition: opacity .3s; will-change: transform;
   -webkit-mask: radial-gradient(circle closest-side, transparent calc(100% - var(--u) * .55), #000 calc(100% - var(--u) * .55 + 1px)); mask: radial-gradient(circle closest-side, transparent calc(100% - var(--u) * .55), #000 calc(100% - var(--u) * .55 + 1px)); }
@@ -45,7 +45,7 @@
 .kh-badge__fig { position: absolute; width: 160%; height: 160%; left: -30%; top: -15.8%; pointer-events: none;
   -webkit-mask: radial-gradient(circle at 50% 41.1%, #000 calc(var(--bs) * .5 - var(--ring-w) - .5px), transparent calc(var(--bs) * .5 - var(--ring-w) + .5px)), linear-gradient(#000, #000) 0 0 / 100% 41.1% no-repeat;
   mask: radial-gradient(circle at 50% 41.1%, #000 calc(var(--bs) * .5 - var(--ring-w) - .5px), transparent calc(var(--bs) * .5 - var(--ring-w) + .5px)), linear-gradient(#000, #000) 0 0 / 100% 41.1% no-repeat; }
-.kh-badge__breath { position: absolute; inset: 0; transform-origin: 50% 85%; animation: kh-breath 4s ease-in-out infinite; will-change: transform; }
+.kh-badge__breath { position: absolute; inset: 0; transform-origin: 50% 85%; animation: kh-breath 4s steps(10) infinite; }
 .kh-badge__base { position: absolute; inset: 0; }
 .kh-badge__img { position: absolute; left: var(--fx, 0); top: var(--fy, 0); width: 100%; height: 100%; object-fit: contain; -webkit-user-drag: none; }
 .kh-badge__img.is-blink { z-index: 2; opacity: 0; }
@@ -73,15 +73,15 @@
   box-shadow: var(--pill-shadow); text-shadow: var(--outline-thin); }
 .kh-badge__pill .kh-i { width: 1.05em; height: 1.05em; color: #fff; }
 .kh-badge__pill [data-k=pbox] .kh-i { color: var(--c-accent); filter: drop-shadow(0 1px 0 var(--navy)); }
-.kh-badge.is-turn .kh-badge__glow { opacity: 1; animation: kh-halo 1.4s ease-in-out infinite alternate; }
-.kh-badge.is-turn .kh-badge__turn { opacity: 1; animation: kh-spin 1.3s linear infinite; }
+.kh-badge.is-turn .kh-badge__glow { opacity: 1; animation: kh-halo 1.4s steps(8) infinite alternate; }
+.kh-badge.is-turn .kh-badge__turn { opacity: 1; animation: kh-spin 1.3s steps(26) infinite; }
 @keyframes kh-halo { from { opacity: .55; } to { opacity: 1; } }
 /* dürtme alanı (rakip rozetleri) */
 .kh-badge__hit { position: absolute; z-index: 6; inset: -12%; border-radius: 50%; cursor: pointer; background: none; }
 
 /* ---- çizgi film vurguları (öfke işareti + buhar, ?!, ter damlası, kalp, parıltı) ---- */
 .kh-acc { position: absolute; inset: 0; z-index: 4; pointer-events: none; }
-.kh-acc > * { position: absolute; opacity: 0; will-change: transform, opacity; }
+.kh-acc > * { position: absolute; opacity: 0; }
 .kh-acc svg { display: block; width: 100%; height: 100%; }
 .kh-acc__anger { width: calc(var(--bs) * .36); height: calc(var(--bs) * .36); right: calc(var(--bs) * -.06); top: calc(var(--bs) * -.1); }
 .kh-acc__steam { right: calc(var(--bs) * -.2); top: calc(var(--bs) * -.2); width: calc(var(--bs) * .5); height: calc(var(--bs) * .42); opacity: 1; }
@@ -143,7 +143,7 @@
 .kh-hint__t { position: relative; }
 .kh-hint__glow { position: absolute; left: -30%; right: -30%; top: -90%; bottom: -90%; border-radius: 50%; background: var(--hint-glow); opacity: 0; z-index: -1; }
 .kh-hint.is-on { opacity: 1; }
-.kh-hint.is-on .kh-hint__glow { animation: kh-glow 1.1s ease-in-out infinite alternate; }
+.kh-hint.is-on .kh-hint__glow { animation: kh-glow 1.1s steps(8) infinite alternate; }
 @keyframes kh-glow { from { opacity: .25; } to { opacity: 1; } }
 
 /* ---- pişti kahramanı: eğik parlak şerit (VS dili), karakter büyük kayarak girer ---- */

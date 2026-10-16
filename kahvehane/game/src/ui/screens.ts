@@ -13,6 +13,7 @@ import '@fontsource/nunito/900.css';
 import './theme.css';
 import './ui.css';
 import './meta.css';
+import './perf.css';
 import '../themes/frames.css';
 
 import type {CosmeticsListener, GameHud, HomeAction, ResultsData, Settings, Sounds} from './types';

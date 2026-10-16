@@ -14,6 +14,8 @@ import {Profile} from './game/profile';
 import type {Mode} from './game/types';
 import {detectTier, type Tier} from './quality';
 import {setHaptics, store} from './platform/bridge';
+import {initCalm} from './platform/calm';
+import {whenIdle} from './platform/sched';
 
 const Q = new URLSearchParams(location.search);
 const AUTO = Q.has('auto');
@@ -48,6 +50,7 @@ async function boot(): Promise<void> {
   if (tier === 'low') document.documentElement.classList.add('kh-low');
   const profile = new Profile();
   if (!profile.data.onboarded && (Q.has('skipintro') || AUTO)) profile.completeOnboarding('riza', profile.data.name);
+  initCalm({always: tier === 'low'}); // dekoratif sonsuz animasyonlar boşta/düşük cihazda kapanır
   const sfx = new Sfx();
   const voice = new VoicePlayer(() => sfx.context);
   const screens = new Screens(document.body, {
@@ -66,18 +69,18 @@ async function boot(): Promise<void> {
   splash.progress(0.15);
 
   const width = atlasWidth(tier);
-  const atlas = await buildSkinAtlas(await deckById(profile.data.equipped.deck).load(), width);
-  splash.progress(0.6);
-  const table = new Table2D(document.getElementById('app')!, atlas, {
+  splash.progress(0.5);
+  // masa hafif kurulur (boş kartlar); deste atlası ilk ekran göründükten sonra arka planda, parça parça çizilir
+  const table = new Table2D(document.getElementById('app')!, null, {
     deal: () => sfx.deal(),
     land: i => sfx.cardLand(i),
     flip: () => sfx.cardFlip(),
     slide: () => sfx.cardSlide(0.6),
     whoosh: p => sfx.cardThrow(p),
   }, tier === 'low');
+  table.setActive(false); // açılış/ana ekran/market sırasında masa çizilmez; maç başlayınca app.ts açar
   table.setTheme(tableById(profile.data.equipped.table));
   table.onDeck = (n, x, y) => screens.hud.setDeck(n, x, y);
-  table.setActive(false); // açılış/ana ekran/market sırasında masa çizilmez; maç başlayınca app.ts açar
   table.reset();
   splash.progress(0.8);
   try {
@@ -97,17 +100,23 @@ async function boot(): Promise<void> {
   applySettings({...settings});
   // markette/koleksiyonda kuşanınca: deste → atlas yeniden kurulur; masa → tema (son istek kazanır)
   let deckTok = 0;
+  const buildDeck = async (id: string): Promise<void> => {
+    const tok = ++deckTok;
+    const a = await buildSkinAtlas(await deckById(id).load(), width);
+    if (tok === deckTok) await table.setAtlas(a);
+  };
   const applyCosmetics = async (kind: string, id: string) => {
     if (kind === 'table') table.setTheme(tableById(id));
     else if (kind === 'deck') {
-      const tok = ++deckTok;
-      const a = await buildSkinAtlas(await deckById(id).load(), width);
-      if (tok === deckTok) table.setAtlas(a);
+      table.ready = buildDeck(id);
+      await table.ready;
     }
   };
   splash.progress(1);
   document.getElementById('boot')?.remove();
   await splash.done();
+  // deste: ilk ekran göründü, tarayıcı boşalınca arka planda çiz (maç başlarken app.ts table.ready'yi bekler)
+  table.ready = whenIdle(1500).then(() => buildDeck(profile.data.equipped.deck));
   // ilk dokunuşta ses motorunu aç (iOS)
   const unlock = () => {
     sfx.unlock();
