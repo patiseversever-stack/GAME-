@@ -17,6 +17,7 @@ import {daily as dailyModal} from './modals';
 import {ShopPage} from './shop';
 import {CollectionPage} from './profile';
 import {haptic, store} from '../platform/bridge';
+import {cancelAnims} from '../platform/anim';
 import {g3} from './fx';
 
 /** Masa bahisleri ve açıldıkları seviye. */
@@ -246,7 +247,7 @@ export class HomeView implements Shell {
     toEl.style.display = '';
     to.show?.(sub);
     if (ANIM) {
-      fromEl.getAnimations().forEach(a => a.cancel());
+      cancelAnims(fromEl); // getAnimations() stil hesabını zorlar (sekme geçişinde takılma)
       const a = fromEl.animate([{transform: 'none', opacity: 1}, {transform: `translateX(${-dir * 22}%) scale(.97)`, opacity: 0}], {duration: 240, easing: EASE.in, fill: 'forwards'});
       a.onfinish = () => {
         if (this.tab !== tab) return;
@@ -480,7 +481,7 @@ class HomePage implements Page {
     else this.pt.pop();
     const hero = q(this.el, '.kh-hero3');
     const say = q(this.el, '.kh-hero3__say');
-    say.getAnimations().forEach(a => a.cancel());
+    cancelAnims(say);
     say.style.visibility = 'hidden';
     const tw = typeText(this.scope, q(say, '.kh-say__t'), line, 44);
     const bounds = hero.getBoundingClientRect();
