@@ -20,23 +20,25 @@ const PAL: RGB[] = [
 
 function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   // ebru yumuşaktır: ~1× çözünürlük yeter (CSS ile gerilir); piksel sınırı süreyi sabit tutar
-  const k = resScale(w, h, Math.min(dpr, 1), 1, 360_000);
+  const k = resScale(w, h, Math.min(dpr, 1), 1, 280_000);
   const W = Math.round(w * k), H = Math.round(h * k);
   const S = spotOf(w, h);
   const px = S.px * k, py = S.py * k, R = S.ringR * k;
-  const u = Math.sqrt((W * H) / (390 * 844)); // ölçek: farklı ekranlarda aynı desen yoğunluğu
+  const u = Math.sqrt((W * H) / (330 * 714)); // ölçek: farklı ekranlarda aynı desen yoğunluğu
   const rnd = mulberry(0xeb2);
   const ops: MOp[] = [];
-  battal(ops, W, H, rnd, [1, 0, 2, 1, 4, 0, 3, 5, 1, 6, 0, 7], Math.round(320 * Math.min(1.4, (W * H) / 330000)), 16 * u, 34 * u);
-  gelgit(ops, true, 26 * u, 30 * u, 8 * u);
-  ops.push({k: 'wave', dx: 1, dy: 0, A: 9 * u, f: 0.035 / u, ph: 0.4});
-  // yığın çevresinde büyük bülbül yuvası (iç içe iki girdap: içte daha sıkı)
-  ops.push({k: 'swirl', x: px, y: py, a: 3.2, r: R * 3.2});
-  ops.push({k: 'swirl', x: px, y: py, a: 2.2, r: R * 1.8});
+  // taraklı ebru: sık battal → yatay gelgit → ince dikey tarak → dalga
+  battal(ops, W, H, rnd, [1, 2, 4, 3, 0, 5, 6, 7, 1, 2, 4, 8], Math.round((W * H) / 560), 11 * u, 21 * u);
+  gelgit(ops, true, 15 * u, 22 * u, 5 * u);
+  ops.push({k: 'tine', x: 0, y: 0, dx: 0, dy: 1, a: 12 * u, l: 2.5 * u, s: 10 * u});
+  ops.push({k: 'wave', dx: 1, dy: 0, A: 5 * u, f: 0.05 / u, ph: 0});
+  // yığın çevresinde yumuşak girdap: tarak çizgileri kartların çevresinde döner
+  ops.push({k: 'swirl', x: px, y: py, a: 1.6, r: R * 3.6});
+  ops.push({k: 'swirl', x: px, y: py, a: 1.2, r: R * 1.7});
   // köşelerde küçük girdaplar
-  for (const [x, y, s] of [[0.12, 0.12, -1], [0.88, 0.2, 1], [0.1, 0.7, 1], [0.9, 0.82, -1]] as const) ops.push({k: 'swirl', x: W * x, y: H * y, a: 4 * s, r: 40 * u});
+  for (const [x, y, s] of [[0.1, 0.1, -1], [0.9, 0.16, 1], [0.08, 0.66, 1], [0.92, 0.86, -1]] as const) ops.push({k: 'swirl', x: W * x, y: H * y, a: 3 * s, r: 30 * u});
   // iki lale (sol üst, sağ orta) + yeşil yapraklar
-  for (const [x, y, s] of [[0.17, 0.25, 30], [0.83, 0.64, 26]] as const) {
+  for (const [x, y, s] of [[0.16, 0.27, 26], [0.84, 0.66, 22]] as const) {
     const lx = W * x, ly = H * y, LR = s * u;
     rings(ops, lx, ly + LR * 1.5, [LR * 0.45, LR * 0.25], [8, 5]);
     ops.push({k: 'tine', x: lx, y: ly + LR * 1.5, dx: 0, dy: -1, a: LR * 1.4, l: LR * 0.08, t0: -LR, t1: LR, fall: LR * 0.5});

@@ -8,7 +8,8 @@ import {EASE, Scope, bump, clamp, countUp, esc, fmt, h, play, q, shake} from './
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, gemHtml, onAct, rarityHtml, toast} from './parts';
-import {deferMount, mountDeckFan, mountFx, tableSwatch} from './previews';
+import {deferMount, fanHtml, mountFx, tableSceneHtml} from './previews';
+import {setPrice, shopSets} from './sets';
 import {haptic} from '../platform/bridge';
 import {shortName, type Page, type Shell} from './lobby';
 
@@ -51,6 +52,8 @@ export class CollectionPage implements Page {
     const k = clamp(d.xp / Math.max(1, p.xpNext), 0, 1);
     const owned = CATALOG.filter(i => p.owns(i.kind, i.id)).length;
     const frames = CATALOG.filter(i => i.kind === 'frame');
+    const sets = shopSets().map(x => ({s: x, done: !setPrice(x, (k, id) => p.owns(k, id)).missing.length}));
+    const setsDone = sets.filter(x => x.done).length;
     const kinds: ItemKind[] = ['deck', 'table', 'fx'];
     this.inner.innerHTML = `
       <section class="kh-panel kh-pcard" style="--c:${me.color}">
@@ -107,23 +110,24 @@ export class CollectionPage implements Page {
       <section class="kh-coll__sec">
         <div class="kh-coll__hd"><span class="kh-label">Koleksiyon</span><small><b>${owned}</b>/${CATALOG.length} parça</small></div>
         <div class="kh-cprog"><i style="transform:scaleX(${(owned / CATALOG.length).toFixed(3)})"></i></div>
-        ${kinds.map(kd => `<div class="kh-ckind"><div class="kh-ckind__t">${KIND_INFO[kd].plural}</div><div class="kh-ckind__row">${CATALOG.filter(i => i.kind === kd).map(it => {
-          const own = p.owns(kd, it.id), on = d.equipped[kd as 'deck' | 'table' | 'fx'] === it.id;
-          return `<button class="kh-ctile is-${it.rarity}${own ? '' : ' is-locked'}${on ? ' is-on' : ''}" data-act="${own ? 'use' : 'shop'}" data-k="${kd}" data-id="${it.id}" data-spring>
-            <span class="kh-ctile__pv" data-k="${kd}" data-id="${it.id}"></span>
-            <span class="kh-ctile__n">${esc(it.name)}</span>
-            ${on ? `<span class="kh-ctile__on">${I.check}</span>` : own ? '' : `<span class="kh-ctile__lock">${I.lock}</span>`}
-            ${rarityHtml(it.rarity, 'kh-ctile__rar')}</button>`;
-        }).join('')}</div></div>`).join('')}
+        ${sets.length ? `<button class="kh-csets" data-act="sets">${I.gift}<span><b>Setler</b> · ${setsDone}/${sets.length} tamam</span><span class="kh-csets__dots">${sets.map(x => `<i class="${x.done ? 'is-on' : ''}" style="--a:${x.s.a}"></i>`).join('')}</span>${I.chevR}</button>` : ''}
+        ${kinds.map(kd => {
+          const list = CATALOG.filter(i => i.kind === kd);
+          const n = list.filter(i => p.owns(kd, i.id)).length;
+          return `<div class="kh-ckind"><div class="kh-ckind__t"><span>${KIND_INFO[kd].plural}</span><span class="kh-ckind__bar"><i style="transform:scaleX(${(n / Math.max(1, list.length)).toFixed(3)})"></i></span><b>${n}/${list.length}</b></div>
+          <div class="kh-ckind__row">${list.map(it => {
+            const own = p.owns(kd, it.id), on = d.equipped[kd as 'deck' | 'table' | 'fx'] === it.id;
+            return `<button class="kh-ctile is-${it.rarity}${own ? '' : ' is-locked'}${on ? ' is-on' : ''}" data-act="${own ? 'use' : 'shop'}" data-k="${kd}" data-id="${it.id}" data-spring>
+              <span class="kh-ctile__pv is-${kd}">${tilePv(kd, it.id, d.equipped.deck, d.equipped.table)}</span>
+              <span class="kh-ctile__n">${esc(it.name)}</span>
+              ${on ? `<span class="kh-ctile__on">${I.check}</span>` : own ? '' : `<span class="kh-ctile__price"><img src="${ASSETS.icon_coin}" alt="">${fmt(it.price)}</span>`}
+              ${rarityHtml(it.rarity, 'kh-ctile__rar')}</button>`;
+          }).join('')}</div></div>`;
+        }).join('')}
       </section>
       <button class="kh-btn kh-btn--2 kh-btn--block kh-coll__shop" data-act="toshop">${I.bag}Markete Git</button>`;
-    // önizlemeler
-    this.inner.querySelectorAll<HTMLElement>('.kh-ctile__pv').forEach(pv => {
-      const kd = pv.dataset.k as ItemKind, id = pv.dataset.id!;
-      if (kd === 'deck') mountDeckFan(pv, id, 3);
-      else if (kd === 'table') pv.style.background = tableSwatch(id);
-      else if (kd === 'fx') deferMount(pv, () => mountFx(pv, id, true));
-    });
+    // efekt kareleri görünür olunca, sırayla (deste/masa önizlemeleri HTML'le hazır geldi: pişmiş kartlar + swatch)
+    this.inner.querySelectorAll<HTMLElement>('[data-fx]').forEach(box => deferMount(box, () => mountFx(box, box.dataset.fx!, true)));
     const input = q<HTMLInputElement>(this.inner, '.kh-pcard__input');
     this.scope.on(input, 'keydown', e => {
       if ((e as KeyboardEvent).key === 'Enter') this.saveName();
@@ -219,6 +223,10 @@ export class CollectionPage implements Page {
       case 'toshop':
         this.shell.goto('shop');
         return;
+      case 'sets':
+        ctx.sounds.tap();
+        this.shell.goto('shop', 'set');
+        return;
     }
   }
 
@@ -226,6 +234,14 @@ export class CollectionPage implements Page {
     this.scope.dispose();
     this.el.remove();
   }
+}
+
+/** Koleksiyon karosu önizlemesi: deste yelpazesi · masan (kuşanılı destenle) · efekt (masanın üstünde, sonradan kurulur). */
+function tilePv(kd: ItemKind, id: string, deck: string, table: string): string {
+  if (kd === 'deck') return fanHtml(id, 3);
+  if (kd === 'table') return tableSceneHtml(id, {deck, size: 'mini'});
+  if (kd === 'fx') return `${tableSceneHtml(table, {deck, size: 'mini', cls: 'is-under'})}<span class="kh-ctile__fx" data-fx="${id}"></span>`;
+  return '';
 }
 
 function stat(label: string, v: number, icon: string, pct = false): string {

@@ -75,7 +75,20 @@
 /* koleksiyon */
 .kh-cprog { position: relative; height: calc(var(--u) * 1); border-radius: var(--r-pill); background: var(--xp-track); box-shadow: inset 0 2px 3px rgba(0, 0, 20, .7), var(--xp-ring); overflow: hidden; }
 .kh-cprog i { position: absolute; inset: 0; background: var(--xp-fill); transform-origin: 0 50%; box-shadow: inset 0 2px 0 rgba(255, 255, 255, .55); }
-.kh-ckind__t { margin: calc(var(--u) * .3) 0 calc(var(--u) * .4) calc(var(--u) * .2); font-family: var(--font-display); font-size: calc(var(--u) * .95); color: var(--c-text-2); text-shadow: var(--outline-thin); }
+.kh-ckind__t { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: calc(var(--u) * .5); margin: calc(var(--u) * .3) calc(var(--u) * .2) calc(var(--u) * .45);
+  font-family: var(--font-display); font-size: calc(var(--u) * .95); color: var(--c-text-2); text-shadow: var(--outline-thin); }
+.kh-ckind__t b { font-weight: var(--w-display); color: #fff; font-size: .95em; }
+.kh-ckind__bar { position: relative; height: calc(var(--u) * .5); border-radius: var(--r-pill); overflow: hidden; background: var(--xp-track); box-shadow: inset 0 1.5px 2px rgba(0, 0, 20, .7), var(--xp-ring); }
+.kh-ckind__bar i { position: absolute; inset: 0; transform-origin: 0 50%; background: var(--btn1-fill); }
+/* setler satırı → markette Setler */
+.kh-csets { display: flex; align-items: center; gap: .5em; width: 100%; padding: .5em .8em; border-radius: var(--r-md); text-align: left; background: rgba(10, 16, 51, .4);
+  box-shadow: inset 0 0 0 1.5px rgba(255, 210, 63, .35); font-size: calc(var(--u) * .85); font-weight: var(--w-black); color: var(--c-text-2); }
+.kh-csets b { color: #fff; font-family: var(--font-display); font-weight: var(--w-display); text-shadow: var(--outline-thin); }
+.kh-csets > span:first-of-type { flex: 1; min-width: 0; }
+.kh-csets .kh-i { flex: none; width: 1.3em; height: 1.3em; color: var(--c-accent); }
+.kh-csets__dots { display: flex; gap: 4px; }
+.kh-csets__dots i { width: 10px; height: 10px; border-radius: 50%; background: rgba(255, 255, 255, .15); box-shadow: 0 0 0 1.5px rgba(10, 16, 51, .8); }
+.kh-csets__dots i.is-on { background: var(--a); box-shadow: 0 0 0 1.5px var(--navy), 0 0 0 3px rgba(255, 210, 63, .7); }
 .kh-ckind__row { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--u) * .45); }
 .kh-ctile { --edge: var(--rar-edge-common); position: relative; display: flex; flex-direction: column; gap: calc(var(--u) * .2); padding: 3px 3px calc(var(--u) * .3); border-radius: var(--r-sm);
   border: 2px solid transparent; background: var(--panel-fill) padding-box, var(--edge) border-box; box-shadow: 0 0 0 2px var(--navy), 0 3px 0 var(--navy); }
@@ -87,9 +100,18 @@
 .kh-ctile.is-epic .kh-ctile__pv { background: var(--rar-bg-epic); }
 .kh-ctile.is-legendary .kh-ctile__pv { background: var(--rar-bg-legendary); }
 .kh-ctile.is-rare .kh-ctile__pv { background: var(--rar-bg-rare); }
-.kh-ctile__pv.kh-fan .kh-fan__c { --cw: 40%; }
+.kh-ctile__pv .kh-fan__c { --cw: 40%; bottom: 7%; }
+.kh-ctile__pv .kh-ts__pile .kh-ts__c { width: 30%; }
+.kh-ctile__pv .kh-ts__deck .kh-ts__c { width: 22%; left: 6%; }
+.kh-ctile__pv .kh-ts.is-under { opacity: .8; }
+.kh-ctile__pv .kh-ts.is-under .kh-ts__deck { display: none; }
+.kh-ctile__fx { position: absolute; inset: 0; display: block; }
+.kh-ctile__fx.kh-fxpv.kh-fxpv { background: none; }
+.kh-ctile__price { position: absolute; left: 50%; top: calc(var(--u) * .25); transform: translateX(-50%); display: inline-flex; align-items: center; gap: .15em; padding: .12em .45em .1em .2em;
+  border-radius: var(--r-pill); background: rgba(10, 16, 51, .78); font-family: var(--font-display); font-size: calc(var(--u) * .62); color: #fff27a; text-shadow: var(--outline-thin); white-space: nowrap; }
+.kh-ctile__price img { width: 1.2em; height: 1.2em; }
 .kh-ctile__n { font-family: var(--font-display); font-size: calc(var(--u) * .66); line-height: 1.05; text-align: center; text-shadow: var(--outline-thin); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding: 0 2px; }
-.kh-ctile.is-locked .kh-ctile__pv { filter: saturate(.25) brightness(.6); }
+.kh-ctile.is-locked .kh-ctile__pv { filter: saturate(.55) brightness(.72); }
 .kh-ctile.is-locked .kh-ctile__n { color: var(--c-text-3); }
 .kh-ctile__lock, .kh-ctile__on { position: absolute; right: 4px; top: 4px; display: grid; place-items: center; width: calc(var(--u) * 1.4); height: calc(var(--u) * 1.4); border-radius: 50%;
   background: var(--btn4-fill); box-shadow: 0 0 0 2px var(--navy); }
