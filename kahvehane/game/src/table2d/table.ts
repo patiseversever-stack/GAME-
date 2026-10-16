@@ -721,13 +721,13 @@ export class Table2D {
     const key = lvl >= 1 ? 'G' : suit ?? 'N';
     const bl = this.bloom(key);
     bl.style.display = 'block';
-    const peak = Math.min(1, 0.62 + 0.14 * lvl + 0.2 * pileK);
+    const peak = Math.min(1, 0.78 + 0.1 * lvl + 0.15 * pileK);
     const bms = lvl >= 3 ? 640 : lvl >= 1 ? 480 : 380;
     bl.animate([{transform: 'scale(.5)', opacity: 0}, {transform: `scale(${(0.92 + 0.06 * k).toFixed(3)})`, opacity: peak, offset: 0.2}, {transform: `scale(${(1.02 + 0.1 * k).toFixed(3)})`, opacity: 0}],
       {duration: bms, easing: 'cubic-bezier(.2,.7,.3,1)'}).finished.then(() => (bl.style.display = 'none'), () => undefined);
     if (reduce) return;
     // 2) halka vuruşu: hızlı büyür, hafif içe sekip yerine oturur
-    const s1 = 1 + 0.035 * k, s2 = 1 - 0.012 * k;
+    const s1 = 1 + 0.045 * k, s2 = 1 - 0.014 * k;
     const ms = lvl >= 3 ? 560 : lvl >= 1 ? 440 : 360;
     this.ringAnims.push(this.ring.animate([{transform: 'scale(1)'}, {transform: `scale(${s1.toFixed(3)})`, offset: 0.22}, {transform: `scale(${s2.toFixed(3)})`, offset: 0.55}, {transform: 'scale(1)'}],
       {duration: ms, easing: 'cubic-bezier(.25,.7,.35,1)'}));
@@ -785,7 +785,8 @@ export class Table2D {
       el = document.createElement('b');
       el.className = 'ar__rb';
       const c = key === 'G' ? '255, 226, 140' : key === 'N' ? '170, 190, 255' : {H: '255, 70, 100', D: '255, 196, 60', C: '70, 230, 140', S: '90, 160, 255'}[key]!;
-      el.style.background = `radial-gradient(closest-side, rgba(255, 255, 255, .75) 0%, rgba(${c}, .7) 22%, rgba(${c}, .26) 52%, rgba(${c}, 0) 78%)`;
+      // beyaz çekirdek kartın kenarlarından taşar (kartın altından sızan ışık), dışı takım renginde söner
+      el.style.background = `radial-gradient(closest-side, rgba(255, 255, 255, .95) 0%, rgba(255, 252, 240, .7) 30%, rgba(${c}, .55) 44%, rgba(${c}, .2) 62%, rgba(${c}, 0) 80%)`;
       this.ring.prepend(el);
       this.blooms.set(key, el);
     }
