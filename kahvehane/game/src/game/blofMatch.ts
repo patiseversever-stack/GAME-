@@ -408,11 +408,8 @@ export class BlofMatch {
           ui.setClaim(null);
           ui.setLast(null);
         } else ui.setClaim(e.rank);
-        if (e.seat === ME) {
-          hud.showHint(e.open ? 'Turu sen açıyorsun!' : 'Sıra sende');
-          window.setTimeout(() => hud.showHint(null), 1500);
-          haptic('light');
-        }
+        // sıra bende: çubuk + tur halkası (+ hızlı seçim) yeterli; ayrıca ipucu yazısı sahneyi örtmesin
+        if (e.seat === ME) haptic('light');
         return;
       }
       case 'opened':

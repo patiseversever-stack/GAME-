@@ -161,6 +161,8 @@ export class BlofTable {
   private active = false;
   private safeB = 0;
   private safeT = 0;
+  private safeKey = '';
+  private sizeKey = '';
   private gest: {id: number; x0: number; y0: number; act: 'sel' | 'desel' | null; seen: Set<number>; slid: boolean; timer: number} | null = null;
   /** Elde seçim yapılabilir mi (dağıtım/açılış sırasında kapalı) */
   selectable = false;
@@ -224,6 +226,7 @@ export class BlofTable {
   // ───────── etkinleştirme ─────────
   /** Blöf masasını aç: Pişti kart katmanı gizlenir, zemin/tema/efektler ortak kalır. */
   attach(): void {
+    if (this.active) return;
     this.active = true;
     this.t.root.classList.add('is-blof');
     this.el.style.display = '';
@@ -364,9 +367,14 @@ export class BlofTable {
     Object.assign(this.pileHit.style, {width: hr + 'px', height: hr + 'px', transform: `translate3d(${(pile.x - hr / 2).toFixed(1)}px,${(pile.y - hr / 2).toFixed(1)}px,0)`});
     const ar = Math.max(pw, ph) * 1.55;
     Object.assign(this.alertEl.style, {width: ar + 'px', height: ar + 'px', transform: `translate3d(${(pile.x - ar / 2).toFixed(1)}px,${(pile.y - ar / 2).toFixed(1)}px,0)`});
-    for (const c of this.all) {
-      c.el.style.width = cw + 'px';
-      c.el.style.height = ch + 'px';
+    // kart boyutu yalnız değişince yazılır (52 kartın satır içi stili = stil hesabı)
+    const sk = cw + 'x' + ch;
+    if (sk !== this.sizeKey) {
+      this.sizeKey = sk;
+      for (const c of this.all) {
+        c.el.style.width = cw + 'px';
+        c.el.style.height = ch + 'px';
+      }
     }
     this.placeRing();
   }
@@ -762,7 +770,12 @@ export class BlofTable {
   /** Yeni el: kartlar ekran dışında, düzen kurulur. */
   reset(seats: number): void {
     this.n = seats;
-    [this.safeT, this.safeB] = this.readSafe();
+    // güvenli alan ölçümü stil hesabını zorlar: yalnız ekran boyutu değişince
+    const vk = innerWidth + 'x' + innerHeight;
+    if (vk !== this.safeKey) {
+      this.safeKey = vk;
+      [this.safeT, this.safeB] = this.readSafe();
+    }
     this.attach();
     this.layout();
     this.gest = null;
@@ -778,8 +791,7 @@ export class BlofTable {
     this.deck.forEach((c, i) => {
       c.id = -1;
       c.sel = false;
-      c.el.className = 'c2 bl-c';
-      c.el.style.opacity = '';
+      if (c.el.className !== 'c2 bl-c') c.el.className = 'c2 bl-c';
       cancelAnims(c.inn);
       cancelAnims(c.ring);
       this.draw(c, BACK_INDEX);
