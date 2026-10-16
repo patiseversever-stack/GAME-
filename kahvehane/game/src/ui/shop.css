@@ -113,7 +113,7 @@
 
 /* =================== PARILTI (tek seferlik, Spotlight) =================== */
 .kh-glint { position: absolute; z-index: 5; top: -20%; bottom: -20%; left: 0; width: 46%; pointer-events: none; opacity: 0; transform: translateX(-120%) skewX(-20deg);
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .06) 26%, rgba(255, 246, 214, .34) 42%, rgba(255, 255, 255, .78) 50%, rgba(255, 246, 214, .34) 58%, rgba(255, 255, 255, .06) 74%, rgba(255, 255, 255, 0) 100%); }
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .08) 24%, rgba(255, 244, 205, .42) 41%, rgba(255, 255, 255, .9) 50%, rgba(255, 244, 205, .42) 59%, rgba(255, 255, 255, .08) 76%, rgba(255, 255, 255, 0) 100%); }
 /* dört kollu yıldız: iki ince ışık çizgisi + parlak çekirdek (maske/clip-path yok) */
 .kh-spark4 { position: absolute; z-index: 6; right: 9%; top: 9%; width: calc(var(--u) * 2.4); aspect-ratio: 1; pointer-events: none; opacity: 0; transform: scale(0);
   background: radial-gradient(circle, #fff 0 9%, rgba(255, 246, 200, .75) 16%, rgba(255, 220, 120, 0) 46%); }
@@ -146,7 +146,7 @@
 .kh-pv__fxs .kh-ts__ring, .kh-pv__fxs .kh-ts__glow { top: 58%; }
 .kh-pv__fxs .kh-ts__pile .kh-ts__c { top: 58%; width: 24%; }
 .kh-pv__fxs .kh-ts__deck { display: none; }
-.kh-pv__fx.kh-fxpv { background: none; }
+.kh-pv__fx.kh-fxpv.kh-fxpv { background: none; }
 .kh-item__pv .kh-fan__c { --cw: 34%; bottom: 8%; }
 .kh-item.is-wide .kh-item__pv .kh-fan__c { --cw: 33%; bottom: 10%; }
 
@@ -290,7 +290,7 @@
 .kh-pd__fxs { position: absolute; inset: 0; display: block; }
 .kh-pd__fxs > .kh-ts { opacity: .9; }
 .kh-pd__fxbox { position: absolute; inset: 0; display: block; }
-.kh-pd__fxbox.kh-fxpv, .kh-try__fx.kh-fxpv { background: none; }
+.kh-pd__fxbox.kh-fxpv.kh-fxpv, .kh-try__fx.kh-fxpv.kh-fxpv { background: none; }
 .kh-pd.is-fx .kh-fxpv__p.is-word, .kh-try .kh-fxpv__p.is-word { font-size: calc(var(--u) * 3.2); }
 .kh-pd.is-fx .kh-fxpv__p.is-conf, .kh-try .kh-fxpv__p.is-conf { width: 9px; height: 13px; }
 .kh-pd.is-fx .kh-fxpv__p.is-coin, .kh-try .kh-fxpv__p.is-coin { width: 10%; }

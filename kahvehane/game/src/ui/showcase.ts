@@ -82,7 +82,8 @@ export class Spotlight {
     this.unlive();
     el.classList.add('is-live');
     this.live = el;
-    glint(el);
+    // geniş kartlarda süpürme biraz daha ağır (aynı açısal hız)
+    glint(el, el.offsetWidth > 260 ? 1350 : 1050);
     this.liveT = window.setTimeout(() => this.unlive(), 2100);
   };
 }

@@ -11,5 +11,6 @@
 .kh-nav__dot.is-on { animation-timing-function: steps(6) !important; }
 .kh-pt.is-breathing .kh-pt__in { animation-timing-function: steps(19) !important; }
 .kh-ob__hint.is-on { animation-timing-function: steps(8) !important; }
-/* kayan parıltılar: yalnız süpürme anında (≈1.2 sn) kare üretir; 14 adım = ~12 kare/sn, küçük alan */
-.kh-deal__shine, .kh-item__shine, .kh-shine::after { animation-timing-function: steps(14) !important; will-change: auto !important; }
+/* kayan parıltılar: yalnız süpürme anında (≈1.2 sn) kare üretir; 14 adım = ~12 kare/sn, küçük alan
+   (Market kartlarının parıltısı artık sonsuz döngü değil: src/ui/showcase.ts Spotlight — tek seferlik, akıcı, sırayla tek kart.) */
+.kh-shine::after { animation-timing-function: steps(14) !important; will-change: auto !important; }
