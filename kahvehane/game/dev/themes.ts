@@ -4,6 +4,7 @@
 import '../src/table2d/table.css';
 import '../src/themes/frames.css';
 import {TABLES} from '../src/themes/tables';
+import {CATALOG} from '../src/game/catalog';
 import type {TableTheme} from '../src/themes/contract';
 import type {Suit} from '../src/skins/contract';
 import {skin} from '../src/skins/yildizli';
@@ -15,8 +16,9 @@ const only = qs.get('only');
 const empty = qs.get('state') === 'empty';
 const DPR = Math.max(1, window.devicePixelRatio || 1);
 const W = 390, H = 844;
-const FRAMES = ['standart', 'altin', 'lale', 'yildizli', 'ates'];
-const FRAME_NAMES: Record<string, string> = {standart: 'Standart', altin: 'Altın Halka', lale: 'Lale Bahçesi', yildizli: 'Yıldızlı Gece', ates: 'Alev'};
+const FRAME_LIST = CATALOG.filter(i => i.kind === 'frame' && (!qs.get('fids') || qs.get('fids')!.split(',').includes(i.id)));
+const FRAMES = FRAME_LIST.map(i => i.id);
+const FRAME_NAMES: Record<string, string> = Object.fromEntries(FRAME_LIST.map(i => [i.id, i.name]));
 const timings: Record<string, unknown> = {};
 (window as unknown as {__timings: unknown}).__timings = timings;
 
