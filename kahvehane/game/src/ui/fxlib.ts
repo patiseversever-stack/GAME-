@@ -171,54 +171,55 @@ function sparks(s: Stage, at: Pt, o: SparkOpts): void {
 }
 
 // ───────────────────────── efektler ─────────────────────────
-/** Zafer Işığı (ücretsiz): altın ışık toplanır ve patlar; dört parlak 3B takım amblemi (♥♦♣♠) dönerek dışa açılır,
- * şok halkası, ışınlar, mercek parlaması, kıvılcım demeti ve yıldız parıltıları. Ekran yıkanmaz: ışık yereldir. */
+/** Zafer Işığı (ücretsiz): yığında altın ışık toplanır ve patlar; dört parlak 3B takım amblemi (♥♦♣♠) dönerek dışa
+ * açılır ve havada asılı kalır; şok halkası, ışınlar, mercek parlaması, kıvılcım demeti, yıldız parıltıları. */
 function klasik(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100;
-  gather(s, at, 'glint:gold', 6, 10 * m, 34 * m, 0, 200);
-  glow(s, at, 'bloom:gold', 34 * m, 0, 380, 0.2, 1.1, 0.7, 1, 0.55);
+  gather(s, at, 'glint:gold', 6, 12 * m, 44 * m, 0, 200);
+  glow(s, at, 'bloom:gold', 44 * m, 0, 380, 0.2, 1.1, 0.7, 1, 0.55);
   const T = 190;
-  rays(s, at, 'rays:gold', 96 * m, T - 20, 1500, 34, 1);
-  glow(s, at, 'bloom:gold', 62 * m, T, 1200, 0.4, 2.1, 2.6, 1, 0.14);
-  glow(s, at, 'bloom:white', 30 * m, T, 520, 0.3, 1.6, 1.9);
-  shock(s, at, 'ring:gold', 44 * m, T, 700, 2.7);
-  if (jack) shock(s, at, 'ring:gold', 44 * m, T + 170, 760, 3.3, 1, 0.8);
-  flare(s, at, 'flare:gold', 100 * m, T, 700);
-  cluster(s, at, 'burst:gold', 60 * m, T, 1150, 1, 6 * m);
+  rays(s, at, 'rays:gold', 124 * m, T - 20, 1600, 34, 1);
+  glow(s, at, 'bloom:gold', 84 * m, T, 1300, 0.4, 2.1, 2.6, 1, 0.14);
+  glow(s, at, 'bloom:white', 40 * m, T, 560, 0.3, 1.6, 1.9);
+  shock(s, at, 'ring:gold', 60 * m, T, 760, 2.7);
+  if (jack) shock(s, at, 'ring:gold', 60 * m, T + 170, 820, 3.3, 1, 0.8);
+  flare(s, at, 'flare:gold', 130 * m, T, 760);
+  cluster(s, at, 'burst:gold', 86 * m, T, 1250, 1, 8 * m);
   // dört takım amblemi: merkezden dönerek açılır, havada asılı kalır, söner
   const suits = ['suit:H', 'suit:S', 'suit:D', 'suit:C'];
   const nS = jack ? 8 : 4;
   for (let i = 0; i < nS; i++) {
-    const nd = s.node(suits[i % 4], 20 * m, undefined, true);
+    const nd = s.node(suits[i % 4], 28 * m, undefined, true);
     if (!nd) break;
     const ring2 = i >= 4;
-    const ang = ((ring2 ? -150 + (i - 4) * 40 + 20 : -160 + i * 46.6) * Math.PI) / 180;
-    const d = (ring2 ? 44 : 31) * m;
-    const x1 = at.x + Math.cos(ang) * d, y1 = at.y + Math.sin(ang) * d * 0.9 - 4 * m;
+    // üst yay: ♥ sol üst, ♠ yukarı sol, ♦ yukarı sağ, ♣ sağ üst (valede ikinci, daha geniş yay)
+    const ang = ((ring2 ? -168 + (i - 4) * 52 : -150 + i * 40) * Math.PI) / 180;
+    const d = (ring2 ? 62 : 44) * m;
+    const x1 = at.x + Math.cos(ang) * d, y1 = at.y + Math.sin(ang) * d * 0.85 - 6 * m;
     const spin = (i % 2 ? 1 : -1) * 360, tilt = (i % 2 ? -1 : 1) * 10;
-    const D = 1450;
+    const D = 1550;
     const o = (ms: number): number => ms / D;
     const P = (x: number, y: number, r: number, sc: number, ry: number): string => `${tr(x, y, r, sc)} rotateY(${ry.toFixed(0)}deg)`;
     s.run(nd, [
       {transform: P(at.x, at.y, 0, 0.15, 0), opacity: 0, offset: 0},
-      {transform: P(at.x + (x1 - at.x) * 0.55, at.y + (y1 - at.y) * 0.55, spin * 0.6, 1.1, 360), opacity: 1, offset: o(160)},
-      {transform: P(x1, y1, spin + tilt, 1.28, 650), opacity: 1, offset: o(380)},
-      {transform: P(x1, y1 - 1.5 * m, spin + tilt * 0.4, 1.12, 720), opacity: 1, offset: o(560)},
-      {transform: P(x1, y1 - 3 * m, spin, 1.1, 720), opacity: 1, offset: o(1050)},
-      {transform: P(x1, y1 - 7 * m, spin, 0.7, 720), opacity: 0, offset: 1},
+      {transform: P(at.x + (x1 - at.x) * 0.55, at.y + (y1 - at.y) * 0.55, spin * 0.6, 1.1, 360), opacity: 1, offset: o(170)},
+      {transform: P(x1, y1, spin + tilt, 1.25, 650), opacity: 1, offset: o(400)},
+      {transform: P(x1, y1 - 2 * m, spin + tilt * 0.4, 1.1, 720), opacity: 1, offset: o(600)},
+      {transform: P(x1, y1 - 4 * m, spin, 1.08, 720), opacity: 1, offset: o(1150)},
+      {transform: P(x1, y1 - 9 * m, spin, 0.7, 720), opacity: 0, offset: 1},
     ], {duration: D, delay: T + (ring2 ? 90 : 0) + (i % 4) * 25, easing: 'cubic-bezier(.2,.75,.3,1)'});
-    twinkle(s, x1 + 4 * m, y1 - 5 * m, i % 2 ? 'glint:white' : 'glint:gold', 14 * m, T + 420 + i * 70, 560, R(0.9, 1.2));
+    twinkle(s, x1 + 6 * m, y1 - 7 * m, i % 2 ? 'glint:white' : 'glint:gold', 18 * m, T + 440 + i * 70, 600, R(0.9, 1.2));
   }
-  sparks(s, at, {n: jack ? 12 : 12, keys: ['spark:gold'], len: 13 * m, dist: [20 * m, 46 * m], ang: [-Math.PI * 0.97, -Math.PI * 0.03], fall: 32 * m, drag: 2.4, dur: [900, 1300], t: T, r0: 4 * m, align: true, front: true, stagger: 4});
+  sparks(s, at, {n: 12, keys: ['spark:gold'], len: 17 * m, dist: [30 * m, 66 * m], ang: [-Math.PI * 0.97, -Math.PI * 0.03], fall: 40 * m, drag: 2.4, dur: [950, 1350], t: T, r0: 6 * m, align: true, front: true, stagger: 4});
   // dev kırınım yıldızı
-  const st = s.node('glint:white', 40 * m, undefined, true);
+  const st = s.node('glint:white', 56 * m, undefined, true);
   if (st)
     s.run(st, [
       {transform: tr(at.x, at.y, 0, 0.1), opacity: 0},
       {transform: tr(at.x, at.y, 10, jack ? 1.45 : 1.2), opacity: 1, offset: 0.18},
       {transform: tr(at.x, at.y, 22, 0.9), opacity: 0.85, offset: 0.45},
       {transform: tr(at.x, at.y, 40, 0.1), opacity: 0},
-    ], {duration: 760, delay: T - 10, easing: OUT});
+    ], {duration: 800, delay: T - 10, easing: OUT});
   s.sfx(T, x => x.bonus());
   s.sfx(T + 260, x => x.starChime(2));
   s.sfx(T + 520, x => x.starChime(5));
@@ -326,47 +327,56 @@ function havai(s: Stage, at: Pt, jack: boolean): void {
   });
 }
 
-/** Yıldız Yağmuru: ışık geceye kısılır; parlak başlı, uzun kuyruklu göktaşları farklı açılardan yığına yağar;
- * sonunda yığında kırınım yıldızı açar (hâle, ışınlar, şok halkası) ve yıldız tozu göz kırpar. */
+/** Yıldız Yağmuru: ışık hafifçe geceye kısılır; parlak başlı, uzun incelen kuyruklu 6–8 göktaşı ~600 ms içinde farklı
+ * açılardan yığına yağar, her biri indiği yerde göz kırpar; sonunda yığında kırınım yıldızı açar. */
 function yildiz(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100, W = s.W, H = s.H;
-  s.night(0.8, jack ? 2100 : 1850);
+  s.night(0.55, jack ? 2100 : 1850);
   const n = s.low ? 4 : jack ? 8 : 7;
-  const L = 92 * m;
+  const L = 80 * m;
+  const angs = [118, 72, 132, 96, 60, 108, 84, 140];
   let last = 0;
   for (let i = 0; i < n; i++) {
-    // yelpaze: sağ üstten sol üste farklı açılar, hepsi yığına yakın bir noktada biter
-    const ang = 112 + ((i * 37) % 7) * 7 + R(-3, 3);
-    const rad = (ang * Math.PI) / 180;
-    const t = 40 + i * (jack ? 85 : 100) + R(0, 30);
-    const tx = at.x + R(-14, 14) * m, ty = at.y + R(-12, 4) * m;
-    const dist = Math.hypot(W, H) * 0.7;
+    const ang = angs[i % angs.length] + R(-4, 4), rad = (ang * Math.PI) / 180;
+    const t = 40 + (i * (jack ? 600 : 560)) / (n - 1) + R(-15, 15);
+    const tx = at.x + R(-12, 12) * m, ty = at.y + R(-10, 4) * m;
+    const dist = Math.min(Math.hypot(W, H) * 0.5, 110 * m);
     const x0 = tx - Math.cos(rad) * dist, y0 = ty - Math.sin(rad) * dist;
-    const D = R(420, 500);
+    const D = R(380, 440);
     last = Math.max(last, t + D);
+    const path = (q: number): [number, number] => [x0 + (tx - x0) * q, y0 + (ty - y0) * q];
     const nd = s.node('meteor', L);
-    if (nd)
+    if (nd) {
+      // kuyruğun ucu başın arkasında: düğüm merkezi başın L·0.43 gerisinde
+      const back = (q: number): [number, number] => {
+        const [x, y] = path(q);
+        return [x - Math.cos(rad) * L * 0.43, y - Math.sin(rad) * L * 0.43];
+      };
+      const [ax, ay] = back(0), [bx, by] = back(0.25), [cx, cy] = back(0.9), [dx, dy] = back(1);
       s.run(nd, [
-        {transform: tr(x0, y0, ang, 0.7, 1), opacity: 0},
-        {transform: tr(x0 + (tx - x0) * 0.18, y0 + (ty - y0) * 0.18, ang, 1.05, 1.1), opacity: 1, offset: 0.12},
-        {transform: tr(tx - Math.cos(rad) * L * 0.42, ty - Math.sin(rad) * L * 0.42, ang, 1.15, 1.1), opacity: 1, offset: 0.9},
-        {transform: tr(tx, ty, ang, 0.25, 0.7), opacity: 0},
-      ], {duration: D, delay: t, easing: 'cubic-bezier(.45,0,.9,.6)'});
-    // parlak baş: göktaşıyla birlikte giden yıldız parıltısı
-    const hd = s.node(i % 3 ? 'glint:white' : 'glint:blue', 15 * m, undefined, true);
-    if (hd) {
-      const hx = (q: number): number => x0 + (tx - x0) * q, hy = (q: number): number => y0 + (ty - y0) * q;
-      s.run(hd, [
-        {transform: tr(hx(0.05), hy(0.05), 0, 0.5), opacity: 0},
-        {transform: tr(hx(0.2), hy(0.2), 30, 1), opacity: 1, offset: 0.12},
-        {transform: tr(hx(0.96), hy(0.96), 140, 1.1), opacity: 1, offset: 0.9},
-        {transform: tr(tx, ty, 160, 1.5), opacity: 0},
-      ], {duration: D, delay: t, easing: 'cubic-bezier(.45,0,.9,.6)'});
+        {transform: tr(ax, ay, ang, 0.5, 0.9), opacity: 0},
+        {transform: tr(bx, by, ang, 1, 1.1), opacity: 1, offset: 0.2},
+        {transform: tr(cx, cy, ang, 1.05, 1.1), opacity: 1, offset: 0.9},
+        {transform: tr(dx, dy, ang, 0.3, 0.7), opacity: 0},
+      ], {duration: D, delay: t, easing: 'cubic-bezier(.3,0,.75,.8)'});
     }
+    // parlak baş
+    const hd = s.node(i % 3 ? 'glint:white' : 'glint:blue', 16 * m, undefined, true);
+    if (hd) {
+      const [ax, ay] = path(0), [bx, by] = path(0.25), [cx, cy] = path(0.9);
+      s.run(hd, [
+        {transform: tr(ax, ay, 0, 0.5), opacity: 0},
+        {transform: tr(bx, by, 30, 1), opacity: 1, offset: 0.2},
+        {transform: tr(cx, cy, 120, 1.1), opacity: 1, offset: 0.9},
+        {transform: tr(tx, ty, 140, 0.6), opacity: 0},
+      ], {duration: D, delay: t, easing: 'cubic-bezier(.3,0,.75,.8)'});
+    }
+    // indiği yerde kısa parıltı
+    twinkle(s, tx, ty, 'glint:white', 18 * m, t + D - 50, 460, R(0.9, 1.2));
     if (i % 2 === 0) s.sfx(t, x => x.shootingStar());
     s.sfx(t + D - 40, x => x.starChime(i));
   }
-  const T = last - 40;
+  const T = last - 20;
   rays(s, at, 'rays:white', 96 * m, T - 60, 1150, 26, 0.85);
   glow(s, at, 'bloom:blue', 58 * m, T - 80, 1100, 0.3, 2, 2.5, 1, 0.16);
   glow(s, at, 'bloom:white', 28 * m, T, 560, 0.3, 1.6, 1.9);
@@ -379,10 +389,10 @@ function yildiz(s: Stage, at: Pt, jack: boolean): void {
       {transform: tr(at.x, at.y, 30, 1.1), opacity: 0.9, offset: 0.55},
       {transform: tr(at.x, at.y, 50, 0.2), opacity: 0},
     ], {duration: 950, delay: T - 40, easing: OUT});
-  const nd = s.low ? 3 : 7;
+  const nd = s.low ? 2 : 4;
   for (let i = 0; i < nd; i++) {
-    const a = R(0, 6.28), d = R(12, 36) * m;
-    twinkle(s, at.x + Math.cos(a) * d, at.y + Math.sin(a) * d * 0.8, i % 3 ? 'glint:blue' : 'glint:white', 11 * m, T + 80 + i * 80, 560, R(0.7, 1.15));
+    const a = R(0, 6.28), d = R(14, 36) * m;
+    twinkle(s, at.x + Math.cos(a) * d, at.y + Math.sin(a) * d * 0.8, i % 2 ? 'glint:blue' : 'glint:white', 11 * m, T + 120 + i * 110, 560, R(0.7, 1.15));
   }
   s.sfx(T, x => x.bonus());
 }

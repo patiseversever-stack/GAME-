@@ -635,7 +635,7 @@ export class HudView implements GameHud {
         {transform: 'scale(1)', opacity: 1, offset: out}, {transform: 'scale(.8)', opacity: 0}], {duration: D, easing: 'ease-out', fill: 'both'});
     this.snd?.swoosh();
     this.scope.timeout(() => this.fx.stamp(o.jack, o.points, H * 0.66, D - 160, true), 150);
-    this.scope.timeout(() => this.fx.pistiFx(o.fx, o.jack, o.fx === 'klasik' ? {x: o.at.x, y: H * 0.7} : o.at, o.low), 120);
+    this.scope.timeout(() => this.fx.pistiFx(o.fx, o.jack, o.at, o.low), 120);
     b.react('pisti', D);
     await this.scope.wait(D + 60);
     hero.className = 'kh-hero';
