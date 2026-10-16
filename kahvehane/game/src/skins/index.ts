@@ -13,6 +13,7 @@ export const DECKS: readonly DeckEntry[] = [
   {id: 'dalga', load: () => import('./dalga').then(m => m.skin)},
   {id: 'aycicegi', load: () => import('./aycicegi').then(m => m.skin)},
   {id: 'ebru', load: () => import('./ebru').then(m => m.skin)},
+  {id: 'hazine', load: () => import('./hazine').then(m => m.skin)},
 ];
 
 export function deckById(id: string): DeckEntry {

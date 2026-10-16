@@ -23,7 +23,7 @@ export function fanHtml(id: string, n: 3 | 5 = 3, cls = ''): string {
   const mid = (pick.length - 1) / 2;
   if (!hasDeck(id))
     return `<span class="kh-fan is-${n} is-soon ${cls}">${pick.map((_, i) => `<span class="kh-fan__c" style="--i:${i - mid};--z:${10 - Math.abs(i - mid) * 2}"><span class="kh-fan__ph">${suitSvg((['s', 'd', 'h', 'c', 's'] as const)[i % 5])}</span></span>`).join('')}</span>`;
-  return `<span class="kh-fan is-${n} ${cls}">${pick.map((ci, i) => deckCardHtml(id, ci, 'kh-fan__c', `--i:${i - mid};--z:${10 - Math.abs(i - mid) * 2}`)).join('')}</span>`;
+  return `<span class="kh-fan is-${n} ${cls}">${pick.map((ci, i) => deckCardHtml(id, ci, i === mid ? 'kh-fan__c is-mid' : 'kh-fan__c', `--i:${i - mid};--z:${10 - Math.abs(i - mid) * 2}`)).join('')}</span>`;
 }
 
 /** Eski arayüz: kutuya yelpaze kurar. */
