@@ -178,13 +178,13 @@ function klasik(s: Stage, at: Pt, jack: boolean): void {
   gather(s, at, 'glint:gold', 6, 12 * m, 44 * m, 0, 200);
   glow(s, at, 'bloom:gold', 44 * m, 0, 380, 0.2, 1.1, 0.7, 1, 0.55);
   const T = 190;
-  rays(s, at, 'rays:gold', 124 * m, T - 20, 1600, 34, 1);
-  glow(s, at, 'bloom:gold', 84 * m, T, 1300, 0.4, 2.1, 2.6, 1, 0.14);
+  rays(s, at, 'rays:gold', 110 * m, T - 20, 1600, 34, 1);
+  glow(s, at, 'bloom:gold', 74 * m, T, 1300, 0.4, 2.1, 2.6, 1, 0.14);
   glow(s, at, 'bloom:white', 40 * m, T, 560, 0.3, 1.6, 1.9);
   shock(s, at, 'ring:gold', 60 * m, T, 760, 2.7);
   if (jack) shock(s, at, 'ring:gold', 60 * m, T + 170, 820, 3.3, 1, 0.8);
-  flare(s, at, 'flare:gold', 130 * m, T, 760);
-  cluster(s, at, 'burst:gold', 86 * m, T, 1250, 1, 8 * m);
+  flare(s, at, 'flare:gold', 120 * m, T, 760);
+  cluster(s, at, 'burst:gold', 80 * m, T, 1250, 1, 8 * m);
   // dört takım amblemi: merkezden dönerek açılır, havada asılı kalır, söner
   const suits = ['suit:H', 'suit:S', 'suit:D', 'suit:C'];
   const nS = jack ? 8 : 4;
@@ -302,10 +302,10 @@ function havai(s: Stage, at: Pt, jack: boolean): void {
     s.sfx(t0, x => x.fireworkLaunch());
     const tb = t0 + rise - 30;
     s.sfx(tb, x => x.fireworkBurst(0.7 + z * 0.3));
-    glow(s, {x: bx, y: by}, `bloom:${pal}`, 56 * m, tb, 800, 0.2, 1.5 * z, 2 * z, Math.min(1, 0.55 + z * 0.4), 0.1);
-    cluster(s, {x: bx, y: by}, `burst:${pal}`, 80 * m, tb, 1500, z, 12 * m * z);
+    glow(s, {x: bx, y: by}, `bloom:${pal}`, 46 * m, tb, 800, 0.2, 1.5 * z, 2 * z, Math.min(1, 0.55 + z * 0.4), 0.1);
+    cluster(s, {x: bx, y: by}, `burst:${pal}`, 72 * m, tb, 1500, z, 12 * m * z);
     // yakın patlamada sarkan kuyruklu izler (yerçekimi)
-    const n = s.low ? 4 : z > 1 ? 8 : 4;
+    const n = s.low ? 4 : z > 1 ? 7 : 3;
     const off = R(0, 6.28);
     for (let j = 0; j < n; j++) {
       const nd = s.node(`comet:${pal}`, 20 * m, undefined, true);
@@ -448,8 +448,8 @@ function lale(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100;
   glow(s, at, 'bloom:rose', 34 * m, 0, 420, 0.2, 1, 0.7, 0.9, 0.55);
   const T = 170;
-  rays(s, at, 'rays:rose', 90 * m, T, 1500, -30, 0.8);
-  glow(s, at, 'bloom:rose', 50 * m, T, 1100, 0.3, 2, 2.5, 1, 0.14);
+  rays(s, at, 'rays:rose', 80 * m, T, 1500, -30, 0.8);
+  glow(s, at, 'bloom:rose', 44 * m, T, 1100, 0.3, 2, 2.5, 1, 0.14);
   shock(s, at, 'ring:rose', 42 * m, T + 300, 700, 2.6);
   // açan lale: büyür ve döner, sonra yaprakları salıverip söner
   const RS = 38 * m;
@@ -462,7 +462,7 @@ function lale(s: Stage, at: Pt, jack: boolean): void {
       {transform: tr(at.x, at.y, 0, 1), opacity: 1, offset: 0.62},
       {transform: tr(at.x, at.y, 12, 1.35), opacity: 0},
     ], {duration: 520, delay: T, easing: OUT});
-  const n = s.low ? 9 : jack ? 20 : 16;
+  const n = s.low ? 8 : jack ? 18 : 14;
   const keys = ['petal1', 'petal3', 'petal2'];
   for (let i = 0; i < n; i++) {
     const nd = s.node(keys[i % 3], 9 * m, undefined, i % 2 === 0);
