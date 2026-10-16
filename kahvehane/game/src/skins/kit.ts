@@ -203,6 +203,70 @@ export function suitPath(s: Suit): Path2D {
   if (!SP) SP = {S: spadePath(), H: heartPath(), D: diamondPath(), C: clubPath()};
   return SP[s];
 }
+let OUT: Partial<Record<Suit, Path2D>> = {};
+/**
+ * Takımın TEK parça dış hattı (birim yol). Sinek üç daire + saptan oluşur: kontur çizilince içteki kesişim yayları
+ * görünür; neon tüp / altın kenar gibi yalnız dış hattı isteyen çizimler için şekil maskeden izlenir (bir kez).
+ */
+export function suitOutline(s: Suit): Path2D {
+  const hit = OUT[s];
+  if (hit) return hit;
+  if (s !== 'C') return (OUT[s] = suitPath(s));
+  const N = 240, k = N * 0.8;
+  const [c, g] = makeCanvas(N, N);
+  g.setTransform(k, 0, 0, k, N / 2, N / 2);
+  g.fill(suitPath(s));
+  const d = g.getImageData(0, 0, N, N).data;
+  c.width = c.height = 0;
+  const inside = (x: number, y: number): boolean => x >= 0 && y >= 0 && x < N && y < N && d[(y * N + x) * 4 + 3] > 127;
+  // Moore komşuluk izleme
+  let sx = -1, sy = -1;
+  outer: for (let y = 0; y < N; y++)
+    for (let x = 0; x < N; x++)
+      if (inside(x, y)) {
+        sx = x;
+        sy = y;
+        break outer;
+      }
+  const DX = [1, 1, 0, -1, -1, -1, 0, 1], DY = [0, 1, 1, 1, 0, -1, -1, -1];
+  const pts: number[] = [];
+  let x = sx, y = sy, dir = 7;
+  for (let guard = 0; guard < N * 16; guard++) {
+    pts.push(x, y);
+    let found = false;
+    for (let i = 0; i < 8; i++) {
+      const nd = (dir + 6 + i) % 8;
+      const nx = x + DX[nd], ny = y + DY[nd];
+      if (inside(nx, ny)) {
+        x = nx;
+        y = ny;
+        dir = nd;
+        found = true;
+        break;
+      }
+    }
+    if (!found || (x === sx && y === sy && pts.length > 8)) break;
+  }
+  // yumuşat (kayan ortalama) + seyrelt
+  const n = pts.length >> 1;
+  const p = new Path2D();
+  const W = 3;
+  for (let i = 0; i < n; i += 2) {
+    let ax = 0, ay = 0;
+    for (let j = -W; j <= W; j++) {
+      const q = ((i + j + n) % n) * 2;
+      ax += pts[q];
+      ay += pts[q + 1];
+    }
+    ax = (ax / (2 * W + 1) + 0.5 - N / 2) / k;
+    ay = (ay / (2 * W + 1) + 0.5 - N / 2) / k;
+    if (i === 0) p.moveTo(ax, ay);
+    else p.lineTo(ax, ay);
+  }
+  p.closePath();
+  return (OUT[s] = p);
+}
+
 /** Takım şeklinin dış hatları (sağ/sol uç, üst/alt) — birim kutuda */
 export const SUIT_BOX: Record<Suit, {t: number; b: number; hw: number}> = {
   H: {t: -0.47, b: 0.47, hw: 0.5},
