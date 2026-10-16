@@ -77,6 +77,7 @@ async function boot(): Promise<void> {
   }, tier === 'low');
   table.setTheme(tableById(profile.data.equipped.table));
   table.onDeck = (n, x, y) => screens.hud.setDeck(n, x, y);
+  table.setActive(false); // açılış/ana ekran/market sırasında masa çizilmez; maç başlayınca app.ts açar
   table.reset();
   splash.progress(0.8);
   try {

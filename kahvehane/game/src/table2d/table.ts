@@ -55,7 +55,15 @@ const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 const done = (a: Animation, el?: HTMLElement) => a.finished.then(() => el?.remove(), () => el?.remove());
 export const SUIT_COLOR: Record<Suit, string> = {H: '#ff2e4d', D: '#ffb400', C: '#16c45b', S: '#1f7bff'};
-const EASE_OUT = 'cubic-bezier(.2,.75,.25,1)';
+
+/** Yığın ışığı gradyanları (closest-side: 100% = katmanın yarıçapı). N = yığın boşken nötr (tema rengi). */
+const GLOW: Record<string, string> = {
+  N: 'radial-gradient(closest-side, var(--ar-glow-n) 0%, rgba(80, 110, 255, 0) 50%), radial-gradient(closest-side, var(--ar-glow-n) 0%, rgba(60, 90, 255, 0) 100%)',
+  H: 'radial-gradient(closest-side, rgba(255, 70, 100, .62) 0%, rgba(255, 46, 77, .22) 44%, rgba(255, 46, 77, 0) 100%)',
+  D: 'radial-gradient(closest-side, rgba(255, 200, 60, .6) 0%, rgba(255, 180, 0, .2) 44%, rgba(255, 180, 0, 0) 100%)',
+  C: 'radial-gradient(closest-side, rgba(60, 230, 130, .55) 0%, rgba(22, 196, 91, .2) 44%, rgba(22, 196, 91, 0) 100%)',
+  S: 'radial-gradient(closest-side, rgba(80, 160, 255, .62) 0%, rgba(31, 123, 255, .22) 44%, rgba(31, 123, 255, 0) 100%)',
+};const EASE_OUT = 'cubic-bezier(.2,.75,.25,1)';
 const D10 = cardId('D', 10);
 const C2 = cardId('C', 2);
 
@@ -126,7 +134,12 @@ export class Table2D {
   private paintEl: HTMLCanvasElement | null = null;
   private raysAnim: Animation | null = null;
   private raysTimers: number[] = [];
-  private glows = new Map<string, HTMLElement>();
+  /** Yığın ışığı: iki küçük katman çapraz geçişle renk değiştirir (eskiden 5 dev katmandı; telefon GPU belleğini aşıyordu) */
+  private glowEls: HTMLElement[] = [];
+  private glowCur = 0;
+  private glowKey = '';
+  private tintN = 0;
+  private active = true;
   private all: Card[] = [];
   private byId = new Map<CardId, Card>();
   private sparks: Pool;
@@ -159,7 +172,7 @@ export class Table2D {
     this.root = document.createElement('div');
     this.root.className = 'ar' + (low ? ' is-low' : '');
     this.root.innerHTML = `<div class="ar__bg"></div>
-      ${['N', 'H', 'D', 'C', 'S'].map(s => `<div class="ar__glow" data-s="${s}"></div>`).join('')}
+      <div class="ar__glow"></div><div class="ar__glow"></div>
       <div class="ar__tint"></div><div class="ar__rays"></div><div class="ar__pattern"></div><div class="ar__vig"></div><div class="ar__edge"></div>
       <div class="ar__zoom"><div class="ar__shake"><div class="ar__ring"><i></i></div><div class="ar__cards"></div><div class="ar__fx"></div>
       <div class="ar__pot"><svg viewBox="0 0 24 24"><path d="M12 22c-4 0-7-2.8-7-6.6 0-3.5 2.3-5.6 3.7-7.6.9-1.3 1.3-2.9 1.2-4.3 2.9 1.4 4.4 4 4.5 6.7.8-.6 1.3-1.6 1.4-2.7 2 1.8 3.1 4.4 3.1 7.1 0 4.2-3 7.4-6.9 7.4z" fill="#ffb21a" stroke="#0a1033" stroke-width="2"/><path d="M12 20c-1.8 0-3.1-1.2-3.1-2.9 0-1.6 1.1-2.6 1.8-3.5.4-.6.6-1.3.6-2 1.4.7 2.3 2 2.3 3.3.4-.3.7-.8.7-1.3 1 .9 1.5 2.1 1.5 3.4 0 1.7-1.6 3-3.8 3z" fill="#fff27a"/></svg><b>0</b></div></div></div>`;
@@ -173,7 +186,7 @@ export class Table2D {
     this.potEl = this.root.querySelector('.ar__pot')!;
     this.potNum = this.potEl.querySelector('b')!;
     this.tintEl = this.root.querySelector('.ar__tint')!;
-    this.root.querySelectorAll<HTMLElement>('.ar__glow').forEach(g => this.glows.set(g.dataset.s!, g));
+    this.glowEls = Array.from(this.root.querySelectorAll<HTMLElement>('.ar__glow'));
     (this.root.querySelector('.ar__pattern') as HTMLElement).style.backgroundImage = patternUrl();
     this.root.style.setProperty('--c2-r', `${(CORNER_RADIUS * 100).toFixed(1)}% / ${(CORNER_RADIUS * 70).toFixed(1)}%`);
     this.sparks = new Pool(this.fxEl, 'ar__spark', low ? 24 : 48);
@@ -295,7 +308,7 @@ export class Table2D {
     const rd = cw * 2.25;
     Object.assign(this.ring.style, {width: rd + 'px', height: rd + 'px', left: W / 2 - rd / 2 + 'px', top: pileY - rd / 2 + 'px'});
     this.potEl.style.transform = `translate3d(${(W / 2 + rd * 0.36).toFixed(1)}px,${(pileY - rd * 0.36).toFixed(1)}px,0) translate(-50%,-50%)`;
-    for (const g of this.glows.values()) g.style.top = pileY + 'px';
+    for (const g of this.glowEls) g.style.top = pileY + 'px';
     this.raysEl.style.top = pileY + 'px';
     this.tintEl.style.top = pileY + 'px';
   }
@@ -442,9 +455,28 @@ export class Table2D {
   // ───────── arka plan ─────────
   setGlow(suit: Suit | null): void {
     const k = suit ?? 'N';
-    for (const [s, g] of this.glows) g.classList.toggle('is-on', s === k);
+    if (k !== this.glowKey) {
+      this.glowKey = k;
+      const prev = this.glowEls[this.glowCur];
+      this.glowCur = 1 - this.glowCur;
+      const next = this.glowEls[this.glowCur];
+      next.style.background = GLOW[k];
+      next.style.setProperty('--go', k === 'N' ? '.72' : '1');
+      next.classList.add('is-on');
+      prev.classList.remove('is-on');
+    }
     if (suit) this.ring.style.setProperty('--ring', SUIT_COLOR[suit]);
     else this.ring.style.removeProperty('--ring');
+  }
+
+  /** Masayı aç/kapat: ana ekran, açılış, market gibi ekranlar üstteyken kapalı (hiç çizilmez, GPU belleği boşalır). */
+  setActive(on: boolean): void {
+    if (on === this.active) return;
+    this.active = on;
+    this.root.classList.toggle('is-off', !on);
+    if (on) this.raysAnim?.play();
+    else this.raysAnim?.pause();
+    if (on) this.relayout();
   }
 
   /** Hüzmeler bir an hızlanır, sonra kademeli yavaşlar (pişti, büyük an). */
@@ -459,9 +491,15 @@ export class Table2D {
 
   /** Zemine renkli ışık dalgası (yalnız opaklık). */
   tint(color: string, peak = 0.75, ms = 700): void {
-    this.tintEl.style.background = `radial-gradient(circle, ${color} 0%, ${color}66 22%, ${color}00 46%)`;
-    this.tintEl.animate([{opacity: 0, transform: 'scale(.6)'}, {opacity: peak, transform: 'scale(1)', offset: 0.18}, {opacity: 0, transform: 'scale(1.25)'}],
-      {duration: ms, easing: 'cubic-bezier(.2,.7,.3,1)'});
+    const el = this.tintEl;
+    el.style.display = 'block';
+    el.style.background = `radial-gradient(closest-side, ${color} 0%, ${color}66 48%, ${color}00 100%)`;
+    this.tintN++;
+    const done = () => {
+      if (--this.tintN <= 0) el.style.display = 'none'; // boşta katman tutma
+    };
+    el.animate([{opacity: 0, transform: 'scale(.6)'}, {opacity: peak, transform: 'scale(1)', offset: 0.18}, {opacity: 0, transform: 'scale(1.25)'}],
+      {duration: ms, easing: 'cubic-bezier(.2,.7,.3,1)'}).finished.then(done, done);
   }
 
   /** Büyük kazan: yığında 5+ kart varken yığın halkası kızışır ve yanında alevli sayaç görünür (büyük yığın = büyük ödül). */

@@ -109,6 +109,7 @@ export async function runApp(d: AppDeps): Promise<void> {
       }
       const seats = MODE_INFO[mode].seats;
       const setup = buildSetup(profile, mode, opponents, (seats - 1 + dealerBase++) % seats, profile.data.equipped.fx, d.seed);
+      table.setActive(true); // maç masası açılır (menülerde kapalıydı)
       if (first) await screens.versus(setup, stake);
       first = false;
       // bahis düşülür (yarıda kalırsa iade)
@@ -153,5 +154,6 @@ export async function runApp(d: AppDeps): Promise<void> {
         break;
       }
     }
+    table.setActive(false); // ana ekrana dönüş: masa tamamen kapanır (GPU belleği boşalır)
   }
 }

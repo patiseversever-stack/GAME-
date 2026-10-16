@@ -1,9 +1,9 @@
 /* Pişti Arena — ekran efektleri (parçacık, damga, afiş, puan, seri, pişti efektleri). Yalnız transform/opacity animasyonu;
    gölge/parıltı sabit (bir kez boyanır), hareket WAAPI ile bileşimcide. */
 .kh-fx { position: absolute; inset: 0; z-index: 45; pointer-events: none; overflow: hidden; perspective: 900px; }
-.kh-flash { position: absolute; inset: 0; background: var(--flash); opacity: 0; will-change: opacity; }
+.kh-flash { position: absolute; inset: 0; background: var(--flash); opacity: 0; }
 /* yıldız yağmurunda ışık gece mavisine kısılır */
-.kh-night { position: absolute; inset: 0; z-index: 0; opacity: 0; will-change: opacity; pointer-events: none;
+.kh-night { position: absolute; inset: 0; z-index: 0; opacity: 0; pointer-events: none;
   background: radial-gradient(120% 80% at 70% 0%, rgba(30, 40, 120, .2) 0%, rgba(6, 10, 40, .55) 60%, rgba(4, 6, 26, .72) 100%); }
 .kh-p { position: absolute; left: 0; top: 0; display: none; will-change: transform, opacity; }
 .kh-p--conf { z-index: 3; }   /* konfeti damganın önünde, jeton arkasında (yazı okunur kalsın) */

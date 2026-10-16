@@ -155,7 +155,7 @@
 .kh-hero.is-red .kh-hero__band { background: linear-gradient(165deg, #ff6a80 0%, #ff2e4d 40%, #c40a2f 72%, #7a0019 100%); }
 .kh-hero.is-jack .kh-hero__band { background: linear-gradient(165deg, #fff27a 0%, #ffd23f 30%, #ffb21a 62%, #ff7d0a 100%); }
 .kh-hero__band::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 38%; background: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0)); }
-.kh-hero__rays { position: absolute; left: 50%; top: 50%; width: 170vmax; height: 170vmax; margin: -85vmax 0 0 -85vmax; will-change: transform, opacity;
+.kh-hero__rays { position: absolute; left: 50%; top: 50%; width: 80vmax; height: 80vmax; margin: -40vmax 0 0 -40vmax; will-change: transform, opacity;
   background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .22) 0deg 6deg, rgba(255, 255, 255, 0) 6deg 18deg); }
 .kh-hero.is-left .kh-hero__rays { left: 30%; }
 .kh-hero.is-right .kh-hero__rays { left: 70%; }
