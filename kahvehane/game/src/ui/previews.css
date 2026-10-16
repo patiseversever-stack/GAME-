@@ -19,18 +19,20 @@
 .is-live .kh-fan__c.is-mid { transform: translateY(-7%) scale(1.06); }
 
 /* =================== MASA SAHNESİ =================== */
-.kh-ts { position: absolute; inset: 0; display: block; overflow: hidden; border-radius: inherit; isolation: isolate; }
+/* --py: yığının dikey yeri. Swatch amblemi tam ortada (50%); boyalı zemin oyundaki gibi %45.5'te çizer (themes/paint.ts spotOf) */
+.kh-ts { --py: 50%; position: absolute; inset: 0; display: block; overflow: hidden; border-radius: inherit; isolation: isolate; }
+.kh-ts.is-paint { --py: 45.5%; }
 .kh-ts__bg, .kh-ts__paint, .kh-ts__vig, .kh-ts__glow { position: absolute; inset: 0; width: 100%; height: 100%; }
-.kh-ts__glow { left: 50%; top: 47%; width: 92%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, var(--glow), transparent 64%); }
-.kh-ts__ring { position: absolute; left: 50%; top: 47%; width: 50%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid var(--ring);
-  box-shadow: inset 0 0 0 4px rgba(10, 16, 70, .35); }
+.kh-ts__glow { left: 50%; top: var(--py); width: 92%; height: auto; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%; background: radial-gradient(circle, var(--glow), transparent 64%); }
+/* yığın halkasını zemin (swatch / boya) kendisi çizer; ikinci halka çakışıyordu */
+.kh-ts__ring { display: none; }
 .kh-ts__vig { background: radial-gradient(ellipse 80% 70% at 50% 46%, transparent 55%, rgba(2, 4, 24, .5)); pointer-events: none; }
 .kh-ts__c { position: absolute; box-shadow: 0 0 0 1px rgba(10, 16, 51, .7), 0 3px 6px rgba(2, 4, 24, .45); }
 /* mini: yığında iki kart, solda deste */
-.kh-ts__pile .kh-ts__c { left: 50%; top: 47%; width: 26%; }
+.kh-ts__pile .kh-ts__c { left: 50%; top: var(--py); width: 26%; }
 .kh-ts__c.is-p1 { transform: translate(-62%, -54%) rotate(-11deg); }
 .kh-ts__c.is-p2 { transform: translate(-36%, -46%) rotate(8deg); }
-.kh-ts__deck .kh-ts__c { left: 9%; top: 47%; width: 20%; }
+.kh-ts__deck .kh-ts__c { left: 9%; top: var(--py); width: 20%; }
 .kh-ts__c.is-d1 { transform: translate(0, -50%) rotate(-3deg); }
 .kh-ts__c.is-d2 { transform: translate(5%, -54%) rotate(2deg); }
 /* full: rakip eli (kapalı) üstte, oyuncu eli altta yelpaze */

@@ -150,8 +150,7 @@
 .kh-pv__table .kh-ts__deck .kh-ts__c { width: 23%; left: 7%; }
 .kh-pv__fx { position: absolute; inset: 0; display: block; }
 .kh-pv__fxs { position: absolute; inset: 0; display: block; opacity: .62; }
-.kh-pv__fxs .kh-ts__ring, .kh-pv__fxs .kh-ts__glow { top: 58%; }
-.kh-pv__fxs .kh-ts__pile .kh-ts__c { top: 58%; width: 24%; }
+.kh-pv__fxs .kh-ts__pile .kh-ts__c { width: 24%; }
 .kh-pv__fxs .kh-ts__deck { display: none; }
 .kh-pv__fx.kh-fxpv.kh-fxpv { background: none; }
 .kh-item__pv .kh-fan__c { --cw: 34%; bottom: 8%; }
@@ -421,8 +420,6 @@
 .kh-try .kh-ts__hand .kh-ts__c { bottom: 14%; width: 19.5%; cursor: pointer; }
 .kh-try .kh-ts__pile .kh-ts__c { width: 22%; }
 .kh-try .kh-ts__deck .kh-ts__c { width: 15%; left: 7%; }
-.kh-try .kh-ts__ring, .kh-try .kh-ts__glow, .kh-try .kh-ts__pile .kh-ts__c { top: 45%; }
-.kh-try .kh-ts__deck .kh-ts__c { top: 45%; }
 .kh-try__seat { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * .25); pointer-events: none; }
 .kh-try__seat.is-opp { left: 50%; top: calc(var(--u) * 3.6); transform: translateX(-50%); flex-direction: row; gap: .5em; }
 .kh-try__seat.is-me { left: calc(var(--u) * .8); top: 58%; }

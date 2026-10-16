@@ -21,7 +21,7 @@ interface Gem {
   light: RGB;
   ink: string; // köşe yazısı rengi (fildişi üstünde okunur koyu ton)
 }
-const GEM: Record<Suit, Gem> = {
+export const GEM: Record<Suit, Gem> = {
   H: {dark: [86, 0, 22], mid: [214, 16, 58], light: [255, 150, 170], ink: '#b3092e'},
   D: {dark: [120, 44, 0], mid: [246, 140, 14], light: [255, 232, 140], ink: '#c45300'},
   C: {dark: [0, 58, 32], mid: [14, 168, 86], light: [150, 255, 196], ink: '#067a3f'},
@@ -207,7 +207,7 @@ function paintIvory(): HTMLCanvasElement {
 }
 
 /** Kadife: koyu kızıl, geniş yumuşak parlama + ince hav dokusu */
-function paintVelvet(w: number, h: number, base: RGB, seed: number): HTMLCanvasElement {
+export function paintVelvet(w: number, h: number, base: RGB, seed: number): HTMLCanvasElement {
   const [c, g] = makeCanvas(w, h);
   const rnd = mulberry(seed);
   g.fillStyle = css(base);
@@ -308,7 +308,7 @@ const SLOT: Record<number, {x: number; y: number; d: number}> = {
   11: {x: CW / 2, y: CH * 0.17, d: 40},
 };
 
-function pearl(g: Ctx, x: number, y: number, r: number): void {
+export function pearl(g: Ctx, x: number, y: number, r: number): void {
   g.fillStyle = rad(g, x - r * 0.35, y - r * 0.4, 0, r * 1.2, [
     [0, '#ffffff'],
     [0.45, '#f1ece4'],
@@ -323,7 +323,7 @@ function pearl(g: Ctx, x: number, y: number, r: number): void {
   g.stroke();
 }
 /** Küçük kesimli yuvarlak taş */
-function roundGem(g: Ctx, x: number, y: number, r: number, c: Gem, seed: number): void {
+export function roundGem(g: Ctx, x: number, y: number, r: number, c: Gem, seed: number): void {
   const p = new Path2D();
   p.arc(0, 0, 0.5, 0, Math.PI * 2);
   g.save();
@@ -573,7 +573,7 @@ function drawDagger(g: Ctx, cx: number): void {
 
 // ───────────────────────── arka ─────────────────────────
 /** Telkâri kıvrım: C kıvrımı + uç sarmal (altın) */
-function scroll(g: Ctx, x: number, y: number, s: number, rot: number, flip = 1): void {
+export function scroll(g: Ctx, x: number, y: number, s: number, rot: number, flip = 1): void {
   g.save();
   g.translate(x, y);
   g.rotate(rot);
