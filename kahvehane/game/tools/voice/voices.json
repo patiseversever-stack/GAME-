@@ -51,8 +51,8 @@
     },
     "dursun": {
       "name": "Kahveci Dursun",
-      "voice_id": "c9eIhSvMHBxtYhLX4oBt",
-      "designPrompt": "A 55-year-old Turkish coffeehouse owner. Warm, hearty, booming baritone voice, friendly and curious, talks a little loud as if across a busy coffeehouse. Native Turkish with an Istanbul accent. Jovial and generous, laughs from the belly. Clean studio recording, close microphone, no background noise.",
+      "voice_id": "0l2g5xn7wVkUKUNNlZMG",
+      "designPrompt": "A 52-year-old Turkish kahveci with a raspy, smoky baritone, fast and energetic delivery, sharp sense of humor, sounds like he has run the same coffeehouse for 30 years, calls everyone 'kardeşim', half-shouting half-laughing. Native Turkish, Istanbul accent with a light Anatolian flavour.",
       "designPromptTr": "55 yaşında kahvehane sahibi. Sıcak, gür, tok bir bariton; güler yüzlü ve meraklı, kalabalık kahvede seslenir gibi biraz yüksek konuşur. İstanbul ağzıyla anadil Türkçe. Cömert, göbekten güler. Temiz stüdyo kaydı.",
       "previewText": "Hoş geldin, hoş geldin! Otur şöyle, tavşan kanı çaylar geliyor. Bu kahvede kimse çaysız oynamaz. Senin kartlara bir baksam… yok yok, ayıp, bakmıyorum! Çaylar benden, oyun sizden!",
       "settings": {
@@ -62,7 +62,7 @@
         "use_speaker_boost": true
       },
       "previews": [],
-      "voice_name": "Orcun Togan (library)"
+      "voice_name": "Dursun kısık-hızlı (tasarım)"
     },
     "defne": {
       "name": "Defne",
