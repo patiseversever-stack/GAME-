@@ -346,23 +346,7 @@ export class LocalHost<G extends AnyEngine, T = unknown> {
       this.clock.clear(this.ackH);
       this.ackH = null;
     }
-    for (let seat = 0; seat < n; seat++) {
-      const sp = this.seatSpecs[seat];
-      const evs: EventOf<G>[] = [];
-      for (const ev of events) {
-        const r = e.redact(ev, seat);
-        if (r !== null) evs.push(r);
-      }
-      if (sp.kind === 'bot') {
-        for (const ev of evs) sp.brain.observe(ev);
-        continue;
-      }
-      const l = this.links[seat];
-      if (!l || evs.length === 0) continue;
-      l.send({t: 'events', seq, events: evs, view: e.viewFor(this.st, seat), actor, tell});
-      if (sp.paced ?? sp.kind === 'human') this.awaiting.add(seat);
-    }
-    observed?.();
+    // Önce eskiyen zamanlayıcılar (istemci halkayı olayları sunmadan önce durdursun).
     // Dönem değiştiyse bekleyen bot kararları / süre aşımları geçersiz.
     const ep = e.epoch(this.st);
     for (let s = 0; s < n; s++) {
@@ -385,6 +369,23 @@ export class LocalHost<G extends AnyEngine, T = unknown> {
       this.sendAll({t: 'timerCleared', key: this.timer.info.key});
       this.timer = null;
     }
+    for (let seat = 0; seat < n; seat++) {
+      const sp = this.seatSpecs[seat];
+      const evs: EventOf<G>[] = [];
+      for (const ev of events) {
+        const r = e.redact(ev, seat);
+        if (r !== null) evs.push(r);
+      }
+      if (sp.kind === 'bot') {
+        for (const ev of evs) sp.brain.observe(ev);
+        continue;
+      }
+      const l = this.links[seat];
+      if (!l || evs.length === 0) continue;
+      l.send({t: 'events', seq, events: evs, view: e.viewFor(this.st, seat), actor, tell});
+      if (sp.paced ?? sp.kind === 'human') this.awaiting.add(seat);
+    }
+    observed?.();
     if (e.isOver(this.st)) {
       this.clearAllTimers();
       for (let s = 0; s < n; s++) {

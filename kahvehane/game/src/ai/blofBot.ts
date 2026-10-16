@@ -6,10 +6,15 @@
 // (kendi elim, kendi attığım kartlar, açılan kartlar ve gittiği yer, yığının kime gittiği). Unutmak = maskeyi genişletmek
 // (hep güvenli). Blöf olasılığı bu maskelerden ve el sayılarından hesaplanır.
 //
+// Ek olarak "muhtemel sahip" katmanı (kim hangi yığını aldı) ve kamuya açık rakip modeli (kim ne sıklıkla "Blöf!" diyor)
+// tutulur. Kararlar beklenen değerle verilir: atılan/alınan kart + turu açma hakkı (tempo) + yakalanma riski.
+//
 // Zorluk (karakterler aynı, yalnız zorluk farkı):
-//  kolay — yalnız kendi eline bakar, sık sık blöf yapar, nadiren ve geç "Blöf!" der, son kartta bile kaçırabilir, ele verir.
-//  orta  — kart sayar (çoğunu hatırlar), riski yığın büyüklüğüyle tartar, son kartı nadiren kaçırır.
-//  zor   — her şeyi hatırlar, turdaki iddiaları da hesaba katar, bitirmeye yakın rakibi sıkıştırır, az ele verir.
+//  kolay — yalnız kendi eline bakar; gelişigüzel blöf yapar ve der (çoğu boşa), son kartı bile kaçırabilir,
+//          blöfte sık ele verir (gergin), duraksar; yavaş tepki.
+//  orta  — kart sayar ama bazen unutur, kimin ne sıklıkla blöf dediğini izler, biraz gürültülü karar verir.
+//  zor   — her şeyi hatırlar, turdaki iddiaları da hesaba katar, rakiplerin blöf deme sıklığına göre blöf dozunu ayarlar,
+//          bitirmeye yakın rakibi sıkıştırır, son kartı asla kaçırmaz, az ele verir; hızlı tepki.
 import type {BotBrain, BotDecision} from '../core/game';
 import {mulberry32} from '../core/rng';
 import {rankOf} from '../core/types';
@@ -185,8 +190,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
 
   // ─────────────── Gözlem ───────────────
 
-  private init(seats: number, hand: readonly CardId[], pileCount: number, discardCount: number, teams?: readonly number[]): void {
-    if (teams) this.setTeams(teams);
+  private init(seats: number, hand: readonly CardId[], pileCount: number, discardCount: number): void {
     this.others = 0;
     for (let s = 0; s < seats; s++) if (s !== this.seat) this.others |= bit(s);
     const unknown = this.others | (pileCount > 0 ? PILE : 0) | (discardCount > 0 ? DISC : 0);
@@ -290,7 +294,6 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     }
   }
 
-  /** Görünümle tutarlılaştırma: kendi elim kesin; boş yerler elenir; kesin sayısı dolan yere başka kart giremez. */
   /** Takım arkadaşım varsa eşli ayarlarına geç. */
   private setTeams(teams: readonly number[]): void {
     const mate = teams.some((t, i) => i !== this.seat && t === teams[this.seat]);
@@ -299,6 +302,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     this.p = mate && this.base.team ? {...this.base, ...this.base.team} : this.base;
   }
 
+  /** Görünümle tutarlılaştırma: kendi elim kesin; boş yerler elenir; kesin sayısı dolan yere başka kart giremez. */
   private refine(v: BlofView): void {
     if (!this.inited) this.init(v.seats, v.hand, v.pileCount, v.discardCount);
     this.setTeams(v.teams);

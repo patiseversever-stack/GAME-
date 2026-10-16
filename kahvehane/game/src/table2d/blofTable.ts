@@ -110,7 +110,7 @@ const SP_MAX = [0.36, 0.62] as const;
 const SP_MIN = [0.25, 0.34] as const;
 const SP_TIGHT = [0.19, 0.27] as const;
 /** Seçili kartın iki yanındaki adım: komşular yer açar (seçim yığın gibi görünmesin) */
-const SP_SEL = 0.56;
+const SP_SEL = 0.5;
 /** İki sıralı elde arka sıranın kayması, seçim yüksekliği (tek / iki sıra), orta yığın ölçeği (kart genişliği oranı) */
 const ROW_DY = 0.56;
 const LIFT1 = 0.22;
@@ -266,8 +266,8 @@ export class BlofTable {
     let oppBottom: number;
     if (n === 2) {
       const s = 0.58;
-      const plate = Math.max(u * 1.15, safeT + u * 0.7) + u * 9.1; // rozet + ad + sayaç
-      const y = plate + (ch * s) / 2 + u * 0.2;
+      const plate = Math.max(u * 1.15, safeT + u * 0.7) + u * 9.4; // rozet + ad + sayaç
+      const y = plate + (ch * s) / 2 + u * 0.35;
       seats.push({x: W / 2, y, a: 180, s, spread: cw * s * 0.24, vis: 11});
       oppBottom = y + (ch * s) / 2;
     } else if (n === 3) {
@@ -293,7 +293,7 @@ export class BlofTable {
       const bs = (H <= 700 ? 4.3 : 4.6) * u;
       const sideLen = 5 * cw * ss * 0.2 + cw * ss;
       const sy = H * sideTop + bs + u * 3.7 + sideLen / 2;
-      const side = sh * 0.38;
+      const side = sh * 0.48;
       seats.push(
         {x: W - side, y: sy, a: -90, s: ss, spread: cw * ss * 0.2, vis: 6},
         {x: W / 2, y: ty, a: 180, s: fs, spread: cw * fs * 0.3, vis: 10},
@@ -318,7 +318,7 @@ export class BlofTable {
     if (n === 4) {
       // yan yelpazelere değmesin
       const sh = ch * 0.44;
-      const innerR = W - sh * 0.38 - sh / 2 - u * 0.4, innerL = sh * 0.38 + sh / 2 + u * 0.4;
+      const innerR = W - sh * 0.48 - sh / 2 - u * 0.4, innerL = sh * 0.48 + sh / 2 + u * 0.4;
       claim.x = Math.min(claim.x, innerR - d / 2);
       discard.x = Math.max(discard.x, innerL + (cw * 0.52) / 2 + u * 0.3);
     }
@@ -524,7 +524,8 @@ export class BlofTable {
       let fixed = 0, flex = 0;
       for (let i = r.from + 1; i < r.to; i++) {
         const base = grp[i] === grp[i - 1] ? ki : ko;
-        const sel = cards[i].sel || cards[i - 1].sel;
+        // seçili kartın SAĞINDAKİ adım açılır (sonraki kart onu örtüyor); solundaki kart zaten altta kalır
+        const sel = cards[i - 1].sel;
         const st = sel ? Math.max(base, SP_SEL) : base;
         steps.push(st);
         if (sel) fixed += st;
@@ -533,13 +534,13 @@ export class BlofTable {
       const room = h.maxW / (cwH * k) - 1 - fixed;
       const f = flex > 0 && fixed + flex > h.maxW / (cwH * k) - 1 ? Math.max(0.55, room / flex) : 1;
       let w = cwH * k;
-      steps.forEach((st, j) => (w += (cards[r.from + j + 1].sel || cards[r.from + j].sel ? st : st * f) * cwH * k));
+      steps.forEach((st, j) => (w += (cards[r.from + j].sel ? st : st * f) * cwH * k));
       let x = h.cx - w / 2 + (cwH * k) / 2;
       const half = Math.max(w / 2, cwH * 1.5);
       for (let i = r.from; i < r.to; i++) {
         if (i > r.from) {
           const st = steps[i - r.from - 1];
-          x += (cards[i].sel || cards[i - 1].sel ? st : st * f) * cwH * k;
+          x += (cards[i - 1].sel ? st : st * f) * cwH * k;
         }
         const q = (x - h.cx) / half;
         out[i] = {x, y: y0 + q * q * chH * 0.045, r: q * (back ? 2 : 2.8), s: s * k};

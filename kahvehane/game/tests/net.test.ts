@@ -345,3 +345,18 @@ describe('Pişti bağdaştırıcısı (davranış aynı)', () => {
     expect(pistiEngine.apply(host.state, {t: 'play', seat: 1, card: 0}).error).toBeDefined();
   });
 });
+
+describe('LocalHost: zamanlayıcı mesaj sırası', () => {
+  it('blöf denince timerCleared, olaylardan ÖNCE gelir (halka açılış animasyonundan önce durur)', () => {
+    const clock = new VirtualClock();
+    const {host, client} = createBlofLocal({cfg: {seats: 2, seed: 12, firstSeat: 1}, seats: ['human', 'kolay'], clock, paceMaxMs: 0});
+    const msgs = record(client!);
+    host.start();
+    while (host.state.phase === 'turn') clock.step();
+    expect(msgs.some((m) => m.t === 'timer')).toBe(true);
+    const from = msgs.length;
+    client!.act({t: 'challenge', seat: 0});
+    const after = msgs.slice(from).map((m) => m.t);
+    expect(after.indexOf('timerCleared')).toBeLessThan(after.indexOf('events'));
+  });
+});
