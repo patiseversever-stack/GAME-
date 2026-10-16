@@ -60,15 +60,15 @@ export const CATALOG: readonly ShopItem[] = [
   {id: 'kapadokya', kind: 'table', name: 'Kapadokya Şafağı', desc: 'Şafakta onlarca balon, ufukta peri bacaları.', price: 6500, rarity: 'epic', set: 'kapadokya'},
 
   // Pişti efektleri
-  {id: 'klasik', kind: 'fx', name: 'Dört Renk Patlama', desc: 'Işın çarkı, konfeti ve jeton.', price: 0, rarity: 'common', starter: true},
-  {id: 'havai', kind: 'fx', name: 'Havai Fişek', desc: 'Masanın üstünde patlayan renkli fişekler.', price: 6000, rarity: 'epic'},
-  {id: 'yildiz', kind: 'fx', name: 'Yıldız Yağmuru', desc: 'Gökten kayan yıldızlar ve ışık izi.', price: 7000, rarity: 'epic'},
-  {id: 'altin', kind: 'fx', name: 'Altın Yağmuru', desc: 'Masaya yağan altın sikkeler.', price: 9000, rarity: 'legendary'},
-  {id: 'girdap', kind: 'fx', name: 'Dört Renk Girdap', desc: 'Işık kolları dönerek yığına çekilir, merkezde yıldız patlar.', price: 12500, rarity: 'legendary'},
-  {id: 'davul', kind: 'fx', name: 'Davul Zurna', desc: 'Davul gümler, notalar uçuşur: masada düğün havası!', price: 11500, rarity: 'legendary'},
-  {id: 'simsek', kind: 'fx', name: 'Şimşek', desc: 'Gök gürler, yığına şimşek iner, kıvılcımlar saçılır.', price: 8500, rarity: 'epic'},
-  {id: 'lale', kind: 'fx', name: 'Lale Yağmuru', desc: 'Ortada dev bir lale açar, masaya lale yaprakları yağar.', price: 7500, rarity: 'epic', set: 'ebru'},
-  {id: 'nazar', kind: 'fx', name: 'Nazar Boncuğu', desc: 'Yığından halka halka nazar boncukları saçılır. Nazar değmesin!', price: 6500, rarity: 'epic', set: 'nazar'},
+  {id: 'klasik', kind: 'fx', name: 'Zafer Işığı', desc: 'Altın ışık toplanır ve PİŞTİ\'nin ardında patlar: ışınlar, kıvılcımlar, yıldız parıltısı.', price: 0, rarity: 'common', starter: true},
+  {id: 'havai', kind: 'fx', name: 'Havai Fişek', desc: 'Altın, gül ve gümüş fişekler: sarkan ışık izleri, çatırtı ve duman.', price: 6000, rarity: 'epic'},
+  {id: 'yildiz', kind: 'fx', name: 'Yıldız Yağmuru', desc: 'Gece çöker, göktaşları yığına iner, ortada bir yıldız patlar.', price: 7000, rarity: 'epic'},
+  {id: 'altin', kind: 'fx', name: 'Altın Yağmuru', desc: 'Tepeden altın ışık iner, sikkeler masaya yağıp seker.', price: 9000, rarity: 'legendary'},
+  {id: 'girdap', kind: 'fx', name: 'Kozmik Girdap', desc: 'Mor bir girdap döner, ışık sarmalı yığına çöker ve patlar.', price: 12500, rarity: 'legendary'},
+  {id: 'tac', kind: 'fx', name: 'Taç Giyme', desc: 'Altın ışıkta mücevherli taç yığına oturur: masanın sultanı sensin!', price: 11500, rarity: 'legendary', set: 'sultan'},
+  {id: 'simsek', kind: 'fx', name: 'Şimşek', desc: 'Gök kararır, yığına gerçek bir yıldırım iner: elektrik arkları, kıvılcım.', price: 8500, rarity: 'epic'},
+  {id: 'lale', kind: 'fx', name: 'Lale Rüzgârı', desc: 'Gül ışığında lale yaprakları rüzgârla savrulur, altın polen parlar.', price: 7500, rarity: 'epic', set: 'ebru'},
+  {id: 'nazar', kind: 'fx', name: 'Nazar Boncuğu', desc: 'Cam nazar belirir, parıldar; kırılıp boncuklara saçılır. Nazar değmesin!', price: 6500, rarity: 'epic', set: 'nazar'},
 
   // Avatar çerçeveleri
   {id: 'standart', kind: 'frame', name: 'Standart', desc: 'Sade beyaz halka.', price: 0, rarity: 'common', starter: true},

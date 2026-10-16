@@ -85,9 +85,9 @@
   will-change: transform; animation: kh-spin 90s linear infinite; }
 .kh-srays.is-off { animation-play-state: paused; }
 @media (prefers-reduced-motion: reduce) { .kh-srays { animation: none; } }
-.kh-item__rays { left: 50%; top: 62%; width: 170%; margin: -85% 0 0 -85%; opacity: .25; }
-.kh-item.is-epic .kh-item__rays, .kh-deal.is-epic .kh-item__rays { opacity: .34; }
-.kh-item.is-legendary .kh-item__rays, .kh-deal.is-legendary .kh-item__rays { opacity: .5; }
+.kh-item__rays { left: 50%; top: 62%; width: 170%; margin: -85% 0 0 -85%; opacity: .35; }
+.kh-item.is-epic .kh-item__rays, .kh-deal.is-epic .kh-item__rays { opacity: .45; }
+.kh-item.is-legendary .kh-item__rays, .kh-deal.is-legendary .kh-item__rays { opacity: .6; }
 /* efsanevi folyo: durağan çapraz ışık + altın iç kenar */
 .kh-item.is-legendary .kh-item__pv::after, .kh-deal__pv::after { content: ''; position: absolute; inset: 0; z-index: 2; pointer-events: none; border-radius: inherit;
   background: linear-gradient(118deg, rgba(255, 255, 255, 0) 30%, rgba(255, 248, 210, .2) 44%, rgba(255, 255, 255, .05) 52%, rgba(255, 255, 255, 0) 62%);
@@ -196,7 +196,7 @@
     linear-gradient(135deg, #ff4d66 0%, #d4106e 38%, #8a1ac0 74%, #4d16a8 100%) padding-box, var(--rar-edge-legendary) border-box;
   box-shadow: 0 0 0 2.5px var(--navy), 0 6px 0 var(--navy), 0 0 26px rgba(255, 80, 160, .35), 0 14px 22px rgba(2, 4, 24, .45); }
 .kh-deal.is-done { display: flex; justify-content: center; min-height: calc(var(--u) * 6); background: var(--panel-fill) padding-box, var(--rar-edge-legendary) border-box; }
-.kh-deal__srays { left: 24%; top: 50%; width: calc(var(--u) * 19); margin: calc(var(--u) * -9.5) 0 0 calc(var(--u) * -9.5); opacity: .8; animation-duration: 70s; }
+.kh-deal__srays { left: 24%; top: 50%; width: calc(var(--u) * 19); margin: calc(var(--u) * -9.5) 0 0 calc(var(--u) * -9.5); opacity: .9; animation-duration: 70s; }
 /* yıldız tozu: durağan noktalar */
 .kh-deal__dots { position: absolute; inset: 0; pointer-events: none; opacity: .9;
   background: radial-gradient(circle at 58% 18%, #fff 0 1.5px, transparent 2.5px), radial-gradient(circle at 88% 70%, #fff6c0 0 1.5px, transparent 2.5px),
@@ -232,7 +232,7 @@
   background: radial-gradient(ellipse 60% 90% at 22% 55%, rgba(255, 255, 255, .22), transparent 62%) padding-box, linear-gradient(135deg, var(--a), var(--b)) padding-box, var(--rar-edge-legendary) border-box;
   box-shadow: 0 0 0 2.5px var(--navy), 0 6px 0 var(--navy), 0 12px 20px rgba(2, 4, 24, .42); }
 .kh-setc.is-done { background: var(--panel-fill) padding-box, var(--rar-edge-epic) border-box; }
-.kh-setc__srays { left: 24%; top: 55%; width: calc(var(--u) * 16); margin: calc(var(--u) * -8) 0 0 calc(var(--u) * -8); opacity: .42; animation-duration: 100s; }
+.kh-setc__srays { left: 24%; top: 55%; width: calc(var(--u) * 16); margin: calc(var(--u) * -8) 0 0 calc(var(--u) * -8); opacity: .5; animation-duration: 100s; }
 .kh-setc__art { position: relative; z-index: 1; display: block; height: calc(var(--u) * 7.8); }
 .kh-setc__tile { --pvbg: var(--rar-bg-epic); --rays: rgba(255, 255, 255, .1); position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 5); aspect-ratio: .78; overflow: hidden;
   border-radius: var(--r-sm); transform: translate(-50%, -50%) translateX(calc(var(--n) * 64%)) rotate(calc(var(--n) * 9deg));
@@ -276,10 +276,10 @@
 .kh-pd__sbg { position: absolute; inset: 0; background: var(--pvbg); }
 .kh-pd__sbg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse 60% 40% at 50% 100%, rgba(2, 4, 24, .5), transparent 70%); }
 /* sahne ışınları (nadirlik tonunda, beyaz) + efsanevide/sette ters yönde altın çark */
-.kh-pd__srays { left: 50%; top: 58%; width: 150%; margin: -75% 0 0 -75%; opacity: .16; animation-duration: 80s; }
-.kh-pd.is-rare .kh-pd__srays { opacity: .25; }
-.kh-pd.is-epic .kh-pd__srays { opacity: .3; }
-.kh-pd.is-legendary .kh-pd__srays { opacity: .45; }
+.kh-pd__srays { left: 50%; top: 58%; width: 130%; margin: -65% 0 0 -65%; opacity: .2; animation-duration: 80s; }
+.kh-pd.is-rare .kh-pd__srays { opacity: .3; }
+.kh-pd.is-epic .kh-pd__srays { opacity: .38; }
+.kh-pd.is-legendary .kh-pd__srays { opacity: .5; }
 .kh-pd__grays { left: 50%; top: 50%; width: calc(var(--u) * 30); margin: calc(var(--u) * -15) 0 0 calc(var(--u) * -15); opacity: .85; animation-duration: 70s; animation-direction: reverse; }
 .kh-pd__pv { position: relative; width: calc(var(--u) * 14); height: calc(var(--u) * 13); }
 .kh-pd__stage > .kh-glint { width: 30%; }

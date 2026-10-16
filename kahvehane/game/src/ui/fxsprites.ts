@@ -73,15 +73,15 @@ function rays(p: Pal, seed: number): Def {
     draw(g, w) {
       const c = w / 2, R = w / 2, rnd = rng(seed);
       g.globalCompositeOperation = 'lighter';
-      const N = 16;
+      const N = 14;
       for (let i = 0; i < N; i++) {
-        const a = (i / N) * Math.PI * 2 + (rnd() - 0.5) * 0.22, wa = 0.035 + rnd() * 0.07, L = R * (0.62 + rnd() * 0.38);
-        const col = i % 3 === 0 ? p.core : i % 3 === 1 ? p.mid : mix(p.mid, p.out, 0.5);
+        const a = (i / N) * Math.PI * 2 + (rnd() - 0.5) * 0.25, wa = i % 2 ? 0.05 + rnd() * 0.05 : 0.1 + rnd() * 0.08, L = R * (0.7 + rnd() * 0.3);
+        const col = i % 3 === 0 ? p.core : i % 3 === 1 ? p.mid : mix(p.mid, p.out, 0.4);
         const gr = g.createRadialGradient(c, c, 0, c, c, L);
         gr.addColorStop(0, rgba(col, 0));
-        gr.addColorStop(0.1, rgba(col, 0.5));
-        gr.addColorStop(0.35, rgba(col, 0.28));
-        gr.addColorStop(0.75, rgba(col, 0.08));
+        gr.addColorStop(0.08, rgba(col, 0.7));
+        gr.addColorStop(0.3, rgba(col, 0.42));
+        gr.addColorStop(0.7, rgba(col, 0.12));
         gr.addColorStop(1, rgba(col, 0));
         g.fillStyle = gr;
         g.beginPath();
@@ -102,8 +102,8 @@ function rays(p: Pal, seed: number): Def {
 /** Şok halkası: ince parlak kenar, dışa doğru yumuşak ışıma, içte çok hafif dolgu */
 function ring(p: Pal): Def {
   return {
-    w: 256,
-    h: 256,
+    w: 200,
+    h: 200,
     draw(g, w) {
       const c = w / 2, R = w / 2;
       const gr = g.createRadialGradient(c, c, 0, c, c, R);
@@ -211,8 +211,9 @@ function streak(p: Pal, w: number, h: number, headAt = 0.86): Def {
       g.fillRect(hx - h / 2, 0, h, h);
       const lg = g.createLinearGradient(0, 0, hx + r, 0);
       lg.addColorStop(0, rgba(p.out, 0));
-      lg.addColorStop(0.45, rgba(p.out, 0.35));
-      lg.addColorStop(0.8, rgba(p.mid, 0.85));
+      lg.addColorStop(0.4, rgba(p.out, 0.45));
+      lg.addColorStop(0.78, rgba(p.mid, 0.95));
+      lg.addColorStop(0.94, rgba(p.core, 1));
       lg.addColorStop(1, rgba(p.core, 1));
       g.fillStyle = lg;
       g.beginPath();
@@ -230,14 +231,52 @@ function streak(p: Pal, w: number, h: number, headAt = 0.86): Def {
     },
   };
 }
+/** Fişek / kıvılcım demeti: merkezden dışa onlarca ince ışık izi, uçlarında parlak baş (ölçekle "açılır") */
+function burst(p: Pal, seed: number): Def {
+  return {
+    w: 256,
+    h: 256,
+    draw(g, w) {
+      const c = w / 2, R = w * 0.48, rnd = rng(seed);
+      g.globalCompositeOperation = 'lighter';
+      g.lineCap = 'round';
+      const N = 44;
+      for (let i = 0; i < N; i++) {
+        const a = (i / N) * Math.PI * 2 + (rnd() - 0.5) * 0.12, r1 = R * (0.62 + rnd() * 0.38), r0 = r1 * (0.3 + rnd() * 0.2);
+        const x0 = c + Math.cos(a) * r0, y0 = c + Math.sin(a) * r0, x1 = c + Math.cos(a) * r1, y1 = c + Math.sin(a) * r1;
+        const lg = g.createLinearGradient(x0, y0, x1, y1);
+        lg.addColorStop(0, rgba(p.out, 0));
+        lg.addColorStop(0.6, rgba(p.mid, 0.55));
+        lg.addColorStop(1, rgba(p.core, 1));
+        g.strokeStyle = lg;
+        g.lineWidth = 1.6 + rnd() * 1.6;
+        g.beginPath();
+        g.moveTo(x0, y0);
+        g.lineTo(x1, y1);
+        g.stroke();
+        const hg = g.createRadialGradient(x1, y1, 0, x1, y1, 5.5);
+        hg.addColorStop(0, rgba(p.core, 1));
+        hg.addColorStop(0.4, rgba(p.mid, 0.6));
+        hg.addColorStop(1, rgba(p.out, 0));
+        g.fillStyle = hg;
+        g.fillRect(x1 - 6, y1 - 6, 12, 12);
+      }
+      const cg = g.createRadialGradient(c, c, 0, c, c, R * 0.35);
+      cg.addColorStop(0, rgba(p.mid, 0.35));
+      cg.addColorStop(1, rgba(p.out, 0));
+      g.fillStyle = cg;
+      g.fillRect(0, 0, w, w);
+    },
+  };
+}
 /** Göktaşı: uzun, ince, mavimsi beyaz kuyruk; başında küçük dikenli parıltı */
 const meteor: Def = {
   w: 448,
-  h: 36,
+  h: 44,
   draw(g, w, h) {
     const cy = h / 2, hx = w * 0.93;
     g.globalCompositeOperation = 'lighter';
-    for (const [t, a, col] of [[h * 0.42, 0.18, [120, 170, 255]], [h * 0.22, 0.45, [190, 220, 255]], [h * 0.08, 1, [255, 255, 255]]] as const) {
+    for (const [t, a, col] of [[h * 0.46, 0.22, [110, 150, 255]], [h * 0.26, 0.5, [180, 215, 255]], [h * 0.11, 1, [255, 255, 255]]] as const) {
       const lg = g.createLinearGradient(0, 0, hx, 0);
       lg.addColorStop(0, rgba(col, 0));
       lg.addColorStop(0.55, rgba(col, a * 0.35));
@@ -291,8 +330,8 @@ const smoke: Def = {
     for (let i = 0; i < 9; i++) {
       const a = rnd() * Math.PI * 2, d = rnd() * w * 0.18, x = w / 2 + Math.cos(a) * d, y = w / 2 + Math.sin(a) * d * 0.7, r = w * (0.18 + rnd() * 0.16);
       const gr = g.createRadialGradient(x, y, 0, x, y, r);
-      const warm = 220 + rnd() * 30;
-      gr.addColorStop(0, `rgba(${warm | 0},${(warm - 18) | 0},${(warm - 40) | 0},.22)`);
+      const warm = 230 + rnd() * 25;
+      gr.addColorStop(0, `rgba(${warm | 0},${(warm - 14) | 0},${(warm - 34) | 0},.34)`);
       gr.addColorStop(1, `rgba(${warm | 0},${(warm - 18) | 0},${(warm - 40) | 0},0)`);
       g.fillStyle = gr;
       g.fillRect(0, 0, w, w);
@@ -372,7 +411,7 @@ function bolt(seed: number): Def {
         const side = rnd() < 0.5 ? -1 : 1, L = h * (0.12 + rnd() * 0.16), ang = Math.PI / 2 + side * (0.4 + rnd() * 0.5);
         lines.push(jag(at, [at[0] + Math.cos(ang) * L, at[1] + Math.sin(ang) * L], 0.45, 5, rnd));
       }
-      strokeBolt(g, lines, 1);
+      strokeBolt(g, lines, 2.2);
       // çarpma noktasında ışık
       const e = main[main.length - 1];
       const gr = g.createRadialGradient(e[0], e[1], 0, e[0], e[1], w * 0.3);
@@ -407,6 +446,88 @@ const arc: Def = {
 };
 
 // ───────────────────────── lale yaprağı ─────────────────────────
+/** Lale yaprağı yolu (w×h kutusunda, taban altta ortada) */
+function petalPath(w: number, h: number, ox = 0, oy = 0): Path2D {
+  const cx = ox + w / 2, p = new Path2D();
+  p.moveTo(cx, oy + h * 0.98);
+  p.bezierCurveTo(ox + w * 0.1, oy + h * 0.84, ox + w * 0.02, oy + h * 0.4, ox + w * 0.2, oy + h * 0.14);
+  p.quadraticCurveTo(cx - w * 0.06, oy + h * 0.02, cx + w * 0.02, oy + h * 0.02);
+  p.quadraticCurveTo(cx + w * 0.16, oy + h * 0.04, ox + w * 0.82, oy + h * 0.16);
+  p.bezierCurveTo(ox + w * 0.98, oy + h * 0.42, ox + w * 0.9, oy + h * 0.84, cx, oy + h * 0.98);
+  return p;
+}
+/** Açan lale gülü (üstten): dışta 8 büyük, içte 6 küçük boyalı yaprak, altın göbek ve başçıklar */
+const rosette: Def = {
+  w: 256,
+  h: 256,
+  draw(g, w) {
+    const c = w / 2;
+    const halo = g.createRadialGradient(c, c, 0, c, c, c);
+    halo.addColorStop(0, 'rgba(255,200,215,.55)');
+    halo.addColorStop(0.5, 'rgba(255,120,150,.18)');
+    halo.addColorStop(1, 'rgba(255,90,130,0)');
+    g.fillStyle = halo;
+    g.fillRect(0, 0, w, w);
+    const ring = (n: number, L: number, Wd: number, off: number, base: string, top: string, edge: string): void => {
+      for (let i = 0; i < n; i++) {
+        g.save();
+        g.translate(c, c);
+        g.rotate(off + (i / n) * Math.PI * 2);
+        g.translate(-Wd / 2, -L);
+        const p = petalPath(Wd, L);
+        const lg = g.createLinearGradient(0, L, 0, 0);
+        lg.addColorStop(0, '#5a0414');
+        lg.addColorStop(0.3, base);
+        lg.addColorStop(0.9, top);
+        lg.addColorStop(1, '#ffd0d8');
+        g.fillStyle = lg;
+        g.fill(p);
+        g.save();
+        g.clip(p);
+        const sh = g.createLinearGradient(0, 0, Wd, 0);
+        sh.addColorStop(0, 'rgba(255,235,235,.3)');
+        sh.addColorStop(0.5, 'rgba(255,235,235,0)');
+        sh.addColorStop(1, 'rgba(40,0,10,.3)');
+        g.fillStyle = sh;
+        g.fillRect(0, 0, Wd, L);
+        g.strokeStyle = 'rgba(80,0,20,.3)';
+        g.lineWidth = 1.4;
+        g.beginPath();
+        g.moveTo(Wd / 2, L * 0.95);
+        g.quadraticCurveTo(Wd / 2 + 1, L * 0.5, Wd / 2 - 1, L * 0.12);
+        g.stroke();
+        g.restore();
+        g.strokeStyle = edge;
+        g.lineWidth = 2;
+        g.stroke(p);
+        g.restore();
+      }
+    };
+    ring(8, w * 0.46, w * 0.3, 0, '#c8102e', '#ff4a5e', 'rgba(255,206,90,.9)');
+    ring(6, w * 0.3, w * 0.22, Math.PI / 6, '#e0204a', '#ff7a90', 'rgba(110,0,24,.45)');
+    const cg = g.createRadialGradient(c - 4, c - 4, 0, c, c, w * 0.09);
+    cg.addColorStop(0, '#fff6c0');
+    cg.addColorStop(0.5, '#ffc83a');
+    cg.addColorStop(1, '#a05a06');
+    g.fillStyle = cg;
+    g.beginPath();
+    g.arc(c, c, w * 0.085, 0, Math.PI * 2);
+    g.fill();
+    for (let i = 0; i < 6; i++) {
+      const a = (i / 6) * Math.PI * 2 + 0.3, x = c + Math.cos(a) * w * 0.11, y = c + Math.sin(a) * w * 0.11;
+      g.strokeStyle = 'rgba(60,20,0,.7)';
+      g.lineWidth = 1.6;
+      g.beginPath();
+      g.moveTo(c, c);
+      g.lineTo(x, y);
+      g.stroke();
+      g.fillStyle = '#3a1404';
+      g.beginPath();
+      g.ellipse(x, y, 4, 2.5, a, 0, Math.PI * 2);
+      g.fill();
+    }
+  },
+};
 function petal(base: RGB, top: RGB, edge: string | null, gold: boolean): Def {
   return {
     w: 64,
@@ -691,11 +812,14 @@ const crown: Def = {
     // yatay metal parlaması (sol üstten ışık)
     g.save();
     g.clip(body);
+    // silindir gölgesi: kenarlar koyu, sol-orta parlak
     const sh = g.createLinearGradient(L, 0, R, 0);
-    sh.addColorStop(0, 'rgba(255,255,255,.28)');
-    sh.addColorStop(0.3, 'rgba(255,255,255,0)');
-    sh.addColorStop(0.75, 'rgba(70,30,0,.12)');
-    sh.addColorStop(1, 'rgba(70,30,0,.38)');
+    sh.addColorStop(0, 'rgba(60,24,0,.45)');
+    sh.addColorStop(0.12, 'rgba(60,24,0,.08)');
+    sh.addColorStop(0.32, 'rgba(255,255,230,.32)');
+    sh.addColorStop(0.45, 'rgba(255,255,230,0)');
+    sh.addColorStop(0.8, 'rgba(60,24,0,.18)');
+    sh.addColorStop(1, 'rgba(60,24,0,.55)');
     g.fillStyle = sh;
     g.fillRect(0, 0, w, h);
     // uçlarda kabartma çizgileri
@@ -717,6 +841,25 @@ const crown: Def = {
     band.closePath();
     g.fillStyle = metalGold(g, bandTop, bandBot + sag);
     g.fill(band);
+    g.save();
+    g.clip(band);
+    g.fillStyle = sh;
+    g.fillRect(0, 0, w, h);
+    // kazıma: bant boyunca küçük eşkenar dörtgenler
+    g.strokeStyle = 'rgba(110,60,0,.55)';
+    g.lineWidth = 1.2;
+    for (let i = -9; i <= 9; i++) {
+      const x = cx + i * w * 0.045, y = (bandTop + bandBot) / 2 + sag * (1 - (i / 9) ** 2) * 0.55, d = h * 0.03;
+      if (Math.abs(i) <= 1 || Math.abs(i) === 4 || Math.abs(i) === 7) continue;
+      g.beginPath();
+      g.moveTo(x, y - d);
+      g.lineTo(x + d * 0.7, y);
+      g.lineTo(x, y + d);
+      g.lineTo(x - d * 0.7, y);
+      g.closePath();
+      g.stroke();
+    }
+    g.restore();
     g.lineWidth = 3;
     g.strokeStyle = '#6a3a04';
     g.stroke(band);
@@ -745,8 +888,8 @@ const crown: Def = {
 
 // ───────────────────────── kozmik girdap ─────────────────────────
 const disc: Def = {
-  w: 320,
-  h: 320,
+  w: 256,
+  h: 256,
   draw(g, w) {
     const c = w / 2, R = w * 0.48, rnd = rng(9);
     const bg = g.createRadialGradient(c, c, 0, c, c, R);
@@ -797,6 +940,7 @@ const DEFS: Record<string, Def> = {
   petal1: petal([200, 16, 46], [255, 74, 92], null, false),
   petal2: petal([226, 70, 110], [255, 168, 190], null, false),
   petal3: petal([176, 10, 40], [240, 40, 64], 'rgba(255,206,90,.95)', true),
+  rosette,
 };
 for (const k of Object.keys(PAL) as PalKey[]) {
   const p = PAL[k];
@@ -804,10 +948,11 @@ for (const k of Object.keys(PAL) as PalKey[]) {
   DEFS[`ring:${k}`] = ring(p);
   DEFS[`glint:${k}`] = glint(p);
   DEFS[`spark:${k}`] = streak(p, 96, 20);
-  DEFS[`comet:${k}`] = streak(p, 192, 22, 0.9);
+  DEFS[`comet:${k}`] = streak(p, 192, 30, 0.9);
   DEFS[`dust:${k}`] = dust(p);
   DEFS[`flare:${k}`] = flare(p);
   DEFS[`rays:${k}`] = rays(p, k.length * 7);
+  DEFS[`burst:${k}`] = burst(p, k.length * 13);
 }
 export type SpriteKey = string;
 
@@ -840,15 +985,15 @@ export const spriteSize = (key: SpriteKey): [number, number] => (key === 'coin' 
 
 /** Efektin kullandığı görseller (boşta önceden çizmek için) */
 export const FX_SPRITES: Record<string, SpriteKey[]> = {
-  klasik: ['bloom:gold', 'bloom:white', 'ring:gold', 'flare:gold', 'rays:gold', 'spark:gold', 'glint:gold', 'glint:white', 'dust:gold'],
+  klasik: ['bloom:gold', 'bloom:white', 'ring:gold', 'flare:gold', 'rays:gold', 'burst:gold', 'spark:gold', 'spark:white', 'glint:gold', 'glint:white', 'dust:gold'],
   altin: ['coin', 'bloom:gold', 'ring:gold', 'shaft', 'glint:gold', 'glint:white', 'dust:gold'],
-  havai: ['comet:gold', 'comet:rose', 'comet:silver', 'comet:cyan', 'bloom:gold', 'bloom:rose', 'bloom:silver', 'bloom:cyan', 'glint:white', 'smoke'],
-  yildiz: ['meteor', 'glint:white', 'glint:blue', 'bloom:blue', 'ring:blue', 'dust:blue'],
+  havai: ['comet:gold', 'comet:rose', 'comet:silver', 'burst:gold', 'burst:rose', 'burst:silver', 'bloom:gold', 'bloom:rose', 'bloom:silver', 'glint:white', 'smoke'],
+  yildiz: ['meteor', 'glint:white', 'glint:blue', 'bloom:blue', 'ring:blue', 'rays:white'],
   simsek: ['bolt1', 'bolt2', 'arc', 'bloom:blue', 'bloom:white', 'ring:blue', 'flare:blue', 'spark:blue', 'glint:blue'],
-  lale: ['petal1', 'petal2', 'petal3', 'bloom:rose', 'ring:rose', 'rays:rose', 'glint:gold', 'dust:gold'],
+  lale: ['rosette', 'petal1', 'petal2', 'petal3', 'bloom:rose', 'ring:rose', 'rays:rose', 'glint:gold', 'dust:gold'],
   nazar: ['eye', 'bead', 'shard1', 'shard2', 'bloom:blue', 'bloom:white', 'ring:blue', 'glint:white'],
   tac: ['crown', 'shaft', 'smoke', 'bloom:gold', 'ring:gold', 'rays:gold', 'spark:gold', 'glint:white', 'glint:rose', 'glint:blue', 'glint:gold'],
-  girdap: ['disc', 'spark:violet', 'spark:cyan', 'spark:gold', 'bloom:violet', 'bloom:white', 'ring:violet', 'flare:violet', 'glint:white'],
+  girdap: ['disc', 'spark:violet', 'spark:cyan', 'spark:gold', 'bloom:violet', 'bloom:white', 'ring:violet', 'flare:violet', 'burst:violet', 'burst:cyan', 'glint:white'],
 };
 
 /** Boşta, dilim dilim çiz (efekt anında çizim maliyeti olmasın). Önce verilen efekt, sonra diğerleri. */

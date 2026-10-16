@@ -19,9 +19,11 @@ await p.addInitScript(() => {
   const c = URL.createObjectURL.bind(URL), r = URL.revokeObjectURL.bind(URL);
   URL.createObjectURL = o => { window.__blobs++; return c(o); };
   URL.revokeObjectURL = u => { window.__blobs--; return r(u); };
+  // kare ölçer YALNIZ ölçüm sırasında döner: sürekli rAF her vsync'te ana iş parçacığı karesi ister ve çalışan
+  // (bileşimci) animasyonların stilini her karede güncelletir — uygulamanın kendisinde olmayan bir yük (boşta ölçümü bozar)
   window.__jk = {run: false, t: [], last: 0};
-  const loop = t => { const j = window.__jk; if (j.run) { if (j.last) j.t.push(t - j.last); j.last = t; } else j.last = 0; requestAnimationFrame(loop); };
-  requestAnimationFrame(loop);
+  const loop = t => { const j = window.__jk; if (!j.run) { j.last = 0; return; } if (j.last) j.t.push(t - j.last); j.last = t; requestAnimationFrame(loop); };
+  window.__jkStart = () => { window.__jk.t = []; window.__jk.last = 0; window.__jk.run = true; requestAnimationFrame(loop); };
 });
 const cdp = await ctx.newCDPSession(p);
 await cdp.send('Emulation.setCPUThrottlingRate', {rate: +slow});
@@ -49,7 +51,7 @@ async function metrics() {
   return {nodes: m.Nodes, heapMB: +(m.JSHeapUsedSize / 1048576).toFixed(1), listeners: m.JSEventListeners, blobs};
 }
 const jank = async (name, fn) => {
-  await p.evaluate(() => { window.__jk.t = []; window.__jk.run = true; });
+  await p.evaluate(() => window.__jkStart());
   await fn();
   const t = await p.evaluate(() => { window.__jk.run = false; return window.__jk.t; });
   const s = [...t].sort((a, c) => a - c), n = s.length;
@@ -75,7 +77,8 @@ for (const t of ['featured', 'set', 'deck', 'table', 'fx', 'frame', 'char']) {
   await click(`.kh-stab[data-t=${t}]`, 6500);
   const l = await longtasks(s0);
   const f = await frames(3000);
-  console.log(`${f.draw > 3 ? '⚠' : '✓'} boşta ${t.padEnd(9)} kare/sn ${f.draw.toFixed(1).padStart(5)} | boyama/sn ${f.paint.toFixed(1).padStart(5)} | stil/sn ${f.style.toFixed(1).padStart(5)} | düzen/sn ${f.layout.toFixed(1)} | açılış uzun görev: ${l.length ? `${l.length} adet, en uzun ${Math.max(...l)} ms, toplam ${l.reduce((a, c) => a + c, 0)} ms` : 'yok'}`);
+  // ışın çarkları bileşimcide döner: kare üretir ama ana iş parçacığında boyama/stil/düzen ~0 kalmalı (ölçüt bu)
+  console.log(`${f.paint > 3 || f.style > 3 || f.layout > 3 ? '⚠' : '✓'} boşta ${t.padEnd(9)} kare/sn ${f.draw.toFixed(1).padStart(5)} | boyama/sn ${f.paint.toFixed(1).padStart(5)} | stil/sn ${f.style.toFixed(1).padStart(5)} | düzen/sn ${f.layout.toFixed(1)} | açılış uzun görev: ${l.length ? `${l.length} adet, en uzun ${Math.max(...l)} ms, toplam ${l.reduce((a, c) => a + c, 0)} ms` : 'yok'}`);
 }
 // görünürken (ilk 5 sn): kare/sn — parıltı tek seferlik olduğundan düşük kalmalı
 await click('.kh-stab[data-t=deck]', 600);
