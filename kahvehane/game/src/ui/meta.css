@@ -20,13 +20,18 @@
 .kh-ava.is-locked .kh-ava__img { filter: grayscale(.85) brightness(.5) contrast(1.05); }
 .kh-ava.is-locked .kh-ava__clip { background: radial-gradient(circle at 50% 30%, #5162c4, #27348e 60%, #141d66); }
 
-/* ---------- canlı portre ---------- */
+/* ---------- canlı portre: tek görsel; nefes yalnız transform; gölge arkada durağan (görselde filtre/maske yok) ---------- */
 .kh-pt { position: relative; pointer-events: none; }
-.kh-pt__in { position: absolute; inset: 0; transform-origin: 50% 100%; will-change: transform; }
+.kh-pt__sh { position: absolute; left: 6%; right: 6%; top: 10%; bottom: 0; border-radius: 50% 50% 0 0 / 46% 46% 0 0;
+  background: radial-gradient(ellipse 50% 50% at 50% 50%, rgba(4, 7, 30, .42) 0%, rgba(4, 7, 30, .2) 55%, rgba(4, 7, 30, 0) 100%); }
+.kh-pt__pop, .kh-pt__in { position: absolute; inset: 0; transform-origin: 50% 100%; }
 .kh-pt__img { position: absolute; left: 0; bottom: 0; width: 100%; height: auto; max-width: none; }
-.kh-pt__img.is-over { opacity: 0; }
-.kh-pt.is-breathing .kh-pt__in { animation: kh-breath2 3.8s ease-in-out infinite; }
-@keyframes kh-breath2 { 50% { transform: translateY(-.7%) scale(1.012, 1.016); } }
+/* nefes: Portrait.breathe() WAAPI ile oynatır (CSS döngüsü değil; kapatınca kesin iptal) */
+
+/* ---------- daktilo metni: kutu tam metnin boyunu baştan ayırır ---------- */
+.kh-tt { display: grid; }
+.kh-tt > * { grid-area: 1 / 1; }
+.kh-tt__ghost, .kh-tt__rest { visibility: hidden; }
 
 /* ---------- nadirlik rozeti, jeton, yıldızlar ---------- */
 .kh-rar { display: inline-flex; align-items: center; padding: .32em .7em .26em; border-radius: var(--r-pill); color: #fff; white-space: nowrap;
@@ -70,7 +75,7 @@
 
 /* ---------- dört renk perde ---------- */
 .kh-wipe { position: fixed; inset: 0; z-index: 95; pointer-events: auto; overflow: hidden; }
-.kh-wipe__band { position: absolute; top: -12%; bottom: -12%; left: calc(-14% + var(--i) * 27%); width: 36%; transform: translateX(-130vw) skewX(-14deg); overflow: hidden;
+.kh-wipe__band { position: absolute; top: -12%; bottom: -12%; left: calc(-14% + var(--i) * 27%); width: 36%; transform: translateX(-130vw) skewX(-14deg);
   box-shadow: -6px 0 0 var(--navy), 6px 0 0 var(--navy); will-change: transform; }
 .kh-wipe__band.is-h { background: linear-gradient(170deg, #ff7a8e, #ff2e4d 45%, #b3001f); }
 .kh-wipe__band.is-d { background: linear-gradient(170deg, #ffe07a, #ffb400 45%, #c46a00); }
@@ -86,7 +91,8 @@
 
 /* ---------- damga ---------- */
 .kh-stampw { position: absolute; z-index: 75; pointer-events: none; font-size: calc(var(--u) * 3.6); white-space: nowrap; will-change: transform, opacity; }
-.kh-stampw .kh-title { filter: drop-shadow(0 8px 14px rgba(2, 4, 24, .5)); }
+/* damga hareket eder: filtre gölgesi yok (g3 yazının kendi gölgesi var) */
+.kh-stampw .kh-title { filter: none; }
 
 /* ---------- konuşma balonu (meta ekranlar; kuyruk aşağıda) ---------- */
 .kh-say { position: absolute; z-index: 6; max-width: calc(var(--u) * 17); padding: .65em .95em .75em; border-radius: calc(var(--u) * 1.15); border: 2.5px solid var(--bubble-edge);

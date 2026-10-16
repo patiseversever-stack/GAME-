@@ -1,34 +1,57 @@
 // İlk açılış hikâyesi: karanlık → kahvehane lambası yanar, arena aydınlanır → Kahveci Dursun karşılar (daktilo balon) →
 // hediye kutusu kıpırdar, dokununca patlar, içinden dört karakter kartı fırlar → kaydırmalı hediye galerisi (momentum + oturma,
-// paralaks, komşular görünür) → seçilen kart döner, konfeti, karakter zafer pozunda sözünü söyler → "Adın ne?" → hoş geldin.
-// Hikâye kısmı "Geç" ile atlanır (doğrudan galeriye). Sonunda profile.completeOnboarding(karakter, ad).
+// komşular görünür) → seçilen kart döner, konfeti, damga; kartın söz kutusunda karakterin sözü daktiloyla yazılır →
+// "Adın ne?" → hoş geldin. Hikâye kısmı "Geç" ile atlanır (doğrudan galeriye). Sonunda profile.completeOnboarding(karakter, ad).
+//
+// Görsel kural: her karakter ekranda TEK görseldir (poz değişimi yok), yalnız hafif nefes alır. Balonlar yüze asla binmez:
+// hikâyede logo → balon şeridi → karakter (yüz balonun altında, gövde ekran kenarında kesilir) dizilir.
+// Performans: boşta en çok iki küçük döngü; dönen dev ışık hüzmesi yok (ışınlar bir kez SVG'ye pişirilir, durağan);
+// hareket eden hiçbir şeyde filtre/maske yok; giriş animasyonları ≤ 8 öğe, kısa ve kademeli.
 import './onboarding.css';
 import type {Profile as GameProfile} from '../game/profile';
 import {ROSTER, type CharDef} from '../game/roster';
 import {RARITY_INFO} from '../game/catalog';
-import {ANIM, EASE, Scope, bump, center, countUp, esc, fmt, h, play, q, rnd, typewriter} from './dom';
+import {ANIM, EASE, Scope, bump, center, countUp, esc, fmt, h, play, q, rnd} from './dom';
 import {ASSETS} from './assets';
 import {I, suitSvg, type SuitKey} from './icons';
-import {Carousel, Portrait, arenaHtml, rarityHtml, shuffled, stampWord, starsHtml, wordmarkHtml, type Ctx} from './parts';
+import {Carousel, Portrait, arenaHtml, decorLoops, faceRect, placeBubble, rarityHtml, shuffled, stampWord, starsHtml, typeText, wordmarkHtml, type Ctx} from './parts';
 import {g3} from './fx';
 import {haptic} from '../platform/bridge';
 
 const HOST = 'dursun';
 const SUIT_OF: Record<string, SuitKey> = {riza: 'd', cem: 's', dursun: 'h', defne: 'c'};
 
-/** Dursun'un karşılama replikleri ve pozları. */
-const WELCOME: {t: string; pose: 'gulumseme' | 'zafer' | 'pisti' | 'kahkaha'}[] = [
-  {t: 'Hoş geldin evlat! Ben Kahveci Dursun, bu kahvehane benim.', pose: 'gulumseme'},
-  {t: 'Çaylar demlendi, masalar kuruldu. Bir tek sen eksiktin!', pose: 'zafer'},
-  {t: 'İlk gününe özel sana küçük bir hediyemiz var…', pose: 'pisti'},
+/** Dursun'un karşılama replikleri (tek görsel: gülümseme; satırlar arasında poz değişmez). */
+const WELCOME = [
+  'Hoş geldin evlat! Ben Kahveci Dursun, bu kahvehane benim.',
+  'Çaylar demlendi, masalar kuruldu. Bir tek sen eksiktin!',
+  'İlk gününe özel sana küçük bir hediyemiz var…',
 ];
 
 /** İsim önerileri (çipler; zar yeniden karıştırır). */
 const NAMES = ['Pişti Kralı', 'Vale Avcısı', 'Çaycı Usta', 'Şanslı Kedi', 'Kara Vale', 'Masa Bekçisi', 'Karo Onlu', 'Sinek İkili', 'Kahve Falcısı',
   'Deste Ustası', 'Mahalle Yıldızı', 'Gece Kuşu', 'Bıyıklı Usta', 'Sessiz Fırtına', 'Çay Tiryakisi', 'Son El'];
 
-/** Seçilen ada karakterin tepkisi. */
+/** Ad ekranındaki ilk soru ve seçilen ada karakterin tepkisi (balon boyu en uzun satıra göre bir kez ayrılır). */
+const NAME_ASK = 'Masada sana ne diyelim?';
 const NAME_REACT = ['Hah, yakıştı!', 'Bu isimle masada korkulur!', 'Oo, çok havalı!', 'Beğendim bunu!', 'Tam bir usta ismi!'];
+
+/**
+ * Pişmiş ışık hüzmesi: kamalar SVG'de radyal degradeyle (merkez parlak → kenar saydam) boyanır. Maske gerekmez,
+ * bir kez çizilir; arka plan resmi olarak durağan kullanılır (dönmez).
+ */
+function raysBg(rgb: string, n = 18, a = 0.5): string {
+  const step = 360 / n, half = step * 0.32;
+  const wedge = (k: number) => {
+    const a0 = ((k * step - half) * Math.PI) / 180, a1 = ((k * step + half) * Math.PI) / 180;
+    return `M50 50L${(50 + 70 * Math.cos(a0)).toFixed(2)} ${(50 + 70 * Math.sin(a0)).toFixed(2)}L${(50 + 70 * Math.cos(a1)).toFixed(2)} ${(50 + 70 * Math.sin(a1)).toFixed(2)}Z`;
+  };
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><radialGradient id="g" cx="50" cy="50" r="50" gradientUnits="userSpaceOnUse">
+    <stop offset="0" stop-color="rgb(${rgb})" stop-opacity="${a}"/><stop offset=".45" stop-color="rgb(${rgb})" stop-opacity="${(a * 0.45).toFixed(2)}"/><stop offset="1" stop-color="rgb(${rgb})" stop-opacity="0"/></radialGradient></defs>
+    <path fill="url(#g)" d="${Array.from({length: n}, (_, k) => wedge(k)).join('')}"/></svg>`;
+  // tek tırnak: style="--rays:…" özniteliğinin içine güvenle yazılır (encodeURIComponent tek tırnağı kaçırmaz; SVG'de yok)
+  return `url('data:image/svg+xml,${encodeURIComponent(svg)}')`;
+}
 
 /** Hikâye + seçim + ad. Çözülünce ekranı kaldıran fonksiyonu verir (perde kapandıktan sonra çağrılır). */
 export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> {
@@ -41,12 +64,12 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
       <svg class="kh-ob__shade" viewBox="0 0 120 150" aria-hidden="true">
         <path d="M60 0V58" stroke="#0a1033" stroke-width="5"/>
         <path d="M50 56h20l4 10H46z" fill="#ffb21a" stroke="#0a1033" stroke-width="4" stroke-linejoin="round"/>
+        <ellipse cx="60" cy="112" rx="38" ry="8" fill="#02030f" fill-opacity=".3"/>
         <path d="M24 106 Q60 52 96 106 Z" fill="url(#obsh)" stroke="#0a1033" stroke-width="5" stroke-linejoin="round"/>
         <ellipse cx="60" cy="106" rx="36" ry="7" fill="#fff6c8" stroke="#0a1033" stroke-width="4"/>
         <path d="M38 92 Q50 74 62 70" stroke="#fff" stroke-opacity=".55" stroke-width="4" fill="none" stroke-linecap="round"/>
         <defs><linearGradient id="obsh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3dff86"/><stop offset=".55" stop-color="#16c45b"/><stop offset="1" stop-color="#087a35"/></linearGradient></defs>
       </svg></div>
-    <div class="kh-ob__motes">${[0, 1, 2, 3, 4, 5].map(i => `<i class="kh-mote" style="left:${30 + ((i * 37) % 40)}%;top:${30 + ((i * 23) % 34)}%;width:${4 + (i % 3) * 2}px;height:${4 + (i % 3) * 2}px;animation-delay:${-i * 2.3}s"></i>`).join('')}</div>
     <div class="kh-ob__logo">${wordmarkHtml('', true)}</div>
     <div class="kh-ob__stage"></div>
     <div class="kh-ob__dark"></div>
@@ -92,8 +115,13 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
     tapRes = null;
     r?.();
   });
+  // "dokun" ipucu: belirince birkaç kez nefes gibi yanıp söner, sonra durur (sonsuz döngü yok)
+  let hintA: Animation | null = null;
   const showHint = (on: boolean) => {
+    if (hint.classList.contains('is-on') === on) return;
     hint.classList.toggle('is-on', on);
+    hintA?.cancel();
+    hintA = on && decorLoops() ? play(hint, [{opacity: 1}, {opacity: 0.5}, {opacity: 1}], {duration: 1800, delay: 1400, iterations: 3, easing: 'ease-in-out'}, 0) : null;
   };
 
   const dispose = () => {
@@ -115,76 +143,97 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
     const dark = g('.kh-ob__dark');
     const logo = g('.kh-ob__logo');
     const lamp = g('.kh-ob__lamp');
-    // 1) karanlık → lamba titreyerek yanar
+    // 1) karanlık → lamba titreyerek yanar (zemin durağan; karanlık örtü kalkarken ortaya çıkar)
     await scope.wait(450);
     if (skipped) return lightsInstant();
     s.tap();
     haptic('light');
     play(dark, [{opacity: 1}, {opacity: 0.35, offset: 0.1}, {opacity: 0.95, offset: 0.18}, {opacity: 0.2, offset: 0.3}, {opacity: 0.75, offset: 0.38}, {opacity: 0, offset: 0.6}, {opacity: 0}], {duration: 1300, easing: 'linear', fill: 'forwards'});
-    play(lamp, [{transform: 'translateY(-40%)'}, {transform: 'translateY(4%)', offset: 0.6}, {transform: 'none'}], {duration: 900, easing: EASE.out, fill: 'backwards'});
-    play(g('.kh-ob__arena'), [{opacity: 0, transform: 'scale(1.12)'}, {opacity: 1, transform: 'none'}], {duration: 1600, delay: 300, easing: EASE.out, fill: 'backwards'});
+    play(lamp, [{transform: 'translateY(-40%)'}, {transform: 'translateY(4%)', offset: 0.6}, {transform: 'none'}], {duration: 500, easing: EASE.out, fill: 'backwards'});
     scope.timeout(() => s.tap(), 260);
     await scope.wait(700);
     if (skipped) return lightsInstant();
     s.whoosh();
     logo.style.visibility = 'visible';
-    play(logo, [{transform: 'translate(-50%,0) scale(.4) rotate(-8deg)', opacity: 0}, {transform: 'translate(-50%,0) scale(1.08) rotate(2deg)', opacity: 1, offset: 0.6}, {transform: 'translate(-50%,0)', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'backwards'});
-    await scope.wait(650);
+    play(logo, [{transform: 'translate(-50%,0) scale(.5)', opacity: 0}, {transform: 'translate(-50%,0) scale(1.05)', opacity: 1, offset: 0.65}, {transform: 'translate(-50%,0)', opacity: 1}], {duration: 340, easing: EASE.out, fill: 'backwards'});
+    await scope.wait(500);
     if (skipped) return lightsInstant();
 
-    // 2) Dursun karşılar
+    // 2) Dursun karşılar: logo → balon şeridi → karakter (yüz balonun altında; gövde ekranın altında kesilir)
     const host = ROSTER.find(c => c.id === HOST)!;
-    const pt = new Portrait(host, {pose: 'gulumseme', cls: 'kh-ob__host'});
-    stage.append(pt.el);
+    const pt = new Portrait(host, {pose: 'gulumseme', cls: 'kh-ob__host', fade: true});
     const say = h('div', 'kh-say kh-ob__say', `<small>${esc(host.name)}</small><div class="kh-say__t"></div>`);
-    stage.append(say);
+    stage.append(say, pt.el);
     scope.add(() => pt.destroy());
+    // balonun boyu en uzun repliğe göre bir kez ayrılır; karakter balonun hemen altından başlar
+    let tw = typeText(scope, q(say, '.kh-say__t'), WELCOME[0], 40, WELCOME);
+    tw.finish();
+    layoutStory(say, pt.el);
+    scope.on(window, 'resize', () => layoutStory(say, pt.el));
     s.whoosh();
-    play(pt.el, [{transform: 'translateY(70%)'}, {transform: 'translateY(-4%)', offset: 0.65}, {transform: 'none'}], {duration: 620, easing: EASE.out, fill: 'backwards'});
-    await scope.wait(380);
+    play(pt.el, [{transform: 'translateY(40%)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 340, easing: EASE.outQuart, fill: 'backwards'});
+    await scope.wait(300);
     for (let i = 0; i < WELCOME.length && !skipped; i++) {
-      const w = WELCOME[i];
-      pt.pose(w.pose);
-      pt.pop();
-      say.style.visibility = 'visible';
-      play(say, [{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 340, easing: EASE.out});
-      const tw = typewriter(scope, q(say, '.kh-say__t'), w.t, 40);
+      const line = WELCOME[i];
+      if (i === 0) {
+        say.style.visibility = 'visible';
+        play(say, [{transform: 'scale(.5)', opacity: 0}, {transform: 'scale(1.03)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 280, easing: EASE.out});
+      } else pt.pop();
+      tw = typeText(scope, q(say, '.kh-say__t'), line, 40, WELCOME);
       showHint(true);
       // dokunma: önce yazıyı tamamlar, sonra ilerletir
       await Promise.race([tw.done, waitTap()]);
       if (tw.typing()) {
         tw.finish();
         await tapOr(2600);
-      } else await tapOr(1300 + w.t.length * 30);
+      } else await tapOr(1300 + line.length * 30);
       s.tap();
     }
     showHint(false);
     if (skipped) return lightsInstant();
 
-    // 3) hediye kutusu: Dursun köşeye çekilir (yeni küçük balonla), kutu düşer, kıpırdar
-    pt.pose('kahkaha');
-    play(pt.el, [{transform: 'none'}, {transform: 'translate(-30%, 22%) scale(.62)'}], {duration: 520, easing: EASE.inOut, fill: 'forwards'});
+    // 3) hediye kutusu: Dursun sol alt köşeye çekilir (aynı görsel, nefes durur), kutu düşer, kıpırdar
+    pt.breathe(false);
+    const corner = cornerMove(pt.el);
+    play(pt.el, [{transform: 'none'}, {transform: corner}], {duration: 460, easing: EASE.inOut, fill: 'forwards'});
     play(say, [{transform: 'none', opacity: 1}, {transform: 'scale(.6)', opacity: 0}], {duration: 200, easing: EASE.in, fill: 'forwards'});
+    play(logo, [{transform: 'translate(-50%,0)', opacity: 1}, {transform: 'translate(-50%,-30%) scale(.8)', opacity: 0}], {duration: 300, easing: EASE.in, fill: 'forwards'});
     const say2 = h('div', 'kh-say kh-ob__say2', `<div class="kh-say__t">Hadi, aç bakalım!</div>`);
+    say2.style.visibility = 'hidden';
     stage.append(say2);
-    play(say2, [{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1.06)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 360, delay: 480, easing: EASE.out, fill: 'backwards'});
-    play(logo, [{transform: 'translate(-50%,0)', opacity: 1}, {transform: 'translate(-50%,-30%) scale(.8)', opacity: 0}], {duration: 360, easing: EASE.in, fill: 'forwards'});
+    scope.timeout(() => {
+      if (placeBubble(say2, stage, faceRect(pt), stage.getBoundingClientRect(), {maxW: innerWidth * 0.6})) {
+        say2.style.visibility = 'visible';
+        play(say2, [{transform: 'scale(.5)', opacity: 0}, {transform: 'scale(1.04)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 280, easing: EASE.out});
+      }
+    }, ANIM ? 500 : 0);
     const box = giftBox();
     stage.append(box);
     s.whoosh();
-    await done(play(box, [{transform: 'translate(-50%, -160%) rotate(-12deg)'}, {transform: 'translate(-50%, 0) rotate(3deg)', offset: 0.55}, {transform: 'translate(-50%, -12%) rotate(-2deg)', offset: 0.72}, {transform: 'translate(-50%, 0) rotate(0)'}], {duration: 760, easing: EASE.in, fill: 'backwards'}));
+    await done(play(box, [{transform: 'translate(-50%, -160%) rotate(-12deg)'}, {transform: 'translate(-50%, 0) rotate(3deg)', offset: 0.55}, {transform: 'translate(-50%, -12%) rotate(-2deg)', offset: 0.72}, {transform: 'translate(-50%, 0) rotate(0)'}], {duration: 700, easing: EASE.in, fill: 'backwards'}));
     s.slam?.();
     haptic('medium');
-    play(q(box, '.kh-gift__shadow'), [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.15)', opacity: 1, offset: 0.5}, {transform: 'none', opacity: 1}], {duration: 380, easing: EASE.out});
-    play(q(box, '.kh-gift__body'), [{transform: 'scale(1.12, .84)'}, {transform: 'scale(.96, 1.05)', offset: 0.5}, {transform: 'none'}], {duration: 360, easing: EASE.out});
-    box.classList.add('is-wiggle');
+    play(q(box, '.kh-gift__shadow'), [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.15)', opacity: 1, offset: 0.5}, {transform: 'none', opacity: 1}], {duration: 340, easing: EASE.out});
+    play(q(box, '.kh-gift__body'), [{transform: 'scale(1.12, .84)'}, {transform: 'scale(.96, 1.05)', offset: 0.5}, {transform: 'none'}], {duration: 340, easing: EASE.out});
+    // bekleme döngüleri (kutu kıpırtısı, el işareti) WAAPI: tutamağı bizde, dokununca kesin iptal edilir
+    const wiggle = play(q(box, '.kh-gift__in'), [
+      {transform: 'none', offset: 0}, {transform: 'none', offset: 0.58}, {transform: 'rotate(-7deg) scale(1.03, .97)', offset: 0.64},
+      {transform: 'rotate(6deg) scale(.98, 1.03)', offset: 0.71}, {transform: 'rotate(-4deg)', offset: 0.78}, {transform: 'rotate(2deg) translateY(-3%)', offset: 0.85},
+      {transform: 'none', offset: 0.92}, {transform: 'none', offset: 1},
+    ], {duration: 2100, delay: 400, iterations: decorLoops() ? Infinity : 2, easing: 'ease-in-out'}, 0);
     const cta = h('div', 'kh-ob__cta', `${I.hand}<span>Hediyeni aç!</span>`);
     stage.append(cta);
-    play(cta, [{transform: 'translate(-50%, 20px)', opacity: 0}, {transform: 'translate(-50%, 0)', opacity: 1}], {duration: 360, delay: 200, easing: EASE.spring, fill: 'backwards'});
+    play(cta, [{transform: 'translate(-50%, 20px)', opacity: 0}, {transform: 'translate(-50%, 0)', opacity: 1}], {duration: 320, delay: 160, easing: EASE.spring, fill: 'backwards'});
+    const bob = play(q(cta, '.kh-i'), [{transform: 'none'}, {transform: 'translateY(-3px) scale(1.08)'}, {transform: 'none'}], {duration: 1000, iterations: decorLoops() ? Infinity : 2, easing: 'ease-in-out'}, 0);
+    scope.add(() => {
+      wiggle.cancel();
+      bob.cancel();
+    });
     await waitTap();
+    wiggle.cancel();
+    bob.cancel();
     if (skipped) return lightsInstant();
-    box.classList.remove('is-wiggle');
-    play(cta, [{opacity: 1}, {opacity: 0}], {duration: 160, fill: 'forwards'});
+    play(cta, [{opacity: 1}, {opacity: 0}], {duration: 160, fill: 'forwards'}).onfinish = () => cta.remove();
     // ön gerilim: üç sarsıntı, giderek sertleşir
     const body = q(box, '.kh-gift__in');
     for (let k = 1; k <= 3; k++) {
@@ -197,17 +246,40 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
     fanfare();
     s.slam?.();
     haptic('heavy');
-    ctx.fx.flash(0.9, 520);
+    ctx.fx.flash(0.7, 460);
     const c = center(q(box, '.kh-gift__body'));
-    ctx.fx.burst({x: c.x, y: c.y - 20}, {coins: 10, confetti: 34, power: 1.1});
-    play(body, [{transform: 'scale(1.18, .78)'}, {transform: 'scale(.92, 1.1)', offset: 0.4}, {transform: 'none'}], {duration: 420, easing: EASE.out, fill: 'forwards'});
-    play(q(box, '.kh-gift__lid'), [{transform: 'none', opacity: 1}, {transform: 'translate(40%, -380%) rotate(48deg)', opacity: 1, offset: 0.7}, {transform: 'translate(60%, -520%) rotate(70deg)', opacity: 0}], {duration: 900, easing: EASE.out, fill: 'forwards'});
-    const rays = q(box, '.kh-gift__rays');
-    play(rays, [{transform: 'scale(0) rotate(0)', opacity: 0}, {transform: 'scale(1.1) rotate(40deg)', opacity: 1, offset: 0.35}, {transform: 'scale(1.3) rotate(120deg)', opacity: 0}], {duration: 1800, easing: 'ease-out', fill: 'forwards'});
-    play(pt.el, [{transform: 'translate(-30%, 22%) scale(.62)'}, {transform: 'translate(-75%, 115%) scale(.62)'}], {duration: 420, delay: 120, easing: EASE.in, fill: 'forwards'});
-    play(say2, [{opacity: 1}, {opacity: 0}], {duration: 200, fill: 'forwards'});
+    ctx.fx.burst({x: c.x, y: c.y - 20}, {coins: 8, confetti: 28, power: 1.05});
+    play(body, [{transform: 'scale(1.18, .78)'}, {transform: 'scale(.92, 1.1)', offset: 0.4}, {transform: 'none'}], {duration: 380, easing: EASE.out, fill: 'forwards'});
+    play(q(box, '.kh-gift__lid'), [{transform: 'none', opacity: 1}, {transform: 'translate(40%, -380%) rotate(48deg)', opacity: 1, offset: 0.7}, {transform: 'translate(60%, -520%) rotate(70deg)', opacity: 0}], {duration: 800, easing: EASE.out, fill: 'forwards'});
+    play(q(box, '.kh-gift__rays'), [{transform: 'scale(.2) rotate(0)', opacity: 0}, {transform: 'scale(1) rotate(25deg)', opacity: 1, offset: 0.3}, {transform: 'scale(1.15) rotate(60deg)', opacity: 0}], {duration: 1300, easing: 'ease-out', fill: 'forwards'});
+    // Dursun sahneden iner ve kaldırılır (galeride alt kenarda başı görünmesin)
+    play(pt.el, [{transform: corner, opacity: 1}, {transform: `${corner} translateY(110%)`, opacity: 0}], {duration: 380, delay: 100, easing: EASE.in, fill: 'forwards'}).onfinish = () => pt.destroy();
+    play(say2, [{opacity: 1}, {opacity: 0}], {duration: 180, fill: 'forwards'}).onfinish = () => say2.remove();
     await scope.wait(260);
     return true;
+  }
+
+  /**
+   * Hikâye yerleşimi: balon logonun altında (sabit genişlik, en uzun satıra göre ayrılmış boy), karakter balonun altından
+   * başlar; kuyruk ucu en çok saç tepesine değer, yüze asla. Kısa ekranda logo küçülür (CSS) ve karakter aşağı kayar.
+   */
+  function layoutStory(say: HTMLElement, host: HTMLElement): void {
+    const st = stage.getBoundingClientRect();
+    const lr = g('.kh-ob__logo').getBoundingClientRect();
+    say.style.top = `${Math.round(lr.bottom - st.top + 4)}px`;
+    const sr = say.getBoundingClientRect();
+    const w = host.getBoundingClientRect().width;
+    // kuyruk 16 px; yüz kutusu görselin %7'sinden başlar → yüz kuyruğun ucunun altında kalır
+    host.style.top = `${Math.round(sr.bottom - st.top + 18 - w * 0.07)}px`;
+  }
+
+  /** Köşeye çekilme: karakter sol alta küçülür; baş ve omuzlar görünür kalır. */
+  function cornerMove(hostEl: HTMLElement): string {
+    const r = hostEl.getBoundingClientRect();
+    const k = Math.min(0.62, (innerHeight * 0.36) / r.height);
+    const tw = r.width * k;
+    const tx = -tw * 0.18 - r.left, ty = innerHeight - tw * 0.72 - r.top;
+    return `translate(${tx.toFixed(1)}px, ${ty.toFixed(1)}px) scale(${k.toFixed(3)})`;
   }
 
   /** Atlanınca: ışıklar anında yanar, hikâye öğeleri kalkar. */
@@ -216,7 +288,6 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
     const dark = g('.kh-ob__dark');
     dark.getAnimations().forEach(a => a.cancel());
     play(dark, [{opacity: Number(getComputedStyle(dark).opacity)}, {opacity: 0}], {duration: 300, fill: 'forwards'});
-    g('.kh-ob__arena').getAnimations().forEach(a => a.finish());
     g('.kh-ob__logo').style.visibility = 'hidden';
     stage.querySelectorAll('.kh-pt, .kh-say, .kh-gift, .kh-ob__cta').forEach(n => n.remove());
     return false;
@@ -225,21 +296,23 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
   // =================================================================== 4-5: hediye galerisi
   function gallery(): Promise<CharDef> {
     skipBtn.style.display = 'none';
+    showHint(false);
     const lampEl = g('.kh-ob__lamp');
-    play(lampEl, [{transform: 'none', opacity: 1}, {transform: 'translateY(-30%)', opacity: 0}], {duration: 500, easing: EASE.in, fill: 'forwards'});
+    play(lampEl, [{transform: 'none', opacity: 1}, {transform: 'translateY(-30%)', opacity: 0}], {duration: 400, easing: EASE.in, fill: 'forwards'});
     const box = stage.querySelector<HTMLElement>('.kh-gift');
     const fromBox = box ? center(q(box, '.kh-gift__body')) : null;
     const gal = h('div', 'kh-gal');
     const chars = ROSTER.slice();
     // en tatlı başlangıç: ortada Dursun (ev sahibi), sağında/solunda diğerleri
     const start = Math.max(0, chars.findIndex(c => c.id === HOST));
+    const rays = raysBg('255, 255, 255', 16, 0.32);
     gal.innerHTML = `<header class="kh-gal__head"><div class="kh-title kh-gal__title">${g3('Hediyeni Seç!')}</div>
         <div class="kh-gal__sub">Dört usta, tek seçim. Seçtiğin karakter <b>senin</b> olur.</div></header>
       <div class="kh-gal__car kh-car"></div>
       <div class="kh-gal__dots">${chars.map((_, i) => `<i data-i="${i}"></i>`).join('')}<b class="kh-gal__dot"></b></div>
       <div class="kh-gal__foot">
         <div class="kh-gal__value"></div>
-        <button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-shine kh-gal__take" data-act="take">${I.gift}Ücretsiz Al</button>
+        <button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-gal__take" data-act="take">${I.gift}Ücretsiz Al</button>
       </div>`;
     el.append(gal);
     const car = q(gal, '.kh-gal__car');
@@ -249,7 +322,7 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
       it.dataset.i = String(i);
       it.style.setProperty('--c', c.color);
       it.innerHTML = `<div class="kh-gc__in"><div class="kh-gc__card is-${c.rarity}">
-          <i class="kh-gc__rays"></i><span class="kh-gc__suit">${suitSvg(SUIT_OF[c.id] ?? 'h')}</span>
+          <i class="kh-gc__rays" style="--rays:${rays}"></i><span class="kh-gc__suit">${suitSvg(SUIT_OF[c.id] ?? 'h')}</span>
           <div class="kh-gc__top">${rarityHtml(c.rarity)}<span class="kh-gc__price"><img src="${ASSETS.icon_coin}" alt=""><s class="kh-num">${fmt(c.price)}</s></span></div>
           <div class="kh-gc__fig"></div>
           <div class="kh-gc__body">
@@ -260,7 +333,8 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
             <div class="kh-gc__quote">${esc(c.quote)}</div>
           </div>
         </div><div class="kh-gc__free">Bedava!</div></div>`;
-      const pt = new Portrait(c, {pose: 'notr'});
+      // tek, durağan poz (nötr); yalnız ortadaki kart nefes alır
+      const pt = new Portrait(c, {pose: 'notr', breathe: false});
       q(it, '.kh-gc__fig').append(pt.el);
       pts.push(pt);
       scope.add(() => pt.destroy());
@@ -275,6 +349,7 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
       dotsInd.style.transform = `translateX(calc(${i} * var(--dot-step)))`;
       gal.querySelectorAll('.kh-gal__dots i').forEach((d, k) => d.classList.toggle('is-on', k === i));
     };
+    const breatheOnly = (i: number) => pts.forEach((p, k) => p.breathe(k === i));
     const spacing = () => car.clientWidth * 0.7;
     const carousel = new Carousel(scope, car, items, {
       spacing,
@@ -282,28 +357,39 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
       tilt: 16,
       drop: 0.05,
       sounds: ctx.sounds,
-      onChange: i => setValue(i),
-      onSettle: i => {
-        pts.forEach((p, k) => {
-          p.smileIdle = k === i;
-          if (k === i) {
-            p.pose('gulumseme', 1300);
-            p.pop();
-          } else p.rest('notr');
-        });
+      onChange: i => {
+        setValue(i);
+        breatheOnly(-1);
       },
-      render: (it, d) => {
-        // paralaks: portre karttan biraz daha hızlı kayar, ışık hüzmesi döner
-        const fig = it.querySelector<HTMLElement>('.kh-gc__fig')!;
-        fig.style.transform = `translateX(${(-d * 9).toFixed(1)}%)`;
-      },
+      onSettle: i => breatheOnly(i),
     });
-    // kart yüksekliği alana göre
+    // kart ölçüsü alana göre. Portre kartın üstünden taşar: başlığa binmesin diye vitrin o kadar aşağıdan başlar.
+    // Hikâye metni sığan satır kadar gösterilir (yarım satır kesilmez, sonda …).
+    const baseTop = parseFloat(getComputedStyle(car).marginTop) || 0;
     const fit = () => {
-      const hh = car.clientHeight;
-      gal.style.setProperty('--gc-h', `${hh}px`);
-      gal.style.setProperty('--gc-w', `${Math.min(car.clientWidth * 0.8, hh * 0.66)}px`);
+      for (let k = 0; k < 3; k++) {
+        const hh = car.clientHeight;
+        const w = Math.min(car.clientWidth * 0.8, hh * 0.66);
+        gal.style.setProperty('--gc-h', `${hh}px`);
+        gal.style.setProperty('--gc-w', `${w}px`);
+        // portre: kart genişliğinin %108'i kare, kartın %56'sına oturur; saç tepesi görselin ~%4'ünde
+        const pop = 1.08 * (w - 7) * 0.96 - (0.08 + 0.56 * 0.92) * hh;
+        const mt = Math.round(Math.max(baseTop, pop + 6));
+        if (Math.abs((parseFloat(car.style.marginTop) || baseTop) - mt) < 2) break;
+        car.style.marginTop = `${mt}px`;
+      }
       carousel.layout();
+      items.forEach(it => {
+        const p = q(it, '.kh-gc__story');
+        p.style.flexGrow = '1';
+        p.style.webkitLineClamp = '40';
+        const lh = parseFloat(getComputedStyle(p).lineHeight) || 12;
+        const n = Math.floor((p.clientHeight + 2) / lh);
+        // kutu kırpılan satır kadar kısalır: kalan satırlar boyanmaz
+        p.style.flexGrow = '0';
+        p.style.webkitLineClamp = String(Math.max(1, n));
+        p.style.visibility = n < 1 ? 'hidden' : '';
+      });
     };
     scope.on(window, 'resize', fit);
     scope.on(car, 'click', e => {
@@ -316,31 +402,34 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
     carousel.go(start, false);
     setValue(start);
 
-    // ---- giriş: kartlar kutudan fırlar (ya da atlandıysa aşağıdan yükselir) ----
-    play(q(gal, '.kh-gal__head'), [{transform: 'translateY(-30px) scale(.8)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: fromBox ? 520 : 100, easing: EASE.spring, fill: 'backwards'});
-    play(q(gal, '.kh-gal__foot'), [{transform: 'translateY(60px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: fromBox ? 760 : 260, easing: EASE.spring, fill: 'backwards'});
-    play(q(gal, '.kh-gal__dots'), [{opacity: 0}, {opacity: 1}], {duration: 300, delay: fromBox ? 800 : 300, fill: 'backwards'});
+    // ---- giriş: kartlar kutudan fırlar (ya da atlandıysa aşağıdan yükselir); en çok 7 öğe, kademeli ----
+    play(q(gal, '.kh-gal__head'), [{transform: 'translateY(-24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: fromBox ? 420 : 80, easing: EASE.outQuart, fill: 'backwards'});
+    play(q(gal, '.kh-gal__foot'), [{transform: 'translateY(40px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: fromBox ? 560 : 200, easing: EASE.outQuart, fill: 'backwards'});
+    play(q(gal, '.kh-gal__dots'), [{opacity: 0}, {opacity: 1}], {duration: 240, delay: fromBox ? 620 : 240, fill: 'backwards'});
     items.forEach((it, i) => {
       const inner = q(it, '.kh-gc__in');
+      const dist = Math.abs(i - start);
       if (fromBox) {
         const r = it.getBoundingClientRect();
         const dx = fromBox.x - (r.left + r.width / 2), dy = fromBox.y - (r.top + r.height / 2);
         const rot = (i - start) * 25;
         play(inner, [
           {transform: `translate(${dx}px,${dy}px) scale(.12) rotate(${rot}deg)`, opacity: 0},
-          {transform: `translate(${dx * 0.5}px,${dy * 0.6 - 120}px) scale(.45) rotate(${-rot}deg)`, opacity: 1, offset: 0.45},
+          {transform: `translate(${dx * 0.5}px,${dy * 0.6 - 100}px) scale(.45) rotate(${-rot}deg)`, opacity: 1, offset: 0.45},
           {transform: 'none', opacity: 1},
-        ], {duration: 720, delay: 60 + Math.abs(i - start) * 90, easing: EASE.out, fill: 'backwards'});
-        scope.timeout(() => s.flip?.(), 120 + Math.abs(i - start) * 90);
+        ], {duration: 350, delay: 40 + dist * 60, easing: EASE.out, fill: 'backwards'});
+        scope.timeout(() => s.flip?.(), 80 + dist * 60);
       } else {
-        play(inner, [{transform: 'translateY(40%) scale(.8)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 520, delay: 100 + Math.abs(i - start) * 80, easing: EASE.spring, fill: 'backwards'});
+        play(inner, [{transform: 'translateY(30%) scale(.86)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 340, delay: 60 + dist * 60, easing: EASE.outQuart, fill: 'backwards'});
       }
     });
+    // ortadaki kart giriş bittikten sonra nefes almaya başlar (giriş sırasında döngü yok)
+    scope.timeout(() => breatheOnly(carousel.index), ANIM ? (fromBox ? 700 : 500) : 0);
     if (box) {
       // kartlar fırlarken boş kutu küçülüp söner
-      play(q(box, '.kh-gift__in'), [{transform: 'none', opacity: 1}, {transform: 'translateY(12%) scale(.7, .55)', opacity: 0}], {duration: 520, delay: 280, easing: EASE.in, fill: 'forwards'});
-      play(q(box, '.kh-gift__shadow'), [{opacity: 1}, {opacity: 0}], {duration: 400, delay: 300, fill: 'forwards'});
-      scope.timeout(() => box.remove(), 1600);
+      play(q(box, '.kh-gift__in'), [{transform: 'none', opacity: 1}, {transform: 'translateY(12%) scale(.7, .55)', opacity: 0}], {duration: 420, delay: 220, easing: EASE.in, fill: 'forwards'});
+      play(q(box, '.kh-gift__shadow'), [{opacity: 1}, {opacity: 0}], {duration: 320, delay: 240, fill: 'forwards'});
+      scope.timeout(() => box.remove(), 1400);
     }
 
     return new Promise<CharDef>(res => {
@@ -356,58 +445,58 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
       });
     });
 
-    /** Seçim anı: diğerleri uçar, seçilen kart döner, konfeti, karakter sözünü söyler. */
+    /**
+     * Seçim anı: diğerleri uçar, seçilen kart döner (aynı görsel; poz değişmez), konfeti + damga. Ayrı balon yok:
+     * kartın söz kutusu temizlenir ve karakterin sözü orada daktiloyla yeniden yazılır (kutu boyu sabit).
+     */
     async function pick(items: HTMLElement[], pts: Portrait[], i: number): Promise<void> {
       const c = chars[i];
       const it = items[i];
       const inner = q(it, '.kh-gc__in');
       items.forEach((o, k) => {
         if (k === i) return;
-        play(q(o, '.kh-gc__in'), [{transform: 'none', opacity: 1}, {transform: `translate(${k < i ? -40 : 40}%, 30%) rotate(${k < i ? -18 : 18}deg) scale(.7)`, opacity: 0}], {duration: 420, easing: EASE.in, fill: 'forwards'});
+        play(q(o, '.kh-gc__in'), [{transform: 'none', opacity: 1}, {transform: `translate(${k < i ? -40 : 40}%, 30%) rotate(${k < i ? -18 : 18}deg) scale(.7)`, opacity: 0}], {duration: 340, easing: EASE.in, fill: 'forwards'});
       });
       play(q(gal, '.kh-gal__dots'), [{opacity: 1}, {opacity: 0}], {duration: 200, fill: 'forwards'});
       play(value, [{opacity: 1}, {opacity: 0}], {duration: 200, fill: 'forwards'});
       const takeBtn = q(gal, '.kh-gal__take');
-      play(takeBtn, [{transform: 'none', opacity: 1}, {transform: 'translateY(40px) scale(.9)', opacity: 0}], {duration: 260, easing: EASE.in, fill: 'forwards'});
-      // döndür: yarıda poz değişir, kart altın kenarlı "kazanıldı" hâline geçer
+      play(takeBtn, [{transform: 'none', opacity: 1}, {transform: 'translateY(40px) scale(.9)', opacity: 0}], {duration: 240, easing: EASE.in, fill: 'forwards'});
+      // döndür: yarıda kart altın kenarlı "kazanıldı" hâline geçer (görsel aynı kalır)
+      pts[i].breathe(false);
       s.flip?.();
-      await done(play(inner, [{transform: 'none'}, {transform: 'scale(1.08) rotateY(90deg)'}], {duration: 240, easing: EASE.in, fill: 'forwards'}));
+      await done(play(inner, [{transform: 'none'}, {transform: 'scale(1.06) rotateY(90deg)'}], {duration: 220, easing: EASE.in, fill: 'forwards'}));
       it.classList.add('is-won');
-      pts[i].smileIdle = false;
-      pts[i].rest('zafer');
       inner.getAnimations().forEach(a => a.cancel());
       fanfare();
       haptic('success');
-      play(inner, [{transform: 'scale(1.08) rotateY(-90deg)'}, {transform: 'scale(1.04) rotateY(8deg)', offset: 0.6}, {transform: 'scale(1.02) rotateY(0)'}], {duration: 520, easing: EASE.out, fill: 'forwards'});
+      play(inner, [{transform: 'scale(1.06) rotateY(-90deg)'}, {transform: 'scale(1.03) rotateY(8deg)', offset: 0.6}, {transform: 'scale(1.02) rotateY(0)'}], {duration: 420, easing: EASE.out, fill: 'forwards'});
       const r = it.getBoundingClientRect();
-      ctx.fx.flash(0.6, 420);
-      ctx.fx.burst({x: r.left + r.width / 2, y: r.top + r.height * 0.3}, {coins: 0, confetti: 36, power: 1.05});
-      scope.timeout(() => {
-        ctx.fx.burst({x: r.left + 10, y: r.top + r.height * 0.5}, {coins: 4, confetti: 14, power: 0.8});
-        ctx.fx.burst({x: r.right - 10, y: r.top + r.height * 0.5}, {coins: 4, confetti: 14, power: 0.8});
-      }, 260);
-      stampWord(ctx, 'Senin!', {x: innerWidth / 2, y: r.top + r.height * 0.42}, {size: 4.2, ms: 1500});
-      q(gal, '.kh-gal__title').innerHTML = g3('Harika Seçim!');
-      bump(q(gal, '.kh-gal__title'), 1.15);
+      ctx.fx.flash(0.45, 380);
+      ctx.fx.burst({x: r.left + r.width / 2, y: r.top + r.height * 0.3}, {coins: 4, confetti: 30, power: 1});
+      stampWord(ctx, 'Senin!', {x: innerWidth / 2, y: r.top + r.height * 0.36}, {size: 4.2, ms: 1400});
+      const title = q(gal, '.kh-gal__title');
+      title.innerHTML = g3('Harika Seçim!');
+      bump(title, 1.1);
       q(gal, '.kh-gal__sub').innerHTML = `<b>${esc(c.name)}</b> artık senin karakterin.`;
-      await scope.wait(700);
-      // karakter sözünü söyler
-      const say = h('div', 'kh-say kh-gal__say', `<small>${esc(c.name)}</small><div class="kh-say__t"></div>`);
-      gal.append(say);
-      play(say, [{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 360, easing: EASE.out, fill: 'backwards'});
-      const tw = typewriter(scope, q(say, '.kh-say__t'), c.quote, 36);
+      await scope.wait(620);
+      pts[i].breathe(true);
+      // söz kutusunda sözünü söyler (balon yok; yüze hiçbir şey binmez)
+      const quote = q(it, '.kh-gc__quote');
+      quote.classList.add('is-speaking');
+      const tw = typeText(scope, quote, c.quote, 34);
       const next = h('button', 'kh-btn kh-btn--5 kh-btn--xl kh-btn--block kh-gal__next', `Devam ${I.chevR}`);
       next.dataset.act = 'next';
       q(gal, '.kh-gal__foot').append(next);
-      play(next, [{transform: 'translateY(50px) scale(.8)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 500, easing: EASE.spring, fill: 'backwards'});
+      play(next, [{transform: 'translateY(40px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: 380, easing: EASE.outQuart, fill: 'backwards'});
       await new Promise<void>(res => scope.on(next, 'click', () => {
         tw.finish();
         s.tap();
         res();
       }));
       // galeri kalkar
-      play(gal, [{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'scale(.96)'}], {duration: 280, easing: EASE.in, fill: 'forwards'});
-      await scope.wait(280);
+      play(gal, [{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'scale(.97)'}], {duration: 260, easing: EASE.in, fill: 'forwards'});
+      await scope.wait(260);
+      pts.forEach(p => p.destroy());
       gal.remove();
     }
   }
@@ -417,48 +506,53 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
     const wrap = h('div', 'kh-name');
     let pool = shuffled(NAMES);
     const chips = () => pool.slice(0, 4).map(n => `<button class="kh-chip kh-name__chip" data-act="sug" data-n="${esc(n)}">${esc(n)}</button>`).join('');
-    wrap.innerHTML = `<div class="kh-name__hero"><div class="kh-name__fig"></div></div>
-      <div class="kh-say kh-name__say"><small>${esc(c.name)}</small><div class="kh-say__t"></div></div>
+    wrap.innerHTML = `<div class="kh-name__hero"><div class="kh-name__fig"></div>
+        <div class="kh-say kh-name__say"><div class="kh-say__t"></div></div></div>
       <div class="kh-panel kh-name__panel">
         <div class="kh-title kh-name__title">${g3('Adın Ne?', 'is-white')}</div>
         <label class="kh-name__field"><span class="kh-name__ico">${I.pencil}</span>
           <input class="kh-name__input" type="text" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="done" placeholder="Misafir" value="Misafir"></label>
         <div class="kh-name__sugs"><div class="kh-name__chips">${chips()}</div>
           <button class="kh-iconbtn kh-name__dice" data-act="dice" aria-label="Başka öneriler">${I.dice}</button></div>
-        <button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-shine" data-act="ok">Tamam</button>
+        <button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block" data-act="ok">Tamam</button>
       </div>`;
     el.append(wrap);
-    const pt = new Portrait(c, {pose: 'gulumseme'});
+    // tek görsel (gülümseme): yazarken/öneri seçerken poz değişmez, yalnız küçük bir "pop"
+    const pt = new Portrait(c, {pose: 'gulumseme', fade: true});
     q(wrap, '.kh-name__fig').append(pt.el);
     scope.add(() => pt.destroy());
     const input = q<HTMLInputElement>(wrap, '.kh-name__input');
-    const sayT = q(wrap, '.kh-say__t');
-    play(q(wrap, '.kh-name__hero'), [{transform: 'translateY(-30%) scale(.7)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 520, easing: EASE.spring, fill: 'backwards'});
-    play(q(wrap, '.kh-name__panel'), [{transform: 'translateY(40%)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 520, delay: 120, easing: EASE.spring, fill: 'backwards'});
-    play(q(wrap, '.kh-name__say'), [{transform: 'scale(.3)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 360, delay: 380, easing: EASE.spring, fill: 'backwards'});
-    scope.timeout(() => typewriter(scope, sayT, 'Masada sana ne diyelim?', 40), 420);
+    const hero = q(wrap, '.kh-name__hero');
+    const say = q(wrap, '.kh-name__say');
+    const sayT = q(say, '.kh-say__t');
+    const reserve = [NAME_ASK, ...NAME_REACT];
+    typeText(scope, sayT, NAME_ASK, 40, reserve).finish();
+    say.style.visibility = 'hidden';
+    play(hero, [{transform: 'translateY(-12%)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 340, easing: EASE.outQuart, fill: 'backwards'});
+    play(q(wrap, '.kh-name__panel'), [{transform: 'translateY(30%)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 340, delay: 80, easing: EASE.outQuart, fill: 'backwards'});
     q(wrap, '.kh-name__chips').querySelectorAll('.kh-chip').forEach((ch, k) =>
-      play(ch, [{transform: 'scale(.4)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 360, delay: 500 + k * 60, easing: EASE.spring, fill: 'backwards'}));
-    // yazarken düşünür, durunca gülümser
-    let typingT = 0;
-    scope.on(input, 'input', () => {
-      if (pt.current !== 'dusunceli') pt.pose('dusunceli');
-      clearTimeout(typingT);
-      typingT = window.setTimeout(() => pt.alive && pt.rest('gulumseme'), 900);
-    });
+      play(ch, [{transform: 'scale(.6)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 260, delay: 260 + k * 50, easing: EASE.spring, fill: 'backwards'}));
+    const placeSay = () => placeBubble(say, hero, faceRect(pt), hero.getBoundingClientRect(), {maxW: Math.min(hero.clientWidth * 0.66, 300)});
+    scope.timeout(() => {
+      if (!placeSay()) return;
+      say.style.visibility = 'visible';
+      play(say, [{transform: 'scale(.5)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 280, easing: EASE.spring, fill: 'backwards'});
+      typeText(scope, sayT, NAME_ASK, 40, reserve);
+    }, ANIM ? 380 : 0);
+    scope.on(window, 'resize', () => placeSay());
     scope.on(input, 'focus', () => input.select());
-    scope.add(() => clearTimeout(typingT));
     return new Promise<string>(res => {
       const finish = () => {
         const v = input.value.trim().replace(/\s+/g, ' ').slice(0, 16) || 'Misafir';
         input.blur();
         s.tap();
-        pt.pose('kahkaha');
-        play(wrap, [{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'translateY(-4%)'}], {duration: 300, delay: 160, easing: EASE.in, fill: 'forwards'});
+        pt.pop();
+        play(wrap, [{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'translateY(-4%)'}], {duration: 280, delay: 140, easing: EASE.in, fill: 'forwards'});
         scope.timeout(() => {
+          pt.destroy();
           wrap.remove();
           res(v);
-        }, ANIM ? 470 : 0);
+        }, ANIM ? 440 : 0);
       };
       scope.on(input, 'keydown', e => {
         if ((e as KeyboardEvent).key === 'Enter') finish();
@@ -471,7 +565,7 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
         if (a === 'sug') {
           s.tap();
           const n = b.dataset.n ?? '';
-          // öneri harf harf yazılır, karakter güler
+          // öneri harf harf yazılır, karakter tepki verir (aynı görsel + pop)
           input.value = '';
           let k = 0;
           const tick = () => {
@@ -480,20 +574,18 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
             if (k < n.length) scope.timeout(tick, ANIM ? 28 : 0);
           };
           tick();
-          bump(b, 1.1);
-          pt.pose('kahkaha', 1400);
+          bump(b, 1.08);
           pt.pop();
-          sayT.textContent = rnd(NAME_REACT);
-          bump(q(wrap, '.kh-name__say'), 1.06);
+          typeText(scope, sayT, rnd(NAME_REACT), 44, reserve);
         } else if (a === 'dice') {
           if (s.shuffle) s.shuffle();
           else s.tap();
           pool = shuffled(NAMES);
           const box = q(wrap, '.kh-name__chips');
           box.innerHTML = chips();
-          play(b, [{transform: 'rotate(0)'}, {transform: 'rotate(360deg) scale(1.1)'}], {duration: 420, easing: EASE.out});
+          play(b, [{transform: 'rotate(0)'}, {transform: 'rotate(360deg)'}], {duration: 380, easing: EASE.out});
           box.querySelectorAll('.kh-chip').forEach((ch, k) =>
-            play(ch, [{transform: 'translateY(-14px) scale(.6)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: k * 50, easing: EASE.spring, fill: 'backwards'}));
+            play(ch, [{transform: 'translateY(-10px) scale(.7)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 260, delay: k * 40, easing: EASE.spring, fill: 'backwards'}));
         }
       });
     });
@@ -502,40 +594,41 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
   // =================================================================== 7: hoş geldin
   async function welcome(c: CharDef, name: string): Promise<void> {
     const w = h('div', 'kh-welc');
-    w.innerHTML = `<i class="kh-rays is-gold kh-welc__rays"></i>
+    w.innerHTML = `<i class="kh-welc__rays" style="--rays:${raysBg('255, 222, 110', 22, 0.55)}"></i>
       <div class="kh-welc__fig"></div>
       <div class="kh-welc__text"><div class="kh-title kh-welc__l1">${g3('Kahvehaneye', 'is-white')}</div>
         <div class="kh-title kh-welc__l2">${g3('hoş geldin,', 'is-white')}</div>
         <div class="kh-title kh-welc__name">${g3(name + '!')}</div></div>
       <div class="kh-welc__gift"><span>Başlangıç hediyen</span><div class="kh-capsule kh-welc__cap"><img class="kh-capsule__ico" src="${ASSETS.icon_coin}" alt=""><b class="kh-capsule__val kh-num">0</b></div></div>
-      <button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-shine kh-welc__go" data-act="go">${I.play}Masaya Geç</button>`;
+      <button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-welc__go" data-act="go">${I.play}Masaya Geç</button>`;
     el.append(w);
-    const pt = new Portrait(c, {pose: 'zafer'});
+    const pt = new Portrait(c, {pose: 'zafer', fade: true});
     q(w, '.kh-welc__fig').append(pt.el);
     scope.add(() => pt.destroy());
     s.whoosh();
-    play(q(w, '.kh-welc__rays'), [{transform: 'scale(.2)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 900, easing: EASE.out, fill: 'backwards'});
-    play(q(w, '.kh-welc__fig'), [{transform: 'translateY(40%) scale(.8)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 600, easing: EASE.spring, fill: 'backwards'});
+    // giriş: 7 öğe, kademeli, her biri ≤ 340 ms
+    play(q(w, '.kh-welc__rays'), [{opacity: 0}, {opacity: 1}], {duration: 340, easing: 'ease-out', fill: 'backwards'});
+    play(q(w, '.kh-welc__fig'), [{transform: 'translateY(24%) scale(.9)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 340, easing: EASE.outQuart, fill: 'backwards'});
     ['.kh-welc__l1', '.kh-welc__l2', '.kh-welc__name'].forEach((sel, k) =>
-      play(q(w, sel), [{transform: 'translateY(-60px) scale(1.6) rotate(-6deg)', opacity: 0}, {transform: 'scale(.94)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 460, delay: 300 + k * 220, easing: EASE.out, fill: 'backwards'}));
+      play(q(w, sel), [{transform: 'translateY(-30px) scale(1.3)', opacity: 0}, {transform: 'scale(.97)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 320, delay: 220 + k * 160, easing: EASE.out, fill: 'backwards'}));
     scope.timeout(() => {
       s.slam?.();
       const r = q(w, '.kh-welc__name').getBoundingClientRect();
-      ctx.fx.burst({x: r.left + r.width / 2, y: r.top + r.height / 2}, {coins: 0, confetti: 30, power: 0.95});
-    }, 760);
-    play(q(w, '.kh-welc__gift'), [{transform: 'translateY(30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, delay: 1000, easing: EASE.spring, fill: 'backwards'});
-    play(q(w, '.kh-welc__go'), [{transform: 'translateY(60px) scale(.8)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 1300, easing: EASE.spring, fill: 'backwards'});
+      ctx.fx.burst({x: r.left + r.width / 2, y: r.top + r.height / 2}, {coins: 0, confetti: 26, power: 0.95});
+    }, ANIM ? 640 : 0);
+    play(q(w, '.kh-welc__gift'), [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: 800, easing: EASE.outQuart, fill: 'backwards'});
+    play(q(w, '.kh-welc__go'), [{transform: 'translateY(40px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: 1000, easing: EASE.outQuart, fill: 'backwards'});
     scope.timeout(async () => {
       const cap = q(w, '.kh-welc__cap');
       const ico = center(q(cap, '.kh-capsule__ico'));
-      ctx.fx.burst(ico, {coins: 8, confetti: 0, power: 0.6});
+      ctx.fx.burst(ico, {coins: 6, confetti: 0, power: 0.6});
       s.coin(3);
       await countUp(scope, q(cap, '.kh-capsule__val'), 0, profile.data.coins, 900);
-      bump(cap, 1.12);
-    }, ANIM ? 1150 : 0);
+      bump(cap, 1.1);
+    }, ANIM ? 980 : 0);
     await new Promise<void>(res => scope.on(q(w, '[data-act=go]'), 'click', () => {
       s.tap();
-      pt.pose('kahkaha');
+      pt.pop();
       res();
     }));
   }
@@ -547,14 +640,15 @@ function done(a: Animation): Promise<void> {
   return a.finished.then(() => undefined, () => undefined);
 }
 
-/** Hediye kutusu (SVG gövde + ayrı kapak, iç ışık hüzmesi, gölge). */
+/** Hediye kutusu (SVG gövde + gölgesi çizimde, ayrı kapak, pişmiş ışık patlaması, zemin gölgesi). Filtre/maske yok. */
 function giftBox(): HTMLElement {
   const b = h('div', 'kh-gift');
-  b.innerHTML = `<i class="kh-gift__shadow"></i><i class="kh-rays is-gold kh-gift__rays"></i>
+  b.innerHTML = `<i class="kh-gift__shadow"></i><i class="kh-gift__rays" style="--rays:${raysBg('255, 226, 120', 14, 0.75)}"></i>
     <div class="kh-gift__in">
       <svg class="kh-gift__body" viewBox="0 0 200 150" aria-hidden="true">
         <defs><linearGradient id="gfb" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ff7a8e"/><stop offset=".45" stop-color="#ff2e4d"/><stop offset="1" stop-color="#a8001e"/></linearGradient>
           <linearGradient id="gfr" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb21a"/><stop offset=".45" stop-color="#fff27a"/><stop offset="1" stop-color="#e57a00"/></linearGradient></defs>
+        <rect x="8" y="14" width="184" height="138" rx="16" fill="#0a1033" fill-opacity=".45"/>
         <rect x="8" y="6" width="184" height="138" rx="16" fill="url(#gfb)" stroke="#0a1033" stroke-width="7"/>
         <rect x="84" y="6" width="32" height="138" fill="url(#gfr)" stroke="#0a1033" stroke-width="5"/>
         <path d="M20 22 Q60 14 80 18" stroke="#fff" stroke-opacity=".5" stroke-width="7" fill="none" stroke-linecap="round"/>
@@ -570,8 +664,6 @@ function giftBox(): HTMLElement {
         <circle cx="115" cy="50" r="14" fill="url(#gfr2)" stroke="#0a1033" stroke-width="6"/>
         <path d="M20 64 Q60 58 84 60" stroke="#fff" stroke-opacity=".55" stroke-width="6" fill="none" stroke-linecap="round"/>
       </svg></div>
-    </div>
-    <i class="kh-gift__spark is-a"></i><i class="kh-gift__spark is-b"></i><i class="kh-gift__spark is-c"></i>`;
+    </div>`;
   return b;
 }
-

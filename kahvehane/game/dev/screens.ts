@@ -1,6 +1,7 @@
 // Ekran galerisi: /dev/screens.html?s=<ekran>[&anim=0]
-// Ekranlar: splash onboarding home (tab=shop|profile|quests, mode=1v1|4|esli, sub=deck…) product (k=deck&id=iznik) versus (mode=…)
-//   results (mode=…, r=win|lose|draw, lvl=1, streak=3) pause settings rules daily online friends bailout wipe
+// Ekranlar: splash onboarding (p=new: hikâye; jump=gallery: doğrudan galeri) home (tab=shop|profile|quests, mode=1v1|4|esli, sub=deck…, poke=1)
+//   product (k=deck&id=iznik) versus (mode=…) results (mode=…, r=win|lose|draw, lvl=1, streak=3) pause settings rules daily
+//   online (Çevrimiçi tanıtımı) friends (aynı tanıtımın "Arkadaşınla" sekmesi) bailout wipe
 // Profil galeride ayrı anahtarlarda tutulur (kh.* → khg.*): gerçek oyunun kaydına dokunulmaz. p=new → ilk açılış profili; rich=1 → zengin.
 const LS = window.localStorage;
 const gi = LS.getItem.bind(LS), si = LS.setItem.bind(LS), ri = LS.removeItem.bind(LS);
@@ -18,7 +19,7 @@ import type {Mode} from '../src/game/types';
 
 const P = new URLSearchParams(location.search);
 const S = P.get('s') ?? '';
-const LIST = ['splash', 'onboarding', 'home', 'home&tab=shop', 'home&tab=profile', 'home&tab=quests', 'home&mode=4', 'home&mode=esli', 'product&k=deck&id=yildizli', 'product&k=char&id=defne',
+const LIST = ['splash', 'onboarding', 'onboarding&p=new&jump=gallery', 'home', 'home&poke=1', 'home&tab=shop', 'home&tab=profile', 'home&tab=quests', 'home&mode=4', 'home&mode=esli', 'product&k=deck&id=yildizli', 'product&k=char&id=defne',
   'product&k=fx&id=havai', 'product&k=table&id=gece', 'versus', 'versus&mode=4', 'versus&mode=esli', 'results', 'results&r=lose', 'results&mode=4', 'results&mode=esli', 'results&lvl=1&streak=3',
   'pause', 'settings', 'rules', 'daily', 'online', 'friends', 'bailout', 'wipe'];
 
@@ -118,6 +119,7 @@ async function main(): Promise<void> {
       if (pr.data.onboarded) {
         ri('khg.profile3');
       }
+      if (P.get('jump') === 'gallery') click('.kh-ob__skip', 300);
       await sc.onboarding(new Profile());
       sc.home(new Profile());
       break;
@@ -127,6 +129,7 @@ async function main(): Promise<void> {
       if (tab) click(`.kh-nav__btn[data-tab=${tab}]`, 200);
       const sub = P.get('sub');
       if (sub) click(`.kh-stab[data-t=${sub}]`, 700);
+      if (P.has('poke')) click('.kh-hero3__tap', 4800);
       break;
     }
     case 'product': {
@@ -173,11 +176,12 @@ async function main(): Promise<void> {
       break;
     case 'online':
       sc.home(pr);
-      click('.kh-oc2.is-online', 900);
+      click('.kh-onl', 900);
       break;
     case 'friends':
       sc.home(pr);
-      click('.kh-oc2.is-friends', 900);
+      click('.kh-onl', 900);
+      click('.kh-tz__tab[data-t=friends]', 1500);
       break;
     case 'bailout':
       pr.data.coins = 40;

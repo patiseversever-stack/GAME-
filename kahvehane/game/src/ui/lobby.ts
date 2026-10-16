@@ -1,17 +1,18 @@
-// ANA EKRAN kabuğu: üst çubuk (avatar + seviye/XP, jeton kapsülü, kurallar, ayarlar), sayfalar (Ana Sayfa · Market ·
-// Koleksiyon · Görevler) ve kayan göstergeli alt menü. Ana Sayfa: oyuncunun karakteri (nefes, göz kırpma, dokununca poz + söz),
-// günlük ödül ve bedava sandık, ÇEVRİMİÇİ / ARKADAŞLA (yakında), TEK OYUNCU paneli (mod sekmeleri + canlı masa şeması,
-// rakip seçimi, bahis), büyük OYNA. Market ve profil Profile üzerinden kendi içinde çözülür; uygulamaya yalnız maç/ayar/kural döner.
+// ANA EKRAN kabuğu: üst çubuk (avatar + seviye/XP, jeton kapsülü, ayarlar), sayfalar (Ana Sayfa · Market · Koleksiyon · Görevler)
+// ve kayan göstergeli alt menü. Ana Sayfa tek odaklı ve sakin: oyuncunun karakteri (tek görsel, nefes; dokununca poz + söz),
+// yanında iki küçük yuvarlak düğme (günlük ödül, bedava sandık), tek ince ÇEVRİMİÇİ satırı (yakında; içinde arkadaşla özel masa da),
+// mod / rakip / bahis kartı ve ödülü içinde yazan büyük OYNA. Market ve profil Profile üzerinden kendi içinde çözülür;
+// uygulamaya yalnız maç/ayar/kural döner. Boşta yalnız iki küçük döngü (nefes, OYNA nabzı); onları da platform/calm.ts uyutur.
 import './home.css';
 import type {CosmeticsListener, HomeAction} from './types';
 import type {Profile as GameProfile} from '../game/profile';
 import {DAILY_REWARDS, QUEST_BONUS, questDef, type QuestId} from '../game/profile';
 import {ROSTER, charById, type CharDef, type CharId, type Pose} from '../game/roster';
 import {MODE_INFO, type Mode} from '../game/types';
-import {ANIM, EASE, Scope, bump, center, clamp, countUp, esc, fmt, h, hms, play, q, shake, typewriter} from './dom';
+import {ANIM, EASE, Scope, bump, center, clamp, countUp, esc, fmt, h, hms, play, q, shake} from './dom';
 import {ASSETS} from './assets';
 import {I} from './icons';
-import {Carousel, Portrait, arenaHtml, capsuleHtml, charAvatarHtml, gemHtml, onAct, openModal, openSheet, shuffled, starsHtml, toast, type Ctx, type ModalHandle} from './parts';
+import {Portrait, arenaHtml, capsuleHtml, charAvatarHtml, decorLoops, faceRect, gemHtml, onAct, openModal, openSheet, placeBubble, shuffled, starsHtml, toast, typeText, type Ctx, type ModalHandle} from './parts';
 import {daily as dailyModal} from './modals';
 import {ShopPage} from './shop';
 import {CollectionPage} from './profile';
@@ -287,11 +288,8 @@ export class HomeView implements Shell {
     this.home.act(a, b);
   }
 
+  /** Giriş: üst çubuk, alt menü ve zemin durağan (perde zaten açıyor); yalnız sayfa öğeleri sırayla gelir. */
   private enter(): void {
-    const g = (sel: string) => q(this.el, sel);
-    play(g('.kh-arena'), [{transform: 'scale(1.08)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'backwards'});
-    play(g('.kh-top'), [{transform: 'translateY(-30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, delay: 80, easing: EASE.spring, fill: 'backwards'});
-    play(g('.kh-nav'), [{transform: 'translateY(60px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 300, easing: EASE.spring, fill: 'backwards'});
     this.home.enter();
   }
 
@@ -318,21 +316,15 @@ export interface HomeMemo {
 }
 
 // =====================================================================================================
-// Ana Sayfa
+// Ana Sayfa — sakin, tek odak: karakter (nefes) · Çevrimiçi satırı · mod / rakip / bahis kartı · OYNA.
+// Boşta yalnız iki küçük döngü (nefes, OYNA nabzı); dokunuşsuz birkaç saniye sonra platform/calm.ts onları da durdurur.
 // =====================================================================================================
-/** Karakterin ana ekranda dokununca söyledikleri (poz + söz). */
+/** Karaktere dokununca söyledikleri (poz + kısa söz). */
 const POKE: Record<CharId, [Pose, string][]> = {
-  riza: [['gulumseme', 'Gel otur evlat, bir el atalım.'], ['dusunceli', 'Valeyi sona sakla, demedi deme.'], ['kahkaha', 'Haha! Bıyığımı burdum, masa hazır!'], ['zafer', 'Çayımız da geldi. Hadi bakalım!'], ['pisti', 'Şu valeyi görüyor musun? Pişti kokusu var.'], ['saskin', 'Ne o, hâlâ oturmadın mı?']],
+  riza: [['gulumseme', 'Gel otur evlat, bir el atalım.'], ['dusunceli', 'Valeyi sona sakla, demedi deme.'], ['kahkaha', 'Haha! Bıyığımı burdum, masa hazır!'], ['zafer', 'Çayımız geldi. Hadi bakalım!'], ['pisti', 'Bu masada pişti kokusu var.'], ['saskin', 'Ne o, hâlâ oturmadın mı?']],
   cem: [['gulumseme', 'Hazırım. İhtimaller bizden yana.'], ['dusunceli', '52 kart, 4 vale… Hesap tamam.'], ['kahkaha', 'Haha! Algoritma bugün coşkulu.'], ['zafer', 'Seriye bağlayalım, hadi!'], ['pisti', 'Vale bende, pişti kapıda.'], ['saskin', 'Dur, kulaklık… Tamam, buradayım!']],
-  dursun: [['gulumseme', 'Çaylar benden, oyun senden!'], ['zafer', 'Taze demledim, buyur!'], ['kahkaha', 'Hahaha! Bugün şanslı günümüz.'], ['dusunceli', 'Defterde senin hanen boş duruyor…'], ['pisti', 'Göz kırptım ama kimseye söyleme.'], ['saskin', 'Aaa, daha masaya oturmadın mı?']],
+  dursun: [['gulumseme', 'Çaylar benden, oyun senden!'], ['zafer', 'Taze demledim, buyur!'], ['kahkaha', 'Hahaha! Bugün şanslı günümüz.'], ['dusunceli', 'Defterde senin hanen boş duruyor…'], ['pisti', 'Göz kırptım, kimseye söyleme.'], ['saskin', 'Aaa, daha masaya oturmadın mı?']],
   defne: [['gulumseme', 'Hazırsan başlayalım.'], ['dusunceli', 'Planım hazır.'], ['pisti', 'Sessiz olan kazanır.'], ['zafer', 'Bir el daha mı? Olur.'], ['kahkaha', 'Hah. Bu iyiydi.'], ['saskin', 'Beni mi bekliyorsun?']],
-};
-/** Ana ekranda uzun süre dokunulmazsa karakterin dürtmesi. */
-const NUDGE: Record<CharId, string[]> = {
-  riza: ['Hadi evlat, çay soğuyor!', 'Valeler seni bekliyor…'],
-  cem: ['Bekleme modundayım… OYNA’ya bas!', 'Ping atıyorum: masa hazır!'],
-  dursun: ['Masa boş kalmasın, gel otur!', 'Çaylar tazelendi, haberin olsun.'],
-  defne: ['Sıra sende.', 'Bekliyorum.'],
 };
 const TICKLE: Record<CharId, string> = {
   riza: 'Yeter be evlat, bıyığım ağrıdı!',
@@ -341,28 +333,25 @@ const TICKLE: Record<CharId, string> = {
   defne: 'Bir daha dokunursan… pişti yaparım.',
 };
 
-const SEAT_NAME = ['Sen', 'Sağ', 'Karşı', 'Sol'];
-const rndOf = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
-
 /** Kısa ad: "Rıza Amca" → "Rıza", "Kahveci Dursun" → "Dursun". */
 export const shortName = (c: CharDef): string => c.name.replace(/^Kahveci\s+/, '').split(' ')[0];
 
-/** Mod sekmesindeki küçük yuvarlak masa şeması (üstten): koltuklar, ortada iki kart; sıra halkası koltuktan koltuğa geçer. */
-function diagram(mode: Mode): string {
-  const P = [[24, 43], [43, 24], [24, 5], [5, 24]]; // alt, sağ, üst, sol (saat yönünün tersine)
-  const seats = mode === '1v1' ? [0, 2] : [0, 1, 2, 3];
-  const col = (s: number) => (s === 0 ? '#ffd23f' : mode === 'esli' ? (s === 2 ? '#3d93ff' : '#ff4d66') : ['#ffd23f', '#ff4d66', '#16c45b', '#3d93ff'][s]);
-  const link = mode === 'esli' ? '<path d="M24 11V37" stroke="#7fc0ff" stroke-width="2.4" stroke-dasharray="3 2.6" stroke-linecap="round"/>' : '';
-  return `<svg class="kh-dg is-${mode}" viewBox="0 0 48 48" aria-hidden="true">
-    <circle cx="24" cy="24" r="15" fill="url(#khdgf)" stroke="#0a1033" stroke-width="2.6"/>
-    <circle cx="24" cy="24" r="10.5" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="1.2"/>
-    ${link}
-    <rect x="18.5" y="19" width="6" height="8.6" rx="1.4" fill="#fff" stroke="#0a1033" stroke-width="1.2" transform="rotate(-12 21.5 23.3)"/>
-    <rect x="23.5" y="19.4" width="6" height="8.6" rx="1.4" fill="#fff" stroke="#0a1033" stroke-width="1.2" transform="rotate(10 26.5 23.7)"/>
-    <path d="M26.5 21.6c.9-1.3 2.6-.5 2.1.9-.3.9-2.1 2-2.1 2s-1.8-1.1-2.1-2c-.5-1.4 1.2-2.2 2.1-.9z" fill="#ff2e4d" transform="rotate(10 26.5 23.7)"/>
-    ${seats.map(s => `<circle cx="${P[s][0]}" cy="${P[s][1]}" r="4.8" fill="${col(s)}" stroke="#0a1033" stroke-width="2.2"/>`).join('')}
-    <circle class="kh-dg__turn" cx="0" cy="0" r="7.6" fill="none" stroke="#fff" stroke-width="2.2"/>
-  </svg>`;
+/** Mod düğmesindeki küçük simge (durağan): 1'e 1 iki kişi, 4 kişi dört nokta, eşli iki renkli iki çift. */
+function modeIcon(m: Mode): string {
+  const dot = (x: number, y: number, c = 'currentColor') => `<circle cx="${x}" cy="${y}" r="3.1" fill="${c}"/>`;
+  const body = m === '1v1'
+    ? `${dot(12, 5.2)}${dot(12, 18.8)}<path d="M7.5 12h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="1.5 3"/>`
+    : m === '4'
+      ? `${dot(12, 4.6)}${dot(19.4, 12)}${dot(12, 19.4)}${dot(4.6, 12)}`
+      : `${dot(12, 4.6, '#ff6b81')}${dot(12, 19.4, '#ff6b81')}${dot(4.6, 12, '#5aa8ff')}${dot(19.4, 12, '#5aa8ff')}`;
+  return `<svg class="kh-mode__ico" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>`;
+}
+
+/** Sandık süresi: kaba ve sakin ("2sa 14dk", "14 dk") — saniye saymaz, dakikada bir tazelenir. */
+function chestLeft(sec: number): string {
+  const m = Math.max(1, Math.ceil(sec / 60));
+  const hh = Math.floor(m / 60);
+  return hh ? `${hh}sa ${m % 60}dk` : `${m} dk`;
 }
 
 class HomePage implements Page {
@@ -373,10 +362,9 @@ class HomePage implements Page {
   private stake: number;
   private oppIdx = 0;
   private trio: CharId[] = [];
-  private car: Carousel | null = null;
-  private carScope: Scope | null = null;
   private pokes: number[] = [];
   private sayT = 0;
+  private nextPoke = -1;
   private lastPoke = -1;
   private visible = true;
 
@@ -386,30 +374,27 @@ class HomePage implements Page {
     this.stake = p.lastStake ?? 100;
     const me = this.me();
     this.el.innerHTML = `
-      <section class="kh-hero2">
-        <i class="kh-hero2__glow"></i><i class="kh-rays kh-hero2__rays"></i>
-        <div class="kh-hero2__fig"></div>
-        <button class="kh-hero2__tap" data-act="poke" aria-label="Karakterine dokun"></button>
-        <div class="kh-hero2__plate"><b></b><span></span></div>
-        <div class="kh-say kh-hero2__say"><div class="kh-say__t"></div></div>
-        <button class="kh-hw is-daily" data-act="daily" data-spring><span class="kh-hw__ico"><img src="${ASSETS.icon_gift}" alt=""></span><span class="kh-hw__lbl">Günlük</span><i class="kh-dot"></i></button>
-        <button class="kh-hw is-chest" data-act="chest" data-spring><span class="kh-hw__ico"><img src="${ASSETS.icon_chest}" alt=""></span><span class="kh-hw__lbl kh-num">Sandık</span></button>
+      <section class="kh-hero3">
+        <i class="kh-hero3__glow"></i>
+        <div class="kh-hero3__fig"></div>
+        <button class="kh-hero3__tap" data-act="poke" aria-label="Karakterine dokun"></button>
+        <div class="kh-hero3__name"></div>
+        <button class="kh-hw is-daily" data-act="daily" data-spring aria-label="Günlük ödül"><img src="${ASSETS.icon_gift}" alt=""><i class="kh-dot"></i></button>
+        <button class="kh-hw is-chest" data-act="chest" data-spring aria-label="Bedava sandık"><img src="${ASSETS.icon_chest}" alt=""><span class="kh-hw__lbl"></span></button>
+        <div class="kh-say kh-hero3__say" aria-live="polite"><div class="kh-say__t"></div></div>
       </section>
-      <div class="kh-online">
-        <button class="kh-oc2 is-online" data-act="online" data-spring><span class="kh-oc2__ico">${I.globe}</span><span class="kh-oc2__txt"><b>Çevrimiçi</b><small>Gerçek rakipler</small></span><span class="kh-ribbon">Yakında</span></button>
-        <button class="kh-oc2 is-friends" data-act="friends" data-spring><span class="kh-oc2__ico">${I.friends}</span><span class="kh-oc2__txt"><b>Arkadaşla</b><small>Özel masa kur</small></span><span class="kh-ribbon">Yakında</span></button>
-      </div>
-      <section class="kh-panel kh-solo">
-        <div class="kh-solo__head"><span class="kh-label">Tek Oyuncu</span><span class="kh-solo__desc"></span>
-          <button class="kh-solo__help" data-act="rules" data-spring aria-label="Nasıl oynanır">?</button></div>
-        <div class="kh-modes"><i class="kh-modes__ind"></i>${(['1v1', '4', 'esli'] as Mode[]).map(m => `<button class="kh-mode" data-act="mode" data-m="${m}">${diagram(m)}<span>${MODE_INFO[m].name}</span></button>`).join('')}</div>
-        <div class="kh-solo__opp"></div>
-        <div class="kh-solo__stakes"></div>
+      <button class="kh-onl" data-act="online" data-spring><span class="kh-onl__ico">${I.globe}</span>
+        <span class="kh-onl__txt"><b>Çevrimiçi</b><small>Rakipler · Arkadaşlar</small></span><span class="kh-onl__soon">Yakında</span>${I.chevR}</button>
+      <section class="kh-setup">
+        <div class="kh-seg" role="tablist" aria-label="Oyun modu"><i class="kh-seg__ind"></i>${(['1v1', '4', 'esli'] as Mode[]).map(m =>
+          `<button class="kh-mode" role="tab" data-act="mode" data-m="${m}">${modeIcon(m)}<span>${MODE_INFO[m].name}</span></button>`).join('')}</div>
+        <div class="kh-opp"></div>
+        <div class="kh-stakes"></div>
       </section>
-      <div class="kh-playwrap"><button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-shine kh-play2" data-act="play">${I.play}<span>Oyna</span></button></div>
-      <svg width="0" height="0" style="position:absolute"><defs><radialGradient id="khdgf" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#4a66ff"/><stop offset="1" stop-color="#1d30b0"/></radialGradient></defs></svg>`;
-    this.pt = new Portrait(me, {pose: 'notr', cls: 'kh-hero2__pt'});
-    q(this.el, '.kh-hero2__fig').append(this.pt.el);
+      <div class="kh-playwrap"><button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-play2" data-act="play">
+        <span class="kh-play2__l1">${I.play}<span>Oyna</span></span><span class="kh-play2__l2"></span></button></div>`;
+    this.pt = new Portrait(me, {pose: 'notr', cls: 'kh-hero3__pt', fade: true});
+    q(this.el, '.kh-hero3__fig').append(this.pt.el);
     this.scope.add(() => this.pt.destroy());
     this.applyChar(me);
     if (!this.stakeOk(this.stake)) this.stake = STAKES[0].v;
@@ -417,10 +402,16 @@ class HomePage implements Page {
     this.setMode(this.mode, false);
     this.tickChest();
     this.refresh();
-    this.scope.add(() => {
-      clearTimeout(this.sayT);
-      clearTimeout(this.nudgeT);
+    this.bindSwipe();
+    // dokunmadan hemen önce (pointerdown) sıradaki tepki pozunu çözmeye başla: tıkta hazır olsun
+    this.scope.on(q(this.el, '.kh-hero3__tap'), 'pointerdown', () => {
+      const list = POKE[this.me().id];
+      let k = Math.floor(Math.random() * list.length);
+      if (k === this.lastPoke) k = (k + 1) % list.length;
+      this.nextPoke = k;
+      this.pt.preload([list[k][0]]);
     });
+    this.scope.add(() => clearTimeout(this.sayT));
   }
 
   private me(): CharDef {
@@ -440,8 +431,7 @@ class HomePage implements Page {
 
   private applyChar(c: CharDef): void {
     this.el.style.setProperty('--c', c.color);
-    q(this.el, '.kh-hero2__plate b').textContent = c.name;
-    q(this.el, '.kh-hero2__plate span').textContent = c.title;
+    q(this.el, '.kh-hero3__name').textContent = c.name;
   }
 
   /** Profil değişince (jeton, karakter, seviye). */
@@ -455,187 +445,181 @@ class HomePage implements Page {
       if (!this.valid(this.trio)) this.trio = this.defaultTrio();
       this.buildOpp(true);
     }
-    const dot = q(this.el, '.kh-hw.is-daily .kh-dot');
-    dot.style.display = p.dailyReady() ? '' : 'none';
-    q(this.el, '.kh-hw.is-daily').classList.toggle('is-ready', p.dailyReady());
+    const ready = p.dailyReady();
+    const daily = q(this.el, '.kh-hw.is-daily');
+    q(daily, '.kh-dot').style.display = ready ? '' : 'none';
+    daily.classList.toggle('is-ready', ready);
     if (!this.stakeOk(this.stake)) this.stake = STAKES.filter(s => this.stakeOk(s.v)).pop()?.v ?? STAKES[0].v;
     this.buildStakes();
     this.tickChest(true);
   }
 
+  /** Giriş: en çok 6 öğe, 340 ms altı, küçük gecikmelerle (yalnız transform/opaklık). */
   enter(): void {
     const g = (sel: string) => q(this.el, sel);
-    play(g('.kh-hero2__fig'), [{transform: 'translateY(30%) scale(.86)', opacity: 0}, {transform: 'translateY(-3%) scale(1.02)', opacity: 1, offset: 0.7}, {transform: 'none', opacity: 1}], {duration: 620, delay: 120, easing: EASE.out, fill: 'backwards'});
-    play(g('.kh-hero2__glow'), [{transform: 'scale(.4)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 800, delay: 60, easing: EASE.out, fill: 'backwards'});
-    play(g('.kh-hero2__plate'), [{transform: 'translate(-50%, 20px) scale(.7)', opacity: 0}, {transform: 'translate(-50%, 0)', opacity: 1}], {duration: 420, delay: 380, easing: EASE.spring, fill: 'backwards'});
+    const up = (el: Element, delay: number, dy = 16) =>
+      play(el, [{transform: `translateY(${dy}px)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 300, delay, easing: EASE.outQuart, fill: 'backwards'});
+    up(g('.kh-hero3'), 0, 22);
     this.el.querySelectorAll('.kh-hw').forEach((w, i) =>
-      play(w, [{transform: `translateX(${i ? 60 : -60}px) scale(.6)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 420 + i * 80, easing: EASE.spring, fill: 'backwards'}));
-    this.el.querySelectorAll('.kh-oc2').forEach((w, i) =>
-      play(w, [{transform: 'translateY(24px) scale(.9)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, delay: 220 + i * 70, easing: EASE.spring, fill: 'backwards'}));
-    play(g('.kh-solo'), [{transform: 'translateY(40px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 460, delay: 280, easing: EASE.out, fill: 'backwards'});
-    play(g('.kh-playwrap'), [{transform: 'scale(.6)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 520, delay: 380, easing: EASE.spring, fill: 'backwards'});
-    // ilk kez: karakter selam verir; sonra uzun sessizlikte ara sıra dürter
-    this.scope.timeout(() => this.poke(true), ANIM ? 900 : 0);
-    this.scope.on(this.el, 'pointerdown', () => this.armNudge());
-    this.armNudge();
+      play(w, [{transform: 'scale(.5)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: 200 + i * 60, easing: EASE.spring, fill: 'backwards'}));
+    up(g('.kh-onl'), 90);
+    up(g('.kh-setup'), 140);
+    up(g('.kh-play2'), 190);
+    // selam: poz değiştirmeden, yalnız balon + küçük pop
+    this.scope.timeout(() => this.poke(true), ANIM ? 650 : 0);
+    // hazır ödül bir kez kıpırdar (döngü yok)
+    this.scope.timeout(() => {
+      const w = this.el.querySelector<HTMLElement>('.kh-hw.is-ready img');
+      if (w) play(w, [{transform: 'none'}, {transform: 'rotate(-10deg) scale(1.1)', offset: 0.25}, {transform: 'rotate(8deg) scale(1.1)', offset: 0.5}, {transform: 'rotate(-4deg)', offset: 0.75}, {transform: 'none'}], {duration: 620, easing: 'ease-in-out'});
+    }, ANIM ? 1400 : 0);
   }
 
-  private nudgeT = 0;
-  private nudges = 0;
-  private armNudge(): void {
-    clearTimeout(this.nudgeT);
-    if (!ANIM || this.nudges >= 3) return;
-    this.nudgeT = window.setTimeout(() => {
-      if (!this.scope.alive || !this.visible || !this.el.isConnected) return;
-      const me = this.me();
-      this.nudges++;
-      this.pt.pose('dusunceli', 1400);
-      this.scope.timeout(() => this.say(rndOf(NUDGE[me.id]), 'gulumseme'), 1200);
-      this.armNudge();
-    }, 16000 + Math.random() * 8000);
-  }
-
-  /** Balon + poz (dürtme, karşılama). */
-  private say(line: string, pose: Pose): void {
-    this.pt.pose(pose, 2600);
-    this.pt.pop();
-    const say = q(this.el, '.kh-hero2__say');
+  /** Balon (tek balon; yüzün üstüne/yanına yerleşir, birkaç saniye sonra söner). */
+  private say(line: string, pose?: Pose): void {
+    if (pose) this.pt.pose(pose, 2600);
+    else this.pt.pop();
+    const hero = q(this.el, '.kh-hero3');
+    const say = q(this.el, '.kh-hero3__say');
+    say.getAnimations().forEach(a => a.cancel());
+    say.style.visibility = 'hidden';
+    const tw = typeText(this.scope, q(say, '.kh-say__t'), line, 44);
+    const bounds = hero.getBoundingClientRect();
+    if (!placeBubble(say, hero, faceRect(this.pt), bounds)) {
+      tw.finish();
+      return;
+    }
     say.style.visibility = 'visible';
-    play(say, [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.out, fill: 'both'});
-    typewriter(this.scope, q(say, '.kh-say__t'), line, 46);
+    play(say, [{transform: 'scale(.5)', opacity: 0}, {transform: 'scale(1.04)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 260, easing: EASE.out});
     clearTimeout(this.sayT);
     this.sayT = window.setTimeout(() => {
       if (!this.scope.alive) return;
-      const a = play(say, [{opacity: 1}, {opacity: 0, transform: 'scale(.9)'}], {duration: 220, fill: 'forwards'});
+      const a = say.animate([{opacity: 1}, {opacity: 0, transform: 'scale(.94)'}], {duration: 200, fill: 'forwards'});
       a.onfinish = () => {
         say.style.visibility = 'hidden';
         a.cancel();
       };
-    }, ANIM ? 3000 : 60000);
+    }, ANIM ? 1600 + line.length * 50 : 60000);
   }
 
   show(): void {
     this.visible = true;
+    this.pt.breathe(true);
     this.tickChest(true);
-    this.layout();
   }
-
-  /** Ölçüye bağlı yerleşim (sayfa DOM'a eklendikten sonra). */
   layout(): void {
-    this.car?.layout();
+    /* ölçüye bağlı yerleşim yok (vitrin kalktı) */
   }
+  /** Başka sekmeye geçince nefes de durur (gizli sayfada çalışan WAAPI döngüsü boşuna kare ister). */
   hide(): void {
     this.visible = false;
+    this.pt.breathe(false);
   }
 
   // ---------------------------------------------------------------- mod
   private setMode(m: Mode, animate: boolean): void {
     this.mode = m;
     const i = ['1v1', '4', 'esli'].indexOf(m);
-    this.el.querySelectorAll<HTMLElement>('.kh-mode').forEach((b, k) => b.classList.toggle('is-on', k === i));
-    q(this.el, '.kh-modes__ind').style.transform = `translateX(${i * 100}%)`;
-    q(this.el, '.kh-solo__desc').textContent = MODE_INFO[m].desc;
-    if (animate) {
-      const b = this.el.querySelectorAll<HTMLElement>('.kh-mode')[i];
-      play(q(b, '.kh-dg'), [{transform: 'scale(1)'}, {transform: 'scale(1.25) rotate(-6deg)', offset: 0.4}, {transform: 'scale(1)'}], {duration: 380, easing: EASE.out});
-    }
+    this.el.querySelectorAll<HTMLElement>('.kh-mode').forEach((b, k) => {
+      b.classList.toggle('is-on', k === i);
+      b.setAttribute('aria-selected', String(k === i));
+    });
+    q(this.el, '.kh-seg__ind').style.transform = `translateX(${i * 100}%)`;
     this.buildOpp(animate);
     this.buildStakes();
   }
 
-  // ---------------------------------------------------------------- rakipler
+  // ---------------------------------------------------------------- rakip(ler): tek satır
   private buildOpp(animate: boolean): void {
-    const box = q(this.el, '.kh-solo__opp');
-    this.carScope?.dispose();
-    this.carScope = null;
-    this.car = null;
+    const box = q(this.el, '.kh-opp');
     const others = this.others();
+    box.className = `kh-opp is-${this.mode}`;
     if (this.mode === '1v1') {
       const prev = this.memo.opp && others.find(c => c.id === this.memo.opp) ? this.memo.opp : others[Math.floor(others.length / 2)].id;
       this.oppIdx = Math.max(0, others.findIndex(c => c.id === prev));
-      box.className = 'kh-solo__opp is-1v1';
-      box.innerHTML = `<div class="kh-opps kh-car"></div>`;
-      const host = q(box, '.kh-opps');
-      const items = others.map((c, i) => {
-        const it = h('div', 'kh-car__item kh-opc');
-        it.dataset.i = String(i);
-        it.style.setProperty('--c', c.color);
-        it.innerHTML = `<div class="kh-opc__card"><i class="kh-opc__bg"></i><img class="kh-opc__img" src="${c.poses.notr}" alt="">
-          <div class="kh-opc__plate"><b>${esc(c.name)}</b>${starsHtml(c.difficulty)}</div><span class="kh-opc__lvl">${gemHtml(BOT_LEVEL[c.id], false)}</span>
-          <span class="kh-opc__check">${I.check}</span></div>`;
-        host.append(it);
-        return it;
-      });
-      this.carScope = new Scope();
-      const sc = this.carScope;
-      this.car = new Carousel(sc, host, items, {
-        spacing: () => host.clientWidth * 0.34,
-        shrink: 0.2,
-        tilt: 0,
-        drop: 0.06,
-        sounds: this.shell.ctx.sounds,
-        onChange: i => {
-          this.oppIdx = i;
-          this.memo.opp = others[i].id;
-        },
-        onSettle: i => {
-          const img = items[i].querySelector<HTMLImageElement>('.kh-opc__img')!;
-          img.src = others[i].poses.gulumseme;
-          items.forEach((it, k) => k !== i && (it.querySelector<HTMLImageElement>('.kh-opc__img')!.src = others[k].poses.notr));
-        },
-      });
-      sc.on(host, 'click', e => {
-        const it = (e.target as Element).closest<HTMLElement>('.kh-opc');
-        if (!it) return;
-        const i = Number(it.dataset.i);
-        if (i !== this.car!.index) this.car!.go(i);
-        else {
-          this.shell.ctx.sounds.tap();
-          const c = others[i];
-          bump(q(it, '.kh-opc__card'), 1.06);
-          toast(this.shell.ctx, `${c.name}: “${c.quote}”`, I.voice);
-        }
-      });
-      this.car.go(this.oppIdx, false);
-      sc.on(window, 'resize', () => this.car?.layout());
-      if (!host.clientWidth) requestAnimationFrame(() => this.car?.layout());
-      if (animate) items.forEach((it, k) => play(q(it, '.kh-opc__card'), [{transform: 'translateY(30px) scale(.7)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: k * 60, easing: EASE.spring, fill: 'backwards'}));
+      box.innerHTML = `<span class="kh-opp__lbl">Rakip</span><button class="kh-opp__who" data-act="oppinfo"></button>
+        <button class="kh-opp__arr" data-act="opp" data-d="-1" aria-label="Önceki rakip">${I.chevL}</button><button class="kh-opp__arr" data-act="opp" data-d="1" aria-label="Sonraki rakip">${I.chevR}</button>`;
+      this.renderWho(animate ? 1 : 0);
     } else {
-      box.className = `kh-solo__opp is-${this.mode}`;
-      box.innerHTML = this.mode === '4' ? this.trioHtml() : this.teamsHtml();
-      if (animate) box.querySelectorAll('.kh-ava').forEach((a, k) => play(a, [{transform: 'scale(.3) rotate(-20deg)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: k * 60, easing: EASE.spring, fill: 'backwards'}));
+      box.innerHTML = this.groupHtml();
+      if (animate) box.querySelectorAll('.kh-ava').forEach((a, k) => play(a, [{transform: 'scale(.4)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 280, delay: k * 40, easing: EASE.spring, fill: 'backwards'}));
     }
   }
 
-  private trioHtml(): string {
-    // koltuk sırası: [sağ, karşı, sol] → ekranda soldan sağa: sol, karşı, sağ
-    const order = [2, 1, 0];
-    const seat = [1, 2, 3];
-    return `<div class="kh-trio">${order.map(k => {
-      const c = charById(this.trio[k]);
-      return `<div class="kh-trio__seat"><span class="kh-trio__ava">${charAvatarHtml(c, 'standart')}${gemHtml(BOT_LEVEL[c.id], false)}</span><b>${esc(shortName(c))}</b><small>${SEAT_NAME[seat[k]]}</small></div>`;
-    }).join('')}</div>
-      <button class="kh-iconbtn kh-shuf" data-act="shuffle" aria-label="Karıştır">${I.shuffle}</button>`;
+  /** 1'e 1 rakip satırı: avatar + ad + zorluk yıldızları. d: kayış yönü (0 = animasyonsuz). */
+  private renderWho(d: number): void {
+    const who = this.el.querySelector<HTMLElement>('.kh-opp__who');
+    if (!who) return;
+    const c = this.others()[this.oppIdx];
+    who.style.setProperty('--c', c.color);
+    who.setAttribute('aria-label', `${c.name}, zorluk ${c.difficulty}`);
+    // "Kahveci Dursun" → "Dursun": satır tek ve sakin kalsın (tam ad dokununca baloncukta)
+    who.innerHTML = `${charAvatarHtml(c, 'standart', 'kh-opp__ava')}<span class="kh-opp__nm"><b>${esc(c.name.replace(/^Kahveci\s+/, ''))}</b>${starsHtml(c.difficulty)}</span>`;
+    if (d) play(who, [{transform: `translateX(${d * 18}px)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 220, easing: EASE.outQuart});
   }
 
-  private teamsHtml(): string {
-    const me = this.me();
-    const p = this.shell.profile.data;
+  private cycleOpp(d: number): void {
+    const n = this.others().length;
+    this.oppIdx = (this.oppIdx + d + n) % n;
+    this.memo.opp = this.others()[this.oppIdx].id;
+    this.shell.ctx.sounds.tap();
+    haptic('light');
+    this.renderWho(d);
+  }
+
+  /** Rakip satırında yatay kaydırma da rakibi değiştirir. */
+  private bindSwipe(): void {
+    const box = q(this.el, '.kh-opp');
+    let x0 = 0, y0 = 0, id = -1;
+    this.scope.on(box, 'pointerdown', e => {
+      const p = e as PointerEvent;
+      if (this.mode !== '1v1') return;
+      id = p.pointerId;
+      x0 = p.clientX;
+      y0 = p.clientY;
+    });
+    const up = (e: Event) => {
+      const p = e as PointerEvent;
+      if (p.pointerId !== id) return;
+      id = -1;
+      const dx = p.clientX - x0, dy = p.clientY - y0;
+      if (Math.abs(dx) > 34 && Math.abs(dx) > Math.abs(dy) * 1.4) {
+        // ardından gelen tık (bırakılan düğümde) ikinci kez işlemesin
+        this.swiped = true;
+        window.setTimeout(() => (this.swiped = false), 80);
+        this.cycleOpp(dx < 0 ? 1 : -1);
+      }
+    };
+    this.scope.on(window, 'pointerup', up);
+    this.scope.on(window, 'pointercancel', () => (id = -1));
+  }
+  private swiped = false;
+
+  /** 4 kişi / eşli satırı: etiket + oturma avatarları + karıştır. */
+  private groupHtml(): string {
+    const lbl = this.mode === '4' ? 'Masa' : 'Ortak';
+    const aria = this.mode === '4' ? 'Karıştır' : 'Ortağını değiştir';
+    return `<span class="kh-opp__lbl">${lbl}</span>${this.seatsHtml()}<button class="kh-opp__arr kh-shuf" data-act="shuffle" aria-label="${aria}">${I.shuffle}</button>`;
+  }
+
+  private seatsHtml(): string {
+    if (this.mode === '4') {
+      // koltuk sırası: [sağ, karşı, sol] → ekranda soldan sağa: sol, karşı, sağ
+      return `<div class="kh-seats">${[2, 1, 0].map(k => {
+        const c = charById(this.trio[k]);
+        return `<span class="kh-seat">${charAvatarHtml(c, 'standart')}<b>${esc(shortName(c))}</b></span>`;
+      }).join('')}</div>`;
+    }
     const partner = charById(this.trio[1]);
     const r1 = charById(this.trio[0]), r2 = charById(this.trio[2]);
-    return `<div class="kh-hteams">
-        <div class="kh-hteam is-blue"><span class="kh-hteam__avas">${charAvatarHtml(me, p.equipped.frame)}${charAvatarHtml(partner, 'standart')}</span><b>Sen + ${esc(shortName(partner))}</b></div>
-        <span class="kh-hteams__vs">VS</span>
-        <div class="kh-hteam is-red"><span class="kh-hteam__avas">${charAvatarHtml(r1, 'standart')}${charAvatarHtml(r2, 'standart')}</span><b>${esc(shortName(r1))} + ${esc(shortName(r2))}</b></div>
-      </div>
-      <button class="kh-iconbtn kh-shuf" data-act="shuffle" aria-label="Ortağını değiştir">${I.shuffle}</button>`;
+    return `<div class="kh-seats is-teams"><span class="kh-seat is-blue">${charAvatarHtml(partner, 'standart')}<b>${esc(shortName(partner))}</b></span>
+      <span class="kh-vs">VS</span><span class="kh-pair is-red">${charAvatarHtml(r1, 'standart')}${charAvatarHtml(r2, 'standart')}</span></div>`;
   }
 
   private shuffle(btn: HTMLElement): void {
     const s = this.shell.ctx.sounds;
     if (s.shuffle) s.shuffle();
     else s.whoosh();
-    play(btn, [{transform: 'rotate(0)'}, {transform: 'rotate(-360deg) scale(1.15)', offset: 0.7}, {transform: 'rotate(-360deg)'}], {duration: 480, easing: EASE.out});
+    play(btn, [{transform: 'rotate(0)'}, {transform: 'rotate(-360deg)'}], {duration: 420, easing: EASE.out});
     const prev = this.trio.join();
     if (this.mode === 'esli') {
       // ortağı değiştir: üç rakip döner, karşı koltuğa (ortak) sıradaki gelir
@@ -647,20 +631,14 @@ class HomePage implements Page {
       this.trio = t;
     }
     this.memo.trio = this.trio;
-    const box = q(this.el, '.kh-solo__opp');
-    const avas = Array.from(box.querySelectorAll<HTMLElement>('.kh-ava'));
-    avas.forEach((a, k) => play(a, [{transform: 'none'}, {transform: 'rotateY(90deg) scale(.8)'}], {duration: 150, delay: k * 40, easing: EASE.in, fill: 'forwards'}));
-    this.scope.timeout(() => {
-      box.innerHTML = this.mode === '4' ? this.trioHtml() : this.teamsHtml();
-      box.querySelectorAll('.kh-ava').forEach((a, k) => play(a, [{transform: 'rotateY(-90deg) scale(.8)'}, {transform: 'rotateY(10deg) scale(1.08)', offset: 0.6}, {transform: 'none'}], {duration: 360, delay: k * 50, easing: EASE.out, fill: 'backwards'}));
-      if (this.mode === 'esli') {
-        const p = charById(this.trio[1]);
-        toast(this.shell.ctx, `Yeni ortağın: ${p.name}`, I.friends);
-      }
-    }, ANIM ? 200 + avas.length * 40 : 0);
+    const box = q(this.el, '.kh-opp .kh-seats');
+    box.outerHTML = this.seatsHtml();
+    q(this.el, '.kh-opp .kh-seats').querySelectorAll('.kh-ava').forEach((a, k) =>
+      play(a, [{transform: 'scale(.5) rotate(-20deg)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 280, delay: k * 40, easing: EASE.spring, fill: 'backwards'}));
+    if (this.mode === 'esli') toast(this.shell.ctx, `Yeni ortağın: ${charById(this.trio[1]).name}`, I.friends);
   }
 
-  // ---------------------------------------------------------------- bahis
+  // ---------------------------------------------------------------- bahis + OYNA'daki ödül satırı
   private stakeOk(v: number): boolean {
     const s = STAKES.find(x => x.v === v);
     const d = this.shell.profile.data;
@@ -669,44 +647,42 @@ class HomePage implements Page {
 
   private buildStakes(): void {
     const d = this.shell.profile.data;
-    const box = q(this.el, '.kh-solo__stakes');
-    box.innerHTML = `<div class="kh-stakes">${STAKES.map(s => {
+    q(this.el, '.kh-stakes').innerHTML = STAKES.map(s => {
       const lockedLvl = d.level < s.lvl;
       const poor = !lockedLvl && !this.stakeOk(s.v);
-      return `<button class="kh-chip${s.v === this.stake ? ' is-on' : ''}${lockedLvl || poor ? ' is-locked' : ''}" data-act="stake" data-v="${s.v}">
+      return `<button class="kh-chip${s.v === this.stake ? ' is-on' : ''}${lockedLvl || poor ? ' is-locked' : ''}" data-act="stake" data-v="${s.v}" aria-pressed="${s.v === this.stake}">
         ${lockedLvl ? I.lock : `<img class="kh-chip__ico" src="${ASSETS.icon_coin}" alt="">`}<span class="kh-num">${fmt(s.v)}</span>${lockedLvl ? `<span class="kh-tag">Sv. ${s.lvl}</span>` : ''}</button>`;
-    }).join('')}</div>
-      <div class="kh-solo__win">${this.mode === 'esli' ? 'Kazanan takıma kişi başı' : this.mode === '4' ? 'Masadaki pot' : 'Kazanan alır'} <img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(payout(this.mode, this.stake))}</b></div>`;
+    }).join('');
+    q(this.el, '.kh-play2__l2').innerHTML = `Kazanırsan <img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(payout(this.mode, this.stake))}</b>`;
   }
 
   // ---------------------------------------------------------------- dokunma
-  /** Karaktere dokun: rastgele poz + söz; hızlı ardışık dokunuşta gıdıklanır. */
+  /** Karaktere dokun: poz (anında + pop) + söz; hızlı ardışık dokunuşta gıdıklanır. Selamda poz değişmez. */
   private poke(greet = false): void {
     const me = this.me();
     const now = performance.now();
     this.pokes = this.pokes.filter(t => now - t < 2600);
     if (!greet) this.pokes.push(now);
-    let pose: Pose, line: string;
+    let pose: Pose | undefined, line: string;
     if (this.pokes.length >= 5) {
       this.pokes = [];
       pose = 'kizgin';
       line = TICKLE[me.id];
       haptic('warning');
-      shake(q(this.el, '.kh-hero2__fig'), 0.8);
+      shake(q(this.el, '.kh-hero3__fig'), 0.6);
     } else if (greet && this.memo.last) {
       // maçtan dönüş: sonuca göre karşılar
       const {outcome, streak, levelUp} = this.memo.last;
       this.memo.last = undefined;
       if (levelUp) {
         pose = 'zafer';
-        line = `Seviye ${this.shell.profile.data.level}! Yeni masalar seni bekliyor.`;
+        line = `Seviye ${this.shell.profile.data.level}! Yeni masalar açıldı.`;
       } else if (outcome === 'win') {
         pose = streak >= 3 ? 'kahkaha' : 'zafer';
-        line = streak >= 2 ? `${streak} el üst üste! Bu seri bozulmaz.` : 'Helal olsun! Bir tane daha?';
+        line = streak >= 2 ? `${streak} el üst üste! Seri sürsün.` : 'Helal olsun! Bir tane daha?';
       } else if (outcome === 'lose') {
         pose = 'uzgun';
         line = 'Olsun be… Rövanşı alırız!';
-        this.scope.timeout(() => this.pt.pose('gulumseme', 1600), ANIM ? 1500 : 0);
       } else {
         pose = 'saskin';
         line = 'Berabere! Kıl payı kaçtı.';
@@ -715,12 +691,12 @@ class HomePage implements Page {
       const name = this.shell.profile.data.name;
       const hr = new Date().getHours();
       const hi = hr < 6 ? 'Gece kuşu' : hr < 12 ? 'Günaydın' : hr < 18 ? 'Hoş geldin' : 'İyi akşamlar';
-      pose = 'gulumseme';
-      line = `${hi}, ${name}! Masalar hazır.`;
+      line = `${hi}, ${name}!`;
     } else {
       const list = POKE[me.id];
-      let k = Math.floor(Math.random() * list.length);
+      let k = this.nextPoke >= 0 ? this.nextPoke : Math.floor(Math.random() * list.length);
       if (k === this.lastPoke) k = (k + 1) % list.length;
+      this.nextPoke = -1;
       this.lastPoke = k;
       [pose, line] = list[k];
       haptic('light');
@@ -739,9 +715,11 @@ class HomePage implements Page {
     const lbl = q(w, '.kh-hw__lbl');
     const ready = p.chestReady();
     w.classList.toggle('is-ready', ready);
-    lbl.textContent = ready ? 'Aç!' : hms((p.data.chestAt - Date.now()) / 1000);
-    if (!this.scope.alive) return;
-    if (this.visible && ANIM) this.chestT = window.setTimeout(() => this.tickChest(true), ready ? 5000 : 1000);
+    const left = (p.data.chestAt - Date.now()) / 1000;
+    lbl.textContent = ready ? 'Aç!' : chestLeft(left);
+    if (!this.scope.alive || ready) return;
+    // dakika sınırında bir kez tazele (saniye saymaz: boşta kare yok)
+    if (this.visible && ANIM) this.chestT = window.setTimeout(() => this.tickChest(true), (left % 60) * 1000 + 250);
   }
 
   private async openChest(w: HTMLElement): Promise<void> {
@@ -757,7 +735,7 @@ class HomePage implements Page {
     }
     const meter = this.shell.coins;
     meter.hold();
-    const ico = q(w, '.kh-hw__ico');
+    const ico = q(w, 'img');
     // ön gerilim + patlama
     for (let k = 1; k <= 2; k++) {
       await play(ico, [{transform: 'none'}, {transform: `rotate(${-8 * k}deg) scale(${1 + k * 0.06})`}, {transform: `rotate(${8 * k}deg) scale(${1 + k * 0.08})`}, {transform: 'none'}], {duration: 200, easing: 'ease-in-out'}).finished.catch(() => undefined);
@@ -768,8 +746,7 @@ class HomePage implements Page {
     else s.reward();
     haptic('success');
     const c = center(ico);
-    this.shell.ctx.fx.flash(0.4, 300);
-    this.shell.ctx.fx.burst(c, {coins: 10, confetti: 16, power: 0.7});
+    this.shell.ctx.fx.burst(c, {coins: 8, confetti: 14, power: 0.7});
     bump(ico, 1.3);
     popText(this.shell.ctx, `+${fmt(amount)}`, {x: c.x, y: c.y - 20});
     const n = 8;
@@ -818,6 +795,17 @@ class HomePage implements Page {
         this.setMode(m, true);
         return;
       }
+      case 'opp':
+        if (!this.swiped) this.cycleOpp(Number(b.dataset.d) || 1);
+        return;
+      case 'oppinfo': {
+        if (this.swiped) return;
+        const c = this.others()[this.oppIdx];
+        s.tap();
+        bump(q(b, '.kh-ava'), 1.12);
+        toast(ctx, `${c.name}: “${c.quote}”`, I.voice);
+        return;
+      }
       case 'shuffle':
         this.shuffle(b);
         return;
@@ -833,9 +821,11 @@ class HomePage implements Page {
           shake(b, 0.6);
           return toast(ctx, 'Bu masa için jetonun yetmiyor');
         }
+        if (v === this.stake) return;
         this.stake = v;
         this.buildStakes();
-        bump(q(this.el, `.kh-stakes [data-v="${v}"]`), 1.08);
+        bump(q(this.el, `.kh-stakes [data-v="${v}"]`), 1.06);
+        bump(q(this.el, '.kh-play2__l2 b'), 1.2);
         return;
       }
       case 'daily':
@@ -847,10 +837,6 @@ class HomePage implements Page {
       case 'online':
         s.tap();
         onlineTeaser(this.shell);
-        return;
-      case 'friends':
-        s.tap();
-        friendsTeaser(this.shell);
         return;
       case 'play':
         this.play(b);
@@ -877,12 +863,11 @@ class HomePage implements Page {
     p.data.lastStake = this.stake;
     p.save();
     const opponents: CharId[] = this.mode === '1v1' ? [this.others()[this.oppIdx].id] : this.trio.slice();
-    this.pt.pose('zafer');
+    this.pt.pop();
     this.shell.finish({type: 'play', mode: this.mode, stake: this.stake, opponents});
   }
 
   destroy(): void {
-    this.carScope?.dispose();
     this.scope.dispose();
     this.el.remove();
   }
@@ -909,7 +894,7 @@ class QuestsPage implements Page {
     const done = qs.list.filter(x => x.claimed).length;
     const bonusReady = p.bonusReady();
     this.el.innerHTML = `<div class="kh-quests__in kh-scroll">
-      <div class="kh-quests__hero"><i class="kh-rays is-gold"></i><img src="${ASSETS.icon_star}" alt=""></div>
+      <div class="kh-quests__hero"><i class="kh-quests__glow"></i><img src="${ASSETS.icon_star}" alt=""></div>
       <div class="kh-title kh-quests__title">${g3('Günlük Görevler')}</div>
       <p class="kh-quests__sub">Her gün üç yeni görev. Yenilenmesine <b class="kh-num kh-quests__left">${hms(secsToMidnight())}</b></p>
       <div class="kh-quests__list">${qs.list.map((st, i) => {
@@ -922,7 +907,7 @@ class QuestsPage implements Page {
           ${st.claimed
             ? `<span class="kh-quest__done">${I.check}<small>Alındı</small></span>`
             : full
-              ? `<button class="kh-btn kh-btn--5 kh-quest__claim kh-shine" data-act="claim" data-id="${st.id}" data-spring><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(d.reward)}</b><small>Topla</small></button>`
+              ? `<button class="kh-btn kh-btn--5 kh-quest__claim" data-act="claim" data-id="${st.id}" data-spring><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(d.reward)}</b><small>Topla</small></button>`
               : `<span class="kh-quest__rw"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(d.reward)}</b></span>`}
         </div>`;
       }).join('')}
@@ -933,7 +918,7 @@ class QuestsPage implements Page {
           ${qs.bonus
             ? `<span class="kh-quest__done">${I.check}<small>Alındı</small></span>`
             : bonusReady
-              ? `<button class="kh-btn kh-btn--1 kh-quest__claim kh-shine" data-act="bonus" data-spring><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(QUEST_BONUS)}</b><small>Aç</small></button>`
+              ? `<button class="kh-btn kh-btn--1 kh-quest__claim" data-act="bonus" data-spring><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(QUEST_BONUS)}</b><small>Aç</small></button>`
               : `<span class="kh-quest__rw"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(QUEST_BONUS)}</b></span>`}
         </div>
       </div>
@@ -1043,22 +1028,75 @@ function coinSheet(shell: HomeView): void {
   });
 }
 
-function onlineTeaser(shell: HomeView): void {
+/**
+ * Çevrimiçi tanıtımı (yakında): iki sekme — "Rakip Bul" (radar) ve "Arkadaşınla" (özel masa kodu + 3 adım).
+ * Sekmeler aynı hücrede üst üste durur: pencere boyu sekme değişince zıplamaz. Döngü yok; radar birkaç kez nabız atıp durur.
+ */
+function onlineTeaser(shell: HomeView, tab: 'online' | 'friends' = 'online'): void {
   const me = charById(shell.profile.data.char ?? 'dursun');
   const others = ROSTER.filter(c => c.id !== me.id);
   const notified = store.get('notify.online', false);
+  const code = 'KHV-' + String(1000 + ((shell.profile.data.name.length * 7919 + 4821) % 9000));
   const m: ModalHandle = openModal(shell.ctx, {
     cls: 'kh-teaser is-online',
     title: 'Çevrimiçi',
     onX: () => m.close(),
-    body: `<div class="kh-radar"><i class="kh-radar__ring"></i><i class="kh-radar__ring is-2"></i><i class="kh-radar__ring is-3"></i>
-        <div class="kh-radar__orbit">${others.map((c, i) => `<span class="kh-radar__sat" style="--a:${i * 120}deg">${charAvatarHtml(c, 'standart')}</span>`).join('')}</div>
-        <div class="kh-radar__me">${charAvatarHtml(me, shell.profile.data.equipped.frame)}</div></div>
-      <div class="kh-teaser__t">Gerçek rakipler yolda!</div>
-      <p class="kh-teaser__s">Yakında Türkiye'nin dört bir yanından oyuncularla aynı masaya oturacak, sıralamada yükseleceksin.</p>
+    body: `<div class="kh-tz__tabs" role="tablist"><i class="kh-tz__ind"></i>
+        <button class="kh-tz__tab" role="tab" data-act="tab" data-t="online">${I.globe}<span>Rakip Bul</span></button>
+        <button class="kh-tz__tab" role="tab" data-act="tab" data-t="friends">${I.friends}<span>Arkadaşınla</span></button></div>
+      <div class="kh-tz__body">
+        <div class="kh-tz__pane" data-p="online">
+          <div class="kh-radar"><i class="kh-radar__ring"></i><i class="kh-radar__ring is-2"></i><i class="kh-radar__ping"></i>
+            ${others.map((c, i) => `<span class="kh-radar__sat" style="--a:${i * 120 - 90}deg">${charAvatarHtml(c, 'standart')}</span>`).join('')}
+            <div class="kh-radar__me">${charAvatarHtml(me, shell.profile.data.equipped.frame)}</div></div>
+          <div class="kh-teaser__t">Gerçek rakipler yolda!</div>
+          <p class="kh-teaser__s">Türkiye'nin dört bir yanından oyuncularla aynı masaya oturacak, sıralamada yükseleceksin.</p>
+        </div>
+        <div class="kh-tz__pane" data-p="friends">
+          <div class="kh-ticket"><div class="kh-ticket__l"><small>Özel masa kodun</small><b class="kh-num">${code}</b></div><div class="kh-ticket__r">${I.friends}</div></div>
+          <div class="kh-teaser__steps">
+            <div><span>1</span>Masanı kur, kodu paylaş</div>
+            <div><span>2</span>Arkadaşların koda katılsın</div>
+            <div><span>3</span>Eşli ya da 4 kişi, sen seç!</div>
+          </div>
+          <p class="kh-teaser__s">Arkadaşlarınla özel masalar da çok yakında. Şimdilik ustalarla antrenman yap!</p>
+        </div>
+      </div>
       <button class="kh-btn ${notified ? 'kh-btn--5' : 'kh-btn--1'} kh-btn--lg kh-btn--block" data-act="notify">${I.bell}${notified ? 'Haber Vereceğiz' : 'Açılınca Haber Ver'}</button>`,
   });
+  const ping = q(m.panel, '.kh-radar__ping');
+  let pingA: Animation | null = null;
+  const setTab = (t: 'online' | 'friends', animate: boolean) => {
+    const i = t === 'online' ? 0 : 1;
+    q(m.panel, '.kh-tz__ind').style.transform = `translateX(${i * 100}%)`;
+    m.panel.querySelectorAll<HTMLElement>('.kh-tz__tab').forEach((b, k) => {
+      b.classList.toggle('is-on', k === i);
+      b.setAttribute('aria-selected', String(k === i));
+    });
+    m.panel.querySelectorAll<HTMLElement>('.kh-tz__pane').forEach(p => {
+      const on = p.dataset.p === t;
+      p.classList.toggle('is-on', on);
+      if (on && animate) play(p, [{opacity: 0, transform: `translateX(${i ? 16 : -16}px)`}, {opacity: 1, transform: 'none'}], {duration: 220, easing: EASE.outQuart});
+    });
+    pingA?.cancel();
+    pingA = null;
+    if (t === 'online') {
+      // radar: birkaç nabız, sonra durur (sonsuz döngü yok)
+      pingA = play(ping, [{transform: 'scale(.55)', opacity: 0.9}, {transform: 'scale(1.9)', opacity: 0}], {duration: 1700, delay: 250, iterations: decorLoops() ? 4 : 1, easing: 'ease-out'}, 0.3);
+    } else if (animate) {
+      play(q(m.panel, '.kh-ticket'), [{transform: 'rotate(-6deg) scale(.7)', opacity: 0}, {transform: 'rotate(1.5deg) scale(1.03)', opacity: 1, offset: 0.7}, {transform: 'rotate(-1.5deg)', opacity: 1}], {duration: 340, easing: EASE.out, fill: 'backwards'});
+    }
+  };
+  setTab(tab, false);
+  m.scope.add(() => pingA?.cancel());
   onAct(m.scope, m.panel, (a, b) => {
+    if (a === 'tab') {
+      const t = b.dataset.t as 'online' | 'friends';
+      if (b.classList.contains('is-on')) return;
+      shell.ctx.sounds.tap();
+      setTab(t, true);
+      return;
+    }
     if (a !== 'notify') return;
     shell.ctx.sounds.tap();
     store.set('notify.online', true);
@@ -1067,29 +1105,6 @@ function onlineTeaser(shell: HomeView): void {
     bump(b, 1.05);
     toast(shell.ctx, 'Açıldığında ilk sen duyacaksın!', I.bell);
   });
-}
-
-function friendsTeaser(shell: HomeView): void {
-  const code = 'KHV-' + String(1000 + ((shell.profile.data.name.length * 7919 + 4821) % 9000));
-  const m: ModalHandle = openModal(shell.ctx, {
-    cls: 'kh-teaser is-friends',
-    title: 'Arkadaşla',
-    onX: () => m.close(),
-    body: `<div class="kh-ticket"><div class="kh-ticket__l"><small>Özel masa kodun</small><b class="kh-num">${code}</b></div><div class="kh-ticket__r">${I.friends}</div></div>
-      <div class="kh-teaser__steps">
-        <div><span>1</span>Masanı kur, kodu paylaş</div>
-        <div><span>2</span>Arkadaşların koda katılsın</div>
-        <div><span>3</span>Eşli ya da 4 kişi, sen seç!</div>
-      </div>
-      <p class="kh-teaser__s">Arkadaşlarınla özel masalar çok yakında. Şimdilik ustalarla antrenman yap!</p>
-      <button class="kh-btn kh-btn--2 kh-btn--lg kh-btn--block" data-act="ok">Anladım</button>`,
-  });
-  onAct(m.scope, m.panel, a => {
-    if (a !== 'ok') return;
-    shell.ctx.sounds.tap();
-    m.close();
-  });
-  play(q(m.panel, '.kh-ticket'), [{transform: 'rotate(-8deg) scale(.6)', opacity: 0}, {transform: 'rotate(2deg) scale(1.04)', opacity: 1, offset: 0.7}, {transform: 'rotate(-1.5deg)', opacity: 1}], {duration: 520, delay: 120, easing: EASE.out, fill: 'both'});
 }
 
 /** Kasa boşaldı: Kahveci Dursun'dan destek jetonu (bir kez/oturum değil, her boşalışta). */
@@ -1101,7 +1116,7 @@ function bailout(shell: HomeView): void {
     title: 'Kasa Boşaldı!',
     body: `<div class="kh-bail__fig"><img src="${host.poses.zafer}" alt=""></div>
       <div class="kh-say kh-bail__say is-up"><small>${esc(host.name)}</small>Üzülme evlat, olur böyle şeyler. Bu jetonlar benden — borç değil, hediye!</div>
-      <button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-shine" data-act="take"><img class="kh-chip__ico" src="${ASSETS.icon_coin}" alt="">+${fmt(gift)} Al</button>`,
+      <button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block" data-act="take"><img class="kh-chip__ico" src="${ASSETS.icon_coin}" alt="">+${fmt(gift)} Al</button>`,
   });
   onAct(m.scope, m.panel, async (a, b) => {
     if (a !== 'take') return;

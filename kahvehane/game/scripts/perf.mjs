@@ -29,6 +29,7 @@ async function trace(ms) {
   // en çok yeniden boyanan öğeler ve GPU'ya alınamayan animasyonlar
   const paints = new Map();
   const failed = {};
+  const failedNodes = new Map();
   for (const e of events) {
     if (e.name === 'Paint' && e.args?.data?.nodeId) {
       const k = e.args.data.nodeId;
@@ -37,6 +38,8 @@ async function trace(ms) {
     if (e.name === 'Animation' && e.args?.data?.compositeFailed) {
       const k = e.args.data.compositeFailed;
       failed[k] = (failed[k] || 0) + 1;
+      const nid = e.args.data.nodeId;
+      if (nid) failedNodes.set(nid, (failedNodes.get(nid) || 0) + 1);
     }
   }
   const topPaint = [];
@@ -52,7 +55,15 @@ async function trace(ms) {
     n[e.name] = (n[e.name] || 0) + 1;
     if (e.dur) dur[e.name] = (dur[e.name] || 0) + e.dur / 1000;
   }
-  return {n, dur, topPaint, failed};
+  const failedWho = [];
+  for (const [id, c] of [...failedNodes.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4)) {
+    try {
+      const d = (await cdp.send('DOM.describeNode', {backendNodeId: id})).node;
+      const cls = (d.attributes || []).find((x, i, arr) => arr[i - 1] === 'class') || '';
+      failedWho.push(`${d.nodeName.toLowerCase()}.${cls.split(' ').slice(0, 3).join('.')}×${c}`);
+    } catch { failedWho.push('#' + id + '×' + c); }
+  }
+  return {n, dur, topPaint, failed, failedWho};
 }
 
 async function inventory() {
@@ -98,7 +109,7 @@ async function report(name, ms = 3000) {
   const flag = draw > 8 ? '⚠' : '✓';
   console.log(`${flag} ${name.padEnd(14)} kare/sn ${draw.toFixed(0).padStart(3)} | boyama/sn ${paint.toFixed(0).padStart(3)} | düzen/sn ${layout.toFixed(0).padStart(3)} | stil/sn ${recalc.toFixed(0).padStart(3)} | raster ms/sn ${raster.toFixed(0).padStart(4)} | js ms/sn ${script.toFixed(0).padStart(4)} | sonsuz anim ${inv.infinite.length} | katman ≈ ${inv.layerMpx} Mpx`);
   if (t.topPaint.length) console.log('     boyananlar:', t.topPaint.join(' · '));
-  if (Object.keys(t.failed).length) console.log('     GPU\'ya alınamayan animasyon (bitmask×adet):', JSON.stringify(t.failed));
+  if (Object.keys(t.failed).length) console.log('     GPU\'ya alınamayan animasyon (bitmask×adet):', JSON.stringify(t.failed), t.failedWho.join(' · '));
   if (inv.infinite.length) console.log('     sonsuz:', inv.infinite.join(' · '));
   if (inv.topLayers.length && process.env.LAYERS) console.log('     katmanlar:', JSON.stringify(inv.topLayers));
 }

@@ -29,6 +29,28 @@ export function initCalm(o: {always: boolean; idleMs?: number}): void {
     const t = (a.effect as KeyframeEffect | null)?.target as Element | null | undefined;
     return !!t && !!t.closest?.(KEEP);
   };
+  /** Duraklatılmış CSS döngüsünü sürdür; ama sınıf kalkmış (animation-name artık yok) ya da öğe sökülmüşse iptal et. */
+  const resume = (a: Animation): void => {
+    try {
+      const eff = a.effect as KeyframeEffect | null;
+      const t = eff?.target as Element | null | undefined;
+      if (!t || !t.isConnected) {
+        a.cancel();
+        return;
+      }
+      const name = (a as Animation & {animationName?: string}).animationName;
+      if (name !== undefined) {
+        const names = getComputedStyle(t, eff?.pseudoElement ?? null).animationName.split(',').map(x => x.trim());
+        if (!names.includes(name)) {
+          a.cancel();
+          return;
+        }
+      }
+      if (a.playState === 'paused') a.play();
+    } catch {
+      /* animasyon kaldırılmış */
+    }
+  };
   const pause = (a: Animation, force: boolean): void => {
     if (a.playState !== 'running' || !isLoop(a)) return;
     if (!force && essential(a)) return;
@@ -44,13 +66,7 @@ export function initCalm(o: {always: boolean; idleMs?: number}): void {
   const wake = (): void => {
     calm = false;
     root.classList.remove('kh-calm');
-    for (const a of paused) {
-      try {
-        if (a.playState === 'paused') a.play();
-      } catch {
-        /* animasyon kaldırılmış */
-      }
-    }
+    for (const a of paused) resume(a);
     paused.clear();
   };
 
@@ -86,11 +102,7 @@ export function initCalm(o: {always: boolean; idleMs?: number}): void {
       if (!t || !t.isConnected || a.playState === 'idle' || a.playState === 'finished') parked.delete(a);
       else if (onScreen(t)) {
         parked.delete(a);
-        try {
-          a.play();
-        } catch {
-          /* kaldırılmış */
-        }
+        resume(a);
       }
     }
     for (const a of document.getAnimations()) {

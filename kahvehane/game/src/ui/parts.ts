@@ -1,7 +1,8 @@
 // Ortak parçalar: arena zemini, kod çizimi logo, modal iskeleti, bildirim, seviye taşı/jeton kapsülü HTML'i,
-// karakter avatarı (çerçeveli), canlı portre (nefes + göz kırpma + poz), kaydırmalı vitrin (momentumlu), alt pencere, dört renk perde geçişi.
+// karakter avatarı (çerçeveli), canlı portre (tek görsel + nefes; poz = anında değişim), balon yerleşimi + daktilo,
+// kaydırmalı vitrin (momentumlu), alt pencere, dört renk perde geçişi.
 import type {Sounds} from './types';
-import {EASE, Scope, ANIM, clamp, esc, fmt, h, play, preload, q, rnd} from './dom';
+import {EASE, Scope, ANIM, clamp, esc, fmt, h, play, q, rnd} from './dom';
 import {ASSETS} from './assets';
 import {I, SUIT, SUIT_TILE, suitSvg, type SuitKey} from './icons';
 import type {Fx} from './fx';
@@ -181,45 +182,99 @@ export const starsHtml = (n: number): string => `<span class="kh-stars">${[1, 2,
 /** Dönen ışık hüzmesi (kutlama arkası). */
 export const raysHtml = (cls = ''): string => `<i class="kh-rays ${cls}"></i>`;
 
+/**
+ * Süs döngüsü (nefes, kıpırtı, nabız) başlatılabilir mi: donmuş çekimde, düşük cihazda (.kh-low) ve azaltılmış harekette hayır.
+ * WAAPI döngüleri CSS sınıfına bağlı olmadığı için bu kontrol onları başlatan yerde yapılır.
+ */
+export function decorLoops(): boolean {
+  return ANIM && !document.documentElement.classList.contains('kh-low') && !matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
 // =====================================================================================================
-// Canlı portre: nefes alır (CSS), ara sıra göz kırpar, dokununca/istenince geçici poza geçer.
-// Taban poz <img> + üst katman <img> (kırpma/poz) — kare değişimi yalnız opaklık; görseller önceden iner.
+// Canlı portre: TEK <img>. Poz değişimi = önceden çözülmüş (decode) görselin anında yerine konması + kısa yaylı "pop"
+// (yalnız transform). Üst üste iki görsel ve çapraz geçiş YOK: pozların baş konumu farklı, karışınca hayalet yüz oluyordu.
+// Boşta yaşam: sarmalayıcıda tek, ucuz nefes (yalnız transform). Görselde filtre/maske yok; gölge arkada durağan bir öğe.
+// Yalnız gösterilen poz iner; başka pozlar ancak istenince (preload) ya da gösterilirken çözülür.
+// Göz kırpma isteğe bağlı (varsayılan KAPALI); açıksa o da anında değişimdir, asla geçiş değil.
 // =====================================================================================================
 export class Portrait {
   readonly el: HTMLElement;
-  private base: HTMLImageElement;
-  private over: HTMLImageElement;
+  private popEl: HTMLElement;
+  private img: HTMLImageElement;
+  /** Bu portrenin görselleri (adres → <img> + çözülme sözü); aynı öğe tekrar kullanılır, yeniden çözülmez. */
+  private cache = new Map<string, {im: HTMLImageElement; ready: Promise<void>}>();
+  private fade: boolean;
   private char: CharDef;
   private restPose: Pose;
   private cur: Pose;
+  private seq = 0;
   private blinkT = 0;
   private poseT = 0;
-  private idleT = 0;
+  private inEl: HTMLElement;
+  private breathA: Animation | null = null;
   alive = true;
-  /** Dinlenirken ara sıra gülümser (galeri kartı) */
-  smileIdle = false;
 
-  constructor(char: CharDef, o: {pose?: Pose; cls?: string; blink?: boolean; breathe?: boolean} = {}) {
+  /**
+   * fade: görselin alt kenarı ve alt köşeleri yumuşakça solar (bir kez tuvalde pişirilir; canlı maske yok).
+   * shadow: arkada durağan yumuşak gölge (varsayılan açık).
+   */
+  constructor(char: CharDef, o: {pose?: Pose; cls?: string; blink?: boolean; breathe?: boolean; fade?: boolean; shadow?: boolean} = {}) {
     this.char = char;
+    this.fade = !!o.fade;
     this.restPose = this.cur = o.pose ?? 'notr';
-    this.el = h('div', `kh-pt${o.breathe === false ? '' : ' is-breathing'} ${o.cls ?? ''}`);
-    this.el.innerHTML = `<div class="kh-pt__in"><img class="kh-pt__img" alt=""><img class="kh-pt__img is-over" alt=""></div>`;
-    [this.base, this.over] = Array.from(this.el.querySelectorAll('img'));
-    this.base.src = char.poses[this.restPose];
-    preload(Object.values(char.poses));
-    if (o.blink !== false) this.scheduleBlink();
+    this.el = h('div', `kh-pt ${o.cls ?? ''}`);
+    this.el.innerHTML = `${o.shadow === false ? '' : '<i class="kh-pt__sh"></i>'}<div class="kh-pt__pop"><div class="kh-pt__in"></div></div>`;
+    this.popEl = q(this.el, '.kh-pt__pop');
+    this.inEl = q(this.el, '.kh-pt__in');
+    this.img = this.entry(char.poses[this.restPose]).im;
+    this.inEl.append(this.img);
+    this.breathe(o.breathe !== false);
+    if (o.blink) {
+      this.preload(['kirpma']);
+      this.scheduleBlink();
+    }
   }
 
   get id(): string {
     return this.char.id;
   }
 
+  get current(): Pose {
+    return this.cur;
+  }
+
+  /**
+   * Nefes (boşta tek döngü) aç/kapa: örn. galeride yalnız ortadaki kart nefes alır. WAAPI ile ve tutamağı bizde:
+   * kapatınca kesin iptal edilir (sınıfla açılıp kapanan CSS döngüsü, boşta duraklatılıp sürdürülünce sökülemiyordu).
+   * Tabandan (alt kenar sabit) çok hafif büyür; düşük cihazda ve azaltılmış harekette hiç başlamaz.
+   */
+  breathe(on: boolean): void {
+    this.el.classList.toggle('is-breathing', on);
+    if (!on) {
+      this.breathA?.cancel();
+      this.breathA = null;
+      return;
+    }
+    if (this.breathA || !decorLoops()) return;
+    const e = 'cubic-bezier(.45,0,.55,1)';
+    this.breathA = this.inEl.animate([{transform: 'none', easing: e}, {transform: 'scale(1.01, 1.016)', easing: e}, {transform: 'none'}], {duration: 4400, iterations: Infinity});
+  }
+
+  /** Bu pozları arkada indirip çöz (gösterilmeden önce): değişim anı boş kare vermez. */
+  preload(poses: Pose[]): void {
+    for (const p of poses) {
+      const url = this.char.poses[p];
+      if (url) this.entry(url).ready.catch(() => undefined);
+    }
+  }
+
   setChar(c: CharDef, pose: Pose = this.restPose): void {
+    if (c.id === this.char.id) return this.rest(pose);
     this.char = c;
-    preload(Object.values(c.poses));
-    this.restPose = this.cur = pose;
-    this.base.src = c.poses[pose];
-    this.over.style.opacity = '0';
+    this.cache.clear();
+    this.restPose = pose;
+    clearTimeout(this.poseT);
+    this.show(pose, false);
   }
 
   /** Dinlenme pozunu değiştir (kalıcı). */
@@ -227,68 +282,235 @@ export class Portrait {
     if (p === this.restPose && this.cur === p) return;
     this.restPose = p;
     clearTimeout(this.poseT);
-    this.show(p);
+    this.show(p, true);
   }
 
-  /** Geçici poz: ms sonra dinlenme pozuna döner. ms verilmezse kalıcı (rest gibi değil: bir sonraki rest/poz'a kadar). */
+  /** Geçici poz (anında + pop): ms sonra dinlenme pozuna döner; ms verilmezse bir sonraki rest/poz'a kadar kalır. */
   pose(p: Pose, ms = 0): void {
     clearTimeout(this.poseT);
-    this.show(p);
-    if (ms > 0) this.poseT = window.setTimeout(() => this.alive && this.show(this.restPose), ANIM ? ms : 0);
+    this.show(p, true);
+    if (ms > 0) this.poseT = window.setTimeout(() => this.alive && this.show(this.restPose, false), ANIM ? ms : 0);
   }
 
-  get current(): Pose {
-    return this.cur;
-  }
-
-  /** Kısa "tepki" zıplaması (poz değişiminde canlılık). */
+  /** Kısa yaylı "tepki" zıplaması (yalnız transform; nefesten ayrı sarmalayıcıda, birbirini ezmez). */
   pop(): void {
-    play(this.el.firstElementChild!, [{transform: 'scale(1)'}, {transform: 'scale(1.05) translateY(-2%)', offset: 0.35}, {transform: 'scale(.99)', offset: 0.7}, {transform: 'none'}], {duration: 380, easing: EASE.out});
+    play(this.popEl, [{transform: 'scale(1)'}, {transform: 'scale(1.045) translateY(-1.5%)', offset: 0.32}, {transform: 'scale(.992)', offset: 0.7}, {transform: 'none'}], {duration: 360, easing: EASE.out});
   }
 
-  private show(p: Pose): void {
+  private entry(url: string): {im: HTMLImageElement; ready: Promise<void>} {
+    let e = this.cache.get(url);
+    if (!e) {
+      const im = new Image();
+      im.className = 'kh-pt__img';
+      im.alt = '';
+      im.decoding = 'async';
+      im.draggable = false;
+      let ready: Promise<void>;
+      if (this.fade) ready = fadedUrl(url).then(u => {
+        im.src = u;
+        return im.decode();
+      });
+      else {
+        im.src = url;
+        ready = im.decode();
+      }
+      // çözülemezse (öğe söküldü, ağ hatası) sessizce geç: değişim yine yapılır, işlenmemiş ret kalmaz
+      ready.catch(() => undefined);
+      e = {im, ready};
+      this.cache.set(url, e);
+    }
+    return e;
+  }
+
+  /** Görseli çöz, sonra tek hamlede yerine koy (DOM'da hep tek <img>; yarım/boş kare olmaz). */
+  private show(p: Pose, pop: boolean): void {
     this.cur = p;
     const url = this.char.poses[p];
-    if (p === this.restPose) {
-      if (this.base.src !== url && !this.base.src.endsWith(url)) this.base.src = url;
-      this.over.style.opacity = '0';
-      return;
-    }
-    this.over.src = url;
-    const on = () => this.alive && this.cur === p && (this.over.style.opacity = '1');
-    if (this.over.decode) this.over.decode().then(on, on);
-    else on();
+    if (!url) return;
+    const {im: next, ready} = this.entry(url);
+    const seq = ++this.seq;
+    if (next === this.img) return;
+    const swap = () => {
+      if (!this.alive || seq !== this.seq || next === this.img) return;
+      this.img.replaceWith(next);
+      this.img = next;
+      if (pop) this.pop();
+    };
+    ready.then(swap, swap);
   }
 
   private scheduleBlink(): void {
     if (!ANIM) return;
     this.blinkT = window.setTimeout(() => {
       if (!this.alive) return;
-      if (this.cur === 'notr' && this.el.isConnected) {
-        if (this.smileIdle && Math.random() < 0.35) {
-          this.pose('gulumseme', 1600 + Math.random() * 900);
-        } else {
-          this.show('kirpma');
-          window.setTimeout(() => this.alive && this.cur === 'kirpma' && this.show(this.restPose), 130);
-          // ara sıra çift kırpma
-          if (Math.random() < 0.2) window.setTimeout(() => {
-            if (!this.alive || this.cur !== 'notr') return;
-            this.show('kirpma');
-            window.setTimeout(() => this.alive && this.cur === 'kirpma' && this.show(this.restPose), 110);
-          }, 300);
-        }
+      if (this.cur === this.restPose && this.el.isConnected && !document.hidden) {
+        const back = this.restPose;
+        this.show('kirpma', false);
+        window.setTimeout(() => this.alive && this.cur === 'kirpma' && this.show(back, false), 120);
       }
       this.scheduleBlink();
-    }, 2200 + Math.random() * 3200);
+    }, 3200 + Math.random() * 3600);
   }
 
   destroy(): void {
     this.alive = false;
     clearTimeout(this.blinkT);
     clearTimeout(this.poseT);
-    clearTimeout(this.idleT);
+    this.breathA?.cancel();
+    this.breathA = null;
+    this.cache.clear();
     this.el.remove();
   }
+}
+
+/**
+ * Alt kenarı (%20) ve alt köşeleri yumuşakça solan kopya: tuvalde bir kez "pişirilir" (WebP blob), adres önbelleklenir.
+ * Böylece nefes alan/zıplayan görselde maske ya da üst örtü gerekmez. Hata olursa özgün adres döner.
+ */
+const fadeCache = new Map<string, Promise<string>>();
+export function fadedUrl(url: string): Promise<string> {
+  let p = fadeCache.get(url);
+  if (p) return p;
+  p = new Promise<string>(res => {
+    const src = new Image();
+    src.decoding = 'async';
+    src.onerror = () => res(url);
+    src.onload = () => {
+      try {
+        const w = src.naturalWidth, hh = src.naturalHeight;
+        const cv = document.createElement('canvas');
+        cv.width = w;
+        cv.height = hh;
+        const g = cv.getContext('2d')!;
+        g.drawImage(src, 0, 0);
+        g.globalCompositeOperation = 'destination-in';
+        const lin = g.createLinearGradient(0, 0, 0, hh);
+        [[0, 1], [0.8, 1], [0.86, 0.84], [0.93, 0.36], [1, 0]].forEach(([o, a]) => lin.addColorStop(o, `rgba(0,0,0,${a})`));
+        g.fillStyle = lin;
+        g.fillRect(0, 0, w, hh);
+        // eliptik köşe solması (baş ve bıyık tamamen opak kalır)
+        g.translate(w * 0.5, hh * 0.3);
+        g.scale(w * 0.72, hh * 0.9);
+        const rad = g.createRadialGradient(0, 0, 0, 0, 0, 1);
+        [[0, 1], [0.74, 1], [0.84, 0.7], [0.93, 0.22], [1, 0]].forEach(([o, a]) => rad.addColorStop(o, `rgba(0,0,0,${a})`));
+        g.fillStyle = rad;
+        g.fillRect(-2, -2, 4, 4);
+        cv.toBlob(b => res(b ? URL.createObjectURL(b) : url), 'image/webp', 0.94);
+      } catch {
+        res(url);
+      }
+    };
+    src.src = url;
+  });
+  fadeCache.set(url, p);
+  return p;
+}
+
+/** Kare karakter görselinde yüzün kutusu (oran): saç tepesinden çeneye, bıyık dahil. Balonlar buraya binmez. */
+export const FACE_BOX = {l: 0.22, t: 0.07, r: 0.86, b: 0.64} as const;
+
+/** Portrenin ekrandaki yüz dikdörtgeni (portre kutusu kare, görsel tabana oturur). */
+export function faceRect(pt: Portrait): DOMRect {
+  const r = pt.el.getBoundingClientRect();
+  const s = Math.min(r.width, r.height);
+  const top = r.bottom - s;
+  const left = r.left + (r.width - s) / 2;
+  return new DOMRect(left + s * FACE_BOX.l, top + s * FACE_BOX.t, s * (FACE_BOX.r - FACE_BOX.l), s * (FACE_BOX.b - FACE_BOX.t));
+}
+
+/**
+ * Konuşma balonunu yüzün ÜSTÜNE (kuyruk aşağı) ya da yanına yerleştirir; yüz kutusuyla asla kesişmez.
+ * `bounds`: balonun taşmaması gereken alan (ekran koordinatı). Balon `position:absolute`, kabı `host`.
+ * Sığmazsa daraltır; hiçbir yere sığmazsa false döner (çağıran balonu göstermez).
+ */
+export function placeBubble(say: HTMLElement, host: HTMLElement, face: DOMRect, bounds: DOMRect, o: {gap?: number; maxW?: number} = {}): boolean {
+  const gap = o.gap ?? 4;
+  const TAIL = 16;
+  const hr = host.getBoundingClientRect();
+  const fit = (maxW: number): DOMRect => {
+    say.style.maxWidth = `${Math.round(maxW)}px`;
+    say.style.left = '0px';
+    say.style.top = '0px';
+    return say.getBoundingClientRect();
+  };
+  const widths = [o.maxW ?? bounds.width * 0.62, bounds.width * 0.8, bounds.width - 8];
+  for (const w of widths) {
+    const b = fit(w);
+    // 1) yüzün üstü: kuyruk ucu yüzün sağ üst çeyreğine bakar
+    const tipX = face.left + face.width * 0.66;
+    const top = face.top - TAIL - gap - b.height;
+    if (top >= bounds.top) {
+      let left = tipX - b.width * 0.22;
+      left = clamp(left, bounds.left + 4, bounds.right - 4 - b.width);
+      const tail = clamp((tipX - left - 11) / b.width, 0.1, 0.84);
+      say.classList.remove('is-up');
+      say.style.setProperty('--tail', `${(tail * 100).toFixed(1)}%`);
+      say.style.transformOrigin = `${(tail * 100).toFixed(1)}% 100%`;
+      say.style.left = `${Math.round(left - hr.left)}px`;
+      say.style.top = `${Math.round(top - hr.top)}px`;
+      return true;
+    }
+  }
+  // 2) yanlar: yüzün solunda ya da sağında, başın üst yarısı hizasında
+  for (const side of ['r', 'l'] as const) {
+    const room = side === 'r' ? bounds.right - face.right - gap : face.left - bounds.left - gap;
+    if (room < 96) continue;
+    const b = fit(room - 4);
+    const left = side === 'r' ? face.right + gap : face.left - gap - b.width;
+    const top = clamp(face.top - b.height * 0.35, bounds.top, bounds.bottom - b.height - TAIL);
+    if (b.height + TAIL > bounds.height) continue;
+    say.classList.remove('is-up');
+    const tail = side === 'r' ? 0.12 : 0.78;
+    say.style.setProperty('--tail', `${tail * 100}%`);
+    say.style.transformOrigin = `${tail * 100}% 100%`;
+    say.style.left = `${Math.round(left - hr.left)}px`;
+    say.style.top = `${Math.round(top - hr.top)}px`;
+    return true;
+  }
+  return false;
+}
+
+/**
+ * Daktilo metni (balonlar, alıntı kutusu): kutu, tam metnin (ya da `reserve` içindeki en uzun satırın) boyunu baştan ayırır —
+ * yazılmamış kısım görünmez olarak yerinde durur, böylece satır kırılımı ve kutu boyu hiç değişmez.
+ * Her harfte yalnız iki metin düğümünün verisi güncellenir (innerHTML yok). `finish()` anında tamamlar.
+ */
+export function typeText(scope: Scope, host: HTMLElement, text: string, cps = 38, reserve: string[] = []): {done: Promise<void>; finish(): void; typing(): boolean} {
+  host.classList.add('kh-tt');
+  host.textContent = '';
+  for (const r of reserve) host.append(h('span', 'kh-tt__ghost', esc(r)));
+  const live = h('span', 'kh-tt__live');
+  const vis = document.createTextNode('');
+  const restEl = h('span', 'kh-tt__rest');
+  const rest = document.createTextNode(text);
+  restEl.append(rest);
+  live.append(vis, restEl);
+  host.append(live);
+  let i = 0, finished = false, resolve!: () => void;
+  const done = new Promise<void>(r => (resolve = r));
+  const finish = () => {
+    if (finished) return;
+    finished = true;
+    vis.data = text;
+    rest.data = '';
+    resolve();
+  };
+  if (!ANIM) {
+    finish();
+    return {done, finish, typing: () => false};
+  }
+  const step = () => {
+    // aynı kutuya yeni metin yazıldıysa (eski düğümler koptu) ya da ekran kapandıysa dur
+    if (finished || !scope.alive || !live.isConnected) return finish();
+    i++;
+    vis.data = text.slice(0, i);
+    rest.data = text.slice(i);
+    if (i >= text.length) return finish();
+    const c = text[i - 1];
+    scope.timeout(step, /[.!?…]/.test(c) ? 240 : c === ',' ? 110 : 1000 / cps);
+  };
+  scope.timeout(step, 90);
+  return {done, finish, typing: () => !finished};
 }
 
 // =====================================================================================================
