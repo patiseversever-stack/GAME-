@@ -119,11 +119,14 @@ function migrate(d: Partial<ProfileData> | null): ProfileData {
     if (old) Object.assign(f, {name: old.name ?? f.name, level: old.level ?? 1, xp: old.xp ?? 0, coins: Math.max(f.coins, old.coins ?? 0)});
     return f;
   }
+  // katalogdan kaldırılmış bir ürün kuşanılıysa varsayılana dön (sahip olunanlar listesinde kalması zararsız)
+  const equipped = {...f.equipped, ...d.equipped};
+  for (const k of ['deck', 'table', 'fx', 'frame'] as const) if (!itemOf(k, equipped[k])) equipped[k] = f.equipped[k];
   return {
     ...f,
     ...d,
     owned: {...f.owned, ...d.owned},
-    equipped: {...f.equipped, ...d.equipped},
+    equipped,
     stats: {...f.stats, ...d.stats, byMode: {...f.stats.byMode, ...(d.stats?.byMode ?? {})}},
     daily: {...f.daily, ...d.daily},
     quests: d.quests && Array.isArray(d.quests.list) ? d.quests : f.quests,
