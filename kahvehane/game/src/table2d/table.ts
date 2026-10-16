@@ -389,9 +389,10 @@ export class Table2D {
     }
     this.L = {W, H, cw, ch, pile: {x: W / 2, y: pileY}, deck, hand, seats};
     this.pillDy = -u * 0.15;
-    // ipucu hapının yeri HUD'a CSS değişkeniyle (hud.css: var(--kh-hint-bottom…)); Blöf kendi yerini kullanır
+    // ipucu hapının yeri HUD'a CSS değişkeniyle (hud.css: var(--kh-hint-bottom…)); Blöf kendi yerini kullanır.
+    // HUD kökünde yazılır (yalnız onun alt ağacı yeniden hesaplanır); HUD henüz yoksa (açılış) belge kökünde.
     const hb = `${Math.max(0, H - hintBottom).toFixed(1)}px`, hx = `${hintX.toFixed(1)}px`;
-    const rs = document.documentElement.style;
+    const rs = (document.querySelector<HTMLElement>('.kh-hud') ?? document.documentElement).style;
     if (rs.getPropertyValue('--kh-hint-bottom') !== hb || rs.getPropertyValue('--kh-hint-x') !== hx) {
       rs.setProperty('--kh-hint-bottom', hb);
       rs.setProperty('--kh-hint-bottom4', hb);
