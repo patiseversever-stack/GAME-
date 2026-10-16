@@ -66,7 +66,8 @@ export function initCalm(o: {always: boolean; idleMs?: number}): void {
   const wake = (): void => {
     calm = false;
     root.classList.remove('kh-calm');
-    for (const a of paused) resume(a);
+    // düşük cihazda (always) dekoratif döngüler hiç başlamamalı: uyanınca yalnız gerekli (KEEP) olanlar sürer
+    for (const a of paused) if (!o.always || essential(a)) resume(a);
     paused.clear();
   };
 
