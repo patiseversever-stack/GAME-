@@ -322,6 +322,8 @@ export class Fx {
   private qpools = new Map<string, Ring>();
   private qBack = h('div', 'kh-ql');
   private qFront = h('div', 'kh-ql is-front');
+  /** pişti kahramanı sahnedeyken bile en üstte kalan katman (yalnız yüzü örtmeyen taç vb.) */
+  private qTop = h('div', 'kh-ql is-top');
   private qFlash = h('div', 'kh-qflash');
   private warmed = false;
 
@@ -330,13 +332,13 @@ export class Fx {
     warmSprites(id, false);
   }
 
-  private qnode(key: string, w: number, h0?: number, front = false): HTMLElement | null {
+  private qnode(key: string, w: number, h0?: number, layer: 0 | 1 | 2 = 0): HTMLElement | null {
     const [sw, sh] = spriteSize(key);
     const hh = h0 ?? (w * sh) / sw;
-    const id = `${key}|${w.toFixed(0)}|${hh.toFixed(0)}|${front ? 1 : 0}`;
+    const id = `${key}|${w.toFixed(0)}|${hh.toFixed(0)}|${layer}`;
     let r = this.qpools.get(id);
     if (!r) {
-      const host = front ? this.qFront : this.qBack;
+      const host = layer === 2 ? this.qTop : layer === 1 ? this.qFront : this.qBack;
       r = new Ring(host, 22, () => {
         const n = h('i', 'kh-q');
         n.style.cssText = `width:${w.toFixed(1)}px;height:${hh.toFixed(1)}px;margin:${(-hh / 2).toFixed(1)}px 0 0 ${(-w / 2).toFixed(1)}px;background-image:url("${spriteUrl(key)}")`;
@@ -347,24 +349,33 @@ export class Fx {
     return r.get();
   }
 
+  /** Kahraman çıktı: efekt katmanları yerine (efekt katmanına) döner; süren animasyonlar sürer. */
+  heroDone(): void {
+    if (this.qBack.parentElement && this.qBack.parentElement !== this.el) {
+      this.el.insertBefore(this.qBack, this.qFlash.nextSibling);
+      this.el.insertBefore(this.qFront, this.qTop);
+    }
+  }
+
   /** Oyundaki sahne: bu katman, havuz düğümleri, sesler. Kullanılan düğümler efekt bitince TOPLUCA gizlenir
    * (her düğüm için ayrı bitiş işleyicisi + display değişimi = her karede stil hesabı olurdu). */
   private tok = 0;
   private qanim = new WeakMap<HTMLElement, Animation>();
-  private stage(low: boolean, used: HTMLElement[], tok: string): Stage {
+  private stage(low: boolean, used: HTMLElement[], tok: string, face?: DOMRect): Stage {
     const W = this.W, H = this.H;
-    if (!this.qBack.isConnected) {
+    if (!this.qFlash.isConnected) {
       // arka katman damganın (z 2) altında, ön katman üstünde; ekran ışığı en arkada
       this.el.prepend(this.qFlash, this.qBack);
-      this.el.append(this.qFront);
+      this.el.append(this.qFront, this.qTop);
     }
     return {
       W,
       H,
       M: Math.min(W, H),
       low,
-      node: (key, w, hh, front) => {
-        const n = this.qnode(key, w, hh, front);
+      face,
+      node: (key, w, hh, front, top) => {
+        const n = this.qnode(key, w, hh, top ? 2 : front ? 1 : 0);
         if (n) {
           n.style.display = 'none'; // gösterim, animasyonu başlarken (aşağıda)
           n.dataset.tok = tok;
@@ -399,8 +410,12 @@ export class Fx {
     };
   }
 
-  /** Kuşanılmış pişti efekti (bkz. src/ui/fxlib.ts). Vale piştide daha yoğun; `low`: yarı parçacık, ikincil katman yok. */
-  pistiFx(id: string, jack: boolean, at: Pt, low = false): void {
+  /**
+   * Kuşanılmış pişti efekti (bkz. src/ui/fxlib.ts). Vale piştide daha yoğun; `low`: yarı parçacık, ikincil katman yok.
+   * hero: pişti kahramanı (büyük portre) sahnedeyken efekt onun ARKASINDA, başının çevresinde bir hâle gibi oynar
+   * (yüz asla örtülmez): katmanlar kahraman bandıyla portre arasına taşınır; yalnız taç başın üstünde, önde durur.
+   */
+  pistiFx(id: string, jack: boolean, at: Pt, low = false, hero?: {host: HTMLElement; before: Element; face: DOMRect}): void {
     if (!ANIM) return;
     if (!this.warmed) {
       this.warmed = true;
@@ -408,7 +423,14 @@ export class Fx {
     }
     const used: HTMLElement[] = [], tok = String(++this.tok);
     const fx = FX[id] ? id : 'klasik';
-    FX[fx](this.stage(low, used, tok), at, jack);
+    const st = this.stage(low, used, tok, hero?.face);
+    if (hero) {
+      hero.host.insertBefore(this.qBack, hero.before);
+      hero.host.insertBefore(this.qFront, hero.before);
+      const f = hero.face;
+      at = {x: f.x + f.width / 2, y: f.y + f.height * 0.14};
+    } else this.heroDone();
+    FX[fx](st, at, jack);
     // bitince topluca gizle (durdurulmuş/uzamış animasyonu olan düğüm bir süre daha bekler)
     const sweep = (): void => {
       let left = 0;

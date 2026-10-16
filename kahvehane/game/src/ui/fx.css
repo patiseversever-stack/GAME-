@@ -72,6 +72,9 @@
    filtre/maske yok. Arka katman damganın (z 2) altında, ön katman (küçük parıltılar) üstünde. */
 .kh-ql { position: absolute; inset: 0; z-index: 1; pointer-events: none; perspective: 900px; }
 .kh-ql.is-front { z-index: 3; }
+.kh-ql.is-top { z-index: 4; }
+/* kahramanın arkasındayken (bant ile portre arası) */
+.kh-hero > .kh-ql { z-index: auto; }
 .kh-q { position: absolute; left: 0; top: 0; display: none; pointer-events: none; background: center / 100% 100% no-repeat; will-change: transform, opacity; backface-visibility: visible; }
 .kh-qflash { position: absolute; inset: 0; z-index: 0; opacity: 0; pointer-events: none; }
 /* önizleme sahnesi (market ürün penceresi, ızgara küçük resmi, Dene) */

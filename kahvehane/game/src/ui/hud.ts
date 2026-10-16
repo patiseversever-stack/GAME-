@@ -9,7 +9,7 @@ import type {Mode, SeatPlayer} from '../game/types';
 import {ANIM, EASE, Scope, countUp, esc, fmt, h, play, q} from './dom';
 import {ASSETS} from './assets';
 import {I} from './icons';
-import {gemHtml} from './parts';
+import {FACE_BOX, gemHtml} from './parts';
 import {g3, type Fx} from './fx';
 
 /** Rozet konumu: alt (ben, sol alt), üst (1'e 1 rakip), top4 (4 kişide karşı), sol, sağ. */
@@ -635,9 +635,13 @@ export class HudView implements GameHud {
         {transform: 'scale(1)', opacity: 1, offset: out}, {transform: 'scale(.8)', opacity: 0}], {duration: D, easing: 'ease-out', fill: 'both'});
     this.snd?.swoosh();
     this.scope.timeout(() => this.fx.stamp(o.jack, o.points, H * 0.66, D - 160, true), 150);
-    this.scope.timeout(() => this.fx.pistiFx(o.fx, o.jack, o.at, o.low), 120);
+    // efekt kahramanın ARKASINDA, başının çevresinde oynar (yüz örtülmez); yüz kutusu portrenin yerleşiminden (kayma hariç)
+    const fs = fig.offsetWidth;
+    const face = new DOMRect(fig.offsetLeft + fs * FACE_BOX.l, fig.offsetTop + fs * FACE_BOX.t, fs * (FACE_BOX.r - FACE_BOX.l), fs * (FACE_BOX.b - FACE_BOX.t));
+    this.scope.timeout(() => this.fx.pistiFx(o.fx, o.jack, o.at, o.low, {host: hero, before: fig, face}), 120);
     b.react('pisti', D);
     await this.scope.wait(D + 60);
+    this.fx.heroDone();
     hero.className = 'kh-hero';
     hero.getAnimations({subtree: true}).forEach(a => a.cancel());
   }

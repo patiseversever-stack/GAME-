@@ -23,6 +23,8 @@
 .kh-badge { --bs: calc(var(--u) * 5.2); position: absolute; width: var(--bs); height: var(--bs); }
 .kh-badge.is-top { --bs: calc(var(--u) * 6.3); left: 50%; top: max(calc(var(--u) * 1.15), calc(env(safe-area-inset-top) + var(--u) * .7)); margin-left: calc(var(--bs) / -2); }
 .kh-badge.is-top4 { --bs: calc(var(--u) * 5.1); left: 50%; top: max(calc(var(--u) * 1.05), calc(env(safe-area-inset-top) + var(--u) * .6)); margin-left: calc(var(--bs) / -2); }
+/* üst rakip rozeti pişti kahramanının (z 8) ve onun arkasındaki efekt hâlesinin üstünde kalır: yüzü hiçbir efekt örtmez */
+.kh-badge.is-top, .kh-badge.is-top4 { z-index: 9; }
 .kh-badge.is-bottom { --bs: calc(var(--u) * 5.4); left: max(calc(var(--u) * 1.1), env(safe-area-inset-left)); bottom: max(calc(var(--u) * 3.6), calc(env(safe-area-inset-bottom) + var(--u) * 3)); }
 .kh-badge.is-left { --bs: calc(var(--u) * 4.6); left: max(calc(var(--u) * .8), env(safe-area-inset-left)); top: var(--kh-side-top, 24.5%); }
 .kh-badge.is-right { --bs: calc(var(--u) * 4.6); right: max(calc(var(--u) * .8), env(safe-area-inset-right)); top: var(--kh-side-top, 24.5%); }

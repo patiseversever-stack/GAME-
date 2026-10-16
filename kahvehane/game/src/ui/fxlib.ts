@@ -16,8 +16,11 @@ export interface Stage {
   /** kısa kenar (px): bütün ölçüler bunun yüzdesi */
   M: number;
   low: boolean;
-  /** Görsel düğüm (havuzdan ya da taze). w: taban genişlik (px), h yoksa görselin oranı; front: PİŞTİ yazısının önünde */
-  node(key: string, w: number, h?: number, front?: boolean): HTMLElement | null;
+  /** pişti kahramanı sahnede: yüzün dikdörtgeni (efekt onun arkasında, başın çevresinde oynar) */
+  face?: DOMRect;
+  /** Görsel düğüm (havuzdan ya da taze). w: taban genişlik (px), h yoksa görselin oranı; front: PİŞTİ yazısının önünde;
+   * top: kahraman sahnedeyken de en önde (yalnız yüzü örtmeyecek nesneler: başın üstündeki taç) */
+  node(key: string, w: number, h?: number, front?: boolean, top?: boolean): HTMLElement | null;
   run(n: HTMLElement, kf: Keyframe[], o: KeyframeAnimationOptions): void;
   /** tam sahne renkli ışık (yalnız opaklık) */
   flash(color: string, peak: number, ms: number, delay?: number): void;
@@ -78,8 +81,8 @@ function rays(s: Stage, at: Pt, key: string, base: number, t: number, dur: numbe
   ], {duration: dur, delay: t, easing: 'linear'});
 }
 /** Yıldız parıltısı: belirir (45° döner), söner */
-function twinkle(s: Stage, x: number, y: number, key: string, base: number, t: number, dur = 520, sc = 1, front = true): void {
-  const n = s.node(key, base, undefined, front);
+function twinkle(s: Stage, x: number, y: number, key: string, base: number, t: number, dur = 520, sc = 1, front = true, top = false): void {
+  const n = s.node(key, base, undefined, front, top);
   if (!n) return;
   const r0 = R(-20, 20);
   s.run(n, [
@@ -194,7 +197,7 @@ function klasik(s: Stage, at: Pt, jack: boolean): void {
     const ring2 = i >= 4;
     // üst yay: ♥ sol üst, ♠ yukarı sol, ♦ yukarı sağ, ♣ sağ üst (valede ikinci, daha geniş yay)
     const ang = ((ring2 ? -168 + (i - 4) * 52 : -150 + i * 40) * Math.PI) / 180;
-    const d = (ring2 ? 62 : 44) * m;
+    const d = (ring2 ? 62 : 44) * m * (s.face ? 1.25 : 1);
     const x1 = at.x + Math.cos(ang) * d, y1 = at.y + Math.sin(ang) * d * 0.85 - 6 * m;
     const spin = (i % 2 ? 1 : -1) * 360, tilt = (i % 2 ? -1 : 1) * 10;
     const D = 1550;
@@ -452,7 +455,7 @@ function lale(s: Stage, at: Pt, jack: boolean): void {
   glow(s, at, 'bloom:rose', 44 * m, T, 1100, 0.3, 2, 2.5, 1, 0.14);
   shock(s, at, 'ring:rose', 42 * m, T + 300, 700, 2.6);
   // açan lale: büyür ve döner, sonra yaprakları salıverip söner
-  const RS = 38 * m;
+  const RS = (s.face ? 60 : 38) * m; // kahramanın arkasında başın çevresinde dev bir lale
   const ro = s.node('rosette', RS);
   const OPEN = T + 320;
   if (ro)
@@ -503,7 +506,7 @@ function lale(s: Stage, at: Pt, jack: boolean): void {
 /** Nazar Boncuğu: cam nazar madalyonu belirir, parıldar; çatlayıp cam kırıklarına ve boncuklara saçılır. */
 function nazar(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100;
-  const S = 32 * m;
+  const S = (s.face ? 58 : 32) * m; // kahramanın arkasında dev nazar (hâle gibi)
   glow(s, at, 'bloom:blue', 40 * m, 0, 900, 0.3, 1.4, 1.2, 0.85, 0.3);
   const eye = s.node('eye', S);
   const TS = jack ? 760 : 660;
@@ -537,8 +540,11 @@ function nazar(s: Stage, at: Pt, jack: boolean): void {
 /** Taç Giyme: tepeden altın ışık iner, mücevherli taç yığına oturur (şok dalgası, toz), mücevherler parlar. */
 function tac(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100;
-  const cw = 46 * m, chh = (cw * 320) / 400;
-  const cy = at.y - 7 * m;
+  const f = s.face;
+  // kahraman sahnedeyse taç başın ÜSTÜNE oturur (yüzü örtmez); yoksa yığına
+  const cw = f ? Math.min(46 * m, f.width * 0.66) : 46 * m, chh = (cw * 320) / 400;
+  const cy = f ? f.y + f.height * 0.05 - chh * 0.4 : at.y - 7 * m;
+  if (f) at = {x: f.x + f.width / 2, y: cy + 7 * m};
   if (!s.low) {
     const sh = s.node('shaft', 46 * m);
     if (sh) {
@@ -556,7 +562,7 @@ function tac(s: Stage, at: Pt, jack: boolean): void {
   rays(s, {x: at.x, y: cy - chh * 0.1}, 'rays:gold', 86 * m, T - 40, 1500, 30, 0.9);
   glow(s, {x: at.x, y: cy}, 'bloom:gold', 50 * m, T - 30, 1100, 0.3, 1.7, 2.1, 0.95, 0.14);
   const D = 1850;
-  const cr = s.node('crown', cw);
+  const cr = s.node('crown', cw, undefined, false, !!f);
   if (cr) {
     const o = (ms: number): number => ms / D;
     s.run(cr, [
@@ -586,7 +592,7 @@ function tac(s: Stage, at: Pt, jack: boolean): void {
   sparks(s, {x: at.x, y: cy - chh * 0.2}, {n: jack ? 16 : 12, keys: ['spark:gold'], len: 12 * m, dist: [18 * m, 38 * m], ang: [-Math.PI * 0.92, -Math.PI * 0.08], fall: 30 * m, drag: 2.4, dur: [800, 1150], t: T, r0: 6 * m, align: true, front: true});
   // mücevher parıltıları (taç görselindeki taş konumları)
   const gems: [number, number, string][] = [[0, 0.24, 'glint:rose'], [-0.2, 0.22, 'glint:blue'], [0.2, 0.22, 'glint:blue'], [0, -0.2, 'glint:rose'], [-0.42, -0.26, 'glint:white'], [0.42, -0.26, 'glint:white']];
-  gems.slice(0, s.low ? 3 : 6).forEach(([gx, gy, key], i) => twinkle(s, at.x + gx * cw, cy + gy * chh, key, 11 * m, T + 160 + i * 140, 520, R(0.9, 1.2)));
+  gems.slice(0, s.low ? 3 : 6).forEach(([gx, gy, key], i) => twinkle(s, at.x + gx * cw, cy + gy * chh, key, 11 * m, T + 160 + i * 140, 520, R(0.9, 1.2), true, !!f));
   s.sfx(0, x => x.swoosh());
   s.sfx(T, x => x.fireworkBurst(1.25));
   s.sfx(T + 140, x => x.bonus());
@@ -597,7 +603,7 @@ function tac(s: Stage, at: Pt, jack: boolean): void {
 function girdap(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100;
   const TI = 900; // çöküş
-  const disc = s.node('disc', 64 * m);
+  const disc = s.node('disc', (s.face ? 92 : 64) * m);
   if (disc)
     s.run(disc, [
       {transform: tr(at.x, at.y, 0, 1.4, 1.05), opacity: 0},
