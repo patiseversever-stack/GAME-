@@ -418,14 +418,14 @@
 .kh-try__scene { position: absolute; inset: 0; }
 .kh-try .kh-ts { border-radius: 0; }
 .kh-try .kh-ts__opp .kh-ts__c { top: 15%; width: 12%; }
-.kh-try .kh-ts__hand .kh-ts__c { bottom: 15%; width: 23%; cursor: pointer; }
+.kh-try .kh-ts__hand .kh-ts__c { bottom: 14%; width: 19.5%; cursor: pointer; }
 .kh-try .kh-ts__pile .kh-ts__c { width: 22%; }
 .kh-try .kh-ts__deck .kh-ts__c { width: 15%; left: 7%; }
 .kh-try .kh-ts__ring, .kh-try .kh-ts__glow, .kh-try .kh-ts__pile .kh-ts__c { top: 45%; }
 .kh-try .kh-ts__deck .kh-ts__c { top: 45%; }
 .kh-try__seat { position: absolute; z-index: 3; display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * .25); pointer-events: none; }
 .kh-try__seat.is-opp { left: 50%; top: calc(var(--u) * 3.6); transform: translateX(-50%); flex-direction: row; gap: .5em; }
-.kh-try__seat.is-me { left: calc(var(--u) * .8); bottom: calc(var(--u) * 13.4); }
+.kh-try__seat.is-me { left: calc(var(--u) * .8); top: 58%; }
 .kh-try__ava { --as: calc(var(--u) * 3.6); }
 .kh-try__seat.is-me .kh-try__ava { --as: calc(var(--u) * 4.4); }
 .kh-try__nm { padding: .15em .6em; border-radius: var(--r-pill); background: rgba(10, 16, 51, .65); font-family: var(--font-display); font-size: calc(var(--u) * .8); text-shadow: var(--outline-thin); white-space: nowrap; }
@@ -437,7 +437,7 @@
 .kh-try__chip .kh-i { width: 1.15em; height: 1.15em; }
 .kh-try__name { flex: 1; min-width: 0; font-family: var(--font-display); font-weight: var(--w-display); font-size: calc(var(--u) * 1.25); text-shadow: var(--outline-thin); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .kh-try__x { flex: none; }
-.kh-try__hint { position: absolute; z-index: 5; left: 50%; bottom: calc(var(--u) * 12.2); transform: translateX(-50%); display: inline-flex; align-items: center; gap: .35em; padding: .35em .85em;
+.kh-try__hint { position: absolute; z-index: 5; left: 50%; top: 61.5%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: .35em; padding: .35em .85em;
   border-radius: var(--r-pill); background: rgba(10, 16, 51, .7); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .25); white-space: nowrap; pointer-events: none;
   font-weight: var(--w-black); font-size: calc(var(--u) * .82); transition: opacity .3s; }
 .kh-try__hint.is-off { opacity: 0; }

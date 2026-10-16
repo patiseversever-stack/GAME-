@@ -139,6 +139,23 @@ export const TABLES: readonly TableTheme[] = [
     paint: (w, h, dpr) => import('./bogaz').then(m => m.paintBogaz(w, h, dpr)),
     swatch: SWATCH_B.bogaz,
   },
+  {
+    id: 'neon',
+    name: 'Neon Kahvehane',
+    desc: 'Tuğla duvar, pembe tabela, buharı tüten neon çay.',
+    vars: {
+      '--ar-bg': 'radial-gradient(120% 75% at 50% 46%, #2a1238 0%, #170a22 50%, #07040d 100%)',
+      '--ar-rays': 'rgba(255, 120, 220, .05)',
+      '--ar-rays-op': '.25',
+      '--ar-pattern-op': '0',
+      '--ar-vig': 'radial-gradient(120% 90% at 50% 50%, rgba(0, 0, 0, 0) 58%, rgba(0, 0, 0, .55) 100%)',
+      '--ar-ring': 'rgba(255, 70, 200, .75)',
+      '--ar-glow-n': 'rgba(255, 60, 190, .3)',
+      '--ar-pool': 'rgba(10, 2, 20, .45)',
+    },
+    paint: (w, h, dpr) => import('./neon').then(m => m.paintNeon(w, h, dpr)),
+    swatch: SWATCH_B.neon,
+  },
 ];
 
 export function tableById(id: string): TableTheme {

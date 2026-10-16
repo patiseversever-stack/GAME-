@@ -8,12 +8,12 @@ import {
   type Ctx, type Job, type RGB, type Suit, due, grain,
 } from './kit';
 
-const FONT = (px: number): string => `400 ${px}px "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif`;
+export const FONT = (px: number): string => `400 ${px}px "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif`;
 const RF = new RankFont(FONT);
 const PW = 360, PH = Math.round(PW / 0.7);
 const WHITE: RGB = [255, 255, 255];
-const NEON: Record<Suit, RGB> = {H: [255, 46, 99], D: [255, 190, 40], C: [40, 255, 136], S: [46, 196, 255]};
-const PINK: RGB = [255, 60, 190], AMBER: RGB = [255, 170, 40], VIOLET: RGB = [170, 90, 255];
+export const NEON: Record<Suit, RGB> = {H: [255, 46, 99], D: [255, 190, 40], C: [40, 255, 136], S: [46, 196, 255]};
+export const PINK: RGB = [255, 60, 190], AMBER: RGB = [255, 170, 40], VIOLET: RGB = [170, 90, 255];
 
 interface Art {
   /** takım başına: duvar + ortam ışığı + neon çerçeve (kart boyu) */
@@ -27,7 +27,7 @@ interface Art {
 }
 
 /** Takım silüetini birim yoldan çiz (dış hat) */
-function withOutline(g: Ctx, s: Suit, cx: number, cy: number, size: number, fn: (p: Path2D) => void): void {
+export function withOutline(g: Ctx, s: Suit, cx: number, cy: number, size: number, fn: (p: Path2D) => void): void {
   g.save();
   g.translate(cx, cy);
   g.scale(size, size);
@@ -44,7 +44,7 @@ function suitSprite(size: number, pad: number, draw: (g: Ctx, c: number) => void
 
 // ───────────────────────── neon tüp ─────────────────────────
 /** Katmanlı neon: geniş soluk hale → dar parlak hale → renkli tüp → beyaz-sıcak çekirdek. `stroke` yolu çizer. */
-function tube(g: Ctx, stroke: () => void, col: RGB, lw: number, glowK = 1): void {
+export function tube(g: Ctx, stroke: () => void, col: RGB, lw: number, glowK = 1): void {
   g.save();
   g.lineCap = 'round';
   g.lineJoin = 'round';
@@ -70,7 +70,7 @@ function tube(g: Ctx, stroke: () => void, col: RGB, lw: number, glowK = 1): void
   stroke();
   g.restore();
 }
-const tubePath = (g: Ctx, p: Path2D, col: RGB, lw: number, glowK = 1): void => tube(g, () => g.stroke(p), col, lw, glowK);
+export const tubePath = (g: Ctx, p: Path2D, col: RGB, lw: number, glowK = 1): void => tube(g, () => g.stroke(p), col, lw, glowK);
 
 /** Neon değer yazısı: renkli hale + renkli kenar + beyaz-sıcak dolgu (küçük boyda da okunur). */
 function neonRank(g: Ctx, t: string, cx: number, top: number, cap: number, maxW: number, col: RGB): void {
@@ -122,7 +122,7 @@ function neonPip(g: Ctx, s: Suit, cx: number, cy: number, size: number): void {
 }
 
 // ───────────────────────── duvar ─────────────────────────
-function paintWall(w: number, h: number, seed: number, light: [number, number, RGB][]): HTMLCanvasElement {
+export function paintWall(w: number, h: number, seed: number, light: [number, number, RGB][]): HTMLCanvasElement {
   const [c, g] = makeCanvas(w, h);
   const rnd = mulberry(seed);
   g.fillStyle = '#07040d';
@@ -175,7 +175,7 @@ function crownPath(cx: number, by: number, w: number): Path2D {
   p.lineTo(cx + w * 0.5, top);
   return p;
 }
-function* paintCourt(kind: 'K' | 'Q' | 'J'): Job<HTMLCanvasElement> {
+export function* paintCourt(kind: 'K' | 'Q' | 'J'): Job<HTMLCanvasElement> {
   const [c, g] = makeCanvas(CW, CH);
   const cx = CW / 2;
   if (kind === 'K') {
