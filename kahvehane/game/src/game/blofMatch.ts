@@ -21,7 +21,8 @@ import type {GameHud, HudPose} from '../ui/types';
 import {haptic, store} from '../platform/bridge';
 import {BLOF_TALK_STORE} from './talk';
 import {banterPair} from './banter';
-import {SeatBubble, utter} from './seatBubble';
+import {SeatBubble, utter, voiceWant} from './seatBubble';
+import {whenIdle} from '../platform/sched';
 import {QUICK_IDS, type QuickChat} from './quickChat';
 import {charById} from './roster';
 import {type BlofOutcome, type BlofSeatResult, type Difficulty, type HandLayout, type MatchSetup, type SeatPlayer} from './types';
@@ -339,6 +340,8 @@ export class BlofMatch {
     this.autoKey = '';
 
     this.startChat(setup, client);
+    // paketli ses düzeni: masadaki karakterlerin paketleri boşta iner (masada olmayanlar bellekten atılır)
+    void whenIdle(600).then(() => (this.aborted ? undefined : this.d.voice.prepare(voiceWant('blof', setup.players))));
     await sleep(140);
     if (this.aborted) return this.finish(null);
     // el başı: iki bot varsa ara sıra kendi aralarında atışır, yoksa bir rakip açılış repliği

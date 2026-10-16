@@ -2,6 +2,8 @@
 // Tek konuşma yöneticisi src/audio/speech.ts (SpeechDirector); burada yalnız oyunun HUD'una / ekranlarına bağlanır.
 import {dialogue, type TalkStore} from '../ai/dialogue';
 import type {Bubble, SpeechDirector} from '../audio/speech';
+import type {VoicePlayer} from '../audio/voice';
+import {whenIdle} from '../platform/sched';
 import type {MenuTalk} from '../ui/types';
 import {store} from '../platform/bridge';
 import {utter} from './seatBubble';
@@ -17,7 +19,7 @@ export const BLOF_TALK_STORE: TalkStore = {load: () => store.get<unknown>('talk.
  * Menü konuşmaları (ilk açılış galerisi, market): META anlarının replikleri, öncelik 3, etiket 'menu'.
  * Hep bir önceki menü konuşmasını keser (kaydırınca eski karakter susar).
  */
-export function menuTalk(speech: SpeechDirector): MenuTalk {
+export function menuTalk(speech: SpeechDirector, voice?: Pick<VoicePlayer, 'prepare'>): MenuTalk {
   let attached = false;
   return {
     say(charId, moment, bubble) {
@@ -34,6 +36,9 @@ export function menuTalk(speech: SpeechDirector): MenuTalk {
     },
     stop() {
       speech.cancel('menu');
+    },
+    warm(charIds) {
+      if (voice) void whenIdle(800).then(() => voice.prepare(charIds.map(c => [c, 'meta'] as [string, string])));
     },
   };
 }

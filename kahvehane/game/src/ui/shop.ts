@@ -10,7 +10,7 @@
 //  "Dene" (tam ekran masa sahnesinde dene, tryon.ts), cüzdan satırı (alınca ne kalır / ne kadar eksik), set bağlantısı.
 import './shop.css';
 import {CATALOG, KIND_INFO, itemOf, type ItemKind, type ShopItem} from '../game/catalog';
-import {charById, type CharDef} from '../game/roster';
+import {ROSTER, charById, type CharDef} from '../game/roster';
 import {ANIM, EASE, Scope, bump, center, clamp, esc, fmt, h, hms, play, q, shake} from './dom';
 import {ASSETS} from './assets';
 import {I} from './icons';
@@ -273,6 +273,7 @@ export class ShopPage implements Page {
 
   show(sub?: string): void {
     this.visible = true;
+    this.shell.ctx.talk?.warm?.(ROSTER.map(c => c.id)); // paketli ses: karakterlerin satış repliği paketleri boşta
     if (sub && TABS.some(t => t.id === sub)) this.tab = sub as ShopTab;
     // ilk açılış: sayfa kabuğu (başlık, sekmeler) bu karede, içerik bir sonraki karede — sayfa geçişi 60 ms gecikmeli ve
     // saydam başladığı için görünmez; tıklama görevi ikiye bölünür (tek uzun kare yerine iki kısa kare)

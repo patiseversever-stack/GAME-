@@ -2,6 +2,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
+import {packVoice} from './scripts/voice-pack.mjs';
 
 const ROOT = path.dirname(fileURLToPath(import.meta.url));
 const VOICE_SRC = path.join(ROOT, 'assets', 'voice');
@@ -13,9 +14,13 @@ const VOICE_FILE = /^(?:manifest\.json|[a-z]+\/[A-Za-z0-9_]+\.mp3)$/;
  * göreli `voice/` klasöründen okur (src/ui/assets.ts → voiceManifestUrl).
  *  · derleme: assets/voice → <outDir>/voice/ (dist/voice, dist-tek/voice) — manifest + mp3'ler, olduğu kadar.
  *  · geliştirme: her sayfa yolunun altındaki /voice/… isteği assets/voice'tan sunulur (/, /dev/game.html …).
+ *  · packed: true (tek dosya derlemesi / yayın önizlemesi): 925 dosya yerine karakter × grup paketleri
+ *    (voice/manifest.json v2 + voice/packs/*.bin, ≤ 2,5 MB; scripts/voice-pack.mjs). Yayın sunucusu sürüm başına en çok
+ *    511 dosya kabul ettiği için.
+ * @param {{packed?: boolean}} [o]
  */
 /** @returns {import('vite').Plugin} */
-export function khVoice() {
+export function khVoice(o = {}) {
   let outDir = '';
   let build = false;
   return {
@@ -51,6 +56,12 @@ export function khVoice() {
       // geliştirme sunucusu kapanırken / yeniden başlarken de çağrılır: yalnız derlemede kopyala
       if (!build || !outDir || !fs.existsSync(VOICE_SRC)) return;
       const dst = path.join(outDir, 'voice');
+      if (o.packed) {
+        if (!fs.existsSync(path.join(VOICE_SRC, 'manifest.json'))) return;
+        const r = packVoice(VOICE_SRC, dst);
+        console.log(`[kh-voice] voice/ (paketli) → ${path.relative(ROOT, dst)}/ (${r.files} dosya: ${r.packs} paket + manifest, ${(r.bytes / 1048576).toFixed(1)} MB, en büyük ${(r.biggest / 1048576).toFixed(2)} MB)`);
+        return;
+      }
       fs.rmSync(dst, {recursive: true, force: true});
       let n = 0, bytes = 0;
       const walk = (dir, rel) => {

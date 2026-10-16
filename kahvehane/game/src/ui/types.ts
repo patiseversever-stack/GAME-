@@ -60,6 +60,8 @@ export interface MenuTalk {
   say(charId: string, moment: MenuMoment, bubble?: {show(text: string, ms: number): void; hide(): void}): void;
   /** Menü konuşmasını hemen sustur. */
   stop(): void;
+  /** Paketli ses düzeninde bu karakterlerin menü paketlerini boşta indir (galeri / market açılınca). */
+  warm?(charIds: readonly string[]): void;
 }
 
 export interface Sounds {

@@ -3,10 +3,11 @@ import {viteSingleFile} from 'vite-plugin-singlefile';
 import {khVoice} from './vite.voice.mjs';
 
 // "tek" modu: her şey tek bir HTML dosyasına gömülür (önizleme linki / WebView yerel dosya için) — sesler HARİÇ:
-// manifest + mp3'ler index.html'in yanındaki voice/ klasöründen okunur (khVoice: derlemede kopyalar, geliştirmede sunar).
+// manifest + sesler index.html'in yanındaki voice/ klasöründen okunur (khVoice: derlemede kopyalar, geliştirmede sunar).
+// dist/ (Expo) dosya başına mp3; dist-tek/ (yayın önizlemesi) paketli: ~22 dosya (sunucu sürüm başına ≤ 511 dosya).
 export default defineConfig(({mode}) => ({
   base: './',
-  plugins: mode === 'tek' ? [viteSingleFile(), khVoice()] : [khVoice()],
+  plugins: mode === 'tek' ? [viteSingleFile(), khVoice({packed: true})] : [khVoice()],
   build: {
     outDir: mode === 'tek' ? 'dist-tek' : 'dist',
     target: 'es2020',

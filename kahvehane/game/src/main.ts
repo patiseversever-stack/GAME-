@@ -80,7 +80,7 @@ async function boot(): Promise<void> {
     fanfare: () => sfx.pisti(false),
     lose: () => sfx.lose(),
   });
-  screens.talk = menuTalk(speech);
+  screens.talk = menuTalk(speech, voice);
   const chat = new QuickChat(screens.hud, () => screens.quickChat(), speech, voice, tier === 'low' ? 0 : 14, {
     get: () => store.get<boolean>('chat.muteOpp', false),
     set: on => store.set('chat.muteOpp', on),

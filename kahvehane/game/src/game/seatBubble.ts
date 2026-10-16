@@ -43,6 +43,18 @@ export function utter(line: Line, char: string, bubble?: Bubble, minMs?: number)
   return {id: line.id, text: line.text, tts: line.tts, mood: line.mood ?? null, char, bubble, minMs};
 }
 
+/**
+ * Paketli ses düzeninde (tek dosya / yayın önizlemesi) masada gereken paketler, öncelik sırasıyla: botların oyun
+ * replikleri, oyuncunun kendi hızlı sohbet söyleyişleri, botların atışma + cevapları (VoicePlayer.prepare).
+ */
+export function voiceWant(game: 'pisti' | 'blof', players: readonly {char: {id: string}; human: boolean}[]): [string, string][] {
+  const bots = players.filter(p => !p.human).map(p => p.char.id);
+  const out: [string, string][] = bots.map(c => [c, game]);
+  for (const p of players) if (p.human) out.push([p.char.id, 'say']);
+  for (const c of bots) out.push([c, 'bot']);
+  return out;
+}
+
 /** Seslendirmesiz kısa tepki (dürtme, ortak sevinci): yine kanal sırasına uyar. */
 export function quipUtter(text: string, char: string, bubble: Bubble, mood: string | null, minMs: number): Utter {
   return {id: 'quip', text, char, mood, bubble, minMs, audio: false};

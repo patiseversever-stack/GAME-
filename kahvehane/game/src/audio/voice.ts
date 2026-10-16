@@ -12,6 +12,11 @@
  * - Önbellekler dosya adresiyle tutulur: paylaşılan sesler (aynı dosyayı gösteren takma adlar) bir kez iner / çözülür.
  * - `preload`: oyuncunun kendi hızlı sohbet sesleri gibi küçük bir küme sabitlenir (LRU'dan düşmez), gönderince anında çalar.
  *
+ * - İki manifest düzeni: dosya başına (`{id: {url, dur, h, p}}`; dist/ ve geliştirme) ya da PAKETLİ (`{v: 2, packs, clips}`;
+ *   tek dosya / yayın önizlemesi, scripts/voice-pack.mjs). Paketli düzende paket bir kez bütün olarak iner, klip baytları
+ *   bayt aralığıyla kesilip çözülür; paket baytları toplam ~8 MB'lık LRU'da tutulur, masada olmayan karakterlerin paketleri
+ *   önce atılır (prepare). Her klip eksiksiz bir mp3 olduğundan aralığı kesmek geçerli bir dosya verir.
+ *
  * Konuşma sırası, balon eşlemesi, atışma (banter) dizileri ve duraklatma bu sınıfın ÜSTÜNDE: src/audio/speech.ts
  * (SpeechDirector). Oyun kodu doğrudan `play` çağırmaz; tek kanal yöneticisi üzerinden konuşur.
  */
@@ -28,6 +33,25 @@ export interface VoiceEntry {
   h?: string;
   /** Varsayılan öncelik (dialogue.ts → momentPriority); play() önceliği verilmezse kullanılır. */
   p?: number;
+  /** Paketli düzen: paket adı + klibin paket içindeki bayt aralığı (url = paketin adresi). */
+  pack?: string;
+  o?: number;
+  n?: number;
+  /** @internal önbellek anahtarı: dosya adresi ya da "paket#ofset" */
+  key?: string;
+}
+
+/** Paketli düzende bir paket: adres, bayt boyu, karakter, grup (pisti · blof · bot · say · meta). */
+export interface VoicePack {
+  url: string;
+  n: number;
+  char: string;
+  group: string;
+}
+
+export interface VoiceOptions {
+  /** Bellekte tutulacak paket baytları üst sınırı (paketli düzen). Varsayılan 8 MB. */
+  packCapBytes?: number;
 }
 
 export interface VoicePlayOpts {
@@ -47,6 +71,8 @@ const MAX_DECODED = 12;
 const MAX_BYTES = 32;
 /** Sabitlenmiş (preload) çözülmüş tampon üst sınırı: düşük cihazda bellek ≈ 14 × ~1,6 sn × 192 KB/sn. */
 const MAX_PINNED_DECODED = 14;
+/** Paketli düzen: bellekteki paket baytları üst sınırı. */
+export const PACK_CAP_BYTES = 8 * 1048576;
 const QUEUE_MAX_S = 1.0; // eşit öncelik: çalanın kalan süresi bundan azsa sıraya gir
 const MAX_DELAY_MS = 1500; // sıra bekleme dahil; daha geç gelen tepki bayattır
 const FADE_S = 0.05;
@@ -101,6 +127,9 @@ function decodeAudio(ctx: BaseAudioContext, data: ArrayBuffer): Promise<AudioBuf
   });
 }
 
+/** Önbellek anahtarı: dosya adresi ya da paket#ofset. */
+const keyOf = (e: VoiceEntry): string => e.key ?? (e.pack ? `${e.url}#${e.o}` : e.url);
+
 function resolveUrl(url: string, manifestUrl: string): string {
   if (/^([a-z][a-z0-9+.-]*:|\/)/i.test(url)) return url;
   const base = manifestUrl.split(/[?#]/)[0];
@@ -126,10 +155,19 @@ export class VoicePlayer {
   private pinnedBytes = new Map<string, ArrayBuffer>();
   private pinnedDecoded = new Map<string, AudioBuffer>();
   private pinTok = 0;
+  /** Paketli düzen: paket tablosu, bellekteki paketler (LRU, toplam bayt sınırlı), inenler, istenenler (masadakiler). */
+  private packs = new Map<string, VoicePack>();
+  private packBytes = new Map<string, ArrayBuffer>();
+  private packTotal = 0;
+  private packLoading = new Map<string, Promise<ArrayBuffer | null>>();
+  private wanted = new Set<string>();
+  private prepTok = 0;
+  private readonly packCap: number;
 
   /** @param getCtx oyunun AudioContext'i (ör. `() => sfx.context`); henüz yoksa null. */
-  constructor(getCtx: () => AudioContext | null) {
+  constructor(getCtx: () => AudioContext | null, o: VoiceOptions = {}) {
     this.getCtx = getCtx;
+    this.packCap = o.packCapBytes ?? PACK_CAP_BYTES;
   }
 
   setEnabled(on: boolean): void {
@@ -138,6 +176,7 @@ export class VoicePlayer {
       this.stop();
       this.decoded.clear(); // belleği bırak
       this.pinnedDecoded.clear();
+      this.dropPacks(() => true);
     }
   }
 
@@ -151,7 +190,8 @@ export class VoicePlayer {
   }
 
   /**
-   * Manifesti yükler: {id: {url, dur, h?}}. Boş adres, 404 ya da ağ hatası → yalnızca yazı kipi (hata fırlatmaz).
+   * Manifesti yükler: {id: {url, dur, h?, p?}} ya da paketli {v: 2, packs, clips}. Boş adres, 404 ya da ağ hatası →
+   * yalnızca yazı kipi (hata fırlatmaz).
    * @param resolve İsteğe bağlı: manifestteki göreli yolu gerçek URL'ye çevirir (ör. Vite import.meta.glob ile
    *   paketlenmiş dosyalar). undefined dönerse o replik sessiz kalır. Verilmezse yol manifest adresine göre çözülür.
    */
@@ -170,7 +210,34 @@ export class VoicePlayer {
   /** Manifesti doğrudan ver (paketlenmiş / satır içi manifest için). */
   setManifest(manifest: unknown, manifestUrl = '', resolve?: (rel: string) => string | undefined): void {
     this.entries.clear();
+    this.packs.clear();
+    this.dropPacks(() => true);
     if (!manifest || typeof manifest !== 'object') return;
+    const m = manifest as {v?: unknown; packs?: unknown; clips?: unknown};
+    const num = (x: unknown): number | undefined => (typeof x === 'number' && Number.isFinite(x) ? x : undefined);
+    const str = (x: unknown): string | undefined => (typeof x === 'string' ? x : undefined);
+    if (m.v === 2 && m.packs && typeof m.packs === 'object' && m.clips && typeof m.clips === 'object') {
+      // paketli düzen
+      for (const [name, pk] of Object.entries(m.packs as Record<string, unknown>)) {
+        if (!pk || typeof pk !== 'object') continue;
+        const q = pk as Record<string, unknown>;
+        const url = str(q.url);
+        const full = url ? (resolve ? resolve(url) : resolveUrl(url, manifestUrl)) : undefined;
+        if (!full) continue;
+        this.packs.set(name, {url: full, n: num(q.n) ?? 0, char: str(q.char) ?? '', group: str(q.group) ?? ''});
+      }
+      for (const [id, c] of Object.entries(m.clips as Record<string, unknown>)) {
+        if (!c || typeof c !== 'object') continue;
+        const q = c as Record<string, unknown>;
+        const pack = str(q.p);
+        const pk = pack ? this.packs.get(pack) : undefined;
+        const o = num(q.o), n = num(q.n);
+        if (!pk || o === undefined || !n || o < 0 || n <= 0 || (pk.n && o + n > pk.n)) continue;
+        const dur = num(q.dur);
+        this.entries.set(id, {url: pk.url, dur: dur && dur > 0 ? dur : 0, h: str(q.h), p: num(q.prio), pack, o, n, key: `${pk.url}#${o}`});
+      }
+      return;
+    }
     for (const [id, e] of Object.entries(manifest as Record<string, unknown>)) {
       if (!e || typeof e !== 'object') continue;
       const {url, dur, h, p} = e as Partial<VoiceEntry>;
@@ -182,7 +249,37 @@ export class VoicePlayer {
         dur: typeof dur === 'number' && dur > 0 ? dur : 0,
         h: typeof h === 'string' ? h : undefined,
         p: typeof p === 'number' ? p : undefined,
+        key: full,
       });
+    }
+  }
+
+  /** Paketli düzen mi? */
+  get packed(): boolean {
+    return this.packs.size > 0;
+  }
+
+  /**
+   * Paketli düzende önden indirme (boşta çağırın): istenen (karakter, grup) paketleri SIRAYLA, toplam bayt sınırı
+   * dolana dek indirilir; listede olmayan (masada olmayan karakterlerin) paketleri hemen bellekten atılır. Sınıra
+   * sığmayanlar gerektiğinde tembel iner. Dosya başına düzende hiçbir şey yapmaz.
+   * @param want öncelik sırasıyla [karakter, grup] çiftleri (ör. [['cem','pisti'], ['riza','say'], ['cem','bot']])
+   */
+  async prepare(want: readonly (readonly [string, string])[]): Promise<void> {
+    if (!this.packs.size) return;
+    const tok = ++this.prepTok;
+    const names: string[] = [];
+    for (const [char, group] of want)
+      for (const [name, pk] of this.packs) if (pk.char === char && pk.group === group && !names.includes(name)) names.push(name);
+    this.wanted = new Set(names);
+    this.dropPacks(name => !this.wanted.has(name));
+    if (!this.enabled) return;
+    for (const name of names) {
+      if (tok !== this.prepTok || !this.enabled) return;
+      if (this.packBytes.has(name)) continue;
+      const pk = this.packs.get(name)!;
+      if (this.packTotal + pk.n > this.packCap) continue; // sınıra sığmıyor: gerekince tembel iner
+      await this.loadPack(name);
     }
   }
 
@@ -233,7 +330,7 @@ export class VoicePlayer {
     }
     const job: Job = {id, prio, opts, at: nowMs(), buf: null, ducked: false, done: false};
     this.next = job;
-    const hit = this.bufCtx === c ? this.cachedBuf(e.url) : undefined;
+    const hit = this.bufCtx === c ? this.cachedBuf(keyOf(e)) : undefined;
     if (hit) {
       job.buf = hit;
       this.pump();
@@ -255,7 +352,10 @@ export class VoicePlayer {
   /** Olası replikleri önceden indir (yalnızca sıkıştırılmış baytlar; çözme yok, hafif). */
   async prefetch(ids: readonly string[]): Promise<void> {
     if (!this.enabled) return;
-    for (const id of ids) if (this.entries.has(id)) await this.fetchBytes(id);
+    for (const id of ids) {
+      const e = this.entries.get(id);
+      if (e) await this.fetchClip(e);
+    }
   }
 
   /**
@@ -266,24 +366,25 @@ export class VoicePlayer {
     const tok = ++this.pinTok;
     this.unpinAll();
     if (!this.enabled) return;
-    const urls: string[] = [];
+    const list: VoiceEntry[] = [];
     for (const id of ids) {
       const e = this.entries.get(id);
-      if (e && !urls.includes(e.url)) urls.push(e.url);
+      if (e && !list.some(x => x.key === e.key)) list.push(e);
     }
-    for (const u of urls) this.pinned.add(u);
+    for (const e of list) this.pinned.add(keyOf(e));
     let n = 0;
-    for (const u of urls) {
+    for (const e of list) {
       if (tok !== this.pinTok || !this.enabled) return;
-      const b = await this.fetchUrl(u);
+      const k = keyOf(e);
+      const b = await this.fetchClip(e);
       if (tok !== this.pinTok || !b) continue;
-      this.pinnedBytes.set(u, b);
+      this.pinnedBytes.set(k, b);
       if (n >= Math.min(decode, MAX_PINNED_DECODED)) continue;
       const c = this.liveCtx();
       if (!c) continue;
-      const buf = await this.decodeUrl(u, c);
+      const buf = await this.decodeClip(e, c);
       if (tok !== this.pinTok || !buf) continue;
-      this.pinnedDecoded.set(u, buf);
+      this.pinnedDecoded.set(k, buf);
       n++;
     }
   }
@@ -315,6 +416,8 @@ export class VoicePlayer {
     this.decoded.clear();
     this.bytes.clear();
     this.entries.clear();
+    this.dropPacks(() => true);
+    this.packs.clear();
     try {
       this.bus?.disconnect();
     } catch {
@@ -324,13 +427,16 @@ export class VoicePlayer {
   }
 
   /** @internal test/ölçüm */
-  stats(): {entries: number; decoded: number; bytes: number; pinned: number; pinnedDecoded: number; playing: string | null; queued: string | null} {
+  stats(): {entries: number; decoded: number; bytes: number; pinned: number; pinnedDecoded: number; packs: number; packsLoaded: string[]; packBytes: number; playing: string | null; queued: string | null} {
     return {
       entries: this.entries.size,
       decoded: this.decoded.size,
       bytes: this.bytes.size,
       pinned: this.pinnedBytes.size,
       pinnedDecoded: this.pinnedDecoded.size,
+      packs: this.packs.size,
+      packsLoaded: [...this.packBytes.keys()],
+      packBytes: this.packTotal,
       playing: this.cur?.job.id ?? null,
       queued: this.next?.id ?? null,
     };
@@ -363,66 +469,115 @@ export class VoicePlayer {
     return this.bus;
   }
 
-  private fetchBytes(id: string): Promise<ArrayBuffer | null> {
-    const e = this.entries.get(id);
-    return e ? this.fetchUrl(e.url) : Promise.resolve(null);
-  }
-
-  /** Sıkıştırılmış baytlar (adres anahtarlı: takma adlar aynı dosyayı paylaşır). */
-  private fetchUrl(url: string): Promise<ArrayBuffer | null> {
-    const pin = this.pinnedBytes.get(url);
+  /** Klibin sıkıştırılmış baytları (anahtar: dosya adresi ya da paket#ofset; takma adlar aynı kaydı paylaşır). */
+  private fetchClip(e: VoiceEntry): Promise<ArrayBuffer | null> {
+    const k = keyOf(e);
+    const pin = this.pinnedBytes.get(k);
     if (pin) return Promise.resolve(pin);
-    const hit = lruGet(this.bytes, url);
+    const hit = lruGet(this.bytes, k);
     if (hit) return Promise.resolve(hit);
-    let p = this.bytesLoading.get(url);
+    let p = this.bytesLoading.get(k);
     if (!p) {
       if (typeof fetch !== 'function') return Promise.resolve(null);
-      p = fetch(url)
-        .then(r => (r.ok ? r.arrayBuffer() : null))
+      const raw: Promise<ArrayBuffer | null> = e.pack
+        ? this.loadPack(e.pack).then(buf => (buf && e.o !== undefined && e.n && e.o + e.n <= buf.byteLength ? buf.slice(e.o, e.o + e.n) : null))
+        : fetch(e.url).then(r => (r.ok ? r.arrayBuffer() : null));
+      p = raw
         .then(b => {
           const ok = b && b.byteLength ? b : null;
           if (ok) {
-            if (this.pinned.has(url)) this.pinnedBytes.set(url, ok);
-            else lruSet(this.bytes, url, ok, MAX_BYTES);
+            if (this.pinned.has(k)) this.pinnedBytes.set(k, ok);
+            else lruSet(this.bytes, k, ok, MAX_BYTES);
           }
           return ok;
         })
         .catch(() => null)
-        .finally(() => this.bytesLoading.delete(url));
-      this.bytesLoading.set(url, p);
+        .finally(() => this.bytesLoading.delete(k));
+      this.bytesLoading.set(k, p);
     }
     return p;
   }
 
-  private cachedBuf(url: string): AudioBuffer | undefined {
-    return this.pinnedDecoded.get(url) ?? lruGet(this.decoded, url);
+  /** Paketin tamamı (bir kez iner; bellekte LRU, toplam bayt sınırlı). */
+  private loadPack(name: string): Promise<ArrayBuffer | null> {
+    const hit = this.packBytes.get(name);
+    if (hit) {
+      this.packBytes.delete(name);
+      this.packBytes.set(name, hit); // en yeni
+      return Promise.resolve(hit);
+    }
+    let p = this.packLoading.get(name);
+    if (p) return p;
+    const pk = this.packs.get(name);
+    if (!pk || typeof fetch !== 'function') return Promise.resolve(null);
+    p = fetch(pk.url)
+      .then(r => (r.ok ? r.arrayBuffer() : null))
+      .then(b => {
+        if (!b || !b.byteLength) return null;
+        if (this.enabled && this.packs.get(name) === pk) this.storePack(name, b);
+        return b;
+      })
+      .catch(() => null)
+      .finally(() => this.packLoading.delete(name));
+    this.packLoading.set(name, p);
+    return p;
+  }
+
+  /** Paketi belleğe al; sınır aşılırsa önce istenmeyen (masada olmayan), sonra en eski paketler atılır (yenisi hariç). */
+  private storePack(name: string, b: ArrayBuffer): void {
+    const old = this.packBytes.get(name);
+    if (old) this.packTotal -= old.byteLength;
+    this.packBytes.delete(name);
+    this.packBytes.set(name, b);
+    this.packTotal += b.byteLength;
+    for (const pass of [false, true]) {
+      for (const k of [...this.packBytes.keys()]) {
+        if (this.packTotal <= this.packCap) return;
+        if (k === name || (!pass && this.wanted.has(k))) continue;
+        this.packTotal -= this.packBytes.get(k)!.byteLength;
+        this.packBytes.delete(k);
+      }
+    }
+  }
+
+  private dropPacks(which: (name: string) => boolean): void {
+    for (const [k, b] of [...this.packBytes]) {
+      if (!which(k)) continue;
+      this.packTotal -= b.byteLength;
+      this.packBytes.delete(k);
+    }
+  }
+
+  private cachedBuf(key: string): AudioBuffer | undefined {
+    return this.pinnedDecoded.get(key) ?? lruGet(this.decoded, key);
   }
 
   private decode(id: string, c: AudioContext): Promise<AudioBuffer | null> {
     const e = this.entries.get(id);
-    return e ? this.decodeUrl(e.url, c) : Promise.resolve(null);
+    return e ? this.decodeClip(e, c) : Promise.resolve(null);
   }
 
-  private decodeUrl(url: string, c: AudioContext): Promise<AudioBuffer | null> {
+  private decodeClip(e: VoiceEntry, c: AudioContext): Promise<AudioBuffer | null> {
     if (this.bufCtx !== c) {
       this.decoded.clear();
       this.decoding.clear();
       this.pinnedDecoded.clear();
       this.bufCtx = c;
     }
-    const hit = this.cachedBuf(url);
+    const k = keyOf(e);
+    const hit = this.cachedBuf(k);
     if (hit) return Promise.resolve(hit);
-    let p = this.decoding.get(url);
+    let p = this.decoding.get(k);
     if (!p) {
-      p = this.fetchUrl(url)
+      p = this.fetchClip(e)
         .then(b => (b ? decodeAudio(c, b.slice(0)) : null)) // decodeAudioData baytları devralır: kopya ver
         .then(buf => {
-          if (buf && this.bufCtx === c && this.enabled && !this.pinned.has(url)) lruSet(this.decoded, url, buf, MAX_DECODED);
+          if (buf && this.bufCtx === c && this.enabled && !this.pinned.has(k)) lruSet(this.decoded, k, buf, MAX_DECODED);
           return buf;
         })
         .catch(() => null)
-        .finally(() => this.decoding.delete(url));
-      this.decoding.set(url, p);
+        .finally(() => this.decoding.delete(k));
+      this.decoding.set(k, p);
     }
     return p;
   }

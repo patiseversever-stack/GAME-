@@ -303,6 +303,7 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
     const fromBox = box ? center(q(box, '.kh-gift__body')) : null;
     const gal = h('div', 'kh-gal');
     const chars = ROSTER.slice();
+    ctx.talk?.warm?.(chars.map(c => c.id)); // paketli ses: dört karakterin tanıtım paketi boşta
     // en tatlı başlangıç: ortada Dursun (ev sahibi), sağında/solunda diğerleri
     const start = Math.max(0, chars.findIndex(c => c.id === HOST));
     const rays = raysBg('255, 255, 255', 16, 0.32);

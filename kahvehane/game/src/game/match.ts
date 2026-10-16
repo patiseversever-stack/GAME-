@@ -16,7 +16,8 @@ import {haptic} from '../platform/bridge';
 import {pistiInfo, type MatchSetup, type SeatPlayer} from './types';
 import {PISTI_TALK_STORE} from './talk';
 import {banterPair} from './banter';
-import {SeatBubble, quipUtter, utter} from './seatBubble';
+import {SeatBubble, quipUtter, utter, voiceWant} from './seatBubble';
+import {whenIdle} from '../platform/sched';
 import {QUICK_IDS, type QuickChat} from './quickChat';
 
 /** Karakterlerin konuşabileceği anlar (diyalog sistemi bunlara replik seçer). */
@@ -269,6 +270,8 @@ export class Match {
     hud.show(setup.players, setup.mode);
     hud.onPoke = s => this.poke(s);
     this.startChat(setup);
+    // paketli ses düzeni: masadaki karakterlerin paketleri boşta iner (masada olmayanlar bellekten atılır)
+    void whenIdle(600).then(() => (this.aborted ? undefined : this.d.voice.prepare(voiceWant('pisti', setup.players))));
     table.reset(info.seats);
     this.stats();
     hud.setTurn(-1);
