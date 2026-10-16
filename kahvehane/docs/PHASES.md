@@ -91,6 +91,11 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
+**16 Ekim akşamı — sürüm 13 (premium efektler):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+- **Pişti efektleri baştan** (`src/ui/fx.ts`, `fxsprites.ts`, `fxlib.ts`, `fxpreview.ts`): ~45 sprite (parlama, lens, yıldız pırıltısı, gerçek yıldırım, lale, cam nazar, altın taç, galaksi, 3D takım amblemleri…) açılıştan ~2,5 sn sonra boşta bir kez çizilir; efektler yalnız transform/opacity, ≤ ~40 düğüm, ≤ 2 sn, tam ekran beyaz parlama yok. 9 efekt: Zafer Işığı (ücretsiz, eski klasik), Altın Yağmuru, Havai Fişek, Yıldız Yağmuru, Şimşek, Lale Rüzgârı, Nazar, Taç Giyme (yeni; Davul Zurna kaldırıldı), Kozmik Girdap. Kahraman kutlamasında efekt karakterin arkasında (yüz açık), taç şapkanın üstünde.
+- **Dönen ışınlar** geri: arena (`src/ui/img/arena-rays.webp`) ve market önizlemeleri (`rays-white/gold.webp`, `scripts/bake-rays.mjs`) — işlenmiş görsel + yalnız transform dönüşü, `.kh-keep` (calm.ts durdurmaz).
+- **Masa küçük resimleri** gerçek boyamadan pişirilir: `node scripts/bake-tables.mjs` → `src/ui/tablepv/`. Efekt küçük resimleri: `node scripts/bake-fx.mjs`. Deste: `scripts/bake-decks.mjs`. İçerik değişince üçünü de çalıştır.
+
 **16 Ekim öğleden sonra — "Yeni market + yağlı boya" (sürüm 11):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
 - **Yükleme ekranı ~3 sn** (aşamalı çubuk; deste atlası + ses motoru arkada hazırlanır). **VS ekranı ~3,2 sn**: darbe halkası, kıvılcım, parıltı, "Masa kuruluyor → Hazır!", perde açılışı (`src/ui/intro.ts`).
 - **Market baştan** (`src/ui/shop.ts`, `showcase.ts`, `tryon.ts`, `sets.ts`, `previews.ts`, `deckpv.ts`): Öne Çıkan (Günün Teklifi, Özel Setler, Yeni Gelenler, Efsanevi Vitrin, Hemen Alabileceklerin), sekme başına vitrin + ızgara + "Sende", Yeni/Popüler rozetleri, tema setleri (%20–30), etkileşimli ürün penceresi (deste: kaydır/çevir/ışık), DENE (ürünle mini masa: kart at, pişti, efekt), jeton yetmeyince "N EKSİK" + kazanma yolları. Deste önizlemeleri derlemede pişirilir: `node scripts/bake-decks.mjs` (deste ekleyince/değiştirince tekrar çalıştır), efekt küçük resimleri `scripts/bake-fx.mjs`.
