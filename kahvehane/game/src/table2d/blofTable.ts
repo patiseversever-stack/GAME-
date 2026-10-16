@@ -147,6 +147,8 @@ export class BlofTable {
   opp: BCard[][] = [];
   pile: BCard[] = [];
   out: BCard[] = [];
+  /** Yığın yelpazesinin açıklığı (1 = tam; dar ekranda KENAR'a değmesin diye biraz toplanır) */
+  private fan = 1;
   private all: BCard[] = [];
   private deck: BCard[] = [];
   private dim: HTMLElement;
@@ -345,14 +347,43 @@ export class BlofTable {
     const d = clamp(pw * 0.92, u * 4.6, u * 6);
     const gap = u * 1.1;
     const claim = {x: pile.x + pw / 2 + gap + d / 2, y: pileY - ph * 0.04, d};
-    const discard = {x: pile.x - pw / 2 - gap * 1.5 - cw * 0.27, y: pileY - ph * 0.02, s: 0.52};
     if (n === 4) {
       // yan yelpazelere değmesin
       const sh = ch * 0.44;
-      const innerR = W - sh * 0.48 - sh / 2 - u * 0.4, innerL = sh * 0.48 + sh / 2 + u * 0.4;
+      const innerR = W - sh * 0.48 - sh / 2 - u * 0.4;
       claim.x = Math.min(claim.x, innerR - d / 2);
-      discard.x = Math.max(discard.x, innerL + (cw * 0.52) / 2 + u * 0.3);
     }
+    // KENAR: sol kenara yaslı (yığın sahnesi nefes alır). Yığın yelpazesinin en geniş hâli (4 kartlık atış ±0,3 kart + ~35°
+    // dönüş) ile "KENAR n" hapı dahil hiçbir yığın boyunda çakışmaz; yer darsa yelpaze biraz toplanır (fan < 1).
+    const ds = 0.52;
+    const S8 = Math.sin((8 * Math.PI) / 180), C8 = Math.cos((8 * Math.PI) / 180);
+    const cardHalfW = ((cw * ds) / 2) * C8 + ((ch * ds) / 2) * S8 + 2; // -8° eğik deste
+    const chipHalf = u * 2.35; // "KENAR 40" ≈ 4,6u
+    const dHalf = Math.max(cardHalfW, chipHalf);
+    const dTop = ((ch * ds) / 2) * C8 + ((cw * ds) / 2) * S8 + 10 * ds + 2; // + 30 kartlık yığın kalınlığı
+    const dBot = (ch * ds) / 2 + u * 0.75 + u * 0.75; // hap kartın altında
+    const edgeL = Math.max(6, W * 0.016);
+    let dx = edgeL + dHalf, dy = pileY - ph * 0.02;
+    if (n === 4) {
+      // sol yan yelpaze (dikine) ile aynı yükseklikteyse KENAR yelpazenin altına iner; inemezse yelpazenin sağına
+      const f = seats[3], fs = f.s;
+      const fTop = f.y - (5 * cw * fs * 0.2 + cw * fs) / 2 - 4, fBot = f.y + (5 * cw * fs * 0.2 + cw * fs) / 2 + 4;
+      const fRight = f.x + (ch * fs) / 2 + 3;
+      if (dy - dTop < fBot + u * 0.4 && dy + dBot > fTop - u * 0.4 && dx - dHalf < fRight + u * 0.3) {
+        const down = fBot + u * 0.4 + dTop;
+        if (down + dBot <= barTop2 - u * 0.5) dy = Math.max(dy, down);
+        else dx = Math.max(dx, fRight + u * 0.3 + dHalf);
+      }
+    }
+    // yelpaze payı: yığının sola en uzak kenarı KENAR'ın sağ kenarından en az 0,5u uzakta
+    const ext = (k: number): number => {
+      const r = (34.5 * k * Math.PI) / 180;
+      return pw * (0.3 * k + 0.5 * Math.cos(r) + (0.5 / 0.7) * Math.sin(r)) + 4;
+    };
+    let fan = 1;
+    while (fan > 0.62 && pile.x - ext(fan) < dx + dHalf + u * 0.5) fan -= 0.02;
+    this.fan = fan;
+    const discard = {x: dx, y: dy, s: ds};
     this.L = {
       W, H, cw, ch, u, n, pile, claim, discard,
       hand: {cx: W / 2, y: yF, s: sH, cwH, chH, rowDy, lift, maxW, rows: 1, top: yF - chH / 2 - lift},
@@ -1139,14 +1170,15 @@ export class BlofTable {
     const m = list.length;
     // önceki son atış alta bastırılır (üstteki yeni atış belirgin)
     const base = this.pile.length;
-    const rot = rnd(-18, 18);
+    const fan = this.fan;
+    const rot = rnd(-18, 18) * fan;
     this.snd.whoosh(seat === 0 ? 0.75 : 0.55);
     if (seat === 0) this.layoutHand(true, 240);
     else this.layoutFan(seat, true);
     const fl = list.map((c, j) => {
       this.pile.push(c);
       const k = j - (m - 1) / 2;
-      c.off = {x: (k * this.cw * p.s * 0.2 + rnd(-3, 3)) / this.cw, y: (rnd(-3, 3) - Math.min(base + j, 30) * 0.28) / this.cw, r: rot + k * 9 + rnd(-3, 3)};
+      c.off = {x: (k * this.cw * p.s * 0.2 * fan + rnd(-3, 3)) / this.cw, y: (rnd(-3, 3) - Math.min(base + j, 30) * 0.28) / this.cw, r: rot + (k * 9 + rnd(-3, 3)) * fan};
       const to = this.pilePose(c);
       return this.fly(c, to, {ms: seat === 0 ? 300 : 340, lift: 0.2, delay: j * 55, flip: BACK_INDEX, z: 960 + j, zEnd: 300 + base + j, ease: 'cubic-bezier(.25,.6,.3,1)', spin: seat === 0 ? 0 : (seat % 2 ? 1 : -1) * 360});
     });
