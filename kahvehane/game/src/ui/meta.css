@@ -73,21 +73,43 @@
   background: var(--btn4-fill); }
 .kh-sheet__x .kh-i { stroke-width: 3.2; }
 
-/* ---------- dört renk perde ---------- */
-.kh-wipe { position: fixed; inset: 0; z-index: 95; pointer-events: auto; overflow: hidden; }
-.kh-wipe__band { position: absolute; top: -12%; bottom: -12%; left: calc(-14% + var(--i) * 27%); width: 36%; transform: translateX(-130vw) skewX(-14deg);
-  box-shadow: -6px 0 0 var(--navy), 6px 0 0 var(--navy); will-change: transform; }
-.kh-wipe__band.is-h { background: linear-gradient(170deg, #ff7a8e, #ff2e4d 45%, #b3001f); }
-.kh-wipe__band.is-d { background: linear-gradient(170deg, #ffe07a, #ffb400 45%, #c46a00); }
-.kh-wipe__band.is-c { background: linear-gradient(170deg, #7dffa8, #16c45b 45%, #087a35); }
-.kh-wipe__band.is-s { background: linear-gradient(170deg, #7fc0ff, #1f7bff 45%, #0a3fb0); }
-.kh-wipe__band span { position: absolute; left: 50%; top: 50%; width: 70%; aspect-ratio: 1; transform: translate(-50%, -50%) skewX(14deg); color: #fff; opacity: .16; }
+/* ---------- dört renk perde ----------
+   Şeritler dikeyde %112; -14° eğim üst/alt köşeleri ±0,14·yükseklik kaydırır → uç şeritler (ilk sola, son sağa) --e kadar
+   uzar: her en-boy oranında köşe kalmaz. Kenarlar: lacivert çizgi + ince beyaz ışık + hafif parlaklık; gölge düşer. */
+.kh-wipe { position: fixed; inset: 0; z-index: 95; pointer-events: auto; overflow: hidden; --e: calc(17vh + 6vw); }
+.kh-wipe__band { position: absolute; top: -6%; bottom: -6%; left: calc(-14% + var(--i) * 27%); width: 36%; transform: translateX(-250vw) skewX(-14deg);
+  box-shadow: -5px 0 0 var(--navy), -12px 0 22px rgba(2, 4, 30, .28); will-change: transform; }
+.kh-wipe__band:first-child { left: calc(-14% - var(--e)); width: calc(36% + var(--e)); }
+.kh-wipe__band:nth-child(4) { width: calc(36% + var(--e)); }
+/* ön kenar: ince beyaz ışık çizgisi + yanında sönen parlaklık (bombe hissi) */
+.kh-wipe__band::before { content: ''; position: absolute; top: 0; bottom: 0; left: 0; width: 3px; background: rgba(255, 255, 255, .62); }
+.kh-wipe__band::after { content: ''; position: absolute; top: 0; bottom: 0; left: 3px; width: 9vw; background: linear-gradient(90deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, 0)); }
+.kh-wipe__band:first-child::before, .kh-wipe__band:first-child::after { display: none; }
+.kh-wipe__band.is-h { background: linear-gradient(170deg, #ff8396 0%, #ff2e4d 45%, #b3001f 100%); }
+.kh-wipe__band.is-d { background: linear-gradient(170deg, #ffe38a 0%, #ffb400 45%, #c46a00 100%); }
+.kh-wipe__band.is-c { background: linear-gradient(170deg, #8affb2 0%, #16c45b 45%, #087a35 100%); }
+.kh-wipe__band.is-s { background: linear-gradient(170deg, #8cc6ff 0%, #1f7bff 45%, #0a3fb0 100%); }
+/* filigran: şeridin görünen (normal genişlikteki) kısmının ortasında; ilk şerit sola uzadığı için sağdan ölçülür */
+.kh-wipe__band span { position: absolute; left: 18vw; top: 50%; width: 25vw; aspect-ratio: 1; transform: translate(-50%, -50%) skewX(14deg); color: #fff; opacity: .16; will-change: transform, opacity; }
+.kh-wipe__band:first-child span { left: calc(100% - 18vw); }
 .kh-wipe__band span .kh-suit { width: 100%; height: 100%; color: inherit; }
-.kh-wipe__emb { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 7); height: calc(var(--u) * 7); margin: calc(var(--u) * -3.5) 0 0 calc(var(--u) * -3.5);
-  display: grid; grid-template-columns: 1fr 1fr; gap: 6%; padding: 10%; border-radius: 50%; opacity: 0;
-  background: #fff; box-shadow: 0 0 0 4px var(--navy), 0 8px 0 var(--navy), 0 18px 30px rgba(2, 4, 24, .45); }
-.kh-wipe__emb { place-items: center; }
-.kh-wipe__emb .kh-suit { width: calc(var(--u) * 2.3); height: calc(var(--u) * 2.3); filter: drop-shadow(0 2px 0 var(--navy)); }
+/* perdenin üstünden geçen parlak yalım (şeritlere ters açıyla) */
+.kh-wipe__gloss { position: absolute; top: -12%; bottom: -12%; left: 0; width: 30vw; opacity: 0; pointer-events: none; will-change: transform, opacity;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, .1) 30%, rgba(255, 255, 255, .34) 50%, rgba(255, 255, 255, .1) 70%, rgba(255, 255, 255, 0) 100%); }
+/* amblem: ışık parlaması + şok halkası + beyaz disk, içinde 2×2 takım simgesi (diskin içine sığar) */
+.kh-wipe__emb { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 7.4); height: calc(var(--u) * 7.4); margin: calc(var(--u) * -3.7) 0 0 calc(var(--u) * -3.7); pointer-events: none; }
+.kh-wipe__flare { position: absolute; left: -110%; top: -110%; width: 320%; height: 320%; border-radius: 50%; opacity: 0; will-change: transform, opacity;
+  background: radial-gradient(closest-side, rgba(255, 255, 255, .9) 0%, rgba(255, 250, 225, .5) 28%, rgba(255, 240, 200, .16) 55%, rgba(255, 240, 200, 0) 100%); }
+.kh-wipe__shock { position: absolute; inset: 0; border-radius: 50%; opacity: 0; will-change: transform, opacity;
+  border: 3px solid rgba(255, 255, 255, .95); box-shadow: 0 0 16px rgba(255, 255, 255, .7), inset 0 0 12px rgba(255, 255, 255, .5); }
+.kh-wipe__disc { position: absolute; inset: 0; display: grid; grid-template-columns: 1fr 1fr; place-items: center; place-content: center; gap: calc(var(--u) * .2);
+  padding: 19%; border-radius: 50%; opacity: 0; will-change: transform, opacity;
+  background: radial-gradient(circle at 50% 30%, #ffffff 0%, #f6f8ff 55%, #dfe5fb 100%);
+  box-shadow: 0 0 0 4px var(--navy), inset 0 0 0 3px rgba(255, 255, 255, .9), inset 0 -5px 0 rgba(10, 16, 51, .12), 0 8px 0 var(--navy), 0 18px 30px rgba(2, 4, 24, .45); }
+.kh-wipe__s { display: block; width: calc(var(--u) * 1.95); height: calc(var(--u) * 1.95); will-change: transform; }
+.kh-wipe__s .kh-suit { width: 100%; height: 100%; filter: drop-shadow(0 2px 0 var(--navy)); }
+.kh-wipe.is-low .kh-wipe__band { box-shadow: -5px 0 0 var(--navy); }
+.kh-wipe.is-low .kh-wipe__gloss, .kh-wipe.is-low .kh-wipe__flare, .kh-wipe.is-low .kh-wipe__shock { display: none; }
 
 /* ---------- damga ---------- */
 .kh-stampw { position: absolute; z-index: 75; pointer-events: none; font-size: calc(var(--u) * 3.6); white-space: nowrap; will-change: transform, opacity; }
