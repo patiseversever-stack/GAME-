@@ -61,7 +61,7 @@ export function mountFx(box: HTMLElement, id: string, still = false): FxLoop {
         /* önizleme sessiz */
       },
     };
-    const at = {x: W / 2, y: H * (id === 'havai' ? 0.62 : id === 'tac' ? 0.56 : 0.52)};
+    const at = {x: W / 2, y: H * (id === 'havai' ? 0.62 : id === 'klasik' ? 0.66 : id === 'tac' ? 0.56 : 0.52)};
     (FX[id] ?? FX.klasik)(s, at, false);
     if (id === 'klasik') {
       // oyunda damga verir; önizlemede PİŞTİ! yazısı ışığın önünde
