@@ -758,27 +758,89 @@ export function openSheet(ctx: Ctx, o: {cls: string; body: string; onClose?: () 
 
 // =====================================================================================================
 // Dört renk perde: ♥ ♦ ♣ ♠ şeritleri eğik süpürür (ekran değişimi). cover() kapatır, reveal() açar.
+// - Her en-boy oranında ekranı TAM örter: şeritler dikeyde %112, uç şeritler eğimin kaydırdığı köşeler için
+//   (17vh + 6vw) kadar dışarı uzar; kayma mesafesi o anki ekrandan hesaplanır.
+// - Kapanış ~0,8 sn (şeritler, hafif aşıp yerine oturur), amblem ~1 sn'de oturur: beyaz disk yaylanarak döner,
+//   arkasında ışık parlaması + şok halkası, dört takım simgesi sırayla "pıt" diye çıkar, perdenin üstünden parlak bir yalım geçer.
+// - Açılış ~0,85 sn: simgeler ve disk içeri kaçar, şeritler sağdan başlayarak hızlanıp çıkar.
+// Yalnız transform/opacity; her şey bir kez çizilir. Düşük cihazda yalım, parlama, şok halkası ve filigran kayması yok.
 // =====================================================================================================
 export function suitWipe(ctx: Ctx): {cover(): Promise<void>; reveal(): Promise<void>} {
-  const el = h('div', 'kh-wipe');
+  const low = document.documentElement.classList.contains('kh-low');
+  const el = h('div', 'kh-wipe' + (low ? ' is-low' : ''));
   const ks: SuitKey[] = ['h', 'd', 'c', 's'];
   el.innerHTML = ks.map((k, i) => `<i class="kh-wipe__band is-${k}" style="--i:${i}"><span>${suitSvg(k)}</span></i>`).join('') +
-    `<div class="kh-wipe__emb">${ks.map(k => suitSvg(k)).join('')}</div>`;
+    `<i class="kh-wipe__gloss"></i><div class="kh-wipe__emb"><i class="kh-wipe__flare"></i><i class="kh-wipe__shock"></i>` +
+    `<div class="kh-wipe__disc">${ks.map(k => `<i class="kh-wipe__s">${suitSvg(k)}</i>`).join('')}</div></div>`;
   ctx.layer.append(el);
   const bands = Array.from(el.querySelectorAll<HTMLElement>('.kh-wipe__band'));
-  const emb = q(el, '.kh-wipe__emb');
+  const marks = bands.map(b => q(b, 'span'));
+  const disc = q(el, '.kh-wipe__disc');
+  const suits = Array.from(el.querySelectorAll<HTMLElement>('.kh-wipe__s'));
+  const SK = 'skewX(-14deg)';
+  const MARK = 'translate(-50%, -50%) skewX(14deg)';
+  const OUTX = 'cubic-bezier(.16,.84,.3,1)';
+  // kayma mesafesi: en sağdaki şeridin (dışa uzamış) kenarı + eğim payı ekranın tamamen dışında başlasın/bitsin
+  const dist = () => Math.round(innerWidth * 1.22 + innerHeight * 0.32 + 12);
+  let t0 = 0;
+  let live: Animation[] = [];
+  const go = (n: Element, kf: Keyframe[], o: KeyframeAnimationOptions): Animation => {
+    const a = n.animate(kf, o);
+    live.push(a);
+    return a;
+  };
   return {
     async cover() {
       ctx.sounds.whoosh();
       if (!ANIM) return;
-      const as = bands.map((b, i) => b.animate([{transform: 'translateX(-130vw) skewX(-14deg)'}, {transform: 'translateX(0) skewX(-14deg)'}], {duration: 360, delay: i * 55, easing: EASE.outQuart, fill: 'both'}));
-      emb.animate([{transform: 'scale(.2) rotate(-120deg)', opacity: 0}, {transform: 'scale(1.1) rotate(10deg)', opacity: 1, offset: 0.7}, {transform: 'scale(1) rotate(0)', opacity: 1}], {duration: 420, delay: 260, easing: EASE.out, fill: 'both'});
+      t0 = performance.now();
+      const D = dist();
+      const as = bands.map((b, i) => go(b, [
+        {transform: `translateX(${-D}px) ${SK}`, easing: OUTX},
+        {transform: `translateX(${Math.round(innerWidth * 0.014)}px) ${SK}`, offset: 0.84, easing: 'cubic-bezier(.4,0,.5,1)'},
+        {transform: `translateX(0) ${SK}`},
+      ], {duration: 560, delay: i * 75, fill: 'both'}));
+      if (!low) {
+        // filigran şeritten biraz geride kalır (derinlik), yerine oturunca belirginleşir
+        marks.forEach((m, i) => go(m, [{transform: `${MARK} translateX(-14vw) scale(.82)`, opacity: 0}, {transform: `${MARK} scale(1)`, opacity: 0.16}],
+          {duration: 620, delay: 120 + i * 75, easing: OUTX, fill: 'both'}));
+        // parlak yalım perdenin üstünden geçer (şeritlere ters açıyla)
+        go(q(el, '.kh-wipe__gloss'), [{transform: 'translateX(-45vw) skewX(22deg)', opacity: 0}, {opacity: 1, offset: 0.25}, {opacity: 1, offset: 0.7}, {transform: 'translateX(135vw) skewX(22deg)', opacity: 0}],
+          {duration: 620, delay: 470, easing: 'cubic-bezier(.45,.1,.4,1)', fill: 'both'});
+        go(q(el, '.kh-wipe__flare'), [{transform: 'scale(.25)', opacity: 0, easing: OUTX}, {transform: 'scale(1)', opacity: 0.95, offset: 0.3, easing: 'ease-in'}, {transform: 'scale(1.35)', opacity: 0}],
+          {duration: 640, delay: 520, fill: 'both'});
+        go(q(el, '.kh-wipe__shock'), [{transform: 'scale(.85)', opacity: 0.95}, {transform: 'scale(2.3)', opacity: 0}], {duration: 520, delay: 610, easing: 'cubic-bezier(.15,.7,.3,1)', fill: 'both'});
+      }
+      // disk: döne döne büyür, hafif aşıp oturur
+      go(disc, [
+        {transform: 'scale(0) rotate(-140deg)', opacity: 0, easing: 'cubic-bezier(.2,.8,.3,1)'},
+        {transform: 'scale(1.14) rotate(8deg)', opacity: 1, offset: 0.58, easing: 'cubic-bezier(.45,0,.55,1)'},
+        {transform: 'scale(.97) rotate(-2deg)', opacity: 1, offset: 0.82, easing: 'ease-out'},
+        {transform: 'scale(1) rotate(0deg)', opacity: 1},
+      ], {duration: 480, delay: 450, fill: 'both'});
+      // dört simge sırayla çıkar
+      suits.forEach((n, i) => go(n, [
+        {transform: 'scale(0) rotate(-35deg)', opacity: 0, easing: 'cubic-bezier(.2,.8,.3,1)'},
+        {transform: 'scale(1.28) rotate(6deg)', opacity: 1, offset: 0.6, easing: 'ease-in-out'},
+        {transform: 'scale(1) rotate(0deg)', opacity: 1},
+      ], {duration: 300, delay: 600 + i * 60, fill: 'both'}));
       await as[as.length - 1].finished.catch(() => undefined);
     },
     async reveal() {
       if (ANIM) {
-        emb.animate([{transform: 'scale(1)', opacity: 1}, {transform: 'scale(.4) rotate(90deg)', opacity: 0}], {duration: 220, easing: EASE.in, fill: 'forwards'});
-        const as = bands.map((b, i) => b.animate([{transform: 'translateX(0) skewX(-14deg)'}, {transform: 'translateX(130vw) skewX(-14deg)'}], {duration: 380, delay: 80 + (bands.length - 1 - i) * 50, easing: EASE.in, fill: 'both'}));
+        // amblem en az bir an görünsün (kapanış hemen ardından açılış istense de simgeler çıkmış olsun)
+        const wait = t0 ? 960 - (performance.now() - t0) : 0;
+        if (wait > 0) await new Promise(r => setTimeout(r, wait));
+        for (const a of live) a.commitStyles?.();
+        for (const a of live) a.cancel();
+        live = [];
+        const D = dist();
+        suits.forEach((n, i) => go(n, [{transform: 'scale(1)', opacity: 1}, {transform: 'scale(0) rotate(40deg)', opacity: 0}], {duration: 180, delay: (3 - i) * 35, easing: 'cubic-bezier(.5,0,.75,0)', fill: 'forwards'}));
+        go(disc, [{transform: 'scale(1) rotate(0deg)', opacity: 1, easing: 'ease-out'}, {transform: 'scale(1.08) rotate(-6deg)', opacity: 1, offset: 0.3, easing: 'cubic-bezier(.5,0,.75,0)'}, {transform: 'scale(0) rotate(100deg)', opacity: 0}],
+          {duration: 300, delay: 60, fill: 'forwards'});
+        if (!low) marks.forEach((m, i) => go(m, [{opacity: 0.16}, {opacity: 0}], {duration: 220, delay: 140 + (3 - i) * 65, fill: 'forwards'}));
+        const as = bands.map((b, i) => go(b, [{transform: `translateX(0) ${SK}`, easing: 'ease-out'}, {transform: `translateX(-${Math.round(innerWidth * 0.02)}px) ${SK}`, offset: 0.12, easing: 'cubic-bezier(.55,0,.8,.35)'}, {transform: `translateX(${D}px) ${SK}`}],
+          {duration: 540, delay: 150 + (bands.length - 1 - i) * 65, fill: 'both'}));
         await as[0].finished.catch(() => undefined);
       }
       el.remove();
