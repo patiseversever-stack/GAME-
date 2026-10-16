@@ -16,9 +16,9 @@ import './meta.css';
 import './perf.css';
 import '../themes/frames.css';
 
-import type {CosmeticsListener, GameHud, HomeAction, ResultsData, Settings, Sounds} from './types';
+import type {CosmeticsListener, GameHud, HandOption, HomeAction, ResultsData, Settings, Sounds} from './types';
 import type {Profile as GameProfile} from '../game/profile';
-import type {Difficulty, Game, MatchSetup, Mode} from '../game/types';
+import type {Difficulty, Game, HandLayout, MatchSetup, Mode} from '../game/types';
 import {ANIM, enableActiveStates, enableSpringPress, h, q} from './dom';
 import {Fx} from './fx';
 import {HudView} from './hud';
@@ -27,6 +27,7 @@ import {splash, versus} from './intro';
 import {results} from './results';
 import {onboarding} from './onboarding';
 import {daily, pause, rules, settings} from './modals';
+import {handChooser} from './handchooser';
 import {suitWipe, type Ctx} from './parts';
 
 export type {CosmeticsListener, GameHud, HomeAction, HudLayout, HudPlayer, Mood, ResultsData, Settings, Sounds} from './types';
@@ -97,6 +98,11 @@ export class Screens {
     return a;
   }
 
+  /** İlk Blöf'te el düzeni seçici (ekran ikiye bölünür: Gruplu | Klasik). Seçimle çözülür; kaydetmek çağıranın işi. */
+  handChooser(): Promise<HandLayout> {
+    return handChooser(this.ctx, this.deckId);
+  }
+
   /** Sinematik giriş (1'e 1 / 3 kişi / 4 kişi / eşli; oyun adıyla); bitince çözülür. */
   versus(setup: MatchSetup, stake: number): Promise<void> {
     return versus(this.ctx, setup, stake);
@@ -137,8 +143,8 @@ export class Screens {
   }
 
   /** Her değişiklikte onChange çağrılır; pencere kapanınca çözülür. */
-  async settings(s: Settings, onChange: (s: Settings) => void): Promise<void> {
-    if ((await settings(this.ctx, s, onChange, this.version)) === 'rules') await rules(this.ctx, this.memo.game, this.deckId);
+  async settings(s: Settings, onChange: (s: Settings) => void, hand?: HandOption): Promise<void> {
+    if ((await settings(this.ctx, s, onChange, this.version, hand, this.deckId)) === 'rules') await rules(this.ctx, this.memo.game, this.deckId);
   }
 
   /** Nasıl Oynanır (sekmeler: Pişti | Blöf). game: açılacak sekme (verilmezse son oynanan). */

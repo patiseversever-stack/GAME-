@@ -1,7 +1,7 @@
 // Maç kurulumu ve ekonomi (arayüzden bağımsız, saf): koltuklar (3 kişi dahil), bahis ödemesi, XP.
 // Sunucu ileride aynı fonksiyonları çalıştırır.
 import {charById, type CharId} from './roster';
-import {MODE_INFO, type Difficulty, type Game, type MatchSetup, type Mode, type SeatPlayer} from './types';
+import {MODE_INFO, type Difficulty, type Game, type HandLayout, type MatchSetup, type Mode, type SeatPlayer} from './types';
 
 /** Botların rozet seviyesi (karakter başına sabit; masada tutarlı görünsün). */
 export const BOT_LEVEL: Record<CharId, number> = {riza: 28, cem: 12, dursun: 9, defne: 31};
@@ -22,6 +22,8 @@ export interface SetupOpts {
   difficulty?: Difficulty;
   /** Blöf: ilk el, Rıza Amca öğretir (verilmezse oyuncu Blöf'ü hiç oynamadıysa otomatik) */
   tutorial?: boolean;
+  /** Blöf: el düzeni (profil ayarı `settings.blofHand`; yoksa BlofMatch varsayılanı) */
+  handLayout?: HandLayout;
 }
 
 /** Koltukları kur: 0 = insan (profil adı/seviyesi, kendi karakteri), botlar roster'dan (kişilik, düşünme süresi). 3 kişide iki bot. */
@@ -49,6 +51,7 @@ export function buildSetup(profile: SetupProfile, mode: Mode, opponents: CharId[
     setup.difficulty = opts.difficulty ?? 'orta';
     // açıkça true/false: BlofMatch kendi hafızasına değil bu karara uyar (ilk Blöf eli = öğretici)
     setup.tutorial = tutorial;
+    if (opts.handLayout) setup.handLayout = opts.handLayout;
   }
   return setup;
 }

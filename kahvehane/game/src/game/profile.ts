@@ -3,8 +3,8 @@
 import {store} from '../platform/bridge';
 import {CATALOG, itemOf, type ItemKind} from './catalog';
 import type {CharId} from './roster';
-import type {Difficulty, Game, Mode} from './types';
-import {DIFFICULTIES, GAMES, GAME_INFO} from './types';
+import type {Difficulty, Game, HandLayout, Mode} from './types';
+import {DIFFICULTIES, GAMES, GAME_INFO, HAND_LAYOUTS} from './types';
 
 /** Mod başına oynanan / kazanılan (Pişti'de '3' hep 0: Pişti üç kişi oynanmaz). */
 export type ModeStats = Record<Mode, {played: number; won: number}>;
@@ -57,6 +57,8 @@ export interface ProfileData {
   /** Blöf istatistikleri */
   blof: BlofStats;
   daily: {last: string; day: number};
+  /** Oyuncu ayarları (profile bağlı). blofHand: Blöf el düzeni; undefined = henüz seçmedi (ilk Blöf'te seçici açılır). */
+  settings: {blofHand?: HandLayout};
   /** Bedava sandık: bir sonraki açılabilir zaman (ms) */
   chestAt: number;
   /** Ana ekranın hatırladıkları: son oyun, oyun başına son mod, Blöf zorluğu ve bahis */
@@ -170,6 +172,7 @@ export function fresh(): ProfileData {
     stats: {played: 0, won: 0, lost: 0, draw: 0, pisti: 0, valePisti: 0, streak: 0, bestStreak: 0, byMode: emptyModes()},
     blof: {played: 0, won: 0, lost: 0, streak: 0, bestStreak: 0, byMode: emptyModes(), bluffs: 0, caught: 0, timesCaught: 0, wrongChallenges: 0},
     daily: {last: '', day: 0},
+    settings: {},
     chestAt: 0,
     lastGame: 'pisti',
     lastMode: {pisti: '1v1', blof: '3'},
@@ -242,6 +245,8 @@ export function migrateProfile(d: unknown, legacy: {name?: string; level?: numbe
     stats: mergePisti(f.stats, raw.stats),
     blof: mergeBlof(f.blof, raw.blof),
     daily: {...f.daily, ...(isRec(raw.daily) ? raw.daily : {})},
+    // yeni alan: eski kayıtlarda yok → seçilmemiş (undefined); bozuk değer de seçilmemiş sayılır
+    settings: isRec(raw.settings) && HAND_LAYOUTS.includes(raw.settings.blofHand as HandLayout) ? {blofHand: raw.settings.blofHand as HandLayout} : {},
     lastGame: GAMES.includes(raw.lastGame as Game) ? (raw.lastGame as Game) : 'pisti',
     lastMode,
     lastDifficulty: DIFFICULTIES.includes(raw.lastDifficulty as Difficulty) ? (raw.lastDifficulty as Difficulty) : 'orta',

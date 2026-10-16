@@ -47,6 +47,14 @@ export const gameHasMode = (g: Game, m: Mode): boolean => GAME_INFO[g].modes.inc
 /** Başlık/etiket: "Blöf · 3 Kişi", "Pişti · 1'e 1". */
 export const matchTitle = (g: Game, m: Mode): string => `${GAME_INFO[g].name} · ${MODE_INFO[m].name}`;
 
+/** Blöf el düzeni: 'group' = aynı değerler gruplu yığınlar (×N), 'spread' = klasik iki sıra yelpaze. İlk Blöf'te oyuncu seçer, ayarlardan değişir. */
+export type HandLayout = 'group' | 'spread';
+export const HAND_LAYOUTS: readonly HandLayout[] = ['group', 'spread'];
+export const HAND_INFO: Record<HandLayout, {name: string; desc: string}> = {
+  group: {name: 'Gruplu', desc: 'Aynı değerler bir arada, dokunması kolay'},
+  spread: {name: 'Klasik', desc: 'Bütün kartlar yan yana, alışık olduğun gibi'},
+};
+
 /** Blöf rakip zorluğu (ana ekranda seçilir). Kimlikler ai/blofBot.ts'teki BlofDifficulty ile aynı. */
 export type Difficulty = 'kolay' | 'orta' | 'zor';
 export const DIFFICULTIES: readonly Difficulty[] = ['kolay', 'orta', 'zor'];
@@ -89,6 +97,8 @@ export interface MatchSetup {
   difficulty?: Difficulty;
   /** Blöf: oyuncunun ilk Blöf eli (profilde Blöf oynanmamış). Rıza Amca karşıdadır ve oynayarak öğretir (kart seç → değer söyle → blöf de → pas). Blöf'te hep dolu (true/false). */
   tutorial?: boolean;
+  /** Blöf: oyuncunun el düzeni seçimi (profil ayarı). Verilmezse BlofMatch kendi varsayılanını kullanır. */
+  handLayout?: HandLayout;
 }
 
 /**

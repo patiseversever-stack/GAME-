@@ -1,12 +1,13 @@
 // Pencereler: Mola (duraklat), Ayarlar, Nasıl Oynanır, Günlük Ödül.
-import type {Settings} from './types';
+import type {HandOption, Settings} from './types';
 import {ANIM, EASE, center, esc, fmt, play, q} from './dom';
 import {ASSETS} from './assets';
 import {I, suitSvg, type SuitKey} from './icons';
 import {GAME_ICON} from './gameicons';
 import {CI, deckCardHtml, deckOr} from './deckpv';
 import {onAct, openModal, type Ctx, type ModalHandle} from './parts';
-import {GAMES, GAME_INFO, type Game} from '../game/types';
+import {GAMES, GAME_INFO, HAND_INFO, HAND_LAYOUTS, type Game, type HandLayout} from '../game/types';
+import {handPreviewHtml} from './handchooser';
 import {BLOF} from '../game/blofAdapter';
 import './blofmeta.css';
 
@@ -49,7 +50,7 @@ export function pause(ctx: Ctx): Promise<'resume' | 'settings' | 'rules' | 'leav
 
 // ---------------------------------------------------------------- Ayarlar
 /** Kapanınca çözülür; "Nasıl Oynanır" seçilirse 'rules' ile (çağıran kuralları açar). */
-export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void, version: string): Promise<void | 'rules'> {
+export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void, version: string, hand?: HandOption, deck = 'yildizli'): Promise<void | 'rules'> {
   return new Promise(res => {
     const cur: Settings = {...s};
     let m: ModalHandle;
@@ -59,6 +60,15 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
     };
     const tog = (k: 'sfx' | 'voice' | 'music' | 'haptics', label: string, icon: string) =>
       `<button class="kh-set__row kh-card" data-act="toggle" data-k="${k}" aria-pressed="${cur[k]}"><span class="kh-set__ico">${icon}</span><span class="kh-set__lbl">${label}</span><span class="kh-toggle"></span></button>`;
+    let saved = hand?.value;
+    let curHand: HandLayout = saved ?? 'group';
+    // Blöf el düzeni: Gruplu | Klasik, her seçenekte gerçek destenle küçük önizleme
+    const handRow = hand
+      ? `<div class="kh-set__q kh-card"><div class="kh-set__qh"><span class="kh-set__ico">${GAME_ICON.blof}</span><span class="kh-set__lbl">Blöf el düzeni</span></div>
+          <div class="kh-seg is-hand">${HAND_LAYOUTS.map(l =>
+            `<button data-act="hand" data-v="${l}" aria-pressed="${curHand === l}"><span class="kh-hthumb is-${l}">${handPreviewHtml(l, deck)}</span><span>${HAND_INFO[l].name}</span></button>`).join('')}</div>
+          ${hand.live ? '' : '<small class="kh-set__cap">Yeni elde geçerli olur</small>'}</div>`
+      : '';
     const qs: [Settings['quality'], string][] = [['auto', 'Otomatik'], ['low', 'Düşük'], ['mid', 'Orta'], ['high', 'Yüksek']];
     m = openModal(ctx, {
       cls: 'kh-settings',
@@ -66,7 +76,8 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
       onX: () => done(),
       body: `<div class="kh-set__list">${tog('sfx', 'Ses efektleri', I.sfx)}${tog('voice', 'Konuşmalar', I.voice)}${tog('music', 'Müzik', I.music)}${tog('haptics', 'Titreşim', I.vibrate)}
         <div class="kh-set__q kh-card"><div class="kh-set__qh"><span class="kh-set__ico">${I.quality}</span><span class="kh-set__lbl">Grafik</span></div>
-          <div class="kh-seg">${qs.map(([v, n]) => `<button data-act="quality" data-v="${v}" aria-pressed="${cur.quality === v}">${n}</button>`).join('')}</div></div>
+          <div class="kh-seg" style="--n:4">${qs.map(([v, n]) => `<button data-act="quality" data-v="${v}" aria-pressed="${cur.quality === v}">${n}</button>`).join('')}</div></div>
+        ${handRow}
         <button class="kh-set__row kh-card kh-set__rules" data-act="rules"><span class="kh-set__ico">${I.book}</span><span class="kh-set__lbl">Nasıl Oynanır</span><span class="kh-set__go">${I.chevR}</span></button></div>
         <div class="kh-set__foot"><button class="kh-btn kh-btn--1 kh-btn--lg kh-btn--block" data-act="ok">Tamam</button><span class="kh-set__ver">Kahvehane Pişti · Sürüm ${esc(version)}</span></div>`,
     });
@@ -79,6 +90,13 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
         cur[k] = !cur[k];
         b.setAttribute('aria-pressed', String(cur[k]));
         onChange({...cur});
+      } else if (a === 'hand') {
+        const v = b.dataset.v as HandLayout;
+        if (v === saved) return;
+        saved = v;
+        curHand = v;
+        m.panel.querySelectorAll('[data-act=hand]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        hand?.onChange(v);
       } else if (a === 'quality') {
         const v = b.dataset.v as Settings['quality'];
         if (v === cur.quality) return;

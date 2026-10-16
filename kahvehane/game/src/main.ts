@@ -1,5 +1,5 @@
 // Giriş noktası: profil, 2B Pişti Arena masası (kuşanılmış deste + masa teması), sesler, ekranlar ve uygulama akışı.
-// Test bayrakları: ?auto=1 (kendiliğinden oynar; &mode=4|esli · Blöf için &game=blof&mode=1v1|3|4|esli&diff=kolay|orta|zor),
+// Test bayrakları: ?auto=1 (kendiliğinden oynar; &mode=4|esli · Blöf için &game=blof&mode=1v1|3|4|esli&diff=kolay|orta|zor&hand=group|spread),
 // ?seed=123 (sabit deste), ?reset=1 (profili sil → ilk açılış hikâyesi), ?skipintro=1 (hikâyeyi atla, varsayılan karakterle başla),
 // ?q=low|mid|high (kalite), ?blof=0 (Blöf'ü gizle), ?blofstub=1 (yalnız geliştirme: Blöf motoru yerine sahte el; arayüz akışını denemek için).
 import {buildSkinAtlas} from './render/skinAtlas';
@@ -12,7 +12,7 @@ import {Screens, type Settings} from './ui/screens';
 import {ASSETS} from './ui/assets';
 import {runApp} from './game/app';
 import {Profile} from './game/profile';
-import type {Difficulty, Game, Mode} from './game/types';
+import type {Difficulty, Game, HandLayout, Mode} from './game/types';
 import {BLOF} from './game/blofAdapter';
 import {detectTier, type Tier} from './quality';
 import {setHaptics, store} from './platform/bridge';
@@ -25,6 +25,7 @@ const AUTO = Q.has('auto');
 const GAME: Game | undefined = Q.get('game') === 'blof' ? 'blof' : Q.get('game') === 'pisti' ? 'pisti' : undefined;
 const MODE = (['1v1', '3', '4', 'esli'] as Mode[]).find(m => m === Q.get('mode'));
 const DIFF = (['kolay', 'orta', 'zor'] as Difficulty[]).find(d => d === Q.get('diff'));
+const HAND = (['group', 'spread'] as HandLayout[]).find(l => l === Q.get('hand'));
 const SEED = Q.get('seed') ? Number(Q.get('seed')) | 0 : undefined;
 
 /** ?reset=1: profili (ve eski kayıtları) sil; adres çubuğundan bayrağı kaldır ki yenileyince tekrar silinmesin. */
@@ -133,7 +134,7 @@ async function boot(): Promise<void> {
   window.addEventListener('pointerdown', unlock);
   (window as unknown as {__kh: unknown}).__kh = {table, screens, tier, profile};
   if (import.meta.env.DEV && Q.has('blofstub')) BLOF.inject((await import('../dev/blofStub')).stubFactory);
-  await runApp({table, sfx, voice, screens, profile, settings, applySettings, applyCosmetics, auto: AUTO, autoGame: GAME, autoMode: MODE, autoDifficulty: DIFF, seed: SEED});
+  await runApp({table, sfx, voice, screens, profile, settings, applySettings, applyCosmetics, auto: AUTO, autoGame: GAME, autoMode: MODE, autoDifficulty: DIFF, autoHand: HAND, seed: SEED});
 }
 
 boot().catch(err => {

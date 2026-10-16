@@ -125,6 +125,32 @@ describe('profil göçü (v3 → v4)', () => {
   });
 });
 
+describe('el düzeni ayarı (settings.blofHand)', () => {
+  it('yeni profilde ve eski (v3/v4, settings alanı olmayan) kayıtlarda seçilmemiş: undefined', () => {
+    expect(mod.fresh().settings).toEqual({});
+    expect(mod.fresh().settings.blofHand).toBeUndefined();
+    expect(mod.migrateProfile(v3()).settings.blofHand).toBeUndefined();
+    const v4 = mod.migrateProfile(v3());
+    delete (v4 as Partial<typeof v4>).settings;
+    expect(mod.migrateProfile(JSON.parse(JSON.stringify(v4))).settings.blofHand).toBeUndefined();
+  });
+  it('geçerli seçim korunur, bozuk değer seçilmemiş sayılır', () => {
+    expect(mod.migrateProfile({...v3(), v: 4, settings: {blofHand: 'group'}}).settings.blofHand).toBe('group');
+    expect(mod.migrateProfile({...v3(), v: 4, settings: {blofHand: 'spread'}}).settings.blofHand).toBe('spread');
+    for (const bad of ['yelpaze', 3, null, {}, ['group']]) expect(mod.migrateProfile({...v3(), v: 4, settings: {blofHand: bad}}).settings.blofHand).toBeUndefined();
+    for (const bad of ['x', 7, null, []]) expect(mod.migrateProfile({...v3(), v: 4, settings: bad}).settings).toEqual({});
+  });
+  it('Profile kaydı: seçim yazılır ve yeniden yüklenince gelir; v3 kaydı yüklenince seçimsiz', () => {
+    mem.clear();
+    mem.set('kh.profile3', JSON.stringify(v3()));
+    const a = new mod.Profile();
+    expect(a.data.settings.blofHand).toBeUndefined();
+    a.data.settings.blofHand = 'spread';
+    a.save();
+    expect(new mod.Profile().data.settings.blofHand).toBe('spread');
+  });
+});
+
 describe('Blöf istatistikleri', () => {
   const fresh = () => {
     mem.clear();

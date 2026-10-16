@@ -2,6 +2,7 @@
 // Ekranlar: splash onboarding (p=new: hikâye; jump=gallery: doğrudan galeri) home (tab=shop|profile|quests, mode=1v1|3|4|esli, game=blof, diff=kolay|orta|zor, sub=deck…, poke=1)
 //   product (k=deck&id=iznik) versus (mode=…, game=blof) results (mode=…, game=blof, r=win|lose|draw, lvl=1, streak=3) pause settings rules (game=blof) daily
 // newblof=1 → Blöf'ü hiç oynamamış oyuncu (Yeni etiketi, boş istatistik). game=blof → Blöf sekmesi motor olmadan da gösterilir (yalnız galeri; gerçek uygulamada Blöf motoru yoksa Blöf görünmez).
+//   handchooser (ilk Blöf el düzeni seçici) settings (game=blof → "Blöf el düzeni" satırı; hand=group|spread, live=1)
 //   online (Çevrimiçi tanıtımı) friends (aynı tanıtımın "Arkadaşınla" sekmesi) bailout wipe
 // Profil galeride ayrı anahtarlarda tutulur (kh.* → khg.*): gerçek oyunun kaydına dokunulmaz. p=new → ilk açılış profili; rich=1 → zengin.
 const LS = window.localStorage;
@@ -17,7 +18,7 @@ import {buildSetup} from '../src/game/app';
 import {BLOF} from '../src/game/blofAdapter';
 import type {GameResult, SideScore} from '../src/core/types';
 import type {CharId} from '../src/game/roster';
-import {MODE_INFO, type BlofOutcome, type Difficulty, type Game, type Mode} from '../src/game/types';
+import {MODE_INFO, type BlofOutcome, type Difficulty, type Game, type HandLayout, type Mode} from '../src/game/types';
 
 const P = new URLSearchParams(location.search);
 const S = P.get('s') ?? '';
@@ -27,6 +28,7 @@ if (G === 'blof' || P.has('blof')) BLOF.previewOnly(true);
 const LIST = ['splash', 'onboarding', 'onboarding&p=new&jump=gallery', 'home', 'home&poke=1', 'home&tab=shop', 'home&tab=profile', 'home&tab=quests', 'home&mode=4', 'home&mode=esli', 'product&k=deck&id=yildizli', 'product&k=char&id=defne',
   'product&k=fx&id=havai', 'product&k=table&id=gece', 'versus', 'versus&mode=4', 'versus&mode=esli', 'results', 'results&r=lose', 'results&mode=4', 'results&mode=esli', 'results&lvl=1&streak=3',
   'pause', 'settings', 'rules', 'daily', 'online', 'friends', 'bailout', 'wipe',
+  'handchooser', 'settings&game=blof', 'settings&game=blof&hand=spread&live=1',
   'home&game=blof', 'home&game=blof&mode=1v1', 'home&game=blof&mode=4', 'home&game=blof&mode=esli', 'home&tab=profile&game=blof', 'home&tab=quests&game=blof',
   'versus&game=blof&mode=3', 'versus&game=blof&mode=1v1', 'results&game=blof&mode=3', 'results&game=blof&mode=3&r=lose', 'results&game=blof&mode=esli', 'rules&game=blof'];
 
@@ -191,13 +193,18 @@ async function main(): Promise<void> {
       sc.results(d, pr.data.equipped.frame).then(x => console.debug('sonuç:', x));
       break;
     }
+    case 'handchooser':
+      mockTable();
+      sc.handChooser().then(l => console.debug('el düzeni seçildi:', l));
+      break;
     case 'pause':
       mockTable();
       sc.pause().then(r => console.debug('mola:', r));
       break;
     case 'settings':
       mockTable();
-      sc.settings({sfx: true, voice: true, music: false, haptics: true, quality: 'auto'}, s => console.debug('ayar', s));
+      sc.settings({sfx: true, voice: true, music: false, haptics: true, quality: 'auto'}, s => console.debug('ayar', s),
+        BLOF.available() ? {value: P.get('hand') === 'group' || P.get('hand') === 'spread' ? (P.get('hand') as HandLayout) : undefined, live: P.has('live'), onChange: h => console.debug('el düzeni', h)} : undefined);
       break;
     case 'rules':
       mockTable();

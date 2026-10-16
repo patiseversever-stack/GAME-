@@ -1,6 +1,6 @@
 // Arayüz sözleşmesi (oyun akışı bu tiplerle konuşur). screens.ts bunları dışa aktarır.
 import type {GameResult} from '../core/types';
-import type {BlofOutcome, Difficulty, Game, MatchSetup, Mode} from '../game/types';
+import type {BlofOutcome, Difficulty, Game, HandLayout, MatchSetup, Mode} from '../game/types';
 import type {CharId} from '../game/roster';
 import type {ItemKind} from '../game/catalog';
 
@@ -24,6 +24,15 @@ export type HomeAction =
   | {type: 'play'; game: Game; mode: Mode; stake: number; opponents: CharId[]; difficulty: Difficulty}
   | {type: 'settings'}
   | {type: 'rules'};
+
+/** Ayarlar penceresindeki "Blöf el düzeni" satırı (Blöf motoru varsa verilir). */
+export interface HandOption {
+  /** Kayıtlı seçim; undefined = henüz seçmedi (satır Gruplu'yu varsayılan gösterir) */
+  value: HandLayout | undefined;
+  /** El oynanırken masa düzeni anında değişir mi (değilse "yeni elde geçerli olur" notu) */
+  live: boolean;
+  onChange(h: HandLayout): void;
+}
 
 /** Kozmetik değişti (kuşanıldı): uygulama desteyi/masayı yeniden kurar. */
 export type CosmeticsListener = (kind: ItemKind, id: string) => void;

@@ -78,6 +78,15 @@ describe('buildSetup', () => {
   });
 });
 
+describe('el düzeni', () => {
+  it('Blöf kurulumu profildeki el düzenini taşır; yoksa alan yok; Pişti\'de hiç yok', () => {
+    expect(buildSetup(prof(), '3', ['cem', 'defne'], 0, 'klasik', undefined, {game: 'blof', handLayout: 'spread'}).handLayout).toBe('spread');
+    expect(buildSetup(prof(), '1v1', ['cem'], 0, 'klasik', undefined, {game: 'blof', handLayout: 'group'}).handLayout).toBe('group');
+    expect('handLayout' in buildSetup(prof(), '1v1', ['cem'], 0, 'klasik', undefined, {game: 'blof'})).toBe(false);
+    expect(buildSetup(prof(), '1v1', ['cem'], 0, 'klasik', undefined, {game: 'pisti', handLayout: 'spread'}).handLayout).toBeUndefined();
+  });
+});
+
 describe('ekonomi', () => {
   it('pot: 1\'e 1 ve eşli 2×, 3 kişi 3×, 4 kişi 4×', () => {
     expect(payout('1v1', 500)).toBe(1000);

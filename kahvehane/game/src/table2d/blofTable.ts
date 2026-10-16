@@ -122,6 +122,15 @@ const G_SX = 0.08;
 const G_SY = 0.055;
 const G_MIN = 0.62;
 const G_MAX = 1.06;
+/**
+ * Klasik (yayvan) el: kartlar tek tek, aynı değerler sıkı, gruplar arası açık; adımlar kart genişliği oranı [grup içi, gruplar arası].
+ * Önce tek sıra; sığmazsa dengeli iki sıra; o da sığmazsa kart biraz küçülür, en son aralık daralır. Seçili kartın sağı açılır.
+ */
+const SP_MAX = [0.36, 0.62] as const;
+const SP_MIN = [0.25, 0.34] as const;
+const SP_TIGHT = [0.19, 0.27] as const;
+const SP_SEL = 0.5;
+export type HandMode = 'group' | 'spread';
 /** İki sıralı elde arka sıranın kayması, seçim yüksekliği (tek / iki sıra), orta yığın ölçeği (kart genişliği oranı) */
 const ROW_DY = 0.56;
 const LIFT1 = 0.22;
@@ -145,6 +154,8 @@ export class BlofTable {
   private pileHit: HTMLElement;
   private marks: HTMLElement[] = [];
   private badges: HTMLElement[] = [];
+  /** El düzeni: değer grupları (varsayılan) ya da klasik yayvan */
+  private mode: HandMode = 'group';
   private cw = 80;
   private ch = 114;
   private active = false;
@@ -479,6 +490,20 @@ export class BlofTable {
    * dahil) L.hand'e, grup bilgisini gInfo'ya yazar.
    */
   private handLayout(cards: BCard[]): {p: Pose[]; z: number[]} {
+    return this.mode === 'spread' ? this.spreadLayout(cards) : this.groupLayout(cards);
+  }
+
+  /** El düzenini değiştir (oyun içinde de): kartlar yeni yerlerine kayarak yeniden dizilir. */
+  setHandLayout(m: HandMode): void {
+    if (m === this.mode) return;
+    this.mode = m;
+    if (this.active && this.hand.length) this.layoutHand(true, 320);
+  }
+  get handMode(): HandMode {
+    return this.mode;
+  }
+
+  private groupLayout(cards: BCard[]): {p: Pose[]; z: number[]} {
     const h = this.L.hand;
     const n = cards.length;
     const p: Pose[] = new Array(n), z: number[] = new Array(n);
@@ -550,6 +575,116 @@ export class BlofTable {
     return {p, z};
   }
 
+  /** Klasik yayvan el (kart kart): poz + z. Seçili kart kalkar, sağındaki adım açılır (komşusu onu örtmesin). */
+  private spreadLayout(cards: BCard[]): {p: Pose[]; z: number[]} {
+    const h = this.L.hand;
+    const n = cards.length;
+    const out: Pose[] = new Array(n), zz: number[] = new Array(n);
+    this.gInfo = [];
+    if (!n) {
+      h.rows = 1;
+      h.top = h.y - h.chH / 2 - h.chH * LIFT1;
+      this.minTap = 0;
+      return {p: out, z: zz};
+    }
+    const grp: number[] = [];
+    let g = 0;
+    for (let i = 0; i < n; i++) {
+      if (i > 0 && rankOf(cards[i].id) !== rankOf(cards[i - 1].id)) g++;
+      grp.push(g);
+    }
+    const G = g + 1;
+    const span = (from: number, to: number) => {
+      const gg = grp[to - 1] - grp[from] + 1;
+      return {inN: to - from - gg, gapN: gg - 1};
+    };
+    const at = (sp: {inN: number; gapN: number}, a: readonly number[]) => 1 + sp.inN * a[0] + sp.gapN * a[1];
+    const solve = (sp: {inN: number; gapN: number}, cw: number, lo: readonly number[], hi: readonly number[]) => {
+      const den = sp.inN * (hi[0] - lo[0]) + sp.gapN * (hi[1] - lo[1]);
+      if (den <= 0) return 1;
+      return clamp((h.maxW / cw - at(sp, lo)) / den, 0, 1);
+    };
+    let cwH = h.cwH;
+    let rows: {from: number; to: number}[] = [{from: 0, to: n}];
+    let lo: readonly number[] = SP_MIN, hi: readonly number[] = SP_MAX;
+    const one = span(0, n);
+    if (at(one, SP_MIN) * cwH > h.maxW && G > 1) {
+      let best = 1, bestW = Infinity;
+      for (let k = 1; k < G; k++) {
+        const cut = grp.indexOf(k);
+        const w = Math.max(at(span(0, cut), SP_MIN), at(span(cut, n), SP_MIN)) + Math.abs(n - 2 * cut) * 0.001;
+        if (w < bestW) {
+          bestW = w;
+          best = cut;
+        }
+      }
+      rows = [{from: 0, to: best}, {from: best, to: n}];
+      if (bestW * cwH > h.maxW) {
+        cwH = Math.max(h.cwH * 0.76, h.maxW / bestW);
+        if (bestW * cwH > h.maxW) {
+          hi = SP_MIN;
+          lo = SP_TIGHT;
+        }
+      }
+    } else if (at(one, SP_MIN) * cwH > h.maxW) {
+      hi = SP_MIN;
+      lo = SP_TIGHT;
+    }
+    let t = 1;
+    for (const r of rows) t = Math.min(t, solve(span(r.from, r.to), cwH, lo, hi));
+    const ki = lo[0] + (hi[0] - lo[0]) * t, ko = lo[1] + (hi[1] - lo[1]) * t;
+    const two = rows.length === 2;
+    const s = cwH / this.cw;
+    const chH = cwH / 0.7;
+    const rowDy = chH * ROW_DY;
+    const liftF = two ? LIFT2 : LIFT1;
+    let minTap = Infinity;
+    const rowOf = two ? rows[0].to : n;
+    rows.forEach((r, ri) => {
+      const back = two && ri === 0;
+      const k = back ? 0.95 : 1;
+      const y0 = h.y + (h.chH - chH) / 2 - (back ? rowDy : 0);
+      const build = (selStep: number) => {
+        const steps: number[] = [];
+        let fixed = 0, flex = 0;
+        for (let i = r.from + 1; i < r.to; i++) {
+          const base = grp[i] === grp[i - 1] ? ki : ko;
+          const sel = cards[i - 1].sel;
+          const st = sel ? Math.max(base, selStep) : base;
+          steps.push(st);
+          if (sel) fixed += st;
+          else flex += st;
+        }
+        const avail = h.maxW / (cwH * k) - 1;
+        const f = flex > 0 && fixed + flex > avail ? Math.max(0.55, (avail - fixed) / flex) : 1;
+        return {steps, f};
+      };
+      let {steps, f} = build(SP_SEL);
+      if (f < 0.9) ({steps, f} = build(0.36));
+      let w = cwH * k;
+      steps.forEach((st, j) => (w += (cards[r.from + j].sel ? st : st * f) * cwH * k));
+      let x = h.cx - w / 2 + (cwH * k) / 2;
+      const half = Math.max(w / 2, cwH * 1.5);
+      const liftPx = chH * k * liftF;
+      for (let i = r.from; i < r.to; i++) {
+        if (i > r.from) {
+          const st = (cards[i - 1].sel ? steps[i - r.from - 1] : steps[i - r.from - 1] * f) * cwH * k;
+          x += st;
+          minTap = Math.min(minTap, st);
+        }
+        const q = (x - h.cx) / half;
+        const base: Pose = {x, y: y0 + q * q * chH * 0.045, r: q * (back ? 2 : 2.8), s: s * k};
+        out[i] = cards[i].sel ? {x, y: base.y - liftPx, r: base.r * 0.5, s: base.s * 1.04} : base;
+        zz[i] = (i < rowOf ? 500 : 600) + i;
+        if (i === r.from || grp[i] !== grp[i - 1]) this.gInfo.push({rank: rankOf(cards[i].id), x, y: base.y, k: 1, sel: 0, s: s * k, cw: cwH * k, ch: chH * k, strip: cwH * k * ko, z: 0});
+      }
+    });
+    h.rows = rows.length;
+    this.minTap = Math.round(minTap === Infinity ? cwH : minTap);
+    h.top = h.y + (h.chH - chH) / 2 - (two ? rowDy + chH * 0.025 : 0) - chH / 2 - chH * liftF;
+    return {p: out, z: zz};
+  }
+
   /** El yeniden dizilir (gruplar yeniden paketlenir; yalnız transform). barY değişirse onLayout bildirilir. */
   layoutHand(animate = true, ms = 230, pop?: Set<BCard>): void {
     const top0 = this.L.hand.top;
@@ -569,7 +704,7 @@ export class BlofTable {
   /** Grup rozetleri: "×N" (seçim yokken) / "2/3" (seçiliyken, altın). Havuzdan; yalnız transform + metin. */
   private syncBadges(hidden = false): void {
     let k = 0;
-    if (!hidden)
+    if (!hidden && this.mode === 'group')
       for (const g of this.gInfo) {
         if (g.k < 2) continue;
         let b = this.badges[k];
@@ -851,12 +986,33 @@ export class BlofTable {
    * hepsini). Basılı tutmak (350 ms) değerin hepsini kaldırır/bırakır; yatay sürükleme geçtiği her gruptan bir kart kaldırır.
    */
   private tap(c: BCard): 'sel' | 'desel' | null {
+    if (this.mode === 'spread') {
+      // klasik: dokunulan kartın kendisi kalkar / iner
+      if (c.sel) {
+        this.release(c, false);
+        return 'desel';
+      }
+      return this.selectCard(c) ? 'sel' : null;
+    }
     if (c.sel) {
       const g = this.groupOf(rankOf(c.id));
       this.release(c, g.every(x => x.sel));
       return 'desel';
     }
     return this.selectOne(rankOf(c.id)) ? 'sel' : null;
+  }
+
+  private selectCard(c: BCard): boolean {
+    if (this.hand.filter(x => x.sel).length >= 4) {
+      this.reject(c);
+      return false;
+    }
+    this.mark1(c, true);
+    this.layoutHand(true, 200, new Set([c]));
+    this.snd.slide(0.55);
+    haptic('light');
+    this.onSelect(this.selected());
+    return true;
   }
 
   private longPress(rank: number, act: 'sel' | 'desel' | null): void {
@@ -881,7 +1037,7 @@ export class BlofTable {
     e.preventDefault();
     const rank = rankOf(c.id);
     const act = this.tap(c);
-    const g = {id: e.pointerId, x0: e.clientX, y0: e.clientY, act, seen: new Set<number>([rank]), slid: false, timer: 0};
+    const g = {id: e.pointerId, x0: e.clientX, y0: e.clientY, act, seen: new Set<number>([this.mode === 'spread' ? 100 + c.id : rank]), slid: false, timer: 0};
     g.timer = window.setTimeout(() => {
       if (this.gest === g && !g.slid) this.longPress(rank, act);
     }, 350);
@@ -896,9 +1052,19 @@ export class BlofTable {
       clearTimeout(g.timer);
       if (Math.abs(dx) > 14) g.slid = true;
     }
-    if (!g.slid || g.act !== 'sel') return;
+    if (!g.slid || !g.act) return;
     const c = this.cardAt(document.elementFromPoint(e.clientX, e.clientY));
     if (!c) return;
+    if (this.mode === 'spread') {
+      // klasik: sürüklenen her kart aynı işlemi alır (seç ya da bırak)
+      const key = 100 + c.id;
+      if (g.seen.has(key)) return;
+      g.seen.add(key);
+      if (g.act === 'sel' && !c.sel) this.selectCard(c);
+      else if (g.act === 'desel' && c.sel) this.release(c, false);
+      return;
+    }
+    if (g.act !== 'sel') return;
     const r = rankOf(c.id);
     if (g.seen.has(r)) return;
     g.seen.add(r);

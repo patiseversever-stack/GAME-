@@ -10,7 +10,8 @@ import type {ItemKind} from './catalog';
 import type {Table2D} from '../table2d/table';
 import {Match, type MatchOutcome} from './match';
 import type {Profile} from './profile';
-import {MODE_INFO, type Difficulty, type Game, type Mode} from './types';
+import {MODE_INFO, type Difficulty, type Game, type HandLayout, type Mode} from './types';
+import type {HandOption} from '../ui/types';
 import {blofXp, buildSetup, receive} from './setup';
 import {BLOF, loadBlof, normalizeBlofOutcome, type BlofFactory} from './blofAdapter';
 import {post, store} from '../platform/bridge';
@@ -33,6 +34,8 @@ export interface AppDeps {
   autoMode?: Mode;
   /** ?diff=kolay|orta|zor: otomatik testte Blöf zorluğu */
   autoDifficulty?: Difficulty;
+  /** ?hand=group|spread: otomatik testte Blöf el düzeni (verilmezse gruplu; seçici açılmaz) */
+  autoHand?: HandLayout;
   /** ?seed=123: sabit deste (test) */
   seed?: number;
 }
@@ -50,6 +53,20 @@ export async function runApp(d: AppDeps): Promise<void> {
   let current: Runner | null = null;
   let curGame: Game = 'pisti';
   let dealerBase = 0;
+  /** Ayarlar penceresindeki "Blöf el düzeni" satırı: profile yazar; Blöf eli sürüyorsa ve masa destekliyorsa anında uygular. */
+  const handOption = (): HandOption | undefined => {
+    if (!BLOF.available()) return undefined;
+    const live = (): ((h: HandLayout) => void) | undefined => (current as Partial<{setHandLayout(h: HandLayout): void}> | null)?.setHandLayout?.bind(current);
+    return {
+      value: profile.data.settings.blofHand,
+      live: !!live(),
+      onChange: h => {
+        profile.data.settings.blofHand = h;
+        profile.save();
+        live()?.(h);
+      },
+    };
+  };
   // önceki oturumda yarıda kalan elin bahsi iade
   const pending = store.get<number>('pendingStake', 0);
   if (pending > 0) {
@@ -63,7 +80,7 @@ export async function runApp(d: AppDeps): Promise<void> {
   screens.hud.onMenu = async () => {
     sfx.uiTap();
     const r = await screens.pause();
-    if (r === 'settings') await screens.settings(d.settings, s => d.applySettings(s));
+    if (r === 'settings') await screens.settings(d.settings, s => d.applySettings(s), handOption());
     else if (r === 'rules') await screens.rules(curGame);
     else if (r === 'leave') current?.abort();
   };
@@ -75,7 +92,7 @@ export async function runApp(d: AppDeps): Promise<void> {
     const autoGame = d.autoGame && (d.autoGame !== 'blof' || BLOF.playable()) ? d.autoGame : 'pisti';
     const action = await screens.home(profile, d.auto ? {game: autoGame, mode: d.autoMode ?? (autoGame === 'blof' ? '3' : '1v1'), difficulty: d.autoDifficulty} : undefined);
     if (action.type === 'settings') {
-      await screens.settings(d.settings, s => d.applySettings(s));
+      await screens.settings(d.settings, s => d.applySettings(s), handOption());
       continue;
     }
     if (action.type === 'rules') {
@@ -85,6 +102,11 @@ export async function runApp(d: AppDeps): Promise<void> {
 
     const {game, mode, opponents, difficulty} = action;
     curGame = game;
+    // ilk Blöf: el düzeni henüz seçilmediyse VS'ten önce seçici (otomatik testte seçici yok)
+    if (game === 'blof' && !profile.data.settings.blofHand) {
+      profile.data.settings.blofHand = d.auto ? d.autoHand ?? 'group' : await screens.handChooser();
+      profile.save();
+    }
     let stake = action.stake;
     let first = true;
     // aynı masada "Bir El Daha" döngüsü
@@ -101,7 +123,7 @@ export async function runApp(d: AppDeps): Promise<void> {
       }
       const seats = MODE_INFO[mode].seats;
       // otomatik testte öğretici yok: botlar istenen zorlukta oynar
-      const setup = buildSetup(profile, mode, opponents, (seats - 1 + dealerBase++) % seats, profile.data.equipped.fx, d.seed, {game, difficulty, tutorial: d.auto ? false : undefined});
+      const setup = buildSetup(profile, mode, opponents, (seats - 1 + dealerBase++) % seats, profile.data.equipped.fx, d.seed, {game, difficulty, tutorial: d.auto ? false : undefined, handLayout: game === 'blof' ? profile.data.settings.blofHand : undefined});
       table.setActive(true); // maç masası açılır (menülerde kapalıydı)
       // giriş perdesi açıldığında masa temiz görünsün (deste ekran dışında, karıştırmaya hazır). 3 kişi masası maçın kendi kurulumunda yerleşir.
       if (first) table.reset(seats === 2 ? 2 : 4);

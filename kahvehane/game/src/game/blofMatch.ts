@@ -18,7 +18,7 @@ import type {VoicePlayer} from '../audio/voice';
 import type {GameHud, HudPose} from '../ui/types';
 import {haptic, store} from '../platform/bridge';
 import {charById} from './roster';
-import {type BlofOutcome, type BlofSeatResult, type Difficulty, type MatchSetup, type SeatPlayer} from './types';
+import {type BlofOutcome, type BlofSeatResult, type Difficulty, type HandLayout, type MatchSetup, type SeatPlayer} from './types';
 
 export interface BlofMatchDeps {
   table: Table2D;
@@ -79,8 +79,15 @@ export class BlofMatch {
   private autoKey = '';
   private autoTimer = 0;
   private tut: {seen: Set<TutStep>; step: TutStep | null; doneTimer: number} | null = null;
+  private handMode: HandLayout = 'group';
 
   constructor(private d: BlofMatchDeps) {}
+
+  /** El düzeni (oyuncu seçeneği): 'group' değer grupları, 'spread' klasik yayvan. Oyun sırasında da uygulanır. */
+  setHandLayout(h: HandLayout): void {
+    this.handMode = h;
+    this.t?.setHandLayout(h);
+  }
 
   abort(): void {
     this.aborted = true;
@@ -211,6 +218,8 @@ export class BlofMatch {
     for (let s = 0; s < this.n; s++) hud.alert?.(s, false);
 
     // masa + arayüz
+    this.handMode = setup.handLayout ?? this.handMode ?? 'group';
+    this.t.setHandLayout(this.handMode);
     this.t.reset(this.n);
     this.ui.reset();
     this.stats();
