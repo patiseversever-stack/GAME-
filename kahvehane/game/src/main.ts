@@ -116,11 +116,11 @@ async function boot(): Promise<void> {
   };
   splash.progress(1);
   document.getElementById('boot')?.remove();
-  await splash.done();
-  // deste: ilk ekran göründü, tarayıcı boşalınca arka planda çiz (maç başlarken app.ts table.ready'yi bekler)
-  table.ready = whenIdle(1500).then(() => buildDeck(profile.data.equipped.deck));
-  // ses motoru: ilk dokunuşta değil, ekran boşken kurulur (sonra ilk dokunuş yalnız bağlamı sürdürür)
-  void table.ready.then(() => whenIdle(2500)).then(() => sfx.prewarm());
+  // gerçek hazırlık yükleme ekranı görünürken yapılır: deste atlası (parça parça) + ses motoru (ilk dokunuşta takılma olmasın).
+  // Maç başlarken app.ts table.ready'yi bekler; ana ekran geldiğinde hepsi hazırdır.
+  table.ready = whenIdle(300).then(() => buildDeck(profile.data.equipped.deck)).then(() => void performance.mark('kh:deck'));
+  const warm = table.ready.then(() => whenIdle(600)).then(() => sfx.prewarm()).then(() => void performance.mark('kh:audio'));
+  await splash.done(warm);
   // ilk dokunuşta ses motorunu aç (iOS)
   const unlock = () => {
     sfx.unlock();

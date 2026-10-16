@@ -612,7 +612,7 @@ class HomePage implements Page {
     const partner = charById(this.trio[1]);
     const r1 = charById(this.trio[0]), r2 = charById(this.trio[2]);
     return `<div class="kh-seats is-teams"><span class="kh-seat is-blue">${charAvatarHtml(partner, 'standart')}<b>${esc(shortName(partner))}</b></span>
-      <span class="kh-vs">VS</span><span class="kh-pair is-red">${charAvatarHtml(r1, 'standart')}${charAvatarHtml(r2, 'standart')}</span></div>`;
+      <span class="kh-vsl">VS</span><span class="kh-pair is-red">${charAvatarHtml(r1, 'standart')}${charAvatarHtml(r2, 'standart')}</span></div>`;
   }
 
   private shuffle(btn: HTMLElement): void {

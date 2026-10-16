@@ -20,7 +20,7 @@ const TIPS = [
   'Valeyi erken harcama; büyük yığına sakla.',
 ];
 
-export function splash(ctx: Ctx): {progress(p: number): void; done(): Promise<void>} {
+export function splash(ctx: Ctx): {progress(p: number): void; done(ready?: Promise<unknown>): Promise<void>} {
   const scope = new Scope();
   const el = h('div', 'kh-screen kh-splash');
   el.innerHTML = `${arenaHtml()}<div class="kh-splash__glow"></div>${wordmarkHtml('kh-splash__logo')}
@@ -59,17 +59,40 @@ export function splash(ctx: Ctx): {progress(p: number): void; done(): Promise<vo
     }, 3200);
   };
   if (ANIM) rotate();
+  // Yükleme çubuğu: gerçek hazırlık genelde çok kısa sürer; yine de en az ~3 sn "oyun açılıyor" hissi verilir.
+  // Çubuk organik dolar (hızlı başlar, aşamalarda yavaşlar, sona doğru bekler); iş bitince tam dolar. Hepsi transform → bileşimci iş parçacığında.
+  const MIN_MS = 2300; // + kapanış ≈ 0,8 sn → toplam ≈ 3 sn
+  const t0 = performance.now();
   let cur = 0;
   const progress = (p: number) => {
     cur = Math.max(cur, Math.min(1, p));
-    fill.style.transform = `scaleX(${cur.toFixed(3)})`;
+    if (!ANIM) fill.style.transform = `scaleX(${cur.toFixed(3)})`;
   };
+  if (ANIM) {
+    fill.style.transform = 'scaleX(.03)';
+    play(fill, [
+      {transform: 'scaleX(.03)'},
+      {transform: 'scaleX(.30)', offset: 0.14},
+      {transform: 'scaleX(.47)', offset: 0.32},
+      {transform: 'scaleX(.72)', offset: 0.6},
+      {transform: 'scaleX(.85)', offset: 0.82},
+      {transform: 'scaleX(.94)'},
+    ], {duration: 2100, easing: 'ease-in-out', fill: 'forwards'});
+  }
   return {
     progress,
-    async done() {
+    /** ready: gerçek hazırlık (deste, ses). En az MIN_MS geçmeden ve ready bitmeden (en çok 4,5 sn) ekran kalkmaz. */
+    async done(ready?: Promise<unknown>) {
       progress(1);
-      await scope.wait(420);
-      if (ANIM) await el.animate([{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'scale(1.03)'}], {duration: 380, easing: 'ease-in', fill: 'forwards'}).finished.catch(() => undefined);
+      if (ANIM) {
+        await Promise.all([
+          scope.wait(Math.max(0, MIN_MS - (performance.now() - t0))),
+          ready ? Promise.race([ready.catch(() => undefined), scope.wait(4500)]) : undefined,
+        ]);
+        await fill.animate([{transform: 'scaleX(.94)'}, {transform: 'scaleX(1)'}], {duration: 260, easing: 'cubic-bezier(.2,.75,.25,1)', fill: 'forwards'}).finished.catch(() => undefined);
+        await scope.wait(240);
+        await el.animate([{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'scale(1.03)'}], {duration: 380, easing: 'ease-in', fill: 'forwards'}).finished.catch(() => undefined);
+      } else await scope.wait(120);
       scope.dispose();
       el.remove();
     },

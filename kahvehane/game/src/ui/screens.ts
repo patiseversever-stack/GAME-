@@ -62,7 +62,7 @@ export class Screens {
   }
 
   /** Açılış: logo, ilerleme çubuğu, dönen ipuçları. */
-  splash(): {progress(p: number): void; done(): Promise<void>} {
+  splash(): {progress(p: number): void; done(ready?: Promise<unknown>): Promise<void>} {
     return splash(this.ctx);
   }
 
