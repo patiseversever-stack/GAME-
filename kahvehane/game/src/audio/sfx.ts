@@ -637,6 +637,19 @@ export class Sfx {
     return this.unlockP;
   }
 
+  /**
+   * Ses motorunu (bağlam + gürültü/yankı tamponları, ~60-200 ms senkron iş) önceden, ekran boşken kur.
+   * Bağlam askıda başlar; ilk dokunuşta unlock() yalnız sürdürür → ilk dokunuşta takılma olmaz.
+   */
+  prewarm(): void {
+    if (this.offline || this.ctx || this.unlocked) return;
+    try {
+      this.createContext();
+    } catch (e) {
+      this.fail(e);
+    }
+  }
+
   get muted(): boolean {
     return this._muted;
   }

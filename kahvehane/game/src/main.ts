@@ -117,6 +117,8 @@ async function boot(): Promise<void> {
   await splash.done();
   // deste: ilk ekran göründü, tarayıcı boşalınca arka planda çiz (maç başlarken app.ts table.ready'yi bekler)
   table.ready = whenIdle(1500).then(() => buildDeck(profile.data.equipped.deck));
+  // ses motoru: ilk dokunuşta değil, ekran boşken kurulur (sonra ilk dokunuş yalnız bağlamı sürdürür)
+  void table.ready.then(() => whenIdle(2500)).then(() => sfx.prewarm());
   // ilk dokunuşta ses motorunu aç (iOS)
   const unlock = () => {
     sfx.unlock();
