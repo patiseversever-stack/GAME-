@@ -9,7 +9,7 @@
 //   5) Sakin harita: kartların durduğu yerlerde (yığın, eller, desteler, yan koltuklar) referansın değer ve doygunluk
 //      farkı sıkıştırılır, darbe titremesi azalır, ayrıntı katmanı atlanır → krem kartlar ve kart arkaları öne çıkar.
 // Bütün iş dilimli (Job): ~7 ms'lik parçalar; ana iş parçacığı bölünmez.
-import {due, type Job} from '../skins/kit';
+import {due, runJobSync, type Job} from '../skins/kit';
 import {clamp, makeCanvas, mix, mulberry, smooth, spotOf, type Ctx, type RGB, type Rnd} from './paint';
 
 // ───────────────────────── referans ─────────────────────────
@@ -22,21 +22,25 @@ export interface Ref {
 }
 export type Calm = (x: number, y: number) => number;
 
-/** Referans sahneyi çiz: `draw` tasarım biriminde çalışır. `calm` + `tone` verilirse sakin bölgeler bastırılır. */
-export function makeRef(W: number, H: number, k: number, draw: (g: Ctx) => void, calm?: Calm, tone: RGB = [10, 14, 40], amount = 0.62): Ref {
+/** Referans sahneyi çiz: `draw` tasarım biriminde çalışır. `calm` + `tone` verilirse sakin bölgeler bastırılır (dilimli). */
+export function* makeRefJ(W: number, H: number, k: number, draw: (g: Ctx) => void, calm?: Calm, tone: RGB = [10, 14, 40], amount = 0.62): Job<Ref> {
   const [c, g] = makeCanvas(Math.ceil(W * k), Math.ceil(H * k));
   g.save();
   g.scale(k, k);
   draw(g);
   g.restore();
-  const img = g.getImageData(0, 0, c.width, c.height);
-  const d = img.data;
+  const cw = c.width, ch = c.height;
+  const d = g.getImageData(0, 0, cw, ch).data;
+  c.width = c.height = 0;
   if (calm) {
-    for (let y = 0; y < c.height; y++)
-      for (let x = 0; x < c.width; x++) {
-        const q = calm((x + 0.5) / k, (y + 0.5) / k);
+    if (due()) yield;
+    for (let y = 0; y < ch; y++) {
+      if ((y & 15) === 15 && due()) yield;
+      let q = 0;
+      for (let x = 0; x < cw; x++) {
+        if ((x & 1) === 0) q = calm((x + 1) / k, (y + 0.5) / k); // 2 pikselde bir (yumuşak harita)
         if (q <= 0.01) continue;
-        const i = (y * c.width + x) * 4;
+        const i = (y * cw + x) * 4;
         const L = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) / 255;
         const s = 0.72 + 0.5 * L; // değer farkı sıkışır ama tamamen kaybolmaz
         const t = amount * q;
@@ -44,10 +48,12 @@ export function makeRef(W: number, H: number, k: number, draw: (g: Ctx) => void,
         d[i + 1] = d[i + 1] + (tone[1] * s - d[i + 1]) * t;
         d[i + 2] = d[i + 2] + (tone[2] * s - d[i + 2]) * t;
       }
+    }
   }
-  c.width = c.height = 0;
-  return {w: Math.ceil(W * k), h: Math.ceil(H * k), k, d};
+  return {w: cw, h: ch, k, d};
 }
+export const makeRef = (W: number, H: number, k: number, draw: (g: Ctx) => void, calm?: Calm, tone?: RGB, amount?: number): Ref =>
+  runJobSync(makeRefJ(W, H, k, draw, calm, tone, amount));
 
 /** Nesne kimlik haritası: `draw` her nesneyi kendi kimlik rengiyle (R kanalı = kimlik) doldurur; yumuşatma kapalı. */
 export function makeIdMap(W: number, H: number, k: number, draw: (g: Ctx, id: (n: number) => string) => void): Ref {
@@ -235,7 +241,7 @@ export function* paintLayer(g: Ctx, ref: Ref, rnd: Rnd, W: number, H: number, o:
     return Math.atan2((1 - w) * Math.sin(a) + w * Math.sin(t), (1 - w) * Math.cos(a) + w * Math.cos(t));
   };
   const oil = new Oil();
-  let nS = 0;
+  let nS = 0, batch = 400;
   for (let i = 0; i < pts.length; i += 2) {
     const px = pts[i], py = pts[i + 1];
     if (o.where && rnd() > o.where(px, py)) continue;
@@ -259,10 +265,14 @@ export function* paintLayer(g: Ctx, ref: Ref, rnd: Rnd, W: number, H: number, o:
     c = [clamp(c[0] + k + (rnd() - 0.5) * jt * 0.5, 0, 255), clamp(c[1] + k + (rnd() - 0.5) * jt * 0.5, 0, 255), clamp(c[2] + k + (rnd() - 0.5) * jt * 0.5, 0, 255)];
     if (o.tint) c = o.tint(c, px, py, rnd);
     oil.add(tr, lw, c, (o.relief ?? 0.16) * (1 - q * 0.5), o.bristle ?? 0, rnd);
-    // ara ara nefes (yollar birikir, dolgu 1500 darbede bir: daha az ama büyük dolgu çağrısı)
+    // ara ara nefes; yollar birikir ve toplu dolgulanır. Toplu dolgunun süresi ölçülür: uzun sürerse parti küçülür
+    // (iri masa darbeleri), kısa sürerse büyür (küçük kart darbeleri) — tek görev hep kısa kalır.
     if (++nS % 64 === 0 && due()) yield;
-    if (oil.n >= 1500) {
+    if (oil.n >= batch) {
+      const t = performance.now();
       oil.flush(g);
+      const dt = performance.now() - t;
+      batch = dt > 6 ? Math.max(200, batch >> 1) : dt < 2.5 ? Math.min(1600, batch + 200) : batch;
       if (due()) yield;
     }
   }
@@ -295,14 +305,18 @@ export function canvasWeave(g: Ctx, W: number, H: number, rnd: Rnd, a = 0.06): v
  * Işık dokunuşları: referansta parlak ve sıcak/renkli pikseller (pencereler, köprü ışıkları) kısa, kalın, açık
  * darbelere dönüşür (impasto). Bölge [x0,y0,x1,y1] tasarım biriminde; `minL` parlaklık eşiği (0..255).
  */
-export function lightDabs(oil: Oil, ref: Ref, rnd: Rnd, x0: number, y0: number, x1: number, y1: number, minL: number, size: number, calm?: Calm): void {
+export function lightDabs(oil: Oil, ref: Ref, rnd: Rnd, x0: number, y0: number, x1: number, y1: number, minL: number, size: number, calm?: Calm, maxN = 500): void {
   const sx = Math.max(0, Math.floor(x0 * ref.k)), ex = Math.min(ref.w - 1, Math.ceil(x1 * ref.k));
   const sy = Math.max(0, Math.floor(y0 * ref.k)), ey = Math.min(ref.h - 1, Math.ceil(y1 * ref.k));
+  // aday sayısına göre seyrelt: geniş parlak alanlarda (şafak ufku) dokunuş sayısı sınırlı kalsın (tek görev kısa)
+  const L = lumOf(ref);
+  let cand = 0;
+  for (let y = sy; y <= ey; y++) for (let x = sx; x <= ex; x++) if (L[y * ref.w + x] >= minL) cand++;
+  const keep = Math.min(0.65, maxN / Math.max(1, cand));
   for (let y = sy; y <= ey; y++)
     for (let x = sx; x <= ex; x++) {
       const i = (y * ref.w + x) * 4;
-      const L = ref.d[i] * 0.3 + ref.d[i + 1] * 0.59 + ref.d[i + 2] * 0.11;
-      if (L < minL || rnd() < 0.35) continue;
+      if (L[y * ref.w + x] < minL || rnd() > keep) continue;
       const px = (x + rnd()) / ref.k, py = (y + rnd()) / ref.k;
       const q = calm ? calm(px, py) : 0;
       if (q > 0.6) continue;

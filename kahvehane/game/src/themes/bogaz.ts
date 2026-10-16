@@ -4,7 +4,7 @@
 // ve yığına varmadan söner. Kartların durduğu yerler (src/themes/oil.ts tableCalm) değer/doygunluk olarak bastırılır.
 import {due, runJob, type Job} from '../skins/kit';
 import {bridge, galataTower, yalilar} from './scenes';
-import {canvasWeave, idAt, lightDabs, makeIdMap, makeRef, Oil, paintLayer, tableCalm, type Ref} from './oil';
+import {canvasWeave, idAt, lightDabs, makeIdMap, makeRefJ, Oil, paintLayer, tableCalm, type Ref} from './oil';
 import {clamp, makeCanvas, mix, mulberry, radial, resScale, smooth, spotOf, type Ctx, type RGB} from './paint';
 
 function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
@@ -96,7 +96,7 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
     radial(r, W * 0.16, hz - H * 0.07, 0, H * 0.12, [[0, 'rgba(255,190,110,.35)'], [1, 'rgba(255,190,110,0)']]);
     galataTower(r, tx, tby, th);
   };
-  const ref: Ref = makeRef(W, H, 0.5, sketch, calm, [18, 24, 72], 0.42);
+  const ref: Ref = yield* makeRefJ(W, H, 0.5, sketch, calm, [18, 24, 72], 0.42);
   if (due()) yield;
 
   // ── kule: kendi darbe yönü (gövdede dikey taş, külahta tepeye doğru) ──
@@ -156,8 +156,12 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   ring(moon.x, moon.y, moon.r * 0.05, moon.r * 0.5, [[255, 250, 225], [255, 244, 200]], 22, 2.6 * U);
   ring(moon.x, moon.y, moon.r * 0.4, moon.r * 0.95, [[255, 246, 210], [252, 232, 160], [255, 250, 230]], 46, 2.6 * U);
   ring(moon.x, moon.y, moon.r * 1.1, moon.r * 2.6, [[240, 206, 110], [230, 190, 96], [170, 186, 220], [210, 200, 150], [120, 150, 220], [250, 226, 150]], 150, 2.4 * U);
+  dabs.flush(g);
+  if (due()) yield;
   // ufuktaki pencere ve köprü ışıkları: referansın parlak noktalarından kalın küçük darbeler
   lightDabs(dabs, ref, rnd, 0, hz - H * 0.2, W, hz + H * 0.01, 150, 2.2 * U, calm);
+  dabs.flush(g);
+  if (due()) yield;
   for (const [x, y, s] of [[0.1, 0.06, 1], [0.27, 0.035, 0.7], [0.62, 0.05, 0.8], [0.4, 0.13, 0.6], [0.94, 0.17, 0.7], [0.07, 0.16, 0.6]] as const)
     ring(W * x, H * y, M * 0.004, M * 0.03 * s, [[255, 246, 200], [240, 214, 120], [200, 210, 240]], 10, 1.8 * U);
   // yansıma sütununda kalın kırık ışık darbeleri

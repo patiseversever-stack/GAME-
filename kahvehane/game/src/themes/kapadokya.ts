@@ -4,7 +4,7 @@
 // Elin arkası en koyu (koyu erik). Kartların durduğu bölgeler src/themes/oil.ts tableCalm ile bastırılır.
 import {due, runJob, type Job} from '../skins/kit';
 import {fairy, ridge, smallBalloon} from './scenes';
-import {canvasWeave, idAt, lightDabs, makeIdMap, makeRef, Oil, paintLayer, tableCalm, type Ref} from './oil';
+import {canvasWeave, idAt, lightDabs, makeIdMap, makeRefJ, Oil, paintLayer, tableCalm, type Ref} from './oil';
 import {clamp, makeCanvas, mix, mulberry, radial, resScale, smooth, spotOf, type Ctx} from './paint';
 
 function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
@@ -87,7 +87,7 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
     // güneş ışığının vadiye düşen sıcak yansıması (ufka yakın, yığına varmadan söner)
     radial(r, sun.x, hz + H * 0.02, 0, W * 0.5, [[0, 'rgba(255,190,130,.4)'], [1, 'rgba(255,190,130,0)']], 1.6, 0.35);
   };
-  const ref: Ref = makeRef(W, H, 0.5, sketch, calm, [76, 46, 84], 0.36);
+  const ref: Ref = yield* makeRefJ(W, H, 0.5, sketch, calm, [76, 46, 84], 0.36);
   if (due()) yield;
 
   // ── nesne kimlikleri: balon (1..), peri bacası (200), gök (0), vadi (100) ──
