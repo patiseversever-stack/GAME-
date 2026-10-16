@@ -8,7 +8,8 @@ import {rankOf} from '../core/types';
 import {mulberry32} from '../core/rng';
 import {BlofBot, type BlofDifficulty} from '../ai/blofBot';
 import {createBlofLocal, type BlofClient, type BlofHost} from '../net/blofLocal';
-import {BlofTalk, BLOF_MOOD, TUTORIAL, type BlofMoment} from '../ai/blofDialogue';
+import {BlofTalk, TUTORIAL, blofPriority, type BlofMoment} from '../ai/blofDialogue';
+import type {TalkStore} from '../ai/dialogue';
 import type {ServerMsg} from '../net/protocol';
 import {BlofTable, type BlofSounds} from '../table2d/blofTable';
 import type {Table2D} from '../table2d/table';
@@ -39,6 +40,8 @@ const ME = 0;
 const DIFF: Record<string, BlofDifficulty> = {kolay: 'kolay', orta: 'orta', zor: 'zor', easy: 'kolay', medium: 'orta', hard: 'zor'};
 const diffOf = (d: Difficulty | undefined): BlofDifficulty => DIFF[d ?? 'orta'] ?? 'orta';
 const TUT_KEY = 'tut.blof';
+/** Blöf konuşma hafızası: eller / oturumlar arası tekrar önleme (localStorage; hata yutulur). */
+const TALK_STORE: TalkStore = {load: () => store.get<unknown>('talk.blof', null), save: m => store.set('talk.blof', m)};
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 const pickOne = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
 
@@ -178,7 +181,9 @@ export class BlofMatch {
     if (!p || this.aborted) return false;
     const line = this.talk.pick(p.char.id, m, force);
     if (!line) return false;
-    this.d.hud.say(line, mood === undefined ? BLOF_MOOD[m] : mood, ms, seat);
+    const dur = this.d.voice.duration(line.id); // balon sesten önce kapanmasın
+    this.d.hud.say(line.text, mood === undefined ? (line.mood ?? null) : mood, dur ? Math.max(ms, dur * 1000 + 450) : ms, seat);
+    this.d.voice.play(line.id, {priority: blofPriority(m)});
     return true;
   }
 
@@ -205,7 +210,8 @@ export class BlofMatch {
     this.queued = false;
     this.result = null;
     this.view = null;
-    this.talk.reset();
+    this.talk.attach(TALK_STORE);
+    this.talk.begin(this.n);
     const tutorial = setup.tutorial ?? !store.get<boolean>(TUT_KEY, false);
     this.tut = tutorial && !this.d.auto ? {seen: new Set(), step: null, doneTimer: 0} : null;
 

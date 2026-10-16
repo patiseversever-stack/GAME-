@@ -1722,8 +1722,8 @@ export interface Exchange {
 export type QuickReplyCat = 'friendly' | 'praise' | 'taunt' | 'hurry' | 'wait' | 'oops' | 'bluff' | 'trust';
 export interface QuickMsg {
   id: string;
-  /** Menüdeki kısa etiket (≤ 18 harf). */
-  label: string;
+  /** Menü düğmesi: OYUNCUNUN karakterine göre 3–4 kelimelik söz (≤ ~26 harf). Kimlik her karakterde aynı. */
+  labels: Readonly<Record<CharId, string>>;
   /** Simge anahtarı (emoji değil; UI kendi ikonunu eşler). */
   icon: string;
   /** Gelen mesaja botların cevap kategorisi. */
@@ -1732,91 +1732,98 @@ export interface QuickMsg {
   game?: 'pisti' | 'blof';
 }
 
-/** Hızlı sohbet menüsü (sıra = menü sırası; kimlikler kalıcı). */
+/** Hızlı sohbet menüsü (sıra = menü sırası; kimlikler kalıcı, çevrimiçi mesaj = kimlik). */
 export const QUICK_CHAT: readonly QuickMsg[] = [
-  {id: 'hello', label: 'Selam!', icon: 'wave', reply: 'friendly'},
-  {id: 'gg', label: 'İyi oyundu', icon: 'handshake', reply: 'friendly'},
-  {id: 'nice', label: 'Güzel hamle!', icon: 'thumb', reply: 'praise'},
-  {id: 'wow', label: 'Vay be!', icon: 'star', reply: 'praise'},
-  {id: 'lucky', label: 'Şanslısın!', icon: 'clover', reply: 'taunt'},
-  {id: 'hurry', label: 'Hadi ama!', icon: 'clock', reply: 'hurry'},
-  {id: 'wait', label: 'Bir saniye…', icon: 'hourglass', reply: 'wait'},
-  {id: 'oops', label: 'Hay aksi!', icon: 'oops', reply: 'oops'},
-  {id: 'oh_no', label: 'Olamaz!', icon: 'shock', reply: 'oops'},
-  {id: 'thanks', label: 'Sağ ol!', icon: 'heart', reply: 'friendly'},
-  {id: 'tea', label: 'Çaylar benden!', icon: 'tea', reply: 'friendly'},
-  {id: 'revenge', label: 'Rövanş!', icon: 'swords', reply: 'taunt'},
-  {id: 'bluffing', label: 'Blöf yapıyorsun!', icon: 'eye', reply: 'bluff', game: 'blof'},
-  {id: 'trust_me', label: 'Bana güven', icon: 'shield', reply: 'trust', game: 'blof'},
+  {id: 'hello', icon: 'wave', reply: 'friendly', labels: {riza: 'Selamün aleyküm, evlat', dursun: 'Hoş geldin, hoş geldin!', cem: 'Selam kanka, naber?', defne: 'Merhaba, hoş geldin'}},
+  {id: 'gg', icon: 'handshake', reply: 'friendly', labels: {riza: 'Eline sağlık evlat', dursun: 'Helal olsun, çaylar benden', cem: 'GG kanka, temiz oyun', defne: 'Güzel oyundu, keyif aldım'}},
+  {id: 'nice', icon: 'thumb', reply: 'praise', labels: {riza: 'Aferin, usta işi!', dursun: 'Bu hamleye çay içilir', cem: 'Kanka efsane hamle!', defne: 'Zarif bir hamle, bravo'}},
+  {id: 'wow', icon: 'star', reply: 'praise', labels: {riza: 'Maşallah, bu ne hamle!', dursun: 'Vay, tepsiyi düşürecektim!', cem: 'Oha, yok artık ya!', defne: 'Vay, gerçekten etkileyici'}},
+  {id: 'lucky', icon: 'clover', reply: 'taunt', labels: {riza: 'Kör tavuk buğday buldu', dursun: 'Şansına nazar değmesin', cem: 'Sadece şans kanka, şans', defne: 'Şanslısın bugün, tatlım'}},
+  {id: 'hurry', icon: 'clock', reply: 'hurry', labels: {riza: 'Hadi evlat, çay soğudu', dursun: 'Çaylar soğuyor, hadi bakalım', cem: 'Kanka biraz hızlan', defne: 'Acele etsek mi canım?'}},
+  {id: 'wait', icon: 'hourglass', reply: 'wait', labels: {riza: 'Dur evlat, acele yok', dursun: 'Dur, tepsiyi bırakayım', cem: 'Bi saniye, hesaplıyorum', defne: 'Bir saniye, ölçüyorum'}},
+  {id: 'oops', icon: 'oops', reply: 'oops', labels: {riza: 'Hay aksi, gözüm kaydı', dursun: 'Eyvah, tepsi devrildi!', cem: 'Of ya, misclick oldu', defne: 'Tasarım hatası, olur böyle'}},
+  {id: 'oh_no', icon: 'shock', reply: 'oops', labels: {riza: 'Olamaz, vah vah vah', dursun: 'Aman aman, başıma gelenler', cem: 'Hadi ya, olamaz!', defne: 'Ah hayır, olamaz'}},
+  {id: 'thanks', icon: 'heart', reply: 'friendly', labels: {riza: 'Sağ olasın evlat', dursun: 'Sağ ol, eksik olma', cem: 'Eyvallah kanka, sağ ol', defne: 'Çok naziksin, teşekkürler'}},
+  {id: 'tea', icon: 'tea', reply: 'friendly', labels: {riza: 'Dursun, çaylar benden!', dursun: 'Herkese çay benden!', cem: 'Çaylar benden kanka', defne: 'Kahveler benden bugün'}},
+  {id: 'revenge', icon: 'swords', reply: 'taunt', labels: {riza: 'Rövanş! Kalkmak yok', dursun: 'Rövanş! Defteri açıyorum', cem: 'Rövanş kanka, hemen şimdi', defne: 'Rövanş? Seve seve.'}},
+  {id: 'bluffing', icon: 'eye', reply: 'bluff', game: 'blof', labels: {riza: 'Yalanın belli, evlat!', dursun: 'Bu el blöf kokuyor', cem: 'Kanka blöf bu, belli', defne: 'Blöf yapıyorsun, belli'}},
+  {id: 'trust_me', icon: 'shield', reply: 'trust', game: 'blof', labels: {riza: 'Sözüm senettir, evlat', dursun: 'Kahvecinin sözü temizdir', cem: 'Güven bana kanka', defne: 'Bana güven, tatlım'}},
 ];
+
+/** Oyuncunun karakterine göre menü (bu oyunda gösterilecekler, sırasıyla): {id, label, icon}. */
+export function quickMenu(charId: string, game: 'pisti' | 'blof'): {id: string; label: string; icon: string}[] {
+  const c = (CHAR_IDS as readonly string[]).includes(charId) ? (charId as CharId) : 'dursun';
+  return QUICK_CHAT.filter(q => !q.game || q.game === game).map(q => ({id: q.id, label: q.labels[c], icon: q.icon}));
+}
 
 type QSay = [tts: string, opt?: Opt];
 type QReply = [rel: Rel | '', tts: string, opt?: Opt];
 
+// Söyleyişler menüdeki sözü söyler ya da doğal biçimde uzatır (ilki = düğmedeki söz).
 const QC_SAY: Record<CharId, Record<string, QSay[]>> = {
   riza: {
-    hello: [['[chuckles] Selamün aleyküm evlat!'], ['[clears throat] Hayırlı akşamlar, hoş geldin.']],
-    gg: [['[chuckles] Eline sağlık evlat.'], ['[proudly] İyi oyundu, helal olsun.'], ['[chuckles] Güzel maçtı, çaylar benden.']],
-    nice: [['[proudly] Aferin! Usta işi.'], ['[chuckles] Vay, bu hamle bana yakışırdı!'], ['[laughs] Hah! Aferin evlat!']],
-    wow: [['[surprised] Vay anam vay!'], ['[gasps] Maşallah, maşallah!']],
-    lucky: [['[grumbling] Şans bu, şans!'], ['[scoffs] Kör tavuk da bazen buğday bulur!']],
-    hurry: [['[grumbling] Hadi evlat, çay soğuyor!'], ['[sighs] Bu ne ağırlık yahu?'], ['[annoyed] Bekle bekle, sakal bıraktım!']],
-    wait: [['[clears throat] Dur evlat, acele yok.'], ['[thoughtful] Sabret… usta düşünüyor.']],
-    oops: [['[groans] Hay aksi!'], ['[sighs] Eh be… olur böyle.']],
-    oh_no: [['[gasps] Olamaz!'], ['[groans] Vah vah vah…']],
-    thanks: [['[chuckles] Sağ olasın evlat.'], ['[proudly] Eksik olma aslanım.']],
-    tea: [['[shouting] Dursun! Herkese çay, benden!'], ['[chuckles] Çaylar benden evlat.']],
-    revenge: [['[grumbling] Rövanş! Kalkmak yok!'], ['[proudly] Bir el daha! Usta pes etmez.']],
-    bluffing: [['[scoffs] Hıh! Yalanın belli evlat!'], ['[chuckles] Blöf bu, bıyığım titredi.']],
-    trust_me: [['[proudly] Bana güven evlat, sözüm senettir.'], ['[chuckles] Rıza Amca yalan söyler mi?']],
+    hello: [['[chuckles] Selamün aleyküm, evlat!'], ['[clears throat] Selamün aleyküm. Hoş geldin, otur bakalım.']],
+    gg: [['[chuckles] Eline sağlık evlat.'], ['[proudly] Eline sağlık evlat, helal olsun.'], ['[chuckles] Eline sağlık. Çaylar benden.']],
+    nice: [['[proudly] Aferin, usta işi!'], ['[chuckles] Aferin evlat… bana yakışırdı bu!'], ['[laughs] Hah! Usta işi, usta!']],
+    wow: [['[gasps] Maşallah, bu ne hamle!'], ['[surprised] Maşallah! Vay anam vay!']],
+    lucky: [['[scoffs] Kör tavuk buğday buldu!'], ['[grumbling] Kör tavuk da bazen buğday bulur evlat.']],
+    hurry: [['[grumbling] Hadi evlat, çay soğudu!'], ['[sighs] Hadi evlat… çayım buz kesti.'], ['[annoyed] Hadi evlat! Sakal bıraktım bekle bekle!']],
+    wait: [['[clears throat] Dur evlat, acele yok.'], ['[thoughtful] Dur evlat… usta düşünüyor.']],
+    oops: [['[groans] Hay aksi, gözüm kaydı!'], ['[sighs] Hay aksi… gözlüğü takmamışım.']],
+    oh_no: [['[gasps] Olamaz! Vah vah vah…'], ['[groans] Vah vah vah… olamaz bu.']],
+    thanks: [['[chuckles] Sağ olasın evlat.'], ['[proudly] Sağ olasın, eksik olma aslanım.']],
+    tea: [['[shouting] Dursun, çaylar benden!'], ['[chuckles] Dursun! Herkese çay, benim hesabıma.']],
+    revenge: [['[grumbling] Rövanş! Kalkmak yok!'], ['[proudly] Rövanş! Usta pes etmez evlat.']],
+    bluffing: [['[scoffs] Yalanın belli, evlat!'], ['[chuckles] Yalanın belli evlat… bıyığım titredi.']],
+    trust_me: [['[proudly] Sözüm senettir, evlat.'], ['[chuckles] Sözüm senettir. Rıza Amca yalan söyler mi?']],
   },
   dursun: {
-    hello: [['[laughs] Hoş geldin, hoş geldin!'], ['[happy] Selam! Çayınız geliyor!']],
-    gg: [['[laughs] Helal olsun, çaylar benden!'], ['[happy] Güzel oyundu kardeşim!'], ['[laughs heartily] Ne maçtı be! Deftere yazdım!']],
-    nice: [['[excited] Oh be! Bu hamleye çay içilir!'], ['[laughs] Maşallah, maşallah!'], ['[excited] Vay vay! Usta hamle!']],
-    wow: [['[gasps] Vay! Tepsiyi düşürüyordum!'], ['[laughs heartily] Ohooo! Bu ne böyle?']],
-    lucky: [['[laughs] Şanslı müşteri! Nazar değmesin!'], ['[chuckles] Bu şans sende nereden?']],
-    hurry: [['[laughs] Hadi kardeşim, ocak yanıyor!'], ['[chuckles] Çay soğudu, yeniden demliyorum!'], ['[excited] Hadi hadi hadi!']],
-    wait: [['[chuckles] Dur bir dakika, tepsiyi bırakayım.'], ['[thoughtful] Bekle kardeşim, düşünüyorum.']],
-    oops: [['[groans] Eyvah! Tepsi devrildi!'], ['[laughs] Hay aksi! Olsun, olsun!']],
-    oh_no: [['[gasps] Aman aman!'], ['[groans] Vay başıma gelenler!']],
-    thanks: [['[happy] Sağ ol kardeşim, eksik olma!'], ['[laughs] Teşekkürler! Çayın benden!']],
-    tea: [['[laughs heartily] Çaylar benden! Herkese tavşan kanı!'], ['[excited] Ocak yandı, çaylar geliyor!']],
-    revenge: [['[laughs] Rövanş! Çaylar tazelensin!'], ['[excited] Bir el daha! Defteri açıyorum!']],
-    bluffing: [['[laughs] Yalan bunlar! Kahveci anlar!'], ['[chuckles] Bu el blöf kokuyor kardeşim!']],
-    trust_me: [['[happy] Bana güven, ben dürüst kahveciyim!'], ['[chuckles] Kahvecinin sözü çay gibi temiz!']],
+    hello: [['[laughs] Hoş geldin, hoş geldin!'], ['[happy] Hoş geldin! Çayın hemen geliyor!']],
+    gg: [['[laughs] Helal olsun, çaylar benden!'], ['[happy] Helal olsun kardeşim, güzel oyundu!'], ['[laughs heartily] Helal olsun! Ne maçtı be!']],
+    nice: [['[excited] Bu hamleye çay içilir!'], ['[laughs] Maşallah! Bu hamleye çay içilir!'], ['[excited] Vay vay! Usta hamle kardeşim!']],
+    wow: [['[gasps] Vay, tepsiyi düşürecektim!'], ['[laughs heartily] Ohooo! Tepsi elimden kayıyordu!']],
+    lucky: [['[laughs] Şansına nazar değmesin!'], ['[chuckles] Maşallah, nazar değmesin kardeşim.']],
+    hurry: [['[laughs] Çaylar soğuyor, hadi bakalım!'], ['[chuckles] Hadi bakalım, çayı yeniden demliyorum!'], ['[excited] Hadi hadi hadi! Çaylar soğuyor!']],
+    wait: [['[chuckles] Dur, tepsiyi bırakayım.'], ['[thoughtful] Dur kardeşim, tepsiyi bırakıp düşüneyim.']],
+    oops: [['[groans] Eyvah, tepsi devrildi!'], ['[laughs] Eyvah! Olsun olsun, silerim.']],
+    oh_no: [['[gasps] Aman aman, başıma gelenler!'], ['[groans] Aman aman aman…']],
+    thanks: [['[happy] Sağ ol, eksik olma!'], ['[laughs] Sağ ol kardeşim! Çayın benden.']],
+    tea: [['[laughs heartily] Herkese çay benden!'], ['[excited] Herkese çay benden! Tavşan kanı!']],
+    revenge: [['[laughs] Rövanş! Defteri açıyorum!'], ['[excited] Rövanş! Çaylar tazelensin!']],
+    bluffing: [['[chuckles] Bu el blöf kokuyor!'], ['[laughs] Blöf kokuyor kardeşim, çok kokuyor!']],
+    trust_me: [['[happy] Kahvecinin sözü temizdir!'], ['[chuckles] Bana güven. Sözüm çay gibi temizdir.']],
   },
   cem: {
-    hello: [['[excited] Selam kanka!'], ['[chuckles] Naber aga? Hazır mısın?']],
-    gg: [['[chuckles] Ci ci kanka, temiz oyun.', T('GG kanka, temiz oyun.')], ['[excited] Ci ci! Efsane maçtı.', T('GG! Efsane maçtı.')], ['[chuckles] İyi oyundu kanka, saygılar.']],
-    nice: [['[excited] Kanka efsane hamle!'], ['[gasps] Of, çok iyi ya!'], ['[laughs] Bu hamle storilik!', T("Bu hamle story'lik!")]],
-    wow: [['[gasps] Oha! Yok artık!'], ['[excited] Kanka bu ne ya?!']],
-    lucky: [['[scoffs] Kanka sadece şans, sadece şans.'], ['[laughs] Ar en ci seni seviyor kanka!', T('RNG seni seviyor kanka!')]],
-    hurry: [['[sighs] Kanka at artık!'], ['[annoyed] Aga, ey ef key mı kaldın?', T('Aga, AFK mı kaldın?')], ['[chuckles] Kanka şarjım bitecek, hadi!']],
-    wait: [['[thoughtful] Bi saniye kanka, hesaplıyorum.'], ['[whispers] Dur dur, yükleniyor…']],
-    oops: [['[groans] Of ya, miskılik!', T('Of ya, misclick!')], ['[sighs] Kanka bu sayılmaz.']],
-    oh_no: [['[groans] Hadi ya! Olamaz!'], ['[gasps] Kanka ne oldu şimdi?']],
-    thanks: [['[chuckles] Eyvallah kanka!'], ['[excited] Sağ ol aga, efsanesin!']],
-    tea: [['[chuckles] Çaylar benden kanka, öğrenci usulü!'], ['[laughs] Dursun abi, çaylar benim hesaba!']],
-    revenge: [['[annoyed] Rövanş kanka, şimdi!'], ['[excited] Bir el daha! Bu sefer ciddiyim.']],
-    bluffing: [['[scoffs] Kanka blöf bu, belli!'], ['[laughs] Red fleg! Yalan söylüyorsun!', T('Red flag! Yalan söylüyorsun!')]],
-    trust_me: [['[chuckles] Kanka güven bana, yüzde yüz doğru.'], ['[mischievously] Ben mi yalan? Asla kanka.']],
+    hello: [['[excited] Selam kanka, naber?'], ['[chuckles] Selam kanka! Hazır mısın?']],
+    gg: [['[chuckles] Ci ci kanka, temiz oyun.', T('GG kanka, temiz oyun.')], ['[excited] Ci ci! Efsane maçtı kanka.', T('GG! Efsane maçtı kanka.')], ['[chuckles] Temiz oyun kanka, saygılar.']],
+    nice: [['[excited] Kanka efsane hamle!'], ['[gasps] Efsane hamle! Of, çok iyi ya!'], ['[laughs] Kanka bu hamle storilik!', T("Kanka bu hamle story'lik!")]],
+    wow: [['[gasps] Oha, yok artık ya!'], ['[excited] Yok artık! Kanka bu ne ya?!']],
+    lucky: [['[scoffs] Sadece şans kanka, şans.'], ['[laughs] Şans kanka! Ar en ci seni seviyor.', T('Şans kanka! RNG seni seviyor.')]],
+    hurry: [['[sighs] Kanka biraz hızlan.'], ['[annoyed] Kanka hızlan, ey ef key mı kaldın?', T('Kanka hızlan, AFK mı kaldın?')], ['[chuckles] Biraz hızlan kanka, şarjım bitiyor!']],
+    wait: [['[thoughtful] Bi saniye, hesaplıyorum.'], ['[whispers] Bi saniye kanka… yükleniyor.']],
+    oops: [['[groans] Of ya, miskılik oldu!', T('Of ya, misclick oldu!')], ['[sighs] Miskılik kanka, sayılmaz bu.', T('Misclick kanka, sayılmaz bu.')]],
+    oh_no: [['[groans] Hadi ya, olamaz!'], ['[gasps] Olamaz! Kanka ne oldu şimdi?']],
+    thanks: [['[chuckles] Eyvallah kanka, sağ ol.'], ['[excited] Eyvallah aga, efsanesin!']],
+    tea: [['[chuckles] Çaylar benden kanka!'], ['[chuckles] Çaylar benden, öğrenci usulü!']],
+    revenge: [['[annoyed] Rövanş kanka, hemen şimdi!'], ['[excited] Rövanş! Bu sefer ciddiyim kanka.']],
+    bluffing: [['[scoffs] Kanka blöf bu, belli!'], ['[laughs] Blöf bu kanka, red fleg her yerde!', T('Blöf bu kanka, red flag her yerde!')]],
+    trust_me: [['[chuckles] Güven bana kanka.'], ['[mischievously] Güven bana kanka, yüzde yüz doğru.']],
   },
   defne: {
-    hello: [['[calm] Merhaba.'], ['[softly] Selam. Hoş geldin.']],
-    gg: [['[calm] Güzel oyundu… şaşırttın beni.'], ['[chuckles] İyi oyundu. Keyif aldım.'], ['[softly] Tebrikler. Ciddiyim.']],
-    nice: [['[chuckles] Zarif hamle.'], ['[calm] Güzel. Çok güzel.'], ['[softly] Bunu ben de yapardım.']],
-    wow: [['[surprised] Vay. Etkileyici.'], ['[chuckles] Ooo. Bunu beklemiyordum.']],
-    lucky: [['[sarcastic] Şanslısın, tatlım.'], ['[deadpan] Şans. Ne sürpriz.']],
-    hurry: [['[deadpan] Tık tak, tatlım.'], ['[sighs] Bir bina çizilir bu sürede.'], ['[calm] Hadi. Zarifçe ama hızlı.']],
-    wait: [['[calm] Bir saniye. Ölçüyorum.'], ['[softly] Acele yok, değil mi?']],
-    oops: [['[sighs] Ah. Olur böyle.'], ['[chuckles] Hata değil… tasarım tercihi.']],
-    oh_no: [['[gasps] Hayır…'], ['[sighs] Ah, canım…']],
-    thanks: [['[softly] Teşekkürler.'], ['[chuckles] Çok naziksin.']],
-    tea: [['[calm] Benim kahvem sade, sizin çayınız benden.'], ['[softly] Çaylar benden. Bugün cömertim.']],
-    revenge: [['[calm] Rövanş. Şimdi.'], ['[mischievously] Bir el daha? Seve seve.']],
-    bluffing: [['[chuckles] Yalanın çok tatlı ama belli.'], ['[deadpan] Blöf yapıyorsun. Kaşın kalktı.']],
-    trust_me: [['[softly] Bana güven. Sadece biraz yalan söylerim.'], ['[calm] Doğruyu söylüyorum. Bu sefer.']],
+    hello: [['[calm] Merhaba, hoş geldin.'], ['[softly] Merhaba. Hoş geldin, otur.']],
+    gg: [['[calm] Güzel oyundu, keyif aldım.'], ['[chuckles] Güzel oyundu… şaşırttın beni.'], ['[softly] Keyif aldım. Ciddiyim.']],
+    nice: [['[chuckles] Zarif bir hamle, bravo.'], ['[calm] Bravo. Çok zarif.'], ['[softly] Zarif hamle. Bunu ben de yapardım.']],
+    wow: [['[surprised] Vay, gerçekten etkileyici.'], ['[chuckles] Ooo. Etkileyici, itiraf edeyim.']],
+    lucky: [['[sarcastic] Şanslısın bugün, tatlım.'], ['[deadpan] Şanslısın bugün. Ne sürpriz.']],
+    hurry: [['[calm] Acele etsek mi canım?'], ['[deadpan] Acele etsek mi? Tık tak.'], ['[sighs] Canım, bu sürede bina çizilir.']],
+    wait: [['[calm] Bir saniye, ölçüyorum.'], ['[softly] Bir saniye… acele yok, değil mi?']],
+    oops: [['[chuckles] Tasarım hatası, olur böyle.'], ['[sighs] Ah. Hata değil… tasarım tercihi.']],
+    oh_no: [['[gasps] Ah hayır, olamaz.'], ['[sighs] Olamaz… ah, canım.']],
+    thanks: [['[softly] Çok naziksin, teşekkürler.'], ['[chuckles] Teşekkürler. Çok naziksin.']],
+    tea: [['[calm] Kahveler benden bugün.'], ['[softly] Kahveler benden. Bugün cömertim.']],
+    revenge: [['[mischievously] Rövanş? Seve seve.'], ['[calm] Rövanş. Şimdi.']],
+    bluffing: [['[chuckles] Blöf yapıyorsun, belli.'], ['[deadpan] Blöf yapıyorsun. Kaşın kalktı.']],
+    trust_me: [['[softly] Bana güven, tatlım.'], ['[chuckles] Bana güven. Sadece biraz yalan söylerim.']],
   },
 };
 

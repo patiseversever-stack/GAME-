@@ -5,12 +5,12 @@ import {mulberry32} from '../core/rng';
 import type {CardId, GameResult, PistiEvent, PistiState} from '../core/types';
 import {isJack, rankOf} from '../core/types';
 import {PistiBot} from '../ai/bot';
-import {momentPriority, pickLine, shouldSpeak, type Moment as DialogueMoment} from '../ai/dialogue';
+import {beginDialogueHand, momentPriority, pickLine, shouldSpeak, type Moment as DialogueMoment, type TalkStore} from '../ai/dialogue';
 import {Table2D, cardPoints} from '../table2d/table';
 import type {Sfx} from '../audio/sfx';
 import type {VoicePlayer} from '../audio/voice';
 import type {GameHud, HudPose} from '../ui/types';
-import {haptic} from '../platform/bridge';
+import {haptic, store} from '../platform/bridge';
 import {pistiInfo, type MatchSetup, type SeatPlayer} from './types';
 
 /** Karakterlerin konuşabileceği anlar (diyalog sistemi bunlara replik seçer). */
@@ -35,6 +35,9 @@ export interface MatchOutcome {
   /** Bunların kaçı vale pişti */
   myValePisti: number;
 }
+
+/** Pişti konuşma hafızası: eller / oturumlar arası tekrar önleme (localStorage; hata yutulur). */
+const TALK_STORE: TalkStore = {load: () => store.get<unknown>('talk.pisti', null), save: m => store.set('talk.pisti', m)};
 
 /** Bot düşünme süresi çarpanı (karakter aralığı × bu; tempo hızlı kalsın) */
 const TEMPO = 0.8;
@@ -119,7 +122,8 @@ export class Match {
     if (!force && !shouldSpeak(m)) return false;
     const line = pickLine(p.char.id, m);
     if (!line) return false;
-    this.d.hud.say(line.text, (line.mood ?? null) as HudPose | null, ms, seat);
+    const dur = this.d.voice.duration(line.id); // balon sesten önce kapanmasın
+    this.d.hud.say(line.text, (line.mood ?? null) as HudPose | null, dur ? Math.max(ms, dur * 1000 + 450) : ms, seat);
     this.d.voice.play(line.id, {priority: momentPriority(m)});
     return true;
   }
@@ -154,6 +158,7 @@ export class Match {
     const seed = setup.seed ?? (Math.random() * 2 ** 31) | 0;
     const {state, events} = createGame({seats: info.seats, teams: [...info.teams], dealer: setup.dealer, seed});
     this.state = state;
+    beginDialogueHand(info.seats, TALK_STORE); // el sayacı + kalabalık masada daha seyrek konuşma
     this.bots = Array.from({length: info.seats}, (_, s) => {
       const p = this.players[s];
       return p && !p.human ? new PistiBot(s, p.personality, mulberry32((seed ^ 0x5bd1e995) + s * 7919)) : null;
