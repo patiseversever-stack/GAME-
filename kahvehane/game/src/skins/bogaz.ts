@@ -120,6 +120,7 @@ function* paintFrame(): Job<HTMLCanvasElement> {
     W,
     H,
     seed: 1453,
+    s: 1.15,
     mask: stripMask,
     under: false,
     sketch: r => {
@@ -165,7 +166,7 @@ function* paintSuit(s: Suit): Job<HTMLCanvasElement> {
     H: SPR,
     seed: 70 + 'SHDC'.indexOf(s),
     k: 0.75,
-    s: 0.9,
+    s: 1,
     under: false,
     mask: suitMask(s),
     sketch: r => {
@@ -309,7 +310,7 @@ function* paintAce(): Job<HTMLCanvasElement> {
 // ───────────────────────── saray kartları ─────────────────────────
 const PAD = 15;
 function* paintCourt(kind: 'K' | 'Q' | 'J'): Job<HTMLCanvasElement> {
-  const W = CW, H = CH, hz = H * 0.8, s = 1.1;
+  const W = CW, H = CH, hz = H * 0.8, s = 1.2;
   const inner = ogeePts(PAD, PAD, W - 2 * PAD, H - 2 * PAD);
   const innerP = polyPath(inner);
   const moon: Disc = kind === 'Q' ? {x: W * 0.5, y: H * 0.29, r: W * 0.15} : kind === 'K' ? {x: W * 0.76, y: H * 0.21, r: W * 0.075} : {x: W * 0.26, y: H * 0.2, r: W * 0.06};
@@ -445,6 +446,7 @@ function* paintBackArt(): Job<HTMLCanvasElement> {
     H,
     seed: 1923,
     k: 0.75,
+    s: 1.1,
     under: false,
     sketch: r => {
       nightSky(r, W, hz, 19, 6);
@@ -498,34 +500,20 @@ function* paintBackArt(): Job<HTMLCanvasElement> {
 }
 
 function* paintAll(): Job<CardArt> {
-  const T: [string, number][] = [];
-  let t0 = performance.now();
-  const lap = (n: string): void => {
-    const t = performance.now();
-    T.push([n, Math.round(t - t0)]);
-    t0 = t;
-  };
   const frame = yield* paintFrame();
-  lap('frame');
   const cream = yield* paintCream(77, '#f7f2e4', '#e6dcc4', [
     [0.3, 0.26, 0.42, 'rgba(150,172,214,.2)'],
     [0.72, 0.74, 0.46, 'rgba(150,172,214,.16)'],
     [0.62, 0.3, 0.3, 'rgba(236,206,140,.14)'],
   ]);
-  lap('cream');
   const suit = {} as Record<Suit, HTMLCanvasElement>;
   for (const s of ['S', 'H', 'D', 'C'] as Suit[]) suit[s] = yield* paintSuit(s);
-  lap('suits');
   const ace = yield* paintAce();
-  lap('ace');
   const court: Record<number, HTMLCanvasElement> = {};
   court[13] = yield* paintCourt('K');
   court[12] = yield* paintCourt('Q');
   court[11] = yield* paintCourt('J');
-  lap('courts');
   const back = yield* paintBackArt();
-  lap('back');
-  console.warn('TIMING', JSON.stringify(T));
   RF.measure();
   return {frame, cream, suit, ace, court, back};
 }

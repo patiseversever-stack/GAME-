@@ -1,664 +1,530 @@
-// Deste "Kapadokya Şafağı": gün doğarken peri bacalarının üstünde süzülen sıcak hava balonları.
-//   · sayılar: takım şeklinde balon (renkli dilimler, küre ışığı, halatlar, hasır sepet), zarfın ortasında değer rozeti
-//   · As: doğan güneşin önünde dev takım balonu, çevresinde uzak balonlar
-//   · saray kartları kaya kemerli pencerede: Papaz = taçlı mor-altın balon, Kız = lale desenli pembe balon,
-//     Vale = dört renk dilimli balon (Pişti'nin güç kartı)
-//   · arka: mor-pembe-turuncu şafak göğü, ufukta güneş, katman katman peri bacaları, onlarca balon
-import {
-  cardPath, clamp, corners, defineSkin, edge, glow, gold, grain, lin, loadFont, makeCanvas, mix, mulberry, rad, RankFont, rrPath, css, sparkle,
-  suitPath, withSuit, due, isRed, type Ctx, type Job, type RGB, type Rnd, type Suit,
-} from './kit';
+// Deste "Kapadokya Şafağı" — yağlı boya (masa "Kapadokya Şafağı" ile aynı fırça, src/themes/oil.ts).
+// Düzen Yıldızlı Gece destesiyle aynı (src/skins/oilcard.ts): boyalı kenar şeridi + krem tuval + iri köşe dizinleri.
+//   · kenar: şafak göğü (koyu mavi → gül → altın), şeritte minik balonlar; altta peri bacaları ve vadi
+//   · sayılar: takım şeklinde boyalı balon (dilimler boyunca meridyen darbeleri), altında halatlı hasır sepet
+//   · As: doğan güneş madalyonu (haleli güneş, uzak balonlar, peri bacaları) + önünde takım balonu
+//   · saray kartları kaya kemerli pencerede: Papaz = taçlı mor-altın balon, Kız = laleli gül balon,
+//     Vale = dört renk balon (Pişti'nin güç kartı) — hepsi peri bacalarının üstünde, şafakta
+//   · arka: Kapadokya şafağının tamamı (güneş, onlarca balon, peri bacaları, vadi)
+import {basket, classicPath, envelope, fairy, ridge, smallBalloon} from '../themes/scenes';
+import {canvasWeave, haloStrokes, idAt, lightDabs, makeIdMap, Oil, oilArt, pathStrokes, ringStrokes, type Ref} from '../themes/oil';
+import {radial} from '../themes/paint';
+import {ACE, archPts, CH, clipSuit, CW, drawBack, drawFace, paintCream, PH, polyPath, PW, SPR, stripMask, suitMask, type CardArt, type FaceStyle} from './oilcard';
+import {crown, defineSkin, due, loadFont, makeCanvas, mix, mulberry, RankFont, suitPath, type Ctx, type Job, type RGB, type Rnd, type Suit} from './kit';
 
 const FONT = (px: number): string => `400 ${px}px "Lilita One", "Arial Rounded MT Bold", system-ui, sans-serif`;
 const RF = new RankFont(FONT);
-const PW = 360, PH = Math.round(PW / 0.7);
-const RED = '#d4143f', PLUM = '#2b1d5c';
+const STYLE: FaceStyle = {font: RF, red: '#c8143c', ink: '#2b1d5c', line: 'rgba(40,18,52,0.9)', aceSuit: 'sprite', roundel: '#fbf0e0'};
 
-/** Takım balonlarının dilim renkleri (ilk renk baskın) */
+/** Takım balonlarının dilim renkleri (ilk renk baskın: takım rengi okunur kalsın) */
 const GORE: Record<Suit, string[]> = {
-  H: ['#e8173f', '#ffffff', '#e8173f', '#ffc93c'],
-  D: ['#ff6a1f', '#ffd23a', '#e8173f', '#ffd23a'],
-  S: ['#3a2a8c', '#2fc3c8', '#3a2a8c', '#f4eaff'],
-  C: ['#21327a', '#3fd17a', '#21327a', '#ffffff'],
+  H: ['#d0103c', '#ee3c4e', '#d0103c', '#ffc23a'],
+  D: ['#e3202e', '#ff7a2a', '#e3202e', '#ffd84a'],
+  S: ['#2b1d5c', '#4b3496', '#2b1d5c', '#e8b03a'],
+  C: ['#1c2456', '#2a7a6e', '#1c2456', '#e8b03a'],
 };
 
-interface Art {
-  border: HTMLCanvasElement;
-  sky: HTMLCanvasElement;
-  big: Record<Suit, HTMLCanvasElement>;
-  sun: HTMLCanvasElement;
-  court: Record<number, HTMLCanvasElement>;
-  back: HTMLCanvasElement;
+interface Disc {
+  x: number;
+  y: number;
+  r: number;
+}
+interface Bal {
+  x: number;
+  y: number;
+  r: number;
+  cols: string[];
 }
 
-// ───────────────────────── balon ─────────────────────────
-/** Birim yolu (path) dilimli balon zarfına çevirir: dilimler, küre gölgesi, parlak yansıma, ince kontur. */
-function envelope(g: Ctx, path: Path2D, cols: readonly string[], n = 7, ink = 'rgba(30,14,40,0.85)'): void {
-  g.save();
-  g.clip(path);
-  // dilimler: kürenin meridyenleri (üstte ve altta birleşir)
-  for (let i = 0; i < n; i++) {
-    const u0 = -1 + (2 * i) / n, u1 = -1 + (2 * (i + 1)) / n;
-    g.beginPath();
-    const Y0 = -0.64, Y1 = 0.64, steps = 16;
-    for (let k = 0; k <= steps; k++) {
-      const y = Y0 + ((Y1 - Y0) * k) / steps;
-      const hw = 0.56 * Math.sqrt(Math.max(0, 1 - (y / 0.64) ** 2));
-      g.lineTo(u0 * hw, y);
+// ───────────────────────── eskiz parçaları ─────────────────────────
+/** Şafak göğü: koyu kobalttan güle, ufukta altına; yatay pembe-altın bulut şeritleri */
+function dawnSky(r: Ctx, W: number, hz: number, seed: number, clouds = 6): void {
+  const sky = r.createLinearGradient(0, 0, 0, hz);
+  sky.addColorStop(0, '#24388e');
+  sky.addColorStop(0.3, '#4a46a6');
+  sky.addColorStop(0.58, '#b05c9c');
+  sky.addColorStop(0.8, '#ff9472');
+  sky.addColorStop(1, '#ffd47e');
+  r.fillStyle = sky;
+  r.fillRect(0, 0, W, hz + 2);
+  const rr = mulberry(seed);
+  for (let i = 0; i < clouds; i++) {
+    const y = hz * (0.2 + rr() * 0.65), x = W * rr(), w = W * (0.25 + rr() * 0.4);
+    const warm = y > hz * 0.5;
+    radial(r, x, y, 0, w * 0.5, [[0, warm ? 'rgba(255,214,170,.45)' : 'rgba(210,150,200,.4)'], [1, 'rgba(255,200,170,0)']], 1, 0.16);
+  }
+}
+function sunSketch(r: Ctx, s: Disc, halo = 4): void {
+  radial(r, s.x, s.y, 0, s.r * halo, [[0, 'rgba(255,246,200,.95)'], [0.3, 'rgba(255,214,140,.6)'], [0.65, 'rgba(255,150,120,.25)'], [1, 'rgba(255,140,120,0)']]);
+  r.fillStyle = '#fff3c4';
+  r.beginPath();
+  r.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+  r.fill();
+}
+/** Vadi + peri bacaları (ufuk altında) */
+function valley(r: Ctx, W: number, H: number, hz: number, seed: number, ch: number, cw: number): void {
+  const v = r.createLinearGradient(0, hz, 0, H);
+  v.addColorStop(0, '#b4687e');
+  v.addColorStop(0.35, '#86486e');
+  v.addColorStop(0.7, '#5c3260');
+  v.addColorStop(1, '#2c1a36');
+  r.fillStyle = v;
+  r.fillRect(0, hz, W, H - hz);
+  ridge(r, hz + 1, ch * 0.18);
+  // derinlik: uzak sıra küçük ve soluk, orta sıra seyrek, ön sırada yalnız kenarlarda iri kümeler
+  fairy(r, mulberry(seed), -cw, W + cw, hz + ch * 0.4, ch * 0.5, cw * 0.5, 0.55);
+  fairy(r, mulberry(seed + 1), W * 0.06, W * 0.42, hz + ch * 0.75, ch * 0.75, cw * 0.75, 0.85);
+  fairy(r, mulberry(seed + 4), W * 0.62, W * 0.94, hz + ch * 0.8, ch * 0.7, cw * 0.75, 0.85);
+  fairy(r, mulberry(seed + 2), -cw * 0.6, W * 0.26, hz + ch * 1.25, ch * 1.15, cw * 1.1);
+  fairy(r, mulberry(seed + 3), W * 0.78, W + cw, hz + ch * 1.3, ch * 1.05, cw * 1.05);
+}
+/** Balon (eskiz): klasik zarf, dilimler, sepet */
+function balloon(r: Ctx, b: Bal, haze = 0, hazeCol: RGB = [255, 200, 180]): void {
+  smallBalloon(r, b.x, b.y, b.r, b.cols, haze, hazeCol);
+}
+/** Balon zarfının meridyen yönü (birim zarf: yarı genişlik 0.56, yarı boy 0.64) */
+function meridian(x: number, y: number, b: Disc): number {
+  const u = (x - b.x) / b.r, v = Math.max(-0.6, Math.min(0.6, (y - b.y) / b.r));
+  const q = 1 - (v * v) / 0.4096;
+  return Math.atan2(1, (-u * (v / 0.4096)) / Math.max(0.12, q));
+}
+const skyFlow = (x: number, y: number, s: number, sun?: Disc): number => {
+  let vx = 1, vy = 0.22 * Math.sin((x * 0.025) / s + (y * 0.05) / s) + 0.12 * Math.sin((y * 0.1) / s - (x * 0.02) / s);
+  if (sun) {
+    const dx = x - sun.x, dy = y - sun.y, d2 = dx * dx + dy * dy, R = sun.r * 2.6;
+    if (d2 < R * R * 5) {
+      const d = Math.sqrt(d2) + 1e-3, k = 2.6 * Math.exp(-d2 / (R * R));
+      vx += (k * -dy) / d;
+      vy += (k * dx) / d;
     }
-    for (let k = steps; k >= 0; k--) {
-      const y = Y0 + ((Y1 - Y0) * k) / steps;
-      const hw = 0.56 * Math.sqrt(Math.max(0, 1 - (y / 0.64) ** 2));
-      g.lineTo(u1 * hw, y);
-    }
-    g.closePath();
-    g.fillStyle = cols[i % cols.length];
-    g.fill();
   }
-  // dilim dikişleri
-  g.strokeStyle = 'rgba(40,20,40,0.22)';
-  g.lineWidth = 0.012;
-  for (let i = 1; i < n; i++) {
-    const u = -1 + (2 * i) / n;
-    g.beginPath();
-    for (let k = 0; k <= 16; k++) {
-      const y = -0.64 + (1.28 * k) / 16;
-      g.lineTo(u * 0.56 * Math.sqrt(Math.max(0, 1 - (y / 0.64) ** 2)), y);
-    }
-    g.stroke();
-  }
-  // küre gölgesi + yansıma
-  g.fillStyle = rad(g, -0.16, -0.22, 0.05, 0.75, [
-    [0, 'rgba(255,255,255,0.42)'],
-    [0.35, 'rgba(255,255,255,0.08)'],
-    [0.7, 'rgba(40,10,40,0.12)'],
-    [1, 'rgba(40,10,40,0.45)'],
-  ]);
-  g.fillRect(-1, -1, 2, 2);
-  g.fillStyle = lin(g, -0.6, 0, 0.6, 0, [
-    [0, 'rgba(255,220,180,0.12)'],
-    [0.6, 'rgba(0,0,0,0)'],
-    [1, 'rgba(30,0,40,0.28)'],
-  ]);
-  g.fillRect(-1, -1, 2, 2);
-  g.restore();
-  g.lineJoin = 'round';
-  g.lineWidth = 0.035;
-  g.strokeStyle = ink;
-  g.stroke(path);
+  return Math.atan2(vy, vx);
+};
+const valleyFlow = (x: number, y: number, s: number): number => 0.18 * Math.sin((x * 0.04) / s + (y * 0.09) / s);
+/** Bölge kimlik haritası: 1..n balonlar, 200 peri bacası/kaya, 0 gök */
+function regionIds(W: number, H: number, hz: number, bals: Bal[], k = 0.6): Ref {
+  return makeIdMap(W, H, k, (r, id) => {
+    bals.forEach((b, i) => {
+      r.fillStyle = id(1 + i);
+      r.beginPath();
+      r.ellipse(b.x, b.y, b.r * 0.58, b.r * 0.66, 0, 0, Math.PI * 2);
+      r.fill();
+    });
+    r.fillStyle = id(200);
+    r.fillRect(0, hz - H * 0.02, W, H);
+  });
+}
+function sunDabs(oil: Oil, s: Disc, rnd: Rnd, k: number, haloK = 2.4): void {
+  const q = Math.max(0.6, s.r / (20 * k));
+  haloStrokes(oil, s.x, s.y, 0, s.r * 0.95, Math.round(16 * q), [[255, 248, 214], [255, 238, 180], [255, 250, 230]], 3 * k, rnd, 7 * k, 0.12);
+  // ışık: güneşten taşan, sıcak (altın → şeftali → gül) kısa darbeler; düzenli halka değil
+  haloStrokes(oil, s.x, s.y, s.r * 1.05, s.r * 1.6, Math.round(20 * q), [[255, 226, 150], [255, 210, 130], [255, 236, 170]], 2.6 * k, rnd, 10 * k);
+  haloStrokes(oil, s.x, s.y, s.r * 1.5, s.r * haloK, Math.round(26 * q), [[255, 180, 130], [255, 200, 150], [240, 150, 150], [255, 214, 160]], 2.4 * k, rnd, 12 * k);
+}
+function vignette(g: Ctx, W: number, H: number, a: number): void {
+  radial(g, W / 2, H * 0.45, Math.min(W, H) * 0.35, Math.max(W, H) * 0.75, [[0, 'rgba(30,10,30,0)'], [1, `rgba(30,10,30,${a})`]]);
 }
 
-/** Halatlar + hasır sepet: (x0,x1) halat üst uçları (aynı y), sepet `by` altında. Birim koordinatlar. */
-function basket(g: Ctx, x0: number, x1: number, y: number, len: number, w: number): void {
-  const bx = 0, top = y + len, bh = w * 0.62;
-  g.strokeStyle = 'rgba(60,32,20,0.9)';
-  g.lineWidth = 0.016;
-  g.beginPath();
-  g.moveTo(x0, y);
-  g.lineTo(bx - w * 0.46, top);
-  g.moveTo(x1, y);
-  g.lineTo(bx + w * 0.46, top);
-  g.moveTo((x0 * 2 + x1) / 3, y);
-  g.lineTo(bx - w * 0.16, top);
-  g.moveTo((x0 + x1 * 2) / 3, y);
-  g.lineTo(bx + w * 0.16, top);
-  g.stroke();
-  const p = new Path2D();
-  p.moveTo(bx - w / 2, top);
-  p.lineTo(bx + w / 2, top);
-  p.lineTo(bx + w * 0.42, top + bh);
-  p.lineTo(bx - w * 0.42, top + bh);
-  p.closePath();
-  g.fillStyle = lin(g, 0, top, 0, top + bh, [
-    [0, '#c98a46'],
-    [1, '#7a4a20'],
-  ]);
-  g.fill(p);
-  g.save();
-  g.clip(p);
-  g.strokeStyle = 'rgba(70,36,10,0.55)';
-  g.lineWidth = 0.012;
-  for (let i = 1; i < 4; i++) {
-    g.beginPath();
-    g.moveTo(bx - w / 2, top + (bh * i) / 4);
-    g.lineTo(bx + w / 2, top + (bh * i) / 4);
-    g.stroke();
-  }
-  for (let i = -3; i <= 3; i++) {
-    g.beginPath();
-    g.moveTo(bx + (i * w) / 7, top);
-    g.lineTo(bx + (i * w * 0.85) / 7, top + bh);
-    g.stroke();
-  }
-  g.restore();
-  g.fillStyle = '#5a3216';
-  g.fill(rrPath(bx - w * 0.54, top - w * 0.06, w * 1.08, w * 0.13, w * 0.06));
-  g.lineWidth = 0.02;
-  g.strokeStyle = 'rgba(40,20,10,0.9)';
-  g.stroke(p);
+// ───────────────────────── kenar şeridi ─────────────────────────
+function* paintFrame(): Job<HTMLCanvasElement> {
+  const W = PW, H = PH, hz = H * 0.74;
+  const sun: Disc = {x: W * 0.035, y: hz - H * 0.01, r: W * 0.04};
+  const bals: Bal[] = [
+    {x: W * 0.52, y: W * 0.04, r: W * 0.045, cols: ['#e8173f', '#ffd23a']},
+    {x: W * 0.8, y: W * 0.042, r: W * 0.04, cols: ['#2fa7e0', '#ffffff']},
+    {x: W * 0.957, y: H * 0.22, r: W * 0.042, cols: ['#7a3fc8', '#ffb43a']},
+    {x: W * 0.957, y: H * 0.45, r: W * 0.036, cols: ['#18b06a', '#fff1c8']},
+    {x: W * 0.043, y: H * 0.56, r: W * 0.04, cols: ['#ff6a1f', '#3a2a8c']},
+  ];
+  const ids = regionIds(W, H, hz, bals);
+  const {cv, g, ref, rnd} = yield* oilArt({
+    W,
+    H,
+    seed: 1985,
+    s: 1.15,
+    mask: stripMask,
+    under: false,
+    sketch: r => {
+      dawnSky(r, W, hz, 5, 8);
+      sunSketch(r, sun, 4);
+      valley(r, W, H, hz, 40, H * 0.1, W * 0.045);
+      for (const b of bals) balloon(r, b);
+    },
+    field: (x, y) => {
+      const id = idAt(ids, x, y);
+      if (id > 0 && id < 200 && bals[id - 1]) return meridian(x, y, bals[id - 1]);
+      if (id === 200) return y < hz + H * 0.09 ? -Math.PI / 2 + 0.15 * Math.sin(x * 0.3) : valleyFlow(x, y, 1);
+      const side = Math.min(x, W - x) < Math.min(y, H - y);
+      return side ? Math.PI / 2 + 0.35 * Math.sin(y * 0.04) : skyFlow(x, y, 1, sun);
+    },
+    sizeK: (x, y) => {
+      const id = idAt(ids, x, y);
+      return id > 0 && id < 200 ? 0.38 : id === 200 && y < hz + H * 0.09 ? 0.6 : 1;
+    },
+    detail: (x, y) => (idAt(ids, x, y) % 200 > 0 || Math.abs(y - hz) < H * 0.05 ? 0.9 : 0),
+  });
+  const oil = new Oil();
+  sunDabs(oil, sun, rnd, 1, 2.2);
+  lightDabs(oil, ref, rnd, 0, hz - H * 0.02, W, hz + H * 0.08, 215, 2, x => (stripMask(x, hz) ? 0 : 1));
+  oil.flush(g);
+  canvasWeave(g, W, H, rnd, 0.08);
+  return cv;
 }
 
-/** Klasik balon zarfı (birim yol): yuvarlak tepe, aşağı daralan gövde, ağız (etek) */
-function classicPath(): Path2D {
-  const p = new Path2D();
-  p.moveTo(0, -0.62);
-  p.bezierCurveTo(0.36, -0.62, 0.56, -0.38, 0.54, -0.1);
-  p.bezierCurveTo(0.52, 0.16, 0.3, 0.32, 0.14, 0.46);
-  p.lineTo(0.1, 0.56);
-  p.lineTo(-0.1, 0.56);
-  p.lineTo(-0.14, 0.46);
-  p.bezierCurveTo(-0.3, 0.32, -0.52, 0.16, -0.54, -0.1);
-  p.bezierCurveTo(-0.56, -0.38, -0.36, -0.62, 0, -0.62);
-  p.closePath();
-  return p;
-}
-let CLASSIC: Path2D | null = null;
-/** Klasik balon (küçük, uzak): x,y zarf merkezi, r yarı boy, alpha uzaklık sisi */
-export function smallBalloon(g: Ctx, x: number, y: number, r: number, cols: readonly string[], haze: number, hazeCol: RGB): void {
-  CLASSIC ??= classicPath();
-  g.save();
-  g.translate(x, y);
-  g.scale(r, r);
-  basket(g, -0.1, 0.1, 0.56, 0.18, 0.22);
-  envelope(g, CLASSIC, cols, 7, 'rgba(40,20,40,0.5)');
-  if (haze > 0) {
-    g.globalAlpha = haze;
-    g.fillStyle = css(hazeCol);
-    g.fill(CLASSIC);
-    g.fillRect(-0.15, 0.56, 0.3, 0.32);
+// ───────────────────────── takım balonları ─────────────────────────
+function* paintSuit(s: Suit): Job<HTMLCanvasElement> {
+  const k = SPR * 0.84, C = SPR / 2;
+  const b: Disc = {x: C, y: C, r: k * 1.02};
+  const {cv} = yield* oilArt({
+    W: SPR,
+    H: SPR,
+    seed: 90 + 'SHDC'.indexOf(s),
+    k: 0.75,
+    s: 1,
+    under: false,
+    mask: suitMask(s),
+    sketch: r => {
+      r.fillStyle = GORE[s][0];
+      r.fillRect(0, 0, SPR, SPR);
+      r.save();
+      r.translate(C, C);
+      r.scale(k * 1.04, k * 1.04);
+      envelope(r, suitPath(s), GORE[s], 8, 'rgba(0,0,0,0)');
+      r.restore();
+    },
+    field: (x, y) => meridian(x, y, b),
+    detail: (x, y) => (Math.abs(x - C) > k * 0.16 || Math.abs(y - C) > k * 0.2 ? 0.7 : 0),
+  });
+  // dilim dikişleri boyunca ince açık darbeler (balon kumaşının parıltısı)
+  const g = cv.getContext('2d')!, oil = new Oil(), rnd = mulberry(7 + 'SHDC'.indexOf(s));
+  for (let i = 0; i < 60; i++) {
+    const u = (rnd() - 0.5) * 1.0, v = -0.5 + rnd() * 0.9;
+    if (Math.abs(u) < 0.2 && Math.abs(v) < 0.22) continue;
+    const x = C + u * k, y = C + v * k, a = meridian(x, y, b), len = 6 + rnd() * 8;
+    if (rnd() < 0.5 && u > 0.1) continue;
+    oil.add([x, y, x + Math.cos(a) * len, y + Math.sin(a) * len], 1.4 + rnd(), [255, 244, 220], 0.1);
   }
-  g.restore();
-}
-
-/** Takım balonu: zarf = takım şekli, altta halatlar ve sepet. Birim uzayda çizer (merkez 0,0). */
-function suitBalloon(g: Ctx, s: Suit): void {
-  const p = suitPath(s);
-  const y = s === 'H' ? 0.47 : s === 'D' ? 0.58 : 0.54;
-  const [x0, x1] = s === 'H' || s === 'D' ? [-0.03, 0.03] : [-0.2, 0.2];
-  basket(g, x0, x1, y - 0.01, 0.13, 0.24);
-  envelope(g, p, GORE[s], s === 'D' ? 6 : 7);
-}
-
-// ───────────────────────── manzara ─────────────────────────
-/** Peri bacaları sırası: taban `by`, en yüksek `h`, renk; ince uzun koniler, küçük koyu bazalt şapkalar, oyma pencereler */
-export function chimneys(g: Ctx, x0: number, x1: number, by: number, h: number, col: RGB, cap: RGB, rnd: Rnd, holes = false): void {
-  // yumuşak kaya tepeleri (tabanı doldurur)
-  g.fillStyle = css(mix(col, [40, 10, 30], 0.08));
-  g.beginPath();
-  g.moveTo(x0, by + h);
-  const ph = rnd() * 6;
-  for (let x = x0; x <= x1 + 1; x += (x1 - x0) / 30) g.lineTo(x, by - h * (0.16 + 0.1 * Math.sin(x * (6 / (x1 - x0)) + ph) + 0.05 * Math.sin(x * (17 / (x1 - x0)))));
-  g.lineTo(x1, by + h);
-  g.closePath();
-  g.fill();
-  const cone = (x: number, hh: number, ww: number): void => {
-    const top = by - hh, neck = ww * 0.22;
-    const lean = (rnd() - 0.5) * ww * 0.3;
-    const body = new Path2D();
-    body.moveTo(x - ww, by);
-    body.bezierCurveTo(x - ww * 0.55, by - hh * 0.25, x - neck * 1.6 + lean, top + hh * 0.35, x - neck + lean, top + ww * 0.12);
-    body.lineTo(x + neck + lean, top + ww * 0.12);
-    body.bezierCurveTo(x + neck * 1.6 + lean, top + hh * 0.35, x + ww * 0.55, by - hh * 0.25, x + ww, by);
-    body.closePath();
-    g.fillStyle = lin(g, x - ww, 0, x + ww, 0, [
-      [0, css(mix(col, [255, 226, 200], 0.16))],
-      [0.45, css(col)],
-      [1, css(mix(col, [30, 6, 26], 0.22))],
-    ]);
-    g.fill(body);
-    // dikey erozyon çizgileri
-    g.strokeStyle = css(mix(col, [30, 6, 26], 0.3), 0.35);
-    g.lineWidth = Math.max(0.6, ww * 0.04);
-    for (let k = 0; k < 3; k++) {
-      const u = (rnd() - 0.5) * 1.1;
-      g.beginPath();
-      g.moveTo(x + u * ww * 0.8, by);
-      g.quadraticCurveTo(x + u * ww * 0.5 + lean * 0.5, by - hh * 0.5, x + u * neck + lean, top + hh * 0.2);
-      g.stroke();
-    }
-    // şapka: koyu bazalt, hafif eğik
-    g.save();
-    g.translate(x + lean, top + ww * 0.1);
-    g.rotate((rnd() - 0.5) * 0.3);
-    g.fillStyle = css(cap);
-    g.beginPath();
-    g.moveTo(-neck * 2.2, ww * 0.04);
-    g.quadraticCurveTo(-neck * 1.6, -ww * 0.34, 0, -ww * 0.42);
-    g.quadraticCurveTo(neck * 1.6, -ww * 0.34, neck * 2.2, ww * 0.04);
-    g.closePath();
-    g.fill();
-    g.restore();
-    if (holes && rnd() < 0.75) {
-      g.fillStyle = css(mix(col, [24, 6, 20], 0.6));
-      for (let k = 0; k < 1 + Math.floor(rnd() * 3); k++) {
-        const hy = by - hh * (0.15 + rnd() * 0.35), hx = x + (rnd() - 0.5) * ww * 0.7;
-        g.beginPath();
-        g.moveTo(hx - ww * 0.07, hy + ww * 0.12);
-        g.lineTo(hx - ww * 0.07, hy);
-        g.arc(hx, hy, ww * 0.07, Math.PI, 0);
-        g.lineTo(hx + ww * 0.07, hy + ww * 0.12);
-        g.closePath();
-        g.fill();
-      }
-    }
-  };
-  let x = x0 + rnd() * h * 0.2;
-  while (x < x1 + h * 0.2) {
-    const hh = h * (0.5 + rnd() * 0.55), ww = hh * (0.17 + rnd() * 0.08);
-    if (rnd() < 0.3) {
-      // ikiz/üçüz baca kümesi
-      cone(x - ww * 0.7, hh * 0.78, ww * 0.8);
-      cone(x + ww * 0.7, hh * 0.9, ww * 0.85);
-    }
-    cone(x, hh, ww);
-    x += ww * (1.4 + rnd() * 2.2);
-  }
-}
-
-/** Şafak göğü (koyu, arka yüz ve saray pencereleri için) */
-export function dawnSky(g: Ctx, w: number, h: number, horizon: number): void {
-  g.fillStyle = lin(g, 0, 0, 0, horizon, [
-    [0, '#3d2a7a'],
-    [0.35, '#8a3f9a'],
-    [0.62, '#e0577f'],
-    [0.82, '#ff9a5a'],
-    [1, '#ffd77a'],
-  ]);
-  g.fillRect(0, 0, w, h);
-}
-
-export const BALLOON_SETS: string[][] = [
-  ['#e8173f', '#ffd23a'],
-  ['#2fa7e0', '#ffffff'],
-  ['#7a3fc8', '#ffb43a'],
-  ['#18b06a', '#fff1c8'],
-  ['#ff6a1f', '#3a2a8c'],
-  ['#ff4fa0', '#ffffff'],
-  ['#ffd23a', '#e8173f', '#2fa7e0'],
-];
-
-/** Sahne: şafak + güneş + uzak/orta/yakın peri bacaları + balonlar */
-function* landscape(g: Ctx, w: number, h: number, seed: number, nBal: number, horizonK = 0.66): Job<void> {
-  const rnd = mulberry(seed);
-  const hz = h * horizonK;
-  dawnSky(g, w, h, hz);
-  // güneş
-  const sx = w * 0.62, sy = hz - h * 0.045, sr = w * 0.15;
-  glow(g, sx, sy, sr * 4, [255, 200, 120], 0.55);
-  g.fillStyle = rad(g, sx, sy, 0, sr, [
-    [0, '#fff8d8'],
-    [0.7, '#ffe08a'],
-    [1, '#ffb84a'],
-  ]);
-  g.beginPath();
-  g.arc(sx, sy, sr, 0, Math.PI * 2);
-  g.fill();
-  // ince bulut şeritleri
-  g.fillStyle = 'rgba(255,200,210,0.35)';
-  for (let i = 0; i < 6; i++) {
-    const y = hz * (0.25 + rnd() * 0.6), x = rnd() * w, L = w * (0.2 + rnd() * 0.4);
-    g.beginPath();
-    g.ellipse(x, y, L, h * 0.006 + rnd() * h * 0.006, 0, 0, Math.PI * 2);
-    g.fill();
-  }
-  if (due()) yield;
-  // uzak balonlar (sisli)
-  const bal: [number, number, number][] = [];
-  for (let i = 0; i < nBal; i++) bal.push([rnd() * w, hz * (0.08 + rnd() * 0.75), (0.02 + Math.pow(rnd(), 2) * 0.06) * w]);
-  bal.sort((a, b) => a[2] - b[2]);
-  for (const [x, y, r] of bal) {
-    const far = 1 - clamp((r / w - 0.02) / 0.06, 0, 1);
-    smallBalloon(g, x, y, r, pick(BALLOON_SETS, rnd), far * 0.45, [240, 150, 160]);
-    if (due()) yield;
-  }
-  // peri bacaları: uzak (soluk pembe), orta (gül), yakın (koyu kahve-mor)
-  chimneys(g, -10, w + 10, hz + h * 0.02, h * 0.1, [222, 150, 150], [180, 110, 120], rnd);
-  chimneys(g, -10, w + 10, hz + h * 0.12, h * 0.16, [176, 96, 104], [110, 56, 70], rnd, true);
-  if (due()) yield;
-  chimneys(g, -20, w + 20, h * 1.03, h * 0.22, [118, 58, 78], [56, 24, 44], rnd, true);
-}
-function pick<T>(a: readonly T[], rnd: Rnd): T {
-  return a[Math.floor(rnd() * a.length) % a.length];
-}
-
-// ───────────────────────── boyamalar ─────────────────────────
-const F = 0.052; // şafak kenar
-function* paintBorder(): Job<HTMLCanvasElement> {
-  const [c, g] = makeCanvas(PW, PH);
-  dawnSky(g, PW, PH, PH);
-  // kenarda minik balon silüetleri ve yıldızlar (şerit içinde)
-  const rnd = mulberry(8);
-  for (let i = 0; i < 22; i++) {
-    const t = rnd();
-    const side = i % 4;
-    const x = side === 0 ? PW * F * 0.5 : side === 1 ? PW - PW * F * 0.5 : PW * (0.1 + t * 0.8);
-    const y = side === 2 ? PW * F * 0.5 : side === 3 ? PH - PW * F * 0.5 : PH * (0.06 + t * 0.88);
-    g.fillStyle = 'rgba(255,240,250,0.55)';
-    g.beginPath();
-    g.arc(x, y, 1 + rnd() * 1.4, 0, Math.PI * 2);
-    g.fill();
-  }
-  if (due()) yield;
-  return c;
-}
-/** Panel: açık şafak (pastel), altta çok soluk peri bacaları, güneş ışıltısı */
-function* paintSky(): Job<HTMLCanvasElement> {
-  const [c, g] = makeCanvas(PW, PH);
-  const rnd = mulberry(21);
-  g.fillStyle = lin(g, 0, 0, 0, PH, [
-    [0, '#f7f0ff'],
-    [0.5, '#fff1ea'],
-    [1, '#ffe2d0'],
-  ]);
-  g.fillRect(0, 0, PW, PH);
-  glow(g, PW * 0.5, PH * 0.48, PW * 0.6, [255, 220, 170], 0.45);
-  // çok soluk uzak balonlar
-  for (let i = 0; i < 5; i++) {
-    const x = PW * (0.15 + rnd() * 0.7), y = PH * (0.12 + rnd() * 0.5);
-    if (x < PW * 0.4 && y < PH * 0.42) continue;
-    smallBalloon(g, x, y, PW * (0.02 + rnd() * 0.015), pick(BALLOON_SETS, rnd), 0.72, [252, 236, 236]);
-  }
-  if (due()) yield;
-  g.globalAlpha = 0.5;
-  chimneys(g, -10, PW + 10, PH * 0.93, PH * 0.1, [244, 206, 204], [232, 186, 190], rnd);
+  g.globalAlpha = 0.35;
+  oil.flush(g);
   g.globalAlpha = 1;
-  grain(g, PW, PH, rnd, 0.03);
+  const spr = clipSuit(s, cv, undefined, '#24102a');
+  cv.width = cv.height = 0;
+  return spr;
+}
+
+/** Takım balonunun altındaki halatlar + hasır sepet (küçük resim) */
+function paintBasket(): HTMLCanvasElement {
+  const Wb = 120, Hb = 104;
+  const [c, g] = makeCanvas(Wb, Hb);
+  g.translate(Wb / 2, 0);
+  g.scale(Wb, Wb);
+  basket(g, -0.12, 0.12, 0.0, 0.42, 0.34);
+  // boyalı ışık: sepetin sol yüzünde birkaç sıcak darbe
+  const oil = new Oil(), rnd = mulberry(5);
+  for (let i = 0; i < 10; i++) {
+    const x = -0.15 + rnd() * 0.16, y = 0.46 + rnd() * 0.16;
+    oil.add([x, y, x + 0.05, y + (rnd() - 0.5) * 0.01], 0.02 + rnd() * 0.012, mix([226, 170, 100], [250, 210, 150], rnd()), 0.1);
+  }
+  oil.flush(g);
   return c;
 }
 
-const BS = 260;
-function* paintBig(): Job<Record<Suit, HTMLCanvasElement>> {
-  const out = {} as Record<Suit, HTMLCanvasElement>;
-  for (const s of ['S', 'H', 'D', 'C'] as Suit[]) {
-    const [c, g] = makeCanvas(BS, BS);
-    const k = BS * 0.62;
-    g.setTransform(k, 0, 0, k, BS / 2, BS * 0.4);
-    suitBalloon(g, s);
-    out[s] = c;
-    if (due()) yield;
-  }
-  return out;
-}
-function paintSun(): HTMLCanvasElement {
-  const S = 320, C = S / 2;
-  const [c, g] = makeCanvas(S, S);
-  glow(g, C, C, C, [255, 190, 110], 0.7);
+// ───────────────────────── As: doğan güneş madalyonu ─────────────────────────
+function* paintAce(): Job<HTMLCanvasElement> {
+  const S = ACE, C = S / 2, R = S * 0.46, hz = S * 0.74;
+  const sun: Disc = {x: C, y: C - S * 0.02, r: S * 0.17};
+  const bals: Bal[] = [
+    {x: S * 0.22, y: S * 0.3, r: S * 0.07, cols: ['#2fa7e0', '#ffffff']},
+    {x: S * 0.8, y: S * 0.36, r: S * 0.06, cols: ['#18b06a', '#fff1c8']},
+    {x: S * 0.66, y: S * 0.13, r: S * 0.045, cols: ['#ff6a1f', '#3a2a8c']},
+  ];
+  const ids = regionIds(S, S, hz, bals);
+  const {cv: art, rnd} = yield* oilArt({
+    W: S,
+    H: S,
+    seed: 31,
+    k: 0.6,
+    s: 1.05,
+    under: false,
+    mask: (x, y) => (Math.hypot(x - C, y - C) < R + 4 ? 1 : 0),
+    sketch: r => {
+      dawnSky(r, S, hz, 9, 5);
+      sunSketch(r, sun, 2.6);
+      valley(r, S, S, hz, 50, S * 0.16, S * 0.05);
+      for (const b of bals) balloon(r, b, 0.12);
+    },
+    field: (x, y) => {
+      const id = idAt(ids, x, y);
+      if (id > 0 && id < 200 && bals[id - 1]) return meridian(x, y, bals[id - 1]);
+      if (id === 200) return y < hz + S * 0.14 ? -Math.PI / 2 + 0.15 * Math.sin(x * 0.2) : valleyFlow(x, y, 1);
+      return skyFlow(x, y, 1, sun);
+    },
+    sizeK: (x, y) => {
+      const id = idAt(ids, x, y);
+      return id > 0 && id < 200 ? 0.45 : id === 200 && y < hz + S * 0.14 ? 0.65 : 1;
+    },
+    detail: (x, y) => (idAt(ids, x, y) % 200 > 0 || (y > hz - S * 0.02 && y < hz + S * 0.14) ? 0.9 : 0),
+  });
+  const g = art.getContext('2d')!;
+  const oil = new Oil();
+  sunDabs(oil, sun, rnd, 1.1, 1.9);
   g.save();
-  g.translate(C, C);
-  for (let i = 0; i < 20; i++) {
-    g.rotate(Math.PI / 10);
-    g.fillStyle = lin(g, 0, 0, 0, -C * 0.95, [
-      [0, 'rgba(255,230,150,0.7)'],
-      [1, 'rgba(255,170,90,0)'],
-    ]);
-    g.beginPath();
-    g.moveTo(-C * 0.06, 0);
-    g.lineTo(0, -C * (i % 2 ? 0.75 : 0.95));
-    g.lineTo(C * 0.06, 0);
-    g.fill();
-  }
-  g.restore();
-  g.fillStyle = rad(g, C, C, 0, C * 0.42, [
-    [0, '#fffbe8'],
-    [0.6, '#ffe28a'],
-    [1, '#ffb347'],
-  ]);
   g.beginPath();
-  g.arc(C, C, C * 0.42, 0, Math.PI * 2);
-  g.fill();
+  g.rect(0, 0, S, hz + S * 0.02);
+  g.clip();
+  oil.flush(g);
+  g.restore();
+  canvasWeave(g, S, S, rnd, 0.08);
+  const [c, cg] = makeCanvas(S, S);
+  cg.save();
+  cg.beginPath();
+  cg.arc(C, C, R, 0, Math.PI * 2);
+  cg.clip();
+  cg.drawImage(art, 0, 0);
+  cg.restore();
+  art.width = art.height = 0;
+  const rim = new Oil();
+  ringStrokes(rim, C, C, R + 1, R + 1, 5, [[110, 50, 110], [140, 70, 130]], rnd, 12);
+  ringStrokes(rim, C, C, R + 5, R + 5, 4.4, [[242, 206, 74], [255, 236, 160], [214, 160, 48]], rnd, 12);
+  rim.flush(cg);
   return c;
 }
 
-const CW = 240, CH = 350, PAD = 18;
-/** Kaya kemeri: dikdörtgen + yarım daire tepe */
-function archPath(x: number, y: number, w: number, h: number): Path2D {
-  const p = new Path2D();
-  const r = w / 2;
-  p.moveTo(x, y + h);
-  p.lineTo(x, y + r);
-  p.arc(x + r, y + r, r, Math.PI, 0);
-  p.lineTo(x + w, y + h);
-  p.closePath();
-  return p;
-}
+// ───────────────────────── saray kartları ─────────────────────────
+const PAD = 15;
+const COURT: Record<'K' | 'Q' | 'J', {cols: string[]; sun: [number, number]}> = {
+  K: {cols: ['#5a2a9a', '#f0b43a', '#5a2a9a', '#7a44c0'], sun: [0.22, 0.74]},
+  Q: {cols: ['#e8507a', '#fff0e0', '#e8507a', '#ff9ab0'], sun: [0.78, 0.74]},
+  J: {cols: ['#e8173f', '#2fa7e0', '#ffd23a', '#18b06a'], sun: [0.3, 0.75]},
+};
 function* paintCourt(kind: 'K' | 'Q' | 'J'): Job<HTMLCanvasElement> {
-  const [c, g] = makeCanvas(CW, CH);
-  const rnd = mulberry(kind.charCodeAt(0) * 7);
-  const inner = archPath(PAD, PAD, CW - 2 * PAD, CH - 2 * PAD);
+  const W = CW, H = CH, hz = H * 0.76, s = 1.2;
+  const spec = COURT[kind];
+  const inner = archPts(PAD, PAD, W - 2 * PAD, H - 2 * PAD);
+  const innerP = polyPath(inner);
+  const sun: Disc = {x: W * spec.sun[0], y: H * spec.sun[1] - H * 0.02, r: W * 0.075};
+  const big: Bal = {x: W * 0.5, y: H * 0.4, r: W * 0.6, cols: spec.cols};
+  const far: Bal[] =
+    kind === 'K'
+      ? [{x: W * 0.2, y: H * 0.17, r: W * 0.1, cols: ['#2fa7e0', '#ffffff']}, {x: W * 0.84, y: H * 0.62, r: W * 0.08, cols: ['#18b06a', '#fff1c8']}]
+      : kind === 'Q'
+        ? [{x: W * 0.82, y: H * 0.16, r: W * 0.1, cols: ['#ffd23a', '#e8173f']}, {x: W * 0.16, y: H * 0.6, r: W * 0.08, cols: ['#7a3fc8', '#ffb43a']}]
+        : [{x: W * 0.18, y: H * 0.2, r: W * 0.09, cols: ['#ff6a1f', '#3a2a8c']}, {x: W * 0.84, y: H * 0.18, r: W * 0.1, cols: ['#ff4fa0', '#ffffff']}, {x: W * 0.8, y: H * 0.64, r: W * 0.07, cols: ['#2fa7e0', '#ffffff']}];
+  const bals = [big, ...far];
+  const emblemY = big.y + big.r * 0.02;
+  const ids = makeIdMap(W, H, 0.75, (r, id) => {
+    bals.forEach((b, i) => {
+      r.fillStyle = id(1 + i);
+      r.beginPath();
+      r.ellipse(b.x, b.y, b.r * 0.58, b.r * 0.66, 0, 0, Math.PI * 2);
+      r.fill();
+    });
+    r.fillStyle = id(100);
+    r.beginPath();
+    r.ellipse(big.x, emblemY, big.r * 0.17, big.r * 0.17, 0, 0, Math.PI * 2);
+    r.fill();
+    r.fillStyle = id(200);
+    r.fillRect(0, hz - H * 0.02, W, H);
+  });
+  const {cv, g, ref, rnd} = yield* oilArt({
+    W,
+    H,
+    seed: kind.charCodeAt(0) * 11,
+    k: 0.75,
+    s,
+    under: false,
+    mask: (x, y) => (x > PAD - 4 && x < W - PAD + 4 && y > PAD - 4 && y < H - PAD + 4 ? 1 : 0),
+    sketch: r => {
+      dawnSky(r, W, hz, kind.charCodeAt(0), 5);
+      sunSketch(r, sun, 3.2);
+      valley(r, W, H, hz, 60 + kind.charCodeAt(0), H * 0.13, W * 0.06);
+      for (const b of far) balloon(r, b, 0.12);
+      // büyük balon + sepet
+      r.save();
+      r.translate(big.x, big.y);
+      r.scale(big.r, big.r);
+      basket(r, -0.1, 0.1, 0.56, 0.2, 0.24);
+      envelope(r, classicPath(), big.cols, 8, 'rgba(40,14,40,.6)');
+      r.restore();
+      // amblem: krem madalyon
+      r.fillStyle = '#fbf0dc';
+      r.beginPath();
+      r.arc(big.x, emblemY, big.r * 0.15, 0, Math.PI * 2);
+      r.fill();
+      r.lineWidth = big.r * 0.02;
+      r.strokeStyle = '#c99a3a';
+      r.stroke();
+      if (kind === 'K') crown(r, big.x, emblemY + big.r * 0.07, big.r * 0.17);
+      else if (kind === 'Q') tulip(r, big.x, emblemY, big.r * 0.11);
+      else star4(r, big.x, emblemY, big.r * 0.11);
+    },
+    field: (x, y) => {
+      const id = idAt(ids, x, y);
+      if (id === 100) return Math.atan2(y - emblemY, x - big.x) + Math.PI / 2;
+      if (id > 0 && id < 100 && bals[id - 1]) return meridian(x, y, bals[id - 1]);
+      if (id === 200) return y < hz + H * 0.13 ? -Math.PI / 2 + 0.15 * Math.sin(x * 0.2) : valleyFlow(x, y, s);
+      return skyFlow(x, y, s, sun);
+    },
+    sizeK: (x, y) => {
+      const id = idAt(ids, x, y);
+      return id === 100 ? 0.25 : id === 1 ? 0.75 : id > 1 && id < 100 ? 0.4 : id === 200 && y < hz + H * 0.13 ? 0.6 : 1;
+    },
+    detail: (x, y) => {
+      const id = idAt(ids, x, y);
+      return id > 0 && id <= 100 ? 0.9 : id === 200 && y < hz + H * 0.14 ? 0.8 : 0;
+    },
+  });
+  const oil = new Oil();
+  sunDabs(oil, sun, rnd, s, 2.2);
   g.save();
-  g.clip(inner);
-  yield* landscape(g, CW, CH, 600 + kind.charCodeAt(0), 7, 0.74);
-  // kahraman balon
-  const cols = kind === 'K' ? ['#4a2a9c', '#ffcf3a', '#4a2a9c', '#ffcf3a'] : kind === 'Q' ? ['#ff4f8a', '#fff4f8', '#ff4f8a', '#fff4f8'] : ['#e8173f', '#ffb400', '#16c45b', '#1f7bff'];
-  CLASSIC ??= classicPath();
-  const bx = CW / 2, by = CH * 0.37, br = CW * 0.47;
-  g.save();
-  g.translate(bx, by);
-  g.scale(br, br);
-  basket(g, -0.1, 0.1, 0.56, 0.2, 0.26);
-  envelope(g, CLASSIC, cols, kind === 'J' ? 8 : 8);
-  // süs: taç / lale / dört renk kuşak
-  if (kind === 'K') {
-    g.save();
-    g.clip(CLASSIC);
-    g.fillStyle = gold(g, -0.6, 0.05, 0.6, 0.2);
-    g.fillRect(-0.7, 0.06, 1.4, 0.1);
-    g.restore();
-    // tepede küçük taç
-    g.save();
-    g.translate(0, -0.66);
-    g.beginPath();
-    g.moveTo(-0.16, 0.04);
-    g.lineTo(-0.18, -0.12);
-    g.lineTo(-0.08, -0.03);
-    g.lineTo(0, -0.17);
-    g.lineTo(0.08, -0.03);
-    g.lineTo(0.18, -0.12);
-    g.lineTo(0.16, 0.04);
-    g.closePath();
-    g.fillStyle = gold(g, -0.18, -0.17, 0.18, 0.04);
-    g.fill();
-    g.lineWidth = 0.02;
-    g.strokeStyle = '#4a2a06';
-    g.stroke();
-    g.restore();
-  } else if (kind === 'Q') {
-    // zarfın ortasında beyaz rozet içinde lale
-    g.beginPath();
-    g.arc(0, -0.1, 0.2, 0, Math.PI * 2);
-    g.fillStyle = '#fff8fb';
-    g.fill();
-    g.lineWidth = 0.025;
-    g.strokeStyle = '#d0285e';
-    g.stroke();
-    g.fillStyle = '#e0144f';
-    g.beginPath();
-    g.moveTo(0, -0.02);
-    g.bezierCurveTo(-0.12, -0.03, -0.13, -0.16, -0.09, -0.22);
-    g.lineTo(-0.045, -0.15);
-    g.lineTo(0, -0.24);
-    g.lineTo(0.045, -0.15);
-    g.lineTo(0.09, -0.22);
-    g.bezierCurveTo(0.13, -0.16, 0.12, -0.03, 0, -0.02);
-    g.fill();
-    g.strokeStyle = '#1f9a4a';
-    g.lineWidth = 0.02;
-    g.beginPath();
-    g.moveTo(0, -0.02);
-    g.lineTo(0, 0.06);
-    g.stroke();
-  } else {
-    // dört renk kuşak üstünde beyaz yıldız
-    sparkle(g, 0, -0.12, 0.16, '#ffffff', 0.28);
+  g.beginPath();
+  g.rect(0, 0, W, hz);
+  g.clip();
+  oil.flush(g);
+  g.restore();
+  const hl = new Oil();
+  lightDabs(hl, ref, rnd, 0, hz - H * 0.03, W, hz + H * 0.1, 215, 2.2);
+  hl.flush(g);
+  canvasWeave(g, W, H, rnd, 0.08);
+  vignette(g, W, H, 0.22);
+  // kemere kırp + boyalı altın / erik çerçeve
+  const [c, cg] = makeCanvas(W, H);
+  cg.save();
+  cg.clip(innerP);
+  cg.drawImage(cv, 0, 0);
+  cg.restore();
+  cv.width = cv.height = 0;
+  const fr = new Oil();
+  pathStrokes(fr, archPts(PAD * 0.45, PAD * 0.45, W - PAD * 0.9, H - PAD * 0.9), 5, [[150, 100, 26], [196, 140, 36]], rnd, 12, PAD * 0.18);
+  pathStrokes(fr, archPts(PAD * 0.6, PAD * 0.6, W - PAD * 1.2, H - PAD * 1.2), 5, [[242, 206, 74], [255, 240, 170], [214, 160, 48]], rnd, 12);
+  pathStrokes(fr, archPts(PAD * 0.85, PAD * 0.85, W - PAD * 1.7, H - PAD * 1.7), 4, [[110, 50, 110], [150, 70, 130], [90, 40, 100]], rnd, 10);
+  fr.flush(cg);
+  cg.lineJoin = 'round';
+  cg.lineWidth = 2.2;
+  cg.strokeStyle = '#3a1a3a';
+  cg.stroke(innerP);
+  return c;
+}
+/** Lale amblemi (eskiz) */
+function tulip(r: Ctx, x: number, y: number, s: number): void {
+  r.fillStyle = '#2e8a4a';
+  r.fillRect(x - s * 0.06, y, s * 0.12, s * 0.9);
+  r.beginPath();
+  r.ellipse(x - s * 0.35, y + s * 0.55, s * 0.32, s * 0.12, -0.6, 0, Math.PI * 2);
+  r.fill();
+  r.fillStyle = '#d8183e';
+  r.beginPath();
+  r.moveTo(x, y + s * 0.15);
+  r.bezierCurveTo(x - s * 0.7, y + s * 0.1, x - s * 0.6, y - s * 0.6, x - s * 0.35, y - s * 0.8);
+  r.lineTo(x - s * 0.15, y - s * 0.35);
+  r.lineTo(x, y - s * 0.85);
+  r.lineTo(x + s * 0.15, y - s * 0.35);
+  r.lineTo(x + s * 0.35, y - s * 0.8);
+  r.bezierCurveTo(x + s * 0.6, y - s * 0.6, x + s * 0.7, y + s * 0.1, x, y + s * 0.15);
+  r.fill();
+}
+/** Dört renkli yıldız (Vale amblemi) */
+function star4(r: Ctx, x: number, y: number, s: number): void {
+  const cols = ['#e8173f', '#2fa7e0', '#ffd23a', '#18b06a'];
+  for (let i = 0; i < 4; i++) {
+    const a = (i * Math.PI) / 2 - Math.PI / 2;
+    r.fillStyle = cols[i];
+    r.beginPath();
+    r.moveTo(x, y);
+    r.lineTo(x + Math.cos(a - 0.4) * s * 0.4, y + Math.sin(a - 0.4) * s * 0.4);
+    r.lineTo(x + Math.cos(a) * s, y + Math.sin(a) * s);
+    r.lineTo(x + Math.cos(a + 0.4) * s * 0.4, y + Math.sin(a + 0.4) * s * 0.4);
+    r.closePath();
+    r.fill();
   }
-  g.restore();
-  // ön planda iki küçük balon
-  smallBalloon(g, CW * 0.2, CH * 0.62, CW * 0.06, pick(BALLOON_SETS, rnd), 0, [0, 0, 0]);
-  smallBalloon(g, CW * 0.84, CH * 0.22, CW * 0.045, pick(BALLOON_SETS, rnd), 0.2, [240, 150, 160]);
-  g.restore();
-  if (due()) yield;
-  // kaya çerçeve: tüf rengi, kabartma
-  const outer = archPath(2, 2, CW - 4, CH - 4);
+}
+
+// ───────────────────────── arka yüz: Kapadokya şafağı ─────────────────────────
+function* paintBackArt(): Job<HTMLCanvasElement> {
+  const W = PW, H = PH, hz = H * 0.62;
+  const sun: Disc = {x: W * 0.3, y: hz - H * 0.025, r: W * 0.075};
+  const bals: Bal[] = [
+    {x: W * 0.63, y: H * 0.3, r: W * 0.3, cols: ['#e8173f', '#ffd23a', '#e8173f', '#ff8a2a']},
+    {x: W * 0.22, y: H * 0.17, r: W * 0.15, cols: ['#2fa7e0', '#ffffff']},
+    {x: W * 0.86, y: H * 0.1, r: W * 0.1, cols: ['#7a3fc8', '#ffb43a']},
+    {x: W * 0.4, y: H * 0.08, r: W * 0.07, cols: ['#18b06a', '#fff1c8']},
+    {x: W * 0.12, y: H * 0.42, r: W * 0.08, cols: ['#ff4fa0', '#ffffff']},
+    {x: W * 0.88, y: H * 0.47, r: W * 0.065, cols: ['#ff6a1f', '#3a2a8c']},
+    {x: W * 0.47, y: H * 0.5, r: W * 0.05, cols: ['#ffd23a', '#e8173f', '#2fa7e0']},
+  ];
+  const ids = regionIds(W, H, hz, bals, 0.75);
+  const {cv, g, ref, rnd} = yield* oilArt({
+    W,
+    H,
+    seed: 1977,
+    k: 0.75,
+    s: 1.1,
+    under: false,
+    sketch: r => {
+      dawnSky(r, W, hz, 21, 9);
+      sunSketch(r, sun, 4);
+      valley(r, W, H, hz, 70, H * 0.17, W * 0.07);
+      const order = bals.map((b, i) => [b, i] as const).sort((a, b) => a[0].r - b[0].r);
+      for (const [b] of order) balloon(r, b, b.r < W * 0.1 ? 0.15 : 0);
+    },
+    field: (x, y) => {
+      const id = idAt(ids, x, y);
+      if (id > 0 && id < 200 && bals[id - 1]) return meridian(x, y, bals[id - 1]);
+      if (id === 200) return y < hz + H * 0.17 ? -Math.PI / 2 + 0.15 * Math.sin(x * 0.2) : valleyFlow(x, y, 1);
+      return skyFlow(x, y, 1, sun);
+    },
+    sizeK: (x, y) => {
+      const id = idAt(ids, x, y);
+      return id === 1 ? 0.8 : id > 1 && id < 200 ? 0.45 : id === 200 && y < hz + H * 0.17 ? 0.65 : 1;
+    },
+    detail: (x, y) => {
+      const id = idAt(ids, x, y);
+      return id > 0 && id < 200 ? 0.8 : id === 200 && y < hz + H * 0.2 ? 0.8 : Math.hypot(x - sun.x, y - sun.y) < sun.r * 3 ? 0.6 : 0;
+    },
+  });
+  const oil = new Oil();
+  sunDabs(oil, sun, rnd, 1, 2.6);
   g.save();
-  const ring = new Path2D();
-  ring.addPath(outer);
-  ring.addPath(inner);
-  g.clip(ring, 'evenodd');
-  g.fillStyle = lin(g, 0, 0, CW, CH, [
-    [0, '#f2c9a2'],
-    [0.5, '#d9926e'],
-    [1, '#a8604a'],
+  g.beginPath();
+  g.rect(0, 0, W, hz);
+  g.clip();
+  oil.flush(g);
+  g.restore();
+  const hl = new Oil();
+  lightDabs(hl, ref, rnd, 0, hz - H * 0.02, W, hz + H * 0.18, 220, 2.2);
+  hl.flush(g);
+  if (due()) yield;
+  canvasWeave(g, W, H, rnd, 0.09);
+  vignette(g, W, H, 0.3);
+  return cv;
+}
+
+function* paintAll(): Job<CardArt> {
+  const frame = yield* paintFrame();
+  const cream = yield* paintCream(78, '#fbf2e2', '#efdcc0', [
+    [0.3, 0.26, 0.42, 'rgba(240,170,170,.16)'],
+    [0.72, 0.74, 0.46, 'rgba(200,170,220,.16)'],
+    [0.62, 0.32, 0.3, 'rgba(255,214,140,.16)'],
   ]);
-  g.fillRect(0, 0, CW, CH);
-  for (let i = 0; i < 260; i++) {
-    g.fillStyle = rnd() < 0.5 ? 'rgba(255,240,220,0.25)' : 'rgba(110,50,30,0.2)';
-    g.beginPath();
-    g.arc(rnd() * CW, rnd() * CH, 0.8 + rnd() * 2.4, 0, Math.PI * 2);
-    g.fill();
-  }
-  g.restore();
-  g.lineWidth = 2.4;
-  g.strokeStyle = '#5a2a1a';
-  g.stroke(inner);
-  g.lineWidth = 1.6;
-  g.stroke(outer);
-  g.lineWidth = 1.2;
-  g.strokeStyle = 'rgba(255,240,220,0.6)';
-  g.stroke(archPath(PAD - 4, PAD - 4, CW - 2 * PAD + 8, CH - 2 * PAD + 8));
-  return c;
-}
-
-function* paintBack(): Job<HTMLCanvasElement> {
-  const [c, g] = makeCanvas(PW, PH);
-  yield* landscape(g, PW, PH, 1923, 16, 0.7);
-  // ön planda iki büyük balon
-  smallBalloon(g, PW * 0.32, PH * 0.3, PW * 0.2, ['#e8173f', '#ffd23a', '#e8173f', '#ffffff'], 0, [0, 0, 0]);
-  if (due()) yield;
-  smallBalloon(g, PW * 0.74, PH * 0.5, PW * 0.13, ['#1f7bff', '#ffffff', '#16c45b', '#ffffff'], 0, [0, 0, 0]);
-  return c;
-}
-
-function* paintAll(): Job<Art> {
-  const border = yield* paintBorder();
-  const sky = yield* paintSky();
-  const big = yield* paintBig();
-  const sun = paintSun();
-  if (due()) yield;
+  const suit = {} as Record<Suit, HTMLCanvasElement>;
+  for (const s of ['S', 'H', 'D', 'C'] as Suit[]) suit[s] = yield* paintSuit(s);
+  const hang = paintBasket();
+  const ace = yield* paintAce();
   const court: Record<number, HTMLCanvasElement> = {};
   court[13] = yield* paintCourt('K');
   court[12] = yield* paintCourt('Q');
   court[11] = yield* paintCourt('J');
-  const back = yield* paintBack();
+  const back = yield* paintBackArt();
   RF.measure();
-  return {border, sky, big, sun, court, back};
+  return {frame, cream, suit, ace, court, back, hang};
 }
 
-// ───────────────────────── kart çizimi ─────────────────────────
-const ink = (s: Suit): string => (isRed(s) ? RED : PLUM);
-const pipDraw = (g: Ctx, s: Suit, cx: number, cy: number, size: number): void =>
-  withSuit(g, s, cx, cy, size, p => {
-    g.fillStyle = ink(s);
-    g.fill(p);
-  });
-
-function face(g: Ctx, w: number, h: number, s: Suit, r: number, a: Art): void {
-  g.save();
-  g.clip(cardPath(w, h));
-  g.drawImage(a.border, 0, 0, w, h);
-  const panel = rrPath(F * w, F * w, w - 2 * F * w, h - 2 * F * w, 0.055 * w);
-  g.save();
-  g.clip(panel);
-  g.drawImage(a.sky, 0, 0, w, h);
-  g.restore();
-  g.lineWidth = 0.014 * w;
-  g.strokeStyle = gold(g, 0, 0, w, h);
-  g.stroke(panel);
-  const cx = w / 2, cy = h / 2;
-  const bw = 0.82 * w; // büyük balon sprite boyu
-  if (r === 1) {
-    const d = 0.92 * w;
-    g.drawImage(a.sun, cx - d / 2, cy - d * 0.56, d, d);
-    g.drawImage(a.big[s], cx - bw * 0.62, cy - bw * 0.5, bw * 1.24, bw * 1.24);
-  } else if (r >= 11) {
-    const dw = 0.58 * w, dh = (dw * CH) / CW;
-    g.drawImage(a.court[r], cx - dw / 2, cy - dh / 2, dw, dh);
-    for (const sy of [-1, 1]) {
-      const ey = cy + sy * (dh / 2 - 0.01 * w);
-      g.beginPath();
-      g.arc(cx, ey, 0.058 * w, 0, Math.PI * 2);
-      g.fillStyle = '#fff8f2';
-      g.fill();
-      g.lineWidth = 0.012 * w;
-      g.strokeStyle = '#a8604a';
-      g.stroke();
-      pipDraw(g, s, cx, ey + 0.003 * w, 0.066 * w);
-    }
-  } else {
-    const ty = cy - 0.06 * w;
-    g.drawImage(a.big[s], cx - bw / 2, ty - bw * 0.4, bw, bw);
-    // zarfın ortasında beyaz değer rozeti
-    const k = bw * 0.62; // birim → px
-    const rx = cx, ry = ty + (s === 'H' ? -0.06 : s === 'S' ? 0.04 : 0) * k;
-    const rr = 0.105 * w;
-    g.beginPath();
-    g.arc(rx, ry, rr, 0, Math.PI * 2);
-    g.fillStyle = rad(g, rx - rr * 0.3, ry - rr * 0.3, 0, rr * 1.2, [
-      [0, '#ffffff'],
-      [1, '#f3e6ee'],
-    ]);
-    g.fill();
-    g.lineWidth = 0.012 * w;
-    g.strokeStyle = 'rgba(40,20,40,0.85)';
-    g.stroke();
-    const capH = 0.105 * w;
-    RF.draw(g, String(r), rx, ry - capH / 2, capH, 0.15 * w, ink(s));
-  }
-  corners(g, w, h, s, r, {
-    font: RF,
-    x: 0.2,
-    top: 0.085,
-    cap: 0.235,
-    pip: 0.16,
-    gap: 0.05,
-    wide: 0.29,
-    rank: (gg, t, x, top, cap, maxW, su) => RF.draw(gg, t, x, top, cap, maxW, ink(su), 'rgba(255,255,255,0.95)', cap * 0.12),
-    pipDraw: (gg, su, x, y, size) =>
-      withSuit(gg, su, x, y, size, p => {
-        gg.lineJoin = 'round';
-        gg.lineWidth = 0.14;
-        gg.strokeStyle = 'rgba(255,255,255,0.95)';
-        gg.stroke(p);
-        gg.fillStyle = ink(su);
-        gg.fill(p);
-      }),
-  });
-  g.restore();
-  edge(g, w, h, 'rgba(50,20,60,0.8)');
-}
-
-function back(g: Ctx, w: number, h: number, a: Art): void {
-  g.save();
-  const card = cardPath(w, h);
-  g.clip(card);
-  g.drawImage(a.back, 0, 0, w, h);
-  g.lineWidth = 0.06 * w;
-  g.strokeStyle = gold(g, 0, 0, w, h);
-  g.stroke(card);
-  g.lineWidth = 0.008 * w;
-  g.strokeStyle = 'rgba(60,20,30,0.85)';
-  g.stroke(cardPath(w, h, 0.03 * w));
-  g.lineWidth = Math.max(0.6, 0.006 * w);
-  g.strokeStyle = 'rgba(255,236,190,0.9)';
-  g.stroke(cardPath(w, h, 0.055 * w));
-  g.restore();
-}
-
-export const skin = defineSkin<Art>({
+export const skin = defineSkin<CardArt>({
   id: 'kapadokya',
   name: 'Kapadokya Şafağı',
-  desc: 'Gün doğarken peri bacalarının üstünde süzülen balonlar.',
+  desc: 'Her takım kendi balonunda: peri bacalarının üstünde gün doğuyor, yağlı boya.',
   fonts: () => loadFont(() => import('@fontsource/lilita-one/400.css'), `400 100px "Lilita One"`),
   paint: paintAll,
-  face,
-  back,
+  face: (g, w, h, s, r, a) => drawFace(g, w, h, s, r, a, STYLE),
+  back: (g, w, h, a) => drawBack(g, w, h, a, 'rgba(255,226,150,0.85)'),
 });

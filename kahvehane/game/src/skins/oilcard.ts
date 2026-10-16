@@ -225,9 +225,9 @@ export function drawFace(g: Ctx, w: number, h: number, s: Suit, r: number, a: Ca
         g.stroke(p);
       });
     } else {
-      const sz = 0.3 * w, sd = sz / 0.84;
-      hang(sz, sz * 0.5);
-      g.drawImage(a.suit[s], cx - sd / 2, cy - sd / 2 - 0.03 * w, sd, sd);
+      const sz = 0.34 * w, sd = sz / 0.84;
+      hang(sz, sz * 0.5 - 0.035 * w);
+      g.drawImage(a.suit[s], cx - sd / 2, cy - sd / 2 - 0.035 * w, sd, sd);
     }
   } else if (r >= 11) {
     const dw = 0.56 * w, dh = (dw * CH) / CW;

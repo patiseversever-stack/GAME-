@@ -235,7 +235,7 @@ export function* paintLayer(g: Ctx, ref: Ref, rnd: Rnd, W: number, H: number, o:
     return Math.atan2((1 - w) * Math.sin(a) + w * Math.sin(t), (1 - w) * Math.cos(a) + w * Math.cos(t));
   };
   const oil = new Oil();
-  let tJs = 0, tFill = 0, nS = 0, t0 = performance.now();
+  let nS = 0;
   for (let i = 0; i < pts.length; i += 2) {
     const px = pts[i], py = pts[i + 1];
     if (o.where && rnd() > o.where(px, py)) continue;
@@ -259,30 +259,14 @@ export function* paintLayer(g: Ctx, ref: Ref, rnd: Rnd, W: number, H: number, o:
     c = [clamp(c[0] + k + (rnd() - 0.5) * jt * 0.5, 0, 255), clamp(c[1] + k + (rnd() - 0.5) * jt * 0.5, 0, 255), clamp(c[2] + k + (rnd() - 0.5) * jt * 0.5, 0, 255)];
     if (o.tint) c = o.tint(c, px, py, rnd);
     oil.add(tr, lw, c, (o.relief ?? 0.16) * (1 - q * 0.5), o.bristle ?? 0, rnd);
-    nS++;
-    if (nS % 64 === 0 && oil.n < 1500 && due()) {
-      tJs += performance.now() - t0;
-      yield;
-      t0 = performance.now();
-    }
+    // ara ara nefes (yollar birikir, dolgu 1500 darbede bir: daha az ama büyük dolgu çağrısı)
+    if (++nS % 64 === 0 && due()) yield;
     if (oil.n >= 1500) {
-      const a = performance.now();
-      tJs += a - t0;
       oil.flush(g);
-      g.getImageData(0, 0, 1, 1);
-      t0 = performance.now();
-      tFill += t0 - a;
       if (due()) yield;
-      t0 = performance.now();
     }
   }
-  const a = performance.now();
-  tJs += a - t0;
   oil.flush(g);
-  g.getImageData(0, 0, 1, 1);
-  tFill += performance.now() - a;
-  (globalThis as unknown as {__oilT: number[][]}).__oilT ??= [];
-  (globalThis as unknown as {__oilT: number[][]}).__oilT.push([W, H, o.cell, nS, Math.round(tJs), Math.round(tFill)]);
 }
 
 /** Tuval dokusu: düzensiz bez greni (açık/koyu benekler, hafif çapraz lif) — boyanın altından görünen bez. */
