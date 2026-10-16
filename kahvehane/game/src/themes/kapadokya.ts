@@ -2,75 +2,10 @@
 // boya lekesi gibi balonlar; ufukta ışığı yandan alan peri bacaları (çizilmez, boyanır: dikey darbeler); masanın
 // kalanı vadi tabanı: sıcak gül-kahve tonlarında, düşük kontrastlı, sakin geniş darbeler (kartlar öne çıkar).
 // Elin arkası en koyu (koyu erik). Kartların durduğu bölgeler src/themes/oil.ts tableCalm ile bastırılır.
-import {smallBalloon} from '../skins/kapadokya';
 import {due, runJob, type Job} from '../skins/kit';
+import {fairy, ridge, smallBalloon} from './scenes';
 import {canvasWeave, idAt, lightDabs, makeIdMap, makeRef, Oil, paintLayer, tableCalm, type Ref} from './oil';
 import {clamp, makeCanvas, mix, mulberry, radial, resScale, smooth, spotOf, type Ctx} from './paint';
-
-/** Arka sırt: ufukta yumuşak, gül rengi tepe çizgisi */
-function ridge(r: Ctx, by: number, h: number): void {
-  const W = r.canvas.width / r.getTransform().a;
-  r.fillStyle = '#c47a8a';
-  r.beginPath();
-  r.moveTo(-10, by + h);
-  for (let x = -10; x <= W + 10; x += 6) r.lineTo(x, by - h * (0.5 + 0.5 * Math.sin(x * 0.02) * Math.sin(x * 0.007 + 1)));
-  r.lineTo(W + 10, by + h);
-  r.fill();
-}
-/** Peri bacası kümesi (eskiz): ince uzun koni, solu güneşe dönük açık şeftali, sağı gölgede leylak-kahve, koyu bazalt şapka */
-function fairy(r: Ctx, rnd: () => number, x0: number, x1: number, by: number, h: number, w: number, fade = 1, idCol?: string): void {
-  r.save();
-  r.globalAlpha = fade;
-  let x = x0;
-  while (x < x1) {
-    const hh = h * (0.55 + rnd() * 0.45), ww = w * (0.75 + rnd() * 0.4), top = by - hh, neck = ww * 0.36;
-    const body = new Path2D();
-    body.moveTo(x - ww, by);
-    body.bezierCurveTo(x - ww * 0.7, by - hh * 0.35, x - neck * 1.3, top + hh * 0.3, x - neck, top + ww * 0.1);
-    body.lineTo(x + neck, top + ww * 0.1);
-    body.bezierCurveTo(x + neck * 1.3, top + hh * 0.3, x + ww * 0.7, by - hh * 0.35, x + ww, by);
-    body.closePath();
-    if (idCol) {
-      r.fillStyle = idCol;
-      r.fill(body);
-      r.beginPath();
-      r.ellipse(x, top + ww * 0.12, neck * 1.75, ww * 0.3, 0, Math.PI, 0);
-      r.fill();
-      x += ww * (1.7 + rnd() * 1.1);
-      continue;
-    }
-    const gr = r.createLinearGradient(x - ww, 0, x + ww, 0);
-    gr.addColorStop(0, '#ffdcaa');
-    gr.addColorStop(0.4, '#f4a874');
-    gr.addColorStop(0.62, '#a8609a');
-    gr.addColorStop(1, '#5a3a7e');
-    r.fillStyle = gr;
-    r.fill(body);
-    r.fillStyle = '#3e2034';
-    r.beginPath();
-    r.ellipse(x, top + ww * 0.12, neck * 1.75, ww * 0.3, 0, Math.PI, 0);
-    r.lineTo(x + neck * 1.75, top + ww * 0.2);
-    r.lineTo(x - neck * 1.75, top + ww * 0.2);
-    r.fill();
-    // sağ kenarda koyu gölge çizgisi (biçim okunur kalsın)
-    r.strokeStyle = 'rgba(60,24,50,.55)';
-    r.lineWidth = ww * 0.12;
-    r.beginPath();
-    r.moveTo(x + neck * 0.9, top + ww * 0.25);
-    r.bezierCurveTo(x + neck * 1.3, top + hh * 0.35, x + ww * 0.65, by - hh * 0.35, x + ww * 0.95, by);
-    r.stroke();
-    if (rnd() < 0.7) {
-      r.fillStyle = '#4a2440';
-      for (let k = 0; k < 2; k++) {
-        r.beginPath();
-        r.ellipse(x + (rnd() - 0.3) * ww * 0.6, by - hh * (0.2 + rnd() * 0.35), ww * 0.08, ww * 0.12, 0, 0, Math.PI * 2);
-        r.fill();
-      }
-    }
-    x += ww * (1.7 + rnd() * 1.1);
-  }
-  r.restore();
-}
 
 function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   const k = resScale(w, h, dpr, 1.35, 900_000);

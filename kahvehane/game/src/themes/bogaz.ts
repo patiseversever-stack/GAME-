@@ -2,93 +2,10 @@
 // Üstte (rakibin arkasında) girdaplı gece göğü, sağ üstte ay ve haleli ışığı; ufukta Galata, yalılar ve ışıklı köprü.
 // Masanın büyük bölümü koyu, sakin su: yatay darbeler; ay ışığı ve şehir ışıkları kırık altın/renkli darbelerle yansır
 // ve yığına varmadan söner. Kartların durduğu yerler (src/themes/oil.ts tableCalm) değer/doygunluk olarak bastırılır.
-import {bridge, yalilar} from '../skins/bogaz';
 import {due, runJob, type Job} from '../skins/kit';
+import {bridge, galataTower, yalilar} from './scenes';
 import {canvasWeave, idAt, lightDabs, makeIdMap, makeRef, Oil, paintLayer, tableCalm, type Ref} from './oil';
 import {clamp, makeCanvas, mix, mulberry, radial, resScale, smooth, spotOf, type Ctx, type RGB} from './paint';
-
-/**
- * Galata Kulesi (eskiz): gece projektörle aydınlanan kalın taş silindir gövde (taş sıraları, kemerli pencereler),
- * kemerli seyir galerisi, koyu konik külah ve alem. x = eksen, by = taban, h = toplam yükseklik.
- */
-export function galataTower(r: Ctx, x: number, by: number, h: number, lit = true): void {
-  const bodyH = h * 0.6, bw = h * 0.125; // gövde yarı genişliği (kalın)
-  const top = by - bodyH;
-  // gövde: soldan sıcak ışık, sağda gölge
-  const gr = r.createLinearGradient(x - bw, 0, x + bw, 0);
-  gr.addColorStop(0, lit ? '#f0c27e' : '#2a2a4a');
-  gr.addColorStop(0.45, lit ? '#c8925e' : '#20203e');
-  gr.addColorStop(1, lit ? '#6a4a52' : '#121228');
-  r.fillStyle = gr;
-  r.beginPath();
-  r.moveTo(x - bw * 1.08, by);
-  r.lineTo(x - bw, top);
-  r.lineTo(x + bw, top);
-  r.lineTo(x + bw * 1.08, by);
-  r.closePath();
-  r.fill();
-  // taş sıraları
-  r.strokeStyle = 'rgba(70,40,40,.35)';
-  r.lineWidth = Math.max(0.6, h * 0.006);
-  for (let y = top + bodyH * 0.08; y < by; y += bodyH * 0.07) {
-    r.beginPath();
-    r.moveTo(x - bw * 1.05, y);
-    r.lineTo(x + bw * 1.05, y);
-    r.stroke();
-  }
-  // kemerli pencereler (gövde ekseninde iki sütun)
-  r.fillStyle = lit ? '#3a2430' : '#ffd890';
-  for (let i = 0; i < 4; i++) {
-    const wy = top + bodyH * (0.18 + i * 0.2);
-    for (const dx of [-0.4, 0.25]) {
-      const wx = x + dx * bw, ww = bw * 0.16, wh = bodyH * 0.07;
-      r.beginPath();
-      r.moveTo(wx - ww, wy + wh);
-      r.lineTo(wx - ww, wy);
-      r.arc(wx, wy, ww, Math.PI, 0);
-      r.lineTo(wx + ww, wy + wh);
-      r.fill();
-    }
-  }
-  // seyir galerisi: biraz taşan çıkma + ışıklı kemerler
-  const gH = h * 0.1, gy = top - gH;
-  r.fillStyle = lit ? '#b98058' : '#1c1c38';
-  r.fillRect(x - bw * 1.12, top - h * 0.012, bw * 2.24, h * 0.024);
-  r.fillStyle = lit ? '#a8704e' : '#1c1c38';
-  r.fillRect(x - bw * 0.98, gy, bw * 1.96, gH);
-  r.fillStyle = '#fff0b8';
-  for (let i = -3; i <= 3; i++) {
-    const ax = x + i * bw * 0.27, aw = bw * 0.09;
-    r.beginPath();
-    r.moveTo(ax - aw, gy + gH * 0.85);
-    r.lineTo(ax - aw, gy + gH * 0.35);
-    r.arc(ax, gy + gH * 0.35, aw, Math.PI, 0);
-    r.lineTo(ax + aw, gy + gH * 0.85);
-    r.fill();
-  }
-  // konik külah (koyu kurşun) + aydınlık sol kenar + alem
-  const cH = h * 0.3;
-  r.fillStyle = '#1c1a30';
-  r.beginPath();
-  r.moveTo(x - bw * 1.05, gy);
-  r.lineTo(x, gy - cH);
-  r.lineTo(x + bw * 1.05, gy);
-  r.closePath();
-  r.fill();
-  r.fillStyle = 'rgba(200,170,150,.7)';
-  r.beginPath();
-  r.moveTo(x - bw * 1.05, gy);
-  r.lineTo(x, gy - cH);
-  r.lineTo(x - bw * 0.35, gy);
-  r.closePath();
-  r.fill();
-  r.strokeStyle = '#e8c070';
-  r.lineWidth = Math.max(0.8, h * 0.01);
-  r.beginPath();
-  r.moveTo(x, gy - cH);
-  r.lineTo(x, gy - cH - h * 0.05);
-  r.stroke();
-}
 
 function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   const k = resScale(w, h, dpr, 1.35, 900_000);
