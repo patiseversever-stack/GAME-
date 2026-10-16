@@ -9,7 +9,7 @@ import path from 'path';
 import {fileURLToPath} from 'url';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
-const SIZE = 768;
+const SIZE = 512;
 /** Görseldeki en yüksek saydamlık: ekranda gereken en parlak ışın ~0.35. Dar aralık + kayıpsız saydamlık = halka/bant
  *  olmadan ~35 KB. Kullanım yerinde CSS opacity = istenen / MAX_ALPHA (src/ui/shop.css .kh-srays). */
 const MAX_ALPHA = 0.4;
