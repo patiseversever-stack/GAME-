@@ -11,6 +11,11 @@ import type {BlofLayout} from '../table2d/blofTable';
 
 export const RANK_GLYPH = ['', 'A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 export const RANK_NAME = ['', 'As', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'Vale', 'Kız', 'Papaz'];
+/** Türkçe ek (sayı/ad okunuşuna göre ünlü uyumu): çoğul + belirtme ("7'lerini", "As'larını") ve tekil belirtme ("7'yi", "As'ı"). */
+const PL = ['', 'larını', 'lerini', 'lerini', 'lerini', 'lerini', 'larını', 'lerini', 'lerini', 'larını', 'larını', 'lerini', 'larını', 'larını'];
+const SG = ['', 'ı', 'yi', 'ü', 'ü', 'i', 'yı', 'yi', 'i', 'u', 'u', 'yi', 'ı', 'ı'];
+/** Hızlı seçim düğmesi: "7'lerini seç" (n > 1) / "7'yi seç" */
+export const quickText = (rank: number, n: number): string => `${RANK_NAME[rank]}'${n > 1 ? PL[rank] : SG[rank]} seç`;
 /** "3 tane 7" */
 export const claimText = (n: number, rank: number): string => `${n} tane ${RANK_NAME[rank] ?? '?'}`;
 
@@ -39,6 +44,8 @@ export class BlofHud {
   onLetGo: () => void = () => {};
   onClear: () => void = () => {};
   onSkipTutorial: () => void = () => {};
+  /** Hızlı seçim: söylenen değerdeki bütün kartlarım */
+  onQuick: (rank: number) => void = () => {};
   private L: BlofLayout | null = null;
   private claim: HTMLElement;
   private claimIn: HTMLElement;
@@ -51,6 +58,8 @@ export class BlofHud {
   private playBtn: HTMLButtonElement;
   private rankBtn: HTMLButtonElement;
   private selInfo: HTMLElement;
+  private quick: HTMLButtonElement;
+  private quickRank = 0;
   private picker: HTMLElement;
   private pickBtns: HTMLButtonElement[] = [];
   private pickOpen = false;
@@ -79,6 +88,7 @@ export class BlofHud {
         <button class="bl-rank" aria-label="Değeri değiştir"><b></b><i>▾</i></button>
         <button class="kh-btn kh-btn--1 bl-play"><span></span></button>
       </div>
+      <button class="bl-quick"><span class="bl-quick__t"></span><b class="bl-quick__n kh-num"></b></button>
       <div class="bl-sel"><span></span><button class="bl-sel__x" aria-label="Seçimi temizle">${I.close}</button></div>
       <div class="bl-pick"><div class="bl-pick__t">Hangi değeri söylüyorsun?</div><div class="bl-pick__g"></div></div>
       <div class="bl-blof"><div class="bl-blof__ring"><i class="bl-blof__h is-r"><b></b></i><i class="bl-blof__h is-l"><b></b></i></div>
@@ -99,6 +109,13 @@ export class BlofHud {
     this.playBtn = q(this.el, '.bl-play');
     this.rankBtn = q(this.el, '.bl-rank');
     this.selInfo = q(this.el, '.bl-sel');
+    this.quick = q(this.el, '.bl-quick');
+    this.quick.addEventListener('click', () => {
+      if (this.quickRank) {
+        this.snd?.tap();
+        this.onQuick(this.quickRank);
+      }
+    });
     this.picker = q(this.el, '.bl-pick');
     this.blof = q(this.el, '.bl-blof');
     this.blofBtn = q(this.el, '.bl-blof__btn');
@@ -191,6 +208,7 @@ export class BlofHud {
     const y = L.barY;
     this.bar.style.top = y + 'px';
     this.selInfo.style.top = y + 'px';
+    this.quick.style.top = y - L.u * 3.25 + 'px';
     // seçici çubuğun satırının üstünde (rozetimi örtmez)
     this.picker.style.bottom = Math.max(0, L.H - y + L.u * 2.3) + 'px';
     // HUD kökünde (rozetim de okur). :root'a yazmak tüm belgenin stilini yeniden hesaplatırdı (4× yavaşta ~60 ms).
@@ -302,8 +320,24 @@ export class BlofHud {
     const info = st.mode === 'wait' && st.sel > 0;
     this.selInfo.classList.toggle('is-on', info);
     if (info) q(this.selInfo, 'span').textContent = `${st.sel} kart seçili`;
-    if (!on) this.closePicker();
+    if (!on) {
+      this.closePicker();
+      this.setQuick(null);
+    }
     this.syncSuggest();
+  }
+
+  /** Hızlı seçim düğmesi (çubuğun üstünde): "7'lerini seç ×2". null = gizli. */
+  setQuick(rank: number | null, n = 0): void {
+    const r = rank && n > 0 ? rank : 0;
+    if (r === this.quickRank && (!r || q(this.quick, 'b').textContent === '×' + n)) return;
+    const was = this.quickRank;
+    this.quickRank = r;
+    this.quick.classList.toggle('is-on', !!r);
+    if (!r) return;
+    q(this.quick, '.bl-quick__t').textContent = quickText(r, n);
+    q(this.quick, 'b').textContent = '×' + n;
+    if (!was) play(this.quick, [{transform: 'translate(-50%,-50%) translateY(12px) scale(.8)', opacity: 0}, {transform: 'translate(-50%,-50%) scale(1)', opacity: 1}], {duration: 280, easing: EASE.spring});
   }
 
   /** Seçimin değeri (hepsi aynıysa) seçicide öneri olarak parlar. */
@@ -527,8 +561,8 @@ export class BlofHud {
 
   // ───────── HUD noktaları ─────────
   /** Eylem çubuğundaki öğelerin ekran merkezi (öğretici eli için). */
-  where(k: 'play' | 'pass' | 'blof' | 'picker' | 'rank', rank = 0): {x: number; y: number} | null {
-    const el = k === 'play' ? this.playBtn : k === 'pass' ? this.passBtn : k === 'blof' ? this.blofBtn : k === 'rank' ? this.rankBtn : rank ? this.pickBtns[rank - 1] : this.picker;
+  where(k: 'play' | 'pass' | 'blof' | 'picker' | 'rank' | 'quick', rank = 0): {x: number; y: number} | null {
+    const el = k === 'play' ? this.playBtn : k === 'pass' ? this.passBtn : k === 'blof' ? this.blofBtn : k === 'rank' ? this.rankBtn : k === 'quick' ? this.quick : rank ? this.pickBtns[rank - 1] : this.picker;
     const r = el.getBoundingClientRect();
     if (!r.width) return null;
     return {x: r.left + r.width / 2, y: r.top + r.height / 2};

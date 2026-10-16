@@ -191,18 +191,36 @@ if (!scene) {
   }
   t.setSelectable(true);
   const selN = Number(Q.get('sel') ?? 0);
+  // &selr=9: seçilecek kartların değeri (yoksa turun değeri); seçim gruptan yapılır (gerçek dokunuş yolu)
+  const selR = Number(Q.get('selr') ?? rank);
   const pickSel = () => {
-    const same = mine.filter(c => rankOf(c) === rank);
-    const ids = (same.length ? same : mine).slice(0, selN);
-    if (selN > same.length) ids.push(...mine.filter(c => !ids.includes(c)).slice(0, selN - ids.length));
+    const grp = mine.filter(c => rankOf(c) === selR).sort((a, b) => a - b);
+    const ids = grp.slice(-selN);
+    if (ids.length < selN) ids.push(...mine.filter(c => !ids.includes(c)).slice(0, selN - ids.length));
     t.selectIds(ids);
     return ids.length;
   };
+  const quick = () => {
+    const held = t.hand.filter(c => rankOf(c.id) === rank);
+    const on = held.filter(c => c.sel).length;
+    const k = t.selected().length;
+    ui.setQuick(held.length && on < Math.min(4, held.length) && k < 4 ? rank : null, Math.min(4, held.length));
+  };
+  ui.onQuick = r => t.selectRank(r);
   hud.setTurn(0);
   if (scene === 'table') {
     const k = selN ? pickSel() : 0;
     ui.setBar({mode: 'follow', rank, sel: k, canPass: true});
-    t.onSelect = ids => ui.setBar({mode: 'follow', rank, sel: ids.length, canPass: true});
+    quick();
+    t.onSelect = ids => {
+      ui.setBar({mode: 'follow', rank, sel: ids.length, canPass: true});
+      quick();
+    };
+    t.onReject = () => {
+      hud.showHint('En fazla 4 kart atılır');
+      ui.shakePlay();
+      setTimeout(() => hud.showHint(null), 1400);
+    };
   } else if (scene === 'open') {
     ui.setClaim(null);
     ui.setBar({mode: 'open', rank: null, sel: 0, canPass: false});

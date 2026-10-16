@@ -31,3 +31,11 @@
 .bl-mark.is-ok::after { clip-path: polygon(8% 52%, 22% 38%, 40% 56%, 78% 14%, 93% 28%, 40% 86%); }
 .bl-mark.is-bad { background: linear-gradient(180deg, #ff8a9a 0%, #ff2e4d 60%, #c40a2f 100%); }
 .bl-mark.is-bad::after { clip-path: polygon(20% 8%, 50% 38%, 80% 8%, 92% 20%, 62% 50%, 92% 80%, 80% 92%, 50% 62%, 20% 92%, 8% 80%, 38% 50%, 8% 20%); }
+
+/* grup rozeti: "×3" (lacivert) · seçiliyken "2/3" (altın). Sabit gölge; konum transform (geçişli). */
+.bl-gb { position: absolute; left: 0; top: 0; z-index: 700; display: none; min-width: 1.9em; padding: .16em .4em .2em; border-radius: 999px; pointer-events: none;
+  translate: -50% -50%; transform-origin: 0 0; transition: transform .2s cubic-bezier(.2,.75,.25,1); will-change: transform;
+  background: linear-gradient(180deg, #2f3fbf 0%, #1a247a 100%); color: #fff; font: 400 calc(var(--u, 15px) * .95)/1 'Lilita One', 'Nunito', sans-serif; text-align: center;
+  font-style: normal; white-space: nowrap; box-shadow: 0 0 0 2px #fff, 0 0 0 4px #0a1033, 0 3px 0 4px #0a1033;
+  text-shadow: 0 1.5px 0 #0a1033, 1px 1px 0 #0a1033, -1px 1px 0 #0a1033, 1px -1px 0 #0a1033, -1px -1px 0 #0a1033; }
+.bl-gb.is-sel { background: linear-gradient(180deg, #fff27a 0%, #ffd23f 40%, #ffa51a 100%); }

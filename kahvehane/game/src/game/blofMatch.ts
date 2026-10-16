@@ -132,6 +132,10 @@ export class BlofMatch {
     ui.onBlof = () => this.challenge();
     ui.onLetGo = () => this.decline();
     ui.onClear = () => t.clearSelection();
+    ui.onQuick = r => {
+      t.selectRank(r);
+      this.tutSeen('select');
+    };
     ui.onSkipTutorial = () => this.endTutorial(false);
   }
 
@@ -764,6 +768,17 @@ export class BlofMatch {
     }
     this.ui.setBar(st);
     if (st.mode === 'open' && !st.rank && !this.ui.picking) this.ui.openPicker(true);
+    // hızlı seçim: turdaki değerden elimde varsa ve hepsi seçili değilse "7'lerini seç ×2"
+    let quick = 0, qn = 0;
+    if (st.mode === 'follow' && st.rank && v) {
+      const mine = this.t.hand.filter(c => rankOf(c.id) === st.rank);
+      const selR = mine.filter(c => c.sel).length;
+      if (mine.length && selR < Math.min(4, mine.length) && sel < 4) {
+        quick = st.rank;
+        qn = Math.min(4, mine.length);
+      }
+    }
+    this.ui.setQuick(quick || null, qn);
     this.idle(st.mode === 'open' || st.mode === 'follow');
     this.tutShow();
     this.autoPlay();

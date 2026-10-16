@@ -112,15 +112,16 @@ const tf = (p: Pose, cw: number, ch: number) =>
 export const handOrder = (a: CardId, b: CardId): number => rankOf(a) - rankOf(b) || a - b;
 
 /**
- * Elin düzeni: aynı değerler grup (grup içi adım küçük, gruplar arası büyük). Adımlar kart genişliği oranı: [grup içi, gruplar arası].
- * İndeks (değer + takım) kartın sol ~%25'inde: en dar adımda bile tamamı görünür. Önce tek sıra; sığmazsa dengeli iki sıra;
- * o da sığmazsa kart biraz küçülür, en son aralık daralır.
+ * Elin düzeni: DEĞER GRUPLARI. Her değer tek bir küçük deste (gerçek kart yüzleri, hafif çapraz kayma = derinlik) + "×N" rozeti.
+ * Gruplar yan yana, bir sonraki grup öncekinin sağını örter; her grubun görünen şeridi (dokunma alanı) en az MIN_TAP px.
+ * Tek sıraya sığmazsa dengeli iki sıra (7+6). Seçilen kart destesinden kalkar (altın halka); rozet "2/3" olur.
  */
-const SP_MAX = [0.36, 0.62] as const;
-const SP_MIN = [0.25, 0.34] as const;
-const SP_TIGHT = [0.19, 0.27] as const;
-/** Seçili kartın iki yanındaki adım: komşular yer açar (seçim yığın gibi görünmesin) */
-const SP_SEL = 0.5;
+const MIN_TAP = 44;
+/** Grup içi kayma (kart genişliği / yüksekliği oranı) ve gruplar arası adımın alt/üst sınırı (kart genişliği oranı) */
+const G_SX = 0.08;
+const G_SY = 0.055;
+const G_MIN = 0.62;
+const G_MAX = 1.06;
 /** İki sıralı elde arka sıranın kayması, seçim yüksekliği (tek / iki sıra), orta yığın ölçeği (kart genişliği oranı) */
 const ROW_DY = 0.56;
 const LIFT1 = 0.22;
@@ -143,12 +144,13 @@ export class BlofTable {
   private alertEl: HTMLElement;
   private pileHit: HTMLElement;
   private marks: HTMLElement[] = [];
+  private badges: HTMLElement[] = [];
   private cw = 80;
   private ch = 114;
   private active = false;
   private safeB = 0;
   private safeT = 0;
-  private gest: {id: number; x0: number; on: boolean; seen: Set<BCard>; slid: boolean} | null = null;
+  private gest: {id: number; x0: number; y0: number; act: 'sel' | 'desel' | null; seen: Set<number>; slid: boolean; timer: number} | null = null;
   /** Elde seçim yapılabilir mi (dağıtım/açılış sırasında kapalı) */
   selectable = false;
   /** Yığına dokunma (blöf penceresi) */
@@ -467,139 +469,128 @@ export class BlofTable {
     return {x: d.x + Math.sin(i * 2.3) * 1.2 - k * 0.1, y: d.y - k * 0.32, r: -8 + Math.sin(i * 1.7) * 2.5, s: d.s};
   }
 
-  /** Elin pozları (sıralı kartlar için). Sıra sayısını, seçim yüksekliğini ve elin üst kenarını L.hand'e yazar. */
-  private handPoses(cards: BCard[]): Pose[] {
+  /** Grup bilgisi (rozetler, öğretici eli, dokunma ölçümü) — son düzenden */
+  private gInfo: {rank: number; x: number; y: number; k: number; sel: number; s: number; cw: number; ch: number; strip: number; z: number}[] = [];
+  /** En dar grup şeridi (px): dokunma hedefi ölçümü */
+  minTap = 0;
+
+  /**
+   * Elin düzeni (sıralı kartlar): poz + z. Seçili kartlar destelerinden kalkar. Sıra sayısını, elin üst kenarını (kalkık kartlar
+   * dahil) L.hand'e, grup bilgisini gInfo'ya yazar.
+   */
+  private handLayout(cards: BCard[]): {p: Pose[]; z: number[]} {
     const h = this.L.hand;
     const n = cards.length;
+    const p: Pose[] = new Array(n), z: number[] = new Array(n);
+    this.gInfo = [];
     if (!n) {
       h.rows = 1;
-      h.top = h.y - h.chH / 2 - h.lift;
-      return [];
+      h.top = h.y - h.chH / 2 - h.chH * LIFT1;
+      this.minTap = 0;
+      return {p, z};
     }
-    const grp: number[] = [];
-    let g = 0;
+    const groups: {rank: number; idx: number[]}[] = [];
     for (let i = 0; i < n; i++) {
-      if (i > 0 && rankOf(cards[i].id) !== rankOf(cards[i - 1].id)) g++;
-      grp.push(g);
+      const r = rankOf(cards[i].id);
+      const g = groups[groups.length - 1];
+      if (g && g.rank === r) g.idx.push(i);
+      else groups.push({rank: r, idx: [i]});
     }
-    const G = g + 1;
-    // satırın genişliği (kart genişliği cinsinden): 1 + grup içi adımlar + gruplar arası adımlar
-    const span = (from: number, to: number) => {
-      const gg = grp[to - 1] - grp[from] + 1;
-      return {inN: to - from - gg, gapN: gg - 1};
-    };
-    const at = (sp: {inN: number; gapN: number}, a: readonly number[]) => 1 + sp.inN * a[0] + sp.gapN * a[1];
-    /** En geniş aralıktan (t=1) en dara (t=0) arasında, satırı maxW'ye sığdıran en büyük t */
-    const solve = (sp: {inN: number; gapN: number}, cw: number, lo: readonly number[], hi: readonly number[]) => {
-      const den = sp.inN * (hi[0] - lo[0]) + sp.gapN * (hi[1] - lo[1]);
-      if (den <= 0) return 1;
-      return clamp((h.maxW / cw - at(sp, lo)) / den, 0, 1);
-    };
-    let cwH = h.cwH;
-    let rows: {from: number; to: number}[] = [{from: 0, to: n}];
-    let lo: readonly number[] = SP_MIN, hi: readonly number[] = SP_MAX;
-    const one = span(0, n);
-    if (at(one, SP_MIN) * cwH > h.maxW && G > 1) {
-      // iki sıra: grup sınırından, en geniş satırı en dar yapan bölme (eşitse dengeli olan)
-      let best = 1, bestW = Infinity;
-      for (let k = 1; k < G; k++) {
-        const cut = grp.indexOf(k);
-        const w = Math.max(at(span(0, cut), SP_MIN), at(span(cut, n), SP_MIN)) + Math.abs(n - 2 * cut) * 0.001;
-        if (w < bestW) {
-          bestW = w;
-          best = cut;
-        }
-      }
-      rows = [{from: 0, to: best}, {from: best, to: n}];
-      if (bestW * cwH > h.maxW) {
-        // sığmıyor: önce kart biraz küçülür, yine olmazsa aralık daralır
-        cwH = Math.max(h.cwH * 0.76, h.maxW / bestW);
-        if (bestW * cwH > h.maxW) {
-          hi = SP_MIN;
-          lo = SP_TIGHT;
-        }
-      }
-    } else if (at(one, SP_MIN) * cwH > h.maxW) {
-      hi = SP_MIN;
-      lo = SP_TIGHT;
+    const G = groups.length;
+    const cwH = h.cwH;
+    const gw = (k: number, w: number) => w * (1 + (k - 1) * G_SX);
+    const rowStep = (gs: typeof groups, w: number) => (gs.length < 2 ? Infinity : (h.maxW - gw(gs[gs.length - 1].idx.length, w)) / (gs.length - 1));
+    let rows = [groups];
+    let step = rowStep(groups, cwH);
+    if (step < Math.max(MIN_TAP, cwH * G_MIN) && G > 1) {
+      const cut = Math.ceil(G / 2);
+      rows = [groups.slice(0, cut), groups.slice(cut)];
+      step = Math.min(rowStep(rows[0], cwH * 0.95), rowStep(rows[1], cwH));
     }
-    // aralık: en kalabalık satıra göre (iki satır aynı aralıkla — düzenli görünsün)
-    let t = 1;
-    for (const r of rows) t = Math.min(t, solve(span(r.from, r.to), cwH, lo, hi));
-    const ki = lo[0] + (hi[0] - lo[0]) * t, ko = lo[1] + (hi[1] - lo[1]) * t;
+    step = Math.min(step, cwH * G_MAX);
     const two = rows.length === 2;
-    const s = cwH / this.cw;
     const chH = cwH / 0.7;
     const rowDy = chH * ROW_DY;
-    const out: Pose[] = new Array(n);
-    rows.forEach((r, ri) => {
+    const liftF = two ? LIFT2 : LIFT1;
+    let minTap = Infinity;
+    rows.forEach((gs, ri) => {
       const back = two && ri === 0;
       const k = back ? 0.95 : 1;
-      const y0 = h.y + (h.chH - chH) / 2 - (back ? rowDy : 0);
-      // adımlar: seçili kartın iki yanı açılır; satır sığmazsa seçili olmayan adımlar daralır
-      // seçili kartın SAĞINDAKİ adım açılır (sonraki kart onu örtüyor); solundaki kart zaten altta kalır.
-      // Satır taşarsa önce bu açıklık daralır (0.5 → 0.36), sonra seçili olmayan adımlar sıkışır.
-      const build = (selStep: number) => {
-        const steps: number[] = [];
-        let fixed = 0, flex = 0;
-        for (let i = r.from + 1; i < r.to; i++) {
-          const base = grp[i] === grp[i - 1] ? ki : ko;
-          const sel = cards[i - 1].sel;
-          const st = sel ? Math.max(base, selStep) : base;
-          steps.push(st);
-          if (sel) fixed += st;
-          else flex += st;
-        }
-        const avail = h.maxW / (cwH * k) - 1;
-        const f = flex > 0 && fixed + flex > avail ? Math.max(0.55, (avail - fixed) / flex) : 1;
-        return {steps, f};
-      };
-      let {steps, f} = build(SP_SEL);
-      if (f < 0.9) ({steps, f} = build(0.36));
-      let w = cwH * k;
-      steps.forEach((st, j) => (w += (cards[r.from + j].sel ? st : st * f) * cwH * k));
-      let x = h.cx - w / 2 + (cwH * k) / 2;
+      const cw = cwH * k, chh = chH * k;
+      const s = (cwH / this.cw) * k;
+      const y0 = h.y - (back ? rowDy : 0) + (back ? (chH - chh) / 2 : 0);
+      const lastW = gw(gs[gs.length - 1].idx.length, cw);
+      const w = (gs.length - 1) * step + lastW;
+      const x0 = h.cx - w / 2 + cw / 2;
       const half = Math.max(w / 2, cwH * 1.5);
-      for (let i = r.from; i < r.to; i++) {
-        if (i > r.from) {
-          const st = steps[i - r.from - 1];
-          x += (cards[i - 1].sel ? st : st * f) * cwH * k;
-        }
-        const q = (x - h.cx) / half;
-        out[i] = {x, y: y0 + q * q * chH * 0.045, r: q * (back ? 2 : 2.8), s: s * k};
-      }
+      const liftPx = chh * liftF;
+      gs.forEach((g, gi) => {
+        const cx = x0 + gi * step;
+        const q = (cx - h.cx) / half;
+        const ay = q * q * chH * 0.04, ar = q * 2.4;
+        const zb = (back ? 500 : 640) + gi * 8;
+        const un = g.idx.filter(i => !cards[i].sel), se = g.idx.filter(i => cards[i].sel);
+        un.forEach((i, j) => {
+          p[i] = {x: cx + j * G_SX * cw, y: y0 + ay + j * G_SY * chh, r: ar + (j - (un.length - 1) / 2) * 2.2, s};
+          z[i] = zb + j;
+        });
+        // kalkanlar destenin hizasında, sola doğru hafif yelpaze (sağdaki grubun indeksini örtmez)
+        se.forEach((i, j) => {
+          p[i] = {x: cx - j * 0.17 * cw, y: y0 + ay - liftPx - j * 2, r: ar * 0.5 - j * 3.5, s: s * 1.04};
+          z[i] = zb + 5 + j;
+        });
+        const strip = gi < gs.length - 1 ? step : lastW;
+        minTap = Math.min(minTap, strip);
+        this.gInfo.push({rank: g.rank, x: cx, y: y0 + ay, k: g.idx.length, sel: se.length, s, cw, ch: chh, strip, z: zb + 7});
+      });
     });
     h.rows = rows.length;
-    // iki sırada seçim biraz daha az kalkar (arka sıranın indeksleri örtülmesin)
-    this.liftK = two ? LIFT2 / LIFT1 : 1;
-    const liftPx = h.lift * (chH / h.chH) * this.liftK;
-    h.top = h.y + (h.chH - chH) / 2 - (two ? rowDy + chH * 0.025 : 0) - chH / 2 - liftPx;
-    this.rowOf = two ? rows[0].to : n;
-    return out;
+    this.minTap = Math.round(minTap === Infinity ? cwH : minTap);
+    h.top = h.y - (two ? rowDy : 0) - chH / 2 - chH * liftF;
+    return {p, z};
   }
 
-  private liftK = 1;
-  private rowOf = 0;
-
-  private selPose(p: Pose): Pose {
-    const k = p.s / this.L.hand.s;
-    return {x: p.x, y: p.y - this.L.hand.lift * k * this.liftK, r: p.r * 0.5, s: p.s * 1.04};
-  }
-
-  /** El yeniden dizilir (sıralı). barY değişirse onLayout bildirilir. */
+  /** El yeniden dizilir (gruplar yeniden paketlenir; yalnız transform). barY değişirse onLayout bildirilir. */
   layoutHand(animate = true, ms = 230, pop?: Set<BCard>): void {
     const top0 = this.L.hand.top;
-    const poses = this.handPoses(this.hand);
+    const {p, z} = this.handLayout(this.hand);
     this.hand.forEach((c, i) => {
-      const p = c.sel ? this.selPose(poses[i]) : poses[i];
-      const z = (i < this.rowOf ? 500 : 600) + i;
-      c.setZ(z);
-      if (!animate) this.set(c, p);
-      else if (pop?.has(c)) void this.fly(c, p, {ms: c.sel ? 230 : 180, lift: 0, ease: c.sel ? SPRING : EASE_OUT});
-      else if (Math.abs(c.pose.x - p.x) > 0.3 || Math.abs(c.pose.y - p.y) > 0.3 || Math.abs(c.pose.s - p.s) > 0.001) void this.fly(c, p, {ms, lift: 0});
+      c.setZ(z[i]);
+      if (!animate) this.set(c, p[i]);
+      else if (pop?.has(c)) void this.fly(c, p[i], {ms: c.sel ? 230 : 190, lift: 0, ease: c.sel ? SPRING : EASE_OUT});
+      else if (Math.abs(c.pose.x - p[i].x) > 0.3 || Math.abs(c.pose.y - p[i].y) > 0.3 || Math.abs(c.pose.s - p[i].s) > 0.001 || Math.abs(c.pose.r - p[i].r) > 0.05)
+        void this.fly(c, p[i], {ms, lift: 0});
     });
+    this.syncBadges();
     this.updateBar();
     if (Math.abs(top0 - this.L.hand.top) > 0.5) this.onLayout(this.L);
+  }
+
+  /** Grup rozetleri: "×N" (seçim yokken) / "2/3" (seçiliyken, altın). Havuzdan; yalnız transform + metin. */
+  private syncBadges(hidden = false): void {
+    let k = 0;
+    if (!hidden)
+      for (const g of this.gInfo) {
+        if (g.k < 2) continue;
+        let b = this.badges[k];
+        if (!b) {
+          b = document.createElement('i');
+          b.className = 'bl-gb';
+          this.el.append(b);
+          this.badges.push(b);
+        }
+        k++;
+        const txt = g.sel ? `${g.sel}/${g.k}` : `×${g.k}`;
+        if (b.textContent !== txt) b.textContent = txt;
+        b.classList.toggle('is-sel', g.sel > 0);
+        if (b.style.display !== 'block') b.style.display = 'block';
+        const bx = g.x - g.cw / 2 + Math.min(g.strip, g.cw) * 0.7, by = g.y - g.ch / 2 + 1;
+        const tr = `translate3d(${bx.toFixed(1)}px,${by.toFixed(1)}px,0) scale(${(g.s / this.L.hand.s).toFixed(3)})`;
+        if (b.style.transform !== tr) b.style.transform = tr;
+        const zs = String(g.z);
+        if (b.style.zIndex !== zs) b.style.zIndex = zs;
+      }
+    for (let i = k; i < this.badges.length; i++) if (this.badges[i].style.display !== 'none') this.badges[i].style.display = 'none';
   }
 
   private updateBar(): void {
@@ -717,7 +708,8 @@ export class BlofTable {
       if (c) finals.push(c);
     }
     this.hand = finals;
-    const poses = this.handPoses(finals);
+    const {p: poses, z: zs} = this.handLayout(finals);
+    this.syncBadges(true);
     this.updateBar();
     this.onLayout(this.L);
     const cnt = new Array<number>(this.n).fill(0);
@@ -730,7 +722,7 @@ export class BlofTable {
       if (seat === 0) {
         const i = finals.indexOf(c);
         c.el.classList.add('bl-hand');
-        fl.push(this.fly(c, poses[i], {ms: 360, lift: 0.16, flip: c.id, z: 950, zEnd: (i < this.rowOf ? 500 : 600) + i, spin: 360}));
+        fl.push(this.fly(c, poses[i], {ms: 360, lift: 0.16, flip: c.id, z: 950, zEnd: zs[i], spin: 360}));
       } else {
         const i = got[seat]++;
         this.opp[seat].push(c);
@@ -751,11 +743,11 @@ export class BlofTable {
 
   clearSelection(animate = true): void {
     let any = false;
-    for (const c of this.hand) if (c.sel) {
-      c.sel = false;
-      c.el.classList.remove('is-sel');
-      any = true;
-    }
+    for (const c of this.hand)
+      if (c.sel) {
+        this.mark1(c, false);
+        any = true;
+      }
     if (any) {
       this.layoutHand(animate, 180);
       this.onSelect([]);
@@ -770,8 +762,7 @@ export class BlofTable {
       const on = want.has(c.id);
       if (on === c.sel) continue;
       pop.add(c);
-      c.sel = on;
-      c.el.classList.toggle('is-sel', on);
+      this.mark1(c, on);
     }
     if (!pop.size) return;
     this.layoutHand(true, 200, pop);
@@ -779,45 +770,102 @@ export class BlofTable {
     this.onSelect(this.selected());
   }
 
-  /** Elin ekrandaki noktası (öğretici eli): verilen değerdeki ilk kart, yoksa elin ortası. */
+  /** Grubun (değerin) ekrandaki dokunma noktası (öğretici eli): şeridin ortası; değer yoksa elin ortası. */
   handPoint(rank = 0): {x: number; y: number} {
-    const poses = this.handPoses(this.hand);
-    let i = rank ? this.hand.findIndex(c => rankOf(c.id) === rank) : -1;
-    if (i < 0) i = Math.floor(this.hand.length / 2);
-    const p = poses[i];
-    if (!p) return {x: this.L.hand.cx, y: this.L.hand.y};
-    return {x: p.x - this.cw * p.s * 0.25, y: p.y - this.ch * p.s * 0.3};
+    if (!this.gInfo.length) this.handLayout(this.hand);
+    const g = this.gInfo.find(x => x.rank === rank) ?? this.gInfo[Math.floor(this.gInfo.length / 2)];
+    if (!g) return {x: this.L.hand.cx, y: this.L.hand.y};
+    return {x: g.x - g.cw / 2 + Math.min(g.strip, g.cw) / 2, y: g.y - g.ch * 0.12};
   }
 
   /** Değer seçilince (tur açarken): seçim boşsa eldeki o değerdeki kartlar (en çok 4) kendiliğinden kalkar. */
   preselect(rank: number): void {
     if (this.hand.some(c => c.sel)) return;
-    const list = this.hand.filter(c => rankOf(c.id) === rank).slice(0, 4);
-    if (!list.length) return;
-    for (const c of list) {
-      c.sel = true;
-      c.el.classList.add('is-sel');
-    }
-    this.layoutHand(true, 220, new Set(list));
-    this.snd.slide(0.5);
-    this.onSelect(this.selected());
+    this.selectRank(rank, true);
   }
 
-  private toggle(c: BCard, on: boolean): boolean {
-    if (on === c.sel) return false;
-    if (on && this.hand.filter(x => x.sel).length >= 4) {
-      void c.inn.animate([{transform: 'none'}, {transform: 'translateX(-5px) rotate(-3deg)'}, {transform: 'translateX(5px) rotate(3deg)'}, {transform: 'translateX(-3px)'}, {transform: 'none'}], {duration: 300, easing: 'ease-out'});
-      haptic('warning');
-      this.onReject();
+  /** Bu değerdeki bütün kartları seç (en çok 4'e kadar; diğer seçimler kalır). Hızlı seçim düğmesi. */
+  selectRank(rank: number, quiet = false): boolean {
+    const room = 4 - this.hand.filter(c => c.sel).length;
+    const list = this.hand.filter(c => rankOf(c.id) === rank && !c.sel);
+    if (!list.length) return false;
+    if (room <= 0) {
+      this.reject(list[list.length - 1]);
       return false;
     }
+    const take = list.slice(-room);
+    for (const c of take) this.mark1(c, true);
+    this.layoutHand(true, 220, new Set(take));
+    this.snd.slide(0.55);
+    if (!quiet) haptic('light');
+    if (take.length < list.length) this.onReject();
+    this.onSelect(this.selected());
+    return true;
+  }
+
+  private mark1(c: BCard, on: boolean): void {
     c.sel = on;
     c.el.classList.toggle('is-sel', on);
+  }
+
+  private reject(c: BCard): void {
+    void c.inn.animate([{transform: 'none'}, {transform: 'translateX(-5px) rotate(-3deg)'}, {transform: 'translateX(5px) rotate(3deg)'}, {transform: 'translateX(-3px)'}, {transform: 'none'}], {duration: 300, easing: 'ease-out'});
+    haptic('warning');
+    this.onReject();
+  }
+
+  private groupOf(rank: number): BCard[] {
+    return this.hand.filter(c => rankOf(c.id) === rank);
+  }
+
+  /** Gruptan bir kart daha kaldır (destenin en üstündeki). 4 sınırı → sallanır. */
+  private selectOne(rank: number): boolean {
+    const g = this.groupOf(rank);
+    const free = g.filter(c => !c.sel);
+    if (!free.length) return false;
+    const c = free[free.length - 1];
+    if (this.hand.filter(x => x.sel).length >= 4) {
+      this.reject(c);
+      return false;
+    }
+    this.mark1(c, true);
     this.layoutHand(true, 200, new Set([c]));
-    this.snd.slide(on ? 0.55 : 0.35);
+    this.snd.slide(0.55);
     haptic('light');
     this.onSelect(this.selected());
     return true;
+  }
+
+  /** Grubu bırak: kalkık kart(lar) desteye döner. all: grubun hepsi. */
+  private release(c: BCard, all: boolean): void {
+    const list = all ? this.groupOf(rankOf(c.id)).filter(x => x.sel) : [c];
+    for (const x of list) this.mark1(x, false);
+    this.layoutHand(true, 190, new Set(list));
+    this.snd.slide(0.35);
+    haptic('light');
+    this.onSelect(this.selected());
+  }
+
+  /**
+   * Dokunuş: desteye dokunmak o değerden bir kart daha kaldırır; kalkık karta dokunmak onu bırakır (grubun hepsi kalkıksa
+   * hepsini). Basılı tutmak (350 ms) değerin hepsini kaldırır/bırakır; yatay sürükleme geçtiği her gruptan bir kart kaldırır.
+   */
+  private tap(c: BCard): 'sel' | 'desel' | null {
+    if (c.sel) {
+      const g = this.groupOf(rankOf(c.id));
+      this.release(c, g.every(x => x.sel));
+      return 'desel';
+    }
+    return this.selectOne(rankOf(c.id)) ? 'sel' : null;
+  }
+
+  private longPress(rank: number, act: 'sel' | 'desel' | null): void {
+    if (!this.selectable) return;
+    const g = this.groupOf(rank);
+    if (act === 'desel') {
+      const on = g.filter(x => x.sel);
+      if (on.length) this.release(on[0], true);
+    } else if (act === 'sel' && g.some(x => !x.sel)) this.selectRank(rank);
   }
 
   private cardAt(t: EventTarget | null): BCard | null {
@@ -831,24 +879,38 @@ export class BlofTable {
     const c = this.cardAt(e.target);
     if (!c) return;
     e.preventDefault();
-    const on = !c.sel;
-    this.gest = {id: e.pointerId, x0: e.clientX, on, seen: new Set([c]), slid: false};
-    this.toggle(c, on);
+    const rank = rankOf(c.id);
+    const act = this.tap(c);
+    const g = {id: e.pointerId, x0: e.clientX, y0: e.clientY, act, seen: new Set<number>([rank]), slid: false, timer: 0};
+    g.timer = window.setTimeout(() => {
+      if (this.gest === g && !g.slid) this.longPress(rank, act);
+    }, 350);
+    this.gest = g;
   };
 
   private move = (e: PointerEvent) => {
     const g = this.gest;
     if (!g || e.pointerId !== g.id || !this.selectable) return;
-    if (!g.slid && Math.abs(e.clientX - g.x0) > 14) g.slid = true;
-    if (!g.slid) return;
+    const dx = e.clientX - g.x0, dy = e.clientY - g.y0;
+    if (!g.slid && Math.hypot(dx, dy) > 10) {
+      clearTimeout(g.timer);
+      if (Math.abs(dx) > 14) g.slid = true;
+    }
+    if (!g.slid || g.act !== 'sel') return;
     const c = this.cardAt(document.elementFromPoint(e.clientX, e.clientY));
-    if (!c || g.seen.has(c)) return;
-    g.seen.add(c);
-    if (c.sel !== g.on) this.toggle(c, g.on);
+    if (!c) return;
+    const r = rankOf(c.id);
+    if (g.seen.has(r)) return;
+    g.seen.add(r);
+    this.selectOne(r);
   };
 
   private up = (e: PointerEvent) => {
-    if (this.gest && e.pointerId === this.gest.id) this.gest = null;
+    const g = this.gest;
+    if (g && e.pointerId === g.id) {
+      clearTimeout(g.timer);
+      this.gest = null;
+    }
   };
 
   /** Elde seçim açık/kapalı (kapalıyken seçim korunur). */
@@ -1039,12 +1101,13 @@ export class BlofTable {
       for (const c of list) if (c.id < 0) c.id = pool.shift() ?? -1;
       const merged = this.hand.concat(list.filter(c => c.id >= 0)).sort((a, b) => handOrder(a.id, b.id));
       this.hand = merged;
-      const poses = this.handPoses(merged);
+      const {p: poses, z: zs} = this.handLayout(merged);
+      this.syncBadges();
       this.updateBar();
       this.onLayout(this.L);
       merged.forEach((c, i) => {
-        const z = (i < this.rowOf ? 500 : 600) + i;
-        const p = c.sel ? this.selPose(poses[i]) : poses[i];
+        const z = zs[i];
+        const p = poses[i];
         if (!list.includes(c)) {
           // eldekiler bir kare sonra kayar (uçuşların başladığı kareye yük binmesin)
           requestAnimationFrame(() => {

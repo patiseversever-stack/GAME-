@@ -66,6 +66,14 @@
 .bl-rank i { font-style: normal; font-size: .45em; color: var(--c-accent); text-shadow: var(--outline-thin); }
 .bl-rank:active { transform: translateY(2px) scale(.97); }
 
+/* hızlı seçim: "7'lerini seç ×2" (çubuğun üstünde, yeşil hap) */
+.bl-quick { position: absolute; left: 50%; top: 0; z-index: 4; display: none; align-items: center; gap: .45em; min-height: 40px; padding: 0 .45em 0 1em; border-radius: var(--r-pill);
+  background: var(--chip-on-fill); box-shadow: var(--chip-on-shadow); color: #fff; font-family: var(--font-display); font-size: calc(var(--u) * 1.08); line-height: 1;
+  text-shadow: var(--outline-thin); white-space: nowrap; transform: translate(-50%, -50%); }
+.bl-quick.is-on { display: inline-flex; }
+.bl-quick:active { transform: translate(-50%, -50%) translateY(2px) scale(.97); }
+.bl-quick__n { display: inline-grid; place-items: center; min-width: 1.9em; height: 1.9em; padding: 0 .3em; border-radius: var(--r-pill); font-weight: 400;
+  background: rgba(10, 16, 51, .35); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .5); }
 /* sıra başkasındayken seçim bilgisi */
 .bl-sel { left: 50% !important; z-index: 4; display: flex; align-items: center; gap: .4em; padding: .3em .35em .3em .9em; border-radius: var(--r-pill);
   background: var(--name-fill); box-shadow: var(--name-shadow); color: #fff; font-family: var(--font-display); font-size: calc(var(--u) * .98); line-height: 1;
@@ -181,7 +189,7 @@
 .kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-badge__pill { font-size: calc(var(--u) * .98); margin: 0; }
 .kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-bubble { bottom: auto; top: calc(var(--bs) * -1.25); left: calc(var(--bs) * .35); }
 .kh-hud[data-game="blof"][data-mode="1v1"] .kh-badge.is-top { --bs: calc(var(--u) * 5.6); }
-.kh-hud[data-game="blof"] .kh-hint { bottom: auto; top: calc(var(--bl-bar-y, 80vh) - var(--u) * 5.6); left: 50%; }
+.kh-hud[data-game="blof"] .kh-hint { bottom: auto; top: calc(var(--bl-bar-y, 80vh) - var(--u) * 7.6); left: 50%; }
 .kh-hud[data-game="blof"][data-mode="3"] { --kh-side-top: calc(max(calc(var(--u) * .75), env(safe-area-inset-top)) + var(--u) * 3.5); }
 .kh-hud[data-game="blof"][data-mode="3"] .kh-badge.is-left, .kh-hud[data-game="blof"][data-mode="3"] .kh-badge.is-right { --bs: calc(var(--u) * 5); }
 /* eşli: ortağım "ORTAK" etiketi (takım rengi halka hud.css'te) */
