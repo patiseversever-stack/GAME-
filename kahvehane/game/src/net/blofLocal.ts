@@ -25,7 +25,7 @@ export interface BlofLocalOptions {
   paceMaxMs?: number;
   /** Bot rastgelelik tohumu (varsayılan cfg.seed'den türetilir). */
   botSeed?: number;
-  /** Test: bot parametrelerini ezmek için. */
+  /** Bot hamlesi reddedilirse vb. (hata ayıklama). */
   onError?: (msg: string) => void;
 }
 
