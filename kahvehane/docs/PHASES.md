@@ -91,12 +91,12 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
-**16 Ekim (gece) — "Tam paket" çalışması sürüyor.** Önizleme: https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
-Kullanıcının isteği: her ekran ve oynanış "milyon dolarlık stüdyo" kalitesinde; efsane animasyonlar; tek oyuncu 1'e 1 / 4 kişi / eşli; ileride çok oyunculu (ana ekran buna göre); ilk açılışta hikâyeli hediye karakter seçimi (galeri, kaydırmalı, ücretsiz); market.
-- Temel (bitti): `assets/chars/` 4 karakter × 10 hâl (WebP), `src/game/roster.ts` (hikâyeler, fiyatlar), `profile.ts` (jeton/XP/envanter/kuşanma/istatistik/günlük/sandık), `catalog.ts` (karakter, deste, masa, pişti efekti, çerçeve), `types.ts` (Mode, SeatPlayer, MatchSetup), `themes/contract.ts`, `skins/index.ts`.
-- Ajan A (oyun içi): 4 koltuk + eşli, karakter rozetleri (göz kırpma, tepki, pişti kutlaması), pişti efektleri (klasik/havai/yıldız/altın), Table2D.setAtlas/setTheme.
-- Ajan B (meta): açılış hikâyesi + hediye galerisi, yeni ana ekran, market, profil, N oyunculu VS ve sonuç, app.ts akışı.
-- Ajan C1 (desteler): İznik Çinisi, Büyük Dalga, Ayçiçekleri.
-- Ajan C2 (çevre): masa temaları (Yıldızlı Gece, Çini Salon, Kızıl, Zümrüt) + avatar çerçeveleri.
-- Deste: **Yıldızlı Gece** (varsayılan). Diğer kart tarzı denemeleri reddedildi.
-- Test: `?auto=1`, `?seed=2`, `?reset=1` (profili sıfırla), `?skipintro=1`.
+**16 Ekim sabahı — "Tam paket" yayında (sürüm 7):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+- **İlk açılış:** lamba yanar, Kahveci Dursun karşılar, hediye kutusu patlar → kaydırmalı galeriden hikâyeli karakter seçimi (ücretsiz) → ad → hoş geldin. (`src/ui/onboarding.ts`)
+- **Ana ekran:** yaşayan karakter (nefes, göz kırpma, dokununca tepki), günlük ödül + bedava sandık, Çevrimiçi / Arkadaşla (yakında tanıtımları), Tek Oyuncu: 1'e 1 · 4 Kişi · Eşli, rakip seçimi, bahis. (`src/ui/lobby.ts`)
+- **Oyun:** 2/4 koltuk + eşli; karakter rozetleri 10 hâl (`assets/chars/`), büyük pişti kutlaması, değerli kart parıltısı, SERİ/SÜPÜRDÜ, son el, el sonu sayımı; pişti efektleri klasik/havai/yıldız/altın. (`src/table2d/`, `src/game/match.ts`, `src/ui/hud.ts`, `fx.ts`)
+- **Market:** karakterler, desteler (Yıldızlı Gece, İznik Çinisi, Büyük Dalga, Ayçiçekleri), masalar (Mavi Arena, Yıldızlı Gece, Çini Salon, Kızıl Salon, Zümrüt Kadife), efektler, çerçeveler; günün teklifi; canlı önizleme. (`src/ui/shop.ts`, `src/skins/`, `src/themes/`)
+- **Koleksiyon/Profil**, **Günlük Görevler** (3 görev + Günün Sandığı), N oyunculu VS ve sayarak akan sonuç ekranı, seviye atlama.
+- Ekonomi ve kayıt: `src/game/profile.ts` (jeton, XP, envanter, görevler, istatistik). Katalog: `src/game/catalog.ts`. Karakterler: `src/game/roster.ts`.
+- Test: `?auto=1` (+`&mode=4|esli`), `?seed=N`, `?reset=1`, `?skipintro=1`; geliştirici sayfaları `dev/game.html`, `dev/screens.html`, `dev/skins.html`, `dev/themes.html`.
+- Henüz yok / sıradaki: gerçek telefonda performans ölçümü, seslendirme (ElevenLabs anahtarı), çevrimiçi oyun, uygulamaya gömme (Adım 6).
