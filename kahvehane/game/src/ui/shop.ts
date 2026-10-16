@@ -90,7 +90,8 @@ function pvHtml(it: {kind: ItemKind; id: string}, me: Me, big = false): string {
     case 'table':
       return `<span class="kh-pv__table">${tableSceneHtml(it.id, {deck: me.deck, size: 'mini'})}</span>`;
     case 'fx':
-      return `<span class="kh-pv__fx" data-fx="${it.id}"></span>`;
+      // efekt kendi başına değil, kuşanılı masanın üstünde (bağlam: "pişti yapınca masan böyle olur")
+      return `<span class="kh-pv__fxs">${tableSceneHtml(me.table, {deck: me.deck, size: 'mini'})}</span><span class="kh-pv__fx" data-fx="${it.id}"></span>`;
     case 'frame':
       return charAvatarHtml(me.char, it.id, 'kh-pv__ava', big ? 'gulumseme' : 'notr');
     case 'char': {
@@ -134,7 +135,12 @@ function itemCardHtml(it: ShopItem, me: Me, st: {owned: boolean; eq: boolean; wi
 function setCardHtml(s: ShopSet, me: Me, owns: (k: ItemKind, id: string) => boolean, coins: number): string {
   const pr = setPrice(s, owns);
   const done = !pr.missing.length;
-  const tiles = s.parts.slice(0, 3).map((p, i) => `<span class="kh-setc__tile is-${p.kind} is-${p.rarity}" style="--n:${i}"><i class="kh-item__bg"></i>${pvHtml(p, me)}${owns(p.kind, p.id) ? `<i class="kh-setc__own">${I.check}</i>` : ''}</span>`).join('');
+  // parçalar yelpaze gibi: ilk parça (genelde deste) ortada ve önde, diğerleri iki yanda
+  const parts = s.parts.slice(0, 3);
+  const order = parts.length === 3 ? parts.map((p, i) => ({p, n: [0, -1, 1][i]})) : parts.map((p, i) => ({p, n: i - (parts.length - 1) / 2}));
+  const tiles = order
+    .map(({p, n}) => `<span class="kh-setc__tile is-${p.kind} is-${p.rarity}${n === 0 ? ' is-mid' : ''}" style="--n:${n};z-index:${3 - Math.abs(n) * 2}"><i class="kh-item__bg"></i>${pvHtml(p, me)}${owns(p.kind, p.id) ? `<i class="kh-setc__own">${I.check}</i>` : ''}</span>`)
+    .join('');
   const price = done
     ? `<span class="kh-setc__done">${I.check}Tamamlandı</span>`
     : `<span class="kh-setc__price"><s class="kh-num">${fmt(pr.full)}</s><span class="kh-setc__now${coins >= pr.price ? '' : ' is-poor'}">${coinImg()}<b class="kh-num">${fmt(pr.price)}</b></span></span>`;
