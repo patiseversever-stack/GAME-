@@ -57,8 +57,9 @@ export interface BlofLayout {
   barY: number;
   /** BLÖF düğmesi (eylem çubuğunun yerinde) */
   blof: {x: number; y: number; d: number};
-  /** Rakip alanının alt kenarı (öğretici paneli bunun altına) */
+  /** Rakip alanının alt kenarı ve rozet/ad/sayaç bloğunun alt kenarı (öğretici paneli bu aralığa yerleşir) */
   oppBottom: number;
+  oppPlate: number;
   seats: BlofSeat[];
 }
 
@@ -266,12 +267,14 @@ export class BlofTable {
     // koltuklar (rozet yerleri HUD CSS'inde: hud.css + blofHud.css; burada aynı u ölçüsüyle hesaplanır)
     const seats: BlofSeat[] = [{x: W / 2, y: yF, a: 0, s: sH, spread: 0, vis: 0}];
     let oppBottom: number;
+    let oppPlate: number;
     if (n === 2) {
       const s = 0.58;
       const plate = Math.max(u * 1.15, safeT + u * 0.7) + u * 9.4; // rozet + ad + sayaç
       const y = plate + (ch * s) / 2 + u * 0.35;
       seats.push({x: W / 2, y, a: 180, s, spread: cw * s * 0.24, vis: 11});
       oppBottom = y + (ch * s) / 2;
+      oppPlate = plate;
     } else if (n === 3) {
       // rozetler üst köşelerde (HUD: data-mode=3), yelpazeler altlarında masaya doğru eğik
       const s = 0.5;
@@ -283,6 +286,7 @@ export class BlofTable {
         {x: W / 2 - dx, y, a: 160, s, spread: cw * s * 0.24, vis: 10},
       );
       oppBottom = y + ch * s * 0.58;
+      oppPlate = plate;
     } else {
       // üst: rozetin altında; yanlar: rozetin hemen altında küçük, dikine kapalı yelpaze (ekran kenarına yaslı)
       const fs = Math.min(0.54, Math.max(0.46, (H * 0.072) / ch));
@@ -302,6 +306,7 @@ export class BlofTable {
         {x: side, y: sy, a: 90, s: ss, spread: cw * ss * 0.2, vis: 6},
       );
       oppBottom = ty + fh / 2;
+      oppPlate = plate;
     }
     // sahne (yığın + madalyon + kenar): boş alanın görsel ortasında, iri
     const ref = n === 4 ? (barTop1 + barTop2) / 2 : barTop2;
@@ -331,6 +336,7 @@ export class BlofTable {
       barY: 0,
       blof: {x: W / 2, y: 0, d: clamp(barH * 1.62, u * 4.4, u * 5.6)},
       oppBottom,
+      oppPlate,
       seats,
     };
     // yığın etkileşim + uyarı halkası

@@ -440,7 +440,7 @@ export class BlofMatch {
       case 'windowOpen': {
         if (e.final) {
           const pp = t.pilePoint();
-          hud.shout(e.by === ME ? 'SON KART!' : 'SON KART!', pp.x, pp.y - t.L.ch * 0.9, e.by === ME ? 'gold' : 'white');
+          hud.shout('SON KART!', pp.x, pp.y, e.by === ME ? 'gold' : 'white');
           this.d.table.setTension(true);
           sfx.drumRoll(0.8);
           haptic('medium');
@@ -505,7 +505,7 @@ export class BlofMatch {
       }
       case 'pileCleared': {
         const pp = t.pilePoint();
-        hud.shout('KENARA', pp.x, pp.y - t.L.ch * 0.75, 'blue');
+        hud.shout('KENARA', pp.x, pp.y, 'blue');
         await t.discard();
         this.pileN = 0;
         this.outN += e.count;

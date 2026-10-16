@@ -170,7 +170,7 @@ export class BlofHud {
   layout(L: BlofLayout): void {
     this.L = L;
     this.el.style.setProperty('--bl-u', L.u + 'px');
-    this.coachEl.style.top = (L.oppBottom + L.u * 0.6) + 'px';
+    if (this.coachEl.classList.contains('is-on')) this.placeCoach();
     pos(this.claim, L.claim.x, L.claim.y);
     this.claim.style.setProperty('--d', L.claim.d + 'px');
     pos(this.last, L.claim.x, L.claim.y + L.claim.d / 2 + L.u * 0.55);
@@ -493,6 +493,7 @@ export class BlofHud {
     if (o.face) q<HTMLImageElement>(el, 'img').src = o.face;
     const p = q(el, 'p');
     p.textContent = o.text;
+    this.placeCoach();
     play(was ? p : el, was ? [{opacity: 0, transform: 'translateY(6px)'}, {opacity: 1, transform: 'none'}] : [{transform: 'translateY(-20px) scale(.9)', opacity: 0}, {transform: 'none', opacity: 1}],
       {duration: was ? 220 : 340, easing: EASE.spring});
     pt.getAnimations().forEach(a => a.cancel());
@@ -504,6 +505,20 @@ export class BlofHud {
       play(pt, [{transform: `${base} translate(0,0) rotate(-12deg)`}, {transform: `${base} translate(4px,12px) rotate(-12deg) scale(.92)`, offset: 0.5}, {transform: `${base} translate(0,0) rotate(-12deg)`}],
         {duration: 760, iterations: 8, easing: 'ease-in-out', fill: 'both'});
     } else pt.classList.remove('is-on');
+  }
+
+  /**
+   * Öğretici paneli yığını/madalyonu ASLA örtmez: rakip yelpazesiyle yığın arasındaki boşluğa sığarsa oraya,
+   * sığmazsa yukarı, rakibin yelpazesinin üstüne (rozet/ad bloğunun altından başlayarak) yerleşir.
+   */
+  private placeCoach(): void {
+    const L = this.L;
+    if (!L) return;
+    const hgt = this.coachEl.offsetHeight || L.u * 5;
+    const pileTop = L.pile.y - (L.ch * L.pile.s) / 2 - L.u * 1.1; // yığın sayacı rozeti dahil
+    const lo = L.oppBottom + L.u * 0.4, hi = pileTop - L.u * 0.4;
+    const top = hi - lo >= hgt ? (lo + hi) / 2 - hgt / 2 : Math.max(L.oppPlate + L.u * 0.2, hi - hgt);
+    this.coachEl.style.top = top + 'px';
   }
 
   // ───────── HUD noktaları ─────────
