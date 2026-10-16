@@ -13,4 +13,6 @@
 .kh-ob__hint.is-on { animation-timing-function: steps(8) !important; }
 /* kayan parıltılar: yalnız süpürme anında (≈1.2 sn) kare üretir; 14 adım = ~12 kare/sn, küçük alan
    (Market kartlarının parıltısı artık sonsuz döngü değil: src/ui/showcase.ts Spotlight — tek seferlik, akıcı, sırayla tek kart.) */
-.kh-shine::after { animation-timing-function: steps(14) !important; will-change: auto !important; }
+/* düğme parıltısı: akıcı (steps yok — telefonda kesik görünüyordu); boşta calm.ts durdurur, düşük seviyede hiç başlamaz */
+.kh-shine::after { will-change: auto !important; }
+.kh-low .kh-shine::after { animation: none !important; }
