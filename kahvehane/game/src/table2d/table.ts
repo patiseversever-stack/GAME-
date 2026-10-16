@@ -1,10 +1,10 @@
 // Pişti Arena — 2B masa: arka plan (tema), kart katmanı, dokunmatik el, 2/4 koltuk yerleşimi, uçuşlar ve masa efektleri.
 // Tüm hareket WAAPI ile transform/opacity üzerinden (bileşimci iş parçacığında akar; ana iş parçacığı meşgulken bile akıcı).
-// Kart yüzleri atlas tuvalinden her kartın kendi küçük tuvaline bir kez kopyalanır (kodlama/indirme yok).
+// Kart yüzleri: deste atlası tek bir görsele (blob) çevrilir; 52 kart aynı görselden background-position ile kesilir.
+// (Kart başına canvas = kart başına ayrı çizim geçişi + 52 GPU tuvali; tek görsel hem bellek hem kare maliyetini düşürür.)
 // Efekt düğümleri (kıvılcım, halka, iz, toz) havuzdan gelir; boşta hiçbir JS çalışmaz (yalnız ucuz CSS/WAAPI döngüleri).
-import {yieldToMain} from '../platform/sched';
 import './table.css';
-import {ATLAS_COLS, BACK_INDEX, CORNER_RADIUS, type CardAtlas} from '../render/cardAtlas';
+import {ATLAS_COLS, ATLAS_ROWS, BACK_INDEX, CORNER_RADIUS, type CardAtlas} from '../render/cardAtlas';
 import {cardId, isJack, rankOf, suitOf, type CardId, type Suit} from '../core/types';
 import type {TableTheme} from '../themes/contract';
 
@@ -27,22 +27,21 @@ class Card {
   readonly el: HTMLDivElement;
   /** Yerel hareketler (çevirme, sekme, kıpırdama) bu iç katmanda; poz dıştaki öğede. */
   readonly inn: HTMLDivElement;
-  readonly cv: HTMLCanvasElement;
+  /** Kart yüzü: atlas görselinin ilgili hücresini gösteren div */
+  readonly cv: HTMLElement;
   readonly hot: HTMLElement;
   id: CardId = -1;
   cell = BACK_INDEX;
   pose: Pose = {x: 0, y: 0, r: 0, s: 1};
   anim: Animation | null = null;
   gold: HTMLElement | null = null;
-  constructor(w: number, h: number) {
+  constructor() {
     this.el = document.createElement('div');
     this.el.className = 'c2';
     this.inn = document.createElement('div');
     this.inn.className = 'c2__in';
-    this.cv = document.createElement('canvas');
+    this.cv = document.createElement('div');
     this.cv.className = 'c2__f';
-    this.cv.width = w;
-    this.cv.height = h;
     this.hot = document.createElement('i');
     this.hot.className = 'c2__hot';
     this.inn.append(this.hot, this.cv);
@@ -55,14 +54,8 @@ const tf = (p: Pose, cw: number, ch: number) =>
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 const done = (a: Animation, el?: HTMLElement) => a.finished.then(() => el?.remove(), () => el?.remove());
-/** Açılışta kullanılan ufacık yer tutucu atlas: gerçek deste arka planda çizilir. */
-function tinyAtlas(): CardAtlas {
-  const cellW = 18, cellH = 26;
-  const canvas = document.createElement('canvas');
-  canvas.width = cellW * ATLAS_COLS;
-  canvas.height = cellH * 7;
-  return {canvas, width: canvas.width, height: canvas.height, cellW, cellH};
-}
+/** Atlas hücresinin background-position değeri (800% x 700% boyutlu görselde hücre k, k/(n-1) yüzdesi) */
+const CELL_POS: string[] = Array.from({length: BACK_INDEX + 1}, (_, k) => `${(((k % ATLAS_COLS) / (ATLAS_COLS - 1)) * 100).toFixed(4)}% ${((Math.floor(k / ATLAS_COLS) / (ATLAS_ROWS - 1)) * 100).toFixed(4)}%`);
 
 export const SUIT_COLOR: Record<Suit, string> = {H: '#ff2e4d', D: '#ffb400', C: '#16c45b', S: '#1f7bff'};
 
@@ -178,15 +171,13 @@ export class Table2D {
   /** Deste/yığın değişince HUD'a haber ver (deste rozetinin yeri) */
   onDeck: (count: number, x: number, y: number) => void = () => {};
 
-  private atlas: CardAtlas;
   /** Deste atlası hazır olunca çözülür (açılışta masa boş kartlarla kurulur, atlas arka planda çizilir). */
   ready: Promise<void> = Promise.resolve();
   private atlasTok = 0;
+  private atlasUrl = '';
   private paintDirty = false;
 
   constructor(host: HTMLElement, atlas0: CardAtlas | null, private snd: TableSounds, low: boolean) {
-    const atlas = atlas0 ?? tinyAtlas();
-    this.atlas = atlas;
     this.low = low;
     this.root = document.createElement('div');
     this.root.className = 'ar' + (low ? ' is-low' : '');
@@ -213,13 +204,15 @@ export class Table2D {
     this.ghosts = new Pool(this.cardsEl, 'ar__ghost', 6);
     this.puffs = new Pool(this.fxEl, 'ar__puff', 10);
     for (let i = 0; i < 52; i++) {
-      const c = new Card(atlas.cellW, atlas.cellH);
+      const c = new Card();
       this.all.push(c);
       this.cardsEl.append(c.el);
       this.draw(c, BACK_INDEX);
     }
+    this.root.style.setProperty('--c2-bs', `${ATLAS_COLS * 100}% ${ATLAS_ROWS * 100}%`);
     this.layout();
     this.setGlow(null);
+    if (atlas0) void this.setAtlas(atlas0);
     window.addEventListener('resize', () => this.relayout());
     window.visualViewport?.addEventListener('resize', () => this.relayout());
     this.cardsEl.addEventListener('pointerdown', this.down);
@@ -230,22 +223,31 @@ export class Table2D {
 
   // ───────── tema / deste ─────────
 
-  /** Yeni deste atlası: bütün kartlar (açık/kapalı hâliyle) yeniden çizilir; beş kartta bir nefes verir (arayüz donmaz). */
+  /**
+   * Yeni deste atlası: PNG'ye kodlanır (tarayıcı ana iş parçacığını bölmeden, ~0,2 sn) ve tek görsel olarak bütün kartlara
+   * CSS değişkeniyle verilir; kartları yeniden çizmek gerekmez. Eski görsel, yeni kartlara geçildikten sonra serbest kalır.
+   */
   async setAtlas(atlas: CardAtlas): Promise<void> {
-    this.atlas = atlas;
     const tok = ++this.atlasTok;
-    for (let i = 0; i < this.all.length; i++) {
-      const c = this.all[i];
-      if (c.cv.width !== atlas.cellW || c.cv.height !== atlas.cellH) {
-        c.cv.width = atlas.cellW;
-        c.cv.height = atlas.cellH;
-      }
-      this.draw(c, c.cell);
-      if (i % 5 === 4) {
-        await yieldToMain();
-        if (tok !== this.atlasTok) return; // daha yeni bir atlas geldi
-      }
+    const blob = await new Promise<Blob | null>(res => atlas.canvas.toBlob(res, 'image/png'));
+    if (tok !== this.atlasTok || !blob) return; // daha yeni bir atlas geldi
+    const url = URL.createObjectURL(blob);
+    try {
+      const img = new Image();
+      img.src = url;
+      await img.decode(); // çözme iş parçacığı dışında; ilk kare beklemesin
+    } catch {
+      /* decode desteklenmiyorsa tembel çözülür */
     }
+    if (tok !== this.atlasTok) {
+      URL.revokeObjectURL(url);
+      return;
+    }
+    const old = this.atlasUrl;
+    this.atlasUrl = url;
+    this.root.style.setProperty('--c2-atlas', `url("${url}")`);
+    if (old) setTimeout(() => URL.revokeObjectURL(old), 4000);
+    atlas.canvas.width = atlas.canvas.height = 0; // atlas tuvalinin bellek payı hemen geri verilir
   }
 
   /** Masa teması: CSS değişkenleri kök öğeye; boyalı zemin varsa parıltıların altına tuval olarak. */
@@ -332,12 +334,55 @@ export class Table2D {
     }
     this.root.style.setProperty('--cw', cw + 'px');
     this.root.style.setProperty('--ch', ch + 'px');
+    this.bakeShadows(cw, ch);
     const rd = cw * 2.25;
     Object.assign(this.ring.style, {width: rd + 'px', height: rd + 'px', left: W / 2 - rd / 2 + 'px', top: pileY - rd / 2 + 'px'});
     this.potEl.style.transform = `translate3d(${(W / 2 + rd * 0.36).toFixed(1)}px,${(pileY - rd * 0.36).toFixed(1)}px,0) translate(-50%,-50%)`;
     for (const g of this.glowEls) g.style.top = pileY + 'px';
     this.raysEl.style.top = pileY + 'px';
     this.tintEl.style.top = pileY + 'px';
+  }
+
+  private shadowKey = '';
+
+  /**
+   * Kart gölgeleri tek seferlik pişirilmiş görsel olarak (52 kartın her biri için canlı box-shadow + yuvarlak kırpma
+   * ayrı çizim geçişi demekti). Kartın saydam köşeleri atlasta zaten var, canvas'a border-radius gerekmez.
+   * İki görsel: normal (elde/masada) ve yassı (yığında). Kenar payı --c2-p.
+   */
+  private bakeShadows(cw: number, ch: number): void {
+    const key = `${cw}x${ch}`;
+    if (key === this.shadowKey) return;
+    this.shadowKey = key;
+    const P = Math.ceil(cw * 0.26);
+    const S = 2; // 2× çözünürlük: sert alt kenar ölçeklenince bulanmasın
+    const make = (layers: Array<[number, number, number, string]>): string => {
+      const cv = document.createElement('canvas');
+      cv.width = (cw + 2 * P) * S;
+      cv.height = (ch + 2 * P) * S;
+      const g = cv.getContext('2d');
+      if (!g) return '';
+      g.scale(S, S);
+      const r = cw * CORNER_RADIUS;
+      const OFF = 4000; // şekil tuvalin dışında, yalnız gölgesi içeri düşer
+      for (const [dy, blur, , col] of layers) {
+        g.save();
+        g.shadowColor = col;
+        g.shadowBlur = blur * S;
+        g.shadowOffsetX = OFF * S;
+        g.shadowOffsetY = dy * S;
+        g.fillStyle = '#000';
+        g.beginPath();
+        if (g.roundRect) g.roundRect(P - OFF, P, cw, ch, r);
+        else g.rect(P - OFF, P, cw, ch); // eski WebView: köşeler gölgede keskin kalır, kartın kendisi yine yuvarlak
+        g.fill();
+        g.restore();
+      }
+      return `url(${cv.toDataURL('image/png')})`;
+    };
+    this.root.style.setProperty('--c2-p', P + 'px');
+    this.root.style.setProperty('--c2-sh', make([[2, 0, 0, 'rgba(4,8,40,.35)'], [6, 14, 0, 'rgba(2,4,30,.45)']]));
+    this.root.style.setProperty('--c2-sh-flat', make([[1, 0, 0, 'rgba(4,8,40,.4)'], [2, 5, 0, 'rgba(2,4,30,.35)']]));
   }
 
   private relayout(): void {
@@ -358,9 +403,7 @@ export class Table2D {
   // ───────── çizim / poz ─────────
   private draw(c: Card, cell: number): void {
     c.cell = cell;
-    const a = this.atlas, g = c.cv.getContext('2d')!;
-    g.clearRect(0, 0, a.cellW, a.cellH);
-    g.drawImage(a.canvas, (cell % ATLAS_COLS) * a.cellW, Math.floor(cell / ATLAS_COLS) * a.cellH, a.cellW, a.cellH, 0, 0, a.cellW, a.cellH);
+    c.cv.style.backgroundPosition = CELL_POS[cell];
   }
 
   private set(c: Card, p: Pose, z?: number): void {

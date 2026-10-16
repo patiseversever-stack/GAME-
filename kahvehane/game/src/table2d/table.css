@@ -62,9 +62,11 @@
 .c2 { position: absolute; left: 0; top: 0; transform-origin: 50% 50%; will-change: transform; pointer-events: none; }
 .c2__in { position: absolute; inset: 0; transform-origin: 50% 60%; }
 .c2.is-hand { pointer-events: auto; cursor: pointer; }
-.c2__f { position: relative; display: block; width: 100%; height: 100%; border-radius: var(--c2-r, 8%);
-  box-shadow: 0 2px 0 rgba(4, 8, 40, .35), 0 6px 14px rgba(2, 4, 30, .45); }
-.c2.is-flat .c2__f { box-shadow: 0 1px 0 rgba(4, 8, 40, .4), 0 2px 5px rgba(2, 4, 30, .35); }
+/* yüzün köşeleri atlasta saydam (border-radius/box-shadow = kart başına ek çizim geçişi): gölge pişirilmiş görsel */
+.c2__f { position: relative; display: block; width: 100%; height: 100%; background: var(--c2-atlas, none) 0 0 / var(--c2-bs, 800% 700%) no-repeat; }
+.c2__in::before { content: ''; position: absolute; inset: calc(var(--c2-p, 0px) * -1); pointer-events: none;
+  background: var(--c2-sh) center / 100% 100% no-repeat; }
+.c2.is-flat .c2__in::before { background-image: var(--c2-sh-flat); }
 /* alan kart parıltısı */
 .c2__hot { position: absolute; inset: -7%; border-radius: 12%; opacity: 0; pointer-events: none;
   background: radial-gradient(closest-side, rgba(255, 230, 120, 0) 72%, rgba(255, 220, 90, .85) 88%, rgba(255, 210, 60, 0) 100%);
