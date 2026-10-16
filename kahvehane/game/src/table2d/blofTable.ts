@@ -302,9 +302,10 @@ export class BlofTable {
       oppBottom = ty + fh / 2;
     }
     // sahne (yığın + madalyon + kenar): boş alanın görsel ortasında, iri
-    const pileS = PILE_S;
-    const pw = cw * pileS, ph = ch * pileS;
     const ref = n === 4 ? (barTop1 + barTop2) / 2 : barTop2;
+    // yığın boş alana göre iri (uzun ekranda ve tablette büyür, kısa ekranda küçülmez)
+    const pileS = clamp((0.37 * (ref - oppBottom)) / ch, PILE_S * 0.96, 1.22);
+    const pw = cw * pileS, ph = ch * pileS;
     let pileY = (oppBottom + ref) / 2 + u * 0.2;
     // iki sıralı elde bile çubuğa değmesin; üstte rakip yelpazesine değmesin
     pileY = Math.min(pileY, barTop2 - ph / 2 - u * 2.2);

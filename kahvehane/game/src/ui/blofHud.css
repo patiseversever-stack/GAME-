@@ -43,7 +43,7 @@
 .bl-pilechip.is-on, .bl-outchip.is-on { visibility: visible; }
 
 /* ---- eylem çubuğu (elin üstü; solda benim rozetim) ---- */
-.bl-bar { left: calc(var(--u) * 6.1) !important; right: max(calc(var(--u) * .8), env(safe-area-inset-right)); top: 0; z-index: 4; display: flex; gap: calc(var(--u) * .55);
+.bl-bar { left: calc(var(--bl-row-l, calc(var(--u) * .9)) + var(--u) * 5.2) !important; right: max(calc(var(--u) * .8), env(safe-area-inset-right)); max-width: calc(var(--u) * 25.5); top: 0; z-index: 4; display: flex; gap: calc(var(--u) * .55);
   align-items: center; transform: translateY(-50%); visibility: hidden; opacity: 0; transition: opacity .18s, visibility 0s .18s; }
 .bl-bar.is-on { visibility: visible; opacity: 1; transition: opacity .18s; }
 .bl-bar.is-picking { opacity: 0; visibility: hidden; }
@@ -172,7 +172,7 @@
   background: linear-gradient(180deg, #ff8a9a 0%, #ff3d5a 45%, #d9123a 100%); box-shadow: 0 0 0 2.5px #fff2a0, 0 0 0 5px var(--navy), 0 3px 0 5px var(--navy), 0 0 22px 6px rgba(255, 70, 70, .7); }
 .kh-hud[data-game="blof"] .kh-badge.is-alert .kh-badge__pill .kh-i { color: #fff; }
 /* ben: çubuğun solunda; ad yok, sayaç rozetin sağ alt köşesinde */
-.kh-hud[data-game="blof"] .kh-badge.is-bottom { --bs: calc(var(--u) * 4.3); bottom: auto; top: calc(var(--bl-bar-y, 80vh) - var(--bs) / 2 - var(--u) * .1); left: max(calc(var(--u) * .9), env(safe-area-inset-left)); }
+.kh-hud[data-game="blof"] .kh-badge.is-bottom { --bs: calc(var(--u) * 4.3); bottom: auto; top: calc(var(--bl-bar-y, 80vh) - var(--bs) / 2 - var(--u) * .1); left: max(var(--bl-row-l, calc(var(--u) * .9)), env(safe-area-inset-left)); }
 .kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-badge__name { display: none; }
 .kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-badge__plate { left: auto; right: calc(var(--bs) * -.3); top: auto; bottom: calc(var(--bs) * -.2); transform: none; }
 .kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-badge__pill { font-size: calc(var(--u) * .98); margin: 0; }

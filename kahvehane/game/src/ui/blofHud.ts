@@ -189,6 +189,9 @@ export class BlofHud {
     this.selInfo.style.top = y + 'px';
     this.picker.style.bottom = Math.max(0, L.H - y - Math.max(44, L.u * 3) / 2) + 'px';
     document.documentElement.style.setProperty('--bl-bar-y', y + 'px');
+    // geniş ekranda (tablet) rozet + çubuk ortalanmış bir grup; telefonda sola yaslı
+    const groupW = L.u * 31;
+    document.documentElement.style.setProperty('--bl-row-l', Math.max(L.u * 0.9, (L.W - groupW) / 2) + 'px');
     // BLÖF düğmesi çubuğun yerinde (pencere açıkken çubuk gizlenir)
     pos(this.blof, L.blof.x, L.blof.y);
     this.blof.style.setProperty('--d', L.blof.d + 'px');

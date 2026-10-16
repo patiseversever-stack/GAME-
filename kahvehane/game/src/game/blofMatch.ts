@@ -3,14 +3,12 @@
 // tepki, replik, ses, titreşim), arayüzden gelen hamleleri ev sahibine yollar, her olay kümesini sunduktan sonra 'ack' verir
 // (pencere sayacı ve botlar animasyon bitince başlar).
 // Dışarıdan görünüşü Pişti'nin Match'iyle aynı: new BlofMatch({table, hud, sfx, voice, auto}).play(setup) → BlofOutcome | null, abort().
-import {blofEngine, type BlofEngine} from '../core/blofEngine';
 import {BLOF_MODES, blofConfigFor, claimText, type BlofAction, type BlofEvent, type BlofMode, type BlofTell, type BlofView} from '../core/blofTypes';
 import {rankOf} from '../core/types';
 import {mulberry32} from '../core/rng';
 import {BlofBot, type BlofDifficulty} from '../ai/blofBot';
+import {createBlofLocal, type BlofClient, type BlofHost} from '../net/blofLocal';
 import {BlofTalk, BLOF_MOOD, TUTORIAL, type BlofMoment} from '../ai/blofDialogue';
-import {LocalHost, type HostSeat} from '../net/host';
-import {GameClient} from '../net/client';
 import type {ServerMsg} from '../net/protocol';
 import {BlofTable, type BlofSounds} from '../table2d/blofTable';
 import type {Table2D} from '../table2d/table';
@@ -53,8 +51,8 @@ type TutStep = 'open' | 'select' | 'play' | 'blof' | 'pass';
 export class BlofMatch {
   private t!: BlofTable;
   private ui!: BlofHud;
-  private host: LocalHost<BlofEngine, BlofTell> | null = null;
-  private client: GameClient<BlofAction, BlofEvent, BlofView, BlofTell> | null = null;
+  private host: BlofHost | null = null;
+  private client: BlofClient | null = null;
   private setup!: MatchSetup;
   private players: SeatPlayer[] = [];
   private n = 2;
@@ -219,13 +217,15 @@ export class BlofMatch {
     const seed = setup.seed ?? (Math.random() * 2 ** 31) | 0;
     const diff: BlofDifficulty = tutorial ? 'kolay' : diffOf(setup.difficulty);
     const cfg = {...blofConfigFor(mode, seed, tutorial ? ME : undefined), challengeWindowMs: tutorial ? 9000 : undefined};
-    const seats: HostSeat<BlofEngine, BlofTell>[] = Array.from({length: this.n}, (_, s) => {
-      if (s === ME) return {kind: 'human', name: setup.players[0]?.name};
-      return {kind: 'bot', name: this.players[s]?.name, brain: new BlofBot(s, diff, mulberry32((seed ^ 0x5bd1e995) + s * 7919))};
+    const local = createBlofLocal({
+      cfg,
+      seats: Array.from({length: this.n}, (_, i) => (i === ME ? {kind: 'human' as const, name: setup.players[0]?.name} : {kind: 'bot' as const, difficulty: diff, name: this.players[i]?.name})),
+      paceMaxMs: 9000,
+      botSeed: (seed ^ 0x5bd1e995) >>> 0,
     });
-    const host = new LocalHost<BlofEngine, BlofTell>(blofEngine, cfg, {seats, paceMaxMs: 9000});
+    const host = local.host;
     this.host = host;
-    const client = new GameClient<BlofAction, BlofEvent, BlofView, BlofTell>(host.connect(ME));
+    const client = local.client!;
     this.client = client;
     this.autoBot = this.d.auto ? new BlofBot(ME, 'orta', mulberry32(seed + 7)) : null;
     this.autoKey = '';
@@ -733,6 +733,9 @@ export class BlofMatch {
     }
     this.ui.setSelectionRank(ids.length ? r : 0);
     if (ids.length) this.tutSeen('select');
+    // pencere açıkken sıradaki benim ve kart seçmeye başladım: blöf demiyorum (pencere herkes geçince erken kapanır)
+    const v = this.view;
+    if (ids.length && v && v.canChallenge && v.turn === ME && this.ui.blofOpen && !this.d.auto) this.decline();
     this.controls();
   }
 
@@ -750,7 +753,7 @@ export class BlofMatch {
         st.mode = 'follow';
         st.rank = v.rank;
         st.canPass = v.canPass;
-      } else if (v.phase === 'window' && v.turn === ME && v.window && v.window.by !== ME) {
+      } else if (v.phase === 'window' && v.turn === ME && v.window && v.window.by !== ME && !v.canChallenge) {
         // pencere açıkken sıradaki benim: atarsam "blöf demiyorum" sayılır, hamle pencere kapanınca uygulanır
         st.mode = 'follow';
         st.rank = v.window.rank;
