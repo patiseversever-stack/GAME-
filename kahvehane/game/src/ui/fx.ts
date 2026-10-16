@@ -2,6 +2,7 @@
 // PİŞTİ damgası (dört renk hüzme, valede dört renk çark), afiş, puan baloncuğu, seri rozeti, vurgu yazısı ve
 // kuşanılabilir pişti efektleri: klasik (dört renk patlama) · havai (fişek) · yildiz (kayan yıldız yağmuru) · altin (sikke yağmuru).
 // Yalnız transform + opacity; düğümler havuzdan gelir, iş bitince gizlenir (yeni düğüm üretilmez).
+import {cancelAnims} from '../platform/anim';
 import './fx.css';
 import {ANIM, EASE, esc, h, play} from './dom';
 import {ASSETS, OPTIONAL_ART} from './assets';
@@ -37,7 +38,7 @@ class Ring {
       this.host.append(n);
     }
     this.i++;
-    n.getAnimations().forEach(a => a.cancel());
+    cancelAnims(n);
     n.style.display = 'block';
     return n;
   }
@@ -46,7 +47,7 @@ class Ring {
 /** Parçacığı gizle ve bitmiş animasyonunu bırak (fill: both etkisi listede birikmesin). */
 const hide = (n: HTMLElement) => {
   n.style.display = 'none';
-  n.getAnimations().forEach(a => a.cancel());
+  cancelAnims(n);
 };
 
 export class Fx {
@@ -110,7 +111,7 @@ export class Fx {
   private release(n: HTMLElement): void {
     n.dataset.busy = '0';
     n.style.display = 'none';
-    n.getAnimations().forEach(a => a.cancel());
+    cancelAnims(n);
   }
 
   /** Tam ekran kısa, yumuşak renkli ışık patlaması (yalnız opaklık; beyaz patlama yok). */

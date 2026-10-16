@@ -53,6 +53,8 @@ const msToMidnight = () => {
   return m.getTime() - n.getTime();
 };
 
+const FIRST_BATCH = 4, BATCH = 4;
+
 export class ShopPage implements Page {
   readonly el = h('div', 'kh-page kh-shop');
   private scope = new Scope();
@@ -140,6 +142,7 @@ export class ShopPage implements Page {
     this.body.innerHTML = html;
     this.body.scrollTop = 0;
     this.mountPreviews();
+    this.flushLater();
     if (this.tab === 'featured') this.tickDeal();
     if (animate) {
       if (dir) play(this.body, [{transform: `translateX(${dir * 12}%)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, easing: EASE.outQuart});
@@ -170,17 +173,44 @@ export class ShopPage implements Page {
     return `${dealHtml}${feat.length ? this.gridHtml(feat, 'Sana Özel') : ''}`;
   }
 
+  /** Izgaranın ilk parçası hemen, kalanı kare kare (sekme açılışında tek büyük görev olmasın). */
+  private later: string[] = [];
   private gridHtml(items: readonly ShopItem[], title: string): string {
     const sorted = items.slice().sort((a, b) => {
       const ea = this.equipped(a.kind, a.id) ? 2 : this.owns(a.kind, a.id) ? 1 : 0;
       const eb = this.equipped(b.kind, b.id) ? 2 : this.owns(b.kind, b.id) ? 1 : 0;
       return eb - ea || a.price - b.price;
     });
-    return `<div class="kh-shop__sec">${esc(title)}</div><div class="kh-grid">${sorted.map(it => itemCardHtml(it, this.owns(it.kind, it.id), this.equipped(it.kind, it.id))).join('')}</div>`;
+    const cards = sorted.map(it => itemCardHtml(it, this.owns(it.kind, it.id), this.equipped(it.kind, it.id)));
+    this.later = cards.slice(FIRST_BATCH);
+    return `<div class="kh-shop__sec">${esc(title)}</div><div class="kh-grid">${cards.slice(0, FIRST_BATCH).join('')}</div>`;
+  }
+
+  private flushT = 0;
+  private flushLater(): void {
+    const rest = this.later;
+    this.later = [];
+    cancelAnimationFrame(this.flushT);
+    if (!rest.length) return;
+    const grid = this.body.querySelector('.kh-grid');
+    if (!grid) return;
+    let i = 0;
+    const step = (): void => {
+      if (!this.scope.alive || !grid.isConnected) return;
+      const chunk = rest.slice(i, i + BATCH);
+      i += BATCH;
+      const before = grid.childElementCount;
+      grid.insertAdjacentHTML('beforeend', chunk.join(''));
+      const fresh = Array.from(grid.children).slice(before) as HTMLElement[];
+      fresh.forEach(c => play(c, [{opacity: 0, transform: 'translateY(14px)'}, {opacity: 1, transform: 'none'}], {duration: 240, easing: EASE.out, fill: 'backwards'}));
+      this.mountPreviews();
+      if (i < rest.length) this.flushT = requestAnimationFrame(step);
+    };
+    this.flushT = requestAnimationFrame(step);
   }
 
   private mountPreviews(): void {
-    this.body.querySelectorAll<HTMLElement>('[data-pv]').forEach(pv => mountPreview(pv, this.shell, false));
+    this.body.querySelectorAll<HTMLElement>('[data-pv]:not(.kh-pv)').forEach(pv => mountPreview(pv, this.shell, false));
   }
 
   private tickDeal(): void {

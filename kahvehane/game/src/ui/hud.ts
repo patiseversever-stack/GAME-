@@ -2,6 +2,7 @@
 // Canlı karakter rozetleri (kafası çemberden taşan portre, nefes alma, doğal göz kırpma, yaylı tepki hâlleri, küçük çizgi film
 // vurguları, dürtme), jeton, duraklat, deste sayacı, ipucu, eşli takım hapı, konuşma balonu, pişti kahramanı (karakter büyük girer),
 // seri / vurgu yazıları ve el sonu sayımı. Ortadaki masa alanı boş kalır. Yalnız transform/opacity animasyonu.
+import {cancelAnims} from '../platform/anim';
 import './hud.css';
 import type {GameHud, HudPisti, HudPlayer, HudPose, HudSounds, HudTally} from './types';
 import type {Mode, SeatPlayer} from '../game/types';
@@ -168,7 +169,7 @@ class Badge {
       if (tok !== this.baseTok) return;
       next.style.zIndex = '1';
       cur.style.zIndex = '0';
-      next.getAnimations().forEach(a => a.cancel());
+      cancelAnims(next);
       next.style.opacity = '1';
       cur.style.opacity = '0';
       this.front = 1 - this.front;
@@ -187,8 +188,8 @@ class Badge {
     img.src = this.url(pose);
     void ready(img).then(() => {
       if (tok !== this.reactTok) return;
-      img.getAnimations().forEach(a => a.cancel());
-      this.baseWrap.getAnimations().forEach(a => a.cancel());
+      cancelAnims(img);
+      cancelAnims(this.baseWrap);
       img.style.opacity = '1';
       this.baseWrap.style.opacity = '0';
       this.reacting = true;

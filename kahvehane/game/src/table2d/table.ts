@@ -3,6 +3,7 @@
 // Kart yüzleri: deste atlası tek bir görsele (blob) çevrilir; 52 kart aynı görselden background-position ile kesilir.
 // (Kart başına canvas = kart başına ayrı çizim geçişi + 52 GPU tuvali; tek görsel hem bellek hem kare maliyetini düşürür.)
 // Efekt düğümleri (kıvılcım, halka, iz, toz) havuzdan gelir; boşta hiçbir JS çalışmaz (yalnız ucuz CSS/WAAPI döngüleri).
+import {cancelAnims} from '../platform/anim';
 import './table.css';
 import {ATLAS_COLS, ATLAS_ROWS, BACK_INDEX, CORNER_RADIUS, type CardAtlas} from '../render/cardAtlas';
 import {cardId, isJack, rankOf, suitOf, type CardId, type Suit} from '../core/types';
@@ -111,13 +112,13 @@ class Pool {
       this.items.push(el);
     }
     this.i++;
-    el.getAnimations().forEach(a => a.cancel());
+    cancelAnims(el);
     el.style.display = 'block';
     return el;
   }
   hide(el: HTMLElement): void {
     el.style.display = 'none';
-    el.getAnimations().forEach(a => a.cancel());
+    cancelAnims(el);
   }
 }
 
@@ -727,7 +728,7 @@ export class Table2D {
       c.el.classList.add('is-flat');
       c.el.style.opacity = '1';
       this.dropGold(c);
-      c.inn.getAnimations().forEach(a => a.cancel());
+      cancelAnims(c.inn);
       if (c.cell !== BACK_INDEX) this.draw(c, BACK_INDEX);
       const p = this.deckPose(i);
       this.set(c, {...p, x: p.x - this.L.W * 0.7, r: p.r - 25}, 100 + i);
@@ -1026,8 +1027,8 @@ export class Table2D {
 
   private dropGold(c: Card): void {
     if (!c.gold) return;
-    c.gold.getAnimations().forEach(a => a.cancel());
-    (c.gold.firstElementChild as HTMLElement).getAnimations().forEach(a => a.cancel());
+    cancelAnims(c.gold);
+    cancelAnims(c.gold.firstElementChild as HTMLElement);
     c.gold.remove();
     c.gold = null;
   }

@@ -16,6 +16,7 @@ import {detectTier, type Tier} from './quality';
 import {setHaptics, store} from './platform/bridge';
 import {initCalm} from './platform/calm';
 import {whenIdle} from './platform/sched';
+import {trackAnimations} from './platform/anim';
 
 const Q = new URLSearchParams(location.search);
 const AUTO = Q.has('auto');
@@ -44,6 +45,7 @@ function atlasWidth(tier: Tier): number {
 }
 
 async function boot(): Promise<void> {
+  trackAnimations(); // havuz öğelerini hesap zorlamadan temizlemek için animasyonları kaydet
   const settings = store.get<Settings>('settings2', {sfx: true, voice: true, music: true, haptics: true, quality: 'auto'});
   const tier: Tier = settings.quality === 'auto' || Q.has('q') ? detectTier() : settings.quality;
   // düşük seviyede meta ekranların süs döngüleri (dönen hüzmeler, nefes) durur
