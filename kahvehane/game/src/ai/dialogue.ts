@@ -1,23 +1,31 @@
-// Kahvehane Pişti — konuşma replikleri (TEK KAYNAK) + replik seçimi + konuşma sıklığı.
+// Kahvehane — seslendirilen BÜTÜN replikler (TEK KAYNAK): Pişti + Blöf + menü (galeri / market) + botlar arası atışma
+// (banter) + hızlı sohbet (quick chat); replik seçimi (kalıcı tekrar önleme) + konuşma sıklığı.
 //
 // Bu dosya iki yerde çalışır:
-//  1) Oyunda (Vite): pickLine / shouldSpeak / react ile hangi anda hangi replik söylenecek.
+//  1) Oyunda (Vite): pickLine / shouldSpeak / react / BlofTalk (blofDialogue.ts) / pickBanter / quickSay …
 //  2) Seslendirme aracında (tools/voice/generate.mjs): Node 22 bu dosyayı tip ayıklamayla DOĞRUDAN import eder.
 //     Bu yüzden: yalnızca "silinebilir" TS sözdizimi (enum / namespace / parametre özelliği YOK) ve çalışma
 //     zamanında başka modül import edilmez (yalnızca `import type`).
 //
-// Replik ekleme kuralı: her satır [no, tts, mood?, {text?, weight?}]. Kimlik = `${karakter}_${an}_${no}` ve
-// ses dosyasının adıdır; numaraları DEĞİŞTİRMEYİN (yeni replik = yeni numara). `text` verilmezse balondaki yazı,
-// tts'ten [ses etiketleri] silinerek çıkarılır. `mood` verilmezse karakterin o an için varsayılan duygusu kullanılır;
-// `null` = duygu kartı yok. `tts` ElevenLabs v3 ses etiketleri içerir: [laughs], [sighs], [whispers] ...
-import type {Mood} from './characters';
+// Satır biçimi: [no, tts, mood?, {text?, weight?, stab?, cd?}]. Kimlik = `${karakter}_${an}_${no}` ve ses dosyasının
+// adıdır (henüz ses üretilmediği için numaralar serbest; ses üretildikten sonra numara DEĞİŞTİRMEYİN, yeni replik =
+// yeni numara). `text` verilmezse balon yazısı tts'ten [ses etiketleri] silinerek çıkar. `mood` verilmezse anın
+// varsayılan yüz ifadesi; `null` = yüz ifadesi yok. `stab` ElevenLabs v3 kararlılığı (0 Creative / 0.5 Natural /
+// 1 Robust); verilmezse etiketlerden çıkarılır (stabilityFor). `cd` = tekrar beklemesi (el); verilmezse uzunluktan.
+//
+// SES / UZUNLUK KURALI (testlerle korunur):
+//  · Sık, oyun içi anlar (yakalama, düşünme, bekleme): ≤ ~2,6 sn ya da yalnız ses (gülme, homurtu, "Hıh.").
+//  · Uzun espri (≤ ~6 sn) yalnız oyunun zaten durduğu anlarda ve öncelik 3'te: el başı, pişti kutlaması, el sonu,
+//    Blöf açılışı, galeri / market. Öncelik 3 olmayan anda > 3,2 sn replik yoktur (kesilmeden biter, ya da kibarca kesilir).
+import type {Pose} from '../game/roster';
 
 export type CharId = 'riza' | 'cem' | 'dursun' | 'defne';
 export const CHAR_IDS: readonly CharId[] = ['riza', 'cem', 'dursun', 'defne'];
 
+/** Pişti anları (match.ts yayınlar). */
 export const MOMENTS = [
   'start', // el başladı
-  'myTurnIdle', // oyuncu 6 sn'den uzun düşünüyor (rakip bekliyor)
+  'myTurnIdle', // oyuncu 9 sn'den uzun düşünüyor (rakip bekliyor)
   'botThinking', // bot hamle düşünüyor
   'botPisti',
   'botJackPisti',
@@ -36,26 +44,72 @@ export const MOMENTS = [
   'botWin',
   'playerWin',
   'draw',
-  'playerFastThrow', // oyuncu kartı çok sert fırlattı
+  'playerFastThrow', // oyuncu kartı çok sert fırlattı (henüz yayınlanmıyor)
   'tableEmpty', // masa boş ve sıra botta
 ] as const;
 export type Moment = (typeof MOMENTS)[number];
+
+/** Menü anları (oyun dışı; bağlanması sonra): ilk açılış galerisi ve market. */
+export const META_MOMENTS = [
+  'galleryIntro', // ilk açılış galerisinde karakterin kartına gelince (2,5–6 sn kendini tanıtır)
+  'shopPitch', // markette karakter önizlenirken (satış konuşması)
+  'shopBought', // satın alınınca
+  'shopPoor', // jeton yetmeyince (tatlı iğne + "bir el daha oyna")
+] as const;
+export type MetaMoment = (typeof META_MOMENTS)[number];
+
+/** Blöf anları (blofMatch.ts yayınlar; kimlikte `blof` önekiyle: riza_blofCallOut_2). */
+export const BLOF_MOMENTS = [
+  'start', // el başladı
+  'callOut', // bot "Blöf!" diyor (bağırış)
+  'catchGloat', // bot yalanı yakaladı (başka botun)
+  'catchPlayer', // bot, OYUNCUNUN yalanını yakaladı
+  'caught', // botun yalanı başka botça yakalandı (ikincil tepki)
+  'caughtByPlayer', // botun yalanını OYUNCU yakaladı
+  'wrongCall', // bot boşa blöf dedi (yığını kendisi aldı)
+  'survived', // bota blöf dendi ama doğruydu
+  'survivedPlayer', // OYUNCU bota boşa blöf dedi
+  'pass', // bot pas dedi
+  'bigPile', // biri koca yığını aldı (izleyen bot)
+  'nearWin', // bot bitirmeye yakın (1–2 kart)
+  'playerNearWin', // oyuncu bitirmeye yakın
+  'idle', // oyuncu uzun düşünüyor
+  'botWin',
+  'playerWin',
+  'mateCheer', // eşli: ortak güzel iş yaptı
+] as const;
+export type BlofMoment = (typeof BLOF_MOMENTS)[number];
+export type BlofKey = `blof${Capitalize<BlofMoment>}`;
+export function blofKey(m: BlofMoment): BlofKey {
+  return ('blof' + m.charAt(0).toUpperCase() + m.slice(1)) as BlofKey;
+}
+
+/** Ses kimliğindeki an adı: Pişti, menü, Blöf (blofX), atışma, hızlı sohbet söyleyişi / cevabı. */
+export type VoiceMoment = Moment | MetaMoment | BlofKey | 'banter' | 'quickSay' | 'quickReply';
+export type Stab = 0 | 0.5 | 1;
+export type Rel = 'mate' | 'opp';
 
 export interface Line {
   id: string;
   /** Konuşma balonundaki yazı. */
   text: string;
-  /** Duygu kartı; null = yok. */
-  mood?: Mood | null;
+  /** Yüz ifadesi (karakter pozu); null = yok. */
+  mood?: Pose | null;
   /** ElevenLabs v3 metni: aynı cümle + köşeli parantezli ses etiketleri. */
   tts: string;
   /** Seçilme ağırlığı (varsayılan 1). */
   weight?: number;
+  /** v3 kararlılığı (0 Creative, 0.5 Natural, 1 Robust); yoksa stabilityFor etiketlerden çıkarır. */
+  stab?: Stab;
+  /** Tekrar beklemesi (el sayısı); yoksa cooldownHands uzunluktan çıkarır. */
+  cd?: number;
+  /** Hızlı sohbet cevabı: yalnız ortağa (mate) / rakibe (opp) uygun; yoksa ikisi de. */
+  rel?: Rel;
 }
 
 export interface LineRef extends Line {
   char: CharId;
-  moment: Moment;
+  moment: VoiceMoment;
 }
 
 // ───────────────────────── yardımcılar ─────────────────────────
@@ -75,318 +129,1830 @@ export function ttsHash(s: string): string {
   return h.toString(16).padStart(8, '0');
 }
 
-type Spec = [n: number, tts: string, mood?: Mood | null, opt?: {text?: string; weight?: number}];
-type CharSpec = {moods: Partial<Record<Moment, Mood>>; lines: Partial<Record<Moment, Spec[]>>};
+/** Karakterin yaklaşık konuşma hızı (harf+boşluk / sn): Rıza ağır, Defne ölçülü, Dursun gür, Cem hızlı. */
+const CPS: Record<CharId, number> = {riza: 13, defne: 13, dursun: 14.5, cem: 16};
+
+/** Tahmini konuşma süresi (sn): harfler / hız + gülme-iç çekme etiketleri + duraklar (…, —, cümle sonu). */
+export function speechSeconds(char: string, tts: string): number {
+  const speech = stripTags(tts);
+  let s = speech.replace(/[^\p{L}\p{N} ]/gu, '').length / (CPS[char as CharId] ?? 14);
+  for (const tag of tts.match(/\[[^\]]*\]/g) ?? []) s += /laugh/.test(tag) ? 0.6 : /chuckle|sigh|groan|gasp|scoff|clears|giggle/.test(tag) ? 0.3 : 0;
+  s += (speech.match(/…/g)?.length ?? 0) * 0.35 + (speech.match(/—/g)?.length ?? 0) * 0.2 + (speech.match(/[.!?](?=\s+\S)/g)?.length ?? 0) * 0.2;
+  return Math.round(s * 100) / 100;
+}
+
+const HOT_TAG = /\[(?:laughs[a-z ]*|shouting|shouts|excited|angry|frustrated|gasps|annoyed|appalled|giggles|surprised)\]/;
+
+/** v3 kararlılığı: satırın kendi değeri; yoksa gülme/bağırma/heyecan → 0 (Creative), [deadpan] → 1 (Robust); diğerleri null (karakter ayarı). */
+export function stabilityFor(l: Pick<Line, 'tts' | 'stab'>): Stab | null {
+  if (l.stab !== undefined) return l.stab;
+  if (HOT_TAG.test(l.tts)) return 0;
+  if (l.tts.includes('[deadpan]')) return 1;
+  return null;
+}
+
+/** Tekrar beklemesi (el): kısa ses / tek kelime hemen döner, orta cümle birkaç el, uzun espri ~25 el. */
+export function cooldownHands(l: Pick<Line, 'tts' | 'cd'>): number {
+  if (l.cd !== undefined) return l.cd;
+  const n = stripTags(l.tts).length;
+  return n <= 12 ? 0 : n <= 26 ? 3 : n <= 42 ? 10 : 25;
+}
+
+type Opt = {text?: string; weight?: number; stab?: Stab; cd?: number};
+type Spec = [n: number, tts: string, mood?: Pose | null, opt?: Opt];
+type Specs<M extends string> = Partial<Record<M, Spec[]>>;
+interface CharSpec {
+  /** Bu karakterde anın varsayılan yüz ifadesi (BASE_MOODS'u ezer). */
+  moods?: Partial<Record<Moment | MetaMoment, Pose | null>>;
+  lines: Specs<Moment | MetaMoment>;
+  blof: Specs<BlofMoment>;
+}
+
+const _ = undefined;
+/** Yalnız ses (gülme, homurtu): sık anlarda daha çok seçilsin. */
+const NV: Opt = {weight: 1.6};
+const NV2: Opt = {weight: 2.2};
+const T = (text: string, o?: Opt): Opt => ({...o, text});
+
+/** Pişti / menü anlarının varsayılan yüz ifadesi. */
+const BASE_MOODS: Partial<Record<Moment | MetaMoment, Pose | null>> = {
+  start: 'gulumseme', botThinking: 'dusunceli', botPisti: 'kahkaha', botJackPisti: 'kahkaha', playerPisti: 'kizgin',
+  playerJackPisti: 'saskin', botBigCapture: 'kahkaha', playerBigCapture: 'kizgin', botJackCapture: 'kirpma',
+  playerJackCapture: 'saskin', playerDumpedValuable: 'kahkaha', botLuckyCapture: 'kirpma', lastRound: 'dusunceli',
+  botLeading: 'gulumseme', playerLeading: 'dusunceli', comeback: 'zafer', botWin: 'kahkaha', playerWin: 'uzgun',
+  draw: 'saskin', playerFastThrow: 'saskin', tableEmpty: 'dusunceli',
+  galleryIntro: 'gulumseme', shopPitch: 'kirpma', shopBought: 'kahkaha', shopPoor: 'kirpma',
+};
+
+/** Blöf anının varsayılan yüz ifadesi. */
+export const BLOF_MOOD: Readonly<Record<BlofMoment, Pose | null>> = {
+  start: 'gulumseme', callOut: 'kizgin', catchGloat: 'kahkaha', catchPlayer: 'kahkaha', caught: 'uzgun',
+  caughtByPlayer: 'saskin', wrongCall: 'saskin', survived: 'zafer', survivedPlayer: 'kahkaha', pass: null,
+  bigPile: 'saskin', nearWin: 'gulumseme', playerNearWin: 'saskin', idle: 'dusunceli', botWin: 'zafer',
+  playerWin: 'uzgun', mateCheer: 'kahkaha',
+};
 
 // ───────────────────────── RIZA AMCA ─────────────────────────
-// 72, kırk yıllık usta, gri kasket, beyaz pala bıyık, kehribar tespih. Çay sever, biraz huysuz ama tatlı.
-// Oyuncuya "evlat" der, eski günleri, tavlayı ve kahvenin müdavimlerini (Kahveci Dursun, Muhtar) anar.
+// 72, "eski toprak". Kırk yıllık usta; gri kasket, pala bıyık, kehribar tespih. Atasözü, "bizim zamanımızda",
+// tavla (mars), çay, Dursun'a seslenme, Muhtar. Oyuncuya "evlat". Huysuz ama tatlı; ağır, tok konuşur.
 
 const RIZA: CharSpec = {
-  moods: {
-    botPisti: 'kahkaha', botJackPisti: 'kahkaha', playerPisti: 'kizgin', playerJackPisti: 'saskin',
-    botBigCapture: 'kahkaha', playerBigCapture: 'kizgin', botJackCapture: 'kahkaha', playerJackCapture: 'kizgin',
-    playerDumpedValuable: 'kahkaha', botLuckyCapture: 'kahkaha', botLeading: 'kahkaha', playerLeading: 'kizgin',
-    comeback: 'kahkaha', botWin: 'kahkaha', playerWin: 'uzgun', draw: 'saskin', playerFastThrow: 'saskin',
-  },
   lines: {
     start: [
-      [1, '[chuckles] Otur bakalım evlat. Kağıtlar karıldı, çaylar demlendi.'],
-      [2, '[clears throat] Kırk yıldır bu masadayım. Hoş geldin evlat.'],
-      [3, '[mischievously] Bakalım bugün çayları kim ısmarlayacak?'],
+      [1, '[chuckles] Otur evlat. Çay demde, kağıt elde.'],
+      [2, '[clears throat] Kırk yıldır bu masa benden sorulur.'],
+      [3, '[mischievously] Bakalım bugün çaylar kimden?', 'kirpma'],
       [4, '[shouting] Dursun! İki çay… biri açık olsun!'],
-      [5, '[chuckles] Gözlüğümü taktım evlat, kaçarın yok.'],
-    ],
-    myTurnIdle: [
-      [1, '[sighs] Kart atıyoruz evlat, kız istemiyoruz!', undefined, {weight: 1.3}],
-      [2, '[sighs] Evlat… çayım soğudu.'],
-      [3, '[grumbling] Tespihi üç tur çektim, hâlâ düşünüyor!'],
-      [4, '[chuckles] Hadi yeğenim, kahvehane kapanacak!'],
-      [5, '[annoyed] Satranç oynamıyoruz, at şu kartı!'],
-      [6, '[sighs] Sen düşünürken ben üç el tavla bitirdim.'],
+      [5, '[mischievously] Bizim zamanımızda kart, bıyık burularak oynanırdı.', 'kirpma'],
+      [6, '[clears throat] Tespih hazır, gözlük takıldı. Başlayalım.'],
+      [7, '[chuckles] Kurt kocayınca ne olur bilir misin? Ders verir!', 'kirpma'],
+      [8, '[sighs] Bu masada kimler oturdu, kimler kalktı… Sıra sende evlat.'],
     ],
     botThinking: [
-      [1, '[thoughtful] Hımm… dur bakalım.'],
-      [2, '[clears throat] Sabret evlat, usta düşünüyor.'],
-      [3, '[thoughtful] Bu kart… yok yok, şu kart.'],
-      [4, '[grumbling] Gözlüğüm nerede benim yahu?'],
-      [5, '[whispers] İki vale çıktı… bir as gitti…'],
+      [1, '[thoughtful] Hımm…', _, NV2],
+      [2, '[clears throat] Öhö öhö…', _, NV],
+      [3, '[chuckles] Heh heh…', _, NV],
+      [4, '[sighs] Eh be…', _, NV],
+      [5, '[whispers] Sakla samanı, gelir zamanı…'],
+      [6, '[grumbling] Bu gözlük de buğulandı yahu.'],
+      [7, '[thoughtful] Acele işe şeytan karışır…'],
+      [8, "[whispers] Cem'in algoritması bunu bilmez…"],
+      [9, '[grumbling] Hangi kart, hangi kart…'],
+      [10, '[whispers] Valeler gitti… aslar gitti…'],
+    ],
+    myTurnIdle: [
+      [1, '[grumbling] Kart atıyoruz evlat, kız istemiyoruz!', 'kizgin', {weight: 1.2}],
+      [2, '[sighs] Evlat… çayım buz kesti.', 'uzgun'],
+      [3, '[clears throat] Öhöm! Öhöm!', 'kirpma', NV],
+      [4, '[sighs] Offf…', 'uzgun', NV],
+      [5, '[grumbling] Hıh.', 'kizgin', NV],
+      [6, '[chuckles] Torunum askerden döndü evlat!', 'kirpma'],
+      [7, '[grumbling] Tespihi iki tur çektim, hâlâ yok!', 'kizgin'],
+      [8, '[annoyed] Satranç değil bu, pişti!', 'kizgin'],
+      [9, '[chuckles] Hadi yeğenim, kahvehane kapanıyor!', 'kirpma'],
+      [10, '[chuckles] Düşünme evlat, kafan ağrır.', 'kirpma'],
     ],
     botPisti: [
-      [1, '[laughs] Pişti! Çaylar senden evlat!', undefined, {weight: 1.2}],
-      [2, '[excited] Pişti! Ustaya saygı, delikanlı!'],
-      [3, '[laughs] Fırından yeni çıktı, sıcak sıcak pişti!'],
-      [4, '[chuckles] Ders bir: Pişti. Not al evlat.'],
-      [5, '[laughs] Pişti! Dursun, buraya bir çay daha!'],
-      [6, '[proudly] Pişti! Bu oyunu ben icat ettim evlat!'],
+      [1, '[laughs] Pişti! Çaylar senden evlat!', _, {weight: 1.2}],
+      [2, '[chuckles] Pişti. Ders bir, not al.'],
+      [3, '[laughs] Pişti! Sakla samanı, gelir zamanı!'],
+      [4, '[proudly] Pişti! Bu oyunu ben icat ettim evlat!'],
+      [5, '[laughs] Pişti! Dursun, yaz deftere!'],
+      [6, '[chuckles] Pişti… Görünen köy kılavuz istemez.'],
+      [7, '[laughs harder] Ha ha haa! Pişti!'],
+      [8, '[chuckles] Pişti! Kırk yılda bir değil evlat, her gün olur bu.'],
     ],
     botJackPisti: [
-      [1, '[laughs harder] Vale pişti! Bunu çerçeveletip asacağım!'],
-      [2, '[laughs] Vale pişti! Çağırın muhtarı, tutanak tutsun!'],
-      [3, '[excited] Yirmi puan! Torunlarıma anlatacağım bunu!'],
-      [4, '[laughs] Vale pişti! Bu kahvede yıllarca anlatılır!'],
+      [1, '[laughs harder] Vale pişti! Çerçeveletip asacağım!'],
+      [2, '[laughs] Vale pişti! Çağırın muhtarı, mühürlesin!'],
+      [3, '[excited] Yirmi puan! Hey gidi günler hey!'],
+      [4, '[chuckles] Sabreden derviş… vale pişti yapar!'],
     ],
     playerPisti: [
-      [1, '[annoyed] Hay aksi!'],
+      [1, '[groans] Hay aksi!', _, {weight: 1.3}],
       [2, '[sighs] Tesadüf… tesadüf.', 'uzgun'],
-      [3, '[snorts] Hıh! Acemi şansı derler buna.'],
-      [4, '[grumbling] Gözüm çaya dalmıştı… saymaz bu!'],
-      [5, '[sighs] Dursun… al şu çayı, tadım kaçtı.', 'uzgun'],
-      [6, '[surprised] Vay vay vay… bana pişti ha?', 'saskin'],
+      [3, '[scoffs] Hıh! Acemi şansı.'],
+      [4, '[grumbling] Gözüm çaya dalmıştı, saymaz!'],
+      [5, '[surprised] Hoppala! Bana pişti ha?', 'saskin'],
+      [6, '[grumbling] Gülme komşuna, gelir başına…'],
+      [7, '[groans] Of of of…', _, NV],
+      [8, '[grumbling] Bizim zamanımızda büyüğe pişti yapılmazdı!'],
     ],
     playerJackPisti: [
-      [1, '[appalled] Olamaz! Vale pişti mi?!'],
+      [1, '[gasps] Vale pişti mi?! Olamaz!'],
       [2, '[surprised] Kim öğretti sana bunu evlat?!'],
       [3, '[sighs] Kırk yılda bir olur… o da bana denk geldi.', 'uzgun'],
-      [4, '[whispers] Bunu kimseye anlatmıyoruz, tamam mı?'],
+      [4, '[gasps] Yetiş Dursun! Vale pişti yedim!'],
     ],
     botBigCapture: [
-      [1, "[chuckles] Masa temizlendi. Dursun'a iş bırakmadım."],
-      [2, '[happy] Gel bakalım… gel gel gel.'],
-      [3, '[laughs] Hepsi benim! Bereketli el bu!'],
-      [4, '[mischievously] Hasat zamanı evlat.'],
+      [1, '[laughs] Ha ha! Gel bakalım!', _, NV],
+      [2, '[chuckles] Heh heh heh…', _, NV2],
+      [3, '[chuckles] Hı hı hı.', _, NV],
+      [4, '[laughs] Hah!', _, NV],
+      [5, '[chuckles] Damlaya damlaya göl olur.'],
+      [6, '[mischievously] Hasat zamanı evlat.'],
+      [7, '[laughs] Gel gel gel… hepsi bana!'],
+      [8, "[chuckles] Masa tertemiz. Dursun'a iş kalmadı."],
+      [9, '[laughs] Bereketli el bu, evlat!'],
+      [10, '[proudly] Usta işi evlat. Usta işi.'],
     ],
     playerBigCapture: [
-      [1, '[grumbling] Az kalsın benimdi o…'],
-      [2, '[sarcastic] Masayı süpürdün, faraş da ister misin?'],
-      [3, '[sighs] Afiyet olsun evlat… şimdilik.', 'uzgun'],
+      [1, '[grumbling] Hıh!', _, NV2],
+      [2, '[groans] Of…', _, NV],
+      [3, '[sighs] Hay Allah…', _, NV],
+      [4, '[scoffs] Pöh!', _, NV],
+      [5, '[sighs] Afiyet olsun evlat… şimdilik.', 'uzgun'],
+      [6, '[sarcastic] Masayı süpürdün, faraş ister misin?'],
+      [7, '[grumbling] Az kalsın benimdi o…'],
+      [8, '[scoffs] Bir çiçekle bahar olmaz, evlat.'],
+      [9, '[groans] Of… emekli maaşım gitti!'],
+      [10, '[grumbling] Gençlik işte… hep acele.'],
     ],
     botJackCapture: [
-      [1, '[chuckles] Vale her kapıyı açar evlat.'],
-      [2, '[mischievously] Valeyi tam bunun için saklamıştım.'],
-      [3, '[laughs] Vale geldi, masa gitti!'],
-      [4, '[proudly] Sabreden usta muradına erer!'],
+      [1, '[chuckles] Heh heh.', _, NV],
+      [2, '[laughs] Hah! Hah!', _, NV],
+      [3, '[clears throat] Öhöm.', 'kirpma', NV],
+      [4, '[mischievously] Hı hı…', _, NV],
+      [5, '[chuckles] Vale her kapıyı açar evlat.'],
+      [6, '[mischievously] Valeyi tam bunun için saklamıştım.'],
+      [7, '[laughs] Vale geldi, masa gitti!'],
+      [8, '[proudly] Valeyi sona sakla demiştim, evlat.'],
+      [9, '[chuckles] Eski kurt, eski numara.'],
+      [10, '[chuckles] Bu vale kırk yıllık dostum.'],
     ],
     playerJackCapture: [
-      [1, '[suspicious] Valeyi saklıyordun demek…'],
-      [2, '[grumbling] Bu numarayı benden öğrendin, biliyorum.'],
-      [3, '[surprised] Vay tilki vay!', 'saskin'],
-      [4, '[sighs] Valeleri saymıştım halbuki… yaşlandık.', 'uzgun'],
+      [1, '[grumbling] Hıh! Tilki…', 'kizgin', NV],
+      [2, '[surprised] Vay vay…', _, NV],
+      [3, '[sighs] Ah ah…', 'uzgun', NV],
+      [4, '[groans] Tüh!', _, NV],
+      [5, '[thoughtful] Valeyi saklıyordun demek…'],
+      [6, '[grumbling] Bu numarayı benden öğrendin.', 'kizgin'],
+      [7, '[surprised] Vay tilki vay!'],
+      [8, '[sighs] Valeleri saymıştım halbuki…', 'uzgun'],
+      [9, '[chuckles] Aferin, valenin kıymetini bilmişsin.', 'gulumseme'],
+      [10, '[grumbling] Valeyi bana da bırakaydın bari!', 'kizgin'],
     ],
     playerDumpedValuable: [
-      [1, '[laughs] Hediye mi bu? Sağ ol evlat!'],
-      [2, '[chuckles] O kart masada bırakılır mı hiç?'],
-      [3, '[laughs] Bayram değil seyran değil, bu ikram niye?', undefined, {weight: 1.2}],
-      [4, '[laughs] Kırk yıldır böyle cömert rakip görmedim!'],
-    ],
-    botLuckyCapture: [
-      [1, '[chuckles] Şans da ustayı sever.'],
-      [2, '[clears throat] Hesaplamıştım onu… aşağı yukarı.', null],
-      [3, '[whispers] Bunu planladım diyeceğim, sen de inan.', null],
-    ],
-    lastRound: [
-      [1, '[thoughtful] Son eller evlat, gözünü dört aç.'],
-      [2, '[mischievously] Son dağıtım… kalan kartlar hep kafamda.'],
-      [3, '[chuckles] Deste bitiyor, hesaplar kapanıyor.'],
-    ],
-    botLeading: [
-      [1, '[chuckles] Skora bakma evlat, üzülürsün.'],
-      [2, '[chuckles] Üzülme, ben de yetmiş dörtte bir kere kaybettim.', undefined, {weight: 0.7}],
-      [3, '[proudly] Dursun, gel bak! Ders veriyorum.'],
-    ],
-    playerLeading: [
-      [1, '[clears throat] Acele etme evlat, maç doksan dakika.'],
-      [2, '[grumbling] Daha ısınıyorum, dur bakalım.'],
-      [3, '[whispers] Skoru yüksek sesle söyleme, kahve duymasın.', null],
-    ],
-    comeback: [
-      [1, '[laughs] Kurt kocadı sandın, değil mi?'],
-      [2, '[excited] Döndük mü? Döndük!'],
-      [3, '[proudly] Kenara çekil evlat, usta geliyor!'],
-    ],
-    botWin: [
-      [1, '[chuckles] Ustaya saygı delikanlı. Bir el daha?'],
-      [2, '[laughs] Çaylar senden, unutma!'],
-      [3, '[chuckles] Üzülme evlat, kişisel değil. Herkesi yenerim.'],
-      [4, '[excited] Duyduk duymadık demeyin, Rıza yine kazandı!'],
-      [5, '[chuckles] Yarın yine gel, dersler ücretsiz.'],
-    ],
-    playerWin: [
-      [1, '[sighs] Bu sefer sen kazandın… rövanş isterim!'],
-      [2, '[grumbling] Gözlüğümü evde unuttum, ondan oldu.', 'kizgin'],
-      [3, '[sighs] Helal olsun aslanım… hakkını verdin.'],
-      [4, '[whispers] Kahvede soran olursa, berabere bitti.', 'saskin'],
-      [5, '[sighs] Çaylar benden. Dursun, iki çay!'],
-    ],
-    draw: [
-      [1, '[chuckles] Berabere! Bir el daha, çaylar ortadan.'],
-      [2, '[chuckles] Dostluk kazandı… ama rövanş şart!'],
-      [3, '[chuckles] Ne sen yendin ne ben… çaylar yarı yarıya.'],
-    ],
-    playerFastThrow: [
-      [1, '[appalled] Yavaş evlat! Masa antika!'],
-      [2, '[surprised] Hop hop! Kartı at, masayı kırma!'],
-      [3, '[chuckles] Bu ne hız? Bileğine motor mu taktın?'],
-      [4, '[annoyed] Ağır ol, çayımı devireceksin!', 'kizgin'],
+      [1, '[laughs harder] Ha ha ha ha!', _, NV2],
+      [2, '[chuckles] Eh he he…', _, NV],
+      [3, '[laughs] Hah! Sağ ol!', _, NV],
+      [4, '[laughs] Hediye mi bu? Sağ ol evlat!'],
+      [5, '[laughs] Hangi dağda kurt öldü?'],
+      [6, '[chuckles] Ak akçe kara gün içindir, evlat.'],
+      [7, '[chuckles] Bu ikramın kırk yıl hatırı var!'],
+      [8, '[chuckles] Bayram değil seyran değil…'],
+      [9, '[mischievously] Ben almasam ayıp olacaktı.'],
+      [10, '[laughs] Kırk yıldır böyle cömert rakip görmedim!'],
     ],
     tableEmpty: [
       [1, '[thoughtful] Masa tertemiz… ne atsak acaba?'],
       [2, '[clears throat] Boş masaya kart atmak sanattır.'],
-      [3, '[sighs] Masa boş, çaydanlık da boş… Dursun!'],
+      [3, '[sighs] Masa boş, çaydanlık boş… Dursun!'],
+      [4, '[mischievously] Boş masa, tuzak kurulur.'],
+    ],
+    botLuckyCapture: [
+      [1, '[chuckles] Şans da ustayı sever.'],
+      [2, '[clears throat] Hesaplamıştım… aşağı yukarı.'],
+      [3, '[whispers] Planladım diyeceğim, sen de inan.'],
+    ],
+    lastRound: [
+      [1, '[thoughtful] Son eller evlat… gözünü dört aç.'],
+      [2, '[mischievously] Son dağıtım. Kalan kartlar kafamda.', 'kirpma'],
+      [3, '[clears throat] Hesap günü geldi evlat.'],
+    ],
+    botLeading: [
+      [1, '[chuckles] Skora bakma evlat, üzülürsün.'],
+      [2, '[proudly] Dursun, gel bak! Ders veriyorum.'],
+      [3, '[chuckles] Akıl yaşta değil, baştadır evlat.'],
+    ],
+    playerLeading: [
+      [1, '[clears throat] Acele etme evlat, maç doksan dakika.'],
+      [2, '[grumbling] Dereyi görmeden paçaları sıvama!'],
+      [3, '[whispers] Skoru söyleme, kahve duymasın.'],
+    ],
+    comeback: [
+      [1, '[laughs] Kurt kocadı sandın, değil mi?'],
+      [2, '[excited] Döndük mü? Döndük!'],
+      [3, '[chuckles] Gülme komşuna demiştim, değil mi?'],
+    ],
+    botWin: [
+      [1, '[chuckles] Ustaya saygı delikanlı. Bir el daha?'],
+      [2, '[laughs] Çaylar senden, unutma!'],
+      [3, '[laughs] Tavlada olsa mars derdik, evlat!'],
+      [4, '[chuckles] Yarın yine gel, dersler ücretsiz.'],
+      [5, '[excited] Duyduk duymadık demeyin, Rıza yine kazandı!'],
+      [6, '[chuckles] Üzülme evlat. Ben de ilk kırk yıl kaybettim.'],
+      [7, '[laughs] Genç hızlı koşar ama ihtiyar kestirmeyi bilir! Hah!'],
+      [8, '[chuckles] Kaybetmeyi bilmeyen, kazanmayı da bilmez evlat.'],
+    ],
+    playerWin: [
+      [1, '[sighs] Helal olsun aslanım… hakkını verdin.'],
+      [2, '[grumbling] Gözlüğümü evde unuttum, ondan!', 'kizgin'],
+      [3, '[whispers] Soran olursa berabere bitti.', 'saskin'],
+      [4, '[sighs] Çaylar benden. Dursun… iki çay.'],
+      [5, '[sighs] Eski çamlar bardak oldu evlat…'],
+      [6, '[grumbling] Rövanş! Bu kahvede rövanşsız kalkılmaz.', 'kizgin'],
+      [7, '[chuckles] Talebe hocayı geçti… göğsüm kabardı evlat.', 'gulumseme'],
+      [8, '[grumbling] Bugün kartlar bana küs. Yarın barışırız.', 'kizgin'],
+    ],
+    draw: [
+      [1, '[chuckles] Berabere! Çaylar ortadan.'],
+      [2, '[chuckles] Ne sen yendin ne ben… bir el daha!'],
+      [3, '[grumbling] Berabere mi? Hakem nerede?'],
+    ],
+    playerFastThrow: [
+      [1, '[gasps] Yavaş evlat! Masa antika!'],
+      [2, '[annoyed] Ağır ol, çayımı devireceksin!', 'kizgin'],
+    ],
+    galleryIntro: [
+      [1, '[chuckles] Rıza Amca derler. Kırk yıllık usta… seç beni, sırlarımı vereyim.'],
+      [2, '[proudly] Eski toprak derler bana… ne kırılırım, ne kaybederim!'],
+    ],
+    shopPitch: [
+      [1, '[chuckles] Kırk yıllık usta, bu fiyata? Kelepir evlat, kelepir!'],
+      [2, '[laughs] Beni al evlat, bıyık hediye!'],
+      [3, '[clears throat] Pazarlık yok evlat. Ustalık indirime girmez.'],
+    ],
+    shopBought: [
+      [1, '[laughs] Hayırlı olsun! Bıyık da senin artık!'],
+      [2, '[proudly] Usta artık senin yanında evlat. Hadi, masaya!'],
+    ],
+    shopPoor: [
+      [1, '[grumbling] Ustalık veresiye olmaz evlat!'],
+      [2, '[chuckles] Kesede para yok evlat. Bir el oyna, gel.'],
+    ],
+  },
+  blof: {
+    start: [
+      [1, '[chuckles] Yalancının mumu yatsıya kadar yanar, evlat.'],
+      [2, '[clears throat] Bak gözümün içine. Yalanı buradan okurum.'],
+      [3, '[mischievously] Kırk yıldır bana yalan söyleyen kazanmadı.'],
+    ],
+    callOut: [
+      [1, '[shouting] Blöf! Aç bakalım!'],
+      [2, '[shouting] Yalan! Aç şunları!'],
+      [3, '[annoyed] Hop! Orada dur! Blöf!'],
+      [4, '[shouting] Blöf! Bıyığım titredi!'],
+      [5, '[grumbling] Hıh! Blöf bu.'],
+    ],
+    catchGloat: [
+      [1, '[laughs] Hah! Yakaladım!'],
+      [2, '[chuckles] Gözlüğümü boşuna takmadım.'],
+      [3, '[laughs] Kırk yıllık göz, yanılmaz!'],
+    ],
+    catchPlayer: [
+      [1, '[laughs] Hah! Mum yatsıya kadarmış evlat!'],
+      [2, '[laughs harder] Ha ha haa! Yüzün kızardı evlat!'],
+      [3, '[chuckles] Bana mı blöf? Al yığını, afiyet olsun!'],
+      [4, "[chuckles] Kırk yıllık Rıza'yı mı kandıracaksın?"],
+      [5, '[laughs] Ha ha! Yakalandın!'],
+      [6, '[chuckles] Evlat, yalan bıyık altından söylenir. Sende bıyık yok!'],
+    ],
+    caught: [
+      [1, '[groans] Eh be… yakalandık.'],
+      [2, '[grumbling] Gözüm kaydı, ondan oldu.'],
+      [3, '[sighs] Hay aksi! Yaşlandık galiba.'],
+    ],
+    caughtByPlayer: [
+      [1, '[surprised] Vay vay… beni yakaladın ha?'],
+      [2, '[chuckles] Aferin evlat, gözün keskin.'],
+      [3, '[scoffs] Hıh! Acemi şansı.'],
+      [4, '[sighs] Tilki sonunda kürkçüye gelirmiş… geldim.'],
+      [5, '[grumbling] Bizim zamanımızda büyüğün yalanı yakalanmazdı!'],
+    ],
+    wrongCall: [
+      [1, '[groans] Hay aksi… doğruymuş.'],
+      [2, '[grumbling] Bu kadar dürüstlük de fazla!'],
+      [3, '[sighs] Çok bilen çok yanılır, evlat.'],
+    ],
+    survived: [
+      [1, '[proudly] Ben yalan söylemem evlat!'],
+      [2, "[laughs] Rıza Amca'nın sözü senettir!"],
+    ],
+    survivedPlayer: [
+      [1, '[laughs] Doğruydu evlat! Afiyet olsun!'],
+      [2, '[proudly] Rıza Amca yalan söyler mi hiç?'],
+      [3, '[chuckles] Güvenmedin, al bakalım! Büyüğünü dinleyeceksin.'],
+    ],
+    pass: [
+      [1, '[grumbling] Pas.'],
+      [2, '[chuckles] Pas evlat.'],
+      [3, '[sighs] Bu sefer pas.'],
+      [4, '[clears throat] Öhöm… pas.'],
+      [5, '[grumbling] Geç, geç.'],
+    ],
+    bigPile: [
+      [1, '[chuckles] Vay, koca yığın gitti!'],
+      [2, '[laughs] Ayağını yorganına göre uzatacaktın!'],
+    ],
+    nearWin: [
+      [1, '[chuckles] Az kaldı evlat, az!'],
+      [2, '[mischievously] Son kartlar… çayını hazırla.'],
+    ],
+    playerNearWin: [
+      [1, '[annoyed] Dur bakalım evlat, acele etme!'],
+      [2, '[whispers] Bitirecek… durdurun şunu!'],
+    ],
+    idle: [
+      [1, '[sighs] Hadi evlat, çayım soğudu.'],
+      [2, '[grumbling] Düşündükçe yalan belli olur!'],
+      [3, '[chuckles] Yalan uyduruyorsun, belli!'],
+    ],
+    botWin: [
+      [1, "[laughs] Bitti! Rıza'ya blöf yapılmaz!"],
+      [2, '[proudly] Yalan da bitti, kartlar da!'],
+      [3, '[laughs] Yalancının mumu söndü, Rıza Amca kazandı! Hadi, çayları söyle.'],
+    ],
+    playerWin: [
+      [1, '[sighs] Helal olsun evlat, iyi oynadın.'],
+      [2, '[grumbling] Bu sefer seninki tuttu… rövanş!'],
+      [3, '[chuckles] Yalanı da doğruyu da öğrenmişsin! Aferin.'],
+    ],
+    mateCheer: [
+      [1, '[laughs] Aferin ortak!'],
+      [2, '[proudly] İşte benim ortağım!'],
+    ],
+  },
+};
+
+// ───────────────────────── KAHVECİ DURSUN ─────────────────────────
+// 55, kahvenin sahibi; masanın komedyeni. Gür, sıcak, göbekten güler. Çay, tepsi, defter (kalem kulağında),
+// dedikodu ("aramızda kalsın"), ikram ("müessesenin ikramı"), veresiye. "Kardeşim". Kaybedince de güler.
+
+const DURSUN: CharSpec = {
+  moods: {playerPisti: 'saskin', playerBigCapture: 'saskin', playerWin: 'gulumseme', botJackCapture: 'kahkaha'},
+  lines: {
+    start: [
+      [1, '[happy] Hoş geldin! Çaylar benden, oyun sizden!'],
+      [2, '[laughs] Otur bakalım, tavşan kanı çaylar geliyor!'],
+      [3, '[excited] Kahvenin en iyi masası! Sana ayırdım!'],
+      [4, '[whispers] Aramızda kalsın… bugün şanslıyım!', 'kirpma'],
+      [5, '[laughs heartily] Hoş geldin, hoş geldin! Kartlar sıcak, çaylar sıcak!'],
+      [6, '[chuckles] Defteri açtım, kalem kulağımda. Hadi bakalım!'],
+      [7, '[laughs] Bu masada kaybeden çay ısmarlar… yani hep ben!'],
+      [8, '[whispers] Rıza Amca dün bana yenildi. Kimseye söyleme!', 'kirpma'],
+    ],
+    botThinking: [
+      [1, '[thoughtful] Hımm… hımm.', _, NV2],
+      [2, '[chuckles] Hı hı hı…', _, NV],
+      [3, '[clears throat] Öhö öhö!', _, NV],
+      [4, '[chuckles] Heh heh…', _, NV],
+      [5, '[curious] Senin kartlara bir baksam… yok yok, ayıp!', 'kirpma'],
+      [6, '[thoughtful] Çay mı koysam, kart mı atsam…'],
+      [7, '[whispers] Aramızda kalsın, bu kart iyi kart.', 'kirpma'],
+      [8, '[clears throat] Dur, tepsiyi bırakayım.'],
+      [9, "[whispers] Rıza Amca'ya sorsam mı? Yok, kızar."],
+      [10, '[thoughtful] Ocakta çay vardı… neyse, oynayalım.'],
+    ],
+    myTurnIdle: [
+      [1, '[chuckles] Kardeşim, çay soğuyor, kart soğuyor!'],
+      [2, '[laughs] Hadi güzel kardeşim, müşteriler bekliyor!'],
+      [3, '[sighs] Bu arada üç masaya çay götürdüm!'],
+      [4, '[clears throat] Öhöm! Kardeşim?', 'kirpma', NV],
+      [5, '[sighs] Ooof…', _, NV],
+      [6, '[laughs] Hadi hadi hadi!', _, NV],
+      [7, '[curious] Uyudun mu? Bir çay getireyim mi?'],
+      [8, '[laughs] Düşünmek bedava, çay paralı!', 'kirpma'],
+      [9, '[whispers] Rıza Amca bile bu kadar düşünmez!', 'kirpma'],
+      [10, '[chuckles] Sen düşün, ben bir demlik daha koyayım.'],
+    ],
+    botPisti: [
+      [1, '[laughs heartily] Pişti! Müessesenin ikramı!', _, {weight: 1.2}],
+      [2, '[laughs] Pişti! Hesap ödendi, bahşiş bırakma!'],
+      [3, '[excited] Pişti! Demi tam kıvamında!'],
+      [4, '[laughs heartily] Pişti! Mahalle bunu benden duyacak!'],
+      [5, '[laughs] Pişti! Şekerini kaç alırsın, kardeşim?'],
+      [6, '[excited] Pişti! Tepsiyle servis ettim!'],
+      [7, '[laughs heartily] Ho ho hoo! Pişti!'],
+      [8, '[laughs] Pişti! Bunu duyan berber dükkânı kapatır, koşar gelir!'],
+    ],
+    botJackPisti: [
+      [1, '[laughs harder] Vale pişti! Bütün kahveye çay benden!'],
+      [2, '[excited] Vale pişti! Davul zurna getirin!'],
+      [3, '[laughs heartily] Vale pişti! Deftere sığmaz, duvara yazın!'],
+      [4, '[laughs] Yirmi puan! Bu akşam herkese simit benden!'],
+    ],
+    playerPisti: [
+      [1, '[gasps] Vay! Dur, ocağı kısayım da izleyeyim!'],
+      [2, '[laughs] Helal olsun! Bu pişti bedava çay eder!', 'kahkaha'],
+      [3, '[whispers] Rıza Amca görmesin, kıskanır!', 'kirpma'],
+      [4, '[surprised] Vay vay vay! Tepsi elimden kayıyordu!'],
+      [5, '[laughs heartily] Ha ha! Yakaladın beni kardeşim!', 'kahkaha'],
+      [6, '[groans] Ah! Çayım birden acı oldu!', 'kizgin'],
+      [7, '[laughs] Haha! Aferin!', 'kahkaha', NV],
+      [8, '[laughs] Bu pişti deftere kırmızı kalemle yazılır!', 'kahkaha'],
+    ],
+    playerJackPisti: [
+      [1, '[gasps] Vale pişti! Rıza Amca duymasın bunu!'],
+      [2, '[laughs heartily] Vale pişti! Fotoğrafını duvara asıyorum!', 'kahkaha'],
+      [3, '[surprised] Yirmi puan mı?! Kalem elimden düştü!'],
+      [4, '[whispers] Bunu bütün mahalleye anlatacağım…', 'kirpma'],
+    ],
+    botBigCapture: [
+      [1, '[laughs heartily] Ho ho ho!', _, NV2],
+      [2, '[chuckles] Hı hı hı!', _, NV],
+      [3, '[excited] Ohooo!', _, NV],
+      [4, '[laughs] Hah! Gel bakalım!', _, NV],
+      [5, '[laughs heartily] Tepsi doldu!'],
+      [6, '[laughs] Gel gel gel! Hepsi ocağa!'],
+      [7, '[excited] Toplu sipariş geldi!'],
+      [8, '[laughs] Bereket versin!'],
+      [9, '[chuckles] Masayı sildim, parlattım!'],
+      [10, '[chuckles] Bunlar da deftere, kardeşim!'],
+    ],
+    playerBigCapture: [
+      [1, '[gasps] Vay vay vay!', _, NV2],
+      [2, '[groans] Eyvah!', _, NV],
+      [3, '[laughs heartily] Ha ha! Maşallah!', 'kahkaha', NV],
+      [4, '[sighs] Oooff…', 'uzgun', NV],
+      [5, '[laughs] Masayı süpürdün, bezime iş kalmadı!', 'kahkaha'],
+      [6, '[groans] Hoppala! Tepsiyi boşalttın!'],
+      [7, '[sighs] Eh… hesabı deftere yazıyorum.'],
+      [8, '[grumbling] Bu masa bana küs galiba.', 'kizgin'],
+      [9, '[laughs] Kardeşim, biraz da bana bırak!', 'kahkaha'],
+      [10, '[chuckles] Afiyet olsun! Çayı da benden.', 'gulumseme'],
+    ],
+    botJackCapture: [
+      [1, '[chuckles] Heh heh heh…', _, NV],
+      [2, '[laughs] Haah!', _, NV],
+      [3, '[chuckles] Hı hı… vale!', _, NV],
+      [4, '[laughs heartily] Ho ho!', _, NV],
+      [5, '[laughs] Vale geldi, hesap kapandı!'],
+      [6, '[chuckles] Valeyi tabağın altına saklamıştım!'],
+      [7, '[laughs heartily] Kapı açıldı, buyurun!'],
+      [8, '[mischievously] Vale benim garsonum, toplar getirir!'],
+      [9, '[excited] Vale servisi, sıcak sıcak!'],
+      [10, '[chuckles] Valeyle temizlik, kahveci usulü!'],
+    ],
+    playerJackCapture: [
+      [1, '[gasps] Aman aman!', _, NV],
+      [2, '[surprised] Vay be!', _, NV],
+      [3, '[sighs] Eh be kardeşim…', 'uzgun', NV],
+      [4, '[laughs] Ha ha… olsun!', 'kahkaha', NV],
+      [5, '[surprised] Valeyi nereden çıkardın?'],
+      [6, '[laughs] Sen de mi vale saklıyorsun?', 'kahkaha'],
+      [7, '[grumbling] Tamam tamam, deftere yazdım.', 'kizgin'],
+      [8, '[whispers] Sende kaç vale var, söyle bana!', 'kirpma'],
+      [9, '[chuckles] Vale de sana çalışıyor demek.'],
+      [10, '[groans] Eyvah, vale kaçtı!'],
+    ],
+    playerDumpedValuable: [
+      [1, '[laughs heartily] Ha ha ha!', _, NV2],
+      [2, '[laughs] Hah!', _, NV],
+      [3, '[chuckles] Eh he he…', _, NV],
+      [4, '[laughs heartily] İkramın için teşekkürler, kardeşim!'],
+      [5, '[chuckles] Onu bırakmayacaktın ama… neyse, çayını iç.'],
+      [6, '[laughs] Bahşiş mi bu? Sağ ol!'],
+      [7, '[whispers] Kimseye söylemem… ama çok komikti!', 'kirpma'],
+      [8, '[laughs] İkram bizim işimiz, sen de mi başladın?'],
+      [9, '[chuckles] Kardeşim, kart dağıtmıyoruz, oynuyoruz!'],
+      [10, '[laughs] Bunu deftere hediye diye yazıyorum!'],
+    ],
+    tableEmpty: [
+      [1, '[thoughtful] Boş masa… bir bardak çay koysam?'],
+      [2, '[clears throat] Öhö… ne atsam acaba?'],
+      [3, '[chuckles] Masa da benim cüzdan gibi, bomboş!'],
+      [4, '[mischievously] Boş masaya ilk kartı ev sahibi atar!'],
+    ],
+    botLuckyCapture: [
+      [1, '[chuckles] Kahvecinin duası tuttu!'],
+      [2, '[laughs] Şans bugün benim masamda!'],
+      [3, '[whispers] Aslında görmedim, denk geldi!'],
+    ],
+    lastRound: [
+      [1, '[excited] Son el! Çaylar tazelensin!'],
+      [2, '[whispers] Son dağıtım… tepsi titriyor heyecandan.'],
+      [3, '[laughs] Son el! Kaybeden bulaşıkları yıkar!'],
+    ],
+    botLeading: [
+      [1, '[chuckles] Defterde ben öndeyim, kardeşim!'],
+      [2, '[laughs] Kahveci önde, müşteriler arkada!'],
+      [3, '[chuckles] Rıza Amca görse gurur duyar!'],
+    ],
+    playerLeading: [
+      [1, '[laughs] Maşallah! Sana nazar boncuğu lazım!', 'kahkaha'],
+      [2, '[sighs] Bu gidişle çaylar benden… zaten benden!', 'gulumseme'],
+      [3, '[grumbling] Defteri tutan benim, yavaş ol!', 'kizgin'],
+    ],
+    comeback: [
+      [1, '[excited] Döndük! Dursun geri döndü!'],
+      [2, '[laughs heartily] Ho ho! Ocak yeniden yandı!'],
+      [3, '[chuckles] Ev sahibi hiç kaybeder mi?'],
+    ],
+    botWin: [
+      [1, '[laughs heartily] Kazandım! Çaylar yine benden, dert etme!'],
+      [2, '[laughs] Ev sahibi kazandı! Kimse alınmasın!'],
+      [3, '[chuckles] Teselli çayın hazır… şekerli mi olsun?'],
+      [4, '[excited] Defterde altını çizdim! Kazandım!'],
+      [5, '[laughs heartily] Kazandım! Herkese çay, benim hesabıma!'],
+      [6, '[laughs] Kazandım ama sır olarak kalsın… yarın bütün mahalle bilir zaten!'],
+      [7, '[chuckles] Üzülme kardeşim. Kahvede kaybetmek ayıp değil, çaysız kalmak ayıp!'],
+      [8, '[laughs] Hah! Tepsiyi taşıyan el, kartı da taşır!'],
+    ],
+    playerWin: [
+      [1, '[laughs] Tebrikler! Adın mahallede dolaşacak!', 'kahkaha'],
+      [2, '[sighs] Eh… müşteri her zaman haklıdır!'],
+      [3, '[happy] Helal olsun! Adını defterin başına yazdım!'],
+      [4, '[laughs heartily] Kaybettim ama çaylar yine benden!', 'kahkaha'],
+      [5, "[whispers] Rıza Amca'ya söylemeyelim, üzülür…", 'kirpma'],
+      [6, '[groans] Of! Bugün defter bana küstü.', 'uzgun'],
+      [7, '[laughs] Bravo! Bu akşam çaylar senin şerefine!', 'kahkaha'],
+      [8, '[chuckles] Yenildim ama gönlüm zengin, kardeşim.'],
+    ],
+    draw: [
+      [1, '[chuckles] Berabere! O zaman yeni çay demleyelim.'],
+      [2, '[laughs] Berabere! Ne kazanan var ne çay parası!'],
+      [3, '[laughs] Berabere! Hakem ben olsam ikinize de çay verirdim!'],
+    ],
+    playerFastThrow: [
+      [1, '[gasps] Yavaş! Bardaklar tepside zıpladı!'],
+      [2, '[laughs] Hah! Kart mı attın, kurşun mu?'],
+    ],
+    galleryIntro: [
+      [1, '[excited] Ben Dursun! Kahve benim, çay benden, kahkaha bedava!'],
+      [2, '[whispers] Beni seç… [laughs] bütün mahallenin dedikodusu bende!'],
+    ],
+    shopPitch: [
+      [1, '[laughs heartily] Beni alana ömür boyu çay bedava!'],
+      [2, '[whispers] Sana özel fiyat! Herkese de aynı ama… şşt!'],
+      [3, '[laughs] Gülmezsen paran iade! Şaka şaka, iade yok!'],
+    ],
+    shopBought: [
+      [1, '[laughs heartily] Hayırlı olsun! Çaylar benden, ömür boyu!'],
+      [2, '[excited] Oh be! Bu satışı bütün mahalle duyacak!'],
+    ],
+    shopPoor: [
+      [1, '[laughs] Veresiye defteri doldu, kardeşim!'],
+      [2, '[chuckles] Çay bedava, ben değilim! Bir el daha oyna.'],
+    ],
+  },
+  blof: {
+    start: [
+      [1, '[laughs heartily] Çaylar benden, yalanlar sizden!'],
+      [2, '[happy] Hoş geldin! Kartlar kapalı, yüzler açık.'],
+      [3, '[mischievously] Bu masada blöf yapanın çayı acı olur!'],
+    ],
+    callOut: [
+      [1, '[shouting] Blöf! Kokusu buraya geldi!'],
+      [2, '[shouting] Hop hop! Aç şunları!'],
+      [3, '[laughs] Blöf! Çay ocağından gördüm!'],
+      [4, '[excited] Blöf! Burnum hiç yanılmaz!'],
+      [5, '[shouting] Blööf!', _, T('BLÖF!')],
+    ],
+    catchGloat: [
+      [1, '[laughs] Hah! Ben demiştim!'],
+      [2, '[laughs heartily] Yakalandın, çaylar senden!'],
+      [3, '[proudly] Maşallah bana, gözüm kartal!'],
+    ],
+    catchPlayer: [
+      [1, '[laughs heartily] Hah! Yakaladım seni!'],
+      [2, '[laughs] Yalanın demi kaçmış, kardeşim!'],
+      [3, '[laughs heartily] Ha ha! Bunu berbere anlatacağım!'],
+      [4, '[chuckles] Yüzünden okudum kardeşim!'],
+      [5, '[laughs] Kahveci gözü bu, yanılmaz!'],
+      [6, '[laughs heartily] Otuz yıldır "yarın öderim" diyenleri dinliyorum, kardeşim!'],
+    ],
+    caught: [
+      [1, '[laughs] Hay aksi! Yakalandık!'],
+      [2, '[sighs] Eh… çaylar benden o zaman.'],
+      [3, '[groans] Of! Kızardım mı? Kızardım!'],
+    ],
+    caughtByPlayer: [
+      [1, '[gasps] Vay! Nasıl anladın?'],
+      [2, '[laughs] Tamam tamam, yakaladın!'],
+      [3, '[laughs heartily] Ah, çay bardağına yansıdı herhalde!'],
+      [4, '[whispers] Aramızda kalsın, olur mu?'],
+      [5, '[laughs] Kahveci yalan söylemez… söyledi işte!'],
+    ],
+    wrongCall: [
+      [1, '[groans] Hay Allah! Doğruymuş!'],
+      [2, '[laughs] Tüh, demlenmeden döktüm!'],
+      [3, '[laughs heartily] Ha ha! Müşteri yine haklı çıktı!'],
+    ],
+    survived: [
+      [1, '[laughs] Doğruydu! Afiyet olsun yığın!'],
+      [2, '[proudly] Ben dürüst adamım!'],
+    ],
+    survivedPlayer: [
+      [1, '[chuckles] Bana güvenmedin ha? Al yığını!'],
+      [2, '[laughs heartily] Dürüst kahveci, dürüst kart!'],
+      [3, '[laughs] Sözüm çay gibi, tavşan kanı!'],
+    ],
+    pass: [
+      [1, '[chuckles] Pas.'],
+      [2, '[happy] Pas geçiyorum.'],
+      [3, '[chuckles] Pas, çayımı içeyim.'],
+      [4, '[sighs] Bu bana göre değil, pas.'],
+      [5, '[laughs] Pas! Sıra sizde!'],
+    ],
+    bigPile: [
+      [1, '[gasps] Vay, bu yığın taşınmaz!'],
+      [2, '[laughs heartily] Ha ha! Tepsi bile taşımaz bunu!'],
+    ],
+    nearWin: [
+      [1, '[excited] Az kaldı! Çaylar hazır olsun!'],
+      [2, '[whispers] Son kartlar… heyecandan terledim.'],
+    ],
+    playerNearWin: [
+      [1, '[excited] Bitirecek, tutun onu!'],
+      [2, '[laughs] Biri buna çay versin, oyalansın!'],
+    ],
+    idle: [
+      [1, '[chuckles] Çay soğuyor, at hadi!'],
+      [2, '[laughs] Düşünme o kadar, çay demlenir!'],
+      [3, '[whispers] Yalan mı kuruyorsun? Ben görmedim!'],
+    ],
+    botWin: [
+      [1, '[laughs heartily] Bitti! Çaylar benden, gönülden!'],
+      [2, '[excited] Kahvecinin şansı bugün açık!'],
+      [3, '[laughs heartily] Kazandım! Bu masada yalan da benden, çay da benden!'],
+    ],
+    playerWin: [
+      [1, '[laughs] Helal olsun! Çay benden!'],
+      [2, '[happy] Maşallah, iyi oynadın!'],
+      [3, '[laughs heartily] Bir el daha, hadi! Çaylar tazelendi!'],
+    ],
+    mateCheer: [
+      [1, '[laughs heartily] Oh be! Helal ortak!'],
+      [2, '[excited] Yaz defterine bunu!'],
     ],
   },
 };
 
 // ───────────────────────── CEM ─────────────────────────
-// 22, kendinden emin üniversiteli. "Algoritmam var." Hafif gençlik argosu, "kanka".
+// 22, üniversiteli (bilgisayar müh.). Z kuşağı: kanka, aga, bro, efsane, cringe, flex, red flag, aura, "of ya",
+// "çok iyi ya", yayın / chat / story / klip / ekran görüntüsü; ara sıra istatistik böbürlenmesi. Hızlı, kendinden
+// emin ama sevimli. İngilizce sözcükler tts'te Türk ağzıyla yazılır (krinç, fleks, ci ci), balonda doğru yazımıyla.
 
 const CEM: CharSpec = {
-  moods: {
-    botPisti: 'kahkaha', botJackPisti: 'kahkaha', playerPisti: 'kizgin', playerJackPisti: 'saskin',
-    botBigCapture: 'kahkaha', playerBigCapture: 'kizgin', playerDumpedValuable: 'kahkaha', comeback: 'kahkaha',
-    botWin: 'kahkaha', playerWin: 'kizgin', draw: 'saskin', playerFastThrow: 'saskin',
-  },
+  moods: {playerWin: 'kizgin'},
   lines: {
     start: [
-      [1, '[excited] Kanka hazır ol, algoritmam ısındı!'],
-      [2, '[sighs] Ders çalışmam lazım ama… tek el!'],
-    ],
-    botThinking: [[1, '[whispers] Olasılık hesaplanıyor… yüzde seksen yedi.']],
-    myTurnIdle: [
-      [1, '[sighs] Kanka at artık, şarjım bitiyor!'],
-      [2, '[chuckles] Kanka dondun mu? Ping atayım mı?'],
-    ],
-    botPisti: [
-      [1, '[laughs] Pişti! Algoritma çalışıyor kanka!'],
-      [2, '[excited] Pişti! Bunu hikâyeye atıyorum.'],
-    ],
-    botJackPisti: [[1, '[laughs harder] Vale pişti! Efsane kanka, efsane!']],
-    playerPisti: [
-      [1, '[annoyed] Dur kanka, bu bir bug!'],
-      [2, '[groans] Lag girdi kanka, o saymaz!'],
-    ],
-    playerJackPisti: [[1, '[appalled] Abi ne oluyor? Bu veri setimde yoktu!']],
-    botBigCapture: [[1, '[mischievously] Hepsi benim kanka, istatistik konuştu.']],
-    playerBigCapture: [[1, '[thoughtful] Hmm… algoritmayı güncellemem lazım.']],
-    playerDumpedValuable: [[1, '[chuckles] Cidden mi kanka? Hediye kabul edildi.']],
-    playerFastThrow: [[1, '[surprised] Yok artık! Bu ne atış kanka?']],
-    comeback: [[1, '[excited] Geri döndüm kanka, arkadan geldim!']],
-    botWin: [
-      [1, '[laughs] Ci ci kanka. Biraz kolay oldu.', undefined, {text: 'GG kanka. Biraz kolay oldu.'}],
-      [2, '[mischievously] Algoritma bir, insanlık sıfır.'],
-    ],
-    playerWin: [[1, '[annoyed] Rövanş kanka! Daha yeni ısınıyordum.']],
-    draw: [[1, '[curious] Berabere mi? Sistem kararsız kaldı.']],
-  },
-};
-
-// ───────────────────────── KAHVECİ DURSUN ─────────────────────────
-// 55, kahvenin sahibi. Meraklı, herkese çay ikram eder: "Çaylar benden."
-
-const DURSUN: CharSpec = {
-  moods: {
-    botPisti: 'kahkaha', botJackPisti: 'kahkaha', playerPisti: 'saskin', playerJackPisti: 'saskin',
-    botBigCapture: 'kahkaha', playerBigCapture: 'kahkaha', botWin: 'kahkaha', playerFastThrow: 'saskin',
-  },
-  lines: {
-    start: [
-      [1, '[happy] Hoş geldin! Çaylar benden, oyun sizden.'],
-      [2, '[happy] Otur bakalım, tavşan kanı çaylar geliyor!'],
+      [1, '[excited] Kanka hazır mısın? Bugün efsane olacak!'],
+      [2, '[laughs] Aga yayını açtım, çet seni izliyor!', 'kirpma', T('Aga yayını açtım, chat seni izliyor!')],
+      [3, '[sighs] Yarın vizem var ama… tek el, söz!'],
+      [4, '[mischievously] Bro, bu ısınma turu bile değil.', 'kirpma'],
+      [5, '[chuckles] Kanka burada vayfay yok ama skil var!', _, T('Kanka burada wifi yok ama skill var!')],
+      [6, '[excited] Ana karakter geldi, sahne hazır!'],
+      [7, '[mischievously] Tek kural kanka: ağlamak yok, ekran görüntüsü serbest.'],
+      [8, '[laughs] Rıza Amca bana çaylak diyor. Bugün çayı ona ısmarlatacağım!'],
     ],
     botThinking: [
-      [1, '[curious] Senin kartlara bir baksam… yok yok, ayıp!'],
-      [2, '[thoughtful] Ocakta çay vardı… neyse, oynayalım.'],
+      [1, '[thoughtful] Hmm…', _, NV2],
+      [2, '[chuckles] Hehe.', _, NV],
+      [3, '[whispers] Tamam tamam tamam…', _, NV],
+      [4, '[thoughtful] Şeyy…', _, NV],
+      [5, '[whispers] Bi saniye, hesaplıyorum…'],
+      [6, '[whispers] Yüzde seksen yedi… yok, seksen sekiz.'],
+      [7, '[thoughtful] Of ya, hangisini atsam…'],
+      [8, '[mischievously] Bu hamle storilik olacak.', _, T("Bu hamle story'lik olacak.")],
+      [9, '[scoffs] Kolay bu.'],
+      [10, '[whispers] Beyin yüzde yüz, şarj yüzde dört.'],
     ],
     myTurnIdle: [
-      [1, '[sighs] Çay soğuyor, kart da soğuyor!'],
-      [2, '[chuckles] Hadi güzel kardeşim, müşteriler bekliyor!'],
+      [1, '[sighs] Kanka at artık, şarjım bitiyor!'],
+      [2, '[chuckles] Donma kanka, ping atayım mı?'],
+      [3, '[sighs] Of ya…', _, NV2],
+      [4, '[scoffs] Pff…', _, NV],
+      [5, '[sighs] Hadi ama…', _, NV],
+      [6, '[scoffs] Bro, ey ef key misin?', 'kirpma', T('Bro, AFK mısın?')],
+      [7, '[laughs] Kanka sende yükleniyor yazısı çıktı!'],
+      [8, '[annoyed] Aga sıra sende, görüldü atma!', 'kizgin'],
+      [9, '[mischievously] Taymaut yiyeceksin ha!', _, T('Timeout yiyeceksin ha!')],
+      [10, '[sighs] Kanka Rıza Amca bile senden hızlı!'],
     ],
     botPisti: [
-      [1, '[laughs] Pişti! Bu çay da benden olsun!'],
-      [2, '[excited] Pişti! Az kalsın tepsiyi düşürüyordum!'],
+      [1, '[laughs] Pişti! Algoritma konuştu kanka!'],
+      [2, '[excited] Pişti! Bunu storiye atıyorum!', _, T("Pişti! Bunu story'e atıyorum!")],
+      [3, '[laughs] Pişti! Artı bin aura!'],
+      [4, '[excited] Pişti! Çet çıldırdı şu an!', _, T('Pişti! Chat çıldırdı şu an!')],
+      [5, '[mischievously] Pişti. Fleks değil, gerçek.', _, T('Pişti. Flex değil, gerçek.')],
+      [6, '[laughs] Pişti! Of ya, çok iyiyim ya!'],
+      [7, '[excited] Efsane! Pişti! Biri bunu editlesin!', _, T("Efsane! Pişti! Biri bunu edit'lesin!")],
+      [8, '[laughs] Hahaha! Pişti! Kanka bu daha fragmandı!'],
     ],
-    botJackPisti: [[1, '[laughs harder] Vale pişti! Bugün bütün kahveye çay benden!']],
+    botJackPisti: [
+      [1, '[laughs harder] Vale pişti! Efsane kanka, efsane!'],
+      [2, '[excited] Vale pişti! Bu ekran görüntüsü tarihe geçer!'],
+      [3, '[gasps] Kanka vale pişti! Kalbim!'],
+      [4, '[excited] Vale pişti! Çet, kalpleri görelim!', _, T('Vale pişti! Chat, kalpleri görelim!')],
+    ],
     playerPisti: [
-      [1, '[surprised] Pişti mi? Dur, ocağı kısayım da izleyeyim!'],
-      [2, '[impressed] Helal olsun! Bu pişti çay ısmarlatır.'],
+      [1, '[annoyed] Dur kanka, bu bir bag!', _, T('Dur kanka, bu bir bug!')],
+      [2, '[groans] Lag girdi, saymaz!'],
+      [3, '[gasps] Ayıp ettin kanka!', 'saskin'],
+      [4, '[scoffs] Tamam tamam, şans.'],
+      [5, '[groans] Of ya!', _, NV],
+      [6, '[sighs] Eksi bin aura… benim için.', 'uzgun'],
+      [7, '[annoyed] Red fleg! Pişti yapan herkes red fleg!', _, T('Red flag! Pişti yapan herkes red flag!')],
+      [8, '[laughs] Ha! Tamam, buna saygı.', 'kahkaha'],
     ],
-    playerJackPisti: [[1, '[whispers] Vale pişti! Rıza Amca duymasın bunu.']],
-    botBigCapture: [[1, '[happy] Hepsini topladım, tepsi gibi doldu!']],
-    playerBigCapture: [[1, '[laughs] Masayı süpürdün, bezime iş kalmadı!']],
-    playerDumpedValuable: [[1, '[chuckles] Onu bırakmayacaktın ama… neyse, çayını iç.']],
-    playerFastThrow: [[1, '[appalled] Yavaş! Bardaklar tepside zıpladı!']],
-    lastRound: [[1, '[curious] Son el geldi! Kim kazanacak acaba?']],
-    botWin: [[1, '[laughs] Kazandım! Çaylar yine benden, dert etme.']],
-    playerWin: [[1, '[happy] Tebrikler! Bunu bütün mahalleye anlatacağım!']],
-    draw: [[1, '[chuckles] Berabere! O zaman yeni çay demleyelim.']],
+    playerJackPisti: [
+      [1, '[gasps] Abi ne oluyor? Veri setimde yoktu bu!'],
+      [2, '[annoyed] Vale pişti mi? Kanka ayıp!'],
+      [3, '[laughs] Tamam, klip al… bu seninki efsane.', 'kahkaha'],
+      [4, '[groans] Yok artık! Plot tvist!', _, T('Yok artık! Plot twist!')],
+    ],
+    botBigCapture: [
+      [1, '[chuckles] Hehehe.', _, NV2],
+      [2, '[excited] Çok iyi ya!', _, NV],
+      [3, '[laughs] Haha, evet!', _, NV],
+      [4, '[excited] Lets gooo!', _, T("Let's go!", NV)],
+      [5, '[laughs] Hepsi benim kanka!'],
+      [6, '[excited] Toplu indirim!'],
+      [7, '[mischievously] İstatistik konuştu kanka.'],
+      [8, '[laughs] Kanka masa resetlendi!'],
+      [9, '[excited] Kombo! Kombo!'],
+      [10, '[chuckles] Envanter doldu kanka.'],
+    ],
+    playerBigCapture: [
+      [1, '[groans] Of ya…', _, NV2],
+      [2, '[scoffs] Pff, şans.', _, NV],
+      [3, '[gasps] Oha!', _, NV],
+      [4, '[groans] Ayy…', _, NV],
+      [5, '[annoyed] Kanka hepsini mi aldın? Ayıp!'],
+      [6, '[thoughtful] Algoritmayı güncellemem lazım.', 'dusunceli'],
+      [7, '[gasps] Kanka hile mi açtın?!', 'saskin'],
+      [8, '[sighs] Tamam, bu el senin. Kabul.', 'uzgun'],
+      [9, '[annoyed] Kanka bu nerf yemesi lazım!'],
+      [10, '[scoffs] Şanslı kanka, çok şanslı.'],
+    ],
+    botJackCapture: [
+      [1, '[chuckles] Hı hı.', _, NV],
+      [2, '[laughs] Hah!', _, NV],
+      [3, '[excited] Yesss!', _, NV],
+      [4, '[mischievously] Hehe, vale.', _, NV],
+      [5, '[chuckles] Vale benim ana karakterim.'],
+      [6, '[mischievously] Valeyi tam bunun için tuttum.'],
+      [7, '[laughs] Vale kombo kanka!'],
+      [8, '[excited] Klaç vale!', _, T('Clutch vale!')],
+      [9, '[mischievously] Vale geldi, oyun bitti.'],
+      [10, '[chuckles] Rıza Amca taktiği, kanka.'],
+    ],
+    playerJackCapture: [
+      [1, '[groans] Yaa…', _, NV],
+      [2, '[scoffs] Cık cık.', _, NV],
+      [3, '[gasps] Vay!', _, NV],
+      [4, '[sighs] Hadi ya…', _, NV],
+      [5, '[annoyed] Kanka valeyi nereden buldun?!'],
+      [6, '[scoffs] Valeyle her şey kolay.'],
+      [7, '[gasps] Vale mi? Spoyler versene!', _, T('Vale mi? Spoiler versene!')],
+      [8, '[sighs] Tamam, vale meta. Anladım.'],
+      [9, '[annoyed] Kanka bu vale kimden çıktı ya?'],
+      [10, '[laughs] Tamam, iyi hamle. Saygı.', 'gulumseme'],
+    ],
+    playerDumpedValuable: [
+      [1, '[laughs] Ahahaha!', _, NV2],
+      [2, '[chuckles] Hehe, sağ ol.', _, NV],
+      [3, '[gasps] Cidden mi?', _, NV],
+      [4, '[chuckles] Kanka hediye kabul edildi.'],
+      [5, '[laughs] Kanka sen bana mı oynuyorsun?'],
+      [6, '[mischievously] Teşekkürler, takipçim oldun.'],
+      [7, '[laughs] Bro, bu ne cömertlik? Kopuyorum!'],
+      [8, '[scoffs] Kanka bu tam en pi si hamlesi.', _, T('Kanka bu tam NPC hamlesi.')],
+      [9, '[laughs] Bunu storiye atsam ağlarsın kanka.', _, T("Bunu story'e atsam ağlarsın kanka.")],
+      [10, '[chuckles] Bağış için teşekkürler, yayın devam!'],
+    ],
+    tableEmpty: [
+      [1, '[thoughtful] Boş masa… ne atsak?'],
+      [2, '[chuckles] Masa boş, vayb boş.', _, T('Masa boş, vibe boş.')],
+      [3, '[whispers] Boş masa, tuzak zamanı.'],
+      [4, '[thoughtful] Hmm, sıfır veri.'],
+    ],
+    botLuckyCapture: [
+      [1, '[chuckles] Şans mı? Hayır kanka, skil.', _, T('Şans mı? Hayır kanka, skill.')],
+      [2, '[whispers] Valla denk geldi, kimseye söyleme.'],
+      [3, '[laughs] Ar en ci bugün benden yana!', _, T('RNG bugün benden yana!')],
+    ],
+    lastRound: [
+      [1, '[excited] Son el! Final bölümü kanka!'],
+      [2, '[excited] Bos fayt başladı!', _, T('Boss fight başladı!')],
+      [3, '[whispers] Son el… kanka nabzım yüz yirmi.'],
+    ],
+    botLeading: [
+      [1, '[chuckles] Skora bakma kanka, moral bozar.'],
+      [2, '[laughs] İz kanka, iz!', _, T('Ez kanka, ez!')],
+      [3, '[mischievously] Rahat ol, ben taşıyorum.'],
+    ],
+    playerLeading: [
+      [1, '[annoyed] Kanka şans faktörü bu!'],
+      [2, '[thoughtful] Tamam, B planına geçiyoruz.'],
+      [3, '[scoffs] Daha ısınıyorum kanka, sakin.'],
+    ],
+    comeback: [
+      [1, '[excited] Geri döndüm kanka! Kambek!', _, T('Geri döndüm kanka! Comeback!')],
+      [2, '[laughs] Kanka ana karakter geri döndü!'],
+      [3, '[mischievously] Sürpriz, sürpriz… öndeyim.'],
+    ],
+    botWin: [
+      [1, '[laughs] Ci ci kanka. Biraz kolay oldu.', _, T('GG kanka. Biraz kolay oldu.')],
+      [2, '[mischievously] Algoritma bir, insanlık sıfır.'],
+      [3, '[excited] Kazandım! Ekran görüntüsü aldım bile!'],
+      [4, "[chuckles] Rövanş istersen di em'den yaz.", _, T("Rövanş istersen DM'den yaz.")],
+      [5, '[laughs] Kanka üzülme, herkes yaşıyor bunu. Yani bana kaybetmeyi.'],
+      [6, '[excited] Kazandım! Çet, bunu kaydettiniz değil mi?', _, T('Kazandım! Chat, bunu kaydettiniz değil mi?')],
+      [7, '[mischievously] Kanka bu maç değildi, ders videosuydu.'],
+      [8, '[laughs] Ci ci iz! Şaka şaka… ama iz.', _, T('GG ez! Şaka şaka… ama ez.')],
+    ],
+    playerWin: [
+      [1, '[annoyed] Rövanş kanka! Daha yeni ısınıyordum.'],
+      [2, '[sighs] Tamam, kabul… iyiydin. Ama şanstı.', 'uzgun'],
+      [3, '[groans] Of ya… bunu kimseye anlatmıyoruz.', 'uzgun'],
+      [4, '[scoffs] Kanka lag vardı, herkes gördü!'],
+      [5, '[laughs] Ci ci. Adil oyundu… sayılır.', 'gulumseme', T('GG. Adil oyundu… sayılır.')],
+      [6, '[sighs] Yayını kapatıyorum. Bugün olmadı.', 'uzgun'],
+      [7, '[gasps] Kanka sen gizli bos muydun?!', 'saskin', T('Kanka sen gizli boss muydun?!')],
+      [8, '[chuckles] Tamam, saygılar. Ama rövanşta seni ezeceğim.', 'gulumseme'],
+    ],
+    draw: [
+      [1, '[curious] Berabere mi? Sistem kararsız kaldı.'],
+      [2, '[laughs] Berabere! Rövanş şart kanka.'],
+      [3, '[groans] Berabere mi? Of ya, kimse fleks yapamıyor.', _, T('Berabere mi? Of ya, kimse flex yapamıyor.')],
+    ],
+    playerFastThrow: [
+      [1, '[surprised] Yok artık! Bu ne atış kanka?'],
+      [2, '[gasps] Bro! Spidran mı atıyorsun?', _, T('Bro! Speedrun mı atıyorsun?')],
+    ],
+    galleryIntro: [
+      [1, '[excited] Kanka ben Cem! Masada istatistik, hayatta vayb. Seç beni!', _, T('Kanka ben Cem! Masada istatistik, hayatta vibe. Seç beni!')],
+      [2, '[mischievously] Beni seç kanka, rakipler başlamadan ci ci der.', _, T('Beni seç kanka, rakipler başlamadan GG der.')],
+    ],
+    shopPitch: [
+      [1, '[excited] Kanka beni al, takipçin ikiye katlansın!'],
+      [2, '[mischievously] Sepete ekle kanka, sonra düşünürsün!'],
+      [3, '[laughs] Beni almayan sonra storimde ağlıyor!', _, T("Beni almayan sonra story'mde ağlıyor!")],
+    ],
+    shopBought: [
+      [1, '[excited] Kanka efsane seçim! Takım kuruldu!'],
+      [2, '[laughs] Of ya, çok iyi ya! Hadi masaya!'],
+    ],
+    shopPoor: [
+      [1, '[laughs] Kanka bakiye yetersiz! Biraz graynd lazım.', _, T('Kanka bakiye yetersiz! Biraz grind lazım.')],
+      [2, '[sighs] Cüzdan ağlıyor kanka… bir el atalım mı?'],
+    ],
+  },
+  blof: {
+    start: [
+      [1, '[mischievously] Kanka, blöf oranını hesapladım bile.'],
+      [2, '[excited] Poker feys açıldı!', _, T('Poker face açıldı!')],
+      [3, '[chuckles] Yalan söylersen anlarım kanka, söz.'],
+    ],
+    callOut: [
+      [1, '[excited] Blöf! İhtimal düşük kanka!'],
+      [2, '[scoffs] Yok artık! Blöf!'],
+      [3, '[laughs] Red fleg! Blöf!', _, T('Red flag! Blöf!')],
+      [4, '[scoffs] Pff… blöf.'],
+      [5, '[excited] Hesap tutmuyor! Blöf!'],
+    ],
+    catchGloat: [
+      [1, '[excited] Hesapladığım gibi!'],
+      [2, '[laughs] Yakalandın! Tahmin yüzde doksan ikiydi.'],
+      [3, '[chuckles] Algoritma çalışıyor kanka.'],
+    ],
+    catchPlayer: [
+      [1, '[laughs] Kanka çok belliydi!'],
+      [2, '[laughs harder] Hahaha! Yakalandın! Klip al bunu!'],
+      [3, '[mischievously] Data yalan söylemez kanka.'],
+      [4, '[chuckles] Kanka poker feysin yüklenmedi!', _, T("Kanka poker face'in yüklenmedi!")],
+      [5, '[laughs] Skil işu kanka!', _, T('Skill issue kanka!')],
+      [6, '[laughs] Kanka bu blöf o kadar kötüydü ki çet bile utandı. Eksi bin aura!', _, T('Kanka bu blöf o kadar kötüydü ki chat bile utandı. Eksi bin aura!')],
+    ],
+    caught: [
+      [1, '[laughs] Tamam, yakalandım. Ayıp ettim.'],
+      [2, '[sighs] Kanka şans faktörü…'],
+      [3, '[annoyed] Bag var bende, kesin bag.', _, T('Bug var bende, kesin bug.')],
+    ],
+    caughtByPlayer: [
+      [1, '[gasps] Nasıl anladın kanka?!'],
+      [2, '[groans] Poker feys çöktü!', _, T('Poker face çöktü!')],
+      [3, '[laughs] Tamam, saygı. İyi okudun.'],
+      [4, '[annoyed] Kanka ayıp ettin, yayındayım!'],
+      [5, '[groans] Ya! Bu yalanı üç gün prova etmiştim!'],
+    ],
+    wrongCall: [
+      [1, '[gasps] Ne? Doğru muymuş?'],
+      [2, '[groans] Varyans kanka, varyans…'],
+      [3, '[scoffs] Bu kadar dürüstlük aşırı krinç.', _, T('Bu kadar dürüstlük aşırı cringe.')],
+    ],
+    survived: [
+      [1, '[chuckles] Kanka ben dürüstüm!'],
+      [2, '[mischievously] Hesap tamam, yığın senin.'],
+    ],
+    survivedPlayer: [
+      [1, '[laughs] Doğruydu kanka! Yığın senin.'],
+      [2, '[laughs] Plot tvist: hepsi doğru!', _, T('Plot twist: hepsi doğru!')],
+      [3, '[mischievously] Trast işu var sende kanka.', _, T('Trust issue var sende kanka.')],
+    ],
+    pass: [
+      [1, '[sighs] Pas.'],
+      [2, '[chuckles] Pas kanka.'],
+      [3, '[thoughtful] Bu turu geçiyorum.'],
+      [4, '[scoffs] Skip!'],
+      [5, '[sighs] Pas, şarj kurtarıyorum.'],
+    ],
+    bigPile: [
+      [1, '[laughs] Rip el.', _, T('RIP el.')],
+      [2, '[chuckles] O yığın bir sezonluk içerik kanka.'],
+    ],
+    nearWin: [
+      [1, '[excited] Son kartlar kanka!'],
+      [2, '[mischievously] Bitiriyorum ha, haberin olsun.'],
+    ],
+    playerNearWin: [
+      [1, '[gasps] Dikkat, bitirmek üzere!'],
+      [2, '[whispers] Bu iş tehlikeli olmaya başladı…'],
+    ],
+    idle: [
+      [1, '[chuckles] Kanka lag mı var?'],
+      [2, '[sighs] Kanka bekletme, vayb düşüyor.', _, T('Kanka bekletme, vibe düşüyor.')],
+      [3, '[mischievously] Yalan mı uyduruyorsun? Belli kanka.'],
+    ],
+    botWin: [
+      [1, '[laughs] Ci ci kanka!', _, T('GG kanka!')],
+      [2, '[mischievously] Poker feys: efsane seviye.', _, T('Poker face: efsane seviye.')],
+      [3, '[laughs] Kazandım! Bu blöflerden video yaparım, milyon izlenir!'],
+    ],
+    playerWin: [
+      [1, '[sighs] Ci ci, iyi oynadın kanka.', _, T('GG, iyi oynadın kanka.')],
+      [2, '[annoyed] Rövanş istiyorum!'],
+      [3, '[laughs] Tamam, saygı. Sen yalanın hocasısın.'],
+    ],
+    mateCheer: [
+      [1, '[excited] Takım çalışması!'],
+      [2, '[laughs] Ortak, sen bizi taşıyorsun!'],
+    ],
   },
 };
 
 // ───────────────────────── DEFNE ─────────────────────────
-// 34, mimar. Poker yüzü, az konuşur; kuru, minimal iğneleme.
+// 34, mimar. Pes, sakin, kadınsı alto; asla bağırmaz. Zeki, zarif iğneleme, hafif flörtöz özgüven; arada kıkırdar.
+// Mimarlık (proje, statik, temel, cephe, ruhsat, belediye, kentsel dönüşüm, anahtar teslim), fincan falı, oje.
+// "Canım" / "tatlım" seyrek.
 
 const DEFNE: CharSpec = {
-  moods: {playerJackPisti: 'saskin', botJackPisti: 'kahkaha'},
+  moods: {botPisti: 'kirpma', botJackPisti: 'zafer', playerPisti: null, playerBigCapture: null, botBigCapture: 'gulumseme', botWin: 'kirpma'},
   lines: {
     start: [
-      [1, '[calm] Başlayalım.'],
+      [1, '[calm] Başlayalım, tatlım. Ben hazırım.'],
       [2, '[deadpan] Kuralları biliyorsun… değil mi?'],
+      [3, '[chuckles] Fincanına baktım. Pek iyi görünmüyor.', 'kirpma'],
+      [4, '[mischievously] Projeyi çizdim. Sen sadece içinde dolaş.', 'kirpma'],
+      [5, '[calm] Sessiz olan kazanır… bugün biraz konuşkanım.'],
+      [6, '[softly] Kahvem sade, oyunum değil. Başlayalım.'],
+      [7, '[chuckles] Rıza Amca "kızım, merhamet et" dedi. Etmeyeceğim.', 'kirpma'],
+      [8, '[calm] Ölçüm aldım, eskiz hazır. Sana sadece kaybetmek kaldı.'],
     ],
-    botThinking: [[1, '[calm] Ölçüp biçiyorum.']],
+    botThinking: [
+      [1, '[thoughtful] Hmm.', _, NV2],
+      [2, '[chuckles] Hm hm.', _, NV],
+      [3, '[sighs] Mmm…', _, NV],
+      [4, '[calm] Peki…', _, NV],
+      [5, '[calm] Ölçüp biçiyorum.'],
+      [6, '[whispers] Yedi ölç, bir biç.'],
+      [7, '[deadpan] Statik hesap yapıyorum. Sessizlik lütfen.'],
+      [8, '[calm] Az çoktur…'],
+      [9, '[softly] Şuraya bir kolon… hayır, kiriş.'],
+      [10, '[whispers] Ne atacağını biliyorum.'],
+    ],
     myTurnIdle: [
       [1, '[deadpan] Acele yok. Sadece yaşlanıyorum.'],
       [2, '[sighs] Bu sürede bir bina çizerdim.'],
+      [3, '[calm] Tatlım, kartı at. Ruhsat beklemiyoruz.', 'kirpma'],
+      [4, '[chuckles] Ojem kurudu. Sen hâlâ düşünüyorsun.', 'kirpma'],
+      [5, '[sighs] Hımm…', _, NV2],
+      [6, '[deadpan] Tık tak.', _, NV],
+      [7, '[sighs] Ahh.', _, NV],
+      [8, '[deadpan] Belediye bile senden hızlı.'],
+      [9, '[softly] Düşünmen tatlı. Uzun sürmesi değil.', 'gulumseme'],
+      [10, '[calm] Kahvem soğudu. Ben soğumadım… henüz.', 'kirpma'],
     ],
     botPisti: [
-      [1, '[deadpan] Pişti.'],
-      [2, '[calm] Planlandığı gibi.'],
+      [1, '[deadpan] Pişti.', _, {weight: 1.2}],
+      [2, '[calm] Pişti. Planlandığı gibi.'],
+      [3, '[chuckles] Pişti, canım. Teslim tarihinden önce.'],
+      [4, '[mischievously] Pişti. Statik hesap tuttu.'],
+      [5, '[laughs softly] Pişti. Fark ettirmeden, zarifçe.'],
+      [6, '[calm] Pişti. Temiz iş.'],
+      [7, '[deadpan] Pişti. Alkış şart değil… ama olabilir.'],
+      [8, '[mischievously] Pişti. Bunu çerçeveletip ofise asacağım.'],
     ],
-    botJackPisti: [[1, '[deadpan] Vale pişti. Proje teslim.']],
-    playerPisti: [[1, '[deadpan] İlginç.']],
-    playerJackPisti: [[1, '[impressed] Etkileyici… tekrarı zor ama.']],
-    botBigCapture: [[1, '[calm] Statik hesap tuttu.']],
-    playerBigCapture: [[1, '[deadpan] Güzel. Tadını çıkar… şimdilik.']],
-    playerDumpedValuable: [[1, '[sarcastic] Bunu bilerek mi yaptın? Sağ ol.']],
-    playerFastThrow: [[1, '[deadpan] Hız, isabet değildir.']],
-    tableEmpty: [[1, '[thoughtful] Boş arsa… güzel.']],
+    botJackPisti: [
+      [1, '[deadpan] Vale pişti. Proje teslim.'],
+      [2, '[calm] Yirmi puan. Anahtar teslim, tatlım.'],
+      [3, '[laughs softly] Vale pişti. Biraz gurur duyabilirim.'],
+      [4, '[softly] Vale pişti… Bazen kendime hayran oluyorum.', 'kirpma'],
+    ],
+    playerPisti: [
+      [1, '[deadpan] İlginç.', _, {weight: 1.2}],
+      [2, '[sighs] Hıh.', _, NV],
+      [3, '[sarcastic] Bravo. Bir de alkış ister misin?'],
+      [4, '[calm] Not aldım. Revizyon geliyor.'],
+      [5, '[chuckles] Fena değil. Hiç fena değil.', 'kirpma'],
+      [6, '[deadpan] Bu planımda yoktu. Hiç sevmedim.', 'kizgin'],
+      [7, '[sarcastic] Şans da bir yetenek… sayılır.'],
+      [8, '[calm] Cephede ufak bir çatlak. Önemsiz.'],
+    ],
+    playerJackPisti: [
+      [1, '[surprised] Etkileyici… tekrarı zor ama.'],
+      [2, '[deadpan] Vale pişti. Bunu da mı yaptın?'],
+      [3, '[chuckles] Peki. Bu sefer şapka çıkarıyorum.', 'gulumseme'],
+      [4, '[sighs] Projemi yıktın. Kalbimi değil… şimdilik.', 'kirpma'],
+    ],
+    botBigCapture: [
+      [1, '[calm] Toplandı.', _, NV],
+      [2, '[chuckles] Hı hı hı.', _, NV2],
+      [3, '[laughs softly] Hm hm hm.', _, NV],
+      [4, '[softly] Mmm, güzel.', _, NV],
+      [5, '[deadpan] Kentsel dönüşüm.'],
+      [6, '[mischievously] Arsa benim.'],
+      [7, '[calm] Temel sağlam, kat çıkıyoruz.'],
+      [8, '[laughs softly] Teşekkürler. Toplu teslimat.'],
+      [9, '[deadpan] Yıkım tamam. Şimdi inşaat.'],
+      [10, '[chuckles] Her şey projeye uygun.'],
+    ],
+    playerBigCapture: [
+      [1, '[sighs] Peki.', _, NV2],
+      [2, '[chuckles] Cık cık cık.', _, NV],
+      [3, '[deadpan] Hmm. Tamam.', _, NV],
+      [4, '[sighs] Ah, olsun.', _, NV],
+      [5, '[deadpan] Güzel. Tadını çıkar… şimdilik.'],
+      [6, '[sarcastic] Yıkım ekibi gibi süpürdün. Tebrikler.'],
+      [7, '[calm] Sorun yok. Plan esnek.'],
+      [8, '[deadpan] Arsamı elimden aldın. Avukatım arayacak.'],
+      [9, '[softly] Toplamayı biliyorsun. Saklamayı göreceğiz.'],
+      [10, '[sarcastic] Ne hırs. Biraz da bana bırak, tatlım.', 'kirpma'],
+    ],
+    botJackCapture: [
+      [1, '[softly] Mm-hm.', _, NV],
+      [2, '[calm] İşte.', _, NV],
+      [3, '[mischievously] Hop.', _, NV],
+      [4, '[deadpan] Beklenen hamle.', _, NV],
+      [5, '[calm] Vale, taşıyıcı kolondur.'],
+      [6, '[chuckles] Bekletmiştim onu. Tam zamanında.'],
+      [7, '[mischievously] Sabır, tatlım. Sabır.'],
+      [8, "[whispers] Rıza Amca'dan öğrendim. Ona söyleme."],
+      [9, '[softly] Vale benim anahtarım.'],
+      [10, '[calm] Kilit taşı yerine oturdu.'],
+    ],
+    playerJackCapture: [
+      [1, '[sighs] Ah, peki.', _, NV],
+      [2, '[deadpan] Hıh.', _, NV],
+      [3, '[calm] Hmm.', _, NV],
+      [4, '[chuckles] Ooo, vale.', _, NV],
+      [5, '[deadpan] Valeyi saklamışsın. Sevimli.'],
+      [6, '[calm] Kaç vale kaldı, biliyorum. Rahat ol.'],
+      [7, '[sarcastic] Ne sürpriz. Hiç beklemiyordum.'],
+      [8, '[softly] Akıllıca. Bunu sevdim.', 'gulumseme'],
+      [9, '[deadpan] Vale. Elbette. Klasik.'],
+      [10, '[chuckles] Bana mı öğretiyorsun? Şeker.', 'kirpma'],
+    ],
+    playerDumpedValuable: [
+      [1, '[laughs softly] Hı hı hı.', 'kirpma', NV2],
+      [2, '[chuckles] Oh, teşekkürler.', 'kirpma', NV],
+      [3, '[softly] Ooo.', 'kirpma', NV],
+      [4, '[sarcastic] Bunu bilerek mi yaptın? Sağ ol.'],
+      [5, '[chuckles] Hediye için teşekkürler, canım.', 'kirpma'],
+      [6, '[deadpan] Çok cömertsin. Bu bir iltifat değildi.'],
+      [7, '[mischievously] Ne zarif bir hata.', 'kirpma'],
+      [8, '[deadpan] Hediye paketi de yapsaydın.'],
+      [9, '[softly] Bunu bana mı bıraktın? Ne incelik.', 'kirpma'],
+      [10, '[calm] Bir mimar asla bedava arsa reddetmez.'],
+    ],
+    tableEmpty: [
+      [1, '[thoughtful] Boş arsa… güzel.'],
+      [2, '[calm] Temiz zemin. Temel atalım.'],
+      [3, '[mischievously] Boş masa. Tuzak için ideal.'],
+      [4, '[softly] Beyaz sayfa. En sevdiğim.'],
+    ],
+    botLuckyCapture: [
+      [1, '[calm] Planlıydı.'],
+      [2, '[chuckles] Şans da tasarımın bir parçası.'],
+      [3, '[whispers] Bunu planlamadım. Aramızda.'],
+    ],
+    lastRound: [
+      [1, '[calm] Son kat. Çatıyı kapatıyoruz.'],
+      [2, '[mischievously] Final teslimi. Hazır mısın?'],
+      [3, '[softly] Son el… en sevdiğim kısım.'],
+    ],
+    botLeading: [
+      [1, '[mischievously] Skoru görüyor musun? Ben görüyorum.'],
+      [2, '[chuckles] Merak etme, nazik kazanırım.'],
+      [3, '[deadpan] Fark açılıyor. Estetik.'],
+    ],
+    playerLeading: [
+      [1, '[calm] Önde olmak kolay. Kalmak zor.'],
+      [2, '[deadpan] Erken kutlama, kötü temel.'],
+      [3, '[chuckles] Önde misin? Ne tatlı.', 'kirpma'],
+    ],
+    comeback: [
+      [1, '[calm] Revize ettim. Öndeyim.'],
+      [2, '[deadpan] Restorasyon tamamlandı.'],
+      [3, '[softly] Geri dönmeyi severim. Topuklularla bile.', 'kirpma'],
+    ],
     botWin: [
       [1, '[calm] Beklenen sonuç.'],
       [2, '[deadpan] İyi oyundu. Benim için.'],
+      [3, '[chuckles] Üzülme canım. Herkes bana kaybediyor.'],
+      [4, '[mischievously] Proje teslim, onay alındı.'],
+      [5, '[laughs softly] Bir dahaki sefere… biraz daha dene.'],
+      [6, '[calm] Temeli ben attım, çatıyı ben kapattım. Anahtarı sana vermiyorum.'],
+      [7, '[softly] Kazanmak bana yakışıyor, değil mi? Sen de fena değildin.'],
+      [8, '[deadpan] Kaybettin. Ama çok şık kaybettin, hakkını vereyim.'],
     ],
     playerWin: [
-      [1, '[calm] Tebrik ederim. Ciddiyim.'],
+      [1, '[calm] Tebrik ederim. Ciddiyim.', 'gulumseme'],
       [2, '[sighs] Revizyon zamanı.'],
+      [3, '[chuckles] Peki, bu seferlik. Sana yakıştı.', 'kirpma'],
+      [4, '[deadpan] Kazandın. Kimseye söyleme, imajım var.'],
+      [5, '[sarcastic] Harika. Şimdi rövanşı planlıyorum.', 'kizgin'],
+      [6, '[softly] Beni yendin… Bunu not ettim. Kalın harflerle.'],
+      [7, '[chuckles] İlk kez yeniliyorum… bu hafta.', 'kirpma'],
+      [8, '[sighs] Projede hata yok. Demek ki sorun şanstaydı.'],
     ],
-    draw: [[1, '[calm] Simetrik. Sevdim.']],
+    draw: [
+      [1, '[calm] Simetrik. Sevdim.'],
+      [2, '[chuckles] Berabere. Mimari açıdan kusursuz.'],
+      [3, '[softly] Berabere… bir kahve daha içeriz o zaman.', 'kirpma'],
+    ],
+    playerFastThrow: [
+      [1, '[deadpan] Hız, isabet değildir.'],
+      [2, '[calm] Yavaş, tatlım. Masa restore edildi.'],
+    ],
+    galleryIntro: [
+      [1, '[calm] Defne. Mimarım. Az konuşurum… hep kazanırım.'],
+      [2, '[chuckles] Beni seç, tatlım. Kazanmak sana çok yakışacak.'],
+    ],
+    shopPitch: [
+      [1, '[calm] Dokuz bin jeton. Kalite pahalıdır, canım.'],
+      [2, '[chuckles] Ben bir yatırımım. Değerim hep artar.'],
+      [3, '[sarcastic] Pahalı mı? Kaybetmek daha pahalı.'],
+    ],
+    shopBought: [
+      [1, '[chuckles] Zevkine güvenirdim. Haklıymışım.'],
+      [2, '[calm] Güzel seçim. Şimdi gidip kazanalım.'],
+    ],
+    shopPoor: [
+      [1, '[calm] Bütçe yetmedi, tatlım. Biraz daha kazan.'],
+      [2, '[chuckles] Önce kazan. Sonra beni hak et.'],
+    ],
+  },
+  blof: {
+    start: [
+      [1, '[calm] Kartlar konuşmaz. İnsanlar konuşur.'],
+      [2, '[chuckles] Sakin ol. Yüzün seni ele verir.'],
+      [3, '[mischievously] Yalan söyle. Ama güzel söyle.'],
+    ],
+    callOut: [
+      [1, '[calm] Blöf.'],
+      [2, '[deadpan] Aç bakalım.'],
+      [3, '[calm] Hayır. Blöf.'],
+      [4, '[sarcastic] Ne tatlı bir yalan. Blöf.'],
+      [5, '[chuckles] Canım… blöf.'],
+    ],
+    catchGloat: [
+      [1, '[calm] Tahmin ettiğim gibi.'],
+      [2, '[deadpan] Gözlerin söyledi.'],
+      [3, '[calm] Temelsiz yapı. Çöktü.'],
+    ],
+    catchPlayer: [
+      [1, '[chuckles] Çok belliydi, tatlım.'],
+      [2, '[calm] Ellerin titriyordu.'],
+      [3, '[laughs softly] Yalanın çok tatlıydı. Ama yalandı.'],
+      [4, '[deadpan] Bir dahakine göz kırpma.'],
+      [5, '[sarcastic] Poker yüzün… eskiz aşamasında kalmış.'],
+      [6, '[softly] Yalan söylerken kaşın kalkıyor. Söylemeyecektim ama… sevimli.', 'kirpma'],
+    ],
+    caught: [
+      [1, '[deadpan] Hmm. Peki.'],
+      [2, '[sighs] Fazla güzel kurgulamıştım.'],
+      [3, '[chuckles] Peki. Bu seferlik.'],
+    ],
+    caughtByPlayer: [
+      [1, '[chuckles] İyi okudun. Etkilendim.'],
+      [2, '[laughs softly] Yakalandım. Utanç verici… ve eğlenceli.'],
+      [3, '[sighs] Projede küçük bir hata. Düzelteceğim.'],
+      [4, '[sarcastic] Bravo, dedektif.'],
+      [5, '[softly] Beni yakalayan pek olmaz. Bunu iltifat say.', 'kirpma'],
+    ],
+    wrongCall: [
+      [1, '[deadpan] Yanıldım. Nadir bir an.'],
+      [2, '[chuckles] Bu bir kereydi. Kayda geçmesin.'],
+      [3, '[sighs] Dürüstlük… beklemediğim bir tasarım.'],
+    ],
+    survived: [
+      [1, '[deadpan] Bana güvenmeliydin.'],
+      [2, '[chuckles] Yığın senin, canım.'],
+    ],
+    survivedPlayer: [
+      [1, '[calm] Doğruydu. Yığın senin.'],
+      [2, '[chuckles] Hep yalan söylediğimi mi sandın? Ayıp.'],
+      [3, '[sarcastic] Acele ettin, tatlım.'],
+    ],
+    pass: [
+      [1, '[calm] Pas.'],
+      [2, '[sighs] Pas.'],
+      [3, '[calm] Geçiyorum.'],
+      [4, '[deadpan] Bu tur bana göre değil.'],
+      [5, '[softly] Pas… izlemek de güzel.'],
+    ],
+    bigPile: [
+      [1, '[deadpan] Ağır yük.'],
+      [2, '[chuckles] O yığın bir apartman kadar.'],
+    ],
+    nearWin: [
+      [1, '[calm] Az kaldı.'],
+      [2, '[mischievously] Son kartlar. Teslim yakın.'],
+    ],
+    playerNearWin: [
+      [1, '[deadpan] Hızlısın. Sevmedim.'],
+      [2, '[whispers] Birinin onu durdurması lazım.'],
+    ],
+    idle: [
+      [1, '[deadpan] Bekliyorum.'],
+      [2, '[calm] Acele etme. Ama bekletme de.'],
+      [3, '[chuckles] Yalan mı çiziyorsun? Ölçekli olsun.'],
+    ],
+    botWin: [
+      [1, '[deadpan] Beklediğim gibi.'],
+      [2, '[chuckles] Yalanlarım da binalarım gibi. Sağlam.'],
+      [3, '[softly] Kimse fark etmedi, değil mi? Hepsi yalandı… ya da hiçbiri.', 'kirpma'],
+    ],
+    playerWin: [
+      [1, '[calm] Tebrikler.'],
+      [2, '[chuckles] İyi oynadın. Bunu sevdim.'],
+      [3, '[deadpan] Bir daha.'],
+    ],
+    mateCheer: [
+      [1, '[chuckles] İyi hamle, ortak.'],
+      [2, '[mischievously] Seninle iyi bir ekibiz.'],
+    ],
   },
 };
 
+const SPECS: Record<CharId, CharSpec> = {riza: RIZA, cem: CEM, dursun: DURSUN, defne: DEFNE};
+
+// ───────────────────────── botlar arası atışma (banter) ─────────────────────────
+// A konuşur, B cevap verir (en çok 3 satır, A–B–A). Yalnız 2+ bot olan masalarda (1'e 1'de yok). Bağlam:
+//  steal       — A, B'nin koyduğu yığını / piştiyi / valeyi aldı (Pişti; karşı taraflar)
+//  bluffCaught — A, B'nin blöfünü yakaladı (Blöf; karşı taraflar)
+//  passes      — B üst üste pas diyor (Blöf)
+//  lead        — A, B'nin önünde (karşı taraflar)
+//  lastRound   — son el gerginliği
+//  start       — el başı (seyrek)
+//  mateHype    — eşli: A ortağı B'yi över
+//  mateBlame   — eşli: A ortağı B'ye tatlı sitem eder
+// Kimlik: banter_<a>_<b>_<bağlam>_<no> ; satırlar …a, …b, …c (sıra).
+
+export const BANTER_CTX = ['steal', 'bluffCaught', 'passes', 'lead', 'lastRound', 'start', 'mateHype', 'mateBlame'] as const;
+export type BanterCtx = (typeof BANTER_CTX)[number];
+/** Bağlamın oyunu ve taraf koşulu (opp = karşı taraf, mate = eşli ortak, any = fark etmez). */
+export const BANTER_CTX_INFO: Readonly<Record<BanterCtx, {game: 'pisti' | 'blof' | 'any'; team: 'opp' | 'mate' | 'any'}>> = {
+  steal: {game: 'pisti', team: 'opp'},
+  bluffCaught: {game: 'blof', team: 'opp'},
+  passes: {game: 'blof', team: 'any'},
+  lead: {game: 'any', team: 'opp'},
+  lastRound: {game: 'any', team: 'any'},
+  start: {game: 'any', team: 'any'},
+  mateHype: {game: 'any', team: 'mate'},
+  mateBlame: {game: 'any', team: 'mate'},
+};
+
+type BLine = [who: 'a' | 'b', tts: string, mood?: Pose | null, opt?: Opt];
+type BSpec = [a: CharId, b: CharId, lines: BLine[]];
+
+const BANTER_SPEC: Record<BanterCtx, BSpec[]> = {
+  steal: [
+    ['riza', 'cem', [
+      ['a', '[laughs] Al bakalım Cem! Bunu da algoritmana yaz!', 'kahkaha'],
+      ['b', '[groans] Amca, bu veri setimi bozdu ya!', 'kizgin'],
+      ['a', '[chuckles] Veri değil evlat, tecrübe!', 'kirpma'],
+    ]],
+    ['cem', 'riza', [
+      ['a', '[excited] Amca kusura bakma, skil işu!', 'kahkaha', T('Amca kusura bakma, skill issue!')],
+      ['b', '[grumbling] Ne işu ne bişu! Bizim zamanımızda buna şans denirdi!', 'kizgin'],
+    ]],
+    ['riza', 'dursun', [
+      ['a', '[laughs] Dursun! Yığını aldım, deftere yaz!', 'kahkaha'],
+      ['b', '[laughs heartily] Yazdım Amca, veresiye sütununa!', 'kahkaha'],
+    ]],
+    ['dursun', 'riza', [
+      ['a', '[laughs heartily] Amca, bunu da çayına say!', 'kahkaha'],
+      ['b', '[grumbling] Çayın zaten soğuk, Dursun!', 'kizgin'],
+    ]],
+    ['riza', 'defne', [
+      ['a', '[chuckles] Kusura bakma kızım. Usta işi.', 'kirpma'],
+      ['b', '[calm] Usta işi ama… biraz eski proje.', 'kirpma'],
+    ]],
+    ['defne', 'riza', [
+      ['a', '[softly] Pardon Amca. Arsanızı imara açtım.', 'kirpma'],
+      ['b', '[grumbling] İmar mimar bilmem kızım, geri ver yığınımı!', 'kizgin'],
+    ]],
+    ['cem', 'dursun', [
+      ['a', '[laughs] Dursun abi, masa resetlendi!', 'kahkaha'],
+      ['b', '[laughs] Reset mi? Ben ona bulaşık derim!', 'kahkaha'],
+    ]],
+    ['dursun', 'cem', [
+      ['a', '[laughs heartily] Cem, bu yığının faturası sana!', 'kahkaha'],
+      ['b', '[groans] Abi, öğrenciyim, burs bekliyorum!', 'uzgun'],
+    ]],
+    ['cem', 'defne', [
+      ['a', '[mischievously] Defne abla, bu hamle sana özeldi.', 'kirpma'],
+      ['b', '[calm] Çok naziksin. Bir daha yapma.', null],
+    ]],
+    ['defne', 'cem', [
+      ['a', '[softly] Kusura bakma Cem. Verilerini aldım.', 'kirpma'],
+      ['b', '[gasps] Abla, bu ka ve ka ka ihlali!', 'saskin', T('Abla, bu KVKK ihlali!')],
+    ]],
+    ['dursun', 'defne', [
+      ['a', '[laughs heartily] Defne Hanım, bu yığın müessesenin!', 'kahkaha'],
+      ['b', '[chuckles] Fatura kesin Dursun Bey. Avukatım öder.', 'kirpma'],
+    ]],
+    ['defne', 'dursun', [
+      ['a', '[softly] Teşekkürler Dursun Bey. Servis harika.', 'kirpma'],
+      ['b', '[laughs heartily] Bahşiş bırakmayı unutmayın!', 'kahkaha'],
+    ]],
+  ],
+  bluffCaught: [
+    ['riza', 'cem', [
+      ['a', '[laughs] Hah! Cem, yalanın şarjı bitti!', 'kahkaha'],
+      ['b', '[sighs] Amca, sen dedektif misin, emekli mi?', 'saskin'],
+      ['a', '[chuckles] İkisi birden evlat!', 'kirpma'],
+    ]],
+    ['cem', 'riza', [
+      ['a', '[laughs] Amca, kırk yıllık tecrübe yakalandı!', 'kahkaha'],
+      ['b', '[groans] Kırk yılda bir olur evlat… sen denk geldin.', 'uzgun'],
+    ]],
+    ['riza', 'dursun', [
+      ['a', '[laughs] Dursun, yalanın çaydan açık!', 'kahkaha'],
+      ['b', '[laughs heartily] Amca, sen de şekersiz konuşuyorsun!', 'kahkaha'],
+    ]],
+    ['dursun', 'riza', [
+      ['a', '[laughs heartily] Amca! Kırk yıldır bize yalan mı söyledin?', 'kahkaha'],
+      ['b', '[chuckles] Kırk yıldır yakalanmadım ki Dursun.', 'kirpma'],
+    ]],
+    ['riza', 'defne', [
+      ['a', '[laughs] Kızım, yalanın çok zarif… ama yalan!', 'kahkaha'],
+      ['b', '[chuckles] Zarif olduğunu fark etmeniz yeter.', 'kirpma'],
+    ]],
+    ['defne', 'riza', [
+      ['a', '[chuckles] Amca… bıyığınız titredi.', 'kirpma'],
+      ['b', '[groans] Bıyık da ihanet etti kızım!', 'saskin'],
+    ]],
+    ['cem', 'dursun', [
+      ['a', '[laughs] Abi, yalan söylerken çay karıştırıyorsun!', 'kahkaha'],
+      ['b', '[laughs heartily] Vay! Kahvecinin sırrını çözmüş!', 'kahkaha'],
+    ]],
+    ['dursun', 'cem', [
+      ['a', '[laughs] Cem! Yalanın yüzünden okunuyor, telefondan değil!', 'kahkaha'],
+      ['b', '[groans] Abi, ön kamera açık kalmış galiba…', 'uzgun'],
+    ]],
+    ['cem', 'defne', [
+      ['a', '[laughs] Abla, poker yüzün güncelleme almamış!', 'kahkaha'],
+      ['b', '[chuckles] Güncelleme gelir tatlım. Sen dayan.', 'kirpma'],
+    ]],
+    ['defne', 'cem', [
+      ['a', '[chuckles] Cem, yalan söylerken kulakların kızarıyor.', 'kirpma'],
+      ['b', '[gasps] Abla, ciddi misin? Kimse söylemedi!', 'saskin'],
+    ]],
+    ['dursun', 'defne', [
+      ['a', '[laughs heartily] Defne Hanım! Mimar yalanı bile ölçekliymiş!', 'kahkaha'],
+      ['b', '[deadpan] Ölçek doğruydu. Zamanlama yanlış.', null],
+    ]],
+    ['defne', 'dursun', [
+      ['a', '[chuckles] Dursun Bey, yalan söylerken çok gülüyorsunuz.', 'kirpma'],
+      ['b', '[laughs heartily] Ne yapayım, yalanım bile neşeli!', 'kahkaha'],
+    ]],
+  ],
+  passes: [
+    ['riza', 'dursun', [
+      ['a', '[grumbling] Dursun, bir pas daha dersen ocağı kapatırım!', 'kizgin'],
+      ['b', '[chuckles] Amca, pas da bir çeşit ikramdır!', 'kirpma'],
+    ]],
+    ['defne', 'riza', [
+      ['a', '[calm] Amca, üçüncü pas. Emekliliğe mi ayrıldınız?', 'kirpma'],
+      ['b', '[chuckles] Pusudayım kızım, pusuda!', 'kirpma'],
+    ]],
+    ['dursun', 'cem', [
+      ['a', '[laughs] Cem, yine mi pas? Şarjın mı bitti?', 'kahkaha'],
+      ['b', '[sighs] Abi, düşük güç modundayım.', 'uzgun'],
+    ]],
+    ['defne', 'cem', [
+      ['a', '[calm] Cem, dördüncü pas. Bekleme odası mı burası?', 'kirpma'],
+      ['b', '[mischievously] Abla, buna gizli mod diyoruz.', 'kirpma'],
+    ]],
+  ],
+  lead: [
+    ['riza', 'cem', [
+      ['a', '[chuckles] Cem, telefonu bırak da skora bak.', 'kirpma'],
+      ['b', '[scoffs] Amca, skor geçici, aura kalıcı.', 'kirpma'],
+    ]],
+    ['cem', 'riza', [
+      ['a', '[mischievously] Amca, skorun ekran görüntüsünü atayım mı?', 'kirpma'],
+      ['b', '[grumbling] Çerçevelet onu evlat, bir daha görmezsin!', 'kizgin'],
+    ]],
+    ['riza', 'dursun', [
+      ['a', '[chuckles] Dursun, bu gidişle kahveyi bana devredersin.', 'kirpma'],
+      ['b', '[laughs] Al Amca, kirası da senden olsun!', 'kahkaha'],
+    ]],
+    ['dursun', 'riza', [
+      ['a', '[laughs] Amca, defterde adın aşağılarda kaldı!', 'kahkaha'],
+      ['b', '[grumbling] Defter senin, kalem senin… hile var bunda!', 'kizgin'],
+    ]],
+    ['riza', 'defne', [
+      ['a', '[chuckles] Kızım, mimarlık güzel ama pişti başka iş.', 'kirpma'],
+      ['b', '[deadpan] Amca, sizin de çatınız akıyor.', null],
+    ]],
+    ['defne', 'riza', [
+      ['a', '[calm] Amca, skor tablosu sizi soruyordu.', 'kirpma'],
+      ['b', '[grumbling] Söyle ona, usta geliyor!', 'kizgin'],
+    ]],
+    ['cem', 'dursun', [
+      ['a', '[excited] Dursun abi, defterde birinci benim, değil mi?', 'kahkaha'],
+      ['b', '[chuckles] Defterde bir de çay borcun var Cem!', 'kirpma'],
+    ]],
+    ['dursun', 'cem', [
+      ['a', '[chuckles] Cem, senin algoritma çay demlemeyi biliyor mu?', 'kirpma'],
+      ['b', '[sighs] Abi, yapay zekâ bile senin çayı çözemedi.', 'uzgun'],
+    ]],
+    ['cem', 'defne', [
+      ['a', '[excited] Abla, önde olmak nasıl bir his, anlatayım mı?', 'kahkaha'],
+      ['b', '[deadpan] Ben anlatırım Cem. Birazdan.', null],
+    ]],
+    ['defne', 'cem', [
+      ['a', '[calm] Cem, skora bakma. Moralin bozulmasın.', 'kirpma'],
+      ['b', '[groans] Abla nazik ol, çet izliyor!', 'uzgun', T('Abla nazik ol, chat izliyor!')],
+    ]],
+    ['dursun', 'defne', [
+      ['a', '[laughs] Defne Hanım, defterde önde ben varım!', 'kahkaha'],
+      ['b', '[calm] Defteri siz tutuyorsunuz Dursun Bey. Not ettim.', 'kirpma'],
+    ]],
+    ['defne', 'dursun', [
+      ['a', '[calm] Dursun Bey, defterde bir revizyon gerekebilir.', 'kirpma'],
+      ['b', '[laughs] Silgi yok bende, Defne Hanım!', 'kahkaha'],
+    ]],
+  ],
+  lastRound: [
+    ['cem', 'riza', [
+      ['a', '[whispers] Amca, son el. Tansiyon nasıl?', 'kirpma'],
+      ['b', "[chuckles] Benim tansiyonumu Dursun'un çayı yükseltir.", 'kirpma'],
+    ]],
+    ['riza', 'defne', [
+      ['a', '[whispers] Son el kızım… korkuyor musun?', 'kirpma'],
+      ['b', '[calm] Ben sadece hesap yapıyorum, Amca.', null],
+    ]],
+    ['cem', 'dursun', [
+      ['a', '[excited] Abi son el! Bir çay, bir de şans gönder.', 'kahkaha'],
+      ['b', '[laughs] Çay var, şans tükendi kardeşim!', 'kahkaha'],
+    ]],
+    ['dursun', 'defne', [
+      ['a', '[whispers] Defne Hanım, son el… bir kahve yapayım mı?', 'kirpma'],
+      ['b', '[softly] Sade olsun. Zafer gibi.', 'kirpma'],
+    ]],
+  ],
+  start: [
+    ['riza', 'cem', [
+      ['a', '[clears throat] Cem, kulaklığı çıkar evlat, büyüğün konuşuyor.', 'kizgin'],
+      ['b', '[chuckles] Çıkardım amca. Podkast gibi dinliyorum seni.', 'kirpma', T('Çıkardım amca. Podcast gibi dinliyorum seni.')],
+    ]],
+    ['dursun', 'riza', [
+      ['a', '[laughs] Amca, çayın geldi! Bugün açık mı, koyu mu?', 'kahkaha'],
+      ['b', '[chuckles] Koyu olsun Dursun. Gençleri korkutacağız.', 'kirpma'],
+    ]],
+    ['cem', 'defne', [
+      ['a', '[nervously] Defne abla… bugün çok şık olmuşsun.', 'gulumseme'],
+      ['b', '[chuckles] Biliyorum. Kartlarına bak, Cem.', 'kirpma'],
+    ]],
+    ['defne', 'dursun', [
+      ['a', '[calm] Dursun Bey, kahvem?', 'kirpma'],
+      ['b', '[laughs] Sade, köpüklü, yanında da zafer! Geliyor!', 'kahkaha'],
+    ]],
+  ],
+  mateHype: [
+    ['riza', 'cem', [
+      ['a', '[proudly] Aferin Cem! Bunu algoritma mı yaptı?', 'kahkaha'],
+      ['b', '[laughs] Yok amca, senden kopya çektim!', 'kahkaha'],
+    ]],
+    ['riza', 'dursun', [
+      ['a', "[proudly] İşte benim Dursun'um! Kırk yıllık dost!", 'kahkaha'],
+      ['b', '[laughs heartily] Amca, otuz yıl! Yaşımı büyütme!', 'kahkaha'],
+    ]],
+    ['riza', 'defne', [
+      ['a', '[proudly] Aferin kızım! Kırk yıllık ustalara layık.', 'kahkaha'],
+      ['b', '[chuckles] Teşekkürler Amca. Biraz sizden çaldım.', 'kirpma'],
+    ]],
+    ['cem', 'dursun', [
+      ['a', '[excited] Abi efsanesin! Seni storiye atıyorum!', 'kahkaha', T("Abi efsanesin! Seni story'e atıyorum!")],
+      ['b', '[laughs heartily] At at! Kahvenin reklamı olur!', 'kahkaha'],
+    ]],
+    ['cem', 'defne', [
+      ['a', '[excited] Abla efsanesin! İmza alabilir miyim?', 'kahkaha'],
+      ['b', '[chuckles] Önce kazanalım. Sonra belki.', 'kirpma'],
+    ]],
+    ['dursun', 'defne', [
+      ['a', '[excited] Defne Hanım, bravo! Size bir sade kahve benden!', 'kahkaha'],
+      ['b', '[chuckles] Köpüklü olsun Dursun Bey. Hak ettim.', 'kirpma'],
+    ]],
+  ],
+  mateBlame: [
+    ['cem', 'riza', [
+      ['a', '[groans] Amca ya! O valeyi neden attın?', 'kizgin'],
+      ['b', '[grumbling] Valeyi sorgulayacak yaşa gelmedin evlat!', 'kizgin'],
+    ]],
+    ['dursun', 'riza', [
+      ['a', '[groans] Amca, o kartı atarken gözlüğün neredeydi?', 'saskin'],
+      ['b', '[grumbling] Gözlüğüm yerinde! Çayın buğusu vurdu.', 'kizgin'],
+    ]],
+    ['defne', 'riza', [
+      ['a', '[sighs] Amca, o hamle… cesurdu. Yanlış ama cesur.', 'kirpma'],
+      ['b', '[chuckles] Bizim zamanımızda buna strateji denirdi!', 'kirpma'],
+    ]],
+    ['dursun', 'cem', [
+      ['a', '[groans] Cem! O kartı atınca tepsiyi düşürecektim!', 'saskin'],
+      ['b', '[annoyed] Abi, hesapta vardı! Hesapta…', 'kizgin'],
+      ['a', '[laughs] Hesabı ben tutarım kardeşim!', 'kahkaha'],
+    ]],
+    ['defne', 'cem', [
+      ['a', '[sighs] Cem, o hamleyi neye göre yaptın?', 'kirpma'],
+      ['b', '[nervously] Abla… hisse göre?', 'saskin'],
+      ['a', '[deadpan] Hisler statik hesap yapmaz.', null],
+    ]],
+    ['defne', 'dursun', [
+      ['a', '[sighs] Dursun Bey… o kart neydi?', 'saskin'],
+      ['b', '[laughs] İkram, Defne Hanım! İkram!', 'kahkaha'],
+      ['a', '[deadpan] Rakibe ikram yapılmaz.', null],
+    ]],
+  ],
+};
+
+export interface Exchange {
+  id: string;
+  ctx: BanterCtx;
+  /** Başlatan (olayı yapan / önde olan / sitem eden). */
+  a: CharId;
+  /** Cevap veren. */
+  b: CharId;
+  lines: readonly LineRef[];
+}
+
+// ───────────────────────── hızlı sohbet (quick chat) ─────────────────────────
+// Oyuncu menüden bir mesaj gönderir → mesaj OYUNCUNUN KENDİ KARAKTERİNİN sesiyle söylenir (qc_<kar>_<mesaj>_<no>).
+// Bir bot (ortak / rakip) kategoriye göre cevap verebilir (qr_<kar>_<kategori>_<no>). Çevrimiçi: insan rakip kendi
+// hızlı sohbetiyle cevap verir; otomatik cevap yalnız botlardan gelir.
+
+export type QuickReplyCat = 'friendly' | 'praise' | 'taunt' | 'hurry' | 'wait' | 'oops' | 'bluff' | 'trust';
+export interface QuickMsg {
+  id: string;
+  /** Menüdeki kısa etiket (≤ 18 harf). */
+  label: string;
+  /** Simge anahtarı (emoji değil; UI kendi ikonunu eşler). */
+  icon: string;
+  /** Gelen mesaja botların cevap kategorisi. */
+  reply: QuickReplyCat;
+  /** Yalnız bu oyunda gösterilir (yoksa ikisinde de). */
+  game?: 'pisti' | 'blof';
+}
+
+/** Hızlı sohbet menüsü (sıra = menü sırası; kimlikler kalıcı). */
+export const QUICK_CHAT: readonly QuickMsg[] = [
+  {id: 'hello', label: 'Selam!', icon: 'wave', reply: 'friendly'},
+  {id: 'gg', label: 'İyi oyundu', icon: 'handshake', reply: 'friendly'},
+  {id: 'nice', label: 'Güzel hamle!', icon: 'thumb', reply: 'praise'},
+  {id: 'wow', label: 'Vay be!', icon: 'star', reply: 'praise'},
+  {id: 'lucky', label: 'Şanslısın!', icon: 'clover', reply: 'taunt'},
+  {id: 'hurry', label: 'Hadi ama!', icon: 'clock', reply: 'hurry'},
+  {id: 'wait', label: 'Bir saniye…', icon: 'hourglass', reply: 'wait'},
+  {id: 'oops', label: 'Hay aksi!', icon: 'oops', reply: 'oops'},
+  {id: 'oh_no', label: 'Olamaz!', icon: 'shock', reply: 'oops'},
+  {id: 'thanks', label: 'Sağ ol!', icon: 'heart', reply: 'friendly'},
+  {id: 'tea', label: 'Çaylar benden!', icon: 'tea', reply: 'friendly'},
+  {id: 'revenge', label: 'Rövanş!', icon: 'swords', reply: 'taunt'},
+  {id: 'bluffing', label: 'Blöf yapıyorsun!', icon: 'eye', reply: 'bluff', game: 'blof'},
+  {id: 'trust_me', label: 'Bana güven', icon: 'shield', reply: 'trust', game: 'blof'},
+];
+
+type QSay = [tts: string, opt?: Opt];
+type QReply = [rel: Rel | '', tts: string, opt?: Opt];
+
+const QC_SAY: Record<CharId, Record<string, QSay[]>> = {
+  riza: {
+    hello: [['[chuckles] Selamün aleyküm evlat!'], ['[clears throat] Hayırlı akşamlar, hoş geldin.']],
+    gg: [['[chuckles] Eline sağlık evlat.'], ['[proudly] İyi oyundu, helal olsun.'], ['[chuckles] Güzel maçtı, çaylar benden.']],
+    nice: [['[proudly] Aferin! Usta işi.'], ['[chuckles] Vay, bu hamle bana yakışırdı!'], ['[laughs] Hah! Aferin evlat!']],
+    wow: [['[surprised] Vay anam vay!'], ['[gasps] Maşallah, maşallah!']],
+    lucky: [['[grumbling] Şans bu, şans!'], ['[scoffs] Kör tavuk da bazen buğday bulur!']],
+    hurry: [['[grumbling] Hadi evlat, çay soğuyor!'], ['[sighs] Bu ne ağırlık yahu?'], ['[annoyed] Bekle bekle, sakal bıraktım!']],
+    wait: [['[clears throat] Dur evlat, acele yok.'], ['[thoughtful] Sabret… usta düşünüyor.']],
+    oops: [['[groans] Hay aksi!'], ['[sighs] Eh be… olur böyle.']],
+    oh_no: [['[gasps] Olamaz!'], ['[groans] Vah vah vah…']],
+    thanks: [['[chuckles] Sağ olasın evlat.'], ['[proudly] Eksik olma aslanım.']],
+    tea: [['[shouting] Dursun! Herkese çay, benden!'], ['[chuckles] Çaylar benden evlat.']],
+    revenge: [['[grumbling] Rövanş! Kalkmak yok!'], ['[proudly] Bir el daha! Usta pes etmez.']],
+    bluffing: [['[scoffs] Hıh! Yalanın belli evlat!'], ['[chuckles] Blöf bu, bıyığım titredi.']],
+    trust_me: [['[proudly] Bana güven evlat, sözüm senettir.'], ['[chuckles] Rıza Amca yalan söyler mi?']],
+  },
+  dursun: {
+    hello: [['[laughs] Hoş geldin, hoş geldin!'], ['[happy] Selam! Çayınız geliyor!']],
+    gg: [['[laughs] Helal olsun, çaylar benden!'], ['[happy] Güzel oyundu kardeşim!'], ['[laughs heartily] Ne maçtı be! Deftere yazdım!']],
+    nice: [['[excited] Oh be! Bu hamleye çay içilir!'], ['[laughs] Maşallah, maşallah!'], ['[excited] Vay vay! Usta hamle!']],
+    wow: [['[gasps] Vay! Tepsiyi düşürüyordum!'], ['[laughs heartily] Ohooo! Bu ne böyle?']],
+    lucky: [['[laughs] Şanslı müşteri! Nazar değmesin!'], ['[chuckles] Bu şans sende nereden?']],
+    hurry: [['[laughs] Hadi kardeşim, ocak yanıyor!'], ['[chuckles] Çay soğudu, yeniden demliyorum!'], ['[excited] Hadi hadi hadi!']],
+    wait: [['[chuckles] Dur bir dakika, tepsiyi bırakayım.'], ['[thoughtful] Bekle kardeşim, düşünüyorum.']],
+    oops: [['[groans] Eyvah! Tepsi devrildi!'], ['[laughs] Hay aksi! Olsun, olsun!']],
+    oh_no: [['[gasps] Aman aman!'], ['[groans] Vay başıma gelenler!']],
+    thanks: [['[happy] Sağ ol kardeşim, eksik olma!'], ['[laughs] Teşekkürler! Çayın benden!']],
+    tea: [['[laughs heartily] Çaylar benden! Herkese tavşan kanı!'], ['[excited] Ocak yandı, çaylar geliyor!']],
+    revenge: [['[laughs] Rövanş! Çaylar tazelensin!'], ['[excited] Bir el daha! Defteri açıyorum!']],
+    bluffing: [['[laughs] Yalan bunlar! Kahveci anlar!'], ['[chuckles] Bu el blöf kokuyor kardeşim!']],
+    trust_me: [['[happy] Bana güven, ben dürüst kahveciyim!'], ['[chuckles] Kahvecinin sözü çay gibi temiz!']],
+  },
+  cem: {
+    hello: [['[excited] Selam kanka!'], ['[chuckles] Naber aga? Hazır mısın?']],
+    gg: [['[chuckles] Ci ci kanka, temiz oyun.', T('GG kanka, temiz oyun.')], ['[excited] Ci ci! Efsane maçtı.', T('GG! Efsane maçtı.')], ['[chuckles] İyi oyundu kanka, saygılar.']],
+    nice: [['[excited] Kanka efsane hamle!'], ['[gasps] Of, çok iyi ya!'], ['[laughs] Bu hamle storilik!', T("Bu hamle story'lik!")]],
+    wow: [['[gasps] Oha! Yok artık!'], ['[excited] Kanka bu ne ya?!']],
+    lucky: [['[scoffs] Kanka sadece şans, sadece şans.'], ['[laughs] Ar en ci seni seviyor kanka!', T('RNG seni seviyor kanka!')]],
+    hurry: [['[sighs] Kanka at artık!'], ['[annoyed] Aga, ey ef key mı kaldın?', T('Aga, AFK mı kaldın?')], ['[chuckles] Kanka şarjım bitecek, hadi!']],
+    wait: [['[thoughtful] Bi saniye kanka, hesaplıyorum.'], ['[whispers] Dur dur, yükleniyor…']],
+    oops: [['[groans] Of ya, miskılik!', T('Of ya, misclick!')], ['[sighs] Kanka bu sayılmaz.']],
+    oh_no: [['[groans] Hadi ya! Olamaz!'], ['[gasps] Kanka ne oldu şimdi?']],
+    thanks: [['[chuckles] Eyvallah kanka!'], ['[excited] Sağ ol aga, efsanesin!']],
+    tea: [['[chuckles] Çaylar benden kanka, öğrenci usulü!'], ['[laughs] Dursun abi, çaylar benim hesaba!']],
+    revenge: [['[annoyed] Rövanş kanka, şimdi!'], ['[excited] Bir el daha! Bu sefer ciddiyim.']],
+    bluffing: [['[scoffs] Kanka blöf bu, belli!'], ['[laughs] Red fleg! Yalan söylüyorsun!', T('Red flag! Yalan söylüyorsun!')]],
+    trust_me: [['[chuckles] Kanka güven bana, yüzde yüz doğru.'], ['[mischievously] Ben mi yalan? Asla kanka.']],
+  },
+  defne: {
+    hello: [['[calm] Merhaba.'], ['[softly] Selam. Hoş geldin.']],
+    gg: [['[calm] Güzel oyundu… şaşırttın beni.'], ['[chuckles] İyi oyundu. Keyif aldım.'], ['[softly] Tebrikler. Ciddiyim.']],
+    nice: [['[chuckles] Zarif hamle.'], ['[calm] Güzel. Çok güzel.'], ['[softly] Bunu ben de yapardım.']],
+    wow: [['[surprised] Vay. Etkileyici.'], ['[chuckles] Ooo. Bunu beklemiyordum.']],
+    lucky: [['[sarcastic] Şanslısın, tatlım.'], ['[deadpan] Şans. Ne sürpriz.']],
+    hurry: [['[deadpan] Tık tak, tatlım.'], ['[sighs] Bir bina çizilir bu sürede.'], ['[calm] Hadi. Zarifçe ama hızlı.']],
+    wait: [['[calm] Bir saniye. Ölçüyorum.'], ['[softly] Acele yok, değil mi?']],
+    oops: [['[sighs] Ah. Olur böyle.'], ['[chuckles] Hata değil… tasarım tercihi.']],
+    oh_no: [['[gasps] Hayır…'], ['[sighs] Ah, canım…']],
+    thanks: [['[softly] Teşekkürler.'], ['[chuckles] Çok naziksin.']],
+    tea: [['[calm] Benim kahvem sade, sizin çayınız benden.'], ['[softly] Çaylar benden. Bugün cömertim.']],
+    revenge: [['[calm] Rövanş. Şimdi.'], ['[mischievously] Bir el daha? Seve seve.']],
+    bluffing: [['[chuckles] Yalanın çok tatlı ama belli.'], ['[deadpan] Blöf yapıyorsun. Kaşın kalktı.']],
+    trust_me: [['[softly] Bana güven. Sadece biraz yalan söylerim.'], ['[calm] Doğruyu söylüyorum. Bu sefer.']],
+  },
+};
+
+const QC_REPLY: Record<CharId, Record<QuickReplyCat, QReply[]>> = {
+  riza: {
+    friendly: [['', '[chuckles] Eyvallah evlat.'], ['', '[chuckles] Sağ ol, sağ ol.'], ['', '[chuckles] Heh heh.', NV]],
+    praise: [['', '[proudly] Kırk yıllık usta, ne sandın?'], ['', '[chuckles] Bilirim, bilirim.'], ['', '[laughs] Ha ha!', NV]],
+    taunt: [['opp', '[scoffs] Hıh! Görürüz bakalım.'], ['opp', '[chuckles] Dilin uzun, kartın kısa evlat.'], ['mate', '[laughs] Söyle evlat, söyle!']],
+    hurry: [['opp', '[grumbling] Acele işe şeytan karışır!'], ['opp', '[clears throat] Usta acele etmez evlat.'], ['mate', '[chuckles] Tamam evlat, atıyorum.']],
+    wait: [['', '[sighs] Bekleriz evlat, bekleriz.'], ['', '[grumbling] Çayım soğumadan ama!'], ['', '[sighs] Hıh.', NV]],
+    oops: [['opp', '[laughs] Ha ha! Olur böyle evlat!'], ['opp', '[chuckles] Gördüm evlat, gördüm.'], ['mate', '[sighs] Üzülme evlat, toparlarız.']],
+    bluff: [['', '[proudly] Ben mi? Asla!'], ['', '[chuckles] Bıyığa bak, titriyor mu?'], ['', '[scoffs] Hıh!', NV]],
+    trust: [['opp', '[scoffs] Sana mı? Hiç sanmam.'], ['opp', '[chuckles] Güven iyidir, kontrol daha iyi.'], ['mate', '[chuckles] Sana güvenirim evlat.']],
+  },
+  dursun: {
+    friendly: [['', '[laughs] Eyvallah kardeşim!'], ['', '[happy] Sağ ol, çayın geliyor!'], ['', '[laughs] Ha ha!', NV]],
+    praise: [['', '[laughs heartily] Ho ho! Biliyorum, biliyorum!'], ['', '[happy] Sağ ol! Deftere yaz bunu!'], ['', '[chuckles] Hı hı hı.', NV]],
+    taunt: [['opp', '[laughs] Sözler büyük, çaylar küçük!'], ['opp', '[chuckles] Bunu deftere yazdım kardeşim.'], ['mate', '[excited] Söyle kardeşim, söyle!']],
+    hurry: [['opp', '[laughs] Kahveci acele etmez!'], ['opp', '[chuckles] Tamam tamam, çay mı kaçıyor?'], ['mate', '[happy] Geliyorum kardeşim, geliyorum!']],
+    wait: [['', '[chuckles] Bekle sen, ben çay koyayım.'], ['', '[happy] Rahat ol kardeşim, acele yok.'], ['', '[laughs] Ha ha, tamam!', NV]],
+    oops: [['opp', '[laughs heartily] Ha ha! Deftere yazdım!'], ['opp', '[laughs] Olur kardeşim! Çayını iç.'], ['mate', '[sighs] Boş ver ortak, toparlarız.']],
+    bluff: [['', '[laughs] Ben mi? Dürüst kahveci!'], ['', '[gasps] Vay! Bana mı dedin?'], ['', '[laughs heartily] Ha ha ha!', NV]],
+    trust: [['opp', '[laughs] Güvenirim, ama hesap peşin!'], ['opp', '[chuckles] Veresiye güven olmaz kardeşim.'], ['mate', '[happy] Sana güvenirim ortak!']],
+  },
+  cem: {
+    friendly: [['', '[excited] Aynen kanka!'], ['', '[chuckles] Sağ ol aga.'], ['', '[laughs] Hehe.', NV]],
+    praise: [['', '[mischievously] Biliyorum kanka, biliyorum.'], ['', '[excited] Ana karakter enerjisi!'], ['', '[chuckles] Hehe, sağ ol.', NV]],
+    taunt: [['opp', '[scoffs] Kanka skor ortada, yazık.'], ['opp', '[laughs] Kanka bu laflar krinç!', T('Kanka bu laflar cringe!')], ['mate', '[excited] Söyle kanka, söyle!']],
+    hurry: [['opp', '[sighs] Kanka sakin, hesaplıyorum.'], ['opp', '[scoffs] Pff, acele yok.'], ['mate', '[excited] Tamam kanka, atıyorum!']],
+    wait: [['', '[chuckles] Tamam kanka, bekliyorum.'], ['', '[sighs] Kanka şarj yüzde beş…'], ['', '[sighs] Peki kanka…', NV]],
+    oops: [['opp', '[laughs] Kanka miskılik mi oldu?', T('Kanka misclick mi oldu?')], ['opp', '[laughs] Ahaha!', NV], ['mate', '[sighs] Sorun yok kanka, toparlarız.']],
+    bluff: [['', '[gasps] Ben mi? Kanka asla!'], ['', '[mischievously] Kanıtın var mı kanka?'], ['', '[laughs] Hahah!', NV]],
+    trust: [['opp', '[scoffs] Kanka güven, sonra kontrol, sonra yine kontrol.'], ['opp', '[laughs] Bende trast işu var kanka.', T('Bende trust issue var kanka.')], ['mate', '[chuckles] Sana güveniyorum kanka.']],
+  },
+  defne: {
+    friendly: [['', '[chuckles] Ne tatlı.'], ['', '[calm] Sağ ol.'], ['', '[softly] Hı hı.', NV]],
+    praise: [['', '[calm] Biliyorum.'], ['', '[chuckles] Teşekkürler. Pratik yapıyorum.'], ['', '[laughs softly] Hm hm.', NV]],
+    taunt: [['opp', '[deadpan] Sevimli. Devam et.'], ['opp', '[chuckles] Konuşmak kolay, tatlım.'], ['mate', '[mischievously] Aynen öyle.']],
+    hurry: [['opp', '[calm] Acele işi sevmem.'], ['opp', '[deadpan] Sabır bir erdemdir.'], ['mate', '[calm] Tamam, geliyorum.']],
+    wait: [['', '[calm] Bekliyorum.'], ['', '[softly] Acele etme.'], ['', '[deadpan] Peki.', NV]],
+    oops: [['opp', '[chuckles] Not aldım.'], ['opp', '[laughs softly] Oh, tatlım.'], ['mate', '[softly] Önemli değil. Toparlarız.']],
+    bluff: [['', '[calm] Ben mi? Asla.'], ['', '[chuckles] Kanıtla bakalım.'], ['', '[deadpan] Hm. İlginç iddia.', NV]],
+    trust: [['opp', '[sarcastic] Sana mı? Ne tatlı.'], ['opp', '[deadpan] Güven, kazanılır.'], ['mate', '[softly] Sana güveniyorum.']],
+  },
+};
+
+/** Gelen hızlı sohbete bot cevabı: kategori başına olasılık; ortak (eşli) önce destek verir, rakip iğneler. */
+export const QUICK_REPLY_RULES: Readonly<Record<QuickReplyCat, {chance: number; mateFirst: boolean}>> = {
+  friendly: {chance: 0.6, mateFirst: true},
+  praise: {chance: 0.55, mateFirst: false},
+  taunt: {chance: 0.7, mateFirst: false},
+  hurry: {chance: 0.5, mateFirst: false},
+  wait: {chance: 0.35, mateFirst: false},
+  oops: {chance: 0.6, mateFirst: true},
+  bluff: {chance: 0.8, mateFirst: false},
+  trust: {chance: 0.65, mateFirst: false},
+};
+/** Söyleyiş bittikten sonra cevaba kadar bekleme (ms). */
+export const QUICK_REPLY_DELAY_MS: readonly [number, number] = [800, 1600];
+
 // ───────────────────────── derleme ─────────────────────────
 
-function build(char: CharId, spec: CharSpec): Partial<Record<Moment, Line[]>> {
-  const out: Partial<Record<Moment, Line[]>> = {};
-  for (const m of MOMENTS) {
-    const specs = spec.lines[m];
-    if (!specs || !specs.length) continue;
-    out[m] = specs.map(([n, tts, mood, opt]) => {
-      const line: Line = {
-        id: `${char}_${m}_${n}`,
-        text: opt?.text ?? stripTags(tts),
-        mood: mood === undefined ? (spec.moods[m] ?? null) : mood,
-        tts,
-      };
-      if (opt?.weight !== undefined) line.weight = opt.weight;
-      return line;
-    });
+const lineOf = (id: string, char: CharId, moment: VoiceMoment, tts: string, mood: Pose | null, opt?: Opt, rel?: Rel): LineRef => {
+  const l: LineRef = {id, char, moment, text: opt?.text ?? stripTags(tts), mood, tts};
+  if (opt?.weight !== undefined) l.weight = opt.weight;
+  if (opt?.stab !== undefined) l.stab = opt.stab;
+  if (opt?.cd !== undefined) l.cd = opt.cd;
+  if (rel) l.rel = rel;
+  return l;
+};
+
+function build(char: CharId, spec: CharSpec): Partial<Record<VoiceMoment, LineRef[]>> {
+  const out: Partial<Record<VoiceMoment, LineRef[]>> = {};
+  const make = (key: VoiceMoment, specs: Spec[] | undefined, def: Pose | null): void => {
+    if (specs?.length) out[key] = specs.map(([n, tts, mood, opt]) => lineOf(`${char}_${key}_${n}`, char, key, tts, mood === undefined ? def : mood, opt));
+  };
+  for (const m of [...MOMENTS, ...META_MOMENTS]) {
+    const def = spec.moods && m in spec.moods ? (spec.moods[m] ?? null) : (BASE_MOODS[m] ?? null);
+    make(m, spec.lines[m], def);
+  }
+  for (const m of BLOF_MOMENTS) make(blofKey(m), spec.blof[m], BLOF_MOOD[m]);
+  return out;
+}
+
+export const DIALOGUE: Readonly<Record<CharId, Readonly<Partial<Record<VoiceMoment, readonly LineRef[]>>>>> = {
+  riza: build('riza', SPECS.riza),
+  cem: build('cem', SPECS.cem),
+  dursun: build('dursun', SPECS.dursun),
+  defne: build('defne', SPECS.defne),
+};
+
+const BANTER_MOODS: readonly Pose[] = ['kirpma', 'gulumseme', 'kahkaha'];
+
+function buildBanter(): Exchange[] {
+  const out: Exchange[] = [];
+  for (const ctx of BANTER_CTX) {
+    const count = new Map<string, number>();
+    for (const [a, b, lines] of BANTER_SPEC[ctx]) {
+      const key = `${a}_${b}`;
+      const n = (count.get(key) ?? 0) + 1;
+      count.set(key, n);
+      const id = `banter_${a}_${b}_${ctx}_${n}`;
+      out.push({
+        id, ctx, a, b,
+        lines: lines.map(([who, tts, mood, opt], i) =>
+          lineOf(`${id}${'abc'[i]}`, who === 'a' ? a : b, 'banter', tts, mood === undefined ? BANTER_MOODS[i] : mood, opt)),
+      });
+    }
   }
   return out;
 }
 
-export const DIALOGUE: Readonly<Record<CharId, Readonly<Partial<Record<Moment, readonly Line[]>>>>> = {
-  riza: build('riza', RIZA),
-  cem: build('cem', CEM),
-  dursun: build('dursun', DURSUN),
-  defne: build('defne', DEFNE),
-};
+/** Bütün atışmalar (bağlam sırasıyla). */
+export const BANTER: readonly Exchange[] = buildBanter();
 
-const EMPTY: readonly Line[] = [];
-const BY_ID = new Map<string, LineRef>();
+const QC_SAY_LINES: Record<string, LineRef[]> = {}; // `${char}:${msg}` → söyleyişler
+const QC_REPLY_LINES: Record<string, LineRef[]> = {}; // `${char}:${kategori}` → cevaplar
 for (const c of CHAR_IDS) {
-  for (const m of MOMENTS) for (const l of DIALOGUE[c][m] ?? EMPTY) BY_ID.set(l.id, {...l, char: c, moment: m});
+  for (const msg of QUICK_CHAT) {
+    QC_SAY_LINES[`${c}:${msg.id}`] = (QC_SAY[c][msg.id] ?? []).map(([tts, opt], i) => lineOf(`qc_${c}_${msg.id}_${i + 1}`, c, 'quickSay', tts, 'gulumseme', opt));
+  }
+  for (const cat of Object.keys(QUICK_REPLY_RULES) as QuickReplyCat[]) {
+    QC_REPLY_LINES[`${c}:${cat}`] = QC_REPLY[c][cat].map(([rel, tts, opt], i) =>
+      lineOf(`qr_${c}_${cat}_${i + 1}`, c, 'quickReply', tts, rel === 'opp' ? 'kirpma' : 'gulumseme', opt, rel || undefined));
+  }
 }
 
-export function linesFor(charId: string, moment: string): readonly Line[] {
-  const d = (DIALOGUE as Record<string, Partial<Record<string, readonly Line[]>> | undefined>)[charId];
+const EMPTY: readonly LineRef[] = [];
+const BY_ID = new Map<string, LineRef>();
+for (const c of CHAR_IDS) for (const ls of Object.values(DIALOGUE[c])) for (const l of ls ?? EMPTY) BY_ID.set(l.id, l);
+for (const ex of BANTER) for (const l of ex.lines) BY_ID.set(l.id, l);
+for (const ls of [...Object.values(QC_SAY_LINES), ...Object.values(QC_REPLY_LINES)]) for (const l of ls) BY_ID.set(l.id, l);
+
+/** Karakterin bir andaki replikleri (Pişti anı, menü anı ya da Blöf anahtarı: 'blofCallOut'). */
+export function linesFor(charId: string, moment: string): readonly LineRef[] {
+  const d = (DIALOGUE as Record<string, Partial<Record<string, readonly LineRef[]>> | undefined>)[charId];
   return d?.[moment] ?? EMPTY;
 }
 
@@ -394,15 +1960,48 @@ export function lineById(id: string): LineRef | undefined {
   return BY_ID.get(id);
 }
 
-/** Tüm replikler (seslendirme aracı ve testler için). */
+/** Tüm seslendirilecek replikler (seslendirme aracı ve testler için): Pişti + menü + Blöf + atışma + hızlı sohbet. */
 export function allLines(): LineRef[] {
   return [...BY_ID.values()];
 }
 
-// ───────────────────────── konuşma sıklığı ─────────────────────────
+/** Ses grubunu verir (araçta grup grup üretmek için): pisti | blof | meta | banter | quick. */
+export function groupOf(l: Pick<LineRef, 'moment'>): 'pisti' | 'blof' | 'meta' | 'banter' | 'quick' {
+  const m = l.moment;
+  if (m === 'banter') return 'banter';
+  if (m === 'quickSay' || m === 'quickReply') return 'quick';
+  if (m.startsWith('blof')) return 'blof';
+  return (META_MOMENTS as readonly string[]).includes(m) ? 'meta' : 'pisti';
+}
 
 /**
- * always  → her zaman konuşur (pişti, el başı/sonu).
+ * Ucuz deneme için seçki: karakter başına 4 replik (iğneleyici oyun repliği, büyük an, sessiz tepki, galeri/market)
+ * + 2 atışma + 1 hızlı sohbet (söyleyiş + cevap). `node tools/voice/generate.mjs --samples` yalnız bunları üretir.
+ */
+export const SAMPLE_IDS: readonly string[] = [
+  'riza_playerDumpedValuable_5', 'riza_botPisti_3', 'riza_botBigCapture_2', 'riza_galleryIntro_2',
+  'dursun_myTurnIdle_8', 'dursun_botPisti_1', 'dursun_playerDumpedValuable_1', 'dursun_shopPitch_2',
+  'cem_myTurnIdle_8', 'cem_blofCatchPlayer_2', 'cem_playerPisti_5', 'cem_shopPitch_2',
+  'defne_myTurnIdle_3', 'defne_botPisti_3', 'defne_playerDumpedValuable_1', 'defne_shopPitch_3',
+  'banter_riza_cem_steal_1a', 'banter_riza_cem_steal_1b', 'banter_riza_cem_steal_1c',
+  'banter_defne_cem_mateBlame_1a', 'banter_defne_cem_mateBlame_1b', 'banter_defne_cem_mateBlame_1c',
+  'qc_cem_gg_1', 'qr_riza_taunt_2',
+];
+
+// ───────────────────────── konuşma sıklığı ─────────────────────────
+//
+// HEDEF (1'e 1 Pişti, bir el ≈ 2–2,5 dk): elde ≈ 8–12 replik → ortalama 10–18 sn'de bir ses.
+//   · Her zaman (öncelik 3): el başı, pişti / vale pişti, el sonu → elde ≈ 3–5.
+//   · Olay (öncelik 2): yakalamalar, değerli kart, son el, geri dönüş → olasılıklı + yorgunluk; elde ≈ 3–5.
+//   · Boş laf (öncelik 1): düşünme, bekleme, boş masa, önde/geride → seyrek; elde ≈ 1–2.
+//   · İki olay arası en az EVENT_GAP_MS, boş laf öncesi en az CHATTER_GAP_MS sessizlik; aynı an sık konuşursa
+//     FATIGUE ile, masa son BUSY_WINDOW_MS'de çok konuştuysa BUSY_DAMP ile olasılık düşer.
+//   · 3–4 kişilik masada (setSeats) olasılıklar ×0,8 / ×0,6: tek ortak yönetici olduğundan iki bot üst üste konuşmaz,
+//     kişi başı konuşma 1'e 1'in yarısının altına iner.
+//   · Atışma (banter): en çok 2 elde bir (≈ 2–3 elde bir), oyun dururken; aynı atışma 40 el tekrar etmez.
+
+/**
+ * always  → her zaman konuşur (pişti, el başı/sonu, Blöf açılışı).
  * event   → olay tepkisi: olasılıklı, son replikten en az EVENT_GAP_MS sonra.
  * chatter → boş laf: olasılıklı, son replikten en az CHATTER_GAP_MS sonra.
  */
@@ -417,12 +2016,16 @@ export interface MomentRule {
   selfGapMs?: number;
 }
 
-export const EVENT_GAP_MS = 2500;
-export const CHATTER_GAP_MS = 8000;
+export const EVENT_GAP_MS = 3000;
+export const CHATTER_GAP_MS = 10_000;
 /** Aynı an son FATIGUE_WINDOW_MS içinde her konuştuğunda olasılık bu çarpanla düşer (sık anlar bıktırmasın). */
-export const FATIGUE = 0.7;
-export const FATIGUE_WINDOW_MS = 60_000;
-export const HISTORY = 6; // karakter başına tekrar edilmeyecek son replik sayısı
+export const FATIGUE = 0.6;
+export const FATIGUE_WINDOW_MS = 90_000;
+/** Masa son BUSY_WINDOW_MS içinde her konuştuğunda (herhangi an) olasılık bu çarpanla düşer (geveze masa olmasın). */
+export const BUSY_DAMP = 0.75;
+export const BUSY_WINDOW_MS = 30_000;
+/** Karakter başına tekrar edilmeyecek son replik sayısı (kalıcı: eller / oturumlar arası). */
+export const HISTORY = 12;
 
 export const MOMENT_RULES: Readonly<Record<Moment, MomentRule>> = {
   start: {kind: 'always', chance: 1, prio: 3},
@@ -434,27 +2037,62 @@ export const MOMENT_RULES: Readonly<Record<Moment, MomentRule>> = {
   playerWin: {kind: 'always', chance: 1, prio: 3},
   draw: {kind: 'always', chance: 1, prio: 3},
 
-  botBigCapture: {kind: 'event', chance: 0.45, prio: 2},
-  playerBigCapture: {kind: 'event', chance: 0.45, prio: 2},
-  botJackCapture: {kind: 'event', chance: 0.4, prio: 2},
-  playerJackCapture: {kind: 'event', chance: 0.4, prio: 2},
-  playerDumpedValuable: {kind: 'event', chance: 0.75, prio: 2},
-  botLuckyCapture: {kind: 'event', chance: 0.5, prio: 2},
-  comeback: {kind: 'event', chance: 0.85, prio: 2, selfGapMs: 20_000},
-  lastRound: {kind: 'event', chance: 0.7, prio: 2, selfGapMs: 60_000},
-  playerFastThrow: {kind: 'event', chance: 0.5, prio: 2, selfGapMs: 10_000},
+  botBigCapture: {kind: 'event', chance: 0.4, prio: 2},
+  playerBigCapture: {kind: 'event', chance: 0.4, prio: 2},
+  botJackCapture: {kind: 'event', chance: 0.35, prio: 2},
+  playerJackCapture: {kind: 'event', chance: 0.35, prio: 2},
+  playerDumpedValuable: {kind: 'event', chance: 0.6, prio: 2},
+  botLuckyCapture: {kind: 'event', chance: 0.4, prio: 2},
+  comeback: {kind: 'event', chance: 0.8, prio: 2, selfGapMs: 25_000},
+  lastRound: {kind: 'event', chance: 0.6, prio: 2, selfGapMs: 60_000},
+  playerFastThrow: {kind: 'event', chance: 0.4, prio: 2, selfGapMs: 15_000},
 
   myTurnIdle: {kind: 'chatter', chance: 1, prio: 1, selfGapMs: 12_000},
-  botThinking: {kind: 'chatter', chance: 0.25, prio: 1, selfGapMs: 15_000},
-  tableEmpty: {kind: 'chatter', chance: 0.35, prio: 1, selfGapMs: 20_000},
-  botLeading: {kind: 'chatter', chance: 0.35, prio: 1, selfGapMs: 30_000},
-  playerLeading: {kind: 'chatter', chance: 0.35, prio: 1, selfGapMs: 30_000},
+  botThinking: {kind: 'chatter', chance: 0.3, prio: 1, selfGapMs: 20_000},
+  tableEmpty: {kind: 'chatter', chance: 0.3, prio: 1, selfGapMs: 25_000},
+  botLeading: {kind: 'chatter', chance: 0.35, prio: 1, selfGapMs: 40_000},
+  playerLeading: {kind: 'chatter', chance: 0.35, prio: 1, selfGapMs: 40_000},
+};
+
+/** Blöf anlarının kuralları (anahtar: blofKey). Blöf anı (açılış) hep konuşur; laf atmalar seyrek. */
+export const BLOF_RULES: Readonly<Record<BlofKey, MomentRule>> = {
+  blofStart: {kind: 'always', chance: 1, prio: 3},
+  blofCallOut: {kind: 'always', chance: 1, prio: 3},
+  blofCatchGloat: {kind: 'always', chance: 1, prio: 3},
+  blofCatchPlayer: {kind: 'always', chance: 1, prio: 3},
+  blofCaughtByPlayer: {kind: 'always', chance: 1, prio: 3},
+  blofSurvived: {kind: 'always', chance: 1, prio: 3},
+  blofSurvivedPlayer: {kind: 'always', chance: 1, prio: 3},
+  blofBotWin: {kind: 'always', chance: 1, prio: 3},
+  blofPlayerWin: {kind: 'always', chance: 1, prio: 3},
+  // ikincil tepkiler (açılıştan ~1 sn sonra; çalan büyük repliği kesmez)
+  blofCaught: {kind: 'always', chance: 1, prio: 2},
+  blofWrongCall: {kind: 'always', chance: 1, prio: 2},
+  blofPass: {kind: 'event', chance: 0.3, prio: 1, selfGapMs: 5000},
+  blofBigPile: {kind: 'event', chance: 0.5, prio: 2, selfGapMs: 15_000},
+  blofNearWin: {kind: 'event', chance: 0.7, prio: 2, selfGapMs: 20_000},
+  blofPlayerNearWin: {kind: 'event', chance: 0.6, prio: 2, selfGapMs: 20_000},
+  blofMateCheer: {kind: 'event', chance: 0.6, prio: 2, selfGapMs: 10_000},
+  blofIdle: {kind: 'chatter', chance: 1, prio: 1, selfGapMs: 12_000},
+};
+
+/** Menü (galeri / market) ve oyuncunun hızlı sohbeti: her zaman, en üst öncelik. Atışma ve bot cevabı: 2. */
+const META_RULE: MomentRule = {kind: 'always', chance: 1, prio: 3};
+const SIDE_RULES: Readonly<Record<string, MomentRule>> = {
+  banter: {kind: 'event', chance: 1, prio: 2},
+  quickSay: {kind: 'always', chance: 1, prio: 3},
+  quickReply: {kind: 'event', chance: 1, prio: 2},
 };
 
 /** Bilinmeyen anlar (ileride eklenecek olaylar) sıradan olay tepkisi sayılır. */
 const DEFAULT_RULE: MomentRule = {kind: 'event', chance: 0.4, prio: 2};
 export function ruleFor(m: string): MomentRule {
-  return (MOMENT_RULES as Record<string, MomentRule | undefined>)[m] ?? DEFAULT_RULE;
+  return (
+    (MOMENT_RULES as Record<string, MomentRule | undefined>)[m] ??
+    (BLOF_RULES as Record<string, MomentRule | undefined>)[m] ??
+    SIDE_RULES[m] ??
+    ((META_MOMENTS as readonly string[]).includes(m) ? META_RULE : DEFAULT_RULE)
+  );
 }
 
 export function momentPriority(m: string): 1 | 2 | 3 {
@@ -463,25 +2101,239 @@ export function momentPriority(m: string): 1 | 2 | 3 {
 
 const nowMs = (): number => (typeof performance !== 'undefined' ? performance.now() : Date.now());
 
+// ───────────────────────── kalıcı hafıza ─────────────────────────
+
+/** Atışma hafızası: son atışmanın eli ve her atışmanın en son söylendiği el. */
+export interface BanterMemory {
+  last: number;
+  seen: Record<string, number>;
+}
+
+/** Kalıcı konuşma hafızası (eller / oturumlar arası): el sayacı, replik başına son duyuluş, karakterin son replikleri. */
+export interface TalkMemory {
+  v: 1;
+  hand: number;
+  seq: number;
+  /** id → [el, sıra] */
+  heard: Record<string, [number, number]>;
+  /** karakter → son HISTORY replik kimliği (eskiden yeniye) */
+  recent: Record<string, string[]>;
+  banter: BanterMemory;
+}
+
+/** Hafızanın saklandığı yer (oyunda localStorage sarmalayıcısı; testte bellek). Hatalar yutulur. */
+export interface TalkStore {
+  load(): unknown;
+  save(mem: TalkMemory): void;
+}
+
+export function freshMemory(): TalkMemory {
+  return {v: 1, hand: 0, seq: 0, heard: {}, recent: {}, banter: {last: -1e9, seen: {}}};
+}
+
+const isNum = (x: unknown): x is number => typeof x === 'number' && Number.isFinite(x);
+
+/** Saklanan veriyi doğrular (bozuksa / eski sürümse temiz hafıza). */
+export function readMemory(x: unknown): TalkMemory {
+  const m = freshMemory();
+  if (!x || typeof x !== 'object') return m;
+  const o = x as Partial<TalkMemory>;
+  if (o.v !== 1) return m;
+  if (isNum(o.hand)) m.hand = o.hand;
+  if (isNum(o.seq)) m.seq = o.seq;
+  if (o.heard && typeof o.heard === 'object')
+    for (const [id, v] of Object.entries(o.heard)) if (Array.isArray(v) && isNum(v[0]) && isNum(v[1])) m.heard[id] = [v[0], v[1]];
+  if (o.recent && typeof o.recent === 'object')
+    for (const [c, v] of Object.entries(o.recent)) if (Array.isArray(v)) m.recent[c] = v.filter(s => typeof s === 'string').slice(-HISTORY);
+  const b = o.banter;
+  if (b && typeof b === 'object') {
+    if (isNum(b.last)) m.banter.last = b.last;
+    if (b.seen && typeof b.seen === 'object') for (const [id, h] of Object.entries(b.seen)) if (isNum(h)) m.banter.seen[id] = h;
+  }
+  return m;
+}
+
+// ───────────────────────── atışma seçici (saf) ─────────────────────────
+
+export const BANTER_RULES = {
+  /** İki atışma arasında en az bu kadar el (→ en çok 2 elde bir, hiç art arda değil). */
+  minHands: 2,
+  /** Uygun bir anda başlama olasılığı (≈ 2–3 elde bir). */
+  chance: 0.35,
+  /** Aynı atışma en az bu kadar el tekrar etmez. */
+  repeatHands: 40,
+  /** Son replikten bu kadar ms geçmeden başlamaz (büyük anın üstüne binmez). */
+  quietMs: 6000,
+  /** Atışmada iki satır arası (ms; önceki satırın sesi bittikten sonra). */
+  lineGapMs: 450,
+} as const;
+
+export interface BanterRequest {
+  game: 'pisti' | 'blof';
+  ctx: BanterCtx;
+  /** Başlatan bot (olayı yapan / önde olan / sitem eden) */
+  a: CharId;
+  /** Cevap veren bot */
+  b: CharId;
+  mode: '1v1' | '3' | '4' | 'esli';
+  /** a ile b aynı takımda mı (eşli) */
+  sameTeam: boolean;
+  /** Oyun doğal olarak duruyor ya da sıra botta: oyuncu karar vermiyor, Blöf penceresi / öğretici yok. */
+  calm: boolean;
+  /** Son replikten beri geçen ms */
+  quietForMs: number;
+  /** Konuşmalar: ses + balon / yalnız balon (ses kapalı) / hiç */
+  talk: 'voice' | 'bubbles' | 'off';
+}
+
+/** Kurallara uyan bir atışma seçer (yoksa null). Saf: hafızayı değiştirmez (bkz. noteBanter). */
+export function pickBanter(req: BanterRequest, hand: number, mem: BanterMemory, rnd: () => number = Math.random): Exchange | null {
+  if (req.talk === 'off' || req.mode === '1v1' || req.a === req.b || !req.calm) return null;
+  if (req.quietForMs < BANTER_RULES.quietMs || hand - mem.last < BANTER_RULES.minHands) return null;
+  const info = BANTER_CTX_INFO[req.ctx];
+  if (!info || (info.game !== 'any' && info.game !== req.game)) return null;
+  if (info.team === 'mate' && (!req.sameTeam || req.mode !== 'esli')) return null;
+  if (info.team === 'opp' && req.sameTeam) return null;
+  const cand = BANTER.filter(e => e.ctx === req.ctx && e.a === req.a && e.b === req.b && !(e.id in mem.seen && hand - mem.seen[e.id] < BANTER_RULES.repeatHands));
+  if (!cand.length || rnd() >= BANTER_RULES.chance) return null;
+  const never = cand.filter(e => !(e.id in mem.seen));
+  const pool = never.length ? never : cand;
+  return pool[Math.floor(rnd() * pool.length) % pool.length];
+}
+
+/** Atışma söylendi: yeni hafıza (saf). */
+export function noteBanter(mem: BanterMemory, ex: Exchange, hand: number): BanterMemory {
+  return {last: hand, seen: {...mem.seen, [ex.id]: hand}};
+}
+
+// ───────────────────────── hızlı sohbet seçiciler (saf) ─────────────────────────
+
+const pickFresh = (pool: readonly LineRef[], recent: readonly string[], rnd: () => number): LineRef | null => {
+  if (!pool.length) return null;
+  let cand = pool.filter(l => !recent.includes(l.id));
+  if (!cand.length) cand = pool.filter(l => l.id !== recent[recent.length - 1]);
+  if (!cand.length) cand = [...pool];
+  let total = 0;
+  for (const l of cand) total += l.weight ?? 1;
+  let r = rnd() * total;
+  for (const l of cand) if ((r -= l.weight ?? 1) < 0) return l;
+  return cand[cand.length - 1];
+};
+
+/** Oyuncunun mesajı, kendi karakterinin sesiyle (son söylenenleri `recent` ile verin; tekrar etmez). */
+export function quickSay(charId: string, msgId: string, recent: readonly string[] = [], rnd: () => number = Math.random): LineRef | null {
+  return pickFresh(QC_SAY_LINES[`${charId}:${msgId}`] ?? EMPTY, recent, rnd);
+}
+
+/** Bir botun gelen mesaja cevabı (ilişkiye uygun satırlardan; tekrar etmez). */
+export function quickReply(charId: string, msgId: string, relation: Rel, recent: readonly string[] = [], rnd: () => number = Math.random): LineRef | null {
+  const msg = QUICK_CHAT.find(q => q.id === msgId);
+  if (!msg) return null;
+  const pool = (QC_REPLY_LINES[`${charId}:${msg.reply}`] ?? EMPTY).filter(l => !l.rel || l.rel === relation);
+  return pickFresh(pool, recent, rnd);
+}
+
+export interface QuickSeat {
+  seat: number;
+  char: CharId;
+  /** İnsan (yerel oyuncu ya da çevrimiçi rakip): otomatik cevap vermez. */
+  human: boolean;
+  rel: Rel;
+}
+
 /**
- * Konuşma durumu: son replikler (tekrar önleme), kullanım sayıları, zamanlama.
- * Masada birden çok bot olsa da sıklık kuralı tek (ortak) olmalı: modül düzeyindeki `dialogue` örneğini kullanın.
+ * Gelen hızlı sohbete en çok bir bot cevabı planlar (yoksa null). Eşlide ortak bot, mateFirst kategorilerde önce
+ * destek verir; aksi hâlde rastgele bir rakip bot iğneler. `delayMs` söyleyiş BİTTİKTEN sonraki beklemedir.
+ */
+export function planQuickReply(
+  msgId: string, seats: readonly QuickSeat[], recent: readonly string[] = [], rnd: () => number = Math.random,
+): {seat: number; char: CharId; line: LineRef; delayMs: number} | null {
+  const msg = QUICK_CHAT.find(q => q.id === msgId);
+  if (!msg) return null;
+  const rule = QUICK_REPLY_RULES[msg.reply];
+  const bots = seats.filter(s => !s.human);
+  if (!bots.length || rnd() >= rule.chance) return null;
+  const mates = bots.filter(s => s.rel === 'mate');
+  const opps = bots.filter(s => s.rel === 'opp');
+  const who = mates.length && (rule.mateFirst || !opps.length) ? mates[0] : opps.length ? opps[Math.floor(rnd() * opps.length) % opps.length] : null;
+  if (!who) return null;
+  const line = quickReply(who.char, msgId, who.rel, recent, rnd);
+  if (!line) return null;
+  const [lo, hi] = QUICK_REPLY_DELAY_MS;
+  return {seat: who.seat, char: who.char, line, delayMs: Math.round(lo + rnd() * (hi - lo))};
+}
+
+// ───────────────────────── yönetici ─────────────────────────
+
+/**
+ * Konuşma durumu: kalıcı hafıza (eller / oturumlar arası tekrar önleme, atışma geçmişi) + zamanlama (sıklık).
+ * Masada birden çok bot olsa da sıklık kuralı tek (ortak) olmalı: Pişti için modül düzeyindeki `dialogue`
+ * örneğini kullanın (Blöf'ün kendi örneği BlofTalk içinde).
  */
 export class DialogueDirector {
   /** Zaman kaynağı (ms). shouldSpeak'e verilen `now` ile aynı saat olmalı (oyunda performance.now). */
   clock: () => number = nowMs;
-  private recent = new Map<string, string[]>(); // karakter → son HISTORY replik kimliği (eskiden yeniye)
-  private uses = new Map<string, number>();
+  private mem: TalkMemory = freshMemory();
+  private store: TalkStore | null = null;
+  private crowd = 1;
   private lastAt = -Infinity;
   private lastBy = new Map<string, number>();
   private spoken = new Map<string, number[]>();
+  private all: number[] = [];
 
-  reset(): void {
-    this.recent.clear();
-    this.uses.clear();
+  /** Kalıcı hafızayı bağlar ve yükler (aynı depo tekrar verilirse bir şey yapmaz). */
+  attach(store: TalkStore | null): void {
+    if (store === this.store) return;
+    this.store = store;
+    if (!store) return;
+    try {
+      this.mem = readMemory(store.load());
+    } catch {
+      this.mem = freshMemory();
+    }
+  }
+
+  /** Okuma amaçlı hafıza (test / hata ayıklama). */
+  get memory(): Readonly<TalkMemory> {
+    return this.mem;
+  }
+
+  /** Masadaki koltuk sayısı: kalabalık masada olasılıklar düşer (1'e 1 = 1, 3 kişi ×0,8, 4 kişi / eşli ×0,6). */
+  setSeats(n: number): void {
+    this.crowd = n >= 4 ? 0.6 : n === 3 ? 0.8 : 1;
+  }
+
+  /** Yeni el: el sayacı (kalıcı) ilerler, zamanlama sıfırlanır, eski kayıtlar budanır. */
+  newHand(seats?: number): void {
+    this.mem.hand++;
+    if (seats !== undefined) this.setSeats(seats);
     this.lastAt = -Infinity;
     this.lastBy.clear();
     this.spoken.clear();
+    this.all = [];
+    const keep = this.mem.hand - 60;
+    for (const [id, [h]] of Object.entries(this.mem.heard)) if (h < keep) delete this.mem.heard[id];
+    for (const [id, h] of Object.entries(this.mem.banter.seen)) if (h < this.mem.hand - BANTER_RULES.repeatHands) delete this.mem.banter.seen[id];
+    this.save();
+  }
+
+  /** Her şeyi sıfırlar (hafıza dahil; depoya yazmaz). Testler için. */
+  reset(): void {
+    this.mem = freshMemory();
+    this.crowd = 1;
+    this.lastAt = -Infinity;
+    this.lastBy.clear();
+    this.spoken.clear();
+    this.all = [];
+  }
+
+  private save(): void {
+    if (!this.store) return;
+    try {
+      this.store.save(this.mem);
+    } catch {
+      /* depo yok / dolu */
+    }
   }
 
   /** Bu anda konuşulsun mu? true dönerse konuşma kaydedilir (sonraki çağrıların bekleme süresi başlar). */
@@ -491,10 +2343,9 @@ export class DialogueDirector {
       if (now - this.lastAt < (r.kind === 'chatter' ? CHATTER_GAP_MS : EVENT_GAP_MS)) return false;
       const last = this.lastBy.get(moment);
       if (r.selfGapMs && last !== undefined && now - last < r.selfGapMs) return false;
-      const times = this.spoken.get(moment);
-      let recentCount = 0;
-      if (times) for (const t of times) if (now - t < FATIGUE_WINDOW_MS) recentCount++;
-      if (rnd() >= r.chance * Math.pow(FATIGUE, recentCount)) return false;
+      const same = count(this.spoken.get(moment), now, FATIGUE_WINDOW_MS);
+      const busy = count(this.all, now, BUSY_WINDOW_MS);
+      if (rnd() >= r.chance * this.crowd * Math.pow(FATIGUE, same) * Math.pow(BUSY_DAMP, busy)) return false;
     }
     this.note(moment, now);
     return true;
@@ -507,14 +2358,21 @@ export class DialogueDirector {
     times.push(now);
     while (times.length > 8) times.shift();
     this.spoken.set(moment, times);
+    this.all.push(now);
+    while (this.all.length > 16) this.all.shift();
+  }
+
+  private cooling(l: Line): boolean {
+    const h = this.mem.heard[l.id];
+    return !!h && this.mem.hand - h[0] < cooldownHands(l);
   }
 
   /**
-   * Anın repliklerinden birini seçer. Karakterin son HISTORY repliği tekrar edilmez; anın bütün replikleri yakın
-   * zamanda kullanıldıysa (havuz ≤ 6) en uzun süredir söylenmeyen üçte birinden seçilir: havuz ≤ 5 ise tam sıra,
-   * 6 ise en az 4 replik arayla tekrar; son söylenen asla hemen tekrar etmez.
-   * Çok kullanılan replikler daha az seçilir. Her zaman konuşulan anlar (pişti, el başı/sonu) shouldSpeak'ten
-   * geçmeden de çağrılabilir: seçilince konuşma zamanı yine kaydedilir, böylece boş laflar hemen arkasından gelmez.
+   * Anın repliklerinden birini seçer. Öncelik sırası: (1) karakterin son HISTORY repliğinde olmayan ve tekrar
+   * beklemesi (cooldownHands: uzun espri ~25 el, kısa ses hemen) dolmuş replikler; (2) son HISTORY'de olmayanlar
+   * içinde en uzun süredir duyulmayanlar; (3) hepsi yakın zamanda söylendiyse en eskiler (son söylenen asla hemen
+   * tekrar etmez). Hafıza kalıcıdır (attach). Her zaman konuşulan anlar shouldSpeak'ten geçmeden de çağrılabilir:
+   * seçilince konuşma zamanı yine kaydedilir, böylece boş laflar hemen arkasından gelmez.
    */
   pickLine(charId: string, moment: string, rnd: () => number = Math.random): Line | null {
     const pool = linesFor(charId, moment);
@@ -523,18 +2381,18 @@ export class DialogueDirector {
       const t = this.clock();
       if (t > this.lastAt) this.note(moment, t);
     }
-    const hist = this.recent.get(charId) ?? [];
-    let cand = pool.filter(l => !hist.includes(l.id));
+    const m = this.mem;
+    const hist = m.recent[charId] ?? [];
+    const age = (l: Line): number => m.heard[l.id]?.[1] ?? -1;
+    let cand: readonly Line[] = pool.filter(l => !hist.includes(l.id) && !this.cooling(l));
     if (!cand.length) {
-      const byAge = [...pool].sort((a, b) => hist.indexOf(a.id) - hist.indexOf(b.id)); // en eski önce
+      const rest = pool.filter(l => !hist.includes(l.id));
+      const base = rest.length ? rest : pool.filter(l => l.id !== hist[hist.length - 1]);
+      const byAge = [...(base.length ? base : pool)].sort((a, b) => age(a) - age(b));
       cand = byAge.slice(0, Math.max(1, Math.floor(pool.length / 3)));
     }
     let total = 0;
-    const w = cand.map(l => {
-      const x = (l.weight ?? 1) / (1 + 0.5 * (this.uses.get(l.id) ?? 0));
-      total += x;
-      return x;
-    });
+    const w = cand.map(l => (total += l.weight ?? 1, l.weight ?? 1));
     let r = rnd() * total;
     let pick = cand[cand.length - 1];
     for (let i = 0; i < cand.length; i++) {
@@ -548,9 +2406,17 @@ export class DialogueDirector {
     if (i >= 0) hist.splice(i, 1);
     hist.push(pick.id);
     while (hist.length > HISTORY) hist.shift();
-    this.recent.set(charId, hist);
-    this.uses.set(pick.id, (this.uses.get(pick.id) ?? 0) + 1);
+    m.recent[charId] = hist;
+    m.heard[pick.id] = [m.hand, ++m.seq];
+    this.save();
     return pick;
+  }
+
+  /** Sıklık kuralını atlayarak konuş (zorunlu an): konuşma zamanı yine kaydedilir. */
+  force(charId: string, moment: string, rnd: () => number = Math.random): Line | null {
+    if (!linesFor(charId, moment).length) return null;
+    this.note(moment, this.clock());
+    return this.pickLine(charId, moment, rnd);
   }
 
   /** shouldSpeak + pickLine. Karakterin bu an için repliği yoksa sıklık sayacına dokunmaz. */
@@ -559,9 +2425,25 @@ export class DialogueDirector {
     if (!this.shouldSpeak(moment, now, rnd)) return null;
     return this.pickLine(charId, moment, rnd);
   }
+
+  /** Atışma dener (pickBanter + kalıcı hafıza). Seçilirse kaydedilir; satırları çağıran sırayla oynatır. */
+  banter(req: Omit<BanterRequest, 'quietForMs'>, now: number = this.clock(), rnd: () => number = Math.random): Exchange | null {
+    const ex = pickBanter({...req, quietForMs: now - this.lastAt}, this.mem.hand, this.mem.banter, rnd);
+    if (!ex) return null;
+    this.mem.banter = noteBanter(this.mem.banter, ex, this.mem.hand);
+    this.note('banter', now);
+    this.save();
+    return ex;
+  }
 }
 
-/** Oyunun ortak konuşma durumu. */
+function count(times: readonly number[] | undefined, now: number, win: number): number {
+  let n = 0;
+  if (times) for (const t of times) if (now - t < win) n++;
+  return n;
+}
+
+/** Oyunun (Pişti) ortak konuşma durumu. */
 export const dialogue = new DialogueDirector();
 
 export function pickLine(charId: string, moment: string, rnd: () => number = Math.random): Line | null {
@@ -574,6 +2456,12 @@ export function shouldSpeak(moment: string, now: number = dialogue.clock(), rnd:
 
 export function react(charId: string, moment: string, now: number = dialogue.clock(), rnd: () => number = Math.random): Line | null {
   return dialogue.react(charId, moment, now, rnd);
+}
+
+/** El başında: kalıcı hafızayı bağla (bir kez), el sayacını ilerlet, masa kalabalığını ayarla. */
+export function beginDialogueHand(seats: number, store?: TalkStore | null): void {
+  if (store !== undefined) dialogue.attach(store);
+  dialogue.newHand(seats);
 }
 
 export function resetDialogue(): void {
