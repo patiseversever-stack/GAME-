@@ -235,7 +235,8 @@ export class ShopPage implements Page {
     // panel kaydırıldıkça bekleyen parçaları getir (kare başına en çok bir kontrol)
     let fillRaf = 0;
     this.scope.on(this.body, 'scroll', () => {
-      if (!fillRaf) fillRaf = requestAnimationFrame(() => ((fillRaf = 0), this.fill(1.2)));
+      // sekme değişiminde kodla yapılan kaydırma (eski yerine dönüş) kullanıcı kaydırması sayılmaz: önden doldurma yok
+      if (!fillRaf) fillRaf = requestAnimationFrame(() => ((fillRaf = 0), this.fill(performance.now() - this.progScroll > 150 ? 1.2 : undefined)));
     }, {passive: true});
     this.scope.add(() => cancelAnimationFrame(fillRaf));
     this.scope.add(() => cancelAnimationFrame(edgeRaf));
@@ -316,6 +317,7 @@ export class ShopPage implements Page {
 
   /** Görünen sekmeyi hazırla: panel yoksa ya da durum değiştiyse kur; yoksa yalnız göster. dir: kayma yönü. */
   private activate(animate: boolean, dir = 0, from?: HTMLElement): void {
+    this.fillMargin = 0;
     this.placeInd(from);
     this.renderCount();
     // kaydırma yeri: DOM değişmeden önce oku (düzen temizken ucuz); ilk açılışta hiç okuma (yerleşim zorlanmasın)
@@ -345,7 +347,10 @@ export class ShopPage implements Page {
       else go();
     }
     for (const [t, x] of this.panels) x.el.hidden = t !== this.tab;
-    if (cur !== p.scroll && !(fresh && p.scroll)) this.body.scrollTop = p.scroll;
+    if (cur !== p.scroll && !(fresh && p.scroll)) {
+      this.progScroll = performance.now();
+      this.body.scrollTop = p.scroll;
+    }
     if (!fresh) this.fill();
     hydrate(p.el);
     clearTimeout(this.dealT);
@@ -364,6 +369,8 @@ export class ShopPage implements Page {
   /** margin: içerik dibinin ekran altından en çok ne kadar (ekran boyu cinsinden) uzakta olması istenir.
    *  Açılışta küçük (yalnız görünen ekran dolar), kaydırırken büyük (kullanıcı ilerlerken önceden hazırlanır). */
   private fillMargin = 0;
+  /** Son kodla kaydırma anı (sekme dönüşü) */
+  private progScroll = 0;
   private fill(margin?: number): void {
     if (margin !== undefined) this.fillMargin = Math.max(this.fillMargin, margin);
     if (this.fillQueued) return;
@@ -375,7 +382,9 @@ export class ShopPage implements Page {
       if (!this.scope.alive || !p.el.isConnected || this.panels.get(this.tab) !== p || !this.visible) return;
       const b = this.body;
       // görünen ekran dolana dek (kaydırırken bir boy önden); yeniden kurulan panelde eski kaydırma yerine varana dek
-      const need = b.scrollHeight - b.scrollTop - b.clientHeight < b.clientHeight * this.fillMargin || (p.scroll > 0 && b.scrollHeight < p.scroll + b.clientHeight * 1.5);
+      // (içerik ekrandan kısayken scrollHeight = clientHeight olur: içerik dibi doğrudan ölçülür)
+      const gap = p.el.getBoundingClientRect().bottom - b.getBoundingClientRect().bottom;
+      const need = gap < b.clientHeight * this.fillMargin || (p.scroll > 0 && b.scrollHeight < p.scroll + b.clientHeight * 1.5);
       if (!need) return void (this.fillMargin = 0);
       const c = p.pending.shift()!;
       if (typeof c === 'function') p.el.insertAdjacentHTML('beforeend', c());

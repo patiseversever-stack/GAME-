@@ -60,6 +60,9 @@ export class CollectionPage implements Page {
   private sig = '';
 
   show(): void {
+    // her sekme girişinde giriş canlandırması baştan (kurulum olmasa da)
+    this.entered = new WeakSet();
+    this.enterAt = performance.now();
     const need = !this.editing && (!this.sig || this.sig !== JSON.stringify(this.shell.profile.data));
     // içerik bir sonraki karede kurulur (sayfa geçişi 60 ms gecikmeli ve saydam başlar: görünmez); tıklama görevi bölünür
     if (need && ANIM) {
@@ -77,17 +80,21 @@ export class CollectionPage implements Page {
     this.enter();
   }
 
+  /** Bu girişte canlandırılmış öğeler (parça parça kurulumda her parça eklenince yeniden çağrılır) ve girişin başladığı an */
+  private entered = new WeakSet<Element>();
+  private enterAt = 0;
   /** Giriş: kart ve ilk bölümler yaylanır, sayaçlar sayar (yalnız ilk ekrandaki bölümler: her biri ayrı katman) */
   private enter(): void {
-    const g = (s: string) => this.el.querySelector(s);
-    const card = g('.kh-pcard');
-    if (card) play(card, [{transform: 'translateY(-16px) scale(.96)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, easing: EASE.spring, fill: 'backwards'});
+    const since = performance.now() - this.enterAt;
+    const once = (el: Element | null): el is Element => !!el && !this.entered.has(el) && (this.entered.add(el), true);
+    const card = this.el.querySelector('.kh-pcard');
+    if (once(card)) play(card, [{transform: 'translateY(-16px) scale(.96)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, easing: EASE.spring, fill: 'backwards'});
     this.el.querySelectorAll('.kh-coll__sec').forEach((s, i) =>
-      i < 2 && play(s, [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 80 + i * 70, easing: EASE.out, fill: 'backwards'}));
+      i < 2 && once(s) && play(s, [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: Math.max(0, 80 + i * 70 - since), easing: EASE.out, fill: 'backwards'}));
     // sayaçlar yeniden sayar
-    this.el.querySelectorAll<HTMLElement>('.kh-stat b[data-v]').forEach(b => countUp(this.scope, b, 0, Number(b.dataset.v), 700, n => (b.dataset.pct ? `%${n}` : fmt(n))));
+    this.el.querySelectorAll<HTMLElement>('.kh-stat b[data-v]').forEach(b => once(b) && countUp(this.scope, b, 0, Number(b.dataset.v), 700, n => (b.dataset.pct ? `%${n}` : fmt(n))));
     this.el.querySelectorAll<HTMLElement>('.kh-mstat__bar i').forEach((b, i) =>
-      play(b, [{transform: 'scaleX(0)'}, {transform: b.style.transform || 'scaleX(0)'}], {duration: 700, delay: 200 + i * 90, easing: EASE.out, fill: 'backwards'}));
+      once(b) && play(b, [{transform: 'scaleX(0)'}, {transform: b.style.transform || 'scaleX(0)'}], {duration: 700, delay: Math.max(0, 200 + i * 90 - since), easing: EASE.out, fill: 'backwards'}));
   }
 
   private render(delay = 0): void {
@@ -103,7 +110,9 @@ export class CollectionPage implements Page {
     const sets = shopSets().map(x => ({s: x, done: !setPrice(x, (k, id) => p.owns(k, id)).missing.length}));
     const setsDone = sets.filter(x => x.done).length;
     const kinds: ItemKind[] = ['deck', 'table', 'fx'];
-    this.inner.innerHTML = `
+    // üç parça: üst (kart + karakterler), orta (çerçeve + istatistik), alt (koleksiyon). Açılışta her biri ayrı karede
+    // (tek ~110 ms'lik kare yerine üç kısa kare; sayfa saydamdan gelirken sırayla belirir), yerinde kurulumda birlikte.
+    const top = `
       <section class="kh-panel kh-pcard" style="--c:${me.color}">
         <i class="kh-pcard__glow"></i>
         <div class="kh-pcard__ava">${charAvatarHtml(me, d.equipped.frame, 'kh-pcard__img')}${gemHtml(d.level)}</div>
@@ -128,8 +137,8 @@ export class CollectionPage implements Page {
             <b>${esc(shortName(c))}</b>${own ? '' : `<span class="kh-pick__price"><img src="${ASSETS.icon_coin}" alt="">${fmt(c.price)}</span>`}
             ${on ? `<span class="kh-pick__on">${I.check}</span>` : ''}</button>`;
         }).join('')}</div>
-      </section>
-
+      </section>`;
+    const mid = `
       <section class="kh-coll__sec">
         <div class="kh-coll__hd"><span class="kh-label">Çerçeven</span><small>${frames.filter(f => p.owns('frame', f.id)).length}/${frames.length}</small></div>
         <div class="kh-pick is-frames"></div>
@@ -148,8 +157,8 @@ export class CollectionPage implements Page {
           return `<div class="kh-mstat"><span class="kh-mstat__n">${MODE_INFO[m].name}</span><span class="kh-mstat__bar"><i style="transform:scaleX(${r.toFixed(3)})"></i></span>
             <span class="kh-mstat__v"><b>${b.won}</b>/${b.played}</span></div>`;
         }).join('')}</div>
-      </section>
-
+      </section>`;
+    const bot = `
       <section class="kh-coll__sec">
         <div class="kh-coll__hd"><span class="kh-label">Koleksiyon</span><small><b>${owned}</b>/${CATALOG.length} parça</small></div>
         <div class="kh-cprog"><i style="transform:scaleX(${(owned / CATALOG.length).toFixed(3)})"></i></div>
@@ -162,10 +171,21 @@ export class CollectionPage implements Page {
         }).join('')}
       </section>
       <button class="kh-btn kh-btn--2 kh-btn--block kh-coll__shop" data-act="toshop">${I.bag}Markete Git</button>`;
+    const gen = ++this.gen;
+    const sync = delay === 0;
+    if (sync) this.inner.innerHTML = top + mid + bot;
+    else {
+      this.inner.innerHTML = top;
+      for (const part of [mid, bot])
+        frameJob(() => {
+          if (gen !== this.gen || !this.scope.alive) return;
+          this.inner.insertAdjacentHTML('beforeend', part);
+          this.enter();
+        });
+    }
     // çerçeve seçimi ve koleksiyon karoları sayfa açılışından SONRA, kare başına bir parça (açılış görevi küçük kalsın:
     // her çerçeve iki büyük SVG katmanı, ~30 karo + önizlemeler)
-    const gen = ++this.gen;
-    const pick = q(this.inner, '.kh-pick.is-frames');
+    const pickEl = (): HTMLElement | null => this.inner.querySelector<HTMLElement>('.kh-pick.is-frames');
     const frameHtml = (f: (typeof frames)[number]): string => {
       const own = p.owns('frame', f.id), on = d.equipped.frame === f.id;
       return `<button class="kh-pick__it${on ? ' is-on' : ''}${own ? '' : ' is-locked'}" data-act="frame" data-id="${f.id}" data-spring>
@@ -174,18 +194,20 @@ export class CollectionPage implements Page {
     };
     // sayfa giriş kayması sürerken ana iş parçacığı boş kalsın: çerçeveler kayma bitince, karolar ekrana yaklaştıkça.
     // Yerinde yeniden kurulumda (kuşanma, ad) görünen kısım aynı karede dolar: boş kare/yanıp sönme olmasın.
-    const sync = delay === 0;
-    if (sync) pick.innerHTML = frames.map(frameHtml).join('');
+    const rowsOf = (): HTMLElement[] => Array.from(this.inner.querySelectorAll<HTMLElement>('.kh-ckind__row'));
+    if (sync) pickEl()!.innerHTML = frames.map(frameHtml).join('');
     else window.setTimeout(() => {
-      if (gen !== this.gen) return;
+      const pick = pickEl();
+      if (gen !== this.gen || !pick) return;
       for (let i = 0; i < frames.length; i += 4)
         frameJob(() => gen === this.gen && pick.isConnected && pick.insertAdjacentHTML('beforeend', frames.slice(i, i + 4).map(frameHtml).join('')));
+      this.rows = rowsOf();
       this.rowsReady = true;
       this.fillRows();
     }, delay);
     this.rowsReady = sync;
     this.rowMargin = 0;
-    this.rows = Array.from(this.inner.querySelectorAll<HTMLElement>('.kh-ckind__row'));
+    this.rows = sync ? rowsOf() : [];
     this.rowHtml = (row: HTMLElement): void => {
         const kd = row.dataset.kind as ItemKind;
         row.innerHTML = CATALOG.filter(i => i.kind === kd).map(it => {
