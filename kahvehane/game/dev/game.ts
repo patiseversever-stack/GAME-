@@ -124,7 +124,7 @@ const g = {
 let dealer = Number(Q.get('dealer') ?? 1) % info.seats;
 let seed = Q.has('seed') ? Number(Q.get('seed')) | 0 : undefined;
 for (;;) {
-  const setup: MatchSetup = {mode, players, dealer, seed, fx: Q.get('fx') ?? 'klasik'};
+  const setup: MatchSetup = {game: 'pisti', mode, players, dealer, seed, fx: Q.get('fx') ?? 'klasik'};
   g.ready = true;
   const out = await match.play(setup);
   g.outcome = out;

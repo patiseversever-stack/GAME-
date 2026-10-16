@@ -1,17 +1,20 @@
 // ANA EKRAN kabuğu: üst çubuk (avatar + seviye/XP, jeton kapsülü, ayarlar), sayfalar (Ana Sayfa · Market · Koleksiyon · Görevler)
 // ve kayan göstergeli alt menü. Ana Sayfa tek odaklı ve sakin: oyuncunun karakteri (tek görsel, nefes; dokununca poz + söz),
 // yanında iki küçük yuvarlak düğme (günlük ödül, bedava sandık), tek ince ÇEVRİMİÇİ satırı (yakında; içinde arkadaşla özel masa da),
-// mod / rakip / bahis kartı ve ödülü içinde yazan büyük OYNA. Market ve profil Profile üzerinden kendi içinde çözülür;
+// oyun (Pişti | Blöf) + mod / rakip / bahis kartı ve ödülü içinde yazan büyük OYNA. Market ve profil Profile üzerinden kendi içinde çözülür;
 // uygulamaya yalnız maç/ayar/kural döner. Boşta yalnız iki küçük döngü (nefes, OYNA nabzı); onları da platform/calm.ts uyutur.
 import './home.css';
 import type {CosmeticsListener, HomeAction} from './types';
 import type {Profile as GameProfile} from '../game/profile';
 import {DAILY_REWARDS, QUEST_BONUS, questDef, type QuestId} from '../game/profile';
 import {ROSTER, charById, type CharDef, type CharId, type Pose} from '../game/roster';
-import {MODE_INFO, type Mode} from '../game/types';
+import {DIFFICULTIES, DIFFICULTY_INFO, GAMES, GAME_INFO, MODE_INFO, type Difficulty, type Game, type Mode} from '../game/types';
+import {BLOF} from '../game/blofAdapter';
+import {BOT_LEVEL, payout} from '../game/setup';
 import {ANIM, EASE, Scope, bump, center, clamp, countUp, esc, fmt, h, hms, play, q, shake} from './dom';
 import {ASSETS} from './assets';
 import {I} from './icons';
+import {EXTRA_ICON, GAME_ICON} from './gameicons';
 import {Portrait, arenaHtml, capsuleHtml, charAvatarHtml, decorLoops, faceRect, gemHtml, onAct, openModal, openSheet, placeBubble, shuffled, starsHtml, toast, typeText, type Ctx, type ModalHandle} from './parts';
 import {daily as dailyModal} from './modals';
 import {ShopPage} from './shop';
@@ -28,11 +31,8 @@ export const STAKES: {v: number; lvl: number}[] = [
   {v: 5000, lvl: 7},
 ];
 
-/** Kazananın aldığı (kişi başı): 1'e 1 ve eşlide 2×, 4 kişide 4× (pot). */
-export const payout = (mode: Mode, stake: number): number => (mode === '4' ? stake * 4 : stake * 2);
-
-/** Botların rozet seviyesi (karakter başına sabit; masada tutarlı görünsün). */
-export const BOT_LEVEL: Record<CharId, number> = {riza: 28, cem: 12, dursun: 9, defne: 31};
+// Kazanan ödemesi ve bot seviyeleri arayüzden bağımsız yaşar (game/setup.ts); ekranlar buradan da okur.
+export {BOT_LEVEL, payout};
 
 export type Tab = 'home' | 'shop' | 'profile' | 'quests';
 const TABS: Tab[] = ['home', 'shop', 'profile', 'quests'];
@@ -158,9 +158,9 @@ export class HomeView implements Shell {
     return new Promise(res => (this.resolve = res));
   }
 
-  /** Test: verilen modu seçip kısa süre sonra OYNA'ya basar. */
-  autoPlay(mode: Mode): void {
-    this.scope.timeout(() => this.home.act('mode', q(this.el, `.kh-mode[data-m="${mode}"]`)), 600);
+  /** Test: verilen oyunu/modu seçip kısa süre sonra OYNA'ya basar. */
+  autoPlay(game: Game, mode: Mode, difficulty?: Difficulty): void {
+    this.scope.timeout(() => this.home.autoSelect(game, mode, difficulty), 600);
     this.scope.timeout(() => {
       if (this.resolve) this.home.act('play', q(this.el, '.kh-play2'));
     }, 1800);
@@ -312,6 +312,8 @@ export class HomeView implements Shell {
 export interface HomeMemo {
   opp?: CharId;
   trio?: CharId[];
+  /** Son seçilen oyun (ana ekran yeniden kurulsa da kalır) */
+  game?: Game;
   /** Son elin sonucu: ana ekranda karakter buna göre karşılar (bir kez) */
   last?: {outcome: 'win' | 'lose' | 'draw'; streak: number; levelUp: boolean};
 }
@@ -342,7 +344,9 @@ function modeIcon(m: Mode): string {
   const dot = (x: number, y: number, c = 'currentColor') => `<circle cx="${x}" cy="${y}" r="3.1" fill="${c}"/>`;
   const body = m === '1v1'
     ? `${dot(12, 5.2)}${dot(12, 18.8)}<path d="M7.5 12h9" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-dasharray="1.5 3"/>`
-    : m === '4'
+    : m === '3'
+      ? `${dot(12, 4.8)}${dot(5.4, 17.2)}${dot(18.6, 17.2)}`
+      : m === '4'
       ? `${dot(12, 4.6)}${dot(19.4, 12)}${dot(12, 19.4)}${dot(4.6, 12)}`
       : `${dot(12, 4.6, '#ff6b81')}${dot(12, 19.4, '#ff6b81')}${dot(4.6, 12, '#5aa8ff')}${dot(19.4, 12, '#5aa8ff')}`;
   return `<svg class="kh-mode__ico" viewBox="0 0 24 24" aria-hidden="true">${body}</svg>`;
@@ -359,7 +363,9 @@ class HomePage implements Page {
   readonly el = h('div', 'kh-page kh-hp');
   private scope = new Scope();
   private pt: Portrait;
+  private game: Game;
   private mode: Mode;
+  private diff: Difficulty;
   private stake: number;
   private oppIdx = 0;
   private trio: CharId[] = [];
@@ -371,7 +377,11 @@ class HomePage implements Page {
 
   constructor(private shell: HomeView, private memo: HomeMemo) {
     const p = shell.profile.data;
-    this.mode = p.lastMode ?? '1v1';
+    // Blöf motoru yoksa Blöf hiç görünmez (BLOF.available): ana ekran eskisi gibi
+    this.game = BLOF.available() && (memo.game ?? p.lastGame) === 'blof' ? 'blof' : 'pisti';
+    memo.game = this.game;
+    this.mode = this.validMode(this.game, p.lastMode?.[this.game]);
+    this.diff = DIFFICULTIES.includes(p.lastDifficulty) ? p.lastDifficulty : 'orta';
     this.stake = p.lastStake ?? 100;
     const me = this.me();
     this.el.innerHTML = `
@@ -387,8 +397,9 @@ class HomePage implements Page {
       <button class="kh-onl" data-act="online" data-spring><span class="kh-onl__ico">${I.globe}</span>
         <span class="kh-onl__txt"><b>Çevrimiçi</b><small>Rakipler · Arkadaşlar</small></span><span class="kh-onl__soon">Yakında</span>${I.chevR}</button>
       <section class="kh-setup">
-        <div class="kh-seg" role="tablist" aria-label="Oyun modu"><i class="kh-seg__ind"></i>${(['1v1', '4', 'esli'] as Mode[]).map(m =>
-          `<button class="kh-mode" role="tab" data-act="mode" data-m="${m}">${modeIcon(m)}<span>${MODE_INFO[m].name}</span></button>`).join('')}</div>
+        ${BLOF.available() ? `<div class="kh-gsw" role="tablist" aria-label="Oyun" data-g="${this.game}"><i class="kh-gsw__ind"></i>${GAMES.map(g =>
+          `<button class="kh-gbtn" role="tab" data-act="game" data-g="${g}">${GAME_ICON[g]}<span>${GAME_INFO[g].name}</span>${g === 'blof' ? '<span class="kh-tag kh-gnew">Yeni</span>' : ''}</button>`).join('')}</div>` : ''}
+        <div class="kh-seg" role="tablist" aria-label="Oyun modu"></div>
         <div class="kh-opp"></div>
         <div class="kh-stakes"></div>
       </section>
@@ -400,6 +411,8 @@ class HomePage implements Page {
     this.applyChar(me);
     if (!this.stakeOk(this.stake)) this.stake = STAKES[0].v;
     this.trio = memo.trio && this.valid(memo.trio) ? memo.trio : this.defaultTrio();
+    this.markGame();
+    this.buildSeg();
     this.setMode(this.mode, false);
     this.tickChest();
     this.refresh();
@@ -446,6 +459,8 @@ class HomePage implements Page {
       if (!this.valid(this.trio)) this.trio = this.defaultTrio();
       this.buildOpp(true);
     }
+    const gnew = this.el.querySelector<HTMLElement>('.kh-gnew');
+    if (gnew) gnew.hidden = p.playedBlof;
     const ready = p.dailyReady();
     const daily = q(this.el, '.kh-hw.is-daily');
     q(daily, '.kh-dot').style.display = ready ? '' : 'none';
@@ -516,10 +531,63 @@ class HomePage implements Page {
     this.pt.breathe(false);
   }
 
-  // ---------------------------------------------------------------- mod
+  // ---------------------------------------------------------------- oyun (Pişti | Blöf) ve mod
+  /** Oyunun modlarından biri değilse (ya da bozuksa) o oyunun ilk modu. */
+  private validMode(g: Game, m: unknown): Mode {
+    const list = GAME_INFO[g].modes;
+    return list.includes(m as Mode) ? (m as Mode) : list[0];
+  }
+
+  /** Oyun seçici göstergesi + kart vurgusu (oyun değişince). */
+  private markGame(): void {
+    const sw = this.el.querySelector<HTMLElement>('.kh-gsw');
+    if (sw) {
+      sw.dataset.g = this.game;
+      const i = GAMES.indexOf(this.game);
+      q(sw, '.kh-gsw__ind').style.transform = `translateX(${i * 100}%)`;
+      sw.querySelectorAll<HTMLElement>('.kh-gbtn').forEach((b, k) => {
+        b.classList.toggle('is-on', k === i);
+        b.setAttribute('aria-selected', String(k === i));
+      });
+    }
+  }
+
+  /** Mod seçici: oyunun modları (Pişti 3, Blöf 4). */
+  private buildSeg(): void {
+    const seg = q(this.el, '.kh-seg');
+    const modes = GAME_INFO[this.game].modes;
+    seg.style.setProperty('--n', String(modes.length));
+    seg.innerHTML = `<i class="kh-seg__ind"></i>${modes.map(m =>
+      `<button class="kh-mode" role="tab" data-act="mode" data-m="${m}">${modeIcon(m)}<span>${MODE_INFO[m].name}</span></button>`).join('')}`;
+  }
+
+  private setGame(g: Game, animate: boolean): void {
+    if (g === this.game || !BLOF.available()) return;
+    const p = this.shell.profile;
+    this.game = g;
+    this.memo.game = g;
+    p.data.lastGame = g;
+    p.save();
+    this.mode = this.validMode(g, p.data.lastMode?.[g]);
+    this.markGame();
+    this.buildSeg();
+    this.setMode(this.mode, animate);
+    if (animate) {
+      this.el.querySelectorAll('.kh-mode').forEach((b, k) =>
+        play(b, [{transform: 'translateY(6px) scale(.9)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 260, delay: k * 35, easing: EASE.spring, fill: 'backwards'}));
+    }
+  }
+
+  /** Test: oyunu/modu/zorluğu doğrudan seç (tıklama yok). */
+  autoSelect(game: Game, mode: Mode, difficulty?: Difficulty): void {
+    this.setGame(game, false);
+    if (difficulty) this.diff = difficulty;
+    this.setMode(this.validMode(this.game, mode), false);
+  }
+
   private setMode(m: Mode, animate: boolean): void {
     this.mode = m;
-    const i = ['1v1', '4', 'esli'].indexOf(m);
+    const i = GAME_INFO[this.game].modes.indexOf(m);
     this.el.querySelectorAll<HTMLElement>('.kh-mode').forEach((b, k) => {
       b.classList.toggle('is-on', k === i);
       b.setAttribute('aria-selected', String(k === i));
@@ -533,11 +601,12 @@ class HomePage implements Page {
   private buildOpp(animate: boolean): void {
     const box = q(this.el, '.kh-opp');
     const others = this.others();
-    box.className = `kh-opp is-${this.mode}`;
+    const blof = this.game === 'blof';
+    box.className = `kh-opp is-${this.mode}${blof ? ' is-blof' : ''}`;
     if (this.mode === '1v1') {
       const prev = this.memo.opp && others.find(c => c.id === this.memo.opp) ? this.memo.opp : others[Math.floor(others.length / 2)].id;
       this.oppIdx = Math.max(0, others.findIndex(c => c.id === prev));
-      box.innerHTML = `<span class="kh-opp__lbl">Rakip</span><button class="kh-opp__who" data-act="oppinfo"></button>
+      box.innerHTML = `${blof ? this.diffHtml() : '<span class="kh-opp__lbl">Rakip</span>'}<button class="kh-opp__who" data-act="oppinfo"></button>
         <button class="kh-opp__arr" data-act="opp" data-d="-1" aria-label="Önceki rakip">${I.chevL}</button><button class="kh-opp__arr" data-act="opp" data-d="1" aria-label="Sonraki rakip">${I.chevR}</button>`;
       this.renderWho(animate ? 1 : 0);
     } else {
@@ -552,9 +621,10 @@ class HomePage implements Page {
     if (!who) return;
     const c = this.others()[this.oppIdx];
     who.style.setProperty('--c', c.color);
-    who.setAttribute('aria-label', `${c.name}, zorluk ${c.difficulty}`);
-    // "Kahveci Dursun" → "Dursun": satır tek ve sakin kalsın (tam ad dokununca baloncukta)
-    who.innerHTML = `${charAvatarHtml(c, 'standart', 'kh-opp__ava')}<span class="kh-opp__nm"><b>${esc(c.name.replace(/^Kahveci\s+/, ''))}</b>${starsHtml(c.difficulty)}</span>`;
+    const blof = this.game === 'blof';
+    who.setAttribute('aria-label', blof ? c.name : `${c.name}, zorluk ${c.difficulty}`);
+    // "Kahveci Dursun" → "Dursun": satır tek ve sakin kalsın (tam ad dokununca baloncukta). Blöf'te zorluğu karakter değil seçici belirler: yıldız yok.
+    who.innerHTML = `${charAvatarHtml(c, 'standart', 'kh-opp__ava')}<span class="kh-opp__nm"><b>${esc(c.name.replace(/^Kahveci\s+/, ''))}</b>${blof ? '' : starsHtml(c.difficulty)}</span>`;
     if (d) play(who, [{transform: `translateX(${d * 18}px)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 220, easing: EASE.outQuart});
   }
 
@@ -597,12 +667,42 @@ class HomePage implements Page {
 
   /** 4 kişi / eşli satırı: etiket + oturma avatarları + karıştır. */
   private groupHtml(): string {
-    const lbl = this.mode === '4' ? 'Masa' : 'Ortak';
-    const aria = this.mode === '4' ? 'Karıştır' : 'Ortağını değiştir';
-    return `<span class="kh-opp__lbl">${lbl}</span>${this.seatsHtml()}<button class="kh-opp__arr kh-shuf" data-act="shuffle" aria-label="${aria}">${I.shuffle}</button>`;
+    const lbl = this.mode === '4' || this.mode === '3' ? 'Masa' : 'Ortak';
+    const aria = this.mode === 'esli' ? 'Ortağını değiştir' : 'Karıştır';
+    // Blöf'te baştaki etiketin yerini zorluk seçici alır
+    const lead = this.game === 'blof' ? this.diffHtml() : `<span class="kh-opp__lbl">${lbl}</span>`;
+    return `${lead}${this.seatsHtml()}<button class="kh-opp__arr kh-shuf" data-act="shuffle" aria-label="${aria}">${I.shuffle}</button>`;
+  }
+
+  /** Blöf rakip zorluğu: yıldızlı küçük hap, dokununca Kolay → Orta → Zor döner. */
+  private diffHtml(): string {
+    const d = DIFFICULTY_INFO[this.diff];
+    return `<button class="kh-diff is-${this.diff}" data-act="diff" aria-label="Rakip zorluğu: ${d.name}. Değiştirmek için dokun">${starsHtml(d.stars)}<b>${d.name}</b></button>`;
+  }
+
+  private cycleDiff(b: HTMLElement): void {
+    const i = DIFFICULTIES.indexOf(this.diff);
+    this.diff = DIFFICULTIES[(i + 1) % DIFFICULTIES.length];
+    const p = this.shell.profile;
+    p.data.lastDifficulty = this.diff;
+    p.save();
+    this.shell.ctx.sounds.tap();
+    haptic('light');
+    const d = DIFFICULTY_INFO[this.diff];
+    b.className = `kh-diff is-${this.diff}`;
+    b.setAttribute('aria-label', `Rakip zorluğu: ${d.name}. Değiştirmek için dokun`);
+    b.innerHTML = `${starsHtml(d.stars)}<b>${d.name}</b>`;
+    bump(b, 1.1);
   }
 
   private seatsHtml(): string {
+    if (this.mode === '3') {
+      // koltuk sırası: [sağ, sol] → ekranda soldan sağa: sol, sağ
+      return `<div class="kh-seats">${[1, 0].map(k => {
+        const c = charById(this.trio[k]);
+        return `<span class="kh-seat">${charAvatarHtml(c, 'standart')}<b>${esc(shortName(c))}</b></span>`;
+      }).join('')}</div>`;
+    }
     if (this.mode === '4') {
       // koltuk sırası: [sağ, karşı, sol] → ekranda soldan sağa: sol, karşı, sağ
       return `<div class="kh-seats">${[2, 1, 0].map(k => {
@@ -788,6 +888,17 @@ class HomePage implements Page {
       case 'poke':
         this.poke();
         return;
+      case 'game': {
+        const g = b.dataset.g as Game;
+        if (g === this.game) return;
+        s.tap();
+        haptic('light');
+        this.setGame(g, true);
+        return;
+      }
+      case 'diff':
+        this.cycleDiff(b);
+        return;
       case 'mode': {
         const m = b.dataset.m as Mode;
         if (m === this.mode) return;
@@ -860,12 +971,14 @@ class HomePage implements Page {
     }
     ctx.sounds.tap();
     haptic('medium');
-    p.data.lastMode = this.mode;
+    p.data.lastGame = this.game;
+    p.data.lastMode = {...p.data.lastMode, [this.game]: this.mode};
+    p.data.lastDifficulty = this.diff;
     p.data.lastStake = this.stake;
     p.save();
-    const opponents: CharId[] = this.mode === '1v1' ? [this.others()[this.oppIdx].id] : this.trio.slice();
+    const opponents: CharId[] = this.mode === '1v1' ? [this.others()[this.oppIdx].id] : this.mode === '3' ? this.trio.slice(0, 2) : this.trio.slice();
     this.pt.pop();
-    this.shell.finish({type: 'play', mode: this.mode, stake: this.stake, opponents});
+    this.shell.finish({type: 'play', game: this.game, mode: this.mode, stake: this.stake, opponents, difficulty: this.diff});
   }
 
   destroy(): void {
@@ -901,7 +1014,7 @@ class QuestsPage implements Page {
         const d = questDef(st.id), full = st.progress >= d.goal;
         const state = st.claimed ? 'is-claimed' : full ? 'is-ready' : '';
         return `<div class="kh-quest kh-card ${state} is-t${d.tier}" data-i="${i}">
-          <span class="kh-quest__ico">${(I as Record<string, string>)[d.icon] ?? I.target}</span>
+          <span class="kh-quest__ico">${(I as Record<string, string>)[d.icon] ?? EXTRA_ICON[d.icon] ?? I.target}</span>
           <div class="kh-quest__body"><span class="kh-quest__tier">${TIER_NAME[d.tier]}</span><b>${esc(d.title)}</b><small>${esc(d.desc)}</small>
             <span class="kh-quest__bar"><i style="transform:scaleX(${(Math.min(1, st.progress / d.goal)).toFixed(3)})"></i><em>${fmt(st.progress)} / ${fmt(d.goal)}</em></span></div>
           ${st.claimed
@@ -922,7 +1035,7 @@ class QuestsPage implements Page {
               : `<span class="kh-quest__rw"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(QUEST_BONUS)}</b></span>`}
         </div>
       </div>
-      <p class="kh-quests__tip">${I.info}<span>Görev ilerlemesi her elin sonunda işlenir. Pişti ve vale piştiler sayılır!</span></p>
+      <p class="kh-quests__tip">${I.info}<span>Görev ilerlemesi her elin sonunda işlenir. Pişti ve vale piştiler, Blöf'te yakaladığın yalanlar sayılır!</span></p>
     </div>`;
   }
 
@@ -1014,7 +1127,7 @@ function coinSheet(shell: HomeView): void {
       <div class="kh-earn">
         <button class="kh-earn__row kh-card${ready ? ' is-hot' : ''}" data-act="daily"><img src="${ASSETS.icon_gift}" alt=""><span><b>Günlük Ödül</b><small>${ready ? 'Hazır! Hemen topla.' : 'Yarın yeniden gel.'}</small></span><em>${ready ? 'Topla' : I.check}</em></button>
         <button class="kh-earn__row kh-card${chest ? ' is-hot' : ''}" data-act="chest"><img src="${ASSETS.icon_chest}" alt=""><span><b>Bedava Sandık</b><small>${chest ? 'Açılmayı bekliyor!' : `${hms((p.data.chestAt - Date.now()) / 1000)} sonra`}</small></span><em>${chest ? 'Aç' : I.lock}</em></button>
-        <div class="kh-earn__row kh-card is-info"><img src="${ASSETS.icon_trophy}" alt=""><span><b>Maç Kazan</b><small>Kazanan bahsin iki katını alır. 4 kişide pot kazanana!</small></span></div>
+        <div class="kh-earn__row kh-card is-info"><img src="${ASSETS.icon_trophy}" alt=""><span><b>Maç Kazan</b><small>Kazanan bahsin iki katını alır. 3-4 kişide pot kazanana!</small></span></div>
         <div class="kh-earn__row kh-card is-info"><img src="${ASSETS.icon_star}" alt=""><span><b>Seviye Atla</b><small>Her yeni seviyede jeton ödülü seni bekler.</small></span></div>
       </div>`,
   });

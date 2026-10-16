@@ -1,11 +1,13 @@
 // El sonu: başlık damgası, kazanan(lar) zafer pozunda büyük, kaybedenler üzgün; rakibin son sözü balonda;
-// puan tablosu satır satır açılır ve sayar (kart, çoğunluk +3, ♣2, ♦10, as, vale, pişti), toplam vurgusu; eşlide takım toplamları;
+// puan tablosu satır satır açılır ve sayar (Pişti: kart, çoğunluk +3, ♣2, ♦10, as, vale, pişti, toplam · Blöf: attığı/yakaladığı/yakalanan blöf,
+// kalan kart, sıra), toplam vurgusu; eşlide takım toplamları; 1'e 1, 3 kişi (Blöf), 4 kişi, eşli;
 // jetonlar bakiyeye uçar, XP çubuğu dolar, seviye atlamada kutlama + ödül + açılan masa; galibiyet serisi rozeti.
 // "Bir El Daha" / "Ana Sayfa".
 import './results.css';
 import type {ResultsData} from './types';
 import type {SideScore} from '../core/types';
-import type {SeatPlayer} from '../game/types';
+import {MODE_INFO, matchTitle, type SeatPlayer} from '../game/types';
+import {GAME_ICON} from './gameicons';
 import {ANIM, EASE, Scope, bump, center, countUp, esc, fmt, h, play, q, signed} from './dom';
 import {ASSETS} from './assets';
 import {I, suitSvg} from './icons';
@@ -15,43 +17,98 @@ import {haptic} from '../platform/bridge';
 import {STAKES, shortName} from './lobby';
 import {pickLine} from '../ai/dialogue';
 
-const ROWS: {label: string; get: (s: SideScore) => number; info?: boolean; icon?: string}[] = [
-  {label: 'Kart sayısı', get: s => s.cards, info: true},
-  {label: 'En çok kart', get: s => s.majority},
-  {label: 'Sinek 2', get: s => s.club2, icon: suitSvg('c')},
-  {label: 'Karo 10', get: s => s.diamond10, icon: suitSvg('d')},
-  {label: 'Aslar', get: s => s.aces},
-  {label: 'Valeler', get: s => s.jacks},
-  {label: 'Pişti', get: s => s.pisti},
+/** Tablo satırı: kolon (taraf) başına değer. best: vurgulanacak uç ('max' varsayılan, 'none' vurgusuz). */
+interface RowDef {
+  label: string;
+  get: (s: Col) => number;
+  info?: boolean;
+  icon?: string;
+  best?: 'max' | 'none';
+  key?: 'pisti';
+}
+/** Bir taraf (kolon): tek koltuk ya da eşli takım. v: oyuna özgü ham değerler (Pişti: SideScore · Blöf: koltuk sayıları toplamı). */
+interface Col {
+  seats: number[];
+  total: number;
+  /** 1'den: Pişti'de toplama göre, Blöf'te bitiş sırasına göre */
+  rank: number;
+  s?: SideScore;
+  left?: number;
+  bluffs?: number;
+  caught?: number;
+  timesCaught?: number;
+}
+const ROWS: RowDef[] = [
+  {label: 'Kart sayısı', get: c => c.s!.cards, info: true},
+  {label: 'En çok kart', get: c => c.s!.majority},
+  {label: 'Sinek 2', get: c => c.s!.club2, icon: suitSvg('c')},
+  {label: 'Karo 10', get: c => c.s!.diamond10, icon: suitSvg('d')},
+  {label: 'Aslar', get: c => c.s!.aces},
+  {label: 'Valeler', get: c => c.s!.jacks},
+  {label: 'Pişti', get: c => c.s!.pisti, key: 'pisti'},
 ];
+const BLOF_ROWS: RowDef[] = [
+  {label: 'Attığı blöf', get: c => c.bluffs ?? 0},
+  {label: 'Yakaladığı blöf', get: c => c.caught ?? 0},
+  {label: 'Yakalandı', get: c => c.timesCaught ?? 0, best: 'none'},
+  {label: 'Kalan kart', get: c => c.left ?? 0, info: true, best: 'none'},
+];
+
+/** Blöf sonucunu taraflara (eşlide takım, diğerlerinde koltuk) böl: toplam değerler + bitiş sırası (kazanan 1., diğerleri kalan karta göre). */
+function blofCols(d: ResultsData): {cols: Col[]; winners: number[]} {
+  const b = d.blof!;
+  const teams = MODE_INFO[d.setup.mode].teams;
+  const groups = new Map<number, number[]>();
+  teams.forEach((t, seat) => groups.set(t, [...(groups.get(t) ?? []), seat]));
+  const cols: Col[] = [...groups.values()].map(seats => {
+    const rs = seats.map(st => b.seats[st]);
+    const sum = (f: (r: typeof rs[number]) => number) => rs.reduce((a, r) => a + f(r), 0);
+    return {seats, total: 0, rank: 0, left: sum(r => r.left), bluffs: sum(r => r.bluffs), caught: sum(r => r.caught), timesCaught: sum(r => r.timesCaught)};
+  });
+  const win = cols.findIndex(c => c.seats.includes(b.winner));
+  const order = cols.map((c, i) => i).sort((a, c) => (a === win ? -1 : c === win ? 1 : (cols[a].left ?? 0) - (cols[c].left ?? 0) || a - c));
+  order.forEach((ci, k) => (cols[ci].rank = k + 1, cols[ci].total = k + 1));
+  return {cols, winners: [win]};
+}
 
 export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'again' | 'home'> {
   const scope = new Scope();
   const s = ctx.sounds;
-  const {setup, result} = d;
+  const {setup} = d;
   const mode = setup.mode;
+  const game = setup.game;
   const by = (seat: number) => setup.players.find(p => p.seat === seat)!;
-  // taraflar: benimki önce
-  const sides = result.sides.slice();
+  // taraflar (Pişti: puan tablosu · Blöf: koltuk/takım toplamları): benimki önce
+  let sides: Col[];
+  let winIdx: number[];
+  if (game === 'blof') {
+    ({cols: sides, winners: winIdx} = blofCols(d));
+  } else {
+    const result = d.result!;
+    const rk = result.sides.slice().sort((a, b) => b.total - a.total);
+    sides = result.sides.map(sd => ({seats: sd.seats, total: sd.total, rank: rk.indexOf(sd) + 1, s: sd}));
+    winIdx = result.winners;
+  }
+  const defs = game === 'blof' ? BLOF_ROWS : ROWS;
   const mySide = sides.find(x => x.seats.includes(0))!;
   const ordered = [mySide, ...sides.filter(x => x !== mySide)];
-  const winners = new Set(result.winners);
-  const ranked = sides.slice().sort((a, b) => b.total - a.total);
-  const myRank = ranked.findIndex(x => x === mySide) + 1;
+  const winners = new Set(winIdx);
+  const myRank = mySide.rank;
   const outcome = d.outcome;
+  const multi = mode === '4' || mode === '3'; // herkes tek: sıralama rozetleri
 
   let title: string;
   if (outcome === 'draw') title = 'Berabere';
   else if (mode === 'esli') title = outcome === 'win' ? 'Takımın Kazandı!' : 'Takımın Kaybetti';
-  else if (mode === '4') title = outcome === 'win' ? 'Kazandın!' : `${myRank}. Oldun`;
+  else if (multi) title = outcome === 'win' ? 'Kazandın!' : `${myRank}. Oldun`;
   else title = outcome === 'win' ? 'Kazandın!' : 'Kaybettin';
 
   // sahne: kazanan(lar) büyük, diğerleri küçük
-  const winSeats = outcome === 'draw' ? [] : result.winners.flatMap(i => result.sides[i].seats);
+  const winSeats = outcome === 'draw' ? [] : winIdx.flatMap(i => sides[i].seats);
   const bigSeats = outcome === 'draw' ? mySide.seats : winSeats;
   const big = bigSeats.map(by);
-  const small = setup.players.filter(p => !bigSeats.includes(p.seat)).sort((a, b) => sideOf(b).total - sideOf(a).total);
-  function sideOf(p: SeatPlayer): SideScore {
+  const small = setup.players.filter(p => !bigSeats.includes(p.seat)).sort((a, b) => sideOf(a).rank - sideOf(b).rank);
+  function sideOf(p: SeatPlayer): Col {
     return sides.find(x => x.seats.includes(p.seat))!;
   }
   const speaker = outcome === 'win' ? small.find(p => !p.human) : big.find(p => !p.human) ?? small.find(p => !p.human);
@@ -60,12 +117,12 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
   const said = speaker && !d.line ? pickLine(speaker.char.id, outcome === 'win' ? 'playerWin' : outcome === 'lose' ? 'botWin' : 'draw')?.text : undefined;
   const bigPose = outcome === 'draw' ? 'saskin' : 'zafer';
 
-  const colName = (side: SideScore): string => {
+  const colName = (side: Col): string => {
     if (side === mySide) return mode === 'esli' ? 'Takımın' : 'Sen';
     if (mode === 'esli') return 'Rakip';
     return shortName(by(side.seats[0]).char);
   };
-  const colAvas = (side: SideScore) => side.seats.map(by).map(p => charAvatarHtml(p.char, p.human ? frame : 'standart', 'kh-sc__ava')).join('');
+  const colAvas = (side: Col) => side.seats.map(by).map(p => charAvatarHtml(p.char, p.human ? frame : 'standart', 'kh-sc__ava')).join('');
 
   const startCoins = d.coinsBefore;
   const el = h('div', `kh-screen kh-results is-${outcome} is-m${mode}`);
@@ -76,24 +133,26 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
         ${capsuleHtml(startCoins, false, 'kh-results__coins')}
       </div>
       <header class="kh-results__head">
-        <div class="kh-results__kicker">${mode === '1v1' ? 'El bitti' : mode === '4' ? '4 kişi · El bitti' : 'Eşli · El bitti'}</div>
+        <div class="kh-results__kicker">${GAME_ICON[game]}<span>${esc(matchTitle(game, mode))} · El bitti</span></div>
         <div class="kh-title kh-results__title">${g3(title, outcome === 'win' ? '' : outcome === 'lose' ? 'is-lose' : 'is-white')}</div>
       </header>
       <section class="kh-podium is-n${big.length}">
         ${raysHtml(outcome === 'win' ? 'is-gold kh-podium__rays' : 'kh-podium__rays')}
         <div class="kh-podium__big">${big.map((p, i) => `<div class="kh-podium__bust" style="--i:${i}"><img src="${p.char.poses[bigPose]}" alt=""><span class="kh-podium__tag${p.human ? ' is-me' : ''}">${esc(p.human ? p.name : p.char.name)}</span>${outcome !== 'draw' ? `<i class="kh-podium__crown">${I.crown}</i>` : ''}</div>`).join('')}</div>
-        <div class="kh-podium__small">${small.map(p => `<div class="kh-podium__sm"><span class="kh-podium__smava">${charAvatarHtml(p.char, p.human ? frame : 'standart', '', outcome === 'draw' ? 'saskin' : 'uzgun')}${mode === '4' ? `<b class="kh-podium__rank">${ranked.indexOf(sideOf(p)) + 1}</b>` : ''}</span><small>${esc(p.human ? 'Sen' : shortName(p.char))}</small></div>`).join('')}</div>
+        <div class="kh-podium__small">${small.map(p => `<div class="kh-podium__sm"><span class="kh-podium__smava">${charAvatarHtml(p.char, p.human ? frame : 'standart', '', outcome === 'draw' ? 'saskin' : 'uzgun')}${multi ? `<b class="kh-podium__rank">${sideOf(p).rank}</b>` : ''}</span><small>${esc(p.human ? 'Sen' : shortName(p.char))}</small></div>`).join('')}</div>
         ${speaker ? `<div class="kh-say kh-podium__say"><small>${esc(speaker.char.name)}</small>${esc(d.line ?? said ?? defLine)}</div>` : ''}
       </section>
       <section class="kh-panel kh-sc is-c${ordered.length}">
-        <div class="kh-sc__row is-head"><span></span>${ordered.map(sd => `<b class="${sd === mySide ? 'is-me' : ''}${winners.has(result.sides.indexOf(sd)) && outcome !== 'draw' ? ' is-win' : ''}"><span class="kh-sc__avas">${colAvas(sd)}</span><em>${esc(colName(sd))}</em></b>`).join('')}</div>
-        ${ROWS.map(r => {
+        <div class="kh-sc__row is-head"><span></span>${ordered.map(sd => `<b class="${sd === mySide ? 'is-me' : ''}${winners.has(sides.indexOf(sd)) && outcome !== 'draw' ? ' is-win' : ''}"><span class="kh-sc__avas">${colAvas(sd)}</span><em>${esc(colName(sd))}</em></b>`).join('')}</div>
+        ${defs.map(r => {
           const vals = ordered.map(r.get);
           const max = Math.max(...vals);
-          const extra = r.label === 'Pişti' && (d.myPisti || d.myValePisti) ? `<i class="kh-sc__note">${d.myPisti ? `${d.myPisti}×` : ''}${d.myValePisti ? ` · ${d.myValePisti} vale` : ''}</i>` : '';
-          return `<div class="kh-sc__row${r.info ? ' is-info' : ''}${max === 0 ? ' is-zero' : ''}"><span>${r.icon ?? ''}${r.label}${extra}</span>${vals.map(v => `<b class="kh-num${v === max && max > 0 && !r.info ? ' is-best' : ''}" data-v="${v}">0</b>`).join('')}</div>`;
+          const extra = r.key === 'pisti' && (d.myPisti || d.myValePisti) ? `<i class="kh-sc__note">${d.myPisti ? `${d.myPisti}×` : ''}${d.myValePisti ? ` · ${d.myValePisti} vale` : ''}</i>` : '';
+          return `<div class="kh-sc__row${r.info ? ' is-info' : ''}${max === 0 ? ' is-zero' : ''}"><span>${r.icon ?? ''}${r.label}${extra}</span>${vals.map(v => `<b class="kh-num${v === max && max > 0 && !r.info && r.best !== 'none' ? ' is-best' : ''}" data-v="${v}">0</b>`).join('')}</div>`;
         }).join('')}
-        <div class="kh-sc__row is-total"><span>Toplam</span>${ordered.map(sd => `<b class="kh-num${winners.has(result.sides.indexOf(sd)) && outcome !== 'draw' ? ' is-best' : ''}" data-v="${sd.total}">0</b>`).join('')}</div>
+        ${game === 'blof'
+          ? `<div class="kh-sc__row is-total"><span>Sıra</span>${ordered.map(sd => `<b class="kh-num${winners.has(sides.indexOf(sd)) ? ' is-best' : ''}" data-v="${sd.rank}" data-sfx="1">0</b>`).join('')}</div>`
+          : `<div class="kh-sc__row is-total"><span>Toplam</span>${ordered.map(sd => `<b class="kh-num${winners.has(sides.indexOf(sd)) && outcome !== 'draw' ? ' is-best' : ''}" data-v="${sd.total}">0</b>`).join('')}</div>`}
       </section>
       <div class="kh-panel kh-reward">
         <div class="kh-label">${d.coinsDelta > 0 ? 'Kazanç' : d.coinsDelta < 0 ? 'Kayıp' : 'Bahis iade'}</div>
@@ -158,7 +217,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
     play(r, [{transform: 'translateX(-18px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 260, delay, easing: EASE.out, fill: 'backwards'});
     scope.timeout(() => {
       if (!isTotal) s.deal?.();
-      r.querySelectorAll<HTMLElement>('b[data-v]').forEach(b => countUp(scope, b, 0, Number(b.dataset.v), isTotal ? 650 : 300));
+      r.querySelectorAll<HTMLElement>('b[data-v]').forEach(b => countUp(scope, b, 0, Number(b.dataset.v), isTotal ? 650 : 300, b.dataset.sfx ? n => `${n}.` : undefined));
       const best = r.querySelectorAll('b.is-best');
       if (best.length && !isTotal) scope.timeout(() => best.forEach(b => bump(b, 1.3)), 300);
     }, ANIM ? delay : 0);

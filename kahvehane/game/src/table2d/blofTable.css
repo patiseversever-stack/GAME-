@@ -1,0 +1,33 @@
+/* Blöf masası: Pişti Arena'nın üstünde ayrı kart katmanı (.bl-layer). Yalnız transform/opacity animasyonu;
+   seçim halkası ve yeni kart parıltısı SABİT gölge (canlandırılmaz, yalnız opaklık). */
+.ar.is-blof .ar__cards, .ar.is-blof .ar__pot { display: none; }
+.bl-layer { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.bl-layer .c2 { pointer-events: none; }
+.bl-layer.is-pick .c2.bl-hand { pointer-events: auto; cursor: pointer; }
+
+/* seçim halkası: altın çerçeve + dış ışık (statik); yeni gelen kart: mavi-beyaz (söner) */
+.bl-c__ring { position: absolute; inset: -3.5%; border-radius: 11%; opacity: 0; pointer-events: none;
+  box-shadow: 0 0 0 3px #fff2a0, 0 0 0 5.5px #0a1033, 0 0 18px 5px rgba(255, 205, 60, .75); }
+.bl-c.is-sel .bl-c__ring { opacity: 1; }
+.bl-c.is-new:not(.is-sel) .bl-c__ring { opacity: 1; box-shadow: 0 0 0 3px #bfe0ff, 0 0 0 5px #0a1033, 0 0 16px 4px rgba(120, 190, 255, .8); }
+
+/* blöf açılışında masa kararır (kartlar önde) */
+.bl-dim { position: absolute; inset: -10%; z-index: 970; display: none; opacity: 0; pointer-events: none;
+  background: radial-gradient(ellipse 70% 50% at 50% 44%, rgba(4, 6, 30, .35) 0%, rgba(4, 6, 30, .72) 100%); }
+
+/* blöf penceresi: yığının çevresinde kırmızı nabız; yığına dokunma alanı */
+.bl-alert { position: absolute; left: 0; top: 0; z-index: 290; display: none; pointer-events: none; border-radius: 50%; }
+.bl-alert > i { position: absolute; inset: 0; border-radius: 50%; will-change: transform, opacity;
+  background: radial-gradient(circle, rgba(255, 46, 77, 0) 52%, rgba(255, 46, 77, .55) 63%, rgba(255, 90, 110, .9) 67%, rgba(255, 46, 77, .35) 71%, rgba(255, 46, 77, 0) 80%); }
+.bl-pilehit { position: absolute; left: 0; top: 0; z-index: 995; border-radius: 50%; pointer-events: none; background: none; border: 0; padding: 0;
+  -webkit-tap-highlight-color: transparent; }
+.bl-pilehit.is-on { pointer-events: auto; cursor: pointer; }
+
+/* açılan kartın işareti: ✓ (doğru) / ✗ (yalan) */
+.bl-mark { position: absolute; left: 0; top: 0; z-index: 990; display: none; border-radius: 50%; opacity: 0; will-change: transform, opacity;
+  box-shadow: 0 0 0 3px #fff, 0 0 0 5.5px #0a1033, 0 4px 0 5.5px #0a1033; }
+.bl-mark::after { content: ''; position: absolute; inset: 22%; background: #fff; }
+.bl-mark.is-ok { background: linear-gradient(180deg, #7dffa8 0%, #16c45b 60%, #0e9a45 100%); }
+.bl-mark.is-ok::after { clip-path: polygon(8% 52%, 22% 38%, 40% 56%, 78% 14%, 93% 28%, 40% 86%); }
+.bl-mark.is-bad { background: linear-gradient(180deg, #ff8a9a 0%, #ff2e4d 60%, #c40a2f 100%); }
+.bl-mark.is-bad::after { clip-path: polygon(20% 8%, 50% 38%, 80% 8%, 92% 20%, 62% 50%, 92% 80%, 80% 92%, 50% 62%, 20% 92%, 8% 80%, 38% 50%, 8% 20%); }

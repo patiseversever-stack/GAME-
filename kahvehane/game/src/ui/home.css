@@ -94,10 +94,20 @@
 .kh-setup { flex: none; display: flex; flex-direction: column; gap: calc(var(--u) * .5); padding: calc(var(--u) * .45); border-radius: var(--r-lg);
   background: rgba(8, 13, 58, .5); box-shadow: inset 0 0 0 1.5px rgba(110, 130, 255, .22); }
 
-/* mod: bölmeli seçici (metin + küçük simge) */
-.kh-seg { position: relative; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); padding: 3px; border-radius: var(--r-md); background: var(--seg-track);
+/* oyun seçici: Pişti | Blöf (kartın en üstü; ince, sakin; göstergesi oyuna göre mavi / mor). Blöf motoru yoksa hiç çizilmez. */
+.kh-gsw { position: relative; display: grid; grid-template-columns: 1fr 1fr; padding: 3px; border-radius: var(--r-md); background: var(--seg-track); box-shadow: inset 0 2px 4px rgba(0, 0, 20, .55); }
+.kh-gsw__ind { position: absolute; left: 3px; top: 3px; bottom: 3px; width: calc((100% - 6px) / 2); transition: transform .34s cubic-bezier(.32, 1.3, .6, 1); pointer-events: none; }
+.kh-gsw__ind::before { content: ''; position: absolute; inset: 0; border-radius: calc(var(--r-md) - 3px); background: var(--btn2-fill); box-shadow: 0 0 0 2px var(--navy), inset 0 -3px 0 #0a4fc4, inset 0 2px 0 rgba(255, 255, 255, .55); transition: background .25s; }
+.kh-gsw[data-g='blof'] .kh-gsw__ind::before { background: var(--rar-epic); box-shadow: 0 0 0 2px var(--navy), inset 0 -3px 0 var(--rar-epic-dk), inset 0 2px 0 rgba(255, 255, 255, .5); }
+.kh-gbtn { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: .45em; min-height: max(38px, calc(var(--u) * 2.35)); padding: 0 .3em; color: var(--c-text-2); transition: color .2s; }
+.kh-gbtn span { font-family: var(--font-display); font-size: calc(var(--u) * 1.02); letter-spacing: .02em; white-space: nowrap; text-shadow: var(--outline-thin); }
+.kh-gico { flex: none; width: calc(var(--u) * 1.4); height: calc(var(--u) * 1.4); filter: drop-shadow(0 1.5px 0 rgba(10, 16, 51, .7)); }
+.kh-gbtn.is-on { color: #fff; }
+
+/* mod: bölmeli seçici (metin + küçük simge). --n: mod sayısı (Pişti 3, Blöf 4) */
+.kh-seg { position: relative; display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); padding: 3px; border-radius: var(--r-md); background: var(--seg-track);
   box-shadow: inset 0 2px 4px rgba(0, 0, 20, .55); }
-.kh-seg__ind { position: absolute; left: 3px; top: 3px; bottom: 3px; width: calc((100% - 6px) / 3); transition: transform .32s cubic-bezier(.32, 1.3, .6, 1); pointer-events: none; }
+.kh-seg__ind { position: absolute; left: 3px; top: 3px; bottom: 3px; width: calc((100% - 6px) / var(--n, 3)); transition: transform .32s cubic-bezier(.32, 1.3, .6, 1); pointer-events: none; }
 .kh-seg__ind::before { content: ''; position: absolute; inset: 0; border-radius: calc(var(--r-md) - 3px); background: var(--chip-on-fill); box-shadow: 0 0 0 2px var(--navy), inset 0 -3px 0 #087a35, inset 0 2px 0 rgba(255, 255, 255, .65); }
 .kh-mode { position: relative; z-index: 1; display: flex; align-items: center; justify-content: center; gap: .4em; min-height: max(44px, calc(var(--u) * 2.6)); padding: 0 .2em; color: var(--c-text-2); transition: color .2s; }
 .kh-mode span { font-family: var(--font-display); font-size: calc(var(--u) * 1); white-space: nowrap; text-shadow: var(--outline-thin); }
@@ -126,6 +136,19 @@
 .kh-pair { display: flex; padding: 2px; border-radius: var(--r-pill); background: rgba(255, 77, 102, .24); box-shadow: inset 0 0 0 1.5px rgba(255, 157, 176, .6); }
 .kh-pair .kh-ava + .kh-ava { margin-left: calc(var(--u) * -.5); }
 .kh-vsl { flex: none; font-family: var(--font-display); font-size: calc(var(--u) * .85); color: var(--c-text-3); }
+
+/* Blöf: etiketin yerini zorluk seçici alır (yıldızlı hap; dokununca döner) */
+.kh-diff { flex: none; display: flex; align-items: center; gap: .4em; min-height: 44px; padding: 0 calc(var(--u) * .7) 0 calc(var(--u) * .55); border-radius: var(--r-pill); position: relative; }
+.kh-diff::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: calc(var(--u) * 2.2); margin-top: calc(var(--u) * -1.1); border-radius: var(--r-pill);
+  background: rgba(168, 85, 247, .2); box-shadow: inset 0 0 0 1.5px rgba(205, 150, 255, .55); }
+.kh-diff > * { position: relative; }
+.kh-diff b { font-family: var(--font-display); font-weight: var(--w-display); font-size: calc(var(--u) * .92); line-height: 1; white-space: nowrap; text-shadow: var(--outline-thin); }
+.kh-diff .kh-stars { font-size: calc(var(--u) * .78); }
+.kh-diff.is-zor::before { background: rgba(255, 77, 102, .22); box-shadow: inset 0 0 0 1.5px rgba(255, 157, 176, .6); }
+.kh-diff.is-kolay::before { background: rgba(51, 221, 115, .18); box-shadow: inset 0 0 0 1.5px rgba(125, 255, 168, .5); }
+.kh-opp.is-blof { padding-left: calc(var(--u) * .1); gap: calc(var(--u) * .3); }
+.kh-opp.is-blof .kh-seats { gap: calc(var(--u) * .4); }
+.kh-opp.is-blof .kh-seat b { font-size: calc(var(--u) * .78); }
 
 /* bahis: tek sıra, dört jeton */
 .kh-stakes { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(var(--u) * .4); padding-top: calc(var(--u) * .2); }
@@ -242,6 +265,7 @@
   .kh-hp { gap: calc(var(--u) * .45); }
   .kh-hero3 { --band: calc(var(--u) * 2.6); }
   .kh-setup { gap: calc(var(--u) * .3); padding: calc(var(--u) * .35); }
+  .kh-gbtn { min-height: 34px; }
   .kh-stakes { padding-top: calc(var(--u) * .3); }
   .kh-play2 { min-height: max(52px, calc(var(--u) * 3.8)); }
   .kh-play2__l1 { font-size: calc(var(--u) * 1.9); }
@@ -280,3 +304,7 @@
 .kh-quests__tip { display: flex; align-items: center; gap: .5em; max-width: calc(var(--u) * 21); margin: calc(var(--u) * 1) 0 0; color: var(--c-text-2); font-size: calc(var(--u) * .78); font-weight: var(--w-strong); line-height: 1.35; }
 .kh-quests__tip .kh-i { flex: none; width: calc(var(--u) * 1.1); height: calc(var(--u) * 1.1); opacity: .8; }
 @media (prefers-reduced-motion: reduce) { .kh-nav__dot.is-on, .kh-quest.is-ready .kh-quest__claim { animation: none; } }
+
+/* Blöf sekmesindeki "Yeni" etiketi: Blöf bir kez oynanınca kaybolur */
+.kh-gnew { top: calc(var(--u) * -.5); right: calc(var(--u) * -.1); font-size: calc(var(--u) * .54); padding: .28em .5em .22em; pointer-events: none; }
+.kh-gnew[hidden] { display: none; }

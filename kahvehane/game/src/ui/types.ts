@@ -1,6 +1,6 @@
 // Arayüz sözleşmesi (oyun akışı bu tiplerle konuşur). screens.ts bunları dışa aktarır.
 import type {GameResult} from '../core/types';
-import type {MatchSetup, Mode} from '../game/types';
+import type {BlofOutcome, Difficulty, Game, MatchSetup, Mode} from '../game/types';
 import type {CharId} from '../game/roster';
 import type {ItemKind} from '../game/catalog';
 
@@ -17,10 +17,11 @@ export interface Settings {
 /**
  * Ana ekrandan uygulamaya giden istekler. Market, profil, günlük ödül ve sandık ekran içinde (Profile üzerinden) çözülür;
  * yalnız maç, ayarlar ve kurallar uygulamaya döner.
- * `opponents`: koltuk sırasıyla botlar (1'e 1: [üst]; 4 kişi/eşli: [sağ, karşı, sol] — eşlide karşıdaki ortaktır).
+ * `opponents`: koltuk sırasıyla botlar (1'e 1: [üst]; 3 kişi: [sağ, sol]; 4 kişi/eşli: [sağ, karşı, sol] — eşlide karşıdaki ortaktır).
+ * `difficulty`: yalnız Blöf'te (kolay · orta · zor).
  */
 export type HomeAction =
-  | {type: 'play'; mode: Mode; stake: number; opponents: CharId[]}
+  | {type: 'play'; game: Game; mode: Mode; stake: number; opponents: CharId[]; difficulty: Difficulty}
   | {type: 'settings'}
   | {type: 'rules'};
 
@@ -46,7 +47,10 @@ export interface Sounds {
 /** El sonu ekranı verisi (uygulama hesaplar; ekran yalnız gösterir). */
 export interface ResultsData {
   setup: MatchSetup;
-  result: GameResult;
+  /** Pişti: puan tablosu */
+  result?: GameResult;
+  /** Blöf: eli bitiren ve koltuk başına blöf sayıları */
+  blof?: BlofOutcome;
   /** Oyuncunun (ya da takımının) sonucu */
   outcome: 'win' | 'lose' | 'draw';
   myPisti: number;
@@ -159,4 +163,8 @@ export interface GameHud {
   onMenu: () => void;
   /** Rakip rozetine dokunuldu (dürtme) */
   onPoke: (seat: number) => void;
+  /** İsteğe bağlı (Blöf): masa düzeni — 'blof' rozetleri Blöf yerleşimine alır. Pişti çağırmaz. */
+  setGame?(game: 'pisti' | 'blof'): void;
+  /** İsteğe bağlı (Blöf): rozet yanar (elinde 1–2 kart kaldı). */
+  alert?(seat: number, on: boolean): void;
 }

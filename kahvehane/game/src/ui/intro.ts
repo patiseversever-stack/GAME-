@@ -1,6 +1,7 @@
 // Açılış (logo + ilerleme + ipucu) ve karşılaşma girişi (sinematik "VS"): 1'e 1 (iki yarım), eşli (mavi takım – kırmızı takım),
 // 4 kişi (dört eğik şerit sırayla çarparak gelir). Portreler roster'dan; insan oyuncu kendi karakteri ve çerçevesiyle.
-import type {MatchSetup, SeatPlayer} from '../game/types';
+import {matchTitle, type MatchSetup, type SeatPlayer} from '../game/types';
+import {GAME_ICON} from './gameicons';
 import {ANIM, EASE, Scope, countUp, esc, fmt, h, play, q} from './dom';
 import {ASSETS} from './assets';
 import {arenaHtml, gemHtml, wordmarkHtml, type Ctx} from './parts';
@@ -184,7 +185,7 @@ const STREAKS: [number, number][] = [[12, 58], [24, 44], [37, 66], [63, 60], [76
 
 /**
  * Karşılaşma girişi (~3,2 sn). 1'e 1: rakip üst yarıda (kırmızı), sen alt yarıda (mavi); eşli: takımlar yarımlarda yan yana;
- * 4 kişi: dört eğik şerit (♥ ♦ ♣ ♠) sırayla iki yandan çarpar. Ortada "VS" damgası: şok halkası, kıvılcımlar, parıltı, sarsıntı.
+ * 4 kişi: dört eğik şerit (♥ ♦ ♣ ♠), 3 kişi (Blöf): üç şerit (♥ ♦ ♠) sırayla iki yandan çarpar. Üstte oyun adı kurdelesi ("Blöf · 3 Kişi"). Ortada "VS" damgası: şok halkası, kıvılcımlar, parıltı, sarsıntı.
  * Bekleme anında karakterler hafifçe yaklaşır (Ken Burns), VS nabız atar, alt şeritte "Masa kuruluyor → Hazır!".
  * Sonunda perde ikiye ayrılır (yarımlar yukarı/aşağı ya da şeritler iki yana) ve masa açılır. 1,4 sn'den sonra dokunuş geçer.
  * Hepsi transform/opacity (bileşimci iş parçacığı); ışınlar küçük tuvalden büyütülür, yıldız tek SVG. Düşük cihazda
@@ -199,15 +200,15 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   const el = h('div', `kh-screen kh-vs is-${mode}`);
   const sk = 'skewY(-9deg)';
   let body = '';
-  if (mode === '4') {
-    // yukarıdan aşağı: karşı (2), sol (3), sağ (1), sen (0)
-    const order = [2, 3, 1, 0];
-    const suits: SuitKey[] = ['h', 'd', 'c', 's'];
+  if (mode === '4' || mode === '3') {
+    // yukarıdan aşağı: 4 kişide karşı (2), sol (3), sağ (1), sen (0); 3 kişide sol-üst (2), sağ-üst (1), sen (0)
+    const order = mode === '4' ? [2, 3, 1, 0] : [2, 1, 0];
+    const suits: SuitKey[] = mode === '4' ? ['h', 'd', 'c', 's'] : ['h', 'd', 's'];
     body = order.map((seat, k) => `<div class="kh-vs__band is-${suits[k]}" style="--k:${k}"><span class="kh-vs__bsuit">${suitSvg(suits[k])}</span></div>`).join('') +
       order.map((seat, k) => {
         const p = by(seat);
         return `<div class="kh-vs__slot is-k${k} ${k % 2 ? 'is-l' : 'is-r'}${p.human ? ' is-me' : ''}" style="--k:${k}">${bustHtml(p)}${plateHtml(p)}</div>`;
-      }).join('') + `<div class="kh-vs__seams">${[1, 2, 3].map(k => `<i style="--k:${k}"></i>`).join('')}</div>`;
+      }).join('') + `<div class="kh-vs__seams">${order.slice(1).map((_, k) => `<i style="--k:${k + 1}"></i>`).join('')}</div>`;
   } else {
     const top = mode === '1v1' ? [by(1)] : [by(1), by(3)];
     const bot = mode === '1v1' ? [me] : [me, by(2)];
@@ -221,7 +222,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   const sparkN = low ? 0 : 12;
   el.innerHTML = `<canvas class="kh-vs__rays" width="512" height="512"></canvas>${body}
     <div class="kh-vs__streaks">${STREAKS.map(([y, w]) => `<i style="top:${y}%;width:${w}%"></i>`).join('')}</div>
-    <div class="kh-vs__mode">${mode === '1v1' ? "1'e 1" : mode === '4' ? '4 Kişi · Herkes Tek' : 'Eşli · 2’ye 2'}</div>
+    <div class="kh-vs__mode">${GAME_ICON[setup.game]}<span>${esc(matchTitle(setup.game, mode))}</span></div>
     <div class="kh-vs__glint"></div>
     <i class="kh-vs__ring is-a"></i><i class="kh-vs__ring is-b"></i>
     <div class="kh-vs__emblem">${STAR_SVG}<div class="kh-title">${g3('VS', 'is-white')}</div></div>
@@ -236,7 +237,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   const all = (s: string) => Array.from(el.querySelectorAll<HTMLElement>(s));
   const s = ctx.sounds;
   const slam = () => (s.slam ? s.slam() : s.tap());
-  const four = mode === '4';
+  const four = mode === '4' || mode === '3'; // şeritli giriş (4 ya da 3 şerit)
   // zaman çizelgesi (ms)
   const tSlam = four ? 640 : 460;
   const tLoad = tSlam + 520; // alt şerit görünür

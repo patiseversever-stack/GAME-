@@ -3,7 +3,9 @@
 import './collection.css';
 import {CATALOG, KIND_INFO, type ItemKind} from '../game/catalog';
 import {ROSTER, charById} from '../game/roster';
-import {MODE_INFO, type Mode} from '../game/types';
+import {GAMES, GAME_INFO, MODE_INFO, type Game} from '../game/types';
+import {BLOF} from '../game/blofAdapter';
+import {GAME_ICON} from './gameicons';
 import {ANIM, EASE, Scope, bump, clamp, countUp, esc, fmt, h, play, q, shake} from './dom';
 import {ASSETS} from './assets';
 import {I} from './icons';
@@ -19,6 +21,8 @@ export class CollectionPage implements Page {
   private scope = new Scope();
   private inner: HTMLElement;
   private editing = false;
+  /** İstatistik bölümünde gösterilen oyun (Blöf yoksa hep Pişti) */
+  private statGame: Game | null = null;
 
   constructor(private shell: Shell) {
     this.el.innerHTML = `<div class="kh-coll__in kh-scroll"></div>`;
@@ -102,8 +106,6 @@ export class CollectionPage implements Page {
     const d = p.data;
     this.sig = JSON.stringify(d);
     const me = charById(d.char ?? 'dursun');
-    const st = d.stats;
-    const rate = st.played ? Math.round((st.won / st.played) * 100) : 0;
     const k = clamp(d.xp / Math.max(1, p.xpNext), 0, 1);
     const owned = CATALOG.filter(i => p.owns(i.kind, i.id)).length;
     const frames = CATALOG.filter(i => i.kind === 'frame');
@@ -144,20 +146,7 @@ export class CollectionPage implements Page {
         <div class="kh-pick is-frames"></div>
       </section>
 
-      <section class="kh-coll__sec">
-        <div class="kh-coll__hd"><span class="kh-label">İstatistikler</span>${st.streak >= 2 ? `<span class="kh-streak">${I.flame}${st.streak} seri</span>` : ''}</div>
-        <div class="kh-stats">
-          ${stat('Oynanan', st.played, I.cards)}${stat('Galibiyet', st.won, I.crown)}${stat('Kazanma', rate, I.star, true)}
-          ${stat('Pişti', st.pisti, I.sparkle)}${stat('Vale Pişti', st.valePisti, I.swords)}${stat('En İyi Seri', st.bestStreak, I.flame)}
-        </div>
-        ${st.played === 0 ? `<div class="kh-empty">${I.cards}<span>Henüz el oynamadın. İlk zaferin seni bekliyor!</span></div>` : ''}
-        <div class="kh-mstats"${st.played === 0 ? ' hidden' : ''}>${(['1v1', '4', 'esli'] as Mode[]).map(m => {
-          const b = st.byMode[m];
-          const r = b.played ? b.won / b.played : 0;
-          return `<div class="kh-mstat"><span class="kh-mstat__n">${MODE_INFO[m].name}</span><span class="kh-mstat__bar"><i style="transform:scaleX(${r.toFixed(3)})"></i></span>
-            <span class="kh-mstat__v"><b>${b.won}</b>/${b.played}</span></div>`;
-        }).join('')}</div>
-      </section>`;
+      <section class="kh-coll__sec kh-statsec">${this.statsHtml()}</section>`;
     const bot = `
       <section class="kh-coll__sec">
         <div class="kh-coll__hd"><span class="kh-label">Koleksiyon</span><small><b>${owned}</b>/${CATALOG.length} parça</small></div>
@@ -231,6 +220,37 @@ export class CollectionPage implements Page {
       if ((e as KeyboardEvent).key === 'Enter') this.saveName();
     });
     this.scope.on(input, 'blur', () => this.editing && this.saveName());
+  }
+
+  private shownGame(): Game {
+    return BLOF.available() && (this.statGame ?? this.shell.profile.data.lastGame) === 'blof' ? 'blof' : 'pisti';
+  }
+
+  /** İstatistik bölümü: oyun seçici (Blöf motoru varsa) + o oyunun altı sayısı ve mod başına kazanma çubukları. */
+  private statsHtml(): string {
+    const d = this.shell.profile.data;
+    const g = this.shownGame();
+    const st = g === 'blof' ? d.blof : d.stats;
+    const rate = st.played ? Math.round((st.won / st.played) * 100) : 0;
+    const cards = g === 'blof'
+      ? `${stat('Oynanan', st.played, I.cards)}${stat('Galibiyet', st.won, I.crown)}${stat('Kazanma', rate, I.star, true)}
+         ${stat('Attığı Blöf', d.blof.bluffs, GAME_ICON.blof)}${stat('Yakaladığı', d.blof.caught, I.target)}${stat('Yakalandı', d.blof.timesCaught, I.eye)}`
+      : `${stat('Oynanan', st.played, I.cards)}${stat('Galibiyet', st.won, I.crown)}${stat('Kazanma', rate, I.star, true)}
+         ${stat('Pişti', d.stats.pisti, I.sparkle)}${stat('Vale Pişti', d.stats.valePisti, I.swords)}${stat('En İyi Seri', st.bestStreak, I.flame)}`;
+    const sw = BLOF.available()
+      ? `<div class="kh-gsw is-mini" role="tablist" aria-label="Oyun" data-g="${g}"><i class="kh-gsw__ind" style="transform:translateX(${GAMES.indexOf(g) * 100}%)"></i>${GAMES.map(x =>
+        `<button class="kh-gbtn${x === g ? ' is-on' : ''}" role="tab" aria-selected="${x === g}" data-act="statgame" data-g="${x}">${GAME_ICON[x]}<span>${GAME_INFO[x].name}</span></button>`).join('')}</div>`
+      : '';
+    const empty = g === 'blof' ? 'Henüz Blöf oynamadın. İlk blöfün seni bekliyor!' : 'Henüz el oynamadın. İlk zaferin seni bekliyor!';
+    return `<div class="kh-coll__hd"><span class="kh-label">İstatistikler</span>${st.streak >= 2 ? `<span class="kh-streak">${I.flame}${st.streak} seri</span>` : ''}${sw}</div>
+        <div class="kh-stats">${cards}</div>
+        ${st.played === 0 ? `<div class="kh-empty">${GAME_ICON[g]}<span>${empty}</span></div>` : ''}
+        <div class="kh-mstats"${st.played === 0 ? ' hidden' : ''}>${GAME_INFO[g].modes.map(m => {
+          const b = st.byMode[m];
+          const r = b.played ? b.won / b.played : 0;
+          return `<div class="kh-mstat"><span class="kh-mstat__n">${MODE_INFO[m].name}</span><span class="kh-mstat__bar"><i style="transform:scaleX(${r.toFixed(3)})"></i></span>
+            <span class="kh-mstat__v"><b>${b.won}</b>/${b.played}</span></div>`;
+        }).join('')}</div>`;
   }
 
   private saveName(): void {
@@ -321,6 +341,18 @@ export class CollectionPage implements Page {
       case 'toshop':
         this.shell.goto('shop');
         return;
+      case 'statgame': {
+        const g = b.dataset.g as Game;
+        if (g === this.shownGame()) return;
+        ctx.sounds.tap();
+        this.statGame = g;
+        const box = this.inner.querySelector<HTMLElement>('.kh-statsec');
+        if (!box) return;
+        box.innerHTML = this.statsHtml();
+        play(box, [{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'none'}], {duration: 240, easing: EASE.out});
+        this.enter();
+        return;
+      }
       case 'sets':
         ctx.sounds.tap();
         this.shell.goto('shop', 'set');

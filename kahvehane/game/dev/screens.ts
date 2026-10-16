@@ -1,6 +1,7 @@
 // Ekran galerisi: /dev/screens.html?s=<ekran>[&anim=0]
-// Ekranlar: splash onboarding (p=new: hikâye; jump=gallery: doğrudan galeri) home (tab=shop|profile|quests, mode=1v1|4|esli, sub=deck…, poke=1)
-//   product (k=deck&id=iznik) versus (mode=…) results (mode=…, r=win|lose|draw, lvl=1, streak=3) pause settings rules daily
+// Ekranlar: splash onboarding (p=new: hikâye; jump=gallery: doğrudan galeri) home (tab=shop|profile|quests, mode=1v1|3|4|esli, game=blof, diff=kolay|orta|zor, sub=deck…, poke=1)
+//   product (k=deck&id=iznik) versus (mode=…, game=blof) results (mode=…, game=blof, r=win|lose|draw, lvl=1, streak=3) pause settings rules (game=blof) daily
+// newblof=1 → Blöf'ü hiç oynamamış oyuncu (Yeni etiketi, boş istatistik). game=blof → Blöf sekmesi motor olmadan da gösterilir (yalnız galeri; gerçek uygulamada Blöf motoru yoksa Blöf görünmez).
 //   online (Çevrimiçi tanıtımı) friends (aynı tanıtımın "Arkadaşınla" sekmesi) bailout wipe
 // Profil galeride ayrı anahtarlarda tutulur (kh.* → khg.*): gerçek oyunun kaydına dokunulmaz. p=new → ilk açılış profili; rich=1 → zengin.
 const LS = window.localStorage;
@@ -13,15 +14,21 @@ LS.removeItem = (k: string) => ri(map(k));
 import {Screens, type ResultsData} from '../src/ui/screens';
 import {Profile, xpNext} from '../src/game/profile';
 import {buildSetup} from '../src/game/app';
+import {BLOF} from '../src/game/blofAdapter';
 import type {GameResult, SideScore} from '../src/core/types';
 import type {CharId} from '../src/game/roster';
-import type {Mode} from '../src/game/types';
+import {MODE_INFO, type BlofOutcome, type Difficulty, type Game, type Mode} from '../src/game/types';
 
 const P = new URLSearchParams(location.search);
 const S = P.get('s') ?? '';
+const G: Game = P.get('game') === 'blof' ? 'blof' : 'pisti';
+const DIFF = (['kolay', 'orta', 'zor'] as Difficulty[]).find(d => d === P.get('diff')) ?? 'orta';
+if (G === 'blof' || P.has('blof')) BLOF.previewOnly(true);
 const LIST = ['splash', 'onboarding', 'onboarding&p=new&jump=gallery', 'home', 'home&poke=1', 'home&tab=shop', 'home&tab=profile', 'home&tab=quests', 'home&mode=4', 'home&mode=esli', 'product&k=deck&id=yildizli', 'product&k=char&id=defne',
   'product&k=fx&id=havai', 'product&k=table&id=gece', 'versus', 'versus&mode=4', 'versus&mode=esli', 'results', 'results&r=lose', 'results&mode=4', 'results&mode=esli', 'results&lvl=1&streak=3',
-  'pause', 'settings', 'rules', 'daily', 'online', 'friends', 'bailout', 'wipe'];
+  'pause', 'settings', 'rules', 'daily', 'online', 'friends', 'bailout', 'wipe',
+  'home&game=blof', 'home&game=blof&mode=1v1', 'home&game=blof&mode=4', 'home&game=blof&mode=esli', 'home&tab=profile&game=blof', 'home&tab=quests&game=blof',
+  'versus&game=blof&mode=3', 'versus&game=blof&mode=1v1', 'results&game=blof&mode=3', 'results&game=blof&mode=3&r=lose', 'results&game=blof&mode=esli', 'rules&game=blof'];
 
 const log = (n: string) => () => console.debug('[ses]', n);
 const sounds = {tap: log('tap'), whoosh: log('whoosh'), coin: log('coin'), reward: log('reward')};
@@ -43,7 +50,16 @@ function demoProfile(): Profile {
   d.owned.char.push('cem');
   d.equipped.frame = P.get('frame') ?? 'altin';
   d.stats = {...d.stats, played: 37, won: 22, lost: 13, draw: 2, pisti: 41, valePisti: 3, streak: 3, bestStreak: 6,
-    byMode: {'1v1': {played: 24, won: 15}, '4': {played: 8, won: 3}, esli: {played: 5, won: 4}}};
+    byMode: {'1v1': {played: 24, won: 15}, '3': {played: 0, won: 0}, '4': {played: 8, won: 3}, esli: {played: 5, won: 4}}};
+  if (G === 'blof' || P.has('blof')) {
+    d.blof = {played: 18, won: 9, lost: 9, streak: 2, bestStreak: 4, bluffs: 64, caught: 21, timesCaught: 17, wrongChallenges: 6,
+      byMode: {'1v1': {played: 5, won: 3}, '3': {played: 7, won: 3}, '4': {played: 4, won: 2}, esli: {played: 2, won: 1}}};
+    if (P.has('newblof')) d.blof = {...d.blof, played: 0, won: 0, lost: 0, streak: 0, bestStreak: 0, bluffs: 0, caught: 0, timesCaught: 0, wrongChallenges: 0, byMode: {'1v1': {played: 0, won: 0}, '3': {played: 0, won: 0}, '4': {played: 0, won: 0}, esli: {played: 0, won: 0}}};
+    d.lastGame = 'blof';
+    d.quests = {date: new Date().toISOString().slice(0, 10), list: [{id: 'blofCatch1', progress: 1, claimed: false}, {id: 'blofWin1', progress: 0, claimed: false}, {id: 'blofLie3', progress: 2, claimed: false}], bonus: false};
+    d.lastMode.blof = (P.get('mode') as Mode) ?? '3';
+    d.lastDifficulty = DIFF;
+  }
   d.daily = {last: '', day: 2};
   d.chestAt = P.has('chest') ? 0 : Date.now() + 2 * 3600e3 + 14 * 60e3;
   pr.save();
@@ -89,7 +105,23 @@ function demoResult(mode: Mode, r: string): {result: GameResult; outcome: 'win' 
   return {result: {sides: [a, b], winners: [0]}, outcome: 'win'};
 }
 
-const OPP: Record<Mode, CharId[]> = {'1v1': ['riza'], '4': ['cem', 'riza', 'defne'], esli: ['cem', 'defne', 'riza']};
+const OPP: Record<Mode, CharId[]> = {'1v1': ['riza'], '3': ['cem', 'defne'], '4': ['cem', 'riza', 'defne'], esli: ['cem', 'defne', 'riza']};
+
+/** Blöf demo sonucu: r=win → ben bitirdim; r=lose → ilk bot bitirdi (eşlide rakip takımdan biri). */
+function demoBlof(setup: ReturnType<typeof buildSetup>, r: string): BlofOutcome {
+  const n = MODE_INFO[setup.mode].seats;
+  const win = r !== 'lose';
+  const winner = win ? 0 : 1;
+  const seats = Array.from({length: n}, (_, seat) => ({
+    seat,
+    left: seat === winner ? 0 : [0, 4, 7, 2][seat] || 3,
+    bluffs: [5, 3, 4, 2][seat],
+    caught: [2, 1, 3, 0][seat],
+    timesCaught: [1, 2, 0, 1][seat],
+    wrongChallenges: [0, 1, 0, 1][seat],
+  }));
+  return {setup, outcome: win ? 'win' : 'lose', winner, seats};
+}
 
 async function main(): Promise<void> {
   if (!S) {
@@ -105,9 +137,9 @@ async function main(): Promise<void> {
   sc.onCosmeticsChanged = (k, id) => console.debug('kuşanıldı', k, id);
   (window as unknown as {__sc: Screens}).__sc = sc;
   const pr = demoProfile();
-  const mode = (P.get('mode') as Mode) ?? '1v1';
+  const mode = (P.get('mode') as Mode) ?? (G === 'blof' ? '3' : '1v1');
   if (P.get('mode')) {
-    pr.data.lastMode = mode;
+    pr.data.lastMode[G] = mode;
     pr.save();
   }
   const click = (sel: string, ms: number) => setTimeout(() => (document.querySelector(sel) as HTMLElement | null)?.click(), ms);
@@ -141,18 +173,19 @@ async function main(): Promise<void> {
       break;
     }
     case 'versus':
-      sc.versus(buildSetup(pr, mode, OPP[mode], 1, 'klasik'), 500);
+      sc.versus(buildSetup(pr, mode, OPP[mode], 1, 'klasik', undefined, {game: G, difficulty: DIFF}), 500);
       break;
     case 'results': {
       mockTable();
       const r = P.get('r') ?? 'win';
       const lvl = P.has('lvl');
-      const setup = buildSetup(pr, mode, OPP[mode], 1, 'klasik');
-      const {result, outcome} = demoResult(mode, r);
+      const setup = buildSetup(pr, mode, OPP[mode], 1, 'klasik', undefined, {game: G, difficulty: DIFF});
+      const blof = G === 'blof' ? demoBlof(setup, r) : undefined;
+      const {result, outcome} = blof ? {result: undefined, outcome: blof.outcome} : demoResult(mode, r);
       const delta = outcome === 'win' ? 500 : outcome === 'lose' ? -500 : 0;
       const before = {level: lvl ? 3 : 3, xp: lvl ? 240 : 120, xpNext: xpNext(3)};
       const after = lvl ? {level: 4, xp: 30, xpNext: xpNext(4)} : {level: 3, xp: 190, xpNext: xpNext(3)};
-      const d: ResultsData = {setup, result, outcome, myPisti: 2, myValePisti: 1, stake: 500, coinsDelta: delta, coinsBefore: 11950,
+      const d: ResultsData = {setup, result, blof, outcome, myPisti: blof ? 0 : 2, myValePisti: blof ? 0 : 1, stake: 500, coinsDelta: delta, coinsBefore: 11950,
         coinsAfter: 11950 + (outcome === 'win' ? 1000 : outcome === 'draw' ? 500 : 0) + (lvl ? 1000 : 0), xpGain: 70, before, after, levelReward: lvl ? 1000 : 0,
         streak: Number(P.get('streak') ?? (outcome === 'win' ? 2 : 0))};
       sc.results(d, pr.data.equipped.frame).then(x => console.debug('sonuç:', x));
@@ -168,7 +201,7 @@ async function main(): Promise<void> {
       break;
     case 'rules':
       mockTable();
-      sc.rules();
+      sc.rules(G);
       break;
     case 'daily':
       sc.home(pr);

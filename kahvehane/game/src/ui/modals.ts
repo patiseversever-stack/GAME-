@@ -3,7 +3,11 @@ import type {Settings} from './types';
 import {ANIM, EASE, center, esc, fmt, play, q} from './dom';
 import {ASSETS} from './assets';
 import {I, suitSvg, type SuitKey} from './icons';
+import {GAME_ICON} from './gameicons';
 import {onAct, openModal, type Ctx, type ModalHandle} from './parts';
+import {GAMES, GAME_INFO, type Game} from '../game/types';
+import {BLOF} from '../game/blofAdapter';
+import './blofmeta.css';
 
 // ---------------------------------------------------------------- Mola
 export function pause(ctx: Ctx): Promise<'resume' | 'settings' | 'rules' | 'leave'> {
@@ -94,7 +98,25 @@ const back = (style = '') => `<span class="kh-mc is-back" style="${style}"></spa
 const fan = (cards: string[]) =>
   `<span class="kh-pile">${cards.map((c, i) => c.replace('style="', `style="transform:rotate(${(i - (cards.length - 1) / 2) * 11}deg) translateX(${(i - (cards.length - 1) / 2) * 6}px);`)).join('')}</span>`;
 
-export function rules(ctx: Ctx): Promise<void> {
+/** Adım listesi: art (varsa) + başlık + açıklama; art'sız adım tam genişlik. */
+interface RuleStep {
+  art: string;
+  t: string;
+  d: string;
+}
+const stepsHtml = (steps: RuleStep[]) =>
+  steps
+    .map((s, i) => `<div class="kh-step kh-card${s.art ? '' : ' is-wide'}">${s.art ? `<div class="kh-step__art">${s.art}</div>` : ''}<div><div class="kh-step__hd"><span class="kh-step__n">${i + 1}</span><span class="kh-step__t">${s.t}</span></div><div class="kh-step__d">${s.d}</div></div></div>`)
+    .join('');
+
+/** Blöf'te söylenen değer: "3 tane 7" balonu. */
+const call = (n: string, r: string) => `<span class="kh-call"><b>${n}</b><i>tane</i><b>${r}</b></span>`;
+
+/**
+ * Nasıl Oynanır. Blöf motoru varsa iki sekme (Pişti | Blöf), yoksa yalnız Pişti sayfası (eskisi gibi).
+ * game: ilk açılan sekme (oyun içinden açılınca o oyunun kuralları).
+ */
+export function rules(ctx: Ctx, game: Game = 'pisti'): Promise<void> {
   return new Promise(res => {
     let m: ModalHandle;
     const done = () => {
@@ -102,25 +124,63 @@ export function rules(ctx: Ctx): Promise<void> {
       res();
     };
     const arrow = '<span class="kh-step__arrow">➜</span>';
-    const steps = [
+    const pisti: RuleStep[] = [
       {art: `${fan([back(), back(), mc('7', '♦')])}${arrow}${mc('7', '♠', 'is-glow')}`, t: 'Aynısını at, topla', d: 'Ortadaki <b>üst kartın aynısını</b> atarsan yığının tamamı senin.'},
       {art: `${fan([mc('K', '♥'), mc('4', '♣'), mc('9', '♦')])}${arrow}${mc('J', '♣', 'is-glow')}`, t: 'Vale hepsini alır', d: '<b>Vale</b> atınca ortadaki bütün kartları toplarsın.'},
       {art: `${mc('5', '♥')}${arrow}${mc('5', '♣', 'is-glow')}<span class="kh-step__badge">+10</span>`, t: 'Pişti!', d: 'Tek kartın üstüne aynısı: <b>10 puan</b>. Vale üstüne vale: <b>20 puan</b>.'},
       {art: '', t: 'Puanlar', d: `<div class="kh-pts">${[['As', '1'], ['Vale', '1'], ['Sinek 2', '2'], ['Karo 10', '3'], ['En çok kart', '3'], ['Pişti', '10'], ['Vale pişti', '20'], ['Kazanan', 'en yüksek']]
         .map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('')}</div>`},
     ];
+    const blof: RuleStep[] = [
+      {art: `${fan([back(), back(), back()])}${arrow}${call('3', '7')}`, t: 'Söyle ve kapalı at', d: 'Turu açan bir <b>değer</b> söyler, <b>1–4 kartı kapalı</b> atar. Doğruyu söylemek şart değil!'},
+      {art: `${fan([back(), back()])}${arrow}<span class="kh-call is-pass"><b>Pas</b></span>`, t: 'Aynı değer ya da pas', d: 'Sıradakiler <b>aynı değeri</b> söyleyip 1–4 kart atar ya da <b>Pas</b> der. Herkes pas derse yığın kalkar.'},
+      {art: `${fan([mc('7', '♦'), mc('7', '♠'), mc('K', '♥', 'is-glow')])}<span class="kh-step__badge is-red">BLÖF!</span>`, t: 'Blöf de, yakala', d: 'Her atıştan sonra <b>5 sn</b> içinde “Blöf!” de. <b>Yalansa</b> yığını atan, <b>doğruysa</b> sen alırsın.'},
+      {art: `${mc('A', '♠', 'is-glow')}<span class="kh-step__crown">${I.crown}</span>`, t: 'İlk bitiren kazanır', d: 'Kartlarını <b>ilk bitiren</b> kazanır. Son karta da blöf denebilir! Eşlide takım birlikte kazanır.'},
+    ];
+    const both = BLOF.available();
+    let cur: Game = both ? game : 'pisti';
+    const tabs = both
+      ? `<div class="kh-gsw kh-rules__tabs" role="tablist" aria-label="Oyun" data-g="${cur}"><i class="kh-gsw__ind"></i>${GAMES.map(g =>
+        `<button class="kh-gbtn" role="tab" data-act="tab" data-g="${g}">${GAME_ICON[g]}<span>${GAME_INFO[g].name}</span></button>`).join('')}</div>`
+      : '';
+    const foot = (g: Game) => (g === 'pisti' ? `${I.hand}Kartına bir kez dokun ya da yukarı kaydır.` : `${I.hand}Kartlarına dokunup seç, sonra “at”a bas.`);
     m = openModal(ctx, {
-      cls: 'kh-rules',
+      cls: both ? 'kh-rules has-tabs' : 'kh-rules',
       title: 'Nasıl Oynanır',
       onX: done,
-      body: `<div class="kh-steps">${steps
-        .map((s, i) => `<div class="kh-step kh-card${s.art ? '' : ' is-wide'}">${s.art ? `<div class="kh-step__art">${s.art}</div>` : ''}<div><div class="kh-step__hd"><span class="kh-step__n">${i + 1}</span><span class="kh-step__t">${s.t}</span></div><div class="kh-step__d">${s.d}</div></div></div>`)
-        .join('')}</div>
-        <div class="kh-rules__foot"><span>${I.hand}Kartına bir kez dokun ya da yukarı kaydır.</span><button class="kh-btn kh-btn--1 kh-btn--lg kh-btn--block" data-act="ok">Anladım</button></div>`,
+      body: `${tabs}<div class="kh-steps" data-p="pisti"${cur === 'pisti' ? '' : ' hidden'}>${stepsHtml(pisti)}</div>${both ? `<div class="kh-steps" data-p="blof"${cur === 'blof' ? '' : ' hidden'}>${stepsHtml(blof)}</div>` : ''}
+        <div class="kh-rules__foot"><span>${foot(cur)}</span><button class="kh-btn kh-btn--1 kh-btn--lg kh-btn--block" data-act="ok">Anladım</button></div>`,
     });
-    m.panel.querySelectorAll<HTMLElement>('.kh-step').forEach((s, i) =>
+    const enter = (box: Element) => box.querySelectorAll<HTMLElement>('.kh-step').forEach((s, i) =>
       play(s, [{transform: 'translateX(-20px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: 120 + i * 70, easing: EASE.out, fill: 'backwards'}));
-    onAct(m.scope, m.panel, a => {
+    const mark = (animate: boolean) => {
+      const sw = m.panel.querySelector<HTMLElement>('.kh-gsw');
+      if (sw) {
+        sw.dataset.g = cur;
+        q(sw, '.kh-gsw__ind').style.transform = `translateX(${GAMES.indexOf(cur) * 100}%)`;
+        sw.querySelectorAll<HTMLElement>('.kh-gbtn').forEach(b => {
+          b.classList.toggle('is-on', b.dataset.g === cur);
+          b.setAttribute('aria-selected', String(b.dataset.g === cur));
+        });
+      }
+      m.panel.querySelectorAll<HTMLElement>('.kh-steps').forEach(p => {
+        const on = p.dataset.p === cur;
+        p.hidden = !on;
+        if (on && animate) enter(p);
+      });
+      q(m.panel, '.kh-rules__foot span').innerHTML = foot(cur);
+    };
+    mark(false);
+    enter(q(m.panel, `.kh-steps[data-p="${cur}"]`));
+    onAct(m.scope, m.panel, (a, b) => {
+      if (a === 'tab') {
+        const g = b.dataset.g as Game;
+        if (g === cur) return;
+        ctx.sounds.tap();
+        cur = g;
+        mark(true);
+        return;
+      }
       if (a !== 'ok') return;
       ctx.sounds.tap();
       done();

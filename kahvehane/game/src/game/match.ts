@@ -11,7 +11,7 @@ import type {Sfx} from '../audio/sfx';
 import type {VoicePlayer} from '../audio/voice';
 import type {GameHud, HudPose} from '../ui/types';
 import {haptic} from '../platform/bridge';
-import {MODE_INFO, type MatchSetup, type SeatPlayer} from './types';
+import {pistiInfo, type MatchSetup, type SeatPlayer} from './types';
 
 /** Karakterlerin konuşabileceği anlar (diyalog sistemi bunlara replik seçer). */
 export type Moment = DialogueMoment;
@@ -146,7 +146,7 @@ export class Match {
   /** Bir el oynatır; yarıda kesilirse null. HUD'u bu koltuklarla kendisi gösterir. */
   async play(setup: MatchSetup): Promise<MatchOutcome | null> {
     const {table, hud, sfx} = this.d;
-    const info = MODE_INFO[setup.mode];
+    const info = pistiInfo(setup.mode);
     this.aborted = false;
     this.setup = setup;
     this.players = [];

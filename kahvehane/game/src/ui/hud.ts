@@ -440,6 +440,19 @@ export class HudView implements GameHud {
     this.el.classList.toggle('is-dim', on);
   }
 
+  /**
+   * Hangi oyunun masası: 'blof' rozetleri Blöf yerleşimine alır (benim rozetim eylem çubuğunun soluna, rakip sayaçları
+   * masadaki büyük haplarda; stiller src/ui/blofHud.css). Pişti'de hiç çağrılmaz (varsayılan 'pisti').
+   */
+  setGame(game: 'pisti' | 'blof'): void {
+    this.el.dataset.game = game;
+  }
+
+  /** Rozet yanar (Blöf: elinde 1–2 kart kaldı). */
+  alert(seat: number, on: boolean): void {
+    this.badges.get(seat)?.el.classList.toggle('is-alert', on);
+  }
+
   private setPlayers(list: HudPlayer[], mode: Mode): void {
     const sig = mode + '|' + list.map(p => `${p.seat}:${p.char.id}:${p.name}:${p.level}:${p.isMe ? 1 : 0}:${p.team}:${p.frame ?? ''}`).join(',');
     this.mode = mode;
@@ -450,7 +463,8 @@ export class HudView implements GameHud {
     this.badges.forEach(b => b.destroy());
     this.badges.clear();
     for (const p of list) {
-      const pos: Pos = mode === '1v1' ? (p.seat === 0 ? 'bottom' : 'top') : (['bottom', 'right', 'top4', 'left'] as Pos[])[p.seat % 4];
+      // 3 kişi (Blöf): 1 sağ-üst, 2 sol-üst
+      const pos: Pos = mode === '1v1' ? (p.seat === 0 ? 'bottom' : 'top') : mode === '3' ? (['bottom', 'right', 'left'] as Pos[])[p.seat % 3] : (['bottom', 'right', 'top4', 'left'] as Pos[])[p.seat % 4];
       const b = new Badge(p, pos, x => this.poke(x));
       this.badges.set(p.seat, b);
       this.el.insertBefore(b.el, this.deck);

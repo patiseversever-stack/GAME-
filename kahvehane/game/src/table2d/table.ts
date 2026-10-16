@@ -171,6 +171,8 @@ export class Table2D {
   private paintTimer = 0;
   /** Deste/yığın değişince HUD'a haber ver (deste rozetinin yeri) */
   onDeck: (count: number, x: number, y: number) => void = () => {};
+  /** Yeni Pişti eli kuruldu (reset): masaya eklenen başka oyun katmanları (Blöf) kendini kapatır. */
+  onReset: () => void = () => {};
 
   /** Deste atlası hazır olunca çözülür (açılışta masa boş kartlarla kurulur, atlas arka planda çizilir). */
   ready: Promise<void> = Promise.resolve();
@@ -709,6 +711,7 @@ export class Table2D {
   // ───────── el akışı ─────────
   /** Yeni el: kartlar ekran dışına (sol), koltuk sayısına göre yerleşim. */
   reset(seats: 2 | 4 = this.n): void {
+    this.onReset();
     this.n = seats;
     this.stopWiggle();
     this.input = null;

@@ -18,7 +18,7 @@ import '../themes/frames.css';
 
 import type {CosmeticsListener, GameHud, HomeAction, ResultsData, Settings, Sounds} from './types';
 import type {Profile as GameProfile} from '../game/profile';
-import type {MatchSetup, Mode} from '../game/types';
+import type {Difficulty, Game, MatchSetup, Mode} from '../game/types';
 import {ANIM, enableActiveStates, enableSpringPress, h, q} from './dom';
 import {Fx} from './fx';
 import {HudView} from './hud';
@@ -76,12 +76,12 @@ export class Screens {
   }
 
   /** Ana ekran. Ayarlar/kurallar dönüşünde aynı ekran yeniden kurulmadan tazelenir. auto: test için kendiliğinden OYNA. */
-  async home(profile: GameProfile, auto?: {mode: Mode}): Promise<HomeAction> {
+  async home(profile: GameProfile, auto?: {game: Game; mode: Mode; difficulty?: Difficulty}): Promise<HomeAction> {
     if (this.homeView) this.homeView.refresh();
     else this.homeView = new HomeView(this.ctx, profile, (k, id) => this.onCosmeticsChanged(k, id), this.memo);
     this.openCurtain();
     const v = this.homeView;
-    if (auto) v.autoPlay(auto.mode);
+    if (auto) v.autoPlay(auto.game, auto.mode, auto.difficulty);
     const a = await v.wait();
     if (a.type === 'play') {
       this.homeView = null;
@@ -91,7 +91,7 @@ export class Screens {
     return a;
   }
 
-  /** Sinematik giriş (1'e 1 / 4 kişi / eşli); bitince çözülür. */
+  /** Sinematik giriş (1'e 1 / 3 kişi / 4 kişi / eşli; oyun adıyla); bitince çözülür. */
   versus(setup: MatchSetup, stake: number): Promise<void> {
     return versus(this.ctx, setup, stake);
   }
@@ -132,11 +132,12 @@ export class Screens {
 
   /** Her değişiklikte onChange çağrılır; pencere kapanınca çözülür. */
   async settings(s: Settings, onChange: (s: Settings) => void): Promise<void> {
-    if ((await settings(this.ctx, s, onChange, this.version)) === 'rules') await rules(this.ctx);
+    if ((await settings(this.ctx, s, onChange, this.version)) === 'rules') await rules(this.ctx, this.memo.game);
   }
 
-  rules(): Promise<void> {
-    return rules(this.ctx);
+  /** Nasıl Oynanır (sekmeler: Pişti | Blöf). game: açılacak sekme (verilmezse son oynanan). */
+  rules(game?: Game): Promise<void> {
+    return rules(this.ctx, game ?? this.memo.game);
   }
 
   /** day: 1..7, rewards: 7 gün. Toplanan miktarla çözülür (kapatılırsa 0). (Ana ekran kendi içinde kullanır; galeri için.) */

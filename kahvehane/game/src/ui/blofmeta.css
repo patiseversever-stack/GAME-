@@ -1,0 +1,65 @@
+/* =================== BLÖF: ana ekran dışı yüzeyler (kurallar, giriş, sonuç, profil) ===================
+   Oyun seçici (.kh-gsw) ve zorluk hapı (.kh-diff) home.css'te. Burada: Nasıl Oynanır sekmeleri/çizimleri, 3 kişilik karşılaşma girişi,
+   Blöf sonuç tablosu, profil istatistik seçicisi. Hepsi durağan; hareket yalnız transform/opacity (WAAPI). */
+
+/* ---------- Nasıl Oynanır: Pişti | Blöf ---------- */
+.kh-rules__tabs { margin: calc(var(--u) * -.1) 0 calc(var(--u) * .7); }
+.kh-steps[hidden] { display: none; }
+.kh-rules .kh-gsw__ind::before { transition: none; }
+/* söylenen değer: "3 tane 7" altın hapı */
+.kh-call { position: relative; display: inline-flex; align-items: baseline; gap: .22em; padding: .3em .6em .26em; border-radius: var(--r-pill); background: var(--btn1-fill); color: #fff; white-space: nowrap;
+  box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 #e57a00, inset 0 1.5px 0 rgba(255, 255, 255, .7); transform: rotate(-4deg); }
+.kh-call b { font-family: var(--font-display); font-weight: var(--w-display); font-size: calc(var(--u) * 1.15); text-shadow: var(--outline-thin); line-height: 1; }
+.kh-call i { font-style: normal; font-weight: var(--w-black); font-size: calc(var(--u) * .62); letter-spacing: .02em; text-shadow: var(--outline-thin); }
+.kh-call.is-pass { background: var(--btn4-fill); box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 #18207a, inset 0 1.5px 0 rgba(255, 255, 255, .35); }
+.kh-step__badge.is-red { background: var(--btn3-fill); box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 #b3001f, inset 0 1.5px 0 rgba(255, 255, 255, .55); }
+.kh-step__crown { position: relative; display: grid; place-items: center; width: calc(var(--u) * 2.6); height: calc(var(--u) * 2.6); color: #ffd23f; filter: drop-shadow(0 2px 0 var(--navy)); }
+.kh-step__crown .kh-i { width: 100%; height: 100%; }
+/* sekmeli sayfa: şerit için yer açmak üzere adımlar biraz sıkışır (iki sayfa da çoğu telefonda kaydırmasız sığar) */
+.kh-rules.has-tabs .kh-modal__head { margin-bottom: calc(var(--u) * .6); }
+.kh-rules.has-tabs .kh-steps { gap: calc(var(--u) * .45); }
+.kh-rules.has-tabs .kh-step { padding: calc(var(--u) * .3) calc(var(--u) * .4); }
+.kh-rules.has-tabs .kh-step__art { height: calc(var(--u) * 5.2); }
+.kh-rules.has-tabs .kh-step.is-wide { padding: calc(var(--u) * .4) calc(var(--u) * .7) calc(var(--u) * .45); }
+.kh-rules.has-tabs .kh-rules__foot { margin-top: calc(var(--u) * .7); gap: calc(var(--u) * .55); }
+@media (max-height: 700px) {
+  .kh-rules .kh-modal__head { margin-bottom: calc(var(--u) * .5); }
+  .kh-steps { gap: calc(var(--u) * .4); }
+  .kh-step__art { height: calc(var(--u) * 5); }
+  .kh-rules__foot { margin-top: calc(var(--u) * .6); gap: calc(var(--u) * .5); }
+}
+
+/* ---------- 3 kişilik karşılaşma girişi (Blöf): üç eğik şerit ---------- */
+.kh-vs__mode { display: flex; align-items: center; gap: .5em; }
+.kh-vs__mode .kh-gico { width: 1.15em; height: 1.15em; filter: none; }
+.kh-vs.is-1v1 .kh-vs__mode { display: flex; } /* iki oyun var: 1'e 1'de de oyun adı görünür */
+.kh-vs.is-3 .kh-vs__band { top: calc(var(--k) * 33.34% - 5%); height: 43%; }
+.kh-vs.is-3 .kh-vs__slot { top: calc(var(--k) * 33.34%); height: 33.34%; }
+.kh-vs.is-3 .kh-vs__seams i { top: calc(var(--k) * 33.34% - 2px); }
+.kh-vs.is-3 .kh-vs__slot .kh-vs__bust { height: 112%; }
+.kh-vs.is-3 .kh-vs__slot.is-k0 .kh-vs__bust { height: 100%; }
+.kh-vs.is-3 .kh-vs__emblem, .kh-vs.is-3 .kh-vs__ring, .kh-vs.is-3 .kh-vs__sparks { top: 66.67%; } /* VS: rakiplerle senin aranda */
+.kh-vs.is-3 .kh-vs__emblem { width: calc(var(--u) * 7.4); height: calc(var(--u) * 7.4); margin: calc(var(--u) * -3.7) 0 0 calc(var(--u) * -3.7); z-index: 8; }
+.kh-vs.is-3 .kh-vs__emblem .kh-title { font-size: calc(var(--u) * 3); }
+.kh-vs.is-3 .kh-vs__stake { top: auto; bottom: calc(33.34% + var(--u) * .2); right: auto; left: calc(var(--u) * 1); z-index: 8; }
+.kh-vs.is-3 .kh-vs__mode { margin-left: calc(var(--u) * 1); }
+
+/* ---------- sonuç: oyun adı kurdelesi, 3 kolonlu tablo ---------- */
+.kh-results__head .kh-results__kicker { display: inline-flex; align-items: center; gap: .55em; }
+.kh-results__head .kh-results__kicker .kh-gico { width: 1.35em; height: 1.35em; filter: none; }
+.kh-sc.is-c3 { --cw: calc(var(--u) * 4.2); }
+.kh-sc.is-c3 .kh-sc__row { --n: 3; }
+.kh-results.is-m3.is-lose .kh-results__title { font-size: calc(var(--u) * 2.8); }
+.kh-results.is-blof .kh-sc__row.is-total > b { font-size: calc(var(--u) * 1.6); }
+
+/* ---------- profil: istatistik bölümünde küçük oyun seçici ---------- */
+.kh-statsec .kh-coll__hd { align-items: center; gap: .7em; }
+.kh-gsw.is-mini { width: calc(var(--u) * 11.6); margin-left: auto; flex: none; padding: 2px; }
+.kh-gsw.is-mini .kh-gsw__ind { left: 2px; top: 2px; bottom: 2px; width: calc((100% - 4px) / 2); }
+.kh-gsw.is-mini .kh-gbtn { min-height: calc(var(--u) * 2.1); gap: .3em; }
+.kh-gsw.is-mini .kh-gbtn span { font-size: calc(var(--u) * .82); }
+.kh-gsw.is-mini .kh-gico { width: calc(var(--u) * 1.15); height: calc(var(--u) * 1.15); }
+.kh-statsec .kh-streak { flex: none; white-space: nowrap; }
+.kh-statsec .kh-label { flex: none; }
+.kh-results__head .kh-results__kicker { position: relative; z-index: 1; margin-bottom: calc(var(--u) * .3); letter-spacing: .16em; }
+.kh-results .kh-results__head { margin-top: calc(var(--u) * -.45); }
