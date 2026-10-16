@@ -91,6 +91,13 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
+**16 Ekim öğleden sonra — "Yeni market + yağlı boya" (sürüm 11):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+- **Yükleme ekranı ~3 sn** (aşamalı çubuk; deste atlası + ses motoru arkada hazırlanır). **VS ekranı ~3,2 sn**: darbe halkası, kıvılcım, parıltı, "Masa kuruluyor → Hazır!", perde açılışı (`src/ui/intro.ts`).
+- **Market baştan** (`src/ui/shop.ts`, `showcase.ts`, `tryon.ts`, `sets.ts`, `previews.ts`, `deckpv.ts`): Öne Çıkan (Günün Teklifi, Özel Setler, Yeni Gelenler, Efsanevi Vitrin, Hemen Alabileceklerin), sekme başına vitrin + ızgara + "Sende", Yeni/Popüler rozetleri, tema setleri (%20–30), etkileşimli ürün penceresi (deste: kaydır/çevir/ışık), DENE (ürünle mini masa: kart at, pişti, efekt), jeton yetmeyince "N EKSİK" + kazanma yolları. Deste önizlemeleri derlemede pişirilir: `node scripts/bake-decks.mjs` (deste ekleyince/değiştirince tekrar çalıştır), efekt küçük resimleri `scripts/bake-fx.mjs`.
+- **Yeni içerik** (`src/skins/`, `src/themes/`, `src/ui/fx.ts`): desteler Ebru, Boğaz Gecesi, Kapadokya Şafağı (yağlı boya: `src/themes/oil.ts`, `scenes.ts`, `src/skins/oilcard.ts`); masalar Ebru Salonu, Boğaz Gecesi, Kapadokya Şafağı (oyun alanı koyu/sakin — okunurluk kuralı); 7 çerçeve (Sultan Tacı, Mücevher, Buz Kristali, Neon Halka, Ebru, Kapadokya Balonları, Nazar); 5 pişti efekti (Nazar, Lale, Şimşek, Davul Zurna, Girdap). Kullanıcı Hazine ve Neon deste/masalarını reddetti → kaldırıldı. Koleksiyon 40 parça.
+- **Performans:** masa kartları tek atlas görseli (çizim geçişi/kare 108 → 3); çerçeve animasyonları akıcı (steps yok), market sekme geçişi p95 33 ms (4× yavaş CPU), Desteler ilk açılış en uzun görev 1015 → 57 ms; boşta kare/sn ≈ 0. Ölçüm: `scripts/perf.mjs`, `jank.mjs`, `market-perf.mjs`. Gerçek telefonda ölçülmedi.
+- **Kalanlar:** eski 4 deste kullanılmayınca belleği bırakmıyor; pişti damgası ışınlarında maske; yeni efektlerin oyun içi kahraman arka deseni varsayılan; seslendirme (ElevenLabs anahtarı), çevrimiçi, uygulamaya gömme.
+
 **16 Ekim öğleden sonra — "Sakin ve akıcı" turu (sürüm 9):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
 - **Sadeleşen ana ekran:** karakter + iki yuvarlak buton (günlük ödül, bedava sandık) + tek satır "Çevrimiçi" + tek maç kartı (1'e 1 · 4 Kişi · Eşli, rakip/masa şeridi, 4 bahis) + OYNA. "Arkadaşla" artık Çevrimiçi'nin içinde ("Arkadaşınla" sekmesi). (`src/ui/lobby.ts`, `home.css`)
 - **Karakter ekranlarında tek resim:** poz/duygu değişimi ve çapraz geçiş yok (hayalet yüz bitti); yalnız nefes. Konuşma balonu hep yüzün üstünde/yanında (`placeBubble`), sonuç ekranında küçük yüzlerin altında. (`src/ui/parts.ts`, `onboarding.ts`, `results.css`)
