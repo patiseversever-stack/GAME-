@@ -28,7 +28,7 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
   const rnd = mulberry(0xeb2);
   const ops: MOp[] = [];
   // taraklı ebru: sık battal → yatay gelgit → ince dikey tarak → dalga
-  battal(ops, W, H, rnd, [1, 2, 4, 3, 0, 5, 6, 7, 1, 2, 4, 8], Math.round((W * H) / 560), 11 * u, 21 * u);
+  battal(ops, W, H, rnd, [1, 2, 4, 3, 0, 5, 6, 7, 1, 2, 4, 8], Math.round((W * H) / 300), 11 * u, 21 * u);
   gelgit(ops, true, 15 * u, 22 * u, 5 * u);
   ops.push({k: 'tine', x: 0, y: 0, dx: 0, dy: 1, a: 12 * u, l: 2.5 * u, s: 10 * u});
   ops.push({k: 'wave', dx: 1, dy: 0, A: 5 * u, f: 0.05 / u, ph: 0});

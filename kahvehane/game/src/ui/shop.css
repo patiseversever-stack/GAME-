@@ -142,7 +142,7 @@
 .kh-pv__table .kh-ts__pile .kh-ts__c { width: 30%; }
 .kh-pv__table .kh-ts__deck .kh-ts__c { width: 23%; left: 7%; }
 .kh-pv__fx { position: absolute; inset: 0; display: block; }
-.kh-pv__fxs { position: absolute; inset: 0; display: block; opacity: .85; }
+.kh-pv__fxs { position: absolute; inset: 0; display: block; opacity: .62; }
 .kh-pv__fxs .kh-ts__ring, .kh-pv__fxs .kh-ts__glow { top: 58%; }
 .kh-pv__fxs .kh-ts__pile .kh-ts__c { top: 58%; width: 24%; }
 .kh-pv__fxs .kh-ts__deck { display: none; }

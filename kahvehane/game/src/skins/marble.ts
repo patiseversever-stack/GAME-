@@ -111,6 +111,51 @@ export function* marble(o: MarbleOpts): Job<HTMLCanvasElement> {
     PR[i * 3 + 1] = c[1];
     PR[i * 3 + 2] = c[2];
   });
+  // Uzun damla dizileri (battal) için ızgara: piksel yalnız yakınındaki damlaları dolaşır (5-10× hız).
+  // Dizi boyunca nokta biraz kayar: hücre listesi `margin` payıyla kurulur.
+  const runOf = new Int32Array(n).fill(-1); // dizinin SON elemanında: dizi numarası
+  interface Grid {
+    i0: number;
+    x0: number;
+    y0: number;
+    G: number;
+    nx: number;
+    ny: number;
+    start: Int32Array;
+    list: Int32Array;
+  }
+  const grids: Grid[] = [];
+  for (let i = 0; i < n; ) {
+    if (T[i] !== K.Drop) {
+      i++;
+      continue;
+    }
+    let j = i;
+    let rmax = 0;
+    while (j < n && T[j] === K.Drop) rmax = Math.max(rmax, F[j++ * 10 + 2]);
+    if (j - i >= 32) {
+      const margin = rmax * 2.5;
+      const pad = FAR1 * rmax + margin;
+      const G = Math.max(12 * U, rmax * 1.5);
+      const x0 = -pad, y0 = -pad;
+      const nx = Math.ceil((w * U + 2 * pad) / G) + 1, ny = Math.ceil((h * U + 2 * pad) / G) + 1;
+      const cnt = new Int32Array(nx * ny + 1);
+      const each = (k: number, fn: (c: number) => void): void => {
+        const b = k * 10, R = FAR1 * F[b + 2] + margin;
+        const ax = Math.max(0, Math.floor((F[b] - R - x0) / G)), bx = Math.min(nx - 1, Math.floor((F[b] + R - x0) / G));
+        const ay = Math.max(0, Math.floor((F[b + 1] - R - y0) / G)), by = Math.min(ny - 1, Math.floor((F[b + 1] + R - y0) / G));
+        for (let cy = ay; cy <= by; cy++) for (let cx = ax; cx <= bx; cx++) fn(cy * nx + cx);
+      };
+      for (let k = i; k < j; k++) each(k, c => cnt[c + 1]++);
+      for (let c = 0; c < nx * ny; c++) cnt[c + 1] += cnt[c];
+      const fill = cnt.slice();
+      const list = new Int32Array(cnt[nx * ny]);
+      for (let k = i; k < j; k++) each(k, c => (list[fill[c]++] = k));
+      runOf[j - 1] = grids.length;
+      grids.push({i0: i, x0, y0, G, nx, ny, start: cnt, list});
+    }
+    i = j;
+  }
   const [cv, g] = makeCanvas(w, h);
   const img = g.createImageData(w, h);
   const D = img.data;
@@ -121,9 +166,34 @@ export function* marble(o: MarbleOpts): Job<HTMLCanvasElement> {
       if (keep && !keep(x, y)) continue;
       let px = (x + 0.5) * U, py = (y + 0.5) * U;
       let wt = 1, ar = 0, ag = 0, ab = 0, sc = 1;
-      for (let i = n - 1; i >= 0 && wt > 0.004; i--) {
-        const b = i * 10;
-        switch (T[i]) {
+      let i = n - 1;
+      let gl: Int32Array | null = null, li = 0, lend = 0, gi0 = 0;
+      while (wt > 0.004) {
+        let op: number;
+        if (gl) {
+          if (li < lend) {
+            gl = null;
+            i = gi0 - 1;
+            continue;
+          }
+          op = gl[li--];
+        } else {
+          if (i < 0) break;
+          const ri = runOf[i];
+          if (ri >= 0) {
+            const G = grids[ri];
+            const cx = clamp(Math.floor((px - G.x0) / G.G), 0, G.nx - 1), cy = clamp(Math.floor((py - G.y0) / G.G), 0, G.ny - 1);
+            const c = cy * G.nx + cx;
+            gl = G.list;
+            lend = G.start[c];
+            li = G.start[c + 1] - 1;
+            gi0 = G.i0;
+            continue;
+          }
+          op = i--;
+        }
+        const b = op * 10;
+        switch (T[op]) {
           case K.Drop: {
             const cx = F[b], cy = F[b + 1], r = F[b + 2], r2 = F[b + 4];
             const dx = px - cx, dy = py - cy;
