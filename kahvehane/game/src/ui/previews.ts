@@ -283,6 +283,9 @@ export function warmPreviews(ids: {decks: string[]; tables: string[]; frames: st
     ...ids.frames.map(f => `<span class="kh-ava kh-frame kh-frame--${esc(f)} kh-warm__a"><span class="kh-ava__clip"></span></span>`),
   ];
   const start = (): void => {
+    // Nunito 600'ün Türkçe (latin-ext) dilimi ilk koleksiyon açılışında yükleniyordu: yüklenince Nunito kullanan tüm
+    // metin yeniden yerleşir (açılış kayması sırasında ~40 ms kare). Boşta önceden yükle.
+    idleJob(() => void document.fonts?.load('600 16px Nunito', 'ğüşıöçĞÜŞİÖÇ').catch(() => undefined));
     document.body.append(box);
     for (const g of groups) idleJob(() => box.insertAdjacentHTML('beforeend', g));
     rasterFrames(ids.frames);

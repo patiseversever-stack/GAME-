@@ -146,9 +146,13 @@ function* paint(w: number, h: number, dpr: number): Job<HTMLCanvasElement> {
 
   // ── ışık: güneş çevresi, balonların ışıklı yanları, bacaların güneşe bakan kenarları ──
   const dabs = new Oil();
-  for (let i = 0; i < 26; i++) {
-    const rr = sun.r * Math.sqrt(rnd()) * 0.9, a = rnd() * Math.PI * 2, x = sun.x + Math.cos(a) * rr, y = sun.y + Math.sin(a) * rr;
-    dabs.add([x - 3 * U, y, x + 3 * U, y + (rnd() - 0.5) * U], (2.4 + rnd() * 1.4) * U, rnd() < 0.5 ? [255, 250, 226] : [255, 236, 180], 0.2);
+  // güneş: merkez çevresinde teğet, kalın açık darbeler — yalnız gökte (önündeki peri bacalarının üstüne taşmaz)
+  for (let i = 0; i < 40; i++) {
+    const rr = sun.r * (0.15 + Math.sqrt(rnd()) * 0.8), a = rnd() * Math.PI * 2, x = sun.x + Math.cos(a) * rr, y = sun.y + Math.sin(a) * rr;
+    if (idAt(ids, x, y) !== 0 || calm(x, y) > 0.6) continue;
+    const da = (5 * U) / rr, pts: number[] = [];
+    for (let q = 0; q <= 3; q++) pts.push(sun.x + Math.cos(a + (da * q) / 3) * rr, sun.y + Math.sin(a + (da * q) / 3) * rr);
+    dabs.add(pts, (2.2 + rnd() * 1.2) * U, rnd() < 0.5 ? [255, 250, 226] : [255, 236, 180], 0.2);
   }
   lightDabs(dabs, ref, rnd, 0, 0, W, hz + H * 0.06, 205, 2.2 * U, calm);
   dabs.flush(g);

@@ -13,6 +13,13 @@ import {due, runJobSync, type Job} from '../skins/kit';
 import {clamp, makeCanvas, mix, mulberry, smooth, spotOf, type Ctx, type RGB, type Rnd} from './paint';
 
 // ───────────────────────── referans ─────────────────────────
+/** Okunacak (getImageData) küçük tuval: CPU'da tutulur, GPU'dan geri okuma beklemesi olmaz. */
+function readCanvas(w: number, h: number): [HTMLCanvasElement, Ctx] {
+  const c = document.createElement('canvas');
+  c.width = Math.max(1, Math.round(w));
+  c.height = Math.max(1, Math.round(h));
+  return [c, c.getContext('2d', {willReadFrequently: true})!];
+}
 export interface Ref {
   w: number;
   h: number;
@@ -24,7 +31,7 @@ export type Calm = (x: number, y: number) => number;
 
 /** Referans sahneyi çiz: `draw` tasarım biriminde çalışır. `calm` + `tone` verilirse sakin bölgeler bastırılır (dilimli). */
 export function* makeRefJ(W: number, H: number, k: number, draw: (g: Ctx) => void, calm?: Calm, tone: RGB = [10, 14, 40], amount = 0.62): Job<Ref> {
-  const [c, g] = makeCanvas(Math.ceil(W * k), Math.ceil(H * k));
+  const [c, g] = readCanvas(Math.ceil(W * k), Math.ceil(H * k));
   g.save();
   g.scale(k, k);
   draw(g);
@@ -57,7 +64,7 @@ export const makeRef = (W: number, H: number, k: number, draw: (g: Ctx) => void,
 
 /** Nesne kimlik haritası: `draw` her nesneyi kendi kimlik rengiyle (R kanalı = kimlik) doldurur; yumuşatma kapalı. */
 export function makeIdMap(W: number, H: number, k: number, draw: (g: Ctx, id: (n: number) => string) => void): Ref {
-  const [c, g] = makeCanvas(Math.ceil(W * k), Math.ceil(H * k));
+  const [c, g] = readCanvas(Math.ceil(W * k), Math.ceil(H * k));
   g.imageSmoothingEnabled = false;
   g.save();
   g.scale(k, k);
@@ -147,31 +154,31 @@ function thin(pts: number[], n: number): number[] {
   o.push(pts[n * 2 - 2], pts[n * 2 - 1]);
   return o;
 }
-/** Akım çizgisini sivri uçlu fırça çokgeni olarak yola ekler (ortası dolgun). */
+/** Akım çizgisini sivri uçlu fırça çokgeni olarak yola ekler (ortası dolgun). Ara dizi ayırmaz (iki geçiş). */
 function poly(p: Path2D, pts: number[], n: number, hw: number, ox: number, oy: number, taper: number): void {
-  const L: number[] = [], R: number[] = [];
-  for (let i = 0; i < n; i++) {
-    const a = Math.max(0, i - 1), z = Math.min(n - 1, i + 1);
-    let dx = pts[z * 2] - pts[a * 2], dy = pts[z * 2 + 1] - pts[a * 2 + 1];
-    const d = Math.sqrt(dx * dx + dy * dy) || 1;
-    dx /= d;
-    dy /= d;
-    const t = n === 1 ? 0.5 : i / (n - 1);
-    const w = hw * (1 - taper * 0.45 + taper * 0.45 * Math.sin(Math.PI * t));
-    const x = pts[i * 2] + ox, y = pts[i * 2 + 1] + oy;
-    L.push(x - dy * w, y + dx * w);
-    R.push(x + dy * w, y - dx * w);
-  }
   const x0 = pts[0] + ox, y0 = pts[1] + oy, x1 = pts[n * 2 - 2] + ox, y1 = pts[n * 2 - 1] + oy;
   let ex = pts[2] - pts[0], ey = pts[3] - pts[1];
   let e = Math.sqrt(ex * ex + ey * ey) || 1;
   p.moveTo(x0 - (ex / e) * hw * 0.6, y0 - (ey / e) * hw * 0.6);
-  for (let i = 0; i < L.length; i += 2) p.lineTo(L[i], L[i + 1]);
-  ex = pts[n * 2 - 2] - pts[n * 2 - 4];
-  ey = pts[n * 2 - 1] - pts[n * 2 - 3];
-  e = Math.sqrt(ex * ex + ey * ey) || 1;
-  p.lineTo(x1 + (ex / e) * hw * 0.75, y1 + (ey / e) * hw * 0.75);
-  for (let i = R.length - 2; i >= 0; i -= 2) p.lineTo(R[i], R[i + 1]);
+  const k0 = 1 - taper * 0.45, k1 = taper * 0.45, inv = n === 1 ? 0 : 1 / (n - 1);
+  for (let side = 1; side >= -1; side -= 2) {
+    if (side < 0) {
+      ex = pts[n * 2 - 2] - pts[n * 2 - 4];
+      ey = pts[n * 2 - 1] - pts[n * 2 - 3];
+      e = Math.sqrt(ex * ex + ey * ey) || 1;
+      p.lineTo(x1 + (ex / e) * hw * 0.75, y1 + (ey / e) * hw * 0.75);
+    }
+    for (let q = 0; q < n; q++) {
+      const i = side > 0 ? q : n - 1 - q;
+      const a = i > 0 ? i - 1 : 0, z = i < n - 1 ? i + 1 : n - 1;
+      let dx = pts[z * 2] - pts[a * 2], dy = pts[z * 2 + 1] - pts[a * 2 + 1];
+      const d = Math.sqrt(dx * dx + dy * dy) || 1;
+      dx /= d;
+      dy /= d;
+      const w = hw * (k0 + k1 * Math.sin(Math.PI * (n === 1 ? 0.5 : i * inv))) * side;
+      p.lineTo(pts[i * 2] + ox - dy * w, pts[i * 2 + 1] + oy + dx * w);
+    }
+  }
   p.closePath();
 }
 
@@ -361,7 +368,7 @@ export function tableCalm(W: number, H: number): Calm {
 // ───────────────────────── küçük resimler (deste kartları) ─────────────────────────
 /** Şekil maskesi: `draw` doldurduğu yer 1, gerisi 0 (tasarım biriminde, en yakın piksel). */
 export function maskOf(W: number, H: number, draw: (g: Ctx) => void, k = 0.5): (x: number, y: number) => number {
-  const [c, g] = makeCanvas(Math.ceil(W * k), Math.ceil(H * k));
+  const [c, g] = readCanvas(Math.ceil(W * k), Math.ceil(H * k));
   g.scale(k, k);
   g.fillStyle = '#fff';
   draw(g);

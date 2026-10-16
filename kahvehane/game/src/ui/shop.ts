@@ -15,7 +15,7 @@ import {ANIM, EASE, Scope, bump, center, clamp, esc, fmt, h, hms, play, q, shake
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toast, type ModalHandle} from './parts';
-import {fanHtml, frameJob, fxStillHtml, mountFx, mountFxStill, paintTableLater, tableSceneHtml, warmPreviews, type FxLoop} from './previews';
+import {fanHtml, frameJob, fxStillHtml, idleJob, mountFx, mountFxStill, paintTableLater, tableSceneHtml, warmPreviews, type FxLoop} from './previews';
 import {BADGE_NAME, RANK, badgeOf, setOf, setById, setPrice, shopSets, type ShopSet} from './sets';
 import {Spotlight, glint, glintHtml, mountDeckViewer} from './showcase';
 import {deckOr} from './deckpv';
@@ -184,6 +184,13 @@ const secHtml = (title: string, sub = '', icon = ''): string =>
 type Chunk = (() => string) | {into: string; html: () => string};
 /** İki parçayı tek parça yap (ilk ekranı doldurmak için) */
 const join2 = (a: Chunk | undefined, b: Chunk | undefined): Chunk => () => (a ? (a as () => string)() : '') + (b ? (b as () => string)() : '');
+/** Parça dizgesi bir kez üretilir: sıradaki parçalar boşta önceden hazırlanır, ekleme karesinde yalnız ayrıştırma kalır */
+const once = (f: () => string): (() => string) => {
+  let s: string | undefined;
+  return () => (s ??= f());
+};
+const memo = (c: Chunk): Chunk => (typeof c === 'function' ? once(c) : {into: c.into, html: once(c.html)});
+const chunkStr = (c: Chunk): string => (typeof c === 'function' ? c() : c.html());
 
 interface Panel {
   el: HTMLElement;
@@ -319,7 +326,7 @@ export class ShopPage implements Page {
     if (!p || p.sig !== sig) {
       const el = h('div', `kh-shop__panel is-${this.tab}`);
       // ilk ekran hemen, kalanı kare kare (sekme açılışı tek büyük görev olmasın)
-      const chunks = this.panelChunks(this.tab);
+      const chunks = this.panelChunks(this.tab).map(memo);
       el.innerHTML = (chunks[0] as () => string)();
       if (p) p.el.replaceWith(el);
       else this.body.append(el);
@@ -328,6 +335,8 @@ export class ShopPage implements Page {
       fresh = true;
       // kalan parçalar giriş kayması BİTTİKTEN sonra (sayfa: 380+60 ms, alt sekme: 300 ms) ve gerektikçe eklenir
       const pp = p;
+      // kayma sürerken (ana iş parçacığı boşken) ilk bekleyen parçaların dizgeleri hazırlanır
+      this.prime(pp, 2);
       const go = (): void => {
         pp.ready = true;
         this.fill();
@@ -365,7 +374,8 @@ export class ShopPage implements Page {
       this.fillQueued = false;
       if (!this.scope.alive || !p.el.isConnected || this.panels.get(this.tab) !== p || !this.visible) return;
       const b = this.body;
-      const need = b.scrollHeight - b.scrollTop - b.clientHeight < b.clientHeight * this.fillMargin || b.scrollHeight < p.scroll + b.clientHeight * 1.5;
+      // görünen ekran dolana dek (kaydırırken bir boy önden); yeniden kurulan panelde eski kaydırma yerine varana dek
+      const need = b.scrollHeight - b.scrollTop - b.clientHeight < b.clientHeight * this.fillMargin || (p.scroll > 0 && b.scrollHeight < p.scroll + b.clientHeight * 1.5);
       if (!need) return void (this.fillMargin = 0);
       const c = p.pending.shift()!;
       if (typeof c === 'function') p.el.insertAdjacentHTML('beforeend', c());
@@ -375,8 +385,14 @@ export class ShopPage implements Page {
       }
       hydrate(p.el);
       if (p.scroll && b.scrollTop !== p.scroll && b.scrollHeight >= p.scroll + b.clientHeight) b.scrollTop = p.scroll;
+      this.prime(p, 1);
       this.fill();
     });
+  }
+
+  /** Sıradaki n parçanın dizgesini boşta üret (ekleme karesi kısa kalsın) */
+  private prime(p: Panel, n: number): void {
+    for (const c of p.pending.slice(0, n)) idleJob(() => this.scope.alive && this.panels.get(this.tab) === p && void chunkStr(c));
   }
 
   private panelChunks(tab: ShopTab): Chunk[] {

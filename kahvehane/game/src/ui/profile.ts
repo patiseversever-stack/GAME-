@@ -26,7 +26,7 @@ export class CollectionPage implements Page {
     onAct(this.scope, this.el, (a, b) => this.act(a, b));
     let raf = 0;
     this.scope.on(this.inner, 'scroll', () => {
-      if (!raf) raf = requestAnimationFrame(() => ((raf = 0), this.fillRows()));
+      if (!raf) raf = requestAnimationFrame(() => ((raf = 0), (this.rowMargin = 0.9), this.fillRows()));
     }, {passive: true});
     this.scope.add(() => cancelAnimationFrame(raf));
     // içerik ilk show()'da kurulur
@@ -40,6 +40,8 @@ export class CollectionPage implements Page {
   private rowsReady = false;
   private rowQueued = false;
   private rowHtml: (row: HTMLElement) => void = () => undefined;
+  /** Satır ekrana ne kadar (ekran boyu cinsinden) yaklaşınca dolsun: açılışta 0 (yalnız görünen), kaydırınca önden */
+  private rowMargin = 0;
   private fillRows(): void {
     if (!this.rowsReady || this.rowQueued || !this.rows.length) return;
     this.rowQueued = true;
@@ -48,7 +50,7 @@ export class CollectionPage implements Page {
       const row = this.rows[0];
       if (!row || !row.isConnected) return void (this.rows = []);
       const view = this.inner.getBoundingClientRect();
-      if (view.height && row.getBoundingClientRect().top > view.bottom + view.height * 0.9) return;
+      if (view.height && row.getBoundingClientRect().top > view.bottom + view.height * this.rowMargin) return;
       this.rows.shift();
       this.rowHtml(row);
       this.fillRows();
@@ -182,6 +184,7 @@ export class CollectionPage implements Page {
       this.fillRows();
     }, delay);
     this.rowsReady = sync;
+    this.rowMargin = 0;
     this.rows = Array.from(this.inner.querySelectorAll<HTMLElement>('.kh-ckind__row'));
     this.rowHtml = (row: HTMLElement): void => {
         const kd = row.dataset.kind as ItemKind;
