@@ -1,6 +1,7 @@
 // Ortak parçalar: arena zemini, kod çizimi logo, modal iskeleti, bildirim, seviye taşı/jeton kapsülü HTML'i,
 // karakter avatarı (çerçeveli), canlı portre (tek görsel + nefes; poz = anında değişim), balon yerleşimi + daktilo,
 // kaydırmalı vitrin (momentumlu), alt pencere, dört renk perde geçişi.
+import ARENA_RAYS from './img/arena-rays.webp';
 import type {Sounds} from './types';
 import {EASE, Scope, ANIM, clamp, esc, fmt, h, play, q, rnd} from './dom';
 import {ASSETS} from './assets';
@@ -23,8 +24,12 @@ if (typeof document !== 'undefined') document.documentElement.style.setProperty(
  * Arena zemini: merkezde mavi ışık → kenarda gece mavisi, yavaş dönen ışık hüzmeleri (yalnız transform),
  * düşük kontrastlı dağınık takım deseni, kenar karartması. `cls` ile ekran özel ayar (ör. ışık merkezi).
  */
+/**
+ * Arena zemini. Işınlar: sönme maskesi işlenmiş küçük görsel (768 px, 26 KB) — tarayıcı onu doğrudan GPU dokusu olarak
+ * kullanır ve yalnız döndürür (maske/filtre/yeniden çizim yok; boşta da dönmesi ucuz). Dönen katmanı calm.ts durdurmaz (kh-keep).
+ */
 export const arenaHtml = (cls = ''): string =>
-  `<div class="kh-arena ${cls}"><i class="kh-arena__rays"></i><i class="kh-arena__suits"></i><i class="kh-arena__vig"></i></div>`;
+  `<div class="kh-arena ${cls}"><img class="kh-arena__rays kh-keep" src="${ARENA_RAYS}" alt="" decoding="async" draggable="false"><i class="kh-arena__suits"></i><i class="kh-arena__vig"></i></div>`;
 
 let wmSeq = 0;
 /**

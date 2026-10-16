@@ -2,7 +2,6 @@
 .kh-ob { z-index: 50; background: #02030f; }
 .kh-ob .kh-arena { --arena-cy: 46%; }
 /* zemin hüzmeleri durağan (dev maskeli katman dönmez); logodaki kıvılcım döngüleri bu ekranda kapalı */
-.kh-ob .kh-arena__rays { animation: none; will-change: auto; }
 .kh-ob .kh-wm__spark { display: none; }
 /* hareket eden başlık/logoda filtre gölgesi yok (g3 yazının kendi gölgesi yeter; logonun konturu var) */
 .kh-ob .kh-wm__svg, .kh-gal__title, .kh-name__title, .kh-welc__text .kh-title { filter: none; }

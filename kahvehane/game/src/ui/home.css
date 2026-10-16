@@ -2,7 +2,6 @@
 .kh-home { z-index: 10; background: var(--bg-app); }
 .kh-home .kh-arena { --arena-cy: 30%; }
 /* zemin ışık hüzmeleri durağan: dev maskeli katmanın dönmesi her karede megapikselleri yeniden birleştiriyordu */
-.kh-home .kh-arena__rays { animation: none; will-change: auto; }
 /* üst çubuktaki çerçevenin parıltı döngüsü ana ekranda kapalı (boşta tek kare bile üretmesin) */
 .kh-home .kh-top__ava::after { animation: none; }
 /* boştaki düğmeler kalıcı katman olmasın (basış yaylanması WAAPI ile zaten anlık katmana alınır) */

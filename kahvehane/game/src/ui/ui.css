@@ -47,8 +47,9 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 
 /* ---------- arena zemini (açılış, lobi, giriş, sonuç) ---------- */
 .kh-arena { position: absolute; inset: 0; overflow: hidden; pointer-events: none; background: var(--bg-arena); }
-.kh-arena__rays { position: absolute; left: 50%; top: var(--arena-cy, 40%); width: 180vmin; height: 180vmin; margin: -90vmin 0 0 -90vmin; border-radius: 50%;
-  background: var(--arena-rays); -webkit-mask: var(--arena-rays-mask); mask: var(--arena-rays-mask); }
+/* ışınlar: işlenmiş görsel (maske yok), yavaş ve akıcı döner; yalnız transform → bileşimci */
+.kh-arena__rays { position: absolute; left: 50%; top: var(--arena-cy, 40%); width: 180vmin; height: 180vmin; max-width: none; margin: -90vmin 0 0 -90vmin; display: block;
+  pointer-events: none; user-select: none; -webkit-user-drag: none; will-change: transform; animation: kh-spin 90s linear infinite; }
 .kh-arena__suits { position: absolute; inset: 0; background-image: var(--suit-tile); background-size: calc(var(--u) * 15.4) calc(var(--u) * 15.4);
   background-position: 50% 0; opacity: var(--arena-suits-opacity); }
 .kh-arena__vig { position: absolute; inset: 0; background: var(--bg-arena-vig); }

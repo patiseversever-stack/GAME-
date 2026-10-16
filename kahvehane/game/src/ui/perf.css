@@ -2,7 +2,7 @@
    Neden: büyük maskeli katmanların sürekli dönmesi her karede megapiksel birleştirir ve ana iş parçacığında yeniden boyama
    tetikler (ölçüm: Görevler sayfasında 233 boyama/sn). Işın hüzmeleri statiktir; küçük süslemeler steps() ile seyrek çizilir;
    geri kalan sonsuz döngüleri src/platform/calm.ts boşta/düşük cihazda duraklatır. */
-.kh-rays, .kh-arena__rays, .kh-deal__rays, .kh-hero2__rays, .kh-gc__rays::before { animation: none !important; will-change: auto !important; }
+.kh-rays, .kh-deal__rays, .kh-hero2__rays, .kh-gc__rays::before { animation: none !important; will-change: auto !important; }
 /* küçük süs döngüleri: değer değişmedikçe kare üretilmez */
 .kh-quests__hero img { animation-timing-function: steps(12) !important; }
 .kh-hw.is-ready .kh-hw__ico img { animation-timing-function: steps(13) !important; }

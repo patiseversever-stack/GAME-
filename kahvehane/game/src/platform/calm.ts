@@ -51,8 +51,13 @@ export function initCalm(o: {always: boolean; idleMs?: number}): void {
       /* animasyon kaldırılmış */
     }
   };
+  /** .kh-keep: bilerek hep açık kalan ucuz döngüler (yalnız transform; ör. arena ışınları) — sakin modda da durmaz */
+  const always = (a: Animation): boolean => {
+    const t = (a.effect as KeyframeEffect | null)?.target as Element | null | undefined;
+    return !!t && !!t.closest?.('.kh-keep');
+  };
   const pause = (a: Animation, force: boolean): void => {
-    if (a.playState !== 'running' || !isLoop(a)) return;
+    if (a.playState !== 'running' || !isLoop(a) || always(a)) return;
     if (!force && essential(a)) return;
     a.pause();
     paused.add(a);
