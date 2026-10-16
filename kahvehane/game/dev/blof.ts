@@ -21,7 +21,7 @@ import {deckById} from '../src/skins/index';
 import {tableById} from '../src/themes/tables';
 import {Table2D} from '../src/table2d/table';
 import {BlofTable, type BlofSounds} from '../src/table2d/blofTable';
-import {BlofHud} from '../src/ui/blofHud';
+import {BlofHud, claimText} from '../src/ui/blofHud';
 import {Sfx} from '../src/audio/sfx';
 import {VoicePlayer} from '../src/audio/voice';
 import {Fx} from '../src/ui/fx';
@@ -214,7 +214,7 @@ if (!scene) {
     t.onSelect = ids => ui.setBar({mode: 'open', rank: ui.picking ? null : rank, sel: ids.length, canPass: false});
   } else if (scene === 'window') {
     hud.setTurn(-1);
-    hud.say('3 tane 7!', null, 4000, 1);
+    hud.say(claimText(3, rank) + '!', null, 4000, 1);
     ui.setBar({mode: 'wait', rank, sel: 0, canPass: false});
     ui.openBlof(5000, {letGo: true});
     t.setPileTap(true, 5000);
@@ -228,7 +228,7 @@ if (!scene) {
     const other = notMine.filter(c => rankOf(c) !== rank);
     const cards = lie ? [sameRank[0], other[0], sameRank[1] ?? other[1]].slice(0, m) : sameRank.slice(0, m);
     await t.play(liar, m);
-    hud.say(`${m} tane ${rank}!`, null, 1400, liar);
+    hud.say(claimText(m, rank) + '!', null, 1400, liar);
     ui.setPile(pileN + m);
     await new Promise(r => setTimeout(r, 900));
     g.step = 'call';
@@ -242,10 +242,11 @@ if (!scene) {
     hud.react(liar, 'saskin', 2200);
     hud.say('BLÖF!', 'kizgin', 1100, caller);
     void ui.call({x: t.L.u * 3.2, y: t.L.barY}, t.pilePoint());
-    await new Promise(r => setTimeout(r, 520));
+    await new Promise(r => setTimeout(r, 420));
     g.step = 'reveal';
-    sfx.drumRoll(0.35 + m * 0.3);
-    await t.reveal(cards, rank, {step: 300});
+    sfx.drumRoll(0.3 + m * 0.27);
+    ui.focusClaim(true, t.revealTop(m) - t.L.claim.d * 0.62 - t.L.u * 0.3);
+    await t.reveal(cards, rank, {step: 265});
     g.step = 'stamp';
     const loser = lie ? liar : caller;
     if (lie) {
@@ -263,8 +264,9 @@ if (!scene) {
       hud.say('Doğruydu evlat! Al yığını, afiyet olsun.', 'kahkaha', 2200, liar);
     }
     void ui.stamp(lie ? 'caught' : 'truth', loser === 0 ? `Yığın sana: ${pileN + m} kart` : `${players[loser].name.split(' ')[0]} yığını alıyor · ${pileN + m} kart`, t.L.pile.y + t.L.ch * 0.98, 1550);
-    await new Promise(r => setTimeout(r, 620));
+    await new Promise(r => setTimeout(r, 650));
     g.step = 'take';
+    ui.focusClaim(false);
     const pileIds = notMine.filter(c => !cards.includes(c)).slice(0, pileN).concat(cards);
     await t.take(loser, loser === 0 ? pileIds : undefined, (i, total) => hud.tickCards(loser, shown[loser] + Math.round(((i + 1) / total) * (pileN + m))));
     ui.setPile(0);

@@ -3,6 +3,7 @@
 // damgası ve öğretici (Rıza Amca). Konumlar BlofTable düzeninden gelir (yalnız transform yazılır).
 // Animasyonlar yalnız transform/opacity; sonsuz döngü yok (boşta 0 kare).
 import './blofHud.css';
+import {cancelAnims} from '../platform/anim';
 import {ANIM, EASE, esc, h, play, q} from './dom';
 import {g3} from './fx';
 import {I} from './icons';
@@ -106,7 +107,7 @@ export class BlofHud {
     this.pointEl = q(this.el, '.bl-point');
     const grid = q(this.el, '.bl-pick__g');
     for (let r = 1; r <= 13; r++) {
-      const b = h('button', 'bl-pick__r', `<b>${RANK_GLYPH[r]}</b><span>${RANK_NAME[r].length > 2 ? esc(RANK_NAME[r]) : ''}</span><i class="kh-num"></i>`);
+      const b = h('button', 'bl-pick__r', `<b>${RANK_GLYPH[r]}</b><span>${r === 1 || r > 10 ? esc(RANK_NAME[r]) : ''}</span><i class="kh-num"></i>`);
       b.dataset.r = String(r);
       b.addEventListener('click', () => this.pick(r));
       this.pickBtns.push(b);
@@ -187,7 +188,8 @@ export class BlofHud {
     const y = L.barY;
     this.bar.style.top = y + 'px';
     this.selInfo.style.top = y + 'px';
-    this.picker.style.bottom = Math.max(0, L.H - y - Math.max(44, L.u * 3) / 2) + 'px';
+    // seçici çubuğun satırının üstünde (rozetimi örtmez)
+    this.picker.style.bottom = Math.max(0, L.H - y + L.u * 2.3) + 'px';
     document.documentElement.style.setProperty('--bl-bar-y', y + 'px');
     // geniş ekranda (tablet) rozet + çubuk ortalanmış bir grup; telefonda sola yaslı
     const groupW = L.u * 31;
@@ -224,6 +226,24 @@ export class BlofHud {
       ], {duration: 420, easing: EASE.out, fill: 'both'});
       this.snd?.slam();
     }
+  }
+
+  /**
+   * Blöf açılışında tur madalyonu açılan kartların üstüne süzülür (iddia = kontrol edilen değer gözün önünde);
+   * yığın/son atış hapları söner. on=false: yerine döner.
+   */
+  focusClaim(on: boolean, y = 0): void {
+    const L = this.L;
+    if (!L) return;
+    cancelAnims(this.claim);
+    const from = `translate3d(${L.claim.x.toFixed(1)}px,${L.claim.y.toFixed(1)}px,0)`;
+    const to = `translate3d(${(L.W / 2).toFixed(1)}px,${y.toFixed(1)}px,0) scale(1.12)`;
+    if (on) play(this.claim, [{transform: from}, {transform: to}], {duration: 320, easing: EASE.out, fill: 'forwards'});
+    else {
+      const a = play(this.claim, [{transform: to}, {transform: from}], {duration: 260, easing: EASE.out});
+      a.finished.then(() => cancelAnims(this.claim), () => undefined);
+    }
+    this.el.classList.toggle('is-reveal', on);
   }
 
   /** Son atış: "Cem · 3 kart" (madalyonun altında). */

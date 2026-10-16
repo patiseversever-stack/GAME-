@@ -917,9 +917,9 @@ export class BlofTable {
     if (!m) return true;
     const list = this.pile.slice(this.pile.length - m);
     const {pile} = this.L;
-    const s = Math.min(1.25, (this.L.W * 0.86) / (this.cw * (m + (m - 1) * 0.12)));
+    const s = this.revealScale(m);
     const gap = this.cw * s * 1.1;
-    const y = pile.y - this.ch * 0.1;
+    const y = pile.y + this.ch * 0.04;
     // masa kararır, kartlar kalkıp dizilir
     this.dim.style.display = 'block';
     this.dim.animate([{opacity: 0}, {opacity: 1}], {duration: 260, fill: 'forwards', easing: 'ease-out'});
@@ -948,6 +948,14 @@ export class BlofTable {
       await sleep(step * 0.45);
     }
     return all;
+  }
+
+  /** Açılan kartların ölçeği ve satırın üst kenarı (madalyon onun üstüne gelir). */
+  revealScale(m: number): number {
+    return Math.min(1.08, (this.L.W * 0.86) / (this.cw * (m + (m - 1) * 0.12)));
+  }
+  revealTop(m: number): number {
+    return this.L.pile.y + this.ch * 0.04 - (this.ch * this.revealScale(m)) / 2;
   }
 
   private mark(j: number, p: Pose, ok: boolean, s: number): void {

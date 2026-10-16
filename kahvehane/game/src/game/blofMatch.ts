@@ -466,6 +466,7 @@ export class BlofMatch {
         const base = this.counts[seat] ?? 0;
         t.setSelectable(false);
         sfx.capture(e.count);
+        ui.focusClaim(false);
         await t.take(seat, seat === ME ? (e.cards ?? []) : undefined, (i, total) => {
           const k = base + Math.round(((i + 1) / total) * (e.handCount - base));
           if (k !== this.counts[seat]) {
@@ -553,7 +554,7 @@ export class BlofMatch {
     else hud.say('BLÖF!', 'kizgin', 1100, by);
     if (by === ME) this.tutSeen('blof');
     void this.ui.call(from, to);
-    await sleep(520);
+    await sleep(420);
   }
 
   /** Ağır çekim açılış → damga → tepkiler. Yığın uçuşu sonraki olayda (pileTaken). */
@@ -561,8 +562,9 @@ export class BlofMatch {
     const {hud, sfx, table} = this.d;
     const m = e.cards.length;
     sfx.setSlowMo(0.6);
-    sfx.drumRoll(Math.min(1.9, 0.35 + m * 0.3));
-    await this.t.reveal(e.cards, e.rank, {step: 300});
+    sfx.drumRoll(Math.min(1.9, 0.3 + m * 0.27));
+    this.ui.focusClaim(true, this.t.revealTop(m) - this.t.L.claim.d * 0.62 - this.t.L.u * 0.3);
+    await this.t.reveal(e.cards, e.rank, {step: 265});
     sfx.setSlowMo(1);
     if (this.aborted) return;
     const caught = !e.truthful;
@@ -620,7 +622,7 @@ export class BlofMatch {
       const m2 = this.mate(winner);
       if (m2 >= 0 && this.bot(m2) && Math.random() < 0.5) window.setTimeout(() => this.say(m2, 'mateCheer', false, 1600), 1500);
     }, 380);
-    await sleep(620);
+    await sleep(650);
   }
 
   /** El sonu: kazanan(lar) zafer, diğerleri üzgün; konfeti; son söz. */
