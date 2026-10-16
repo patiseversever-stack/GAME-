@@ -429,7 +429,7 @@
 .kh-try__ava { --as: calc(var(--u) * 3.6); }
 .kh-try__seat.is-me .kh-try__ava { --as: calc(var(--u) * 4.4); }
 .kh-try__nm { padding: .15em .6em; border-radius: var(--r-pill); background: rgba(10, 16, 51, .65); font-family: var(--font-display); font-size: calc(var(--u) * .8); text-shadow: var(--outline-thin); white-space: nowrap; }
-.kh-try__fx { position: absolute; z-index: 4; left: 0; right: 0; top: 22%; bottom: 32%; pointer-events: none; }
+.kh-try__fx { position: absolute; z-index: 4; inset: 0; pointer-events: none; }
 .kh-try__top { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: .55em; padding: calc(var(--u) * .7) calc(var(--u) * .8) calc(var(--u) * .4);
   background: linear-gradient(180deg, rgba(6, 10, 48, .75), rgba(6, 10, 48, 0)); }
 .kh-try__chip { display: inline-flex; align-items: center; gap: .3em; padding: .28em .65em .26em .5em; border-radius: var(--r-pill); background: var(--btn2-fill);

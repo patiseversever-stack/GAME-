@@ -227,16 +227,33 @@ export function water(g: Ctx, w: number, y0: number, y1: number, top: string, bo
     [1, bot],
   ]);
   g.fillRect(0, y0, w, y1 - y0);
+  const H = y1 - y0;
+  // yakamoz: ışığın altında yumuşak dikey sütun + kırık, dalgalanan parıltı çizgileri (uzaklaştıkça seyrek, soluk, geniş)
+  g.save();
+  g.globalCompositeOperation = 'lighter';
   for (const [x, col, spread] of glints) {
-    for (let y = y0 + 1; y < y1; y += 2 + rnd() * 2.5) {
-      const t = (y - y0) / (y1 - y0);
-      const len = spread * (0.3 + rnd() * 0.9) * (1 + t);
+    const colA = (a: number): string => col.replace(/,\s*1\)$/, `,${a})`);
+    const col0 = g.createLinearGradient(0, y0, 0, y0 + H * 0.8);
+    col0.addColorStop(0, colA(0.22));
+    col0.addColorStop(1, colA(0));
+    g.fillStyle = col0;
+    g.fillRect(x - spread * 0.6, y0, spread * 1.2, H * 0.8);
+    let y = y0 + 1;
+    while (y < y1) {
+      const t = (y - y0) / H;
+      const fade = Math.pow(1 - t, 1.6);
+      if (fade < 0.03) break;
+      const len = spread * (0.15 + rnd() * 0.75) * (1 + t * 1.5);
+      const jx = (rnd() - 0.5) * spread * (0.4 + t * 1.6);
       g.fillStyle = col;
-      g.globalAlpha = 0.25 + rnd() * 0.55 * (1 - t * 0.5);
-      g.fillRect(x - len / 2 + (rnd() - 0.5) * spread * 0.6, y, len, 1 + rnd() * 1.2);
+      g.globalAlpha = (0.18 + rnd() * 0.6) * fade;
+      g.beginPath();
+      g.ellipse(x + jx, y, len / 2, 0.5 + rnd() * 0.7 + t, 0, 0, Math.PI * 2);
+      g.fill();
+      y += 1.6 + rnd() * 2.2 + t * 5;
     }
   }
-  g.globalAlpha = 1;
+  g.restore();
 }
 
 export function stars(g: Ctx, w: number, h: number, n: number, rnd: Rnd): void {
