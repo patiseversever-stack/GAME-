@@ -15,7 +15,7 @@ import {ANIM, EASE, Scope, bump, center, clamp, esc, fmt, h, hms, play, q, shake
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toast, type ModalHandle} from './parts';
-import {fanHtml, frameJob, mountFx, mountFxStill, paintTableLater, tableSceneHtml, type FxLoop} from './previews';
+import {fanHtml, frameJob, fxStillHtml, mountFx, mountFxStill, paintTableLater, tableSceneHtml, warmPreviews, type FxLoop} from './previews';
 import {BADGE_NAME, RANK, badgeOf, setOf, setById, setPrice, shopSets, type ShopSet} from './sets';
 import {Spotlight, glint, glintHtml, mountDeckViewer} from './showcase';
 import {deckOr} from './deckpv';
@@ -92,7 +92,7 @@ function pvHtml(it: {kind: ItemKind; id: string}, me: Me, big = false): string {
       return `<span class="kh-pv__table">${tableSceneHtml(it.id, {deck: me.deck, size: 'mini'})}</span>`;
     case 'fx':
       // efekt kendi başına değil, kuşanılı masanın üstünde (bağlam: "pişti yapınca masan böyle olur")
-      return `<span class="kh-pv__fxs">${tableSceneHtml(me.table, {deck: me.deck, size: 'mini'})}</span><span class="kh-pv__fx" data-fx="${it.id}"></span>`;
+      return `<span class="kh-pv__fxs">${tableSceneHtml(me.table, {deck: me.deck, size: 'mini'})}</span>${fxStillHtml(it.id, 'kh-pv__fx')}`;
     case 'frame':
       return charAvatarHtml(me.char, it.id, 'kh-pv__ava', big ? 'gulumseme' : 'notr');
     case 'char': {
@@ -104,7 +104,7 @@ function pvHtml(it: {kind: ItemKind; id: string}, me: Me, big = false): string {
 
 /** Kök altındaki efekt kutularını görünür olunca, sırayla, donmuş kare olarak kur. */
 function hydrate(root: ParentNode): void {
-  root.querySelectorAll<HTMLElement>('[data-fx]:not(.kh-fxpv)').forEach(box => mountFxStill(box, box.dataset.fx!));
+  root.querySelectorAll<HTMLElement>('[data-fx]:not(.kh-fxpv):not(.kh-fxst)').forEach(box => mountFxStill(box, box.dataset.fx!));
 }
 
 const badgeHtml = (it: ShopItem): string => {
@@ -187,6 +187,10 @@ interface Panel {
   el: HTMLElement;
   sig: string;
   scroll: number;
+  /** Henüz eklenmemiş parçalar: ancak kullanıcı aşağı yaklaştıkça (ekranın ~1 boyu kala) kare başına bir tane eklenir */
+  pending: Chunk[];
+  /** Panel açıldığından beri parça eklemeye izin var mı (giriş kayması bitti) */
+  ready: boolean;
 }
 
 export class ShopPage implements Page {
@@ -219,6 +223,12 @@ export class ShopPage implements Page {
       if (!edgeRaf) edgeRaf = requestAnimationFrame(edges);
     };
     this.scope.on(tabs, 'scroll', this.edges, {passive: true});
+    // panel kaydırıldıkça bekleyen parçaları getir (kare başına en çok bir kontrol)
+    let fillRaf = 0;
+    this.scope.on(this.body, 'scroll', () => {
+      if (!fillRaf) fillRaf = requestAnimationFrame(() => ((fillRaf = 0), this.fill()));
+    }, {passive: true});
+    this.scope.add(() => cancelAnimationFrame(fillRaf));
     this.scope.add(() => cancelAnimationFrame(edgeRaf));
     this.scope.add(() => {
       clearTimeout(this.dealT);
@@ -296,14 +306,21 @@ export class ShopPage implements Page {
       el.innerHTML = chunks[0] as string;
       if (p) p.el.replaceWith(el);
       else this.body.append(el);
-      p = {el, sig, scroll: p?.scroll ?? 0};
+      p = {el, sig, scroll: p?.scroll ?? 0, pending: chunks.slice(1), ready: false};
       this.panels.set(this.tab, p);
       fresh = true;
-      // kalan parçalar giriş kayması bittikten sonra başlar (kayma sırasında ana iş parçacığı boş kalsın)
-      this.appendChunks(p, chunks.slice(1), ANIM ? (this.panels.size === 1 ? 420 : 320) : 0);
+      // kalan parçalar giriş kayması BİTTİKTEN sonra (sayfa: 380+60 ms, alt sekme: 300 ms) ve gerektikçe eklenir
+      const pp = p;
+      const go = (): void => {
+        pp.ready = true;
+        this.fill();
+      };
+      if (ANIM) window.setTimeout(go, this.panels.size === 1 ? 470 : 330);
+      else go();
     }
     for (const [t, x] of this.panels) x.el.hidden = t !== this.tab;
     if (cur !== p.scroll && !(fresh && p.scroll)) this.body.scrollTop = p.scroll;
+    if (!fresh) this.fill();
     hydrate(p.el);
     clearTimeout(this.dealT);
     if (this.tab === 'featured') this.tickDeal();
@@ -312,28 +329,33 @@ export class ShopPage implements Page {
     this.spot.start(fresh ? 1100 : 800);
   }
 
-  /** Panelin kalan parçalarını kare başına bir parça ekle (efekt kareleriyle aynı kuyrukta); bitince kaydırma yerini geri koy. */
-  private appendChunks(p: Panel, rest: Chunk[], delay = 0): void {
-    const want = p.scroll;
-    // panel yeniden kurulursa (eski öğe sökülür) kalan parçalar düşer; sekme değişse de (gizli panel) eklemeye devam eder
-    const live = (): boolean => this.scope.alive && p.el.isConnected;
-    if (delay) {
-      window.setTimeout(() => live() && this.appendChunks(p, rest), delay);
-      return;
-    }
-    rest.forEach((c, i) =>
-      frameJob(() => {
-        if (!live()) return;
-        if (typeof c === 'string') p.el.insertAdjacentHTML('beforeend', c);
-        else {
-          const box = p.el.querySelectorAll(c.into);
-          box[box.length - 1]?.insertAdjacentHTML('beforeend', c.html);
-        }
-        hydrate(p.el);
-        if (i === rest.length - 1 && want && this.panels.get(this.tab) === p) this.body.scrollTop = want;
-      }, i === 0),
-    );
-    if (!rest.length && want) requestAnimationFrame(() => live() && (this.body.scrollTop = want));
+  /**
+   * Bekleyen parçaları ekle: yalnız görünen panel, giriş kayması bittikten sonra ve içerik dibi ekrana ~1 boy
+   * yaklaştıkça, kare başına bir parça (efekt kareleriyle aynı kuyrukta). Kaydırınca yeniden bakılır. Yeniden kurulan
+   * panelde (satın alma sonrası) eski kaydırma yerine varana dek doldurulur.
+   */
+  private fillQueued = false;
+  private fill(): void {
+    if (this.fillQueued) return;
+    const p = this.panels.get(this.tab);
+    if (!p || !p.ready || !p.pending.length || !this.visible) return;
+    this.fillQueued = true;
+    frameJob(() => {
+      this.fillQueued = false;
+      if (!this.scope.alive || !p.el.isConnected || this.panels.get(this.tab) !== p || !this.visible) return;
+      const b = this.body;
+      const need = b.scrollHeight - b.scrollTop - b.clientHeight < b.clientHeight * 0.9 || b.scrollHeight < p.scroll + b.clientHeight * 1.5;
+      if (!need) return;
+      const c = p.pending.shift()!;
+      if (typeof c === 'string') p.el.insertAdjacentHTML('beforeend', c);
+      else {
+        const box = p.el.querySelectorAll(c.into);
+        box[box.length - 1]?.insertAdjacentHTML('beforeend', c.html);
+      }
+      hydrate(p.el);
+      if (p.scroll && b.scrollTop !== p.scroll && b.scrollHeight >= p.scroll + b.clientHeight) b.scrollTop = p.scroll;
+      this.fill();
+    });
   }
 
   private panelChunks(tab: ShopTab): Chunk[] {
@@ -849,3 +871,10 @@ function setSheet(shell: Shell, s: ShopSet, onChange: () => void): ModalHandle {
   });
   return m;
 }
+
+// Uygulama açıldıktan sonra boşta: vitrin görsellerinin ilk kullanım maliyeti (veri adresi/SVG) önceden ödensin
+warmPreviews({
+  decks: CATALOG.filter(i => i.kind === 'deck').map(i => i.id),
+  tables: CATALOG.filter(i => i.kind === 'table').map(i => i.id),
+  frames: CATALOG.filter(i => i.kind === 'frame').map(i => i.id),
+});

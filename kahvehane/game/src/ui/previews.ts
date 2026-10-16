@@ -8,7 +8,7 @@ import {TABLES, tableById} from '../themes/tables';
 import type {TableTheme} from '../themes/contract';
 import {ANIM, esc} from './dom';
 import {suitSvg} from './icons';
-import {CI, deckCardHtml, hasDeck} from './deckpv';
+import {CI, deckCardHtml, fxStillReady, hasDeck} from './deckpv';
 import {mountFx, type FxLoop} from './fxpreview';
 
 export {hasDeck};
@@ -127,8 +127,21 @@ export function deferMount(box: HTMLElement, fn: () => void, idle = false): void
 
 // donmuş efekt kareleri: aynı efekt aynı boyutta ikinci kez kurulmaz (panel yeniden kurulunca, koleksiyonda, setlerde)
 const stillCache = new Map<string, string>();
-/** Efekt kutusunu donmuş güzel kareyle doldur: görünür olunca, boşta; önbellekte varsa anında. */
+/**
+ * Efekt kutusu HTML'i: pişmiş donmuş kare varsa doğrudan görsel (çalışma anında hiçbir şey kurulmaz), yoksa
+ * mountFxStill ile sonradan kurulacak boş kutu (data-fx).
+ */
+export function fxStillHtml(id: string, cls: string): string {
+  return fxStillReady(id) ? `<span class="${cls} kh-fxst" data-fxs="${esc(id)}"></span>` : `<span class="${cls}" data-fx="${esc(id)}"></span>`;
+}
+
+/** Efekt kutusunu donmuş güzel kareyle doldur: pişmişse görsel; değilse görünür olunca, boşta kurar (önbellekli). */
 export function mountFxStill(box: HTMLElement, id: string): void {
+  if (fxStillReady(id)) {
+    box.classList.add('kh-fxst');
+    box.dataset.fxs = id;
+    return;
+  }
   box.classList.add('kh-fxpv');
   deferMount(
     box,
@@ -250,6 +263,30 @@ export function paintTableLater(scene: HTMLElement, id: string, delay = 520): vo
   };
   const w = window as unknown as {requestIdleCallback?: (f: () => void, o?: {timeout: number}) => number};
   setTimeout(() => (w.requestIdleCallback ? w.requestIdleCallback(go, {timeout: 600}) : go()), ANIM ? delay : 0);
+}
+
+// ---------------------------------------------------------------- ısınma (boşta, bir kez)
+// Bir görselin İLK kullanımı pahalıdır (veri adresinin çözülmesi, SVG belgesinin ayrıştırılması): market/koleksiyon
+// açılırken bu iş sekme geçişine binmesin diye, uygulama açıldıktan sonra boşta, görünmez küçük bir kapta her deste şeridi,
+// masa zemini ve çerçeve katmanı bir kez stillenir. Kap kalıcıdır (kaynaklar bellekte sıcak kalır; ~40 küçük öğe).
+let warmed = false;
+export function warmPreviews(ids: {decks: string[]; tables: string[]; frames: string[]}): void {
+  if (warmed || typeof document === 'undefined') return;
+  warmed = true;
+  const box = document.createElement('div');
+  box.className = 'kh-warm';
+  box.setAttribute('aria-hidden', 'true');
+  const groups: string[] = [
+    ids.decks.filter(hasDeck).map(d => deckCardHtml(d, CI.jack, 'kh-warm__c')).join(''),
+    ids.tables.map(t => (swatchRule(t), `<i class="kh-ts__bg kh-warm__c" data-sw="${esc(t)}"></i>`)).join(''),
+    // çerçeveler en ağırı (büyük SVG): her biri ayrı boş anda
+    ...ids.frames.map(f => `<span class="kh-ava kh-frame kh-frame--${esc(f)} kh-warm__a"><span class="kh-ava__clip"></span></span>`),
+  ];
+  const start = (): void => {
+    document.body.append(box);
+    for (const g of groups) idleJob(() => box.insertAdjacentHTML('beforeend', g));
+  };
+  setTimeout(start, 2500);
 }
 
 // pişti efekti önizlemeleri ayrı dosyada (src/ui/fxpreview.ts)

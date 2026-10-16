@@ -4,11 +4,11 @@ import './collection.css';
 import {CATALOG, KIND_INFO, type ItemKind} from '../game/catalog';
 import {ROSTER, charById} from '../game/roster';
 import {MODE_INFO, type Mode} from '../game/types';
-import {EASE, Scope, bump, clamp, countUp, esc, fmt, h, play, q, shake} from './dom';
+import {ANIM, EASE, Scope, bump, clamp, countUp, esc, fmt, h, play, q, shake} from './dom';
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, gemHtml, onAct, rarityHtml, toast} from './parts';
-import {fanHtml, frameJob, mountFxStill, tableSceneHtml} from './previews';
+import {fanHtml, frameJob, fxStillHtml, mountFxStill, tableSceneHtml} from './previews';
 import {setPrice, shopSets} from './sets';
 import {deckOr} from './deckpv';
 import {haptic} from '../platform/bridge';
@@ -24,16 +24,40 @@ export class CollectionPage implements Page {
     this.el.innerHTML = `<div class="kh-coll__in kh-scroll"></div>`;
     this.inner = q(this.el, '.kh-coll__in');
     onAct(this.scope, this.el, (a, b) => this.act(a, b));
+    let raf = 0;
+    this.scope.on(this.inner, 'scroll', () => {
+      if (!raf) raf = requestAnimationFrame(() => ((raf = 0), this.fillRows()));
+    }, {passive: true});
+    this.scope.add(() => cancelAnimationFrame(raf));
     // içerik ilk show()'da kurulur
   }
 
   /** Karo kuşağı: yeniden kurulumda eski sıradaki işler boşa düşsün */
   private gen = 0;
+  /** Henüz doldurulmamış koleksiyon satırları: ekrana ~1 boy yaklaşınca, kare başına bir satır */
+  private rows: HTMLElement[] = [];
+  private rowsReady = false;
+  private rowQueued = false;
+  private rowHtml: (row: HTMLElement) => void = () => undefined;
+  private fillRows(): void {
+    if (!this.rowsReady || this.rowQueued || !this.rows.length) return;
+    this.rowQueued = true;
+    frameJob(() => {
+      this.rowQueued = false;
+      const row = this.rows[0];
+      if (!row || !row.isConnected) return void (this.rows = []);
+      const view = this.inner.getBoundingClientRect();
+      if (view.height && row.getBoundingClientRect().top > view.bottom + view.height * 0.9) return;
+      this.rows.shift();
+      this.rowHtml(row);
+      this.fillRows();
+    });
+  }
   /** Son kurulumdaki profil durumu: aynıysa sekme dönüşünde sayfa yeniden kurulmaz. */
   private sig = '';
 
   show(): void {
-    if (!this.editing && (!this.sig || this.sig !== JSON.stringify(this.shell.profile.data))) this.render();
+    if (!this.editing && (!this.sig || this.sig !== JSON.stringify(this.shell.profile.data))) this.render(ANIM ? 470 : 0);
     const g = (s: string) => this.el.querySelector(s);
     const card = g('.kh-pcard');
     if (card) play(card, [{transform: 'translateY(-16px) scale(.96)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 420, easing: EASE.spring, fill: 'backwards'});
@@ -45,7 +69,7 @@ export class CollectionPage implements Page {
       play(b, [{transform: 'scaleX(0)'}, {transform: b.style.transform || 'scaleX(0)'}], {duration: 700, delay: 200 + i * 90, easing: EASE.out, fill: 'backwards'}));
   }
 
-  private render(): void {
+  private render(delay = 0): void {
     const p = this.shell.profile;
     const d = p.data;
     this.sig = JSON.stringify(d);
@@ -127,11 +151,20 @@ export class CollectionPage implements Page {
             ${charAvatarHtml(me, f.id, own ? '' : 'is-dim')}<b>${esc(f.name)}</b>${own ? '' : `<span class="kh-pick__lock">${I.lock}</span>`}
             ${on ? `<span class="kh-pick__on">${I.check}</span>` : ''}</button>`;
     };
-    for (let i = 0; i < frames.length; i += 5)
-      frameJob(() => gen === this.gen && pick.isConnected && pick.insertAdjacentHTML('beforeend', frames.slice(i, i + 5).map(frameHtml).join('')));
-    this.inner.querySelectorAll<HTMLElement>('.kh-ckind__row').forEach(row =>
-      frameJob(() => {
-        if (gen !== this.gen || !row.isConnected) return;
+    // sayfa giriş kayması sürerken ana iş parçacığı boş kalsın: çerçeveler kayma bitince, karolar ekrana yaklaştıkça.
+    // Yerinde yeniden kurulumda (kuşanma, ad) görünen kısım aynı karede dolar: boş kare/yanıp sönme olmasın.
+    const sync = delay === 0;
+    if (sync) pick.innerHTML = frames.map(frameHtml).join('');
+    else window.setTimeout(() => {
+      if (gen !== this.gen) return;
+      for (let i = 0; i < frames.length; i += 4)
+        frameJob(() => gen === this.gen && pick.isConnected && pick.insertAdjacentHTML('beforeend', frames.slice(i, i + 4).map(frameHtml).join('')));
+      this.rowsReady = true;
+      this.fillRows();
+    }, delay);
+    this.rowsReady = sync;
+    this.rows = Array.from(this.inner.querySelectorAll<HTMLElement>('.kh-ckind__row'));
+    this.rowHtml = (row: HTMLElement): void => {
         const kd = row.dataset.kind as ItemKind;
         row.innerHTML = CATALOG.filter(i => i.kind === kd).map(it => {
           const own = p.owns(kd, it.id), on = d.equipped[kd as 'deck' | 'table' | 'fx'] === it.id;
@@ -143,8 +176,12 @@ export class CollectionPage implements Page {
         }).join('');
         // efekt kareleri görünür olunca, boşta (deste/masa önizlemeleri HTML'le hazır: pişmiş kartlar + swatch)
         row.querySelectorAll<HTMLElement>('[data-fx]').forEach(box => mountFxStill(box, box.dataset.fx!));
-      }),
-    );
+    };
+    if (sync) {
+      const view = this.inner.getBoundingClientRect();
+      while (this.rows.length && this.rows[0].getBoundingClientRect().top < view.bottom) this.rowHtml(this.rows.shift()!);
+      this.fillRows();
+    }
     const input = q<HTMLInputElement>(this.inner, '.kh-pcard__input');
     this.scope.on(input, 'keydown', e => {
       if ((e as KeyboardEvent).key === 'Enter') this.saveName();
@@ -257,7 +294,7 @@ export class CollectionPage implements Page {
 function tilePv(kd: ItemKind, id: string, deck: string): string {
   if (kd === 'deck') return fanHtml(id, 3);
   if (kd === 'table') return tableSceneHtml(id, {deck, size: 'tile'});
-  if (kd === 'fx') return `<span class="kh-ctile__fx" data-fx="${id}"></span>`;
+  if (kd === 'fx') return fxStillHtml(id, 'kh-ctile__fx');
   return '';
 }
 

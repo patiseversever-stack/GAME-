@@ -41,3 +41,11 @@
 .kh-ts__opp .kh-ts__c { left: 50%; top: 4%; width: 13%; transform-origin: 50% -60%; transform: translateX(-50%) translateX(calc(var(--i) * 46%)) rotate(calc(var(--i) * -7deg)); }
 .kh-ts__hand .kh-ts__c { left: 50%; bottom: 3%; width: 22%; transform-origin: 50% 150%; transform: translateX(-50%) translateX(calc(var(--i) * 62%)) rotate(calc(var(--i) * 7deg));
   box-shadow: 0 0 0 1.5px rgba(10, 16, 51, .8), 0 6px 12px rgba(2, 4, 24, .5); }
+
+/* pişmiş efekt karesi (src/ui/fxpv): kutuyu doldurur */
+.kh-fxst { background-repeat: no-repeat; background-position: center; background-size: cover; }
+/* ısınma kabı: görünmez, tıklanmaz, yerleşimi kendi içinde (ekran dışında stillenir; boyanmaz) */
+.kh-warm { position: fixed; left: -400px; top: 0; width: 300px; height: 120px; overflow: hidden; visibility: hidden; pointer-events: none; contain: strict; }
+.kh-warm__c { position: absolute; left: 0; top: 0; width: 60px; height: 86px; }
+.kh-warm__a { --as: 96px; position: absolute; left: 100px; top: 0; }
+.kh-warm .kh-frame::before, .kh-warm .kh-frame::after { animation: none !important; }

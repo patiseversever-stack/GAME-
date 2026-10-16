@@ -1,0 +1,323 @@
+// Yağlı boya işleyici (masalar + desteler). Kullanıcının sevdiği "Yıldızlı Gece" diliyle aynı aile:
+//   1) Referans sahne: küçük bir tuvale yumuşak vektör çizilir (gök degradesi, siluetler, ışıklar) — "eskiz".
+//   2) Akış alanı: tasarlanmış yön (gökte girdap/yatay, suda yatay dalga, kayada dikey) + referansın kenarlarına
+//      teğet yön (darbeler biçimlerin çevresini dolaşır, ressam gibi).
+//   3) Katmanlar: astar (iri, geniş darbe) → gövde (orta) → ayrıntı (ince, yalnız ilgi bölgelerinde) → ışık (kalın,
+//      açık impasto). Her darbe rengini referanstan alır (+ renk titremesi, ara sıra "kırık renk" vurgusu).
+//   4) Darbe: uçları sivrilen gövde + ışık sırtı (sol üst) + gölge oluğu (sağ alt) + kıl izleri (iri darbelerde);
+//      aynı renkteki binlerce darbe tek yola toplanıp tek dolguyla çizilir (hızlı). Sonda tuval dokusu.
+//   5) Sakin harita: kartların durduğu yerlerde (yığın, eller, desteler, yan koltuklar) referansın değer ve doygunluk
+//      farkı sıkıştırılır, darbe titremesi azalır, ayrıntı katmanı atlanır → krem kartlar ve kart arkaları öne çıkar.
+// Bütün iş dilimli (Job): ~7 ms'lik parçalar; ana iş parçacığı bölünmez.
+import {due, type Job} from '../skins/kit';
+import {clamp, makeCanvas, mix, smooth, spotOf, type Ctx, type RGB, type Rnd} from './paint';
+
+// ───────────────────────── referans ─────────────────────────
+export interface Ref {
+  w: number;
+  h: number;
+  /** referans pikseli / tasarım birimi */
+  k: number;
+  d: Uint8ClampedArray;
+}
+export type Calm = (x: number, y: number) => number;
+
+/** Referans sahneyi çiz: `draw` tasarım biriminde çalışır. `calm` + `tone` verilirse sakin bölgeler bastırılır. */
+export function makeRef(W: number, H: number, k: number, draw: (g: Ctx) => void, calm?: Calm, tone: RGB = [10, 14, 40], amount = 0.62): Ref {
+  const [c, g] = makeCanvas(Math.ceil(W * k), Math.ceil(H * k));
+  g.save();
+  g.scale(k, k);
+  draw(g);
+  g.restore();
+  const img = g.getImageData(0, 0, c.width, c.height);
+  const d = img.data;
+  if (calm) {
+    for (let y = 0; y < c.height; y++)
+      for (let x = 0; x < c.width; x++) {
+        const q = calm((x + 0.5) / k, (y + 0.5) / k);
+        if (q <= 0.01) continue;
+        const i = (y * c.width + x) * 4;
+        const L = (d[i] * 0.3 + d[i + 1] * 0.59 + d[i + 2] * 0.11) / 255;
+        const s = 0.72 + 0.5 * L; // değer farkı sıkışır ama tamamen kaybolmaz
+        const t = amount * q;
+        d[i] = d[i] + (tone[0] * s - d[i]) * t;
+        d[i + 1] = d[i + 1] + (tone[1] * s - d[i + 1]) * t;
+        d[i + 2] = d[i + 2] + (tone[2] * s - d[i + 2]) * t;
+      }
+  }
+  c.width = c.height = 0;
+  return {w: Math.ceil(W * k), h: Math.ceil(H * k), k, d};
+}
+
+/** Nesne kimlik haritası: `draw` her nesneyi kendi kimlik rengiyle (R kanalı = kimlik) doldurur; yumuşatma kapalı. */
+export function makeIdMap(W: number, H: number, k: number, draw: (g: Ctx, id: (n: number) => string) => void): Ref {
+  const [c, g] = makeCanvas(Math.ceil(W * k), Math.ceil(H * k));
+  g.imageSmoothingEnabled = false;
+  g.save();
+  g.scale(k, k);
+  draw(g, n => `rgb(${n},0,0)`);
+  g.restore();
+  const d = g.getImageData(0, 0, c.width, c.height).data;
+  c.width = c.height = 0;
+  return {w: Math.ceil(W * k), h: Math.ceil(H * k), k, d};
+}
+/** En yakın piksel kimliği */
+export function idAt(m: Ref, x: number, y: number): number {
+  const i = clamp(Math.floor(x * m.k), 0, m.w - 1), j = clamp(Math.floor(y * m.k), 0, m.h - 1);
+  return m.d[(j * m.w + i) * 4];
+}
+
+/** Çift doğrusal örnek (tasarım biriminde) */
+export function refAt(r: Ref, x: number, y: number): RGB {
+  const fx = clamp(x * r.k - 0.5, 0, r.w - 1.001), fy = clamp(y * r.k - 0.5, 0, r.h - 1.001);
+  const i = fx | 0, j = fy | 0, tx = fx - i, ty = fy - j;
+  const a = (j * r.w + i) * 4, b = a + r.w * 4, d = r.d;
+  const f = (o: number): number => (d[a + o] * (1 - tx) + d[a + 4 + o] * tx) * (1 - ty) + (d[b + o] * (1 - tx) + d[b + 4 + o] * tx) * ty;
+  return [f(0), f(1), f(2)];
+}
+const lumAt = (r: Ref, x: number, y: number): number => {
+  const c = refAt(r, x, y);
+  return c[0] * 0.3 + c[1] * 0.59 + c[2] * 0.11;
+};
+
+// ───────────────────────── yağlı boya darbeleri ─────────────────────────
+interface Bin {
+  c: RGB;
+  p: Path2D;
+}
+/** Darbe toplayıcı: gövde + ışık sırtı + gölge oluğu + kıl izleri; renk kutularına toplanır, tek dolguyla çizilir. */
+export class Oil {
+  private bins = new Map<number, Bin>();
+  n = 0;
+  private bin(c: RGB): Path2D {
+    const key = ((clamp(c[0], 0, 255) >> 3) << 10) | ((clamp(c[1], 0, 255) >> 3) << 5) | (clamp(c[2], 0, 255) >> 3);
+    let b = this.bins.get(key);
+    if (!b) {
+      b = {c, p: new Path2D()};
+      this.bins.set(key, b);
+    }
+    return b.p;
+  }
+  /** pts: akım çizgisi, lw: genişlik, relief: ışık sırtı gücü (0 yok), bristle: kıl izi (0..1) */
+  add(pts: number[], lw: number, c: RGB, relief = 0.18, bristle = 0, rnd?: Rnd): void {
+    const n = pts.length >> 1;
+    if (n < 2) return;
+    this.n++;
+    poly(this.bin(c), pts, n, lw * 0.5, 0, 0, 1);
+    if (relief > 0) {
+      const q = Math.max(0.35, lw * 0.15);
+      poly(this.bin(mix(c, [255, 248, 230], relief)), pts, n, lw * 0.13, -q, -q, 0.8);
+      poly(this.bin(mix(c, [0, 0, 10], relief * 0.9)), pts, n, lw * 0.1, q * 0.9, q * 0.9, 0.7);
+    }
+    if (bristle > 0 && lw > 3.2 && rnd && rnd() < bristle) {
+      // kıl izleri: gövdenin içinde iki ince, biraz açık/koyu çizgi
+      const off = lw * 0.22;
+      poly(this.bin(mix(c, [255, 250, 235], 0.1)), pts, n, Math.max(0.3, lw * 0.05), -off * 0.6, off * 0.3, 0.9);
+      poly(this.bin(mix(c, [0, 0, 0], 0.12)), pts, n, Math.max(0.3, lw * 0.05), off * 0.5, -off * 0.4, 0.9);
+    }
+  }
+  flush(g: Ctx): void {
+    for (const b of this.bins.values()) {
+      g.fillStyle = `rgb(${b.c[0] | 0},${b.c[1] | 0},${b.c[2] | 0})`;
+      g.fill(b.p);
+    }
+    this.bins.clear();
+    this.n = 0;
+  }
+}
+/** Akım çizgisini sivri uçlu fırça çokgeni olarak yola ekler (ortası dolgun). */
+function poly(p: Path2D, pts: number[], n: number, hw: number, ox: number, oy: number, taper: number): void {
+  const L: number[] = [], R: number[] = [];
+  for (let i = 0; i < n; i++) {
+    const a = Math.max(0, i - 1), z = Math.min(n - 1, i + 1);
+    let dx = pts[z * 2] - pts[a * 2], dy = pts[z * 2 + 1] - pts[a * 2 + 1];
+    const d = Math.sqrt(dx * dx + dy * dy) || 1;
+    dx /= d;
+    dy /= d;
+    const t = n === 1 ? 0.5 : i / (n - 1);
+    const w = hw * (1 - taper * 0.45 + taper * 0.45 * Math.sin(Math.PI * t));
+    const x = pts[i * 2] + ox, y = pts[i * 2 + 1] + oy;
+    L.push(x - dy * w, y + dx * w);
+    R.push(x + dy * w, y - dx * w);
+  }
+  const x0 = pts[0] + ox, y0 = pts[1] + oy, x1 = pts[n * 2 - 2] + ox, y1 = pts[n * 2 - 1] + oy;
+  let ex = pts[2] - pts[0], ey = pts[3] - pts[1];
+  let e = Math.sqrt(ex * ex + ey * ey) || 1;
+  p.moveTo(x0 - (ex / e) * hw * 0.6, y0 - (ey / e) * hw * 0.6);
+  for (let i = 0; i < L.length; i += 2) p.lineTo(L[i], L[i + 1]);
+  ex = pts[n * 2 - 2] - pts[n * 2 - 4];
+  ey = pts[n * 2 - 1] - pts[n * 2 - 3];
+  e = Math.sqrt(ex * ex + ey * ey) || 1;
+  p.lineTo(x1 + (ex / e) * hw * 0.75, y1 + (ey / e) * hw * 0.75);
+  for (let i = R.length - 2; i >= 0; i -= 2) p.lineTo(R[i], R[i + 1]);
+  p.closePath();
+}
+
+// ───────────────────────── katman boyama ─────────────────────────
+export interface Layer {
+  /** ızgara aralığı (darbe başlangıçları) */
+  cell: number;
+  len: [number, number];
+  width: [number, number];
+  /** iz adımı */
+  step?: number;
+  /** tasarlanmış akış yönü (radyan) */
+  field: (x: number, y: number) => number;
+  /** referans kenarlarına teğet olma (0..1) */
+  edge?: number;
+  /** renk titremesi (0..255) */
+  jitter: number;
+  /** ışık sırtı */
+  relief?: number;
+  /** kıl izi olasılığı */
+  bristle?: number;
+  /** bu noktaya darbe koyma olasılığı (0..1); yoksa her yere */
+  where?: (x: number, y: number) => number;
+  /** renk düzeltme (ör. kırık renk vurgusu) */
+  tint?: (c: RGB, x: number, y: number, rnd: Rnd) => RGB;
+  /** sakin harita: titremeyi ve genişlik oynamasını azaltır */
+  calm?: Calm;
+  /** darbe boyu/genişliği çarpanı (küçük nesnelerde kısa darbe) */
+  sizeK?: (x: number, y: number) => number;
+  /** sınır (tasarım birimi) */
+  x0?: number;
+  y0?: number;
+  x1?: number;
+  y1?: number;
+}
+
+export function* paintLayer(g: Ctx, ref: Ref, rnd: Rnd, W: number, H: number, o: Layer): Job<void> {
+  const step = o.step ?? Math.max(1.5, o.width[0] * 0.7);
+  const edgeK = o.edge ?? 0;
+  const x0 = o.x0 ?? 0, y0 = o.y0 ?? 0, x1 = o.x1 ?? W, y1 = o.y1 ?? H;
+  // başlangıç noktaları: karıştırılmış ızgara
+  const pts: number[] = [];
+  for (let y = y0 - o.cell; y < y1 + o.cell; y += o.cell)
+    for (let x = x0 - o.cell; x < x1 + o.cell; x += o.cell) pts.push(x + rnd() * o.cell, y + rnd() * o.cell);
+  for (let i = pts.length / 2 - 1; i > 0; i--) {
+    const j = Math.floor(rnd() * (i + 1));
+    const ax = pts[i * 2], ay = pts[i * 2 + 1];
+    pts[i * 2] = pts[j * 2];
+    pts[i * 2 + 1] = pts[j * 2 + 1];
+    pts[j * 2] = ax;
+    pts[j * 2 + 1] = ay;
+  }
+  const dirAt = (x: number, y: number): number => {
+    const a = o.field(x, y);
+    if (edgeK <= 0) return a;
+    const e = 1.2 / ref.k;
+    const gx = lumAt(ref, x + e, y) - lumAt(ref, x - e, y), gy = lumAt(ref, x, y + e) - lumAt(ref, x, y - e);
+    const m = Math.sqrt(gx * gx + gy * gy);
+    if (m < 6) return a;
+    // kenara teğet (iki yön: tasarlanan yöne yakın olanı seç)
+    let t = Math.atan2(gy, gx) + Math.PI / 2;
+    if (Math.cos(t - a) < 0) t += Math.PI;
+    const w = edgeK * smooth(6, 40, m);
+    return Math.atan2((1 - w) * Math.sin(a) + w * Math.sin(t), (1 - w) * Math.cos(a) + w * Math.cos(t));
+  };
+  const oil = new Oil();
+  for (let i = 0; i < pts.length; i += 2) {
+    const px = pts[i], py = pts[i + 1];
+    if (o.where && rnd() > o.where(px, py)) continue;
+    const q = o.calm ? o.calm(px, py) : 0;
+    const sk = o.sizeK ? o.sizeK(px, py) : 1;
+    const len = (o.len[0] + rnd() * (o.len[1] - o.len[0])) * sk;
+    const lw = (o.width[0] + rnd() * (o.width[1] - o.width[0]) * (1 - q * 0.5)) * (0.55 + 0.45 * sk);
+    const tr: number[] = [px, py];
+    let x = px, y = py;
+    const ns = Math.max(2, Math.round(len / (step * (0.6 + 0.4 * sk))));
+    for (let s = 0; s < ns; s++) {
+      const a = dirAt(x, y);
+      x += Math.cos(a) * step * (0.6 + 0.4 * sk);
+      y += Math.sin(a) * step * (0.6 + 0.4 * sk);
+      tr.push(x, y);
+    }
+    const mid = tr.length >> 2 << 1;
+    let c = mix(refAt(ref, px, py), refAt(ref, tr[mid], tr[mid + 1]), 0.5);
+    const jt = o.jitter * (1 - q * 0.65);
+    const k = (rnd() - 0.5) * 2 * jt;
+    c = [clamp(c[0] + k + (rnd() - 0.5) * jt * 0.5, 0, 255), clamp(c[1] + k + (rnd() - 0.5) * jt * 0.5, 0, 255), clamp(c[2] + k + (rnd() - 0.5) * jt * 0.5, 0, 255)];
+    if (o.tint) c = o.tint(c, px, py, rnd);
+    oil.add(tr, lw, c, (o.relief ?? 0.16) * (1 - q * 0.5), o.bristle ?? 0, rnd);
+    if (oil.n >= 420) {
+      oil.flush(g);
+      if (due()) yield;
+    }
+  }
+  oil.flush(g);
+}
+
+/** Tuval dokusu: düzensiz bez greni (açık/koyu benekler, hafif çapraz lif) — boyanın altından görünen bez. */
+export function canvasWeave(g: Ctx, W: number, H: number, rnd: Rnd, a = 0.06): void {
+  const T = 96;
+  const [c, cg] = makeCanvas(T, T);
+  const img = cg.createImageData(T, T);
+  for (let y = 0; y < T; y++)
+    for (let x = 0; x < T; x++) {
+      const i = (y * T + x) * 4;
+      // çapraz lif: çok hafif, düzensiz
+      const fib = Math.sin((x + y) * 1.7 + Math.sin(y * 0.9) * 2) * 0.25 + Math.sin((x - y) * 1.3) * 0.15;
+      const v = fib + (rnd() - 0.5) * 1.1;
+      img.data[i] = img.data[i + 1] = img.data[i + 2] = v > 0 ? 255 : 0;
+      img.data[i + 3] = (Math.min(1, Math.abs(v)) * a * 255) | 0;
+    }
+  cg.putImageData(img, 0, 0);
+  g.save();
+  g.globalCompositeOperation = 'soft-light';
+  g.fillStyle = g.createPattern(c, 'repeat')!;
+  g.fillRect(0, 0, W, H);
+  g.restore();
+}
+
+/**
+ * Işık dokunuşları: referansta parlak ve sıcak/renkli pikseller (pencereler, köprü ışıkları) kısa, kalın, açık
+ * darbelere dönüşür (impasto). Bölge [x0,y0,x1,y1] tasarım biriminde; `minL` parlaklık eşiği (0..255).
+ */
+export function lightDabs(oil: Oil, ref: Ref, rnd: Rnd, x0: number, y0: number, x1: number, y1: number, minL: number, size: number, calm?: Calm): void {
+  const sx = Math.max(0, Math.floor(x0 * ref.k)), ex = Math.min(ref.w - 1, Math.ceil(x1 * ref.k));
+  const sy = Math.max(0, Math.floor(y0 * ref.k)), ey = Math.min(ref.h - 1, Math.ceil(y1 * ref.k));
+  for (let y = sy; y <= ey; y++)
+    for (let x = sx; x <= ex; x++) {
+      const i = (y * ref.w + x) * 4;
+      const L = ref.d[i] * 0.3 + ref.d[i + 1] * 0.59 + ref.d[i + 2] * 0.11;
+      if (L < minL || rnd() < 0.35) continue;
+      const px = (x + rnd()) / ref.k, py = (y + rnd()) / ref.k;
+      const q = calm ? calm(px, py) : 0;
+      if (q > 0.6) continue;
+      const c: RGB = mix([ref.d[i], ref.d[i + 1], ref.d[i + 2]], [255, 250, 230], 0.25);
+      const len = size * (0.5 + rnd() * 0.8), a = (rnd() - 0.5) * 0.6;
+      oil.add([px - Math.cos(a) * len * 0.5, py - Math.sin(a) * len * 0.5, px + Math.cos(a) * len * 0.5, py + Math.sin(a) * len * 0.5], size * (0.55 + rnd() * 0.35), c, 0.3);
+    }
+}
+
+// ───────────────────────── masa düzeni: kartların durduğu yerler ─────────────────────────
+/**
+ * Sakin harita (0..1): Table2D.layout() ile aynı oranlar. 2 kişi + 4 kişi düzenlerinin birleşimi:
+ * yığın, rakip eli / üst koltuk, oyuncunun eli (alt bant), deste ve toplanan kart yığınları, yan koltuklar.
+ */
+export function tableCalm(W: number, H: number): Calm {
+  const S = spotOf(W, H);
+  const cw = S.cw, ch = cw / 0.7;
+  const sx = Math.max(cw * 0.6, W * 0.15);
+  const blobs: [number, number, number, number, number][] = [
+    [S.px, S.py, S.ringR * 2.1, S.ringR * 2.1, 1], // yığın
+    [W / 2, H * 0.215, Math.max(W * 0.22, cw * 1.7), H * 0.068, 0.78], // rakip eli (2 kişi) / üst koltuk (4 kişi)
+    [Math.min(W - cw * 0.9, W / 2 + cw * 1.45), H * 0.2, cw * 0.75, ch * 0.62, 0.7], // üst koltuğun toplananları (4 kişi)
+    [Math.max(cw * 0.62, W * 0.155), S.py, cw * 1.05, ch * 0.9, 0.85], // deste (2 kişi)
+    [W - sx, H * 0.27, cw * 0.95, ch * 0.8, 0.75], // toplanan (rakip)
+    [W - sx, H * 0.655, cw * 0.95, ch * 0.8, 0.8], // toplanan (oyuncu)
+    [Math.max(cw * 0.7, W * 0.29), H * 0.665, cw * 0.95, ch * 0.75, 0.8], // deste (4 kişi)
+    [Math.min(W - cw * 0.6, W * 0.72), H * 0.665, cw * 0.95, ch * 0.75, 0.8], // toplanan (4 kişi)
+    [W * 0.07, H * 0.5, W * 0.13, H * 0.18, 0.8], // sol koltuk (4 kişi)
+    [W * 0.93, H * 0.5, W * 0.13, H * 0.18, 0.8], // sağ koltuk (4 kişi)
+  ];
+  return (x, y) => {
+    let q = 0.95 * smooth(H * 0.7, H * 0.79, y); // oyuncunun eli
+    for (const [bx, by, rx, ry, s] of blobs) {
+      const dx = (x - bx) / rx, dy = (y - by) / ry;
+      const d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 1.3) q = Math.max(q, s * (1 - smooth(0.7, 1.3, d)));
+    }
+    return q;
+  };
+}

@@ -25,6 +25,27 @@ export const PV_QUALITY = 0.8;
 
 const baked = import.meta.glob('./deckpv/*.webp', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 
+// ---------------------------------------------------------------- pişmiş efekt kareleri (scripts/bake-fx.mjs)
+/** Pişirme kutusu (CSS px) ve ölçek: ızgara kartı önizlemesine yakın oran */
+export const FX_BAKE = {w: 200, h: 180, dpr: 1.6, q: 0.78} as const;
+const bakedFx = import.meta.glob('./fxpv/*.webp', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
+const fxInstalled = new Set<string>();
+/** Efektin pişmiş donmuş karesi var mı; varsa CSS kuralını (bir kez) ekler: .kh-fxst[data-fxs=id] */
+export function fxStillReady(id: string): boolean {
+  if (fxInstalled.has(id)) return true;
+  const url = bakedFx[`./fxpv/${id}.webp`];
+  if (!url) return false;
+  fxInstalled.add(id);
+  const s = sheet();
+  const rule = `.kh-fxst[data-fxs="${CSS.escape(id)}"]{background-image:url("${url}")}`;
+  try {
+    s?.insertRule(rule, s.cssRules.length);
+  } catch {
+    styleEl!.append(rule);
+  }
+  return true;
+}
+
 export const hasDeck = (id: string): boolean => DECKS.some(d => d.id === id);
 /** Kayıtta olmayan (kaldırılmış) bir deste kuşanılıysa önizlemeler varsayılan desteyle çizilir (oyun da öyle yapar). */
 export const deckOr = (id: string): string => (hasDeck(id) ? id : DECKS[0].id);
