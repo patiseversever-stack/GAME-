@@ -55,7 +55,8 @@ async function main(): Promise<void> {
   await new Promise(r => setTimeout(r, 200));
   const res = {load: Math.round(t1 - t0), prepare: Math.round(t2 - t1), draw: td, atlasMs, longtasks: long};
   document.getElementById('t')!.textContent = JSON.stringify(res);
-  (window as unknown as {__lab: unknown}).__lab = res;
+  (window as unknown as {__lab: unknown; __skin: unknown}).__lab = res;
+  (window as unknown as {__skin: unknown}).__skin = skin;
   document.body.dataset.ready = '1';
 }
 main().catch(e => {

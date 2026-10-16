@@ -377,7 +377,8 @@ export class Fx {
     const L = Math.hypot(W, H);
     for (let i = 0; i < 4; i++) {
       const b = this.beams.get();
-      b.style.background = `linear-gradient(90deg, rgba(255,255,255,0) 0%, ${SUIT_HEX[i]}cc 30%, #ffffffdd 50%, ${SUIT_HEX[i]}cc 70%, rgba(255,255,255,0) 100%)`;
+      // maskesiz: elips degrade iki yönde de söner (dönen katmanda maske her kare yeniden işlenirdi)
+      b.style.background = `radial-gradient(50% 50% at 50% 50%, #ffffffee 0%, ${SUIT_HEX[i]}dd 28%, ${SUIT_HEX[i]}66 62%, rgba(255,255,255,0) 100%)`;
       Object.assign(b.style, {width: L * 1.2 + 'px', left: W / 2 - L * 0.6 + 'px', top: H * 0.45 + 'px'});
       const a0 = i * 45 - 70;
       const a = b.animate([
@@ -578,7 +579,7 @@ export class Fx {
       {transform: `${T(at.x, at.y - u * 1.2)} scale(1.5) rotate(0deg)`, opacity: 0},
     ], {duration: jack ? 1550 : 1350, easing: 'cubic-bezier(.2,.7,.3,1)'});
     const waves = this.fbPool('nzW', 3, 'wave');
-    for (let i = 0; i < (jack ? 3 : 2); i++)
+    for (let i = 0; i < 2; i++)
       this.fly(waves.get(), [{transform: `${T(at.x, at.y)} scale(.25)`, opacity: 0.95}, {transform: `${T(at.x, at.y)} scale(3.6)`, opacity: 0}], {duration: 850, delay: 80 + i * 210, easing: 'cubic-bezier(.1,.6,.3,1)'});
     const beads = this.fbPool('nzB', 24, 'bead');
     const n = Math.round((jack ? 24 : 16) * (low ? 0.5 : 1));

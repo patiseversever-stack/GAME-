@@ -73,9 +73,7 @@
   background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, currentColor 45%, #ffffff 100%); box-shadow: 0 0 6px 1px currentColor; }
 .kh-fwflash { position: absolute; left: 0; top: 0; display: none; width: calc(var(--u) * 9); height: calc(var(--u) * 9); margin: calc(var(--u) * -4.5) 0 0 calc(var(--u) * -4.5); border-radius: 50%;
   background: radial-gradient(circle, #ffffff 0%, currentColor 18%, rgba(255, 255, 255, 0) 62%); opacity: 0; will-change: transform, opacity; }
-.kh-fwflash.is-star { border-radius: 0; background: radial-gradient(circle, #ffffff 0%, currentColor 10%, rgba(255, 255, 255, 0) 30%),
-  conic-gradient(from 0deg, transparent 0 40deg, currentColor 45deg, transparent 50deg 130deg, currentColor 135deg, transparent 140deg 220deg, currentColor 225deg, transparent 230deg 310deg, currentColor 315deg, transparent 320deg);
-  -webkit-mask: radial-gradient(circle, #000 0%, #000 20%, transparent 62%); mask: radial-gradient(circle, #000 0%, #000 20%, transparent 62%); }
+.kh-fwflash.is-star { border-radius: 0; background: var(--fxb-star) center / contain no-repeat; } /* maskesiz: yıldız SVG'si bir kez rasterlenir */
 .kh-glit { position: absolute; left: 0; top: 0; display: none; width: 12px; height: 12px; margin: -6px 0 0 -6px; background: #fffbe0; opacity: 0; will-change: transform, opacity;
   clip-path: polygon(50% 0, 60% 40%, 100% 50%, 60% 60%, 50% 100%, 40% 60%, 0 50%, 40% 40%); }
 
@@ -90,8 +88,7 @@
 .kh-shoot.is-big b { left: -13px; top: -13px; width: 26px; height: 26px; }
 
 /* ─── vale: dört renk ışık hüzmesi ─── */
-.kh-beam4 { position: absolute; left: 0; top: 0; display: none; height: calc(var(--u) * 3.2); margin-top: calc(var(--u) * -1.6); transform-origin: 50% 50%; will-change: transform, opacity; opacity: 0;
-  -webkit-mask: linear-gradient(180deg, transparent, #000 45%, #000 55%, transparent); mask: linear-gradient(180deg, transparent, #000 45%, #000 55%, transparent); }
+.kh-beam4 { position: absolute; left: 0; top: 0; display: none; height: calc(var(--u) * 3.2); margin-top: calc(var(--u) * -1.6); transform-origin: 50% 50%; will-change: transform, opacity; opacity: 0; }
 @media (prefers-reduced-motion: reduce) { .kh-combo__fire { animation: none !important; } }
 
 /* ══════════ Koleksiyon pişti efektleri: nazar · lale · şimşek · davul zurna · girdap ══════════
@@ -109,6 +106,7 @@
   --fxb-bolt1: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 400' preserveAspectRatio='none'><path d='M50 0L27.0 40L47.6 80L41.3 120L29.1 160L66.6 200L45.8 240L50.8 280L48.5 320L48.7 360L48.0 400M41.3 120L19.3 146L19.1 178M45.8 240L25.6 266L12.6 298' fill='none' stroke='%236fb8ff' stroke-width='24' stroke-opacity='0.2' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M50 0L27.0 40L47.6 80L41.3 120L29.1 160L66.6 200L45.8 240L50.8 280L48.5 320L48.7 360L48.0 400M41.3 120L19.3 146L19.1 178M45.8 240L25.6 266L12.6 298' fill='none' stroke='%239fd8ff' stroke-width='11' stroke-opacity='0.6' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M50 0L27.0 40L47.6 80L41.3 120L29.1 160L66.6 200L45.8 240L50.8 280L48.5 320L48.7 360L48.0 400' fill='none' stroke='%23ffffff' stroke-width='4.6' stroke-opacity='1' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M41.3 120L19.3 146L19.1 178M45.8 240L25.6 266L12.6 298' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-opacity='0.9' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>");
   --fxb-bolt2: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 400' preserveAspectRatio='none'><path d='M50 0L27.0 40L64.5 80L69.0 120L40.8 160L47.7 200L43.1 240L43.8 280L58.6 320L59.2 360L46.4 400M69.0 120L56.1 146L47.4 178M43.1 240L23.4 266L17.3 298' fill='none' stroke='%236fb8ff' stroke-width='24' stroke-opacity='0.2' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M50 0L27.0 40L64.5 80L69.0 120L40.8 160L47.7 200L43.1 240L43.8 280L58.6 320L59.2 360L46.4 400M69.0 120L56.1 146L47.4 178M43.1 240L23.4 266L17.3 298' fill='none' stroke='%239fd8ff' stroke-width='11' stroke-opacity='0.6' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M50 0L27.0 40L64.5 80L69.0 120L40.8 160L47.7 200L43.1 240L43.8 280L58.6 320L59.2 360L46.4 400' fill='none' stroke='%23ffffff' stroke-width='4.6' stroke-opacity='1' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M69.0 120L56.1 146L47.4 178M43.1 240L23.4 266L17.3 298' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-opacity='0.9' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>");
   --fxb-bolt3: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 400' preserveAspectRatio='none'><path d='M50 0L27.0 40L35.4 80L50.6 120L52.6 160L28.8 200L40.4 240L36.7 280L68.7 320L69.6 360L54.0 400M50.6 120L32.8 146L29.7 178M40.4 240L59.6 266L74.7 298' fill='none' stroke='%236fb8ff' stroke-width='24' stroke-opacity='0.2' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M50 0L27.0 40L35.4 80L50.6 120L52.6 160L28.8 200L40.4 240L36.7 280L68.7 320L69.6 360L54.0 400M50.6 120L32.8 146L29.7 178M40.4 240L59.6 266L74.7 298' fill='none' stroke='%239fd8ff' stroke-width='11' stroke-opacity='0.6' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M50 0L27.0 40L35.4 80L50.6 120L52.6 160L28.8 200L40.4 240L36.7 280L68.7 320L69.6 360L54.0 400' fill='none' stroke='%23ffffff' stroke-width='4.6' stroke-opacity='1' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/><path d='M50.6 120L32.8 146L29.7 178M40.4 240L59.6 266L74.7 298' fill='none' stroke='%23ffffff' stroke-width='2.4' stroke-opacity='0.9' stroke-linejoin='round' stroke-linecap='round' vector-effect='non-scaling-stroke'/></svg>");
+  --fxb-star: url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><radialGradient id='h'><stop offset='0' stop-color='%23ffffff'/><stop offset='.12' stop-color='%23fff6c8' stop-opacity='.95'/><stop offset='.35' stop-color='%23ffe9a0' stop-opacity='.35'/><stop offset='.62' stop-color='%23ffe9a0' stop-opacity='0'/></radialGradient><radialGradient id='a'><stop offset='0' stop-color='%23ffffff'/><stop offset='.4' stop-color='%23fff6c8' stop-opacity='.9'/><stop offset='1' stop-color='%23fff6c8' stop-opacity='0'/></radialGradient></defs><circle cx='50' cy='50' r='50' fill='url(%23h)'/><path d='M50 0Q53 47 100 50Q53 53 50 100Q47 53 0 50Q47 47 50 0Z' fill='url(%23a)'/><path d='M50 22Q51.5 48.5 78 50Q51.5 51.5 50 78Q48.5 51.5 22 50Q48.5 48.5 50 22Z' fill='%23fff' transform='rotate(45 50 50)' opacity='.7'/></svg>");
 }
 .kh-fb { position: absolute; left: 0; top: 0; display: none; will-change: transform, opacity; pointer-events: none; }
 /* nazar */
@@ -122,12 +120,12 @@
   box-shadow: 0 0 0 1.5px rgba(10, 16, 51, .55); }
 .kh-fb--wave { width: calc(var(--u) * 9); height: calc(var(--u) * 9); margin: calc(var(--u) * -4.5) 0 0 calc(var(--u) * -4.5); border-radius: 50%;
   background: radial-gradient(circle, rgba(40, 110, 255, 0) 0 56%, rgba(60, 140, 255, .8) 64%, #ffffff 69%, rgba(60, 140, 255, .55) 74%, rgba(40, 110, 255, 0) 82%); }
-.kh-fb--bflash { width: calc(var(--u) * 36); height: calc(var(--u) * 36); margin: calc(var(--u) * -18) 0 0 calc(var(--u) * -18); border-radius: 50%;
+.kh-fb--bflash { width: calc(var(--u) * 26); height: calc(var(--u) * 26); margin: calc(var(--u) * -13) 0 0 calc(var(--u) * -13); border-radius: 50%;
   background: radial-gradient(circle, rgba(150, 210, 255, .7) 0%, rgba(40, 100, 255, .25) 35%, rgba(40, 100, 255, 0) 66%); }
 /* lale */
 .kh-fb--tulip { z-index: 2; width: calc(var(--u) * 10); height: calc(var(--u) * 13.75); margin: calc(var(--u) * -10.5) 0 0 calc(var(--u) * -5);
   transform-origin: 50% 76%; background: var(--fxb-tulip) center / contain no-repeat; }
-.kh-fb--lglow { width: calc(var(--u) * 24); height: calc(var(--u) * 24); margin: calc(var(--u) * -12) 0 0 calc(var(--u) * -12); border-radius: 50%;
+.kh-fb--lglow { width: calc(var(--u) * 18); height: calc(var(--u) * 18); margin: calc(var(--u) * -9) 0 0 calc(var(--u) * -9); border-radius: 50%;
   background: radial-gradient(circle, rgba(255, 220, 150, .75) 0%, rgba(255, 90, 140, .32) 34%, rgba(255, 90, 140, 0) 66%); }
 .kh-fb--pet { z-index: 3; width: calc(var(--u) * 1.3); height: calc(var(--u) * 1.8); margin: calc(var(--u) * -.9) 0 0 calc(var(--u) * -.65);
   border-radius: 50% 50% 50% 50% / 72% 72% 28% 28%; background: linear-gradient(160deg, #ff8aa0 0%, #e8173f 55%, #a8001e 100%);
@@ -156,7 +154,7 @@
 .kh-fb--note.is-1 { background-image: var(--fxb-note1); } .kh-fb--note.is-2 { background-image: var(--fxb-note2); }
 .kh-fb--note.is-3 { background-image: var(--fxb-note3); } .kh-fb--note.is-4 { background-image: var(--fxb-note4); }
 /* girdap */
-.kh-fb--disc { width: calc(var(--u) * 26); height: calc(var(--u) * 26); margin: calc(var(--u) * -13) 0 0 calc(var(--u) * -13); background: var(--fxb-disc) center / contain no-repeat; }
+.kh-fb--disc { width: calc(var(--u) * 22); height: calc(var(--u) * 22); margin: calc(var(--u) * -11) 0 0 calc(var(--u) * -11); background: var(--fxb-disc) center / contain no-repeat; }
 .kh-fb--gp { z-index: 3; width: calc(var(--u) * 1.9); height: calc(var(--u) * .5); margin: calc(var(--u) * -.25) 0 0 calc(var(--u) * -.95); border-radius: calc(var(--u) * .25);
   background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0%, currentColor 55%, #ffffff 100%); box-shadow: 0 0 calc(var(--u) * .45) currentColor; }
 

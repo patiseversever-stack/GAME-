@@ -33,6 +33,13 @@ if (import.meta.env.DEV) (window as unknown as {__khGlint: typeof glint}).__khGl
 export const glintHtml = (spark = true): string => `<i class="kh-glint"></i>${spark ? '<i class="kh-spark4"></i>' : ''}`;
 
 // ---------------------------------------------------------------- sıralı vitrin ışığı
+// Son dokunuştan bu yana geçen süre: canlanma yalnız kullanıcı yakın zamanda dokunduysa başlar ve sakin moddan
+// (calm.ts, 5 sn) ÖNCE biter; böylece boşta hiç kare üretilmez.
+let lastInput = performance.now();
+if (typeof window !== 'undefined')
+  for (const ev of ['pointerdown', 'pointermove', 'touchstart', 'wheel', 'keydown'] as const) window.addEventListener(ev, () => (lastInput = performance.now()), {passive: true, capture: true});
+const QUIET_AFTER = 3500;
+
 export class Spotlight {
   private t = 0;
   private liveT = 0;
@@ -41,7 +48,7 @@ export class Spotlight {
   private live: HTMLElement | null = null;
 
   /** root: o an görünen panel; period: iki canlanma arası (ms) */
-  constructor(private root: () => HTMLElement | null, private period = 2700) {}
+  constructor(private root: () => HTMLElement | null, private period = 2400) {}
 
   start(delay = 900): void {
     this.stop();
@@ -66,7 +73,7 @@ export class Spotlight {
     if (!this.on) return;
     this.t = window.setTimeout(this.tick, this.period);
     // boşta (sakin mod), gizli sekme, açık pencere/deneme sahnesi: hiçbir şey yapma (kare üretme)
-    if (document.hidden || document.documentElement.classList.contains('kh-calm') || document.querySelector('.kh-sheet, .kh-try')) return;
+    if (document.hidden || performance.now() - lastInput > QUIET_AFTER || document.documentElement.classList.contains('kh-calm') || document.querySelector('.kh-sheet, .kh-try')) return;
     const root = this.root();
     if (!root || !root.isConnected) return;
     const vh = innerHeight;
@@ -103,9 +110,9 @@ export interface DeckViewer {
 export function mountDeckViewer(host: HTMLElement, deck: string, scope: Scope, start = 1): DeckViewer {
   host.innerHTML = `<div class="kh-dv kh-noswipe">
       <div class="kh-dv__track">${FACES.map(
+        // arka yüz yalnız çevrilince eklenir (açılışta 5 katman daha az)
         (ci, k) => `<div class="kh-dv__slot" style="--k:${k}"><div class="kh-dv__card">
-          <span class="kh-dv__side is-front">${deckCardHtml(deck, ci, 'kh-dv__img')}<i class="kh-dv__glare"></i></span>
-          <span class="kh-dv__side is-back">${deckCardHtml(deck, CI.back, 'kh-dv__img')}<i class="kh-dv__glare"></i></span></div></div>`,
+          <span class="kh-dv__side is-front">${deckCardHtml(deck, ci, 'kh-dv__img')}<i class="kh-dv__glare"></i></span></div></div>`,
       ).join('')}</div>
       <div class="kh-dv__dots">${FACES.map((_, k) => `<i data-k="${k}"></i>`).join('')}</div>
     </div>`;
@@ -246,6 +253,11 @@ export function mountDeckViewer(host: HTMLElement, deck: string, scope: Scope, s
 
   const api: DeckViewer = {
     flip() {
+      const c = slots[focus].querySelector('.kh-dv__card')!;
+      if (!c.querySelector('.is-back')) {
+        c.insertAdjacentHTML('beforeend', `<span class="kh-dv__side is-back">${deckCardHtml(deck, CI.back, 'kh-dv__img')}<i class="kh-dv__glare"></i></span>`);
+        void (c as HTMLElement).offsetWidth; // yeni yüz yerleşsin, sonra dönüş geçişi başlasın
+      }
       if (flipped.has(focus)) flipped.delete(focus);
       else flipped.add(focus);
       slots[focus].classList.toggle('is-flip', flipped.has(focus));

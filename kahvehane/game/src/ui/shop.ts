@@ -15,7 +15,7 @@ import {ANIM, EASE, Scope, bump, center, clamp, esc, fmt, h, hms, play, q, shake
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toast, type ModalHandle} from './parts';
-import {deferMount, fanHtml, frameJob, mountFx, paintTableLater, tableSceneHtml, type FxLoop} from './previews';
+import {fanHtml, frameJob, mountFx, mountFxStill, paintTableLater, tableSceneHtml, type FxLoop} from './previews';
 import {BADGE_NAME, RANK, badgeOf, setOf, setById, setPrice, shopSets, type ShopSet} from './sets';
 import {Spotlight, glint, glintHtml, mountDeckViewer} from './showcase';
 import {openTryOn} from './tryon';
@@ -103,10 +103,7 @@ function pvHtml(it: {kind: ItemKind; id: string}, me: Me, big = false): string {
 
 /** Kök altındaki efekt kutularını görünür olunca, sırayla, donmuş kare olarak kur. */
 function hydrate(root: ParentNode): void {
-  root.querySelectorAll<HTMLElement>('[data-fx]:not(.kh-fxpv)').forEach(box => {
-    box.classList.add('kh-fxpv');
-    deferMount(box, () => mountFx(box, box.dataset.fx!, true));
-  });
+  root.querySelectorAll<HTMLElement>('[data-fx]:not(.kh-fxpv)').forEach(box => mountFxStill(box, box.dataset.fx!));
 }
 
 const badgeHtml = (it: ShopItem): string => {
@@ -301,7 +298,8 @@ export class ShopPage implements Page {
       p = {el, sig, scroll: p?.scroll ?? 0};
       this.panels.set(this.tab, p);
       fresh = true;
-      this.appendChunks(p, chunks.slice(1));
+      // kalan parçalar giriş kayması bittikten sonra başlar (kayma sırasında ana iş parçacığı boş kalsın)
+      this.appendChunks(p, chunks.slice(1), ANIM ? (this.panels.size === 1 ? 420 : 320) : 0);
     }
     for (const [t, x] of this.panels) x.el.hidden = t !== this.tab;
     if (cur !== p.scroll && !(fresh && p.scroll)) this.body.scrollTop = p.scroll;
@@ -310,14 +308,18 @@ export class ShopPage implements Page {
     if (this.tab === 'featured') this.tickDeal();
     // sekme değişimi: TEK katman (panel) kayar; kart kart giriş yok (her kart ayrı katman + boyama = ilk açılışta takılma)
     if (animate && ANIM && dir) play(p.el, [{transform: `translateX(${dir * 9}%)`, opacity: 0}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.outQuart});
-    this.spot.start(fresh ? 1300 : 700);
+    this.spot.start(fresh ? 1100 : 800);
   }
 
   /** Panelin kalan parçalarını kare başına bir parça ekle (efekt kareleriyle aynı kuyrukta); bitince kaydırma yerini geri koy. */
-  private appendChunks(p: Panel, rest: Chunk[]): void {
-    const gen = ++this.chunkGen;
+  private appendChunks(p: Panel, rest: Chunk[], delay = 0): void {
     const want = p.scroll;
-    const live = (): boolean => this.scope.alive && p.el.isConnected && gen === this.chunkGen;
+    // panel yeniden kurulursa (eski öğe sökülür) kalan parçalar düşer; sekme değişse de (gizli panel) eklemeye devam eder
+    const live = (): boolean => this.scope.alive && p.el.isConnected;
+    if (delay) {
+      window.setTimeout(() => live() && this.appendChunks(p, rest), delay);
+      return;
+    }
     rest.forEach((c, i) =>
       frameJob(() => {
         if (!live()) return;
@@ -332,7 +334,6 @@ export class ShopPage implements Page {
     );
     if (!rest.length && want) requestAnimationFrame(() => live() && (this.body.scrollTop = want));
   }
-  private chunkGen = 0;
 
   private panelChunks(tab: ShopTab): Chunk[] {
     const me = meOf(this.shell);

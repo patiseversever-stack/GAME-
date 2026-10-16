@@ -95,14 +95,18 @@ await jank('dene-aç (deste)', async () => {
   await click('.kh-sheet__x', 600);
 });
 
-// 4) sızıntı: 20 sekme geçişi
-const m0 = await metrics();
+// 4) sızıntı: ısınma turu (her sekme bir kez kurulsun, efekt kareleri dolsun), sonra 20 sekme geçişi
 const subs = ['featured', 'set', 'deck', 'table', 'fx', 'frame', 'char'];
-for (let i = 0; i < 20; i++) {
-  await click(`.kh-stab[data-t=${subs[i % subs.length]}]`, 250);
-  if (i % 5 === 4) { await click('.kh-nav [data-tab=profile]', 350); await click('.kh-nav [data-tab=shop]', 350); }
-}
-await p.waitForTimeout(1500);
+const round = async () => {
+  for (let i = 0; i < 20; i++) {
+    await click(`.kh-stab[data-t=${subs[i % subs.length]}]`, 250);
+    if (i % 5 === 4) { await click('.kh-nav [data-tab=profile]', 350); await click('.kh-nav [data-tab=shop]', 350); }
+  }
+  await p.waitForTimeout(2500);
+};
+await round();
+const m0 = await metrics();
+await round();
 const m1 = await metrics();
 console.log(`20 geçiş: DOM ${m0.nodes} → ${m1.nodes} | JS yığını ${m0.heapMB} → ${m1.heapMB} MB | dinleyici ${m0.listeners} → ${m1.listeners} | blob ${m0.blobs} → ${m1.blobs}`);
 console.log(errs.length ? 'HATA: ' + errs.slice(0, 3).join(' | ') : 'konsol temiz');

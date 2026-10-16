@@ -437,31 +437,17 @@ function* paintBack(): Job<HTMLCanvasElement> {
 }
 
 function* paintAll(): Job<Art> {
-  const T: Record<string, number> = {};
-  let t = performance.now();
-  const lap = (k: string): void => {
-    const n = performance.now();
-    T[k] = Math.round(n - t);
-    t = n;
-  };
   const frame = yield* paintFrame();
-  lap('frame');
   const paper = yield* paintPaper();
-  lap('paper');
   const suit = {} as Record<Suit, HTMLCanvasElement>;
   for (const s of ['S', 'H', 'D', 'C'] as Suit[]) suit[s] = yield* paintSuit(s);
-  lap('suits');
   const ace = yield* paintAce();
-  lap('ace');
   const court: Record<number, HTMLCanvasElement> = {};
   court[13] = yield* paintCourt('K');
   court[12] = yield* paintCourt('Q');
   court[11] = yield* paintCourt('J');
-  lap('courts');
   const back = yield* paintBack();
-  lap('back');
   RF.measure();
-  console.warn('ebru', JSON.stringify(T));
   return {frame, paper, suit, ace, court, back};
 }
 

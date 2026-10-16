@@ -9,6 +9,7 @@ import type {TableTheme} from '../themes/contract';
 import {ANIM, esc} from './dom';
 import {suitSvg} from './icons';
 import {CI, deckCardHtml, hasDeck} from './deckpv';
+import {mountFx, type FxLoop} from './fxpreview';
 
 export {hasDeck};
 
@@ -59,32 +60,91 @@ export function frameJob(fn: () => void, first = false): void {
   pump();
 }
 
+// boşta işler: kullanıcı dokunurken/kaydırırken değil, tarayıcı boş kalınca (efekt karesi kurmak 50-200 ms sürebilir)
+const idleJobs: Array<() => void> = [];
+let idling = false;
+type RIC = (f: (d: {timeRemaining(): number}) => void, o?: {timeout: number}) => number;
+function idlePump(): void {
+  if (idling) return;
+  idling = true;
+  const ric = (window as unknown as {requestIdleCallback?: RIC}).requestIdleCallback;
+  const next = (): void => {
+    if (!idleJobs.length) {
+      idling = false;
+      return;
+    }
+    if (ric) ric(run, {timeout: 1200});
+    else setTimeout(run, 60);
+  };
+  const run = (): void => {
+    const f = idleJobs.shift();
+    try {
+      f?.();
+    } catch {
+      /* */
+    }
+    next();
+  };
+  next();
+}
+export function idleJob(fn: () => void): void {
+  idleJobs.push(fn);
+  idlePump();
+}
+
 /**
- * Ağır önizlemeyi görünür olunca, kare başına küçük bir bütçeyle kur. Görünürlük gözlemcisi her ortamda güvenilir
- * olmayabilir (gömülü, farklı kökenli çerçeve): 700 ms içinde haber gelmezse kutu ekrandaysa yine kurulur.
+ * Ağır önizlemeyi görünür olunca kur (idle: boşta; değilse bir sonraki karede, kare başına bir iş). Görünürlük
+ * gözlemcisi her ortamda güvenilir olmayabilir (gömülü, farklı kökenli çerçeve): birkaç kez seyrekleşen aralıklarla
+ * kutunun ekranda olup olmadığına da bakılır.
  */
-export function deferMount(box: HTMLElement, fn: () => void): void {
+export function deferMount(box: HTMLElement, fn: () => void, idle = false): void {
   let done = false;
   const enqueue = (): void => {
     if (done) return;
     done = true;
     io?.disconnect();
-    frameJob(() => {
+    const job = (): void => {
       if (box.isConnected) fn();
-    });
+    };
+    if (idle) idleJob(job);
+    else frameJob(job);
   };
   let io: IntersectionObserver | null = null;
   if ('IntersectionObserver' in window) {
     io = new IntersectionObserver(es => es.some(e => e.isIntersecting) && enqueue(), {rootMargin: '160px'});
     io.observe(box);
+    let wait = 700;
     const check = (): void => {
-      if (done || !box.isConnected) return io?.disconnect();
+      if (done || !box.isConnected) return;
       const r = box.getBoundingClientRect();
       if (r.width && r.bottom > -160 && r.top < innerHeight + 160) enqueue();
-      else setTimeout(check, 1500);
+      else if ((wait *= 2) < 12000) setTimeout(check, wait);
     };
-    setTimeout(check, 700);
+    setTimeout(check, wait);
   } else enqueue();
+}
+
+// donmuş efekt kareleri: aynı efekt aynı boyutta ikinci kez kurulmaz (panel yeniden kurulunca, koleksiyonda, setlerde)
+const stillCache = new Map<string, string>();
+/** Efekt kutusunu donmuş güzel kareyle doldur: görünür olunca, boşta; önbellekte varsa anında. */
+export function mountFxStill(box: HTMLElement, id: string): void {
+  box.classList.add('kh-fxpv');
+  deferMount(
+    box,
+    () => {
+      const key = `${id}:${Math.round(box.clientWidth / 8)}x${Math.round(box.clientHeight / 8)}`;
+      const hit = stillCache.get(key);
+      if (hit) {
+        box.classList.add(`is-${id}`);
+        box.innerHTML = hit;
+        return;
+      }
+      mountFx(box, id, true);
+      if (stillCache.size > 40) stillCache.delete(stillCache.keys().next().value!);
+      stillCache.set(key, box.innerHTML);
+    },
+    true,
+  );
 }
 
 // ---------------------------------------------------------------- masa
@@ -124,8 +184,8 @@ function swatchRule(id: string): void {
 export interface SceneOpts {
   /** Kartların destesi (kuşanılı deste) */
   deck: string;
-  /** 'mini': ızgara (yığın + deste) · 'full': ürün penceresi/dene (rakip eli, deste, yığın, oyuncu eli) */
-  size?: 'mini' | 'full';
+  /** 'tile': yalnız zemin + yığın (koleksiyon karosu) · 'mini': ızgara (yığın + deste) · 'full': ürün penceresi/dene (rakip eli, deste, yığın, oyuncu eli) */
+  size?: 'tile' | 'mini' | 'full';
   cls?: string;
 }
 
@@ -140,6 +200,8 @@ export function tableSceneHtml(id: string, o: SceneOpts): string {
   const d = o.deck;
   const full = o.size === 'full';
   swatchRule(id);
+  if (o.size === 'tile')
+    return `<span class="kh-ts is-tile ${o.cls ?? ''}"><i class="kh-ts__bg" data-sw="${esc(id)}"></i><span class="kh-ts__pile">${deckCardHtml(o.deck, CI.ten, 'kh-ts__c is-p1')}${deckCardHtml(o.deck, CI.queen, 'kh-ts__c is-p2')}</span></span>`;
   const pile = `<span class="kh-ts__pile">${deckCardHtml(d, CI.ten, 'kh-ts__c is-p1')}${deckCardHtml(d, CI.queen, 'kh-ts__c is-p2')}</span>`;
   const stack = `<span class="kh-ts__deck">${deckCardHtml(d, CI.back, 'kh-ts__c is-d1')}${deckCardHtml(d, CI.back, 'kh-ts__c is-d2')}</span>`;
   const opp = full ? `<span class="kh-ts__opp">${[0, 1, 2, 3].map(i => deckCardHtml(d, CI.back, 'kh-ts__c', `--i:${i - 1.5}`)).join('')}</span>` : '';
@@ -190,4 +252,4 @@ export function paintTableLater(scene: HTMLElement, id: string, delay = 520): vo
 }
 
 // pişti efekti önizlemeleri ayrı dosyada (src/ui/fxpreview.ts)
-export {mountFx, type FxLoop} from './fxpreview';
+export {mountFx, type FxLoop};
