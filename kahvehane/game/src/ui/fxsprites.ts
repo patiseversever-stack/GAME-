@@ -5,6 +5,7 @@
 // düğümleri bunu arka plan görseli yapar ve yalnız transform/opacity ile oynatılır (bileşimci). Bellek sınırlı:
 // ~35 küçük görsel, her biri bir kez.
 import {ASSETS} from './assets';
+import {suitOutline, suitPath} from '../skins/kit';
 
 type Ctx = CanvasRenderingContext2D;
 type RGB = readonly [number, number, number];
@@ -923,6 +924,83 @@ const disc: Def = {
   },
 };
 
+// ───────────────────────── parlak 3B takım amblemi ─────────────────────────
+/** ♥♦ yakut kırmızısı, ♣♠ gece laciverti; parlak cam/emaye gövde, altın kenar, sol üstte parlama */
+function suit3d(su: 'H' | 'D' | 'C' | 'S'): Def {
+  return {
+    w: 128,
+    h: 128,
+    draw(g, w) {
+      const c = w / 2, k = w * 0.72, red = su === 'H' || su === 'D';
+      const path = suitPath(su), out = suitOutline(su);
+      // yumuşak gölge
+      g.save();
+      g.translate(c + w * 0.02, c + w * 0.04);
+      g.scale(k * 1.02, k * 1.02);
+      g.fillStyle = 'rgba(0,0,20,.35)';
+      g.fill(path);
+      g.restore();
+      g.save();
+      g.translate(c, c);
+      g.scale(k, k);
+      const lg = g.createLinearGradient(0, -0.55, 0, 0.55);
+      if (red) {
+        lg.addColorStop(0, '#ff8a94');
+        lg.addColorStop(0.3, '#ef2a44');
+        lg.addColorStop(0.72, '#a8081f');
+        lg.addColorStop(1, '#58000e');
+      } else {
+        lg.addColorStop(0, '#6a7ac0');
+        lg.addColorStop(0.3, '#26346e');
+        lg.addColorStop(0.72, '#0c1234');
+        lg.addColorStop(1, '#03050f');
+      }
+      g.fillStyle = lg;
+      g.fill(path);
+      g.save();
+      g.clip(path);
+      const hg = g.createRadialGradient(-0.2, -0.3, 0.02, -0.12, -0.12, 0.75);
+      hg.addColorStop(0, 'rgba(255,255,255,.55)');
+      hg.addColorStop(0.35, 'rgba(255,255,255,.12)');
+      hg.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = hg;
+      g.fillRect(-1, -1, 2, 2);
+      const rg = g.createRadialGradient(0.18, 0.42, 0, 0.18, 0.42, 0.45);
+      rg.addColorStop(0, red ? 'rgba(255,170,150,.35)' : 'rgba(120,170,255,.35)');
+      rg.addColorStop(1, 'rgba(0,0,0,0)');
+      g.fillStyle = rg;
+      g.fillRect(-1, -1, 2, 2);
+      g.save();
+      g.translate(-0.17, -0.3);
+      g.rotate(-0.6);
+      g.scale(1, 0.45);
+      const sg = g.createRadialGradient(0, 0, 0, 0, 0, 0.16);
+      sg.addColorStop(0, 'rgba(255,255,255,.95)');
+      sg.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = sg;
+      g.beginPath();
+      g.arc(0, 0, 0.16, 0, Math.PI * 2);
+      g.fill();
+      g.restore();
+      g.restore();
+      g.lineJoin = 'round';
+      g.lineWidth = 0.085;
+      g.strokeStyle = '#2a1602';
+      g.stroke(out);
+      const gg = g.createLinearGradient(-0.5, -0.55, 0.5, 0.55);
+      gg.addColorStop(0, '#fff3b0');
+      gg.addColorStop(0.3, '#e8b030');
+      gg.addColorStop(0.55, '#fff0a0');
+      gg.addColorStop(0.8, '#b07410');
+      gg.addColorStop(1, '#ffe080');
+      g.lineWidth = 0.055;
+      g.strokeStyle = gg;
+      g.stroke(out);
+      g.restore();
+    },
+  };
+}
+
 // ───────────────────────── katalog ─────────────────────────
 const DEFS: Record<string, Def> = {
   meteor,
@@ -941,6 +1019,10 @@ const DEFS: Record<string, Def> = {
   petal2: petal([226, 70, 110], [255, 168, 190], null, false),
   petal3: petal([176, 10, 40], [240, 40, 64], 'rgba(255,206,90,.95)', true),
   rosette,
+  'suit:H': suit3d('H'),
+  'suit:D': suit3d('D'),
+  'suit:C': suit3d('C'),
+  'suit:S': suit3d('S'),
 };
 for (const k of Object.keys(PAL) as PalKey[]) {
   const p = PAL[k];
@@ -985,10 +1067,10 @@ export const spriteSize = (key: SpriteKey): [number, number] => (key === 'coin' 
 
 /** Efektin kullandığı görseller (boşta önceden çizmek için) */
 export const FX_SPRITES: Record<string, SpriteKey[]> = {
-  klasik: ['bloom:gold', 'bloom:white', 'ring:gold', 'flare:gold', 'rays:gold', 'burst:gold', 'spark:gold', 'spark:white', 'glint:gold', 'glint:white', 'dust:gold'],
+  klasik: ['suit:H', 'suit:D', 'suit:C', 'suit:S', 'bloom:gold', 'bloom:white', 'ring:gold', 'flare:gold', 'rays:gold', 'burst:gold', 'spark:gold', 'glint:gold', 'glint:white'],
   altin: ['coin', 'bloom:gold', 'ring:gold', 'shaft', 'glint:gold', 'glint:white', 'dust:gold'],
-  havai: ['comet:gold', 'comet:rose', 'comet:silver', 'burst:gold', 'burst:rose', 'burst:silver', 'bloom:gold', 'bloom:rose', 'bloom:silver', 'glint:white', 'smoke'],
-  yildiz: ['meteor', 'glint:white', 'glint:blue', 'bloom:blue', 'ring:blue', 'rays:white'],
+  havai: ['comet:gold', 'comet:rose', 'comet:silver', 'comet:cyan', 'burst:gold', 'burst:rose', 'burst:silver', 'burst:cyan', 'bloom:gold', 'bloom:rose', 'bloom:silver', 'bloom:cyan', 'glint:white'],
+  yildiz: ['meteor', 'glint:white', 'glint:blue', 'bloom:blue', 'bloom:white', 'ring:blue', 'rays:white'],
   simsek: ['bolt1', 'bolt2', 'arc', 'bloom:blue', 'bloom:white', 'ring:blue', 'flare:blue', 'spark:blue', 'glint:blue'],
   lale: ['rosette', 'petal1', 'petal2', 'petal3', 'bloom:rose', 'ring:rose', 'rays:rose', 'glint:gold', 'dust:gold'],
   nazar: ['eye', 'bead', 'shard1', 'shard2', 'bloom:blue', 'bloom:white', 'ring:blue', 'glint:white'],

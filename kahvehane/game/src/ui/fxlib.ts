@@ -27,7 +27,6 @@ export interface Stage {
 }
 
 const R = (a: number, b: number): number => a + Math.random() * (b - a);
-const pick = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
 /** konum + dönüş + ölçek */
 const tr = (x: number, y: number, rot = 0, sx = 1, sy = sx): string =>
   `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) rotate(${rot.toFixed(1)}deg) scale(${sx.toFixed(3)},${sy.toFixed(3)})`;
@@ -172,82 +171,92 @@ function sparks(s: Stage, at: Pt, o: SparkOpts): void {
 }
 
 // ───────────────────────── efektler ─────────────────────────
-/** Zafer Işığı (ücretsiz): altın ışık toplanır, PİŞTİ'nin ardında patlar; dev yıldız parıltısı, ışınlar, mercek
- * parlaması, yerçekimiyle süzülen kıvılcımlar ve yükselen altın zerreler. */
+/** Zafer Işığı (ücretsiz): altın ışık toplanır ve patlar; dört parlak 3B takım amblemi (♥♦♣♠) dönerek dışa açılır,
+ * şok halkası, ışınlar, mercek parlaması, kıvılcım demeti ve yıldız parıltıları. Ekran yıkanmaz: ışık yereldir. */
 function klasik(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100;
-  gather(s, at, 'glint:gold', 6, 10 * m, 34 * m, 0, 210);
+  gather(s, at, 'glint:gold', 6, 10 * m, 34 * m, 0, 200);
   glow(s, at, 'bloom:gold', 34 * m, 0, 380, 0.2, 1.1, 0.7, 1, 0.55);
-  const T = 200;
-  s.flash('rgba(255,228,160,1)', jack ? 0.5 : 0.4, 360, T);
-  rays(s, at, 'rays:gold', 96 * m, T - 20, 1450, 34, 1);
-  glow(s, at, 'bloom:gold', 60 * m, T, 1000, 0.4, 2.0, 2.5, 1, 0.14);
-  glow(s, at, 'bloom:white', 30 * m, T, 480, 0.3, 1.6, 1.9);
-  shock(s, at, 'ring:gold', 44 * m, T, 650, 2.6);
-  if (jack) shock(s, at, 'ring:gold', 44 * m, T + 170, 720, 3.3, 1, 0.8);
+  const T = 190;
+  rays(s, at, 'rays:gold', 96 * m, T - 20, 1500, 34, 1);
+  glow(s, at, 'bloom:gold', 62 * m, T, 1200, 0.4, 2.1, 2.6, 1, 0.14);
+  glow(s, at, 'bloom:white', 30 * m, T, 520, 0.3, 1.6, 1.9);
+  shock(s, at, 'ring:gold', 44 * m, T, 700, 2.7);
+  if (jack) shock(s, at, 'ring:gold', 44 * m, T + 170, 760, 3.3, 1, 0.8);
   flare(s, at, 'flare:gold', 100 * m, T, 700);
-  cluster(s, at, 'burst:gold', 56 * m, T, 1100, 1, 6 * m);
+  cluster(s, at, 'burst:gold', 60 * m, T, 1150, 1, 6 * m);
+  // dört takım amblemi: merkezden dönerek açılır, havada asılı kalır, söner
+  const suits = ['suit:H', 'suit:S', 'suit:D', 'suit:C'];
+  const nS = jack ? 8 : 4;
+  for (let i = 0; i < nS; i++) {
+    const nd = s.node(suits[i % 4], 20 * m, undefined, true);
+    if (!nd) break;
+    const ring2 = i >= 4;
+    const ang = ((ring2 ? -150 + (i - 4) * 40 + 20 : -160 + i * 46.6) * Math.PI) / 180;
+    const d = (ring2 ? 44 : 31) * m;
+    const x1 = at.x + Math.cos(ang) * d, y1 = at.y + Math.sin(ang) * d * 0.9 - 4 * m;
+    const spin = (i % 2 ? 1 : -1) * 360, tilt = (i % 2 ? -1 : 1) * 10;
+    const D = 1450;
+    const o = (ms: number): number => ms / D;
+    const P = (x: number, y: number, r: number, sc: number, ry: number): string => `${tr(x, y, r, sc)} rotateY(${ry.toFixed(0)}deg)`;
+    s.run(nd, [
+      {transform: P(at.x, at.y, 0, 0.15, 0), opacity: 0, offset: 0},
+      {transform: P(at.x + (x1 - at.x) * 0.55, at.y + (y1 - at.y) * 0.55, spin * 0.6, 1.1, 360), opacity: 1, offset: o(160)},
+      {transform: P(x1, y1, spin + tilt, 1.28, 650), opacity: 1, offset: o(380)},
+      {transform: P(x1, y1 - 1.5 * m, spin + tilt * 0.4, 1.12, 720), opacity: 1, offset: o(560)},
+      {transform: P(x1, y1 - 3 * m, spin, 1.1, 720), opacity: 1, offset: o(1050)},
+      {transform: P(x1, y1 - 7 * m, spin, 0.7, 720), opacity: 0, offset: 1},
+    ], {duration: D, delay: T + (ring2 ? 90 : 0) + (i % 4) * 25, easing: 'cubic-bezier(.2,.75,.3,1)'});
+    twinkle(s, x1 + 4 * m, y1 - 5 * m, i % 2 ? 'glint:white' : 'glint:gold', 14 * m, T + 420 + i * 70, 560, R(0.9, 1.2));
+  }
+  sparks(s, at, {n: jack ? 12 : 12, keys: ['spark:gold'], len: 13 * m, dist: [20 * m, 46 * m], ang: [-Math.PI * 0.97, -Math.PI * 0.03], fall: 32 * m, drag: 2.4, dur: [900, 1300], t: T, r0: 4 * m, align: true, front: true, stagger: 4});
   // dev kırınım yıldızı
-  const st = s.node('glint:white', 44 * m, undefined, true);
+  const st = s.node('glint:white', 40 * m, undefined, true);
   if (st)
     s.run(st, [
       {transform: tr(at.x, at.y, 0, 0.1), opacity: 0},
-      {transform: tr(at.x, at.y, 10, jack ? 1.5 : 1.25), opacity: 1, offset: 0.16},
+      {transform: tr(at.x, at.y, 10, jack ? 1.45 : 1.2), opacity: 1, offset: 0.18},
       {transform: tr(at.x, at.y, 22, 0.9), opacity: 0.85, offset: 0.45},
       {transform: tr(at.x, at.y, 40, 0.1), opacity: 0},
     ], {duration: 760, delay: T - 10, easing: OUT});
-  sparks(s, at, {n: jack ? 18 : 15, keys: ['spark:gold', 'spark:gold', 'spark:white'], len: 14 * m, dist: [22 * m, 50 * m], ang: [-Math.PI * 0.97, -Math.PI * 0.03], fall: 34 * m, drag: 2.4, dur: [900, 1300], t: T, r0: 4 * m, align: true, front: true, stagger: 4});
-  const nt = s.low ? 3 : jack ? 6 : 5;
-  for (let i = 0; i < nt; i++) {
-    const a = R(-Math.PI * 0.95, -Math.PI * 0.05), d = R(16, 40) * m;
-    twinkle(s, at.x + Math.cos(a) * d, at.y + Math.sin(a) * d * 0.85, i % 2 ? 'glint:white' : 'glint:gold', 15 * m, T + 160 + i * 150, 600, R(0.8, 1.2));
-  }
-  if (!s.low)
-    for (let i = 0; i < 5; i++) {
-      const n = s.node('dust:gold', 4 * m);
-      if (!n) break;
-      const x = at.x + R(-26, 26) * m, y = at.y + R(-6, 10) * m, up = R(20, 34) * m, sw = R(-5, 5) * m;
-      s.run(n, [
-        {transform: tr(x, y, 0, 0.4), opacity: 0},
-        {transform: tr(x + sw * 0.5, y - up * 0.35, 0, 1), opacity: 1, offset: 0.3},
-        {transform: tr(x - sw * 0.4, y - up * 0.75, 0, 0.9), opacity: 0.8, offset: 0.7},
-        {transform: tr(x + sw, y - up, 0, 0.4), opacity: 0},
-      ], {duration: R(1200, 1500), delay: T + 220 + i * 60, easing: 'ease-out'});
-    }
   s.sfx(T, x => x.bonus());
   s.sfx(T + 260, x => x.starChime(2));
+  s.sfx(T + 520, x => x.starChime(5));
 }
 
-/** Altın Yağmuru: tepeden altın ışık hüzmesi iner, sikkeler yağar, masaya düşüp seker; iniş parıltıları. */
+/** Altın Yağmuru: tepeden altın ışık hüzmesi iner, yoğun sikke yağmuru masaya düşüp seker; yığında büyük altın
+ * ışık, masada altın halka, iniş parıltıları. */
 function altin(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100, W = s.W;
-  const count = Math.round((jack ? 28 : 20) * (s.low ? 0.55 : 1));
-  const span = jack ? 1000 : 700;
+  const count = Math.round((jack ? 32 : 26) * (s.low ? 0.55 : 1));
+  const span = jack ? 900 : 650;
   if (!s.low) {
-    const sh = s.node('shaft', 44 * m);
+    const sh = s.node('shaft', 50 * m);
     if (sh) {
-      const hgt = (44 * m * 512) / 128;
+      const hgt = (50 * m * 512) / 128;
       s.run(sh, [
         {transform: tr(at.x, at.y - hgt * 0.42, 0, 0.6, 1), opacity: 0},
-        {transform: tr(at.x, at.y - hgt * 0.42, 0, 1, 1), opacity: 0.8, offset: 0.25},
-        {transform: tr(at.x, at.y - hgt * 0.42, 0, 1.15, 1), opacity: 0.55, offset: 0.7},
+        {transform: tr(at.x, at.y - hgt * 0.42, 0, 1, 1), opacity: 0.85, offset: 0.22},
+        {transform: tr(at.x, at.y - hgt * 0.42, 0, 1.15, 1), opacity: 0.6, offset: 0.7},
         {transform: tr(at.x, at.y - hgt * 0.42, 0, 1.3, 1), opacity: 0},
-      ], {duration: 1700, easing: 'ease-out'});
+      ], {duration: 1800, easing: 'ease-out'});
     }
   }
-  const land0 = 560;
-  glow(s, at, 'bloom:gold', 46 * m, land0, 1000, 0.3, 1.6, 2.1, 0.85, 0.2);
-  shock(s, at, 'ring:gold', 40 * m, land0, 700, 2.6, 0.42);
-  s.flash('rgba(255,220,140,1)', jack ? 0.3 : 0.22, 320, land0);
+  glow(s, at, 'bloom:gold', 40 * m, 80, 600, 0.2, 1.1, 1.2, 0.8, 0.5);
+  const land0 = 500;
+  glow(s, at, 'bloom:gold', 64 * m, land0, 1250, 0.3, 1.9, 2.4, 1, 0.16);
+  glow(s, at, 'bloom:white', 26 * m, land0, 520, 0.3, 1.5, 1.8, 0.9);
+  shock(s, at, 'ring:gold', 44 * m, land0, 760, 2.8, 0.42);
+  if (jack) shock(s, at, 'ring:gold', 44 * m, land0 + 260, 800, 3.3, 0.42, 0.8);
   const u = m * 3.6;
   for (let i = 0; i < count; i++) {
     const c = s.node('coin', u * 1.85, u * 1.85, true);
     if (!c) break;
     const a = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random());
-    const lx = at.x + Math.cos(a) * rr * W * 0.36, ly = at.y + Math.sin(a) * rr * s.M * 0.14 + u * 0.3;
-    const x0 = lx + R(-W * 0.1, W * 0.1), y0 = -u * R(2, 6);
-    const fall = R(520, 700), dur = fall + 700, f = fall / dur;
-    const bounce = u * R(1.2, 2.6), sp = R(2, 5) * 360 * (Math.random() < 0.5 ? -1 : 1), s0 = R(0.85, 1.25);
+    const lx = at.x + Math.cos(a) * rr * W * 0.3, ly = at.y + Math.sin(a) * rr * s.M * 0.12 + u * 0.3;
+    const x0 = lx + R(-W * 0.08, W * 0.08), y0 = -u * R(2, 6);
+    const fall = R(480, 640), dur = fall + 700, f = fall / dur;
+    const bounce = u * R(1.2, 2.6), sp = R(2, 5) * 360 * (Math.random() < 0.5 ? -1 : 1), s0 = R(0.85, 1.3);
     const P = (x: number, y: number, ry: number, sc: number): string => `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) rotateY(${ry.toFixed(0)}deg) scale(${sc.toFixed(2)})`;
     const delay = (i / count) * span + R(0, 60);
     s.run(c, [
@@ -257,50 +266,50 @@ function altin(s: Stage, at: Pt, jack: boolean): void {
       {transform: P(lx + R(-6, 6), ly - bounce, sp + 180, s0), opacity: 1, offset: f + (1 - f) * 0.18},
       {transform: P(lx, ly, sp + 360, s0 * 0.95), opacity: 1, offset: f + (1 - f) * 0.34},
       {transform: P(lx, ly - bounce * 0.22, sp + 360, s0 * 0.95), opacity: 1, offset: f + (1 - f) * 0.44},
-      {transform: P(lx, ly, sp + 360, s0 * 0.93), opacity: 1, offset: f + (1 - f) * 0.54},
+      {transform: P(lx, ly, sp + 360, s0 * 0.93), opacity: 1, offset: f + (1 - f) * 0.6},
       {transform: P(lx, ly + u * 0.3, sp + 360, s0 * 0.5), opacity: 0, offset: 1},
     ], {duration: dur, delay, easing: 'linear'});
-    if (i % 4 === 0 && !s.low) twinkle(s, lx + u * 0.3, ly - u * 0.5, i % 8 ? 'glint:white' : 'glint:gold', 9 * m, delay + fall + 120, 480);
+    if (i % 4 === 0 && !s.low) twinkle(s, lx + u * 0.3, ly - u * 0.5, i % 8 ? 'glint:white' : 'glint:gold', 11 * m, delay + fall + 100, 480);
   }
   s.sfx(0, x => x.coinRain(Math.min(24, Math.round(count * 0.7)), span / 1000 + 0.5));
+  s.sfx(land0, x => x.bonus());
 }
 
-/** Havai Fişek: altın, gül ve gümüş fişekler yükselir; kuyruklu yıldız gibi sarkan ışık izleri, çatırtı, duman. */
+/** Havai Fişek: dört katmanlı fişek gösterisi — uzak (küçük, soluk) ve yakın (iri, parlak) patlamalar sırayla açılır;
+ * büyük ışık hâlesi, yerçekimiyle sarkan kuyruklu ışık izleri, çatırtı. */
 function havai(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100, W = s.W, H = s.H;
-  const shells = jack ? 3 : 2;
-  const per = jack ? 6 : 8;
-  const pals = jack ? ['gold', 'rose', 'silver'] : pick([['gold', 'rose'], ['gold', 'silver'], ['rose', 'gold']]);
-  const xs = shells === 3 ? [0.27, 0.73, 0.5] : [0.33, 0.67];
-  for (let i = 0; i < shells; i++) {
-    const pal = pals[i % pals.length];
-    const t0 = i * (jack ? 220 : 280);
-    const bx = W * xs[i] + R(-4, 4) * m, by = Math.max(H * 0.12, at.y - (shells === 3 && i === 2 ? 40 : R(18, 30)) * m);
-    const sx = bx + R(-8, 8) * m, sy = Math.min(H + 4 * m, at.y + 50 * m);
-    const rise = 460;
+  // [x oranı, yükseklik (pile'a göre m), boy (derinlik), renk, gecikme]
+  const plan: [number, number, number, string, number][] = jack
+    ? [[0.3, 30, 0.75, 'rose', 0], [0.7, 36, 0.7, 'cyan', 160], [0.5, 22, 1.15, 'gold', 330], [0.22, 12, 0.9, 'silver', 520]]
+    : [[0.3, 30, 0.72, 'rose', 0], [0.7, 34, 0.68, 'silver', 170], [0.52, 20, 1.15, 'gold', 360], [0.76, 8, 0.82, 'rose', 560]];
+  const shells = s.low ? plan.slice(2, 3) : plan;
+  shells.forEach(([fx, hy, z, pal, t0], i) => {
+    const bx = W * fx + R(-3, 3) * m, by = Math.max(H * 0.1, at.y - hy * m);
+    const sx = bx + R(-6, 6) * m, sy = Math.min(H + 4 * m, at.y + 50 * m);
+    const rise = 420 + (1 - z) * 120;
     const rk = s.node(`comet:${pal}`, 22 * m);
     if (rk) {
       const ang = (Math.atan2(by - sy, bx - sx) * 180) / Math.PI;
       s.run(rk, [
-        {transform: tr(sx, sy, ang, 0.6, 0.8), opacity: 0},
-        {transform: tr((sx + bx) / 2, (sy + by) / 2 + (sy - by) * 0.08, ang, 1.3, 0.9), opacity: 1, offset: 0.3},
-        {transform: tr(bx, by, ang, 0.7, 0.8), opacity: 0.9, offset: 0.92},
+        {transform: tr(sx, sy, ang, 0.6 * z, 0.8 * z), opacity: 0},
+        {transform: tr((sx + bx) / 2, (sy + by) / 2 + (sy - by) * 0.08, ang, 1.3 * z, 0.9 * z), opacity: 1, offset: 0.3},
+        {transform: tr(bx, by, ang, 0.7 * z, 0.8 * z), opacity: 0.9, offset: 0.92},
         {transform: tr(bx, by, ang, 0.2, 0.5), opacity: 0},
       ], {duration: rise, delay: t0, easing: 'cubic-bezier(.25,.6,.4,1)'});
     }
     s.sfx(t0, x => x.fireworkLaunch());
     const tb = t0 + rise - 30;
-    s.sfx(tb, x => x.fireworkBurst(jack ? 1 : 0.85));
-    if (i === 0) s.flash('rgba(255,236,200,1)', 0.22, 300, tb);
-    glow(s, {x: bx, y: by}, `bloom:${pal}`, 50 * m, tb, 750, 0.2, 1.5, 2, 1, 0.1);
-    cluster(s, {x: bx, y: by}, `burst:${pal}`, 78 * m, tb, 1400, 1, 10 * m);
-    // patlama: hız yönüne dönük ışık izleri, ağır ağır sarkar
-    const n = s.low ? Math.ceil(per / 2) : per;
+    s.sfx(tb, x => x.fireworkBurst(0.7 + z * 0.3));
+    glow(s, {x: bx, y: by}, `bloom:${pal}`, 56 * m, tb, 800, 0.2, 1.5 * z, 2 * z, Math.min(1, 0.55 + z * 0.4), 0.1);
+    cluster(s, {x: bx, y: by}, `burst:${pal}`, 80 * m, tb, 1500, z, 12 * m * z);
+    // yakın patlamada sarkan kuyruklu izler (yerçekimi)
+    const n = s.low ? 4 : z > 1 ? 8 : 4;
     const off = R(0, 6.28);
     for (let j = 0; j < n; j++) {
-      const nd = s.node(`comet:${pal}`, 19 * m, undefined, true);
+      const nd = s.node(`comet:${pal}`, 20 * m, undefined, true);
       if (!nd) break;
-      const a = off + (j / n) * Math.PI * 2 + R(-0.1, 0.1), k = 2.7, v = R(30, 40) * m * k, g = 14 * m * k, D = R(1050, 1300);
+      const a = off + (j / n) * Math.PI * 2 + R(-0.15, 0.15), k = 2.2, v = R(30, 40) * m * z * k, g = 34 * m * k, D = R(1300, 1600);
       const vx = Math.cos(a) * v, vy = Math.sin(a) * v;
       const kf: Keyframe[] = [];
       for (const q of [0, 0.05, 0.14, 0.28, 0.48, 0.72, 1]) {
@@ -308,115 +317,118 @@ function havai(s: Stage, at: Pt, jack: boolean): void {
         const x = bx + (vx / k) * (1 - e), y = by + ((vy + g / k) / k) * (1 - e) - (g / k) * T;
         const cvx = vx * e, cvy = (vy + g / k) * e - g / k;
         const sp = Math.hypot(cvx, cvy) / v;
-        kf.push({transform: tr(x, y, (Math.atan2(cvy, cvx) * 180) / Math.PI, 0.45 + 1.05 * Math.min(1, sp * 1.5), 1.1 - q * 0.5), opacity: q === 0 ? 0 : q < 0.55 ? 1 : q === 1 ? 0 : 0.7, offset: q});
+        kf.push({transform: tr(x, y, (Math.atan2(cvy, cvx) * 180) / Math.PI, (0.5 + 0.9 * Math.min(1, sp * 1.5)) * z, (1.1 - q * 0.5) * z), opacity: q === 0 ? 0 : q < 0.6 ? 1 : q === 1 ? 0 : 0.7, offset: q});
       }
       kf[1].opacity = 1;
       s.run(nd, kf, {duration: D, delay: tb, easing: 'linear'});
     }
-    // çatırtı + duman
-    if (!s.low) {
-      for (let j = 0; j < 2; j++) {
-        const a = R(0, 6.28), d = R(16, 28) * m;
-        twinkle(s, bx + Math.cos(a) * d, by + Math.sin(a) * d + 5 * m, 'glint:white', 10 * m, tb + 520 + j * 130, 400, R(0.8, 1.1));
-      }
-      const sm = s.node('smoke', 40 * m);
-      if (sm)
-        s.run(sm, [
-          {transform: tr(bx, by, 0, 0.4), opacity: 0},
-          {transform: tr(bx, by + 2 * m, 20, 1), opacity: 0.5, offset: 0.25},
-          {transform: tr(bx, by + 8 * m, 40, 1.5), opacity: 0},
-        ], {duration: 1500, delay: tb + 80, easing: 'ease-out'});
-    }
-  }
+    if (!s.low && i % 2 === 0) twinkle(s, bx + R(-14, 14) * m, by + R(4, 16) * m, 'glint:white', 11 * m, tb + 600, 420, R(0.8, 1.1));
+  });
 }
 
-/** Yıldız Yağmuru: ışık geceye kısılır, uzun kuyruklu göktaşları yığına iner; ortada kırınım yıldızı patlar. */
+/** Yıldız Yağmuru: ışık geceye kısılır; parlak başlı, uzun kuyruklu göktaşları farklı açılardan yığına yağar;
+ * sonunda yığında kırınım yıldızı açar (hâle, ışınlar, şok halkası) ve yıldız tozu göz kırpar. */
 function yildiz(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100, W = s.W, H = s.H;
-  s.night(0.85, jack ? 2000 : 1750);
-  const n = s.low ? 3 : jack ? 9 : 7;
-  const ang = 128, rad = (ang * Math.PI) / 180;
-  const L = 72 * m;
+  s.night(0.8, jack ? 2100 : 1850);
+  const n = s.low ? 4 : jack ? 8 : 7;
+  const L = 92 * m;
+  let last = 0;
   for (let i = 0; i < n; i++) {
-    const t = 60 + i * (jack ? 80 : 95) + R(0, 40);
-    const tx = at.x + R(-26, 26) * m, ty = at.y + R(-24, 6) * m;
-    const dist = Math.hypot(W, H) * 0.75;
+    // yelpaze: sağ üstten sol üste farklı açılar, hepsi yığına yakın bir noktada biter
+    const ang = 112 + ((i * 37) % 7) * 7 + R(-3, 3);
+    const rad = (ang * Math.PI) / 180;
+    const t = 40 + i * (jack ? 85 : 100) + R(0, 30);
+    const tx = at.x + R(-14, 14) * m, ty = at.y + R(-12, 4) * m;
+    const dist = Math.hypot(W, H) * 0.7;
     const x0 = tx - Math.cos(rad) * dist, y0 = ty - Math.sin(rad) * dist;
+    const D = R(420, 500);
+    last = Math.max(last, t + D);
     const nd = s.node('meteor', L);
-    if (nd) {
-      const D = R(430, 520);
+    if (nd)
       s.run(nd, [
-        {transform: tr(x0, y0, ang, 0.6, 1), opacity: 0},
-        {transform: tr(x0 + (tx - x0) * 0.2, y0 + (ty - y0) * 0.2, ang, 1.1, 1), opacity: 1, offset: 0.15},
-        {transform: tr(tx - Math.cos(rad) * L * 0.4, ty - Math.sin(rad) * L * 0.4, ang, 1.2, 1), opacity: 1, offset: 0.9},
-        {transform: tr(tx, ty, ang, 0.2, 0.6), opacity: 0},
+        {transform: tr(x0, y0, ang, 0.7, 1), opacity: 0},
+        {transform: tr(x0 + (tx - x0) * 0.18, y0 + (ty - y0) * 0.18, ang, 1.05, 1.1), opacity: 1, offset: 0.12},
+        {transform: tr(tx - Math.cos(rad) * L * 0.42, ty - Math.sin(rad) * L * 0.42, ang, 1.15, 1.1), opacity: 1, offset: 0.9},
+        {transform: tr(tx, ty, ang, 0.25, 0.7), opacity: 0},
       ], {duration: D, delay: t, easing: 'cubic-bezier(.45,0,.9,.6)'});
-      twinkle(s, tx, ty, 'glint:white', 14 * m, t + D * 0.88, 560, R(0.8, 1.15));
+    // parlak baş: göktaşıyla birlikte giden yıldız parıltısı
+    const hd = s.node(i % 3 ? 'glint:white' : 'glint:blue', 15 * m, undefined, true);
+    if (hd) {
+      const hx = (q: number): number => x0 + (tx - x0) * q, hy = (q: number): number => y0 + (ty - y0) * q;
+      s.run(hd, [
+        {transform: tr(hx(0.05), hy(0.05), 0, 0.5), opacity: 0},
+        {transform: tr(hx(0.2), hy(0.2), 30, 1), opacity: 1, offset: 0.12},
+        {transform: tr(hx(0.96), hy(0.96), 140, 1.1), opacity: 1, offset: 0.9},
+        {transform: tr(tx, ty, 160, 1.5), opacity: 0},
+      ], {duration: D, delay: t, easing: 'cubic-bezier(.45,0,.9,.6)'});
     }
     if (i % 2 === 0) s.sfx(t, x => x.shootingStar());
-    s.sfx(t + 420, x => x.starChime(i));
+    s.sfx(t + D - 40, x => x.starChime(i));
   }
-  const T = 60 + n * (jack ? 80 : 95) + 330;
-  rays(s, at, 'rays:white', 90 * m, T - 40, 1100, 26, 0.8);
-  glow(s, at, 'bloom:blue', 44 * m, T - 60, 1000, 0.3, 1.8, 2.3, 0.95);
-  shock(s, at, 'ring:blue', 40 * m, T, 650, 2.6);
-  // büyük kırınım yıldızı
-  const st = s.node('glint:white', 30 * m, undefined, true);
+  const T = last - 40;
+  rays(s, at, 'rays:white', 96 * m, T - 60, 1150, 26, 0.85);
+  glow(s, at, 'bloom:blue', 58 * m, T - 80, 1100, 0.3, 2, 2.5, 1, 0.16);
+  glow(s, at, 'bloom:white', 28 * m, T, 560, 0.3, 1.6, 1.9);
+  shock(s, at, 'ring:blue', 44 * m, T, 700, 2.8);
+  const st = s.node('glint:white', 40 * m, undefined, true);
   if (st)
     s.run(st, [
       {transform: tr(at.x, at.y, 0, 0), opacity: 0},
-      {transform: tr(at.x, at.y, 15, jack ? 1.6 : 1.35), opacity: 1, offset: 0.22},
-      {transform: tr(at.x, at.y, 30, jack ? 1.3 : 1.1), opacity: 0.9, offset: 0.55},
+      {transform: tr(at.x, at.y, 15, jack ? 1.55 : 1.35), opacity: 1, offset: 0.2},
+      {transform: tr(at.x, at.y, 30, 1.1), opacity: 0.9, offset: 0.55},
       {transform: tr(at.x, at.y, 50, 0.2), opacity: 0},
-    ], {duration: 900, delay: T - 40, easing: OUT});
-  // yıldız tozu
-  const nd = s.low ? 4 : 9;
+    ], {duration: 950, delay: T - 40, easing: OUT});
+  const nd = s.low ? 3 : 7;
   for (let i = 0; i < nd; i++) {
-    const a = R(0, 6.28), d = R(10, 36) * m;
-    twinkle(s, at.x + Math.cos(a) * d, at.y + Math.sin(a) * d * 0.8, i % 3 ? 'glint:blue' : 'glint:white', 9 * m, T + 60 + i * 70, 560, R(0.7, 1.15));
+    const a = R(0, 6.28), d = R(12, 36) * m;
+    twinkle(s, at.x + Math.cos(a) * d, at.y + Math.sin(a) * d * 0.8, i % 3 ? 'glint:blue' : 'glint:white', 11 * m, T + 80 + i * 80, 560, R(0.7, 1.15));
   }
   s.sfx(T, x => x.bonus());
 }
 
-/** Şimşek: ekran kararır, gökten yığına gerçek yıldırım iner (çekirdek + mavi parıltı), çakma, arklar, kıvılcım. */
+/** Şimşek: ışık kararır; kalın, dallanan bir yıldırım (beyaz çekirdek + mavi parıltı) yığına çakar, ikinci çatal gelir;
+ * yığının üstünde elektrik arkları gezinir, mavi şok halkası, kıvılcımlar. Ekran yıkanmaz: ışık yereldir. */
 function simsek(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100, W = s.W;
-  s.night(0.9, 1500);
-  const bolts: [string, number, number][] = [['bolt1', at.x, 70]];
-  if (!s.low) bolts.push(['bolt2', at.x + (Math.random() < 0.5 ? -1 : 1) * W * R(0.22, 0.3), 300]);
-  if (jack) bolts.push(['bolt2', at.x - (bolts[1] ? bolts[1][1] - at.x : W * 0.25), 480]);
-  bolts.forEach(([key, x, t], i) => {
-    const hgt = Math.max(30 * m, at.y + (i ? -6 : 4) * m);
-    const w = hgt / 4;
-    const nd = s.node(key, w, hgt);
+  s.night(0.85, 1550);
+  const side = Math.random() < 0.5 ? -1 : 1;
+  const bolts: [string, number, number, number][] = [['bolt1', at.x, 60, 1]];
+  if (!s.low) bolts.push(['bolt2', at.x + side * W * 0.16, 260, 0.8]);
+  if (jack) bolts.push(['bolt1', at.x - side * W * 0.18, 460, 0.8]);
+  bolts.forEach(([key, x, t, k], i) => {
+    const hgt = Math.max(30 * m, at.y + (i ? -4 : 3) * m);
+    const w = hgt / 2.5;
+    const nd = s.node(key, w * k, hgt);
     if (!nd) return;
     const y = hgt / 2 - 2 * m, flip = i === 1 ? -1 : 1;
-    const tf = (o: number) => ({transform: tr(x, y, 0, flip, 1), opacity: o});
-    s.run(nd, [tf(0), {...tf(1), offset: 0.04}, {...tf(0.15), offset: 0.12}, {...tf(1), offset: 0.2}, {...tf(0.85), offset: 0.38}, {...tf(0.25), offset: 0.5}, {...tf(0.7), offset: 0.56}, tf(0)],
-      {duration: 700, delay: t, easing: 'linear'});
+    // gök tarafı sabit, uç yığına (ikinci çatal biraz yana eğik)
+    const tilt = i ? (x - at.x) / W * -14 : 0;
+    const tf = (o: number) => ({transform: tr(x, y, tilt, flip, 1), opacity: o});
+    s.run(nd, [tf(0), {...tf(1), offset: 0.04}, {...tf(0.2), offset: 0.11}, {...tf(1), offset: 0.18}, {...tf(0.9), offset: 0.4}, {...tf(0.3), offset: 0.52}, {...tf(0.8), offset: 0.58}, tf(0)],
+      {duration: 760, delay: t, easing: 'linear'});
     s.sfx(t + 20, x2 => x2.fireworkBurst(i ? 0.8 : 1.3));
   });
-  const T = 95;
-  s.flash('rgba(210,230,255,1)', 0.55, 520, T);
-  glow(s, at, 'bloom:blue', 46 * m, T, 900, 0.3, 1.9, 2.4);
-  glow(s, at, 'bloom:white', 20 * m, T, 420, 0.3, 1.5, 1.7);
-  shock(s, at, 'ring:blue', 40 * m, T + 20, 520, 2.6, 0.55);
-  if (jack) shock(s, at, 'ring:blue', 40 * m, T + 300, 560, 2.9, 0.55, 0.8);
-  flare(s, at, 'flare:blue', 80 * m, T, 520);
-  // yığının çevresinde çakan arklar
-  const na = s.low ? 2 : 4;
+  const T = 90;
+  glow(s, at, 'bloom:blue', 64 * m, T, 1000, 0.3, 2, 2.6, 1, 0.12);
+  glow(s, at, 'bloom:white', 30 * m, T, 480, 0.3, 1.6, 1.9);
+  shock(s, at, 'ring:blue', 44 * m, T + 20, 600, 2.8, 0.55);
+  shock(s, at, 'ring:blue', 44 * m, T + 300, 650, 3.1, 0.55, 0.75);
+  flare(s, at, 'flare:blue', 90 * m, T, 560);
+  // yığının üstünde gezinen elektrik arkları
+  const na = s.low ? 3 : 6;
   for (let i = 0; i < na; i++) {
-    const nd = s.node('arc', 22 * m, undefined, true);
+    const nd = s.node('arc', 26 * m, undefined, true);
     if (!nd) break;
-    const rot = (i / na) * 360 + R(-30, 30), sc = R(0.8, 1.2);
-    const tf = (o: number, k = 1) => ({transform: tr(at.x, at.y, rot, sc * k), opacity: o});
-    s.run(nd, [tf(0, 0.6), {...tf(1), offset: 0.1}, {...tf(0.1), offset: 0.22}, {...tf(1, 1.1), offset: 0.34}, {...tf(0, 1.2), offset: 0.5}, {...tf(0.8, 1.25), offset: 0.62}, tf(0, 1.3)],
-      {duration: 620, delay: T + 30 + i * 70, easing: 'linear'});
+    const rot = (i / na) * 360 + R(-25, 25), sc = R(0.75, 1.25), dx = R(-5, 5) * m, dy = R(-4, 4) * m;
+    const tf = (o: number, kk = 1, r = 0) => ({transform: tr(at.x + dx, at.y + dy, rot + r, sc * kk), opacity: o});
+    s.run(nd, [tf(0, 0.6), {...tf(1, 1, 8), offset: 0.08}, {...tf(0.15, 1, 20), offset: 0.18}, {...tf(1, 1.1, 34), offset: 0.3}, {...tf(0.2, 1.15, 48), offset: 0.44}, {...tf(0.9, 1.2, 60), offset: 0.56}, {...tf(0.1, 1.25, 75), offset: 0.7}, {...tf(0.7, 1.3, 88), offset: 0.82}, tf(0, 1.35, 100)],
+      {duration: 900, delay: T + 20 + i * 60, easing: 'linear'});
   }
-  sparks(s, at, {n: jack ? 18 : 14, keys: ['spark:blue'], len: 11 * m, dist: [14 * m, 34 * m], ang: [-Math.PI * 0.98, -Math.PI * 0.02], fall: 55 * m, drag: 2.8, dur: [600, 900], t: T + 20, r0: 2 * m, align: true, front: true});
-  for (let i = 0; i < (s.low ? 2 : 4); i++) {
+  sparks(s, at, {n: jack ? 16 : 12, keys: ['spark:blue'], len: 12 * m, dist: [14 * m, 34 * m], ang: [-Math.PI * 0.98, -Math.PI * 0.02], fall: 55 * m, drag: 2.8, dur: [600, 950], t: T + 20, r0: 2 * m, align: true, front: true});
+  for (let i = 0; i < (s.low ? 2 : 3); i++) {
     const a = R(0, 6.28), d = R(8, 22) * m;
-    twinkle(s, at.x + Math.cos(a) * d, at.y + Math.sin(a) * d, 'glint:blue', 10 * m, T + 200 + i * 120, 420);
+    twinkle(s, at.x + Math.cos(a) * d, at.y + Math.sin(a) * d, 'glint:blue', 12 * m, T + 220 + i * 140, 440);
   }
   s.sfx(T + 200, x => x.sweep());
 }
@@ -426,7 +438,6 @@ function lale(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100;
   glow(s, at, 'bloom:rose', 34 * m, 0, 420, 0.2, 1, 0.7, 0.9, 0.55);
   const T = 170;
-  s.flash('rgba(255,205,220,1)', 0.25, 380, T);
   rays(s, at, 'rays:rose', 90 * m, T, 1500, -30, 0.8);
   glow(s, at, 'bloom:rose', 50 * m, T, 1100, 0.3, 2, 2.5, 1, 0.14);
   shock(s, at, 'ring:rose', 42 * m, T + 300, 700, 2.6);
@@ -499,7 +510,6 @@ function nazar(s: Stage, at: Pt, jack: boolean): void {
   twinkle(s, at.x - S * 0.22, at.y - S * 0.24, 'glint:white', 14 * m, 320, 520, 1.1);
   // kırılma: camın üstünde beyaz parlama, sonra parçalanır
   glow(s, at, 'bloom:white', 26 * m, TS - 90, 260, 0.6, 1.3, 1.6, 1, 0.6);
-  s.flash('rgba(200,225,255,1)', 0.4, 320, TS);
   glow(s, at, 'bloom:white', 22 * m, TS, 420, 0.4, 1.6, 2);
   shock(s, at, 'ring:blue', 40 * m, TS, 650, 2.8);
   sparks(s, at, {n: jack ? 16 : 12, keys: ['shard1', 'shard2'], len: 10 * m, dist: [14 * m, 32 * m], ang: [-Math.PI, Math.PI], fall: 40 * m, drag: 2.6, dur: [900, 1250], t: TS, r0: S * 0.25, spin: 720, sc: [1, 0.7], front: true, stagger: 3});
@@ -549,7 +559,6 @@ function tac(s: Stage, at: Pt, jack: boolean): void {
       {transform: tr(at.x, cy - 6 * m, 0, 1.06), opacity: 0, offset: 1},
     ], {duration: D, easing: 'cubic-bezier(.55,0,.85,.4)'});
   }
-  s.flash('rgba(255,226,160,1)', jack ? 0.35 : 0.26, 320, T);
   shock(s, {x: at.x, y: cy + chh * 0.36}, 'ring:gold', 44 * m, T, 700, 2.6, 0.38);
   if (jack) shock(s, {x: at.x, y: cy + chh * 0.36}, 'ring:gold', 44 * m, T + 160, 760, 3.2, 0.38, 0.75);
   // toz bulutları: tabandan iki yana
@@ -607,7 +616,6 @@ function girdap(s: Stage, at: Pt, jack: boolean): void {
   }
   // patlama
   const T = TI;
-  s.flash('rgba(225,200,255,1)', jack ? 0.45 : 0.35, 360, T);
   glow(s, at, 'bloom:violet', 56 * m, T, 1000, 0.2, 2.2, 2.8, 1, 0.12);
   glow(s, at, 'bloom:white', 30 * m, T, 520, 0.2, 1.7, 2.1);
   shock(s, at, 'ring:violet', 42 * m, T, 650, 2.9);
