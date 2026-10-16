@@ -264,3 +264,34 @@
   .kh-hw__ico { width: calc(var(--u) * 3.4); height: calc(var(--u) * 3.4); }
   .kh-hw__ico img { width: calc(var(--u) * 2.9); height: calc(var(--u) * 2.9); }
 }
+
+/* =================== GÖREVLER (gerçek) =================== */
+.kh-nav__dot { position: absolute; top: calc(var(--u) * -.2); right: 22%; width: calc(var(--u) * .75); height: calc(var(--u) * .75); border-radius: 50%;
+  background: #ff2e4d; box-shadow: 0 0 0 2px var(--navy), 0 0 8px rgba(255, 46, 77, .8); opacity: 0; transform: scale(.3); transition: opacity .25s, transform .3s cubic-bezier(.3, 1.6, .5, 1); }
+.kh-nav__dot.is-on { opacity: 1; transform: none; animation: kh-dot-pulse 1.6s ease-in-out infinite; }
+@keyframes kh-dot-pulse { 50% { transform: scale(1.25); } }
+.kh-quests__sub b { color: var(--c-accent); }
+.kh-quest { opacity: 1; position: relative; }
+.kh-quest.is-claimed { opacity: .62; }
+.kh-quest.is-t1 .kh-quest__ico { background: linear-gradient(#3d8bff, #1f5fd6); box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 #0a3fb0; }
+.kh-quest.is-t2 .kh-quest__ico { background: linear-gradient(#b86bff, #7a2fe0); box-shadow: 0 0 0 2px var(--navy), inset 0 -2px 0 #4c1a99; }
+.kh-quest.is-ready { box-shadow: 0 0 0 2px #ffd23f, 0 0 18px rgba(255, 210, 63, .45); }
+.kh-quest__tier { align-self: flex-start; font-size: calc(var(--u) * .62); font-weight: 900; letter-spacing: .08em; text-transform: uppercase; color: var(--c-text-2); }
+.kh-quest__claim { flex: none; display: flex; flex-direction: column; align-items: center; gap: .05em; min-width: calc(var(--u) * 4.4); padding: .35em .6em .3em; font-size: calc(var(--u) * .8); }
+.kh-quest__claim img { width: calc(var(--u) * 1.3); height: calc(var(--u) * 1.3); object-fit: contain; }
+.kh-quest__claim b { font-family: var(--font-display); font-size: 1.15em; line-height: 1; }
+.kh-quest__claim small { font-family: var(--font-display); font-size: .9em; line-height: 1; }
+.kh-quest.is-ready .kh-quest__claim { animation: kh-claim 1.2s ease-in-out infinite; }
+@keyframes kh-claim { 50% { transform: scale(1.07); } }
+.kh-quest__done { flex: none; display: flex; flex-direction: column; align-items: center; min-width: calc(var(--u) * 4.4); color: #3fe07a; }
+.kh-quest__done .kh-i { width: calc(var(--u) * 1.8); height: calc(var(--u) * 1.8); }
+.kh-quest__done small { font-family: var(--font-display); font-size: calc(var(--u) * .75); }
+.kh-quest--bonus { background: linear-gradient(135deg, rgba(255, 196, 40, .22), rgba(255, 140, 20, .1)), var(--panel-fill, #16206b); }
+.kh-quest__ico.is-chest { background: radial-gradient(circle at 50% 40%, #ffe27a, #ffb400 60%, #c46a00); }
+.kh-quest__ico.is-chest img { width: 78%; height: 78%; object-fit: contain; }
+.kh-quest__pips { display: flex; gap: .35em; margin-top: .15em; }
+.kh-quest__pips i { width: calc(var(--u) * 1.6); height: calc(var(--u) * .55); border-radius: var(--r-pill); background: var(--xp-track); box-shadow: inset 0 1px 2px rgba(0, 0, 20, .6); }
+.kh-quest__pips i.on { background: linear-gradient(#ffe27a, #ffb400); box-shadow: 0 0 6px rgba(255, 210, 63, .7); }
+.kh-quests__tip { display: flex; align-items: center; gap: .5em; max-width: calc(var(--u) * 21); margin: calc(var(--u) * 1) 0 0; color: var(--c-text-2); font-size: calc(var(--u) * .78); font-weight: var(--w-strong); line-height: 1.35; }
+.kh-quests__tip .kh-i { flex: none; width: calc(var(--u) * 1.1); height: calc(var(--u) * 1.1); opacity: .8; }
+@media (prefers-reduced-motion: reduce) { .kh-nav__dot.is-on, .kh-quest.is-ready .kh-quest__claim { animation: none; } }

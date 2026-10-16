@@ -5,7 +5,7 @@
 import './home.css';
 import type {CosmeticsListener, HomeAction} from './types';
 import type {Profile as GameProfile} from '../game/profile';
-import {DAILY_REWARDS} from '../game/profile';
+import {DAILY_REWARDS, QUEST_BONUS, questDef, type QuestId} from '../game/profile';
 import {ROSTER, charById, type CharDef, type CharId, type Pose} from '../game/roster';
 import {MODE_INFO, type Mode} from '../game/types';
 import {ANIM, EASE, Scope, bump, center, clamp, countUp, esc, fmt, h, hms, play, q, shake, typewriter} from './dom';
@@ -43,6 +43,8 @@ export interface Shell {
   goto(tab: Tab, sub?: string): void;
   /** Kuşanma bildirimi (uygulama desteyi/masayı değiştirir) */
   cosmetics(kind: Parameters<CosmeticsListener>[0], id: string): void;
+  /** Görevler menü rozetini tazele */
+  refreshQuestDot?(): void;
 }
 
 export interface Page {
@@ -123,7 +125,7 @@ export class HomeView implements Shell {
           <button class="kh-nav__btn" data-tab="home"><span class="kh-nav__ico is-fan">${I.fan}</span><span class="kh-nav__lbl">Ana Sayfa</span></button>
           <button class="kh-nav__btn" data-tab="shop"><span class="kh-nav__ico"><img src="${ASSETS.icon_chest}" alt=""></span><span class="kh-nav__lbl">Market</span></button>
           <button class="kh-nav__btn" data-tab="profile"><span class="kh-nav__ico"><img src="${ASSETS.icon_trophy}" alt=""></span><span class="kh-nav__lbl">Koleksiyon</span></button>
-          <button class="kh-nav__btn" data-tab="quests"><span class="kh-nav__ico"><img src="${ASSETS.icon_star}" alt=""></span><span class="kh-nav__lbl">Görevler</span><span class="kh-nav__soon">Yakında</span></button>
+          <button class="kh-nav__btn" data-tab="quests"><span class="kh-nav__ico"><img src="${ASSETS.icon_star}" alt=""></span><span class="kh-nav__lbl">Görevler</span><i class="kh-nav__dot"></i></button>
         </nav>
       </div>`;
     ctx.layer.append(this.el);
@@ -143,7 +145,9 @@ export class HomeView implements Shell {
       this.coins.sync(true);
       this.renderTop(false);
       this.home.refresh();
+      this.refreshQuestDot();
     });
+    this.refreshQuestDot();
     this.enter();
   }
 
@@ -165,6 +169,13 @@ export class HomeView implements Shell {
     this.coins.sync(false);
     this.renderTop(false);
     this.home.refresh();
+    this.refreshQuestDot();
+  }
+
+  /** Görevler sekmesindeki kırmızı nokta: toplanmayı bekleyen ödül var mı. */
+  refreshQuestDot(): void {
+    const dot = this.el.querySelector<HTMLElement>('.kh-nav__dot');
+    if (dot) dot.classList.toggle('is-on', this.profile.questsReady() > 0);
   }
 
   finish(a: HomeAction): void {
@@ -222,7 +233,7 @@ export class HomeView implements Shell {
     const from = this.pages.get(this.tab)!;
     let to = this.pages.get(tab);
     if (!to) {
-      to = tab === 'shop' ? new ShopPage(this) : tab === 'profile' ? new CollectionPage(this) : new QuestsPage();
+      to = tab === 'shop' ? new ShopPage(this) : tab === 'profile' ? new CollectionPage(this) : new QuestsPage(this);
       this.pages.set(tab, to);
       q(this.el, '.kh-pages').append(to.el);
     }
@@ -878,35 +889,122 @@ class HomePage implements Page {
 }
 
 // =====================================================================================================
-// Görevler (yakında)
+// Görevler: günlük 3 görev (kolay · orta · zor) + hepsini bitirene Günün Sandığı. Gece yarısı yenilenir.
+// Tamamlanan görevin "Topla" düğmesi parlar; ödül jetonları üst çubuktaki kapsüle uçar.
 // =====================================================================================================
+const TIER_NAME = ['Kolay', 'Orta', 'Zor'];
 class QuestsPage implements Page {
   readonly el = h('div', 'kh-page kh-quests');
-  constructor() {
-    const qs: [string, string, number, number, number][] = [
-      ['Pişti Avcısı', '3 pişti yap', 1, 3, 300],
-      ['Vale Ustası', 'Vale ile 5 yığın topla', 2, 5, 250],
-      ['Eşli Kahraman', 'Eşli modda 2 el kazan', 0, 2, 500],
-    ];
+  private scope = new Scope();
+  private timer = 0;
+
+  constructor(private shell: Shell) {
+    this.render();
+    onAct(this.scope, this.el, (a, b) => this.act(a, b));
+  }
+
+  private render(): void {
+    const p = this.shell.profile;
+    const qs = p.dailyQuests();
+    const done = qs.list.filter(x => x.claimed).length;
+    const bonusReady = p.bonusReady();
     this.el.innerHTML = `<div class="kh-quests__in kh-scroll">
       <div class="kh-quests__hero"><i class="kh-rays is-gold"></i><img src="${ASSETS.icon_star}" alt=""></div>
-      <div class="kh-title kh-quests__title">${g3('Görevler')}</div>
-      <p class="kh-quests__sub">Günlük görevler çok yakında! Pişti yap, vale topla, ödülleri kap.</p>
-      <div class="kh-quests__list">${qs.map(([t, d, a, b, r]) => `<div class="kh-quest kh-card">
-          <span class="kh-quest__ico">${I.target}</span>
-          <div class="kh-quest__body"><b>${t}</b><small>${d}</small><span class="kh-quest__bar"><i style="transform:scaleX(${(a / b).toFixed(2)})"></i><em>${a}/${b}</em></span></div>
-          <span class="kh-quest__rw">${`<img src="${ASSETS.icon_coin}" alt="">`}<b class="kh-num">${fmt(r)}</b></span></div>`).join('')}
-        <div class="kh-quests__lock"><span class="kh-tag">Yakında</span></div>
-      </div></div>`;
+      <div class="kh-title kh-quests__title">${g3('Günlük Görevler')}</div>
+      <p class="kh-quests__sub">Her gün üç yeni görev. Yenilenmesine <b class="kh-num kh-quests__left">${hms(secsToMidnight())}</b></p>
+      <div class="kh-quests__list">${qs.list.map((st, i) => {
+        const d = questDef(st.id), full = st.progress >= d.goal;
+        const state = st.claimed ? 'is-claimed' : full ? 'is-ready' : '';
+        return `<div class="kh-quest kh-card ${state} is-t${d.tier}" data-i="${i}">
+          <span class="kh-quest__ico">${(I as Record<string, string>)[d.icon] ?? I.target}</span>
+          <div class="kh-quest__body"><span class="kh-quest__tier">${TIER_NAME[d.tier]}</span><b>${esc(d.title)}</b><small>${esc(d.desc)}</small>
+            <span class="kh-quest__bar"><i style="transform:scaleX(${(Math.min(1, st.progress / d.goal)).toFixed(3)})"></i><em>${fmt(st.progress)} / ${fmt(d.goal)}</em></span></div>
+          ${st.claimed
+            ? `<span class="kh-quest__done">${I.check}<small>Alındı</small></span>`
+            : full
+              ? `<button class="kh-btn kh-btn--5 kh-quest__claim kh-shine" data-act="claim" data-id="${st.id}" data-spring><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(d.reward)}</b><small>Topla</small></button>`
+              : `<span class="kh-quest__rw"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(d.reward)}</b></span>`}
+        </div>`;
+      }).join('')}
+        <div class="kh-quest kh-card kh-quest--bonus${bonusReady ? ' is-ready' : qs.bonus ? ' is-claimed' : ''}">
+          <span class="kh-quest__ico is-chest"><img src="${ASSETS.icon_chest}" alt=""></span>
+          <div class="kh-quest__body"><span class="kh-quest__tier">Ödül</span><b>Günün Sandığı</b><small>Üç görevin ödülünü de topla</small>
+            <span class="kh-quest__pips">${[0, 1, 2].map(k => `<i class="${k < done ? 'on' : ''}"></i>`).join('')}</span></div>
+          ${qs.bonus
+            ? `<span class="kh-quest__done">${I.check}<small>Alındı</small></span>`
+            : bonusReady
+              ? `<button class="kh-btn kh-btn--1 kh-quest__claim kh-shine" data-act="bonus" data-spring><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(QUEST_BONUS)}</b><small>Aç</small></button>`
+              : `<span class="kh-quest__rw"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(QUEST_BONUS)}</b></span>`}
+        </div>
+      </div>
+      <p class="kh-quests__tip">${I.info}<span>Görev ilerlemesi her elin sonunda işlenir. Pişti ve vale piştiler sayılır!</span></p>
+    </div>`;
   }
-  show(): void {
+
+  private async act(a: string, b: HTMLElement): Promise<void> {
+    if (a !== 'claim' && a !== 'bonus') return;
+    const {ctx, profile, coins} = this.shell;
+    (b as HTMLButtonElement).disabled = true;
+    const from = center(b);
+    coins.hold();
+    const got = a === 'claim' ? profile.claimQuest(b.dataset.id as QuestId) : profile.claimQuestBonus();
+    if (!got) {
+      coins.release();
+      return;
+    }
+    ctx.sounds.reward();
+    haptic('success');
+    ctx.fx.burst(from, {coins: a === 'bonus' ? 14 : 8, confetti: a === 'bonus' ? 30 : 14, power: a === 'bonus' ? 1 : 0.7});
+    const card = b.closest('.kh-quest') as HTMLElement | null;
+    if (card) play(card, [{transform: 'scale(1)'}, {transform: 'scale(1.05)'}, {transform: 'scale(1)'}], {duration: 320, easing: EASE.spring});
+    const n = a === 'bonus' ? 12 : 8;
+    let added = 0;
+    await ctx.fx.flyCoins(from, coins.target(), n, i => {
+      ctx.sounds.coin(1);
+      const add = i === n - 1 ? got - added : Math.round(got / n);
+      added += add;
+      coins.add(add);
+    });
+    coins.release();
+    if (!this.scope.alive) return;
+    this.render();
+    this.enter(false);
+    this.shell.refreshQuestDot?.();
+  }
+
+  private enter(full: boolean): void {
     this.el.querySelectorAll('.kh-quest').forEach((x, i) =>
-      play(x, [{transform: 'translateX(-30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 360, delay: 120 + i * 80, easing: EASE.spring, fill: 'backwards'}));
-    play(q(this.el, '.kh-quests__hero img'), [{transform: 'scale(.4) rotate(-30deg)'}, {transform: 'scale(1.1) rotate(6deg)', offset: 0.6}, {transform: 'none'}], {duration: 600, easing: EASE.out});
+      play(x, [{transform: 'translateX(-30px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: full ? 360 : 220, delay: (full ? 120 : 0) + i * 70, easing: EASE.spring, fill: 'backwards'}));
+    this.el.querySelectorAll<HTMLElement>('.kh-quest__bar i').forEach((bar, i) => {
+      const to = bar.style.transform;
+      play(bar, [{transform: 'scaleX(0)'}, {transform: to}], {duration: 700, delay: 260 + i * 90, easing: EASE.out, fill: 'backwards'});
+    });
+    if (full) play(q(this.el, '.kh-quests__hero img'), [{transform: 'scale(.4) rotate(-30deg)'}, {transform: 'scale(1.1) rotate(6deg)', offset: 0.6}, {transform: 'none'}], {duration: 600, easing: EASE.out});
+  }
+
+  show(): void {
+    this.render();
+    this.enter(true);
+    clearInterval(this.timer);
+    this.timer = window.setInterval(() => {
+      const el = this.el.querySelector('.kh-quests__left');
+      if (el) el.textContent = hms(secsToMidnight());
+    }, 1000);
+  }
+  hide(): void {
+    clearInterval(this.timer);
   }
   destroy(): void {
+    clearInterval(this.timer);
+    this.scope.dispose();
     this.el.remove();
   }
+}
+
+function secsToMidnight(): number {
+  const n = new Date();
+  const m = new Date(n.getFullYear(), n.getMonth(), n.getDate() + 1);
+  return Math.max(0, (m.getTime() - n.getTime()) / 1000);
 }
 
 // =====================================================================================================

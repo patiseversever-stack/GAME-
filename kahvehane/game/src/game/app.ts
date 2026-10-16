@@ -135,7 +135,8 @@ export async function runApp(d: AppDeps): Promise<void> {
       const before = {level: profile.data.level, xp: profile.data.xp, xpNext: profile.xpNext};
       const base = out.outcome === 'win' ? 60 : out.outcome === 'draw' ? 30 : 20;
       const xpGain = Math.round(base * (mode === '4' ? 1.25 : mode === 'esli' ? 1.1 : 1) + out.myPisti * 8 + out.myValePisti * 12);
-      profile.recordMatch(mode, out.outcome, out.myPisti, out.myValePisti);
+      const mine = out.result.sides.find(sd => sd.seats.includes(0));
+      profile.recordMatch(mode, out.outcome, out.myPisti, out.myValePisti, {cards: mine?.cards ?? 0, majority: (mine?.majority ?? 0) > 0});
       const lv = profile.addXp(xpGain);
       const after = {level: profile.data.level, xp: profile.data.xp, xpNext: profile.xpNext};
       post('match:end', {mode, result: out.outcome, delta: got - stake, coins: profile.data.coins});

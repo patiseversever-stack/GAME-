@@ -24,6 +24,63 @@ export interface ProfileData {
   /** Son seçilen mod ve bahis (ana ekran hatırlar) */
   lastMode: Mode;
   lastStake: number;
+  /** Günlük görevler (tarihe göre her gün yenilenir) */
+  quests: {date: string; list: QuestState[]; bonus: boolean};
+}
+
+// ───────── günlük görevler ─────────
+export type QuestId = 'play3' | 'pisti2' | 'cards60' | 'win2' | 'majority2' | 'mode4' | 'esli1' | 'vale1' | 'streak3' | 'pisti5' | 'cards30';
+export interface QuestDef {
+  id: QuestId;
+  title: string;
+  desc: string;
+  goal: number;
+  reward: number;
+  /** 0 kolay · 1 orta · 2 zor — her gün her zorluktan bir görev */
+  tier: 0 | 1 | 2;
+  /** icons.ts anahtarı */
+  icon: string;
+}
+export interface QuestState {
+  id: QuestId;
+  progress: number;
+  claimed: boolean;
+}
+export const QUESTS: readonly QuestDef[] = [
+  {id: 'play3', title: 'Isınma Turu', desc: '3 el oyna', goal: 3, reward: 250, tier: 0, icon: 'cards'},
+  {id: 'pisti2', title: 'Pişti Avcısı', desc: '2 pişti yap', goal: 2, reward: 350, tier: 0, icon: 'target'},
+  {id: 'cards60', title: 'Kart Toplayıcı', desc: 'Toplam 60 kart topla', goal: 60, reward: 300, tier: 0, icon: 'fan'},
+  {id: 'win2', title: 'Kazanan Masa', desc: '2 el kazan', goal: 2, reward: 500, tier: 1, icon: 'crown'},
+  {id: 'majority2', title: 'Çoğunluk Benim', desc: '2 elde en çok kartı topla', goal: 2, reward: 450, tier: 1, icon: 'grid'},
+  {id: 'mode4', title: 'Kalabalık Masa', desc: '4 Kişi modunda 2 el oyna', goal: 2, reward: 400, tier: 1, icon: 'friends'},
+  {id: 'esli1', title: 'Ortaklık', desc: 'Eşli modda 1 el kazan', goal: 1, reward: 500, tier: 1, icon: 'swords'},
+  {id: 'vale1', title: 'Vale Ustası', desc: '1 Vale Pişti yap', goal: 1, reward: 800, tier: 2, icon: 'sparkle'},
+  {id: 'streak3', title: 'Yenilmez', desc: 'Üst üste 3 el kazan', goal: 3, reward: 900, tier: 2, icon: 'flame'},
+  {id: 'pisti5', title: 'Pişti Kralı', desc: 'Bugün 5 pişti yap', goal: 5, reward: 750, tier: 2, icon: 'star'},
+  {id: 'cards30', title: 'Masayı Sildim', desc: 'Tek elde 30+ kart topla', goal: 1, reward: 700, tier: 2, icon: 'shuffle'},
+];
+export const QUEST_BONUS = 1000;
+export const questDef = (id: QuestId): QuestDef => QUESTS.find(q => q.id === id) ?? QUESTS[0];
+
+/** Tarihe bağlı, herkes için aynı günlük seçim (kolay + orta + zor). */
+function questsFor(date: string): QuestState[] {
+  let h = 2166136261;
+  for (let i = 0; i < date.length; i++) h = Math.imul(h ^ date.charCodeAt(i), 16777619);
+  return ([0, 1, 2] as const).map(t => {
+    const pool = QUESTS.filter(q => q.tier === t);
+    h = Math.imul(h ^ (h >>> 13), 0x5bd1e995);
+    return {id: pool[(h >>> 0) % pool.length].id, progress: 0, claimed: false};
+  });
+}
+
+/** Bir elin görevlere katkısı. */
+export interface HandFacts {
+  mode: Mode;
+  outcome: 'win' | 'lose' | 'draw';
+  pisti: number;
+  valePisti: number;
+  cards: number;
+  majority: boolean;
 }
 
 const KEY = 'profile3';
@@ -49,6 +106,7 @@ function fresh(): ProfileData {
     chestAt: 0,
     lastMode: '1v1',
     lastStake: 100,
+    quests: {date: today(), list: questsFor(today()), bonus: false},
   };
 }
 
@@ -68,6 +126,7 @@ function migrate(d: Partial<ProfileData> | null): ProfileData {
     equipped: {...f.equipped, ...d.equipped},
     stats: {...f.stats, ...d.stats, byMode: {...f.stats.byMode, ...(d.stats?.byMode ?? {})}},
     daily: {...f.daily, ...d.daily},
+    quests: d.quests && Array.isArray(d.quests.list) ? d.quests : f.quests,
   } as ProfileData;
 }
 
@@ -158,7 +217,7 @@ export class Profile {
   }
 
   /** El sonu istatistikleri. outcome: oyuncunun (veya takımının) sonucu. */
-  recordMatch(mode: Mode, outcome: 'win' | 'lose' | 'draw', pisti: number, valePisti: number): void {
+  recordMatch(mode: Mode, outcome: 'win' | 'lose' | 'draw', pisti: number, valePisti: number, extra?: {cards: number; majority: boolean}): void {
     const s = this.data.stats;
     s.played++;
     s.byMode[mode].played++;
@@ -174,7 +233,68 @@ export class Profile {
     }
     s.pisti += pisti;
     s.valePisti += valePisti;
+    this.advanceQuests({mode, outcome, pisti, valePisti, cards: extra?.cards ?? 0, majority: extra?.majority ?? false});
     this.save();
+  }
+
+  /** Bugünün görevleri (gün değiştiyse yenilenir). */
+  dailyQuests(): {list: QuestState[]; bonus: boolean} {
+    const d = today();
+    if (this.data.quests.date !== d) {
+      this.data.quests = {date: d, list: questsFor(d), bonus: false};
+      this.save();
+    }
+    return this.data.quests;
+  }
+
+  private advanceQuests(f: HandFacts): void {
+    const add = (q: QuestState, n: number) => (q.progress = Math.min(questDef(q.id).goal, q.progress + n));
+    for (const q of this.dailyQuests().list) {
+      if (q.claimed) continue;
+      switch (q.id) {
+        case 'play3': add(q, 1); break;
+        case 'pisti2': case 'pisti5': add(q, f.pisti); break;
+        case 'cards60': add(q, f.cards); break;
+        case 'win2': if (f.outcome === 'win') add(q, 1); break;
+        case 'majority2': if (f.majority) add(q, 1); break;
+        case 'mode4': if (f.mode === '4') add(q, 1); break;
+        case 'esli1': if (f.mode === 'esli' && f.outcome === 'win') add(q, 1); break;
+        case 'vale1': add(q, f.valePisti); break;
+        case 'streak3': q.progress = Math.min(3, Math.max(q.progress, this.data.stats.streak)); break;
+        case 'cards30': if (f.cards >= 30) add(q, 1); break;
+      }
+    }
+  }
+
+  /** Tamamlanmış ama alınmamış görev/bonus sayısı (menü rozeti için). */
+  questsReady(): number {
+    const qs = this.dailyQuests();
+    const done = qs.list.filter(q => !q.claimed && q.progress >= questDef(q.id).goal).length;
+    return done + (this.bonusReady() ? 1 : 0);
+  }
+
+  /** Görev ödülünü al; tamamlanmadıysa 0. */
+  claimQuest(id: QuestId): number {
+    const q = this.dailyQuests().list.find(x => x.id === id);
+    if (!q || q.claimed || q.progress < questDef(id).goal) return 0;
+    q.claimed = true;
+    const r = questDef(id).reward;
+    this.data.coins += r;
+    this.save();
+    return r;
+  }
+
+  bonusReady(): boolean {
+    const qs = this.dailyQuests();
+    return !qs.bonus && qs.list.every(q => q.claimed);
+  }
+
+  claimQuestBonus(): number {
+    if (!this.bonusReady()) return 0;
+    this.data.quests.bonus = true;
+    this.data.coins += QUEST_BONUS;
+    this.save();
+    return QUEST_BONUS;
   }
 
   dailyReady(): boolean {
