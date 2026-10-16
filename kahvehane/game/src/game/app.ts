@@ -110,6 +110,7 @@ export async function runApp(d: AppDeps): Promise<void> {
       const seats = MODE_INFO[mode].seats;
       const setup = buildSetup(profile, mode, opponents, (seats - 1 + dealerBase++) % seats, profile.data.equipped.fx, d.seed);
       table.setActive(true); // maç masası açılır (menülerde kapalıydı)
+      if (first) table.reset(seats); // giriş perdesi açıldığında masa temiz görünsün (deste ekran dışında, karıştırmaya hazır)
       const deckReady = table.ready; // deste atlası arka planda çiziliyor olabilir; giriş ekranı süresince tamamlanır
       if (first) await screens.versus(setup, stake);
       await deckReady;
