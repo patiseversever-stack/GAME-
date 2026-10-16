@@ -3,7 +3,7 @@
 // TABLE_BAKE). Market ızgarası, vitrin, setler, koleksiyon ve "Dene"/ürün penceresi (canlı boya gelene dek) bunu gösterir.
 // Elle: /dev/tablebake.html (?only=bogaz) — resimleri ve boyutlarını gösterir.
 import {TABLES} from '../src/themes/tables';
-import {FULL_BAKE, TABLE_BAKE, TABLE_THUMB, TABLE_ZOOM, THUMB} from '../src/ui/tablepv';
+import {FULL_BAKE, TABLE_BAKE, TABLE_THUMB, THUMB} from '../src/ui/tablepv';
 
 const only = new URLSearchParams(location.search).get('only');
 // boyanın yığın halkası (themes/paint.ts spotOf): yüksekliğin %45.5'i
@@ -45,16 +45,14 @@ async function bake(): Promise<Out[]> {
     // 1) satış küçük resmi: oyun oranında büyük çiz, imzayı kırp
     const big = await t.paint(TABLE_BAKE.w, TABLE_BAKE.h, TABLE_BAKE.dpr);
     const bw = big.width, bh = big.height;
-    const z = TABLE_ZOOM[t.id] ?? {w: 1, x: 0};
-    const sw = bw * z.w, sx = bw * z.x;
-    const sh = Math.min(bh, (sw * THUMB.h) / THUMB.w);
+    const sh = Math.min(bh, (bw * THUMB.h) / THUMB.w);
     const sy = TABLE_THUMB[t.id] === 'top' ? 0 : Math.max(0, Math.min(bh - sh, bh * RING_Y - sh / 2));
     const c = document.createElement('canvas');
     c.width = THUMB.w;
     c.height = THUMB.h;
     const g = c.getContext('2d')!;
     g.imageSmoothingQuality = 'high';
-    g.drawImage(big, sx, sy, sw, sh, 0, 0, THUMB.w, THUMB.h);
+    g.drawImage(big, 0, sy, bw, sh, 0, 0, THUMB.w, THUMB.h);
     big.width = big.height = 0;
     const a = await toUrl(c, TABLE_BAKE.q);
     // 2) büyük sahne yer tutucusu: canlı boyayla aynı oran, düşük çözünürlük

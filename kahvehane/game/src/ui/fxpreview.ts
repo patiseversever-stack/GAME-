@@ -50,6 +50,7 @@ export function mountFx(box: HTMLElement, id: string, still = false): FxLoop {
         A(n, kf, o);
       },
       flash(color, peak, ms, delay = 0) {
+        if (still || !ANIM) return; // küçük resimde ekran ışığı kareyi soldurur
         flash.style.background = color;
         A(flash, [{opacity: 0}, {opacity: peak * 0.8, offset: 0.1}, {opacity: peak * 0.25, offset: 0.4}, {opacity: 0}], {duration: ms, delay, easing: 'ease-out'});
       },

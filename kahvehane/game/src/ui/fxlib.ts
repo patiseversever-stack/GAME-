@@ -180,12 +180,12 @@ function klasik(s: Stage, at: Pt, jack: boolean): void {
   glow(s, at, 'bloom:gold', 34 * m, 0, 380, 0.2, 1.1, 0.7, 1, 0.55);
   const T = 200;
   s.flash('rgba(255,228,160,1)', jack ? 0.5 : 0.4, 360, T);
-  rays(s, at, 'rays:gold', 110 * m, T - 20, 1450, 34, 1);
+  rays(s, at, 'rays:gold', 96 * m, T - 20, 1450, 34, 1);
   glow(s, at, 'bloom:gold', 60 * m, T, 1000, 0.4, 2.0, 2.5, 1, 0.14);
   glow(s, at, 'bloom:white', 30 * m, T, 480, 0.3, 1.6, 1.9);
   shock(s, at, 'ring:gold', 44 * m, T, 650, 2.6);
   if (jack) shock(s, at, 'ring:gold', 44 * m, T + 170, 720, 3.3, 1, 0.8);
-  flare(s, at, 'flare:gold', 110 * m, T, 700);
+  flare(s, at, 'flare:gold', 100 * m, T, 700);
   cluster(s, at, 'burst:gold', 56 * m, T, 1100, 1, 6 * m);
   // dev kırınım yıldızı
   const st = s.node('glint:white', 44 * m, undefined, true);
@@ -241,7 +241,7 @@ function altin(s: Stage, at: Pt, jack: boolean): void {
   s.flash('rgba(255,220,140,1)', jack ? 0.3 : 0.22, 320, land0);
   const u = m * 3.6;
   for (let i = 0; i < count; i++) {
-    const c = s.node('coin', u * 1.7, u * 1.7, true);
+    const c = s.node('coin', u * 1.85, u * 1.85, true);
     if (!c) break;
     const a = Math.random() * Math.PI * 2, rr = Math.sqrt(Math.random());
     const lx = at.x + Math.cos(a) * rr * W * 0.36, ly = at.y + Math.sin(a) * rr * s.M * 0.14 + u * 0.3;
@@ -581,8 +581,8 @@ function girdap(s: Stage, at: Pt, jack: boolean): void {
   const disc = s.node('disc', 64 * m);
   if (disc)
     s.run(disc, [
-      {transform: tr(at.x, at.y, 0, 1.7, 1.25), opacity: 0},
-      {transform: tr(at.x, at.y, 160, 1.35, 1.0), opacity: 0.95, offset: 0.3},
+      {transform: tr(at.x, at.y, 0, 1.4, 1.05), opacity: 0},
+      {transform: tr(at.x, at.y, 160, 1.25, 0.92), opacity: 0.95, offset: 0.3},
       {transform: tr(at.x, at.y, 420, 0.9, 0.68), opacity: 1, offset: 0.75},
       {transform: tr(at.x, at.y, 600, 0.06, 0.05), opacity: 0},
     ], {duration: TI + 60, easing: 'cubic-bezier(.45,0,.75,.5)'});
@@ -629,4 +629,4 @@ export const FX: Record<string, (s: Stage, at: Pt, jack: boolean) => void> = {kl
 /** Efektin toplam süresi (ms; önizleme döngüsü / temizlik için) */
 export const FX_MS: Record<string, number> = {klasik: 1700, altin: 2100, havai: 1950, yildiz: 2000, simsek: 1500, lale: 1950, nazar: 2000, tac: 1900, girdap: 1800};
 /** Donmuş küçük resim için en güzel an (ms) */
-export const FX_STILL: Record<string, number> = {klasik: 420, altin: 1050, havai: 1060, yildiz: 1060, simsek: 230, lale: 640, nazar: 940, tac: 760, girdap: 620};
+export const FX_STILL: Record<string, number> = {klasik: 420, altin: 1000, havai: 1060, yildiz: 1220, simsek: 300, lale: 470, nazar: 470, tac: 760, girdap: 620};

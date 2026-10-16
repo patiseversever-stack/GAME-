@@ -18,11 +18,6 @@ export const FULL_BAKE = {w: 240, h: 400, dpr: 0.67, q: 0.72} as const;
  * ortada (desen masaları: çini madalyonu, kadife halkası — kartlar halkanın üstünde durur).
  */
 export const TABLE_THUMB: Record<string, 'top'> = {gece: 'top', ebru: 'top', kapadokya: 'top', bogaz: 'top'};
-/**
- * İsteğe bağlı yakınlaştırma: kırpım genişliği (boyanın eninin oranı) ve sol kenarı. Ebru'nun imzası yalnız dış bordür ve
- * üst köşelerde: sol üst köşeye ağırlıklı daha dar kırpım lale + bordür + yan şeridi karede büyütür.
- */
-export const TABLE_ZOOM: Record<string, {w: number; x: number}> = {ebru: {w: 0.78, x: 0}};
 
 const baked = import.meta.glob('./tablepv/*.webp', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 

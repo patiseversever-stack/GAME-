@@ -365,12 +365,28 @@ export class Fx {
       node: (key, w, hh, front) => {
         const n = this.qnode(key, w, hh, front);
         if (n) {
+          n.style.display = 'none'; // gösterim, animasyonu başlarken (aşağıda)
           n.dataset.tok = tok;
           used.push(n);
         }
         return n;
       },
-      run: (n, kf, o) => void play(n, kf, {fill: 'both', ...o}),
+      // Geç başlayan parçacıklar ancak sıraları yaklaşınca görünür olur: ilk karede onlarca katman birden kurulmasın
+      // (katman kurma + boyama tek kareye yığılırsa yavaş telefonda o kare uzar).
+      run: (n, kf, o) => {
+        const d = Number(o.delay) || 0;
+        if (d < 260) {
+          n.style.display = 'block';
+          play(n, kf, {fill: 'both', ...o});
+          return;
+        }
+        const t0 = performance.now();
+        window.setTimeout(() => {
+          if (n.dataset.tok !== tok) return;
+          n.style.display = 'block';
+          play(n, kf, {fill: 'both', ...o, delay: Math.max(0, d - (performance.now() - t0))});
+        }, d - 180);
+      },
       flash: (color, peak, ms, delay = 0) => {
         this.qFlash.style.background = color;
         play(this.qFlash, [{opacity: 0}, {opacity: peak, offset: 0.1}, {opacity: peak * 0.3, offset: 0.4}, {opacity: 0}], {duration: ms, delay, easing: 'ease-out'}, 1);
