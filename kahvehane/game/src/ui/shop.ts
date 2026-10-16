@@ -181,7 +181,9 @@ const secHtml = (title: string, sub = '', icon = ''): string =>
 // Sayfa
 // =====================================================================================================
 /** Panel parçası: düz HTML (panelin sonuna) ya da bir kabın içine (ör. şeridin devamı). */
-type Chunk = string | {into: string; html: string};
+type Chunk = (() => string) | {into: string; html: () => string};
+/** İki parçayı tek parça yap (ilk ekranı doldurmak için) */
+const join2 = (a: Chunk | undefined, b: Chunk | undefined): Chunk => () => (a ? (a as () => string)() : '') + (b ? (b as () => string)() : '');
 
 interface Panel {
   el: HTMLElement;
@@ -206,7 +208,7 @@ export class ShopPage implements Page {
 
   constructor(private shell: Shell) {
     this.el.innerHTML = `<header class="kh-shop__head"><div class="kh-title kh-shop__title">${g3('Market')}</div><button class="kh-shop__count" data-act="coll"></button></header>
-      <div class="kh-shop__tabsw"><div class="kh-shop__tabs kh-noswipe"><div class="kh-shop__track">${TABS.map(t => `<button class="kh-stab" data-act="tab" data-t="${t.id}">${t.icon}<span>${t.name}</span></button>`).join('')}<i class="kh-stab__ind"></i></div></div></div>
+      <div class="kh-shop__tabsw"><div class="kh-shop__tabs kh-noswipe"><div class="kh-shop__track">${TABS.map(t => `<button class="kh-stab" data-act="tab" data-t="${t.id}">${t.icon}<span>${t.name}</span></button>`).join('')}</div></div></div>
       <div class="kh-shop__body kh-scroll"></div>`;
     this.body = q(this.el, '.kh-shop__body');
     onAct(this.scope, this.el, (a, b) => this.act(a, b));
@@ -226,7 +228,7 @@ export class ShopPage implements Page {
     // panel kaydırıldıkça bekleyen parçaları getir (kare başına en çok bir kontrol)
     let fillRaf = 0;
     this.scope.on(this.body, 'scroll', () => {
-      if (!fillRaf) fillRaf = requestAnimationFrame(() => ((fillRaf = 0), this.fill()));
+      if (!fillRaf) fillRaf = requestAnimationFrame(() => ((fillRaf = 0), this.fill(1.2)));
     }, {passive: true});
     this.scope.add(() => cancelAnimationFrame(fillRaf));
     this.scope.add(() => cancelAnimationFrame(edgeRaf));
@@ -269,19 +271,29 @@ export class ShopPage implements Page {
     if (p) p.scroll = this.body.scrollTop;
   }
 
-  private placeInd(): void {
+  /**
+   * Seçili sekme hapı (.kh-stab.is-on::before). Ölçüm yok: ilk açılışta yerleşimi zorlamaz. Sekme değişince eski
+   * sekmeden yeniye kayar (yalnız transform; düzen o anda temiz olduğu için ölçüm ucuz). Şerit ortalama ve kenar
+   * gölgeleri giriş kayması bittikten sonra.
+   */
+  private placeInd(from?: HTMLElement): void {
     const tabs = this.el.querySelectorAll<HTMLElement>('.kh-stab');
     const i = TABS.findIndex(t => t.id === this.tab);
     tabs.forEach((t, k) => t.classList.toggle('is-on', k === i));
     const on = tabs[i];
-    const ind = q(this.el, '.kh-stab__ind');
-    ind.style.width = on.offsetWidth + 'px';
-    ind.style.transform = `translateX(${on.offsetLeft}px)`;
-    // seçili sekme ortada dursun (ilk açılışta da)
-    const strip = q(this.el, '.kh-shop__tabs');
-    const want = on.offsetLeft + on.offsetWidth / 2 - strip.clientWidth / 2;
-    if (Math.abs(strip.scrollLeft - want) > 2) strip.scrollTo({left: want, behavior: ANIM && this.visible && this.panels.size ? 'smooth' : 'auto'});
-    this.edges();
+    if (from && from !== on && ANIM) {
+      const dx = from.offsetLeft - on.offsetLeft, sx = from.offsetWidth / Math.max(1, on.offsetWidth);
+      on.animate([{transform: `translateX(${dx}px) scaleX(${sx.toFixed(3)})`, transformOrigin: '0 50%'}, {transform: 'none', transformOrigin: '0 50%'}], {duration: 380, easing: 'cubic-bezier(.32,1.3,.6,1)', pseudoElement: '::before'});
+    }
+    const center = (): void => {
+      if (!this.scope.alive) return;
+      const strip = q(this.el, '.kh-shop__tabs');
+      const want = on.offsetLeft + on.offsetWidth / 2 - strip.clientWidth / 2;
+      if (Math.abs(strip.scrollLeft - want) > 2) strip.scrollTo({left: Math.max(0, want), behavior: ANIM && from ? 'smooth' : 'auto'});
+      this.edges();
+    };
+    if (from) center();
+    else window.setTimeout(center, ANIM ? 480 : 0);
   }
 
   private renderCount(): void {
@@ -291,11 +303,11 @@ export class ShopPage implements Page {
   }
 
   /** Görünen sekmeyi hazırla: panel yoksa ya da durum değiştiyse kur; yoksa yalnız göster. dir: kayma yönü. */
-  private activate(animate: boolean, dir = 0): void {
-    this.placeInd();
+  private activate(animate: boolean, dir = 0, from?: HTMLElement): void {
+    this.placeInd(from);
     this.renderCount();
-    // kaydırma yeri: DOM değişmeden önce oku (düzen temizken ucuz); sonra yalnız gerekiyorsa yaz (zorlanmış düzen)
-    const cur = this.body.scrollTop;
+    // kaydırma yeri: DOM değişmeden önce oku (düzen temizken ucuz); ilk açılışta hiç okuma (yerleşim zorlanmasın)
+    const cur = this.panels.size ? this.body.scrollTop : 0;
     const sig = this.signature(this.tab);
     let p = this.panels.get(this.tab);
     let fresh = false;
@@ -303,7 +315,7 @@ export class ShopPage implements Page {
       const el = h('div', `kh-shop__panel is-${this.tab}`);
       // ilk ekran hemen, kalanı kare kare (sekme açılışı tek büyük görev olmasın)
       const chunks = this.panelChunks(this.tab);
-      el.innerHTML = chunks[0] as string;
+      el.innerHTML = (chunks[0] as () => string)();
       if (p) p.el.replaceWith(el);
       else this.body.append(el);
       p = {el, sig, scroll: p?.scroll ?? 0, pending: chunks.slice(1), ready: false};
@@ -335,7 +347,11 @@ export class ShopPage implements Page {
    * panelde (satın alma sonrası) eski kaydırma yerine varana dek doldurulur.
    */
   private fillQueued = false;
-  private fill(): void {
+  /** margin: içerik dibinin ekran altından en çok ne kadar (ekran boyu cinsinden) uzakta olması istenir.
+   *  Açılışta küçük (yalnız görünen ekran dolar), kaydırırken büyük (kullanıcı ilerlerken önceden hazırlanır). */
+  private fillMargin = 0.2;
+  private fill(margin?: number): void {
+    if (margin !== undefined) this.fillMargin = Math.max(this.fillMargin, margin);
     if (this.fillQueued) return;
     const p = this.panels.get(this.tab);
     if (!p || !p.ready || !p.pending.length || !this.visible) return;
@@ -344,13 +360,13 @@ export class ShopPage implements Page {
       this.fillQueued = false;
       if (!this.scope.alive || !p.el.isConnected || this.panels.get(this.tab) !== p || !this.visible) return;
       const b = this.body;
-      const need = b.scrollHeight - b.scrollTop - b.clientHeight < b.clientHeight * 0.9 || b.scrollHeight < p.scroll + b.clientHeight * 1.5;
-      if (!need) return;
+      const need = b.scrollHeight - b.scrollTop - b.clientHeight < b.clientHeight * this.fillMargin || b.scrollHeight < p.scroll + b.clientHeight * 1.5;
+      if (!need) return void (this.fillMargin = 0.2);
       const c = p.pending.shift()!;
-      if (typeof c === 'string') p.el.insertAdjacentHTML('beforeend', c);
+      if (typeof c === 'function') p.el.insertAdjacentHTML('beforeend', c());
       else {
         const box = p.el.querySelectorAll(c.into);
-        box[box.length - 1]?.insertAdjacentHTML('beforeend', c.html);
+        box[box.length - 1]?.insertAdjacentHTML('beforeend', c.html());
       }
       hydrate(p.el);
       if (p.scroll && b.scrollTop !== p.scroll && b.scrollHeight >= p.scroll + b.clientHeight) b.scrollTop = p.scroll;
@@ -396,18 +412,19 @@ export class ShopPage implements Page {
     const afford = rest.filter(it => it.price <= coins).sort((a, b) => b.price - a.price).slice(0, 4);
     const goal = afford.length ? [] : rest.slice().sort((a, b) => a.price - b.price).slice(0, 2);
     // parça 1: teklif vitrini (ilk görev küçük kalsın); parça 2-3: setler
-    const out: Chunk[] = [dealHtml(deal, me)];
-    sets.forEach((x, i) => out.push((i ? '' : secHtml('Özel Setler', `Paket indirimi <b>-%${Math.round(Math.max(...sets.map(y => y.s.off)) * 100)}</b>`, I.gift)) + `<div class="kh-sets">${setCardHtml(x.s, me, this.owns, coins)}</div>`));
+    // parçalar ancak eklenecekleri anda kurulur (açılış görevinde yalnız teklif vitrini dizgesi hazırlanır)
+    const out: Chunk[] = [() => dealHtml(deal, me)];
+    sets.forEach((x, i) => out.push(() => (i ? '' : secHtml('Özel Setler', `Paket indirimi <b>-%${Math.round(Math.max(...sets.map(y => y.s.off)) * 100)}</b>`, I.gift)) + `<div class="kh-sets">${setCardHtml(x.s, me, this.owns, coins)}</div>`));
     if (fresh.length) {
-      out.push(secHtml('Yeni Gelenler', `${freshAll} yeni ürün`, I.sparkle) + `<div class="kh-rail kh-noswipe"><div class="kh-rail__in">${fresh.slice(0, 3).map(it => this.card(it, me, {sub: true, rail: true})).join('')}</div></div>`);
-      for (let i = 3; i < fresh.length; i += 3) out.push({into: '.kh-rail__in', html: fresh.slice(i, i + 3).map(it => this.card(it, me, {sub: true, rail: true})).join('')});
+      out.push(() => secHtml('Yeni Gelenler', `${freshAll} yeni ürün`, I.sparkle) + `<div class="kh-rail kh-noswipe"><div class="kh-rail__in">${fresh.slice(0, 3).map(it => this.card(it, me, {sub: true, rail: true})).join('')}</div></div>`);
+      for (let i = 3; i < fresh.length; i += 3) out.push({into: '.kh-rail__in', html: () => fresh.slice(i, i + 3).map(it => this.card(it, me, {sub: true, rail: true})).join('')});
     }
     if (legend.length) {
-      out.push(secHtml('Efsanevi Vitrin', 'Masada herkes sana bakacak', I.crown) + `<div class="kh-grid">${legend.slice(0, 2).map(it => this.card(it, me, {sub: true})).join('')}</div>`);
-      if (legend.length > 2) out.push(`<div class="kh-grid">${legend.slice(2).map(it => this.card(it, me, {sub: true})).join('')}</div>`);
+      out.push(() => secHtml('Efsanevi Vitrin', 'Masada herkes sana bakacak', I.crown) + `<div class="kh-grid">${legend.slice(0, 2).map(it => this.card(it, me, {sub: true})).join('')}</div>`);
+      if (legend.length > 2) out.push(() => `<div class="kh-grid">${legend.slice(2).map(it => this.card(it, me, {sub: true})).join('')}</div>`);
     }
-    if (afford.length) out.push(secHtml('Hemen Alabileceklerin', `Kasanda ${coinImg()}<b>${fmt(coins)}</b>`, I.check) + `<div class="kh-grid">${afford.map(it => this.card(it, me, {sub: true})).join('')}</div>`);
-    else if (goal.length) out.push(secHtml('Hedefin', 'Birkaç el kazan, senin olsun', I.target) + `<div class="kh-grid">${goal.map(it => this.card(it, me, {sub: true})).join('')}</div>`);
+    if (afford.length) out.push(() => secHtml('Hemen Alabileceklerin', `Kasanda ${coinImg()}<b>${fmt(coins)}</b>`, I.check) + `<div class="kh-grid">${afford.map(it => this.card(it, me, {sub: true})).join('')}</div>`);
+    else if (goal.length) out.push(() => secHtml('Hedefin', 'Birkaç el kazan, senin olsun', I.target) + `<div class="kh-grid">${goal.map(it => this.card(it, me, {sub: true})).join('')}</div>`);
     return out;
   }
 
@@ -416,11 +433,10 @@ export class ShopPage implements Page {
     const all = shopSets().map(s => ({s, p: setPrice(s, this.owns)}));
     const open = all.filter(x => x.p.missing.length).sort((a, b) => b.p.full - b.p.price - (a.p.full - a.p.price));
     const done = all.filter(x => !x.p.missing.length);
-    const out = [secHtml('Tema Setleri', 'Tek temada tam takım, indirimli', I.gift)];
-    for (const x of open) out.push(`<div class="kh-sets">${setCardHtml(x.s, me, this.owns, coins)}</div>`);
-    if (!out[1]) out.push('');
-    out[0] += out.splice(1, 1)[0];
-    if (done.length) out.push(secHtml('Tamamladıkların', `${done.length} set`, I.check) + `<div class="kh-sets">${done.map(x => setCardHtml(x.s, me, this.owns, coins)).join('')}</div>`);
+    const out: Chunk[] = [() => secHtml('Tema Setleri', 'Tek temada tam takım, indirimli', I.gift)];
+    for (const x of open) out.push(() => `<div class="kh-sets">${setCardHtml(x.s, me, this.owns, coins)}</div>`);
+    out.splice(0, 2, join2(out[0], out[1]));
+    if (done.length) out.push(() => secHtml('Tamamladıkların', `${done.length} set`, I.check) + `<div class="kh-sets">${done.map(x => setCardHtml(x.s, me, this.owns, coins)).join('')}</div>`);
     return out;
   }
 
@@ -432,12 +448,12 @@ export class ShopPage implements Page {
     const k = items.length ? owned.length / items.length : 0;
     const hero = un[0] && RANK[un[0].rarity] >= 2 ? un[0] : null;
     const grid = hero ? un.slice(1) : un;
-    const out = [`<div class="kh-cprog2"><span class="kh-cprog2__t">${KIND_INFO[kind].plural}</span><span class="kh-cprog2__bar"><i style="transform:scaleX(${k.toFixed(3)})"></i></span><b class="kh-num">${owned.length}/${items.length}</b><small>sende</small></div>
+    const out: Chunk[] = [() => `<div class="kh-cprog2"><span class="kh-cprog2__t">${KIND_INFO[kind].plural}</span><span class="kh-cprog2__bar"><i style="transform:scaleX(${k.toFixed(3)})"></i></span><b class="kh-num">${owned.length}/${items.length}</b><small>sende</small></div>
       ${hero ? `<div class="kh-grid">${this.card(hero, me, {wide: true})}</div>` : ''}${!un.length ? `<div class="kh-shop__all">${I.crown}<span>Bu bölümdeki her şey sende. Usta koleksiyoncu!</span></div>` : ''}`];
     // ızgara 4'erli parçalar (ilk parça ilk ekranla birlikte)
-    for (let i = 0; i < grid.length; i += 2) out.push(`<div class="kh-grid">${grid.slice(i, i + 2).map(it => this.card(it, me)).join('')}</div>`);
-    if (out[1]) out[0] += out.splice(1, 1)[0];
-    for (let i = 0; i < mine.length; i += 4) out.push((i ? '' : secHtml('Sende', `${mine.length} parça`, I.check)) + `<div class="kh-grid is-mine">${mine.slice(i, i + 4).map(it => this.card(it, me)).join('')}</div>`);
+    for (let i = 0; i < grid.length; i += 2) out.push(() => `<div class="kh-grid">${grid.slice(i, i + 2).map(it => this.card(it, me)).join('')}</div>`);
+    if (out.length > 1) out.splice(0, 2, join2(out[0], out[1]));
+    for (let i = 0; i < mine.length; i += 4) out.push(() => (i ? '' : secHtml('Sende', `${mine.length} parça`, I.check)) + `<div class="kh-grid is-mine">${mine.slice(i, i + 4).map(it => this.card(it, me)).join('')}</div>`);
     return out;
   }
 
@@ -452,8 +468,9 @@ export class ShopPage implements Page {
       const cur = this.panels.get(this.tab);
       if (cur) cur.scroll = this.body.scrollTop;
       this.spot.stop();
+      const from = this.el.querySelector<HTMLElement>('.kh-stab.is-on') ?? undefined;
       this.tab = t;
-      this.activate(true, dir);
+      this.activate(true, dir, from);
     } else if (a === 'item' || a === 'deal') {
       s.tap();
       const it = itemOf(b.dataset.k as ItemKind, b.dataset.id!);
