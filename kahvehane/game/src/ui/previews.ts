@@ -1,171 +1,168 @@
-// Market / koleksiyon önizlemeleri:
-//  - deste: gerçek kaplamayla (Skin.drawFace/drawBack) birkaç kart bir kez çizilir → blob adresleri önbelleğe alınır (tembel).
-//  - masa: TableTheme.swatch (ucuz küçük resim) + büyük önizlemede paint() tuvali; kayıtta yoksa yedek renk.
-//  - pişti efekti: kutu içinde döngülü küçük gösteri (klasik · havai · yıldız · altın); durağan hâli duraklatılmış kare.
-import {DECKS} from '../skins/index';
+// Market / koleksiyon önizlemeleri (hepsi HTML dizgesi üretir; DOM'a tek seferde girer, sonradan çizim yapmaz):
+//  - deste: pişmiş şeritten kartlar (src/ui/deckpv.ts) → yelpaze. Tuval yok, blob yok, gözlemci yok: anında görünür.
+//  - masa: TableTheme.swatch (SVG minyatür) zemini + kuşanılı destenin GERÇEK kartları (yığın, deste, el) → "masan böyle olur".
+//    Büyük sahnede (ürün penceresi / dene) boyalı zemin, pencere açılış animasyonu bittikten sonra boşta eklenir ve önbelleğe alınır.
+//  - pişti efekti: src/ui/fxpreview.ts (mountFx) — ızgarada donmuş kare, görünür olunca sırayla kurulur.
+import './previews.css';
 import {TABLES, tableById} from '../themes/tables';
 import type {TableTheme} from '../themes/contract';
 import {ANIM} from './dom';
 import {suitSvg} from './icons';
+import {CI, deckCardHtml, hasDeck} from './deckpv';
 
-// ---------------------------------------------------------------- deste
-export interface DeckArt {
-  faces: string[];
-  back: string;
-}
-const deckCache = new Map<string, Promise<DeckArt | null>>();
-/** Önizleme kartları: maça as, karo 10, kupa vale, sinek papaz. */
-const SHOW: [('S' | 'H' | 'D' | 'C'), number][] = [['S', 1], ['D', 10], ['H', 11], ['C', 13]];
-const CW = 168, CH = Math.round(168 / 0.7);
+export {hasDeck};
 
-export const hasDeck = (id: string): boolean => DECKS.some(d => d.id === id);
+// ---------------------------------------------------------------- deste yelpazesi
+/** Yelpazede gösterilen kartlar (soldan sağa); ortadaki en önde. */
+const FAN3 = [CI.back, CI.jack, CI.ace] as const;
+const FAN5 = [CI.back, CI.ace, CI.jack, CI.king, CI.queen] as const;
 
-export function deckArt(id: string): Promise<DeckArt | null> {
-  let p = deckCache.get(id);
-  if (p) return p;
-  p = (async () => {
-    const entry = DECKS.find(d => d.id === id);
-    if (!entry) return null;
-    try {
-      const skin = await entry.load();
-      await skin.prepare();
-      const draw = async (f: (g: CanvasRenderingContext2D) => void): Promise<string> => {
-        // ana iş parçacığını boğmamak için kartlar arasında nefes
-        await new Promise(r => setTimeout(r, 0));
-        const c = document.createElement('canvas');
-        c.width = CW;
-        c.height = CH;
-        const g = c.getContext('2d')!;
-        f(g);
-        const blob = await new Promise<Blob | null>(r => c.toBlob(r, 'image/png'));
-        return blob ? URL.createObjectURL(blob) : c.toDataURL();
-      };
-      const faces: string[] = [];
-      for (const [s, r] of SHOW) faces.push(await draw(g => skin.drawFace(g, CW, CH, s, r)));
-      const back = await draw(g => skin.drawBack(g, CW, CH));
-      return {faces, back};
-    } catch (e) {
-      console.warn('deste önizlemesi çizilemedi', id, e);
-      return null;
-    }
-  })();
-  deckCache.set(id, p);
-  return p;
+/** Kart yelpazesi HTML'i (n = 3 ya da 5 kart). Destesi olmayan katalog girdisi için "Hazırlanıyor" yer tutucusu. */
+export function fanHtml(id: string, n: 3 | 5 = 3, cls = ''): string {
+  const pick = n === 5 ? FAN5 : FAN3;
+  const mid = (pick.length - 1) / 2;
+  if (!hasDeck(id))
+    return `<span class="kh-fan is-${n} is-soon ${cls}">${pick.map((_, i) => `<span class="kh-fan__c" style="--i:${i - mid};--z:${10 - Math.abs(i - mid) * 2}"><span class="kh-fan__ph">${suitSvg((['s', 'd', 'h', 'c', 's'] as const)[i % 5])}</span></span>`).join('')}</span>`;
+  return `<span class="kh-fan is-${n} ${cls}">${pick.map((ci, i) => deckCardHtml(id, ci, 'kh-fan__c', `--i:${i - mid};--z:${10 - Math.abs(i - mid) * 2}`)).join('')}</span>`;
 }
 
-/** Kart yelpazesi (n kart) → kutuya yerleştirir; yüklenene dek parıldayan yer tutucu. */
+/** Eski arayüz: kutuya yelpaze kurar. */
 export function mountDeckFan(box: HTMLElement, id: string, n: 3 | 5 = 3): void {
-  box.classList.add('kh-fan', `is-${n}`);
-  const slots = Array.from({length: n}, (_, i) => `<span class="kh-fan__c" style="--i:${i - (n - 1) / 2}"><i class="kh-shimmer"></i></span>`).join('');
-  box.innerHTML = slots;
-  if (!hasDeck(id)) {
-    box.classList.add('is-soon');
-    box.querySelectorAll('.kh-fan__c').forEach((c, i) => (c.innerHTML = `<span class="kh-fan__ph">${suitSvg((['s', 'd', 'h', 'c', 's'] as const)[i % 5])}</span>`));
-    return;
-  }
-  const go = () =>
-    deckArt(id).then(a => {
-      if (!a || !box.isConnected) return;
-      const pics = n === 5 ? [a.back, ...a.faces] : [a.faces[0], a.faces[2], a.faces[1]];
-      box.querySelectorAll<HTMLElement>('.kh-fan__c').forEach((c, i) => {
-        const img = new Image();
-        img.alt = '';
-        img.decoding = 'async';
-        img.src = pics[i];
-        img.onload = () => {
-          c.innerHTML = '';
-          c.append(img);
-          if (ANIM) img.animate([{opacity: 0, transform: 'scale(.9)'}, {opacity: 1, transform: 'none'}], {duration: 260, delay: i * 60, easing: 'ease-out', fill: 'backwards'});
-        };
-      });
-    });
-  // görünür olunca çiz (market ızgarası uzun olabilir)
-  if ('IntersectionObserver' in window) {
-    const io = new IntersectionObserver(es => {
-      if (es.some(e => e.isIntersecting)) {
-        io.disconnect();
-        go();
-      }
-    });
-    io.observe(box);
-  } else go();
+  box.innerHTML = fanHtml(id, n);
 }
 
-// ---------------------------------------------------------------- sıralı kurulum
+// ---------------------------------------------------------------- sıralı kurulum (ağır önizlemeler: efekt)
 const mountQueue: Array<() => void> = [];
 let pumping = false;
 function pump(): void {
   if (pumping) return;
   pumping = true;
   const step = (): void => {
-    const f = mountQueue.shift();
-    if (f) {
+    const t0 = performance.now();
+    // kare başına ~6 ms bütçe; en az bir iş
+    do {
+      const f = mountQueue.shift();
+      if (!f) break;
       try {
         f();
       } catch {
         /* tek önizleme bozuksa diğerleri çalışsın */
       }
-    }
+    } while (mountQueue.length && performance.now() - t0 < 6);
     if (mountQueue.length) requestAnimationFrame(step);
     else pumping = false;
   };
   requestAnimationFrame(step);
 }
+
 /**
- * Ağır önizlemeyi (efekt, vb.) görünür olunca ve kare başına BİR tane kur: sayfa açılırken 8-10 önizlemenin
- * tek görevde kurulup ekranı donduran (zayıf telefonda ~250 ms) hâli olmasın.
+ * Ağır önizlemeyi görünür olunca, kare başına küçük bir bütçeyle kur. Görünürlük gözlemcisi her ortamda güvenilir
+ * olmayabilir (gömülü, farklı kökenli çerçeve): 700 ms içinde haber gelmezse kutu ekrandaysa yine kurulur.
  */
 export function deferMount(box: HTMLElement, fn: () => void): void {
+  let done = false;
   const enqueue = (): void => {
+    if (done) return;
+    done = true;
+    io?.disconnect();
     mountQueue.push(() => {
       if (box.isConnected) fn();
     });
     pump();
   };
+  let io: IntersectionObserver | null = null;
   if ('IntersectionObserver' in window) {
-    const io = new IntersectionObserver(es => {
-      if (es.some(e => e.isIntersecting)) {
-        io.disconnect();
-        enqueue();
-      }
-    }, {rootMargin: '120px'});
+    io = new IntersectionObserver(es => es.some(e => e.isIntersecting) && enqueue(), {rootMargin: '160px'});
     io.observe(box);
+    const check = (): void => {
+      if (done || !box.isConnected) return io?.disconnect();
+      const r = box.getBoundingClientRect();
+      if (r.width && r.bottom > -160 && r.top < innerHeight + 160) enqueue();
+      else setTimeout(check, 1500);
+    };
+    setTimeout(check, 700);
   } else enqueue();
 }
 
 // ---------------------------------------------------------------- masa
 const TABLE_FALLBACK: Record<string, string> = {
-  kizil: 'repeating-conic-gradient(from 0deg at 50% 46%, rgba(255,220,160,.07) 0deg 7deg, rgba(255,255,255,0) 7deg 18deg), radial-gradient(120% 75% at 50% 46%, #e8334a 0%, #a8142c 32%, #6e0a1e 62%, #3a0512 100%)',
-  zumrut: 'repeating-conic-gradient(from 0deg at 50% 46%, rgba(220,255,200,.06) 0deg 7deg, rgba(255,255,255,0) 7deg 18deg), radial-gradient(120% 75% at 50% 46%, #22c472 0%, #0f8a4a 34%, #075a32 64%, #03301b 100%)',
+  kizil: 'radial-gradient(120% 75% at 50% 46%, #e8334a 0%, #a8142c 32%, #6e0a1e 62%, #3a0512 100%)',
+  zumrut: 'radial-gradient(120% 75% at 50% 46%, #22c472 0%, #0f8a4a 34%, #075a32 64%, #03301b 100%)',
 };
 export const hasTable = (id: string): boolean => TABLES.some(t => t.id === id);
 export function tableSwatch(id: string): string {
   const t = TABLES.find(x => x.id === id);
   return t?.swatch ?? t?.vars['--ar-bg'] ?? TABLE_FALLBACK[id] ?? TABLES[0].swatch ?? '#14228a';
 }
+function themeOf(id: string): TableTheme | null {
+  return hasTable(id) ? tableById(id) : null;
+}
 
-/** Küçük masa: zemin + halka + iki kart + deste. big: boyalı zemin tuvali (varsa) arkaya eklenir. */
-export function mountTable(box: HTMLElement, id: string, big = false): void {
-  box.classList.add('kh-mtab');
-  box.style.background = tableSwatch(id);
-  const t: TableTheme | null = hasTable(id) ? tableById(id) : null;
-  const ring = t?.vars['--ar-ring'] ?? 'rgba(160,185,255,.5)';
-  box.innerHTML = `<i class="kh-mtab__glow" style="--g:${t?.vars['--ar-glow-n'] ?? 'rgba(140,170,255,.35)'}"></i>
-    <i class="kh-mtab__ring" style="border-color:${ring}"></i>
-    <i class="kh-mtab__deck"></i><i class="kh-mtab__card is-a"></i><i class="kh-mtab__card is-b"></i>
-    <i class="kh-mtab__vig"></i>`;
-  if (big && t?.paint) {
-    const r = box.getBoundingClientRect();
+export interface SceneOpts {
+  /** Kartların destesi (kuşanılı deste) */
+  deck: string;
+  /** 'mini': ızgara (yığın + deste) · 'full': ürün penceresi/dene (rakip eli, deste, yığın, oyuncu eli) */
+  size?: 'mini' | 'full';
+  cls?: string;
+}
+
+/**
+ * Masa sahnesi HTML'i: zemin (swatch) + yığın halkası + gerçek kartlar. Kartlar CSS dönüşümüyle yerleşik, durağan.
+ * full: üstte rakibin kapalı eli, solda deste, ortada yığın (iki yüz), altta oyuncunun eli (dört yüz).
+ */
+export function tableSceneHtml(id: string, o: SceneOpts): string {
+  const t = themeOf(id);
+  const ring = t?.vars['--ar-ring'] ?? 'rgba(160,185,255,.55)';
+  const glow = t?.vars['--ar-glow-n'] ?? 'rgba(120,150,255,.38)';
+  const d = o.deck;
+  const full = o.size === 'full';
+  const pile = `<span class="kh-ts__pile">${deckCardHtml(d, CI.ten, 'kh-ts__c is-p1')}${deckCardHtml(d, CI.queen, 'kh-ts__c is-p2')}</span>`;
+  const stack = `<span class="kh-ts__deck">${deckCardHtml(d, CI.back, 'kh-ts__c is-d1')}${deckCardHtml(d, CI.back, 'kh-ts__c is-d2')}</span>`;
+  const opp = full ? `<span class="kh-ts__opp">${[0, 1, 2, 3].map(i => deckCardHtml(d, CI.back, 'kh-ts__c', `--i:${i - 1.5}`)).join('')}</span>` : '';
+  const hand = full ? `<span class="kh-ts__hand">${[CI.ace, CI.jack, CI.king, CI.ten].map((ci, i) => deckCardHtml(d, ci, 'kh-ts__c', `--i:${i - 1.5}`)).join('')}</span>` : '';
+  return `<span class="kh-ts ${full ? 'is-full' : 'is-mini'} ${o.cls ?? ''}" data-table="${id}" style="--ring:${ring};--glow:${glow}">
+    <i class="kh-ts__bg" style="background:${tableSwatch(id)}"></i><i class="kh-ts__glow"></i><i class="kh-ts__ring"></i>
+    ${opp}${stack}${pile}${hand}<i class="kh-ts__vig"></i></span>`;
+}
+
+/** Eski arayüz: kutuya küçük masa kurar (deste verilmezse varsayılan). */
+export function mountTable(box: HTMLElement, id: string, big = false, deck = 'yildizli'): void {
+  box.innerHTML = tableSceneHtml(id, {deck, size: big ? 'full' : 'mini'});
+  if (big) paintTableLater(box.firstElementChild as HTMLElement, id);
+}
+
+// boyalı zeminler: masa başına en çok 2 tuval önbellekte (yeniden açılışta tekrar çizilmez)
+const paintCache = new Map<string, HTMLCanvasElement>();
+/**
+ * Büyük sahneye boyalı zemini ekle: çağıran animasyonun bitmesini bekler (delay), sonra boşta çizer.
+ * Zemin swatch ile zaten görünür; boyama yalnız inceliği artırır.
+ */
+export function paintTableLater(scene: HTMLElement, id: string, delay = 520): void {
+  const t = themeOf(id);
+  if (!t?.paint) return;
+  const go = (): void => {
+    if (!scene.isConnected) return;
+    const r = scene.getBoundingClientRect();
     const w = Math.max(120, Math.round(r.width)), hh = Math.max(160, Math.round(r.height));
-    Promise.resolve(t.paint(w, hh, Math.min(2, window.devicePixelRatio || 1)))
+    const key = `${id}:${w}x${hh}`;
+    const put = (c: HTMLCanvasElement): void => {
+      if (!scene.isConnected) return;
+      c.classList.add('kh-ts__paint');
+      scene.querySelector('.kh-ts__bg')?.after(c);
+      if (ANIM) c.animate([{opacity: 0}, {opacity: 1}], {duration: 360, easing: 'ease-out'});
+    };
+    const hit = paintCache.get(key);
+    if (hit) return put(hit);
+    Promise.resolve(t.paint!(w, hh, Math.min(2, window.devicePixelRatio || 1)))
       .then(c => {
-        if (!box.isConnected) return;
-        c.classList.add('kh-mtab__paint');
-        box.prepend(c);
-        if (ANIM) c.animate([{opacity: 0}, {opacity: 1}], {duration: 400, easing: 'ease-out'});
+        paintCache.set(key, c);
+        while (paintCache.size > 2) paintCache.delete(paintCache.keys().next().value!);
+        put(c);
       })
       .catch(() => undefined);
-  }
+  };
+  const w = window as unknown as {requestIdleCallback?: (f: () => void, o?: {timeout: number}) => number};
+  setTimeout(() => (w.requestIdleCallback ? w.requestIdleCallback(go, {timeout: 600}) : go()), ANIM ? delay : 0);
 }
 
 // pişti efekti önizlemeleri ayrı dosyada (src/ui/fxpreview.ts)

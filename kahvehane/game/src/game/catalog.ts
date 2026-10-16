@@ -15,6 +15,10 @@ export interface ShopItem {
   rarity: Rarity;
   /** Başlangıçta herkeste olan (ücretsiz) */
   starter?: boolean;
+  /** Market rozeti: yeni / popüler / sınırlı. Yoksa market kendisi seçer (src/ui/sets.ts). */
+  badge?: 'new' | 'hot' | 'limited';
+  /** Tema seti kimliği: aynı `set` değerini taşıyan ürünler marketteki "Setler"de indirimli paket olur (src/ui/sets.ts). */
+  set?: string;
 }
 
 export const RARITY_INFO: Record<Rarity, {name: string; color: string}> = {
