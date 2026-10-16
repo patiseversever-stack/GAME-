@@ -1,0 +1,176 @@
+{
+  "banter_defne_cem_mateBlame_1a": {
+    "url": "defne/banter_defne_cem_mateBlame_1a.mp3",
+    "dur": 2.9,
+    "h": "e4fb74cb",
+    "p": 2
+  },
+  "banter_defne_cem_mateBlame_1b": {
+    "url": "cem/banter_defne_cem_mateBlame_1b.mp3",
+    "dur": 2.06,
+    "h": "fe29c4b5",
+    "p": 2
+  },
+  "banter_defne_cem_mateBlame_1c": {
+    "url": "defne/banter_defne_cem_mateBlame_1c.mp3",
+    "dur": 2.12,
+    "h": "83e6741c",
+    "p": 2
+  },
+  "banter_riza_cem_steal_1a": {
+    "url": "riza/banter_riza_cem_steal_1a.mp3",
+    "dur": 4.94,
+    "h": "23ff1a57",
+    "p": 2
+  },
+  "banter_riza_cem_steal_1b": {
+    "url": "cem/banter_riza_cem_steal_1b.mp3",
+    "dur": 2.35,
+    "h": "8477af5f",
+    "p": 2
+  },
+  "banter_riza_cem_steal_1c": {
+    "url": "riza/banter_riza_cem_steal_1c.mp3",
+    "dur": 3.6,
+    "h": "120c0470",
+    "p": 2
+  },
+  "cem_blofCatchPlayer_2": {
+    "url": "cem/cem_blofCatchPlayer_2.mp3",
+    "dur": 2.77,
+    "h": "b5c2a974",
+    "p": 3
+  },
+  "cem_myTurnIdle_8": {
+    "url": "cem/cem_myTurnIdle_8.mp3",
+    "dur": 1.93,
+    "h": "2e0e6a63",
+    "p": 1
+  },
+  "cem_playerPisti_5": {
+    "url": "cem/cem_playerPisti_5.mp3",
+    "dur": 1.54,
+    "h": "24276cd9",
+    "p": 3
+  },
+  "cem_shopPitch_2": {
+    "url": "cem/cem_shopPitch_2.mp3",
+    "dur": 1.93,
+    "h": "d88edad3",
+    "p": 3
+  },
+  "defne_blofCatchPlayer_1": {
+    "url": "defne/defne_blofCatchPlayer_1.mp3",
+    "dur": 2.09,
+    "h": "2d7d9c7a",
+    "p": 3
+  },
+  "defne_botBigCapture_11": {
+    "url": "defne/defne_botBigCapture_11.mp3",
+    "dur": 0.84,
+    "h": "7cec2349",
+    "p": 2
+  },
+  "defne_myTurnIdle_6": {
+    "url": "defne/defne_myTurnIdle_6.mp3",
+    "dur": 2.3,
+    "h": "f7ca68aa",
+    "p": 1
+  },
+  "defne_playerDumpedValuable_1": {
+    "url": "defne/defne_botBigCapture_11.mp3",
+    "dur": 0.84,
+    "h": "7cec2349",
+    "p": 2
+  },
+  "defne_shopPitch_1": {
+    "url": "defne/defne_shopPitch_1.mp3",
+    "dur": 2.8,
+    "h": "eb7c6e02",
+    "p": 3
+  },
+  "dursun_botBigCapture_11": {
+    "url": "dursun/dursun_botBigCapture_11.mp3",
+    "dur": 1.18,
+    "h": "840c0e53",
+    "p": 2
+  },
+  "dursun_botPisti_1": {
+    "url": "dursun/dursun_botPisti_1.mp3",
+    "dur": 3.4,
+    "h": "dbd333ff",
+    "p": 3
+  },
+  "dursun_myTurnIdle_9": {
+    "url": "dursun/dursun_myTurnIdle_9.mp3",
+    "dur": 2.85,
+    "h": "a2799da5",
+    "p": 1
+  },
+  "dursun_playerDumpedValuable_1": {
+    "url": "dursun/dursun_botBigCapture_11.mp3",
+    "dur": 1.18,
+    "h": "840c0e53",
+    "p": 2
+  },
+  "dursun_shopPitch_2": {
+    "url": "dursun/dursun_shopPitch_2.mp3",
+    "dur": 3.32,
+    "h": "10797165",
+    "p": 3
+  },
+  "qc_cem_gg_1": {
+    "url": "cem/qc_cem_gg_1.mp3",
+    "dur": 1.8,
+    "h": "35d59b0b",
+    "p": 3
+  },
+  "qr_dursun_friendly_3": {
+    "url": "dursun/dursun_botBigCapture_11.mp3",
+    "dur": 1.18,
+    "h": "840c0e53",
+    "p": 2
+  },
+  "qr_riza_taunt_2": {
+    "url": "riza/qr_riza_taunt_2.mp3",
+    "dur": 3.53,
+    "h": "25564aa6",
+    "p": 2
+  },
+  "riza_botBigCapture_2": {
+    "url": "riza/riza_botBigCapture_2.mp3",
+    "dur": 1.96,
+    "h": "47005d22",
+    "p": 2
+  },
+  "riza_botJackCapture_5": {
+    "url": "riza/riza_botBigCapture_2.mp3",
+    "dur": 1.96,
+    "h": "47005d22",
+    "p": 2
+  },
+  "riza_botPisti_3": {
+    "url": "riza/riza_botPisti_3.mp3",
+    "dur": 5.49,
+    "h": "4fcb2276",
+    "p": 3
+  },
+  "riza_galleryIntro_2": {
+    "url": "riza/riza_galleryIntro_2.mp3",
+    "dur": 6.16,
+    "h": "d49eb839",
+    "p": 3
+  },
+  "riza_playerDumpedValuable_3": {
+    "url": "riza/riza_botBigCapture_2.mp3",
+    "dur": 1.96,
+    "h": "47005d22",
+    "p": 2
+  },
+  "riza_playerDumpedValuable_6": {
+    "url": "riza/riza_playerDumpedValuable_6.mp3",
+    "dur": 3.47,
+    "h": "49b6128c",
+    "p": 2
+  }
+}
