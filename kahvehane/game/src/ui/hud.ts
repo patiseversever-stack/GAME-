@@ -71,6 +71,7 @@ class Badge {
   private bubble: HTMLElement;
   private acc: HTMLElement;
   private sayTimer = 0;
+  private sayTok = 0;
   private reactTimer = 0;
   private reactTok = 0;
   private baseTok = 0;
@@ -285,8 +286,8 @@ class Badge {
     }
   }
 
-  /** Balon + (varsa) tepki hâli. */
-  say(text: string, mood: HudPose | null | undefined, ms: number): void {
+  /** Balon + (varsa) tepki hâli. Dönen numara bu yazının kimliği (unsayIf / holdSay yalnız onu etkiler). */
+  say(text: string, mood: HudPose | null | undefined, ms: number): number {
     clearTimeout(this.sayTimer);
     this.el.classList.add('is-talking');
     this.bubble.textContent = text;
@@ -294,6 +295,19 @@ class Badge {
     play(this.bubble, [{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1.06)', opacity: 1, offset: 0.62}, {transform: 'scale(1)', opacity: 1}],
       {duration: 360, easing: EASE.out, fill: 'backwards'});
     if (mood) this.react(mood, ms);
+    if (ANIM) this.sayTimer = window.setTimeout(() => this.unsay(), ms);
+    return ++this.sayTok;
+  }
+
+  /** Yalnız tok numaralı yazı hâlâ görünüyorsa kapat (arada başka yazı geldiyse dokunma). */
+  unsayIf(tok?: number): void {
+    if (tok === undefined || tok === this.sayTok) this.unsay();
+  }
+
+  /** tok numaralı yazı en az ms daha kalsın (ses geç başladı). */
+  holdSay(tok: number, ms: number): void {
+    if (tok !== this.sayTok || !this.bubble.classList.contains('is-on')) return;
+    clearTimeout(this.sayTimer);
     if (ANIM) this.sayTimer = window.setTimeout(() => this.unsay(), ms);
   }
 
@@ -340,6 +354,12 @@ export class HudView implements GameHud {
   readonly el = h('div', 'kh-hud is-hidden');
   onMenu: () => void = () => {};
   onPoke: (seat: number) => void = () => {};
+  /** Hızlı sohbet düğmesi (setChat(true) ile görünür) */
+  onChat: () => void = () => {};
+  private chatBtn: HTMLElement;
+  private chatCool: HTMLElement;
+  private chatOn = false;
+  private coolAnim: Animation | null = null;
   private badges = new Map<number, Badge>();
   private mode: Mode = '1v1';
   private signature = '';
@@ -371,6 +391,7 @@ export class HudView implements GameHud {
     this.el.innerHTML = `<div class="kh-capsule kh-hud__coins" data-coins><img class="kh-capsule__ico" src="${ASSETS.icon_coin}" alt=""><b class="kh-capsule__val kh-num">0</b></div>
       <div class="kh-team" style="display:none"><span class="is-a"><i>BİZ</i><b class="kh-num">0</b></span><span class="is-b"><i>ONLAR</i><b class="kh-num">0</b></span></div>
       <button class="kh-iconbtn kh-menu" aria-label="Duraklat">${I.pause}</button>
+      <button class="kh-iconbtn kh-chatbtn" aria-label="Hızlı sohbet" hidden>${I.voice}<i class="kh-chatbtn__cool"></i></button>
       <div class="kh-deck" style="display:none">${I.cards}<b class="kh-num">0</b></div>
       <div class="kh-hint"><span class="kh-hint__glow"></span>${I.hand}<span class="kh-hint__t"></span></div>
       <div class="kh-tallies"></div>`;
@@ -387,7 +408,37 @@ export class HudView implements GameHud {
     q(this.el, '.kh-menu').addEventListener('click', () => {
       if (this.visible) this.onMenu();
     });
+    this.chatBtn = q(this.el, '.kh-chatbtn');
+    this.chatCool = q(this.chatBtn, '.kh-chatbtn__cool');
+    this.chatBtn.addEventListener('click', () => {
+      if (this.visible && this.chatOn) this.onChat();
+    });
     parent.append(this.el);
+  }
+
+  /** Hızlı sohbet düğmesini göster / gizle (maç başında açılır, el bitince kapanır). */
+  setChat(on: boolean): void {
+    if (on === this.chatOn) return;
+    this.chatOn = on;
+    this.chatBtn.hidden = !on;
+    if (!on) this.chatCooldown(0);
+    else if (this.visible) play(this.chatBtn, [{transform: 'scale(.4)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.spring, fill: 'backwards'});
+  }
+
+  /** Bekleme: düğmenin üstündeki gölge ms boyunca aşağı doğru erir (yalnız transform). 0 = temizle. */
+  chatCooldown(ms: number): void {
+    this.coolAnim?.cancel();
+    this.coolAnim = null;
+    this.chatBtn.classList.toggle('is-cool', ms > 0);
+    if (ms <= 0) return;
+    const a = play(this.chatCool, [{transform: 'scaleY(1)'}, {transform: 'scaleY(0)'}], {duration: ms, easing: 'linear', fill: 'forwards'}, 0.5);
+    this.coolAnim = a;
+    a.onfinish = () => {
+      if (this.coolAnim !== a) return;
+      this.coolAnim = null;
+      this.chatBtn.classList.remove('is-cool');
+      a.cancel();
+    };
   }
 
   setSounds(s: HudSounds | null): void {
@@ -418,6 +469,7 @@ export class HudView implements GameHud {
       const drop = [{transform: 'translateY(-60px)', opacity: 0}, {transform: 'none', opacity: 1}];
       play(this.coinsCap, drop, {duration: 380, delay: 120, easing: EASE.spring, fill: 'backwards'});
       play(q(this.el, '.kh-menu'), drop, {duration: 380, delay: 160, easing: EASE.spring, fill: 'backwards'});
+      if (this.chatOn) play(this.chatBtn, drop, {duration: 380, delay: 200, easing: EASE.spring, fill: 'backwards'});
       if (mode === 'esli') play(this.team, drop, {duration: 380, delay: 220, easing: EASE.spring, fill: 'backwards'});
     }
   }
@@ -562,7 +614,7 @@ export class HudView implements GameHud {
     } else this.hint.classList.remove('is-on');
   }
 
-  say(text: string, mood?: HudPose | null, ms = 2400, seat?: number): void {
+  say(text: string, mood?: HudPose | null, ms = 2400, seat?: number): number {
     let b = seat !== undefined ? this.badges.get(seat) : undefined;
     if (!b)
       for (const x of this.badges.values())
@@ -570,7 +622,15 @@ export class HudView implements GameHud {
           b = x;
           break;
         }
-    b?.say(text, mood, ms);
+    return b ? b.say(text, mood, ms) : 0;
+  }
+
+  unsay(seat: number, tok?: number): void {
+    this.badges.get(seat)?.unsayIf(tok);
+  }
+
+  holdSay(seat: number, tok: number, ms: number): void {
+    this.badges.get(seat)?.holdSay(tok, ms);
   }
 
   react(seat: number, pose: HudPose, ms = 1500): void {

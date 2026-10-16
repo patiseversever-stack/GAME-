@@ -5,6 +5,8 @@ import type {ResultsData, Screens, Settings} from '../ui/screens';
 import type {MatchSetup} from './types';
 import {STAKES} from '../ui/screens';
 import type {VoicePlayer} from '../audio/voice';
+import {speechFor, type SpeechDirector} from '../audio/speech';
+import type {QuickChat} from './quickChat';
 import type {Sfx} from '../audio/sfx';
 import type {ItemKind} from './catalog';
 import type {Table2D} from '../table2d/table';
@@ -20,6 +22,10 @@ export interface AppDeps {
   table: Table2D;
   sfx: Sfx;
   voice: VoicePlayer;
+  /** TEK konuşma yöneticisi (verilmezse oynatıcınınki) */
+  speech?: SpeechDirector;
+  /** Hızlı sohbet denetleyicisi (oyun içi sohbet düğmesi + pencere) */
+  chat?: QuickChat;
   screens: Screens;
   profile: Profile;
   settings: Settings;
@@ -50,6 +56,7 @@ interface Runner {
 
 export async function runApp(d: AppDeps): Promise<void> {
   const {screens, sfx, profile, table} = d;
+  const speech = d.speech ?? speechFor(d.voice);
   let current: Runner | null = null;
   let curGame: Game = 'pisti';
   let dealerBase = 0;
@@ -79,10 +86,16 @@ export async function runApp(d: AppDeps): Promise<void> {
   };
   screens.hud.onMenu = async () => {
     sfx.uiTap();
-    const r = await screens.pause();
-    if (r === 'settings') await screens.settings(d.settings, s => d.applySettings(s), handOption());
-    else if (r === 'rules') await screens.rules(curGame);
-    else if (r === 'leave') current?.abort();
+    d.chat?.close();
+    speech.hold(true); // mola: konuşma susar, menü açık kaldıkça yeni replik yok
+    try {
+      const r = await screens.pause();
+      if (r === 'settings') await screens.settings(d.settings, s => d.applySettings(s), handOption());
+      else if (r === 'rules') await screens.rules(curGame);
+      else if (r === 'leave') current?.abort();
+    } finally {
+      speech.hold(false);
+    }
   };
 
   // ilk açılış: hikâye + hediye karakter + ad
@@ -130,6 +143,7 @@ export async function runApp(d: AppDeps): Promise<void> {
       // Blöf motoru giriş ekranı sürerken arka planda yüklenir
       const factory: Promise<BlofFactory | null> = game === 'blof' ? loadBlof().catch(() => null) : Promise.resolve(null);
       const deckReady = table.ready; // deste atlası arka planda çiziliyor olabilir; giriş ekranı süresince tamamlanır
+      speech.stopAll(); // giriş müziği/damgası bir konuşmanın üstüne binmez (market / galeri sesi biter)
       if (first) await screens.versus(setup, stake);
       await deckReady;
       first = false;
@@ -146,7 +160,7 @@ export async function runApp(d: AppDeps): Promise<void> {
       sfx.coin(2);
       screens.hud.show(setup.players, mode, profile.data.coins, profile.data.equipped.frame);
       screens.hud.setCoins(profile.data.coins);
-      const deps = {table, hud: screens.hud, sfx, voice: d.voice, auto: d.auto};
+      const deps = {table, hud: screens.hud, sfx, voice: d.voice, speech, chat: d.chat, auto: d.auto};
       current = game === 'blof' ? make!(deps) : new Match(deps);
       const raw = await current.play(setup);
       current = null;
@@ -192,7 +206,9 @@ export async function runApp(d: AppDeps): Promise<void> {
         coinsDelta: got - stake, coinsAfter: profile.data.coins, after, levelReward: lv.reward,
         streak: game === 'blof' ? profile.data.blof.streak : profile.data.stats.streak,
       });
-      await new Promise(r => setTimeout(r, 350));
+      // son söz yarıda kalmasın: konuşma bitene dek (en çok ~3,8 sn) bekle, sonra sonuç ekranının sesi tek başına çalar
+      await speech.settle(350, 3800);
+      speech.stopAll();
       const choice = await screens.results(data, profile.data.equipped.frame);
       if (choice === 'home') {
         screens.hud.hide();

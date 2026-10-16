@@ -2,7 +2,7 @@
 // karakter avatarı (çerçeveli), canlı portre (tek görsel + nefes; poz = anında değişim), balon yerleşimi + daktilo,
 // kaydırmalı vitrin (momentumlu), alt pencere, dört renk perde geçişi.
 import ARENA_RAYS from './img/arena-rays.webp';
-import type {Sounds} from './types';
+import type {MenuTalk, Sounds} from './types';
 import {EASE, Scope, ANIM, clamp, esc, fmt, h, play, q, rnd} from './dom';
 import {ASSETS} from './assets';
 import {I, SUIT, SUIT_TILE, suitSvg, type SuitKey} from './icons';
@@ -15,6 +15,8 @@ export interface Ctx {
   layer: HTMLElement;
   sounds: Sounds;
   fx: Fx;
+  /** Menü konuşmaları (galeri / market): tek konuşma yöneticisinden geçer. Yoksa sessiz (yalnız yazı). */
+  talk?: MenuTalk;
 }
 
 // Arena deseni CSS değişkeni olarak bir kez kurulur (masa katmanı da var(--suit-tile) ile kullanabilir).

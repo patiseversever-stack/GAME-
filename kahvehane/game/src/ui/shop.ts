@@ -282,6 +282,7 @@ export class ShopPage implements Page {
 
   hide(): void {
     this.visible = false;
+    this.shell.ctx.talk?.stop(); // sekmeden çıkınca market konuşması susar
     clearTimeout(this.dealT);
     this.spot.stop();
     const p = this.panels.get(this.tab);
@@ -652,6 +653,27 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
   });
   const pv = q(m.panel, '.kh-pd__pv');
   const stage = q(m.panel, '.kh-pd__stage');
+  // karakter ürünü: açılınca satış konuşması (bir kez), alınca sevinç, jeton yetmezse tatlı iğne. Yazı alıntı kutusunda;
+  // pencere kapanınca konuşma susar. Hepsi tek konuşma yöneticisinden (ctx.talk).
+  const talk = c ? ctx.talk : undefined;
+  const quoteEl = c ? m.panel.querySelector<HTMLElement>('.kh-pd__quote') : null;
+  const quoteBubble = quoteEl && c
+    ? {
+        show: (text: string) => {
+          quoteEl.textContent = text;
+          quoteEl.classList.add('is-speaking');
+        },
+        hide: () => {
+          if (!m.scope.alive) return;
+          quoteEl.textContent = c.quote;
+          quoteEl.classList.remove('is-speaking');
+        },
+      }
+    : undefined;
+  if (c && talk) {
+    m.scope.timeout(() => talk.say(c.id, 'shopPitch', quoteBubble), ANIM ? 420 : 0);
+    m.scope.add(() => talk.stop());
+  }
   // vitrin (deste gezgini, masa sahnesi, efekt) pencere kabuğundan bir kare SONRA: tıklama karesi kısa kalır. Önizleme
   // girişi zaten 110 ms gecikmeli ve saydam başlar, fark görünmez.
   let show: Stage = {cheer: () => undefined, stop: () => undefined};
@@ -733,12 +755,13 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
     if (a !== 'buy') return;
     const msg = q(m.panel, '.kh-pd__msg');
     if (p.data.coins < price) {
-      // yetersiz jeton: sallan + nazik mesaj (oyuncunun karakteri üzgün bakar)
+      // yetersiz jeton: sallan + nazik mesaj (oyuncunun karakteri üzgün bakar); karakter ürününde karakter iğneler
       ctx.sounds.tap();
       haptic('warning');
       shake(b, 1);
       shake(wallet, 0.5);
       showEarn(shell, msg, price - p.data.coins);
+      if (c && talk) talk.say(c.id, 'shopPoor', quoteBubble);
       return;
     }
     busy = true;
@@ -763,6 +786,7 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
     await payFx(shell, price, pv, m.scope);
     if (!m.scope.alive) return;
     unlockFx(shell, stage, pv);
+    if (c && talk) talk.say(c.id, 'shopBought', quoteBubble);
     show.cheer();
     renderAct(true);
     onChange();

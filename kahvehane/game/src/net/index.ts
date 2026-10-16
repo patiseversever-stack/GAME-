@@ -5,3 +5,4 @@ export * from './transport';
 export * from './host';
 export * from './client';
 export * from './blofLocal';
+export * from './chat';

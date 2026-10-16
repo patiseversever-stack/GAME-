@@ -1,7 +1,7 @@
 // Blöf konuşmaları. Replik verisi (seslendirilen, kimlikli: riza_blofCallOut_3) src/ai/dialogue.ts'te — seslendirme
 // aracı oradan okur. Burada: an → replik seçimi (kalıcı tekrar önleme) + sıklık (dialogue.ts → BLOF_RULES) ve
 // Rıza Amca'nın öğretici metinleri.
-import {BLOF_MOOD, DialogueDirector, blofKey, momentPriority, type BlofMoment, type Line, type TalkStore} from './dialogue';
+import {BLOF_MOOD, DialogueDirector, blofKey, momentPriority, type BlofMoment, type Exchange, type Line, type TalkStore} from './dialogue';
 
 export {BLOF_MOOD};
 export type {BlofMoment};
@@ -23,6 +23,11 @@ export class BlofTalk {
   /** Her şeyi sıfırlar (hafıza dahil). */
   reset(): void {
     this.d.reset();
+  }
+
+  /** Botlar arası atışma dener (bkz. DialogueDirector.banter): Blöf masasının kendi hafızası ve sıklığıyla. */
+  banter(req: Parameters<DialogueDirector['banter']>[0]): Exchange | null {
+    return this.d.banter(req);
   }
 
   /** Repliği seç (yoksa ya da sıra değilse null). force: sıklık sınırını atla (Blöf anı, el sonu…). */

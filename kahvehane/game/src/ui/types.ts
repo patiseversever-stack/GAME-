@@ -37,6 +37,31 @@ export interface HandOption {
 /** Kozmetik değişti (kuşanıldı): uygulama desteyi/masayı yeniden kurar. */
 export type CosmeticsListener = (kind: ItemKind, id: string) => void;
 
+/** Hızlı sohbet menüsünün bir satırı (oyuncunun karakterine göre söz). */
+export interface QuickChatItem {
+  id: string;
+  label: string;
+  icon: string;
+}
+
+/** Hızlı sohbet penceresi (bir kez kurulur, tekrar kullanılır). */
+export interface QuickChatSheetPort {
+  readonly isOpen: boolean;
+  open(o: {items: readonly QuickChatItem[]; muted: boolean; coolMs: number; onPick(id: string): void; onMute(on: boolean): void}): void;
+  close(): void;
+  /** Bekleme (ms): satırlar soluk + ilerleme şeridi. */
+  cool(ms: number): void;
+}
+
+/** Menü konuşmaları (galeri tanıtımı, market): karakterin repliği ses + yazı; tek konuşma yöneticisinden geçer. */
+export type MenuMoment = 'galleryIntro' | 'shopPitch' | 'shopBought' | 'shopPoor';
+export interface MenuTalk {
+  /** Önceki menü konuşmasını keser, karakterin bu andaki repliğini söyler. bubble: yazının göründüğü yer. */
+  say(charId: string, moment: MenuMoment, bubble?: {show(text: string, ms: number): void; hide(): void}): void;
+  /** Menü konuşmasını hemen sustur. */
+  stop(): void;
+}
+
 export interface Sounds {
   tap(): void;
   whoosh(): void;
@@ -150,8 +175,18 @@ export interface GameHud {
   /** Her karede çağrılabilir; yalnız transform yazar */
   setDeck(count: number, x: number, y: number): void;
   showHint(text: string | null): void;
-  /** Konuşma balonu + (varsa) tepki hâli. seat verilmezse ilk rakip. */
-  say(text: string, mood?: HudPose | null, ms?: number, seat?: number): void;
+  /** Konuşma balonu + (varsa) tepki hâli. seat verilmezse ilk rakip. Dönen numara bu yazının kimliği (unsay / holdSay için). */
+  say(text: string, mood?: HudPose | null, ms?: number, seat?: number): number | void;
+  /** Koltuğun balonunu kapat (tok verilirse yalnız o yazı hâlâ görünüyorsa). Konuşma yöneticisi sesi kesince çağırır. */
+  unsay?(seat: number, tok?: number): void;
+  /** tok numaralı yazı en az ms daha görünsün (ses geç başladı). */
+  holdSay?(seat: number, tok: number, ms: number): void;
+  /** Hızlı sohbet düğmesi: göster / gizle */
+  setChat?(on: boolean): void;
+  /** Hızlı sohbet bekleme göstergesi (ms; 0 temizler) */
+  chatCooldown?(ms: number): void;
+  /** Hızlı sohbet düğmesine dokunuldu */
+  onChat?: () => void;
   /** Yalnız yüz ifadesi (yaylı geçiş + küçük çizgi film vurgusu); ms sonra nötre döner */
   react(seat: number, pose: HudPose, ms?: number): void;
   /** Kalıcı temel hâl (ör. çok geride kalınca üzgün, el sonunda zafer); null = nötr */

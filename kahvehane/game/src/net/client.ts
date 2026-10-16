@@ -114,6 +114,11 @@ export class GameClient<A, E, V, T = unknown> {
     this.transport.send({t: 'resync'});
   }
 
+  /** Hızlı sohbet mesajı (QUICK_CHAT kimliği). Ev sahibi doğrulayıp herkese {t: 'chat', seat, msg} yayar. */
+  chat(msg: string): void {
+    this.transport.send({t: 'chat', msg});
+  }
+
   ping(): void {
     this.transport.send({t: 'ping', ts: this.clock.now()});
   }

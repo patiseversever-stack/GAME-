@@ -38,6 +38,7 @@ export function openTryOn(shell: Shell, it: ShopItem, o: TryOpts): void {
   el.innerHTML = `<div class="kh-try__col"><div class="kh-try__scene">${tableSceneHtml(table, {deck, size: 'full'})}</div>
     <div class="kh-try__seat is-opp">${charAvatarHtml(opp, 'standart', 'kh-try__ava')}<span class="kh-try__nm">${esc(opp.name)}</span></div>
     <div class="kh-try__seat is-me">${charAvatarHtml(meChar, frame, 'kh-try__ava')}<span class="kh-try__nm">${esc(d.name)}</span></div>
+    ${it.kind === 'char' ? '<div class="kh-try__say" hidden></div>' : ''}
     <div class="kh-try__fx"></div>
     <header class="kh-try__top"><span class="kh-try__chip">${I.eye}Deneme</span><b class="kh-try__name">${esc(it.name)}</b>
       <button class="kh-iconbtn kh-try__x" data-act="x" aria-label="Kapat">${I.close}</button></header>
@@ -52,6 +53,23 @@ export function openTryOn(shell: Shell, it: ShopItem, o: TryOpts): void {
             : `<button class="kh-btn kh-btn--1 kh-btn--xl kh-btn--block kh-try__buy" data-act="buy"><span>Satın Al</span><span class="kh-pd__cost"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(o.price)}</b></span></button>`
     }</footer></div>`;
   ctx.layer.append(el);
+  // karakter denenirken kendini satar (bir kez, açılışta): yazı avatarın üstünde küçük balonda; kapanınca susar
+  const sayEl = el.querySelector<HTMLElement>('.kh-try__say');
+  if (sayEl && ctx.talk) {
+    const talk = ctx.talk;
+    const bubble = {
+      show: (text: string) => {
+        sayEl.textContent = text;
+        sayEl.hidden = false;
+        play(sayEl, [{transform: 'scale(.5)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 260, easing: EASE.spring, fill: 'backwards'});
+      },
+      hide: () => {
+        if (scope.alive) sayEl.hidden = true;
+      },
+    };
+    scope.timeout(() => talk.say(it.id, 'shopPitch', bubble), ANIM ? 520 : 0);
+    scope.add(() => talk.stop());
+  }
   const scene = q(el, '.kh-ts');
   const fxBox = q(el, '.kh-try__fx');
   paintTableLater(scene, table, 420);

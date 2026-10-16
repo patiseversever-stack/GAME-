@@ -10,6 +10,7 @@ import type {ActionOf, AnyEngine, BotBrain, CfgOf, EventOf, StateOf, ViewOf} fro
 import {type Clock, type TimerHandle, realClock} from './clock';
 import {type ClientMsg, PROTOCOL_VERSION, type SeatInfo, type ServerMsg, type TimerInfo} from './protocol';
 import {LocalTransport, type Transport} from './transport';
+import {ChatGate, type ChatGateOptions} from './chat';
 
 export type HostSeat<G extends AnyEngine, T = unknown> =
   /** Bu cihazdaki insan (arayüz connect(seat) ile bağlanır). paced: olay sunumunu ack ile bildirir (varsayılan true). */
@@ -30,6 +31,8 @@ export interface HostOptions<G extends AnyEngine, T = unknown> {
   /** Yetkili taraf gözlemcisi (test, kayıt, tekrar oynatma). Tam durumu görür: arayüze verilmez. */
   onStep?: (step: {state: StateOf<G>; events: EventOf<G>[]; action: ActionOf<G>; actor: number; seq: number}) => void;
   onError?: (msg: string) => void;
+  /** Hızlı sohbet: geçerli mesaj kimlikleri (+ isteğe bağlı sınırlar). Verilmezse sohbet kapalı (mesajlar düşer). */
+  chat?: ChatGateOptions;
 }
 
 type HostLink<G extends AnyEngine, T> = Transport<ServerMsg<EventOf<G>, ViewOf<G>, T>, ClientMsg<ActionOf<G>>>;
@@ -69,6 +72,7 @@ export class LocalHost<G extends AnyEngine, T = unknown> {
   private startedFlag = false;
   private stopped = false;
   private readonly log: ActionOf<G>[] = [];
+  private readonly chat: ChatGate | null;
   private resolveDone!: (s: StateOf<G>) => void;
   /** Oyun bitince yetkili son durumla çözülür. */
   readonly done: Promise<StateOf<G>>;
@@ -93,6 +97,7 @@ export class LocalHost<G extends AnyEngine, T = unknown> {
     this.turnPending = new Array(n).fill(null);
     this.queued = new Array(n).fill(null);
     this.done = new Promise((r) => (this.resolveDone = r));
+    this.chat = opts.chat ? new ChatGate(opts.chat) : null;
     opts.seats.forEach((sp, i) => {
       if (sp.kind === 'bot' && sp.brain.seat !== i) throw new Error(`LocalHost: ${i}. koltuğun botu ${sp.brain.seat}. koltuğa ait`);
     });
@@ -203,12 +208,25 @@ export class LocalHost<G extends AnyEngine, T = unknown> {
       case 'ping':
         this.links[seat]?.send({t: 'pong', ts: m.ts, serverTime: this.clock.now()});
         break;
+      case 'chat':
+        this.onChat(seat, m.msg);
+        break;
       case 'leave':
         this.detach(seat);
         break;
       case 'join':
         break; // yerelde koltuk connect() ile belli; çevrimiçinde oda sunucusu işler
     }
+  }
+
+  /** Hızlı sohbet: kimlik + hız sınırı denetlenir, geçerse gönderen dahil bütün bağlı koltuklara yayılır. Oyun durumunu değiştirmez. */
+  private onChat(seat: number, msg: unknown): void {
+    const v = this.chat ? this.chat.check(seat, msg, this.clock.now()) : 'invalid';
+    if (v !== 'ok') {
+      this.opts.onError?.(`chat ${seat}: ${v}`);
+      return;
+    }
+    this.sendAll({t: 'chat', seat, msg: msg as string});
   }
 
   private pendingFns: (() => void)[] = [];

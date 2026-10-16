@@ -27,6 +27,8 @@ export interface BlofLocalOptions {
   botSeed?: number;
   /** Bot hamlesi reddedilirse vb. (hata ayıklama). */
   onError?: (msg: string) => void;
+  /** Hızlı sohbet mesaj kimlikleri (QUICK_CHAT). Verilmezse sohbet kapalı. */
+  chatIds?: readonly string[];
 }
 
 export interface BlofLocal {
@@ -51,7 +53,7 @@ export function createBlofLocal(o: BlofLocalOptions): BlofLocal {
     bots.push(brain);
     return {kind: 'bot', brain, name: spec.name};
   });
-  const host: BlofHost = new LocalHost(blofEngine, o.cfg, {seats, clock: o.clock, paceMaxMs: o.paceMaxMs, onError: o.onError});
+  const host: BlofHost = new LocalHost(blofEngine, o.cfg, {seats, clock: o.clock, paceMaxMs: o.paceMaxMs, onError: o.onError, chat: o.chatIds ? {ids: o.chatIds} : undefined});
   const humanSeat = bots.findIndex((b) => b === null);
   const client: BlofClient | null = humanSeat >= 0 ? new GameClient(host.connect(humanSeat), o.clock) : null;
   return {host, client, bots};

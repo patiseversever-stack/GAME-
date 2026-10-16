@@ -9,6 +9,13 @@
 .kh-hud__coins .kh-capsule__val { min-width: 3.2em; }
 .kh-menu { position: absolute; z-index: 6; top: max(calc(var(--u) * .6), env(safe-area-inset-top)); right: max(calc(var(--u) * .7), env(safe-area-inset-right)); }
 .kh-menu .kh-i { width: 42%; height: 42%; }
+/* hızlı sohbet: duraklat düğmesinin solunda, aynı sırada (eldeki kartlardan, eylem çubuğundan ve rozetlerden uzak) */
+.kh-chatbtn { position: absolute; z-index: 6; top: max(calc(var(--u) * .6), env(safe-area-inset-top)); overflow: hidden;
+  right: calc(max(calc(var(--u) * .7), env(safe-area-inset-right)) + var(--tap) + var(--u) * .5); }
+.kh-chatbtn[hidden] { display: none; }
+.kh-chatbtn .kh-i { position: relative; z-index: 1; width: 52%; height: 52%; transition: opacity .2s; }
+.kh-chatbtn__cool { position: absolute; inset: 0; border-radius: 50%; background: rgba(6, 10, 40, .5); transform: scaleY(0); transform-origin: 50% 100%; pointer-events: none; }
+.kh-chatbtn.is-cool .kh-i { opacity: .55; }
 
 /* eşli takım hapı: mavi BİZ · kırmızı ONLAR (toplanan kart) */
 .kh-team { position: absolute; z-index: 6; top: calc(max(calc(var(--u) * .75), env(safe-area-inset-top)) + var(--u) * 2.95); left: max(calc(var(--u) * .9), env(safe-area-inset-left));

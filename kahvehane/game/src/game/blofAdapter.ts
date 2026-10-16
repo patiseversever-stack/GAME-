@@ -6,7 +6,9 @@
 import type {Table2D} from '../table2d/table';
 import type {Sfx} from '../audio/sfx';
 import type {VoicePlayer} from '../audio/voice';
+import type {SpeechDirector} from '../audio/speech';
 import type {GameHud} from '../ui/types';
+import type {QuickChat} from './quickChat';
 import {MODE_INFO, type BlofOutcome, type BlofSeatResult, type MatchSetup} from './types';
 
 export interface BlofDeps {
@@ -14,6 +16,10 @@ export interface BlofDeps {
   hud: GameHud;
   sfx: Sfx;
   voice: VoicePlayer;
+  /** Uygulamanın tek konuşma yöneticisi */
+  speech?: SpeechDirector;
+  /** Hızlı sohbet denetleyicisi */
+  chat?: QuickChat;
   /** Test: insan koltuğu (0) kendiliğinden oynar */
   auto?: boolean;
 }

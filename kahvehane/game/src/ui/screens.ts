@@ -16,7 +16,7 @@ import './meta.css';
 import './perf.css';
 import '../themes/frames.css';
 
-import type {CosmeticsListener, GameHud, HandOption, HomeAction, ResultsData, Settings, Sounds} from './types';
+import type {CosmeticsListener, GameHud, HandOption, HomeAction, MenuTalk, QuickChatSheetPort, ResultsData, Settings, Sounds} from './types';
 import type {Profile as GameProfile} from '../game/profile';
 import type {Difficulty, Game, HandLayout, MatchSetup, Mode} from '../game/types';
 import {ANIM, enableActiveStates, enableSpringPress, h, q} from './dom';
@@ -28,9 +28,10 @@ import {results} from './results';
 import {onboarding} from './onboarding';
 import {daily, pause, rules, settings} from './modals';
 import {handChooser} from './handchooser';
+import {QuickChatSheet} from './quickchat';
 import {suitWipe, type Ctx} from './parts';
 
-export type {CosmeticsListener, GameHud, HomeAction, HudLayout, HudPlayer, Mood, ResultsData, Settings, Sounds} from './types';
+export type {CosmeticsListener, GameHud, HomeAction, HudLayout, HudPlayer, MenuTalk, Mood, QuickChatItem, QuickChatSheetPort, ResultsData, Settings, Sounds} from './types';
 export {STAKES, BOT_LEVEL, payout} from './lobby';
 
 export class Screens {
@@ -47,6 +48,7 @@ export class Screens {
   private deckId = 'yildizli';
   /** Perde kapalı bekliyor: bir sonraki ekran kurulunca açılır. */
   private curtain: {reveal(): Promise<void>} | null = null;
+  private qc: QuickChatSheet | null = null;
 
   constructor(root: HTMLElement, sounds: Sounds) {
     enableActiveStates();
@@ -62,6 +64,16 @@ export class Screens {
       <div class="kh-rotate__s">Kahvehane dikey oynanır</div><button class="kh-btn kh-btn--2">Yine de devam et</button></div>`);
     q(rot, 'button').addEventListener('click', () => rot.classList.add('is-dismissed'));
     layer.append(rot);
+  }
+
+  /** Menü konuşmaları (galeri / market) — uygulama konuşma yöneticisine bağlar. */
+  set talk(t: MenuTalk | undefined) {
+    this.ctx.talk = t;
+  }
+
+  /** Hızlı sohbet penceresi: ilk istekte kurulur (DOM ilk açılışta), sonra hep aynı örnek. */
+  quickChat(): QuickChatSheetPort {
+    return (this.qc ??= new QuickChatSheet(this.ctx));
   }
 
   /** Açılış: logo, ilerleme çubuğu, dönen ipuçları. */

@@ -334,6 +334,7 @@
 .kh-pd__story { margin: 0; color: #e3e8ff; font-size: calc(var(--u) * .9); font-weight: var(--w-body); line-height: 1.4; }
 .kh-pd__quote { position: relative; padding: .55em .9em .55em 2em; border-radius: var(--r-md); background: rgba(255, 255, 255, .1); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, .2);
   text-align: left; font-style: italic; font-weight: var(--w-black); font-size: calc(var(--u) * .92); }
+.kh-pd__quote.is-speaking { background: rgba(255, 210, 63, .14); box-shadow: inset 0 0 0 1.5px rgba(255, 210, 63, .55); }
 .kh-pd__quote::before { content: '“'; position: absolute; left: .3em; top: -.05em; font-family: var(--font-display); font-style: normal; font-size: 2.4em; line-height: 1; color: var(--c-accent); }
 /* set bağlantısı */
 .kh-pd__set { display: flex; align-items: center; gap: .55em; width: 100%; margin-top: calc(var(--u) * .7); padding: .55em .8em; border-radius: var(--r-md); text-align: left;
@@ -460,6 +461,11 @@
 .kh-try__ava { --as: calc(var(--u) * 3.6); }
 .kh-try__seat.is-me .kh-try__ava { --as: calc(var(--u) * 4.4); }
 .kh-try__nm { padding: .15em .6em; border-radius: var(--r-pill); background: rgba(10, 16, 51, .65); font-family: var(--font-display); font-size: calc(var(--u) * .8); text-shadow: var(--outline-thin); white-space: nowrap; }
+.kh-try__say { position: absolute; z-index: 5; left: calc(var(--u) * .8); bottom: calc(42% + var(--u) * .6); max-width: min(72%, calc(var(--u) * 17)); padding: .5em .8em .55em;
+  border-radius: calc(var(--u) * 1); border: 2.5px solid var(--navy); background: #fff; color: var(--navy); box-shadow: 0 3px 0 var(--navy);
+  font-family: var(--font-bubble); font-weight: var(--w-bubble); font-size: calc(var(--u) * .86); line-height: 1.2; transform-origin: 1.5em 100%; pointer-events: none; }
+.kh-try__say[hidden] { display: none; }
+.kh-try__say::after { content: ''; position: absolute; left: 1.4em; bottom: -10px; border: 8px solid transparent; border-top: 10px solid var(--navy); border-bottom: 0; }
 .kh-try__fx { position: absolute; z-index: 4; inset: 0; pointer-events: none; }
 .kh-try__top { position: absolute; z-index: 6; left: 0; right: 0; top: 0; display: flex; align-items: center; gap: .55em; padding: calc(var(--u) * .7) calc(var(--u) * .8) calc(var(--u) * .4);
   background: linear-gradient(180deg, rgba(6, 10, 48, .75), rgba(6, 10, 48, 0)); }

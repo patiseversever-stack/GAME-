@@ -9,15 +9,20 @@ import {mulberry32} from '../core/rng';
 import {BlofBot, type BlofDifficulty} from '../ai/blofBot';
 import {createBlofLocal, type BlofClient, type BlofHost} from '../net/blofLocal';
 import {BlofTalk, TUTORIAL, blofPriority, type BlofMoment} from '../ai/blofDialogue';
-import type {TalkStore} from '../ai/dialogue';
+import {BANTER_RULES, type BanterCtx, type Exchange} from '../ai/dialogue';
 import type {ServerMsg} from '../net/protocol';
 import {BlofTable, type BlofSounds} from '../table2d/blofTable';
 import type {Table2D} from '../table2d/table';
 import {BlofHud, type BarState} from '../ui/blofHud';
 import type {Sfx} from '../audio/sfx';
 import type {VoicePlayer} from '../audio/voice';
+import {speechFor, type SpeechDirector, type Utter} from '../audio/speech';
 import type {GameHud, HudPose} from '../ui/types';
 import {haptic, store} from '../platform/bridge';
+import {BLOF_TALK_STORE} from './talk';
+import {banterPair} from './banter';
+import {SeatBubble, utter} from './seatBubble';
+import {QUICK_IDS, type QuickChat} from './quickChat';
 import {charById} from './roster';
 import {type BlofOutcome, type BlofSeatResult, type Difficulty, type HandLayout, type MatchSetup, type SeatPlayer} from './types';
 
@@ -26,6 +31,10 @@ export interface BlofMatchDeps {
   hud: GameHud;
   sfx: Sfx;
   voice: VoicePlayer;
+  /** Uygulamanın TEK konuşma yöneticisi (verilmezse oynatıcınınki: speechFor(voice)). */
+  speech?: SpeechDirector;
+  /** Hızlı sohbet denetleyicisi (uygulama başına bir tane). */
+  chat?: QuickChat;
   /** Test/önizleme: insan koltuğu (0) kendiliğinden oynar (arayüz yolundan: kartları seçer, düğmeye basar) */
   auto?: boolean;
   /** Blöf arayüzünün takılacağı katman (verilmezse HUD'un kendi öğesi) */
@@ -40,8 +49,8 @@ const ME = 0;
 const DIFF: Record<string, BlofDifficulty> = {kolay: 'kolay', orta: 'orta', zor: 'zor', easy: 'kolay', medium: 'orta', hard: 'zor'};
 const diffOf = (d: Difficulty | undefined): BlofDifficulty => DIFF[d ?? 'orta'] ?? 'orta';
 const TUT_KEY = 'tut.blof';
-/** Blöf konuşma hafızası: eller / oturumlar arası tekrar önleme (localStorage; hata yutulur). */
-const TALK_STORE: TalkStore = {load: () => store.get<unknown>('talk.blof', null), save: m => store.set('talk.blof', m)};
+/** Olaylar sunulduktan sonra süren atışmanın bitmesini bekleme sınırı (ms; ev sahibinin paceMaxMs'inden kısa). */
+const BANTER_WAIT_MS = 7000;
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 const pickOne = <T>(a: readonly T[]): T => a[Math.floor(Math.random() * a.length)];
 
@@ -84,8 +93,16 @@ export class BlofMatch {
   private tut: {seen: Set<TutStep>; step: TutStep | null; doneTimer: number} | null = null;
   private handMode: HandLayout = 'group';
   private hintTimer = 0;
+  private readonly speech: SpeechDirector;
+  /** Koltuk başına üst üste pas sayısı (atışma: "passes") */
+  private passRun: number[] = [];
+  /** Bu elde son el gerginliği atışması denendi mi */
+  private lastRoundTried = false;
+  private chatOff: (() => void) | null = null;
 
-  constructor(private d: BlofMatchDeps) {}
+  constructor(private d: BlofMatchDeps) {
+    this.speech = d.speech ?? speechFor(d.voice);
+  }
 
   /** El düzeni (oyuncu seçeneği): 'group' değer grupları, 'spread' klasik yayvan. Oyun sırasında da uygulanır. */
   setHandLayout(h: HandLayout): void {
@@ -97,6 +114,8 @@ export class BlofMatch {
     this.aborted = true;
     this.abortRes();
     this.host?.stop();
+    this.speech.stopAll(); // masadan kalkış: konuşma anında susar, sıra temizlenir
+    this.endChat();
   }
 
   // ───────── kurulum ─────────
@@ -175,16 +194,81 @@ export class BlofMatch {
     return out;
   }
 
-  /** Bot konuşur (balon + yüz ifadesi). */
+  /** Bot konuşur: TEK konuşma yöneticisinden (ses + balon eşli). Kanal o öncelikte doluysa replik seçilmez → false. */
   private say(seat: number, m: BlofMoment, force = false, ms = 2200, mood?: HudPose | null): boolean {
+    const u = this.utterFor(seat, m, force, ms, mood);
+    return !!u && this.speech.say(u, {prio: blofPriority(m), tag: 'match'});
+  }
+
+  /** Repliği seçip söze çevirir (söylemez). Kanal bu öncelikte doluysa seçmez (tekrar hafızası boşa yanmaz). */
+  private utterFor(seat: number, m: BlofMoment, force = false, ms = 2200, mood?: HudPose | null, queue = false): Utter | null {
     const p = this.bot(seat);
-    if (!p || this.aborted) return false;
+    if (!p || this.aborted || !this.speech.canSay(blofPriority(m), queue)) return null;
     const line = this.talk.pick(p.char.id, m, force);
-    if (!line) return false;
-    const dur = this.d.voice.duration(line.id); // balon sesten önce kapanmasın
-    this.d.hud.say(line.text, mood === undefined ? (line.mood ?? null) : mood, dur ? Math.max(ms, dur * 1000 + 450) : ms, seat);
-    this.d.voice.play(line.id, {priority: blofPriority(m)});
-    return true;
+    if (!line) return null;
+    const u = utter(line, p.char.id, new SeatBubble(this.d.hud, seat), ms);
+    if (mood !== undefined) u.mood = mood;
+    return u;
+  }
+
+  // ───────── botlar arası atışma (banter) ─────────
+  /**
+   * a ile b (iki bot) arasında atışma dener (dialogue.ts → pickBanter). Öğreticide ve blöf penceresi açıkken yok; olaylar
+   * sunulduktan sonra atışma bitene dek 'ack' bekletilir → pencere sayacı, botlar ve oyuncunun sırası atışmadan sonra başlar.
+   * react: bir olay tepkisinin YERİNE (blöf yakalandı, ortağa övgü/sitem) → sessizlik şartı aranmaz, kanal boşalınca başlar.
+   */
+  private banter(ctx: BanterCtx, a: number, b: number, react = false): boolean {
+    const pa = this.bot(a), pb = this.bot(b);
+    if (!pa || !pb || a === b || this.aborted || this.n < 3) return false;
+    const calm = !this.tut && !this.ui.blofOpen && this.view?.phase !== 'window';
+    if (!calm || !this.speech.canSay(2, react)) return false;
+    const ex = this.talk.banter({
+      game: 'blof', ctx, a: pa.char.id, b: pb.char.id, mode: this.setup.mode, sameTeam: this.team(a) === this.team(b), calm,
+      talk: this.speech.isEnabled ? 'voice' : 'bubbles', quietForMs: react ? Infinity : undefined,
+    });
+    return !!ex && this.sayExchange(ex, a, b, react);
+  }
+
+  private sayExchange(ex: Exchange, a: number, b: number, queue: boolean): boolean {
+    const lines = ex.lines.map(l => utter(l, l.char, new SeatBubble(this.d.hud, l.char === ex.a ? a : b), 1800));
+    // tepki yerine geçen atışma, büyük replik (≈ 2 satır) bitene dek sırada bekleyebilir
+    return this.speech.exchange(lines, {prio: 2, tag: 'banter', gapMs: BANTER_RULES.lineGapMs, queue, ttlMs: queue ? BANTER_WAIT_MS : 2500});
+  }
+
+  /** Bot koltukları. */
+  private botSeats(): number[] {
+    const out: number[] = [];
+    for (let s = 0; s < this.n; s++) if (this.bot(s)) out.push(s);
+    return out;
+  }
+
+  /** as × bs içinden bu bağlamda atışması yazılmış bir bot çifti (yoksa null). */
+  private pair(ctx: BanterCtx, as: readonly number[], bs: readonly number[]): [number, number] | null {
+    return banterPair(ctx, as, bs, s => this.bot(s)?.char.id);
+  }
+
+
+  // ───────── hızlı sohbet ─────────
+  /** Mesajlar GameClient → LocalHost yolundan gider (ev sahibi doğrular + hız sınırı + herkese yayar); çevrimiçinde aynı yol. */
+  private startChat(setup: MatchSetup, client: BlofClient): void {
+    const chat = this.d.chat;
+    if (!chat) return;
+    const remote = new Set(client.seats.filter(x => x.kind === 'remote').map(x => x.seat));
+    this.chatOff = client.on(m => {
+      if (m.t === 'chat' && !this.aborted) chat.receive(m.seat, m.msg);
+    });
+    chat.attach({
+      game: 'blof',
+      me: ME,
+      seats: setup.players.map(p => ({seat: p.seat, char: p.char.id, team: this.team(p.seat), human: p.human || remote.has(p.seat), remote: remote.has(p.seat)})),
+      send: msg => this.client?.chat(msg),
+    });
+  }
+
+  private endChat(): void {
+    this.chatOff?.();
+    this.chatOff = null;
+    this.d.chat?.detach();
   }
 
   // ───────── oyun ─────────
@@ -210,8 +294,10 @@ export class BlofMatch {
     this.queued = false;
     this.result = null;
     this.view = null;
-    this.talk.attach(TALK_STORE);
+    this.talk.attach(BLOF_TALK_STORE);
     this.talk.begin(this.n);
+    this.passRun = new Array<number>(this.n).fill(0);
+    this.lastRoundTried = false;
     const tutorial = setup.tutorial ?? !store.get<boolean>(TUT_KEY, false);
     this.tut = tutorial && !this.d.auto ? {seen: new Set(), step: null, doneTimer: 0} : null;
 
@@ -243,6 +329,7 @@ export class BlofMatch {
       seats: Array.from({length: this.n}, (_, i) => (i === ME ? {kind: 'human' as const, name: setup.players[0]?.name} : {kind: 'bot' as const, difficulty: diff, name: this.players[i]?.name})),
       paceMaxMs: 9000,
       botSeed: (seed ^ 0x5bd1e995) >>> 0,
+      chatIds: QUICK_IDS,
     });
     const host = local.host;
     this.host = host;
@@ -251,10 +338,14 @@ export class BlofMatch {
     this.autoBot = this.d.auto ? new BlofBot(ME, 'orta', mulberry32(seed + 7)) : null;
     this.autoKey = '';
 
+    this.startChat(setup, client);
     await sleep(140);
     if (this.aborted) return this.finish(null);
+    // el başı: iki bot varsa ara sıra kendi aralarında atışır, yoksa bir rakip açılış repliği
+    const bots = this.botSeats();
+    const duo = this.tut ? null : this.pair('start', bots, bots);
     const talkers = this.foes(ME);
-    if (talkers.length) this.say(pickOne(talkers), 'start', true, 2400);
+    if (!(duo && this.banter('start', duo[0], duo[1])) && talkers.length) this.say(pickOne(talkers), 'start', true, 2400);
     host.start();
 
     // olay döngüsü
@@ -270,6 +361,8 @@ export class BlofMatch {
   }
 
   private finish<T>(v: T): T {
+    this.endChat();
+    this.speech.cancel('banter'); // el bitti: yarım atışma kalmaz
     window.clearTimeout(this.idleTimer);
     window.clearTimeout(this.autoTimer);
     if (this.tut?.doneTimer) window.clearTimeout(this.tut.doneTimer);
@@ -315,6 +408,9 @@ export class BlofMatch {
           await this.present(e, m);
           if (this.aborted) return;
         }
+        // atışma sürüyorsa bitmesini bekle: pencere sayacı, botlar ve oyuncunun kararı atışmadan sonra (ack bekletilir)
+        if (this.speech.busy('banter')) await Promise.race([this.speech.idle({tag: 'banter', maxMs: BANTER_WAIT_MS}), this.abortP]);
+        if (this.aborted) return;
         this.view = m.view;
         this.busy = false;
         this.syncCounts(m.view);
@@ -441,6 +537,7 @@ export class BlofMatch {
           await t.play(ME, e.cards ?? []);
         } else await t.play(seat, e.count);
         this.counts[seat] = e.handCount;
+        this.passRun[seat] = 0;
         this.stats();
         this.pileN = e.pileCount;
         ui.setPile(e.pileCount);
@@ -512,11 +609,14 @@ export class BlofMatch {
         const seat = e.seat;
         hud.setTurn(-1);
         sfx.cardSlide(0.25);
+        this.passRun[seat] = (this.passRun[seat] ?? 0) + 1;
         if (seat === ME) {
           this.sent = false;
           this.queued = false;
           hud.say('Pas', null, 1000, ME);
           this.tutSeen('pass');
+        } else if (this.passRun[seat] >= 3 && this.passBanter(seat)) {
+          // üst üste pas diyen bota başka bir bot laf atar (atışma)
         } else if (!this.say(seat, 'pass', false, 1200)) hud.say('Pas', null, 1000, seat);
         await sleep(260);
         return;
@@ -531,6 +631,7 @@ export class BlofMatch {
         ui.setOut(this.outN);
         ui.setClaim(null);
         ui.setLast(null);
+        this.roundBanter(); // tur arası doğal duraklama: önde olan laf atar / son el gerginliği
         return;
       }
       case 'finished': {
@@ -624,28 +725,74 @@ export class BlofMatch {
       const mateOfWinner = this.team(s) === this.team(winner);
       hud.react(s, mateOfWinner ? 'gulumseme' : 'saskin', 1500);
     }
-    // laf atma
-    window.setTimeout(() => {
-      if (this.aborted) return;
-      if (caught) {
-        if (this.bot(caller)) this.say(caller, liar === ME ? 'catchPlayer' : 'catchGloat', true, 2400);
-        else if (this.bot(liar)) this.say(liar, 'caughtByPlayer', true, 2400);
-        if (this.bot(caller) && this.bot(liar)) window.setTimeout(() => this.say(liar, 'caught', true, 2000), 1100);
-      } else {
-        if (this.bot(liar)) this.say(liar, caller === ME ? 'survivedPlayer' : 'survived', true, 2400);
-        else if (this.bot(caller)) this.say(caller, 'wrongCall', true, 2400);
-        if (this.bot(liar) && this.bot(caller)) window.setTimeout(() => this.say(caller, 'wrongCall', true, 2000), 1100);
-      }
-      // eşli: kazanan tarafın ortağı sevinir
-      const m2 = this.mate(winner);
-      if (m2 >= 0 && this.bot(m2) && Math.random() < 0.5) window.setTimeout(() => this.say(m2, 'mateCheer', false, 1600), 1500);
-    }, 380);
-    await sleep(650);
+    // laf atma (sunumun içinde: atışma başlarsa olay kümesi bitince 'ack' onu bekler)
+    await sleep(380);
+    if (this.aborted) return;
+    this.revealTalk(caught, liar, caller, winner, loser);
+    await sleep(270);
+  }
+
+  /**
+   * Açılış sonrası konuşma. İki karşı bot arasında yakalanan blöf → atışma (bluffCaught). Değilse büyük replik + ikincil
+   * tepki TEK bölünmez dizi (ikisi üst üste binmez). Eşlide kazanan botun ortağı över (mateHype) ya da kaybeden botun
+   * ortağı sitem eder (mateBlame); olmazsa kısa sevinç (mateCheer). Hepsi tek kanaldan, sırayla.
+   */
+  private revealTalk(caught: boolean, liar: number, caller: number, winner: number, loser: number): void {
+    if (caught && this.bot(caller) && this.bot(liar) && this.team(caller) !== this.team(liar) && this.banter('bluffCaught', caller, liar)) return;
+    const lines: Utter[] = [];
+    const add = (u: Utter | null): void => void (u && lines.push(u));
+    if (caught) {
+      if (this.bot(caller)) add(this.utterFor(caller, liar === ME ? 'catchPlayer' : 'catchGloat', true, 2400));
+      else if (this.bot(liar)) add(this.utterFor(liar, 'caughtByPlayer', true, 2400));
+      if (lines.length && this.bot(caller) && this.bot(liar)) add(this.utterFor(liar, 'caught', true, 2000, undefined, true));
+    } else {
+      if (this.bot(liar)) add(this.utterFor(liar, caller === ME ? 'survivedPlayer' : 'survived', true, 2400));
+      else if (this.bot(caller)) add(this.utterFor(caller, 'wrongCall', true, 2400));
+      if (lines.length && this.bot(liar) && this.bot(caller)) add(this.utterFor(caller, 'wrongCall', true, 2000, undefined, true));
+    }
+    if (lines.length) this.speech.exchange(lines, {prio: 3, tag: 'match', gapMs: 300});
+    if (this.setup.mode !== 'esli') return;
+    // eşli: ortak tepkisi (büyük repliğin ardından sıraya girer)
+    const wm = this.mate(winner), lm = this.mate(loser);
+    if (this.bot(winner) && wm >= 0 && this.bot(wm) && this.banter('mateHype', wm, winner, true)) return;
+    if (this.bot(loser) && lm >= 0 && this.bot(lm) && this.banter('mateBlame', lm, loser, true)) return;
+    if (wm >= 0 && this.bot(wm) && Math.random() < 0.5) {
+      const u = this.utterFor(wm, 'mateCheer', false, 1600, undefined, true);
+      if (u) this.speech.say(u, {prio: blofPriority('mateCheer'), tag: 'match', queue: true, ttlMs: 6000});
+    }
+  }
+
+  /** Üst üste 3+ pas: başka bir bot (sıradaki tercihen) pas diyene laf atar. */
+  private passBanter(seat: number): boolean {
+    const others: number[] = [];
+    for (let s = 1; s < this.n; s++) if (s !== seat && this.bot(s)) others.push(s);
+    const duo = this.pair('passes', others, [seat]);
+    return !!duo && this.banter('passes', duo[0], duo[1]);
+  }
+
+  /** Tur arası (yığın kenara): son el gerginliği (biri ≤ 3 karta inince, elde bir kez) ya da önde olan bot geride olana. */
+  private roundBanter(): void {
+    if (this.n < 3) return;
+    const min = Math.min(...this.counts);
+    if (!this.lastRoundTried && min > 0 && min <= 3) {
+      this.lastRoundTried = true;
+      const bots = this.botSeats();
+      const duo = this.pair('lastRound', bots, bots);
+      if (duo && this.banter('lastRound', duo[0], duo[1])) return;
+    }
+    let lead = -1;
+    for (let s = 1; s < this.n; s++) if (this.bot(s) && (lead < 0 || this.counts[s] < this.counts[lead])) lead = s;
+    if (lead < 0) return;
+    const behind: number[] = [];
+    for (let s = 1; s < this.n; s++) if (this.bot(s) && this.team(s) !== this.team(lead) && this.counts[s] - this.counts[lead] >= 5) behind.push(s);
+    const duo = this.pair('lead', [lead], behind);
+    if (duo) this.banter('lead', duo[0], duo[1]);
   }
 
   /** El sonu: kazanan(lar) zafer, diğerleri üzgün; konfeti; son söz. */
   private async finale(winner: number): Promise<void> {
     const {hud} = this.d;
+    this.speech.cancel('banter'); // el bitti: yarım atışma sürmez
     hud.setTurn(-1);
     const myWin = this.team(winner) === this.team(ME);
     for (let s = 0; s < this.n; s++) {

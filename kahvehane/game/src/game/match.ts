@@ -5,13 +5,19 @@ import {mulberry32} from '../core/rng';
 import type {CardId, GameResult, PistiEvent, PistiState} from '../core/types';
 import {isJack, rankOf} from '../core/types';
 import {PistiBot} from '../ai/bot';
-import {beginDialogueHand, momentPriority, pickLine, shouldSpeak, type Moment as DialogueMoment, type TalkStore} from '../ai/dialogue';
+import {BANTER_RULES, beginDialogueHand, dialogue, momentPriority, pickLine, shouldSpeak, type BanterCtx, type Exchange, type Moment as DialogueMoment} from '../ai/dialogue';
 import {Table2D, cardPoints} from '../table2d/table';
 import type {Sfx} from '../audio/sfx';
 import type {VoicePlayer} from '../audio/voice';
+import {TAIL_MS, speechFor, type SpeechDirector} from '../audio/speech';
+import {ChatRelay} from '../net/chat';
 import type {GameHud, HudPose} from '../ui/types';
-import {haptic, store} from '../platform/bridge';
+import {haptic} from '../platform/bridge';
 import {pistiInfo, type MatchSetup, type SeatPlayer} from './types';
+import {PISTI_TALK_STORE} from './talk';
+import {banterPair} from './banter';
+import {SeatBubble, quipUtter, utter} from './seatBubble';
+import {QUICK_IDS, type QuickChat} from './quickChat';
 
 /** Karakterlerin konuşabileceği anlar (diyalog sistemi bunlara replik seçer). */
 export type Moment = DialogueMoment;
@@ -21,6 +27,10 @@ export interface MatchDeps {
   hud: GameHud;
   sfx: Sfx;
   voice: VoicePlayer;
+  /** Uygulamanın TEK konuşma yöneticisi (verilmezse oynatıcınınki: speechFor(voice)). */
+  speech?: SpeechDirector;
+  /** Hızlı sohbet denetleyicisi (uygulama başına bir tane). */
+  chat?: QuickChat;
   /** Test/önizleme: insan koltuğu (0) kendiliğinden oynar */
   auto?: boolean;
 }
@@ -36,8 +46,8 @@ export interface MatchOutcome {
   myValePisti: number;
 }
 
-/** Pişti konuşma hafızası: eller / oturumlar arası tekrar önleme (localStorage; hata yutulur). */
-const TALK_STORE: TalkStore = {load: () => store.get<unknown>('talk.pisti', null), save: m => store.set('talk.pisti', m)};
+/** İnsanın kararından önce süren atışmanın bitmesi için en çok bekleme (ms). */
+const BANTER_WAIT_MS = 6500;
 
 /** Bot düşünme süresi çarpanı (karakter aralığı × bu; tempo hızlı kalsın) */
 const TEMPO = 0.8;
@@ -81,12 +91,18 @@ export class Match {
   private myVale = 0;
   private lastLead = 0;
   private pokeLineAt = -1e9;
+  private readonly talk: SpeechDirector;
+  private relay: ChatRelay | null = null;
 
-  constructor(private d: MatchDeps) {}
+  constructor(private d: MatchDeps) {
+    this.talk = d.speech ?? speechFor(d.voice);
+  }
 
   abort(): void {
     this.aborted = true;
     this.cancelWait();
+    this.talk.stopAll(); // masadan kalkış: konuşma anında susar, sıra temizlenir
+    this.endChat();
   }
 
   private get seats(): number {
@@ -115,24 +131,27 @@ export class Match {
     this.d.hud.setStats(Array.from({length: this.seats}, (_, s) => ({cards: this.state.captured[s].length, pisti: this.pistiCount[s]})));
   }
 
-  /** Bot konuşur: replik balonda, ses (varsa) çalar. force: sıklık kuralını atla. */
+  /**
+   * Bot konuşur: TEK konuşma yöneticisinden (ses + balon eşli). force: sıklık kuralını atla. Kanal o öncelikte doluysa
+   * replik hiç seçilmez (tekrar hafızası boşa yanmaz) ve false döner.
+   */
   private speak(seat: number, m: Moment, force = false, ms = 2400): boolean {
     const p = this.bot(seat);
     if (!p || this.aborted) return false;
+    const prio = momentPriority(m);
+    if (!this.talk.canSay(prio)) return false;
     if (!force && !shouldSpeak(m)) return false;
     const line = pickLine(p.char.id, m);
     if (!line) return false;
-    const dur = this.d.voice.duration(line.id); // balon sesten önce kapanmasın
-    this.d.hud.say(line.text, (line.mood ?? null) as HudPose | null, dur ? Math.max(ms, dur * 1000 + 450) : ms, seat);
-    this.d.voice.play(line.id, {priority: momentPriority(m)});
-    return true;
+    return this.talk.say(utter(line, p.char.id, new SeatBubble(this.d.hud, seat), ms), {prio, tag: 'match'});
   }
 
-  /** Yalnız balon (seslendirmesiz kısa tepki). */
+  /** Seslendirmesiz kısa tepki (balon): kanal doluysa yalnız yüz ifadesi. */
   private quip(seat: number, table: Record<string, string[]>, pose: HudPose, ms = 1800): void {
     const p = this.bot(seat);
     const list = p ? table[p.char.id] : undefined;
-    if (p && list) this.d.hud.say(pickOne(list), pose, ms, seat);
+    if (!p || !list || this.aborted) return;
+    if (!this.talk.say(quipUtter(pickOne(list), p.char.id, new SeatBubble(this.d.hud, seat), pose, ms), {prio: 1, tag: 'match'})) this.d.hud.react(seat, pose, Math.min(ms, 1500));
   }
 
   private poke(seat: number): void {
@@ -140,15 +159,84 @@ export class Match {
     if (!p || this.aborted) return;
     const pose = pickOne(POKE_POSES);
     const now = performance.now();
-    if (now - this.pokeLineAt > 3500) {
-      this.pokeLineAt = now;
-      this.d.hud.say(pickOne(POKE[p.char.id] ?? ['Hı?']), pose, 1700, seat);
-    } else this.d.hud.react(seat, pose, 900);
+    const said = now - this.pokeLineAt > 3500 && this.talk.say(quipUtter(pickOne(POKE[p.char.id] ?? ['Hı?']), p.char.id, new SeatBubble(this.d.hud, seat), pose, 1700), {prio: 1, tag: 'match'});
+    if (said) this.pokeLineAt = now;
+    else this.d.hud.react(seat, pose, 900);
     haptic('light');
+  }
+
+  // ───────── botlar arası atışma (banter) ─────────
+  /**
+   * a ile b (iki bot) arasında bağlama uygun bir atışma dener (dialogue.ts → pickBanter: 1'e 1'de yok, en çok 2 elde bir,
+   * aynısı 40 el tekrar etmez). Atışma bölünmez birim olarak tek kanaldan söylenir. react: bir olay tepkisinin YERİNE
+   * (yakalama) → sessizlik şartı aranmaz, kanal boşalınca başlar (sıraya girer).
+   */
+  private banter(ctx: BanterCtx, a: number, b: number, react = false): boolean {
+    const pa = this.bot(a), pb = this.bot(b);
+    if (!pa || !pb || a === b || this.aborted || this.seats < 3) return false;
+    if (!this.talk.canSay(2, react)) return false;
+    const ex = dialogue.banter({
+      game: 'pisti', ctx, a: pa.char.id, b: pb.char.id, mode: this.setup.mode, sameTeam: this.team(a) === this.team(b),
+      calm: true, talk: this.talk.isEnabled ? 'voice' : 'bubbles', quietForMs: react ? Infinity : undefined,
+    });
+    return !!ex && this.sayExchange(ex, a, b, react);
+  }
+
+  private sayExchange(ex: Exchange, a: number, b: number, queue: boolean): boolean {
+    const lines = ex.lines.map(l => utter(l, l.char, new SeatBubble(this.d.hud, l.char === ex.a ? a : b), 1800));
+    return this.talk.exchange(lines, {prio: 2, tag: 'banter', gapMs: BANTER_RULES.lineGapMs, queue, ttlMs: queue ? 4000 : 2500});
+  }
+
+  /** Bot koltukları. */
+  private botSeats(): number[] {
+    const out: number[] = [];
+    for (let s = 0; s < this.seats; s++) if (this.bot(s)) out.push(s);
+    return out;
+  }
+
+  /** as × bs içinden bu bağlamda atışması yazılmış bir bot çifti (yoksa null). */
+  private pair(ctx: BanterCtx, as: readonly number[], bs: readonly number[]): [number, number] | null {
+    return banterPair(ctx, as, bs, s => this.bot(s)?.char.id);
+  }
+
+
+  // ───────── hızlı sohbet ─────────
+  /** Yerel yayıncı (ev sahibi yok): ChatRelay aynı kapıdan geçirir (kimlik + hız sınırı); çevrimiçinde sunucu yayar. */
+  private startChat(setup: MatchSetup): void {
+    const chat = this.d.chat;
+    if (!chat) return;
+    const relay = new ChatRelay({ids: QUICK_IDS});
+    this.relay = relay;
+    relay.on(m => {
+      if (!this.aborted) chat.receive(m.seat, m.msg);
+    });
+    chat.attach({
+      game: 'pisti',
+      me: 0,
+      seats: setup.players.map(p => ({seat: p.seat, char: p.char.id, team: p.team, human: p.human})),
+      send: msg => void relay.send(0, msg),
+    });
+  }
+
+  private endChat(): void {
+    if (!this.relay) return;
+    this.d.chat?.detach();
+    this.relay.close();
+    this.relay = null;
   }
 
   /** Bir el oynatır; yarıda kesilirse null. HUD'u bu koltuklarla kendisi gösterir. */
   async play(setup: MatchSetup): Promise<MatchOutcome | null> {
+    try {
+      return await this.run(setup);
+    } finally {
+      this.endChat();
+      this.talk.cancel('banter'); // el bitti: yarım atışma kalmaz (son söz sürebilir; sonuç ekranından önce uygulama bekler)
+      this.d.hud.onPoke = () => {};
+    }
+  }
+
+  private async run(setup: MatchSetup): Promise<MatchOutcome | null> {
     const {table, hud, sfx} = this.d;
     const info = pistiInfo(setup.mode);
     this.aborted = false;
@@ -158,7 +246,7 @@ export class Match {
     const seed = setup.seed ?? (Math.random() * 2 ** 31) | 0;
     const {state, events} = createGame({seats: info.seats, teams: [...info.teams], dealer: setup.dealer, seed});
     this.state = state;
-    beginDialogueHand(info.seats, TALK_STORE); // el sayacı + kalabalık masada daha seyrek konuşma
+    beginDialogueHand(info.seats, PISTI_TALK_STORE); // el sayacı + kalabalık masada daha seyrek konuşma
     this.bots = Array.from({length: info.seats}, (_, s) => {
       const p = this.players[s];
       return p && !p.human ? new PistiBot(s, p.personality, mulberry32((seed ^ 0x5bd1e995) + s * 7919)) : null;
@@ -180,6 +268,7 @@ export class Match {
     hud.setSounds(sfx);
     hud.show(setup.players, setup.mode);
     hud.onPoke = s => this.poke(s);
+    this.startChat(setup);
     table.reset(info.seats);
     this.stats();
     hud.setTurn(-1);
@@ -188,8 +277,11 @@ export class Match {
     sfx.shuffle();
     await table.intro();
     if (this.aborted) return null;
+    // el başı: iki bot varsa ara sıra kendi aralarında atışır (dağıtım sürerken), yoksa bir rakip açılış repliği
+    const bots = this.botSeats();
+    const duo = this.pair('start', bots, bots);
     const talkers = this.foes(0);
-    if (talkers.length) this.speak(pickOne(talkers), 'start', true);
+    if (!(duo && this.banter('start', duo[0], duo[1])) && talkers.length) this.speak(pickOne(talkers), 'start', true);
     for (const e of events) {
       if (e.t === 'tableDeal') await table.dealTable(e.cards, e.faceUp);
       else if (e.t === 'handDeal') await table.dealHands(e.deals);
@@ -202,6 +294,9 @@ export class Match {
       const seat = this.state.turn;
       let card: CardId;
       if (seat === 0) {
+        // atışma insanın kararı sırasında sürmez: botlar konuşurken sıra bekler (en çok BANTER_WAIT_MS)
+        if (this.talk.busy('banter')) await this.talk.idle({tag: 'banter', maxMs: BANTER_WAIT_MS});
+        if (this.aborted) return null;
         card = await this.waitPlayer();
         if (card < 0 || this.aborted) return null;
       } else {
@@ -225,7 +320,6 @@ export class Match {
     if (!result) return null;
     const outcome = await this.finale(result);
     if (this.aborted) return null;
-    hud.onPoke = () => {};
     return {setup, result, outcome, myPisti: this.myPisti, myValePisti: this.myVale};
   }
 
@@ -296,7 +390,9 @@ export class Match {
           table.setTension(true);
           haptic('medium');
           const t = this.foes(0);
-          if (t.length) this.speak(pickOne(t), 'lastRound');
+          const bots = this.botSeats();
+          const duo = this.pair('lastRound', bots, bots);
+          if (!(duo && this.banter('lastRound', duo[0], duo[1])) && t.length) this.speak(pickOne(t), 'lastRound');
           await sleep(650);
         }
         await table.dealHands(e.deals);
@@ -318,7 +414,7 @@ export class Match {
 
   /** Pişti: masa patlar, karakter büyük girer (damga + kuşanılmış efekt), diğerleri tepki verir; sonra kartlar süzülür. */
   private async celebrate(seat: number, card: CardId, cap: Extract<PistiEvent, {t: 'capture'}>, pileBefore: CardId[]): Promise<void> {
-    const {table, hud, sfx, voice} = this.d;
+    const {table, hud, sfx} = this.d;
     const jack = cap.pisti === 20;
     table.impact(jack ? 'jack' : 'pisti');
     sfx.pisti(jack);
@@ -331,13 +427,16 @@ export class Match {
     }
     const victim = this.pileOwner.get(pileBefore[0]) ?? (seat - 1 + this.seats) % this.seats;
     let line: string | undefined;
+    let said: {id: string; bubble: SeatBubble} | null = null;
     const maker = this.bot(seat);
     if (maker) {
       const m: Moment = jack ? 'botJackPisti' : 'botPisti';
       const l = pickLine(maker.char.id, m);
       if (l) {
         line = l.text;
-        voice.play(l.id, {priority: momentPriority(m)});
+        // yazı kahraman bandında; ses bittikten önce bant çekilirse kalanı koltuk balonunda sürer
+        const bubble = new SeatBubble(hud, seat, true);
+        if (this.talk.say(utter(l, maker.char.id, bubble, 1600), {prio: momentPriority(m), tag: 'match'})) said = {id: l.id, bubble};
       }
     }
     // diğerleri: ortak sevinir, kurban kızar/şaşırır, kalanlar şaşırır
@@ -361,6 +460,8 @@ export class Match {
     }
     await hud.pisti({seat, jack, points: cap.pisti, fx: this.setup.fx, line, at: table.pilePoint(), low: table.low});
     if (this.aborted) return;
+    const cur = said && this.talk.current();
+    if (said && cur && cur.id === said.id && cur.leftMs > 250) said.bubble.late(cur.leftMs + TAIL_MS);
     sfx.capture(cap.cards.length);
     await this.sweep(seat, cap, card);
   }
@@ -396,7 +497,10 @@ export class Match {
     const maker = this.bot(seat);
     const human = seat === 0;
     const valuableDumped = pileBefore.some(c => this.pileOwner.get(c) === 0 && cardPoints(c) >= 1 && !isJack(c));
-    if (maker && this.team(seat) !== this.team(0) && valuableDumped && this.speak(seat, 'playerDumpedValuable')) {
+    const notable = big || isJack(card) || vals.some(v => v.pts >= 2);
+    if (notable && this.capBanter(seat, pileBefore)) {
+      // iki bot kendi arasında atıştı (tek tepki yerine)
+    } else if (maker && this.team(seat) !== this.team(0) && valuableDumped && this.speak(seat, 'playerDumpedValuable')) {
       const m = this.mate(0);
       if (m >= 0 && this.bot(m) && Math.random() < 0.6) window.setTimeout(() => this.quip(m, SIGH, 'uzgun', 1600), 900);
     } else if (big) {
@@ -419,6 +523,28 @@ export class Match {
     if (big) for (let s = 0; s < this.seats; s++) if (this.team(s) !== this.team(seat)) hud.react(s, Math.random() < 0.5 ? 'saskin' : 'kizgin', 1500);
     if (human && big && mate >= 0 && this.bot(mate) && Math.random() < 0.6) window.setTimeout(() => this.quip(mate, CHEER, 'kahkaha', 1800), 500);
     await this.sweep(seat, cap, null);
+  }
+
+  /**
+   * Önemli bir alışta atışma: bot A, karşı taraftaki bot B'nin bıraktığı yığını aldı → steal; eşlide bot A, ortağı bot B'nin
+   * alışını över → mateHype; insanın takımı bot B'nin bıraktığını aldı → B'nin ortağı (bot) sitem eder → mateBlame.
+   */
+  private capBanter(seat: number, pileBefore: CardId[]): boolean {
+    if (this.seats < 3) return false;
+    const top = pileBefore[pileBefore.length - 1];
+    const owner = top === undefined ? -1 : this.pileOwner.get(top) ?? -1;
+    const esli = this.setup.mode === 'esli';
+    if (this.bot(seat)) {
+      if (owner >= 0 && owner !== seat && this.bot(owner) && this.team(owner) !== this.team(seat) && this.banter('steal', seat, owner, true)) return true;
+      const m = this.mate(seat);
+      if (esli && m >= 0 && this.bot(m) && Math.random() < 0.5) return this.banter('mateHype', m, seat, true);
+      return false;
+    }
+    if (esli && owner >= 0 && this.bot(owner) && this.team(owner) !== this.team(seat)) {
+      const m = this.mate(owner);
+      if (m >= 0 && this.bot(m)) return this.banter('mateBlame', m, owner, true);
+    }
+    return false;
   }
 
   /** Kartlar desteye uçarken sayaç tek tek ilerler; sonunda "+N". */
@@ -487,6 +613,10 @@ export class Match {
     let lead = foes[0];
     for (const f of foes) if ((st.get(this.team(f)) ?? 0) > (st.get(this.team(lead)) ?? 0)) lead = f;
     const them = st.get(this.team(lead)) ?? 0;
+    // önde giden bot, geride kalan karşı taraf botuna laf atar (atışma); yoksa tek replik
+    const behind = foes.filter(f => this.team(f) !== this.team(lead) && (st.get(this.team(lead)) ?? 0) - (st.get(this.team(f)) ?? 0) >= 8);
+    const duo = this.pair('lead', [lead], behind);
+    if (duo && this.banter('lead', duo[0], duo[1])) return;
     if (me > them + 8) this.speak(pickOne(foes), 'playerLeading');
     else if (them > me + 8) this.speak(lead, 'botLeading');
   }
@@ -494,6 +624,7 @@ export class Match {
   /** El sonu: kart sayımı + çoğunluk +3 uçuşu, kazanan zafer / kaybeden üzgün, son söz. */
   private async finale(result: GameResult): Promise<'win' | 'lose' | 'draw'> {
     const {table, hud} = this.d;
+    this.talk.cancel('banter'); // el bitti: yarım atışma sürmez
     table.setTension(false);
     hud.setTurn(-1);
     await sleep(350);

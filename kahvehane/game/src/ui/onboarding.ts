@@ -350,6 +350,39 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
       gal.querySelectorAll('.kh-gal__dots i').forEach((d, k) => d.classList.toggle('is-on', k === i));
     };
     const breatheOnly = (i: number) => pts.forEach((p, k) => p.breathe(k === i));
+    // ---- tanıtım: kart oturunca (~250 ms) karakter kendini tanıtır (ses + söz kutusunda yazı); kaydırınca hemen susar.
+    // Konuşma tek yöneticiden (ctx.talk); kaydırmayı hiç bekletmez (yalnız bir zamanlayıcı + iptal).
+    let introT = 0;
+    let introReady = false;
+    let picked = false;
+    const quoteOf = (i: number) => q(items[i], '.kh-gc__quote');
+    const introBubble = (i: number) => ({
+      show: (text: string) => {
+        const el = quoteOf(i);
+        el.textContent = text;
+        el.classList.add('is-speaking');
+      },
+      hide: () => {
+        if (picked || !scope.alive) return;
+        const el = quoteOf(i);
+        el.textContent = chars[i].quote;
+        el.classList.remove('is-speaking');
+      },
+    });
+    const hush = () => {
+      clearTimeout(introT);
+      introT = 0;
+      ctx.talk?.stop();
+    };
+    const intro = (i: number, wait = 250) => {
+      clearTimeout(introT);
+      if (!introReady || picked || !ctx.talk) return;
+      introT = scope.timeout(() => {
+        introT = 0;
+        if (!picked && carousel.index === i) ctx.talk?.say(chars[i].id, 'galleryIntro', introBubble(i));
+      }, wait);
+    };
+    scope.add(() => ctx.talk?.stop());
     const spacing = () => car.clientWidth * 0.7;
     const carousel = new Carousel(scope, car, items, {
       spacing,
@@ -360,8 +393,12 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
       onChange: i => {
         setValue(i);
         breatheOnly(-1);
+        hush();
       },
-      onSettle: i => breatheOnly(i),
+      onSettle: i => {
+        breatheOnly(i);
+        intro(i);
+      },
     });
     // kart ölçüsü alana göre. Portre kartın üstünden taşar: başlığa binmesin diye vitrin o kadar aşağıdan başlar.
     // Hikâye metni sığan satır kadar gösterilir (yarım satır kesilmez, sonda …).
@@ -423,8 +460,12 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
         play(inner, [{transform: 'translateY(30%) scale(.86)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 340, delay: 60 + dist * 60, easing: EASE.outQuart, fill: 'backwards'});
       }
     });
-    // ortadaki kart giriş bittikten sonra nefes almaya başlar (giriş sırasında döngü yok)
-    scope.timeout(() => breatheOnly(carousel.index), ANIM ? (fromBox ? 700 : 500) : 0);
+    // ortadaki kart giriş bittikten sonra nefes almaya başlar (giriş sırasında döngü yok); ilk tanıtım da girişten sonra
+    scope.timeout(() => {
+      breatheOnly(carousel.index);
+      introReady = true;
+      intro(carousel.index, 200);
+    }, ANIM ? (fromBox ? 700 : 500) : 0);
     if (box) {
       // kartlar fırlarken boş kutu küçülüp söner
       play(q(box, '.kh-gift__in'), [{transform: 'none', opacity: 1}, {transform: 'translateY(12%) scale(.7, .55)', opacity: 0}], {duration: 420, delay: 220, easing: EASE.in, fill: 'forwards'});
@@ -438,6 +479,8 @@ export function onboarding(ctx: Ctx, profile: GameProfile): Promise<() => void> 
         const i = carousel.index;
         if (take.disabled) return;
         take.disabled = true;
+        hush();
+        picked = true;
         car.style.pointerEvents = 'none';
         s.tap();
         await pick(items, pts, i);

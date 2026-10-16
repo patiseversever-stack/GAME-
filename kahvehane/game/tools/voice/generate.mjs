@@ -437,7 +437,7 @@ const TRIM = [
 ].join(',');
 
 function checkFfmpeg() {
-  const r = spawnSync(FFMPEG, ['-hide_banner', '-version'], {encoding: 'utf8'});
+  const r = spawnSync(FFMPEG, ['-hide_banner', '-version'], {encoding: 'utf8', timeout: 30_000});
   if (r.status !== 0) die(`ffmpeg bulunamadı (${FFMPEG}). FFMPEG ortam değişkeniyle yol verin.`);
 }
 
@@ -445,7 +445,7 @@ function measure(src) {
   const r = spawnSync(
     FFMPEG,
     ['-hide_banner', '-nostdin', '-i', src, '-af', `${TRIM},loudnorm=I=${LOUD.I}:TP=${LOUD.TP}:LRA=${LOUD.LRA}:print_format=json`, '-f', 'null', '-'],
-    {encoding: 'utf8'},
+    {encoding: 'utf8', timeout: 30_000},
   );
   const s = r.stderr || '';
   const i = s.lastIndexOf('{');
@@ -474,7 +474,7 @@ function normalize(src, dst) {
     FFMPEG,
     ['-hide_banner', '-nostdin', '-loglevel', 'error', '-y', '-i', src, '-af', `${TRIM},${ln},aresample=44100`,
       '-ac', '1', '-ar', '44100', '-c:a', 'libmp3lame', '-b:a', '64k', '-map_metadata', '-1', tmp],
-    {encoding: 'utf8'},
+    {encoding: 'utf8', timeout: 30_000},
   );
   if (r.status !== 0 || !fs.existsSync(tmp)) {
     try {
@@ -488,7 +488,7 @@ function normalize(src, dst) {
 }
 
 function duration(file) {
-  const r = spawnSync(FFPROBE, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', file], {encoding: 'utf8'});
+  const r = spawnSync(FFPROBE, ['-v', 'error', '-show_entries', 'format=duration', '-of', 'default=nw=1:nk=1', file], {encoding: 'utf8', timeout: 30_000});
   const d = parseFloat(r.stdout);
   return Number.isFinite(d) ? Math.round(d * 100) / 100 : 0;
 }

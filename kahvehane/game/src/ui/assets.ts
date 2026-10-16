@@ -5,9 +5,26 @@
 
 const ART = import.meta.glob(['../../assets/art/icon_*', '../../assets/art/*_text.*', '../../assets/art/badge_frame.*', '../../assets/art/steam.*'], {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 const UI = import.meta.glob('../../assets/ui/*', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
-const VOICE = import.meta.glob('../../assets/voice/manifest.json', {eager: true, query: '?url', import: 'default'}) as Record<string, string>;
 
 const EXT = ['png', 'webp', 'jpg', 'jpeg', 'avif', 'svg'];
+
+/**
+ * Seslendirme manifesti adresi: index.html'in yanındaki `voice/manifest.json` (dist/voice, dist-tek/voice; geliştirme
+ * sunucusu assets/voice'u aynı yoldan sunar — vite.config.ts → khVoice). Sayfanın taban adresine göre çözülür
+ * (document.baseURI → location): yerel dosya, alt klasörde yayın, opak kökenli korumalı iframe ve srcdoc iframe'de de
+ * aynı göreli yol. Çözülemezse '' → yalnız yazı kipi. Ses dosyaları asla pakete gömülmez (tek dosya derlemesi şişmez).
+ */
+export function voiceManifestUrl(rel = 'voice/manifest.json'): string {
+  if (typeof document === 'undefined') return '';
+  for (const base of [document.baseURI, typeof location !== 'undefined' ? location.href : '']) {
+    try {
+      if (base) return new URL(rel, base).href;
+    } catch {
+      /* about:srcdoc / blob: gibi göreli çözülemeyen taban */
+    }
+  }
+  return '';
+}
 
 /** assets/art/<ad>.<uzantı> varsa adresi, yoksa undefined. */
 export function art(name: string): string | undefined {
@@ -34,7 +51,8 @@ export const ASSETS = {
   icon_star: art('icon_star') ?? ui('placeholder.svg'),
   icon_gift: art('icon_gift') ?? ui('placeholder.svg'),
   silhouette: ui('silhouette.svg'),
-  voiceManifest: VOICE['../../assets/voice/manifest.json'] as string | undefined,
+  /** Seslendirme manifesti: sayfanın YANINDAKİ voice/ klasörü (bkz. voiceManifestUrl). Paketlenmez. */
+  voiceManifest: voiceManifestUrl() as string | undefined,
 };
 
 /** Henüz gelmemiş olabilecek sanat: yoksa CSS ile çizilir. */

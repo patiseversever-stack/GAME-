@@ -2262,9 +2262,13 @@ export class DialogueDirector {
     return this.pickLine(charId, moment, rnd);
   }
 
-  /** Atışma dener (pickBanter + kalıcı hafıza). Seçilirse kaydedilir; satırları çağıran sırayla oynatır. */
-  banter(req: Omit<BanterRequest, 'quietForMs'>, now: number = this.clock(), rnd: () => number = Math.random): Exchange | null {
-    const ex = pickBanter({...req, quietForMs: now - this.lastAt}, this.mem.hand, this.mem.banter, rnd);
+  /**
+   * Atışma dener (pickBanter + kalıcı hafıza). Seçilirse kaydedilir; satırları çağıran sırayla oynatır.
+   * req.quietForMs verilirse son replikten beri geçen süre yerine o kullanılır: atışma bir olay tepkisinin YERİNE
+   * söylenecekse (yakalama, blöf yakalandı) konuşma yöneticisi zaten sırayla söyletir, üst üste binmez.
+   */
+  banter(req: Omit<BanterRequest, 'quietForMs'> & {quietForMs?: number}, now: number = this.clock(), rnd: () => number = Math.random): Exchange | null {
+    const ex = pickBanter({...req, quietForMs: req.quietForMs ?? now - this.lastAt}, this.mem.hand, this.mem.banter, rnd);
     if (!ex) return null;
     this.mem.banter = noteBanter(this.mem.banter, ex, this.mem.hand);
     this.note('banter', now);
