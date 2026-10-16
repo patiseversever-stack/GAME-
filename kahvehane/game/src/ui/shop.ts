@@ -17,7 +17,7 @@ import {I} from './icons';
 import {charAvatarHtml, onAct, openSheet, rarityHtml, starsHtml, stampWord, toast, type ModalHandle} from './parts';
 import {afterFrameJob, fanHtml, frameJob, fxStillHtml, idleJob, mountFx, mountFxStill, paintTableLater, tableSceneHtml, warmPreviews, type FxLoop} from './previews';
 import {BADGE_NAME, RANK, badgeOf, setOf, setById, setPrice, shopSets, type ShopSet} from './sets';
-import {Spotlight, glint, glintHtml, mountDeckViewer} from './showcase';
+import {Spotlight, glint, glintHtml, mountDeckViewer, raysGate, spinRaysHtml} from './showcase';
 import {deckOr} from './deckpv';
 import {openTryOn} from './tryon';
 import {haptic} from '../platform/bridge';
@@ -112,6 +112,9 @@ const badgeHtml = (it: ShopItem): string => {
   return b ? `<span class="kh-mtag is-${b}">${BADGE_NAME[b]}</span>` : '';
 };
 
+/** Nadirlik zemini: nadir ve üstünde ışın çarkı döner (sıradanda durağan, soluk ışınlar zeminde boyalı). */
+const rarBgHtml = (r: ShopItem['rarity']): string => (r === 'common' ? '<i class="kh-item__bg"></i>' : `<i class="kh-item__bg is-spin">${spinRaysHtml('kh-item__rays')}</i>`);
+
 /** Ürün kartı. wide: iki sütunluk vitrin kartı; sub: tür adını göster (karışık listelerde). */
 function itemCardHtml(it: ShopItem, me: Me, st: {owned: boolean; eq: boolean; wide?: boolean; sub?: boolean; rail?: boolean}): string {
   const foot = st.eq
@@ -121,7 +124,7 @@ function itemCardHtml(it: ShopItem, me: Me, st: {owned: boolean; eq: boolean; wi
       : `<span class="kh-item__price">${coinImg()}<b class="kh-num">${fmt(it.price)}</b></span>`;
   const glow = RANK[it.rarity] >= 2 && !st.owned;
   return `<button class="kh-item is-${it.rarity}${st.owned ? ' is-owned' : ''}${st.eq ? ' is-eq' : ''}${st.wide ? ' is-wide' : ''}${st.rail ? ' is-rail' : ''}" data-act="item" data-k="${it.kind}" data-id="${it.id}"${glow ? ' data-glint' : ''}>
-    <span class="kh-item__pv is-${it.kind}"><i class="kh-item__bg"></i>${pvHtml(it, me, st.wide)}${glow ? glintHtml() : ''}</span>
+    <span class="kh-item__pv is-${it.kind}">${rarBgHtml(it.rarity)}${pvHtml(it, me, st.wide)}${glow ? glintHtml() : ''}</span>
     <span class="kh-item__top">${rarityHtml(it.rarity, 'kh-item__rar')}${st.owned ? '' : badgeHtml(it)}</span>
     <span class="kh-item__name">${esc(it.name)}</span>
     ${st.sub || st.wide ? `<span class="kh-item__sub">${KIND_INFO[it.kind].name}${st.wide ? ` · ${esc(it.desc)}` : ''}</span>` : ''}
@@ -143,7 +146,7 @@ function setCardHtml(s: ShopSet, me: Me, owns: (k: ItemKind, id: string) => bool
     ? `<span class="kh-setc__done">${I.check}Tamamlandı</span>`
     : `<span class="kh-setc__price"><s class="kh-num">${fmt(pr.full)}</s><span class="kh-setc__now${coins >= pr.price ? '' : ' is-poor'}">${coinImg()}<b class="kh-num">${fmt(pr.price)}</b></span></span>`;
   return `<button class="kh-setc${done ? ' is-done' : ''}" data-act="set" data-set="${s.id}" style="--a:${s.a};--b:${s.b}"${done ? '' : ' data-glint'}>
-    <i class="kh-setc__rays"></i>
+    ${spinRaysHtml('kh-setc__srays')}
     <span class="kh-setc__art">${tiles}</span>
     <span class="kh-setc__info">
       <span class="kh-setc__kick">${I.gift}Set · ${s.parts.length} parça</span>
@@ -160,8 +163,8 @@ function dealHtml(deal: {item: ShopItem; price: number} | null, me: Me): string 
   if (!deal) return `<div class="kh-deal is-done"><span class="kh-deal__info"><span class="kh-deal__kick">${I.crown}Koleksiyon tamam!</span><b class="kh-deal__name">Her şey sende, usta!</b></span></div>`;
   const it = deal.item;
   return `<button class="kh-deal is-${it.rarity} is-k-${it.kind}" data-act="deal" data-k="${it.kind}" data-id="${it.id}" data-glint>
-      <i class="kh-deal__rays"></i><i class="kh-deal__dots"></i>
-      <span class="kh-deal__pv is-${it.kind}"><i class="kh-item__bg"></i>${pvHtml(it, me, true)}</span>
+      ${spinRaysHtml('kh-deal__srays', true)}<i class="kh-deal__dots"></i>
+      <span class="kh-deal__pv is-${it.kind}">${rarBgHtml(it.rarity)}${pvHtml(it, me, true)}</span>
       <span class="kh-deal__info">
         <span class="kh-deal__kick">${I.sparkle}Günün Teklifi</span>
         <b class="kh-deal__name">${esc(it.name)}</b>
@@ -212,12 +215,15 @@ export class ShopPage implements Page {
   private visible = false;
   private spot = new Spotlight(() => this.panels.get(this.tab)?.el ?? null);
   private edges: () => void = () => undefined;
+  /** Yeni eklenen ışın çarklarını görünürlük gözlemcisine bağla (görünmeyenler durur) */
+  private rays: (box: ParentNode) => void = () => undefined;
 
   constructor(private shell: Shell) {
     this.el.innerHTML = `<header class="kh-shop__head"><div class="kh-title kh-shop__title">${g3('Market')}</div><button class="kh-shop__count" data-act="coll"></button></header>
       <div class="kh-shop__tabsw"><div class="kh-shop__tabs kh-noswipe"><div class="kh-shop__track">${TABS.map(t => `<button class="kh-stab" data-act="tab" data-t="${t.id}">${t.icon}<span>${t.name}</span></button>`).join('')}</div></div></div>
       <div class="kh-shop__body kh-scroll"></div>`;
     this.body = q(this.el, '.kh-shop__body');
+    this.rays = raysGate(this.body, this.scope);
     onAct(this.scope, this.el, (a, b) => this.act(a, b));
     // sekme şeridi kenarları: devamı varsa yumuşak gölge (kesik yazı "devamı var" diye okunur)
     const tabs = q(this.el, '.kh-shop__tabs'), wrap = q(this.el, '.kh-shop__tabsw');
@@ -353,6 +359,7 @@ export class ShopPage implements Page {
     }
     if (!fresh) this.fill();
     hydrate(p.el);
+    this.rays(p.el);
     clearTimeout(this.dealT);
     if (this.tab === 'featured') this.tickDeal();
     // sekme değişimi: TEK katman (panel) kayar; kart kart giriş yok (her kart ayrı katman + boyama = ilk açılışta takılma)
@@ -393,6 +400,7 @@ export class ShopPage implements Page {
         box[box.length - 1]?.insertAdjacentHTML('beforeend', c.html());
       }
       hydrate(p.el);
+      this.rays(p.el);
       if (p.scroll && b.scrollTop !== p.scroll && b.scrollHeight >= p.scroll + b.clientHeight) b.scrollTop = p.scroll;
       this.prime(p, 1);
       this.fill();
@@ -631,7 +639,7 @@ function productSheet(shell: Shell, it: ShopItem, dealPrice: number | undefined,
   const hint = stageHint(it.kind);
   const m = openSheet(ctx, {
     cls: `kh-pd is-${it.rarity} is-${it.kind}`,
-    body: `<div class="kh-pd__stage"><i class="kh-pd__sbg"></i><i class="kh-rays is-gold kh-pd__rays"></i>
+    body: `<div class="kh-pd__stage"><i class="kh-pd__sbg">${spinRaysHtml('kh-pd__srays')}</i>${it.rarity === 'legendary' ? spinRaysHtml('kh-pd__grays', true) : ''}
         <div class="kh-pd__pv"></div>${hint ? `<span class="kh-pd__hint">${I.hand}${hint}</span>` : ''}</div>
       <div class="kh-pd__meta">${rarityHtml(it.rarity)}<span class="kh-pd__kind">${KIND_INFO[it.kind].name}</span>${badge && !p.owns(it.kind, it.id) ? `<span class="kh-mtag is-${badge}">${BADGE_NAME[badge]}</span>` : ''}${dealPrice ? `<span class="kh-pd__deal">Günün Teklifi -%${Math.round(DEAL_OFF * 100)}</span>` : ''}</div>
       <div class="kh-title kh-pd__name">${g3(it.name, it.rarity === 'legendary' ? '' : 'is-white')}</div>
@@ -800,8 +808,14 @@ function unlockFx(shell: Shell, stage: HTMLElement, pv: HTMLElement): void {
   else ctx.sounds.reward();
   haptic('success');
   stage.classList.add('is-unlocked');
-  const rays = stage.querySelector('.kh-pd__rays');
-  if (rays) play(rays, [{transform: 'scale(.2) rotate(0)', opacity: 0}, {transform: 'scale(1) rotate(30deg)', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'forwards'});
+  // altın ışın çarkı patlar (efsanevide zaten döner; diğerlerinde eklenir). Dönüş transform'da, patlama ayrı `scale` +
+  // opaklıkta: ikisi birbirini ezmez, ikisi de bileşimcide
+  let rays = stage.querySelector<HTMLElement>('.kh-pd__grays');
+  if (!rays) {
+    (stage.querySelector('.kh-pd__sbg') ?? stage).insertAdjacentHTML('afterend', spinRaysHtml('kh-pd__grays', true));
+    rays = stage.querySelector<HTMLElement>('.kh-pd__grays');
+  }
+  if (rays) play(rays, [{scale: '.2', opacity: 0}, {scale: '1', opacity: 1}], {duration: 700, easing: EASE.out, fill: 'forwards'});
   play(pv, [{transform: 'scale(1)'}, {transform: 'scale(1.14) rotate(-3deg)', offset: 0.35}, {transform: 'scale(.97) rotate(1deg)', offset: 0.7}, {transform: 'none'}], {duration: 620, easing: EASE.out});
   ctx.fx.flash(0.5, 380);
   ctx.fx.burst(to, {coins: 0, confetti: 30, power: 0.9});
@@ -819,7 +833,7 @@ function setSheet(shell: Shell, s: ShopSet, onChange: () => void): ModalHandle {
   const pr0 = setPrice(s, owns);
   const m = openSheet(ctx, {
     cls: 'kh-pd kh-sd is-legendary',
-    body: `<div class="kh-pd__stage kh-sd__stage" style="--a:${s.a};--b:${s.b}"><i class="kh-rays is-gold kh-pd__rays"></i>
+    body: `<div class="kh-pd__stage kh-sd__stage" style="--a:${s.a};--b:${s.b}">${spinRaysHtml('kh-pd__grays', true)}
         <div class="kh-pd__pv kh-sd__parts" data-n="${s.parts.length}">${s.parts.map((it, i) => `<button class="kh-sd__part is-${it.kind} is-${it.rarity}" data-act="part" data-k="${it.kind}" data-id="${it.id}" style="--n:${i - (s.parts.length - 1) / 2}">
           <span class="kh-sd__pv"><i class="kh-item__bg"></i>${pvHtml(it, me)}</span><b>${esc(it.name)}</b><small>${KIND_INFO[it.kind].name}</small>
           <span class="kh-sd__st"></span></button>`).join('')}</div></div>

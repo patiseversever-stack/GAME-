@@ -1,6 +1,7 @@
 // Market / koleksiyon önizlemeleri (hepsi HTML dizgesi üretir; DOM'a tek seferde girer, sonradan çizim yapmaz):
 //  - deste: pişmiş şeritten kartlar (src/ui/deckpv.ts) → yelpaze. Tuval yok, blob yok, gözlemci yok: anında görünür.
-//  - masa: TableTheme.swatch (SVG minyatür) zemini + kuşanılı destenin GERÇEK kartları (yığın, deste, el) → "masan böyle olur".
+//  - masa: pişmiş küçük resim (src/ui/tablepv.ts, temanın güncel boyası; boyasız masada TableTheme.swatch) zemini +
+//    kuşanılı destenin GERÇEK kartları (yığın, deste, el) → "masan böyle olur".
 //    Büyük sahnede (ürün penceresi / dene) boyalı zemin, pencere açılış animasyonu bittikten sonra boşta eklenir ve önbelleğe alınır.
 //  - pişti efekti: src/ui/fxpreview.ts (mountFx) — ızgarada donmuş kare, görünür olunca sırayla kurulur.
 import './previews.css';
@@ -9,6 +10,7 @@ import type {TableTheme} from '../themes/contract';
 import {ANIM, esc} from './dom';
 import {suitSvg} from './icons';
 import {CI, deckCardHtml, fxStillReady, hasDeck} from './deckpv';
+import {bakedTable} from './tablepv';
 import {mountFx, type FxLoop} from './fxpreview';
 
 export {hasDeck};
@@ -195,7 +197,10 @@ function swatchRule(id: string): void {
     swStyle.dataset.kh = 'swatch';
     document.head.append(swStyle);
   }
-  const rule = `.kh-ts__bg[data-sw="${CSS.escape(id)}"]{background:${tableSwatch(id)}}`;
+  // boyalı masa: pişmiş küçük resim (temanın güncel boyası; ürün penceresindeki canlı boyayla aynı kompozisyon)
+  const pv = bakedTable(id);
+  const bg = pv ? `url("${pv}") 50% 50% / cover no-repeat #0a1033` : tableSwatch(id);
+  const rule = `.kh-ts__bg[data-sw="${CSS.escape(id)}"]{background:${bg}}`;
   try {
     swStyle.sheet!.insertRule(rule, swStyle.sheet!.cssRules.length);
   } catch {
@@ -222,13 +227,15 @@ export function tableSceneHtml(id: string, o: SceneOpts): string {
   const d = o.deck;
   const full = o.size === 'full';
   swatchRule(id);
+  // pişmiş boya varsa yığın, boyanın çizdiği halkanın yerinde (%45.5) durur; swatch amblemi ortada (%50)
+  const pt = bakedTable(id) || (full && t?.paint) ? ' is-paint' : '';
   if (o.size === 'tile')
-    return `<span class="kh-ts is-tile ${o.cls ?? ''}"><i class="kh-ts__bg" data-sw="${esc(id)}"></i><span class="kh-ts__pile">${deckCardHtml(o.deck, CI.ten, 'kh-ts__c is-p1')}${deckCardHtml(o.deck, CI.queen, 'kh-ts__c is-p2')}</span></span>`;
+    return `<span class="kh-ts is-tile${pt} ${o.cls ?? ''}"><i class="kh-ts__bg" data-sw="${esc(id)}"></i><span class="kh-ts__pile">${deckCardHtml(o.deck, CI.ten, 'kh-ts__c is-p1')}${deckCardHtml(o.deck, CI.queen, 'kh-ts__c is-p2')}</span></span>`;
   const pile = `<span class="kh-ts__pile">${deckCardHtml(d, CI.ten, 'kh-ts__c is-p1')}${deckCardHtml(d, CI.queen, 'kh-ts__c is-p2')}</span>`;
   const stack = `<span class="kh-ts__deck">${deckCardHtml(d, CI.back, 'kh-ts__c is-d1')}${deckCardHtml(d, CI.back, 'kh-ts__c is-d2')}</span>`;
   const opp = full ? `<span class="kh-ts__opp">${[0, 1, 2, 3].map(i => deckCardHtml(d, CI.back, 'kh-ts__c', `--i:${i - 1.5}`)).join('')}</span>` : '';
   const hand = full ? `<span class="kh-ts__hand">${[CI.ace, CI.jack, CI.king, CI.ten].map((ci, i) => deckCardHtml(d, ci, 'kh-ts__c', `--i:${i - 1.5}`)).join('')}</span>` : '';
-  return `<span class="kh-ts ${full ? 'is-full' : 'is-mini'}${full && t?.paint ? ' is-paint' : ''} ${o.cls ?? ''}" data-table="${id}" style="--ring:${ring};--glow:${glow}">
+  return `<span class="kh-ts ${full ? 'is-full' : 'is-mini'}${pt} ${o.cls ?? ''}" data-table="${id}" style="--ring:${ring};--glow:${glow}">
     <i class="kh-ts__bg" data-sw="${esc(id)}"></i>${full ? '<i class="kh-ts__glow"></i>' : ''}
     ${opp}${stack}${pile}${hand}${full ? '<i class="kh-ts__vig"></i>' : ''}</span>`;
 }

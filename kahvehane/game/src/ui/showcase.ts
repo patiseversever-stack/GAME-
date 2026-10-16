@@ -6,6 +6,36 @@
 import {ANIM, Scope, clamp} from './dom';
 import {decorLoops} from './parts';
 import {CI, deckCardHtml} from './deckpv';
+import RAYS_WHITE from './img/rays-white.webp';
+import RAYS_GOLD from './img/rays-gold.webp';
+
+// ---------------------------------------------------------------- dönen ışın çarkı
+/**
+ * Önizleme arkasındaki ışın çarkı: ışınlar VE kenar sönümü pişmiş görselde (scripts/bake-rays.mjs; maske, conic-gradient,
+ * kendi köşe yuvarlaması yok). Yalnız transform ile yavaş döner (bileşimci: boyama/stil yok); kırpma dönmeyen atadaki
+ * overflow:hidden ile. .kh-keep: platform/calm.ts sakin modda da durdurmaz. Görünmeyenler raysGate ile duraklar.
+ */
+export const spinRaysHtml = (cls: string, gold = false): string =>
+  `<img class="kh-srays kh-keep ${cls}" src="${gold ? RAYS_GOLD : RAYS_WHITE}" alt="" decoding="async" draggable="false">`;
+
+/**
+ * Kaydırma kabındaki ışın çarklarından yalnız görünenler dönsün (katman kalır: yeniden görününce boyama gerekmez, açı
+ * korunur). Gözlemci hiç çalışmazsa (bazı gömülü ortamlar) hepsi döner — bozulma yok. Dönüş: yeni içerikte çağrılacak işlev.
+ */
+export function raysGate(root: HTMLElement, scope: Scope): (box: ParentNode) => void {
+  if (!ANIM || typeof IntersectionObserver === 'undefined') return () => undefined;
+  const io = new IntersectionObserver(es => {
+    for (const e of es) e.target.classList.toggle('is-off', !e.isIntersecting);
+  }, {root, rootMargin: '24px'});
+  scope.add(() => io.disconnect());
+  const seen = new WeakSet<Element>();
+  return box =>
+    box.querySelectorAll('.kh-srays').forEach(el => {
+      if (seen.has(el)) return;
+      seen.add(el);
+      io.observe(el);
+    });
+}
 
 // ---------------------------------------------------------------- tek parıltı
 /** Kartın .kh-glint (süpürme) ve .kh-spark4 (yıldız) öğelerini bir kez oynat. Sonlu; kalıcı katman bırakmaz. */
