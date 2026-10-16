@@ -16,6 +16,10 @@
 .kh-chatbtn .kh-i { position: relative; z-index: 1; width: 52%; height: 52%; transition: opacity .2s; }
 .kh-chatbtn__cool { position: absolute; inset: 0; border-radius: 50%; background: rgba(6, 10, 40, .5); transform: scaleY(0); transform-origin: 50% 100%; pointer-events: none; }
 .kh-chatbtn.is-cool .kh-i { opacity: .55; }
+/* sohbet düğmesi varken üstteki rozetlerin balonu düğmenin altından başlar (dar ekranda balonun üst kenarı düğmeye binmesin) */
+.kh-hud { --chat-clear: calc(max(calc(var(--u) * .6), env(safe-area-inset-top)) + var(--tap) + var(--u) * .35); }
+.kh-hud.has-chat .kh-badge.is-top .kh-bubble { top: max(calc(var(--bs) * .42), calc(var(--chat-clear) - max(calc(var(--u) * 1.15), calc(env(safe-area-inset-top) + var(--u) * .7)))); }
+.kh-hud.has-chat .kh-badge.is-top4 .kh-bubble { top: max(calc(var(--bs) * .42), calc(var(--chat-clear) - max(calc(var(--u) * 1.05), calc(env(safe-area-inset-top) + var(--u) * .6)))); }
 
 /* eşli takım hapı: mavi BİZ · kırmızı ONLAR (toplanan kart) */
 .kh-team { position: absolute; z-index: 6; top: calc(max(calc(var(--u) * .75), env(safe-area-inset-top)) + var(--u) * 2.95); left: max(calc(var(--u) * .9), env(safe-area-inset-left));

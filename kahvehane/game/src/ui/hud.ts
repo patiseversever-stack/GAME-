@@ -421,6 +421,7 @@ export class HudView implements GameHud {
     if (on === this.chatOn) return;
     this.chatOn = on;
     this.chatBtn.hidden = !on;
+    this.el.classList.toggle('has-chat', on);
     if (!on) this.chatCooldown(0);
     else if (this.visible) play(this.chatBtn, [{transform: 'scale(.4)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.spring, fill: 'backwards'});
   }
