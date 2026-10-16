@@ -332,17 +332,17 @@ function havai(s: Stage, at: Pt, jack: boolean): void {
 function yildiz(s: Stage, at: Pt, jack: boolean): void {
   const m = s.M / 100, W = s.W, H = s.H;
   s.night(0.55, jack ? 2100 : 1850);
-  const n = s.low ? 4 : jack ? 8 : 7;
+  const n = s.low ? 4 : 8;
   const L = 80 * m;
   const angs = [118, 72, 132, 96, 60, 108, 84, 140];
   let last = 0;
   for (let i = 0; i < n; i++) {
     const ang = angs[i % angs.length] + R(-4, 4), rad = (ang * Math.PI) / 180;
-    const t = 40 + (i * (jack ? 600 : 560)) / (n - 1) + R(-15, 15);
+    const t = 40 + (i * (jack ? 560 : 480)) / (n - 1) + R(-15, 15);
     const tx = at.x + R(-12, 12) * m, ty = at.y + R(-10, 4) * m;
     const dist = Math.min(Math.hypot(W, H) * 0.5, 110 * m);
     const x0 = tx - Math.cos(rad) * dist, y0 = ty - Math.sin(rad) * dist;
-    const D = R(380, 440);
+    const D = R(440, 520);
     last = Math.max(last, t + D);
     const path = (q: number): [number, number] => [x0 + (tx - x0) * q, y0 + (ty - y0) * q];
     const nd = s.node('meteor', L);
@@ -647,4 +647,4 @@ export const FX: Record<string, (s: Stage, at: Pt, jack: boolean) => void> = {kl
 /** Efektin toplam süresi (ms; önizleme döngüsü / temizlik için) */
 export const FX_MS: Record<string, number> = {klasik: 1700, altin: 2100, havai: 1950, yildiz: 2000, simsek: 1500, lale: 1950, nazar: 2000, tac: 1900, girdap: 1800};
 /** Donmuş küçük resim için en güzel an (ms) */
-export const FX_STILL: Record<string, number> = {klasik: 420, altin: 1000, havai: 1060, yildiz: 1220, simsek: 300, lale: 470, nazar: 470, tac: 760, girdap: 620};
+export const FX_STILL: Record<string, number> = {klasik: 640, altin: 1000, havai: 1060, yildiz: 1220, simsek: 300, lale: 470, nazar: 470, tac: 760, girdap: 620};
