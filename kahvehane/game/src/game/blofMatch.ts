@@ -550,8 +550,8 @@ export class BlofMatch {
     table.tint('#ff2e4d', 0.55, 650);
     hud.react(by, 'kizgin', 1500);
     hud.react(target, 'saskin', 2200);
+    // bot bağırır (kendi repliği); oyuncu için çizgi roman patlaması yeterli (balon tekrarı yok)
     if (this.bot(by)) this.say(by, 'callOut', true, 1300);
-    else hud.say('BLÖF!', 'kizgin', 1100, by);
     if (by === ME) this.tutSeen('blof');
     void this.ui.call(from, to);
     await sleep(420);
@@ -571,8 +571,8 @@ export class BlofMatch {
     const liar = e.seat, caller = e.by;
     const loser = caught ? liar : caller;
     const winner = caught ? caller : liar;
-    const L = this.t.L;
-    const y = L.pile.y + L.ch * 0.98;
+    // damga açılan kartların alt yarısında (indeksler ve ✓/✗ görünür; alttaki rozet/sayaç açık kalır)
+    const y = this.t.revealTop(m) + this.t.L.ch * this.t.revealScale(m) * 0.8;
     const pileN = this.pileN || this.t.pile.length;
     const sub = loser === ME ? `Yığın sana: ${pileN} kart` : `${this.name(loser)} yığını alıyor · ${pileN} kart`;
     // ses + titreşim: oyuncunun durumu belirler
@@ -831,8 +831,11 @@ export class BlofMatch {
     if (mode === 'open' && !this.openRank && !tut.seen.has('open')) {
       step = 'open';
       text = TUTORIAL.open;
-      target = ui.where('picker');
-      if (target) target = {x: target.x, y: target.y - 4};
+      // en çok tuttuğun değeri göster (doğru açmak en güvenlisi)
+      const held = this.heldCounts(v.hand);
+      let best = 1;
+      for (let r = 1; r <= 13; r++) if (held[r] > held[best]) best = r;
+      target = ui.where('picker', best);
     } else if (mode === 'open' && this.openRank && t.selected().length === 0 && !tut.seen.has('select')) {
       step = 'select';
       text = TUTORIAL.select;
@@ -870,7 +873,12 @@ export class BlofMatch {
       return;
     }
     const face = charById('riza').poses.kahkaha || charById('riza').poses.notr;
-    this.ui.coach({text: TUTORIAL.done, face, target: null, at: 'top'});
-    window.setTimeout(() => this.ui.coach(null), 3200);
+    // son söz, masadaki anlık yazılar (KENARA vb.) bittikten sonra
+    this.ui.coach(null);
+    window.setTimeout(() => {
+      if (this.aborted || this.result) return;
+      this.ui.coach({text: TUTORIAL.done, face, target: null, at: 'top'});
+      window.setTimeout(() => this.ui.coach(null), 3400);
+    }, 1300);
   }
 }

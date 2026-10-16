@@ -164,7 +164,7 @@ export class BlofTalk {
 export const TUTORIAL = {
   open: 'Turu sen açıyorsun evlat! Önce hangi değeri söyleyeceğini seç.',
   select: 'Şimdi elinden 1–4 kart seç. O değerden olmasa da olur… kimse görmüyor!',
-  play: 'Tamam! Şimdi at bakalım.',
+  play: 'Kartların kalktı! İstersen başka kart da ekle — yalan serbest. Sonra AT\'a bas.',
   blof: 'Kartları kapalı attım. İnanmıyorsan BLÖF de — ya da yığına dokun!',
   blofOther: 'Bu atışa inanıyor musun? İnanmıyorsan BLÖF de — ya da yığına dokun!',
   pass: 'Elinde yoksa PAS de, riske girme. Herkes pas derse son atan yeni turu açar.',

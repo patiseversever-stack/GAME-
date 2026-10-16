@@ -240,7 +240,6 @@ if (!scene) {
     table.tint('#ff2e4d', 0.55, 650);
     hud.react(caller, 'kizgin', 1500);
     hud.react(liar, 'saskin', 2200);
-    hud.say('BLÖF!', 'kizgin', 1100, caller);
     void ui.call({x: t.L.u * 3.2, y: t.L.barY}, t.pilePoint());
     await new Promise(r => setTimeout(r, 420));
     g.step = 'reveal';
@@ -263,7 +262,7 @@ if (!scene) {
       hud.react(liar, 'zafer', 2000);
       hud.say('Doğruydu evlat! Al yığını, afiyet olsun.', 'kahkaha', 2200, liar);
     }
-    void ui.stamp(lie ? 'caught' : 'truth', loser === 0 ? `Yığın sana: ${pileN + m} kart` : `${players[loser].name.split(' ')[0]} yığını alıyor · ${pileN + m} kart`, t.L.pile.y + t.L.ch * 0.98, 1550);
+    void ui.stamp(lie ? 'caught' : 'truth', loser === 0 ? `Yığın sana: ${pileN + m} kart` : `${players[loser].name.split(' ')[0]} yığını alıyor · ${pileN + m} kart`, t.revealTop(m) + t.L.ch * t.revealScale(m) * 0.8, 1550);
     await new Promise(r => setTimeout(r, 650));
     g.step = 'take';
     ui.focusClaim(false);

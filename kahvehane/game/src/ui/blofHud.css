@@ -1,6 +1,6 @@
 /* Blöf oyun içi arayüzü. Konumlar JS'ten transform ile (sarıcı sıfır boyutlu; iç öğe ortalanır).
    Yalnız transform/opacity animasyonu; gölgeler sabit. Sonsuz döngü yok. */
-.bl-hud { position: absolute; inset: 0; z-index: 6; pointer-events: none; visibility: hidden; opacity: 0; transition: opacity .3s, visibility 0s .3s;
+.bl-hud { position: absolute; inset: 0; z-index: 10; pointer-events: none; visibility: hidden; opacity: 0; transition: opacity .3s, visibility 0s .3s;
   --bl-gold: linear-gradient(180deg, #fff27a 0%, #ffd23f 35%, #ffb21a 100%); }
 .bl-hud.is-on { visibility: visible; opacity: 1; transition: opacity .3s; }
 .bl-hud button { pointer-events: auto; }
@@ -145,11 +145,10 @@
 
 /* ---- öğretici: Rıza Amca ---- */
 .bl-coach { left: max(calc(var(--u) * .7), env(safe-area-inset-left)) !important; right: max(calc(var(--u) * .7), env(safe-area-inset-right));
-  top: calc(max(calc(var(--u) * .75), env(safe-area-inset-top)) + var(--u) * 3.6) !important; z-index: 9; display: flex; align-items: center; gap: calc(var(--u) * .7);
+  top: 30%; z-index: 9; display: flex; align-items: center; gap: calc(var(--u) * .7);
   max-width: calc(var(--u) * 28); margin: 0 auto; padding: calc(var(--u) * .6) calc(var(--u) * .8) calc(var(--u) * .65) calc(var(--u) * .6); border-radius: var(--r-lg);
   border: 2.5px solid var(--bubble-edge); background: var(--bubble-fill); color: var(--bubble-fg); box-shadow: var(--bubble-shadow); visibility: hidden; will-change: transform; }
 .bl-coach.is-on { visibility: visible; }
-.bl-coach.is-mid { top: 33% !important; }
 .bl-coach__face { flex: none; width: calc(var(--u) * 4); height: calc(var(--u) * 4); border-radius: 50%; overflow: hidden;
   background: radial-gradient(circle at 50% 28%, #ffd28a 0%, #c8862e 55%, #7a4a12 100%); box-shadow: 0 0 0 2.5px var(--navy), inset 0 2px 6px rgba(0, 0, 0, .3); }
 .bl-coach__face img { width: 150%; height: 150%; margin: -6% 0 0 -25%; object-fit: contain; }
@@ -182,7 +181,7 @@
 .kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-badge__pill { font-size: calc(var(--u) * .98); margin: 0; }
 .kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-bubble { bottom: auto; top: calc(var(--bs) * -1.25); left: calc(var(--bs) * .35); }
 .kh-hud[data-game="blof"][data-mode="1v1"] .kh-badge.is-top { --bs: calc(var(--u) * 5.6); }
-.kh-hud[data-game="blof"] .kh-hint { bottom: auto; top: calc(var(--bl-bar-y, 80vh) - var(--u) * 3.6); left: 50%; }
+.kh-hud[data-game="blof"] .kh-hint { bottom: auto; top: calc(var(--bl-bar-y, 80vh) - var(--u) * 5.6); left: 50%; }
 .kh-hud[data-game="blof"][data-mode="3"] { --kh-side-top: calc(max(calc(var(--u) * .75), env(safe-area-inset-top)) + var(--u) * 3.5); }
 .kh-hud[data-game="blof"][data-mode="3"] .kh-badge.is-left, .kh-hud[data-game="blof"][data-mode="3"] .kh-badge.is-right { --bs: calc(var(--u) * 5); }
 /* eşli: ortağım "ORTAK" etiketi (takım rengi halka hud.css'te) */

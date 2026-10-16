@@ -170,6 +170,7 @@ export class BlofHud {
   layout(L: BlofLayout): void {
     this.L = L;
     this.el.style.setProperty('--bl-u', L.u + 'px');
+    this.coachEl.style.top = (L.oppBottom + L.u * 0.6) + 'px';
     pos(this.claim, L.claim.x, L.claim.y);
     this.claim.style.setProperty('--d', L.claim.d + 'px');
     pos(this.last, L.claim.x, L.claim.y + L.claim.d / 2 + L.u * 0.55);
@@ -507,8 +508,8 @@ export class BlofHud {
 
   // ───────── HUD noktaları ─────────
   /** Eylem çubuğundaki öğelerin ekran merkezi (öğretici eli için). */
-  where(k: 'play' | 'pass' | 'blof' | 'picker' | 'rank'): {x: number; y: number} | null {
-    const el = k === 'play' ? this.playBtn : k === 'pass' ? this.passBtn : k === 'blof' ? this.blofBtn : k === 'rank' ? this.rankBtn : this.picker;
+  where(k: 'play' | 'pass' | 'blof' | 'picker' | 'rank', rank = 0): {x: number; y: number} | null {
+    const el = k === 'play' ? this.playBtn : k === 'pass' ? this.passBtn : k === 'blof' ? this.blofBtn : k === 'rank' ? this.rankBtn : rank ? this.pickBtns[rank - 1] : this.picker;
     const r = el.getBoundingClientRect();
     if (!r.width) return null;
     return {x: r.left + r.width / 2, y: r.top + r.height / 2};

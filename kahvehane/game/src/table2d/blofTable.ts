@@ -55,8 +55,10 @@ export interface BlofLayout {
   hand: {cx: number; y: number; s: number; cwH: number; chH: number; rowDy: number; lift: number; maxW: number; rows: number; top: number};
   /** Eylem çubuğunun dikey merkezi (elin hemen üstü) */
   barY: number;
-  /** BLÖF düğmesi (yığın ile çubuk arası) */
+  /** BLÖF düğmesi (eylem çubuğunun yerinde) */
   blof: {x: number; y: number; d: number};
+  /** Rakip alanının alt kenarı (öğretici paneli bunun altına) */
+  oppBottom: number;
   seats: BlofSeat[];
 }
 
@@ -328,6 +330,7 @@ export class BlofTable {
       hand: {cx: W / 2, y: yF, s: sH, cwH, chH, rowDy, lift, maxW, rows: 1, top: yF - chH / 2 - lift},
       barY: 0,
       blof: {x: W / 2, y: 0, d: clamp(barH * 1.62, u * 4.4, u * 5.6)},
+      oppBottom,
       seats,
     };
     // yığın etkileşim + uyarı halkası
