@@ -184,12 +184,15 @@ function ensureProxyEnv() {
 
 function apiKey() {
   const k = (process.env.ELEVENLABS_API_KEY || '').trim();
+  // Ortamın "ağ gizli anahtarı" vekilde xi-api-key başlığını kendisi ekliyorsa anahtar sürece hiç gelmez.
+  if (!k && process.env.ELEVENLABS_VIA_PROXY === '1') return '';
   if (!k) die('ELEVENLABS_API_KEY ortam değişkeni yok. Anahtarı sohbete yazmayın; ortam ayarlarına (secret) ekleyin. Bkz. tools/voice/README.md');
   return k;
 }
 
 async function http(method, pathname, {json, timeoutMs = 90_000, accept} = {}) {
-  const headers = {'xi-api-key': apiKey()};
+  const key = apiKey();
+  const headers = key ? {'xi-api-key': key} : {};
   if (json !== undefined) headers['content-type'] = 'application/json';
   if (accept) headers.accept = accept;
   return fetch(API + pathname, {
