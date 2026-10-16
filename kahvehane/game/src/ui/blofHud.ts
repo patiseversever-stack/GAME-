@@ -45,8 +45,6 @@ export class BlofHud {
   private last: HTMLElement;
   private pileChip: HTMLElement;
   private outChip: HTMLElement;
-  private chips: HTMLElement[] = [];
-  private counts: number[] = [];
   private bar: HTMLElement;
   private passBtn: HTMLButtonElement;
   private playBtn: HTMLButtonElement;
@@ -155,16 +153,8 @@ export class BlofHud {
     }
   }
 
-  /** Yeni el: rozetler koltuk sayısına göre kurulur, sayaçlar sıfırlanır. */
-  reset(seats: number, team?: number[]): void {
-    for (const c of this.chips) c.remove();
-    this.chips = [];
-    this.counts = new Array(seats).fill(-1);
-    for (let s = 0; s < seats; s++) {
-      const c = h('div', 'bl-cnt' + (s === 0 ? ' is-me' : '') + (team && team[s] !== undefined && team[s] >= 0 ? ` team-${team[s] === team[0] ? 'a' : 'b'}` : ''), `<div class="bl-cnt__in">${I.cards}<b class="kh-num">0</b></div>`);
-      this.chips.push(c);
-      this.el.insertBefore(c, this.bar);
-    }
+  /** Yeni el: tur/yığın/kenar sıfırlanır, pencere/seçici/öğretici kapanır. (Kart sayıları HUD rozetlerinde.) */
+  reset(): void {
     this.setClaim(null);
     this.setLast(null);
     this.setPile(0);
@@ -187,13 +177,7 @@ export class BlofHud {
     pos(this.pileChip, L.pile.x - pw * 0.46, L.pile.y - ph * 0.46);
     pos(this.outChip, L.discard.x, L.discard.y + L.ch * L.discard.s * 0.5 + L.u * 0.75);
     void pw;
-    for (let s = 1; s < this.chips.length; s++) {
-      const p = L.seats[s]?.chip;
-      if (p) pos(this.chips[s], p.x, p.y);
-    }
     this.placeBar();
-    pos(this.blof, L.blof.x, L.blof.y);
-    this.blof.style.setProperty('--d', L.blof.d + 'px');
   }
 
   /** Çubuk elin üstünde; benim rozetim çubuğun solunda (HUD rozeti CSS değişkeniyle aynı satıra iner). */
@@ -205,8 +189,9 @@ export class BlofHud {
     this.selInfo.style.top = y + 'px';
     this.picker.style.bottom = Math.max(0, L.H - y - Math.max(44, L.u * 3) / 2) + 'px';
     document.documentElement.style.setProperty('--bl-bar-y', y + 'px');
-    const me = this.chips[0];
-    if (me) pos(me, 0, 0);
+    // BLÖF düğmesi çubuğun yerinde (pencere açıkken çubuk gizlenir)
+    pos(this.blof, L.blof.x, L.blof.y);
+    this.blof.style.setProperty('--d', L.blof.d + 'px');
   }
 
   relayoutBar(L: BlofLayout): void {
@@ -262,24 +247,6 @@ export class BlofHud {
   setOut(n: number): void {
     this.outChip.classList.toggle('is-on', n > 0);
     q(this.outChip, 'b').textContent = String(n);
-  }
-
-  /** Koltuğun kart sayısı (rakip rozeti büyük; 1–2 kart kalınca yanar). */
-  setCount(seat: number, n: number, animate = true): void {
-    const c = this.chips[seat];
-    if (!c) return;
-    const was = this.counts[seat];
-    if (was === n) return;
-    this.counts[seat] = n;
-    q(c, 'b').textContent = String(n);
-    c.classList.toggle('is-low', n > 0 && n <= 2);
-    c.classList.toggle('is-zero', n === 0);
-    c.classList.add('is-on');
-    if (animate && was >= 0) {
-      const up = n > was;
-      play(c.firstElementChild!, [{transform: 'translate(-50%,-50%) scale(1)'}, {transform: `translate(-50%,-50%) scale(${up ? 1.35 : 1.18}) rotate(${up ? -6 : 0}deg)`, offset: 0.35}, {transform: 'translate(-50%,-50%) scale(1)'}],
-        {duration: up ? 420 : 260, easing: EASE.out});
-    }
   }
 
   // ───────── eylem çubuğu ─────────

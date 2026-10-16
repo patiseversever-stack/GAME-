@@ -119,7 +119,7 @@ if (!scene) {
   hud.show(players, mode);
   hud.setDeck(0, 0, 0);
   t.reset(n);
-  ui.reset(n, mode === 'esli' ? info.teams : undefined);
+  ui.reset();
   ui.layout(t.L);
   ui.show(true);
   const seed = Number(Q.get('seed') ?? 5) | 0;
@@ -152,7 +152,8 @@ if (!scene) {
   }
   await t.deal(order, mine);
   const shown = counts.slice();
-  shown.forEach((c, s) => ui.setCount(s, c, false));
+  const stats = () => hud.setStats(shown.map(c => ({cards: c, pisti: 0})));
+  stats();
   const held = new Array<number>(14).fill(0);
   for (const id of mine) held[rankOf(id)]++;
   ui.setHeld(held);
@@ -181,7 +182,7 @@ if (!scene) {
     who = who % (n - 1) + 1;
   }
   shown[1] = counts[1] - outN - pileN;
-  shown.forEach((c, s) => ui.setCount(s, c, false));
+  stats();
   for (let s = 1; s < n; s++) hud.alert(s, shown[s] > 0 && shown[s] <= 2);
   ui.setPile(pileN);
   if (pileN) {
@@ -265,7 +266,7 @@ if (!scene) {
     await new Promise(r => setTimeout(r, 620));
     g.step = 'take';
     const pileIds = notMine.filter(c => !cards.includes(c)).slice(0, pileN).concat(cards);
-    await t.take(loser, loser === 0 ? pileIds : undefined, (i, total) => ui.setCount(loser, shown[loser] + Math.round(((i + 1) / total) * (pileN + m))));
+    await t.take(loser, loser === 0 ? pileIds : undefined, (i, total) => hud.tickCards(loser, shown[loser] + Math.round(((i + 1) / total) * (pileN + m))));
     ui.setPile(0);
     ui.setClaim(null);
     ui.setLast(null);

@@ -42,6 +42,8 @@ export class Screens {
   private ctx: Ctx;
   private homeView: HomeView | null = null;
   private memo: HomeMemo = {};
+  /** Kuşanılmış deste (kurallar sayfasındaki kapalı kartlar masadakiyle aynı arka yüzü gösterir) */
+  private deckId = 'yildizli';
   /** Perde kapalı bekliyor: bir sonraki ekran kurulunca açılır. */
   private curtain: {reveal(): Promise<void>} | null = null;
 
@@ -77,8 +79,12 @@ export class Screens {
 
   /** Ana ekran. Ayarlar/kurallar dönüşünde aynı ekran yeniden kurulmadan tazelenir. auto: test için kendiliğinden OYNA. */
   async home(profile: GameProfile, auto?: {game: Game; mode: Mode; difficulty?: Difficulty}): Promise<HomeAction> {
+    this.deckId = profile.data.equipped.deck;
     if (this.homeView) this.homeView.refresh();
-    else this.homeView = new HomeView(this.ctx, profile, (k, id) => this.onCosmeticsChanged(k, id), this.memo);
+    else this.homeView = new HomeView(this.ctx, profile, (k, id) => {
+      if (k === 'deck') this.deckId = id;
+      this.onCosmeticsChanged(k, id);
+    }, this.memo);
     this.openCurtain();
     const v = this.homeView;
     if (auto) v.autoPlay(auto.game, auto.mode, auto.difficulty);
@@ -132,12 +138,12 @@ export class Screens {
 
   /** Her değişiklikte onChange çağrılır; pencere kapanınca çözülür. */
   async settings(s: Settings, onChange: (s: Settings) => void): Promise<void> {
-    if ((await settings(this.ctx, s, onChange, this.version)) === 'rules') await rules(this.ctx, this.memo.game);
+    if ((await settings(this.ctx, s, onChange, this.version)) === 'rules') await rules(this.ctx, this.memo.game, this.deckId);
   }
 
   /** Nasıl Oynanır (sekmeler: Pişti | Blöf). game: açılacak sekme (verilmezse son oynanan). */
   rules(game?: Game): Promise<void> {
-    return rules(this.ctx, game ?? this.memo.game);
+    return rules(this.ctx, game ?? this.memo.game, this.deckId);
   }
 
   /** day: 1..7, rewards: 7 gün. Toplanan miktarla çözülür (kapatılırsa 0). (Ana ekran kendi içinde kullanır; galeri için.) */

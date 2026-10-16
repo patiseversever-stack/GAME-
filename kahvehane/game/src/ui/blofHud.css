@@ -42,23 +42,6 @@
 .bl-outchip b { font-weight: 400; font-size: 1.2em; }
 .bl-pilechip.is-on, .bl-outchip.is-on { visibility: visible; }
 
-/* rakip kart sayısı: büyük hap; 1–2 kart kalınca kırmızı-altın yanar */
-.bl-cnt { width: 0; height: 0; z-index: 3; visibility: hidden; }
-.bl-cnt.is-on { visibility: visible; }
-.bl-cnt.is-me { display: none; }
-.bl-cnt__in { position: absolute; left: 0; top: 0; transform: translate(-50%, -50%); display: flex; align-items: center; gap: .18em; padding: .2em .55em .24em .42em;
-  border-radius: var(--r-pill); background: linear-gradient(180deg, #ffffff 0%, #e8edff 55%, #c9d3ff 100%); color: var(--navy);
-  box-shadow: 0 0 0 2.5px var(--navy), 0 3.5px 0 var(--navy), 0 8px 14px rgba(2, 4, 24, .45), inset 0 -2px 0 rgba(10, 16, 51, .15);
-  font-family: var(--font-display); font-size: calc(var(--u) * 1.5); line-height: 1; white-space: nowrap; will-change: transform; }
-.bl-cnt__in .kh-i { width: .78em; height: .78em; color: var(--navy); stroke-width: 2.6; }
-.bl-cnt__in b { font-weight: 400; min-width: .62em; text-align: center; }
-.bl-cnt.team-a .bl-cnt__in { box-shadow: 0 0 0 2.5px var(--navy), 0 3.5px 0 var(--navy), 0 0 0 5px #3d93ff, 0 8px 14px rgba(2, 4, 24, .45); }
-.bl-cnt.team-b .bl-cnt__in { box-shadow: 0 0 0 2.5px var(--navy), 0 3.5px 0 var(--navy), 0 0 0 5px #ff4d66, 0 8px 14px rgba(2, 4, 24, .45); }
-.bl-cnt.is-low .bl-cnt__in { color: #fff; text-shadow: var(--outline-thin); background: linear-gradient(180deg, #ff8a9a 0%, #ff3d5a 45%, #d9123a 100%);
-  box-shadow: 0 0 0 2.5px #fff2a0, 0 0 0 5px var(--navy), 0 4px 0 5px var(--navy), 0 0 26px 8px rgba(255, 70, 70, .75); }
-.bl-cnt.is-low .bl-cnt__in .kh-i { color: #fff; }
-.bl-cnt.is-zero .bl-cnt__in { background: var(--bl-gold); }
-
 /* ---- eylem çubuğu (elin üstü; solda benim rozetim) ---- */
 .bl-bar { left: calc(var(--u) * 6.1) !important; right: max(calc(var(--u) * .8), env(safe-area-inset-right)); top: 0; z-index: 4; display: flex; gap: calc(var(--u) * .55);
   align-items: center; transform: translateY(-50%); visibility: hidden; opacity: 0; transition: opacity .18s, visibility 0s .18s; }
@@ -128,8 +111,10 @@
 .bl-blof__btn::before { content: ''; position: absolute; left: 16%; right: 16%; top: 7%; height: 36%; border-radius: 50% 50% 40% 40%;
   background: linear-gradient(180deg, rgba(255, 255, 255, .55), rgba(255, 255, 255, 0)); pointer-events: none; }
 .bl-blof__btn .kh-g3 { position: relative; transform: rotate(-6deg); }
-.bl-blof__go { position: absolute; left: 0; top: calc(var(--d) * .66); transform: translateX(-50%); padding: .3em .9em .34em; border-radius: var(--r-pill);
-  background: var(--name-fill); box-shadow: var(--name-shadow); color: #fff; font-family: var(--font-display); font-size: calc(var(--u) * .92); line-height: 1; text-shadow: var(--outline-thin); }
+.bl-blof__go { position: absolute; left: calc(var(--d) * .78); top: 0; transform: translateY(-50%); min-height: 40px; padding: 0 1em; border-radius: var(--r-pill);
+  background: var(--btn4-fill); box-shadow: var(--btn4-shadow); color: #fff; font-family: var(--font-display); font-size: calc(var(--u) * 1.05); line-height: 1;
+  letter-spacing: .04em; text-shadow: var(--outline-thin); }
+.bl-blof__go:active { transform: translateY(calc(-50% + 2px)) scale(.97); }
 
 /* ---- "BLÖF!" çağrısı (çizgi roman patlaması) ---- */
 .bl-call { z-index: 7; display: none; width: 0; height: 0; }
@@ -174,15 +159,31 @@
 .bl-point.is-on { display: block; }
 .bl-point .kh-i { width: 100%; height: 100%; fill: #ffe14a; stroke: var(--navy); stroke-width: 1.8; filter: drop-shadow(0 3px 0 var(--navy)); }
 
-/* ---- HUD rozetleri Blöf masasında (hud.ts setGame('blof')): benim rozetim çubuğun soluna iner, ad hapı gizli ----
-   rakiplerin kart sayısı masadaki büyük haplarda (rozet altı sayaç gizli); 1–2 kart kalınca rozet yanar. */
+/* ---- HUD rozetleri Blöf masasında (hud.ts setGame('blof')) ----
+   Kart sayısı rozetin altındaki hapta (büyük, avatara bağlı); 1–2 kart kalınca hap ve rozet kırmızı yanar (hud.alert).
+   Benim rozetim eylem çubuğunun soluna iner (ad gizli, sayaç köşede). Eşlide ortak "ORTAK" etiketi taşır. */
+.kh-hud[data-game="blof"] .kh-team { display: none !important; }
+.kh-hud[data-game="blof"] .kh-badge__pill { margin-top: calc(var(--u) * .28); font-size: calc(var(--u) * 1.22); }
+.kh-hud[data-game="blof"] .kh-badge__pill span { padding: .2em .55em .22em .42em; background: linear-gradient(180deg, #ffffff 0%, #e8edff 55%, #c9d3ff 100%); color: var(--navy);
+  text-shadow: none; box-shadow: 0 0 0 2.5px var(--navy), 0 3px 0 var(--navy), inset 0 -2px 0 rgba(10, 16, 51, .14); }
+.kh-hud[data-game="blof"] .kh-badge__pill span[data-k="pbox"] { display: none !important; }
+.kh-hud[data-game="blof"] .kh-badge__pill .kh-i { color: var(--navy); width: .85em; height: .85em; }
+.kh-hud[data-game="blof"] .kh-badge.is-alert .kh-badge__pill span { color: #fff; text-shadow: var(--outline-thin);
+  background: linear-gradient(180deg, #ff8a9a 0%, #ff3d5a 45%, #d9123a 100%); box-shadow: 0 0 0 2.5px #fff2a0, 0 0 0 5px var(--navy), 0 3px 0 5px var(--navy), 0 0 22px 6px rgba(255, 70, 70, .7); }
+.kh-hud[data-game="blof"] .kh-badge.is-alert .kh-badge__pill .kh-i { color: #fff; }
+/* ben: çubuğun solunda; ad yok, sayaç rozetin sağ alt köşesinde */
 .kh-hud[data-game="blof"] .kh-badge.is-bottom { --bs: calc(var(--u) * 4.3); bottom: auto; top: calc(var(--bl-bar-y, 80vh) - var(--bs) / 2 - var(--u) * .1); left: max(calc(var(--u) * .9), env(safe-area-inset-left)); }
-.kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-badge__plate { display: none; }
-.kh-hud[data-game="blof"] .kh-badge:not(.is-bottom) .kh-badge__pill { display: none; }
+.kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-badge__name { display: none; }
+.kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-badge__plate { left: auto; right: calc(var(--bs) * -.3); top: auto; bottom: calc(var(--bs) * -.2); transform: none; }
+.kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-badge__pill { font-size: calc(var(--u) * .98); margin: 0; }
 .kh-hud[data-game="blof"] .kh-badge.is-bottom .kh-bubble { bottom: auto; top: calc(var(--bs) * -1.25); left: calc(var(--bs) * .35); }
 .kh-hud[data-game="blof"][data-mode="1v1"] .kh-badge.is-top { --bs: calc(var(--u) * 5.6); }
 .kh-hud[data-game="blof"] .kh-hint { bottom: auto; top: calc(var(--bl-bar-y, 80vh) - var(--u) * 3.6); left: 50%; }
 .kh-hud[data-game="blof"][data-mode="3"] { --kh-side-top: calc(max(calc(var(--u) * .75), env(safe-area-inset-top)) + var(--u) * 3.5); }
 .kh-hud[data-game="blof"][data-mode="3"] .kh-badge.is-left, .kh-hud[data-game="blof"][data-mode="3"] .kh-badge.is-right { --bs: calc(var(--u) * 5); }
+/* eşli: ortağım "ORTAK" etiketi (takım rengi halka hud.css'te) */
+.kh-hud[data-game="blof"][data-mode="esli"] .kh-badge.team-a:not(.is-me) .kh-badge__plate::before { content: 'ORTAK'; order: -1; margin-bottom: calc(var(--u) * .2);
+  padding: .2em .55em .22em; border-radius: var(--r-pill); background: linear-gradient(180deg, #7fc0ff 0%, #2f86ff 50%, #1259d6 100%);
+  box-shadow: 0 0 0 2px var(--navy), 0 2px 0 var(--navy); color: #fff; font-family: var(--font-display); font-size: calc(var(--u) * .66); letter-spacing: .1em;
+  line-height: 1; white-space: nowrap; text-shadow: var(--outline-thin); }
 .kh-badge.is-alert .kh-badge__glow { opacity: 1; background: radial-gradient(circle, rgba(255, 70, 90, .75) 0%, rgba(255, 46, 77, .3) 48%, rgba(255, 46, 77, 0) 70%); }
-.kh-badge.is-alert .kh-badge__ring { box-shadow: var(--ring-shadow), 0 0 0 3px #ff4d66, 0 0 18px 6px rgba(255, 60, 80, .7); }

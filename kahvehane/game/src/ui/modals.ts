@@ -4,6 +4,7 @@ import {ANIM, EASE, center, esc, fmt, play, q} from './dom';
 import {ASSETS} from './assets';
 import {I, suitSvg, type SuitKey} from './icons';
 import {GAME_ICON} from './gameicons';
+import {CI, deckCardHtml, deckOr} from './deckpv';
 import {onAct, openModal, type Ctx, type ModalHandle} from './parts';
 import {GAMES, GAME_INFO, type Game} from '../game/types';
 import {BLOF} from '../game/blofAdapter';
@@ -94,7 +95,6 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
 const SK: Record<string, SuitKey> = {'♥': 'h', '♦': 'd', '♣': 'c', '♠': 's'};
 const mc = (r: string, s: string, cls = '', style = '') =>
   `<span class="kh-mc is-${SK[s]} ${cls}" style="${style}"><span class="kh-mc__r">${r}${suitSvg(SK[s])}</span><span class="kh-mc__s">${suitSvg(SK[s])}</span></span>`;
-const back = (style = '') => `<span class="kh-mc is-back" style="${style}"></span>`;
 const fan = (cards: string[]) =>
   `<span class="kh-pile">${cards.map((c, i) => c.replace('style="', `style="transform:rotate(${(i - (cards.length - 1) / 2) * 11}deg) translateX(${(i - (cards.length - 1) / 2) * 6}px);`)).join('')}</span>`;
 
@@ -116,8 +116,10 @@ const call = (n: string, r: string) => `<span class="kh-call"><b>${n}</b><i>tane
  * Nasıl Oynanır. Blöf motoru varsa iki sekme (Pişti | Blöf), yoksa yalnız Pişti sayfası (eskisi gibi).
  * game: ilk açılan sekme (oyun içinden açılınca o oyunun kuralları).
  */
-export function rules(ctx: Ctx, game: Game = 'pisti'): Promise<void> {
+export function rules(ctx: Ctx, game: Game = 'pisti', deck = 'yildizli'): Promise<void> {
   return new Promise(res => {
+    // kapalı kart: masada kullanılan kuşanılmış destenin gerçek arka yüzü (pişmiş deste şeridinden dilim)
+    const back = (style = '') => deckCardHtml(deckOr(deck), CI.back, 'kh-mcb', style);
     let m: ModalHandle;
     const done = () => {
       m.close();
@@ -133,8 +135,8 @@ export function rules(ctx: Ctx, game: Game = 'pisti'): Promise<void> {
     ];
     const blof: RuleStep[] = [
       {art: `${fan([back(), back(), back()])}${arrow}${call('3', '7')}`, t: 'Söyle ve kapalı at', d: 'Turu açan bir <b>değer</b> söyler, <b>1–4 kartı kapalı</b> atar. Doğruyu söylemek şart değil!'},
-      {art: `${fan([back(), back()])}${arrow}<span class="kh-call is-pass"><b>Pas</b></span>`, t: 'Aynı değer ya da pas', d: 'Sıradakiler <b>aynı değeri</b> söyleyip 1–4 kart atar ya da <b>Pas</b> der. Herkes pas derse yığın kalkar.'},
-      {art: `${fan([mc('7', '♦'), mc('7', '♠'), mc('K', '♥', 'is-glow')])}<span class="kh-step__badge is-red">BLÖF!</span>`, t: 'Blöf de, yakala', d: 'Her atıştan sonra <b>5 sn</b> içinde “Blöf!” de. <b>Yalansa</b> yığını atan, <b>doğruysa</b> sen alırsın.'},
+      {art: `${fan([back(), back()])}${arrow}<span class="kh-call is-pass"><b>Pas</b></span>`, t: 'Aynısı ya da Pas', d: 'Sıradakiler <b>aynı değeri</b> söyleyip 1–4 kart atar ya da <b>Pas</b> der. Herkes pas derse yığın kalkar.'},
+      {art: `${fan([back(), back(), back()])}${arrow}${mc('K', '♥', 'is-glow')}<span class="kh-step__badge is-red">BLÖF!</span>`, t: 'Blöf de, yakala', d: 'Her atıştan sonra <b>5 sn</b> içinde “Blöf!” de. <b>Yalansa</b> yığını atan, <b>doğruysa</b> sen alırsın.'},
       {art: `${mc('A', '♠', 'is-glow')}<span class="kh-step__crown">${I.crown}</span>`, t: 'İlk bitiren kazanır', d: 'Kartlarını <b>ilk bitiren</b> kazanır. Son karta da blöf denebilir! Eşlide takım birlikte kazanır.'},
     ];
     const both = BLOF.available();

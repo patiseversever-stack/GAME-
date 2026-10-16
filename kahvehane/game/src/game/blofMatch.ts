@@ -20,7 +20,7 @@ import type {VoicePlayer} from '../audio/voice';
 import type {GameHud, HudPose} from '../ui/types';
 import {haptic, store} from '../platform/bridge';
 import {charById} from './roster';
-import {MODE_INFO, type BlofOutcome, type BlofSeatResult, type Difficulty, type MatchSetup, type SeatPlayer} from './types';
+import {type BlofOutcome, type BlofSeatResult, type Difficulty, type MatchSetup, type SeatPlayer} from './types';
 
 export interface BlofMatchDeps {
   table: Table2D;
@@ -209,9 +209,9 @@ export class BlofMatch {
     for (let s = 0; s < this.n; s++) hud.alert?.(s, false);
 
     // masa + arayüz
-    const team = MODE_INFO[setup.mode]?.teams ?? info.teams;
     this.t.reset(this.n);
-    this.ui.reset(this.n, setup.mode === 'esli' ? team : undefined);
+    this.ui.reset();
+    this.stats();
     this.ui.layout(this.t.L);
     this.ui.show(true);
 
@@ -334,14 +334,16 @@ export class BlofMatch {
 
   /** Görünümle ekrandakini eşitle (sayılar, el). Normalde zaten aynıdır; kopukluk/hata durumunda sessiz düzeltme. */
   private syncCounts(v: BlofView): void {
+    let changed = false;
     for (let s = 0; s < this.n; s++) {
       const c = v.handCounts[s] ?? 0;
       if (this.counts[s] !== c) {
         this.counts[s] = c;
-        this.ui.setCount(s, c);
+        changed = true;
       }
       this.d.hud.alert?.(s, c > 0 && c <= 2);
     }
+    if (changed) this.stats();
     this.t.sync(v.hand, v.handCounts);
     this.ui.setHeld(this.heldCounts(v.hand));
     if (this.pileN !== v.pileCount) {
@@ -352,6 +354,11 @@ export class BlofMatch {
       this.outN = v.discardCount;
       this.ui.setOut(v.discardCount);
     }
+  }
+
+  /** Kart sayıları rozetlerin altındaki haplarda (HUD). */
+  private stats(): void {
+    this.d.hud.setStats(this.counts.map(c => ({cards: c, pisti: 0})));
   }
 
   private heldCounts(hand: readonly number[]): number[] {
@@ -374,10 +381,8 @@ export class BlofMatch {
         for (let i = 0; i < total; i++) order.push((e.startSeat + i) % this.n);
         const mine = e.hands[ME] ?? [];
         await t.deal(order, mine);
-        e.counts.forEach((c, s) => {
-          this.counts[s] = c;
-          ui.setCount(s, c, false);
-        });
+        e.counts.forEach((c, s) => (this.counts[s] = c));
+        this.stats();
         ui.setHeld(this.heldCounts(mine));
         t.setSelectable(true);
         return;
@@ -418,7 +423,7 @@ export class BlofMatch {
           await t.play(ME, e.cards ?? []);
         } else await t.play(seat, e.count);
         this.counts[seat] = e.handCount;
-        ui.setCount(seat, e.handCount);
+        this.stats();
         this.pileN = e.pileCount;
         ui.setPile(e.pileCount);
         ui.setLast(this.name(seat), e.count);
@@ -462,11 +467,14 @@ export class BlofMatch {
         t.setSelectable(false);
         sfx.capture(e.count);
         await t.take(seat, seat === ME ? (e.cards ?? []) : undefined, (i, total) => {
-          ui.setCount(seat, base + Math.round(((i + 1) / total) * (e.handCount - base)));
-          if (i % 2 === 0) sfx.tick(Math.min(20, i));
+          const k = base + Math.round(((i + 1) / total) * (e.handCount - base));
+          if (k !== this.counts[seat]) {
+            this.counts[seat] = k;
+            hud.tickCards(seat, k);
+          }
         });
         this.counts[seat] = e.handCount;
-        ui.setCount(seat, e.handCount);
+        this.stats();
         this.pileN = 0;
         ui.setPile(0);
         ui.setClaim(null);

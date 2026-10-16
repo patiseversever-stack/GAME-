@@ -36,8 +36,6 @@ export interface BlofSeat {
   spread: number;
   /** Yelpazede görünen en çok kart (fazlası alttakilerin arkasına sıkışır) */
   vis: number;
-  /** Kart sayısı rozetinin yeri */
-  chip: {x: number; y: number};
 }
 
 export interface BlofLayout {
@@ -111,6 +109,13 @@ export const handOrder = (a: CardId, b: CardId): number => rankOf(a) - rankOf(b)
 const SP_MAX = [0.36, 0.62] as const;
 const SP_MIN = [0.25, 0.34] as const;
 const SP_TIGHT = [0.19, 0.27] as const;
+/** Seçili kartın iki yanındaki adım: komşular yer açar (seçim yığın gibi görünmesin) */
+const SP_SEL = 0.56;
+/** İki sıralı elde arka sıranın kayması, seçim yüksekliği (tek / iki sıra), orta yığın ölçeği (kart genişliği oranı) */
+const ROW_DY = 0.56;
+const LIFT1 = 0.22;
+const LIFT2 = 0.19;
+const PILE_S = 0.96;
 
 export class BlofTable {
   readonly el: HTMLDivElement;
@@ -132,6 +137,7 @@ export class BlofTable {
   private ch = 114;
   private active = false;
   private safeB = 0;
+  private safeT = 0;
   private gest: {id: number; x0: number; on: boolean; seen: Set<BCard>; slid: boolean} | null = null;
   /** Elde seçim yapılabilir mi (dağıtım/açılış sırasında kapalı) */
   selectable = false;
@@ -222,11 +228,12 @@ export class BlofTable {
   };
 
   // ───────── düzen ─────────
-  private readSafe(): number {
+  private readSafe(): [number, number] {
     const p = document.createElement('div');
-    p.style.cssText = 'position:fixed;left:0;bottom:0;height:0;padding-bottom:env(safe-area-inset-bottom);visibility:hidden';
+    p.style.cssText = 'position:fixed;left:0;bottom:0;height:0;padding-top:env(safe-area-inset-top);padding-bottom:env(safe-area-inset-bottom);visibility:hidden';
     document.body.append(p);
-    const v = p.offsetHeight;
+    const cs = getComputedStyle(p);
+    const v: [number, number] = [parseFloat(cs.paddingTop) || 0, parseFloat(cs.paddingBottom) || 0];
     p.remove();
     return v;
   }
@@ -246,70 +253,82 @@ export class BlofTable {
     const sH = cwH / cw;
     const maxW = Math.min(W - Math.max(16, W * 0.04), cwH * 10.5);
     const bottom = H - Math.max(8, H * 0.012) - this.safeB;
-    const rowDy = chH * 0.47;
-    const lift = chH * 0.22;
+    const rowDy = chH * ROW_DY;
+    const lift = chH * LIFT1;
     const yF = bottom - chH / 2;
-    // yığın
-    const pileS = 0.82;
-    const pileY = H * (n === 2 ? 0.425 : n === 3 ? 0.44 : 0.445);
-    const pile = {x: W / 2, y: pileY, s: pileS};
-    const pw = cw * pileS, ph = ch * pileS;
-    // koltuklar
-    const seats: BlofSeat[] = [{x: W / 2, y: yF, a: 0, s: sH, spread: 0, vis: 0, chip: {x: 0, y: 0}}];
-    const fs4 = Math.min(0.56, Math.max(0.46, (H * 0.075) / ch));
+    const barH = Math.max(44, u * 3);
+    // eylem çubuğunun üstü: tek sıra / iki sıra el
+    const barTop1 = yF - chH / 2 - lift - 6 - barH;
+    const barTop2 = yF - rowDy - chH * 0.525 - chH * LIFT2 - 6 - barH;
+    const safeT = this.safeT;
+    // koltuklar (rozet yerleri HUD CSS'inde: hud.css + blofHud.css; burada aynı u ölçüsüyle hesaplanır)
+    const seats: BlofSeat[] = [{x: W / 2, y: yF, a: 0, s: sH, spread: 0, vis: 0}];
+    let oppBottom: number;
     if (n === 2) {
       const s = 0.58;
-      const y = H * 0.232;
-      seats.push({x: W / 2, y, a: 180, s, spread: cw * s * 0.24, vis: 11, chip: {x: W / 2, y: y + ch * s * 0.5 + u * 1.1}});
+      const plate = Math.max(u * 1.15, safeT + u * 0.7) + u * 9.1; // rozet + ad + sayaç
+      const y = plate + (ch * s) / 2 + u * 0.2;
+      seats.push({x: W / 2, y, a: 180, s, spread: cw * s * 0.24, vis: 11});
+      oppBottom = y + (ch * s) / 2;
     } else if (n === 3) {
       // rozetler üst köşelerde (HUD: data-mode=3), yelpazeler altlarında masaya doğru eğik
       const s = 0.5;
-      const y = H * 0.285;
-      const dx = W * 0.255;
-      const cy = y + ch * s * 0.5 + u * 1.15;
+      const plate = Math.max(u * 0.75, safeT) + u * 3.5 + u * 8.4;
+      const y = plate + (ch * s) / 2 + u * 0.1;
+      const dx = W * 0.25;
       seats.push(
-        {x: W / 2 + dx, y, a: -160, s, spread: cw * s * 0.24, vis: 10, chip: {x: W / 2 + dx - u * 0.6, y: cy}},
-        {x: W / 2 - dx, y, a: 160, s, spread: cw * s * 0.24, vis: 10, chip: {x: W / 2 - dx + u * 0.6, y: cy}},
+        {x: W / 2 + dx, y, a: -160, s, spread: cw * s * 0.24, vis: 10},
+        {x: W / 2 - dx, y, a: 160, s, spread: cw * s * 0.24, vis: 10},
       );
+      oppBottom = y + ch * s * 0.58;
     } else {
-      const fh = ch * fs4;
-      const side = Math.max(fh * 0.36, Math.min(W * 0.1, fh * 0.62));
-      const sy = pileY - ch * 0.04;
-      const ty = H * 0.205;
-      // yan yelpazenin boyu (görünen kart sayısına göre) → sayaç yelpazenin altında
-      const half = cw * fs4 * 0.3 * 4 + (cw * fs4) / 2;
-      const cy = sy + half + u * 1.3;
+      // üst: rozetin altında; yanlar: rozetin hemen altında küçük, dikine kapalı yelpaze (ekran kenarına yaslı)
+      const fs = Math.min(0.54, Math.max(0.46, (H * 0.072) / ch));
+      const fh = ch * fs;
+      const plate = Math.max(u * 1.05, safeT + u * 0.6) + u * 8.6;
+      const ty = plate + fh / 2 + u * 0.15;
+      const ss = 0.44;
+      const sh = ch * ss;
+      const sideTop = H <= 700 ? 0.215 : 0.245;
+      const bs = (H <= 700 ? 4.3 : 4.6) * u;
+      const sideLen = 5 * cw * ss * 0.2 + cw * ss;
+      const sy = H * sideTop + bs + u * 3.7 + sideLen / 2;
+      const side = sh * 0.38;
       seats.push(
-        {x: W - side, y: sy, a: -90, s: fs4, spread: cw * fs4 * 0.3, vis: 9, chip: {x: W - Math.max(side, u * 2.4), y: cy}},
-        {x: W / 2, y: ty, a: 180, s: fs4, spread: cw * fs4 * 0.32, vis: 11, chip: {x: W / 2, y: ty + fh * 0.5 + u * 1.05}},
-        {x: side, y: sy, a: 90, s: fs4, spread: cw * fs4 * 0.3, vis: 9, chip: {x: Math.max(side, u * 2.4), y: cy}},
+        {x: W - side, y: sy, a: -90, s: ss, spread: cw * ss * 0.2, vis: 6},
+        {x: W / 2, y: ty, a: 180, s: fs, spread: cw * fs * 0.3, vis: 10},
+        {x: side, y: sy, a: 90, s: ss, spread: cw * ss * 0.2, vis: 6},
       );
+      oppBottom = ty + fh / 2;
     }
+    // sahne (yığın + madalyon + kenar): boş alanın görsel ortasında, iri
+    const pileS = PILE_S;
+    const pw = cw * pileS, ph = ch * pileS;
+    const ref = n === 4 ? (barTop1 + barTop2) / 2 : barTop2;
+    let pileY = (oppBottom + ref) / 2 + u * 0.2;
+    // iki sıralı elde bile çubuğa değmesin; üstte rakip yelpazesine değmesin
+    pileY = Math.min(pileY, barTop2 - ph / 2 - u * 2.2);
+    pileY = Math.max(pileY, oppBottom + ph / 2 + u * 1.6);
+    const pile = {x: W / 2, y: pileY, s: pileS};
     // tur madalyonu (yığının sağı) ve kenar (solu)
-    const d = Math.max(u * 4.4, Math.min(pw * 0.95, u * 5.6));
+    const d = clamp(pw * 0.92, u * 4.6, u * 6);
     const gap = u * 1.1;
-    let claim = {x: pile.x + pw / 2 + gap + d / 2, y: pileY, d};
-    let discard = {x: pile.x - pw / 2 - gap * 1.6 - cw * 0.28, y: pileY - ph * 0.04, s: 0.52};
+    const claim = {x: pile.x + pw / 2 + gap + d / 2, y: pileY - ph * 0.04, d};
+    const discard = {x: pile.x - pw / 2 - gap * 1.5 - cw * 0.27, y: pileY - ph * 0.02, s: 0.52};
     if (n === 4) {
-      // yan yelpazelerin iç kenarına çarpmasın
-      const fh = ch * fs4;
-      const innerR = seats[1].x - fh / 2 - u * 0.5, innerL = seats[3].x + fh / 2 + u * 0.5;
-      claim = {x: Math.min(claim.x, innerR - d / 2), y: pileY, d};
-      discard = {x: Math.max(discard.x, innerL + cw * 0.52 * 0.5 * 0.7 + u * 0.4), y: pileY - ph * 0.04, s: 0.5};
+      // yan yelpazelere değmesin
+      const sh = ch * 0.44;
+      const innerR = W - sh * 0.38 - sh / 2 - u * 0.4, innerL = sh * 0.38 + sh / 2 + u * 0.4;
+      claim.x = Math.min(claim.x, innerR - d / 2);
+      discard.x = Math.max(discard.x, innerL + (cw * 0.52) / 2 + u * 0.3);
     }
     this.L = {
       W, H, cw, ch, u, n, pile, claim, discard,
       hand: {cx: W / 2, y: yF, s: sH, cwH, chH, rowDy, lift, maxW, rows: 1, top: yF - chH / 2 - lift},
       barY: 0,
-      blof: {x: W / 2, y: 0, d: 0},
+      blof: {x: W / 2, y: 0, d: clamp(barH * 1.62, u * 4.4, u * 5.6)},
       seats,
     };
-    // BLÖF düğmesi: yığının altı ile en kötü (iki sıra) çubuk üstü arasında
-    const barH = Math.max(44, u * 3);
-    const worstTop = yF - rowDy - chH / 2 - lift - 8 - barH;
-    const pileBottom = pileY + ph / 2 + u * 0.6;
-    const bd = clamp((worstTop - pileBottom) * 0.92, u * 4.2, u * 6);
-    this.L.blof = {x: W / 2, y: (pileBottom + worstTop) / 2, d: bd};
     // yığın etkileşim + uyarı halkası
     const hr = Math.max(pw, ph) * 1.25;
     Object.assign(this.pileHit.style, {width: hr + 'px', height: hr + 'px', transform: `translate3d(${(pile.x - hr / 2).toFixed(1)}px,${(pile.y - hr / 2).toFixed(1)}px,0)`});
@@ -494,25 +513,41 @@ export class BlofTable {
     const two = rows.length === 2;
     const s = cwH / this.cw;
     const chH = cwH / 0.7;
-    const rowDy = chH * 0.52;
+    const rowDy = chH * ROW_DY;
     const out: Pose[] = new Array(n);
     rows.forEach((r, ri) => {
       const back = two && ri === 0;
-      const sc = back ? s * 0.95 : s;
+      const k = back ? 0.95 : 1;
       const y0 = h.y + (h.chH - chH) / 2 - (back ? rowDy : 0);
-      let w = cwH;
-      for (let i = r.from + 1; i < r.to; i++) w += (grp[i] === grp[i - 1] ? ki : ko) * cwH * (back ? 0.95 : 1);
-      let x = h.cx - w / 2 + (cwH * (back ? 0.95 : 1)) / 2;
+      // adımlar: seçili kartın iki yanı açılır; satır sığmazsa seçili olmayan adımlar daralır
+      const steps: number[] = [];
+      let fixed = 0, flex = 0;
+      for (let i = r.from + 1; i < r.to; i++) {
+        const base = grp[i] === grp[i - 1] ? ki : ko;
+        const sel = cards[i].sel || cards[i - 1].sel;
+        const st = sel ? Math.max(base, SP_SEL) : base;
+        steps.push(st);
+        if (sel) fixed += st;
+        else flex += st;
+      }
+      const room = h.maxW / (cwH * k) - 1 - fixed;
+      const f = flex > 0 && fixed + flex > h.maxW / (cwH * k) - 1 ? Math.max(0.55, room / flex) : 1;
+      let w = cwH * k;
+      steps.forEach((st, j) => (w += (cards[r.from + j + 1].sel || cards[r.from + j].sel ? st : st * f) * cwH * k));
+      let x = h.cx - w / 2 + (cwH * k) / 2;
       const half = Math.max(w / 2, cwH * 1.5);
       for (let i = r.from; i < r.to; i++) {
-        if (i > r.from) x += (grp[i] === grp[i - 1] ? ki : ko) * cwH * (back ? 0.95 : 1);
+        if (i > r.from) {
+          const st = steps[i - r.from - 1];
+          x += (cards[i].sel || cards[i - 1].sel ? st : st * f) * cwH * k;
+        }
         const q = (x - h.cx) / half;
-        out[i] = {x, y: y0 + q * q * chH * 0.045, r: q * (back ? 2 : 2.8), s: sc};
+        out[i] = {x, y: y0 + q * q * chH * 0.045, r: q * (back ? 2 : 2.8), s: s * k};
       }
     });
     h.rows = rows.length;
-    // iki sırada seçim daha az kalkar (arka sıranın indeksleri örtülmesin)
-    this.liftK = two ? 0.16 / 0.22 : 1;
+    // iki sırada seçim biraz daha az kalkar (arka sıranın indeksleri örtülmesin)
+    this.liftK = two ? LIFT2 / LIFT1 : 1;
     const liftPx = h.lift * (chH / h.chH) * this.liftK;
     h.top = h.y + (h.chH - chH) / 2 - (two ? rowDy + chH * 0.025 : 0) - chH / 2 - liftPx;
     this.rowOf = two ? rows[0].to : n;
@@ -528,15 +563,16 @@ export class BlofTable {
   }
 
   /** El yeniden dizilir (sıralı). barY değişirse onLayout bildirilir. */
-  layoutHand(animate = true, ms = 230): void {
+  layoutHand(animate = true, ms = 230, pop?: Set<BCard>): void {
     const top0 = this.L.hand.top;
     const poses = this.handPoses(this.hand);
     this.hand.forEach((c, i) => {
       const p = c.sel ? this.selPose(poses[i]) : poses[i];
       const z = (i < this.rowOf ? 500 : 600) + i;
       c.el.style.zIndex = String(z);
-      if (animate) void this.fly(c, p, {ms, lift: 0});
-      else this.set(c, p);
+      if (!animate) this.set(c, p);
+      else if (pop?.has(c)) void this.fly(c, p, {ms: c.sel ? 230 : 180, lift: 0, ease: c.sel ? SPRING : EASE_OUT});
+      else if (Math.abs(c.pose.x - p.x) > 0.3 || Math.abs(c.pose.y - p.y) > 0.3 || Math.abs(c.pose.s - p.s) > 0.001) void this.fly(c, p, {ms, lift: 0});
     });
     this.updateBar();
     if (Math.abs(top0 - this.L.hand.top) > 0.5) this.onLayout(this.L);
@@ -545,6 +581,8 @@ export class BlofTable {
   private updateBar(): void {
     const barH = Math.max(44, this.L.u * 3);
     this.L.barY = this.L.hand.top - 6 - barH / 2;
+    // BLÖF düğmesi çubuğun yerinde (pencere açıkken çubuk gizli)
+    this.L.blof.y = this.L.barY;
   }
 
   private layoutFan(seat: number, animate = true): void {
@@ -574,7 +612,7 @@ export class BlofTable {
   /** Yeni el: kartlar ekran dışında, düzen kurulur. */
   reset(seats: number): void {
     this.n = seats;
-    this.safeB = this.readSafe();
+    [this.safeT, this.safeB] = this.readSafe();
     this.attach();
     this.layout();
     this.gest = null;
@@ -703,17 +741,16 @@ export class BlofTable {
   /** Tam olarak bu kartları seç (otomatik oyun / öğretici). */
   selectIds(ids: CardId[]): void {
     const want = new Set(ids.slice(0, 4));
-    let changed = false;
-    const poses = this.handPoses(this.hand);
-    this.hand.forEach((c, i) => {
+    const pop = new Set<BCard>();
+    for (const c of this.hand) {
       const on = want.has(c.id);
-      if (on === c.sel) return;
-      changed = true;
+      if (on === c.sel) continue;
+      pop.add(c);
       c.sel = on;
       c.el.classList.toggle('is-sel', on);
-      void this.fly(c, on ? this.selPose(poses[i]) : poses[i], {ms: 200, lift: 0, ease: on ? SPRING : EASE_OUT});
-    });
-    if (!changed) return;
+    }
+    if (!pop.size) return;
+    this.layoutHand(true, 200, pop);
     this.snd.slide(0.5);
     this.onSelect(this.selected());
   }
@@ -733,13 +770,11 @@ export class BlofTable {
     if (this.hand.some(c => c.sel)) return;
     const list = this.hand.filter(c => rankOf(c.id) === rank).slice(0, 4);
     if (!list.length) return;
-    list.forEach((c, j) => {
+    for (const c of list) {
       c.sel = true;
       c.el.classList.add('is-sel');
-      const i = this.hand.indexOf(c);
-      const p = this.handPoses(this.hand)[i];
-      void this.fly(c, this.selPose(p), {ms: 220, delay: j * 45, lift: 0, ease: SPRING});
-    });
+    }
+    this.layoutHand(true, 220, new Set(list));
     this.snd.slide(0.5);
     this.onSelect(this.selected());
   }
@@ -754,9 +789,7 @@ export class BlofTable {
     }
     c.sel = on;
     c.el.classList.toggle('is-sel', on);
-    const i = this.hand.indexOf(c);
-    const base = this.handPoses(this.hand)[i];
-    void this.fly(c, on ? this.selPose(base) : base, {ms: on ? 200 : 170, lift: 0, ease: on ? SPRING : EASE_OUT});
+    this.layoutHand(true, 200, new Set([c]));
     this.snd.slide(on ? 0.55 : 0.35);
     haptic('light');
     this.onSelect(this.selected());

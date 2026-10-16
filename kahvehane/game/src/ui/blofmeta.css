@@ -63,3 +63,8 @@
 .kh-statsec .kh-label { flex: none; }
 .kh-results__head .kh-results__kicker { position: relative; z-index: 1; margin-bottom: calc(var(--u) * .3); letter-spacing: .16em; }
 .kh-results .kh-results__head { margin-top: calc(var(--u) * -.45); }
+
+/* kurallar: kapalı kart = masadaki gerçek deste arkası (kh-dc dilimi); küçük kartlarla aynı boy */
+.kh-mcb { --cw: calc(var(--u) * 2.35); flex: none; width: var(--cw); box-shadow: 0 0 0 1.5px rgba(10, 16, 51, .9), 0 3px 6px rgba(2, 4, 24, .45); }
+.kh-pile .kh-mcb { position: absolute; left: 50%; top: 50%; margin: calc(var(--u) * -1.645) 0 0 calc(var(--u) * -1.175); }
+.kh-step__badge.is-red { right: auto; left: calc(var(--u) * .3); } /* K kartının köşe işaretini kapatmasın */

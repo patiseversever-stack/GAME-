@@ -16,9 +16,13 @@ export interface LocalTransportOptions {
   clock?: Clock;
 }
 
-/** Aynı süreçteki iki uç. Mesajlar yapılandırılmış kopyayla (JSON) geçer: paylaşılan nesne sızıntısı olmaz. */
+/**
+ * Aynı süreçteki iki uç. Mesajlar değer kopyasıyla (JSON) geçer: paylaşılan nesne sızıntısı olmaz.
+ * Gerçek soket gibi, henüz dinleyici yokken gelenler tamponda bekler ve ilk dinleyiciye sırayla verilir.
+ */
 export class LocalTransport<Out, In> implements Transport<Out, In> {
   private listeners: ((msg: In) => void)[] = [];
+  private pending: In[] = [];
   private peer: LocalTransport<In, Out> | null = null;
   private _closed = false;
 
@@ -48,11 +52,20 @@ export class LocalTransport<Out, In> implements Transport<Out, In> {
 
   private deliver(msg: In): void {
     if (this._closed) return;
+    if (this.listeners.length === 0) {
+      this.pending.push(msg);
+      return;
+    }
     for (const cb of this.listeners.slice()) cb(msg);
   }
 
   onMessage(cb: (msg: In) => void): () => void {
     this.listeners.push(cb);
+    if (this.pending.length > 0) {
+      const q = this.pending;
+      this.pending = [];
+      for (const m of q) this.deliver(m);
+    }
     return () => {
       const i = this.listeners.indexOf(cb);
       if (i >= 0) this.listeners.splice(i, 1);
@@ -63,6 +76,7 @@ export class LocalTransport<Out, In> implements Transport<Out, In> {
     if (this._closed) return;
     this._closed = true;
     this.listeners = [];
+    this.pending = [];
     const p = this.peer;
     this.peer = null;
     if (p && !p._closed) p.close();
