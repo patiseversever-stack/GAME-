@@ -537,19 +537,25 @@ export class BlofTable {
       const k = back ? 0.95 : 1;
       const y0 = h.y + (h.chH - chH) / 2 - (back ? rowDy : 0);
       // adımlar: seçili kartın iki yanı açılır; satır sığmazsa seçili olmayan adımlar daralır
-      const steps: number[] = [];
-      let fixed = 0, flex = 0;
-      for (let i = r.from + 1; i < r.to; i++) {
-        const base = grp[i] === grp[i - 1] ? ki : ko;
-        // seçili kartın SAĞINDAKİ adım açılır (sonraki kart onu örtüyor); solundaki kart zaten altta kalır
-        const sel = cards[i - 1].sel;
-        const st = sel ? Math.max(base, SP_SEL) : base;
-        steps.push(st);
-        if (sel) fixed += st;
-        else flex += st;
-      }
-      const room = h.maxW / (cwH * k) - 1 - fixed;
-      const f = flex > 0 && fixed + flex > h.maxW / (cwH * k) - 1 ? Math.max(0.55, room / flex) : 1;
+      // seçili kartın SAĞINDAKİ adım açılır (sonraki kart onu örtüyor); solundaki kart zaten altta kalır.
+      // Satır taşarsa önce bu açıklık daralır (0.5 → 0.36), sonra seçili olmayan adımlar sıkışır.
+      const build = (selStep: number) => {
+        const steps: number[] = [];
+        let fixed = 0, flex = 0;
+        for (let i = r.from + 1; i < r.to; i++) {
+          const base = grp[i] === grp[i - 1] ? ki : ko;
+          const sel = cards[i - 1].sel;
+          const st = sel ? Math.max(base, selStep) : base;
+          steps.push(st);
+          if (sel) fixed += st;
+          else flex += st;
+        }
+        const avail = h.maxW / (cwH * k) - 1;
+        const f = flex > 0 && fixed + flex > avail ? Math.max(0.55, (avail - fixed) / flex) : 1;
+        return {steps, f};
+      };
+      let {steps, f} = build(SP_SEL);
+      if (f < 0.9) ({steps, f} = build(0.36));
       let w = cwH * k;
       steps.forEach((st, j) => (w += (cards[r.from + j].sel ? st : st * f) * cwH * k));
       let x = h.cx - w / 2 + (cwH * k) / 2;
