@@ -393,7 +393,7 @@ export class ShopPage implements Page {
     const all = shopSets().map(s => ({s, p: setPrice(s, this.owns)}));
     const open = all.filter(x => x.p.missing.length).sort((a, b) => b.p.full - b.p.price - (a.p.full - a.p.price));
     const done = all.filter(x => !x.p.missing.length);
-    const out = [secHtml('Tema Setleri', 'Bir temanın tüm parçaları, tek seferde, indirimli', I.gift)];
+    const out = [secHtml('Tema Setleri', 'Tek temada tam takım, indirimli', I.gift)];
     for (const x of open) out.push(`<div class="kh-sets">${setCardHtml(x.s, me, this.owns, coins)}</div>`);
     if (!out[1]) out.push('');
     out[0] += out.splice(1, 1)[0];
