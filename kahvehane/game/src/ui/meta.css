@@ -17,7 +17,7 @@
 .kh-ava[data-char=cem] .kh-ava__img { left: -30%; top: 0%; }
 .kh-ava[data-char=dursun] .kh-ava__img { top: 1%; }
 .kh-ava[data-char=defne] .kh-ava__img { left: -30%; top: -2%; }
-.kh-ava.is-locked .kh-ava__img { filter: brightness(0) opacity(.55); }
+.kh-ava.is-locked .kh-ava__img { filter: grayscale(.85) brightness(.5) contrast(1.05); }
 .kh-ava.is-locked .kh-ava__clip { background: radial-gradient(circle at 50% 30%, #5162c4, #27348e 60%, #141d66); }
 
 /* ---------- canlı portre ---------- */

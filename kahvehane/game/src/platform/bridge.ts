@@ -27,6 +27,9 @@ const PATTERN: Record<Haptic, number | number[]> = {light: 8, medium: 18, heavy:
 export function haptic(kind: Haptic): void {
   if (!hapticsOn) return;
   if (inApp()) return post('haptic', {kind});
+  // kullanıcı sayfaya hiç dokunmadıysa tarayıcı titreşimi engeller (ve konsola uyarı yazar): hiç deneme
+  const ua = (navigator as Navigator & {userActivation?: {hasBeenActive: boolean}}).userActivation;
+  if (ua && !ua.hasBeenActive) return;
   try {
     navigator.vibrate?.(PATTERN[kind]);
   } catch {
