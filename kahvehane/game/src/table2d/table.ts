@@ -130,6 +130,12 @@ export class Table2D {
   private cardsEl: HTMLDivElement;
   private fxEl: HTMLDivElement;
   private ring: HTMLDivElement;
+  /** Halkanın çentikleri (her atışta bir çentik "tık"lar), parlama çizgisi, dışa yayılan çentik halkaları, kart altı ışık */
+  private ticks: HTMLElement;
+  private ringFlash: HTMLElement;
+  private ripples: Pool;
+  private blooms = new Map<string, HTMLElement>();
+  private ringAnims: Animation[] = [];
   private raysEl: HTMLElement;
   private potEl: HTMLElement;
   private potNum: HTMLElement;
@@ -187,7 +193,7 @@ export class Table2D {
     this.root.innerHTML = `<div class="ar__bg"></div>
       <div class="ar__glow"></div><div class="ar__glow"></div>
       <div class="ar__tint"></div><div class="ar__rays"></div><div class="ar__pattern"></div><div class="ar__vig"></div><div class="ar__edge"></div>
-      <div class="ar__zoom"><div class="ar__shake"><div class="ar__ring"><i></i></div><div class="ar__cards"></div><div class="ar__fx"></div>
+      <div class="ar__zoom"><div class="ar__shake"><div class="ar__ring"><i class="ar__rf"></i><i class="ar__tk"></i></div><div class="ar__cards"></div><div class="ar__fx"></div>
       <div class="ar__pot"><svg viewBox="0 0 24 24"><path d="M12 22c-4 0-7-2.8-7-6.6 0-3.5 2.3-5.6 3.7-7.6.9-1.3 1.3-2.9 1.2-4.3 2.9 1.4 4.4 4 4.5 6.7.8-.6 1.3-1.6 1.4-2.7 2 1.8 3.1 4.4 3.1 7.1 0 4.2-3 7.4-6.9 7.4z" fill="#ffb21a" stroke="#0a1033" stroke-width="2"/><path d="M12 20c-1.8 0-3.1-1.2-3.1-2.9 0-1.6 1.1-2.6 1.8-3.5.4-.6.6-1.3.6-2 1.4.7 2.3 2 2.3 3.3.4-.3.7-.8.7-1.3 1 .9 1.5 2.1 1.5 3.4 0 1.7-1.6 3-3.8 3z" fill="#fff27a"/></svg><b>0</b></div></div></div>`;
     host.append(this.root);
     this.zoomEl = this.root.querySelector('.ar__zoom')!;
@@ -195,6 +201,8 @@ export class Table2D {
     this.cardsEl = this.root.querySelector('.ar__cards')!;
     this.fxEl = this.root.querySelector('.ar__fx')!;
     this.ring = this.root.querySelector('.ar__ring')!;
+    this.ticks = this.ring.querySelector('.ar__tk')!;
+    this.ringFlash = this.ring.querySelector('.ar__rf')!;
     this.raysEl = this.root.querySelector('.ar__rays')!;
     this.potEl = this.root.querySelector('.ar__pot')!;
     this.potNum = this.potEl.querySelector('b')!;
@@ -206,6 +214,7 @@ export class Table2D {
     this.pulses = new Pool(this.fxEl, 'ar__pulse', 6);
     this.ghosts = new Pool(this.cardsEl, 'ar__ghost', 6);
     this.puffs = new Pool(this.fxEl, 'ar__puff', 10);
+    this.ripples = new Pool(this.ring, 'ar__rt', 3);
     for (let i = 0; i < 52; i++) {
       const c = new Card();
       this.all.push(c);
@@ -305,15 +314,28 @@ export class Table2D {
     const cw = Math.round(Math.min(W * 0.215, H * 0.112));
     const ch = Math.round(cw / 0.7);
     const handW = Math.min(W * 0.245, H * 0.138);
+    const handH = handW / 0.7;
     const pileY = H * 0.455;
     const sx = Math.max(cw * 0.6, W * 0.15);
-    const hand = {x: W * 0.61, y: H - handW / 0.7 / 2 - Math.max(14, H * 0.022), s: handW / cw, maxW: W * 0.68};
+    const hand = {x: W * 0.61, y: H - handH / 2 - Math.max(14, H * 0.022), s: handW / cw, maxW: W * 0.68};
+    // HUD birimi (theme.css --u ile aynı formül) ve "Sıra sende / Bu kartla alabilirsin!" ipucu bandı: elin hemen üstünde,
+    // kalkmış (sıra 8 px + basılı 14 px + %3 büyüme) ve kıpırdayan kartın da üstünde, nefes payıyla. Bu bandın üstüne
+    // (clear çizgisinin altına) hiçbir masa öğesi inmez: ipucu hiçbir zaman karta ya da desteye binmez.
+    const u = Math.min(22, Math.max(12, Math.min(W * 0.04, H * 0.02)));
+    const handTop = hand.y - handH / 2;
+    const hintBottom = handTop - (22 + handH * 0.035) - u * 0.45;
+    const clear = hintBottom - u * 2.65 - u * 0.4;
+    const edge = Math.max(7, W * 0.018) + 4; // ekran kenarı payı (+ destenin -5° eğikliği)
+    // deste sayacı hapı kartın alt kenarına biner (yarısı dışarıda): dikeyde ~0,8u taşar
+    const pillOut = u * 0.8;
     let seats: SeatGeo[];
     let deck: {x: number; y: number; s: number};
     if (this.n === 2) {
-      deck = {x: Math.max(cw * 0.62, W * 0.155), y: pileY, s: 1};
+      // kalan deste sol kenara çekilir (halka ile arasında nefes payı), biraz küçük: ortadaki sahne öne çıkar
+      const ds = 0.9;
+      deck = {x: edge + (cw * ds) / 2, y: pileY, s: ds};
       seats = [
-        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: W - sx, y: H * 0.655, s: 0.78, r: 8}, pdir: -1},
+        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: W - sx, y: Math.min(H * 0.655, clear - (ch * 0.78) / 2 - 5), s: 0.78, r: 8}, pdir: -1},
         {fan: {x: W / 2, y: H * 0.235, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: W - sx, y: H * 0.27, s: 0.78, r: -8}, pdir: -1},
       ];
     } else {
@@ -322,15 +344,32 @@ export class Table2D {
       const side = Math.max(fh * 0.36, Math.min(W * 0.1, fh * 0.62));
       const ss = 0.6;
       const sideStackX = Math.max(cw * ss * 0.7, W * 0.12);
-      deck = {x: Math.max(cw * 0.7, W * 0.29), y: H * 0.665, s: 0.8};
+      // yan rakibin destesi yelpazesinin hemen altında (eskiden sabit %60,5: uzun ekranda boşluk, kısa ekranda desteye yer kalmıyordu)
+      const fanBottom = H * 0.455 + 1.5 * cw * fs * 0.62 + (cw * fs) / 2 + 4;
+      const sideY = Math.min(H * 0.605, fanBottom + u * 0.45 + (ch * ss) / 2 + 3);
+      // kalan deste sol kenarda, yan rakibin destesi ile benim rozetim arasında (ortadaki sahne boş kalır); yer daralırsa küçülür
+      const slotTop = sideY + (ch * ss) / 2 + 3 + u * 0.45;
+      const slotBot = H - u * 10.1 - u * 0.3; // alt rozet (kafa taşması dahil)
+      const need = (s: number) => ch * s + 10.9 * s + pillOut; // kart + 26 kartlık yığın kayması + hap taşması
+      const ds = Math.max(0.56, Math.min(0.8, (slotBot - slotTop - pillOut) / (ch + 10.9)));
+      const top = slotTop + Math.max(0, (slotBot - slotTop - need(ds)) / 2);
+      deck = {x: edge + (cw * ds) / 2, y: top + 10.9 * ds + (ch * ds) / 2, s: ds};
       seats = [
-        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: Math.min(W - cw * 0.6, W * 0.72), y: H * 0.665, s: 0.7, r: 8}, pdir: 1},
-        {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: H * 0.605, s: ss, r: -6}, pdir: -1},
+        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: Math.min(W - cw * 0.6, W * 0.72), y: Math.min(H * 0.665, clear - (ch * 0.7) / 2 - 5), s: 0.7, r: 8}, pdir: 1},
+        {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1},
         {fan: {x: W / 2, y: H * 0.2, a: 180, s: fs, spread: cw * fs * 0.62}, stack: {x: Math.min(W - cw * 0.9, W / 2 + cw * 1.45), y: H * 0.2, s: ss, r: 6}, pdir: 1},
-        {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: H * 0.605, s: ss, r: 6}, pdir: 1},
+        {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1},
       ];
     }
     this.L = {W, H, cw, ch, pile: {x: W / 2, y: pileY}, deck, hand, seats};
+    this.pillDy = -u * 0.15;
+    // ipucu hapının yeri HUD'a CSS değişkeniyle (hud.css: var(--kh-hint-bottom…)); Blöf kendi yerini kullanır
+    const hb = `${Math.max(0, H - hintBottom).toFixed(1)}px`;
+    const rs = document.documentElement.style;
+    if (rs.getPropertyValue('--kh-hint-bottom') !== hb) {
+      rs.setProperty('--kh-hint-bottom', hb);
+      rs.setProperty('--kh-hint-bottom4', hb);
+    }
     for (const c of this.all) {
       c.el.style.width = cw + 'px';
       c.el.style.height = ch + 'px';
@@ -506,9 +545,12 @@ export class Table2D {
     return {x: s.x + g.pdir * (this.L.cw * s.s * 0.5 + i * 12), y: s.y + 6, r: g.pdir * (14 + i * 4), s: s.s * 0.94};
   }
 
+  /** Deste sayacı hapının kartın alt kenarına göre dikey kayması (hap kenara biner) */
+  private pillDy = 0;
+
   private emitDeck(): void {
     const d = this.deckPose(this.deck.length - 1);
-    this.onDeck(this.deck.length, this.L.deck.x, d.y + (this.L.ch * this.L.deck.s) / 2 + 12);
+    this.onDeck(this.deck.length, this.L.deck.x, d.y + (this.L.ch * this.L.deck.s) / 2 + this.pillDy);
   }
 
   /** Ekrandaki noktalar (HUD sayı balonları için) */
@@ -637,6 +679,94 @@ export class Table2D {
     Object.assign(el.style, {width: d + 'px', height: d + 'px', left: p.x - d / 2 + 'px', top: p.y - d / 2 + 'px', color});
     el.animate([{transform: 'scale(.55)', opacity: 0.95}, {transform: 'scale(1.45)', opacity: 0}], {duration: 520 + 160 * size, easing: 'cubic-bezier(.15,.7,.3,1)'})
       .finished.then(() => this.pulses.hide(el), () => undefined);
+  }
+
+  /**
+   * Yığın halkasının atışa tepkisi (yalnız transform/opacity, havuzlu düğümler, döngü yok; hepsi ≤ ~0,4 sn, pişti ≤ 0,75 sn).
+   * lvl: 0 sıradan atış · 1 alış · 2 büyük alış (6+ kart) · 3 pişti · 4 vale pişti. Her seviye bir öncekinin üstüne ekler:
+   * halka "vurulur" (yaylanarak büyür), çentikler bir çentik tıklar (alışta 2, piştide tam tur), kartın altından takım renginde
+   * ışık açılır, çentik halkası dışa dalgalanır (alışta 2, piştide 3 + şok halkası). Yığın büyüdükçe atış tepkisi de büyür.
+   * Düşük cihaz: yalnız halka vuruşu + ışık (çentik dalgası, tık ve parlama yok). Hareket azaltma tercihinde yalnız ışık.
+   */
+  ringHit(lvl: number, suit: Suit | null): void {
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const pileK = Math.min(1, Math.max(0, this.pile.length - 2) / 8); // 0 → 1: yığın kızıştıkça
+    const k = lvl === 0 ? 1 + 0.45 * pileK : [1, 1.45, 1.75, 2.1, 2.5][lvl];
+    this.stopRing();
+    // 1) kart altı ışık (takım renginde; alış ve piştide altın-beyaz)
+    const key = lvl >= 1 ? 'G' : suit ?? 'N';
+    const bl = this.bloom(key);
+    bl.style.display = 'block';
+    const peak = Math.min(1, 0.62 + 0.14 * lvl + 0.2 * pileK);
+    const bms = lvl >= 3 ? 640 : lvl >= 1 ? 480 : 380;
+    bl.animate([{transform: 'scale(.5)', opacity: 0}, {transform: `scale(${(0.92 + 0.06 * k).toFixed(3)})`, opacity: peak, offset: 0.2}, {transform: `scale(${(1.02 + 0.1 * k).toFixed(3)})`, opacity: 0}],
+      {duration: bms, easing: 'cubic-bezier(.2,.7,.3,1)'}).finished.then(() => (bl.style.display = 'none'), () => undefined);
+    if (reduce) return;
+    // 2) halka vuruşu: hızlı büyür, hafif içe sekip yerine oturur
+    const s1 = 1 + 0.035 * k, s2 = 1 - 0.012 * k;
+    const ms = lvl >= 3 ? 560 : lvl >= 1 ? 440 : 360;
+    this.ringAnims.push(this.ring.animate([{transform: 'scale(1)'}, {transform: `scale(${s1.toFixed(3)})`, offset: 0.22}, {transform: `scale(${s2.toFixed(3)})`, offset: 0.55}, {transform: 'scale(1)'}],
+      {duration: ms, easing: 'cubic-bezier(.25,.7,.35,1)'}));
+    if (this.low) return;
+    // 3) çentikler: kadran gibi tık (desen 15°'de bir tekrarlar → sonda yerine oturmuş görünür, açı saklanmaz)
+    const notches = lvl === 0 ? 1 : lvl === 1 ? 2 : lvl === 2 ? 3 : lvl === 3 ? 12 : 24;
+    const deg = notches * 15;
+    const over = lvl >= 3 ? 0 : 2.5;
+    this.ringAnims.push(this.ticks.animate([
+      {transform: 'rotate(0deg) scale(1)', opacity: 0.7},
+      {transform: `rotate(${(deg * 0.72).toFixed(1)}deg) scale(${(1 + 0.03 * k).toFixed(3)})`, opacity: 1, offset: 0.3},
+      {transform: `rotate(${(deg + over).toFixed(1)}deg) scale(1)`, opacity: 0.85, offset: 0.7},
+      {transform: `rotate(${deg}deg) scale(1)`, opacity: 0.7},
+    ], {duration: lvl >= 3 ? 760 : ms + 40, easing: lvl >= 3 ? 'cubic-bezier(.15,.8,.25,1)' : 'cubic-bezier(.3,.7,.3,1)'}));
+    // 4) halka çizgisi parlar (beyaz, takım renginde ışıma)
+    const rf = this.ringFlash;
+    rf.style.color = lvl >= 1 ? '#ffe9a0' : suit ? SUIT_COLOR[suit] : '#cfd8ff';
+    rf.style.display = 'block';
+    const fa = rf.animate([{opacity: 0, transform: 'scale(.97)'}, {opacity: Math.min(1, 0.7 + 0.1 * lvl), transform: `scale(${(1 + 0.012 * k).toFixed(3)})`, offset: 0.18}, {opacity: 0, transform: `scale(${(1.02 + 0.02 * k).toFixed(3)})`}],
+      {duration: ms + 60, easing: 'ease-out'});
+    fa.finished.then(() => (rf.style.display = 'none'), () => undefined);
+    this.ringAnims.push(fa);
+    // 5) dışa dalgalanan çentik halkaları (alış/piştide birden çok, gecikmeli)
+    const waves = lvl === 0 ? 1 : lvl <= 2 ? 2 : 3;
+    for (let i = 0; i < waves; i++) {
+      const el = this.ripples.get();
+      const to = 1.18 + 0.1 * k + i * 0.14;
+      el.animate([{transform: 'rotate(0deg) scale(1)', opacity: 0.9 - i * 0.18}, {transform: `rotate(${7.5 + i * 7.5}deg) scale(${to.toFixed(3)})`, opacity: 0}],
+        {duration: (lvl >= 3 ? 620 : 400) + i * 60, delay: i * 85, easing: 'cubic-bezier(.15,.65,.3,1)', fill: 'backwards'}).finished.then(() => this.ripples.hide(el), () => undefined);
+    }
+    // 6) alış ve pişti: halkanın dışına ince şok dalgası (pişti zaten impact() ile büyük patlar)
+    if (lvl === 1 || lvl === 2) setTimeout(() => this.pulse('#fff6d0', lvl === 2 ? 1.75 : 1.4), 70);
+  }
+
+  /** Toplama başlarken halka "nefes alır": içe çekilir, çentikler geri sarılır, yerine yaylanır. */
+  private ringInhale(): void {
+    if (this.low || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    this.stopRing();
+    this.ringAnims = [
+      this.ring.animate([{transform: 'scale(1)'}, {transform: 'scale(.94)', offset: 0.35}, {transform: 'scale(1.015)', offset: 0.75}, {transform: 'scale(1)'}], {duration: 460, easing: 'cubic-bezier(.3,.6,.3,1)'}),
+      this.ticks.animate([{transform: 'rotate(0deg) scale(1)', opacity: 0.7}, {transform: 'rotate(-30deg) scale(.96)', opacity: 0.45, offset: 0.45}, {transform: 'rotate(-45deg) scale(1)', opacity: 0.7}], {duration: 520, easing: 'cubic-bezier(.3,.7,.3,1)'}),
+    ];
+  }
+
+  private stopRing(): void {
+    for (const a of this.ringAnims) a.cancel();
+    this.ringAnims = [];
+    this.ringFlash.style.display = 'none';
+  }
+
+  /** Kart altı ışık katmanı (renk başına bir kez çizilir; sonra yalnız transform/opacity). */
+  private bloom(key: string): HTMLElement {
+    let el = this.blooms.get(key);
+    if (!el) {
+      el = document.createElement('b');
+      el.className = 'ar__rb';
+      const c = key === 'G' ? '255, 226, 140' : key === 'N' ? '170, 190, 255' : {H: '255, 70, 100', D: '255, 196, 60', C: '70, 230, 140', S: '90, 160, 255'}[key]!;
+      el.style.background = `radial-gradient(closest-side, rgba(255, 255, 255, .75) 0%, rgba(${c}, .7) 22%, rgba(${c}, .26) 52%, rgba(${c}, 0) 78%)`;
+      this.ring.prepend(el);
+      this.blooms.set(key, el);
+    }
+    cancelAnims(el);
+    return el;
   }
 
   /** İniş tozu: kartın çevresinden yere yayılan yumuşak bulutçuklar. */
@@ -799,6 +929,7 @@ export class Table2D {
       if (k === cards.length - 1) {
         await f;
         this.landFx(c, 0.6);
+        this.ringHit(0, suitOf(c.id));
         this.setGlow(suitOf(c.id));
       } else await sleep(85);
     }
@@ -961,9 +1092,13 @@ export class Table2D {
     c.el.classList.remove('is-hand', 'is-hot');
     this.stopWiggle();
     const under = this.pile[this.pile.length - 1];
+    const jack = isJack(card);
+    // halka tepkisinin seviyesi: kural motoruyla aynı koşul (yalnız görsel; puanı motor verir)
+    const prev = this.pile.length;
+    const same = !!under && rankOf(under.id) === rankOf(card);
+    const lvl = prev > 0 && (jack || same) ? (prev === 1 && same ? (jack ? 4 : 3) : prev + 1 >= 6 ? 2 : 1) : 0;
     this.pile.push(c);
     const to = this.pilePose(this.pile.length);
-    const jack = isJack(card);
     this.snd.whoosh(seat === 0 ? 0.75 : 0.55);
     if (seat === 0) this.layoutHand(true);
     else list.forEach((x, i) => void this.fly(x, this.fanPose(seat, i, list.length), {ms: 220, lift: 0}));
@@ -971,6 +1106,7 @@ export class Table2D {
       ease: 'cubic-bezier(.25,.6,.3,1)', trail: SUIT_COLOR[suitOf(card)]});
     this.snd.land(jack ? 0.95 : 0.7);
     this.landFx(c, jack ? 1.3 : 0.85);
+    this.ringHit(lvl, suitOf(card));
     // alttaki kart çarpmanın etkisiyle hafifçe itilir
     if (under) {
       const ax = rnd(-1, 1) * 4, ay = rnd(0.4, 1) * 4;
@@ -1046,7 +1182,8 @@ export class Table2D {
     this.syncPot();
     const st = this.stacks[seat];
     const {pile} = this.L;
-    // 1) toplanma: kartlar yığın merkezine sıkışır
+    // 1) toplanma: kartlar yığın merkezine sıkışır, halka nefes alır
+    this.ringInhale();
     await Promise.all(list.map((c, k) => this.fly(c, {x: pile.x + (c.pose.x - pile.x) * 0.15, y: pile.y + (c.pose.y - pile.y) * 0.15 - k * 0.4, r: c.pose.r * 0.3, s: c.pose.s > 1 ? 1.04 : 1}, {ms: 110, lift: 0})));
     this.snd.whoosh(0.5 + Math.min(0.4, list.length * 0.04));
     const fl: Promise<void>[] = [];

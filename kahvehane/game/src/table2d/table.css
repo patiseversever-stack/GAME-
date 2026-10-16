@@ -34,15 +34,23 @@
 .ar__zoom, .ar__shake { position: absolute; inset: 0; }
 .ar__zoom { transform-origin: 50% 45.5%; }
 /* yığın halkası */
-.ar__ring { position: absolute; border-radius: 50%; pointer-events: none; }
+.ar__ring { position: absolute; border-radius: 50%; pointer-events: none; will-change: transform; }
 .ar__ring::before { content: ''; position: absolute; inset: 0; border-radius: 50%;
   background: radial-gradient(circle, var(--ar-pool) 0%, var(--ar-pool) 30%, rgba(10, 16, 70, 0) 70%); }
 .ar__ring::after { content: ''; position: absolute; inset: 6%; border-radius: 50%; border: 3px solid var(--ring, var(--ar-ring));
   box-shadow: 0 0 0 7px rgba(120, 150, 255, .10), 0 0 22px var(--ring, var(--ar-ring)), inset 0 0 24px var(--ring, var(--ar-ring)); opacity: .75; }
-.ar__ring i { position: absolute; inset: -2%; border-radius: 50%; will-change: transform;
+.ar__tk { position: absolute; inset: -2%; border-radius: 50%; will-change: transform;
   background: repeating-conic-gradient(rgba(255, 255, 255, .55) 0deg 2.2deg, rgba(255, 255, 255, 0) 2.2deg 15deg);
   -webkit-mask: radial-gradient(circle, transparent 0 63%, #000 64% 67%, transparent 68%); mask: radial-gradient(circle, transparent 0 63%, #000 64% 67%, transparent 68%);
   opacity: .7; }
+/* atış tepkisi (Table2D.ringHit): halka çizgisi parlaması, dışa yayılan çentik halkaları, kartın altında açılan ışık.
+   Hepsi bir kez çizilir; yalnız transform/opacity oynar; boşta gizli (katman tutmaz). */
+.ar__rf { position: absolute; display: none; inset: 6%; border-radius: 50%; opacity: 0; will-change: transform, opacity; color: #fff;
+  border: 2.5px solid rgba(255, 255, 255, .95); box-shadow: 0 0 14px 2px currentColor, inset 0 0 12px currentColor; }
+.ar__rt { position: absolute; display: none; inset: -2%; border-radius: 50%; opacity: 0; will-change: transform, opacity;
+  background: repeating-conic-gradient(rgba(255, 255, 255, .95) 0deg 2.6deg, rgba(255, 255, 255, 0) 2.6deg 15deg);
+  -webkit-mask: radial-gradient(circle, transparent 0 62%, #000 63% 68%, transparent 69%); mask: radial-gradient(circle, transparent 0 62%, #000 63% 68%, transparent 69%); }
+.ar__rb { position: absolute; display: none; inset: -6%; border-radius: 50%; opacity: 0; will-change: transform, opacity; }
 .ar__cards { position: absolute; inset: 0; }
 .ar__fx { position: absolute; inset: 0; pointer-events: none; }
 
@@ -103,7 +111,7 @@
 .ar__sweep { position: absolute; border-radius: 50%; opacity: 0; will-change: transform, opacity;
   background: conic-gradient(from 0deg, rgba(255, 255, 255, 0) 0deg, rgba(160, 200, 255, .15) 200deg, rgba(255, 255, 255, .95) 352deg, rgba(255, 255, 255, 0) 360deg);
   -webkit-mask: radial-gradient(circle, transparent 0 48%, #000 52% 66%, transparent 72%); mask: radial-gradient(circle, transparent 0 48%, #000 52% 66%, transparent 72%); }
-@media (prefers-reduced-motion: reduce) { .ar__ring i, .ar.is-tense .ar__edge { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .ar__tk, .ar.is-tense .ar__edge { animation: none; } }
 
 /* Menü/ana ekran/açılış sırasında masa tamamen durur: çizilmez, animasyonlar duraklar, GPU katmanı tutmaz */
 .ar.is-off { visibility: hidden; }
