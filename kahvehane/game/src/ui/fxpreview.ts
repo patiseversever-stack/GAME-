@@ -142,7 +142,7 @@ export function mountFx(box: HTMLElement, id: string, still = false): FxLoop {
       A(ring, [{transform: 'translate(-50%,-50%) scale(.2)', opacity: 1}, {transform: 'translate(-50%,-50%) scale(2.2)', opacity: 0}], {duration: 700, delay: 150, easing: 'cubic-bezier(.1,.6,.3,1)'});
       for (let i = 0; i < 10; i++) {
         const a = -Math.PI * (0.1 + (i / 9) * 0.8), d = 26 + (i % 3) * 10;
-        const sp = P('is-spark');
+        const sp = P('is-zap');
         const deg = (a * 180) / Math.PI;
         A(sp, [{transform: `rotate(${deg}deg) translateX(0) scaleX(.4)`, opacity: 1}, {transform: `rotate(${deg}deg) translateX(${d * 0.7}px) scaleX(1.6)`, opacity: 1, offset: 0.3},
           {transform: `rotate(${deg}deg) translateX(${d}px) scaleX(.3)`, opacity: 0}], {duration: 650, delay: 160 + i * 15, easing: 'ease-out'});

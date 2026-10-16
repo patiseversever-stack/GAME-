@@ -442,3 +442,9 @@
 .kh-try__bar { position: absolute; z-index: 6; left: 0; right: 0; bottom: 0; padding: calc(var(--u) * 1.4) calc(var(--u) * 1) calc(var(--u) * 1.2);
   background: linear-gradient(0deg, rgba(6, 10, 48, .85) 30%, rgba(6, 10, 48, 0)); }
 .kh-try__buy { justify-content: space-between; padding: 0 calc(var(--u) * 1.1); }
+
+/* =================== EKRAN DIŞI PARÇALAR =================== */
+/* Panelin ekran dışındaki parçaları (ızgara satırları, setler, şerit) çizilene dek stil/düzen/boyama atlanır: sekme açılışı ve
+   parça ekleme ucuzlar. Boya sınırlaması taşmayı kırpacağı için köşe rozeti ve gölge payı iç boşlukla telafi edilir. */
+.kh-shop__panel > .kh-grid, .kh-shop__panel > .kh-sets, .kh-shop__panel > .kh-rail { content-visibility: auto; contain-intrinsic-size: auto 320px; }
+.kh-shop__panel > .kh-grid, .kh-shop__panel > .kh-sets { padding: calc(var(--u) * 1.1) calc(var(--u) * .8) calc(var(--u) * 1.3); margin: calc(var(--u) * -1.1) calc(var(--u) * -.8) calc(var(--u) * -1.3); }

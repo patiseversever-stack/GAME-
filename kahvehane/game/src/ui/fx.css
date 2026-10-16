@@ -176,7 +176,7 @@
 .kh-fxpv__p.is-sflash { inset: 0; background: radial-gradient(130% 90% at 50% 20%, rgba(230, 244, 255, .95), rgba(150, 196, 255, .5) 45%, rgba(90, 120, 255, .15)); }
 .kh-fxpv__p.is-sring { left: 50%; top: 66%; width: 46%; aspect-ratio: 1; border-radius: 50%;
   background: radial-gradient(circle, rgba(160, 220, 255, 0) 0 52%, rgba(160, 220, 255, .7) 62%, #ffffff 67%, rgba(110, 180, 255, .55) 73%, rgba(110, 180, 255, 0) 82%); }
-.kh-fxpv__p.is-spark { left: 50%; top: 66%; width: 12%; height: 2px; transform-origin: 0 50%; background: linear-gradient(90deg, rgba(255, 255, 255, 0), #9fe0ff 45%, #fff); }
+.kh-fxpv__p.is-zap { left: 50%; top: 66%; width: 12%; height: 2px; transform-origin: 0 50%; background: linear-gradient(90deg, rgba(255, 255, 255, 0), #9fe0ff 45%, #fff); }
 .kh-fxpv__p.is-drum { left: 50%; top: 62%; width: 40%; aspect-ratio: 120 / 96; transform-origin: 50% 80%; background: var(--fxb-drum) center / contain no-repeat; }
 .kh-fxpv__p.is-zurna { left: 6%; top: 40%; width: 44%; aspect-ratio: 160 / 44; transform-origin: 10% 50%; background: var(--fxb-zurna) center / contain no-repeat; }
 .kh-fxpv__p.is-note { left: 50%; top: 55%; width: 11%; aspect-ratio: 40 / 48; background: center / contain no-repeat; }
