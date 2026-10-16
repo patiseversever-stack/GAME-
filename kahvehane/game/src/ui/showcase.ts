@@ -145,7 +145,8 @@ export function mountDeckViewer(host: HTMLElement, deck: string, scope: Scope, s
   place();
 
   // ---- işaretçi: sürükle / bas-eğ / dokun-çevir
-  let pid = -1, x0 = 0, y0 = 0, t0 = 0, pos0 = 0, mode: 'none' | 'press' | 'drag' = 'none';
+  // press: yeni dokunuş (hızlı yatay hareket → drag); tilt: 220 ms basılı tutuldu → kart eğilir, ışık parmağı izler (kaydırmaz)
+  let pid = -1, x0 = 0, y0 = 0, t0 = 0, pos0 = 0, mode: 'none' | 'press' | 'tilt' | 'drag' = 'none';
   let lastX = 0, lastT = 0, vx = 0;
   let fx = 0.5, fy = 0.5;
   let raf = 0;
@@ -153,7 +154,7 @@ export function mountDeckViewer(host: HTMLElement, deck: string, scope: Scope, s
   const frame = (): void => {
     raf = 0;
     if (mode === 'drag') return place();
-    if (mode === 'press') {
+    if (mode === 'press' || mode === 'tilt') {
       const c = card();
       const ry = (fx - 0.5) * 22, rx = (0.5 - fy) * 18;
       c.style.transform = `perspective(700px) rotateY(${(flipped.has(focus) ? 180 : 0) + ry}deg) rotateX(${rx}deg) scale(1.04)`;
@@ -205,6 +206,7 @@ export function mountDeckViewer(host: HTMLElement, deck: string, scope: Scope, s
     if (now > lastT) vx = vx * 0.6 + ((p.clientX - lastX) / (now - lastT)) * 0.4;
     lastX = p.clientX;
     lastT = now;
+    if (mode === 'press' && now - t0 > 220) mode = 'tilt';
     if (mode === 'press' && Math.abs(dx) > 9 && Math.abs(dx) > Math.abs(p.clientY - y0)) {
       mode = 'drag';
       releaseTilt();
@@ -233,7 +235,7 @@ export function mountDeckViewer(host: HTMLElement, deck: string, scope: Scope, s
     releaseTilt();
     if (cancel) return;
     const moved = Math.hypot(p.clientX - x0, p.clientY - y0);
-    if (moved < 10 && performance.now() - t0 < 420) {
+    if (was === 'press' && moved < 10 && performance.now() - t0 < 420) {
       // yan karta dokunduysa ona git, odaktakine dokunduysa çevir
       const hit = (p.target as Element).closest<HTMLElement>('.kh-dv__slot');
       const k = hit ? slots.indexOf(hit) : focus;
