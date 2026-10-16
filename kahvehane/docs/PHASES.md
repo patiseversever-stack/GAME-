@@ -91,6 +91,13 @@ Online (eşleştirme, arkadaşla oyun, emote) → Blöf → Batak
 
 ## 📍 KALDIĞIMIZ YER
 
+**17 Ekim gece — sürüm 15–16 (karakter sesleri + görsel cila):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
+- **Seslendirme (ElevenLabs, Starter):** sesler tasarlandı ve `tools/voice/voices.json`'da: Rıza (80 yaş dede), Dursun (kısık-hızlı kahveci), Cem (enerjik yayıncı), Defne (hanımefendi). ~1000 replik (`src/ai/dialogue.ts`: Pişti, Blöf, banter, hazır mesaj, galeri/market), 924 klip `assets/voice/` (mono 64 kbps, ~20 MB). Üretim: `ELEVENLABS_VIA_PROXY=1 node tools/voice/generate.mjs` (anahtar ortamın ağ gizli anahtarında, `xi-api-key` başlığıyla vekilden eklenir). `defne_playerWin_2` boş döndü → yalnız balon (metni değiştirip `--only … --force`).
+- **Konuşma yönetmeni** `src/audio/speech.ts`: tek kanal, öncelik/kesme, banter atomik, balon ≥ ses süresi, duraklat/çıkışta susar, "Konuşmalar" kapalı → yalnız balon. Hazır mesajlı sohbet (`src/ui/quickchat.ts`, `src/game/quickChat.ts`, protokol `{t:'chat'}` + host hız sınırı `src/net/chat.ts`). Galeri tanıtımı, market satış/aldı/eksik sesleri.
+- **Sesin barındırılması:** `dist/voice/` tek tek mp3 (Expo); önizleme (`dist-tek/voice/`) 21 paket + manifest v2 (`scripts/voice-pack.mjs`, oynatıcı 8 MB paket LRU). Yayın: sayfa + `voice/manifest.json` + `voice/packs/*.bin` (Artifact `files`, 23 dosya).
+- **Görsel cila (v16):** ipucu yazısı ele binmiyor, Pişti destesi ve Blöf KENAR kenarda, orta halkanın atış/alma/pişti tepkileri (pişti: altın-beyaz ışınlar), 4 renkli şerit geçişi ekranı tam kaplıyor + yavaş + parlak logo, VS bant çizgileri portrelerin arkasında.
+- **Sıradaki:** gerçek telefonda performans + ses; çevrimiçi (oda/eşleşme/kimlik); Okey; banter sıklığını oynayarak ayarlama; `docs/karakterler.md`'de Defne'nin eski tarifi.
+
 **16 Ekim gece — sürüm 14 (Blöf geldi):** https://claude.ai/artifact/AGD4e3sw2ecT2Z6NqwoTro
 - **İkinci oyun Blöf** — kurallar `docs/BLOF.md` (anketle kararlaştırıldı). Modlar 1'e 1 · 3 Kişi · 4 Kişi · Eşli; 5 sn blöf penceresi (BLÖF düğmesi/yığına dokun/Geç), ağır çekim açılış, YAKALANDI!/DOĞRU ÇIKTI!, yığın kaybedene uçar, karakter lafları (`src/ai/blofDialogue.ts`), Rıza Amca öğreticisi (ilk Blöf eli).
 - **Motor ve çevrimiçi altyapı** (`src/core/blofTypes.ts`, `blof.ts`, `game.ts` GameEngine arayüzü, `pistiEngine.ts`; `src/net/` LocalHost/GameClient/LocalTransport, protokol, `remote.ts` WebSocket iskeleti). Oyun bugün telefonda yerel sunucuyla koşuyor; gerçek sunucuya taşınınca istemci kodu değişmez. Mimari ve yapılacaklar: `docs/ONLINE.md`. Pişti adaptörü hazır ama `match.ts` henüz host üzerinden oynamıyor.
