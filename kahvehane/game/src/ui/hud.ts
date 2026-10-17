@@ -170,7 +170,23 @@ class Badge {
     this.popEl = q(this.el, '.kh-badge__pop');
     this.cv = q(this.el, '.kh-badge__cv') as HTMLCanvasElement;
     this.face = face;
-    this.show(notr);
+    void this.show(notr);
+    // rozet boyutu değişirse (oyun/koltuk düzeni, ekran) portre yeni ölçüyle yeniden çizilir
+    if (typeof ResizeObserver !== 'undefined') {
+      let w = 0;
+      this.ro = new ResizeObserver(() => {
+        const nw = this.el.offsetWidth;
+        if (!nw || nw === w) return;
+        const first = !w;
+        w = nw;
+        if (!first && this.shown) {
+          const u = this.shown;
+          this.shown = '';
+          void this.show(u);
+        }
+      });
+      this.ro.observe(this.el);
+    }
     this.cardsEl = q(this.el, '[data-k=cards]');
     this.pistiEl = q(this.el, '[data-k=pisti]');
     this.pistiBox = q(this.el, '[data-k=pbox]');
@@ -188,13 +204,20 @@ class Badge {
   }
 
   private face: [number, number] = [0, 0];
+  private ro: ResizeObserver | null = null;
 
   /** Portreyi göster: görsel çözülmemişse çözülünce (o arada eski poz kalır). Sonraki çağrı öncekini geçersiz kılar. */
   private show(url: string): Promise<boolean> {
     const tok = ++this.drawTok;
     const img = portrait(url);
+    let tries = 0;
     const draw = (): boolean => {
       if (tok !== this.drawTok) return false;
+      // rozet henüz yerleşmediyse (kurulurken DOM dışında) yerleşince çiz: kırpma şekli rozetin ölçülerinden
+      if (!this.el.isConnected || !this.el.offsetWidth) {
+        if (++tries < 30) requestAnimationFrame(() => void draw());
+        return true;
+      }
       if (url !== this.shown) this.paint(img);
       this.shown = url;
       return true;
@@ -419,6 +442,8 @@ class Badge {
   }
 
   destroy(): void {
+    this.drawTok++;
+    this.ro?.disconnect();
     clearTimeout(this.sayTimer);
     clearTimeout(this.reactTimer);
     this.scope.dispose();
