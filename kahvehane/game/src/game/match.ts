@@ -308,9 +308,11 @@ export class Match {
         if (this.state.pile.length === 0 && Math.random() < 0.3) this.speak(seat, 'tableEmpty');
         else if (Math.random() < 0.08) this.speak(seat, 'botThinking');
         const [a, b] = p?.think ?? [0.5, 0.9];
-        await table.think(seat, (a + Math.random() * (b - a)) * 1000 * TEMPO + (this.state.pile.length === 1 ? 220 : 0));
-        if (this.aborted) return null;
+        // karar önce verilir (durum düşünürken değişmez); süre kararın zorluğuna göre: apaçık hamle kısa, başa baş uzun
         card = this.bots[seat]!.choose(viewFor(this.state, seat));
+        const hard = this.bots[seat]!.thinkScale();
+        await table.think(seat, (a + Math.random() * (b - a)) * 1000 * TEMPO * hard + (this.state.pile.length === 1 ? 220 : 0));
+        if (this.aborted) return null;
       }
       hud.setTurn(-1);
       const pileBefore = this.state.pile.slice();

@@ -29,6 +29,7 @@ export class PistiBotBrain implements BotBrain<PistiAction, PistiEvent, PlayerVi
     if (v.turn !== v.seat || v.hand.length === 0) return null;
     const card = this.bot.choose(v);
     const [a, b] = this.think;
-    return {action: {t: 'play', seat: this.seat, card}, delayMs: a + this.rnd() * (b - a)};
+    // insan gibi: apaçık hamlede kısa, başa baş kararda uzun düşünür
+    return {action: {t: 'play', seat: this.seat, card}, delayMs: (a + this.rnd() * (b - a)) * this.bot.thinkScale()};
   }
 }

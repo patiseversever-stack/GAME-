@@ -17,6 +17,7 @@ const HIDDEN_AVG = 0.3; // kapalı kartın ortalama değeri
 const JACK_RISK = 0.8; // rakibin Valesiyle alma ihtimalinin ağırlığı
 const LATER_OPP_WEIGHT = 0.4; // sıradaki ilk rakipten sonraki rakiplerin riski daha az
 const DUMP_BONUS = 0.1; // değersiz kartı yığına atma eğilimi
+const JACK_KEEP = 1.6; // elde Vale tutmanın değeri (ileride bir yığını alır): boşuna yere bırakılmaz
 const CLUB2 = cardId('C', 2);
 const DIAMOND10 = cardId('D', 10);
 
@@ -61,6 +62,8 @@ export class PistiBot {
   private nOpp = 0;
   private readonly oppHand = new Int8Array(4);
   private readonly oppW = new Float64Array(4);
+  /** Son kararın zorluğu (0 apaçık/zorunlu … 1 iki seçenek başa baş): düşünme süresi için. */
+  private lastHard = 0;
 
   constructor(
     private readonly seat: number,
@@ -72,6 +75,14 @@ export class PistiBot {
       skill: clamp01(personality.skill),
       jackPatience: clamp01(personality.jackPatience),
     };
+  }
+
+  /**
+   * Son kararın düşünme süresi çarpanı (insan gibi): tek kart / apaçık pişti → kısa (0,7), başa baş seçenekler → uzun (1,4).
+   * Karar tohumunu tüketmez (oyun akışı aynı kalır).
+   */
+  thinkScale(): number {
+    return 0.7 + 0.7 * this.lastHard;
   }
 
   /** Bu koltuğun hatırladığı kart mı (test ve hata ayıklama için). */
@@ -112,6 +123,10 @@ export class PistiBot {
       const b = scores[bestIdx];
       if (s > b + 1e-9 || (s > b - 1e-9 && hand[i] < hand[bestIdx])) bestIdx = i;
     }
+    // kararsızlık: en iyi ile ikinci arasındaki fark (puan cinsinden); farklı değerdeki kartlar arasında
+    let second = -Infinity;
+    for (let i = 0; i < n; i++) if (i !== bestIdx && rankOf(hand[i]) !== rankOf(hand[bestIdx])) second = Math.max(second, scores[i]);
+    this.lastHard = Number.isFinite(second) ? Math.max(0, Math.min(1, 1 - (scores[bestIdx] - second) / 2.5)) : 0;
 
     const temp = (1 - this.p.skill) * 2;
     if (temp < 1e-6 || n === 1) return hand[bestIdx];
@@ -205,6 +220,8 @@ export class PistiBot {
     }
     let s = -loss;
     if (r >= 2 && r <= 10 && VALUE[c] === 0) s += DUMP_BONUS;
+    // Valeyi almadan bırakmak, elimdeki en güçlü kartı boşa harcamak demek (riski olmasa bile)
+    if (jack) s -= JACK_KEEP * this.futureFactor;
     return s;
   }
 }
