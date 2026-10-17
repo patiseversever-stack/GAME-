@@ -1123,15 +1123,21 @@ export function warmSprites(first?: string, all = false, nodes = false): void {
   add('klasik');
   if (all) for (const id of Object.keys(FX_SPRITES)) add(id);
   if (!order.length) return;
-  const ric = (globalThis as {requestIdleCallback?: (cb: () => void, o?: {timeout: number}) => number}).requestIdleCallback;
-  const next = (): void => void (ric ? ric(step, {timeout: 1500}) : setTimeout(step, 60));
-  const step = (): void => {
+  type Deadline = {timeRemaining(): number; didTimeout: boolean};
+  const ric = (globalThis as {requestIdleCallback?: (cb: (d: Deadline) => void, o?: {timeout: number}) => number}).requestIdleCallback;
+  const next = (): void => void (ric ? ric(step, {timeout: nodes ? 1500 : 4000}) : setTimeout(step, 60));
+  const step = (d?: Deadline): void => {
     const t0 = performance.now();
-    // nodes: oyundaki doku düğümleri için yalnız kaynak tuval (PNG kodlaması yok); değilse market önizlemeleri için adres
+    // nodes: oyundaki doku düğümleri için yalnız kaynak tuval (PNG kodlaması yok); değilse market önizlemeleri için adres:
+    // tek PNG kodlaması 4× yavaş telefonda ~40 ms → yalnız gerçekten boş bir anda ve boşta birer birer (maç sırasında da sürer)
+    if (!nodes && d && !d.didTimeout && d.timeRemaining() < 12) return next();
     while (order.length && performance.now() - t0 < 6) {
       const k = order.shift()!;
       if (nodes) source(k);
-      else spriteUrl(k);
+      else {
+        spriteUrl(k);
+        break;
+      }
     }
     if (order.length) next();
   };

@@ -50,8 +50,8 @@ function preload(urls: string[], decode = false): void {
 /**
  * Rozet portreleri tuvale ÇÖZÜLMÜŞ ve tuval boyuna küçültülmüş ImageBitmap'ten çizilir (anahtar: adres|boy). <img>'den tuvale
  * çizimde görsel, img.decode() yapılmış olsa bile ana iş parçacığında YENİDEN çözülüyordu (tuvalin ayrı görsel önbelleği; 4×
- * yavaşta poz başına ~40 ms: ilk piştide iki rozet birden tepki verince ~90 ms takılma). createImageBitmap çözmeyi ve küçültmeyi
- * iş parçacığı dışında yapar; çizim yalnız dokuya yükleme. Rozet yerleşince karakterin bütün pozları boşta hazırlanır.
+ * yavaşta poz başına ~40 ms: ilk piştide iki rozet birden tepki verince ~90 ms takılma). Blob'dan createImageBitmap çözmeyi ve
+ * küçültmeyi iş parçacığı dışında yapar; çizim yalnız dokuya yükleme. Rozet yerleşince karakterin bütün pozları boşta hazırlanır.
  */
 const bitmaps = new Map<string, Promise<ImageBitmap | null>>();
 const bitmapNow = new Map<string, ImageBitmap>();
@@ -59,12 +59,13 @@ function bitmapFor(url: string, n: number): Promise<ImageBitmap | null> {
   const key = url + '|' + n;
   let p = bitmaps.get(key);
   if (!p) {
-    const img = portrait(url);
-    p = typeof createImageBitmap !== 'function'
+    // Blob'dan: çözme + küçültme iş parçacığı dışında (<img>'den createImageBitmap ana iş parçacığında eşzamanlı çözüyor).
+    // Dosya, ön yüklenen <img> sayesinde tarayıcı önbelleğinde.
+    p = typeof createImageBitmap !== 'function' || typeof fetch !== 'function'
       ? Promise.resolve(null)
-      : img
-          .decode()
-          .then(() => createImageBitmap(img, {resizeWidth: n, resizeHeight: n, resizeQuality: 'high'}))
+      : fetch(url)
+          .then(r => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status)))))
+          .then(b => createImageBitmap(b, {resizeWidth: n, resizeHeight: n, resizeQuality: 'high'}))
           .then(bm => (bitmapNow.set(key, bm), bm), () => null);
     bitmaps.set(key, p);
   }
@@ -423,6 +424,11 @@ class Badge {
       {transform: 'translateY(14px) scale(.85)', opacity: 0}], {duration: ms, easing: 'ease-in', fill: 'both'}, 0.35);
   }
 
+  /** Portre tuvali (pişti vitrini başlığı bunu küçültüp kopyalar) */
+  portraitCanvas(): HTMLCanvasElement {
+    return this.cv;
+  }
+
   enter(i: number): void {
     play(this.el, [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.06)', opacity: 1, offset: 0.7}, {transform: 'scale(1)', opacity: 1}], {duration: 520, delay: 80 + i * 90, easing: EASE.out, fill: 'backwards'});
   }
@@ -714,6 +720,11 @@ export class HudView implements GameHud {
   setStats(st: {cards: number; pisti: number}[]): void {
     st.forEach((s, seat) => this.badges.get(seat)?.setStats(s.cards, s.pisti));
     this.syncTeam();
+  }
+
+  /** Koltuğun portre tuvali (yoksa null): pişti vitrini başlığı için */
+  portrait(seat: number): HTMLCanvasElement | null {
+    return this.badges.get(seat)?.portraitCanvas() ?? null;
   }
 
   tickCards(seat: number, cards: number): void {

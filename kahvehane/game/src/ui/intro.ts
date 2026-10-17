@@ -150,25 +150,50 @@ const BUST_PX = 576;
  * büst başına ≈ 4 MB, poz değişince yeniden tarama + Android'de büyük görselin "sonra çözülmesi" = bir an boş büst). Tuval
  * doğal boyutunda (576² ≈ 1,3 MB) bir doku: bileşimci büyütür, poz değişimi yalnız tuvale yeni çizim.
  */
-const bustCache = new Map<string, Promise<HTMLImageElement | null>>();
-const bustReady = new Map<string, HTMLImageElement>();
-function bustImage(url: string): Promise<HTMLImageElement | null> {
+type BustSrc = ImageBitmap | HTMLImageElement;
+const bustCache = new Map<string, Promise<BustSrc | null>>();
+const bustReady = new Map<string, BustSrc>();
+/**
+ * Poz görseli ÇÖZÜLMÜŞ olarak: Blob'dan createImageBitmap (çözme iş parçacığı dışında). <img>.decode() yetmez: tuvale çizimde
+ * görsel ana iş parçacığında yeniden çözülür (4× yavaşta büst başına ~40 ms; damga anındaki poz değişimine binerdi).
+ */
+function bustImage(url: string): Promise<BustSrc | null> {
   let p = bustCache.get(url);
   if (!p) {
-    const im = new Image();
-    im.decoding = 'async';
-    im.src = url;
-    p = im.decode().then(() => im, () => (im.complete && im.naturalWidth ? im : null)).then(r => {
-      if (r) bustReady.set(url, r);
-      else bustCache.delete(url); // sonra yeniden denenebilsin
-      return r;
-    });
+    const viaImg = (): Promise<BustSrc> => {
+      const im = new Image();
+      im.decoding = 'async';
+      im.src = url;
+      return im.decode().then(() => im);
+    };
+    p = (typeof createImageBitmap === 'function' && typeof fetch === 'function'
+      ? fetch(url).then(r => (r.ok ? r.blob() : Promise.reject(new Error(String(r.status))))).then(b => createImageBitmap(b))
+      : Promise.reject(new Error('no bitmap'))
+    )
+      .catch(viaImg)
+      .then(
+        r => {
+          bustReady.set(url, r);
+          return r;
+        },
+        () => {
+          bustCache.delete(url); // sonra yeniden denenebilsin
+          return null;
+        },
+      );
     bustCache.set(url, p);
   }
   return p;
 }
-function paintBust(cv: HTMLCanvasElement, im: HTMLImageElement): void {
-  const w = im.naturalWidth || BUST_PX, hh = im.naturalHeight || BUST_PX;
+/** Giriş bitince çözülmüş pozlar serbest (bir sonraki girişte yeniden hazırlanır). */
+function releaseBusts(): void {
+  for (const v of bustReady.values()) if (!(v instanceof HTMLImageElement)) v.close();
+  bustReady.clear();
+  bustCache.clear();
+}
+function paintBust(cv: HTMLCanvasElement, im: BustSrc): void {
+  const w = (im instanceof HTMLImageElement ? im.naturalWidth : im.width) || BUST_PX;
+  const hh = (im instanceof HTMLImageElement ? im.naturalHeight : im.height) || BUST_PX;
   if (cv.width !== w || cv.height !== hh) {
     cv.width = w;
     cv.height = hh;
@@ -178,7 +203,11 @@ function paintBust(cv: HTMLCanvasElement, im: HTMLImageElement): void {
   g.globalCompositeOperation = 'source-over';
   g.clearRect(0, 0, w, hh);
   g.imageSmoothingQuality = 'high';
-  g.drawImage(im, 0, 0, w, hh);
+  try {
+    g.drawImage(im, 0, 0, w, hh);
+  } catch {
+    return; // serbest bırakılmış bitmap
+  }
   g.globalCompositeOperation = 'destination-in';
   const lin = g.createLinearGradient(0, 0, 0, hh);
   lin.addColorStop(0, '#000');
@@ -187,10 +216,6 @@ function paintBust(cv: HTMLCanvasElement, im: HTMLImageElement): void {
   g.fillStyle = lin;
   g.fillRect(0, 0, w, hh);
   g.globalCompositeOperation = 'source-over';
-}
-/** Karşılaşma girişinin pozlarını boşta önceden çöz (giriş anında çözme işi binmesin). */
-export function warmVersus(urls: readonly string[]): void {
-  for (const u of urls) void bustImage(u);
 }
 
 /** Şok halkaları ve yarım ışıkları: küçük tuval dokuları (CSS radial-gradient(circle, …) ile aynı duraklar). */
@@ -504,6 +529,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
         unhide.fn();
         scope.dispose();
         el.remove();
+        releaseBusts();
         res();
         return;
       }
@@ -535,6 +561,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
       unhide.fn();
       scope.dispose();
       el.remove();
+      releaseBusts();
       res();
     };
     // 1,4 sn'den sonra dokunuş beklemeyi kısaltır
