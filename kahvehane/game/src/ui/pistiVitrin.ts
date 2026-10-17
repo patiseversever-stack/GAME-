@@ -79,12 +79,22 @@ export class PistiVitrin {
   }
 
   private warmed = false;
+  private warmTries = 0;
   private warm(): void {
-    if (this.warmed || this.cur || this.d.table.busy > 0) return;
+    if (this.warmed) return;
+    if (this.cur || this.d.table.busy > 0) {
+      // masa sahne oynatıyor (dağıtım): sakinleşince dene (en çok ~20 sn)
+      if (++this.warmTries < 28) window.setTimeout(() => void whenIdle(800).then(() => this.warm()), 700);
+      return;
+    }
     this.build();
     this.warmed = true;
     const els: HTMLElement[] = [this.dim, this.head, this.tags[0], this.hintEl];
     this.paintPortrait(0);
+    // ısınma metni: "ş" / "★" gibi yazı tipinde olmayan harflerin yedek yazı tipi İLK vitrinde değil burada yüklensin
+    this.nm.textContent = 'Pişti';
+    this.cntN.textContent = '0';
+    this.tags[0].textContent = 'Vale Pişti +20';
     for (const el of els) {
       el.style.display = el === this.head ? 'flex' : 'block';
       el.style.opacity = '0.01';

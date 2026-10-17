@@ -389,6 +389,15 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   const tEnd = four ? 3100 : 2800; // perde açılır
   const tReady = tEnd - 480; // "Hazır!"
   const t0 = performance.now();
+  // VS masayı tamamen örterken destenin 52 kart katmanı çizilmez (kh-vs-cover; ≈ 40–50 MB karo). Perde açılmadan ~0,9 sn önce
+  // (ya da erken dokunuşta açılış başlarken) geri gelir: kartlar perde kalkmadan taranmış olur, dağıtım beklemez.
+  const root = document.documentElement;
+  const coverTable = (on: boolean): void => void root.classList.toggle('kh-vs-cover', on);
+  if (ANIM) {
+    requestAnimationFrame(() => scope.alive && coverTable(true));
+    scope.timeout(() => coverTable(false), Math.max(tSlam + 500, tEnd - 900));
+    scope.add(() => coverTable(false));
+  }
 
   if (ANIM) {
     s.whoosh();
@@ -534,6 +543,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
         return;
       }
       // perde açılışı: yarımlar/şeritler geldikleri yöne çekilir, arkadan masa görünür
+      coverTable(false);
       s.whoosh();
       el.style.pointerEvents = 'none';
       el.style.background = 'transparent';

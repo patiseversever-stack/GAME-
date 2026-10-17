@@ -10,6 +10,7 @@ import {cardId, isJack, rankOf, suitOf, type CardId, type Suit} from '../core/ty
 import type {TableTheme} from '../themes/contract';
 import {ctx2d, glowRing, radial, texCanvas, ticks, withAlpha} from '../platform/tex';
 import {whenIdle} from '../platform/sched';
+import {canvasToPng} from '../render/atlasBlob';
 
 export interface TableSounds {
   deal(): void;
@@ -281,7 +282,7 @@ export class Table2D {
    */
   async setAtlas(atlas: CardAtlas): Promise<void> {
     const tok = ++this.atlasTok;
-    const blob = await new Promise<Blob | null>(res => atlas.canvas.toBlob(res, 'image/png'));
+    const blob = await canvasToPng(atlas.canvas); // geri okuma + kodlama işçide (src/render/atlasBlob.ts)
     if (tok !== this.atlasTok || !blob) return; // daha yeni bir atlas geldi
     const url = URL.createObjectURL(blob);
     try {
@@ -517,7 +518,7 @@ export class Table2D {
       const cv = document.createElement('canvas');
       cv.width = (cw + 2 * P) * S;
       cv.height = (ch + 2 * P) * S;
-      const g = cv.getContext('2d');
+      const g = cv.getContext('2d', {willReadFrequently: true}); // yazılım tuvali: toDataURL GPU'dan eşzamanlı geri okumaz
       if (!g) return '';
       g.scale(S, S);
       const r = cw * CORNER_RADIUS;
@@ -553,7 +554,7 @@ export class Table2D {
     const cv = document.createElement('canvas');
     cv.width = (cw + 2 * P) * S;
     cv.height = (ch + 2 * P) * S;
-    const g = cv.getContext('2d');
+    const g = cv.getContext('2d', {willReadFrequently: true}); // yazılım tuvali: toDataURL GPU'dan eşzamanlı geri okumaz
     if (!g) return;
     g.scale(S, S);
     const r = cw * CORNER_RADIUS + 3;

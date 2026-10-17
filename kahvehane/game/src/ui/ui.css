@@ -248,6 +248,8 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 
 /* =================== KARŞILAŞMA GİRİŞİ =================== */
 .kh-vs { z-index: 40; background: var(--arena-deep); }
+/* VS opak örterken masanın kart katmanları (52 ayrı katman) çizilmez; intro.ts perde açılmadan önce kaldırır */
+.kh-vs-cover .ar__cards, .kh-vs-cover .bl-layer { visibility: hidden; }
 /* yarımlar ve 4/3 kişi şeritleri <canvas>: gradyan (--vs-top / --vs-bottom / --bg) + takım deseni (+ şeritte kenar, ışık çizgisi,
    büyük simge) intro.ts paintStripe ile tuvale çizilir. DOM gradyanı olsalardı ekrandan geniş + eğik oldukları için tam karolarla
    taranırlardı (yarım ≈ 16 MB, şerit ≈ 10 MB görünür karo belleği). Tuval genişliği açık verilir (left+right tuvali germez). */
