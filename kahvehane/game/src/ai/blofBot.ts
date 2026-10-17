@@ -706,8 +706,15 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
       pl += dj * ll * mul;
     }
     let q = pl / Math.max(1e-9, pt + pl);
-    // Masadaki iddialar 4'ü aşıyor: biri yalan söylüyor, büyük olasılıkla son atan (açan çoğunlukla doğrudur).
-    if (tableImpossible && this.rnd() < this.p.readTable) q = Math.max(q, 0.85);
+    // Masadaki iddialar 4'ü aşıyor: biri yalan söylüyor — ama kim? Son atan da olabilir, önceki biri (çoğu zaman araya
+    // yalan kart katan açan) de. Kuşku, turdaki iddialara türüne ve atanın geçmişine göre paylaştırılır.
+    if (tableImpossible && this.rnd() < this.p.readTable) {
+      const suspect = (seat: number, count: number, open: boolean): number => (open ? 0.8 : count === 1 ? 1 : count === 2 ? 1.5 : 2.5) * this.lieMul(seat, open);
+      let all = 0;
+      for (let i = 0; i < plays.length; i++) if (plays[i].seat !== this.seat) all += suspect(plays[i].seat, plays[i].count, i === 0);
+      const cur = suspect(x, k, opening);
+      q = Math.max(q, 0.9 * (all > 0 ? cur / all : 1));
+    }
     return clamp(q, 0, 0.995);
   }
 
