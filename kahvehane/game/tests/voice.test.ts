@@ -5,6 +5,9 @@ import {
   BANTER_RULES,
   BLOF_MOMENTS,
   CHAR_IDS,
+  CHAT_PROFILES,
+  POOL_ALIAS,
+  TABLE_MOMENTS,
   CHATTER_GAP_MS,
   DIALOGUE,
   DialogueDirector,
@@ -41,6 +44,7 @@ import {
   stripTags,
   ttsHash,
   type BanterRequest,
+  type ChatLevel,
   type TalkMemory,
 } from '../src/ai/dialogue';
 import {BlofTalk, blofPriority} from '../src/ai/blofDialogue';
@@ -198,7 +202,7 @@ describe('replik verisi', () => {
     expect(chars).toBeLessThanOrEqual(1000);
   });
 
-  it('kredi bütçesi: tekil ses dosyaları toplamı ≤ ~41,5k karakter; el / maç sonu grubu ≤ 8k', () => {
+  it('kredi bütçesi: tekil ses dosyaları toplamı ≤ ~43,5k karakter (Geveze masa sohbeti +2,9k dahil); el / maç sonu grubu ≤ 8k', () => {
     const seen = new Set<string>();
     let chars = 0;
     let end = 0;
@@ -208,7 +212,7 @@ describe('replik verisi', () => {
         chars += l.tts.length;
         if (groupOf(l) === 'end') end += l.tts.length;
       }
-    expect(chars).toBeLessThanOrEqual(41_500);
+    expect(chars).toBeLessThanOrEqual(43_500);
     expect(end).toBeGreaterThan(5000);
     expect(end).toBeLessThanOrEqual(8000);
   });
@@ -415,6 +419,129 @@ describe('shouldSpeak', () => {
   it('react: repliği olmayan an sayacı bozmaz', () => {
     expect(d.react('defne', 'boyleBirAnYok', 0, yes)).toBeNull();
     expect(d.react('defne', 'botBigCapture', 10, yes)?.id).toBe('defne_botBigCapture_1');
+  });
+});
+
+describe('sohbet seviyeleri: masa sohbeti (maç ortası)', () => {
+  const LEVELS: readonly ChatLevel[] = ['sakin', 'normal', 'geveze'];
+
+  it('profiller Sakin < Normal < Geveze sıralı; Normal sönümleri tam (eski davranış), Geveze sönümleri yumuşak', () => {
+    const [s, n, g] = LEVELS.map(l => CHAT_PROFILES[l]);
+    expect([s.table, s.turn, s.chatter]).toEqual([0, 0, 0]);
+    expect(n.table).toBeGreaterThan(0);
+    expect(n.table).toBeLessThan(0.25); // Normal: yalnız cılız bir tat
+    expect(g.table).toBeGreaterThan(n.table * 4);
+    expect(g.turn).toBeGreaterThan(n.turn * 5);
+    expect(g.event).toBeGreaterThan(n.event);
+    expect(g.gap).toBeLessThan(n.gap);
+    expect(n.turn).toBe(0.08); // eskiden sabit 0,08
+    expect(n.crowd).toBe(1);
+    expect(n.damp).toBe(1);
+    expect(g.crowd).toBeLessThan(0.5);
+    expect(g.damp).toBeLessThan(0.5);
+    expect(s.soft).toBeLessThan(1);
+    expect(n.soft).toBe(1);
+  });
+
+  it('masa sohbeti anları var olan kısa seslerden beslenir: havuz yeterli, hepsi kısa, hepsi kendi anının sesi', () => {
+    for (const m of TABLE_MOMENTS) {
+      expect(ruleFor(m).kind, m).toBe('table');
+      expect(momentPriority(m), m).toBe(1);
+      expect(POOL_ALIAS[m], m).toBeTruthy();
+    }
+    for (const c of CHAR_IDS) {
+      for (const m of ['botCapture', 'playerCapture', 'rivalCapture']) {
+        const pool = linesFor(c, m);
+        expect(pool.length, `${c}/${m}`).toBeGreaterThanOrEqual(5);
+        expect(uniqueSounds(pool), `${c}/${m}`).toBe(pool.length);
+        for (const l of pool) expect(stripTags(l.tts).length, l.id).toBeLessThanOrEqual(16);
+      }
+      expect(linesFor(c, 'blofThink').length, c).toBeGreaterThanOrEqual(10);
+      expect(linesFor(c, 'blofLaugh').length, c).toBeGreaterThanOrEqual(6);
+      // yeni anlar (kendi repliği): Geveze'de sık gelir, havuz küçük kalmasın
+      expect(linesFor(c, 'pileGrows').length, c).toBeGreaterThanOrEqual(4);
+      expect(linesFor(c, 'blofClaim').length, c).toBeGreaterThanOrEqual(5);
+      expect(linesFor(c, 'blofDoubt').length, c).toBeGreaterThanOrEqual(5);
+    }
+  });
+
+  it('Sakin: masa sohbeti hiç yok; ikincil büyük anlar (soft) yarıya iner, Normal\'de hep', () => {
+    const sakin = new DialogueDirector();
+    sakin.level = 'sakin';
+    for (const m of ['botCapture', 'playerCapture', 'pileGrows', 'blofClaim', 'blofDoubt', 'blofThink'])
+      expect(sakin.shouldSpeak(m, 100_000, () => 0), m).toBe(false);
+    const rnd = mulberry32(5);
+    let sk = 0, nm = 0;
+    const normal = new DialogueDirector();
+    normal.level = 'normal';
+    for (let i = 0; i < 400; i++) {
+      if (sakin.force('riza', 'blofCaught', rnd)) sk++;
+      if (normal.force('riza', 'blofCaught', rnd)) nm++;
+    }
+    expect(nm).toBe(400);
+    expect(sk).toBeGreaterThan(130);
+    expect(sk).toBeLessThan(270);
+  });
+
+  it('Geveze kalabalık masada susmaz: 4 koltukta olasılık düşmez (Normal\'de düşer)', () => {
+    const rnd = mulberry32(21);
+    const hit = (level: ChatLevel, seats: number): number => {
+      let n = 0;
+      for (let i = 0; i < 3000; i++) {
+        const q = new DialogueDirector();
+        q.level = level;
+        q.setSeats(seats);
+        if (q.shouldSpeak('botCapture', 0, rnd)) n++;
+      }
+      return n;
+    };
+    expect(hit('geveze', 4)).toBeGreaterThan(hit('geveze', 2) * 0.85);
+    const nmOne = hit('normal', 2), nmFour = hit('normal', 4);
+    expect(nmFour).toBeLessThan(nmOne * 0.8);
+  });
+
+  /** Bir elin (160 sn) kaba benzetimi: her 7 sn bot sırası, her 12 sn bir sıradan alış (bot / oyuncu sırayla), 40 sn'de bir büyük alış. */
+  const simulate = (level: ChatLevel, seed: number, seats = 2): {lines: number; maxGap: number} => {
+    const rnd = mulberry32(seed);
+    const d = new DialogueDirector();
+    d.level = level;
+    d.newHand(seats);
+    let n = 0, last = 0, maxGap = 0;
+    const say = (t: number, m: string): void => {
+      if (d.react('cem', m, t, rnd)) {
+        n++;
+        maxGap = Math.max(maxGap, t - last);
+        last = t;
+      }
+    };
+    for (let t = 0; t < 160_000; t += 500) {
+      if (t % 7000 === 0 && rnd() < d.profile.turn) say(t, 'botThinking');
+      if (t % 12_000 === 3000) say(t, 'botCapture');
+      if (t % 12_000 === 9000) say(t, 'playerCapture');
+      if (t % 40_000 === 20_000) say(t, 'botBigCapture');
+      if (t % 40_000 === 30_000) say(t, 'playerBigCapture');
+    }
+    maxGap = Math.max(maxGap, 160_000 - last);
+    return {lines: n, maxGap};
+  };
+
+  it('benzetim: Sakin ≈ sessiz, Normal eskisi gibi seyrek, Geveze belirgin biçimde (≥ 2,5×) daha çok; Geveze\'de uzun sessizlik kısalır', () => {
+    const avg = (level: ChatLevel, seats?: number) => {
+      let lines = 0, gap = 0;
+      for (let s = 1; s <= 30; s++) {
+        const r = simulate(level, s, seats);
+        lines += r.lines;
+        gap += r.maxGap;
+      }
+      return {lines: lines / 30, gap: gap / 30};
+    };
+    const s = avg('sakin'), n = avg('normal'), g = avg('geveze');
+    expect(s.lines).toBeLessThan(n.lines);
+    expect(n.lines).toBeLessThan(5); // Normal elde birkaç satır (eskisi gibi)
+    expect(g.lines).toBeGreaterThan(n.lines * 2.5);
+    expect(g.lines).toBeGreaterThan(10);
+    expect(g.gap).toBeLessThan(n.gap);
+    expect(g.gap).toBeLessThan(40_000);
   });
 });
 

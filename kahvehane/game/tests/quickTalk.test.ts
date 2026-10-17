@@ -460,7 +460,7 @@ describe('ek replik verisi', () => {
     }
   });
 
-  it('uzunluk, etiket ve süre kuralları; bütçe ≤ 5500 karakter; her mesajın hedefli sözü üç hedefte de var', () => {
+  it('uzunluk, etiket ve süre kuralları; bütçe ≤ 6500 karakter (Geveze için Blöf pas / bekleme + Pişti boş masa +0,8k dahil); her mesajın hedefli sözü üç hedefte de var', () => {
     let chars = 0;
     for (const l of lines) {
       expect(l.text.length, l.id).toBeLessThanOrEqual(64);
@@ -474,7 +474,7 @@ describe('ek replik verisi', () => {
       expect(speechSeconds(l.char, l.tts), l.id).toBeLessThanOrEqual(max);
       if (soundKey(l.id) === l.id) chars += l.tts.length;
     }
-    expect(chars).toBeLessThanOrEqual(5500);
+    expect(chars).toBeLessThanOrEqual(6500);
     for (const s of CHAR_IDS)
       for (const m of TARGET_MSGS)
         for (const t of CHAR_IDS) if (s !== t) expect(lineById(targetSayId(s, m, t)), `${s}→${t} ${m}`).toBeTruthy();
