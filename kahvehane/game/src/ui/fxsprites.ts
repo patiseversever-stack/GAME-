@@ -1,9 +1,10 @@
 // Pişti efektlerinin parçacık görselleri: bir kez (boşta, dilim dilim) tuvalde "gerçek" görünümlü çizilir —
 // yumuşak ışık hâleleri, anamorfik mercek parlaması, kırınım dikenli yıldız parıltıları, kıvılcım/kuyruklu yıldız
 // izleri, şok halkaları, ışık hüzmeleri, gerçek yıldırım (çekirdek + parıltı), boyalı lale yaprakları, cam nazar
-// boncuğu ve kırıkları, metal altın taç, kozmik girdap diski, duman. Sonuç PNG veri adresi olarak saklanır; DOM
-// düğümleri bunu arka plan görseli yapar ve yalnız transform/opacity ile oynatılır (bileşimci). Bellek sınırlı:
-// ~35 küçük görsel, her biri bir kez.
+// boncuğu ve kırıkları, metal altın taç, kozmik girdap diski, duman. Oyunda düğümler görselin kendi boyutunda küçük
+// <canvas> doku katmanlarıdır (spriteNode: GPU karo belleği tutmaz, büyütülünce yeniden taranmaz); market önizlemeleri
+// PNG veri adresini arka plan görseli yapar (spriteUrl). Yalnız transform/opacity ile oynatılır (bileşimci).
+// Bellek sınırlı: ~35 küçük görsel, her biri bir kez.
 import {ASSETS} from './assets';
 import {suitOutline, suitPath} from '../skins/kit';
 
@@ -1040,20 +1041,54 @@ export type SpriteKey = string;
 
 const URLS = new Map<string, string>();
 const KEEP: HTMLImageElement[] = [];
+/** Kaynak tuvaller (yazılım belleğinde; GPU'ya hiç gitmez): oyundaki doku düğümleri (spriteNode) buradan bir kez kopyalanır. */
+const SRC = new Map<string, HTMLCanvasElement>();
+function source(key: SpriteKey): HTMLCanvasElement {
+  let c = SRC.get(key);
+  if (c) return c;
+  const d = DEFS[key];
+  if (!d) throw new Error('fx görseli yok: ' + key);
+  c = document.createElement('canvas');
+  c.width = d.w;
+  c.height = d.h;
+  // willReadFrequently: hızlandırılmamış (CPU) tuval — kaynak görüntü GPU belleği tutmaz
+  const g = c.getContext('2d', {willReadFrequently: true})!;
+  d.draw(g, d.w, d.h);
+  SRC.set(key, c);
+  return c;
+}
+
+/**
+ * Oyun içi efekt düğümü: görseli taşıyan küçük <canvas>. Tuval bileşimcide ayrı bir DOKU katmanıdır (GPU'da görselin
+ * kendi boyutu kadar yer tutar, ör. 128² = 64 KB) ve ekranda ne kadar büyütülürse büyütülsün yeniden taranmaz.
+ * Eskiden arka plan görselli <i> idi: canlandırılan katman animasyonun EN BÜYÜK ölçeğinde ekran çözünürlüğüyle taranır
+ * (2,6× büyüyen bir hâle 2,6 dpr telefonda ~2000² px ≈ 17 MB karo); pişti anında onlarca düğüm GPU karo belleğini
+ * aşıyor, ekran kararıp portreler bozuluyordu. `coin` (dış görsel) için null: çağıran arka plan görseli kullanır.
+ */
+export function spriteNode(key: SpriteKey, cls: string): HTMLCanvasElement | null {
+  if (key === 'coin' || !DEFS[key]) return null;
+  const src = source(key);
+  const c = document.createElement('canvas');
+  c.className = cls;
+  c.width = src.width;
+  c.height = src.height;
+  c.getContext('2d')?.drawImage(src, 0, 0);
+  return c;
+}
+
 /** Görselin adresi (yoksa hemen çizer). `coin` = oyunun jeton görseli. */
 export function spriteUrl(key: SpriteKey): string {
   if (key === 'coin') return ASSETS.icon_coin;
   let u = URLS.get(key);
   if (u) return u;
-  const d = DEFS[key];
-  if (!d) throw new Error('fx görseli yok: ' + key);
-  const c = document.createElement('canvas');
-  c.width = d.w;
-  c.height = d.h;
-  const g = c.getContext('2d')!;
-  d.draw(g, d.w, d.h);
+  // yalnız adres için çizildiyse kaynak tuval tutulmaz (çözülmüş görsel zaten KEEP'te); oyunun düğümleri isterse yeniden çizilir
+  const kept = SRC.has(key);
+  const c = source(key);
   u = c.toDataURL('image/png');
-  c.width = c.height = 0;
+  if (!kept) {
+    SRC.delete(key);
+    c.width = c.height = 0;
+  }
   URLS.set(key, u);
   // çözülmüş hâli bellekte kalsın: ilk gösterimde boş kare olmasın
   const img = new Image();
@@ -1079,10 +1114,10 @@ export const FX_SPRITES: Record<string, SpriteKey[]> = {
 };
 
 /** Boşta, dilim dilim çiz (efekt anında çizim maliyeti olmasın). Önce verilen efekt, sonra diğerleri. */
-export function warmSprites(first?: string, all = false): void {
+export function warmSprites(first?: string, all = false, nodes = false): void {
   const order: string[] = [];
   const add = (id: string): void => {
-    for (const k of FX_SPRITES[id] ?? []) if (k !== 'coin' && !URLS.has(k) && !order.includes(k)) order.push(k);
+    for (const k of FX_SPRITES[id] ?? []) if (k !== 'coin' && !(nodes ? SRC.has(k) : URLS.has(k)) && !order.includes(k)) order.push(k);
   };
   if (first) add(first);
   add('klasik');
@@ -1092,7 +1127,12 @@ export function warmSprites(first?: string, all = false): void {
   const next = (): void => void (ric ? ric(step, {timeout: 1500}) : setTimeout(step, 60));
   const step = (): void => {
     const t0 = performance.now();
-    while (order.length && performance.now() - t0 < 6) spriteUrl(order.shift()!);
+    // nodes: oyundaki doku düğümleri için yalnız kaynak tuval (PNG kodlaması yok); değilse market önizlemeleri için adres
+    while (order.length && performance.now() - t0 < 6) {
+      const k = order.shift()!;
+      if (nodes) source(k);
+      else spriteUrl(k);
+    }
     if (order.length) next();
   };
   next();

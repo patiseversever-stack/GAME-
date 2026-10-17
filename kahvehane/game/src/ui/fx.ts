@@ -10,7 +10,7 @@ import {ASSETS, OPTIONAL_ART} from './assets';
 import {suitSvg, type SuitKey} from './icons';
 import type {HudSounds} from './types';
 import {FX, FX_MS, type Stage} from './fxlib';
-import {spriteSize, spriteUrl, warmSprites} from './fxsprites';
+import {spriteNode, spriteSize, spriteUrl, warmSprites} from './fxsprites';
 
 type Pt = {x: number; y: number};
 export type Tone = 'gold' | 'white' | 'blue';
@@ -75,7 +75,10 @@ export class Fx {
     this.el.append(this.nightEl, this.flashEl, this.stampEl, this.bannerEl, this.shoutEl, this.comboEl);
     parent.append(this.el);
     // efekt görselleri boşta, dilim dilim önceden çizilir (~45 küçük görsel, toplam ~70 ms; ilk piştide takılma olmasın)
-    if (ANIM) window.setTimeout(() => warmSprites(undefined, true), 2500);
+    if (ANIM) window.setTimeout(() => {
+      warmSprites(undefined, true);
+      warmSprites(undefined, false, true); // oyundaki doku düğümleri (Zafer Işığı); diğer efektler ilk piştide
+    }, 2500);
   }
 
   private get W(): number {
@@ -330,6 +333,7 @@ export class Fx {
   /** Kuşanılmış efektin görsellerini boşta önceden çiz (ilk piştide çizim maliyeti olmasın). */
   prime(id: string): void {
     warmSprites(id, false);
+    warmSprites(id, false, true);
   }
 
   private qnode(key: string, w: number, h0?: number, layer: 0 | 1 | 2 = 0): HTMLElement | null {
@@ -340,8 +344,11 @@ export class Fx {
     if (!r) {
       const host = layer === 2 ? this.qTop : layer === 1 ? this.qFront : this.qBack;
       r = new Ring(host, 22, () => {
-        const n = h('i', 'kh-q');
-        n.style.cssText = `width:${w.toFixed(1)}px;height:${hh.toFixed(1)}px;margin:${(-hh / 2).toFixed(1)}px 0 0 ${(-w / 2).toFixed(1)}px;background-image:url("${spriteUrl(key)}")`;
+        // görsel düğümü küçük bir doku katmanı (<canvas>, görselin kendi boyutunda): ekranda büyütülünce yeniden taranmaz,
+        // GPU karo belleği tutmaz (bkz. fxsprites.ts spriteNode). Yalnız jeton dış görsel: arka plan görseli.
+        const n = spriteNode(key, 'kh-q') ?? h('i', 'kh-q');
+        n.style.cssText = `width:${w.toFixed(1)}px;height:${hh.toFixed(1)}px;margin:${(-hh / 2).toFixed(1)}px 0 0 ${(-w / 2).toFixed(1)}px` +
+          (n instanceof HTMLCanvasElement ? '' : `;background-image:url("${spriteUrl(key)}")`);
         return n;
       });
       this.qpools.set(id, r);
@@ -419,7 +426,7 @@ export class Fx {
     if (!ANIM) return;
     if (!this.warmed) {
       this.warmed = true;
-      warmSprites(id);
+      warmSprites(id, false, true);
     }
     const used: HTMLElement[] = [], tok = String(++this.tok);
     const fx = FX[id] ? id : 'klasik';
