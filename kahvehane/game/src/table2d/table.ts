@@ -957,12 +957,13 @@ export class Table2D {
     void t.inn.animate([{transform: 'translateY(-3px)'}, {transform: 'none'}], {duration: 120, easing: 'ease-out'});
   }
 
+  /** Masa: kapalı kartların kimliği gelmez (−1; yalnız alan görür: revealHidden), açık kart yüzüyle iner. */
   async dealTable(cards: CardId[], faceUp: boolean[]): Promise<void> {
     for (let k = 0; k < cards.length; k++) {
       const c = this.deck.pop()!;
       c.el.classList.remove('is-flat');
-      c.id = cards[k];
-      this.byId.set(c.id, c);
+      c.id = faceUp[k] ? cards[k] : -1;
+      if (c.id >= 0) this.byId.set(c.id, c);
       this.pile.push(c);
       this.snd.deal();
       const to = {x: this.L.pile.x + rnd(-5, 5), y: this.L.pile.y + rnd(-5, 5) - k * 0.3, r: faceUp[k] ? rnd(-8, 8) : rnd(-24, 24), s: 1};
@@ -986,8 +987,8 @@ export class Table2D {
     for (const d of deals) {
       const c = this.deck.pop()!;
       c.el.classList.remove('is-flat');
-      c.id = d.card;
-      this.byId.set(c.id, c);
+      c.id = d.card; // rakibin kartı süzülmüş olayda −1: atılınca kimlik kazanır (play)
+      if (c.id >= 0) this.byId.set(c.id, c);
       this.hands[d.seat].push(c);
       const i = this.hands[d.seat].length - 1;
       this.snd.deal();
@@ -1128,8 +1129,15 @@ export class Table2D {
 
   /** Kartı yığına at (hayalet izle). İner inmez çözülür. */
   async play(seat: number, card: CardId): Promise<void> {
-    const c = this.byId.get(card)!;
     const list = this.hands[seat];
+    let c = this.byId.get(card);
+    if (!c || !list.includes(c)) {
+      // rakibin kapalı kartı (kimliği bu cihaza dağıtımda gelmedi): yelpazeden bir kart atılır ve yüzü şimdi belli olur
+      const pool = list.filter(x => x.id < 0);
+      c = pool[Math.floor(rnd(0.2, 0.8) * pool.length)] ?? list[0];
+      c.id = card;
+      this.byId.set(card, c);
+    }
     list.splice(list.indexOf(c), 1);
     c.el.classList.remove('is-hand', 'is-hot');
     this.stopWiggle();
@@ -1170,7 +1178,33 @@ export class Table2D {
   }
 
   /**
-   * Değerli kartlar (♦10, ♣2, As, Vale) yığından havalanır, altın parlar (kapalıysa açılır).
+   * Baştaki kapalı masa kartlarını ALAN kişiye (yalnız koltuk 0) gösterir: yığının dibinden kalkıp küçük bir yelpazede
+   * havada açılır, bir an durur ve yüzü açık olarak yığına geri oturur (toplam ≤ 600 ms); toplama (collect) sonra onları
+   * kapalı olarak desteye götürür. Rakip alınca çağrılmaz: kartlar kapalı kalır, kimlikleri bu cihaza hiç gelmez.
+   */
+  async revealHidden(ids: CardId[]): Promise<void> {
+    const list = this.pile.filter(c => c.id < 0).slice(0, ids.length);
+    if (!list.length) return;
+    const {pile, cw, ch} = this.L;
+    const m = list.length;
+    const home = list.map(c => ({pose: {...c.pose}, z: 301 + this.pile.indexOf(c)}));
+    list.forEach((c, j) => {
+      c.id = ids[j];
+      this.byId.set(c.id, c);
+    });
+    this.snd.flip();
+    const y = pile.y - ch * 0.5;
+    await Promise.all(list.map((c, j) => this.fly(c, {x: pile.x + (j - (m - 1) / 2) * cw * 0.66, y, r: (j - (m - 1) / 2) * 9, s: 0.94},
+      {ms: 280, lift: 0.06, delay: j * 35, flip: c.id, z: 940 + j, ease: 'cubic-bezier(.2,.8,.25,1)'})));
+    this.pulse('#ffe3a0', 0.55, {x: pile.x, y});
+    // 3 kart: 280 + 2·35 uçuş + 130 bekleme + 110 dönüş ≈ 590 ms
+    await sleep(130);
+    await Promise.all(list.map((c, j) => this.fly(c, home[j].pose, {ms: 110, lift: 0, z: 940 + j, zEnd: home[j].z, ease: 'cubic-bezier(.5,0,.75,0)'})));
+  }
+
+  /**
+   * Değerli kartlar (♦10, ♣2, As, Vale) yığından havalanır, altın parlar (kapalıysa açılır). Kimliği bilinmeyen
+   * (başkasının aldığı kapalı masa kartı: −1) hiç gösterilmez.
    * Ekran noktaları ve puanları döner (HUD "+3" baloncukları için).
    */
   async showValuables(cards: CardId[]): Promise<{x: number; y: number; pts: number; id: CardId}[]> {

@@ -1,5 +1,6 @@
-// Mevcut Pişti motorunun GameEngine sözleşmesine bağdaştırıcısı. pisti.ts'e DOKUNMAZ, davranışı aynen korur;
-// yalnız sarar (game/match.ts doğrudan pisti.ts'i kullanmaya devam eder). Çevrimiçi Pişti bunu kullanacak.
+// Mevcut Pişti motorunun GameEngine sözleşmesine bağdaştırıcısı: yalnız sarar (game/match.ts doğrudan pisti.ts'i kullanır
+// ama sahneye, botlara ve otomatik oyuncuya bu dosyanın redact'ından geçmiş olayları verir). Çevrimiçi Pişti bunu kullanacak.
+// Gizli bilgi: başkasının eline giden kartlar, masadaki 3 kapalı kart — alınınca bile yalnız ALAN görür.
 import type {GameEngine} from './game';
 import {applyPlay, createGame, legalMoves, viewFor} from './pisti';
 import type {CardId, PistiConfig, PistiEvent, PistiState, PlayerView} from './types';
@@ -43,6 +44,13 @@ export const pistiEngine: PistiEngine = {
       case 'handDeal':
         // Başkalarının eline giden kart gizli (animasyon için koltuk sırası korunur).
         return {...e, deals: e.deals.map((d) => ({seat: d.seat, card: d.seat === seat ? d.card : HIDDEN_CARD}))};
+      case 'capture':
+      case 'finalSweep': {
+        // Baştaki kapalı masa kartlarını yalnız alan görür; diğerlerine kapalı (−1) gider. Kart SAYISI herkese açık.
+        const k = e.hidden ?? 0;
+        if (k <= 0 || e.seat === seat) return {...e, cards: [...e.cards]};
+        return {...e, cards: e.cards.map((c, i) => (i < k ? HIDDEN_CARD : c))};
+      }
       default:
         return e;
     }

@@ -105,12 +105,14 @@ export function applyPlay(
     const same = rankOf(card) === rankOf(s.pile[n - 1]);
     const pisti = n === 1 && same ? (isJack(card) ? 20 : 10) : 0;
     const cards = [...s.pile, card];
+    // baştaki kapalı masa kartları (yığının en altı) da gidiyor: olay kaçının kapalı olduğunu söyler (yalnız alan görür)
+    const hidden = s.pileHiddenCount;
     s.captured[seat].push(...cards);
     s.pistiPoints[seat] += pisti;
     s.pile = [];
     s.pileHiddenCount = 0;
     s.lastCapturer = seat;
-    events.push({t: 'capture', seat, cards, pisti});
+    events.push(hidden > 0 ? {t: 'capture', seat, cards, pisti, hidden} : {t: 'capture', seat, cards, pisti});
   } else {
     s.pile.push(card);
   }
@@ -127,7 +129,8 @@ export function applyPlay(
       if (s.pile.length > 0) {
         const to = s.lastCapturer >= 0 ? s.lastCapturer : s.cfg.dealer;
         s.captured[to].push(...s.pile);
-        events.push({t: 'finalSweep', seat: to, cards: [...s.pile]});
+        const hidden = s.pileHiddenCount;
+        events.push(hidden > 0 ? {t: 'finalSweep', seat: to, cards: [...s.pile], hidden} : {t: 'finalSweep', seat: to, cards: [...s.pile]});
         s.pile = [];
         s.pileHiddenCount = 0;
       }

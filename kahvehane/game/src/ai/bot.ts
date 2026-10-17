@@ -103,8 +103,14 @@ export class PistiBot {
         // Her kart tek kez oynanır: fark edip etmediği bir kez zarla belirlenir.
         if (this.seen[ev.card] === 0 && this.rnd() < this.p.memory) this.seen[ev.card] = 1;
         break;
+      case 'capture':
+      case 'finalSweep':
+        // Baştaki kapalı masa kartlarını yalnız ALAN görür (süzülmüş olayda başkasına −1): aldıysam artık oyunda değiller.
+        // Ham olay gelse bile yalnız kendi aldığımı kullanırım (başkasının aldığı kapalı kart bana kapalıdır).
+        if (ev.seat === this.seat && ev.hidden) for (let i = 0; i < ev.hidden; i++) if (ev.cards[i] >= 0) this.seen[ev.cards[i]] = 1;
+        break; // oynanan kart zaten görüldü
       default:
-        break; // capture/finalSweep/gameOver: oynanan kart zaten görüldü, yeni bilgi yok
+        break; // gameOver: yeni bilgi yok
     }
   }
 

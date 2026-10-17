@@ -22,8 +22,14 @@ export type PistiEvent =
   | {t: 'tableDeal'; cards: CardId[]; faceUp: boolean[]}
   | {t: 'handDeal'; round: number; deals: {seat: number; card: CardId}[]}
   | {t: 'play'; seat: number; card: CardId}
-  | {t: 'capture'; seat: number; cards: CardId[]; pisti: 0 | 10 | 20}
-  | {t: 'finalSweep'; seat: number; cards: CardId[]}
+  /**
+   * Yakalama. hidden: cards'ın BAŞINDAKİ bu kadar kart, başta masaya kapalı dağıtılan kartlardır (yalnız ilk yakalamada,
+   * genelde 3). Kapalı kartların yüzünü YALNIZ alan görür: süzülmüş olayda (pistiEngine.redact) diğer koltuklara −1 gider.
+   * Puanlar el sonunda herkese açık sayılır (gameOver sonucu).
+   */
+  | {t: 'capture'; seat: number; cards: CardId[]; pisti: 0 | 10 | 20; hidden?: number}
+  /** Deste bitti, kalan yığın son alana. hidden: kimse hiç almadıysa baştaki kapalı kartlar (capture'daki gibi gizli). */
+  | {t: 'finalSweep'; seat: number; cards: CardId[]; hidden?: number}
   | {t: 'gameOver'; result: GameResult};
 
 export interface SideScore {

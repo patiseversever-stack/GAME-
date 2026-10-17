@@ -1,6 +1,10 @@
 // Bir elin oyun akışı: kural motoru + botlar + 2B masa + HUD. 1'e 1, 4 kişi (herkes tek) ve eşli (karşıdaki ortak).
 // Online'da aynı olay akışı sunucudan gelecek; bu sınıf yalnızca olayları sahneye çevirir (uçuş, tepki, replik, efekt, ses, titreşim).
+// Gizli bilgi: sahne (koltuk 0), her bot ve otomatik oyuncu motorun HAM olaylarını değil, kendi koltuğuna süzülmüş olayları
+// (pistiEngine.redact) görür — çevrimiçindeki gibi. Baştaki 3 kapalı masa kartını yalnız alan görür; sahnedeki tepkiler
+// (değerli kart parıltısı, yüzler, "önde" laf atmaları) başkasının aldığı kapalı kartları hesaba katmaz. El sonu sayımı herkese açık.
 import {applyPlay, createGame, viewFor} from '../core/pisti';
+import {pistiEngine} from '../core/pistiEngine';
 import {mulberry32} from '../core/rng';
 import type {CardId, GameResult, PistiEvent, PistiState} from '../core/types';
 import {isJack, rankOf} from '../core/types';
@@ -86,6 +90,9 @@ export class Match {
   private aborted = false;
   private cancelWait: () => void = () => {};
   private pileOwner = new Map<CardId, number>();
+  /** Baştaki kapalı masa kartları (ham kimlik) ve onları alan koltuk: başkası aldıysa sahne puanına katılmaz. */
+  private hiddenIds = new Set<CardId>();
+  private hiddenBy = -1;
   private streak: number[] = [];
   private pistiCount: number[] = [];
   private myPisti = 0;
@@ -254,15 +261,26 @@ export class Match {
     });
     this.autoBot = this.d.auto ? new PistiBot(0, {memory: 1, skill: 0.9, jackPatience: 0.7}, mulberry32(seed + 7)) : null;
     this.pileOwner.clear();
+    this.hiddenIds.clear();
+    this.hiddenBy = -1;
     this.streak = new Array<number>(info.seats).fill(0);
     this.pistiCount = new Array<number>(info.seats).fill(0);
     this.myPisti = 0;
     this.myVale = 0;
     this.lastLead = 0;
+    // her beyin yalnız kendi koltuğuna süzülmüş olayı görür (çevrimiçindeki gibi; kapalı kartı yalnız alan görür)
     const observe = (e: PistiEvent) => {
-      for (const b of this.bots) b?.observe(e);
-      this.autoBot?.observe(e);
+      this.bots.forEach((b, s) => {
+        const x = b ? pistiEngine.redact(e, s) : null;
+        if (x) b!.observe(x);
+      });
+      const mine = this.autoBot ? pistiEngine.redact(e, 0) : null;
+      if (mine) this.autoBot!.observe(mine);
       if (e.t === 'play') this.pileOwner.set(e.card, e.seat);
+      if ((e.t === 'capture' || e.t === 'finalSweep') && e.hidden) {
+        this.hiddenIds = new Set(e.cards.slice(0, e.hidden));
+        this.hiddenBy = e.seat;
+      }
     };
     events.forEach(observe);
 
@@ -285,7 +303,8 @@ export class Match {
     const duo = this.pair('start', bots, bots);
     const talkers = this.foes(0);
     if (!(duo && this.banter('start', duo[0], duo[1])) && talkers.length) this.speak(pickOne(talkers), 'start', true);
-    for (const e of events) {
+    for (const raw of events) {
+      const e = pistiEngine.redact(raw, 0)!; // sahne = koltuk 0'ın gördüğü
       if (e.t === 'tableDeal') await table.dealTable(e.cards, e.faceUp);
       else if (e.t === 'handDeal') await table.dealHands(e.deals);
       if (this.aborted) return null;
@@ -319,7 +338,7 @@ export class Match {
       const r = applyPlay(this.state, seat, card);
       this.state = r.state;
       r.events.forEach(observe);
-      result = await this.present(seat, card, r.events, pileBefore);
+      result = await this.present(seat, card, r.events.map(e => pistiEngine.redact(e, 0)!), pileBefore);
       if (this.aborted) return null;
     }
     if (!result) return null;
@@ -358,7 +377,10 @@ export class Match {
     return card;
   }
 
-  /** Bir hamlenin sahnesi: atış → (pişti kutlaması | değerli kartlar → süpürme) → seri → tepkiler → yeni dağıtım / son süpürme. */
+  /**
+   * Bir hamlenin sahnesi: atış → (pişti kutlaması | değerli kartlar → süpürme) → seri → tepkiler → yeni dağıtım / son süpürme.
+   * evs: koltuk 0'a süzülmüş olaylar (başkasının aldığı kapalı masa kartı −1).
+   */
   private async present(seat: number, card: CardId, evs: PistiEvent[], pileBefore: CardId[]): Promise<GameResult | null> {
     const {table, hud, sfx} = this.d;
     const cap = evs.find(e => e.t === 'capture') as Extract<PistiEvent, {t: 'capture'}> | undefined;
@@ -475,6 +497,11 @@ export class Match {
   private async take(seat: number, card: CardId, cap: Extract<PistiEvent, {t: 'capture'}>, pileBefore: CardId[]): Promise<void> {
     const {table, hud, sfx} = this.d;
     await sleep(130);
+    // baştaki kapalı kartlar: alan bensem bir an açılıp bana gösterilir; başkası aldıysa kapalı kalır (kimliği −1)
+    if (cap.hidden && seat === 0) {
+      await table.revealHidden(cap.cards.slice(0, cap.hidden).filter(c => c >= 0));
+      if (this.aborted) return;
+    }
     const vals = await table.showValuables(cap.cards);
     if (this.aborted) return;
     if (vals.length) {
@@ -563,14 +590,18 @@ export class Match {
     this.pileOwner.clear();
   }
 
-  /** Taraf puanları (o ana kadar): kart puanları + pişti + kesin çoğunluk tahmini. Taraf = takım indeksi. */
+  /**
+   * Taraf puanları (o ana kadar), oyuncunun (koltuk 0) bildiği kadarıyla: kart puanları + pişti + kesin çoğunluk tahmini.
+   * Başkasının aldığı kapalı masa kartlarının puanı sayılmaz (yüz ifadeleri / laf atmaları gizli kartı ele vermesin).
+   */
   private standings(): Map<number, number> {
     const pts = new Map<number, number>();
     const cards = new Map<number, number>();
     for (let s = 0; s < this.seats; s++) {
       const t = this.team(s);
       let p = pts.get(t) ?? 0;
-      for (const c of this.state.captured[s]) p += cardPoints(c);
+      const secret = s !== 0 && s === this.hiddenBy;
+      for (const c of this.state.captured[s]) if (!(secret && this.hiddenIds.has(c))) p += cardPoints(c);
       pts.set(t, p + this.state.pistiPoints[s]);
       cards.set(t, (cards.get(t) ?? 0) + this.state.captured[s].length);
     }
