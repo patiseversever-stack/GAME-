@@ -1,6 +1,6 @@
 # Seslendirme (ElevenLabs)
 
-Replikler tek yerde durur: `src/ai/dialogue.ts` (Pişti, Blöf, galeri/market, botlar arası atışma, hızlı sohbet). Bu araç o dosyayı okur, her replik için ElevenLabs'te ses üretir ve oyunun okuyacağı dosyaları yazar. Ses dosyası yoksa oyun yine çalışır, replikler yalnızca konuşma balonunda görünür.
+Replikler tek yerde durur: `src/ai/dialogue.ts` (Pişti, Blöf, galeri/market, el / maç sonu karşılıklı konuşma, botlar arası atışma, hızlı sohbet). Bu araç o dosyayı okur, her replik için ElevenLabs'te ses üretir ve oyunun okuyacağı dosyaları yazar. Ses dosyası yoksa oyun yine çalışır, replikler yalnızca konuşma balonunda görünür.
 
 ## 1. Anahtar (sohbete yazmayın)
 
@@ -14,7 +14,7 @@ Replikler tek yerde durur: `src/ai/dialogue.ts` (Pişti, Blöf, galeri/market, b
 |---|---|
 | Ne üretilecek, kaç kredi? (anahtar gerekmez) | `node tools/voice/generate.mjs --dry` |
 | Ucuz deneme seçkisi (24 replik, ≈ 920 kredi) | `node tools/voice/generate.mjs --samples` |
-| Grup grup üret (pisti, blof, meta, banter, quick) | `node tools/voice/generate.mjs --group pisti,meta` |
+| Grup grup üret (pisti, blof, meta, end, banter, quick) | `node tools/voice/generate.mjs --group pisti,meta` |
 | Karakter seslerini tasarla (önizleme) | `node tools/voice/generate.mjs --design` |
 | Önizlemeyi seç → kalıcı ses | `node tools/voice/generate.mjs --pick riza=2` |
 | Tasarla + ilk önizlemeyi otomatik seç | `node tools/voice/generate.mjs --design --auto` |
@@ -27,7 +27,8 @@ Replikler tek yerde durur: `src/ai/dialogue.ts` (Pişti, Blöf, galeri/market, b
 
 - **Sesler:** `tools/voice/voices.json`. `voice_id` boşsa önce `--design` çalıştırın. Önizlemeler `tools/voice/previews/<karakter>/1.mp3, 2.mp3, …` dosyalarına iner; dinleyip `--pick` ile seçin. İsterseniz ElevenLabs Voice Library'den bir sesin kimliğini doğrudan `voice_id` alanına da yazabilirsiniz.
 - **Model:** `eleven_v3` (Türkçe, `[laughs]`, `[sighs]` gibi ses etiketleriyle). `--v2` ile `eleven_multilingual_v2` kullanılır ve etiketler metinden silinir.
-- **Kredi:** 1 karakter yaklaşık 1 kredidir; etiketler de sayılır. Bütün replikler ≈ 33.200 kredi (1012 replik, 925 ses dosyası; `--dry` kesin sayıyı ve grup dökümünü verir). Önce `--samples` ile dinleyin.
+- **Kredi:** 1 karakter yaklaşık 1 kredidir; etiketler de sayılır. Bütün replikler ≈ 40.300 kredi (1184 replik, 1097 ses dosyası; `--dry` kesin sayıyı ve grup dökümünü verir). Önce `--samples` ile dinleyin.
+- **El / maç sonu (`end` grubu, 172 replik ≈ 7.200 kr.):** `<kar>_end…_<no>` / `<kar>_mid…_<no>` — Ara Skor ve sonuç ekranındaki karşılıklı diziler (kazanan takılır, kaybeden söylenir, ikinci ses / kenardan seyirci, eşlide ortak ↔ rakip, rövanş çağrısı, rövanş kabulü, veda). Hepsi ≤ ~3 sn; seçimi `planEndTalk` yapar (bkz. §4).
 - **Takma ad:** Aynı karakterde birebir aynı tts'li replikler (paylaşılan gülme, homurtu) bir kez üretilir; manifestte diğer kimlikler aynı dosyayı gösterir. Oyunda da tek replik sayılır (tekrar önleme).
 - **Duygu / kararlılık:** Her isteğin v3 kararlılığı satırdan gelir (`dialogue.ts → stabilityFor`: gülme/bağırma/heyecan → 0 Creative, `[deadpan]` → 1 Robust, satır `stab` değeri her zaman kazanır); yoksa `voices.json` ayarı. `--dry` listesinde `s=` sütunu ve tahmini süre görünür.
 - **Güvenli tekrar:** Var olan dosyalar atlanır. Hız sınırında (429) betik bekleyip yeniden dener. Ağ hatası ya da 5xx gibi belirsiz durumlarda istek tekrarlanmadan önce çıktı dosyasına, sonra ElevenLabs geçmişine bakılır; ses orada varsa yeniden üretilmez (iki kez ücret ödenmez).
@@ -49,6 +50,8 @@ Bütün konuşmalar (Pişti/Blöf replikleri, botlar arası atışma, hızlı so
 - Balon sesle eşli: ses süresi + 450 ms görünür, ses kesilince hemen kapanır. Konuşurken efekt/ortam sesi kısılır (`sfx.duck`).
 - "Konuşmalar" ayarı kapalı → hiç ses yok, balonlar eskisi gibi. Duraklat menüsü açıkken konuşma susar; masadan kalkış, VS girişi, sonuç ekranı ve uygulamanın arka plana geçmesi konuşmayı anında keser ve sırayı temizler. Sonuç ekranı son söz bitene dek (en çok ~3,8 sn) bekler.
 - Test bayrağı: `?banter=1` atışmayı her uygun anda tetikler (olasılık 1).
+- **Sohbet yoğunluğu** (profil `settings.chatLevel`: Sakin · Normal · Geveze; ilk açılışta seçici, Ayarlar → Konuşmalar kartında "Sohbet"): `dialogue.ts → CHAT_PROFILES` bütün yöneticilerin olasılık / aralık / atışma çarpanlarını verir. Sakin: olay ×0,4, boş laf yok, aralıklar ×1,6, atışma ×0,35 (en az 4 elde bir), sonuçta tek replik, Ara Skor yarı yarıya tek replik. Normal: çarpanlar 1 (eski ayar), sonuçta A+B, ara sıra rövanş. Geveze: olay ×1,5, boş laf ×1,8, aralıklar ×0,7, atışma ×2 (her elde olabilir), bekleme lafı daha erken, sonuçta A+B+rövanş. "Konuşmalar" kapalıysa ses yok, seviye balonlara aynen uygulanır. Test: `?chat=sakin|normal|geveze`, seçiciyi yeniden göster: `?chatpick=1`.
+- **El / maç sonu konuşması** (`planEndTalk` + `src/game/app.ts`): Ara Skor'da önde / geride bot + ikinci ses (1'e 1'de masada olmayan seyirci, Dursun öncelikli; eşlide ortak ↔ rakip), sonuç ekranında kazanan / kaybeden + cevap, koşullu replikler (kıl payı, ezici, seri, pişti yağmuru, Blöf'te çok yakalanma / hiç yakalanmama / son kart blöfü), "Bir El Daha"ya basılırsa yeni maçın açılışında rövanş kabulü, ana sayfaya dönülürse ara sıra veda. Düğmeler hiç beklemez; seçimde konuşma kesilir.
 
 ## 5. Barındırma: `voice/` klasörü (sesler pakete GİRMEZ)
 
@@ -64,7 +67,7 @@ Kopyalamayı `vite.voice.mjs` (Vite eklentisi `khVoice`) yapar: yalnız `manifes
 
 **Paketli düzen (dist-tek):** yayın sunucusu sürüm başına en çok 511 dosya (yayın başına 255, dosya başına 16 MB) kabul ettiği için tek dosya derlemesi sesleri karakter × grup paketlerine koyar (`scripts/voice-pack.mjs`; `khVoice({packed: true})`, `artifact.mjs` de paketli değilse paketler ve dosya sayısını denetler):
 
-- Gruplar: `pisti`, `blof` (masadaki botların oyun replikleri), `bot` (atışma + hızlı sohbet cevapları), `say` (oyuncunun kendi hızlı sohbeti), `meta` (galeri + market). Paket ≤ 2,5 MB; aşan grup eşit parçalara bölünür (`riza-pisti-1/2`). Şu an 21 paket (0,18–2,21 MB) + manifest = 22 dosya, 18,3 MB.
+- Gruplar: `pisti`, `blof` (masadaki botların oyun replikleri), `bot` (atışma + hızlı sohbet cevapları), `say` (oyuncunun kendi hızlı sohbeti), `meta` (galeri + market), `end` (el / maç sonu konuşmaları; maç başında masadaki botlar + 1'e 1'de seyirci için en sona, el bitince en öne alınır). Paket ≤ 2,5 MB; aşan grup eşit parçalara bölünür (`riza-pisti-1/2`).
 - Manifest v2: `{v: 2, packs: {ad: {url: "packs/ad.bin", n, char, group}}, clips: {kimlik: {p: paket, o: bayt ofseti, n: bayt uzunluğu, dur, h, prio}}}`. Her klip eksiksiz bir mp3; aralığı kesmek geçerli dosya verir. Paylaşılan (takma ad) sesler her grubun paketine ayrıca konur.
 - Oyun (`VoicePlayer`): paket bir kez bütün olarak iner, klip baytları aralıkla kesilip çözülür. Paket baytları toplam 8 MB'lık LRU'da; maç başında boşta `prepare` masadaki botların oyun paketlerini + oyuncunun `say` paketini + (sığarsa) botların `bot` paketlerini sırayla indirir, masada olmayan karakterlerin paketlerini atar; sığmayan gerekince tembel iner. Galeri / market açılınca dört `meta` paketi (≈ 0,9 MB). Dosya başına düzende `prepare` hiçbir şey yapmaz.
 - Elle: `node scripts/voice-pack.mjs assets/voice dist-tek/voice`. Yayında `voice/manifest.json` ve `voice/packs/*.bin` (içerik türü `application/octet-stream` ya da `audio/mpeg`) sayfanın yanında olmalı.

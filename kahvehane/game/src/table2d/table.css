@@ -63,6 +63,11 @@
   text-shadow: 0 2px 0 #0a1033, 1.5px 1.5px 0 #0a1033, -1.5px 1.5px 0 #0a1033, 1.5px -1.5px 0 #0a1033, -1.5px -1.5px 0 #0a1033; }
 .ar__pot.is-on { opacity: 1; }
 .ar__pot svg { display: block; width: 1.25em; height: 1.25em; }
+/* pişti rozeti "×5": yere sığmayan pişti kartlarının sayısı (lacivert hap, altın kenar ve yazı: rozet haplarıyla aynı dil) */
+.ar__pc { position: absolute; left: 0; top: 0; z-index: 380; display: none; padding: 2px 6px 3px; border-radius: 999px; pointer-events: none; font-style: normal;
+  background: linear-gradient(180deg, #1c2780 0%, #0f1755 100%); box-shadow: 0 0 0 2px #0a1033, inset 0 0 0 1.5px #ffb21a, 0 2px 4px rgba(2, 4, 24, .5);
+  font: 400 calc(var(--cw) * .17)/1 'Lilita One', 'Nunito', sans-serif; color: #ffd23f; text-shadow: 0 1.5px 0 #0a1033; white-space: nowrap; }
+.ar__pc.is-on { display: block; }
 .ar__ring.is-lone::after { animation: ar-pot .45s ease-in-out 8 alternate; }
 .ar.is-low .ar__ring.is-pot::after, .ar.is-low .ar__ring.is-lone::after { animation: none; }
 
