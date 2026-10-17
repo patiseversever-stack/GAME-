@@ -9,11 +9,14 @@
 .bl-c__ring { position: absolute; inset: -3.5%; border-radius: 11%; opacity: 0; pointer-events: none;
   box-shadow: 0 0 0 3px #fff2a0, 0 0 0 5.5px #0a1033, 0 0 18px 5px rgba(255, 205, 60, .75); }
 .bl-c.is-sel .bl-c__ring { opacity: 1; }
+/* yalnız seçili/yeni kartta var (display): opaklığı 0 iken bile gölgesi her kartın katmanını büyütüp GPU karo belleği tutuyordu */
+.bl-c__ring { display: none; }
+.bl-c.is-sel .bl-c__ring, .bl-c.is-new .bl-c__ring { display: block; }
 .bl-c.is-new:not(.is-sel) .bl-c__ring { opacity: 1; box-shadow: 0 0 0 3px #bfe0ff, 0 0 0 5px #0a1033, 0 0 16px 4px rgba(120, 190, 255, .8); }
 
 /* blöf açılışında masa kararır (kartlar önde) */
-.bl-dim { position: absolute; inset: -10%; z-index: 970; display: none; opacity: 0; pointer-events: none;
-  background: radial-gradient(ellipse 70% 50% at 50% 44%, rgba(4, 6, 30, .35) 0%, rgba(4, 6, 30, .72) 100%); }
+/* doku tuvali (blofTable.ts dimTex): gradyan tuvale çizili; tam ekran gradyan katmanı GPU karo belleği tutmasın */
+.bl-dim { position: absolute; left: -10%; top: -10%; width: 120%; height: 120%; z-index: 970; display: none; opacity: 0; pointer-events: none; }
 
 /* blöf penceresi: yığının çevresinde kırmızı nabız; yığına dokunma alanı */
 .bl-alert { position: absolute; left: 0; top: 0; z-index: 290; display: none; pointer-events: none; border-radius: 50%; }

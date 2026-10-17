@@ -4,6 +4,7 @@
 // - Uçuşlar WAAPI ile yalnız transform; gölgeler Table2D'nin pişirdiği görsel; efekt düğümleri havuzdan. Boşta hiç JS çalışmaz.
 // - Gizli bilgi: rakip kartlarının kimliği bilinmez (id = -1); yalnız açılınca (blöf) ya da bana gelince yüz çizilir.
 import {cancelAnims} from '../platform/anim';
+import {ctx2d, texCanvas} from '../platform/tex';
 import {haptic} from '../platform/bridge';
 import './blofTable.css';
 import {ATLAS_COLS, ATLAS_ROWS, BACK_INDEX} from '../render/cardAtlas';
@@ -108,6 +109,23 @@ const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
 const tf = (p: Pose, cw: number, ch: number) =>
   `translate3d(${(p.x - cw / 2).toFixed(1)}px,${(p.y - ch / 2).toFixed(1)}px,0) rotate(${p.r.toFixed(2)}deg) scale(${p.s.toFixed(4)})`;
 
+/** Blöf karartması: elips (genişliğin %70'i × yüksekliğin %50'si, merkez %50/%44) içi .35 → dışı .72 lacivert (eski CSS
+ * radial-gradient ile aynı); kare tuval katmanın en-boyuna gerilince elips korunur. */
+function dimTex(c: HTMLCanvasElement): void {
+  const g = ctx2d(c);
+  if (!g) return;
+  const N = c.width;
+  g.save();
+  g.translate(N * 0.5, N * 0.44);
+  g.scale(1, 0.5 / 0.7);
+  const gr = g.createRadialGradient(0, 0, 0, 0, 0, N * 0.7);
+  gr.addColorStop(0, 'rgba(4, 6, 30, .35)');
+  gr.addColorStop(1, 'rgba(4, 6, 30, .72)');
+  g.fillStyle = gr;
+  g.fillRect(-N, -N * 2, N * 2, N * 4);
+  g.restore();
+}
+
 /** Elde sıralama: değer (As → Papaz), sonra takım. */
 export const handOrder = (a: CardId, b: CardId): number => rankOf(a) - rankOf(b) || a - b;
 
@@ -184,8 +202,9 @@ export class BlofTable {
   constructor(private t: Table2D, private snd: BlofSounds) {
     this.el = document.createElement('div');
     this.el.className = 'bl-layer';
-    this.dim = document.createElement('i');
-    this.dim.className = 'bl-dim';
+    // blöf açılışında masayı kısan katman: küçük doku tuvali (tam ekran gradyan katmanı ≈ 10 MB GPU karo yerine 64 KB)
+    this.dim = texCanvas('bl-dim', 128);
+    dimTex(this.dim as HTMLCanvasElement);
     this.alertEl = document.createElement('i');
     this.alertEl.className = 'bl-alert';
     this.alertEl.innerHTML = '<i></i>';
