@@ -74,6 +74,8 @@ const GLOW: Record<string, ReadonlyArray<readonly [number, string]>> = {
 const GLOW_N = 'rgba(110, 140, 255, .55)';
 const RAYS_C = 'rgba(255, 255, 255, .075)';
 const EASE_OUT = 'cubic-bezier(.2,.75,.25,1)';
+/** Kart stillerinin okuduğu, kök öğede satır içi duran CSS değişkenleri (vitrin katmanına kopyalanır: mirrorVars) */
+const CARD_VARS = ['--c2-atlas', '--c2-bs', '--c2-p', '--c2-sh', '--c2-sh-flat', '--c2-sh-vit', '--c2-r', '--cw', '--ch'];
 const OUT = 'cubic-bezier(.2,.8,.3,1)';
 /** Çok kareli animasyonda yumuşatma her aralığa ayrı (WAAPI tek easing'i tüm zaman çizelgesine uygular, tepe noktası kayar). */
 const seg = (kf: Keyframe[], e: string[]): Keyframe[] => kf.map((k, i) => (i < kf.length - 1 ? {...k, easing: e[Math.min(i, e.length - 1)]} : k));
@@ -117,6 +119,8 @@ interface Layout {
   seats: SeatGeo[];
   /** "+N" yazısının yükselirken çıkabileceği en üst y (duraklat / sohbet düğmelerinin altı) */
   popTop: number;
+  /** İpucu hapının üstü (bu çizginin altına masa öğesi inmez): pişti vitrini yelpazesi bunun üstünde kalır */
+  clear: number;
 }
 
 /** Havuz: sabit sayıda düğüm; boşta olan tekrar kullanılır (yeni düğüm üretilmez). tag 'canvas': doku katmanı düğümü. */
@@ -475,7 +479,7 @@ export class Table2D {
         {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1, py, padj: padjL, pnew: true, pspan: leftSpan},
       ];
     }
-    this.L = {W, H, cw, ch, pile: {x: W / 2, y: pileY}, deck, hand, seats, popTop: u * 0.6 + Math.max(44, u * 3) + 4};
+    this.L = {W, H, cw, ch, pile: {x: W / 2, y: pileY}, deck, hand, seats, popTop: u * 0.6 + Math.max(44, u * 3) + 4, clear};
     this.pillDy = -u * 0.15;
     // ipucu hapının yeri HUD'a CSS değişkeniyle (hud.css: var(--kh-hint-bottom…)); Blöf kendi yerini kullanır.
     // HUD kökünde yazılır (yalnız onun alt ağacı yeniden hesaplanır); HUD henüz yoksa (açılış) belge kökünde.
@@ -824,6 +828,17 @@ export class Table2D {
   /** Vitrinin altına konan öğe (karartma dokusu, vb.): kart katmanında, kart numarasıyla çakışmaz. */
   mount(el: HTMLElement): void {
     this.cardsEl.append(el);
+  }
+  /**
+   * Kart stillerinin bağlı olduğu CSS değişkenlerini (atlas, gölge, boyut) kök öğeden `el`e kopyalar: vitrin kartları HUD'un üstündeki
+   * katmana taşınınca da aynı görünür. Değişmeyen değere yazılmaz (açılış başına çoğunlukla sıfır yazma).
+   */
+  mirrorVars(el: HTMLElement): void {
+    const from = this.root.style, to = el.style;
+    for (const k of CARD_VARS) {
+      const v = from.getPropertyValue(k);
+      if (to.getPropertyValue(k) !== v) to.setProperty(k, v);
+    }
   }
   /** Boş yığına dokununca (pişti yok) küçük zıplama: yalnız üst kartın iç katmanı, transform. */
   nudge(seat: number): void {

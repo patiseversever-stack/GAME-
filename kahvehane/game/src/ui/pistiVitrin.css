@@ -1,9 +1,13 @@
-/* Pişti vitrini: başlık, kart etiketleri, tek seferlik ipucu ve karartma. Hepsi kart katmanında (ar__cards) KÜÇÜK öğeler:
-   yalnız transform/opacity canlanır; büyük gradyan/blur/mask yok. Karartma: yelpaze şeridini kaplayan 64² doku tuvali (bileşimci büyütür, karo tutmaz; tam ekran harmanlama yok).
-   Gizliyken display:none JS'ten satır içi verilir (ui.css `#app canvas {display:block}` kimlik seçicisini yener; görünmeyen
-   süs katmanı büyütür). Altın çerçeve kartın pişirilmiş gölge görselinin yerini alır (table.css .is-vit). */
-.kh-vit__dim { position: absolute; left: 0; top: 0; z-index: 450; pointer-events: none; }
-.kh-vit__head, .kh-vit__tag, .kh-vit__hint { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; font-style: normal;
+/* Pişti vitrini: tam ekran karartma + başlık + kart etiketleri + tek seferlik ipucu.
+   Katman (.kh-vit__layer) HUD katmanında (.kh-ui) HUD'un (z 5) üstünde, bildirim / efekt katmanının (z 45) altındadır; açılışta vitrin
+   kartları buraya taşınır, kapanınca masaya geri döner → karartma masayı, elleri, rozetleri ve HUD düğmelerini kaplar; kartlar, başlık ve
+   etiketler karartmanın ÜSTÜNDE tam parlak kalır. Hepsi küçük öğeler; yalnız transform/opacity canlanır (docs/PHASES.md "GPU karo belleği"):
+   karartma 128² doku tuvali (radyal gradyan pişirilmiş; bileşimci tam ekrana büyütür, karo tutmaz), gradyan öğesi / blur / backdrop-filter / maske yok.
+   Gizliyken display:none JS'ten satır içi verilir (ui.css `#app canvas {display:block}` kimlik seçicisini yener; görünmeyen süs katmanı
+   büyütür). Altın çerçeve kartın pişirilmiş gölge görselinin yerini alır (table.css .is-vit). */
+.kh-vit__layer { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
+.kh-vit__dim { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 450; pointer-events: none; }
+.kh-vit__head, .kh-vit__tag, .kh-vit__hint { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; font-style: normal; font-weight: 400;
   font-family: var(--font-display, 'Lilita One'), 'Nunito', sans-serif; text-shadow: 0 1.5px 0 #0a1033, 1px 1px 0 #0a1033, -1px 1px 0 #0a1033, 1px -1px 0 #0a1033, -1px -1px 0 #0a1033; }
 .kh-vit__head { z-index: 900; align-items: center; gap: calc(var(--u, 16px) * .5); padding: calc(var(--u, 16px) * .2) calc(var(--u, 16px) * .9) calc(var(--u, 16px) * .24) calc(var(--u, 16px) * .22);
   border-radius: 999px; font-size: calc(var(--u, 16px) * 1.05); line-height: 1; color: #fff;
@@ -12,10 +16,11 @@
 .kh-vit__nm { font-weight: 400; max-width: 8.5em; overflow: hidden; text-overflow: ellipsis; }
 .kh-vit__cnt { display: inline-flex; align-items: center; gap: .22em; padding-left: .55em; margin-left: .1em; color: #ffd23f; border-left: 2px solid rgba(255, 178, 26, .45); }
 .kh-vit__cnt b { font-weight: 400; color: #fff; }
-.kh-vit__tag { z-index: 905; padding: calc(var(--u, 16px) * .14) calc(var(--u, 16px) * .55) calc(var(--u, 16px) * .2); border-radius: 999px; font-size: calc(var(--u, 16px) * .82); line-height: 1; color: #ffd23f;
-  background: linear-gradient(180deg, #1c2780 0%, #0f1755 100%); box-shadow: 0 0 0 2px #0a1033, inset 0 0 0 1.2px #ffb21a, 0 2px 5px rgba(2, 4, 24, .5); }
+/* kart etiketi: boyutu (em) satır içi font-size'tan; kartın açıkta kalan şeridine sığar, kartla birlikte döner */
+.kh-vit__tag { z-index: 905; padding: .16em .42em .2em; border-radius: 999px; font-size: calc(var(--u, 16px) * .86); line-height: 1; color: #ffd23f; text-shadow: 0 .09em 0 #0a1033;
+  background: linear-gradient(180deg, #1c2780 0%, #0f1755 100%); box-shadow: 0 0 0 .15em #0a1033, inset 0 0 0 .09em #ffb21a, 0 .14em .32em rgba(2, 4, 24, .5); }
 .kh-vit__tag.is-vale { color: #0a1033; text-shadow: none; background: linear-gradient(180deg, #fff0a0 0%, #ffc83a 55%, #ff9f1a 100%);
-  box-shadow: 0 0 0 2px #0a1033, inset 0 1.5px 0 rgba(255, 255, 255, .7), 0 2px 5px rgba(2, 4, 24, .5); }
+  box-shadow: 0 0 0 .15em #0a1033, inset 0 .1em 0 rgba(255, 255, 255, .7), 0 .14em .32em rgba(2, 4, 24, .5); }
 .kh-vit__hint { z-index: 910; padding: calc(var(--u, 16px) * .26) calc(var(--u, 16px) * .8) calc(var(--u, 16px) * .3); border-radius: 999px; font-size: calc(var(--u, 16px) * .86); line-height: 1; color: #fff;
   background: linear-gradient(180deg, #1c2780 0%, #0f1755 100%); box-shadow: 0 0 0 2.5px #0a1033, inset 0 0 0 1.4px #ffb21a, 0 3px 8px rgba(2, 4, 24, .55); }
 .kh-vit__hint b { font-weight: 400; color: #ffd23f; }

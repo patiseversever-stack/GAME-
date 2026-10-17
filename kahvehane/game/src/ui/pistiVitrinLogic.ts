@@ -7,11 +7,11 @@ export const VIT_MAX = 8;
 
 /**
  * Pişti kartının etiketi. Pişti kartı OYNANAN karttır: Vale (J) yalnız vale piştide (tek J'nin üstüne J) pişti kartı olabilir
- * (J tek başka kartı alırsa pişti sayılmaz) → J = "Vale Pişti +20", diğerleri "+10".
+ * (J tek başka kartı alırsa pişti sayılmaz) → J = "VALE +20" (altın), diğerleri "+10".
  */
 export function pistiTag(id: CardId): {points: 10 | 20; vale: boolean; label: string} {
   const vale = isJack(id);
-  return {points: vale ? 20 : 10, vale, label: vale ? 'Vale Pişti +20' : '+10'};
+  return {points: vale ? 20 : 10, vale, label: vale ? 'VALE +20' : '+10'};
 }
 
 /** Gösterilecek kartlar: oluş sırasıyla (pişti yapılış sırası), en çok `cap`; fazlası varsa en eskiler atlanır (first: ilk gösterilenin sıra no'su). */
@@ -26,8 +26,10 @@ export interface FanBox {
   cw: number;
   /** Elin kart ölçeği (L.hand.s): vitrin kartları eldekiler kadar büyük (atlas o çözünürlükte pişirilir → köşe indeksi net) */
   handS: number;
-  /** Kartların sol kenarı bundan küçük olamaz (ör. desteyle çakışmasın: yelpaze o kadar sağa kayar / daralır). */
+  /** Kartların sol kenarı bundan küçük olamaz (ör. desteyle çakışmasın: yelpaze o kadar sağa kayar, gerekirse kartlar küçülür). */
   left?: number;
+  /** Yelpazenin en alt kenarı bundan aşağı inemez (ipucu hapının üstü): gerekirse yelpaze yukarı kayar. */
+  bottomMax?: number;
 }
 export interface FanPose {
   x: number;
@@ -50,18 +52,18 @@ export interface FanLayout {
   cx: number;
 }
 
-/** Sahne ortasında, ekrana sığan yay biçimli yelpaze: kart sırası soldan sağa = oluş sırası, sonuncusu en üstte ve tam görünür. */
+/**
+ * Sahne ortasında, ekrana sığan yay biçimli yelpaze: kart sırası soldan sağa = oluş sırasıyla, sonuncusu en üstte ve tam görünür.
+ * Kartlar eldekiler kadar büyük (net atlas çözünürlüğü); çok kartta ve sol sınır (deste) varsa köşe indeksi (kart genişliğinin
+ * ~%36'sı) açık kalacak kadar küçülür. Sol sınır hep korunur.
+ */
 export function vitrinFan(n: number, b: FanBox): FanLayout {
-  const s = b.handS, w = b.cw * s, h = w / 0.7;
   const edge = Math.max(0, b.W * 0.03), right = b.W - edge;
-  // adım: köşe indeksi (kart genişliğinin ~%34'ü) rahat okunsun; dar ekranda sığacak kadar
-  const stepFor = (l: number) => (n > 1 ? Math.min(w * 0.6, (Math.min(b.W * 0.94, right - l) - w) / (n - 1)) : 0);
-  let left = Math.max(edge, b.left ?? 0), step = stepFor(left);
-  if (n > 1 && step < w * 0.36) {
-    // sol sınıra uyunca köşe indeksleri sıkışıyorsa (çok kart): sınırdan vazgeç, tüm genişliği kullan
-    left = edge;
-    step = stepFor(left);
-  }
+  const left = Math.max(edge, b.left ?? 0);
+  const avail = Math.min(b.W * 0.94, right - left);
+  const w = Math.min(b.cw * b.handS, avail / (n > 1 ? 1 + (n - 1) * 0.36 : 1)), h = w / 0.7;
+  const s = w / b.cw;
+  const step = n > 1 ? Math.min(w * 0.6, (avail - w) / (n - 1)) : 0;
   const total = w + (n - 1) * step;
   // ortalı; sol sınır (deste) varsa o kadar sağa kayar
   const cx = Math.min(right - total / 2, Math.max(b.W / 2, left + total / 2));
@@ -72,7 +74,7 @@ export function vitrinFan(n: number, b: FanBox): FanLayout {
   let top = Infinity, bottom = -Infinity;
   for (let k = 0; k < n; k++) {
     const off = k - (n - 1) / 2;
-    const r = off * da, y = yc + off * off * (n <= 5 ? 1.9 : 1.1); // kalabalıkta yay daha yassı: etiketler elin ipucuna inmez
+    const r = off * da, y = yc + off * off * (n <= 5 ? 1.9 : 1.1); // kalabalıkta yay daha yassı
     poses.push({x: cx + off * step, y, r, s});
     const a = (Math.abs(r) * Math.PI) / 180;
     const hh = (h * Math.cos(a) + w * Math.sin(a)) / 2;
@@ -80,24 +82,87 @@ export function vitrinFan(n: number, b: FanBox): FanLayout {
     bottom = Math.max(bottom, y + hh);
     bottoms.push(y + hh);
   }
+  if (b.bottomMax !== undefined && bottom > b.bottomMax) {
+    const dy = bottom - b.bottomMax; // ipucu hapına inmesin
+    for (let k = 0; k < n; k++) {
+      poses[k].y -= dy;
+      bottoms[k] -= dy;
+    }
+    top -= dy;
+    bottom -= dy;
+  }
   return {poses, w, h, step, top, bottom, bottoms, cx};
 }
 
-/**
- * Etiket satırları: soldan sağa dizili etiketler (merkez x, genişlik) yan yana sığmıyorsa sonrakiler bir alt satıra iner.
- * Sonuç: her etiketin satır no'su (0 = ilk satır).
- */
-export function tagRows(xs: readonly number[], widths: readonly number[], gap = 6): number[] {
-  const rows: number[] = [];
-  const last: number[] = []; // her satırdaki son etiketin sağ kenarı
-  for (let i = 0; i < xs.length; i++) {
-    const left = xs[i] - widths[i] / 2;
-    let r = 0;
-    while (r < last.length && left < last[r] + gap) r++;
-    last[r] = xs[i] + widths[i] / 2;
-    rows.push(r);
+export interface TagPlan {
+  /** etiket merkezi (dünya) ve dönüşü: kartın dönüşünü izler, yay boyunca tek taban çizgisi */
+  x: number;
+  y: number;
+  rot: number;
+  /** yazı boyu (px); etiket genişliği şeride sığar */
+  fs: number;
+  label: string;
+  vale: boolean;
+  /** tahmini kutu (px) */
+  w: number;
+  h: number;
+}
+
+const quad = (cx: number, cy: number, w: number, h: number, rotDeg: number): number[][] => {
+  const a = (rotDeg * Math.PI) / 180, co = Math.cos(a), si = Math.sin(a);
+  return [[-w / 2, -h / 2], [w / 2, -h / 2], [w / 2, h / 2], [-w / 2, h / 2]].map(([x, y]) => [cx + x * co - y * si, cy + x * si + y * co]);
+};
+/** İki döndürülmüş dörtgen `gap` px'ten yakın mı (ayırıcı eksen testi; dörtgenler dikdörtgen) */
+function quadsNear(A: number[][], B: number[][], gap: number): boolean {
+  for (const P of [A, B]) for (let i = 0; i < 2; i++) {
+    const [x0, y0] = P[i], [x1, y1] = P[i + 1], L = Math.hypot(x1 - x0, y1 - y0) || 1, ax = [-(y1 - y0) / L, (x1 - x0) / L];
+    const pr = (Q: number[][]) => { const v = Q.map(([x, y]) => x * ax[0] + y * ax[1]); return [Math.min(...v), Math.max(...v)]; };
+    const [a0, a1] = pr(A), [b0, b1] = pr(B);
+    if (Math.min(a1, b1) - Math.max(a0, b0) <= -gap) return false;
   }
-  return rows;
+  return true;
+}
+
+/**
+ * Kart başına TEK etiket: kartın açıkta kalan şeridinin (sol şerit) alt kısmında, kartla birlikte dönerek (yay boyunca tek taban
+ * çizgisi). Genişliği şeride sığar ve komşu etiketle ≥1.5 px boşluk bırakır (döndürülmüş kutular gerçekten ölçülür; sığmazsa yazı
+ * küçülür) → ne komşu etiketle ne başka kartın değer/takım köşesiyle (üst-sol) çakışır. Vale: altın "VALE +20", şeride okunur
+ * boyda sığmazsa altın "+20"; diğerleri "+10".
+ */
+export function vitrinTags(fan: FanLayout, vale: readonly boolean[], u: number): TagPlan[] {
+  const n = fan.poses.length;
+  const strip = n > 1 ? fan.step : fan.w * 0.82; // tek kartta kartın tamamı açıkta: etiket altta ortada
+  const avail = Math.max(16, strip - 3);
+  const em = (chars: number) => chars * 0.56 + 0.95; // genişlik (em): metin + dolgu + halka
+  const fs0 = u * 0.86;
+  const make = (long: boolean, k: number): TagPlan[] => {
+    const fsPlain = Math.min(fs0, avail / em(3)) * k, fsLong = Math.min(fs0, avail / em(8)) * k;
+    const fsPlainUsed = long ? Math.min(fsPlain, fsLong * 1.15) : fsPlain; // "VALE +20" ile aynı ölçekte kalsın (en çok %15 büyük)
+    return fan.poses.map((p, i) => {
+      const v = vale[i];
+      const label = v ? (long ? 'VALE +20' : '+20') : '+10';
+      const fs = v && long ? fsLong : fsPlainUsed;
+      const w = em(label.length) * fs, h = fs * 1.62;
+      const a = (p.r * Math.PI) / 180, co = Math.cos(a), si = Math.sin(a);
+      const lx = n > 1 ? -fan.w / 2 + strip / 2 : 0, ly = fan.h / 2 - h / 2 - 5;
+      return {x: p.x + lx * co - ly * si, y: p.y + lx * si + ly * co, rot: p.r, fs, label, vale: v, w, h};
+    });
+  };
+  const clash = (t: TagPlan[]): boolean => {
+    const q = t.map(x => quad(x.x, x.y, x.w, x.h, x.rot));
+    for (let i = 0; i + 1 < q.length; i++) for (let j = i + 1; j < Math.min(q.length, i + 3); j++) if (quadsNear(q[i], q[j], 1.5)) return true;
+    return false;
+  };
+  const fit = (long: boolean): TagPlan[] => {
+    let k = 1, t = make(long, k);
+    for (let it = 0; it < 24 && clash(t); it++) t = make(long, (k *= 0.96));
+    return t;
+  };
+  const plain = fit(false);
+  if (!vale.some(Boolean)) return plain;
+  const long = fit(true);
+  const fsL = Math.min(...long.filter(x => x.vale).map(x => x.fs)), fsP = Math.min(...plain.map(x => x.fs));
+  return fsL >= Math.max(8.4, fsP * 0.7) ? long : plain;
 }
 
 /** Vitrini etkileyebilecek olaylar: masadaki sahne animasyonları, dokunmalar, süre, el sonu. */
