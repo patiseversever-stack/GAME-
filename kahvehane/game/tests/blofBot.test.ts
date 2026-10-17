@@ -242,22 +242,24 @@ describe('Blöf botu: zorluk sıralaması (simülasyon)', () => {
     return w / N;
   };
 
+  // Not: botlar insana karşı ayarlıdır (bkz. docs/BOTS.md, tests/blofAudit.test.ts — "sıradan oyuncu" merdiveni).
+  // Bot-bot farkı 1'e 1'de belirgin; kalabalık masada şans payı büyük (zor ≈ orta), kolay hep geride.
   it('1v1: zor > orta > kolay', () => {
-    expect(winRate(2, ['zor', 'kolay'])).toBeGreaterThan(0.75);
-    expect(winRate(2, ['zor', 'orta'])).toBeGreaterThan(0.7);
-    expect(winRate(2, ['orta', 'kolay'])).toBeGreaterThan(0.53);
+    expect(winRate(2, ['zor', 'kolay'])).toBeGreaterThan(0.66);
+    expect(winRate(2, ['zor', 'orta'])).toBeGreaterThan(0.5);
+    expect(winRate(2, ['orta', 'kolay'])).toBeGreaterThan(0.66);
   }, 60_000);
 
-  it('3 ve 4 kişi: zor ve orta, kolaylara karşı payından (1/n) çok kazanır', () => {
+  it('3 ve 4 kişi: zor ve orta, kolaylara karşı payından (1/n) çok kazanır; zor ortalara ezilmez', () => {
     expect(winRate(3, ['zor', 'kolay', 'kolay'])).toBeGreaterThan(0.48);
-    expect(winRate(3, ['orta', 'kolay', 'kolay'])).toBeGreaterThan(0.37);
+    expect(winRate(3, ['orta', 'kolay', 'kolay'])).toBeGreaterThan(0.45);
     expect(winRate(4, ['zor', 'kolay', 'kolay', 'kolay'])).toBeGreaterThan(0.4);
-    expect(winRate(4, ['zor', 'orta', 'orta', 'orta'])).toBeGreaterThan(0.3);
+    expect(winRate(4, ['zor', 'orta', 'orta', 'orta'])).toBeGreaterThan(0.2);
   }, 60_000);
 
-  it('eşli: zor takım kolay takımı yener', () => {
-    expect(winRate(4, ['zor', 'kolay', 'zor', 'kolay'], [0, 1, 0, 1])).toBeGreaterThan(0.68);
-    expect(winRate(4, ['orta', 'kolay', 'orta', 'kolay'], [0, 1, 0, 1])).toBeGreaterThan(0.6);
+  it('eşli: zor/orta takım kolay takımı yener', () => {
+    expect(winRate(4, ['zor', 'kolay', 'zor', 'kolay'], [0, 1, 0, 1])).toBeGreaterThan(0.54);
+    expect(winRate(4, ['orta', 'kolay', 'orta', 'kolay'], [0, 1, 0, 1])).toBeGreaterThan(0.54);
   }, 60_000);
 });
 
