@@ -11,6 +11,7 @@ import {I} from './icons';
 import {FACE_BOX, gemHtml} from './parts';
 import {g3, type Fx} from './fx';
 import {ctx2d} from '../platform/tex';
+import {whenIdle} from '../platform/sched';
 
 /** Rozet konumu: alt (ben, sol alt), üst (1'e 1 rakip), top4 (4 kişide karşı), sol, sağ. */
 type Pos = 'bottom' | 'top' | 'top4' | 'left' | 'right';
@@ -555,6 +556,8 @@ export class HudView implements GameHud {
   show(players: readonly SeatPlayer[], mode: Mode, coins?: number, frame?: string): void {
     if (coins !== undefined) this.setCoins(coins);
     if (frame !== undefined) this.frame = frame;
+    // pişti kahramanı (ışın/çark dokuları) boşta önceden kurulur: ilk piştide ana iş parçacığında çizim olmasın
+    if (!this.heroEl && ANIM) void whenIdle(3000).then(() => void (this.heroEl ??= this.buildHero()));
     const list: HudPlayer[] = players.map(p => ({seat: p.seat, name: p.name, char: p.char, isMe: p.human, team: mode === 'esli' ? p.team : -1, level: p.level,
       frame: p.human ? this.frame : undefined}));
     this.setPlayers(list, mode);
