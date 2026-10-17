@@ -399,22 +399,51 @@ export class Table2D {
       // benim destem halkanın sağ altında, ipucu bandının üstünde; pişti kartları ortaya (sola) dizilir: sağdaki rakibin destesine binmez
       const ms = 0.66;
       const myY = clear - (ch * ms) / 2 - 5;
-      // sağdaki rakibin pişti sırası (sola, biraz yukarı) ile aynı yüksekliğe denk gelirse destem sola kayar —
-      // ama pişti sıram (solda) halkaya girmeyecek kadar (kısa ekranda yer yoksa en az çakışma)
-      const py = -ch * ss * 0.18, ph = ch * ss * 0.94;
-      const rightPistiL = W - sideStackX - cw * ss * 0.5 - 12 - (cw * ss * 0.94) / 2 - ph * 0.16;
+      // Pişti kartları yığının yanına dizilir; her kartın köşe indeksi açık kalan adımla (kart genişliğinin ~%34'ü, bkz. pistiPose).
+      // Yerleşim 3 pişti kartına göre ayrılır, daha çoğunda adım daralır (pspan): sıra yelpaze / halka / komşu yığın / ekran kenarına taşmaz.
+      const wS = cw * ss, hS = ch * ss, wM = wS * 0.94, hM = hS * 0.94, fullStep = wM * 0.34, rowSteps = 2;
+      const ringR = cw * 1.125 + 4;
+      const ringHalf = (y: number) => (Math.abs(y - pileY) >= ringR ? 0 : Math.sqrt(ringR * ringR - (y - pileY) ** 2));
+      const stepOf = (span: number, full = fullStep) => Math.max(full * 0.3, Math.min(full, span / rowSteps));
+      // yan rakiplerin pişti sırası kendi yelpazelerinin hemen altında başlar (eskiden %18 yukarı kayıktı: yelpazenin son kartına biniyordu)
+      const py = Math.max(-hS * 0.25, fanBottom + hM / 2 + 7 - sideY);
+      const rowTop = sideY + py - hM / 2 - 5, rowBot = sideY + py + hM / 2 + 5;
+      const rightC0 = W - sideStackX - wS / 2, leftC0 = sideStackX + wS / 2;
+      const rightSpan = rightC0 - (W / 2 + ringHalf(rowTop) + wM / 2 + 8);
+      const leftSpan = W / 2 - ringHalf(rowTop) - (leftC0 + wM / 2 + 8);
+      const rightL = rightC0 - rowSteps * stepOf(rightSpan) - wM / 2 - 8; // sağ rakibin 3. pişti kartının sol kenarı
+      const leftR = leftC0 + rowSteps * stepOf(leftSpan) + wM / 2 + 8; // sol rakibin 3. pişti kartının sağ kenarı
+      // sağdaki rakibin pişti sırası ile aynı yüksekliğe denk gelirse destem sola kayar — ama yığınım halkaya girmeyecek kadar
+      // (kısa ekranda yer yoksa en az çakışma)
       const myTop = myY - (ch * ms) / 2 - 4, R = cw * 2.25 * 0.47;
       let myX = Math.min(W - cw * 0.6, W * 0.71);
-      if (myTop < sideY + py + ph / 2 + 4) {
+      if (myTop < rowBot) {
         const ringOk = (x: number) => myTop > pileY + R + 4 || x - cw * ms * 1.55 > W / 2 + Math.sqrt(Math.max(0, R * R - (myTop - pileY) ** 2)) + 4;
-        const want = rightPistiL - 6 - (cw * ms) / 2 - 4;
+        const want = rightL - 6 - (cw * ms) / 2 - 4;
         for (let x = Math.min(myX, want); x <= myX; x += 2) if (ringOk(x)) { myX = x; break; }
       }
+      // benim pişti sıram (sola): halkaya, soldaki rakibin pişti sırasına ve desteye girmez
+      const wMe = cw * ms * 0.94, hMe = ch * ms * 0.94, myC0 = myX - (cw * ms) / 2;
+      const myRowTop = myY + 6 - hMe / 2 - 5, myRowBot = myY + 6 + hMe / 2 + 5;
+      let myMin = myRowTop < pileY + ringR ? W / 2 + ringHalf(myRowTop) + 2 : 0;
+      if (myRowTop < rowBot && myRowBot > rowTop) myMin = Math.max(myMin, leftR + 6);
+      const deckR = deck.x + (cw * deck.s) / 2 + 8;
+      if (myRowBot > deck.y - (ch * deck.s) / 2 - 12) myMin = Math.max(myMin, deckR);
+      const mySpan = myC0 - (myMin + wMe / 2 + 10);
+      // üst rakip: yığın sağ üstte (duraklat düğmesinin altı, sağ rakibin portresinin üstü), pişti kartları yelpazeye doğru (sola) dizilir
+      // (eskiden sağa dizilip ekranın dışına taşıyordu, 4 sıra portreye biniyordu)
+      const pauseBottom = u * 0.6 + Math.max(44, u * 3);
+      const headTop = H * (H <= 700 ? 0.215 : 0.245) - (H <= 700 ? 4.3 : 4.6) * u * 0.14; // sağ/sol rozetin portresi (hud.css)
+      const topLo = pauseBottom + 8 + hS / 2, topHi = headTop - 6 - hS / 2;
+      const topY = topHi < topLo ? topHi : (topLo + topHi) / 2;
+      const topX = W - 8 - wS / 2 - 3;
+      const topFanR = W / 2 + 1.5 * cw * fs * 0.62 + (cw * fs) / 2 + 6;
+      const topSpan = topX - wS / 2 - (topFanR + 6 + wM / 2 + 8);
       seats = [
-        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: myX, y: myY, s: ms, r: 8}, pdir: -1},
-        {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1, py},
-        {fan: {x: W / 2, y: H * 0.2, a: 180, s: fs, spread: cw * fs * 0.62}, stack: {x: Math.min(W - cw * 0.9, W / 2 + cw * 1.45), y: H * 0.2, s: ss, r: 6}, pdir: 1},
-        {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1, py},
+        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: myX, y: myY, s: ms, r: 8}, pdir: -1, pspan: mySpan},
+        {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1, py, pspan: rightSpan},
+        {fan: {x: W / 2, y: H * 0.2, a: 180, s: fs, spread: cw * fs * 0.62}, stack: {x: topX, y: topY, s: ss, r: 6}, pdir: -1, pspan: topSpan},
+        {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1, py, pspan: leftSpan},
       ];
     }
     this.L = {W, H, cw, ch, pile: {x: W / 2, y: pileY}, deck, hand, seats};
@@ -598,9 +627,23 @@ export class Table2D {
     const s = this.L.seats[seat].stack, k = Math.min(i, 30);
     return {x: s.x + Math.sin(i * 5.1) * 1.5, y: s.y - k * 0.35, r: s.r + Math.sin(i * 1.7) * 3, s: s.s};
   }
-  private pistiPose(seat: number, i: number): Pose {
-    const g = this.L.seats[seat], s = g.stack;
-    return {x: s.x + g.pdir * (this.L.cw * s.s * 0.5 + i * 12), y: s.y + (g.py ?? 6), r: g.pdir * (14 + i * 4), s: s.s * 0.94};
+  /**
+   * Açık pişti kartı i / n: yığının yanına (pdir) ya da altına (pv) dizilir. Her kartın köşe indeksi (değer + takım) açıkta kalır:
+   * adım yatayda kart genişliğinin ~%34'ü, dikeyde yüksekliğin ~%40'ı. Kart çoğalınca adım, koltuğa ayrılan yere (pspan) göre daralır.
+   */
+  private pistiPose(seat: number, i: number, n = this.pistis[seat].length): Pose {
+    const g = this.L.seats[seat], s = g.stack, {cw, ch} = this.L, m = s.s * 0.94;
+    const full = g.pv ? ch * m * 0.4 : cw * m * 0.34;
+    const step = n > 1 ? Math.max(full * 0.3, Math.min(full, (g.pspan ?? Infinity) / (n - 1))) : full;
+    if (g.pv) return {x: s.x + g.pdir * i * 1.5, y: s.y + g.pv * ((ch * s.s) / 2 + (ch * m) / 2 + 4 + i * step), r: g.pdir * (4 + i * 1.5), s: m};
+    return {x: s.x + g.pdir * ((cw * s.s) / 2 + i * step), y: s.y + (g.py ?? 6), r: g.pdir * (12 + Math.min(i, 4) * 2.5), s: m};
+  }
+  /**
+   * Pişti kartı katmanı: dikey sırada yeni kart üstte (her kartın üst şeridi, yani sol-üst köşe indeksi açıkta); yatay sırada
+   * ilk kart üstte, sonrakiler altına girer (açıkta kalan dış şerit; yığının altına giren ilk kartın da dış yarısı görünür).
+   */
+  private pistiZ(seat: number, i: number): number {
+    return 190 + (this.L.seats[seat].pv ? i : -i);
   }
 
   /** Deste sayacı hapının kartın alt kenarına göre dikey kayması (hap kenara biner) */
@@ -1384,7 +1427,12 @@ export class Table2D {
       if (pistiCard !== null && c.id === pistiCard) {
         const row = this.pistis[seat];
         row.push(c);
-        f = this.fly(c, this.pistiPose(seat, row.length - 1), {ms: 440, lift: 0.14, delay: k * step, z, zEnd: 190 + row.length, arc: 0.18 * side});
+        // adım kart sayısına göre daralabilir: önceki pişti kartları yeni yerine kayar (kart azken konum değişmez)
+        row.slice(0, -1).forEach((q, j) => {
+          const to = this.pistiPose(seat, j);
+          if (Math.hypot(to.x - q.pose.x, to.y - q.pose.y) > 0.5) void this.fly(q, to, {ms: 260, lift: 0, ease: EASE_OUT});
+        });
+        f = this.fly(c, this.pistiPose(seat, row.length - 1), {ms: 440, lift: 0.14, delay: k * step, z, zEnd: this.pistiZ(seat, row.length - 1), arc: 0.18 * side});
       } else {
         st.push(c);
         const i = st.length - 1;
