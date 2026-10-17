@@ -385,7 +385,7 @@ export class Table2D {
       const ringX = myRowTop < pileY + ringKeep2 - 1.5 ?W / 2 + Math.sqrt(Math.max(0, ringKeep2 * ringKeep2 - (myRowTop - pileY) ** 2)) : 0;
       seats = [
         {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: stX, y: myY, s: ss2, r: 8}, pdir: -1, py: -2, pspan: stX - (cw * ss2) / 2 - (Math.max(ringX, W * 0.3) + wm2 / 2 + 8)},
-        {fan: {x: W / 2, y: oppY, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: stX, y: oppSY, s: ss2, r: -8}, pdir: -1, pv: 1, pnew: true, pspan: myY - hs2 / 2 - 4 - 10 - hm2 / 2 - oppC0},
+        {fan: {x: W / 2, y: oppY, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: stX, y: oppSY, s: ss2, r: -8}, pdir: -1, pv: 1, pnew: true, pspan: myY - hs2 / 2 - 4 - 15 - hm2 / 2 - oppC0},
       ];
     } else {
       const fs = Math.min(0.56, Math.max(0.46, (H * 0.075) / ch));
