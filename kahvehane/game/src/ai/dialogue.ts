@@ -2405,9 +2405,9 @@ export const CHAT_PROFILES: Readonly<Record<ChatLevel, ChatProfile>> = {
   // yalnız büyük anlar: olay tepkisi seyrek, boş laf ve masa sohbeti yok, atışma nadir; sonuçta tek replik
   sakin: {event: 0.4, chatter: 0, gap: 1.6, banter: 0.35, banterHands: 2, reply: 0.6, quip: 0.35, idle: 1.4, midTalk: 0.5, midReply: 0, endMax: 1, endReply: 0, endRevenge: 0, bye: 0,
     table: 0, turn: 0, crowd: 1, damp: 1, lead: 0.35, soft: 0.5},
-  // Normal = önceki ayar (çarpanlar 1); masa sohbeti yalnız cılız bir tat (≈ +%15)
+  // Normal = önceki ayar (çarpanlar 1); masa sohbeti yalnız cılız bir tat (≈ +%10–15)
   normal: {event: 1, chatter: 1, gap: 1, banter: 1, banterHands: 1, reply: 1, quip: 1, idle: 1, midTalk: 1, midReply: 0.6, endMax: 3, endReply: 1, endRevenge: 0.35, bye: 0.5,
-    table: 0.12, turn: 0.08, crowd: 1, damp: 1, lead: 0.35, soft: 1},
+    table: 0.1, turn: 0.08, crowd: 1, damp: 1, lead: 0.35, soft: 1},
   // kahvehane: elde ~8–12 sn'de bir laf (1'e 1), kalabalık masada daha çok; atışma elde birkaç kez, bot botun hamlesine de laf atar
   // (yine tek kanal, kararda atışma yok); sonuçta tam karşılıklı dizi
   geveze: {event: 1.6, chatter: 2.2, gap: 0.55, banter: 2.5, banterHands: 0, reply: 1.3, quip: 1, idle: 0.6, midTalk: 1, midReply: 1, endMax: 3, endReply: 1, endRevenge: 0.75, bye: 0.9,
@@ -2503,7 +2503,7 @@ export const POOL_ALIAS: Readonly<Record<string, readonly PoolSrc[]>> = {
 /** Blöf anlarının kuralları (anahtar: blofKey). Blöf anı (açılış) hep konuşur; laf atmalar seyrek. */
 export const BLOF_RULES: Readonly<Record<BlofKey, MomentRule>> = {
   blofStart: {kind: 'always', chance: 1, prio: 3},
-  blofCallOut: {kind: 'always', chance: 1, prio: 3},
+  blofCallOut: {kind: 'always', chance: 1, prio: 3}, // Blöf çağrısı: her seviyede (Sakin'in 'büyük anlar'ından)
   blofCatchGloat: {kind: 'always', chance: 1, prio: 3, soft: true},
   blofCatchPlayer: {kind: 'always', chance: 1, prio: 3},
   blofCaughtByPlayer: {kind: 'always', chance: 1, prio: 3},
