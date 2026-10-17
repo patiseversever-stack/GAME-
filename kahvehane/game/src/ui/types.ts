@@ -77,6 +77,8 @@ export interface QuickChatItem {
   id: string;
   label: string;
   icon: string;
+  /** Bağlama uygun öneri (öne dizilir, parlar). */
+  hot?: boolean;
 }
 
 /** Hızlı sohbet penceresi (bir kez kurulur, tekrar kullanılır). */

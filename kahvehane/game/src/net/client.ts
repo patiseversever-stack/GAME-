@@ -114,9 +114,15 @@ export class GameClient<A, E, V, T = unknown> {
     this.transport.send({t: 'resync'});
   }
 
-  /** Hızlı sohbet mesajı (QUICK_CHAT kimliği). Ev sahibi doğrulayıp herkese {t: 'chat', seat, msg} yayar. */
-  chat(msg: string): void {
-    this.transport.send({t: 'chat', msg});
+  /**
+   * Hızlı sohbet mesajı (QUICK_CHAT kimliği) + seçilen söyleyiş + hedef koltuk. Ev sahibi doğrulayıp herkese
+   * {t: 'chat', seat, msg, line?, to?, rp?} yayar.
+   */
+  chat(msg: string, line?: string, to?: number): void {
+    const m: {t: 'chat'; msg: string; line?: string; to?: number} = {t: 'chat', msg};
+    if (line) m.line = line;
+    if (to !== undefined && to >= 0) m.to = to;
+    this.transport.send(m);
   }
 
   ping(): void {

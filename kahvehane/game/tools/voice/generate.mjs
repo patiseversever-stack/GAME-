@@ -52,6 +52,8 @@ const SELF = fileURLToPath(import.meta.url);
 const HERE = path.dirname(SELF);
 const GAME = path.resolve(HERE, '..', '..');
 const DIALOGUE_TS = path.join(GAME, 'src', 'ai', 'dialogue.ts');
+/** dialogue.ts → registerLines ile kaydedilen ek replik tabloları (yalnız `import type`; extraLines() dışa aktarır). */
+const EXTRA_TS = [path.join(GAME, 'src', 'ai', 'quickTalkLines.ts')];
 const VOICES_JSON = path.join(HERE, 'voices.json');
 const LINES_JSON = path.join(HERE, 'lines.json');
 const RAW_DIR = path.join(HERE, '.raw');
@@ -240,6 +242,15 @@ async function loadLines() {
     D = await import(pathToFileURL(DIALOGUE_TS).href);
   } catch (e) {
     die(`src/ai/dialogue.ts okunamadı. Node 22.18+ gerekir (daha eskisinde: node --experimental-strip-types …). Hata: ${e?.message ?? e}`);
+  }
+  // ek replik tabloları (oyunda quickTalk.ts kaydeder; burada aynı tablo aynı kancayla): hedefli hızlı sohbet, takım mesajları…
+  for (const f of EXTRA_TS) {
+    if (!fs.existsSync(f) || !D.registerLines) continue;
+    try {
+      D.registerLines((await import(pathToFileURL(f).href)).extraLines());
+    } catch (e) {
+      die(`${rel(f)} okunamadı: ${e?.message ?? e}`);
+    }
   }
   const first = new Map(); // `${char}|${tts}` → ilk kimlik (ses dosyası)
   const lines = D.allLines().map(l => {

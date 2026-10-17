@@ -88,22 +88,30 @@ Botlar `BotBrain` arayüzünü uygular: `observe(süzülmüş olay)` + `decide(g
 
 ## 4. Protokol (src/net/protocol.ts)
 
-İstemci → ev sahibi: `join` · `action {cseq, action}` · `ack {seq}` · `resync` · `ping` · `chat {msg}` · `leave`
+İstemci → ev sahibi: `join` · `action {cseq, action}` · `ack {seq}` · `resync` · `ping` · `chat {msg, line?, to?}` · `leave`
 Ev sahibi → istemci: `welcome {seat, seats}` · `seats` · `events {seq, events, view, actor, tell?}` · `sync {view, timer, reason}` ·
 `timer {key, kind, ms, deadline}` · `timerCleared` · `rejected {cseq, error, code}` · `queued {cseq}` · `timeout {seat}` · `pong` ·
-`chat {seat, msg}` · `closed`
+`chat {seat, msg, line?, to?, rp?}` · `closed`
 
 - `seq` masada ortak ve artandır; her `events` mesajı o hamleden sonraki **tam görünümü** de taşır → istemci durum tutmaz,
   kayıp mesajda `resync` yeter.
 - **Tempo (`ack`):** yerelde ev sahibi, insan arayüzü olayları sunup `ack` gönderene dek pencere sayacını başlatmaz ve botları
   uyandırmaz (en çok `paceMaxMs`, varsayılan 6 sn). Böylece pencere halkası (5 ya da 3 sn), atış animasyonu bittiğinde dolmaya başlar.
   Çevrimiçinde aynı mekanizma kısa bir üst sınırla (ör. 1,5 sn) kullanılmalı; yavaş istemci masayı bekletmesin.
-- **Hızlı sohbet (`chat`):** `msg` yalnız `QUICK_CHAT` kimliğidir (src/ai/dialogue.ts; serbest metin yok → küfür/moderasyon
-  sorunu yok). Ev sahibi `ChatGate` ile kimliği doğrular ve koltuk başına hız sınırı uygular (4 sn − 0,5 sn ağ payı, dakikada 6;
-  src/net/chat.ts), geçerse **gönderen dahil** herkese `chat {seat, msg}` yayar; geçersiz/hızlı mesaj sessizce düşer. Oyun durumunu
-  ve `seq`'i değiştirmez. Her istemci söyleyişi gönderenin karakter sesiyle kendisi çalar (aynı kimlik → aynı replik havuzu).
-  Bot cevapları bugün yalnız mesajı gönderen cihazda planlanır (yerel oyun); çevrimiçinde uzak insan koltukları otomatik cevap
-  vermez. Pişti (ev sahibi yok) aynı kapıyı `ChatRelay` ile kullanır.
+- **Hızlı sohbet (`chat`):** `msg` yalnız `QUICK_CHAT` (+ eşli takım mesajları) kimliğidir (src/ai/dialogue.ts,
+  src/ai/quickTalkLines.ts; serbest metin yok → küfür/moderasyon sorunu yok). **Söyleyişi gönderen seçer:** `line` = seçilen
+  söyleyiş kimliği (`qc_…`), `to` = hedef koltuk (1'e 1'de rakip; 3–4 kişide tepki → son hamleyi yapan, "hadi" → sıradaki,
+  selam / gg / çay → masa, takım mesajı → ortak; src/ai/quickTalk.ts → resolveTarget). Ev sahibi `ChatGate` + `ChatPolicy`
+  (quickTalk.ts → chatPolicy) ile denetler: gönderen insan koltuk, mesaj bu oyunda / masada var, `line` o mesaja ve gönderenin
+  karakterine ait, kişiye özel söz (ör. "Rıza Amca, uyudun mu?") yalnız o karakterdeki **bot** koltuğa — insan koltuğa (avatarı
+  Rıza olsa da arkasındaki "Mustafa") asla; nötr söz masadaki insan avatarını anamaz. Geçersiz `line`/`to` → mesaj düşer (kotadan
+  da düşmez). Koltuk başına hız sınırı aynı (4 sn − 0,5 sn ağ payı, dakikada 6; src/net/chat.ts). Geçerse **gönderen dahil**
+  herkese `chat {seat, msg, line, to, rp}` yayar; `rp {seat, line, ms}` = ev sahibinin planladığı bot cevabı (seslenilen bot
+  cevaplar; takım mesajına ortak bot). Böylece **her cihaz aynı klibi** çalar; alıcılar da aynı denetimi yapar (sayLineOk /
+  replyLineOk). Eski istemci (`line` yok) yine kabul edilir: politika herkes için tek nötr söyleyiş seçer (`fill`). Oyun durumunu
+  ve `seq`'i değiştirmez. Uzak insan koltukları otomatik cevap vermez. Pişti (ev sahibi yok) aynı kapıyı `ChatRelay` ile kullanır.
+  Sunucuda koltuk → avatar + insan/bot bilgisi `chatPolicy({game, mode, seats})`'e verilmeli; maç başında istemci de
+  `setTableHumans` ile insan avatarlarını bildirir (hiçbir bot repliği insana karakter adıyla seslenmez).
 - **Saat:** `timer.deadline` ev sahibi saatindedir; istemci kalan süreyi `client.timeLeft()` ile hesaplar
   (alındığı andan bu yana geçen yerel süreyi düşer). Çevrimiçinde `ping/pong` ile saat farkı ölçülür.
 

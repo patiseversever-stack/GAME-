@@ -34,3 +34,8 @@
 .kh-qc__l { min-width: 0; font-family: var(--font-ui); font-weight: var(--w-black); font-size: calc(var(--u) * .84); line-height: 1.12; text-shadow: 0 1.5px 0 rgba(6, 10, 40, .6);
   overflow-wrap: anywhere; }
 .kh-qc.is-cool .kh-qc__it { opacity: .5; }
+/* bağlama uygun öneri: altın kenar + üstte hafif sıcak ışık + köşede kıvılcım (mutlak konum: yerleşim kaymaz, döngü animasyonu yok) */
+.kh-qc__it.is-hot { background: linear-gradient(180deg, rgba(255, 214, 90, .2), rgba(255, 214, 90, 0) 65%) padding-box, var(--card-fill) padding-box,
+  linear-gradient(180deg, #ffe98f, #ffb02e 60%, #e07b00) border-box; box-shadow: 0 3px 0 var(--navy), 0 0 12px rgba(255, 196, 60, .28); }
+.kh-qc__it.is-hot::after { content: ''; position: absolute; top: 5px; right: 6px; width: 6px; height: 6px; border-radius: 50%;
+  background: #fff3b0; box-shadow: 0 0 0 2px rgba(255, 190, 40, .55), 0 0 8px 2px rgba(255, 210, 63, .7); pointer-events: none; }

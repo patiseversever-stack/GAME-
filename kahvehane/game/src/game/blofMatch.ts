@@ -9,7 +9,8 @@ import {mulberry32} from '../core/rng';
 import {BlofBot, type BlofDifficulty} from '../ai/blofBot';
 import {createBlofLocal, type BlofClient, type BlofHost} from '../net/blofLocal';
 import {BlofTalk, TUTORIAL, blofPriority, type BlofMoment} from '../ai/blofDialogue';
-import {BANTER_RULES, type BanterCtx, type Exchange} from '../ai/dialogue';
+import {BANTER_RULES, setTableHumans, type BanterCtx, type Exchange} from '../ai/dialogue';
+import {chatPolicy} from '../ai/quickTalk';
 import type {ServerMsg} from '../net/protocol';
 import {BlofTable, type BlofSounds} from '../table2d/blofTable';
 import type {Table2D} from '../table2d/table';
@@ -256,14 +257,16 @@ export class BlofMatch {
     if (!chat) return;
     const remote = new Set(client.seats.filter(x => x.kind === 'remote').map(x => x.seat));
     this.chatOff = client.on(m => {
-      if (m.t === 'chat' && !this.aborted) chat.receive(m.seat, m.msg);
+      if (m.t === 'chat' && !this.aborted) chat.receive(m.seat, m.msg, m);
     });
     chat.attach({
       game: 'blof',
+      mode: setup.mode,
       me: ME,
       seats: setup.players.map(p => ({seat: p.seat, char: p.char.id, team: this.team(p.seat), human: p.human || remote.has(p.seat), remote: remote.has(p.seat)})),
-      send: msg => this.client?.chat(msg),
+      send: (msg, line, to) => this.client?.chat(msg, line, to),
     });
+    chat.cue('start');
   }
 
   private endChat(): void {
@@ -334,6 +337,7 @@ export class BlofMatch {
       paceMaxMs: 9000,
       botSeed: (seed ^ 0x5bd1e995) >>> 0,
       chatIds: QUICK_IDS,
+      chatPolicy: chatPolicy({game: 'blof', mode, seats: setup.players.map(p => ({seat: p.seat, char: p.char.id, team: this.team(p.seat), human: p.human}))}),
     });
     const host = local.host;
     this.host = host;
@@ -342,6 +346,8 @@ export class BlofMatch {
     this.autoBot = this.d.auto ? new BlofBot(ME, 'orta', mulberry32(seed + 7)) : null;
     this.autoKey = '';
 
+    const remote = new Set(client.seats.filter(x => x.kind === 'remote').map(x => x.seat));
+    setTableHumans(setup.players.filter(p => p.human || remote.has(p.seat)).map(p => p.char.id)); // insan avatarına adla seslenilmez
     this.startChat(setup, client);
     // paketli ses düzeni: masadaki karakterlerin paketleri boşta iner (masada olmayanlar bellekten atılır)
     void whenIdle(600).then(() => (this.aborted ? undefined : this.d.voice.prepare(voiceWant('blof', setup.players))));
@@ -512,6 +518,7 @@ export class BlofMatch {
       }
       case 'turn': {
         hud.setTurn(e.seat, e.seat !== ME);
+        this.d.chat?.turn(e.seat);
         if (e.open || !e.rank) {
           ui.setClaim(null);
           ui.setLast(null);
@@ -523,6 +530,7 @@ export class BlofMatch {
       case 'opened':
       case 'played': {
         const seat = e.seat;
+        this.d.chat?.acted(seat);
         if (e.t === 'opened') ui.setClaim(e.rank);
         hud.setTurn(-1);
         const text = claimText(e.count, e.rank) + (seat === ME ? '' : '!');
@@ -559,6 +567,8 @@ export class BlofMatch {
         return;
       }
       case 'windowOpen': {
+        if (e.by === ME) this.d.chat?.cue('myClaim');
+        else if (e.eligible.includes(ME)) this.d.chat?.cue('window', e.by);
         if (e.final) {
           const pp = t.pilePoint();
           hud.shout('SON KART!', pp.x, pp.y, e.by === ME ? 'gold' : 'white');
@@ -722,6 +732,8 @@ export class BlofMatch {
     const liar = e.seat, caller = e.by;
     const loser = caught ? liar : caller;
     const winner = caught ? caller : liar;
+    if (loser === ME) this.d.chat?.cue('myMistake', winner);
+    else if (caught && caller === ME) this.d.chat?.cue('caughtThem', liar);
     // damga açılan kartların alt yarısında (indeksler ve ✓/✗ görünür; alttaki rozet/sayaç açık kalır)
     const y = this.t.revealTop(m) + this.t.L.ch * this.t.revealScale(m) * 0.8;
     const pileN = this.pileN || this.t.pile.length;
@@ -826,6 +838,7 @@ export class BlofMatch {
   private async finale(winner: number): Promise<void> {
     const {hud} = this.d;
     this.speech.cancel('banter'); // el bitti: yarım atışma sürmez
+    this.d.chat?.cue('end');
     hud.setTurn(-1);
     const myWin = this.team(winner) === this.team(ME);
     for (let s = 0; s < this.n; s++) {

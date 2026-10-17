@@ -1,5 +1,6 @@
 // Hızlı sohbet penceresi: oyun içinde sohbet düğmesine dokununca alttan açılan küçük pencere. Oyuncunun KARAKTERİNE göre
-// 3–4 kelimelik sözler (dialogue.ts → QUICK_CHAT / quickMenu), iki sütun; "Rakipleri sustur" anahtarı; bekleme şeridi.
+// 3–4 kelimelik sözler (ai/quickTalk.ts → chatMenu; eşlide takım mesajları), iki sütun; "Rakipleri sustur" anahtarı; bekleme
+// şeridi. Bir olaydan hemen sonra açılırsa uygun 3–4 söz başta ve altın kenarlı (hot) gelir; öğe sayısı değişmez.
 // Performans: ilk açılışta BİR KEZ kurulur (14 düğme), sonra yalnız yazılar / görünürlük güncellenir; animasyonlar yalnız
 // transform/opacity; kapalıyken hidden (boyanmaz). Dinleyiciler pencere ömrü boyunca tek (uygulama ömrü).
 import './quickchat.css';
@@ -27,6 +28,9 @@ const ICONS: Record<string, string> = {
   swords: svg('<path d="M4 4l9.5 9.5M4 4v3.4M4 4h3.4M20 4l-9.5 9.5M20 4v3.4M20 4h-3.4M7 14.5l2.5 2.5-3 3-2.5-2.5zM17 14.5l-2.5 2.5 3 3 2.5-2.5z"/>'),
   eye: svg('<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3" fill="currentColor"/>'),
   shield: svg('<path d="M12 2.8l7.5 3v5.6c0 4.6-3.2 8.3-7.5 9.8-4.3-1.5-7.5-5.2-7.5-9.8V5.8z"/><path d="M8.6 12.2l2.4 2.4 4.6-4.8"/>'),
+  // eşli takım mesajları: iki kişi omuz omuza · özür (kalp üstünde el)
+  team: svg('<circle cx="8.3" cy="7.6" r="3"/><circle cx="15.9" cy="7.6" r="3"/><path d="M2.8 19.5c.4-3.6 2.6-5.6 5.5-5.6 1.6 0 3 .6 3.9 1.8.9-1.2 2.3-1.8 3.9-1.8 2.9 0 5.1 2 5.5 5.6"/>'),
+  sorry: svg('<path d="M12 20.5s-7.8-4.6-7.8-10.1A4.3 4.3 0 0 1 12 8a4.3 4.3 0 0 1 7.8 2.4c0 5.5-7.8 10.1-7.8 10.1z"/><path d="M9.3 13.2h5.4"/>'),
 };
 const MUTE_ICON = svg('<path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z" fill="currentColor"/><path d="M16 9.5l5 5M21 9.5l-5 5"/>');
 const MAX_ITEMS = 16;
@@ -109,8 +113,9 @@ export class QuickChatSheet implements QuickChatSheetPort {
     const el = (this.el ??= this.build());
     this.onPick = o.onPick;
     this.onMute = o.onMute;
-    // yazılar yalnız menü değişince (karakter / oyun) güncellenir
-    const sig = o.items.map(i => i.id + ':' + i.label).join('|');
+    // yazılar yalnız menü değişince (karakter / oyun / öneri sırası) güncellenir; pencere kapalıyken (hidden) yazılır →
+    // öğe sayısı aynı kaldıkça yerleşim kaymaz; simge yalnız değişince yeniden çizilir
+    const sig = o.items.map(i => i.id + ':' + i.label + (i.hot ? '*' : '')).join('|');
     if (sig !== this.sig) {
       this.sig = sig;
       this.items.forEach((b, i) => {
@@ -118,8 +123,12 @@ export class QuickChatSheet implements QuickChatSheetPort {
         b.hidden = !it;
         if (!it) return;
         b.dataset.id = it.id;
+        b.classList.toggle('is-hot', !!it.hot);
         q(b, '.kh-qc__l').textContent = it.label;
-        q(b, '.kh-qc__ico').innerHTML = ICONS[it.icon] ?? ICONS.star;
+        if (b.dataset.icon !== it.icon) {
+          b.dataset.icon = it.icon;
+          q(b, '.kh-qc__ico').innerHTML = ICONS[it.icon] ?? ICONS.star;
+        }
       });
     }
     this.mute.setAttribute('aria-pressed', String(o.muted));
