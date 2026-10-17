@@ -31,7 +31,7 @@ export function pause(ctx: Ctx, leave?: {sub: string; btn?: string}): Promise<'r
       <div class="kh-confirm__s">${leave?.sub ?? 'Maçı bırakırsan bahsi kaybedersin.'}</div>
       <div class="kh-confirm__row">
         <button class="kh-btn kh-btn--2" data-act="back">Vazgeç</button>
-        <button class="kh-btn kh-btn--3" data-act="sure">${I.exit}${leave?.btn ?? 'Maçı Bırak'}</button>
+        <button class="kh-btn kh-btn--3" data-act="sure">${I.exit}${leave?.btn ?? 'Bırak'}</button>
       </div></div>`;
     m = openModal(ctx, {cls: 'kh-pause', title: 'Çay Molası', body: `<div class="kh-pause__body">${list}</div>`, onX: () => done('resume')});
     const body = q(m.panel, '.kh-pause__body');

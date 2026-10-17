@@ -359,12 +359,18 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
       const a = d.action;
       if (a.t === 'pass') {
         const held = v.hand.filter((c) => rankOf(c) === v.rank).length;
-        if (held > 0) {
+        const last = v.lastPlay?.seat ?? -1;
+        const mateLast = last >= 0 && last !== seat && teams[last] === teams[seat];
+        // ortak son atansa pas bilinçli (tur ortağa döner)
+        if (held > 0 && !mateLast) {
           m.passWithRank++;
           if (v.hand.length <= 4) m.passWithRankFew++;
         }
-        const last = v.lastPlay?.seat ?? -1;
-        if (last >= 0 && v.passes === n - 2 && teams[last] !== teams[seat] && v.handCounts[last] === 1) m.giftPasses++;
+        let claimed = 0;
+        for (const pl of v.roundPlays) claimed += pl.count;
+        // zorunlu pas: o değer elde yok ve blöf imkânsız (masada 4 dolu) ya da tek kart kaldı
+        const forced = held === 0 && (claimed + 1 > 4 || v.hand.length < 2);
+        if (!forced && last >= 0 && v.passes === n - 2 && teams[last] !== teams[seat] && v.handCounts[last] === 1) m.giftPasses++;
       }
       if (a.t === 'decline' && v.window?.final) botFinalDeclines++;
     }

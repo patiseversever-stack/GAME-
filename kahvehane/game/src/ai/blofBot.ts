@@ -52,8 +52,9 @@ export interface BlofBotParams {
   caution: number;
   /** Karar gürültüsü (beklenen değere eklenen sapmanın ölçeği, kart cinsinden). */
   noise: number;
-  /** "Blöf!" deme eğilimi kayması (+: daha şüpheci). */
+  /** "Blöf!" deme eğilimi kayması (+: daha şüpheci): 1'e 1'de / kalabalık masada (kalabalıkta az demek kazandırır). */
   suspicion: number;
+  suspicionN: number;
   /** Sınırda bir "Blöf!" kararında içgüdüyle yanılma olasılığı (zor bot da yanılır). */
   slip: number;
   /** Son kartlarını atan rakibe "Blöf!" deme olasılığı. */
@@ -94,14 +95,15 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     claims: 0,
     notice: 0.75,
     readTable: 0.35,
-    selfCheck: 0.7,
+    selfCheck: 0.85,
     greed: 0.25,
-    bluffLove: 1.25,
-    caution: 0.7,
-    noise: 1.2,
-    suspicion: 0.15,
+    bluffLove: 1.15,
+    caution: 0.9,
+    noise: 1.0,
+    suspicion: -0.8,
+    suspicionN: -0.8,
     slip: 0.12,
-    finalCatch: 0.9,
+    finalCatch: 0.93,
     probe: 0,
     temperament: 0.5,
     tellLeak: 0.65,
@@ -129,6 +131,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     caution: 0.95,
     noise: 0.55,
     suspicion: 0,
+    suspicionN: -0.5,
     slip: 0.07,
     finalCatch: 1,
     probe: 0.08,
@@ -158,6 +161,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     caution: 1,
     noise: 0.3,
     suspicion: 0,
+    suspicionN: -1,
     slip: 0.04,
     finalCatch: 1,
     probe: 0.12,
@@ -700,7 +704,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     // Karşılaştırma "geç"in getirisiyle: sıra bendeyse ve elimde o değer yoksa geçmek çoğu zaman zorunlu pas demektir.
     const gain = q * (S * gW + T + danger);
     const loss = (1 - q) * (Math.max(0, S * this.p.caution - this.pileGroupBonus(v, w.rank)) + To);
-    let ev = gain - loss - this.declineValue(v) + this.p.suspicion + this.bold + this.p.noise * this.gauss();
+    let ev = gain - loss - this.declineValue(v) + (v.seats === 2 ? this.p.suspicion : this.p.suspicionN) + this.bold + this.p.noise * this.gauss();
     // içgüdü: sınırda kararlarda arada bir yanılır (zor bot da)
     if (Math.abs(ev) < 1.5 && this.rnd() < this.p.slip) ev = -ev;
     // merak: bu rakibin böyle atışını henüz pek açmadım ve yığın ucuz → ara sıra "bir bakalım" (rakibi tanımak için)

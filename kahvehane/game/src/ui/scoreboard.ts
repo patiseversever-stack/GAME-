@@ -327,7 +327,7 @@ export function interim(ctx: Ctx, d: InterimData): InterimHandle {
       btns.innerHTML = `<div class="kh-confirm kh-ia__confirm">
         <div class="kh-confirm__t">Maçı bırakıyor musun?</div>
         <div class="kh-confirm__s">${stakeLine(d.stake)}</div>
-        <div class="kh-confirm__row"><button class="kh-btn kh-btn--2" data-act="stay">Vazgeç</button><button class="kh-btn kh-btn--3" data-act="sure">${I.exit}Maçı Bırak</button></div></div>`;
+        <div class="kh-confirm__row"><button class="kh-btn kh-btn--2" data-act="stay">Vazgeç</button><button class="kh-btn kh-btn--3" data-act="sure">${I.exit}Bırak</button></div></div>`;
       play(btns, [{opacity: 0, transform: 'translateY(8px)'}, {opacity: 1, transform: 'none'}], {duration: 220, easing: EASE.out});
     } else if (a === 'stay') {
       btns.innerHTML = btnsHtml;
