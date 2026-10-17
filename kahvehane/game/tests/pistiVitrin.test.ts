@@ -142,7 +142,7 @@ describe('etiketler: kart başına tek, şeride sığar, yay boyunca tek taban �
             expect(overlap(boxes[k], corners[j])).toBe(false); // hiçbir kartın değer/takım köşesine binmez
           }
           if (n > 1) expect(t.w).toBeLessThanOrEqual(fan.step - 1.4); // şeride sığar (komşu karta taşmaz)
-          expect(t.fs).toBeGreaterThanOrEqual(n <= 5 ? 8.5 : 7.8); // okunur kalır
+          expect(t.fs).toBeGreaterThanOrEqual(n <= 5 ? 8.5 : 8.2); // okunur kalır
           expect(t.rot).toBe(fan.poses[k].r); // kartla aynı dönüş (yay izlenir)
         });
       }

@@ -106,6 +106,8 @@ export interface TagPlan {
   /** tahmini kutu (px) */
   w: number;
   h: number;
+  /** dar şeritte yan dolgusu azaltılmış etiket (okunur yazı boyunu korur) */
+  tight: boolean;
 }
 
 const quad = (cx: number, cy: number, w: number, h: number, rotDeg: number): number[][] => {
@@ -133,19 +135,21 @@ export function vitrinTags(fan: FanLayout, vale: readonly boolean[], u: number):
   const n = fan.poses.length;
   const strip = n > 1 ? fan.step : fan.w * 0.82; // tek kartta kartın tamamı açıkta: etiket altta ortada
   const avail = Math.max(16, strip - 3);
-  const em = (chars: number) => chars * 0.56 + 0.95; // genişlik (em): metin + dolgu + halka
+  // Etiket kutusu genişliği / yüksekliği (em): gerçek yazı ('Lilita One') + dolgu + halka, tarayıcıda ölçüldü (tests: yazı tipi kaymasına karşı CLEARANCE payı)
+  const EM_W: Record<string, number> = {'+10': 2.79, '+20': 2.91, 'VALE +20': 5.3}, EM_H = 1.66, TIGHT = 0.44; // dar etiket: yan dolgu .42em → .2em
   const fs0 = u * 0.86;
-  const make = (long: boolean, k: number): TagPlan[] => {
-    const fsPlain = Math.min(fs0, avail / em(3)) * k, fsLong = Math.min(fs0, avail / em(8)) * k;
+  const make = (long: boolean, k: number, tight: boolean): TagPlan[] => {
+    const tw = (label: string) => EM_W[label] - (tight ? TIGHT : 0);
+    const fsPlain = Math.min(fs0, avail / tw('+20')) * k, fsLong = Math.min(fs0, avail / tw('VALE +20')) * k;
     const fsPlainUsed = long ? Math.min(fsPlain, fsLong * 1.15) : fsPlain; // "VALE +20" ile aynı ölçekte kalsın (en çok %15 büyük)
     return fan.poses.map((p, i) => {
       const v = vale[i];
       const label = v ? (long ? 'VALE +20' : '+20') : '+10';
       const fs = v && long ? fsLong : fsPlainUsed;
-      const w = em(label.length) * fs, h = fs * 1.62;
+      const w = tw(label) * fs, h = fs * EM_H;
       const a = (p.r * Math.PI) / 180, co = Math.cos(a), si = Math.sin(a);
       const lx = n > 1 ? -fan.w / 2 + strip / 2 : 0, ly = fan.h / 2 - h / 2 - 5;
-      return {x: p.x + lx * co - ly * si, y: p.y + lx * si + ly * co, rot: p.r, fs, label, vale: v, w, h};
+      return {x: p.x + lx * co - ly * si, y: p.y + lx * si + ly * co, rot: p.r, fs, label, vale: v, w, h, tight};
     });
   };
   const clash = (t: TagPlan[]): boolean => {
@@ -153,15 +157,23 @@ export function vitrinTags(fan: FanLayout, vale: readonly boolean[], u: number):
     for (let i = 0; i + 1 < q.length; i++) for (let j = i + 1; j < Math.min(q.length, i + 3); j++) if (quadsNear(q[i], q[j], 1.5)) return true;
     return false;
   };
-  const fit = (long: boolean): TagPlan[] => {
-    let k = 1, t = make(long, k);
-    for (let it = 0; it < 24 && clash(t); it++) t = make(long, (k *= 0.96));
+  const fit = (long: boolean, tight: boolean): TagPlan[] => {
+    let k = 1, t = make(long, k, tight);
+    for (let it = 0; it < 24 && clash(t); it++) t = make(long, (k *= 0.96), tight);
     return t;
   };
-  const plain = fit(false);
+  const minFs = (t: TagPlan[]) => Math.min(...t.map(x => x.fs));
+  /** normal dolgu; yazı çok küçülürse dar dolgu (yalnız anlamlı kazançta) */
+  const best = (long: boolean): TagPlan[] => {
+    const a = fit(long, false);
+    if (minFs(a) >= 9.6) return a;
+    const c = fit(long, true);
+    return minFs(c) > minFs(a) * 1.08 ? c : a;
+  };
+  const plain = best(false);
   if (!vale.some(Boolean)) return plain;
-  const long = fit(true);
-  const fsL = Math.min(...long.filter(x => x.vale).map(x => x.fs)), fsP = Math.min(...plain.map(x => x.fs));
+  const long = best(true);
+  const fsL = Math.min(...long.filter(x => x.vale).map(x => x.fs)), fsP = minFs(plain);
   return fsL >= Math.max(8.4, fsP * 0.7) ? long : plain;
 }
 

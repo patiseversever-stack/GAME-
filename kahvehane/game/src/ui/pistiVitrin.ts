@@ -322,6 +322,7 @@ export class PistiVitrin {
       const el = this.tags[k];
       el.textContent = tg.label;
       el.classList.toggle('is-vale', tg.vale);
+      el.classList.toggle('is-tight', tg.tight);
       el.style.display = 'block';
       el.style.fontSize = `${tg.fs.toFixed(1)}px`;
       const tb = `translate3d(${tg.x.toFixed(1)}px,${tg.y.toFixed(1)}px,0) translate(-50%,-50%) rotate(${tg.rot.toFixed(1)}deg)`;
