@@ -367,7 +367,7 @@ export class Table2D {
       deck = {x: edge + (cw * ds) / 2, y: pileY, s: ds};
       const ss2 = 0.78, hs2 = ch * ss2, wm2 = cw * ss2 * 0.94, hm2 = hs2 * 0.94;
       // ipucu hapı ile yığın arası en az 10 px (yığının -8° eğikliği dahil)
-      const myY = Math.min(H * 0.655, clear - hs2 / 2 - 9);
+      const myY = Math.min(H * 0.655, clear - hs2 / 2 - 11);
       // Yığınlar sağ kenarda (kenar payı ~14 px); halkanın 10 px ötesinde kalır
       const sx2 = Math.max(cw * 0.55, W * 0.13), stX = W - sx2;
       // Rakibin yığını yelpazesinin sağında, yelpazeyle aynı hizada. Yelpaze ile halka arasında pişti kartlarını yana dizmeye yer yok
@@ -377,10 +377,10 @@ export class Table2D {
       const oppY = H * 0.235;
       const oppC0 = oppY + hs2 / 2 + hm2 / 2 + 4;
       const ringKeep2 = cw * 1.125 + 10;
-      const myRowTop = myY + 6 - hm2 / 2 - 6;
+      const myRowTop = myY - 2 - hm2 / 2 - 6;
       const ringX = myRowTop < pileY + ringKeep2 ? W / 2 + Math.sqrt(Math.max(0, ringKeep2 * ringKeep2 - (myRowTop - pileY) ** 2)) : 0;
       seats = [
-        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: stX, y: myY, s: ss2, r: 8}, pdir: -1, pspan: stX - (cw * ss2) / 2 - (Math.max(ringX, W * 0.3) + wm2 / 2 + 8)},
+        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: stX, y: myY, s: ss2, r: 8}, pdir: -1, py: -2, pspan: stX - (cw * ss2) / 2 - (Math.max(ringX, W * 0.3) + wm2 / 2 + 8)},
         {fan: {x: W / 2, y: oppY, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: stX, y: oppY, s: ss2, r: -8}, pdir: -1, pv: 1, pspan: myY - hs2 / 2 - 4 - 12 - hm2 / 2 - oppC0},
       ];
     } else {
@@ -388,7 +388,7 @@ export class Table2D {
       const fh = ch * fs;
       const side = Math.max(fh * 0.36, Math.min(W * 0.1, fh * 0.62));
       const ss = 0.6;
-      const sideStackX = Math.max(cw * ss * 0.7, W * 0.12);
+      const sideStackX = Math.max((cw * ss) / 2 + 11, W * 0.105); // yelpaze sütununun altında, kenar payı ≥13 px
       // yan rakibin destesi yelpazesinin hemen altında (eskiden sabit %60,5: uzun ekranda boşluk, kısa ekranda desteye yer kalmıyordu)
       const fanBottom = H * 0.455 + 1.5 * cw * fs * 0.62 + (cw * fs) / 2 + 4;
       const sideY = Math.min(H * 0.605, fanBottom + u * 0.45 + (ch * ss) / 2 + 3);
@@ -403,8 +403,8 @@ export class Table2D {
       deck = {x: edge + (cw * ds) / 2, y: top + 10.9 * ds + (ch * ds) / 2, s: ds};
       hintX = Math.min(maxX, Math.max(hintX, edge + cw * ds + 4 + 5 + half));
       // benim destem halkanın sağ altında, ipucu bandının üstünde (≥10 px); pişti kartları ortaya (sola) dizilir
-      const ms = 0.66;
-      const myY = clear - (ch * ms) / 2 - 9;
+      const ms = H <= 700 ? 0.58 : 0.66; // kısa ekranda halka ile sağdaki rakibin sırası arasına sığması için biraz küçük
+      const myY = clear - (ch * ms) / 2 - 11;
       // Pişti kartları yığının yanına dizilir. Görünür yuva sayısı ve adım yere göre (pistiRow): her kartın köşe indeksi açık kalır,
       // kart çoğalınca eskileri ilk yuvanın altına girer; sıra yelpaze / halka / komşu yığın / ekran kenarından ≥10 px uzak durur.
       const wS = cw * ss, hS = ch * ss, wM = wS * 0.94, hM = hS * 0.94, fullStep = wM * 0.34;
@@ -432,7 +432,7 @@ export class Table2D {
       const rightSpan2 = yOver ? Math.min(rightSpan, marker0L - myX - mySW - 10) : rightSpan;
       // benim pişti sıram (sola): halkaya, soldaki rakibin pişti sırasına ve desteye ≥10 px yaklaşmaz
       const wMe = cw * ms * 0.94, hMe = ch * ms * 0.94, myC0 = myX - (cw * ms) / 2;
-      const myRowTop = myY + 6 - hMe / 2 - 6, myRowBot = myY + 6 + hMe / 2 + 6;
+      const myRowTop = myY - 2 - hMe / 2 - 6, myRowBot = myY - 2 + hMe / 2 + 6;
       let myMin = myRowTop < pileY + ringKeep ? W / 2 + ringHalf(myRowTop) : 0;
       if (myRowTop < rowBot + 10 && myRowBot > rowTop - 10) myMin = Math.max(myMin, leftC0 + reach(leftSpan) + wM / 2 + 8 + 10);
       if (myRowBot > deck.y - (ch * deck.s) / 2 - 12) myMin = Math.max(myMin, deck.x + (cw * deck.s) / 2 + 12);
@@ -446,7 +446,7 @@ export class Table2D {
       const topFanR = W / 2 + 1.5 * cw * fs * 0.62 + (cw * fs) / 2 + 6;
       const topSpan = topX - wS / 2 - (topFanR + 6 + wM / 2 + 8);
       seats = [
-        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: myX, y: myY, s: ms, r: 8}, pdir: -1, pspan: mySpan},
+        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: myX, y: myY, s: ms, r: 8}, pdir: -1, py: -2, pspan: mySpan},
         {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1, py, pspan: rightSpan2},
         {fan: {x: W / 2, y: H * 0.2, a: 180, s: fs, spread: cw * fs * 0.62}, stack: {x: topX, y: topY, s: ss, r: 6}, pdir: -1, pspan: topSpan},
         {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1, py, pspan: leftSpan},

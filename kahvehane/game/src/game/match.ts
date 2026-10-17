@@ -24,8 +24,8 @@ import {SeatBubble, quipUtter, utter, voiceWant} from './seatBubble';
 import {whenIdle} from '../platform/sched';
 import {QUICK_IDS, type QuickChat} from './quickChat';
 
-/** Karakterlerin konuşabileceği anlar (diyalog sistemi bunlara replik seçer). */
-export type Moment = DialogueMoment;
+/** Karakterlerin konuşabileceği anlar (diyalog sistemi bunlara replik seçer; rövanş kabulü 'endAccept' dahil). */
+export type Moment = DialogueMoment | 'endAccept';
 
 export interface MatchDeps {
   table: Table2D;
@@ -159,7 +159,8 @@ export class Match {
     const p = this.bot(seat);
     const list = p ? table[p.char.id] : undefined;
     if (!p || !list || this.aborted) return;
-    if (!this.talk.say(quipUtter(pickOne(list), p.char.id, new SeatBubble(this.d.hud, seat), pose, ms), {prio: 1, tag: 'match'})) this.d.hud.react(seat, pose, Math.min(ms, 1500));
+    // sohbet seviyesi: Sakin'de ortak sevinci / iç çekme çoğunlukla yalnız yüz ifadesi
+    if (!dialogue.allowQuip() || !this.talk.say(quipUtter(pickOne(list), p.char.id, new SeatBubble(this.d.hud, seat), pose, ms), {prio: 1, tag: 'match'})) this.d.hud.react(seat, pose, Math.min(ms, 1500));
   }
 
   private poke(seat: number): void {
@@ -300,9 +301,11 @@ export class Match {
     if (this.aborted) return null;
     // el başı: iki bot varsa ara sıra kendi aralarında atışır (dağıtım sürerken), yoksa bir rakip açılış repliği
     const bots = this.botSeats();
-    const duo = this.pair('start', bots, bots);
     const talkers = this.foes(0);
-    if (!(duo && this.banter('start', duo[0], duo[1])) && talkers.length) this.speak(pickOne(talkers), 'start', true);
+    // rövanş: sonuç ekranından "Bir El Daha / Yeni Maç" → rövanşı çağıran rakip açılışta kabul eder (el başı repliği yerine)
+    const rematch = setup.rematchBy ? talkers.find(s => this.players[s]?.char.id === setup.rematchBy) ?? talkers[0] : undefined;
+    const duo = rematch === undefined ? this.pair('start', bots, bots) : null;
+    if (!(rematch !== undefined && this.speak(rematch, 'endAccept', true, 2200)) && !(duo && this.banter('start', duo[0], duo[1])) && talkers.length) this.speak(pickOne(talkers), 'start', true);
     for (const raw of events) {
       const e = pistiEngine.redact(raw, 0)!; // sahne = koltuk 0'ın gördüğü
       if (e.t === 'tableDeal') await table.dealTable(e.cards, e.faceUp);
@@ -363,7 +366,7 @@ export class Match {
       hud.showHint(v.pileCount === 1 && rankOf(best) === rankOf(v.pileTop!) ? 'Pişti fırsatı!' : 'Bu kartla alabilirsin!');
     }, 6000);
     const foe = this.foes(0)[0];
-    const t2 = window.setTimeout(() => foe !== undefined && this.speak(foe, 'myTurnIdle'), 9000);
+    const t2 = window.setTimeout(() => foe !== undefined && this.speak(foe, 'myTurnIdle'), dialogue.idleDelay(9000));
     if (this.autoBot) {
       const c = this.autoBot.choose(v);
       window.setTimeout(() => table.pick(c), 380);
