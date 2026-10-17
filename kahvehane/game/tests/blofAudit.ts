@@ -170,6 +170,8 @@ export interface AuditOptions {
   onAction?: (actor: number, action: BlofAction, before: BlofState) => void;
   /** Pencere sonuçlandı: by koltuğunun atışına blöf dendi mi (ölçüm). */
   onWindowResolved?: (by: number, challenged: boolean) => void;
+  /** Deney: her adımdan sonra durumu değiştir (kural çeşidi denemek için; ör. yakalanan yalancıya ceza kartı). */
+  mutate?: (s: BlofState, events: BlofEvent[]) => BlofState;
   /** Bot fabrikası (parametre denemeleri). */
   botFactory?: (seat: number, diff: BlofDifficulty, seed: number) => BlofBot;
 }
@@ -429,7 +431,7 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
     const r = applyBlof(s, action);
     if (r.error !== undefined) throw new Error(`geçersiz hamle ${JSON.stringify(action)} (koltuk ${actor}): ${r.error}`);
     const prevWin = s.window?.id;
-    s = r.state;
+    s = o.mutate ? o.mutate(r.state, r.events) : r.state;
     feed(r.events);
     for (const e of r.events) {
       if (e.t === 'challenged') o.onWindowResolved?.(e.target, true);
