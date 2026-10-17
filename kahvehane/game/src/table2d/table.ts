@@ -8,6 +8,7 @@ import './table.css';
 import {ATLAS_COLS, ATLAS_ROWS, BACK_INDEX, CORNER_RADIUS, type CardAtlas} from '../render/cardAtlas';
 import {cardId, isJack, rankOf, suitOf, type CardId, type Suit} from '../core/types';
 import type {TableTheme} from '../themes/contract';
+import {ctx2d, glowRing, radial, texCanvas, ticks, withAlpha} from '../platform/tex';
 
 export interface TableSounds {
   deal(): void;
@@ -54,20 +55,23 @@ const tf = (p: Pose, cw: number, ch: number) =>
   `translate3d(${(p.x - cw / 2).toFixed(1)}px,${(p.y - ch / 2).toFixed(1)}px,0) rotate(${p.r.toFixed(2)}deg) scale(${p.s.toFixed(4)})`;
 const rnd = (a: number, b: number) => a + Math.random() * (b - a);
 const sleep = (ms: number) => new Promise<void>(r => setTimeout(r, ms));
-const done = (a: Animation, el?: HTMLElement) => a.finished.then(() => el?.remove(), () => el?.remove());
 /** Atlas hücresinin background-position değeri (800% x 700% boyutlu görselde hücre k, k/(n-1) yüzdesi) */
 const CELL_POS: string[] = Array.from({length: BACK_INDEX + 1}, (_, k) => `${(((k % ATLAS_COLS) / (ATLAS_COLS - 1)) * 100).toFixed(4)}% ${((Math.floor(k / ATLAS_COLS) / (ATLAS_ROWS - 1)) * 100).toFixed(4)}%`);
 
 export const SUIT_COLOR: Record<Suit, string> = {H: '#ff2e4d', D: '#ffb400', C: '#16c45b', S: '#1f7bff'};
 
-/** Yığın ışığı gradyanları (closest-side: 100% = katmanın yarıçapı). N = yığın boşken nötr (tema rengi). */
-const GLOW: Record<string, string> = {
-  N: 'radial-gradient(closest-side, var(--ar-glow-n) 0%, rgba(80, 110, 255, 0) 50%), radial-gradient(closest-side, var(--ar-glow-n) 0%, rgba(60, 90, 255, 0) 100%)',
-  H: 'radial-gradient(closest-side, rgba(255, 70, 100, .62) 0%, rgba(255, 46, 77, .22) 44%, rgba(255, 46, 77, 0) 100%)',
-  D: 'radial-gradient(closest-side, rgba(255, 200, 60, .6) 0%, rgba(255, 180, 0, .2) 44%, rgba(255, 180, 0, 0) 100%)',
-  C: 'radial-gradient(closest-side, rgba(60, 230, 130, .55) 0%, rgba(22, 196, 91, .2) 44%, rgba(22, 196, 91, 0) 100%)',
-  S: 'radial-gradient(closest-side, rgba(80, 160, 255, .62) 0%, rgba(31, 123, 255, .22) 44%, rgba(31, 123, 255, 0) 100%)',
-};const EASE_OUT = 'cubic-bezier(.2,.75,.25,1)';
+/** Yığın ışığı gradyanları (closest-side: 1 = katmanın yarıçapı). N = yığın boşken nötr (tema rengi, setGlow'da çizilir).
+ * Küçük doku tuvaline çizilir (bkz. src/platform/tex.ts): ekranın %80'ini kaplayan iki ışık katmanı karo belleği tutmaz. */
+const GLOW: Record<string, ReadonlyArray<readonly [number, string]>> = {
+  H: [[0, 'rgba(255, 70, 100, .62)'], [0.44, 'rgba(255, 46, 77, .22)'], [1, 'rgba(255, 46, 77, 0)']],
+  D: [[0, 'rgba(255, 200, 60, .6)'], [0.44, 'rgba(255, 180, 0, .2)'], [1, 'rgba(255, 180, 0, 0)']],
+  C: [[0, 'rgba(60, 230, 130, .55)'], [0.44, 'rgba(22, 196, 91, .2)'], [1, 'rgba(22, 196, 91, 0)']],
+  S: [[0, 'rgba(80, 160, 255, .62)'], [0.44, 'rgba(31, 123, 255, .22)'], [1, 'rgba(31, 123, 255, 0)']],
+};
+/** Tema değişkenlerinin varsayılanları (table.css .ar ile aynı) */
+const GLOW_N = 'rgba(110, 140, 255, .55)';
+const RAYS_C = 'rgba(255, 255, 255, .075)';
+const EASE_OUT = 'cubic-bezier(.2,.75,.25,1)';
 const OUT = 'cubic-bezier(.2,.8,.3,1)';
 /** Çok kareli animasyonda yumuşatma her aralığa ayrı (WAAPI tek easing'i tüm zaman çizelgesine uygular, tepe noktası kayar). */
 const seg = (kf: Keyframe[], e: string[]): Keyframe[] => kf.map((k, i) => (i < kf.length - 1 ? {...k, easing: e[Math.min(i, e.length - 1)]} : k));
@@ -103,15 +107,15 @@ interface Layout {
   seats: SeatGeo[];
 }
 
-/** Havuz: sabit sayıda düğüm; boşta olan tekrar kullanılır (yeni düğüm üretilmez). */
+/** Havuz: sabit sayıda düğüm; boşta olan tekrar kullanılır (yeni düğüm üretilmez). tag 'canvas': doku katmanı düğümü. */
 class Pool {
   private items: HTMLElement[] = [];
   private i = 0;
-  constructor(private host: HTMLElement, private cls: string, private max: number) {}
+  constructor(private host: HTMLElement, private cls: string, private max: number, private tag: 'i' | 'canvas' = 'i') {}
   get(): HTMLElement {
     let el = this.items[this.i % this.max];
     if (!el) {
-      el = document.createElement('i');
+      el = document.createElement(this.tag);
       el.className = this.cls;
       this.host.append(el);
       this.items.push(el);
@@ -140,6 +144,8 @@ export class Table2D {
   private ringFlash: HTMLElement;
   private ripples: Pool;
   private blooms = new Map<string, HTMLElement>();
+  /** Büyük an doku tuvalleri (hüzme çarkı, ışık hâlesi): ilk kullanımda bir kez çizilir */
+  private fxTex = new Map<string, HTMLElement>();
   private ringAnims: Animation[] = [];
   private raysEl: HTMLElement;
   private potEl: HTMLElement;
@@ -195,10 +201,12 @@ export class Table2D {
     this.low = low;
     this.root = document.createElement('div');
     this.root.className = 'ar' + (low ? ' is-low' : '');
+    // Büyük yumuşak ışıklar (yığın ışığı, zemin ışığı, hüzmeler, çentikler) küçük doku tuvalleri: bkz. src/platform/tex.ts.
+    // Düşük cihazda hüzmeler döndürülmez: zeminle birlikte bir kez boyanan CSS katmanı kalır (ek katman yok).
     this.root.innerHTML = `<div class="ar__bg"></div>
-      <div class="ar__glow"></div><div class="ar__glow"></div>
-      <div class="ar__tint"></div><div class="ar__rays"></div><div class="ar__pattern"></div><div class="ar__vig"></div><div class="ar__edge"></div>
-      <div class="ar__zoom"><div class="ar__shake"><div class="ar__ring"><i class="ar__rf"></i><i class="ar__tk"></i></div><div class="ar__cards"></div><div class="ar__fx"></div>
+      <canvas class="ar__glow" width="256" height="256"></canvas><canvas class="ar__glow" width="256" height="256"></canvas>
+      <canvas class="ar__tint" width="256" height="256"></canvas>${low ? '<div class="ar__rays"></div>' : '<canvas class="ar__rays is-tex" width="768" height="768"></canvas>'}<div class="ar__pattern"></div><div class="ar__vig"></div><div class="ar__edge"></div>
+      <div class="ar__zoom"><div class="ar__shake"><div class="ar__ring"><i class="ar__rf"></i><canvas class="ar__tk" width="512" height="512"></canvas></div><div class="ar__cards"></div><div class="ar__fx"></div>
       <div class="ar__pot"><svg viewBox="0 0 24 24"><path d="M12 22c-4 0-7-2.8-7-6.6 0-3.5 2.3-5.6 3.7-7.6.9-1.3 1.3-2.9 1.2-4.3 2.9 1.4 4.4 4 4.5 6.7.8-.6 1.3-1.6 1.4-2.7 2 1.8 3.1 4.4 3.1 7.1 0 4.2-3 7.4-6.9 7.4z" fill="#ffb21a" stroke="#0a1033" stroke-width="2"/><path d="M12 20c-1.8 0-3.1-1.2-3.1-2.9 0-1.6 1.1-2.6 1.8-3.5.4-.6.6-1.3.6-2 1.4.7 2.3 2 2.3 3.3.4-.3.7-.8.7-1.3 1 .9 1.5 2.1 1.5 3.4 0 1.7-1.6 3-3.8 3z" fill="#fff27a"/></svg><b>0</b></div></div></div>`;
     host.append(this.root);
     this.zoomEl = this.root.querySelector('.ar__zoom')!;
@@ -216,10 +224,10 @@ export class Table2D {
     (this.root.querySelector('.ar__pattern') as HTMLElement).style.backgroundImage = patternUrl();
     this.root.style.setProperty('--c2-r', `${(CORNER_RADIUS * 100).toFixed(1)}% / ${(CORNER_RADIUS * 70).toFixed(1)}%`);
     this.sparks = new Pool(this.fxEl, 'ar__spark', low ? 24 : 48);
-    this.pulses = new Pool(this.fxEl, 'ar__pulse', 6);
-    this.ghosts = new Pool(this.cardsEl, 'ar__ghost', 6);
+    this.pulses = new Pool(this.fxEl, 'ar__pulse', 6, 'canvas');
+    this.ghosts = new Pool(this.cardsEl, 'ar__ghost', 6, 'canvas');
     this.puffs = new Pool(this.fxEl, 'ar__puff', 10);
-    this.ripples = new Pool(this.ring, 'ar__rt', 3);
+    this.ripples = new Pool(this.ring, 'ar__rt', 3, 'canvas');
     for (let i = 0; i < 52; i++) {
       const c = new Card();
       this.all.push(c);
@@ -228,6 +236,8 @@ export class Table2D {
     }
     this.root.style.setProperty('--c2-bs', `${ATLAS_COLS * 100}% ${ATLAS_ROWS * 100}%`);
     this.layout();
+    this.drawRays();
+    drawTicks(this.ticks as HTMLCanvasElement, 'rgba(255, 255, 255, .55)', 2.2, 0.64, 0.67);
     this.setGlow(null);
     if (atlas0) void this.setAtlas(atlas0);
     window.addEventListener('resize', () => this.relayout());
@@ -278,6 +288,11 @@ export class Table2D {
     }
     this.theme = theme;
     this.root.dataset.theme = theme.id;
+    this.drawRays();
+    if (this.glowKey === 'N') {
+      this.glowKey = '';
+      this.setGlow(null); // nötr ışık tema rengiyle yeniden çizilir
+    }
     if (theme.paint) this.repaint();
     else {
       this.paintTok++;
@@ -532,8 +547,8 @@ export class Table2D {
   private trail(kf: Keyframe[], ms: number, delay: number, easing: string, color: string): void {
     const n = this.low ? 1 : 3;
     for (let i = 0; i < n; i++) {
-      const g = this.ghosts.get();
-      g.style.color = color;
+      const g = this.ghosts.get() as HTMLCanvasElement;
+      if (g.dataset.c !== color || g.dataset.w !== String(this.L.cw)) ghostTex(g, color, this.L.cw, this.L.ch);
       const pk = [0.5, 0.32, 0.18][i];
       g.animate(kf.map((k, j) => ({...k, opacity: j === 1 ? pk : 0})), {duration: ms, delay: delay + 26 * (i + 1), easing, fill: 'both'})
         .finished.then(() => this.ghosts.hide(g), () => undefined);
@@ -596,14 +611,57 @@ export class Table2D {
   }
 
   // ───────── arka plan ─────────
+  /** Temanın satır içi değişkeni (yoksa varsayılan): getComputedStyle gerektirmez. */
+  private themeVar(k: string, def: string): string {
+    return this.theme?.vars?.[k] ?? this.theme?.vars?.[k.slice(2)] ?? def;
+  }
+
+  /** Işık hüzmeleri: 18°'de bir 7° geniş hüzme, merkezden sönen (CSS'teki repeating-conic + radial maske ile aynı). Doku
+   * tuvaline bir kez çizilir; büyük anlarda yalnız döner (eskiden maskeli tam ekran katman her dönüşte yeniden birleşiyor,
+   * sonunda zeminle birlikte baştan taranıyordu). Düşük cihazda CSS katmanı kalır. */
+  private drawRays(): void {
+    const c = this.raysEl;
+    if (!(c instanceof HTMLCanvasElement)) return;
+    const col = this.themeVar('--ar-rays', RAYS_C);
+    if (c.dataset.c === col) return;
+    c.dataset.c = col;
+    const g = ctx2d(c);
+    if (!g) return;
+    const N = c.width, R = N / 2;
+    g.clearRect(0, 0, N, N);
+    g.fillStyle = col;
+    g.beginPath();
+    for (let a = 0; a < 360; a += 18) {
+      const a0 = ((a - 90) * Math.PI) / 180, a1 = ((a + 7 - 90) * Math.PI) / 180;
+      g.moveTo(R, R);
+      g.arc(R, R, R * 1.5, a0, a1);
+      g.closePath();
+    }
+    g.fill();
+    // merkezden kenara sönme (CSS maskesi: #000 0 → .7 %41 → saydam %100)
+    g.globalCompositeOperation = 'destination-in';
+    const m = g.createRadialGradient(R, R, 0, R, R, R);
+    m.addColorStop(0, 'rgba(0,0,0,1)');
+    m.addColorStop(0.41, 'rgba(0,0,0,.7)');
+    m.addColorStop(1, 'rgba(0,0,0,0)');
+    g.fillStyle = m;
+    g.fillRect(0, 0, N, N);
+    g.globalCompositeOperation = 'source-over';
+  }
+
   setGlow(suit: Suit | null): void {
     const k = suit ?? 'N';
     if (k !== this.glowKey) {
       this.glowKey = k;
       const prev = this.glowEls[this.glowCur];
       this.glowCur = 1 - this.glowCur;
-      const next = this.glowEls[this.glowCur];
-      next.style.background = GLOW[k];
+      const next = this.glowEls[this.glowCur] as HTMLCanvasElement;
+      // gizli olan tuvale yeni renk çizilir (256² doku; boyama/tarama yok), sonra çapraz geçiş (yalnız opaklık)
+      if (k === 'N') {
+        const n = this.themeVar('--ar-glow-n', GLOW_N), n0 = withAlpha(n, 0);
+        radial(next, [[0, n], [0.5, n0], [1, n0]]);
+        radial(next, [[0, n], [1, n0]], true);
+      } else radial(next, GLOW[k]);
       next.style.setProperty('--go', k === 'N' ? '.72' : '1');
       next.classList.add('is-on');
       prev.classList.remove('is-on');
@@ -647,7 +705,10 @@ export class Table2D {
   tint(color: string, peak = 0.75, ms = 700): void {
     const el = this.tintEl;
     el.style.display = 'block';
-    el.style.background = `radial-gradient(closest-side, ${color} 0%, ${color}66 48%, ${color}00 100%)`;
+    if (el.dataset.c !== color) {
+      el.dataset.c = color;
+      radial(el as HTMLCanvasElement, [[0, color], [0.48, withAlpha(color, 0.4)], [1, withAlpha(color, 0)]]);
+    }
     this.tintN++;
     const done = () => {
       if (--this.tintN <= 0) el.style.display = 'none'; // boşta katman tutma
@@ -701,10 +762,15 @@ export class Table2D {
 
   /** Halka dalgası (takım renginde). */
   pulse(color: string, size = 1, at?: {x: number; y: number}): void {
-    const el = this.pulses.get();
+    const el = this.pulses.get() as HTMLCanvasElement;
     const d = this.L.cw * 1.6 * size;
     const p = at ?? this.L.pile;
-    Object.assign(el.style, {width: d + 'px', height: d + 'px', left: p.x - d / 2 + 'px', top: p.y - d / 2 + 'px', color});
+    // doku tuvali: 5 px çizgi + 22 px ışıma (eski border + iki bulanık gölge; büyüyen katman ekran çözünürlüğünde
+    // taranıyordu — tek pişti ≈ 4 halka ≈ 50 MB karo). Işıma payı kutunun dışında.
+    const pad = 24, E = d + 2 * pad;
+    if (el.width !== 256) el.width = el.height = 256;
+    glowRing(el, color, d, pad, 5, 22);
+    Object.assign(el.style, {width: E + 'px', height: E + 'px', left: p.x - E / 2 + 'px', top: p.y - E / 2 + 'px'});
     el.animate([{transform: 'scale(.55)', opacity: 0.95}, {transform: 'scale(1.45)', opacity: 0}], {duration: 520 + 160 * size, easing: 'cubic-bezier(.15,.7,.3,1)'})
       .finished.then(() => this.pulses.hide(el), () => undefined);
   }
@@ -765,7 +831,11 @@ export class Table2D {
     // 5) çentik halkası dışa dalgalanır (alışta 2, piştide 3; her biri biraz daha uzağa, gecikmeli)
     const waves = lvl === 0 ? 1 : lvl <= 2 ? 2 : 3;
     for (let i = 0; i < waves; i++) {
-      const el = this.ripples.get();
+      const el = this.ripples.get() as HTMLCanvasElement;
+      if (el.width !== 384) {
+        el.width = el.height = 384;
+        ticks(el, 'rgba(255, 255, 255, .95)', 2.6, 0.625, 0.685);
+      }
       const to = 1.2 + 0.1 * k + i * 0.15;
       el.animate([{transform: 'rotate(0deg) scale(1)', opacity: 0.9 - i * 0.18}, {transform: `rotate(${7.5 + i * 7.5}deg) scale(${to.toFixed(3)})`, opacity: 0}],
         {duration: (big ? 620 : 380) + i * 60, delay: i * 85, easing: 'cubic-bezier(.15,.65,.3,1)', fill: 'backwards'}).finished.then(() => this.ripples.hide(el), () => undefined);
@@ -794,11 +864,11 @@ export class Table2D {
   private bloom(key: string): HTMLElement {
     let el = this.blooms.get(key);
     if (!el) {
-      el = document.createElement('b');
-      el.className = 'ar__rb';
+      const cv = texCanvas('ar__rb', 256);
+      el = cv;
       const c = key === 'G' ? '255, 222, 120' : key === 'N' ? '180, 200, 255' : {H: '255, 110, 135', D: '255, 205, 80', C: '110, 240, 165', S: '120, 180, 255'}[key]!;
       // parlak çekirdek kartın kenarlarından taşar (kartın altından sızan ışık), dışı takım renginde yumuşakça söner
-      el.style.background = `radial-gradient(closest-side, rgba(255, 255, 255, .95) 0%, rgba(255, 253, 244, .82) 34%, rgba(${c}, .62) 46%, rgba(${c}, .26) 62%, rgba(${c}, .08) 74%, rgba(${c}, 0) 86%)`;
+      radial(cv, [[0, 'rgba(255, 255, 255, .95)'], [0.34, 'rgba(255, 253, 244, .82)'], [0.46, `rgba(${c}, .62)`], [0.62, `rgba(${c}, .26)`], [0.74, `rgba(${c}, .08)`], [0.86, `rgba(${c}, 0)`], [1, `rgba(${c}, 0)`]]);
       this.ring.prepend(el);
       this.blooms.set(key, el);
     }
@@ -826,24 +896,31 @@ export class Table2D {
   impact(kind: 'pisti' | 'jack' | 'big'): void {
     const {pile, cw} = this.L;
     const jack = kind === 'jack';
-    const mk = (cls: string, d: number) => {
-      const el = document.createElement('i');
-      el.className = cls;
-      Object.assign(el.style, {width: d + 'px', height: d + 'px', left: pile.x - d / 2 + 'px', top: pile.y - d / 2 + 'px'});
-      this.fxEl.append(el);
+    // hüzme çarkı ve ışık hâlesi: bir kez çizilen doku tuvalleri (yeniden kullanılır; eskiden her piştide maskeli dev
+    // katman doğup tam çözünürlükte taranıyordu)
+    const mk = (key: 'burst' | 'bloom', d: number): HTMLElement => {
+      let el = this.fxTex.get(key);
+      if (!el) {
+        el = key === 'burst' ? burstTex() : bloomTex();
+        this.fxTex.set(key, el);
+        this.fxEl.prepend(el);
+      }
+      cancelAnims(el);
+      Object.assign(el.style, {display: 'block', width: d + 'px', height: d + 'px', left: pile.x - d / 2 + 'px', top: pile.y - d / 2 + 'px'});
       return el;
     };
+    const hide = (a: Animation, el: HTMLElement): void => void a.finished.then(() => (el.style.display = 'none'), () => undefined);
     if (kind !== 'big') {
       // ince altın-beyaz hüzmeler açılır, ağır ağır döner ve söner (kısa; vale biraz daha büyük ve uzun)
-      const b = mk('ar__burst', cw * (jack ? 6.4 : 5.2));
-      done(b.animate(seg([
+      const b = mk('burst', cw * (jack ? 6.4 : 5.2));
+      hide(b.animate(seg([
         {transform: 'scale(.35) rotate(-6deg)', opacity: 0},
         {transform: 'scale(1) rotate(4deg)', opacity: 1, offset: 0.24},
         {transform: 'scale(1.12) rotate(14deg)', opacity: 0},
       ], [OUT, 'cubic-bezier(.4,0,.7,1)']), {duration: jack ? 1050 : 850}), b);
     }
-    const bl = mk('ar__bloom', cw * 3.6);
-    done(bl.animate(seg([{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1)', opacity: 0.85, offset: 0.18}, {transform: 'scale(1.4)', opacity: 0}], [OUT, 'ease-in']),
+    const bl = mk('bloom', cw * 3.6);
+    hide(bl.animate(seg([{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1)', opacity: 0.85, offset: 0.18}, {transform: 'scale(1.4)', opacity: 0}], [OUT, 'ease-in']),
       {duration: 700}), bl);
     // altın şok halkası, ardından ince beyaz halka; birkaç pırıltı (kalabalık konfeti değil)
     this.pulse('#ffd36a', jack ? 2.4 : kind === 'big' ? 1.6 : 2);
@@ -862,12 +939,17 @@ export class Table2D {
   sweepFx(): void {
     const {pile, cw} = this.L;
     const d = cw * 3.4;
-    const el = document.createElement('i');
-    el.className = 'ar__sweep';
-    Object.assign(el.style, {width: d + 'px', height: d + 'px', left: pile.x - d / 2 + 'px', top: pile.y - d / 2 + 'px'});
-    this.fxEl.append(el);
-    done(el.animate([{transform: 'rotate(-90deg) scale(.6)', opacity: 0}, {transform: 'rotate(60deg) scale(1)', opacity: 1, offset: 0.3}, {transform: 'rotate(330deg) scale(1.15)', opacity: 0}],
-      {duration: 750, easing: 'cubic-bezier(.3,.6,.4,1)'}), el);
+    let el = this.fxTex.get('sweep');
+    if (!el) {
+      el = sweepTex();
+      this.fxTex.set('sweep', el);
+      this.fxEl.append(el);
+    }
+    cancelAnims(el);
+    Object.assign(el.style, {display: 'block', width: d + 'px', height: d + 'px', left: pile.x - d / 2 + 'px', top: pile.y - d / 2 + 'px'});
+    const node = el;
+    node.animate([{transform: 'rotate(-90deg) scale(.6)', opacity: 0}, {transform: 'rotate(60deg) scale(1)', opacity: 1, offset: 0.3}, {transform: 'rotate(330deg) scale(1.15)', opacity: 0}],
+      {duration: 750, easing: 'cubic-bezier(.3,.6,.4,1)'}).finished.then(() => (node.style.display = 'none'), () => undefined);
   }
 
   shake(k: number): void {
@@ -1309,6 +1391,108 @@ export class Table2D {
     const pool = same.length ? same : cap;
     return pool.slice().sort((a, b) => cardPoints(a) - cardPoints(b))[0];
   }
+}
+
+/** Çentik halkası (yığın halkasının kadranı) — doku tuvali; bkz. src/platform/tex.ts ticks. */
+function drawTicks(c: HTMLCanvasElement, color: string, deg: number, rIn: number, rOut: number): void {
+  if (c instanceof HTMLCanvasElement) ticks(c, color, deg, rIn, rOut);
+}
+
+/** Pişti hüzme çarkı: 30°'de bir ince beyaz + daha ince altın hüzme, merkezden yumuşak sönen (eski CSS repeating-conic +
+ * radial maskenin aynısı; köşeye göre yarıçap). 768² doku. */
+function burstTex(): HTMLCanvasElement {
+  const c = texCanvas('ar__burst', 768);
+  const g = ctx2d(c);
+  if (!g) return c;
+  const N = c.width, R = N / 2, F = R * Math.SQRT2;
+  const deg = (d: number): number => ((d - 90 - 1) * Math.PI) / 180;
+  const cg = (g as CanvasRenderingContext2D & {createConicGradient?: (a: number, x: number, y: number) => CanvasGradient}).createConicGradient?.(deg(0), R, R);
+  if (cg) {
+    // [derece, renk] — bir 30° periyot; 12 kez tekrarlanır
+    const P: Array<[number, string]> = [[0, 'rgba(255,250,230,0)'], [0.7, 'rgba(255,250,230,.95)'], [1.3, 'rgba(255,250,230,.95)'], [2, 'rgba(255,250,230,0)'],
+      [14.4, 'rgba(255,210,110,0)'], [14.9, 'rgba(255,206,96,.75)'], [15.3, 'rgba(255,206,96,.75)'], [15.8, 'rgba(255,210,110,0)']];
+    for (let k = 0; k < 12; k++) for (const [d, col] of P) cg.addColorStop((k * 30 + d) / 360, col);
+    cg.addColorStop(1, 'rgba(255,250,230,0)');
+    g.fillStyle = cg;
+    g.fillRect(0, 0, N, N);
+  } else {
+    // eski WebView: düz kama hüzmeler
+    for (const [d0, w, col] of [[0.7, 0.6, 'rgba(255,250,230,.95)'], [14.9, 0.4, 'rgba(255,206,96,.75)']] as const) {
+      g.fillStyle = col;
+      g.beginPath();
+      for (let k = 0; k < 12; k++) {
+        g.moveTo(R, R);
+        g.arc(R, R, F, deg(k * 30 + d0), deg(k * 30 + d0 + w));
+        g.closePath();
+      }
+      g.fill();
+    }
+  }
+  g.globalCompositeOperation = 'destination-in';
+  const m = g.createRadialGradient(R, R, 0, R, R, F);
+  for (const [o, a] of [[0, 0], [0.09, 0], [0.17, 0.9], [0.34, 0.55], [0.52, 0.18], [0.68, 0], [1, 0]] as const) m.addColorStop(o, `rgba(0,0,0,${a})`);
+  g.fillStyle = m;
+  g.fillRect(0, 0, N, N);
+  g.globalCompositeOperation = 'source-over';
+  return c;
+}
+
+/** SÜPÜRDÜ ışık yayı: halka biçiminde, sonuna doğru parlayan dönen yay (eski conic + halka maskesi). 384² doku. */
+function sweepTex(): HTMLCanvasElement {
+  const c = texCanvas('ar__sweep', 384);
+  const g = ctx2d(c);
+  if (!g) return c;
+  const N = c.width, R = N / 2, F = R * Math.SQRT2;
+  const cg = (g as CanvasRenderingContext2D & {createConicGradient?: (a: number, x: number, y: number) => CanvasGradient}).createConicGradient?.(-Math.PI / 2, R, R);
+  if (cg) {
+    cg.addColorStop(0, 'rgba(255,255,255,0)');
+    cg.addColorStop(200 / 360, 'rgba(160,200,255,.15)');
+    cg.addColorStop(352 / 360, 'rgba(255,255,255,.95)');
+    cg.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = cg;
+  } else g.fillStyle = 'rgba(200,220,255,.5)';
+  g.fillRect(0, 0, N, N);
+  g.globalCompositeOperation = 'destination-in';
+  const m = g.createRadialGradient(R, R, 0, R, R, F);
+  for (const [o, a] of [[0, 0], [0.48, 0], [0.52, 1], [0.66, 1], [0.72, 0], [1, 0]] as const) m.addColorStop(o, `rgba(0,0,0,${a})`);
+  g.fillStyle = m;
+  g.fillRect(0, 0, N, N);
+  g.globalCompositeOperation = 'source-over';
+  return c;
+}
+
+/** Atılan kartın hayalet izi: kart biçiminde beyazdan takım rengine geçen yüzey + 16 px ışıma (doku tuvali; CSS boyutu
+ * kart + ışıma payı, ortası kartın ortası). */
+const GHOST_PAD = 18;
+function ghostTex(c: HTMLCanvasElement, color: string, cw: number, ch: number): void {
+  c.dataset.c = color;
+  c.dataset.w = String(cw);
+  const k = 1.5; // kart başına ~1,5 piksel/CSS px: hızlı geçen yarı saydam iz için yeterli
+  c.width = Math.ceil((cw + 2 * GHOST_PAD) * k);
+  c.height = Math.ceil((ch + 2 * GHOST_PAD) * k);
+  c.style.width = cw + 2 * GHOST_PAD + 'px';
+  c.style.height = ch + 2 * GHOST_PAD + 'px';
+  const g = ctx2d(c);
+  if (!g) return;
+  g.scale(k, k);
+  const r = cw * CORNER_RADIUS;
+  const gr = g.createLinearGradient(0, GHOST_PAD, 0, GHOST_PAD + ch);
+  gr.addColorStop(0, 'rgba(255,255,255,.85)');
+  gr.addColorStop(1, color);
+  g.fillStyle = gr;
+  g.shadowColor = color;
+  g.shadowBlur = 16 * k;
+  g.beginPath();
+  if (g.roundRect) g.roundRect(GHOST_PAD, GHOST_PAD, cw, ch, r);
+  else g.rect(GHOST_PAD, GHOST_PAD, cw, ch);
+  g.fill();
+}
+
+/** Pişti ışık hâlesi (beyaz → altın, köşeye göre yarıçap). 256² doku. */
+function bloomTex(): HTMLCanvasElement {
+  const c = texCanvas('ar__bloom', 256);
+  radial(c, [[0, 'rgba(255, 255, 255, .9)'], [0.18, 'rgba(255, 236, 170, .55)'], [0.6, 'rgba(255, 210, 120, 0)'], [1, 'rgba(255, 210, 120, 0)']], false, true);
+  return c;
 }
 
 /** Arka plan için düşük kontrastlı takım işareti deseni (SVG). */

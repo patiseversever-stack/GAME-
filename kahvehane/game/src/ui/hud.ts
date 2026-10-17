@@ -11,6 +11,7 @@ import {ASSETS} from './assets';
 import {I} from './icons';
 import {FACE_BOX, gemHtml} from './parts';
 import {g3, type Fx} from './fx';
+import {ctx2d} from '../platform/tex';
 
 /** Rozet konumu: alt (ben, sol alt), üst (1'e 1 rakip), top4 (4 kişide karşı), sol, sağ. */
 type Pos = 'bottom' | 'top' | 'top4' | 'left' | 'right';
@@ -20,20 +21,64 @@ const ACCENT: Partial<Record<HudPose, Accent>> = {kizgin: 'anger', saskin: 'q', 
 /** Karakter başına portre kaydırma (% — yüz çemberin ortasına gelsin) */
 const FACE: Record<string, [number, number]> = {riza: [0, 1], cem: [-3, -1], dursun: [0, 1], defne: [-2, 0]};
 
-const preloaded = new Set<string>();
-function preload(urls: string[]): void {
+/** Ön yüklenen poz görselleri: nesneler TUTULUR (eskiden çöp toplanıyordu; poz değişiminde görsel yeniden indirilip
+ * çözülüyor, portre bir an boş/bozuk çiziliyordu). decode: true → hemen çöz (pişti kahramanı gibi büyük gösterilenler). */
+const preloaded = new Map<string, HTMLImageElement>();
+function preload(urls: string[], decode = false): void {
   for (const u of urls) {
-    if (!u || preloaded.has(u)) continue;
-    preloaded.add(u);
-    const i = new Image();
-    i.decoding = 'async';
-    i.src = u;
+    if (!u) continue;
+    let i = preloaded.get(u);
+    if (!i) {
+      i = new Image();
+      i.decoding = 'async';
+      i.src = u;
+      preloaded.set(u, i);
+    }
+    if (decode) void i.decode().catch(() => undefined);
   }
 }
 /** Görsel çözülene kadar bekle (en fazla ms); poz değişiminde boş kare görünmesin. */
 function ready(img: HTMLImageElement, ms = 160): Promise<void> {
   if (img.complete && img.naturalWidth) return Promise.resolve();
   return Promise.race([img.decode().catch(() => undefined), new Promise<void>(r => setTimeout(r, ms))]);
+}
+
+/** Kahraman bandının ışınları: 18°'de bir 6° beyaz (.22) hüzme (eski repeating-conic ile aynı), 512² doku. */
+function heroRays(c: HTMLCanvasElement): void {
+  const g = ctx2d(c);
+  if (!g) return;
+  const N = c.width, R = N / 2;
+  g.fillStyle = 'rgba(255, 255, 255, .22)';
+  g.beginPath();
+  for (let a = 0; a < 360; a += 18) {
+    g.moveTo(R, R);
+    g.arc(R, R, R * 1.5, ((a - 90) * Math.PI) / 180, ((a + 6 - 90) * Math.PI) / 180);
+    g.closePath();
+  }
+  g.fill();
+}
+
+/** Vale pişti çarkı: dört renk dilimli halka (%31–%64, köşeye göre), 384² doku. */
+function heroWheel(c: HTMLCanvasElement): void {
+  const g = ctx2d(c);
+  if (!g) return;
+  const N = c.width, R = N / 2, F = R * Math.SQRT2;
+  const cs = getComputedStyle(document.documentElement);
+  const col = ['--suit-h', '--suit-d', '--suit-c', '--suit-s'].map((k, i) => cs.getPropertyValue(k).trim() || ['#ff2e4d', '#ffb400', '#16c45b', '#1f7bff'][i]);
+  for (let i = 0; i < 32; i++) {
+    g.fillStyle = col[i % 4];
+    g.beginPath();
+    g.moveTo(R, R);
+    g.arc(R, R, F, ((i * 11.25 - 90) * Math.PI) / 180, (((i + 1) * 11.25 - 90 + 0.2) * Math.PI) / 180);
+    g.closePath();
+    g.fill();
+  }
+  g.globalCompositeOperation = 'destination-in';
+  g.lineWidth = (0.64 - 0.31) * F;
+  g.beginPath();
+  g.arc(R, R, ((0.31 + 0.64) / 2) * F, 0, Math.PI * 2);
+  g.stroke();
+  g.globalCompositeOperation = 'source-over';
 }
 
 /** Dar koltuklarda uzun ad kısalır: "Kahveci Dursun" → "Dursun" (iki kelimeli kısa adlar kalır: "Rıza Amca"). */
@@ -86,6 +131,7 @@ class Badge {
     const face = FACE[c.id] ?? [0, 0];
     const notr = c.poses.notr;
     preload(Object.values(c.poses));
+    preload([c.poses.pisti || notr], true); // pişti kahramanı: ilk piştide boş/geç çizilmesin
     const team = p.team >= 0 ? ` team-${p.team === 0 ? 'a' : 'b'}` : '';
     this.el = h('div', `kh-badge is-${pos}${p.isMe ? ' is-me' : ''}${team}`, `
       <div class="kh-badge__pop">
@@ -93,9 +139,9 @@ class Badge {
         <div class="kh-badge__ring${p.frame ? ' kh-frame--' + esc(p.frame) : ''}"><i class="kh-badge__gloss"></i></div>
         <div class="kh-badge__back"></div>
         <div class="kh-badge__fig" style="--fx:${face[0]}%;--fy:${face[1]}%"><div class="kh-badge__breath">
-          <div class="kh-badge__base"><img class="kh-badge__img" src="${notr}" alt="" draggable="false"><img class="kh-badge__img" alt="" draggable="false" style="opacity:0"></div>
-          <img class="kh-badge__img is-blink" src="${c.poses.kirpma || notr}" alt="" draggable="false">
-          <img class="kh-badge__img is-react" alt="" draggable="false">
+          <div class="kh-badge__base"><img class="kh-badge__img" src="${notr}" alt="" draggable="false" decoding="sync"><img class="kh-badge__img" alt="" draggable="false" decoding="sync" style="opacity:0"></div>
+          <img class="kh-badge__img is-blink" src="${c.poses.kirpma || notr}" alt="" draggable="false" decoding="sync">
+          <img class="kh-badge__img is-react" alt="" draggable="false" decoding="sync">
         </div></div>
         <div class="kh-acc">
           <i class="kh-acc__anger">${ANGER}</i><i class="kh-acc__steam"><i></i><i></i><i></i></i>
@@ -644,9 +690,13 @@ export class HudView implements GameHud {
 
   // ───────── pişti kahramanı ─────────
   private buildHero(): HTMLElement {
-    const el = h('div', 'kh-hero', `<div class="kh-hero__band"><i class="kh-hero__rays"></i><i class="kh-hero__pat"></i><i class="kh-hero__shine"></i></div>
-      <div class="kh-hero__wheel"></div><div class="kh-hero__fig"><img alt="" draggable="false"></div>
+    // decoding="sync": portre tarama sırasında çözülür (Android'de 512 KB üstü görseller aksi hâlde önce GÖRSELSİZ taranıp
+    // sonra yeniden çiziliyor — kahraman bir an boş görünüyordu). Işınlar ve çark küçük doku tuvalleri (tek seferlik çizim).
+    const el = h('div', 'kh-hero', `<div class="kh-hero__band"><canvas class="kh-hero__rays" width="512" height="512"></canvas><i class="kh-hero__pat"></i><i class="kh-hero__shine"></i></div>
+      <canvas class="kh-hero__wheel" width="384" height="384"></canvas><div class="kh-hero__fig"><img alt="" draggable="false" decoding="sync"></div>
       <div class="kh-hero__name"></div><div class="kh-hero__say"></div>`);
+    heroRays(q(el, '.kh-hero__rays') as HTMLCanvasElement);
+    heroWheel(q(el, '.kh-hero__wheel') as HTMLCanvasElement);
     this.el.append(el);
     return el;
   }

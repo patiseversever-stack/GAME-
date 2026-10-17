@@ -105,10 +105,11 @@
 .kh-acc__q { right: calc(var(--bs) * -.16); top: calc(var(--bs) * -.3); font-size: calc(var(--bs) * .36); line-height: 1; }
 .kh-acc__sweat { width: calc(var(--bs) * .2); height: calc(var(--bs) * .25); left: calc(var(--bs) * .06); top: calc(var(--bs) * .02); }
 .kh-acc__heart { width: calc(var(--bs) * .26); height: calc(var(--bs) * .26); right: calc(var(--bs) * -.04); top: calc(var(--bs) * -.06); }
-.kh-acc__sp { width: calc(var(--bs) * .24); height: calc(var(--bs) * .24); background: #ffe14a;
-  clip-path: polygon(50% 0, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0 50%, 39% 39%); }
+.kh-acc__sp { width: calc(var(--bs) * .24); height: calc(var(--bs) * .24); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 0L61 39L100 50L61 61L50 100L39 61L0 50L39 39z' fill='%23ffe14a'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
+/* yıldız SVG görsel (clip-path DEĞİL): clip-path'li öğe scale(0)'a doğru canlanınca Chrome katmanını kırpma yolunun sınırına
+   değil kesme dikdörtgenine göre boyutluyordu (25 px yıldız → 2025×2025 CSS px katman ≈ 28 Mpx) — her tepkide GPU belleği taşıyordu */
 .kh-acc__sp.is-1 { left: calc(var(--bs) * -.08); top: calc(var(--bs) * -.06); }
-.kh-acc__sp.is-2 { right: calc(var(--bs) * -.12); top: calc(var(--bs) * .12); width: calc(var(--bs) * .18); height: calc(var(--bs) * .18); background: #fff; }
+.kh-acc__sp.is-2 { right: calc(var(--bs) * -.12); top: calc(var(--bs) * .12); width: calc(var(--bs) * .18); height: calc(var(--bs) * .18); background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Cpath d='M50 0L61 39L100 50L61 61L50 100L39 61L0 50L39 39z' fill='%23fff'/%3E%3C/svg%3E") center / 100% 100% no-repeat; }
 .kh-acc__sp.is-3 { left: calc(var(--bs) * .44); top: calc(var(--bs) * -.3); }
 
 /* düşünüyor (üç nokta) + konuşma balonu (rozetin yanında) */
@@ -169,8 +170,9 @@
 .kh-hero.is-red .kh-hero__band { background: linear-gradient(165deg, #ff6a80 0%, #ff2e4d 40%, #c40a2f 72%, #7a0019 100%); }
 .kh-hero.is-jack .kh-hero__band { background: linear-gradient(165deg, #fff27a 0%, #ffd23f 30%, #ffb21a 62%, #ff7d0a 100%); }
 .kh-hero__band::after { content: ''; position: absolute; left: 0; right: 0; top: 0; height: 38%; background: linear-gradient(180deg, rgba(255, 255, 255, .32), rgba(255, 255, 255, 0)); }
-.kh-hero__rays { position: absolute; left: 50%; top: 50%; width: 80vmax; height: 80vmax; margin: -40vmax 0 0 -40vmax; will-change: transform, opacity;
-  background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .22) 0deg 6deg, rgba(255, 255, 255, 0) 6deg 18deg); }
+.kh-hero__rays { position: absolute; left: 50%; top: 50%; display: block; width: 80vmax; height: 80vmax; margin: -40vmax 0 0 -40vmax; will-change: transform, opacity; }
+/* .kh-hero__rays / .kh-hero__wheel: küçük doku tuvalleri (hud.ts buildHero; bkz. src/platform/tex.ts) — maske/gradyan katmanı
+   değil, her piştide ekran çözünürlüğünde yeniden taranmaz */
 .kh-hero.is-left .kh-hero__rays { left: 30%; }
 .kh-hero.is-right .kh-hero__rays { left: 70%; }
 .kh-hero__pat { position: absolute; inset: 0; opacity: .12;
@@ -186,16 +188,16 @@
   background: radial-gradient(circle at 30% 40%, #fff27a 0 4px, #ffb21a 5px, #c46a00 6.5px, transparent 7.5px) 0 0 / 58px 58px, radial-gradient(circle at 75% 80%, #fffbe0 0 1.5px, transparent 2.5px) 0 0 / 29px 29px; }
 .kh-hero__shine { position: absolute; top: -20%; bottom: -20%; left: 0; width: 22%; will-change: transform;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .75) 50%, rgba(255, 255, 255, 0)); }
-.kh-hero__wheel { position: absolute; top: 42.5%; width: calc(var(--hero-w) * 1.05); height: calc(var(--hero-w) * 1.05); margin-top: calc(var(--hero-w) * -.6); border-radius: 50%; opacity: 0; will-change: transform, opacity;
-  background: repeating-conic-gradient(from 0deg, var(--suit-h) 0 11.25deg, var(--suit-d) 11.25deg 22.5deg, var(--suit-c) 22.5deg 33.75deg, var(--suit-s) 33.75deg 45deg);
-  -webkit-mask: radial-gradient(circle, transparent 0 30%, #000 31% 64%, transparent 66%); mask: radial-gradient(circle, transparent 0 30%, #000 31% 64%, transparent 66%); }
+.kh-hero__wheel { position: absolute; top: 42.5%; display: block; width: calc(var(--hero-w) * 1.05); height: calc(var(--hero-w) * 1.05); margin-top: calc(var(--hero-w) * -.6); opacity: 0; will-change: transform, opacity; }
 .kh-hero.is-left .kh-hero__wheel { left: calc(4% + var(--hero-w) * -.025); }
 .kh-hero.is-right .kh-hero__wheel { right: calc(4% + var(--hero-w) * -.025); }
-.kh-hero__fig { position: absolute; top: calc(58% - var(--hero-w) * .98); width: var(--hero-w); height: var(--hero-w); will-change: transform;
-  -webkit-mask: linear-gradient(180deg, #000 82%, transparent 98%); mask: linear-gradient(180deg, #000 82%, transparent 98%); }
+.kh-hero__fig { position: absolute; top: calc(58% - var(--hero-w) * .98); width: var(--hero-w); height: var(--hero-w); will-change: transform; }
 .kh-hero.is-left .kh-hero__fig { left: 3%; }
 .kh-hero.is-right .kh-hero__fig { right: 3%; }
-.kh-hero__fig img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 8px 0 rgba(10, 16, 51, .35)); }
+.kh-hero__fig img { display: block; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 8px 0 rgba(10, 16, 51, .35));
+  -webkit-mask: linear-gradient(180deg, #000 82%, transparent 98%); mask: linear-gradient(180deg, #000 82%, transparent 98%); }
+/* alt sönme maskesi (ve gölge) <img>'de: canlanan .kh-hero__fig katmanına bir kez taranır. Maske canlanan katmanın kendisindeyken
+   bileşimci her karede ayrı maske yüzeyi + karo (≈ portre boyu × 2) tutuyordu. */
 .kh-hero__name { position: absolute; top: 47%; font-size: calc(var(--u) * 2.1); will-change: transform, opacity; }
 .kh-hero.is-left .kh-hero__name { right: 5%; }
 .kh-hero.is-right .kh-hero__name { left: 5%; }
