@@ -54,15 +54,12 @@
   background: repeating-conic-gradient(from 0deg, rgba(255, 255, 255, .16) 0deg 9deg, rgba(255, 255, 255, 0) 9deg 24deg);
   -webkit-mask: radial-gradient(circle, #000 0%, transparent 70%); mask: radial-gradient(circle, #000 0%, transparent 70%); }
 .kh-badge__back::after { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 18%, rgba(255, 255, 255, .5), rgba(255, 255, 255, 0) 52%); }
-/* portre kutusu: çemberin 1.6 katı; maske = iç çember ∪ çember merkezinin üstü (kafa taşar, omuzlar çembere kırpılır) */
-.kh-badge__fig { position: absolute; width: 160%; height: 160%; left: -30%; top: -15.8%; pointer-events: none;
-  -webkit-mask: radial-gradient(circle at 50% 41.1%, #000 calc(var(--bs) * .5 - var(--ring-w) - .5px), transparent calc(var(--bs) * .5 - var(--ring-w) + .5px)), linear-gradient(#000, #000) 0 0 / 100% 41.1% no-repeat;
-  mask: radial-gradient(circle at 50% 41.1%, #000 calc(var(--bs) * .5 - var(--ring-w) - .5px), transparent calc(var(--bs) * .5 - var(--ring-w) + .5px)), linear-gradient(#000, #000) 0 0 / 100% 41.1% no-repeat; }
+/* portre kutusu: çemberin 1.6 katı. Portre tek <canvas> (hud.ts Badge.paint): çember (omuzlar kırpılır) ∪ çember merkezinin
+   üstü (kafa taşar) şekli tuvale çizilirken uygulanır — CSS maskesi yok (nefes alan katmanın üstündeki maske bileşimcide ayrı
+   maske katmanı/yüzeyi demekti; GPU belleği sıkışınca ya da tepki zıplamasında portre bir an boş görünüyordu). */
+.kh-badge__fig { position: absolute; width: 160%; height: 160%; left: -30%; top: -15.8%; pointer-events: none; }
 .kh-badge__breath { position: absolute; inset: 0; transform-origin: 50% 85%; animation: kh-breath 4s steps(10) infinite; }
-.kh-badge__base { position: absolute; inset: 0; }
-.kh-badge__img { position: absolute; left: var(--fx, 0); top: var(--fy, 0); width: 100%; height: 100%; object-fit: contain; -webkit-user-drag: none; }
-.kh-badge__img.is-blink { z-index: 2; opacity: 0; }
-.kh-badge__img.is-react { z-index: 3; opacity: 0; }
+.kh-badge__cv { position: absolute; left: 0; top: 0; display: block; width: 100%; height: 100%; }
 @keyframes kh-breath { 50% { transform: scale(1.028) translateY(-.9%); } }
 .kh-badge .kh-gemwrap { position: absolute; z-index: 4; left: calc(var(--bs) * -.2); top: calc(var(--bs) * .62); }
 .kh-badge .kh-gem { --gs: calc(var(--bs) * .36); }

@@ -2,7 +2,6 @@
 // Canlı karakter rozetleri (kafası çemberden taşan portre, nefes alma, doğal göz kırpma, yaylı tepki hâlleri, küçük çizgi film
 // vurguları, dürtme), jeton, duraklat, deste sayacı, ipucu, eşli takım hapı, konuşma balonu, pişti kahramanı (karakter büyük girer),
 // seri / vurgu yazıları ve el sonu sayımı. Ortadaki masa alanı boş kalır. Yalnız transform/opacity animasyonu.
-import {cancelAnims} from '../platform/anim';
 import './hud.css';
 import type {GameHud, HudPisti, HudPlayer, HudPose, HudSounds, HudTally} from './types';
 import type {Mode, SeatPlayer} from '../game/types';
@@ -24,6 +23,13 @@ const FACE: Record<string, [number, number]> = {riza: [0, 1], cem: [-3, -1], dur
 /** Ön yüklenen poz görselleri: nesneler TUTULUR (eskiden çöp toplanıyordu; poz değişiminde görsel yeniden indirilip
  * çözülüyor, portre bir an boş/bozuk çiziliyordu). decode: true → hemen çöz (pişti kahramanı gibi büyük gösterilenler). */
 const preloaded = new Map<string, HTMLImageElement>();
+/** Bir kez çözülmüş portre adresleri (sonraki çizimler beklemeden). */
+const decodedOnce = new Set<string>();
+/** Portre görseli (ön yüklenen nesne; yoksa oluşturulur ve tutulur). */
+function portrait(url: string): HTMLImageElement {
+  preload([url]);
+  return preloaded.get(url)!;
+}
 function preload(urls: string[], decode = false): void {
   for (const u of urls) {
     if (!u) continue;
@@ -34,7 +40,10 @@ function preload(urls: string[], decode = false): void {
       i.src = u;
       preloaded.set(u, i);
     }
-    if (decode) void i.decode().catch(() => undefined);
+    if (decode) {
+      const im = i, url = u;
+      void im.decode().then(() => decodedOnce.add(url), () => undefined);
+    }
   }
 }
 /** Görsel çözülene kadar bekle (en fazla ms); poz değişiminde boş kare görünmesin. */
@@ -105,11 +114,12 @@ class Badge {
   readonly el: HTMLElement;
   private scope = new Scope();
   private popEl: HTMLElement;
-  private baseWrap: HTMLElement;
-  private base: HTMLImageElement[];
-  private front = 0;
-  private blinkImg: HTMLImageElement;
-  private reactImg: HTMLImageElement;
+  /** Portre: tek <canvas> (bileşimcide doku katmanı). Poz değişince yeni görsel ÇÖZÜLDÜKTEN sonra çizilir: ara karede boş
+   * portre olmaz. Omuzları çembere kırpan şekil tuvale çizimde uygulanır — CSS maskesi (canlanan nefes katmanının üstünde)
+   * bileşimcide ayrı maske katmanı + yüzey demekti; tepki zıplamasında ya da GPU belleği sıkışınca portre boş çiziliyordu. */
+  private cv: HTMLCanvasElement;
+  private shown = '';
+  private drawTok = 0;
   private cardsEl: HTMLElement;
   private pistiEl: HTMLElement;
   private pistiBox: HTMLElement;
@@ -119,7 +129,6 @@ class Badge {
   private sayTok = 0;
   private reactTimer = 0;
   private reactTok = 0;
-  private baseTok = 0;
   private reacting = false;
   private basePose: HudPose = 'notr';
   private persist: HudPose | null = null;
@@ -131,18 +140,15 @@ class Badge {
     const face = FACE[c.id] ?? [0, 0];
     const notr = c.poses.notr;
     preload(Object.values(c.poses));
-    preload([c.poses.pisti || notr], true); // pişti kahramanı: ilk piştide boş/geç çizilmesin
+    // nötr + göz kırpma hemen; pişti pozu kahraman için (ilk piştide boş/geç çizilmesin). Diğer pozlar ilk kullanımda çözülür.
+    preload([notr, c.poses.kirpma || notr, c.poses.pisti || notr], true);
     const team = p.team >= 0 ? ` team-${p.team === 0 ? 'a' : 'b'}` : '';
     this.el = h('div', `kh-badge is-${pos}${p.isMe ? ' is-me' : ''}${team}`, `
       <div class="kh-badge__pop">
         <div class="kh-badge__glow"></div><div class="kh-badge__turn"></div>
         <div class="kh-badge__ring${p.frame ? ' kh-frame--' + esc(p.frame) : ''}"><i class="kh-badge__gloss"></i></div>
         <div class="kh-badge__back"></div>
-        <div class="kh-badge__fig" style="--fx:${face[0]}%;--fy:${face[1]}%"><div class="kh-badge__breath">
-          <div class="kh-badge__base"><img class="kh-badge__img" src="${notr}" alt="" draggable="false" decoding="sync"><img class="kh-badge__img" alt="" draggable="false" decoding="sync" style="opacity:0"></div>
-          <img class="kh-badge__img is-blink" src="${c.poses.kirpma || notr}" alt="" draggable="false" decoding="sync">
-          <img class="kh-badge__img is-react" alt="" draggable="false" decoding="sync">
-        </div></div>
+        <div class="kh-badge__fig"><div class="kh-badge__breath"><canvas class="kh-badge__cv"></canvas></div></div>
         <div class="kh-acc">
           <i class="kh-acc__anger">${ANGER}</i><i class="kh-acc__steam"><i></i><i></i><i></i></i>
           <b class="kh-acc__q">${g3('?!')}</b><i class="kh-acc__sweat">${SWEAT}</i><i class="kh-acc__heart">${HEART}</i>
@@ -162,11 +168,9 @@ class Badge {
     this.el.style.setProperty('--bc3', shade(c.color, -0.45));
     this.el.querySelector('.kh-badge__breath')!.setAttribute('style', `animation-delay:${(-Math.random() * 4).toFixed(2)}s;animation-duration:${(3.6 + Math.random() * 0.9).toFixed(2)}s`);
     this.popEl = q(this.el, '.kh-badge__pop');
-    this.baseWrap = q(this.el, '.kh-badge__base');
-    const imgs = Array.from(this.el.querySelectorAll<HTMLImageElement>('.kh-badge__img'));
-    this.base = [imgs[0], imgs[1]];
-    this.blinkImg = imgs[2];
-    this.reactImg = imgs[3];
+    this.cv = q(this.el, '.kh-badge__cv') as HTMLCanvasElement;
+    this.face = face;
+    this.show(notr);
     this.cardsEl = q(this.el, '[data-k=cards]');
     this.pistiEl = q(this.el, '[data-k=pisti]');
     this.pistiBox = q(this.el, '[data-k=pbox]');
@@ -183,6 +187,45 @@ class Badge {
     return this.p.char.poses[pose] || this.p.char.poses.notr;
   }
 
+  private face: [number, number] = [0, 0];
+
+  /** Portreyi göster: görsel çözülmemişse çözülünce (o arada eski poz kalır). Sonraki çağrı öncekini geçersiz kılar. */
+  private show(url: string): Promise<boolean> {
+    const tok = ++this.drawTok;
+    const img = portrait(url);
+    const draw = (): boolean => {
+      if (tok !== this.drawTok) return false;
+      if (url !== this.shown) this.paint(img);
+      this.shown = url;
+      return true;
+    };
+    if (img.complete && img.naturalWidth && decodedOnce.has(url)) return Promise.resolve(draw());
+    return img.decode().then(() => (decodedOnce.add(url), draw()), () => draw());
+  }
+
+  /** Tuvale çiz: kutu = rozet çemberinin 1,6 katı; çember (omuzlar kırpılır) ∪ çember merkezinin üstü (kafa taşar). */
+  private paint(img: HTMLImageElement): void {
+    const fig = this.cv.parentElement!.parentElement as HTMLElement;
+    const fw = fig.offsetWidth || 160;
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    const N = Math.max(64, Math.min(640, Math.round(fw * dpr)));
+    if (this.cv.width !== N) this.cv.width = this.cv.height = N;
+    const g = this.cv.getContext('2d');
+    if (!g || !img.naturalWidth) return;
+    const bs = this.el.offsetWidth || fw / 1.6;
+    const back = (this.el.querySelector('.kh-badge__back') as HTMLElement | null)?.offsetWidth ?? bs * 0.86;
+    // nefes (×1,028) kırpma çemberini de büyütür: 1 px içeriden kırp, halkaya taşmasın
+    const k = N / fw, r = (bs / 2 - (bs - back) / 2 - 1) * k, cy = N * 0.411;
+    g.clearRect(0, 0, N, N);
+    g.save();
+    g.beginPath();
+    g.arc(N / 2, cy, r, 0, Math.PI * 2);
+    g.rect(0, 0, N, cy);
+    g.clip('nonzero');
+    g.drawImage(img, (this.face[0] / 100) * N, (this.face[1] / 100) * N, N, N);
+    g.restore();
+  }
+
   // ───── göz kırpma ─────
   private scheduleBlink(): void {
     if (!ANIM) return;
@@ -197,10 +240,19 @@ class Badge {
     const cl = document.documentElement.classList;
     if (cl.contains('kh-calm') || cl.contains('kh-low')) return;
     const dbl = Math.random() < 0.18;
-    const kf: Keyframe[] = dbl
-      ? [{opacity: 0}, {opacity: 1, offset: 0.08}, {opacity: 1, offset: 0.3}, {opacity: 0, offset: 0.4}, {opacity: 0, offset: 0.55}, {opacity: 1, offset: 0.63}, {opacity: 1, offset: 0.9}, {opacity: 0}]
-      : [{opacity: 0}, {opacity: 1, offset: 0.15}, {opacity: 1, offset: 0.82}, {opacity: 0}];
-    play(this.blinkImg, kf, {duration: dbl ? 380 : 150, easing: 'linear'}, 0);
+    const shut = this.p.char.poses.kirpma, open = this.url('notr');
+    if (!shut) return;
+    // kapalı göz karesi: tek kırpma ~125 ms, çift kırpmada iki kez (tuvale çizim; katman/raster yok)
+    const close = (at: number, ms: number): void => {
+      this.scope.timeout(() => {
+        if (this.basePose === 'notr' && !this.reacting) void this.show(shut);
+      }, at);
+      this.scope.timeout(() => {
+        if (this.basePose === 'notr' && !this.reacting) void this.show(open);
+      }, at + ms);
+    };
+    close(0, dbl ? 120 : 125);
+    if (dbl) close(210, 110);
   }
 
   // ───── hâller ─────
@@ -209,18 +261,7 @@ class Badge {
     const pose: HudPose = this.thinking ? 'dusunceli' : this.persist ?? 'notr';
     if (pose === this.basePose) return;
     this.basePose = pose;
-    const tok = ++this.baseTok;
-    const next = this.base[1 - this.front], cur = this.base[this.front];
-    next.src = this.url(pose);
-    void ready(next).then(() => {
-      if (tok !== this.baseTok) return;
-      next.style.zIndex = '1';
-      cur.style.zIndex = '0';
-      cancelAnims(next);
-      next.style.opacity = '1';
-      cur.style.opacity = '0';
-      this.front = 1 - this.front;
-    });
+    if (!this.reacting) void this.show(this.url(pose));
   }
 
   setMood(pose: HudPose | null): void {
@@ -231,15 +272,9 @@ class Badge {
   /** Yaylı tepki: hâl katmanı belirir, rozet zıplar, küçük çizgi film vurgusu; ms sonra temel hâle döner. */
   react(pose: HudPose, ms = 1500): void {
     const tok = ++this.reactTok;
-    const img = this.reactImg;
-    img.src = this.url(pose);
-    void ready(img).then(() => {
-      if (tok !== this.reactTok) return;
-      cancelAnims(img);
-      cancelAnims(this.baseWrap);
-      img.style.opacity = '1';
-      this.baseWrap.style.opacity = '0';
-      this.reacting = true;
+    this.reacting = true;
+    void this.show(this.url(pose)).then(ok => {
+      if (tok !== this.reactTok || !ok) return;
       this.bounce(pose === 'kizgin' || pose === 'saskin' ? 1.14 : 1.1);
       const a = ACCENT[pose];
       if (a) this.accent(a);
@@ -250,12 +285,8 @@ class Badge {
 
   private unreact(tok: number): void {
     if (tok !== this.reactTok) return;
-    const img = this.reactImg;
-    img.style.opacity = '0';
-    this.baseWrap.style.opacity = '1';
-    this.scope.timeout(() => {
-      if (tok === this.reactTok) this.reacting = false;
-    }, 230);
+    this.reacting = false;
+    void this.show(this.url(this.basePose));
   }
 
   /** Yaylı zıplama (tepki, dürtme). */
@@ -379,12 +410,11 @@ class Badge {
     this.unsay();
     clearTimeout(this.reactTimer);
     this.reactTok++;
-    this.reactImg.style.opacity = '0';
-    this.baseWrap.style.opacity = '1';
     this.reacting = false;
     this.persist = null;
     this.thinking = false;
     this.syncBase();
+    void this.show(this.url(this.basePose));
     this.setTurn(false, false);
   }
 
