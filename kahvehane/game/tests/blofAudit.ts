@@ -39,7 +39,13 @@ export interface CasualStyle {
   /** Açışlara "Blöf!" deme olasılığı (kesin yalan hariç). */
   callOpen: number;
 }
-export const CASUAL: CasualStyle = {callMul: 1, bluff2: 0.7, bluffN: 0.45, pad: 0.12, callOpen: 0.06};
+/**
+ * Sıradan oyuncu, ceza kuralını bilen (17 Ekim: yakalanan yalancı kenardan 2 ceza kartı alır): açışa yalnız %4 yalan katar,
+ * elinde o değer yokken 1'e 1'de %40, kalabalıkta %30 blöf yapar (zorluk merdiveni buna göre ölçülür; docs/BOTS.md).
+ */
+export const CASUAL: CasualStyle = {callMul: 1, bluff2: 0.4, bluffN: 0.3, pad: 0.04, callOpen: 0.06};
+/** Ceza kuralından önceki "saf" sıradan oyuncu (hep aynı sıklıkta blöf yapar): karşılaştırma için. */
+export const CASUAL_NAIVE: Partial<CasualStyle> = {bluff2: 0.7, bluffN: 0.45, pad: 0.12};
 
 export class CasualHuman implements Brain {
   private readonly rnd: () => number;
