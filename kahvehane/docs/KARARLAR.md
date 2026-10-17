@@ -24,6 +24,19 @@ Yeni oturum bu dosyayı okuyup devam edebilsin diye tutulur.
 - Arkadan akıl veren seyirci ("yancı") + kahvehane ortam sesi.
 - Pişti hareketi (masaya vurma vb.) görev/mağazadan açılır. **Sadece gösteriş**, puana/oyuna etkisi yok. Online'da en fazla 2 sn, rakip susturabilir.
 
+## Kural kararları — 17 Ekim (bot denetimi sonrası; ayrıntı `BOTS.md`, kurallar `BLOF.md`, çevrimiçi `ONLINE.md`)
+- **Blöf — yakalanan yalancıya ceza:** "Blöf!" yalanı ortaya çıkarırsa yalancı yığının tamamını alır **ve kenardan (KENAR) 2 ceza kartı**
+  alır: KENAR'ın üstünden, en son kenara gidenler (belirlenimci); kenarda 1 kart varsa 1, boşsa ceza yok. Doğru çıkan atışta ceza yok.
+  Ceza kartlarının yüzünü yalnız alan görür. Neden: 1'e 1'de "açışa hep bir yalan kart kat" taktiği bütün botları %90+ yeniyordu
+  (bedeli yalnız turu kaptırmaktı); ceza ile %0–1. Botların açışa yalan katma oranı %12–45 → ~%5.
+- **Blöf — pencere süresi:** atıştan sonra sıradaki (bir sonra oynayacak) koltuk **insansa 5 sn**, **bot ise 3 sn** (insan her pencerede
+  blöf diyebilir; masa onu boşuna beklemez). Herkes "geç" derse erken kapanır. Çevrimiçinde aynı kural: ev sahibi sayar, `timer`
+  mesajı gerçek süreyi taşır, istemci halkası ona göre. Öğretici elde 9 sn.
+- **Pişti — kapalı masa kartları:** başta açık kartın altına kapalı dağıtılan 3 kart, alındığında da **yalnız alana** görünür; diğerleri
+  kart arkası görür (alan insansa kartlar bir an açılıp ona gösterilir, ≤ 600 ms). El sonu sayımında puanlar herkese açık.
+- **Masadan kalkmak** (zaten böyleydi): her maç uzunluğunda, **Tek El dahil**, bahis yanar ve maç kayıp sayılır; mola ve Ara Skor onay
+  metni ile Nasıl Oynanır bunu açıkça yazar.
+
 ## Görsel tarz
 - "Arası": gerçekçi ışık ve malzeme (ahşap, çuha, kumaş, ten) + karaktere göre değişen abartı.
 - Abes durmaması için: hepsi aynı ışık, aynı renk paleti, aynı render dili; abartı seviyesi bir bant içinde.

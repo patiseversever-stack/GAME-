@@ -23,8 +23,9 @@
 - **Durum yalnız ev sahibindedir.** İstemci hiçbir zaman tam durumu (`BlofState`, `PistiState`) görmez; yalnız kendi koltuğunun
   görünümünü (`viewFor(state, seat)`) ve kendisine **süzülmüş** olayları (`redact(event, seat)`) alır.
 - **Her hamle ev sahibinde doğrulanır** (`apply` → `{error}`); istemcideki `isLegalFor`/`legal` yalnız düğmeleri açıp kapamak içindir.
-- **Zaman ev sahibindedir:** Blöf'ün 5 sn'lik penceresini, hamle süre aşımlarını ev sahibi sayar ve süre dolunca yetkili hamleyi
-  (`{t:'windowClosed'}`, varsayılan hamle) kendisi uygular. Motor saatsizdir.
+- **Zaman ev sahibindedir:** Blöf'ün penceresini (sıradaki insansa 5 sn, bot ise 3 sn), hamle süre aşımlarını ev sahibi sayar ve süre
+  dolunca yetkili hamleyi (`{t:'windowClosed'}`, varsayılan hamle) kendisi uygular. Motor saatsizdir (sürenin KAÇ olacağı ise kuraldır,
+  motorda: §3 Blöf).
 
 ## 2. Sözleşme: `GameEngine` (src/core/game.ts)
 
@@ -38,9 +39,10 @@
 | `actors(state)` | Şu an hamlesi beklenenler (botlar buna göre uyanır) |
 | `epoch(state)` | Karar bağlamı sayacı; değişince bekleyen bot kararları/süre aşımları iptal |
 | `actionSeat(action)` | Hamleyi kimin yaptığı; −1 = yalnız yetkili taraf (istemci gönderemez) |
-| `timer(state)` | Kurulacak zamanlayıcı (Blöf: `w<id>`, 5000 ms, `windowClosed`) |
+| `timer(state)` | Kurulacak zamanlayıcı (Blöf: `w<id>`, o pencerenin süresi 5000 / 3000 ms, `windowClosed`) |
 | `timeoutAction(state, seat)` | AFK oyuncu için varsayılan hamle |
 | `defer(state, action)` | Henüz geçersiz ama birazdan geçerli olacak hamle (Blöf: pencere açıkken sıradakinin "at"ı) |
+| `withSeats(cfg, human)` | Ev sahibi oyunu kurmadan koltuk türlerini ayara yazdırır (insan = yerel ya da uzak; bot). Blöf: `humanSeats` → pencere süresi. Dönen ayar maçın kaydıdır (`host.cfg`) |
 
 Botlar `BotBrain` arayüzünü uygular: `observe(süzülmüş olay)` + `decide(görünüm) → {action, delayMs, tell?}`.
 **Bot asla gizli durumu görmez** → aynı bot sunucuda boş koltuğu doldurabilir, hatta oyun ortasında kopan oyuncunun yerine geçebilir
@@ -51,15 +53,29 @@ Botlar `BotBrain` arayüzünü uygular: `observe(süzülmüş olay)` + `decide(g
 ### Pişti — `pistiEngine` (src/core/pistiEngine.ts)
 - Hamle: `{t:'play', seat, card}`. Zamanlayıcı yok; süre aşımında elindeki ilk kart atılır.
 - Gizli bilgi: başkalarının eline dağıtılan kartlar ve masadaki 3 kapalı kart → süzülmüş olayda `-1` (`HIDDEN_CARD`).
-- `game/match.ts` bugün motoru doğrudan kullanıyor ve **değişmedi**. Çevrimiçi Pişti için match, Blöf'teki gibi `GameClient`
-  üzerinden olay sunacak şekilde çevrilecek (sunum kodu aynen kalır; yalnız "hamleyi kim üretiyor" değişir).
+  **Kapalı kartlar alınınca da gizli kalır (17 Ekim):** `capture` (ve kimse almadıysa `finalSweep`) olayı `hidden: 3` taşır —
+  `cards`'ın başındaki o kadar kart kapalı masa kartıdır; `redact` onları YALNIZ ALANA açık bırakır, diğer koltuklara (eşlide
+  ortağa da) ve seyirciye `-1` gider. Kart sayısı herkese açık; puanlar el sonunda (`gameOver` sonucu) herkese açık sayılır.
+- `game/match.ts` motoru doğrudan kullanıyor ama sahne (koltuk 0), botlar ve `?auto=1` oyuncusu artık HAM olayı değil kendi koltuğuna
+  süzülmüş olayı görür (çevrimiçindeki gibi): masa rakibin kartının kimliğini ancak atılınca öğrenir, başkasının aldığı kapalı kartlar
+  kapalı uçar, değerli kart parıltısı/yüz ifadeleri/laf atmaları onları saymaz. Çevrimiçi Pişti için kalan iş: match'i `GameClient`
+  üzerinden sürmek (sunum kodu aynen kalır; yalnız "hamleyi kim üretiyor" değişir).
 - Bot bağdaştırıcısı: `PistiBotBrain` (src/net/pistiLocal.ts). Test: ev sahibi üzerinden oynanan oyun, doğrudan motorla oynananla birebir aynı.
 
 ### Blöf — `blofEngine` (src/core/blofEngine.ts), kurallar docs/BLOF.md
 - Hamleler: `open` (değer + 1–4 kart), `play`, `pass`, `challenge`, `decline` ("geç"), `windowClosed` (yalnız yetkili).
-- Gizli bilgi: eller, kapalı atılan kartlar (`opened/played.cards` yalnız atana), alınan yığının içeriği (yalnız alana),
-  kimin "geç" dediği (yalnız kendine). Açılan son atış (`reveal`) herkese açıktır.
-- Zamanlayıcı: her atıştan sonra pencere (`timer` → `w<id>`); herkes geçerse motor pencereyi kendisi erken kapatır.
+- Gizli bilgi: eller, kapalı atılan kartlar (`opened/played.cards` yalnız atana), alınan yığının içeriği (yalnız alana), yakalanan
+  yalancının kenardan aldığı ceza kartları (`penalty.cards` yalnız alana; sayı ve `discardCount` herkese), kimin "geç" dediği (yalnız
+  kendine). Açılan son atış (`reveal`) herkese açıktır.
+- **Pencere süresi (çevrimiçi kural, 17 Ekim):** `window = 5000 ms` eğer atıştan sonra **sıradaki** koltuk (bir sonra oynayacak olan)
+  bir **insan** koltuğuysa (yerel ya da uzak), değilse `3000 ms`. Ev sahibi koltuk türlerini kurulumda `withSeats` ile ayara yazar
+  (`humanSeats`); motor süreyi her pencereye yazar (`BlofWindow.ms` → `windowOpen.ms`, `BlofView.window.ms`, `timer().ms`).
+  **Sayan ev sahibidir** ve `timer {key, kind:'window', ms, deadline}` mesajı GERÇEK süreyi yayar; istemci halkası bu `ms` ile ve
+  `client.timeLeft()` ile çizilir (5000'e sabit değil; geç gelen istemcide halka geçen kısım dolu başlar). Herkes geçerse motor
+  pencereyi kendisi erken kapatır (kısa pencerede de). Botlar kararlarını pencere bitmeden verir (kısa pencerede yavaş tepkiler
+  orantılı sıkışır). Yedek bot devralınca o koltuğun `humanSeats` değeri sonraki pencereden itibaren güncellenmeli (yedek bot henüz
+  yok, §5).
+- Zamanlayıcı: her atıştan sonra pencere (`timer` → `w<id>`, süre yukarıdaki kural).
 - Erteleme: pencere açıkken sıradaki oyuncu "at/pas" derse ev sahibi bunu "geç" sayar ve hamleyi sıraya alır; pencere blöfsüz
   kapanınca uygular, araya blöf girerse reddeder (`queued` / `rejected` mesajları).
 
@@ -80,7 +96,7 @@ Ev sahibi → istemci: `welcome {seat, seats}` · `seats` · `events {seq, event
 - `seq` masada ortak ve artandır; her `events` mesajı o hamleden sonraki **tam görünümü** de taşır → istemci durum tutmaz,
   kayıp mesajda `resync` yeter.
 - **Tempo (`ack`):** yerelde ev sahibi, insan arayüzü olayları sunup `ack` gönderene dek pencere sayacını başlatmaz ve botları
-  uyandırmaz (en çok `paceMaxMs`, varsayılan 6 sn). Böylece 5 sn'lik halka, atış animasyonu bittiğinde dolmaya başlar.
+  uyandırmaz (en çok `paceMaxMs`, varsayılan 6 sn). Böylece pencere halkası (5 ya da 3 sn), atış animasyonu bittiğinde dolmaya başlar.
   Çevrimiçinde aynı mekanizma kısa bir üst sınırla (ör. 1,5 sn) kullanılmalı; yavaş istemci masayı bekletmesin.
 - **Hızlı sohbet (`chat`):** `msg` yalnız `QUICK_CHAT` kimliğidir (src/ai/dialogue.ts; serbest metin yok → küfür/moderasyon
   sorunu yok). Ev sahibi `ChatGate` ile kimliği doğrular ve koltuk başına hız sınırı uygular (4 sn − 0,5 sn ağ payı, dakikada 6;
@@ -157,6 +173,10 @@ for (;;) {
 - [x] Oyun uzunluğu / seri (17 Ekim, `src/game/series.ts`): saf ve deterministik — maç = ayar + tohum + el sonuçları; el tohumu, dağıtan
   (Pişti) / açan (Blöf), toplamlar, hedef, uzatma eli, eşitlik bozma, bırakma ve kayıttan doğrulayıp sürdürme (`validateSeries`) sunucuda
   aynen koşar. Sunucu her el sonunda `recordPisti(GameResult)` / `recordBlof({winner, handCounts})` çağırır; ödeme `setup.ts receive(…, mult)`.
+
+- [x] Kural kararları (17 Ekim): Blöf'te yakalanan yalancıya kenardan 2 ceza kartı (`penalty` olayı, yalnız alana açık), pencere süresi
+  sıradaki insansa 5 sn / değilse 3 sn (`withSeats` + `timer.ms`), Pişti'de alınan kapalı masa kartları yalnız alana açık (`capture.hidden`).
+  Testler: tests/blof.test.ts, tests/net.test.ts (insan + uzak + bot koltuklu ev sahibi), tests/pisti.test.ts, tests/pistiAudit.test.ts.
 
 **Sıradaki:**
 - [ ] Sunucu barındırma kararı (§7) ve `WebSocketTransport`'un gerçek sürümü (yeniden bağlanma, geri çekilme, kimlik)

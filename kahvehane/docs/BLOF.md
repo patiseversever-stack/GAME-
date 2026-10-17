@@ -8,15 +8,27 @@ Kahvehane Pişti uygulamasının ikinci oyunu. Aynı jeton, karakterler, destele
 - **Deste:** tek deste, 52 kart, hepsi dağıtılır. 3 kişide 17-17-18: fazla kartı turu ilk AÇMAYAN oyunculardan biri alır.
 - **Tur:** turu açan oyuncu bir DEĞER söyler (As…Papaz) ve elinden 1–4 kartı kapalı atar ("3 tane 7").
   Tur boyunca herkes AYNI değeri söyleyerek 1–4 kart atar ya da **Pas** der.
-- **Blöf:** her kart atışından sonra **5 saniyelik pencere** açılır; atan HARİÇ masadaki herkes "Blöf!" diyebilir
+- **Blöf:** her kart atışından sonra **blöf penceresi** açılır; atan HARİÇ masadaki herkes "Blöf!" diyebilir
   (insan: kırmızı BLÖF düğmesi ya da ortadaki yığına dokunma). İlk diyen açar. Eşlide takım arkadaşının hamlesine blöf denemez.
+  - **Süre (17 Ekim):** atıştan sonra **sıradaki** (bir sonra oynayacak) koltuk **insansa 5 sn**, **bot ise 3 sn**. İnsan her pencerede
+    blöf diyebilir; yalnız sırası gelmeyecekse masa onu 5 sn beklemez. Blöf diyebilecek herkes "geç" derse pencere hemen kapanır.
+    Süreyi motor her pencereye yazar (`windowOpen.ms`, `BlofView.window.ms`); sayan ev sahibidir (çevrimiçi kural: ONLINE.md §3).
+    Öğretici elde pencere hep 9 sn.
   - Son atılan kartlar açılır. Hepsi söylenen değerse → doğru: yığının TAMAMINI blöf diyen alır, yeni turu atan (doğru çıkan) açar.
-  - Herhangi biri farklıysa → yalan: yığının TAMAMINI atan alır, yeni turu blöf diyen (yakalayan) açar.
+  - Herhangi biri farklıysa → yalan: yığının TAMAMINI atan alır, **üstüne kenardan 2 ceza kartı** (17 Ekim), yeni turu blöf diyen
+    (yakalayan) açar. Ceza kartları **KENAR'ın üstünden** alınır (en son kenara gidenler; belirlenimci). Kenarda 1 kart varsa 1, kenar
+    boşsa ceza yok. Doğru çıkan atışta ceza yok (blöf diyen yalnız yığını alır).
 - **Pas:** herkes (son atan hariç) art arda pas derse ortadaki kartlar kenara (oyun dışına) gider, son atan yeni turu açar.
   Turu açan pas diyemez (mutlaka değer söyleyip atar).
 - **Bitiş:** son kartlarını atan oyuncunun hamlesine de blöf denebilir; pencere blöfsüz kapanırsa (ya da blöf yanlış çıkarsa) o oyuncu
-  bitirir. Yalanı yakalanırsa yığını alıp devam eder. **İlk bitiren kazanır** (eşlide takımı kazanır). Tek el.
+  bitirir. Yalanı yakalanırsa yığını (+ ceza kartlarını) alıp devam eder. **İlk bitiren kazanır** (eşlide takımı kazanır). Tek el.
 - **Görünürlük:** herkesin elindeki kart sayısı rozetin yanında görünür; 1–2 kart kalınca rozet yanar. Hafıza yardımı/sayaç YOK.
+  Alınan yığının ve ceza kartlarının yüzünü yalnız alan görür (diğerleri yalnız sayıyı; KENAR sayacı düşer).
+
+### Neden ceza kartı? (17 Ekim, bot denetimi — docs/BOTS.md)
+1'e 1'de açışta yakalanan yalancı yığında yalnız kendi kartlarını geri alıyordu: bedeli yalnız turu kaptırmaktı. Her açışına bir yalan
+kart katan sıradan oyuncu bütün botları %90+ yeniyordu (orta %94, zor %93). Ceza kuralıyla aynı oyuncu %0–1 kazanıyor; normal oyunun
+zorluk merdiveni neredeyse aynı kaldı (BOTS.md "Kural değişikliği" tablosu).
 
 ## Oyun uzunluğu: Tek El · 3 El · 5 El (17 Ekim; kod `src/game/series.ts`, testler `tests/series.test.ts`)
 Kullanıcı isteği: "Blöf'te hep tek oyun var." Seçenekler **Tek El** (bugünkü gibi: ilk bitiren kazanır) · **3 El** · **5 El** (seri).
@@ -30,7 +42,8 @@ Kullanıcı isteği: "Blöf'te hep tek oyun var." Seçenekler **Tek El** (bugün
   XP: el başına 20 + sonuç primi (kazanma 40 · berabere 10) × çarpan, kalabalık masa çarpanı, yakalanan blöf +6 (el başına en çok 10).
 - **Eller arası "Ara Skor":** bu elin cezaları (sayarak), el el ceza hücreleri, el sayacı (●●○ 2/3), önde olana taç, konuşan karakter, büyük
   "Sonraki El" (6 sn sonra kendiliğinden), "Masadan kalk" (onaylı).
-- **Maçı bırakmak** (Mola → Masadan Kalk ya da Ara Skor'dan; onaylı): bahis yanar, maç kaybı sayılır. **Uygulama maç ortasında kapanırsa**
+- **Maçı bırakmak** (Mola → Masadan Kalk ya da Ara Skor'dan; onaylı): bahis yanar, maç kaybı sayılır — **her uzunlukta, Tek El dahil**
+  (onay metni bunu açıkça yazar; Nasıl Oynanır'da da var). **Uygulama maç ortasında kapanırsa**
   maç durumu her el sonunda profile yazıldığı için sonraki açılışta "Yarım kalan maça devam et?" sorulur: devam, kaldığı **elin başından** aynı
   tohumla başlar (el ortası saklanmaz); bırakmak maç kaybıdır.
 - İstatistik ve görevlerde **maç** sayılır (oynanan/kazanılan/seri); blöf sayıları her elde birikir. Yeni görev: "5 elli Blöf serisi kazan".
@@ -39,8 +52,9 @@ Kullanıcı isteği: "Blöf'te hep tek oyun var." Seçenekler **Tek El** (bugün
 
 ## Oynanış ve sunum (kesin)
 - Kart atma: elden dokunarak 1–4 kart seç (kalkar) → alttaki "3 tane 7 at" düğmesi. Turu sen açıyorsan önce değer seçicisi.
-- Pas düğmesi; Blöf düğmesi (büyük kırmızı, 5 sn halka dolar) + yığına dokunma.
-- **Blöf anı:** ağır çekim tek tek kart açılışı (gerilim sesi) · "YAKALANDI!" / "DOĞRU ÇIKTI!" damgası · yığın uçarak kaybedene gider ·
+- Pas düğmesi; Blöf düğmesi (büyük kırmızı; halkası pencerenin gerçek süresinde — 5 ya da 3 sn — dolar) + yığına dokunma.
+- **Blöf anı:** ağır çekim tek tek kart açılışı (gerilim sesi) · "YAKALANDI!" / "DOĞRU ÇIKTI!" damgası (yalansa alt satırda "+2 ceza") ·
+  yığın uçarak kaybedene gider · yalansa ardından KENAR'ın üstündeki 2 kart "+2 ceza" etiketiyle yalancıya uçar (KENAR sayacı düşer) ·
   karakter tepkileri (yakalanan utanır/kızar, yakalayan sırıtır; laf atma balonları).
 - Rakipler: kolay / orta / zor (zorluk seviyesine göre; kişilik farkı şart değil).
 - Bahis Pişti gibi (100 / 500 / 1.000 / 5.000, seviye kilitleri); kazanan potu alır.
