@@ -407,7 +407,7 @@ export class Table2D {
       deck = {x: edge + (cw * ds) / 2, y: top + 10.9 * ds + (ch * ds) / 2, s: ds};
       hintX = Math.min(maxX, Math.max(hintX, edge + cw * ds + 4 + 5 + half));
       // benim destem halkanın sağ altında, ipucu bandının üstünde (≥10 px); pişti kartları ortaya (sola) dizilir
-      const ms = H <= 700 ? 0.58 : 0.66; // kısa ekranda halka ile sağdaki rakibin sırası arasına sığması için biraz küçük
+      const ms = H <= 700 ? 0.54 : 0.66; // kısa ekranda halka ile sağdaki rakibin sırası arasına sığması için biraz küçük
       const myY = clear - (ch * ms) / 2 - 11;
       // Pişti kartları yığının yanına dizilir. Görünür yuva sayısı ve adım yere göre (pistiRow): her kartın köşe indeksi açık kalır,
       // kart çoğalınca eskileri ilk yuvanın altına girer; sıra yelpaze / halka / komşu yığın / ekran kenarından ≥10 px uzak durur.

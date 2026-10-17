@@ -5,10 +5,11 @@ import {LENGTH_INFO, isLong} from '../game/series';
 import {GAME_ICON} from './gameicons';
 import {ANIM, EASE, Scope, countUp, esc, fmt, h, play, q} from './dom';
 import {ASSETS} from './assets';
-import {arenaHtml, gemHtml, wordmarkHtml, type Ctx} from './parts';
+import {arenaHtml, gemHtml, hideUnder, wordmarkHtml, type Ctx} from './parts';
 import {g3} from './fx';
 import {suitSvg, type SuitKey} from './icons';
 import {haptic} from '../platform/bridge';
+import {ctx2d, radial} from '../platform/tex';
 
 const TIPS = [
   'Vale ortadaki tüm kartları alır.',
@@ -106,8 +107,9 @@ const plateHtml = (p: SeatPlayer, cls = ''): string =>
   `<div class="kh-vs__plate ${cls}">${gemHtml(p.level, p.human)}<div><div class="kh-vs__name">${esc(p.human ? p.name : p.char.name)}</div>
     <div class="kh-vs__sub">${p.human ? `${esc(p.char.name)}` : esc(p.char.title)}</div></div></div>`;
 
+/** Büst: tuval (doku katmanı; görsel doğal boyutunda bir kez çizilir, alt solması işlenir). Bkz. paintBust. */
 const bustHtml = (p: SeatPlayer, cls = ''): string =>
-  `<img class="kh-vs__bust ${cls}" data-seat="${p.seat}" src="${p.char.poses[p.human ? 'gulumseme' : 'notr']}" alt="">`;
+  `<canvas class="kh-vs__bust ${cls}" data-seat="${p.seat}" data-src="${p.char.poses[p.human ? 'gulumseme' : 'notr']}" width="${BUST_PX}" height="${BUST_PX}"></canvas>`;
 
 /** Işın deseni (20 dilim) + merkezden sönme: küçük tuvale bir kez çizilir, GPU büyütür (dev maskeli katman yok). */
 function paintRays(cv: HTMLCanvasElement): void {
@@ -139,46 +141,74 @@ const STAR_SVG = `<svg class="kh-vs__star" viewBox="-8 -8 116 116" aria-hidden="
   <g transform="rotate(7 50 50)"><polygon points="${STAR}" fill="#0a1033" stroke="#0a1033" stroke-width="8" stroke-linejoin="round" transform="translate(50 50) scale(1.03) translate(-50 -50)"/>
   <polygon points="${STAR}" fill="url(#kh-vs-gold)" stroke="#fff" stroke-width="2.6" stroke-linejoin="round" transform="translate(50 50) scale(.92) translate(-50 -50)"/></g></svg>`;
 
+/** Poz görsellerinin doğal boyutu (karakter görselleri 576²): tuval baştan bu boyutta → yerleşim görsel gelmeden doğru. */
+const BUST_PX = 576;
 /**
- * Büst alt kenar solması bir kez görsele işlenir (CSS maskesi = her karede ayrı çizim geçişi; hareketli büstte pahalı).
- * Maskeyle aynı eğri (%78 → %99), böylece maskeli hâlden işlenmiş hâle geçiş görünmez. Önbellekli.
+ * Büstler <canvas>: görsel ÇÖZÜLMÜŞ olarak (decode) bir kez tuvale çizilir, alt kenar solması (%78 → %99) aynı tuvale işlenir.
+ * <img> + CSS maskesi yerine: maske her karede ayrı çizim geçişi; <img> ise ekran çözünürlüğünde karolara taranır (dpr 2,6'da
+ * büst başına ≈ 4 MB, poz değişince yeniden tarama + Android'de büyük görselin "sonra çözülmesi" = bir an boş büst). Tuval
+ * doğal boyutunda (576² ≈ 1,3 MB) bir doku: bileşimci büyütür, poz değişimi yalnız tuvale yeni çizim.
  */
-const fadeCache = new Map<string, Promise<string>>();
-const fadeReady = new Map<string, string>();
-function vsFade(url: string): Promise<string> {
-  let p = fadeCache.get(url);
-  if (p) return p;
-  p = new Promise<string>(res => {
-    const src = new Image();
-    src.decoding = 'async';
-    src.onerror = () => res(url);
-    src.onload = () => {
-      try {
-        const w = src.naturalWidth, hh = src.naturalHeight;
-        const cv = document.createElement('canvas');
-        cv.width = w;
-        cv.height = hh;
-        const g = cv.getContext('2d')!;
-        g.drawImage(src, 0, 0);
-        g.globalCompositeOperation = 'destination-in';
-        const lin = g.createLinearGradient(0, 0, 0, hh);
-        lin.addColorStop(0, '#000');
-        lin.addColorStop(0.78, '#000');
-        lin.addColorStop(0.99, 'rgba(0,0,0,0)');
-        g.fillStyle = lin;
-        g.fillRect(0, 0, w, hh);
-        cv.toBlob(b => res(b ? URL.createObjectURL(b) : url), 'image/webp', 0.92);
-      } catch {
-        res(url);
-      }
-    };
-    src.src = url;
-  }).then(u => {
-    fadeReady.set(url, u);
-    return u;
-  });
-  fadeCache.set(url, p);
+const bustCache = new Map<string, Promise<HTMLImageElement | null>>();
+const bustReady = new Map<string, HTMLImageElement>();
+function bustImage(url: string): Promise<HTMLImageElement | null> {
+  let p = bustCache.get(url);
+  if (!p) {
+    const im = new Image();
+    im.decoding = 'async';
+    im.src = url;
+    p = im.decode().then(() => im, () => (im.complete && im.naturalWidth ? im : null)).then(r => {
+      if (r) bustReady.set(url, r);
+      else bustCache.delete(url); // sonra yeniden denenebilsin
+      return r;
+    });
+    bustCache.set(url, p);
+  }
   return p;
+}
+function paintBust(cv: HTMLCanvasElement, im: HTMLImageElement): void {
+  const w = im.naturalWidth || BUST_PX, hh = im.naturalHeight || BUST_PX;
+  if (cv.width !== w || cv.height !== hh) {
+    cv.width = w;
+    cv.height = hh;
+  }
+  const g = ctx2d(cv);
+  if (!g) return;
+  g.globalCompositeOperation = 'source-over';
+  g.clearRect(0, 0, w, hh);
+  g.imageSmoothingQuality = 'high';
+  g.drawImage(im, 0, 0, w, hh);
+  g.globalCompositeOperation = 'destination-in';
+  const lin = g.createLinearGradient(0, 0, 0, hh);
+  lin.addColorStop(0, '#000');
+  lin.addColorStop(0.78, '#000');
+  lin.addColorStop(0.99, 'rgba(0,0,0,0)');
+  g.fillStyle = lin;
+  g.fillRect(0, 0, w, hh);
+  g.globalCompositeOperation = 'source-over';
+}
+/** Karşılaşma girişinin pozlarını boşta önceden çöz (giriş anında çözme işi binmesin). */
+export function warmVersus(urls: readonly string[]): void {
+  for (const u of urls) void bustImage(u);
+}
+
+/** Şok halkaları ve yarım ışıkları: küçük tuval dokuları (CSS radial-gradient(circle, …) ile aynı duraklar). */
+const RING_A: ReadonlyArray<readonly [number, string]> = [[0.55, 'rgba(255,255,255,0)'], [0.61, 'rgba(255,255,255,.95)'], [0.66, 'rgba(255,236,150,.55)'], [0.71, 'rgba(255,220,90,0)']];
+const RING_B: ReadonlyArray<readonly [number, string]> = [[0.56, 'rgba(255,210,60,0)'], [0.62, 'rgba(255,200,40,.85)'], [0.67, 'rgba(255,140,20,.35)'], [0.71, 'rgba(255,120,0,0)']];
+const SIDE_GLOW: ReadonlyArray<readonly [number, string]> = [[0, 'rgba(255,255,255,.4)'], [0.4, 'rgba(255,255,255,.1)'], [0.68, 'rgba(255,255,255,0)']];
+/** Parıltı şeridi (soldan sağa yatay gradyan): ince tuval, yükseklik boyunca gerilir. */
+function paintGlint(cv: HTMLCanvasElement): void {
+  const g = ctx2d(cv);
+  if (!g) return;
+  const w = cv.width;
+  const lin = g.createLinearGradient(0, 0, w, 0);
+  lin.addColorStop(0, 'rgba(255,255,255,0)');
+  lin.addColorStop(0.42, 'rgba(255,255,255,.2)');
+  lin.addColorStop(0.5, 'rgba(255,246,200,.34)');
+  lin.addColorStop(0.58, 'rgba(255,255,255,.2)');
+  lin.addColorStop(1, 'rgba(255,255,255,0)');
+  g.fillStyle = lin;
+  g.fillRect(0, 0, w, cv.height);
 }
 
 /** Hız çizgileri: [üstten %, genişlik %] — iki yöne sırayla. */
@@ -216,7 +246,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   } else {
     const top = mode === '1v1' ? [by(1)] : [by(1), by(3)];
     const bot = mode === '1v1' ? [me] : [me, by(2)];
-    const side = (list: SeatPlayer[], cls: string, team: string) => `<div class="kh-vs__side ${cls}${list.length > 1 ? ' is-duo' : ''}">
+    const side = (list: SeatPlayer[], cls: string, team: string) => `<div class="kh-vs__side ${cls}${list.length > 1 ? ' is-duo' : ''}"><canvas class="kh-vs__glow" width="128" height="128"></canvas>
         ${list.map((p, i) => `<div class="kh-vs__who" style="--i:${i}">${bustHtml(p)}${list.length > 1 ? plateHtml(p, 'is-sm') : ''}</div>`).join('')}
         ${list.length > 1 ? `<div class="kh-vs__team">${team}</div>` : plateHtml(list[0])}
       </div>`;
@@ -227,8 +257,8 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   el.innerHTML = `<canvas class="kh-vs__rays" width="512" height="512"></canvas>${body}
     <div class="kh-vs__streaks">${STREAKS.map(([y, w]) => `<i style="top:${y}%;width:${w}%"></i>`).join('')}</div>
     <div class="kh-vs__mode">${GAME_ICON[setup.game]}<span>${esc(matchTitle(setup.game, mode))}${isLong(setup.len) ? ` · ${esc(LENGTH_INFO[setup.len!].label)}${setup.game === 'blof' ? '' : "'lik"}` : ''}</span></div>
-    <div class="kh-vs__glint"></div>
-    <i class="kh-vs__ring is-a"></i><i class="kh-vs__ring is-b"></i>
+    <canvas class="kh-vs__glint" width="64" height="2"></canvas>
+    <canvas class="kh-vs__ring is-a" width="384" height="384"></canvas><canvas class="kh-vs__ring is-b" width="384" height="384"></canvas>
     <div class="kh-vs__emblem">${STAR_SVG}<div class="kh-title">${g3('VS', 'is-white')}</div></div>
     <div class="kh-vs__sparks">${'<i></i>'.repeat(sparkN)}</div>
     <div class="kh-vs__stake"><span>Masa</span><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(stake)}</b></div>
@@ -237,6 +267,16 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
     <div class="kh-vs__flash"></div>`;
   ctx.layer.append(el);
   paintRays(q(el, '.kh-vs__rays') as HTMLCanvasElement);
+  const cvs = (s: string) => Array.from(el.querySelectorAll<HTMLCanvasElement>(s));
+  cvs('.kh-vs__ring.is-a').forEach(c => radial(c, RING_A, false, true));
+  cvs('.kh-vs__ring.is-b').forEach(c => radial(c, RING_B, false, true));
+  cvs('.kh-vs__glow').forEach(c => radial(c, SIDE_GLOW, false, true));
+  cvs('.kh-vs__glint').forEach(paintGlint);
+  // VS ilk karesinden itibaren opak: altta kalan (çıkmakta olan) ana ekran artık çizilmesin (karo belleği + dönen ışınlar)
+  const unhide = {fn: (): void => undefined};
+  requestAnimationFrame(() => {
+    if (scope.alive) unhide.fn = hideUnder(el);
+  });
   const g = (s: string) => q(el, s);
   const all = (s: string) => Array.from(el.querySelectorAll<HTMLElement>(s));
   const s = ctx.sounds;
@@ -356,43 +396,27 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   play(g('.kh-vs__lt .is-a'), [{opacity: 1}, {opacity: 0}], {duration: 140, delay: tReady, fill: 'forwards'}, 0);
   play(g('.kh-vs__lt .is-b'), [{opacity: 0, transform: 'scale(.6)'}, {opacity: 1, transform: 'scale(1.12)', offset: 0.6}, {opacity: 1, transform: 'scale(1)'}], {duration: 280, delay: tReady + 60, easing: EASE.out, fill: 'both'}, 0);
 
-  // büstler maskesiz, solması işlenmiş görsele geçer (hazır olunca, çözülmüş olarak: görünmez geçiş)
-  const upgrade = (img: HTMLImageElement, url: string): void => {
-    img.dataset.want = url;
-    void vsFade(url).then(async u => {
-      if (u === url || !scope.alive || img.dataset.want !== url) return;
-      const pre = new Image();
-      pre.src = u;
-      await pre.decode?.().catch(() => undefined);
-      if (!scope.alive || img.dataset.want !== url) return;
-      img.src = u;
-      img.classList.add('is-faded');
+  // büstler: çözülen poz tuvale çizilir (solma işli); damga anında rakipler oyun yüzüne geçer, takım arkadaşı sana gülümser
+  const busts = cvs('.kh-vs__bust');
+  const show = (cv: HTMLCanvasElement, url: string): void => {
+    cv.dataset.want = url;
+    const ready = bustReady.get(url);
+    if (ready) return paintBust(cv, ready);
+    void bustImage(url).then(im => {
+      if (im && scope.alive && cv.dataset.want === url) paintBust(cv, im);
     });
   };
-  const busts = Array.from(el.querySelectorAll<HTMLImageElement>('.kh-vs__bust'));
-  busts.forEach(img => upgrade(img, img.getAttribute('src') ?? ''));
-  // damga anında rakipler oyun yüzüne geçer, takım arkadaşı sana gülümser (işlenmiş görsel hazırsa anlık değişim)
+  busts.forEach(cv => show(cv, cv.dataset.src ?? ''));
   if (ANIM) {
-    const swaps: Array<[HTMLImageElement, string]> = [];
-    for (const img of busts) {
-      const p = by(Number(img.dataset.seat));
+    const swaps: Array<[HTMLCanvasElement, string]> = [];
+    for (const cv of busts) {
+      const p = by(Number(cv.dataset.seat));
       if (!p || p.human) continue;
       const u = p.char.poses[p.team === me.team ? 'kahkaha' : 'kizgin'];
-      void vsFade(u);
-      swaps.push([img, u]);
+      void bustImage(u);
+      swaps.push([cv, u]);
     }
-    scope.timeout(() => swaps.forEach(([img, u]) => {
-      const f = fadeReady.get(u);
-      img.dataset.want = u;
-      if (f && f !== u) {
-        img.src = f;
-        img.classList.add('is-faded');
-      } else {
-        img.classList.remove('is-faded');
-        img.src = u;
-        upgrade(img, u);
-      }
-    }), tSlam + 40);
+    scope.timeout(() => swaps.forEach(([cv, u]) => show(cv, u)), tSlam + 40);
   }
 
   return new Promise(res => {
@@ -401,6 +425,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
       if (ended) return;
       ended = true;
       if (!ANIM) {
+        unhide.fn();
         scope.dispose();
         el.remove();
         res();
@@ -431,6 +456,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
       fade(g('.kh-vs__mode'), 180);
       go(g('.kh-vs__load'), [{transform: 'none', opacity: 1}, {transform: 'translateY(60%)', opacity: 0}], 200, 0, 'ease-in');
       await Promise.all(anims.map(a => a.finished.catch(() => undefined)));
+      unhide.fn();
       scope.dispose();
       el.remove();
       res();
