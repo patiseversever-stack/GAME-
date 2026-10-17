@@ -421,8 +421,7 @@ export class BlofHud {
     play(el.querySelector('.bl-blof__ring')!, [{transform: 'scale(.5)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 300, easing: EASE.out, fill: 'backwards'});
     const total = Math.max(ms, o.total ?? ms);
     const gone = total - ms; // sunum/ağ gecikmesi: halka geçen kadar dolu başlar
-    el.dataset.ms = String(Math.round(total));
-    el.classList.toggle('is-short', total < 4000);
+    el.dataset.ms = String(Math.round(total)); // pencerenin gerçek süresi (5000 / 3000) — inceleme/test için
     const half = total / 2;
     play(halves[0], [{transform: 'rotate(0deg)'}, {transform: 'rotate(180deg)'}], {duration: half, delay: -gone, easing: 'linear', fill: 'both'});
     play(halves[1], [{transform: 'rotate(0deg)'}, {transform: 'rotate(180deg)'}], {duration: half, delay: half - gone, easing: 'linear', fill: 'both'});
