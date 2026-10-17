@@ -102,6 +102,8 @@
 .ar__pulse { position: absolute; display: none; opacity: 0; will-change: transform, opacity; }
 /* pişti / vale: ince sıcak ışık hüzmeleri — 12 beyaz + 12 daha ince altın, yumuşak kenarlı, merkezden yumuşak sönen (gökkuşağı yok) */
 .ar__burst, .ar__bloom { position: absolute; display: none; opacity: 0; will-change: transform, opacity; }
+/* ui.css `#app canvas { display: block }` (kimlik seçicisi) gizli doku tuvallerini açmasın: kullanılınca JS satır içi display verir */
+#app .ar__tint, #app .ar__burst, #app .ar__bloom, #app .ar__sweep, #app .ar__pulse, #app .ar__rt, #app .ar__rb, #app .ar__ghost { display: none; }
 /* SÜPÜRDÜ: yığının çevresinde dönen ışık yayı */
 .ar__sweep { position: absolute; display: none; opacity: 0; will-change: transform, opacity; }
 @media (prefers-reduced-motion: reduce) { .ar__tk, .ar.is-tense .ar__edge { animation: none; } }

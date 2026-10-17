@@ -31,6 +31,7 @@
 
 - Masa: ~10 çizim çağrısı. 52 kart tek InstancedMesh. Boşta çizim yok.
 - Arayüz animasyonları: yalnızca `transform` ve `opacity`. Animasyonlu `box-shadow`, `filter` ve `backdrop-filter` yok. Hareketli öğeler `will-change` ile katmanlanır.
+- **GPU karo belleği (17 Ekim, "ekran kararıyor / portre bozuluyor" hatası):** canlanan her öğe ayrı katmandır ve Chrome onu animasyonun EN BÜYÜK ölçeğinde, ekran çözünürlüğünde tarar (dpr 2,6'da tam ekran gradyan ≈ 10 MB, 2,6× büyüyen 300 px'lik hâle ≈ 17 MB). Bütçe aşılınca eksik karolar koyu zemin renginde çizilir. Kurallar: büyük/yumuşak ışık, hâle, ışın, şok halkası → küçük `<canvas>` doku katmanı (`src/platform/tex.ts`; bileşimci büyütür, karo tutmaz); canlanan katmanda ya da onun ATASINDA `mask`/`clip-path`/`filter` yok (ayrı maske yüzeyi; `clip-path` + `scale(0)` 2025² px katman doğurdu); görünmeyen süs (opacity 0 parıltı/gölge) `display: none` (yoksa katmanı büyütür); doku tuvalleri zemin yığınının en üstünde (altta kalırsa üstündeki her şey ayrı katmana alınır); portre gibi büyük görseller çözülmeden gösterilmez. Ölçüm: `--force-device-scale-factor` ile GERÇEK dpr (CDP `deviceScaleFactor` yalnız bildirir, 1× tarar) + `--force-gpu-mem-available-mb` ile kısıtlı bütçe + bellek dökümü (`cc/tile_manager` karoları).
 - Görseller WebP/JPEG, makul boyutta. Toplam paket hedefi < 8 MB.
 - Oyun döngüsünde bellek ayırma yok. Cihaza göre kalite: `?q=low|mid|high`.
 

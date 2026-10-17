@@ -17,6 +17,7 @@
 /* blöf açılışında masa kararır (kartlar önde) */
 /* doku tuvali (blofTable.ts dimTex): gradyan tuvale çizili; tam ekran gradyan katmanı GPU karo belleği tutmasın */
 .bl-dim { position: absolute; left: -10%; top: -10%; width: 120%; height: 120%; z-index: 970; display: none; opacity: 0; pointer-events: none; }
+#app .bl-dim { display: none; } /* ui.css `#app canvas { display: block }` gizli tuvali açmasın (açılışta JS satır içi verir) */
 
 /* blöf penceresi: yığının çevresinde kırmızı nabız; yığına dokunma alanı */
 .bl-alert { position: absolute; left: 0; top: 0; z-index: 290; display: none; pointer-events: none; border-radius: 50%; }
