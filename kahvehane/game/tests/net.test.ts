@@ -61,8 +61,9 @@ describe('LocalHost: yalnız botlar', () => {
       expect(host.over).toBe(true);
       const final = await host.done;
       expect(final.phase).toBe('over');
-      // Tekrar oynatma: create + kayıtlı hamleler → aynı durum (deterministik motor)
-      let s: BlofState = createBlof(cfg).state;
+      // Tekrar oynatma: create(maçın etkin ayarı: koltuk türleri yazılmış) + kayıtlı hamleler → aynı durum
+      expect(host.cfg.humanSeats).toEqual(new Array(cfg.seats).fill(false));
+      let s: BlofState = createBlof(host.cfg).state;
       for (const a of host.actions) {
         const r = applyBlof(s, a);
         expect(r.error).toBeUndefined();
@@ -136,10 +137,11 @@ describe('LocalHost + GameClient: yerel insan', () => {
     expect(msgs.some((m) => m.t === 'timer')).toBe(false);
     client!.ack();
     const t = msgs.find((m): m is Extract<BlofServerMsg, {t: 'timer'}> => m.t === 'timer')!;
-    expect(t.timer).toMatchObject({kind: 'window', ms: 5000, deadline: 2000 + 5000});
-    expect(client!.timeLeft()).toBeGreaterThan(0);
+    // insan attı → sıradaki bot → kısa pencere (3 sn); halka timer mesajındaki gerçek süreyle döner
+    expect(t.timer).toMatchObject({kind: 'window', ms: 3000, deadline: 2000 + 3000});
+    expect(client!.timeLeft()).toBe(3000);
     const before = host.actions.length;
-    clock.advance(5000);
+    clock.advance(3000);
     expect(host.actions.length).toBeGreaterThan(before); // bot karar verdi / pencere kapandı
 
     // ack hiç gelmezse: paceMaxMs sonra kendiliğinden ilerler

@@ -281,12 +281,14 @@ describe('Blöf: blöf penceresi', () => {
     const r = ok(s, {t: 'challenge', seat: 1});
     const rev = r.events[1] as Extract<BlofEvent, {t: 'reveal'}>;
     expect(rev.truthful).toBe(false);
-    expect(r.events[2]).toMatchObject({t: 'pileTaken', seat: 0, count: 2, reason: 'caught'});
+    expect(r.events[2]).toMatchObject({t: 'pileTaken', seat: 0, count: 2, reason: 'caught', handCount: 3});
+    // + ceza: kenarın üstünden 2 kart (kenarda 46 kart var)
+    expect(r.events[3]).toMatchObject({t: 'penalty', seat: 0, count: 2, handCount: 5, discardCount: 44});
     expect(r.state.turn).toBe(1);
     expect(r.state.rank).toBe(0);
-    expect(r.state.hands[0].length).toBe(3);
+    expect(r.state.hands[0].length).toBe(5);
     expect(r.state.stats[1]).toMatchObject({caught: 1});
-    expect(r.state.stats[0]).toMatchObject({timesCaught: 1});
+    expect(r.state.stats[0]).toMatchObject({timesCaught: 1, penaltyCards: 2});
   });
 
   it('herkes geçerse pencere erken kapanır; geçen sonra blöf diyemez; atan geçemez', () => {
@@ -435,9 +437,9 @@ describe('Blöf: bitiş (son kartlar)', () => {
     ]);
     s = ok(s, {t: 'open', seat: 0, rank: 7, cards: [C('S', 7), C('H', 2)]}).state;
     const r = ok(s, {t: 'challenge', seat: 1});
-    expect(types(r.events)).toEqual(['challenged', 'reveal', 'pileTaken', 'turn']);
+    expect(types(r.events)).toEqual(['challenged', 'reveal', 'pileTaken', 'penalty', 'turn']);
     expect(r.state.phase).toBe('turn');
-    expect(r.state.hands[0].length).toBe(2);
+    expect(r.state.hands[0].length).toBe(4); // 2 kart yığından + 2 ceza
     expect(r.state.turn).toBe(1);
   });
 
