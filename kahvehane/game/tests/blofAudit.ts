@@ -10,7 +10,7 @@ import {mulberry32} from '../src/core/rng';
 import {rankOf} from '../src/core/types';
 
 /** Koltuk: bot zorluğu ya da insan vekili (kararları bir bot beyni ya da 'casual' kural seti verir; zamanlaması insan gibi). */
-export type AuditSeat = BlofDifficulty | {human: BlofDifficulty | 'casual'};
+export type AuditSeat = BlofDifficulty | {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>};
 
 /** Karar veren beyin (BlofBot ya da sabit kurallı insan vekili). */
 interface Brain {
@@ -23,9 +23,20 @@ interface Brain {
  * en kalabalık değerini doğru açar (ara sıra bir yalan kart katar), değer elindeyse doğru atar, yoksa ara sıra tek kart blöf yapar;
  * son karta hep "Blöf!" der, kendi elinden kesin yalanı ve masadaki 4'ü aşan iddiayı yakalar, gerisinde arada bir şansını dener.
  */
+export interface CasualStyle {
+  /** "Blöf!" deme olasılıklarının çarpanı (kesin/göze batan yalan hariç). */
+  callMul: number;
+  /** Elinde değer yokken tek kartla blöf yapma olasılığı (1'e 1 / kalabalık). */
+  bluff2: number;
+  bluffN: number;
+  /** Açışta araya bir yalan kart katma. */
+  pad: number;
+}
+export const CASUAL: CasualStyle = {callMul: 1, bluff2: 0.7, bluffN: 0.45, pad: 0.12};
+
 export class CasualHuman implements Brain {
   private readonly rnd: () => number;
-  constructor(readonly seat: number, seed: number) {
+  constructor(readonly seat: number, seed: number, private readonly st: CasualStyle = CASUAL) {
     this.rnd = mulberry32(seed);
   }
   observe(): void {}
@@ -46,7 +57,7 @@ export class CasualHuman implements Brain {
       let prev = 0;
       for (let i = 0; i < v.roundPlays.length - 1; i++) prev += v.roundPlays[i].count;
       const opening = v.roundPlays.length === 1;
-      let p = opening ? 0.06 : w.count === 1 ? 0.22 : 0.4;
+      let p = (opening ? 0.06 : w.count === 1 ? 0.22 : 0.4) * this.st.callMul;
       if (v.seats === 2) p *= 1.3;
       if (mine + w.count > 4) p = 1;
       else if (prev + w.count + mine > 4) p = 0.85;
@@ -58,7 +69,7 @@ export class CasualHuman implements Brain {
       for (let r = 1; r <= 13; r++) if (cnt[r] > (best ? cnt[best] : 0) || (cnt[r] === cnt[best] && cnt[r] > 0 && this.rnd() < 0.5)) best = r;
       const cards = of(best);
       if (cards.length === hand.length) return {action: {t: 'open', seat: me, rank: best, cards}, delayMs: 3000};
-      if (cards.length < 4 && hand.length - cards.length >= 2 && this.rnd() < 0.12) cards.push(...junk(best, 1));
+      if (cards.length < 4 && hand.length - cards.length >= 2 && this.rnd() < this.st.pad) cards.push(...junk(best, 1));
       return {action: {t: 'open', seat: me, rank: best, cards}, delayMs: 3000};
     }
     const r = v.rank;
@@ -68,7 +79,7 @@ export class CasualHuman implements Brain {
     const last = v.lastPlay?.seat ?? -1;
     const lastMate = last >= 0 && v.teams[last] === v.teams[me];
     const desperate = last >= 0 && !lastMate && v.handCounts[last] === 1 && v.passes === v.seats - 2;
-    const p = desperate ? 1 : lastMate ? 0.1 : v.seats === 2 ? 0.7 : 0.45;
+    const p = desperate ? 1 : lastMate ? 0.1 : v.seats === 2 ? this.st.bluff2 : this.st.bluffN;
     const impossible = claimed + 1 > 4 && this.rnd() < 0.8;
     if (hand.length >= 2 && !impossible && this.rnd() < p) return {action: {t: 'play', seat: me, cards: junk(r, 1)}, delayMs: 2500};
     if (desperate) return {action: {t: 'play', seat: me, cards: junk(r, 1)}, delayMs: 2500};
@@ -155,7 +166,7 @@ export interface AuditOptions {
   botFactory?: (seat: number, diff: BlofDifficulty, seed: number) => BlofBot;
 }
 
-const isHuman = (s: AuditSeat): s is {human: BlofDifficulty | 'casual'} => typeof s === 'object';
+const isHuman = (s: AuditSeat): s is {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>} => typeof s === 'object';
 
 function presentMs(evs: BlofEvent[], seats: number): number {
   let ms = 0;
@@ -203,7 +214,7 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
   const brains: Brain[] = o.seats.map((sp, i) => {
     const d = isHuman(sp) ? sp.human : sp;
     const bs = (seed * 131 + i * 7 + 1) >>> 0;
-    if (d === 'casual') return new CasualHuman(i, bs);
+    if (d === 'casual') return new CasualHuman(i, bs, {...CASUAL, ...(sp as {style?: Partial<CasualStyle>}).style});
     return o.botFactory ? o.botFactory(i, d, bs) : new BlofBot(i, d, bs);
   });
   const human = o.seats.findIndex(isHuman);

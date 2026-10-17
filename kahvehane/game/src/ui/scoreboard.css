@@ -32,7 +32,7 @@
 
 /* tablo: taraf satırları (önde olan üstte) */
 .kh-sb { flex: none; display: flex; flex-direction: column; padding: calc(var(--u) * .3) calc(var(--u) * .55); }
-.kh-sb__row { --c: #ff4d66; position: relative; isolation: isolate; display: grid; grid-template-columns: calc(var(--u) * 1.5) auto minmax(0, 1fr) auto calc(var(--u) * 3.4); align-items: center;
+.kh-sb__row { --c: #ff4d66; position: relative; isolation: isolate; display: grid; grid-template-columns: calc(var(--u) * 1.5) auto minmax(0, 1fr) calc(var(--u) * 3.5) calc(var(--u) * 3.4); align-items: center;
   column-gap: calc(var(--u) * .5); min-height: calc(var(--u) * 3.3); padding: calc(var(--u) * .25) calc(var(--u) * .2); border-bottom: 1.5px solid var(--line); }
 .kh-sb__row:last-child { border-bottom: 0; }
 .kh-sb.is-n4 .kh-sb__row { min-height: calc(var(--u) * 2.9); }
