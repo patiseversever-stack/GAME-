@@ -213,7 +213,10 @@ export function suitOutline(s: Suit): Path2D {
   if (hit) return hit;
   if (s !== 'C') return (OUT[s] = suitPath(s));
   const N = 240, k = N * 0.8;
-  const [c, g] = makeCanvas(N, N);
+  // okunacak tuval yazılımda (willReadFrequently): getImageData GPU'dan eşzamanlı geri okuma beklemez
+  const c = document.createElement('canvas');
+  c.width = c.height = N;
+  const g = c.getContext('2d', {willReadFrequently: true})!;
   g.setTransform(k, 0, 0, k, N / 2, N / 2);
   g.fill(suitPath(s));
   const d = g.getImageData(0, 0, N, N).data;

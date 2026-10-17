@@ -47,6 +47,39 @@ function preload(urls: string[], decode = false): void {
     }
   }
 }
+/**
+ * Rozet portreleri tuvale ÇÖZÜLMÜŞ ve tuval boyuna küçültülmüş ImageBitmap'ten çizilir (anahtar: adres|boy). <img>'den tuvale
+ * çizimde görsel, img.decode() yapılmış olsa bile ana iş parçacığında YENİDEN çözülüyordu (tuvalin ayrı görsel önbelleği; 4×
+ * yavaşta poz başına ~40 ms: ilk piştide iki rozet birden tepki verince ~90 ms takılma). createImageBitmap çözmeyi ve küçültmeyi
+ * iş parçacığı dışında yapar; çizim yalnız dokuya yükleme. Rozet yerleşince karakterin bütün pozları boşta hazırlanır.
+ */
+const bitmaps = new Map<string, Promise<ImageBitmap | null>>();
+const bitmapNow = new Map<string, ImageBitmap>();
+function bitmapFor(url: string, n: number): Promise<ImageBitmap | null> {
+  const key = url + '|' + n;
+  let p = bitmaps.get(key);
+  if (!p) {
+    const img = portrait(url);
+    p = typeof createImageBitmap !== 'function'
+      ? Promise.resolve(null)
+      : img
+          .decode()
+          .then(() => createImageBitmap(img, {resizeWidth: n, resizeHeight: n, resizeQuality: 'high'}))
+          .then(bm => (bitmapNow.set(key, bm), bm), () => null);
+    bitmaps.set(key, p);
+  }
+  return p;
+}
+/** Yalnız bu adreslerin bitmap'leri kalır (HUD yeni oyuncularla açılınca: önceki karakterlerinki serbest). */
+function keepBitmaps(urls: ReadonlySet<string>): void {
+  for (const [key, p] of bitmaps) {
+    if (urls.has(key.slice(0, key.lastIndexOf('|')))) continue;
+    bitmaps.delete(key);
+    bitmapNow.delete(key);
+    void p.then(bm => bm?.close());
+  }
+}
+
 /** Görsel çözülene kadar bekle (en fazla ms); poz değişiminde boş kare görünmesin. */
 function ready(img: HTMLImageElement, ms = 160): Promise<void> {
   if (img.complete && img.naturalWidth) return Promise.resolve();
@@ -207,36 +240,67 @@ class Badge {
   private face: [number, number] = [0, 0];
   private ro: ResizeObserver | null = null;
 
-  /** Portreyi göster: görsel çözülmemişse çözülünce (o arada eski poz kalır). Sonraki çağrı öncekini geçersiz kılar. */
+  /**
+   * Portreyi göster: hazır bitmap varsa aynı karede; yoksa bitmap iş parçacığı dışında hazırlanınca (o arada eski poz kalır).
+   * Sonraki çağrı öncekini geçersiz kılar.
+   */
   private show(url: string): Promise<boolean> {
     const tok = ++this.drawTok;
     const img = portrait(url);
     let tries = 0;
-    const draw = (): boolean => {
+    const draw = async (): Promise<boolean> => {
       if (tok !== this.drawTok) return false;
       // rozet henüz yerleşmediyse (kurulurken DOM dışında) yerleşince çiz: kırpma şekli rozetin ölçülerinden
       if (!this.el.isConnected || !this.el.offsetWidth) {
         if (++tries < 30) requestAnimationFrame(() => void draw());
         return true;
       }
-      if (!img.naturalWidth) return false; // yüklenemedi: eski poz kalır
-      if (url !== this.shown) this.paint(img);
+      if (url === this.shown) return true;
+      const N = this.texSize();
+      const bm = bitmapNow.get(url + '|' + N) ?? (await bitmapFor(url, N));
+      if (tok !== this.drawTok) return false;
+      if (!bm) {
+        // bitmap yok (eski WebView): görsel çözülünce doğrudan çiz
+        if (!decodedOnce.has(url)) await img.decode().then(() => void decodedOnce.add(url), () => undefined);
+        if (tok !== this.drawTok || !img.naturalWidth) return false; // yüklenemedi: eski poz kalır
+      }
+      this.paint(bm ?? img);
       this.shown = url;
+      this.warm(N);
       return true;
     };
-    if (img.complete && img.naturalWidth && decodedOnce.has(url)) return Promise.resolve(draw());
-    return img.decode().then(() => (decodedOnce.add(url), draw()), () => draw());
+    return draw();
+  }
+
+  /** Tuval piksel boyu (rozet figürü × dpr). */
+  private texSize(): number {
+    const fig = this.cv.parentElement!.parentElement as HTMLElement;
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
+    return Math.max(64, Math.min(640, Math.round((fig.offsetWidth || 160) * dpr)));
+  }
+
+  /** Bu boydaki bütün pozların bitmap'leri boşta, birer birer (tepki anında çözme/küçültme beklenmesin). */
+  private warmN = 0;
+  private warm(n: number): void {
+    if (this.warmN === n) return;
+    this.warmN = n;
+    const urls = [...new Set(Object.values(this.p.char.poses).filter(Boolean))];
+    const next = (): void => {
+      const u = urls.shift();
+      if (!u || this.warmN !== n || !this.el.isConnected) return;
+      void whenIdle(2000).then(() => bitmapFor(u, n)).then(next);
+    };
+    next();
   }
 
   /** Tuvale çiz: kutu = rozet çemberinin 1,6 katı; çember (omuzlar kırpılır) ∪ çember merkezinin üstü (kafa taşar). */
-  private paint(img: HTMLImageElement): void {
+  private paint(img: HTMLImageElement | ImageBitmap): void {
     const fig = this.cv.parentElement!.parentElement as HTMLElement;
     const fw = fig.offsetWidth || 160;
-    const dpr = Math.min(3, window.devicePixelRatio || 1);
-    const N = Math.max(64, Math.min(640, Math.round(fw * dpr)));
+    const N = this.texSize();
     if (this.cv.width !== N) this.cv.width = this.cv.height = N;
     const g = this.cv.getContext('2d');
-    if (!g || !img.naturalWidth) return;
+    if (!g || !img.width) return;
     const bs = this.el.offsetWidth || fw / 1.6;
     const back = (this.el.querySelector('.kh-badge__back') as HTMLElement | null)?.offsetWidth ?? bs * 0.86;
     // nefes (×1,028) kırpma çemberini de büyütür: 1 px içeriden kırp, halkaya taşmasın
@@ -247,7 +311,11 @@ class Badge {
     g.arc(N / 2, cy, r, 0, Math.PI * 2);
     g.rect(0, 0, N, cy);
     g.clip('nonzero');
-    g.drawImage(img, (this.face[0] / 100) * N, (this.face[1] / 100) * N, N, N);
+    try {
+      g.drawImage(img, (this.face[0] / 100) * N, (this.face[1] / 100) * N, N, N);
+    } catch {
+      /* serbest bırakılmış bitmap: bir sonraki çizim yeniden hazırlar */
+    }
     g.restore();
   }
 
@@ -559,6 +627,7 @@ export class HudView implements GameHud {
     if (frame !== undefined) this.frame = frame;
     // pişti kahramanı (ışın/çark dokuları) boşta önceden kurulur: ilk piştide ana iş parçacığında çizim olmasın
     if (!this.heroEl && ANIM) void whenIdle(3000).then(() => void (this.heroEl ??= this.buildHero()));
+    keepBitmaps(new Set(players.flatMap(p => Object.values(p.char.poses))));
     const list: HudPlayer[] = players.map(p => ({seat: p.seat, name: p.name, char: p.char, isMe: p.human, team: mode === 'esli' ? p.team : -1, level: p.level,
       frame: p.human ? this.frame : undefined}));
     this.setPlayers(list, mode);

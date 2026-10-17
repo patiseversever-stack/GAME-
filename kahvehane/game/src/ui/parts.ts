@@ -407,7 +407,8 @@ export function fadedUrl(url: string): Promise<string> {
         const cv = document.createElement('canvas');
         cv.width = w;
         cv.height = hh;
-        const g = cv.getContext('2d')!;
+        // yazılım tuvali: toBlob, GPU'dan eşzamanlı geri okuma (hızlandırılmış tuvalde ana iş parçacığı saniyelerce bekliyordu) yapmaz
+        const g = cv.getContext('2d', {willReadFrequently: true})!;
         g.drawImage(src, 0, 0);
         g.globalCompositeOperation = 'destination-in';
         const lin = g.createLinearGradient(0, 0, 0, hh);

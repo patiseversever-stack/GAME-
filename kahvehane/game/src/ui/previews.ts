@@ -350,7 +350,9 @@ function rasterFrames(ids: string[]): void {
         .then(() => {
           const c = document.createElement('canvas');
           c.width = c.height = FRAME_PX;
-          const g = c.getContext('2d');
+          // yazılım tuvali: toBlob GPU'dan eşzamanlı geri okuma beklemez (hızlandırılmış tuvalde 4× yavaşta ~100-700 ms,
+          // bu işler maç sırasında boşta da sürüyordu)
+          const g = c.getContext('2d', {willReadFrequently: true});
           if (!g) return;
           g.drawImage(img, 0, 0, FRAME_PX, FRAME_PX);
           c.toBlob(b => {
