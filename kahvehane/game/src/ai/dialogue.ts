@@ -554,7 +554,7 @@ const RIZA: CharSpec = {
     endDuoLoseB: [[1, '[grumbling] Bana bakma, kartlar bana küstü!']],
     endAccept: [
       [1, '[chuckles] Geldin mi yine? Otur evlat.'],
-      [2, '[proudly] Rövanş kabul! Dursun, çayları tazele!'],
+      [2, '[proudly] Rövanş kabul evlat!'],
     ],
     endBye: [
       [1, '[chuckles] Kaçma evlat, kaçma! Yarın gel.'],
@@ -1207,7 +1207,7 @@ const CEM: CharSpec = {
     endSulkStreak: [[1, '[gasps] Kanka vin strik mi kasıyorsun?!', _, T('Kanka win streak mi kasıyorsun?!')]],
     endSulkPisti: [[1, '[annoyed] Bu kadar pişti? Kanka hesabın raporlu!', 'kizgin']],
     endSulkSly: [[1, '[gasps] Kanka sen poker yüzünü nereden aldın?']],
-    endSulkLast: [[1, '[gasps] Son kart blöf mü? Kanka bu plot tvist!', _, T('Son kart blöf mü? Kanka bu plot twist!')]],
+    endSulkLast: [[1, '[gasps] Son kart blöf mü? Plot tvist!', _, T('Son kart blöf mü? Plot twist!')]],
     endJoinWin: [
       [1, '[chuckles] Kanka üzülme, bu meta herkesi yakıyor.'],
       [2, '[scoffs] Kazandı diye fleks yapıyor, krinç!', 'kirpma', T('Kazandı diye flex yapıyor, cringe!')],
@@ -1244,7 +1244,7 @@ const CEM: CharSpec = {
     endDuoLoseB: [[1, '[annoyed] Ortak, şarjım bitti, ne yapayım!']],
     endAccept: [
       [1, '[excited] Rövanş modu açık! Hadi kanka!'],
-      [2, '[laughs] Geri döndün kanka? Saygı!'],
+      [2, '[excited] Geri döndün kanka? Saygı!'],
     ],
     endBye: [
       [1, '[chuckles] Bay bay kanka, sonra di em at!', _, T('Bye bye kanka, sonra DM at!')],

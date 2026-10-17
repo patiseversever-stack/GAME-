@@ -379,13 +379,13 @@ export class Table2D {
       // Benim yığınım ve pişti sıram aşağıda, halkanın altında: pişti kartları yana (sola) dizilir. İkisinde de görünür yuva sayısı
       // yere göre sınırlı (pistiRow): kart çoğalınca eskileri ilk yuvanın altına girer, sıra hiçbir şeye taşmaz.
       const oppY = H * 0.235;
-      const oppC0 = oppY + hs2 / 2 + hm2 / 2 + 4;
+      const oppC0 = oppY + hs2 / 2 + hm2 / 2 + 2;
       const ringKeep2 = cw * 1.125 + 11;
       const myRowTop = myY - 2 - hm2 / 2 - 6;
       const ringX = myRowTop < pileY + ringKeep2 - 1.5 ?W / 2 + Math.sqrt(Math.max(0, ringKeep2 * ringKeep2 - (myRowTop - pileY) ** 2)) : 0;
       seats = [
         {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: stX, y: myY, s: ss2, r: 8}, pdir: -1, py: -2, pspan: stX - (cw * ss2) / 2 - (Math.max(ringX, W * 0.3) + wm2 / 2 + 8)},
-        {fan: {x: W / 2, y: oppY, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: stX, y: oppY, s: ss2, r: -8}, pdir: -1, pv: 1, pnew: true, pspan: myY - hs2 / 2 - 4 - 12 - hm2 / 2 - oppC0},
+        {fan: {x: W / 2, y: oppY, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: stX, y: oppY, s: ss2, r: -8}, pdir: -1, pv: 1, pnew: true, pspan: myY - hs2 / 2 - 4 - 10 - hm2 / 2 - oppC0},
       ];
     } else {
       const fs = Math.min(0.56, Math.max(0.46, (H * 0.075) / ch));
@@ -652,7 +652,7 @@ export class Table2D {
     const {slot, step, under} = this.pistiSlot(seat, i, n);
     // ilk yuvanın altındaki eski kartlar hafif eğik üst üste (dağınık yığın görünümü; yer kaplamaz)
     const tilt = under ? (under % 2 ? 1 : -1) * Math.min(3 + under * 2, 9) : 0;
-    if (g.pv) return {x: s.x, y: s.y + g.pv * ((ch * s.s) / 2 + (ch * m) / 2 + 4 + slot * step), r: g.pdir * (4 + slot * 1.5) + tilt, s: m};
+    if (g.pv) return {x: s.x, y: s.y + g.pv * ((ch * s.s) / 2 + (ch * m) / 2 + 2 + slot * step), r: g.pdir * (4 + slot * 1.5) + tilt, s: m};
     return {x: s.x + g.pdir * ((cw * s.s) / 2 + (g.padj ?? 0) * cw * m + slot * step), y: s.y + (g.py ?? 6), r: g.pdir * (12 + Math.min(slot, 4) * 2.5) + tilt, s: m};
   }
   /**
