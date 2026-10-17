@@ -174,7 +174,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
         <div class="kh-podium__small">${small.map(p => `<div class="kh-podium__sm"><span class="kh-podium__smava">${charAvatarHtml(p.char, p.human ? frame : 'standart', '', outcome === 'draw' ? 'saskin' : 'uzgun')}${multi ? `<b class="kh-podium__rank">${sideOf(p).rank}</b>` : ''}</span><small>${esc(p.human ? 'Sen' : shortName(p.char))}</small></div>`).join('')}</div>
         ${speaker ? `<div class="kh-say kh-podium__say"><small>${esc(speaker.char.name)}</small>${esc(d.line ?? said ?? defLine)}</div>` : ''}
       </section>
-      <section class="kh-panel kh-sc is-c${ordered.length}">
+      <section class="kh-panel kh-sc is-c${ordered.length}${series ? ' is-series' : ''}">
         <div class="kh-sc__row is-head"><span></span>${ordered.map(sd => `<b class="${sd === mySide ? 'is-me' : ''}${winners.has(sides.indexOf(sd)) && outcome !== 'draw' ? ' is-win' : ''}"><span class="kh-sc__avas">${colAvas(sd)}</span><em>${esc(colName(sd))}</em></b>`).join('')}</div>
         ${defs.map(r => {
           const vals = ordered.map(r.get);

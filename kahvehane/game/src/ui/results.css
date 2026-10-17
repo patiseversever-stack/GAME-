@@ -76,6 +76,10 @@
 .kh-sc__row.is-total > span { font-family: var(--font-display); font-weight: var(--w-display); color: #fff; text-transform: uppercase; letter-spacing: .06em; font-size: calc(var(--u) * 1.05); text-shadow: var(--outline-thin); }
 .kh-sc__row.is-total > b { font-size: calc(var(--u) * 1.8); }
 
+/* çok elli maç: satır az (Pişti 4 + toplam) → satırlar boşluğu doldurur */
+.kh-sc.is-series .kh-sc__row { max-height: calc(var(--u) * 3.2); }
+.kh-sc.is-series .kh-sc__row.is-total { max-height: calc(var(--u) * 3.4); }
+
 /* ödül */
 .kh-reward { flex: none; display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: calc(var(--u) * 1); padding: calc(var(--u) * .6) calc(var(--u) * 1); }
 .kh-reward .kh-label { grid-column: 1; }

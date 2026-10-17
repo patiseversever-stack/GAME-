@@ -659,7 +659,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     // Doğru tahmin: atan yığını alır, yeni turu ben açarım. Yanlış: yığın bana, atan açar.
     // Karşılaştırma "geç"in getirisiyle: sıra bendeyse ve elimde o değer yoksa geçmek çoğu zaman zorunlu pas demektir.
     const gain = q * (S * gW + T + danger);
-    const loss = (1 - q) * (S * this.p.caution + To);
+    const loss = (1 - q) * (Math.max(0, S * this.p.caution - this.pileGroupBonus(v, w.rank)) + To);
     let ev = gain - loss - this.declineValue(v) + this.p.suspicion + this.bold + this.p.noise * this.gauss();
     // içgüdü: sınırda kararlarda arada bir yanılır (zor bot da)
     if (Math.abs(ev) < 1.5 && this.rnd() < this.p.slip) ev = -ev;
@@ -670,6 +670,32 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     }
     // açıkça doğru görünen atışa çabuk "geç"; kararsızken daha uzun bakar
     return pass(this.range(this.p.decline) * (0.75 + 0.6 * doubt) + weight * 0.5);
+  }
+
+  /**
+   * Yığını alırsam içinden çıkacak grubun değeri (kart cinsinden, yığın maliyetinden düşülür): turda söylenenler büyük
+   * olasılıkla gerçekten o değer. Elimdekilerle dördü tamamlarsam, o dört kart sonra kimsenin doğru takip edemeyeceği
+   * bedava bir açış olur (1'e 1'de çok değerli).
+   */
+  private pileGroupBonus(v: BlofView, rank: number, extraMine = 0): number {
+    if (!this.p.counting || rank === 0) return 0;
+    let held = 0;
+    for (const c of v.hand) if (rankOf(c) === rank) held++;
+    let mineIn = extraMine;
+    let others = 0;
+    let earlier = 0;
+    const plays = v.roundPlays;
+    for (let s = 0; s < 4; s++) if (this.loc[s * 13 + rank - 1] === PILE) mineIn++;
+    for (let i = 0; i < plays.length; i++) {
+      if (plays[i].seat === this.seat) continue;
+      others += plays[i].count;
+      if (i < plays.length - 1) earlier++;
+    }
+    const after = held + mineIn + others;
+    // önceki iddialar arada yalan olabilir (sonuncusu "doğru çıktı" dalında zaten doğru)
+    const conf = Math.pow(0.9, earlier);
+    if (after >= 4) return conf * (v.seats === 2 ? 3.8 : 3.3);
+    return after >= 3 ? conf : 0;
   }
 
   /** "Geç" dersem (sıra bendeyse) sıradaki hamlemin değeri: doğru atış, blöf ya da zorunlu pas. Sıra başkasındaysa 0. */
@@ -684,7 +710,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     for (const pl of v.roundPlays) claimed += pl.count;
     if (claimed + 1 > 4 || v.hand.length < 2) return pass;
     const rb = this.challengeRisk(v, w.rank, 1, true, v.hand.length - 1, false);
-    return Math.max(pass, (1 - rb) * this.p.bluffLove - rb * (v.pileCount * this.p.caution + this.oppTempo(v)));
+    return Math.max(pass, (1 - rb) * this.p.bluffLove - rb * (Math.max(0, v.pileCount * this.p.caution - this.pileGroupBonus(v, w.rank)) + this.oppTempo(v)));
   }
 
   /** Açtığım değerin kalanını sıradaki rakip tutuyor olabilir mi: tutuyorsa doğru takip eder, tur ona döner. */
@@ -858,7 +884,8 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         const extra = this.junk(hand, r, 1);
         for (const x of extra) used.add(x);
         const rp = this.challengeRisk(v, r, m + 1, true, n - m - 1, false);
-        const vp = (1 - rp) * (m + 1 + this.shape(hand, used)) - rp * (S * caution + To) + greed + noise * this.gauss();
+        const gb = this.pileGroupBonus(v, r, m);
+        const vp = (1 - rp) * (m + 1 + this.shape(hand, used)) - rp * (Math.max(0, S * caution - gb) + To) + greed + noise * this.gauss();
         consider(vp, {t: 'play', seat: me, cards: mine.concat(extra)}, true, rp);
       }
     } else {
@@ -868,9 +895,10 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         const after = n - b;
         const cards = this.junk(hand, r, b);
         const rb = this.challengeRisk(v, r, b, true, after, false);
+        const gb = this.pileGroupBonus(v, r);
         // son kartla blöf: tutarsa kazanır ama neredeyse kesin yakalanır (yalnız pas eli vereceksese anlamlı)
         const gain = after === 0 ? WIN : b * love + this.shape(hand, new Set(cards));
-        const vb = (1 - rb) * gain - rb * (S * caution + To) + noise * this.gauss();
+        const vb = (1 - rb) * gain - rb * (Math.max(0, S * caution - gb) + To) + noise * this.gauss();
         consider(vb, {t: 'play', seat: me, cards}, true, rb);
       }
     }
