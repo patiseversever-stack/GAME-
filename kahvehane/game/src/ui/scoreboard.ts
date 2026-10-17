@@ -118,7 +118,7 @@ export function lengthSheet(ctx: Ctx, o: {game: Game; mode: Mode; stake: number;
     let picked: MatchLength | null = null;
     const m = openSheet(ctx, {
       cls: `kh-lensheet is-${o.game}`,
-      onClose: () => res(null),
+      onClose: () => !picked && res(null),
       body: `<div class="kh-len">
         <div class="kh-title kh-len__t">${g3('Kaça oynuyoruz?')}</div>
         <div class="kh-len__sub">${GAME_ICON[o.game]}<span>${esc(matchTitle(o.game, o.mode))}</span><span class="kh-len__bet">Bahis <img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(o.stake)}</b></span></div>

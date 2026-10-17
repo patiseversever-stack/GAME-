@@ -699,7 +699,13 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     const after = held + mineIn + others;
     // önceki iddialar arada yalan olabilir (sonuncusu "doğru çıktı" dalında zaten doğru)
     const conf = Math.pow(0.9, earlier);
-    const g = this.p.groupValue;
+    // dörtlü ancak açmaya vakit kalırsa değerli: rakip bitirmeye yakınsa ya da elimde açılmayı bekleyen dörtlüler varsa az
+    let near = 99;
+    for (const s of this.opponents(v)) if (v.handCounts[s] > 0) near = Math.min(near, v.handCounts[s]);
+    let quads = 0;
+    const cnt = new Int8Array(14);
+    for (const c of v.hand) if (++cnt[rankOf(c)] === 4) quads++;
+    const g = this.p.groupValue * clamp((near - 3) / 10, 0, 1) / (1 + quads);
     if (after >= 4) return g * conf * (v.seats === 2 ? 3.8 : 3.3);
     return after >= 3 ? g * conf : 0;
   }
