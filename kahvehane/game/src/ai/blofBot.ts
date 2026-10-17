@@ -104,11 +104,11 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     selfCheck: 0.92,
     greed: 0.25,
     bluffLove: 0.9,
-    bluffLoveN: 1,
+    bluffLoveN: 1.6,
     caution: 1,
     noise: 0.75,
     suspicion: -0.8,
-    suspicionN: -0.8,
+    suspicionN: 0,
     slip: 0.12,
     finalCatch: 0.93,
     probe: 0,
@@ -125,7 +125,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempoN: 0.8,
     groupValue: 0,
     padOpen2: 0.12,
-    priorBluffN: 0.38,
+    priorBluffN: 0.25,
   },
   orta: {
     memory: 0.75,
@@ -137,14 +137,14 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     selfCheck: 0.97,
     greed: 0.05,
     bluffLove: 1.05,
-    bluffLoveN: 1,
+    bluffLoveN: 1.5,
     caution: 0.95,
     noise: 0.55,
     suspicion: 0,
     suspicionN: -0.5,
     slip: 0.07,
     finalCatch: 1,
-    probe: 0.08,
+    probe: 0.06,
     temperament: 0.35,
     tellLeak: 0.4,
     tellFake: 0.12,
@@ -158,7 +158,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempoN: 1,
     groupValue: 0.6,
     padOpen2: 0.25,
-    priorBluffN: 0.38,
+    priorBluffN: 0.25,
   },
   zor: {
     memory: 0.93,
@@ -170,14 +170,14 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     selfCheck: 1,
     greed: 0.1,
     bluffLove: 1.1,
-    bluffLoveN: 1,
+    bluffLoveN: 1.5,
     caution: 1,
     noise: 0.3,
     suspicion: 0,
     suspicionN: -1,
     slip: 0.04,
     finalCatch: 1,
-    probe: 0.12,
+    probe: 0.08,
     temperament: 0.3,
     tellLeak: 0.2,
     tellFake: 0.15,
@@ -191,7 +191,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempoN: 1,
     groupValue: 0.6,
     padOpen2: 0.45,
-    priorBluffN: 0.38,
+    priorBluffN: 0.25,
   },
 };
 
@@ -739,9 +739,10 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     let ev = gain - loss - this.declineValue(v) + (v.seats === 2 ? this.p.suspicion : this.p.suspicionN) + this.bold + this.p.noise * this.gauss();
     // içgüdü: sınırda kararlarda arada bir yanılır (zor bot da)
     if (Math.abs(ev) < 1.5 && this.rnd() < this.p.slip) ev = -ev;
-    // merak: bu rakibin böyle atışını henüz pek açmadım ve yığın ucuz → ara sıra "bir bakalım" (rakibi tanımak için)
+    // merak: bu rakibin böyle atışını henüz pek açmadım ve yığın ucuz → ara sıra "bir bakalım" (rakibi tanımak için).
+    // Yalnız sıradaki oyuncu yapar (kalabalık masada herkes aynı anda merak etmesin).
     const opening = v.roundPlays.length === 1;
-    if (ev <= 0 && S <= 5 && q > 0.05 && this.seen(w.by, opening) < 3 && this.rnd() < this.p.probe) ev = 0.1;
+    if (ev <= 0 && v.turn === me && S <= 4 && q > 0.05 && this.seen(w.by, opening) < 2 && this.rnd() < this.p.probe) ev = 0.1;
     const doubt = 1 - Math.abs(q - 0.5) * 2; // 1: tam belirsiz
     if (ev > 0) {
       const urgency = Math.min(1, ev / 4);
