@@ -4,8 +4,9 @@
 // Sahne (ekran görüntüsü için, motor yok):
 //   ?scene=table&hand=26&pile=9&out=6&rank=7&sel=2   (masa yerleşimi, seçili kartlar, eylem çubuğu)
 //   ?scene=open                                       (turu sen açıyorsun: değer seçici)
-//   ?scene=window                                     (BLÖF düğmesi + dolan halka)
-//   ?scene=reveal&lie=1                               (blöf anı: çağrı → ağır çekim açılış → damga → yığın uçar)
+//   ?scene=window&wms=3000                            (BLÖF düğmesi + dolan halka; wms: pencere süresi, 5000 / 3000)
+//   ?scene=reveal&lie=1&out=6                         (blöf anı: çağrı → ağır çekim açılış → damga → yığın uçar →
+//                                                      yalansa kenardan "+2 ceza" kartları yalancıya; out: kenardaki kart)
 // Ortak: &lay=group|spread (el düzeni) &deck=yildizli &table=arena &low=1 &anim=0
 // Hata ayıklama: window.__b → {table, hud, fx, sfx, match, t, ui, ready, done, outcome, run(name)}
 import '@fontsource/lilita-one/400.css';
@@ -236,8 +237,9 @@ if (!scene) {
     hud.setTurn(-1);
     hud.say(claimText(3, rank) + '!', null, 4000, 1);
     ui.setBar({mode: 'wait', rank, sel: 0, canPass: false});
-    ui.openBlof(5000, {letGo: true});
-    t.setPileTap(true, 5000);
+    const wms = Number(Q.get('wms') ?? 5000);
+    ui.openBlof(wms, {letGo: true, total: wms});
+    t.setPileTap(true, wms);
   } else if (scene === 'reveal') {
     hud.setTurn(-1);
     const lie = Q.get('lie') !== '0';
@@ -282,7 +284,9 @@ if (!scene) {
       hud.react(liar, 'zafer', 2000);
       hud.say('Doğruydu evlat! Al yığını, afiyet olsun.', 'kahkaha', 2200, liar);
     }
-    void ui.stamp(lie ? 'caught' : 'truth', loser === 0 ? `Yığın sana: ${pileN + m} kart` : `${players[loser].name.split(' ')[0]} yığını alıyor · ${pileN + m} kart`, t.revealTop(m) + t.L.ch * t.revealScale(m) * 0.8, 1550);
+    const pen = lie ? Math.min(2, outN) : 0;
+    const penTxt = pen ? ` +${pen} ceza` : '';
+    void ui.stamp(lie ? 'caught' : 'truth', loser === 0 ? `Yığın sana: ${pileN + m} kart${penTxt}` : `${players[loser].name.split(' ')[0]} yığını alıyor · ${pileN + m} kart${penTxt}`, t.revealTop(m) + t.L.ch * t.revealScale(m) * 0.8, 1550);
     await new Promise(r => setTimeout(r, 650));
     g.step = 'take';
     ui.focusClaim(false);
@@ -291,6 +295,17 @@ if (!scene) {
     ui.setPile(0);
     ui.setClaim(null);
     ui.setLast(null);
+    shown[loser] += pileN + m;
+    if (pen) {
+      // ceza: kenarın üstündeki kartlar "+2 ceza" etiketiyle yalancıya
+      g.step = 'penalty';
+      const to = loser === 0 ? {x: t.L.hand.cx, y: t.L.hand.top} : t.seatPoint(loser);
+      void ui.penaltyTag(pen, t.discardPoint(), to, 1050);
+      const base = shown[loser];
+      await t.penalty(loser, pen, undefined, (i, total) => hud.tickCards(loser, base + Math.round(((i + 1) / total) * pen)));
+      shown[loser] += pen;
+      ui.setOut(outN - pen);
+    }
     g.step = 'done';
   }
   g.ready = true;
