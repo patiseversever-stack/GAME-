@@ -712,8 +712,9 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     const w = v.window!;
     const me = this.seat;
     const limit = Math.max(150, w.ms - 300);
-    const say = (ms: number): BotDecision<BlofAction, BlofTell> => ({action: {t: 'challenge', seat: me}, delayMs: clamp(ms, 150, limit)});
-    const pass = (ms: number): BotDecision<BlofAction, BlofTell> => ({action: {t: 'decline', seat: me}, delayMs: clamp(ms, 150, limit)});
+    // insan en hızlı ~0,5 sn'de basar; pencere bitmeden (son 300 ms ev sahibine pay)
+    const say = (ms: number): BotDecision<BlofAction, BlofTell> => ({action: {t: 'challenge', seat: me}, delayMs: clamp(ms, Math.min(500, limit), limit)});
+    const pass = (ms: number): BotDecision<BlofAction, BlofTell> => ({action: {t: 'decline', seat: me}, delayMs: clamp(ms, Math.min(450, limit), limit)});
     const S = v.pileCount;
     // büyük yığında karar ağır: biraz daha bakılır
     const weight = Math.min(700, S * 25);
