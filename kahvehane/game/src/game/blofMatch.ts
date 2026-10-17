@@ -8,7 +8,7 @@ import {rankOf} from '../core/types';
 import {mulberry32} from '../core/rng';
 import {BlofBot, type BlofDifficulty} from '../ai/blofBot';
 import {createBlofLocal, type BlofClient, type BlofHost} from '../net/blofLocal';
-import {BlofTalk, TUTORIAL, blofPriority, type BlofMoment} from '../ai/blofDialogue';
+import {BlofTalk, TUTORIAL, blofPriority, type BlofMoment, type BlofTableMoment} from '../ai/blofDialogue';
 import {BANTER_RULES, setTableHumans, type BanterCtx, type Exchange} from '../ai/dialogue';
 import {chatPolicy} from '../ai/quickTalk';
 import type {ServerMsg} from '../net/protocol';
@@ -201,13 +201,13 @@ export class BlofMatch {
   }
 
   /** Bot konuşur: TEK konuşma yöneticisinden (ses + balon eşli). Kanal o öncelikte doluysa replik seçilmez → false. */
-  private say(seat: number, m: BlofMoment, force = false, ms = 2200, mood?: HudPose | null): boolean {
+  private say(seat: number, m: BlofMoment | BlofTableMoment, force = false, ms = 2200, mood?: HudPose | null): boolean {
     const u = this.utterFor(seat, m, force, ms, mood);
     return !!u && this.speech.say(u, {prio: blofPriority(m), tag: 'match'});
   }
 
   /** Repliği seçip söze çevirir (söylemez). Kanal bu öncelikte doluysa seçmez (tekrar hafızası boşa yanmaz). */
-  private utterFor(seat: number, m: BlofMoment, force = false, ms = 2200, mood?: HudPose | null, queue = false): Utter | null {
+  private utterFor(seat: number, m: BlofMoment | BlofTableMoment, force = false, ms = 2200, mood?: HudPose | null, queue = false): Utter | null {
     const p = this.bot(seat);
     if (!p || this.aborted || !this.speech.canSay(blofPriority(m), queue)) return null;
     const line = this.talk.pick(p.char.id, m, force);
@@ -536,6 +536,8 @@ export class BlofMatch {
       case 'turn': {
         hud.setTurn(e.seat, e.seat !== ME);
         this.d.chat?.turn(e.seat);
+        // sıra botta: düşünürken kısa mırıltı (sıklık sohbet seviyesinde: Sakin yok, Geveze sık)
+        if (e.seat !== ME && this.bot(e.seat) && Math.random() < this.talk.profile.turn) this.say(e.seat, 'think', false, 1800);
         if (e.open || !e.rank) {
           ui.setClaim(null);
           ui.setLast(null);
@@ -575,6 +577,7 @@ export class BlofMatch {
         this.pileN = e.pileCount;
         ui.setPile(e.pileCount);
         ui.setLast(this.name(seat), e.count);
+        this.claimTalk(seat);
         hud.alert?.(seat, e.handCount > 0 && e.handCount <= 2);
         if (seat === ME) ui.setHeld(this.heldCounts(t.hand.map(c => c.id)));
         if (e.handCount > 0 && e.handCount <= 2) {
@@ -634,7 +637,7 @@ export class BlofMatch {
         this.d.table.setTension(false);
         if (seat === ME) ui.setHeld(this.heldCounts(t.hand.map(c => c.id)));
         t.setSelectable(true);
-        if (e.count >= 10) {
+        if (e.count >= (this.talk.profile.table >= 0.5 ? 7 : 10)) {
           const watchers = this.foes(seat).filter(s => s !== seat);
           if (watchers.length) this.say(pickOne(watchers), 'bigPile');
         }
@@ -815,6 +818,15 @@ export class BlofMatch {
       if (lines.length && this.bot(liar) && this.bot(caller)) add(this.utterFor(caller, 'wrongCall', true, 2000, undefined, true));
     }
     if (lines.length) this.speech.exchange(lines, {prio: 3, tag: 'match', gapMs: 300});
+    // masa sohbeti: olaya karışmayan bir bot araya kahkaha / homurtu atar (büyük repliğin ardından sıraya girer)
+    if (this.talk.profile.table > 0 && lines.length) {
+      const bystanders: number[] = [];
+      for (let s = 0; s < this.n; s++) if (s !== liar && s !== caller && s !== ME && this.bot(s)) bystanders.push(s);
+      if (bystanders.length && Math.random() < 0.55 * this.talk.profile.table) {
+        const u = this.utterFor(pickOne(bystanders), 'laugh', true, 1500, undefined, true); // büyük repliği az önce seçildi: aralık şartı yerine olasılık
+        if (u) this.speech.say(u, {prio: blofPriority('laugh'), tag: 'match', queue: true, ttlMs: 6000});
+      }
+    }
     if (this.setup.mode !== 'esli') return;
     // eşli: ortak tepkisi (büyük repliğin ardından sıraya girer)
     const wm = this.mate(winner), lm = this.mate(loser);
@@ -824,6 +836,21 @@ export class BlofMatch {
       const u = this.utterFor(wm, 'mateCheer', false, 1600, undefined, true);
       if (u) this.speech.say(u, {prio: blofPriority('mateCheer'), tag: 'match', queue: true, ttlMs: 6000});
     }
+  }
+
+  /**
+   * Masa sohbeti: iddia söylendikten ~1,7 sn sonra (iddia yazısı balonda kaybolunca) iddiayı yapan bot kendi iddiasına laf atar
+   * ('claim') ya da başka bir bot şüpheyle mırıldanır ('doubt'; yalnız rakip taraf). Sıklığı sohbet seviyesi belirler.
+   */
+  private claimTalk(seat: number): void {
+    if (this.talk.profile.table <= 0) return;
+    window.setTimeout(() => {
+      if (this.aborted || this.result) return;
+      const doubters: number[] = [];
+      for (let s = 0; s < this.n; s++) if (s !== seat && this.bot(s) && this.team(s) !== this.team(seat)) doubters.push(s);
+      if (this.bot(seat) && (!doubters.length || Math.random() < 0.5)) this.say(seat, 'claim', false, 2000);
+      else if (doubters.length) this.say(pickOne(doubters), 'doubt', false, 2000);
+    }, 1700);
   }
 
   /** Üst üste 3+ pas: başka bir bot (sıradaki tercihen) pas diyene laf atar. */

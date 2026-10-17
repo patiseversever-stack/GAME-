@@ -1,10 +1,12 @@
 // Blöf konuşmaları. Replik verisi (seslendirilen, kimlikli: riza_blofCallOut_3) src/ai/dialogue.ts'te — seslendirme
 // aracı oradan okur. Burada: an → replik seçimi (kalıcı tekrar önleme) + sıklık (dialogue.ts → BLOF_RULES) ve
 // Rıza Amca'nın öğretici metinleri.
-import {BLOF_MOOD, DialogueDirector, blofKey, momentPriority, type BlofMoment, type Exchange, type Line, type TalkStore} from './dialogue';
+import {BLOF_MOOD, DialogueDirector, blofKey, momentPriority, type BlofMoment, type ChatProfile, type Exchange, type Line, type TalkStore} from './dialogue';
 
 export {BLOF_MOOD};
 export type {BlofMoment};
+/** Masa sohbeti: kendi repliği olmayan, var olan havuzlardan beslenen anlar (dialogue.ts → POOL_ALIAS): 'think' sıra mırıltısı, 'laugh' araya kahkaha. */
+export type BlofTableMoment = 'think' | 'laugh';
 
 /** Blöf masasının konuşma durumu (Pişti'ninkinden ayrı; kendi kalıcı hafızası olabilir). */
 export class BlofTalk {
@@ -31,8 +33,8 @@ export class BlofTalk {
   }
 
   /** Repliği seç (yoksa ya da sıra değilse null). force: sıklık sınırını atla (Blöf anı, el sonu…). */
-  pick(charId: string, m: BlofMoment, force = false, now?: number): Line | null {
-    const key = blofKey(m);
+  pick(charId: string, m: BlofMoment | BlofTableMoment, force = false, now?: number): Line | null {
+    const key = blofKey(m as BlofMoment);
     return force ? this.d.force(charId, key) : this.d.react(charId, key, now);
   }
 
@@ -50,11 +52,16 @@ export class BlofTalk {
   idleDelay(baseMs: number): number {
     return this.d.idleDelay(baseMs);
   }
+
+  /** Geçerli sohbet profili (masa sohbeti zarları: turn, table, lead…). */
+  get profile(): ChatProfile {
+    return this.d.profile;
+  }
 }
 
 /** Ses önceliği (1 laf atma, 2 olay / ikincil tepki, 3 Blöf anı / el sonu). */
-export function blofPriority(m: BlofMoment): 1 | 2 | 3 {
-  return momentPriority(blofKey(m));
+export function blofPriority(m: BlofMoment | BlofTableMoment): 1 | 2 | 3 {
+  return momentPriority(blofKey(m as BlofMoment));
 }
 
 /** Rıza Amca'nın öğretici metinleri (ilk Blöf eli). */

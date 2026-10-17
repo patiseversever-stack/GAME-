@@ -9,6 +9,7 @@ import {CI, deckCardHtml, deckOr} from './deckpv';
 import {onAct, openModal, type Ctx, type ModalHandle} from './parts';
 import {GAMES, GAME_INFO, HAND_INFO, HAND_LAYOUTS, type Game, type HandLayout} from '../game/types';
 import {handPreviewHtml} from './handchooser';
+import {chatMeterSvg} from './chatchooser';
 import {BLOF} from '../game/blofAdapter';
 import './blofmeta.css';
 
@@ -80,7 +81,7 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
     const voiceRow = chat
       ? `<div class="kh-set__q kh-card kh-set__talk"><button class="kh-set__qh kh-set__tg" data-act="toggle" data-k="voice" aria-pressed="${cur.voice}"><span class="kh-set__ico">${I.voice}</span><span class="kh-set__lbl">Konuşmalar</span><span class="kh-toggle"></span></button>
           <div class="kh-set__chat"><span class="kh-set__sub">Sohbet</span><div class="kh-seg is-chat" style="--n:3" role="group" aria-label="Sohbet yoğunluğu">${CHAT_LEVELS.map(l =>
-            `<button data-act="chat" data-v="${l}" aria-pressed="${curChat === l}">${CHAT_LEVEL_INFO[l].name}</button>`).join('')}</div></div></div>`
+            `<button data-act="chat" data-v="${l}" aria-pressed="${curChat === l}">${chatMeterSvg(l)}<span>${CHAT_LEVEL_INFO[l].name}</span></button>`).join('')}</div></div></div>`
       : tog('voice', 'Konuşmalar', I.voice);
     m = openModal(ctx, {
       cls: 'kh-settings',

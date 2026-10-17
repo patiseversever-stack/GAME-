@@ -9,7 +9,7 @@ import {mulberry32} from '../core/rng';
 import type {CardId, GameResult, PistiEvent, PistiState} from '../core/types';
 import {isJack, rankOf} from '../core/types';
 import {PistiBot} from '../ai/bot';
-import {BANTER_RULES, beginDialogueHand, dialogue, momentPriority, pickLine, setTableHumans, shouldSpeak, type BanterCtx, type Exchange, type Moment as DialogueMoment} from '../ai/dialogue';
+import {BANTER_RULES, beginDialogueHand, dialogue, momentPriority, pickLine, setTableHumans, shouldSpeak, type BanterCtx, type Exchange, type Moment as DialogueMoment, type TableMoment} from '../ai/dialogue';
 import {chatPolicy} from '../ai/quickTalk';
 import {Table2D, cardPoints} from '../table2d/table';
 import type {Sfx} from '../audio/sfx';
@@ -27,7 +27,7 @@ import {whenIdle} from '../platform/sched';
 import {QUICK_IDS, type QuickChat} from './quickChat';
 
 /** Karakterlerin konuşabileceği anlar (diyalog sistemi bunlara replik seçer; rövanş kabulü 'endAccept' dahil). */
-export type Moment = DialogueMoment | 'endAccept';
+export type Moment = DialogueMoment | TableMoment | 'endAccept';
 
 export interface MatchDeps {
   table: Table2D;
@@ -335,8 +335,12 @@ export class Match {
       } else {
         const p = this.players[seat];
         hud.setTurn(seat, true);
+        // sıra botta: masa boşsa / yığın şiştiyse buna laf, yoksa mırıltı (sıklık sohbet seviyesinde: Sakin yok, Geveze sık)
+        const pf = dialogue.profile;
         if (this.state.pile.length === 0 && Math.random() < 0.3) this.speak(seat, 'tableEmpty');
-        else if (Math.random() < 0.08) this.speak(seat, 'botThinking');
+        else if (this.state.pile.length >= 6 && Math.random() < pf.turn && this.speak(seat, 'pileGrows')) {
+          // yığın lafı söylendi
+        } else if (Math.random() < pf.turn) this.speak(seat, 'botThinking');
         const [a, b] = p?.think ?? [0.5, 0.9];
         // karar önce verilir (durum düşünürken değişmez); süre kararın zorluğuna göre: apaçık hamle kısa, başa baş uzun
         card = this.bots[seat]!.choose(viewFor(this.state, seat));
@@ -374,8 +378,8 @@ export class Match {
       table.wiggle(best);
       hud.showHint(v.pileCount === 1 && rankOf(best) === rankOf(v.pileTop!) ? 'Pişti fırsatı!' : 'Bu kartla alabilirsin!');
     }, 6000);
-    const foe = this.foes(0)[0];
-    const t2 = window.setTimeout(() => foe !== undefined && this.speak(foe, 'myTurnIdle'), dialogue.idleDelay(9000));
+    const foes = this.foes(0);
+    const t2 = window.setTimeout(() => foes.length && this.speak(pickOne(foes), 'myTurnIdle'), dialogue.idleDelay(9000));
     if (this.autoBot) {
       const c = this.autoBot.choose(v);
       window.setTimeout(() => table.pick(c), 380 + (this.d.autoThink ? this.d.autoThink * (0.5 + Math.random()) : 0));
@@ -545,24 +549,28 @@ export class Match {
     const notable = big || isJack(card) || vals.some(v => v.pts >= 2);
     if (this.team(seat) !== this.team(0) && valuableDumped) this.d.chat?.cue('myMistake', seat);
     else if (big) this.d.chat?.cue(human ? 'iScored' : 'theyScored', seat);
-    if (notable && this.capBanter(seat, pileBefore)) {
-      // iki bot kendi arasında atıştı (tek tepki yerine)
+    let spoke = false;
+    if (this.capBanter(seat, pileBefore, notable)) {
+      spoke = true; // iki bot kendi arasında atıştı (tek tepki yerine)
     } else if (maker && this.team(seat) !== this.team(0) && valuableDumped && this.speak(seat, 'playerDumpedValuable')) {
+      spoke = true;
       const m = this.mate(0);
       if (m >= 0 && this.bot(m) && Math.random() < 0.6) window.setTimeout(() => this.quip(m, SIGH, 'uzgun', 1600), 900);
     } else if (big) {
-      if (maker) this.speak(seat, 'botBigCapture');
+      if (maker) spoke = this.speak(seat, 'botBigCapture');
       else {
         const f = this.foes(0);
-        if (f.length) this.speak(pickOne(f), 'playerBigCapture');
+        if (f.length) spoke = this.speak(pickOne(f), 'playerBigCapture');
       }
     } else if (isJack(card) && Math.random() < 0.5) {
-      if (maker) this.speak(seat, 'botJackCapture');
+      if (maker) spoke = this.speak(seat, 'botJackCapture');
       else {
         const f = this.foes(0);
-        if (f.length) this.speak(pickOne(f), 'playerJackCapture');
+        if (f.length) spoke = this.speak(pickOne(f), 'playerJackCapture');
       }
-    } else if (maker && pileBefore.length && this.pileOwner.get(pileBefore[pileBefore.length - 1]) === 0 && Math.random() < 0.3) this.speak(seat, 'botLuckyCapture');
+    } else if (maker && pileBefore.length && this.pileOwner.get(pileBefore[pileBefore.length - 1]) === 0 && Math.random() < 0.3) spoke = this.speak(seat, 'botLuckyCapture');
+    // büyük tepki söylenmediyse: sıradan alışa masa sohbeti (sohbet seviyesi; Sakin'de yok)
+    if (!spoke) this.tableReact(seat, pileBefore);
     // yüz ifadesi: alan sevinir; büyükte kaybedenler şaşırır; eşlide ortak sevinir
     hud.react(seat, big || vals.some(v => v.pts >= 2) ? 'kahkaha' : 'gulumseme', 1300);
     const mate = this.mate(seat);
@@ -573,11 +581,35 @@ export class Match {
   }
 
   /**
+   * Masa sohbeti: sıradan bir alışa KISA tepki (var olan kısa sesler: dialogue.ts POOL_ALIAS). Alan bot sevinir; yığını bırakan rakip
+   * bot (4 kişi / eşli: başka bot da olabilir) homurdanır; oyuncu aldıysa yığını bırakan bot, yoksa rastgele bir rakip. Eşlide alan
+   * botun ortağı yazıyla alkışlar. Sıklığı sohbet seviyesi (table) ve konuşma yöneticisi (kanal doluysa söylenmez) belirler.
+   */
+  private tableReact(seat: number, pileBefore: CardId[]): void {
+    if (dialogue.profile.table <= 0) return;
+    const top = pileBefore[pileBefore.length - 1];
+    const owner = top === undefined ? -1 : this.pileOwner.get(top) ?? -1;
+    const loser = owner >= 0 && owner !== seat && this.bot(owner) && this.team(owner) !== this.team(seat) ? owner : -1;
+    if (this.bot(seat)) {
+      const said = this.speak(seat, 'botCapture');
+      if (loser >= 0 && this.seats >= 3) window.setTimeout(() => this.speak(loser, 'rivalCapture'), said ? 1900 : 200);
+      const m = this.mate(seat);
+      if (said && m >= 0 && this.bot(m) && Math.random() < 0.3) window.setTimeout(() => this.quip(m, CHEER, 'gulumseme', 1500), 900);
+    } else {
+      const f = this.foes(0);
+      if (loser >= 0) this.speak(loser, 'playerCapture');
+      else if (f.length) this.speak(pickOne(f), 'playerCapture');
+    }
+  }
+
+  /**
    * Önemli bir alışta atışma: bot A, karşı taraftaki bot B'nin bıraktığı yığını aldı → steal; eşlide bot A, ortağı bot B'nin
    * alışını över → mateHype; insanın takımı bot B'nin bıraktığını aldı → B'nin ortağı (bot) sitem eder → mateBlame.
    */
-  private capBanter(seat: number, pileBefore: CardId[]): boolean {
+  private capBanter(seat: number, pileBefore: CardId[], notable: boolean): boolean {
     if (this.seats < 3) return false;
+    // sıradan alışta atışma yalnız masa sohbeti açıkken (Geveze) ve ara sıra: Normal'de eskisi gibi yalnız önemli alışta
+    if (!notable && Math.random() >= dialogue.profile.table * 0.35) return false;
     const top = pileBefore[pileBefore.length - 1];
     const owner = top === undefined ? -1 : this.pileOwner.get(top) ?? -1;
     const esli = this.setup.mode === 'esli';
@@ -656,7 +688,7 @@ export class Match {
   }
 
   private leadingChatter(): void {
-    if (Math.random() > 0.35) return;
+    if (Math.random() > dialogue.profile.lead) return;
     const st = this.standings();
     const me = st.get(this.team(0)) ?? 0;
     const foes = this.foes(0);

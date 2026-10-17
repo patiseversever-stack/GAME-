@@ -149,7 +149,7 @@ export class Screens {
    */
   chatChooser(port?: ChatSamplePort, current?: ChatLevel): Promise<ChatLevel> {
     this.openCurtain();
-    return chatChooser(this.ctx, port, current);
+    return chatChooser(this.ctx, port, current, this.deckId);
   }
 
   /** Sinematik giriş (1'e 1 / 3 kişi / 4 kişi / eşli; oyun adıyla); bitince çözülür. */

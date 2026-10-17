@@ -8,7 +8,8 @@
 //     zarif (asla cinsiyetçi değil). Hedef insansa (çevrimiçi "Mustafa") ya da bilinmiyorsa nötr söyleyiş çalar.
 //  2) Eşli takım mesajları (qc_<kar>_team_*_<no>): ortağa; cevabı ortak bot verir (mevcut 'mate' cevapları).
 //  3) Nötr ek: Rıza'nın "Dursun, çaylar benden!" sözünün Dursun masada İNSANKEN kullanılacak adsız karşılığı.
-//  4) İnce havuzlara ek (an kimliği, 31+): Blöf'te her elde birkaç kez gelen açılış tepkileri ve Pişti'nin şanslı alışı.
+//  4) İnce havuzlara ek (an kimliği, 31+): Blöf'te her elde birkaç kez gelen açılış tepkileri ve Pişti'nin şanslı alışı; Geveze için
+//     Blöf pas / bekleme ve Pişti boş masa lafları (41+).
 import type {CharId, ExtraLine, LineOpt, QuickReplyCat, VoiceMoment} from './dialogue';
 import type {Pose} from '../game/roster';
 
@@ -212,6 +213,9 @@ export const NEUTRAL_LABELS: Partial<Record<CharId, Record<string, string>>> = {
 
 const MOMENT_MORE: Record<CharId, Partial<Record<VoiceMoment, MSpec[]>>> = {
   riza: {
+    blofPass: [[41, '[sighs] Pas, geçiyorum evlat.'], [42, '[grumbling] Bende yok, pas.'], [43, '[chuckles] Pas diyorum, pas.']],
+    blofIdle: [[41, '[grumbling] Sen düşün, çay soğusun.'], [42, '[chuckles] Acele yok evlat… ama bekliyorum.']],
+    tableEmpty: [[41, '[chuckles] Temiz masa, temiz vicdan.'], [42, '[sighs] Boş masa, boş çay bardağı…']],
     blofStart: [[31, '[chuckles] Yalan da sanattır evlat, ama ustasına yapılmaz.']],
     blofSurvivedPlayer: [[31, "[chuckles] Rıza'ya güvenmeyen yığını taşır evlat!"], [32, '[laughs] Şüphe iyidir evlat, ama bu sefer pahalı oldu!']],
     blofWrongCall: [[31, '[grumbling] Bu gözlük de artık eskidi.']],
@@ -221,6 +225,9 @@ const MOMENT_MORE: Record<CharId, Partial<Record<VoiceMoment, MSpec[]>>> = {
     botLeading: [[31, '[proudly] Usta önde, çırak arkada evlat.']],
   },
   dursun: {
+    blofPass: [[41, '[chuckles] Pas, çay demleniyor.'], [42, 'Pas kardeşim, sıra sende.'], [43, '[sighs] Bu tur pas.']],
+    blofIdle: [[41, '[chuckles] Düşünmek bedava ama çay değil!'], [42, '[chuckles] Üç çay götürdüm, sen hâlâ düşünüyorsun!']],
+    tableEmpty: [[41, '[chuckles] Masa silinmiş, tepsi gibi!'], [42, '[sighs] Boş masa… müşteri yok gibi.']],
     blofStart: [[31, '[laughs] Kartlar kapalı, yüzler açık! Başlayalım!']],
     blofSurvivedPlayer: [[31, '[laughs] Şüphe bedava değil kardeşim, yığın senin!'], [32, '[chuckles] Deftere yazdım: bir yığın borçlusun!']],
     blofWrongCall: [[31, '[groans] Burnum bu sefer nezle!']],
@@ -228,6 +235,9 @@ const MOMENT_MORE: Record<CharId, Partial<Record<VoiceMoment, MSpec[]>>> = {
     botLuckyCapture: [[31, '[laughs] Bunu da tepsiye koydum!'], [32, '[chuckles] Nazar boncuğu işe yaradı!']],
   },
   cem: {
+    blofPass: [[41, 'Pas kanka, skip.'], [42, '[chuckles] Bu tur pas, sonra görüşürüz.'], [43, 'Pas, şarj tasarrufu.']],
+    blofIdle: [[41, 'Kanka loding mi çekiyorsun?', _, T('Kanka loading mi çekiyorsun?')], [42, '[chuckles] Hadi kanka, hamle bekliyoruz.']],
+    tableEmpty: [[41, 'Boş masa kanka, temiz sayfa!'], [42, '[chuckles] Masa resetlendi, yeni bölüm!']],
     blofStart: [[31, '[excited] Kanka yalan makinesi açık, hazır mısın?']],
     blofSurvivedPlayer: [[31, '[laughs] Kanka yanlış alarm! Yığın senin, afiyet olsun!'], [32, '[laughs] Kanka trast işu sende, yığın da sende!', _, T('Kanka trust issue sende, yığın da sende!')]],
     blofWrongCall: [[31, '[groans] Kanka algoritmam yanlış öğrenmiş!']],
@@ -235,6 +245,9 @@ const MOMENT_MORE: Record<CharId, Partial<Record<VoiceMoment, MSpec[]>>> = {
     botLuckyCapture: [[31, '[laughs] Kanka lut düştü!', _, T('Kanka loot düştü!')], [32, '[chuckles] Bu el bana kıyak geçti.']],
   },
   defne: {
+    blofPass: [[41, '[sweetly] Pas, canım.'], [42, '[playfully] Bu turu sana bırakıyorum.'], [43, 'Pas. Zarafetle.']],
+    blofIdle: [[41, '[playfully] Acele yok, ama bekliyorum.'], [42, '[sweetly] Sen düşün, ben ojemi kurutayım.']],
+    tableEmpty: [[41, '[sweetly] Boş masa, sade ve şık.'], [42, '[playfully] Temiz sayfa. Sevdim.']],
     blofStart: [[31, '[playfully] Herkes dürüst görünür… ilk yalana kadar.']],
     blofSurvivedPlayer: [[31, '[sweetly] Bu sefer doğruydu. Şaşırdın mı canım?'], [32, '[playfully] Güvensizlik çok çirkin. Yığın da öyle.']],
     blofWrongCall: [[31, '[sighs] Sezgim mola vermiş. Duymamış ol.']],

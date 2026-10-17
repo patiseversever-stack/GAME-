@@ -46,6 +46,7 @@ export const MOMENTS = [
   'draw',
   'playerFastThrow', // oyuncu kartı çok sert fırlattı (henüz yayınlanmıyor)
   'tableEmpty', // masa boş ve sıra botta
+  'pileGrows', // yığın şişti (≥ 6 kart) ve sıra botta
 ] as const;
 export type Moment = (typeof MOMENTS)[number];
 
@@ -77,6 +78,8 @@ export const BLOF_MOMENTS = [
   'botWin',
   'playerWin',
   'mateCheer', // eşli: ortak güzel iş yaptı
+  'claim', // bot kendi iddiasını söylerken (kısa takılma; masa sohbeti)
+  'doubt', // başkasının iddiasına bakan bot şüpheyle mırıldanır (masa sohbeti)
 ] as const;
 export type BlofMoment = (typeof BLOF_MOMENTS)[number];
 export type BlofKey = `blof${Capitalize<BlofMoment>}`;
@@ -214,7 +217,7 @@ const T = (text: string, o?: Opt): Opt => ({...o, text});
 const BASE_MOODS: Partial<Record<Moment | MetaMoment, Pose | null>> = {
   start: 'gulumseme', botThinking: 'dusunceli', botPisti: 'kahkaha', botJackPisti: 'kahkaha', playerPisti: 'kizgin',
   playerJackPisti: 'saskin', botBigCapture: 'kahkaha', playerBigCapture: 'kizgin', botJackCapture: 'kirpma',
-  playerJackCapture: 'saskin', playerDumpedValuable: 'kahkaha', botLuckyCapture: 'kirpma', lastRound: 'dusunceli',
+  playerJackCapture: 'saskin', playerDumpedValuable: 'kahkaha', botLuckyCapture: 'kirpma', lastRound: 'dusunceli', pileGrows: 'dusunceli',
   botLeading: 'gulumseme', playerLeading: 'dusunceli', comeback: 'zafer', botWin: 'kahkaha', playerWin: 'uzgun',
   draw: 'saskin', playerFastThrow: 'saskin', tableEmpty: 'dusunceli',
   galleryIntro: 'gulumseme', shopPitch: 'kirpma', shopBought: 'kahkaha', shopPoor: 'kirpma',
@@ -225,7 +228,7 @@ export const BLOF_MOOD: Readonly<Record<BlofMoment, Pose | null>> = {
   start: 'gulumseme', callOut: 'kizgin', catchGloat: 'kahkaha', catchPlayer: 'kahkaha', caught: 'uzgun',
   caughtByPlayer: 'saskin', wrongCall: 'saskin', survived: 'zafer', survivedPlayer: 'kahkaha', pass: null,
   bigPile: 'saskin', nearWin: 'gulumseme', playerNearWin: 'saskin', idle: 'dusunceli', botWin: 'zafer',
-  playerWin: 'uzgun', mateCheer: 'kahkaha',
+  playerWin: 'uzgun', mateCheer: 'kahkaha', claim: 'kirpma', doubt: 'dusunceli',
 };
 
 // ───────────────────────── RIZA AMCA ─────────────────────────
@@ -361,6 +364,12 @@ const RIZA: CharSpec = {
       [10, '[teasing] Ben almasam ayıp olurdu.'],
       [11, '[chuckles] Heh heh…', _, NV],
     ],
+    pileGrows: [
+      [1, '[chuckles] Yığın şişti evlat… kim alacak?'],
+      [2, '[whispers] Bu yığın kime nasip olacak…'],
+      [3, '[grumbling] Masa doldu, hasat yakın.'],
+      [4, '[chuckles] Koca yığın… iştahım kabardı.'],
+    ],
     tableEmpty: [
       [1, 'Masa tertemiz… ne atsak?'],
       [2, '[clears throat] Boş masaya kart atmak sanattır.'],
@@ -467,6 +476,20 @@ const RIZA: CharSpec = {
     survivedPlayer: [
       [1, '[laughs] Doğruydu evlat! Afiyet olsun!'],
       [2, '[proudly] Rıza Amca yalan söyler mi hiç?'],
+    ],
+    claim: [
+      [1, '[chuckles] Rıza Amca yalan söylemez evlat.'],
+      [2, '[proudly] Gözümün içine bak, doğru bu.'],
+      [3, '[chuckles] Yemin ederim, tertemiz.'],
+      [4, '[grumbling] Böyle de atılır evlat.'],
+      [5, '[teasing] İnan inanma, sana kalmış.'],
+    ],
+    doubt: [
+      [1, '[whispers] Hımm… bu kokuyor evlat.'],
+      [2, '[grumbling] Hmm, hmm… bir tuhaflık var.'],
+      [3, '[sighs] Bizim zamanımızda böyle atılmazdı.'],
+      [4, '[whispers] Yüzünden okurum ben…'],
+      [5, '[chuckles] Yalancının mumu yanıyor yine.'],
     ],
     pass: [
       [1, '[grumbling] Pas.'],
@@ -712,6 +735,12 @@ const DURSUN: CharSpec = {
       [9, '[laughs] İkram bizim işimiz, sen de mi?'],
       [11, '[laughs heartily] Ho ho ho!', _, NV],
     ],
+    pileGrows: [
+      [1, '[chuckles] Tepsi gibi doldu masa!'],
+      [2, '[whispers] Bu yığın çaya değer…'],
+      [3, '[laughs] Yığın taşıyor, tepsi yetmez!'],
+      [4, '[excited] Koca yığın! Kimin olacak?'],
+    ],
     tableEmpty: [
       [1, 'Boş masa… bir çay koysam?'],
       [2, '[chuckles] Masa da cüzdanım gibi, bomboş!'],
@@ -818,6 +847,20 @@ const DURSUN: CharSpec = {
     survivedPlayer: [
       [1, '[chuckles] Bana güvenmedin ha? Al yığını!'],
       [2, '[laughs] Dürüst kahveci, dürüst kart!'],
+    ],
+    claim: [
+      [1, '[chuckles] Çayım üstüne yemin, doğru!'],
+      [2, '[laughs] Dursun yalan söylemez, çay söyler!'],
+      [3, '[proudly] Deftere yazdım, doğru bu!'],
+      [4, '[chuckles] Tepsiye koydum, inanabilirsin.'],
+      [5, '[teasing] Bak yüzüm gülüyor mu?'],
+    ],
+    doubt: [
+      [1, '[whispers] Burnuma yalan kokusu geliyor…'],
+      [2, '[whispers] Bu iş kokuyor kardeşim…'],
+      [3, '[grumbling] Hıı… ben inanmadım pek.'],
+      [4, '[chuckles] Ocaktan gördüm, şüpheli.'],
+      [5, '[whispers] Tepsiyi tutan el titredi…'],
     ],
     pass: [
       [1, '[chuckles] Pas.'],
@@ -1063,6 +1106,12 @@ const CEM: CharSpec = {
       [10, '[chuckles] Bağış için teşekkürler, yayın devam!'],
       [11, '[excited] Çok iyi ya!', _, NV],
     ],
+    pileGrows: [
+      [1, '[excited] Kanka yığın lut boks gibi!', _, T('Kanka yığın loot box gibi!')],
+      [2, 'Yığın dolmuş kanka, cekpot yakın!', _, T('Yığın dolmuş kanka, jackpot yakın!')],
+      [3, '[whispers] Bu yığına bir vale lazım…'],
+      [4, '[chuckles] Yığın eks el oldu, kim çekecek?', _, T('Yığın XL oldu, kim çekecek?')],
+    ],
     tableEmpty: [
       [1, 'Boş masa… ne atsak?'],
       [2, '[chuckles] Masa boş, vayb boş.', _, T('Masa boş, vibe boş.')],
@@ -1169,6 +1218,20 @@ const CEM: CharSpec = {
     survivedPlayer: [
       [1, '[laughs] Doğruydu kanka! Yığın senin.'],
       [2, '[laughs] Plot tvist: hepsi doğru!', _, T('Plot twist: hepsi doğru!')],
+    ],
+    claim: [
+      [1, '[excited] Kanka bu sefer yüzde yüz doğru!'],
+      [2, '[chuckles] Poker face aktif.'],
+      [3, '[laughs] Güven bana kanka, ne olur ki!'],
+      [4, '[whispers] Hesap kitap tamam, atıyorum.'],
+      [5, '[chuckles] İhtimalleri biliyorum kanka.'],
+    ],
+    doubt: [
+      [1, '[whispers] Red flag kokuyor kanka…'],
+      [2, '[chuckles] İhtimal hesaplıyorum… düşük.'],
+      [3, 'Hmm, bu çok sas kanka.', _, T('Hmm, bu çok sus kanka.')],
+      [4, '[whispers] Bu hamle bana yalan geldi.'],
+      [5, '[sighs] İnanmak istiyorum ama…'],
     ],
     pass: [
       [1, '[sighs] Pas.'],
@@ -1415,6 +1478,12 @@ const DEFNE: CharSpec = {
       [10, '[giggles] Bana hediye mi? Utandırdın.', 'kirpma'],
       [11, '[laughs softly] Hm hm hm.', _, NV],
     ],
+    pileGrows: [
+      [1, '[playfully] Yığın büyüdü. Sabır güzeldir.'],
+      [2, '[sweetly] Güzel bir yığın. Kimin olacak?'],
+      [3, '[whispers] Bu yığın benim gibi, değerli.'],
+      [4, '[playfully] Kule yükseldi tatlım.'],
+    ],
     tableEmpty: [
       [1, '[softly] Boş arsa… ne güzel.'],
       [2, '[playfully] Temiz masa. Rujumu tazeleyeyim.'],
@@ -1521,6 +1590,20 @@ const DEFNE: CharSpec = {
     survivedPlayer: [
       [1, '[sweetly] Doğruydu canım. Yığın senin.'],
       [2, '[laughs softly] Hep yalan söylediğimi mi sandın? Ayıp.'],
+    ],
+    claim: [
+      [1, '[sweetly] Güzel bir hamle. Hem de dürüst.'],
+      [2, '[playfully] Bana güvenmek serbest, canım.'],
+      [3, '[sweetly] Plan tutarlı. Kartlar da öyle.'],
+      [4, '[playfully] Yalan mı? Hiç sanmam.'],
+      [5, '[chuckles] Zarif bir doğru, tatlım.'],
+    ],
+    doubt: [
+      [1, '[whispers] Hmm… ilginç bir iddia.'],
+      [2, '[playfully] Ölçüsü tutmadı, tatlım.'],
+      [3, '[sweetly] Güvenmek isterdim… ama.'],
+      [4, '[whispers] Gözü bir yerde, eli başka.'],
+      [5, '[playfully] Bu kadar emin olmak şüpheli.'],
     ],
     pass: [
       [1, '[softly] Pas.'],
@@ -2140,6 +2223,7 @@ export interface ExtraLine {
  */
 export function registerLines(ls: readonly ExtraLine[]): LineRef[] {
   const out: LineRef[] = [];
+  ALIAS_POOLS.clear();
   for (const x of ls) {
     if (BY_ID.has(x.id) || !(CHAR_IDS as readonly string[]).includes(x.char)) continue;
     const blof = x.moment.startsWith('blof') ? (x.moment.charAt(4).toLowerCase() + x.moment.slice(5)) as BlofMoment : null;
@@ -2161,8 +2245,28 @@ export function registerLines(ls: readonly ExtraLine[]): LineRef[] {
 /** Karakterin bir andaki replikleri (Pişti anı, menü anı ya da Blöf anahtarı: 'blofCallOut'). */
 export function linesFor(charId: string, moment: string): readonly LineRef[] {
   const d = (DIALOGUE as Record<string, Partial<Record<string, readonly LineRef[]>> | undefined>)[charId];
-  return d?.[moment] ?? EMPTY;
+  const src = POOL_ALIAS[moment];
+  if (!src) return d?.[moment] ?? EMPTY;
+  const key = `${charId}|${moment}`;
+  let pool = ALIAS_POOLS.get(key);
+  if (!pool) {
+    // kendi replikleri + kaynak anların kısa replikleri; aynı ses (paylaşılan gülme) bir kez
+    const seen = new Set<string>();
+    const out: LineRef[] = [];
+    const add = (l: LineRef): void => {
+      const k = soundKey(l.id);
+      if (!seen.has(k)) {
+        seen.add(k);
+        out.push(l);
+      }
+    };
+    for (const l of d?.[moment] ?? EMPTY) add(l);
+    for (const s of src) for (const l of d?.[s.m] ?? EMPTY) if (s.max === undefined || stripTags(l.tts).length <= s.max) add(l);
+    ALIAS_POOLS.set(key, (pool = out));
+  }
+  return pool;
 }
+const ALIAS_POOLS = new Map<string, readonly LineRef[]>();
 
 export function lineById(id: string): LineRef | undefined {
   return BY_ID.get(id);
@@ -2218,8 +2322,10 @@ export const SAMPLE_IDS: readonly string[] = [
  * always  → her zaman konuşur (pişti, el başı/sonu, Blöf açılışı).
  * event   → olay tepkisi: olasılıklı, son replikten en az EVENT_GAP_MS sonra.
  * chatter → boş laf: olasılıklı, son replikten en az CHATTER_GAP_MS sonra.
+ * table   → masa sohbeti (maç ortası: sıradan alışa kısa tepki, sıra mırıltısı, bot-bot yorum): ChatProfile.table ile ölçeklenir
+ *           (Sakin 0, Normal çok seyrek, Geveze sık); son replikten en az EVENT_GAP_MS sonra.
  */
-export type MomentKind = 'always' | 'event' | 'chatter';
+export type MomentKind = 'always' | 'event' | 'chatter' | 'table';
 export interface MomentRule {
   kind: MomentKind;
   /** Temel konuşma olasılığı (always için yok sayılır). */
@@ -2228,6 +2334,8 @@ export interface MomentRule {
   prio: 1 | 2 | 3;
   /** Aynı anın iki repliği arasında en az bu kadar ms. */
   selfGapMs?: number;
+  /** 'always' ama ikincil (bot→bot yakalama, ikincil tepki…): Sakin'de ChatProfile.soft olasılığıyla söylenir. */
+  soft?: boolean;
 }
 
 export const EVENT_GAP_MS = 3000;
@@ -2278,15 +2386,32 @@ export interface ChatProfile {
   endRevenge: number;
   /** Ana sayfaya dönerken veda repliği olasılığı */
   bye: number;
+  /** Masa sohbeti ('table' anları: sıradan alışa kısa tepki, bot-bot yorum, yığın lafı) olasılık çarpanı; 0 = hiç */
+  table: number;
+  /** Botun kendi sırasında mırıldanmayı deneme zarı (match.ts / blofMatch.ts: her bot sırasında bir kez) */
+  turn: number;
+  /** Kalabalık masa (3–4 koltuk) olasılık düşüşünün ne kadarı uygulanır (1 = tam, 0 = hiç: Geveze'de kalabalık masa daha çok konuşur) */
+  crowd: number;
+  /** Yorgunluk (aynı an tekrarı) + meşgul masa (son 30 sn çok konuşuldu) sönümünün ne kadarı uygulanır (1 = tam) */
+  damp: number;
+  /** Her dağıtımda skor / önde-geride laf atma zarı */
+  lead: number;
+  /** 'soft' büyük anların (bot→bot yakalama tepkileri…) konuşulma olasılığı */
+  soft: number;
 }
 
 /** Seviye profilleri. Normal = önceki ayar (çarpanlar 1). */
 export const CHAT_PROFILES: Readonly<Record<ChatLevel, ChatProfile>> = {
-  // yalnız büyük anlar: olay tepkisi seyrek, boş laf yok, atışma nadir; sonuçta tek replik
-  sakin: {event: 0.4, chatter: 0, gap: 1.6, banter: 0.35, banterHands: 2, reply: 0.6, quip: 0.35, idle: 1.4, midTalk: 0.5, midReply: 0, endMax: 1, endReply: 0, endRevenge: 0, bye: 0},
-  normal: {event: 1, chatter: 1, gap: 1, banter: 1, banterHands: 1, reply: 1, quip: 1, idle: 1, midTalk: 1, midReply: 0.6, endMax: 3, endReply: 1, endRevenge: 0.35, bye: 0.5},
-  // kahvehane: daha çok tepki, takılma ve atışma (yine tek kanal, kararda atışma yok); sonuçta tam karşılıklı dizi
-  geveze: {event: 1.5, chatter: 1.8, gap: 0.7, banter: 2, banterHands: 0.5, reply: 1.3, quip: 1, idle: 0.75, midTalk: 1, midReply: 1, endMax: 3, endReply: 1, endRevenge: 0.75, bye: 0.9},
+  // yalnız büyük anlar: olay tepkisi seyrek, boş laf ve masa sohbeti yok, atışma nadir; sonuçta tek replik
+  sakin: {event: 0.4, chatter: 0, gap: 1.6, banter: 0.35, banterHands: 2, reply: 0.6, quip: 0.35, idle: 1.4, midTalk: 0.5, midReply: 0, endMax: 1, endReply: 0, endRevenge: 0, bye: 0,
+    table: 0, turn: 0, crowd: 1, damp: 1, lead: 0.35, soft: 0.5},
+  // Normal = önceki ayar (çarpanlar 1); masa sohbeti yalnız cılız bir tat (≈ +%15)
+  normal: {event: 1, chatter: 1, gap: 1, banter: 1, banterHands: 1, reply: 1, quip: 1, idle: 1, midTalk: 1, midReply: 0.6, endMax: 3, endReply: 1, endRevenge: 0.35, bye: 0.5,
+    table: 0.12, turn: 0.08, crowd: 1, damp: 1, lead: 0.35, soft: 1},
+  // kahvehane: elde ~8–12 sn'de bir laf (1'e 1), kalabalık masada daha çok; atışma elde birkaç kez, bot botun hamlesine de laf atar
+  // (yine tek kanal, kararda atışma yok); sonuçta tam karşılıklı dizi
+  geveze: {event: 1.6, chatter: 2.2, gap: 0.55, banter: 2.5, banterHands: 0, reply: 1.3, quip: 1, idle: 0.6, midTalk: 1, midReply: 1, endMax: 3, endReply: 1, endRevenge: 0.75, bye: 0.9,
+    table: 1, turn: 0.9, crowd: 0.2, damp: 0.25, lead: 0.8, soft: 1},
 };
 
 let LEVEL: ChatLevel = 'normal';
@@ -2333,32 +2458,71 @@ export const MOMENT_RULES: Readonly<Record<Moment, MomentRule>> = {
   playerFastThrow: {kind: 'event', chance: 0.4, prio: 2, selfGapMs: 15_000},
 
   myTurnIdle: {kind: 'chatter', chance: 1, prio: 1, selfGapMs: 12_000},
-  botThinking: {kind: 'chatter', chance: 0.3, prio: 1, selfGapMs: 20_000},
+  botThinking: {kind: 'chatter', chance: 0.3, prio: 1, selfGapMs: 14_000},
   tableEmpty: {kind: 'chatter', chance: 0.3, prio: 1, selfGapMs: 25_000},
   botLeading: {kind: 'chatter', chance: 0.35, prio: 1, selfGapMs: 40_000},
   playerLeading: {kind: 'chatter', chance: 0.35, prio: 1, selfGapMs: 40_000},
+
+  // masa sohbeti (ChatProfile.table ile ölçeklenir)
+  pileGrows: {kind: 'table', chance: 0.55, prio: 1, selfGapMs: 22_000},
+};
+
+/**
+ * Masa sohbeti: maç ortasında sık, KISA tepkiler. Kendi repliği olmayan anlar var olan havuzlardan beslenir (POOL_ALIAS), böylece
+ * yeni ses üretmeden Geveze masa canlı olur; rastgele sesler tekrar önleme hafızasını (karakter başına son HISTORY) ortak kullanır.
+ *  botCapture    bot sıradan bir alış yaptı (büyük / vale / değerli kart tepkisi söylenmediyse): kısa neşe
+ *  playerCapture oyuncu sıradan bir alış yaptı: rakip bot kısa homurtu (yığını bırakan botsa o)
+ *  rivalCapture  4 kişi / eşli: yığını bırakan rakip bot, başka botun alışına homurdanır
+ *  blofThink     Blöf'te botun sırası (düşünürken mırıltı)
+ *  blofLaugh     Blöf'te başkasının yalanı yakalanınca / yanlış blöf deyince araya kahkaha
+ */
+export const TABLE_MOMENTS = ['botCapture', 'playerCapture', 'rivalCapture', 'blofThink', 'blofLaugh'] as const;
+export type TableMoment = (typeof TABLE_MOMENTS)[number];
+export const TABLE_RULES: Readonly<Record<TableMoment, MomentRule>> = {
+  botCapture: {kind: 'table', chance: 0.5, prio: 1, selfGapMs: 4000},
+  playerCapture: {kind: 'table', chance: 0.5, prio: 1, selfGapMs: 4000},
+  rivalCapture: {kind: 'table', chance: 0.45, prio: 1, selfGapMs: 5000},
+  blofThink: {kind: 'table', chance: 0.5, prio: 1, selfGapMs: 6000},
+  blofLaugh: {kind: 'table', chance: 0.5, prio: 1, selfGapMs: 8000},
+};
+
+/** Havuz kaynağı: karakterin `m` anının replikleri (max: yazısı en çok bu kadar harf — yalnız kısa sesler / tepkiler). */
+export interface PoolSrc {
+  m: string;
+  max?: number;
+}
+/** Kendi repliği olmayan (ya da kendi repliklerine ek olarak) başka anların KISA repliklerinden beslenen masa sohbeti havuzları. */
+export const POOL_ALIAS: Readonly<Record<string, readonly PoolSrc[]>> = {
+  botCapture: [{m: 'botBigCapture', max: 16}],
+  playerCapture: [{m: 'playerBigCapture', max: 16}],
+  rivalCapture: [{m: 'playerBigCapture', max: 16}],
+  blofThink: [{m: 'botThinking'}],
+  blofLaugh: [{m: 'playerDumpedValuable', max: 16}, {m: 'botBigCapture', max: 16}],
 };
 
 /** Blöf anlarının kuralları (anahtar: blofKey). Blöf anı (açılış) hep konuşur; laf atmalar seyrek. */
 export const BLOF_RULES: Readonly<Record<BlofKey, MomentRule>> = {
   blofStart: {kind: 'always', chance: 1, prio: 3},
   blofCallOut: {kind: 'always', chance: 1, prio: 3},
-  blofCatchGloat: {kind: 'always', chance: 1, prio: 3},
+  blofCatchGloat: {kind: 'always', chance: 1, prio: 3, soft: true},
   blofCatchPlayer: {kind: 'always', chance: 1, prio: 3},
   blofCaughtByPlayer: {kind: 'always', chance: 1, prio: 3},
-  blofSurvived: {kind: 'always', chance: 1, prio: 3},
+  blofSurvived: {kind: 'always', chance: 1, prio: 3, soft: true},
   blofSurvivedPlayer: {kind: 'always', chance: 1, prio: 3},
   blofBotWin: {kind: 'always', chance: 1, prio: 3},
   blofPlayerWin: {kind: 'always', chance: 1, prio: 3},
   // ikincil tepkiler (açılıştan ~1 sn sonra; çalan büyük repliği kesmez)
-  blofCaught: {kind: 'always', chance: 1, prio: 2},
-  blofWrongCall: {kind: 'always', chance: 1, prio: 2},
+  blofCaught: {kind: 'always', chance: 1, prio: 2, soft: true},
+  blofWrongCall: {kind: 'always', chance: 1, prio: 2, soft: true},
   blofPass: {kind: 'event', chance: 0.3, prio: 1, selfGapMs: 5000},
   blofBigPile: {kind: 'event', chance: 0.5, prio: 2, selfGapMs: 15_000},
   blofNearWin: {kind: 'event', chance: 0.7, prio: 2, selfGapMs: 20_000},
   blofPlayerNearWin: {kind: 'event', chance: 0.6, prio: 2, selfGapMs: 20_000},
   blofMateCheer: {kind: 'event', chance: 0.6, prio: 2, selfGapMs: 10_000},
   blofIdle: {kind: 'chatter', chance: 1, prio: 1, selfGapMs: 12_000},
+  // masa sohbeti (ChatProfile.table)
+  blofClaim: {kind: 'table', chance: 0.5, prio: 1, selfGapMs: 9000},
+  blofDoubt: {kind: 'table', chance: 0.5, prio: 1, selfGapMs: 9000},
 };
 
 /** Menü (galeri / market) ve oyuncunun hızlı sohbeti: her zaman, en üst öncelik. Atışma ve bot cevabı: 2. */
@@ -2377,6 +2541,7 @@ export function ruleFor(m: string): MomentRule {
   return (
     (MOMENT_RULES as Record<string, MomentRule | undefined>)[m] ??
     (BLOF_RULES as Record<string, MomentRule | undefined>)[m] ??
+    (TABLE_RULES as Record<string, MomentRule | undefined>)[m] ??
     SIDE_RULES[m] ??
     ((META_MOMENTS as readonly string[]).includes(m) ? META_RULE : isEndMoment(m) ? END_RULE : DEFAULT_RULE)
   );
@@ -2707,14 +2872,17 @@ export class DialogueDirector {
     const r = ruleFor(moment);
     if (r.kind !== 'always') {
       const p = this.profile;
-      const mult = r.kind === 'chatter' ? p.chatter : p.event;
+      const mult = r.kind === 'chatter' ? p.chatter : r.kind === 'table' ? p.table : p.event;
       if (mult <= 0) return false;
       if (now - this.lastAt < (r.kind === 'chatter' ? CHATTER_GAP_MS : EVENT_GAP_MS) * p.gap) return false;
       const last = this.lastBy.get(moment);
       if (r.selfGapMs && last !== undefined && now - last < r.selfGapMs * p.gap) return false;
       const same = count(this.spoken.get(moment), now, FATIGUE_WINDOW_MS);
       const busy = count(this.all, now, BUSY_WINDOW_MS);
-      if (rnd() >= Math.min(1, r.chance * mult) * this.crowd * Math.pow(FATIGUE, same) * Math.pow(BUSY_DAMP, busy)) return false;
+      // sönümler seviyeye göre yumuşar: Geveze'de kalabalık masa, sık konuşan masa ve tekrarlanan an eskisi kadar susturmaz
+      const crowd = 1 - (1 - this.crowd) * p.crowd;
+      const tired = Math.pow(1 - (1 - FATIGUE) * p.damp, same) * Math.pow(1 - (1 - BUSY_DAMP) * p.damp, busy);
+      if (rnd() >= Math.min(1, r.chance * mult) * crowd * tired) return false;
     }
     this.note(moment, now);
     return true;
@@ -2810,7 +2978,9 @@ export class DialogueDirector {
    */
   force(charId: string, moment: string, rnd: () => number = Math.random): Line | null {
     if (!linesFor(charId, moment).length) return null;
-    if (ruleFor(moment).kind === 'chatter' && this.profile.chatter <= 0) return null;
+    const r = ruleFor(moment);
+    if ((r.kind === 'chatter' && this.profile.chatter <= 0) || (r.kind === 'table' && this.profile.table <= 0)) return null;
+    if (r.soft && rnd() >= this.profile.soft) return null; // Sakin: ikincil büyük anların yarısı susar
     this.note(moment, this.clock());
     return this.pickLine(charId, moment, rnd);
   }
