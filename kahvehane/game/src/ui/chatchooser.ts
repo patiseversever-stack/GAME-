@@ -11,6 +11,7 @@ import type {ChatSamplePort} from './types';
 import {ANIM, EASE, Scope, esc, h, play, q} from './dom';
 import {I} from './icons';
 import {charAvatarHtml, decorLoops, onAct, type Ctx} from './parts';
+import {shortName} from './lobby';
 import {haptic} from '../platform/bridge';
 
 type SeatPos = 't' | 'l' | 'r';
@@ -150,7 +151,7 @@ export function chatChooser(ctx: Ctx, port?: ChatSamplePort, current: ChatLevel 
         mine = true;
         c.querySelectorAll('.kh-cc__seat.is-talk').forEach(x => x.classList.remove('is-talk'));
         seat?.classList.add('is-talk');
-        cap.innerHTML = `<b>${esc(charById(char).name.split(' ')[0])}:</b> ${esc(text)}`;
+        cap.innerHTML = `<b>${esc(shortName(charById(char)))}:</b> ${esc(text)}`;
         play(cap, [{opacity: 0, transform: 'translateY(4px)'}, {opacity: 1, transform: 'none'}], {duration: 200, easing: EASE.out});
         const ava = seat?.querySelector('.kh-cc__ava');
         if (ava && ANIM) ava.animate([{transform: 'none'}, {transform: 'scale(1.16)', offset: 0.4}, {transform: 'none'}], {duration: 380, easing: 'ease-out'});

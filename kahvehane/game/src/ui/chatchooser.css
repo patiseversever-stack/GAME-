@@ -96,7 +96,13 @@
 .kh-seg.is-chat { flex: 1; min-width: 0; }
 .kh-seg.is-chat button { padding: 0 .1em; white-space: nowrap; font-size: calc(var(--u) * .86); }
 .kh-seg.is-chat button[aria-pressed='true'] { font-size: calc(var(--u) * .92); }
+/* kısa ekranda (360×600) pencere kaydırmasız sığsın: kart sıkışır, satır araları biraz daralır */
 @media (max-height: 700px) {
-  .kh-set__talk { gap: calc(var(--u) * .3); padding-top: calc(var(--u) * .35); }
-  .kh-set__tg { min-height: calc(var(--u) * 2.2); }
+  .kh-settings .kh-set__talk { gap: calc(var(--u) * .15); padding-top: calc(var(--u) * .3); padding-bottom: calc(var(--u) * .35); }
+  .kh-set__tg { min-height: calc(var(--u) * 2.1); }
+  .kh-settings .kh-seg.is-chat button { min-height: 30px; }
+  .kh-settings .kh-set__list { gap: calc(var(--u) * .32); }
+}
+@media (max-height: 640px) {
+  .kh-settings .kh-set__list > .kh-set__row { min-height: calc(var(--u) * 2.7); }
 }
