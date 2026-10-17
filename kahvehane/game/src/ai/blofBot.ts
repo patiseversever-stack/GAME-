@@ -48,8 +48,9 @@ export interface BlofBotParams {
   selfCheck: number;
   /** Açışta/atışta araya bir yalan kart katma eğilimi (kart cinsinden ek değer). */
   greed: number;
-  /** Blöfle kart eritmenin değer çarpanı. */
+  /** Blöfle kart eritmenin değer çarpanı (1'e 1) / kalabalık masada ek çarpan (kahvehanede herkes biraz blöf yapar). */
   bluffLove: number;
+  bluffLoveN: number;
   /** Yakalanınca alınacak yığının ağırlığı (1 = tarafsız beklenen değer; düşük = pervasız). */
   caution: number;
   /** Karar gürültüsü (beklenen değere eklenen sapmanın ölçeği, kart cinsinden). */
@@ -86,6 +87,8 @@ export interface BlofBotParams {
    * kaptırmaktır (yığında yalnız kendi kartların var, geri alırsın) → ustalar sık yapar.
    */
   padOpen2: number;
+  /** Önsel: takipçi elinde o değer yokken pas yerine blöf yapar (kalabalık masada; 1'e 1'de daha sık). */
+  priorBluffN: number;
   /** Eşli masada (takım arkadaşı varken) üzerine yazılan ayarlar. */
   team?: Partial<Omit<BlofBotParams, 'team'>>;
 }
@@ -101,6 +104,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     selfCheck: 0.92,
     greed: 0.25,
     bluffLove: 0.9,
+    bluffLoveN: 1,
     caution: 1,
     noise: 0.75,
     suspicion: -0.8,
@@ -121,6 +125,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempoN: 0.8,
     groupValue: 0,
     padOpen2: 0.12,
+    priorBluffN: 0.38,
   },
   orta: {
     memory: 0.75,
@@ -132,6 +137,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     selfCheck: 0.97,
     greed: 0.05,
     bluffLove: 1.05,
+    bluffLoveN: 1,
     caution: 0.95,
     noise: 0.55,
     suspicion: 0,
@@ -151,7 +157,8 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempo2: 2.5,
     tempoN: 1,
     groupValue: 0.6,
-    padOpen2: 0.3,
+    padOpen2: 0.25,
+    priorBluffN: 0.38,
   },
   zor: {
     memory: 0.93,
@@ -163,6 +170,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     selfCheck: 1,
     greed: 0.1,
     bluffLove: 1.1,
+    bluffLoveN: 1,
     caution: 1,
     noise: 0.3,
     suspicion: 0,
@@ -182,7 +190,8 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempo2: 2.5,
     tempoN: 1,
     groupValue: 0.6,
-    padOpen2: 0.5,
+    padOpen2: 0.45,
+    priorBluffN: 0.38,
   },
 };
 
@@ -204,7 +213,6 @@ const pFinish = (h: number): number => (h < PFIN.length ? PFIN[h] : 0);
 const BLUFF_K = [0, 0.62, 0.33, 0.04, 0.01];
 /** Takipçi elinde yokken pas yerine blöf yapma olasılığı (1'e 1'de pas pahalı → daha sık). */
 const BLUFF_F2 = 0.65;
-const BLUFF_FN = 0.38;
 /** Doğrunun yanına bir yalan kart katma (takipçi / açan), elinde olanı tutup yalan atma, hiç tutmadığı değeri açma. */
 const PAD_F = 0.12;
 const PAD_O = 0.07;
@@ -609,6 +617,24 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     return Math.max(0, unknown);
   }
 
+  /** Kart saymadan: s koltuğunun elinde bu değerden kaç kopya olabileceği (bilmediğim kopyalar eşit dağılmış). */
+  private naiveCopies(v: BlofView, s: number, rank: number): void {
+    let mine = 0;
+    for (const c of v.hand) if (rankOf(c) === rank) mine++;
+    let pool = 52 - v.hand.length;
+    for (let su = 0; su < 4; su++) {
+      const c = su * 13 + rank - 1;
+      if (this.loc[c] === PILE || this.loc[c] === DISC) {
+        mine++;
+        pool--;
+      }
+    }
+    const unknown = Math.max(0, 4 - mine);
+    const p = pool > 0 ? clamp(v.handCounts[s] / pool, 0, 1) : 0;
+    for (let i = 0; i < unknown; i++) this.prob[i] = p;
+    this.fold(unknown);
+  }
+
   /** Son atış yalan olasılığı (bu botun bilgisiyle). */
   lieProbability(v: BlofView): number {
     const w = v.window;
@@ -649,7 +675,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     if (possible < k) return this.rnd() < this.p.notice ? 1 : 0.5;
     const d = this.dist;
     const mul = this.lieMul(x, opening);
-    const bluffF = v.seats === 2 ? BLUFF_F2 : BLUFF_FN;
+    const bluffF = v.seats === 2 ? BLUFF_F2 : this.p.priorBluffN;
     let pt = 0;
     let pl = 0;
     for (let j = 0; j <= 4; j++) {
@@ -804,8 +830,9 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         const base = this.callRate(s, opps.length, opening);
         const shape = (opening ? (k === 4 ? 1.2 : 1) : k === 1 ? 1 : k === 2 ? 1.4 : k === 3 ? 1.8 : 2.2) * (after <= 2 ? 1.5 : 1) * (1 + 0.03 * v.pileCount);
         ps = Math.min(0.9, base * shape);
-        if (lie && this.p.counting) {
-          // rakip kendi elinden görür mü: elinde (5 − masadaki iddialar − k) ya da fazla kopya varsa yalan ona apaçık
+        if (lie) {
+          // rakip kendi elinden ne görür: elinde (5 − masadaki iddialar − k) ya da fazla kopya varsa yalan ona apaçık;
+          // birkaç kopya tutuyorsa da kuşkulanır (iddiam onun elindekilerle zor tutar)
           const need = 5 - claimed - k;
           if (need <= 0) ps = 0.92;
           else {
@@ -815,10 +842,12 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
               if (pl.seat === s) sOwn += pl.count;
               else if (pl.seat !== this.seat) sOther += pl.count;
             }
-            this.holdDist(this.loc, this.likely, v, s, rank, 0, 0, sOther, sOwn > 0 ? 1 : 0);
+            if (this.p.counting) this.holdDist(this.loc, this.likely, v, s, rank, 0, 0, sOther, sOwn > 0 ? 1 : 0);
+            else this.naiveCopies(v, s, rank);
             let know = 0;
             for (let j = need; j <= 4; j++) know += this.dist[j];
-            ps = know * 0.95 + (1 - know) * ps;
+            const some = 1 - this.dist[0];
+            ps = know * 0.95 + (1 - know) * Math.min(0.9, ps * (1 + 2 * some));
           }
         }
       }
@@ -870,7 +899,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     const T = this.tempo(v);
     const To = this.oppTempo(v);
     const greed = this.p.greed;
-    const love = this.p.bluffLove * this.bluffy;
+    const love = this.p.bluffLove * this.bluffy * (v.seats === 2 ? 1 : this.p.bluffLoveN);
     let claimed = 0;
     for (const pl of v.roundPlays) claimed += pl.count;
     /** İddiam masayı 4'ün üstüne çıkarıyor ve bunu fark ettim → yapma. */
