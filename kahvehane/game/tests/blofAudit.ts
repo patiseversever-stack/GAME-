@@ -14,7 +14,7 @@ export type AuditSeat =
   | BlofDifficulty
   | {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>}
   /** Karma (deney): sıra kararları bir beyinden, pencere kararları diğerinden. */
-  | {hybrid: {turn: BlofDifficulty | 'casual'; window: BlofDifficulty | 'casual'}};
+  | {hybrid: {turn: BlofDifficulty | 'casual'; window: BlofDifficulty | 'casual'; open?: BlofDifficulty | 'casual'}};
 
 /** Karar veren beyin (BlofBot ya da sabit kurallı insan vekili). */
 interface Brain {
@@ -221,12 +221,14 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
       const mk = (d: BlofDifficulty | 'casual', k: number): Brain => (d === 'casual' ? new CasualHuman(i, bs + k) : new BlofBot(i, d, bs + k));
       const t = mk(sp.hybrid.turn, 0);
       const w = mk(sp.hybrid.window, 1);
+      const op = mk(sp.hybrid.open ?? sp.hybrid.turn, 2);
       return {
         observe: (e: BlofEvent) => {
           t.observe(e);
           w.observe(e);
+          op.observe(e);
         },
-        decide: (v: BlofView) => (v.canChallenge ? w.decide(v) : t.decide(v)),
+        decide: (v: BlofView) => (v.canChallenge ? w.decide(v) : v.mustOpen ? op.decide(v) : t.decide(v)),
       };
     }
     const d = isHuman(sp) ? sp.human : sp;

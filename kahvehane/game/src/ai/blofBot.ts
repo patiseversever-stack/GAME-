@@ -137,7 +137,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempo2: 2.5,
     tempoN: 1,
     groupValue: 1,
-    followWeight: 1,
+    followWeight: 0,
   },
   zor: {
     memory: 0.93,
@@ -165,7 +165,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempo2: 2.5,
     tempoN: 1,
     groupValue: 1,
-    followWeight: 1,
+    followWeight: 0,
   },
 };
 
