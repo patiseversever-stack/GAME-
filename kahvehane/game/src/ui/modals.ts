@@ -28,7 +28,7 @@ export function pause(ctx: Ctx, leave?: {sub: string; btn?: string}): Promise<'r
     </div>`;
     const confirm = `<div class="kh-confirm">
       <div class="kh-confirm__t">Masadan kalkıyor musun?</div>
-      <div class="kh-confirm__s">${leave?.sub ?? 'Maçı bırakırsan bahsi kaybedersin.'}</div>
+      <div class="kh-confirm__s">${leave?.sub ?? 'Masadan kalkarsan bahsi kaybedersin ve maç kayıp sayılır (Tek El dahil her maçta).'}</div>
       <div class="kh-confirm__row">
         <button class="kh-btn kh-btn--2" data-act="back">Vazgeç</button>
         <button class="kh-btn kh-btn--3" data-act="sure">${I.exit}${leave?.btn ?? 'Bırak'}</button>
@@ -146,19 +146,19 @@ export function rules(ctx: Ctx, game: Game = 'pisti', deck = 'yildizli'): Promis
     };
     const arrow = '<span class="kh-step__arrow">➜</span>';
     const pisti: RuleStep[] = [
-      {art: `${fan([back(), back(), mc('7', '♦')])}${arrow}${mc('7', '♠', 'is-glow')}`, t: 'Aynısını at, topla', d: 'Ortadaki <b>üst kartın aynısını</b> atarsan yığının tamamı senin.'},
+      {art: `${fan([back(), back(), mc('7', '♦')])}${arrow}${mc('7', '♠', 'is-glow')}`, t: 'Aynısını at, topla', d: 'Ortadaki <b>üst kartın aynısını</b> atarsan yığının tamamı senin. Alttaki <b>3 kapalı kartı</b> yalnız alan görür.'},
       {art: `${fan([mc('K', '♥'), mc('4', '♣'), mc('9', '♦')])}${arrow}${mc('J', '♣', 'is-glow')}`, t: 'Vale hepsini alır', d: '<b>Vale</b> atınca ortadaki bütün kartları toplarsın.'},
       {art: `${mc('5', '♥')}${arrow}${mc('5', '♣', 'is-glow')}<span class="kh-step__badge">+10</span>`, t: 'Pişti!', d: 'Tek kartın üstüne aynısı: <b>10 puan</b>. Vale üstüne vale: <b>20 puan</b>.'},
       {art: '', t: 'Puanlar', d: `<div class="kh-pts">${[['As', '1'], ['Vale', '1'], ['Sinek 2', '2'], ['Karo 10', '3'], ['En çok kart', '3'], ['Pişti', '10'], ['Vale pişti', '20'], ['Kazanan', 'en yüksek']]
         .map(([a, b]) => `<div><span>${a}</span><b>${b}</b></div>`).join('')}</div>`},
-      {art: '', t: 'Uzun maç: 51 · 101 · 151', d: 'Eller art arda dağıtılır, puanlar toplanır; dağıtan her el sırayla değişir. Bir elin sonunda hedefi geçen olursa <b>en yüksek toplam</b> kazanır. En yüksekte eşitlik varsa <b>bir el daha</b> oynanır.'},
+      {art: '', t: 'Uzun maç: 51 · 101 · 151', d: 'Eller art arda dağıtılır, puanlar toplanır; dağıtan her el sırayla değişir. Bir elin sonunda hedefi geçen olursa <b>en yüksek toplam</b> kazanır. En yüksekte eşitlik varsa <b>bir el daha</b> oynanır. <b>Masadan kalkarsan bahsi kaybedersin</b> (Tek El dahil her maçta).'},
     ];
     const blof: RuleStep[] = [
       {art: `${fan([back(), back(), back()])}${arrow}${call('3', '7')}`, t: 'Söyle ve kapalı at', d: 'Turu açan bir <b>değer</b> söyler, <b>1–4 kartı kapalı</b> atar. Doğruyu söylemek şart değil!'},
       {art: `${fan([back(), back()])}${arrow}<span class="kh-call is-pass"><b>Pas</b></span>`, t: 'Aynısı ya da Pas', d: 'Sıradakiler <b>aynı değeri</b> söyleyip 1–4 kart atar ya da <b>Pas</b> der. Herkes pas derse yığın kalkar.'},
-      {art: `${fan([back(), back(), back()])}${arrow}${mc('K', '♥', 'is-glow')}<span class="kh-step__badge is-red">BLÖF!</span>`, t: 'Blöf de, yakala', d: 'Her atıştan sonra <b>5 sn</b> içinde “Blöf!” de. <b>Yalansa</b> yığını atan, <b>doğruysa</b> sen alırsın.'},
+      {art: `${fan([back(), back(), back()])}${arrow}${mc('K', '♥', 'is-glow')}<span class="kh-step__badge is-red">BLÖF!</span>`, t: 'Blöf de, yakala', d: 'Her atıştan sonra “Blöf!” diyebilirsin: sıra sendeyse <b>5 sn</b>, değilse <b>3 sn</b>. <b>Yalansa</b> yığını atan alır, üstüne <b>kenardan 2 ceza kartı</b>; <b>doğruysa</b> yığın sana.'},
       {art: `${mc('A', '♠', 'is-glow')}<span class="kh-step__crown">${I.crown}</span>`, t: 'İlk bitiren kazanır', d: 'Kartlarını <b>ilk bitiren</b> kazanır. Son karta da blöf denebilir! Eşlide takım birlikte kazanır.'},
-      {art: '', t: 'Seri: 3 El · 5 El', d: 'Her elde bitiren <b>0</b>, diğerleri <b>elinde kalan kart kadar ceza</b> alır (eşlide kaybeden takımın iki oyuncusunun toplamı). Seri sonunda <b>en az ceza</b> kazanır; eşitlikte çok el kazanan. Sonraki eli en çok kartı kalan açar.'},
+      {art: '', t: 'Seri: 3 El · 5 El', d: 'Her elde bitiren <b>0</b>, diğerleri <b>elinde kalan kart kadar ceza</b> alır (eşlide kaybeden takımın iki oyuncusunun toplamı). Seri sonunda <b>en az ceza</b> kazanır; eşitlikte çok el kazanan. Sonraki eli en çok kartı kalan açar. <b>Masadan kalkarsan bahsi kaybedersin</b> (Tek El dahil her maçta).'},
     ];
     const both = BLOF.available();
     let cur: Game = both ? game : 'pisti';

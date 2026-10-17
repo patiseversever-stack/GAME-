@@ -1,6 +1,7 @@
 import {describe, expect, it} from 'vitest';
 import {applyPlay, createGame, legalMoves, scoreGame, viewFor} from '../src/core/pisti';
 import {mulberry32, shuffle} from '../src/core/rng';
+import {HIDDEN_CARD, pistiEngine} from '../src/core/pistiEngine';
 import {cardId, isJack, rankOf, type CardId, type PistiConfig, type PistiEvent, type PistiState} from '../src/core/types';
 
 const CONFIGS: PistiConfig[] = [
@@ -212,6 +213,47 @@ describe('tam oyun değişmezleri', () => {
     expect(res.sides[0].cards).toBe(state.captured[0].length + state.captured[2].length);
     const solo = scoreGame(playRandom({seats: 4, teams: [0, 1, 2, 3], dealer: 0, seed: 11}).state);
     expect(solo.sides.map((s) => s.side)).toEqual([0, 1, 2, 3]);
+  });
+});
+
+describe('Pişti: baştaki kapalı masa kartları (yalnız alan görür)', () => {
+  const pile = [C('H', 2), C('D', 10), C('C', 2), C('D', 8)]; // ilk üçü kapalı (♦10 ve ♣2 değerli)
+  it('yakalama olayı kaç kartın kapalı olduğunu söyler; yalnız ilk yakalamada', () => {
+    const s = mk({pile, pileHiddenCount: 3, hands: [[C('S', 8), C('S', 3)], [C('D', 4), C('S', 4)]]});
+    const r = applyPlay(s, 0, C('S', 8));
+    expect(r.events[1]).toEqual({t: 'capture', seat: 0, cards: [...pile, C('S', 8)], pisti: 0, hidden: 3});
+    expect(r.state.captured[0]).toEqual([...pile, C('S', 8)]); // puan sayımı için motor her şeyi bilir
+    // sonraki yakalamalarda kapalı kart yok
+    const r2 = applyPlay(applyPlay(r.state, 1, C('D', 4)).state, 0, C('S', 3));
+    expect(r2.events.find((e) => e.t === 'capture')).toBeUndefined();
+    const r3 = applyPlay(mk({pile: [C('H', 5), C('D', 9)], hands: [[C('S', 9), C('S', 2)], [C('D', 4)]]}), 0, C('S', 9));
+    expect(r3.events[1]).toEqual({t: 'capture', seat: 0, cards: [C('H', 5), C('D', 9), C('S', 9)], pisti: 0});
+  });
+
+  it('süzme: alan kapalı kartların yüzünü görür, diğer koltuklar (ve seyirci) kapalı (−1) görür; sayı ve açık kartlar herkese', () => {
+    const s = mk({cfg: {seats: 4, teams: [0, 1, 0, 1], dealer: 3, seed: 1}, pile, pileHiddenCount: 3, hands: [[C('S', 2)], [C('S', 8), C('S', 3)], [C('D', 3)], [C('H', 4)]], captured: [[], [], [], []], pistiPoints: [0, 0, 0, 0], turn: 1});
+    const cap = applyPlay(s, 1, C('S', 8)).events[1] as Extract<PistiEvent, {t: 'capture'}>;
+    for (let seat = -1; seat < 4; seat++) {
+      const x = pistiEngine.redact(cap, seat) as Extract<PistiEvent, {t: 'capture'}>;
+      expect(x.cards.length).toBe(5);
+      expect(x.hidden).toBe(3);
+      expect(x.cards.slice(3)).toEqual([C('D', 8), C('S', 8)]);
+      // eşlide ortak (3) da görmez: kapalı kartı YALNIZ alan görür
+      expect(x.cards.slice(0, 3)).toEqual(seat === 1 ? pile.slice(0, 3) : [HIDDEN_CARD, HIDDEN_CARD, HIDDEN_CARD]);
+    }
+    expect(cap.cards[0]).toBe(C('H', 2)); // süzme kopya üretir
+  });
+
+  it('kimse hiç almadıysa son süpürmede de kapalı kartlar yalnız alana açık', () => {
+    const s = mk({cfg: {seats: 2, teams: [0, 1], dealer: 1, seed: 1}, pile, pileHiddenCount: 3, hands: [[C('S', 6)], []], turn: 0});
+    const r = applyPlay(s, 0, C('S', 6));
+    const sw = r.events[1] as Extract<PistiEvent, {t: 'finalSweep'}>;
+    expect(sw).toEqual({t: 'finalSweep', seat: 1, cards: [...pile, C('S', 6)], hidden: 3});
+    expect((pistiEngine.redact(sw, 1) as typeof sw).cards).toEqual([...pile, C('S', 6)]);
+    expect((pistiEngine.redact(sw, 0) as typeof sw).cards).toEqual([HIDDEN_CARD, HIDDEN_CARD, HIDDEN_CARD, C('D', 8), C('S', 6)]);
+    // el sonu sayımı herkese açık: puanlar kapalı kartları da sayar
+    const go = r.events[2] as Extract<PistiEvent, {t: 'gameOver'}>;
+    expect(go.result.sides[1]).toMatchObject({club2: 2, diamond10: 3});
   });
 });
 

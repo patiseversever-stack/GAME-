@@ -91,6 +91,47 @@ describe('Pişti botu: hile yok', () => {
     }
   });
 
+  it('alınan kapalı masa kartları: ev sahibi yalnız alana açar; alan bot onları "görülmüş" sayar, diğerleri hiç bilmez', () => {
+    for (const cfg of [{seats: 2, teams: [0, 1], dealer: 1, seed: 52}, {seats: 4, teams: [0, 1, 2, 3], dealer: 0, seed: 53}, {seats: 4, teams: [0, 1, 0, 1], dealer: 2, seed: 54}] as PistiConfig[]) {
+      const clock = new VirtualClock();
+      const seen: PistiEvent[][] = Array.from({length: cfg.seats}, () => []);
+      const brains = Array.from({length: cfg.seats}, (_, s) => {
+        const b = new PistiBotBrain(s, P.defne, 300 + s);
+        const orig = b.observe.bind(b);
+        b.observe = (e: PistiEvent) => {
+          seen[s].push(e);
+          orig(e);
+        };
+        return b;
+      });
+      const host = new LocalHost(pistiEngine, cfg, {seats: brains.map((brain) => ({kind: 'bot' as const, brain})), clock});
+      const hidden = createGame(cfg).state.pile.slice(0, 3); // dağıtımın kapalı üçü
+      host.start();
+      clock.runAll();
+      expect(host.over).toBe(true);
+      let capturer = -1;
+      seen.forEach((evs, seat) => {
+        for (const e of evs) {
+          if ((e.t === 'capture' || e.t === 'finalSweep') && e.hidden) {
+            capturer = e.seat;
+            expect(e.cards.slice(0, e.hidden)).toEqual(e.seat === seat ? hidden : [HIDDEN_CARD, HIDDEN_CARD, HIDDEN_CARD]);
+          }
+          // gizli kartların kimliği başka hiçbir olayda bu koltuğa gelmez (alan değilse)
+          if (seat !== capturer && e.t !== 'gameOver') {
+            const ids = e.t === 'tableDeal' ? e.cards : e.t === 'handDeal' ? e.deals.map((d) => d.card) : e.t === 'play' ? [e.card] : e.cards;
+            for (const c of hidden) expect(ids.includes(c)).toBe(false);
+          }
+        }
+      });
+      expect(capturer).toBeGreaterThanOrEqual(0);
+      // bot hafızası: kapalı kartları yalnız alan bilir (oynanmadıkları için başka yoldan görülemez)
+      brains.forEach((b, seat) => {
+        const bot = (b as unknown as {bot: PistiBot}).bot;
+        for (const c of hidden) expect(bot.knows(c)).toBe(seat === capturer);
+      });
+    }
+  });
+
   it('ev sahibi üzerinden bot beyni yalnız kendi kartlarını ve açık masa kartını görür', () => {
     const cfg: PistiConfig = {seats: 4, teams: [0, 1, 0, 1], dealer: 2, seed: 31};
     const clock = new VirtualClock();

@@ -97,9 +97,9 @@ function rowHtml(s: SeriesState, v: SideView, frame: string, live: boolean): str
   </div>`;
 }
 
-/** Onay metni: "Maçı bırakırsan masadaki 🪙 500 bahsi kaybedersin." */
+/** Onay metni: "Masadan kalkarsan masadaki 🪙 500 bahsi kaybedersin ve maç kayıp sayılır." */
 const stakeLine = (stake: number): string =>
-  stake > 0 ? `Maçı bırakırsan masadaki <span class="kh-confirm__stake"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(stake)}</b></span> bahsi kaybedersin.` : 'Maçı bırakırsan bu maç kayıp sayılır.';
+  stake > 0 ? `Masadan kalkarsan masadaki <span class="kh-confirm__stake"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(stake)}</b></span> bahsi kaybedersin ve maç kayıp sayılır.` : 'Masadan kalkarsan bu maç kayıp sayılır.';
 
 const title = (s: SeriesState) => `${matchTitle(s.game, s.mode)} · ${LENGTH_INFO[s.len].title}`;
 

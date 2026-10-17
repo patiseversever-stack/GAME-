@@ -48,8 +48,8 @@ export const TUTORIAL = {
   select: 'Kartına dokun: o değerden bir kart kalkar, basılı tutarsan hepsi. O değerden olmasa da olur… kimse görmüyor!',
   selectSpread: 'Atmak istediğin kartlara dokun (1–4 kart). O değerden olmasa da olur… kimse görmüyor!',
   play: 'Kartların kalktı! İstersen başka kart da ekle — yalan serbest. Sonra AT\'a bas.',
-  blof: 'Kartları kapalı attım. İnanmıyorsan BLÖF de — ya da yığına dokun!',
-  blofOther: 'Bu atışa inanıyor musun? İnanmıyorsan BLÖF de — ya da yığına dokun!',
+  blof: 'Kartları kapalı attım. İnanmıyorsan BLÖF de — ya da yığına dokun! Yalansa yığın, üstüne kenardan 2 ceza kartı bana.',
+  blofOther: 'Bu atışa inanıyor musun? İnanmıyorsan BLÖF de — ya da yığına dokun! Yalansa yığını o alır, üstüne 2 ceza kartı.',
   pass: 'O değerden varsa yeşil düğmeye dokun, hepsi kalksın. Yoksa PAS de — herkes pas derse son atan yeni turu açar.',
   done: 'İşte bu kadar evlat! Gerisi senin elinde. Önce kartlarını bitiren kazanır.',
 };

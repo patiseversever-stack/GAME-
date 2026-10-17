@@ -107,7 +107,9 @@ export async function runApp(d: AppDeps): Promise<void> {
   let tableStake = 0;
   /** Ara skorda son konuşan (karakter:an) */
   let lastSpoken = '';
-  const leaveText = (stake: number) => (stake > 0 ? `Maçı bırakırsan masadaki ${fmt(stake)} jetonluk bahsi kaybedersin.` : 'Maçı bırakırsan bu maç kayıp sayılır.');
+  // her maç uzunluğunda aynı kural (Tek El dahil): kalkmak = bahis yanar + maç kaybı
+  const leaveText = (stake: number) =>
+    stake > 0 ? `Masadan kalkarsan masadaki ${fmt(stake)} jetonluk bahsi kaybedersin ve maç kayıp sayılır — Tek El'de de.` : 'Masadan kalkarsan bu maç kayıp sayılır.';
   /** Ayarlar penceresindeki "Blöf el düzeni" satırı: profile yazar; Blöf eli sürüyorsa ve masa destekliyorsa anında uygular. */
   const handOption = (): HandOption | undefined => {
     if (!BLOF.available()) return undefined;
