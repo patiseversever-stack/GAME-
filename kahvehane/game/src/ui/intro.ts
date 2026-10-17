@@ -6,7 +6,7 @@ import {GAME_ICON} from './gameicons';
 import {ANIM, EASE, Scope, countUp, esc, fmt, h, play, q} from './dom';
 import {ASSETS} from './assets';
 import {arenaHtml, gemHtml, hideUnder, wordmarkHtml, type Ctx} from './parts';
-import {g3} from './fx';
+import {g3, paintFlash} from './fx';
 import {suitSvg, type SuitKey} from './icons';
 import {haptic} from '../platform/bridge';
 import {ctx2d, radial} from '../platform/tex';
@@ -264,9 +264,9 @@ function paintStripe(cv: HTMLCanvasElement, bg: string, tile: number, tileA: num
     g.restore();
   }
   if (edge) {
-    // ::before: 5 px ışık çizgisi + altında 2 px gölge (box-shadow 0 2px 0)
+    // ::before: 5 px ışık çizgisi + altında 2 px gölge (box-shadow 0 2px 0: kutunun altında kalan kısım görünmez → yalnız 5..7)
     g.fillStyle = 'rgba(10,16,51,.45)';
-    g.fillRect(0, 2, w, 5);
+    g.fillRect(0, 5, w, 2);
     g.fillStyle = cssLinear(g, edge.seam, w, 5) ?? '#fff';
     g.fillRect(0, 0, w, 5);
   }
@@ -326,7 +326,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
     <div class="kh-vs__stake"><span>Masa</span><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(stake)}</b></div>
     <div class="kh-vs__load"><span class="kh-vs__suits">${(['h', 'd', 'c', 's'] as SuitKey[]).map(k => `<i class="is-${k}">${suitSvg(k)}</i>`).join('')}</span>
       <span class="kh-vs__lt"><b class="is-a">Masa kuruluyor</b><b class="is-b">Hazır!</b></span><i class="kh-vs__bar"><b></b></i></div>
-    <div class="kh-vs__flash"></div>`;
+    <canvas class="kh-vs__flash"></canvas>`;
   ctx.layer.append(el);
   paintRays(q(el, '.kh-vs__rays') as HTMLCanvasElement);
   const cvs = (s: string) => Array.from(el.querySelectorAll<HTMLCanvasElement>(s));
@@ -334,6 +334,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   cvs('.kh-vs__ring.is-b').forEach(c => radial(c, RING_B, false, true));
   cvs('.kh-vs__glow').forEach(c => radial(c, SIDE_GLOW, false, true));
   cvs('.kh-vs__glint').forEach(paintGlint);
+  cvs('.kh-vs__flash').forEach(paintFlash);
   {
     // yarımlar / şeritler: CSS değişkenlerindeki gradyanlar, desen boyu --u'dan (ölçü için tek bir yerleşim okuması)
     const cs = getComputedStyle(el);

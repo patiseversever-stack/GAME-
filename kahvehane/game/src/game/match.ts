@@ -404,7 +404,7 @@ export class Match {
     if (cap) {
       this.streak[seat]++;
       if (this.streak[seat] >= 2) {
-        const sp = table.stackPoint(seat);
+        const sp = table.scorePoint(seat);
         hud.combo(seat, this.streak[seat], sp.x, sp.y - table.L.ch * 0.75);
         if (seat === 0) haptic('light');
       }
@@ -437,7 +437,7 @@ export class Match {
         const base = this.state.captured[e.seat].length - e.cards.length;
         await table.collect(e.seat, null, i => hud.tickCards(e.seat, base + i + 1));
         this.stats();
-        const sp = table.stackPoint(e.seat);
+        const sp = table.scorePoint(e.seat);
         hud.popScore(sp.x, sp.y, `+${e.cards.length}`, 'white');
       } else if (e.t === 'gameOver') result = e.result;
     }
@@ -593,7 +593,7 @@ export class Match {
     const base = this.state.captured[seat].length - cap.cards.length;
     await table.collect(seat, pistiCard, i => hud.tickCards(seat, base + i + 1));
     this.stats();
-    const sp = table.stackPoint(seat);
+    const sp = table.scorePoint(seat);
     hud.popScore(sp.x, sp.y, `+${cap.cards.length}`, 'white');
     this.pileOwner.clear();
   }
@@ -676,8 +676,8 @@ export class Match {
     if (this.aborted) return 'draw';
     const esli = this.setup.mode === 'esli';
     const rows = Array.from({length: this.seats}, (_, s) => {
-      const p = table.stackPoint(s);
-      return {seat: s, cards: this.state.captured[s].length, x: p.x, y: p.y - table.L.ch * 0.12};
+      const p = table.tallyPoint(s);
+      return {seat: s, cards: this.state.captured[s].length, x: p.x, y: p.y};
     });
     const maj = result.sides.find(sd => sd.majority > 0);
     const majSeat = maj ? (esli ? (maj.side === this.team(0) ? 0 : this.foes(0)[0] ?? -1) : maj.seats[0]) : -1;

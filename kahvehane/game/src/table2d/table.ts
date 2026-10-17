@@ -114,6 +114,8 @@ interface Layout {
   deck: {x: number; y: number; s: number};
   hand: {x: number; y: number; s: number; maxW: number};
   seats: SeatGeo[];
+  /** "+N" yazısının yükselirken çıkabileceği en üst y (duraklat / sohbet düğmelerinin altı) */
+  popTop: number;
 }
 
 /** Havuz: sabit sayıda düğüm; boşta olan tekrar kullanılır (yeni düğüm üretilmez). tag 'canvas': doku katmanı düğümü. */
@@ -461,7 +463,7 @@ export class Table2D {
         {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1, py, padj: padjL, pnew: true, pspan: leftSpan},
       ];
     }
-    this.L = {W, H, cw, ch, pile: {x: W / 2, y: pileY}, deck, hand, seats};
+    this.L = {W, H, cw, ch, pile: {x: W / 2, y: pileY}, deck, hand, seats, popTop: u * 0.6 + Math.max(44, u * 3) + 4};
     this.pillDy = -u * 0.15;
     // ipucu hapının yeri HUD'a CSS değişkeniyle (hud.css: var(--kh-hint-bottom…)); Blöf kendi yerini kullanır.
     // HUD kökünde yazılır (yalnız onun alt ağacı yeniden hesaplanır); HUD henüz yoksa (açılış) belge kökünde.
@@ -717,6 +719,18 @@ export class Table2D {
   stackPoint(seat: number): {x: number; y: number} {
     const s = this.L.seats[seat].stack;
     return {x: s.x, y: s.y - this.L.ch * s.s * 0.6};
+  }
+  /** "+N" yazısının çıkış yeri: yığının üstü; yazı (~78 px yükselir) üst köşedeki düğmelere varacaksa yığının altı. */
+  scorePoint(seat: number): {x: number; y: number} {
+    const s = this.L.seats[seat].stack;
+    const half = this.L.ch * s.s * 0.6;
+    return {x: s.x, y: s.y - half - 78 < this.L.popTop ? s.y + half + 14 : s.y - half};
+  }
+  /** El sonu sayaç hapının yeri (hap bu noktanın üstünde durur): yığının üstü; üst köşedeki düğmelere değecekse yığının altı. */
+  tallyPoint(seat: number): {x: number; y: number} {
+    const s = this.L.seats[seat].stack;
+    const half = this.L.ch * s.s * 0.6, y = s.y - half - this.L.ch * 0.12;
+    return {x: s.x, y: y - 36 < this.L.popTop ? s.y + half + 36 : y};
   }
   pilePoint(): {x: number; y: number} {
     return {...this.L.pile};

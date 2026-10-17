@@ -4,7 +4,7 @@
 // klasik (Zafer Işığı) · altin · havai · yildiz · simsek · lale · nazar · tac (Taç Giyme) · girdap (Kozmik Girdap).
 // Yalnız transform + opacity; düğümler havuzdan gelir, iş bitince gizlenir (yeni düğüm üretilmez).
 import {cancelAnims} from '../platform/anim';
-import {radial} from '../platform/tex';
+import {ctx2d, radial} from '../platform/tex';
 import './fx.css';
 import {ANIM, EASE, esc, h, play} from './dom';
 import {ASSETS, OPTIONAL_ART} from './assets';
@@ -52,9 +52,33 @@ const hide = (n: HTMLElement) => {
   cancelAnims(n);
 };
 
+/**
+ * Tam ekran yumuşak ışık patlaması (eski --flash: radial-gradient(circle at 50% 46%, …)) küçük tuvale: tam ekran bir DOM gradyanı
+ * dpr 2,6'da ≈ 10 MB karo demek ve her parlamada (pişti, VS darbesi) yeniden taranırdı. Tuval kutunun en-boy oranında (128 px
+ * genişlik); oran değişince (döndürme) yeniden çizilir.
+ */
+export function paintFlash(cv: HTMLCanvasElement): void {
+  const w = cv.clientWidth || innerWidth, hh = cv.clientHeight || innerHeight;
+  const W = 128, H = Math.max(8, Math.min(1024, Math.round((128 * hh) / Math.max(1, w))));
+  if (cv.width === W && cv.height === H && cv.dataset.p) return;
+  cv.width = W;
+  cv.height = H;
+  cv.dataset.p = '1';
+  const g = ctx2d(cv);
+  if (!g) return;
+  const cx = W * 0.5, cy = H * 0.46, r = Math.hypot(Math.max(cx, W - cx), Math.max(cy, H - cy)); // farthest-corner
+  const gr = g.createRadialGradient(cx, cy, 0, cx, cy, r);
+  gr.addColorStop(0, 'rgba(255,226,120,.62)');
+  gr.addColorStop(0.18, 'rgba(255,190,70,.3)');
+  gr.addColorStop(0.4, 'rgba(90,120,255,.16)');
+  gr.addColorStop(0.64, 'rgba(61,91,255,0)');
+  g.fillStyle = gr;
+  g.fillRect(0, 0, W, H);
+}
+
 export class Fx {
   readonly el = h('div', 'kh-fx');
-  private flashEl = h('div', 'kh-flash');
+  private flashEl = h('canvas', 'kh-flash');
   /** Yıldız yağmurunda ışığı kısan katman (HUD bunu kendi altına taşır: kahraman kararmasın). */
   readonly nightEl = h('div', 'kh-night');
   private coins: HTMLElement[] = [];
@@ -110,6 +134,7 @@ export class Fx {
 
   /** Tam ekran kısa, yumuşak renkli ışık patlaması (yalnız opaklık; beyaz patlama yok). */
   flash(peak = 0.8, ms = 340): void {
+    paintFlash(this.flashEl);
     play(this.flashEl, [{opacity: 0}, {opacity: peak, offset: 0.12}, {opacity: 0}], {duration: ms, easing: 'ease-out'}, 1);
   }
 
