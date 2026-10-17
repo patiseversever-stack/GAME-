@@ -4,6 +4,7 @@
 // klasik (Zafer Işığı) · altin · havai · yildiz · simsek · lale · nazar · tac (Taç Giyme) · girdap (Kozmik Girdap).
 // Yalnız transform + opacity; düğümler havuzdan gelir, iş bitince gizlenir (yeni düğüm üretilmez).
 import {cancelAnims} from '../platform/anim';
+import {radial} from '../platform/tex';
 import './fx.css';
 import {ANIM, EASE, esc, h, play} from './dom';
 import {ASSETS, OPTIONAL_ART} from './assets';
@@ -203,11 +204,13 @@ export class Fx {
     const word = jack ? 'VALE PİŞTİ!' : 'PİŞTİ!';
     this.stampEl.className = 'kh-stamp is-on' + (jack ? ' is-jack' : '') + (bare ? ' is-bare' : '');
     this.stampEl.style.top = (y ?? this.H * 0.47) + 'px';
-    this.stampEl.innerHTML = `<div class="kh-stamp__in"><div class="kh-stamp__glow"></div><div class="kh-stamp__rays"></div>${jack ? '<div class="kh-stamp__wheel"></div>' : ''}
+    this.stampEl.innerHTML = `<div class="kh-stamp__in"><canvas class="kh-stamp__glow" width="256" height="256"></canvas><div class="kh-stamp__rays"></div>${jack ? '<div class="kh-stamp__wheel"></div>' : ''}
       <div class="kh-stamp__word">${img ? `<img class="kh-g3img" src="${img}" alt="${word}">` : jack ? g3('VALE', 'is-sm is-white') + g3('PİŞTİ!') : g3(word)}</div>
       <div class="kh-stamp__pts">${g3('+' + points, 'is-white')}</div></div>`;
     const inn = this.stampEl.firstElementChild as HTMLElement;
-    const glow = inn.querySelector('.kh-stamp__glow') as HTMLElement;
+    const glow = inn.querySelector('.kh-stamp__glow') as HTMLCanvasElement;
+    // ışık hâlesi küçük doku tuvali (bkz. src/platform/tex.ts): 1,2× büyüyen 26u'luk gradyan katmanı taranmaz
+    radial(glow, [[0, 'rgba(255, 236, 140, .85)'], [0.26, 'rgba(255, 196, 60, .45)'], [0.46, 'rgba(255, 159, 26, .14)'], [0.64, 'rgba(255, 159, 26, 0)'], [1, 'rgba(255, 159, 26, 0)']], false, true);
     const rays = inn.querySelector('.kh-stamp__rays') as HTMLElement;
     const pts = inn.querySelector('.kh-stamp__pts') as HTMLElement;
     const wheel = inn.querySelector<HTMLElement>('.kh-stamp__wheel');

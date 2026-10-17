@@ -9,6 +9,7 @@ import {ATLAS_COLS, ATLAS_ROWS, BACK_INDEX, CORNER_RADIUS, type CardAtlas} from 
 import {cardId, isJack, rankOf, suitOf, type CardId, type Suit} from '../core/types';
 import type {TableTheme} from '../themes/contract';
 import {ctx2d, glowRing, radial, texCanvas, ticks, withAlpha} from '../platform/tex';
+import {whenIdle} from '../platform/sched';
 
 export interface TableSounds {
   deal(): void;
@@ -203,9 +204,11 @@ export class Table2D {
     this.root.className = 'ar' + (low ? ' is-low' : '');
     // Büyük yumuşak ışıklar (yığın ışığı, zemin ışığı, hüzmeler, çentikler) küçük doku tuvalleri: bkz. src/platform/tex.ts.
     // Düşük cihazda hüzmeler döndürülmez: zeminle birlikte bir kez boyanan CSS katmanı kalır (ek katman yok).
-    this.root.innerHTML = `<div class="ar__bg"></div>
+    // Sıra önemli: doku tuvalleri (her zaman ayrı katman) zeminin EN ÜSTÜNDE. Desen/vinyet/kenar onların üstünde kalsaydı
+    // "üst üste binme" yüzünden tam ekran ayrı bir katmana alınırdı (+1 tam ekran karo seti).
+    this.root.innerHTML = `<div class="ar__bg"></div>${low ? '<div class="ar__rays"></div>' : ''}<div class="ar__pattern"></div><div class="ar__vig"></div><div class="ar__edge"></div>
       <canvas class="ar__glow" width="256" height="256"></canvas><canvas class="ar__glow" width="256" height="256"></canvas>
-      <canvas class="ar__tint" width="256" height="256"></canvas>${low ? '<div class="ar__rays"></div>' : '<canvas class="ar__rays is-tex" width="768" height="768"></canvas>'}<div class="ar__pattern"></div><div class="ar__vig"></div><div class="ar__edge"></div>
+      <canvas class="ar__tint" width="256" height="256"></canvas>${low ? '' : '<canvas class="ar__rays is-tex" width="768" height="768"></canvas>'}
       <div class="ar__zoom"><div class="ar__shake"><div class="ar__ring"><i class="ar__rf"></i><canvas class="ar__tk" width="512" height="512"></canvas></div><div class="ar__cards"></div><div class="ar__fx"></div>
       <div class="ar__pot"><svg viewBox="0 0 24 24"><path d="M12 22c-4 0-7-2.8-7-6.6 0-3.5 2.3-5.6 3.7-7.6.9-1.3 1.3-2.9 1.2-4.3 2.9 1.4 4.4 4 4.5 6.7.8-.6 1.3-1.6 1.4-2.7 2 1.8 3.1 4.4 3.1 7.1 0 4.2-3 7.4-6.9 7.4z" fill="#ffb21a" stroke="#0a1033" stroke-width="2"/><path d="M12 20c-1.8 0-3.1-1.2-3.1-2.9 0-1.6 1.1-2.6 1.8-3.5.4-.6.6-1.3.6-2 1.4.7 2.3 2 2.3 3.3.4-.3.7-.8.7-1.3 1 .9 1.5 2.1 1.5 3.4 0 1.7-1.6 3-3.8 3z" fill="#fff27a"/></svg><b>0</b></div></div></div>`;
     host.append(this.root);
@@ -238,6 +241,7 @@ export class Table2D {
     this.layout();
     this.drawRays();
     drawTicks(this.ticks as HTMLCanvasElement, 'rgba(255, 255, 255, .55)', 2.2, 0.64, 0.67);
+    void whenIdle(2500).then(() => this.warmTex());
     this.setGlow(null);
     if (atlas0) void this.setAtlas(atlas0);
     window.addEventListener('resize', () => this.relayout());
@@ -611,6 +615,20 @@ export class Table2D {
   }
 
   // ───────── arka plan ─────────
+  /** Büyük an dokularını boşta önceden çiz (ilk piştide/süpürmede ana iş parçacığı çizimle uğraşmasın). */
+  private warmTex(): void {
+    const add = (key: string, make: () => HTMLElement, at: 'prepend' | 'append'): void => {
+      if (this.fxTex.has(key)) return;
+      const el = make();
+      this.fxTex.set(key, el);
+      this.fxEl[at](el);
+    };
+    add('burst', burstTex, 'prepend');
+    add('bloom', bloomTex, 'prepend');
+    add('sweep', sweepTex, 'append');
+    for (const s of Object.values(SUIT_COLOR)) ghostSource(s, this.L.cw, this.L.ch);
+  }
+
   /** Temanın satır içi değişkeni (yoksa varsayılan): getComputedStyle gerektirmez. */
   private themeVar(k: string, def: string): string {
     return this.theme?.vars?.[k] ?? this.theme?.vars?.[k.slice(2)] ?? def;
@@ -1464,16 +1482,32 @@ function sweepTex(): HTMLCanvasElement {
 /** Atılan kartın hayalet izi: kart biçiminde beyazdan takım rengine geçen yüzey + 16 px ışıma (doku tuvali; CSS boyutu
  * kart + ışıma payı, ortası kartın ortası). */
 const GHOST_PAD = 18;
+/** Renk + kart boyutu başına bir kez çizilen kaynak (yazılım tuvali); havuz düğümleri yalnız kopyalar (bulanıklık yeniden hesaplanmaz). */
+const ghostSrc = new Map<string, HTMLCanvasElement>();
 function ghostTex(c: HTMLCanvasElement, color: string, cw: number, ch: number): void {
   c.dataset.c = color;
   c.dataset.w = String(cw);
+  const src = ghostSource(color, cw, ch);
+  if (c.width !== src.width || c.height !== src.height) {
+    c.width = src.width;
+    c.height = src.height;
+  } else ctx2d(c)?.clearRect(0, 0, c.width, c.height);
+  c.style.width = cw + 2 * GHOST_PAD + 'px';
+  c.style.height = ch + 2 * GHOST_PAD + 'px';
+  ctx2d(c)?.drawImage(src, 0, 0);
+}
+function ghostSource(color: string, cw: number, ch: number): HTMLCanvasElement {
+  const key = `${color}|${cw}|${ch}`;
+  let c = ghostSrc.get(key);
+  if (c) return c;
+  if (ghostSrc.size > 12) ghostSrc.clear(); // boyut değişti (döndürme vb.): eskiler atılır
+  c = document.createElement('canvas');
+  ghostSrc.set(key, c);
   const k = 1.5; // kart başına ~1,5 piksel/CSS px: hızlı geçen yarı saydam iz için yeterli
   c.width = Math.ceil((cw + 2 * GHOST_PAD) * k);
   c.height = Math.ceil((ch + 2 * GHOST_PAD) * k);
-  c.style.width = cw + 2 * GHOST_PAD + 'px';
-  c.style.height = ch + 2 * GHOST_PAD + 'px';
-  const g = ctx2d(c);
-  if (!g) return;
+  const g = c.getContext('2d', {willReadFrequently: true});
+  if (!g) return c;
   g.scale(k, k);
   const r = cw * CORNER_RADIUS;
   const gr = g.createLinearGradient(0, GHOST_PAD, 0, GHOST_PAD + ch);
@@ -1486,6 +1520,7 @@ function ghostTex(c: HTMLCanvasElement, color: string, cw: number, ch: number): 
   if (g.roundRect) g.roundRect(GHOST_PAD, GHOST_PAD, cw, ch, r);
   else g.rect(GHOST_PAD, GHOST_PAD, cw, ch);
   g.fill();
+  return c;
 }
 
 /** Pişti ışık hâlesi (beyaz → altın, köşeye göre yarıçap). 256² doku. */

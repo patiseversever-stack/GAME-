@@ -19,8 +19,9 @@
 .kh-stamp { position: absolute; left: 0; right: 0; top: 47%; height: 0; z-index: 2; display: flex; align-items: center; justify-content: center; visibility: hidden; }
 .kh-stamp.is-on { visibility: visible; }
 .kh-stamp__in { position: relative; display: flex; flex-direction: column; align-items: center; will-change: transform, opacity; }
-.kh-stamp__glow { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 26); height: calc(var(--u) * 26); margin: calc(var(--u) * -13) 0 0 calc(var(--u) * -13);
-  border-radius: 50%; background: var(--stamp-glow); will-change: transform, opacity; }
+/* doku tuvali (fx.ts stamp; --stamp-glow gradyanı tuvale çizili) */
+.kh-stamp__glow { position: absolute; left: 50%; top: 50%; display: block; width: calc(var(--u) * 26); height: calc(var(--u) * 26); margin: calc(var(--u) * -13) 0 0 calc(var(--u) * -13);
+  will-change: transform, opacity; }
 .kh-stamp__rays { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 40); height: calc(var(--u) * 40); margin: calc(var(--u) * -20) 0 0 calc(var(--u) * -20);
   border-radius: 50%; background: var(--stamp-rays); -webkit-mask: var(--stamp-rays-mask); mask: var(--stamp-rays-mask); will-change: transform, opacity; }
 .kh-stamp__wheel { position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 21); height: calc(var(--u) * 21); margin: calc(var(--u) * -10.5) 0 0 calc(var(--u) * -10.5);

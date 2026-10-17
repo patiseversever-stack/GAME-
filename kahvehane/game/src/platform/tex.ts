@@ -83,21 +83,28 @@ export function ticks(c: HTMLCanvasElement, color: string, deg: number, rIn: num
   g.globalCompositeOperation = 'source-over';
 }
 
-/** Parlayan halka (şok dalgası): `box` CSS kutusunun içinde `border` px kalınlığında çizgi + çevresinde `blur` px ışıma.
- * Tuvalin CSS boyutu box + 2·pad olmalı (ışıma kutunun dışına taşar). */
+/** Parlayan halka (şok dalgası): `box` CSS kutusunun içinde `border` px kalınlığında çizgi + iki yanında `blur` px ışıma.
+ * Tuvalin CSS boyutu box + 2·pad olmalı (ışıma kutunun dışına taşar). Tek dairesel gradyan (gölge bulanıklığı YOK: yazılım
+ * tuvalinde shadowBlur ana iş parçacığında pahalı; gradyan hem ucuz hem aynı görünüm). */
 export function glowRing(c: HTMLCanvasElement, color: string, box: number, pad: number, border: number, blur: number): void {
   const g = ctx2d(c);
   if (!g) return;
-  const N = c.width, k = N / (box + 2 * pad);
+  const N = c.width, E = box + 2 * pad, R = N / 2;
   g.clearRect(0, 0, N, N);
-  g.lineWidth = border * k;
-  g.strokeStyle = color;
-  g.shadowColor = color;
-  g.beginPath();
-  g.arc(N / 2, N / 2, (box / 2 - border / 2) * k, 0, Math.PI * 2);
-  g.shadowBlur = blur * k;
-  g.stroke();
-  g.shadowBlur = blur * k * 0.45;
-  g.stroke();
-  g.shadowBlur = 0;
+  const o = (cssR: number): number => Math.max(0, Math.min(1, cssR / (E / 2)));
+  const r0 = box / 2 - border, r1 = box / 2; // çizginin iç ve dış kenarı
+  const gr = g.createRadialGradient(R, R, 0, R, R, R);
+  const stops: Array<[number, number]> = [
+    [r0 - blur * 0.8, 0], [r0 - blur * 0.45, 0.12], [r0 - blur * 0.18, 0.4], [r0, 0.95],
+    [r1, 0.95], [r1 + blur * 0.2, 0.42], [r1 + blur * 0.5, 0.14], [r1 + blur, 0],
+  ];
+  let last = -1;
+  for (const [r, a] of stops) {
+    const t = o(r);
+    if (t <= last) continue;
+    last = t;
+    gr.addColorStop(t, withAlpha(color, a));
+  }
+  g.fillStyle = gr;
+  g.fillRect(0, 0, N, N);
 }
