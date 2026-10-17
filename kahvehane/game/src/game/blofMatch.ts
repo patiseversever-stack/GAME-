@@ -39,6 +39,8 @@ export interface BlofMatchDeps {
   chat?: QuickChat;
   /** Test/önizleme: insan koltuğu (0) kendiliğinden oynar (arayüz yolundan: kartları seçer, düğmeye basar) */
   auto?: boolean;
+  /** Test: otomatik insan koltuğunun düşünme süresi (ms ortalama; 0 = hemen). Gerçek oyuncu gibi bekletip ölçüm yapmak için (?think=4000). */
+  autoThink?: number;
   /** Blöf arayüzünün takılacağı katman (verilmezse HUD'un kendi öğesi) */
   layer?: HTMLElement;
 }
@@ -1017,7 +1019,7 @@ export class BlofMatch {
   /** Oyuncu uzun düşünürse rakip söylenir. */
   private idle(on: boolean): void {
     window.clearTimeout(this.idleTimer);
-    if (!on || this.d.auto) return;
+    if (!on || (this.d.auto && !this.d.autoThink)) return;
     this.idleTimer = window.setTimeout(() => {
       const f = this.foes(ME);
       if (f.length && this.view?.myTurn) this.say(pickOne(f), 'idle', true, 2200);
@@ -1051,7 +1053,7 @@ export class BlofMatch {
       } else if (a.t === 'pass') this.pass();
       else if (a.t === 'challenge') this.challenge();
       else if (a.t === 'decline') this.decline();
-    }, Math.min(900, Math.max(250, d.delayMs * 0.4)));
+    }, Math.min(900, Math.max(250, d.delayMs * 0.4)) + (this.d.autoThink ? this.d.autoThink * (0.5 + Math.random()) : 0));
   }
 
   // ───────── öğretici (ilk Blöf eli; Rıza Amca) ─────────

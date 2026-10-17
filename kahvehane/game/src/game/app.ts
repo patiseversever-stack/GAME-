@@ -62,6 +62,8 @@ export interface AppDeps {
   autoHand?: HandLayout;
   /** ?len=tek|51|101|151 (Pişti) · tek|3|5 (Blöf): otomatik testte oyun uzunluğu */
   autoLen?: MatchLength;
+  /** ?think=4000: otomatik testte insan koltuğunun ortalama düşünme süresi (ms; ölçüm gerçek oyuncu hızıyla yapılsın) */
+  autoThink?: number;
   /** ?seed=123: sabit deste (test) */
   seed?: number;
   /** ?chatpick=1: sohbet seçicisini (seçilmiş olsa da) aç (test / ekran görüntüsü) */
@@ -371,7 +373,7 @@ export async function runApp(d: AppDeps): Promise<void> {
       save();
       screens.hud.show(setup.players, mode, profile.data.coins, profile.data.equipped.frame);
       screens.hud.setCoins(profile.data.coins);
-      const deps = {table, hud: screens.hud, sfx, voice: d.voice, speech, chat: d.chat, auto: d.auto, vitrin};
+      const deps = {table, hud: screens.hud, sfx, voice: d.voice, speech, chat: d.chat, auto: d.auto, autoThink: d.autoThink, vitrin};
 
       // ---- eller ----
       let quit: 'leave' | 'error' | null = null;

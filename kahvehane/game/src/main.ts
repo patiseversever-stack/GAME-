@@ -35,6 +35,7 @@ const DIFF = (['kolay', 'orta', 'zor'] as Difficulty[]).find(d => d === Q.get('d
 const HAND = (['group', 'spread'] as HandLayout[]).find(l => l === Q.get('hand'));
 const SEED = Q.get('seed') ? Number(Q.get('seed')) | 0 : undefined;
 const LEN = (['tek', '51', '101', '151', '3', '5'] as MatchLength[]).find(l => l === Q.get('len'));
+const THINK = Math.max(0, Math.min(20000, Number(Q.get('think')) || 0));
 if (Q.has('banter')) Object.assign(BANTER_RULES as {chance: number; minHands: number}, {chance: 1, minHands: 0});
 
 /** ?reset=1: profili (ve eski kayıtları) sil; adres çubuğundan bayrağı kaldır ki yenileyince tekrar silinmesin. */
@@ -151,7 +152,7 @@ async function boot(): Promise<void> {
   (window as unknown as {__kh: unknown}).__kh = {table, screens, tier, profile, speech, voice};
   if (import.meta.env.DEV && Q.has('blofstub')) BLOF.inject((await import('../dev/blofStub')).stubFactory);
   await runApp({
-    table, sfx, voice, speech, chat, screens, profile, settings, applySettings, applyCosmetics, auto: AUTO, autoGame: GAME, autoMode: MODE, autoDifficulty: DIFF, autoHand: HAND, autoLen: LEN, seed: SEED,
+    table, sfx, voice, speech, chat, screens, profile, settings, applySettings, applyCosmetics, auto: AUTO, autoGame: GAME, autoMode: MODE, autoDifficulty: DIFF, autoHand: HAND, autoLen: LEN, autoThink: THINK, seed: SEED,
     chatPick: Q.has('chatpick'), chatFixed: isChatLevel(chatFlag),
   });
 }

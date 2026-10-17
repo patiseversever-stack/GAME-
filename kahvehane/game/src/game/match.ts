@@ -40,6 +40,8 @@ export interface MatchDeps {
   chat?: QuickChat;
   /** Test/önizleme: insan koltuğu (0) kendiliğinden oynar */
   auto?: boolean;
+  /** Test: otomatik insan koltuğunun düşünme süresi (ms ortalama; 0 = hemen). Gerçek oyuncu gibi bekletip ölçüm yapmak için (?think=4000). */
+  autoThink?: number;
   /** Pişti vitrini (uygulama başına bir tane): maç başında oyuncular tanıtılır, el bitince anında kapanır. */
   vitrin?: PistiVitrin;
 }
@@ -376,7 +378,7 @@ export class Match {
     const t2 = window.setTimeout(() => foe !== undefined && this.speak(foe, 'myTurnIdle'), dialogue.idleDelay(9000));
     if (this.autoBot) {
       const c = this.autoBot.choose(v);
-      window.setTimeout(() => table.pick(c), 380);
+      window.setTimeout(() => table.pick(c), 380 + (this.d.autoThink ? this.d.autoThink * (0.5 + Math.random()) : 0));
     }
     const card = await w.card;
     clearTimeout(t1);

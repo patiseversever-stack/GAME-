@@ -22,6 +22,7 @@ export interface BlofDeps {
   chat?: QuickChat;
   /** Test: insan koltuğu (0) kendiliğinden oynar */
   auto?: boolean;
+  autoThink?: number;
 }
 
 /** BlofMatch'in dışarıya gördürdüğü yüzey. */
