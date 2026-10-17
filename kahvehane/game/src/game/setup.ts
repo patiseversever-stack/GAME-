@@ -56,15 +56,46 @@ export function buildSetup(profile: SetupProfile, mode: Mode, opponents: CharId[
   return setup;
 }
 
-/** El sonu ödemesi (bahis düşüldükten sonra alınan): 1'e 1/eşli kazanana 2×, 3-4 kişide pot kazanan(lar)a; beraberlikte iade. Blöf'te beraberlik yok. */
-export function receive(mode: Mode, stake: number, outcome: 'win' | 'lose' | 'draw', winners: number): number {
-  if (mode === '4' || mode === '3') return outcome === 'lose' ? 0 : Math.floor(payout(mode, stake) / Math.max(1, winners));
-  return outcome === 'win' ? payout(mode, stake) : outcome === 'draw' ? stake : 0;
+/**
+ * Maç sonu ödemesi (bahis maçın başında BİR KEZ düşülür; bu, sonra alınan): 1'e 1/eşli kazanana 2×, 3-4 kişide pot kazanan(lar)a;
+ * beraberlikte iade (1'e 1/eşli) ya da pot bölünür (3-4 kişi). mult: oyun uzunluğu çarpanı (series.ts LENGTH_INFO; tek el 1) —
+ * uzun maçın potu büyür (kazanana kasadan ek), kaybeden yine yalnız bahsini kaybeder.
+ */
+export function receive(mode: Mode, stake: number, outcome: 'win' | 'lose' | 'draw', winners: number, mult = 1): number {
+  const pot = Math.floor(payout(mode, stake) * Math.max(1, mult));
+  if (mode === '4' || mode === '3') return outcome === 'lose' ? 0 : Math.floor(pot / Math.max(1, winners));
+  return outcome === 'win' ? pot : outcome === 'draw' ? stake : 0;
 }
 
-/** Blöf el XP'si: kazanana 60, kaybedene 20 (Pişti ile aynı); kalabalık masa çarpanı; her yakalanan blöf +6. */
-export function blofXp(mode: Mode, outcome: 'win' | 'lose' | 'draw', caught: number): number {
-  const base = outcome === 'win' ? 60 : outcome === 'draw' ? 30 : 20;
+/** Ana ekrandaki "Kazanırsan …": tek kazanan maçta alınacak. */
+export const prize = (mode: Mode, stake: number, mult = 1): number => receive(mode, stake, 'win', 1, mult);
+
+/** Maç XP'si girdisi. */
+export interface XpFacts {
+  /** Oynanan (biten) el sayısı */
+  hands: number;
+  /** Oyun uzunluğu çarpanı (tek el 1) */
+  mult: number;
+  /** Pişti: insanın pişti sayısı (vale dahil) ve vale pişti sayısı */
+  pisti?: number;
+  vale?: number;
+  /** Blöf: yakaladığı blöf */
+  caught?: number;
+}
+
+/**
+ * Maç XP'si: el başına 20 (katılım) + sonuç primi (kazanma 40 · berabere 10 · kayıp 0) × uzunluk çarpanı; kalabalık masa çarpanı;
+ * Pişti'de pişti +8 / vale pişti +12 · Blöf'te yakalanan blöf +6 (el başına en çok 10). Tek elde eskisiyle birebir aynı (60 / 30 / 20).
+ */
+export function matchXp(game: Game, mode: Mode, outcome: 'win' | 'lose' | 'draw', f: XpFacts): number {
+  const hands = Math.max(1, f.hands);
+  const base = 20 * hands + (outcome === 'win' ? 40 : outcome === 'draw' ? 10 : 0) * Math.max(1, f.mult);
   const k = mode === '4' ? 1.25 : mode === '3' ? 1.15 : mode === 'esli' ? 1.1 : 1;
-  return Math.round(base * k + Math.min(10, caught) * 6);
+  const extra = game === 'blof' ? Math.min(10 * hands, f.caught ?? 0) * 6 : (f.pisti ?? 0) * 8 + (f.vale ?? 0) * 12;
+  return Math.round(base * k + extra);
+}
+
+/** Blöf tek el XP'si: kazanana 60, kaybedene 20 (Pişti ile aynı); kalabalık masa çarpanı; her yakalanan blöf +6. */
+export function blofXp(mode: Mode, outcome: 'win' | 'lose' | 'draw', caught: number): number {
+  return matchXp('blof', mode, outcome, {hands: 1, mult: 1, caught});
 }

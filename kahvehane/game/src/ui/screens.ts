@@ -16,7 +16,7 @@ import './meta.css';
 import './perf.css';
 import '../themes/frames.css';
 
-import type {CosmeticsListener, GameHud, HandOption, HomeAction, MenuTalk, QuickChatSheetPort, ResultsData, Settings, Sounds} from './types';
+import type {CosmeticsListener, GameHud, HandOption, HomeAction, InterimData, MenuTalk, QuickChatSheetPort, ResultsData, ResumeOffer, Settings, Sounds} from './types';
 import type {Profile as GameProfile} from '../game/profile';
 import type {Difficulty, Game, HandLayout, MatchSetup, Mode} from '../game/types';
 import {ANIM, enableActiveStates, enableSpringPress, h, q} from './dom';
@@ -29,9 +29,12 @@ import {onboarding} from './onboarding';
 import {daily, pause, rules, settings} from './modals';
 import {handChooser} from './handchooser';
 import {QuickChatSheet} from './quickchat';
-import {suitWipe, type Ctx} from './parts';
+import {suitWipe, toast, type Ctx} from './parts';
+import {I} from './icons';
+import {interim, resumePrompt, type InterimHandle} from './scoreboard';
 
-export type {CosmeticsListener, GameHud, HomeAction, HudLayout, HudPlayer, MenuTalk, Mood, QuickChatItem, QuickChatSheetPort, ResultsData, Settings, Sounds} from './types';
+export type {CosmeticsListener, GameHud, HomeAction, HudLayout, HudPlayer, InterimData, MenuTalk, Mood, QuickChatItem, QuickChatSheetPort, ResultsData, ResumeOffer, Settings, Sounds} from './types';
+export type {InterimHandle} from './scoreboard';
 export {STAKES, BOT_LEVEL, payout} from './lobby';
 
 export class Screens {
@@ -90,8 +93,11 @@ export class Screens {
     this.curtain = w;
   }
 
-  /** Ana ekran. Ayarlar/kurallar dönüşünde aynı ekran yeniden kurulmadan tazelenir. auto: test için kendiliğinden OYNA. */
-  async home(profile: GameProfile, auto?: {game: Game; mode: Mode; difficulty?: Difficulty}): Promise<HomeAction> {
+  /**
+   * Ana ekran. Ayarlar/kurallar dönüşünde aynı ekran yeniden kurulmadan tazelenir. auto: test için kendiliğinden OYNA.
+   * offer: yarım kalan maç — ana ekran açılınca "devam et?" sorulur; Devam → {type:'resume'}, Bırak → offer.onDecline() (ana ekran kalır).
+   */
+  async home(profile: GameProfile, auto?: {game: Game; mode: Mode; difficulty?: Difficulty}, offer?: ResumeOffer): Promise<HomeAction> {
     this.deckId = profile.data.equipped.deck;
     if (this.homeView) this.homeView.refresh();
     else this.homeView = new HomeView(this.ctx, profile, (k, id) => {
@@ -100,9 +106,20 @@ export class Screens {
     }, this.memo);
     this.openCurtain();
     const v = this.homeView;
-    if (auto) v.autoPlay(auto.game, auto.mode, auto.difficulty);
+    if (offer) {
+      // ana ekran yerleşince sor (otomatik testte hemen kabul; OYNA'dan önce)
+      window.setTimeout(async () => {
+        const r = await resumePrompt(this.ctx, offer);
+        if (this.homeView !== v) return;
+        if (r === 'resume') v.finish({type: 'resume'});
+        else {
+          offer.onDecline();
+          toast(this.ctx, 'Maçı bıraktın, bahsi kaybettin', I.exit);
+        }
+      }, ANIM && !offer.auto ? 650 : 0);
+    } else if (auto) v.autoPlay(auto.game, auto.mode, auto.difficulty);
     const a = await v.wait();
-    if (a.type === 'play') {
+    if (a.type === 'play' || a.type === 'resume') {
       this.homeView = null;
       // karşılaşma girişi ana ekranın üstünden süpürür; ana ekran arkada kapanır
       window.setTimeout(() => v.leave(), ANIM ? 380 : 0);
@@ -120,8 +137,17 @@ export class Screens {
     return versus(this.ctx, setup, stake);
   }
 
-  pause(): Promise<'resume' | 'settings' | 'rules' | 'leave'> {
-    return pause(this.ctx);
+  /** Mola. leave: "Masadan Kalk" onay metni (bahis yanar). */
+  pause(leave?: {sub: string; btn?: string}): Promise<'resume' | 'settings' | 'rules' | 'leave'> {
+    return pause(this.ctx, leave);
+  }
+
+  /** Eller arası Ara Skor (HUD solar). done: 'next' (dokunma / süre) ya da 'leave' (onaylı). */
+  interim(d: InterimData): InterimHandle {
+    this.hud.dim(true);
+    const ia = interim(this.ctx, d);
+    void ia.done.then(() => this.hud.dim(false));
+    return ia;
   }
 
   /** El sonu. "Ana Sayfa" seçilirse dört renk perde kapanır (home() açar). */

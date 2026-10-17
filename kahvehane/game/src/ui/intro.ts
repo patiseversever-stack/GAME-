@@ -1,6 +1,7 @@
 // Açılış (logo + ilerleme + ipucu) ve karşılaşma girişi (sinematik "VS"): 1'e 1 (iki yarım), eşli (mavi takım – kırmızı takım),
 // 4 kişi (dört eğik şerit sırayla çarparak gelir). Portreler roster'dan; insan oyuncu kendi karakteri ve çerçevesiyle.
 import {matchTitle, type MatchSetup, type SeatPlayer} from '../game/types';
+import {LENGTH_INFO, isLong} from '../game/series';
 import {GAME_ICON} from './gameicons';
 import {ANIM, EASE, Scope, countUp, esc, fmt, h, play, q} from './dom';
 import {ASSETS} from './assets';
@@ -225,7 +226,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   const sparkN = low ? 0 : 12;
   el.innerHTML = `<canvas class="kh-vs__rays" width="512" height="512"></canvas>${body}
     <div class="kh-vs__streaks">${STREAKS.map(([y, w]) => `<i style="top:${y}%;width:${w}%"></i>`).join('')}</div>
-    <div class="kh-vs__mode">${GAME_ICON[setup.game]}<span>${esc(matchTitle(setup.game, mode))}</span></div>
+    <div class="kh-vs__mode">${GAME_ICON[setup.game]}<span>${esc(matchTitle(setup.game, mode))}${isLong(setup.len) ? ` · ${esc(LENGTH_INFO[setup.len!].label)}${setup.game === 'blof' ? '' : "'lik"}` : ''}</span></div>
     <div class="kh-vs__glint"></div>
     <i class="kh-vs__ring is-a"></i><i class="kh-vs__ring is-b"></i>
     <div class="kh-vs__emblem">${STAR_SVG}<div class="kh-title">${g3('VS', 'is-white')}</div></div>

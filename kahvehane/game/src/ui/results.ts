@@ -2,11 +2,13 @@
 // puan tablosu satır satır açılır ve sayar (Pişti: kart, çoğunluk +3, ♣2, ♦10, as, vale, pişti, toplam · Blöf: attığı/yakaladığı/yakalanan blöf,
 // kalan kart, sıra), toplam vurgusu; eşlide takım toplamları; 1'e 1, 3 kişi (Blöf), 4 kişi, eşli;
 // jetonlar bakiyeye uçar, XP çubuğu dolar, seviye atlamada kutlama + ödül + açılan masa; galibiyet serisi rozeti.
-// "Bir El Daha" / "Ana Sayfa".
+// "Bir El Daha" (tek el) / "Yeni Maç" (çok elli maç: aynı ayarlarla) / "Ana Sayfa".
+// Çok elli maçta tablo maç toplamlarından kurulur: Pişti kazandığı el, pişti puanı, en iyi el, son el, toplam · Blöf el el ceza + toplam ceza.
 import './results.css';
 import type {ResultsData} from './types';
 import type {SideScore} from '../core/types';
 import {MODE_INFO, matchTitle, type SeatPlayer} from '../game/types';
+import {LENGTH_INFO, pistiOf, rankOf, seatsOfSide, type SeriesState} from '../game/series';
 import {GAME_ICON} from './gameicons';
 import {ANIM, EASE, Scope, bump, center, countUp, esc, fmt, h, play, q, signed} from './dom';
 import {ASSETS} from './assets';
@@ -23,7 +25,8 @@ interface RowDef {
   get: (s: Col) => number;
   info?: boolean;
   icon?: string;
-  best?: 'max' | 'none';
+  /** vurgulanacak uç: en büyük (varsayılan), en küçük (ceza) ya da hiçbiri */
+  best?: 'max' | 'min' | 'none';
   key?: 'pisti';
 }
 /** Bir taraf (kolon): tek koltuk ya da eşli takım. v: oyuna özgü ham değerler (Pişti: SideScore · Blöf: koltuk sayıları toplamı). */
@@ -37,6 +40,10 @@ interface Col {
   bluffs?: number;
   caught?: number;
   timesCaught?: number;
+  /** Çok elli maç: kazandığı el, pişti puanı, el el değerler (Pişti puan · Blöf ceza) */
+  wins?: number;
+  pp?: number;
+  hands?: number[];
 }
 const ROWS: RowDef[] = [
   {label: 'Kart sayısı', get: c => c.s!.cards, info: true},
@@ -71,6 +78,28 @@ function blofCols(d: ResultsData): {cols: Col[]; winners: number[]} {
   return {cols, winners: [win]};
 }
 
+/** Çok elli maç: taraf (koltuk / eşli takım) başına maç toplamları; kazanan(lar) maçtan. */
+function seriesCols(s: SeriesState): {cols: Col[]; winners: number[]} {
+  const n = s.totals.length;
+  const cols: Col[] = Array.from({length: n}, (_, side) => ({
+    seats: seatsOfSide(s.mode, side), total: s.totals[side], rank: rankOf(s, side), wins: s.wins[side], pp: pistiOf(s, side), hands: s.hands.map(h => h.pts[side] ?? 0),
+  }));
+  return {cols, winners: s.winners};
+}
+
+/** Çok elli Pişti maçının satırları. */
+const SERIES_ROWS: RowDef[] = [
+  {label: 'Kazandığı el', get: c => c.wins ?? 0},
+  {label: 'Pişti puanı', get: c => c.pp ?? 0, key: 'pisti'},
+  {label: 'En iyi el', get: c => Math.max(0, ...(c.hands ?? []))},
+  {label: 'Son el', get: c => c.hands?.[c.hands.length - 1] ?? 0, info: true},
+];
+/** Blöf serisinin satırları: el el ceza (bitiren 0), kazandığı el. */
+const blofSeriesRows = (hands: number): RowDef[] => [
+  ...Array.from({length: hands}, (_, i): RowDef => ({label: `${i + 1}. El cezası`, get: c => c.hands?.[i] ?? 0, best: 'min'})),
+  {label: 'Kazandığı el', get: c => c.wins ?? 0},
+];
+
 export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'again' | 'home'> {
   const scope = new Scope();
   const s = ctx.sounds;
@@ -81,7 +110,10 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
   // taraflar (Pişti: puan tablosu · Blöf: koltuk/takım toplamları): benimki önce
   let sides: Col[];
   let winIdx: number[];
-  if (game === 'blof') {
+  const series = d.series;
+  if (series) {
+    ({cols: sides, winners: winIdx} = seriesCols(series));
+  } else if (game === 'blof') {
     ({cols: sides, winners: winIdx} = blofCols(d));
   } else {
     const result = d.result!;
@@ -89,7 +121,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
     sides = result.sides.map(sd => ({seats: sd.seats, total: sd.total, rank: rk.indexOf(sd) + 1, s: sd}));
     winIdx = result.winners;
   }
-  const defs = game === 'blof' ? BLOF_ROWS : ROWS;
+  const defs = series ? (game === 'blof' ? blofSeriesRows(series.hands.length) : SERIES_ROWS) : game === 'blof' ? BLOF_ROWS : ROWS;
   const mySide = sides.find(x => x.seats.includes(0))!;
   const ordered = [mySide, ...sides.filter(x => x !== mySide)];
   const winners = new Set(winIdx);
@@ -133,7 +165,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
         ${capsuleHtml(startCoins, false, 'kh-results__coins')}
       </div>
       <header class="kh-results__head">
-        <div class="kh-results__kicker">${GAME_ICON[game]}<span>${esc(matchTitle(game, mode))} · El bitti</span></div>
+        <div class="kh-results__kicker">${GAME_ICON[game]}<span>${esc(matchTitle(game, mode))} · ${series ? `${esc(LENGTH_INFO[series.len].title)} · ${series.hands.length} el` : 'El bitti'}</span></div>
         <div class="kh-title kh-results__title">${g3(title, outcome === 'win' ? '' : outcome === 'lose' ? 'is-lose' : 'is-white')}</div>
       </header>
       <section class="kh-podium is-n${big.length}">
@@ -147,10 +179,14 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
         ${defs.map(r => {
           const vals = ordered.map(r.get);
           const max = Math.max(...vals);
+          const min = Math.min(...vals);
+          const best = (v: number) => !r.info && r.best !== 'none' && (r.best === 'min' ? v === min && min < max : v === max && max > 0);
           const extra = r.key === 'pisti' && (d.myPisti || d.myValePisti) ? `<i class="kh-sc__note">${d.myPisti ? `${d.myPisti}×` : ''}${d.myValePisti ? ` · ${d.myValePisti} vale` : ''}</i>` : '';
-          return `<div class="kh-sc__row${r.info ? ' is-info' : ''}${max === 0 ? ' is-zero' : ''}"><span>${r.icon ?? ''}${r.label}${extra}</span>${vals.map(v => `<b class="kh-num${v === max && max > 0 && !r.info && r.best !== 'none' ? ' is-best' : ''}" data-v="${v}">0</b>`).join('')}</div>`;
+          return `<div class="kh-sc__row${r.info ? ' is-info' : ''}${max === 0 ? ' is-zero' : ''}"><span>${r.icon ?? ''}${r.label}${extra}</span>${vals.map(v => `<b class="kh-num${best(v) ? ' is-best' : ''}" data-v="${v}">0</b>`).join('')}</div>`;
         }).join('')}
-        ${game === 'blof'
+        ${series && game === 'blof'
+          ? `<div class="kh-sc__row is-total"><span>Toplam ceza</span>${ordered.map(sd => `<b class="kh-num${winners.has(sides.indexOf(sd)) && outcome !== 'draw' ? ' is-best' : ''}" data-v="${sd.total}">0</b>`).join('')}</div>`
+          : game === 'blof'
           ? `<div class="kh-sc__row is-total"><span>Sıra</span>${ordered.map(sd => `<b class="kh-num${winners.has(sides.indexOf(sd)) ? ' is-best' : ''}" data-v="${sd.rank}" data-sfx="1">0</b>`).join('')}</div>`
           : `<div class="kh-sc__row is-total"><span>Toplam</span>${ordered.map(sd => `<b class="kh-num${winners.has(sides.indexOf(sd)) && outcome !== 'draw' ? ' is-best' : ''}" data-v="${sd.total}">0</b>`).join('')}</div>`}
       </section>
@@ -163,7 +199,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
         </div>
       </div>
       <div class="kh-results__btns">
-        <button class="kh-btn kh-btn--1 kh-btn--xl kh-shine" data-act="again">${I.play}Bir El Daha</button>
+        <button class="kh-btn kh-btn--1 kh-btn--xl kh-shine" data-act="again">${I.play}${series ? 'Yeni Maç' : 'Bir El Daha'}</button>
         <button class="kh-btn kh-btn--4" data-act="home">${I.home}Ana Sayfa</button>
       </div>
     </div>`;

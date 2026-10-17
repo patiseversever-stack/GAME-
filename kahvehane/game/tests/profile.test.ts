@@ -257,3 +257,108 @@ describe('günlük görevler', () => {
     expect(list.every(q => q.progress === 0)).toBe(true);
   });
 });
+
+describe('oyun uzunluğu: profil (maç sayımı, yarım kalan maç, görevler)', () => {
+  type S = typeof import('../src/game/series');
+  let ser: S;
+  beforeAll(async () => {
+    ser = await import('../src/game/series');
+  });
+  const fresh = () => {
+    mem.clear();
+    return new mod.Profile();
+  };
+  const withQuests = (ids: string[]) => {
+    const pr = fresh();
+    pr.data.quests = {date: new Date().toISOString().slice(0, 10), list: ids.map(id => ({id: id as never, progress: 0, claimed: false})), bonus: false};
+    return pr;
+  };
+  const prog = (pr: InstanceType<P['Profile']>) => Object.fromEntries(pr.data.quests.list.map(q => [q.id, q.progress]));
+  const saved = () => {
+    let s = ser.createSeries({game: 'pisti', mode: '1v1', len: '101', seed: 42});
+    s = ser.recordPisti(s, {sides: [{side: 0, seats: [0], cards: 30, majority: 3, aces: 2, jacks: 2, club2: 2, diamond10: 3, pisti: 10, total: 22},
+      {side: 1, seats: [1], cards: 22, majority: 0, aces: 2, jacks: 2, club2: 0, diamond10: 0, pisti: 0, total: 4}], winners: [0]});
+    return {series: s, stake: 500, opponents: ['dursun' as const], difficulty: 'orta' as const, acc: {pisti: 1, vale: 0, caught: 0}, at: 123};
+  };
+
+  it('eski kayıtta yeni alanlar varsayılan: tek el, yarım maç yok, uzun maç sayacı 0', () => {
+    const p = mod.migrateProfile(v3());
+    expect(p.lastLength).toEqual({pisti: 'tek', blof: 'tek'});
+    expect(p.match).toBeNull();
+    expect(p.stats.long).toEqual({played: 0, won: 0});
+    expect(p.blof.long).toEqual({played: 0, won: 0});
+    expect(p.stats.played).toBe(20); // eski sayılar aynen
+    expect(mod.migrateProfile({...v3(), v: 4, lastLength: {pisti: '101', blof: '151'}}).lastLength).toEqual({pisti: '101', blof: 'tek'});
+    expect(mod.migrateProfile({...v3(), v: 4, lastLength: 'x'}).lastLength).toEqual({pisti: 'tek', blof: 'tek'});
+  });
+
+  it('yarım kalan maç kaydedilir, yeniden açılışta doğrulanıp aynen döner', () => {
+    const pr = fresh();
+    pr.saveMatch(saved());
+    const again = new mod.Profile();
+    expect(again.data.match).toEqual(saved());
+    again.saveMatch(null);
+    expect(new mod.Profile().data.match).toBeNull();
+  });
+
+  it('bozuk / bitmiş / tutarsız maç kaydı yok sayılır', () => {
+    const ok = saved();
+    expect(mod.validSaved(ok)).toEqual(ok);
+    expect(mod.validSaved(null)).toBeNull();
+    expect(mod.validSaved({...ok, stake: -5})).toBeNull();
+    expect(mod.validSaved({...ok, stake: 1.5})).toBeNull();
+    expect(mod.validSaved({...ok, opponents: ['kimse']})).toBeNull();
+    expect(mod.validSaved({...ok, opponents: ['cem', 'defne']})).toBeNull(); // 1'e 1'de tek rakip
+    expect(mod.validSaved({...ok, series: {...ok.series, v: 9}})).toBeNull();
+    const over = ser.forfeitSeries(ok.series, 0);
+    expect(mod.validSaved({...ok, series: over})).toBeNull();
+    expect(mod.validSaved({...ok, difficulty: 'cok'})?.difficulty).toBe('orta');
+    expect(mod.validSaved({...ok, acc: 'x'})?.acc).toEqual({pisti: 0, vale: 0, caught: 0});
+    expect(mod.migrateProfile({...v3(), v: 4, match: {...ok, stake: 'çok'}}).match).toBeNull();
+  });
+
+  it('el sayıları her elde birikir; maç (oynanan/kazanılan/seri) maç başına bir kez', () => {
+    const pr = fresh();
+    pr.recordPistiHand('1v1', {pisti: 2, valePisti: 1, cards: 30, majority: true}, 'win');
+    pr.recordPistiHand('1v1', {pisti: 1, valePisti: 0, cards: 20, majority: false}, 'lose');
+    expect(pr.data.stats).toMatchObject({played: 0, won: 0, pisti: 3, valePisti: 1});
+    pr.recordGame('pisti', '1v1', 'win', '101');
+    expect(pr.data.stats).toMatchObject({played: 1, won: 1, streak: 1, long: {played: 1, won: 1}});
+    expect(pr.data.stats.byMode['1v1']).toEqual({played: 1, won: 1});
+    pr.recordGame('pisti', '4', 'lose', 'tek');
+    expect(pr.data.stats).toMatchObject({played: 2, won: 1, lost: 1, streak: 0, long: {played: 1, won: 1}});
+    expect(pr.playedLong).toBe(true);
+    // Blöf: blöf sayıları elde, seri beraberliği kayıp sayılmaz ama seriyi bozar
+    pr.recordBlofHand('3', {bluffs: 3, caught: 1, timesCaught: 0, wrongChallenges: 1});
+    pr.recordGame('blof', '3', 'win', '3');
+    pr.recordGame('blof', '3', 'draw', '5');
+    expect(pr.data.blof).toMatchObject({played: 2, won: 1, lost: 0, streak: 0, bestStreak: 1, bluffs: 3, caught: 1, long: {played: 2, won: 1}});
+  });
+
+  it('görevler: pişti/kart elde, oyna/kazan maçta; uzun maç görevleri', () => {
+    const pr = withQuests(['pisti2', 'play3', 'win2', 'long101']);
+    pr.recordPistiHand('1v1', {pisti: 1, valePisti: 0, cards: 10, majority: false});
+    pr.recordPistiHand('1v1', {pisti: 1, valePisti: 0, cards: 10, majority: false});
+    expect(prog(pr)).toEqual({pisti2: 2, play3: 0, win2: 0, long101: 0});
+    pr.recordGame('pisti', '1v1', 'win', '51');
+    expect(prog(pr)).toEqual({pisti2: 2, play3: 1, win2: 1, long101: 0}); // 51 sayılmaz
+    pr.recordGame('pisti', '1v1', 'win', '151');
+    expect(prog(pr).long101).toBe(1); // 101 ve üstü
+    const b = withQuests(['blofSeries5', 'blofPlay2', 'blofWin1']);
+    b.recordGame('blof', '4', 'win', '3');
+    expect(prog(b)).toEqual({blofSeries5: 0, blofPlay2: 1, blofWin1: 1});
+    b.recordGame('blof', '4', 'win', '5');
+    expect(prog(b).blofSeries5).toBe(1);
+  });
+
+  it('uzun maç görevleri yalnız uzun maç oynamış oyuncuya; eski seçimler değişmez', () => {
+    const dates = Array.from({length: 200}, (_, i) => new Date(Date.UTC(2026, 0, 1 + i)).toISOString().slice(0, 10));
+    const ids = (blof: boolean, long: boolean) => dates.flatMap(d => mod.questsFor(d, blof, long).map(q => q.id));
+    expect(ids(false, false)).not.toContain('long101');
+    expect(ids(true, false)).not.toContain('blofSeries5');
+    expect(ids(false, true)).toContain('long101');
+    expect(ids(false, true)).not.toContain('blofSeries5'); // Blöf görevi Blöf oynamadan çıkmaz
+    expect(ids(true, true)).toContain('blofSeries5');
+    for (const d of dates) expect(mod.questsFor(d, true, true).map(q => mod.questDef(q.id).tier)).toEqual([0, 1, 2]);
+  });
+});

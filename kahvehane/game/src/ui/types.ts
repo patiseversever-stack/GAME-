@@ -1,6 +1,7 @@
 // Arayüz sözleşmesi (oyun akışı bu tiplerle konuşur). screens.ts bunları dışa aktarır.
 import type {GameResult} from '../core/types';
-import type {BlofOutcome, Difficulty, Game, HandLayout, MatchSetup, Mode} from '../game/types';
+import type {BlofOutcome, Difficulty, Game, HandLayout, MatchLength, MatchSetup, Mode, SeatPlayer} from '../game/types';
+import type {SeriesState} from '../game/series';
 import type {CharId} from '../game/roster';
 import type {ItemKind} from '../game/catalog';
 
@@ -21,9 +22,43 @@ export interface Settings {
  * `difficulty`: yalnız Blöf'te (kolay · orta · zor).
  */
 export type HomeAction =
-  | {type: 'play'; game: Game; mode: Mode; stake: number; opponents: CharId[]; difficulty: Difficulty}
+  | {type: 'play'; game: Game; mode: Mode; stake: number; opponents: CharId[]; difficulty: Difficulty; len?: MatchLength}
   | {type: 'settings'}
-  | {type: 'rules'};
+  | {type: 'rules'}
+  /** Yarım kalan maça devam (açılıştaki "devam et?" penceresi) */
+  | {type: 'resume'};
+
+/** Ana ekran açılınca sorulacak yarım kalan maç (ResumeData + "Bırak" seçilirse uygulamanın yapacağı). */
+export interface ResumeOffer extends ResumeData {
+  onDecline(): void;
+}
+
+/** Yarım kalan maç penceresi verisi. */
+export interface ResumeData {
+  series: SeriesState;
+  /** Koltuklar (avatar/ad) */
+  players: readonly SeatPlayer[];
+  /** Masadaki (maç başında düşülmüş) bahis */
+  stake: number;
+  /** Oyuncunun çerçevesi */
+  frame: string;
+  /** Test: kendiliğinden "Devam Et" */
+  auto?: boolean;
+}
+
+/** Eller arası "Ara Skor" verisi (uygulama hesaplar; ekran yalnız gösterir). */
+export interface InterimData {
+  /** Biten elin kurulumu (koltuklar) */
+  setup: MatchSetup;
+  /** Bu el kaydedildikten SONRAKİ maç durumu (bitmemiş) */
+  series: SeriesState;
+  stake: number;
+  frame: string;
+  /** Sahnedeki konuşan karakter (bot koltuğu + poz); balonu konuşma yöneticisi yazar */
+  speaker?: {seat: number; pose: import('../game/roster').Pose};
+  /** Bu kadar ms sonra kendiliğinden "Sonraki El" (0: kapalı) */
+  autoMs: number;
+}
 
 /** Ayarlar penceresindeki "Blöf el düzeni" satırı (Blöf motoru varsa verilir). */
 export interface HandOption {
@@ -85,8 +120,10 @@ export interface ResultsData {
   setup: MatchSetup;
   /** Pişti: puan tablosu */
   result?: GameResult;
-  /** Blöf: eli bitiren ve koltuk başına blöf sayıları */
+  /** Blöf: eli bitiren ve koltuk başına blöf sayıları (çok elli seride son elin sayıları; tablo seriden kurulur) */
   blof?: BlofOutcome;
+  /** Çok elli maç: maç toplamları (Pişti: puan + el · Blöf: el el ceza). Tek elde verilmez (tablo eskisi gibi). */
+  series?: SeriesState;
   /** Oyuncunun (ya da takımının) sonucu */
   outcome: 'win' | 'lose' | 'draw';
   myPisti: number;

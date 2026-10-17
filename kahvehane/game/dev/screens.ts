@@ -54,7 +54,7 @@ function demoProfile(): Profile {
   d.stats = {...d.stats, played: 37, won: 22, lost: 13, draw: 2, pisti: 41, valePisti: 3, streak: 3, bestStreak: 6,
     byMode: {'1v1': {played: 24, won: 15}, '3': {played: 0, won: 0}, '4': {played: 8, won: 3}, esli: {played: 5, won: 4}}};
   if (G === 'blof' || P.has('blof')) {
-    d.blof = {played: 18, won: 9, lost: 9, streak: 2, bestStreak: 4, bluffs: 64, caught: 21, timesCaught: 17, wrongChallenges: 6,
+    d.blof = {played: 18, won: 9, lost: 9, streak: 2, bestStreak: 4, long: {played: 2, won: 1}, bluffs: 64, caught: 21, timesCaught: 17, wrongChallenges: 6,
       byMode: {'1v1': {played: 5, won: 3}, '3': {played: 7, won: 3}, '4': {played: 4, won: 2}, esli: {played: 2, won: 1}}};
     if (P.has('newblof')) d.blof = {...d.blof, played: 0, won: 0, lost: 0, streak: 0, bestStreak: 0, bluffs: 0, caught: 0, timesCaught: 0, wrongChallenges: 0, byMode: {'1v1': {played: 0, won: 0}, '3': {played: 0, won: 0}, '4': {played: 0, won: 0}, esli: {played: 0, won: 0}}};
     d.lastGame = 'blof';

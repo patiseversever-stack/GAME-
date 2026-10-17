@@ -1,5 +1,6 @@
 // Giriş noktası: profil, 2B Pişti Arena masası (kuşanılmış deste + masa teması), sesler, ekranlar ve uygulama akışı.
-// Test bayrakları: ?auto=1 (kendiliğinden oynar; &mode=4|esli · Blöf için &game=blof&mode=1v1|3|4|esli&diff=kolay|orta|zor&hand=group|spread),
+// Test bayrakları: ?auto=1 (kendiliğinden oynar; &mode=4|esli · Blöf için &game=blof&mode=1v1|3|4|esli&diff=kolay|orta|zor&hand=group|spread ·
+// oyun uzunluğu &len=tek|51|101|151 (Pişti) · tek|3|5 (Blöf); yarım kalan maç varsa kendiliğinden devam eder),
 // ?seed=123 (sabit deste), ?reset=1 (profili sil → ilk açılış hikâyesi), ?skipintro=1 (hikâyeyi atla, varsayılan karakterle başla),
 // ?q=low|mid|high (kalite), ?blof=0 (Blöf'ü gizle), ?blofstub=1 (yalnız geliştirme: Blöf motoru yerine sahte el; arayüz akışını denemek için),
 // ?banter=1 (test: botlar arası atışma her uygun anda — olasılık 1, el aralığı 0; ekran görüntüsü / ses denemesi için).
@@ -16,7 +17,7 @@ import {Screens, type Settings} from './ui/screens';
 import {ASSETS} from './ui/assets';
 import {runApp} from './game/app';
 import {Profile} from './game/profile';
-import type {Difficulty, Game, HandLayout, Mode} from './game/types';
+import type {Difficulty, Game, HandLayout, MatchLength, Mode} from './game/types';
 import {BLOF} from './game/blofAdapter';
 import {detectTier, type Tier} from './quality';
 import {setHaptics, store} from './platform/bridge';
@@ -32,6 +33,7 @@ const MODE = (['1v1', '3', '4', 'esli'] as Mode[]).find(m => m === Q.get('mode')
 const DIFF = (['kolay', 'orta', 'zor'] as Difficulty[]).find(d => d === Q.get('diff'));
 const HAND = (['group', 'spread'] as HandLayout[]).find(l => l === Q.get('hand'));
 const SEED = Q.get('seed') ? Number(Q.get('seed')) | 0 : undefined;
+const LEN = (['tek', '51', '101', '151', '3', '5'] as MatchLength[]).find(l => l === Q.get('len'));
 if (Q.has('banter')) Object.assign(BANTER_RULES as {chance: number; minHands: number}, {chance: 1, minHands: 0});
 
 /** ?reset=1: profili (ve eski kayıtları) sil; adres çubuğundan bayrağı kaldır ki yenileyince tekrar silinmesin. */
@@ -144,7 +146,7 @@ async function boot(): Promise<void> {
   window.addEventListener('pointerdown', unlock);
   (window as unknown as {__kh: unknown}).__kh = {table, screens, tier, profile, speech, voice};
   if (import.meta.env.DEV && Q.has('blofstub')) BLOF.inject((await import('../dev/blofStub')).stubFactory);
-  await runApp({table, sfx, voice, speech, chat, screens, profile, settings, applySettings, applyCosmetics, auto: AUTO, autoGame: GAME, autoMode: MODE, autoDifficulty: DIFF, autoHand: HAND, seed: SEED});
+  await runApp({table, sfx, voice, speech, chat, screens, profile, settings, applySettings, applyCosmetics, auto: AUTO, autoGame: GAME, autoMode: MODE, autoDifficulty: DIFF, autoHand: HAND, autoLen: LEN, seed: SEED});
 }
 
 boot().catch(err => {

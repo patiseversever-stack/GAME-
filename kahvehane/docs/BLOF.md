@@ -18,6 +18,25 @@ Kahvehane Pişti uygulamasının ikinci oyunu. Aynı jeton, karakterler, destele
   bitirir. Yalanı yakalanırsa yığını alıp devam eder. **İlk bitiren kazanır** (eşlide takımı kazanır). Tek el.
 - **Görünürlük:** herkesin elindeki kart sayısı rozetin yanında görünür; 1–2 kart kalınca rozet yanar. Hafıza yardımı/sayaç YOK.
 
+## Oyun uzunluğu: Tek El · 3 El · 5 El (17 Ekim; kod `src/game/series.ts`, testler `tests/series.test.ts`)
+Kullanıcı isteği: "Blöf'te hep tek oyun var." Seçenekler **Tek El** (bugünkü gibi: ilk bitiren kazanır) · **3 El** · **5 El** (seri).
+- **Ceza:** her elde bitiren taraf **0** ceza alır; diğer her oyuncu **elinde kalan kart kadar** ceza alır.
+  **Eşli:** kazanan takım 0; kaybeden takımın cezası **iki oyuncusunun elinde kalan kartların toplamı** (kazanan takımda bitirmeyen ortağın kartları sayılmaz).
+- **Sonraki eli açan:** kaybeden taraflardan **elinde en çok kart kalan** oyuncu (teselli + geriden gelme şansı). Eşitlikte bitirenden sonra sırası
+  ilk gelen. İlk eli motor tohumdan seçer (ilk Blöf maçının ilk elinde öğretici: oyuncu açar).
+- **Kazanan:** N el bitince **en az toplam ceza**. Eşitlikte: **daha çok el kazanan** → **son elde daha az ceza alan** → berabere (pot bölünür / iade).
+  Seri erken bitmez (hep N el).
+- **Bahis maç başına bir kez** düşülür; kazananın aldığı pot uzunlukla büyür: 3 El ×1,5 · 5 El ×2 (Pişti 51 ×1,5 · 101 ×2 · 151 ×2,5).
+  XP: el başına 20 + sonuç primi (kazanma 40 · berabere 10) × çarpan, kalabalık masa çarpanı, yakalanan blöf +6 (el başına en çok 10).
+- **Eller arası "Ara Skor":** bu elin cezaları (sayarak), el el ceza hücreleri, el sayacı (●●○ 2/3), önde olana taç, konuşan karakter, büyük
+  "Sonraki El" (6 sn sonra kendiliğinden), "Masadan kalk" (onaylı).
+- **Maçı bırakmak** (Mola → Masadan Kalk ya da Ara Skor'dan; onaylı): bahis yanar, maç kaybı sayılır. **Uygulama maç ortasında kapanırsa**
+  maç durumu her el sonunda profile yazıldığı için sonraki açılışta "Yarım kalan maça devam et?" sorulur: devam, kaldığı **elin başından** aynı
+  tohumla başlar (el ortası saklanmaz); bırakmak maç kaybıdır.
+- İstatistik ve görevlerde **maç** sayılır (oynanan/kazanılan/seri); blöf sayıları her elde birikir. Yeni görev: "5 elli Blöf serisi kazan".
+- Seçim profilde oyun başına saklanır (`lastLength`, ilk oyunlarda Tek El). Ana ekrandaki seçicinin yeri kullanıcıyla belirlenecek
+  (şimdilik ayar + test kancası `?auto=1&game=blof&mode=3&len=3`).
+
 ## Oynanış ve sunum (kesin)
 - Kart atma: elden dokunarak 1–4 kart seç (kalkar) → alttaki "3 tane 7 at" düğmesi. Turu sen açıyorsan önce değer seçicisi.
 - Pas düğmesi; Blöf düğmesi (büyük kırmızı, 5 sn halka dolar) + yığına dokunma.

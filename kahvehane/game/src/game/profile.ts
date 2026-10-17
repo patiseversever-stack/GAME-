@@ -2,12 +2,19 @@
 // Tek kaynak burası; ekranlar okur, satın alma/kuşanma buradan geçer. (İleride sunucuya taşınacak.)
 import {store} from '../platform/bridge';
 import {CATALOG, itemOf, type ItemKind} from './catalog';
-import type {CharId} from './roster';
-import type {Difficulty, Game, HandLayout, Mode} from './types';
-import {DIFFICULTIES, GAMES, GAME_INFO, HAND_LAYOUTS} from './types';
+import {ROSTER, type CharId} from './roster';
+import type {Difficulty, Game, HandLayout, MatchLength, Mode} from './types';
+import {DIFFICULTIES, GAMES, GAME_INFO, HAND_LAYOUTS, MODE_INFO} from './types';
+import {LENGTH_INFO, isLong, lengthFor, validateSeries, type SeriesState} from './series';
 
 /** Mod başına oynanan / kazanılan (Pişti'de '3' hep 0: Pişti üç kişi oynanmaz). */
 export type ModeStats = Record<Mode, {played: number; won: number}>;
+
+/** Oynanan / kazanılan sayacı. */
+export interface PlayWon {
+  played: number;
+  won: number;
+}
 
 /** Pişti istatistikleri (eski kayıtlardaki `stats` aynen budur). */
 export interface PistiStats {
@@ -20,6 +27,8 @@ export interface PistiStats {
   streak: number;
   bestStreak: number;
   byMode: ModeStats;
+  /** Çok elli maçlar (51/101/151): played/won bunların içinde de sayılır */
+  long: PlayWon;
 }
 
 /** Blöf istatistikleri: galibiyet/mod + blöf sayıları. */
@@ -30,6 +39,8 @@ export interface BlofStats {
   streak: number;
   bestStreak: number;
   byMode: ModeStats;
+  /** Seriler (3 El / 5 El): played/won bunların içinde de sayılır */
+  long: PlayWon;
   /** Yaptığı blöf (içinde yanlış kart olan atış) */
   bluffs: number;
   /** Yakaladığı blöf (başkasının yalanını doğru çağırdı) */
@@ -38,6 +49,23 @@ export interface BlofStats {
   timesCaught: number;
   /** Boşa blöf çağrısı (doğru çıktı) */
   wrongChallenges: number;
+}
+
+/**
+ * Yarım kalan maç (uygulama maç ortasında kapanırsa sonraki açılışta "devam et?" sorulur). Her elin sonunda ve maç başında
+ * yazılır; maç bitince/bırakılınca silinir. Devam, kaldığı ELİN başından aynı tohumla başlar (el ortası saklanmaz).
+ */
+export interface SavedMatch {
+  series: SeriesState;
+  /** Maç başında düşülen bahis (masada) */
+  stake: number;
+  /** Koltuk sırasıyla botlar (buildSetup) */
+  opponents: CharId[];
+  difficulty: Difficulty;
+  /** Önceki ellerden biriken (maç sonu XP'si için): insanın pişti / vale pişti / yakaladığı blöf sayıları */
+  acc: {pisti: number; vale: number; caught: number};
+  /** Kaydın zamanı (ms) */
+  at: number;
 }
 
 export interface ProfileData {
@@ -66,13 +94,17 @@ export interface ProfileData {
   lastMode: Record<Game, Mode>;
   lastDifficulty: Difficulty;
   lastStake: number;
+  /** Oyun başına son seçilen oyun uzunluğu (ilk oyunlarda 'tek') */
+  lastLength: Record<Game, MatchLength>;
+  /** Yarım kalan maç (yoksa null) */
+  match: SavedMatch | null;
   /** Günlük görevler (tarihe göre her gün yenilenir) */
   quests: {date: string; list: QuestState[]; bonus: boolean};
 }
 
 // ───────── günlük görevler ─────────
 export type QuestId = 'play3' | 'pisti2' | 'cards60' | 'win2' | 'majority2' | 'mode4' | 'esli1' | 'vale1' | 'streak3' | 'pisti5' | 'cards30'
-  | 'blofCatch1' | 'blofPlay2' | 'blofWin1' | 'blofCatch3' | 'blofLie3' | 'blofStreak2';
+  | 'blofCatch1' | 'blofPlay2' | 'blofWin1' | 'blofCatch3' | 'blofLie3' | 'blofStreak2' | 'long101' | 'blofSeries5';
 export interface QuestDef {
   id: QuestId;
   title: string;
@@ -85,41 +117,50 @@ export interface QuestDef {
   icon: string;
   /** Yalnız bu oyunda ilerler ve yalnız oyuncu o oyunu bir kez oynadıktan sonra teklif edilir. Boşsa her oyunda geçerli. */
   game?: Game;
+  /** Yalnız oyuncu bir kez çok elli maç (Pişti 51/101/151 ya da Blöf serisi) oynadıktan sonra teklif edilir. */
+  long?: boolean;
 }
 export interface QuestState {
   id: QuestId;
   progress: number;
   claimed: boolean;
 }
+// "maç": tek el de bir maçtır; çok elli maç bitince BİR maç sayılır (oynanan/kazanılan, seri). Pişti/kart/blöf sayıları her elde birikir.
 export const QUESTS: readonly QuestDef[] = [
-  {id: 'play3', title: 'Isınma Turu', desc: '3 el oyna', goal: 3, reward: 250, tier: 0, icon: 'cards'},
+  {id: 'play3', title: 'Isınma Turu', desc: '3 maç oyna', goal: 3, reward: 250, tier: 0, icon: 'cards'},
   {id: 'pisti2', title: 'Pişti Avcısı', desc: '2 pişti yap', goal: 2, reward: 350, tier: 0, icon: 'target'},
   {id: 'cards60', title: 'Kart Toplayıcı', desc: 'Toplam 60 kart topla', goal: 60, reward: 300, tier: 0, icon: 'fan'},
-  {id: 'win2', title: 'Kazanan Masa', desc: '2 el kazan', goal: 2, reward: 500, tier: 1, icon: 'crown'},
+  {id: 'win2', title: 'Kazanan Masa', desc: '2 maç kazan', goal: 2, reward: 500, tier: 1, icon: 'crown'},
   {id: 'majority2', title: 'Çoğunluk Benim', desc: '2 elde en çok kartı topla', goal: 2, reward: 450, tier: 1, icon: 'grid'},
-  {id: 'mode4', title: 'Kalabalık Masa', desc: '4 Kişi modunda 2 el oyna', goal: 2, reward: 400, tier: 1, icon: 'friends'},
-  {id: 'esli1', title: 'Ortaklık', desc: 'Eşli modda 1 el kazan', goal: 1, reward: 500, tier: 1, icon: 'swords'},
+  {id: 'mode4', title: 'Kalabalık Masa', desc: '4 Kişi modunda 2 maç oyna', goal: 2, reward: 400, tier: 1, icon: 'friends'},
+  {id: 'esli1', title: 'Ortaklık', desc: 'Eşli modda 1 maç kazan', goal: 1, reward: 500, tier: 1, icon: 'swords'},
   {id: 'vale1', title: 'Vale Ustası', desc: '1 Vale Pişti yap', goal: 1, reward: 800, tier: 2, icon: 'sparkle'},
-  {id: 'streak3', title: 'Yenilmez', desc: 'Üst üste 3 el kazan', goal: 3, reward: 900, tier: 2, icon: 'flame'},
+  {id: 'streak3', title: 'Yenilmez', desc: 'Üst üste 3 maç kazan', goal: 3, reward: 900, tier: 2, icon: 'flame'},
   {id: 'pisti5', title: 'Pişti Kralı', desc: 'Bugün 5 pişti yap', goal: 5, reward: 750, tier: 2, icon: 'star'},
   {id: 'cards30', title: 'Masayı Sildim', desc: 'Tek elde 30+ kart topla', goal: 1, reward: 700, tier: 2, icon: 'shuffle'},
   // ---- Blöf (yalnız Blöf'ü bir kez oynamış oyuncuya teklif edilir; havuzun SONUNA eklenir: Pişti oyuncusunun günlük seçimi değişmez) ----
   {id: 'blofCatch1', title: 'Keskin Göz', desc: 'Bir blöf yakala', goal: 1, reward: 300, tier: 0, icon: 'target', game: 'blof'},
-  {id: 'blofPlay2', title: 'Maskeli Masa', desc: "Blöf'te 2 el oyna", goal: 2, reward: 250, tier: 0, icon: 'mask', game: 'blof'},
-  {id: 'blofWin1', title: 'Yalan Dolan', desc: "Blöf'te 1 el kazan", goal: 1, reward: 500, tier: 1, icon: 'crown', game: 'blof'},
+  {id: 'blofPlay2', title: 'Maskeli Masa', desc: "Blöf'te 2 maç oyna", goal: 2, reward: 250, tier: 0, icon: 'mask', game: 'blof'},
+  {id: 'blofWin1', title: 'Yalan Dolan', desc: "Blöf'te 1 maç kazan", goal: 1, reward: 500, tier: 1, icon: 'crown', game: 'blof'},
   {id: 'blofCatch3', title: 'Avcı Gözü', desc: 'Bugün 3 blöf yakala', goal: 3, reward: 450, tier: 1, icon: 'swords', game: 'blof'},
   {id: 'blofLie3', title: 'Poker Yüzü', desc: 'Yakalanmadan 3 blöf yap', goal: 3, reward: 800, tier: 2, icon: 'mask', game: 'blof'},
-  {id: 'blofStreak2', title: 'Usta Blöfçü', desc: "Blöf'te üst üste 2 el kazan", goal: 2, reward: 900, tier: 2, icon: 'flame', game: 'blof'},
+  {id: 'blofStreak2', title: 'Usta Blöfçü', desc: "Blöf'te üst üste 2 maç kazan", goal: 2, reward: 900, tier: 2, icon: 'flame', game: 'blof'},
+  // ---- uzun maç (yalnız bir kez çok elli maç oynamış oyuncuya; havuzun SONUNDA: diğer oyuncuların günlük seçimi değişmez) ----
+  {id: 'long101', title: 'Uzun Soluk', desc: "101'lik bir maç kazan", goal: 1, reward: 1200, tier: 2, icon: 'crown', game: 'pisti', long: true},
+  {id: 'blofSeries5', title: 'Seri Ustası', desc: '5 elli Blöf serisi kazan', goal: 1, reward: 1200, tier: 2, icon: 'mask', game: 'blof', long: true},
 ];
 export const QUEST_BONUS = 1000;
 export const questDef = (id: QuestId): QuestDef => QUESTS.find(q => q.id === id) ?? QUESTS[0];
 
-/** Tarihe bağlı günlük seçim (kolay + orta + zor). blof: Blöf görevleri havuza girer (oyuncu Blöf'ü en az bir kez oynadıysa). */
-export function questsFor(date: string, blof = false): QuestState[] {
+/**
+ * Tarihe bağlı günlük seçim (kolay + orta + zor). blof: Blöf görevleri havuza girer (oyuncu Blöf'ü en az bir kez oynadıysa).
+ * long: uzun maç görevleri havuza girer (oyuncu bir kez çok elli maç oynadıysa; Pişti'ninki her zaman, Blöf'ünkü blof ile birlikte).
+ */
+export function questsFor(date: string, blof = false, long = false): QuestState[] {
   let h = 2166136261;
   for (let i = 0; i < date.length; i++) h = Math.imul(h ^ date.charCodeAt(i), 16777619);
   return ([0, 1, 2] as const).map(t => {
-    const pool = QUESTS.filter(q => q.tier === t && (!q.game || (q.game === 'blof' && blof)));
+    const pool = QUESTS.filter(q => q.tier === t && (!q.game || q.game === 'pisti' || blof) && (!q.long || long));
     h = Math.imul(h ^ (h >>> 13), 0x5bd1e995);
     return {id: pool[(h >>> 0) % pool.length].id, progress: 0, claimed: false};
   });
@@ -136,6 +177,13 @@ export interface HandFacts {
   majority: boolean;
   /** Yalnız Blöf: elin sayıları */
   blof?: BlofHandFacts;
+}
+/** Bir maçın (tek el ya da çok elli) görevlere katkısı: oynanan/kazanılan, mod, seri, uzunluk. */
+export interface MatchFacts {
+  game: Game;
+  mode: Mode;
+  outcome: 'win' | 'lose' | 'draw';
+  len: MatchLength;
 }
 /** Blöf elinde insan oyuncunun sayıları. */
 export interface BlofHandFacts {
@@ -169,8 +217,8 @@ export function fresh(): ProfileData {
     onboarded: false,
     owned: {char: [], deck: starters('deck'), table: starters('table'), fx: starters('fx'), frame: starters('frame')},
     equipped: {deck: 'yildizli', table: 'arena', fx: 'klasik', frame: 'standart'},
-    stats: {played: 0, won: 0, lost: 0, draw: 0, pisti: 0, valePisti: 0, streak: 0, bestStreak: 0, byMode: emptyModes()},
-    blof: {played: 0, won: 0, lost: 0, streak: 0, bestStreak: 0, byMode: emptyModes(), bluffs: 0, caught: 0, timesCaught: 0, wrongChallenges: 0},
+    stats: {played: 0, won: 0, lost: 0, draw: 0, pisti: 0, valePisti: 0, streak: 0, bestStreak: 0, byMode: emptyModes(), long: {played: 0, won: 0}},
+    blof: {played: 0, won: 0, lost: 0, streak: 0, bestStreak: 0, byMode: emptyModes(), long: {played: 0, won: 0}, bluffs: 0, caught: 0, timesCaught: 0, wrongChallenges: 0},
     daily: {last: '', day: 0},
     settings: {},
     chestAt: 0,
@@ -178,6 +226,8 @@ export function fresh(): ProfileData {
     lastMode: {pisti: '1v1', blof: '3'},
     lastDifficulty: 'orta',
     lastStake: 100,
+    lastLength: {pisti: 'tek', blof: 'tek'},
+    match: null,
     quests: {date: today(), list: questsFor(today()), bonus: false},
   };
 }
@@ -196,20 +246,42 @@ function mergeModes(base: ModeStats, raw: unknown): ModeStats {
   return out;
 }
 
+/** Oynanan/kazanılan sayacı (eski kayıtta yok → 0). */
+function mergePW(raw: unknown): PlayWon {
+  const r = isRec(raw) ? raw : {};
+  return {played: nat(r.played, 0), won: nat(r.won, 0)};
+}
+
 function mergePisti(f: PistiStats, raw: unknown): PistiStats {
   const r = isRec(raw) ? raw : {};
   return {
     played: nat(r.played, f.played), won: nat(r.won, f.won), lost: nat(r.lost, f.lost), draw: nat(r.draw, f.draw),
     pisti: nat(r.pisti, f.pisti), valePisti: nat(r.valePisti, f.valePisti), streak: nat(r.streak, f.streak), bestStreak: nat(r.bestStreak, f.bestStreak),
-    byMode: mergeModes(f.byMode, r.byMode),
+    byMode: mergeModes(f.byMode, r.byMode), long: mergePW(r.long),
   };
+}
+
+/** Yarım kalan maç kaydı: bozuk/bitmiş/tutarsız → null (maç yok sayılır; bahis zaten masadaydı). */
+export function validSaved(raw: unknown): SavedMatch | null {
+  if (!isRec(raw)) return null;
+  const series = validateSeries(raw.series);
+  if (!series || series.over) return null;
+  const stake = raw.stake;
+  if (typeof stake !== 'number' || !Number.isInteger(stake) || stake < 0 || stake > 1e7) return null;
+  const ids = ROSTER.map(c => c.id);
+  const opp = Array.isArray(raw.opponents) ? raw.opponents.filter((x): x is CharId => ids.includes(x as CharId)) : [];
+  if (!opp.length) return null;
+  const difficulty = DIFFICULTIES.includes(raw.difficulty as Difficulty) ? (raw.difficulty as Difficulty) : 'orta';
+  const acc = isRec(raw.acc) ? raw.acc : {};
+  if (opp.length !== MODE_INFO[series.mode].seats - 1) return null;
+  return {series, stake, opponents: opp, difficulty, acc: {pisti: nat(acc.pisti, 0), vale: nat(acc.vale, 0), caught: nat(acc.caught, 0)}, at: nat(raw.at, 0)};
 }
 
 function mergeBlof(f: BlofStats, raw: unknown): BlofStats {
   const r = isRec(raw) ? raw : {};
   return {
     played: nat(r.played, f.played), won: nat(r.won, f.won), lost: nat(r.lost, f.lost), streak: nat(r.streak, f.streak), bestStreak: nat(r.bestStreak, f.bestStreak),
-    byMode: mergeModes(f.byMode, r.byMode),
+    byMode: mergeModes(f.byMode, r.byMode), long: mergePW(r.long),
     bluffs: nat(r.bluffs, f.bluffs), caught: nat(r.caught, f.caught), timesCaught: nat(r.timesCaught, f.timesCaught), wrongChallenges: nat(r.wrongChallenges, f.wrongChallenges),
   };
 }
@@ -250,6 +322,9 @@ export function migrateProfile(d: unknown, legacy: {name?: string; level?: numbe
     lastGame: GAMES.includes(raw.lastGame as Game) ? (raw.lastGame as Game) : 'pisti',
     lastMode,
     lastDifficulty: DIFFICULTIES.includes(raw.lastDifficulty as Difficulty) ? (raw.lastDifficulty as Difficulty) : 'orta',
+    // yeni alanlar (eski kayıtlarda yok): tek el · yarım maç yok
+    lastLength: {pisti: lengthFor('pisti', isRec(raw.lastLength) ? raw.lastLength.pisti : undefined), blof: lengthFor('blof', isRec(raw.lastLength) ? raw.lastLength.blof : undefined)},
+    match: validSaved(raw.match),
     quests: isRec(raw.quests) && Array.isArray(raw.quests.list) ? raw.quests : f.quests,
   } as ProfileData;
   return out;
@@ -342,47 +417,80 @@ export class Profile {
     return {levels, reward};
   }
 
-  /** Pişti el sonu istatistikleri. outcome: oyuncunun (veya takımının) sonucu. */
+  /** Pişti tek el (eski yüzey): el + maç birlikte. outcome: oyuncunun (veya takımının) sonucu. */
   recordMatch(mode: Mode, outcome: 'win' | 'lose' | 'draw', pisti: number, valePisti: number, extra?: {cards: number; majority: boolean}): void {
+    this.recordPistiHand(mode, {pisti, valePisti, cards: extra?.cards ?? 0, majority: extra?.majority ?? false}, outcome);
+    this.recordGame('pisti', mode, outcome, 'tek');
+  }
+
+  /** Blöf tek el (eski yüzey): el + maç birlikte (beraberlik yok: ilk bitiren kazanır). */
+  recordBlof(mode: Mode, outcome: 'win' | 'lose', x: BlofHandFacts): void {
+    this.recordBlofHand(mode, x, outcome);
+    this.recordGame('blof', mode, outcome, 'tek');
+  }
+
+  /**
+   * Pişti EL sonu: pişti sayıları ve el görevleri (pişti, kart, çoğunluk, vale) her elde birikir; oynanan/kazanılan maç sayılmaz.
+   * outcome: bu elin sonucu (yalnız bilgi; görevler maçla ilerler).
+   */
+  recordPistiHand(mode: Mode, f: {pisti: number; valePisti: number; cards: number; majority: boolean}, outcome: 'win' | 'lose' | 'draw' = 'lose'): void {
     const s = this.data.stats;
-    s.played++;
-    s.byMode[mode].played++;
-    if (outcome === 'win') {
-      s.won++;
-      s.byMode[mode].won++;
-      s.streak++;
-      s.bestStreak = Math.max(s.bestStreak, s.streak);
-    } else {
-      if (outcome === 'lose') s.lost++;
-      else s.draw++;
-      s.streak = 0;
-    }
-    s.pisti += pisti;
-    s.valePisti += valePisti;
-    this.advanceQuests({game: 'pisti', mode, outcome, pisti, valePisti, cards: extra?.cards ?? 0, majority: extra?.majority ?? false});
+    s.pisti += f.pisti;
+    s.valePisti += f.valePisti;
+    this.handQuests({game: 'pisti', mode, outcome, pisti: f.pisti, valePisti: f.valePisti, cards: f.cards, majority: f.majority});
     this.save();
   }
 
-  /** Blöf el sonu istatistikleri (beraberlik yok: ilk bitiren kazanır). */
-  recordBlof(mode: Mode, outcome: 'win' | 'lose', x: BlofHandFacts): void {
+  /** Blöf EL sonu: blöf sayıları ve el görevleri (yakala, yakalanmadan blöf) her elde birikir. */
+  recordBlofHand(mode: Mode, x: BlofHandFacts, outcome: 'win' | 'lose' = 'lose'): void {
     const s = this.data.blof;
-    s.played++;
-    s.byMode[mode].played++;
-    if (outcome === 'win') {
-      s.won++;
-      s.byMode[mode].won++;
-      s.streak++;
-      s.bestStreak = Math.max(s.bestStreak, s.streak);
-    } else {
-      s.lost++;
-      s.streak = 0;
-    }
     s.bluffs += x.bluffs;
     s.caught += x.caught;
     s.timesCaught += x.timesCaught;
     s.wrongChallenges += x.wrongChallenges;
-    this.advanceQuests({game: 'blof', mode, outcome, pisti: 0, valePisti: 0, cards: 0, majority: false, blof: x});
+    this.handQuests({game: 'blof', mode, outcome, pisti: 0, valePisti: 0, cards: 0, majority: false, blof: x});
     this.save();
+  }
+
+  /**
+   * MAÇ sonu (tek el ya da çok elli; maçı bırakmak = kayıp): oynanan/kazanılan, mod sayaçları, galibiyet serisi, uzun maç sayacı ve
+   * maç görevleri (oyna, kazan, seri, mod, uzun maç). Blöf'te beraberlik (seri eşitliği) seriyi bozar ama kayıp sayılmaz.
+   */
+  recordGame(game: Game, mode: Mode, outcome: 'win' | 'lose' | 'draw', len: MatchLength = 'tek'): void {
+    const s = game === 'blof' ? this.data.blof : this.data.stats;
+    s.played++;
+    s.byMode[mode].played++;
+    if (isLong(len)) s.long.played++;
+    if (outcome === 'win') {
+      s.won++;
+      s.byMode[mode].won++;
+      if (isLong(len)) s.long.won++;
+      s.streak++;
+      s.bestStreak = Math.max(s.bestStreak, s.streak);
+    } else {
+      if (outcome === 'lose') s.lost++;
+      else if ('draw' in s) s.draw++;
+      s.streak = 0;
+    }
+    this.matchQuests({game, mode, outcome, len});
+    this.save();
+  }
+
+  /** Oyun uzunluğu seçimi (ana ekrandaki seçici bunu çağırır; geçersizse tek el). Sonraki OYNA bu uzunlukla başlar. */
+  setLastLength(game: Game, len: MatchLength): void {
+    this.data.lastLength[game] = lengthFor(game, len);
+    this.save();
+  }
+
+  /** Yarım kalan maçı yaz (null: sil). Kayıt anında doğrulanmaz; okurken (migrateProfile) doğrulanır. */
+  saveMatch(m: SavedMatch | null): void {
+    this.data.match = m;
+    this.save();
+  }
+
+  /** Oyuncu bir kez çok elli maç oynadı mı (uzun maç görevleri buna bakar). */
+  get playedLong(): boolean {
+    return this.data.stats.long.played + this.data.blof.long.played > 0;
   }
 
   /** Oyuncu Blöf'ü en az bir kez oynadı mı (Blöf görevleri ve ana ekran ipuçları buna bakar). */
@@ -399,36 +507,53 @@ export class Profile {
   dailyQuests(): {list: QuestState[]; bonus: boolean} {
     const d = today();
     if (this.data.quests.date !== d) {
-      this.data.quests = {date: d, list: questsFor(d, this.playedBlof), bonus: false};
+      this.data.quests = {date: d, list: questsFor(d, this.playedBlof, this.playedLong), bonus: false};
       this.save();
     }
     return this.data.quests;
   }
 
-  private advanceQuests(f: HandFacts): void {
+  /** El görevleri: her elde biriken sayılar. */
+  private handQuests(f: HandFacts): void {
     const add = (q: QuestState, n: number) => (q.progress = Math.min(questDef(q.id).goal, q.progress + n));
     const blof = f.game === 'blof';
     const b = f.blof;
     for (const q of this.dailyQuests().list) {
       if (q.claimed) continue;
       switch (q.id) {
-        case 'play3': add(q, 1); break;
         case 'pisti2': case 'pisti5': add(q, f.pisti); break;
         case 'cards60': add(q, f.cards); break;
-        case 'win2': if (f.outcome === 'win') add(q, 1); break;
         case 'majority2': if (f.majority) add(q, 1); break;
-        case 'mode4': if (f.mode === '4') add(q, 1); break;
-        case 'esli1': if (f.mode === 'esli' && f.outcome === 'win') add(q, 1); break;
         case 'vale1': add(q, f.valePisti); break;
-        case 'streak3': q.progress = Math.min(3, Math.max(q.progress, blof ? this.data.blof.streak : this.data.stats.streak)); break;
         case 'cards30': if (f.cards >= 30) add(q, 1); break;
         // ---- Blöf ----
         case 'blofCatch1': case 'blofCatch3': if (blof && b) add(q, b.caught); break;
-        case 'blofPlay2': if (blof) add(q, 1); break;
-        case 'blofWin1': if (blof && f.outcome === 'win') add(q, 1); break;
         // "yakalanmadan": hiç yakalanmadığın ellerde yaptığın blöfler sayılır
         case 'blofLie3': if (blof && b && b.timesCaught === 0) add(q, b.bluffs); break;
+      }
+    }
+  }
+
+  /** Maç görevleri: maç başına bir kez (tek el de bir maçtır). */
+  private matchQuests(f: MatchFacts): void {
+    const add = (q: QuestState, n: number) => (q.progress = Math.min(questDef(q.id).goal, q.progress + n));
+    const blof = f.game === 'blof';
+    const win = f.outcome === 'win';
+    for (const q of this.dailyQuests().list) {
+      if (q.claimed) continue;
+      switch (q.id) {
+        case 'play3': add(q, 1); break;
+        case 'win2': if (win) add(q, 1); break;
+        case 'mode4': if (f.mode === '4') add(q, 1); break;
+        case 'esli1': if (f.mode === 'esli' && win) add(q, 1); break;
+        case 'streak3': q.progress = Math.min(3, Math.max(q.progress, blof ? this.data.blof.streak : this.data.stats.streak)); break;
+        // ---- Blöf ----
+        case 'blofPlay2': if (blof) add(q, 1); break;
+        case 'blofWin1': if (blof && win) add(q, 1); break;
         case 'blofStreak2': if (blof) q.progress = Math.min(2, Math.max(q.progress, this.data.blof.streak)); break;
+        // ---- uzun maç ----
+        case 'long101': if (!blof && win && LENGTH_INFO[f.len].target >= 101) add(q, 1); break;
+        case 'blofSeries5': if (blof && win && f.len === '5') add(q, 1); break;
       }
     }
   }

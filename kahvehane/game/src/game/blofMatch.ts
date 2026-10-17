@@ -324,7 +324,9 @@ export class BlofMatch {
     // yerel ev sahibi: motor yetkili, botlar ev sahibinde, insan koltuğu bu arayüz
     const seed = setup.seed ?? (Math.random() * 2 ** 31) | 0;
     const diff: BlofDifficulty = tutorial ? 'kolay' : diffOf(setup.difficulty);
-    const cfg = {...blofConfigFor(mode, seed, tutorial ? ME : undefined), challengeWindowMs: tutorial ? 9000 : undefined};
+    // ilk açan: öğreticide oyuncu; seride önceki elin kaybedeni (setup.firstSeat); yoksa motor tohumdan seçer
+    const first = tutorial ? ME : setup.firstSeat !== undefined && setup.firstSeat >= 0 && setup.firstSeat < this.n ? setup.firstSeat : undefined;
+    const cfg = {...blofConfigFor(mode, seed, first), challengeWindowMs: tutorial ? 9000 : undefined};
     const local = createBlofLocal({
       cfg,
       seats: Array.from({length: this.n}, (_, i) => (i === ME ? {kind: 'human' as const, name: setup.players[0]?.name} : {kind: 'bot' as const, difficulty: diff, name: this.players[i]?.name})),

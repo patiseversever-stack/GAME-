@@ -12,6 +12,12 @@ Yeni oturum bu dosyayı okuyup devam edebilsin diye tutulur.
 ## Oyun
 - Klasik Pişti puanı: Pişti 10, Vale ile pişti 20, her As/Vale 1, ♣2 = 2, ♦10 = 3, en çok kart +3.
 - Modlar: **1'e 1**, **4 kişi tekli** (herkes kendine), **4 kişi eşli** (2'ye 2, karşılıklı ortak).
+- **Oyun uzunluğu (17 Ekim; `src/game/series.ts`):** Tek El · 51 · 101 · 151. Eller art arda dağıtılır, el puanları (kart puanları + pişti 10 /
+  vale pişti 20 + çoğunluk 3) toplanır; eşlide takım, 4 kişide herkes kendi toplamı. Dağıtan her el bir sonraki koltuğa geçer (ilk eli insan açar).
+  Bir elin sonunda biri hedefe ulaştıysa maç o elde biter, **en yüksek toplam** kazanır; en yüksekte **eşitlik → bir el daha** (uzatma eli,
+  eşitlik bozulana dek; 40 el güvenlik sınırında pişti puanı, o da eşitse berabere). Tek El'de eşitlik beraberliktir (bugünkü gibi).
+  Bahis maç başına bir kez; ödül çarpanı 51 ×1,5 · 101 ×2 · 151 ×2,5 (Blöf kuralları ve ortak ekonomi: `BLOF.md` "Oyun uzunluğu").
+  Ortalama el sayısı (bot simülasyonu, 200 maç): 1'e 1 ve eşli 51 ≈ 3,6 · 101 ≈ 7 · 151 ≈ 10,4; 4 kişi 51 ≈ 5,8 · 101 ≈ 12,4 · 151 ≈ 19 el.
 - Bakış: birinci şahıs, oturan oyuncunun gözünden, göz hizasının biraz üstü (~45°).
 - Eller görünür: sol el kartları yelpaze tutar (4 kart + başparmak), sağ el kartı alır, kol ortaya uzanıp bırakır/çarpar.
 - Rakipler karşıda 3D (bel üstü), tepkili, komik.

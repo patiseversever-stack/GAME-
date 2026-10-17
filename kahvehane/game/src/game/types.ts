@@ -47,6 +47,12 @@ export const gameHasMode = (g: Game, m: Mode): boolean => GAME_INFO[g].modes.inc
 /** Başlık/etiket: "Blöf · 3 Kişi", "Pişti · 1'e 1". */
 export const matchTitle = (g: Game, m: Mode): string => `${GAME_INFO[g].name} · ${MODE_INFO[m].name}`;
 
+/**
+ * Oyun uzunluğu (maç ayarı; kurallar ve ekonomi src/game/series.ts). Pişti: 'tek' tek el · '51' / '101' / '151' o puana kadar.
+ * Blöf: 'tek' tek el · '3' / '5' el sayısı (en az ceza kazanır). Oyun başına son seçim profilde (lastLength) saklanır.
+ */
+export type MatchLength = 'tek' | '51' | '101' | '151' | '3' | '5';
+
 /** Blöf el düzeni: 'group' = aynı değerler gruplu yığınlar (×N), 'spread' = klasik iki sıra yelpaze. İlk Blöf'te oyuncu seçer, ayarlardan değişir. */
 export type HandLayout = 'group' | 'spread';
 export const HAND_LAYOUTS: readonly HandLayout[] = ['group', 'spread'];
@@ -99,6 +105,12 @@ export interface MatchSetup {
   tutorial?: boolean;
   /** Blöf: oyuncunun el düzeni seçimi (profil ayarı). Verilmezse BlofMatch kendi varsayılanını kullanır. */
   handLayout?: HandLayout;
+  /** Oyun uzunluğu (verilmezse tek el). Match/BlofMatch tek bir el oynar; maç döngüsü app.ts + series.ts'tedir. */
+  len?: MatchLength;
+  /** Maçın kaçıncı eli (1'den; bilgi/sunum için) */
+  handNo?: number;
+  /** Blöf: turu ilk açacak koltuk (seride önceki elin kaybedeni). Verilmezse motor tohumdan seçer; öğreticide hep oyuncu. */
+  firstSeat?: number;
 }
 
 /**

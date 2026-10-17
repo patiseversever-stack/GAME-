@@ -1,5 +1,5 @@
 import {describe, expect, it} from 'vitest';
-import {BOT_LEVEL, blofXp, buildSetup, payout, receive, type SetupProfile} from '../src/game/setup';
+import {BOT_LEVEL, blofXp, buildSetup, matchXp, payout, prize, receive, type SetupProfile} from '../src/game/setup';
 import {GAME_INFO, MODE_INFO, matchTitle, pistiInfo, type Mode} from '../src/game/types';
 import {normalizeBlofOutcome} from '../src/game/blofAdapter';
 import type {CharId} from '../src/game/roster';
@@ -101,6 +101,28 @@ describe('ekonomi', () => {
     }
     expect(receive('1v1', 100, 'draw', 2)).toBe(100);
     expect(receive('4', 100, 'draw', 2)).toBe(200); // 4 kişide beraberlikte pot bölünür (Pişti)
+  });
+  it('oyun uzunluğu: bahis maç başına bir; kazananın potu çarpanla büyür, kaybeden yalnız bahsini kaybeder', () => {
+    expect(receive('1v1', 100, 'win', 1, 1)).toBe(200);
+    expect(receive('1v1', 100, 'win', 1, 2)).toBe(400);
+    expect(receive('esli', 500, 'win', 1, 2.5)).toBe(2500);
+    expect(receive('1v1', 100, 'lose', 1, 2)).toBe(0);
+    expect(receive('1v1', 100, 'draw', 2, 2)).toBe(100); // beraberlik: iade
+    expect(receive('4', 100, 'win', 1, 1.5)).toBe(600);
+    expect(receive('4', 100, 'draw', 2, 2)).toBe(400); // pot bölünür
+    expect(receive('3', 1000, 'win', 1, 2)).toBe(6000);
+    expect(prize('1v1', 100, 2)).toBe(400);
+    expect(prize('4', 100)).toBe(400);
+  });
+  it('maç XP: tek elde eski değerler; uzun maçta el başına 20 + sonuç primi × çarpan', () => {
+    // tek el = eski formül: 60 / 30 / 20 × mod çarpanı + pişti 8 / vale 12
+    expect(matchXp('pisti', '1v1', 'win', {hands: 1, mult: 1})).toBe(60);
+    expect(matchXp('pisti', '1v1', 'draw', {hands: 1, mult: 1})).toBe(30);
+    expect(matchXp('pisti', '4', 'lose', {hands: 1, mult: 1})).toBe(25);
+    expect(matchXp('pisti', 'esli', 'win', {hands: 1, mult: 1, pisti: 2, vale: 1})).toBe(Math.round(60 * 1.1 + 16 + 12));
+    expect(matchXp('pisti', '1v1', 'win', {hands: 7, mult: 2})).toBe(20 * 7 + 80);
+    expect(matchXp('pisti', '1v1', 'lose', {hands: 7, mult: 2})).toBe(140);
+    expect(matchXp('blof', '3', 'win', {hands: 3, mult: 1.5, caught: 40})).toBe(Math.round((60 + 60) * 1.15 + 30 * 6));
   });
   it('Blöf XP: kalabalık masa çarpanı, yakalanan blöf başına +6 (en çok 10)', () => {
     expect(blofXp('1v1', 'win', 0)).toBe(60);

@@ -9,8 +9,72 @@ import type {BlofAction, BlofConfig, BlofEvent, BlofState, BlofView} from '../sr
 import {mulberry32} from '../src/core/rng';
 import {rankOf} from '../src/core/types';
 
-/** Koltuk: bot zorluğu ya da insan vekili (kararları bir bot beyni verir, zamanlaması insan gibi). */
-export type AuditSeat = BlofDifficulty | {human: BlofDifficulty};
+/** Koltuk: bot zorluğu ya da insan vekili (kararları bir bot beyni ya da 'casual' kural seti verir; zamanlaması insan gibi). */
+export type AuditSeat = BlofDifficulty | {human: BlofDifficulty | 'casual'};
+
+/** Karar veren beyin (BlofBot ya da sabit kurallı insan vekili). */
+interface Brain {
+  observe(e: BlofEvent): void;
+  decide(v: BlofView): {action: BlofAction; delayMs: number} | null;
+}
+
+/**
+ * Sıradan kahvehane oyuncusu (sabit kurallar, kart saymaz; yalnız kendi elini ve masadaki iddiaları görür):
+ * en kalabalık değerini doğru açar (ara sıra bir yalan kart katar), değer elindeyse doğru atar, yoksa ara sıra tek kart blöf yapar;
+ * son karta hep "Blöf!" der, kendi elinden kesin yalanı ve masadaki 4'ü aşan iddiayı yakalar, gerisinde arada bir şansını dener.
+ */
+export class CasualHuman implements Brain {
+  private readonly rnd: () => number;
+  constructor(readonly seat: number, seed: number) {
+    this.rnd = mulberry32(seed);
+  }
+  observe(): void {}
+  decide(v: BlofView): {action: BlofAction; delayMs: number} | null {
+    const me = this.seat;
+    const hand = v.hand;
+    const cnt = new Array<number>(14).fill(0);
+    for (const c of hand) cnt[rankOf(c)]++;
+    const of = (r: number) => hand.filter((c) => rankOf(c) === r).slice(0, 4);
+    const junk = (r: number, k: number) => {
+      const pool = hand.filter((c) => rankOf(c) !== r).sort((a, b) => cnt[rankOf(a)] - cnt[rankOf(b)] || a - b);
+      return pool.slice(0, k);
+    };
+    if (v.canChallenge && v.window) {
+      const w = v.window;
+      if (w.final) return {action: {t: 'challenge', seat: me}, delayMs: 1000};
+      const mine = cnt[w.rank];
+      let prev = 0;
+      for (let i = 0; i < v.roundPlays.length - 1; i++) prev += v.roundPlays[i].count;
+      const opening = v.roundPlays.length === 1;
+      let p = opening ? 0.06 : w.count === 1 ? 0.22 : 0.4;
+      if (v.seats === 2) p *= 1.3;
+      if (mine + w.count > 4) p = 1;
+      else if (prev + w.count + mine > 4) p = 0.85;
+      return this.rnd() < p ? {action: {t: 'challenge', seat: me}, delayMs: 1200} : {action: {t: 'decline', seat: me}, delayMs: 1200};
+    }
+    if (!v.myTurn) return null;
+    if (v.mustOpen) {
+      let best = 0;
+      for (let r = 1; r <= 13; r++) if (cnt[r] > (best ? cnt[best] : 0) || (cnt[r] === cnt[best] && cnt[r] > 0 && this.rnd() < 0.5)) best = r;
+      const cards = of(best);
+      if (cards.length === hand.length) return {action: {t: 'open', seat: me, rank: best, cards}, delayMs: 3000};
+      if (cards.length < 4 && hand.length - cards.length >= 2 && this.rnd() < 0.12) cards.push(...junk(best, 1));
+      return {action: {t: 'open', seat: me, rank: best, cards}, delayMs: 3000};
+    }
+    const r = v.rank;
+    if (cnt[r] > 0) return {action: {t: 'play', seat: me, cards: of(r)}, delayMs: 2500};
+    let claimed = 0;
+    for (const pl of v.roundPlays) claimed += pl.count;
+    const last = v.lastPlay?.seat ?? -1;
+    const lastMate = last >= 0 && v.teams[last] === v.teams[me];
+    const desperate = last >= 0 && !lastMate && v.handCounts[last] === 1 && v.passes === v.seats - 2;
+    const p = desperate ? 1 : lastMate ? 0.1 : v.seats === 2 ? 0.7 : 0.45;
+    const impossible = claimed + 1 > 4 && this.rnd() < 0.8;
+    if (hand.length >= 2 && !impossible && this.rnd() < p) return {action: {t: 'play', seat: me, cards: junk(r, 1)}, delayMs: 2500};
+    if (desperate) return {action: {t: 'play', seat: me, cards: junk(r, 1)}, delayMs: 2500};
+    return {action: {t: 'pass', seat: me}, delayMs: 1500};
+  }
+}
 
 /** Sunum süreleri (ms) — blofMatch/blofTable animasyonlarının kabaca toplamı. */
 export const PRESENT_MS = {
@@ -85,11 +149,13 @@ export interface AuditOptions {
   humanDeclineP?: number;
   /** Her karardan sonra (denetim için) çağrılır: bot kararı + bot görünümü + TAM durum (yalnız ölçüm). */
   onDecision?: (seat: number, view: BlofView, action: BlofAction, state: BlofState) => void;
+  /** Pencere sonuçlandı: by koltuğunun atışına blöf dendi mi (ölçüm). */
+  onWindowResolved?: (by: number, challenged: boolean) => void;
   /** Bot fabrikası (parametre denemeleri). */
   botFactory?: (seat: number, diff: BlofDifficulty, seed: number) => BlofBot;
 }
 
-const isHuman = (s: AuditSeat): s is {human: BlofDifficulty} => typeof s === 'object';
+const isHuman = (s: AuditSeat): s is {human: BlofDifficulty | 'casual'} => typeof s === 'object';
 
 function presentMs(evs: BlofEvent[], seats: number): number {
   let ms = 0;
@@ -134,9 +200,10 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
   const g = createBlof(cfg);
   let s = g.state;
   const seed = o.botSeed ?? cfg.seed;
-  const brains = o.seats.map((sp, i) => {
+  const brains: Brain[] = o.seats.map((sp, i) => {
     const d = isHuman(sp) ? sp.human : sp;
     const bs = (seed * 131 + i * 7 + 1) >>> 0;
+    if (d === 'casual') return new CasualHuman(i, bs);
     return o.botFactory ? o.botFactory(i, d, bs) : new BlofBot(i, d, bs);
   });
   const human = o.seats.findIndex(isHuman);
@@ -197,6 +264,8 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
   /** İnsan vekilinin pencerede sıraya aldığı hamle (pencere blöfsüz kapanınca uygulanır). */
   let humanQueued = false;
   let humanIdleFrom = t;
+  /** İnsan vekilinin bu karar bağlamında (hamle sayacı) kararını verdi mi. */
+  let humanEpoch = -1;
   const maxMoves = o.maxMoves ?? 3000;
   let passRun = 0;
   let botFinalDeclines = 0;
@@ -229,6 +298,7 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
       const v = viewFor(s, human);
       const d = brains[human].decide(v)!;
       pending[human] = {at: t + 250, epoch: s.move, action: d.action, human: true, start: t};
+      humanEpoch = s.move;
     } else if (humanQueued && s.phase === 'turn') humanQueued = false;
     // 2) hamlesi beklenenler karar verir (ev sahibi: sunum bitince)
     for (const seat of actors(s)) {
@@ -236,6 +306,8 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
       if (p && p.epoch === s.move) continue;
       const v = viewFor(s, seat);
       if (seat === human) {
+        if (humanEpoch === s.move) continue;
+        humanEpoch = s.move;
         pending[seat] = humanDecide(seat, v);
         if (pending[seat]) {
           m.humanMaxIdle = Math.max(m.humanMaxIdle, (t - humanIdleFrom) / 1000);
@@ -311,12 +383,15 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
       }
     }
     const wasFinal = s.phase === 'window' && s.window?.final;
+    const winBy = s.phase === 'window' ? s.window!.by : -1;
     const r = applyBlof(s, action);
     if (r.error !== undefined) throw new Error(`geçersiz hamle ${JSON.stringify(action)} (koltuk ${actor}): ${r.error}`);
     const prevWin = s.window?.id;
     s = r.state;
     feed(r.events);
     for (const e of r.events) {
+      if (e.t === 'challenged') o.onWindowResolved?.(e.target, true);
+      if (e.t === 'windowClosed') o.onWindowResolved?.(winBy, false);
       if (e.t === 'pileCleared') {
         m.clears++;
         m.discarded += e.count;

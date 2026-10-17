@@ -4,17 +4,25 @@
 //
 // Bilgi modeli: her kart için "olası yerler" bit maskesi (koltuk 0–3, yığın, kenar). Yalnız KESİN bilgiyle daraltılır
 // (kendi elim, kendi attığım kartlar, açılan kartlar ve gittiği yer, yığının kime gittiği). Unutmak = maskeyi genişletmek
-// (hep güvenli). Blöf olasılığı bu maskelerden ve el sayılarından hesaplanır.
+// (hep güvenli). Ek olarak "muhtemel sahip" katmanı (kim hangi yığını aldı) ve kamuya açık rakip modeli tutulur:
+// kim ne sıklıkla "Blöf!" diyor, kimin açılan atışları ne sıklıkla yalan çıktı.
 //
-// Ek olarak "muhtemel sahip" katmanı (kim hangi yığını aldı) ve kamuya açık rakip modeli (kim ne sıklıkla "Blöf!" diyor)
-// tutulur. Kararlar beklenen değerle verilir: atılan/alınan kart + turu açma hakkı (tempo) + yakalanma riski.
+// Kararlar (kart cinsinden beklenen değer):
+//  - Blöf mü? Atanın atıştan ÖNCEKİ elinde o değerden kaç kart olabileceğinin dağılımı × davranış olabilirliği (Bayes).
+//    Turu açan değeri KENDİSİ seçer (çoğunlukla en kalabalık grubunu) → açış iddiaları çoğunlukla doğrudur; takipçinin
+//    "2 tane" iddiası ise elinde yokken sık yapılan blöftür. Masadaki iddialar 4'ü aşıyorsa göze batar.
+//  - Atış/pas: doğru at · araya yalan kart kat · blöf · pas. Yakalanma riski rakiplerin gözlenen blöf deme sıklığından ve
+//    rakibin görebildiğinden (masadaki iddialar, açılan kartları alan) hesaplanır. Pas, turu kime açtırdığına bakar:
+//    tek kartı kalan rakibe turu bedava açtırmak = eli vermek; eşlide son atan ortaksa pas ona turu açtırır.
 //
 // Zorluk (karakterler aynı, yalnız zorluk farkı):
-//  kolay — yalnız kendi eline bakar; gelişigüzel blöf yapar ve der (çoğu boşa), son kartı bile kaçırabilir,
-//          blöfte sık ele verir (gergin), duraksar; yavaş tepki.
-//  orta  — kart sayar ama bazen unutur, kimin ne sıklıkla blöf dediğini izler, biraz gürültülü karar verir.
-//  zor   — her şeyi hatırlar, turdaki iddiaları da hesaba katar, rakiplerin blöf deme sıklığına göre blöf dozunu ayarlar,
-//          bitirmeye yakın rakibi sıkıştırır, son kartı asla kaçırmaz, az ele verir; hızlı tepki.
+//  kolay — kart saymaz, yalnız kendi elini ve göze batan iddiaları görür; gelişigüzel blöf yapar ve der, ara sıra son karta
+//          bile blöf demeyi unutur, blöfte sık ele verir, yavaş tepki verir.
+//  orta  — kart sayar ama unutur, masadaki iddiaları çoğunlukla izler, kimin blöf dediğini izler, gürültülü karar verir.
+//  zor   — neredeyse her şeyi hatırlar (yine de arada yanılır), iddiaları hesaba katar, rakibin blöf deme sıklığına göre
+//          blöf dozunu ayarlar, bitirmeye yakın rakibi sıkıştırır, son karta hep "Blöf!" der, az ele verir.
+// Her bot örneğinin ufak bir mizacı (cesaret/blöf sevgisi) vardır: aynı masadaki botlar hep aynı anda aynı şeyi yapmaz.
+// Bekleme süreleri insan gibidir: karar zorsa ve yığın büyükse daha uzun düşünür, kesin yakalamada hızlı ama ani değil.
 import type {BotBrain, BotDecision} from '../core/game';
 import {mulberry32} from '../core/rng';
 import {rankOf} from '../core/types';
@@ -24,27 +32,34 @@ export type BlofDifficulty = 'kolay' | 'orta' | 'zor';
 export const BLOF_DIFFICULTIES: readonly BlofDifficulty[] = ['kolay', 'orta', 'zor'];
 
 export interface BlofBotParams {
-  /** 0..1: açılan/alınan kartların yerini hatırlama olasılığı (unutunca maske genişler). */
+  /** 0..1: alınan yığının içeriğini (kim aldı, ne vardı) hatırlama olasılığı (unutunca maske genişler). */
   memory: number;
-  /** Maskelerle kart sayar mı (false: yalnız kendi eli). */
+  /** Maskelerle kart sayar mı (false: yalnız kendi eli ve masadaki iddialar). */
   counting: boolean;
-  /** Turdaki önceki iddiaları da hesaba katar mı. */
-  claims: boolean;
-  /** Yığın küçükken açışta araya fazladan (yalan) kart katma eğilimi. */
+  /** 0..1: turdaki önceki iddiaları ne kadar hesaba katar. */
+  claims: number;
+  /** Kendi elinden kesin yalanı fark etme olasılığı. */
+  notice: number;
+  /** Turdaki iddiaların toplamı 4'ü aşınca fark etme olasılığı (göze batan yalan). */
+  readTable: number;
+  /** Kendi iddiasının masayı 4'ün üstüne çıkaracağını fark etme olasılığı (imkânsız iddia yapmama). */
+  selfCheck: number;
+  /** Açışta/atışta araya bir yalan kart katma eğilimi (kart cinsinden ek değer). */
   greed: number;
-  /** Elinde o değer yokken blöf yapma isteği (değer çarpanı). */
+  /** Blöfle kart eritmenin değer çarpanı. */
   bluffLove: number;
-  /** Yakalanma riskine duyarlılık (1'e 1 / kalabalık masa). */
+  /** Yakalanınca alınacak yığının ağırlığı (1 = tarafsız beklenen değer; düşük = pervasız). */
   caution: number;
-  cautionN: number;
-  /** Karar gürültüsü (beklenen değere eklenen sapmanın ölçeği). */
+  /** Karar gürültüsü (beklenen değere eklenen sapmanın ölçeği, kart cinsinden). */
   noise: number;
-  /** "Blöf!" deme eşiği kayması (+: daha şüpheci). */
+  /** "Blöf!" deme eğilimi kayması (+: daha şüpheci). */
   suspicion: number;
+  /** Sınırda bir "Blöf!" kararında içgüdüyle yanılma olasılığı (zor bot da yanılır). */
+  slip: number;
   /** Son kartlarını atan rakibe "Blöf!" deme olasılığı. */
   finalCatch: number;
-  /** Kesin yalanı (kendi elinden) fark etme olasılığı. */
-  notice: number;
+  /** Bot başına mizaç farkı (cesaret ± bu kadar; blöf sevgisi ± %15·bu). */
+  temperament: number;
   /** Blöfte gergin görünme olasılığı / doğruyken gergin görünme olasılığı / blöfte sırıtma (taklit). */
   tellLeak: number;
   tellFake: number;
@@ -56,7 +71,7 @@ export interface BlofBotParams {
   decline: [number, number];
   /** Blöf yaparken fazladan duraksama (ms) — zamanlama ipucu; zor bot saklar. */
   hesitate: [number, number];
-  /** Turu açmanın değeri (kart cinsinden): 1'e 1'de / kalabalık masada. Pas ve blöf kararlarını tartar. */
+  /** Turu açmanın değeri (kart cinsinden): 1'e 1'de / kalabalık masada. */
   tempo2: number;
   tempoN: number;
   /** Eşli masada (takım arkadaşı varken) üzerine yazılan ayarlar. */
@@ -67,72 +82,80 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
   kolay: {
     memory: 0.3,
     counting: false,
-    claims: false,
-    greed: 0.15,
-    bluffLove: 1.15,
-    caution: 0.6,
-    cautionN: 0.6,
-    noise: 1.1,
-    suspicion: -0.4,
-    finalCatch: 0.7,
-    notice: 0.55,
+    claims: 0,
+    notice: 0.75,
+    readTable: 0.35,
+    selfCheck: 0.7,
+    greed: 0.25,
+    bluffLove: 1.25,
+    caution: 0.7,
+    noise: 1.2,
+    suspicion: 0.15,
+    slip: 0.12,
+    finalCatch: 0.9,
+    temperament: 0.5,
     tellLeak: 0.65,
     tellFake: 0.1,
     tellMask: 0.02,
-    think: [1000, 2300],
-    react: [1500, 3800],
-    sure: [1200, 3000],
-    decline: [700, 2000],
+    think: [1100, 2500],
+    react: [1500, 3600],
+    sure: [1100, 2400],
+    decline: [800, 2000],
     hesitate: [300, 900],
-    tempo2: 1,
-    tempoN: 0.5,
+    tempo2: 2,
+    tempoN: 0.8,
   },
   orta: {
     memory: 0.75,
     counting: true,
-    claims: false,
-    greed: 0.3,
-    bluffLove: 1,
-    caution: 0.6,
-    cautionN: 1.2,
-    noise: 0.45,
-    suspicion: 0,
-    finalCatch: 0.93,
+    claims: 0.7,
     notice: 0.95,
+    readTable: 0.85,
+    selfCheck: 0.97,
+    greed: 0.05,
+    bluffLove: 1.05,
+    caution: 0.95,
+    noise: 0.55,
+    suspicion: 0,
+    slip: 0.07,
+    finalCatch: 1,
+    temperament: 0.35,
     tellLeak: 0.4,
     tellFake: 0.12,
     tellMask: 0.08,
-    think: [800, 1900],
-    react: [1000, 3000],
-    sure: [700, 1600],
-    decline: [500, 1500],
+    think: [900, 2100],
+    react: [1100, 2900],
+    sure: [800, 1700],
+    decline: [600, 1500],
     hesitate: [100, 500],
-    tempo2: 4,
-    tempoN: 0.5,
+    tempo2: 2.5,
+    tempoN: 1,
   },
   zor: {
-    memory: 1,
+    memory: 0.93,
     counting: true,
-    claims: true,
-    greed: 0.45,
-    bluffLove: 1.3,
-    caution: 0.6,
-    cautionN: 0.6,
-    noise: 0.12,
-    suspicion: 0,
-    finalCatch: 1,
+    claims: 1,
     notice: 1,
+    readTable: 0.97,
+    selfCheck: 1,
+    greed: 0.1,
+    bluffLove: 1.1,
+    caution: 1,
+    noise: 0.3,
+    suspicion: 0,
+    slip: 0.04,
+    finalCatch: 1,
+    temperament: 0.3,
     tellLeak: 0.2,
     tellFake: 0.15,
     tellMask: 0.2,
-    think: [700, 1700],
-    react: [800, 2600],
-    sure: [450, 1100],
-    decline: [400, 1300],
+    think: [850, 1900],
+    react: [950, 2600],
+    sure: [650, 1400],
+    decline: [500, 1400],
     hesitate: [0, 0],
-    tempo2: 5,
-    tempoN: 1.5,
-    team: {cautionN: 1.2, tempoN: 0.5, bluffLove: 1.6},
+    tempo2: 2.5,
+    tempoN: 1,
   },
 };
 
@@ -141,8 +164,30 @@ const DISC = 32;
 const SLOT_PILE = 4;
 const SLOT_DISC = 5;
 const bit = (seat: number): number => 1 << seat;
-/** Takipçinin elinde o değer yokken k kart iddia etme eğilimi (k = 1..4). */
-const BLUFF_K = [0, 0.4, 0.25, 0.1, 0.05];
+const clamp = (x: number, a: number, b: number): number => (x < a ? a : x > b ? b : x);
+
+/** Bitirmenin (eli kazanmanın) değeri, kart cinsinden. */
+const WIN = 14;
+/** Turu açan oyuncu h kartla kaldıysa hemen bitirebilme olasılığı (hepsi aynı değer): 1 → kesin. */
+const PFIN = [1, 1, 0.3, 0.12, 0.06];
+const pFinish = (h: number): number => (h < PFIN.length ? PFIN[h] : 0);
+
+// Davranış olabilirlikleri (Bayes): bir oyuncu elindeki kopya sayısına göre "k tane" iddiasını ne sıklıkla yapar.
+/** Takipçi o değerden hiç tutmuyorsa blöf yapınca k kart iddia etme payı (k = 1..4). */
+const BLUFF_K = [0, 0.62, 0.33, 0.04, 0.01];
+/** Takipçi elinde yokken pas yerine blöf yapma olasılığı (1'e 1'de pas pahalı → daha sık). */
+const BLUFF_F2 = 0.65;
+const BLUFF_FN = 0.38;
+/** Doğrunun yanına bir yalan kart katma (takipçi / açan), elinde olanı tutup yalan atma, hiç tutmadığı değeri açma. */
+const PAD_F = 0.12;
+const PAD_O = 0.07;
+const EPS_F = 0.02;
+const EPS_O = 0.01;
+const PURE_O = 0.04;
+/** Rakip modeli: açılan atışlarda yalan payının önseli (yalnız şüpheli atışlar açıldığı için ~%45). */
+const LIE_BASE = 0.45;
+/** Rakip modeli: bir pencerede (kim olursa) "Blöf!" denme sıklığının önseli. */
+const CALL_BASE = 0.3;
 
 export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTell> {
   readonly seat: number;
@@ -151,6 +196,9 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
   private readonly base: BlofBotParams;
   private teamMode = false;
   private readonly rnd: () => number;
+  /** Mizaç: "Blöf!" deme eğilimi kayması ve blöf sevgisi çarpanı (bot başına sabit). */
+  private readonly bold: number;
+  private readonly bluffy: number;
   /** Kart başına olası yerler. */
   private readonly loc = new Uint8Array(52);
   /** Son rakip atışından hemen önceki maskeler (pencere kararı atandan önceki ele bakar). */
@@ -170,10 +218,19 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
   private readonly exact = new Int16Array(6);
   private readonly prob = new Float64Array(5);
   private readonly dist = new Float64Array(5);
-  /** Rakip modeli (kamuya açık): koltuk başına blöf diyebildiği pencere sayısı ve dediği blöf sayısı. */
+  private readonly soft = new Int16Array(6);
+  /** Rakip modeli (kamuya açık): koltuk başına blöf diyebildiği pencere, dediği blöf; açılan atışlarında yalan/doğru. */
   private readonly eligibleN = new Float64Array(4);
   private readonly challengedN = new Float64Array(4);
-  private readonly soft = new Int16Array(6);
+  private readonly liesN = new Float64Array(4);
+  private readonly truthsN = new Float64Array(4);
+  /** Kenara giden turlarda söylenen kart sayısı (değer başına, ≤ 4): o değerin kopyaları büyük olasılıkla kenarda. */
+  private readonly discClaims = new Float64Array(14);
+  /** Bu turun değeri ve söylenen toplam (kenara giderse discClaims'e eklenir). */
+  private roundRank = 0;
+  private roundClaims = 0;
+  /** Son atış kararında öngörülen "Blöf!" denme riski (ölçüm/test için). */
+  lastRisk = 0;
 
   constructor(seat: number, difficulty: BlofDifficulty = 'orta', seed: number | (() => number) = seat * 7919 + 17, params?: Partial<BlofBotParams>) {
     this.seat = seat;
@@ -181,6 +238,9 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     this.base = {...BLOF_BOT_PARAMS[difficulty], ...params};
     this.p = this.base;
     this.rnd = typeof seed === 'function' ? seed : mulberry32(seed);
+    const t = this.base.temperament;
+    this.bold = (this.rnd() * 2 - 1) * t;
+    this.bluffy = 1 + (this.rnd() * 2 - 1) * 0.15 * Math.min(1, t * 2);
   }
 
   /** Bu kartın olası yerleri (bit maskesi; test ve hata ayıklama için). */
@@ -218,6 +278,11 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
       }
       case 'opened':
       case 'played': {
+        if (e.t === 'opened') {
+          this.roundRank = e.rank;
+          this.roundClaims = 0;
+        }
+        this.roundClaims += e.count;
         if (!this.inited) return;
         if (e.seat === me && e.cards) {
           for (const c of e.cards) {
@@ -244,6 +309,10 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         break;
       }
       case 'reveal':
+        if (e.seat !== me) {
+          if (e.truthful) this.truthsN[e.seat]++;
+          else this.liesN[e.seat]++;
+        }
         if (!this.inited) return;
         for (const c of e.cards) {
           this.loc[c] = PILE;
@@ -251,6 +320,8 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         }
         break;
       case 'pileTaken': {
+        this.roundRank = 0;
+        this.roundClaims = 0;
         if (!this.inited) return;
         const b = bit(e.seat);
         if (e.seat === me && e.cards) {
@@ -283,6 +354,10 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         if (e.by !== me) this.challengedN[e.by]++;
         break;
       case 'pileCleared':
+        if (this.roundRank > 0 && this.p.counting && this.rnd() < this.p.memory + (1 - this.p.memory) * 0.5)
+          this.discClaims[this.roundRank] = Math.min(4, this.discClaims[this.roundRank] + this.roundClaims);
+        this.roundRank = 0;
+        this.roundClaims = 0;
         if (!this.inited) return;
         for (let c = 0; c < 52; c++) {
           const m = this.loc[c];
@@ -361,7 +436,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     return r[0] + this.rnd() * (r[1] - r[0]);
   }
 
-  /** Yaklaşık normal gürültü. */
+  /** Yaklaşık normal gürültü (ortalama 0, sapma ≈ 1). */
   private gauss(): number {
     return (this.rnd() + this.rnd() + this.rnd() - 1.5) * 2;
   }
@@ -372,12 +447,38 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     return out;
   }
 
+  /** Turu açmanın değeri (kart cinsinden): 1'e 1'de açan bedavaya en kalabalık grubunu atar. */
+  private tempo(v: BlofView): number {
+    return v.seats === 2 ? this.p.tempo2 : this.p.tempoN;
+  }
+
+  /** Bir rakibin turu açmasının bana maliyeti (kalabalık masada etkisi bölünür). */
+  private oppTempo(v: BlofView): number {
+    return v.seats === 2 ? this.p.tempo2 : this.p.tempoN * 0.7;
+  }
+
+  /** Bir rakibin gözlenen "Blöf!" deme sıklığı (önsel: pencere başına CALL_BASE, rakipler arasında paylaşılır). Kolay bot rakibini izlemez. */
+  private callRate(s: number, opps: number): number {
+    const prior = 1 - Math.pow(1 - CALL_BASE, 1 / Math.max(1, opps));
+    if (!this.p.counting) return prior;
+    return (this.challengedN[s] + prior * 5) / (this.eligibleN[s] + 5);
+  }
+
+  /** Bir rakibin açılan atışlarındaki yalan payına göre blöf eğilimi çarpanı (kamuya açık geçmiş). */
+  private lieMul(s: number): number {
+    if (!this.p.counting) return 1;
+    const l = this.liesN[s];
+    const t = this.truthsN[s];
+    return clamp((l + LIE_BASE * 3) / (l + t + 3) / LIE_BASE, 0.55, 1.8);
+  }
+
   /**
-   * Atanın (atıştan ÖNCEKİ elinde) bu değerden kaç kart tuttuğunun dağılımı → this.dist[0..4] (bağımsız yaklaşık).
-   * possible: atanın elinde olabilecek kopya sayısı (kesin üst sınır).
+   * x koltuğunun elinde bu değerden kaç kart olduğunun dağılımı → this.dist[0..4] (kopyalar bağımsız yaklaşık).
+   * masks/likely: hangi bilgiyle (atıştan önceki: pre; şimdiki: loc). addX: x'in eline geri eklenecek (atılan) kart sayısı;
+   * subPile: yığından düşülecek. claimsOther/claimsOwn: turda başkalarının / x'in önceki iddiaları (doğruysa o kopyalar yığında).
+   * Dönüş: x'te olabilecek kopya sayısı (kesin üst sınır).
    */
-  private holdDist(v: BlofView, x: number, rank: number, count: number, othersClaims: number): number {
-    const pre = this.pre;
+  private holdDist(masks: Uint8Array, likely: Int8Array, v: BlofView, x: number, rank: number, addX: number, subPile: number, claimsOther: number, claimsOwn: number): number {
     const bx = bit(x);
     const slots = this.slots;
     const ex = this.exact;
@@ -385,40 +486,56 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     ex.fill(0);
     soft.fill(0);
     for (let c = 0; c < 52; c++) {
-      const m = pre[c];
+      const m = masks[c];
       if (m === 0) continue;
       if ((m & (m - 1)) === 0) ex[m === PILE ? SLOT_PILE : m === DISC ? SLOT_DISC : Math.log2(m) | 0]++;
-      else if (this.preLikely[c] >= 0) soft[this.preLikely[c]]++;
+      else if (likely[c] >= 0) soft[likely[c]]++;
     }
     for (let s = 0; s < v.seats; s++) {
-      slots[s] = s === this.seat ? 0 : Math.max(0, v.handCounts[s] + (s === x ? count : 0) - ex[s] - soft[s]);
+      slots[s] = s === this.seat ? 0 : Math.max(0, v.handCounts[s] + (s === x ? addX : 0) - ex[s] - soft[s]);
     }
-    slots[SLOT_PILE] = Math.max(0, v.pileCount - count - ex[SLOT_PILE]);
+    slots[SLOT_PILE] = Math.max(0, v.pileCount - subPile - ex[SLOT_PILE]);
     slots[SLOT_DISC] = Math.max(0, v.discardCount - ex[SLOT_DISC]);
+    // Kenar, söylenen değerlerle dolu: o değer kenara gittiyse kopyası kenarda olası, hiç gitmediyse az olası.
+    let dc = 0;
+    for (let r = 1; r <= 13; r++) dc += this.discClaims[r];
+    const discW = v.discardCount > 0 ? clamp((0.35 + this.discClaims[rank]) / (0.35 + dc / 13), 0.2, 4) : 1;
 
     const prob = this.prob;
     let k = 0;
     for (let suit = 0; suit < 4; suit++) {
       const c = suit * 13 + rank - 1;
-      const m = pre[c];
+      const m = masks[c];
       if (!(m & bx)) continue;
       let pc: number;
       if (m === bx) pc = 1;
-      else if (this.preLikely[c] === x) pc = 0.88;
-      else if (this.preLikely[c] >= 0) pc = 0.06;
+      else if (likely[c] === x) pc = 0.88;
+      else if (likely[c] >= 0) pc = 0.06;
       else {
         let den = 0;
-        for (let s = 0; s < 6; s++) if (m & (1 << s)) den += slots[s];
+        for (let s = 0; s < 6; s++) if (m & (1 << s)) den += s === SLOT_DISC ? slots[s] * discW : slots[s];
         pc = den > 0 ? slots[x] / den : 0;
       }
       prob[k++] = pc;
     }
     // Turda başkalarının iddiaları doğruysa o kopyalar yığında: belirsiz kopyaların olasılığı düşer.
-    if (k > 0 && othersClaims > 0) {
-      const f = Math.max(0.15, 1 - (0.6 * othersClaims) / Math.max(1, k));
+    if (k > 0 && claimsOther > 0) {
+      const f = Math.max(0.15, 1 - (0.6 * claimsOther) / Math.max(1, k));
       for (let i = 0; i < k; i++) if (prob[i] < 1) prob[i] *= f;
     }
+    // x bu turda bu değeri zaten söyledi: dürüst oyuncu elindekilerin hepsini atar → kalmış olması az olası.
+    if (k > 0 && claimsOwn > 0) {
+      const f = 1 - 0.85 * Math.min(1, claimsOwn);
+      for (let i = 0; i < k; i++) if (prob[i] < 1) prob[i] *= f;
+    }
+    this.fold(k);
+    return k;
+  }
+
+  /** this.prob[0..k) kopya olasılıklarından this.dist (0..4 kopya) dağılımı. */
+  private fold(k: number): void {
     const d = this.dist;
+    const prob = this.prob;
     d.fill(0);
     d[0] = 1;
     for (let i = 0; i < k; i++) {
@@ -426,7 +543,21 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
       for (let j = Math.min(i + 1, 4); j >= 1; j--) d[j] = d[j] * (1 - q) + d[j - 1] * q;
       d[0] *= 1 - q;
     }
-    return k;
+  }
+
+  /** Kart saymayan (kolay) bot: x'in payı kadar, bilmediği kopyalar eşit dağılmış varsayılır. */
+  private naiveDist(v: BlofView, x: number, rank: number, addX: number, mine: number): number {
+    const unknown = 4 - mine;
+    let pool = 52 - v.hand.length;
+    for (let s = 0; s < 4; s++) {
+      const c = s * 13 + rank - 1;
+      if (this.pre[c] === PILE || this.pre[c] === DISC) pool--;
+    }
+    const hx = v.handCounts[x] + addX;
+    const p = pool > 0 ? clamp(hx / pool, 0, 1) : 0;
+    for (let i = 0; i < unknown; i++) this.prob[i] = p;
+    this.fold(Math.max(0, unknown));
+    return Math.max(0, unknown);
   }
 
   /** Son atış yalan olasılığı (bu botun bilgisiyle). */
@@ -441,6 +572,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     const w = v.window!;
     const r = w.rank;
     const k = w.count;
+    const x = w.by;
     const opening = v.roundPlays.length === 1;
     // Kendi elimden, kendi attıklarımdan ve kenardakilerden kesin kontrol.
     let mine = 0;
@@ -449,68 +581,94 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
       const c = s * 13 + r - 1;
       if (this.pre[c] === PILE || this.pre[c] === DISC) mine++;
     }
-    if (!this.p.counting) {
-      // Kolay: yalnız kendi eline bakar.
-      if (mine + k > 4) return this.rnd() < this.p.notice ? 1 : 0.35;
-      return (opening ? 0.12 : 0.2) + 0.08 * k;
+    if (mine + k > 4) return this.rnd() < this.p.notice ? 1 : 0.5;
+    // Turda bu atıştan önceki iddialar (kendi iddialarımın gerçeğini zaten biliyorum: mine içinde).
+    let others = 0;
+    let own = 0;
+    const plays = v.roundPlays;
+    for (let i = 0; i < plays.length - 1; i++) {
+      const pl = plays[i];
+      if (pl.seat === this.seat) continue;
+      if (pl.seat === x) own += pl.count;
+      else others += pl.count;
     }
-    let ownClaims = 0;
-    let othersClaims = 0;
-    if (this.p.claims) {
-      const plays = v.roundPlays;
-      for (let i = 0; i < plays.length - 1; i++) {
-        const pl = plays[i];
-        if (pl.seat === this.seat) continue;
-        if (pl.seat === w.by) ownClaims += pl.count;
-        else othersClaims += pl.count;
-      }
-    }
-    const possible = this.holdDist(v, w.by, r, k, othersClaims);
-    if (possible < k || mine + k > 4) return this.rnd() < this.p.notice ? 1 : 0.4;
+    const tableImpossible = others + own + k + mine > 4;
+    let possible: number;
+    if (this.p.counting) possible = this.holdDist(this.pre, this.preLikely, v, x, r, k, k, others * this.p.claims, own > 0 ? this.p.claims : 0);
+    else possible = this.naiveDist(v, x, r, k, mine);
+    if (possible < k) return this.rnd() < this.p.notice ? 1 : 0.5;
     const d = this.dist;
-    // Atanın bu turda önceki (doğru varsayılan) atışları elindeki kopyaları azaltır.
-    const shift = Math.round(0.6 * ownClaims);
-    let hi = 0;
-    for (let j = Math.min(4, k + shift); j <= 4; j++) hi += d[j];
-    let none = 0;
-    for (let j = 0; j <= Math.min(4, shift); j++) none += d[j];
-    const mid = Math.max(0, 1 - hi - none);
-    // Bayes: tutan çoğunlukla doğru atar; tutmayanın bu kadar kart iddia etme eğilimi düşüktür.
-    let truth: number;
-    // Açan değeri kendisi seçer (çoğunlukla en kalabalık grubunu): az tutup çok iddia etmek nadir.
-    if (opening) truth = hi / Math.max(1e-9, hi + mid * 0.2 + none * 0.01);
-    else truth = (hi * 0.95) / Math.max(1e-9, hi * 0.95 + mid * 0.3 + none * BLUFF_K[k]);
-    return 1 - Math.min(0.995, Math.max(0, truth));
+    const mul = this.lieMul(x);
+    const bluffF = v.seats === 2 ? BLUFF_F2 : BLUFF_FN;
+    let pt = 0;
+    let pl = 0;
+    for (let j = 0; j <= 4; j++) {
+      const dj = d[j];
+      if (dj <= 0) continue;
+      let lt = 0;
+      let ll: number;
+      if (opening) {
+        // açan değeri kendisi seçer: elindeki kopya sayısının karesiyle orantılı (en kalabalık grubu)
+        const sel = j * j;
+        if (j >= k) lt = (j === k || k === 4 ? 1 : 0.05) * sel;
+        if (j === 0) ll = PURE_O;
+        else if (j === k - 1) ll = sel * PAD_O;
+        else if (j < k - 1) ll = sel * PAD_O * 0.15;
+        else ll = sel * EPS_O;
+      } else {
+        if (j >= k) lt = j === k || k === 4 ? 1 : 0.08;
+        if (j === 0) ll = bluffF * BLUFF_K[k];
+        else if (j === k - 1) ll = PAD_F;
+        else if (j < k - 1) ll = PAD_F * 0.15;
+        else ll = EPS_F;
+      }
+      pt += dj * lt;
+      pl += dj * ll * mul;
+    }
+    let q = pl / Math.max(1e-9, pt + pl);
+    // Masadaki iddialar 4'ü aşıyor: biri yalan söylüyor, büyük olasılıkla son atan (açan çoğunlukla doğrudur).
+    if (tableImpossible && this.rnd() < this.p.readTable) q = Math.max(q, 0.85);
+    return clamp(q, 0, 0.995);
   }
 
+  /** Bu pencere kararında kullanılan, gecikme için de gereken bağlam. */
   private decideWindow(v: BlofView): BotDecision<BlofAction, BlofTell> {
     const w = v.window!;
     const me = this.seat;
     const limit = Math.max(150, w.ms - 300);
-    const say = (ms: number): BotDecision<BlofAction, BlofTell> => ({action: {t: 'challenge', seat: me}, delayMs: Math.min(limit, ms)});
-    const pass = (): BotDecision<BlofAction, BlofTell> => ({action: {t: 'decline', seat: me}, delayMs: Math.min(limit, this.range(this.p.decline))});
+    const say = (ms: number): BotDecision<BlofAction, BlofTell> => ({action: {t: 'challenge', seat: me}, delayMs: clamp(ms, 150, limit)});
+    const pass = (ms: number): BotDecision<BlofAction, BlofTell> => ({action: {t: 'decline', seat: me}, delayMs: clamp(ms, 150, limit)});
+    const S = v.pileCount;
+    // büyük yığında karar ağır: biraz daha bakılır
+    const weight = Math.min(700, S * 25);
 
     if (w.final) {
-      // Son kartlar: blöf dememek = kaybetmek. Kolay bot bazen kaçırır.
-      return this.rnd() < this.p.finalCatch ? say(this.range(this.p.sure)) : pass();
+      // Son kartlar: blöf dememek = kaybetmek (doğru çıksa da el biter; denemenin bedeli yok). Kolay bot ara sıra kaçırır.
+      return this.rnd() < this.p.finalCatch ? say(this.range(this.p.sure) + weight * 0.5) : pass(this.range(this.p.decline) * 1.3);
     }
     const q = this.estimateLie(v);
-    if (q >= 0.999) return say(this.range(this.p.sure));
+    if (q >= 0.999) return say(this.range(this.p.sure) + weight * 0.4);
 
-    const S = v.pileCount;
     const opps = this.opponents(v).length;
     const gW = 1 / Math.max(1, opps);
     const hcX = v.handCounts[w.by];
-    const danger = hcX <= 3 ? (4 - hcX) * 1.5 : 0;
+    // bitirmeye yaklaşan rakibi durdurmak ayrıca değerli
+    const danger = hcX <= 3 ? (4 - hcX) * 1.2 : 0;
     const T = this.tempo(v);
+    const To = this.oppTempo(v);
     // Doğru tahmin: atan yığını alır, yeni turu ben açarım. Yanlış: yığın bana, atan açar.
-    const ev = q * (S * gW + T + danger) - (1 - q) * (S + T * gW) * this.caution(v) + this.p.suspicion + this.p.noise * this.gauss();
+    const gain = q * (S * gW + T + danger);
+    const loss = (1 - q) * (S * this.p.caution + To);
+    let ev = gain - loss + this.p.suspicion + this.bold + this.p.noise * this.gauss();
+    // içgüdü: sınırda kararlarda arada bir yanılır (zor bot da)
+    if (Math.abs(ev) < 1.5 && this.rnd() < this.p.slip) ev = -ev;
+    const doubt = 1 - Math.abs(q - 0.5) * 2; // 1: tam belirsiz
     if (ev > 0) {
       const urgency = Math.min(1, ev / 4);
-      const ms = this.range(this.p.react) * (1 - 0.4 * urgency);
-      return say(ms);
+      return say(this.range(this.p.react) * (1 - 0.35 * urgency) * (0.85 + 0.3 * doubt) + weight);
     }
-    return pass();
+    // açıkça doğru görünen atışa çabuk "geç"; kararsızken daha uzun bakar
+    return pass(this.range(this.p.decline) * (0.75 + 0.6 * doubt) + weight * 0.5);
   }
 
   /** Elden "yük" kartları: en az tutulan değerlerden (tekler önce), istenen değer hariç. */
@@ -525,32 +683,73 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     return keyed.slice(0, n).map((x) => x.c);
   }
 
-  /** Turu açmanın değeri (kart cinsinden): 1'e 1'de açan bedavaya en kalabalık grubunu atar. */
-  private tempo(v: BlofView): number {
-    return v.seats === 2 ? this.p.tempo2 : this.p.tempoN;
-  }
-
-  private caution(v: BlofView): number {
-    return v.seats === 2 ? this.p.caution : this.p.cautionN;
-  }
-
-  /** Bir rakibin gözlenen blöf deme sıklığı (önsel 0,25). Kolay bot rakibini izlemez. */
-  private rate(s: number): number {
-    if (!this.p.counting) return 0.25;
-    return (this.challengedN[s] + 1) / (this.eligibleN[s] + 4);
-  }
-
-  /** Benim atışıma (add kart, sonra elimde after kart) blöf denme olasılığı. */
-  private challengeRisk(v: BlofView, add: number, after: number): number {
-    if (after === 0) return 0.97; // son kartlara herkes blöf der
+  /**
+   * Benim "k tane rank" atışıma (sonra elimde after kart) birinin "Blöf!" deme olasılığı.
+   * lie: atış yalan mı (rakip kendi elinden ya da masadaki iddialardan yalanı görebilir mi diye bakılır).
+   */
+  private challengeRisk(v: BlofView, rank: number, k: number, lie: boolean, after: number, opening: boolean): number {
+    if (after === 0) return 0.985; // son kartlara herkes blöf der
     let claimed = 0;
     for (const pl of v.roundPlays) claimed += pl.count;
-    let mult = 1 + 0.05 * (v.pileCount + add);
-    if (claimed + add > 4) mult += 1.2; // dörtten fazla iddia göze batar
-    if (after <= 2) mult += 0.8;
+    const publicImpossible = claimed + k > 4;
     let none = 1;
-    for (const s of this.opponents(v)) none *= 1 - Math.min(0.95, this.rate(s) * mult);
+    const opps = this.opponents(v);
+    for (const s of opps) {
+      if (v.handCounts[s] === 0) continue;
+      let ps: number;
+      if (publicImpossible) ps = 0.92;
+      else {
+        const base = this.callRate(s, opps.length);
+        const shape = (k === 1 ? 1 : k === 2 ? 1.4 : k === 3 ? 1.8 : 2.2) * (opening ? 0.45 : 1) * (after <= 2 ? 1.5 : 1) * (1 + 0.03 * v.pileCount);
+        ps = Math.min(0.9, base * shape);
+        if (lie && this.p.counting) {
+          // rakip kendi elinden görür mü: elinde (5 − masadaki iddialar − k) ya da fazla kopya varsa yalan ona apaçık
+          const need = 5 - claimed - k;
+          if (need <= 0) ps = 0.92;
+          else {
+            let sOwn = 0;
+            let sOther = 0;
+            for (const pl of v.roundPlays) {
+              if (pl.seat === s) sOwn += pl.count;
+              else if (pl.seat !== this.seat) sOther += pl.count;
+            }
+            this.holdDist(this.loc, this.likely, v, s, rank, 0, 0, sOther, sOwn > 0 ? 1 : 0);
+            let know = 0;
+            for (let j = need; j <= 4; j++) know += this.dist[j];
+            ps = know * 0.95 + (1 - know) * ps;
+          }
+        }
+      }
+      none *= 1 - ps;
+    }
     return 1 - none;
+  }
+
+  /** Pas: turu kime açtırıyor? Değer (kart cinsinden): ortağa açtırmak +, tek kartı kalan rakibe açtırmak eli vermek. */
+  private passValue(v: BlofView): number {
+    const me = this.seat;
+    const last = v.lastPlay ? v.lastPlay.seat : -1;
+    if (last < 0 || last === me) return 0;
+    // benim pasım seriyi tamamlıyor mu (son atan hariç herkes pas) — değilse sonrakiler de pas derse
+    const completes = v.passes >= v.seats - 2;
+    const pc = completes ? 1 : Math.pow(0.5, v.seats - 2 - v.passes);
+    const h = v.handCounts[last];
+    if (v.teams[last] === v.teams[me]) return pc * (this.tempo(v) + WIN * pFinish(h));
+    return -pc * (this.oppTempo(v) + WIN * pFinish(h));
+  }
+
+  /** Atıştan sonra elde kalanlar tek değerse (≤ 4): turu açınca bitiririm. */
+  private shape(hand: readonly CardId[], used: ReadonlySet<CardId>): number {
+    let r = 0;
+    let n = 0;
+    for (const c of hand) {
+      if (used.has(c)) continue;
+      n++;
+      const k = rankOf(c);
+      if (r === 0) r = k;
+      else if (r !== k) return 0;
+    }
+    return n > 0 && n <= BLOF_MAX_PLAY ? 1.5 : 0;
   }
 
   private decideTurn(v: BlofView): BotDecision<BlofAction, BlofTell> {
@@ -560,104 +759,118 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     const cnt = this.cnt;
     cnt.fill(0);
     for (const c of hand) cnt[rankOf(c)]++;
-    const of = (r: number): CardId[] => hand.filter((c) => rankOf(c) === r);
+    const of = (r: number): CardId[] => hand.filter((c) => rankOf(c) === r).slice(0, BLOF_MAX_PLAY);
     const opps = this.opponents(v).length;
     const gW = 1 / Math.max(1, opps);
-    const caution = this.caution(v);
+    const caution = this.p.caution;
     const noise = this.p.noise;
-    const pile = v.pileCount;
-    const TEMPO = this.tempo(v);
+    const S = v.pileCount;
+    const T = this.tempo(v);
+    const To = this.oppTempo(v);
+    const greed = this.p.greed;
+    const love = this.p.bluffLove * this.bluffy;
+    let claimed = 0;
+    for (const pl of v.roundPlays) claimed += pl.count;
+    /** İddiam masayı 4'ün üstüne çıkarıyor ve bunu fark ettim → yapma. */
+    const blatant = (k: number): boolean => claimed + k > 4 && this.rnd() < this.p.selfCheck;
+
+    // seçenekler: değer + gürültü; en iyisi ve ikincisi (düşünme süresi kararsızlığa göre)
+    let best = -Infinity;
+    let second = -Infinity;
+    let pick: {action: BlofAction; bluff: boolean} | null = null;
+    const consider = (val: number, action: BlofAction, bluff: boolean, risk = 0) => {
+      if (val > best) {
+        second = best;
+        best = val;
+        pick = {action, bluff};
+        this.lastRisk = risk;
+      } else if (val > second) second = val;
+    };
 
     if (v.mustOpen) {
-      // Seçenekler: her değer için doğru açış (hepsi) ya da araya bir yalan kart katarak.
-      let best: {rank: number; pad: boolean; val: number} = {rank: 0, pad: false, val: -Infinity};
       for (let r = 1; r <= 13; r++) {
         if (cnt[r] === 0) continue;
-        const c = Math.min(cnt[r], BLOF_MAX_PLAY);
-        if (c === n) {
-          best = {rank: r, pad: false, val: Infinity}; // hepsi doğru → bitiriş
-          break;
-        }
-        const risk = this.challengeRisk(v, c, n - c);
-        const vt = c + risk * c * gW + noise * 0.5 * this.gauss();
-        if (vt > best.val) best = {rank: r, pad: false, val: vt};
-        if (c < BLOF_MAX_PLAY && n - c - 1 >= 1) {
-          const rp = this.challengeRisk(v, c + 1, n - c - 1);
-          const vp = (1 - rp) * (c + 1) - rp * TEMPO * caution + (this.p.greed - 0.3) + noise * 0.5 * this.gauss();
-          if (vp > best.val) best = {rank: r, pad: true, val: vp};
+        const cards = of(r);
+        const c = cards.length;
+        if (c === n) return this.play({t: 'open', seat: me, rank: r, cards}, false, 0.7); // hepsi doğru → bitiriş
+        const rt = this.challengeRisk(v, r, c, false, n - c, true);
+        const used = new Set(cards);
+        consider(c + rt * (c * gW + T) + this.shape(hand, used) + noise * 0.5 * this.gauss(), {t: 'open', seat: me, rank: r, cards}, false, rt);
+        if (c < BLOF_MAX_PLAY && n - c - 1 >= 1 && !blatant(c + 1)) {
+          const extra = this.junk(hand, r, 1);
+          const rp = this.challengeRisk(v, r, c + 1, true, n - c - 1, true);
+          for (const x of extra) used.add(x);
+          const vp = (1 - rp) * (c + 1 + this.shape(hand, used)) - rp * To * caution + greed + noise * 0.5 * this.gauss();
+          consider(vp, {t: 'open', seat: me, rank: r, cards: cards.concat(extra)}, true, rp);
         }
       }
-      let cards = of(best.rank).slice(0, BLOF_MAX_PLAY);
-      if (this.difficulty === 'kolay' && cards.length > 1 && best.val !== Infinity && this.rnd() < 0.35) {
-        cards = cards.slice(0, 1 + Math.floor(this.rnd() * cards.length));
+      // kolay: bazen grubunun yalnız bir kısmını açar (acemi)
+      const chosen = pick! as {action: Extract<BlofAction, {t: 'open'}>; bluff: boolean};
+      if (this.difficulty === 'kolay' && !chosen.bluff && chosen.action.cards.length > 1 && this.rnd() < 0.3) {
+        const cs = chosen.action.cards;
+        chosen.action = {...chosen.action, cards: cs.slice(0, 1 + Math.floor(this.rnd() * cs.length))};
       }
-      if (best.pad) cards = cards.concat(this.junk(hand, best.rank, 1));
-      return this.play({t: 'open', seat: me, rank: best.rank, cards}, best.pad);
+      return this.play(chosen.action, chosen.bluff, this.closeness(best, second) + 0.15);
     }
 
     const r = v.rank;
-    const m = Math.min(cnt[r], BLOF_MAX_PLAY);
-    if (m > 0 && m === n) return this.play({t: 'play', seat: me, cards: of(r)}, false); // doğru bitiriş
+    const mine = of(r);
+    const m = mine.length;
+    if (m > 0 && m === n) return this.play({t: 'play', seat: me, cards: mine}, false, 0.6); // doğru bitiriş
 
-    // Pas: 1'e 1'de rakip yeniden açar (bedava atış) → pahalı; kalabalıkta daha ucuz.
-    let bestKind: 'pass' | 'truth' | 'pad' | 'bluff' = 'pass';
-    let bestB = 0;
-    // Pas: herkes pas derse son atan yeniden açar; 1'e 1'de bu hemen olur (rakibe bedava açış).
-    // Eşlide son atan ortağımsa pas iyidir: rakipler de geçerse tur ortağıma döner.
-    const last = v.lastPlay ? v.lastPlay.seat : -1;
-    const mateLast = last >= 0 && last !== me && v.teams[last] === v.teams[me];
-    let bestV = (mateLast ? 0.5 * TEMPO : -(v.seats === 2 ? TEMPO : 0.5)) + noise * 0.5 * this.gauss();
+    consider(this.passValue(v) + noise * 0.5 * this.gauss(), {t: 'pass', seat: me}, false);
     if (m > 0) {
-      const risk = this.challengeRisk(v, m, n - m);
-      const vt = m + risk * (pile + m) * gW + noise * 0.3 * this.gauss();
-      if (vt > bestV) {
-        bestV = vt;
-        bestKind = 'truth';
+      const used = new Set(mine);
+      const rt = this.challengeRisk(v, r, m, false, n - m, false);
+      consider(m + rt * ((S + m) * gW + T) + this.shape(hand, used) + noise * 0.3 * this.gauss(), {t: 'play', seat: me, cards: mine}, false, rt);
+      if (this.difficulty === 'kolay' && m > 1 && this.rnd() < 0.25) {
+        // kolay: bazen elindekinin bir kısmını atar
+        consider(m - 0.5 + noise * 0.3 * this.gauss(), {t: 'play', seat: me, cards: mine.slice(0, 1 + Math.floor(this.rnd() * (m - 1)))}, false);
       }
-      if (m < BLOF_MAX_PLAY && n - m - 1 >= 1) {
-        const rp = this.challengeRisk(v, m + 1, n - m - 1);
-        const vp = (1 - rp) * (m + 1) - rp * (pile + TEMPO) * caution + (this.p.greed - 0.3) + noise * this.gauss();
-        if (vp > bestV) {
-          bestV = vp;
-          bestKind = 'pad';
-        }
+      if (m < BLOF_MAX_PLAY && n - m - 1 >= 1 && !blatant(m + 1)) {
+        const extra = this.junk(hand, r, 1);
+        for (const x of extra) used.add(x);
+        const rp = this.challengeRisk(v, r, m + 1, true, n - m - 1, false);
+        const vp = (1 - rp) * (m + 1 + this.shape(hand, used)) - rp * (S * caution + To) + greed + noise * this.gauss();
+        consider(vp, {t: 'play', seat: me, cards: mine.concat(extra)}, true, rp);
       }
     } else {
       const maxB = Math.min(2, n);
       for (let b = 1; b <= maxB; b++) {
+        if (blatant(b)) continue;
         const after = n - b;
-        const risk = this.challengeRisk(v, b, after);
-        const gain = after === 0 ? 25 : b; // son kartla blöf: tutarsa kazanır ama neredeyse kesin yakalanır
-        // Yakalanmazsam: b kart erir, rakip pas derse turu ben açarım. Yakalanırsam: yığın bana, rakip açar.
-        const vb = (1 - risk) * (gain * this.p.bluffLove + 0.5 * TEMPO) - risk * (pile + TEMPO) * caution + noise * this.gauss();
-        if (vb > bestV) {
-          bestV = vb;
-          bestKind = 'bluff';
-          bestB = b;
-        }
+        const cards = this.junk(hand, r, b);
+        const rb = this.challengeRisk(v, r, b, true, after, false);
+        // son kartla blöf: tutarsa kazanır ama neredeyse kesin yakalanır (yalnız pas eli vereceksese anlamlı)
+        const gain = after === 0 ? WIN : b * love + this.shape(hand, new Set(cards));
+        const vb = (1 - rb) * gain - rb * (S * caution + To) + noise * this.gauss();
+        consider(vb, {t: 'play', seat: me, cards}, true, rb);
       }
     }
-    switch (bestKind) {
-      case 'pass':
-        return {action: {t: 'pass', seat: me}, delayMs: this.range(this.p.think) * 0.7};
-      case 'truth': {
-        let cards = of(r).slice(0, BLOF_MAX_PLAY);
-        if (this.difficulty === 'kolay' && cards.length > 1 && this.rnd() < 0.3) cards = cards.slice(0, 1 + Math.floor(this.rnd() * cards.length));
-        return this.play({t: 'play', seat: me, cards}, false);
-      }
-      case 'pad':
-        return this.play({t: 'play', seat: me, cards: of(r).slice(0, BLOF_MAX_PLAY - 1).concat(this.junk(hand, r, 1))}, true);
-      case 'bluff':
-        return this.play({t: 'play', seat: me, cards: this.junk(hand, r, bestB)}, true);
-    }
+    const chosen = pick! as {action: BlofAction; bluff: boolean};
+    if (chosen.action.t === 'pass') return {action: chosen.action, delayMs: this.thinkMs(this.closeness(best, second)) * 0.75};
+    return this.play(chosen.action, chosen.bluff, this.closeness(best, second));
   }
 
-  /** Atış kararı + ipucu + insan gibi bekleme. */
-  private play(action: BlofAction, bluff: boolean): BotDecision<BlofAction, BlofTell> {
+  /** İki en iyi seçenek ne kadar yakın: 1 = kararsız (uzun düşünür), 0 = apaçık. */
+  private closeness(best: number, second: number): number {
+    if (!Number.isFinite(second)) return 0;
+    return clamp(1 - (best - second) / 2.5, 0, 1);
+  }
+
+  /** İnsan gibi düşünme süresi: kararsızken uzun, ara sıra dalgın uzun düşünme. */
+  private thinkMs(hard: number): number {
+    let ms = this.range(this.p.think) * (0.8 + 0.55 * hard);
+    if (this.rnd() < 0.06) ms *= 1.6;
+    return ms;
+  }
+
+  /** Atış kararı + ipucu + insan gibi bekleme. hard: kararsızlık (0..1). */
+  private play(action: BlofAction, bluff: boolean, hard: number): BotDecision<BlofAction, BlofTell> {
     const p = this.p;
     const nervous = bluff ? this.rnd() < p.tellLeak : this.rnd() < p.tellFake;
     const smug = bluff ? this.rnd() < p.tellMask : this.rnd() < 0.25;
-    let delay = this.range(p.think);
+    let delay = this.thinkMs(hard);
     if (bluff) delay += this.range(p.hesitate);
     return {action, delayMs: delay, tell: {nervous, smug: smug && !nervous}};
   }
