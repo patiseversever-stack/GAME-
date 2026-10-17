@@ -84,8 +84,40 @@ export function blofKey(m: BlofMoment): BlofKey {
   return ('blof' + m.charAt(0).toUpperCase() + m.slice(1)) as BlofKey;
 }
 
-/** Ses kimliğindeki an adı: Pişti, menü, Blöf (blofX), atışma, hızlı sohbet söyleyişi / cevabı. */
-export type VoiceMoment = Moment | MetaMoment | BlofKey | 'banter' | 'quickSay' | 'quickReply';
+/**
+ * El / maç sonu anları (Ara Skor + sonuç ekranı + rövanş; iki oyunda ortak, kimlik: riza_endGloat_1). Hepsi kısa (≤ ~3 sn)
+ * ve oyun durmuşken söylenir; planEndTalk karşılıklı dizi (A söyler, B cevaplar, ara sıra C) kurar. Rol adları:
+ *  end…   sonuç ekranı: Gloat (kazanan bot oyuncuya), Sulk (kaybeden bot oyuncuya), koşullu türevleri (Close kıl payı,
+ *         Big ezici, Caught oyuncu çok yakalandı, Streak oyuncunun serisi, Pisti oyuncunun piştileri, Sly oyuncu hiç
+ *         yakalanmadı, Last son kart blöfüyle bitirdi), Join… ikinci ses (başka bot / seyirci: Win = oyuncu kaybetti,
+ *         Lose = oyuncu kazandı), Revenge rövanş çağrısı, Mate… oyuncunun bot ortağı ona ("ortak"), Foe… rakip takım
+ *         bize, Duo… rakip takımın iki botu birbirine (A söyler, B cevaplar), Accept rövanş kabul (yeni maç başı),
+ *         Bye oyuncu ana sayfaya dönerken veda.
+ *  mid…   Ara Skor: Ahead (önde bot), Behind (geride bot), Side (nötr yorum), MateUp / MateDown (eşli ortak bize).
+ */
+export const END_MOMENTS = [
+  'endGloat', 'endGloatClose', 'endGloatBig', 'endGloatCaught',
+  'endSulk', 'endSulkClose', 'endSulkBig', 'endSulkStreak', 'endSulkPisti', 'endSulkSly', 'endSulkLast',
+  'endJoinWin', 'endJoinLose', 'endRevenge',
+  'endMateWin', 'endMateLose', 'endFoeWin', 'endFoeLose', 'endDuoWinA', 'endDuoWinB', 'endDuoLoseA', 'endDuoLoseB',
+  'endAccept', 'endBye',
+  'midAhead', 'midBehind', 'midSide', 'midMateUp', 'midMateDown',
+] as const;
+export type EndMoment = (typeof END_MOMENTS)[number];
+
+/** El / maç sonu anlarının varsayılan yüz ifadesi. */
+const END_MOOD: Readonly<Record<EndMoment, Pose | null>> = {
+  endGloat: 'kahkaha', endGloatClose: 'zafer', endGloatBig: 'kahkaha', endGloatCaught: 'kirpma',
+  endSulk: 'uzgun', endSulkClose: 'kizgin', endSulkBig: 'uzgun', endSulkStreak: 'saskin', endSulkPisti: 'saskin', endSulkSly: 'saskin', endSulkLast: 'saskin',
+  endJoinWin: 'gulumseme', endJoinLose: 'kahkaha', endRevenge: 'kirpma',
+  endMateWin: 'kahkaha', endMateLose: 'uzgun', endFoeWin: 'kahkaha', endFoeLose: 'uzgun',
+  endDuoWinA: 'kahkaha', endDuoWinB: 'gulumseme', endDuoLoseA: 'kizgin', endDuoLoseB: 'saskin',
+  endAccept: 'gulumseme', endBye: 'kirpma',
+  midAhead: 'gulumseme', midBehind: 'dusunceli', midSide: 'kirpma', midMateUp: 'gulumseme', midMateDown: 'dusunceli',
+};
+
+/** Ses kimliğindeki an adı: Pişti, menü, Blöf (blofX), el/maç sonu, atışma, hızlı sohbet söyleyişi / cevabı. */
+export type VoiceMoment = Moment | MetaMoment | BlofKey | EndMoment | 'banter' | 'quickSay' | 'quickReply';
 export type Stab = 0 | 0.5 | 1;
 export type Rel = 'mate' | 'opp';
 
@@ -166,6 +198,8 @@ interface CharSpec {
   moods?: Partial<Record<Moment | MetaMoment, Pose | null>>;
   lines: Specs<Moment | MetaMoment>;
   blof: Specs<BlofMoment>;
+  /** El / maç sonu (Ara Skor, sonuç, rövanş, veda): kısa, karşılıklı dizilerde kullanılır. */
+  end: Specs<EndMoment>;
 }
 
 const _ = undefined;
@@ -466,6 +500,75 @@ const RIZA: CharSpec = {
       [2, '[proudly] İşte benim ortağım!'],
     ],
   },
+  end: {
+    endGloat: [
+      [1, '[chuckles] Ders bitti evlat. Çaylar senden.'],
+      [2, '[proudly] Usta yine usta. Not al evlat.'],
+    ],
+    endGloatClose: [[1, '[chuckles] Kıl payı evlat… ama pay benim.']],
+    endGloatBig: [[1, '[laughs] Bu maç değil, ders kitabıydı!']],
+    endGloatCaught: [[1, '[chuckles] Her yalanında bıyığım titredi evlat.']],
+    endSulk: [
+      [1, '[grumbling] Gözlüğü değiştireceğim, o kadar.', 'kizgin'],
+      [2, '[sighs] Eh… kırk yılda bir olur, oldu.'],
+    ],
+    endSulkClose: [[1, '[grumbling] Bir el daha olsa dönerdim!']],
+    endSulkBig: [[1, '[sighs] Bu ne hız evlat? Nefes aldırmadın.']],
+    endSulkStreak: [[1, '[grumbling] Bu kaçıncı evlat? Tespih yetmiyor!']],
+    endSulkPisti: [[1, '[groans] Bu ne pişti! Muhtara yazacağım.']],
+    endSulkSly: [[1, '[surprised] Bu yalanları kimden öğrendin evlat?']],
+    endSulkLast: [[1, '[gasps] Son kart da mı yalandı?! Pes!']],
+    endJoinWin: [
+      [1, '[chuckles] Üzülme evlat, kaybetmek de öğretir.'],
+      [2, '[scoffs] Bir kere kazandı, havaya girdi!', 'kirpma'],
+      [3, '[chuckles] Evlat, sabreden derviş muradına erer.'],
+    ],
+    endJoinLose: [
+      [1, '[proudly] Aferin evlat! Bıyık bile alkışlıyor.'],
+      [2, '[chuckles] Bahane hazır, çay da hazır!', 'kirpma'],
+      [3, '[laughs] Ders verdin evlat, ders!'],
+    ],
+    endRevenge: [
+      [1, '[clears throat] Bir el daha, evlat. Çay tazelendi.'],
+      [2, '[chuckles] Rövanşa var mısın evlat?'],
+    ],
+    endMateWin: [
+      [1, '[laughs] Ortak, bu masa artık bizim!'],
+      [2, '[proudly] Ortaklık dediğin böyle olur evlat.', 'zafer'],
+    ],
+    endMateLose: [
+      [1, '[sighs] Ortak, bu akşam çaylar bizden.'],
+      [2, '[grumbling] Ortak, bir dahakine beni dinle!', 'kizgin'],
+    ],
+    endFoeWin: [
+      [1, '[chuckles] İki kişi bir ustayı yenemedi!', 'kirpma'],
+      [2, '[laughs] Ortaklık güzel, ustalık başka!'],
+    ],
+    endFoeLose: [
+      [1, '[grumbling] İkiniz bir oldunuz, ayıp ettiniz!', 'kizgin'],
+      [2, '[sighs] Helal size… bu seferlik.'],
+    ],
+    endDuoWinA: [[1, '[proudly] Ortak, kırk yılın hatırına çak!']],
+    endDuoWinB: [[1, '[chuckles] Ortak, ders bitti, çay vakti!']],
+    endDuoLoseA: [[1, '[grumbling] Ortak, kartları uyuttun bu el!']],
+    endDuoLoseB: [[1, '[grumbling] Bana bakma, kartlar bana küstü!']],
+    endAccept: [
+      [1, '[chuckles] Geldin mi yine? Otur evlat.'],
+      [2, '[proudly] Rövanş kabul! Dursun, çayları tazele!'],
+    ],
+    endBye: [
+      [1, '[chuckles] Kaçma evlat, kaçma! Yarın gel.'],
+      [2, '[sighs] Git bakalım… masa burada.', 'uzgun'],
+    ],
+    midAhead: [[1, '[chuckles] Isınma turuydu evlat, asıl şimdi.']],
+    midBehind: [[1, '[grumbling] Daha bitmedi! Kurt sabırlıdır.']],
+    midSide: [
+      [1, '[chuckles] Maç yeni ısınıyor, çaylar tazelensin.'],
+      [2, '[sighs] Hesap sonra görülür, sonra.', 'dusunceli'],
+    ],
+    midMateUp: [[1, '[proudly] Ortak, iyi gidiyoruz. Bozma!']],
+    midMateDown: [[1, '[whispers] Ortak, toparlanıyoruz. Bana güven.']],
+  },
 };
 
 // ───────────────────────── KAHVECİ DURSUN ─────────────────────────
@@ -741,6 +844,75 @@ const DURSUN: CharSpec = {
       [1, '[laughs] Oh be! Helal ortak!'],
       [2, '[excited] Yaz defterine bunu!'],
     ],
+  },
+  end: {
+    endGloat: [
+      [1, '[laughs] Bulaşıklar senden kardeşim!'],
+      [2, '[chuckles] Hesabı deftere yazdım, hayırlı olsun!', 'kirpma'],
+    ],
+    endGloatClose: [[1, '[laughs] Kıl payı! Tam kıvamında maç!']],
+    endGloatBig: [[1, '[laughs heartily] Ho ho! Bu maç mahalleye anlatılır!']],
+    endGloatCaught: [[1, '[laughs] Yalanın çay bardağından belliydi!']],
+    endSulk: [
+      [1, '[laughs] Kaybettim ama müessese kazandı!', 'kahkaha'],
+      [2, '[sighs] Eh… müşteri velinimettir, kazansın.', 'gulumseme'],
+    ],
+    endSulkClose: [[1, '[groans] Bir çay farkıyla kaçtı be!']],
+    endSulkBig: [[1, '[laughs] Tepsiyi de al bari, kardeşim!', 'kahkaha']],
+    endSulkStreak: [[1, '[gasps] Yine mi? Defterde sayfa kalmadı!']],
+    endSulkPisti: [[1, '[laughs] Pişti makinesi! Berber duymalı!', 'kahkaha']],
+    endSulkSly: [[1, '[gasps] Bu kadar yalan, hiç yakalanmadın!']],
+    endSulkLast: [[1, '[gasps] Son kart da yalan mıydı? Vay!']],
+    endJoinWin: [
+      [1, '[chuckles] Üzülme kardeşim, çayın benden!'],
+      [2, '[whispers] Aramızda kalsın, o hep böyle böbürlenir.', 'kirpma'],
+      [3, '[laughs] Alışırsın kardeşim, ben alıştım!', 'kahkaha'],
+    ],
+    endJoinLose: [
+      [1, '[laughs] Helal! Bu zafere çay içilir!'],
+      [2, '[laughs] Bahane mi arıyorsun? Defterde yok!'],
+      [3, '[excited] Mahalle bunu duyacak, kardeşim!'],
+    ],
+    endRevenge: [
+      [1, '[laughs] Rövanş! Ocak yanıyor, kaçmak yok!'],
+      [2, '[chuckles] Bir el daha atalım mı kardeşim?'],
+    ],
+    endMateWin: [
+      [1, '[laughs] Ortak, çak! Simitler benden!'],
+      [2, '[excited] Ortak, sen olmasan tepsi devrilirdi!'],
+    ],
+    endMateLose: [
+      [1, '[sighs] Ortak, bulaşıkları beraber yıkarız.'],
+      [2, '[chuckles] Boş ver ortak, ocak yine yanar.', 'gulumseme'],
+    ],
+    endFoeWin: [
+      [1, '[laughs] Ortaklar, hesap masada!'],
+      [2, '[chuckles] İkinize birer teselli çayı!', 'kirpma'],
+    ],
+    endFoeLose: [
+      [1, '[laughs] Siz ikiniz kahveyi batıracaksınız!', 'kahkaha'],
+      [2, '[sighs] Helal size, çaylar benden yine.', 'gulumseme'],
+    ],
+    endDuoWinA: [[1, '[excited] Ortak, bu zafere çay demliyorum!']],
+    endDuoWinB: [[1, '[laughs] Ortak, gel sarılalım!', 'kahkaha']],
+    endDuoLoseA: [[1, '[groans] Ortak, tepsiyi elimden düşürdün!']],
+    endDuoLoseB: [[1, '[laughs] Ben mi? Ben ikram ettim sadece!', 'kahkaha']],
+    endAccept: [
+      [1, '[laughs] Geri geldin! Çayın hazır kardeşim.'],
+      [2, '[excited] Rövanş başlasın! Defter açık!'],
+    ],
+    endBye: [
+      [1, '[laughs] Yine bekleriz! Çaylar sıcak kalır.', 'gulumseme'],
+      [2, '[chuckles] Güle güle kardeşim, veresiye yok!'],
+    ],
+    midAhead: [[1, '[laughs] Ocak harlı, ben öndeyim!']],
+    midBehind: [[1, '[sighs] Çay demleniyor, ben de demleniyorum.']],
+    midSide: [
+      [1, '[excited] Maç kızışıyor! Çay koyayım mı?', 'gulumseme'],
+      [2, '[whispers] Aramızda kalsın, bu maç uzar.'],
+    ],
+    midMateUp: [[1, '[chuckles] Ortak, böyle devam, simitler yolda!']],
+    midMateDown: [[1, '[whispers] Ortak, ocağı biraz açalım.']],
   },
 };
 
@@ -1018,6 +1190,75 @@ const CEM: CharSpec = {
       [2, '[laughs] Ortak, sen bizi taşıyorsun!'],
     ],
   },
+  end: {
+    endGloat: [
+      [1, '[laughs] Ci ci kanka, klibi aldım bile!', _, T('GG kanka, klibi aldım bile!')],
+      [2, '[teasing] Kanka, bu maç senin için tutoryaldı.', 'kirpma', T('Kanka, bu maç senin için tutorialdı.')],
+    ],
+    endGloatClose: [[1, '[excited] Klaç anı kanka! Kalbim hâlâ atıyor!', _, T('Clutch anı kanka! Kalbim hâlâ atıyor!')]],
+    endGloatBig: [[1, '[laughs] Kanka bu maçı spidran yaptım!', _, T('Kanka bu maçı speedrun yaptım!')]],
+    endGloatCaught: [[1, '[teasing] Kanka, blöflerin hep ekran görüntüsünde.']],
+    endSulk: [
+      [1, '[groans] Of ya… bunu yayından keseceğim.'],
+      [2, '[sighs] Tamam, saygı. Ama kayıt dışı.', 'kirpma'],
+    ],
+    endSulkClose: [[1, '[groans] Kıl payı kanka, ping atsaydım alırdım!']],
+    endSulkBig: [[1, '[gasps] Kanka beni resmen silip attın, aura sıfır!']],
+    endSulkStreak: [[1, '[gasps] Kanka vin strik mi kasıyorsun?!', _, T('Kanka win streak mi kasıyorsun?!')]],
+    endSulkPisti: [[1, '[annoyed] Bu kadar pişti? Kanka hesabın raporlu!', 'kizgin']],
+    endSulkSly: [[1, '[gasps] Kanka sen poker yüzünü nereden aldın?']],
+    endSulkLast: [[1, '[gasps] Son kart blöf mü? Kanka bu plot tvist!', _, T('Son kart blöf mü? Kanka bu plot twist!')]],
+    endJoinWin: [
+      [1, '[chuckles] Kanka üzülme, bu meta herkesi yakıyor.'],
+      [2, '[scoffs] Kazandı diye fleks yapıyor, krinç!', 'kirpma', T('Kazandı diye flex yapıyor, cringe!')],
+      [3, '[laughs] Kanka, çet seni teselli ediyor şu an.', _, T('Kanka, chat seni teselli ediyor şu an.')],
+    ],
+    endJoinLose: [
+      [1, '[excited] Kanka artı bin aura, hak ettin!'],
+      [2, '[laughs] Bahaneler yükleniyor… yüzde doksan!', 'kirpma'],
+      [3, '[chuckles] Kanka bu klip viral olur.'],
+    ],
+    endRevenge: [
+      [1, '[excited] Rövanş kanka! Bu sefer renkıd!', _, T('Rövanş kanka! Bu sefer ranked!')],
+      [2, '[teasing] Bir el daha? Yoksa korktun mu kanka?'],
+    ],
+    endMateWin: [
+      [1, '[excited] Ortak, duo efsane! Çak bir beşlik!'],
+      [2, '[laughs] Ortak, sen beni taşıdın, saygı!', 'gulumseme'],
+    ],
+    endMateLose: [
+      [1, '[groans] Ortak, bu maç ikimizin de lagıydı.'],
+      [2, '[sighs] Ortak, sorun yok, rövanşta taşırım.', 'gulumseme'],
+    ],
+    endFoeWin: [
+      [1, '[laughs] Ortaklık çöktü kanka, sunucu kapandı!'],
+      [2, '[teasing] Duo değil, demo olmuşsunuz!', 'kirpma'],
+    ],
+    endFoeLose: [
+      [1, '[annoyed] Bu duo nerf yemeli, resmen!', 'kizgin'],
+      [2, '[sighs] Tamam, iyi takımdınız. Saygı.'],
+    ],
+    endDuoWinA: [[1, '[excited] Ortak, takım efsane! Klibi kestim!']],
+    endDuoWinB: [[1, '[laughs] Ortak, sen de efsanesin, aynen!']],
+    endDuoLoseA: [[1, '[groans] Ortak, sen de bir hamle yapsaydın!']],
+    endDuoLoseB: [[1, '[annoyed] Ortak, şarjım bitti, ne yapayım!']],
+    endAccept: [
+      [1, '[excited] Rövanş modu açık! Hadi kanka!'],
+      [2, '[laughs] Geri döndün kanka? Saygı!'],
+    ],
+    endBye: [
+      [1, '[chuckles] Bay bay kanka, sonra di em at!', _, T('Bye bye kanka, sonra DM at!')],
+      [2, '[teasing] Kaçıyor musun kanka? Çet gördü!', _, T('Kaçıyor musun kanka? Chat gördü!')],
+    ],
+    midAhead: [[1, '[teasing] Kanka daha ilk bölüm, final de benim.']],
+    midBehind: [[1, '[sighs] Tamam, kambek arkı başlıyor.', _, T('Tamam, comeback arkı başlıyor.')]],
+    midSide: [
+      [1, '[excited] Çet ısınıyor, maç kızışıyor!', 'gulumseme', T('Chat ısınıyor, maç kızışıyor!')],
+      [2, '[whispers] Kanka bu maçın senaryosu iyi.'],
+    ],
+    midMateUp: [[1, '[excited] Ortak, duo çalışıyor! Devam!']],
+    midMateDown: [[1, '[whispers] Ortak, B planı. Bana güven.']],
+  },
 };
 
 // ───────────────────────── DEFNE ─────────────────────────
@@ -1190,7 +1431,7 @@ const DEFNE: CharSpec = {
     ],
     playerWin: [
       [1, '[sweetly] Tebrik ederim. Ciddiyim, canım.', 'gulumseme'],
-      [2, '[sighs dramatically] Peki… bu seferlik.'],
+      [2, '[sighs] Peki… bu seferlik, canım.'],
       [3, '[giggles] Kazandın mı? Kimseye söyleme, imajım var.', 'kirpma'],
       [5, '[softly] Beni yendin… Not ettim. Kırmızı rujla.'],
       [6, '[laughs softly] İlk kez yeniliyorum… bu hafta.', 'kirpma'],
@@ -1294,6 +1535,75 @@ const DEFNE: CharSpec = {
       [1, '[giggles] İyi hamle, ortak!'],
       [2, '[sweetly] Seninle çok iyi bir ekibiz.'],
     ],
+  },
+  end: {
+    endGloat: [
+      [1, '[sweetly] Teşekkür ederim. Alkış kabul ediyorum.', 'kirpma'],
+      [2, '[giggles] Fincanında bu yazıyordu, tatlım.', 'kirpma'],
+    ],
+    endGloatClose: [[1, '[softly] Kıl payı… ama zarif bir kıl payı.']],
+    endGloatBig: [[1, '[laughs softly] Bu farkı ölçekle çizmek lazım.', 'kirpma']],
+    endGloatCaught: [[1, '[giggles] Her yalanında kaşın kalktı, canım.']],
+    endSulk: [
+      [1, '[sighs] Peki… ojemi bozdun ama haklısın.'],
+      [2, '[playfully] Tebrikler. Bugün sezgim izinliydi.', 'kirpma'],
+    ],
+    endSulkClose: [[1, '[sighs] Bir milimle. Projede revizyon şart.']],
+    endSulkBig: [[1, '[gasps] Aaa… beni yerle bir ettin, canım.']],
+    endSulkStreak: [[1, '[playfully] Yine mi sen? Fincanına bakmalıyım.', 'kirpma']],
+    endSulkPisti: [[1, '[sighs] Pişti üstüne pişti… şaşırttın.']],
+    endSulkSly: [[1, '[softly] Seni okuyamadım. Bu… etkileyici.']],
+    endSulkLast: [[1, '[laughs softly] Son kart blöf… çok cüretkâr.', 'gulumseme']],
+    endJoinWin: [
+      [1, '[sweetly] Üzülme canım, kahve benden.'],
+      [2, '[sarcastic] Kazandı, şimdi bir hafta anlatır.', 'kirpma'],
+      [3, '[softly] Fincanında rövanş görüyorum, tatlım.', 'kirpma'],
+    ],
+    endJoinLose: [
+      [1, '[sweetly] Bravo canım. Çok zarif bir zafer.', 'gulumseme'],
+      [2, '[giggles] Kaybedenin yüzüne bakın, ne tatlı.', 'kirpma'],
+      [3, '[playfully] Bu zaferi çerçeveletmek lazım.'],
+    ],
+    endRevenge: [
+      [1, '[teasing] Rövanş? Topuklarımı çıkarmadım daha.'],
+      [2, '[playfully] Bir el daha? Ben hazırım, ya sen?'],
+    ],
+    endMateWin: [
+      [1, '[giggles] Ortak, bu zafer sana da yakıştı.'],
+      [2, '[sweetly] Ortak, temeli sen attın, çatıyı ben.', 'kirpma'],
+    ],
+    endMateLose: [
+      [1, '[softly] Ortak, planı yeniden çizeriz.', 'dusunceli'],
+      [2, '[sighs] Ortak… bu el ojeme dokundu.'],
+    ],
+    endFoeWin: [
+      [1, '[sweetly] İkiniz de çok tatlıydınız. Ama yetmedi.', 'kirpma'],
+      [2, '[teasing] Uyumunuz eskiz aşamasında kalmış.', 'kirpma'],
+    ],
+    endFoeLose: [
+      [1, '[sighs] Peki, ikinize de şapka çıkarıyorum.', 'gulumseme'],
+      [2, '[playfully] Takım ruhunuz çok tatlı. Kıskandım.', 'kirpma'],
+    ],
+    endDuoWinA: [[1, '[giggles] Ortak, zafer pozu! Gülümse.']],
+    endDuoWinB: [[1, '[sweetly] Ortak, seninle kazanmak çok şık.']],
+    endDuoLoseA: [[1, '[sighs] Ortak, biraz sezgi lütfen.']],
+    endDuoLoseB: [[1, '[softly] Topuklarım sıktı, ortak. Affet.']],
+    endAccept: [
+      [1, '[playfully] Döndün demek. Bunu bekliyordum.', 'kirpma'],
+      [2, '[sweetly] Rövanş mı? Kahvemi tazeleyeyim.'],
+    ],
+    endBye: [
+      [1, '[sweetly] Görüşürüz canım. Kahve sözü bende.', 'gulumseme'],
+      [2, '[playfully] Gidiyor musun? Tam ısınmıştım.'],
+    ],
+    midAhead: [[1, '[softly] İlk kat bitti. Çatı da benim olacak.', 'kirpma']],
+    midBehind: [[1, '[playfully] Keyfini çıkar, kısa sürecek.', 'kirpma']],
+    midSide: [
+      [1, '[softly] Gerilim tırmanıyor… bayıldım.'],
+      [2, '[giggles] Maç güzelleşiyor, rujumu tazeleyeyim.', 'gulumseme'],
+    ],
+    midMateUp: [[1, '[sweetly] Ortak, harika gidiyoruz. Bozmayalım.']],
+    midMateDown: [[1, '[softly] Ortak, sakin. Sezgim dönüyor diyor.']],
   },
 };
 
@@ -1713,6 +2023,7 @@ function build(char: CharId, spec: CharSpec): Partial<Record<VoiceMoment, LineRe
     make(m, spec.lines[m], def);
   }
   for (const m of BLOF_MOMENTS) make(blofKey(m), spec.blof[m], BLOF_MOOD[m]);
+  for (const m of END_MOMENTS) make(m, spec.end[m], END_MOOD[m]);
   return out;
 }
 
