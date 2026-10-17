@@ -4,9 +4,11 @@ Kullanıcı isteği: "Botlarda sıkıntı var mı? Hile gibi çok akıllı olmas
 Blöf her açıdan mükemmel olmalı." Bu belge bulunanları, düzeltmeleri ve önce/sonra ölçümleri özetler.
 
 **Ölçüm araçları** (repoda, tekrar koşulabilir):
-- `tests/blofAudit.ts` — Blöf zaman çizelgeli simülatör (ev sahibi akışı: sunum süreleri, bot bekleme, 5 sn pencere) +
-  "sıradan oyuncu" insan vekili (`CasualHuman`: kart saymaz, doğru açar, %12 araya yalan katar, arada blöf yapar,
-  son karta hep "Blöf!" der, kendi elinden kesin yalanı ve masada 4'ü aşan iddiayı yakalar).
+- `tests/blofAudit.ts` — Blöf zaman çizelgeli simülatör (ev sahibi akışı: sunum süreleri, bot bekleme, pencere — 17 Ekim'den beri
+  sıradaki insan vekiliyse 5 sn, değilse 3 sn; ceza kartı sunumu dahil) + "sıradan oyuncu" insan vekili (`CasualHuman`: kart saymaz,
+  doğru açar, arada araya yalan katar ve blöf yapar, son karta hep "Blöf!" der, kendi elinden kesin yalanı ve masada 4'ü aşan iddiayı
+  yakalar). 17 Ekim'den beri varsayılan vekil ceza kuralını bilir (`CASUAL`: açışa %4 yalan, elinde yokken 1'e 1'de %40, kalabalıkta
+  %30 blöf); eski "saf" tarz `CASUAL_NAIVE` (%12 / %70 / %45) karşılaştırma için durur. §7.
 - `tests/pistiAudit.ts` — Pişti simülatörü + basit insan vekili (alabiliyorsa alır, Valeyi saklar, kart saymaz).
 - Testler: `tests/blofAudit.test.ts` (hile yok, salak hamle yok, zamanlama, canlı el, zorluk merdiveni),
   `tests/pistiAudit.test.ts` (hile yok, Vale, düşünme süresi, kalite), `tests/blofBot.test.ts` (bot-bot sıralaması).
@@ -40,8 +42,8 @@ Karşılaştırma: aynı tohumlar, el başına 300 el, insan koltuğunda **sıra
 | **Robotik tepki** | zor "Blöf!" p10 0,52 sn (1'e 1) | insan alt sınırı: blöf ≥ 0,5 sn, geç ≥ 0,45 sn; büyük yığında ve kararsızken daha uzun; kesin yakalama daha çabuk | zor p10/p50/p90 **0,8 / 1,3 / 2,0 sn**, orta 1,0/1,5/2,3, kolay 1,3/2,0/3,0 |
 | Düşünme süresi sabit aralık | — | kararsızlığa göre (iki en iyi seçenek yakınsa uzun), %6 "dalgın" uzun düşünme, bitirişte kısa | testli |
 
-**Önemli keşif (1'e 1):** açışta yakalanan yalancı yalnız **kendi kartlarını geri alır** (yığında başka kart yok); bedeli
-yalnız turu kaptırmak. Ölçüm: hep araya yalan katan sıradan oyuncu, sıradan oyuncuyu %86, eski ve yeni bütün botları
+**Önemli keşif (1'e 1) — 17 Ekim'de kural değişikliğiyle kapandı (§7):** açışta yakalanan yalancı yalnız **kendi kartlarını geri
+alır** (yığında başka kart yok); bedeli yalnız turu kaptırmak. Ölçüm: hep araya yalan katan sıradan oyuncu, sıradan oyuncuyu %86, eski ve yeni bütün botları
 **%90+** yeniyordu. Botlar artık 1'e 1'de doğru açışına ara sıra bir yalan kart katar (kolay %12, orta %25, zor %45) —
 zoru sıradan oyuncuya karşı %37'den %59'a çıkaran en büyük etken. Bkz. §6, kullanıcı kararı gerekiyor.
 
@@ -92,19 +94,22 @@ ilk bitiren kazanır. **Kural hatası bulunmadı.** Ama iki tasarım sorunu var 
   apaçık pişti 0,7×, başa baş 1,4×) — `PistiBot.thinkScale()`, `match.ts` ve `PistiBotBrain` kullanıyor.
 - Eşli: takım arkadaşından risk sayılmaz (önceden vardı), ortak yığını "çalmak" diye bir şey yok (puan ortak).
 
-## 5. Ayar özeti (src/ai/blofBot.ts → BLOF_BOT_PARAMS)
+## 5. Ayar özeti (src/ai/blofBot.ts → BLOF_BOT_PARAMS; 17 Ekim ceza kuralına göre yeniden ayarlı, eski değer parantezde)
 
 | | kolay | orta | zor |
 |---|---|---|---|
 | Kart sayma / hafıza / dalgınlık | yok / 0,3 / — | var / 0,75 / %20 | var / 0,93 / %12 |
 | Son karta "Blöf!" | %93 | %100 | %100 |
-| 1'e 1 açışa yalan katma | %12 | %25 | %45 |
-| Şüphe (1'e 1 / kalabalık) | −0,8 / 0 | 0 / −0,5 | 0 / −1 |
-| Tepki aralığı (kesin / kuşkulu, ms) | 1100–2400 / 1500–3600 | 800–1700 / 1100–2900 | 650–1400 / 950–2600 |
+| 1'e 1 açışa yalan katma (`padOpen2`) | %6 (%12) | %5 (%25) | %5 (%45) |
+| Ceza kartını hesaba katma (`penaltyWeight`, yeni) | 0,3 (acemi küçümser) | 0,8 | 1 |
+| Şüphe (1'e 1 / kalabalık) | +0,6 / −0,8 (−0,8 / 0); eşlide 0 | 0 / −0,2 (0 / −0,5) | +0,8 / −0,3 (0 / −1) |
+| Blöf sevgisi (1'e 1 / kalabalık çarpanı) | 0,9 / 1,3 (1,6) | 1,05 / 1,5 | 1,2 / 1,375 (1,1 / 1,5) |
+| Tepki aralığı (kesin / kuşkulu, ms; 5 sn pencere) | 1100–2400 / 1500–3600 | 800–1700 / 1100–2900 | 650–1400 / 950–2600 |
+| 3 sn pencerede | 0,9 sn'nin üstü orantılı sıkışır: 4,7 sn → 2,7 sn (en yavaşı da pencere bitmeden) | aynı | aynı |
 
 ## 6. Kullanıcı kararı gereken konular
 
-1. **1'e 1'de açış yalanı neredeyse bedava (en önemli konu).** Yakalanan açan yalnız kendi attığını geri alır, bedeli
+1. **[KARAR VERİLDİ 17 Ekim → §7: yakalanan yalancı kenardan 2 ceza kartı alır]** **1'e 1'de açış yalanı neredeyse bedava (en önemli konu).** Yakalanan açan yalnız kendi attığını geri alır, bedeli
    yalnız turu kaptırmak. Ölçüm (300 el): her açışına bir yalan kart katan sıradan oyuncu → sıradan oyuncuyu %86, **zoru %93,
    ortayı %94** yeniyor (kolayı %61). Hiçbir savunma işe yaramıyor: açışların hepsine blöf demek %78, kanıtlı yalanı
    yakalamak bile yalancıya turu bedavaya vermek demek. Bir insan bunu keşfederse her eli kazanır.
@@ -116,9 +121,64 @@ ilk bitiren kazanır. **Kural hatası bulunmadı.** Ama iki tasarım sorunu var 
    (yığın hep yalancıya döner): hep-yalancı × hep-yalancı 300 elin 296'sı takıldı (ceza kuralıyla da). Botlar bunu yapmaz
    (%50 yalan katan iki oyuncuda 0/300), ama çevrimiçi iki insan için hamle sınırı gerekir (ör. 600 hamlede en az kartı
    olan kazanır) — motor şu an sınırsız.
-3. **4 kişide insan bekliyor:** her bot atışında insan da blöf diyebildiği için pencere 5 sn sürüyor ("Geç"e basmazsa);
+3. **[KARAR VERİLDİ 17 Ekim → §7: sıradaki insansa 5 sn, değilse 3 sn]** **4 kişide insan bekliyor:** her bot atışında insan da blöf diyebildiği için pencere 5 sn sürüyor ("Geç"e basmazsa);
    insanın iki kararı arasında p90 ≈ 23–30 sn (eşli 22–45 sn). Öneri: "Geç"i bir kez seçince o turda otomatik geç,
    ya da sıra insanda değilken pencereyi kısaltma (kural/arayüz kararı).
-4. **Pişti — alınan kapalı masa kartları:** arayüz alınan yığındaki değerli kapalı kartları herkese gösteriyor
+4. **[KARAR VERİLDİ 17 Ekim → §7: yalnız alan görür; `capture.hidden` süzülür, arayüz kapalı uçurur]** **Pişti — alınan kapalı masa kartları:** arayüz alınan yığındaki değerli kapalı kartları herkese gösteriyor
    ("kapalıysa açılır"); çevrimiçi `redact` de `capture` olayını süzmüyor. Kapalı kartlar herkese açık mı olmalı?
 5. Kalabalık masada el ~4 dk; hedef 4–8 dk ise botların düşünme süresi biraz uzatılabilir (oynanışı değiştirmez).
+
+## 7. Kural değişikliği (17 Ekim, kullanıcı kararı) — ölçümler
+
+Kurallar: **(1)** Blöf'te yalanı yakalanan yığına ek olarak **KENAR'ın üstünden 2 ceza kartı** alır (kenarda 1 varsa 1, boşsa
+yok). **(2)** Blöf penceresi atıştan sonra **sıradaki insansa 5 sn, bot ise 3 sn**. **(3)** Pişti'de alınan **kapalı masa kartlarını
+yalnız alan görür**. (BLOF.md, ONLINE.md, KARARLAR.md.)
+Ölçüm: tests/blofAudit.ts, her hücre 300 el, aynı tohumlar; rapor betiği `BLOF_REPORT=1` ile vitest'te koşulan geçici bir dosyaydı
+(depoda değil: tsconfig node tipleri içermiyor) — aynı sayılar `auditMany(...)` çağrılarıyla yeniden üretilir.
+
+**İstismar kapandı** — 1'e 1, her açışına bir yalan kart katan sıradan oyuncunun kazanma oranı:
+
+| rakip | kolay | orta | zor | sıradan oyuncu |
+|---|---|---|---|---|
+| önce | %61 | %94 | %93 | %86 |
+| **sonra** | **%0** | **%0** | **%0** | **%1** |
+
+**Zorluk merdiveni** — sıradan oyuncunun kazanma oranı (adil pay parantezde). "Sonra" satırı ceza kuralını bilen vekille
+(`CASUAL`: daha az blöf); "saf" satırı eski tarzda oynamayı sürdüren vekille (bilerek kaybeden bir strateji: blöflerinin %75'i
+yakalanıyor, elde +4 ceza kartı — gerçek oyuncu "+2 ceza"yı gördükçe blöfünü azaltır):
+
+| Mod | önce (eski kural) | **sonra** | sonra, saf vekil |
+|---|---|---|---|
+| 1'e 1 (%50) | %75 / %51 / %41 | **%74 / %49 / %44** | %58 / %35 / %36 |
+| 3 kişi (%33) | %42 / %33 / %30 | **%40 / %33 / %32** | %38 / %35 / %26 |
+| 4 kişi (%25) | %24 / %17 / %13 | **%28 / %19 / %18** | %31 / %19 / %18 |
+| Eşli (%50) | %49 / %53 / %44 | **%58 / %51 / %49** | %57 / %52 / %50 |
+
+(kolay / orta / zor.) Zor'un 1'e 1'deki eski %41'i büyük ölçüde açışa %45 yalan katmasından geliyordu (artık ceza yüzünden
+kârsız, istenen ~%5); 600 ellik ölçümde zor %44–46, kalabalıkta %15–18 (±%2–3 örnekleme payı). Eşlide kolay biraz daha kolay
+(acemi ortağına güvenmez: kalabalık temkinini bırakıp daha çok, çoğu boşa "Blöf!" der) — bot-bot eşlide zor/orta takımı kolayı %71/%68 yener.
+Bot-bot 1'e 1: zor>kolay %88 (önce %78), orta>kolay %85 (%76), zor>orta %49 (%57; yakın — iki zorluk arasındaki fark artık
+çoğunlukla insana karşı çıkıyor).
+
+**El süresi** (medyan, sıradan oyuncuyla; kolay / orta / zor): 1'e 1 3,5 / 2,9 / 2,8 dk (önce 3,5 / 3,2 / 3,3) · 3 kişi 4,0 / 3,4 /
+3,3 (4,3 / 3,6 / 3,5) · 4 kişi 4,3 / 3,6 / 3,6 (4,4 / 4,0 / 3,8) · eşli 4,2 / 3,6 / 3,5 (4,2 / 3,6 / 3,5). Kısa pencere elleri
+~0,2–0,4 dk kısalttı; ceza kartları biraz uzattı.
+
+**Pencere ve zamanlama:**
+- Botların "Blöf!" tepkisi p10/p50/p90 (sn, sunum bittikten sonra): zor 0,8–0,9 / 1,1–1,2 / 1,5–1,6 · orta 0,9–1,0 / 1,2–1,3 / 1,6–1,8 ·
+  kolay 1,1 / 1,4–1,5 / 1,9–2,4 (önce 3,0'a dek). Test: 3 sn'lik pencerede bütün kararlar 0,45–2,7 sn arasında, en yavaşlar pencerenin
+  sonuna yığılmaz (%10'dan az ≥ 2,69 sn); zor kesin yalanı her zaman, orta ≥ %90 yakalar.
+- İnsanın bir kararı için en uzun bekleyişi p90: 4 kişi 21–29 sn (önce 23–31), eşli 23–38 sn (22–45), 3 kişi 17–24 sn (18–25).
+  Kazanç sınırlı: bekleyişin çoğu botların düşünme/sunum süresi; "geç"e basılmayan pencereler artık 3 sn.
+- Blöf oranı (atışların): 1'e 1 orta/zor %4 (önce %10–15; farkın çoğu kaldırılan açış dolgusu), kolay %7; kalabalık orta/zor %4–8,
+  kolay %15–20. Bot-bot ellerde orta/zor %2,5–5,7 — 4 kişilik ellerin ~%20'sinde botlar hiç blöf yapmıyor. `bluffLove` bunu pek
+  oynatmıyor (karar riskle belirleniyor); daha "blöflü" masa istenirse ayrı bir lezzet ayarı gerekir (açık konu).
+
+**Bot bilgisi (ceza kartları):** bot, kenara giden yığınlardaki kendi kartlarının sırasını tutar: kenarın üstündekini kendisi attıysa
+ceza alanın elinde olduğunu KESİN bilir, bilmediğinde kenardaki her kart için "o koltukta olabilir" der (kenar tümden alındıysa kesin).
+Test: ceza dahil 30 tam oyunda her botun maskesi her an gerçeği içeriyor; kart saymayan kolay da güvenli genişletir.
+
+**Pişti:** botlar `match.ts`'te de artık yalnız kendi koltuğuna süzülmüş olayı görür; alan bot kapalı kartları "görülmüş" sayar
+(oyundan çıktılar), diğerleri hiç bilmez — test (ev sahibi üzerinden 1'e 1 / 4 kişi / eşli). Ham/süzülmüş olayla 90 oyunda kararlar
+yine birebir aynı.
+
