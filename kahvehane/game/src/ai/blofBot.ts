@@ -74,6 +74,8 @@ export interface BlofBotParams {
   /** Turu açmanın değeri (kart cinsinden): 1'e 1'de / kalabalık masada. */
   tempo2: number;
   tempoN: number;
+  /** Yığından çıkacak dörtlü grubun (bedava açış) değer çarpanı (0: hesaba katmaz). */
+  groupValue: number;
   /** Eşli masada (takım arkadaşı varken) üzerine yazılan ayarlar. */
   team?: Partial<Omit<BlofBotParams, 'team'>>;
 }
@@ -104,6 +106,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     hesitate: [300, 900],
     tempo2: 2,
     tempoN: 0.8,
+    groupValue: 0,
   },
   orta: {
     memory: 0.75,
@@ -130,6 +133,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     hesitate: [100, 500],
     tempo2: 2.5,
     tempoN: 1,
+    groupValue: 1,
   },
   zor: {
     memory: 0.93,
@@ -156,6 +160,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     hesitate: [0, 0],
     tempo2: 2.5,
     tempoN: 1,
+    groupValue: 1,
   },
 };
 
@@ -678,7 +683,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
    * bedava bir açış olur (1'e 1'de çok değerli).
    */
   private pileGroupBonus(v: BlofView, rank: number, extraMine = 0): number {
-    if (!this.p.counting || rank === 0) return 0;
+    if (!this.p.counting || rank === 0 || this.p.groupValue <= 0) return 0;
     let held = 0;
     for (const c of v.hand) if (rankOf(c) === rank) held++;
     let mineIn = extraMine;
@@ -694,8 +699,9 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     const after = held + mineIn + others;
     // önceki iddialar arada yalan olabilir (sonuncusu "doğru çıktı" dalında zaten doğru)
     const conf = Math.pow(0.9, earlier);
-    if (after >= 4) return conf * (v.seats === 2 ? 3.8 : 3.3);
-    return after >= 3 ? conf : 0;
+    const g = this.p.groupValue;
+    if (after >= 4) return g * conf * (v.seats === 2 ? 3.8 : 3.3);
+    return after >= 3 ? g * conf : 0;
   }
 
   /** "Geç" dersem (sıra bendeyse) sıradaki hamlemin değeri: doğru atış, blöf ya da zorunlu pas. Sıra başkasındaysa 0. */
