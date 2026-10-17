@@ -218,11 +218,24 @@ export class BlofHud {
     // geniş ekranda (tablet) rozet + çubuk ortalanmış bir grup; telefonda sola yaslı
     const host = this.el.parentElement ?? this.el;
     const by = y.toFixed(1) + 'px', rl = Math.max(L.u * 0.9, (L.W - L.u * 31) / 2).toFixed(1) + 'px';
-    if (by !== this.varY) host.style.setProperty('--bl-bar-y', (this.varY = by));
+    if (by !== this.varY) {
+      const dy = this.varY ? parseFloat(this.varY) - y : 0;
+      host.style.setProperty('--bl-bar-y', (this.varY = by));
+      // satır yeri değişti (dağıtımda ayrılan yer tutmadı ya da el bir satıra indi): rozetim ve açık çubuk zıplamaz, kısa kayar
+      if (ANIM && Math.abs(dy) > 1 && this.el.classList.contains('is-on')) this.glide(host, dy);
+    }
     if (rl !== this.varL) host.style.setProperty('--bl-row-l', (this.varL = rl));
     // BLÖF düğmesi çubuğun yerinde (pencere açıkken çubuk gizlenir)
     pos(this.blof, L.blof.x, L.blof.y);
     this.blof.style.setProperty('--d', L.blof.d + 'px');
+  }
+
+  /** FLIP: yeni satırda, eski yerden kayarak (yalnız `translate`: rozetin kendi transform animasyonlarıyla çakışmaz). */
+  private glide(host: HTMLElement, dy: number): void {
+    const kf: Keyframe[] = [{translate: `0 ${dy.toFixed(1)}px`}, {translate: '0 0'}];
+    const o: KeyframeAnimationOptions = {duration: 280, easing: 'cubic-bezier(.2,.8,.3,1)'};
+    host.querySelector('.kh-badge.is-bottom')?.animate(kf, o);
+    if (this.bar.classList.contains('is-on')) this.bar.animate(kf, o);
   }
 
   relayoutBar(L: BlofLayout): void {
@@ -534,8 +547,14 @@ export class BlofHud {
     const inn = q(el, '.bl-stamp__in');
     const glow = q(el, '.bl-stamp__glow');
     const sub2 = q(el, '.bl-stamp__s');
+    // giriş büyütmesi ekrana sığacak kadar (dar telefonda "DOĞRU ÇIKTI!" 2,3× ile kenarlardan taşıyordu): -14° dönük sözcüğün
+    // kapladığı genişlik ekranın içinde kalır; geniş ekranda eskisi gibi 2,3×. Aynı eğri/süre/dönüş; yalnız başlangıç ölçeği.
+    const w = q(el, '.bl-stamp__w');
+    const vw = this.el.clientWidth || innerWidth;
+    const foot = w.offsetWidth * 0.97 + w.offsetHeight * 0.24; // cos 14°, sin 14°
+    const s0 = foot > 0 ? Math.min(2.3, Math.max(1, (vw - 16) / foot)) : 2.3;
     const a = play(inn, [
-      {transform: 'scale(2.3) rotate(-14deg)', opacity: 0},
+      {transform: `scale(${s0.toFixed(3)}) rotate(-14deg)`, opacity: 0},
       {transform: 'scale(.92) rotate(-4deg)', opacity: 1, offset: 0.1},
       {transform: 'scale(1.04) rotate(-3deg)', opacity: 1, offset: 0.16},
       {transform: 'scale(1) rotate(-3deg)', opacity: 1, offset: 0.78},

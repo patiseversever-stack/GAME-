@@ -309,7 +309,9 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 /* büst kırpması: alt sınır = bir alttaki şeridin üst kenarı (merkezde yuvanın %84'ü; -9° eğimle sola inip sağa çıkar:
    tan 9° × 50vw = 7,92vw), lacivert kenar çizgisinin hemen üstünde. Üst serbest: baş üstteki şeride taşar. */
 .kh-vs__clip { position: absolute; inset: 0; --cut: 84%; }
-.kh-vs__clip.is-cut { clip-path: polygon(-5% -400%, 105% -400%, 105% calc(var(--cut) - 4px - 8.71vw), -5% calc(var(--cut) - 4px + 8.71vw)); }
+/* Üst sınır −40%: büstün tepesi (Ken Burns dahil) yuvanın en çok ~%16 üstüne çıkar. clip-path canlandırılan büstte bir MASKE katmanı
+   demek ve maske, çokgenin sınır kutusu kadar taranır: eski −400% üst sınırla her biri ~1200×3000 px (üç maske ≈ 21 MB karo). */
+.kh-vs__clip.is-cut { clip-path: polygon(-5% -40%, 105% -40%, 105% calc(var(--cut) - 4px - 8.71vw), -5% calc(var(--cut) - 4px + 8.71vw)); }
 .kh-vs.is-4 .kh-vs__emblem { width: calc(var(--u) * 7.4); height: calc(var(--u) * 7.4); margin: calc(var(--u) * -3.7) 0 0 calc(var(--u) * -3.7); z-index: 8; }
 .kh-vs.is-4 .kh-vs__emblem .kh-title { font-size: calc(var(--u) * 3); }
 .kh-vs.is-4 .kh-vs__stake { top: auto; bottom: calc(25% + var(--u) * .2); right: auto; left: calc(var(--u) * 1); z-index: 8; }

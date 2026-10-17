@@ -196,6 +196,12 @@ export class BlofTable {
   onPile: () => void = () => {};
   /** Yerleşim değişti (HUD katmanı rozet/çubuk yerlerini buna göre koyar) */
   onLayout: (L: BlofLayout) => void = () => {};
+  /**
+   * Dağıtımdan önce elin yeri ayrılır: el boşken yerleşim, dağıtılacak kart sayısında TİPİK bir elle (beklenen farklı değer sayısı)
+   * hesaplanır. Böylece çubuk satırı ve ona hizalı rozetim HUD açılırken son yerinde durur; dağıtımda zıplamaz (seyrek farkta
+   * BlofHud kısa bir kaymayla düzeltir). 0: ayrım yok (dağıtım başladı).
+   */
+  private reserveN = 0;
   /** Masa Blöf'ten çıktı (Pişti eli kuruldu): arayüz katmanı da kapanır */
   onDetach: () => void = () => {};
 
@@ -548,6 +554,23 @@ export class BlofTable {
    * dahil) L.hand'e, grup bilgisini gInfo'ya yazar.
    */
   private handLayout(cards: BCard[]): {p: Pose[]; z: number[]} {
+    if (!cards.length && this.reserveN > 0) {
+      const k = this.reserveN;
+      // k kartta beklenen farklı değer: 13 · (1 − C(48,k)/C(52,k)); gruplar olabildiğince eşit (en çok 4)
+      let miss = 1;
+      for (let i = 0; i < 4; i++) miss *= (52 - k - i) / (52 - i);
+      const G = clamp(Math.round(13 * (1 - miss)), Math.ceil(k / 4), Math.min(13, k));
+      const fake: BCard[] = [];
+      for (let r = 0; r < G; r++) {
+        const size = Math.floor(k / G) + (r < k % G ? 1 : 0);
+        for (let su = 0; su < size; su++) fake.push({id: su * 13 + r, sel: false} as unknown as BCard);
+      }
+      if (this.mode === 'spread') this.spreadLayout(fake);
+      else this.groupLayout(fake);
+      this.gInfo = [];
+      this.minTap = 0;
+      return {p: [], z: []};
+    }
     return this.mode === 'spread' ? this.spreadLayout(cards) : this.groupLayout(cards);
   }
 
@@ -849,6 +872,8 @@ export class BlofTable {
       this.set(c, {...p, x: p.x - this.L.W * 0.75, r: p.r - 30}, 100 + i);
     });
     this.t.setGlow(null);
+    this.reserveN = Math.floor(52 / Math.max(2, seats));
+    this.handLayout(this.hand);
     this.updateBar();
     this.onLayout(this.L);
   }
@@ -885,6 +910,7 @@ export class BlofTable {
    * rakiplerinki kapalı yelpazeye. `mine`: kişinin bütün eli (dağıtım sırası önemli değil), `order`: dağıtım sırası (koltuk).
    */
   async deal(order: number[], mine: CardId[]): Promise<void> {
+    this.reserveN = 0;
     const sorted = mine.slice().sort(handOrder);
     // son elin düzeni önceden: kart yerine uçar
     const finals: BCard[] = [];

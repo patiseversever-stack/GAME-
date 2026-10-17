@@ -784,6 +784,23 @@ export function openSheet(ctx: Ctx, o: {cls: string; body: string; onClose?: () 
 // - Açılış ~0,85 sn: simgeler ve disk içeri kaçar, şeritler sağdan başlayarak hızlanıp çıkar.
 // Yalnız transform/opacity; her şey bir kez çizilir. Düşük cihazda yalım, parlama, şok halkası ve filigran kayması yok.
 // =====================================================================================================
+/** CSS cubic-bezier(x1, y1, x2, y2) zamanlama işlevi (ilerleme 0..1 → değer). */
+function cubicBezier(x1: number, y1: number, x2: number, y2: number): (x: number) => number {
+  const bx = (s: number) => 3 * x1 * s * (1 - s) ** 2 + 3 * x2 * s * s * (1 - s) + s ** 3;
+  const by = (s: number) => 3 * y1 * s * (1 - s) ** 2 + 3 * y2 * s * s * (1 - s) + s ** 3;
+  return x => {
+    if (x <= 0) return 0;
+    if (x >= 1) return 1;
+    let lo = 0, hi = 1;
+    for (let k = 0; k < 24; k++) {
+      const m = (lo + hi) / 2;
+      if (bx(m) < x) lo = m;
+      else hi = m;
+    }
+    return by((lo + hi) / 2);
+  };
+}
+
 export function suitWipe(ctx: Ctx): {cover(): Promise<void>; reveal(): Promise<void>} {
   const low = document.documentElement.classList.contains('kh-low');
   const el = h('div', 'kh-wipe' + (low ? ' is-low' : ''));
@@ -808,6 +825,37 @@ export function suitWipe(ctx: Ctx): {cover(): Promise<void>; reveal(): Promise<v
     return {W, inn, out};
   };
   let t0 = 0;
+  /**
+   * Perde ekranı TAMAMEN örtünce (görsel olarak; son şeridin yaylanması bitmeden) alttaki eski ekranlar çizilmez ve kapalı perdenin
+   * arkasında kurulan yeni ekranın dönen ışınları durur (kh-covered): örtülü ekran GPU karo belleği tutmaz, kare üretmez. Perde
+   * açılmaya başlarken geri alınır (açılış ≥150 ms gecikmeli: yeni ekranın taranmasına zaman kalır). Görünüm değişmez.
+   */
+  let unhide: (() => void) | null = null;
+  let opening = false;
+  const covered = (): void => {
+    if (unhide || opening || !el.isConnected) return;
+    unhide = hideUnder(el);
+    ctx.layer.classList.add('kh-covered');
+  };
+  const uncover = (): void => {
+    unhide?.();
+    unhide = null;
+    ctx.layer.classList.remove('kh-covered');
+  };
+  /** Şeritler (kaymaları xs) ekranı boşluksuz örtüyor mu: -14° eğim payı dahil, komşu şeritler en az 2 px üst üste. */
+  const fullyCovered = (xs: readonly number[]): boolean => {
+    const W = innerWidth, H = innerHeight, e = 0.17 * H + 0.06 * W, sk = 0.1247 * H; // tan14° × H/2
+    let prevR = -Infinity;
+    for (let i = 0; i < bands.length; i++) {
+      const L = (-0.14 + 0.27 * i) * W - (i === 0 ? e : 0) + xs[i];
+      const R = L + 0.36 * W + (i === 0 || i === 3 ? e : 0);
+      if (i === 0 && L + sk > -2) return false; // sol kenar: üst köşe eğimle sağa kayar
+      if (i > 0 && L > prevR - 2) return false; // iki şerit arasında boşluk
+      if (i === bands.length - 1 && R - sk < W + 2) return false; // sağ kenar: alt köşe eğimle sola kayar
+      prevR = R;
+    }
+    return true;
+  };
   /** Çalışan animasyonlar; açılışta kalıcı olanların (şerit, disk, simge, filigran) son hâli yazılıp iptal edilir, ışık efektleri yalnız iptal */
   let live: Array<[Animation, boolean]> = [];
   const go = (n: Element, kf: Keyframe[], o: KeyframeAnimationOptions, keep = true): Animation => {
@@ -818,7 +866,7 @@ export function suitWipe(ctx: Ctx): {cover(): Promise<void>; reveal(): Promise<v
   return {
     async cover() {
       ctx.sounds.whoosh();
-      if (!ANIM) return;
+      if (!ANIM) return covered();
       t0 = performance.now();
       const G = geo();
       // kırmızı önce oturur (0,5 sn), mavi en uzağa gider ve en son oturur (~0,78 sn); hafif aşıp yerine yaylanır
@@ -852,9 +900,23 @@ export function suitWipe(ctx: Ctx): {cover(): Promise<void>; reveal(): Promise<v
         {transform: 'scale(1.28) rotate(6deg)', opacity: 1, offset: 0.6, easing: 'ease-in-out'},
         {transform: 'scale(1) rotate(0deg)', opacity: 1},
       ], {duration: 300, delay: 600 + i * 60, fill: 'both'}));
+      // örtme anı şerit anahtar karelerinden hesaplanır (zamanlayıcı: kare üretimi tıkansa da gecikmez); en geç son şerit bitince
+      const ez1 = cubicBezier(0.22, 0.7, 0.28, 1), ez2 = cubicBezier(0.4, 0, 0.5, 1);
+      const xAt = (i: number, t: number): number => {
+        const p = Math.min(1, t / (500 + i * 92)), over = G.W * 0.012;
+        return p < 0.86 ? -G.inn[i] + (over + G.inn[i]) * ez1(p / 0.86) : over * (1 - ez2((p - 0.86) / 0.14));
+      };
+      let tCover = -1;
+      for (let t = 0; t < 500 + 3 * 92 && tCover < 0; t += 8) if (fullyCovered(bands.map((_, i) => xAt(i, t)))) tCover = t;
+      // zamanlayıcı animasyonun GERÇEK başlangıcına bağlı (yoğun anda başlangıç birkaç kare gecikebilir); + iki kare pay
+      if (tCover >= 0)
+        void as[0].ready.then(() => window.setTimeout(covered, Math.max(0, tCover - (Number(as[0].currentTime) || 0)) + 34), () => undefined);
       await as[as.length - 1].finished.catch(() => undefined);
+      covered();
     },
     async reveal() {
+      opening = true;
+      uncover();
       if (ANIM) {
         // amblem en az bir an görünsün (kapanış hemen ardından açılış istense de simgeler çıkmış olsun)
         const wait = t0 ? 960 - (performance.now() - t0) : 0;
