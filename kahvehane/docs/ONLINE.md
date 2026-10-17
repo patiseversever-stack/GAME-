@@ -154,6 +154,9 @@ for (;;) {
 - [x] `LocalHost`: doğrulama, süzme, pencere zamanlayıcı, tempo (`ack`), erteleme, süre aşımı, yeniden bağlanma/`resync`, hamle kaydı
 - [x] `GameClient`, `LocalTransport` (isteğe bağlı yapay gecikme), sanal saat (`VirtualClock`) ile testler
 - [x] Botlar yalnız görünüm + süzülmüş olayla oynar (sunucuda koşabilir)
+- [x] Oyun uzunluğu / seri (17 Ekim, `src/game/series.ts`): saf ve deterministik — maç = ayar + tohum + el sonuçları; el tohumu, dağıtan
+  (Pişti) / açan (Blöf), toplamlar, hedef, uzatma eli, eşitlik bozma, bırakma ve kayıttan doğrulayıp sürdürme (`validateSeries`) sunucuda
+  aynen koşar. Sunucu her el sonunda `recordPisti(GameResult)` / `recordBlof({winner, handCounts})` çağırır; ödeme `setup.ts receive(…, mult)`.
 
 **Sıradaki:**
 - [ ] Sunucu barındırma kararı (§7) ve `WebSocketTransport`'un gerçek sürümü (yeniden bağlanma, geri çekilme, kimlik)

@@ -10,7 +10,11 @@ import {mulberry32} from '../src/core/rng';
 import {rankOf} from '../src/core/types';
 
 /** Koltuk: bot zorluğu ya da insan vekili (kararları bir bot beyni ya da 'casual' kural seti verir; zamanlaması insan gibi). */
-export type AuditSeat = BlofDifficulty | {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>};
+export type AuditSeat =
+  | BlofDifficulty
+  | {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>}
+  /** Karma (deney): sıra kararları bir beyinden, pencere kararları diğerinden. */
+  | {hybrid: {turn: BlofDifficulty | 'casual'; window: BlofDifficulty | 'casual'}};
 
 /** Karar veren beyin (BlofBot ya da sabit kurallı insan vekili). */
 interface Brain {
@@ -166,7 +170,7 @@ export interface AuditOptions {
   botFactory?: (seat: number, diff: BlofDifficulty, seed: number) => BlofBot;
 }
 
-const isHuman = (s: AuditSeat): s is {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>} => typeof s === 'object';
+const isHuman = (s: AuditSeat): s is {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>} => typeof s === 'object' && 'human' in s;
 
 function presentMs(evs: BlofEvent[], seats: number): number {
   let ms = 0;
@@ -212,8 +216,20 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
   let s = g.state;
   const seed = o.botSeed ?? cfg.seed;
   const brains: Brain[] = o.seats.map((sp, i) => {
-    const d = isHuman(sp) ? sp.human : sp;
     const bs = (seed * 131 + i * 7 + 1) >>> 0;
+    if (typeof sp === 'object' && 'hybrid' in sp) {
+      const mk = (d: BlofDifficulty | 'casual', k: number): Brain => (d === 'casual' ? new CasualHuman(i, bs + k) : new BlofBot(i, d, bs + k));
+      const t = mk(sp.hybrid.turn, 0);
+      const w = mk(sp.hybrid.window, 1);
+      return {
+        observe: (e: BlofEvent) => {
+          t.observe(e);
+          w.observe(e);
+        },
+        decide: (v: BlofView) => (v.canChallenge ? w.decide(v) : t.decide(v)),
+      };
+    }
+    const d = isHuman(sp) ? sp.human : sp;
     if (d === 'casual') return new CasualHuman(i, bs, {...CASUAL, ...(sp as {style?: Partial<CasualStyle>}).style});
     return o.botFactory ? o.botFactory(i, d, bs) : new BlofBot(i, d, bs);
   });

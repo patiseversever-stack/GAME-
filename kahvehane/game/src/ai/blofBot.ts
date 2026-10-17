@@ -76,6 +76,8 @@ export interface BlofBotParams {
   tempoN: number;
   /** Yığından çıkacak dörtlü grubun (bedava açış) değer çarpanı (0: hesaba katmaz). */
   groupValue: number;
+  /** Açışta "rakip kalanıyla takip eder mi" kaygısının ağırlığı (0: kaygısız). */
+  followWeight: number;
   /** Eşli masada (takım arkadaşı varken) üzerine yazılan ayarlar. */
   team?: Partial<Omit<BlofBotParams, 'team'>>;
 }
@@ -107,6 +109,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempo2: 2,
     tempoN: 0.8,
     groupValue: 0,
+    followWeight: 0,
   },
   orta: {
     memory: 0.75,
@@ -134,6 +137,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempo2: 2.5,
     tempoN: 1,
     groupValue: 1,
+    followWeight: 1,
   },
   zor: {
     memory: 0.93,
@@ -161,6 +165,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempo2: 2.5,
     tempoN: 1,
     groupValue: 1,
+    followWeight: 1,
   },
 };
 
@@ -191,8 +196,9 @@ const EPS_O = 0.01;
 const PURE_O = 0.04;
 /** Rakip modeli: açılan atışlarda yalan payının önseli (yalnız şüpheli atışlar açıldığı için ~%45). */
 const LIE_BASE = 0.45;
-/** Rakip modeli: bir pencerede (kim olursa) "Blöf!" denme sıklığının önseli. */
-const CALL_BASE = 0.3;
+/** Rakip modeli: bir açış / takip penceresinde (kim olursa) "Blöf!" denme sıklığının önseli. */
+const CALL_OPEN = 0.1;
+const CALL_FOLLOW = 0.3;
 
 export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTell> {
   readonly seat: number;
@@ -225,8 +231,12 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
   private readonly dist = new Float64Array(5);
   private readonly soft = new Int16Array(6);
   /** Rakip modeli (kamuya açık): koltuk başına blöf diyebildiği pencere, dediği blöf; açılan atışlarında yalan/doğru. */
-  private readonly eligibleN = new Float64Array(4);
-  private readonly challengedN = new Float64Array(4);
+  /** [koltuk*2 + tür]: tür 0 = açış penceresi, 1 = takip penceresi (son kart pencereleri sayılmaz: onlara herkes der). */
+  private readonly eligibleN = new Float64Array(8);
+  private readonly challengedN = new Float64Array(8);
+  /** Açık pencerenin türü (0 açış, 1 takip) ve son kart mı. */
+  private winKind = 0;
+  private winFinal = false;
   private readonly liesN = new Float64Array(4);
   private readonly truthsN = new Float64Array(4);
   /** Kenara giden turlarda söylenen kart sayısı (değer başına, ≤ 4): o değerin kopyaları büyük olasılıkla kenarda. */
@@ -283,6 +293,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
       }
       case 'opened':
       case 'played': {
+        this.winKind = e.t === 'opened' ? 0 : 1;
         if (e.t === 'opened') {
           this.roundRank = e.rank;
           this.roundClaims = 0;
@@ -353,10 +364,11 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         break;
       }
       case 'windowOpen':
-        for (const s of e.eligible) if (s !== me) this.eligibleN[s]++;
+        this.winFinal = e.final;
+        if (!e.final) for (const s of e.eligible) if (s !== me) this.eligibleN[s * 2 + this.winKind]++;
         break;
       case 'challenged':
-        if (e.by !== me) this.challengedN[e.by]++;
+        if (e.by !== me && !this.winFinal) this.challengedN[e.by * 2 + this.winKind]++;
         break;
       case 'pileCleared':
         if (this.roundRank > 0 && this.p.counting && this.rnd() < this.p.memory + (1 - this.p.memory) * 0.5)
@@ -462,11 +474,15 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     return v.seats === 2 ? this.p.tempo2 : this.p.tempoN * 0.7;
   }
 
-  /** Bir rakibin gözlenen "Blöf!" deme sıklığı (önsel: pencere başına CALL_BASE, rakipler arasında paylaşılır). Kolay bot rakibini izlemez. */
-  private callRate(s: number, opps: number): number {
-    const prior = 1 - Math.pow(1 - CALL_BASE, 1 / Math.max(1, opps));
+  /**
+   * Bir rakibin gözlenen "Blöf!" deme sıklığı, açışlara ve takiplere ayrı (önsel: pencere başına CALL_OPEN / CALL_FOLLOW,
+   * rakipler arasında paylaşılır). Kolay bot rakibini izlemez.
+   */
+  private callRate(s: number, opps: number, opening: boolean): number {
+    const kind = opening ? 0 : 1;
+    const prior = 1 - Math.pow(1 - (opening ? CALL_OPEN : CALL_FOLLOW), 1 / Math.max(1, opps));
     if (!this.p.counting) return prior;
-    return (this.challengedN[s] + prior * 5) / (this.eligibleN[s] + 5);
+    return (this.challengedN[s * 2 + kind] + prior * 5) / (this.eligibleN[s * 2 + kind] + 5);
   }
 
   /** Bir rakibin açılan atışlarındaki yalan payına göre blöf eğilimi çarpanı (kamuya açık geçmiş). */
@@ -727,7 +743,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
 
   /** Açtığım değerin kalanını sıradaki rakip tutuyor olabilir mi: tutuyorsa doğru takip eder, tur ona döner. */
   private followRisk(v: BlofView, rank: number): number {
-    if (!this.p.counting) return 0;
+    if (!this.p.counting || this.p.followWeight <= 0) return 0;
     const next = (this.seat + 1) % v.seats;
     if (v.teams[next] === v.teams[this.seat] || v.handCounts[next] === 0) return 0;
     this.holdDist(this.loc, this.likely, v, next, rank, 0, 0, 0, 0);
@@ -762,8 +778,8 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
       let ps: number;
       if (publicImpossible) ps = 0.92;
       else {
-        const base = this.callRate(s, opps.length);
-        const shape = (k === 1 ? 1 : k === 2 ? 1.4 : k === 3 ? 1.8 : 2.2) * (opening ? 0.45 : 1) * (after <= 2 ? 1.5 : 1) * (1 + 0.03 * v.pileCount);
+        const base = this.callRate(s, opps.length, opening);
+        const shape = (opening ? (k === 4 ? 1.2 : 1) : k === 1 ? 1 : k === 2 ? 1.4 : k === 3 ? 1.8 : 2.2) * (after <= 2 ? 1.5 : 1) * (1 + 0.03 * v.pileCount);
         ps = Math.min(0.9, base * shape);
         if (lie && this.p.counting) {
           // rakip kendi elinden görür mü: elinde (5 − masadaki iddialar − k) ya da fazla kopya varsa yalan ona apaçık
@@ -859,7 +875,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         const rt = this.challengeRisk(v, r, c, false, n - c, true);
         const used = new Set(cards);
         // 1'e 1: rakip kalan kopyalarla doğru takip ederse dört dolar, ben pas demek zorunda kalırım → tur ona geçer
-        const fr = c < BLOF_MAX_PLAY ? this.followRisk(v, r) * To * (v.seats === 2 ? 0.8 : 0.3) : 0;
+        const fr = c < BLOF_MAX_PLAY ? this.followRisk(v, r) * To * (v.seats === 2 ? 0.8 : 0.3) * this.p.followWeight : 0;
         consider(c + rt * (c * gW + T) - fr + this.shape(hand, used) + noise * 0.5 * this.gauss(), {t: 'open', seat: me, rank: r, cards}, false, rt);
         if (c < BLOF_MAX_PLAY && n - c - 1 >= 1 && !blatant(c + 1)) {
           const extra = this.junk(hand, r, 1);
