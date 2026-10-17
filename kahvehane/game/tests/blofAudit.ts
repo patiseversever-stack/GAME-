@@ -126,7 +126,7 @@ export interface HandMetrics {
   caught: number;
   wrongChallenges: number;
   bluffs: number;
-  /** Turda iddia toplamı 4'ü aşan atışlar (herkesin gördüğü imkânsız iddia). */
+  /** Turda iddia toplamı 4'ü aşan YALAN atışlar (herkesin görebileceği imkânsız iddia). */
   impossibleClaims: number;
   clears: number;
   discarded: number;
@@ -406,7 +406,8 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
     if (action.t === 'open' || action.t === 'play') {
       const rank = action.t === 'open' ? action.rank : s.rank;
       const claimed = s.plays.reduce((x, p) => x + p.count, 0) + action.cards.length;
-      if (claimed > 4) m.impossibleClaims++;
+      // göze batan yalan: masadaki iddialar 4'ü aşarken yalan atmak (doğru atış sayılmaz: önceki biri yalan söylemiştir)
+      if (claimed > 4 && action.cards.some((c) => rankOf(c) !== rank)) m.impossibleClaims++;
       if (s.hands[action.seat].length === action.cards.length) {
         m.finals++;
         if (action.cards.some((c) => rankOf(c) !== rank)) m.finalBluffs++;

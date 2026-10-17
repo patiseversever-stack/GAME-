@@ -42,6 +42,8 @@ export interface BlofBotParams {
   notice: number;
   /** Turdaki iddiaların toplamı 4'ü aşınca fark etme olasılığı (göze batan yalan). */
   readTable: number;
+  /** Dalgınlık: bir "Blöf!" kararında kart saymayı unutup yalnız kendi eline bakma olasılığı (zor bot da insan). */
+  lapse: number;
   /** Kendi iddiasının masayı 4'ün üstüne çıkaracağını fark etme olasılığı (imkânsız iddia yapmama). */
   selfCheck: number;
   /** Açışta/atışta araya bir yalan kart katma eğilimi (kart cinsinden ek değer). */
@@ -95,11 +97,12 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     claims: 0,
     notice: 0.75,
     readTable: 0.35,
-    selfCheck: 0.85,
+    lapse: 0,
+    selfCheck: 0.92,
     greed: 0.25,
-    bluffLove: 1.15,
-    caution: 0.9,
-    noise: 1.0,
+    bluffLove: 0.9,
+    caution: 1,
+    noise: 0.75,
     suspicion: -0.8,
     suspicionN: -0.8,
     slip: 0.12,
@@ -125,6 +128,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     claims: 0.7,
     notice: 0.95,
     readTable: 0.85,
+    lapse: 0.2,
     selfCheck: 0.97,
     greed: 0.05,
     bluffLove: 1.05,
@@ -155,6 +159,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     claims: 1,
     notice: 1,
     readTable: 0.97,
+    lapse: 0.12,
     selfCheck: 1,
     greed: 0.1,
     bluffLove: 1.1,
@@ -638,7 +643,8 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     }
     const tableImpossible = others + own + k + mine > 4;
     let possible: number;
-    if (this.p.counting) possible = this.holdDist(this.pre, this.preLikely, v, x, r, k, k, others * this.p.claims, own > 0 ? this.p.claims : 0);
+    // dalgın anında yalnız kendi eline bakar (kart saymaz)
+    if (this.p.counting && this.rnd() >= this.p.lapse) possible = this.holdDist(this.pre, this.preLikely, v, x, r, k, k, others * this.p.claims, own > 0 ? this.p.claims : 0);
     else possible = this.naiveDist(v, x, r, k, mine);
     if (possible < k) return this.rnd() < this.p.notice ? 1 : 0.5;
     const d = this.dist;
