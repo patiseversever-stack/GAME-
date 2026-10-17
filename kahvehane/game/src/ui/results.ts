@@ -296,6 +296,11 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart', talk?: Res
       });
     } else countUp(scope, capVal, startCoins, coinsAfterMatch, 500);
   }, ANIM ? tReward : 0);
+  // seviye atlama kutlaması kapanınca çözülür (atlama yoksa hemen): karşılıklı konuşma kutlamanın altında kalmasın
+  let lvlDone: () => void = () => {};
+  const lvlP = new Promise<void>(r => (lvlDone = r));
+  if (!lvlUp) lvlDone();
+  scope.add(() => lvlDone());
   scope.timeout(async () => {
     xpFill.style.transition = '';
     if (lvlUp) {
@@ -311,6 +316,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart', talk?: Res
       xpFill.style.transition = '';
       xpFill.style.transform = `scaleX(${Math.min(1, d.after.xp / Math.max(1, d.after.xpNext)).toFixed(3)})`;
       await levelUp(ctx, scope, d, cap);
+      lvlDone();
     } else xpFill.style.transform = `scaleX(${Math.min(1, d.after.xp / Math.max(1, d.after.xpNext)).toFixed(3)})`;
   }, ANIM ? tReward + 250 : 0);
   if (!ANIM) {
@@ -320,7 +326,10 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart', talk?: Res
 
   // ---- karşılıklı konuşma: konuşanın balonu (büyük büst → kuyruk sola, küçük yüz → kuyruk yukarı, seyirci → küçük portre) ----
   const stage = talk ? talkStage(scope, el, talk.talkers) : null;
-  if (talk && stage) scope.timeout(() => talk.start(stage), ANIM ? 1000 : 0);
+  if (talk && stage) {
+    if (!lvlUp) scope.timeout(() => talk.start(stage), ANIM ? 1000 : 0);
+    else void lvlP.then(() => scope.alive && scope.timeout(() => talk.start(stage), ANIM ? 350 : 0));
+  }
 
   return new Promise(res => {
     onAct(scope, el, async a => {

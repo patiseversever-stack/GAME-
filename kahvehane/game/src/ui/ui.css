@@ -259,13 +259,12 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-vs__side { position: absolute; z-index: 5; left: 0; right: 0; height: 50%; will-change: transform; } /* ışınlar yarımların üstünde, karakterlerin altında */
 .kh-vs__side.is-opp { top: 0; }
 .kh-vs__side.is-me { bottom: 0; }
-.kh-vs__side::before { content: ''; position: absolute; left: 50%; top: 50%; width: calc(var(--u) * 24); height: calc(var(--u) * 24); margin: calc(var(--u) * -12) 0 0 calc(var(--u) * -12);
-  background: radial-gradient(circle, rgba(255, 255, 255, .4) 0%, rgba(255, 255, 255, .1) 40%, rgba(255, 255, 255, 0) 68%); }
+.kh-vs__glow { position: absolute; left: 50%; top: 50%; display: block; width: calc(var(--u) * 24); height: calc(var(--u) * 24); margin: calc(var(--u) * -12) 0 0 calc(var(--u) * -12); pointer-events: none; }
+/* (karakter arkası ışık: tuval dokusu, intro.ts SIDE_GLOW — ekran çözünürlüğünde taranan gradyan değil) */
 .kh-vs__who { position: absolute; inset: 0; }
-.kh-vs__bust { position: absolute; left: 50%; bottom: 4%; height: 82%; width: auto; max-width: none; transform: translateX(-50%); transform-origin: 50% 85%;
-  -webkit-mask: linear-gradient(180deg, #000 78%, transparent 99%); mask: linear-gradient(180deg, #000 78%, transparent 99%); }
+.kh-vs__bust { position: absolute; left: 50%; bottom: 4%; display: block; height: 82%; width: auto; max-width: none; transform: translateX(-50%); transform-origin: 50% 85%; }
 .kh-vs__side.is-me .kh-vs__bust { bottom: 2%; height: 80%; }
-.kh-vs__bust.is-faded { -webkit-mask: none; mask: none; } /* solma görsele işlendi: maske geçişi yok */
+/* büst = tuval: alt kenar solması tuvale işlenir (maske yok), bkz. intro.ts paintBust */
 .kh-vs__plate { position: absolute; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: calc(var(--u) * .5); min-width: calc(var(--u) * 13);
   padding: calc(var(--u) * .45) calc(var(--u) * 1.5) calc(var(--u) * .55) calc(var(--u) * .7);
   border-radius: var(--r-pill); background: var(--name-fill); box-shadow: 0 0 0 3px var(--navy), inset 0 0 0 2px rgba(255, 255, 255, .85), inset 0 3px 0 rgba(255, 255, 255, .25), 0 5px 0 var(--navy), 0 12px 20px rgba(2, 4, 24, .45);
@@ -341,12 +340,10 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 .kh-vs__streaks { position: absolute; inset: 0; z-index: 6; pointer-events: none; }
 .kh-vs__streaks i { position: absolute; left: 0; height: calc(var(--u) * .24); min-height: 3px; border-radius: 99px; opacity: 0; will-change: transform, opacity;
   background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .95) 70%, rgba(255, 255, 255, 0)); }
-.kh-vs__glint { position: absolute; z-index: 6; left: -30%; top: -10%; width: 28%; height: 120%; opacity: 0; pointer-events: none; will-change: transform, opacity;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 255, 255, .2) 42%, rgba(255, 246, 200, .34) 50%, rgba(255, 255, 255, .2) 58%, rgba(255, 255, 255, 0)); }
-.kh-vs__ring { position: absolute; z-index: 7; left: 50%; top: 50%; width: calc(var(--u) * 9); height: calc(var(--u) * 9); margin: calc(var(--u) * -4.5) 0 0 calc(var(--u) * -4.5);
-  opacity: 0; pointer-events: none; will-change: transform, opacity;
-  background: radial-gradient(circle, rgba(255, 255, 255, 0) 55%, rgba(255, 255, 255, .95) 61%, rgba(255, 236, 150, .55) 66%, rgba(255, 220, 90, 0) 71%); }
-.kh-vs__ring.is-b { background: radial-gradient(circle, rgba(255, 210, 60, 0) 56%, rgba(255, 200, 40, .85) 62%, rgba(255, 140, 20, .35) 67%, rgba(255, 120, 0, 0) 71%); }
+.kh-vs__glint { position: absolute; z-index: 6; left: -30%; top: -10%; display: block; width: 28%; height: 120%; opacity: 0; pointer-events: none; will-change: transform, opacity; } /* tuval: yatay gradyan */
+/* şok halkaları: 3,4× büyüyen tuval dokuları (intro.ts RING_A/RING_B); gradyan DOM'da olsaydı 3,4× ölçekte taranırdı (≈ 7 MB/halka) */
+.kh-vs__ring { position: absolute; z-index: 7; left: 50%; top: 50%; display: block; width: calc(var(--u) * 9); height: calc(var(--u) * 9); margin: calc(var(--u) * -4.5) 0 0 calc(var(--u) * -4.5);
+  opacity: 0; pointer-events: none; will-change: transform, opacity; }
 .kh-vs__sparks { position: absolute; z-index: 8; left: 50%; top: 50%; width: 0; height: 0; pointer-events: none; }
 .kh-vs__sparks i { position: absolute; left: calc(var(--u) * -.75); top: calc(var(--u) * -.75); width: calc(var(--u) * 1.5); height: calc(var(--u) * 1.5); opacity: 0; will-change: transform, opacity;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23fff'/%3E%3Cstop offset='.55' stop-color='%23fff6c2'/%3E%3Cstop offset='1' stop-color='%23ffb81f'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='10' cy='10' r='4.2' fill='%23fff' opacity='.5'/%3E%3Cpath d='M10 0 11.9 8.1 20 10 11.9 11.9 10 20 8.1 11.9 0 10 8.1 8.1Z' fill='url(%23g)'/%3E%3C/svg%3E") center / contain no-repeat; }

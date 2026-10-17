@@ -164,11 +164,11 @@ describe('el / maç sonu replikleri (veri)', () => {
   it('her karakter her rol için dolu; genel havuzlar ≥ 2, ikinci ses ≥ 3; hepsi kısa ve öncelik 3', () => {
     for (const c of CHAR_IDS) {
       for (const m of END_MOMENTS) expect(linesFor(c, m).length, `${c}/${m}`).toBeGreaterThanOrEqual(1);
-      for (const m of ['endGloat', 'endSulk', 'endRevenge', 'endMateWin', 'endMateLose', 'endFoeWin', 'endFoeLose', 'endAccept', 'endBye', 'midSide'])
+      for (const m of ['endGloat', 'endSulk', 'endRevenge', 'endMateWin', 'endMateLose', 'endFoeWin', 'endFoeLose', 'endAccept', 'endBye', 'midSide', 'midMateDown'])
         expect(linesFor(c, m).length, `${c}/${m}`).toBeGreaterThanOrEqual(2);
       for (const m of ['endJoinWin', 'endJoinLose']) expect(linesFor(c, m).length, `${c}/${m}`).toBe(3);
     }
-    expect(end.length).toBe(172);
+    expect(end.length).toBe(188);
     for (const l of end) {
       expect(speechSeconds(l.char, l.tts), l.id).toBeLessThanOrEqual(3.1);
       expect(momentPriority(l.moment)).toBe(3);

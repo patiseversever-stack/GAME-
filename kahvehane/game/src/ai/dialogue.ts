@@ -565,9 +565,15 @@ const RIZA: CharSpec = {
     midSide: [
       [1, '[chuckles] Maç yeni ısınıyor, çaylar tazelensin.'],
       [2, '[sighs] Hesap sonra görülür, sonra.', 'dusunceli'],
+      [3, '[chuckles] Kartlar karışık, akıl başta.'],
+      [4, '[clears throat] Bu maç uzun sürer, çay söyleyin.'],
     ],
     midMateUp: [[1, '[proudly] Ortak, iyi gidiyoruz. Bozma!']],
-    midMateDown: [[1, '[whispers] Ortak, toparlanıyoruz. Bana güven.']],
+    midMateDown: [
+      [1, '[whispers] Ortak, toparlanıyoruz. Bana güven.'],
+      [2, '[grumbling] Ortak, gözünü kartlara dik!', 'kizgin'],
+      [3, '[chuckles] Ortak, maç daha bitmedi.'],
+    ],
   },
 };
 
@@ -910,9 +916,15 @@ const DURSUN: CharSpec = {
     midSide: [
       [1, '[excited] Maç kızışıyor! Çay koyayım mı?', 'gulumseme'],
       [2, '[whispers] Aramızda kalsın, bu maç uzar.'],
+      [3, '[laughs] Bu el defterlik oldu!', 'kahkaha'],
+      [4, '[chuckles] Tepsi hazır, gerilim tavan!'],
     ],
     midMateUp: [[1, '[chuckles] Ortak, böyle devam, simitler yolda!']],
-    midMateDown: [[1, '[whispers] Ortak, ocağı biraz açalım.']],
+    midMateDown: [
+      [1, '[whispers] Ortak, ocağı biraz açalım.'],
+      [2, '[chuckles] Ortak, çay iç, kafan açılsın.'],
+      [3, '[laughs] Geride miyiz? Ocak yeni ısınıyor!', 'kahkaha'],
+    ],
   },
 };
 
@@ -1255,9 +1267,15 @@ const CEM: CharSpec = {
     midSide: [
       [1, '[excited] Çet ısınıyor, maç kızışıyor!', 'gulumseme', T('Chat ısınıyor, maç kızışıyor!')],
       [2, '[whispers] Kanka bu maçın senaryosu iyi.'],
+      [3, '[excited] Kanka bu maç tam içerik!'],
+      [4, '[chuckles] Skor tablosu ısınıyor kanka.'],
     ],
     midMateUp: [[1, '[excited] Ortak, duo çalışıyor! Devam!']],
-    midMateDown: [[1, '[whispers] Ortak, B planı. Bana güven.']],
+    midMateDown: [
+      [1, '[whispers] Ortak, B planı. Bana güven.'],
+      [2, '[sighs] Ortak, lag girdi, toparlıyoruz.'],
+      [3, '[excited] Ortak, kambek zamanı!', _, T('Ortak, comeback zamanı!')],
+    ],
   },
 };
 
@@ -1601,9 +1619,15 @@ const DEFNE: CharSpec = {
     midSide: [
       [1, '[softly] Gerilim tırmanıyor… bayıldım.'],
       [2, '[giggles] Maç güzelleşiyor, rujumu tazeleyeyim.', 'gulumseme'],
+      [3, '[playfully] Bu maçın bir falı olmalı.', 'kirpma'],
+      [4, '[softly] Hikâye güzelleşiyor, tatlım.'],
     ],
     midMateUp: [[1, '[sweetly] Ortak, harika gidiyoruz. Bozmayalım.']],
-    midMateDown: [[1, '[softly] Ortak, sakin. Sezgim dönüyor diyor.']],
+    midMateDown: [
+      [1, '[softly] Ortak, sakin. Sezgim dönüyor diyor.'],
+      [2, '[sweetly] Ortak, panik yok. Planım var.'],
+      [3, '[playfully] Ortak, rujumu tazeledim. Dönüyoruz.', 'kirpma'],
+    ],
   },
 };
 
@@ -2869,7 +2893,7 @@ export function planEndTalk(f: EndFacts, pick: EndPick, rnd: () => number = Math
       const mate = mates[0];
       const foe = one(foes);
       if (myLead) {
-        if (mate) add(mate, ['midMateUp']);
+        if (mate) add(mate, ['midMateUp', 'blofMateCheer']);
         add(foe, ...either(['playerLeading'], ['midBehind']));
       } else if (theirLead) {
         add(foe, ...ahead());
@@ -2918,7 +2942,7 @@ export function planEndTalk(f: EndFacts, pick: EndPick, rnd: () => number = Math
     const v = rnd();
     if (mate && v < 0.45) {
       // ortak bize, rakip cevap verir
-      add(mate, [won ? 'endMateWin' : 'endMateLose']);
+      add(mate, won ? ['endMateWin', 'blofMateCheer'] : ['endMateLose']);
       add(f1 ?? f2, ...(useCond && cond ? [[cond]] : []), [won ? 'endFoeLose' : 'endFoeWin']);
     } else if (f1 && f2 && v < 0.75) {
       // rakip takımın iki botu birbirine (kazandılarsa övgü, kaybettilerse sitem)
@@ -2927,7 +2951,7 @@ export function planEndTalk(f: EndFacts, pick: EndPick, rnd: () => number = Math
     } else {
       // rakip bize takılır / söylenir, ortak bize döner
       add(f1 ?? f2, ...aPools([[won ? 'endFoeLose' : 'endFoeWin']]));
-      if (mate) add(mate, [won ? 'endMateWin' : 'endMateLose']);
+      if (mate) add(mate, won ? ['endMateWin', 'blofMateCheer'] : ['endMateLose']);
     }
   } else {
     // 1'e 1 / 3 / 4 kişi
