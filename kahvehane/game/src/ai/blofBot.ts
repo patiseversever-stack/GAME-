@@ -657,9 +657,10 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     const T = this.tempo(v);
     const To = this.oppTempo(v);
     // Doğru tahmin: atan yığını alır, yeni turu ben açarım. Yanlış: yığın bana, atan açar.
+    // Karşılaştırma "geç"in getirisiyle: sıra bendeyse ve elimde o değer yoksa geçmek çoğu zaman zorunlu pas demektir.
     const gain = q * (S * gW + T + danger);
     const loss = (1 - q) * (S * this.p.caution + To);
-    let ev = gain - loss + this.p.suspicion + this.bold + this.p.noise * this.gauss();
+    let ev = gain - loss - this.declineValue(v) + this.p.suspicion + this.bold + this.p.noise * this.gauss();
     // içgüdü: sınırda kararlarda arada bir yanılır (zor bot da)
     if (Math.abs(ev) < 1.5 && this.rnd() < this.p.slip) ev = -ev;
     const doubt = 1 - Math.abs(q - 0.5) * 2; // 1: tam belirsiz
@@ -669,6 +670,30 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     }
     // açıkça doğru görünen atışa çabuk "geç"; kararsızken daha uzun bakar
     return pass(this.range(this.p.decline) * (0.75 + 0.6 * doubt) + weight * 0.5);
+  }
+
+  /** "Geç" dersem (sıra bendeyse) sıradaki hamlemin değeri: doğru atış, blöf ya da zorunlu pas. Sıra başkasındaysa 0. */
+  private declineValue(v: BlofView): number {
+    const w = v.window!;
+    if (v.turn !== this.seat) return 0;
+    let m = 0;
+    for (const c of v.hand) if (rankOf(c) === w.rank) m++;
+    if (m > 0) return Math.min(m, BLOF_MAX_PLAY, 2) * 0.8;
+    const pass = this.passValue(v);
+    let claimed = 0;
+    for (const pl of v.roundPlays) claimed += pl.count;
+    if (claimed + 1 > 4 || v.hand.length < 2) return pass;
+    const rb = this.challengeRisk(v, w.rank, 1, true, v.hand.length - 1, false);
+    return Math.max(pass, (1 - rb) * this.p.bluffLove - rb * (v.pileCount * this.p.caution + this.oppTempo(v)));
+  }
+
+  /** Açtığım değerin kalanını sıradaki rakip tutuyor olabilir mi: tutuyorsa doğru takip eder, tur ona döner. */
+  private followRisk(v: BlofView, rank: number): number {
+    if (!this.p.counting) return 0;
+    const next = (this.seat + 1) % v.seats;
+    if (v.teams[next] === v.teams[this.seat] || v.handCounts[next] === 0) return 0;
+    this.holdDist(this.loc, this.likely, v, next, rank, 0, 0, 0, 0);
+    return 1 - this.dist[0];
   }
 
   /** Elden "yük" kartları: en az tutulan değerlerden (tekler önce), istenen değer hariç. */
@@ -795,7 +820,9 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         if (c === n) return this.play({t: 'open', seat: me, rank: r, cards}, false, 0.7); // hepsi doğru → bitiriş
         const rt = this.challengeRisk(v, r, c, false, n - c, true);
         const used = new Set(cards);
-        consider(c + rt * (c * gW + T) + this.shape(hand, used) + noise * 0.5 * this.gauss(), {t: 'open', seat: me, rank: r, cards}, false, rt);
+        // 1'e 1: rakip kalan kopyalarla doğru takip ederse dört dolar, ben pas demek zorunda kalırım → tur ona geçer
+        const fr = c < BLOF_MAX_PLAY ? this.followRisk(v, r) * To * (v.seats === 2 ? 0.8 : 0.3) : 0;
+        consider(c + rt * (c * gW + T) - fr + this.shape(hand, used) + noise * 0.5 * this.gauss(), {t: 'open', seat: me, rank: r, cards}, false, rt);
         if (c < BLOF_MAX_PLAY && n - c - 1 >= 1 && !blatant(c + 1)) {
           const extra = this.junk(hand, r, 1);
           const rp = this.challengeRisk(v, r, c + 1, true, n - c - 1, true);

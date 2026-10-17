@@ -1,18 +1,19 @@
-// ARA SKOR (çok elli maçta eller arası) ve YARIM KALAN MAÇ penceresi.
+// OYUN UZUNLUĞU arayüzü: "Kaça oynuyoruz?" seçimi (OYNA'ya basınca), ARA SKOR (çok elli maçta eller arası) ve YARIM KALAN MAÇ penceresi.
 // Ara skor: el sonucu (bu elin puanı / cezası sayarak), maç toplamları (Pişti: hedefe ilerleme çubuğu · Blöf: el el ceza hücreleri),
 // lider tacı, konuşan karakterin büstü + balon (konuşma yöneticisi Bubble ile yazar), büyük SONRAKİ EL (6 sn sonra kendiliğinden),
 // "Masadan kalk" (onaylı; bahis yanar). Animasyonlar yalnız transform/opacity; boşta döngü yok (sayaç çubuğu tek seferlik geçiş).
 import './scoreboard.css';
 import type {Bubble} from '../audio/speech';
 import type {InterimData, ResumeData} from './types';
-import type {SeatPlayer} from '../game/types';
+import type {Game, MatchLength, Mode, SeatPlayer} from '../game/types';
 import {matchTitle} from '../game/types';
-import {LENGTH_INFO, handsOf, isExtra, isLong, leaders, rankOf, ranking, seatsOfSide, sidesOf, targetOf, type SeriesState} from '../game/series';
+import {prize} from '../game/setup';
+import {LENGTHS, LENGTH_INFO, handsOf, isExtra, isLong, leaders, rankOf, ranking, seatsOfSide, sidesOf, targetOf, type SeriesState} from '../game/series';
 import {ANIM, EASE, Scope, countUp, esc, fmt, h, play, q} from './dom';
 import {ASSETS} from './assets';
 import {I} from './icons';
 import {GAME_ICON} from './gameicons';
-import {charAvatarHtml, onAct, openModal, type Ctx} from './parts';
+import {charAvatarHtml, onAct, openModal, openSheet, type Ctx} from './parts';
 import {g3} from './fx';
 import {haptic} from '../platform/bridge';
 import {shortName} from './lobby';
@@ -100,6 +101,55 @@ const stakeLine = (stake: number): string =>
   stake > 0 ? `Maçı bırakırsan masadaki <span class="kh-confirm__stake"><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(stake)}</b></span> bahsi kaybedersin.` : 'Maçı bırakırsan bu maç kayıp sayılır.';
 
 const title = (s: SeriesState) => `${matchTitle(s.game, s.mode)} · ${LENGTH_INFO[s.len].title}`;
+
+// =====================================================================================================
+// "Kaça oynuyoruz?" — OYNA'ya basınca alttan açılır. Seçeneğe dokunmak maçı hemen başlatır (onay yok); son seçim vurgulu.
+// Kapat (X) / karartmaya dokunmak / aşağı kaydırmak → null (ana ekrana dönülür). Her seçenekte o uzunluğun ödülü.
+// =====================================================================================================
+const LEN_CAP: Record<MatchLength, string> = {
+  tek: 'Hızlı tek el', '51': 'Kısa maç', '101': 'Klasik maç', '151': 'Uzun maç', '3': 'En az ceza kazanır', '5': 'En az ceza kazanır',
+};
+const capOf = (g: Game, l: MatchLength): string => (g === 'blof' && l === 'tek' ? 'İlk bitiren kazanır' : LEN_CAP[l]);
+
+export function lengthSheet(ctx: Ctx, o: {game: Game; mode: Mode; stake: number; current: MatchLength}): Promise<MatchLength | null> {
+  return new Promise(res => {
+    const opts = LENGTHS[o.game];
+    const cur = opts.includes(o.current) ? o.current : 'tek';
+    let picked: MatchLength | null = null;
+    const m = openSheet(ctx, {
+      cls: `kh-lensheet is-${o.game}`,
+      onClose: () => res(null),
+      body: `<div class="kh-len">
+        <div class="kh-title kh-len__t">${g3('Kaça oynuyoruz?')}</div>
+        <div class="kh-len__sub">${GAME_ICON[o.game]}<span>${esc(matchTitle(o.game, o.mode))}</span><span class="kh-len__bet">Bahis <img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(o.stake)}</b></span></div>
+        <div class="kh-len__grid is-n${opts.length}">${opts.map(l => {
+          const info = LENGTH_INFO[l];
+          const big = o.game === 'pisti' && l !== 'tek' ? `${info.label}<em>puan</em>` : info.label;
+          return `<button class="kh-len__opt${l === cur ? ' is-on' : ''}" data-act="len" data-v="${l}" aria-pressed="${l === cur}" aria-label="${esc(info.title)}">
+            ${info.mult > 1 ? `<i class="kh-len__mult">×${String(info.mult).replace('.', ',')}</i>` : ''}
+            <span class="kh-len__big">${big}</span><small class="kh-len__cap">${capOf(o.game, l)}</small>
+            <span class="kh-len__win"><small>Kazanırsan</small><span><img src="${ASSETS.icon_coin}" alt=""><b class="kh-num">${fmt(prize(o.mode, o.stake, info.mult))}</b></span></span>
+          </button>`;
+        }).join('')}</div>
+      </div>`,
+    });
+    m.panel.querySelectorAll<HTMLElement>('.kh-len__opt').forEach((b, i) =>
+      play(b, [{transform: 'translateY(18px) scale(.92)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 320, delay: 140 + i * 55, easing: EASE.spring, fill: 'backwards'}));
+    onAct(m.scope, m.panel, async (a, b) => {
+      if (a !== 'len' || picked) return;
+      picked = b.dataset.v as MatchLength;
+      ctx.sounds.tap();
+      haptic('medium');
+      m.panel.querySelectorAll('.kh-len__opt').forEach(x => {
+        x.classList.toggle('is-on', x === b);
+        x.setAttribute('aria-pressed', String(x === b));
+      });
+      await play(b, [{transform: 'scale(1)'}, {transform: 'scale(1.07)', offset: 0.45}, {transform: 'scale(1)'}], {duration: 240, easing: EASE.out}).finished.catch(() => undefined);
+      void m.close();
+      res(picked);
+    });
+  });
+}
 
 // =====================================================================================================
 // Ara skor

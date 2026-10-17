@@ -31,7 +31,7 @@ import {handChooser} from './handchooser';
 import {QuickChatSheet} from './quickchat';
 import {suitWipe, toast, type Ctx} from './parts';
 import {I} from './icons';
-import {interim, resumePrompt, type InterimHandle} from './scoreboard';
+import {interim, lengthSheet, resumePrompt, type InterimHandle} from './scoreboard';
 
 export type {CosmeticsListener, GameHud, HomeAction, HudLayout, HudPlayer, InterimData, MenuTalk, Mood, QuickChatItem, QuickChatSheetPort, ResultsData, ResumeOffer, Settings, Sounds} from './types';
 export type {InterimHandle} from './scoreboard';
@@ -118,7 +118,16 @@ export class Screens {
         }
       }, ANIM && !offer.auto ? 650 : 0);
     } else if (auto) v.autoPlay(auto.game, auto.mode, auto.difficulty);
-    const a = await v.wait();
+    let a = await v.wait();
+    // OYNA → "Kaça oynuyoruz?" (otomatik testte yok: uzunluk ?len= ile). Seçim maçı başlatır; kapatmak ana ekrana döner.
+    while (a.type === 'play' && !auto && !a.len) {
+      const len = await lengthSheet(this.ctx, {game: a.game, mode: a.mode, stake: a.stake, current: profile.data.lastLength[a.game]});
+      if (len) {
+        a = {...a, len};
+        break;
+      }
+      a = await v.wait();
+    }
     if (a.type === 'play' || a.type === 'resume') {
       this.homeView = null;
       // karşılaşma girişi ana ekranın üstünden süpürür; ana ekran arkada kapanır

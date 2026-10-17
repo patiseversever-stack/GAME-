@@ -117,3 +117,34 @@
 .kh-resume .kh-sb { padding: calc(var(--u) * .2) calc(var(--u) * .45); border-radius: var(--r-md); background: rgba(0, 0, 30, .3); box-shadow: inset 0 0 0 1.5px rgba(120, 140, 255, .25); }
 .kh-resume__q { margin: calc(var(--u) * .8) 0 calc(var(--u) * .8); text-align: center; font-weight: var(--w-strong); color: var(--c-text-2); font-size: calc(var(--u) * .95); }
 .kh-resume__list { display: flex; flex-direction: column; gap: calc(var(--u) * .7); }
+
+/* =================== "KAÇA OYNUYORUZ?" (OYNA'dan sonra, alttan) =================== */
+.kh-len { display: flex; flex-direction: column; align-items: center; gap: calc(var(--u) * .45); padding-top: calc(var(--u) * .2); }
+.kh-len__t { max-width: 100%; padding: 0 calc(var(--tap) - 4px); font-size: calc(var(--u) * 2.2); line-height: 1.05; text-align: center; }
+.kh-len__sub { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .25em .7em; color: var(--c-text-2); font-weight: var(--w-black); font-size: calc(var(--u) * .85); }
+.kh-len__sub .kh-gico { width: 1.35em; height: 1.35em; }
+.kh-len__bet { display: inline-flex; align-items: center; gap: .3em; padding: .2em .65em .2em .45em; border-radius: var(--r-pill); background: rgba(7, 11, 46, .5); box-shadow: inset 0 0 0 1.5px rgba(255, 210, 63, .35); }
+.kh-len__bet img { width: 1.3em; height: 1.3em; object-fit: contain; }
+.kh-len__bet b { font-family: var(--font-display); color: var(--c-accent); font-size: 1.1em; text-shadow: var(--outline-thin); }
+.kh-len__grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: calc(var(--u) * .6); width: 100%; margin-top: calc(var(--u) * .4); }
+.kh-len__grid.is-n3 { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(var(--u) * .5); }
+.kh-len__opt { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: calc(var(--u) * .2); min-height: calc(var(--u) * 6.6);
+  padding: calc(var(--u) * .7) calc(var(--u) * .35) calc(var(--u) * .6); border-radius: var(--r-md); text-align: center;
+  border: 2.5px solid transparent; background: var(--card-fill) padding-box, var(--card-edge) border-box; box-shadow: 0 3px 0 var(--navy), inset 0 2px 0 rgba(255, 255, 255, .18); }
+.kh-len__opt.is-on { background: linear-gradient(180deg, #3550d8 0%, #2338a8 100%) padding-box, linear-gradient(180deg, #ffe27a, #ffb400) border-box;
+  box-shadow: 0 3px 0 var(--navy), 0 0 0 2px var(--navy), 0 0 14px rgba(255, 210, 63, .45), inset 0 2px 0 rgba(255, 255, 255, .25); }
+.kh-len__big { display: flex; align-items: baseline; gap: .18em; font-family: var(--font-display); font-weight: var(--w-display); font-size: calc(var(--u) * 2.1); line-height: 1; color: #fff; text-shadow: var(--outline-thin); white-space: nowrap; }
+.kh-len__big em { font-style: normal; font-size: .42em; color: var(--c-text-2); letter-spacing: .04em; }
+.is-blof .kh-len__big { font-size: calc(var(--u) * 1.75); }
+.kh-len__cap { color: var(--c-text-2); font-weight: var(--w-black); font-size: calc(var(--u) * .68); line-height: 1.15; }
+.kh-len__win { display: flex; flex-direction: column; align-items: center; gap: .05em; margin-top: calc(var(--u) * .15); }
+.kh-len__win small { color: var(--c-text-3); font-weight: var(--w-black); font-size: calc(var(--u) * .58); letter-spacing: .06em; text-transform: uppercase; }
+.kh-len__win > span { display: inline-flex; align-items: center; gap: .25em; }
+.kh-len__win img { width: calc(var(--u) * 1.15); height: calc(var(--u) * 1.15); object-fit: contain; }
+.kh-len__win b { font-family: var(--font-display); font-weight: var(--w-display); font-size: calc(var(--u) * 1.15); color: var(--c-accent); text-shadow: var(--outline-thin); }
+.kh-len__mult { position: absolute; top: calc(var(--u) * -.55); right: calc(var(--u) * .4); padding: .22em .5em .18em; border-radius: var(--r-pill); font-style: normal;
+  font-family: var(--font-display); font-size: calc(var(--u) * .7); line-height: 1; color: #5a2a00; background: linear-gradient(#ffe27a, #ffb400); box-shadow: 0 0 0 2px var(--navy); }
+@media (max-height: 700px) {
+  .kh-len__t { font-size: calc(var(--u) * 2); }
+  .kh-len__opt { min-height: calc(var(--u) * 5.8); padding-top: calc(var(--u) * .55); padding-bottom: calc(var(--u) * .45); }
+}
