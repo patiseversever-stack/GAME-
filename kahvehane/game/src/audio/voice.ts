@@ -199,7 +199,8 @@ export class VoicePlayer {
     this.entries.clear();
     if (!manifestUrl || typeof fetch !== 'function') return;
     try {
-      const r = await fetch(manifestUrl);
+      // yeni sürümde paket adları aynı kalır: manifest her açılışta yeniden doğrulanır (eski önbellek yeni paketle karışmasın)
+      const r = await fetch(manifestUrl, {cache: 'no-cache'});
       if (!r.ok) return;
       this.setManifest((await r.json()) as unknown, manifestUrl, resolve);
     } catch {
@@ -510,8 +511,10 @@ export class VoicePlayer {
     if (p) return p;
     const pk = this.packs.get(name);
     if (!pk || typeof fetch !== 'function') return Promise.resolve(null);
-    p = fetch(pk.url)
-      .then(r => (r.ok ? r.arrayBuffer() : null))
+    // önbellekteki paket manifestteki boyda değilse (eski sürüm) önbelleği atlayıp bir kez yeniden iner
+    const get = (cache?: RequestCache): Promise<ArrayBuffer | null> => fetch(pk.url, cache ? {cache} : undefined).then(r => (r.ok ? r.arrayBuffer() : null));
+    p = get()
+      .then(b => (b && pk.n && b.byteLength !== pk.n ? get('reload') : b))
       .then(b => {
         if (!b || !b.byteLength) return null;
         if (this.enabled && this.packs.get(name) === pk) this.storePack(name, b);
