@@ -35,8 +35,12 @@ export type ClientMsg<A> =
   /** Tam görünüm iste (kopukluk/şüphe sonrası). */
   | {t: 'resync'}
   | {t: 'ping'; ts: number}
-  /** Hızlı sohbet: msg = QUICK_CHAT kimliği (serbest metin yok). Ev sahibi doğrular + hız sınırı (net/chat.ts). */
-  | {t: 'chat'; msg: string}
+  /**
+   * Hızlı sohbet: msg = QUICK_CHAT kimliği (serbest metin yok); line = gönderenin seçtiği söyleyiş (qc_…), to = hedef koltuk.
+   * Ev sahibi doğrular (söyleyiş o mesaja + gönderenin karakterine ait; kişiye özel söz yalnız bot hedefe) + hız sınırı
+   * (net/chat.ts). line/to verilmeyen eski istemci de kabul edilir.
+   */
+  | {t: 'chat'; msg: string; line?: string; to?: number}
   | {t: 'leave'};
 
 /** Ev sahibi → istemci */
@@ -61,8 +65,8 @@ export type ServerMsg<E, V, T = unknown> =
   /** Süre aşımı: ev sahibi bu koltuk yerine varsayılan hamleyi yaptı. */
   | {t: 'timeout'; seat: number}
   | {t: 'pong'; ts: number; serverTime: number}
-  /** Hızlı sohbet yayını (gönderen dahil herkese): koltuk + mesaj kimliği. */
-  | {t: 'chat'; seat: number; msg: string}
+  /** Hızlı sohbet yayını (gönderen dahil herkese): koltuk + mesaj + söyleyiş + hedef + ev sahibinin planladığı bot cevabı. */
+  | {t: 'chat'; seat: number; msg: string; line?: string; to?: number; rp?: {seat: number; line: string; ms: number}}
   | {t: 'closed'; reason: string};
 
 export type ServerMsgType = ServerMsg<unknown, unknown>['t'];

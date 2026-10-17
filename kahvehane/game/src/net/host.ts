@@ -212,7 +212,7 @@ export class LocalHost<G extends AnyEngine, T = unknown> {
         this.links[seat]?.send({t: 'pong', ts: m.ts, serverTime: this.clock.now()});
         break;
       case 'chat':
-        this.onChat(seat, m.msg);
+        this.onChat(seat, m);
         break;
       case 'leave':
         this.detach(seat);
@@ -222,14 +222,17 @@ export class LocalHost<G extends AnyEngine, T = unknown> {
     }
   }
 
-  /** Hızlı sohbet: kimlik + hız sınırı denetlenir, geçerse gönderen dahil bütün bağlı koltuklara yayılır. Oyun durumunu değiştirmez. */
-  private onChat(seat: number, msg: unknown): void {
-    const v = this.chat ? this.chat.check(seat, msg, this.clock.now()) : 'invalid';
-    if (v !== 'ok') {
-      this.opts.onError?.(`chat ${seat}: ${v}`);
+  /**
+   * Hızlı sohbet: kimlik + söyleyiş/hedef (politika) + hız sınırı denetlenir, geçerse gönderen dahil bütün bağlı koltuklara
+   * yayılır (bot cevabı dahil: herkes aynı sesi duyar). Oyun durumunu değiştirmez.
+   */
+  private onChat(seat: number, m: {msg: unknown; line?: unknown; to?: unknown}): void {
+    const r = this.chat ? this.chat.admit(seat, m, this.clock.now()) : {v: 'invalid' as const};
+    if (r.v !== 'ok' || !r.out) {
+      this.opts.onError?.(`chat ${seat}: ${r.v}`);
       return;
     }
-    this.sendAll({t: 'chat', seat, msg: msg as string});
+    this.sendAll(r.out);
   }
 
   private pendingFns: (() => void)[] = [];

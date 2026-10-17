@@ -9,7 +9,8 @@ import {mulberry32} from '../core/rng';
 import type {CardId, GameResult, PistiEvent, PistiState} from '../core/types';
 import {isJack, rankOf} from '../core/types';
 import {PistiBot} from '../ai/bot';
-import {BANTER_RULES, beginDialogueHand, dialogue, momentPriority, pickLine, shouldSpeak, type BanterCtx, type Exchange, type Moment as DialogueMoment} from '../ai/dialogue';
+import {BANTER_RULES, beginDialogueHand, dialogue, momentPriority, pickLine, setTableHumans, shouldSpeak, type BanterCtx, type Exchange, type Moment as DialogueMoment} from '../ai/dialogue';
+import {chatPolicy} from '../ai/quickTalk';
 import {Table2D, cardPoints} from '../table2d/table';
 import type {Sfx} from '../audio/sfx';
 import type {VoicePlayer} from '../audio/voice';
@@ -214,17 +215,15 @@ export class Match {
   private startChat(setup: MatchSetup): void {
     const chat = this.d.chat;
     if (!chat) return;
-    const relay = new ChatRelay({ids: QUICK_IDS});
+    const seats = setup.players.map(p => ({seat: p.seat, char: p.char.id, team: p.team, human: p.human}));
+    // politika: söyleyiş + hedef denetimi (kişiye özel söz yalnız bot hedefe), bot cevabını yayıncı planlar (herkes aynısını duyar)
+    const relay = new ChatRelay({ids: QUICK_IDS, policy: chatPolicy({game: 'pisti', mode: setup.mode, seats})});
     this.relay = relay;
     relay.on(m => {
-      if (!this.aborted) chat.receive(m.seat, m.msg);
+      if (!this.aborted) chat.receive(m.seat, m.msg, m);
     });
-    chat.attach({
-      game: 'pisti',
-      me: 0,
-      seats: setup.players.map(p => ({seat: p.seat, char: p.char.id, team: p.team, human: p.human})),
-      send: msg => void relay.send(0, msg),
-    });
+    chat.attach({game: 'pisti', mode: setup.mode, me: 0, seats, send: (msg, line, to) => void relay.send(0, msg, line, to)});
+    chat.cue('start');
   }
 
   private endChat(): void {
@@ -255,6 +254,7 @@ export class Match {
     const seed = setup.seed ?? (Math.random() * 2 ** 31) | 0;
     const {state, events} = createGame({seats: info.seats, teams: [...info.teams], dealer: setup.dealer, seed});
     this.state = state;
+    setTableHumans(setup.players.filter(p => p.human).map(p => p.char.id)); // insan avatarına adla seslenilmez (dialogue.ts)
     beginDialogueHand(info.seats, PISTI_TALK_STORE); // el sayacı + kalabalık masada daha seyrek konuşma
     this.bots = Array.from({length: info.seats}, (_, s) => {
       const p = this.players[s];
@@ -317,6 +317,7 @@ export class Match {
     while (!this.state.over) {
       if (this.aborted) return null;
       const seat = this.state.turn;
+      this.d.chat?.turn(seat); // hızlı sohbet: "hadi" sıradakine
       let card: CardId;
       if (seat === 0) {
         // atışma insanın kararı sırasında sürmez: botlar konuşurken sıra bekler (en çok BANTER_WAIT_MS)
@@ -340,6 +341,7 @@ export class Match {
       const pileBefore = this.state.pile.slice();
       const r = applyPlay(this.state, seat, card);
       this.state = r.state;
+      this.d.chat?.acted(seat); // hızlı sohbet: tepki mesajları son hamleyi yapana
       r.events.forEach(observe);
       result = await this.present(seat, card, r.events.map(e => pistiEngine.redact(e, 0)!), pileBefore);
       if (this.aborted) return null;
@@ -451,6 +453,7 @@ export class Match {
     haptic('heavy');
     if (jack) window.setTimeout(() => haptic('success'), 450);
     this.pistiCount[seat]++;
+    this.d.chat?.cue(seat === 0 ? 'iScored' : 'theyScored', seat);
     if (seat === 0) {
       this.myPisti++;
       if (jack) this.myVale++;
@@ -533,6 +536,8 @@ export class Match {
     const human = seat === 0;
     const valuableDumped = pileBefore.some(c => this.pileOwner.get(c) === 0 && cardPoints(c) >= 1 && !isJack(c));
     const notable = big || isJack(card) || vals.some(v => v.pts >= 2);
+    if (this.team(seat) !== this.team(0) && valuableDumped) this.d.chat?.cue('myMistake', seat);
+    else if (big) this.d.chat?.cue(human ? 'iScored' : 'theyScored', seat);
     if (notable && this.capBanter(seat, pileBefore)) {
       // iki bot kendi arasında atıştı (tek tepki yerine)
     } else if (maker && this.team(seat) !== this.team(0) && valuableDumped && this.speak(seat, 'playerDumpedValuable')) {
@@ -664,6 +669,7 @@ export class Match {
   private async finale(result: GameResult): Promise<'win' | 'lose' | 'draw'> {
     const {table, hud} = this.d;
     this.talk.cancel('banter'); // el bitti: yarım atışma sürmez
+    this.d.chat?.cue('end');
     table.setTension(false);
     hud.setTurn(-1);
     await sleep(350);

@@ -1,6 +1,6 @@
 # Seslendirme (ElevenLabs)
 
-Replikler tek yerde durur: `src/ai/dialogue.ts` (Pişti, Blöf, galeri/market, el / maç sonu karşılıklı konuşma, botlar arası atışma, hızlı sohbet). Bu araç o dosyayı okur, her replik için ElevenLabs'te ses üretir ve oyunun okuyacağı dosyaları yazar. Ses dosyası yoksa oyun yine çalışır, replikler yalnızca konuşma balonunda görünür.
+Replikler tek yerde durur: `src/ai/dialogue.ts` (Pişti, Blöf, galeri/market, el / maç sonu karşılıklı konuşma, botlar arası atışma, hızlı sohbet). Bu araç o dosyayı okur, her replik için ElevenLabs'te ses üretir ve oyunun okuyacağı dosyaları yazar. Ses dosyası yoksa oyun yine çalışır, replikler yalnızca konuşma balonunda görünür. Ek tablolar (hedefli hızlı sohbet sözleri, eşli takım mesajları, ince havuz ekleri) `src/ai/quickTalkLines.ts`'te durur; araç onları da `dialogue.ts → registerLines` ile aynı listeye katar.
 
 ## 1. Anahtar (sohbete yazmayın)
 

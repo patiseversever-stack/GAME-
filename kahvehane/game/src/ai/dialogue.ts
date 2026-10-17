@@ -191,6 +191,8 @@ export function cooldownHands(l: Pick<Line, 'tts' | 'cd'>): number {
 }
 
 type Opt = {text?: string; weight?: number; stab?: Stab; cd?: number};
+/** Satır seçenekleri (ek replik tabloları için: src/ai/quickTalkLines.ts). */
+export type LineOpt = Opt;
 type Spec = [n: number, tts: string, mood?: Pose | null, opt?: Opt];
 type Specs<M extends string> = Partial<Record<M, Spec[]>>;
 interface CharSpec {
@@ -2105,16 +2107,55 @@ for (const ls of [...Object.values(QC_SAY_LINES), ...Object.values(QC_REPLY_LINE
  * tekrar önlemede tek replik sayılır. Anahtar = o sesin ilk kimliği (seslendirme aracı da dosyayı bu adla yazar).
  */
 const SOUND = new Map<string, string>();
-{
-  const first = new Map<string, string>();
-  for (const l of BY_ID.values()) {
-    const k = `${l.char}|${l.tts}`;
-    if (!first.has(k)) first.set(k, l.id);
-    SOUND.set(l.id, first.get(k)!);
-  }
-}
+const FIRST_SOUND = new Map<string, string>(); // `${char}|${tts}` → ilk kimlik
+const noteSound = (l: LineRef): void => {
+  const k = `${l.char}|${l.tts}`;
+  if (!FIRST_SOUND.has(k)) FIRST_SOUND.set(k, l.id);
+  SOUND.set(l.id, FIRST_SOUND.get(k)!);
+};
+for (const l of BY_ID.values()) noteSound(l);
 export function soundKey(id: string): string {
   return SOUND.get(id) ?? id;
+}
+
+/**
+ * Ek replik (kaynağı başka modülde: src/ai/quickTalkLines.ts → extraLines). `pool` verilirse hızlı sohbetin nötr söyleyiş
+ * havuzuna (`${kar}:${mesaj}`) eklenir; oyun anıysa (Pişti / Blöf / menü) o anın havuzuna. Hedefli söyleyişler havuzsuzdur
+ * (yalnız kimlikle, src/ai/quickTalk.ts seçer).
+ */
+export interface ExtraLine {
+  id: string;
+  char: CharId;
+  moment: VoiceMoment;
+  tts: string;
+  mood?: Pose | null;
+  opt?: Opt;
+  rel?: Rel;
+  pool?: string;
+}
+
+/**
+ * Ek replikleri kaydeder: kimlik (lineById, allLines → seslendirme aracı), ses anahtarı (takma ad), an havuzu. Aynı kimlik
+ * ikinci kez eklenmez (oyun ve araç aynı tabloyu bir kez kaydeder). Kaydedilen satırları döndürür.
+ */
+export function registerLines(ls: readonly ExtraLine[]): LineRef[] {
+  const out: LineRef[] = [];
+  for (const x of ls) {
+    if (BY_ID.has(x.id) || !(CHAR_IDS as readonly string[]).includes(x.char)) continue;
+    const blof = x.moment.startsWith('blof') ? (x.moment.charAt(4).toLowerCase() + x.moment.slice(5)) as BlofMoment : null;
+    const mm = x.moment as Moment, moods = SPECS[x.char].moods;
+    const def: Pose | null = x.moment === 'quickSay' ? 'gulumseme' : blof ? BLOF_MOOD[blof] ?? null : moods && mm in moods ? moods[mm] ?? null : BASE_MOODS[mm] ?? null;
+    const l = lineOf(x.id, x.char, x.moment, x.tts, x.mood === undefined ? def : x.mood, x.opt, x.rel);
+    BY_ID.set(l.id, l);
+    noteSound(l);
+    if (x.pool) (QC_SAY_LINES[x.pool] ??= []).push(l);
+    else if (x.moment !== 'quickSay' && x.moment !== 'quickReply' && x.moment !== 'banter') {
+      const d = DIALOGUE[x.char] as Partial<Record<VoiceMoment, readonly LineRef[]>>;
+      d[x.moment] = [...(d[x.moment] ?? EMPTY), l];
+    }
+    out.push(l);
+  }
+  return out;
 }
 
 /** Karakterin bir andaki replikleri (Pişti anı, menü anı ya da Blöf anahtarı: 'blofCallOut'). */
@@ -2444,7 +2485,10 @@ export function pickBanter(req: BanterRequest, hand: number, mem: BanterMemory, 
   if (!info || (info.game !== 'any' && info.game !== req.game)) return null;
   if (info.team === 'mate' && (!req.sameTeam || req.mode !== 'esli')) return null;
   if (info.team === 'opp' && req.sameTeam) return null;
-  const cand = BANTER.filter(e => e.ctx === req.ctx && e.a === req.a && e.b === req.b && !(e.id in mem.seen && hand - mem.seen[e.id] < BANTER_RULES.repeatHands));
+  // atışma yalnız iki BOT arasında; bir insan koltuğun avatarını anan atışma seçilmez
+  if (TABLE_HUMANS.has(req.a) || TABLE_HUMANS.has(req.b)) return null;
+  const cand = BANTER.filter(e => e.ctx === req.ctx && e.a === req.a && e.b === req.b && !(e.id in mem.seen && hand - mem.seen[e.id] < BANTER_RULES.repeatHands) &&
+    e.lines.every(l => lineAllowed(l, TABLE_HUMANS, true)));
   if (!cand.length || rnd() >= Math.min(1, BANTER_RULES.chance * prof.banter)) return null;
   const never = cand.filter(e => !(e.id in mem.seen));
   const pool = never.length ? never : cand;
@@ -2454,6 +2498,54 @@ export function pickBanter(req: BanterRequest, hand: number, mem: BanterMemory, 
 /** Atışma söylendi: yeni hafıza (saf). */
 export function noteBanter(mem: BanterMemory, ex: Exchange, hand: number): BanterMemory {
   return {last: hand, seen: {...mem.seen, [ex.id]: hand}};
+}
+
+// ───────────────────────── masa kadrosu: insana karakter adıyla seslenilmez ─────────────────────────
+// İnsan koltuğu (bu cihazdaki oyuncu ya da çevrimiçi rakip) bir karakter avatarı taşır ama arkasındaki kişi "Mustafa" olabilir:
+//  · Bir repliğin andığı karakter (konuşan dışında) masada İNSAN koltuktaysa o replik seçilmez. Bot olarak masadaysa ya da hiç
+//    yoksa (Dursun = kahvenin sahibi, arka planda) serbest. Konuşanın kendi avatarına göndermesi ("Rıza Amca yalan söyler mi?") serbest.
+//  · İnsana yönelebilecek replikte (oyun anı, nötr söyleyiş, bot cevabı) cinsiyet / kişilik varsayan hitap (delikanlı, abi,
+//    aslanım…) masada insan varken seçilmez. Botlar arası atışma ve bota yöneltilmiş hedefli söyleyiş bundan muaf (dinleyen bot).
+// Kadroyu maç başında setTableHumans verir (Pişti: match.ts, Blöf: blofMatch.ts; çevrimiçi uzak koltuklar dahil).
+
+const NAME_RE: Readonly<Record<CharId, RegExp>> = {riza: /R[ıi]za/u, dursun: /Dursun/u, cem: /(?<!\p{L})Cem(?!\p{L})/u, defne: /Defne/u};
+/** Dinleyene cinsiyet / kişilik varsayan hitap (tırnak içi alıntı hariç: "merhamet et kızım" dedi). */
+const GENDERED_RE = /(?<!\p{L})(?:delikanlı|aslanım|abi|abla|ağabey|abicim|ablacım|kızım|oğlum|hanımefendi|beyefendi|bacım|birader|yakışıklı|güzelim)(?!\p{L})/iu;
+const MENTIONS = new Map<string, readonly CharId[]>();
+const GENDERED = new Map<string, boolean>();
+let TABLE_HUMANS: ReadonlySet<string> = new Set();
+
+/** Repliğin adını andığı karakterler (konuşanın kendisi hariç; yazı + seslendirme metni). Kimlik başına önbellekli. */
+export function mentionsOf(l: Pick<LineRef, 'id' | 'char' | 'text' | 'tts'>): readonly CharId[] {
+  let m = MENTIONS.get(l.id);
+  if (!m) MENTIONS.set(l.id, (m = CHAR_IDS.filter(c => c !== l.char && (NAME_RE[c].test(l.text) || NAME_RE[c].test(stripTags(l.tts))))));
+  return m;
+}
+
+/** Repliğin dinleyene cinsiyet / kişilik varsayan hitabı var mı (alıntılar hariç). */
+export function addressesGender(l: Pick<LineRef, 'id' | 'text'>): boolean {
+  let g = GENDERED.get(l.id);
+  if (g === undefined) GENDERED.set(l.id, (g = GENDERED_RE.test(l.text.replace(/["“”][^"“”]*["“”]/g, ' '))));
+  return g;
+}
+
+/**
+ * Bu masada (humans = insan koltukların avatarları) söylenebilir mi. aimedAtBot: replik bir BOTA yöneltilmiş (atışma, bota
+ * hedefli söyleyiş) → hitap kuralı aranmaz; ad kuralı her zaman geçerli.
+ */
+export function lineAllowed(l: Pick<LineRef, 'id' | 'char' | 'text' | 'tts'>, humans: ReadonlySet<string> = TABLE_HUMANS, aimedAtBot = false): boolean {
+  if (!humans.size) return true;
+  for (const c of mentionsOf(l)) if (humans.has(c)) return false;
+  return aimedAtBot || !addressesGender(l);
+}
+
+/** Maç başı: insan koltukların (yerel + çevrimiçi uzak) avatar karakterleri. Bütün seçiciler buna uyar. */
+export function setTableHumans(chars: Iterable<string>): void {
+  TABLE_HUMANS = new Set(chars);
+}
+
+export function tableHumans(): ReadonlySet<string> {
+  return TABLE_HUMANS;
 }
 
 // ───────────────────────── hızlı sohbet seçiciler (saf) ─────────────────────────
@@ -2474,16 +2566,28 @@ const pickFresh = (pool: readonly LineRef[], recent: readonly string[], rnd: () 
 
 /** Oyuncunun mesajı, kendi karakterinin sesiyle (son söylenenleri `recent` ile verin; tekrar etmez). */
 export function quickSay(charId: string, msgId: string, recent: readonly string[] = [], rnd: () => number = Math.random): LineRef | null {
-  return pickFresh(QC_SAY_LINES[`${charId}:${msgId}`] ?? EMPTY, recent, rnd);
+  return pickFresh((QC_SAY_LINES[`${charId}:${msgId}`] ?? EMPTY).filter(l => lineAllowed(l)), recent, rnd);
 }
 
-/** Bir botun gelen mesaja cevabı (ilişkiye uygun satırlardan; tekrar etmez). */
-export function quickReply(charId: string, msgId: string, relation: Rel, recent: readonly string[] = [], rnd: () => number = Math.random): LineRef | null {
-  const msg = QUICK_CHAT.find(q => q.id === msgId);
-  if (!msg) return null;
-  const pool = (QC_REPLY_LINES[`${charId}:${msg.reply}`] ?? EMPTY).filter(l => !l.rel || l.rel === relation);
+/** Bir botun gelen mesaja cevabı (ilişkiye uygun satırlardan; tekrar etmez). cat: mesajın cevap kategorisi yerine doğrudan kategori. */
+export function quickReply(charId: string, msgId: string, relation: Rel, recent: readonly string[] = [], rnd: () => number = Math.random, cat?: QuickReplyCat): LineRef | null {
+  const c = cat ?? QUICK_CHAT.find(q => q.id === msgId)?.reply;
+  if (!c) return null;
+  const pool = (QC_REPLY_LINES[`${charId}:${c}`] ?? EMPTY).filter(l => (!l.rel || l.rel === relation) && lineAllowed(l));
   return pickFresh(pool, recent, rnd);
 }
+
+/** Hızlı sohbetin nötr söyleyiş havuzu (`${kar}:${mesaj}`; kadro süzgeci uygulanmamış). */
+export function quickSayPool(charId: string, msgId: string): readonly LineRef[] {
+  return QC_SAY_LINES[`${charId}:${msgId}`] ?? EMPTY;
+}
+
+/** Bot cevap havuzu (karakter + kategori; kadro süzgeci uygulanmamış). */
+export function quickReplyPool(charId: string, cat: QuickReplyCat): readonly LineRef[] {
+  return QC_REPLY_LINES[`${charId}:${cat}`] ?? EMPTY;
+}
+
+export {pickFresh as pickFreshLine};
 
 export interface QuickSeat {
   seat: number;
@@ -2658,7 +2762,9 @@ export class DialogueDirector {
    * aynı kurallarla (karakterin son replikleri, tekrar beklemesi, ağırlık). Konuşma zamanı ilk anın adıyla kaydedilir.
    */
   pickAny(charId: string, moments: readonly string[], rnd: () => number = Math.random): Line | null {
-    const pool = moments.length === 1 ? linesFor(charId, moments[0]) : moments.flatMap(mo => linesFor(charId, mo));
+    const all = moments.length === 1 ? linesFor(charId, moments[0]) : moments.flatMap(mo => linesFor(charId, mo));
+    // masa kadrosu: insan koltuğun avatarını anan / insana cinsiyet varsayan replik seçilmez (bkz. lineAllowed)
+    const pool = TABLE_HUMANS.size ? all.filter(l => lineAllowed(l)) : all;
     if (!pool.length) return null;
     const moment = moments[0];
     if (ruleFor(moment).kind === 'always') {
