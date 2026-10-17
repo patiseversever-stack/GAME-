@@ -1,6 +1,6 @@
 // Blöf oyun içi arayüzü (masanın üstünde, HUD'un yanında): tur madalyonu, yığın/kenar sayaçları, rakip kart sayısı rozetleri,
-// eylem çubuğu (Pas · "3 tane 7 at"), değer seçici, BLÖF düğmesi (5 sn dolan halka), "BLÖF!" çağrısı, YAKALANDI / DOĞRU ÇIKTI
-// damgası ve öğretici (Rıza Amca). Konumlar BlofTable düzeninden gelir (yalnız transform yazılır).
+// eylem çubuğu (Pas · "3 tane 7 at"), değer seçici, BLÖF düğmesi (pencerenin GERÇEK süresinde — 5 ya da 3 sn — dolan halka),
+// "BLÖF!" çağrısı, YAKALANDI / DOĞRU ÇIKTI damgası, "+2 ceza" etiketi ve öğretici (Rıza Amca). Konumlar BlofTable düzeninden gelir (yalnız transform yazılır).
 // Animasyonlar yalnız transform/opacity; sonsuz döngü yok (boşta 0 kare).
 import './blofHud.css';
 import {cancelAnims} from '../platform/anim';
@@ -68,6 +68,7 @@ export class BlofHud {
   private letGo: HTMLButtonElement;
   private blofTok = 0;
   private stampEl: HTMLElement;
+  private penEl: HTMLElement;
   private callEl: HTMLElement;
   private coachEl: HTMLElement;
   private pointEl: HTMLElement;
@@ -95,6 +96,7 @@ export class BlofHud {
         <button class="bl-blof__btn" aria-label="Blöf de">${g3('BLÖF!', 'is-white')}</button>
         <button class="bl-blof__go">Geç</button></div>
       <div class="bl-call"><div class="bl-call__in">${g3('BLÖF!', 'is-white')}</div></div>
+      <div class="bl-pen"><div class="bl-pen__in"><b class="kh-num"></b><span>ceza</span></div></div>
       <div class="bl-stamp"><div class="bl-stamp__in"><i class="bl-stamp__glow"></i><div class="bl-stamp__w"></div><div class="bl-stamp__s"></div></div></div>
       <div class="bl-point">${I.hand}</div>
       <div class="bl-coach"><div class="bl-coach__face"><img alt="" draggable="false"></div><div class="bl-coach__body"><b class="bl-coach__name">Rıza Amca</b><p></p></div>
@@ -121,6 +123,7 @@ export class BlofHud {
     this.blofBtn = q(this.el, '.bl-blof__btn');
     this.letGo = q(this.el, '.bl-blof__go');
     this.stampEl = q(this.el, '.bl-stamp');
+    this.penEl = q(this.el, '.bl-pen');
     this.callEl = q(this.el, '.bl-call');
     this.coachEl = q(this.el, '.bl-coach');
     this.pointEl = q(this.el, '.bl-point');
@@ -402,8 +405,11 @@ export class BlofHud {
   }
 
   // ───────── BLÖF penceresi ─────────
-  /** Kırmızı BLÖF düğmesi; halkası ms içinde dolar. letGo: "Geç" seçeneği. */
-  openBlof(ms: number, o: {letGo?: boolean} = {}): void {
+  /**
+   * Kırmızı BLÖF düğmesi; halkası kalan ms içinde dolar. total: pencerenin gerçek süresi (ev sahibinin 'timer' mesajından:
+   * sıradaki insansa 5000, değilse 3000) — halka geçen kısım dolu başlar. letGo: "Geç" seçeneği.
+   */
+  openBlof(ms: number, o: {letGo?: boolean; total?: number} = {}): void {
     const tok = ++this.blofTok;
     const el = this.blof;
     el.classList.add('is-on');
@@ -413,17 +419,24 @@ export class BlofHud {
     play(el.querySelector('.bl-blof__btn')!, [{transform: 'scale(.2) rotate(-25deg)', opacity: 0}, {transform: 'scale(1.12) rotate(4deg)', opacity: 1, offset: 0.6}, {transform: 'scale(1) rotate(0deg)', opacity: 1}],
       {duration: 340, easing: EASE.out, fill: 'backwards'});
     play(el.querySelector('.bl-blof__ring')!, [{transform: 'scale(.5)', opacity: 0}, {transform: 'scale(1)', opacity: 1}], {duration: 300, easing: EASE.out, fill: 'backwards'});
-    const half = ms / 2;
-    play(halves[0], [{transform: 'rotate(0deg)'}, {transform: 'rotate(180deg)'}], {duration: half, easing: 'linear', fill: 'both'});
-    play(halves[1], [{transform: 'rotate(0deg)'}, {transform: 'rotate(180deg)'}], {duration: half, delay: half, easing: 'linear', fill: 'both'});
+    const total = Math.max(ms, o.total ?? ms);
+    const gone = total - ms; // sunum/ağ gecikmesi: halka geçen kadar dolu başlar
+    el.dataset.ms = String(Math.round(total));
+    el.classList.toggle('is-short', total < 4000);
+    const half = total / 2;
+    play(halves[0], [{transform: 'rotate(0deg)'}, {transform: 'rotate(180deg)'}], {duration: half, delay: -gone, easing: 'linear', fill: 'both'});
+    play(halves[1], [{transform: 'rotate(0deg)'}, {transform: 'rotate(180deg)'}], {duration: half, delay: half - gone, easing: 'linear', fill: 'both'});
     // nabız (sonlu): son 1.5 sn daha hızlı
     const btn = this.blofBtn;
     const beats = Math.max(1, Math.floor((ms - 1500) / 700));
     play(btn, [{transform: 'scale(1)'}, {transform: 'scale(1.06)', offset: 0.5}, {transform: 'scale(1)'}], {duration: 700, delay: 340, iterations: beats, easing: 'ease-in-out'});
     play(btn, [{transform: 'scale(1) rotate(0deg)'}, {transform: 'scale(1.08) rotate(-3deg)', offset: 0.25}, {transform: 'scale(1.08) rotate(3deg)', offset: 0.75}, {transform: 'scale(1) rotate(0deg)'}],
       {duration: 300, delay: ms - 1500, iterations: 5, easing: 'ease-in-out'});
-    // son 3 saniyede tık
-    for (let i = 3; i >= 1; i--) window.setTimeout(() => tok === this.blofTok && this.blof.classList.contains('is-on') && this.snd?.tick(12 - i * 3), ms - i * 1000);
+    // son 3 saniyede tık (kısa pencerede açılış anında değil: ilki en erken 0,4 sn sonra)
+    for (let i = 3; i >= 1; i--) {
+      const at = ms - i * 1000;
+      if (at >= 400) window.setTimeout(() => tok === this.blofTok && this.blof.classList.contains('is-on') && this.snd?.tick(12 - i * 3), at);
+    }
   }
 
   /** Pencereyi kapat (basıldıysa düğme patlayarak, değilse sönerek). */
@@ -476,6 +489,35 @@ export class BlofHud {
       const end = () => {
         el.style.display = 'none';
         this.el.classList.remove('is-calling');
+        res();
+      };
+      if (ANIM) a.finished.then(end, end);
+      else window.setTimeout(end, 0);
+    });
+  }
+
+  /**
+   * "+n ceza" etiketi: kenarın üstünde belirir, ceza kartlarıyla birlikte yakalanan yalancının koltuğuna süzülür ve söner
+   * (ms ≈ kart uçuşu). Yalnız transform/opacity.
+   */
+  penaltyTag(n: number, from: {x: number; y: number}, to: {x: number; y: number}, ms = 1000): Promise<void> {
+    const el = this.penEl;
+    const inn = el.firstElementChild as HTMLElement;
+    q(inn, 'b').textContent = '+' + n;
+    el.classList.add('is-on');
+    const p = (x: number, y: number) => `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%)`;
+    const mx = from.x + (to.x - from.x) * 0.25, my = from.y + (to.y - from.y) * 0.25 - (this.L?.u ?? 14) * 1.2;
+    const a = play(inn, [
+      {transform: `${p(from.x, from.y)} scale(.3) rotate(-14deg)`, opacity: 0},
+      {transform: `${p(from.x, from.y - (this.L?.u ?? 14))} scale(1.18) rotate(-6deg)`, opacity: 1, offset: 0.18},
+      {transform: `${p(mx, my)} scale(1) rotate(-4deg)`, opacity: 1, offset: 0.45},
+      {transform: `${p(to.x, to.y)} scale(.8) rotate(0deg)`, opacity: 1, offset: 0.85},
+      {transform: `${p(to.x, to.y)} scale(.7) rotate(0deg)`, opacity: 0},
+    ], {duration: ms, easing: 'cubic-bezier(.3,.7,.3,1)', fill: 'both'}, 0.45);
+    return new Promise(res => {
+      const end = () => {
+        el.classList.remove('is-on');
+        cancelAnims(inn);
         res();
       };
       if (ANIM) a.finished.then(end, end);

@@ -1,4 +1,4 @@
-// Blöf eli: motoru DOĞRUDAN çağırmaz — yerel ev sahibi (net/LocalHost: yetkili motor + 5 sn pencere sayacı + botlar) ile
+// Blöf eli: motoru DOĞRUDAN çağırmaz — yerel ev sahibi (net/LocalHost: yetkili motor + pencere sayacı + botlar) ile
 // GameClient üzerinden konuşur; ileride aynı akış sunucuya bağlanır. Gelen olayları sahneye çevirir (uçuş, açılış, damga,
 // tepki, replik, ses, titreşim), arayüzden gelen hamleleri ev sahibine yollar, her olay kümesini sunduktan sonra 'ack' verir
 // (pencere sayacı ve botlar animasyon bitince başlar).
@@ -326,7 +326,8 @@ export class BlofMatch {
     const diff: BlofDifficulty = tutorial ? 'kolay' : diffOf(setup.difficulty);
     // ilk açan: öğreticide oyuncu; seride önceki elin kaybedeni (setup.firstSeat); yoksa motor tohumdan seçer
     const first = tutorial ? ME : setup.firstSeat !== undefined && setup.firstSeat >= 0 && setup.firstSeat < this.n ? setup.firstSeat : undefined;
-    const cfg = {...blofConfigFor(mode, seed, first), challengeWindowMs: tutorial ? 9000 : undefined};
+    // pencere: sıradaki insansa 5 sn, bot ise 3 sn (ev sahibi koltuk türlerini ayara yazar); öğreticide hep rahat 9 sn
+    const cfg = {...blofConfigFor(mode, seed, first), ...(tutorial ? {challengeWindowMs: 9000, challengeWindowShortMs: 9000} : {})};
     const local = createBlofLocal({
       cfg,
       seats: Array.from({length: this.n}, (_, i) => (i === ME ? {kind: 'human' as const, name: setup.players[0]?.name} : {kind: 'bot' as const, difficulty: diff, name: this.players[i]?.name})),
@@ -579,7 +580,7 @@ export class BlofMatch {
         await this.challenged(e.by, e.target);
         return;
       case 'reveal':
-        await this.reveal(e);
+        await this.reveal(e, m.events.find((x): x is Extract<BlofEvent, {t: 'penalty'}> => x.t === 'penalty')?.count ?? 0);
         return;
       case 'pileTaken': {
         const seat = e.seat;
@@ -608,6 +609,32 @@ export class BlofMatch {
           const watchers = this.foes(seat).filter(s => s !== seat);
           if (watchers.length) this.say(pickOne(watchers), 'bigPile');
         }
+        return;
+      }
+      case 'penalty': {
+        // yakalanan yalancı: yığının ardından kenarın üstünden ceza kartları (+2 ceza etiketiyle), KENAR sayacı düşer
+        const seat = e.seat;
+        const base = this.counts[seat] ?? 0;
+        t.setSelectable(false);
+        const from = t.discardPoint();
+        const to = seat === ME ? {x: t.L.hand.cx, y: t.L.hand.top} : t.seatPoint(seat);
+        void ui.penaltyTag(e.count, from, to, 1050);
+        sfx.cardSlide(0.4);
+        if (seat === ME) haptic('warning');
+        await t.penalty(seat, e.count, seat === ME ? (e.cards ?? []) : undefined, (i, total) => {
+          const k = base + Math.round(((i + 1) / total) * (e.handCount - base));
+          if (k !== this.counts[seat]) {
+            this.counts[seat] = k;
+            hud.tickCards(seat, k);
+          }
+        });
+        this.counts[seat] = e.handCount;
+        this.stats();
+        this.outN = e.discardCount;
+        ui.setOut(e.discardCount);
+        hud.alert?.(seat, e.handCount > 0 && e.handCount <= 2);
+        if (seat === ME) ui.setHeld(this.heldCounts(t.hand.map(c => c.id)));
+        t.setSelectable(true);
         return;
       }
       case 'passed': {
@@ -681,8 +708,8 @@ export class BlofMatch {
     await sleep(420);
   }
 
-  /** Ağır çekim açılış → damga → tepkiler. Yığın uçuşu sonraki olayda (pileTaken). */
-  private async reveal(e: Extract<BlofEvent, {t: 'reveal'}>): Promise<void> {
+  /** Ağır çekim açılış → damga → tepkiler. Yığın uçuşu sonraki olayda (pileTaken), ceza kartları ondan sonra (penalty). */
+  private async reveal(e: Extract<BlofEvent, {t: 'reveal'}>, penalty = 0): Promise<void> {
     const {hud, sfx, table} = this.d;
     const m = e.cards.length;
     sfx.setSlowMo(0.6);
@@ -698,7 +725,8 @@ export class BlofMatch {
     // damga açılan kartların alt yarısında (indeksler ve ✓/✗ görünür; alttaki rozet/sayaç açık kalır)
     const y = this.t.revealTop(m) + this.t.L.ch * this.t.revealScale(m) * 0.8;
     const pileN = this.pileN || this.t.pile.length;
-    const sub = loser === ME ? `Yığın sana: ${pileN} kart` : `${this.name(loser)} yığını alıyor · ${pileN} kart`;
+    const pen = caught && penalty > 0 ? ` +${penalty} ceza` : '';
+    const sub = loser === ME ? `Yığın sana: ${pileN} kart${pen}` : `${this.name(loser)} yığını alıyor · ${pileN} kart${pen}`;
     // ses + titreşim: oyuncunun durumu belirler
     if (loser === ME) {
       sfx.lose();
@@ -829,8 +857,9 @@ export class BlofMatch {
     const v = this.view;
     const c = this.client;
     if (!v || !c || !v.canChallenge) return;
+    // halka pencerenin GERÇEK süresiyle (timer mesajı: sıradaki insansa 5 sn, değilse 3 sn), kalan kısmından başlar
     const ms = Math.max(400, c.timeLeft());
-    this.ui.openBlof(ms, {letGo: true});
+    this.ui.openBlof(ms, {letGo: true, total: c.timer?.ms ?? ms});
     this.t.setPileTap(true, ms);
     if (this.tut && !this.tut.seen.has('blof')) this.tutShow();
   }

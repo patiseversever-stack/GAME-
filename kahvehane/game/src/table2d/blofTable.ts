@@ -1369,6 +1369,80 @@ export class BlofTable {
     this.t.pulse('#ffffff', 0.6, sp);
   }
 
+  /** KENAR destesinin üstü (ekran noktası; "+2 ceza" etiketi buradan çıkar). */
+  discardPoint(): {x: number; y: number} {
+    const d = this.L.discard;
+    const top = this.out.length ? this.out[this.out.length - 1].pose : null;
+    return top ? {x: top.x, y: top.y} : {x: d.x, y: d.y};
+  }
+
+  /**
+   * Ceza: KENARIN ÜSTÜNDEKİ n kart (en son kenara gidenler) yakalanan yalancıya uçar — yığın ona uçtuktan hemen sonra.
+   * Kartlar kenardan hafifçe kalkıp (dikkat çeksin) koltuğa süzülür. Kişiye gelirse ids (sunucu yalnız ona açıklar):
+   * havada açılır, sıralı ele oturur, kısa süre parlar; rakibe gelirse kapalı olarak yelpazesine.
+   */
+  async penalty(seat: number, n: number, ids?: CardId[], onArrive?: (i: number, total: number) => void): Promise<void> {
+    const k = Math.min(n, this.out.length);
+    if (!k) return;
+    const list = this.out.splice(this.out.length - k, k);
+    const d = this.L.discard;
+    this.snd.whoosh(0.45);
+    await Promise.all(list.map((c, j) => this.fly(c, {x: d.x + (j - (k - 1) / 2) * this.cw * d.s * 0.62, y: d.y - this.ch * d.s * 0.42, r: (j - (k - 1) / 2) * 12, s: d.s * 1.18},
+      {ms: 200, lift: 0.04, delay: j * 40, z: 960 + j, ease: 'cubic-bezier(.2,.8,.3,1.2)'})));
+    let arrived = 0;
+    const fl: Promise<void>[] = [];
+    if (seat === 0) {
+      const pool = (ids ?? []).slice();
+      for (const c of list) c.id = pool.shift() ?? -1;
+      const got = list.filter(c => c.id >= 0);
+      const merged = this.hand.concat(got).sort((a, b) => handOrder(a.id, b.id));
+      this.hand = merged;
+      const {p: poses, z: zs} = this.handLayout(merged);
+      this.syncBadges();
+      this.updateBar();
+      this.onLayout(this.L);
+      merged.forEach((c, i) => {
+        if (!got.includes(c)) {
+          requestAnimationFrame(() => {
+            c.setZ(zs[i]);
+            void this.fly(c, poses[i], {ms: 300, lift: 0});
+          });
+          return;
+        }
+        const j = got.indexOf(c);
+        c.el.classList.add('bl-hand', 'is-new');
+        fl.push(this.fly(c, poses[i], {ms: 460, lift: 0.16, delay: j * 70, flip: c.id, z: 960 + j, zEnd: zs[i], arc: 0.12, ease: 'cubic-bezier(.45,.05,.3,1)'})
+          .then(() => onArrive?.(arrived++, got.length)));
+      });
+      await Promise.all(fl);
+      setTimeout(() => {
+        for (const c of got) {
+          if (!c.el.classList.contains('is-new')) continue;
+          c.ring.animate([{opacity: 1}, {opacity: 0}], {duration: 600, easing: 'ease-in'}).finished.then(() => c.el.classList.remove('is-new'), () => c.el.classList.remove('is-new'));
+        }
+      }, 900);
+    } else {
+      const h = this.opp[seat];
+      const n0 = h.length;
+      for (const c of list) {
+        c.id = -1;
+        c.sel = false;
+        h.push(c);
+      }
+      const N = h.length;
+      h.forEach((c, i) => {
+        if (i < n0) void this.fly(c, this.fanPose(seat, i, N), {ms: 300, lift: 0});
+      });
+      list.forEach((c, j) => {
+        const i = n0 + j;
+        fl.push(this.fly(c, this.fanPose(seat, i, N), {ms: 460, lift: 0.1, delay: j * 70, flip: BACK_INDEX, z: 960 + j, zEnd: 400 + seat * 60 + i, arc: 0.15, ease: 'cubic-bezier(.45,.05,.3,1)'})
+          .then(() => onArrive?.(arrived++, k)));
+      });
+      await Promise.all(fl);
+    }
+    this.t.pulse('#ff6a4d', 0.6, this.seatPoint(seat));
+  }
+
   /** Herkes pas: yığın kenara kayar (kapalı, düzgün deste). */
   async discard(): Promise<void> {
     const list = this.pile;

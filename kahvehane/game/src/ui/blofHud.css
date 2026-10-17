@@ -135,6 +135,15 @@
   background: center / 100% 100% no-repeat url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 220 148'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='0' y2='1'%3E%3Cstop offset='0' stop-color='%23ff8a9a'/%3E%3Cstop offset='.45' stop-color='%23ff2e4d'/%3E%3Cstop offset='1' stop-color='%23b3001f'/%3E%3C/linearGradient%3E%3C/defs%3E%3Cpath d='M110 6l14 22 26-16 2 28 32-6-14 26 36 10-30 18 26 24-36 2 8 30-30-16-12 30-18-26-22 24-6-30-34 10 12-28-34-8 28-20-24-24 34-2-10-30 32 12z' fill='url(%23g)' stroke='%230a1033' stroke-width='7' stroke-linejoin='round'/%3E%3Cpath d='M110 20l10 16 20-12 2 20 22-4-10 18 24 8-20 12 18 16-26 2' fill='none' stroke='%23fff' stroke-opacity='.45' stroke-width='5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); }
 .bl-call__in .kh-g3 { font-size: calc(var(--u) * 2.5); transform: rotate(-4deg); }
 
+/* ---- "+2 ceza": yakalanan yalancıya kenardan gelen ceza kartlarının etiketi (kartlarla birlikte kenardan koltuğa süzülür) ---- */
+.bl-pen { z-index: 7; width: 0; height: 0; visibility: hidden; }
+.bl-pen.is-on { visibility: visible; }
+.bl-pen__in { position: absolute; left: 0; top: 0; display: flex; align-items: baseline; gap: .28em; white-space: nowrap; padding: .3em .72em .34em;
+  border-radius: var(--r-pill); font-family: var(--font-display); line-height: 1; color: #fff; text-shadow: var(--outline-thin); will-change: transform, opacity;
+  background: linear-gradient(180deg, #ff7a5c 0%, #ff2e4d 55%, #c4102e 100%); box-shadow: 0 0 0 2px var(--navy), 0 3px 0 2px var(--navy), 0 8px 16px rgba(40, 0, 10, .4); }
+.bl-pen__in b { font-weight: 400; font-size: calc(var(--u) * 1.35); }
+.bl-pen__in span { font-size: calc(var(--u) * .92); letter-spacing: .05em; }
+
 /* ---- YAKALANDI! / DOĞRU ÇIKTI! ---- */
 .bl-stamp { left: 0 !important; right: 0; height: 0; z-index: 8; display: flex; align-items: center; justify-content: center; visibility: hidden; }
 .bl-stamp.is-on { visibility: visible; }
