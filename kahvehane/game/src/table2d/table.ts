@@ -95,6 +95,10 @@ interface SeatGeo {
   pdir: number;
   /** Pişti sırasının desteye göre dikey kayması (varsayılan 6 px aşağı) */
   py?: number;
+  /** Verilirse pişti kartları yanına değil dikey dizilir: +1 yığının altına, -1 üstüne (yatayda yer olmayan üst koltuk, 1'e 1) */
+  pv?: number;
+  /** Pişti sırasının (kart sayısı - 1) adımına ayrılan en çok yer (px). Kart çoğalınca adım daralır: sıra yelpaze/halka/komşu öğelere taşmaz. */
+  pspan?: number;
 }
 
 interface Layout {

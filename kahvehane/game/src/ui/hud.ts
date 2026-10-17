@@ -219,6 +219,7 @@ class Badge {
         if (++tries < 30) requestAnimationFrame(() => void draw());
         return true;
       }
+      if (!img.naturalWidth) return false; // yüklenemedi: eski poz kalır
       if (url !== this.shown) this.paint(img);
       this.shown = url;
       return true;
