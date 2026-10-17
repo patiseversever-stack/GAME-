@@ -4,6 +4,8 @@
 // newblof=1 → Blöf'ü hiç oynamamış oyuncu (Yeni etiketi, boş istatistik). game=blof → Blöf sekmesi motor olmadan da gösterilir (yalnız galeri; gerçek uygulamada Blöf motoru yoksa Blöf görünmez).
 //   handchooser (ilk Blöf el düzeni seçici) settings (game=blof → "Blöf el düzeni" satırı; hand=group|spread, live=1)
 //   online (Çevrimiçi tanıtımı) friends (aynı tanıtımın "Arkadaşınla" sekmesi) bailout wipe
+// Oyun uzunluğu: lensheet (OYNA → "Kaça oynuyoruz?"; game=blof) · interim (Ara Skor; mode, game, len=51|101|151|3|5, n=biten el, extra=1 uzatma)
+//   resume (yarım kalan maç; mode, game, len, n) · results&len=101 (çok elli maç sonucu, maç sonuna dek oynanmış)
 // Profil galeride ayrı anahtarlarda tutulur (kh.* → khg.*): gerçek oyunun kaydına dokunulmaz. p=new → ilk açılış profili; rich=1 → zengin.
 const LS = window.localStorage;
 const gi = LS.getItem.bind(LS), si = LS.setItem.bind(LS), ri = LS.removeItem.bind(LS);
@@ -14,11 +16,13 @@ LS.removeItem = (k: string) => ri(map(k));
 
 import {Screens, type ResultsData} from '../src/ui/screens';
 import {Profile, xpNext} from '../src/game/profile';
-import {buildSetup} from '../src/game/app';
+import {buildSetup, interimSpeaker} from '../src/game/app';
 import {BLOF} from '../src/game/blofAdapter';
 import type {GameResult, SideScore} from '../src/core/types';
 import type {CharId} from '../src/game/roster';
-import {MODE_INFO, type BlofOutcome, type Difficulty, type Game, type HandLayout, type Mode} from '../src/game/types';
+import {MODE_INFO, type BlofOutcome, type Difficulty, type Game, type HandLayout, type MatchLength, type Mode} from '../src/game/types';
+import {pickLine} from '../src/ai/dialogue';
+import {createSeries, isLong, lengthFor, outcomeFor, recordBlof, recordPisti, sidesOf, type SeriesState} from '../src/game/series';
 
 const P = new URLSearchParams(location.search);
 const S = P.get('s') ?? '';
@@ -30,7 +34,9 @@ const LIST = ['splash', 'onboarding', 'onboarding&p=new&jump=gallery', 'home', '
   'pause', 'settings', 'rules', 'daily', 'online', 'friends', 'bailout', 'wipe',
   'handchooser', 'settings&game=blof', 'settings&game=blof&hand=spread&live=1',
   'home&game=blof', 'home&game=blof&mode=1v1', 'home&game=blof&mode=4', 'home&game=blof&mode=esli', 'home&tab=profile&game=blof', 'home&tab=quests&game=blof',
-  'versus&game=blof&mode=3', 'versus&game=blof&mode=1v1', 'results&game=blof&mode=3', 'results&game=blof&mode=3&r=lose', 'results&game=blof&mode=esli', 'rules&game=blof'];
+  'versus&game=blof&mode=3', 'versus&game=blof&mode=1v1', 'results&game=blof&mode=3', 'results&game=blof&mode=3&r=lose', 'results&game=blof&mode=esli', 'rules&game=blof',
+  'lensheet', 'lensheet&game=blof', 'interim', 'interim&mode=esli', 'interim&mode=4&n=3', 'interim&extra=1&len=51', 'interim&game=blof&mode=4&len=5&n=2', 'interim&game=blof&mode=esli&len=3',
+  'resume&mode=esli&n=3', 'resume&game=blof&mode=4&len=5&n=2', 'results&len=101', 'results&mode=4&len=51', 'results&game=blof&mode=4&len=5'];
 
 const log = (n: string) => () => console.debug('[ses]', n);
 const sounds = {tap: log('tap'), whoosh: log('whoosh'), coin: log('coin'), reward: log('reward')};
@@ -125,6 +131,39 @@ function demoBlof(setup: ReturnType<typeof buildSetup>, r: string): BlofOutcome 
   return {setup, outcome: win ? 'win' : 'lose', winner, seats};
 }
 
+/**
+ * Galeri için belirlenimci çok elli maç: n el (Pişti el puanları 1'e 1/eşli 10–30, 4 kişi 0–19; Blöf'te bitiren sırayla döner).
+ * extra: Pişti'de son elde en yüksekte eşitlik (uzatma eli). Maç bitmesin diye hedefe göre kırpılır.
+ */
+function demoSeries(game: Game, mode: Mode, len: MatchLength, n: number, extra = false, finish = false): SeriesState {
+  let s = createSeries({game, mode, len, seed: 4242});
+  const sides = Math.max(...MODE_INFO[mode].teams) + 1;
+  const seats = MODE_INFO[mode].seats;
+  for (let k = 0; k < (finish ? 60 : n) && !s.over; k++) {
+    if (game === 'pisti') {
+      const pts = Array.from({length: sides}, (_, i) => (sides === 2 ? [24, 11, 30, 9, 17, 22, 13][(k + i * 3) % 7] : [12, 3, 19, 6, 9, 0, 15][(k * 2 + i * 3) % 7]));
+      if (extra && k === n - 1) {
+        const t = s.totals.map((v, i) => v + pts[i]);
+        const top = Math.max(...t);
+        const goal = Math.max(top, Number(len) || 51);
+        pts[0] += goal - t[0];
+        pts[1] += goal - t[1];
+      }
+      const total = (i: number) => pts[i];
+      const res = {sides: Array.from({length: sides}, (_, i) => side(i, sidesOf(mode).flatMap((t, st) => (t === i ? [st] : [])), {pisti: k % 3 === i ? 10 : 0, total: total(i)})), winners: [] as number[]};
+      const best = Math.max(...pts);
+      res.winners = pts.flatMap((p, i) => (p === best ? [i] : []));
+      const next = recordPisti(s, res);
+      if (next.over && !extra && !finish) break;
+      s = next;
+    } else {
+      const winner = [2, 0, 1, 3, 0][k % 5] % seats;
+      s = recordBlof(s, {winner, handCounts: Array.from({length: seats}, (_, i) => (i === winner ? 0 : [5, 3, 8, 2, 6][(i + k) % 5]))});
+    }
+  }
+  return s;
+}
+
 async function main(): Promise<void> {
   if (!S) {
     const g = document.createElement('div');
@@ -183,11 +222,15 @@ async function main(): Promise<void> {
       const lvl = P.has('lvl');
       const setup = buildSetup(pr, mode, OPP[mode], 1, 'klasik', undefined, {game: G, difficulty: DIFF});
       const blof = G === 'blof' ? demoBlof(setup, r) : undefined;
-      const {result, outcome} = blof ? {result: undefined, outcome: blof.outcome} : demoResult(mode, r);
+      const len = lengthFor(G, P.get('len'));
+      const series = isLong(len) ? demoSeries(G, mode, len, 0, false, true) : undefined;
+      const demo = blof ? {result: undefined, outcome: blof.outcome} : demoResult(mode, r);
+      const result = demo.result;
+      const outcome = series ? outcomeFor(series, sidesOf(mode)[0]) : demo.outcome;
       const delta = outcome === 'win' ? 500 : outcome === 'lose' ? -500 : 0;
       const before = {level: lvl ? 3 : 3, xp: lvl ? 240 : 120, xpNext: xpNext(3)};
       const after = lvl ? {level: 4, xp: 30, xpNext: xpNext(4)} : {level: 3, xp: 190, xpNext: xpNext(3)};
-      const d: ResultsData = {setup, result, blof, outcome, myPisti: blof ? 0 : 2, myValePisti: blof ? 0 : 1, stake: 500, coinsDelta: delta, coinsBefore: 11950,
+      const d: ResultsData = {setup, result, blof, series, outcome, myPisti: blof ? 0 : 2, myValePisti: blof ? 0 : 1, stake: 500, coinsDelta: delta, coinsBefore: 11950,
         coinsAfter: 11950 + (outcome === 'win' ? 1000 : outcome === 'draw' ? 500 : 0) + (lvl ? 1000 : 0), xpGain: 70, before, after, levelReward: lvl ? 1000 : 0,
         streak: Number(P.get('streak') ?? (outcome === 'win' ? 2 : 0))};
       sc.results(d, pr.data.equipped.frame).then(x => console.debug('sonuç:', x));
@@ -233,6 +276,30 @@ async function main(): Promise<void> {
       sc.home(pr);
       setTimeout(() => sc.cover(), 800);
       break;
+    case 'lensheet':
+      sc.home(pr).then(a => console.debug('ana ekran:', a));
+      click('.kh-play2', 1200);
+      break;
+    case 'interim': {
+      mockTable();
+      const len = lengthFor(G, P.get('len') ?? (G === 'blof' ? '3' : '101'));
+      const series = demoSeries(G, mode, len, Number(P.get('n') ?? 1), P.has('extra'));
+      const setup = buildSetup(pr, mode, OPP[mode], 1, 'klasik', undefined, {game: G, difficulty: DIFF});
+      // uygulamadaki seçimle aynı: önde olan bot övünür / oyuncu öndeyse arkadan gelen söylenir
+      const sp = interimSpeaker(series, setup.players, []);
+      const ia = sc.interim({setup, series, stake: 500, frame: pr.data.equipped.frame, speaker: sp ? {seat: sp.seat, pose: sp.pose} : undefined, autoMs: P.has('auto') ? 6000 : 0});
+      const line = sp?.moment ? pickLine(sp.char, sp.moment)?.text : undefined;
+      if (line) setTimeout(() => ia.bubble.show(line, null, 4000), 900);
+      ia.done.then(r => console.debug('ara skor:', r));
+      break;
+    }
+    case 'resume': {
+      const len = lengthFor(G, P.get('len') ?? (G === 'blof' ? '3' : '101'));
+      const series = demoSeries(G, mode, len, Number(P.get('n') ?? 2));
+      const setup = buildSetup(pr, mode, OPP[mode], 1, 'klasik', undefined, {game: G, difficulty: DIFF, tutorial: false});
+      sc.home(pr, undefined, {series, players: setup.players, stake: 500, frame: pr.data.equipped.frame, onDecline: () => console.debug('maç bırakıldı')}).then(a => console.debug('ana ekran:', a));
+      break;
+    }
   }
 }
 

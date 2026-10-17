@@ -12,7 +12,7 @@ import {rankOf} from '../src/core/types';
 /** Koltuk: bot zorluğu ya da insan vekili (kararları bir bot beyni ya da 'casual' kural seti verir; zamanlaması insan gibi). */
 export type AuditSeat =
   | BlofDifficulty
-  | {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>}
+  | {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>; /** insan zamanlaması yok (bot gibi sürülür) */ asBot?: boolean}
   /** Karma (deney): sıra kararları bir beyinden, pencere kararları diğerinden. */
   | {hybrid: {turn: BlofDifficulty | 'casual'; window: BlofDifficulty | 'casual'; open?: BlofDifficulty | 'casual'}};
 
@@ -35,8 +35,10 @@ export interface CasualStyle {
   bluffN: number;
   /** Açışta araya bir yalan kart katma. */
   pad: number;
+  /** Açışlara "Blöf!" deme olasılığı (kesin yalan hariç). */
+  callOpen: number;
 }
-export const CASUAL: CasualStyle = {callMul: 1, bluff2: 0.7, bluffN: 0.45, pad: 0.12};
+export const CASUAL: CasualStyle = {callMul: 1, bluff2: 0.7, bluffN: 0.45, pad: 0.12, callOpen: 0.06};
 
 export class CasualHuman implements Brain {
   private readonly rnd: () => number;
@@ -61,8 +63,8 @@ export class CasualHuman implements Brain {
       let prev = 0;
       for (let i = 0; i < v.roundPlays.length - 1; i++) prev += v.roundPlays[i].count;
       const opening = v.roundPlays.length === 1;
-      let p = (opening ? 0.06 : w.count === 1 ? 0.22 : 0.4) * this.st.callMul;
-      if (v.seats === 2) p *= 1.3;
+      let p = opening ? this.st.callOpen : (w.count === 1 ? 0.22 : 0.4) * this.st.callMul;
+      if (v.seats === 2) p = Math.min(1, p * 1.3);
       if (mine + w.count > 4) p = 1;
       else if (prev + w.count + mine > 4) p = 0.85;
       return this.rnd() < p ? {action: {t: 'challenge', seat: me}, delayMs: 1200} : {action: {t: 'decline', seat: me}, delayMs: 1200};
@@ -172,7 +174,8 @@ export interface AuditOptions {
   botFactory?: (seat: number, diff: BlofDifficulty, seed: number) => BlofBot;
 }
 
-const isHuman = (s: AuditSeat): s is {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>} => typeof s === 'object' && 'human' in s;
+const hasBrain = (s: AuditSeat): s is {human: BlofDifficulty | 'casual'; style?: Partial<CasualStyle>; asBot?: boolean} => typeof s === 'object' && 'human' in s;
+const isHuman = (s: AuditSeat): boolean => hasBrain(s) && !s.asBot;
 
 function presentMs(evs: BlofEvent[], seats: number): number {
   let ms = 0;
@@ -233,7 +236,7 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
         decide: (v: BlofView) => (v.canChallenge ? w.decide(v) : v.mustOpen ? op.decide(v) : t.decide(v)),
       };
     }
-    const d = isHuman(sp) ? sp.human : sp;
+    const d = hasBrain(sp) ? sp.human : (sp as BlofDifficulty);
     if (d === 'casual') return new CasualHuman(i, bs, {...CASUAL, ...(sp as {style?: Partial<CasualStyle>}).style});
     return o.botFactory ? o.botFactory(i, d, bs) : new BlofBot(i, d, bs);
   });
