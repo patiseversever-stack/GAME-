@@ -51,6 +51,12 @@ export interface GameEngine<Cfg, State, Action, Event, View, Legal = Action[]> {
    * asıl hamle sıraya alınır ve geçerli olunca uygulanır, imkânsızlaşınca reddedilir.
    */
   defer?(state: State, action: Action): {now: Action | null} | null;
+  /**
+   * Ev sahibi, oyunu kurmadan önce koltuk türlerini (insan mı: yerel ya da uzak; bot mu) ayara yazdırır. Kurala etkisi
+   * olan oyunlar uygular (Blöf: pencere süresi sıradaki koltuk insansa 5 sn, değilse 3 sn). Dönen ayar maç kaydının
+   * ayarıdır (tekrar oynatma bununla yapılır: host.cfg).
+   */
+  withSeats?(cfg: Cfg, human: readonly boolean[]): Cfg;
 }
 
 /** Botun kararı: hamle + insan gibi bekleme süresi + (isteğe bağlı) arayüz için ipucu. */

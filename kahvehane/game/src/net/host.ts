@@ -1,7 +1,8 @@
 // LocalHost: motoru yetkili olarak (sunucu gibi) aynı süreçte koşturur.
 // - Koltuk denetleyicileri: 'human' (bu cihazdaki arayüz, connect() ile), 'remote' (ileride ağdan, attach() ile), 'bot' (BotBrain).
 // - Her hamleyi motorda doğrular, olayları koltuk başına süzer (redact), görünümleri yollar.
-// - Zamanlayıcıları sayar (Blöf: 5 sn pencere → windowClosed), botları insan gibi bekleterek oynatır,
+// - Zamanlayıcıları sayar (Blöf: pencere → windowClosed; süreyi motor verir — sıradaki insansa 5 sn, değilse 3 sn — ve
+//   'timer' mesajı GERÇEK süreyi taşır), botları insan gibi bekleterek oynatır,
 //   isteğe bağlı hamle süre aşımı uygular.
 // - Tempo: 'paced' istemciler bir olay kümesini sunup 'ack' gönderene (ya da paceMaxMs dolana) dek
 //   zamanlayıcı başlamaz ve botlar uyanmaz → pencere halkası animasyon bitince başlar.
@@ -49,6 +50,7 @@ type Input<A, T> =
 
 export class LocalHost<G extends AnyEngine, T = unknown> {
   readonly engine: G;
+  /** Maçın etkin ayarı (koltuk türleri yazılmış: engine.withSeats). create(cfg) + actions → aynı durum. */
   readonly cfg: CfgOf<G>;
   private st: StateOf<G>;
   private readonly initialEvents: EventOf<G>[];
@@ -79,8 +81,9 @@ export class LocalHost<G extends AnyEngine, T = unknown> {
 
   constructor(engine: G, cfg: CfgOf<G>, private readonly opts: HostOptions<G, T>) {
     this.engine = engine;
-    this.cfg = cfg;
-    const g = engine.create(cfg);
+    // koltuk türleri motor ayarına (Blöf: pencere süresi sıradakinin insan olup olmamasına bağlı); kayıt bu ayarla
+    this.cfg = engine.withSeats ? engine.withSeats(cfg, opts.seats.map((sp) => sp.kind !== 'bot')) : cfg;
+    const g = engine.create(this.cfg);
     this.st = g.state;
     this.initialEvents = g.events;
     const n = engine.seats(this.st);

@@ -45,6 +45,7 @@ const zeroStats = (): BlofSeatStats => ({
   pilesTaken: 0,
   cardsTaken: 0,
   biggestPile: 0,
+  penaltyCards: 0,
 });
 
 /** Elle kurulan durum: verilen eller, kalan kartlar kenarda (52 korunur). */
@@ -55,7 +56,7 @@ function mk(hands: CardId[][], o: Partial<BlofState> & {teams?: number[]} = {}):
   const discard = Array.from({length: 52}, (_, i) => i).filter((c) => !used.has(c));
   const {teams, ...rest} = o;
   return {
-    cfg: {seats: n, teams: teams ?? Array.from({length: n}, (_, i) => i), seed: 1, firstSeat: 0, challengeWindowMs: 5000},
+    cfg: {seats: n, teams: teams ?? Array.from({length: n}, (_, i) => i), seed: 1, firstSeat: 0, challengeWindowMs: 5000, challengeWindowShortMs: 3000, humanSeats: new Array<boolean>(n).fill(true)},
     hands: hands.map((h) => [...h]),
     pile: [],
     plays: [],

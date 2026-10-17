@@ -17,10 +17,13 @@ export const blofEngine: BlofEngine = {
   actors,
   epoch: (s) => s.move,
   actionSeat: (a) => (a.t === 'windowClosed' ? -1 : a.seat),
+  // Pencere süresi kuraldır (motor her pencereye yazar): atıştan sonra sıradaki insansa 5 sn, bot ise 3 sn.
   timer: (s) =>
     s.phase === 'window' && s.window
-      ? {key: `w${s.window.id}`, kind: 'window', ms: s.cfg.challengeWindowMs, action: {t: 'windowClosed', id: s.window.id}}
+      ? {key: `w${s.window.id}`, kind: 'window', ms: s.window.ms, action: {t: 'windowClosed', id: s.window.id}}
       : null,
+  // Ev sahibi koltuk türlerini yazar: hangi koltukta insan (yerel ya da uzak) oturuyor → pencere süresi.
+  withSeats: (cfg, human) => ({...cfg, humanSeats: [...human]}),
   timeoutAction,
   // Pencere açıkken sıradaki oyuncu "at"/"pas" derse: blöf demiyor demektir → şimdi 'decline', hamle pencere kapanınca.
   defer: (s, a) => {

@@ -1,13 +1,17 @@
 // Blöf kural motoru: saf ve deterministik (kurallar: docs/BLOF.md). Girdi durumunu asla değiştirmez;
 // her hamle yeni bir durum + olay listesi döndürür. Saat yok: blöf penceresini ev sahibi sayar ve
-// süre dolunca {t:'windowClosed'} gönderir. Aynı kod çevrimiçinde sunucuda aynen koşar.
+// süre dolunca {t:'windowClosed'} gönderir. Pencerenin SÜRESİ ise kuraldır ve motorda belirlenir: atıştan sonra sıradaki
+// koltuk insansa 5 sn, değilse 3 sn (BlofWindow.ms). Yakalanan yalancı yığına ek olarak kenarın üstünden 2 ceza kartı alır.
+// Aynı kod çevrimiçinde sunucuda aynen koşar.
 
 import {type CardId, rankOf} from './types';
 import {mulberry32, shuffle} from './rng';
 import {
   BLOF_MAX_PLAY,
   BLOF_MIN_PLAY,
+  BLOF_PENALTY,
   BLOF_WINDOW_MS,
+  BLOF_WINDOW_SHORT_MS,
   type BlofAction,
   type BlofApplyResult,
   type BlofConfig,
@@ -23,6 +27,7 @@ import {
   type BlofStep,
   type BlofView,
   isTruthful,
+  windowMsFor,
 } from './blofTypes';
 
 const ALL_RANKS: readonly number[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
@@ -45,12 +50,13 @@ const emptyStats = (): BlofSeatStats => ({
   pilesTaken: 0,
   cardsTaken: 0,
   biggestPile: 0,
+  penaltyCards: 0,
 });
 
 /** Durumun derin kopyası (tüm alanlar düz sayı dizisi/nesne; structuredClone'dan hızlı). */
 function cloneState(s: BlofState): BlofState {
   return {
-    cfg: {...s.cfg, teams: [...s.cfg.teams]},
+    cfg: {...s.cfg, teams: [...s.cfg.teams], humanSeats: [...s.cfg.humanSeats]},
     hands: s.hands.map((h) => [...h]),
     pile: [...s.pile],
     plays: s.plays.map((p) => ({...p})),
@@ -83,8 +89,12 @@ export function normalizeBlofConfig(cfg: BlofConfig, rnd?: () => number): BlofSe
   if (firstSeat === undefined) firstSeat = rnd ? Math.floor(rnd() * seats) : 0;
   if (!Number.isInteger(firstSeat) || firstSeat < 0 || firstSeat >= seats) throw new Error(`Blöf: geçersiz ilk koltuk (${firstSeat})`);
   const ms = cfg.challengeWindowMs ?? BLOF_WINDOW_MS;
-  if (!(ms > 0)) throw new Error('Blöf: pencere süresi pozitif olmalı');
-  return {seats, teams, seed: cfg.seed | 0, firstSeat, challengeWindowMs: ms};
+  // kısa pencere uzundan uzun olamaz (ör. öğreticide uzun pencere 9 sn verilirse kısa da en çok o kadar)
+  const short = cfg.challengeWindowShortMs ?? Math.min(ms, BLOF_WINDOW_SHORT_MS);
+  if (!(ms > 0) || !(short > 0)) throw new Error('Blöf: pencere süresi pozitif olmalı');
+  const human = cfg.humanSeats ? cfg.humanSeats.map((h) => !!h) : new Array<boolean>(seats).fill(true);
+  if (human.length !== seats) throw new Error('Blöf: insan koltuk listesi koltuk sayısıyla uyuşmuyor');
+  return {seats, teams, seed: cfg.seed | 0, firstSeat, challengeWindowMs: ms, challengeWindowShortMs: short, humanSeats: human};
 }
 
 /**
@@ -249,7 +259,7 @@ function doPlay(s: BlofState, seat: number, rank: number, cards: CardId[], open:
   const base = {seat, rank, count: cards.length, cards: [...cards], pileCount: s.pile.length, handCount: hand.length};
   events.push(open ? {t: 'opened', ...base} : {t: 'played', ...base});
 
-  // Pencere: atan hariç herkes; eşlide takım arkadaşı da hariç.
+  // Pencere: atan hariç herkes; eşlide takım arkadaşı da hariç. Süre: sıradaki (s.turn) insansa uzun, bot ise kısa.
   const team = s.cfg.teams[seat];
   const eligible = s.cfg.teams.map((t, i) => i !== seat && t !== team);
   s.windowSeq++;
@@ -259,6 +269,7 @@ function doPlay(s: BlofState, seat: number, rank: number, cards: CardId[], open:
     rank,
     count: cards.length,
     final: hand.length === 0,
+    ms: windowMsFor(s.cfg, s.turn),
     eligible,
     declined: new Array<boolean>(n).fill(false),
   };
@@ -272,7 +283,7 @@ function doPlay(s: BlofState, seat: number, rank: number, cards: CardId[], open:
     rank,
     count: cards.length,
     final: s.window.final,
-    ms: s.cfg.challengeWindowMs,
+    ms: s.window.ms,
     eligible: el,
   });
 }
@@ -351,6 +362,15 @@ function doChallenge(s: BlofState, by: number, events: BlofEvent[]): void {
     reason: truthful ? 'wrongChallenge' : 'caught',
     handCount: hand.length,
   });
+  // Ceza: yakalanan yalancı kenarın üstünden (en son kenara giden) BLOF_PENALTY kart daha alır; kenarda az varsa o kadar.
+  if (!truthful && s.discard.length > 0) {
+    const k = Math.min(BLOF_PENALTY, s.discard.length);
+    const pen = s.discard.splice(s.discard.length - k, k);
+    hand.push(...pen);
+    hand.sort(byOrder);
+    tk.penaltyCards += pen.length;
+    events.push({t: 'penalty', seat: taker, count: pen.length, cards: pen, handCount: hand.length, discardCount: s.discard.length});
+  }
 
   if (truthful && w.final) {
     // Son kartları doğru çıktı: atan bitirir.
@@ -426,12 +446,13 @@ export function viewFor(s: BlofState, seat: number): BlofView {
     roundPlays: s.plays.map((p) => ({...p})),
     lastPlay: s.lastSeat >= 0 ? {seat: s.lastSeat, count: s.lastCount, rank: lastRank} : null,
     passes: s.passes,
-    window: w ? {id: w.id, by: w.by, rank: w.rank, count: w.count, final: w.final, eligible: [...w.eligible], ms: s.cfg.challengeWindowMs} : null,
+    window: w ? {id: w.id, by: w.by, rank: w.rank, count: w.count, final: w.final, eligible: [...w.eligible], ms: w.ms} : null,
     canChallenge: me && s.phase === 'window' && !!w && w.eligible[seat] && !w.declined[seat],
     declined: me && !!w && w.declined[seat],
     round: s.round,
     move: s.move,
     challengeWindowMs: s.cfg.challengeWindowMs,
+    challengeWindowShortMs: s.cfg.challengeWindowShortMs,
     winner: s.winner,
     over: s.phase === 'over',
     result: s.result,
@@ -480,8 +501,8 @@ export function isLegalFor(v: BlofView, a: BlofAction): boolean {
 
 /**
  * Olayın bu koltuğa gidecek hâli (gizli bilgi silinir). null → bu koltuğa gönderilmez.
- * - deal: yalnız kendi elin; opened/played: kartları yalnız atan görür; pileTaken: kartları yalnız alan görür
- *   (açılan son atış zaten herkese 'reveal' ile gösterildi); declined: yalnız geçene.
+ * - deal: yalnız kendi elin; opened/played: kartları yalnız atan görür; pileTaken ve penalty (kenardan ceza kartları):
+ *   kartları yalnız alan görür (açılan son atış zaten herkese 'reveal' ile gösterildi); declined: yalnız geçene.
  */
 export function redactBlofEvent(e: BlofEvent, seat: number): BlofEvent | null {
   switch (e.t) {
@@ -491,6 +512,7 @@ export function redactBlofEvent(e: BlofEvent, seat: number): BlofEvent | null {
     case 'played':
       return {...e, cards: e.seat === seat && e.cards ? [...e.cards] : null};
     case 'pileTaken':
+    case 'penalty':
       return {...e, cards: e.seat === seat && e.cards ? [...e.cards] : null};
     case 'declined':
       return e.seat === seat ? {...e} : null;

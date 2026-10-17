@@ -78,7 +78,7 @@ export function simulate(cfg: BlofConfig, diffs: BlofDifficulty[], o: SimOptions
     const prevWin = s.window?.id;
     s = r.state;
     feed(r.events);
-    if (s.phase === 'window' && s.window!.id !== prevWin) windowAt = t + s.cfg.challengeWindowMs;
+    if (s.phase === 'window' && s.window!.id !== prevWin) windowAt = t + s.window!.ms;
     if (s.phase !== 'window') windowAt = Infinity;
     const bad = checkBlofInvariants(s);
     if (bad) throw new Error(`tutarsız durum: ${bad}`);

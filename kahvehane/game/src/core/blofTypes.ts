@@ -4,8 +4,8 @@
 //
 // Temel ilkeler (çevrimiçi hazırlığı, bkz. docs/ONLINE.md):
 // - Durum (BlofState) düz, serileştirilebilir veridir (JSON'a aynen yazılır); sunucuda aynen koşar.
-// - Motor saatsizdir: 5 sn'lik blöf penceresini ev sahibi (şimdilik LocalHost, sonra sunucu) sayar ve
-//   süre dolunca {t:'windowClosed'} gönderir.
+// - Motor saatsizdir: blöf penceresini (sıradaki insansa 5 sn, değilse 3 sn) ev sahibi (şimdilik LocalHost, sonra sunucu)
+//   sayar ve süre dolunca {t:'windowClosed'} gönderir. Sürenin kendisi kuraldır: motor her pencereye yazar (BlofWindow.ms).
 // - İstemci yalnız kendi BlofView'unu ve kendine süzülmüş (redact) olayları görür; gizli kart sızmaz.
 
 import type {CardId} from './types';
@@ -26,8 +26,12 @@ export const BLOF_MODES: Record<BlofMode, {seats: BlofSeats; teams: number[]; na
   esli: {seats: 4, teams: [0, 1, 0, 1], name: 'Eşli', desc: 'Karşındaki ortağın; biriniz bitirirse ikiniz kazanırsınız.'},
 };
 
-/** Blöf penceresinin varsayılan süresi (ms). */
+/** Blöf penceresi (ms): atıştan sonra sıradaki (bir sonraki oynayacak) koltuk İNSANSA. */
 export const BLOF_WINDOW_MS = 5000;
+/** Blöf penceresi (ms): sıradaki koltuk bot ise (insan yine blöf diyebilir; masa boşuna beklemez). */
+export const BLOF_WINDOW_SHORT_MS = 3000;
+/** Yakalanan yalancının yığına ek olarak kenarın üstünden aldığı ceza kartı sayısı (kenarda az varsa o kadar). */
+export const BLOF_PENALTY = 2;
 /** Bir atışta en az / en çok kart. */
 export const BLOF_MIN_PLAY = 1;
 export const BLOF_MAX_PLAY = 4;
@@ -64,8 +68,18 @@ export interface BlofConfig {
   seed: number;
   /** İlk turu açan koltuk. Verilmezse tohumdan seçilir. */
   firstSeat?: number;
-  /** Blöf penceresi (ms). Varsayılan 5000. Motor bunu yalnız olaylara/görünüme yazar; sayan ev sahibidir. */
+  /**
+   * Blöf penceresi (ms), atıştan sonra sıradaki koltuk insansa. Varsayılan 5000. Motor süreyi olaylara/görünüme yazar;
+   * sayan ev sahibidir.
+   */
   challengeWindowMs?: number;
+  /** Blöf penceresi (ms), sıradaki koltuk bot ise. Varsayılan 3000. */
+  challengeWindowShortMs?: number;
+  /**
+   * Koltuk başına: bir insan mı oynuyor (bu cihazda ya da uzaktan). Yalnız pencere süresini belirler. Verilmezse herkes
+   * insan sayılır (hep uzun pencere). Ev sahibi bunu koltuk türlerinden kendisi doldurur (GameEngine.withSeats).
+   */
+  humanSeats?: boolean[];
 }
 
 /** Durumda saklanan, varsayılanları doldurulmuş ayar. */
@@ -74,8 +88,17 @@ export interface BlofSettings {
   teams: number[];
   seed: number;
   firstSeat: number;
+  /** Sıradaki insansa pencere (ms). */
   challengeWindowMs: number;
+  /** Sıradaki bot ise pencere (ms). */
+  challengeWindowShortMs: number;
+  /** Koltuk başına insan mı (pencere süresi için). */
+  humanSeats: boolean[];
 }
+
+/** Pencere süresi kuralı: atıştan sonra sıradaki koltuk insansa uzun (5 sn), değilse kısa (3 sn). */
+export const windowMsFor = (cfg: Pick<BlofSettings, 'challengeWindowMs' | 'challengeWindowShortMs' | 'humanSeats'>, nextSeat: number): number =>
+  (cfg.humanSeats?.[nextSeat] ?? true) ? cfg.challengeWindowMs : (cfg.challengeWindowShortMs ?? cfg.challengeWindowMs);
 
 // ───────────────────────────── Durum ─────────────────────────────
 
@@ -105,6 +128,8 @@ export interface BlofWindow {
   count: number;
   /** Atan son kartlarını attı: pencere blöfsüz kapanırsa (ya da blöf yanlış çıkarsa) oyunu bitirir. */
   final: boolean;
+  /** Bu pencerenin süresi (ms): sıradaki insansa challengeWindowMs, değilse challengeWindowShortMs. */
+  ms: number;
   /** Koltuk başına: bu pencerede blöf diyebilir mi (atan ve eşlide takım arkadaşı diyemez). */
   eligible: boolean[];
   /** Koltuk başına: "geç" dedi mi (herkes geçerse pencere erken kapanır). Gizli: görünümde yalnız kendi hâlin. */
@@ -139,6 +164,8 @@ export interface BlofSeatStats {
   cardsTaken: number;
   /** Bir seferde aldığı en büyük yığın. */
   biggestPile: number;
+  /** Yakalanınca kenardan aldığı ceza kartları (toplam). */
+  penaltyCards: number;
 }
 
 /** Oyun sonucu. */
@@ -229,7 +256,7 @@ export type BlofAction =
  *  atış      : opened|played → windowOpen
  *  geç       : declined (yalnız geçene) [→ herkes geçtiyse windowClosed → turn | finished → gameOver]
  *  süre doldu: windowClosed → turn | finished → gameOver
- *  blöf      : challenged → reveal → pileTaken → turn (yeni tur) | finished → gameOver
+ *  blöf      : challenged → reveal → pileTaken [→ penalty (yalansa, kenarda kart varsa)] → turn (yeni tur) | finished → gameOver
  *  pas       : passed → turn | passed → pileCleared → turn (yeni tur)
  */
 export type BlofEvent =
@@ -243,7 +270,10 @@ export type BlofEvent =
   | {t: 'played'; seat: number; rank: number; count: number; cards: CardId[] | null; pileCount: number; handCount: number}
   /** Pas. passes: son atıştan beri art arda pas sayısı. */
   | {t: 'passed'; seat: number; passes: number}
-  /** Blöf penceresi açıldı (ms: süre ipucu; gerçek bitişi ev sahibinin 'timer' mesajı söyler). eligible: blöf diyebilecek koltuklar. */
+  /**
+   * Blöf penceresi açıldı. ms: bu pencerenin süresi (sıradaki insansa 5000, değilse 3000; sayacı ev sahibi sunum bitince
+   * başlatır, gerçek bitişi 'timer' mesajı söyler). eligible: blöf diyebilecek koltuklar.
+   */
   | {t: 'windowOpen'; id: number; by: number; rank: number; count: number; final: boolean; ms: number; eligible: number[]}
   /** Bu koltuk "geç" dedi (yalnız kendisine gider). */
   | {t: 'declined'; id: number; seat: number}
@@ -255,6 +285,12 @@ export type BlofEvent =
   | {t: 'reveal'; seat: number; by: number; rank: number; cards: CardId[]; truthful: boolean}
   /** seat yığının tamamını aldı. cards yalnız alana görünür. reason: 'caught' = blöfü yakalandı, 'wrongChallenge' = boşa blöf dedi. */
   | {t: 'pileTaken'; seat: number; count: number; cards: CardId[] | null; reason: 'caught' | 'wrongChallenge'; handCount: number}
+  /**
+   * Yakalanan yalancıya ceza (pileTaken'ın hemen ardından): kenarın ÜSTÜNDEN (en son kenara giden) count kart (en çok
+   * BLOF_PENALTY; kenarda daha az varsa o kadar; kenar boşsa olay yok). cards (kenardaki sırasıyla, en üstteki en sonda)
+   * yalnız alana görünür — alınan yığın gibi. handCount / discardCount: cezadan sonraki sayılar.
+   */
+  | {t: 'penalty'; seat: number; count: number; cards: CardId[] | null; handCount: number; discardCount: number}
   /** Herkes pas dedi: yığın kenara gitti; by (son atan) yeni turu açacak. */
   | {t: 'pileCleared'; count: number; by: number}
   /** seat son kartlarını attı ve geçerli sayıldı: bitirdi (ilk bitiren kazanır). */
@@ -297,7 +333,7 @@ export interface BlofView {
   lastPlay: {seat: number; count: number; rank: number} | null;
   /** Son atıştan beri art arda pas. */
   passes: number;
-  /** Açık pencere (eligible herkese açık; kimin geçtiği gizli). */
+  /** Açık pencere (eligible herkese açık; kimin geçtiği gizli). ms: bu pencerenin süresi (5000 / 3000). */
   window: {id: number; by: number; rank: number; count: number; final: boolean; eligible: boolean[]; ms: number} | null;
   /** Şu an "Blöf!" diyebilirim. */
   canChallenge: boolean;
@@ -305,8 +341,9 @@ export interface BlofView {
   declined: boolean;
   round: number;
   move: number;
-  /** Pencere süresi (ms). */
+  /** Pencere süresi (ms) sıradaki insansa / bot ise (açık pencerenin gerçek süresi: window.ms). */
   challengeWindowMs: number;
+  challengeWindowShortMs: number;
   /** Kazanan (−1: sürüyor). */
   winner: number;
   over: boolean;

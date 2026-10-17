@@ -20,6 +20,7 @@ const zero = (): BlofSeatStats => ({
   pilesTaken: 0,
   cardsTaken: 0,
   biggestPile: 0,
+  penaltyCards: 0,
 });
 
 /** Elle kurulmuş durum + her bota başlangıç dağıtımını gösterir. */
@@ -27,7 +28,7 @@ function setup(hands: CardId[][], diffs: BlofDifficulty[], teams?: number[]): {s
   const n = hands.length as 2 | 3 | 4;
   const used = new Set(hands.flat());
   const s: BlofState = {
-    cfg: {seats: n, teams: teams ?? hands.map((_, i) => i), seed: 1, firstSeat: 0, challengeWindowMs: 5000},
+    cfg: {seats: n, teams: teams ?? hands.map((_, i) => i), seed: 1, firstSeat: 0, challengeWindowMs: 5000, challengeWindowShortMs: 3000, humanSeats: new Array<boolean>(n).fill(true)},
     hands: hands.map((h) => [...h]),
     pile: [],
     plays: [],

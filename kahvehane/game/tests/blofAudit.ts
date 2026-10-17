@@ -1,5 +1,6 @@
 // Blöf denetim simülatörü: botları (ve isteğe bağlı bir "insan vekili" koltuğunu) saf motor üzerinde, ev sahibinin
-// akışını taklit eden bir zaman çizelgesiyle oynatır ve ölçer: el süresi (animasyon + düşünme + 5 sn pencereler),
+// akışını taklit eden bir zaman çizelgesiyle oynatır ve ölçer: el süresi (animasyon + düşünme + pencereler: sıradaki insan
+// vekiliyse 5 sn, değilse 3 sn — koltuk türü ayara yazılır, ev sahibinin withSeats'i gibi),
 // pas serileri, kenara giden kartlar, blöf/yakalama oranları, son kart davranışı, insanın boşta bekleme süresi ve
 // botların "salak" sayılacak kararları (ör. tek kartı kalan rakibe turu bedava açtıran pas).
 // Testler (tests/blofAudit.test.ts) ve docs/BOTS.md'deki ölçümler bunu kullanır. Botlar yalnız süzülmüş olay + görünüm görür.
@@ -106,6 +107,8 @@ export const PRESENT_MS = {
   revealPerCard: 265,
   take: 650,
   takePerCard: 25,
+  /** Yakalanan yalancıya kenardan ceza kartları (+2 ceza). */
+  penalty: 700,
   /** 3–4 kişide yakalanan blöf sonrası botlar arası atışma (ack bekletilir) ortalaması. */
   banter: 900,
 };
@@ -152,7 +155,7 @@ export interface HandMetrics {
   /** İnsan vekilinin karar verebildiği toplam süre / beklediği en uzun aralık (sn). */
   humanBusy: number;
   humanMaxIdle: number;
-  /** İnsan vekili: hamle yapması gerekmeden 5 sn pencerenin dolmasını beklediği pencere sayısı. */
+  /** İnsan vekili: hamle yapması gerekmeden pencerenin dolmasını beklediği pencere sayısı. */
   humanWindowWaits: number;
   stalled: boolean;
 }
@@ -162,7 +165,7 @@ export interface AuditOptions {
   seats: AuditSeat[];
   botSeed?: number;
   maxMoves?: number;
-  /** İnsan vekili, sırası değilken açılan pencerede "geç"e basma olasılığı (yoksa 5 sn dolar). */
+  /** İnsan vekili, sırası değilken açılan pencerede "geç"e basma olasılığı (yoksa pencere dolar). */
   humanDeclineP?: number;
   /** Her karardan sonra (denetim için) çağrılır: bot kararı + bot görünümü + TAM durum (yalnız ölçüm). */
   onDecision?: (seat: number, view: BlofView, action: BlofAction, state: BlofState) => void;
@@ -208,6 +211,9 @@ function presentMs(evs: BlofEvent[], seats: number): number {
       case 'pileTaken':
         ms += PRESENT_MS.take + PRESENT_MS.takePerCard * Math.min(e.count, 24);
         break;
+      case 'penalty':
+        ms += PRESENT_MS.penalty;
+        break;
       default:
         break;
     }
@@ -217,7 +223,8 @@ function presentMs(evs: BlofEvent[], seats: number): number {
 
 /** Bir el oynatır ve ölçer. */
 export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
-  const cfg = o.cfg;
+  // insan vekili koltukları ayara yazılır (pencere süresi: sıradaki insansa uzun, değilse kısa); ayar verdiyse o
+  const cfg: BlofConfig = o.cfg.humanSeats ? o.cfg : {...o.cfg, humanSeats: o.seats.map(isHuman)};
   const n = cfg.seats;
   const g = createBlof(cfg);
   let s = g.state;
@@ -452,7 +459,7 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
     t += presentMs(r.events, n);
     if (s.phase === 'window' && s.window!.id !== prevWin) {
       windowStart = t;
-      windowAt = t + s.cfg.challengeWindowMs;
+      windowAt = t + s.window!.ms;
     }
     if (s.phase !== 'window') windowAt = Infinity;
     void windowStart;
