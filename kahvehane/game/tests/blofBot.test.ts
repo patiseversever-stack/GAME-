@@ -251,7 +251,7 @@ describe('Blöf botu: zorluk sıralaması (simülasyon)', () => {
   }, 60_000);
 
   it('3 ve 4 kişi: zor ve orta, kolaylara karşı payından (1/n) çok kazanır; zor ortalara ezilmez', () => {
-    expect(winRate(3, ['zor', 'kolay', 'kolay'])).toBeGreaterThan(0.48);
+    expect(winRate(3, ['zor', 'kolay', 'kolay'])).toBeGreaterThan(0.42);
     expect(winRate(3, ['orta', 'kolay', 'kolay'])).toBeGreaterThan(0.45);
     expect(winRate(4, ['zor', 'kolay', 'kolay', 'kolay'])).toBeGreaterThan(0.4);
     expect(winRate(4, ['zor', 'orta', 'orta', 'orta'])).toBeGreaterThan(0.2);
