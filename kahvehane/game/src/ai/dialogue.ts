@@ -2108,11 +2108,17 @@ export function allLines(): LineRef[] {
   return [...BY_ID.values()];
 }
 
-/** Ses grubunu verir (araçta grup grup üretmek için): pisti | blof | meta | banter | quick. */
-export function groupOf(l: Pick<LineRef, 'moment'>): 'pisti' | 'blof' | 'meta' | 'banter' | 'quick' {
+/** El / maç sonu anı mı (Ara Skor, sonuç, rövanş, veda)? */
+export function isEndMoment(m: string): m is EndMoment {
+  return (END_MOMENTS as readonly string[]).includes(m);
+}
+
+/** Ses grubunu verir (araçta grup grup üretmek için): pisti | blof | meta | end | banter | quick. */
+export function groupOf(l: Pick<LineRef, 'moment'>): 'pisti' | 'blof' | 'meta' | 'end' | 'banter' | 'quick' {
   const m = l.moment;
   if (m === 'banter') return 'banter';
   if (m === 'quickSay' || m === 'quickReply') return 'quick';
+  if (isEndMoment(m)) return 'end';
   if (m.startsWith('blof')) return 'blof';
   return (META_MOMENTS as readonly string[]).includes(m) ? 'meta' : 'pisti';
 }
@@ -2227,6 +2233,8 @@ const SIDE_RULES: Readonly<Record<string, MomentRule>> = {
   quickReply: {kind: 'event', chance: 1, prio: 2},
 };
 
+/** El / maç sonu (Ara Skor, sonuç ekranı, rövanş kabulü, veda): oyun durmuşken, sıklığı planEndTalk + sohbet seviyesi belirler. */
+const END_RULE: MomentRule = {kind: 'always', chance: 1, prio: 3};
 /** Bilinmeyen anlar (ileride eklenecek olaylar) sıradan olay tepkisi sayılır. */
 const DEFAULT_RULE: MomentRule = {kind: 'event', chance: 0.4, prio: 2};
 export function ruleFor(m: string): MomentRule {
@@ -2234,7 +2242,7 @@ export function ruleFor(m: string): MomentRule {
     (MOMENT_RULES as Record<string, MomentRule | undefined>)[m] ??
     (BLOF_RULES as Record<string, MomentRule | undefined>)[m] ??
     SIDE_RULES[m] ??
-    ((META_MOMENTS as readonly string[]).includes(m) ? META_RULE : DEFAULT_RULE)
+    ((META_MOMENTS as readonly string[]).includes(m) ? META_RULE : isEndMoment(m) ? END_RULE : DEFAULT_RULE)
   );
 }
 
