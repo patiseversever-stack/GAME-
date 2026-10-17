@@ -10,7 +10,7 @@ const ctx = await b.newContext({...devices['Pixel 7'], viewport: {width: 412, he
 const p = await ctx.newPage();
 const errs = [];
 p.on('pageerror', e => errs.push(e.message));
-await p.addInitScript(() => localStorage.getItem('kh.profile3') || localStorage.setItem('kh.profile3', JSON.stringify({v: 3, onboarded: false})));
+await p.addInitScript(() => localStorage.getItem('kh.profile3') || localStorage.setItem('kh.profile3', JSON.stringify({v: 3, onboarded: false, settings: {chatLevel: 'normal'}})));
 const cdp = await ctx.newCDPSession(p);
 await cdp.send('Emulation.setCPUThrottlingRate', {rate: +slow});
 await cdp.send('DOM.enable');
@@ -134,7 +134,8 @@ for (const tab of ['shop', 'profile', 'quests']) {
   await report(tab);
 }
 await click('.kh-nav [data-tab=home]', 2000);
-await click('[data-act=play]', 9000);
+await click('[data-act=play]', 900);
+await click('[data-act=len][data-v=tek]', 9000); // "Kaça oynuyoruz?" penceresi: Tek El
 await report('oyun-bosta', 3000);
 // el oynat
 for (let i = 0; i < 6; i++) {

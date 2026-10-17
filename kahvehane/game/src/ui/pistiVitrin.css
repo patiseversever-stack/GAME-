@@ -1,8 +1,8 @@
 /* Pişti vitrini: başlık, kart etiketleri, tek seferlik ipucu ve karartma. Hepsi kart katmanında (ar__cards) KÜÇÜK öğeler:
-   yalnız transform/opacity canlanır; büyük gradyan/blur/mask yok. Karartma 64² doku tuvali (bileşimci büyütür, karo tutmaz).
+   yalnız transform/opacity canlanır; büyük gradyan/blur/mask yok. Karartma: yelpaze şeridini kaplayan 64² doku tuvali (bileşimci büyütür, karo tutmaz; tam ekran harmanlama yok).
    Gizliyken display:none JS'ten satır içi verilir (ui.css `#app canvas {display:block}` kimlik seçicisini yener; görünmeyen
    süs katmanı büyütür). Altın çerçeve kartın pişirilmiş gölge görselinin yerini alır (table.css .is-vit). */
-.kh-vit__dim { position: absolute; left: 0; top: 0; width: 100%; height: 100%; z-index: 450; pointer-events: none; }
+.kh-vit__dim { position: absolute; left: 0; top: 0; z-index: 450; pointer-events: none; }
 .kh-vit__head, .kh-vit__tag, .kh-vit__hint { position: absolute; left: 0; top: 0; pointer-events: none; white-space: nowrap; font-style: normal;
   font-family: var(--font-display, 'Lilita One'), 'Nunito', sans-serif; text-shadow: 0 1.5px 0 #0a1033, 1px 1px 0 #0a1033, -1px 1px 0 #0a1033, 1px -1px 0 #0a1033, -1px -1px 0 #0a1033; }
 .kh-vit__head { z-index: 900; align-items: center; gap: calc(var(--u, 16px) * .5); padding: calc(var(--u, 16px) * .2) calc(var(--u, 16px) * .9) calc(var(--u, 16px) * .24) calc(var(--u, 16px) * .22);

@@ -9,7 +9,7 @@ const p = await ctx.newPage();
 const errs = [];
 p.on('pageerror', e => errs.push(e.message));
 await p.addInitScript(() => {
-  localStorage.getItem('kh.profile3') || localStorage.setItem('kh.profile3', JSON.stringify({v: 3, onboarded: true, char: 'dursun', owned: {char: ['dursun', 'cem'], deck: ['yildizli'], table: ['arena'], fx: ['klasik'], frame: ['standart']}, coins: 20000}));
+  localStorage.getItem('kh.profile3') || localStorage.setItem('kh.profile3', JSON.stringify({v: 3, onboarded: true, char: 'dursun', owned: {char: ['dursun', 'cem'], deck: ['yildizli'], table: ['arena'], fx: ['klasik'], frame: ['standart']}, coins: 20000, settings: {chatLevel: 'normal'}}));
   window.__jk = {run: false, t: [], last: 0};
   const loop = t => { const j = window.__jk; if (j.run) { if (j.last) j.t.push(t - j.last); j.last = t; } else j.last = 0; requestAnimationFrame(loop); };
   requestAnimationFrame(loop);
@@ -33,7 +33,7 @@ await p.waitForSelector('.kh-nav', {timeout: 60000});
 await p.waitForTimeout(3500);
 await run('sekme-geçişleri', async () => { for (const t of ['shop', 'profile', 'quests', 'home']) await click(`.kh-nav [data-tab=${t}]`, 900); });
 await run('market-ürün-aç', async () => { await click('.kh-nav [data-tab=shop]', 1200); await click('.kh-item, .kh-deal', 1500); await click('.kh-sheet__x, .kh-modal__x, [data-act=close]', 900); await click('.kh-nav [data-tab=home]', 900); });
-await run('oyna→giriş→masa', async () => { await click('[data-act=play]', 11000); });
+await run('oyna→giriş→masa', async () => { await click('[data-act=play]', 700); await click('[data-act=len][data-v=tek]', 10300); });
 for (let i = 0; i < 4; i++) {
   const box = await p.evaluate(() => { const els = [...document.querySelectorAll('.c2.is-hand')]; if (!els.length) return null; const r = els[0].getBoundingClientRect(); return {x: r.x + r.width / 2, y: r.y + r.height / 2}; });
   if (box) { await start(); await p.mouse.click(box.x, box.y); await p.waitForTimeout(3200); await stop('kart-at-' + (i + 1)); }

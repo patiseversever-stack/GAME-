@@ -49,6 +49,8 @@
 .kh-podium__say::after { left: -10.5px; top: calc(40% + 3.5px); bottom: auto; border-width: 6.5px 11px 6.5px 0; border-color: transparent var(--bubble-fill) transparent transparent; }
 /* karşılıklı konuşma: küçük yüzlerden biri konuşunca kuyruk yukarı (yüze hizalı), seyirci konuşunca kuyruk yok + başlıkta küçük portre */
 .kh-podium__say.is-talk { z-index: 7; }
+/* veda balonu: sonuç ekranı kalktıktan sonra perdenin (z 95) üstünde, sesle birlikte söner (results.ts farewell) */
+.kh-say.kh-farewell { position: fixed; z-index: 96; right: calc(var(--u) * .8); top: 30%; pointer-events: none; }
 .kh-podium__say.is-up::before { left: var(--tail, 30%); top: -16px; bottom: auto; border-width: 0 11px 16px 11px; border-color: transparent transparent var(--bubble-edge) transparent; }
 .kh-podium__say.is-up::after { left: calc(var(--tail, 30%) + 3.5px); top: -10.5px; bottom: auto; border-width: 0 7.5px 11px 7.5px; border-color: transparent transparent var(--bubble-fill) transparent; }
 .kh-podium__say.is-free::before, .kh-podium__say.is-free::after { display: none; }

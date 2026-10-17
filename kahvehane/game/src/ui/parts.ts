@@ -6,6 +6,8 @@ import type {MenuTalk, Sounds} from './types';
 import {EASE, Scope, ANIM, clamp, esc, fmt, h, play, q, rnd} from './dom';
 import {ASSETS} from './assets';
 import {I, SUIT, SUIT_TILE, suitSvg, type SuitKey} from './icons';
+import {radial} from '../platform/tex';
+import {cssLinear} from './suittex';
 import type {Fx} from './fx';
 import {g3} from './fx';
 import {RARITY_INFO} from '../game/catalog';
@@ -785,6 +787,66 @@ export function openSheet(ctx: Ctx, o: {cls: string; body: string; onClose?: () 
 // - Açılış ~0,85 sn: simgeler ve disk içeri kaçar, şeritler sağdan başlayarak hızlanıp çıkar.
 // Yalnız transform/opacity; her şey bir kez çizilir. Düşük cihazda yalım, parlama, şok halkası ve filigran kayması yok.
 // =====================================================================================================
+/**
+ * Perdenin büyük yüzeyleri tuval dokusu (görünüm aynı): şeritler ekrandan uzun (%112) ve eğik (skewX) canlanan katmanlardı → dpr
+ * 2,6'da tam karolarla taranıyordu (dört şerit ≈ 25–30 MB, ışık parlaması 1,35× ölçekte ≈ 11 MB, yalım ≈ 5 MB). Şerit tuvali: CSS
+ * gradyanı (--bg) + ön kenar (3 px beyaz çizgi .62 + 9vw parlaklık) + sol dışta lacivert 5 px kenar ve yumuşak gölge (box-shadow
+ * -5px 0 0 navy, -12px 0 22px). İçerik dikeyde yavaş değiştiği için dikey çözünürlük düşük (½ px/CSS px), yatayda ekranınki.
+ */
+const WIPE_PAD = 40; // tuval şeridin solundan bu kadar taşar (lacivert kenar + gölge)
+function paintWipe(el: HTMLElement, low: boolean): void {
+  const dpr = window.devicePixelRatio || 1;
+  const kx = Math.min(3, dpr), vw = innerWidth / 100; // yatayda ekran çözünürlüğü: kenar çizgileri piksel piksel aynı yerde
+  el.querySelectorAll<HTMLCanvasElement>('.kh-wipe__bt').forEach((cv, i) => {
+    const band = cv.parentElement as HTMLElement;
+    const w = band.offsetWidth, hb = band.offsetHeight;
+    if (!w || !hb) return;
+    const ky = Math.min(0.5, 1024 / hb);
+    const W = Math.round((w + WIPE_PAD) * kx), H = Math.max(2, Math.round(hb * ky));
+    cv.width = W;
+    cv.height = H;
+    const g = cv.getContext('2d');
+    if (!g) return;
+    const navy = getComputedStyle(el).getPropertyValue('--navy').trim() || '#0a1033';
+    if (!low) {
+      // box-shadow -12px 0 22px rgba(2,4,30,.28): kutu tuval dışında çizilir, yalnız bulanık gölgesi içeri düşer (dikeyde taşar)
+      const OFF = W * 4;
+      g.save();
+      g.shadowColor = 'rgba(2,4,30,.28)';
+      g.shadowBlur = 22 * kx;
+      g.shadowOffsetX = OFF;
+      g.fillStyle = '#000';
+      g.fillRect((WIPE_PAD - 12) * kx - OFF, -H, w * kx, H * 3);
+      g.restore();
+    }
+    g.setTransform(kx, 0, 0, ky, WIPE_PAD * kx, 0); // CSS px, şerit kutusunun sol üstü
+    g.fillStyle = navy;
+    g.fillRect(-5, 0, 5, hb);
+    g.fillStyle = cssLinear(g, getComputedStyle(band).getPropertyValue('--bg').trim(), w, hb) ?? '#1f7bff';
+    g.fillRect(0, 0, w, hb);
+    if (i > 0) {
+      const sw = 9 * vw;
+      const lin = g.createLinearGradient(3, 0, 3 + sw, 0);
+      lin.addColorStop(0, 'rgba(255,255,255,.2)');
+      lin.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = lin;
+      g.fillRect(3, 0, sw, hb);
+      g.fillStyle = 'rgba(255,255,255,.62)';
+      g.fillRect(0, 0, 3, hb);
+    }
+  });
+  const gl = el.querySelector<HTMLCanvasElement>('.kh-wipe__gloss');
+  const gg = gl?.getContext('2d');
+  if (gl && gg) {
+    const lin = gg.createLinearGradient(0, 0, gl.width, 0);
+    [[0, 0], [0.3, 0.1], [0.5, 0.34], [0.7, 0.1], [1, 0]].forEach(([o, a]) => lin.addColorStop(o, `rgba(255,255,255,${a})`));
+    gg.fillStyle = lin;
+    gg.fillRect(0, 0, gl.width, gl.height);
+  }
+  const fl = el.querySelector<HTMLCanvasElement>('.kh-wipe__flare');
+  if (fl) radial(fl, [[0, 'rgba(255,255,255,.9)'], [0.28, 'rgba(255,250,225,.5)'], [0.55, 'rgba(255,240,200,.16)'], [1, 'rgba(255,240,200,0)']]);
+}
+
 /** CSS cubic-bezier(x1, y1, x2, y2) zamanlama işlevi (ilerleme 0..1 → değer). */
 function cubicBezier(x1: number, y1: number, x2: number, y2: number): (x: number) => number {
   const bx = (s: number) => 3 * x1 * s * (1 - s) ** 2 + 3 * x2 * s * s * (1 - s) + s ** 3;
@@ -806,10 +868,11 @@ export function suitWipe(ctx: Ctx): {cover(): Promise<void>; reveal(): Promise<v
   const low = document.documentElement.classList.contains('kh-low');
   const el = h('div', 'kh-wipe' + (low ? ' is-low' : ''));
   const ks: SuitKey[] = ['h', 'd', 'c', 's'];
-  el.innerHTML = ks.map((k, i) => `<i class="kh-wipe__band is-${k}" style="--i:${i}"><span>${suitSvg(k)}</span></i>`).join('') +
-    `<i class="kh-wipe__gloss"></i><div class="kh-wipe__emb"><i class="kh-wipe__flare"></i><i class="kh-wipe__shock"></i>` +
+  el.innerHTML = ks.map((k, i) => `<i class="kh-wipe__band is-${k}" style="--i:${i}"><canvas class="kh-wipe__bt"></canvas><span>${suitSvg(k)}</span></i>`).join('') +
+    `<canvas class="kh-wipe__gloss" width="64" height="2"></canvas><div class="kh-wipe__emb"><canvas class="kh-wipe__flare" width="256" height="256"></canvas><i class="kh-wipe__shock"></i>` +
     `<div class="kh-wipe__disc">${ks.map(k => `<i class="kh-wipe__s">${suitSvg(k)}</i>`).join('')}</div></div>`;
   ctx.layer.append(el);
+  paintWipe(el, low);
   const bands = Array.from(el.querySelectorAll<HTMLElement>('.kh-wipe__band'));
   const marks = bands.map(b => q(b, 'span'));
   const disc = q(el, '.kh-wipe__disc');

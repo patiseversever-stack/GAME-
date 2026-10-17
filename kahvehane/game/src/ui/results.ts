@@ -107,6 +107,50 @@ const blofSeriesRows = (hands: number): RowDef[] => [
  * Konuşma düğmeleri asla bekletmez; seçim anında talk.leave çağrılır (konuşma kesilir, gerekirse veda).
  */
 export function results(ctx: Ctx, d: ResultsData, frame = 'standart', talk?: ResultsTalk): Promise<'again' | 'home'> {
+  return predecode(resultPortraits(d), 400).then(() => showResults(ctx, d, frame, talk));
+}
+
+/** Sonuç ekranının portreleri: tablo başlığı nötr; büst / küçük yüz (beraberlikte şaşkın, yoksa zafer + üzgün); konuşan botların
+ * balon yüzü gülümseme. */
+function resultPortraits(d: ResultsData): string[] {
+  const out = new Set<string>();
+  const poses = d.outcome === 'draw' ? (['notr', 'saskin'] as const) : (['notr', 'zafer', 'uzgun'] as const);
+  for (const p of d.setup.players) {
+    for (const k of poses) if (p.char.poses[k]) out.add(p.char.poses[k]);
+    if (!p.human && p.char.poses.gulumseme) out.add(p.char.poses.gulumseme);
+  }
+  return [...out];
+}
+
+/**
+ * Portreler ekran açılmadan ÇÖZÜLÜR (en çok `ms` beklenir; tarayıcı çözülmüş kareyi aynı görselin <img>'lerinde kullanır). Yoksa
+ * 576²'lik poz görselleri ilk boyamada çözülmemiş olur: Android büyük görselleri sonradan çözer, giriş animasyonu boş çerçeveyle
+ * başlayıp portre bir kare sonra "pat" diye gelirdi. Görseller ekran kurulana dek tutulur (önbellekten düşmesin).
+ */
+const decoding = new Map<string, {im: HTMLImageElement; p: Promise<void>}>();
+function predecode(urls: readonly string[], ms: number): Promise<void> {
+  if (!ANIM || !urls.length) return Promise.resolve();
+  const ps = urls.map(u => {
+    let e = decoding.get(u);
+    if (!e) {
+      const im = new Image();
+      im.decoding = 'async';
+      im.src = u;
+      e = {im, p: im.decode().catch(() => undefined)};
+      decoding.set(u, e);
+      setTimeout(() => decoding.delete(u), 30000); // tutulan görsel bir süre sonra bırakılır
+    }
+    return e.p;
+  });
+  return Promise.race([Promise.all(ps).then(() => undefined), new Promise<void>(r => setTimeout(r, ms))]);
+}
+
+/** El bittiğinde (sonuç ekranından önceki konuşma beklemesinde) portreleri önceden çöz: ekran gelince beklemeden açılır. */
+export function prepareResults(d: ResultsData): void {
+  void predecode(resultPortraits(d), 0);
+}
+
+function showResults(ctx: Ctx, d: ResultsData, frame: string, talk?: ResultsTalk): Promise<'again' | 'home'> {
   const scope = new Scope();
   const s = ctx.sounds;
   const {setup} = d;
@@ -325,7 +369,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart', talk?: Res
   }
 
   // ---- karşılıklı konuşma: konuşanın balonu (büyük büst → kuyruk sola, küçük yüz → kuyruk yukarı, seyirci → küçük portre) ----
-  const stage = talk ? talkStage(scope, el, talk.talkers) : null;
+  const stage = talk ? talkStage(scope, el, talk.talkers, ctx.layer) : null;
   if (talk && stage) {
     if (!lvlUp) scope.timeout(() => talk.start(stage), ANIM ? 1000 : 0);
     else void lvlP.then(() => scope.alive && scope.timeout(() => talk.start(stage), ANIM ? 350 : 0));
@@ -334,7 +378,10 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart', talk?: Res
   return new Promise(res => {
     onAct(scope, el, async a => {
       if (a !== 'again' && a !== 'home') return;
-      if (talk && stage) talk.leave(a, stage);
+      if (talk && stage) {
+        stage.leaving(); // bundan sonra söylenen (veda) ekranın üstünde, perdenin de üstünde kalan balonda
+        talk.leave(a, stage);
+      }
       s.tap();
       el.style.pointerEvents = 'none';
       if (ANIM) await el.animate([{opacity: 1}, {opacity: 0}], {duration: 240, easing: 'ease-in', fill: 'forwards'}).finished.catch(() => undefined);
@@ -345,12 +392,57 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart', talk?: Res
   });
 }
 
+/**
+ * Veda balonu: "Ana Sayfa" seçilince sonuç ekranı ~0,25 sn'de solar, perde kapanır; vedanın sesi ise sürer. Söz bu kısa balonda
+ * yarıda kalmasın diye ayrılırken söylenen ekranın dışında, perdenin üstünde (z 96) aynı yerde duran küçük bir balonda gösterilir
+ * ve sesle birlikte (konuşma yöneticisinin hide'ı) söner. Aynı anda tek söz kuralı değişmez: balon yalnız o sözün süresince görünür.
+ */
+function farewell(layer: HTMLElement, at: {right: number; top: number; maxW: number} | null): Bubble & {char(c: ReturnType<typeof charById>): void} {
+  let f: HTMLElement | null = null;
+  let who: ReturnType<typeof charById> | null = null;
+  let tok = 0;
+  let safety = 0;
+  const drop = (n: HTMLElement): void => {
+    if (!ANIM) return void n.remove();
+    const a = n.animate([{opacity: 1, transform: 'none'}, {opacity: 0, transform: 'translateY(-6px) scale(.96)'}], {duration: 260, easing: 'ease-in', fill: 'forwards'});
+    a.onfinish = () => n.remove();
+  };
+  return {
+    char(c) {
+      who = c;
+    },
+    show(text, _mood, ms) {
+      if (f) drop(f);
+      const n = h('div', 'kh-say kh-podium__say is-talk is-free kh-farewell');
+      n.innerHTML = `<small>${who ? charAvatarHtml(who, 'standart', 'kh-say__face', 'gulumseme') + esc(who.name) : ''}</small><span class="kh-podium__line"></span>`;
+      q(n, '.kh-podium__line').textContent = text;
+      if (at) {
+        n.style.right = at.right + 'px';
+        n.style.top = at.top + 'px';
+        n.style.maxWidth = at.maxW + 'px';
+      }
+      layer.append(n);
+      f = n;
+      const mine = ++tok;
+      if (ANIM) n.animate([{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.out});
+      clearTimeout(safety);
+      safety = window.setTimeout(() => mine === tok && this.hide(), Math.max(1500, ms) + 4000); // hide gelmezse
+    },
+    hide() {
+      clearTimeout(safety);
+      if (f) drop(f);
+      f = null;
+    },
+  };
+}
+
 /** Sonuç ekranının konuşma sahnesi: tek balon, konuşana göre kuyruk + başlık; konuşan hafifçe sıçrar (yalnız transform). */
-function talkStage(scope: Scope, el: HTMLElement, talkers: readonly Talker[]): TalkStage {
+function talkStage(scope: Scope, el: HTMLElement, talkers: readonly Talker[], layer: HTMLElement): TalkStage & {leaving(): void} {
   const say = q(el, '.kh-podium__say.is-talk');
   const head = q(say, 'small');
   const lineEl = q(say, '.kh-podium__line');
   let tok = 0;
+  let away: {right: number; top: number; maxW: number} | null | undefined; // ayrılırken balonun yeri (veda için)
   const hideSay = (): void => {
     if (!scope.alive || say.style.visibility === 'hidden') return;
     tok++;
@@ -361,9 +453,20 @@ function talkStage(scope: Scope, el: HTMLElement, talkers: readonly Talker[]): T
     };
   };
   return {
+    leaving() {
+      if (away !== undefined) return;
+      const r = say.getBoundingClientRect(), pod = say.parentElement?.getBoundingClientRect();
+      away = r.height > 0 && pod ? {right: Math.max(0, innerWidth - pod.right), top: r.top, maxW: pod.width * 0.48} : null;
+      hideSay();
+    },
     bubble(seat: number, charId: string): Bubble {
       const t = talkers.find(x => x.seat === seat && x.char.id === charId);
       const char = t?.char ?? charById(charId);
+      if (away !== undefined) {
+        const fb = farewell(layer, away);
+        fb.char(char);
+        return fb;
+      }
       let mine = -1;
       return {
         show(text) {

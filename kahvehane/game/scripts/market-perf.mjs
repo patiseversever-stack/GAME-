@@ -11,7 +11,7 @@ const errs = [];
 p.on('pageerror', e => errs.push(e.message));
 p.on('console', m => m.type() === 'error' && errs.push(m.text()));
 await p.addInitScript(() => {
-  localStorage.getItem('kh.profile3') || localStorage.setItem('kh.profile3', JSON.stringify({v: 3, onboarded: true, char: 'dursun', owned: {char: ['dursun', 'cem'], deck: ['yildizli'], table: ['arena'], fx: ['klasik'], frame: ['standart']}, coins: 20000}));
+  localStorage.getItem('kh.profile3') || localStorage.setItem('kh.profile3', JSON.stringify({v: 3, onboarded: true, char: 'dursun', owned: {char: ['dursun', 'cem'], deck: ['yildizli'], table: ['arena'], fx: ['klasik'], frame: ['standart']}, coins: 20000, settings: {chatLevel: 'normal'}}));
   // uzun görevler + kare aralıkları + canlı blob adresleri
   window.__lt = [];
   try { new PerformanceObserver(l => { for (const e of l.getEntries()) window.__lt.push([Math.round(e.startTime), Math.round(e.duration)]); }).observe({type: 'longtask', buffered: true}); } catch { /* */ }

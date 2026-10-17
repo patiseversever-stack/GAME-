@@ -491,6 +491,7 @@ export async function runApp(d: AppDeps): Promise<void> {
         },
       };
       // son söz yarıda kalmasın: konuşma bitene dek (en çok ~3,8 sn) bekle, sonra sonuç ekranının sesi tek başına çalar
+      screens.prepareResults(data); // beklerken portreler çözülür (ekran bir kare geç "pat" diye dolmaz)
       await speech.settle(350, 3800);
       speech.stopAll();
       const choice = await screens.results(data, profile.data.equipped.frame, talk);

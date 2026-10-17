@@ -25,7 +25,7 @@ import {Fx} from './fx';
 import {HudView} from './hud';
 import {HomeView, type HomeMemo} from './lobby';
 import {splash, versus} from './intro';
-import {results} from './results';
+import {prepareResults, results} from './results';
 import {onboarding} from './onboarding';
 import {daily, pause, rules, settings} from './modals';
 import {handChooser} from './handchooser';
@@ -168,6 +168,11 @@ export class Screens {
     const ia = interim(this.ctx, d);
     void ia.done.then(() => this.hud.dim(false));
     return ia;
+  }
+
+  /** Sonuç ekranı gelmeden (el sonu beklemesinde) portreleri önceden çöz. */
+  prepareResults(d: ResultsData): void {
+    prepareResults(d);
   }
 
   /** El sonu. "Ana Sayfa" seçilirse dört renk perde kapanır (home() açar). talk: karşılıklı konuşma kancası (uygulama). */

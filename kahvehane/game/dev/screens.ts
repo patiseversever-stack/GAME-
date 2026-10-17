@@ -268,7 +268,13 @@ async function main(): Promise<void> {
       sc.results(d, pr.data.equipped.frame, {
         talkers: talkersOf(plan, setup),
         start: stage => speech.exchange(plan.map(x => utter(x.line, x.char, stage.bubble(x.seat, x.char), 2000)), {prio: 3, tag: 'end', gapMs: 450}),
-        leave: () => speech.cancel('end'),
+        leave: (c, stage) => {
+          speech.cancel('end');
+          // &bye=1: "Ana Sayfa"da rakipten veda (perdenin üstünde kalan veda balonu denemesi)
+          const opp = setup.players.find(p => !p.human);
+          const line = c === 'home' && P.has('bye') && opp ? dialogue.pickAny(opp.char.id, ['endBye']) : null;
+          if (line && opp) speech.say(utter(line, opp.char.id, stage.bubble(opp.seat, opp.char.id), 1400), {prio: 3, tag: 'bye'});
+        },
       }).then(x => console.debug('sonuç:', x));
       break;
     }

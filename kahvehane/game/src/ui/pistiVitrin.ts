@@ -179,7 +179,8 @@ export class PistiVitrin {
     this.built = true;
     const t = this.d.table;
     this.dim = texCanvas('kh-vit__dim', 64, 64);
-    radial(this.dim, [[0, 'rgba(2, 5, 36, .30)'], [0.55, 'rgba(2, 5, 36, .46)'], [1, 'rgba(1, 3, 24, .64)']], false, true);
+    // yumuşak koyu ışık hüzmesi (kenarlara doğru söner): yelpazenin arkası okunur, masa görünür kalır; kart şeridi kadar alan (tam ekran harmanlama yok)
+    radial(this.dim, [[0, 'rgba(2, 5, 36, .62)'], [0.55, 'rgba(2, 5, 36, .42)'], [1, 'rgba(2, 5, 36, 0)']]);
     this.dim.style.display = 'none';
     t.mount(this.dim);
     this.head = document.createElement('div');
@@ -270,8 +271,10 @@ export class PistiVitrin {
     this.d.slide(0.3);
 
     // karartma + kartlar (kart düğümleri yeniden kullanılır; yalnız transform)
-    this.dim.style.display = 'block';
-    this.fade.push(this.dim.animate([{opacity: 0}, {opacity: 1}], {duration: 260, easing: 'ease-out', fill: 'both'}));
+    const bandTop = Math.max(0, fan.top - u * 7.5), bandBot = Math.min(L.H, fan.bottom + u * 6);
+    Object.assign(this.dim.style, {display: 'block', left: '0px', top: `${bandTop.toFixed(1)}px`, width: `${L.W}px`, height: `${(bandBot - bandTop).toFixed(1)}px`});
+    // karartma 2 basamakta belirir (steps): yarı saydam büyük katmanın kare kare yeniden harmanlanması (yazılım GL'de pahalı) olmaz
+    this.fade.push(this.dim.animate([{opacity: 0}, {opacity: 1}], {duration: 240, easing: 'steps(2, start)', fill: 'both'}));
     items.forEach((c, k) => {
       t.vitRim(c, true);
       void t.vitFly(c, fan.poses[k], {ms: OPEN_MS, delay: k * STAGGER, z: 800 + k, zEnd: 800 + k, lift: 0.16, ease: EASE});
@@ -354,7 +357,7 @@ export class PistiVitrin {
 
   private fadeOut(ms: number): void {
     const els = [this.dim, this.head, ...this.tags.filter(e => e.style.display !== 'none')];
-    for (const el of els) this.fade.push(el.animate([{opacity: 1}, {opacity: 0}], {duration: ms, easing: 'ease-in', fill: 'both'}));
+    for (const el of els) this.fade.push(el.animate([{opacity: 1}, {opacity: 0}], {duration: ms, easing: el === this.dim ? 'steps(2, start)' : 'ease-in', fill: 'both'}));
   }
 
   /** Kartlar yerine döndü (anlık kapanışta şimdi yerleştirilir): çerçeve kalkar, rozet geri gelir, vitrin düğümleri gizlenir. */
@@ -393,22 +396,30 @@ export class PistiVitrin {
     const t = this.d.table;
     if (this.cur || !t.pistis[seat]?.length) return;
     this.build();
-    const L = t.L, st = L.seats[seat].stack, el = this.hintEl;
+    const L = t.L, g = L.seats[seat], st = g.stack, el = this.hintEl;
     const u = Math.min(22, Math.max(12, Math.min(L.W * 0.04, L.H * 0.02)));
     const hw = u * 6.6;
-    const x = Math.max(hw + 6, Math.min(L.W - hw - 6, st.x));
-    // alt yarıdaki yığınlarda yığının üstünde, üst yarıdakilerde pişti sırasının altında (el / rozetlerle çakışmasın)
-    let y: number;
-    if (st.y > L.H * 0.5) y = st.y - (L.ch * st.s) / 2 - u * 2.6;
-    else {
-      let b = st.y + (L.ch * st.s) / 2;
-      t.pistis[seat].forEach((_, i) => {
-        const p = t.pistiHome(seat, i).pose;
-        b = Math.max(b, p.y + (L.ch * p.s) / 2);
-      });
-      y = b + u * 0.9;
-    }
-    const tb = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,0)`;
+    // yığın + pişti kartlarının kapladığı kutu (kartların evinden)
+    let x0 = st.x - (L.cw * st.s) / 2, x1 = st.x + (L.cw * st.s) / 2, y0 = st.y - (L.ch * st.s) / 2, y1 = st.y + (L.ch * st.s) / 2;
+    t.pistis[seat].forEach((_, i) => {
+      const p = t.pistiHome(seat, i).pose;
+      x0 = Math.min(x0, p.x - (L.cw * p.s) / 2);
+      x1 = Math.max(x1, p.x + (L.cw * p.s) / 2);
+      y0 = Math.min(y0, p.y - (L.ch * p.s) / 2);
+      y1 = Math.max(y1, p.y + (L.ch * p.s) / 2);
+    });
+    // ipucu masanın ortasına doğru, el / rozet / yelpazeyle çakışmayan tarafa: dikey sütun ve sağ rakip → solunda; sol rakip → sağında;
+    // üst koltuk (4 kişi) → altında; ben → üstünde
+    let x = st.x, y = y0 - u * 1.5;
+    if (g.pv || (L.seats.length === 4 && seat === 1)) {
+      x = x0 - 8 - hw;
+      y = (y0 + y1) / 2;
+    } else if (L.seats.length === 4 && seat === 3) {
+      x = x1 + 8 + hw;
+      y = (y0 + y1) / 2;
+    } else if (st.y < L.H * 0.4) y = y1 + u * 1.5;
+    x = Math.max(hw + 6, Math.min(L.W - hw - 6, x));
+    const tb = `translate3d(${x.toFixed(1)}px,${y.toFixed(1)}px,0) translate(-50%,-50%)`;
     el.style.transform = tb;
     el.style.display = 'block';
     const a = el.animate([

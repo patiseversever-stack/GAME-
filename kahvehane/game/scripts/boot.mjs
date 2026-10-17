@@ -6,7 +6,7 @@ const b = await chromium.launch({args: ['--use-gl=swiftshader', '--enable-unsafe
 const ctx = await b.newContext({...devices['Pixel 7'], viewport: {width: 412, height: 839}});
 const p = await ctx.newPage();
 await p.addInitScript(() => {
-  localStorage.getItem('kh.profile3') || localStorage.setItem('kh.profile3', JSON.stringify({v: 3, onboarded: true, char: 'dursun', owned: {char: ['dursun'], deck: ['yildizli'], table: ['arena'], fx: ['klasik'], frame: ['standart']}}));
+  localStorage.getItem('kh.profile3') || localStorage.setItem('kh.profile3', JSON.stringify({v: 3, onboarded: true, char: 'dursun', owned: {char: ['dursun'], deck: ['yildizli'], table: ['arena'], fx: ['klasik'], frame: ['standart']}, settings: {chatLevel: 'normal'}}));
   window.__lt = [];
   new PerformanceObserver(l => l.getEntries().forEach(e => window.__lt.push([Math.round(e.startTime), Math.round(e.duration)]))).observe({type: 'longtask', buffered: true});
 });
