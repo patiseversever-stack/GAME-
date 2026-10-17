@@ -483,6 +483,24 @@ describe('sohbet seviyeleri: masa sohbeti (maç ortası)', () => {
     expect(sk).toBeLessThan(270);
   });
 
+  it('Sakin: gerçekten büyük anlar (pişti, açılışta yakalama, el sonu) hep, tekrar eden ikincil anlar (soft) ~%40', () => {
+    for (const m of ['botPisti', 'playerPisti', 'botWin', 'playerWin', 'blofCaughtByPlayer', 'blofCatchPlayer', 'blofPlayerWin'])
+      expect(ruleFor(m).soft, m).toBeFalsy();
+    for (const m of ['start', 'blofStart', 'blofCallOut', 'blofSurvivedPlayer', 'blofBotWin', 'blofCaught', 'blofWrongCall'])
+      expect(ruleFor(m).soft, m).toBe(true);
+    expect(CHAT_PROFILES.sakin.soft).toBeLessThanOrEqual(0.5);
+    expect(CHAT_PROFILES.normal.soft).toBe(1);
+    expect(CHAT_PROFILES.geveze.soft).toBe(1);
+    const sakin = new DialogueDirector();
+    sakin.level = 'sakin';
+    const rnd = mulberry32(9);
+    let ok = 0;
+    for (let i = 0; i < 1000; i++) if (sakin.allowSoft('blofCallOut', rnd)) ok++;
+    expect(ok).toBeGreaterThan(330);
+    expect(ok).toBeLessThan(470);
+    expect(sakin.allowSoft('botPisti', () => 0.99)).toBe(true);
+  });
+
   it('Geveze kalabalık masada susmaz: 4 koltukta olasılık düşmez (Normal\'de düşer)', () => {
     const rnd = mulberry32(21);
     const hit = (level: ChatLevel, seats: number): number => {

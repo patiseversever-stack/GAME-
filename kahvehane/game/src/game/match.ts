@@ -152,6 +152,7 @@ export class Match {
   private speak(seat: number, m: Moment, force = false, ms = 2400): boolean {
     const p = this.bot(seat);
     if (!p || this.aborted) return false;
+    if (!dialogue.allowSoft(m)) return false; // Sakin: ikincil büyük anların çoğu susar (el başı…)
     const prio = momentPriority(m);
     if (!this.talk.canSay(prio)) return false;
     if (!force && !shouldSpeak(m)) return false;

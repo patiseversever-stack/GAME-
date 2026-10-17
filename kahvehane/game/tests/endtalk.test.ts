@@ -108,7 +108,15 @@ describe('sohbet seviyesi (Sakin · Normal · Geveze)', () => {
     setChatLevel('sakin');
     const t = new BlofTalk();
     expect(t.pick('riza', 'idle', true)).toBeNull();
-    expect(t.pick('riza', 'callOut', true)).not.toBeNull();
+    // büyük anlar Sakin'de de söylenir; tekrar eden ikincil olanlar (Blöf çağrısı, el başı…) yalnız ~%40
+    let called = 0, played = 0;
+    for (let i = 0; i < 300; i++) {
+      if (t.pick('riza', 'callOut', true)) called++;
+      if (t.pick('riza', 'playerWin', true)) played++;
+    }
+    expect(called).toBeGreaterThan(60);
+    expect(called).toBeLessThan(200);
+    expect(played).toBe(300);
     expect(t.line('riza', 'endAccept')).not.toBeNull();
     const d = new DialogueDirector();
     expect(d.allowQuip(() => 0.5)).toBe(false);

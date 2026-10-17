@@ -2396,15 +2396,15 @@ export interface ChatProfile {
   damp: number;
   /** Her dağıtımda skor / önde-geride laf atma zarı */
   lead: number;
-  /** 'soft' büyük anların (bot→bot yakalama tepkileri…) konuşulma olasılığı */
+  /** 'soft' büyük anların (el başı, Blöf çağrısı / bot→bot yakalama tepkileri…) konuşulma olasılığı: Sakin'de ~%40, diğerlerinde hep */
   soft: number;
 }
 
 /** Seviye profilleri. Normal = önceki ayar (çarpanlar 1). */
 export const CHAT_PROFILES: Readonly<Record<ChatLevel, ChatProfile>> = {
   // yalnız büyük anlar: olay tepkisi seyrek, boş laf ve masa sohbeti yok, atışma nadir; sonuçta tek replik
-  sakin: {event: 0.4, chatter: 0, gap: 1.6, banter: 0.35, banterHands: 2, reply: 0.6, quip: 0.35, idle: 1.4, midTalk: 0.5, midReply: 0, endMax: 1, endReply: 0, endRevenge: 0, bye: 0,
-    table: 0, turn: 0, crowd: 1, damp: 1, lead: 0.35, soft: 0.5},
+  sakin: {event: 0.3, chatter: 0, gap: 1.6, banter: 0.35, banterHands: 2, reply: 0.6, quip: 0.35, idle: 1.4, midTalk: 0.5, midReply: 0, endMax: 1, endReply: 0, endRevenge: 0, bye: 0,
+    table: 0, turn: 0, crowd: 1, damp: 1, lead: 0.35, soft: 0.4},
   // Normal = önceki ayar (çarpanlar 1); masa sohbeti yalnız cılız bir tat (≈ +%10–15)
   normal: {event: 1, chatter: 1, gap: 1, banter: 1, banterHands: 1, reply: 1, quip: 1, idle: 1, midTalk: 1, midReply: 0.6, endMax: 3, endReply: 1, endRevenge: 0.35, bye: 0.5,
     table: 0.1, turn: 0.08, crowd: 1, damp: 1, lead: 0.35, soft: 1},
@@ -2438,7 +2438,7 @@ export const CHAT_LEVEL_INFO: Readonly<Record<ChatLevel, {name: string; desc: st
 };
 
 export const MOMENT_RULES: Readonly<Record<Moment, MomentRule>> = {
-  start: {kind: 'always', chance: 1, prio: 3},
+  start: {kind: 'always', chance: 1, prio: 3, soft: true},
   botPisti: {kind: 'always', chance: 1, prio: 3},
   botJackPisti: {kind: 'always', chance: 1, prio: 3},
   playerPisti: {kind: 'always', chance: 1, prio: 3},
@@ -2502,14 +2502,14 @@ export const POOL_ALIAS: Readonly<Record<string, readonly PoolSrc[]>> = {
 
 /** Blöf anlarının kuralları (anahtar: blofKey). Blöf anı (açılış) hep konuşur; laf atmalar seyrek. */
 export const BLOF_RULES: Readonly<Record<BlofKey, MomentRule>> = {
-  blofStart: {kind: 'always', chance: 1, prio: 3},
-  blofCallOut: {kind: 'always', chance: 1, prio: 3}, // Blöf çağrısı: her seviyede (Sakin'in 'büyük anlar'ından)
+  blofStart: {kind: 'always', chance: 1, prio: 3, soft: true},
+  blofCallOut: {kind: 'always', chance: 1, prio: 3, soft: true}, // Blöf çağrısı: Sakin'de ~%40 (patlama / yüz ifadesi yine görünür; turlar boyu tekrar eder)
   blofCatchGloat: {kind: 'always', chance: 1, prio: 3, soft: true},
   blofCatchPlayer: {kind: 'always', chance: 1, prio: 3},
   blofCaughtByPlayer: {kind: 'always', chance: 1, prio: 3},
   blofSurvived: {kind: 'always', chance: 1, prio: 3, soft: true},
-  blofSurvivedPlayer: {kind: 'always', chance: 1, prio: 3},
-  blofBotWin: {kind: 'always', chance: 1, prio: 3},
+  blofSurvivedPlayer: {kind: 'always', chance: 1, prio: 3, soft: true},
+  blofBotWin: {kind: 'always', chance: 1, prio: 3, soft: true},
   blofPlayerWin: {kind: 'always', chance: 1, prio: 3},
   // ikincil tepkiler (açılıştan ~1 sn sonra; çalan büyük repliği kesmez)
   blofCaught: {kind: 'always', chance: 1, prio: 2, soft: true},
@@ -2888,6 +2888,11 @@ export class DialogueDirector {
     return true;
   }
 
+  /** 'soft' (ikincil büyük) an bu seviyede söylensin mi: Sakin'de ChatProfile.soft olasılığıyla, diğerlerinde hep. */
+  allowSoft(moment: string, rnd: () => number = Math.random): boolean {
+    return !ruleFor(moment).soft || rnd() < this.profile.soft;
+  }
+
   /** Seslendirmesiz kısa tepki (ortak sevinci, iç çekme) söylensin mi: seviyenin quip olasılığı. */
   allowQuip(rnd: () => number = Math.random): boolean {
     return rnd() < this.profile.quip;
@@ -2980,7 +2985,7 @@ export class DialogueDirector {
     if (!linesFor(charId, moment).length) return null;
     const r = ruleFor(moment);
     if ((r.kind === 'chatter' && this.profile.chatter <= 0) || (r.kind === 'table' && this.profile.table <= 0)) return null;
-    if (r.soft && rnd() >= this.profile.soft) return null; // Sakin: ikincil büyük anların yarısı susar
+    if (!this.allowSoft(moment, rnd)) return null; // Sakin: ikincil büyük anların çoğu susar
     this.note(moment, this.clock());
     return this.pickLine(charId, moment, rnd);
   }
