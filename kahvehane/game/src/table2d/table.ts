@@ -366,9 +366,16 @@ export class Table2D {
       // kalan deste sol kenara çekilir (halka ile arasında nefes payı), biraz küçük: ortadaki sahne öne çıkar
       const ds = 0.9;
       deck = {x: edge + (cw * ds) / 2, y: pileY, s: ds};
+      const ss2 = 0.78, hs2 = ch * ss2, wm2 = cw * ss2 * 0.94, hm2 = hs2 * 0.94;
+      const myY = Math.min(H * 0.655, clear - hs2 / 2 - 5);
+      // Rakibin yığını yelpazesinin sağında, yelpazeyle aynı hizada. Yelpaze ile halka arasında pişti kartlarını yana dizmeye yer yok
+      // (yelpazeye ya da halkaya biniyordu): pişti kartları yığının ALTINA, boş sağ sütuna dizilir; sütun benim yığınımın üstünde biter.
+      // Benim yığınım ve pişti sıram aşağıda, halkanın altında: pişti kartları yana (sola) dizilir.
+      const oppY = H * 0.235;
+      const oppC0 = oppY + hs2 / 2 + hm2 / 2 + 4;
       seats = [
-        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: W - sx, y: Math.min(H * 0.655, clear - (ch * 0.78) / 2 - 5), s: 0.78, r: 8}, pdir: -1},
-        {fan: {x: W / 2, y: H * 0.235, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: W - sx, y: H * 0.27, s: 0.78, r: -8}, pdir: -1},
+        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: W - sx, y: myY, s: ss2, r: 8}, pdir: -1, pspan: W - sx - (cw * ss2) / 2 - (W * 0.3 + wm2 / 2 + 10)},
+        {fan: {x: W / 2, y: oppY, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: W - sx, y: oppY, s: ss2, r: -8}, pdir: -1, pv: 1, pspan: myY - hs2 / 2 - 14 - hm2 / 2 - oppC0},
       ];
     } else {
       const fs = Math.min(0.56, Math.max(0.46, (H * 0.075) / ch));
