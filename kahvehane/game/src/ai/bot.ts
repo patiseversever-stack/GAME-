@@ -17,7 +17,7 @@ const HIDDEN_AVG = 0.3; // kapalı kartın ortalama değeri
 const JACK_RISK = 0.8; // rakibin Valesiyle alma ihtimalinin ağırlığı
 const LATER_OPP_WEIGHT = 0.4; // sıradaki ilk rakipten sonraki rakiplerin riski daha az
 const DUMP_BONUS = 0.1; // değersiz kartı yığına atma eğilimi
-const JACK_KEEP = 1.6; // elde Vale tutmanın değeri (ileride bir yığını alır): boşuna yere bırakılmaz
+const JACK_KEEP = 3.2; // elde Vale tutmanın değeri (ileride bir yığını alır): boşuna yere bırakılmaz
 const CLUB2 = cardId('C', 2);
 const DIAMOND10 = cardId('D', 10);
 

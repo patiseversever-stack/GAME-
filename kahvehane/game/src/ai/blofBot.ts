@@ -14,6 +14,10 @@
 //  - Atış/pas: doğru at · araya yalan kart kat · blöf · pas. Yakalanma riski rakiplerin gözlenen blöf deme sıklığından ve
 //    rakibin görebildiğinden (masadaki iddialar, açılan kartları alan) hesaplanır. Pas, turu kime açtırdığına bakar:
 //    tek kartı kalan rakibe turu bedava açtırmak = eli vermek; eşlide son atan ortaksa pas ona turu açtırır.
+//  - 1'e 1'de açışta yakalanmanın bedeli yalnız turu kaptırmaktır (yığında yalnız kendi kartların var, geri alırsın):
+//    bot doğru açışına ara sıra bir yalan kart katar (padOpen2) — simülasyonla ölçüldü, bkz. docs/BOTS.md.
+//  - Yığını alacaksam içinden dörtlü çıkacaksa (bedava açış) maliyet azalır; ama ancak açmaya vakit varsa.
+//  - Kalabalık masada az "Blöf!" demek kazandırır (suspicionN), 1'e 1'de sıkışınca (geçersem zorunlu pas) denemek ucuzdur.
 //
 // Zorluk (karakterler aynı, yalnız zorluk farkı):
 //  kolay — kart saymaz, yalnız kendi elini ve göze batan iddiaları görür; gelişigüzel blöf yapar ve der, ara sıra son karta
@@ -937,7 +941,6 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
           consider(vp, {t: 'open', seat: me, rank: r, cards: cards.concat(extra)}, true, rp);
         }
       }
-      // kolay: bazen grubunun yalnız bir kısmını açar (acemi)
       const chosen = pick! as {action: Extract<BlofAction, {t: 'open'}>; bluff: boolean};
       // 1'e 1: doğru açışa bir yalan kart kat (yakalanırsa kendi kartlarını geri alır, yalnız tur gider)
       if (v.seats === 2 && !chosen.bluff && this.rnd() < this.p.padOpen2) {
@@ -947,6 +950,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
           chosen.bluff = true;
         }
       }
+      // kolay: bazen grubunun yalnız bir kısmını açar (acemi)
       if (this.difficulty === 'kolay' && !chosen.bluff && chosen.action.cards.length > 1 && this.rnd() < 0.3) {
         const cs = chosen.action.cards;
         chosen.action = {...chosen.action, cards: cs.slice(0, 1 + Math.floor(this.rnd() * cs.length))};
