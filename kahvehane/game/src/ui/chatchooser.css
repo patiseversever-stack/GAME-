@@ -15,7 +15,7 @@
 .kh-cc__sub { margin-top: calc(var(--u) * .3); color: var(--c-text-2); font-size: calc(var(--u) * .82); font-weight: var(--w-black); }
 
 .kh-cc__list { display: flex; flex-direction: column; justify-content: center; gap: calc(var(--u) * .6); min-height: 0; padding: calc(var(--u) * .2) max(16px, calc(var(--u) * 1)); }
-.kh-cc__opt { position: relative; flex: 1 1 0; min-height: 0; max-height: calc(var(--u) * 10.5); display: grid; grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
+.kh-cc__opt { position: relative; flex: 1 1 0; min-height: 0; max-height: calc(var(--u) * 13.5); display: grid; grid-template-columns: minmax(0, 44%) minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr) auto; column-gap: calc(var(--u) * .7); row-gap: calc(var(--u) * .3); padding: calc(var(--u) * .5); border-radius: var(--r-lg); overflow: hidden;
   cursor: pointer; box-shadow: 0 0 0 2.5px var(--navy), 0 4px 0 var(--navy); -webkit-tap-highlight-color: transparent; }
 .kh-cc__bg { position: absolute; inset: 0; z-index: 0; }

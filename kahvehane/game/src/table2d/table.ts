@@ -441,7 +441,7 @@ export class Table2D {
       // (eskiden sağa dizilip ekranın dışına taşıyordu, 4 sıra portreye biniyordu)
       const pauseBottom = u * 0.6 + Math.max(44, u * 3);
       const headTop = H * (H <= 700 ? 0.215 : 0.245) - (H <= 700 ? 4.3 : 4.6) * u * 0.14; // sağ/sol rozetin portresi (hud.css)
-      const topY = (pauseBottom + 11 + headTop - 5) / 2; // düğme ile portre arasında ortalı (yığının eğikliği ve 6 px yükselmesi dahil)
+      const topY = (pauseBottom + 11 + headTop - 5) / 2 - 1; // düğme ile portre arasında ortalı (yığının eğikliği ve 6 px yükselmesi dahil)
       const topX = W - 8 - wS / 2 - 3;
       const topFanR = W / 2 + 1.5 * cw * fs * 0.62 + (cw * fs) / 2 + 6;
       const topSpan = topX - wS / 2 - (topFanR + 6 + wM / 2 + 8);

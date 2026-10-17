@@ -125,6 +125,27 @@ describe('profil göçü (v3 → v4)', () => {
   });
 });
 
+describe('sohbet yoğunluğu ayarı (settings.chatLevel)', () => {
+  it('yeni ve eski kayıtlarda seçilmemiş (ilk açılışta seçici); geçerli seçim korunur, bozuk değer seçilmemiş', () => {
+    expect(mod.fresh().settings.chatLevel).toBeUndefined();
+    expect(mod.migrateProfile(v3()).settings.chatLevel).toBeUndefined();
+    for (const l of ['sakin', 'normal', 'geveze'] as const) expect(mod.migrateProfile({...v3(), v: 4, settings: {chatLevel: l}}).settings.chatLevel).toBe(l);
+    for (const bad of ['GEVEZE', 'loud', 2, null, {}]) expect(mod.migrateProfile({...v3(), v: 4, settings: {chatLevel: bad}}).settings.chatLevel).toBeUndefined();
+    // iki ayar birbirini bozmaz
+    expect(mod.migrateProfile({...v3(), v: 4, settings: {blofHand: 'spread', chatLevel: 'sakin'}}).settings).toEqual({blofHand: 'spread', chatLevel: 'sakin'});
+    expect(mod.migrateProfile({...v3(), v: 4, settings: {blofHand: 'x', chatLevel: 'geveze'}}).settings).toEqual({chatLevel: 'geveze'});
+  });
+  it('Profile kaydı: seçim yazılır ve yeniden yüklenince gelir', () => {
+    mem.clear();
+    mem.set('kh.profile3', JSON.stringify(v3()));
+    const a = new mod.Profile();
+    expect(a.data.settings.chatLevel).toBeUndefined();
+    a.data.settings.chatLevel = 'geveze';
+    a.save();
+    expect(new mod.Profile().data.settings.chatLevel).toBe('geveze');
+  });
+});
+
 describe('el düzeni ayarı (settings.blofHand)', () => {
   it('yeni profilde ve eski (v3/v4, settings alanı olmayan) kayıtlarda seçilmemiş: undefined', () => {
     expect(mod.fresh().settings).toEqual({});

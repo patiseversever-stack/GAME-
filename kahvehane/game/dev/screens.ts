@@ -4,6 +4,8 @@
 // newblof=1 → Blöf'ü hiç oynamamış oyuncu (Yeni etiketi, boş istatistik). game=blof → Blöf sekmesi motor olmadan da gösterilir (yalnız galeri; gerçek uygulamada Blöf motoru yoksa Blöf görünmez).
 //   handchooser (ilk Blöf el düzeni seçici) settings (game=blof → "Blöf el düzeni" satırı; hand=group|spread, live=1)
 //   online (Çevrimiçi tanıtımı) friends (aynı tanıtımın "Arkadaşınla" sekmesi) bailout wipe
+// Sohbet: chatchooser (ilk açılış sohbet yoğunluğu seçici; hear=sakin|normal|geveze → o kartın örneğini dinlet) · settings (Sohbet satırı)
+//   results / interim karşılıklı konuşmayla (chat=sakin|normal|geveze; cond=big|close|streak|pisti|caught|sly|last; seed=n). Sesler /voice'tan.
 // Oyun uzunluğu: lensheet (OYNA → "Kaça oynuyoruz?"; game=blof) · interim (Ara Skor; mode, game, len=51|101|151|3|5, n=biten el, extra=1 uzatma)
 //   resume (yarım kalan maç; mode, game, len, n) · results&len=101 (çok elli maç sonucu, maç sonuna dek oynanmış)
 // Profil galeride ayrı anahtarlarda tutulur (kh.* → khg.*): gerçek oyunun kaydına dokunulmaz. p=new → ilk açılış profili; rich=1 → zengin.
@@ -21,7 +23,13 @@ import {BLOF} from '../src/game/blofAdapter';
 import type {GameResult, SideScore} from '../src/core/types';
 import type {CharId} from '../src/game/roster';
 import {MODE_INFO, type BlofOutcome, type Difficulty, type Game, type HandLayout, type MatchLength, type Mode} from '../src/game/types';
-import {pickLine} from '../src/ai/dialogue';
+import {CHAT_LEVEL_INFO, chatLevel, dialogue, isChatLevel, lineById, planEndTalk, setChatLevel, type EndFacts, type LineRef} from '../src/ai/dialogue';
+import {endSeats, marginOf, spectatorsOf, talkersOf} from '../src/game/app';
+import {utter} from '../src/game/seatBubble';
+import {VoicePlayer} from '../src/audio/voice';
+import {speechFor} from '../src/audio/speech';
+import {mulberry32} from '../src/core/rng';
+import {leaders, ranking} from '../src/game/series';
 import {createSeries, isLong, lengthFor, outcomeFor, recordBlof, recordPisti, sidesOf, type SeriesState} from '../src/game/series';
 
 const P = new URLSearchParams(location.search);
@@ -29,7 +37,7 @@ const S = P.get('s') ?? '';
 const G: Game = P.get('game') === 'blof' ? 'blof' : 'pisti';
 const DIFF = (['kolay', 'orta', 'zor'] as Difficulty[]).find(d => d === P.get('diff')) ?? 'orta';
 if (G === 'blof' || P.has('blof')) BLOF.previewOnly(true);
-const LIST = ['splash', 'onboarding', 'onboarding&p=new&jump=gallery', 'home', 'home&poke=1', 'home&tab=shop', 'home&tab=profile', 'home&tab=quests', 'home&mode=4', 'home&mode=esli', 'product&k=deck&id=yildizli', 'product&k=char&id=defne',
+const LIST = ['chatchooser', 'chatchooser&hear=geveze', 'interim&chat=geveze', 'results&chat=geveze', 'results&r=lose&chat=geveze', 'results&mode=esli&chat=geveze', 'splash', 'onboarding', 'onboarding&p=new&jump=gallery', 'home', 'home&poke=1', 'home&tab=shop', 'home&tab=profile', 'home&tab=quests', 'home&mode=4', 'home&mode=esli', 'product&k=deck&id=yildizli', 'product&k=char&id=defne',
   'product&k=fx&id=havai', 'product&k=table&id=gece', 'versus', 'versus&mode=4', 'versus&mode=esli', 'results', 'results&r=lose', 'results&mode=4', 'results&mode=esli', 'results&lvl=1&streak=3',
   'pause', 'settings', 'rules', 'daily', 'online', 'friends', 'bailout', 'wipe',
   'handchooser', 'settings&game=blof', 'settings&game=blof&hand=spread&live=1',
@@ -37,6 +45,20 @@ const LIST = ['splash', 'onboarding', 'onboarding&p=new&jump=gallery', 'home', '
   'versus&game=blof&mode=3', 'versus&game=blof&mode=1v1', 'results&game=blof&mode=3', 'results&game=blof&mode=3&r=lose', 'results&game=blof&mode=esli', 'rules&game=blof',
   'lensheet', 'lensheet&game=blof', 'interim', 'interim&mode=esli', 'interim&mode=4&n=3', 'interim&extra=1&len=51', 'interim&game=blof&mode=4&len=5&n=2', 'interim&game=blof&mode=esli&len=3',
   'resume&mode=esli&n=3', 'resume&game=blof&mode=4&len=5&n=2', 'results&len=101', 'results&mode=4&len=51', 'results&game=blof&mode=4&len=5'];
+
+if (isChatLevel(P.get('chat'))) setChatLevel(P.get('chat'));
+/** Konuşma: gerçek yönetici + oynatıcı (ses /voice'tan; ilk dokunuşta ses bağlamı açılır, yoksa yalnız balon). */
+let actx: AudioContext | null = null;
+addEventListener('pointerdown', () => {
+  actx ??= new AudioContext();
+  void actx.resume();
+}, {once: false});
+const voice = new VoicePlayer(() => actx);
+void voice.load('voice/manifest.json');
+const speech = speechFor(voice);
+const RND = P.has('seed') ? mulberry32(Number(P.get('seed'))) : Math.random;
+const COND = new Set((P.get('cond') ?? '').split(',').filter(Boolean));
+(window as unknown as {__speech: unknown}).__speech = speech;
 
 const log = (n: string) => () => console.debug('[ses]', n);
 const sounds = {tap: log('tap'), whoosh: log('whoosh'), coin: log('coin'), reward: log('reward')};
@@ -233,7 +255,21 @@ async function main(): Promise<void> {
       const d: ResultsData = {setup, result, blof, series, outcome, myPisti: blof ? 0 : 2, myValePisti: blof ? 0 : 1, stake: 500, coinsDelta: delta, coinsBefore: 11950,
         coinsAfter: 11950 + (outcome === 'win' ? 1000 : outcome === 'draw' ? 500 : 0) + (lvl ? 1000 : 0), xpGain: 70, before, after, levelReward: lvl ? 1000 : 0,
         streak: Number(P.get('streak') ?? (outcome === 'win' ? 2 : 0))};
-      sc.results(d, pr.data.equipped.frame).then(x => console.debug('sonuç:', x));
+      const ser = series ?? createSeries({game: G, mode, len: 'tek', seed: 1});
+      const won = outcome === 'win';
+      const facts: EndFacts = {
+        scene: 'results', game: G, mode, seats: endSeats(setup), outcome, leaders: series ? series.winners : won ? [sidesOf(mode)[0]] : outcome === 'lose' ? [sidesOf(mode)[1]] : [0, 1],
+        order: series ? ranking(series) : won ? [0, 1, 2, 3].slice(0, Math.max(...MODE_INFO[mode].teams) + 1) : [1, 0, 2, 3].slice(0, Math.max(...MODE_INFO[mode].teams) + 1),
+        ...(series ? marginOf(ser) : {close: COND.has('close'), big: COND.has('big')}),
+        streak: COND.has('streak'), pistiHeavy: COND.has('pisti'), caughtLot: COND.has('caught'), sly: COND.has('sly'), lastBluff: COND.has('last'), rematch: true, spectators: spectatorsOf(setup),
+      };
+      const plan = planEndTalk(facts, (c, ms) => dialogue.pickAny(c, ms), RND);
+      console.debug('konuşma planı', plan.map(x => `${x.char}:${x.role}:${x.line.text}`));
+      sc.results(d, pr.data.equipped.frame, {
+        talkers: talkersOf(plan, setup),
+        start: stage => speech.exchange(plan.map(x => utter(x.line, x.char, stage.bubble(x.seat, x.char), 2000)), {prio: 3, tag: 'end', gapMs: 450}),
+        leave: () => speech.cancel('end'),
+      }).then(x => console.debug('sonuç:', x));
       break;
     }
     case 'handchooser':
@@ -247,8 +283,23 @@ async function main(): Promise<void> {
     case 'settings':
       mockTable();
       sc.settings({sfx: true, voice: true, music: false, haptics: true, quality: 'auto'}, s => console.debug('ayar', s),
-        BLOF.available() ? {value: P.get('hand') === 'group' || P.get('hand') === 'spread' ? (P.get('hand') as HandLayout) : undefined, live: P.has('live'), onChange: h => console.debug('el düzeni', h)} : undefined);
+        BLOF.available() ? {value: P.get('hand') === 'group' || P.get('hand') === 'spread' ? (P.get('hand') as HandLayout) : undefined, live: P.has('live'), onChange: h => console.debug('el düzeni', h)} : undefined,
+        {value: chatLevel(), onChange: l => console.debug('sohbet', l)});
       break;
+    case 'chatchooser': {
+      mockTable();
+      sc.chatChooser({
+        play(level, bubble) {
+          speech.cancel('chooser');
+          const lines = CHAT_LEVEL_INFO[level].sample.map(id => lineById(id)).filter((l): l is LineRef => !!l);
+          speech.exchange(lines.map(l => utter(l, l.char, bubble(l.char), 1400)), {prio: 3, tag: 'chooser', gapMs: level === 'geveze' ? 220 : 420});
+        },
+        stop: () => speech.cancel('chooser'),
+      }).then(l => console.debug('sohbet seçildi:', l));
+      const hear = P.get('hear');
+      if (hear) click(`.kh-cc__opt.is-${hear} .kh-cc__hear`, 1200);
+      break;
+    }
     case 'rules':
       mockTable();
       sc.rules(G);
@@ -285,11 +336,19 @@ async function main(): Promise<void> {
       const len = lengthFor(G, P.get('len') ?? (G === 'blof' ? '3' : '101'));
       const series = demoSeries(G, mode, len, Number(P.get('n') ?? 1), P.has('extra'));
       const setup = buildSetup(pr, mode, OPP[mode], 1, 'klasik', undefined, {game: G, difficulty: DIFF});
-      // uygulamadaki seçimle aynı: önde olan bot övünür / oyuncu öndeyse arkadan gelen söylenir
+      // uygulamadaki gibi: karşılıklı kısa konuşma (önde / geride bot + ikinci ses; eşlide ortak ↔ rakip)
+      const lead = leaders(series);
+      const mine = sidesOf(mode)[0];
+      const plan = planEndTalk({
+        scene: 'interim', game: G, mode, seats: endSeats(setup), outcome: lead.length === 1 ? (lead[0] === mine ? 'win' : 'lose') : 'draw', leaders: lead, order: ranking(series),
+        prevLeaders: P.has('back') ? [mine] : [], spectators: spectatorsOf(setup),
+      }, (c, ms) => dialogue.pickAny(c, ms), RND);
+      console.debug('konuşma planı', plan.map(x => `${x.char}:${x.role}:${x.line.text}`));
+      let talkers = talkersOf(plan, setup);
       const sp = interimSpeaker(series, setup.players, []);
-      const ia = sc.interim({setup, series, stake: 500, frame: pr.data.equipped.frame, speaker: sp ? {seat: sp.seat, pose: sp.pose} : undefined, autoMs: P.has('auto') ? 6000 : 0});
-      const line = sp?.moment ? pickLine(sp.char, sp.moment)?.text : undefined;
-      if (line) setTimeout(() => ia.bubble.show(line, null, 4000), 900);
+      if (!talkers.length && sp) talkers = [{seat: sp.seat, char: setup.players.find(x => x.seat === sp.seat)!.char, pose: sp.pose}];
+      const ia = sc.interim({setup, series, stake: 500, frame: pr.data.equipped.frame, talkers, autoMs: P.has('auto') ? 8000 : 0});
+      setTimeout(() => speech.exchange(plan.map(x => utter(x.line, x.char, ia.stage.bubble(x.seat, x.char), 1800)), {prio: 3, tag: 'end', gapMs: 450}), 900);
       ia.done.then(r => console.debug('ara skor:', r));
       break;
     }

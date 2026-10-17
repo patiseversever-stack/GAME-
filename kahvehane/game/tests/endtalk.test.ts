@@ -237,7 +237,7 @@ describe('planEndTalk: karşılıklı dizi', () => {
       expect(p.filter(x => /rövanş/i.test(x.line.text)).length).toBeLessThanOrEqual(1);
     }
     for (let i = 0; i < 20; i++) expect(plan(facts({}), dir('sakin'), mulberry32(i)).length).toBe(1);
-    const g = plan(facts({}), dir('geveze'), seq(0.9, 0.9, 0.9, 0.5, 0.1, 0.5));
+    const g = plan(facts({}), dir('geveze'), seq(0.1, 0.9, 0.9, 0.5, 0.1, 0.5));
     expect(g.length).toBe(3);
     expect(g[2].role).toBe('endRevenge');
     expect(g[2].char).toBe('cem');
