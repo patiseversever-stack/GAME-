@@ -21,6 +21,7 @@ import {
   dialogue,
   freshMemory,
   groupOf,
+  isEndMoment,
   lineById,
   linesFor,
   momentPriority,
@@ -131,6 +132,7 @@ describe('replik verisi', () => {
       if (l.moment === 'blofCallOut' || l.moment === 'blofPass') max = 2;
       if (l.moment === 'banter') max = 3.6;
       if (l.moment === 'quickSay' || l.moment === 'quickReply') max = 3;
+      if (isEndMoment(l.moment)) max = 3.1; // el / maç sonu: kısa, karşılıklı diziler (≤ ~3 sn)
       expect(s, `${l.id} ${l.tts}`).toBeLessThanOrEqual(max);
     }
   });
@@ -196,11 +198,19 @@ describe('replik verisi', () => {
     expect(chars).toBeLessThanOrEqual(1000);
   });
 
-  it('kredi bütçesi: tekil ses dosyaları toplamı ≤ ~33,5k karakter', () => {
+  it('kredi bütçesi: tekil ses dosyaları toplamı ≤ ~41,5k karakter; el / maç sonu grubu ≤ 8k', () => {
     const seen = new Set<string>();
     let chars = 0;
-    for (const l of all) if (!seen.has(soundKey(l.id))) (seen.add(soundKey(l.id)), (chars += l.tts.length));
-    expect(chars).toBeLessThanOrEqual(33_500);
+    let end = 0;
+    for (const l of all)
+      if (!seen.has(soundKey(l.id))) {
+        seen.add(soundKey(l.id));
+        chars += l.tts.length;
+        if (groupOf(l) === 'end') end += l.tts.length;
+      }
+    expect(chars).toBeLessThanOrEqual(41_500);
+    expect(end).toBeGreaterThan(5000);
+    expect(end).toBeLessThanOrEqual(8000);
   });
 });
 

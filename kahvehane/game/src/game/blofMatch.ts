@@ -99,6 +99,8 @@ export class BlofMatch {
   private passRun: number[] = [];
   /** Bu elde son el gerginliği atışması denendi mi */
   private lastRoundTried = false;
+  /** Oyuncunun son atışı elini bitirdi ve içinde söylediği değer olmayan kart vardı (son kart blöfü) */
+  private finalLie = false;
   private chatOff: (() => void) | null = null;
 
   constructor(private d: BlofMatchDeps) {
@@ -212,6 +214,14 @@ export class BlofMatch {
     return u;
   }
 
+  /** Rövanş kabulü (yeni maçın açılışı): el / maç sonu replikleri ('endAccept'), Blöf masasının hafızasıyla. */
+  private accept(seat: number): boolean {
+    const p = this.bot(seat);
+    if (!p || this.aborted || !this.speech.canSay(3)) return false;
+    const line = this.talk.line(p.char.id, 'endAccept');
+    return !!line && this.speech.say(utter(line, p.char.id, new SeatBubble(this.d.hud, seat), 2200), {prio: 3, tag: 'match'});
+  }
+
   // ───────── botlar arası atışma (banter) ─────────
   /**
    * a ile b (iki bot) arasında atışma dener (dialogue.ts → pickBanter). Öğreticide ve blöf penceresi açıkken yok; olaylar
@@ -299,6 +309,7 @@ export class BlofMatch {
     this.talk.begin(this.n);
     this.passRun = new Array<number>(this.n).fill(0);
     this.lastRoundTried = false;
+    this.finalLie = false;
     const tutorial = setup.tutorial ?? !store.get<boolean>(TUT_KEY, false);
     this.tut = tutorial && !this.d.auto ? {seen: new Set(), step: null, doneTimer: 0} : null;
 
@@ -349,9 +360,11 @@ export class BlofMatch {
     if (this.aborted) return this.finish(null);
     // el başı: iki bot varsa ara sıra kendi aralarında atışır, yoksa bir rakip açılış repliği
     const bots = this.botSeats();
-    const duo = this.tut ? null : this.pair('start', bots, bots);
     const talkers = this.foes(ME);
-    if (!(duo && this.banter('start', duo[0], duo[1])) && talkers.length) this.say(pickOne(talkers), 'start', true, 2400);
+    // rövanş: sonuç ekranından "Bir El Daha / Yeni Maç" → rövanşı çağıran rakip açılışta kabul eder (el başı repliği yerine)
+    const rematch = setup.rematchBy && !this.tut ? talkers.find(s => this.players[s]?.char.id === setup.rematchBy) ?? talkers[0] : undefined;
+    const duo = this.tut || rematch !== undefined ? null : this.pair('start', bots, bots);
+    if (!(rematch !== undefined && this.accept(rematch)) && !(duo && this.banter('start', duo[0], duo[1])) && talkers.length) this.say(pickOne(talkers), 'start', true, 2400);
     host.start();
 
     // olay döngüsü
@@ -400,7 +413,9 @@ export class BlofMatch {
       const st = r.stats[seat];
       return {seat, left: r.handCounts[seat] ?? 0, bluffs: st?.bluffs ?? 0, caught: st?.caught ?? 0, timesCaught: st?.timesCaught ?? 0, wrongChallenges: st?.wrongChallenges ?? 0};
     });
-    return {setup: this.setup, outcome: win ? 'win' : 'lose', winner: r.winner, seats};
+    const out: BlofOutcome = {setup: this.setup, outcome: win ? 'win' : 'lose', winner: r.winner, seats};
+    if (r.winner === ME && this.finalLie) out.lastBluff = true;
+    return out;
   }
 
   // ───────── ev sahibi mesajları ─────────
@@ -540,6 +555,8 @@ export class BlofMatch {
           this.tutSeen('select');
           this.tutSeen('open');
           if (e.t === 'played') this.tutSeen('pass');
+          // son kart blöfü: eli bitiren atışta söylenen değer dışında kart var mı (sonuç konuşması için)
+          this.finalLie = e.handCount === 0 && !!e.rank && (e.cards ?? []).some(c => rankOf(c) !== e.rank);
           await t.play(ME, e.cards ?? []);
         } else await t.play(seat, e.count);
         this.counts[seat] = e.handCount;
@@ -991,7 +1008,7 @@ export class BlofMatch {
     this.idleTimer = window.setTimeout(() => {
       const f = this.foes(ME);
       if (f.length && this.view?.myTurn) this.say(pickOne(f), 'idle', true, 2200);
-    }, 11000);
+    }, this.talk.idleDelay(11000));
   }
 
   private poke(seat: number): void {

@@ -378,7 +378,7 @@ export class Table2D {
       const oppC0 = oppY + hs2 / 2 + hm2 / 2 + 4;
       const ringKeep2 = cw * 1.125 + 10;
       const myRowTop = myY - 2 - hm2 / 2 - 6;
-      const ringX = myRowTop < pileY + ringKeep2 ? W / 2 + Math.sqrt(Math.max(0, ringKeep2 * ringKeep2 - (myRowTop - pileY) ** 2)) : 0;
+      const ringX = myRowTop < pileY + ringKeep2 - 1.5 ?W / 2 + Math.sqrt(Math.max(0, ringKeep2 * ringKeep2 - (myRowTop - pileY) ** 2)) : 0;
       seats = [
         {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: stX, y: myY, s: ss2, r: 8}, pdir: -1, py: -2, pspan: stX - (cw * ss2) / 2 - (Math.max(ringX, W * 0.3) + wm2 / 2 + 8)},
         {fan: {x: W / 2, y: oppY, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: stX, y: oppY, s: ss2, r: -8}, pdir: -1, pv: 1, pspan: myY - hs2 / 2 - 4 - 12 - hm2 / 2 - oppC0},
@@ -409,7 +409,7 @@ export class Table2D {
       // kart çoğalınca eskileri ilk yuvanın altına girer; sıra yelpaze / halka / komşu yığın / ekran kenarından ≥10 px uzak durur.
       const wS = cw * ss, hS = ch * ss, wM = wS * 0.94, hM = hS * 0.94, fullStep = wM * 0.34;
       const ringKeep = cw * 1.125 + 10;
-      const ringHalf = (y: number) => (Math.abs(y - pileY) >= ringKeep ? 0 : Math.sqrt(ringKeep * ringKeep - (y - pileY) ** 2));
+      const ringHalf = (y: number) => (Math.abs(y - pileY) >= ringKeep - 1.5 ? 0 : Math.sqrt(ringKeep * ringKeep - (y - pileY) ** 2));
       const reach = (span: number) => Math.min(Math.max(0, span), 4 * fullStep); // bir sıranın en uzak uzanışı
       // yan rakiplerin pişti sırası kendi yelpazelerinin hemen altında başlar (eskiden %18 yukarı kayıktı: yelpazenin son kartına biniyordu)
       const py = Math.max(-hS * 0.25, fanBottom + hM / 2 + 12 - sideY);
@@ -433,7 +433,7 @@ export class Table2D {
       // benim pişti sıram (sola): halkaya, soldaki rakibin pişti sırasına ve desteye ≥10 px yaklaşmaz
       const wMe = cw * ms * 0.94, hMe = ch * ms * 0.94, myC0 = myX - (cw * ms) / 2;
       const myRowTop = myY - 2 - hMe / 2 - 6, myRowBot = myY - 2 + hMe / 2 + 6;
-      let myMin = myRowTop < pileY + ringKeep ? W / 2 + ringHalf(myRowTop) : 0;
+      let myMin = ringHalf(myRowTop) > 0 ? W / 2 + ringHalf(myRowTop) : 0;
       if (myRowTop < rowBot + 10 && myRowBot > rowTop - 10) myMin = Math.max(myMin, leftC0 + reach(leftSpan) + wM / 2 + 8 + 10);
       if (myRowBot > deck.y - (ch * deck.s) / 2 - 12) myMin = Math.max(myMin, deck.x + (cw * deck.s) / 2 + 12);
       const mySpan = myC0 - (myMin + wMe / 2 + 8);
@@ -441,14 +441,14 @@ export class Table2D {
       // (eskiden sağa dizilip ekranın dışına taşıyordu, 4 sıra portreye biniyordu)
       const pauseBottom = u * 0.6 + Math.max(44, u * 3);
       const headTop = H * (H <= 700 ? 0.215 : 0.245) - (H <= 700 ? 4.3 : 4.6) * u * 0.14; // sağ/sol rozetin portresi (hud.css)
-      const topY = (pauseBottom + 9 + hS / 2 + headTop - 8 - hS / 2) / 2; // düğme ile portre arasında ortalı (yığının eğikliği dahil)
+      const topY = (pauseBottom + 11 + headTop - 5) / 2; // düğme ile portre arasında ortalı (yığının eğikliği ve 6 px yükselmesi dahil)
       const topX = W - 8 - wS / 2 - 3;
       const topFanR = W / 2 + 1.5 * cw * fs * 0.62 + (cw * fs) / 2 + 6;
       const topSpan = topX - wS / 2 - (topFanR + 6 + wM / 2 + 8);
       seats = [
         {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: myX, y: myY, s: ms, r: 8}, pdir: -1, py: -2, pspan: mySpan},
         {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1, py, pspan: rightSpan2},
-        {fan: {x: W / 2, y: H * 0.2, a: 180, s: fs, spread: cw * fs * 0.62}, stack: {x: topX, y: topY, s: ss, r: 6}, pdir: -1, pspan: topSpan},
+        {fan: {x: W / 2, y: H * 0.2, a: 180, s: fs, spread: cw * fs * 0.62}, stack: {x: topX, y: topY, s: ss, r: 6}, pdir: -1, py: -4, pspan: topSpan},
         {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1, py, pspan: leftSpan},
       ];
     }
