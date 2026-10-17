@@ -58,6 +58,8 @@ export interface BlofBotParams {
   slip: number;
   /** Son kartlarını atan rakibe "Blöf!" deme olasılığı. */
   finalCatch: number;
+  /** Az tanıdığı rakibin ucuz yığınına ara sıra "bir bakalım" deme olasılığı (rakibi öğrenmek için). */
+  probe: number;
   /** Bot başına mizaç farkı (cesaret ± bu kadar; blöf sevgisi ± %15·bu). */
   temperament: number;
   /** Blöfte gergin görünme olasılığı / doğruyken gergin görünme olasılığı / blöfte sırıtma (taklit). */
@@ -97,6 +99,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     suspicion: 0.15,
     slip: 0.12,
     finalCatch: 0.9,
+    probe: 0,
     temperament: 0.5,
     tellLeak: 0.65,
     tellFake: 0.1,
@@ -125,6 +128,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     suspicion: 0,
     slip: 0.07,
     finalCatch: 1,
+    probe: 0.08,
     temperament: 0.35,
     tellLeak: 0.4,
     tellFake: 0.12,
@@ -153,6 +157,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     suspicion: 0,
     slip: 0.04,
     finalCatch: 1,
+    probe: 0.12,
     temperament: 0.3,
     tellLeak: 0.2,
     tellFake: 0.15,
@@ -194,8 +199,9 @@ const PAD_O = 0.07;
 const EPS_F = 0.02;
 const EPS_O = 0.01;
 const PURE_O = 0.04;
-/** Rakip modeli: açılan atışlarda yalan payının önseli (yalnız şüpheli atışlar açıldığı için ~%45). */
-const LIE_BASE = 0.45;
+/** Rakip modeli: açılan (blöf denen) atışlarda yalan payının önseli — açışta / takipte (şüpheli atışlar açıldığı için yüksek). */
+const LIE_OPEN = 0.2;
+const LIE_FOLLOW = 0.45;
 /** Rakip modeli: bir açış / takip penceresinde (kim olursa) "Blöf!" denme sıklığının önseli. */
 const CALL_OPEN = 0.1;
 const CALL_FOLLOW = 0.3;
@@ -237,8 +243,9 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
   /** Açık pencerenin türü (0 açış, 1 takip) ve son kart mı. */
   private winKind = 0;
   private winFinal = false;
-  private readonly liesN = new Float64Array(4);
-  private readonly truthsN = new Float64Array(4);
+  /** [koltuk*2 + tür] (0 açış, 1 takip): açılan atışlarından yalan / doğru çıkanlar. */
+  private readonly liesN = new Float64Array(8);
+  private readonly truthsN = new Float64Array(8);
   /** Kenara giden turlarda söylenen kart sayısı (değer başına, ≤ 4): o değerin kopyaları büyük olasılıkla kenarda. */
   private readonly discClaims = new Float64Array(14);
   /** Bu turun değeri ve söylenen toplam (kenara giderse discClaims'e eklenir). */
@@ -326,8 +333,8 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
       }
       case 'reveal':
         if (e.seat !== me) {
-          if (e.truthful) this.truthsN[e.seat]++;
-          else this.liesN[e.seat]++;
+          if (e.truthful) this.truthsN[e.seat * 2 + this.winKind]++;
+          else this.liesN[e.seat * 2 + this.winKind]++;
         }
         if (!this.inited) return;
         for (const c of e.cards) {
@@ -486,11 +493,20 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
   }
 
   /** Bir rakibin açılan atışlarındaki yalan payına göre blöf eğilimi çarpanı (kamuya açık geçmiş). */
-  private lieMul(s: number): number {
+  private lieMul(s: number, opening: boolean): number {
     if (!this.p.counting) return 1;
-    const l = this.liesN[s];
-    const t = this.truthsN[s];
-    return clamp((l + LIE_BASE * 3) / (l + t + 3) / LIE_BASE, 0.55, 1.8);
+    const k = s * 2 + (opening ? 0 : 1);
+    const l = this.liesN[k];
+    const t = this.truthsN[k];
+    const base = opening ? LIE_OPEN : LIE_FOLLOW;
+    // hızlı öğrenir: "açışta hep yalan atıyor" ya da "hiç blöf yapmıyor" birkaç açılışta belli olur
+    return clamp((l + base * 3) / (l + t + 3) / base, 0.35, opening ? 6 : 2.2);
+  }
+
+  /** Bu rakibin bu tür atışından (açış/takip) kaç kez açılış gördüm (az ise ara sıra "bir bakayım" der). */
+  private seen(s: number, opening: boolean): number {
+    const k = s * 2 + (opening ? 0 : 1);
+    return this.liesN[k] + this.truthsN[k];
   }
 
   /**
@@ -619,7 +635,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     else possible = this.naiveDist(v, x, r, k, mine);
     if (possible < k) return this.rnd() < this.p.notice ? 1 : 0.5;
     const d = this.dist;
-    const mul = this.lieMul(x);
+    const mul = this.lieMul(x, opening);
     const bluffF = v.seats === 2 ? BLUFF_F2 : BLUFF_FN;
     let pt = 0;
     let pl = 0;
@@ -684,6 +700,9 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     let ev = gain - loss - this.declineValue(v) + this.p.suspicion + this.bold + this.p.noise * this.gauss();
     // içgüdü: sınırda kararlarda arada bir yanılır (zor bot da)
     if (Math.abs(ev) < 1.5 && this.rnd() < this.p.slip) ev = -ev;
+    // merak: bu rakibin böyle atışını henüz pek açmadım ve yığın ucuz → ara sıra "bir bakalım" (rakibi tanımak için)
+    const opening = v.roundPlays.length === 1;
+    if (ev <= 0 && S <= 5 && q > 0.05 && this.seen(w.by, opening) < 3 && this.rnd() < this.p.probe) ev = 0.1;
     const doubt = 1 - Math.abs(q - 0.5) * 2; // 1: tam belirsiz
     if (ev > 0) {
       const urgency = Math.min(1, ev / 4);
