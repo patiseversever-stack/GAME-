@@ -2176,6 +2176,77 @@ export const BUSY_WINDOW_MS = 30_000;
 /** Karakter başına tekrar edilmeyecek son replik sayısı (kalıcı: eller / oturumlar arası). */
 export const HISTORY = 12;
 
+// ───────────────────────── sohbet yoğunluğu (Sakin · Normal · Geveze) ─────────────────────────
+//
+// Oyuncunun seçtiği seviye bütün yöneticilerin (Pişti `dialogue`, BlofTalk) sıklık kurallarını ÇARPANLA ölçekler; büyük
+// anlar (pişti, el başı/sonu, Blöf anı: kind 'always') her seviyede konuşur. Hiçbir seviye üst üste konuşma ya da
+// insanın karar penceresinde atışma getirmez (tek kanal + atışma `calm` şartı aynen geçerli). "Konuşmalar" kapalıysa
+// ses hiç yok; seviye balonları da (ses yokken yalnız balon) aynı ölçüde seyreltir.
+
+export const CHAT_LEVELS = ['sakin', 'normal', 'geveze'] as const;
+export type ChatLevel = (typeof CHAT_LEVELS)[number];
+export const isChatLevel = (x: unknown): x is ChatLevel => (CHAT_LEVELS as readonly unknown[]).includes(x);
+
+export interface ChatProfile {
+  /** Olay tepkisi (event: yakalama, değerli kart, son el…) olasılık çarpanı */
+  event: number;
+  /** Boş laf (chatter: düşünme, bekleme, önde/geride, Blöf'te bekleme) olasılık çarpanı; 0 = hiç */
+  chatter: number;
+  /** Sessizlik aralıkları (EVENT_GAP_MS, CHATTER_GAP_MS, anın selfGapMs'i) çarpanı */
+  gap: number;
+  /** Atışma: BANTER_RULES.chance çarpanı (en çok 1) */
+  banter: number;
+  /** Atışma: BANTER_RULES.minHands çarpanı (iki atışma arası el) */
+  banterHands: number;
+  /** Hızlı sohbete bot cevabı olasılık çarpanı */
+  reply: number;
+  /** Seslendirmesiz kısa tepki (ortak sevinci, iç çekme) olasılığı */
+  quip: number;
+  /** Oyuncu uzun düşününce laf atma gecikmesi çarpanı */
+  idle: number;
+  /** Ara Skor: konuşulma olasılığı · ikinci satır (cevap) olasılığı */
+  midTalk: number;
+  midReply: number;
+  /** Sonuç ekranı: en çok satır · ikinci satır olasılığı · üçüncü satır (rövanş çağrısı) olasılığı */
+  endMax: 1 | 2 | 3;
+  endReply: number;
+  endRevenge: number;
+  /** Ana sayfaya dönerken veda repliği olasılığı */
+  bye: number;
+}
+
+/** Seviye profilleri. Normal = önceki ayar (çarpanlar 1). */
+export const CHAT_PROFILES: Readonly<Record<ChatLevel, ChatProfile>> = {
+  // yalnız büyük anlar: olay tepkisi seyrek, boş laf yok, atışma nadir; sonuçta tek replik
+  sakin: {event: 0.4, chatter: 0, gap: 1.6, banter: 0.35, banterHands: 2, reply: 0.6, quip: 0.35, idle: 1.4, midTalk: 0.5, midReply: 0, endMax: 1, endReply: 0, endRevenge: 0, bye: 0},
+  normal: {event: 1, chatter: 1, gap: 1, banter: 1, banterHands: 1, reply: 1, quip: 1, idle: 1, midTalk: 1, midReply: 0.6, endMax: 3, endReply: 1, endRevenge: 0.35, bye: 0.5},
+  // kahvehane: daha çok tepki, takılma ve atışma (yine tek kanal, kararda atışma yok); sonuçta tam karşılıklı dizi
+  geveze: {event: 1.5, chatter: 1.8, gap: 0.7, banter: 2, banterHands: 0.5, reply: 1.3, quip: 1, idle: 0.75, midTalk: 1, midReply: 1, endMax: 3, endReply: 1, endRevenge: 0.75, bye: 0.9},
+};
+
+let LEVEL: ChatLevel = 'normal';
+/** Oyunun sohbet seviyesini ayarlar (profil ayarı; bilinmeyen değer → normal). Bütün yöneticiler bunu okur. */
+export function setChatLevel(l: unknown): ChatLevel {
+  LEVEL = isChatLevel(l) ? l : 'normal';
+  return LEVEL;
+}
+export function chatLevel(): ChatLevel {
+  return LEVEL;
+}
+export function chatProfile(l: ChatLevel = LEVEL): ChatProfile {
+  return CHAT_PROFILES[l];
+}
+
+/** İlk açılış seçicisi / ayarlar: seviyenin adı, kısa açıklaması ve dinletilecek örnek (var olan sesli replikler). */
+export const CHAT_LEVEL_INFO: Readonly<Record<ChatLevel, {name: string; desc: string; sample: readonly string[]}>> = {
+  sakin: {name: 'Sakin', desc: 'Yalnız büyük anlar: pişti, blöf, zafer.', sample: ['qr_riza_praise_1']},
+  normal: {name: 'Normal', desc: 'Tepkiler, takılmalar, ara sıra atışma.', sample: ['banter_dursun_riza_steal_1a', 'banter_dursun_riza_steal_1b']},
+  geveze: {
+    name: 'Geveze', desc: 'Tam kahvehane: laf lafı açar!',
+    sample: ['banter_riza_cem_steal_1a', 'banter_riza_cem_steal_1b', 'banter_riza_cem_steal_1c', 'qr_dursun_friendly_3'],
+  },
+};
+
 export const MOMENT_RULES: Readonly<Record<Moment, MomentRule>> = {
   start: {kind: 'always', chance: 1, prio: 3},
   botPisti: {kind: 'always', chance: 1, prio: 3},
@@ -2337,16 +2408,20 @@ export interface BanterRequest {
   talk: 'voice' | 'bubbles' | 'off';
 }
 
-/** Kurallara uyan bir atışma seçer (yoksa null). Saf: hafızayı değiştirmez (bkz. noteBanter). */
-export function pickBanter(req: BanterRequest, hand: number, mem: BanterMemory, rnd: () => number = Math.random): Exchange | null {
+/**
+ * Kurallara uyan bir atışma seçer (yoksa null). Saf: hafızayı değiştirmez (bkz. noteBanter). Sohbet seviyesi (prof)
+ * olasılığı, el aralığını ve sessizlik şartını ölçekler; 1'e 1 / sakin olmayan an / kapalı her seviyede yok.
+ */
+export function pickBanter(req: BanterRequest, hand: number, mem: BanterMemory, rnd: () => number = Math.random, prof: ChatProfile = chatProfile()): Exchange | null {
   if (req.talk === 'off' || req.mode === '1v1' || req.a === req.b || !req.calm) return null;
-  if (req.quietForMs < BANTER_RULES.quietMs || hand - mem.last < BANTER_RULES.minHands) return null;
+  const minHands = Math.round(BANTER_RULES.minHands * prof.banterHands);
+  if (req.quietForMs < BANTER_RULES.quietMs * prof.gap || hand - mem.last < minHands) return null;
   const info = BANTER_CTX_INFO[req.ctx];
   if (!info || (info.game !== 'any' && info.game !== req.game)) return null;
   if (info.team === 'mate' && (!req.sameTeam || req.mode !== 'esli')) return null;
   if (info.team === 'opp' && req.sameTeam) return null;
   const cand = BANTER.filter(e => e.ctx === req.ctx && e.a === req.a && e.b === req.b && !(e.id in mem.seen && hand - mem.seen[e.id] < BANTER_RULES.repeatHands));
-  if (!cand.length || rnd() >= BANTER_RULES.chance) return null;
+  if (!cand.length || rnd() >= Math.min(1, BANTER_RULES.chance * prof.banter)) return null;
   const never = cand.filter(e => !(e.id in mem.seen));
   const pool = never.length ? never : cand;
   return pool[Math.floor(rnd() * pool.length) % pool.length];
@@ -2399,13 +2474,13 @@ export interface QuickSeat {
  * destek verir; aksi hâlde rastgele bir rakip bot iğneler. `delayMs` söyleyiş BİTTİKTEN sonraki beklemedir.
  */
 export function planQuickReply(
-  msgId: string, seats: readonly QuickSeat[], recent: readonly string[] = [], rnd: () => number = Math.random,
+  msgId: string, seats: readonly QuickSeat[], recent: readonly string[] = [], rnd: () => number = Math.random, prof: ChatProfile = chatProfile(),
 ): {seat: number; char: CharId; line: LineRef; delayMs: number} | null {
   const msg = QUICK_CHAT.find(q => q.id === msgId);
   if (!msg) return null;
   const rule = QUICK_REPLY_RULES[msg.reply];
   const bots = seats.filter(s => !s.human);
-  if (!bots.length || rnd() >= rule.chance) return null;
+  if (!bots.length || rnd() >= Math.min(0.95, rule.chance * prof.reply)) return null;
   const mates = bots.filter(s => s.rel === 'mate');
   const opps = bots.filter(s => s.rel === 'opp');
   const who = mates.length && (rule.mateFirst || !opps.length) ? mates[0] : opps.length ? opps[Math.floor(rnd() * opps.length) % opps.length] : null;
@@ -2426,6 +2501,8 @@ export function planQuickReply(
 export class DialogueDirector {
   /** Zaman kaynağı (ms). shouldSpeak'e verilen `now` ile aynı saat olmalı (oyunda performance.now). */
   clock: () => number = nowMs;
+  /** Bu yöneticiye özel sohbet seviyesi (test); verilmezse oyunun seviyesi (setChatLevel). */
+  level: ChatLevel | null = null;
   private mem: TalkMemory = freshMemory();
   private store: TalkStore | null = null;
   private crowd = 1;
@@ -2489,19 +2566,40 @@ export class DialogueDirector {
     }
   }
 
-  /** Bu anda konuşulsun mu? true dönerse konuşma kaydedilir (sonraki çağrıların bekleme süresi başlar). */
+  /** Geçerli sohbet profili (yöneticinin kendi seviyesi ya da oyunun). */
+  get profile(): ChatProfile {
+    return chatProfile(this.level ?? LEVEL);
+  }
+
+  /**
+   * Bu anda konuşulsun mu? true dönerse konuşma kaydedilir (sonraki çağrıların bekleme süresi başlar). Sohbet seviyesi
+   * olay / boş laf olasılığını ve sessizlik aralıklarını ölçekler ('always' anlar her seviyede konuşur).
+   */
   shouldSpeak(moment: string, now: number = this.clock(), rnd: () => number = Math.random): boolean {
     const r = ruleFor(moment);
     if (r.kind !== 'always') {
-      if (now - this.lastAt < (r.kind === 'chatter' ? CHATTER_GAP_MS : EVENT_GAP_MS)) return false;
+      const p = this.profile;
+      const mult = r.kind === 'chatter' ? p.chatter : p.event;
+      if (mult <= 0) return false;
+      if (now - this.lastAt < (r.kind === 'chatter' ? CHATTER_GAP_MS : EVENT_GAP_MS) * p.gap) return false;
       const last = this.lastBy.get(moment);
-      if (r.selfGapMs && last !== undefined && now - last < r.selfGapMs) return false;
+      if (r.selfGapMs && last !== undefined && now - last < r.selfGapMs * p.gap) return false;
       const same = count(this.spoken.get(moment), now, FATIGUE_WINDOW_MS);
       const busy = count(this.all, now, BUSY_WINDOW_MS);
-      if (rnd() >= r.chance * this.crowd * Math.pow(FATIGUE, same) * Math.pow(BUSY_DAMP, busy)) return false;
+      if (rnd() >= Math.min(1, r.chance * mult) * this.crowd * Math.pow(FATIGUE, same) * Math.pow(BUSY_DAMP, busy)) return false;
     }
     this.note(moment, now);
     return true;
+  }
+
+  /** Seslendirmesiz kısa tepki (ortak sevinci, iç çekme) söylensin mi: seviyenin quip olasılığı. */
+  allowQuip(rnd: () => number = Math.random): boolean {
+    return rnd() < this.profile.quip;
+  }
+
+  /** Oyuncu uzun düşününce laf atma gecikmesi (ms): seviyeye göre (Geveze daha erken, Sakin'de boş laf zaten yok). */
+  idleDelay(baseMs: number): number {
+    return Math.round(baseMs * this.profile.idle);
   }
 
   private note(moment: string, now: number): void {
@@ -2528,8 +2626,17 @@ export class DialogueDirector {
    * seçilince konuşma zamanı yine kaydedilir, böylece boş laflar hemen arkasından gelmez.
    */
   pickLine(charId: string, moment: string, rnd: () => number = Math.random): Line | null {
-    const pool = linesFor(charId, moment);
+    return this.pickAny(charId, [moment], rnd);
+  }
+
+  /**
+   * pickLine'ın çok anlı biçimi: birkaç anın replikleri TEK havuz sayılır (ör. sonuçta 'endGloat' + 'botWin'), seçim
+   * aynı kurallarla (karakterin son replikleri, tekrar beklemesi, ağırlık). Konuşma zamanı ilk anın adıyla kaydedilir.
+   */
+  pickAny(charId: string, moments: readonly string[], rnd: () => number = Math.random): Line | null {
+    const pool = moments.length === 1 ? linesFor(charId, moments[0]) : moments.flatMap(mo => linesFor(charId, mo));
     if (!pool.length) return null;
+    const moment = moments[0];
     if (ruleFor(moment).kind === 'always') {
       const t = this.clock();
       if (t > this.lastAt) this.note(moment, t);
@@ -2567,9 +2674,13 @@ export class DialogueDirector {
     return pick;
   }
 
-  /** Sıklık kuralını atlayarak konuş (zorunlu an): konuşma zamanı yine kaydedilir. */
+  /**
+   * Sıklık kuralını atlayarak konuş (zorunlu an): konuşma zamanı yine kaydedilir. Boş laf (chatter) türündeki anlar
+   * (ör. Blöf'te oyuncu uzun düşününce) sohbet seviyesi boş lafı kapatmışsa (Sakin) yine susar.
+   */
   force(charId: string, moment: string, rnd: () => number = Math.random): Line | null {
     if (!linesFor(charId, moment).length) return null;
+    if (ruleFor(moment).kind === 'chatter' && this.profile.chatter <= 0) return null;
     this.note(moment, this.clock());
     return this.pickLine(charId, moment, rnd);
   }
@@ -2587,7 +2698,7 @@ export class DialogueDirector {
    * söylenecekse (yakalama, blöf yakalandı) konuşma yöneticisi zaten sırayla söyletir, üst üste binmez.
    */
   banter(req: Omit<BanterRequest, 'quietForMs'> & {quietForMs?: number}, now: number = this.clock(), rnd: () => number = Math.random): Exchange | null {
-    const ex = pickBanter({...req, quietForMs: req.quietForMs ?? now - this.lastAt}, this.mem.hand, this.mem.banter, rnd);
+    const ex = pickBanter({...req, quietForMs: req.quietForMs ?? now - this.lastAt}, this.mem.hand, this.mem.banter, rnd, this.profile);
     if (!ex) return null;
     this.mem.banter = noteBanter(this.mem.banter, ex, this.mem.hand);
     this.note('banter', now);
@@ -2625,4 +2736,250 @@ export function beginDialogueHand(seats: number, store?: TalkStore | null): void
 
 export function resetDialogue(): void {
   dialogue.reset();
+}
+
+// ───────────────────────── el / maç sonu karşılıklı konuşma (Ara Skor + sonuç ekranı) ─────────────────────────
+//
+// Sonuç ekranında ve Ara Skor'da kısa bir karşılıklı dizi: A söyler, B cevaplar, ara sıra C (rövanş çağrısı). Satırlar
+// rol havuzlarından (END_MOMENTS + var olan botWin / playerWin / botLeading / playerLeading / comeback / draw) bağlama göre
+// seçilir; kalıcı tekrar önleme yöneticiden (pick → DialogueDirector.pickAny) gelir, böylece diziler hep değişir.
+//  · 1'e 1 / 3 / 4 kişi: kazanan bot oyuncuya takılır (ya da kaybeden bot söylenir); ikinci ses başka bir bot ya da
+//    1'e 1'de kenardan bir seyirci (masada olmayan karakter; kahveci Dursun öncelikli).
+//  · Eşli: bot ortağın oyuncuya ("ortak") sözü + rakibin cevabı, ya da rakip takımın iki botu birbirine (övgü / sitem).
+//  · Koşullar: kıl payı / ezici fark, oyuncunun serisi, pişti yağmuru, Blöf'te çok yakalanma / hiç yakalanmama / son kart blöfü.
+//  · Sohbet seviyesi: Sakin tek satır (Ara Skor'da yarı yarıya), Normal A+B (rövanş ara sıra), Geveze A+B+C.
+
+/** Masadaki bir koltuk (planEndTalk için): insan konuşmaz; side = taraf (eşlide takım, diğerlerinde koltuk). */
+export interface EndSeat {
+  seat: number;
+  char: CharId;
+  human: boolean;
+  side: number;
+}
+
+/** El / maç sonu bağlamı (uygulama hesaplar). Oyuncunun tarafı = insan koltuğunun side'ı. */
+export interface EndFacts {
+  scene: 'results' | 'interim';
+  game: 'pisti' | 'blof';
+  mode: '1v1' | '3' | '4' | 'esli';
+  seats: readonly EndSeat[];
+  /** Sonuç: oyuncunun (takımının) sonucu · Ara Skor: oyuncunun durumu (win = tek başına önde, lose = rakip önde, draw = eşit) */
+  outcome: 'win' | 'lose' | 'draw';
+  /** Kazanan / önde olan taraflar */
+  leaders: readonly number[];
+  /** Taraflar iyiden kötüye */
+  order: readonly number[];
+  /** Ara Skor: bu elden ÖNCE önde olanlar (geri dönüş için) */
+  prevLeaders?: readonly number[];
+  /** Kıl payı · ezici fark */
+  close?: boolean;
+  big?: boolean;
+  /** Oyuncunun galibiyet serisi sürüyor (≥ 3) */
+  streak?: boolean;
+  /** Pişti: oyuncu bu maçta çok pişti yaptı */
+  pistiHeavy?: boolean;
+  /** Blöf: oyuncunun blöfleri çok yakalandı */
+  caughtLot?: boolean;
+  /** Blöf: oyuncu hiç yakalanmadan blöf yaptı ya da çok blöf yakaladı */
+  sly?: boolean;
+  /** Blöf: oyuncu eli son kart blöfüyle bitirdi */
+  lastBluff?: boolean;
+  /** Sonuç: "Bir El Daha / Yeni Maç" düğmesi var (rövanş çağrısı olabilir) */
+  rematch?: boolean;
+  /** Masada olmayan, kenardan laf atabilecek karakterler (1'e 1'de ikinci ses) */
+  spectators?: readonly CharId[];
+}
+
+export interface EndLine {
+  /** Konuşanın koltuğu; seyirci (masada değil) −1 */
+  seat: number;
+  char: CharId;
+  line: Line;
+  /** Rol (seçilen an grubunun ilki: 'endGloat', 'endRevenge', 'midSide' …) */
+  role: string;
+}
+
+/** Replik seçici: karakterin şu anlarından biri, TEK havuz (oyunda DialogueDirector.pickAny; kalıcı tekrar önleme). */
+export type EndPick = (char: CharId, moments: readonly string[]) => Line | null;
+
+/** Seyirci: masada olmayan biri; kahvenin sahibi Dursun öncelikli (sabit sıra: ses paketi maç başında hazırlanabilsin). */
+export function spectatorFor(atTable: readonly string[]): CharId | null {
+  const order: CharId[] = ['dursun', 'riza', 'defne', 'cem'];
+  return order.find(c => !atTable.includes(c)) ?? null;
+}
+
+/** Oyuncu kazandı: kaybeden botun koşullu repliği (öncelik sırasıyla) ya da null. */
+function sulkRole(f: EndFacts): EndMoment | null {
+  if (f.game === 'blof' && f.lastBluff) return 'endSulkLast';
+  if (f.game === 'blof' && f.sly) return 'endSulkSly';
+  if (f.streak) return 'endSulkStreak';
+  if (f.game === 'pisti' && f.pistiHeavy) return 'endSulkPisti';
+  if (f.big) return 'endSulkBig';
+  if (f.close) return 'endSulkClose';
+  return null;
+}
+
+/** Oyuncu kaybetti: kazanan botun koşullu repliği ya da null. */
+function gloatRole(f: EndFacts): EndMoment | null {
+  if (f.game === 'blof' && f.caughtLot) return 'endGloatCaught';
+  if (f.big) return 'endGloatBig';
+  if (f.close) return 'endGloatClose';
+  return null;
+}
+
+/** Koşullu replik bulunursa çoğunlukla o söylenir (hep aynı koşulda bile genel havuz arada bir karışır). */
+const COND_P = 0.85;
+const REVENGE_RX = /rövanş/i;
+
+/**
+ * El / maç sonu karşılıklı dizisini planlar (en çok 3 satır; aynı kişi art arda konuşmaz; "rövanş" iki kez geçmez).
+ * Saf: seçimi `pick` yapar (oyunda kalıcı hafızalı yönetici), rastgelelik `rnd`, seviye `prof`.
+ */
+export function planEndTalk(f: EndFacts, pick: EndPick, rnd: () => number = Math.random, prof: ChatProfile = chatProfile()): EndLine[] {
+  const me = f.seats.find(s => s.human);
+  const mySide = me ? me.side : -1;
+  const bots = f.seats.filter(s => !s.human);
+  if (!bots.length) return [];
+  const mates = bots.filter(s => s.side === mySide);
+  const foes = bots.filter(s => s.side !== mySide);
+  const rank = (s: EndSeat): number => {
+    const i = f.order.indexOf(s.side);
+    return i < 0 ? 99 : i;
+  };
+  const one = <T>(xs: readonly T[]): T | undefined => (xs.length ? xs[Math.floor(rnd() * xs.length) % xs.length] : undefined);
+  const specChar = f.spectators?.find(c => !f.seats.some(s => s.char === c));
+  const spectator: {seat: number; char: CharId} | undefined = specChar ? {seat: -1, char: specChar} : undefined;
+  /** İkinci ses: A'dan başka bir bot (önce `pref` içinden), yoksa seyirci. */
+  const other = (a: {char: CharId} | undefined, pref: readonly EndSeat[] = bots): {seat: number; char: CharId} | undefined =>
+    one(pref.filter(s => s.char !== a?.char)) ?? one(bots.filter(s => s.char !== a?.char)) ?? spectator;
+  /** Rastgele sırayla iki havuzdan biri (ilkinde replik yoksa öbürü). */
+  const either = (a: readonly string[], b: readonly string[]): readonly (readonly string[])[] => (rnd() < 0.5 ? [a, b] : [b, a]);
+
+  type Step = {who: {seat: number; char: CharId} | undefined; pools: readonly (readonly string[])[]};
+  const steps: Step[] = [];
+  const add = (who: Step['who'], ...pools: (readonly string[])[]): void => void steps.push({who, pools});
+
+  if (f.scene === 'interim') {
+    if (rnd() >= prof.midTalk) return [];
+    const myLead = f.leaders.length === 1 && f.leaders[0] === mySide;
+    const theirLead = f.leaders.length === 1 && f.leaders[0] !== mySide;
+    const back = theirLead && f.prevLeaders?.length === 1 && f.prevLeaders[0] === mySide; // bot geriden gelip öne geçti
+    const ahead = (): readonly (readonly string[])[] => (back ? [['comeback'], ['botLeading']] : either(['botLeading'], ['midAhead']));
+    if (f.mode === 'esli') {
+      const mate = mates[0];
+      const foe = one(foes);
+      if (myLead) {
+        if (mate) add(mate, ['midMateUp']);
+        add(foe, ...either(['playerLeading'], ['midBehind']));
+      } else if (theirLead) {
+        add(foe, ...ahead());
+        if (mate) add(mate, ['midMateDown']);
+      } else {
+        const a = one(bots);
+        add(a, ['midSide']);
+        add(other(a), ['midSide']);
+      }
+    } else {
+      if (myLead) {
+        const chaser = [...foes].sort((x, y) => rank(x) - rank(y))[0];
+        add(chaser, ...either(['playerLeading'], ['midBehind']));
+        add(other(chaser), ['midSide']);
+      } else if (theirLead) {
+        const leader = bots.find(s => s.side === f.leaders[0]) ?? one(foes);
+        add(leader, ...ahead());
+        add(other(leader), ['midSide']);
+      } else {
+        const a = one(bots);
+        add(a, ['midSide']);
+        add(other(a), ['midSide']);
+      }
+    }
+    const n = rnd() < prof.midReply ? 2 : 1;
+    return run(steps.slice(0, n));
+  }
+
+  // ---- sonuç ekranı ----
+  const won = f.outcome === 'win';
+  const lost = f.outcome === 'lose';
+  const cond = won ? sulkRole(f) : lost ? gloatRole(f) : null;
+  const useCond = !!cond && rnd() < COND_P;
+  const blof = f.game === 'blof';
+  /** A'nın havuzları: koşullu → genel (yeni kısa replikler ya da var olan kazanma / kaybetme replikleri). */
+  const aPools = (generic: readonly (readonly string[])[]): readonly (readonly string[])[] => (useCond && cond ? [[cond], ...generic] : generic);
+  const gloat = either(['endGloat'], [blof ? 'blofBotWin' : 'botWin']);
+  const sulk = either(['endSulk'], [blof ? 'blofPlayerWin' : 'playerWin']);
+  if (f.outcome === 'draw') {
+    const a = one(bots);
+    add(a, ['draw'], ['midSide']);
+    add(other(a), ['midSide']);
+  } else if (f.mode === 'esli') {
+    const mate = mates[0];
+    const [f1, f2] = rnd() < 0.5 ? [foes[0], foes[1]] : [foes[1], foes[0]];
+    const v = rnd();
+    if (mate && v < 0.45) {
+      // ortak bize, rakip cevap verir
+      add(mate, [won ? 'endMateWin' : 'endMateLose']);
+      add(f1 ?? f2, ...(useCond && cond ? [[cond]] : []), [won ? 'endFoeLose' : 'endFoeWin']);
+    } else if (f1 && f2 && v < 0.75) {
+      // rakip takımın iki botu birbirine (kazandılarsa övgü, kaybettilerse sitem)
+      add(f1, [won ? 'endDuoLoseA' : 'endDuoWinA']);
+      add(f2, [won ? 'endDuoLoseB' : 'endDuoWinB']);
+    } else {
+      // rakip bize takılır / söylenir, ortak bize döner
+      add(f1 ?? f2, ...aPools([[won ? 'endFoeLose' : 'endFoeWin']]));
+      if (mate) add(mate, [won ? 'endMateWin' : 'endMateLose']);
+    }
+  } else {
+    // 1'e 1 / 3 / 4 kişi
+    const losers = [...foes].sort((x, y) => rank(x) - rank(y));
+    const a = won ? (rnd() < 0.7 ? losers[0] : one(losers)) : (foes.find(s => f.leaders.includes(s.side)) ?? one(foes));
+    const b = won ? other(a) : other(a, foes.filter(s => !f.leaders.includes(s.side)));
+    const join: readonly string[] = [won ? 'endJoinLose' : 'endJoinWin'];
+    if (f.mode === '1v1' && b && b.seat < 0 && !useCond && rnd() < 0.4) {
+      // 1'e 1: önce kenardan seyirci, sonra masadaki bot
+      add(b, join);
+      add(a, ...(won ? sulk : gloat));
+    } else {
+      add(a, ...aPools(won ? sulk : gloat));
+      add(b, join);
+    }
+  }
+  const plan = run(steps.slice(0, prof.endMax <= 1 || rnd() >= prof.endReply ? 1 : 2));
+  // rövanş çağrısı (C): rakip bir bot, son konuşan değil; "rövanş" zaten geçtiyse yok
+  if (prof.endMax >= 3 && f.rematch && plan.length >= 1 && rnd() < prof.endRevenge && !plan.some(p => REVENGE_RX.test(p.line.text))) {
+    const last = plan[plan.length - 1];
+    const by = foes.filter(s => s.char !== last.char);
+    const who = by.find(s => plan.some(p => p.char === s.char)) ?? one(by);
+    if (who) {
+      const c = run([{who, pools: [['endRevenge']]}]);
+      plan.push(...c);
+    }
+  }
+  return plan;
+
+  function run(list: readonly Step[]): EndLine[] {
+    const res: EndLine[] = [];
+    for (const s of list) {
+      if (!s.who) continue;
+      if (res.length && res[res.length - 1].char === s.who.char) continue;
+      for (const pool of s.pools) {
+        const line = pick(s.who.char, pool);
+        if (line) {
+          res.push({seat: s.who.seat, char: s.who.char, line, role: pool[0]});
+          break;
+        }
+      }
+    }
+    return res;
+  }
+}
+
+/** Rövanş kabulü (yeni maçın açılışı) ve veda için konuşacak rakip: rövanş çağıran → sonuçta konuşan rakip → ilk rakip. */
+export function endChallenger(plan: readonly EndLine[], seats: readonly EndSeat[]): EndSeat | null {
+  const me = seats.find(s => s.human);
+  const foes = seats.filter(s => !s.human && (!me || s.side !== me.side));
+  const rev = plan.find(p => p.role === 'endRevenge');
+  const said = [...plan].reverse().find(p => foes.some(s => s.char === p.char));
+  const c = rev?.char ?? said?.char;
+  return foes.find(s => s.char === c) ?? foes[0] ?? null;
 }

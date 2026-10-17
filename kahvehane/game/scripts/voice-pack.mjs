@@ -7,6 +7,7 @@
 //   bot             — botlar arası atışma (banter) + hızlı sohbete bot cevapları (qr_)
 //   say             — oyuncunun KENDİ karakterinin hızlı sohbet söyleyişleri (qc_)
 //   meta            — galeri tanıtımı + market (satış, alındı, eksik)
+//   end             — el / maç sonu karşılıklı konuşma (Ara Skor, sonuç ekranı, rövanş kabulü, veda: <kar>_end…/mid…_<no>)
 // Paylaşılan (takma ad) sesler her grubun paketine ayrıca konur: gruplar kendi içinde tam kalır.
 // Paket en çok `maxPack` bayt (varsayılan 2,5 MB); aşan grup -1, -2… diye bölünür.
 // Kullanım: node scripts/voice-pack.mjs <kaynak=assets/voice> <hedef=dist-tek/voice>
@@ -15,13 +16,14 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 
 const META = new Set(['galleryIntro', 'shopPitch', 'shopBought', 'shopPoor']);
-export const PACK_GROUPS = ['pisti', 'blof', 'bot', 'say', 'meta'];
+export const PACK_GROUPS = ['pisti', 'blof', 'bot', 'say', 'meta', 'end'];
 
 /** Kimlikten grup (dialogue.ts kimlik biçimleri: <kar>_<an>_<no>, banter_…, qc_…, qr_…). */
 export function packGroup(id) {
   if (id.startsWith('banter_') || id.startsWith('qr_')) return 'bot';
   if (id.startsWith('qc_')) return 'say';
   const m = /^[a-z]+_([A-Za-z]+)_\d+$/.exec(id);
+  if (m && /^(?:end|mid)[A-Z]/.test(m[1])) return 'end';
   if (m && m[1].startsWith('blof')) return 'blof';
   if (m && META.has(m[1])) return 'meta';
   return 'pisti';

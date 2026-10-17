@@ -35,6 +35,21 @@ export class BlofTalk {
     const key = blofKey(m);
     return force ? this.d.force(charId, key) : this.d.react(charId, key, now);
   }
+
+  /** Blöf dışı bir anın repliği (ör. rövanş kabulü 'endAccept'): zorunlu an olarak, bu masanın hafızasıyla. */
+  line(charId: string, moment: string): Line | null {
+    return this.d.force(charId, moment);
+  }
+
+  /** Seslendirmesiz kısa tepki söylensin mi (sohbet seviyesi). */
+  allowQuip(): boolean {
+    return this.d.allowQuip();
+  }
+
+  /** Oyuncu uzun düşününce laf atma gecikmesi (sohbet seviyesine göre). */
+  idleDelay(baseMs: number): number {
+    return this.d.idleDelay(baseMs);
+  }
 }
 
 /** Ses önceliği (1 laf atma, 2 olay / ikincil tepki, 3 Blöf anı / el sonu). */

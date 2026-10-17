@@ -344,8 +344,7 @@ export class Table2D {
     const handW = Math.min(W * 0.245, H * 0.138);
     const handH = handW / 0.7;
     const pileY = H * 0.455;
-    const sx = Math.max(cw * 0.6, W * 0.15);
-    const hand = {x: W * 0.61, y: H - handH / 2 - Math.max(14, H * 0.022), s: handW / cw, maxW: W * 0.68};
+    const hand ={x: W * 0.61, y: H - handH / 2 - Math.max(14, H * 0.022), s: handW / cw, maxW: W * 0.68};
     // HUD birimi (theme.css --u ile aynı formül) ve "Sıra sende / Bu kartla alabilirsin!" ipucu bandı: elin hemen üstünde,
     // kalkmış (sıra 8 px + basılı 14 px + %3 büyüme) ve kıpırdayan kartın da üstünde, nefes payıyla. Bu bandın üstüne
     // (clear çizgisinin altına) hiçbir masa öğesi inmez: ipucu hiçbir zaman karta ya da desteye binmez.
@@ -367,15 +366,22 @@ export class Table2D {
       const ds = 0.9;
       deck = {x: edge + (cw * ds) / 2, y: pileY, s: ds};
       const ss2 = 0.78, hs2 = ch * ss2, wm2 = cw * ss2 * 0.94, hm2 = hs2 * 0.94;
-      const myY = Math.min(H * 0.655, clear - hs2 / 2 - 5);
+      // ipucu hapı ile yığın arası en az 10 px (yığının -8° eğikliği dahil)
+      const myY = Math.min(H * 0.655, clear - hs2 / 2 - 9);
+      // Yığınlar sağ kenarda (kenar payı ~14 px); halkanın 10 px ötesinde kalır
+      const sx2 = Math.max(cw * 0.55, W * 0.13), stX = W - sx2;
       // Rakibin yığını yelpazesinin sağında, yelpazeyle aynı hizada. Yelpaze ile halka arasında pişti kartlarını yana dizmeye yer yok
       // (yelpazeye ya da halkaya biniyordu): pişti kartları yığının ALTINA, boş sağ sütuna dizilir; sütun benim yığınımın üstünde biter.
-      // Benim yığınım ve pişti sıram aşağıda, halkanın altında: pişti kartları yana (sola) dizilir.
+      // Benim yığınım ve pişti sıram aşağıda, halkanın altında: pişti kartları yana (sola) dizilir. İkisinde de görünür yuva sayısı
+      // yere göre sınırlı (pistiRow): kart çoğalınca eskileri ilk yuvanın altına girer, sıra hiçbir şeye taşmaz.
       const oppY = H * 0.235;
       const oppC0 = oppY + hs2 / 2 + hm2 / 2 + 4;
+      const ringKeep2 = cw * 1.125 + 10;
+      const myRowTop = myY + 6 - hm2 / 2 - 6;
+      const ringX = myRowTop < pileY + ringKeep2 ? W / 2 + Math.sqrt(Math.max(0, ringKeep2 * ringKeep2 - (myRowTop - pileY) ** 2)) : 0;
       seats = [
-        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: W - sx, y: myY, s: ss2, r: 8}, pdir: -1, pspan: W - sx - (cw * ss2) / 2 - (W * 0.3 + wm2 / 2 + 10)},
-        {fan: {x: W / 2, y: oppY, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: W - sx, y: oppY, s: ss2, r: -8}, pdir: -1, pv: 1, pspan: myY - hs2 / 2 - 14 - hm2 / 2 - oppC0},
+        {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: stX, y: myY, s: ss2, r: 8}, pdir: -1, pspan: stX - (cw * ss2) / 2 - (Math.max(ringX, W * 0.3) + wm2 / 2 + 8)},
+        {fan: {x: W / 2, y: oppY, a: 180, s: 0.62, spread: cw * 0.5}, stack: {x: stX, y: oppY, s: ss2, r: -8}, pdir: -1, pv: 1, pspan: myY - hs2 / 2 - 4 - 12 - hm2 / 2 - oppC0},
       ];
     } else {
       const fs = Math.min(0.56, Math.max(0.46, (H * 0.075) / ch));
@@ -396,52 +402,52 @@ export class Table2D {
       const top = slotTop + Math.max(0, (slotBot - slotTop - need(ds)) / 2);
       deck = {x: edge + (cw * ds) / 2, y: top + 10.9 * ds + (ch * ds) / 2, s: ds};
       hintX = Math.min(maxX, Math.max(hintX, edge + cw * ds + 4 + 5 + half));
-      // benim destem halkanın sağ altında, ipucu bandının üstünde; pişti kartları ortaya (sola) dizilir: sağdaki rakibin destesine binmez
+      // benim destem halkanın sağ altında, ipucu bandının üstünde (≥10 px); pişti kartları ortaya (sola) dizilir
       const ms = 0.66;
-      const myY = clear - (ch * ms) / 2 - 5;
-      // Pişti kartları yığının yanına dizilir; her kartın köşe indeksi açık kalan adımla (kart genişliğinin ~%34'ü, bkz. pistiPose).
-      // Yerleşim 3 pişti kartına göre ayrılır, daha çoğunda adım daralır (pspan): sıra yelpaze / halka / komşu yığın / ekran kenarına taşmaz.
-      const wS = cw * ss, hS = ch * ss, wM = wS * 0.94, hM = hS * 0.94, fullStep = wM * 0.34, rowSteps = 2;
-      const ringR = cw * 1.125 + 4;
-      const ringHalf = (y: number) => (Math.abs(y - pileY) >= ringR ? 0 : Math.sqrt(ringR * ringR - (y - pileY) ** 2));
-      const stepOf = (span: number, full = fullStep) => Math.max(full * 0.3, Math.min(full, span / rowSteps));
+      const myY = clear - (ch * ms) / 2 - 9;
+      // Pişti kartları yığının yanına dizilir. Görünür yuva sayısı ve adım yere göre (pistiRow): her kartın köşe indeksi açık kalır,
+      // kart çoğalınca eskileri ilk yuvanın altına girer; sıra yelpaze / halka / komşu yığın / ekran kenarından ≥10 px uzak durur.
+      const wS = cw * ss, hS = ch * ss, wM = wS * 0.94, hM = hS * 0.94, fullStep = wM * 0.34;
+      const ringKeep = cw * 1.125 + 10;
+      const ringHalf = (y: number) => (Math.abs(y - pileY) >= ringKeep ? 0 : Math.sqrt(ringKeep * ringKeep - (y - pileY) ** 2));
+      const reach = (span: number) => Math.min(Math.max(0, span), 4 * fullStep); // bir sıranın en uzak uzanışı
       // yan rakiplerin pişti sırası kendi yelpazelerinin hemen altında başlar (eskiden %18 yukarı kayıktı: yelpazenin son kartına biniyordu)
       const py = Math.max(-hS * 0.25, fanBottom + hM / 2 + 7 - sideY);
       const rowTop = sideY + py - hM / 2 - 5, rowBot = sideY + py + hM / 2 + 5;
       const rightC0 = W - sideStackX - wS / 2, leftC0 = sideStackX + wS / 2;
       const rightSpan = rightC0 - (W / 2 + ringHalf(rowTop) + wM / 2 + 8);
       const leftSpan = W / 2 - ringHalf(rowTop) - (leftC0 + wM / 2 + 8);
-      const rightL = rightC0 - rowSteps * stepOf(rightSpan) - wM / 2 - 8; // sağ rakibin 3. pişti kartının sol kenarı
-      const leftR = leftC0 + rowSteps * stepOf(leftSpan) + wM / 2 + 8; // sol rakibin 3. pişti kartının sağ kenarı
-      // sağdaki rakibin pişti sırası ile aynı yüksekliğe denk gelirse destem sola kayar — ama yığınım halkaya girmeyecek kadar
-      // (kısa ekranda yer yoksa en az çakışma)
-      const myTop = myY - (ch * ms) / 2 - 4, R = cw * 2.25 * 0.47;
-      let myX = Math.min(W - cw * 0.6, W * 0.71);
-      if (myTop < rowBot) {
-        const ringOk = (x: number) => myTop > pileY + R + 4 || x - cw * ms * 1.55 > W / 2 + Math.sqrt(Math.max(0, R * R - (myTop - pileY) ** 2)) + 4;
-        const want = rightL - 6 - (cw * ms) / 2 - 4;
-        for (let x = Math.min(myX, want); x <= myX; x += 2) if (ringOk(x)) { myX = x; break; }
+      // Yığınımın yeri: halkadan ve sağdaki rakibin pişti sırasından ≥10 px uzakta. İkisi birden sığmıyorsa (kısa ekran) en dengeli yer
+      // seçilir, sağ rakibin sırası da kalan yere göre kısalır.
+      const myTop = myY - (ch * ms) / 2 - 4, myBot = myY + (ch * ms) / 2 + 4, mySW = (cw * ms) / 2 + 4;
+      const yOver = myTop < rowBot + 10 && myBot > rowTop - 10;
+      const marker0L = rightC0 - wM / 2 - 6; // sağ rakibin ilk pişti kartının sol kenarı
+      const ringGap = (x: number) => Math.hypot(Math.max(x - mySW - W / 2, 0, W / 2 - (x + mySW)), Math.max(myTop - pileY, 0, pileY - myBot)) - cw * 1.125;
+      const xMax = Math.min(W - cw * 0.6, W * 0.71), wantReach = Math.min(reach(rightSpan), 2 * fullStep);
+      let myX = xMax, best = -Infinity;
+      for (let x = xMax; x >= W * 0.3; x -= 2) {
+        const sc = Math.min(ringGap(x) - 10, yOver ? marker0L - x - mySW - 10 - wantReach : 99);
+        if (sc > best + 0.01) { best = sc; myX = x; }
       }
-      // benim pişti sıram (sola): halkaya, soldaki rakibin pişti sırasına ve desteye girmez
+      const rightSpan2 = yOver ? Math.min(rightSpan, marker0L - myX - mySW - 10) : rightSpan;
+      // benim pişti sıram (sola): halkaya, soldaki rakibin pişti sırasına ve desteye ≥10 px yaklaşmaz
       const wMe = cw * ms * 0.94, hMe = ch * ms * 0.94, myC0 = myX - (cw * ms) / 2;
-      const myRowTop = myY + 6 - hMe / 2 - 5, myRowBot = myY + 6 + hMe / 2 + 5;
-      let myMin = myRowTop < pileY + ringR ? W / 2 + ringHalf(myRowTop) + 2 : 0;
-      if (myRowTop < rowBot && myRowBot > rowTop) myMin = Math.max(myMin, leftR + 6);
-      const deckR = deck.x + (cw * deck.s) / 2 + 8;
-      if (myRowBot > deck.y - (ch * deck.s) / 2 - 12) myMin = Math.max(myMin, deckR);
-      const mySpan = myC0 - (myMin + wMe / 2 + 10);
+      const myRowTop = myY + 6 - hMe / 2 - 6, myRowBot = myY + 6 + hMe / 2 + 6;
+      let myMin = myRowTop < pileY + ringKeep ? W / 2 + ringHalf(myRowTop) : 0;
+      if (myRowTop < rowBot + 10 && myRowBot > rowTop - 10) myMin = Math.max(myMin, leftC0 + reach(leftSpan) + wM / 2 + 8 + 10);
+      if (myRowBot > deck.y - (ch * deck.s) / 2 - 12) myMin = Math.max(myMin, deck.x + (cw * deck.s) / 2 + 12);
+      const mySpan = myC0 - (myMin + wMe / 2 + 8);
       // üst rakip: yığın sağ üstte (duraklat düğmesinin altı, sağ rakibin portresinin üstü), pişti kartları yelpazeye doğru (sola) dizilir
       // (eskiden sağa dizilip ekranın dışına taşıyordu, 4 sıra portreye biniyordu)
       const pauseBottom = u * 0.6 + Math.max(44, u * 3);
       const headTop = H * (H <= 700 ? 0.215 : 0.245) - (H <= 700 ? 4.3 : 4.6) * u * 0.14; // sağ/sol rozetin portresi (hud.css)
-      const topLo = pauseBottom + 8 + hS / 2, topHi = headTop - 6 - hS / 2;
-      const topY = topHi < topLo ? topHi : (topLo + topHi) / 2;
+      const topY = (pauseBottom + 10 + hS / 2 + headTop - 10 - hS / 2) / 2;
       const topX = W - 8 - wS / 2 - 3;
       const topFanR = W / 2 + 1.5 * cw * fs * 0.62 + (cw * fs) / 2 + 6;
       const topSpan = topX - wS / 2 - (topFanR + 6 + wM / 2 + 8);
       seats = [
         {fan: {x: hand.x, y: hand.y, a: 0, s: hand.s, spread: 0}, stack: {x: myX, y: myY, s: ms, r: 8}, pdir: -1, pspan: mySpan},
-        {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1, py, pspan: rightSpan},
+        {fan: {x: W - side, y: H * 0.455, a: -90, s: fs, spread: cw * fs * 0.62}, stack: {x: W - sideStackX, y: sideY, s: ss, r: -6}, pdir: -1, py, pspan: rightSpan2},
         {fan: {x: W / 2, y: H * 0.2, a: 180, s: fs, spread: cw * fs * 0.62}, stack: {x: topX, y: topY, s: ss, r: 6}, pdir: -1, pspan: topSpan},
         {fan: {x: side, y: H * 0.455, a: 90, s: fs, spread: cw * fs * 0.62}, stack: {x: sideStackX, y: sideY, s: ss, r: 6}, pdir: 1, py, pspan: leftSpan},
       ];
@@ -522,7 +528,7 @@ export class Table2D {
     this.layoutHand(false);
     for (let s = 0; s < this.n; s++) {
       this.stacks[s].forEach((c, i) => this.set(c, this.stackPose(s, i)));
-      this.pistis[s].forEach((c, i) => this.set(c, this.pistiPose(s, i)));
+      this.pistis[s].forEach((c, i) => this.set(c, this.pistiPose(s, i), this.pistiZ(s, i)));
     }
     this.emitDeck();
     clearTimeout(this.paintTimer);
@@ -633,17 +639,29 @@ export class Table2D {
    */
   private pistiPose(seat: number, i: number, n = this.pistis[seat].length): Pose {
     const g = this.L.seats[seat], s = g.stack, {cw, ch} = this.L, m = s.s * 0.94;
-    const full = g.pv ? ch * m * 0.4 : cw * m * 0.34;
-    const step = n > 1 ? Math.max(full * 0.3, Math.min(full, (g.pspan ?? Infinity) / (n - 1))) : full;
-    if (g.pv) return {x: s.x + g.pdir * i * 1.5, y: s.y + g.pv * ((ch * s.s) / 2 + (ch * m) / 2 + 4 + i * step), r: g.pdir * (4 + i * 1.5), s: m};
-    return {x: s.x + g.pdir * ((cw * s.s) / 2 + i * step), y: s.y + (g.py ?? 6), r: g.pdir * (12 + Math.min(i, 4) * 2.5), s: m};
+    const {slot, step, under} = this.pistiSlot(seat, i, n);
+    if (g.pv) return {x: s.x + under * 1.6, y: s.y + g.pv * ((ch * s.s) / 2 + (ch * m) / 2 + 4 + slot * step), r: g.pdir * (4 + slot * 1.5), s: m};
+    return {x: s.x + g.pdir * ((cw * s.s) / 2 + slot * step), y: s.y + (g.py ?? 6) - under * 1.6, r: g.pdir * (12 + Math.min(slot, 4) * 2.5), s: m};
+  }
+  /**
+   * Pişti kartının yuvası: yere sığan görünür yuva sayısı (en çok 5; adım köşe indeksini açık bırakan adımın en az %90'ı) ve adım.
+   * Kart bundan çoksa en eskileri ilk yuvanın altına girer (under: kaçıncı eski kart); son kartlar hep görünür kalır.
+   */
+  private pistiSlot(seat: number, i: number, n: number): {slot: number; step: number; under: number} {
+    const g = this.L.seats[seat], {cw, ch} = this.L, m = g.stack.s * 0.94;
+    const full = g.pv ? ch * m * 0.4 : cw * m * 0.34, span = g.pspan ?? 1e9;
+    const slots = Math.min(n, Math.max(1, Math.min(5, 1 + Math.floor((span + 0.5) / (full * 0.9)))));
+    const extra = n - slots;
+    return {slot: Math.max(0, i - extra), step: slots > 1 ? Math.min(full, span / (slots - 1)) : full, under: Math.max(0, extra - i)};
   }
   /**
    * Pişti kartı katmanı: dikey sırada yeni kart üstte (her kartın üst şeridi, yani sol-üst köşe indeksi açıkta); yatay sırada
-   * ilk kart üstte, sonrakiler altına girer (açıkta kalan dış şerit; yığının altına giren ilk kartın da dış yarısı görünür).
+   * ilk yuva üstte, sonrakiler altına girer (açıkta kalan dış şerit; yığının altına giren ilk kartın da dış yarısı görünür).
+   * Aynı yuvadaki eski kartlarda yeni olan üstte.
    */
-  private pistiZ(seat: number, i: number): number {
-    return 190 + (this.L.seats[seat].pv ? i : -i);
+  private pistiZ(seat: number, i: number, n = this.pistis[seat].length): number {
+    const {slot} = this.pistiSlot(seat, i, n);
+    return 190 + (this.L.seats[seat].pv ? slot * 8 : -slot * 8) + Math.min(i, 7);
   }
 
   /** Deste sayacı hapının kartın alt kenarına göre dikey kayması (hap kenara biner) */
@@ -1427,9 +1445,10 @@ export class Table2D {
       if (pistiCard !== null && c.id === pistiCard) {
         const row = this.pistis[seat];
         row.push(c);
-        // adım kart sayısına göre daralabilir: önceki pişti kartları yeni yerine kayar (kart azken konum değişmez)
+        // yuvalar kart sayısına göre kayabilir: önceki pişti kartları yeni yerine kayar (yer varken konum değişmez)
         row.slice(0, -1).forEach((q, j) => {
           const to = this.pistiPose(seat, j);
+          q.el.style.zIndex = String(this.pistiZ(seat, j));
           if (Math.hypot(to.x - q.pose.x, to.y - q.pose.y) > 0.5) void this.fly(q, to, {ms: 260, lift: 0, ease: EASE_OUT});
         });
         f = this.fly(c, this.pistiPose(seat, row.length - 1), {ms: 440, lift: 0.14, delay: k * step, z, zEnd: this.pistiZ(seat, row.length - 1), arc: 0.18 * side});
