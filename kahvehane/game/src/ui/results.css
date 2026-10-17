@@ -47,6 +47,13 @@
 .kh-podium__sm small { display: none; }
 .kh-podium__say::before { left: -16px; top: 40%; bottom: auto; border-width: 10px 16px 10px 0; border-color: transparent var(--bubble-edge) transparent transparent; }
 .kh-podium__say::after { left: -10.5px; top: calc(40% + 3.5px); bottom: auto; border-width: 6.5px 11px 6.5px 0; border-color: transparent var(--bubble-fill) transparent transparent; }
+/* karşılıklı konuşma: küçük yüzlerden biri konuşunca kuyruk yukarı (yüze hizalı), seyirci konuşunca kuyruk yok + başlıkta küçük portre */
+.kh-podium__say.is-talk { z-index: 7; }
+.kh-podium__say.is-up::before { left: var(--tail, 30%); top: -16px; bottom: auto; border-width: 0 11px 16px 11px; border-color: transparent transparent var(--bubble-edge) transparent; }
+.kh-podium__say.is-up::after { left: calc(var(--tail, 30%) + 3.5px); top: -10.5px; bottom: auto; border-width: 0 7.5px 11px 7.5px; border-color: transparent transparent var(--bubble-fill) transparent; }
+.kh-podium__say.is-free::before, .kh-podium__say.is-free::after { display: none; }
+.kh-podium__say small { display: flex; align-items: center; gap: .4em; }
+.kh-say__face.kh-ava { --as: 1.9em; box-shadow: 0 0 0 1.5px var(--navy); }
 
 /* puan tablosu */
 .kh-sc { --cw: calc(var(--u) * 4.8); flex: 1 1 auto; display: flex; flex-direction: column; min-height: min-content; padding: calc(var(--u) * .35) calc(var(--u) * .65) calc(var(--u) * .55); }

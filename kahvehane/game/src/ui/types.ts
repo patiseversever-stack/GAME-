@@ -2,8 +2,10 @@
 import type {GameResult} from '../core/types';
 import type {BlofOutcome, Difficulty, Game, HandLayout, MatchLength, MatchSetup, Mode, SeatPlayer} from '../game/types';
 import type {SeriesState} from '../game/series';
-import type {CharId} from '../game/roster';
+import type {CharDef, CharId, Pose} from '../game/roster';
 import type {ItemKind} from '../game/catalog';
+import type {Bubble} from '../audio/speech';
+import type {ChatLevel} from '../ai/dialogue';
 
 export type Mood = 'kahkaha' | 'kizgin' | 'saskin' | 'uzgun';
 
@@ -54,10 +56,50 @@ export interface InterimData {
   series: SeriesState;
   stake: number;
   frame: string;
-  /** Sahnedeki konuşan karakter (bot koltuğu + poz); balonu konuşma yöneticisi yazar */
-  speaker?: {seat: number; pose: import('../game/roster').Pose};
+  /** Sahnedeki konuşan karakter (bot koltuğu + poz); balonu konuşma yöneticisi yazar. talkers verilirse yok sayılır. */
+  speaker?: {seat: number; pose: Pose};
+  /** Karşılıklı konuşanlar (sırasıyla): ilki büst, ikincisi yuvarlak portre; koltuk −1 = masada olmayan seyirci */
+  talkers?: readonly Talker[];
   /** Bu kadar ms sonra kendiliğinden "Sonraki El" (0: kapalı) */
   autoMs: number;
+}
+
+/** Ara Skor / sonuç ekranında konuşan biri: koltuk (−1: seyirci), karakter, poz. */
+export interface Talker {
+  seat: number;
+  char: CharDef;
+  pose: Pose;
+}
+
+/** Konuşma sahnesi (Ara Skor, sonuç ekranı): konuşanın balonunu verir; koltuk −1 = masada olmayan seyirci (karakterle). */
+export interface TalkStage {
+  bubble(seat: number, char: string): Bubble;
+}
+
+/** Sonuç ekranının konuşma kancası (uygulama doldurur; ekran yalnız sahneyi verir). */
+export interface ResultsTalk {
+  /** Konuşacaklar (sırasıyla; balon kuyruğu ve seyirci portresi için). */
+  readonly talkers: readonly Talker[];
+  /** Giriş oturdu: karşılıklı konuşma başlayabilir. */
+  start(stage: TalkStage): void;
+  /** Oyuncu seçti (ekran solmadan hemen önce): konuşma kesilir, gerekirse veda / rövanş kabulü hazırlanır. */
+  leave(choice: 'again' | 'home', stage: TalkStage): void;
+}
+
+/** Ayarlar penceresindeki "Sohbet" satırı: Sakin · Normal · Geveze. */
+export interface ChatOption {
+  value: ChatLevel;
+  onChange(l: ChatLevel): void;
+}
+
+/** İlk açılış sohbet seçicisinin örnek dinletme kapısı (uygulama konuşma yöneticisine bağlar). */
+export interface ChatSamplePort {
+  /** Seviyenin örnek konuşmasını çal (öncekini keser); konuşanın balonu `bubble(char)`. */
+  play(level: ChatLevel, bubble: (char: string) => Bubble): void;
+  /** Örneği sustur. */
+  stop(): void;
+  /** Örneklerin seslerini boşta hazırla (paketli düzen). */
+  warm?(): void;
 }
 
 /** Ayarlar penceresindeki "Blöf el düzeni" satırı (Blöf motoru varsa verilir). */

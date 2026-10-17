@@ -4,7 +4,7 @@
 // "Masadan kalk" (onaylı; bahis yanar). Animasyonlar yalnız transform/opacity; boşta döngü yok (sayaç çubuğu tek seferlik geçiş).
 import './scoreboard.css';
 import type {Bubble} from '../audio/speech';
-import type {InterimData, ResumeData} from './types';
+import type {InterimData, ResumeData, TalkStage, Talker} from './types';
 import type {Game, MatchLength, Mode, SeatPlayer} from '../game/types';
 import {matchTitle} from '../game/types';
 import {prize} from '../game/setup';
@@ -22,6 +22,8 @@ import {shortName} from './lobby';
 export interface InterimHandle {
   /** Konuşan karakterin balonu (sahnede büstün yanında) — konuşma yöneticisi yazar/kapatır. */
   readonly bubble: Bubble;
+  /** Karşılıklı konuşma: konuşanın balonu (büst ya da yuvarlak portre; balon kuyruğu konuşana döner). */
+  readonly stage: TalkStage;
   /** SONRAKİ EL (dokunma ya da süre doldu) → 'next' · Masadan kalk onaylandı → 'leave'. Ekran kapanınca çözülür. */
   readonly done: Promise<'next' | 'leave'>;
 }
@@ -177,7 +179,11 @@ export function interim(ctx: Ctx, d: InterimData): InterimHandle {
       ? `${I.flame}<span>En yüksekte eşitlik: <b>kazanan çıkana dek</b> bir el daha</span>`
       : `${I.target}<span>Hedef <b>${targetOf(s)}</b> · sıradaki eli ${nextP?.human ? '<b>sen</b> dağıtıyorsun' : `<b>${esc(nextWho)}</b> dağıtıyor`}</span>`
     : `${I.target}<span><b>En az ceza</b> kazanır · sıradaki eli ${nextP?.human ? '<b>sen</b> açıyorsun' : nextP ? `<b>${esc(nextWho)}</b> açıyor` : 'kura belirler'}</span>`;
-  const sp = d.speaker ? by(d.speaker.seat) : undefined;
+  // konuşanlar: ilki büst (solda), ikincisi yuvarlak portre (sağ altta); eski tek konuşan (speaker) de desteklenir
+  const old = d.speaker ? by(d.speaker.seat) : undefined;
+  const talkers: readonly Talker[] = d.talkers?.length ? d.talkers : old && d.speaker ? [{seat: d.speaker.seat, char: old.char, pose: d.speaker.pose}] : [];
+  const sp = talkers[0];
+  const tb = talkers.find(t => t !== sp && t.char.id !== sp?.char.id);
   const handsTotal = handsOf(s);
   const pips = !pisti && handsTotal > 1
     ? `<div class="kh-sb__pips" aria-label="${done}/${handsTotal}">${Array.from({length: handsTotal}, (_, i) => `<i class="${i < done ? 'on' : ''}${i === done - 1 ? ' is-new' : ''}"></i>`).join('')}<b class="kh-num">${done}/${handsTotal}</b></div>`
@@ -192,7 +198,8 @@ export function interim(ctx: Ctx, d: InterimData): InterimHandle {
         ${pips}
       </header>
       <section class="kh-ia__stage${sp ? '' : ' is-empty'}">
-        ${sp ? `<div class="kh-ia__bust"><img src="${sp.char.poses[d.speaker!.pose]}" alt=""><span class="kh-ia__tag">${esc(sp.char.name)}</span></div>` : ''}
+        ${sp ? `<div class="kh-ia__bust"><img src="${sp.char.poses[sp.pose]}" alt=""><span class="kh-ia__tag">${esc(sp.char.name)}</span></div>` : ''}
+        ${tb ? `<div class="kh-ia__b">${charAvatarHtml(tb.char, 'standart', 'kh-ia__bava', tb.pose)}<span class="kh-ia__btag">${esc(shortName(tb.char))}</span></div>` : ''}
         <div class="kh-say kh-ia__say" aria-live="polite"><small></small><span class="kh-ia__line"></span></div>
       </section>
       <section class="kh-panel kh-sb is-n${views.length}">${views.map(v => rowHtml(s, v, d.frame, true)).join('')}</section>
@@ -214,6 +221,8 @@ export function interim(ctx: Ctx, d: InterimData): InterimHandle {
   play(g('.kh-ia__sub'), [{opacity: 0, transform: 'translateY(6px)'}, {opacity: 1, transform: 'none'}], {duration: 260, delay: 260, fill: 'backwards'});
   const bust = el.querySelector('.kh-ia__bust');
   if (bust) play(bust, [{transform: 'translateY(40%) scale(.8)', opacity: 0}, {transform: 'translateY(-3%) scale(1.03)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 520, delay: 160, easing: EASE.out, fill: 'backwards'});
+  const bAva = el.querySelector('.kh-ia__b');
+  if (bAva) play(bAva, [{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1.08)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 420, delay: 380, easing: EASE.out, fill: 'backwards'});
   const rows = Array.from(el.querySelectorAll<HTMLElement>('.kh-sb__row'));
   rows.forEach((r, i) => play(r, [{transform: 'translateX(-22px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 300, delay: 220 + i * 70, easing: EASE.out, fill: 'backwards'}));
   play(g('.kh-ia__note'), [{opacity: 0}, {opacity: 1}], {duration: 300, delay: 420, fill: 'backwards'});
@@ -258,28 +267,47 @@ export function interim(ctx: Ctx, d: InterimData): InterimHandle {
     r.querySelectorAll<HTMLElement>('.kh-sb__delta b[data-v]').forEach(b => (b.textContent = fmt(Number(b.dataset.v))));
   });
 
-  // ---- konuşma balonu (sahnede, büstün yanında) ----
+  // ---- konuşma balonu (sahnede): konuşan büstse kuyruk sola, sağ alttaki portreyse aşağı; konuşan hafifçe sıçrar ----
   let sayTok = 0;
-  const bubble: Bubble = {
-    show(text, _mood, ms) {
+  const lineEl = q(say, '.kh-ia__line');
+  const hideSay = (): void => {
+    if (!scope.alive || say.style.visibility === 'hidden') return;
+    sayTok++;
+    play(say, [{opacity: 1}, {opacity: 0, transform: 'scale(.94)'}], {duration: 180, fill: 'forwards'}).onfinish = () => {
       if (!scope.alive) return;
-      const tok = ++sayTok;
-      q(say, 'small').textContent = sp ? sp.char.name : '';
-      q(say, '.kh-ia__line').textContent = text;
-      say.style.visibility = 'visible';
-      play(say, [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.out});
-      scope.timeout(() => tok === sayTok && bubble.hide(), Math.max(1800, ms) + 2500); // güvenlik: yönetici kapatmazsa
-    },
-    hide() {
-      if (!scope.alive || say.style.visibility === 'hidden') return;
-      sayTok++;
-      play(say, [{opacity: 1}, {opacity: 0, transform: 'scale(.94)'}], {duration: 180, fill: 'forwards'}).onfinish = () => {
+      say.style.visibility = 'hidden';
+      say.getAnimations().forEach(a => a.cancel());
+    };
+  };
+  const bubbleFor = (t: Talker | undefined, name: string): Bubble => {
+    let tok = -1;
+    const isB = !!t && t === tb;
+    const target = isB ? el.querySelector<HTMLElement>('.kh-ia__bava') : t === sp ? el.querySelector<HTMLElement>('.kh-ia__bust img') : null;
+    return {
+      show(text, _mood, ms) {
         if (!scope.alive) return;
-        say.style.visibility = 'hidden';
+        tok = ++sayTok;
+        q(say, 'small').textContent = name;
+        lineEl.textContent = text;
+        say.classList.toggle('is-b', isB);
+        say.style.visibility = 'visible';
         say.getAnimations().forEach(a => a.cancel());
-      };
+        play(say, [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.out});
+        if (target && ANIM) target.animate([{transform: 'none'}, {transform: isB ? 'scale(1.1)' : 'translateY(-2.5%) scale(1.025)', offset: 0.4}, {transform: 'none'}], {duration: 420, easing: 'ease-out'});
+        scope.timeout(() => tok === sayTok && hideSay(), Math.max(1800, ms) + 2500); // güvenlik: yönetici kapatmazsa
+      },
+      hide() {
+        if (tok === sayTok) hideSay();
+      },
+    };
+  };
+  const stage: TalkStage = {
+    bubble(seat, char) {
+      const t = talkers.find(x => x.seat === seat && x.char.id === char) ?? talkers.find(x => x.char.id === char);
+      return bubbleFor(t, t ? t.char.name : char);
     },
   };
+  const bubble: Bubble = bubbleFor(sp, sp ? sp.char.name : '');
 
   // ---- SONRAKİ EL: dokun ya da süre dolsun; "Masadan kalk" onaylı ----
   const timer = el.querySelector<HTMLElement>('.kh-ia__timer i');
@@ -334,7 +362,7 @@ export function interim(ctx: Ctx, d: InterimData): InterimHandle {
       arm();
     } else if (a === 'sure') void finish('leave');
   });
-  return {bubble, done: result};
+  return {bubble, stage, done: result};
 }
 
 // =====================================================================================================

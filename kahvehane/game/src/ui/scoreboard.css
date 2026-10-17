@@ -29,6 +29,14 @@
 .kh-ia__say { left: auto; right: 0; top: 10%; max-width: 54%; padding: .5em .8em .6em; font-size: calc(var(--u) * .86); line-height: 1.24; --tail: 16%; }
 .kh-ia__say::before { left: -16px; top: 42%; bottom: auto; border-width: 10px 16px 10px 0; border-color: transparent var(--bubble-edge) transparent transparent; }
 .kh-ia__say::after { left: -10.5px; top: calc(42% + 3.5px); bottom: auto; border-width: 6.5px 11px 6.5px 0; border-color: transparent var(--bubble-fill) transparent transparent; }
+/* karşılıklı konuşmanın ikinci sesi: sağ altta yuvarlak portre + ad; konuşurken balonun kuyruğu ona (aşağı) döner */
+.kh-ia__b { position: absolute; z-index: 5; right: 3%; bottom: 2%; display: flex; flex-direction: column; align-items: center; gap: .15em; pointer-events: none; }
+.kh-ia__b .kh-ava { --as: calc(var(--u) * 3.7); }
+.kh-ia__btag { padding: .14em .6em .18em; border-radius: var(--r-pill); background: var(--name-fill); box-shadow: var(--name-shadow); font-family: var(--font-display);
+  font-size: calc(var(--u) * .74); white-space: nowrap; text-shadow: var(--outline-thin); }
+.kh-ia__say.is-b { top: 4%; }
+.kh-ia__say.is-b::before { left: auto; right: calc(var(--u) * 1.6); top: auto; bottom: -16px; border-width: 16px 11px 0 11px; border-color: var(--bubble-edge) transparent transparent transparent; }
+.kh-ia__say.is-b::after { left: auto; right: calc(var(--u) * 1.6 + 3.5px); top: auto; bottom: -10.5px; border-width: 11px 7.5px 0 7.5px; border-color: var(--bubble-fill) transparent transparent transparent; }
 
 /* tablo: taraf satırları (önde olan üstte) */
 .kh-sb { flex: none; display: flex; flex-direction: column; padding: calc(var(--u) * .3) calc(var(--u) * .55); }

@@ -5,7 +5,8 @@
 // "Bir El Daha" (tek el) / "Yeni Maç" (çok elli maç: aynı ayarlarla) / "Ana Sayfa".
 // Çok elli maçta tablo maç toplamlarından kurulur: Pişti kazandığı el, pişti puanı, en iyi el, son el, toplam · Blöf el el ceza + toplam ceza.
 import './results.css';
-import type {ResultsData} from './types';
+import type {ResultsData, ResultsTalk, TalkStage, Talker} from './types';
+import type {Bubble} from '../audio/speech';
 import type {SideScore} from '../core/types';
 import {MODE_INFO, matchTitle, type SeatPlayer} from '../game/types';
 import {LENGTH_INFO, pistiOf, rankOf, seatsOfSide, type SeriesState} from '../game/series';
@@ -18,6 +19,7 @@ import {g3} from './fx';
 import {haptic} from '../platform/bridge';
 import {STAKES, shortName} from './lobby';
 import {pickLine} from '../ai/dialogue';
+import {charById} from '../game/roster';
 
 /** Tablo satırı: kolon (taraf) başına değer. best: vurgulanacak uç ('max' varsayılan, 'none' vurgusuz). */
 interface RowDef {
@@ -100,7 +102,11 @@ const blofSeriesRows = (hands: number): RowDef[] => [
   {label: 'Kazandığı el', get: c => c.wins ?? 0},
 ];
 
-export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'again' | 'home'> {
+/**
+ * talk: karşılıklı konuşma (uygulama planlar; ekran balonu verir). Verilmezse eski davranış: rakibin son sözü yalnız yazı.
+ * Konuşma düğmeleri asla bekletmez; seçim anında talk.leave çağrılır (konuşma kesilir, gerekirse veda).
+ */
+export function results(ctx: Ctx, d: ResultsData, frame = 'standart', talk?: ResultsTalk): Promise<'again' | 'home'> {
   const scope = new Scope();
   const s = ctx.sounds;
   const {setup} = d;
@@ -143,7 +149,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
   function sideOf(p: SeatPlayer): Col {
     return sides.find(x => x.seats.includes(p.seat))!;
   }
-  const speaker = outcome === 'win' ? small.find(p => !p.human) : big.find(p => !p.human) ?? small.find(p => !p.human);
+  const speaker = talk ? undefined : outcome === 'win' ? small.find(p => !p.human) : big.find(p => !p.human) ?? small.find(p => !p.human);
   const defLine = outcome === 'win' ? 'Bu sefer sen kazandın… Rövanş isterim!' : outcome === 'lose' ? 'Ustaya saygı evlat! Bir el daha?' : 'Berabere! Bir el daha oynayalım.';
   // konuşanın kendi repliği (karakterin ağzından; seslendirme yok, masada söylenenden farklı seçilir)
   const said = speaker && !d.line ? pickLine(speaker.char.id, outcome === 'win' ? 'playerWin' : outcome === 'lose' ? 'botWin' : 'draw')?.text : undefined;
@@ -170,9 +176,10 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
       </header>
       <section class="kh-podium is-n${big.length}">
         ${raysHtml(outcome === 'win' ? 'is-gold kh-podium__rays' : 'kh-podium__rays')}
-        <div class="kh-podium__big">${big.map((p, i) => `<div class="kh-podium__bust" style="--i:${i}"><img src="${p.char.poses[bigPose]}" alt=""><span class="kh-podium__tag${p.human ? ' is-me' : ''}">${esc(p.human ? p.name : p.char.name)}</span>${outcome !== 'draw' ? `<i class="kh-podium__crown">${I.crown}</i>` : ''}</div>`).join('')}</div>
-        <div class="kh-podium__small">${small.map(p => `<div class="kh-podium__sm"><span class="kh-podium__smava">${charAvatarHtml(p.char, p.human ? frame : 'standart', '', outcome === 'draw' ? 'saskin' : 'uzgun')}${multi ? `<b class="kh-podium__rank">${sideOf(p).rank}</b>` : ''}</span><small>${esc(p.human ? 'Sen' : shortName(p.char))}</small></div>`).join('')}</div>
+        <div class="kh-podium__big">${big.map((p, i) => `<div class="kh-podium__bust" style="--i:${i}" data-seat="${p.seat}"><img src="${p.char.poses[bigPose]}" alt=""><span class="kh-podium__tag${p.human ? ' is-me' : ''}">${esc(p.human ? p.name : p.char.name)}</span>${outcome !== 'draw' ? `<i class="kh-podium__crown">${I.crown}</i>` : ''}</div>`).join('')}</div>
+        <div class="kh-podium__small">${small.map(p => `<div class="kh-podium__sm" data-seat="${p.seat}"><span class="kh-podium__smava">${charAvatarHtml(p.char, p.human ? frame : 'standart', '', outcome === 'draw' ? 'saskin' : 'uzgun')}${multi ? `<b class="kh-podium__rank">${sideOf(p).rank}</b>` : ''}</span><small>${esc(p.human ? 'Sen' : shortName(p.char))}</small></div>`).join('')}</div>
         ${speaker ? `<div class="kh-say kh-podium__say"><small>${esc(speaker.char.name)}</small>${esc(d.line ?? said ?? defLine)}</div>` : ''}
+        ${talk ? '<div class="kh-say kh-podium__say is-talk" aria-live="polite" style="visibility:hidden"><small></small><span class="kh-podium__line"></span></div>' : ''}
       </section>
       <section class="kh-panel kh-sc is-c${ordered.length}${series ? ' is-series' : ''}">
         <div class="kh-sc__row is-head"><span></span>${ordered.map(sd => `<b class="${sd === mySide ? 'is-me' : ''}${winners.has(sides.indexOf(sd)) && outcome !== 'draw' ? ' is-win' : ''}"><span class="kh-sc__avas">${colAvas(sd)}</span><em>${esc(colName(sd))}</em></b>`).join('')}</div>
@@ -221,7 +228,7 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
     play(b, [{transform: 'scale(.3) rotate(-14deg)', opacity: 0}, {transform: 'scale(1.08)', opacity: 1, offset: 0.65}, {transform: 'none', opacity: 1}], {duration: 420, delay: 420 + i * 90, easing: EASE.out, fill: 'backwards'}));
   el.querySelectorAll<HTMLElement>('.kh-podium__crown').forEach((c, i) =>
     play(c, [{transform: 'translate(-50%, -80px) rotate(-30deg) scale(.5)', opacity: 0}, {transform: 'translate(-50%, 6px) rotate(6deg) scale(1.1)', opacity: 1, offset: 0.7}, {transform: 'translate(-50%, 0) rotate(-8deg)', opacity: 1}], {duration: 520, delay: 700 + i * 120, easing: EASE.out, fill: 'backwards'}));
-  const say = el.querySelector('.kh-podium__say');
+  const say = el.querySelector('.kh-podium__say:not(.is-talk)');
   if (say) play(say, [{transform: 'scale(.3)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 380, delay: 760, easing: EASE.out, fill: 'backwards'});
   play(g('.kh-podium__rays'), [{transform: 'scale(.3)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 900, delay: 160, easing: EASE.out, fill: 'backwards'});
   play(g('.kh-sc'), [{transform: 'translateY(24px)', opacity: 0}, {transform: 'none', opacity: 1}], {duration: 380, delay: 160, easing: EASE.out, fill: 'backwards'});
@@ -311,9 +318,14 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
     if (lvlUp) q(el, '.kh-reward__xp .kh-gem b').textContent = String(d.after.level);
   }
 
+  // ---- karşılıklı konuşma: konuşanın balonu (büyük büst → kuyruk sola, küçük yüz → kuyruk yukarı, seyirci → küçük portre) ----
+  const stage = talk ? talkStage(scope, el, talk.talkers) : null;
+  if (talk && stage) scope.timeout(() => talk.start(stage), ANIM ? 1000 : 0);
+
   return new Promise(res => {
     onAct(scope, el, async a => {
       if (a !== 'again' && a !== 'home') return;
+      if (talk && stage) talk.leave(a, stage);
       s.tap();
       el.style.pointerEvents = 'none';
       if (ANIM) await el.animate([{opacity: 1}, {opacity: 0}], {duration: 240, easing: 'ease-in', fill: 'forwards'}).finished.catch(() => undefined);
@@ -322,6 +334,55 @@ export function results(ctx: Ctx, d: ResultsData, frame = 'standart'): Promise<'
       res(a);
     });
   });
+}
+
+/** Sonuç ekranının konuşma sahnesi: tek balon, konuşana göre kuyruk + başlık; konuşan hafifçe sıçrar (yalnız transform). */
+function talkStage(scope: Scope, el: HTMLElement, talkers: readonly Talker[]): TalkStage {
+  const say = q(el, '.kh-podium__say.is-talk');
+  const head = q(say, 'small');
+  const lineEl = q(say, '.kh-podium__line');
+  let tok = 0;
+  const hideSay = (): void => {
+    if (!scope.alive || say.style.visibility === 'hidden') return;
+    tok++;
+    play(say, [{opacity: 1}, {opacity: 0, transform: 'scale(.94)'}], {duration: 180, fill: 'forwards'}).onfinish = () => {
+      if (!scope.alive) return;
+      say.style.visibility = 'hidden';
+      say.getAnimations().forEach(x => x.cancel());
+    };
+  };
+  return {
+    bubble(seat: number, charId: string): Bubble {
+      const t = talkers.find(x => x.seat === seat && x.char.id === charId);
+      const char = t?.char ?? charById(charId);
+      let mine = -1;
+      return {
+        show(text) {
+          if (!scope.alive) return;
+          mine = ++tok;
+          const bust = seat >= 0 ? el.querySelector<HTMLElement>(`.kh-podium__bust[data-seat="${seat}"]`) : null;
+          const sm = seat >= 0 && !bust ? el.querySelector<HTMLElement>(`.kh-podium__sm[data-seat="${seat}"]`) : null;
+          // seyirci (masada değil): başlıkta küçük portre; konuşan yüz küçük sıradaysa kuyruk yukarı, ona hizalı
+          head.innerHTML = `${bust || sm ? '' : charAvatarHtml(char, 'standart', 'kh-say__face', 'gulumseme')}${esc(char.name)}`;
+          lineEl.textContent = text;
+          say.classList.toggle('is-up', !!sm);
+          say.classList.toggle('is-free', !bust && !sm);
+          say.style.visibility = 'visible';
+          say.getAnimations().forEach(x => x.cancel());
+          if (sm) {
+            const a = sm.getBoundingClientRect(), b = say.getBoundingClientRect();
+            if (b.width > 0) say.style.setProperty('--tail', `${Math.max(6, Math.min(86, ((a.left + a.width / 2 - b.left) / b.width) * 100 - 6)).toFixed(1)}%`);
+          }
+          play(say, [{transform: 'scale(.4)', opacity: 0}, {transform: 'scale(1.05)', opacity: 1, offset: 0.6}, {transform: 'none', opacity: 1}], {duration: 300, easing: EASE.out});
+          const who = bust?.querySelector('img') ?? sm?.querySelector('.kh-podium__smava');
+          if (who && ANIM) who.animate([{transform: 'none'}, {transform: sm ? 'scale(1.12)' : 'translateY(-2%) scale(1.03)', offset: 0.4}, {transform: 'none'}], {duration: 420, easing: 'ease-out'});
+        },
+        hide() {
+          if (mine === tok) hideSay();
+        },
+      };
+    },
+  };
 }
 
 /** Seviye atlama kutlaması: ışın, dev taş (eski → yeni), ödül jetonları kapsüle uçar, açılan masa. */

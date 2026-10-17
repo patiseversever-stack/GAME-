@@ -412,8 +412,8 @@ export class Table2D {
       const ringHalf = (y: number) => (Math.abs(y - pileY) >= ringKeep ? 0 : Math.sqrt(ringKeep * ringKeep - (y - pileY) ** 2));
       const reach = (span: number) => Math.min(Math.max(0, span), 4 * fullStep); // bir sıranın en uzak uzanışı
       // yan rakiplerin pişti sırası kendi yelpazelerinin hemen altında başlar (eskiden %18 yukarı kayıktı: yelpazenin son kartına biniyordu)
-      const py = Math.max(-hS * 0.25, fanBottom + hM / 2 + 7 - sideY);
-      const rowTop = sideY + py - hM / 2 - 5, rowBot = sideY + py + hM / 2 + 5;
+      const py = Math.max(-hS * 0.25, fanBottom + hM / 2 + 12 - sideY);
+      const rowTop = sideY + py - hM / 2 - 8, rowBot = sideY + py + hM / 2 + 8; // + kartların eğikliği
       const rightC0 = W - sideStackX - wS / 2, leftC0 = sideStackX + wS / 2;
       const rightSpan = rightC0 - (W / 2 + ringHalf(rowTop) + wM / 2 + 8);
       const leftSpan = W / 2 - ringHalf(rowTop) - (leftC0 + wM / 2 + 8);
@@ -425,7 +425,7 @@ export class Table2D {
       const ringGap = (x: number) => Math.hypot(Math.max(x - mySW - W / 2, 0, W / 2 - (x + mySW)), Math.max(myTop - pileY, 0, pileY - myBot)) - cw * 1.125;
       const xMax = Math.min(W - cw * 0.6, W * 0.71), wantReach = Math.min(reach(rightSpan), 2 * fullStep);
       let myX = xMax, best = -Infinity;
-      for (let x = xMax; x >= W * 0.3; x -= 2) {
+      for (let x = xMax; x >= W / 2 + mySW; x -= 2) { // yığınım hep ortanın sağında (halkanın sağ altı)
         const sc = Math.min(ringGap(x) - 10, yOver ? marker0L - x - mySW - 10 - wantReach : 99);
         if (sc > best + 0.01) { best = sc; myX = x; }
       }
@@ -441,7 +441,7 @@ export class Table2D {
       // (eskiden sağa dizilip ekranın dışına taşıyordu, 4 sıra portreye biniyordu)
       const pauseBottom = u * 0.6 + Math.max(44, u * 3);
       const headTop = H * (H <= 700 ? 0.215 : 0.245) - (H <= 700 ? 4.3 : 4.6) * u * 0.14; // sağ/sol rozetin portresi (hud.css)
-      const topY = (pauseBottom + 10 + hS / 2 + headTop - 10 - hS / 2) / 2;
+      const topY = (pauseBottom + 9 + hS / 2 + headTop - 8 - hS / 2) / 2; // düğme ile portre arasında ortalı (yığının eğikliği dahil)
       const topX = W - 8 - wS / 2 - 3;
       const topFanR = W / 2 + 1.5 * cw * fs * 0.62 + (cw * fs) / 2 + 6;
       const topSpan = topX - wS / 2 - (topFanR + 6 + wM / 2 + 8);
