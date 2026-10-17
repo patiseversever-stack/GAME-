@@ -95,6 +95,11 @@ export interface BlofBotParams {
    * açışta yakalanmanın bedeli yalnız turu kaptırmaktı (%12–45 ayarlıydı); artık yakalanan 2 ceza kartı da alır → ~%5.
    */
   padOpen2: number;
+  /**
+   * Yakalanan yalancının kenardan aldığı ceza kartlarını kararlarda ne kadar hesaba katar (1 = tam): kendi yalanının
+   * bedelinde de, yakalamanın getirisinde de. Kolay (acemi) cezayı küçümser: daha pervasız yalan söyler.
+   */
+  penaltyWeight: number;
   /** Önsel: takipçi elinde o değer yokken pas yerine blöf yapar (kalabalık masada; 1'e 1'de daha sık). */
   priorBluffN: number;
   /** Eşli masada (takım arkadaşı varken) üzerine yazılan ayarlar. */
@@ -133,6 +138,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempoN: 0.8,
     groupValue: 0,
     padOpen2: 0.06,
+    penaltyWeight: 0.3,
     priorBluffN: 0.25,
   },
   orta: {
@@ -166,6 +172,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempoN: 1,
     groupValue: 0.6,
     padOpen2: 0.05,
+    penaltyWeight: 0.8,
     priorBluffN: 0.25,
   },
   zor: {
@@ -199,6 +206,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempoN: 1,
     groupValue: 0.6,
     padOpen2: 0.05,
+    penaltyWeight: 1,
     priorBluffN: 0.25,
   },
 };
@@ -543,9 +551,9 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     return out;
   }
 
-  /** Yakalanan yalancının kenardan alacağı ceza kartı sayısı (kenarda az varsa o kadar). */
+  /** Yakalanan yalancının kenardan alacağı ceza kartları (kenarda az varsa o kadar) × botun bunu ne kadar önemsediği. */
   private penalty(v: BlofView): number {
-    return Math.min(BLOF_PENALTY, v.discardCount);
+    return Math.min(BLOF_PENALTY, v.discardCount) * this.p.penaltyWeight;
   }
 
   /** Turu açmanın değeri (kart cinsinden): 1'e 1'de açan bedavaya en kalabalık grubunu atar. */
