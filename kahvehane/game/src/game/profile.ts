@@ -89,8 +89,9 @@ export interface ProfileData {
   /**
    * Oyuncu ayarları (profile bağlı). blofHand: Blöf el düzeni; undefined = henüz seçmedi (ilk Blöf'te seçici açılır).
    * chatLevel: sohbet yoğunluğu (Sakin · Normal · Geveze); undefined = henüz seçmedi (ilk açılışta seçici; o zamana dek Normal).
+   * vitrinHint: "Dokun, piştileri gör" ipucu gösterildi (profil başına bir kez).
    */
-  settings: {blofHand?: HandLayout; chatLevel?: ChatLevel};
+  settings: {blofHand?: HandLayout; chatLevel?: ChatLevel; vitrinHint?: boolean};
   /** Bedava sandık: bir sonraki açılabilir zaman (ms) */
   chestAt: number;
   /** Ana ekranın hatırladıkları: son oyun, oyun başına son mod, Blöf zorluğu ve bahis */
@@ -271,6 +272,7 @@ function mergeSettings(raw: unknown): ProfileData['settings'] {
   if (!isRec(raw)) return out;
   if (HAND_LAYOUTS.includes(raw.blofHand as HandLayout)) out.blofHand = raw.blofHand as HandLayout;
   if (isChatLevel(raw.chatLevel)) out.chatLevel = raw.chatLevel;
+  if (raw.vitrinHint === true) out.vitrinHint = true;
   return out;
 }
 

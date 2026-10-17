@@ -34,6 +34,7 @@ import {PISTI_TALK_STORE} from './talk';
 import {whenIdle} from '../platform/sched';
 import {fmt} from '../ui/dom';
 import {post, store} from '../platform/bridge';
+import {PistiVitrin} from '../ui/pistiVitrin';
 
 export interface AppDeps {
   table: Table2D;
@@ -143,6 +144,14 @@ export function talkersOf(plan: readonly EndLine[], setup: MatchSetup): Talker[]
 export async function runApp(d: AppDeps): Promise<void> {
   const {screens, sfx, profile, table} = d;
   const speech = d.speech ?? speechFor(d.voice);
+  /** Pişti vitrini: masaya dokununca pişti kartlarını açar (uygulama başına bir tane; ipucu profilde bir kez). */
+  const vitrin = new PistiVitrin({
+    table,
+    slide: v => sfx.cardSlide(v),
+    portrait: s => screens.hud.portrait?.(s) ?? null,
+    hint: {seen: () => !!profile.data.settings.vitrinHint, mark: () => ((profile.data.settings.vitrinHint = true), profile.save())},
+    auto: d.auto,
+  });
   let current: Runner | null = null;
   let curGame: Game = 'pisti';
   let dealerBase = 0;
@@ -362,7 +371,7 @@ export async function runApp(d: AppDeps): Promise<void> {
       save();
       screens.hud.show(setup.players, mode, profile.data.coins, profile.data.equipped.frame);
       screens.hud.setCoins(profile.data.coins);
-      const deps = {table, hud: screens.hud, sfx, voice: d.voice, speech, chat: d.chat, auto: d.auto};
+      const deps = {table, hud: screens.hud, sfx, voice: d.voice, speech, chat: d.chat, auto: d.auto, vitrin};
 
       // ---- eller ----
       let quit: 'leave' | 'error' | null = null;

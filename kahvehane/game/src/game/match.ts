@@ -17,6 +17,7 @@ import type {VoicePlayer} from '../audio/voice';
 import {TAIL_MS, speechFor, type SpeechDirector} from '../audio/speech';
 import {ChatRelay} from '../net/chat';
 import type {GameHud, HudPose} from '../ui/types';
+import type {PistiVitrin} from '../ui/pistiVitrin';
 import {haptic} from '../platform/bridge';
 import {pistiInfo, type MatchSetup, type SeatPlayer} from './types';
 import {PISTI_TALK_STORE} from './talk';
@@ -39,6 +40,8 @@ export interface MatchDeps {
   chat?: QuickChat;
   /** Test/önizleme: insan koltuğu (0) kendiliğinden oynar */
   auto?: boolean;
+  /** Pişti vitrini (uygulama başına bir tane): maç başında oyuncular tanıtılır, el bitince anında kapanır. */
+  vitrin?: PistiVitrin;
 }
 
 export interface MatchOutcome {
@@ -238,6 +241,7 @@ export class Match {
     try {
       return await this.run(setup);
     } finally {
+      this.d.vitrin?.end();
       this.endChat();
       this.talk.cancel('banter'); // el bitti: yarım atışma kalmaz (son söz sürebilir; sonuç ekranından önce uygulama bekler)
       this.d.hud.onPoke = () => {};
@@ -287,6 +291,7 @@ export class Match {
 
     hud.setSounds(sfx);
     hud.show(setup.players, setup.mode);
+    this.d.vitrin?.begin(setup.players);
     hud.onPoke = s => this.poke(s);
     this.startChat(setup);
     // paketli ses düzeni: masadaki karakterlerin paketleri boşta iner (masada olmayanlar bellekten atılır)

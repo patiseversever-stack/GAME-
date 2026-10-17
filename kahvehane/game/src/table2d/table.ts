@@ -19,14 +19,14 @@ export interface TableSounds {
   whoosh(p: number): void;
 }
 
-interface Pose {
+export interface Pose {
   x: number;
   y: number;
   r: number; // derece
   s: number;
 }
 
-class Card {
+export class Card {
   readonly el: HTMLDivElement;
   /** Yerel hareketler (çevirme, sekme, kıpırdama) bu iç katmanda; poz dıştaki öğede. */
   readonly inn: HTMLDivElement;
@@ -201,6 +201,17 @@ export class Table2D {
   onDeck: (count: number, x: number, y: number) => void = () => {};
   /** Yeni Pişti eli kuruldu (reset): masaya eklenen başka oyun katmanları (Blöf) kendini kapatır. */
   onReset: () => void = () => {};
+  /**
+   * Pişti vitrini (ui/pistiVitrin.ts) bağlantıları. onBusy: yeni bir sahne animasyonu başlıyor (açık vitrin hemen kapanır);
+   * onStackTap: koltuğun yığınına / pişti kartlarına / ×N rozetine dokunuldu; onPistiRow: koltuğun pişti sırası büyüdü.
+   */
+  onBusy: (kind: 'play' | 'collect' | 'deal' | 'reset' | 'layout' | 'turn' | 'fx') => void = () => {};
+  onStackTap: (seat: number) => void = () => {};
+  onPistiRow: (seat: number, n: number) => void = () => {};
+  /** Süren sahne animasyonu kalmadı (masa sakin). */
+  onIdle: () => void = () => {};
+  /** Süren sahne animasyonu sayısı (atış, toplama, dağıtım, açılış...): vitrin yalnız sakin masada açılır. */
+  busy = 0;
 
   /** Deste atlası hazır olunca çözülür (açılışta masa boş kartlarla kurulur, atlas arka planda çizilir). */
   ready: Promise<void> = Promise.resolve();
@@ -529,9 +540,43 @@ export class Table2D {
     this.root.style.setProperty('--c2-p', P + 'px');
     this.root.style.setProperty('--c2-sh', make([[2, 0, 0, 'rgba(4,8,40,.35)'], [6, 14, 0, 'rgba(2,4,30,.45)']]));
     this.root.style.setProperty('--c2-sh-flat', make([[1, 0, 0, 'rgba(4,8,40,.4)'], [2, 5, 0, 'rgba(2,4,30,.35)']]));
+    this.rimKey = '';
+    void whenIdle(1500).then(() => this.bakeRim()); // vitrin çerçevesi boşta pişer: açılışta ana iş parçacığına yük binmez
+  }
+
+  /** Pişti vitrini kartlarının altın çerçevesi + yumuşak hâlesi: kartın gölge görselinin yerini alan TEK pişirilmiş görsel (ek katman yok). */
+  private rimKey = '';
+  private bakeRim(): void {
+    if (this.rimKey === this.shadowKey || !this.L) return;
+    this.rimKey = this.shadowKey;
+    const {cw, ch} = this.L, P = Math.ceil(cw * 0.26), S = 2;
+    const cv = document.createElement('canvas');
+    cv.width = (cw + 2 * P) * S;
+    cv.height = (ch + 2 * P) * S;
+    const g = cv.getContext('2d');
+    if (!g) return;
+    g.scale(S, S);
+    const r = cw * CORNER_RADIUS + 3;
+    const gr = g.createLinearGradient(0, P, 0, P + ch);
+    gr.addColorStop(0, '#fff3a8');
+    gr.addColorStop(0.5, '#ffc83a');
+    gr.addColorStop(1, '#ff9f1a');
+    g.shadowColor = 'rgba(255, 196, 60, .8)';
+    g.shadowBlur = 12 * S;
+    g.fillStyle = gr;
+    g.beginPath();
+    if (g.roundRect) g.roundRect(P - 3, P - 3, cw + 6, ch + 6, r);
+    else g.rect(P - 3, P - 3, cw + 6, ch + 6);
+    g.fill();
+    const url = cv.toDataURL('image/png');
+    this.root.style.setProperty('--c2-sh-vit', `url(${url})`);
+    const im = new Image(); // aynı adres: ilk vitrinde çözme takılması olmasın (görsel önbelleğe çözülü girer)
+    im.src = url;
+    void im.decode().catch(() => undefined);
   }
 
   private relayout(): void {
+    this.onBusy('layout');
     this.layout();
     this.deck.forEach((c, i) => this.set(c, this.deckPose(i)));
     this.pile.forEach((c, i) => this.set(c, this.pilePose(i, c.pose)));
@@ -542,6 +587,7 @@ export class Table2D {
       this.pistis[s].forEach((c, i) => this.set(c, this.pistiPose(s, i), this.pistiZ(s, i)));
     }
     this.syncPistiChips();
+    this.syncPistiHits();
     this.emitDeck();
     clearTimeout(this.paintTimer);
     if (this.theme?.paint) this.paintTimer = window.setTimeout(() => this.repaint(), 250);
@@ -692,7 +738,7 @@ export class Table2D {
         this.pcChips[s] = el;
       }
       const g = this.L.seats[s], {slots} = n ? this.pistiSlot(s, 0, n) : {slots: 0};
-      if (n <= slots) {
+      if (n <= slots || s === this.vitSeat) {
         el.classList.remove('is-on');
         continue;
       }
@@ -705,6 +751,92 @@ export class Table2D {
       el.classList.add('is-on');
     }
     for (let s = this.n; s < this.pcChips.length; s++) this.pcChips[s]?.classList.remove('is-on');
+  }
+
+  // ───────── pişti vitrini: masa tarafı (akış ve görünüm ui/pistiVitrin.ts'te) ─────────
+  /** Vitrin açıkken hangi koltuğun kartları sahne ortasında (-1: kapalı): ×N rozeti gizlenir. */
+  vitSeat = -1;
+  private hits: HTMLElement[] = [];
+  private hitDown: {seat: number; x: number; y: number; t: number} | null = null;
+
+  /**
+   * Koltuk yığınının dokunma alanı: yığın + pişti kartları birleşimi (kartların evinden hesaplanır: açıkken de yerinde), en az 44×44.
+   * Dokunma alanı el kartlarının (katman 500+) ALTINDA, kartlar/rozetin üstünde: el kartlarından dokunma çalmaz; HUD ayrı katmanda.
+   * Boş yığına (kart yok) alan yoktur.
+   */
+  private syncPistiHits(): void {
+    const {cw, ch} = this.L;
+    for (let s = 0; s < this.n; s++) {
+      let el = this.hits[s];
+      if (!el) {
+        el = document.createElement('i');
+        el.className = 'ar__vh';
+        el.addEventListener('pointerdown', e => {
+          this.hitDown = {seat: s, x: e.clientX, y: e.clientY, t: performance.now()};
+        });
+        el.addEventListener('pointerup', e => {
+          const d = this.hitDown;
+          this.hitDown = null;
+          if (d && d.seat === s && Math.hypot(e.clientX - d.x, e.clientY - d.y) < 12 && performance.now() - d.t < 600) this.onStackTap(s);
+        });
+        el.addEventListener('pointercancel', () => (this.hitDown = null));
+        this.cardsEl.append(el);
+        this.hits[s] = el;
+      }
+      const st = this.L.seats[s].stack, nSt = this.stacks[s].length, nP = this.pistis[s].length;
+      if (!nSt && !nP) {
+        el.style.display = 'none';
+        continue;
+      }
+      let x0 = st.x - (cw * st.s) / 2, x1 = st.x + (cw * st.s) / 2, y0 = st.y - (ch * st.s) / 2 - 8, y1 = st.y + (ch * st.s) / 2;
+      for (let i = 0; i < nP; i++) {
+        const p = this.pistiPose(s, i), w = (cw * p.s) / 2 + 4, h = (ch * p.s) / 2 + 4;
+        x0 = Math.min(x0, p.x - w);
+        x1 = Math.max(x1, p.x + w);
+        y0 = Math.min(y0, p.y - h);
+        y1 = Math.max(y1, p.y + h);
+      }
+      const w = Math.max(44, x1 - x0 + 12), h = Math.max(44, y1 - y0 + 12);
+      Object.assign(el.style, {display: 'block', width: w.toFixed(0) + 'px', height: h.toFixed(0) + 'px', left: ((x0 + x1) / 2 - w / 2).toFixed(1) + 'px', top: ((y0 + y1) / 2 - h / 2).toFixed(1) + 'px'});
+    }
+    for (let s = this.n; s < this.hits.length; s++) this.hits[s].style.display = 'none';
+  }
+
+  /** Vitrin düğümleri (kart düğümleri YENİDEN kullanılır, yeni düğüm doğmaz): kartın evi, uçuş, anında yerleştirme, altın çerçeve. */
+  pistiHome(seat: number, i: number): {pose: Pose; z: number} {
+    return {pose: this.pistiPose(seat, i), z: this.pistiZ(seat, i)};
+  }
+  vitFly(c: Card, to: Pose, o: {ms?: number; delay?: number; z?: number; zEnd?: number; lift?: number; ease?: string}): Promise<void> {
+    return this.fly(c, to, {lift: 0.12, ...o});
+  }
+  vitSet(c: Card, p: Pose, z?: number): void {
+    this.set(c, p, z);
+  }
+  vitRim(c: Card, on: boolean): void {
+    c.el.classList.toggle('is-vit', on);
+  }
+  /** Vitrin hangi koltukta açık (-1 kapalı): o koltuğun ×N rozeti gizlenir/geri gelir. */
+  vitMode(seat: number): void {
+    this.vitSeat = seat;
+    this.syncPistiChips();
+  }
+  /** Vitrinin altına konan öğe (karartma dokusu, vb.): kart katmanında, kart numarasıyla çakışmaz. */
+  mount(el: HTMLElement): void {
+    this.cardsEl.append(el);
+  }
+  /** Boş yığına dokununca (pişti yok) küçük zıplama: yalnız üst kartın iç katmanı, transform. */
+  nudge(seat: number): void {
+    const top = this.stacks[seat][this.stacks[seat].length - 1];
+    if (top) void top.inn.animate([{transform: 'scale(1.1)'}, {transform: 'none'}], {duration: 220, easing: 'cubic-bezier(.3,1.6,.5,1)'});
+  }
+  /** Süren sahne animasyonlarını izler; bağlı vitrin başlamadan önce haberdar olur. */
+  private track<T>(kind: 'play' | 'collect' | 'deal' | 'fx', fn: () => Promise<T>): Promise<T> {
+    this.onBusy(kind);
+    this.busy++;
+    return fn().finally(() => {
+      this.busy--;
+      if (!this.busy) this.onIdle();
+    });
   }
 
   /** Deste sayacı hapının kartın alt kenarına göre dikey kayması (hap kenara biner) */
@@ -1110,6 +1242,7 @@ export class Table2D {
   // ───────── el akışı ─────────
   /** Yeni el: kartlar ekran dışına (sol), koltuk sayısına göre yerleşim. */
   reset(seats: 2 | 4 = this.n): void {
+    this.onBusy('reset');
     this.onReset();
     this.n = seats;
     this.stopWiggle();
@@ -1124,10 +1257,11 @@ export class Table2D {
     this.hotSet.clear();
     this.layout();
     this.syncPistiChips();
+    this.syncPistiHits();
     this.setTension(false);
     this.deck.forEach((c, i) => {
       c.id = -1;
-      c.el.classList.remove('is-hand', 'is-hot');
+      c.el.classList.remove('is-hand', 'is-hot', 'is-vit');
       c.el.classList.add('is-flat');
       c.el.style.opacity = '1';
       this.dropGold(c);
@@ -1146,7 +1280,10 @@ export class Table2D {
    * Karıştırma gösterisi (masanın ortasında): deste dönerek gelir, ikiye ayrılıp fermuar gibi harmanlanır,
    * köprü kurup şelale gibi akar, sonra deste yerine kayar (~1.4 sn; sfx.shuffle ile aynı uzunlukta).
    */
-  async intro(): Promise<void> {
+intro(): Promise<void> {
+    return this.track('deal', () => this.intro0());
+  }
+  private async intro0(): Promise<void> {
     const n = this.deck.length;
     const {pile, cw, ch} = this.L;
     const cp = (i: number): Pose => {
@@ -1186,7 +1323,10 @@ export class Table2D {
   }
 
   /** Masa: kapalı kartların kimliği gelmez (−1; yalnız alan görür: revealHidden), açık kart yüzüyle iner. */
-  async dealTable(cards: CardId[], faceUp: boolean[]): Promise<void> {
+dealTable(cards: CardId[], faceUp: boolean[]): Promise<void> {
+    return this.track('deal', () => this.dealTable0(cards, faceUp));
+  }
+  private async dealTable0(cards: CardId[], faceUp: boolean[]): Promise<void> {
     for (let k = 0; k < cards.length; k++) {
       const c = this.deck.pop()!;
       c.el.classList.remove('is-flat');
@@ -1207,7 +1347,10 @@ export class Table2D {
   }
 
   /** Eller: desteden fiskeyle, dönerek; insanın kartları havada açılır. */
-  async dealHands(deals: {seat: number; card: CardId}[]): Promise<void> {
+dealHands(deals: {seat: number; card: CardId}[]): Promise<void> {
+    return this.track('deal', () => this.dealHands0(deals));
+  }
+  private async dealHands0(deals: {seat: number; card: CardId}[]): Promise<void> {
     const fl: Promise<void>[] = [];
     const cnt = new Array<number>(this.n).fill(0);
     for (const d of deals) cnt[d.seat]++;
@@ -1246,6 +1389,7 @@ export class Table2D {
 
   /** Oyuncunun sırası: alan kartlar parlar; dokunma/sürükleme ile seçilen kart döner. */
   waitPlayer(hot: CardId[]): {card: Promise<CardId>; cancel(): void} {
+    this.onBusy('turn');
     this.hotSet = new Set(hot);
     for (const c of this.hands[0]) c.el.classList.toggle('is-hot', this.hotSet.has(c.id));
     // sıra gelince el hafifçe kalkar
@@ -1356,7 +1500,10 @@ export class Table2D {
   }
 
   /** Kartı yığına at (hayalet izle). İner inmez çözülür. */
-  async play(seat: number, card: CardId): Promise<void> {
+play(seat: number, card: CardId): Promise<void> {
+    return this.track('play', () => this.play0(seat, card));
+  }
+  private async play0(seat: number, card: CardId): Promise<void> {
     const list = this.hands[seat];
     let c = this.byId.get(card);
     if (!c || !list.includes(c)) {
@@ -1410,7 +1557,10 @@ export class Table2D {
    * havada açılır, bir an durur ve yüzü açık olarak yığına geri oturur (toplam ≤ 600 ms); toplama (collect) sonra onları
    * kapalı olarak desteye götürür. Rakip alınca çağrılmaz: kartlar kapalı kalır, kimlikleri bu cihaza hiç gelmez.
    */
-  async revealHidden(ids: CardId[]): Promise<void> {
+revealHidden(ids: CardId[]): Promise<void> {
+    return this.track('fx', () => this.revealHidden0(ids));
+  }
+  private async revealHidden0(ids: CardId[]): Promise<void> {
     const list = this.pile.filter(c => c.id < 0).slice(0, ids.length);
     if (!list.length) return;
     const {pile, cw, ch} = this.L;
@@ -1435,7 +1585,10 @@ export class Table2D {
    * (başkasının aldığı kapalı masa kartı: −1) hiç gösterilmez.
    * Ekran noktaları ve puanları döner (HUD "+3" baloncukları için).
    */
-  async showValuables(cards: CardId[]): Promise<{x: number; y: number; pts: number; id: CardId}[]> {
+showValuables(cards: CardId[]): Promise<{x: number; y: number; pts: number; id: CardId}[]> {
+    return this.track('fx', () => this.showValuables0(cards));
+  }
+  private async showValuables0(cards: CardId[]): Promise<{x: number; y: number; pts: number; id: CardId}[]> {
     const vals = cards.map(id => ({id, pts: cardPoints(id), c: this.byId.get(id)})).filter(v => v.pts > 0 && v.c && this.pile.includes(v.c));
     if (!vals.length) return [];
     const m = vals.length;
@@ -1480,7 +1633,10 @@ export class Table2D {
    * Yığını topla: kartlar önce ortada toplanır, sonra yay çizerek sırayla oyuncunun destesine süzülür
    * (her varışta onArrive). Pişti kartı açık olarak yanına dizilir.
    */
-  async collect(seat: number, pistiCard: CardId | null, onArrive?: (i: number, total: number) => void): Promise<void> {
+collect(seat: number, pistiCard: CardId | null, onArrive?: (i: number, total: number) => void): Promise<void> {
+    return this.track('collect', () => this.collect0(seat, pistiCard, onArrive));
+  }
+  private async collect0(seat: number, pistiCard: CardId | null, onArrive?: (i: number, total: number) => void): Promise<void> {
     const list = this.pile;
     this.pile = [];
     this.syncPot();
@@ -1522,6 +1678,8 @@ export class Table2D {
     this.setGlow(null);
     await Promise.all(fl);
     this.syncPistiChips();
+    this.syncPistiHits();
+    if (pistiCard !== null) this.onPistiRow(seat, this.pistis[seat].length);
     for (const c of st) c.el.classList.add('is-flat');
     // deste "yuttu" hissi: üst kart hafifçe zıplar
     const top = st[st.length - 1];

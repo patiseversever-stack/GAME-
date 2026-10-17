@@ -260,6 +260,8 @@ export interface GameHud {
   showHint(text: string | null): void;
   /** Konuşma balonu + (varsa) tepki hâli. seat verilmezse ilk rakip. Dönen numara bu yazının kimliği (unsay / holdSay için). */
   say(text: string, mood?: HudPose | null, ms?: number, seat?: number): number | void;
+  /** Koltuğun portre tuvali (pişti vitrini başlığı için; yoksa null) */
+  portrait?(seat: number): HTMLCanvasElement | null;
   /** Koltuğun balonunu kapat (tok verilirse yalnız o yazı hâlâ görünüyorsa). Konuşma yöneticisi sesi kesince çağırır. */
   unsay?(seat: number, tok?: number): void;
   /** tok numaralı yazı en az ms daha görünsün (ses geç başladı). */

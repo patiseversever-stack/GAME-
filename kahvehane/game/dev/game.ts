@@ -16,6 +16,7 @@ import {Sfx} from '../src/audio/sfx';
 import {VoicePlayer} from '../src/audio/voice';
 import {Fx} from '../src/ui/fx';
 import {HudView} from '../src/ui/hud';
+import {PistiVitrin} from '../src/ui/pistiVitrin';
 import {ASSETS} from '../src/ui/assets';
 import {Match, type MatchOutcome} from '../src/game/match';
 import {charById, ROSTER} from '../src/game/roster';
@@ -107,9 +108,10 @@ table.showValuables = cards => {
   void p.then(v => v.length && events.push({t: 'valuable', at: performance.now()}));
   return p;
 };
-const match = new Match({table, hud, sfx, voice, auto: Q.has('auto')});
+const vitrin = new PistiVitrin({table, slide: v => sfx.cardSlide(v), portrait: s => hud.portrait(s), auto: Q.has('auto'), hint: Q.has('hint') ? {seen: () => false, mark: () => {}} : undefined});
+const match = new Match({table, hud, sfx, voice, auto: Q.has('auto'), vitrin});
 const g = {
-  table, hud, fx, sfx, match, events, players, ready: false, outcome: null as MatchOutcome | null,
+  table, hud, fx, sfx, match, vitrin, events, players, ready: false, outcome: null as MatchOutcome | null,
   pisti: (seat = 1, jack = false, id = Q.get('fx') ?? 'klasik') => {
     table.impact(jack ? 'jack' : 'pisti');
     sfx.pisti(jack);

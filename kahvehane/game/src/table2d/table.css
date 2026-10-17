@@ -80,6 +80,10 @@
 .c2__in::before { content: ''; position: absolute; inset: calc(var(--c2-p, 0px) * -1); pointer-events: none;
   background: var(--c2-sh) center / 100% 100% no-repeat; }
 .c2.is-flat .c2__in::before { background-image: var(--c2-sh-flat); }
+/* pişti vitrinindeki kart: gölgenin yerine pişirilmiş altın çerçeve + hâle (ek katman / kart başına çizim geçişi yok) */
+.c2.is-vit .c2__in::before, .c2.is-flat.is-vit .c2__in::before { background-image: var(--c2-sh-vit, var(--c2-sh)); }
+/* pişti vitrini dokunma alanı: şeffaf, kartların üstünde, el kartlarının (500+) altında (konum/boyut JS'ten; katman doğurmaz) */
+.ar__vh { position: absolute; z-index: 350; display: none; background: none; pointer-events: auto; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
 /* alan kart parıltısı */
 /* yalnız alan kartta var (display): gizli hâliyle bile 52 kartın HER katmanını gölgesi kadar büyütüyordu (karo ×1,5) */
 .c2__hot { position: absolute; inset: -7%; display: none; border-radius: 12%; opacity: 0; pointer-events: none;
