@@ -64,7 +64,8 @@ function rowHtml(s: SeriesState, v: SideView, frame: string, live: boolean): str
   const pisti = s.game === 'pisti';
   const avas = v.seats.map(p => charAvatarHtml(p.char, p.human ? frame : 'standart', 'kh-sb__ava')).join('');
   const color = v.seats.length === 1 && !v.me ? v.seats[0].char.color : '';
-  const team = s.mode === 'esli' ? (v.me ? ' is-blue' : ' is-red') : v.me ? ' is-blue' : '';
+  // eşlide takım renkleri; diğerlerinde oyuncu yeşil (karakter renkleri: Rıza amber, Cem mavi, Dursun turuncu, Defne mor)
+  const team = s.mode === 'esli' ? (v.me ? ' is-blue' : ' is-red') : v.me ? ' is-green' : '';
   let meter: string;
   if (pisti && isLong(s.len)) {
     const k = (n: number) => Math.min(1, n / targetOf(s)).toFixed(3);

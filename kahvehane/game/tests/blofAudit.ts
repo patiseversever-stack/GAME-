@@ -164,6 +164,8 @@ export interface AuditOptions {
   humanDeclineP?: number;
   /** Her karardan sonra (denetim için) çağrılır: bot kararı + bot görünümü + TAM durum (yalnız ölçüm). */
   onDecision?: (seat: number, view: BlofView, action: BlofAction, state: BlofState) => void;
+  /** Uygulanan her hamle (ölçüm/kayıt): yapan koltuk (−1: ev sahibi), hamle, hamleden önceki TAM durum. */
+  onAction?: (actor: number, action: BlofAction, before: BlofState) => void;
   /** Pencere sonuçlandı: by koltuğunun atışına blöf dendi mi (ölçüm). */
   onWindowResolved?: (by: number, challenged: boolean) => void;
   /** Bot fabrikası (parametre denemeleri). */
@@ -411,6 +413,7 @@ export function auditHand(o: AuditOptions): HandMetrics & {state: BlofState} {
         if (last.some((c) => rankOf(c) !== s.window!.rank)) m.finalCaught++;
       }
     }
+    o.onAction?.(actor, action, s);
     const wasFinal = s.phase === 'window' && s.window?.final;
     const winBy = s.phase === 'window' ? s.window!.by : -1;
     const r = applyBlof(s, action);

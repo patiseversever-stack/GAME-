@@ -38,6 +38,7 @@
 .kh-sb.is-n4 .kh-sb__row { min-height: calc(var(--u) * 2.9); }
 .kh-sb__row.is-blue { --c: #3d93ff; }
 .kh-sb__row.is-red { --c: #ff4d66; }
+.kh-sb__row.is-green { --c: #2fd36b; }
 .kh-sb__row.is-lead::before { content: ''; position: absolute; inset: 2px calc(var(--u) * -.3); z-index: -1; border-radius: var(--r-md);
   background: linear-gradient(90deg, rgba(255, 210, 63, .2), rgba(255, 210, 63, .04)); box-shadow: inset 0 0 0 1.5px rgba(255, 210, 63, .45); }
 .kh-sb__rank { display: grid; place-items: center; width: calc(var(--u) * 1.4); height: calc(var(--u) * 1.4); border-radius: 50%; background: var(--btn4-fill); box-shadow: 0 0 0 2px var(--navy);
