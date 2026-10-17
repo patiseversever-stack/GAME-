@@ -38,6 +38,10 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 :where(.kh-ui) :focus { outline: none; }
 :where(.kh-ui) :focus-visible { outline: 3px solid var(--c-accent); outline-offset: 3px; }
 .kh-screen { position: absolute; inset: 0; pointer-events: auto; overflow: hidden; }
+/* opak bir perde/ekranın (dört renk perde, VS) tamamen altında kalan ekran: çizilmez (GPU karo belleği boşalır), döngüleri
+   (dönen .kh-keep ışınları dahil) durur. parts.ts hideUnder / suitWipe kurar ve geri alır. */
+.kh-under { visibility: hidden !important; }
+.kh-under *, .kh-under *::before, .kh-under *::after, .kh-covered > .kh-screen .kh-keep { animation-play-state: paused !important; }
 .kh-num { font-variant-numeric: tabular-nums; }
 .kh-i { width: 1.15em; height: 1.15em; flex: none; display: block; }
 .kh-suit { display: block; width: 1em; height: 1em; flex: none; }

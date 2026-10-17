@@ -156,6 +156,25 @@ export function onAct(scope: Scope, root: HTMLElement, fn: (act: string, el: HTM
 let toastEl: HTMLElement | null = null;
 let toastTimer = 0;
 /** Kısa bilgi şeridi (üst orta). */
+/**
+ * Opak tam ekran bir perde/ekran (`top`) üstteyken altında kalan eski ekranlar çizilmez: `kh-under` = visibility:hidden ve
+ * döngüleri durur (dönen .kh-keep ışınları dahil). Kapalı perdenin arkasındaki ekran GPU karo belleği tutmaz, kare üretmez.
+ * Yalnız `top`tan ÖNCE eklenmiş .kh-screen kardeşler; sonradan eklenen (perde açılınca görünecek) ekrana dokunulmaz.
+ * Dönüş: geri al (hâlâ belgede olanlar yeniden görünür; ışınlar kaldığı açıdan sürer — görünmezken döndükleri fark edilmez).
+ */
+export function hideUnder(top: Element): () => void {
+  const hidden: Element[] = [];
+  for (let n = top.previousElementSibling; n; n = n.previousElementSibling)
+    if (n.classList.contains('kh-screen') && !n.classList.contains('kh-under')) {
+      n.classList.add('kh-under');
+      hidden.push(n);
+    }
+  return () => {
+    for (const n of hidden) n.classList.remove('kh-under');
+    hidden.length = 0;
+  };
+}
+
 export function toast(ctx: Ctx, text: string, icon: string = I.lock): void {
   if (!toastEl) toastEl = h('div', 'kh-toast');
   ctx.layer.append(toastEl);
