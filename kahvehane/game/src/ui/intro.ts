@@ -10,6 +10,7 @@ import {g3} from './fx';
 import {suitSvg, type SuitKey} from './icons';
 import {haptic} from '../platform/bridge';
 import {ctx2d, radial} from '../platform/tex';
+import {cssLinear, suitPath, suitTile} from './suittex';
 
 const TIPS = [
   'Vale ortadaki tüm kartları alır.',
@@ -211,6 +212,67 @@ function paintGlint(cv: HTMLCanvasElement): void {
   g.fillRect(0, 0, w, cv.height);
 }
 
+/**
+ * VS yarımı / şeridi tuvale: CSS gradyanı (`bg`) + dağınık takım deseni (`tile` CSS px döşeme, `tileA` saydamlık); şeritte
+ * ayrıca üstte lacivert kenar (`edge.px` CSS px, kutunun ÜSTÜNE taşan box-shadow'un yerine), beyaz ışık çizgisi + gölgesi ve büyük
+ * soluk takım simgesi. Çözünürlük en çok 2× (yumuşak gradyan ve %9–14 saydam desen 2,6×'te farksız). Öğe = tuval, canlandırılan
+ * da odur (eğim/kayma bileşimcide): katman taranmaz, karo belleği tutmaz.
+ */
+function paintStripe(cv: HTMLCanvasElement, bg: string, tile: number, tileA: number, edge?: {px: number; navy: string; seam: string}, glyph?: {k: SuitKey; left: boolean}): void {
+  const w = cv.offsetWidth, hh = cv.offsetHeight;
+  if (!w || !hh) return;
+  const K = Math.min(2, window.devicePixelRatio || 1);
+  const W = Math.min(2048, Math.round(w * K)), H = Math.min(2048, Math.round(hh * K));
+  cv.width = W;
+  cv.height = H;
+  const g = ctx2d(cv);
+  if (!g) return;
+  const sx = W / w, sy = H / hh;
+  const top = edge ? edge.px : 0, bh = hh - top;
+  if (edge) {
+    g.fillStyle = edge.navy;
+    g.fillRect(0, 0, W, Math.round(top * sy));
+  }
+  g.setTransform(sx, 0, 0, sy, 0, top * sy); // CSS px, şerit içeriğinin sol üstü
+  g.fillStyle = cssLinear(g, bg, w, bh) ?? '#1f4fd6';
+  g.fillRect(0, 0, w, bh);
+  const t = suitTile(tile * sx);
+  if (t) {
+    // desen tuval pikselinde (döşeme tile·sx px), CSS'teki gibi kutunun sol üstünden
+    g.setTransform(1, 0, 0, 1, 0, top * sy);
+    const pat = g.createPattern(t, 'repeat');
+    if (pat) {
+      g.globalAlpha = tileA;
+      g.fillStyle = pat;
+      g.fillRect(0, 0, W, bh * sy);
+      g.globalAlpha = 1;
+    }
+    g.setTransform(sx, 0, 0, sy, 0, top * sy);
+  }
+  const p = glyph ? suitPath(glyph.k) : null;
+  if (glyph && p) {
+    // .kh-vs__bsuit: genişliğin %30'u kare, üstten %18, soldan/sağdan %22; içindeki simge skewY(9°) (şeridin eğimini dengeler)
+    const side = w * 0.3, x = glyph.left ? w * 0.22 : w - w * 0.22 - side, y = bh * 0.18;
+    g.save();
+    g.translate(x + side / 2, y + side / 2);
+    g.transform(1, Math.tan((9 * Math.PI) / 180), 0, 1, 0, 0);
+    g.translate(-side / 2, -side / 2);
+    g.scale(side / 24, side / 24);
+    g.globalAlpha = 0.14;
+    g.fillStyle = '#fff';
+    g.fill(p);
+    g.restore();
+  }
+  if (edge) {
+    // ::before: 5 px ışık çizgisi + altında 2 px gölge (box-shadow 0 2px 0)
+    g.fillStyle = 'rgba(10,16,51,.45)';
+    g.fillRect(0, 2, w, 5);
+    g.fillStyle = cssLinear(g, edge.seam, w, 5) ?? '#fff';
+    g.fillRect(0, 0, w, 5);
+  }
+  g.setTransform(1, 0, 0, 1, 0, 0);
+}
+
 /** Hız çizgileri: [üstten %, genişlik %] — iki yöne sırayla. */
 const STREAKS: [number, number][] = [[12, 58], [24, 44], [37, 66], [63, 60], [76, 46], [88, 64]];
 
@@ -235,7 +297,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
     // yukarıdan aşağı: 4 kişide karşı (2), sol (3), sağ (1), sen (0); 3 kişide sol-üst (2), sağ-üst (1), sen (0)
     const order = mode === '4' ? [2, 3, 1, 0] : [2, 1, 0];
     const suits: SuitKey[] = mode === '4' ? ['h', 'd', 'c', 's'] : ['h', 'd', 's'];
-    body = order.map((seat, k) => `<div class="kh-vs__band is-${suits[k]}" style="--k:${k}"><span class="kh-vs__bsuit">${suitSvg(suits[k])}</span></div>`).join('') +
+    body = order.map((seat, k) => `<canvas class="kh-vs__band is-${suits[k]}" style="--k:${k}" data-s="${suits[k]}"></canvas>`).join('') +
       order.map((seat, k) => {
         const p = by(seat);
         // büst kendi şeridinin alt kenarında kesilir (alttaki şeridin arkasına girer), başı üstteki şeride taşabilir;
@@ -250,7 +312,7 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
         ${list.map((p, i) => `<div class="kh-vs__who" style="--i:${i}">${bustHtml(p)}${list.length > 1 ? plateHtml(p, 'is-sm') : ''}</div>`).join('')}
         ${list.length > 1 ? `<div class="kh-vs__team">${team}</div>` : plateHtml(list[0])}
       </div>`;
-    body = `<div class="kh-vs__half is-t"></div><div class="kh-vs__half is-b"></div><div class="kh-vs__seam"></div>
+    body = `<canvas class="kh-vs__half is-t"></canvas><canvas class="kh-vs__half is-b"></canvas><div class="kh-vs__seam"></div>
       ${side(top, 'is-opp', 'Kırmızı Takım')}${side(bot, 'is-me', 'Mavi Takım')}`;
   }
   const sparkN = low ? 0 : 12;
@@ -272,6 +334,19 @@ export function versus(ctx: Ctx, setup: MatchSetup, stake: number): Promise<void
   cvs('.kh-vs__ring.is-b').forEach(c => radial(c, RING_B, false, true));
   cvs('.kh-vs__glow').forEach(c => radial(c, SIDE_GLOW, false, true));
   cvs('.kh-vs__glint').forEach(paintGlint);
+  {
+    // yarımlar / şeritler: CSS değişkenlerindeki gradyanlar, desen boyu --u'dan (ölçü için tek bir yerleşim okuması)
+    const cs = getComputedStyle(el);
+    const probe = h('i');
+    probe.style.cssText = 'position:absolute;visibility:hidden;width:calc(var(--u) * 100);height:0';
+    el.append(probe);
+    const u = probe.offsetWidth / 100 || 16;
+    probe.remove();
+    const v = (n: string, def: string) => cs.getPropertyValue(n).trim() || def;
+    cvs('.kh-vs__half').forEach(c => paintStripe(c, v(c.classList.contains('is-t') ? '--vs-top' : '--vs-bottom', ''), u * 13, 0.09));
+    const edge = {px: 4, navy: v('--navy', '#0a1033'), seam: v('--vs-seam', '')};
+    cvs('.kh-vs__band').forEach((c, k) => paintStripe(c, getComputedStyle(c).getPropertyValue('--bg').trim(), u * 11, 0.1, edge, {k: (c.dataset.s ?? 'h') as SuitKey, left: k % 2 === 0}));
+  }
   // VS ilk karesinden itibaren opak: altta kalan (çıkmakta olan) ana ekran artık çizilmesin (karo belleği + dönen ışınlar)
   const unhide = {fn: (): void => undefined};
   requestAnimationFrame(() => {

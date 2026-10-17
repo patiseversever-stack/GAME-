@@ -2946,8 +2946,9 @@ export function planEndTalk(f: EndFacts, pick: EndPick, rnd: () => number = Math
       add(f1 ?? f2, ...(useCond && cond ? [[cond]] : []), [won ? 'endFoeLose' : 'endFoeWin']);
     } else if (f1 && f2 && v < 0.75) {
       // rakip takımın iki botu birbirine (kazandılarsa övgü, kaybettilerse sitem)
-      add(f1, [won ? 'endDuoLoseA' : 'endDuoWinA']);
-      add(f2, [won ? 'endDuoLoseB' : 'endDuoWinB']);
+      // (tek replikli roller, anlamca uyan sesli rollerle tek havuz: art arda maçlarda da değişsin)
+      add(f1, won ? ['endDuoLoseA', 'endMateLose'] : ['endDuoWinA', 'blofMateCheer']);
+      add(f2, won ? ['endDuoLoseB', 'endSulk'] : ['endDuoWinB', 'endMateWin']);
     } else {
       // rakip bize takılır / söylenir, ortak bize döner
       add(f1 ?? f2, ...aPools([[won ? 'endFoeLose' : 'endFoeWin']]));

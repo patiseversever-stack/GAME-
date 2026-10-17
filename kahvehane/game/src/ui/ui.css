@@ -248,10 +248,12 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
 
 /* =================== KARŞILAŞMA GİRİŞİ =================== */
 .kh-vs { z-index: 40; background: var(--arena-deep); }
-.kh-vs__half { position: absolute; left: -15%; right: -15%; height: 62%; will-change: transform; }
-.kh-vs__half::after { content: ''; position: absolute; inset: 0; background-image: var(--suit-tile); background-size: calc(var(--u) * 13) calc(var(--u) * 13); opacity: .09; }
-.kh-vs__half.is-t { top: -12%; background: var(--vs-top); transform: skewY(-9deg); }
-.kh-vs__half.is-b { bottom: -12%; background: var(--vs-bottom); transform: skewY(-9deg); }
+/* yarımlar ve 4/3 kişi şeritleri <canvas>: gradyan (--vs-top / --vs-bottom / --bg) + takım deseni (+ şeritte kenar, ışık çizgisi,
+   büyük simge) intro.ts paintStripe ile tuvale çizilir. DOM gradyanı olsalardı ekrandan geniş + eğik oldukları için tam karolarla
+   taranırlardı (yarım ≈ 16 MB, şerit ≈ 10 MB görünür karo belleği). Tuval genişliği açık verilir (left+right tuvali germez). */
+.kh-vs__half { position: absolute; left: -15%; width: 130%; height: 62%; display: block; will-change: transform; }
+.kh-vs__half.is-t { top: -12%; transform: skewY(-9deg); }
+.kh-vs__half.is-b { bottom: -12%; transform: skewY(-9deg); }
 .kh-vs__seam { position: absolute; left: -15%; right: -15%; top: 50%; height: 6px; margin-top: -3px; background: var(--vs-seam); transform: skewY(-9deg);
   box-shadow: 0 0 0 2px rgba(10, 16, 51, .6); }
 .kh-vs__rays { position: absolute; z-index: 5; left: 50%; top: 50%; width: 92vmax; height: 92vmax; margin: -46vmax 0 0 -46vmax; pointer-events: none; will-change: transform; }
@@ -289,20 +291,14 @@ body { font-family: var(--font-ui); color: var(--c-text); font-size: var(--u); -
   box-shadow: 0 0 0 3px var(--navy), 0 4px 0 var(--navy), inset 0 2px 0 rgba(255, 255, 255, .5); }
 .kh-vs__side.is-opp .kh-vs__team { top: 10%; background: var(--team-red); }
 .kh-vs__side.is-me .kh-vs__team { bottom: 3%; background: var(--team-blue); }
-/* 4 kişi: dört eğik şerit */
-.kh-vs__band { position: absolute; left: -20%; right: -20%; top: calc(var(--k) * 25% - 4%); height: 33%; overflow: hidden; transform: skewY(-9deg); will-change: transform;
-  box-shadow: 0 -4px 0 var(--navy); }
-.kh-vs__band.is-h { background: linear-gradient(165deg, #ff8a9a 0%, #ff2e4d 40%, #a8001e 100%); z-index: 1; }
-.kh-vs__band.is-d { background: linear-gradient(165deg, #ffe07a 0%, #ffb400 40%, #b35a00 100%); z-index: 2; }
-.kh-vs__band.is-c { background: linear-gradient(165deg, #7dffa8 0%, #16c45b 40%, #06672c 100%); z-index: 3; }
-.kh-vs__band.is-s { background: var(--vs-bottom); z-index: 4; }
-.kh-vs__band::after { content: ''; position: absolute; inset: 0; background-image: var(--suit-tile); background-size: calc(var(--u) * 11) calc(var(--u) * 11); opacity: .1; }
-/* şerit sınırı: lacivert kenar (box-shadow, üstte) + beyaz ışık çizgisi + ince gölge — şeridin kendi üst kenarında, onunla birlikte kayar */
-.kh-vs__band::before { content: ''; position: absolute; z-index: 1; left: 0; right: 0; top: 0; height: 5px; background: var(--vs-seam); box-shadow: 0 2px 0 rgba(10, 16, 51, .45); }
-.kh-vs__bsuit { position: absolute; top: 18%; width: 30%; aspect-ratio: 1; color: #fff; opacity: .14; }
-.kh-vs__band:nth-of-type(odd) .kh-vs__bsuit { left: 22%; }
-.kh-vs__band:nth-of-type(even) .kh-vs__bsuit { right: 22%; }
-.kh-vs__bsuit .kh-suit { width: 100%; height: 100%; color: inherit; transform: skewY(9deg); }
+/* 4 kişi: dört eğik şerit (tuval). Şerit sınırı: lacivert kenar (4 px, şeridin üstüne taşar: tuval 4 px yukarıdan başlar) + beyaz
+   ışık çizgisi + ince gölge — şeridin kendi üst kenarında, onunla birlikte kayar; büyük soluk takım simgesi (genişliğin %30'u,
+   üstten %18, sırayla soldan/sağdan %22). Hepsi paintStripe'ta. */
+.kh-vs__band { position: absolute; left: -20%; width: 140%; top: calc(var(--k) * 25% - 4% - 4px); height: calc(33% + 4px); display: block; transform: skewY(-9deg); will-change: transform; }
+.kh-vs__band.is-h { --bg: linear-gradient(165deg, #ff8a9a 0%, #ff2e4d 40%, #a8001e 100%); z-index: 1; }
+.kh-vs__band.is-d { --bg: linear-gradient(165deg, #ffe07a 0%, #ffb400 40%, #b35a00 100%); z-index: 2; }
+.kh-vs__band.is-c { --bg: linear-gradient(165deg, #7dffa8 0%, #16c45b 40%, #06672c 100%); z-index: 3; }
+.kh-vs__band.is-s { --bg: var(--vs-bottom); z-index: 4; }
 .kh-vs__slot { position: absolute; left: 0; right: 0; top: calc(var(--k) * 25%); height: 25%; z-index: 5; will-change: transform; }
 .kh-vs__slot .kh-vs__bust { left: auto; right: -2%; bottom: -8%; height: 118%; transform: none; }
 .kh-vs__slot.is-l .kh-vs__bust { right: auto; left: -2%; }

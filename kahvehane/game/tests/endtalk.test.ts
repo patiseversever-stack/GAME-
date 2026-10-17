@@ -328,6 +328,24 @@ describe('planEndTalk: karşılıklı dizi', () => {
     expect(new Set(seen).size).toBeGreaterThanOrEqual(20);
   });
 
+  it('eşli: art arda maçlarda (aynı profil) ortak ve rakip ikili replikleri de değişir', () => {
+    const d = dir('geveze');
+    const r = mulberry32(9);
+    const seen = new Map<string, Set<string>>();
+    for (let i = 0; i < 40; i++) {
+      d.newHand(4);
+      for (const outcome of ['win', 'lose'] as const) {
+        const p = plan(facts({mode: 'esli', seats: esli, outcome, leaders: outcome === 'win' ? [0] : [1], order: outcome === 'win' ? [0, 1] : [1, 0], spectators: []}), d, r);
+        for (const x of p) {
+          const k = `${x.char}:${x.role}`;
+          if (!seen.has(k)) seen.set(k, new Set());
+          seen.get(k)!.add(x.line.id);
+        }
+      }
+    }
+    for (const [k, ids] of seen) if (/Duo|Mate/.test(k)) expect(ids.size, k).toBeGreaterThanOrEqual(2);
+  });
+
   it('rövanş kabulü / veda için rakip: rövanş çağıran → konuşan rakip → ilk rakip', () => {
     const line = (char: CharId, role: string): EndLine => ({seat: 1, char, line: linesFor(char, 'endGloat')[0], role});
     expect(endChallenger([line('cem', 'endGloat'), line('dursun', 'endJoinWin')], seats4)!.char).toBe('dursun');

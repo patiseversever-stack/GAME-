@@ -16,12 +16,14 @@ export type SuitKey = keyof typeof SUIT;
 export const suitSvg = (k: SuitKey, cls = ''): string =>
   `<svg class="kh-suit kh-suit--${k} ${cls}" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">${SUIT[k]}</svg>`;
 
+/** Desen döşemesindeki simgeler: [takım, x, y, ölçek, açı°] (240 px döşeme). Tuval dokuları da aynısını çizer (ui/suittex.ts). */
+export const SUIT_TILE_ITEMS: ReadonlyArray<readonly [SuitKey, number, number, number, number]> = [
+  ['h', 26, 30, 1.5, -18], ['s', 124, 22, 1.1, 14], ['d', 204, 70, 1.3, 8], ['c', 66, 110, 1.25, -10], ['h', 172, 146, 0.95, 22],
+  ['s', 28, 196, 1.35, -6], ['d', 112, 200, 0.95, -24], ['c', 210, 210, 1.3, 12], ['d', 150, 96, 0.75, 0], ['h', 84, 166, 0.75, 30],
+];
 /** Arena zeminindeki dağınık takım deseni (240 px döşeme, beyaz; saydamlık CSS'te). */
 export const SUIT_TILE = (() => {
-  const items: [SuitKey, number, number, number, number][] = [
-    ['h', 26, 30, 1.5, -18], ['s', 124, 22, 1.1, 14], ['d', 204, 70, 1.3, 8], ['c', 66, 110, 1.25, -10], ['h', 172, 146, 0.95, 22],
-    ['s', 28, 196, 1.35, -6], ['d', 112, 200, 0.95, -24], ['c', 210, 210, 1.3, 12], ['d', 150, 96, 0.75, 0], ['h', 84, 166, 0.75, 30],
-  ];
+  const items = SUIT_TILE_ITEMS;
   const g = items.map(([k, x, y, sc, r]) => `<g transform="translate(${x} ${y}) rotate(${r}) scale(${sc}) translate(-12 -12)">${SUIT[k]}</g>`).join('');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="240" height="240" viewBox="0 0 240 240"><g fill="#fff">${g}</g></svg>`;
   return `url("data:image/svg+xml,${encodeURIComponent(svg)}")`;
