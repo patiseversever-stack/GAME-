@@ -1,5 +1,5 @@
 // Koltuk balonu + replik → söz dönüştürücüleri (DOM'a / yerel kayda dokunmaz; testlerde de yüklenir).
-import type {Line} from '../ai/dialogue';
+import {spectatorFor, type Line} from '../ai/dialogue';
 import type {Bubble, Utter} from '../audio/speech';
 import type {GameHud, HudPose} from '../ui/types';
 
@@ -45,14 +45,18 @@ export function utter(line: Line, char: string, bubble?: Bubble, minMs?: number)
 
 /**
  * Paketli ses düzeninde (tek dosya / yayın önizlemesi) masada gereken paketler, öncelik sırasıyla: botların oyun
- * replikleri, oyuncunun kendi hızlı sohbet söyleyişleri, botların atışma + cevapları (VoicePlayer.prepare).
+ * replikleri, oyuncunun kendi hızlı sohbet söyleyişleri, botların atışma + cevapları, el / maç sonu konuşmaları (botlar +
+ * 1'e 1'de kenardaki seyirci) (VoicePlayer.prepare). endFirst: el bitti → Ara Skor / sonuç konuşmaları önce insin.
  */
-export function voiceWant(game: 'pisti' | 'blof', players: readonly {char: {id: string}; human: boolean}[]): [string, string][] {
+export function voiceWant(game: 'pisti' | 'blof', players: readonly {char: {id: string}; human: boolean}[], endFirst = false): [string, string][] {
   const bots = players.filter(p => !p.human).map(p => p.char.id);
   const out: [string, string][] = bots.map(c => [c, game]);
   for (const p of players) if (p.human) out.push([p.char.id, 'say']);
   for (const c of bots) out.push([c, 'bot']);
-  return out;
+  const end: [string, string][] = bots.map(c => [c, 'end']);
+  const spec = players.length === 2 ? spectatorFor(players.map(p => p.char.id)) : null;
+  if (spec) end.push([spec, 'end']);
+  return endFirst ? [...end, ...out] : [...out, ...end];
 }
 
 /** Seslendirmesiz kısa tepki (dürtme, ortak sevinci): yine kanal sırasına uyar. */

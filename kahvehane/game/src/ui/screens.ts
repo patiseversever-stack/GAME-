@@ -16,7 +16,8 @@ import './meta.css';
 import './perf.css';
 import '../themes/frames.css';
 
-import type {CosmeticsListener, GameHud, HandOption, HomeAction, InterimData, MenuTalk, QuickChatSheetPort, ResultsData, ResumeOffer, Settings, Sounds} from './types';
+import type {ChatOption, ChatSamplePort, CosmeticsListener, GameHud, HandOption, HomeAction, InterimData, MenuTalk, QuickChatSheetPort, ResultsData, ResultsTalk, ResumeOffer, Settings, Sounds} from './types';
+import type {ChatLevel} from '../ai/dialogue';
 import type {Profile as GameProfile} from '../game/profile';
 import type {Difficulty, Game, HandLayout, MatchSetup, Mode} from '../game/types';
 import {ANIM, enableActiveStates, enableSpringPress, h, q} from './dom';
@@ -28,12 +29,13 @@ import {results} from './results';
 import {onboarding} from './onboarding';
 import {daily, pause, rules, settings} from './modals';
 import {handChooser} from './handchooser';
+import {chatChooser} from './chatchooser';
 import {QuickChatSheet} from './quickchat';
 import {suitWipe, toast, type Ctx} from './parts';
 import {I} from './icons';
 import {interim, lengthSheet, resumePrompt, type InterimHandle} from './scoreboard';
 
-export type {CosmeticsListener, GameHud, HomeAction, HudLayout, HudPlayer, InterimData, MenuTalk, Mood, QuickChatItem, QuickChatSheetPort, ResultsData, ResumeOffer, Settings, Sounds} from './types';
+export type {ChatOption, ChatSamplePort, CosmeticsListener, GameHud, HomeAction, HudLayout, HudPlayer, InterimData, MenuTalk, Mood, QuickChatItem, QuickChatSheetPort, ResultsData, ResultsTalk, ResumeOffer, Settings, Sounds, TalkStage, Talker} from './types';
 export type {InterimHandle} from './scoreboard';
 export {STAKES, BOT_LEVEL, payout} from './lobby';
 
@@ -141,6 +143,15 @@ export class Screens {
     return handChooser(this.ctx, this.deckId);
   }
 
+  /**
+   * İlk açılışta sohbet seviyesi seçici (Sakin · Normal · Geveze; kartta canlı önizleme + örnek dinletme). Seçimle çözülür;
+   * kaydetmek çağıranın işi. Perde kapalıysa (hikâyeden sonra) önce açılır.
+   */
+  chatChooser(port?: ChatSamplePort, current?: ChatLevel): Promise<ChatLevel> {
+    this.openCurtain();
+    return chatChooser(this.ctx, port, current);
+  }
+
   /** Sinematik giriş (1'e 1 / 3 kişi / 4 kişi / eşli; oyun adıyla); bitince çözülür. */
   versus(setup: MatchSetup, stake: number): Promise<void> {
     return versus(this.ctx, setup, stake);
@@ -159,11 +170,11 @@ export class Screens {
     return ia;
   }
 
-  /** El sonu. "Ana Sayfa" seçilirse dört renk perde kapanır (home() açar). */
-  async results(d: ResultsData, frame = 'standart'): Promise<'again' | 'home'> {
+  /** El sonu. "Ana Sayfa" seçilirse dört renk perde kapanır (home() açar). talk: karşılıklı konuşma kancası (uygulama). */
+  async results(d: ResultsData, frame = 'standart', talk?: ResultsTalk): Promise<'again' | 'home'> {
     const dim = (this.hudView as unknown as {dim?: (on: boolean) => void}).dim;
     dim?.call(this.hudView, true);
-    const r = await results(this.ctx, d, frame);
+    const r = await results(this.ctx, d, frame, talk);
     dim?.call(this.hudView, false);
     this.memo.last = {outcome: d.outcome, streak: d.streak, levelUp: d.after.level > d.before.level};
     if (r === 'home') {
@@ -190,8 +201,8 @@ export class Screens {
   }
 
   /** Her değişiklikte onChange çağrılır; pencere kapanınca çözülür. */
-  async settings(s: Settings, onChange: (s: Settings) => void, hand?: HandOption): Promise<void> {
-    if ((await settings(this.ctx, s, onChange, this.version, hand, this.deckId)) === 'rules') await rules(this.ctx, this.memo.game, this.deckId);
+  async settings(s: Settings, onChange: (s: Settings) => void, hand?: HandOption, chat?: ChatOption): Promise<void> {
+    if ((await settings(this.ctx, s, onChange, this.version, hand, this.deckId, chat)) === 'rules') await rules(this.ctx, this.memo.game, this.deckId);
   }
 
   /** Nasıl Oynanır (sekmeler: Pişti | Blöf). game: açılacak sekme (verilmezse son oynanan). */

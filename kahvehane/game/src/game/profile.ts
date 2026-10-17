@@ -6,6 +6,7 @@ import {ROSTER, type CharId} from './roster';
 import type {Difficulty, Game, HandLayout, MatchLength, Mode} from './types';
 import {DIFFICULTIES, GAMES, GAME_INFO, HAND_LAYOUTS, MODE_INFO} from './types';
 import {LENGTH_INFO, isLong, lengthFor, validateSeries, type SeriesState} from './series';
+import {isChatLevel, type ChatLevel} from '../ai/dialogue';
 
 /** Mod başına oynanan / kazanılan (Pişti'de '3' hep 0: Pişti üç kişi oynanmaz). */
 export type ModeStats = Record<Mode, {played: number; won: number}>;
@@ -85,8 +86,11 @@ export interface ProfileData {
   /** Blöf istatistikleri */
   blof: BlofStats;
   daily: {last: string; day: number};
-  /** Oyuncu ayarları (profile bağlı). blofHand: Blöf el düzeni; undefined = henüz seçmedi (ilk Blöf'te seçici açılır). */
-  settings: {blofHand?: HandLayout};
+  /**
+   * Oyuncu ayarları (profile bağlı). blofHand: Blöf el düzeni; undefined = henüz seçmedi (ilk Blöf'te seçici açılır).
+   * chatLevel: sohbet yoğunluğu (Sakin · Normal · Geveze); undefined = henüz seçmedi (ilk açılışta seçici; o zamana dek Normal).
+   */
+  settings: {blofHand?: HandLayout; chatLevel?: ChatLevel};
   /** Bedava sandık: bir sonraki açılabilir zaman (ms) */
   chestAt: number;
   /** Ana ekranın hatırladıkları: son oyun, oyun başına son mod, Blöf zorluğu ve bahis */
@@ -261,6 +265,15 @@ function mergePisti(f: PistiStats, raw: unknown): PistiStats {
   };
 }
 
+/** Ayarlar: tanınmayan / bozuk değerler "seçilmemiş" sayılır (alan hiç yazılmaz). */
+function mergeSettings(raw: unknown): ProfileData['settings'] {
+  const out: ProfileData['settings'] = {};
+  if (!isRec(raw)) return out;
+  if (HAND_LAYOUTS.includes(raw.blofHand as HandLayout)) out.blofHand = raw.blofHand as HandLayout;
+  if (isChatLevel(raw.chatLevel)) out.chatLevel = raw.chatLevel;
+  return out;
+}
+
 /** Yarım kalan maç kaydı: bozuk/bitmiş/tutarsız → null (maç yok sayılır; bahis zaten masadaydı). */
 export function validSaved(raw: unknown): SavedMatch | null {
   if (!isRec(raw)) return null;
@@ -318,7 +331,7 @@ export function migrateProfile(d: unknown, legacy: {name?: string; level?: numbe
     blof: mergeBlof(f.blof, raw.blof),
     daily: {...f.daily, ...(isRec(raw.daily) ? raw.daily : {})},
     // yeni alan: eski kayıtlarda yok → seçilmemiş (undefined); bozuk değer de seçilmemiş sayılır
-    settings: isRec(raw.settings) && HAND_LAYOUTS.includes(raw.settings.blofHand as HandLayout) ? {blofHand: raw.settings.blofHand as HandLayout} : {},
+    settings: mergeSettings(raw.settings),
     lastGame: GAMES.includes(raw.lastGame as Game) ? (raw.lastGame as Game) : 'pisti',
     lastMode,
     lastDifficulty: DIFFICULTIES.includes(raw.lastDifficulty as Difficulty) ? (raw.lastDifficulty as Difficulty) : 'orta',

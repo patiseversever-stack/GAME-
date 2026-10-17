@@ -110,5 +110,7 @@ export function normalizeBlofOutcome(raw: unknown, setup: MatchSetup): BlofOutco
     const left = typeof hands[seat] === 'number' ? Math.max(0, Math.round(hands[seat] as number)) : num(r, ['left', 'cardsLeft']);
     return {seat, left, bluffs: num(r, ['bluffs']), caught: num(r, ['caught']), timesCaught: num(r, ['timesCaught']), wrongChallenges: num(r, ['wrongChallenges'])};
   });
-  return {setup, outcome, winner, seats};
+  const out: BlofOutcome = {setup, outcome, winner, seats};
+  if (o.lastBluff === true) out.lastBluff = true;
+  return out;
 }

@@ -3,7 +3,8 @@
 // oyun uzunluğu &len=tek|51|101|151 (Pişti) · tek|3|5 (Blöf); yarım kalan maç varsa kendiliğinden devam eder),
 // ?seed=123 (sabit deste), ?reset=1 (profili sil → ilk açılış hikâyesi), ?skipintro=1 (hikâyeyi atla, varsayılan karakterle başla),
 // ?q=low|mid|high (kalite), ?blof=0 (Blöf'ü gizle), ?blofstub=1 (yalnız geliştirme: Blöf motoru yerine sahte el; arayüz akışını denemek için),
-// ?banter=1 (test: botlar arası atışma her uygun anda — olasılık 1, el aralığı 0; ekran görüntüsü / ses denemesi için).
+// ?banter=1 (test: botlar arası atışma her uygun anda — olasılık 1, el aralığı 0; ekran görüntüsü / ses denemesi için),
+// ?chat=sakin|normal|geveze (test: sohbet yoğunluğu, profile yazılmaz), ?chatpick=1 (test: sohbet seçicisini yine göster).
 import {buildSkinAtlas} from './render/skinAtlas';
 import {deckById} from './skins/index';
 import {tableById} from './themes/tables';
@@ -23,7 +24,7 @@ import {detectTier, type Tier} from './quality';
 import {setHaptics, store} from './platform/bridge';
 import {initCalm} from './platform/calm';
 import {whenIdle} from './platform/sched';
-import {BANTER_RULES} from './ai/dialogue';
+import {BANTER_RULES, isChatLevel, setChatLevel} from './ai/dialogue';
 import {trackAnimations} from './platform/anim';
 
 const Q = new URLSearchParams(location.search);
@@ -65,6 +66,9 @@ async function boot(): Promise<void> {
   if (tier === 'low') document.documentElement.classList.add('kh-low');
   const profile = new Profile();
   if (!profile.data.onboarded && (Q.has('skipintro') || AUTO)) profile.completeOnboarding('riza', profile.data.name);
+  // sohbet yoğunluğu: profil ayarı (seçilmemişse Normal); ?chat= test bayrağı profile yazılmaz
+  const chatFlag = Q.get('chat');
+  setChatLevel(isChatLevel(chatFlag) ? chatFlag : profile.data.settings.chatLevel);
   initCalm({always: tier === 'low'}); // dekoratif sonsuz animasyonlar boşta/düşük cihazda kapanır
   const sfx = new Sfx();
   const voice = new VoicePlayer(() => sfx.context);
@@ -146,7 +150,10 @@ async function boot(): Promise<void> {
   window.addEventListener('pointerdown', unlock);
   (window as unknown as {__kh: unknown}).__kh = {table, screens, tier, profile, speech, voice};
   if (import.meta.env.DEV && Q.has('blofstub')) BLOF.inject((await import('../dev/blofStub')).stubFactory);
-  await runApp({table, sfx, voice, speech, chat, screens, profile, settings, applySettings, applyCosmetics, auto: AUTO, autoGame: GAME, autoMode: MODE, autoDifficulty: DIFF, autoHand: HAND, autoLen: LEN, seed: SEED});
+  await runApp({
+    table, sfx, voice, speech, chat, screens, profile, settings, applySettings, applyCosmetics, auto: AUTO, autoGame: GAME, autoMode: MODE, autoDifficulty: DIFF, autoHand: HAND, autoLen: LEN, seed: SEED,
+    chatPick: Q.has('chatpick'), chatFixed: isChatLevel(chatFlag),
+  });
 }
 
 boot().catch(err => {

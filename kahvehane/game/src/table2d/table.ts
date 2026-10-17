@@ -641,7 +641,7 @@ export class Table2D {
     const g = this.L.seats[seat], s = g.stack, {cw, ch} = this.L, m = s.s * 0.94;
     const {slot, step, under} = this.pistiSlot(seat, i, n);
     if (g.pv) return {x: s.x + under * 1.6, y: s.y + g.pv * ((ch * s.s) / 2 + (ch * m) / 2 + 4 + slot * step), r: g.pdir * (4 + slot * 1.5), s: m};
-    return {x: s.x + g.pdir * ((cw * s.s) / 2 + slot * step), y: s.y + (g.py ?? 6) - under * 1.6, r: g.pdir * (12 + Math.min(slot, 4) * 2.5), s: m};
+    return {x: s.x + g.pdir * ((cw * s.s) / 2 + slot * step), y: s.y + (g.py ?? 6) + under * 1.6, r: g.pdir * (12 + Math.min(slot, 4) * 2.5), s: m};
   }
   /**
    * Pişti kartının yuvası: yere sığan görünür yuva sayısı (en çok 5; adım köşe indeksini açık bırakan adımın en az %90'ı) ve adım.

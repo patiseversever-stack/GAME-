@@ -111,6 +111,8 @@ export interface MatchSetup {
   handNo?: number;
   /** Blöf: turu ilk açacak koltuk (seride önceki elin kaybedeni). Verilmezse motor tohumdan seçer; öğreticide hep oyuncu. */
   firstSeat?: number;
+  /** Rövanş: sonuç ekranından "Bir El Daha / Yeni Maç" ile gelindi; bu rakip (masadaysa) açılışta rövanşı kabul eder. */
+  rematchBy?: import('./roster').CharId;
 }
 
 /**
@@ -139,4 +141,6 @@ export interface BlofOutcome {
   winner: number;
   /** Koltuk sırasıyla sayılar */
   seats: BlofSeatResult[];
+  /** Oyuncu (koltuk 0) eli son kart BLÖFÜYLE bitirdi (attığı son kartlar söylediği değer değildi, kimse yakalamadı) */
+  lastBluff?: boolean;
 }

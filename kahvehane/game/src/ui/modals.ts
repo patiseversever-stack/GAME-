@@ -1,5 +1,6 @@
 // Pencereler: Mola (duraklat), Ayarlar, Nasıl Oynanır, Günlük Ödül.
-import type {HandOption, Settings} from './types';
+import type {ChatOption, HandOption, Settings} from './types';
+import {CHAT_LEVELS, CHAT_LEVEL_INFO, type ChatLevel} from '../ai/dialogue';
 import {ANIM, EASE, center, esc, fmt, play, q} from './dom';
 import {ASSETS} from './assets';
 import {I, suitSvg, type SuitKey} from './icons';
@@ -50,8 +51,11 @@ export function pause(ctx: Ctx, leave?: {sub: string; btn?: string}): Promise<'r
 }
 
 // ---------------------------------------------------------------- Ayarlar
-/** Kapanınca çözülür; "Nasıl Oynanır" seçilirse 'rules' ile (çağıran kuralları açar). */
-export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void, version: string, hand?: HandOption, deck = 'yildizli'): Promise<void | 'rules'> {
+/**
+ * Kapanınca çözülür; "Nasıl Oynanır" seçilirse 'rules' ile (çağıran kuralları açar). chat: "Sohbet" (Sakin · Normal · Geveze)
+ * — Konuşmalar kartının içinde ikinci satır (pencere 360×600'e kaydırmasız sığsın).
+ */
+export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void, version: string, hand?: HandOption, deck = 'yildizli', chat?: ChatOption): Promise<void | 'rules'> {
   return new Promise(res => {
     const cur: Settings = {...s};
     let m: ModalHandle;
@@ -71,11 +75,18 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
           ${hand.live ? '' : '<small class="kh-set__cap">Yeni elde geçerli olur</small>'}</div>`
       : '';
     const qs: [Settings['quality'], string][] = [['auto', 'Otomatik'], ['low', 'Düşük'], ['mid', 'Orta'], ['high', 'Yüksek']];
+    // Konuşmalar (ses aç/kapa) + Sohbet yoğunluğu: tek kart, iki satır
+    let curChat: ChatLevel = chat?.value ?? 'normal';
+    const voiceRow = chat
+      ? `<div class="kh-set__q kh-card kh-set__talk"><button class="kh-set__qh kh-set__tg" data-act="toggle" data-k="voice" aria-pressed="${cur.voice}"><span class="kh-set__ico">${I.voice}</span><span class="kh-set__lbl">Konuşmalar</span><span class="kh-toggle"></span></button>
+          <div class="kh-set__chat"><span class="kh-set__sub">Sohbet</span><div class="kh-seg is-chat" style="--n:3" role="group" aria-label="Sohbet yoğunluğu">${CHAT_LEVELS.map(l =>
+            `<button data-act="chat" data-v="${l}" aria-pressed="${curChat === l}">${CHAT_LEVEL_INFO[l].name}</button>`).join('')}</div></div></div>`
+      : tog('voice', 'Konuşmalar', I.voice);
     m = openModal(ctx, {
       cls: 'kh-settings',
       title: 'Ayarlar',
       onX: () => done(),
-      body: `<div class="kh-set__list">${tog('sfx', 'Ses efektleri', I.sfx)}${tog('voice', 'Konuşmalar', I.voice)}${tog('music', 'Müzik', I.music)}${tog('haptics', 'Titreşim', I.vibrate)}
+      body: `<div class="kh-set__list">${tog('sfx', 'Ses efektleri', I.sfx)}${voiceRow}${tog('music', 'Müzik', I.music)}${tog('haptics', 'Titreşim', I.vibrate)}
         <div class="kh-set__q kh-card"><div class="kh-set__qh"><span class="kh-set__ico">${I.quality}</span><span class="kh-set__lbl">Grafik</span></div>
           <div class="kh-seg is-q" style="--n:4">${qs.map(([v, n]) => `<button data-act="quality" data-v="${v}" aria-pressed="${cur.quality === v}">${n}</button>`).join('')}</div></div>
         ${handRow}
@@ -98,6 +109,12 @@ export function settings(ctx: Ctx, s: Settings, onChange: (s: Settings) => void,
         curHand = v;
         m.panel.querySelectorAll('[data-act=hand]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
         hand?.onChange(v);
+      } else if (a === 'chat') {
+        const v = b.dataset.v as ChatLevel;
+        if (v === curChat || !CHAT_LEVELS.includes(v)) return;
+        curChat = v;
+        m.panel.querySelectorAll('[data-act=chat]').forEach(x => x.setAttribute('aria-pressed', String(x === b)));
+        chat?.onChange(v);
       } else if (a === 'quality') {
         const v = b.dataset.v as Settings['quality'];
         if (v === cur.quality) return;
