@@ -78,8 +78,11 @@ export interface BlofBotParams {
   tempoN: number;
   /** Yığından çıkacak dörtlü grubun (bedava açış) değer çarpanı (0: hesaba katmaz). */
   groupValue: number;
-  /** Açışta "rakip kalanıyla takip eder mi" kaygısının ağırlığı (0: kaygısız). */
-  followWeight: number;
+  /**
+   * 1'e 1'de doğru açışın yanına bir yalan kart katma olasılığı. 1'e 1'de açışta yakalanmanın bedeli yalnız turu
+   * kaptırmaktır (yığında yalnız kendi kartların var, geri alırsın) → ustalar sık yapar.
+   */
+  padOpen2: number;
   /** Eşli masada (takım arkadaşı varken) üzerine yazılan ayarlar. */
   team?: Partial<Omit<BlofBotParams, 'team'>>;
 }
@@ -112,7 +115,7 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     tempo2: 2,
     tempoN: 0.8,
     groupValue: 0,
-    followWeight: 0,
+    padOpen2: 0.12,
   },
   orta: {
     memory: 0.75,
@@ -140,8 +143,8 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     hesitate: [100, 500],
     tempo2: 2.5,
     tempoN: 1,
-    groupValue: 1,
-    followWeight: 0,
+    groupValue: 0.6,
+    padOpen2: 0.3,
   },
   zor: {
     memory: 0.93,
@@ -169,8 +172,8 @@ export const BLOF_BOT_PARAMS: Record<BlofDifficulty, BlofBotParams> = {
     hesitate: [0, 0],
     tempo2: 2.5,
     tempoN: 1,
-    groupValue: 1,
-    followWeight: 0,
+    groupValue: 0.6,
+    padOpen2: 0.5,
   },
 };
 
@@ -760,15 +763,6 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
     return Math.max(pass, (1 - rb) * this.p.bluffLove - rb * (Math.max(0, v.pileCount * this.p.caution - this.pileGroupBonus(v, w.rank)) + this.oppTempo(v)));
   }
 
-  /** Açtığım değerin kalanını sıradaki rakip tutuyor olabilir mi: tutuyorsa doğru takip eder, tur ona döner. */
-  private followRisk(v: BlofView, rank: number): number {
-    if (!this.p.counting || this.p.followWeight <= 0) return 0;
-    const next = (this.seat + 1) % v.seats;
-    if (v.teams[next] === v.teams[this.seat] || v.handCounts[next] === 0) return 0;
-    this.holdDist(this.loc, this.likely, v, next, rank, 0, 0, 0, 0);
-    return 1 - this.dist[0];
-  }
-
   /** Elden "yük" kartları: en az tutulan değerlerden (tekler önce), istenen değer hariç. */
   private junk(hand: readonly CardId[], except: number, n: number): CardId[] {
     const cnt = this.cnt;
@@ -893,9 +887,7 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
         if (c === n) return this.play({t: 'open', seat: me, rank: r, cards}, false, 0.7); // hepsi doğru → bitiriş
         const rt = this.challengeRisk(v, r, c, false, n - c, true);
         const used = new Set(cards);
-        // 1'e 1: rakip kalan kopyalarla doğru takip ederse dört dolar, ben pas demek zorunda kalırım → tur ona geçer
-        const fr = c < BLOF_MAX_PLAY ? this.followRisk(v, r) * To * (v.seats === 2 ? 0.8 : 0.3) * this.p.followWeight : 0;
-        consider(c + rt * (c * gW + T) - fr + this.shape(hand, used) + noise * 0.5 * this.gauss(), {t: 'open', seat: me, rank: r, cards}, false, rt);
+        consider(c + rt * (c * gW + T) + this.shape(hand, used) + noise * 0.5 * this.gauss(), {t: 'open', seat: me, rank: r, cards}, false, rt);
         if (c < BLOF_MAX_PLAY && n - c - 1 >= 1 && !blatant(c + 1)) {
           const extra = this.junk(hand, r, 1);
           const rp = this.challengeRisk(v, r, c + 1, true, n - c - 1, true);
@@ -906,6 +898,14 @@ export class BlofBot implements BotBrain<BlofAction, BlofEvent, BlofView, BlofTe
       }
       // kolay: bazen grubunun yalnız bir kısmını açar (acemi)
       const chosen = pick! as {action: Extract<BlofAction, {t: 'open'}>; bluff: boolean};
+      // 1'e 1: doğru açışa bir yalan kart kat (yakalanırsa kendi kartlarını geri alır, yalnız tur gider)
+      if (v.seats === 2 && !chosen.bluff && this.rnd() < this.p.padOpen2) {
+        const cs = chosen.action.cards;
+        if (cs.length < BLOF_MAX_PLAY && n - cs.length - 1 >= 1 && !blatant(cs.length + 1)) {
+          chosen.action = {...chosen.action, cards: cs.concat(this.junk(hand, chosen.action.rank, 1))};
+          chosen.bluff = true;
+        }
+      }
       if (this.difficulty === 'kolay' && !chosen.bluff && chosen.action.cards.length > 1 && this.rnd() < 0.3) {
         const cs = chosen.action.cards;
         chosen.action = {...chosen.action, cards: cs.slice(0, 1 + Math.floor(this.rnd() * cs.length))};
