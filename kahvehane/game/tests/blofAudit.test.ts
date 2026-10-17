@@ -29,11 +29,11 @@ const zero = (): BlofSeatStats => ({
 });
 
 /** Elle kurulan durum (kalan kartlar kenarda) + o durumu oyun ortasından devralan botlar. */
-function table(hands: CardId[][], diffs: BlofDifficulty[], seed: number, teams?: number[], firstTurn = 0) {
+function table(hands: CardId[][], diffs: BlofDifficulty[], seed: number, teams?: number[], firstTurn = 0, human?: boolean[]) {
   const n = hands.length as 2 | 3 | 4;
   const used = new Set(hands.flat());
   const s: BlofState = {
-    cfg: {seats: n, teams: teams ?? hands.map((_, i) => i), seed: 1, firstSeat: firstTurn, challengeWindowMs: 5000, challengeWindowShortMs: 3000, humanSeats: new Array<boolean>(n).fill(true)},
+    cfg: {seats: n, teams: teams ?? hands.map((_, i) => i), seed: 1, firstSeat: firstTurn, challengeWindowMs: 5000, challengeWindowShortMs: 3000, humanSeats: human ?? new Array<boolean>(n).fill(true)},
     hands: hands.map((h) => [...h]),
     pile: [],
     plays: [],
@@ -341,6 +341,57 @@ describe('Blöf botu: insan gibi zamanlama', () => {
         expect(avg(sure)).toBeLessThan(avg(doubt));
       }
       expect(BLOF_BOT_PARAMS[d].sure[0]).toBeGreaterThanOrEqual(600);
+    }
+  });
+
+  it('kısa pencere (sıradaki bot: 3 sn): kararlar pencere bitmeden (≤ 2,7 sn) gelir, ani değil; orta/zor kesin yalanı yine yakalar', () => {
+    for (const d of ['kolay', 'orta', 'zor'] as const) {
+      const say: number[] = [];
+      const all: number[] = [];
+      for (let seed = 1; seed <= 60; seed++) {
+        // iki bot (insan yok): her pencere kısa
+        const t = table(
+          [
+            [C('S', 7), C('H', 2), C('D', 4), C('C', 5), C('S', 9)],
+            [C('H', 7), C('D', 7), C('C', 7), C('S', 3), C('H', 10)],
+          ],
+          [d, d],
+          seed,
+          undefined,
+          0,
+          [false, false],
+        );
+        t.step({t: 'open', seat: 0, rank: 7, cards: [C('S', 7), C('H', 2)]}); // 1 üç 7 tutuyor: kesin yalan
+        expect(t.s.window!.ms).toBe(3000);
+        const dec = t.bots[1].decide(viewFor(t.s, 1))!;
+        if (dec.action.t === 'challenge') say.push(dec.delayMs);
+        all.push(dec.delayMs);
+        // belirsiz iddia (takip): kuşkulu karar da sığar
+        const u = table(
+          [
+            [C('S', 8), C('H', 2), C('D', 4), C('C', 5), C('S', 9)],
+            [C('H', 6), C('D', 3), C('C', 11), C('S', 3), C('H', 10)],
+          ],
+          [d, d],
+          seed,
+          undefined,
+          0,
+          [false, false],
+        );
+        u.step({t: 'open', seat: 0, rank: 8, cards: [C('S', 8)]});
+        u.step({t: 'windowClosed'});
+        u.step({t: 'play', seat: 1, cards: [C('H', 6), C('D', 3)]});
+        all.push(u.bots[0].decide(viewFor(u.s, 0))!.delayMs);
+      }
+      for (const ms of all) {
+        expect(ms).toBeGreaterThanOrEqual(450);
+        expect(ms).toBeLessThanOrEqual(2700);
+      }
+      // en yavaşlar bile pencerenin sonuna yığılmaz (sıkıştırma orantılı, kırpma değil)
+      expect(all.filter((x) => x >= 2690).length / all.length).toBeLessThan(0.1);
+      // kesin yalan (elimdeki üç 7): zor hep, orta neredeyse hep yakalar (orta %5 fark etmeyebilir)
+      if (d !== 'kolay') expect(say.length / 60).toBeGreaterThanOrEqual(d === 'zor' ? 1 : 0.9);
+      if (say.length >= 5) expect(say.reduce((a, b) => a + b, 0) / say.length).toBeLessThan(d === 'kolay' ? 2200 : 1500);
     }
   });
 

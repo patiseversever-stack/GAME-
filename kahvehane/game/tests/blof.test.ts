@@ -11,9 +11,14 @@ import {
   validateBlof,
   viewFor,
 } from '../src/core/blof';
+import {blofEngine} from '../src/core/blofEngine';
 import {
   BLOF_MODES,
+  BLOF_PENALTY,
+  BLOF_WINDOW_MS,
+  BLOF_WINDOW_SHORT_MS,
   blofConfigFor,
+  windowMsFor,
   claimText,
   isTruthful,
   rankName,
@@ -345,6 +350,129 @@ describe('Blöf: blöf penceresi', () => {
     expect(r.events[0]).toMatchObject({reason: 'timeout'});
     expect(r.events[1]).toMatchObject({seat: 1, open: false, rank: 7});
     expect(r.state.pile.length).toBe(2);
+  });
+});
+
+describe('Blöf: yakalanan yalancıya ceza (kenardan 2 kart)', () => {
+  /** Kenarı açıkça verilen durum: eller + kenar (sırasıyla, en üstteki en sonda); geri kalan kartlar 1. koltuğa. */
+  function mkDisc(h0: CardId[], discard: CardId[], extra1: CardId[] = []): BlofState {
+    const used = new Set([...h0, ...discard, ...extra1]);
+    const rest = Array.from({length: 52}, (_, i) => i).filter((c) => !used.has(c));
+    const s = mk([h0, [...extra1, ...rest]]);
+    return {...s, discard: [...discard]};
+  }
+  const lie = (s: BlofState) => ok(ok(s, {t: 'open', seat: 0, rank: 7, cards: [C('S', 7), C('D', 2)]}).state, {t: 'challenge', seat: 1});
+
+  it('yalan: yığın + kenarın ÜSTÜNDEN 2 kart (en son kenara gidenler), kartlar yalnız alana', () => {
+    expect(BLOF_PENALTY).toBe(2);
+    const disc = [C('C', 4), C('C', 5), C('C', 6), C('C', 9)]; // üstteki: ♣9, altındaki: ♣6
+    const r = lie(mkDisc([C('S', 7), C('D', 2), C('H', 13)], disc));
+    expect(types(r.events)).toEqual(['challenged', 'reveal', 'pileTaken', 'penalty', 'turn']);
+    const pen = r.events[3] as Extract<BlofEvent, {t: 'penalty'}>;
+    expect(pen).toEqual({t: 'penalty', seat: 0, count: 2, cards: [C('C', 6), C('C', 9)], handCount: 5, discardCount: 2});
+    expect(r.state.discard).toEqual([C('C', 4), C('C', 5)]);
+    expect(r.state.hands[0]).toEqual(expect.arrayContaining([C('S', 7), C('D', 2), C('H', 13), C('C', 6), C('C', 9)]));
+    expect(r.state.stats[0]).toMatchObject({penaltyCards: 2, cardsTaken: 2, timesCaught: 1});
+    // süzme: ceza kartlarını yalnız alan görür (alınan yığın gibi); sayı herkese açık
+    for (let seat = -1; seat < 2; seat++) {
+      const x = redactBlofEvent(pen, seat) as Extract<BlofEvent, {t: 'penalty'}>;
+      expect(x.count).toBe(2);
+      expect(x.discardCount).toBe(2);
+      expect(x.cards).toEqual(seat === 0 ? [C('C', 6), C('C', 9)] : null);
+    }
+    expect(pen.cards).not.toBeNull(); // süzme kopya üretir
+  });
+
+  it('kenarda 1 kart varsa 1 ceza; kenar boşsa ceza yok (olay da yok)', () => {
+    const one = lie(mkDisc([C('S', 7), C('D', 2), C('H', 13)], [C('C', 9)]));
+    expect(one.events.find((e) => e.t === 'penalty')).toEqual({t: 'penalty', seat: 0, count: 1, cards: [C('C', 9)], handCount: 4, discardCount: 0});
+    expect(one.state.discard).toEqual([]);
+    const none = lie(mkDisc([C('S', 7), C('D', 2), C('H', 13)], []));
+    expect(types(none.events)).toEqual(['challenged', 'reveal', 'pileTaken', 'turn']);
+    expect(none.state.hands[0].length).toBe(3);
+    expect(none.state.stats[0].penaltyCards).toBe(0);
+  });
+
+  it('doğru çıkınca ceza yok: blöf diyen yalnız yığını alır', () => {
+    const s = mkDisc([C('S', 7), C('H', 7), C('H', 13)], [C('C', 4), C('C', 9)]);
+    const r = ok(ok(s, {t: 'open', seat: 0, rank: 7, cards: [C('S', 7), C('H', 7)]}).state, {t: 'challenge', seat: 1});
+    expect(types(r.events)).toEqual(['challenged', 'reveal', 'pileTaken', 'turn']);
+    expect(r.state.discard).toEqual([C('C', 4), C('C', 9)]);
+  });
+
+  it('son kartındaki yalanı yakalanan da ceza alır ve oyuna devam eder; 52 kart korunur', () => {
+    const s = mkDisc([C('S', 7), C('D', 2)], [C('C', 4), C('C', 9), C('C', 10)]);
+    const r = ok(ok(s, {t: 'open', seat: 0, rank: 7, cards: [C('S', 7), C('D', 2)]}).state, {t: 'challenge', seat: 1});
+    expect(r.state.phase).toBe('turn');
+    expect(r.state.hands[0].length).toBe(4);
+    expect(checkBlofInvariants(r.state)).toBeNull();
+  });
+
+  it('kenara giden yığın sırasıyla yığılır: herkes pas → sonra yakalanan yalancı o yığının son atışını alır', () => {
+    let s = mk([
+      [C('S', 7), C('H', 7), C('D', 2), C('H', 13)],
+      [C('C', 8), C('S', 3), C('H', 3), C('D', 9)],
+    ]);
+    const before = s.discard.length;
+    s = ok(s, {t: 'open', seat: 0, rank: 7, cards: [C('S', 7), C('H', 7)]}).state;
+    s = ok(s, {t: 'windowClosed'}).state;
+    s = ok(s, {t: 'pass', seat: 1}).state; // yığın kenara: üstte ♠7 ♥7
+    expect(s.discard.slice(-2)).toEqual([C('S', 7), C('H', 7)]);
+    s = ok(s, {t: 'open', seat: 0, rank: 13, cards: [C('H', 13)]}).state;
+    s = ok(s, {t: 'windowClosed'}).state;
+    const r = ok(ok(s, {t: 'play', seat: 1, cards: [C('D', 9)]}).state, {t: 'challenge', seat: 0}); // 1 yalan söyledi
+    expect(r.events.find((e) => e.t === 'penalty')).toMatchObject({seat: 1, count: 2, cards: [C('S', 7), C('H', 7)], discardCount: before});
+  });
+});
+
+describe('Blöf: pencere süresi (sıradaki insansa 5 sn, bot ise 3 sn)', () => {
+  const wOpen = (r: BlofStep) => r.events.find((e) => e.t === 'windowOpen') as Extract<BlofEvent, {t: 'windowOpen'}>;
+  it('kural: sıradaki (atıştan sonra oynayacak) koltuğa göre; olay, durum, görünüm ve zamanlayıcı aynı süreyi taşır', () => {
+    expect([BLOF_WINDOW_MS, BLOF_WINDOW_SHORT_MS]).toEqual([5000, 3000]);
+    // 3 kişi: 0 insan, 1 bot, 2 insan
+    let s = createBlof({seats: 3, seed: 4, firstSeat: 0, humanSeats: [true, false, true]}).state;
+    expect(s.cfg).toMatchObject({challengeWindowMs: 5000, challengeWindowShortMs: 3000, humanSeats: [true, false, true]});
+    const hand0 = s.hands[0];
+    let r = ok(s, {t: 'open', seat: 0, rank: rankOf(hand0[0]), cards: [hand0[0]]}); // sıradaki 1: bot → 3 sn
+    expect(wOpen(r).ms).toBe(3000);
+    expect(r.state.window!.ms).toBe(3000);
+    expect(viewFor(r.state, 0).window!.ms).toBe(3000);
+    expect(viewFor(r.state, 2).window!.ms).toBe(3000);
+    expect(blofEngine.timer(r.state)).toMatchObject({kind: 'window', ms: 3000});
+    s = ok(r.state, {t: 'windowClosed'}).state;
+    const c1 = s.hands[1][0];
+    r = ok(s, {t: 'play', seat: 1, cards: [c1]}); // sıradaki 2: insan → 5 sn
+    expect(wOpen(r).ms).toBe(5000);
+    expect(blofEngine.timer(r.state)!.ms).toBe(5000);
+    s = ok(r.state, {t: 'windowClosed'}).state;
+    r = ok(s, {t: 'play', seat: 2, cards: [s.hands[2][0]]}); // sıradaki 0: insan → 5 sn
+    expect(wOpen(r).ms).toBe(5000);
+    // herkes geçerse kısa (3 sn) pencere de erken kapanır
+    const f = createBlof({seats: 3, seed: 4, firstSeat: 0, humanSeats: [true, false, true]}).state;
+    const k = ok(f, {t: 'open', seat: 0, rank: rankOf(f.hands[0][0]), cards: [f.hands[0][0]]});
+    expect(wOpen(k).ms).toBe(3000);
+    const r2 = ok(ok(k.state, {t: 'decline', seat: 1}).state, {t: 'decline', seat: 2});
+    expect(types(r2.events)).toEqual(['declined', 'windowClosed', 'turn']);
+    expect(r2.events[1]).toMatchObject({reason: 'declined'});
+  });
+
+  it('humanSeats verilmezse herkes insan sayılır (hep 5 sn); özel süreler (öğretici 9 sn) ve doğrulama', () => {
+    const a = createBlof({seats: 2, seed: 1, firstSeat: 0}).state;
+    expect(a.cfg.humanSeats).toEqual([true, true]);
+    expect(windowMsFor(a.cfg, 1)).toBe(5000);
+    const t = createBlof({seats: 2, seed: 1, firstSeat: 0, challengeWindowMs: 9000, challengeWindowShortMs: 9000, humanSeats: [true, false]}).state;
+    expect(windowMsFor(t.cfg, 1)).toBe(9000);
+    expect(windowMsFor(t.cfg, 0)).toBe(9000);
+    // kısa süre verilmezse uzundan uzun olamaz
+    expect(createBlof({seats: 2, seed: 1, challengeWindowMs: 2000}).state.cfg.challengeWindowShortMs).toBe(2000);
+    expect(() => createBlof({seats: 2, seed: 1, humanSeats: [true]})).toThrow();
+    expect(() => createBlof({seats: 2, seed: 1, challengeWindowShortMs: 0})).toThrow();
+  });
+
+  it('ev sahibi sözleşmesi: withSeats koltuk türlerini ayara yazar (insan/uzak = true, bot = false)', () => {
+    const cfg: BlofConfig = {seats: 4, seed: 3};
+    expect(blofEngine.withSeats!(cfg, [true, false, true, false])).toEqual({seats: 4, seed: 3, humanSeats: [true, false, true, false]});
+    expect(cfg).toEqual({seats: 4, seed: 3}); // girdi değişmez
   });
 });
 

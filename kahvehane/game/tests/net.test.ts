@@ -6,7 +6,7 @@ import type {BlofAction, BlofConfig, BlofEvent, BlofState, BlofView} from '../sr
 import {applyPlay, createGame, viewFor as pistiView} from '../src/core/pisti';
 import {pistiEngine} from '../src/core/pistiEngine';
 import {mulberry32} from '../src/core/rng';
-import type {PistiConfig, PistiEvent} from '../src/core/types';
+import {rankOf as rankOfCard, type PistiConfig, type PistiEvent} from '../src/core/types';
 import {PistiBot, type BotPersonality} from '../src/ai/bot';
 import {type BlofClient, type BlofServerMsg, createBlofLocal} from '../src/net/blofLocal';
 import {VirtualClock} from '../src/net/clock';
@@ -73,6 +73,70 @@ describe('LocalHost: yalnız botlar', () => {
       expect(host.actions.some((a) => a.t === 'windowClosed' || a.t === 'decline')).toBe(true);
     });
   }
+});
+
+describe('Çevrimiçi kural: blöf penceresi sıradaki koltuk insansa 5 sn, bot ise 3 sn (ev sahibi sayar)', () => {
+  it('insan + uzak + bot koltukları: her timer mesajı kurala uyar, istemci halkası (timeLeft) gerçek süreyle başlar', () => {
+    const clock = new VirtualClock();
+    // 0 bu cihaz, 1 uzak insan (ağdan bağlanacak), 2 bot
+    const host = new LocalHost(blofEngine, {seats: 3, seed: 77, firstSeat: 2}, {
+      seats: [{kind: 'human'}, {kind: 'remote'}, {kind: 'bot', brain: new BlofBot(2, 'zor', 5)}],
+      clock,
+      paceMaxMs: 0,
+    });
+    expect(host.cfg.humanSeats).toEqual([true, true, false]);
+    const c0 = new GameClient<BlofAction, BlofEvent, BlofView>(host.connect(0), clock);
+    const c1 = new GameClient<BlofAction, BlofEvent, BlofView>(host.connect(1), clock);
+    autoPilot(c0 as BlofClient, clock, new BlofBot(0, 'orta', 11));
+    autoPilot(c1 as BlofClient, clock, new BlofBot(1, 'kolay', 12));
+    const by = new Map<string, number>();
+    const timers: {key: string; ms: number; left: number}[] = [];
+    c0.on((m) => {
+      if (m.t === 'events') for (const e of m.events) if (e.t === 'windowOpen') by.set(`w${e.id}`, e.by);
+      if (m.t === 'timer' && m.timer.kind === 'window') timers.push({key: m.timer.key, ms: m.timer.ms, left: c0.timeLeft()});
+    });
+    host.start();
+    clock.runAll();
+    expect(host.over).toBe(true);
+    expect(timers.length).toBeGreaterThan(10);
+    let short = 0;
+    for (const t of timers) {
+      const next = (by.get(t.key)! + 1) % 3;
+      const want = next === 2 ? 3000 : 5000; // 2 bot; 0 ve 1 insan
+      expect(t.ms).toBe(want);
+      expect(t.left).toBeCloseTo(want, 6); // halka timer mesajındaki süreyle başlar (5000'e sabit değil)
+      if (want === 3000) short++;
+    }
+    expect(short).toBeGreaterThan(0);
+    expect(short).toBeLessThan(timers.length);
+  });
+
+  it('kısa pencere: süre 3 sn sonra dolar (bot geç demese bile ev sahibi kapatır); herkes geçerse erken kapanır', () => {
+    // 1'e 1, insan (0) açar → sıradaki bot → 3 sn. Botun kararı gelmeden süre dolsun diye bot beyni "hiç karar vermez".
+    const clock = new VirtualClock();
+    const silent = {seat: 1, observe: () => {}, decide: () => null};
+    const host = new LocalHost(blofEngine, {seats: 2, seed: 9, firstSeat: 0}, {seats: [{kind: 'human'}, {kind: 'bot', brain: silent}], clock, paceMaxMs: 0, botFallbackMs: 60_000});
+    const c = new GameClient<BlofAction, BlofEvent, BlofView>(host.connect(0), clock);
+    host.start();
+    const v = c.view!;
+    c.act({t: 'open', seat: 0, rank: rankOfCard(v.hand[0]), cards: [v.hand[0]]});
+    expect(host.timerInfo).toMatchObject({kind: 'window', ms: 3000});
+    expect(c.timeLeft()).toBeCloseTo(3000, 6);
+    clock.advance(2999);
+    expect(host.state.phase).toBe('window');
+    clock.advance(1);
+    expect(host.state.phase).toBe('turn');
+    expect(host.actions[host.actions.length - 1]).toMatchObject({t: 'windowClosed'});
+    // bot açar → sıradaki insan → 5 sn; insan "geç" derse (tek hak sahibi) hemen kapanır
+    const clk = new VirtualClock();
+    const g = createBlofLocal({cfg: {seats: 2, seed: 12, firstSeat: 1}, seats: ['human', 'kolay'], clock: clk, paceMaxMs: 0});
+    g.host.start();
+    while (g.host.state.phase === 'turn') clk.step();
+    expect(g.host.timerInfo!.ms).toBe(5000);
+    g.client!.act({t: 'decline', seat: 0});
+    expect(g.host.state.phase).toBe('turn');
+    expect(g.host.actions.slice(-1)[0]).toMatchObject({t: 'decline', seat: 0});
+  });
 });
 
 describe('LocalHost + GameClient: yerel insan', () => {

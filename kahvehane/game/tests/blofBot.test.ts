@@ -232,6 +232,58 @@ describe('Blöf botu: hile yok', () => {
   });
 });
 
+describe('Blöf botu: ceza kartları (kenardan 2 kart)', () => {
+  it('kenarın üstündeki kendi kartlarını cezayı alanın elinde KESİN bilir; kart saymayan bot "olabilir" diye genişletir', () => {
+    for (const d of ['zor', 'kolay'] as const) {
+      const {s: s0, bots, feed} = setup(
+        [
+          [C('S', 7), C('H', 7), C('S', 5), C('D', 13), C('H', 12)],
+          [C('C', 8), C('S', 3), C('H', 3), C('D', 9), C('C', 12)],
+        ],
+        [d, d],
+      );
+      // tam hafıza (kenar sırasını unutmasın)
+      bots[0] = new BlofBot(0, d, 1000, {memory: 1});
+      bots[0].decide(viewFor({...s0, turn: -1}, 0));
+      let s = step(s0, {t: 'open', seat: 0, rank: 7, cards: [C('S', 7), C('H', 7)]}, feed);
+      s = step(s, {t: 'windowClosed'}, feed);
+      s = step(s, {t: 'pass', seat: 1}, feed); // ♠7 ♥7 kenarın üstünde
+      s = step(s, {t: 'open', seat: 0, rank: 5, cards: [C('S', 5)]}, feed);
+      s = step(s, {t: 'windowClosed'}, feed);
+      s = step(s, {t: 'play', seat: 1, cards: [C('D', 9)]}, feed); // yalan
+      s = step(s, {t: 'challenge', seat: 0}, feed); // yakalandı: yığın + ♠7 ♥7 → 1
+      expect(s.hands[1]).toEqual(expect.arrayContaining([C('S', 7), C('H', 7)]));
+      const m = bots[0].possible(C('S', 7));
+      if (d === 'zor') expect(m).toBe(1 << 1);
+      else expect(m & (1 << 1)).not.toBe(0);
+      // alan bot kendi aldığını kesin bilir
+      expect(bots[1].possible(C('H', 7))).toBe(1 << 1);
+    }
+  });
+
+  it('maskeler her an gerçeği içerir (kart nerede olursa olsun olası yerlerinde): ceza dahil tam oyunlar', () => {
+    const LOC = (st: BlofState, c: CardId): number => {
+      for (let i = 0; i < st.hands.length; i++) if (st.hands[i].includes(c)) return 1 << i;
+      return st.pile.includes(c) ? 16 : 32;
+    };
+    let penalties = 0;
+    for (let seed = 1; seed <= 30; seed++) {
+      const seats = (2 + (seed % 3)) as 2 | 3 | 4;
+      const diffs = (['zor', 'orta', 'kolay', 'zor'] as const).slice(0, seats);
+      const bots: BlofBot[] = [];
+      simulate({seats, seed, firstSeat: seed % seats}, [...diffs], {
+        botFactory: (i) => (bots[i] = new BlofBot(i, diffs[i], seed * 131 + i * 7 + 1)),
+        onStep: (st, evs) => {
+          if (evs.some((e) => e.t === 'penalty')) penalties++;
+          if (!evs.some((e) => e.t === 'penalty' || e.t === 'pileTaken' || e.t === 'pileCleared')) return;
+          for (let b = 0; b < seats; b++) for (let c = 0; c < 52; c++) expect(bots[b].possible(c) & LOC(st, c)).not.toBe(0);
+        },
+      });
+    }
+    expect(penalties).toBeGreaterThan(10);
+  });
+});
+
 describe('Blöf botu: zorluk sıralaması (simülasyon)', () => {
   const N = 150;
   const winRate = (seats: 2 | 3 | 4, diffs: BlofDifficulty[], teams?: number[]): number => {
