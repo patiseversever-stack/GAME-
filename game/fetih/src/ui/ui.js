@@ -153,7 +153,17 @@ export class UI {
 		app.cam.fit(app.boundsOf(m.map), { pitch: 0.98 });
 		const pick = await new Promise((res) => {
 			app.onTap = (idx) => {
-				if (options.includes(idx)) res(idx);
+				if (options.includes(idx)) return res(idx);
+				// yanlış il: ipucu sallanır, seçilebilen iller bir kez daha parlar
+				const pr = this.$.prompt;
+				pr.classList.remove('shake');
+				void pr.offsetWidth;
+				pr.classList.add('shake');
+				this.prompt(`<em>${esc(text)}</em> · parlayan illerden birine dokun`);
+				for (const i of options) b.fx(i, 0.3, 1);
+				setTimeout(() => {
+					for (const i of options) b.fx(i, 0.18, 0.75);
+				}, 350);
 			};
 		});
 		app.onTap = null;

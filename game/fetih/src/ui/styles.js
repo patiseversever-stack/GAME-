@@ -49,13 +49,15 @@ export const CSS = /* css */ `
 .fl-prompt{position:absolute;left:50%;bottom:calc(18px + env(safe-area-inset-bottom));transform:translateX(-50%) translateY(20px);opacity:0;padding:12px 20px;border-radius:16px;background:var(--panel);
   border:2px solid var(--line);font-size:17px;white-space:nowrap;transition:opacity .25s,transform .25s;box-shadow:0 6px 0 rgba(0,0,0,.35)}
 .fl-prompt.on{opacity:1;transform:translateX(-50%)}
+.fl-prompt.shake{animation:flShake .35s}
+@keyframes flShake{25%{transform:translateX(calc(-50% - 8px))}75%{transform:translateX(calc(-50% + 8px))}}
 .fl-prompt em{font-style:normal;color:var(--gold)}
 
 /* soru kartı */
 .fl-q{position:absolute;left:50%;bottom:calc(10px + env(safe-area-inset-bottom));transform:translate(-50%,40px);opacity:0;width:min(96vw,520px);pointer-events:auto;
   background:linear-gradient(180deg,rgba(28,44,86,.97),rgba(14,22,46,.97));border:2.5px solid var(--line);border-radius:22px;box-shadow:0 10px 0 rgba(0,0,0,.35),0 20px 40px rgba(0,0,0,.35);
-  transition:opacity .25s,transform .35s cubic-bezier(.3,1.4,.5,1);padding:12px 14px 14px}
-.fl-q.on{opacity:1;transform:translate(-50%,0)}
+  transition:opacity .25s,transform .35s cubic-bezier(.3,1.4,.5,1),visibility 0s .35s;padding:12px 14px 14px;visibility:hidden;pointer-events:none}
+.fl-q.on{opacity:1;transform:translate(-50%,0);visibility:visible;pointer-events:auto;transition:opacity .25s,transform .35s cubic-bezier(.3,1.4,.5,1)}
 .fl-q.mini .fl-qbody,.fl-q.mini .fl-qtext{display:none}
 .fl-qtop{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .fl-cat{display:flex;align-items:center;gap:6px;padding:4px 10px 4px 5px;border-radius:999px;font-size:13px;color:#fff;${OUT('rgba(0,0,0,.35)', 1)}}
