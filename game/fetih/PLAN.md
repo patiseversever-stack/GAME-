@@ -46,6 +46,8 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 > dolarlık oyun gibi geliştir. Sınırım olan şehirleri seçebilmeliyim; bakınca her şey net
 > gözüksün; rengime boyayayım.
 
+- **Kullanıcının değerlendirmesi:** v0.1 finalin yaklaşık %5'i. Görsel, arayüz ve his sıfırdan
+  büyük bütçe seviyesine çıkarılmalı; küçük iyileştirmeler yetmez.
 - [x] **Düzeltildi:** şehir seçilemiyordu. Kaybolan soru kartı görünmez halde ekranın altında kalıp
   dokunuşları yutuyordu (`.fl-q` için `visibility`/`pointer-events`). Yanlış ile dokununca uyarı da
   eklendi.
