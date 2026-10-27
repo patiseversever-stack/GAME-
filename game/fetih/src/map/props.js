@@ -112,6 +112,11 @@ function makeGeo(kind) {
 	return mergeSimple([trunk, top]);
 }
 
+function proxyGeo(kind) {
+	const g = kind === 0 ? new THREE.ConeGeometry(0.2, 0.62, 5, 1, true).translate(0, 0.38, 0) : new THREE.OctahedronGeometry(0.21, 0).translate(0, 0.34, 0);
+	return g.index ? g.toNonIndexed() : g;
+}
+
 function mergeSimple(list) {
 	const parts = list.map(strip);
 	const pos = [];
@@ -122,7 +127,7 @@ function mergeSimple(list) {
 	return out;
 }
 
-const TREES = [2000, 1400, 750]; // kademe 2, 1, 0 (ters sıra)
+const TREES = [1850, 1350, 700]; // kademe 2, 1, 0 (ters sıra)
 
 export class Props {
 	constructor(G, tier, board) {
@@ -180,7 +185,13 @@ export class Props {
 			const m = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps).replace('__KIND__', String(k)), uniforms }));
 			m.frustumCulled = false;
 			this.group.add(m);
-			const sm = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms }));
+			// gölge için çok sade vekil (gölge haritasında ağaç zaten bir leke): 5–8 üçgen
+			const sg = new THREE.InstancedBufferGeometry();
+			sg.setAttribute('position', proxyGeo(k).getAttribute('position'));
+			sg.setAttribute('iP', g.getAttribute('iP'));
+			sg.setAttribute('iQ', g.getAttribute('iQ'));
+			sg.instanceCount = list.length;
+			const sm = new THREE.Mesh(sg, new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms, side: THREE.DoubleSide }));
 			sm.frustumCulled = false;
 			this.casters.push(sm);
 		}

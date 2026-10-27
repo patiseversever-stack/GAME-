@@ -2,6 +2,7 @@
 // Renkler doğrusal uzayda; ışık şiddetleri 1'in üstüne çıkabilir, ton eşleme sığdırır.
 
 import * as THREE from 'three';
+import { noiseTexture } from './noise.js';
 
 const C = (hex, k = 1) => new THREE.Color(hex).multiplyScalar(k);
 
@@ -23,6 +24,7 @@ export function createGlobals() {
 		uGain: { value: new THREE.Color(1, 1, 1) },
 		uVigCol: { value: new THREE.Color() },
 		uFocus: { value: new THREE.Vector4(0, -99, 0, 3) },
+		uNoise: { value: noiseTexture() }, // döşenebilir gürültü (noise.js)
 		uShadowMap: { value: null },
 		uShadowMat: { value: new THREE.Matrix4() },
 		uShadowP: { value: new THREE.Vector4(1 / 1024, 0.04, 0.0008, 1) },

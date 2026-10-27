@@ -282,6 +282,9 @@ function castleGeo(tier) {
 
 let SHARED = null;
 
+/** Yıkılma eğrisi: önce hızlı, sonda yumuşak. */
+const fallEase = (f) => 1 - Math.pow(1 - f, 2.2);
+
 export class Castle {
 	constructor(G, tier, owner, color) {
 		this.owner = owner;
@@ -358,9 +361,7 @@ export class Castle {
 			if (t.alive) continue;
 			t.fall = Math.min(1, t.fall + dt * 1.4);
 		}
-		// kolay çıkış: önce hızlı, sonda yumuşak
-		const e = (f) => 1 - Math.pow(1 - f, 2.2);
-		this.fall.set(e(this.towers[0].fall), e(this.towers[1].fall), e(this.towers[2].fall));
+		this.fall.set(fallEase(this.towers[0].fall), fallEase(this.towers[1].fall), fallEase(this.towers[2].fall));
 		this.group.updateMatrixWorld();
 		for (const c of this.casters) c.matrix.copy(this.mesh.matrixWorld);
 	}
