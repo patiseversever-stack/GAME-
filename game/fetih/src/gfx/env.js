@@ -87,6 +87,34 @@ export const ENVS = {
 	},
 };
 
+/**
+ * Harita ışığı (oyunun ana ayarı): batı-güneybatıdan, kameranın solundan gelen ılık öğleden sonra
+ * güneşi. Kabartma soldan aydınlanır (batı yamaçları parlak, doğu yamaçları gölgede), minyatürlerin
+ * kameraya bakan yüzü yarı ışıkta kalır. Gölgeler serin mavi-mor; deniz canlı turkuazdan laciverde.
+ */
+ENVS.harita = {
+	sunAz: 148,
+	sunEl: 41,
+	sun: C('#fff1db', 3.0),
+	skyTop: C('#8fbaff', 0.6),
+	skyHor: C('#c4e1ff', 0.52),
+	ground: C('#ffdcb0', 0.3),
+	shade: C('#a9b4ff', 1),
+	fog: C('#cfe6ff'),
+	fogSun: C('#fff1d4'),
+	fogP: [0.0021, 110, 0.02, 8],
+	zenith: C('#3d86e6'),
+	horizon: C('#cfeeff'),
+	sunGlow: C('#fff0c8', 1.2),
+	sea: C('#22a6dc'),
+	seaDeep: C('#1a66bd'),
+	grade: [1.1, 1.07, 1.0],
+	lift: C('#10204a', 0.04),
+	gain: C('#fffaf2'),
+	vignette: 0.3,
+	vig: C('#24306e'),
+};
+
 export function applyEnv(G, e) {
 	const az = THREE.MathUtils.degToRad(e.sunAz);
 	const el = THREE.MathUtils.degToRad(e.sunEl);

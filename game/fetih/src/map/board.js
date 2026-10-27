@@ -1,16 +1,29 @@
-// Minyatür Türkiye haritası: 81 il, her biri pahlı kalın bir karo (masa üstü maket gibi).
+// Minyatür Türkiye haritası: 81 il, gerçek kabartmalı tek parça bir maket.
 //
-// Bütün iller tek geometride birleşir; her köşe hangi ile ait olduğunu (pid) taşır. İlin sahibi,
-// rengi, yükselmesi ve parlaması küçük bir veri dokusundan okunur: bir il fethedilince yalnızca
-// bu dokunun bir pikseli değişir, geometri yeniden kurulmaz. Tek çizim çağrısı.
+// Bütün iller tek geometride birleşir; her köşe hangi ile ait olduğunu (pid) taşır. Yükseklik, normal ve
+// doğa bilgisi köşelere pişirilir (terrain.js). İlin sahibi, boya dalgası, yükselmesi, parlaması ve
+// seçilebilirliği küçük bir kayan noktalı durum dokusundan okunur: bir il fethedilince dokunun birkaç
+// pikseli değişir, geometri yeniden kurulmaz. Tek çizim çağrısı.
 //
-// Karo kenarları toprak katmanları gösterir (kesilmiş pasta dilimi gibi), üstü bölgenin doğasıyla
-// boyanır; sahibi olan ilde renk sahibin rengine döner ama arazi dokusu kaybolmaz.
+// Okunurluk:
+// - İl sınırları açılışta ekran kartında çizilen bir uzaklık alanından (fields.js) gelir: her yakınlıkta
+//   keskin, piksel olarak en az kalınlıkta. Tarafsız il sınırı ince bir oyuk; sahipli ilin dış sınırı
+//   sahibin renginde kalın bir şerit ve içe doğru ışıltı. Aynı sahibin iki ili arasında sınır incelir,
+//   oyuncunun toprağı tek bir ülke gibi okunur.
+// - select(list): seçilebilen iller kalkar ve nabız gibi parlayan altın dış hatla çevrilir, komşulara
+//   hale taşar; diğer bütün iller solar ve kararır.
+// - paint(i, renk, x, z): dokunulan noktadan dışa yayılan boya dalgası ve dalga cephesinde parlak çizgi.
+// - showLabels(list | 'all' | null): il adları 3D yazı katmanında (labels.js).
+//
+// Arazi: Doğu yüksek yayla, Toroslar, Kuzey Anadolu Dağları, Kaçkar, karlı volkanlar; gerçek göller ve
+// nehirler; kıyıda kumsal ya da falez. Hepsi aynı shader'da, ek çizim çağrısı olmadan.
 
 import * as THREE from 'three';
-import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { COMMON, SHADOW, LIGHT, FINISH } from '../gfx/shaderlib.js';
+import { COMMON, SHADOW, LIGHT, FINISH, PROV, glslColor as C } from '../gfx/shaderlib.js';
 import DATA from '../data/turkiye.json';
+import { Relief, buildBoardGeometry, BASE, VS, BOTTOM, LIFT } from './terrain.js';
+import { bakeFields, FIELD_BOX, RB, RC, RL } from './fields.js';
+import { Labels } from './labels.js';
 
 export const REGIONS = {
 	marmara: { name: 'Marmara', color: 0x8fd16a },
@@ -22,102 +35,266 @@ export const REGIONS = {
 	guneydogu: { name: 'Güneydoğu Anadolu', color: 0xe39a5c },
 };
 
-const TOP = 0.62; // karo üstünün deniz seviyesinden yüksekliği
-const BOTTOM = -0.5;
+const SEL_LIFT = 0.26; // seçilebilir il bu kadar kalkar
+const TOP = 0.5; // tipik kara yüksekliği (eski kullanım için; doğrusu heightAt)
+const f = (v) => v.toFixed(4);
 
 const PROV_VS = /* glsl */ `
 ${COMMON}
+${PROV}
 attribute float pid;
-attribute vec3 terrain;
-uniform sampler2D uState;  // r,g,b sahip rengi, a sahiplik gücü
-uniform sampler2D uState2; // r yükselme, g parlama, b titreşim
-uniform float uCount;
+attribute vec4 bio;
+attribute float surf;
 varying vec3 vW;
 varying vec3 vN;
-varying vec3 vTerr;
-varying vec4 vOwn;
-varying vec3 vFx;
-varying float vTop;
+varying vec4 vBio;
+varying float vDepth;
+flat varying float vPid;
+flat varying vec4 vOwn;
+flat varying vec4 vPrev;
+flat varying vec4 vPaint;
+flat varying vec4 vFx;
 void main() {
-	vec2 suv = vec2((pid + 0.5) / uCount, 0.5);
-	vOwn = texture2D(uState, suv);
-	vFx = texture2D(uState2, suv).rgb;
+	vOwn = provRow(pid, 0);
+	vPrev = provRow(pid, 1);
+	vPaint = provRow(pid, 2);
+	vFx = provRow(pid, 3);
+	float lift = vFx.x * ${f(LIFT)} + vFx.z * ${f(SEL_LIFT)};
 	vec3 p = position;
-	float lift = vFx.r * 1.4;
-	// yükselen karo: üst yüz kalkar, alt yerinde (kenar uzar)
-	p.y += lift * smoothstep(${BOTTOM.toFixed(2)}, ${TOP.toFixed(2)}, p.y);
+	if (bio.w < 0.75) p.y += lift; // yüzey ve duvarın üst kenarı kalkar, alt kenar yerinde
 	vec4 w = modelMatrix * vec4(p, 1.0);
 	vW = w.xyz;
 	vN = normalize(mat3(modelMatrix) * normal);
-	vTerr = terrain;
-	vTop = smoothstep(0.55, 0.9, normal.y);
+	vBio = bio;
+	vPid = pid;
+	vDepth = surf + lift - p.y;
 	gl_Position = projectionMatrix * viewMatrix * w;
 }`;
 
 const PROV_FS = /* glsl */ `
 #define SHADOW_TAPS __TAPS__
+#define TIER __TIER__
 ${COMMON}
 ${SHADOW}
 ${LIGHT}
 ${FINISH}
+${PROV}
+uniform sampler2D uBorder;
+uniform sampler2D uWater;
+uniform vec4 uFBox;
+uniform vec2 uFRes;
 varying vec3 vW;
 varying vec3 vN;
-varying vec3 vTerr;
-varying vec4 vOwn;
-varying vec3 vFx;
-varying float vTop;
+varying vec4 vBio;
+varying float vDepth;
+flat varying float vPid;
+flat varying vec4 vOwn;
+flat varying vec4 vPrev;
+flat varying vec4 vPaint;
+flat varying vec4 vFx;
+
+float lineAA(float d, float w, float px) {
+	return 1.0 - smoothstep(w - px, w + px, d);
+}
+
+vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float snowK, out float rockK) {
+	float e = (h - ${f(BASE)}) / ${f(VS)};
+	vec2 q = w.xz;
+	float n1 = vnoise(q * 0.33);
+	float n2 = vnoise(q * 1.6 + 3.0);
+	float n3 = vnoise(q * 5.5 - 7.0);
+	float slope = 1.0 - N.y;
+	float green = clamp(bio.y + (n1 - 0.5) * 0.3, 0.0, 1.0);
+	vec3 dry = mix(${C('#c7a25f')}, ${C('#dcc285')}, n2);
+	vec3 lush = mix(${C('#4a8c33')}, ${C('#74ad48')}, n2 * 0.8 + n3 * 0.2);
+	vec3 mid = mix(${C('#98a653')}, ${C('#b7b86b')}, n2);
+	vec3 c = green < 0.5 ? mix(dry, mid, smoothstep(0.1, 0.5, green)) : mix(mid, lush, smoothstep(0.5, 0.9, green));
+	// yayla çayırı: yükseldikçe zeytin-kahve
+	c = mix(c, mix(${C('#9c9265')}, ${C('#8a8460')}, n3), smoothstep(1500.0, 2500.0, e) * 0.55);
+#if TIER > 0
+	// tarla deseni: düz, ormansız, alçak yerlerde parsel parsel
+	float farm = (1.0 - smoothstep(0.1, 0.4, bio.x)) * (1.0 - smoothstep(0.15, 0.45, bio.z)) * smoothstep(0.985, 0.998, N.y) * (1.0 - smoothstep(1300.0, 1800.0, e));
+	// her ovada parseller farklı yöne bakar; dikdörtgen tarlalar, ince çit çizgileri
+	vec2 zone = floor(q * 0.16 + n1 * 0.6);
+	float ang = hash12(zone) * 3.14159;
+	vec2 rq = mat2(cos(ang), -sin(ang), sin(ang), cos(ang)) * q;
+	vec2 fq = rq * vec2(1.7, 0.95) + vec2(n2 * 0.7, n1 * 0.9);
+	vec2 cell = floor(fq);
+	vec2 fr = fract(fq);
+	float fpx = fwidth(fq.x) + fwidth(fq.y);
+	float fade = 1.0 - smoothstep(0.3, 0.75, fpx);
+	float r = hash12(cell + zone * 17.0);
+	vec3 fc = c * (r < 0.22 ? vec3(1.16, 1.08, 0.74) : r < 0.42 ? vec3(0.84, 0.95, 0.8) : r < 0.6 ? vec3(1.04, 1.02, 0.96) : r < 0.8 ? vec3(0.97, 0.9, 0.78) : vec3(0.9, 0.78, 0.62));
+	float edge = min(min(fr.x, 1.0 - fr.x), min(fr.y, 1.0 - fr.y));
+	fc *= mix(0.9, 1.0, smoothstep(0.0, 0.05 + fpx, edge));
+	c = mix(c, fc, farm * fade * 0.75);
+#endif
+	// orman tabanı
+	c = mix(c, mix(${C('#2d5f2f')}, ${C('#3f7539')}, n3), smoothstep(0.2, 0.65, bio.x) * 0.8);
+	// kaya: dik yamaç ve sarp dağlar
+	rockK = clamp(smoothstep(0.22, 0.5, slope + bio.z * 0.22 + (n2 - 0.5) * 0.22), 0.0, 1.0) * smoothstep(250.0, 1300.0, e);
+	c = mix(c, mix(${C('#8c7a6a')}, ${C('#b8a998')}, n3), rockK);
+	// kar: doğuda ve kuzey yamaçlarında daha aşağı iner
+	float snowLine = 2850.0 - 350.0 * n1 + slope * 1100.0 + N.z * 250.0;
+	snowK = smoothstep(snowLine - 120.0, snowLine + 160.0, e + (n3 - 0.5) * 260.0);
+	c = mix(c, ${C('#f3f7ff')}, snowK);
+	// kumsal: alçak kıyı
+	float beach = smoothstep(0.93, 0.975, coast) * (1.0 - smoothstep(0.075, 0.12, h)) * (1.0 - rockK);
+	c = mix(c, mix(${C('#e8d29a')}, ${C('#f4e4b4')}, n3), beach);
+	return c;
+}
+
 void main() {
 	vec3 N = normalize(vN);
 	vec3 V = normalize(cameraPosition - vW);
-	// üst: arazi dokusu (tarla, çayır, taşlık) + sahip rengi
-	vec2 q = vW.xz;
-	float n1 = vnoise(q * 0.9);
-	float n2 = vnoise(q * 3.7);
-	float fields = step(0.5, fract((q.x * 0.7 + q.y * 0.45) * 1.6 + n1 * 0.6)) * 0.06;
-	vec3 terr = vTerr * (0.86 + 0.18 * n1 + 0.08 * n2 - fields);
-	vec3 own = vOwn.rgb * (0.9 + 0.14 * n1 + 0.06 * n2);
-	vec3 top = mix(terr, mix(terr, own, 0.82), vOwn.a);
-	// kenar: toprak katmanları
-	float y = vW.y;
-	float band = step(0.5, fract(y * 3.1 + n2 * 0.3));
-	vec3 soil = mix(vec3(0.24, 0.13, 0.07), vec3(0.34, 0.2, 0.11), band);
-	soil = mix(soil, vec3(0.5, 0.36, 0.22), smoothstep(0.35, 0.6, y) * 0.5);
-	// kenarın üst şeridi sahibin rengiyle boyalı (bayrak şeridi gibi)
-	soil = mix(soil, own * 0.85, vOwn.a * smoothstep(0.3, 0.5, y + vFx.r * 1.4) * 0.8);
-	vec3 alb = mix(soil, top, vTop);
+	float lift = vFx.x * ${f(LIFT)} + vFx.z * ${f(SEL_LIFT)};
+	float h = vW.y - lift;
+	bool skirt = vBio.w > 0.25;
+	vec2 uv = (vW.xz - uFBox.xy) * uFBox.zw;
+	float d = texture(uBorder, uv).r * ${f(RB)};
+	float px = max(fwidth(d), 1e-4);
+	float nb = floor(texelFetch(uBorder, ivec2(uv * uFRes), 0).g * 255.0 + 0.5);
+	vec4 fw = texture(uWater, uv);
+	float coast = fw.r;
+
+	// --- boya dalgası: dalga içinde yeni sahip, dışında eski
+	float dO = distance(vW.xz, vPaint.xy);
+	float pw = max(fwidth(dO), 1e-4);
+	float painted = 1.0 - smoothstep(vPaint.z - pw, vPaint.z + pw, dO);
+	float ownerId = painted > 0.5 ? vOwn.w : vPrev.w;
+	float ownedK = mix(vPrev.w >= 0.0 ? 1.0 : 0.0, vOwn.w >= 0.0 ? 1.0 : 0.0, painted);
+	vec3 ownCol = vPrev.w >= 0.0 ? mix(vPrev.rgb, vOwn.rgb, painted) : vOwn.rgb;
+	float rim = exp(-pow((dO - vPaint.z) / 0.24, 2.0)) * vPaint.w;
+
+	// --- komşu: sınırın öbür yanı
+	float nbOwner = nb > 254.5 ? -3.0 : -2.0;
+	float nbSel = 0.0;
+	if (nb < 250.0 && d < ${f(RB * 0.97)}) {
+		nbOwner = texelFetch(uState, ivec2(int(nb), 0), 0).w;
+		nbSel = texelFetch(uState, ivec2(int(nb), 3), 0).z;
+	}
+	float same = (ownerId >= 0.0 && abs(nbOwner - ownerId) < 0.5) ? 1.0 : 0.0;
+
+	float snowK, rockK;
+	vec3 alb = terrainAlbedo(vW, N, vBio, h, coast, snowK, rockK);
+
+	// --- sahip boyası: arazinin açık-koyu dokusu korunur
+	float lum = dot(alb, vec3(0.3, 0.59, 0.11));
+	vec3 tint = ownCol * (0.5 + 1.7 * lum);
+	alb = mix(alb, tint, ownedK * (0.8 - snowK * 0.35));
+
+	// --- sınırlar
+	float sel = vFx.z;
+	float glow = vFx.y;
+	float pulse = 0.62 + 0.38 * sin(uTime * 5.2 + vPid * 1.7);
+	float wG = max(0.03, 1.0 * px);
+	float groove = lineAA(d, wG, px) * (nb > 254.5 ? 0.3 : 1.0);
+	float ownEdge = ownedK * (1.0 - same);
+	float wBand = max(0.08, 2.3 * px);
+	float band = lineAA(d, wBand, px) * ownEdge;
+	float inner = exp(-d / 0.42) * ownEdge;
+	// sahipli ilin dış sınırı: içe doğru renk ışıltısı + kalın parlak şerit + ince koyu dış çizgi
+	alb = mix(alb, ownCol * 1.1, inner * 0.3);
+	alb *= 1.0 - groove * mix(0.58, 0.14, same * ownedK);
+	alb = mix(alb, ownCol * 0.92, band);
+	// şeridin iç kenarında parlak çizgi (cilalı oyun taşı kenarı), dışta koyu çizgi
+	alb = mix(alb, ownCol * 1.8 + 0.14, lineAA(abs(d - wBand * 0.8), max(0.011, 0.45 * px), px) * ownEdge * 0.75);
+	alb *= 1.0 - lineAA(d, max(0.016, 0.55 * px), px) * ownEdge * 0.55;
+
+	// --- su: göller ve nehirler
+	float lakeIn = step(0.3, fw.b);
+	float salt = lakeIn * (1.0 - step(0.9, fw.b));
+	float shoreD = (1.0 - fw.a) * ${f(RL)};
+	float sd = mix(shoreD, -shoreD, lakeIn);
+	float lpx = max(fwidth(sd), 1e-4);
+	float lake = 1.0 - smoothstep(-lpx, lpx, sd);
+	float rpx = max(fwidth(fw.g), 1e-4);
+	float river = smoothstep(0.5 - rpx, 0.5 + rpx, fw.g) * (1.0 - lake);
+	float water = max(lake, river) * (skirt ? 0.0 : 1.0);
+
+	float gloss = 0.06 + 0.1 * ownedK + snowK * 0.15;
+	float ao = 1.0;
+	if (skirt) {
+		// il duvarı: toprak katmanları (pasta dilimi), kıyıda falez
+		float dep = vDepth;
+		float n = vnoise(vec2((vW.x - vW.z) * 2.0, dep * 5.0));
+		vec3 soil = mix(${C('#7b4a2b')}, ${C('#a06838')}, step(0.5, fract(dep * 3.4 + n * 0.5)));
+		soil = mix(soil, ${C('#6c625b')}, smoothstep(0.55, 1.0, dep));
+		vec3 cliff = mix(${C('#c9b495')}, ${C('#a8927a')}, step(0.5, fract(vW.y * 9.0 + n * 0.6)));
+		soil = mix(soil, cliff, smoothstep(0.94, 0.99, coast) * step(-0.02, vW.y));
+		soil = mix(alb, soil, smoothstep(0.015, 0.05, dep));
+		// üst şerit sahibin renginde (bayrak şeridi)
+		soil = mix(soil, ownCol * 0.95, ownedK * (1.0 - smoothstep(0.07, 0.11, dep)) * step(0.015, dep));
+		alb = soil;
+		ao = mix(0.45, 1.0, exp(-dep * 1.2));
+		gloss = 0.04;
+	}
+
 	float sh = shadowAt(vW, N);
-	float ao = mix(0.55, 1.0, smoothstep(-0.4, 0.6, y));
-	vec3 c = shade(alb, N, V, ao, sh, 0.08 + 0.12 * vOwn.a, 0.5);
-	// parlama: seçili/hedef il nabız gibi ışır
-	float glow = vFx.g * (0.55 + 0.45 * sin(uTime * 6.0 + vFx.b * 6.28));
-	c += (vOwn.a > 0.01 ? own : vec3(1.0, 0.9, 0.6)) * glow * 0.55;
+	vec3 c;
+	if (water > 0.01) {
+		// su yüzeyi: dalgacık, gök yansıması, güneş pırıltısı
+		vec2 wq = vW.xz * 3.0;
+		vec2 g = vec2(vnoise(wq + uTime * 0.4), vnoise(wq * 1.3 - uTime * 0.33)) - 0.5;
+		vec3 WN = normalize(vec3(g.x * 0.25, 1.0, g.y * 0.25));
+		vec3 deep = mix(${C('#1d6db0')}, ${C('#2f8fc4')}, river);
+		vec3 shal = ${C('#4cc6d6')};
+		vec3 wc = mix(shal, deep, smoothstep(0.0, 0.35, -sd) * lake + river * 0.5);
+		wc = mix(wc, mix(${C('#f2e9ea')}, ${C('#e7b9c4')}, vnoise(vW.xz * 0.8)), salt * 0.85);
+		float ndv = clamp(dot(WN, V), 0.0, 1.0);
+		float fres = 0.04 + 0.96 * pow(1.0 - ndv, 5.0);
+		vec3 wcol = wc * (skyAmbient(WN) * 0.9 + uSunCol * 0.32 * sh);
+		wcol = mix(wcol, skyReflect(reflect(-V, WN)), fres * 0.6);
+		vec3 H = normalize(uSunDir + V);
+		wcol += uSunCol * pow(max(dot(WN, H), 0.0), 180.0) * 1.6 * sh;
+		// kıyı köpüğü
+		wcol = mix(wcol, vec3(1.0) * (uSkyTop + uSunCol * 0.35), lineAA(abs(sd), 0.018 + lpx, lpx) * lake * 0.7);
+		vec3 lc = shade(alb, N, V, ao, sh, gloss, 0.35);
+		c = mix(lc, wcol, water);
+	} else {
+		c = shade(alb, N, V, ao, sh, gloss, 0.35);
+	}
+
+	// --- seçim: altın dış hat, iç ışıltı, komşuya taşan hale
+	vec3 gold = vec3(1.0, 0.78, 0.28);
+	float wSel = max(0.1, 3.0 * px);
+	float selBand = lineAA(d, wSel, px) * sel;
+	float selIn = exp(-d / 0.5) * sel;
+	float halo = (1.0 - sel) * nbSel * exp(-d / 0.28) * uSelOn;
+	c *= 1.0 + sel * 0.1;
+	c = mix(c, vec3(1.0, 0.93, 0.7) * (1.2 + 0.6 * pulse), selBand * (0.75 + 0.25 * pulse));
+	c += gold * (selIn * 0.38 * pulse + halo * 0.55 * pulse);
+	// eski parlama (fx): nabız gibi ışır
+	vec3 gcol = ownedK > 0.5 ? ownCol * 1.4 + 0.1 : vec3(1.0, 0.88, 0.55);
+	c += gcol * glow * (0.35 + 0.35 * sin(uTime * 6.0 + vPid * 0.7)) * (0.35 + lineAA(d, wSel, px) * 0.9);
+	// boya dalgası cephesi
+	c += (ownCol * 1.6 + vec3(0.55)) * rim * (skirt ? 0.3 : 1.0);
+
+	// seçim kipi ve maç dışı iller sönük
+	c = provDim(c, max(sel, halo * 0.8), vFx.w);
+#if TIER > 0
+	// bulut gölgeleri
+	float cs = smoothstep(0.58, 0.82, vnoise(vW.xz * 0.05 + uTime * vec2(0.015, 0.006)));
+	c *= 1.0 - cs * 0.16;
+#endif
 	c = applyFog(c, vW);
 	gl_FragColor = finish(c, 1.0);
 }`;
 
-const DEPTH_VS = PROV_VS;
+const DEPTH_VS = /* glsl */ `
+${PROV}
+attribute float pid;
+attribute vec4 bio;
+uniform float uDrop;
+void main() {
+	vec4 fx = provRow(pid, 3);
+	vec3 p = position;
+	p.y += fx.x * ${f(LIFT)} + fx.z * ${f(SEL_LIFT)} - uDrop;
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * vec4(p, 1.0);
+}`;
 const DEPTH_FS = /* glsl */ `void main() { gl_FragColor = vec4(1.0); }`;
 
-const LAND_FS = /* glsl */ `
-#define SHADOW_TAPS __TAPS__
-${COMMON}
-${SHADOW}
-${LIGHT}
-${FINISH}
-varying vec3 vW;
-varying vec3 vN;
-void main() {
-	vec3 N = normalize(vN);
-	float n = vnoise(vW.xz * 0.6);
-	vec3 alb = mix(vec3(0.17, 0.19, 0.16), vec3(0.14, 0.18, 0.15), n);
-	alb = mix(vec3(0.14, 0.11, 0.09), alb, smoothstep(0.5, 0.9, N.y));
-	float sh = shadowAt(vW, N);
-	vec3 c = shade(alb, N, normalize(cameraPosition - vW), 0.9, sh, 0.05, 0.2);
-	// komşu ülkeler sisli ve soluk: göz Türkiye'de kalsın
-	c = mix(c, uFogCol * 0.55, 0.14);
-	c = applyFog(c, vW);
-	gl_FragColor = finish(c, 1.0);
-}`;
+// komşu ülkeler: boyanmamış alçı maket (göz Türkiye'de kalsın)
 const LAND_VS = /* glsl */ `
 varying vec3 vW;
 varying vec3 vN;
@@ -127,48 +304,86 @@ void main() {
 	vN = normalize(mat3(modelMatrix) * normal);
 	gl_Position = projectionMatrix * viewMatrix * w;
 }`;
+const LAND_FS = /* glsl */ `
+#define SHADOW_TAPS __TAPS__
+${COMMON}
+${SHADOW}
+${LIGHT}
+${FINISH}
+uniform sampler2D uWater;
+uniform vec4 uFBox;
+uniform float uSelOn;
+varying vec3 vW;
+varying vec3 vN;
+void main() {
+	vec2 nq = vW.xz * 0.7;
+	float h0 = vnoise(nq) + 0.5 * vnoise(nq * 2.3);
+	vec3 N = normalize(vec3(h0 - vnoise(nq + vec2(0.15, 0.0)) - 0.5 * vnoise((nq + vec2(0.15, 0.0)) * 2.3), 0.35, h0 - vnoise(nq + vec2(0.0, 0.15)) - 0.5 * vnoise((nq + vec2(0.0, 0.15)) * 2.3)));
+	vec2 uv = (vW.xz - uFBox.xy) * uFBox.zw;
+	float coast = (uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) ? texture(uWater, uv).r : 0.0;
+	float n = vnoise(vW.xz * 0.5);
+	float n2 = vnoise(vW.xz * 2.3);
+	vec3 alb = mix(${C('#c6c0b1')}, ${C('#d3cdbd')}, n) * (0.94 + 0.08 * n2);
+	alb = mix(alb, ${C('#e6dcc4')}, smoothstep(0.93, 0.99, coast));
+	alb = mix(${C('#9d8f7c')}, alb, smoothstep(0.6, 0.95, N.y));
+	float sh = shadowAt(vW, N);
+	vec3 c = shade(alb, N, normalize(cameraPosition - vW), 0.95, sh, 0.03, 0.2);
+	c = mix(c, uFogCol * 0.8, 0.22);
+	c *= 1.0 - 0.18 * uSelOn;
+	c = applyFog(c, vW);
+	gl_FragColor = finish(c, 1.0);
+}`;
 
 const SEA_VS = /* glsl */ `
 varying vec3 vW;
-varying vec2 vUv;
 void main() {
 	vec4 w = modelMatrix * vec4(position, 1.0);
 	vW = w.xyz;
-	vUv = uv;
 	gl_Position = projectionMatrix * viewMatrix * w;
 }`;
 const SEA_FS = /* glsl */ `
+#define TIER __TIER__
 ${COMMON}
 ${LIGHT}
 ${FINISH}
-uniform sampler2D uCoast; // kıyıya yakınlık (bulanık kara maskesi)
+uniform sampler2D uWater;
+uniform vec4 uFBox;
 uniform vec3 uSea, uSeaDeep;
-uniform vec4 uCoastBox;   // x0, z0, 1/genişlik, 1/derinlik
+uniform float uSelOn;
 varying vec3 vW;
-varying vec2 vUv;
 void main() {
-	vec2 cuv = (vW.xz - uCoastBox.xy) * uCoastBox.zw;
-	float coast = texture2D(uCoast, cuv).r;
+	vec2 uv = (vW.xz - uFBox.xy) * uFBox.zw;
+	float eb = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
+	float coast = texture(uWater, clamp(uv, 0.0, 1.0)).r * smoothstep(0.0, 0.06, eb);
+	float dist = (1.0 - coast) * ${f(RC)}; // kıyıya uzaklık (birim)
 	float t = uTime;
 	vec2 p = vW.xz;
 	vec2 g = vec2(0.0);
-	g += vec2(0.6, 0.8) * cos(dot(p, vec2(0.6, 0.8)) * 0.7 + t * 1.1) * 0.06;
-	g += vec2(-0.8, 0.5) * cos(dot(p, vec2(-0.8, 0.5)) * 1.4 + t * 1.6) * 0.04;
-	g += (vec2(vnoise(p * 0.9 + t * 0.3), vnoise(p * 0.9 - t * 0.27)) - 0.5) * 0.1;
+	g += vec2(0.6, 0.8) * cos(dot(p, vec2(0.6, 0.8)) * 0.9 + t * 1.2) * 0.05;
+	g += vec2(-0.8, 0.5) * cos(dot(p, vec2(-0.8, 0.5)) * 1.7 + t * 1.7) * 0.035;
+#if TIER > 0
+	g += (vec2(vnoise(p * 1.1 + t * 0.35), vnoise(p * 1.1 - t * 0.3)) - 0.5) * 0.12;
+#endif
 	vec3 N = normalize(vec3(-g.x, 1.0, -g.y));
 	vec3 V = normalize(cameraPosition - vW);
-	vec3 base = mix(uSeaDeep, uSea, smoothstep(0.05, 0.75, coast));
-	base = mix(base, vec3(0.5, 0.92, 0.88), smoothstep(0.75, 0.97, coast) * 0.55);
+	// derinlik: kıyıda turkuaz sığlık, açıkta lacivert
+	vec3 deep = uSeaDeep * mix(0.93, 1.03, vnoise(p * 0.04));
+	vec3 base = mix(deep, uSea, smoothstep(2.2, 0.3, dist));
+	base = mix(base, ${C('#62e3d4')}, smoothstep(0.32, 0.02, dist) * 0.75);
 	float ndv = clamp(dot(N, V), 0.0, 1.0);
 	float fres = 0.02 + 0.98 * pow(1.0 - ndv, 5.0);
-	vec3 c = base * (uSkyTop * 0.95 + uSunCol * 0.3 * max(dot(N, uSunDir), 0.0));
-	c = mix(c, skyReflect(reflect(-V, N)), fres * 0.75);
+	vec3 c = base * (uSkyTop * 1.05 + uSunCol * 0.26 * max(dot(N, uSunDir), 0.0));
+	c = mix(c, skyReflect(reflect(-V, N)), fres * 0.7);
 	vec3 H = normalize(uSunDir + V);
-	c += uSunCol * pow(max(dot(N, H), 0.0), 260.0) * 2.0;
-	// kıyı köpüğü: kıyıya paralel nefes alan çizgiler
-	float wave = sin(coast * 30.0 - t * 2.0 + vnoise(p * 0.7) * 4.0) * 0.5 + 0.5;
-	float foam = smoothstep(0.82, 0.95, coast) * smoothstep(0.6, 0.95, wave) * 0.7 + smoothstep(0.96, 0.995, coast);
-	c = mix(c, vec3(1.0) * (uSkyTop + uSunCol * 0.3), clamp(foam, 0.0, 1.0) * 0.85);
+	c += uSunCol * pow(max(dot(N, H), 0.0), 320.0) * 2.4;
+	// kıyı köpüğü: kıyıya paralel nefes alan çizgiler + kıyı çizgisinde beyaz yaka
+	// açık denizde ağır kayan ince dalga çizgileri
+	float wl = smoothstep(0.985, 1.0, sin(dot(p, vec2(0.42, 0.91)) * 1.1 + vnoise(p * 0.22) * 9.0 + t * 0.5)) * smoothstep(0.8, 2.6, dist) * vnoise(p * 0.15 + 4.0);
+	c += uSunCol * wl * 0.018;
+	float wave = sin(dist * 26.0 - t * 1.8 + vnoise(p * 0.8) * 5.0) * 0.5 + 0.5;
+	float foam = smoothstep(0.35, 0.08, dist) * smoothstep(0.72, 0.98, wave) * 0.55 + smoothstep(0.07, 0.015, dist);
+	c = mix(c, vec3(1.0) * (uSkyTop + uSunCol * 0.32), clamp(foam, 0.0, 1.0) * 0.82);
+	c *= 1.0 - 0.15 * uSelOn;
 	c = applyFog(c, vW);
 	gl_FragColor = finish(c, 1.0);
 }`;
@@ -178,10 +393,8 @@ void main() {
 const ringToShape = (flat) => {
 	const s = new THREE.Shape();
 	for (let i = 0; i < flat.length; i += 2) {
-		const x = flat[i];
-		const y = flat[i + 1];
-		if (i === 0) s.moveTo(x, y);
-		else s.lineTo(x, y);
+		if (i === 0) s.moveTo(flat[i], flat[i + 1]);
+		else s.lineTo(flat[i], flat[i + 1]);
 	}
 	s.closePath();
 	return s;
@@ -214,50 +427,21 @@ function edgeDist(x, y, flat) {
 	return md;
 }
 
-/** Kıyı maskesi: bütün karaların bulanık siluet dokusu (denizin sığ rengi ve köpük için). */
-function coastTexture(polys, box) {
-	const W = 1024;
-	const H = Math.round((W * box.d) / box.w);
-	const cv = document.createElement('canvas');
-	cv.width = W;
-	cv.height = H;
-	const g = cv.getContext('2d');
-	g.fillStyle = '#000';
-	g.fillRect(0, 0, W, H);
-	const px = (x) => ((x - box.x0) / box.w) * W;
-	const pz = (z) => ((z - box.z0) / box.d) * H;
-	const draw = (blur, alpha) => {
-		g.filter = `blur(${blur}px)`;
-		g.fillStyle = `rgba(255,255,255,${alpha})`;
-		for (const f of polys) {
-			g.beginPath();
-			for (let i = 0; i < f.length; i += 2) {
-				const X = px(f[i]);
-				const Z = pz(-f[i + 1]);
-				if (i === 0) g.moveTo(X, Z);
-				else g.lineTo(X, Z);
-			}
-			g.closePath();
-			g.fill();
-		}
-	};
-	draw(26, 0.55);
-	draw(9, 0.5);
-	draw(2, 0.6);
-	g.filter = 'none';
-	const t = new THREE.CanvasTexture(cv);
-	t.colorSpace = THREE.NoColorSpace;
-	t.flipY = false;
-	return t;
-}
+const easeOut = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
 
 // ------------------------------------------------------------------ harita
 
 export class Board {
-	constructor(G, tier) {
+	/**
+	 * @param G ortak uniform'lar
+	 * @param tier kalite kademesi
+	 * @param renderer alan dokularını açılışta çizmek için (yoksa sınır çizgisi olmadan çalışır)
+	 */
+	constructor(G, tier, renderer = null) {
 		this.G = G;
 		this.tier = tier;
 		this.data = DATA;
+		this.relief = new Relief();
 		this.provinces = DATA.provinces.map((p, i) => ({
 			...p,
 			index: i,
@@ -269,108 +453,214 @@ export class Board {
 		this.group = new THREE.Group();
 		const N = this.provinces.length;
 		this.count = N;
+		this.top = TOP;
+		this.liftUnit = LIFT;
+		this.selLiftUnit = SEL_LIFT;
 		const taps = String(tier.shadowTaps);
-
-		// il durumu dokuları
-		this.state = new Uint8Array(N * 4);
-		this.state2 = new Uint8Array(N * 4);
-		this.stateTex = new THREE.DataTexture(this.state, N, 1, THREE.RGBAFormat);
-		this.state2Tex = new THREE.DataTexture(this.state2, N, 1, THREE.RGBAFormat);
-		for (const t of [this.stateTex, this.state2Tex]) {
-			t.magFilter = t.minFilter = THREE.NearestFilter;
-			t.colorSpace = THREE.NoColorSpace;
-			t.needsUpdate = true;
+		const tierId = String(tier.id);
+		for (const p of this.provinces) {
+			p.y = this.relief.height(p.x, -p.z);
+			// il sınırının en uzak noktası (boya dalgası süresi için)
+			let bx0 = Infinity;
+			let bx1 = -Infinity;
+			let bz0 = Infinity;
+			let bz1 = -Infinity;
+			for (const r of p.rings)
+				for (let k = 0; k < r.length; k += 2) {
+					bx0 = Math.min(bx0, r[k]);
+					bx1 = Math.max(bx1, r[k]);
+					bz0 = Math.min(bz0, -r[k + 1]);
+					bz1 = Math.max(bz1, -r[k + 1]);
+				}
+			p.box = [bx0, bz0, bx1, bz1];
 		}
+
+		// --- il durumu dokusu (kayan noktalı, N × 4)
+		this.S = new Float32Array(N * 4 * 4);
+		this.stateTex = new THREE.DataTexture(this.S, N, 4, THREE.RGBAFormat, THREE.FloatType);
+		this.stateTex.magFilter = this.stateTex.minFilter = THREE.NearestFilter;
+		this.stateTex.colorSpace = THREE.NoColorSpace;
+		this.stateTex.generateMipmaps = false;
+		for (let i = 0; i < N; i++) {
+			this._row(i, 0).set([0, 0, 0, -1]);
+			this._row(i, 1).set([0, 0, 0, -1]);
+			this._row(i, 2).set([this.provinces[i].x, this.provinces[i].z, 1e5, 0]);
+		}
+		this.stateTex.needsUpdate = true;
+		this.state2Tex = this.stateTex; // eski adı (geri uyum)
 		this.lift = new Float32Array(N);
 		this.liftTo = new Float32Array(N);
 		this.glow = new Float32Array(N);
 		this.glowTo = new Float32Array(N);
+		this.sel = new Float32Array(N);
+		this.selTo = new Float32Array(N);
+		this.dim = new Float32Array(N);
+		this.dimTo = new Float32Array(N);
+		this.wave = this.provinces.map(() => ({ on: false, t: 0, dur: 1, maxR: 1, flash: 0 }));
+		this.uSelOn = { value: 0 };
+		this.selOnTo = 0;
+		this._c = new THREE.Color();
 
-		// --- il karoları
-		const parts = [];
-		const depth = TOP - BOTTOM - 0.24;
-		const extr = { depth, bevelEnabled: true, bevelThickness: 0.12, bevelSize: 0.1, bevelOffset: -0.17, bevelSegments: 2, curveSegments: 4 };
-		const col = new THREE.Color();
-		for (const p of this.provinces) {
-			col.setHex(REGIONS[p.region].color); // sRGB → doğrusal
-			// aynı bölgedeki iller tonca hafif ayrışsın
-			const v = 0.92 + ((p.id * 37) % 17) / 100;
-			for (const r of p.rings) {
-				const g = new THREE.ExtrudeGeometry(ringToShape(r), extr);
-				g.rotateX(-Math.PI / 2);
-				g.translate(0, BOTTOM + 0.12, 0);
-				const n = g.getAttribute('position').count;
-				g.setAttribute('pid', new THREE.BufferAttribute(new Float32Array(n).fill(p.index), 1));
-				const tc = new Float32Array(n * 3);
-				for (let i = 0; i < n; i++) {
-					tc[i * 3] = col.r * v;
-					tc[i * 3 + 1] = col.g * v;
-					tc[i * 3 + 2] = col.b * v;
-				}
-				g.setAttribute('terrain', new THREE.BufferAttribute(tc, 3));
-				g.deleteAttribute('uv');
-				g.clearGroups();
-				parts.push(g);
-			}
-		}
-		const geo = mergeGeometries(parts, false);
-		geo.computeBoundingSphere();
-		const uniforms = { ...G, uState: { value: this.stateTex }, uState2: { value: this.state2Tex }, uCount: { value: N } };
-		this.mat = new THREE.ShaderMaterial({ vertexShader: PROV_VS, fragmentShader: PROV_FS.replace('__TAPS__', taps), uniforms });
+		// --- alan dokuları (sınır uzaklığı, kıyı, nehir, göl)
+		const res = tier.id === 0 ? 1536 : 2048;
+		this.fields = renderer ? bakeFields(renderer, DATA, (id) => this.byId.get(id).index, res) : null;
+		const blank = new THREE.DataTexture(new Uint8Array([255, 255, 0, 0]), 1, 1);
+		blank.needsUpdate = true;
+		const fBox = this.fields ? this.fields.box : new THREE.Vector4(FIELD_BOX.x0, FIELD_BOX.z0, 1 / FIELD_BOX.w, 1 / FIELD_BOX.d);
+		const fieldU = {
+			uBorder: { value: this.fields ? this.fields.border.texture : blank },
+			uWater: { value: this.fields ? this.fields.water.texture : blank },
+			uFBox: { value: fBox },
+			uFRes: { value: this.fields ? this.fields.res : new THREE.Vector2(1, 1) },
+		};
+		this.fieldUniforms = fieldU;
+
+		// --- il yüzeyleri ve duvarları
+		const step = tier.id === 0 ? 0.5 : tier.id === 1 ? 0.4 : 0.33;
+		const built = buildBoardGeometry(this.provinces, this.relief, step);
+		this.geoStats = { vertices: built.vertices, triangles: built.triangles };
+		const geo = built.geometry;
+		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn };
+		this.uniforms = uniforms;
+		this.mat = new THREE.ShaderMaterial({
+			vertexShader: PROV_VS,
+			fragmentShader: PROV_FS.replace('__TAPS__', taps).replace('__TIER__', tierId),
+			uniforms,
+		});
 		this.mesh = new THREE.Mesh(geo, this.mat);
 		this.mesh.matrixAutoUpdate = false;
 		this.group.add(this.mesh);
-		this.shadowMesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms }));
+		// gölge: kaba kabartma (yalnızca yüzey), biraz alçaltılmış (kendi gölgesi kirlenmesin)
+		// q=0: harita gölge yapmaz (yalnızca ağaç, yapı ve kaleler), gölge geçişi hafif kalsın
+		const sbuilt = tier.id === 0 ? { geometry: emptyGeo(), triangles: 0 } : buildBoardGeometry(this.provinces, this.relief, 1.0, { skirts: false });
+		this.shadowGeoStats = { triangles: sbuilt.triangles };
+		this.shadowMesh = new THREE.Mesh(
+			sbuilt.geometry,
+			new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms: { uState: uniforms.uState, uSelOn: this.uSelOn, uDrop: { value: 0.1 } } }),
+		);
 		this.shadowMesh.matrixAutoUpdate = false;
 
 		// --- komşu ülkeler (alçak, soluk)
-		const lparts = [];
-		for (const r of DATA.land) {
-			const g = new THREE.ExtrudeGeometry(ringToShape(r), { depth: 0.5, bevelEnabled: true, bevelThickness: 0.08, bevelSize: 0.08, bevelOffset: -0.08, bevelSegments: 1 });
-			g.rotateX(-Math.PI / 2);
-			g.translate(0, -0.5, 0);
-			g.deleteAttribute('uv');
-			g.clearGroups();
-			lparts.push(g);
-		}
-		const lgeo = mergeGeometries(lparts, false);
-		this.land = new THREE.Mesh(lgeo, new THREE.ShaderMaterial({ vertexShader: LAND_VS, fragmentShader: LAND_FS.replace('__TAPS__', taps), uniforms: { ...G } }));
+		const lgeo = landCaps(DATA.land, 0.03);
+		this.land = new THREE.Mesh(
+			lgeo,
+			new THREE.ShaderMaterial({ vertexShader: LAND_VS, fragmentShader: LAND_FS.replace('__TAPS__', taps), uniforms: { ...G, ...fieldU, uSelOn: this.uSelOn } }),
+		);
 		this.land.matrixAutoUpdate = false;
 		this.group.add(this.land);
 
-		// --- deniz
-		const box = { x0: -100, z0: -60, w: 200, d: 120 };
-		const allPolys = [...this.provinces.flatMap((p) => p.rings), ...DATA.land];
-		const coast = coastTexture(allPolys, box);
+		// --- deniz: ufka kadar
 		this.sea = new THREE.Mesh(
-			new THREE.PlaneGeometry(box.w, box.d, 1, 1).rotateX(-Math.PI / 2),
-			new THREE.ShaderMaterial({
-				vertexShader: SEA_VS,
-				fragmentShader: SEA_FS,
-				uniforms: { ...G, uCoast: { value: coast }, uCoastBox: { value: new THREE.Vector4(box.x0, box.z0, 1 / box.w, 1 / box.d) } },
-			}),
+			new THREE.PlaneGeometry(2400, 2400, 1, 1).rotateX(-Math.PI / 2),
+			new THREE.ShaderMaterial({ vertexShader: SEA_VS, fragmentShader: SEA_FS.replace('__TIER__', tierId), uniforms: { ...G, ...fieldU, uSelOn: this.uSelOn } }),
 		);
-		this.sea.position.set(box.x0 + box.w / 2, 0, box.z0 + box.d / 2);
-		this.sea.updateMatrix();
+		this.sea.renderOrder = 2; // karadan sonra: örtülen deniz pikseli hiç boyanmaz
 		this.sea.matrixAutoUpdate = false;
+		this.sea.updateMatrix();
 		this.group.add(this.sea);
-		this.top = TOP;
+
+		// --- il adı noktaları ve yazı katmanı
+		this.labels = this.provinces.map((p) => this.labelAt(p.index, new THREE.Vector3(), true));
+		this.labelLayer = new Labels(G, this);
+		this.group.add(this.labelLayer.mesh);
 	}
 
-	/** İlin sahibini ve rengini ayarla (renk null → tarafsız). */
-	setOwner(index, owner, color) {
-		const p = this.provinces[index];
-		p.owner = owner;
-		const s = this.state;
-		if (color) {
-			const c = new THREE.Color(color);
-			s[index * 4] = Math.round(c.r * 255);
-			s[index * 4 + 1] = Math.round(c.g * 255);
-			s[index * 4 + 2] = Math.round(c.b * 255);
-			s[index * 4 + 3] = 255;
-		} else s[index * 4 + 3] = 0;
+	_row(i, r) {
+		const o = (r * this.count + i) * 4;
+		return this.S.subarray(o, o + 4);
+	}
+
+	_setRow(i, r, a, b, c, d) {
+		const o = (r * this.count + i) * 4;
+		const S = this.S;
+		S[o] = a;
+		S[o + 1] = b;
+		S[o + 2] = c;
+		S[o + 3] = d;
 		this.stateTex.needsUpdate = true;
 	}
+
+	// ---------------------------------------------------------------- sahiplik ve boya
+
+	/**
+	 * İlin sahibini ve rengini ayarla (renk null → tarafsız). ox/oz verilirse boya dalgası o noktadan
+	 * yayılır; verilmezse anında boyanır (ama önceki renk saklanır: hemen ardından paint() çağrılırsa
+	 * dalga eski renkten başlar).
+	 */
+	setOwner(index, owner, color, ox, oz) {
+		const p = this.provinces[index];
+		p.owner = owner;
+		const o = (0 * this.count + index) * 4;
+		const S = this.S;
+		// önceki = şimdiki
+		this._setRow(index, 1, S[o], S[o + 1], S[o + 2], S[o + 3]);
+		if (color != null && owner >= 0) {
+			const c = this._c.set(color);
+			this._setRow(index, 0, c.r, c.g, c.b, owner);
+		} else this._setRow(index, 0, 0, 0, 0, -1);
+		if (ox != null && oz != null) this._wave(index, ox, oz);
+		else {
+			this.wave[index].on = false;
+			this._setRow(index, 2, p.x, p.z, 1e5, 0);
+		}
+	}
+
+	/**
+	 * Boya dalgası: il, dünya noktasından (ox, oz) dışa doğru bu renge boyanır; cephede parlak çizgi.
+	 * setOwner'dan hemen sonra aynı renkle çağrılırsa eski renkten başlar. Nokta verilmezse il merkezi.
+	 * Dönen: dalga süresi (saniye).
+	 */
+	paint(index, color, ox, oz) {
+		const p = this.provinces[index];
+		const o = index * 4;
+		const S = this.S;
+		const c = this._c.set(color);
+		const same = Math.abs(S[o] - c.r) + Math.abs(S[o + 1] - c.g) + Math.abs(S[o + 2] - c.b) < 1e-3 && S[o + 3] >= 0;
+		if (!same) {
+			this._setRow(index, 1, S[o], S[o + 1], S[o + 2], S[o + 3]);
+			this._setRow(index, 0, c.r, c.g, c.b, p.owner >= 0 ? p.owner : 99);
+		}
+		return this._wave(index, ox ?? p.x, oz ?? p.z);
+	}
+
+	_wave(index, ox, oz) {
+		const p = this.provinces[index];
+		let maxR = 0;
+		for (const r of p.rings)
+			for (let k = 0; k < r.length; k += 2) maxR = Math.max(maxR, Math.hypot(r[k] - ox, -r[k + 1] - oz));
+		const w = this.wave[index];
+		w.on = true;
+		w.t = 0;
+		w.maxR = maxR + 0.3;
+		w.dur = Math.min(1.35, Math.max(0.65, 0.45 + maxR * 0.07));
+		w.flash = 1;
+		w.ox = ox;
+		w.oz = oz;
+		this._setRow(index, 2, ox, oz, 0, 1);
+		return w.dur;
+	}
+
+	/** İki ilin ortak sınırının orta noktası (saldırı dalgası buradan başlasın). Yoksa a'nın merkezi. */
+	borderPoint(a, b, out = new THREE.Vector3()) {
+		const ida = this.provinces[a].id;
+		const idb = this.provinces[b].id;
+		let best = null;
+		let bl = -1;
+		for (const s of DATA.borders) {
+			if (!((s.a === ida && s.b === idb) || (s.a === idb && s.b === ida))) continue;
+			if (s.pts.length > bl) {
+				bl = s.pts.length;
+				best = s.pts;
+			}
+		}
+		if (!best) return out.set(this.provinces[a].x, this.provinces[a].y, this.provinces[a].z);
+		const k = (best.length >> 2) * 2;
+		const x = best[k];
+		const y = best[k + 1];
+		return out.set(x, this.relief.height(x, y), -y);
+	}
+
+	// ---------------------------------------------------------------- vurgu
 
 	/** Yükselme (0..1) ve parlama (0..1) hedefleri; yumuşakça varılır. */
 	fx(index, lift, glow) {
@@ -383,36 +673,143 @@ export class Board {
 		this.glowTo.fill(0);
 	}
 
+	/** Seçilebilir iller: kalkar, altın dış hatla parlar; diğerleri solar. null → normal harita. */
+	select(list) {
+		this.selTo.fill(0);
+		if (list && list.length) {
+			for (const i of list) this.selTo[i] = 1;
+			this.selOnTo = 1;
+		} else this.selOnTo = 0;
+	}
+
+	/** Maçın oynandığı iller (dışarıdakiler kalıcı olarak sönük). null → hepsi etkin. */
+	setActive(list) {
+		this.dimTo.fill(list ? 1 : 0);
+		if (list) for (const i of list) this.dimTo[i] = 0;
+	}
+
+	/** İl adları: dizi (vurgulu), 'all' (sığanlar) ya da null (kapalı). */
+	showLabels(list) {
+		this.labelLayer.show(list);
+	}
+
 	update(dt) {
-		let dirty = false;
 		const k = 1 - Math.exp(-8 * dt);
-		const s2 = this.state2;
-		for (let i = 0; i < this.count; i++) {
+		const N = this.count;
+		const S = this.S;
+		let dirty = false;
+		for (let i = 0; i < N; i++) {
 			const l = this.lift[i] + (this.liftTo[i] - this.lift[i]) * k;
 			const g = this.glow[i] + (this.glowTo[i] - this.glow[i]) * k;
-			if (Math.abs(l - this.lift[i]) > 1e-4 || Math.abs(g - this.glow[i]) > 1e-4) {
+			const s = this.sel[i] + (this.selTo[i] - this.sel[i]) * Math.min(1, k * 1.3);
+			const d = this.dim[i] + (this.dimTo[i] - this.dim[i]) * k;
+			if (Math.abs(l - this.lift[i]) + Math.abs(g - this.glow[i]) + Math.abs(s - this.sel[i]) + Math.abs(d - this.dim[i]) > 1e-4) {
 				this.lift[i] = l;
 				this.glow[i] = g;
-				s2[i * 4] = Math.round(l * 255);
-				s2[i * 4 + 1] = Math.round(g * 255);
-				s2[i * 4 + 2] = (i * 47) % 255;
+				this.sel[i] = s;
+				this.dim[i] = d;
+				const o = (3 * N + i) * 4;
+				S[o] = l;
+				S[o + 1] = g;
+				S[o + 2] = s;
+				S[o + 3] = d;
+				dirty = true;
+			}
+			const w = this.wave[i];
+			if (w.on) {
+				w.t += dt;
+				const o = (2 * N + i) * 4;
+				const u = w.t / w.dur;
+				S[o + 2] = w.maxR * easeOut(u) ;
+				S[o + 3] = u < 1 ? 1 : Math.max(0, 1 - (u - 1) * 3);
+				if (u >= 1.35) {
+					w.on = false;
+					S[o + 2] = 1e5;
+					S[o + 3] = 0;
+				}
 				dirty = true;
 			}
 		}
-		if (dirty) this.state2Tex.needsUpdate = true;
+		this.labelLayer.update(dt);
+		const so = this.uSelOn.value + (this.selOnTo - this.uSelOn.value) * Math.min(1, k * 1.3);
+		this.uSelOn.value = Math.abs(so - this.selOnTo) < 1e-3 ? this.selOnTo : so;
+		if (dirty) this.stateTex.needsUpdate = true;
+	}
+
+	// ---------------------------------------------------------------- konum sorguları
+
+	/** Dünya noktasındaki kara yüksekliği (yükselme hariç). */
+	heightAt(x, z) {
+		return this.relief.height(x, -z);
+	}
+
+	/** İlin şu anki toplam yükselmesi (birim). */
+	liftOf(index) {
+		return this.lift[index] * LIFT + this.sel[index] * SEL_LIFT;
 	}
 
 	/** İlin dünya konumundaki tepe noktası (kale, bayrak, kamera için). */
 	topAt(index, out) {
 		const p = this.provinces[index];
-		return out.set(p.x, TOP + this.lift[index] * 1.4, p.z);
+		return out.set(p.x, p.y + this.liftOf(index), p.z);
+	}
+
+	/** İl adının dünya noktası (rest: yükselme hariç). */
+	labelAt(index, out, rest = false) {
+		const p = this.provinces[index];
+		const dz = Math.min(0.85, p.inner * 0.5);
+		const x = p.x;
+		const z = p.z + dz;
+		const y = Math.max(this.relief.height(x, -z), p.y) + 0.35 + (rest ? 0 : this.liftOf(index));
+		return out.set(x, y, z);
 	}
 
 	/** Dünya noktası → il indeksi (yoksa -1). */
 	pick(x, z) {
 		const y = -z;
-		for (const p of this.provinces) for (const r of p.rings) if (pointInPoly(x, y, r)) return p.index;
+		for (const p of this.provinces) {
+			const b = p.box;
+			if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) continue;
+			for (const r of p.rings) if (pointInPoly(x, y, r)) return p.index;
+		}
 		return -1;
+	}
+
+	/** Işın → il (kabartmalı yüzeyle kesişim). out: çarpma noktası. Dönen il indeksi ya da -1. */
+	raycast(ray, out) {
+		const o = ray.origin;
+		const d = ray.direction;
+		if (d.y > -1e-4) return -1;
+		// y = 3 ile y = 0 düzlemleri arasında yürü
+		let t0 = Math.max(0, (3 - o.y) / d.y);
+		const t1 = (0 - o.y) / d.y;
+		const n = 64;
+		const dt = (t1 - t0) / n;
+		let prev = t0;
+		let hit = -1;
+		for (let i = 0; i <= n; i++) {
+			const t = t0 + dt * i;
+			const x = o.x + d.x * t;
+			const y = o.y + d.y * t;
+			const z = o.z + d.z * t;
+			const g = this.relief.height(x, -z);
+			if (y <= g) {
+				// ikiye bölerek incelt
+				let a = prev;
+				let b = t;
+				for (let k = 0; k < 8; k++) {
+					const m = (a + b) / 2;
+					if (o.y + d.y * m <= this.relief.height(o.x + d.x * m, -(o.z + d.z * m))) b = m;
+					else a = m;
+				}
+				hit = b;
+				break;
+			}
+			prev = t;
+		}
+		if (hit < 0) hit = t1;
+		out.set(o.x + d.x * hit, o.y + d.y * hit, o.z + d.z * hit);
+		return this.pick(out.x, out.z);
 	}
 
 	/** İlin içinde, kenardan en az m uzaklıkta rastgele nokta (süsler için). */
@@ -441,4 +838,57 @@ export class Board {
 	region(key) {
 		return this.provinces.filter((p) => p.region === key).map((p) => p.index);
 	}
+}
+
+function emptyGeo() {
+	const g = new THREE.BufferGeometry();
+	g.setAttribute('position', new THREE.Float32BufferAttribute([0, 0, 0], 3));
+	g.setIndex([]);
+	return g;
+}
+
+/** Komşu ülkeler: düz kapak (deniz üstünde ince), yukarı bakan normal. */
+function landCaps(rings, y) {
+	const pos = [];
+	const v = [];
+	for (const r of rings) {
+		v.length = 0;
+		for (let i = 0; i < r.length; i += 2) v.push(new THREE.Vector2(r[i], r[i + 1]));
+		const faces = THREE.ShapeUtils.triangulateShape(v, []);
+		for (const f of faces) {
+			// dünyada yukarı baksın
+			const A = v[f[0]], B = v[f[1]], Cc = v[f[2]];
+			const cr = (B.x - A.x) * (Cc.y - A.y) - (B.y - A.y) * (Cc.x - A.x);
+			for (const k of cr > 0 ? [f[0], f[1], f[2]] : [f[0], f[2], f[1]]) pos.push(v[k].x, y, -v[k].y);
+		}
+	}
+	const g = new THREE.BufferGeometry();
+	g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+	const n = new Float32Array(pos.length);
+	for (let i = 1; i < n.length; i += 3) n[i] = 1;
+	g.setAttribute('normal', new THREE.BufferAttribute(n, 3));
+	g.computeBoundingSphere();
+	return g;
+}
+
+function mergeAll(list) {
+	// ExtrudeGeometry'ler dizinsiz; konum + normal birleştir
+	let n = 0;
+	for (const g of list) n += g.getAttribute('position').count;
+	const pos = new Float32Array(n * 3);
+	const nor = new Float32Array(n * 3);
+	let o = 0;
+	for (const g of list) {
+		const a = g.getAttribute('position');
+		const b = g.getAttribute('normal');
+		pos.set(a.array, o * 3);
+		nor.set(b.array, o * 3);
+		o += a.count;
+		g.dispose();
+	}
+	const out = new THREE.BufferGeometry();
+	out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+	out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
+	out.computeBoundingSphere();
+	return out;
 }

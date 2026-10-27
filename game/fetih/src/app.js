@@ -92,14 +92,14 @@ export class App {
 			grade: [1.3, 1.12, 0.96],
 			vignette: 0.3,
 		};
-		applyEnv(G, env);
+		applyEnv(G, ENVS.harita || env);
 		this.shadow = new ShadowSystem(G, R.tier.shadowSize, R.tier.shadowHalf);
 
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera(32, 1, 1, 1500);
 		this.cam = new MapCamera(this.camera);
 
-		this.board = new Board(G, R.tier);
+		this.board = new Board(G, R.tier, this.renderer);
 		this.scene.add(this.board.group);
 		this.shadow.add(this.board.shadowMesh);
 		this.props = new Props(G, R.tier, this.board);

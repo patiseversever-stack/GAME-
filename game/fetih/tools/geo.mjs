@@ -477,6 +477,16 @@ for (const a of arcs) {
 	borders.push({ a: L, b: isProv(R) ? R : R >= 1000 ? -1 : 0, pts: flat(pts) });
 }
 
+// komşu ülke kıyıları (deniz köpüğü ve sığlık için; kara sınırları hariç)
+const nbCoast = [];
+for (const a of arcs) {
+	if (isProv(a.L) || isProv(a.R)) continue;
+	if (a.L >= 0 && a.R >= 0) continue;
+	const far = Math.min(...a.proj.map(([x, y]) => Math.max(Math.abs(x) - 58, Math.abs(y) - 28, 0)));
+	if (far > 2) continue;
+	nbCoast.push(flat(a.proj));
+}
+
 // komşu ülke halkaları (yalnızca görüntü)
 const land = [];
 for (const s of shapes) {
@@ -992,6 +1002,7 @@ const out = {
 		.map((p) => ({ id: p.id, name: p.name, region: p.region, center: p.center.map(round), inner: round(p.inner), area: round(p.area), nb: [...p.nb].sort((a, b) => a - b), rings: p.rings.map(flat) })),
 	borders,
 	land,
+	nbCoast,
 	lakes: lakes.map((l) => ({ name: l.name, level: l.level, ring: flat(l.ring) })),
 	rivers: rivers.map((r) => ({ name: r.name, w: r.w, pts: flat(r.pts) })),
 	peaks: PEAKS.map(([name, lon, lat, m]) => ({ name, p: proj([lon, lat]).map(round), m })),

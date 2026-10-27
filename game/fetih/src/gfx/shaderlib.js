@@ -145,3 +145,33 @@ vec4 finish(vec3 c, float a) {
 	return vec4(clamp(c, 0.0, 1.0), a);
 }
 `;
+
+// İl durumu dokusu (harita, ağaçlar, yapılar ve kaleler ortak okur). Genişlik il sayısı, 4 satır:
+//   0: sahip rengi rgb, sahip kimliği (-1 tarafsız)
+//   1: önceki renk rgb, önceki kimlik (boya dalgası buradan başlar)
+//   2: dalga merkezi x, z, dalga yarıçapı, parlama
+//   3: yükselme, parlama (nabız), seçilebilirlik, sönüklük (maç dışı)
+export const PROV = /* glsl */ `
+uniform sampler2D uState;
+uniform float uSelOn;   // seçim kipi açık (0..1): seçilemeyen iller kararır
+vec4 provRow(float pid, int row) {
+	return texelFetch(uState, ivec2(int(pid + 0.5), row), 0);
+}
+/** Seçim kipinde seçilemeyen ve maç dışı iller: renk solar, kararır. */
+vec3 provDim(vec3 c, float sel, float dim) {
+	float k = clamp(uSelOn * (1.0 - sel) + dim * 0.7, 0.0, 1.0);
+	float l = dot(c, vec3(0.3, 0.59, 0.11));
+	c = mix(c, vec3(l) * vec3(0.9, 0.95, 1.08), k * 0.72);
+	return c * (1.0 - 0.42 * k);
+}
+`;
+
+/** sRGB onaltılık renk → GLSL doğrusal vec3 sabiti (shader derlenirken gömülür). */
+export function glslColor(hex, k = 1) {
+	const v = typeof hex === 'number' ? hex : parseInt(hex.replace('#', ''), 16);
+	const f = (c) => {
+		c /= 255;
+		return (c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4)) * k;
+	};
+	return `vec3(${f((v >> 16) & 255).toFixed(4)}, ${f((v >> 8) & 255).toFixed(4)}, ${f(v & 255).toFixed(4)})`;
+}
