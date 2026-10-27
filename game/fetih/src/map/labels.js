@@ -146,6 +146,7 @@ export class Labels {
 		this.mesh = new THREE.Mesh(g, this.mat);
 		this.mesh.frustumCulled = false;
 		this.mesh.renderOrder = 50;
+		this.mesh.userData.overlay = true; // tilt-shift bulanıklığından sonra çizilir
 		this.mesh.onBeforeRender = (renderer, scene, camera) => this._before(renderer, camera);
 
 		// kip ve canlandırma durumu

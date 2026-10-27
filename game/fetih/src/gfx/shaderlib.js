@@ -166,6 +166,16 @@ vec3 provDim(vec3 c, float sel, float dim) {
 }
 `;
 
+// Haritanın çevresi yumuşak bir pusa gömülür: göz Türkiye'de kalır, uzak kara parçalarının kesik
+// kenarları görünmez (mobil oyun haritalarındaki bulut çerçevesi gibi).
+export const MIST = /* glsl */ `
+vec3 edgeMist(vec3 c, vec3 w) {
+	float e = length(w.xz / vec2(66.0, 35.0));
+	float m = smoothstep(0.98, 1.4, e);
+	return mix(c, uFogCol * vec3(0.96, 1.0, 1.04), m);
+}
+`;
+
 /** sRGB onaltılık renk → GLSL doğrusal vec3 sabiti (shader derlenirken gömülür). */
 export function glslColor(hex, k = 1) {
 	const v = typeof hex === 'number' ? hex : parseInt(hex.replace('#', ''), 16);

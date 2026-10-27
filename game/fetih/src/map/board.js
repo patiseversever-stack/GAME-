@@ -19,11 +19,13 @@
 // nehirler; kıyıda kumsal ya da falez. Hepsi aynı shader'da, ek çizim çağrısı olmadan.
 
 import * as THREE from 'three';
-import { COMMON, SHADOW, LIGHT, FINISH, PROV, glslColor as C } from '../gfx/shaderlib.js';
+import { COMMON, SHADOW, LIGHT, FINISH, PROV, MIST, glslColor as C } from '../gfx/shaderlib.js';
 import DATA from '../data/turkiye.json';
 import { Relief, buildBoardGeometry, BASE, VS, BOTTOM, LIFT } from './terrain.js';
 import { bakeFields, FIELD_BOX, RB, RC, RL } from './fields.js';
 import { Labels } from './labels.js';
+import { Castle } from './castle.js';
+import { Clouds } from '../gfx/clouds.js';
 
 export const REGIONS = {
 	marmara: { name: 'Marmara', color: 0x8fd16a },
@@ -35,7 +37,7 @@ export const REGIONS = {
 	guneydogu: { name: 'Güneydoğu Anadolu', color: 0xe39a5c },
 };
 
-const SEL_LIFT = 0.26; // seçilebilir il bu kadar kalkar
+const SEL_LIFT = 0.36; // seçilebilir il bu kadar kalkar
 const TOP = 0.5; // tipik kara yüksekliği (eski kullanım için; doğrusu heightAt)
 const f = (v) => v.toFixed(4);
 
@@ -164,7 +166,8 @@ void main() {
 	float ownerId = painted > 0.5 ? vOwn.w : vPrev.w;
 	float ownedK = mix(vPrev.w >= 0.0 ? 1.0 : 0.0, vOwn.w >= 0.0 ? 1.0 : 0.0, painted);
 	vec3 ownCol = vPrev.w >= 0.0 ? mix(vPrev.rgb, vOwn.rgb, painted) : vOwn.rgb;
-	float rim = exp(-pow((dO - vPaint.z) / 0.24, 2.0)) * vPaint.w;
+	float rimW = max(0.22, 5.0 * pw);
+	float rim = exp(-pow((dO - vPaint.z) / rimW, 2.0)) * vPaint.w;
 
 	// --- komşu: sınırın öbür yanı
 	float nbOwner = nb > 254.5 ? -3.0 : -2.0;
@@ -180,8 +183,8 @@ void main() {
 
 	// --- sahip boyası: arazinin açık-koyu dokusu korunur
 	float lum = dot(alb, vec3(0.3, 0.59, 0.11));
-	vec3 tint = ownCol * (0.5 + 1.7 * lum);
-	alb = mix(alb, tint, ownedK * (0.8 - snowK * 0.35));
+	vec3 tint = ownCol * (0.42 + 2.0 * lum);
+	alb = mix(alb, tint, ownedK * (0.72 - snowK * 0.3));
 
 	// --- sınırlar
 	float sel = vFx.z;
@@ -256,19 +259,22 @@ void main() {
 	}
 
 	// --- seçim: altın dış hat, iç ışıltı, komşuya taşan hale
-	vec3 gold = vec3(1.0, 0.78, 0.28);
-	float wSel = max(0.1, 3.0 * px);
+	vec3 gold = vec3(1.0, 0.72, 0.18);
+	float wSel = max(0.11, 3.6 * px);
 	float selBand = lineAA(d, wSel, px) * sel;
-	float selIn = exp(-d / 0.5) * sel;
-	float halo = (1.0 - sel) * nbSel * exp(-d / 0.28) * uSelOn;
-	c *= 1.0 + sel * 0.1;
-	c = mix(c, vec3(1.0, 0.93, 0.7) * (1.2 + 0.6 * pulse), selBand * (0.75 + 0.25 * pulse));
-	c += gold * (selIn * 0.38 * pulse + halo * 0.55 * pulse);
+	float selCore = lineAA(d, wSel * 0.45, px) * sel;
+	float selIn = exp(-d / 0.55) * sel;
+	float hw = max(0.3, 7.0 * px);
+	float halo = (1.0 - sel) * nbSel * exp(-d / hw) * uSelOn;
+	c *= 1.0 + sel * 0.12;
+	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * (0.8 + 0.2 * pulse));
+	c = mix(c, vec3(1.0, 0.96, 0.82) * (1.6 + 0.6 * pulse), selCore * 0.8);
+	c += gold * (selIn * 0.42 * pulse + halo * 0.9 * (0.55 + 0.45 * pulse));
 	// eski parlama (fx): nabız gibi ışır
 	vec3 gcol = ownedK > 0.5 ? ownCol * 1.4 + 0.1 : vec3(1.0, 0.88, 0.55);
 	c += gcol * glow * (0.35 + 0.35 * sin(uTime * 6.0 + vPid * 0.7)) * (0.35 + lineAA(d, wSel, px) * 0.9);
 	// boya dalgası cephesi
-	c += (ownCol * 1.6 + vec3(0.55)) * rim * (skirt ? 0.3 : 1.0);
+	c += (ownCol * 1.8 + vec3(0.9)) * rim * (skirt ? 0.3 : 1.0);
 
 	// seçim kipi ve maç dışı iller sönük
 	c = provDim(c, max(sel, halo * 0.8), vFx.w);
@@ -310,15 +316,17 @@ ${COMMON}
 ${SHADOW}
 ${LIGHT}
 ${FINISH}
+${MIST}
 uniform sampler2D uWater;
 uniform vec4 uFBox;
 uniform float uSelOn;
 varying vec3 vW;
 varying vec3 vN;
 void main() {
-	vec2 nq = vW.xz * 0.7;
-	float h0 = vnoise(nq) + 0.5 * vnoise(nq * 2.3);
-	vec3 N = normalize(vec3(h0 - vnoise(nq + vec2(0.15, 0.0)) - 0.5 * vnoise((nq + vec2(0.15, 0.0)) * 2.3), 0.35, h0 - vnoise(nq + vec2(0.0, 0.15)) - 0.5 * vnoise((nq + vec2(0.0, 0.15)) * 2.3)));
+	// alçı kabartma: yumuşak tepeler (sahte normal)
+	vec2 nq = vW.xz * 0.32;
+	float h0 = vnoise(nq);
+	vec3 N = normalize(vec3((h0 - vnoise(nq + vec2(0.2, 0.0))) * 1.6, 1.0, (h0 - vnoise(nq + vec2(0.0, 0.2))) * 1.6));
 	vec2 uv = (vW.xz - uFBox.xy) * uFBox.zw;
 	float coast = (uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) ? texture(uWater, uv).r : 0.0;
 	float n = vnoise(vW.xz * 0.5);
@@ -331,6 +339,7 @@ void main() {
 	c = mix(c, uFogCol * 0.8, 0.22);
 	c *= 1.0 - 0.18 * uSelOn;
 	c = applyFog(c, vW);
+	c = edgeMist(c, vW);
 	gl_FragColor = finish(c, 1.0);
 }`;
 
@@ -346,6 +355,7 @@ const SEA_FS = /* glsl */ `
 ${COMMON}
 ${LIGHT}
 ${FINISH}
+${MIST}
 uniform sampler2D uWater;
 uniform vec4 uFBox;
 uniform vec3 uSea, uSeaDeep;
@@ -385,6 +395,7 @@ void main() {
 	c = mix(c, vec3(1.0) * (uSkyTop + uSunCol * 0.32), clamp(foam, 0.0, 1.0) * 0.82);
 	c *= 1.0 - 0.15 * uSelOn;
 	c = applyFog(c, vW);
+	c = edgeMist(c, vW);
 	gl_FragColor = finish(c, 1.0);
 }`;
 
@@ -563,6 +574,10 @@ export class Board {
 		this.labels = this.provinces.map((p) => this.labelAt(p.index, new THREE.Vector3(), true));
 		this.labelLayer = new Labels(G, this);
 		this.group.add(this.labelLayer.mesh);
+		Castle.board = this;
+		// --- bulutlar (harita çevresinde)
+		this.clouds = new Clouds(G, tier);
+		this.group.add(this.clouds.mesh);
 	}
 
 	_row(i, r) {

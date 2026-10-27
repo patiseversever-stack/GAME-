@@ -9,6 +9,7 @@ export class ShadowSystem {
 		this.G = G;
 		this.size = size;
 		this.half = half; // haritanın yarı genişliği (birim)
+		this.maxHalf = half;
 		this.scene = new THREE.Scene();
 		this.scene.matrixWorldAutoUpdate = false;
 		this.cam = new THREE.OrthographicCamera(-this.half, this.half, this.half, -this.half, 1, 300);
@@ -43,8 +44,26 @@ export class ShadowSystem {
 		return object;
 	}
 
-	/** Haritayı odak noktasına ve güneş yönüne göre konumlar. */
-	place(focus, sunDir) {
+	/**
+	 * Haritayı odak noktasına ve güneş yönüne göre konumlar. dist (isteğe bağlı): kamera uzaklığı;
+	 * verilirse kapsam yakın çekimde daralır (gölgeler keskinleşir). Kapsam basamaklıdır
+	 * (1.25 katlar): yakınlaştırırken gölge kenarları sürekli titremesin.
+	 */
+	place(focus, sunDir, dist) {
+		if (dist != null) {
+			const want = Math.min(this.maxHalf, Math.max(14, dist * 0.8));
+			const stepH = 14 * Math.pow(1.25, Math.round(Math.log(want / 14) / Math.log(1.25)));
+			const h = Math.min(this.maxHalf, stepH);
+			if (h !== this.half) {
+				this.half = h;
+				const c = this.cam;
+				c.left = -h;
+				c.right = h;
+				c.top = h;
+				c.bottom = -h;
+				c.updateProjectionMatrix();
+			}
+		}
 		const f = this._f.copy(sunDir).negate(); // ışığın bakış yönü
 		const up = Math.abs(f.y) > 0.98 ? this._u.set(1, 0, 0) : this._u.set(0, 1, 0);
 		const r = this._r.crossVectors(f, up).normalize();
@@ -69,6 +88,9 @@ export class ShadowSystem {
 		renderer.setRenderTarget(this.rt);
 		renderer.clear(false, true, false);
 		renderer.render(this.scene, this.cam);
+		// gölge geçişinin maliyeti (app.stats ana geçişi sayar; bunu ayrıca raporlamak için)
+		this.calls = renderer.info.render.calls;
+		this.tris = renderer.info.render.triangles;
 		renderer.setRenderTarget(prev);
 	}
 

@@ -11,6 +11,7 @@ import { createRenderer } from './core/renderer.js';
 import { Governor } from './core/quality.js';
 import { createGlobals, ENVS, applyEnv } from './gfx/env.js';
 import { ShadowSystem } from './gfx/shadow.js';
+import { TiltShift } from './gfx/post.js';
 import { Board } from './map/board.js';
 import { Props } from './map/props.js';
 import { Castle } from './map/castle.js';
@@ -94,6 +95,7 @@ export class App {
 		};
 		applyEnv(G, ENVS.harita || env);
 		this.shadow = new ShadowSystem(G, R.tier.shadowSize, R.tier.shadowHalf);
+		this.post = new TiltShift(this.renderer, R.tier);
 
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera(32, 1, 1, 1500);
@@ -110,7 +112,7 @@ export class App {
 			new THREE.SphereGeometry(900, 32, 16),
 			new THREE.ShaderMaterial({ vertexShader: SKY_VS, fragmentShader: SKY_FS, uniforms: { ...G }, side: THREE.BackSide, depthWrite: false }),
 		);
-		sky.renderOrder = -10;
+		sky.renderOrder = 20; // en son: yalnızca boş kalan pikseller (deniz ufka kadar örttüğü için çoğu kez hiç)
 		sky.frustumCulled = false;
 		this.scene.add(sky);
 
@@ -238,6 +240,7 @@ export class App {
 		this.cam.setAspect(w / h);
 		this.G.uRes.value.x = Math.round(w * pr);
 		this.G.uRes.value.y = Math.round(h * pr);
+		this.post?.setSize(this.G.uRes.value.x, this.G.uRes.value.y);
 	}
 
 	start() {
@@ -284,8 +287,9 @@ export class App {
 
 	render() {
 		const r = this.renderer;
-		this.shadow.place(this.cam.target, this.G.uSunDir.value);
+		this.shadow.place(this.cam.target, this.G.uSunDir.value, this.cam.dist);
 		this.shadow.render(r);
+		if (this.post?.render(r, this.scene, this.camera)) return;
 		r.setRenderTarget(null);
 		r.clear();
 		r.render(this.scene, this.camera);

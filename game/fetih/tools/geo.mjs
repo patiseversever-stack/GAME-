@@ -416,6 +416,40 @@ for (const a of arcs) {
 	a.coast = coast;
 }
 
+// boğazlar: gerçekte 1–3 km (haritada kıl inceliğinde); okunabilsin diye iki kıyı denize doğru itilir.
+// [boylam0, enlem0, boylam1, enlem1, itme (birim)]
+const STRAITS = [
+	[28.93, 40.97, 29.16, 41.24, 0.085], // İstanbul Boğazı
+	[26.15, 40.0, 26.75, 40.45, 0.05], // Çanakkale Boğazı
+];
+for (const a of arcs) {
+	if (!a.coast) continue;
+	const n = a.proj.length;
+	const out = a.proj.map((p) => p.slice());
+	for (const [lo0, la0, lo1, la1, w] of STRAITS) {
+		const [x0, y0] = proj([lo0, la0]);
+		const [x1, y1] = proj([lo1, la1]);
+		for (let i = 1; i < n - 1; i++) {
+			const [x, y] = a.proj[i];
+			if (x < x0 || x > x1 || y < y0 || y > y1) continue;
+			// kutunun kenarına doğru sönümlenir
+			const fx = Math.min(x - x0, x1 - x) / ((x1 - x0) * 0.25);
+			const fy = Math.min(y - y0, y1 - y) / ((y1 - y0) * 0.25);
+			const k = Math.min(1, fx, fy);
+			const [px, py] = a.proj[i - 1];
+			const [nx, ny] = a.proj[i + 1];
+			let ox = ny - py;
+			let oy = -(nx - px);
+			const L = Math.hypot(ox, oy) || 1;
+			// il solda: deniz sağda (iç taraf L ise), değilse ters
+			const sgn = isProv(a.L) ? 1 : -1;
+			out[i][0] += (ox / L) * w * k * sgn;
+			out[i][1] += (oy / L) * w * k * sgn;
+		}
+	}
+	a.proj = out;
+}
+
 function buildRing(refs) {
 	const out = [];
 	for (const { arc, rev } of refs) {
