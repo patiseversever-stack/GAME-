@@ -13,7 +13,7 @@
 import * as THREE from 'three';
 import { CSS } from './styles.js';
 import { CATS, WHEEL } from '../quiz/categories.js';
-import { esc, ico, ICONS, SPARK, avatar, avatarURL, lookOf, shade, rgbOf, regionSymbols } from './art.js';
+import { esc, ico, ICONS, SPARK, AVATARS, avatar, avatarURL, lookOf, shade, rgbOf, hash, regionSymbols } from './art.js';
 import { Fx } from './fx.js';
 import { WheelView } from './wheel.js';
 import { duelIntro } from './duel.js';
@@ -119,9 +119,11 @@ export class UI {
 		this._s = { x: 0, y: 0 };
 		this._s2 = { x: 0, y: 0 };
 		this._jk = [];
+		this._looks = new WeakMap();
 		this._extra = 0;
 		this.current = null;
 		this._gen = 0;
+		this.setAssets(app.hooks?.assets);
 		buildTitle(this);
 	}
 
@@ -141,9 +143,22 @@ export class UI {
 
 	/** Oyuncunun portre görünümü (insan oyuncu: komutan ayarları; botlar: adından türetilir). */
 	look(p) {
-		const L = lookOf(p, p.human ? this.cmd : null);
-		L.img = L.img || this.assets[`cmd-${L.kind}`] || null;
-		return L;
+		let L = this._looks.get(p);
+		if (!L) {
+			L = lookOf(p, p.human ? this.cmd : null);
+			// aynı maçtaki botlar farklı portre alsın
+			if (!p.human && !p.look) {
+				const m = this.app.match;
+				const used = new Set((m?.players || []).filter((x) => x !== p).map((x) => (x.human ? this.cmd.avatar : this._looks.get(x)?.kind)));
+				let k = hash(p.name + '#av') % AVATARS.length;
+				for (let n = 0; n < AVATARS.length && used.has(AVATARS[k].id); n++) k = (k + 1) % AVATARS.length;
+				L.kind = AVATARS[k].id;
+			}
+			if (!p.human) this._looks.set(p, L);
+		}
+		const out = p.human ? { ...L, color: p.css || L.color } : L;
+		out.img = out.img || this.assets[`cmd-${out.kind}`] || null;
+		return out;
 	}
 
 	cmdLook() {
@@ -499,7 +514,8 @@ export class UI {
 		const duel = !!(ctx.attacker && ctx.defender);
 		const tie = /EŞİTLİK/i.test(ctx.title || '');
 		const gen = ++this._gen;
-		if (duel && !tie && !ctx.noIntro) await duelIntro(this, ctx);
+		// düello girişi yalnızca saldırı sorusunda (maç phase: 'duel' verir); eşitlik bozmada yok
+		if (duel && !tie && ctx.phase === 'duel' && !ctx.noIntro) await duelIntro(this, ctx);
 		if (gen !== this._gen) return { human: null };
 		const card = this.$.q;
 		const cat = CATS[q.cat] || CATS[ctx.cat] || { name: 'Genel Kültür', color: '#4a8cff', icon: ICONS.star };

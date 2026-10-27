@@ -26,6 +26,12 @@ export const rgbOf = (c) => `rgb(${hex2(c).join(', ')})`;
 export const hash = (s) => {
 	let h = 2166136261;
 	for (const ch of String(s)) h = Math.imul(h ^ ch.codePointAt(0), 16777619);
+	// son karıştırma: kısa adlarda da bitler dağılsın
+	h ^= h >>> 16;
+	h = Math.imul(h, 0x85ebca6b);
+	h ^= h >>> 13;
+	h = Math.imul(h, 0xc2b2ae35);
+	h ^= h >>> 16;
 	return h >>> 0;
 };
 
@@ -101,9 +107,9 @@ export function lookOf(p, cmd) {
 	const h = hash(p.name || p.i || 'x');
 	const own = p.look || (p.human && cmd) || {};
 	return {
-		kind: own.avatar || own.kind || AVATARS[(h >> 3) % AVATARS.length].id,
-		banner: own.banner || BANNERS[(h >> 7) % BANNERS.length].id,
-		skin: own.skin ?? (h >> 11) % SKINS.length,
+		kind: own.avatar || own.kind || AVATARS[(h >>> 3) % AVATARS.length].id,
+		banner: own.banner || BANNERS[(h >>> 7) % BANNERS.length].id,
+		skin: own.skin ?? (h >>> 11) % SKINS.length,
 		color: p.css || own.colorCss || '#e0583a',
 		img: own.img || null,
 	};

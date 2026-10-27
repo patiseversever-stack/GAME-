@@ -34,7 +34,7 @@ const BASE = /* css */ `
 .fl-av{position:relative;display:block;flex:none;overflow:hidden;border-radius:28%;border:2.5px solid #fff;background:#24345e;box-shadow:0 3px 0 rgba(0,0,0,.35)}
 
 /* ortak 3B düğme: yüz + alt kenar gölgesi (basınca yüz iner; yalnızca transform canlanır) */
-.fl-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;font-family:'Lilita One';font-weight:400;font-size:20px;letter-spacing:.02em;
+.fl-btn{position:relative;display:inline-flex;align-items:center;justify-content:center;gap:8px;white-space:nowrap;font-family:'Lilita One';font-weight:400;font-size:20px;letter-spacing:.02em;
   padding:10px 20px 12px;border-radius:16px;color:#fff;border:3px solid #fff;background:linear-gradient(180deg,var(--b1,#4f8fff),var(--b2,#2a5ad8));
   box-shadow:0 6px 0 var(--b3,#163a8f),0 10px 16px rgba(0,0,0,.28);transition:transform .08s;${OUT('rgba(0,0,0,.35)', 1.5)}}
 .fl-btn:active{transform:translateY(4px);box-shadow:0 2px 0 var(--b3,#163a8f),0 4px 8px rgba(0,0,0,.25)}
@@ -42,7 +42,7 @@ const BASE = /* css */ `
 .fl-btn.green{--b1:#72e36a;--b2:#2fa83c;--b3:#16661f}
 .fl-btn.gold{--b1:#ffe680;--b2:#f5b324;--b3:#a0620a;color:#4a2800;text-shadow:0 1px 0 rgba(255,255,255,.5)}
 .fl-btn.navy{--b1:#2f5299;--b2:#1d3770;--b3:#0b1839;border-color:rgba(255,255,255,.5)}
-.fl-btn.big{font-size:30px;padding:14px 40px 17px;border-radius:22px;border-width:4px}
+.fl-btn.big{font-size:clamp(22px,7.4vw,30px);padding:14px clamp(16px,6vw,40px) 17px;border-radius:22px;border-width:4px}
 .fl-btn:disabled{filter:grayscale(.7);opacity:.6}
 .fl-btn .fl-i{width:1.1em;height:1.1em}
 

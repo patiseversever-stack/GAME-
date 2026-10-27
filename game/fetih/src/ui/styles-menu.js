@@ -28,7 +28,7 @@ export const CSS_MENU = /* css */ `
 @keyframes flShn{0%{transform:translateX(-150%) skewX(-20deg)}35%,100%{transform:translateX(320%) skewX(-20deg)}}
 .fl-logo small{display:block;margin-top:16px;padding:5px 16px 6px;border-radius:999px;font-size:17px;background:rgba(10,21,52,.85);border:2px solid rgba(255,210,90,.6);animation:flUp .4s 1s ease-out both;opacity:0;transform:translateY(10px)}
 .fl-tbtns{display:flex;flex-direction:column;align-items:center;gap:16px;width:min(100%,400px);animation:flUp .45s 1.1s ease-out both;opacity:0;transform:translateY(20px)}
-.fl-play{width:100%;font-size:40px;padding:14px 20px 18px;animation:flPulse 1.6s 2s ease-in-out infinite}
+.fl-play{width:100%;font-size:clamp(30px,10vw,40px);padding:14px 20px 18px;animation:flPulse 1.6s 2s ease-in-out infinite}
 .fl-play .fl-i{font-size:38px}
 @keyframes flPulse{0%,100%{transform:none}50%{transform:scale(1.04)}}
 .fl-tbtns .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
@@ -187,7 +187,7 @@ export const CSS_MENU = /* css */ `
 .fl-rew .gd b{font-family:'Lilita One';font-weight:400;font-size:19px;color:var(--gold)}
 .fl-rew .gd small{font-size:10px;letter-spacing:.1em;color:#cfe0ff}
 .fl-end .btns{display:grid;grid-template-columns:auto 1fr;gap:10px;width:100%;animation:flUp .4s 1.1s ease-out both;opacity:0;transform:translateY(12px)}
-.fl-end .btns .fl-btn.big{font-size:26px;padding:12px 12px 15px}
+.fl-end .btns .fl-btn.big{font-size:clamp(19px,6.4vw,26px);padding:12px 10px 15px}
 
 ${LAND}{
   .fl-title{flex-direction:row;justify-content:space-around;padding:calc(12px + var(--sat)) 24px calc(12px + var(--sab))}
