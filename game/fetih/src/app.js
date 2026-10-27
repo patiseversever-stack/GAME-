@@ -213,6 +213,7 @@ export class App {
 		const r = this.canvas.getBoundingClientRect();
 		this._ndc.set(((cx - r.left) / r.width) * 2 - 1, -((cy - r.top) / r.height) * 2 + 1);
 		this._ray.setFromCamera(this._ndc, this.camera);
+		if (this.board.raycast) return this.board.raycast(this._ray.ray, this._hit); // kabartmalı arazide doğru il
 		if (!this._ray.ray.intersectPlane(this._plane, this._hit)) return -1;
 		return this.board.pick(this._hit.x, this._hit.z);
 	}

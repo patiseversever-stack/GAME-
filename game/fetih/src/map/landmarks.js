@@ -564,8 +564,8 @@ const B = {
 
 // [yapı, boylam, enlem, ölçek, dönüş, il kimliği (plaka), merkezden en az uzaklık]
 const SITES = [
-	['galata', 28.72, 41.16, 1.75, 0, 34],
-	['ayasofya', 28.88, 41.02, 1.68, 0.1, 34],
+	['galata', 28.93, 41.12, 1.75, 0, 34],
+	['ayasofya', 28.78, 41.03, 1.68, 0.1, 34],
 	['kizkulesi', 29.004, 41.021, 1.0, 0, 34, 0, 'sea'],
 	['kopru', 29.036, 41.052, 1.4, 0.15, 34, 0, 'sea'],
 	['anitkabir', 32.84, 39.93, 1.82, 0, 6],

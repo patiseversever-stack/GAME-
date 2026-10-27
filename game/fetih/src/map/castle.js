@@ -301,7 +301,8 @@ export class Castle {
 		c.matrixAutoUpdate = false;
 		c.frustumCulled = false;
 		const grp = this.group;
-		Object.defineProperty(c, 'visible', { get: () => grp.visible, set: () => {} });
+		// açılıştaki ilk gölge çiziminde görünür (derinlik shader'ı oyun sırasında derlenmesin)
+		Object.defineProperty(c, 'visible', { get: () => grp.visible || !Castle.warmed, set: () => {} });
 		this.casters = [c];
 		this.towers = [0, 1, 2].map((i) => ({ alive: 1, fall: 0, i }));
 		this._last = new THREE.Vector3(1e9, 0, 0);
@@ -367,3 +368,5 @@ export class Castle {
 
 /** Harita (Board kurulunca kendini yazar): kaleler araziye oturur ve ilin yükselmesini izler. */
 Castle.board = null;
+/** İlk kare çizilince true (o ana kadar gölge kopyaları ısınma için görünür). */
+Castle.warmed = false;

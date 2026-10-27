@@ -137,8 +137,9 @@ vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float sno
 	rockK = clamp(smoothstep(0.22, 0.5, slope + bio.z * 0.22 + (n2 - 0.5) * 0.22), 0.0, 1.0) * smoothstep(250.0, 1300.0, e);
 	c = mix(c, mix(${C('#8c7a6a')}, ${C('#b8a998')}, n3), rockK);
 	// kar: doğuda ve kuzey yamaçlarında daha aşağı iner
-	float snowLine = 2850.0 - 350.0 * n1 + slope * 1100.0 + N.z * 250.0;
-	snowK = smoothstep(snowLine - 120.0, snowLine + 160.0, e + (n3 - 0.5) * 260.0);
+	// yaz karı: yalnızca en yüksek doruklarda (Ağrı, Süphan, Erciyes, Kaçkar, Cilo…), lekeli
+	float snowLine = 3350.0 - 300.0 * n1 + slope * 900.0 + N.z * 200.0;
+	snowK = smoothstep(snowLine - 120.0, snowLine + 180.0, e + (n3 - 0.5) * 300.0);
 	c = mix(c, ${C('#f3f7ff')}, snowK);
 	// kumsal: alçak kıyı
 	float beach = smoothstep(0.93, 0.975, coast) * (1.0 - smoothstep(0.075, 0.12, h)) * (1.0 - rockK);
@@ -400,16 +401,6 @@ void main() {
 }`;
 
 // ------------------------------------------------------------------ yardımcılar
-
-const ringToShape = (flat) => {
-	const s = new THREE.Shape();
-	for (let i = 0; i < flat.length; i += 2) {
-		if (i === 0) s.moveTo(flat[i], flat[i + 1]);
-		else s.lineTo(flat[i], flat[i + 1]);
-	}
-	s.closePath();
-	return s;
-};
 
 export function pointInPoly(x, y, flat) {
 	let inside = false;
@@ -709,6 +700,7 @@ export class Board {
 	}
 
 	update(dt) {
+		Castle.warmed = true;
 		const k = 1 - Math.exp(-8 * dt);
 		const N = this.count;
 		const S = this.S;
@@ -798,23 +790,29 @@ export class Board {
 		// y = 3 ile y = 0 düzlemleri arasında yürü
 		let t0 = Math.max(0, (3 - o.y) / d.y);
 		const t1 = (0 - o.y) / d.y;
-		const n = 64;
+		const n = 72;
 		const dt = (t1 - t0) / n;
+		// kalkmış il varsa yüksekliğe onu da kat (kalkık ilin üstüne ya da duvarına dokunulabilsin)
+		let lifted = false;
+		for (let i = 0; i < this.count && !lifted; i++) if (this.liftOf(i) > 0.02) lifted = true;
+		const ground = (x, z) => {
+			const g = this.relief.height(x, -z);
+			if (!lifted) return g;
+			const idx = this.pick(x, z);
+			return idx >= 0 ? g + this.liftOf(idx) : g;
+		};
 		let prev = t0;
 		let hit = -1;
 		for (let i = 0; i <= n; i++) {
 			const t = t0 + dt * i;
-			const x = o.x + d.x * t;
 			const y = o.y + d.y * t;
-			const z = o.z + d.z * t;
-			const g = this.relief.height(x, -z);
-			if (y <= g) {
+			if (y <= ground(o.x + d.x * t, o.z + d.z * t)) {
 				// ikiye bölerek incelt
 				let a = prev;
 				let b = t;
 				for (let k = 0; k < 8; k++) {
 					const m = (a + b) / 2;
-					if (o.y + d.y * m <= this.relief.height(o.x + d.x * m, -(o.z + d.z * m))) b = m;
+					if (o.y + d.y * m <= ground(o.x + d.x * m, o.z + d.z * m)) b = m;
 					else a = m;
 				}
 				hit = b;
@@ -884,26 +882,4 @@ function landCaps(rings, y) {
 	g.setAttribute('normal', new THREE.BufferAttribute(n, 3));
 	g.computeBoundingSphere();
 	return g;
-}
-
-function mergeAll(list) {
-	// ExtrudeGeometry'ler dizinsiz; konum + normal birleştir
-	let n = 0;
-	for (const g of list) n += g.getAttribute('position').count;
-	const pos = new Float32Array(n * 3);
-	const nor = new Float32Array(n * 3);
-	let o = 0;
-	for (const g of list) {
-		const a = g.getAttribute('position');
-		const b = g.getAttribute('normal');
-		pos.set(a.array, o * 3);
-		nor.set(b.array, o * 3);
-		o += a.count;
-		g.dispose();
-	}
-	const out = new THREE.BufferGeometry();
-	out.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-	out.setAttribute('normal', new THREE.BufferAttribute(nor, 3));
-	out.computeBoundingSphere();
-	return out;
 }

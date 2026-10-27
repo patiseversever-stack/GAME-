@@ -170,9 +170,13 @@ vec3 provDim(vec3 c, float sel, float dim) {
 // kenarları görünmez (mobil oyun haritalarındaki bulut çerçevesi gibi).
 export const MIST = /* glsl */ `
 vec3 edgeMist(vec3 c, vec3 w) {
-	float e = length(w.xz / vec2(66.0, 35.0));
-	float m = smoothstep(0.98, 1.4, e);
-	return mix(c, uFogCol * vec3(0.96, 1.0, 1.04), m);
+	vec2 q = w.xz * 0.07 + vec2(uTime * 0.012, 0.0);
+	float n = vnoise(q) * 0.65 + vnoise(q * 2.7 + 5.0) * 0.35;
+	float e = length(w.xz / vec2(68.0, 36.0)) + (n - 0.5) * 0.22;
+	float m = smoothstep(0.97, 1.32, e);
+	// bulut denizi: tepeleri beyaz, aralar açık gök mavisi
+	vec3 mc = mix(uFogCol * vec3(0.92, 0.98, 1.06), vec3(1.0, 1.0, 1.02) * (uSkyTop * 0.6 + uSunCol * 0.24), smoothstep(0.35, 0.75, n));
+	return mix(c, mc, m);
 }
 `;
 

@@ -90,8 +90,8 @@ export class Clouds {
 	constructor(G, tier) {
 		let s = 11;
 		const R = () => ((s = (s * 16807) % 2147483647) / 2147483647);
-		const count = tier.id === 0 ? 7 : tier.id === 1 ? 12 : 16;
-		const geo = puffGeo(tier.id === 0 ? 0 : 1, R);
+		const count = tier.id === 0 ? 8 : tier.id === 1 ? 12 : 16;
+		const geo = puffGeo(1, R);
 		const g = new THREE.InstancedBufferGeometry();
 		g.setAttribute('position', geo.getAttribute('position'));
 		g.setAttribute('normal', geo.getAttribute('normal'));

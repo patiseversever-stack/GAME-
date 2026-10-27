@@ -69,7 +69,7 @@ void main() {
 	vec4 o = vec4(0.0);
 	if (ch < 0.5) o.r = v;
 	else if (ch < 1.5) o.g = v;
-	else if (ch < 2.5) o.b = 1.0; // göl içi (üçgen)
+	else if (ch < 2.5) o.b = vInfo.z > 0.5 ? 0.75 : 1.0; // göl içi (üçgen); tuz gölü 0.75
 	else o.a = v;
 	gl_FragColor = o;
 }`;
@@ -126,11 +126,12 @@ function lakeFillGeometry(lakes) {
 		const v = [];
 		for (let i = 0; i < r.length; i += 2) v.push(new THREE.Vector2(r[i], r[i + 1]));
 		const faces = THREE.ShapeUtils.triangulateShape(v, []);
+		const salt = /Tuz/.test(l.name) ? 1 : 0;
 		for (const f of faces)
 			for (const k of f) {
 				pos.push(v[k].x, 0, -v[k].y);
 				seg.push(0, 0, 0, 0);
-				info.push(2, 1, 0, 0);
+				info.push(2, 1, salt, 0);
 			}
 	}
 	const g = new THREE.BufferGeometry();
@@ -207,6 +208,7 @@ export function bakeFields(renderer, data, indexOf, res) {
 		depthTest: true,
 		depthWrite: true,
 		depthFunc: THREE.LessDepth,
+		side: THREE.DoubleSide, // dünya z = -y: üçgen sarımı ters döner, hiçbiri elenmesin
 	});
 	const wmat = new THREE.ShaderMaterial({
 		vertexShader: SEG_VS,
@@ -214,6 +216,7 @@ export function bakeFields(renderer, data, indexOf, res) {
 		uniforms: { uBox: { value: uBox } },
 		depthTest: false,
 		depthWrite: false,
+		side: THREE.DoubleSide,
 		blending: THREE.CustomBlending,
 		blendEquation: THREE.MaxEquation,
 		blendSrc: THREE.OneFactor,
