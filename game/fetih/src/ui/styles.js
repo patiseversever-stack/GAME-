@@ -14,6 +14,7 @@ import { CSS_Q } from './styles-q.js';
 import { CSS_WHEEL } from './styles-wheel.js';
 import { CSS_MENU } from './styles-menu.js';
 import { OUT, LAND } from './cssutil.js';
+import { TR_FONTS } from './trglyphs.js';
 
 const BASE = /* css */ `
 .fl-ui{position:absolute;inset:0;pointer-events:none;font-family:'Fredoka',system-ui,sans-serif;font-weight:600;color:#fff;overflow:hidden;
@@ -54,8 +55,8 @@ const BASE = /* css */ `
 .fl-pl .tx{min-width:0;flex:1}
 .fl-pl b{display:block;font-size:12.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fl-pl em{display:block;font-style:normal;font-family:'Lilita One';font-size:17px;line-height:1.05;color:var(--gold);${OUT('#3a2300', 1)}}
-.fl-pl .cs{position:absolute;left:50%;bottom:-8px;transform:translateX(-50%);display:flex;gap:2px;padding:2px 5px;border-radius:8px;background:var(--navy-d);border:1.5px solid rgba(255,255,255,.25)}
-.fl-pl .cs i{width:10px;height:10px;background:var(--pc);-webkit-mask:var(--tw) center/contain no-repeat;mask:var(--tw) center/contain no-repeat;transition:opacity .3s,transform .3s}
+.fl-pl .cs{position:absolute;left:50%;bottom:-9px;transform:translateX(-50%);display:flex;gap:3px;padding:2px 6px;border-radius:8px;background:var(--navy-d);border:1.5px solid rgba(255,255,255,.25)}
+.fl-pl .cs i{width:13px;height:13px;background:var(--pc);-webkit-mask:var(--tw) center/contain no-repeat;mask:var(--tw) center/contain no-repeat;transition:opacity .3s,transform .3s}
 .fl-pl .cs i.off{opacity:.22;transform:scale(.7) rotate(18deg)}
 .fl-pl .cs i.hit{animation:flCrack .6s}
 .fl-pl .tm{position:absolute;top:-6px;right:-5px;padding:0 5px;border-radius:6px;font-size:9.5px;line-height:15px;letter-spacing:.06em;background:var(--tc);border:1.5px solid #fff}
@@ -82,10 +83,11 @@ const BASE = /* css */ `
 .fl-banner .band::before,.fl-banner .band::after{content:'';position:absolute;left:0;right:0;height:4px;background:linear-gradient(90deg,transparent,var(--t1) 20%,#fff 50%,var(--t1) 80%,transparent)}
 .fl-banner .band::before{top:22px}.fl-banner .band::after{bottom:22px}
 .fl-banner .band i{position:absolute;top:0;bottom:0;left:0;width:30%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.28),transparent);transform:translateX(-120%) skewX(-20deg)}
-.fl-banner .emb{position:relative;width:62px;height:62px;margin-bottom:-6px;border-radius:18px;display:grid;place-items:center;font-size:36px;opacity:0;
+.fl-banner .row{position:relative;display:flex;align-items:center;gap:14px}
+.fl-banner .emb{position:relative;flex:none;width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:36px;opacity:0;
   background:linear-gradient(var(--t1),var(--t2));border:3.5px solid #fff;box-shadow:0 5px 0 var(--t3);transform:rotate(45deg) scale(0)}
 .fl-banner .emb .fl-i{transform:rotate(-45deg)}
-.fl-banner b{position:relative;display:flex;font-family:'Lilita One';font-weight:400;font-size:min(16vw,76px);line-height:1;letter-spacing:.03em;color:#fff;${OUT('var(--t3)', 4.5)}}
+.fl-banner b{position:relative;display:flex;font-family:'Lilita One';font-weight:400;font-size:min(16vw,76px);line-height:1;letter-spacing:.03em;color:#fff;${OUT('var(--t2)', 4)}}
 .fl-banner b i{display:block;font-style:normal;opacity:0;transform:translateY(-40px) scale(2.2)}
 .fl-banner span{position:relative;margin-top:6px;padding:5px 18px 6px;border-radius:999px;font-size:17px;background:var(--ink);border:2.5px solid var(--t1);opacity:0;transform:translateY(10px)}
 .fl-banner.on .band{animation:flBand .32s cubic-bezier(.2,.9,.3,1) forwards}
@@ -189,4 +191,5 @@ const RM = /* css */ `
   .fl-banner.on b i,.fl-banner.on .emb,.fl-banner.on .band,.fl-banner.on span{animation-delay:0s!important}
 }`;
 
-export const CSS = BASE + CSS_Q + CSS_WHEEL + CSS_MENU + RM;
+// TR_FONTS: Ğ ğ İ Ş ş eki (gömülü alt kümelerde yok; bkz. trfont.py)
+export const CSS = TR_FONTS + BASE + CSS_Q + CSS_WHEEL + CSS_MENU + RM;

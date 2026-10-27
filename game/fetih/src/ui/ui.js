@@ -1,144 +1,332 @@
-// Arayüz: menü, oyuncu kartları, tur bayrakları, soru kartı, çark, sıralama, harita iğneleri, bitiş.
+// Arayüz: menüler, oyuncu kartları, sahne bayrakları, düello sahnesi, soru kartı, çark, sıralama,
+// il seçimi, harita etiketleri ve iğneleri, bildirimler, jokerler, bitiş.
 // Maç akışı her adımı bir Promise ile bekler. fast = true iken (benzetim) her şey anında biter.
+//
+// DESIGN.md sözleşmesi (korunur):
+//   hud(m), banner(title, sub, {tone, short}), prompt(html), pickProvince(m, options, text), botPick(m, p, i),
+//   question(m, ctx) → {human: {value, time}}, reveal(m, ctx), ranking(m, order, picks), wheel(m, p),
+//   chooseCategory(m), end(m, ranking), title(on), showMenu(), update()
+// Eklenenler (başka ajanlar ?. ile çağırabilir):
+//   toast(text, {tone, icon, p, ms, html}), jokers(list, cb), addTime(sec), hideOptions(indices),
+//   setAssets(map), look(p), current (o anki soru: {m, ctx, card, body, ctl}), reset(), debug(opts)
 
 import * as THREE from 'three';
 import { CSS } from './styles.js';
-import { CATS, WHEEL, FETIH_SLICE } from '../quiz/categories.js';
-import { MODES } from '../game/match.js';
+import { CATS, WHEEL } from '../quiz/categories.js';
+import { esc, ico, ICONS, SPARK, avatar, avatarURL, lookOf, shade, rgbOf, regionSymbols } from './art.js';
+import { Fx } from './fx.js';
+import { WheelView } from './wheel.js';
+import { duelIntro } from './duel.js';
+import { buildTitle, refreshTitle, showMenu, showCommander, showEnd } from './menu.js';
+import { debugShot } from './debug.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
-const icon = (d) => `<svg viewBox="0 0 24 24"><path d="${d}"/></svg>`;
-const PIN = (c) => `<svg viewBox="0 0 26 36"><path d="M13 35C13 35 2 20 2 13a11 11 0 1 1 22 0c0 7-11 22-11 22z" fill="${c}" stroke="#fff" stroke-width="2.5"/><circle cx="13" cy="13" r="4.2" fill="#fff"/></svg>`;
-const GOAL = `<svg viewBox="0 0 34 34"><circle cx="17" cy="17" r="14" fill="none" stroke="#fff" stroke-width="3"/><circle cx="17" cy="17" r="8" fill="#ffd25a" stroke="#fff" stroke-width="2.5"/><path d="M17 1v8M17 25v8M1 17h8M25 17h8" stroke="#fff" stroke-width="2.5"/></svg>`;
-const REGION_NAMES = { marmara: 'Marmara', ege: 'Ege', akdeniz: 'Akdeniz', icanadolu: 'İç Anadolu', karadeniz: 'Karadeniz', dogu: 'Doğu Anadolu', guneydogu: 'Güneydoğu', all: 'Tüm Türkiye' };
+const svgURL = (inner, vb = '0 0 24 24') => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}">${inner}</svg>`)}")`;
+const strokeURL = (d, c = '#000', w = 2.8) => svgURL(`<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`);
+const fillURL = (d) => svgURL(`<path d="${d}" fill="#000" fill-rule="evenodd"/>`);
+const TOWER = 'M4 23V10L2.5 8.5V3h4v2.5h3V3h5v2.5h3V3h4v5.5L20 10v13zM10 23v-5a2 2 0 0 1 4 0v5z';
+const CROWN = 'M2 21h20v-2.5H2zM3 17L2 6l5.5 4.5L12 3l4.5 7.5L22 6l-1 11z';
+const PIN_SHAPE = (c) =>
+	`<svg class="sh" viewBox="0 0 40 52"><path d="M20 50C20 50 3 31 3 20a17 17 0 1 1 34 0c0 11-17 30-17 30z" fill="${c}" stroke="#fff" stroke-width="3"/><path d="M20 50C20 50 3 31 3 20a17 17 0 1 1 34 0c0 11-17 30-17 30z" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="1" transform="translate(0 1.5)"/></svg>`;
+const GOAL = `<svg viewBox="0 0 48 48"><circle cx="24" cy="24" r="21" fill="rgba(255,255,255,.25)" stroke="#fff" stroke-width="3"/><circle cx="24" cy="24" r="14" fill="#e8402a" stroke="#fff" stroke-width="3"/><circle cx="24" cy="24" r="6" fill="#fff"/><path d="M24 1v9M24 38v9M1 24h9M38 24h9" stroke="#fff" stroke-width="3" stroke-linecap="round"/></svg>`;
+const JK_ICON = [
+	[/half|fifty|yari|50/, 'half'],
+	[/time|sure|süre|extra|ekstra/, 'clock'],
+	[/shield|kalkan/, 'shield'],
+	[/second|ikinci|chance|sans|şans/, 'heart'],
+	[/sabot/, 'bomb'],
+	[/oracle|kahin|kâhin|seyirci|audience/, 'eye'],
+];
+const TONE_ICON = { info: 'star', good: 'check', bad: 'cross', warn: 'cross', gold: 'crown' };
+const yearish = (q) => q && !q.unit && Number.isInteger(q.ans) && q.ans >= 500 && q.ans <= 2100 && /yıl/i.test(q.q || '');
 
 export class UI {
-	constructor(root, app, h) {
+	constructor(root, app, h = {}) {
 		this.app = app;
-		this.h = h;
+		this.h = h || {};
 		this.fast = false;
+		this.assets = {};
+		const mq = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
+		this.rm = !!mq?.matches;
+		mq?.addEventListener?.('change', (e) => {
+			this.rm = e.matches;
+			this.fx.rm = e.matches;
+		});
 		const st = document.createElement('style');
 		st.textContent = CSS;
 		root.appendChild(st);
 		const el = document.createElement('div');
 		el.className = 'fl-ui';
 		el.lang = 'tr';
-		el.innerHTML = `
+		const syms = regionSymbols(app.board.provinces);
+		this.vb = syms.vb;
+		el.innerHTML = `${syms.svg}
 			<div class="fl-pins" data-r="pins"></div>
-			<div class="fl-hud" data-r="hud"></div>
-			<div class="fl-banner" data-r="banner"><b></b><span></span></div>
+			<div class="fl-hud off" data-r="hud"></div>
+			<div class="fl-toasts" data-r="toasts"></div>
 			<div class="fl-prompt" data-r="prompt"></div>
 			<div class="fl-rank" data-r="rank"></div>
 			<div class="fl-q" data-r="q"></div>
 			<div class="fl-wheel" data-r="wheel" style="display:none"></div>
-			<div class="fl-scr fl-title" data-r="title">
-				<div class="fl-logo"><span class="a">FETİH</span><span class="b">LİGİ</span><small>Bil, fethet, Türkiye'yi kazan.</small></div>
-				<button class="fl-play" data-a="menu">OYNA</button>
-			</div>
+			<div class="fl-duel" data-r="duel"></div>
+			<div class="fl-banner" data-r="banner"></div>
+			<div class="fl-fx" data-r="fx"></div>
+			<div class="fl-scr fl-title" data-r="title"></div>
 			<div class="fl-scr off" data-r="menu"></div>
+			<div class="fl-scr off" data-r="cmd"></div>
 			<div class="fl-scr fl-end off" data-r="end"></div>`;
+		const vars = {
+			'--tw': fillURL(TOWER),
+			'--crown': fillURL(CROWN),
+			'--spk': fillURL(SPARK),
+			'--pinm': fillURL(ICONS.pin),
+			'--ok': strokeURL(ICONS.check, '#000', 3.4),
+			'--no': strokeURL(ICONS.cross, '#000', 3.4),
+			'--skull': strokeURL(ICONS.skull, '#fff', 2.2),
+		};
+		for (const [k, v] of Object.entries(vars)) el.style.setProperty(k, v);
 		root.appendChild(el);
 		this.el = el;
 		this.$ = {};
 		for (const n of el.querySelectorAll('[data-r]')) this.$[n.dataset.r] = n;
 		el.addEventListener('pointerdown', (e) => {
-			if (e.target.closest('button,.fl-q,.fl-card,input')) e.stopPropagation();
+			if (e.target.closest('button,input,.fl-qc,.fl-card,.fl-cbox,.fl-scr,.fl-wheel,.fl-duel')) e.stopPropagation();
 		});
 		el.addEventListener('click', (e) => {
 			const b = e.target.closest('[data-a]');
-			if (!b) return;
+			if (!b || !this.$.title.contains(b)) return;
 			const a = b.dataset.a;
+			this.sfx('tap');
 			if (a === 'menu') this.showMenu();
+			if (a === 'cmd') {
+				this.$.title.classList.add('off');
+				showCommander(this, () => this.title(true));
+			}
+			if (a === 'camp') this.h.campaign?.();
 		});
-		this.cfg = { mode: 'ffa3', length: 'quick', region: 'random', bot: 'er' };
+		const store = app.store;
+		this.cfg = { mode: 'ffa3', length: 'quick', region: 'random', bot: 'er', ...(store?.get?.('menu') || {}) };
+		this.cmd = { name: 'Sen', avatar: 'gokturk', banner: 'duz', color: 0, skin: 0, ...(store?.get?.('commander') || {}) };
+		this.fx = new Fx(this.$.fx, { low: app.tier?.id === 0, rm: this.rm });
+		this.wheelView = new WheelView(this);
 		this.pins = [];
+		this.lines = [];
 		this.labels = [];
+		this.marks = [];
+		this._lsort = [];
 		this._v = new THREE.Vector3();
+		this._v2 = new THREE.Vector3();
+		this._s = { x: 0, y: 0 };
+		this._s2 = { x: 0, y: 0 };
+		this._jk = [];
+		this._extra = 0;
+		this.current = null;
+		this._gen = 0;
+		buildTitle(this);
+	}
+
+	// ---------------------------------------------------------------- yardımcılar
+
+	sfx(name, opts) {
+		try {
+			this.app.sfx?.play?.(name, opts);
+		} catch (e) {
+			/* ses yoksa sessiz */
+		}
+	}
+
+	wait(ms) {
+		return this.fast ? Promise.resolve() : sleep(ms);
+	}
+
+	/** Oyuncunun portre görünümü (insan oyuncu: komutan ayarları; botlar: adından türetilir). */
+	look(p) {
+		const L = lookOf(p, p.human ? this.cmd : null);
+		L.img = L.img || this.assets[`cmd-${L.kind}`] || null;
+		return L;
+	}
+
+	cmdLook() {
+		const cols = this.app.playerColors.map((c) => '#' + c.toString(16).padStart(6, '0'));
+		return { kind: this.cmd.avatar, banner: this.cmd.banner, color: cols[this.cmd.color] || cols[0], skin: this.cmd.skin ?? 0, img: this.assets[`cmd-${this.cmd.avatar}`] || null };
+	}
+
+	/** Görsel adresleri (ASSETS.md): { 'cmd-gokturk': url, … }. Portreler varsa görseli kullanır. */
+	setAssets(map) {
+		Object.assign(this.assets, map || {});
+	}
+
+	setCommander(cm) {
+		this.cmd = { ...this.cmd, ...cm };
+		try {
+			this.app.store?.set?.('commander', this.cmd);
+		} catch (e) {
+			/* depolama yok */
+		}
+		refreshTitle(this);
+	}
+
+	saveCfg() {
+		try {
+			this.app.store?.set?.('menu', this.cfg);
+		} catch (e) {
+			/* depolama yok */
+		}
+	}
+
+	wallet() {
+		return { xp: 0, gold: 0, ...(this.app.store?.get?.('wallet') || {}) };
+	}
+
+	saveWallet(w) {
+		try {
+			this.app.store?.set?.('wallet', w);
+		} catch (e) {
+			/* depolama yok */
+		}
+	}
+
+	/** İstemci koordinatı → arayüz katmanı koordinatı. */
+	local(x, y) {
+		const r = this.el.getBoundingClientRect();
+		return { x: x - r.left, y: y - r.top };
+	}
+
+	startMatch(cfg) {
+		this.lastCfg = { ...cfg };
+		const cols = this.app.playerColors;
+		// renk tercihi maç akışına iletilir (cfg.commander.color: oyuncu renkleri dizisindeki sıra)
+		this.h.start?.({ ...cfg, humanName: this.cmd.name, commander: { ...this.cmd, colorHex: cols[this.cmd.color] } });
 	}
 
 	// ---------------------------------------------------------------- menüler
 
 	showMenu() {
-		this.$.title.classList.add('off');
-		const c = this.cfg;
-		const seg = (key, opts, cls = '') =>
-			`<div class="fl-seg ${cls}">${opts.map(([v, l]) => `<button data-k="${key}" data-v="${v}" class="${c[key] === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
-		this.$.menu.innerHTML = `<div class="fl-card">
-			<h3>Yeni Maç</h3>
-			<div class="fl-lbl">Oyuncular</div>${seg('mode', Object.entries(MODES).map(([k, m]) => [k, m.label]))}
-			<div class="fl-lbl">Süre</div>${seg('length', [['quick', 'Hızlı'], ['long', 'Uzun']], 'c3')}
-			<div class="fl-lbl">Harita</div>${seg('region', [['random', 'Rastgele'], ['ege', 'Ege'], ['marmara', 'Marmara'], ['karadeniz', 'Karadeniz'], ['akdeniz', 'Akdeniz'], ['icanadolu', 'İç Anadolu'], ['dogu', 'Doğu'], ['all', 'Türkiye']])}
-			<div class="fl-lbl">Rakipler</div>${seg('bot', [['caylak', 'Çaylak'], ['er', 'Er'], ['usta', 'Usta'], ['efsane', 'Efsane']])}
-			<button class="fl-go" data-go="1">SAVAŞA BAŞLA</button>
-		</div>`;
-		this.$.menu.classList.remove('off');
-		this.$.menu.onclick = (e) => {
-			const b = e.target.closest('button');
-			if (!b) return;
-			if (b.dataset.k) {
-				c[b.dataset.k] = b.dataset.v;
-				for (const x of this.$.menu.querySelectorAll(`[data-k="${b.dataset.k}"]`)) x.classList.toggle('on', x === b);
-				if (b.dataset.k === 'length' && b.dataset.v === 'long') {
-					c.region = 'all';
-					for (const x of this.$.menu.querySelectorAll('[data-k="region"]')) x.classList.toggle('on', x.dataset.v === 'all');
-				}
-			}
-			if (b.dataset.go) {
-				this.$.menu.classList.add('off');
-				const regions = ['ege', 'marmara', 'karadeniz', 'akdeniz', 'icanadolu', 'dogu', 'guneydogu'];
-				const region = c.region === 'random' ? regions[Math.floor(Math.random() * regions.length)] : c.region;
-				this.h.start({ ...c, region });
-			}
-		};
+		this.$.end.classList.add('off');
+		this.$.cmd.classList.add('off');
+		showMenu(this);
 	}
 
 	title(on) {
 		this.$.title.classList.toggle('off', !on);
-		if (on) this.$.hud.innerHTML = '';
+		if (on) {
+			this.$.hud.classList.add('off');
+			this.$.menu.classList.add('off');
+			refreshTitle(this);
+		}
 	}
 
 	// ---------------------------------------------------------------- oyuncu kartları
 
 	hud(m) {
-		const html = m.players
-			.map((p) => {
-				const k = this.app.castles[p.i];
-				const hp = [0, 1, 2].map((j) => `<i class="${p.alive && j < k.hp ? '' : 'off'}"></i>`).join('');
-				return `<div class="fl-pl ${p.alive ? '' : 'dead'} ${m.turn === p.i ? 'turn' : ''}" style="${m.mode.teams ? `border-bottom-color:${p.team ? '#3d7dff' : '#ff4d4d'}` : ''}">
-					<span class="fl-av" style="background:${p.css}">${esc(p.name[0])}</span>
-					<div><b>${esc(p.name)}</b><em>${p.score.toLocaleString('tr-TR')}</em></div>
-					<span class="fl-hp">${hp}</span></div>`;
-			})
-			.join('');
-		if (html !== this._hud) {
-			this._hud = html;
-			this.$.hud.innerHTML = html;
+		if (!m?.players) return;
+		const hud = this.$.hud;
+		const key = m.players.map((p) => p.i + ':' + p.name).join('|') + (m.mode?.teams ? ':t' : '');
+		if (key !== this._hudKey || this._hudM !== m) {
+			this._hudKey = key;
+			this._hudM = m;
+			hud.innerHTML = m.players
+				.map((p) => {
+					const team = m.mode?.teams ? `<span class="tm" style="--tc:${p.team ? '#3d7dff' : '#ff4d4d'}">${p.team ? 'B' : 'A'}</span>` : '';
+					return `<div class="fl-pl" data-p="${p.i}" style="--pc:${p.css}"><span class="fl-av">${avatar(this.look(p))}</span>
+						<div class="tx"><b>${esc(p.name)}</b><em>${p.score.toLocaleString('tr-TR')}</em></div>
+						<span class="cs"><i></i><i></i><i></i></span>${team}</div>`;
+				})
+				.join('');
+			this._pl = m.players.map((p) => {
+				const e = hud.querySelector(`[data-p="${p.i}"]`);
+				return { e, em: e.querySelector('em'), cs: [...e.querySelectorAll('.cs i')], score: p.score, hp: 3, turn: false, dead: false };
+			});
+		}
+		if (!this.$.title.classList.contains('off') || !this.$.menu.classList.contains('off')) hud.classList.add('off');
+		else hud.classList.remove('off');
+		for (const p of m.players) {
+			const s = this._pl[p.i];
+			if (!s) continue;
+			const turn = m.turn === p.i;
+			if (turn !== s.turn) s.e.classList.toggle('turn', (s.turn = turn));
+			const dead = !p.alive;
+			if (dead !== s.dead) s.e.classList.toggle('dead', (s.dead = dead));
+			const k = this.app.castles?.[p.i];
+			const hp = p.alive ? (k ? k.hp : 3) : 0;
+			if (hp !== s.hp) {
+				s.cs.forEach((c, j) => {
+					c.classList.toggle('off', j >= hp);
+					if (!this.fast && j >= hp && j < s.hp) {
+						c.classList.remove('hit');
+						void c.offsetWidth;
+						c.classList.add('hit');
+					}
+				});
+				s.hp = hp;
+			}
+			if (p.score !== s.score) {
+				const d = p.score - s.score;
+				if (this.fast) s.em.textContent = p.score.toLocaleString('tr-TR');
+				else {
+					this.fx.count(s.em, s.score, p.score, 650);
+					if (Math.abs(d) >= 50) {
+						const f = document.createElement('span');
+						f.className = 'd' + (d < 0 ? ' neg' : '');
+						f.textContent = (d > 0 ? '+' : '−') + Math.abs(d).toLocaleString('tr-TR');
+						s.e.appendChild(f);
+						setTimeout(() => f.remove(), 1150);
+					}
+				}
+				s.score = p.score;
+			}
 		}
 	}
 
-	// ---------------------------------------------------------------- tur bayrağı ve ipucu
+	// ---------------------------------------------------------------- sahne bayrağı ve bildirim
 
 	async banner(title, sub, { tone = '', short = false } = {}) {
 		if (this.fast) return;
 		const b = this.$.banner;
-		b.className = `fl-banner ${tone}`;
-		b.querySelector('b').textContent = title;
-		b.querySelector('span').textContent = sub || '';
-		b.querySelector('span').style.display = sub ? '' : 'none';
-		await sleep(30);
+		const T = String(title || '');
+		const icon = /YAYILMA/.test(T) ? 'flag' : /FETİH/.test(T) ? 'swords' : /KUŞATMA/.test(T) ? 'castle' : /EŞİTLİK/.test(T) ? 'scales' : /ZAFER/.test(T) ? 'crown' : 'star';
+		const tn = tone || (/KUŞATMA/.test(T) ? 'red' : 'blue');
+		b.className = `fl-banner t-${tn}`;
+		b.innerHTML = `<div class="band"><i></i></div><div class="row"><div class="emb">${ico(icon, { w: 2.6, o: 2, oc: 'rgba(0,0,0,.3)' })}</div><b>${[...T]
+			.map((c, k) => `<i style="--k:${k}">${c === ' ' ? '&nbsp;' : esc(c)}</i>`)
+			.join('')}</b></div>${sub ? `<span>${esc(sub)}</span>` : ''}`;
+		const g = this._gen;
+		void b.offsetWidth;
 		b.classList.add('on');
-		this.app.sfx?.play?.('banner');
-		await sleep(short ? 800 : 1150);
-		b.classList.remove('on');
-		await sleep(220);
+		this.sfx('banner', { title: T });
+		await sleep(this.rm ? 700 : short ? 1000 : 1400);
+		if (g !== this._gen) return;
+		b.classList.add('out');
+		await sleep(280);
+		if (g !== this._gen) return;
+		b.className = 'fl-banner';
+		b.innerHTML = '';
 	}
 
-	prompt(html) {
+	/** Kısa bildirim. tone: info | good | bad | warn | gold. p: portresi gösterilecek oyuncu. */
+	toast(text, { tone = 'info', icon = null, p = null, ms = 2300, html = false } = {}) {
+		if (this.fast) return null;
+		const box = this.$.toasts;
+		while (box.children.length >= 3) box.firstChild.remove();
+		const t = document.createElement('div');
+		t.className = `fl-toast ${tone}`;
+		const lead = p
+			? `<span class="fl-av" style="border-color:${p.css}">${avatar(this.look(p))}</span>`
+			: `<span class="ti">${ico(icon || TONE_ICON[tone] || 'star', { w: 2.8 })}</span>`;
+		t.innerHTML = `${lead}<span>${html ? text : esc(text)}</span>`;
+		box.appendChild(t);
+		setTimeout(() => {
+			t.classList.add('bye');
+			setTimeout(() => t.remove(), 280);
+		}, ms);
+		return t;
+	}
+
+	prompt(html, { tone = '', icon = 'tap' } = {}) {
 		const p = this.$.prompt;
 		if (!html) return p.classList.remove('on');
-		p.innerHTML = html;
-		p.classList.add('on');
+		p.className = `fl-prompt ${tone} on`;
+		p.innerHTML = `<span class="pi">${ico(icon, { w: 2.4 })}</span><span class="pt">${html}</span>`;
 	}
 
 	// ---------------------------------------------------------------- il seçimi
@@ -147,49 +335,155 @@ export class UI {
 		const app = this.app;
 		const b = app.board;
 		if (this.fast) return m.botChoose(m.players[0], options, 'free');
-		for (const i of options) b.fx(i, 0.18, 0.75);
-		this.showLabels(options);
-		this.prompt(`<em>${esc(text)}</em>`);
+		const me = m.players.find((p) => p.human) || m.players[0];
+		m.turn = me.i;
+		this.hud(m);
+		const attack = options.some((i) => b.provinces[i].owner >= 0 && b.provinces[i].owner !== me.i);
+		const adj = !attack && options.some((i) => (m.neighbors?.(i) || []).some((j) => b.provinces[j].owner === me.i));
+		this._selOn(m, options, attack);
+		const head = esc(String(text || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')).toLocaleUpperCase('tr-TR'));
+		const hint = attack ? 'Parlayan sınır illerinden birine dokun' : adj ? 'Topraklarına komşu parlayan illerden birini al' : 'Parlayan boş illerden birini al';
+		this.prompt(`<b>${head}</b><small>${hint}</small>`, { tone: attack ? 'red' : '' });
 		app.cam.fit(app.boundsOf(m.map), { pitch: 0.98 });
 		const pick = await new Promise((res) => {
-			app.onTap = (idx) => {
+			this._pickRes = res;
+			app.onTap = (idx, x, y) => {
 				if (options.includes(idx)) return res(idx);
-				// yanlış il: ipucu sallanır, seçilebilen iller bir kez daha parlar
-				const pr = this.$.prompt;
-				pr.classList.remove('shake');
-				void pr.offsetWidth;
-				pr.classList.add('shake');
-				this.prompt(`<em>${esc(text)}</em> · parlayan illerden birine dokun`);
-				for (const i of options) b.fx(i, 0.3, 1);
-				setTimeout(() => {
-					for (const i of options) b.fx(i, 0.18, 0.75);
-				}, 350);
+				this._badTap(m, me, idx, x, y, attack, options);
 			};
 		});
 		app.onTap = null;
+		this._pickRes = null;
+		this._selOff(options);
+		this.prompt(null);
+		this.sfx('tap');
+		return pick;
+	}
+
+	_selOn(m, options, attack) {
+		const b = this.app.board;
+		this._selList = options;
+		if (typeof b.select === 'function') {
+			try {
+				b.select(options, { attack });
+			} catch (e) {
+				for (const i of options) b.fx(i, 0.18, 0.75);
+			}
+		} else for (const i of options) b.fx(i, 0.18, 0.75);
+		this.showLabels(options, { m, tap: true });
+	}
+
+	_selOff(options) {
+		const b = this.app.board;
+		if (typeof b.select === 'function') {
+			try {
+				b.select(null);
+			} catch (e) {
+				/* yoksay */
+			}
+		}
 		for (const i of options) b.fx(i, 0, 0);
 		this.showLabels([]);
-		this.prompt(null);
-		this.app.sfx?.play?.('tap');
-		return pick;
+		this._selList = null;
+	}
+
+	_badTap(m, me, idx, x, y, attack, options) {
+		const b = this.app.board;
+		const pr = this.$.prompt;
+		pr.classList.remove('shake');
+		void pr.offsetWidth;
+		pr.classList.add('shake');
+		this.sfx('wrong');
+		if (x != null) {
+			const p = this.local(x, y);
+			const e = document.createElement('i');
+			e.className = 'fl-tapx';
+			e.innerHTML = ico('cross', { w: 3.4, c: '#ff5a4a' });
+			e.style.left = p.x + 'px';
+			e.style.top = p.y + 'px';
+			this.$.fx.appendChild(e);
+			setTimeout(() => e.remove(), 600);
+		}
+		const pv = idx >= 0 ? b.provinces[idx] : null;
+		const o = pv ? pv.owner : -1;
+		let msg;
+		if (!pv) msg = 'Orası deniz. Parlayan illerden birine dokun.';
+		else if (o === me.i) msg = `${pv.name} zaten senin.`;
+		else if (!m.inMap?.has(idx)) msg = `${pv.name} bu maçın haritasında değil.`;
+		else if (o >= 0 && m.ally?.(o, me.i)) msg = `${pv.name} takım arkadaşının.`;
+		else if (attack) msg = `${pv.name} sınırında değil. Yalnızca komşu illere saldırabilirsin.`;
+		else if (o >= 0) msg = `${pv.name} dolu. Parlayan boş illerden birini seç.`;
+		else msg = `${pv.name} topraklarına komşu değil.`;
+		this.toast(msg, { tone: 'warn', ms: 2000 });
+		// seçilebilenler bir kez daha parlasın
+		if (typeof b.select !== 'function') {
+			for (const i of options) b.fx(i, 0.32, 1);
+			setTimeout(() => {
+				if (this._selList === options) for (const i of options) b.fx(i, 0.18, 0.75);
+			}, 380);
+		}
+		for (const l of this.labels) {
+			l.el.classList.remove('pop');
+			void l.el.offsetWidth;
+			l.el.classList.add('pop');
+		}
 	}
 
 	async botPick(m, p, i) {
 		if (this.fast) return;
+		m.turn = p.i;
+		this.hud(m);
 		this.app.board.fx(i, 0.3, 1);
+		this.mark(i, p, 900);
 		await sleep(380);
 		this.app.board.fx(i, 0, 0);
 	}
 
-	showLabels(list) {
+	/** İlin üstünde kısa süreli oyuncu işareti (portre + ad). */
+	mark(i, p, ms = 900) {
+		if (this.fast) return;
+		const e = document.createElement('div');
+		e.className = 'fl-label mark pop';
+		e.style.setProperty('--oc', p.css);
+		e.innerHTML = `<span class="fl-av">${avatar(this.look(p))}</span><span>${esc(this.app.board.provinces[i].name)}</span>`;
+		this.$.pins.appendChild(e);
+		const mk = { el: e, i, w: 0, h: 0 };
+		this.marks.push(mk);
+		setTimeout(() => {
+			e.remove();
+			const k = this.marks.indexOf(mk);
+			if (k >= 0) this.marks.splice(k, 1);
+		}, ms);
+	}
+
+	/** İl adları (seçim sırasında). Harita 3B etiket verirse onu kullanır; yoksa dokunulabilir DOM etiketleri. */
+	showLabels(list, { m = this.app.match, tap = false } = {}) {
+		const b = this.app.board;
+		if (typeof b.showLabels === 'function') {
+			try {
+				b.showLabels(list);
+				for (const l of this.labels) l.el.remove();
+				this.labels = [];
+				this._lsort = [];
+				return;
+			} catch (e) {
+				/* DOM etiketlerine düş */
+			}
+		}
 		for (const l of this.labels) l.el.remove();
 		this.labels = list.map((i) => {
-			const e = document.createElement('div');
-			e.className = 'fl-label';
-			e.textContent = this.app.board.provinces[i].name;
+			const pv = b.provinces[i];
+			const own = pv.owner >= 0 ? m?.players?.[pv.owner] : null;
+			const cap = own && own.capital === i;
+			const e = document.createElement(tap ? 'button' : 'div');
+			e.className = 'fl-label opt pop';
+			if (own) e.style.setProperty('--oc', own.css);
+			e.innerHTML = `${own ? '<i></i>' : ''}<span>${esc(pv.name)}</span>${cap ? ico('castle', { w: 2.4, c: '#ffd25a' }) : ''}`;
+			if (tap) e.addEventListener('click', () => this._pickRes?.(i));
 			this.$.pins.appendChild(e);
-			return { el: e, i };
+			return { el: e, i, w: 0, h: 0, x: 0, y: 0 };
 		});
+		this._lsort = this.labels.slice();
 	}
 
 	// ---------------------------------------------------------------- soru
@@ -202,130 +496,542 @@ export class UI {
 			const hb = human ? T.bot(v, 0.6, m.R) : null;
 			return { human: hb ? { value: hb.value, time: hb.time } : null };
 		}
+		const duel = !!(ctx.attacker && ctx.defender);
+		const tie = /EŞİTLİK/i.test(ctx.title || '');
+		const gen = ++this._gen;
+		if (duel && !tie && !ctx.noIntro) await duelIntro(this, ctx);
+		if (gen !== this._gen) return { human: null };
 		const card = this.$.q;
-		const cat = CATS[q.cat];
-		const duel = ctx.attacker && ctx.defender;
-		const vs = duel
-			? `<span class="fl-vs"><i style="background:${ctx.attacker.css}">${esc(ctx.attacker.name[0])}</i>⚔<i style="background:${ctx.defender.css}">${esc(ctx.defender.name[0])}</i></span>`
-			: '';
-		card.innerHTML = `<div class="fl-qtop">
-				<span class="fl-cat" style="background:${cat.color}">${icon(cat.icon)}${esc(cat.name)}</span>
-				<span class="fl-type">${esc(T.label)}</span>${vs}
-				<span class="fl-timer" data-r="timer"><svg viewBox="0 0 40 40"><circle class="bg" cx="20" cy="20" r="16"/><circle class="fg" cx="20" cy="20" r="16" stroke-dasharray="100.5" stroke-dashoffset="0"/></svg><b>${T.time}</b></span>
+		const cat = CATS[q.cat] || CATS[ctx.cat] || { name: 'Genel Kültür', color: '#4a8cff', icon: ICONS.star };
+		const map = !!T.needsMap;
+		const closest = T.kind === 'closest';
+		const sec = T.time;
+		const prov = ctx.target != null ? app.board.provinces[ctx.target] : null;
+		const siege = duel && prov && ctx.defender.capital === ctx.target;
+		this._extra = 0;
+		const plate = (p, k, sub) =>
+			`<div class="fl-qp ${k}" data-p="${p.i}" style="--pc:${p.css}"><span class="fl-av">${avatar(this.look(p))}</span><span class="nm"><b>${esc(p.name)}</b>${
+				sub ? `<small>${sub}</small>` : ''
+			}</span><i class="st">${ico('check', { w: 3.4 })}</i><span class="tt"></span></div>`;
+		const whoHTML = duel
+			? `${plate(ctx.attacker, 'a', 'SALDIRAN')}<div class="fl-qvs"><b>VS</b>${prov ? `<span>${esc(prov.name)}</span>` : ''}</div>${plate(ctx.defender, 'd', siege ? 'KALE' : 'SAVUNAN')}`
+			: who.map((p) => plate(p, '', '')).join('');
+		const rule = tie ? 'Eşitlik bozma · en yakın kazanır' : closest ? 'En yakın kazanır' : '';
+		card.className = `fl-q${map ? ' map' : ''}${human ? '' : ' spec'}`;
+		card.style.setProperty('--cc', cat.color);
+		card.style.setProperty('--cd', shade(cat.color, -0.4));
+		card.style.setProperty('--me', human ? avatarURL(this.look(human)) : 'none');
+		card.innerHTML = `<div class="fl-qwho${duel ? ' duel' : ''}">${whoHTML}</div>
+			<div class="fl-qc">
+				<div class="fl-qhead"><span class="fl-cat"><span class="ci">${ico(cat.icon, { w: 2.6, c: cat.color })}</span><b>${esc(cat.name)}</b></span><span class="fl-type">${esc(
+					String(T.label || '').toLocaleUpperCase('tr-TR'),
+				)}</span>${rule ? `<span class="fl-rule">${esc(rule)}</span>` : ''}<span class="fl-clock"><b>${sec}</b></span></div>
+				<div class="fl-tbar"><i></i></div>
+				<div class="fl-qtext">${esc(q.q)}</div>
+				<div class="fl-qbody"></div>
+				<div class="fl-jk"></div>
 			</div>
-			<div class="fl-answered">${who.map((p) => `<i data-p="${p.i}" style="background:${p.css}"></i>`).join('')}</div>
-			<div class="fl-qtext">${esc(q.q)}</div>
-			<div class="fl-qbody"></div>`;
+			<div class="fl-stamp"></div>`;
 		const body = card.querySelector('.fl-qbody');
-		const timer = card.querySelector('[data-r=timer]');
-		const fg = timer.querySelector('.fg');
-		const tb = timer.querySelector('b');
+		const clockB = card.querySelector('.fl-clock b');
 		let answerRes;
-		const answered = new Promise((r) => (answerRes = r));
+		let answered = false;
+		const done = new Promise((r) => (answerRes = r));
+		let t0 = performance.now();
 		let tapHandler = null;
-		const api = {
-			answer: (value) => answerRes({ value, time: (performance.now() - t0) / 1000 }),
-			onMapTap: (fn) => (tapHandler = fn),
-			showPin: (p) => this.setPins([{ x: p.x, z: p.z, color: human.css, me: true }]),
+		let cur = null;
+		const finish = (val) => {
+			if (answered) return;
+			answered = true;
+			if (cur) cur.answered = true;
+			answerRes(val);
 		};
-		const ctl = T.mount(body, v, api);
+		const api = {
+			answer: (value) => finish({ value, time: (performance.now() - t0) / 1000 }),
+			onMapTap: (fn) => (tapHandler = fn),
+			showPin: (p) => this.setPins([{ x: p.x, z: p.z, p: human }]),
+		};
+		let ctl;
+		try {
+			ctl = T.mount(body, v, api) || {};
+		} catch (e) {
+			console.error('soru tipi çizilemedi', e);
+			body.innerHTML = '<div class="fl-hint">Bu soru gösterilemedi.</div>';
+			ctl = {};
+		}
 		this._ctl = ctl;
-		if (T.needsMap) {
+		cur = { m, ctx, card, body, ctl, api, answered, finish };
+		this.current = cur;
+		this._enhance(body, v);
+		this._renderJokers();
+		if (map) {
 			app.cam.fit(app.boundsOf(app.board.provinces.map((p) => p.index)), { pitch: 1.05 });
 			app.onGround = (pt) => tapHandler?.(pt);
 		}
 		await sleep(20);
 		card.classList.add('on');
-		app.sfx?.play?.('question');
-		const t0 = performance.now();
+		this.sfx('question', { type: q.type, cat: q.cat });
+		t0 = performance.now();
 		// botların "cevapladı" işaretleri
 		const spectate = !human;
-		const scale = spectate ? Math.min(1, 2.6 / Math.max(...bots.map((b) => b.time), 0.1)) : 1;
-		const timers = bots.map((b) =>
-			setTimeout(() => card.querySelector(`[data-p="${b.p.i}"]`)?.classList.add('on'), Math.min(b.time, T.time) * 1000 * scale),
-		);
+		const maxBot = Math.max(0.1, ...bots.map((b) => b.time));
+		const scale = spectate ? Math.min(1, 2.6 / maxBot) : 1;
+		this._bar = card.querySelector('.fl-tbar i');
+		this._t0 = t0;
+		this._sec = spectate ? Math.min(sec, maxBot * scale + 0.4) : sec;
+		this._runBar(0);
+		const timers = bots.map((b) => setTimeout(() => this._answered(b.p.i), Math.min(b.time, sec) * 1000 * scale));
 		let result = null;
-		if (human) {
-			const tick = setInterval(() => {
-				const t = (performance.now() - t0) / 1000;
-				const left = Math.max(0, T.time - t);
-				fg.setAttribute('stroke-dashoffset', String(100.5 * (1 - left / T.time)));
-				tb.textContent = String(Math.ceil(left));
-				timer.classList.toggle('hot', left < 4);
-				if (left <= 0) answerRes({ value: ctl.value ? ctl.value() : null, time: T.time, timeout: true });
-			}, 100);
-			result = await answered;
+		let tick = 0;
+		this._cancel = () => {
 			clearInterval(tick);
-			ctl.lock?.();
-			card.querySelector(`[data-p="${human.i}"]`)?.classList.add('on');
-			app.sfx?.play?.(result.timeout ? 'timeout' : 'answer');
+			for (const t of timers) clearTimeout(t);
+			finish({ value: null, time: 0, aborted: true });
+		};
+		if (human) {
+			let lastS = -1;
+			let hot = false;
+			tick = setInterval(() => {
+				const t = (performance.now() - t0) / 1000;
+				const total = sec + this._extra;
+				const left = Math.max(0, total - t);
+				const s = Math.ceil(left);
+				if (s !== lastS) {
+					lastS = s;
+					clockB.textContent = String(s);
+					const h = left <= 5 && left > 0;
+					if (h !== hot) card.classList.toggle('hot', (hot = h));
+					if (h) this.sfx('count', { left: s });
+				}
+				if (left <= 0) {
+					let val = null;
+					try {
+						val = ctl.value ? ctl.value() : null;
+					} catch (e) {
+						val = null;
+					}
+					finish({ value: val, time: total, timeout: true });
+				}
+			}, 100);
+			result = await done;
+			clearInterval(tick);
+			if (result.aborted) return { human: null };
+			try {
+				ctl.lock?.();
+			} catch (e) {
+				/* yoksay */
+			}
+			card.classList.add('locked');
+			card.classList.remove('hot');
+			this._renderJokers();
+			this._answered(human.i);
+			this.sfx(result.timeout ? 'timeout' : 'answer');
+			if (result.timeout) this.stamp('SÜRE DOLDU', 'warn');
 			// botlar hâlâ düşünüyorsa kısa bir bekleme (en çok 1.2 sn)
 			const rest = Math.max(0, Math.min(1.2, Math.max(0, ...bots.map((b) => b.time)) - result.time));
 			await sleep(rest * 1000);
+			if (gen !== this._gen) return { human: null };
 		} else {
-			await sleep(Math.min(2.8, Math.max(...bots.map((b) => b.time)) * scale) * 1000 + 200);
+			await Promise.race([sleep(Math.min(2.8, maxBot * scale) * 1000 + 200), done]);
+			if (answered) return { human: null };
 		}
 		for (const t of timers) clearTimeout(t);
-		for (const b of bots) card.querySelector(`[data-p="${b.p.i}"]`)?.classList.add('on');
+		for (const b of bots) this._answered(b.p.i);
 		app.onGround = null;
+		this._cancel = null;
 		return { human: result };
+	}
+
+	_answered(i) {
+		const e = this.$.q.querySelector(`.fl-qp[data-p="${i}"]`);
+		if (e && !e.classList.contains('done')) {
+			e.classList.add('done');
+			this.sfx('answered', { player: i });
+		}
+	}
+
+	_runBar(elapsed) {
+		const bar = this._bar;
+		if (!bar) return;
+		const total = this._sec + this._extra;
+		bar.classList.remove('run');
+		void bar.offsetWidth;
+		bar.style.setProperty('--tt', total + 's');
+		bar.style.animationDelay = `-${Math.max(0, elapsed).toFixed(2)}s`;
+		bar.classList.add('run');
+	}
+
+	/** Tiplerin çizdiği gövdeye ortak dokunuşlar: uzun şıklar tek sütun, kaydırıcı dolgusu, yıl biçimi. */
+	_enhance(body, v) {
+		const opts = body.querySelector('.fl-opts');
+		if (opts) {
+			const long = [...opts.querySelectorAll('.fl-opt')].some((b) => (b.textContent || '').trim().length > 24);
+			if (long) opts.classList.add('one');
+		}
+		for (const r of body.querySelectorAll('.fl-range')) {
+			const fill = () => {
+				const mn = Number(r.min) || 0;
+				const mx = Number(r.max) || 100;
+				r.style.setProperty('--p', (((Number(r.value) - mn) / (mx - mn || 1)) * 100).toFixed(1) + '%');
+			};
+			fill();
+			r.addEventListener('input', fill);
+			for (const s of body.querySelectorAll('.fl-step')) s.addEventListener('click', () => setTimeout(fill, 0));
+		}
+		// yıllar binlik ayraçsız (1.453 değil 1453)
+		if (yearish(v?.q)) {
+			const val = body.querySelector('.fl-num-val b');
+			if (val) {
+				const fix = () => {
+					const t = val.textContent;
+					if (/\d\.\d{3}/.test(t)) val.textContent = t.replace(/\./g, '');
+				};
+				fix();
+				new MutationObserver(fix).observe(val, { childList: true, characterData: true, subtree: true });
+			}
+		}
+	}
+
+	stamp(text, tone = '', sub = '') {
+		const s = this.$.q.querySelector('.fl-stamp');
+		if (!s) return;
+		s.className = `fl-stamp ${tone}`;
+		s.innerHTML = `${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ''}`;
+		void s.offsetWidth;
+		s.classList.add('on');
 	}
 
 	async reveal(m, ctx) {
 		if (this.fast) return;
 		const { T, v, results } = ctx;
+		const card = this.$.q;
 		const ctl = this._ctl;
-		ctl?.reveal(results);
-		if (T.needsMap) {
-			this.setPins([
-				{ x: v.target.x, z: v.target.z, goal: true },
-				...results.filter((r) => r.value).map((r) => ({ x: r.value.x, z: r.value.z, color: r.color })),
-			]);
+		const gen = this._gen;
+		card.classList.add('rv', 'locked');
+		card.classList.remove('hot');
+		this._renderJokers();
+		try {
+			ctl?.reveal?.(results);
+		} catch (e) {
+			console.error('cevap gösterilemedi', e);
 		}
-		this.app.sfx?.play?.(results.some((r) => r.p.human && r.correct) ? 'right' : 'reveal');
-		await sleep(T.kind === 'closest' ? 2300 : 1700);
-		this.$.q.classList.remove('on');
+		this._whoAvatars(card, results);
+		const closest = T.kind === 'closest';
+		const order = results.slice().sort((a, b) => (closest ? a.err - b.err || a.time - b.time : (b.correct ? 1 : 0) - (a.correct ? 1 : 0) || a.time - b.time));
+		for (const r of results) {
+			const e = card.querySelector(`.fl-qp[data-p="${r.i}"]`);
+			if (!e) continue;
+			e.classList.add('done');
+			e.querySelector('.tt').textContent = r.value == null ? '—' : (r.time ?? 0).toFixed(1) + ' sn';
+			if (!closest) {
+				e.classList.toggle('no', !r.correct);
+				if (!r.correct) e.querySelector('.st').innerHTML = ico('cross', { w: 3.4 });
+			}
+		}
+		if (closest) {
+			this._closest(card, T, v, order);
+			card.querySelector(`.fl-qp[data-p="${order[0].i}"]`)?.classList.add('win');
+		}
+		const rt = card.querySelector('.fl-opt.right,.fl-card2.right,.fl-word.revealed,.fl-item.right,.fl-tile.right');
+		if (rt) {
+			const c = Fx.center(rt);
+			this.fx.burst(c.x, c.y, { n: 14, dist: 80, colors: ['#7dff9a', '#fff', '#ffd25a'], kind: 'star', size: 12 });
+		}
+		const me = results.find((r) => r.p.human);
+		if (me) {
+			if (closest) {
+				const rank = order.indexOf(me);
+				if (rank === 0) this.stamp(me.err === 0 ? 'TAM İSABET!' : 'EN YAKIN SEN!', 'gold');
+				else this.stamp(`${rank + 1}. SIRADASIN`, 'bad', `${order[0].name} daha yakın`);
+				this.sfx(rank === 0 ? 'right' : 'wrong');
+			} else {
+				this.stamp(me.correct ? 'DOĞRU!' : me.value == null ? 'SÜRE DOLDU' : 'YANLIŞ!', me.correct ? '' : me.value == null ? 'warn' : 'bad');
+				this.sfx(me.correct ? 'right' : 'wrong');
+			}
+			if (me.correct || (closest && order[0] === me)) {
+				const s = card.querySelector('.fl-stamp');
+				if (s) {
+					const c = Fx.center(s);
+					this.fx.burst(c.x, c.y, { n: 18, dist: 140, kind: 'star', size: 14, life: 900 });
+				}
+			}
+		} else this.sfx('reveal');
+		if (T.needsMap) this._mapReveal(v, results);
+		await this._hold(closest ? 3000 : 1900);
+		if (gen !== this._gen) return;
+		card.classList.remove('on');
 		this.setPins([]);
-		await sleep(250);
+		await sleep(260);
+		if (gen !== this._gen) return;
+		card.className = 'fl-q';
+		this.current = null;
+	}
+
+	/** Bekle; kart açıkken dokunulursa (en az 0.8 sn sonra) erken geç. */
+	_hold(ms) {
+		return new Promise((res) => {
+			const t0 = performance.now();
+			const card = this.$.q;
+			let tm = 0;
+			const end = () => {
+				clearTimeout(tm);
+				card.removeEventListener('pointerdown', skip);
+				this._cancel = null;
+				res();
+			};
+			const skip = () => {
+				if (performance.now() - t0 > 800) end();
+			};
+			tm = setTimeout(end, ms);
+			card.addEventListener('pointerdown', skip);
+			this._cancel = end;
+		});
+	}
+
+	/** Tiplerin koyduğu .fl-who renk işaretlerini oyuncu portrelerine çevir. */
+	_whoAvatars(card, results) {
+		const byRGB = new Map(results.map((r) => [rgbOf(r.color), r]));
+		for (const w of card.querySelectorAll('.fl-who')) {
+			if (w.dataset.av) continue;
+			const r = byRGB.get(w.style.backgroundColor) || results.find((x) => x.color === w.style.background);
+			if (!r) continue;
+			w.dataset.av = '1';
+			w.style.borderColor = '#fff';
+			w.innerHTML = avatar({ ...this.look(r.p), img: null });
+		}
+	}
+
+	/** En yakın kazanır: doğru cevap, sayı doğrusu ve uzaklık çubukları. */
+	_closest(card, T, v, order) {
+		const body = card.querySelector('.fl-qbody');
+		const q = v.q || {};
+		const map = !!T.needsMap;
+		const num = !map && typeof q.ans === 'number';
+		const yr = yearish(q);
+		const fmt = (x) => (yr ? String(Math.round(x)) : (Math.round(Number(x) * 100) / 100).toLocaleString('tr-TR'));
+		const unit = q.unit || '';
+		let html = '';
+		if (num) {
+			html += `<div class="fl-ans"><small>DOĞRU<br>CEVAP</small><b data-r="ans">${fmt(q.ans)}</b>${unit ? `<em>${esc(unit)}</em>` : ''}</div>`;
+			const vals = order.filter((r) => r.value != null).map((r) => Number(r.value));
+			let lo = Math.min(q.ans, ...vals);
+			let hi = Math.max(q.ans, ...vals);
+			const pad = Math.max((hi - lo) * 0.14, Math.abs(q.ans) * 0.02, 1);
+			lo -= pad;
+			hi += pad;
+			if (q.min != null) lo = Math.max(q.min, lo);
+			if (q.max != null) hi = Math.min(q.max, hi);
+			if (hi <= lo) hi = lo + 1;
+			const X = (x) => Math.max(0, Math.min(1, (x - lo) / (hi - lo)));
+			const ax = X(q.ans);
+			let segs = '';
+			let mks = '';
+			order.forEach((r, k) => {
+				if (r.value == null) return;
+				const x = X(Number(r.value));
+				segs += `<i class="seg" style="--a:${Math.min(ax, x).toFixed(4)};--b:${Math.max(ax, x).toFixed(4)};--c:${r.color};--o:${x < ax ? '100%' : '0%'}"></i>`;
+				mks += `<b class="mk" style="--x:${x.toFixed(4)};--c:${r.color};--k:${k}">${avatar({ ...this.look(r.p), img: null })}</b>`;
+			});
+			html += `<div class="fl-nline"><i class="trk"></i>${segs}<i class="gl" style="--x:${ax.toFixed(4)}"></i>${mks}<span class="tk" style="left:0">${fmt(lo)}</span><span class="tk" style="left:100%">${fmt(hi)}</span></div>`;
+		}
+		const fin = order.filter((r) => Number.isFinite(r.err));
+		const maxErr = Math.max(0, ...fin.map((r) => r.err));
+		const rows = order
+			.map((r, k) => {
+				const ok = Number.isFinite(r.err) && r.value != null;
+				const w = !ok ? 0 : maxErr <= 0 ? 1 : Math.max(0.06, 1 - r.err / (maxErr * 1.15));
+				const val = !ok ? '—' : map ? `${Math.round(r.err).toLocaleString('tr-TR')} km` : `${fmt(r.value)}${unit ? ' ' + esc(unit) : ''}`;
+				const sub = !ok ? 'cevap yok' : map ? (r.correct ? 'tam isabet' : 'uzaklık') : r.err === 0 ? 'tam isabet' : `fark ${fmt(r.err)}`;
+				const tag = k === 0 && ok ? `<span class="tag">${r.err === 0 || (map && r.correct) ? 'TAM İSABET' : 'EN YAKIN'}</span>` : '';
+				return `<div class="fl-cr ${k === 0 && ok ? 'win' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span>
+					<span class="nm"><b>${esc(r.name)}</b><i class="bar"><u style="--w:${w.toFixed(3)}"></u></i></span><em>${val}<small>${sub}</small></em>${tag}</div>`;
+			})
+			.join('');
+		body.innerHTML = `<div class="fl-close">${html}<div class="fl-crs">${rows}</div></div>`;
+		const ans = body.querySelector('[data-r=ans]');
+		if (ans && !this.rm) this.fx.count(ans, q.min ?? 0, q.ans, 800, fmt);
+	}
+
+	_mapReveal(v, results) {
+		const app = this.app;
+		const tg = v.target;
+		if (!tg) return;
+		this.setPins([{ x: tg.x, z: tg.z, goal: true }, ...results.filter((r) => r.value).map((r) => ({ x: r.value.x, z: r.value.z, p: r.p, km: Number.isFinite(r.err) ? Math.round(r.err) + ' km' : '' }))]);
+		this.lines = results
+			.filter((r) => r.value)
+			.map((r) => {
+				const e = document.createElement('i');
+				e.className = 'fl-line';
+				e.style.borderTopColor = r.color;
+				this.$.pins.insertBefore(e, this.$.pins.firstChild);
+				return { el: e, a: r.value, b: tg };
+			});
+		// kamera hedefi ve tahminleri birlikte görsün
+		const xs = [tg.x, ...results.filter((r) => r.value).map((r) => r.value.x)];
+		const zs = [tg.z, ...results.filter((r) => r.value).map((r) => r.value.z)];
+		const b = { x0: Math.min(...xs) - 6, x1: Math.max(...xs) + 6, z0: Math.min(...zs) - 5, z1: Math.max(...zs) + 9 };
+		try {
+			app.cam.fit(b, { pitch: 1.0 });
+		} catch (e) {
+			/* yoksay */
+		}
 	}
 
 	setPins(list) {
 		for (const p of this.pins) p.el.remove();
+		for (const l of this.lines) l.el.remove();
+		this.lines = [];
 		this.pins = list.map((p) => {
 			const e = document.createElement('div');
-			e.className = `fl-pin ${p.goal ? 'goal' : ''}`;
-			e.innerHTML = p.goal ? GOAL : PIN(p.color);
+			e.className = `fl-pin${p.goal ? ' goal' : ''}`;
+			if (p.goal) e.innerHTML = `<div class="pb">${GOAL}</div>`;
+			else {
+				const c = p.p?.css || p.color || '#ff4d4d';
+				e.innerHTML = `<div class="pb">${PIN_SHAPE(c)}${p.p ? `<span class="fl-av">${avatar({ ...this.look(p.p), img: null })}</span>` : ''}${p.km ? `<span class="km">${esc(p.km)}</span>` : ''}</div>`;
+			}
 			this.$.pins.appendChild(e);
 			return { el: e, x: p.x, z: p.z };
 		});
 	}
 
-	/** Her kare: iğneleri ve il adlarını ekrana izdüşür. */
+	/** Her kare: iğneleri, çizgileri ve il adlarını ekrana izdüşür. */
 	update() {
 		const app = this.app;
 		const v = this._v;
-		const s = { x: 0, y: 0 };
+		const s = this._s;
+		const top = app.board.top;
 		for (const p of this.pins) {
-			app.toScreen(v.set(p.x, app.board.top, p.z), s);
-			p.el.style.transform = `translate(${s.x}px,${s.y}px)`;
+			app.toScreen(v.set(p.x, top, p.z), s);
+			p.el.style.transform = `translate(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px)`;
 		}
-		for (const l of this.labels) {
-			app.board.topAt(l.i, v);
+		for (const l of this.lines) {
+			app.toScreen(v.set(l.a.x, top, l.a.z), s);
+			app.toScreen(this._v2.set(l.b.x, top, l.b.z), this._s2);
+			const dx = this._s2.x - s.x;
+			const dy = this._s2.y - s.y;
+			l.el.style.transform = `translate(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px) rotate(${Math.atan2(dy, dx).toFixed(4)}rad) scaleX(${Math.hypot(dx, dy).toFixed(1)})`;
+		}
+		const L = this._lsort;
+		if (L.length) {
+			for (const l of L) {
+				app.board.topAt(l.i, v);
+				app.toScreen(v, s);
+				if (!l.w) {
+					l.w = l.el.offsetWidth || 60;
+					l.h = l.el.offsetHeight || 22;
+				}
+				l.x = s.x;
+				l.y = s.y - 8;
+			}
+			// üst üste binenleri yukarı it (y'ye göre sıralı, en fazla birkaç geçiş)
+			L.sort((a, b) => b.y - a.y);
+			for (let i = 1; i < L.length; i++) {
+				const a = L[i];
+				for (let j = 0; j < i; j++) {
+					const o = L[j];
+					if (Math.abs(a.x - o.x) < (a.w + o.w) / 2 + 2 && a.y > o.y - o.h - 2 && a.y < o.y + a.h) a.y = o.y - o.h - 3;
+				}
+			}
+			for (const l of L) l.el.style.transform = `translate(${(l.x - l.w / 2).toFixed(1)}px,${(l.y - l.h).toFixed(1)}px)`;
+		}
+		for (const mk of this.marks) {
+			app.board.topAt(mk.i, v);
 			app.toScreen(v, s);
-			l.el.style.transform = `translate(${s.x}px,${s.y - 16}px) translate(-50%,-50%)`;
+			if (!mk.w) {
+				mk.w = mk.el.offsetWidth || 80;
+				mk.h = mk.el.offsetHeight || 28;
+			}
+			mk.el.style.transform = `translate(${(s.x - mk.w / 2).toFixed(1)}px,${(s.y - mk.h - 8).toFixed(1)}px)`;
 		}
 	}
+
+	// ---------------------------------------------------------------- jokerler
+
+	/** Joker çubuğu: list = [{id, label, count, ready}]. Dokununca cb(id, ctx) ya da h.joker(id, ctx). */
+	jokers(list, cb) {
+		this._jk = Array.isArray(list) ? list.filter((j) => j && j.id != null) : [];
+		if (typeof cb === 'function') this._jkCb = cb;
+		this._renderJokers();
+	}
+
+	_renderJokers() {
+		const box = this.$.q.querySelector('.fl-jk');
+		if (!box) return;
+		const cur = this.current;
+		if (!cur || !cur.ctx.human || !this._jk.length) {
+			box.innerHTML = '';
+			return;
+		}
+		const icn = (id) => (JK_ICON.find(([re]) => re.test(String(id).toLowerCase())) || [0, 'star'])[1];
+		box.innerHTML = this._jk
+			.map((j) => {
+				const off = j.ready === false || (j.count != null && j.count <= 0) || cur.answered;
+				return `<button class="fl-jkb" data-j="${esc(j.id)}" ${off ? 'disabled' : ''}><span class="ji">${ico(j.icon || icn(j.id), { w: 2.4 })}</span>${esc(j.label || j.id)}${
+					j.count != null ? `<i>${esc(j.count)}</i>` : ''
+				}</button>`;
+			})
+			.join('');
+		box.onclick = (e) => {
+			const b = e.target.closest('[data-j]');
+			if (!b || b.disabled || this.current?.answered) return;
+			b.classList.remove('used');
+			void b.offsetWidth;
+			b.classList.add('used');
+			this.sfx('joker', { id: b.dataset.j });
+			const c = Fx.center(b);
+			this.fx.burst(c.x, c.y, { n: 10, dist: 50, colors: ['#c07aff', '#fff', '#ffd25a'], kind: 'star', size: 10 });
+			try {
+				(this._jkCb || this.h.joker)?.(b.dataset.j, this.current?.ctx);
+			} catch (err) {
+				console.error('joker', err);
+			}
+		};
+	}
+
+	/** Ekstra süre jokeri: insan oyuncunun süresine sn ekler. */
+	addTime(sec = 10) {
+		if (!this.current || this.current.answered) return;
+		const el = (performance.now() - this._t0) / 1000;
+		this._extra += sec;
+		this._runBar(el);
+		const ck = this.$.q.querySelector('.fl-clock');
+		if (ck) {
+			const c = Fx.center(ck);
+			this.fx.text(c.x, c.y + 30, `+${sec} sn`, { cls: 'good' });
+		}
+	}
+
+	/** Yarı yarıya jokeri: verilen şık sıralarını eler (.fl-opt[data-i]). */
+	hideOptions(indices = []) {
+		for (const i of indices) {
+			const b = this.$.q.querySelector(`.fl-opt[data-i="${i}"]`);
+			if (b) {
+				b.classList.add('gone');
+				b.disabled = true;
+			}
+		}
+	}
+
+	// ---------------------------------------------------------------- sıralama
 
 	async ranking(m, order, picks) {
 		if (this.fast) return;
 		const r = this.$.rank;
-		r.innerHTML = `<h4>Seçim sırası</h4>${order
-			.map((o, k) => `<div><b>${k + 1}</b><i style="background:${o.color}"></i><span>${esc(o.name)}</span><em>${picks[k] ? `+${picks[k]} il` : '—'}</em></div>`)
+		r.innerHTML = `<h4>${ico('flag', { w: 2.6 })}SEÇİM SIRASI</h4>${order
+			.map(
+				(o, k) =>
+					`<div class="rw" style="--k:${k}"><span class="md">${k + 1}</span><span class="fl-av" style="border-color:${o.color}">${avatar(this.look(o.p || o))}</span><b>${esc(o.name)}</b><em class="${
+						picks[k] ? '' : 'z'
+					}">${picks[k] ? `+${picks[k]} il` : '—'}</em></div>`,
+			)
 			.join('')}`;
+		const g = this._gen;
 		r.classList.add('on');
-		await sleep(1500);
+		this.sfx('rank');
+		await sleep(this.rm ? 1000 : 1700);
+		if (g !== this._gen) return;
 		r.classList.remove('on');
-		await sleep(200);
+		await sleep(220);
 	}
 
 	// ---------------------------------------------------------------- çark
@@ -336,78 +1042,13 @@ export class UI {
 		m.turn = p.i;
 		this.hud(m);
 		if (this.fast) return WHEEL[pick];
-		const w = this.$.wheel;
-		const R = 100;
-		const slices = WHEEL.map((k, i) => {
-			const c = k === 'fetih' ? FETIH_SLICE : CATS[k];
-			const a0 = (i / n) * Math.PI * 2 - Math.PI / 2;
-			const a1 = ((i + 1) / n) * Math.PI * 2 - Math.PI / 2;
-			const x0 = 110 + Math.cos(a0) * R;
-			const y0 = 110 + Math.sin(a0) * R;
-			const x1 = 110 + Math.cos(a1) * R;
-			const y1 = 110 + Math.sin(a1) * R;
-			const am = (a0 + a1) / 2;
-			const ix = 110 + Math.cos(am) * 64;
-			const iy = 110 + Math.sin(am) * 64;
-			return `<path d="M110 110L${x0} ${y0}A${R} ${R} 0 0 1 ${x1} ${y1}Z" fill="${c.color}" stroke="#fff" stroke-width="3"/>
-				<g transform="translate(${ix - 13} ${iy - 13}) scale(1.1)"><path d="${c.icon}" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></g>`;
-		}).join('');
-		w.innerHTML = `<div class="fl-wheel-box"><div class="ptr"></div>
-			<svg viewBox="0 0 220 220"><g class="spin">${slices}<circle cx="110" cy="110" r="22" fill="#101a33" stroke="#ffd25a" stroke-width="4"/></g></svg>
-			<div class="fl-wheel-cap">${p.human ? 'Çarkı çevir!' : esc(p.name) + ' çeviriyor…'}</div></div>`;
-		w.style.display = '';
-		await sleep(20);
-		w.classList.add('on');
-		const spin = w.querySelector('.spin');
-		if (p.human) {
-			await new Promise((res) => {
-				const go = () => {
-					w.removeEventListener('pointerdown', go);
-					res();
-				};
-				w.style.pointerEvents = 'auto';
-				w.addEventListener('pointerdown', go);
-				setTimeout(go, 2500);
-			});
-			w.style.pointerEvents = 'none';
-		} else await sleep(450);
-		// dilimin ortası işaretçinin altına gelsin
-		const deg = 360 * 5 - ((pick + 0.5) / n) * 360 + (m.R() - 0.5) * (300 / n);
-		spin.style.transform = `rotate(${deg}deg)`;
-		this.app.sfx?.play?.('wheel');
-		await sleep(2350);
-		const key = WHEEL[pick];
-		const c = key === 'fetih' ? FETIH_SLICE : CATS[key];
-		w.querySelector('.fl-wheel-cap').innerHTML = `<span style="color:${c.color}">${esc(c.name)}</span>`;
-		await sleep(700);
-		w.classList.remove('on');
-		await sleep(220);
-		w.style.display = 'none';
-		return key;
+		const jit = m.R() - 0.5;
+		return this.wheelView.spin(m, p, pick, jit);
 	}
 
 	async chooseCategory(m) {
 		if (this.fast) return 'tarih';
-		const w = this.$.wheel;
-		w.innerHTML = `<div class="fl-card"><h3>Kategorini seç</h3><div class="fl-catpick">${Object.entries(CATS)
-			.map(([k, c]) => `<button data-c="${k}" style="background:${c.color}">${icon(c.icon)}${esc(c.name)}</button>`)
-			.join('')}</div></div>`;
-		w.style.display = '';
-		w.style.pointerEvents = 'auto';
-		await sleep(20);
-		w.classList.add('on');
-		const k = await new Promise((res) => {
-			w.onclick = (e) => {
-				const b = e.target.closest('[data-c]');
-				if (b) res(b.dataset.c);
-			};
-		});
-		w.onclick = null;
-		w.classList.remove('on');
-		w.style.pointerEvents = 'none';
-		await sleep(220);
-		w.style.display = 'none';
-		return k;
+		return this.wheelView.choose(Object.keys(CATS));
 	}
 
 	// ---------------------------------------------------------------- bitiş
@@ -416,23 +1057,51 @@ export class UI {
 		m.turn = -1;
 		this.hud(m);
 		if (this.fast) return ranking;
-		const team = !!m.mode.teams;
-		const rows = team
-			? ranking.map((t, k) => `<div><b>${k + 1}</b><i style="background:${t.team ? '#3d7dff' : '#ff4d4d'}"></i><span>${t.players.map((p) => esc(p.name)).join(' & ')}</span><em>${t.score.toLocaleString('tr-TR')}</em></div>`)
-			: ranking.map((p, k) => `<div><b>${k + 1}</b><i style="background:${p.css}"></i><span>${esc(p.name)}</span><em>${p.score.toLocaleString('tr-TR')}</em></div>`);
-		const meWon = team ? ranking[0].players.some((p) => p.human) : ranking[0].human;
-		this.$.end.innerHTML = `<div class="fl-card"><h3>${meWon ? 'ZAFER!' : 'Maç bitti'}</h3>
-			<div class="fl-podium">${rows.join('')}</div>
-			<button class="fl-go" data-x="again">TEKRAR OYNA</button></div>`;
-		this.$.end.classList.remove('off');
-		this.app.sfx?.play?.(meWon ? 'win' : 'lose');
-		await new Promise((res) => {
-			this.$.end.onclick = (e) => {
-				if (e.target.closest('[data-x]')) res();
-			};
-		});
-		this.$.end.classList.add('off');
-		this.showMenu();
+		this.$.hud.classList.add('off');
+		const act = await showEnd(this, m, ranking);
+		if (act === 'again' && this.lastCfg) setTimeout(() => this.startMatch(this.lastCfg), 0);
+		else this.showMenu();
 		return ranking;
+	}
+
+	// ---------------------------------------------------------------- sıfırlama ve geliştirme
+
+	/** Açık her şeyi kapat (maçtan çıkış, ekran görüntüsü sahneleri). */
+	reset() {
+		this._gen++;
+		try {
+			this._cancel?.();
+		} catch (e) {
+			/* yoksay */
+		}
+		this._cancel = null;
+		const $ = this.$;
+		$.q.className = 'fl-q';
+		$.q.innerHTML = '';
+		$.wheel.classList.remove('on', 'pick', 'done', 'spinning', 'fetih');
+		$.wheel.style.display = 'none';
+		$.wheel.style.pointerEvents = 'none';
+		$.wheel.querySelector('.fl-catpick')?.remove();
+		$.wheel.querySelector('.fl-wh')?.classList.remove('hide');
+		$.duel.className = 'fl-duel';
+		$.duel.innerHTML = '';
+		$.banner.className = 'fl-banner';
+		$.rank.classList.remove('on');
+		$.toasts.innerHTML = '';
+		$.fx.innerHTML = '';
+		this.prompt(null);
+		this.setPins([]);
+		this.showLabels([]);
+		for (const mk of this.marks) mk.el.remove();
+		this.marks = [];
+		for (const k of ['menu', 'cmd', 'end', 'title']) $[k].classList.add('off');
+		this.app.onTap = null;
+		this.app.onGround = null;
+		this._pickRes = null;
+		this.current = null;
+	}
+
+	debug(opts) {
+		return debugShot(this, opts);
 	}
 }

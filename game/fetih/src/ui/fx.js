@@ -19,10 +19,16 @@ export class Fx {
 		return this.low ? Math.ceil(n * 0.5) : n;
 	}
 
+	_org() {
+		const r = this.layer.getBoundingClientRect();
+		this._ox = r.left;
+		this._oy = r.top;
+	}
+
 	_add(cls, x, y, style, life) {
 		const e = document.createElement('i');
 		e.className = cls;
-		e.style.cssText = `left:${x}px;top:${y}px;${style}`;
+		e.style.cssText = `left:${(x - this._ox).toFixed(1)}px;top:${(y - this._oy).toFixed(1)}px;${style}`;
 		this.layer.appendChild(e);
 		setTimeout(() => e.remove(), life + 60);
 		return e;
@@ -31,6 +37,7 @@ export class Fx {
 	/** Bir noktadan dışa kıvılcım/yıldız patlaması. */
 	burst(x, y, { n = 14, colors = PALETTE, dist = 90, life = 750, size = 10, kind = 'spark', up = 0 } = {}) {
 		const k = this._n(n);
+		this._org();
 		for (let i = 0; i < k; i++) {
 			const a = (i / k) * Math.PI * 2 + Math.random() * 0.6;
 			const d = dist * (0.55 + Math.random() * 0.6);
@@ -51,11 +58,13 @@ export class Fx {
 	/** Genişleyen şok halkası. */
 	ring(x, y, { color = '#fff', size = 160, life = 600 } = {}) {
 		if (this.rm) return;
+		this._org();
 		this._add('fl-ring', x, y, `--s:${size}px;--c:${color};animation-duration:${life}ms`, life);
 	}
 
 	/** Uçan yazı (+200, DOĞRU! …). */
 	text(x, y, html, { cls = '', life = 1100 } = {}) {
+		this._org();
 		const e = this._add(`fl-ftxt ${cls}`, x, y, `animation-duration:${life}ms`, life);
 		e.innerHTML = html;
 		return e;
@@ -65,15 +74,17 @@ export class Fx {
 	confetti(w, { n = 40, life = 2600 } = {}) {
 		const k = this._n(n);
 		const cs = ['#ffd25a', '#ff5a4a', '#4a8cff', '#5fd35a', '#b45bff', '#ffffff'];
+		this._org();
+		const ox = this._ox;
 		for (let i = 0; i < k; i++) {
-			const x = Math.random() * w;
+			const x = ox + Math.random() * w;
 			const dx = (Math.random() - 0.5) * 160;
 			const dy = 500 + Math.random() * 500;
 			const l = life * (0.7 + Math.random() * 0.5);
 			this._add(
 				'fl-p conf',
 				x,
-				-20,
+				this._oy - 20,
 				`--dx:${dx.toFixed(0)}px;--dy:${dy.toFixed(0)}px;--r:${Math.round(360 + Math.random() * 720)}deg;--s:${(7 + Math.random() * 7).toFixed(1)}px;--c:${cs[i % cs.length]};animation-duration:${l.toFixed(0)}ms;animation-delay:${(Math.random() * 600).toFixed(0)}ms`,
 				l + 600,
 			);

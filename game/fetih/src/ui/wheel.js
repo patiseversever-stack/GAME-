@@ -174,6 +174,8 @@ export class WheelView {
 		const S = this.S;
 		const human = !!p.human;
 		const L = ui.look(p);
+		const gen = ui._gen;
+		const live = () => gen === ui._gen;
 		el.classList.remove('done', 'spinning', 'fetih');
 		$.res.className = 'fl-wh-res';
 		$.res.innerHTML = '';
@@ -206,6 +208,7 @@ export class WheelView {
 			});
 			el.style.pointerEvents = 'none';
 		} else await sleep(ui.rm ? 150 : 550);
+		if (!live()) return this.keys[pick];
 		ui.sfx('wheel');
 		el.classList.add('spinning');
 		$.hub.classList.add('go');
@@ -250,10 +253,13 @@ export class WheelView {
 		this.theta = tgt % 360;
 		this._set(this.theta);
 		const key = this.keys[pick];
+		if (!live()) return key;
 		this.result(key, jit * 0.7 * S, p);
 		await sleep(ui.rm ? 500 : key === 'fetih' ? 1350 : 1150);
+		if (!live()) return key;
 		el.classList.remove('on');
 		await sleep(230);
+		if (!live()) return key;
 		el.style.display = 'none';
 		$.hub.classList.remove('go');
 		return key;
@@ -284,7 +290,8 @@ export class WheelView {
 	}
 
 	_anim(ms, fn) {
-		return new Promise((res) => this.ui.fx.tween(ms, fn, res));
+		const g = this.ui._gen;
+		return new Promise((res) => this.ui.fx.tween(ms, (k) => g === this.ui._gen && fn(k), res));
 	}
 
 	/** "Fetih!" dilimi: oyuncu kategorisini seçer. */

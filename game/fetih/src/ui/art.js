@@ -325,16 +325,22 @@ export function regionSymbols(provinces) {
 		}
 		(byRegion[p.region] = byRegion[p.region] || []).push(d);
 	}
-	const vb = `${(x0 - 1).toFixed(1)} ${(y0 - 1).toFixed(1)} ${(x1 - x0 + 2).toFixed(1)} ${(y1 - y0 + 2).toFixed(1)}`;
+	const W = (x1 - x0 + 2).toFixed(1);
+	const H = (y1 - y0 + 2).toFixed(1);
+	const real = `${(x0 - 1).toFixed(1)} ${(y0 - 1).toFixed(1)} ${W} ${H}`;
+	// semboller gerçek koordinatta; kullanan SVG 0 0 W H kutusuyla bakar (use x/y 0'dan başlar)
 	const sym = Object.entries(byRegion)
-		.map(([k, ds]) => `<symbol id="fl-rg-${k}" viewBox="${vb}"><path d="${ds.join('')}"/></symbol>`)
+		.map(([k, ds]) => `<symbol id="fl-rg-${k}" viewBox="${real}"><path d="${ds.join('')}"/></symbol>`)
 		.join('');
-	const all = `<symbol id="fl-rg-all" viewBox="${vb}">${Object.keys(byRegion)
-		.map((k) => `<use href="#fl-rg-${k}"/>`)
+	const all = `<symbol id="fl-rg-all" viewBox="0 0 ${W} ${H}">${Object.keys(byRegion)
+		.map((k) => `<use href="#fl-rg-${k}" width="${W}" height="${H}"/>`)
 		.join('')}</symbol>`;
-	return { svg: `<svg width="0" height="0" style="position:absolute" aria-hidden="true">${sym}${all}</svg>`, keys: Object.keys(byRegion), vb };
+	return { svg: `<svg width="0" height="0" style="position:absolute" aria-hidden="true">${sym}${all}</svg>`, keys: Object.keys(byRegion), vb: `0 0 ${W} ${H}`, W, H };
 }
 
 /** Türkiye silüeti üstünde bölgesi parlayan mini harita. */
-export const regionMap = (key, vb) =>
-	`<svg class="fl-mm" viewBox="${vb}"><use href="#fl-rg-all" class="base"/>${key === 'all' ? '<use href="#fl-rg-all" class="hi"/>' : key === 'random' ? '' : `<use href="#fl-rg-${key}" class="hi"/>`}</svg>`;
+export const regionMap = (key, vb) => {
+	const [, , W, H] = vb.split(' ');
+	const u = (id, cls) => `<use href="#fl-rg-${id}" class="${cls}" width="${W}" height="${H}"/>`;
+	return `<svg class="fl-mm" viewBox="${vb}">${u('all', 'base')}${key === 'all' ? u('all', 'hi') : key === 'random' ? '' : u(key, 'hi')}</svg>`;
+};

@@ -90,14 +90,14 @@ export const CSS_Q = /* css */ `
 .fl-qvs span{margin-top:3px;max-width:96px;padding:1px 7px 2px;border-radius:7px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#c42a1a;border:1.5px solid #fff}
 
 /* sonuç damgası */
-.fl-stamp{position:absolute;left:50%;top:44%;z-index:5;transform:translate(-50%,-50%) rotate(-8deg);pointer-events:none;opacity:0;white-space:nowrap;
+.fl-stamp{position:absolute;left:50%;top:-18px;z-index:5;transform:translate(-50%,-100%) rotate(-6deg);pointer-events:none;opacity:0;white-space:nowrap;
   font-family:'Lilita One';font-size:min(13vw,52px);letter-spacing:.02em;padding:2px 22px 6px;border-radius:18px;border:4px solid #fff;color:#fff;background:var(--sc,#2fa84a);box-shadow:0 6px 0 var(--sd,#16661f),0 12px 26px rgba(0,0,0,.4);${OUT('var(--sd,#16661f)', 2.5)}}
 .fl-stamp.on{animation:flStamp .45s cubic-bezier(.3,1.7,.5,1) forwards}
 .fl-stamp.bad{--sc:#e53a2a;--sd:#7a120a}
 .fl-stamp.warn{--sc:#ff8a2a;--sd:#8a3a00}
 .fl-stamp.gold{--sc:#f5b324;--sd:#7a4a06}
 .fl-stamp small{display:block;margin-top:-4px;font-family:'Fredoka';font-weight:600;font-size:15px;letter-spacing:0;text-align:center;text-shadow:none}
-@keyframes flStamp{0%{opacity:0;transform:translate(-50%,-50%) rotate(-8deg) scale(2.6)}60%{opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(.92)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-8deg) scale(1)}}
+@keyframes flStamp{0%{opacity:0;transform:translate(-50%,-100%) rotate(-6deg) scale(2.4)}60%{opacity:1;transform:translate(-50%,-100%) rotate(-6deg) scale(.92)}100%{opacity:1;transform:translate(-50%,-100%) rotate(-6deg) scale(1)}}
 
 /* haritalı soru: kart üst çubuğa iner, harita tamamen dokunulabilir */
 .fl-q.map{top:calc(66px + var(--sat));bottom:auto;transform:translate(-50%,-40px)}
@@ -110,7 +110,8 @@ export const CSS_Q = /* css */ `
 .fl-q.map .fl-tbar{margin:6px 2px 8px;height:7px}
 .fl-q.map .fl-qtext{min-height:0;padding:7px 10px 8px;font-size:clamp(16px,4.4vw,19px)}
 .fl-q.map .fl-qbody{margin-top:8px}
-.fl-q.map .fl-stamp{top:120%}
+.fl-q.map .fl-stamp{top:auto;bottom:-24px;transform:translate(-50%,100%) rotate(-6deg);animation-name:flStampB}
+@keyframes flStampB{0%{opacity:0;transform:translate(-50%,100%) rotate(-6deg) scale(2.4)}60%{opacity:1;transform:translate(-50%,100%) rotate(-6deg) scale(.92)}100%{opacity:1;transform:translate(-50%,100%) rotate(-6deg) scale(1)}}
 
 /* ---------------------------------------------------------------- şıklar */
 .fl-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px 9px}
