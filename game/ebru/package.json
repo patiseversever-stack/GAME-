@@ -1,0 +1,21 @@
+{
+  "name": "ebru",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Ebru: suyun üstünde akan boyalarla oynanan mobil oyun. Tek dosya HTML, WebGL2.",
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "dev": "node build.mjs --dev",
+    "shot": "node tools/shot.mjs"
+  },
+  "dependencies": {
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.0",
+    "@fontsource/cormorant-garamond": "5.1.0",
+    "@fontsource/manrope": "5.1.0",
+    "playwright-core": "1.56.1"
+  }
+}
