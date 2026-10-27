@@ -140,7 +140,7 @@ export async function debugShot(ui, o = {}) {
 	if (show === 'wheel') {
 		const sp = o.human ? p : d;
 		ui.wheel(m, sp);
-		if (o.human) {
+		if (o.human && o.tap !== false) {
 			await sleep(o.tapAt ?? 700);
 			ui.$.wheel.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true }));
 		}

@@ -110,8 +110,8 @@ export const CSS_Q = /* css */ `
 .fl-q.map .fl-tbar{margin:6px 2px 8px;height:7px}
 .fl-q.map .fl-qtext{min-height:0;padding:7px 10px 8px;font-size:clamp(16px,4.4vw,19px)}
 .fl-q.map .fl-qbody{margin-top:8px}
-.fl-q.map .fl-stamp{top:auto;bottom:-24px;transform:translate(-50%,100%) rotate(-6deg);animation-name:flStampB}
-@keyframes flStampB{0%{opacity:0;transform:translate(-50%,100%) rotate(-6deg) scale(2.4)}60%{opacity:1;transform:translate(-50%,100%) rotate(-6deg) scale(.92)}100%{opacity:1;transform:translate(-50%,100%) rotate(-6deg) scale(1)}}
+.fl-q.map .fl-stamp{top:calc(100vh - 150px - var(--sat) - var(--sab));font-size:min(10vw,40px);animation-name:flStampB}
+@keyframes flStampB{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(2.4)}60%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(.92)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}}
 
 /* ---------------------------------------------------------------- şıklar */
 .fl-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px 9px}
@@ -275,7 +275,7 @@ export const CSS_Q = /* css */ `
 .fl-cr em small{display:block;font-family:'Fredoka';font-size:11px;color:#cfe0ff}
 .fl-cr.win{border-color:var(--gold);background:linear-gradient(90deg,rgba(255,210,90,.28),var(--ink) 70%)}
 .fl-cr.win .rk{color:var(--gold)}
-.fl-cr .tag{position:absolute;right:8px;top:-9px;padding:0 7px;border-radius:7px;font-family:'Lilita One';font-size:11px;letter-spacing:.06em;line-height:16px;color:#4a2800;background:var(--gold);border:1.5px solid #fff;animation:flPopIn .35s .9s both}
+.fl-cr .tag{display:inline-block;vertical-align:2px;margin-left:6px;padding:0 6px;border-radius:7px;font-family:'Lilita One';font-size:11px;letter-spacing:.06em;line-height:16px;color:#4a2800;background:var(--gold);border:1.5px solid #fff;animation:flPopIn .35s .9s both}
 @keyframes flRowIn{from{opacity:0;transform:translateX(-18px)}}
 .fl-q.map .fl-close{gap:5px}
 .fl-q.map .fl-cr{padding:3px 8px 3px 5px}
@@ -283,7 +283,7 @@ export const CSS_Q = /* css */ `
 /* ---------------------------------------------------------------- jokerler */
 .fl-jk{display:flex;justify-content:center;gap:10px;margin-top:12px}
 .fl-jk:empty{display:none}
-.fl-jkb{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:62px;padding:5px 2px 4px;border-radius:14px;font-size:10.5px;line-height:1.1;letter-spacing:.02em;
+.fl-jkb{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:70px;padding:5px 2px 5px;border-radius:14px;font-size:12px;line-height:1.1;letter-spacing:.02em;
   background:linear-gradient(#7a4ad8,#4a2a9a);border:2.5px solid #fff;box-shadow:0 4px 0 #2a1460;transition:transform .08s,opacity .2s}
 .fl-jkb:active{transform:translateY(3px);box-shadow:0 1px 0 #2a1460}
 .fl-jkb .ji{width:26px;height:26px;font-size:22px;display:grid;place-items:center}
@@ -307,5 +307,18 @@ ${LAND}{
   .fl-q.map{top:calc(6px + var(--sat));transform:translate(0,-30px);width:min(46vw,440px)}
   .fl-q.map.on{transform:none}
   .fl-jk{margin-top:8px}
+  .fl-stamp{left:auto;right:calc(100% + 18px);top:50%;transform:translate(0,-50%) rotate(-6deg);font-size:min(6vw,44px)}
+  .fl-stamp.on{animation-name:flStampL}
+  .fl-q.map .fl-stamp{top:calc(100vh - 110px);right:auto;left:50%;animation-name:flStampB}
+  .fl-q.kc.rv:not(.map) .fl-qtext{display:none}
+  .fl-q.kc.rv .fl-qbody{margin-top:6px}
+  .fl-ans{padding:3px 10px 5px}
+  .fl-ans b{font-size:28px}
+  .fl-nline{height:50px}
+  .fl-nline .trk{top:30px}.fl-nline .seg{top:31px}.fl-nline .gl{top:18px;height:26px}.fl-nline .tk{top:40px}
+  .fl-nline .mk{width:26px;height:26px;margin-left:-13px}
+  .fl-cr{padding:3px 8px 3px 5px}
+  .fl-cr .fl-av{width:26px;height:26px}
 }
+@keyframes flStampL{0%{opacity:0;transform:translate(0,-50%) rotate(-6deg) scale(2.2)}60%{opacity:1;transform:translate(0,-50%) rotate(-6deg) scale(.92)}100%{opacity:1;transform:translate(0,-50%) rotate(-6deg) scale(1)}}
 `;

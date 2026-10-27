@@ -516,8 +516,8 @@ export class UI {
 		const whoHTML = duel
 			? `${plate(ctx.attacker, 'a', 'SALDIRAN')}<div class="fl-qvs"><b>VS</b>${prov ? `<span>${esc(prov.name)}</span>` : ''}</div>${plate(ctx.defender, 'd', siege ? 'KALE' : 'SAVUNAN')}`
 			: who.map((p) => plate(p, '', '')).join('');
-		const rule = tie ? 'Eşitlik bozma · en yakın kazanır' : closest ? 'En yakın kazanır' : '';
-		card.className = `fl-q${map ? ' map' : ''}${human ? '' : ' spec'}`;
+		const rule = tie ? 'Eşitlik bozma' : closest ? 'En yakın kazanır' : '';
+		card.className = `fl-q${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}`;
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));
 		card.style.setProperty('--me', human ? avatarURL(this.look(human)) : 'none');
@@ -565,7 +565,9 @@ export class UI {
 		this._enhance(body, v);
 		this._renderJokers();
 		if (map) {
-			app.cam.fit(app.boundsOf(app.board.provinces.map((p) => p.index)), { pitch: 1.05 });
+			const bb = app.boundsOf(app.board.provinces.map((p) => p.index));
+			if (!(innerWidth > innerHeight && innerHeight < 560)) bb.z0 -= (bb.z1 - bb.z0) * 0.5;
+			app.cam.fit(bb, { pitch: 1.05 });
 			app.onGround = (pt) => tapHandler?.(pt);
 		}
 		await sleep(20);
@@ -745,7 +747,7 @@ export class UI {
 				else this.stamp(`${rank + 1}. SIRADASIN`, 'bad', `${order[0].name} daha yakın`);
 				this.sfx(rank === 0 ? 'right' : 'wrong');
 			} else {
-				this.stamp(me.correct ? 'DOĞRU!' : me.value == null ? 'SÜRE DOLDU' : 'YANLIŞ!', me.correct ? '' : me.value == null ? 'warn' : 'bad');
+				this.stamp(me.correct ? 'BİLDİN!' : me.value == null ? 'SÜRE DOLDU' : 'BİLEMEDİN', me.correct ? '' : me.value == null ? 'warn' : 'bad');
 				this.sfx(me.correct ? 'right' : 'wrong');
 			}
 			if (me.correct || (closest && order[0] === me)) {
@@ -832,7 +834,9 @@ export class UI {
 				segs += `<i class="seg" style="--a:${Math.min(ax, x).toFixed(4)};--b:${Math.max(ax, x).toFixed(4)};--c:${r.color};--o:${x < ax ? '100%' : '0%'}"></i>`;
 				mks += `<b class="mk" style="--x:${x.toFixed(4)};--c:${r.color};--k:${k}">${avatar({ ...this.look(r.p), img: null })}</b>`;
 			});
-			html += `<div class="fl-nline"><i class="trk"></i>${segs}<i class="gl" style="--x:${ax.toFixed(4)}"></i>${mks}<span class="tk" style="left:0">${fmt(lo)}</span><span class="tk" style="left:100%">${fmt(hi)}</span></div>`;
+			const span = hi - lo;
+			const tick = (x) => (yr ? String(Math.round(x)) : (span >= 20 ? Math.round(x) : Math.round(x * 10) / 10).toLocaleString('tr-TR'));
+			html += `<div class="fl-nline"><i class="trk"></i>${segs}<i class="gl" style="--x:${ax.toFixed(4)}"></i>${mks}<span class="tk" style="left:0">${tick(lo)}</span><span class="tk" style="left:100%">${tick(hi)}</span></div>`;
 		}
 		const fin = order.filter((r) => Number.isFinite(r.err));
 		const maxErr = Math.max(0, ...fin.map((r) => r.err));
@@ -844,7 +848,7 @@ export class UI {
 				const sub = !ok ? 'cevap yok' : map ? (r.correct ? 'tam isabet' : 'uzaklık') : r.err === 0 ? 'tam isabet' : `fark ${fmt(r.err)}`;
 				const tag = k === 0 && ok ? `<span class="tag">${r.err === 0 || (map && r.correct) ? 'TAM İSABET' : 'EN YAKIN'}</span>` : '';
 				return `<div class="fl-cr ${k === 0 && ok ? 'win' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span>
-					<span class="nm"><b>${esc(r.name)}</b><i class="bar"><u style="--w:${w.toFixed(3)}"></u></i></span><em>${val}<small>${sub}</small></em>${tag}</div>`;
+					<span class="nm"><b>${esc(r.name)}${tag}</b><i class="bar"><u style="--w:${w.toFixed(3)}"></u></i></span><em>${val}<small>${sub}</small></em></div>`;
 			})
 			.join('');
 		body.innerHTML = `<div class="fl-close">${html}<div class="fl-crs">${rows}</div></div>`;
@@ -870,6 +874,8 @@ export class UI {
 		const xs = [tg.x, ...results.filter((r) => r.value).map((r) => r.value.x)];
 		const zs = [tg.z, ...results.filter((r) => r.value).map((r) => r.value.z)];
 		const b = { x0: Math.min(...xs) - 6, x1: Math.max(...xs) + 6, z0: Math.min(...zs) - 5, z1: Math.max(...zs) + 9 };
+		if (!(innerWidth > innerHeight && innerHeight < 560)) b.z0 -= (b.z1 - b.z0) * 0.6;
+		else b.x1 += (b.x1 - b.x0) * 0.8;
 		try {
 			app.cam.fit(b, { pitch: 1.0 });
 		} catch (e) {

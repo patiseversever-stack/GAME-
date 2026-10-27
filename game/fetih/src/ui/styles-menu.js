@@ -199,7 +199,7 @@ ${LAND}{
   .fl-mtop,.fl-mfoot{max-width:900px}
   .fl-mtop{padding-top:calc(6px + var(--sat));padding-bottom:4px}
   .fl-mtop h2{font-size:24px}
-  .fl-mbody section{margin-top:6px}
+  .fl-mbody section{margin-top:6px;min-width:0}
   .fl-modes{grid-template-columns:repeat(4,1fr);gap:7px}
   .fl-mode .art{height:52px}
   .fl-mode .h{width:30px;height:30px;border-radius:9px}

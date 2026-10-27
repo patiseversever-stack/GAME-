@@ -115,17 +115,18 @@ const BASE = /* css */ `
 @keyframes flToastOut{to{opacity:0;transform:translateY(-12px) scale(.95)}}
 
 /* ---------------------------------------------------------------- il seçimi ipucu */
-.fl-prompt{position:absolute;left:50%;bottom:calc(16px + var(--sab));display:flex;align-items:center;gap:12px;max-width:calc(100vw - 24px);padding:10px 20px 12px 12px;border-radius:20px;
-  background:var(--panel);border:3px solid var(--pt,var(--gold));box-shadow:0 6px 0 var(--navy-d),0 12px 20px rgba(0,0,0,.35);opacity:0;transform:translate(-50%,30px) scale(.9);transition:opacity .25s,transform .3s cubic-bezier(.3,1.5,.5,1)}
-.fl-prompt.on{opacity:1;transform:translate(-50%,0)}
+.fl-prompt{position:absolute;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(16px + var(--sab));display:flex;align-items:center;gap:12px;max-width:calc(100% - 24px);padding:10px 20px 12px 12px;border-radius:20px;
+  background:var(--panel);border:3px solid var(--pt,var(--gold));box-shadow:0 6px 0 var(--navy-d),0 12px 20px rgba(0,0,0,.35);opacity:0;transform:translateY(30px) scale(.9);transition:opacity .25s,transform .3s cubic-bezier(.3,1.5,.5,1)}
+.fl-prompt.on{opacity:1;transform:none}
 .fl-prompt.red{--pt:#ff6a4a}
 .fl-prompt .pi{flex:none;width:50px;height:50px;border-radius:15px;display:grid;place-items:center;font-size:32px;background:linear-gradient(var(--gold),#e8980e);border:3px solid #fff;box-shadow:0 4px 0 var(--gold-dd)}
 .fl-prompt.red .pi{background:linear-gradient(#ff7d5c,#d8341f);box-shadow:0 4px 0 #6a1206}
 .fl-prompt .pi .fl-i{animation:flTap 1.2s ease-in-out infinite}
-.fl-prompt .pt b{display:block;font-family:'Lilita One';font-weight:400;font-size:clamp(19px,5.4vw,24px);line-height:1.05;letter-spacing:.02em;color:#fff}
+.fl-prompt .pt{min-width:0}
+.fl-prompt .pt b{display:block;white-space:nowrap;font-family:'Lilita One';font-weight:400;font-size:clamp(19px,5.4vw,24px);line-height:1.05;letter-spacing:.02em;color:#fff}
 .fl-prompt .pt small{display:block;margin-top:3px;font-size:14px;line-height:1.2;color:#cfe0ff}
 .fl-prompt.shake{animation:flShakeP .4s}
-@keyframes flShakeP{0%,100%{transform:translate(-50%,0)}20%{transform:translate(calc(-50% - 10px),0)}40%{transform:translate(calc(-50% + 9px),0)}60%{transform:translate(calc(-50% - 6px),0)}80%{transform:translate(calc(-50% + 4px),0)}}
+@keyframes flShakeP{0%,100%{transform:none}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
 @keyframes flTap{0%,100%{transform:translateY(0)}40%{transform:translateY(4px) scale(.92)}60%{transform:translateY(4px) scale(.92)}}
 
 /* ---------------------------------------------------------------- harita üstü: etiketler, iğneler, çizgiler */
