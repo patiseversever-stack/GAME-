@@ -62,7 +62,7 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 | Arayüz (bitti) | Düello sahnesi, yeni soru kartı, çark, HUD, faz afişleri, menüler, komutan seçimi, bitiş kürsüsü, dikey + yatay. Türkçe harf düzeltmesi (`src/ui/trglyphs.js`). |
 | Bağlama (bitti) | Fetihte boya dalgası ortak sınırdan; maç dışı iller kararır; kale araziye oturur. 1'e 1 maç baştan sona hatasız (133 sn). |
 | İçerik (bitti) | `src/data/q/`: 1.000 doğrulanmış soru (tarih 180, coğrafya 200, spor 140, bilim 160, sanat 140, genel kültür 180). `src/data/bank.js` ile oyuna bağlı; şimdilik yalnız tanımlı tipler (choice, tf, num, pin, hang ≈ 750 soru) çıkar, diğer tipler soru tipleri birleşince açılır. |
-| Sinema/efekt | Başlanmadı (ordu yürüyüşü, mancınık, kule enkazı, havai fişek, açılış uçuşu). |
+| Sinema/efekt (bitti) | Açılış uçuşu, ordu yürüyüşü, mancınık ve ateşli ok, kule yıkımı, fetih patlaması ve sancak, kalkan, kale çöküşü, zafer havai fişeği. `src/gfx/fx.js` (boşta 0, en çok 6 çağrı). Bilinen: başsız testte `castleDrop` yavaş (kare süresine bağlı), telefonda denenmedi. |
 | Soru tipleri (yarım, birleştirilmedi) | Dal `worktree-agent-af31e996c3a1eb880`: order, match, hilo, odd, emoji, proverb, riddle, anagram, cross, img, blitz, `TYPE_WEIGHTS`. Örnek soru ve test yok. |
 | Oynanış (yarım, birleştirilmedi) | Dal `worktree-agent-a35eedab62b33d177`: komutanlar, jokerler, ilerleme, soru bankası, sefer, ağ katmanı. `sim.mjs` ve denge yok. |
 | Ses (yarım, birleştirilmedi) | Dal `worktree-agent-ad6d837d89d36b9d7`: WebAudio motoru, makam müziği, efektler. `ASSETS.md` yazılmadı. |
@@ -90,8 +90,8 @@ yenisini başlat. Görsel işler Opus high, diğerleri Sonnet high.
    yaklaştıkça önem ve ekran boyuna göre artar, asla çakışmaz, yumuşak geçiş. Seçimde yalnız seçilebilirler,
    saldırıda yalnız saldıran ve hedef.
 
-Bu dört iş sinema ajanına verildi (dal `worktree-agent-a984ef4b5f136efd8`). Yeni oturumda bu dal birleştirilmemişse
-bu işleri yeniden yap. Gündönümü referansı: `game/Gundonumu.html` (varsa).
+**Durum: dördü de yapıldı ve birleştirildi** (`board.night()`, akıllı `showLabels('all')`, yeni oyuncu renkleri).
+Kullanıcı telefonda deneyip geri bildirim verecek; ona göre ince ayar yapılacak. Gündönümü referansı: `game/Gundonumu.html` (varsa).
 
 ## Sıradaki büyük iş (v0.2: "milyon dolarlık" geçiş)
 
