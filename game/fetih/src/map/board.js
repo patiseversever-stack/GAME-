@@ -26,6 +26,7 @@ import { bakeFields, FIELD_BOX, RB, RC, RL } from './fields.js';
 import { Labels } from './labels.js';
 import { Castle } from './castle.js';
 import { Clouds, CloudFrame } from '../gfx/clouds.js';
+import { Cues } from './cues.js';
 
 export const REGIONS = {
 	marmara: { name: 'Marmara', color: 0x8fd16a },
@@ -86,6 +87,7 @@ uniform sampler2D uWater;
 uniform sampler2D uNoise;
 uniform vec4 uFBox;
 uniform vec2 uFRes;
+uniform float uMe; // insan oyuncunun kimliği (gecede kendi toprağı biraz daha okunur)
 varying vec3 vW;
 varying vec3 vN;
 varying vec4 vBio;
@@ -243,9 +245,9 @@ void main() {
 
 	float sh = shadowAt(vW, N);
 	// gece odağı: seçilebilir il (ve komşuya taşan hale) gündüz ışığında kalır
-	float hw = max(0.3, 7.0 * px);
+	float hw = max(0.2, 5.0 * px);
 	float halo = (1.0 - sel) * nbSel * exp(-d / hw) * uSelOn;
-	gLit = max(sel, halo * 0.8);
+	gLit = sel; // hale komşuyu aydınlatmaz: yalnızca seçilebilir il ışıkta
 	float nk = nightK();
 	vec3 c;
 	if (water > 0.01) {
@@ -268,9 +270,9 @@ void main() {
 			// gece gölü: gök aynası, yıldızlar, ay parıltısı
 			vec3 R = reflect(-V, WN);
 			R.y = abs(R.y);
-			vec3 nw = mix(wc * vec3(0.05, 0.06, 0.16), nightSky(R) + starField(normalize(vec3(R.x, R.y * 1.02, R.z))) * 0.8, 0.7);
+			vec3 nw = mix(wc * vec3(0.02, 0.03, 0.06), nightSky(R) + starField(normalize(vec3(R.x, R.y * 1.02, R.z))) * 0.5, 0.7);
 			nw += vec3(0.85, 0.82, 1.0) * pow(max(dot(R, N_MOON), 0.0), 220.0) * 2.5;
-			nw = mix(nw, vec3(0.08, 0.16, 0.3), lineAA(abs(sd), 0.018 + lpx, lpx) * lake * 0.3);
+			nw = mix(nw, vec3(0.04, 0.07, 0.12), lineAA(abs(sd), 0.018 + lpx, lpx) * lake * 0.3);
 			wcol = mix(wcol, nw, nk);
 		}
 		vec3 lc = shade(alb, N, V, ao, sh, gloss, 0.35);
@@ -280,10 +282,14 @@ void main() {
 	}
 
 	// gece: sahiplerin sınırları kendi renginde ışır (karanlıkta toprak okunur)
-	if (nk > 0.001) c += ownCol * (band * 0.7 + inner * 0.07) * nk * (skirt ? 0.4 : 1.0);
+	// (sakin: başkalarınınki ince, oyuncunun kendi toprağı biraz daha belirgin)
+	if (nk > 0.001) {
+		float mine = abs(ownerId - uMe) < 0.5 ? 1.0 : 0.0;
+		c += ownCol * (band * mix(0.28, 0.55, mine) + inner * mix(0.02, 0.06, mine)) * nk * (skirt ? 0.4 : 1.0);
+	}
 	// --- seçim: altın dış hat, iç ışıltı, komşuya taşan hale
-	vec3 gold = vec3(1.0, 0.56, 0.04);
-	float wSel = max(0.11, 3.6 * px);
+	vec3 gold = vec3(1.0, 0.58, 0.06);
+	float wSel = max(0.13, 4.2 * px);
 	float selBand = lineAA(d, wSel, px) * sel;
 	float selCore = lineAA(d, wSel * 0.45, px) * sel;
 	float selIn = exp(-d / 0.55) * sel;
@@ -298,7 +304,7 @@ void main() {
 	c = mix(c, mix(vec3(1.0, 0.96, 0.82), vec3(1.0, 0.8, 0.42), uNight.x) * (1.6 + 0.6 * pulse), selCore * bk * mix(0.8, 0.6, uNight.x));
 	// iç ışıltı: hafif altın (karışım yok: mavi il altınla soluklaşıp beyaza yanmasın)
 	c += gold * selIn * sp * 0.16 * pulse;
-	c += gold * halo * sp * 0.9 * (0.55 + 0.45 * pulse);
+	c += gold * halo * sp * mix(0.9, 0.55, uNight.x) * (0.55 + 0.45 * pulse);
 	// eski parlama (fx): nabız gibi ışır (gecede ve havuz dışında kısık: hedef il patlamasın)
 	vec3 gcol = ownedK > 0.5 ? ownCol * 1.4 + 0.1 : vec3(1.0, 0.88, 0.55);
 	c += gcol * glow * sp * (1.0 - 0.5 * uNight.x) * (0.35 + 0.35 * sin(uTime * 6.0 + vPid * 0.7)) * (0.35 + lineAA(d, wSel, px) * 0.9);
@@ -306,7 +312,7 @@ void main() {
 	c += (ownCol * 1.8 + vec3(0.9)) * rim * (skirt ? 0.3 : 1.0);
 
 	// seçim kipi ve maç dışı iller sönük
-	c = provDim(c, max(sel, halo * 0.8), vFx.w);
+	c = provDim(c, sel, vFx.w);
 #if TIER > 0
 	// bulut gölgeleri
 	float cs = smoothstep(0.58, 0.82, texture(uNoise, vW.xz / 160.0 + uTime * vec2(0.0019, 0.0008)).a);
@@ -431,17 +437,17 @@ void main() {
 		R.y = abs(R.y);
 		vec3 Rc = reflect(-V, normalize(vec3(-g.x * 0.06, 1.0, -g.y * 0.06)));
 		Rc.y = abs(Rc.y);
-		vec3 body = mix(vec3(0.004, 0.005, 0.03), vec3(0.008, 0.03, 0.06), smoothstep(2.2, 0.3, dist));
-		float fr = 0.5 + 0.4 * pow(1.0 - ndv, 3.0);
+		vec3 body = mix(vec3(0.001, 0.0016, 0.005), vec3(0.002, 0.006, 0.012), smoothstep(2.2, 0.3, dist));
+		float fr = 0.35 + 0.4 * pow(1.0 - ndv, 3.0);
 		vec3 n = mix(body, nightSky(Rc) * 0.8, fr);
 		// yıldızlar sisten sonra eklenir (uzak denizde de seçilsin)
-		stars = starField(Rc) * fr * 2.2 * uNight.x;
+		stars = starField(Rc) * fr * 0.4 * uNight.x;
 		// ay yolu: sakin yüzeyde geniş yumuşak ışık, dalgacıklarda pırıltı
 		float mc = max(dot(Rc, N_MOON), 0.0);
-		n += vec3(0.32, 0.3, 0.7) * pow(mc, 14.0) * 0.35;
+		n += vec3(0.16, 0.2, 0.34) * pow(mc, 14.0) * 0.3;
 		float m = max(dot(R, N_MOON), 0.0);
-		n += vec3(0.85, 0.82, 1.0) * pow(m, 700.0) * 2.2 * (0.3 + 0.7 * smoothstep(0.6, 0.95, mc));
-		n += vec3(0.12, 0.5, 0.75) * clamp(foam, 0.0, 1.0) * 0.08;
+		n += vec3(0.8, 0.84, 1.0) * pow(m, 700.0) * 1.6 * (0.3 + 0.7 * smoothstep(0.6, 0.95, mc));
+		n += vec3(0.1, 0.16, 0.26) * clamp(foam, 0.0, 1.0) * 0.05;
 		c = mix(c, n, uNight.x);
 		gRelit = 1.0;
 	}
@@ -584,7 +590,8 @@ export class Board {
 		const built = buildBoardGeometry(this.provinces, this.relief, step);
 		this.geoStats = { vertices: built.vertices, triangles: built.triangles };
 		const geo = built.geometry;
-		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn };
+		this.uMe = { value: -5 };
+		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe };
 		this.uniforms = uniforms;
 		this.mat = new THREE.ShaderMaterial({
 			vertexShader: PROV_VS,
@@ -633,6 +640,9 @@ export class Board {
 		this.group.add(this.clouds.mesh);
 		this.cloudFrame = new CloudFrame(G, tier); // gece bulut çerçevesi (ekran kenarı)
 		this.group.add(this.cloudFrame.mesh);
+		// seçim işaretleri: sınırdan hedefe altın oklar ve hedef rozetleri (tek çizim)
+		this.cues = new Cues(G, this);
+		this.group.add(this.cues.mesh);
 	}
 
 	_row(i, r) {
@@ -744,8 +754,11 @@ export class Board {
 	}
 
 	/** Seçilebilir iller: gece odağı; yalnızca bunlar gündüz renginde, kalkık ve altın hatlı. null → gündüz. */
-	select(list) {
+	select(list, { attack = false, me = null } = {}) {
+		if (me != null) this.uMe.value = me;
 		this.night(!!(list && list.length), list);
+		if (list && list.length) this.cues.show(list, me != null ? me : this.uMe.value, { attack });
+		else this.cues.hide();
 	}
 
 	/**
@@ -768,6 +781,7 @@ export class Board {
 	}
 
 	_day() {
+		this.cues.hide();
 		this.selTo.fill(0);
 		this.selOnTo = 0;
 		if (this.nightTo > 0) this.onNight?.(false);
@@ -813,7 +827,8 @@ export class Board {
 			const sw = Math.min(1, Math.max(0, (p - 0.35) / 0.65));
 			nu.w = sw * sw * (3 - 2 * sw);
 			nu.z = this._rising ? 0 : Math.sin(Math.PI * Math.min(1, p * 1.15)) * 0.9 * (p > 0 ? 1 : 0);
-			this.cloudFrame.update(nu.x);
+			this.cloudFrame.update(0); // v0.3: gece bulut çerçevesi kaldırıldı (ucuz duruyordu)
+			this.clouds.mesh.visible = nu.x < 0.995; // tombul bulutlar gecede söner
 		}
 		const k = 1 - Math.exp(-8 * dt);
 		const N = this.count;
@@ -852,6 +867,7 @@ export class Board {
 			}
 		}
 		this.labelLayer.update(dt);
+		this.cues.update(dt);
 		const so = this.uSelOn.value + (this.selOnTo - this.uSelOn.value) * Math.min(1, k * 1.3);
 		this.uSelOn.value = Math.abs(so - this.selOnTo) < 1e-3 ? this.selOnTo : so;
 		if (dirty) this.stateTex.needsUpdate = true;

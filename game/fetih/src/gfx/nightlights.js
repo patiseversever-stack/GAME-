@@ -54,9 +54,9 @@ void main() {
 		if (kind < 0.5) {
 			// pencere: hafif titrek, gündüz ışığındaki (aydınlık) ilde söner
 			a *= (0.78 + 0.22 * sin(t * (0.8 + ph * 2.0) + ph * 40.0)) * (1.0 - sel * 0.9) * (1.0 - dim * 0.3);
-			col = mix(vec3(1.0, 0.5, 0.16), vec3(1.0, 0.8, 0.46), iB.w) * 1.5;
-			px0 = 2.0;
-			px1 = 4.2;
+			col = mix(vec3(1.0, 0.46, 0.14), vec3(1.0, 0.7, 0.36), iB.w) * 1.1;
+			px0 = 1.3;
+			px1 = 2.6;
 			pull = 0.06;
 		} else if (kind < 1.5) {
 			// ışık tozu: süzülür, ağır ağır yükselir, nabız gibi yanıp söner
@@ -65,14 +65,14 @@ void main() {
 			p.z += cos(t * 0.29 + ph * 9.1) * 0.3 + sin(t * 0.71 + ph * 5.0) * 0.06;
 			p.y += rise * 0.9 + sin(t * 0.53 + ph * 4.0) * 0.1;
 			float pulse = 0.3 + 0.7 * pow(0.5 + 0.5 * sin(t * (1.4 + ph * 2.1) + ph * 30.0), 2.0);
-			a *= mix(0.05, 1.0, sel) * pulse * sin(3.14159 * rise) * (1.0 - dim * 0.85);
-			col = mix(vec3(1.0, 0.62, 0.2), vec3(1.0, 0.88, 0.55), iB.w) * 2.4;
-			px0 = 3.4;
-			px1 = 9.0;
+			a *= sel * sel * pulse * sin(3.14159 * rise) * (1.0 - dim); // yalnızca seçilebilir illerin üstünde
+			col = mix(vec3(1.0, 0.55, 0.14), vec3(1.0, 0.78, 0.36), iB.w) * 1.4;
+			px0 = 2.2;
+			px1 = 5.5;
 		} else {
 			// şehir / yapı halesi
 			a *= iB.w * (1.0 - sel * 0.75) * (1.0 - dim * 0.4) * (0.9 + 0.1 * sin(t * 1.3 + ph * 9.0));
-			col = vec3(1.0, 0.52, 0.2) * 0.42;
+			col = vec3(1.0, 0.5, 0.2) * 0.26;
 			p.y += 0.25;
 			pull = iA.w * 0.8;
 		}
@@ -157,8 +157,8 @@ export class NightLights {
 			const pop = POP[p.id] || 300;
 			const k = Math.sqrt(pop / 1000);
 			// şehir: il merkezinin çevresinde yoğun, dışa doğru seyrelen pencereler
-			const nCity = Math.round((6 + 9 * Math.sqrt(pop / 100)) * dens);
-			const sig = 0.18 + 0.36 * k;
+			const nCity = Math.round((2 + 7 * k) * dens); // yalnızca il merkezi: küçük kentte 3–5, metropolde ~25
+			const sig = 0.1 + 0.2 * k;
 			let made = 0;
 			for (let t = 0; t < nCity * 4 && made < nCity; t++) {
 				// gauss benzeri dağılım (iki tekdüze toplamı), merkezde boşluk: kale ve il adı yeri
@@ -172,7 +172,7 @@ export class NightLights {
 			}
 			counts[0] += made;
 			// köyler: il geneline serpilmiş küçük ışık kümeleri (1–3 pencere)
-			const nV = Math.round(p.area * 0.3 * dens);
+			const nV = pop > 900 ? Math.round(Math.min(3, p.area * 0.04) * dens) : 0; // büyük illerde birkaç ilçe
 			for (let v = 0; v < nV; v++) {
 				const s = board.sample(p.index, R, 0.2);
 				if (!s) continue;
@@ -186,20 +186,20 @@ export class NightLights {
 				}
 			}
 			// ışık tozu: her ilde aynı sayıda (seçilebilir her il kendi bulutunu taşısın)
-			const nF = lo ? 14 : tier.id === 1 ? 20 : 26;
+			const nF = lo ? 8 : tier.id === 1 ? 11 : 14;
 			for (let f = 0; f < nF; f++) {
 				const s = board.sample(p.index, R, 0.25) || [p.x, p.z];
 				add(s[0], board.heightAt(s[0], s[1]) + 0.15 + R() * 0.55, s[1], 0.07 + R() * 0.05, 1, p.index, R());
 				counts[1]++;
 			}
 			// şehir halesi
-			add(p.x, board.heightAt(p.x, p.z) + 0.1, p.z, 0.55 + 0.75 * k, 2, p.index, Math.min(0.85, 0.3 + 0.35 * k));
+			add(p.x, board.heightAt(p.x, p.z) + 0.1, p.z, 0.35 + 0.55 * k, 2, p.index, Math.min(0.75, 0.18 + 0.32 * k));
 			counts[2]++;
 		}
 		// ünlü yapılar: sıcak hale + birkaç pencere
 		for (const s of landmarks) {
 			if (s.index == null) continue;
-			add(s.x, s.y + 0.2, s.z, 0.85, 2, s.index, 0.55);
+			add(s.x, s.y + 0.2, s.z, 0.6, 2, s.index, 0.35);
 			counts[2]++;
 		}
 		// kaleler
@@ -208,7 +208,7 @@ export class NightLights {
 			counts[3]++;
 		}
 		// bulut arası ışık: her bulutun altında ve yanında
-		if (clouds?.P) {
+		if (false && clouds?.P) { // v0.3: gece bulutları söner, sızıntı yok
 			const P = clouds.P;
 			for (let i = 0; i < clouds.count; i++) {
 				const s = P[i * 4 + 3];

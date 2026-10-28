@@ -1,9 +1,11 @@
 // İl adları: haritanın üstünde, her zaman okunur 3D yazı katmanı. Tek çizim çağrısı.
 //
-// - Yazılar bir kez tuvale çizilir (yazı atlası). Kanallar: r = dolgu, g = dolgu + kalın kontur.
-//   Shader konturu sahibin koyu rengiyle boyar; g kanalının bulanık mip düzeyi yumuşak gölge/hale verir.
+// - v0.3 tasarımı (Gündönümü tonu): Manrope kalın büyük harf, geniş harf aralığı, ince lacivert hap üstünde
+//   fildişi yazı; solda sahibin renginde küçük nokta (tarafsızda ince halka). Seçimde hap koyulaşır, ince
+//   altın çizgi alır. Atlas kanalları: r = yazı, g = hap, b = hapın iç çizgisi (g'nin mip'i yumuşak gölge).
 // - Her il bir örnek (instance): dünya noktası ekrana izdüşer, yazı ekrana paralel durur (bulanıklaşmaz).
-// - Boyut ölçeğe duyarlı: ilin ekrandaki büyüklüğüyle orantılı, ama piksel olarak alt-üst sınırlı.
+// - Boy sabit (css piksel): her yakınlıkta aynı, sakin. Ekran kenarına taşan ad içeri kıstırılır, asla
+//   kesilmez; ekranın çok dışındaki ad gösterilmez.
 // - 'all' kipinde çakışan yazılar elenir (büyük il ve vurgulu il önce); seçim listesindekiler hep görünür.
 // - Kamera her çizimde onBeforeRender ile gelir: uygulamanın çizim döngüsüne dokunmak gerekmez.
 
@@ -13,6 +15,16 @@ import { PROV } from '../gfx/shaderlib.js';
 // büyük şehirler (plaka): genel bakışta yalnızca bunlar (önem sırasıyla)
 const MAJOR = [34, 6, 35, 16, 7, 42, 1, 61, 25, 21, 65, 55, 27];
 const SECOND = [38, 26, 33, 63, 44, 58, 20, 41, 10, 45, 9, 48, 52, 36, 46, 23];
+
+// Atlas yerleşimi (yazı boyu FS piksel): hücre = ince hap (pill) + kenar payı. Hap yüksekliği, nokta ve
+// yazı başlangıcı hücre yüksekliği cinsinden sabittir (shader bunları bilir).
+const FS_PX = 34;
+const PILL = Math.round(FS_PX * 1.5);
+const MARG = 6;
+const CELL = PILL + MARG * 2;
+const DOT_X = (MARG + PILL * 0.52) / CELL; // sahip noktası merkezi (hücre yüksekliği biriminde, soldan)
+const DOT_R = (FS_PX * 0.2) / CELL;
+const f4 = (v) => v.toFixed(4);
 
 const VS = /* glsl */ `
 ${PROV}
@@ -28,8 +40,10 @@ uniform float uDpr;
 uniform float uPLift;
 uniform float uPSel;
 varying vec2 vUv;
+varying vec2 vQ;    // hücre içi konum: x soldan (hücre yüksekliği birimi), y merkezden
 varying float vA;
 varying float vHi;
+varying float vPx;  // 1 ekran pikseli (hücre yüksekliği birimi)
 varying vec4 vOwn;
 void main() {
 	float pid = iSize.z;
@@ -38,42 +52,64 @@ void main() {
 	vec3 p = iPos;
 	p.y += fx.x * uPLift + fx.z * uPSel;
 	vec4 c = projectionMatrix * viewMatrix * vec4(p, 1.0);
-	// bu derinlikte 1 dünya birimi kaç cihaz pikseli
-	float ppu = uRes.y * projectionMatrix[1][1] * 0.5 / max(c.w, 1e-3);
 	float hi = iState.y;
-	// sade ve tutarlı boy: genel bakışta küçük, seçimde okunur
-	float minPx = mix(10.0, 15.0, hi) * uDpr;
-	float maxPx = mix(14.0, 19.0, hi) * uDpr;
-	float h = clamp(ppu * iSize.y * 0.8, minPx, maxPx) * iOff.z;
-	vec2 off = corner * vec2(h * iSize.x, h) + iOff.xy * uDpr;
-	c.xy += off / uRes.xy * 2.0 * c.w;
-	gl_Position = c;
+	// sabit, sakin boy (css px): genel bakışta 17, vurguda 21
+	float h = mix(17.0, 21.0, hi) * uDpr * iOff.z;
+	float w = h * iSize.x;
+	// ekran kenarında kesilmesin: hücre ekranın içine kıstırılır (kenardan 6 px pay)
+	vec2 ndc = c.xy / c.w + iOff.xy * uDpr / uRes.xy * 2.0;
+	vec2 hs = vec2(w, h) / uRes.xy + 6.0 * uDpr / uRes.xy * 2.0;
+	vec2 cl = clamp(ndc, -1.0 + hs, 1.0 - hs);
+	// çok dışarıdaki ad hiç görünmez (kıstırma yalnızca kenara taşanlar için)
+	float ofs = max(abs(ndc.x - cl.x) * uRes.x, abs(ndc.y - cl.y) * uRes.y) * 0.5 / uDpr;
+	vA = iState.x * (1.0 - smoothstep(24.0, 60.0, ofs));
+	ndc = cl + corner * vec2(w, h) / uRes.xy * 2.0;
+	gl_Position = vec4(ndc * c.w, c.z, c.w);
 	vUv = mix(iRect.xy, iRect.zw, corner + 0.5);
-	vA = iState.x;
+	vQ = vec2((corner.x + 0.5) * iSize.x, corner.y);
+	vPx = 1.0 / max(h, 1.0);
 	vHi = hi;
 }`;
 
 const FS = /* glsl */ `
 uniform sampler2D uAtlas;
 varying vec2 vUv;
+varying vec2 vQ;
 varying float vA;
 varying float vHi;
+varying float vPx;
 varying vec4 vOwn;
 void main() {
-	vec4 t = texture(uAtlas, vUv);
-	float glow = texture(uAtlas, vUv, 2.6).g;
-	float fill = t.r;
-	float edge = t.g;
-	// sahipli il: kontur sahibin koyu rengi; tarafsız: gece mavisi
+	vec4 t = texture(uAtlas, vUv, -0.4);
+	float text = t.r;
+	float pill = t.g;
+	float line = t.b;
+	float shadow = texture(uAtlas, vUv, 2.2).g;
+	// hap: gece lacivert, yarı saydam; vurguda daha koyu ve ince altın çizgili
+	vec3 bg = mix(vec3(0.035, 0.045, 0.085), vec3(0.02, 0.025, 0.05), vHi);
+	float bgA = pill * mix(0.66, 0.84, vHi);
+	vec3 c = bg;
+	float a = bgA;
+	// altta yumuşak gölge
+	a = a + shadow * 0.35 * (1.0 - a);
+	vec3 gold = vec3(0.98, 0.78, 0.4);
+	c = mix(c, gold, line * mix(0.18, 0.95, vHi));
+	a = max(a, line * mix(0.18, 0.95, vHi) * pill);
+	// sahip noktası: sahipli ilde sahibin rengi (koyu halkalı), tarafsızda ince fildişi halka
+	float d = length(vQ - vec2(${f4(DOT_X)}, 0.0));
+	float aa = vPx * 1.2;
 	vec3 own = pow(max(vOwn.rgb, 0.0), vec3(1.0 / 2.2));
-	vec3 outC = vOwn.w >= 0.0 ? own * 0.42 : vec3(0.07, 0.1, 0.22);
-	vec3 col = mix(outC, vec3(1.0), clamp(fill / max(edge, 1e-3), 0.0, 1.0));
-	// alt hale: vurguluda altın ışıltı, değilse yumuşak gölge
-	vec3 gc = mix(vec3(0.02, 0.03, 0.08), vec3(1.0, 0.82, 0.32), vHi);
-	float ga = glow * mix(0.55, 0.95, vHi);
-	float A = edge + ga * (1.0 - edge);
-	vec3 c = (col * edge + gc * ga * (1.0 - edge)) / max(A, 1e-3);
-	gl_FragColor = vec4(c, A * vA);
+	float disc = 1.0 - smoothstep(${f4(DOT_R)} - aa, ${f4(DOT_R)} + aa, d);
+	float ring = 1.0 - smoothstep(0.0, aa * 1.2, abs(d - ${f4(DOT_R)}) - vPx * 0.6);
+	if (vOwn.w >= 0.0) {
+		c = mix(c, own * 1.08, disc);
+		c = mix(c, vec3(1.0), ring * 0.35);
+	} else c = mix(c, vec3(0.92, 0.88, 0.8), ring * 0.7);
+	// yazı: fildişi (vurguda sıcak beyaz)
+	vec3 tc = mix(vec3(0.9, 0.88, 0.84), vec3(1.0, 0.95, 0.84), vHi);
+	c = mix(c, tc, text);
+	a = max(a, text);
+	gl_FragColor = vec4(c, a * vA);
 }`;
 
 export class Labels {
@@ -123,11 +159,12 @@ export class Labels {
 			this.size[p.index * 3 + 1] = THREE.MathUtils.clamp(p.inner * 0.34, 0.42, 1.05);
 			this.size[p.index * 3 + 2] = p.index;
 		}
-		this._draw("'Lilita One', 'Fredoka', system-ui, sans-serif");
+		const FONT = "'Manrope', system-ui, sans-serif";
+		this._draw(FONT);
 		// gömülü yazı tipi yüklenince atlası yeniden çiz (yalnızca doku güncellenir, shader değil)
 		try {
-			document.fonts?.load("400 56px 'Lilita One'").then(() => {
-				this._draw("'Lilita One', 'Fredoka', system-ui, sans-serif");
+			document.fonts?.load(`700 ${FS_PX}px Manrope`, 'ĞğİıŞşÇçÖöÜü').then(() => {
+				this._draw(FONT);
 				this.tex.needsUpdate = true;
 			});
 		} catch (e) {
@@ -189,6 +226,7 @@ export class Labels {
 		this._sw = new Float32Array(N);
 		this._sh = new Float32Array(N);
 		this._ok = new Uint8Array(N);
+		this._far = new Uint8Array(N);
 		this._v = new THREE.Vector3();
 		this._m = new THREE.Matrix4();
 		this._frame = 0;
@@ -199,58 +237,73 @@ export class Labels {
 	_draw(font) {
 		const c = this.canvas;
 		const g = c.getContext('2d');
+		g.clearRect(0, 0, c.width, c.height);
 		g.fillStyle = '#000';
 		g.fillRect(0, 0, c.width, c.height);
 		const names = this.board.provinces.map((p) => p.name.toLocaleUpperCase('tr-TR'));
-		let fs = 58;
-		let layout = null;
-		// yerleşim: sığana kadar yazı boyunu küçült
-		for (; fs > 24; fs -= 4) {
-			g.font = `400 ${fs}px ${font}`;
-			const pad = Math.ceil(fs * 0.34);
-			const rowH = Math.ceil(fs * 1.32) + pad;
-			let x = 0;
-			let y = 0;
-			const out = [];
-			let ok = true;
-			for (const n of names) {
-				const w = Math.ceil(g.measureText(n).width) + pad * 2;
-				if (x + w > c.width) {
-					x = 0;
-					y += rowH;
-				}
-				if (y + rowH > c.height) {
-					ok = false;
-					break;
-				}
-				out.push([x, y, w, rowH, pad]);
-				x += w;
-			}
-			if (ok) {
-				layout = out;
-				break;
-			}
-		}
-		g.font = `400 ${fs}px ${font}`;
+		const fs = FS_PX;
+		const sp = fs * 0.16; // harf aralığı (küçük büyük harf, Gündönümü tonu)
+		g.font = `700 ${fs}px ${font}`;
+		const textW = (n) => {
+			let w = 0;
+			for (const ch of n) w += g.measureText(ch).width + sp;
+			return w - sp;
+		};
+		const left = MARG + PILL * 0.98; // nokta için yer
+		const right = MARG + PILL * 0.5;
+		let x = 0;
+		let y = 0;
+		const W = c.width;
+		const H = c.height;
 		g.textBaseline = 'middle';
-		g.textAlign = 'center';
-		g.lineJoin = 'round';
-		g.miterLimit = 2;
-		const lw = Math.max(6, fs * 0.24);
+		g.textAlign = 'left';
 		names.forEach((n, i) => {
-			const [x, y, w, h] = layout[i];
-			const cx = x + w / 2;
-			const cy = y + h / 2 + fs * 0.04;
-			g.lineWidth = lw;
-			g.strokeStyle = '#00ff00';
-			g.strokeText(n, cx, cy);
-			g.fillStyle = '#ffff00';
-			g.fillText(n, cx, cy);
+			const tw = Math.ceil(textW(n));
+			const w = Math.ceil(left + tw + right);
+			if (x + w > W) {
+				x = 0;
+				y += CELL;
+			}
+			const r = PILL / 2;
+			const px0 = x + MARG;
+			const py0 = y + MARG;
+			const pw = w - MARG * 2;
+			// g: hap dolgusu
+			g.fillStyle = '#00ff00';
+			g.beginPath();
+			g.moveTo(px0 + r, py0);
+			g.arcTo(px0 + pw, py0, px0 + pw, py0 + PILL, r);
+			g.arcTo(px0 + pw, py0 + PILL, px0, py0 + PILL, r);
+			g.arcTo(px0, py0 + PILL, px0, py0, r);
+			g.arcTo(px0, py0, px0 + pw, py0, r);
+			g.closePath();
+			g.fill();
+			// b: içe 2 px ince çizgi (toplamalı karışım: kanallar birbirini silmez)
+			g.globalCompositeOperation = 'lighter';
+			g.strokeStyle = '#0000ff';
+			g.lineWidth = 2.2;
+			g.beginPath();
+			const ir = r - 3;
+			g.moveTo(px0 + 3 + ir, py0 + 3);
+			g.arcTo(px0 + pw - 3, py0 + 3, px0 + pw - 3, py0 + PILL - 3, ir);
+			g.arcTo(px0 + pw - 3, py0 + PILL - 3, px0 + 3, py0 + PILL - 3, ir);
+			g.arcTo(px0 + 3, py0 + PILL - 3, px0 + 3, py0 + 3, ir);
+			g.arcTo(px0 + 3, py0 + 3, px0 + pw - 3, py0 + 3, ir);
+			g.closePath();
+			g.stroke();
+			// r: yazı
+			g.fillStyle = '#ff0000';
+			let cx = x + left;
+			const cy = y + CELL / 2 + fs * 0.03;
+			for (const ch of n) {
+				g.fillText(ch, cx, cy);
+				cx += g.measureText(ch).width + sp;
+			}
+			g.globalCompositeOperation = 'source-over';
 			// atlas UV (CanvasTexture flipY: v aşağıdan yukarı)
-			const W = c.width;
-			const H = c.height;
-			this.rect.set([x / W, 1 - (y + h) / H, (x + w) / W, 1 - y / H], i * 4);
-			this.size[i * 3] = w / h;
+			this.rect.set([x / W, 1 - (y + CELL) / H, (x + w) / W, 1 - y / H], i * 4);
+			this.size[i * 3] = w / CELL;
+			x += w;
 		});
 		this.aRect.needsUpdate = true;
 		this.aSize.needsUpdate = true;
@@ -363,11 +416,17 @@ export class Labels {
 			this._sy[i] = ((cy / w) * 0.5 + 0.5) * res.y;
 			const ppu = (res.y * p11 * 0.5) / w;
 			this._pp[i] = ppu;
-			const lo = (list ? 15 : 10) * dpr;
-			const hi = (list ? 19 : 14) * dpr;
-			const h = Math.min(hi, Math.max(lo, ppu * this.size[i * 3 + 1] * 0.8));
-			this._sh[i] = h * 0.82 + 2 * dpr;
-			this._sw[i] = h * this.size[i * 3] * 0.82 + 3 * dpr;
+			const h = (list ? 21 : 17) * dpr;
+			this._sh[i] = h * 0.8 + 3 * dpr;
+			this._sw[i] = h * this.size[i * 3] * 0.94 + 4 * dpr;
+			// ekran kenarına kıstır (shader ile aynı): çakışma denetimi gerçek yerle yapılsın
+			const hx = (h * this.size[i * 3]) / 2 + 6 * dpr;
+			const hy = h / 2 + 6 * dpr;
+			const sx0 = this._sx[i];
+			const sy0 = this._sy[i];
+			this._sx[i] = Math.min(res.x - hx, Math.max(hx, sx0));
+			this._sy[i] = Math.min(res.y - hy, Math.max(hy, sy0));
+			this._far[i] = Math.max(Math.abs(sx0 - this._sx[i]), Math.abs(sy0 - this._sy[i])) > 30 * dpr ? 1 : 0;
 			this._ok[i] = 0;
 			this._ox[i] = 0;
 			this._oy[i] = 0;
@@ -381,7 +440,8 @@ export class Labels {
 			if (list ? !this.forced[i] : B.dimTo[i] > 0.5) continue;
 			let sx = this._sx[i];
 			let sy = this._sy[i];
-			if (sx < -40 || sy < -40 || sx > res.x + 40 || sy > res.y + 40) continue;
+			if (this._far[i]) continue; // ekranın çok dışında
+
 			if (!list) {
 				// önem eşiği: büyük şehirler hep aday; diğerleri ancak ekranda yeterince büyükse
 				const rk = this.rank[i];

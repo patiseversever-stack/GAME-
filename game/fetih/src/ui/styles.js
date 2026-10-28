@@ -116,9 +116,16 @@ const BASE = /* css */ `
 @keyframes flToastIn{from{opacity:0;transform:translateY(-16px) scale(.9)}}
 @keyframes flToastOut{to{opacity:0;transform:translateY(-12px) scale(.95)}}
 
+/* ---------------------------------------------------------------- sinematik şeritler (gece odağı) */
+.fl-cine{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.fl-cine i{position:absolute;left:0;right:0;will-change:transform;transition:transform .85s cubic-bezier(.22,.8,.24,1)}
+.fl-cine i:first-child{top:0;height:calc(15vh + var(--sat, 0px));background:linear-gradient(180deg,#020309 0,#020309 52%,rgba(2,3,9,.72) 74%,rgba(2,3,9,0));transform:translateY(-101%)}
+.fl-cine i:last-child{bottom:0;height:calc(25vh + var(--sab, 0px));background:linear-gradient(0deg,#020309 0,rgba(2,3,9,.94) 34%,rgba(2,3,9,.55) 66%,rgba(2,3,9,0));transform:translateY(101%)}
+.fl-cine.on i{transform:none}
+
 /* ---------------------------------------------------------------- il seçimi ipucu */
 .fl-prompt{position:absolute;left:0;right:0;margin:0 auto;bottom:calc(6px + var(--sab));width:min(calc(100% - 16px),460px);display:flex;justify-content:center;padding:34px 14px 22px;text-align:center;
-  background:radial-gradient(ellipse 58% 64% at 50% 58%,rgba(12,6,34,.78),rgba(16,8,44,.5) 48%,rgba(16,8,44,0) 100%);
+  background:radial-gradient(ellipse 58% 64% at 50% 58%,rgba(3,5,12,.6),rgba(3,5,12,.3) 48%,rgba(3,5,12,0) 100%);
   opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
 .fl-prompt.on{opacity:1;transform:none}
 .fl-prompt .pt{display:flex;flex-direction:column;align-items:center;min-width:0}
@@ -134,7 +141,7 @@ const BASE = /* css */ `
 .fl-prompt .pt b{display:block;margin-top:9px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500;
   font-size:clamp(31px,9vw,42px);line-height:1.02;letter-spacing:.01em;color:#fff4e2;text-shadow:0 2px 22px rgba(255,186,90,.38),0 1px 2px rgba(10,4,30,.6)}
 /* ipucu: küçük, aralıklı, lavanta */
-.fl-prompt .pt small{display:block;margin-top:10px;font-family:'Manrope',system-ui,sans-serif;font-weight:500;font-size:10.5px;line-height:1.4;letter-spacing:.24em;margin-right:-.24em;text-transform:uppercase;color:rgba(216,208,255,.86)}
+.fl-prompt .pt small{display:block;margin-top:10px;font-family:'Manrope',system-ui,sans-serif;font-weight:500;font-size:10.5px;line-height:1.4;letter-spacing:.24em;margin-right:-.24em;text-transform:uppercase;color:rgba(214,220,232,.78)}
 .fl-prompt .pt::after{content:'';display:block;margin-top:13px;width:120px;height:1px;background:linear-gradient(90deg,rgba(244,200,108,0),rgba(244,200,108,.85),rgba(244,200,108,0))}
 .fl-prompt.cap .pt b{font-size:clamp(28px,8vw,38px)}
 .fl-prompt.shake{animation:flShakeP .4s}
@@ -150,8 +157,8 @@ const BASE = /* css */ `
 .fl-label .fl-i{width:14px;height:14px;margin-left:1px}
 .fl-ui .fl-label.opt{pointer-events:auto;font-size:14px;padding:4px 10px 5px 6px;border-color:var(--gold);color:#fff}
 .fl-label.opt::after{border-top-color:var(--gold)}
-.fl-label.mark{padding:2px 8px 3px 2px;border-color:var(--oc);gap:5px}
-.fl-label.mark .fl-av{width:24px;height:24px;border-radius:8px;border-width:2px}
+.fl-label.mark{padding:2px;border-radius:50%;border-color:var(--oc);gap:0;background:#060a16}
+.fl-label.mark .fl-av{width:30px;height:30px;border-radius:50%;border-width:2px}
 .fl-label.mark::after{border-top-color:var(--oc)}
 .fl-label.pop{animation:flPopIn .35s cubic-bezier(.3,1.7,.5,1) both}
 .fl-pin{position:absolute;left:0;top:0;width:40px;height:52px;margin:-50px 0 0 -20px;will-change:transform}

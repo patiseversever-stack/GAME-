@@ -166,7 +166,7 @@ async function snap(name) {
 		app.ui.update();
 		app.render();
 	});
-	await page.waitForTimeout(350); // CSS geçişleri (gerçek zamanlı) otursun
+	await page.waitForTimeout(950); // CSS geçişleri (gerçek zamanlı) otursun
 	await page.evaluate(() => {
 		const app = window.__fl.app;
 		app.ui.update();

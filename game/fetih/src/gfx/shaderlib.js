@@ -36,17 +36,17 @@ float gRim = 0.0;
 float gRelit = 0.0;
 float gOwn = 0.0;
 #endif
-// Gece paleti (doğrusal). Gündönümü'nün "Gece Düştü" anı: mor-lacivert gök, lavanta ay ışığı,
-// gölgeler çivit; renkler solar ama griye düşmez. Ay kuzeybatıda, yüksekte: kameradan bakınca
-// denizdeki yansıması ekranın üst yarısında bir ışık yolu çizer.
+// Gece paleti (doğrusal). v0.3: siyaha yakın lacivert gece, serin ay ışığı, düşük doygunluk.
+// Aydınlık (seçilebilir) iller ekrandaki tek parlak ve renkli şey olsun; gece manzarası yalnızca ince
+// ay kabartması ve birkaç sıcak şehir ışığıyla okunur. Ay kuzeybatıda, yüksekte.
 const vec3 N_MOON = vec3(-0.3498, 0.7795, -0.5197);
-const vec3 N_MOONC = vec3(0.52, 0.42, 1.08);
-const vec3 N_SKY = vec3(0.17, 0.09, 0.43);
-const vec3 N_GND = vec3(0.07, 0.04, 0.12);
-const vec3 N_RIM = vec3(0.62, 0.5, 1.15);
-const vec3 N_ZEN = vec3(0.006, 0.007, 0.04);
-const vec3 N_HOR = vec3(0.075, 0.05, 0.21);
-const vec3 N_FOG = vec3(0.06, 0.045, 0.17);
+const vec3 N_MOONC = vec3(0.2, 0.26, 0.42);
+const vec3 N_SKY = vec3(0.022, 0.032, 0.068);
+const vec3 N_GND = vec3(0.005, 0.006, 0.012);
+const vec3 N_RIM = vec3(0.16, 0.22, 0.38);
+const vec3 N_ZEN = vec3(0.0015, 0.0022, 0.006);
+const vec3 N_HOR = vec3(0.008, 0.013, 0.03);
+const vec3 N_FOG = vec3(0.006, 0.009, 0.02);
 const vec3 N_WARM = vec3(1.0, 0.56, 0.2);
 const vec3 DAWN = vec3(1.0, 0.5, 0.28);
 
@@ -146,8 +146,8 @@ vec3 nightSky(vec3 d) {
 	float h = d.y;
 	vec3 c = mix(N_HOR, N_ZEN, pow(smoothstep(-0.03, 0.9, h), 0.55));
 	float m = max(dot(d, N_MOON), 0.0);
-	c += vec3(0.3, 0.32, 0.75) * (pow(m, 5.0) * 0.16 + pow(m, 48.0) * 0.45);
-	c += vec3(1.6, 1.55, 1.8) * smoothstep(0.99935, 0.99965, m);
+	c += vec3(0.16, 0.2, 0.36) * (pow(m, 5.0) * 0.12 + pow(m, 48.0) * 0.4);
+	c += vec3(1.5, 1.55, 1.7) * smoothstep(0.99935, 0.99965, m);
 	c += DAWN * uNight.z * exp(-max(h, 0.0) * 4.0) * 0.55;
 	return c;
 }
@@ -158,18 +158,18 @@ vec3 moonShade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, flo
 	// Sahip rengi (gOwn) solmaz ve mor ışık almaz: kırmızı gecede koyu kırmızı kalır, pembeye kaçmaz.
 	float ow = clamp(gOwn, 0.0, 1.0);
 	// (sahip rengi tam doygun ama koyu: gece ilinde kırmızı derin kırmızı, aydınlık adadan ayrı okunur)
-	vec3 a = pow(max(mix(vec3(l), albedo, 0.5 + 0.5 * ow), 0.0), vec3(0.78)) * (1.0 - 0.5 * ow);
+	vec3 a = pow(max(mix(vec3(l), albedo, 0.22 + 0.3 * ow), 0.0), vec3(0.8)) * (1.0 - 0.35 * ow);
 	float w = clamp((dot(N, N_MOON) + 0.3) / 1.3, 0.0, 1.0);
 	float up = N.y * 0.5 + 0.5;
 	vec3 amb = mix(N_GND, N_SKY, smoothstep(0.1, 1.0, up)) * ao;
-	amb = mix(amb, vec3(dot(amb, vec3(0.3, 0.59, 0.11))) * vec3(0.95, 0.95, 1.15) * 1.1, ow);
-	vec3 c = a * (amb + mix(N_MOONC, vec3(0.6, 0.56, 0.74), ow) * w * w * mix(0.62, 1.0, sh));
+	amb = mix(amb, vec3(dot(amb, vec3(0.3, 0.59, 0.11))) * vec3(0.95, 0.98, 1.1) * 1.1, ow);
+	vec3 c = a * (amb + mix(N_MOONC, vec3(0.3, 0.31, 0.36), ow) * w * w * mix(0.55, 1.0, sh));
 	float ndv = clamp(dot(N, V), 0.0, 1.0);
 	vec3 H = normalize(N_MOON + V);
 	// ay parıltısı ve kenarı: sahip renginde soluk ve nötr (kırmızının üstüne lavanta binip pembeleştirmesin)
-	vec3 sc = mix(N_MOONC, vec3(0.5, 0.5, 0.62), ow) * (1.0 - 0.6 * ow);
+	vec3 sc = mix(N_MOONC, vec3(0.3, 0.3, 0.36), ow) * (1.0 - 0.6 * ow);
 	c += sc * pow(max(dot(N, H), 0.0), mix(16.0, 140.0, gloss)) * mix(0.08, 1.6, gloss) * sh;
-	c += N_RIM * pow(1.0 - ndv, 3.0) * (0.1 + rimK * 0.3) * ao * (0.4 + 0.6 * uNight.y) * (1.0 - 0.5 * ow);
+	c += N_RIM * pow(1.0 - ndv, 3.0) * (0.08 + rimK * 0.22) * ao * (0.4 + 0.6 * uNight.y) * (1.0 - 0.5 * ow);
 	return c;
 }
 vec3 skyAmbient(vec3 N) {
@@ -233,7 +233,7 @@ vec3 applyFog(vec3 c, vec3 wp) {
 	if (nk > 0.001) {
 		fc = mix(fc, N_FOG, nk);
 		// gece pusu: uzak yerler mor sise gömülür (derinlik, Gündönümü'ndeki gibi); sahip rengi daha az
-		f = max(f, (1.0 - exp(-max(dist - 24.0, 0.0) * 0.022)) * 0.55 * nk * (1.0 - 0.45 * clamp(gOwn, 0.0, 1.0)));
+		f = max(f, (1.0 - exp(-max(dist - 22.0, 0.0) * 0.026)) * 0.7 * nk * (1.0 - 0.45 * clamp(gOwn, 0.0, 1.0)));
 	}
 	return mix(c, fc, clamp(f, 0.0, 1.0));
 }
@@ -267,8 +267,8 @@ vec3 tonemap(vec3 c) {
 // ay kenarı lavanta. Yeniden aydınlatılan pikseller (gRelit) buraya girmez.
 vec3 nightGrade(vec3 c) {
 	float l = dot(c, vec3(0.3, 0.59, 0.11));
-	vec3 n = mix(vec3(l), c, 0.6) * vec3(0.17, 0.19, 0.42) + vec3(0.002, 0.003, 0.011);
-	n += vec3(0.4, 0.34, 0.9) * gRim * 0.3 * uNight.y;
+	vec3 n = mix(vec3(l), c, 0.3) * vec3(0.07, 0.085, 0.15) + vec3(0.001, 0.0015, 0.004);
+	n += N_RIM * gRim * 0.25 * uNight.y;
 	return n;
 }
 vec4 finish(vec3 c, float a) {
@@ -281,14 +281,14 @@ vec4 finish(vec3 c, float a) {
 	c = c * uGain + uLift * (1.0 - c);
 	// gece: gölgeler mora kalkar (Gündönümü), aydınlık adalar canlı kalır
 	// (yalnızca gece pikselinde; sahip rengine az: kırmızı pembeleşmesin)
-	c += vec3(0.04, 0.012, 0.085) * nk * (1.0 - 0.75 * clamp(gOwn, 0.0, 1.0)) * (1.0 - c);
+	c += vec3(0.004, 0.008, 0.02) * nk * (1.0 - c);
 	float l = dot(c, vec3(0.299, 0.587, 0.114));
 	c = mix(vec3(l), c, uGrade.x);
 	c = (c - 0.5) * uGrade.y + 0.5;
 	vec2 q = gl_FragCoord.xy / uRes.xy - 0.5;
 	q.x *= uRes.x / uRes.y * 0.8;
 	float vg = smoothstep(0.3, 0.95, length(q));
-	c *= mix(vec3(1.0), mix(uVigCol, vec3(0.22, 0.1, 0.42), uNight.x), (uRes.z + 0.35 * uNight.x) * vg);
+	c *= mix(vec3(1.0), mix(uVigCol, vec3(0.04, 0.05, 0.09), uNight.x), (uRes.z + 0.5 * uNight.x) * vg);
 	c += (hash12(gl_FragCoord.xy + fract(uTime) * 61.0) - 0.5) * uGrade.w;
 	return vec4(clamp(c, 0.0, 1.0), a);
 }
@@ -335,11 +335,8 @@ vec3 edgeMist(vec3 c, vec3 w) {
 	// bulut denizi: tepeleri beyaz, aralar açık gök mavisi
 	vec3 mc = mix(uFogCol * vec3(0.92, 0.98, 1.06), vec3(1.0, 1.0, 1.02) * (uSkyTop * 0.6 + uSunCol * 0.24), smoothstep(0.35, 0.75, n));
 	if (uNight.x > 0.001) {
-		// gece: ay ışığında mor bulut denizi; tepeler lavanta, aralarında sıcak altın ışık sızar
-		vec3 nm = mix(vec3(0.025, 0.02, 0.085), vec3(0.24, 0.23, 0.5), smoothstep(0.32, 0.8, n));
-		float g2 = texture(uNoise, q * 0.045 / 8.0 + vec2(0.37, 0.71)).a;
-		float leak = smoothstep(0.5, 0.3, n) * smoothstep(0.45, 0.8, g2);
-		nm += N_WARM * leak * 0.55;
+		// gece: karanlık ufuk pusu (lacivert-siyah), ay tarafında çok hafif gümüş; ışık sızıntısı yok
+		vec3 nm = mix(vec3(0.003, 0.004, 0.01), vec3(0.018, 0.024, 0.045), smoothstep(0.32, 0.8, n));
 		nm += DAWN * uNight.z * 0.25;
 		mc = mix(mc, nm, uNight.x);
 	}

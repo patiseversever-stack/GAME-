@@ -70,7 +70,7 @@ void main() {
 	}
 	c = applyFog(c, vW);
 	// gecede yarı saydam, hayalet gibi (çerçeve bulutları öne çıksın, alçak çokgen yüzleri seçilmesin)
-	gl_FragColor = finish(c, vA * (1.0 - 0.45 * uNight.x));
+	gl_FragColor = finish(c, vA * (1.0 - smoothstep(0.0, 0.55, uNight.x))); // gecede hızla söner (sakin, karanlık gök)
 }`;
 
 function puffGeo(detail, R) {

@@ -74,14 +74,18 @@ export class Cinema {
 			const opts = this._options(m, p, i);
 			const attack = b.provinces[i].owner >= 0;
 			// kamera botun üstünde: başkenti ve seçenekleri birlikte; seçenekler gecede ışık adası
+			const me = m.players?.find((q) => q.human);
+			if (me && b.uMe) b.uMe.value = me.i;
 			b.night?.(true, opts);
 			b.showLabels?.(opts);
+			b.cues?.show(opts, p.i, { attack });
 			const cap = p.capital >= 0 && opts.length < 9 ? [...opts, p.capital] : opts;
 			this.frameList(cap);
 			ui.caption?.(`SIRA · ${p.name}`, attack ? 'Hedefini seçiyor' : 'Bir il seçiyor', null, { p, tone: attack ? 'red' : '' });
 			await sleep(880);
 			b.night?.(true, [i]);
 			b.showLabels?.([i]);
+			b.cues?.show([i], p.i, { attack });
 			ui.caption?.(`${p.name} · ${attack ? 'SALDIRI' : 'YAYILMA'}`, b.provinces[i].name, attack ? 'SAVAŞ BAŞLIYOR' : 'YENİ TOPRAK', { p, tone: attack ? 'red' : '' });
 			await bot(m, p, i);
 		};
@@ -441,6 +445,9 @@ export class Cinema {
 			});
 		} else cam.shake = 0.5;
 		app.sfx?.play?.('conquer');
+		// boya dalgası her zaman gecede (harita sorusundan gündüzde gelinse bile)
+		b.night?.(true, [i]);
+		b.showLabels?.([i]);
 		app.ui?.caption?.('FETİH', b.provinces[i].name, `${p.name} topraklarına katıldı`, { p });
 		this._spot(c, 3.6);
 		if (cam.shot) cam.shot(c.x, c.z + 0.6, { dist: 30, pitch: 0.86, yaw: cam.yaw * 0.5, dur: 1.2, arc: 0 });

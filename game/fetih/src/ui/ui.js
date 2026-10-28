@@ -64,6 +64,7 @@ export class UI {
 		const syms = regionSymbols(app.board.provinces);
 		this.vb = syms.vb;
 		el.innerHTML = `${syms.svg}
+			<div class="fl-cine" data-r="cine"><i></i><i></i></div>
 			<div class="fl-pins" data-r="pins"></div>
 			<div class="fl-hud off" data-r="hud"></div>
 			<div class="fl-toasts" data-r="toasts"></div>
@@ -389,7 +390,7 @@ export class UI {
 		this.hud(m);
 		const attack = options.some((i) => b.provinces[i].owner >= 0 && b.provinces[i].owner !== me.i);
 		const adj = !attack && options.some((i) => (m.neighbors?.(i) || []).some((j) => b.provinces[j].owner === me.i));
-		this._selOn(m, options, attack);
+		this._selOn(m, options, attack, me);
 		const head = esc(String(text || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')));
 		const hint = attack ? 'Işıklı sınır illerinden birine dokun' : adj ? 'Topraklarına komşu ışıklı illerden birini al' : 'Işıklı boş illerden birini al';
 		const ey = attack ? 'FETİH · SIRA SENDE' : 'YAYILMA · SIRA SENDE';
@@ -410,12 +411,12 @@ export class UI {
 		return pick;
 	}
 
-	_selOn(m, options, attack) {
+	_selOn(m, options, attack, me = null) {
 		const b = this.app.board;
 		this._selList = options;
 		if (typeof b.select === 'function') {
 			try {
-				b.select(options, { attack });
+				b.select(options, { attack, me: me ? me.i : null });
 			} catch (e) {
 				for (const i of options) b.fx(i, 0.18, 0.75);
 			}
@@ -495,7 +496,7 @@ export class UI {
 		const e = document.createElement('div');
 		e.className = 'fl-label mark pop';
 		e.style.setProperty('--oc', p.css);
-		e.innerHTML = `<span class="fl-av">${avatar(this.look(p))}</span><span>${esc(this.app.board.provinces[i].name)}</span>`;
+		e.innerHTML = `<span class="fl-av">${avatar(this.look(p))}</span>`; // ad haritadaki etikette; burada yalnız portre
 		this.$.pins.appendChild(e);
 		const mk = { el: e, i, w: 0, h: 0 };
 		this.marks.push(mk);
@@ -986,6 +987,12 @@ export class UI {
 		const s = this._s;
 		const top = app.board.top;
 		const b = app.board;
+		// sinematik şeritler: gece odağında üstten ve alttan kayarak girer (yalnızca durum değişince DOM'a yazılır)
+		const cine = !this.fast && b.nightTo > 0;
+		if (cine !== this._cine) {
+			this._cine = cine;
+			this.$.cine.classList.toggle('on', cine);
+		}
 		const hb = typeof b.heightAt === 'function';
 		for (const p of this.pins) {
 			app.toScreen(v.set(p.x, hb ? b.heightAt(p.x, p.z) : top, p.z), s);

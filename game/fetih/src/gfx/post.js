@@ -45,7 +45,7 @@ void main() {
 		gl_FragColor = c;
 		return;
 	}
-	float r = k * uTilt.w;
+	float r = k * uTilt.w * (1.0 + 0.7 * uNight.x); // gecede alan derinliği biraz daha yumuşak (sinematik)
 	vec3 acc = c.rgb;
 	float wsum = 1.0;
 	// altın açılı disk (12 örnek)
@@ -131,6 +131,7 @@ export class TiltShift {
 			scene.traverse((o) => {
 				if (o.userData && o.userData.overlay) this.overlays.push(o);
 			});
+			this.overlays.sort((a, b) => a.renderOrder - b.renderOrder); // oklar önce, adlar en üstte
 		}
 		const ov = this.overlays;
 		for (let i = 0; i < ov.length; i++) {
