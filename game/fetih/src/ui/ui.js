@@ -18,6 +18,9 @@ import { Fx } from './fx.js';
 import { WheelView } from './wheel.js';
 import { duelIntro } from './duel.js';
 import { buildTitle, refreshTitle, showMenu, showCommander, showEnd } from './menu.js';
+import { showCampaign } from './campaign.js';
+import { renderBar, jokerUsed, sabotage, clearZone, showBotJokers } from './jokerfx.js';
+import { questionTime } from '../game/jokers.js';
 import { debugShot } from './debug.js';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -43,7 +46,7 @@ const yearish = (q) => q && !q.unit && Number.isInteger(q.ans) && q.ans >= 500 &
 export class UI {
 	constructor(root, app, h = {}) {
 		this.app = app;
-		this.h = h || {};
+		this.h = { campaign: () => this.showCampaign(), ...(h || {}) };
 		this.fast = false;
 		this.assets = {};
 		const mq = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
@@ -74,6 +77,7 @@ export class UI {
 			<div class="fl-scr fl-title" data-r="title"></div>
 			<div class="fl-scr off" data-r="menu"></div>
 			<div class="fl-scr off" data-r="cmd"></div>
+			<div class="fl-scr fl-camp off" data-r="camp"></div>
 			<div class="fl-scr fl-end off" data-r="end"></div>`;
 		const vars = {
 			'--tw': fillURL(TOWER),
@@ -217,7 +221,7 @@ export class UI {
 		this.lastCfg = { ...cfg };
 		const cols = this.app.playerColors;
 		// renk tercihi maç akışına iletilir (cfg.commander.color: oyuncu renkleri dizisindeki sıra)
-		this.h.start?.({ ...cfg, humanName: this.cmd.name, commander: { ...this.cmd, colorHex: cols[this.cmd.color] } });
+		return this.h.start?.({ ...cfg, humanName: this.cmd.name, commander: { ...this.cmd, colorHex: cols[this.cmd.color] } });
 	}
 
 	// ---------------------------------------------------------------- menüler
@@ -248,15 +252,16 @@ export class UI {
 			this._hudM = m;
 			hud.innerHTML = m.players
 				.map((p) => {
-					const team = m.mode?.teams ? `<span class="tm" style="--tc:${p.team ? '#3d7dff' : '#ff4d4d'}">${p.team ? 'B' : 'A'}</span>` : '';
+					const tcol = m.mode?.teams ? m.players.find((x) => x.team === p.team)?.css : null;
+					const team = m.mode?.teams ? `<span class="tm" style="--tc:${tcol}">${p.team ? 'B' : 'A'}</span>` : '';
 					return `<div class="fl-pl" data-p="${p.i}" style="--pc:${p.css}"><span class="fl-av">${avatar(this.look(p))}</span>
 						<div class="tx"><b>${esc(p.name)}</b><em>${p.score.toLocaleString('tr-TR')}</em></div>
-						<span class="cs"><i></i><i></i><i></i></span>${team}</div>`;
+						<span class="cs"><i></i><i></i><i></i></span><span class="sd">${ico('shield', { w: 3, c: '#4a2800' })}</span>${team}</div>`;
 				})
 				.join('');
 			this._pl = m.players.map((p) => {
 				const e = hud.querySelector(`[data-p="${p.i}"]`);
-				return { e, em: e.querySelector('em'), cs: [...e.querySelectorAll('.cs i')], score: p.score, hp: 3, turn: false, dead: false };
+				return { e, em: e.querySelector('em'), cs: [...e.querySelectorAll('.cs i')], score: p.score, hp: 3, turn: false, dead: false, shd: false };
 			});
 		}
 		if (!this.$.title.classList.contains('off') || !this.$.menu.classList.contains('off')) hud.classList.add('off');
@@ -268,6 +273,8 @@ export class UI {
 			if (turn !== s.turn) s.e.classList.toggle('turn', (s.turn = turn));
 			const dead = !p.alive;
 			if (dead !== s.dead) s.e.classList.toggle('dead', (s.dead = dead));
+			const shd = !!p.shield;
+			if (shd !== s.shd) s.e.classList.toggle('shd', (s.shd = shd));
 			const k = this.app.castles?.[p.i];
 			const hp = p.alive ? (k ? k.hp : 3) : 0;
 			if (hp !== s.hp) {
@@ -553,6 +560,8 @@ export class UI {
 		const prov = ctx.target != null ? app.board.provinces[ctx.target] : null;
 		const siege = duel && prov && ctx.defender.capital === ctx.target;
 		this._extra = 0;
+		this._floor = 0;
+		this._jkCb = null;
 		const plate = (p, k, sub) =>
 			`<div class="fl-qp ${k}" data-p="${p.i}" style="--pc:${p.css}"><span class="fl-av">${avatar(this.look(p))}</span><span class="nm"><b>${esc(p.name)}</b>${
 				sub ? `<small>${sub}</small>` : ''
@@ -618,6 +627,7 @@ export class UI {
 		card.classList.add('on');
 		this.sfx('question', { type: q.type, cat: q.cat });
 		t0 = performance.now();
+		showBotJokers(this, ctx.botJokers, gen);
 		// botların "cevapladı" işaretleri
 		const spectate = !human;
 		const maxBot = Math.max(0.1, ...bots.map((b) => b.time));
@@ -639,7 +649,16 @@ export class UI {
 			let hot = false;
 			tick = setInterval(() => {
 				const t = (performance.now() - t0) / 1000;
-				const total = sec + this._extra;
+				// ekstra süre ve sabotaj: saat Match'te tutulur (ctx.clock.extra), çubuk ve sayaç buna uyar
+				const ex = ctx.clock ? ctx.clock.extra : this._extra;
+				if (ex !== this._extra) {
+					// sabotajdan sonra en az 3 sn kalır (alt sınır bir kez konur, sürekli kayan bir pencere değil)
+					if (ex < this._extra) this._floor = Math.max(this._floor, t + 3);
+					this._clockFx(ex - this._extra);
+					this._extra = ex;
+					this._runBar(t);
+				}
+				const total = questionTime(T, this._extra, this._floor);
 				const left = Math.max(0, total - t);
 				const s = Math.ceil(left);
 				if (s !== lastS) {
@@ -699,7 +718,7 @@ export class UI {
 	_runBar(elapsed) {
 		const bar = this._bar;
 		if (!bar) return;
-		const total = this._sec + this._extra;
+		const total = Math.max(this._sec + this._extra, this._floor);
 		bar.classList.remove('run');
 		void bar.offsetWidth;
 		bar.style.setProperty('--tt', total + 's');
@@ -755,6 +774,7 @@ export class UI {
 		const gen = this._gen;
 		card.classList.add('rv', 'locked');
 		card.classList.remove('hot');
+		clearZone(this);
 		this._renderJokers();
 		try {
 			ctl?.reveal?.(results);
@@ -1012,9 +1032,12 @@ export class UI {
 		}
 	}
 
-	// ---------------------------------------------------------------- jokerler
+	// ---------------------------------------------------------------- jokerler (çizim: jokerfx.js)
 
-	/** Joker çubuğu: list = [{id, label, count, ready}]. Dokununca cb(id, ctx) ya da h.joker(id, ctx). */
+	/**
+	 * Joker çubuğu: list = Match.jokerList() ya da [{id, label, count, ready}].
+	 * Dokununca cb(id, ctx) ya da h.joker(id, ctx) çağrılır; dönüş {ok, reason} ise hata bildirimi gösterilir.
+	 */
 	jokers(list, cb) {
 		this._jk = Array.isArray(list) ? list.filter((j) => j && j.id != null) : [];
 		if (typeof cb === 'function') this._jkCb = cb;
@@ -1022,43 +1045,34 @@ export class UI {
 	}
 
 	_renderJokers() {
-		const box = this.$.q.querySelector('.fl-jk');
-		if (!box) return;
-		const cur = this.current;
-		if (!cur || !cur.ctx.human || !this._jk.length) {
-			box.innerHTML = '';
-			return;
-		}
-		const icn = (id) => (JK_ICON.find(([re]) => re.test(String(id).toLowerCase())) || [0, 'star'])[1];
-		box.innerHTML = this._jk
-			.map((j) => {
-				const off = j.ready === false || (j.count != null && j.count <= 0) || cur.answered;
-				return `<button class="fl-jkb" data-j="${esc(j.id)}" ${off ? 'disabled' : ''}><span class="ji">${ico(j.icon || icn(j.id), { w: 2.4 })}</span>${esc(j.label || j.id)}${
-					j.count != null ? `<i>${esc(j.count)}</i>` : ''
-				}</button>`;
-			})
-			.join('');
-		box.onclick = (e) => {
-			const b = e.target.closest('[data-j]');
-			if (!b || b.disabled || this.current?.answered) return;
-			b.classList.remove('used');
-			void b.offsetWidth;
-			b.classList.add('used');
-			this.sfx('joker', { id: b.dataset.j });
-			const c = Fx.center(b);
-			this.fx.burst(c.x, c.y, { n: 10, dist: 50, colors: ['#c07aff', '#fff', '#ffd25a'], kind: 'star', size: 10 });
-			try {
-				(this._jkCb || this.h.joker)?.(b.dataset.j, this.current?.ctx);
-			} catch (err) {
-				console.error('joker', err);
-			}
-		};
+		renderBar(this);
 	}
 
-	/** Ekstra süre jokeri: insan oyuncunun süresine sn ekler. */
+	/** Bir oyuncu joker kullandı (Match çağırır): insansa etki kartta, botsa rozet olarak görünür. */
+	jokerUsed(p, id, effect, cur) {
+		jokerUsed(this, p, id, effect, cur);
+	}
+
+	/** İnsan oyuncuya rakip sabotajı ulaştı (süre Match'te kısaldı). */
+	sabotage(effect) {
+		sabotage(this, effect);
+	}
+
+	/** Saat değişti (ekstra süre ya da sabotaj): sayaç kısa süre vurgulanır. */
+	_clockFx(delta) {
+		const ck = this.$.q.querySelector('.fl-clock');
+		if (!ck || !delta) return;
+		ck.classList.remove('up', 'dn');
+		void ck.offsetWidth;
+		ck.classList.add(delta > 0 ? 'up' : 'dn');
+		setTimeout(() => ck.classList.remove('up', 'dn'), 900);
+	}
+
+	/** Ekstra süre jokeri (hata ayıklama): insan oyuncunun süresine sn ekler. */
 	addTime(sec = 10) {
 		if (!this.current || this.current.answered) return;
 		const el = (performance.now() - this._t0) / 1000;
+		this._clockFx(sec);
 		this._extra += sec;
 		this._runBar(el);
 		const ck = this.$.q.querySelector('.fl-clock');
@@ -1068,7 +1082,7 @@ export class UI {
 		}
 	}
 
-	/** Yarı yarıya jokeri: verilen şık sıralarını eler (.fl-opt[data-i]). */
+	/** Yarı yarıya jokeri (hata ayıklama): verilen şık sıralarını eler (.fl-opt[data-i]). */
 	hideOptions(indices = []) {
 		for (const i of indices) {
 			const b = this.$.q.querySelector(`.fl-opt[data-i="${i}"]`);
@@ -1077,6 +1091,22 @@ export class UI {
 				b.disabled = true;
 			}
 		}
+	}
+
+	// ---------------------------------------------------------------- sefer
+
+	showCampaign() {
+		this.$.title.classList.add('off');
+		showCampaign(this);
+	}
+
+	/** Sefer sahnesini başlat (sefer ekranı ve bitiş ekranı çağırır). */
+	startCampaign(id) {
+		const camp = this.app.campaign;
+		if (!camp?.stage(id)) return;
+		const cfg = camp.cfgFor(id);
+		this.$.camp.classList.add('off');
+		this.startMatch(cfg);
 	}
 
 	// ---------------------------------------------------------------- sıralama
@@ -1120,13 +1150,28 @@ export class UI {
 
 	// ---------------------------------------------------------------- bitiş
 
-	async end(m, ranking) {
+	async end(m, ranking, rewards = null) {
 		m.turn = -1;
 		this.hud(m);
 		if (this.fast) return ranking;
 		this.$.hud.classList.add('off');
-		const act = await showEnd(this, m, ranking);
+		const prog = this.app.progress;
+		// ara reklam kancası (reklamsız pakette hiç); gerçek SDK app.hooks.interstitial ile bağlanır
+		if (rewards && prog?.interstitialDue()) {
+			prog.noteInterstitialShown();
+			try {
+				await this.app.hooks?.interstitial?.();
+			} catch (e) {
+				/* reklam gösterilemedi: maç akışı sürer */
+			}
+		}
+		const act = await showEnd(this, m, ranking, rewards);
 		if (act === 'again' && this.lastCfg) setTimeout(() => this.startMatch(this.lastCfg), 0);
+		else if (act === 'next' && rewards?.campaign) {
+			const id = this.app.campaign.next();
+			if (id) setTimeout(() => this.startCampaign(id), 0);
+			else this.showCampaign();
+		} else if (act === 'camp') this.showCampaign();
 		else this.showMenu();
 		return ranking;
 	}
@@ -1161,7 +1206,8 @@ export class UI {
 		this.showLabels([]);
 		for (const mk of this.marks) mk.el.remove();
 		this.marks = [];
-		for (const k of ['menu', 'cmd', 'end', 'title']) $[k].classList.add('off');
+		clearZone(this);
+		for (const k of ['menu', 'cmd', 'end', 'title', 'camp']) $[k].classList.add('off');
 		this.app.onTap = null;
 		this.app.onGround = null;
 		this._pickRes = null;

@@ -141,7 +141,7 @@ await page.evaluate((cfg) => {
 		const end = ui.$.end;
 		if (!end.classList.contains('off') && !W.endSeen) {
 			W.endSeen = true;
-			setTimeout(() => end.querySelector('[data-x]')?.click(), 1500);
+			setTimeout(() => (end.querySelector('[data-x="menu"]') || end.querySelector('[data-x]'))?.click(), 1500);
 		}
 	});
 	obs.observe(ui.el, { subtree: true, attributes: true, attributeFilter: ['style', 'class'], childList: true });

@@ -110,8 +110,10 @@ export const TYPES = {
 			const range = el.querySelector('.fl-range');
 			const val = el.querySelector('[data-r=val]');
 			const big = Math.max(1, Math.round((q.max - q.min) / 200));
+			let lo = q.min; // yarı yarıya jokeri aralığı daraltabilir
+			let hi = q.max;
 			const set = (x) => {
-				x = Math.max(q.min, Math.min(q.max, Math.round(x)));
+				x = Math.max(lo, Math.min(hi, Math.round(x)));
 				range.value = String(x);
 				val.textContent = x.toLocaleString('tr-TR');
 			};
@@ -130,6 +132,17 @@ export const TYPES = {
 					done = true;
 				},
 				value: () => Number(range.value),
+				// joker: { kind:'range', min, max } kaydırıcıyı daraltır
+				joker(e) {
+					if (e.kind !== 'range') return;
+					lo = e.min;
+					hi = e.max;
+					range.min = String(lo);
+					range.max = String(hi);
+					set((lo + hi) / 2);
+					range.dispatchEvent(new Event('input', { bubbles: true }));
+					el.querySelector('.fl-num').classList.add('narrow');
+				},
 				reveal(results) {
 					const rows = results
 						.slice()

@@ -20,6 +20,7 @@ import { COMMON, LIGHT, FINISH } from './gfx/shaderlib.js';
 import { Cinema } from './game/cinema.js';
 import { FX } from './gfx/fx.js';
 import { Match } from './game/match.js';
+import { ensureSystems } from './game/campaign.js';
 import { UI } from './ui/ui.js';
 import { Sfx } from './audio/sfx.js';
 import { NightLights } from './gfx/nightlights.js';
@@ -142,6 +143,7 @@ export class App {
 		this.scene.add(this.fx.group);
 		this.cinema = new Cinema(this);
 		this.sfx = new Sfx(this.hooks);
+		ensureSystems(this); // app.progress (XP, altın, kozmetik) ve app.campaign (sefer)
 		this.ui = new UI(this.container, this, { start: (cfg) => this.startMatch(cfg) });
 		this.cinema.bind(this.ui); // gece odağı: seçimde kamera ve ışık
 		this.lowFps = true;
@@ -352,7 +354,7 @@ export class App {
 		const r = await m.run();
 		this.ui.fast = false;
 		this.cinema.fast = false;
-		return { winner: (r[0].players ? r[0].players.map((p) => p.name).join('&') : r[0].name), scores: m.players.map((p) => [p.name, p.score, p.alive]), used: m.used.size };
+		return { winner: (r[0].players ? r[0].players.map((p) => p.name).join('&') : r[0].name), scores: m.players.map((p) => [p.name, p.score, p.alive]), used: m.used.size, report: this.lastSim };
 	}
 
 	/** Maçı belli bir ana kadar hızlı oynat, sonra o anı gerçek arayüzle göster (ekran görüntüsü). */

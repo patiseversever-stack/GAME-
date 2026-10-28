@@ -159,17 +159,19 @@ export async function debugShot(ui, o = {}) {
 		if (o.lose) p.score = Math.round(d.score * 0.6);
 		else p.score = Math.max(...m.players.map((x) => x.score)) + 600;
 		if (m.players[2] && o.dead) m.players[2].alive = false;
-		ui.end(m, m.standings());
+		m.stat[p.i] = { q: o.q ?? 12, correct: o.correct ?? 9 };
+		const ranking = m.standings();
+		// gerçek ödül kaydı (ilerleme ve sefer): o.cfg.campaign ile sefer sahnesi
+		const rewards = m.finish(ranking);
+		ui.end(m, ranking, rewards);
 		return 'ok';
 	}
 	if (show === 'q') {
+		// gerçek akış: m.ask → bot jokerleri, saat, joker düğmeleri, açıklama (insan cevabı o.answer ile verilir)
 		const q = o.qid ? QUESTIONS.find((x) => x.id === o.qid) : m.pick({ cat: o.cat, types: [o.type || 'choice'] });
 		const T = TYPES[q.type];
-		const v = T.prepare(q, m.R);
 		const duel = o.duel ?? T.kind !== 'closest';
 		const who = duel ? [p, d] : m.players.filter((x) => x.alive);
-		const bots = who.filter((x) => !x.human).map((x) => ({ p: x, ...T.bot(v, x.skill, m.R) }));
-		for (const b of bots) b.time = Math.min(b.time, o.botTime ?? 1.0 + b.p.i * 0.3);
 		const target = o.siege ? d.capital : m.owned(d.i).find((i) => i !== d.capital) ?? d.capital;
 		const ctx = duel
 			? { attacker: p, defender: d, target, cat: q.cat, title: o.tie ? 'EŞİTLİK BOZMA' : o.siege ? 'KUŞATMA' : 'DÜELLO', noIntro: !o.intro, phase: 'duel' }
@@ -179,32 +181,20 @@ export async function debugShot(ui, o = {}) {
 			app.board.fx(target, 0.35, 1);
 			app.cam.focus(t.x, t.z + 1.5, { dist: 26, pitch: 0.8 });
 		}
-		ui.jokers(
-			o.jokers
-				? [
-						{ id: 'half', label: 'Yarı yarıya', count: 1, ready: true },
-						{ id: 'time', label: '+10 sn', count: 2, ready: true },
-						{ id: 'shield', label: 'Kalkan', count: 0, ready: false },
-						{ id: 'oracle', label: 'Kâhin', count: 1, ready: true },
-					]
-				: [],
-			o.jokers ? (id) => (id === 'time' ? ui.addTime(10) : id === 'half' ? ui.hideOptions([0, 1, 2, 3].filter((k) => k !== v.right).slice(0, 2)) : 0) : undefined,
-		);
-		const run = ui.question(m, { q, v, T, who, bots, human: p, ...ctx });
+		// o.bots: botların joker hakkını sıfırla (görüntü kararlı olsun), o.botJokers: ['yari'] gibi zorla
+		for (const x of m.players) if (!x.human && o.botJokers !== undefined) for (const id of Object.keys(x.jk)) x.jk[id].left = (o.botJokers || []).includes(id) ? 1 : 0;
+		const run = m.ask(q, who, ctx);
+		const v = m.cur.v;
+		// o.use: [{id, at}] ya da ['yari']: insan oyuncu joker kullanır
+		for (const u of o.use || []) {
+			const id = u.id || u;
+			setTimeout(() => m.useJoker(id), u.at ?? 1500);
+		}
 		if (o.answer) {
 			await sleep(o.answerAt ?? (o.intro ? 2600 : 900));
 			await answer(ui, T, v, o.answer);
 		}
-		if (o.reveal) {
-			const res = await run;
-			const out = who.map((x) => {
-				const b = bots.find((y) => y.p === x);
-				const a = x.human ? res.human : b ? { value: b.value, time: b.time } : { value: null, time: T.time };
-				const j = T.judge(v, a?.value ?? null);
-				return { p: x, i: x.i, name: x.name, color: x.css, value: a?.value ?? null, time: a?.time ?? T.time, ...j };
-			});
-			ui.reveal(m, { q, v, T, results: out, ...ctx });
-		}
+		if (o.reveal) await run;
 		return q.id;
 	}
 	return 'bilinmeyen sahne';
