@@ -1,0 +1,3022 @@
+diff --git a/game/fetih/src/quiz/assets.js b/game/fetih/src/quiz/assets.js
+new file mode 100644
+index 0000000..eff3aff
+--- /dev/null
++++ b/game/fetih/src/quiz/assets.js
+@@ -0,0 +1,1076 @@
++// Görsel varlık manifesti: id → { name, url?, draw?, decor?, bg?, focus? }
++//
++//   url    : gerçek (yapay zekâyla üretilmiş) görselin adresi. Varsa o kullanılır; yüklenemezse draw'a düşer.
++//   draw   : yedek (prosedürel) çizim. 400×300 sanal uzayda, şeffaf zeminde çizer: draw(g, o).
++//            o.sil true ise yalnızca gövde şekli çizilmeli (ayrıntı yok): siluet kipi bunu siyaha boyar.
++//   decor  : yalnızca renkli kipte çizilen süs (güneş, bulut, zemin...). Siluette çizilmez.
++//   bg     : [üst, alt] arka plan renkleri.
++//   focus  : [x, y] yakınlaştırma kipinin odak noktası (sanal uzay).
++//   name   : Türkçe görünen ad.
++//
++// Gerçek görsel eklemek için yalnızca `url` verin (4:3 oran önerilir; siluet kipi için şeffaf PNG).
++// `draw` silinmek zorunda değil, yedek olarak kalır.
++
++export const ASSETS = {};
++
++const INK = '#1b2440';
++const W0 = 400;
++const H0 = 300;
++
++// ---------------------------------------------------------------- çizim yardımcıları
++function poly(g, pts, fill, stroke, lw = 3) {
++	g.beginPath();
++	pts.forEach(([x, y], i) => (i ? g.lineTo(x, y) : g.moveTo(x, y)));
++	g.closePath();
++	paint(g, fill, stroke, lw);
++}
++function paint(g, fill, stroke, lw = 3) {
++	if (fill) {
++		g.fillStyle = fill;
++		g.fill();
++	}
++	if (stroke) {
++		g.strokeStyle = stroke;
++		g.lineWidth = lw;
++		g.lineJoin = 'round';
++		g.lineCap = 'round';
++		g.stroke();
++	}
++}
++function rect(g, x, y, w, h, fill, stroke, lw) {
++	g.beginPath();
++	g.rect(x, y, w, h);
++	paint(g, fill, stroke, lw);
++}
++function rrect(g, x, y, w, h, r, fill, stroke, lw) {
++	g.beginPath();
++	g.moveTo(x + r, y);
++	g.arcTo(x + w, y, x + w, y + h, r);
++	g.arcTo(x + w, y + h, x, y + h, r);
++	g.arcTo(x, y + h, x, y, r);
++	g.arcTo(x, y, x + w, y, r);
++	g.closePath();
++	paint(g, fill, stroke, lw);
++}
++function circ(g, x, y, r, fill, stroke, lw) {
++	g.beginPath();
++	g.arc(x, y, r, 0, Math.PI * 2);
++	paint(g, fill, stroke, lw);
++}
++function ell(g, x, y, rx, ry, fill, stroke, lw, rot = 0) {
++	g.beginPath();
++	g.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2);
++	paint(g, fill, stroke, lw);
++}
++function line(g, x1, y1, x2, y2, stroke, lw = 3) {
++	g.beginPath();
++	g.moveTo(x1, y1);
++	g.lineTo(x2, y2);
++	g.strokeStyle = stroke;
++	g.lineWidth = lw;
++	g.lineCap = 'round';
++	g.stroke();
++}
++function star(g, cx, cy, R, r, n, rot, fill, stroke, lw) {
++	const pts = [];
++	for (let i = 0; i < n * 2; i++) {
++		const a = rot + (i * Math.PI) / n;
++		const rr = i % 2 ? r : R;
++		pts.push([cx + Math.cos(a) * rr, cy + Math.sin(a) * rr]);
++	}
++	poly(g, pts, fill, stroke, lw);
++}
++function cloud(g, x, y, s, fill = '#fff') {
++	g.fillStyle = fill;
++	g.beginPath();
++	g.arc(x, y, 16 * s, 0, 7);
++	g.arc(x + 18 * s, y - 8 * s, 20 * s, 0, 7);
++	g.arc(x + 40 * s, y, 16 * s, 0, 7);
++	g.rect(x, y - 2 * s, 40 * s, 16 * s);
++	g.fill();
++}
++function sun(g, x, y, r, fill = '#ffe27a') {
++	const gr = g.createRadialGradient(x, y, r * 0.3, x, y, r * 2.2);
++	gr.addColorStop(0, 'rgba(255,240,170,.9)');
++	gr.addColorStop(1, 'rgba(255,240,170,0)');
++	g.fillStyle = gr;
++	g.fillRect(x - r * 2.2, y - r * 2.2, r * 4.4, r * 4.4);
++	circ(g, x, y, r, fill);
++}
++function ground(g, y, fill = '#7bc86a', top = '#5aa84a') {
++	rect(g, -20, y, W0 + 40, H0 - y + 20, fill);
++	rect(g, -20, y, W0 + 40, 6, top);
++}
++function sea(g, y) {
++	const gr = g.createLinearGradient(0, y, 0, H0);
++	gr.addColorStop(0, '#3a8fd0');
++	gr.addColorStop(1, '#1f5fa0');
++	g.fillStyle = gr;
++	g.fillRect(-20, y, W0 + 40, H0 - y + 20);
++	g.strokeStyle = 'rgba(255,255,255,.45)';
++	g.lineWidth = 3;
++	g.lineCap = 'round';
++	for (let r = 0; r < 3; r++)
++		for (let i = 0; i < 6; i++) {
++			const x = ((i * 83 + r * 41) % 440) - 20;
++			const yy = y + 14 + r * 15;
++			g.beginPath();
++			g.moveTo(x, yy);
++			g.quadraticCurveTo(x + 10, yy - 6, x + 20, yy);
++			g.quadraticCurveTo(x + 30, yy + 6, x + 40, yy);
++			g.stroke();
++		}
++}
++
++const def = (id, name, o) => (ASSETS[id] = { name, ...o });
++const SKY = ['#82cbff', '#eaf7ff'];
++
++// ---------------------------------------------------------------- bayraklar (3:2)
++function flag(id, name, drawFlag, { w = 320, bg = ['#5a79c8', '#a9c0f0'], focus } = {}) {
++	const h = 210;
++	def(id, name, {
++		bg,
++		focus,
++		draw(g) {
++			g.save();
++			g.translate(200 - w / 2, 45);
++			// gölge ve gövde
++			g.fillStyle = 'rgba(0,0,0,.22)';
++			g.fillRect(6, 9, w, h);
++			g.save();
++			g.beginPath();
++			g.rect(0, 0, w, h);
++			g.clip();
++			drawFlag(g, w, h);
++			// hafif dalga parlaması
++			const gr = g.createLinearGradient(0, 0, w, 0);
++			gr.addColorStop(0, 'rgba(255,255,255,.22)');
++			gr.addColorStop(0.35, 'rgba(255,255,255,0)');
++			gr.addColorStop(0.7, 'rgba(0,0,0,.1)');
++			gr.addColorStop(1, 'rgba(255,255,255,.12)');
++			g.fillStyle = gr;
++			g.fillRect(0, 0, w, h);
++			g.restore();
++			g.strokeStyle = 'rgba(20,30,60,.55)';
++			g.lineWidth = 3;
++			g.strokeRect(0, 0, w, h);
++			g.restore();
++		},
++	});
++}
++
++flag(
++	'bayrak_tr',
++	'Türkiye bayrağı',
++	(g, w, h) => {
++		rect(g, 0, 0, w, h, '#e30a17');
++		circ(g, 0.36 * w * 0.98, h / 2, 0.25 * h, '#fff');
++		circ(g, 0.36 * w * 0.98 + 0.06 * h, h / 2, 0.2 * h, '#e30a17');
++		star(g, 0.36 * w * 0.98 + 0.34 * h, h / 2, 0.125 * h, 0.05 * h, 5, 0, '#fff');
++	},
++	{ focus: [190, 150] },
++);
++flag('bayrak_jp', 'Japonya bayrağı', (g, w, h) => {
++	rect(g, 0, 0, w, h, '#fff');
++	circ(g, w / 2, h / 2, 0.3 * h, '#bc002d');
++});
++flag('bayrak_de', 'Almanya bayrağı', (g, w, h) => {
++	rect(g, 0, 0, w, h / 3 + 1, '#000');
++	rect(g, 0, h / 3, w, h / 3 + 1, '#dd0000');
++	rect(g, 0, (2 * h) / 3, w, h / 3 + 1, '#ffce00');
++});
++flag('bayrak_fr', 'Fransa bayrağı', (g, w, h) => {
++	rect(g, 0, 0, w / 3 + 1, h, '#0055a4');
++	rect(g, w / 3, 0, w / 3 + 1, h, '#fff');
++	rect(g, (2 * w) / 3, 0, w / 3 + 1, h, '#ef4135');
++});
++flag('bayrak_it', 'İtalya bayrağı', (g, w, h) => {
++	rect(g, 0, 0, w / 3 + 1, h, '#009246');
++	rect(g, w / 3, 0, w / 3 + 1, h, '#fff');
++	rect(g, (2 * w) / 3, 0, w / 3 + 1, h, '#ce2b37');
++});
++flag(
++	'bayrak_ch',
++	'İsviçre bayrağı',
++	(g, w, h) => {
++		rect(g, 0, 0, w, h, '#da291c');
++		rect(g, w / 2 - 0.09 * w, h / 2 - 0.3 * h, 0.18 * w, 0.6 * h, '#fff');
++		rect(g, w / 2 - 0.3 * h, h / 2 - 0.09 * w, 0.6 * h, 0.18 * w, '#fff');
++	},
++	{ w: 210 },
++);
++flag('bayrak_se', 'İsveç bayrağı', (g, w, h) => {
++	rect(g, 0, 0, w, h, '#006aa7');
++	rect(g, (5 / 16) * w, 0, (2 / 16) * w, h, '#fecc02');
++	rect(g, 0, 0.4 * h, w, 0.2 * h, '#fecc02');
++});
++flag('bayrak_gr', 'Yunanistan bayrağı', (g, w, h) => {
++	const s = h / 9;
++	rect(g, 0, 0, w, h, '#0d5eaf');
++	for (let i = 1; i < 9; i += 2) rect(g, 0, i * s, w, s, '#fff');
++	rect(g, 0, 0, 5 * s, 5 * s, '#0d5eaf');
++	rect(g, 2 * s, 0, s, 5 * s, '#fff');
++	rect(g, 0, 2 * s, 5 * s, s, '#fff');
++});
++flag('bayrak_br', 'Brezilya bayrağı', (g, w, h) => {
++	rect(g, 0, 0, w, h, '#009c3b');
++	poly(g, [[w / 2, 0.1 * h], [0.9 * w, h / 2], [w / 2, 0.9 * h], [0.1 * w, h / 2]], '#ffdf00');
++	circ(g, w / 2, h / 2, 0.22 * h, '#002776');
++	g.save();
++	g.beginPath();
++	g.arc(w / 2, h / 2, 0.22 * h, 0, 7);
++	g.clip();
++	g.beginPath();
++	g.ellipse(w / 2, h / 2 + 0.34 * h, 0.5 * h, 0.2 * h, 0, 0, 7);
++	g.strokeStyle = '#fff';
++	g.lineWidth = 0.05 * h;
++	g.stroke();
++	g.restore();
++});
++flag('bayrak_gb', 'Birleşik Krallık bayrağı', (g, w, h) => {
++	const u = h / 30;
++	rect(g, 0, 0, w, h, '#012169');
++	g.lineCap = 'butt';
++	line(g, 0, 0, w, h, '#fff', 6 * u);
++	line(g, w, 0, 0, h, '#fff', 6 * u);
++	line(g, 0, 0, w, h, '#c8102e', 2 * u);
++	line(g, w, 0, 0, h, '#c8102e', 2 * u);
++	rect(g, w / 2 - 5 * u, 0, 10 * u, h, '#fff');
++	rect(g, 0, h / 2 - 5 * u, w, 10 * u, '#fff');
++	rect(g, w / 2 - 3 * u, 0, 6 * u, h, '#c8102e');
++	rect(g, 0, h / 2 - 3 * u, w, 6 * u, '#c8102e');
++});
++flag('bayrak_ca', 'Kanada bayrağı', (g, w, h) => {
++	rect(g, 0, 0, w, h, '#fff');
++	rect(g, 0, 0, w / 4, h, '#d52b1e');
++	rect(g, (3 * w) / 4, 0, w / 4, h, '#d52b1e');
++	g.save();
++	g.translate(w / 2, h / 2 + 4);
++	g.scale(h / 120, h / 120);
++	poly(g, [[0, -48], [9, -30], [22, -34], [18, -14], [38, -20], [32, -4], [46, 2], [22, 18], [26, 30], [4, 26], [4, 48], [-4, 48], [-4, 26], [-26, 30], [-22, 18], [-46, 2], [-32, -4], [-38, -20], [-18, -14], [-22, -34], [-9, -30]], '#d52b1e');
++	g.restore();
++});
++
++// ---------------------------------------------------------------- yapılar
++def('galata_kulesi', 'Galata Kulesi', {
++	bg: SKY,
++	focus: [200, 70],
++	decor(g) {
++		sun(g, 320, 60, 22);
++		cloud(g, 40, 80, 1);
++		cloud(g, 270, 130, 0.7);
++		ground(g, 255, '#c9a16a', '#a98250');
++	},
++	draw(g, o) {
++		const stone = '#dcc197';
++		// gövde
++		poly(g, [[162, 255], [172, 105], [228, 105], [238, 255]], stone, INK);
++		// balkon
++		poly(g, [[150, 100], [250, 100], [244, 114], [156, 114]], '#b88a5a', INK);
++		// üst gövde
++		poly(g, [[170, 100], [176, 58], [224, 58], [230, 100]], stone, INK);
++		// külah
++		poly(g, [[170, 58], [200, 10], [230, 58]], '#7d8c99', INK);
++		line(g, 200, 10, 200, 0, INK, 3);
++		if (o.sil) return;
++		for (const [x, y] of [[200, 82], [200, 150], [185, 190], [215, 190], [200, 225]]) {
++			ell(g, x, y, 6, 11, '#3a2f2a');
++		}
++		for (let x = 158; x < 246; x += 11) line(g, x, 100, x, 114, INK, 2);
++		line(g, 176, 58, 224, 58, INK, 3);
++		for (const x of [190, 210]) ell(g, x, 44, 4, 7, '#3a2f2a');
++	},
++});
++
++def('kiz_kulesi', 'Kız Kulesi', {
++	bg: SKY,
++	focus: [200, 110],
++	decor(g) {
++		sun(g, 60, 55, 20);
++		cloud(g, 250, 60, 0.9);
++		sea(g, 205);
++	},
++	draw(g, o) {
++		// ada
++		poly(g, [[130, 230], [150, 205], [250, 205], [275, 232], [250, 250], [150, 250]], '#a89478', INK);
++		// gövde
++		rect(g, 170, 150, 60, 60, '#e6d2ae', INK);
++		poly(g, [[160, 150], [240, 150], [236, 140], [164, 140]], '#c9ad84', INK);
++		// kulenin üst bölümü
++		rect(g, 178, 108, 44, 34, '#f1e3c4', INK);
++		// kubbe
++		g.beginPath();
++		g.moveTo(176, 108);
++		g.quadraticCurveTo(200, 62, 224, 108);
++		g.closePath();
++		paint(g, '#8a9ba8', INK);
++		rect(g, 197, 56, 6, 14, INK);
++		line(g, 200, 50, 200, 40, INK, 3);
++		if (o.sil) return;
++		for (const x of [188, 212]) rect(g, x - 5, 114, 10, 20, '#3a2f2a');
++		for (const x of [182, 200, 218]) rect(g, x - 5, 172, 10, 22, '#3a2f2a');
++	},
++});
++
++def('ayasofya', 'Ayasofya', {
++	bg: ['#f2a56a', '#fde3b8'],
++	focus: [200, 100],
++	decor(g) {
++		sun(g, 330, 70, 24, '#fff2b0');
++		ground(g, 258, '#9db36a', '#7e9650');
++	},
++	draw(g, o) {
++		const wall = '#d98b6a';
++		const lead = '#7f93a3';
++		// minareler
++		for (const x of [78, 322]) {
++			rect(g, x - 8, 70, 16, 190, '#efe2cf', INK);
++			poly(g, [[x - 11, 70], [x, 30], [x + 11, 70]], lead, INK);
++			rect(g, x - 12, 110, 24, 6, '#b79b78', INK, 2);
++		}
++		for (const x of [112, 288]) {
++			rect(g, x - 6, 110, 12, 150, '#efe2cf', INK);
++			poly(g, [[x - 8, 110], [x, 78], [x + 8, 110]], lead, INK);
++		}
++		// gövde ve payandalar
++		rect(g, 118, 160, 164, 98, wall, INK);
++		rect(g, 100, 200, 28, 58, '#c97a5a', INK);
++		rect(g, 272, 200, 28, 58, '#c97a5a', INK);
++		// yarım kubbeler
++		g.beginPath();
++		g.arc(150, 162, 40, Math.PI, 0);
++		g.closePath();
++		paint(g, lead, INK);
++		g.beginPath();
++		g.arc(250, 162, 40, Math.PI, 0);
++		g.closePath();
++		paint(g, lead, INK);
++		// ana kubbe
++		rect(g, 156, 112, 88, 52, wall, INK);
++		g.beginPath();
++		g.arc(200, 114, 52, Math.PI, 0);
++		g.closePath();
++		paint(g, lead, INK);
++		line(g, 200, 62, 200, 46, INK, 3);
++		circ(g, 200, 43, 4, INK);
++		if (o.sil) return;
++		for (let x = 164; x < 240; x += 14) rect(g, x, 122, 7, 14, '#3a2f2a');
++		for (const x of [140, 170, 200, 230, 260]) {
++			g.beginPath();
++			g.moveTo(x - 8, 258);
++			g.lineTo(x - 8, 220);
++			g.arc(x, 220, 8, Math.PI, 0);
++			g.lineTo(x + 8, 258);
++			g.closePath();
++			paint(g, '#3a2f2a');
++		}
++	},
++});
++
++def('eyfel_kulesi', 'Eyfel Kulesi', {
++	bg: ['#ffb38a', '#ffe9d2'],
++	focus: [200, 60],
++	decor(g) {
++		sun(g, 70, 70, 22, '#fff2b0');
++		cloud(g, 270, 70, 1);
++		ground(g, 258, '#8ccf7a', '#69b25a');
++	},
++	draw(g, o) {
++		const iron = '#5c4a3d';
++		// dış çizgi
++		poly(g, [[200, 12], [208, 70], [214, 70], [222, 130], [236, 130], [262, 200], [292, 258], [248, 258], [232, 224], [200, 205], [168, 224], [152, 258], [108, 258], [138, 200], [164, 130], [178, 130], [186, 70], [192, 70]], iron, INK, 3);
++		if (o.sil) return;
++		// kemer
++		g.beginPath();
++		g.moveTo(152, 258);
++		g.quadraticCurveTo(200, 170, 248, 258);
++		g.closePath();
++		g.fillStyle = '#ffd9b6';
++		g.fill();
++		// platformlar
++		rect(g, 164, 128, 72, 8, '#8a7060', INK, 2);
++		rect(g, 184, 68, 32, 6, '#8a7060', INK, 2);
++		// çapraz kirişler
++		g.strokeStyle = '#2b2118';
++		g.lineWidth = 2;
++		for (let y = 136; y < 200; y += 16) {
++			const half = 36 + (y - 136) * 0.6;
++			g.beginPath();
++			g.moveTo(200 - half, y);
++			g.lineTo(200 + half, y + 16);
++			g.moveTo(200 + half, y);
++			g.lineTo(200 - half, y + 16);
++			g.stroke();
++		}
++		g.beginPath();
++		g.moveTo(190, 76);
++		g.lineTo(210, 122);
++		g.moveTo(210, 76);
++		g.lineTo(190, 122);
++		g.stroke();
++	},
++});
++
++def('piramit', 'Giza Piramitleri', {
++	bg: ['#ffc477', '#ffeccc'],
++	focus: [200, 100],
++	decor(g) {
++		sun(g, 330, 60, 26, '#fff0a0');
++		ground(g, 240, '#e9c27a', '#d6a95c');
++		g.fillStyle = 'rgba(190,140,70,.4)';
++		g.beginPath();
++		g.ellipse(120, 270, 120, 18, 0, 0, 7);
++		g.fill();
++	},
++	draw(g, o) {
++		// büyük piramit
++		poly(g, [[200, 60], [60, 245], [340, 245]], '#e8b867', INK);
++		poly(g, [[200, 60], [340, 245], [235, 245]], '#c99244', null);
++		// küçük piramit
++		poly(g, [[330, 150], [260, 245], [400, 245]], '#dcaa5a', INK);
++		poly(g, [[330, 150], [400, 245], [345, 245]], '#bd8a3d', null);
++		poly(g, [[85, 190], [30, 245], [140, 245]], '#dcaa5a', INK);
++		if (o.sil) return;
++		g.strokeStyle = 'rgba(120,80,30,.35)';
++		g.lineWidth = 2;
++		for (let y = 90; y < 245; y += 22) {
++			const t = (y - 60) / 185;
++			line(g, 200 - 140 * t, y, 200 + 140 * t, y, 'rgba(120,80,30,.3)', 2);
++		}
++	},
++});
++
++def('pisa_kulesi', 'Pisa Kulesi', {
++	bg: ['#9bd4ff', '#effaff'],
++	focus: [215, 60],
++	decor(g) {
++		cloud(g, 40, 70, 1);
++		cloud(g, 280, 40, 0.8);
++		ground(g, 250, '#86cf72', '#62b050');
++	},
++	draw(g, o) {
++		g.save();
++		g.translate(200, 250);
++		g.rotate(0.1);
++		g.translate(-200, -250);
++		const mar = '#f4efe4';
++		rect(g, 170, 76, 60, 176, mar, INK);
++		rect(g, 178, 46, 44, 32, mar, INK);
++		rect(g, 172, 40, 56, 8, '#d9d0bf', INK, 2);
++		poly(g, [[178, 46], [182, 28], [218, 28], [222, 46]], '#b9cdd8', INK, 2.5);
++		if (!o.sil) {
++			for (let i = 0; i < 6; i++) {
++				const y = 82 + i * 28;
++				line(g, 170, y + 26, 230, y + 26, INK, 2);
++				for (let x = 177; x < 230; x += 12) {
++					g.beginPath();
++					g.moveTo(x - 4, y + 24);
++					g.lineTo(x - 4, y + 12);
++					g.arc(x, y + 12, 4, Math.PI, 0);
++					g.lineTo(x + 4, y + 24);
++					g.closePath();
++					g.fillStyle = '#6b5f50';
++					g.fill();
++				}
++			}
++			for (const x of [188, 202, 214]) ell(g, x, 62, 4, 8, '#6b5f50');
++		}
++		g.restore();
++	},
++});
++
++def('peri_bacasi', 'Peri Bacaları', {
++	bg: ['#ffb27a', '#ffe7c4'],
++	focus: [210, 130],
++	decor(g) {
++		sun(g, 60, 70, 20, '#fff0a0');
++		// sıcak hava balonları
++		for (const [x, y, c] of [[290, 60, '#ff5a4a'], [340, 105, '#3a9ad8']]) {
++			ell(g, x, y, 18, 22, c, INK, 2.5);
++			rect(g, x - 5, y + 24, 10, 8, '#8a5a3a', INK, 2);
++		}
++		ground(g, 252, '#cf9b65', '#b5834f');
++	},
++	draw(g, o) {
++		const body = '#e0aa78';
++		const cap = '#8c5a3a';
++		const chimney = (x, base, w, h, c = 1) => {
++			g.beginPath();
++			g.moveTo(x - w / 2, base);
++			g.quadraticCurveTo(x - w * 0.22, base - h * 0.55, x - w * 0.16, base - h);
++			g.lineTo(x + w * 0.16, base - h);
++			g.quadraticCurveTo(x + w * 0.22, base - h * 0.55, x + w / 2, base);
++			g.closePath();
++			paint(g, body, INK);
++			// şapka taşı
++			g.beginPath();
++			g.moveTo(x - w * 0.27, base - h + 8);
++			g.quadraticCurveTo(x, base - h - w * 0.4, x + w * 0.27, base - h + 8);
++			g.closePath();
++			paint(g, cap, INK, 2.5);
++			if (!o.sil && c) {
++				rrect(g, x - 5, base - h * 0.5, 10, 15, 4, '#4a2f1f');
++			}
++		};
++		chimney(105, 252, 90, 120);
++		chimney(205, 252, 120, 175);
++		chimney(305, 252, 80, 105);
++		chimney(55, 252, 50, 70, 0);
++		chimney(355, 252, 50, 80, 0);
++	},
++});
++
++def('bogaz_koprusu', 'Boğaz Köprüsü', {
++	bg: ['#ff9a7a', '#ffe0b5'],
++	focus: [110, 70],
++	decor(g) {
++		sun(g, 200, 100, 28, '#fff4b0');
++		sea(g, 200);
++	},
++	draw(g, o) {
++		const steel = '#c8352a';
++		// tabliye
++		rect(g, -10, 168, 420, 12, '#40495f', INK, 2.5);
++		// kuleler
++		for (const x of [110, 290]) {
++			rect(g, x - 9, 48, 7, 130, steel, INK, 2.5);
++			rect(g, x + 2, 48, 7, 130, steel, INK, 2.5);
++			rect(g, x - 9, 80, 18, 6, steel, INK, 2);
++			rect(g, x - 9, 128, 18, 6, steel, INK, 2);
++		}
++		g.strokeStyle = '#2b3350';
++		g.lineWidth = 4;
++		g.lineCap = 'round';
++		g.beginPath();
++		g.moveTo(-10, 172);
++		g.quadraticCurveTo(50, 120, 110, 52);
++		g.quadraticCurveTo(200, 190, 290, 52);
++		g.quadraticCurveTo(350, 120, 410, 172);
++		g.stroke();
++		if (o.sil) return;
++		// ana kablodan tabliyeye askılar (ana kablo: 110,52 → 200,~121 → 290,52 ikinci derece eğri)
++		for (let x = 122; x < 290; x += 12) {
++			const t = (x - 110) / 180;
++			const cy = 52 + 138 * t * (1 - t) * 2 * 0.5;
++			line(g, x, cy + 2, x, 168, '#2b3350', 1.6);
++		}
++		for (const [x0, x1, y0] of [[-6, 104, 168], [296, 406, 168]]) {
++			for (let x = x0; x < x1; x += 14) {
++				const t = (x - x0) / (x1 - x0);
++				const k = x0 < 0 ? t : 1 - t;
++				const cy = 172 - 118 * k * (0.35 + 0.65 * k);
++				line(g, x, cy + 1, x, y0, '#2b3350', 1.4);
++			}
++		}
++	},
++});
++
++def('saat_kulesi', 'Saat Kulesi', {
++	bg: SKY,
++	focus: [200, 100],
++	decor(g) {
++		cloud(g, 40, 90, 1);
++		cloud(g, 290, 60, 0.8);
++		ground(g, 255, '#c9a16a', '#a98250');
++	},
++	draw(g, o) {
++		rect(g, 156, 100, 88, 156, '#e6d2ae', INK);
++		rect(g, 148, 92, 104, 14, '#b88a5a', INK);
++		poly(g, [[152, 92], [200, 20], [248, 92]], '#9b4a3a', INK);
++		rect(g, 142, 250, 116, 10, '#b88a5a', INK);
++		line(g, 200, 20, 200, 4, INK, 3);
++		circ(g, 200, 140, 31, '#fff', INK, 4);
++		if (o.sil) return;
++		for (let i = 0; i < 12; i++) {
++			const a = (i * Math.PI) / 6;
++			line(g, 200 + Math.cos(a) * 24, 140 + Math.sin(a) * 24, 200 + Math.cos(a) * 28, 140 + Math.sin(a) * 28, INK, i % 3 ? 2 : 3.5);
++		}
++		line(g, 200, 140, 200, 120, INK, 4);
++		line(g, 200, 140, 214, 146, INK, 3.5);
++		circ(g, 200, 140, 3, INK);
++		for (const y of [190, 225]) {
++			g.beginPath();
++			g.moveTo(186, y + 18);
++			g.lineTo(186, y);
++			g.arc(200, y, 14, Math.PI, 0);
++			g.lineTo(214, y + 18);
++			g.closePath();
++			paint(g, '#3a2f2a');
++		}
++	},
++});
++
++// ---------------------------------------------------------------- gündelik nesneler
++def('ay', 'Ay', {
++	bg: ['#1c2a5a', '#3f4f9a'],
++	draw(g, o) {
++		g.save();
++		g.beginPath();
++		g.rect(0, 0, W0, H0);
++		g.moveTo(312, 128);
++		g.arc(238, 128, 74, 0, Math.PI * 2);
++		g.clip('evenodd');
++		circ(g, 200, 150, 96, '#ffe27a', INK, 4);
++		g.restore();
++		if (!o.sil) {
++			star(g, 300, 70, 12, 5, 4, 0.4, '#fff6c0');
++			star(g, 90, 80, 9, 4, 4, 0.2, '#fff6c0');
++			star(g, 320, 220, 8, 3.5, 4, 0.3, '#fff6c0');
++		}
++	},
++});
++def('cicek', 'Çiçek', {
++	bg: ['#bfe8ff', '#effbea'],
++	draw(g, o) {
++		line(g, 200, 160, 200, 290, '#3f9a45', 10);
++		ell(g, 168, 238, 30, 12, '#58bb5a', INK, 3, -0.5);
++		ell(g, 234, 214, 28, 11, '#58bb5a', INK, 3, 0.5);
++		for (let i = 0; i < 10; i++) {
++			const a = (i * Math.PI * 2) / 10;
++			ell(g, 200 + Math.cos(a) * 46, 120 + Math.sin(a) * 46, 30, 15, '#fff', INK, 3, a);
++		}
++		circ(g, 200, 120, 28, '#ffcf3a', INK, 3);
++		if (!o.sil) circ(g, 192, 112, 8, '#ffe98a');
++	},
++});
++def('kar_tanesi', 'Kar tanesi', {
++	bg: ['#3f86d0', '#9fd0f6'],
++	draw(g) {
++		g.strokeStyle = '#fff';
++		g.lineCap = 'round';
++		for (let i = 0; i < 6; i++) {
++			g.save();
++			g.translate(200, 150);
++			g.rotate((i * Math.PI) / 3);
++			g.lineWidth = 9;
++			g.beginPath();
++			g.moveTo(0, 0);
++			g.lineTo(0, -108);
++			g.stroke();
++			g.lineWidth = 7;
++			for (const [y, l] of [[-40, 28], [-72, 22]]) {
++				g.beginPath();
++				g.moveTo(0, y);
++				g.lineTo(-l, y - l * 0.8);
++				g.moveTo(0, y);
++				g.lineTo(l, y - l * 0.8);
++				g.stroke();
++			}
++			g.restore();
++		}
++		circ(g, 200, 150, 13, '#fff');
++	},
++});
++def('top', 'Top', {
++	bg: ['#8ad37a', '#c9efb8'],
++	draw(g, o) {
++		circ(g, 200, 150, 100, '#fff', INK, 5);
++		if (o.sil) return;
++		poly(g, pent(200, 150, 32, -Math.PI / 2), INK);
++		for (let i = 0; i < 5; i++) {
++			const a = -Math.PI / 2 + (i * Math.PI * 2) / 5;
++			line(g, 200 + Math.cos(a) * 32, 150 + Math.sin(a) * 32, 200 + Math.cos(a) * 62, 150 + Math.sin(a) * 62, INK, 4);
++			poly(g, pent(200 + Math.cos(a) * 84, 150 + Math.sin(a) * 84, 20, a + Math.PI), INK);
++		}
++	},
++});
++function pent(cx, cy, r, rot) {
++	return Array.from({ length: 5 }, (_, i) => [cx + Math.cos(rot + (i * Math.PI * 2) / 5) * r, cy + Math.sin(rot + (i * Math.PI * 2) / 5) * r]);
++}
++def('goz', 'Göz', {
++	bg: ['#ffe0b0', '#fff4e0'],
++	draw(g, o) {
++		g.beginPath();
++		g.moveTo(60, 150);
++		g.quadraticCurveTo(200, 30, 340, 150);
++		g.quadraticCurveTo(200, 270, 60, 150);
++		g.closePath();
++		paint(g, '#fff', INK, 6);
++		circ(g, 200, 150, 52, '#2a9ac8', INK, 4);
++		circ(g, 200, 150, 24, '#10182e');
++		if (!o.sil) {
++			circ(g, 184, 134, 10, '#fff');
++			for (let i = -3; i <= 3; i++) line(g, 200 + i * 38, 90 - Math.abs(i) * 6, 200 + i * 46, 62 - Math.abs(i) * 8, INK, 5);
++		}
++	},
++});
++def('damla', 'Damla', {
++	bg: ['#dff4ff', '#a8dcff'],
++	draw(g, o) {
++		g.beginPath();
++		g.moveTo(200, 30);
++		g.bezierCurveTo(230, 90, 300, 130, 300, 200);
++		g.arc(200, 200, 100, 0, Math.PI, false);
++		g.bezierCurveTo(100, 130, 170, 90, 200, 30);
++		g.closePath();
++		paint(g, '#2f8fe0', INK, 5);
++		if (!o.sil) {
++			g.beginPath();
++			g.arc(200, 205, 74, Math.PI * 0.62, Math.PI * 0.95);
++			g.strokeStyle = 'rgba(255,255,255,.75)';
++			g.lineWidth = 12;
++			g.lineCap = 'round';
++			g.stroke();
++		}
++	},
++});
++def('yildiz', 'Yıldız', {
++	bg: ['#22307a', '#5a6bd0'],
++	draw(g, o) {
++		star(g, 200, 160, 120, 52, 5, -Math.PI / 2, '#ffd83a', INK, 5);
++		if (!o.sil) star(g, 200, 160, 66, 28, 5, -Math.PI / 2, '#ffec8a');
++	},
++});
++def('balik', 'Balık', {
++	bg: ['#47b5e8', '#bfe9fb'],
++	draw(g, o) {
++		poly(g, [[285, 150], [370, 90], [350, 150], [370, 210]], '#ff7a2a', INK, 4);
++		ell(g, 190, 150, 110, 66, '#ff9a3a', INK, 5);
++		poly(g, [[160, 95], [200, 60], [240, 100]], '#ff7a2a', INK, 4);
++		poly(g, [[180, 205], [210, 238], [230, 200]], '#ff7a2a', INK, 4);
++		if (o.sil) return;
++		g.save();
++		g.beginPath();
++		g.ellipse(190, 150, 110, 66, 0, 0, 7);
++		g.clip();
++		for (const x of [200, 240, 275]) rect(g, x, 80, 14, 140, '#fff');
++		g.restore();
++		circ(g, 112, 138, 11, '#fff', INK, 3);
++		circ(g, 110, 138, 5, INK);
++	},
++});
++def('kus', 'Kuş', {
++	bg: ['#a5dcff', '#effaff'],
++	draw(g, o) {
++		line(g, 170, 220, 165, 262, '#e8903a', 7);
++		line(g, 210, 220, 215, 262, '#e8903a', 7);
++		poly(g, [[270, 150], [360, 120], [345, 175]], '#2f7ad0', INK, 4);
++		ell(g, 200, 160, 82, 66, '#4aa0f0', INK, 5);
++		circ(g, 130, 108, 40, '#4aa0f0', INK, 5);
++		poly(g, [[93, 100], [58, 114], [94, 124]], '#ffb02a', INK, 4);
++		ell(g, 210, 160, 44, 28, '#2f7ad0', INK, 4, -0.3);
++		if (o.sil) return;
++		ell(g, 190, 190, 52, 28, '#dff1ff');
++		circ(g, 124, 100, 8, '#fff', INK, 2);
++		circ(g, 122, 100, 4, INK);
++	},
++});
++def('agac', 'Ağaç', {
++	bg: ['#a8dcff', '#effaff'],
++	decor(g) {
++		ground(g, 258, '#7bc86a', '#5aa84a');
++	},
++	draw(g, o) {
++		poly(g, [[184, 262], [190, 160], [210, 160], [216, 262]], '#8a5a3a', INK, 4);
++		for (const [x, y, r] of [[200, 90, 62], [145, 140, 52], [255, 140, 52], [200, 150, 54]]) circ(g, x, y, r, '#3fae52', INK, 4);
++		if (o.sil) return;
++		for (const [x, y, r] of [[182, 76, 22], [230, 120, 14], [140, 132, 12]]) circ(g, x, y, r, '#62cc72');
++	},
++});
++def('kalp', 'Kalp', {
++	bg: ['#ffd0dd', '#fff0f4'],
++	draw(g, o) {
++		g.beginPath();
++		g.moveTo(200, 262);
++		g.bezierCurveTo(60, 170, 70, 50, 150, 50);
++		g.bezierCurveTo(180, 50, 198, 70, 200, 92);
++		g.bezierCurveTo(202, 70, 220, 50, 250, 50);
++		g.bezierCurveTo(330, 50, 340, 170, 200, 262);
++		g.closePath();
++		paint(g, '#e8344a', INK, 5);
++		if (!o.sil) {
++			g.beginPath();
++			g.arc(152, 100, 32, Math.PI * 0.95, Math.PI * 1.45);
++			g.strokeStyle = 'rgba(255,255,255,.6)';
++			g.lineWidth = 12;
++			g.lineCap = 'round';
++			g.stroke();
++		}
++	},
++});
++def('ev', 'Ev', {
++	bg: SKY,
++	decor(g) {
++		cloud(g, 40, 60, 1);
++		ground(g, 258, '#7bc86a', '#5aa84a');
++	},
++	draw(g, o) {
++		rect(g, 270, 60, 26, 70, '#a8584a', INK, 4);
++		rect(g, 105, 140, 190, 120, '#f2dfb2', INK, 5);
++		poly(g, [[85, 146], [200, 50], [315, 146]], '#d8483a', INK, 5);
++		if (o.sil) return;
++		rect(g, 175, 190, 50, 70, '#8a5a3a', INK, 4);
++		circ(g, 215, 228, 4, '#ffd25a');
++		for (const x of [125, 245]) {
++			rect(g, x, 170, 36, 36, '#bfe6ff', INK, 4);
++			line(g, x + 18, 170, x + 18, 206, INK, 3);
++			line(g, x, 188, x + 36, 188, INK, 3);
++		}
++	},
++});
++def('anahtar', 'Anahtar', {
++	bg: ['#ffe9a8', '#fff7dc'],
++	draw(g) {
++		g.save();
++		g.translate(200, 150);
++		g.rotate(-0.5);
++		g.beginPath();
++		g.arc(-100, 0, 54, 0, Math.PI * 2);
++		g.moveTo(-76, 0);
++		g.arc(-100, 0, 24, 0, Math.PI * 2, true);
++		g.fillStyle = '#f0b82a';
++		g.fill('evenodd');
++		g.strokeStyle = INK;
++		g.lineWidth = 5;
++		g.stroke();
++		rrect(g, -50, -13, 190, 26, 8, '#f0b82a', INK, 5);
++		rect(g, 90, 12, 20, 40, '#f0b82a', INK, 5);
++		rect(g, 118, 12, 18, 30, '#f0b82a', INK, 5);
++		g.restore();
++	},
++});
++def('saat', 'Saat', {
++	bg: ['#d8e6ff', '#f2f6ff'],
++	draw(g, o) {
++		circ(g, 200, 150, 112, '#fff', INK, 8);
++		circ(g, 200, 150, 112, null, '#ffb02a', 3);
++		for (let i = 0; i < 12; i++) {
++			const a = (i * Math.PI) / 6;
++			line(g, 200 + Math.cos(a) * 88, 150 + Math.sin(a) * 88, 200 + Math.cos(a) * 102, 150 + Math.sin(a) * 102, INK, i % 3 ? 4 : 8);
++		}
++		line(g, 200, 150, 200, 84, INK, 9);
++		line(g, 200, 150, 248, 176, INK, 7);
++		if (!o.sil) line(g, 200, 150, 150, 190, '#e8344a', 3);
++		circ(g, 200, 150, 8, INK);
++	},
++});
++def('gunes', 'Güneş', {
++	bg: ['#7ec4ff', '#d4eeff'],
++	draw(g) {
++		for (let i = 0; i < 12; i++) {
++			g.save();
++			g.translate(200, 150);
++			g.rotate((i * Math.PI) / 6);
++			poly(g, [[-10, -92], [0, -138], [10, -92]], '#ffb02a', INK, 3);
++			g.restore();
++		}
++		circ(g, 200, 150, 82, '#ffd83a', INK, 5);
++		circ(g, 174, 128, 20, 'rgba(255,255,255,.4)');
++	},
++});
++def('bulut', 'Bulut', {
++	bg: ['#4a90d8', '#a8d4f8'],
++	draw(g) {
++		const blobs = [[120, 190, 50], [186, 140, 62], [260, 160, 52], [290, 200, 38]];
++		// önce kontur (biraz büyük), sonra dolgu: birleşik bulut çerçevesi
++		for (const [x, y, r] of blobs) circ(g, x, y, r + 5, INK);
++		rect(g, 120, 190, 170, 50, INK);
++		for (const [x, y, r] of blobs) circ(g, x, y, r, '#fff');
++		rect(g, 120, 186, 170, 49, '#fff');
++	},
++});
++def('kedi', 'Kedi', {
++	bg: ['#ffd9a8', '#fff2dc'],
++	draw(g, o) {
++		// kuyruk
++		g.beginPath();
++		g.moveTo(262, 238);
++		g.bezierCurveTo(350, 250, 360, 150, 320, 120);
++		g.strokeStyle = INK;
++		g.lineWidth = 30;
++		g.lineCap = 'round';
++		g.stroke();
++		g.strokeStyle = '#8a8a96';
++		g.lineWidth = 22;
++		g.stroke();
++		// gövde
++		g.beginPath();
++		g.moveTo(130, 260);
++		g.bezierCurveTo(100, 180, 150, 140, 200, 140);
++		g.bezierCurveTo(260, 140, 290, 190, 270, 260);
++		g.closePath();
++		paint(g, '#8a8a96', INK, 5);
++		// kafa
++		poly(g, [[140, 70], [146, 22], [182, 56]], '#8a8a96', INK, 5);
++		poly(g, [[218, 56], [254, 22], [260, 70]], '#8a8a96', INK, 5);
++		ell(g, 200, 100, 62, 54, '#8a8a96', INK, 5);
++		if (o.sil) return;
++		poly(g, [[148, 64], [150, 40], [168, 58]], '#ffb0c0');
++		poly(g, [[232, 58], [250, 40], [252, 64]], '#ffb0c0');
++		for (const x of [176, 224]) {
++			ell(g, x, 98, 9, 12, '#bff070', INK, 3);
++			ell(g, x, 98, 3, 10, INK);
++		}
++		poly(g, [[194, 116], [206, 116], [200, 124]], '#ff8aa0');
++		for (const s of [-1, 1]) {
++			line(g, 200 + s * 18, 124, 200 + s * 62, 114, INK, 2);
++			line(g, 200 + s * 18, 128, 200 + s * 62, 132, INK, 2);
++		}
++		ell(g, 200, 215, 38, 44, '#b7b7c4');
++	},
++});
++def('elma', 'Elma', {
++	bg: ['#d6f2c0', '#f2fbe6'],
++	draw(g, o) {
++		g.beginPath();
++		g.moveTo(200, 90);
++		g.bezierCurveTo(260, 40, 340, 90, 320, 180);
++		g.bezierCurveTo(300, 260, 240, 270, 200, 250);
++		g.bezierCurveTo(160, 270, 100, 260, 80, 180);
++		g.bezierCurveTo(60, 90, 140, 40, 200, 90);
++		g.closePath();
++		paint(g, '#e8402f', INK, 5);
++		line(g, 200, 90, 208, 40, '#6b4a2a', 8);
++		ell(g, 240, 52, 34, 15, '#4cb04a', INK, 4, -0.4);
++		if (!o.sil) {
++			g.beginPath();
++			g.arc(140, 150, 40, Math.PI * 1.05, Math.PI * 1.5);
++			g.strokeStyle = 'rgba(255,255,255,.55)';
++			g.lineWidth = 12;
++			g.lineCap = 'round';
++			g.stroke();
++		}
++	},
++});
++def('kitap', 'Kitap', {
++	bg: ['#ffe4c0', '#fff6e6'],
++	draw(g, o) {
++		poly(g, [[200, 90], [70, 70], [70, 232], [200, 252]], '#fffaf0', INK, 5);
++		poly(g, [[200, 90], [330, 70], [330, 232], [200, 252]], '#fffaf0', INK, 5);
++		poly(g, [[60, 232], [200, 262], [340, 232], [340, 244], [200, 276], [60, 244]], '#2f6fd0', INK, 4);
++		if (o.sil) return;
++		for (let i = 0; i < 5; i++) {
++			line(g, 90, 106 + i * 24, 184, 120 + i * 24, '#9aa7c0', 4);
++			line(g, 216, 120 + i * 24, 310, 106 + i * 24, '#9aa7c0', 4);
++		}
++		line(g, 200, 90, 200, 252, INK, 4);
++	},
++});
++def('araba', 'Araba', {
++	bg: SKY,
++	decor(g) {
++		cloud(g, 50, 70, 1);
++		ground(g, 232, '#6b7388', '#4d556a');
++		for (let x = 0; x < 400; x += 70) rect(g, x, 262, 38, 6, '#fff');
++	},
++	draw(g, o) {
++		poly(g, [[60, 200], [60, 160], [140, 150], [168, 100], [270, 100], [310, 150], [350, 160], [350, 200]], '#e8402f', INK, 5);
++		for (const x of [135, 285]) circ(g, x, 205, 38, '#2b3350', INK, 5);
++		if (o.sil) return;
++		poly(g, [[152, 150], [176, 112], [218, 112], [218, 150]], '#bfe6ff', INK, 3);
++		poly(g, [[228, 150], [228, 112], [262, 112], [294, 150]], '#bfe6ff', INK, 3);
++		for (const x of [135, 285]) {
++			circ(g, x, 205, 18, '#cfd6e6');
++			circ(g, x, 205, 6, INK);
++		}
++		rect(g, 330, 168, 22, 12, '#ffe27a', INK, 2);
++	},
++});
++
++// ---------------------------------------------------------------- kullanım
++const imgCache = new Map();
++/** URL'li görseli yükler; hazır olunca callback. Yüklenemezse yedek çizim kalır. */
++export function loadImage(url) {
++	if (!url) return null;
++	let e = imgCache.get(url);
++	if (!e) {
++		const img = new Image();
++		e = { img, ok: false, fail: false, cbs: [] };
++		img.onload = () => {
++			e.ok = true;
++			e.cbs.splice(0).forEach((f) => f());
++		};
++		img.onerror = () => {
++			e.fail = true;
++			e.cbs.splice(0).forEach((f) => f());
++		};
++		img.src = url;
++		imgCache.set(url, e);
++	}
++	return e;
++}
++
++/** Bütün kimlikler hazırsa (ya da vazgeçildiyse) true. onReady yüklenince çağrılır. */
++export function whenReady(ids, onReady) {
++	const pend = ids.map((id) => ASSETS[id]?.url && loadImage(ASSETS[id].url)).filter((e) => e && !e.ok && !e.fail);
++	if (!pend.length) return true;
++	let n = pend.length;
++	for (const e of pend)
++		e.cbs.push(() => {
++			if (--n === 0) onReady();
++		});
++	return false;
++}
++
++export const assetName = (id) => ASSETS[id]?.name || id;
++export const assetFocus = (id) => ASSETS[id]?.focus || [200, 150];
++
++/**
++ * Bir varlığı g bağlamına W×H boyutunda çizer.
++ *   o.bg   : arka planı çiz (varsayılan true)
++ *   o.sil  : yalnızca gövde şekli (siluet kipi için; çağıran siyaha boyar)
++ *   o.view : { fx, fy, s } sanal uzayda odak ve yakınlaştırma
++ */
++export function drawAsset(g, id, W, H, o = {}) {
++	const a = ASSETS[id];
++	if (!a) return;
++	const { bg = true, sil = false, view = null } = o;
++	g.save();
++	if (bg) {
++		const gr = g.createLinearGradient(0, 0, 0, H);
++		const [c0, c1] = a.bg || SKY;
++		gr.addColorStop(0, c0);
++		gr.addColorStop(1, c1);
++		g.fillStyle = gr;
++		g.fillRect(0, 0, W, H);
++	}
++	const s0 = Math.min(W / W0, H / H0) * (view?.s ?? 1);
++	g.translate(W / 2, H / 2);
++	g.scale(s0, s0);
++	g.translate(-(view?.fx ?? 200), -(view?.fy ?? 150));
++	const e = a.url && loadImage(a.url);
++	if (e?.ok) {
++		// gerçek görsel: 400×300 kutuya sığdır
++		const k = Math.min(W0 / e.img.naturalWidth, H0 / e.img.naturalHeight);
++		const w = e.img.naturalWidth * k;
++		const h = e.img.naturalHeight * k;
++		g.drawImage(e.img, (W0 - w) / 2, (H0 - h) / 2, w, h);
++	} else if (a.draw) {
++		if (!sil && a.decor) a.decor(g, { sil });
++		a.draw(g, { sil });
++	}
++	g.restore();
++}
++
++/** Siluet: gövdeyi tamamen siyaha boyar (geçici tuvalde source-in). */
++export function drawSilhouette(g, id, W, H, tmp) {
++	const a = ASSETS[id];
++	const [c0, c1] = ['#dfe9ff', '#fff7e0'];
++	const gr = g.createLinearGradient(0, 0, 0, H);
++	gr.addColorStop(0, c0);
++	gr.addColorStop(1, c1);
++	g.fillStyle = gr;
++	g.fillRect(0, 0, W, H);
++	// parıltı
++	const rg = g.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.6);
++	rg.addColorStop(0, 'rgba(255,255,255,.9)');
++	rg.addColorStop(1, 'rgba(255,255,255,0)');
++	g.fillStyle = rg;
++	g.fillRect(0, 0, W, H);
++	if (!a) return;
++	tmp.width = W;
++	tmp.height = H;
++	const t = tmp.getContext('2d');
++	t.clearRect(0, 0, W, H);
++	drawAsset(t, id, W, H, { bg: false, sil: true });
++	t.globalCompositeOperation = 'source-in';
++	t.fillStyle = '#0d1630';
++	t.fillRect(0, 0, W, H);
++	t.globalCompositeOperation = 'source-over';
++	g.drawImage(tmp, 0, 0);
++}
++
++/** Dışarıdan (ör. gerçek görsel listesi) varlık eklemek ya da url bağlamak için. */
++export function registerAssets(map) {
++	for (const [id, v] of Object.entries(map)) ASSETS[id] = { ...(ASSETS[id] || {}), ...v };
++}
+diff --git a/game/fetih/src/quiz/crossgen.js b/game/fetih/src/quiz/crossgen.js
+new file mode 100644
+index 0000000..db75c5c
+--- /dev/null
++++ b/game/fetih/src/quiz/crossgen.js
+@@ -0,0 +1,132 @@
++// Mini çengel bulmaca yerleştirici.
++// layout(words, R) → { rows, cols, words: [{w, clue, r, c, dir:'a'|'d', n}], cells: [{r,c,ch}], ok }
++// Kural: her yeni kelime en az bir harfte öncekilerle kesişir; yan yana değen ama kesişmeyen harf olmaz.
++// 'a' = yatay (soldan sağa), 'd' = dikey (yukarıdan aşağı).
++
++const key = (r, c) => r + ',' + c;
++
++function fits(grid, w, r, c, dir) {
++	const dr = dir === 'd' ? 1 : 0;
++	const dc = dir === 'a' ? 1 : 0;
++	// kelimenin öncesi ve sonrası boş olmalı
++	if (grid.has(key(r - dr, c - dc)) || grid.has(key(r + dr * w.length, c + dc * w.length))) return -1;
++	let cross = 0;
++	for (let i = 0; i < w.length; i++) {
++		const rr = r + dr * i;
++		const cc = c + dc * i;
++		const cell = grid.get(key(rr, cc));
++		if (cell) {
++			if (cell.ch !== w[i] || cell.dirs.has(dir)) return -1;
++			cross++;
++		} else {
++			// kesişmeyen hücrenin yan komşuları boş olmalı
++			if (grid.has(key(rr + dc, cc + dr)) || grid.has(key(rr - dc, cc - dr))) return -1;
++		}
++	}
++	return cross;
++}
++
++function put(grid, w, r, c, dir) {
++	const dr = dir === 'd' ? 1 : 0;
++	const dc = dir === 'a' ? 1 : 0;
++	for (let i = 0; i < w.length; i++) {
++		const k = key(r + dr * i, c + dc * i);
++		const cell = grid.get(k);
++		if (cell) cell.dirs.add(dir);
++		else grid.set(k, { ch: w[i], dirs: new Set([dir]) });
++	}
++}
++
++function bounds(placed) {
++	let r0 = 1e9;
++	let c0 = 1e9;
++	let r1 = -1e9;
++	let c1 = -1e9;
++	for (const p of placed) {
++		const er = p.r + (p.dir === 'd' ? p.w.length - 1 : 0);
++		const ec = p.c + (p.dir === 'a' ? p.w.length - 1 : 0);
++		r0 = Math.min(r0, p.r);
++		c0 = Math.min(c0, p.c);
++		r1 = Math.max(r1, er);
++		c1 = Math.max(c1, ec);
++	}
++	return { r0, c0, r1, c1, rows: r1 - r0 + 1, cols: c1 - c0 + 1 };
++}
++
++function attempt(items, R) {
++	const grid = new Map();
++	const placed = [];
++	const first = items[0];
++	put(grid, first.w, 0, 0, 'a');
++	placed.push({ ...first, r: 0, c: 0, dir: 'a' });
++	let crossings = 0;
++	for (let k = 1; k < items.length; k++) {
++		const it = items[k];
++		let best = null;
++		for (const p of placed) {
++			const pd = p.dir;
++			const dir = pd === 'a' ? 'd' : 'a';
++			for (let i = 0; i < p.w.length; i++) {
++				for (let j = 0; j < it.w.length; j++) {
++					if (p.w[i] !== it.w[j]) continue;
++					// p'nin i. harfi it'in j. harfi olacak
++					const pr = p.r + (pd === 'd' ? i : 0);
++					const pc = p.c + (pd === 'a' ? i : 0);
++					const r = dir === 'd' ? pr - j : pr;
++					const c = dir === 'a' ? pc - j : pc;
++					const x = fits(grid, it.w, r, c, dir);
++					if (x < 1) continue;
++					const test = bounds([...placed, { w: it.w, r, c, dir }]);
++					const score = x * 3 - test.rows * test.cols * 0.08 - Math.abs(test.rows - test.cols) * 0.4 + R() * 0.6;
++					if (!best || score > best.score) best = { r, c, dir, score, x };
++				}
++			}
++		}
++		if (!best) return null;
++		put(grid, it.w, best.r, best.c, best.dir);
++		placed.push({ ...it, r: best.r, c: best.c, dir: best.dir });
++		crossings += best.x;
++	}
++	const b = bounds(placed);
++	return { placed, b, crossings, grid };
++}
++
++export function layout(words, R = Math.random) {
++	const base = words.map((x) => ({ w: x.w, clue: x.clue }));
++	let best = null;
++	for (let t = 0; t < 60; t++) {
++		// ilk kelime uzun olsun; geri kalanı karışık
++		const rest = base.slice().sort(() => R() - 0.5);
++		rest.sort((a, b) => b.w.length - a.w.length + (R() - 0.5) * 2.5);
++		const res = attempt(rest, R);
++		if (!res) continue;
++		const area = res.b.rows * res.b.cols;
++		const score = -area - Math.abs(res.b.rows - res.b.cols) * 1.5 + res.crossings * 2;
++		if (!best || score > best.score) best = { ...res, score };
++	}
++	if (!best) {
++		// yedek: hepsini alt alta, kesişmesiz yatay yerleştir (içerik hatası; oyun yine de çalışır)
++		const placed = base.map((x, i) => ({ ...x, r: i * 2, c: 0, dir: 'a' }));
++		const grid = new Map();
++		for (const p of placed) put(grid, p.w, p.r, p.c, 'a');
++		best = { placed, b: bounds(placed), grid, crossings: 0 };
++		best.ok = false;
++	} else best.ok = true;
++	const { r0, c0, rows, cols } = best.b;
++	const out = best.placed.map((p) => ({ w: p.w, clue: p.clue, r: p.r - r0, c: p.c - c0, dir: p.dir }));
++	// numaralandırma: okuma sırası (satır, sütun); aynı başlangıç hücresi aynı numarayı alır
++	const starts = [...new Set(out.map((p) => p.r * 100 + p.c))].sort((a, b) => a - b);
++	for (const p of out) p.n = starts.indexOf(p.r * 100 + p.c) + 1;
++	out.sort((a, b) => a.n - b.n || (a.dir === 'a' ? -1 : 1));
++	const cells = [];
++	const seen = new Set();
++	for (const p of out)
++		for (let i = 0; i < p.w.length; i++) {
++			const r = p.r + (p.dir === 'd' ? i : 0);
++			const c = p.c + (p.dir === 'a' ? i : 0);
++			if (seen.has(key(r, c))) continue;
++			seen.add(key(r, c));
++			cells.push({ r, c, ch: p.w[i] });
++		}
++	return { rows, cols, words: out, cells, ok: best.ok };
++}
+diff --git a/game/fetih/src/quiz/t_blitz.js b/game/fetih/src/quiz/t_blitz.js
+new file mode 100644
+index 0000000..bbc7670
+--- /dev/null
++++ b/game/fetih/src/quiz/t_blitz.js
+@@ -0,0 +1,156 @@
++// YILDIRIM TURU: 10 saniyede olabildiğince çok "doğru mu yanlış mı" bil.
++// Veri: items: [{t, ans}, ×12..16]  (t kısa ifade, ans true/false). Her oyunda karıştırılır.
++// Değer: { score, n }  (score = doğru sayısı, n = cevaplanan ifade sayısı).
++//
++// SIRALAMA: tür 'closest'. judge → err = −score; yani çok doğru yapan önde. Eşitlikte `time` (daha erken
++// bitiren) belirler. İnsan süre dolunca otomatik gönderilir (arayüz value() ile skoru okur, time = süre);
++// botlar süre sonunda bitirmiş sayılır. correct = skor en az 5.
++// Yanlış cevap 0.6 sn'lik bir kilitlenme getirir (rastgele basarak puan toplanmasın).
++
++import { css, esc, shuffle, pCorrect, clamp, buzz, chips } from './util.js';
++
++const CSS = /* css */ `
++.fl-bz{display:flex;flex-direction:column;gap:10px}
++.fl-bz-top{display:flex;align-items:center;gap:10px}
++.fl-bz-score{font-family:'Lilita One';font-weight:400;font-size:40px;line-height:1;color:var(--gold);text-shadow:0 3px 0 #3a2000;min-width:1.4em;transition:transform .15s}
++.fl-bz-score.pop{transform:scale(1.35)}
++.fl-bz-top small{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.75}
++.fl-bz-combo{margin-left:auto;font-family:'Lilita One';font-size:18px;color:#ff8a3a;opacity:0;transform:scale(.6);transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
++.fl-bz-combo.on{opacity:1;transform:scale(1)}
++.fl-bz-stage{position:relative;min-height:116px;display:grid;place-items:center;overflow:hidden;border-radius:18px;padding:14px;text-align:center;
++  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06));border:2.5px solid rgba(255,255,255,.28);font-size:clamp(19px,5.4vw,24px);line-height:1.25;text-wrap:balance}
++.fl-bz-stage span{display:block;animation:flq-slide .2s ease-out}
++.fl-bz-stage.ok{border-color:#7dff9a;box-shadow:0 0 0 3px rgba(125,255,154,.35)}
++.fl-bz-stage.no{border-color:#ff6a5a;box-shadow:0 0 0 3px rgba(255,106,90,.35);animation:flq-shake .38s}
++.fl-bz .fl-tf .fl-opt{min-height:72px}
++.fl-bz.lock .fl-tf .fl-opt{opacity:.4;pointer-events:none}
++.fl-bz-log{display:flex;flex-wrap:wrap;gap:4px;justify-content:center;margin-top:2px}
++.fl-bz-log i{width:20px;height:20px;border-radius:6px;display:grid;place-items:center;font-style:normal;font-size:12px;font-weight:700}
++.fl-bz-log i.y{background:#2a9a44}.fl-bz-log i.n{background:#c8352a}
++.fl-bz-final{text-align:center;font-family:'Lilita One';font-size:28px;color:#7dff9a;margin:2px 0}
++.fl-bz-rows{display:flex;flex-direction:column;gap:3px;font-size:13px;text-align:left}
++.fl-bz-rows div{display:flex;gap:8px;align-items:center;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06)}
++.fl-bz-rows div.n{background:rgba(255,80,60,.2)}
++.fl-bz-rows em{margin-left:auto;font-style:normal;font-family:'Lilita One';opacity:.8}
++@keyframes flq-slide{from{transform:translateX(26px);opacity:0}to{transform:none;opacity:1}}
++`;
++
++export const blitz = {
++	time: 10,
++	label: 'Yıldırım turu',
++	kind: 'closest',
++	prepare(q, R) {
++		return { q, items: shuffle(q.items, R) };
++	},
++	mount(el, v, api) {
++		css('blitz', CSS);
++		const items = v.items;
++		el.innerHTML = `<div class="fl-bz">
++			<div class="fl-bz-top"><b class="fl-bz-score">0</b><small>doğru</small><span class="fl-bz-combo"></span></div>
++			<div class="fl-bz-stage"><span></span></div>
++			<div class="fl-tf"><button class="fl-opt fl-yes" data-a="1"><span>DOĞRU</span></button><button class="fl-opt fl-no" data-a="0"><span>YANLIŞ</span></button></div>
++			<div data-r="x"></div>
++		</div>`;
++		const root = el.querySelector('.fl-bz');
++		const stage = root.querySelector('.fl-bz-stage');
++		const txt = stage.firstChild;
++		const scoreEl = root.querySelector('.fl-bz-score');
++		const comboEl = root.querySelector('.fl-bz-combo');
++		let k = 0; // sıradaki ifade
++		let score = 0;
++		let combo = 0;
++		let done = false;
++		let lock = false;
++		const log = [];
++		const show = () => {
++			txt.style.animation = 'none';
++			void txt.offsetWidth;
++			txt.style.animation = '';
++			txt.textContent = items[k].t;
++		};
++		show();
++		const finish = () => {
++			if (done) return;
++			done = true;
++			api.answer({ score, n: log.length });
++		};
++		const flash = (cls) => {
++			stage.classList.remove('ok', 'no');
++			void stage.offsetWidth;
++			stage.classList.add(cls);
++			setTimeout(() => stage.classList.remove(cls), 330);
++		};
++		root.querySelector('.fl-tf').addEventListener('click', (e) => {
++			const b = e.target.closest('.fl-opt');
++			if (!b || done || lock) return;
++			const say = b.dataset.a === '1';
++			const it = items[k];
++			const ok = say === !!it.ans;
++			log.push({ t: it.t, ans: !!it.ans, ok });
++			if (ok) {
++				score++;
++				combo++;
++				scoreEl.textContent = score;
++				scoreEl.classList.add('pop');
++				setTimeout(() => scoreEl.classList.remove('pop'), 150);
++				flash('ok');
++				buzz(6);
++				comboEl.textContent = combo >= 3 ? `🔥 x${combo}` : '';
++				comboEl.classList.toggle('on', combo >= 3);
++			} else {
++				combo = 0;
++				comboEl.classList.remove('on');
++				flash('no');
++				buzz(40);
++				lock = true;
++				root.classList.add('lock');
++				setTimeout(() => {
++					lock = false;
++					root.classList.remove('lock');
++				}, 600);
++			}
++			k++;
++			if (k >= items.length) return finish();
++			show();
++		});
++		return {
++			lock() {
++				done = true;
++			},
++			value: () => ({ score, n: log.length }),
++			reveal(results) {
++				done = true;
++				const x = root.querySelector('[data-r=x]');
++				root.querySelector('.fl-tf').style.display = 'none';
++				stage.style.display = 'none';
++				const sc = (r) => (r.value ? r.value.score : 0);
++				x.innerHTML = `<div class="fl-bz-final">${score} doğru!</div>
++					<div class="fl-bz-rows">${log
++						.slice(-6)
++						.map((l) => `<div class="${l.ok ? '' : 'n'}"><span>${l.ok ? '✓' : '✗'}</span><span>${esc(l.t)}</span><em>${l.ans ? 'Doğru' : 'Yanlış'}</em></div>`)
++						.join('')}</div>${chips(results, (r) => sc(r) + ' doğru')}`;
++			},
++			destroy() {},
++		};
++	},
++	judge(v, value) {
++		const score = value ? value.score || 0 : 0;
++		return { correct: score >= 5, err: -score, score };
++	},
++	bot(v, skill, R) {
++		// her ifade ~ (1.5 − 0.6·beceri) sn: okuma ve dokunma. Yanlış: 0.6 sn ceza.
++		const per = 1.55 - 0.6 * skill;
++		const p = clamp(pCorrect(skill, v.q.diff) + 0.12, 0.2, 0.97);
++		let t = 0;
++		let score = 0;
++		let n = 0;
++		while (n < v.items.length) {
++			t += per * (0.75 + R() * 0.5);
++			if (t > blitz.time) break;
++			n++;
++			if (R() < p) score++;
++			else t += 0.6;
++		}
++		return { value: { score, n }, time: n >= v.items.length ? Math.min(t, blitz.time) : blitz.time };
++	},
++};
+diff --git a/game/fetih/src/quiz/t_img.js b/game/fetih/src/quiz/t_img.js
+new file mode 100644
+index 0000000..6551956
+--- /dev/null
++++ b/game/fetih/src/quiz/t_img.js
+@@ -0,0 +1,279 @@
++// RESİMLİ SORU: blur (bulanıktan netleşir), zoom (çok yakından uzaklaşır), silhouette (siyah gölge),
++// rebus (birkaç resim yan yana, birleşimi bul).
++//
++// Veri: img: 'varlık_kimliği' | ['kimlik1','kimlik2',…] (rebus), mode, ve cevap için
++//       a: [doğru, y1, y2, y3]  (şıklı)  YA DA  w: 'KELİME' (klavyeyle yazılır).
++// Kimlikler assets.js manifestinden gelir; gerçek görsel yoksa prosedürel çizim kullanılır.
++//
++// Değer: şıklıda { i, f }, yazılıda { ok, tries, f }; f = cevap anındaki süre oranı (0..1).
++// Erken doğru cevap daha çok puan: judge → { correct, err (= f), score (100..40) }.
++// Tür 'exact': doğru olanlar arasında hızlı olan öne geçer (eşitlik bozma `time` ile).
++
++import { css, esc, shuffle, pCorrect, thinkTime, mountChoice, typedWord, clamp, trUp, chips, buzz } from './util.js';
++import { ASSETS, drawAsset, drawSilhouette, assetFocus, whenReady } from './assets.js';
++
++const CSS = /* css */ `
++.fl-img{display:flex;flex-direction:column;gap:10px}
++.fl-img-stage{position:relative;border-radius:18px;overflow:hidden;border:3px solid rgba(255,255,255,.85);box-shadow:0 6px 0 rgba(0,0,0,.35);background:#0d1630;line-height:0}
++.fl-img-stage canvas{display:block;width:100%;height:auto}
++.fl-img-rebus{display:flex;align-items:center;justify-content:center;gap:6px;padding:8px;border-radius:18px;background:rgba(0,0,0,.25);border:2px solid rgba(255,255,255,.14)}
++.fl-img-rebus .c{border-radius:14px;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.35);line-height:0;flex:none}
++.fl-img-rebus .c canvas{display:block}
++.fl-img-rebus .p{flex:none;font-family:'Lilita One';font-size:26px;color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.4)}
++.fl-img-bonus{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;opacity:.9}
++.fl-img-bonus i{flex:1;height:8px;border-radius:6px;background:rgba(255,255,255,.14);overflow:hidden;position:relative}
++.fl-img-bonus i::after{content:'';position:absolute;inset:0;border-radius:6px;background:linear-gradient(90deg,#ffd25a,#ff8a3a);transform-origin:0 50%;transform:scaleX(var(--k,1))}
++.fl-img-bonus b{font-family:'Lilita One';font-weight:400;font-size:15px;color:var(--gold);min-width:2.2em;text-align:right}
++.fl-img-cap{position:absolute;left:0;right:0;bottom:0;padding:8px 10px;text-align:center;font-family:'Lilita One';font-size:20px;line-height:1.1;color:#fff;
++  background:linear-gradient(180deg,transparent,rgba(10,16,34,.85));text-shadow:0 2px 0 rgba(0,0,0,.45);animation:flq-pop .35s cubic-bezier(.3,1.5,.5,1)}
++.fl-img-cap.rb{position:static;background:none;padding:4px;font-size:22px;color:#7dff9a}
++.fl-img-tag{position:absolute;left:8px;top:8px;padding:2px 9px;border-radius:999px;background:rgba(10,16,34,.75);font-size:11px;letter-spacing:.12em;text-transform:uppercase;line-height:1.5;border:1.5px solid rgba(255,255,255,.4)}
++`;
++
++const MODE_LABEL = { blur: 'Netleşen foto', zoom: 'Uzaklaşan foto', silhouette: 'Siluet', rebus: 'Resimli bulmaca' };
++const MODE_TAG = { blur: 'bulanık', zoom: 'yakın çekim', silhouette: 'gölge' };
++const LEVELS = [8, 11, 15, 21, 30, 44, 64, 96, 148, 230, 360, 480];
++const ease = (x) => 1 - Math.pow(1 - x, 2.2);
++
++export const img = {
++	time: 20,
++	label: 'Resimli soru',
++	kind: 'exact',
++	prepare(q, R) {
++		const ids = Array.isArray(q.img) ? q.img : [q.img];
++		const mode = q.mode || 'blur';
++		const v = { q, ids, mode, label: MODE_LABEL[mode] || 'Resimli soru' };
++		if (q.a) {
++			const order = shuffle([0, 1, 2, 3], R);
++			v.opts = order.map((i) => q.a[i]);
++			v.right = order.indexOf(0);
++		} else v.word = trUp(q.w);
++		return v;
++	},
++	mount(el, v, api) {
++		css('img', CSS);
++		const T = img.time;
++		const span = T * 0.85 * 1000; // bonus bu sürede erir
++		const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
++		const cssW = Math.min(el.clientWidth || 340, 380);
++		const typed = !!v.word;
++		const stageW = cssW;
++		const stageH = Math.round(stageW * (typed ? 0.5 : 0.62));
++		const multi = v.mode === 'rebus';
++		const bonus = v.mode === 'blur' || v.mode === 'zoom';
++		el.innerHTML = `<div class="fl-img">
++			${multi ? '<div class="fl-img-rebus"></div>' : '<div class="fl-img-stage"><canvas></canvas><span class="fl-img-tag">' + esc(MODE_TAG[v.mode] || '') + '</span></div>'}
++			${bonus ? '<div class="fl-img-bonus"><span>hız bonusu</span><i></i><b>100</b></div>' : ''}
++			<div data-r="ans"></div>
++		</div>`;
++		const root = el.querySelector('.fl-img');
++		const ansEl = el.querySelector('[data-r=ans]');
++		const bonusEl = el.querySelector('.fl-img-bonus');
++		const t0 = performance.now();
++		let done = false;
++		let alive = true;
++		const fNow = () => clamp((performance.now() - t0) / span, 0, 1);
++
++		// ------- tuvaller
++		let canvas = null;
++		let g = null;
++		const cw = Math.round(stageW * dpr);
++		const ch = Math.round(stageH * dpr);
++		const asp = ch / cw;
++		const mk = (w, h) => {
++			const c = document.createElement('canvas');
++			c.width = w;
++			c.height = h;
++			return c;
++		};
++		let rebusCanvases = [];
++		if (multi) {
++			const n = v.ids.length;
++			const rw = el.querySelector('.fl-img-rebus');
++			const cell = Math.floor((stageW - 16 - (n - 1) * 26) / n);
++			const px = Math.round(cell * dpr);
++			v.ids.forEach((id, i) => {
++				if (i) rw.insertAdjacentHTML('beforeend', '<span class="p">+</span>');
++				const d = document.createElement('div');
++				d.className = 'c';
++				const c = mk(px, px);
++				c.style.width = cell + 'px';
++				c.style.height = cell + 'px';
++				d.appendChild(c);
++				rw.appendChild(d);
++				rebusCanvases.push({ c, id });
++			});
++		} else {
++			canvas = el.querySelector('canvas');
++			canvas.width = cw;
++			canvas.height = ch;
++			g = canvas.getContext('2d');
++			g.imageSmoothingEnabled = true;
++		}
++		const id0 = v.ids[0];
++
++		// ------- kipler
++		const sil = mk(cw, ch);
++		let levels = null;
++		const buildLevels = () => {
++			const src = mk(480, Math.round(480 * asp));
++			drawAsset(src.getContext('2d'), id0, src.width, src.height, {});
++			levels = LEVELS.map((w) => {
++				const c = mk(w, Math.max(2, Math.round(w * asp)));
++				const x = c.getContext('2d');
++				x.imageSmoothingQuality = 'high';
++				x.drawImage(src, 0, 0, c.width, c.height);
++				return c;
++			});
++			// kademeli küçültme: büyük adımlarda tırtıklanmayı önler
++			for (let i = levels.length - 2; i >= 0; i--) {
++				const x = levels[i].getContext('2d');
++				x.imageSmoothingQuality = 'high';
++				x.clearRect(0, 0, levels[i].width, levels[i].height);
++				x.drawImage(levels[i + 1], 0, 0, levels[i].width, levels[i].height);
++			}
++		};
++		let lastKey = -1;
++		let curS = 16;
++		const focus = assetFocus(id0);
++		const draw = (f, final = false) => {
++			if (multi) {
++				for (const r of rebusCanvases) drawAsset(r.c.getContext('2d'), r.id, r.c.width, r.c.height, {});
++				return;
++			}
++			if (v.mode === 'blur') {
++				if (final) {
++					drawAsset(g, id0, cw, ch, {});
++					return;
++				}
++				if (!levels) buildLevels();
++				const p = clamp(f / 0.85, 0, 1);
++				const i = Math.min(LEVELS.length - 1, Math.floor(Math.pow(p, 0.75) * (LEVELS.length - 1) + 0.0001));
++				if (i === lastKey) return;
++				lastKey = i;
++				g.drawImage(levels[i], 0, 0, cw, ch);
++			} else if (v.mode === 'zoom') {
++				const s = final ? 1 : Math.exp(Math.log(16) * (1 - ease(clamp(f / 0.85, 0, 1))));
++				const key = Math.round(s * 40);
++				if (key === lastKey && !final) return;
++				lastKey = key;
++				curS = s;
++				drawAsset(g, id0, cw, ch, { view: { fx: focus[0], fy: focus[1], s } });
++			} else if (v.mode === 'silhouette') {
++				if (final) drawAsset(g, id0, cw, ch, {});
++				else if (lastKey < 0) {
++					lastKey = 1;
++					drawSilhouette(g, id0, cw, ch, sil);
++				}
++			}
++		};
++		const ready = whenReady(v.ids, () => {
++			lastKey = -1;
++			levels = null;
++			draw(fNow());
++		});
++		void ready;
++		draw(0);
++		// ------- döngü
++		const tick = () => {
++			if (!alive || !el.isConnected) return;
++			if (!done) {
++				const f = fNow();
++				draw(f);
++				if (bonusEl) {
++					const k = 1 - clamp(f / 1, 0, 1);
++					bonusEl.querySelector('i').style.setProperty('--k', k.toFixed(3));
++					bonusEl.querySelector('b').textContent = String(Math.round(40 + 60 * k));
++				}
++				requestAnimationFrame(tick);
++			}
++		};
++		requestAnimationFrame(tick);
++
++		// ------- cevap alanı
++		let ctl;
++		let tw = null;
++		let tries = 0;
++		if (typed) {
++			tw = typedWord(ansEl, v.word, {
++				onFull(guess) {
++					if (guess === v.word.replace(/ /g, '')) {
++						done = true;
++						tw.lock();
++						api.answer({ ok: true, tries, f: fNow() });
++					} else {
++						tries++;
++						tw.shake();
++						setTimeout(() => !done && tw.clear(), 380);
++					}
++				},
++			});
++		} else {
++			ctl = mountChoice(ansEl, v, api, { wrap: (i) => ({ i, f: fNow() }) });
++		}
++		return {
++			lock() {
++				done = true;
++				ctl?.lock();
++				tw?.lock();
++			},
++			value: () => null,
++			reveal(results) {
++				done = true;
++				alive = false;
++				const answerText = typed ? v.word : v.opts[v.right];
++				if (ctl) ctl.reveal(results, (x) => x?.i);
++				if (tw) tw.fill(v.word);
++				// resmi netle / renklendir
++				if (multi) {
++					draw(1);
++					root.insertAdjacentHTML('beforeend', `<div class="fl-img-cap rb">${esc(answerText)}</div>`);
++				} else {
++					const stage = el.querySelector('.fl-img-stage');
++					stage.querySelector('.fl-img-tag')?.remove();
++					if (v.mode === 'zoom') {
++						// kalan yakınlaştırmayı hızlıca aç
++						const a = performance.now();
++						const s0 = curS;
++						const step = (t) => {
++							const k = clamp((t - a) / 500, 0, 1);
++							drawAsset(g, id0, cw, ch, { view: { fx: focus[0], fy: focus[1], s: Math.exp(Math.log(s0) * (1 - ease(k))) } });
++							if (k < 1 && el.isConnected) requestAnimationFrame(step);
++						};
++						requestAnimationFrame(step);
++					} else draw(1, true);
++					stage.insertAdjacentHTML('beforeend', `<div class="fl-img-cap">${esc(answerText)}</div>`);
++				}
++				const mine = results;
++				root.insertAdjacentHTML('beforeend', chips(mine, (r) => (r.correct ? '✓ ' + Math.round(r.score ?? 0) : '✗')));
++			},
++			destroy() {
++				alive = false;
++			},
++		};
++	},
++	judge(v, value) {
++		if (!value) return { correct: false, err: 99, score: 0 };
++		const ok = v.word ? !!value.ok : value.i === v.right;
++		const f = clamp(value.f ?? 1, 0, 1);
++		return { correct: ok, err: ok ? f : 99, score: ok ? Math.round(100 - 60 * f) : 0 };
++	},
++	bot(v, skill, R) {
++		const time = thinkTime(R, 3, v.mode === 'rebus' ? 9 : 10);
++		const f = clamp(time / (img.time * 0.85), 0, 1);
++		let p = pCorrect(skill, v.q.diff);
++		if (v.mode === 'blur' || v.mode === 'zoom') p *= Math.min(1, 0.55 + f * 1.1);
++		if (v.word) p *= 0.85; // yazmak daha zor
++		const ok = R() < clamp(p, 0.05, 0.96);
++		let value;
++		if (v.word) value = { ok, tries: ok ? 0 : 2, f };
++		else {
++			let i = v.right;
++			if (!ok) do i = Math.floor(R() * 4); while (i === v.right);
++			value = { i, f };
++		}
++		return { value, time: v.word ? time + 3 : time };
++	},
++};
++
++export { ASSETS };
+diff --git a/game/fetih/src/quiz/t_match.js b/game/fetih/src/quiz/t_match.js
+new file mode 100644
+index 0000000..c8961fe
+--- /dev/null
++++ b/game/fetih/src/quiz/t_match.js
+@@ -0,0 +1,196 @@
++// EŞLEŞTİR: sol sütundan bir öğeye, sonra sağ sütundan eşine dokun; renkli bir bağlantı çizgisi çizilir.
++// Veri: pairs: [[sol, sağ], ×4]
++// Değer (value): value[solIndeks] = ekrandaki sağ sıra numarası (-1: bağlanmamış)
++// Sıralama türü 'closest': err = yanlış ya da boş eşleşme sayısı (0..4).
++
++import { css, esc, shuffle, pCorrect, thinkTime, buzz, chips } from './util.js';
++
++const COLORS = ['#ffd25a', '#5ad1ff', '#ff7ab8', '#9dff7a'];
++
++const CSS = /* css */ `
++.fl-mat{position:relative;display:grid;grid-template-columns:1fr 54px 1fr;align-items:stretch}
++.fl-mat-col{display:flex;flex-direction:column;gap:8px;grid-row:1}
++.fl-mat-col.l{grid-column:1}.fl-mat-col.r{grid-column:3}
++.fl-mat-it{position:relative;min-height:54px;padding:6px 10px;border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:14.5px;line-height:1.15;
++  background:linear-gradient(180deg,#3a5ba8,#2a4486);border:2.5px solid rgba(255,255,255,.22);box-shadow:0 4px 0 #142554;touch-action:manipulation;
++  transition:transform .12s,border-color .2s,background .2s}
++.fl-mat-it:active{transform:translateY(2px)}
++.fl-mat-it.sel{border-color:#fff;background:linear-gradient(180deg,#6a7fc8,#4a5fa8);transform:scale(1.04)}
++.fl-mat-it.on{border-color:var(--c)}
++.fl-mat-it.on::after{content:'';position:absolute;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:var(--c);border:2px solid #fff}
++.fl-mat-col.l .fl-mat-it.on::after{right:-8px}
++.fl-mat-col.r .fl-mat-it.on::after{left:-8px}
++.fl-mat-it.ok{background:linear-gradient(180deg,#4fd16a,#2a9a44);border-color:#fff;box-shadow:0 4px 0 #156a2a}
++.fl-mat-it.bad{background:linear-gradient(180deg,#ff6a5a,#c8352a);box-shadow:0 4px 0 #7a1a12}
++.fl-mat svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
++.fl-mat path{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .3s ease-out,opacity .3s}
++.fl-mat path.in{stroke-dashoffset:0}
++.fl-mat path.out{opacity:0}
++.fl-mat-send{margin-top:10px;width:100%}
++.fl-mat.sent .fl-mat-send{display:none}
++`;
++
++export const match = {
++	time: 25,
++	label: 'Eşleştir',
++	kind: 'closest',
++	prepare(q, R) {
++		const n = q.pairs.length;
++		const idx = q.pairs.map((_, i) => i);
++		let ord = shuffle(idx, R);
++		for (let k = 0; k < 12 && ord.every((x, i) => x === i); k++) ord = shuffle(idx, R);
++		// ord[j]: j. sağ konumda gösterilen çiftin indeksi
++		return { q, n, ord, left: q.pairs.map((p) => p[0]), right: ord.map((i) => q.pairs[i][1]) };
++	},
++	mount(el, v, api) {
++		css('match', CSS);
++		const n = v.n;
++		el.innerHTML = `<div class="fl-mat">
++			<svg></svg>
++			<div class="fl-mat-col l">${v.left.map((t, i) => `<button class="fl-mat-it" data-s="l" data-i="${i}">${esc(t)}</button>`).join('')}</div>
++			<div class="fl-mat-col r">${v.right.map((t, i) => `<button class="fl-mat-it" data-s="r" data-i="${i}">${esc(t)}</button>`).join('')}</div>
++		</div>
++		<button class="fl-send fl-mat-send" disabled>ONAYLA</button>`;
++		const root = el.querySelector('.fl-mat');
++		const svg = root.querySelector('svg');
++		const L = [...root.querySelectorAll('.l .fl-mat-it')];
++		const Rt = [...root.querySelectorAll('.r .fl-mat-it')];
++		const send = el.querySelector('.fl-mat-send');
++		const m = Array(n).fill(-1); // sol → sağ
++		let sel = null;
++		let done = false;
++		const paths = new Map();
++
++		const anchor = (b, side) => ({ x: side === 'l' ? b.offsetLeft + b.offsetWidth : b.offsetLeft, y: b.offsetTop + b.offsetHeight / 2 });
++		const makePath = (l, r, color, cls = '') => {
++			const a = anchor(L[l], 'l');
++			const b = anchor(Rt[r], 'r');
++			const dx = (b.x - a.x) * 0.55;
++			const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
++			p.setAttribute('d', `M${a.x},${a.y} C${a.x + dx},${a.y} ${b.x - dx},${b.y} ${b.x},${b.y}`);
++			p.setAttribute('pathLength', '1');
++			p.style.stroke = color;
++			if (cls) p.classList.add(cls);
++			svg.appendChild(p);
++			requestAnimationFrame(() => requestAnimationFrame(() => p.classList.add('in')));
++			return p;
++		};
++		const clearSel = () => {
++			sel = null;
++			for (const b of [...L, ...Rt]) b.classList.remove('sel');
++		};
++		const paint = () => {
++			L.forEach((b, i) => {
++				b.classList.toggle('on', m[i] >= 0);
++				b.style.setProperty('--c', COLORS[i]);
++			});
++			Rt.forEach((b, j) => {
++				const l = m.indexOf(j);
++				b.classList.toggle('on', l >= 0);
++				if (l >= 0) b.style.setProperty('--c', COLORS[l]);
++			});
++			send.disabled = m.some((x) => x < 0);
++		};
++		const drop = (l) => {
++			if (m[l] < 0) return;
++			const p = paths.get(l);
++			if (p) {
++				p.classList.add('out');
++				setTimeout(() => p.remove(), 300);
++				paths.delete(l);
++			}
++			m[l] = -1;
++		};
++		const connect = (l, r) => {
++			drop(l);
++			const prev = m.indexOf(r);
++			if (prev >= 0) drop(prev);
++			m[l] = r;
++			paths.set(l, makePath(l, r, COLORS[l]));
++			buzz(10);
++		};
++		const tap = (side, i) => {
++			if (done) return;
++			if (sel && sel.side !== side) {
++				const l = side === 'l' ? i : sel.i;
++				const r = side === 'l' ? sel.i : i;
++				clearSel();
++				connect(l, r);
++			} else {
++				// aynı sütun: bağlıysa çözüp yeniden seç
++				if (side === 'l') drop(i);
++				else {
++					const l = m.indexOf(i);
++					if (l >= 0) drop(l);
++				}
++				clearSel();
++				sel = { side, i };
++				(side === 'l' ? L : Rt)[i].classList.add('sel');
++			}
++			paint();
++		};
++		root.addEventListener('click', (e) => {
++			const b = e.target.closest('.fl-mat-it');
++			if (b) tap(b.dataset.s, Number(b.dataset.i));
++		});
++		send.addEventListener('click', () => {
++			if (done || send.disabled) return;
++			done = true;
++			clearSel();
++			root.classList.add('sent');
++			api.answer(m.slice());
++		});
++		paint();
++		return {
++			lock() {
++				done = true;
++			},
++			value: () => m.slice(),
++			reveal(results) {
++				done = true;
++				root.classList.add('sent');
++				clearSel();
++				for (const p of paths.values()) p.classList.add('out');
++				const okL = [];
++				L.forEach((b, l) => {
++					const good = m[l] >= 0 && v.ord[m[l]] === l;
++					okL.push(good);
++					b.classList.remove('on');
++					b.classList.add(good ? 'ok' : 'bad');
++				});
++				Rt.forEach((b, j) => {
++					const l = m.indexOf(j);
++					b.classList.remove('on');
++					b.classList.add(l >= 0 && v.ord[j] === l ? 'ok' : 'bad');
++				});
++				// doğru çizgiler sırayla belirir
++				setTimeout(() => {
++					svg.innerHTML = '';
++					for (const p of paths.values()) p.remove();
++					L.forEach((b, l) => setTimeout(() => makePath(l, v.ord.indexOf(l), '#7dff9a'), l * 140));
++					L.concat(Rt).forEach((b) => b.classList.remove('bad'));
++					L.concat(Rt).forEach((b) => b.classList.add('ok'));
++				}, 700);
++				root.insertAdjacentHTML('afterend', chips(results, (r) => (r.err === 0 ? '✓' : r.value ? 4 - r.err + '/4' : '—')));
++			},
++			destroy() {},
++		};
++	},
++	judge(v, value) {
++		if (!Array.isArray(value)) return { correct: false, err: v.n };
++		let err = 0;
++		for (let l = 0; l < v.n; l++) if (value[l] == null || value[l] < 0 || v.ord[value[l]] !== l) err++;
++		return { correct: err === 0, err };
++	},
++	bot(v, skill, R) {
++		// doğru eşleşmeyi bul; bilmeyen bot en az iki öğeyi karıştırır
++		const m = v.ord.map((_, j) => j).map((j) => v.ord.indexOf(j)); // sol l → sağ konum
++		if (R() >= Math.min(0.96, pCorrect(skill, v.q.diff) + 0.08)) {
++			const k = 2 + (R() < 0.35 ? 1 : 0) + (R() < 0.15 ? 1 : 0);
++			const picks = shuffle([...m.keys()], R).slice(0, Math.min(k, v.n));
++			const vals = picks.map((l) => m[l]);
++			picks.forEach((l, i) => (m[l] = vals[(i + 1) % picks.length]));
++		}
++		return { value: m, time: thinkTime(R, 7, 9) };
++	},
++};
+diff --git a/game/fetih/src/quiz/t_order.js b/game/fetih/src/quiz/t_order.js
+new file mode 100644
+index 0000000..1c723db
+--- /dev/null
++++ b/game/fetih/src/quiz/t_order.js
+@@ -0,0 +1,188 @@
++// SIRALA (kronoloji): 4 öğeyi sürükleyerek küçükten büyüğe (ya da eskiden yeniye) diz.
++// Veri: items: [{t, v, s?}, ×4]  (t metin, v sıralama değeri, s isteğe bağlı gösterim metni)
++//       lo / hi: isteğe bağlı uç etiketleri ("en eski" / "en yeni").
++// Değer (value): öğe indekslerinin sırası, örn. [2,0,3,1]
++// Sıralama türü 'closest': err = ters çevrilmiş çift sayısı (0..6); 0 = tam doğru.
++
++import { css, esc, shuffle, pCorrect, gauss, thinkTime, clamp, buzz, chips, fmtNum } from './util.js';
++
++const PITCH = 60;
++const ROW = 52;
++
++const CSS = /* css */ `
++.fl-ord{display:flex;flex-direction:column;gap:6px}
++.fl-ord-cap{font-size:12px;letter-spacing:.12em;text-transform:uppercase;opacity:.65;text-align:center}
++.fl-ord-list{position:relative;touch-action:none}
++.fl-ord-row{position:absolute;left:0;right:0;top:0;height:${ROW}px;display:flex;align-items:center;gap:10px;padding:0 12px 0 8px;border-radius:14px;
++  background:linear-gradient(180deg,#3a5ba8,#2a4486);border:2px solid rgba(255,255,255,.22);box-shadow:0 4px 0 #142554;
++  transition:transform .22s cubic-bezier(.3,1.3,.5,1),background .25s,border-color .25s,box-shadow .25s;touch-action:none;cursor:grab;will-change:transform}
++.fl-ord-row.drag{transition:none;z-index:5;border-color:#fff;box-shadow:0 10px 18px rgba(0,0,0,.45);cursor:grabbing;background:linear-gradient(180deg,#5f7fd2,#3f5fb2)}
++.fl-ord-row.sel{border-color:var(--gold);box-shadow:0 0 0 3px rgba(255,210,90,.35),0 4px 0 #142554}
++.fl-ord-row b{flex:none;width:28px;height:28px;border-radius:9px;background:rgba(255,255,255,.2);display:grid;place-items:center;font-family:'Lilita One';font-weight:400;font-size:16px}
++.fl-ord-row span{flex:1;min-width:0;font-size:16px;line-height:1.15}
++.fl-ord-row em{font-style:normal;font-family:'Lilita One';font-size:16px;color:var(--gold);opacity:0;transition:opacity .3s}
++.fl-ord-row .fl-grip{flex:none;width:16px;height:16px;background:radial-gradient(circle,rgba(255,255,255,.55) 1.6px,transparent 2px) 0 0/8px 8px;opacity:.8}
++.fl-ord-row.ok{background:linear-gradient(180deg,#4fd16a,#2a9a44);box-shadow:0 4px 0 #156a2a;border-color:#fff}
++.fl-ord-row.bad{background:linear-gradient(180deg,#ff6a5a,#c8352a);box-shadow:0 4px 0 #7a1a12}
++.fl-ord-row.fin{background:linear-gradient(180deg,#4fd16a,#2a9a44);box-shadow:0 4px 0 #156a2a;border-color:#fff}
++.fl-ord-row.ok em,.fl-ord-row.bad em,.fl-ord-row.fin em{opacity:1;color:#fff}
++.fl-ord .fl-send{margin-top:4px}
++.fl-ord.sent .fl-send{display:none}
++.fl-ord.sent .fl-grip{display:none}
++`;
++
++/** values: item indeksleri sırası; ters çevrilmiş çift sayısı. */
++export function inversions(seq, items) {
++	let c = 0;
++	for (let i = 0; i < seq.length; i++) for (let j = i + 1; j < seq.length; j++) if (items[seq[i]].v > items[seq[j]].v) c++;
++	return c;
++}
++
++export const order = {
++	time: 25,
++	label: 'Sırala',
++	kind: 'closest',
++	prepare(q, R) {
++		const idx = q.items.map((_, i) => i);
++		const correct = idx.slice().sort((a, b) => q.items[a].v - q.items[b].v);
++		let start = shuffle(idx, R);
++		for (let k = 0; k < 12 && inversions(start, q.items) === 0; k++) start = shuffle(idx, R);
++		return { q, start, correct };
++	},
++	mount(el, v, api) {
++		css('order', CSS);
++		const items = v.q.items;
++		const n = items.length;
++		let seq = v.start.slice();
++		el.innerHTML = `<div class="fl-ord">
++			<div class="fl-ord-cap">▲ ${esc(v.q.lo || 'en küçük')}</div>
++			<div class="fl-ord-list" style="height:${n * PITCH - (PITCH - ROW)}px">${items
++				.map((it, i) => `<div class="fl-ord-row" data-i="${i}"><b></b><span>${esc(it.t)}</span><em></em><i class="fl-grip"></i></div>`)
++				.join('')}</div>
++			<div class="fl-ord-cap">▼ ${esc(v.q.hi || 'en büyük')}</div>
++			<button class="fl-send">ONAYLA</button>
++		</div>`;
++		const root = el.querySelector('.fl-ord');
++		const list = el.querySelector('.fl-ord-list');
++		const rows = [...el.querySelectorAll('.fl-ord-row')];
++		let done = false;
++		let drag = null;
++		let sel = -1;
++		const place = (skip = -1) => {
++			seq.forEach((k, slot) => {
++				if (k === skip) return;
++				rows[k].style.transform = `translateY(${slot * PITCH}px)`;
++				rows[k].firstChild.textContent = slot + 1;
++			});
++			if (skip >= 0) rows[skip].firstChild.textContent = seq.indexOf(skip) + 1;
++		};
++		place();
++		list.addEventListener('pointerdown', (e) => {
++			if (done || drag) return;
++			const row = e.target.closest('.fl-ord-row');
++			if (!row) return;
++			const i = Number(row.dataset.i);
++			drag = { row, i, y0: e.clientY, base: seq.indexOf(i) * PITCH, moved: false, id: e.pointerId };
++			try {
++				row.setPointerCapture(e.pointerId);
++			} catch {
++				/* yoksay */
++			}
++		});
++		list.addEventListener('pointermove', (e) => {
++			if (!drag || e.pointerId !== drag.id) return;
++			const dy = e.clientY - drag.y0;
++			if (!drag.moved) {
++				if (Math.abs(dy) < 6) return;
++				drag.moved = true;
++				drag.row.classList.add('drag');
++				rows.forEach((r) => r.classList.remove('sel'));
++				sel = -1;
++			}
++			const y = clamp(drag.base + dy, -6, (n - 1) * PITCH + 6);
++			drag.row.style.transform = `translateY(${y}px) scale(1.03)`;
++			const slot = clamp(Math.round(y / PITCH), 0, n - 1);
++			const cur = seq.indexOf(drag.i);
++			if (slot !== cur) {
++				seq.splice(cur, 1);
++				seq.splice(slot, 0, drag.i);
++				place(drag.i);
++				buzz(6);
++			}
++		});
++		const end = (e) => {
++			if (!drag || e.pointerId !== drag.id) return;
++			const d = drag;
++			drag = null;
++			d.row.classList.remove('drag');
++			if (d.moved) return place();
++			// dokunma: ilk dokunuş seçer, ikincisi yer değiştirir
++			if (sel < 0) {
++				sel = d.i;
++				d.row.classList.add('sel');
++			} else if (sel === d.i) {
++				sel = -1;
++				d.row.classList.remove('sel');
++			} else {
++				const a = seq.indexOf(sel);
++				const b = seq.indexOf(d.i);
++				[seq[a], seq[b]] = [seq[b], seq[a]];
++				rows[sel].classList.remove('sel');
++				sel = -1;
++				place();
++				buzz(8);
++			}
++		};
++		list.addEventListener('pointerup', end);
++		list.addEventListener('pointercancel', end);
++		el.querySelector('.fl-send').addEventListener('click', () => {
++			if (done) return;
++			done = true;
++			root.classList.add('sent');
++			api.answer(seq.slice());
++		});
++		return {
++			lock() {
++				done = true;
++				drag = null;
++			},
++			value: () => seq.slice(),
++			reveal(results) {
++				done = true;
++				root.classList.add('sent');
++				rows.forEach((r) => r.classList.remove('sel', 'drag'));
++				const right = v.correct;
++				const unit = v.q.unit ? ' ' + v.q.unit : '';
++				rows.forEach((r, i) => {
++					r.classList.add(seq.indexOf(i) === right.indexOf(i) ? 'ok' : 'bad');
++					r.querySelector('em').textContent = (items[i].s ?? fmtNum(items[i].v)) + (items[i].s ? '' : unit);
++				});
++				setTimeout(() => {
++					seq = right.slice();
++					rows.forEach((r) => r.classList.add('fin'));
++					place();
++				}, 750);
++				root.insertAdjacentHTML('beforeend', chips(results, (r) => (r.err === 0 ? '✓' : r.value ? r.err + ' hata' : '—')));
++			},
++			destroy() {},
++		};
++	},
++	judge(v, value) {
++		const max = (v.q.items.length * (v.q.items.length - 1)) / 2;
++		if (!Array.isArray(value)) return { correct: false, err: max };
++		const err = inversions(value, v.q.items);
++		return { correct: err === 0, err };
++	},
++	bot(v, skill, R) {
++		const seq = v.correct.slice();
++		if (R() >= Math.min(0.97, pCorrect(skill, v.q.diff) + 0.05)) {
++			// komşu yer değiştirmeleriyle yanılgı (1..3)
++			const k = clamp(Math.round(Math.abs(gauss(R)) * (1.5 - skill) * 1.4) + 1, 1, 4);
++			for (let j = 0; j < k; j++) {
++				const a = Math.floor(R() * (seq.length - 1));
++				[seq[a], seq[a + 1]] = [seq[a + 1], seq[a]];
++			}
++		}
++		return { value: seq, time: thinkTime(R, 6, 10) };
++	},
++};
+diff --git a/game/fetih/src/quiz/t_pick.js b/game/fetih/src/quiz/t_pick.js
+new file mode 100644
+index 0000000..b98d8d7
+--- /dev/null
++++ b/game/fetih/src/quiz/t_pick.js
+@@ -0,0 +1,234 @@
++// Seçmeli tipler: hilo, odd, emoji, proverb, riddle.
++// Hepsi 'exact' türünde: bildi / bilemedi; eşitlikte hızlı olan kazanır.
++
++import { css, esc, shuffle, pCorrect, thinkTime, mountChoice, buzz, fmtNum, clamp } from './util.js';
++
++const CSS = /* css */ `
++/* hilo */
++.fl-hilo{display:grid;grid-template-columns:1fr 1fr;gap:10px;position:relative}
++.fl-hl{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:150px;padding:12px 8px;border-radius:18px;text-align:center;
++  border:2.5px solid rgba(255,255,255,.3);box-shadow:0 6px 0 rgba(0,0,0,.35);touch-action:manipulation;transition:transform .15s,opacity .3s,filter .3s}
++.fl-hl.a{background:linear-gradient(160deg,#4a7be0,#2a4aa8)}
++.fl-hl.b{background:linear-gradient(160deg,#f08a3a,#c8501a)}
++.fl-hl:active{transform:translateY(3px)}
++.fl-hl strong{font-family:'Lilita One';font-weight:400;font-size:clamp(20px,6vw,27px);line-height:1.05;text-wrap:balance;text-shadow:0 2px 0 rgba(0,0,0,.35)}
++.fl-hl small{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
++.fl-hl .val{font-family:'Lilita One';font-size:30px;min-height:36px;color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.4);opacity:0;transform:scale(.6);transition:opacity .25s,transform .35s cubic-bezier(.3,1.6,.5,1)}
++.fl-hl .val u{display:block;text-decoration:none;font-family:'Fredoka';font-size:12px;color:#fff;opacity:.85}
++.fl-hl.show .val{opacity:1;transform:scale(1)}
++.fl-hl.pick{outline:3px solid #fff;outline-offset:2px;transform:scale(1.03)}
++.fl-hl.right{border-color:#7dff9a;box-shadow:0 0 0 3px rgba(125,255,154,.45),0 6px 0 rgba(0,0,0,.35)}
++.fl-hl.right::before{content:'♛';position:absolute;top:-16px;left:50%;transform:translateX(-50%);font-size:26px;color:var(--gold);text-shadow:0 2px 0 #6a3a00}
++.fl-hl.lose{opacity:.55;filter:saturate(.6)}
++.fl-hilo i.vs{position:absolute;left:50%;top:50%;width:38px;height:38px;margin:-19px 0 0 -19px;border-radius:50%;display:grid;place-items:center;font-style:normal;
++  font-family:'Lilita One';font-size:15px;background:#101a33;border:2.5px solid var(--gold);color:var(--gold);z-index:2}
++/* odd */
++.fl-odd .fl-opt{min-height:64px;justify-content:center;text-align:center;font-size:17px}
++.fl-odd .fl-opt i{position:absolute;top:5px;left:5px;width:20px;height:20px;font-size:12px}
++.fl-why{margin-top:10px;padding:9px 12px;border-radius:12px;background:rgba(255,210,90,.16);border:1.5px solid var(--line);font-size:14.5px;line-height:1.3;text-align:center;
++  animation:flq-pop .35s cubic-bezier(.3,1.5,.5,1)}
++.fl-why b{color:var(--gold)}
++/* emoji */
++.fl-emo{display:flex;justify-content:center;flex-wrap:wrap;gap:2px 6px;margin:0 0 12px;padding:10px 6px;border-radius:18px;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.18),rgba(255,255,255,.04));
++  border:2px solid rgba(255,255,255,.14)}
++.fl-emo span{font-size:clamp(42px,13vw,60px);line-height:1.15;font-family:'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;opacity:0;animation:flq-bounce .55s cubic-bezier(.3,1.7,.5,1) forwards}
++/* proverb */
++.fl-prv{margin:0 0 12px;padding:14px 12px;border-radius:18px;background:linear-gradient(180deg,rgba(255,235,190,.22),rgba(255,235,190,.1));border:2px solid rgba(255,210,90,.4);
++  text-align:center;font-size:clamp(19px,5.4vw,24px);line-height:1.5;text-wrap:balance}
++.fl-prv::before{content:'❝';display:block;font-size:26px;line-height:.8;color:var(--gold);opacity:.8}
++.fl-blank{display:inline-block;min-width:4.2em;padding:0 8px;margin:0 2px;border-radius:9px;background:rgba(0,0,0,.28);border-bottom:3px solid var(--gold);color:var(--gold);
++  font-family:'Lilita One';animation:flq-pulse 1.1s ease-in-out infinite}
++.fl-blank.set{animation:none;border-color:#fff;color:#fff}
++.fl-blank.right{background:#2a9a44;border-color:#fff;color:#fff}
++.fl-blank.wrong{background:#c8352a;border-color:#fff;color:#fff}
++/* bilmece */
++.fl-rid{display:flex;justify-content:center;margin:-2px 0 8px;font-size:34px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35))}
++.fl-rid span{display:inline-block;animation:flq-float 2.2s ease-in-out infinite}
++@keyframes flq-bounce{0%{transform:translateY(24px) scale(.3);opacity:0}100%{transform:none;opacity:1}}
++@keyframes flq-pulse{50%{box-shadow:0 0 0 4px rgba(255,210,90,.35)}}
++@keyframes flq-float{50%{transform:translateY(-4px) rotate(4deg)}}
++`;
++
++const choiceKind = (extra) => ({
++	kind: 'exact',
++	judge(v, value) {
++		return { correct: value === v.right, err: value === v.right ? 0 : 1 };
++	},
++	...extra,
++});
++
++/** 4 şıklı tipler için ortak bot. */
++function choiceBot(v, skill, R, [base, span] = [3, 6], bonus = 0) {
++	const ok = R() < Math.min(0.96, pCorrect(skill, v.q.diff) + bonus);
++	let value = v.right;
++	if (!ok) do value = Math.floor(R() * v.opts.length); while (value === v.right);
++	return { value, time: thinkTime(R, base, span) };
++}
++
++/** a: [doğru, y1, y2, y3] → karıştırılmış şıklar */
++function prepChoice(q, R, extra = {}) {
++	const order = shuffle([0, 1, 2, 3], R);
++	return { q, opts: order.map((i) => q.a[i]), right: order.indexOf(0), ...extra };
++}
++
++// ---------------------------------------------------------------- hilo
++export const hilo = {
++	time: 10,
++	label: 'Hangisi daha fazla?',
++	prepare(q, R) {
++		const flip = R() < 0.5; // doğru taraf rastgele zaten veride; ekranda yerlerini de karıştır
++		const sides = flip ? [q.right, q.left] : [q.left, q.right];
++		return { q, sides, right: sides[0].v > sides[1].v ? 0 : 1 };
++	},
++	mount(el, v, api) {
++		css('pick', CSS);
++		const unit = v.q.unit || '';
++		el.innerHTML = `<div class="fl-hilo">${v.sides
++			.map((s, i) => `<button class="fl-hl ${'ab'[i]}" data-i="${i}"><strong>${esc(s.t)}</strong><small>${esc(v.q.prop || '')}</small><div class="val">?</div></button>`)
++			.join('')}<i class="vs">VS</i></div>`;
++		const btns = [...el.querySelectorAll('.fl-hl')];
++		let done = false;
++		for (const b of btns)
++			b.addEventListener('click', () => {
++				if (done) return;
++				done = true;
++				b.classList.add('pick');
++				buzz();
++				api.answer(Number(b.dataset.i));
++			});
++		const countUp = (node, to, dur = 900) => {
++			const t0 = performance.now();
++			const step = (t) => {
++				if (!node.isConnected) return;
++				const k = Math.min(1, (t - t0) / dur);
++				const e = 1 - Math.pow(1 - k, 3);
++				const x = Number.isInteger(to) ? Math.round(to * e) : to * e;
++				node.firstChild.nodeValue = fmtNum(k < 1 ? x : to);
++				if (k < 1) requestAnimationFrame(step);
++			};
++			requestAnimationFrame(step);
++		};
++		return {
++			lock() {
++				done = true;
++			},
++			reveal(results) {
++				done = true;
++				btns.forEach((b, i) => {
++					const val = b.querySelector('.val');
++					val.innerHTML = `0<u>${esc(unit)}</u>`;
++					b.classList.add('show', i === v.right ? 'right' : 'lose');
++					countUp(val, v.sides[i].v);
++				});
++				for (const r of results) if (r.value != null) btns[r.value]?.insertAdjacentHTML('beforeend', `<b class="fl-who" style="background:${r.color}"></b>`);
++			},
++			destroy() {},
++		};
++	},
++	...choiceKind({
++		bot(v, skill, R) {
++			// değerler birbirine yakınsa bot da şaşırır
++			const a = v.sides[0].v;
++			const b = v.sides[1].v;
++			const ratio = Math.max(a, b) / Math.max(1e-9, Math.min(a, b));
++			const close = clamp((1.6 - ratio) * 0.35, 0, 0.3);
++			const ok = R() < clamp(pCorrect(skill, v.q.diff) + 0.12 - close, 0.3, 0.96);
++			return { value: ok ? v.right : 1 - v.right, time: thinkTime(R, 1.8, 4) };
++		},
++	}),
++};
++
++// ---------------------------------------------------------------- odd
++export const odd = {
++	time: 15,
++	label: 'Farklı olanı bul',
++	prepare(q, R) {
++		const ord = shuffle([0, 1, 2, 3], R);
++		return { q, opts: ord.map((i) => q.opts[i]), right: ord.indexOf(q.odd) };
++	},
++	mount(el, v, api) {
++		css('pick', CSS);
++		el.innerHTML = '<div class="fl-odd"></div><div data-r="why"></div>';
++		const box = el.querySelector('.fl-odd');
++		const ctl = mountChoice(box, v, api);
++		return {
++			lock: ctl.lock,
++			reveal(results) {
++				ctl.reveal(results);
++				ctl.btns.forEach((b, i) => i !== v.right && !b.classList.contains('wrong') && b.classList.add('dim'));
++				if (v.q.why) el.querySelector('[data-r=why]').innerHTML = `<div class="fl-why"><b>${esc(v.opts[v.right])}</b> farklı: ${esc(v.q.why)}</div>`;
++			},
++			destroy() {},
++		};
++	},
++	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [3, 6]) }),
++};
++
++// ---------------------------------------------------------------- emoji
++export const emoji = {
++	time: 15,
++	label: 'Emoji bilmecesi',
++	prepare: (q, R) => prepChoice(q, R),
++	mount(el, v, api) {
++		css('pick', CSS);
++		// her emoji ayrı bir kutu (bayrak/ZWJ dizileri ve renk tonları tek parça)
++		const parts = v.q.e.match(/\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic}️?|[\u{1F3FB}-\u{1F3FF}])*|\S/gu) || [];
++		el.innerHTML = `<div class="fl-emo">${parts.map((e, i) => `<span style="animation-delay:${0.08 + i * 0.12}s">${e}</span>`).join('')}</div><div data-r="o"></div>`;
++		const ctl = mountChoice(el.querySelector('[data-r=o]'), v, api);
++		return { lock: ctl.lock, reveal: (r) => ctl.reveal(r), destroy() {} };
++	},
++	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [2.5, 6]) }),
++};
++
++// ---------------------------------------------------------------- proverb
++export const proverb = {
++	time: 15,
++	label: 'Atasözünü tamamla',
++	prepare: (q, R) => prepChoice(q, R),
++	mount(el, v, api) {
++		css('pick', CSS);
++		const [pre, post] = v.q.text.split('___');
++		el.innerHTML = `<div class="fl-prv">${esc(pre)}<span class="fl-blank">&nbsp;?&nbsp;</span>${esc(post || '')}</div><div data-r="o"></div>`;
++		const blank = el.querySelector('.fl-blank');
++		const ctl = mountChoice(el.querySelector('[data-r=o]'), v, api, {
++			onPick(i) {
++				blank.textContent = v.opts[i];
++				blank.classList.add('set');
++			},
++		});
++		return {
++			lock: ctl.lock,
++			reveal(results) {
++				ctl.reveal(results);
++				const mine = ctl.mine;
++				blank.classList.add('set');
++				if (mine === v.right) blank.classList.add('right');
++				else {
++					if (mine != null) blank.classList.add('wrong');
++					blank.textContent = v.opts[mine ?? v.right];
++					setTimeout(() => {
++						blank.classList.remove('wrong');
++						blank.classList.add('right');
++						blank.textContent = v.opts[v.right];
++					}, 650);
++				}
++			},
++			destroy() {},
++		};
++	},
++	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [3, 6], 0.03) }),
++};
++
++// ---------------------------------------------------------------- riddle
++export const riddle = {
++	time: 20,
++	label: 'Bilmece',
++	prepare: (q, R) => prepChoice(q, R),
++	mount(el, v, api) {
++		css('pick', CSS);
++		el.innerHTML = '<div class="fl-rid"><span>🧞</span></div><div data-r="o"></div>';
++		const ctl = mountChoice(el.querySelector('[data-r=o]'), v, api);
++		return { lock: ctl.lock, reveal: (r) => ctl.reveal(r), destroy() {} };
++	},
++	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [4, 8], -0.02) }),
++};
+diff --git a/game/fetih/src/quiz/t_word.js b/game/fetih/src/quiz/t_word.js
+new file mode 100644
+index 0000000..33f6fb4
+--- /dev/null
++++ b/game/fetih/src/quiz/t_word.js
+@@ -0,0 +1,369 @@
++// Kelime tipleri: anagram ve mini çengel bulmaca (cross).
++
++import { css, esc, shuffle, pCorrect, thinkTime, buzz, clamp, trUp, keyboard, physicalKeys, chips } from './util.js';
++import { layout } from './crossgen.js';
++
++const CSS = /* css */ `
++/* anagram */
++.fl-ana{display:flex;flex-direction:column;align-items:center;gap:14px}
++.fl-ana .fl-word b{cursor:pointer;touch-action:manipulation;transition:transform .12s,background .2s;border-bottom-color:rgba(255,210,90,.55)}
++.fl-ana .fl-word b.has{background:rgba(255,255,255,.2);border-bottom-color:var(--gold);animation:flq-pop2 .22s cubic-bezier(.3,1.7,.5,1)}
++.fl-ana .fl-word.bad b{background:#c8352a;border-bottom-color:#fff}
++.fl-ana .fl-word.good b{background:#2a9a44;border-bottom-color:#fff}
++.fl-tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:100%}
++.fl-tile{width:clamp(38px,11.5vw,48px);height:clamp(44px,13vw,54px);border-radius:12px;background:linear-gradient(180deg,#ffe27a,#f2b02a);color:#3a2000;border:2px solid #fff;
++  box-shadow:0 5px 0 #a86a0a;font-family:'Lilita One';font-size:clamp(22px,6.4vw,28px);touch-action:manipulation;transition:transform .12s,opacity .2s,box-shadow .12s}
++.fl-tile:active{transform:translateY(4px);box-shadow:0 1px 0 #a86a0a}
++.fl-tile.used{opacity:.18;transform:scale(.82);pointer-events:none}
++.fl-ana-row{display:flex;gap:8px}
++.fl-mini{padding:8px 14px;border-radius:12px;background:#2a4486;border:2px solid rgba(255,255,255,.2);font-size:14px;box-shadow:0 3px 0 #142554}
++.fl-ana.done .fl-tiles,.fl-ana.done .fl-ana-row{opacity:.35;pointer-events:none}
++/* çengel */
++.fl-cross{display:flex;flex-direction:column;align-items:center;gap:8px}
++.fl-cr-grid{display:grid;gap:3px;justify-content:center;touch-action:manipulation}
++.fl-cr{position:relative;border-radius:7px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.18);display:grid;place-items:center;
++  font-family:'Lilita One';font-size:calc(var(--cs) * .5);color:#fff;transition:background .15s,border-color .15s}
++.fl-cr.void{visibility:hidden}
++.fl-cr.wd{background:rgba(255,210,90,.25);border-color:rgba(255,210,90,.6)}
++.fl-cr.cur{background:rgba(255,210,90,.55);border-color:#fff;color:#3a2000;transform:scale(1.07);z-index:2}
++.fl-cr sup{position:absolute;left:2px;top:0;font-family:'Fredoka';font-size:calc(var(--cs) * .28);line-height:1.1;opacity:.85}
++.fl-cr.ok{background:#2a9a44;border-color:#fff}
++.fl-cr.bad{background:#c8352a;border-color:#fff}
++.fl-cr-clue{display:flex;align-items:center;gap:6px;width:100%}
++.fl-cr-clue>div{flex:1;min-width:0;padding:7px 10px;border-radius:12px;background:rgba(0,0,0,.28);font-size:14.5px;line-height:1.2;min-height:46px;display:flex;align-items:center;gap:7px}
++.fl-cr-clue b{flex:none;padding:2px 7px;border-radius:7px;background:var(--gold);color:#3a2000;font-family:'Lilita One';font-weight:400;font-size:14px}
++.fl-cr-nav{flex:none;width:34px;height:46px;border-radius:10px;background:#2a4486;border:2px solid rgba(255,255,255,.2);font-size:14px}
++.fl-cr-done{flex:none;padding:0 10px;height:46px;border-radius:10px;font-family:'Lilita One';font-size:14px;color:#3a2000;background:linear-gradient(180deg,#ffe27a,#f2b02a);border:2px solid #fff;box-shadow:0 3px 0 #a86a0a}
++.fl-cross .fl-keys{gap:4px}
++.fl-cross .fl-key{height:36px}
++.fl-cross .fl-back{max-width:48px;flex:1.4}
++.fl-cross.done .fl-keys,.fl-cross.done .fl-cr-nav,.fl-cross.done .fl-cr-done{opacity:.3;pointer-events:none}
++@keyframes flq-pop2{from{transform:scale(.4)}to{transform:scale(1)}}
++`;
++
++// ---------------------------------------------------------------- anagram
++export const anagram = {
++	time: 30,
++	label: 'Anagram',
++	kind: 'exact',
++	prepare(q, R) {
++		const word = trUp(q.w);
++		const letters = [...word].filter((c) => c !== ' ');
++		let tiles = shuffle(letters, R);
++		for (let k = 0; k < 20 && tiles.join('') === letters.join(''); k++) tiles = shuffle(letters, R);
++		return { q, word, tiles };
++	},
++	mount(el, v, api) {
++		css('word', CSS);
++		const chars = [...v.word];
++		const need = v.tiles.length;
++		el.innerHTML = `<div class="fl-ana">
++			<div class="fl-word" data-r="slots"></div>
++			<div class="fl-tiles" data-r="tiles">${v.tiles.map((c, i) => `<button class="fl-tile" data-i="${i}">${c}</button>`).join('')}</div>
++			<div class="fl-ana-row"><button class="fl-mini" data-a="shuf">🔀 Karıştır</button><button class="fl-mini" data-a="clr">⌫ Temizle</button></div>
++		</div>`;
++		const root = el.querySelector('.fl-ana');
++		const slotsEl = el.querySelector('[data-r=slots]');
++		const tilesEl = el.querySelector('[data-r=tiles]');
++		const tileBtns = [...tilesEl.children];
++		let order = v.tiles.map((_, i) => i); // ekrandaki düzen: tile indeksleri
++		const seq = []; // dolu yuvalar: tile indeksleri
++		let tries = 0;
++		let done = false;
++		const text = () => seq.map((i) => v.tiles[i]).join('');
++		const drawSlots = () => {
++			let k = 0;
++			slotsEl.innerHTML = chars
++				.map((c) => {
++					if (c === ' ') return '<s></s>';
++					const i = k++;
++					return `<b data-s="${i}" class="${seq[i] != null ? 'has' : ''}">${seq[i] != null ? v.tiles[seq[i]] : ''}</b>`;
++				})
++				.join('');
++		};
++		const drawTiles = () => {
++			tilesEl.append(...order.map((i) => tileBtns[i]));
++			tileBtns.forEach((b, i) => b.classList.toggle('used', seq.includes(i)));
++		};
++		const check = () => {
++			if (seq.length < need) return;
++			if (text() === v.word.replace(/ /g, '')) {
++				done = true;
++				root.classList.add('done');
++				slotsEl.classList.add('good');
++				buzz(20);
++				api.answer({ ok: true, tries });
++			} else {
++				tries++;
++				slotsEl.classList.add('bad', 'shake');
++				buzz(30);
++				done = true; // kısa kilit
++				setTimeout(() => {
++					slotsEl.classList.remove('bad', 'shake');
++					seq.length = 0;
++					done = false;
++					drawSlots();
++					drawTiles();
++				}, 520);
++			}
++		};
++		tilesEl.addEventListener('click', (e) => {
++			const b = e.target.closest('.fl-tile');
++			if (!b || done || b.classList.contains('used')) return;
++			seq.push(Number(b.dataset.i));
++			buzz(5);
++			drawSlots();
++			drawTiles();
++			check();
++		});
++		slotsEl.addEventListener('click', (e) => {
++			const b = e.target.closest('b');
++			if (!b || done) return;
++			const s = Number(b.dataset.s);
++			if (s < seq.length) {
++				seq.splice(s, 1);
++				drawSlots();
++				drawTiles();
++			}
++		});
++		root.querySelector('.fl-ana-row').addEventListener('click', (e) => {
++			const a = e.target.closest('[data-a]')?.dataset.a;
++			if (!a || done) return;
++			if (a === 'clr') seq.length = 0;
++			else order = shuffle(order, Math.random);
++			drawSlots();
++			drawTiles();
++		});
++		drawSlots();
++		drawTiles();
++		return {
++			lock() {
++				done = true;
++			},
++			value: () => ({ ok: false, tries }),
++			reveal(results) {
++				done = true;
++				root.classList.add('done');
++				slotsEl.classList.remove('bad', 'shake');
++				slotsEl.classList.add('good');
++				slotsEl.innerHTML = chars.map((c) => (c === ' ' ? '<s></s>' : `<b class="has">${c}</b>`)).join('');
++				root.insertAdjacentHTML('beforeend', chips(results, (r) => (r.correct ? '✓' : '✗')));
++			},
++			destroy() {},
++		};
++	},
++	judge(v, value) {
++		if (!value || !value.ok) return { correct: false, err: 99 };
++		return { correct: true, err: value.tries };
++	},
++	bot(v, skill, R) {
++		const n = v.tiles.length;
++		const ok = R() < clamp(pCorrect(skill, v.q.diff) - (n > 8 ? 0.08 : 0), 0.08, 0.95);
++		return { value: { ok, tries: ok ? (R() < 0.25 ? 1 : 0) : 3 }, time: thinkTime(R, 6 + n * 0.5, 10) };
++	},
++};
++
++// ---------------------------------------------------------------- cross
++export const cross = {
++	time: 50,
++	label: 'Mini çengel',
++	kind: 'closest',
++	prepare(q, R) {
++		const words = q.words.map((x) => ({ w: trUp(x.w), clue: x.clue }));
++		const L = layout(words, R);
++		return { q, L };
++	},
++	mount(el, v, api) {
++		css('word', CSS);
++		const { L } = v;
++		const cs = clamp(Math.floor((Math.min(window.innerWidth * 0.96, 520) - 36 - (L.cols - 1) * 3) / L.cols), 26, 44);
++		const idxAt = new Map(L.cells.map((c, i) => [c.r + ',' + c.c, i]));
++		// her hücre için hangi kelimeler (yatay/dikey) geçiyor
++		const wordsAt = L.cells.map(() => ({}));
++		L.words.forEach((w, wi) => {
++			for (let i = 0; i < w.w.length; i++) {
++				const r = w.r + (w.dir === 'd' ? i : 0);
++				const c = w.c + (w.dir === 'a' ? i : 0);
++				wordsAt[idxAt.get(r + ',' + c)][w.dir] = wi;
++			}
++		});
++		const cellsOf = (wi) => {
++			const w = L.words[wi];
++			return Array.from({ length: w.w.length }, (_, i) => idxAt.get(w.r + (w.dir === 'd' ? i : 0) + ',' + (w.c + (w.dir === 'a' ? i : 0))));
++		};
++		const grid = Array.from({ length: L.rows * L.cols }, (_, k) => {
++			const r = Math.floor(k / L.cols);
++			const c = k % L.cols;
++			const i = idxAt.get(r + ',' + c);
++			const num = L.words.find((w) => w.r === r && w.c === c)?.n;
++			return i == null ? '<div class="fl-cr void"></div>' : `<div class="fl-cr" data-i="${i}">${num ? `<sup>${num}</sup>` : ''}<span></span></div>`;
++		}).join('');
++		el.innerHTML = `<div class="fl-cross">
++			<div class="fl-cr-grid" style="--cs:${cs}px;grid-template-columns:repeat(${L.cols},${cs}px);grid-auto-rows:${cs}px">${grid}</div>
++			<div class="fl-cr-clue"><button class="fl-cr-nav" data-d="-1" aria-label="önceki">◀</button><div data-r="clue"></div><button class="fl-cr-nav" data-d="1" aria-label="sonraki">▶</button><button class="fl-cr-done">BİTİR</button></div>
++			<div data-r="kb"></div>
++		</div>`;
++		const root = el.querySelector('.fl-cross');
++		const cellEls = L.cells.map((c, i) => root.querySelector(`.fl-cr[data-i="${i}"]`));
++		const clueEl = root.querySelector('[data-r=clue]');
++		const letters = L.cells.map(() => '');
++		let cur = 0; // seçili hücre
++		let wi = 0; // seçili kelime
++		let done = false;
++		const arrow = (d) => (d === 'a' ? '→' : '↓');
++		const select = (i, prefer) => {
++			cur = i;
++			const w = wordsAt[i];
++			wi = prefer != null && w[prefer] != null ? w[prefer] : w[L.words[wi]?.dir] != null ? w[L.words[wi].dir] : (w.a ?? w.d);
++			draw();
++		};
++		const draw = () => {
++			const inWord = new Set(cellsOf(wi));
++			cellEls.forEach((e, i) => {
++				e.classList.toggle('wd', inWord.has(i));
++				e.classList.toggle('cur', i === cur);
++				e.lastChild.textContent = letters[i];
++			});
++			const w = L.words[wi];
++			clueEl.innerHTML = `<b>${w.n}${arrow(w.dir)}</b><span>${esc(w.clue)}</span>`;
++		};
++		const filled = () => letters.every((x) => x);
++		const wrongCount = () => L.cells.reduce((s, c, i) => s + (letters[i] === c.ch ? 0 : 1), 0);
++		const finish = () => {
++			if (done) return;
++			done = true;
++			root.classList.add('done');
++			api.answer(letters.slice());
++		};
++		const step = (dir) => {
++			const cs2 = cellsOf(wi);
++			const k = cs2.indexOf(cur) + dir;
++			if (k >= 0 && k < cs2.length) cur = cs2[k];
++		};
++		const onKey = (ch) => {
++			if (done) return;
++			letters[cur] = ch;
++			buzz(4);
++			// bir sonraki boş hücreye, yoksa sonrakine
++			const cs2 = cellsOf(wi);
++			const from = cs2.indexOf(cur);
++			const next = cs2.slice(from + 1).find((i) => !letters[i]) ?? cs2[from + 1];
++			if (next != null) cur = next;
++			draw();
++			if (filled()) {
++				if (wrongCount() === 0) finish();
++				else {
++					root.querySelector('.fl-cr-grid').classList.remove('shake');
++					void root.offsetWidth;
++					root.querySelector('.fl-cr-grid').classList.add('shake');
++					buzz(30);
++				}
++			}
++		};
++		const onBack = () => {
++			if (done) return;
++			if (letters[cur]) letters[cur] = '';
++			else {
++				step(-1);
++				letters[cur] = '';
++			}
++			draw();
++		};
++		keyboard(root.querySelector('[data-r=kb]'), { onKey, onBack });
++		const stop = physicalKeys(root, {
++			onKey,
++			onBack,
++			onArrow(k) {
++				const w = L.words[wi];
++				const d = k === 'ArrowRight' || k === 'ArrowDown' ? 1 : -1;
++				if ((k === 'ArrowLeft' || k === 'ArrowRight') && w.dir === 'a') step(d);
++				else if ((k === 'ArrowUp' || k === 'ArrowDown') && w.dir === 'd') step(d);
++				else {
++					const other = w.dir === 'a' ? 'd' : 'a';
++					if (wordsAt[cur][other] != null) wi = wordsAt[cur][other];
++				}
++				draw();
++			},
++		});
++		root.querySelector('.fl-cr-grid').addEventListener('click', (e) => {
++			const c = e.target.closest('.fl-cr:not(.void)');
++			if (!c || done) return;
++			const i = Number(c.dataset.i);
++			const w = wordsAt[i];
++			if (i === cur && w.a != null && w.d != null) select(i, L.words[wi].dir === 'a' ? 'd' : 'a');
++			else select(i);
++			buzz(4);
++		});
++		root.querySelector('.fl-cr-clue').addEventListener('click', (e) => {
++			if (done) return;
++			if (e.target.closest('.fl-cr-done')) return finish();
++			const d = e.target.closest('.fl-cr-nav')?.dataset.d;
++			if (!d) return;
++			wi = (wi + Number(d) + L.words.length) % L.words.length;
++			const cs2 = cellsOf(wi);
++			cur = cs2.find((i) => !letters[i]) ?? cs2[0];
++			draw();
++		});
++		// ilk seçim: ilk kelimenin ilk hücresi
++		wi = 0;
++		cur = cellsOf(0)[0];
++		draw();
++		return {
++			lock() {
++				done = true;
++			},
++			value: () => letters.slice(),
++			reveal(results) {
++				done = true;
++				stop();
++				root.classList.add('done');
++				cellEls.forEach((e, i) => {
++					e.classList.remove('wd', 'cur');
++					e.classList.add(letters[i] === L.cells[i].ch ? 'ok' : 'bad');
++				});
++				setTimeout(() => {
++					cellEls.forEach((e, i) => {
++						letters[i] = L.cells[i].ch;
++						e.lastChild.textContent = letters[i];
++						e.classList.remove('bad');
++						e.classList.add('ok');
++					});
++				}, 800);
++				root.insertAdjacentHTML('beforeend', chips(results, (r) => (r.err === 0 ? '✓' : r.value ? r.err + ' hata' : '—')));
++			},
++			destroy: stop,
++		};
++	},
++	judge(v, value) {
++		const n = v.L.cells.length;
++		if (!Array.isArray(value)) return { correct: false, err: n };
++		let err = 0;
++		v.L.cells.forEach((c, i) => {
++			if (value[i] !== c.ch) err++;
++		});
++		return { correct: err === 0, err };
++	},
++	bot(v, skill, R) {
++		const n = v.L.cells.length;
++		const p = clamp(pCorrect(skill, v.q.diff) + 0.05, 0.1, 0.96);
++		// kelime kelime çözer: bilinmeyen kelimenin yalnızca kesişen harfleri doğru çıkar
++		const known = v.L.words.map(() => R() < p);
++		const value = v.L.cells.map((c) => c.ch);
++		let miss = 0;
++		v.L.words.forEach((w, wi) => {
++			if (known[wi]) return;
++			for (let i = 0; i < w.w.length; i++) {
++				if (R() < 0.55) {
++					const r = w.r + (w.dir === 'd' ? i : 0);
++					const cc = w.c + (w.dir === 'a' ? i : 0);
++					const k = v.L.cells.findIndex((x) => x.r === r && x.c === cc);
++					if (value[k] === v.L.cells[k].ch) {
++						value[k] = '';
++						miss++;
++					}
++				}
++			}
++		});
++		return { value, time: thinkTime(R, 14 + n * 0.5, 16) };
++	},
++};
+diff --git a/game/fetih/src/quiz/types.js b/game/fetih/src/quiz/types.js
+index 73c867d..7af97ae 100644
+--- a/game/fetih/src/quiz/types.js
++++ b/game/fetih/src/quiz/types.js
+@@ -11,14 +11,13 @@
+ //
+ // Botların doğruluk modeli: P(doğru) = skill + 0.25 − 0.15·zorluk (0.08..0.95 arası).
+ 
+-const pCorrect = (skill, diff) => Math.min(0.95, Math.max(0.08, skill + 0.25 - 0.15 * diff));
+-const gauss = (R) => {
+-	const u = Math.max(1e-6, R());
+-	const v = R();
+-	return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
+-};
+-const thinkTime = (R, base, span) => base + R() * span;
+-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
++import { pCorrect, gauss, thinkTime, esc, mountChoice } from './util.js';
++import { order } from './t_order.js';
++import { match } from './t_match.js';
++import { hilo, odd, emoji, proverb, riddle } from './t_pick.js';
++import { anagram, cross } from './t_word.js';
++import { img } from './t_img.js';
++import { blitz } from './t_blitz.js';
+ 
+ // harita izdüşümü (tools/geo.mjs ile aynı)
+ export const GEO = { K: 6, lon0: 35.2, lat0: 39.0 };
+@@ -36,32 +35,8 @@ export const TYPES = {
+ 			return { q, opts: order.map((i) => q.a[i]), right: order.indexOf(0) };
+ 		},
+ 		mount(el, v, api) {
+-			el.innerHTML = `<div class="fl-opts">${v.opts
+-				.map((o, i) => `<button class="fl-opt" data-i="${i}"><i>${'ABCD'[i]}</i><span>${esc(o)}</span></button>`)
+-				.join('')}</div>`;
+-			const btns = [...el.querySelectorAll('.fl-opt')];
+-			let done = false;
+-			for (const b of btns)
+-				b.addEventListener('click', () => {
+-					if (done) return;
+-					done = true;
+-					b.classList.add('pick');
+-					api.answer(Number(b.dataset.i));
+-				});
+-			return {
+-				lock() {
+-					done = true;
+-				},
+-				reveal(results) {
+-					btns[v.right].classList.add('right');
+-					for (const r of results) {
+-						if (r.value == null || r.value === v.right) continue;
+-						btns[r.value]?.classList.add('wrong');
+-					}
+-					for (const r of results) if (r.value != null) btns[r.value]?.insertAdjacentHTML('beforeend', `<b class="fl-who" style="background:${r.color}"></b>`);
+-				},
+-				destroy() {},
+-			};
++			const c = mountChoice(el, v, api);
++			return { lock: c.lock, reveal: (r) => c.reveal(r), destroy() {} };
+ 		},
+ 		judge(v, value) {
+ 			return { correct: value === v.right, err: value === v.right ? 0 : 1 };
+@@ -307,3 +282,58 @@ export const TYPES = {
+ 		},
+ 	},
+ };
++
++// ---------------------------------------------------------------- yeni tipler (src/quiz/t_*.js)
++Object.assign(TYPES, { order, match, hilo, odd, emoji, anagram, cross, proverb, riddle, img, blitz });
++
++// ---------------------------------------------------------------- kategori başına tip ağırlıkları
++// Oynanış ajanı bunu okur: attack = fetih düellosu (2 kişi), expand = yayılma turu (herkes aynı soruyu çözer;
++// 'closest' tiplerde err'e, 'exact' tiplerde doğru + hıza göre sıralanır; 3-4 kişide derece ayrımı için
++// tahmin, sıralama, eşleştirme, çengel ve yıldırım turu ağırlıklıdır).
++//
++// Anahtarlar tip adları, değerler göreli ağırlık (0 = hiç).
++export const TYPE_WEIGHTS = {
++	tarih: {
++		attack: { choice: 4, tf: 2, order: 3, match: 2, odd: 1, hang: 1, anagram: 1, cross: 1, pin: 2, hilo: 1, img: 1, blitz: 1, riddle: 0.5 },
++		expand: { num: 3, order: 3, pin: 2, match: 1, cross: 1, hilo: 1, blitz: 1 },
++	},
++	cografya: {
++		attack: { choice: 4, tf: 2, pin: 3, hang: 1, hilo: 2, match: 2, odd: 1, img: 3, anagram: 1, cross: 1, blitz: 1, emoji: 0.5 },
++		expand: { pin: 4, num: 3, hilo: 2, order: 1, match: 1, cross: 1, img: 1, blitz: 1 },
++	},
++	spor: {
++		attack: { choice: 4, tf: 2, hang: 1, hilo: 2, odd: 1, emoji: 1, match: 1, anagram: 1, blitz: 1, order: 1, cross: 1 },
++		expand: { num: 3, hilo: 2, order: 2, blitz: 2, match: 1, cross: 1 },
++	},
++	bilim: {
++		attack: { choice: 4, tf: 2, hang: 1, odd: 2, anagram: 2, hilo: 2, match: 2, order: 1, riddle: 1, emoji: 1, cross: 1, img: 1, blitz: 1 },
++		expand: { num: 4, order: 2, hilo: 2, blitz: 1, match: 1, cross: 1 },
++	},
++	sanat: {
++		attack: { choice: 4, tf: 1, odd: 2, match: 2, proverb: 2, riddle: 2, emoji: 1, anagram: 1, hang: 1, cross: 2, img: 1, order: 1 },
++		expand: { num: 2, order: 2, match: 2, cross: 2, blitz: 1 },
++	},
++	eglence: {
++		attack: { choice: 3, tf: 2, emoji: 3, proverb: 3, riddle: 3, odd: 2, anagram: 2, hang: 1, img: 2, match: 1, cross: 1, blitz: 2, hilo: 1, order: 1 },
++		expand: { num: 2, hilo: 2, blitz: 2, order: 1, match: 1, cross: 1 },
++	},
++	// kategori belirsizse
++	default: {
++		attack: { choice: 4, tf: 2, hang: 1, odd: 1, emoji: 1, proverb: 1, anagram: 1, match: 1, order: 1, hilo: 1, img: 1, blitz: 1 },
++		expand: { num: 3, order: 2, hilo: 1, match: 1, blitz: 1 },
++	},
++};
++
++/**
++ * Ağırlıklı tip seçimi. phase: 'attack' | 'expand'. R: rastgele fonksiyon.
++ * have: isteğe bağlı Set/dizi; yalnızca bankada sorusu olan tipler seçilir.
++ */
++export function pickType(cat, phase, R = Math.random, have = null) {
++	const w = (TYPE_WEIGHTS[cat] || TYPE_WEIGHTS.default)[phase] || TYPE_WEIGHTS.default.attack;
++	const ok = have ? new Set(have) : null;
++	const list = Object.entries(w).filter(([t, x]) => x > 0 && TYPES[t] && (!ok || ok.has(t)));
++	if (!list.length) return phase === 'expand' ? 'num' : 'choice';
++	let r = R() * list.reduce((s, [, x]) => s + x, 0);
++	for (const [t, x] of list) if ((r -= x) <= 0) return t;
++	return list[list.length - 1][0];
++}
+diff --git a/game/fetih/src/quiz/util.js b/game/fetih/src/quiz/util.js
+new file mode 100644
+index 0000000..0de6326
+--- /dev/null
++++ b/game/fetih/src/quiz/util.js
+@@ -0,0 +1,218 @@
++// Soru tipleri için ortak yardımcılar: rastgelelik, kaçış, CSS enjeksiyonu,
++// Türkçe ekran klavyesi ve çoktan seçmeli gövde (choice, emoji, odd, proverb, riddle, img paylaşır).
++
++export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
++export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
++export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
++export const trUp = (s) => String(s).toLocaleUpperCase('tr-TR');
++
++/** Botların doğruluk modeli: P(doğru) = beceri + 0.25 − 0.15·zorluk (0.08..0.95). */
++export const pCorrect = (skill, diff) => Math.min(0.95, Math.max(0.08, skill + 0.25 - 0.15 * diff));
++export const gauss = (R) => {
++	const u = Math.max(1e-6, R());
++	const v = R();
++	return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
++};
++export const thinkTime = (R, base, span) => base + R() * span;
++
++/** Fisher-Yates; R() kullanır. */
++export function shuffle(arr, R) {
++	const a = arr.slice();
++	for (let i = a.length - 1; i > 0; i--) {
++		const j = Math.floor(R() * (i + 1));
++		[a[i], a[j]] = [a[j], a[i]];
++	}
++	return a;
++}
++
++/** Kısa titreşim (destekleyen telefonlarda). */
++export function buzz(ms = 8) {
++	try {
++		navigator.vibrate?.(ms);
++	} catch {
++		/* yoksay */
++	}
++}
++
++/** Sayı biçimi: yıl gibi küçük sayılar ham, büyükler binlik ayraçlı. */
++export const fmtNum = (v) => (Math.abs(v) >= 10000 || !Number.isInteger(v) ? Number(v).toLocaleString('tr-TR') : String(v));
++
++// ---------------------------------------------------------------- CSS (bir kez enjekte)
++const injected = new Set();
++const COMMON = /* css */ `
++.fl-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:10px}
++.fl-chip{display:inline-flex;align-items:center;gap:6px;padding:3px 10px 3px 6px;border-radius:999px;background:rgba(255,255,255,.1);font-size:13px;animation:flq-pop .3s cubic-bezier(.3,1.5,.5,1)}
++.fl-chip b{width:14px;height:14px;border-radius:5px;border:2px solid #fff}
++.fl-chip em{font-style:normal;font-family:'Lilita One';opacity:.9}
++.fl-chip.ok em{color:#7dff9a}
++.shake{animation:flq-shake .38s}
++.fl-typed b.cur{border-bottom-color:#fff;box-shadow:0 0 0 2px rgba(255,255,255,.25)}
++.fl-typed.revealed b{color:#7dff9a}
++@keyframes flq-pop{from{transform:scale(.85);opacity:0}to{transform:scale(1);opacity:1}}
++@keyframes flq-shake{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-5px)}80%{transform:translateX(5px)}}
++.fl-ui button{touch-action:manipulation}
++`;
++function inject(id, text) {
++	if (injected.has(id) || typeof document === 'undefined') return;
++	injected.add(id);
++	const s = document.createElement('style');
++	s.dataset.flq = id;
++	s.textContent = text;
++	document.head.appendChild(s);
++}
++/** Tip CSS'ini bir kez ekler (ortak stiller de dahil). */
++export function css(id, text) {
++	inject('common', COMMON);
++	inject(id, text);
++}
++
++// ---------------------------------------------------------------- klavye
++/** Adam asmaca ile aynı Türkçe tuş satırları (29 harf). */
++export const KEYS = 'ERTYUIOPĞÜ|ASDFGHJKLŞİ|ZCVBNMÖÇ'.split('|');
++
++/** Ekran klavyesi. onKey(harf), onBack(). */
++export function keyboard(host, { onKey, onBack }) {
++	host.innerHTML = KEYS.map(
++		(row, i) =>
++			`<div>${[...row].map((k) => `<button class="fl-key" data-k="${k}">${k}</button>`).join('')}${
++				i === 2 ? '<button class="fl-key fl-back" data-k="⌫" aria-label="sil">⌫</button>' : ''
++			}</div>`,
++	).join('');
++	host.classList.add('fl-keys');
++	host.addEventListener('click', (e) => {
++		const b = e.target.closest('.fl-key');
++		if (!b || b.disabled) return;
++		if (b.dataset.k === '⌫') onBack();
++		else onKey(b.dataset.k);
++	});
++	return { el: host };
++}
++
++/** Fiziksel klavye (masaüstü): kart kapanıp düğüm bağlantısı kopunca kendini kaldırır. */
++export function physicalKeys(el, { onKey, onBack, onArrow }) {
++	const h = (e) => {
++		if (!el.isConnected) return document.removeEventListener('keydown', h);
++		if (e.ctrlKey || e.metaKey || e.altKey) return;
++		if (e.key === 'Backspace') {
++			onBack();
++			e.preventDefault();
++			return;
++		}
++		if (e.key.startsWith('Arrow')) {
++			onArrow?.(e.key);
++			e.preventDefault();
++			return;
++		}
++		if (e.key.length === 1) {
++			const k = trUp(e.key);
++			if (KEYS.join('').includes(k)) onKey(k);
++		}
++	};
++	document.addEventListener('keydown', h);
++	return () => document.removeEventListener('keydown', h);
++}
++
++// ---------------------------------------------------------------- çoktan seçmeli gövde
++/**
++ * v = { opts, right }. Seçeneğe dokununca api.answer(wrap(indeks)).
++ * reveal(results, pickOf): pickOf(value) → seçilen indeks.
++ */
++export function mountChoice(el, v, api, { wrap = (i) => i, onPick } = {}) {
++	el.innerHTML = `<div class="fl-opts">${v.opts
++		.map((o, i) => `<button class="fl-opt" data-i="${i}"><i>${'ABCD'[i]}</i><span>${esc(o)}</span></button>`)
++		.join('')}</div>`;
++	const btns = [...el.querySelectorAll('.fl-opt')];
++	let done = false;
++	let mine = null;
++	for (const b of btns)
++		b.addEventListener('click', () => {
++			if (done) return;
++			done = true;
++			mine = Number(b.dataset.i);
++			b.classList.add('pick');
++			buzz();
++			onPick?.(mine);
++			api.answer(wrap(mine));
++		});
++	return {
++		btns,
++		lock() {
++			done = true;
++		},
++		reveal(results, pickOf = (x) => x) {
++			btns[v.right].classList.add('right');
++			for (const r of results) {
++				const i = r.value == null ? null : pickOf(r.value);
++				if (i == null || i < 0 || i === v.right) continue;
++				btns[i]?.classList.add('wrong');
++			}
++			for (const r of results) {
++				const i = r.value == null ? null : pickOf(r.value);
++				if (i != null && i >= 0) btns[i]?.insertAdjacentHTML('beforeend', `<b class="fl-who" style="background:${r.color}"></b>`);
++			}
++		},
++		get mine() {
++			return mine;
++		},
++	};
++}
++
++/** Cevap sonrası: oyuncu çipleri ("Ali ✓ 2.4 sn"). fn(r) → etiket. */
++export function chips(results, fn) {
++	return `<div class="fl-chips">${results
++		.map((r) => `<span class="fl-chip${r.correct ? ' ok' : ''}"><b style="background:${r.color}"></b>${esc(r.name)}<em>${esc(fn(r))}</em></span>`)
++		.join('')}</div>`;
++}
++
++/** Harf kutuları + klavye: yazılı cevap (img w). onFull(tahmin) dolunca çağrılır. */
++export function typedWord(el, word, { onFull }) {
++	const letters = [...word];
++	const buf = [];
++	el.innerHTML = `<div class="fl-word fl-typed" data-r="slots"></div><div data-r="kb"></div>`;
++	const slots = el.querySelector('[data-r=slots]');
++	const draw = () => {
++		let k = 0;
++		slots.innerHTML = letters.map((c) => (c === ' ' ? '<s></s>' : `<b class="${k === buf.length ? 'cur' : ''}">${buf[k++] || ''}</b>`)).join('');
++	};
++	const need = letters.filter((c) => c !== ' ').length;
++	let locked = false;
++	keyboard(el.querySelector('[data-r=kb]'), {
++		onKey(k) {
++			if (locked || buf.length >= need) return;
++			buf.push(k);
++			buzz(4);
++			draw();
++			if (buf.length === need) onFull(buf.join(''));
++		},
++		onBack() {
++			if (locked) return;
++			buf.pop();
++			draw();
++		},
++	});
++	draw();
++	return {
++		lock() {
++			locked = true;
++		},
++		shake() {
++			slots.classList.remove('shake');
++			void slots.offsetWidth;
++			slots.classList.add('shake');
++			buzz(30);
++		},
++		clear() {
++			buf.length = 0;
++			draw();
++		},
++		fill(w) {
++			buf.length = 0;
++			buf.push(...[...w].filter((c) => c !== ' '));
++			draw();
++			slots.classList.add('revealed');
++		},
++		get text() {
++			return buf.join('');
++		},
++	};
++}
