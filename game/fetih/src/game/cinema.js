@@ -117,7 +117,7 @@ export class Cinema {
 		box.z1 = cz + d / 2 + 1.5; // alttaki arayüz için biraz pay
 		// gece süzülüşü: kamera yolda hafifçe kalkar (kavis), varınca ağır ağır döner ve yaklaşır
 		this._drift = -(this._drift || 1);
-		app.cam.fit({ ...box }, { pitch: 0.95, pad: 1.2, dur: 1.05, arc: 4.5, yawRate: 0.05 * this._drift, distRate: -0.012, decay: 0.32 });
+		app.cam.fit({ ...box }, { pitch: 0.95, pad: 1.2, dur: 0.95, arc: 4.5, yawRate: 0.03 * this._drift, distRate: -0.014, decay: 0.32 });
 	}
 
 	/** Botun bu seçimdeki seçenekleri (maç akışıyla aynı kural). */

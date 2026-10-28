@@ -50,7 +50,7 @@ console.log(`hazır: ${((Date.now() - t0) / 1000).toFixed(1)} sn`);
 await page.clock.install();
 await page.clock.pauseAt(Date.now() + 1000);
 
-const cfg = { mode: opt.mode || 'ffa3', length: 'quick', region: opt.region || 'ege', bot: 'er', seed: Number(opt.seed || 7), seq: 'seq' in opt };
+const cfg = { mode: opt.mode || 'ffa3', length: opt.length || 'quick', region: opt.region || 'ege', bot: 'er', seed: Number(opt.seed || 7), seq: 'seq' in opt };
 await page.evaluate((cfg) => {
 	const app = window.__fl.app;
 	const ui = app.ui;

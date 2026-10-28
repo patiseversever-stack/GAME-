@@ -40,8 +40,8 @@ float gOwn = 0.0;
 // Aydınlık (seçilebilir) iller ekrandaki tek parlak ve renkli şey olsun; gece manzarası yalnızca ince
 // ay kabartması ve birkaç sıcak şehir ışığıyla okunur. Ay kuzeybatıda, yüksekte.
 const vec3 N_MOON = vec3(-0.3498, 0.7795, -0.5197);
-const vec3 N_MOONC = vec3(0.2, 0.26, 0.42);
-const vec3 N_SKY = vec3(0.022, 0.032, 0.068);
+const vec3 N_MOONC = vec3(0.17, 0.235, 0.42);
+const vec3 N_SKY = vec3(0.018, 0.029, 0.07);
 const vec3 N_GND = vec3(0.005, 0.006, 0.012);
 const vec3 N_RIM = vec3(0.16, 0.22, 0.38);
 const vec3 N_ZEN = vec3(0.0015, 0.0022, 0.006);
@@ -283,7 +283,8 @@ vec4 finish(vec3 c, float a) {
 	// (yalnızca gece pikselinde; sahip rengine az: kırmızı pembeleşmesin)
 	c += vec3(0.004, 0.008, 0.02) * nk * (1.0 - c);
 	float l = dot(c, vec3(0.299, 0.587, 0.114));
-	c = mix(vec3(l), c, uGrade.x);
+	// gecede aydınlık ada biraz daha doygun (soluk krem değil, canlı gündüz rengi)
+	c = mix(vec3(l), c, uGrade.x * (1.0 + 0.1 * (uNight.x - nk)));
 	c = (c - 0.5) * uGrade.y + 0.5;
 	vec2 q = gl_FragCoord.xy / uRes.xy - 0.5;
 	q.x *= uRes.x / uRes.y * 0.8;

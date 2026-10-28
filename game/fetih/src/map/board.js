@@ -191,9 +191,15 @@ void main() {
 	float lum = dot(alb, vec3(0.3, 0.59, 0.11));
 	// güçlü, doygun sahip rengi (Supercell): arazi dokusu yalnızca hafif parlaklık farkı olarak kalır;
 	// ışıkta beyaza/pembeye kaçmasın diye albedo orta tonda tutulur
-	vec3 tint = ownCol * (0.5 + 0.9 * lum);
-	alb = mix(alb, tint, ownedK * (0.9 - snowK * 0.3));
-	gOwn = ownedK * (0.9 - snowK * 0.3);
+	// (orman tabanı gibi koyu yerler sahip renginde kara leke olmasın: parlaklık farkı sınırlı)
+	vec3 tint = ownCol * (0.62 + 0.65 * lum);
+	// gece, ışıkta olmayan il: başkalarının toprağı yalnızca hafif renk tonu (ay ışıklı arazi okunur),
+	// oyuncunun kendi toprağı biraz daha kendi renginde
+	float mineE = abs(ownerId - uMe) < 0.5 ? 1.0 : 0.0;
+	float nkE = uNight.x * (1.0 - vFx.z);
+	float ownW = ownedK * (0.9 - snowK * 0.3) * (1.0 - nkE * mix(0.5, 0.2, mineE));
+	alb = mix(alb, tint, ownW);
+	gOwn = ownW;
 
 	// --- sınırlar
 	float sel = vFx.z;
@@ -270,7 +276,7 @@ void main() {
 			// gece gölü: gök aynası, yıldızlar, ay parıltısı
 			vec3 R = reflect(-V, WN);
 			R.y = abs(R.y);
-			vec3 nw = mix(wc * vec3(0.02, 0.03, 0.06), nightSky(R) + starField(normalize(vec3(R.x, R.y * 1.02, R.z))) * 0.5, 0.7);
+			vec3 nw = mix(wc * vec3(0.02, 0.03, 0.06), nightSky(R) + starField(normalize(vec3(R.x, R.y * 1.02, R.z))) * 0.15, 0.7);
 			nw += vec3(0.85, 0.82, 1.0) * pow(max(dot(R, N_MOON), 0.0), 220.0) * 2.5;
 			nw = mix(nw, vec3(0.04, 0.07, 0.12), lineAA(abs(sd), 0.018 + lpx, lpx) * lake * 0.3);
 			wcol = mix(wcol, nw, nk);
@@ -302,6 +308,11 @@ void main() {
 	float bk = 0.45 + 0.55 * sp; // dış hat havuz dışında da seçilir (daha sönük)
 	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * bk * (0.8 + 0.2 * pulse));
 	c = mix(c, mix(vec3(1.0, 0.96, 0.82), vec3(1.0, 0.8, 0.42), uNight.x) * (1.6 + 0.6 * pulse), selCore * bk * mix(0.8, 0.6, uNight.x));
+	// altın şeridin iç kenarında ince koyu çizgi: sarı/turuncu sahipte de çerçeve ayrı okunur (mine işi)
+	c = mix(c, vec3(0.08, 0.04, 0.0), lineAA(abs(d - wSel * 1.06), max(0.012, 0.6 * px), px) * sel * bk * 0.7 * uNight.x);
+	// iki seçilebilir il yan yana: aralarında ince koyu yarık (iki altın şerit arasında), iller ayrı okunur
+	float split = sel * nbSel * lineAA(d, max(0.03, 1.7 * px), px);
+	c = mix(c, vec3(0.05, 0.03, 0.004), split * 0.9);
 	// iç ışıltı: hafif altın (karışım yok: mavi il altınla soluklaşıp beyaza yanmasın)
 	c += gold * selIn * sp * 0.16 * pulse;
 	c += gold * halo * sp * mix(0.9, 0.55, uNight.x) * (0.55 + 0.45 * pulse);
@@ -441,7 +452,7 @@ void main() {
 		float fr = 0.35 + 0.4 * pow(1.0 - ndv, 3.0);
 		vec3 n = mix(body, nightSky(Rc) * 0.8, fr);
 		// yıldızlar sisten sonra eklenir (uzak denizde de seçilsin)
-		stars = starField(Rc) * fr * 0.4 * uNight.x;
+		stars = starField(Rc) * fr * 0.12 * uNight.x;
 		// ay yolu: sakin yüzeyde geniş yumuşak ışık, dalgacıklarda pırıltı
 		float mc = max(dot(Rc, N_MOON), 0.0);
 		n += vec3(0.16, 0.2, 0.34) * pow(mc, 14.0) * 0.3;
