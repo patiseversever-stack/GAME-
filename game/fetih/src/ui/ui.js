@@ -860,10 +860,12 @@ export class UI {
 		}
 		const fin = order.filter((r) => Number.isFinite(r.err));
 		const maxErr = Math.max(0, ...fin.map((r) => r.err));
+		const minErr = Math.min(0, ...fin.map((r) => r.err)); // yıldırım turu gibi eksi hatalı (skor) tipler için
+		const spread = maxErr - minErr;
 		const rows = order
 			.map((r, k) => {
 				const ok = Number.isFinite(r.err) && r.value != null;
-				const w = !ok ? 0 : maxErr <= 0 ? 1 : Math.max(0.06, 1 - r.err / (maxErr * 1.15));
+				const w = !ok ? 0 : spread <= 0 ? 1 : Math.max(0.06, 1 - (r.err - minErr) / (spread * 1.15));
 				// tip kendi biçimini verebilir: T.fmt(v, value, result) → yazı
 				let val;
 				if (!ok) val = '—';
@@ -871,13 +873,16 @@ export class UI {
 				else if (map) val = `${Math.round(r.err).toLocaleString('tr-TR')} km`;
 				else if (typeof r.value === 'number') val = `${fmt(r.value)}${unit ? ' ' + esc(unit) : ''}`;
 				else val = fmt(r.err);
-				const sub = !ok ? 'cevap yok' : map ? (r.correct ? 'tam isabet' : 'uzaklık') : r.err === 0 ? 'tam isabet' : `fark ${fmt(r.err)}`;
+				const sub = !ok ? 'cevap yok' : typeof T.sub === 'function' ? esc(T.sub(v, r.value, r)) : map ? (r.correct ? 'tam isabet' : 'uzaklık') : r.err === 0 ? 'tam isabet' : `fark ${fmt(r.err)}`;
 				const tag = k === 0 && ok ? `<span class="tag">${r.err === 0 || (map && r.correct) ? 'TAM İSABET' : 'EN YAKIN'}</span>` : '';
 				return `<div class="fl-cr ${k === 0 && ok ? 'win' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span>
 					<span class="nm"><b>${esc(r.name)}${tag}</b><i class="bar"><u style="--w:${w.toFixed(3)}"></u></i></span><em>${val}<small>${sub}</small></em></div>`;
 			})
 			.join('');
-		body.innerHTML = `<div class="fl-close">${html}<div class="fl-crs">${rows}</div></div>`;
+		const panel = `<div class="fl-close">${html}<div class="fl-crs">${rows}</div></div>`;
+		// T.keep: tip kendi cevap tahtasını (sıralama, eşleşme...) korur; sıralama altına eklenir
+		if (T.keep) body.insertAdjacentHTML('beforeend', panel);
+		else body.innerHTML = panel;
 		const ans = body.querySelector('[data-r=ans]');
 		if (ans && !this.rm) this.fx.count(ans, q.min ?? 0, q.ans, 800, fmt);
 	}

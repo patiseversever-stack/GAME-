@@ -42,7 +42,7 @@ const CSS = /* css */ `
 .fl-blank.right{background:#2a9a44;border-color:#fff;color:#fff}
 .fl-blank.wrong{background:#c8352a;border-color:#fff;color:#fff}
 /* bilmece */
-.fl-rid{display:flex;justify-content:center;margin:-2px 0 8px;font-size:34px;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35))}
+.fl-rid{display:flex;justify-content:center;margin:-2px 0 8px;font-size:44px;line-height:1.1;font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35))}
 .fl-rid span{display:inline-block;animation:flq-float 2.2s ease-in-out infinite}
 @keyframes flq-bounce{0%{transform:translateY(24px) scale(.3);opacity:0}100%{transform:none;opacity:1}}
 @keyframes flq-pulse{50%{box-shadow:0 0 0 4px rgba(255,210,90,.35)}}
@@ -74,7 +74,7 @@ function prepChoice(q, R, extra = {}) {
 // ---------------------------------------------------------------- hilo
 export const hilo = {
 	time: 10,
-	label: 'Hangisi daha fazla?',
+	label: 'Karşılaştır',
 	prepare(q, R) {
 		const flip = R() < 0.5; // doğru taraf rastgele zaten veride; ekranda yerlerini de karıştır
 		const sides = flip ? [q.right, q.left] : [q.left, q.right];
@@ -141,7 +141,7 @@ export const hilo = {
 // ---------------------------------------------------------------- odd
 export const odd = {
 	time: 15,
-	label: 'Farklı olanı bul',
+	label: 'Farklı olan',
 	prepare(q, R) {
 		const ord = shuffle([0, 1, 2, 3], R);
 		return { q, opts: ord.map((i) => q.opts[i]), right: ord.indexOf(q.odd) };
@@ -167,7 +167,7 @@ export const odd = {
 // ---------------------------------------------------------------- emoji
 export const emoji = {
 	time: 15,
-	label: 'Emoji bilmecesi',
+	label: 'Emoji',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {
 		css('pick', CSS);
@@ -183,7 +183,7 @@ export const emoji = {
 // ---------------------------------------------------------------- proverb
 export const proverb = {
 	time: 15,
-	label: 'Atasözünü tamamla',
+	label: 'Atasözü',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {
 		css('pick', CSS);

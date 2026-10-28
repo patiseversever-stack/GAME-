@@ -4,7 +4,7 @@
 // Akış async/await ile yazılır; arayüz (ui) her adımı Promise ile bekletir. Botlar aynı arayüzden
 // geçer ama cevaplarını kendileri üretir. Hızlı benzetim (debugSim) için ui.fast = true.
 
-import { TYPES } from '../quiz/types.js';
+import { TYPES, pickType } from '../quiz/types.js';
 import { CATS, WHEEL } from '../quiz/categories.js';
 import { BANK as QUESTIONS } from '../data/bank.js';
 import { rng } from '../core/math.js';
@@ -50,6 +50,7 @@ export class Match {
 		this.inMap = new Set(this.map);
 		this.value = new Map(); // il → puan değeri
 		this.used = new Set();
+		this.recent = []; // son çıkan soru tipleri (art arda aynı tip gelmesin)
 		this.round = 0;
 		this.over = false;
 	}
@@ -111,9 +112,35 @@ export class Match {
 		let list = QUESTIONS.filter(ok);
 		if (!list.length) list = QUESTIONS.filter((q) => (!cat || q.cat === cat) && (!types || types.includes(q.type)));
 		if (!list.length) list = QUESTIONS.filter((q) => !types || types.includes(q.type));
+		if (!list.length) list = QUESTIONS; // istenen tipte hiç soru yok: herhangi biri
 		const q = list[Math.floor(this.R() * list.length)];
 		this.used.add(q.id);
 		return q;
+	}
+
+	/** Kategoride (önce kullanılmamış) sorusu olan tipler; verisiz tipler hiç çekilmez. */
+	haveTypes(cat) {
+		const of = (fresh) => new Set(QUESTIONS.filter((q) => (!cat || q.cat === cat) && (!fresh || !this.used.has(q.id))).map((q) => q.type));
+		let s = of(true);
+		if (!s.size) s = of(false);
+		if (!s.size) s = new Set(QUESTIONS.map((q) => q.type));
+		return s;
+	}
+
+	/**
+	 * Ağırlıklı tip seçimiyle soru: phase 'attack' (düello) ya da 'expand' (yayılma).
+	 * Son iki tipten biri gelirse birkaç kez yeniden çekilir, böylece çeşit artar.
+	 */
+	pickTyped(cat, phase) {
+		const have = this.haveTypes(cat);
+		let t = 'choice';
+		for (let k = 0; k < 6; k++) {
+			t = pickType(cat || 'default', phase, this.R, have);
+			if (!this.recent.includes(t) || have.size < 3) break;
+		}
+		this.recent.push(t);
+		if (this.recent.length > 2) this.recent.shift();
+		return this.pick({ cat, types: [t] });
 	}
 
 	/** Bir soruyu oyunculara sor; herkesin sonucu döner. */
@@ -215,8 +242,9 @@ export class Match {
 	}
 
 	async expansionRound(r) {
-		const types = r % 2 ? ['num'] : ['pin', 'num'];
-		const q = this.pick({ types });
+		// her yayılma turu başka bir kategoriden; tip kategorinin 'expand' ağırlıklarıyla seçilir
+		const cats = Object.keys(CATS);
+		const q = this.pickTyped(cats[Math.floor(this.R() * cats.length)], 'expand');
 		const res = await this.ask(q, this.players.filter((p) => p.alive), { title: 'Herkes cevaplıyor', phase: 'yayilma' });
 		const order = this.rank(res, TYPES[q.type].kind);
 		// seçim hakları: birinciye 2, ikinciye 1 (4 kişide üçüncüye de 1); 1'e 1'de 2 ve 1
@@ -295,9 +323,7 @@ export class Match {
 		// çark: kategori (fetih dilimi: saldıran seçer)
 		let cat = await this.ui.wheel(this, p);
 		if (cat === 'fetih') cat = p.human ? await this.ui.chooseCategory(this) : Object.keys(CATS)[Math.floor(this.R() * 6)];
-		const types = cat === 'cografya' || cat === 'tarih' ? ['choice', 'choice', 'tf', 'hang', 'pin'] : ['choice', 'choice', 'tf', 'hang'];
-		const t = types[Math.floor(this.R() * types.length)];
-		const q = this.pick({ cat, types: [t] });
+		const q = this.pickTyped(cat, 'attack');
 		const res = await this.ask(q, [p, d], { title: isCap ? 'KUŞATMA' : 'DÜELLO', attacker: p, defender: d, target, cat, phase: 'duel' });
 		const A = res[0];
 		const D = res[1];

@@ -3,7 +3,7 @@
 // Değer (value): value[solIndeks] = ekrandaki sağ sıra numarası (-1: bağlanmamış)
 // Sıralama türü 'closest': err = yanlış ya da boş eşleşme sayısı (0..4).
 
-import { css, esc, shuffle, pCorrect, thinkTime, buzz, chips } from './util.js';
+import { css, esc, shuffle, pCorrect, thinkTime, buzz, isLand, LAND } from './util.js';
 
 const COLORS = ['#ffd25a', '#5ad1ff', '#ff7ab8', '#9dff7a'];
 
@@ -12,11 +12,12 @@ const CSS = /* css */ `
 .fl-mat-col{display:flex;flex-direction:column;gap:8px;grid-row:1}
 .fl-mat-col.l{grid-column:1}.fl-mat-col.r{grid-column:3}
 .fl-mat-it{position:relative;min-height:54px;padding:6px 10px;border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:14.5px;line-height:1.15;
-  background:linear-gradient(180deg,#3a5ba8,#2a4486);border:2.5px solid rgba(255,255,255,.22);box-shadow:0 4px 0 #142554;touch-action:manipulation;
+  background:linear-gradient(180deg,#3a5ba8,#2a4486);border:2.5px solid rgba(255,255,255,.22);box-shadow:0 4px 0 #142554;touch-action:none;user-select:none;-webkit-user-select:none;
   transition:transform .12s,border-color .2s,background .2s}
 .fl-mat-it:active{transform:translateY(2px)}
 .fl-mat-it.sel{border-color:#fff;background:linear-gradient(180deg,#6a7fc8,#4a5fa8);transform:scale(1.04)}
 .fl-mat-it.on{border-color:var(--c)}
+.fl-mat-it.tgt{border-color:#fff;transform:scale(1.04)}
 .fl-mat-it.on::after{content:'';position:absolute;top:50%;width:12px;height:12px;margin-top:-6px;border-radius:50%;background:var(--c);border:2px solid #fff}
 .fl-mat-col.l .fl-mat-it.on::after{right:-8px}
 .fl-mat-col.r .fl-mat-it.on::after{left:-8px}
@@ -25,15 +26,33 @@ const CSS = /* css */ `
 .fl-mat svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 .fl-mat path{fill:none;stroke-width:5;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .3s ease-out,opacity .3s}
 .fl-mat path.in{stroke-dashoffset:0}
+.fl-mat path.drag{stroke:#fff;stroke-dasharray:none;stroke-dashoffset:0;transition:none;opacity:.85}
 .fl-mat path.out{opacity:0}
 .fl-mat-send{margin-top:10px;width:100%}
-.fl-mat.sent .fl-mat-send{display:none}
+.fl-mat.sent+.fl-mat-send{display:none}
+.fl-mat.cmp .fl-mat-it{min-height:28px;padding:2px 6px;font-size:12.5px;border-radius:10px;border-width:2px;box-shadow:0 2px 0 #142554}
+.fl-mat.cmp .fl-mat-col{gap:5px}
+${LAND}{
+  .fl-mat-col{gap:6px}
+  .fl-mat-it{min-height:38px;padding:3px 8px;font-size:13.5px;border-radius:11px;box-shadow:0 3px 0 #142554}
+  .fl-mat-send{margin-top:8px;padding:8px 16px 10px;font-size:18px}
+}
+@media (orientation:landscape) and (max-height:400px){
+  .fl-mat-col{gap:5px}
+  .fl-mat-it{min-height:33px;font-size:13px}
+  .fl-mat-send{margin-top:6px;padding:5px 16px 7px;font-size:16px}
+  .fl-mat.cmp .fl-mat-it{min-height:24px;font-size:12px}
+  .fl-mat.cmp .fl-mat-col{gap:4px}
+}
 `;
 
 export const match = {
 	time: 25,
 	label: 'Eşleştir',
 	kind: 'closest',
+	keep: true, // arayüz sıralama tablosunu tahtanın altına ekler (tahtayı silmez)
+	fmt: (v, value, r) => `${v.n - r.err}/${v.n} doğru`,
+	sub: (v, value, r) => (r.err === 0 ? 'tam isabet' : `${r.err} yanlış`),
 	prepare(q, R) {
 		const n = q.pairs.length;
 		const idx = q.pairs.map((_, i) => i);
@@ -130,9 +149,70 @@ export const match = {
 			paint();
 		};
 		root.addEventListener('click', (e) => {
+			if (Date.now() < noClick) return;
 			const b = e.target.closest('.fl-mat-it');
 			if (b) tap(b.dataset.s, Number(b.dataset.i));
 		});
+		// sürükle-bırak: bir öğeden karşı sütundaki öğeye çizgi çek (dokunup dokunma yolu da çalışır)
+		let dg = null;
+		let rub = null;
+		let noClick = 0;
+		const sideOf = (x, y) => document.elementFromPoint(x, y)?.closest?.('.fl-mat-it');
+		root.addEventListener('pointerdown', (e) => {
+			const b = done ? null : e.target.closest('.fl-mat-it');
+			if (b) dg = { b, side: b.dataset.s, i: Number(b.dataset.i), x: e.clientX, y: e.clientY, id: e.pointerId, moved: false, tgt: null };
+		});
+		root.addEventListener('pointermove', (e) => {
+			if (!dg || e.pointerId !== dg.id) return;
+			if (!dg.moved) {
+				if (Math.hypot(e.clientX - dg.x, e.clientY - dg.y) < 10) return;
+				dg.moved = true;
+				try {
+					root.setPointerCapture(e.pointerId);
+				} catch {
+					/* yoksay */
+				}
+				clearSel();
+				dg.b.classList.add('sel');
+				rub = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+				rub.classList.add('drag');
+				svg.appendChild(rub);
+			}
+			const rc = root.getBoundingClientRect();
+			const a = anchor(dg.b, dg.side);
+			const x = e.clientX - rc.left;
+			const y = e.clientY - rc.top;
+			const dx = (x - a.x) * 0.5;
+			rub.setAttribute('d', `M${a.x},${a.y} C${a.x + dx},${a.y} ${x - dx},${y} ${x},${y}`);
+			const t = sideOf(e.clientX, e.clientY);
+			const ok = t && t.dataset.s !== dg.side ? t : null;
+			if (ok !== dg.tgt) {
+				dg.tgt?.classList.remove('tgt');
+				ok?.classList.add('tgt');
+				dg.tgt = ok;
+			}
+		});
+		const dragEnd = (e) => {
+			if (!dg || e.pointerId !== dg.id) return;
+			const d = dg;
+			dg = null;
+			if (!d.moved) return;
+			noClick = Date.now() + 80;
+			rub?.remove();
+			rub = null;
+			d.tgt?.classList.remove('tgt');
+			d.b.classList.remove('sel');
+			const t = e.type === 'pointerup' ? sideOf(e.clientX, e.clientY) : null;
+			if (t && t.dataset.s !== d.side && !done) {
+				const l = d.side === 'l' ? d.i : Number(t.dataset.i);
+				const r = d.side === 'l' ? Number(t.dataset.i) : d.i;
+				clearSel();
+				connect(l, r);
+				paint();
+			}
+		};
+		root.addEventListener('pointerup', dragEnd);
+		root.addEventListener('pointercancel', dragEnd);
 		send.addEventListener('click', () => {
 			if (done || send.disabled) return;
 			done = true;
@@ -150,6 +230,7 @@ export const match = {
 				done = true;
 				root.classList.add('sent');
 				clearSel();
+				if (isLand()) root.classList.add('cmp'); // yatayda sıralama tablosuna yer aç
 				for (const p of paths.values()) p.classList.add('out');
 				const okL = [];
 				L.forEach((b, l) => {
@@ -171,7 +252,6 @@ export const match = {
 					L.concat(Rt).forEach((b) => b.classList.remove('bad'));
 					L.concat(Rt).forEach((b) => b.classList.add('ok'));
 				}, 700);
-				root.insertAdjacentHTML('afterend', chips(results, (r) => (r.err === 0 ? '✓' : r.value ? 4 - r.err + '/4' : '—')));
 			},
 			destroy() {},
 		};

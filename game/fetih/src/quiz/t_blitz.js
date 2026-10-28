@@ -37,8 +37,10 @@ const CSS = /* css */ `
 
 export const blitz = {
 	time: 10,
-	label: 'Yıldırım turu',
+	label: 'Yıldırım',
 	kind: 'closest',
+	fmt: (v, value) => `${value?.score || 0} doğru`,
+	sub: (v, value) => (value?.n ? `${value.n} ifade` : ''),
 	prepare(q, R) {
 		return { q, items: shuffle(q.items, R) };
 	},

@@ -37,7 +37,7 @@ const ease = (x) => 1 - Math.pow(1 - x, 2.2);
 
 export const img = {
 	time: 20,
-	label: 'Resimli soru',
+	label: 'Resimli',
 	kind: 'exact',
 	prepare(q, R) {
 		const ids = Array.isArray(q.img) ? q.img : [q.img];

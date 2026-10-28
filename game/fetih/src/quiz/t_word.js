@@ -20,24 +20,24 @@ const CSS = /* css */ `
 .fl-ana.done .fl-tiles,.fl-ana.done .fl-ana-row{opacity:.35;pointer-events:none}
 /* çengel */
 .fl-cross{display:flex;flex-direction:column;align-items:center;gap:8px}
-.fl-cr-grid{display:grid;gap:3px;justify-content:center;touch-action:manipulation}
-.fl-cr{position:relative;border-radius:7px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.18);display:grid;place-items:center;
+.fl-xc-grid{display:grid;gap:3px;justify-content:center;touch-action:manipulation}
+.fl-xc{position:relative;border-radius:7px;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.18);display:grid;place-items:center;
   font-family:'Lilita One';font-size:calc(var(--cs) * .5);color:#fff;transition:background .15s,border-color .15s}
-.fl-cr.void{visibility:hidden}
-.fl-cr.wd{background:rgba(255,210,90,.25);border-color:rgba(255,210,90,.6)}
-.fl-cr.cur{background:rgba(255,210,90,.55);border-color:#fff;color:#3a2000;transform:scale(1.07);z-index:2}
-.fl-cr sup{position:absolute;left:2px;top:0;font-family:'Fredoka';font-size:calc(var(--cs) * .28);line-height:1.1;opacity:.85}
-.fl-cr.ok{background:#2a9a44;border-color:#fff}
-.fl-cr.bad{background:#c8352a;border-color:#fff}
-.fl-cr-clue{display:flex;align-items:center;gap:6px;width:100%}
-.fl-cr-clue>div{flex:1;min-width:0;padding:7px 10px;border-radius:12px;background:rgba(0,0,0,.28);font-size:14.5px;line-height:1.2;min-height:46px;display:flex;align-items:center;gap:7px}
-.fl-cr-clue b{flex:none;padding:2px 7px;border-radius:7px;background:var(--gold);color:#3a2000;font-family:'Lilita One';font-weight:400;font-size:14px}
-.fl-cr-nav{flex:none;width:34px;height:46px;border-radius:10px;background:#2a4486;border:2px solid rgba(255,255,255,.2);font-size:14px}
-.fl-cr-done{flex:none;padding:0 10px;height:46px;border-radius:10px;font-family:'Lilita One';font-size:14px;color:#3a2000;background:linear-gradient(180deg,#ffe27a,#f2b02a);border:2px solid #fff;box-shadow:0 3px 0 #a86a0a}
+.fl-xc.void{visibility:hidden}
+.fl-xc.wd{background:rgba(255,210,90,.25);border-color:rgba(255,210,90,.6)}
+.fl-xc.cur{background:rgba(255,210,90,.55);border-color:#fff;color:#3a2000;transform:scale(1.07);z-index:2}
+.fl-xc sup{position:absolute;left:2px;top:0;font-family:'Fredoka';font-size:calc(var(--cs) * .28);line-height:1.1;opacity:.85}
+.fl-xc.ok{background:#2a9a44;border-color:#fff}
+.fl-xc.bad{background:#c8352a;border-color:#fff}
+.fl-xc-clue{display:flex;align-items:center;gap:6px;width:100%}
+.fl-xc-clue>div{flex:1;min-width:0;padding:7px 10px;border-radius:12px;background:rgba(0,0,0,.28);font-size:14.5px;line-height:1.2;min-height:46px;display:flex;align-items:center;gap:7px}
+.fl-xc-clue b{flex:none;padding:2px 7px;border-radius:7px;background:var(--gold);color:#3a2000;font-family:'Lilita One';font-weight:400;font-size:14px}
+.fl-xc-nav{flex:none;width:34px;height:46px;border-radius:10px;background:#2a4486;border:2px solid rgba(255,255,255,.2);font-size:14px}
+.fl-xc-done{flex:none;padding:0 10px;height:46px;border-radius:10px;font-family:'Lilita One';font-size:14px;color:#3a2000;background:linear-gradient(180deg,#ffe27a,#f2b02a);border:2px solid #fff;box-shadow:0 3px 0 #a86a0a}
 .fl-cross .fl-keys{gap:4px}
 .fl-cross .fl-key{height:36px}
 .fl-cross .fl-back{max-width:48px;flex:1.4}
-.fl-cross.done .fl-keys,.fl-cross.done .fl-cr-nav,.fl-cross.done .fl-cr-done{opacity:.3;pointer-events:none}
+.fl-cross.done .fl-keys,.fl-cross.done .fl-xc-nav,.fl-cross.done .fl-xc-done{opacity:.3;pointer-events:none}
 @keyframes flq-pop2{from{transform:scale(.4)}to{transform:scale(1)}}
 `;
 
@@ -166,8 +166,11 @@ export const anagram = {
 // ---------------------------------------------------------------- cross
 export const cross = {
 	time: 50,
-	label: 'Mini çengel',
+	label: 'Çengel',
 	kind: 'closest',
+	keep: true, // arayüz sıralama tablosunu tahtanın altına ekler
+	fmt: (v, value, r) => `${v.L.cells.length - r.err}/${v.L.cells.length} harf`,
+	sub: (v, value, r) => (r.err === 0 ? 'tam isabet' : `${r.err} eksik ya da yanlış`),
 	prepare(q, R) {
 		const words = q.words.map((x) => ({ w: trUp(x.w), clue: x.clue }));
 		const L = layout(words, R);
@@ -196,15 +199,15 @@ export const cross = {
 			const c = k % L.cols;
 			const i = idxAt.get(r + ',' + c);
 			const num = L.words.find((w) => w.r === r && w.c === c)?.n;
-			return i == null ? '<div class="fl-cr void"></div>' : `<div class="fl-cr" data-i="${i}">${num ? `<sup>${num}</sup>` : ''}<span></span></div>`;
+			return i == null ? '<div class="fl-xc void"></div>' : `<div class="fl-xc" data-i="${i}">${num ? `<sup>${num}</sup>` : ''}<span></span></div>`;
 		}).join('');
 		el.innerHTML = `<div class="fl-cross">
-			<div class="fl-cr-grid" style="--cs:${cs}px;grid-template-columns:repeat(${L.cols},${cs}px);grid-auto-rows:${cs}px">${grid}</div>
-			<div class="fl-cr-clue"><button class="fl-cr-nav" data-d="-1" aria-label="önceki">◀</button><div data-r="clue"></div><button class="fl-cr-nav" data-d="1" aria-label="sonraki">▶</button><button class="fl-cr-done">BİTİR</button></div>
+			<div class="fl-xc-grid" style="--cs:${cs}px;grid-template-columns:repeat(${L.cols},${cs}px);grid-auto-rows:${cs}px">${grid}</div>
+			<div class="fl-xc-clue"><button class="fl-xc-nav" data-d="-1" aria-label="önceki">◀</button><div data-r="clue"></div><button class="fl-xc-nav" data-d="1" aria-label="sonraki">▶</button><button class="fl-xc-done">BİTİR</button></div>
 			<div data-r="kb"></div>
 		</div>`;
 		const root = el.querySelector('.fl-cross');
-		const cellEls = L.cells.map((c, i) => root.querySelector(`.fl-cr[data-i="${i}"]`));
+		const cellEls = L.cells.map((c, i) => root.querySelector(`.fl-xc[data-i="${i}"]`));
 		const clueEl = root.querySelector('[data-r=clue]');
 		const letters = L.cells.map(() => '');
 		let cur = 0; // seçili hücre
@@ -253,9 +256,9 @@ export const cross = {
 			if (filled()) {
 				if (wrongCount() === 0) finish();
 				else {
-					root.querySelector('.fl-cr-grid').classList.remove('shake');
+					root.querySelector('.fl-xc-grid').classList.remove('shake');
 					void root.offsetWidth;
-					root.querySelector('.fl-cr-grid').classList.add('shake');
+					root.querySelector('.fl-xc-grid').classList.add('shake');
 					buzz(30);
 				}
 			}
@@ -285,8 +288,8 @@ export const cross = {
 				draw();
 			},
 		});
-		root.querySelector('.fl-cr-grid').addEventListener('click', (e) => {
-			const c = e.target.closest('.fl-cr:not(.void)');
+		root.querySelector('.fl-xc-grid').addEventListener('click', (e) => {
+			const c = e.target.closest('.fl-xc:not(.void)');
 			if (!c || done) return;
 			const i = Number(c.dataset.i);
 			const w = wordsAt[i];
@@ -294,10 +297,10 @@ export const cross = {
 			else select(i);
 			buzz(4);
 		});
-		root.querySelector('.fl-cr-clue').addEventListener('click', (e) => {
+		root.querySelector('.fl-xc-clue').addEventListener('click', (e) => {
 			if (done) return;
-			if (e.target.closest('.fl-cr-done')) return finish();
-			const d = e.target.closest('.fl-cr-nav')?.dataset.d;
+			if (e.target.closest('.fl-xc-done')) return finish();
+			const d = e.target.closest('.fl-xc-nav')?.dataset.d;
 			if (!d) return;
 			wi = (wi + Number(d) + L.words.length) % L.words.length;
 			const cs2 = cellsOf(wi);
@@ -329,7 +332,6 @@ export const cross = {
 						e.classList.add('ok');
 					});
 				}, 800);
-				root.insertAdjacentHTML('beforeend', chips(results, (r) => (r.err === 0 ? '✓' : r.value ? r.err + ' hata' : '—')));
 			},
 			destroy: stop,
 		};
