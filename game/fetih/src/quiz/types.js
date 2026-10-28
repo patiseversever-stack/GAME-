@@ -11,14 +11,13 @@
 //
 // Botların doğruluk modeli: P(doğru) = skill + 0.25 − 0.15·zorluk (0.08..0.95 arası).
 
-const pCorrect = (skill, diff) => Math.min(0.95, Math.max(0.08, skill + 0.25 - 0.15 * diff));
-const gauss = (R) => {
-	const u = Math.max(1e-6, R());
-	const v = R();
-	return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
-};
-const thinkTime = (R, base, span) => base + R() * span;
-const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+import { pCorrect, gauss, thinkTime, esc, mountChoice } from './util.js';
+import { order } from './t_order.js';
+import { match } from './t_match.js';
+import { hilo, odd, emoji, proverb, riddle } from './t_pick.js';
+import { anagram, cross } from './t_word.js';
+import { img } from './t_img.js';
+import { blitz } from './t_blitz.js';
 
 // harita izdüşümü (tools/geo.mjs ile aynı)
 export const GEO = { K: 6, lon0: 35.2, lat0: 39.0 };
@@ -36,32 +35,8 @@ export const TYPES = {
 			return { q, opts: order.map((i) => q.a[i]), right: order.indexOf(0) };
 		},
 		mount(el, v, api) {
-			el.innerHTML = `<div class="fl-opts">${v.opts
-				.map((o, i) => `<button class="fl-opt" data-i="${i}"><i>${'ABCD'[i]}</i><span>${esc(o)}</span></button>`)
-				.join('')}</div>`;
-			const btns = [...el.querySelectorAll('.fl-opt')];
-			let done = false;
-			for (const b of btns)
-				b.addEventListener('click', () => {
-					if (done) return;
-					done = true;
-					b.classList.add('pick');
-					api.answer(Number(b.dataset.i));
-				});
-			return {
-				lock() {
-					done = true;
-				},
-				reveal(results) {
-					btns[v.right].classList.add('right');
-					for (const r of results) {
-						if (r.value == null || r.value === v.right) continue;
-						btns[r.value]?.classList.add('wrong');
-					}
-					for (const r of results) if (r.value != null) btns[r.value]?.insertAdjacentHTML('beforeend', `<b class="fl-who" style="background:${r.color}"></b>`);
-				},
-				destroy() {},
-			};
+			const c = mountChoice(el, v, api);
+			return { lock: c.lock, reveal: (r) => c.reveal(r), destroy() {} };
 		},
 		judge(v, value) {
 			return { correct: value === v.right, err: value === v.right ? 0 : 1 };
@@ -307,3 +282,58 @@ export const TYPES = {
 		},
 	},
 };
+
+// ---------------------------------------------------------------- yeni tipler (src/quiz/t_*.js)
+Object.assign(TYPES, { order, match, hilo, odd, emoji, anagram, cross, proverb, riddle, img, blitz });
+
+// ---------------------------------------------------------------- kategori başına tip ağırlıkları
+// Oynanış ajanı bunu okur: attack = fetih düellosu (2 kişi), expand = yayılma turu (herkes aynı soruyu çözer;
+// 'closest' tiplerde err'e, 'exact' tiplerde doğru + hıza göre sıralanır; 3-4 kişide derece ayrımı için
+// tahmin, sıralama, eşleştirme, çengel ve yıldırım turu ağırlıklıdır).
+//
+// Anahtarlar tip adları, değerler göreli ağırlık (0 = hiç).
+export const TYPE_WEIGHTS = {
+	tarih: {
+		attack: { choice: 4, tf: 2, order: 3, match: 2, odd: 1, hang: 1, anagram: 1, cross: 1, pin: 2, hilo: 1, img: 1, blitz: 1, riddle: 0.5 },
+		expand: { num: 3, order: 3, pin: 2, match: 1, cross: 1, hilo: 1, blitz: 1 },
+	},
+	cografya: {
+		attack: { choice: 4, tf: 2, pin: 3, hang: 1, hilo: 2, match: 2, odd: 1, img: 3, anagram: 1, cross: 1, blitz: 1, emoji: 0.5 },
+		expand: { pin: 4, num: 3, hilo: 2, order: 1, match: 1, cross: 1, img: 1, blitz: 1 },
+	},
+	spor: {
+		attack: { choice: 4, tf: 2, hang: 1, hilo: 2, odd: 1, emoji: 1, match: 1, anagram: 1, blitz: 1, order: 1, cross: 1 },
+		expand: { num: 3, hilo: 2, order: 2, blitz: 2, match: 1, cross: 1 },
+	},
+	bilim: {
+		attack: { choice: 4, tf: 2, hang: 1, odd: 2, anagram: 2, hilo: 2, match: 2, order: 1, riddle: 1, emoji: 1, cross: 1, img: 1, blitz: 1 },
+		expand: { num: 4, order: 2, hilo: 2, blitz: 1, match: 1, cross: 1 },
+	},
+	sanat: {
+		attack: { choice: 4, tf: 1, odd: 2, match: 2, proverb: 2, riddle: 2, emoji: 1, anagram: 1, hang: 1, cross: 2, img: 1, order: 1 },
+		expand: { num: 2, order: 2, match: 2, cross: 2, blitz: 1 },
+	},
+	eglence: {
+		attack: { choice: 3, tf: 2, emoji: 3, proverb: 3, riddle: 3, odd: 2, anagram: 2, hang: 1, img: 2, match: 1, cross: 1, blitz: 2, hilo: 1, order: 1 },
+		expand: { num: 2, hilo: 2, blitz: 2, order: 1, match: 1, cross: 1 },
+	},
+	// kategori belirsizse
+	default: {
+		attack: { choice: 4, tf: 2, hang: 1, odd: 1, emoji: 1, proverb: 1, anagram: 1, match: 1, order: 1, hilo: 1, img: 1, blitz: 1 },
+		expand: { num: 3, order: 2, hilo: 1, match: 1, blitz: 1 },
+	},
+};
+
+/**
+ * Ağırlıklı tip seçimi. phase: 'attack' | 'expand'. R: rastgele fonksiyon.
+ * have: isteğe bağlı Set/dizi; yalnızca bankada sorusu olan tipler seçilir.
+ */
+export function pickType(cat, phase, R = Math.random, have = null) {
+	const w = (TYPE_WEIGHTS[cat] || TYPE_WEIGHTS.default)[phase] || TYPE_WEIGHTS.default.attack;
+	const ok = have ? new Set(have) : null;
+	const list = Object.entries(w).filter(([t, x]) => x > 0 && TYPES[t] && (!ok || ok.has(t)));
+	if (!list.length) return phase === 'expand' ? 'num' : 'choice';
+	let r = R() * list.reduce((s, [, x]) => s + x, 0);
+	for (const [t, x] of list) if ((r -= x) <= 0) return t;
+	return list[list.length - 1][0];
+}

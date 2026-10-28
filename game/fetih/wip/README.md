@@ -5,6 +5,9 @@ Uygulamak için: `git apply --3way game/fetih/wip/<ad>.patch` (çakışmaları e
 
 | Yama | İçerik |
 |---|---|
-| `soru-tipleri.patch` | order, match, hilo, odd, emoji, proverb, riddle, anagram, cross, img, blitz, `TYPE_WEIGHTS` |
 | `oynanis.patch` | komutanlar, jokerler, ilerleme, soru bankası, sefer, ağ katmanı (WIP) |
 | `ses.patch` | WebAudio motoru, makam müziği, efektler |
+
+`soru-tipleri.patch` kaldırıldı: yeni soru tipleri (order, match, hilo, odd, emoji, proverb, riddle, anagram, cross, img, blitz, `TYPE_WEIGHTS`)
+uygulandı, maça bağlandı (`Match.pickTyped`) ve `test/types.test.mjs` ile sınanıyor. Verisi olmayan tipler (anagram, cross, img, blitz)
+kayıtlı kalır ama banka o kategoride soru taşımadıkça hiç çekilmez; veri eklenince kendiliğinden devreye girer.
