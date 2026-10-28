@@ -373,7 +373,7 @@ export class Cinema {
 		const yaw = clamp(wrapPi(Math.atan2(dx, -dz)) * 0.45, -0.55, 0.55);
 		const mx = (from.x + to.x) / 2;
 		const mz = (from.z + to.z) / 2;
-		const d0 = clamp(span * 2 + 12, 16, 30);
+		const d0 = clamp(span * 2 + 14, 20, 32); // gece bağlamı görünsün: iki ışık adası ve çevresindeki gece
 		cam.shot(mx, mz, { dist: d0, pitch: isCap ? 0.66 : 0.78, yaw, dur: 0.6 });
 		const tx = to.x;
 		const tz = to.z;
@@ -391,7 +391,7 @@ export class Cinema {
 			this.at(1.3, () => fx.catapult(1, wall.clone().setY(wall.y + 0.4), null));
 			await this.beat(1900);
 		} else {
-			this.at(0.6, () => cam.shot(tx, tz, { dist: d0 * 0.72, pitch: 0.7, yaw, dur: 0.95, arc: 0, distRate: -0.03, distMin: 12 }));
+			this.at(0.6, () => cam.shot(tx, tz, { dist: Math.max(18, d0 * 0.8), pitch: 0.72, yaw, dur: 0.95, arc: 0, distRate: -0.02, distMin: 16 }));
 			await this.beat(1600);
 		}
 		this._hold();
@@ -418,7 +418,7 @@ export class Cinema {
 		} else cam.shake = 0.5;
 		app.sfx?.play?.('conquer');
 		app.ui?.caption?.('FETİH', b.provinces[i].name, `${p.name} topraklarına katıldı`, { p });
-		if (cam.shot) cam.shot(c.x, c.z + 0.6, { dist: 27, pitch: 0.86, yaw: cam.yaw * 0.5, dur: 1.2, arc: 0 });
+		if (cam.shot) cam.shot(c.x, c.z + 0.6, { dist: 30, pitch: 0.86, yaw: cam.yaw * 0.5, dur: 1.2, arc: 0 });
 		await this.beat(1400);
 		b.fx(i, 0, 0);
 		// şafak: gece sıcak bir ufukla aydınlanır, kamera hafifçe geri çekilir; sonra sıradaki tur

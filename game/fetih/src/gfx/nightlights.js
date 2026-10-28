@@ -180,7 +180,7 @@ export class NightLights {
 				}
 			}
 			// ışık tozu: her ilde aynı sayıda (seçilebilir her il kendi bulutunu taşısın)
-			const nF = lo ? 9 : tier.id === 1 ? 13 : 16;
+			const nF = lo ? 14 : tier.id === 1 ? 20 : 26;
 			for (let f = 0; f < nF; f++) {
 				const s = board.sample(p.index, R, 0.25) || [p.x, p.z];
 				add(s[0], board.heightAt(s[0], s[1]) + 0.15 + R() * 0.55, s[1], 0.07 + R() * 0.05, 1, p.index, R());

@@ -289,7 +289,7 @@ void main() {
 	// gece adası: kalkık ilin duvarı alttan altın ışıkla yanar
 	if (skirt) c += gold * sel * uNight.x * exp(-vDepth * 3.5) * (1.2 + 0.5 * pulse);
 	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * (0.8 + 0.2 * pulse));
-	c = mix(c, vec3(1.0, 0.96, 0.82) * (1.6 + 0.6 * pulse), selCore * 0.8);
+	c = mix(c, mix(vec3(1.0, 0.96, 0.82), vec3(1.0, 0.8, 0.42), uNight.x) * (1.6 + 0.6 * pulse), selCore * mix(0.8, 0.6, uNight.x));
 	c += gold * (selIn * 0.42 * pulse + halo * 0.9 * (0.55 + 0.45 * pulse));
 	// eski parlama (fx): nabız gibi ışır
 	vec3 gcol = ownedK > 0.5 ? ownCol * 1.4 + 0.1 : vec3(1.0, 0.88, 0.55);
@@ -425,9 +425,12 @@ void main() {
 		vec3 body = mix(vec3(0.004, 0.005, 0.03), vec3(0.008, 0.03, 0.06), smoothstep(2.2, 0.3, dist));
 		float fr = 0.5 + 0.4 * pow(1.0 - ndv, 3.0);
 		vec3 n = mix(body, nightSky(Rc) * 0.8, fr);
-		n += starField(Rc) * fr;
+		n += starField(Rc) * fr * 2.2;
+		// ay yolu: sakin yüzeyde geniş yumuşak ışık, dalgacıklarda pırıltı
+		float mc = max(dot(Rc, N_MOON), 0.0);
+		n += vec3(0.32, 0.3, 0.7) * pow(mc, 14.0) * 0.35;
 		float m = max(dot(R, N_MOON), 0.0);
-		n += vec3(0.85, 0.82, 1.0) * pow(m, 700.0) * 2.2;
+		n += vec3(0.85, 0.82, 1.0) * pow(m, 700.0) * 2.2 * (0.3 + 0.7 * smoothstep(0.6, 0.95, mc));
 		n += vec3(0.12, 0.5, 0.75) * clamp(foam, 0.0, 1.0) * 0.08;
 		c = mix(c, n, uNight.x);
 		gRelit = 1.0;

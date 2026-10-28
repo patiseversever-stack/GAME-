@@ -84,7 +84,7 @@ await page.evaluate((cfg) => {
 	ui.botPick = function (m, p, i) {
 		const k = W.bots++;
 		if (k === 3) {
-			want('b_bot', 820);
+			want('b_bot', 650);
 			want('b2_bot_secti', 1400);
 		}
 		return bot.call(this, m, p, i);
