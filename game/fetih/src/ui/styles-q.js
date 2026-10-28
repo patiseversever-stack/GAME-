@@ -22,6 +22,10 @@
 //   .fl-grid > .fl-cell           bulmaca ızgarası (.on .right .blank)
 //   .fl-proverb > u               atasözü boşluğu
 //   .fl-guesses > .fl-guess, .fl-num-ans  eski tahmin sonuçları (arayüz kendi sonuç panelini çizer)
+//
+// "En yakın kazanır" tiplerinde (kind: 'closest') sonucu arayüz çizer: doğru cevap (q.ans, q.unit),
+// sayı doğrusu (q.min..q.max) ve uzaklık çubukları (results[].err). Tip isterse T.fmt(v, value, r) ile
+// bir tahminin yazısını verir. Haritalı tiplerde (needsMap) uzaklık km olarak yazılır.
 
 import { OUT, LAND } from './cssutil.js';
 
@@ -62,7 +66,8 @@ export const CSS_Q = /* css */ `
 .fl-qbody{position:relative;margin-top:12px}
 .fl-q.on .fl-qbody{animation:flUp2 .35s .18s ease-out both}
 @keyframes flUp2{from{opacity:0;transform:translateY(14px)}}
-.fl-q.locked .fl-qbody{pointer-events:none}
+.fl-q.locked .fl-qbody,.fl-q.spec .fl-qbody{pointer-events:none}
+.fl-q.spec .fl-rule{padding:1px 8px;border-radius:8px;background:rgba(0,0,0,.35);text-shadow:none}
 
 /* oyuncular şeridi */
 .fl-qwho{position:relative;z-index:2;display:flex;align-items:flex-end;justify-content:center;gap:6px;margin:0 6px -12px;pointer-events:none}
@@ -129,7 +134,6 @@ export const CSS_Q = /* css */ `
 .fl-q.locked .fl-opt:not(.pick):not(.right):not(.wrong){opacity:.6}
 .fl-opt.right{color:#fff;background:linear-gradient(180deg,#7fe88a,#2fa84a);border-color:#fff;box-shadow:0 0 0 3px #d8ffd8,0 5px 0 var(--green-d),0 8px 18px rgba(40,200,80,.45);animation:flPop .45s;${OUT('rgba(0,60,20,.45)', 1)}}
 .fl-opt.right>i{background:#fff;color:#2fa84a;text-shadow:none}
-.fl-opt.right>i::before{content:'';position:absolute}
 .fl-opt.wrong{color:#fff;background:linear-gradient(180deg,#ff8a78,#d53b2c);border-color:#fff;box-shadow:0 5px 0 #7a120a,0 8px 12px rgba(0,0,0,.25);animation:flShakeX .45s;${OUT('rgba(80,0,0,.45)', 1)}}
 .fl-opt.wrong>i{background:#fff;color:#d53b2c;text-shadow:none}
 .fl-opt.dim{opacity:.4}

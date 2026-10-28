@@ -532,7 +532,7 @@ export class UI {
 		const whoHTML = duel
 			? `${plate(ctx.attacker, 'a', 'SALDIRAN')}<div class="fl-qvs"><b>VS</b>${prov ? `<span>${esc(prov.name)}</span>` : ''}</div>${plate(ctx.defender, 'd', siege ? 'KALE' : 'SAVUNAN')}`
 			: who.map((p) => plate(p, '', '')).join('');
-		const rule = tie ? 'Eşitlik bozma' : closest ? 'En yakın kazanır' : '';
+		const rule = !human ? 'İzliyorsun' : tie ? 'Eşitlik bozma' : closest ? 'En yakın kazanır' : '';
 		card.className = `fl-q${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}`;
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));
@@ -755,6 +755,10 @@ export class UI {
 			const c = Fx.center(rt);
 			this.fx.burst(c.x, c.y, { n: 14, dist: 80, colors: ['#7dff9a', '#fff', '#ffd25a'], kind: 'star', size: 12 });
 		}
+		for (const w of card.querySelectorAll('.fl-opt.wrong,.fl-card2.wrong')) {
+			const c = Fx.center(w);
+			this.fx.burst(c.x, c.y, { n: 7, dist: 44, colors: ['#ff5a4a', '#ffb0a0'], size: 9, life: 500 });
+		}
 		const me = results.find((r) => r.p.human);
 		if (me) {
 			if (closest) {
@@ -860,7 +864,13 @@ export class UI {
 			.map((r, k) => {
 				const ok = Number.isFinite(r.err) && r.value != null;
 				const w = !ok ? 0 : maxErr <= 0 ? 1 : Math.max(0.06, 1 - r.err / (maxErr * 1.15));
-				const val = !ok ? '—' : map ? `${Math.round(r.err).toLocaleString('tr-TR')} km` : `${fmt(r.value)}${unit ? ' ' + esc(unit) : ''}`;
+				// tip kendi biçimini verebilir: T.fmt(v, value, result) → yazı
+				let val;
+				if (!ok) val = '—';
+				else if (typeof T.fmt === 'function') val = esc(T.fmt(v, r.value, r));
+				else if (map) val = `${Math.round(r.err).toLocaleString('tr-TR')} km`;
+				else if (typeof r.value === 'number') val = `${fmt(r.value)}${unit ? ' ' + esc(unit) : ''}`;
+				else val = fmt(r.err);
 				const sub = !ok ? 'cevap yok' : map ? (r.correct ? 'tam isabet' : 'uzaklık') : r.err === 0 ? 'tam isabet' : `fark ${fmt(r.err)}`;
 				const tag = k === 0 && ok ? `<span class="tag">${r.err === 0 || (map && r.correct) ? 'TAM İSABET' : 'EN YAKIN'}</span>` : '';
 				return `<div class="fl-cr ${k === 0 && ok ? 'win' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span>

@@ -138,7 +138,6 @@ const BASE = /* css */ `
 .fl-label .fl-i{width:14px;height:14px;margin-left:1px}
 .fl-ui .fl-label.opt{pointer-events:auto;font-size:14px;padding:4px 10px 5px 6px;border-color:var(--gold);color:#fff}
 .fl-label.opt::after{border-top-color:var(--gold)}
-.fl-label.opt span{animation:none}
 .fl-label.mark{padding:2px 8px 3px 2px;border-color:var(--oc);gap:5px}
 .fl-label.mark .fl-av{width:24px;height:24px;border-radius:8px;border-width:2px}
 .fl-label.mark::after{border-top-color:var(--oc)}
