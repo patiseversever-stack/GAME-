@@ -77,11 +77,21 @@ export class Match {
 		return this.map.filter((i) => this.owner(i) === p);
 	}
 
-	setOwner(i, p, value) {
+	setOwner(i, p, value, wave = false) {
 		const pl = p >= 0 ? this.players[p] : null;
-		this.app.board.setOwner(i, p, pl ? pl.color : null);
+		const o = wave && pl && !this.ui.fast ? this.waveFrom(i, p) : null;
+		this.app.board.setOwner(i, p, pl ? pl.color : null, o?.x, o?.z);
 		if (value != null) this.value.set(i, value);
 		this.rescore();
+	}
+
+	/** Boya dalgasının başlayacağı nokta: oyuncunun komşu ilinden ortak sınır, yoksa ilin ortası. */
+	waveFrom(i, p) {
+		const b = this.app.board;
+		const o = (this._wv ||= new this.app.V3());
+		const nb = b.provinces[i].nb.map((id) => b.byId.get(id)?.index).find((j) => j != null && j !== i && this.owner(j) === p);
+		if (nb != null && b.borderPoint) return b.borderPoint(nb, i, o);
+		return b.labelAt ? b.labelAt(i, o) : o.set(b.provinces[i].x, 0, b.provinces[i].z);
 	}
 
 	rescore() {
@@ -243,7 +253,7 @@ export class Match {
 			await this.ui.botPick(this, p, pickI);
 		}
 		if (kind === 'free') {
-			this.setOwner(pickI, p.i, VALUE.pick);
+			this.setOwner(pickI, p.i, VALUE.pick, true);
 			await this.app.cinema.claim(p, pickI);
 		}
 		return pickI;
@@ -311,7 +321,7 @@ export class Match {
 				else this.rescore();
 			} else {
 				const v = (this.value.get(target) || VALUE.pick) + VALUE.conquer;
-				this.setOwner(target, p.i, v);
+				this.setOwner(target, p.i, v, true);
 				await app.cinema.conquer(p, target);
 			}
 		} else if (winner === d) {

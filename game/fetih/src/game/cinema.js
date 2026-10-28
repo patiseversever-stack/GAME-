@@ -36,7 +36,7 @@ export class Cinema {
 				const step = () => {
 					const t = Math.min(1, (performance.now() - t0) / 520);
 					const e = 1 - Math.pow(1 - t, 3);
-					k.group.position.set(top.x, y0 + (top.y + 0.35 - y0) * e, top.z);
+					k.group.position.set(top.x, y0 + (top.y - y0) * e, top.z);
 					if (t < 1) requestAnimationFrame(step);
 					else res();
 				};
@@ -45,7 +45,7 @@ export class Cinema {
 			app.cam.shake = 0.35;
 			app.sfx?.play?.('castle');
 		}
-		k.place(app.board.topAt(i, _v).setY(app.board.top + 0.35));
+		k.place(app.board.topAt(i, _v));
 		await this.wait(250);
 		app.board.fx(i, 0, 0);
 	}

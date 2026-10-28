@@ -302,6 +302,8 @@ export class App {
 		const b = this.board;
 		for (const p of b.provinces) b.setOwner(p.index, -1, null);
 		b.clearFx();
+		b.setActive?.(null);
+		b.showLabels?.(null);
 		for (const k of this.castles) {
 			k.group.visible = false;
 			k.repair();
@@ -315,6 +317,8 @@ export class App {
 		this.game = null;
 		const m = new Match(this, this.ui, cfg);
 		this.match = m;
+		this.board.setActive?.(m.map.length < this.board.count ? m.map : null);
+		this.board.showLabels?.(m.map);
 		await m.run();
 		this.lowFps = true;
 	}

@@ -932,13 +932,15 @@ export class UI {
 		const v = this._v;
 		const s = this._s;
 		const top = app.board.top;
+		const b = app.board;
+		const hb = typeof b.heightAt === 'function';
 		for (const p of this.pins) {
-			app.toScreen(v.set(p.x, top, p.z), s);
+			app.toScreen(v.set(p.x, hb ? b.heightAt(p.x, p.z) : top, p.z), s);
 			p.el.style.transform = `translate(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px)`;
 		}
 		for (const l of this.lines) {
-			app.toScreen(v.set(l.a.x, top, l.a.z), s);
-			app.toScreen(this._v2.set(l.b.x, top, l.b.z), this._s2);
+			app.toScreen(v.set(l.a.x, hb ? b.heightAt(l.a.x, l.a.z) : top, l.a.z), s);
+			app.toScreen(this._v2.set(l.b.x, hb ? b.heightAt(l.b.x, l.b.z) : top, l.b.z), this._s2);
 			const dx = this._s2.x - s.x;
 			const dy = this._s2.y - s.y;
 			l.el.style.transform = `translate(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px) rotate(${Math.atan2(dy, dx).toFixed(4)}rad) scaleX(${Math.hypot(dx, dy).toFixed(1)})`;
