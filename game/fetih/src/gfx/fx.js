@@ -263,11 +263,11 @@ void main() {
 	float sz = iP.w;
 	vec2 q;
 	if (iM.w > 0.0) {
-		vec2 d = vec2(dot(iV, R), dot(iV, U));
-		float l = length(d);
-		d = l > 1e-4 ? d / l : vec2(0.0, 1.0);
-		vec2 nn = vec2(-d.y, d.x);
-		q = d * c.y * sz * (1.0 + iM.w * l) + nn * c.x * sz;
+		vec2 dv = vec2(dot(iV, R), dot(iV, U)) + vec2(0.0, 1e-4);
+		float l = length(dv);
+		vec2 d = dv / l;
+		vec2 nn = vec2(d.y, -d.x); // sarım yönü korunsun (arka yüz ayıklanmasın)
+		q = d * (c.y * sz * (1.0 + iM.w * l)) + nn * (c.x * sz);
 	} else {
 		float cs = cos(iM.x);
 		float sn = sin(iM.x);
@@ -312,7 +312,7 @@ void main() {
 		col *= 0.65 + 0.55 * abs(sin(vM.x * 1.7));
 	} else {
 		// iz (ok, roket): uzun yumuşak çizgi, başı parlak
-		a = exp(-vUv.x * vUv.x * 7.0) * smoothstep(1.0, 0.6, abs(vUv.y)) * (0.45 + 0.55 * smoothstep(-1.0, 0.8, vUv.y));
+		a = exp(-vUv.x * vUv.x * 7.0) * (1.0 - smoothstep(0.6, 1.0, abs(vUv.y))) * (0.45 + 0.55 * smoothstep(-1.0, 0.8, vUv.y));
 	}
 	a *= vC.a;
 	if (a < 0.004) discard;
@@ -389,6 +389,7 @@ void main() {
 		vec3 V = normalize(cameraPosition - vW);
 		float f = abs(dot(N, V));
 		a = pow(f, 1.5) * pow(1.0 - vL.y, 1.6);
+		col = col * 2.2 + 0.25;
 	}
 	a *= vB.a;
 	if (a < 0.003) discard;
@@ -659,6 +660,11 @@ export class FX {
 	/** Parçacık bırak. col: THREE.Color (doğrusal). Dönen: kayıt indeksi (ek alanlar için) ya da -1. */
 	emit(x, y, z, vx, vy, vz, life, s0, s1, col, a0, shape, add = 1, drag = 0, grav = 0) {
 		if (this.np >= this.maxParts) return -1;
+		if (add) {
+			// ışık parçacıkları telefonda okunacak kadar iri (minyatür ölçeğinde birkaç piksel kalmasın)
+			s0 *= 2.2;
+			s1 *= 2.2;
+		}
 		const o = this.np++ * PF;
 		const P = this.P;
 		P[o + X] = x;
@@ -752,7 +758,6 @@ export class FX {
 
 	/** Kıvılcım saçması. */
 	sparks(p, n = 20, speed = 3, color = 0xffd27a, k = 2.5, size = 0.07, grav = 5) {
-		size *= 1.6;
 		_c.set(color).multiplyScalar(k);
 		for (let i = 0; i < n; i++) {
 			_v.set(rr(-1, 1), rr(0.2, 1.2), rr(-1, 1)).normalize().multiplyScalar(speed * rr(0.4, 1));
@@ -767,7 +772,7 @@ export class FX {
 		for (let i = 0; i < n; i++) {
 			const a = rnd() * 6.28;
 			const r = rnd() * rad;
-			this.emit(p.x + Math.cos(a) * r, p.y + rr(0, 0.6), p.z + Math.sin(a) * r, Math.cos(a) * 0.4, rr(0.6, 2), Math.sin(a) * 0.4, rr(0.6, 1.2), rr(0.16, 0.3), 0.03, _c, 1, STAR, 1, 1.2, -0.3);
+			this.emit(p.x + Math.cos(a) * r, p.y + rr(0, 0.6), p.z + Math.sin(a) * r, Math.cos(a) * 0.4, rr(0.6, 2), Math.sin(a) * 0.4, rr(0.6, 1.2), rr(0.08, 0.15), 0.02, _c, 1, STAR, 1, 1.2, -0.3);
 		}
 	}
 
@@ -879,7 +884,7 @@ export class FX {
 		this.pillar(p.x, p.y, p.z, 0.4 * big, 6 * big, 0xfff6d8, 0.7);
 		this.twinkle(_w.copy(p), 30, 1.6 * big, 0xfff1b0, 2.6);
 		_c.set(color).multiplyScalar(3);
-		this.emit(p.x, p.y + 0.4, p.z, 0, 0, 0, 0.4, 1.2 * big, 3 * big, _c, 0.8, GLOW, 1);
+		this.emit(p.x, p.y + 0.4, p.z, 0, 0, 0, 0.4, 0.55 * big, 1.4 * big, _c, 0.8, GLOW, 1);
 		_w.copy(p);
 		_w.y += 0.3;
 		this.sparks(_w, 26, 4.5 * big, color, 2.4, 0.08, 4);
@@ -891,7 +896,8 @@ export class FX {
 		const s = this.stds.find((x) => !x.on) || this.stds[0];
 		s.on = true;
 		s.p.copy(p);
-		s.yaw = 0.6;
+		// bez kameraya dönük (3/4)
+		s.yaw = -(this.app.cam?.yaw || 0) - Math.PI / 2 + 0.45;
 		s.age = 0;
 		s.life = life;
 		s.c.set(color);
@@ -1256,10 +1262,10 @@ export class FX {
 				const vy = (e.p.y - py) / Math.max(dt, 1e-3);
 				const vz = (e.p.z - pz) / Math.max(dt, 1e-3);
 				_c.setRGB(3.2, 1.3, 0.35);
-				let o = this.emit(e.p.x, e.p.y, e.p.z, vx, vy, vz, 0.06, 0.09, 0.09, _c, 1, STREAK, 1);
+				let o = this.emit(e.p.x, e.p.y, e.p.z, vx, vy, vz, 0.06, 0.045, 0.045, _c, 1, STREAK, 1);
 				if (o >= 0) this.P[o + STR] = 0.1;
 				_c.setRGB(2.4, 0.8, 0.15);
-				o = this.emit(e.p.x, e.p.y, e.p.z, rr(-0.2, 0.2), rr(0, 0.4), rr(-0.2, 0.2), rr(0.25, 0.4), 0.14, 0.02, _c, 0.8, GLOW, 1, 1, -0.5);
+				o = this.emit(e.p.x, e.p.y, e.p.z, rr(-0.2, 0.2), rr(0, 0.4), rr(-0.2, 0.2), rr(0.25, 0.4), 0.07, 0.01, _c, 0.8, GLOW, 1, 1, -0.5);
 				if (u >= 1) {
 					e.on = false;
 					this.sparks(e.b, 5, 1.6, 0xffb050, 2.4, 0.05, 4);
@@ -1290,22 +1296,24 @@ export class FX {
 						const d = Math.sqrt(rnd()) * e.k;
 						r.a.set(e.p.x + Math.cos(a) * d, e.p.y, e.p.z + Math.sin(a) * d * 0.6);
 						r.p.copy(r.a);
-						r.v.set(rr(-0.8, 0.8), e.h * rr(1.15, 1.5), rr(-0.8, 0.8));
-						r.life = rr(0.6, 0.85);
+						// tepe yüksekliği ~h: v = √(2gh), süre v/g
+						const vy = Math.sqrt(2 * 9 * e.h * rr(0.75, 1.05));
+						r.v.set(rr(-0.8, 0.8), vy, rr(-0.8, 0.8));
+						r.life = (vy / 9) * rr(0.85, 0.98);
 						r.c.set(e.colors[(Math.random() * e.colors.length) | 0]);
 						r.c2.set(e.colors[(Math.random() * e.colors.length) | 0]);
-						r.h = rr(0.8, 1.2) * (e.h / 7);
+						r.h = rr(0.8, 1.2) * (e.h / 4.5);
 					}
 				}
 				if (e.age >= e.life) e.on = false;
 			} else if (e.kind === 'rocket') {
-				e.v.y -= 6 * dt;
+				e.v.y -= 9 * dt;
 				e.p.addScaledVector(e.v, dt);
 				_c.setRGB(3, 2, 1.2);
-				let o = this.emit(e.p.x, e.p.y, e.p.z, e.v.x, e.v.y, e.v.z, 0.05, 0.13, 0.13, _c, 1, STREAK, 1);
+				let o = this.emit(e.p.x, e.p.y, e.p.z, e.v.x, e.v.y, e.v.z, 0.05, 0.06, 0.06, _c, 1, STREAK, 1);
 				if (o >= 0) this.P[o + STR] = 0.06;
 				_c.setRGB(2.2, 1.2, 0.4);
-				o = this.emit(e.p.x, e.p.y, e.p.z, rr(-0.3, 0.3), rr(-0.6, 0), rr(-0.3, 0.3), rr(0.35, 0.7), 0.1, 0.02, _c, 0.8, STAR, 1, 1, 1.5);
+				o = this.emit(e.p.x, e.p.y, e.p.z, rr(-0.3, 0.3), rr(-0.6, 0), rr(-0.3, 0.3), rr(0.35, 0.7), 0.05, 0.01, _c, 0.8, STAR, 1, 1, 1.5);
 				if (e.age >= e.life) {
 					e.on = false;
 					this._boom(e.p, e.c, e.c2, e.h);
@@ -1316,21 +1324,21 @@ export class FX {
 
 	_boom(p, c1, c2, k) {
 		const n = this.tier.id === 0 ? 46 : 80;
-		const sp = 4.2 * k;
+		const sp = 8.5 * k;
 		for (let i = 0; i < n; i++) {
 			// küresel dağılım + hafif halka
 			const u = rr(-1, 1);
 			const a = rnd() * 6.28;
 			const s = Math.sqrt(1 - u * u);
 			const m = sp * (0.85 + 0.15 * rnd());
-			_c.copy(i & 1 ? c1 : c2).multiplyScalar(3.2);
-			const o = this.emit(p.x, p.y, p.z, Math.cos(a) * s * m, u * m, Math.sin(a) * s * m, rr(1, 1.6), 0.22, 0.05, _c, 1, STREAK, 1, 2.4, 2.2);
+			_c.copy(i & 1 ? c1 : c2).multiplyScalar(1.7);
+			const o = this.emit(p.x, p.y, p.z, Math.cos(a) * s * m, u * m, Math.sin(a) * s * m, rr(1.1, 1.7), 0.075, 0.025, _c, 1, STREAK, 1, 1.7, 2.4);
 			if (o >= 0) this.P[o + STR] = 0.11;
 		}
-		_c.copy(c1).multiplyScalar(4);
-		this.emit(p.x, p.y, p.z, 0, 0, 0, 0.45, 1.6 * k, 3.4 * k, _c, 0.75, GLOW, 1);
+		_c.copy(c1).multiplyScalar(2.5);
+		this.emit(p.x, p.y, p.z, 0, 0, 0, 0.4, 0.4 * k, 1 * k, _c, 0.45, GLOW, 1);
 		_c.setRGB(4, 3.6, 3);
-		this.emit(p.x, p.y, p.z, 0, 0, 0, 0.15, 0.6 * k, 1.2 * k, _c, 1, STAR, 1);
+		this.emit(p.x, p.y, p.z, 0, 0, 0, 0.15, 0.2 * k, 0.4 * k, _c, 0.8, STAR, 1);
 	}
 
 	_rocks(dt) {
@@ -1349,7 +1357,7 @@ export class FX {
 				r.p.y += 4 * f.h * u * (1 - u);
 				// alevli iz
 				_c.setRGB(3, 1.2, 0.25);
-				this.emit(r.p.x, r.p.y, r.p.z, (r.p.x - px) * 4, (r.p.y - py) * 4, (r.p.z - pz) * 4, 0.22, r.s * 1.9, r.s * 0.4, _c, 0.9, GLOW, 1, 3, 0);
+				this.emit(r.p.x, r.p.y, r.p.z, (r.p.x - px) * 4, (r.p.y - py) * 4, (r.p.z - pz) * 4, 0.22, r.s * 1.2, r.s * 0.3, _c, 0.9, GLOW, 1, 3, 0);
 				_c.setRGB(0.4, 0.37, 0.35);
 				const o = this.emit(r.p.x, r.p.y, r.p.z, rr(-0.2, 0.2), rr(0.1, 0.4), rr(-0.2, 0.2), rr(0.6, 1), r.s * 1.2, r.s * 3.2, _c, 0.5, SMOKE, 0, 1);
 				if (o >= 0) this.P[o + SPIN] = rr(-1, 1);
@@ -1414,7 +1422,7 @@ export class FX {
 		this.dust(p, Math.round(8 * k + 4), 0.6 * k + 0.3, 0xcdbb98, 0.8);
 		this.sparks(p, Math.round(10 * k + 4), 3.5 * k, 0xffb35a, 2.6, 0.06, 5);
 		_c.setRGB(3, 1.8, 0.8);
-		this.emit(p.x, p.y + 0.1, p.z, 0, 0, 0, 0.22, 0.4 * k, 1.4 * k, _c, 0.9, GLOW, 1);
+		this.emit(p.x, p.y + 0.1, p.z, 0, 0, 0, 0.22, 0.2 * k, 0.65 * k, _c, 0.9, GLOW, 1);
 		this.debris(p, Math.round(4 * k), 2.6 * k, 0.07, 0xd9c7a4, 0x8b7a66);
 		this.shake(0.35 + 0.35 * k);
 	}

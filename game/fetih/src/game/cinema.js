@@ -29,7 +29,7 @@ export class Cinema {
 		this.fast = false;
 		this._skip = null;
 		this._t0 = 0;
-		this._gen = 0;
+		this._cur = null;
 		this.a = new THREE.Vector3();
 		this.b = new THREE.Vector3();
 		this.c = new THREE.Vector3();
@@ -57,15 +57,19 @@ export class Cinema {
 		return this.fast ? Promise.resolve() : sleep(ms);
 	}
 
-	/** Atlanabilir an: ms sonra ya da dokununca biter; bitince bu anın ara çekimleri iptal. */
+	/** Atlanabilir an: ms sonra ya da dokununca biter; bitince bu anın ara çekimleri (at) iptal. */
 	beat(ms) {
-		if (this.fast) return Promise.resolve();
-		this._skip?.();
+		const tok = this._cur || { alive: true };
+		this._cur = null;
+		if (this.fast) {
+			tok.alive = false;
+			return Promise.resolve();
+		}
 		return new Promise((res) => {
 			const done = () => {
 				clearTimeout(id);
 				if (this._skip === done) this._skip = null;
-				this._gen++;
+				tok.alive = false;
 				res();
 			};
 			const id = setTimeout(done, ms);
@@ -74,12 +78,12 @@ export class Cinema {
 		});
 	}
 
-	/** Bu anın içinde t sn sonra (an atlanırsa çalışmaz). */
+	/** Bu anın içinde t sn sonra (an atlanırsa çalışmaz). Bir sonraki beat() bu anı kapatır. */
 	at(t, fn) {
-		const g = this._gen;
 		const fx = this.fx;
 		if (!fx) return;
-		fx.after(t, () => g === this._gen && fn());
+		const tok = (this._cur ||= { alive: true });
+		fx.after(t, () => tok.alive && fn());
 	}
 
 	_hold() {
@@ -189,7 +193,7 @@ export class Cinema {
 		if (fx) {
 			_v.copy(pos);
 			_v.y += 1.2;
-			fx.fireworks(_v, colors, 8, 5.5, 7.5);
+			fx.fireworks(_v, colors, 8, 5, 4.8);
 			fx.burst(pos, champ.color, { banner: false, big: 1.3 });
 			fx.confetti(pos, colors, app.tier.id === 0 ? 90 : 160, 6, 5);
 			const p2 = pos.clone();
@@ -357,7 +361,7 @@ export class Cinema {
 		const vx = ((-oz / ol) * s1) * 0.65 + ax * 0.35;
 		const vz = ((ox / ol) * s1) * 0.65 + az * 0.35;
 		const yaw = Math.atan2(-vx, vz);
-		cam.shot(c.x + ox * 0.35, c.z + oz * 0.35, { dist: 12, pitch: 0.42, yaw, dur: 0.55, arc: 1 });
+		cam.shot(c.x + ox * 0.75, c.z + oz * 0.75, { dist: 13, pitch: 0.42, yaw, dur: 0.55, arc: 1 });
 		const low = tp.clone();
 		low.y -= 0.6;
 		const camp = A ? A.clone() : c.clone().add(new THREE.Vector3(vx * 5, 0, vz * 5));
