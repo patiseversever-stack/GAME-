@@ -93,6 +93,26 @@ yenisini başlat. Görsel işler Opus high, diğerleri Sonnet high.
 **Durum: dördü de yapıldı ve birleştirildi** (`board.night()`, akıllı `showLabels('all')`, yeni oyuncu renkleri).
 Kullanıcı telefonda deneyip geri bildirim verecek; ona göre ince ayar yapılacak. Gündönümü referansı: `game/Gundonumu.html` (varsa).
 
+### Gece odağı: kullanıcı mevcut hali REDDETTİ (28 Ekim)
+
+> "Rezalet, istediğimle alakası yok. Gündönümü'ndeki karartma böyle. Sinematiklik yok."
+
+Mevcut `board.night()` sadece renk tonunu koyulaştırıyor; bu yetmez. Hedef görsel: `ref/gundonumu_gece.jpg`
+(Gündönümü'nün "Gece Düştü" anı, kaynak: `game/Gundonumu.html`, gece/bitiş geçişini incele). İstenen his:
+
+- **Gökyüzü gerçekten geceye döner:** koyu mor-lacivert gökyüzü, yıldızlar, ay ışığıyla aydınlanmış hacimli bulutlar,
+  bulutların arasında sıcak ışık sızıntısı (glow / bloom hissi).
+- **Işık tozu:** havada süzülen altın parçacıklar, ateş böceği gibi; seçilebilir illerin üstünde yoğunlaşır.
+- **Harita gece manzarası olur:** iller mor-mavi gölgede, şehir ve köylerde yanan pencere ışıkları, ünlü yapılar ve
+  kalelerde sıcak ışıklar. Gri ya da sadece karartılmış görünmemeli; Gündönümü gibi büyülü ve sinematik olmalı.
+- **Seçilebilir iller** bu gecenin içinde ışık adası gibi parlar: canlı gündüz rengi, altın kenar ışığı, üstlerinde ışık tozu.
+- **Geçiş sinematik:** kamera hafifçe kalkar ve süzülür, gökyüzü gündüzden geceye akar (renk, yıldızlar beliriyor),
+  ~1 sn; dönüşte şafak gibi aydınlanır.
+- Aynı gece hissi: rakip seçerken, saldırı/düello sırasında (yalnız iki il ışıkta) ve fetih anında.
+- Gündönümü'nün yazı tipi ve tonu (ince, aralıklı harfler, altın vurgular) seçim istemi için de örnek alınabilir.
+- Performans: q0'da tam ekran geçiş yok; bloom hissi sahte glow sprite / katmanla verilir, q≥1'de tek post geçişi olabilir.
+- Kullanıcının itiraz ettiği eski seçim görüntüsü: `ref/v02_secim_sikayet.jpg`.
+
 ## Sıradaki büyük iş (v0.2: "milyon dolarlık" geçiş)
 
 ### 1. Harita sanatı (Opus xhigh)
