@@ -136,6 +136,16 @@ export class Props {
 		const R = rng(99);
 		const taps = String(tier.shadowTaps);
 		const relief = board.relief;
+		// önce ünlü yapılar: ağaçlar onların ve il merkezlerinin (kale yeri) çevresinde bitmesin
+		this.landmarks = new Landmarks(G, tier, board);
+		const clear = [
+			...this.landmarks.sites.map((s) => [s.x, s.z, 0.95]),
+			...board.provinces.map((p) => [p.x, p.z, 1.6]),
+		];
+		const blocked = (x, z) => {
+			for (const [cx, cz, r] of clear) if ((x - cx) * (x - cx) + (z - cz) * (z - cz) < r * r) return true;
+			return false;
+		};
 		const lists = [[], []];
 		const budget = TREES[2 - tier.id] ?? 1000;
 		// orman kuşaklarında titreşimli ızgara: olasılık = orman yoğunluğu
@@ -149,9 +159,10 @@ export class Props {
 				const la = relief.bil(relief.La, jx, jy);
 				const gr = relief.bil(relief.Gr, jx, jy);
 				// orman yoksa yeşil ovalarda seyrek tek tük ağaç
-				const pr = fo > 0.08 ? Math.pow(fo, 1.15) : gr > 0.6 ? 0.025 : 0;
+				const pr = fo > 0.08 ? Math.min(1, Math.pow(fo, 1.15) * 1.7) : gr > 0.6 ? 0.03 : 0;
 				if (la > 0.05 || pr <= 0) continue;
 				if (R() > pr) continue;
+				if (blocked(jx, -jy)) continue;
 				cand.push([jx, jy, fo]);
 			}
 		// bütçeye indir (eşit seyreltme)
@@ -197,7 +208,6 @@ export class Props {
 		}
 		this.counts = lists.map((l) => l.length);
 		// ünlü yapılar
-		this.landmarks = new Landmarks(G, tier, board);
 		this.group.add(this.landmarks.mesh);
 		this.casters.push(this.landmarks.caster);
 		this.counts.push(this.landmarks.count);

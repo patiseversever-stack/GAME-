@@ -431,7 +431,11 @@ function edgeDist(x, y, flat) {
 	return md;
 }
 
-const easeOut = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
+// boya dalgası cephesi: hızlı çıkış ama cephe il boyunca görünür kalsın
+const waveEase = (t) => {
+	const u = Math.min(1, Math.max(0, t));
+	return u * (2 - u) * 0.85 + u * 0.15;
+};
 
 // ------------------------------------------------------------------ harita
 
@@ -640,7 +644,7 @@ export class Board {
 		w.on = true;
 		w.t = 0;
 		w.maxR = maxR + 0.3;
-		w.dur = Math.min(1.35, Math.max(0.65, 0.45 + maxR * 0.07));
+		w.dur = Math.min(1.6, Math.max(0.85, 0.6 + maxR * 0.09));
 		w.flash = 1;
 		w.ox = ox;
 		w.oz = oz;
@@ -729,7 +733,7 @@ export class Board {
 				w.t += dt;
 				const o = (2 * N + i) * 4;
 				const u = w.t / w.dur;
-				S[o + 2] = w.maxR * easeOut(u) ;
+				S[o + 2] = w.maxR * waveEase(u);
 				S[o + 3] = u < 1 ? 1 : Math.max(0, 1 - (u - 1) * 3);
 				if (u >= 1.35) {
 					w.on = false;
