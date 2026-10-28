@@ -64,10 +64,10 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 | İçerik (bitti) | `src/data/q/`: 1.000 doğrulanmış soru (tarih 180, coğrafya 200, spor 140, bilim 160, sanat 140, genel kültür 180). `src/data/bank.js` ile oyuna bağlı; şimdilik yalnız tanımlı tipler (choice, tf, num, pin, hang ≈ 750 soru) çıkar, diğer tipler soru tipleri birleşince açılır. |
 | Sinema/efekt (bitti) | Açılış uçuşu, ordu yürüyüşü, mancınık ve ateşli ok, kule yıkımı, fetih patlaması ve sancak, kalkan, kale çöküşü, zafer havai fişeği. `src/gfx/fx.js` (boşta 0, en çok 6 çağrı). Bilinen: başsız testte `castleDrop` yavaş (kare süresine bağlı), telefonda denenmedi. |
 | Soru tipleri (yarım, birleştirilmedi) | Dal `worktree-agent-af31e996c3a1eb880`: order, match, hilo, odd, emoji, proverb, riddle, anagram, cross, img, blitz, `TYPE_WEIGHTS`. Örnek soru ve test yok. |
-| Oynanış (yarım, birleştirilmedi) | Dal `worktree-agent-a35eedab62b33d177`: komutanlar, jokerler, ilerleme, soru bankası, sefer, ağ katmanı. `sim.mjs` ve denge yok. |
+| Oynanış (bitti, birleştirildi) | Jokerler (yarı yarıya, süre, kalkan, ikinci şans, sabotaj, seyirci; botlar da kullanır), sefer (7 bölge x 4 sahne + Büyük Fetih, yıldız, kilit, komutan patronlar), ilerleme (XP, seviye, altın, günlük ödül, ELO), gelir kancaları (ödüllü reklam, mağaza, reklamsız: yalnız kanca), ağ katmanı (yerel `net.js`). Menüdeki renk ve görünüm maça taşınır. Denge: `node test/sim.mjs` (hızlı maç ~5–7 dk, uzun ~17–20 dk tahmini). |
 | Ses (yarım, birleştirilmedi) | Dal `worktree-agent-ad6d837d89d36b9d7`: WebAudio motoru, makam müziği, efektler. `ASSETS.md` yazılmadı. |
 
-**Bilinen eksikler:** maçtan çık / duraklat ekranı yok; menüde seçilen renk maça yansımıyor; Nemrut ve Kız Kulesi basit;
+**Bilinen eksikler:** maçtan çık / duraklat ekranı yok; Nemrut ve Kız Kulesi basit;
 komşu ülkeler düz; il etiketlerinde sahip rengi zemini yok.
 
 **Maliyet kuralı (kullanıcı isteği):** aynı anda en çok 1–2 ajan. Uzun aradan sonra eski ajanı devam ettirme, kısa görevle

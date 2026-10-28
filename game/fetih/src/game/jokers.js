@@ -95,7 +95,7 @@ export const JOKERS = {
 		short: 'Sabotaj',
 		desc: `Rakibin süresi ${SABOTAGE.cut} sn kısalır, ekranı ${SABOTAGE.blurMs / 1000} sn kararır.`,
 		color: '#e0583a',
-		icon: 'bomb',
+		icon: 'bolt',
 		free: 0,
 		max: 1,
 		scope: 'question',
@@ -300,8 +300,10 @@ export function botPlan(slots, { T, v, R, duel, capital, rivalHuman }) {
 	return out;
 }
 
-/** Süre toplamı (arayüz her tikte çağırır): sabotaj sonrası kalan süre en az 3 sn. */
-export function questionTime(T, clock, elapsed = 0) {
-	const extra = clock ? clock.extra : 0;
-	return Math.max(T.time + extra, elapsed + (extra < 0 ? 3 : 0));
+/**
+ * Sorunun toplam süresi. extra: ekstra süre (+) ve sabotaj (−) toplamı; floor: sabotaj anından itibaren
+ * en az 3 sn kalması için arayüzün tuttuğu alt sınır (sabotaj anı + 3). Süre hiçbir zaman 3 sn'nin altına inmez.
+ */
+export function questionTime(T, extra = 0, floor = 0) {
+	return Math.max(T.time + extra, floor, 3);
 }

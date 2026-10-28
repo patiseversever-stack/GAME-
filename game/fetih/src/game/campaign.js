@@ -209,6 +209,10 @@ export class Campaign {
 		return n;
 	}
 
+	maxStars() {
+		return STAGES.length * 3;
+	}
+
 	regionName(key) {
 		return REGION_NAMES[key] || key;
 	}

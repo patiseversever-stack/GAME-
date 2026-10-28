@@ -8,11 +8,13 @@
 // - Dikey ve yatay telefon: yatay düzen @media (orientation:landscape) and (max-height:560px).
 //
 // Diğer stil dosyaları: styles-q.js (soru kartı ve soru tiplerinin ortak sınıfları),
-// styles-wheel.js (çark, düello sahnesi, sıralama), styles-menu.js (başlık, menüler, bitiş).
+// styles-wheel.js (çark, düello sahnesi, sıralama), styles-menu.js (başlık, menüler, bitiş),
+// styles-play.js (jokerler, sefer, ödül ekranı).
 
 import { CSS_Q } from './styles-q.js';
 import { CSS_WHEEL } from './styles-wheel.js';
 import { CSS_MENU } from './styles-menu.js';
+import { CSS_PLAY } from './styles-play.js';
 import { OUT, LAND } from './cssutil.js';
 import { TR_FONTS } from './trglyphs.js';
 
@@ -202,4 +204,4 @@ const RM = /* css */ `
 }`;
 
 // TR_FONTS: Ğ ğ İ Ş ş eki (gömülü alt kümelerde yok; bkz. trfont.py)
-export const CSS = TR_FONTS + BASE + CSS_Q + CSS_WHEEL + CSS_MENU + RM;
+export const CSS = TR_FONTS + BASE + CSS_Q + CSS_WHEEL + CSS_MENU + CSS_PLAY + RM;

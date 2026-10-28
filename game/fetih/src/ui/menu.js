@@ -50,9 +50,11 @@ export function buildTitle(ui) {
 			<button class="fl-btn big red fl-play" data-a="menu">${ico('swords', { w: 2.8 })}OYNA</button>
 			<div class="row">
 				<button class="fl-btn navy fl-cmdb" data-a="cmd"><span class="fl-av" data-r="tav"></span><span class="tx"><small>KOMUTAN</small><b data-r="tnm"></b></span></button>
-				<button class="fl-btn navy" data-a="camp" ${ui.h.campaign ? '' : 'disabled'}>${ico('map', { w: 2.4 })}<span class="tx"><small>SEFER</small><b>${ui.h.campaign ? 'Başla' : 'Yakında'}</b></span></button>
+				<button class="fl-btn navy" data-a="camp" ${ui.h.campaign ? '' : 'disabled'}>${ico('map', { w: 2.4 })}<span class="tx"><small>SEFER</small><b data-r="tcs">${ui.h.campaign ? 'Başla' : 'Yakında'}</b></span></button>
 			</div>
-		</div>`;
+		</div>
+		<div class="fl-prof" data-r="prof"><span class="lv"><small>SEV</small><b data-r="plv">1</b></span><div class="xb"><u data-r="pxp"></u></div>
+			<span class="gd"><span class="coin">${ico('coin', { w: 2.2, c: '#7a4a06' })}</span><b data-r="pgd">0</b></span></div>`;
 	refreshTitle(ui);
 }
 
@@ -66,6 +68,25 @@ export function refreshTitle(ui) {
 	}
 	const nm = t.querySelector('[data-r=tnm]');
 	if (nm) nm.textContent = ui.cmd.name;
+	// ilerleme şeridi (seviye, XP, altın) ve sefer yıldızları
+	const pg = ui.app.progress;
+	if (pg) {
+		const li = pg.levelInfo;
+		const set = (r, v) => {
+			const e = t.querySelector(`[data-r=${r}]`);
+			if (e) e.textContent = v;
+		};
+		set('plv', li.level);
+		set('pgd', pg.gold.toLocaleString('tr-TR'));
+		const u = t.querySelector('[data-r=pxp]');
+		if (u) u.style.transform = `scaleX(${li.max ? 1 : (li.into / li.need).toFixed(3)})`;
+	}
+	const cp = ui.app.campaign;
+	if (cp) {
+		const n = cp.totalStars();
+		const e = t.querySelector('[data-r=tcs]');
+		if (e) e.textContent = n ? `★ ${n} / ${cp.maxStars()}` : 'Başla';
+	}
 }
 
 // ------------------------------------------------------------------ yeni maç
@@ -217,104 +238,6 @@ export function showCommander(ui, back) {
 	};
 }
 
-// ------------------------------------------------------------------ bitiş
+// ------------------------------------------------------------------ bitiş (ayrı dosyada)
 
-export async function showEnd(ui, m, ranking) {
-	const el = ui.$.end;
-	const team = !!m.mode.teams;
-	const me = m.players.find((p) => p.human);
-	const place = team ? ranking.findIndex((t) => t.players.includes(me)) : ranking.indexOf(me);
-	const won = place === 0;
-	const fmt = (n) => Math.round(n).toLocaleString('tr-TR');
-	const TEAM = ['#ff4d4d', '#3d7dff'];
-	const entry = (r, k) => {
-		if (team)
-			return {
-				name: r.players.map((p) => p.name).join(' & '),
-				score: r.score,
-				color: TEAM[r.team] || '#ff4d4d',
-				heads: r.players.map((p) => `<span class="fl-av" style="border-color:${p.css}">${avatar(ui.look(p))}</span>`).join(''),
-				me: r.players.includes(me),
-				dead: false,
-			};
-		return { name: r.name, score: r.score, color: r.css, heads: `<span class="fl-av" style="border-color:${r.css}">${avatar(ui.look(r))}</span>`, me: !!r.human, dead: !r.alive };
-	};
-	const E = ranking.map(entry);
-	const order = E.length >= 3 ? [1, 0, 2] : E.length === 2 ? [1, 0] : [0];
-	const podium = order
-		.filter((k) => E[k])
-		.map((k) => {
-			const e = E[k];
-			return `<div class="pd p${k + 1} ${e.me ? 'me' : ''}" style="--c:${e.color};--k:${k}">
-				<div class="who">${k === 0 ? `<span class="crown">${ico('crown', { w: 2.4, c: '#7a4a06' })}</span>` : ''}<div class="hs">${e.heads}</div>
-				<b>${esc(e.name)}</b><em>${fmt(e.score)}</em></div>
-				<div class="ped"><span>${k + 1}</span></div></div>`;
-		})
-		.join('');
-	const rest = E.slice(3)
-		.map((e, j) => `<div class="rr ${e.me ? 'me' : ''}"><span class="n">${j + 4}</span>${e.heads}<b>${esc(e.name)}</b><em>${fmt(e.score)}</em></div>`)
-		.join('');
-	// ödüller (yer tutucu): oyun akışı m.rewards verirse o kullanılır
-	const owned = me ? m.owned(me.i).length : 0;
-	const rw = m.rewards || {
-		xp: Math.round((me?.score || 0) / 25) + (won ? 120 : 40) + owned * 5,
-		gold: (won ? 60 : 15) + owned * 2,
-	};
-	const wal = ui.wallet();
-	const xp0 = wal.xp;
-	wal.xp += rw.xp || 0;
-	wal.gold += rw.gold || 0;
-	ui.saveWallet(wal);
-	const lvl = (x) => Math.floor(x / 500) + 1;
-	const prog = (x) => (x % 500) / 500;
-	const title = won ? 'ZAFER!' : place === 1 ? 'İKİNCİ!' : 'MAÇ BİTTİ';
-	const sub = me ? `${place + 1}. oldun · ${owned} il · ${fmt(me.score)} puan` : 'Maç sona erdi';
-	el.className = `fl-scr fl-end ${won ? 'win' : 'lose'}`;
-	el.innerHTML = `<div class="fl-ein">
-		<div class="hdr"><div class="rays"></div><b>${title}</b><span>${esc(sub)}</span></div>
-		<div class="fl-podium n${Math.min(3, E.length)}">${podium}</div>
-		${rest ? `<div class="fl-rest">${rest}</div>` : ''}
-		<div class="fl-rew">
-			<div class="xp"><span class="lv"><small>SEVİYE</small><b data-r="lv">${lvl(xp0)}</b></span><div class="bar"><u data-r="xpb" style="transform:scaleX(${prog(xp0).toFixed(3)})"></u><span><b data-r="xpn">+0</b> XP</span></div></div>
-			<div class="gd"><span class="coin">${ico('coin', { w: 2.2, c: '#7a4a06' })}</span><b data-r="gd">+0</b><small>ALTIN</small></div>
-		</div>
-		<div class="btns"><button class="fl-btn navy" data-x="menu">${ico('home', { w: 2.6 })}MENÜ</button><button class="fl-btn big green" data-x="again">${ico('replay', { w: 2.8 })}TEKRAR OYNA</button></div>
-	</div>`;
-	el.classList.remove('off');
-	ui.sfx(won ? 'win' : 'lose');
-	if (won) setTimeout(() => ui.fx.confetti(innerWidth, { n: 60, life: 3000 }), 350);
-	// ödül sayaçları
-	setTimeout(() => {
-		const q = (s) => el.querySelector(s);
-		ui.fx.count(q('[data-r=xpn]'), 0, rw.xp || 0, 900, (x) => '+' + Math.round(x).toLocaleString('tr-TR'));
-		ui.fx.count(q('[data-r=gd]'), 0, rw.gold || 0, 900, (x) => '+' + Math.round(x).toLocaleString('tr-TR'));
-		const bar = q('[data-r=xpb]');
-		const lv = q('[data-r=lv]');
-		const x1 = wal.xp;
-		ui.fx.tween(1100, (k) => {
-			const e = 1 - Math.pow(1 - k, 3);
-			const x = xp0 + (x1 - xp0) * e;
-			bar.style.transform = `scaleX(${prog(x).toFixed(3)})`;
-			const l = String(lvl(x));
-			if (lv.textContent !== l) {
-				lv.textContent = l;
-				lv.parentElement.classList.remove('up');
-				void lv.offsetWidth;
-				lv.parentElement.classList.add('up');
-				ui.sfx('levelup');
-			}
-		});
-		ui.sfx('coin');
-	}, 900);
-	const act = await new Promise((res) => {
-		el.onclick = (e) => {
-			const b = e.target.closest('[data-x]');
-			if (b) res(b.dataset.x);
-		};
-	});
-	ui.sfx('tap');
-	el.onclick = null;
-	el.classList.add('off');
-	await sleep(50);
-	return act;
-}
+export { showEnd } from './endscreen.js';

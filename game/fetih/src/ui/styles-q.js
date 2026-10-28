@@ -284,17 +284,7 @@ export const CSS_Q = /* css */ `
 .fl-q.map .fl-close{gap:5px}
 .fl-q.map .fl-cr{padding:3px 8px 3px 5px}
 
-/* ---------------------------------------------------------------- jokerler */
-.fl-jk{display:flex;justify-content:center;gap:10px;margin-top:12px}
-.fl-jk:empty{display:none}
-.fl-jkb{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;width:70px;padding:5px 2px 5px;border-radius:14px;font-size:12px;line-height:1.1;letter-spacing:.02em;
-  background:linear-gradient(#7a4ad8,#4a2a9a);border:2.5px solid #fff;box-shadow:0 4px 0 #2a1460;transition:transform .08s,opacity .2s}
-.fl-jkb:active{transform:translateY(3px);box-shadow:0 1px 0 #2a1460}
-.fl-jkb .ji{width:26px;height:26px;font-size:22px;display:grid;place-items:center}
-.fl-jkb>i{position:absolute;right:-7px;top:-8px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;font-style:normal;font-family:'Lilita One';font-size:13px;line-height:17px;text-align:center;color:#4a2800;background:var(--gold);border:2px solid #fff}
-.fl-jkb:disabled,.fl-jkb.off{opacity:.38;filter:grayscale(.8)}
-.fl-jkb.used{animation:flPop .4s}
-.fl-q.locked .fl-jk,.fl-q.rv .fl-jk{opacity:.35;pointer-events:none}
+/* jokerler: styles-play.js */
 
 ${LAND}{
   .fl-q{left:auto;right:8px;bottom:auto;top:50%;width:min(52vw,480px);transform:translate(40px,-50%)}
