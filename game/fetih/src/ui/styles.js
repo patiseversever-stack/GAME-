@@ -124,26 +124,34 @@ const BASE = /* css */ `
 .fl-cine.on i{transform:none}
 
 /* ---------------------------------------------------------------- il seçimi ipucu */
-.fl-prompt{position:absolute;left:0;right:0;margin:0 auto;bottom:calc(6px + var(--sab));width:min(calc(100% - 16px),460px);display:flex;justify-content:center;padding:34px 14px 22px;text-align:center;
-  background:radial-gradient(ellipse 58% 64% at 50% 58%,rgba(3,5,12,.6),rgba(3,5,12,.3) 48%,rgba(3,5,12,0) 100%);
+.fl-prompt{position:absolute;left:0;right:0;margin:0 auto;bottom:calc(6px + var(--sab));width:min(calc(100% - 16px),460px);display:flex;justify-content:center;padding:40px 12px 24px;text-align:center;
+  background:radial-gradient(ellipse 66% 70% at 50% 58%,rgba(2,4,10,.86),rgba(2,4,10,.55) 50%,rgba(2,4,10,0) 100%);
   opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
 .fl-prompt.on{opacity:1;transform:none}
-.fl-prompt .pt{display:flex;flex-direction:column;align-items:center;min-width:0}
+.fl-prompt .pt{position:relative;display:flex;flex-direction:column;align-items:center;min-width:0}
+/* başlığın ardında nabız gibi atan altın ışık (dikkat çeker; yalnız opacity/transform) */
+.fl-prompt .pt::before{content:'';position:absolute;left:50%;top:44%;width:120%;height:92px;margin:-46px 0 0 -60%;border-radius:50%;pointer-events:none;z-index:-1;
+  background:radial-gradient(ellipse at center,rgba(255,196,90,.42),rgba(255,170,60,.14) 45%,rgba(255,170,60,0) 72%);animation:flPromptGlow 1.6s ease-in-out infinite}
+.fl-prompt.red .pt::before{background:radial-gradient(ellipse at center,rgba(255,110,70,.45),rgba(255,90,50,.15) 45%,rgba(255,90,50,0) 72%)}
+@keyframes flPromptGlow{0%,100%{opacity:.55;transform:scale(.92)}50%{opacity:1;transform:scale(1.06)}}
+@keyframes flPromptBreath{0%,100%{transform:scale(1)}50%{transform:scale(1.035)}}
 /* üst satır: ince, geniş aralıklı altın büyük harf; iki yanında altın kıl çizgi */
-.fl-prompt .ey{display:flex;align-items:center;gap:12px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:10.5px;line-height:1;letter-spacing:.42em;margin-right:-.42em;color:#f4c86c;white-space:nowrap;
-  text-shadow:0 0 12px rgba(255,190,90,.45)}
-.fl-prompt .ey::before,.fl-prompt .ey::after{content:'';flex:none;width:30px;height:1px;background:linear-gradient(90deg,rgba(244,200,108,0),#f4c86c)}
+.fl-prompt .ey{display:flex;align-items:center;gap:12px;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:13.5px;line-height:1;letter-spacing:.36em;margin-right:-.36em;color:#ffd27a;white-space:nowrap;
+  text-shadow:0 0 14px rgba(255,190,90,.65),0 1px 2px rgba(0,0,0,.9)}
+.fl-prompt .ey::before,.fl-prompt .ey::after{content:'';flex:none;width:34px;height:2px;background:linear-gradient(90deg,rgba(255,210,122,0),#ffd27a)}
 .fl-prompt .ey::after{transform:scaleX(-1);margin-left:-.42em}
-.fl-prompt.red .ey{color:#ffb08a;text-shadow:0 0 12px rgba(255,120,80,.5)}
+.fl-prompt.red .ey{color:#ffb894;text-shadow:0 0 14px rgba(255,120,80,.7),0 1px 2px rgba(0,0,0,.9)}
 .fl-prompt.red .ey::before,.fl-prompt.red .ey::after{background:linear-gradient(90deg,rgba(255,176,138,0),#ffb08a)}
 .fl-prompt .pd{flex:none;width:8px;height:8px;border-radius:50%;background:var(--pc);box-shadow:0 0 0 1.5px rgba(255,244,226,.8),0 0 10px var(--pc);margin-right:2px}
 /* başlık: italik serif (Gündönümü'nün ada adı gibi) */
-.fl-prompt .pt b{display:block;margin-top:9px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500;
-  font-size:clamp(31px,9vw,42px);line-height:1.02;letter-spacing:.01em;color:#fff4e2;text-shadow:0 2px 22px rgba(255,186,90,.38),0 1px 2px rgba(10,4,30,.6)}
+.fl-prompt .pt b{display:block;margin-top:9px;max-width:100%;white-space:nowrap;overflow:visible;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:700;
+  font-size:clamp(38px,11.5vw,54px);line-height:1.05;letter-spacing:.005em;color:#fff7e8;padding:0 .12em;
+  text-shadow:0 0 26px rgba(255,186,90,.75),0 0 6px rgba(255,210,140,.5),0 2px 3px rgba(0,0,0,.95);animation:flPromptBreath 1.6s ease-in-out infinite}
 /* ipucu: küçük, aralıklı, lavanta */
-.fl-prompt .pt small{display:block;margin-top:10px;font-family:'Manrope',system-ui,sans-serif;font-weight:500;font-size:10.5px;line-height:1.4;letter-spacing:.24em;margin-right:-.24em;text-transform:uppercase;color:rgba(214,220,232,.78)}
-.fl-prompt .pt::after{content:'';display:block;margin-top:13px;width:120px;height:1px;background:linear-gradient(90deg,rgba(244,200,108,0),rgba(244,200,108,.85),rgba(244,200,108,0))}
-.fl-prompt.cap .pt b{font-size:clamp(28px,8vw,38px)}
+.fl-prompt .pt small{display:block;margin-top:10px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:12.5px;line-height:1.45;letter-spacing:.16em;margin-right:-.16em;text-transform:uppercase;color:#eef2fa;text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 10px rgba(0,0,0,.6)}
+.fl-prompt .pt::after{content:'';display:block;margin-top:14px;width:150px;height:2px;background:linear-gradient(90deg,rgba(255,210,122,0),#ffd27a,rgba(255,210,122,0))}
+.fl-prompt.cap .pt b{font-size:clamp(32px,9.5vw,44px);animation:none}
+.fl-prompt.cap .pt::before{animation:none;opacity:.6}
 .fl-prompt.shake{animation:flShakeP .4s}
 @keyframes flShakeP{0%,100%{transform:none}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
 @keyframes flTap{0%,100%{transform:translateY(0)}40%{transform:translateY(4px) scale(.92)}60%{transform:translateY(4px) scale(.92)}}

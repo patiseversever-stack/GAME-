@@ -392,7 +392,7 @@ export class UI {
 		const adj = !attack && options.some((i) => (m.neighbors?.(i) || []).some((j) => b.provinces[j].owner === me.i));
 		this._selOn(m, options, attack, me);
 		const head = esc(String(text || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')));
-		const hint = attack ? 'Işıklı sınır illerinden birine dokun' : adj ? 'Topraklarına komşu ışıklı illerden birini al' : 'Işıklı boş illerden birini al';
+		const hint = attack ? 'Işıklı sınır illerinden birine dokun' : adj ? 'Komşu ışıklı illerden birini al' : 'Işıklı boş illerden birini al';
 		const ey = attack ? 'FETİH · SIRA SENDE' : 'YAYILMA · SIRA SENDE';
 		this.prompt(`<span class="ey">${ey}</span><b>${head}</b><small>${hint}</small>`, { tone: attack ? 'red' : '' });
 		app.cam.fit(app.boundsOf(m.map), { pitch: 0.98 });
