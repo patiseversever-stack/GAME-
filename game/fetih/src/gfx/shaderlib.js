@@ -24,6 +24,13 @@ uniform vec3 uLift;
 uniform vec3 uGain;
 uniform vec3 uVigCol;
 uniform vec4 uFocus;    // xyz odak (zincirin ucu), w yarıçap: odak çevresi hafif ışıltı
+uniform vec4 uNight;    // x gece miktarı (0 gündüz, 1 gece odağı), y ay kenarı gücü
+#ifndef FL_GLOBALS
+#define FL_GLOBALS
+// gece odağı: gLit 1 olan piksel gündüz renginde kalır (seçilebilir il, efekt ışığı); gRim ay kenarı
+float gLit = 0.0;
+float gRim = 0.0;
+#endif
 
 float hash12(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
@@ -104,6 +111,7 @@ vec3 shade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, float r
 	c += skyReflect(R) * fres * gloss * 0.55 * ao;
 	// kenar ışığı: siluet sıcak ışıkla parlar
 	float rim = pow(1.0 - ndv, 3.0) * rimK;
+	gRim = pow(1.0 - ndv, 2.5);
 	c += uSunCol * rim * (0.25 + 0.75 * sh) * 0.35 * ao;
 	return c;
 }
@@ -130,7 +138,16 @@ vec3 tonemap(vec3 c) {
 	vec3 hp = c * (mt / max(m, 1e-4));
 	return mix(acesFit(c), hp, 0.7 * (1.0 - smoothstep(1.2, 6.0, m)));
 }
+// gece: gri değil; derin mavi-mor, düşük pozlama, ay ışığı kenarı. Aydınlık (gLit) pikseller gündüzde kalır.
+vec3 nightGrade(vec3 c) {
+	float l = dot(c, vec3(0.3, 0.59, 0.11));
+	vec3 n = mix(vec3(l), c, 0.55) * vec3(0.045, 0.062, 0.18) + vec3(0.002, 0.003, 0.012);
+	n += vec3(0.25, 0.32, 0.9) * gRim * 0.3 * uNight.y;
+	return n;
+}
 vec4 finish(vec3 c, float a) {
+	float nk = uNight.x * (1.0 - clamp(gLit, 0.0, 1.0));
+	if (nk > 0.001) c = mix(c, nightGrade(c), nk);
 	c = tonemap(c * uGrade.z);
 	c = pow(c, vec3(1.0 / 2.2));
 	c = c * uGain + uLift * (1.0 - c);
@@ -152,6 +169,12 @@ vec4 finish(vec3 c, float a) {
 //   2: dalga merkezi x, z, dalga yarıçapı, parlama
 //   3: yükselme, parlama (nabız), seçilebilirlik, sönüklük (maç dışı)
 export const PROV = /* glsl */ `
+#ifndef FL_GLOBALS
+#define FL_GLOBALS
+// gece odağı: gLit 1 olan piksel gündüz renginde kalır (seçilebilir il, efekt ışığı); gRim ay kenarı
+float gLit = 0.0;
+float gRim = 0.0;
+#endif
 uniform sampler2D uState;
 uniform float uSelOn;   // seçim kipi açık (0..1): seçilemeyen iller kararır
 vec4 provRow(float pid, int row) {
@@ -159,7 +182,9 @@ vec4 provRow(float pid, int row) {
 }
 /** Seçim kipinde seçilemeyen ve maç dışı iller: renk solar, kararır. */
 vec3 provDim(vec3 c, float sel, float dim) {
-	float k = clamp(uSelOn * (1.0 - sel) + dim * 0.7, 0.0, 1.0);
+	// seçim kipinde gri karartma yok: gece odağı finish() içinde; seçilebilir il aydınlık kalır
+	gLit = max(gLit, sel);
+	float k = clamp(dim * 0.7, 0.0, 1.0);
 	float l = dot(c, vec3(0.3, 0.59, 0.11));
 	c = mix(c, vec3(l) * vec3(0.9, 0.95, 1.08), k * 0.72);
 	return c * (1.0 - 0.42 * k);

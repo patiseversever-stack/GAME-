@@ -24,6 +24,7 @@ export function createGlobals() {
 		uGain: { value: new THREE.Color(1, 1, 1) },
 		uVigCol: { value: new THREE.Color() },
 		uFocus: { value: new THREE.Vector4(0, -99, 0, 3) },
+		uNight: { value: new THREE.Vector4(0, 1, 0, 0) }, // gece odağı (board.night)
 		uNoise: { value: noiseTexture() }, // döşenebilir gürültü (noise.js)
 		uShadowMap: { value: null },
 		uShadowMat: { value: new THREE.Matrix4() },

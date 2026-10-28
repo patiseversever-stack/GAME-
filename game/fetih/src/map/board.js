@@ -187,8 +187,10 @@ void main() {
 
 	// --- sahip boyası: arazinin açık-koyu dokusu korunur
 	float lum = dot(alb, vec3(0.3, 0.59, 0.11));
-	vec3 tint = ownCol * (0.42 + 2.0 * lum);
-	alb = mix(alb, tint, ownedK * (0.72 - snowK * 0.3));
+	// güçlü, doygun sahip rengi (Supercell): arazi dokusu yalnızca hafif parlaklık farkı olarak kalır;
+	// ışıkta beyaza/pembeye kaçmasın diye albedo orta tonda tutulur
+	vec3 tint = ownCol * (0.5 + 0.9 * lum);
+	alb = mix(alb, tint, ownedK * (0.9 - snowK * 0.3));
 
 	// --- sınırlar
 	float sel = vFx.z;
@@ -262,14 +264,14 @@ void main() {
 	}
 
 	// --- seçim: altın dış hat, iç ışıltı, komşuya taşan hale
-	vec3 gold = vec3(1.0, 0.72, 0.18);
+	vec3 gold = vec3(1.0, 0.56, 0.04);
 	float wSel = max(0.11, 3.6 * px);
 	float selBand = lineAA(d, wSel, px) * sel;
 	float selCore = lineAA(d, wSel * 0.45, px) * sel;
 	float selIn = exp(-d / 0.55) * sel;
 	float hw = max(0.3, 7.0 * px);
 	float halo = (1.0 - sel) * nbSel * exp(-d / hw) * uSelOn;
-	c *= 1.0 + sel * 0.12;
+	c *= 1.0 + sel * 0.16;
 	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * (0.8 + 0.2 * pulse));
 	c = mix(c, vec3(1.0, 0.96, 0.82) * (1.6 + 0.6 * pulse), selCore * 0.8);
 	c += gold * (selIn * 0.42 * pulse + halo * 0.9 * (0.55 + 0.45 * pulse));
@@ -340,7 +342,6 @@ void main() {
 	float sh = shadowAt(vW, N);
 	vec3 c = shade(alb, N, normalize(cameraPosition - vW), 0.95, sh, 0.03, 0.2);
 	c = mix(c, uFogCol * 0.8, 0.22);
-	c *= 1.0 - 0.18 * uSelOn;
 	c = applyFog(c, vW);
 	c = edgeMist(c, vW);
 	gl_FragColor = finish(c, 1.0);
@@ -396,7 +397,6 @@ void main() {
 	float wave = sin(dist * 26.0 - t * 1.8 + texture(uNoise, p * 0.8 / 32.0).b * 5.0) * 0.5 + 0.5;
 	float foam = smoothstep(0.35, 0.08, dist) * smoothstep(0.72, 0.98, wave) * 0.55 + smoothstep(0.07, 0.015, dist);
 	c = mix(c, vec3(1.0) * (uSkyTop + uSunCol * 0.32), clamp(foam, 0.0, 1.0) * 0.82);
-	c *= 1.0 - 0.15 * uSelOn;
 	c = applyFog(c, vW);
 	c = edgeMist(c, vW);
 	gl_FragColor = finish(c, 1.0);
@@ -507,6 +507,8 @@ export class Board {
 		this.wave = this.provinces.map(() => ({ on: false, t: 0, dur: 1, maxR: 1, flash: 0 }));
 		this.uSelOn = { value: 0 };
 		this.selOnTo = 0;
+		this.nightTo = 0;
+		this._nightOff = -1;
 		this._c = new THREE.Color();
 
 		// --- alan dokuları (sınır uzaklığı, kıyı, nehir, göl)
@@ -685,13 +687,38 @@ export class Board {
 		this.glowTo.fill(0);
 	}
 
-	/** Seçilebilir iller: kalkar, altın dış hatla parlar; diğerleri solar. null → normal harita. */
+	/** Seçilebilir iller: gece odağı; yalnızca bunlar gündüz renginde, kalkık ve altın hatlı. null → gündüz. */
 	select(list) {
-		this.selTo.fill(0);
-		if (list && list.length) {
-			for (const i of list) this.selTo[i] = 1;
+		this.night(!!(list && list.length), list);
+	}
+
+	/**
+	 * Gece odağı: on → sahne ~0.6 sn'de geceye geçer, list (aydınlık iller) gündüzde kalır, kalkar, altın
+	 * hatla parlar. off → kısa bir beklemeden sonra (hold sn; hemen ardından gelen yeni seçim titretmesin)
+	 * gündüze döner.
+	 */
+	night(on, list = null, { hold = 0.3 } = {}) {
+		if (on) {
+			this._nightOff = -1;
+			this.selTo.fill(0);
+			if (list) for (const i of list) this.selTo[i] = 1;
 			this.selOnTo = 1;
-		} else this.selOnTo = 0;
+			this.nightTo = 1;
+		} else if (hold <= 0) {
+			this._nightOff = -1;
+			this._day();
+		} else if (this.nightTo > 0 && this._nightOff < 0) this._nightOff = hold;
+	}
+
+	_day() {
+		this.selTo.fill(0);
+		this.selOnTo = 0;
+		this.nightTo = 0;
+	}
+
+	/** Şu an gece mi (0..1). */
+	get nightAmt() {
+		return this.G.uNight.value.x;
 	}
 
 	/** Maçın oynandığı iller (dışarıdakiler kalıcı olarak sönük). null → hepsi etkin. */
@@ -707,6 +734,19 @@ export class Board {
 
 	update(dt) {
 		Castle.warmed = true;
+		if (this._nightOff >= 0) {
+			this._nightOff -= dt;
+			if (this._nightOff <= 0) {
+				this._nightOff = -1;
+				this._day();
+			}
+		}
+		const nu = this.G.uNight?.value;
+		if (nu) {
+			const kn = 1 - Math.exp(-dt * 5.5);
+			nu.x += (this.nightTo - nu.x) * kn;
+			if (Math.abs(nu.x - this.nightTo) < 1e-3) nu.x = this.nightTo;
+		}
 		const k = 1 - Math.exp(-8 * dt);
 		const N = this.count;
 		const S = this.S;

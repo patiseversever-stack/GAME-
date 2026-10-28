@@ -18,6 +18,7 @@ import { Castle } from './map/castle.js';
 import { MapCamera } from './game/camera.js';
 import { COMMON, FINISH } from './gfx/shaderlib.js';
 import { Cinema } from './game/cinema.js';
+import { FX } from './gfx/fx.js';
 import { Match } from './game/match.js';
 import { UI } from './ui/ui.js';
 import { Sfx } from './audio/sfx.js';
@@ -43,7 +44,7 @@ void main() {
 	gl_FragColor = finish(c, 1.0);
 }`;
 
-export const PLAYER_COLORS = [0xff4d4d, 0x3d7dff, 0xffc12e, 0xa55bff];
+export const PLAYER_COLORS = [0xff3030, 0x2a6bff, 0xffbe12, 0x9b3dff]; // güçlü oyun renkleri (pembeye/soluğa kaçmaz)
 
 export class App {
 	constructor({ container, store, hooks = {}, quality = 'auto', power = 'auto' }) {
@@ -126,9 +127,12 @@ export class App {
 		});
 
 		this.playerColors = PLAYER_COLORS;
+		this.fx = new FX(G, R.tier, this);
+		this.scene.add(this.fx.group);
 		this.cinema = new Cinema(this);
 		this.sfx = new Sfx(this.hooks);
 		this.ui = new UI(this.container, this, { start: (cfg) => this.startMatch(cfg) });
+		this.cinema.bind(this.ui); // gece odağı: seçimde kamera ve ışık
 		this.lowFps = true;
 
 		this._onResize = () => this.resize();
@@ -279,6 +283,7 @@ export class App {
 		this.game?.update(dt);
 		this.board.update(dt);
 		for (const k of this.castles) if (k.group.visible) k.update(dt);
+		this.fx.update(dt);
 		this.cam.update(dt);
 		if (draw) {
 			this.ui.update();
@@ -300,6 +305,7 @@ export class App {
 
 	resetBoard() {
 		const b = this.board;
+		this.fx.clear();
 		for (const p of b.provinces) b.setOwner(p.index, -1, null);
 		b.clearFx();
 		b.setActive?.(null);
@@ -318,7 +324,7 @@ export class App {
 		const m = new Match(this, this.ui, cfg);
 		this.match = m;
 		this.board.setActive?.(m.map.length < this.board.count ? m.map : null);
-		this.board.showLabels?.(m.map);
+		this.board.showLabels?.('all'); // akıllı adlar: yakınlaştıkça önem sırasıyla, çakışmasız
 		await m.run();
 		this.lowFps = true;
 	}

@@ -87,6 +87,7 @@ ${LIGHT}
 ${FINISH}
 uniform vec3 uOwner;
 uniform float uFade;
+uniform float uLit;
 varying vec3 vW;
 varying vec3 vN;
 varying vec3 vC;
@@ -113,6 +114,7 @@ void main() {
 	vec3 V = normalize(cameraPosition - vW);
 	vec3 c = shade(alb, N, V, 1.0, sh, gloss, 0.6);
 	c = applyFog(c, vW);
+	gLit = uLit; // gece odağında ilin aydınlıksa kale de aydınlık
 	gl_FragColor = finish(c * uFade, 1.0);
 }`;
 
@@ -292,7 +294,7 @@ export class Castle {
 		const taps = String(tier.shadowTaps);
 		if (!SHARED) SHARED = castleGeo(tier);
 		this.fall = new THREE.Vector3();
-		this.uniforms = { ...G, uOwner: { value: new THREE.Color(color) }, uFade: { value: 1 }, uFall: { value: this.fall } };
+		this.uniforms = { ...G, uOwner: { value: new THREE.Color(color) }, uFade: { value: 1 }, uFall: { value: this.fall }, uLit: { value: 0 } };
 		const mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms: this.uniforms, side: THREE.DoubleSide });
 		this.mesh = new THREE.Mesh(SHARED, mat);
 		this.mesh.frustumCulled = false;
@@ -357,6 +359,7 @@ export class Castle {
 			gp.y = b.heightAt(gp.x, gp.z) + b.liftOf(this._prov);
 			this._last.copy(gp);
 		}
+		this.uniforms.uLit.value = b && this._prov >= 0 ? b.sel[this._prov] : 0;
 		for (const t of this.towers) {
 			if (t.alive) continue;
 			t.fall = Math.min(1, t.fall + dt * 1.4);
