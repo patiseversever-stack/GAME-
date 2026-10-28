@@ -277,7 +277,7 @@ void main() {
 			vec3 R = reflect(-V, WN);
 			R.y = abs(R.y);
 			vec3 nw = mix(wc * vec3(0.02, 0.03, 0.06), nightSky(R) + starField(normalize(vec3(R.x, R.y * 1.02, R.z))) * 0.15, 0.7);
-			nw += vec3(0.85, 0.82, 1.0) * pow(max(dot(R, N_MOON), 0.0), 220.0) * 2.5;
+			nw += vec3(0.7, 0.76, 0.9) * pow(max(dot(R, N_MOON), 0.0), 220.0) * 0.5;
 			nw = mix(nw, vec3(0.04, 0.07, 0.12), lineAA(abs(sd), 0.018 + lpx, lpx) * lake * 0.3);
 			wcol = mix(wcol, nw, nk);
 		}
@@ -452,15 +452,15 @@ void main() {
 		Rc.y = abs(Rc.y);
 		vec3 body = mix(vec3(0.001, 0.0016, 0.005), vec3(0.002, 0.006, 0.012), smoothstep(2.2, 0.3, dist));
 		float fr = 0.35 + 0.4 * pow(1.0 - ndv, 3.0);
-		vec3 n = mix(body, nightSky(Rc) * 0.8, fr);
+		vec3 n = mix(body, nightSky(Rc) * 0.5, fr);
 		// yıldızlar sisten sonra eklenir (uzak denizde de seçilsin)
 		stars = starField(Rc) * fr * 0.12 * uNight.x;
 		// ay yolu: sakin yüzeyde geniş yumuşak ışık, dalgacıklarda pırıltı
 		float mc = max(dot(Rc, N_MOON), 0.0);
 		n += vec3(0.16, 0.2, 0.34) * pow(mc, 14.0) * 0.3;
 		float m = max(dot(R, N_MOON), 0.0);
-		n += vec3(0.8, 0.84, 1.0) * pow(m, 700.0) * 1.6 * (0.3 + 0.7 * smoothstep(0.6, 0.95, mc));
-		n -= vec3(1.5, 1.55, 1.7) * smoothstep(0.99935, 0.99965, mc) * 0.8 * fr; // ay diski yansıması leke gibi durmasın
+		n += vec3(0.7, 0.76, 0.9) * pow(m, 700.0) * 0.7 * (0.3 + 0.7 * smoothstep(0.6, 0.95, mc));
+		n -= vec3(1.5, 1.55, 1.7) * smoothstep(0.99935, 0.99965, mc) * 0.5 * fr; // ay diski yansıması leke gibi durmasın
 		n += vec3(0.1, 0.16, 0.26) * clamp(foam, 0.0, 1.0) * 0.05;
 		c = mix(c, n, uNight.x);
 		gRelit = 1.0;

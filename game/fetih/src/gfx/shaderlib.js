@@ -102,8 +102,8 @@ export const LIGHT = /* glsl */ `
 float spotK() {
 	if (uSpot.w < 0.001) return 1.0;
 	vec2 q = gl_FragCoord.xy / uRes.xy - uSpot.xy;
-	q.x *= uRes.x / uRes.y * 0.82;
-	return 1.0 - uSpot.w * smoothstep(uSpot.z, uSpot.z * 1.75, length(q));
+	q.x *= uRes.x / uRes.y * 0.95;
+	return 1.0 - uSpot.w * smoothstep(uSpot.z, uSpot.z * 1.8, length(q));
 }
 #endif
 /** Bu pikselin gece miktarı: aydınlık (gLit) pikseller gündüzde kalır (ışık havuzunun içinde). */
@@ -249,8 +249,8 @@ export const FINISH = /* glsl */ `
 float spotK() {
 	if (uSpot.w < 0.001) return 1.0;
 	vec2 q = gl_FragCoord.xy / uRes.xy - uSpot.xy;
-	q.x *= uRes.x / uRes.y * 0.82;
-	return 1.0 - uSpot.w * smoothstep(uSpot.z, uSpot.z * 1.75, length(q));
+	q.x *= uRes.x / uRes.y * 0.95;
+	return 1.0 - uSpot.w * smoothstep(uSpot.z, uSpot.z * 1.8, length(q));
 }
 #endif
 vec3 acesFit(vec3 x) {

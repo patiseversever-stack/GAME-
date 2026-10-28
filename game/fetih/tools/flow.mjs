@@ -182,9 +182,9 @@ async function snap(name) {
 	});
 	const file = join(outDir, name + '.png');
 	await page.screenshot({ path: file });
-	const st = await page.evaluate(() => ({ ...window.__fl.app.stats(), q: window.__fl.app.ui.$.q.className, night: +window.__fl.app.G.uNight.value.x.toFixed(2), t: +window.__flow.t.toFixed(1) }));
+	const st = await page.evaluate(() => ({ ...window.__fl.app.stats(), q: window.__fl.app.ui.$.q.className, night: +window.__fl.app.G.uNight.value.x.toFixed(2), spot: window.__fl.app.G.uSpot.value.toArray().map((v) => +v.toFixed(2)).join('/'), t: +window.__flow.t.toFixed(1) }));
 	shots.push(name);
-	console.log(`${name}: oyun ${st.t} sn  gece=${st.night} kart=${st.q} çizim=${st.calls} üçgen=${st.tris} program=${st.programs}`);
+	console.log(`${name}: oyun ${st.t} sn  gece=${st.night} havuz=${st.spot} kart=${st.q} çizim=${st.calls} üçgen=${st.tris} program=${st.programs}`);
 }
 
 const wall = Date.now();

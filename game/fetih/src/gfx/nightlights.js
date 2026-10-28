@@ -283,7 +283,7 @@ export class NightLights {
 		// ekran merkezi (0..1) ve yarıçap (ekran yüksekliği cinsinden)
 		U.x = ((e[0] * p.x + e[8] * p.z) / depth) * 0.5 + 0.5;
 		U.y = ((e[5] * p.y + e[9] * p.z) / depth) * 0.5 + 0.5;
-		U.z = Math.min(0.23, Math.max(0.11, (s.r * e[5]) / depth / 2));
+		U.z = Math.min(0.17, Math.max(0.1, (s.r * e[5]) / depth / 2)); // sıkı havuz: yakın çekimde kadrajın kenarları gece
 		U.w = s.str * s.k;
 	}
 
