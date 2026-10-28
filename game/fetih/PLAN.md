@@ -52,26 +52,29 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
   dokunuşları yutuyordu (`.fl-q` için `visibility`/`pointer-events`). Yanlış ile dokununca uyarı da
   eklendi.
 
-## Şu anki durum (v0.1, commit f35cb59 ve sonrası)
+## Şu anki durum (v0.2 ara sürüm, 28 Ekim)
 
-| Alan | Dosya | Durum |
-|---|---|---|
-| Harita | `src/map/board.js` | 81 il; tek geometri; il durumu veri dokusunda (sahip rengi, yükselme, parlama) |
-| Süsler | `src/map/props.js` | Dağ, ağaç, çam (örneklemeli) |
-| Kale | `src/map/castle.js` | 3 kule, sancak |
-| Veri | `tools/geo.mjs`, `src/data/turkiye.json` | Natural Earth (kamu malı) → il çokgenleri, komşuluk, merkez |
-| Maç | `src/game/match.js` | Başkent → yayılma → fetih → kuşatma; 4 mod; botlar |
-| Sinema | `src/game/cinema.js` | Basit kamera hareketleri |
-| Soru tipleri | `src/quiz/types.js` | choice, tf, num, pin, hang |
-| Sorular | `src/data/questions.js` | 68 doğrulanmış soru |
-| Arayüz | `src/ui/ui.js`, `src/ui/styles.js` | Menü, HUD, soru kartı, çark, sıralama, bitiş |
-| Ses | `src/audio/sfx.js` | Boş iskelet |
+**Yayında:** https://claude.ai/artifact/4t77RHjRmbZC3SGbxdhLWz (sürüm 3). Dal: `ccr-ac8b068d-5guafj`.
 
-- **Test:** `app.debugSim({mode, region, length})` botlarla maçı baştan sona oynatır.
-- **Ekran görüntüsü:** `app.debugScene({show:'question'|'wheel', type, cat})` sahneyi gösterir.
-- **Komutlar:** `node build.mjs --dev`, sonra `node tools/shot.mjs views.json çıkış --q=2`.
-- **Yayın:** `node build.mjs --artifact=<scratchpad>/fetih-ligi.html`, ardından Artifact ile yayınla.
-  Mevcut adres: https://claude.ai/artifact/4t77RHjRmbZC3SGbxdhLWz
+| Alan | Durum |
+|---|---|
+| Harita (bitti) | SDF il sınırları, `select()`, `paint()` boya dalgası, 3D il adları (`showLabels`), kabartma arazi, 42 göl, 19 nehir, 23 ünlü yapı, Osmanlı kalesi (3 kule yıkılır), bulut, tilt-shift (q≥1). q0: 21 çağrı / 145k üçgen, q2: 22 / 236k. |
+| Arayüz (bitti) | Düello sahnesi, yeni soru kartı, çark, HUD, faz afişleri, menüler, komutan seçimi, bitiş kürsüsü, dikey + yatay. Türkçe harf düzeltmesi (`src/ui/trglyphs.js`). |
+| Bağlama (bitti) | Fetihte boya dalgası ortak sınırdan; maç dışı iller kararır; kale araziye oturur. 1'e 1 maç baştan sona hatasız (133 sn). |
+| İçerik (yarım) | `src/data/q/`: 520 soru (tarih 180, coğrafya 200, spor 140). Bilim, sanat, genel kültür boş. **Henüz oyuna bağlı değil.** |
+| Sinema/efekt | Başlanmadı (ordu yürüyüşü, mancınık, kule enkazı, havai fişek, açılış uçuşu). |
+| Soru tipleri (yarım, birleştirilmedi) | Dal `worktree-agent-af31e996c3a1eb880`: order, match, hilo, odd, emoji, proverb, riddle, anagram, cross, img, blitz, `TYPE_WEIGHTS`. Örnek soru ve test yok. |
+| Oynanış (yarım, birleştirilmedi) | Dal `worktree-agent-a35eedab62b33d177`: komutanlar, jokerler, ilerleme, soru bankası, sefer, ağ katmanı. `sim.mjs` ve denge yok. |
+| Ses (yarım, birleştirilmedi) | Dal `worktree-agent-ad6d837d89d36b9d7`: WebAudio motoru, makam müziği, efektler. `ASSETS.md` yazılmadı. |
+
+**Bilinen eksikler:** maçtan çık / duraklat ekranı yok; menüde seçilen renk maça yansımıyor; Nemrut ve Kız Kulesi basit;
+komşu ülkeler düz; il etiketlerinde sahip rengi zemini yok.
+
+**Maliyet kuralı (kullanıcı isteği):** aynı anda en çok 1–2 ajan. Uzun aradan sonra eski ajanı devam ettirme, kısa görevle
+yenisini başlat. Görsel işler Opus high, diğerleri Sonnet high.
+
+**Test:** `node build.mjs --dev`, sonra tam maç akışı için
+`/tmp/.../scratchpad/int/flow.mjs` örneği (otomatik insan oyuncu), ekran görüntüsü için `tools/shot.mjs`.
 
 ## Sıradaki büyük iş (v0.2: "milyon dolarlık" geçiş)
 
