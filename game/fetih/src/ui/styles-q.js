@@ -42,12 +42,12 @@ export const CSS_Q = /* css */ `
 .fl-q.hot .fl-qc::after{animation:flHot .5s ease-in-out infinite alternate}
 @keyframes flHot{from{opacity:0}to{opacity:.85}}
 .fl-qhead{position:relative;display:flex;align-items:center;gap:8px;height:36px;margin:-2px 0 0}
-.fl-cat{display:flex;align-items:center;gap:6px;min-width:0;padding:3px 12px 3px 3px;border-radius:999px;background:rgba(0,0,0,.28);border:2px solid rgba(255,255,255,.5)}
+.fl-cat{flex:0 0 auto;display:flex;align-items:center;gap:6px;min-width:0;max-width:62%;padding:3px 12px 3px 3px;border-radius:999px;background:rgba(0,0,0,.28);border:2px solid rgba(255,255,255,.5)}
 .fl-cat .ci{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:16px;background:#fff}
 .fl-cat .ci .fl-i path:last-child{stroke:var(--cd)}
 .fl-cat b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${OUT('rgba(0,0,0,.35)', 1)}}
-.fl-type{font-family:'Lilita One';font-size:13px;letter-spacing:.1em;white-space:nowrap;padding:3px 9px;border-radius:9px;color:var(--cd);background:#fff}
-.fl-rule{font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;${OUT('rgba(0,0,0,.4)', 1)}}
+.fl-type{flex:none;font-family:'Lilita One';font-size:13px;letter-spacing:.1em;white-space:nowrap;padding:3px 9px;border-radius:9px;color:var(--cd);background:#fff}
+.fl-rule{flex:0 100 auto;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;${OUT('rgba(0,0,0,.4)', 1)}}
 .fl-clock{position:relative;margin-left:auto;flex:none;width:46px;height:46px;margin-top:-4px;margin-right:-4px;border-radius:50%;display:grid;place-items:center;
   background:radial-gradient(circle at 50% 35%,#2f5299,#12234a);border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.4)}
 .fl-clock b{font-family:'Lilita One';font-weight:400;font-size:21px;line-height:1;${OUT('#0a1534', 1.5)}}

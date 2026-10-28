@@ -9,7 +9,7 @@
 // Erken doğru cevap daha çok puan: judge → { correct, err (= f), score (100..40) }.
 // Tür 'exact': doğru olanlar arasında hızlı olan öne geçer (eşitlik bozma `time` ile).
 
-import { css, esc, shuffle, pCorrect, thinkTime, mountChoice, typedWord, clamp, trUp, chips, buzz } from './util.js';
+import { css, esc, shuffle, pCorrect, thinkTime, mountChoice, typedWord, clamp, trUp, chips, buzz, isLand, LAND } from './util.js';
 import { ASSETS, drawAsset, drawSilhouette, assetFocus, whenReady } from './assets.js';
 
 const CSS = /* css */ `
@@ -27,6 +27,17 @@ const CSS = /* css */ `
 .fl-img-cap{position:absolute;left:0;right:0;bottom:0;padding:8px 10px;text-align:center;font-family:'Lilita One';font-size:20px;line-height:1.1;color:#fff;
   background:linear-gradient(180deg,transparent,rgba(10,16,34,.85));text-shadow:0 2px 0 rgba(0,0,0,.45);animation:flq-pop .35s cubic-bezier(.3,1.5,.5,1)}
 .fl-img-cap.rb{position:static;background:none;padding:4px;font-size:22px;color:#7dff9a}
+${LAND}{
+  .fl-img.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px 10px;align-items:start}
+  .fl-img.two>.fl-img-stage,.fl-img.two>.fl-img-rebus{grid-column:1}
+  .fl-img.two>.fl-img-bonus{grid-column:1}
+  .fl-img.two>[data-r=ans]{grid-column:2;grid-row:1/3}
+  .fl-img.two.typ{grid-template-columns:176px minmax(0,1fr)}
+  .fl-img.two .fl-key{height:30px;min-width:0}
+  .fl-img.two .fl-word b{height:32px}
+  .fl-img.two .fl-opts{grid-template-columns:1fr;gap:7px}
+  .fl-img.two .fl-opt{min-height:42px}
+}
 .fl-img-tag{position:absolute;left:8px;top:8px;padding:2px 9px;border-radius:999px;background:rgba(10,16,34,.75);font-size:11px;letter-spacing:.12em;text-transform:uppercase;line-height:1.5;border:1.5px solid rgba(255,255,255,.4)}
 `;
 
@@ -55,13 +66,14 @@ export const img = {
 		const T = img.time;
 		const span = T * 0.85 * 1000; // bonus bu sürede erir
 		const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
-		const cssW = Math.min(el.clientWidth || 340, 380);
 		const typed = !!v.word;
+		const two = isLand(); // yatay kısa ekran: görsel solda, şıklar (ya da klavye) sağda
+		const cssW = two ? (typed ? 176 : Math.min(Math.floor((el.clientWidth || 440) / 2) - 6, 240)) : Math.min(el.clientWidth || 340, 380);
 		const stageW = cssW;
 		const stageH = Math.round(stageW * (typed ? 0.5 : 0.62));
 		const multi = v.mode === 'rebus';
 		const bonus = v.mode === 'blur' || v.mode === 'zoom';
-		el.innerHTML = `<div class="fl-img">
+		el.innerHTML = `<div class="fl-img${two ? ' two' : ''}${two && typed ? ' typ' : ''}">
 			${multi ? '<div class="fl-img-rebus"></div>' : '<div class="fl-img-stage"><canvas></canvas><span class="fl-img-tag">' + esc(MODE_TAG[v.mode] || '') + '</span></div>'}
 			${bonus ? '<div class="fl-img-bonus"><span>hız bonusu</span><i></i><b>100</b></div>' : ''}
 			<div data-r="ans"></div>

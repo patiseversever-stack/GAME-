@@ -7,7 +7,7 @@
 // botlar süre sonunda bitirmiş sayılır. correct = skor en az 5.
 // Yanlış cevap 0.6 sn'lik bir kilitlenme getirir (rastgele basarak puan toplanmasın).
 
-import { css, esc, shuffle, pCorrect, clamp, buzz, chips } from './util.js';
+import { css, esc, shuffle, pCorrect, clamp, buzz, chips, LAND } from './util.js';
 
 const CSS = /* css */ `
 .fl-bz{display:flex;flex-direction:column;gap:10px}
@@ -32,6 +32,12 @@ const CSS = /* css */ `
 .fl-bz-rows div{display:flex;gap:8px;align-items:center;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06)}
 .fl-bz-rows div.n{background:rgba(255,80,60,.2)}
 .fl-bz-rows em{margin-left:auto;font-style:normal;font-family:'Lilita One';opacity:.8}
+${LAND}{
+  .fl-bz{gap:6px}
+  .fl-bz-score{font-size:30px}
+  .fl-bz-stage{min-height:62px;padding:8px;font-size:17px;border-radius:14px}
+  .fl-bz .fl-tf .fl-opt{min-height:52px}
+}
 @keyframes flq-slide{from{transform:translateX(26px);opacity:0}to{transform:none;opacity:1}}
 `;
 

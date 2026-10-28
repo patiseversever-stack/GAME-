@@ -1,6 +1,6 @@
 // Kelime tipleri: anagram ve mini çengel bulmaca (cross).
 
-import { css, esc, shuffle, pCorrect, thinkTime, buzz, clamp, trUp, keyboard, physicalKeys, chips } from './util.js';
+import { css, esc, shuffle, pCorrect, thinkTime, buzz, clamp, trUp, keyboard, physicalKeys, chips, isLand, LAND } from './util.js';
 import { layout } from './crossgen.js';
 
 const CSS = /* css */ `
@@ -39,6 +39,16 @@ const CSS = /* css */ `
 .fl-cross .fl-back{max-width:48px;flex:1.4}
 .fl-cross.done .fl-keys,.fl-cross.done .fl-xc-nav,.fl-cross.done .fl-xc-done{opacity:.3;pointer-events:none}
 @keyframes flq-pop2{from{transform:scale(.4)}to{transform:scale(1)}}
+${LAND}{
+  .fl-ana{gap:8px}
+  .fl-tile{width:36px;height:40px;font-size:21px;border-radius:10px}
+  .fl-tiles{gap:6px}
+  .fl-cross{display:grid;grid-template-columns:auto minmax(0,1fr);align-items:start;gap:6px 10px}
+  .fl-xc-grid{grid-column:1;grid-row:1/3}
+  .fl-xc-clue{grid-column:2;grid-row:1}
+  .fl-cross>[data-r=kb]{grid-column:2;grid-row:2}
+  .fl-cross .fl-key{height:32px;min-width:0}
+}
 `;
 
 // ---------------------------------------------------------------- anagram
@@ -179,7 +189,10 @@ export const cross = {
 	mount(el, v, api) {
 		css('word', CSS);
 		const { L } = v;
-		const cs = clamp(Math.floor((Math.min(window.innerWidth * 0.96, 520) - 36 - (L.cols - 1) * 3) / L.cols), 26, 44);
+		// yatay kısa ekranda tahta solda (en çok ~200 px), ipucu ve klavye sağda
+		const cs = isLand()
+			? clamp(Math.min(Math.floor((200 - (L.cols - 1) * 3) / L.cols), Math.floor((200 - (L.rows - 1) * 3) / L.rows)), 18, 34)
+			: clamp(Math.floor((Math.min(window.innerWidth * 0.96, 520) - 36 - (L.cols - 1) * 3) / L.cols), 26, 44);
 		const idxAt = new Map(L.cells.map((c, i) => [c.r + ',' + c.c, i]));
 		// her hücre için hangi kelimeler (yatay/dikey) geçiyor
 		const wordsAt = L.cells.map(() => ({}));
