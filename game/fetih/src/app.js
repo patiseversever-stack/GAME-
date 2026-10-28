@@ -18,6 +18,7 @@ import { Castle } from './map/castle.js';
 import { MapCamera } from './game/camera.js';
 import { COMMON, FINISH } from './gfx/shaderlib.js';
 import { Cinema } from './game/cinema.js';
+import { FX } from './gfx/fx.js';
 import { Match } from './game/match.js';
 import { UI } from './ui/ui.js';
 import { Sfx } from './audio/sfx.js';
@@ -126,6 +127,8 @@ export class App {
 		});
 
 		this.playerColors = PLAYER_COLORS;
+		this.fx = new FX(G, R.tier, this);
+		this.scene.add(this.fx.group);
 		this.cinema = new Cinema(this);
 		this.sfx = new Sfx(this.hooks);
 		this.ui = new UI(this.container, this, { start: (cfg) => this.startMatch(cfg) });
@@ -279,6 +282,7 @@ export class App {
 		this.game?.update(dt);
 		this.board.update(dt);
 		for (const k of this.castles) if (k.group.visible) k.update(dt);
+		this.fx.update(dt);
 		this.cam.update(dt);
 		if (draw) {
 			this.ui.update();
@@ -300,6 +304,7 @@ export class App {
 
 	resetBoard() {
 		const b = this.board;
+		this.fx.clear();
 		for (const p of b.provinces) b.setOwner(p.index, -1, null);
 		b.clearFx();
 		b.setActive?.(null);

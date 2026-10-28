@@ -1,27 +1,204 @@
-// Sinematik anlar: kamera hareketleri ve haritadaki görsel tepkiler. Her yöntem bir Promise döner;
-// maç akışı bunları bekler. Hızlı benzetimde (fast) hepsi anında biter.
+// Sinematik anlar: kamera çekimleri ve haritadaki savaş/kutlama efektleri. Her yöntem bir Promise döner;
+// maç akışı bunları bekler. Hızlı benzetimde (fast) hepsi anında biter. Her an en çok ~2 sn sürer ve
+// ekrana dokununca atlanır (atlanınca kamera ara çekimleri iptal olur; kule düşmesi gibi oyun durumuna
+// bağlı olaylar yine de gerçekleşir).
+//
+//   overview(map)            ilk çağrı: Türkiye üstünden açılış uçuşu → maç bölgesi; maç sonunda: zafer
+//   castleDrop(p, i)         kale gökten iner, toz halkası
+//   claim(p, i)              boş il alındı: küçük halka ve ışıltı
+//   attack(p, d, t, isCap)   ordu saldıranın sınırından hedefe yürür; kuşatmada mancınık ve oklar
+//   conquer(p, i)            hücum, fetih patlaması, sancak yükselir, kamera geri çekilir
+//   towerDown(p, d, i, left) mancınık taşları kuleyi vurur, kule yıkılır, enkaz ve toz
+//   defend(d, i)             kalkan parlar, ordu geri çekilir
+//   nobody(i)                ordu geri çekilir
+//   eliminated(d, by)        kale çöker, topraklar fatihin rengine dalga dalga boyanır
+//   victory(m)               kazananın kalesi çevresinde yörünge, havai fişek, konfeti
 
 import * as THREE from 'three';
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+const wrapPi = (a) => a - Math.PI * 2 * Math.round(a / (Math.PI * 2));
 const _v = new THREE.Vector3();
+const STONE = 0xd9c7a4;
+const STONE2 = 0x8b7a66;
 
 export class Cinema {
 	constructor(app) {
 		this.app = app;
 		this.fast = false;
+		this._skip = null;
+		this._t0 = 0;
+		this._gen = 0;
+		this.a = new THREE.Vector3();
+		this.b = new THREE.Vector3();
+		this.c = new THREE.Vector3();
+		this.d = new THREE.Vector3();
+		// dokununca atla (çekimi başlatan dokunuştan hemen sonrakini sayma)
+		app.container?.addEventListener(
+			'pointerdown',
+			() => {
+				if (this._skip && performance.now() - this._t0 > 160) this._skip();
+			},
+			true,
+		);
+		// kamera ataleti: parmak kalkınca kayma sürer
+		app.canvas?.addEventListener('pointerdown', () => app.cam?.grab?.());
+		const up = () => app.cam?.release?.();
+		window.addEventListener('pointerup', up);
+		window.addEventListener('pointercancel', up);
+	}
+
+	get fx() {
+		return this.app.fx;
 	}
 
 	wait(ms) {
 		return this.fast ? Promise.resolve() : sleep(ms);
 	}
 
+	/** Atlanabilir an: ms sonra ya da dokununca biter; bitince bu anın ara çekimleri iptal. */
+	beat(ms) {
+		if (this.fast) return Promise.resolve();
+		this._skip?.();
+		return new Promise((res) => {
+			const done = () => {
+				clearTimeout(id);
+				if (this._skip === done) this._skip = null;
+				this._gen++;
+				res();
+			};
+			const id = setTimeout(done, ms);
+			this._skip = done;
+			this._t0 = performance.now();
+		});
+	}
+
+	/** Bu anın içinde t sn sonra (an atlanırsa çalışmaz). */
+	at(t, fn) {
+		const g = this._gen;
+		const fx = this.fx;
+		if (!fx) return;
+		fx.after(t, () => g === this._gen && fn());
+	}
+
+	_hold() {
+		const s = this.app.cam.sh;
+		if (s) {
+			s.yawRate = 0;
+			s.distRate = 0;
+		}
+	}
+
+	/** İlin yer noktası (y: arazi + şimdiki/varsayılan yükselme). */
+	_center(i, out, lift = null) {
+		const b = this.app.board;
+		const p = b.provinces[i];
+		b.labelAt ? b.labelAt(i, out, true) : out.set(p.x, p.y, p.z);
+		out.z -= 0.25;
+		out.y = b.heightAt(out.x, out.z) + (lift != null ? lift * (b.liftUnit || 1.2) : b.liftOf(i));
+		return out;
+	}
+
+	/** Saldıranın hedefe komşu ili (en yakını). */
+	_source(p, target) {
+		const b = this.app.board;
+		const t = b.provinces[target];
+		let best = -1;
+		let bd = Infinity;
+		for (const id of t.nb) {
+			const q = b.byId.get(id);
+			if (!q || q.owner !== p.i) continue;
+			const d = Math.hypot(q.x - t.x, q.z - t.z);
+			if (d < bd) {
+				bd = d;
+				best = q.index;
+			}
+		}
+		if (best < 0) {
+			// komşu yoksa saldıranın en yakın ili
+			for (const q of b.provinces) {
+				if (q.owner !== p.i) continue;
+				const d = Math.hypot(q.x - t.x, q.z - t.z);
+				if (d < bd) {
+					bd = d;
+					best = q.index;
+				}
+			}
+		}
+		return best;
+	}
+
+	// ---------------------------------------------------------------- açılış ve zafer
+
 	async overview(map) {
 		const app = this.app;
+		const cam = app.cam;
 		app.board.clearFx();
-		app.cam.fit(app.boundsOf(map), { pitch: 0.98 });
-		await this.wait(900);
+		const b = app.boundsOf(map);
+		cam.setLimit?.(b);
+		const m = app.match;
+		if (!this.fast && m && m.round > 0 && m.map === map) return this.victory(m);
+		if (this.fast || !cam.path || !m || m.round > 0) {
+			cam.fit(b, { pitch: 0.98 });
+			await this.wait(900);
+			return;
+		}
+		// açılış uçuşu: Türkiye'nin öbür ucundan alçak geçiş, yükselerek maç bölgesine yerleş
+		const all = (this._all ||= app.boundsOf(app.board.provinces.map((p) => p.index)));
+		const cx = (b.x0 + b.x1) / 2;
+		const cz = (b.z0 + b.z1) / 2;
+		const ax = (all.x0 + all.x1) / 2;
+		const az = (all.z0 + all.z1) / 2;
+		const fd = cam.fitDist(b, 0.98);
+		const whole = b.x1 - b.x0 > (all.x1 - all.x0) * 0.8;
+		const side = whole ? -1 : cx > ax ? -1 : 1; // bölge doğudaysa batıdan başla
+		const sx = side < 0 ? all.x0 + 7 : all.x1 - 7;
+		const y0 = -side * 0.95;
+		cam.path(
+			[
+				{ x: sx, z: az + 3, dist: 30, yaw: y0, pitch: 0.5 },
+				{ x: sx + (ax - sx) * 0.55, z: az + 1, dist: 46, yaw: y0 * 0.55, pitch: 0.62 },
+				{ x: (ax + cx) / 2, z: (az + cz) / 2, dist: Math.max(fd * 1.25, 55), yaw: y0 * 0.2, pitch: 0.82 },
+				{ x: cx, z: cz, dist: fd, yaw: 0, pitch: 0.98 },
+			],
+			2.0,
+		);
+		app.sfx?.play?.('banner', { title: 'FETİH' });
+		await this.beat(2000);
+		cam.fit(b, { pitch: 0.98, dur: 0.45 });
 	}
+
+	async victory(m) {
+		const app = this.app;
+		const fx = this.fx;
+		const st = m.standings();
+		const w = st[0];
+		const team = w.players || [w];
+		const champ = team.find((p) => p.alive) || team[0];
+		const k = app.castles[champ.i];
+		const pos = this.a;
+		if (k.group.visible) pos.copy(k.group.position);
+		else {
+			const b = app.boundsOf(m.map);
+			pos.set((b.x0 + b.x1) / 2, 0, (b.z0 + b.z1) / 2);
+			pos.y = app.board.heightAt(pos.x, pos.z);
+		}
+		const colors = [...team.map((p) => p.color), 0xffd34d, 0xffffff, 0xff7ad9];
+		app.cam.orbitAt(pos.x, pos.z - 1, { dist: 22, pitch: 0.48, yaw: app.cam.yaw - 0.3, rate: 0.18, dur: 1.2 });
+		if (fx) {
+			_v.copy(pos);
+			_v.y += 1.2;
+			fx.fireworks(_v, colors, 8, 5.5, 7.5);
+			fx.burst(pos, champ.color, { banner: false, big: 1.3 });
+			fx.confetti(pos, colors, app.tier.id === 0 ? 90 : 160, 6, 5);
+			const p2 = pos.clone();
+			fx.after(1.6, () => fx.confetti(p2, colors, app.tier.id === 0 ? 60 : 110, 7, 6));
+		}
+		await this.beat(2000);
+	}
+
+	// ---------------------------------------------------------------- yayılma
 
 	async castleDrop(p, i) {
 		const app = this.app;
@@ -30,19 +207,21 @@ export class Cinema {
 		app.board.fx(i, 0.25, 1);
 		// kale yukarıdan iner
 		if (!this.fast) {
-			const t0 = performance.now();
 			const y0 = top.y + 8;
-			await new Promise((res) => {
-				const step = () => {
-					const t = Math.min(1, (performance.now() - t0) / 520);
-					const e = 1 - Math.pow(1 - t, 3);
-					k.group.position.set(top.x, y0 + (top.y - y0) * e, top.z);
-					if (t < 1) requestAnimationFrame(step);
-					else res();
-				};
-				step();
-			});
-			app.cam.shake = 0.35;
+			const tx = top.x;
+			const tz = top.z;
+			const ty = top.y;
+			const fall = (t) => k.group.position.set(tx, y0 + (ty - y0) * t * t * t, tz); // hızlanarak düşer
+			if (this.fx) await new Promise((res) => this.fx.anim(0.52, fall, res));
+			else fall(1);
+			const fx = this.fx;
+			if (fx) {
+				const g = this.b.set(tx, ty + 0.1, tz);
+				fx.dust(g, 22, 1.6, 0xd8c8a6, 0.5);
+				fx.ring(tx, ty + 0.15, tz, 0.8, 3.6, p.color, 0.7, 1.3, 0.14);
+				fx.debris(g, 6, 2.4, 0.07, STONE2, STONE);
+			}
+			app.cam.impulse ? app.cam.impulse(0.5) : (app.cam.shake = 0.35);
 			app.sfx?.play?.('castle');
 		}
 		k.place(app.board.topAt(i, _v));
@@ -54,53 +233,238 @@ export class Cinema {
 		const b = this.app.board;
 		b.fx(i, 0.6, 1);
 		this.app.sfx?.play?.('claim');
+		if (!this.fast && this.fx) {
+			const c = this._center(i, this.c, 0.6);
+			this.fx.ring(c.x, c.y + 0.1, c.z, 0.2, 1.6, p.color, 0.5, 1.1, 0.22);
+			this.fx.twinkle(c, 8, 0.8, 0xfff1b0, 2);
+		}
 		await this.wait(380);
 		b.fx(i, 0, 0);
 	}
 
+	// ---------------------------------------------------------------- fetih
+
 	async attack(p, d, target, isCap) {
 		const app = this.app;
-		const t = app.board.provinces[target];
-		app.board.fx(target, 0.35, 1);
-		app.cam.focus(t.x, t.z + 1.5, { dist: isCap ? 20 : 26, pitch: isCap ? 0.62 : 0.8 });
+		const b = app.board;
+		const cam = app.cam;
+		const fx = this.fx;
+		b.fx(target, 0.35, 1);
 		app.sfx?.play?.(isCap ? 'siege' : 'attack');
-		await this.wait(700);
+		if (this.fast) return;
+		const t = b.provinces[target];
+		const src = this._source(p, target);
+		if (src < 0 || !fx || !cam.shot) {
+			cam.focus(t.x, t.z + 1.5, { dist: isCap ? 20 : 26, pitch: isCap ? 0.62 : 0.8 });
+			await this.beat(900);
+			return;
+		}
+		// yol: saldıranın ilinden ortak sınıra, oradan hedefe (kuşatmada kalenin önüne)
+		const S = b.provinces[src];
+		const border = b.borderPoint ? b.borderPoint(src, target, this.a) : this.a.set((S.x + t.x) / 2, 0, (S.z + t.z) / 2);
+		const from = this.b.set(S.x + (border.x - S.x) * 0.35, 0, S.z + (border.z - S.z) * 0.35);
+		const to = this.c;
+		const k = app.castles[d.i];
+		if (isCap) to.copy(k.group.position);
+		else this._center(target, to, 0.35).lerp(border, 0.4);
+		from.y = b.heightAt(from.x, from.z);
+		const dx = to.x - from.x;
+		const dz = to.z - from.z;
+		const span = Math.hypot(dx, dz);
+		fx.march(from, to, p.color, { siege: isCap, dur: isCap ? 1.1 : 1.2, stopShort: isCap ? 2.5 : 0 });
+		// kamera: saldıranın arkasından, yürüyüş yönüne bakarak; sonra hedefe yaklaş
+		const yaw = clamp(wrapPi(Math.atan2(dx, -dz)) * 0.45, -0.55, 0.55);
+		const mx = (from.x + to.x) / 2;
+		const mz = (from.z + to.z) / 2;
+		const d0 = clamp(span * 2 + 12, 16, 30);
+		cam.shot(mx, mz, { dist: d0, pitch: isCap ? 0.66 : 0.78, yaw, dur: 0.6 });
+		const tx = to.x;
+		const tz = to.z;
+		if (isCap) {
+			// kuşatma: mancınıkların arkasından 3/4 bakış, alçak ağır yörünge; oklar ve iki taş surları döver
+			const ux = dx / span;
+			const uz = dz / span;
+			const wall = new THREE.Vector3(tx - ux * 1.1, to.y + 0.9, tz - uz * 1.1);
+			const camp = from.clone();
+			const full = Math.atan2(dx, -dz) + 0.55;
+			this._siegeYaw = full;
+			this.at(0.55, () => cam.orbitAt(tx - ux * 2.3, tz - uz * 2.3, { dist: 13, pitch: 0.48, yaw: full, rate: 0.1, dur: 0.85 }));
+			this.at(0.75, () => fx.arrows(camp, wall, 12, 0.6, 0.8));
+			this.at(1.0, () => fx.catapult(0, wall, () => app.sfx?.play?.('tower', { soft: true })));
+			this.at(1.3, () => fx.catapult(1, wall.clone().setY(wall.y + 0.4), null));
+			await this.beat(1900);
+		} else {
+			this.at(0.6, () => cam.shot(tx, tz, { dist: d0 * 0.72, pitch: 0.7, yaw, dur: 0.95, arc: 0, distRate: -0.03, distMin: 12 }));
+			await this.beat(1600);
+		}
+		this._hold();
 	}
 
 	async conquer(p, i) {
 		const app = this.app;
-		app.board.fx(i, 1, 1);
-		app.cam.shake = 0.5;
+		const b = app.board;
+		b.fx(i, 0.6, 1);
+		if (this.fast) {
+			b.fx(i, 0, 0);
+			return;
+		}
+		const fx = this.fx;
+		const cam = app.cam;
+		const c = this._center(i, this.a, 0.6);
+		if (fx) {
+			fx.armyCharge(c);
+			const cc = c.clone();
+			this.at(0.22, () => {
+				fx.burst(cc, p.color);
+				fx.shake(0.45);
+			});
+		} else cam.shake = 0.5;
 		app.sfx?.play?.('conquer');
-		await this.wait(650);
-		app.board.fx(i, 0, 0);
-		await this.wait(250);
+		if (cam.shot) cam.shot(c.x, c.z + 0.6, { dist: 27, pitch: 0.86, yaw: cam.yaw * 0.5, dur: 1.2, arc: 0 });
+		await this.beat(1400);
+		b.fx(i, 0, 0);
 	}
 
 	async towerDown(p, d, i, left) {
 		const app = this.app;
-		app.cam.shake = 0.8;
+		const cam = app.cam;
+		const fx = this.fx;
+		const k = app.castles[d.i];
 		app.sfx?.play?.('tower');
-		await this.wait(900);
+		if (this.fast || !fx) {
+			cam.shake = 0.8;
+			await this.wait(900);
+			app.board.fx(i, 0, 0);
+			return;
+		}
+		const ti = k.lastHit ?? 1;
+		const tw = k.towers?.[ti];
+		// kule taşlar değene kadar ayakta kalsın
+		if (tw) tw.alive = 1;
+		const tp = k.towerPos(ti, new THREE.Vector3());
+		const c = k.group.position;
+		const ox = tp.x - c.x;
+		const oz = tp.z - c.z;
+		// kamera kuleyi yandan görsün (düşüşü donjon örtmesin), ordunun bulunduğu yana yakın
+		const ol = Math.hypot(ox, oz) || 1;
+		const A = fx.army.on ? fx.army.p0 : null;
+		let ax = A ? A.x - c.x : ox;
+		let az = A ? A.z - c.z : oz;
+		const al = Math.hypot(ax, az) || 1;
+		ax /= al;
+		az /= al;
+		const s1 = (-oz / ol) * ax + (ox / ol) * az > 0 ? 1 : -1;
+		const vx = ((-oz / ol) * s1) * 0.65 + ax * 0.35;
+		const vz = ((ox / ol) * s1) * 0.65 + az * 0.35;
+		const yaw = Math.atan2(-vx, vz);
+		cam.shot(c.x + ox * 0.35, c.z + oz * 0.35, { dist: 12, pitch: 0.42, yaw, dur: 0.55, arc: 1 });
+		const low = tp.clone();
+		low.y -= 0.6;
+		const camp = A ? A.clone() : c.clone().add(new THREE.Vector3(vx * 5, 0, vz * 5));
+		this.at(0.1, () => fx.arrows(camp, low, 10, 0.5, 0.35));
+		this.at(0.2, () => fx.catapult(1, tp, null));
+		this.at(0.32, () => fx.catapult(0, low, null));
+		const base = c.clone().add(new THREE.Vector3(ox * 1.2, 0.2, oz * 1.2));
+		// yıkılış (atlanırsa da olur)
+		fx.after(1.02, () => {
+			if (tw) tw.alive = 0;
+			fx.debris(tp, app.tier.id === 0 ? 12 : 18, 3.4, 0.11, STONE, STONE2);
+			fx.dust(base, 26, 1.3, 0xd5c4a2, 0.9);
+			fx.ring(base.x, base.y, base.z, 0.4, 2.6, 0xe8dcc0, 0.7, 0.8, 0.25);
+			fx.smokeColumn(tp, 3.2, 12);
+			fx.shake(0.95);
+		});
+		this.at(1.45, () => fx.armyCheer(1.0));
+		await this.beat(1900);
+		this._hold();
 		app.board.fx(i, 0, 0);
 	}
 
 	async defend(d, i) {
 		const app = this.app;
-		app.board.fx(i, 0.15, 0.6);
+		const b = app.board;
+		b.fx(i, 0.15, 0.6);
 		app.sfx?.play?.('defend');
-		await this.wait(600);
-		app.board.fx(i, 0, 0);
+		if (this.fast || !this.fx) {
+			await this.wait(600);
+			b.fx(i, 0, 0);
+			return;
+		}
+		const fx = this.fx;
+		const k = app.castles[d.i];
+		const isCap = d.capital === i && k.group.visible;
+		const c = isCap ? this.a.copy(k.group.position) : this._center(i, this.a, 0.15);
+		const P = b.provinces[i];
+		const r = isCap ? 2.9 : clamp(Math.max(P.box[2] - P.box[0], P.box[3] - P.box[1]) * 0.32, 1.6, 3);
+		fx.shield(c.x, c.y - 0.1, c.z, r, d.color, 1.1);
+		fx.ring(c.x, c.y + 0.1, c.z, r * 0.9, r * 1.6, d.color, 0.6, 1, 0.2);
+		if (fx.army.on) {
+			const f = fx.army.p2.clone();
+			f.y = fx.ground(f.x, f.z) + 0.3;
+			fx.sparks(f, 16, 2.6, 0xbfe0ff, 2.6, 0.06, 4);
+		}
+		this.at(0.3, () => fx.armyRetreat());
+		const cam = app.cam;
+		if (cam.shot) cam.shot(c.x, c.z, { dist: isCap ? 17 : 20, pitch: 0.7, yaw: cam.yaw, dur: 0.8, arc: 0 });
+		await this.beat(1050);
+		b.fx(i, 0, 0);
 	}
 
 	async nobody(i) {
-		await this.wait(400);
+		this.fx?.armyRetreat();
+		await this.beat(500);
 		this.app.board.fx(i, 0, 0);
 	}
 
 	async eliminated(d, by) {
-		this.app.cam.shake = 1;
-		this.app.sfx?.play?.('eliminate');
-		await this.wait(1200);
+		const app = this.app;
+		const fx = this.fx;
+		app.sfx?.play?.('eliminate');
+		if (this.fast || !fx) {
+			app.cam.shake = 1;
+			await this.wait(1200);
+			return;
+		}
+		const k = app.castles[d.i];
+		const c0 = k.group.position.clone();
+		const cam = app.cam;
+		cam.shot(c0.x, c0.z, { dist: 15, pitch: 0.5, yaw: cam.yaw, dur: 0.5, arc: 0.5 });
+		// kale bir an daha görünür, sarsılarak toprağa gömülür
+		k.group.visible = true;
+		fx.armyFade();
+		let puff = 0;
+		fx.anim(
+			1.3,
+			(t) => {
+				const e = t * t;
+				k.group.position.set(c0.x + Math.sin(t * 70) * 0.05 * (1 - t), c0.y - e * 3.2, c0.z + Math.cos(t * 61) * 0.05 * (1 - t));
+				if (t * 6 > puff) {
+					puff++;
+					const p = this.b.set(c0.x + (Math.random() - 0.5) * 2.4, c0.y + 0.4 + Math.random() * 1.2, c0.z + (Math.random() - 0.5) * 2.4);
+					fx.debris(p, app.tier.id === 0 ? 5 : 8, 3, 0.1, STONE, STONE2);
+					fx.dust(p, 4, 0.8, 0xd5c4a2, 0.6);
+					fx.shake(0.7);
+				}
+			},
+			() => {
+				k.group.visible = false;
+				k.group.position.copy(c0);
+			},
+		);
+		fx.dust(this.c.copy(c0).setY(c0.y + 0.2), 22, 1.6, 0xd8c8a6, 0.7);
+		fx.ring(c0.x, c0.y + 0.2, c0.z, 1, 5, 0xe8dcc0, 1, 0.9, 0.2);
+		fx.smokeColumn(this.d.copy(c0).setY(c0.y + 0.6), 3, 16);
+		// yenilenin toprakları fatihin rengine kaleden dışa dalga dalga boyanır
+		const b = app.board;
+		const S = b.S;
+		const N = b.count;
+		if (S && b.paint) {
+			for (const p of b.provinces) {
+				if (p.owner !== by.i || S[(N + p.index) * 4 + 3] !== d.i) continue;
+				b.paint(p.index, by.color, c0.x, c0.z);
+			}
+		}
+		this.at(1.2, () => fx.burst(c0, by.color, { big: 1.2 }));
+		await this.beat(1900);
 	}
 }
