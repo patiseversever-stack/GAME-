@@ -54,7 +54,7 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 
 ## Şu anki durum (v0.2 ara sürüm, 28 Ekim)
 
-**Yayında:** https://claude.ai/artifact/4t77RHjRmbZC3SGbxdhLWz (sürüm 6). Dal: `ccr-ac8b068d-5guafj`.
+**Yayında:** https://claude.ai/artifact/4t77RHjRmbZC3SGbxdhLWz (sürüm 7). Dal: `ccr-ac8b068d-5guafj`.
 
 | Alan | Durum |
 |---|---|
@@ -96,13 +96,16 @@ Kullanıcı telefonda deneyip geri bildirim verecek; ona göre ince ayar yapıla
 
 ### Gece odağı: kullanıcı mevcut hali REDDETTİ (28 Ekim)
 
-**v2 yapıldı (28 Ekim, yayında sürüm 6), kullanıcı geri bildirimi bekleniyor.** Ay ışığıyla yeniden aydınlatma (mor-mavi, gri değil),
+**v2 + cila yapıldı (28 Ekim, yayında sürüm 7), kullanıcı geri bildirimi bekleniyor.** Cila: yakın çekimde ışık havuzu (`uSpot`), sahip rengi gecede pembeleşmez, gece bulut çerçevesi (`CloudFrame`), büyük yıldızlar. Ay ışığıyla yeniden aydınlatma (mor-mavi, gri değil),
 gök aynası deniz (yıldızlar, ay yolu), gece bulutları ve altın ışık sızıntısı, `src/gfx/nightlights.js` (tek çağrı: ışık tozu,
 ~2–3 bin pencere ışığı, yapı ve kale ışıkları), altın kenarlı ışık adası iller, ~1 sn kamera kalkışlı geçiş ve şafak dönüşü,
 bot seçimi / saldırı / fetih hep gecede, Gündönümü tonunda istem (`ui.caption`). q≥1'de gece ışıltısı tilt-shift geçişinde.
 Test: `node tools/flow.mjs ÇIKTI [--only=a,b --seq --q --dpr]` gerçek maçı oynatıp anları kaydeder.
-Bilinen zayıflar: yakın çekimde gece yalnız kenarda kalıyor, kırmızı sahip mor ışıkta pembeleşiyor, kale yakınında hafif patlama,
-bulutlar yakında az poligonlu.
+Kalan zayıflar: kuşatma yakın çekiminde kadrajın çoğu hâlâ aydınlık; yan bulut tutamları q2'de baloncuk gibi; şafak karesi gri-düz;
+kıyı illerinin kalkık yamaçları fetihte parlak.
+
+**Sıradaki (kullanıcının listesi):** ses yaması (`wip/ses.patch`, temiz uygulanır), maçtan çık + duraklat ekranları,
+mağaza ekranı, 1'e 1'de ilk oyuncu avantajı (%55–65) ve puan eşitliği kuralı.
 
 
 > "Rezalet, istediğimle alakası yok. Gündönümü'ndeki karartma böyle. Sinematiklik yok."
