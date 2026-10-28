@@ -94,6 +94,16 @@ yenisini başlat. Görsel işler Opus high, diğerleri Sonnet high.
 **Durum: dördü de yapıldı ve birleştirildi** (`board.night()`, akıllı `showLabels('all')`, yeni oyuncu renkleri).
 Kullanıcı telefonda deneyip geri bildirim verecek; ona göre ince ayar yapılacak. Gündönümü referansı: `game/Gundonumu.html` (varsa).
 
+### Kullanıcı geri bildirimi v0.3 (28 Ekim, telefonda sürüm 7): EN ÖNCELİKLİ
+
+> "Çok karışık hissettiriyor, o sinematiklik yok. Saldıracağım yerler anlaşılmıyor. Karartmalar az daha siyahımsı olmalı.
+> Soruların bazıları çok zor, bazıları çok saçma (hangisi Türk değildir: Einstein). Sonnet en yüksek eforla hazırlasın
+> soruları. Hâlâ renklendirmeler bol gibi. İsimler kötü."
+
+Görüntüler: `ref/v03_*.jpg`. Teşhis: gece lavanta/pembe ve aydınlık (siyaha yakın lacivert olmalı), beyaz pencere pırıltıları
+her yerde (kalabalık), baloncuk bulutlar ucuz, mor gecede sahip renkleri kaybolup saldırılabilir iller seçilmiyor, il adları
+kalın beyaz konturlu ve kaba, kenarda kesiliyor. Sorular: bariz ya da kesin olmayan sorular (`ref/v03_saçma_soru.jpg`).
+
 ### Gece odağı: kullanıcı mevcut hali REDDETTİ (28 Ekim)
 
 **v2 + cila yapıldı (28 Ekim, yayında sürüm 7), kullanıcı geri bildirimi bekleniyor.** Cila: yakın çekimde ışık havuzu (`uSpot`), sahip rengi gecede pembeleşmez, gece bulut çerçevesi (`CloudFrame`), büyük yıldızlar. Ay ışığıyla yeniden aydınlatma (mor-mavi, gri değil),
