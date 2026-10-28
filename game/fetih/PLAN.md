@@ -37,7 +37,7 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 - **Hassas konular:** yalnızca tarihi bilgi olarak; güncel siyaset ve din tartışması yok.
 - **Müzik:** epik + Türk enstrümanları (davul, zurna, bağlama, ney).
 - **Kitle:** 12+, uyarlanan zorluk (her soru kolay/orta/zor).
-- **Ajan modelleri:** görsel ve grafik işleri Opus en yüksek efor (xhigh); önemsiz işler Sonnet high.
+- **Ajan modelleri (28 Ekim'den itibaren, kullanıcı kararı):** bütün yeni ajanlar Sonnet, en yüksek efor (max). Görsel işler dahil.
 
 ## Kullanıcının son geri bildirimi (v0.1 için)
 
@@ -72,7 +72,7 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 komşu ülkeler düz; il etiketlerinde sahip rengi zemini yok.
 
 **Maliyet kuralı (kullanıcı isteği):** aynı anda en çok 1–2 ajan. Uzun aradan sonra eski ajanı devam ettirme, kısa görevle
-yenisini başlat. Görsel işler Opus high, diğerleri Sonnet high.
+yenisini başlat. Yeni ajanların hepsi Sonnet, en yüksek efor (max).
 
 **Test:** `node build.mjs --dev`, sonra tam maç akışı için
 `/tmp/.../scratchpad/int/flow.mjs` örneği (otomatik insan oyuncu), ekran görüntüsü için `tools/shot.mjs`.
