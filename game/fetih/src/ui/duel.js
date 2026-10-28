@@ -59,7 +59,8 @@ export async function duelIntro(ui, ctx) {
 		ui.fx.ring(x, y, { color: '#fff3b0', size: Math.max(r.width, r.height) * 0.9, life: 650 });
 		ui.fx.burst(x, y, { n: 20, dist: 150, colors: ['#ffd25a', '#fff', a.css, d.css], kind: 'star', size: 13, life: 800 });
 	}, 470);
-	await Promise.race([sleep(ui.rm ? 900 : 1900), skipped]);
+	const mine = a.human || d.human;
+	await Promise.race([sleep(ui.rm ? 900 : mine ? 1900 : 1350), skipped]);
 	clearTimeout(clash);
 	if (gen !== ui._gen) return;
 	el.onpointerdown = null;

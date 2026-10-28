@@ -27,7 +27,7 @@ export const EMBLEM = `<svg class="fl-emb" viewBox="0 0 200 200"><defs>
 <linearGradient id="fle-gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3b8"/><stop offset=".5" stop-color="#ffc93a"/><stop offset="1" stop-color="#b07a12"/></linearGradient>
 <g id="fle-sw"><path d="M100 2l7 15v133H93V17z" fill="url(#fle-bl)" stroke="#3a4a6a" stroke-width="3"/><path d="M100 14v132" stroke="#fff" stroke-width="2" opacity=".8"/>
 <rect x="70" y="148" width="60" height="12" rx="6" fill="url(#fle-gd)" stroke="#6a3a04" stroke-width="3"/><rect x="95" y="160" width="10" height="26" rx="3" fill="#7a3a14" stroke="#3a1a04" stroke-width="2.5"/><circle cx="100" cy="190" r="8" fill="url(#fle-gd)" stroke="#6a3a04" stroke-width="3"/></g></defs>
-<use href="#fle-sw" transform="rotate(-138 100 100) translate(100 100) scale(.86) translate(-100 -100)"/><use href="#fle-sw" transform="rotate(138 100 100) translate(100 100) scale(.86) translate(-100 -100)"/>
+<use href="#fle-sw" transform="rotate(-128 100 100) translate(100 100) scale(.95) translate(-100 -100)"/><use href="#fle-sw" transform="rotate(128 100 100) translate(100 100) scale(.95) translate(-100 -100)"/>
 <path d="M100 34l56 18v46c0 38-26 62-56 74-30-12-56-36-56-74V52z" fill="url(#fle-sh)" stroke="url(#fle-gd)" stroke-width="9" stroke-linejoin="round"/>
 <path d="M100 46l44 14v38c0 31-21 51-44 61-23-10-44-30-44-61V60z" fill="none" stroke="#fff" stroke-width="2.5" opacity=".5"/>
 <path d="M72 138V96h9v9h9v-9h20v9h9v-9h9v42z" fill="#fff"/><path d="M93 138v-14a7 7 0 0 1 14 0v14z" fill="#a8231a"/>

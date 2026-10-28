@@ -86,7 +86,7 @@ export const CSS_WHEEL = /* css */ `
 @keyframes flSideA{from{opacity:0;transform:translate(-60%,-10%) rotate(-8deg) scale(.7)}}
 @keyframes flSideD{from{opacity:0;transform:translate(60%,10%) rotate(8deg) scale(.7)}}
 .fl-duel .mid{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
-.fl-duel .pt{position:relative;width:min(40vw,23vh,176px);aspect-ratio:1}
+.fl-duel .pt{position:relative;width:min(40vw,21vh,176px);aspect-ratio:1}
 .fl-duel .pt .flag{position:absolute;left:-26%;top:-8%;width:44%;transform:rotate(-10deg);opacity:.95}
 .fl-duel .sd.d .pt .flag{left:auto;right:-26%;transform:rotate(10deg)}
 .fl-duel .pt .fl-av{position:absolute;inset:0;border-radius:26%;border:5px solid #fff;box-shadow:0 8px 0 rgba(0,0,0,.35),0 0 0 4px var(--pc)}
@@ -96,10 +96,10 @@ export const CSS_WHEEL = /* css */ `
 .fl-duel .nm .hp{display:flex;gap:3px;margin-top:3px}
 .fl-duel .nm .hp i{width:15px;height:15px;background:var(--gold);-webkit-mask:var(--tw) center/contain no-repeat;mask:var(--tw) center/contain no-repeat}
 .fl-duel .nm .hp i.off{opacity:.25}
-.fl-duel .vs{position:relative;width:min(110px,15vh);aspect-ratio:1;display:grid;place-items:center;opacity:0;transform:scale(3.2);animation:flVs .38s .42s cubic-bezier(.3,1.5,.5,1) forwards}
+.fl-duel .vs{position:relative;width:min(110px,13vh);aspect-ratio:1;display:grid;place-items:center;opacity:0;transform:scale(3.2);animation:flVs .38s .42s cubic-bezier(.3,1.5,.5,1) forwards}
 .fl-duel .vs .sw{position:absolute;inset:-8%;opacity:.9}
 .fl-duel .vs .sw .fl-i{width:100%;height:100%}
-.fl-duel .vs b{position:relative;font-family:'Lilita One';font-weight:400;font-size:min(70px,9.5vh);line-height:1;color:var(--gold);letter-spacing:-.02em;${OUT('#5a1a00', 5)}}
+.fl-duel .vs b{position:relative;font-family:'Lilita One';font-weight:400;font-size:min(70px,8.5vh);line-height:1;color:var(--gold);letter-spacing:-.02em;${OUT('#5a1a00', 5)}}
 @keyframes flVs{to{opacity:1;transform:scale(1)}}
 .fl-duel .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;animation:flFlash .45s .48s ease-out}
 @keyframes flFlash{0%{opacity:0}15%{opacity:.75}100%{opacity:0}}

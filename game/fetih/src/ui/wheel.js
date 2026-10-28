@@ -207,7 +207,7 @@ export class WheelView {
 				const tm = setTimeout(go, 4500);
 			});
 			el.style.pointerEvents = 'none';
-		} else await sleep(ui.rm ? 150 : 550);
+		} else await sleep(ui.rm ? 150 : 400);
 		if (!live()) return this.keys[pick];
 		ui.sfx('wheel');
 		el.classList.add('spinning');
@@ -221,7 +221,7 @@ export class WheelView {
 		const turns = ui.rm ? 1 : human ? 5 : 4;
 		while (tgt < from + 360 * turns) tgt += 360;
 		const over = ui.rm ? 0 : S * 0.1;
-		const D = ui.rm ? 900 : human ? 3500 : 2900;
+		const D = ui.rm ? 900 : human ? 3500 : 2500;
 		let lastC = Math.floor(from / S);
 		let lastT = 0;
 		let prevTh = from;
@@ -255,7 +255,7 @@ export class WheelView {
 		const key = this.keys[pick];
 		if (!live()) return key;
 		this.result(key, jit * 0.7 * S, p);
-		await sleep(ui.rm ? 500 : key === 'fetih' ? 1350 : 1150);
+		await sleep(ui.rm ? 500 : key === 'fetih' ? 1350 : human ? 1150 : 950);
 		if (!live()) return key;
 		el.classList.remove('on');
 		await sleep(230);
