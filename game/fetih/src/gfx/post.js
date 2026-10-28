@@ -23,12 +23,25 @@ const FS = /* glsl */ `
 uniform sampler2D uTex;
 uniform vec2 uPx;      // 1 / çözünürlük
 uniform vec4 uTilt;    // x odak bandı merkezi (0..1, aşağıdan), y keskin yarı genişlik, z geçiş, w en büyük yarıçap (piksel)
+uniform vec4 uNight;   // gece odağı (env.js): x gece miktarı
+uniform float uBloom;  // gece ışıltısı gücü (0: kapalı)
 varying vec2 vUv;
+// gece ışıltısı (bloom): aynı geçişte, sahne dokusunun mip zincirinden geniş ve yumuşak hale.
+// Ayrı bulanıklık geçişi yok; mip'ler çizim sonunda donanımda üretilir (yalnızca gecede).
+vec3 glow() {
+	vec3 b = textureLod(uTex, vUv, 3.0).rgb * 0.25 + textureLod(uTex, vUv, 4.5).rgb * 0.4 + textureLod(uTex, vUv, 6.0).rgb * 0.35;
+	float l = dot(b, vec3(0.3, 0.59, 0.11));
+	// göz uyumu: kare zaten aydınlıksa (yakın çekimde gündüz ışığındaki il) ışıltı söner, patlamasın
+	float avg = dot(textureLod(uTex, vec2(0.5), 9.0).rgb, vec3(0.3, 0.59, 0.11));
+	return b * b * smoothstep(0.3, 0.85, l) * smoothstep(0.62, 0.32, avg) * vec3(1.0, 0.84, 0.66);
+}
 void main() {
 	float d = abs(vUv.y - uTilt.x);
 	float k = smoothstep(uTilt.y, uTilt.y + uTilt.z, d);
-	vec4 c = texture(uTex, vUv);
+	vec4 c = textureLod(uTex, vUv, 0.0);
+	float bk = uBloom * uNight.x;
 	if (k < 0.02) {
+		if (bk > 0.001) c.rgb += glow() * bk;
 		gl_FragColor = c;
 		return;
 	}
@@ -41,18 +54,21 @@ void main() {
 		float a = fi * 2.39996;
 		float rr = sqrt(fi / 12.0) * r;
 		vec2 o = vec2(cos(a), sin(a)) * rr * uPx;
-		vec3 s = texture(uTex, vUv + o).rgb;
+		vec3 s = textureLod(uTex, vUv + o, 0.0).rgb;
 		// parlak noktalar hafif öne çıksın (bokeh hissi)
 		float w = 1.0 + dot(s, vec3(0.3, 0.59, 0.11)) * 0.6;
 		acc += s * w;
 		wsum += w;
 	}
-	gl_FragColor = vec4(acc / wsum, 1.0);
+	vec3 o = acc / wsum;
+	if (bk > 0.001) o += glow() * bk;
+	gl_FragColor = vec4(o, 1.0);
 }`;
 
 export class TiltShift {
-	constructor(renderer, tier) {
+	constructor(renderer, tier, G = null) {
 		this.enabled = tier.id >= 1;
+		this.G = G;
 		this.renderer = renderer;
 		if (!this.enabled) return;
 		const attrs = renderer.getContext().getContextAttributes() || {};
@@ -61,8 +77,9 @@ export class TiltShift {
 			type: THREE.UnsignedByteType,
 			depthBuffer: true,
 			stencilBuffer: false,
-			generateMipmaps: false,
-			minFilter: THREE.LinearFilter,
+			// gece ışıltısı için mip zinciri (yalnızca gecede her kare üretilir; gündüz bayat ama okunmaz)
+			generateMipmaps: true,
+			minFilter: THREE.LinearMipmapLinearFilter,
 			magFilter: THREE.LinearFilter,
 		});
 		this.rt.texture.colorSpace = THREE.NoColorSpace;
@@ -71,7 +88,10 @@ export class TiltShift {
 			uPx: { value: new THREE.Vector2(1 / 4, 1 / 4) },
 			// odak bandı: ekranın ortası; kenarda en çok ~7 piksel (yüksek çözünürlükte ölçeklenir)
 			uTilt: { value: new THREE.Vector4(0.52, 0.24, 0.3, 5) },
+			uNight: G ? G.uNight : { value: new THREE.Vector4() },
+			uBloom: { value: 0.3 },
 		};
+		this._mipFresh = 0; // yeniden boyutlanınca mip'ler bir kez üretilsin (doku eksiksiz kalsın)
 		const geo = new THREE.BufferGeometry();
 		geo.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
 		this.mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, uniforms: this.uniforms, depthTest: false, depthWrite: false });
@@ -88,6 +108,7 @@ export class TiltShift {
 	setSize(w, h) {
 		if (!this.enabled) return;
 		this.rt.setSize(Math.max(1, w), Math.max(1, h));
+		this._mipFresh = 2;
 		this.uniforms.uPx.value.set(1 / Math.max(1, w), 1 / Math.max(1, h));
 		this.uniforms.uTilt.value.w = 5 * Math.max(1, h / 900) * this.strength;
 	}
@@ -116,6 +137,9 @@ export class TiltShift {
 			ov[i].userData._vis = ov[i].visible;
 			ov[i].visible = false;
 		}
+		const night = this.uniforms.uNight.value.x > 0.001;
+		this.rt.texture.generateMipmaps = night || this._mipFresh > 0;
+		if (this._mipFresh > 0) this._mipFresh--;
 		renderer.setRenderTarget(this.rt);
 		renderer.clear();
 		renderer.render(scene, camera);

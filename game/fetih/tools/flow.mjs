@@ -4,7 +4,7 @@
 // çalışır (çizim yok), görüntü yalnızca çekim anında çizilir. Böylece yavaş yazılım çiziciyle bile
 // geçişler gerçek cihazdaki zamanlamayla görünür.
 //
-//   node tools/flow.mjs çıktı-dizini [--q=2 --w=412 --h=892 --dpr=1 --seed=7 --region=ege --mode=ffa3 --only=a,b]
+//   node tools/flow.mjs çıktı-dizini [--q=2 --w=412 --h=892 --dpr=1 --seed=7 --region=ege --mode=ffa3 --only=a,b --seq]
 //
 // Çekimler:
 //   a_secim      insan il seçerken (gece, seçilebilir iller ışık adası)
@@ -50,12 +50,12 @@ console.log(`hazır: ${((Date.now() - t0) / 1000).toFixed(1)} sn`);
 await page.clock.install();
 await page.clock.pauseAt(Date.now() + 1000);
 
-const cfg = { mode: opt.mode || 'ffa3', length: 'quick', region: opt.region || 'ege', bot: 'er', seed: Number(opt.seed || 7) };
+const cfg = { mode: opt.mode || 'ffa3', length: 'quick', region: opt.region || 'ege', bot: 'er', seed: Number(opt.seed || 7), seq: 'seq' in opt };
 await page.evaluate((cfg) => {
 	const app = window.__fl.app;
 	const ui = app.ui;
 	app.stop();
-	const W = (window.__flow = { want: [], log: [], done: false, err: null, picks: 0, attacks: 0, bots: 0, conq: 0, duel: 0, t: 0 });
+	const W = (window.__flow = { want: [], log: [], done: false, err: null, picks: 0, attacks: 0, bots: 0, conq: 0, duel: 0, t: 0, seq: cfg.seq });
 	const want = (name, ms) => setTimeout(() => W.want.push(name), ms);
 	// oyun adımı: sahte saatte 30 kare/sn mantık (çizim yok)
 	setInterval(() => {
@@ -70,6 +70,8 @@ await page.evaluate((cfg) => {
 		const k = attack ? W.attacks++ : W.picks++;
 		const name = attack ? (k === 0 ? 'c_saldiri' : null) : k === 0 ? 'a_secim' : null;
 		if (name) want(name, 1500);
+		// --seq: gece düşüşünün ara kareleri (geçişi denetlemek için)
+		if (name === 'a_secim' && W.seq) for (const ms of [200, 450, 700, 950]) want('t_gecis_' + ms, ms);
 		setTimeout(() => {
 			// en çok komşusu olan seçeneği al (gerçek oyuncu gibi)
 			const o = options[Math.floor(Math.random() * options.length)];
@@ -172,9 +174,9 @@ async function snap(name) {
 	});
 	const file = join(outDir, name + '.png');
 	await page.screenshot({ path: file });
-	const st = await page.evaluate(() => ({ ...window.__fl.app.stats(), night: +window.__fl.app.G.uNight.value.x.toFixed(2), t: +window.__flow.t.toFixed(1) }));
+	const st = await page.evaluate(() => ({ ...window.__fl.app.stats(), q: window.__fl.app.ui.$.q.className, night: +window.__fl.app.G.uNight.value.x.toFixed(2), t: +window.__flow.t.toFixed(1) }));
 	shots.push(name);
-	console.log(`${name}: oyun ${st.t} sn  gece=${st.night}  çizim=${st.calls} üçgen=${st.tris} program=${st.programs}`);
+	console.log(`${name}: oyun ${st.t} sn  gece=${st.night} kart=${st.q} çizim=${st.calls} üçgen=${st.tris} program=${st.programs}`);
 }
 
 const wall = Date.now();

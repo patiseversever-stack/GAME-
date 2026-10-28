@@ -57,13 +57,13 @@ void main() {
 		float top = smoothstep(-0.3, 0.9, vY);
 		// hacim: ay tarafı gümüş-lavanta, gölge tarafı derin çivit; tombul kısımlar arasında koyu oyuklar
 		float lit = pow(mw, 3.0) * (0.3 + 0.7 * top);
-		vec3 n = mix(vec3(0.03, 0.018, 0.085), vec3(0.44, 0.4, 0.82), lit);
+		vec3 n = mix(vec3(0.03, 0.018, 0.085), vec3(0.34, 0.31, 0.7), lit);
 		n = mix(n, vec3(0.1, 0.06, 0.24), (1.0 - lit) * 0.5 * smoothstep(0.2, -0.3, vY));
 		float ndv = clamp(dot(N, V), 0.0, 1.0);
 		n += N_RIM * pow(1.0 - ndv, 3.0) * 0.5 * (0.3 + 0.7 * mw);
 		float under = 1.0 - smoothstep(-0.38, 0.2, vY);
 		float flick = 0.65 + 0.35 * sin(vW.x * 0.9 + vW.z * 1.3 + uTime * 0.6);
-		n += N_WARM * (under * 0.9 + pow(1.0 - ndv, 4.0) * (1.0 - top) * 0.7) * flick * 0.6;
+		n += N_WARM * (under * 0.8 + pow(1.0 - ndv, 4.0) * (1.0 - top) * 0.6) * flick * 0.38;
 		c = mix(c, n, uNight.x);
 		gRelit = 1.0;
 	}

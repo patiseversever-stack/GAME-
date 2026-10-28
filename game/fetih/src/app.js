@@ -104,7 +104,7 @@ export class App {
 		};
 		applyEnv(G, ENVS.harita || env);
 		this.shadow = new ShadowSystem(G, R.tier.shadowSize, R.tier.shadowHalf);
-		this.post = new TiltShift(this.renderer, R.tier);
+		this.post = new TiltShift(this.renderer, R.tier, G);
 
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera(32, 1, 1, 1500);

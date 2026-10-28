@@ -88,7 +88,7 @@ void main() {
 		p = vec3(x, iA.y, iA.z);
 		float dc = distance(cameraPosition, p);
 		a *= iB.w * smoothstep(5.0, 14.0, dc) * smoothstep(80.0, 68.0, abs(x)) * (0.75 + 0.25 * sin(t * 0.4 + ph * 6.0));
-		col = vec3(1.0, 0.6, 0.26) * 0.5;
+		col = vec3(1.0, 0.62, 0.3) * 0.3;
 	}
 	vKind = kind;
 	vUv = corner;

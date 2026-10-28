@@ -285,7 +285,7 @@ void main() {
 	float selBand = lineAA(d, wSel, px) * sel;
 	float selCore = lineAA(d, wSel * 0.45, px) * sel;
 	float selIn = exp(-d / 0.55) * sel;
-	c *= 1.0 + sel * (0.16 + 0.22 * uNight.x);
+	c *= 1.0 + sel * (0.16 + 0.08 * uNight.x);
 	// gece adası: kalkık ilin duvarı alttan altın ışıkla yanar
 	if (skirt) c += gold * sel * uNight.x * exp(-vDepth * 3.5) * (1.2 + 0.5 * pulse);
 	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * (0.8 + 0.2 * pulse));
@@ -427,7 +427,7 @@ void main() {
 		vec3 n = mix(body, nightSky(Rc) * 0.8, fr);
 		n += starField(Rc) * fr;
 		float m = max(dot(R, N_MOON), 0.0);
-		n += vec3(0.85, 0.82, 1.0) * pow(m, 260.0) * 3.0;
+		n += vec3(0.85, 0.82, 1.0) * pow(m, 700.0) * 2.2;
 		n += vec3(0.12, 0.5, 0.75) * clamp(foam, 0.0, 1.0) * 0.08;
 		c = mix(c, n, uNight.x);
 		gRelit = 1.0;
