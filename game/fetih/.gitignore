@@ -1,3 +1,4 @@
 node_modules/
 verify-out/
 raw/
+package-lock.json
