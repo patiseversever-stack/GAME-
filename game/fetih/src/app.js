@@ -44,7 +44,7 @@ void main() {
 	gl_FragColor = finish(c, 1.0);
 }`;
 
-export const PLAYER_COLORS = [0xff4d4d, 0x3d7dff, 0xffc12e, 0xa55bff];
+export const PLAYER_COLORS = [0xff3030, 0x2a6bff, 0xffbe12, 0x9b3dff]; // güçlü oyun renkleri (pembeye/soluğa kaçmaz)
 
 export class App {
 	constructor({ container, store, hooks = {}, quality = 'auto', power = 'auto' }) {
@@ -132,6 +132,7 @@ export class App {
 		this.cinema = new Cinema(this);
 		this.sfx = new Sfx(this.hooks);
 		this.ui = new UI(this.container, this, { start: (cfg) => this.startMatch(cfg) });
+		this.cinema.bind(this.ui); // gece odağı: seçimde kamera ve ışık
 		this.lowFps = true;
 
 		this._onResize = () => this.resize();
@@ -323,7 +324,7 @@ export class App {
 		const m = new Match(this, this.ui, cfg);
 		this.match = m;
 		this.board.setActive?.(m.map.length < this.board.count ? m.map : null);
-		this.board.showLabels?.(m.map);
+		this.board.showLabels?.('all'); // akıllı adlar: yakınlaştıkça önem sırasıyla, çakışmasız
 		await m.run();
 		this.lowFps = true;
 	}

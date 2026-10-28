@@ -53,6 +53,81 @@ export class Cinema {
 		return this.app.fx;
 	}
 
+	// ---------------------------------------------------------------- gece odağı
+
+	/**
+	 * Arayüzün seçim adımlarına bağlan: insan seçerken kamera bütün seçeneklerini çerçeveler; bot
+	 * seçerken önce seçenekleri gecede aydınlık gösterilir, sonra seçimi. Harita sorusunda gündüz.
+	 */
+	bind(ui) {
+		const app = this.app;
+		const pick = ui.pickProvince.bind(ui);
+		ui.pickProvince = (m, options, text) => {
+			const pr = pick(m, options, text);
+			if (!ui.fast && !this.fast) this.frameList(options);
+			return pr;
+		};
+		const bot = ui.botPick.bind(ui);
+		ui.botPick = async (m, p, i) => {
+			if (ui.fast || this.fast) return bot(m, p, i);
+			const b = app.board;
+			const opts = this._options(m, p, i);
+			b.night?.(true, opts);
+			b.showLabels?.(opts);
+			this.frameList(opts);
+			await sleep(560);
+			b.night?.(true, [i]);
+			b.showLabels?.([i]);
+			await bot(m, p, i);
+		};
+		const q = ui.question.bind(ui);
+		ui.question = (m, ctx) => {
+			if (!ui.fast && ctx?.T?.needsMap) {
+				app.board.night?.(false, null, { hold: 0 });
+				app.board.showLabels?.([]);
+			}
+			return q(m, ctx);
+		};
+	}
+
+	/** Kamera listedeki illerin hepsini çerçeveler (çok küçükse en az ~14 birim). */
+	frameList(list) {
+		const app = this.app;
+		if (!list || !list.length) return;
+		const b = app.boundsOf(list);
+		const cx = (b.x0 + b.x1) / 2;
+		const cz = (b.z0 + b.z1) / 2;
+		const w = Math.max(14, b.x1 - b.x0);
+		const d = Math.max(12, b.z1 - b.z0);
+		const box = (this._fb ||= { x0: 0, x1: 0, z0: 0, z1: 0 });
+		box.x0 = cx - w / 2;
+		box.x1 = cx + w / 2;
+		box.z0 = cz - d / 2;
+		box.z1 = cz + d / 2 + 1.5; // alttaki arayüz için biraz pay
+		app.cam.fit({ ...box }, { pitch: 0.95, pad: 1.2 });
+	}
+
+	/** Botun bu seçimdeki seçenekleri (maç akışıyla aynı kural). */
+	_options(m, p, i) {
+		const b = this.app.board;
+		if (!m?.neighbors) return [i];
+		if (b.provinces[i].owner < 0) {
+			const free = m.free();
+			const adj = free.filter((j) => m.neighbors(j).some((k) => m.owner(k) === p.i));
+			return adj.length ? adj : free;
+		}
+		const set = new Set();
+		for (const j of m.owned(p.i)) for (const k of m.neighbors(j)) if (m.owner(k) >= 0 && !m.ally(m.owner(k), p.i)) set.add(k);
+		return set.size ? [...set] : [i];
+	}
+
+	/** Gündüze dön (adlar genel kipe). */
+	_day(hold = 0.3) {
+		const b = this.app.board;
+		b.night?.(false, null, { hold });
+		b.showLabels?.([]);
+	}
+
 	wait(ms) {
 		return this.fast ? Promise.resolve() : sleep(ms);
 	}
@@ -139,6 +214,7 @@ export class Cinema {
 		const app = this.app;
 		const cam = app.cam;
 		app.board.clearFx();
+		app.board.night?.(false, null, { hold: 0 });
 		const b = app.boundsOf(map);
 		cam.setLimit?.(b);
 		const m = app.match;
@@ -237,6 +313,10 @@ export class Cinema {
 		const b = this.app.board;
 		b.fx(i, 0.6, 1);
 		this.app.sfx?.play?.('claim');
+		if (!this.fast) {
+			b.night?.(true, [i]); // boya dalgası gecede, sonra gündüz
+			b.showLabels?.([i]);
+		}
 		if (!this.fast && this.fx) {
 			const c = this._center(i, this.c, 0.6);
 			this.fx.ring(c.x, c.y + 0.1, c.z, 0.2, 1.6, p.color, 0.5, 1.1, 0.22);
@@ -244,6 +324,7 @@ export class Cinema {
 		}
 		await this.wait(380);
 		b.fx(i, 0, 0);
+		if (!this.fast) this._day(0.35);
 	}
 
 	// ---------------------------------------------------------------- fetih
@@ -264,6 +345,8 @@ export class Cinema {
 			return;
 		}
 		// yol: saldıranın ilinden ortak sınıra, oradan hedefe (kuşatmada kalenin önüne)
+		b.night?.(true, [src, target]);
+		b.showLabels?.([src, target]);
 		const S = b.provinces[src];
 		const border = b.borderPoint ? b.borderPoint(src, target, this.a) : this.a.set((S.x + t.x) / 2, 0, (S.z + t.z) / 2);
 		const from = this.b.set(S.x + (border.x - S.x) * 0.35, 0, S.z + (border.z - S.z) * 0.35);
@@ -327,6 +410,7 @@ export class Cinema {
 		if (cam.shot) cam.shot(c.x, c.z + 0.6, { dist: 27, pitch: 0.86, yaw: cam.yaw * 0.5, dur: 1.2, arc: 0 });
 		await this.beat(1400);
 		b.fx(i, 0, 0);
+		this._day();
 	}
 
 	async towerDown(p, d, i, left) {
@@ -382,6 +466,7 @@ export class Cinema {
 		await this.beat(1900);
 		this._hold();
 		app.board.fx(i, 0, 0);
+		this._day();
 	}
 
 	async defend(d, i) {
@@ -412,12 +497,14 @@ export class Cinema {
 		if (cam.shot) cam.shot(c.x, c.z, { dist: isCap ? 17 : 20, pitch: 0.7, yaw: cam.yaw, dur: 0.8, arc: 0 });
 		await this.beat(1050);
 		b.fx(i, 0, 0);
+		this._day();
 	}
 
 	async nobody(i) {
 		this.fx?.armyRetreat();
 		await this.beat(500);
 		this.app.board.fx(i, 0, 0);
+		if (!this.fast) this._day();
 	}
 
 	async eliminated(d, by) {
@@ -470,5 +557,6 @@ export class Cinema {
 		}
 		this.at(1.2, () => fx.burst(c0, by.color, { big: 1.2 }));
 		await this.beat(1900);
+		this._day();
 	}
 }

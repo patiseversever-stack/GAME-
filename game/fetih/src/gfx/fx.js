@@ -107,6 +107,7 @@ void main() {
 	vec3 V = normalize(cameraPosition - vW);
 	vec3 c = shade(alb, N, V, 1.0, 1.0, gloss, 0.9);
 	c = applyFog(c, vW);
+	gLit = 0.85; // ordu sahnenin odağı: gecede de seçilir
 	gl_FragColor = finish(c, 1.0);
 }`;
 
@@ -243,6 +244,7 @@ void main() {
 	// kızgın taş (r > 1): akkor parlar
 	c += max(vC - 1.0, 0.0) * 2.0;
 	c = applyFog(c, vW);
+	gLit = 0.85;
 	gl_FragColor = finish(c, 1.0);
 }`;
 
@@ -316,6 +318,7 @@ void main() {
 	}
 	a *= vC.a;
 	if (a < 0.004) discard;
+	gLit = vM.z; // ışık (toplamalı) gece kararmaz; duman ve konfeti geceye uyar
 	vec3 o = finish(col, 1.0).rgb;
 	gl_FragColor = vec4(o * a, a * (1.0 - vM.z));
 }`;
@@ -393,6 +396,7 @@ void main() {
 	}
 	a *= vB.a;
 	if (a < 0.003) discard;
+	gLit = 1.0;
 	vec3 o = finish(col, 1.0).rgb;
 	gl_FragColor = vec4(o * a, 0.0);
 }`;
