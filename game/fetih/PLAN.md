@@ -54,7 +54,7 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 
 ## Şu anki durum (v0.2 ara sürüm, 28 Ekim)
 
-**Yayında:** https://claude.ai/artifact/4t77RHjRmbZC3SGbxdhLWz (sürüm 3). Dal: `ccr-ac8b068d-5guafj`.
+**Yayında:** https://claude.ai/artifact/4t77RHjRmbZC3SGbxdhLWz (sürüm 6). Dal: `ccr-ac8b068d-5guafj`.
 
 | Alan | Durum |
 |---|---|
@@ -63,7 +63,8 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 | Bağlama (bitti) | Fetihte boya dalgası ortak sınırdan; maç dışı iller kararır; kale araziye oturur. 1'e 1 maç baştan sona hatasız (133 sn). |
 | İçerik (bitti) | `src/data/q/`: 1.000 doğrulanmış soru (tarih 180, coğrafya 200, spor 140, bilim 160, sanat 140, genel kültür 180). `src/data/bank.js` ile oyuna bağlı; şimdilik yalnız tanımlı tipler (choice, tf, num, pin, hang ≈ 750 soru) çıkar, diğer tipler soru tipleri birleşince açılır. |
 | Sinema/efekt (bitti) | Açılış uçuşu, ordu yürüyüşü, mancınık ve ateşli ok, kule yıkımı, fetih patlaması ve sancak, kalkan, kale çöküşü, zafer havai fişeği. `src/gfx/fx.js` (boşta 0, en çok 6 çağrı). Bilinen: başsız testte `castleDrop` yavaş (kare süresine bağlı), telefonda denenmedi. |
-| Soru tipleri (yarım, birleştirilmedi) | Dal `worktree-agent-af31e996c3a1eb880`: order, match, hilo, odd, emoji, proverb, riddle, anagram, cross, img, blitz, `TYPE_WEIGHTS`. Örnek soru ve test yok. |
+| Soru tipleri (bitti) | order, match, hilo, odd, emoji, proverb, riddle bankadan açık (maçta ve düelloda çıkar); anagram, cross, img, blitz hazır ama verisi yok, çekilmez. Sürükle-eşleştir, yatay düzen. Test: `node test/types.test.mjs` (63k denetim). Banka yinelenme anahtarı içeriğe göre (önceden ~40 soru düşüyordu). |
+| ASSETS.md (bitti) | Telifsiz görsel üretim listesi: komutanlar, sefer, simgeler, jokerler, ödüller, sancaklar, soru görselleri, ekranlar. |
 | Oynanış (yarım, birleştirilmedi) | Dal `worktree-agent-a35eedab62b33d177`: komutanlar, jokerler, ilerleme, soru bankası, sefer, ağ katmanı. `sim.mjs` ve denge yok. |
 | Ses (yarım, birleştirilmedi) | Dal `worktree-agent-ad6d837d89d36b9d7`: WebAudio motoru, makam müziği, efektler. `ASSETS.md` yazılmadı. |
 
@@ -94,6 +95,15 @@ yenisini başlat. Görsel işler Opus high, diğerleri Sonnet high.
 Kullanıcı telefonda deneyip geri bildirim verecek; ona göre ince ayar yapılacak. Gündönümü referansı: `game/Gundonumu.html` (varsa).
 
 ### Gece odağı: kullanıcı mevcut hali REDDETTİ (28 Ekim)
+
+**v2 yapıldı (28 Ekim, yayında sürüm 6), kullanıcı geri bildirimi bekleniyor.** Ay ışığıyla yeniden aydınlatma (mor-mavi, gri değil),
+gök aynası deniz (yıldızlar, ay yolu), gece bulutları ve altın ışık sızıntısı, `src/gfx/nightlights.js` (tek çağrı: ışık tozu,
+~2–3 bin pencere ışığı, yapı ve kale ışıkları), altın kenarlı ışık adası iller, ~1 sn kamera kalkışlı geçiş ve şafak dönüşü,
+bot seçimi / saldırı / fetih hep gecede, Gündönümü tonunda istem (`ui.caption`). q≥1'de gece ışıltısı tilt-shift geçişinde.
+Test: `node tools/flow.mjs ÇIKTI [--only=a,b --seq --q --dpr]` gerçek maçı oynatıp anları kaydeder.
+Bilinen zayıflar: yakın çekimde gece yalnız kenarda kalıyor, kırmızı sahip mor ışıkta pembeleşiyor, kale yakınında hafif patlama,
+bulutlar yakında az poligonlu.
+
 
 > "Rezalet, istediğimle alakası yok. Gündönümü'ndeki karartma böyle. Sinematiklik yok."
 
