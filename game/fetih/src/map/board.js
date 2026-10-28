@@ -25,7 +25,7 @@ import { Relief, buildBoardGeometry, BASE, VS, BOTTOM, LIFT } from './terrain.js
 import { bakeFields, FIELD_BOX, RB, RC, RL } from './fields.js';
 import { Labels } from './labels.js';
 import { Castle } from './castle.js';
-import { Clouds } from '../gfx/clouds.js';
+import { Clouds, CloudFrame } from '../gfx/clouds.js';
 
 export const REGIONS = {
 	marmara: { name: 'Marmara', color: 0x8fd16a },
@@ -191,6 +191,7 @@ void main() {
 	// ışıkta beyaza/pembeye kaçmasın diye albedo orta tonda tutulur
 	vec3 tint = ownCol * (0.5 + 0.9 * lum);
 	alb = mix(alb, tint, ownedK * (0.9 - snowK * 0.3));
+	gOwn = ownedK * (0.9 - snowK * 0.3);
 
 	// --- sınırlar
 	float sel = vFx.z;
@@ -235,6 +236,7 @@ void main() {
 		// üst şerit sahibin renginde (bayrak şeridi)
 		soil = mix(soil, ownCol * 0.95, ownedK * (1.0 - smoothstep(0.07, 0.11, dep)) * step(0.015, dep));
 		alb = soil;
+		gOwn *= 1.0 - smoothstep(0.07, 0.11, dep);
 		ao = mix(0.45, 1.0, exp(-dep * 1.2));
 		gloss = 0.04;
 	}
@@ -285,15 +287,21 @@ void main() {
 	float selBand = lineAA(d, wSel, px) * sel;
 	float selCore = lineAA(d, wSel * 0.45, px) * sel;
 	float selIn = exp(-d / 0.55) * sel;
-	c *= 1.0 + sel * (0.16 + 0.08 * uNight.x);
+	// gece ışık havuzunun dışında süsler de söner (yakın çekimde kenarlar geceye karışsın)
+	float sp = mix(1.0, spotK(), uNight.x);
+	float selL = sel * sp;
+	c *= 1.0 + selL * (0.12 + 0.04 * uNight.x);
 	// gece adası: kalkık ilin duvarı alttan altın ışıkla yanar
-	if (skirt) c += gold * sel * uNight.x * exp(-vDepth * 3.5) * (1.2 + 0.5 * pulse);
-	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * (0.8 + 0.2 * pulse));
-	c = mix(c, mix(vec3(1.0, 0.96, 0.82), vec3(1.0, 0.8, 0.42), uNight.x) * (1.6 + 0.6 * pulse), selCore * mix(0.8, 0.6, uNight.x));
-	c += gold * (selIn * 0.42 * pulse + halo * 0.9 * (0.55 + 0.45 * pulse));
-	// eski parlama (fx): nabız gibi ışır
+	if (skirt) c += gold * selL * uNight.x * exp(-vDepth * 3.5) * (0.6 + 0.3 * pulse);
+	float bk = 0.45 + 0.55 * sp; // dış hat havuz dışında da seçilir (daha sönük)
+	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * bk * (0.8 + 0.2 * pulse));
+	c = mix(c, mix(vec3(1.0, 0.96, 0.82), vec3(1.0, 0.8, 0.42), uNight.x) * (1.6 + 0.6 * pulse), selCore * bk * mix(0.8, 0.6, uNight.x));
+	// iç ışıltı: hafif altın (karışım yok: mavi il altınla soluklaşıp beyaza yanmasın)
+	c += gold * selIn * sp * 0.16 * pulse;
+	c += gold * halo * sp * 0.9 * (0.55 + 0.45 * pulse);
+	// eski parlama (fx): nabız gibi ışır (gecede ve havuz dışında kısık: hedef il patlamasın)
 	vec3 gcol = ownedK > 0.5 ? ownCol * 1.4 + 0.1 : vec3(1.0, 0.88, 0.55);
-	c += gcol * glow * (0.35 + 0.35 * sin(uTime * 6.0 + vPid * 0.7)) * (0.35 + lineAA(d, wSel, px) * 0.9);
+	c += gcol * glow * sp * (1.0 - 0.5 * uNight.x) * (0.35 + 0.35 * sin(uTime * 6.0 + vPid * 0.7)) * (0.35 + lineAA(d, wSel, px) * 0.9);
 	// boya dalgası cephesi
 	c += (ownCol * 1.8 + vec3(0.9)) * rim * (skirt ? 0.3 : 1.0);
 
@@ -415,6 +423,7 @@ void main() {
 	c = mix(c, vec3(1.0) * (uSkyTop + uSunCol * 0.32), clamp(foam, 0.0, 1.0) * 0.82);
 	// şafak: deniz ufku ısınır
 	if (uNight.z > 0.001) c += DAWN * uNight.z * fres * 0.5;
+	vec3 stars = vec3(0.0);
 	if (uNight.x > 0.001) {
 		// gece denizi: durgun bir gök aynası. Mor-lacivert gök, yıldızlar (sakin normalle, titremesin),
 		// dalgacıklarda ay yolu; kıyıda soğuk ışıklı köpük (biyolüminesans)
@@ -425,7 +434,8 @@ void main() {
 		vec3 body = mix(vec3(0.004, 0.005, 0.03), vec3(0.008, 0.03, 0.06), smoothstep(2.2, 0.3, dist));
 		float fr = 0.5 + 0.4 * pow(1.0 - ndv, 3.0);
 		vec3 n = mix(body, nightSky(Rc) * 0.8, fr);
-		n += starField(Rc) * fr * 2.2;
+		// yıldızlar sisten sonra eklenir (uzak denizde de seçilsin)
+		stars = starField(Rc) * fr * 2.2 * uNight.x;
 		// ay yolu: sakin yüzeyde geniş yumuşak ışık, dalgacıklarda pırıltı
 		float mc = max(dot(Rc, N_MOON), 0.0);
 		n += vec3(0.32, 0.3, 0.7) * pow(mc, 14.0) * 0.35;
@@ -436,6 +446,7 @@ void main() {
 		gRelit = 1.0;
 	}
 	c = applyFog(c, vW);
+	c += stars;
 	c = edgeMist(c, vW);
 	gl_FragColor = finish(c, 1.0);
 }`;
@@ -620,6 +631,8 @@ export class Board {
 		// --- bulutlar (harita çevresinde)
 		this.clouds = new Clouds(G, tier);
 		this.group.add(this.clouds.mesh);
+		this.cloudFrame = new CloudFrame(G, tier); // gece bulut çerçevesi (ekran kenarı)
+		this.group.add(this.cloudFrame.mesh);
 	}
 
 	_row(i, r) {
@@ -800,6 +813,7 @@ export class Board {
 			const sw = Math.min(1, Math.max(0, (p - 0.35) / 0.65));
 			nu.w = sw * sw * (3 - 2 * sw);
 			nu.z = this._rising ? 0 : Math.sin(Math.PI * Math.min(1, p * 1.15)) * 0.9 * (p > 0 ? 1 : 0);
+			this.cloudFrame.update(nu.x);
 		}
 		const k = 1 - Math.exp(-8 * dt);
 		const N = this.count;

@@ -100,6 +100,7 @@ export class Cinema {
 	frameList(list) {
 		const app = this.app;
 		if (!list || !list.length) return;
+		this._spot(null); // seçimde bütün seçenekler aydınlık: ışık havuzu yok
 		const b = app.boundsOf(list);
 		const cx = (b.x0 + b.x1) / 2;
 		const cz = (b.z0 + b.z1) / 2;
@@ -129,9 +130,21 @@ export class Cinema {
 		return set.size ? [...set] : [i];
 	}
 
+	/**
+	 * Gece ışık havuzu (yakın çekim): aydınlık il(ler) ekranın ortasında yumuşak bir ışıkta kalır,
+	 * çevresi geceye karışır. p: dünya noktası (null → kapalı), r: yarıçap (dünya birimi).
+	 */
+	_spot(p, r = 4, k = 0.95) {
+		const nl = this.app.nightLights;
+		if (!nl?.focus) return;
+		if (!p) nl.focus(null);
+		else nl.focus(p.x, p.y, p.z, r, k);
+	}
+
 	/** Gündüze dön (adlar genel kipe). */
 	_day(hold = 0.3) {
 		const b = this.app.board;
+		this._spot(null);
 		b.night?.(false, null, { hold });
 		b.showLabels?.([]);
 		this.app.ui?.caption?.(null);
@@ -368,6 +381,10 @@ export class Cinema {
 		const dx = to.x - from.x;
 		const dz = to.z - from.z;
 		const span = Math.hypot(dx, dz);
+		// ışık havuzu: saldıranın ili ile hedef birlikte, çevreleri gece
+		const sc = this._center(src, this.d, 0);
+		const tc = this._center(target, _v, 0);
+		this._spot(sc.lerp(tc, 0.55), Math.hypot(tc.x - sc.x, tc.z - sc.z) * 0.5 + 1.8);
 		fx.march(from, to, p.color, { siege: isCap, dur: isCap ? 1.1 : 1.2, stopShort: isCap ? 2.5 : 0 });
 		// kamera: saldıranın arkasından, yürüyüş yönüne bakarak; sonra hedefe yaklaş
 		const yaw = clamp(wrapPi(Math.atan2(dx, -dz)) * 0.45, -0.55, 0.55);
@@ -385,13 +402,20 @@ export class Cinema {
 			const camp = from.clone();
 			const full = Math.atan2(dx, -dz) + 0.55;
 			this._siegeYaw = full;
-			this.at(0.55, () => cam.orbitAt(tx - ux * 2.3, tz - uz * 2.3, { dist: 13, pitch: 0.48, yaw: full, rate: 0.1, dur: 0.85 }));
+			const kp = k.group.position.clone();
+			this.at(0.55, () => {
+				cam.orbitAt(tx - ux * 2.3, tz - uz * 2.3, { dist: 16, pitch: 0.52, yaw: full, rate: 0.1, dur: 0.85 });
+				this._spot(kp, 3.4);
+			});
 			this.at(0.75, () => fx.arrows(camp, wall, 12, 0.6, 0.8));
 			this.at(1.0, () => fx.catapult(0, wall, () => app.sfx?.play?.('tower', { soft: true })));
 			this.at(1.3, () => fx.catapult(1, wall.clone().setY(wall.y + 0.4), null));
 			await this.beat(1900);
 		} else {
-			this.at(0.6, () => cam.shot(tx, tz, { dist: Math.max(18, d0 * 0.8), pitch: 0.72, yaw, dur: 0.95, arc: 0, distRate: -0.02, distMin: 16 }));
+			// hedefe yaklaş ama ikisi ve çevrelerindeki gece kadrajda kalsın (ışık havuzu ortada)
+			const fx2 = mx + (tx - mx) * 0.6;
+			const fz2 = mz + (tz - mz) * 0.6;
+			this.at(0.6, () => cam.shot(fx2, fz2, { dist: Math.max(21, d0 * 0.9), pitch: 0.74, yaw, dur: 0.95, arc: 0, distRate: -0.015, distMin: 19 }));
 			await this.beat(1600);
 		}
 		this._hold();
@@ -418,6 +442,7 @@ export class Cinema {
 		} else cam.shake = 0.5;
 		app.sfx?.play?.('conquer');
 		app.ui?.caption?.('FETİH', b.provinces[i].name, `${p.name} topraklarına katıldı`, { p });
+		this._spot(c, 3.6);
 		if (cam.shot) cam.shot(c.x, c.z + 0.6, { dist: 30, pitch: 0.86, yaw: cam.yaw * 0.5, dur: 1.2, arc: 0 });
 		await this.beat(1400);
 		b.fx(i, 0, 0);
@@ -460,6 +485,7 @@ export class Cinema {
 		const vz = ((ox / ol) * s1) * 0.65 + az * 0.35;
 		const yaw = Math.atan2(-vx, vz);
 		cam.shot(c.x + ox * 0.75, c.z + oz * 0.75, { dist: 13, pitch: 0.42, yaw, dur: 0.55, arc: 1 });
+		this._spot(c, 3.4);
 		const low = tp.clone();
 		low.y -= 0.6;
 		const camp = A ? A.clone() : c.clone().add(new THREE.Vector3(vx * 5, 0, vz * 5));
@@ -499,6 +525,7 @@ export class Cinema {
 		const c = isCap ? this.a.copy(k.group.position) : this._center(i, this.a, 0.15);
 		const P = b.provinces[i];
 		const r = isCap ? 2.9 : clamp(Math.max(P.box[2] - P.box[0], P.box[3] - P.box[1]) * 0.32, 1.6, 3);
+		this._spot(c, r + 1.6);
 		fx.shield(c.x, c.y - 0.1, c.z, r, d.color, 1.1);
 		fx.ring(c.x, c.y + 0.1, c.z, r * 0.9, r * 1.6, d.color, 0.6, 1, 0.2);
 		if (fx.army.on) {

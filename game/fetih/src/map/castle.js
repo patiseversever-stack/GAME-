@@ -102,6 +102,7 @@ void main() {
 		// sahip rengi (g: parlaklık çarpanı); külahlar kurşun gibi hafif cilalı
 		alb = uOwner * vC.g;
 		gloss = 0.35;
+		gOwn = 1.0;
 	} else if (vC.b > 0.0 && vC.r > 0.0) {
 		// taş dokusu: sıra sıra kesme taş
 		float row = floor(vL * 16.0);
@@ -119,8 +120,8 @@ void main() {
 		// gece: mazgal ve kapılar içeriden yanar; surların dibi meşale ışığında; sancak ay ışığında seçilir
 		float win = 1.0 - smoothstep(0.004, 0.02, distance(vC, ${C('#3a2a22')}));
 		c += N_WARM * win * nk * (2.2 + 0.5 * sin(uTime * 4.0 + vW.x * 7.0));
-		c += N_WARM * alb * nk * 0.55 * exp(-max(vL, 0.0) * 1.6);
-		if (own) c += uOwner * nk * 0.25;
+		c += N_WARM * alb * nk * 0.3 * exp(-max(vL, 0.0) * 2.4);
+		if (own) c += uOwner * nk * 0.18;
 	}
 	c = applyFog(c, vW);
 	gl_FragColor = finish(c * uFade, 1.0);

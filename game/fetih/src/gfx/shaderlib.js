@@ -25,13 +25,16 @@ uniform vec3 uGain;
 uniform vec3 uVigCol;
 uniform vec4 uFocus;    // xyz odak (zincirin ucu), w yarıçap: odak çevresi hafif ışıltı
 uniform vec4 uNight;    // x gece (0 gündüz, 1 gece odağı), y ay kenarı gücü, z şafak (dönüşte sıcak ufuk), w yıldızlar
+uniform vec4 uSpot;     // sinematik ışık havuzu (yakın çekim): xy ekran merkezi (0..1), z yarıçap (ekran yüksekliği), w güç
 #ifndef FL_GLOBALS
 #define FL_GLOBALS
 // gece odağı: gLit 1 olan piksel gündüz renginde kalır (seçilebilir il, efekt ışığı); gRim ay kenarı;
-// gRelit 1: piksel gece ışığıyla yeniden aydınlatıldı (finish() ayrıca karartmaz)
+// gRelit 1: piksel gece ışığıyla yeniden aydınlatıldı (finish() ayrıca karartmaz);
+// gOwn 1: sahip rengi (gecede de tonunu korur: kırmızı ay ışığında pembeye kaçmaz)
 float gLit = 0.0;
 float gRim = 0.0;
 float gRelit = 0.0;
+float gOwn = 0.0;
 #endif
 // Gece paleti (doğrusal). Gündönümü'nün "Gece Düştü" anı: mor-lacivert gök, lavanta ay ışığı,
 // gölgeler çivit; renkler solar ama griye düşmez. Ay kuzeybatıda, yüksekte: kameradan bakınca
@@ -90,9 +93,22 @@ float shadowAt(vec3 wp, vec3 n) {
 `;
 
 export const LIGHT = /* glsl */ `
-/** Bu pikselin gece miktarı: aydınlık (gLit) pikseller gündüzde kalır. */
+#ifndef FL_SPOT
+#define FL_SPOT
+/**
+ * Sinematik ışık havuzu (yalnızca parça shader'ı): yakın çekimde aydınlık il(ler) ekranın ortasındaki
+ * yumuşak bir ışık havuzunda kalır, kenara doğru geceye karışır (gece yakın çekimde de okunur).
+ */
+float spotK() {
+	if (uSpot.w < 0.001) return 1.0;
+	vec2 q = gl_FragCoord.xy / uRes.xy - uSpot.xy;
+	q.x *= uRes.x / uRes.y * 0.82;
+	return 1.0 - uSpot.w * smoothstep(uSpot.z, uSpot.z * 1.75, length(q));
+}
+#endif
+/** Bu pikselin gece miktarı: aydınlık (gLit) pikseller gündüzde kalır (ışık havuzunun içinde). */
 float nightK() {
-	return uNight.x * (1.0 - clamp(gLit, 0.0, 1.0));
+	return uNight.x * (1.0 - clamp(gLit, 0.0, 1.0) * spotK());
 }
 float sh13(vec3 p) {
 	p = fract(p * 0.1031);
@@ -103,20 +119,24 @@ float sh13(vec3 p) {
 vec3 starField(vec3 d) {
 	vec3 c = vec3(0.0);
 	float on = uNight.w;
+	// yıldızın en küçük boyu piksel cinsinden (kamera görüş açısı 32°): düşük çözünürlükte de okunur
+	float pxa = 0.5735 / max(uRes.y, 1.0);
 	vec3 sp = d * 250.0;
 	float r = sh13(floor(sp));
 	float th = 1.0 - 0.1 * on;
 	if (r > th) {
 		float l = length(fract(sp) - 0.5);
-		c += mix(vec3(0.62, 0.74, 1.0), vec3(1.0, 0.86, 0.66), fract(r * 37.0)) * smoothstep(0.26, 0.0, l) * (r - th) * 13.0 * (0.72 + 0.28 * sin(uTime * (2.0 + r * 6.0) + r * 91.0));
+		float rad = clamp(2.3 * pxa * 250.0, 0.32, 0.48);
+		c += mix(vec3(0.62, 0.74, 1.0), vec3(1.0, 0.86, 0.66), fract(r * 37.0)) * smoothstep(rad, rad * 0.15, l) * (r - th) * 20.0 * (0.72 + 0.28 * sin(uTime * (2.0 + r * 6.0) + r * 91.0));
 	}
 	sp = d * 64.0;
 	r = sh13(floor(sp) + 17.3);
-	th = 1.0 - 0.02 * on;
+	th = 1.0 - 0.03 * on;
 	if (r > th) {
 		vec3 f = fract(sp) - 0.5;
 		float l = length(f);
-		float s = smoothstep(0.1, 0.0, l) * 2.2 + smoothstep(0.42, 0.0, l) * 0.22 + (smoothstep(0.03, 0.0, abs(f.x)) + smoothstep(0.03, 0.0, abs(f.y))) * smoothstep(0.4, 0.0, l) * 0.35;
+		float cr = max(0.1, 2.2 * pxa * 64.0);
+		float s = smoothstep(cr, cr * 0.2, l) * 2.2 + smoothstep(0.42, 0.0, l) * 0.26 + (smoothstep(0.03, 0.0, abs(f.x)) + smoothstep(0.03, 0.0, abs(f.y))) * smoothstep(0.4, 0.0, l) * 0.35;
 		c += mix(vec3(0.7, 0.8, 1.0), vec3(1.0, 0.82, 0.6), fract(r * 53.0)) * s * (0.75 + 0.25 * sin(uTime * (1.3 + r * 3.0) + r * 40.0)) * smoothstep(th, th + 0.004, r);
 	}
 	return c;
@@ -134,16 +154,22 @@ vec3 nightSky(vec3 d) {
 /** Gece ışığı: ay (lavanta), gök (çivit), cilada ay parıltısı, siluette ay kenarı. */
 vec3 moonShade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, float rimK) {
 	float l = dot(albedo, vec3(0.3, 0.59, 0.11));
-	// renkler solar (Purkinje) ama koyular kömür olmaz: ağaçlar ay ışığında seçilir
-	vec3 a = pow(max(mix(vec3(l), albedo, 0.5), 0.0), vec3(0.78));
+	// renkler solar (Purkinje) ama koyular kömür olmaz: ağaçlar ay ışığında seçilir.
+	// Sahip rengi (gOwn) solmaz ve mor ışık almaz: kırmızı gecede koyu kırmızı kalır, pembeye kaçmaz.
+	float ow = clamp(gOwn, 0.0, 1.0);
+	// (sahip rengi tam doygun ama koyu: gece ilinde kırmızı derin kırmızı, aydınlık adadan ayrı okunur)
+	vec3 a = pow(max(mix(vec3(l), albedo, 0.5 + 0.5 * ow), 0.0), vec3(0.78)) * (1.0 - 0.5 * ow);
 	float w = clamp((dot(N, N_MOON) + 0.3) / 1.3, 0.0, 1.0);
 	float up = N.y * 0.5 + 0.5;
 	vec3 amb = mix(N_GND, N_SKY, smoothstep(0.1, 1.0, up)) * ao;
-	vec3 c = a * (amb + N_MOONC * w * w * mix(0.62, 1.0, sh));
+	amb = mix(amb, vec3(dot(amb, vec3(0.3, 0.59, 0.11))) * vec3(0.95, 0.95, 1.15) * 1.1, ow);
+	vec3 c = a * (amb + mix(N_MOONC, vec3(0.6, 0.56, 0.74), ow) * w * w * mix(0.62, 1.0, sh));
 	float ndv = clamp(dot(N, V), 0.0, 1.0);
 	vec3 H = normalize(N_MOON + V);
-	c += N_MOONC * pow(max(dot(N, H), 0.0), mix(16.0, 140.0, gloss)) * mix(0.08, 1.6, gloss) * sh;
-	c += N_RIM * pow(1.0 - ndv, 3.0) * (0.1 + rimK * 0.3) * ao * (0.4 + 0.6 * uNight.y);
+	// ay parıltısı ve kenarı: sahip renginde soluk ve nötr (kırmızının üstüne lavanta binip pembeleştirmesin)
+	vec3 sc = mix(N_MOONC, vec3(0.5, 0.5, 0.62), ow) * (1.0 - 0.6 * ow);
+	c += sc * pow(max(dot(N, H), 0.0), mix(16.0, 140.0, gloss)) * mix(0.08, 1.6, gloss) * sh;
+	c += N_RIM * pow(1.0 - ndv, 3.0) * (0.1 + rimK * 0.3) * ao * (0.4 + 0.6 * uNight.y) * (1.0 - 0.5 * ow);
 	return c;
 }
 vec3 skyAmbient(vec3 N) {
@@ -206,14 +232,27 @@ vec3 applyFog(vec3 c, vec3 wp) {
 	if (uNight.z > 0.001) fc = mix(fc, fc * vec3(1.15, 0.86, 0.74) + DAWN * 0.12, uNight.z * (1.0 - nk));
 	if (nk > 0.001) {
 		fc = mix(fc, N_FOG, nk);
-		// gece pusu: uzak yerler mor sise gömülür (derinlik, Gündönümü'ndeki gibi)
-		f = max(f, (1.0 - exp(-max(dist - 24.0, 0.0) * 0.022)) * 0.55 * nk);
+		// gece pusu: uzak yerler mor sise gömülür (derinlik, Gündönümü'ndeki gibi); sahip rengi daha az
+		f = max(f, (1.0 - exp(-max(dist - 24.0, 0.0) * 0.022)) * 0.55 * nk * (1.0 - 0.45 * clamp(gOwn, 0.0, 1.0)));
 	}
 	return mix(c, fc, clamp(f, 0.0, 1.0));
 }
 `;
 
 export const FINISH = /* glsl */ `
+#ifndef FL_SPOT
+#define FL_SPOT
+/**
+ * Sinematik ışık havuzu (yalnızca parça shader'ı): yakın çekimde aydınlık il(ler) ekranın ortasındaki
+ * yumuşak bir ışık havuzunda kalır, kenara doğru geceye karışır (gece yakın çekimde de okunur).
+ */
+float spotK() {
+	if (uSpot.w < 0.001) return 1.0;
+	vec2 q = gl_FragCoord.xy / uRes.xy - uSpot.xy;
+	q.x *= uRes.x / uRes.y * 0.82;
+	return 1.0 - uSpot.w * smoothstep(uSpot.z, uSpot.z * 1.75, length(q));
+}
+#endif
 vec3 acesFit(vec3 x) {
 	return clamp((x * (2.51 * x + 0.03)) / (x * (2.43 * x + 0.59) + 0.14), 0.0, 1.0);
 }
@@ -233,13 +272,16 @@ vec3 nightGrade(vec3 c) {
 	return n;
 }
 vec4 finish(vec3 c, float a) {
-	float nk = uNight.x * (1.0 - clamp(gLit, 0.0, 1.0));
+	float nk = uNight.x * (1.0 - clamp(gLit, 0.0, 1.0) * spotK());
 	if (nk > 0.001 && gRelit < 0.5) c = mix(c, nightGrade(c), nk);
+	// gecede aydınlık ada: biraz kısık pozlama (beyaza yanmasın, sahip rengi doygun kalsın)
+	c *= 1.0 - 0.22 * (uNight.x - nk);
 	c = tonemap(c * uGrade.z);
 	c = pow(c, vec3(1.0 / 2.2));
 	c = c * uGain + uLift * (1.0 - c);
 	// gece: gölgeler mora kalkar (Gündönümü), aydınlık adalar canlı kalır
-	c += vec3(0.04, 0.012, 0.085) * uNight.x * (1.0 - c);
+	// (yalnızca gece pikselinde; sahip rengine az: kırmızı pembeleşmesin)
+	c += vec3(0.04, 0.012, 0.085) * nk * (1.0 - 0.75 * clamp(gOwn, 0.0, 1.0)) * (1.0 - c);
 	float l = dot(c, vec3(0.299, 0.587, 0.114));
 	c = mix(vec3(l), c, uGrade.x);
 	c = (c - 0.5) * uGrade.y + 0.5;
@@ -263,6 +305,7 @@ export const PROV = /* glsl */ `
 float gLit = 0.0;
 float gRim = 0.0;
 float gRelit = 0.0;
+float gOwn = 0.0;
 #endif
 uniform sampler2D uState;
 uniform float uSelOn;   // seçim kipi açık (0..1): seçilemeyen iller kararır

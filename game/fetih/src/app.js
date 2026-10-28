@@ -295,7 +295,7 @@ export class App {
 		this.board.update(dt);
 		for (const k of this.castles) if (k.group.visible) k.update(dt);
 		this.fx.update(dt);
-		this.nightLights.update(dt);
+		this.nightLights.update(dt, this.camera);
 		this.cam.update(dt);
 		if (draw) {
 			this.ui.update();

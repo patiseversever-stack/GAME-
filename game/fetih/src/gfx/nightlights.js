@@ -80,7 +80,7 @@ void main() {
 		vec4 cs = uCastle[int(iB.y + 0.5)];
 		p = cs.xyz + vec3(0.0, 0.9, 0.0);
 		a *= cs.w * iB.w * (0.85 + 0.15 * sin(t * 5.0 + ph * 3.0) * sin(t * 3.1));
-		col = vec3(1.0, 0.55, 0.2) * 0.55;
+		col = vec3(1.0, 0.5, 0.16) * 0.42;
 		pull = iA.w * 0.7;
 	} else {
 		// bulutun altından ve aralarından sızan sıcak ışık (clouds.js ile aynı rüzgâr)
@@ -102,6 +102,12 @@ void main() {
 	float ppu = uRes.y * projectionMatrix[1][1] * 0.5 / max(c.w, 1e-3);
 	float h = iA.w * ppu;
 	if (px1 > 0.0) h = clamp(h, px0 * uDpr, px1 * uDpr);
+	else {
+		// hale yakın çekimde ekranı kaplamasın (kale çevresi patlamasın): boyu sınırlı, büyüdükçe söner
+		float fr = h / uRes.y;
+		vCol *= smoothstep(0.5, 0.14, fr);
+		h = min(h, 0.2 * uRes.y);
+	}
 	c.xy += corner * h / uRes.xy * 2.0 * c.w;
 	gl_Position = c;
 }`;
@@ -249,11 +255,61 @@ export class NightLights {
 			this.uniforms.uDpr.value = renderer.getPixelRatio();
 		};
 		this.triangles = n * 2;
+		this.spot = { on: false, x: 0, y: 0, z: 0, r: 4, str: 0.9, k: 0 };
+		this._m = new THREE.Matrix4();
+		this._p = new THREE.Vector3();
 	}
 
-	/** Kare başına: kale konumları ve görünürlük (gündüz hiç çizilmez). */
-	update() {
+	_spot(dt, camera) {
+		const s = this.spot;
+		const U = this.G.uSpot.value;
+		if (s.on && !(this.board.nightTo > 0)) s.on = false; // gündüze dönünce havuz kapanır
+		const want = s.on ? 1 : 0;
+		s.k += (want - s.k) * Math.min(1, dt * 3.5);
+		if (Math.abs(want - s.k) < 0.002) s.k = want;
+		if (s.k < 0.002 || !camera) {
+			U.w = 0;
+			return;
+		}
+		camera.updateMatrixWorld();
+		const m = this._m.copy(camera.matrixWorld).invert();
+		const p = this._p.set(s.x, s.y, s.z).applyMatrix4(m);
+		if (p.z > -0.5) {
+			U.w = 0; // nokta kameranın arkasında
+			return;
+		}
+		const depth = -p.z;
+		const e = camera.projectionMatrix.elements;
+		// ekran merkezi (0..1) ve yarıçap (ekran yüksekliği cinsinden)
+		U.x = ((e[0] * p.x + e[8] * p.z) / depth) * 0.5 + 0.5;
+		U.y = ((e[5] * p.y + e[9] * p.z) / depth) * 0.5 + 0.5;
+		U.z = Math.min(0.23, Math.max(0.11, (s.r * e[5]) / depth / 2));
+		U.w = s.str * s.k;
+	}
+
+	/**
+	 * Sinematik ışık havuzu (yakın çekim: saldırı, kuşatma, fetih): dünya noktası ve yarıçapı. Aydınlık
+	 * iller havuzun içinde gündüz renginde kalır, ekran kenarına doğru geceye karışır. null → kapalı
+	 * (gece bitince kendiliğinden kapanır).
+	 */
+	focus(x, y = 0, z = 0, r = 4, k = 0.95) {
+		const s = this.spot;
+		if (x == null) {
+			s.on = false;
+			return;
+		}
+		s.on = true;
+		s.x = x;
+		s.y = y;
+		s.z = z;
+		s.r = r;
+		s.str = k;
+	}
+
+	/** Kare başına: kale konumları, ışık havuzu ve görünürlük (gündüz hiç çizilmez). */
+	update(dt = 0, camera = null) {
 		const night = this.G.uNight.value.x;
+		this._spot(dt, camera);
 		this.mesh.visible = night > 0.002 || this.warm;
 		for (let i = 0; i < this.castleU.length; i++) {
 			const k = this.castles[i];
