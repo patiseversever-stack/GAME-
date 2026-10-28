@@ -76,6 +76,23 @@ yenisini başlat. Görsel işler Opus high, diğerleri Sonnet high.
 **Test:** `node build.mjs --dev`, sonra tam maç akışı için
 `/tmp/.../scratchpad/int/flow.mjs` örneği (otomatik insan oyuncu), ekran görüntüsü için `tools/shot.mjs`.
 
+## Kullanıcının son istekleri (28 Ekim, en öncelikli)
+
+1. **Gece odağı (Gündönümü'ndeki gece geçişi gibi):** il seçme sırası gelince bütün sahne ~0,6 sn'de koyu, premium
+   geceye geçer (gri karartma değil: koyu mavi-mor, ay ışığı, hafif kenar parlaması). Yalnızca seçilebilir iller
+   gündüz renginde, canlı, yükselmiş, parlak altın çerçeveli ve adlı kalır. Seçim bitince gündüze dönülür.
+2. **Kamera:** insanın sırasında seçilebilir illerin hepsini kadraja alır. Bot seçerken de kamera ona gider, seçenekleri
+   gecede parlar, sonra seçimi ve boya dalgası. Saldırı ve soru sırasında yalnız saldıran il ile hedef aydınlık.
+   Fetihte boya dalgası gecede oynar, sonra gündüz. Geçişler kısa (maç 5–7 dk).
+3. **Renkler:** sahip renkleri güçlü Supercell renkleri olmalı (kırmızı pembe görünmemeli). Seçilebilir vurgu parlak altın,
+   soluk sarı değil.
+4. **İl adları:** 81 ad birden yazılıp üst üste biniyordu (rezalet). Uzaktan yalnız büyük şehirler (ya da hiç),
+   yaklaştıkça önem ve ekran boyuna göre artar, asla çakışmaz, yumuşak geçiş. Seçimde yalnız seçilebilirler,
+   saldırıda yalnız saldıran ve hedef.
+
+Bu dört iş sinema ajanına verildi (dal `worktree-agent-a984ef4b5f136efd8`). Yeni oturumda bu dal birleştirilmemişse
+bu işleri yeniden yap. Gündönümü referansı: `game/Gundonumu.html` (varsa).
+
 ## Sıradaki büyük iş (v0.2: "milyon dolarlık" geçiş)
 
 ### 1. Harita sanatı (Opus xhigh)
