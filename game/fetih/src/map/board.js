@@ -304,7 +304,9 @@ void main() {
 	float selL = sel * sp;
 	c *= 1.0 + selL * (0.12 + 0.04 * uNight.x);
 	// gece adası: kalkık ilin duvarı alttan altın ışıkla yanar
-	if (skirt) c += gold * selL * uNight.x * exp(-vDepth * 3.5) * (0.6 + 0.3 * pulse);
+	// gece adasının duvarı gölgede kalır (yakın çekimde soluk, çizgili falez parlamasın), üst kenarı altın ışıkla yanar
+	if (skirt) c *= mix(1.0, 0.42, uNight.x * sel * smoothstep(0.03, 0.12, vDepth));
+	if (skirt) c += gold * selL * uNight.x * exp(-vDepth * 7.0) * (0.3 + 0.15 * pulse);
 	float bk = 0.45 + 0.55 * sp; // dış hat havuz dışında da seçilir (daha sönük)
 	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * bk * (0.8 + 0.2 * pulse));
 	c = mix(c, mix(vec3(1.0, 0.96, 0.82), vec3(1.0, 0.8, 0.42), uNight.x) * (1.6 + 0.6 * pulse), selCore * bk * mix(0.8, 0.6, uNight.x));
@@ -318,7 +320,7 @@ void main() {
 	c += gold * halo * sp * mix(0.9, 0.55, uNight.x) * (0.55 + 0.45 * pulse);
 	// eski parlama (fx): nabız gibi ışır (gecede ve havuz dışında kısık: hedef il patlamasın)
 	vec3 gcol = ownedK > 0.5 ? ownCol * 1.4 + 0.1 : vec3(1.0, 0.88, 0.55);
-	c += gcol * glow * sp * (1.0 - 0.5 * uNight.x) * (0.35 + 0.35 * sin(uTime * 6.0 + vPid * 0.7)) * (0.35 + lineAA(d, wSel, px) * 0.9);
+	c += gcol * glow * sp * (1.0 - 0.5 * uNight.x) * (skirt ? 0.2 : 1.0) * (0.35 + 0.35 * sin(uTime * 6.0 + vPid * 0.7)) * (0.35 + lineAA(d, wSel, px) * 0.9);
 	// boya dalgası cephesi
 	c += (ownCol * 1.8 + vec3(0.9)) * rim * (skirt ? 0.3 : 1.0);
 
@@ -458,6 +460,7 @@ void main() {
 		n += vec3(0.16, 0.2, 0.34) * pow(mc, 14.0) * 0.3;
 		float m = max(dot(R, N_MOON), 0.0);
 		n += vec3(0.8, 0.84, 1.0) * pow(m, 700.0) * 1.6 * (0.3 + 0.7 * smoothstep(0.6, 0.95, mc));
+		n -= vec3(1.5, 1.55, 1.7) * smoothstep(0.99935, 0.99965, mc) * 0.8 * fr; // ay diski yansıması leke gibi durmasın
 		n += vec3(0.1, 0.16, 0.26) * clamp(foam, 0.0, 1.0) * 0.05;
 		c = mix(c, n, uNight.x);
 		gRelit = 1.0;
@@ -577,7 +580,7 @@ export class Board {
 		this._nightOff = -1;
 		this._np = 0; // gece geçişinin doğrusal ilerlemesi (0..1)
 		this._rising = false;
-		this.nightIn = 0.95; // gündüz → gece (sn)
+		this.nightIn = 0.8; // gündüz → gece (sn)
 		this.nightOut = 1.1; // gece → şafak → gündüz (sn)
 		this.onNight = null; // (on) => {}: gece başlarken/biterken (sinema kamerayı kaldırır)
 		this._c = new THREE.Color();
@@ -777,8 +780,9 @@ export class Board {
 	 * hatla parlar. off → kısa bir beklemeden sonra (hold sn; hemen ardından gelen yeni seçim titretmesin)
 	 * gündüze döner.
 	 */
-	night(on, list = null, { hold = 0.3 } = {}) {
+	night(on, list = null, { hold = 0.3, fast = false } = {}) {
 		if (on) {
+			this._fastIn = fast; // hızlı düşüş (gündüzden doğrudan bir ana kesme)
 			this._nightOff = -1;
 			this.selTo.fill(0);
 			if (list) for (const i of list) this.selTo[i] = 1;
@@ -831,7 +835,7 @@ export class Board {
 			const up = to > this._np;
 			if (up) this._rising = true;
 			else if (to < this._np) this._rising = false;
-			const step = dt / (up ? this.nightIn : this.nightOut);
+			const step = dt / (up ? (this._fastIn ? 0.35 : this.nightIn) : this.nightOut);
 			this._np = up ? Math.min(to, this._np + step) : Math.max(to, this._np - step);
 			const p = this._np;
 			nu.x = p * p * (3 - 2 * p);

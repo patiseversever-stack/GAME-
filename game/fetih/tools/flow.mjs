@@ -52,6 +52,14 @@ await page.clock.pauseAt(Date.now() + 1000);
 
 const cfg = { mode: opt.mode || 'ffa3', length: opt.length || 'quick', region: opt.region || 'ege', bot: 'er', seed: Number(opt.seed || 7), seq: 'seq' in opt };
 await page.evaluate((cfg) => {
+	// tekrarlanabilir akış: sayfanın Math.random'ı tohumdan (aynı tohum → aynı seçimler ve cevaplar)
+	let rs = (cfg.seed * 2654435761) | 0;
+	Math.random = () => {
+		rs = (rs + 0x6d2b79f5) | 0;
+		let t = Math.imul(rs ^ (rs >>> 15), 1 | rs);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
 	const app = window.__fl.app;
 	const ui = app.ui;
 	app.stop();

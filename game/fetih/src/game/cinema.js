@@ -88,6 +88,7 @@ export class Cinema {
 			b.cues?.show([i], p.i, { attack });
 			ui.caption?.(`${p.name} · ${attack ? 'SALDIRI' : 'YAYILMA'}`, b.provinces[i].name, attack ? 'SAVAŞ BAŞLIYOR' : 'YENİ TOPRAK', { p, tone: attack ? 'red' : '' });
 			await bot(m, p, i);
+			b.cues?.hide(); // seçim bitti: oklar söner (fetih ve düello oksuz)
 		};
 		const q = ui.question.bind(ui);
 		ui.question = (m, ctx) => {
@@ -446,11 +447,13 @@ export class Cinema {
 		} else cam.shake = 0.5;
 		app.sfx?.play?.('conquer');
 		// boya dalgası her zaman gecede (harita sorusundan gündüzde gelinse bile)
-		b.night?.(true, [i]);
+		b.night?.(true, [i], { fast: (b.nightAmt ?? 1) < 0.5 });
 		b.showLabels?.([i]);
 		app.ui?.caption?.('FETİH', b.provinces[i].name, `${p.name} topraklarına katıldı`, { p });
 		this._spot(c, 3.6);
-		if (cam.shot) cam.shot(c.x, c.z + 0.6, { dist: 30, pitch: 0.86, yaw: cam.yaw * 0.5, dur: 1.2, arc: 0 });
+		// uzaktan geliniyorsa (harita sorusundan) hızlı kesme: boya dalgası kaçmasın
+		const far = cam.target ? Math.hypot(cam.target.x - c.x, cam.target.z - c.z) > 8 : false;
+		if (cam.shot) cam.shot(c.x, c.z + 0.6, { dist: 30, pitch: 0.86, yaw: cam.yaw * 0.5, dur: far ? 0.55 : 1.2, arc: far ? 2 : 0 });
 		await this.beat(1400);
 		b.fx(i, 0, 0);
 		// şafak: gece sıcak bir ufukla aydınlanır, kamera hafifçe geri çekilir; sonra sıradaki tur
