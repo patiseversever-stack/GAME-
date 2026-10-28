@@ -61,7 +61,7 @@ Kaldığımız yer burası. Yeni oturumda önce bu dosyayı oku.
 | Harita (bitti) | SDF il sınırları, `select()`, `paint()` boya dalgası, 3D il adları (`showLabels`), kabartma arazi, 42 göl, 19 nehir, 23 ünlü yapı, Osmanlı kalesi (3 kule yıkılır), bulut, tilt-shift (q≥1). q0: 21 çağrı / 145k üçgen, q2: 22 / 236k. |
 | Arayüz (bitti) | Düello sahnesi, yeni soru kartı, çark, HUD, faz afişleri, menüler, komutan seçimi, bitiş kürsüsü, dikey + yatay. Türkçe harf düzeltmesi (`src/ui/trglyphs.js`). |
 | Bağlama (bitti) | Fetihte boya dalgası ortak sınırdan; maç dışı iller kararır; kale araziye oturur. 1'e 1 maç baştan sona hatasız (133 sn). |
-| İçerik (yarım) | `src/data/q/`: 520 soru (tarih 180, coğrafya 200, spor 140). Bilim, sanat, genel kültür boş. **Henüz oyuna bağlı değil.** |
+| İçerik (bitti) | `src/data/q/`: 1.000 doğrulanmış soru (tarih 180, coğrafya 200, spor 140, bilim 160, sanat 140, genel kültür 180). `src/data/bank.js` ile oyuna bağlı; şimdilik yalnız tanımlı tipler (choice, tf, num, pin, hang ≈ 750 soru) çıkar, diğer tipler soru tipleri birleşince açılır. |
 | Sinema/efekt | Başlanmadı (ordu yürüyüşü, mancınık, kule enkazı, havai fişek, açılış uçuşu). |
 | Soru tipleri (yarım, birleştirilmedi) | Dal `worktree-agent-af31e996c3a1eb880`: order, match, hilo, odd, emoji, proverb, riddle, anagram, cross, img, blitz, `TYPE_WEIGHTS`. Örnek soru ve test yok. |
 | Oynanış (yarım, birleştirilmedi) | Dal `worktree-agent-a35eedab62b33d177`: komutanlar, jokerler, ilerleme, soru bankası, sefer, ağ katmanı. `sim.mjs` ve denge yok. |

@@ -6,7 +6,7 @@
 
 import { TYPES } from '../quiz/types.js';
 import { CATS, WHEEL } from '../quiz/categories.js';
-import { QUESTIONS } from '../data/questions.js';
+import { BANK as QUESTIONS } from '../data/bank.js';
 import { rng } from '../core/math.js';
 
 export const MODES = {

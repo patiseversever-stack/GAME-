@@ -89,7 +89,7 @@ export default [
 	{ id: "bil-nu-003", cat: "bilim", diff: 2, type: "num", q: "Yetişkin bir insanın tam diş sayısı kaçtır?", ans: 32, unit: "diş", min: 16, max: 48 },
 	{ id: "bil-nu-004", cat: "bilim", diff: 2, type: "num", q: "Yetişkin bir insan iskeletinde yaklaşık kaç kemik vardır?", ans: 206, unit: "kemik", min: 100, max: 400 },
 	{ id: "bil-nu-005", cat: "bilim", diff: 2, type: "num", q: "Işığın boşluktaki hızı yaklaşık kaç km/sn'dir?", ans: 299792, unit: "km/sn", min: 100000, max: 1000000 },
-	{ id: "bil-nu-006", cat: "bilim", diff: 3, type: "num", q: "Periyodik tabloda şu an kaç element yer alır?", ans: 118, unit: "element", min: 80, max: 150 },
+	{ id: "bil-nu-006", cat: "bilim", diff: 3, type: "num", q: "2016'da son dört element adlandırıldığında periyodik tabloda kaç element vardı?", ans: 118, unit: "element", min: 80, max: 150 },
 	{ id: "bil-nu-007", cat: "bilim", diff: 1, type: "num", q: "Saf su deniz seviyesinde kaç °C'de donar?", ans: 0, unit: "°C", min: -50, max: 50 },
 	{ id: "bil-nu-008", cat: "bilim", diff: 2, type: "num", q: "İnsan hücresinde kaç kromozom bulunur?", ans: 46, unit: "kromozom", min: 10, max: 100 },
 	{ id: "bil-nu-009", cat: "bilim", diff: 2, type: "num", q: "Karbon elementinin atom numarası kaçtır?", ans: 6, unit: "", min: 1, max: 30 },
