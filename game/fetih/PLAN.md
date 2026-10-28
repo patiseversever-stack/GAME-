@@ -94,6 +94,15 @@ yenisini başlat. Yeni ajanların hepsi Sonnet, en yüksek efor (max).
 **Durum: dördü de yapıldı ve birleştirildi** (`board.night()`, akıllı `showLabels('all')`, yeni oyuncu renkleri).
 Kullanıcı telefonda deneyip geri bildirim verecek; ona göre ince ayar yapılacak. Gündönümü referansı: `game/Gundonumu.html` (varsa).
 
+### Kullanıcı geri bildirimi v0.4 (28 Ekim, sürüm 9): EN ÖNCELİKLİ
+
+> "Ben buradan bir şey anlamıyorum: saldıracak mı, hangisi saldıracak, hangisi benim? Çok fosforlu ve tüm haritada
+> netlik sıkıntısı var." (`ref/v04_saldiri_anlasilmiyor.jpg`, saldırı hedefi seçimi)
+
+Teşhis: kendi toprağı gecede koyu kahve, "benim" okunmuyor; altın kenar ışığı sarı sahiplerle aynı renk, neon yığın;
+oklar altın (sarıya karışıyor) ve nereden çıktığı belirsiz; hedefin kime ait olduğu yazmıyor; tilt-shift ve karanlık yüzünden
+harita bulanık. Seçim istemi kalınlaştırıldı (sürüm 9), asıl harita okunurluğu sırada.
+
 ### Kullanıcı geri bildirimi v0.3 (28 Ekim, telefonda sürüm 7): EN ÖNCELİKLİ
 
 > "Çok karışık hissettiriyor, o sinematiklik yok. Saldıracağım yerler anlaşılmıyor. Karartmalar az daha siyahımsı olmalı.
