@@ -169,9 +169,10 @@ vec3 provDim(vec3 c, float sel, float dim) {
 // Haritanın çevresi yumuşak bir pusa gömülür: göz Türkiye'de kalır, uzak kara parçalarının kesik
 // kenarları görünmez (mobil oyun haritalarındaki bulut çerçevesi gibi).
 export const MIST = /* glsl */ `
+uniform sampler2D uNoise;
 vec3 edgeMist(vec3 c, vec3 w) {
-	vec2 q = w.xz * 0.07 + vec2(uTime * 0.012, 0.0);
-	float n = vnoise(q) * 0.65 + vnoise(q * 2.7 + 5.0) * 0.35;
+	vec2 q = w.xz + vec2(uTime * 0.17, 0.0);
+	float n = texture(uNoise, q * 0.07 / 8.0).a * 0.65 + texture(uNoise, q * 0.19 / 16.0 + 0.3).r * 0.35;
 	float e = length(w.xz / vec2(68.0, 36.0)) + (n - 0.5) * 0.22;
 	float m = smoothstep(0.97, 1.32, e);
 	// bulut denizi: tepeleri beyaz, aralar açık gök mavisi

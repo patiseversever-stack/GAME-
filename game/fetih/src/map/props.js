@@ -112,6 +112,11 @@ function makeGeo(kind) {
 	return mergeSimple([trunk, top]);
 }
 
+function proxyGeo(kind) {
+	const g = kind === 0 ? new THREE.ConeGeometry(0.2, 0.62, 5, 1, true).translate(0, 0.38, 0) : new THREE.OctahedronGeometry(0.21, 0).translate(0, 0.34, 0);
+	return g.index ? g.toNonIndexed() : g;
+}
+
 function mergeSimple(list) {
 	const parts = list.map(strip);
 	const pos = [];
@@ -122,7 +127,7 @@ function mergeSimple(list) {
 	return out;
 }
 
-const TREES = [2000, 1400, 750]; // kademe 2, 1, 0 (ters sıra)
+const TREES = [1850, 1350, 700]; // kademe 2, 1, 0 (ters sıra)
 
 export class Props {
 	constructor(G, tier, board) {
@@ -131,6 +136,16 @@ export class Props {
 		const R = rng(99);
 		const taps = String(tier.shadowTaps);
 		const relief = board.relief;
+		// önce ünlü yapılar: ağaçlar onların ve il merkezlerinin (kale yeri) çevresinde bitmesin
+		this.landmarks = new Landmarks(G, tier, board);
+		const clear = [
+			...this.landmarks.sites.map((s) => [s.x, s.z, 0.95]),
+			...board.provinces.map((p) => [p.x, p.z, 1.6]),
+		];
+		const blocked = (x, z) => {
+			for (const [cx, cz, r] of clear) if ((x - cx) * (x - cx) + (z - cz) * (z - cz) < r * r) return true;
+			return false;
+		};
 		const lists = [[], []];
 		const budget = TREES[2 - tier.id] ?? 1000;
 		// orman kuşaklarında titreşimli ızgara: olasılık = orman yoğunluğu
@@ -144,9 +159,10 @@ export class Props {
 				const la = relief.bil(relief.La, jx, jy);
 				const gr = relief.bil(relief.Gr, jx, jy);
 				// orman yoksa yeşil ovalarda seyrek tek tük ağaç
-				const pr = fo > 0.08 ? Math.pow(fo, 1.15) : gr > 0.6 ? 0.025 : 0;
+				const pr = fo > 0.08 ? Math.min(1, Math.pow(fo, 1.15) * 1.7) : gr > 0.6 ? 0.03 : 0;
 				if (la > 0.05 || pr <= 0) continue;
 				if (R() > pr) continue;
+				if (blocked(jx, -jy)) continue;
 				cand.push([jx, jy, fo]);
 			}
 		// bütçeye indir (eşit seyreltme)
@@ -180,13 +196,18 @@ export class Props {
 			const m = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps).replace('__KIND__', String(k)), uniforms }));
 			m.frustumCulled = false;
 			this.group.add(m);
-			const sm = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms }));
+			// gölge için çok sade vekil (gölge haritasında ağaç zaten bir leke): 5–8 üçgen
+			const sg = new THREE.InstancedBufferGeometry();
+			sg.setAttribute('position', proxyGeo(k).getAttribute('position'));
+			sg.setAttribute('iP', g.getAttribute('iP'));
+			sg.setAttribute('iQ', g.getAttribute('iQ'));
+			sg.instanceCount = list.length;
+			const sm = new THREE.Mesh(sg, new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms, side: THREE.DoubleSide }));
 			sm.frustumCulled = false;
 			this.casters.push(sm);
 		}
 		this.counts = lists.map((l) => l.length);
 		// ünlü yapılar
-		this.landmarks = new Landmarks(G, tier, board);
 		this.group.add(this.landmarks.mesh);
 		this.casters.push(this.landmarks.caster);
 		this.counts.push(this.landmarks.count);

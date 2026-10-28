@@ -83,6 +83,7 @@ ${FINISH}
 ${PROV}
 uniform sampler2D uBorder;
 uniform sampler2D uWater;
+uniform sampler2D uNoise;
 uniform vec4 uFBox;
 uniform vec2 uFRes;
 varying vec3 vW;
@@ -102,9 +103,10 @@ float lineAA(float d, float w, float px) {
 vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float snowK, out float rockK) {
 	float e = (h - ${f(BASE)}) / ${f(VS)};
 	vec2 q = w.xz;
-	float n1 = vnoise(q * 0.33);
-	float n2 = vnoise(q * 1.6 + 3.0);
-	float n3 = vnoise(q * 5.5 - 7.0);
+	vec4 f1 = texture(uNoise, q / 48.0);
+	float n1 = f1.r;
+	float n2 = f1.g;
+	float n3 = texture(uNoise, q / 12.0 + 0.5).g;
 	float slope = 1.0 - N.y;
 	float green = clamp(bio.y + (n1 - 0.5) * 0.3, 0.0, 1.0);
 	vec3 dry = mix(${C('#c7a25f')}, ${C('#dcc285')}, n2);
@@ -159,6 +161,7 @@ void main() {
 	float nb = floor(texelFetch(uBorder, ivec2(uv * uFRes), 0).g * 255.0 + 0.5);
 	vec4 fw = texture(uWater, uv);
 	float coast = fw.r;
+	vec4 f1 = texture(uNoise, vW.xz / 48.0);
 
 	// --- boya dalgası: dalga içinde yeni sahip, dışında eski
 	float dO = distance(vW.xz, vPaint.xy);
@@ -221,7 +224,7 @@ void main() {
 	if (skirt) {
 		// il duvarı: toprak katmanları (pasta dilimi), kıyıda falez
 		float dep = vDepth;
-		float n = vnoise(vec2((vW.x - vW.z) * 2.0, dep * 5.0));
+		float n = texture(uNoise, vec2((vW.x - vW.z) * 2.0, dep * 5.0) / 64.0).g;
 		vec3 soil = mix(${C('#7b4a2b')}, ${C('#a06838')}, step(0.5, fract(dep * 3.4 + n * 0.5)));
 		soil = mix(soil, ${C('#6c625b')}, smoothstep(0.55, 1.0, dep));
 		vec3 cliff = mix(${C('#c9b495')}, ${C('#a8927a')}, step(0.5, fract(vW.y * 9.0 + n * 0.6)));
@@ -238,13 +241,12 @@ void main() {
 	vec3 c;
 	if (water > 0.01) {
 		// su yüzeyi: dalgacık, gök yansıması, güneş pırıltısı
-		vec2 wq = vW.xz * 3.0;
-		vec2 g = vec2(vnoise(wq + uTime * 0.4), vnoise(wq * 1.3 - uTime * 0.33)) - 0.5;
+		vec2 g = vec2(texture(uNoise, vW.xz * 3.0 / 64.0 + uTime * 0.006).g, texture(uNoise, vW.xz * 3.9 / 64.0 - uTime * 0.005 + 0.4).g) - 0.5;
 		vec3 WN = normalize(vec3(g.x * 0.25, 1.0, g.y * 0.25));
 		vec3 deep = mix(${C('#1d6db0')}, ${C('#2f8fc4')}, river);
 		vec3 shal = ${C('#4cc6d6')};
 		vec3 wc = mix(shal, deep, smoothstep(0.0, 0.35, -sd) * lake + river * 0.5);
-		wc = mix(wc, mix(${C('#f2e9ea')}, ${C('#e7b9c4')}, vnoise(vW.xz * 0.8)), salt * 0.85);
+		wc = mix(wc, mix(${C('#f2e9ea')}, ${C('#e7b9c4')}, f1.b), salt * 0.85);
 		float ndv = clamp(dot(WN, V), 0.0, 1.0);
 		float fres = 0.04 + 0.96 * pow(1.0 - ndv, 5.0);
 		vec3 wcol = wc * (skyAmbient(WN) * 0.9 + uSunCol * 0.32 * sh);
@@ -281,7 +283,7 @@ void main() {
 	c = provDim(c, max(sel, halo * 0.8), vFx.w);
 #if TIER > 0
 	// bulut gölgeleri
-	float cs = smoothstep(0.58, 0.82, vnoise(vW.xz * 0.05 + uTime * vec2(0.015, 0.006)));
+	float cs = smoothstep(0.58, 0.82, texture(uNoise, vW.xz / 160.0 + uTime * vec2(0.0019, 0.0008)).a);
 	c *= 1.0 - cs * 0.16;
 #endif
 	c = applyFog(c, vW);
@@ -325,13 +327,13 @@ varying vec3 vW;
 varying vec3 vN;
 void main() {
 	// alçı kabartma: yumuşak tepeler (sahte normal)
-	vec2 nq = vW.xz * 0.32;
-	float h0 = vnoise(nq);
-	vec3 N = normalize(vec3((h0 - vnoise(nq + vec2(0.2, 0.0))) * 1.6, 1.0, (h0 - vnoise(nq + vec2(0.0, 0.2))) * 1.6));
+	vec2 nq = vW.xz * 0.32 / 16.0;
+	float h0 = texture(uNoise, nq).r;
+	vec3 N = normalize(vec3((h0 - texture(uNoise, nq + vec2(0.0125, 0.0)).r) * 1.6, 1.0, (h0 - texture(uNoise, nq + vec2(0.0, 0.0125)).r) * 1.6));
 	vec2 uv = (vW.xz - uFBox.xy) * uFBox.zw;
 	float coast = (uv.x > 0.0 && uv.y > 0.0 && uv.x < 1.0 && uv.y < 1.0) ? texture(uWater, uv).r : 0.0;
-	float n = vnoise(vW.xz * 0.5);
-	float n2 = vnoise(vW.xz * 2.3);
+	float n = texture(uNoise, vW.xz * 0.5 / 16.0).r;
+	float n2 = texture(uNoise, vW.xz * 2.3 / 64.0).g;
 	vec3 alb = mix(${C('#c6c0b1')}, ${C('#d3cdbd')}, n) * (0.94 + 0.08 * n2);
 	alb = mix(alb, ${C('#e6dcc4')}, smoothstep(0.93, 0.99, coast));
 	alb = mix(${C('#9d8f7c')}, alb, smoothstep(0.6, 0.95, N.y));
@@ -373,12 +375,12 @@ void main() {
 	g += vec2(0.6, 0.8) * cos(dot(p, vec2(0.6, 0.8)) * 0.9 + t * 1.2) * 0.05;
 	g += vec2(-0.8, 0.5) * cos(dot(p, vec2(-0.8, 0.5)) * 1.7 + t * 1.7) * 0.035;
 #if TIER > 0
-	g += (vec2(vnoise(p * 1.1 + t * 0.35), vnoise(p * 1.1 - t * 0.3)) - 0.5) * 0.12;
+	g += (vec2(texture(uNoise, p * 1.1 / 64.0 + t * 0.0055).g, texture(uNoise, p * 1.1 / 64.0 - t * 0.0047 + 0.5).g) - 0.5) * 0.12;
 #endif
 	vec3 N = normalize(vec3(-g.x, 1.0, -g.y));
 	vec3 V = normalize(cameraPosition - vW);
 	// derinlik: kıyıda turkuaz sığlık, açıkta lacivert
-	vec3 deep = uSeaDeep * mix(0.93, 1.03, vnoise(p * 0.04));
+	vec3 deep = uSeaDeep * mix(0.93, 1.03, texture(uNoise, p * 0.04 / 8.0).a);
 	vec3 base = mix(deep, uSea, smoothstep(2.2, 0.3, dist));
 	base = mix(base, ${C('#62e3d4')}, smoothstep(0.32, 0.02, dist) * 0.75);
 	float ndv = clamp(dot(N, V), 0.0, 1.0);
@@ -389,9 +391,9 @@ void main() {
 	c += uSunCol * pow(max(dot(N, H), 0.0), 320.0) * 2.4;
 	// kıyı köpüğü: kıyıya paralel nefes alan çizgiler + kıyı çizgisinde beyaz yaka
 	// açık denizde ağır kayan ince dalga çizgileri
-	float wl = smoothstep(0.985, 1.0, sin(dot(p, vec2(0.42, 0.91)) * 1.1 + vnoise(p * 0.22) * 9.0 + t * 0.5)) * smoothstep(0.8, 2.6, dist) * vnoise(p * 0.15 + 4.0);
+	float wl = smoothstep(0.985, 1.0, sin(dot(p, vec2(0.42, 0.91)) * 1.1 + texture(uNoise, p * 0.22 / 16.0).r * 9.0 + t * 0.5)) * smoothstep(0.8, 2.6, dist) * texture(uNoise, p * 0.15 / 8.0 + 0.3).a;
 	c += uSunCol * wl * 0.018;
-	float wave = sin(dist * 26.0 - t * 1.8 + vnoise(p * 0.8) * 5.0) * 0.5 + 0.5;
+	float wave = sin(dist * 26.0 - t * 1.8 + texture(uNoise, p * 0.8 / 32.0).b * 5.0) * 0.5 + 0.5;
 	float foam = smoothstep(0.35, 0.08, dist) * smoothstep(0.72, 0.98, wave) * 0.55 + smoothstep(0.07, 0.015, dist);
 	c = mix(c, vec3(1.0) * (uSkyTop + uSunCol * 0.32), clamp(foam, 0.0, 1.0) * 0.82);
 	c *= 1.0 - 0.15 * uSelOn;
@@ -429,7 +431,11 @@ function edgeDist(x, y, flat) {
 	return md;
 }
 
-const easeOut = (t) => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
+// boya dalgası cephesi: hızlı çıkış ama cephe il boyunca görünür kalsın
+const waveEase = (t) => {
+	const u = Math.min(1, Math.max(0, t));
+	return u * (2 - u) * 0.85 + u * 0.15;
+};
 
 // ------------------------------------------------------------------ harita
 
@@ -534,7 +540,7 @@ export class Board {
 		this.group.add(this.mesh);
 		// gölge: kaba kabartma (yalnızca yüzey), biraz alçaltılmış (kendi gölgesi kirlenmesin)
 		// q=0: harita gölge yapmaz (yalnızca ağaç, yapı ve kaleler), gölge geçişi hafif kalsın
-		const sbuilt = tier.id === 0 ? { geometry: emptyGeo(), triangles: 0 } : buildBoardGeometry(this.provinces, this.relief, 1.0, { skirts: false });
+		const sbuilt = tier.id === 0 ? { geometry: emptyGeo(), triangles: 0 } : buildBoardGeometry(this.provinces, this.relief, 1.3, { skirts: false });
 		this.shadowGeoStats = { triangles: sbuilt.triangles };
 		this.shadowMesh = new THREE.Mesh(
 			sbuilt.geometry,
@@ -638,7 +644,7 @@ export class Board {
 		w.on = true;
 		w.t = 0;
 		w.maxR = maxR + 0.3;
-		w.dur = Math.min(1.35, Math.max(0.65, 0.45 + maxR * 0.07));
+		w.dur = Math.min(1.6, Math.max(0.85, 0.6 + maxR * 0.09));
 		w.flash = 1;
 		w.ox = ox;
 		w.oz = oz;
@@ -727,7 +733,7 @@ export class Board {
 				w.t += dt;
 				const o = (2 * N + i) * 4;
 				const u = w.t / w.dur;
-				S[o + 2] = w.maxR * easeOut(u) ;
+				S[o + 2] = w.maxR * waveEase(u);
 				S[o + 3] = u < 1 ? 1 : Math.max(0, 1 - (u - 1) * 3);
 				if (u >= 1.35) {
 					w.on = false;
