@@ -6,7 +6,7 @@
 // merkezden uzağa itilir.
 
 import * as THREE from 'three';
-import { COMMON, SHADOW, LIGHT, FINISH, PROV } from '../gfx/shaderlib.js';
+import { COMMON, SHADOW, LIGHT, FINISH, PROV, glslColor as C } from '../gfx/shaderlib.js';
 import { Kit, archShape, facadeShape } from '../gfx/kit.js';
 
 const VS = /* glsl */ `
@@ -59,7 +59,16 @@ void main() {
 	}
 	float sh = shadowAt(vW, N);
 	vec3 V = normalize(cameraPosition - vW);
+	gLit = vSel.x;
 	vec3 c = shade(alb, N, V, 1.0, sh, gloss, 0.55);
+	// gece: kapı, pencere ve kemer boşlukları (koyu taş rengi) içeriden sıcak ışıkla yanar
+	float nk = nightK();
+	if (nk > 0.001) {
+		float win = 1.0 - smoothstep(0.004, 0.02, distance(alb, ${C('#3a2c25')}));
+		c += N_WARM * win * nk * (2.4 + 0.4 * sin(uTime * 3.1 + vW.x * 9.0));
+		// yapının dibi sıcak sokak ışığında
+		c += N_WARM * alb * nk * 0.5 * exp(-max(vW.y - 0.1, 0.0) * 2.2) * smoothstep(-0.2, 0.4, N.y + 0.3);
+	}
 	c = provDim(c, vSel.x, vSel.y);
 	c = applyFog(c, vW);
 	gl_FragColor = finish(c, 1.0);

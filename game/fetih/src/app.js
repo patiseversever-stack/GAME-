@@ -16,12 +16,13 @@ import { Board } from './map/board.js';
 import { Props } from './map/props.js';
 import { Castle } from './map/castle.js';
 import { MapCamera } from './game/camera.js';
-import { COMMON, FINISH } from './gfx/shaderlib.js';
+import { COMMON, LIGHT, FINISH } from './gfx/shaderlib.js';
 import { Cinema } from './game/cinema.js';
 import { FX } from './gfx/fx.js';
 import { Match } from './game/match.js';
 import { UI } from './ui/ui.js';
 import { Sfx } from './audio/sfx.js';
+import { NightLights } from './gfx/nightlights.js';
 
 const SKY_VS = /* glsl */ `
 varying vec3 vD;
@@ -32,6 +33,7 @@ void main() {
 }`;
 const SKY_FS = /* glsl */ `
 ${COMMON}
+${LIGHT}
 ${FINISH}
 uniform vec3 uZenith, uHorizon, uSunGlow;
 varying vec3 vD;
@@ -41,6 +43,12 @@ void main() {
 	vec3 c = mix(uHorizon, uZenith, pow(h, 0.5));
 	float s = max(dot(d, uSunDir), 0.0);
 	c += uSunGlow * pow(s, 10.0) * 0.4;
+	if (uNight.z > 0.001) c += DAWN * uNight.z * exp(-h * 5.0) * 0.8;
+	// gece: mor-lacivert gök, ay, yıldızlar (gece odağında alçak çekimlerde görünür)
+	if (uNight.x > 0.001) {
+		c = mix(c, nightSky(d) + starField(d) * smoothstep(-0.05, 0.15, d.y), uNight.x);
+		gRelit = 1.0;
+	}
 	gl_FragColor = finish(c, 1.0);
 }`;
 
@@ -126,6 +134,9 @@ export class App {
 			return k;
 		});
 
+		// gece ışıkları (pencereler, ışık tozu, haleler): tek çizim, yalnızca gece odağında
+		this.nightLights = new NightLights(G, R.tier, this.board, { landmarks: this.props.landmarks.sites, castles: this.castles, clouds: this.board.clouds });
+		this.scene.add(this.nightLights.mesh);
 		this.playerColors = PLAYER_COLORS;
 		this.fx = new FX(G, R.tier, this);
 		this.scene.add(this.fx.group);
@@ -284,6 +295,7 @@ export class App {
 		this.board.update(dt);
 		for (const k of this.castles) if (k.group.visible) k.update(dt);
 		this.fx.update(dt);
+		this.nightLights.update(dt);
 		this.cam.update(dt);
 		if (draw) {
 			this.ui.update();

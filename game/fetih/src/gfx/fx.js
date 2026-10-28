@@ -105,9 +105,9 @@ void main() {
 		gloss = 0.3;
 	}
 	vec3 V = normalize(cameraPosition - vW);
+	gLit = 0.85; // ordu sahnenin odağı: gecede de seçilir
 	vec3 c = shade(alb, N, V, 1.0, 1.0, gloss, 0.9);
 	c = applyFog(c, vW);
-	gLit = 0.85; // ordu sahnenin odağı: gecede de seçilir
 	gl_FragColor = finish(c, 1.0);
 }`;
 
@@ -240,11 +240,11 @@ void main() {
 	vec3 N = normalize(vN);
 	vec3 V = normalize(cameraPosition - vW);
 	vec3 alb = vC;
+	gLit = 0.85;
 	vec3 c = shade(max(alb, 0.0), N, V, 1.0, 1.0, 0.05, 0.5);
 	// kızgın taş (r > 1): akkor parlar
 	c += max(vC - 1.0, 0.0) * 2.0;
 	c = applyFog(c, vW);
-	gLit = 0.85;
 	gl_FragColor = finish(c, 1.0);
 }`;
 

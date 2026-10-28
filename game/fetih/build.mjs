@@ -18,6 +18,10 @@ const FONTS = [
 	['fredoka', '500'],
 	['fredoka', '600'],
 	['fredoka', '700'],
+	// gece istemi (Gündönümü tonu): italik serif başlık, ince aralıklı harfler; latin-ext Türkçe harfleri içerir
+	['cormorant-garamond', '500-italic'],
+	['manrope', '500'],
+	['manrope', '700'],
 ];
 
 function fontFaces() {

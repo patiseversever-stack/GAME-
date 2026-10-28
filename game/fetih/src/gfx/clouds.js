@@ -48,6 +48,25 @@ void main() {
 	vec3 base = mix(vec3(0.62, 0.68, 0.86), vec3(1.0), smoothstep(-0.3, 0.6, vY));
 	vec3 c = base * (uSkyTop * 1.3 + uSunCol * 0.42 * w * w);
 	c += uSunCol * pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 3.0) * 0.18;
+	// şafak: bulutların güneşe bakan yüzü pembe-altın
+	if (uNight.z > 0.001) c += DAWN * uNight.z * (0.25 + 0.5 * w) * 0.6;
+	if (uNight.x > 0.001) {
+		// gece: ay ışığında hacimli bulut. Tepesi lavanta-gümüş, altı derin mor; kenarı ay ışığıyla
+		// parlar; altından ve aralarından sıcak altın ışık sızar (aşağıdaki şehirlerin ışığı gibi)
+		float mw = clamp(dot(N, N_MOON) * 0.5 + 0.5, 0.0, 1.0);
+		float top = smoothstep(-0.3, 0.9, vY);
+		// hacim: ay tarafı gümüş-lavanta, gölge tarafı derin çivit; tombul kısımlar arasında koyu oyuklar
+		float lit = pow(mw, 3.0) * (0.3 + 0.7 * top);
+		vec3 n = mix(vec3(0.03, 0.018, 0.085), vec3(0.44, 0.4, 0.82), lit);
+		n = mix(n, vec3(0.1, 0.06, 0.24), (1.0 - lit) * 0.5 * smoothstep(0.2, -0.3, vY));
+		float ndv = clamp(dot(N, V), 0.0, 1.0);
+		n += N_RIM * pow(1.0 - ndv, 3.0) * 0.5 * (0.3 + 0.7 * mw);
+		float under = 1.0 - smoothstep(-0.38, 0.2, vY);
+		float flick = 0.65 + 0.35 * sin(vW.x * 0.9 + vW.z * 1.3 + uTime * 0.6);
+		n += N_WARM * (under * 0.9 + pow(1.0 - ndv, 4.0) * (1.0 - top) * 0.7) * flick * 0.6;
+		c = mix(c, n, uNight.x);
+		gRelit = 1.0;
+	}
 	c = applyFog(c, vW);
 	gl_FragColor = finish(c, vA);
 }`;
@@ -113,6 +132,7 @@ export class Clouds {
 			Rr[i] = R() * 6.28;
 		}
 		g.setAttribute('iP', new THREE.InstancedBufferAttribute(P, 4));
+		this.P = P; // gece ışıkları bulut arası sızıntıyı aynı konumlardan kurar
 		g.setAttribute('iR', new THREE.InstancedBufferAttribute(Rr, 1));
 		g.instanceCount = count;
 		this.mesh = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, uniforms: { ...G }, transparent: true, depthWrite: false }));

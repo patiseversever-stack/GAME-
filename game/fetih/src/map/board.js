@@ -240,6 +240,11 @@ void main() {
 	}
 
 	float sh = shadowAt(vW, N);
+	// gece odağı: seçilebilir il (ve komşuya taşan hale) gündüz ışığında kalır
+	float hw = max(0.3, 7.0 * px);
+	float halo = (1.0 - sel) * nbSel * exp(-d / hw) * uSelOn;
+	gLit = max(sel, halo * 0.8);
+	float nk = nightK();
 	vec3 c;
 	if (water > 0.01) {
 		// su yüzeyi: dalgacık, gök yansıması, güneş pırıltısı
@@ -257,21 +262,32 @@ void main() {
 		wcol += uSunCol * pow(max(dot(WN, H), 0.0), 180.0) * 1.6 * sh;
 		// kıyı köpüğü
 		wcol = mix(wcol, vec3(1.0) * (uSkyTop + uSunCol * 0.35), lineAA(abs(sd), 0.018 + lpx, lpx) * lake * 0.7);
+		if (nk > 0.001) {
+			// gece gölü: gök aynası, yıldızlar, ay parıltısı
+			vec3 R = reflect(-V, WN);
+			R.y = abs(R.y);
+			vec3 nw = mix(wc * vec3(0.05, 0.06, 0.16), nightSky(R) + starField(normalize(vec3(R.x, R.y * 1.02, R.z))) * 0.8, 0.7);
+			nw += vec3(0.85, 0.82, 1.0) * pow(max(dot(R, N_MOON), 0.0), 220.0) * 2.5;
+			nw = mix(nw, vec3(0.08, 0.16, 0.3), lineAA(abs(sd), 0.018 + lpx, lpx) * lake * 0.3);
+			wcol = mix(wcol, nw, nk);
+		}
 		vec3 lc = shade(alb, N, V, ao, sh, gloss, 0.35);
 		c = mix(lc, wcol, water);
 	} else {
 		c = shade(alb, N, V, ao, sh, gloss, 0.35);
 	}
 
+	// gece: sahiplerin sınırları kendi renginde ışır (karanlıkta toprak okunur)
+	if (nk > 0.001) c += ownCol * (band * 0.7 + inner * 0.07) * nk * (skirt ? 0.4 : 1.0);
 	// --- seçim: altın dış hat, iç ışıltı, komşuya taşan hale
 	vec3 gold = vec3(1.0, 0.56, 0.04);
 	float wSel = max(0.11, 3.6 * px);
 	float selBand = lineAA(d, wSel, px) * sel;
 	float selCore = lineAA(d, wSel * 0.45, px) * sel;
 	float selIn = exp(-d / 0.55) * sel;
-	float hw = max(0.3, 7.0 * px);
-	float halo = (1.0 - sel) * nbSel * exp(-d / hw) * uSelOn;
-	c *= 1.0 + sel * 0.16;
+	c *= 1.0 + sel * (0.16 + 0.22 * uNight.x);
+	// gece adası: kalkık ilin duvarı alttan altın ışıkla yanar
+	if (skirt) c += gold * sel * uNight.x * exp(-vDepth * 3.5) * (1.2 + 0.5 * pulse);
 	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * (0.8 + 0.2 * pulse));
 	c = mix(c, vec3(1.0, 0.96, 0.82) * (1.6 + 0.6 * pulse), selCore * 0.8);
 	c += gold * (selIn * 0.42 * pulse + halo * 0.9 * (0.55 + 0.45 * pulse));
@@ -341,7 +357,7 @@ void main() {
 	alb = mix(${C('#9d8f7c')}, alb, smoothstep(0.6, 0.95, N.y));
 	float sh = shadowAt(vW, N);
 	vec3 c = shade(alb, N, normalize(cameraPosition - vW), 0.95, sh, 0.03, 0.2);
-	c = mix(c, uFogCol * 0.8, 0.22);
+	c = mix(c, mix(uFogCol * 0.8, N_FOG, nightK()), 0.22);
 	c = applyFog(c, vW);
 	c = edgeMist(c, vW);
 	gl_FragColor = finish(c, 1.0);
@@ -397,6 +413,25 @@ void main() {
 	float wave = sin(dist * 26.0 - t * 1.8 + texture(uNoise, p * 0.8 / 32.0).b * 5.0) * 0.5 + 0.5;
 	float foam = smoothstep(0.35, 0.08, dist) * smoothstep(0.72, 0.98, wave) * 0.55 + smoothstep(0.07, 0.015, dist);
 	c = mix(c, vec3(1.0) * (uSkyTop + uSunCol * 0.32), clamp(foam, 0.0, 1.0) * 0.82);
+	// şafak: deniz ufku ısınır
+	if (uNight.z > 0.001) c += DAWN * uNight.z * fres * 0.5;
+	if (uNight.x > 0.001) {
+		// gece denizi: durgun bir gök aynası. Mor-lacivert gök, yıldızlar (sakin normalle, titremesin),
+		// dalgacıklarda ay yolu; kıyıda soğuk ışıklı köpük (biyolüminesans)
+		vec3 R = reflect(-V, N);
+		R.y = abs(R.y);
+		vec3 Rc = reflect(-V, normalize(vec3(-g.x * 0.06, 1.0, -g.y * 0.06)));
+		Rc.y = abs(Rc.y);
+		vec3 body = mix(vec3(0.004, 0.005, 0.03), vec3(0.008, 0.03, 0.06), smoothstep(2.2, 0.3, dist));
+		float fr = 0.5 + 0.4 * pow(1.0 - ndv, 3.0);
+		vec3 n = mix(body, nightSky(Rc) * 0.8, fr);
+		n += starField(Rc) * fr;
+		float m = max(dot(R, N_MOON), 0.0);
+		n += vec3(0.85, 0.82, 1.0) * pow(m, 260.0) * 3.0;
+		n += vec3(0.12, 0.5, 0.75) * clamp(foam, 0.0, 1.0) * 0.08;
+		c = mix(c, n, uNight.x);
+		gRelit = 1.0;
+	}
 	c = applyFog(c, vW);
 	c = edgeMist(c, vW);
 	gl_FragColor = finish(c, 1.0);
@@ -509,6 +544,11 @@ export class Board {
 		this.selOnTo = 0;
 		this.nightTo = 0;
 		this._nightOff = -1;
+		this._np = 0; // gece geçişinin doğrusal ilerlemesi (0..1)
+		this._rising = false;
+		this.nightIn = 0.95; // gündüz → gece (sn)
+		this.nightOut = 1.1; // gece → şafak → gündüz (sn)
+		this.onNight = null; // (on) => {}: gece başlarken/biterken (sinema kamerayı kaldırır)
 		this._c = new THREE.Color();
 
 		// --- alan dokuları (sınır uzaklığı, kıyı, nehir, göl)
@@ -703,6 +743,7 @@ export class Board {
 			this.selTo.fill(0);
 			if (list) for (const i of list) this.selTo[i] = 1;
 			this.selOnTo = 1;
+			if (this.nightTo < 1) this.onNight?.(true);
 			this.nightTo = 1;
 		} else if (hold <= 0) {
 			this._nightOff = -1;
@@ -713,6 +754,7 @@ export class Board {
 	_day() {
 		this.selTo.fill(0);
 		this.selOnTo = 0;
+		if (this.nightTo > 0) this.onNight?.(false);
 		this.nightTo = 0;
 	}
 
@@ -743,9 +785,18 @@ export class Board {
 		}
 		const nu = this.G.uNight?.value;
 		if (nu) {
-			const kn = 1 - Math.exp(-dt * 5.5);
-			nu.x += (this.nightTo - nu.x) * kn;
-			if (Math.abs(nu.x - this.nightTo) < 1e-3) nu.x = this.nightTo;
+			// ~1 sn sinematik geçiş: gök kararır, yıldızlar ardından tek tek belirir; dönüşte şafak
+			const to = this.nightTo;
+			const up = to > this._np;
+			if (up) this._rising = true;
+			else if (to < this._np) this._rising = false;
+			const step = dt / (up ? this.nightIn : this.nightOut);
+			this._np = up ? Math.min(to, this._np + step) : Math.max(to, this._np - step);
+			const p = this._np;
+			nu.x = p * p * (3 - 2 * p);
+			const sw = Math.min(1, Math.max(0, (p - 0.35) / 0.65));
+			nu.w = sw * sw * (3 - 2 * sw);
+			nu.z = this._rising ? 0 : Math.sin(Math.PI * Math.min(1, p * 1.15)) * 0.9 * (p > 0 ? 1 : 0);
 		}
 		const k = 1 - Math.exp(-8 * dt);
 		const N = this.count;

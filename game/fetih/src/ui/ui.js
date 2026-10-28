@@ -124,6 +124,12 @@ export class UI {
 		this.current = null;
 		this._gen = 0;
 		this.setAssets(app.hooks?.assets);
+		// gece istemi yazı tipleri ilk gecede hazır olsun (yedek yazı tipiyle bir kare görünmesin)
+		try {
+			for (const f of ["italic 500 36px 'Cormorant Garamond'", "700 11px 'Manrope'", "500 11px 'Manrope'"]) document.fonts?.load(f, 'ĞğİıŞşÇçÖöÜü');
+		} catch (e) {
+			/* yazı tipi API'si yok */
+		}
 		buildTitle(this);
 	}
 
@@ -337,11 +343,32 @@ export class UI {
 		return t;
 	}
 
-	prompt(html, { tone = '', icon = 'tap' } = {}) {
+	/**
+	 * Gece istemi (Gündönümü tonu): ince, geniş aralıklı altın üst satır, italik serif başlık, aralıklı
+	 * küçük harfli ipucu. html: `<span class="ey">…</span><b>…</b><small>…</small>`.
+	 */
+	prompt(html, { tone = '', icon = null } = {}) {
 		const p = this.$.prompt;
-		if (!html) return p.classList.remove('on');
+		if (!html) {
+			this._cap = null;
+			return p.classList.remove('on');
+		}
 		p.className = `fl-prompt ${tone} on`;
-		p.innerHTML = `<span class="pi">${ico(icon, { w: 2.4 })}</span><span class="pt">${html}</span>`;
+		p.innerHTML = `<span class="pt">${html}</span>`;
+	}
+
+	/** Gece altyazısı (bot seçimi, saldırı, fetih): üst satır, başlık, alt satır. null → kapat. */
+	caption(eyebrow, title, sub = null, { tone = '', p = null } = {}) {
+		if (this.fast) return;
+		if (eyebrow == null) {
+			if (this._cap) this.prompt(null);
+			return;
+		}
+		const key = `${eyebrow}|${title}|${sub}`;
+		if (this._cap === key) return;
+		const dot = p ? `<i class="pd" style="--pc:${p.css}"></i>` : '';
+		this.prompt(`<span class="ey">${dot}${esc(String(eyebrow).toLocaleUpperCase('tr-TR'))}</span><b>${esc(title)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}`, { tone: `cap ${tone}` });
+		this._cap = key;
 	}
 
 	// ---------------------------------------------------------------- il seçimi
@@ -356,9 +383,10 @@ export class UI {
 		const attack = options.some((i) => b.provinces[i].owner >= 0 && b.provinces[i].owner !== me.i);
 		const adj = !attack && options.some((i) => (m.neighbors?.(i) || []).some((j) => b.provinces[j].owner === me.i));
 		this._selOn(m, options, attack);
-		const head = esc(String(text || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')).toLocaleUpperCase('tr-TR'));
-		const hint = attack ? 'Parlayan sınır illerinden birine dokun' : adj ? 'Topraklarına komşu parlayan illerden birini al' : 'Parlayan boş illerden birini al';
-		this.prompt(`<b>${head}</b><small>${hint}</small>`, { tone: attack ? 'red' : '' });
+		const head = esc(String(text || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')));
+		const hint = attack ? 'Işıklı sınır illerinden birine dokun' : adj ? 'Topraklarına komşu ışıklı illerden birini al' : 'Işıklı boş illerden birini al';
+		const ey = attack ? 'FETİH · SIRA SENDE' : 'YAYILMA · SIRA SENDE';
+		this.prompt(`<span class="ey">${ey}</span><b>${head}</b><small>${hint}</small>`, { tone: attack ? 'red' : '' });
 		app.cam.fit(app.boundsOf(m.map), { pitch: 0.98 });
 		const pick = await new Promise((res) => {
 			this._pickRes = res;

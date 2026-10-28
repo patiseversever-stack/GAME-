@@ -47,7 +47,7 @@ export class MapCamera {
 		this.bounds = null; // son sığdırılan kutu
 		this.limit = null; // kullanıcı kaydırmasının sınırı (maç bölgesi)
 		// geçiş
-		this.sh = { on: false, t: 0, dur: 1, arc: 0, ease: easeInOut, a: state(), b: state(), yawRate: 0, distRate: 0, distMin: 6, pitchDip: 0 };
+		this.sh = { on: false, t: 0, dur: 1, arc: 0, ease: easeInOut, a: state(), b: state(), yawRate: 0, distRate: 0, distMin: 6, pitchDip: 0, decay: 0 };
 		// uçuş yolu (en çok 8 anahtar)
 		this.pathKeys = Array.from({ length: 8 }, state);
 		this.pathN = 0;
@@ -80,13 +80,13 @@ export class MapCamera {
 	}
 
 	/** Dikdörtgen bölgeyi (dünya x/z) ekrana sığdır: yumuşak, kavisli geçiş. */
-	fit(b, { pitch = 0.98, yaw = 0, pad = 1.12, dur = null, arc = null } = {}) {
+	fit(b, { pitch = 0.98, yaw = 0, pad = 1.12, dur = null, arc = null, yawRate = 0, distRate = 0, decay = 0 } = {}) {
 		this.bounds = b;
 		this._fitOpt = { pitch, yaw, pad };
 		const x = (b.x0 + b.x1) / 2;
 		const z = (b.z0 + b.z1) / 2;
 		const dist = this.fitDist(b, pitch, pad);
-		this.shot(x, z, { dist, pitch, yaw, dur, arc });
+		this.shot(x, z, { dist, pitch, yaw, dur, arc, yawRate, distRate, decay });
 		this.mode = 'fit';
 	}
 
@@ -101,7 +101,7 @@ export class MapCamera {
 	 * (verilmezse yolun uzunluğuyla orantılı). Bitince yawRate (rad/sn) ve distRate (sn başına oran)
 	 * ile sürüklenir: yörünge ve yavaş yaklaşma çekimleri.
 	 */
-	shot(x, z, { dist = this.dist, pitch = this.pitch, yaw = this.yaw, dur = null, arc = null, yawRate = 0, distRate = 0, distMin = 6, ease = null } = {}) {
+	shot(x, z, { dist = this.dist, pitch = this.pitch, yaw = this.yaw, dur = null, arc = null, yawRate = 0, distRate = 0, distMin = 6, ease = null, decay = 0 } = {}) {
 		const s = this.sh;
 		const moving = s.on && s.t < s.dur;
 		s.a.x = this.target.x;
@@ -124,6 +124,7 @@ export class MapCamera {
 		s.yawRate = yawRate;
 		s.distRate = distRate;
 		s.distMin = distMin;
+		s.decay = decay; // sürüklenme sönümü (1/sn): gece süzülüşü yavaşça durur
 		this.goal.set(x, 0, z);
 		this.distTo = dist;
 		this.yawTo = s.b.yaw;
@@ -286,6 +287,11 @@ export class MapCamera {
 			return;
 		}
 		// vardı: sürüklenme (yörünge / yavaş yaklaşma)
+		if (s.decay) {
+			const k = Math.exp(-s.decay * dt);
+			s.yawRate *= k;
+			s.distRate *= k;
+		}
 		this.target.x = s.b.x;
 		this.target.z = s.b.z;
 		this.pitch = s.b.pitch;

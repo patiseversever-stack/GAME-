@@ -115,16 +115,26 @@ const BASE = /* css */ `
 @keyframes flToastOut{to{opacity:0;transform:translateY(-12px) scale(.95)}}
 
 /* ---------------------------------------------------------------- il seçimi ipucu */
-.fl-prompt{position:absolute;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(16px + var(--sab));display:flex;align-items:center;gap:12px;max-width:calc(100% - 24px);padding:10px 20px 12px 12px;border-radius:20px;
-  background:var(--panel);border:3px solid var(--pt,var(--gold));box-shadow:0 6px 0 var(--navy-d),0 12px 20px rgba(0,0,0,.35);opacity:0;transform:translateY(30px) scale(.9);transition:opacity .25s,transform .3s cubic-bezier(.3,1.5,.5,1)}
+.fl-prompt{position:absolute;left:0;right:0;margin:0 auto;bottom:calc(6px + var(--sab));width:min(calc(100% - 16px),460px);display:flex;justify-content:center;padding:34px 14px 22px;text-align:center;
+  background:radial-gradient(ellipse 58% 64% at 50% 58%,rgba(12,6,34,.78),rgba(16,8,44,.5) 48%,rgba(16,8,44,0) 100%);
+  opacity:0;transform:translateY(16px);transition:opacity .5s ease,transform .7s cubic-bezier(.2,.8,.2,1)}
 .fl-prompt.on{opacity:1;transform:none}
-.fl-prompt.red{--pt:#ff6a4a}
-.fl-prompt .pi{flex:none;width:50px;height:50px;border-radius:15px;display:grid;place-items:center;font-size:32px;background:linear-gradient(var(--gold),#e8980e);border:3px solid #fff;box-shadow:0 4px 0 var(--gold-dd)}
-.fl-prompt.red .pi{background:linear-gradient(#ff7d5c,#d8341f);box-shadow:0 4px 0 #6a1206}
-.fl-prompt .pi .fl-i{animation:flTap 1.2s ease-in-out infinite}
-.fl-prompt .pt{min-width:0}
-.fl-prompt .pt b{display:block;white-space:nowrap;font-family:'Lilita One';font-weight:400;font-size:clamp(19px,5.4vw,24px);line-height:1.05;letter-spacing:.02em;color:#fff}
-.fl-prompt .pt small{display:block;margin-top:3px;font-size:14px;line-height:1.2;color:#cfe0ff}
+.fl-prompt .pt{display:flex;flex-direction:column;align-items:center;min-width:0}
+/* üst satır: ince, geniş aralıklı altın büyük harf; iki yanında altın kıl çizgi */
+.fl-prompt .ey{display:flex;align-items:center;gap:12px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:10.5px;line-height:1;letter-spacing:.42em;margin-right:-.42em;color:#f4c86c;white-space:nowrap;
+  text-shadow:0 0 12px rgba(255,190,90,.45)}
+.fl-prompt .ey::before,.fl-prompt .ey::after{content:'';flex:none;width:30px;height:1px;background:linear-gradient(90deg,rgba(244,200,108,0),#f4c86c)}
+.fl-prompt .ey::after{transform:scaleX(-1);margin-left:-.42em}
+.fl-prompt.red .ey{color:#ffb08a;text-shadow:0 0 12px rgba(255,120,80,.5)}
+.fl-prompt.red .ey::before,.fl-prompt.red .ey::after{background:linear-gradient(90deg,rgba(255,176,138,0),#ffb08a)}
+.fl-prompt .pd{flex:none;width:8px;height:8px;border-radius:50%;background:var(--pc);box-shadow:0 0 0 1.5px rgba(255,244,226,.8),0 0 10px var(--pc);margin-right:2px}
+/* başlık: italik serif (Gündönümü'nün ada adı gibi) */
+.fl-prompt .pt b{display:block;margin-top:9px;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:500;
+  font-size:clamp(31px,9vw,42px);line-height:1.02;letter-spacing:.01em;color:#fff4e2;text-shadow:0 2px 22px rgba(255,186,90,.38),0 1px 2px rgba(10,4,30,.6)}
+/* ipucu: küçük, aralıklı, lavanta */
+.fl-prompt .pt small{display:block;margin-top:10px;font-family:'Manrope',system-ui,sans-serif;font-weight:500;font-size:10.5px;line-height:1.4;letter-spacing:.24em;margin-right:-.24em;text-transform:uppercase;color:rgba(216,208,255,.86)}
+.fl-prompt .pt::after{content:'';display:block;margin-top:13px;width:120px;height:1px;background:linear-gradient(90deg,rgba(244,200,108,0),rgba(244,200,108,.85),rgba(244,200,108,0))}
+.fl-prompt.cap .pt b{font-size:clamp(28px,8vw,38px)}
 .fl-prompt.shake{animation:flShakeP .4s}
 @keyframes flShakeP{0%,100%{transform:none}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
 @keyframes flTap{0%,100%{transform:translateY(0)}40%{transform:translateY(4px) scale(.92)}60%{transform:translateY(4px) scale(.92)}}

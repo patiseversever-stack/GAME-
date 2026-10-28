@@ -8,7 +8,7 @@
 // hp, update(dt), group, casters. Ek: towerPos(i, out) kulenin dünya konumu (parçacık efektleri için).
 
 import * as THREE from 'three';
-import { COMMON, SHADOW, LIGHT, FINISH } from '../gfx/shaderlib.js';
+import { COMMON, SHADOW, LIGHT, FINISH, glslColor as C } from '../gfx/shaderlib.js';
 import { Kit, archShape } from '../gfx/kit.js';
 
 const RT = 0.95; // kule çemberi yarıçapı
@@ -112,9 +112,17 @@ void main() {
 	alb *= 1.0 - vF * 0.35; // yıkılan kule kararır
 	float sh = shadowAt(vW, N);
 	vec3 V = normalize(cameraPosition - vW);
-	vec3 c = shade(alb, N, V, 1.0, sh, gloss, 0.6);
-	c = applyFog(c, vW);
 	gLit = uLit; // gece odağında ilin aydınlıksa kale de aydınlık
+	vec3 c = shade(alb, N, V, 1.0, sh, gloss, 0.6);
+	float nk = nightK();
+	if (nk > 0.001) {
+		// gece: mazgal ve kapılar içeriden yanar; surların dibi meşale ışığında; sancak ay ışığında seçilir
+		float win = 1.0 - smoothstep(0.004, 0.02, distance(vC, ${C('#3a2a22')}));
+		c += N_WARM * win * nk * (2.2 + 0.5 * sin(uTime * 4.0 + vW.x * 7.0));
+		c += N_WARM * alb * nk * 0.55 * exp(-max(vL, 0.0) * 1.6);
+		if (own) c += uOwner * nk * 0.25;
+	}
+	c = applyFog(c, vW);
 	gl_FragColor = finish(c * uFade, 1.0);
 }`;
 

@@ -72,16 +72,22 @@ export class Cinema {
 			if (ui.fast || this.fast) return bot(m, p, i);
 			const b = app.board;
 			const opts = this._options(m, p, i);
+			const attack = b.provinces[i].owner >= 0;
+			// kamera botun üstünde: başkenti ve seçenekleri birlikte; seçenekler gecede ışık adası
 			b.night?.(true, opts);
 			b.showLabels?.(opts);
-			this.frameList(opts);
-			await sleep(560);
+			const cap = p.capital >= 0 && opts.length < 9 ? [...opts, p.capital] : opts;
+			this.frameList(cap);
+			ui.caption?.(`SIRA · ${p.name}`, attack ? 'Hedefini seçiyor' : 'Bir il seçiyor', null, { p, tone: attack ? 'red' : '' });
+			await sleep(880);
 			b.night?.(true, [i]);
 			b.showLabels?.([i]);
+			ui.caption?.(`${p.name} · ${attack ? 'SALDIRI' : 'YAYILMA'}`, b.provinces[i].name, attack ? 'SAVAŞ BAŞLIYOR' : 'YENİ TOPRAK', { p, tone: attack ? 'red' : '' });
 			await bot(m, p, i);
 		};
 		const q = ui.question.bind(ui);
 		ui.question = (m, ctx) => {
+			ui.caption?.(null);
 			if (!ui.fast && ctx?.T?.needsMap) {
 				app.board.night?.(false, null, { hold: 0 });
 				app.board.showLabels?.([]);
@@ -104,7 +110,9 @@ export class Cinema {
 		box.x1 = cx + w / 2;
 		box.z0 = cz - d / 2;
 		box.z1 = cz + d / 2 + 1.5; // alttaki arayüz için biraz pay
-		app.cam.fit({ ...box }, { pitch: 0.95, pad: 1.2 });
+		// gece süzülüşü: kamera yolda hafifçe kalkar (kavis), varınca ağır ağır döner ve yaklaşır
+		this._drift = -(this._drift || 1);
+		app.cam.fit({ ...box }, { pitch: 0.95, pad: 1.2, dur: 1.05, arc: 4.5, yawRate: 0.05 * this._drift, distRate: -0.012, decay: 0.32 });
 	}
 
 	/** Botun bu seçimdeki seçenekleri (maç akışıyla aynı kural). */
@@ -126,6 +134,7 @@ export class Cinema {
 		const b = this.app.board;
 		b.night?.(false, null, { hold });
 		b.showLabels?.([]);
+		this.app.ui?.caption?.(null);
 	}
 
 	wait(ms) {
@@ -347,6 +356,7 @@ export class Cinema {
 		// yol: saldıranın ilinden ortak sınıra, oradan hedefe (kuşatmada kalenin önüne)
 		b.night?.(true, [src, target]);
 		b.showLabels?.([src, target]);
+		app.ui?.caption?.(isCap ? 'KUŞATMA' : 'SALDIRI', t.name, `${p.name} · ${d.name}`, { p, tone: 'red' });
 		const S = b.provinces[src];
 		const border = b.borderPoint ? b.borderPoint(src, target, this.a) : this.a.set((S.x + t.x) / 2, 0, (S.z + t.z) / 2);
 		const from = this.b.set(S.x + (border.x - S.x) * 0.35, 0, S.z + (border.z - S.z) * 0.35);
@@ -407,10 +417,14 @@ export class Cinema {
 			});
 		} else cam.shake = 0.5;
 		app.sfx?.play?.('conquer');
+		app.ui?.caption?.('FETİH', b.provinces[i].name, `${p.name} topraklarına katıldı`, { p });
 		if (cam.shot) cam.shot(c.x, c.z + 0.6, { dist: 27, pitch: 0.86, yaw: cam.yaw * 0.5, dur: 1.2, arc: 0 });
 		await this.beat(1400);
 		b.fx(i, 0, 0);
-		this._day();
+		// şafak: gece sıcak bir ufukla aydınlanır, kamera hafifçe geri çekilir; sonra sıradaki tur
+		this._day(0);
+		if (cam.shot) cam.shot(c.x, c.z + 0.8, { dist: 33, pitch: 0.9, yaw: 0, dur: 1.1, arc: 0, ease: (t) => 1 - Math.pow(1 - t, 3) });
+		await this.wait(b.nightOut ? b.nightOut * 1000 : 900);
 	}
 
 	async towerDown(p, d, i, left) {
