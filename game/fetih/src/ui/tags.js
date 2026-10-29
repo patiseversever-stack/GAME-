@@ -21,13 +21,26 @@ const ICON = {
 	src: ['src', 'arrow', '#fff'],
 };
 
+// rozet adayları: [x payı (genişlik), x sabit, y payı (yükseklik), y sabit, öncelik cezası, duruş]
+// (merkez = çıkış noktası + pay*boyut + sabit; duruş: 0 üstte, 1 altta (ucu yukarı), 2 yanda (uçsuz))
+const CAND = [
+	[0, 0, -0.5, -3, 0, 0],
+	[0, 0, 0.5, 12, 0.3, 1],
+	[-0.42, 0, -0.5, -3, 0.15, 0],
+	[0.42, 0, -0.5, -3, 0.15, 0],
+	[-0.42, 0, 0.5, 12, 0.45, 1],
+	[0.42, 0, 0.5, 12, 0.45, 1],
+	[-0.5, -14, 0, 0, 0.6, 2],
+	[0.5, 14, 0, 0, 0.6, 2],
+];
+const POSE = ['', 'pu', 'ps'];
+
 export class Tags {
 	constructor(ui) {
 		this.ui = ui;
 		this.el = ui.$.tags;
 		this.items = [];
 		this.map = new Map();
-		this.tap = false;
 		this._v = new THREE.Vector3();
 		this._s = { x: 0, y: 0, behind: false };
 		this.W = 0;
@@ -36,14 +49,9 @@ export class Tags {
 		this.bot = 700;
 		this.left = 8;
 		this.right = 400;
-		this._rects = [];
 		this._n = 0;
 		this._na = 0;
 		this._pts = null;
-	}
-
-	get count() {
-		return this.items.length;
 	}
 
 	/**
@@ -63,9 +71,8 @@ export class Tags {
 				// sırayla belirir (yelpaze gibi; yalnızca opacity/transform geçişi)
 				it.inner.style.transitionDelay = Math.min(list.length, 8) * 40 + 'ms';
 				this.el.appendChild(it.el);
-				const el = it.el;
-				// bir sonraki karede belirir (geçiş çalışsın)
-				requestAnimationFrame(() => el.classList.add('on'));
+				// gece yeterince düşünce belirir (update): gündüz haritada etiket önce çıkmasın
+				it.shown = false;
 				it.w = 0;
 				it.h = 0;
 			}
@@ -84,7 +91,6 @@ export class Tags {
 		}
 		this.map = next;
 		this.items = list;
-		this.tap = tap;
 	}
 
 	clear() {
@@ -183,29 +189,20 @@ export class Tags {
 		const py = it.py;
 		const pts = this._pts;
 		const n = this._na;
-		const cand = [
-			[0, -3 - h / 2, 0, ''],
-			[0, 12 + h / 2, 0.3, 'pu'],
-			[-w * 0.42, -3 - h / 2, 0.15, ''],
-			[w * 0.42, -3 - h / 2, 0.15, ''],
-			[-w * 0.42, 12 + h / 2, 0.45, 'pu'],
-			[w * 0.42, 12 + h / 2, 0.45, 'pu'],
-			[-(w / 2 + 14), 0, 0.6, 'ps'],
-			[w / 2 + 14, 0, 0.6, 'ps'],
-		];
 		let best = 0;
 		let bs = Infinity;
-		for (let c = 0; c < cand.length; c++) {
-			const cx = Math.min(this.right - w / 2, Math.max(this.left + w / 2, px + cand[c][0]));
-			const cy = py + cand[c][1];
+		for (let c = 0; c < CAND.length; c++) {
+			const k = CAND[c];
+			const cx = Math.min(this.right - w / 2, Math.max(this.left + w / 2, px + k[0] * w + k[1]));
+			const cy = py + k[2] * h + k[3];
 			const x0 = cx - w / 2 - 6;
 			const x1 = cx + w / 2 + 6;
 			const y0 = cy - h / 2 - 6;
 			const y1 = cy + h / 2 + 6;
-			let sc = cand[c][2] + (c === it.slot ? -0.6 : 0);
-			for (let k = 0; k < n; k++) {
-				const X = this._pts[k * 2];
-				const Y = this._pts[k * 2 + 1];
+			let sc = k[4] + (c === it.slot ? -0.6 : 0);
+			for (let q = 0; q < n; q++) {
+				const X = pts[q * 2];
+				const Y = pts[q * 2 + 1];
 				if (X > x0 && X < x1 && Y > y0 && Y < y1) sc += 1;
 			}
 			// üst ve alt sınır: arayüze taşmasın
@@ -216,15 +213,15 @@ export class Tags {
 				best = c;
 			}
 		}
-		void pts;
 		it.slot = best;
-		const c = cand[best];
-		it.cx = px + c[0];
-		it.cy = py + c[1];
-		if (it.pose !== c[3]) {
-			it.pose = c[3];
-			it.el.classList.toggle('pu', c[3] === 'pu');
-			it.el.classList.toggle('ps', c[3] === 'ps');
+		const k = CAND[best];
+		it.cx = px + k[0] * w + k[1];
+		it.cy = py + k[2] * h + k[3];
+		const pose = POSE[k[5]];
+		if (it.pose !== pose) {
+			it.pose = pose;
+			it.el.classList.toggle('pu', pose === 'pu');
+			it.el.classList.toggle('ps', pose === 'ps');
 		}
 	}
 
@@ -244,6 +241,16 @@ export class Tags {
 		this._na = 0; // ok örnek noktaları (rozet yerleşimi için), gerektiğinde bir kez hesaplanır
 		let arrowsDone = false;
 		const P = app.camera.projectionMatrix.elements;
+		// geceye geçiş ~0,8 sn: etiketler gece oturunca (ya da zaten gecedeyse hemen) belirir
+		const ready = b.nightAmt > 0.3 || b.nightTo < 0.5;
+		if (ready) {
+			for (const it of items) {
+				if (!it.shown) {
+					it.shown = true;
+					it.el.classList.add('on');
+				}
+			}
+		}
 		// yazı tipi geç yüklenirse (Türkçe harf eki) ölçüler bir süre yenilenir
 		const remeasure = (this._n = (this._n + 1) % 20) === 0;
 		for (const it of items) {

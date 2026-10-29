@@ -318,11 +318,11 @@ void main() {
 	float sp = mix(1.0, spotK(), uNight.x); // yakın çekimde ışık havuzunun dışı
 	float bk = 0.55 + 0.45 * sp;
 	vec3 white = vec3(1.0, 0.985, 0.95);
-	float wOut = max(0.06, 3.0 * px) * (0.93 + 0.14 * pulse);
+	float wOut = max(0.06, 3.0 * px) * (0.88 + 0.24 * pulse);
 	float fwD = max(fwidth(vDepth), 1e-4);
 	// yüzeyde: il içinde sınıra bitişik bant; duvarda: üst kenarda ince çizgi
 	float edgeW = skirt ? 1.0 - smoothstep(1.2 * fwD, 2.8 * fwD, vDepth) : lineAA(d, wOut, px);
-	c = mix(c, white * 1.6, edgeW * sel * bk * (0.9 + 0.1 * pulse));
+	c = mix(c, white * 1.6, edgeW * sel * bk * (0.82 + 0.18 * pulse));
 	// beyaz bandın iç kenarında ince koyu çizgi: açık dolguda (krem, sarı) bant ayrı okunur
 	c *= 1.0 - (skirt ? 0.0 : lineAA(abs(d - wOut - 0.9 * px), max(0.012, 0.55 * px), px)) * sel * bk * 0.3;
 	// en dışta koyu kıl çizgi: beyaz bant komşu aydınlık ya da açık renkli yüzeyden ayrı okunur
@@ -330,7 +330,7 @@ void main() {
 	// kalkık ilin duvarı gölgede (beyaz çizgi öne çıksın)
 	if (skirt) c *= mix(1.0, 0.5, uNight.x * sel * smoothstep(0.03, 0.12, vDepth));
 	// yumuşak nabız: dolgu çok hafif parlar
-	c *= 1.0 + sel * sp * 0.035 * pulse;
+	c *= 1.0 + sel * sp * 0.05 * pulse;
 	// eski parlama (fx: kale inişi, fetih anı): yalnızca hafif aydınlanma, kenar ışıması yok
 	vec3 gcol = ownedK > 0.5 ? ownCol : vec3(1.0, 0.95, 0.85);
 	c = c * (1.0 + 0.14 * glow * sp * (skirt ? 0.0 : 1.0)) + gcol * glow * sp * (skirt ? 0.0 : 0.035 * (0.7 + 0.3 * sin(uTime * 6.0 + vPid * 0.7)));

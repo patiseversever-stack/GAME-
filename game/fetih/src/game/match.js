@@ -663,6 +663,7 @@ export class Match {
 		this.phase = 'baskent';
 		this.emit('phase', { phase: this.phase, round: 0 });
 		await this.placeCapitals();
+		await app.cinema.introBadges?.(this.players); // "hangisi benim?": kalelerin üstünde SEN ve bot rozetleri
 		await this.startBonus();
 		// yayılma: haritada boş il kalmayana kadar
 		this.phase = 'yayilma';

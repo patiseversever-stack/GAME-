@@ -7,6 +7,7 @@
 //   node tools/flow.mjs çıktı-dizini [--q=2 --w=412 --h=892 --dpr=1 --seed=7 --region=ege --mode=ffa3 --only=a,b --seq]
 //
 // Çekimler:
+//   a0_rozetler  başkentler yerleşince kalelerin üstünde SEN ve bot rozetleri (gündüz)
 //   a_secim      insan il seçerken (gece, seçilebilir iller ışık adası)
 //   b_bot        bot seçerken (seçenekleri aydınlık) ve b2_bot_secti (seçimi + boya dalgası)
 //   c_saldiri    insan saldıracağı düşman ilini seçerken
@@ -105,6 +106,12 @@ await page.evaluate((cfg) => {
 		if (p.human && !W.duel++) want('d_duello', 1250);
 		return attack(p, d, target, isCap);
 	};
+	const intro = cin.introBadges?.bind(cin);
+	if (intro)
+		cin.introBadges = (pl) => {
+			want('a0_rozetler', 900);
+			return intro(pl);
+		};
 	const conquer = cin.conquer.bind(cin);
 	cin.conquer = (p, i) => {
 		if (!W.conq++) {

@@ -362,10 +362,13 @@ export class Cues {
 	}
 
 	update(dt) {
-		const want = this.on ? 1 : 0;
+		// oklar gece oturunca belirir (gündüz haritada önce okların çıkması kötü görünür)
+		const b = this.board;
+		const ready = this.on && (b.nightAmt > 0.3 || b.nightTo < 0.5);
+		const want = ready ? 1 : 0;
 		this.k += (want - this.k) * Math.min(1, dt * (this.on ? 6 : 9));
 		if (Math.abs(want - this.k) < 0.003) this.k = want;
-		if (this.on) this.grow = Math.min(1, this.grow + dt / 0.75);
+		if (ready) this.grow = Math.min(1, this.grow + dt / 0.75);
 		this.uniforms.uGrow.value = this.grow;
 		this.uniforms.uAlpha.value = this.k;
 		const vis = this.k > 0.003 && this.nA > 0;

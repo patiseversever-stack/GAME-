@@ -4,6 +4,7 @@
 // bağlı olaylar yine de gerçekleşir).
 //
 //   overview(map)            ilk çağrı: Türkiye üstünden açılış uçuşu → maç bölgesi; maç sonunda: zafer
+//   introBadges(players)     başkentler yerleşince her kalenin üstünde oyuncu rozeti (SEN, bot adları)
 //   castleDrop(p, i)         kale gökten iner, toz halkası
 //   claim(p, i)              boş il alındı: küçük halka ve ışıltı
 //   attack(p, d, t, isCap)   ordu saldıranın sınırından hedefe yürür; kuşatmada mancınık ve oklar
@@ -324,6 +325,20 @@ export class Cinema {
 
 	// ---------------------------------------------------------------- yayılma
 
+	/**
+	 * Başkentler yerleşince kısa tanıtım: her kalenin üstünde oyuncunun rozeti ("SEN", botların adı).
+	 * Yeni oyuncu "hangisi benim?" sorusunun cevabını maçın en başında görür. Dokununca geçilir.
+	 */
+	async introBadges(players) {
+		const ui = this.app.ui;
+		if (this.fast || !ui || ui.fast || !ui.tagsOn) return;
+		const badges = players.filter((p) => p.alive && p.capital >= 0).map((p) => ({ p, i: p.capital, castle: true }));
+		if (!badges.length) return;
+		ui.tagsOn([], { badges });
+		await this.beat(1700);
+		ui.tagsOff();
+	}
+
 	async castleDrop(p, i) {
 		const app = this.app;
 		const k = app.castles[p.i];
@@ -358,7 +373,7 @@ export class Cinema {
 		b.fx(i, 0.6, 1);
 		this.app.sfx?.play?.('claim');
 		if (!this.fast) {
-			b.uAct.value = p.i;
+			if (b.uAct) b.uAct.value = p.i;
 			b.night?.(true, [i]); // boya dalgası gecede, sonra gündüz
 			this.app.ui?.tagsOn?.(this.app.ui.tagSpecs(this.app.match, [i], 'pick'));
 		}
@@ -390,7 +405,7 @@ export class Cinema {
 			return;
 		}
 		// yol: saldıranın ilinden ortak sınıra, oradan hedefe (kuşatmada kalenin önüne)
-		b.uAct.value = p.i;
+		if (b.uAct) b.uAct.value = p.i;
 		b.night?.(true, [src, target]);
 		// kim kime: saldıranın ilinden hedefe saldıranın renginde ok; iki ilin etiketinde sahipleri (SALDIRAN / SAVUNAN)
 		b.cues?.show([target], p.i, { attack: true });
@@ -477,7 +492,7 @@ export class Cinema {
 		} else cam.shake = 0.5;
 		app.sfx?.play?.('conquer');
 		// boya dalgası her zaman gecede (harita sorusundan gündüzde gelinse bile)
-		b.uAct.value = p.i;
+		if (b.uAct) b.uAct.value = p.i;
 		b.night?.(true, [i], { fast: (b.nightAmt ?? 1) < 0.5 });
 		app.ui?.tagsOn?.(app.ui.tagSpecs(app.match, [i], 'conq'));
 		app.ui?.caption?.('FETİH', b.provinces[i].name, `${p.name} topraklarına katıldı`, { p });
