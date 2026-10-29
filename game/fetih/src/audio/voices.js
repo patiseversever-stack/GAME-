@@ -1,7 +1,9 @@
-// Sürekli sesli çalgılar: zurna, ney, boru (alçak nefesli) ve bordo (drone).
+// Sürekli sesli çalgılar: zurna, ney, boru (alçak nefesli), bordo (drone), yaylı pad ve koro (CANLI motor: Web Audio düğümleri).
 // Hepsi az sayıda düğümle kurulur; eşzamanlı sayıları çağıran tarafça sınırlanır.
+// Pişirme motoru (e.js: JsEngine, synth.js) aynı adlı yöntemleriyle örnek düzeyinde sentez yapar; bu işlevler ona yönlendirir,
+// böylece sounds.js tarifleri ve besteler iki motorda da aynı çağrıyı kullanır.
 
-function connectEnd(src, nodes, e, g) {
+function cleanup(e, src, nodes, g) {
 	src.onended = () => {
 		for (const n of nodes) {
 			try {
@@ -15,8 +17,9 @@ function connectEnd(src, nodes, e, g) {
 }
 
 // Zurna: testere dalgası + çift kamış (hafif detune) + gırtlak (formant) süzgeçleri + vibrato.
-// o: {to, bend (sent, aşağıdan kayma), vib (paylaşılan titreşim), pan, bright}
+// o: {to, bend (sent, aşağıdan kayma), orn (sent, kısa süslü üst vuruş), vib (paylaşılan titreşim), pan, bright}
 export function zurna(e, t, f, dur, vol, o = {}) {
+	if (e.js) return e.zurna(t, f, dur, vol, o);
 	const c = e.ctx;
 	const a = c.createOscillator();
 	a.type = 'sawtooth';
@@ -54,7 +57,7 @@ export function zurna(e, t, f, dur, vol, o = {}) {
 	g.gain.setValueAtTime(0.0001, t);
 	g.gain.linearRampToValueAtTime(v, t + 0.02);
 	g.gain.linearRampToValueAtTime(v * 0.82, t + 0.12);
-	g.gain.setValueAtTime(v * 0.82, end);
+	g.gain.setValueAtTime(v * 0.82, Math.max(t + 0.12, end));
 	g.gain.linearRampToValueAtTime(0.0001, end + 0.07);
 	a.connect(mix);
 	if (b) b.connect(mix);
@@ -64,31 +67,30 @@ export function zurna(e, t, f, dur, vol, o = {}) {
 	p2.connect(lp);
 	lp.connect(g);
 	let tail = g;
-	let pn = null;
-	if (o.pan) {
-		pn = c.createStereoPanner();
+	if (o.pan && c.createStereoPanner) {
+		const pn = c.createStereoPanner();
 		pn.pan.value = o.pan;
 		g.connect(pn);
 		tail = pn;
 		nodes.push(pn);
 	}
 	tail.connect(o.to || e.dest);
-	// kayma: perdeye aşağıdan gelir
-	if (o.bend) {
-		a.detune.setValueAtTime(-o.bend, t);
-		a.detune.linearRampToValueAtTime(0, t + 0.05);
+	// kayma: perdeye aşağıdan gelir; süs: perdeden önce kısa bir üst vuruş (zurnanın tipik "tril"i)
+	const b0 = o.bend ? -o.bend : o.orn || 0;
+	if (b0) {
+		a.detune.setValueAtTime(b0, t);
+		a.detune.linearRampToValueAtTime(0, t + (o.orn ? 0.07 : 0.05));
 		if (b) {
-			b.detune.setValueAtTime(11 - o.bend, t);
-			b.detune.linearRampToValueAtTime(11, t + 0.05);
+			b.detune.setValueAtTime(11 + b0, t);
+			b.detune.linearRampToValueAtTime(11, t + (o.orn ? 0.07 : 0.05));
 		}
 	}
 	// titreşim: paylaşılan ya da kendi
-	let own = null;
 	if (o.vib) {
 		o.vib.connect(a.detune);
 		if (b) o.vib.connect(b.detune);
 	} else if (dur > 0.35) {
-		own = c.createOscillator();
+		const own = c.createOscillator();
 		own.frequency.value = 5.6;
 		const og = c.createGain();
 		og.gain.setValueAtTime(0, t);
@@ -131,6 +133,7 @@ export function zurna(e, t, f, dur, vol, o = {}) {
 
 // Ney: yumuşak, nefesli. Yavaş atak, geç gelen vibrato, perdeye aşağıdan kayış.
 export function ney(e, t, f, dur, vol, o = {}) {
+	if (e.js) return e.ney(t, f, dur, vol, o);
 	const c = e.ctx;
 	const a = c.createOscillator();
 	a.type = 'sine';
@@ -156,9 +159,8 @@ export function ney(e, t, f, dur, vol, o = {}) {
 	lp.connect(g);
 	// nefes: perde etrafında dar bantlı gürültü
 	const nodes = [a, b, bg, lp];
-	let ns = null;
 	if (!e.low) {
-		ns = c.createBufferSource();
+		const ns = c.createBufferSource();
 		ns.buffer = e.noiseBuf;
 		ns.loop = true;
 		const nf = c.createBiquadFilter();
@@ -175,7 +177,7 @@ export function ney(e, t, f, dur, vol, o = {}) {
 		nodes.push(ns, nf, ng);
 	}
 	let tail = g;
-	if (o.pan) {
+	if (o.pan && c.createStereoPanner) {
 		const pn = c.createStereoPanner();
 		pn.pan.value = o.pan;
 		g.connect(pn);
@@ -183,9 +185,10 @@ export function ney(e, t, f, dur, vol, o = {}) {
 		nodes.push(pn);
 	}
 	tail.connect(o.to || e.dest);
-	a.detune.setValueAtTime(o.scoop === undefined ? -55 : -o.scoop, t);
+	const sc = o.scoop === undefined ? -55 : -o.scoop;
+	a.detune.setValueAtTime(sc, t);
 	a.detune.linearRampToValueAtTime(0, t + 0.14);
-	b.detune.setValueAtTime(o.scoop === undefined ? -55 : -o.scoop, t);
+	b.detune.setValueAtTime(sc, t);
 	b.detune.linearRampToValueAtTime(0, t + 0.14);
 	if (o.vib) {
 		o.vib.connect(a.detune);
@@ -231,6 +234,7 @@ export function ney(e, t, f, dur, vol, o = {}) {
 
 // Boru/borazan: alçak, kalın, süzgeci açılan testere (kuşatma çağrısı)
 export function horn(e, t, f, dur, vol, o = {}) {
+	if (e.js) return e.horn(t, f, dur, vol, o);
 	const c = e.ctx;
 	const a = c.createOscillator();
 	a.type = 'sawtooth';
@@ -255,15 +259,143 @@ export function horn(e, t, f, dur, vol, o = {}) {
 	b.connect(bg);
 	bg.connect(lp);
 	lp.connect(g);
-	g.connect(o.to || e.dest);
+	let tail = g;
+	if (o.pan && c.createStereoPanner) {
+		const pn = c.createStereoPanner();
+		pn.pan.value = o.pan;
+		g.connect(pn);
+		tail = pn;
+	}
+	tail.connect(o.to || e.dest);
 	a.start(t);
 	b.start(t);
 	a.stop(t + dur + 0.3);
 	b.stop(t + dur + 0.3);
-	connectEnd(a, [a, b, bg, lp], e, g);
+	cleanup(e, a, [a, b, bg, lp], g);
 }
 
-// Bordo: köklü, yumuşak, ağır; süzgeci çok yavaş nefes alır. {stop(t, fade)} döner.
+// Yaylı pad (kemençe/yaylı tınısı): detune'lu testere + yavaş açılan alçak geçiren, yavaş atak ve bırakış.
+// freqs: Hz dizisi (akor). o: {to, pan, att, rel, bright}
+export function strings(e, t, freqs, dur, vol, o = {}) {
+	if (e.js) return e.strings(t, freqs, dur, vol, o);
+	const c = e.ctx;
+	const att = o.att === undefined ? 0.7 : o.att;
+	const rel = o.rel === undefined ? 0.9 : o.rel;
+	const g = e.gain(0.0001);
+	g.gain.setValueAtTime(0.0001, t);
+	g.gain.linearRampToValueAtTime(vol, t + att);
+	g.gain.setValueAtTime(vol, Math.max(t + att, t + dur));
+	g.gain.linearRampToValueAtTime(0.0001, t + dur + rel);
+	const lp = c.createBiquadFilter();
+	lp.type = 'lowpass';
+	lp.Q.value = 0.7;
+	lp.frequency.setValueAtTime(500, t);
+	lp.frequency.linearRampToValueAtTime(o.bright || 1800, t + att + dur * 0.4);
+	lp.connect(g);
+	const nodes = [lp];
+	const end = t + dur + rel + 0.05;
+	const per = e.low ? 1 : 2;
+	let first = null;
+	for (const f of freqs) {
+		for (let k = 0; k < per; k++) {
+			const s = c.createOscillator();
+			s.type = 'sawtooth';
+			s.frequency.value = f;
+			s.detune.value = per === 1 ? 0 : (k ? 1 : -1) * (6 + (f % 5));
+			const sg = c.createGain();
+			sg.gain.value = 0.5 / (freqs.length * per);
+			s.connect(sg);
+			sg.connect(lp);
+			s.start(t);
+			s.stop(end);
+			nodes.push(s, sg);
+			if (!first) first = s;
+		}
+	}
+	let tail = g;
+	if (o.pan && c.createStereoPanner) {
+		const pn = c.createStereoPanner();
+		pn.pan.value = o.pan;
+		g.connect(pn);
+		tail = pn;
+		nodes.push(pn);
+	}
+	tail.connect(o.to || e.dest);
+	if (first) cleanup(e, first, nodes, g);
+}
+
+// Koro "aa/oo": testere + gırtlak süzgeçleri (formant), yavaş atak, hafif titreşim.
+// freqs: Hz dizisi. o: {to, pan, att, rel, vowel: 'a'|'o'}
+const VOWEL = { a: [800, 1150, 2900], o: [450, 800, 2830], u: [325, 700, 2530] };
+export function choir(e, t, freqs, dur, vol, o = {}) {
+	if (e.js) return e.choir(t, freqs, dur, vol, o);
+	const c = e.ctx;
+	const att = o.att === undefined ? 0.9 : o.att;
+	const rel = o.rel === undefined ? 1.1 : o.rel;
+	const fm = VOWEL[o.vowel || 'o'];
+	const g = e.gain(0.0001);
+	g.gain.setValueAtTime(0.0001, t);
+	g.gain.linearRampToValueAtTime(vol, t + att);
+	g.gain.setValueAtTime(vol, Math.max(t + att, t + dur));
+	g.gain.linearRampToValueAtTime(0.0001, t + dur + rel);
+	const nodes = [];
+	const mix = c.createGain();
+	mix.gain.value = 1;
+	nodes.push(mix);
+	const bands = e.low ? 2 : 3;
+	for (let i = 0; i < bands; i++) {
+		const bp = c.createBiquadFilter();
+		bp.type = 'bandpass';
+		bp.frequency.value = fm[i];
+		bp.Q.value = 5 + i * 2;
+		const bg = c.createGain();
+		bg.gain.value = [1, 0.7, 0.35][i];
+		mix.connect(bp);
+		bp.connect(bg);
+		bg.connect(g);
+		nodes.push(bp, bg);
+	}
+	const end = t + dur + rel + 0.05;
+	const lfo = c.createOscillator();
+	lfo.frequency.value = e.loopLen ? Math.max(1, Math.round(5.2 * e.loopLen)) / e.loopLen : 5.2;
+	const lg = c.createGain();
+	lg.gain.value = 9;
+	lfo.connect(lg);
+	lfo.start(t);
+	lfo.stop(end);
+	nodes.push(lfo, lg);
+	let first = null;
+	const per = e.low ? 1 : 2;
+	for (const f of freqs) {
+		for (let k = 0; k < per; k++) {
+			const s = c.createOscillator();
+			s.type = 'sawtooth';
+			s.frequency.value = f;
+			s.detune.value = per === 1 ? 0 : (k ? 1 : -1) * 7;
+			lg.connect(s.detune);
+			const sg = c.createGain();
+			sg.gain.value = 0.9 / (freqs.length * per);
+			s.connect(sg);
+			sg.connect(mix);
+			s.start(t);
+			s.stop(end);
+			nodes.push(s, sg);
+			if (!first) first = s;
+		}
+	}
+	let tail = g;
+	if (o.pan && c.createStereoPanner) {
+		const pn = c.createStereoPanner();
+		pn.pan.value = o.pan;
+		g.connect(pn);
+		tail = pn;
+		nodes.push(pn);
+	}
+	tail.connect(o.to || e.dest);
+	if (first) cleanup(e, first, nodes, g);
+}
+
+// Bordo: köklü, yumuşak, ağır; süzgeci çok yavaş nefes alır. Canlı: {stop(t, fade)} döner.
 export function drone(e, f, vol, to) {
 	const c = e.ctx;
 	const t = c.currentTime;

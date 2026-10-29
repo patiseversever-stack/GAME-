@@ -1,17 +1,24 @@
-// Ses motoru: AudioContext, ana karıştırıcı (sıkıştırıcı + yumuşak sınırlayıcı), müzik/efekt hatları,
-// yankı, ducking, ses havuzu ve eşzamanlılık sınırı. Hiçbir yerde istisna fırlatmaz.
+// Canlı ses motoru (gerçek AudioContext): ana karıştırıcı (sıkıştırıcı + yumuşak sınırlayıcı), efekt ve müzik hatları,
+// ducking, ses havuzu ve eşzamanlılık sınırı. Kare başına iş yok; yalnızca olay anında birkaç düğüm. Hiçbir yerde
+// istisna fırlatmaz.
+//
+// Ağır sesler ve müzik burada çalınmaz: bake.js bunları JS'te (synth.js) pişirip AudioBuffer yapar; çalarken tek
+// AudioBufferSource yeter. Bu motor (a) pişmiş sesi çalar, (b) henüz pişmemiş efekti aynı tarifle canlı çalar.
 import { rng, buildSample, pluckSample, BANK_RATE } from './dsp.js';
 
 const POOL_MAX = 64;
 const MASTER = 0.55; // sıkıştırıcı öncesi pay: Chrome sıkıştırıcısı kendi telafi kazancını ekler
 
+// Bağlamlar arası paylaşılan AudioBuffer'lar (spesifikasyon izin verir): vuruş ve tel örnekleri bir kez kurulur.
+const SHARED = new Map();
+const SHARED_PLUCK = new Map();
+
 export class Engine {
-	constructor({ ctx = null, low = false, sync = false } = {}) {
+	/** ctx: AudioContext (çevrimdışı sınama için OfflineAudioContext de olur). low: düşük cihaz (daha az düğüm). */
+	constructor({ ctx = null, low = false, seed = 0xfe71 } = {}) {
 		this.ctx = null;
-		this.low = low; // düşük cihaz: yankı yok, daha az ses
-		this.sync = sync; // çevrimdışı ölçümde örnekleri hemen üret
-		this.r = rng(0xfe71);
-		this.bufs = new Map();
+		this.low = low;
+		this.r = rng(seed);
 		this.pool = [];
 		this.voices = [];
 		this.musicVol = 0.7;
@@ -55,7 +62,7 @@ export class Engine {
 			this.comp.release.value = 0.2;
 			this.clip = c.createWaveShaper();
 			const curve = new Float32Array(1024);
-			for (let i = 0; i < curve.length; i++) curve[i] = Math.tanh(((i / (curve.length - 1)) * 2 - 1) * 1.15) / Math.tanh(1.15) * 0.97;
+			for (let i = 0; i < curve.length; i++) curve[i] = (Math.tanh(((i / (curve.length - 1)) * 2 - 1) * 1.15) / Math.tanh(1.15)) * 0.97;
 			this.clip.curve = curve;
 			this.master.connect(this.comp);
 			this.comp.connect(this.clip);
@@ -70,47 +77,6 @@ export class Engine {
 			this.duckG = c.createGain();
 			this.musicIn.connect(this.duckG);
 			this.duckG.connect(this.master);
-			// yankı (ping-pong gecikme): düşük cihazda kurulmaz
-			this.echoIn = null;
-			if (!this.low) {
-				const eIn = c.createGain();
-				const dl = c.createDelay(1);
-				const dr = c.createDelay(1);
-				dl.delayTime.value = 0.19;
-				dr.delayTime.value = 0.29;
-				const fa = c.createGain();
-				const fb = c.createGain();
-				fa.gain.value = fb.gain.value = 0.36;
-				const lp = c.createBiquadFilter();
-				lp.type = 'lowpass';
-				lp.frequency.value = 3200;
-				const out = c.createGain();
-				out.gain.value = 0.8;
-				const pl = c.createStereoPanner();
-				const pr = c.createStereoPanner();
-				pl.pan.value = -0.65;
-				pr.pan.value = 0.65;
-				eIn.connect(dl);
-				dl.connect(fa);
-				fa.connect(lp);
-				lp.connect(dr);
-				dr.connect(fb);
-				fb.connect(dl);
-				dl.connect(pl);
-				dr.connect(pr);
-				pl.connect(out);
-				pr.connect(out);
-				out.connect(this.master);
-				const ms = c.createGain();
-				ms.gain.value = 0.2;
-				this.musicIn.connect(ms);
-				ms.connect(eIn);
-				const ss = c.createGain();
-				ss.gain.value = 0.1;
-				this.sfxIn.connect(ss);
-				ss.connect(eIn);
-				this.echoIn = eIn;
-			}
 			// ortak gürültü
 			const n = Math.floor(c.sampleRate * 2);
 			const nb = c.createBuffer(1, n, c.sampleRate);
@@ -129,20 +95,21 @@ export class Engine {
 
 	setMusicVolume(v) {
 		this.musicVol = v;
-		if (this.ctx) this.musicIn.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
+		if (this.ctx && this.musicIn) this.musicIn.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
 	}
 	setSfxVolume(v) {
 		this.sfxVol = v;
-		if (this.ctx) this.sfxIn.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
+		if (this.ctx && this.sfxIn) this.sfxIn.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
 	}
-	setMuted(on) {
+	/** Sessize al / aç: ana kazanç yumuşakça iner ve çıkar (tıkırtı yok). tc: zaman sabiti (sn). */
+	setMuted(on, tc = 0.04) {
 		this.muted = on;
-		if (this.ctx) this.master.gain.setTargetAtTime(on ? 0 : MASTER, this.ctx.currentTime, 0.04);
+		if (this.ctx && this.master) this.master.gain.setTargetAtTime(on ? 0 : MASTER, this.ctx.currentTime, tc);
 	}
 
 	// Büyük anlarda müziği kıs: depth 0..1, hold sn, rel sn
 	duck(depth = 0.5, hold = 0.6, rel = 0.8, at = 0) {
-		if (!this.ctx) return;
+		if (!this.ctx || !this.duckG) return;
 		const g = this.duckG.gain;
 		const t = this.ctx.currentTime + at;
 		try {
@@ -192,7 +159,7 @@ export class Engine {
 	_play(src, g, to, t, stop, pan = 0, extra = null) {
 		let tail = g;
 		let pn = null;
-		if (pan) {
+		if (pan && this.ctx.createStereoPanner) {
 			pn = this.ctx.createStereoPanner();
 			pn.pan.value = pan;
 			g.connect(pn);
@@ -219,47 +186,44 @@ export class Engine {
 		if (stop) src.stop(stop);
 	}
 
+	/** Vuruş örneği (paylaşılan AudioBuffer). */
 	buf(name) {
-		let b = this.bufs.get(name);
+		let b = SHARED.get(name);
 		if (b) return b;
 		const d = buildSample(name, BANK_RATE);
 		if (!d) return null;
 		b = this.ctx.createBuffer(1, d.length, BANK_RATE);
 		b.getChannelData(0).set(d);
-		this.bufs.set(name, b);
+		SHARED.set(name, b);
 		return b;
 	}
 
-	// vuruş örneğini çal
-	hit(name, t, vol = 1, rate = 1, pan = 0, to = null) {
-		const b = this.buf(name);
-		if (!b) return;
+	/** Hazır (pişirilmiş ya da örnek) tamponu çal. */
+	shot(buf, t, vol = 1, rate = 1, pan = 0, to = null) {
+		if (!buf) return;
 		const s = this.ctx.createBufferSource();
-		s.buffer = b;
-		s.playbackRate.value = rate;
+		s.buffer = buf;
+		if (rate !== 1) s.playbackRate.value = rate;
 		const g = this.gain(vol);
 		s.connect(g);
 		this._play(s, g, to, t, 0, pan);
 	}
 
-	// tel çal (bağlama/kanun), freq Hz
+	// vuruş örneğini çal
+	hit(name, t, vol = 1, rate = 1, pan = 0, to = null) {
+		this.shot(this.buf(name), t, vol, rate, pan, to);
+	}
+
+	// tel çal (bağlama/kanun/tambur), freq Hz
 	pluck(kind, freq, t, vol = 0.6, pan = 0, to = null, detune = 0) {
 		const key = kind + ':' + Math.round(freq * 20);
-		let b = this.bufs.get(key);
+		let b = SHARED_PLUCK.get(key);
 		if (!b) {
 			const d = pluckSample(kind, freq);
 			b = this.ctx.createBuffer(1, d.data.length, d.rate);
 			b.getChannelData(0).set(d.data);
-			this.bufs.set(key, b);
-			if (this.bufs.size > 140) {
-				// en eski telleri at
-				for (const k of this.bufs.keys()) {
-					if (k.indexOf(':') > 0) {
-						this.bufs.delete(k);
-						break;
-					}
-				}
-			}
+			SHARED_PLUCK.set(key, b);
+			if (SHARED_PLUCK.size > 220) SHARED_PLUCK.delete(SHARED_PLUCK.keys().next().value); // en eski teli at
 		}
 		const s = this.ctx.createBufferSource();
 		s.buffer = b;
@@ -270,7 +234,7 @@ export class Engine {
 	}
 
 	// ses dalgası: frekans süpürmeli, zarflı
-	// o: {a: atak, bus, pan, curve:'exp'|'lin', det}
+	// o: {a: atak, to, pan, lp, sweep}
 	tone(type, f0, f1, t, dur, vol, o = {}) {
 		const c = this.ctx;
 		const s = c.createOscillator();
@@ -282,7 +246,6 @@ export class Engine {
 		g.gain.setValueAtTime(0.0001, t);
 		g.gain.linearRampToValueAtTime(vol, t + a);
 		g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
-		let src = s;
 		if (o.lp) {
 			const f = c.createBiquadFilter();
 			f.type = 'lowpass';
@@ -290,11 +253,11 @@ export class Engine {
 			s.connect(f);
 			f.connect(g);
 		} else s.connect(g);
-		this._play(src, g, o.to, t, t + dur + 0.03, o.pan || 0);
+		this._play(s, g, o.to, t, t + dur + 0.03, o.pan || 0);
 	}
 
 	// filtreli gürültü: f0→f1 süpürme
-	// o: {type, q, a, to, pan, off}
+	// o: {type, q, a, to, pan, hold}
 	noise(t, dur, vol, f0, f1, o = {}) {
 		const c = this.ctx;
 		const s = c.createBufferSource();
@@ -313,17 +276,16 @@ export class Engine {
 		g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
 		s.connect(f);
 		f.connect(g);
-		s.start(t, this.r() * 1.5);
-		// _play start çağırır; burada kendi başlatmamız var
 		let tail = g;
 		let pn = null;
-		if (o.pan) {
+		if (o.pan && c.createStereoPanner) {
 			pn = c.createStereoPanner();
 			pn.pan.value = o.pan;
 			g.connect(pn);
 			tail = pn;
 		}
 		tail.connect(o.to || this.dest);
+		s.start(t, this.r() * 1.5);
 		s.stop(t + dur + 0.03);
 		s.onended = () => {
 			try {
@@ -335,17 +297,5 @@ export class Engine {
 			}
 			this.freeGain(g);
 		};
-	}
-
-	// Paylaşılan titreşim (vibrato) kaynağı: çıkışı sent cinsinden; sesler detune'a bağlar.
-	makeVibrato(rate = 5.4, cents = 14) {
-		const c = this.ctx;
-		const o = c.createOscillator();
-		o.frequency.value = rate;
-		const g = c.createGain();
-		g.gain.value = cents;
-		o.connect(g);
-		o.start();
-		return { osc: o, out: g };
 	}
 }
