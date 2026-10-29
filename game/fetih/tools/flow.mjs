@@ -17,6 +17,8 @@
 //   e_fetih      fetih: gecede boya dalgası
 //   f_safak      fetihten sonra şafak, f2_gunduz gündüze dönmüş hali
 //   m_harita_0..6  ilk harita sorusu: kamera geçişi (0–3), oturmuş kadraj (4), cevap açılışı (5–6)
+//   w_cark_0..2  insanın ilk çark çevirişi: dokunmayı bekleyen çark (0), hızlı dönüş (1), sonuç ve kutlama (2)
+//   w_cark_3     "Fetih!" dilimi gelirse kategori seçimi (maçta çıkmazsa çekilmez)
 //   gunduz       sade gündüz (maç başı)
 // Çıktıda HATA satırı = sayfada hata. Maç sonuna kadar oynanır; "maç bitti" satırı başarı demektir.
 import { chromium } from 'playwright-core';
@@ -24,7 +26,7 @@ import { mkdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const outDir = process.argv.slice(2).find((a) => !a.startsWith('--')) || 'flow-out';
-const opt = Object.fromEntries(process.argv.filter((a) => a.startsWith('--')).map((a) => a.slice(2).split('=')));
+const opt = Object.fromEntries(process.argv.filter((a) => a.startsWith('--')).map((a) => a.slice(2).split('=')).map(([k, ...v]) => [k, v.join('=')])); // --ek=gece=2: ilk = ayırır
 const W = Number(opt.w || 412);
 const H = Number(opt.h || 892);
 const Q = opt.q ?? '2';
@@ -155,6 +157,23 @@ await page.evaluate((cfg) => {
 		}
 		return pr;
 	};
+	// --- çark: insanın ilk çevirişi (betik 0,7 sn sonra dokunur), "Fetih!" diliminde kategori seçimi
+	const wheel = ui.wheel;
+	ui.wheel = function (m, p) {
+		if (p.human && !W.wheelSeen) {
+			W.wheelSeen = 1;
+			[[0, 300], [1, 1400], [2, 5500]].forEach(([k, ms]) => want('w_cark_' + k, ms));
+		}
+		return wheel.call(this, m, p);
+	};
+	const chooseCat = ui.chooseCategory;
+	ui.chooseCategory = function (m, sec) {
+		if (!W.catSeen) {
+			W.catSeen = 1;
+			want('w_cark_3', 400);
+		}
+		return chooseCat.call(this, m, sec);
+	};
 	// --- çark (insan dokunur), fetih dilimi: kategori seç, bitiş ekranı
 	const obs = new MutationObserver(() => {
 		const wh = ui.$.wheel;
@@ -198,7 +217,13 @@ async function snap(name) {
 		app.render();
 	});
 	const file = join(outDir, name + '.png');
-	await page.screenshot({ path: file });
+	// sahte saat dururken çekim bazen bir kare bekleyip takılıyor (yazılım çizici): saati 16 ms'lik adımlarla dürt
+	let ok = false;
+	const shot = page.screenshot({ path: file, timeout: 180000 }).then(() => (ok = true));
+	while (!ok) {
+		await Promise.race([shot, page.waitForTimeout(2000)]);
+		if (!ok) await page.clock.runFor(16);
+	}
 	const st = await page.evaluate(() => ({ ...window.__fl.app.stats(), q: window.__fl.app.ui.$.q.className, night: +window.__fl.app.G.uNight.value.x.toFixed(2), spot: window.__fl.app.G.uSpot.value.toArray().map((v) => +v.toFixed(2)).join('/'), t: +window.__flow.t.toFixed(1) }));
 	shots.push(name);
 	console.log(`${name}: oyun ${st.t} sn  gece=${st.night} havuz=${st.spot} kart=${st.q} çizim=${st.calls} üçgen=${st.tris} program=${st.programs}`);

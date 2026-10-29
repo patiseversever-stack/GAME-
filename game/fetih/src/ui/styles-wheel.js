@@ -1,71 +1,122 @@
 // Çark, "Fetih!" kategori seçimi, düello sahnesi ve seçim sırası stilleri.
+// Çark: jant, disk, bulanık disk, göbek, mandal ve sonuç kartı ayrı katmanlar; canlanan yalnızca transform ve
+// opacity (gölgeler duruk, filtre yok).
 
 import { OUT, LAND } from './cssutil.js';
 
 export const CSS_WHEEL = /* css */ `
 /* ---------------------------------------------------------------- çark */
-.fl-wheel{position:absolute;inset:0;display:grid;place-items:center;opacity:0;transition:opacity .22s;background:radial-gradient(circle at 50% 48%,rgba(8,14,34,.45),rgba(8,14,34,.88) 70%)}
+/* --ws: çarkın genişliği; dar ya da kısa ekranda küçülür, üstte HUD ve duraklat düğmesi için yer kalır */
+.fl-wheel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .25s;
+  --ws:min(calc(90 * var(--vw)),390px,calc((calc(100 * var(--vh)) - 330px) / 1.04));
+  padding:calc(var(--sat) + 100px) 0 calc(var(--sab) + min(40px,calc(4 * var(--vh))));
+  background:linear-gradient(180deg,rgba(4,8,20,.32) 0,rgba(4,8,20,.32) calc(var(--sat) + 92px),rgba(4,8,20,.82) calc(var(--sat) + 190px),rgba(4,8,20,.9))}
 .fl-wheel.on{opacity:1}
-.fl-wh{display:flex;flex-direction:column;align-items:center;gap:30px;transition:opacity .2s,transform .3s}
+.fl-wh{display:flex;flex-direction:column;align-items:center}
 .fl-wh.hide{display:none}
-.fl-wh-cap{display:flex;align-items:center;gap:10px;padding:5px 18px 6px 5px;border-radius:18px;background:var(--panel);border:3px solid var(--gold);box-shadow:0 5px 0 var(--navy-d);transform:translateY(-14px);opacity:0}
-.fl-wheel.on .fl-wh-cap{animation:flUp .35s .05s cubic-bezier(.3,1.5,.5,1) forwards}
-.fl-wh-cap .fl-av{width:44px;height:44px;border-radius:13px}
-.fl-wh-cap b{display:block;font-family:'Lilita One';font-weight:400;font-size:22px;line-height:1.05;letter-spacing:.02em}
-.fl-wh-cap small{display:block;font-size:14px;color:#cfe0ff}
-.fl-wh-box{position:relative;width:min(calc(84 * var(--vw)),370px);aspect-ratio:1;transform:scale(.6);opacity:0}
-.fl-wheel.on .fl-wh-box{animation:flWhIn .45s cubic-bezier(.3,1.5,.5,1) forwards}
-@keyframes flWhIn{to{transform:scale(1);opacity:1}}
-.fl-wh-box>svg,.fl-wh-spin{position:absolute;inset:0;width:100%;height:100%}
-.fl-wh-spin{will-change:transform}
-.fl-wh-spin svg{width:100%;height:100%}
-.fl-wh-rays{position:absolute;left:-30%;top:-30%;width:160%;height:160%;border-radius:50%;opacity:.35;
-  background:repeating-conic-gradient(from 0deg,rgba(255,226,140,.5) 0deg 7deg,rgba(255,226,140,0) 7deg 18deg);
-  -webkit-mask:radial-gradient(circle,#000 25%,transparent 68%);mask:radial-gradient(circle,#000 25%,transparent 68%);animation:flRot 24s linear infinite;will-change:transform}
-.fl-wheel.done .fl-wh-rays{opacity:1;animation:flRot 6s linear infinite,flRaysPop .5s cubic-bezier(.3,1.5,.5,1)}
 @keyframes flRot{to{transform:rotate(360deg)}}
-@keyframes flRaysPop{from{opacity:.35}}
-.fl-wh-box .bulbs circle{fill:#fff7d0;stroke:#c98a12;stroke-width:1.4}
-.fl-wh-box .bulbs .b1{animation:flBulb 1s steps(1) infinite}
-.fl-wh-box .bulbs .b0{animation:flBulb 1s .5s steps(1) infinite}
-.fl-wheel.spinning .bulbs .b1{animation-duration:.24s}
-.fl-wheel.spinning .bulbs .b0{animation-duration:.24s;animation-delay:.12s}
-.fl-wheel.done .bulbs circle{animation:flBulb .16s steps(1) 6}
-@keyframes flBulb{0%{opacity:1}50%{opacity:.3}}
-.fl-wh-hl{opacity:0}
-.fl-wheel.done .fl-wh-hl{animation:flHl .9s ease-out forwards}
-@keyframes flHl{0%{opacity:0}25%{opacity:.75}100%{opacity:.32}}
-.fl-wh-hub{position:absolute;left:50%;top:50%;width:17%;height:17%;margin:-8.5% 0 0 -8.5%;border-radius:50%;display:grid;place-items:center;overflow:hidden}
-.fl-wh-hub b{font-family:'Lilita One';font-weight:400;font-size:min(calc(4.4 * var(--vw)),18px);color:#fff;${OUT('#7a1a0a', 1.5)}}
-.fl-wh-hub.me{background:radial-gradient(circle at 45% 35%,#ff8a6a,#d8301e 70%);border:2px solid #fff}
-.fl-wh-hub.me:not(.go){animation:flHubP .9s ease-in-out infinite}
-@keyframes flHubP{50%{transform:scale(1.12)}}
-.fl-wh-hub .fl-av{width:100%;height:100%;border-radius:50%;border:2px solid #fff;box-shadow:none}
-.fl-wh-tk{position:absolute;left:50%;top:-8.5%;width:12%;margin-left:-6%;aspect-ratio:40/64;transform-origin:50% 26.5%;will-change:transform;z-index:2}
-.fl-wh-tk svg{width:100%;height:100%;filter:drop-shadow(0 3px 0 rgba(0,0,0,.4))}
-.fl-wh-res{min-height:56px;display:flex;align-items:center;gap:10px;padding:5px 22px 6px 6px;border-radius:20px;background:linear-gradient(var(--cc),var(--cd));border:3.5px solid #fff;box-shadow:0 6px 0 rgba(0,0,0,.4);opacity:0;transform:scale(.4)}
-.fl-wh-res.on{animation:flResIn .5s cubic-bezier(.3,1.8,.5,1) forwards}
-.fl-wh-res:empty{visibility:hidden}
-@keyframes flResIn{to{opacity:1;transform:none}}
-.fl-wh-res .ri{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-size:28px;background:#fff;box-shadow:inset 0 -3px 0 rgba(0,0,0,.12)}
-.fl-wh-res b{display:block;font-family:'Lilita One';font-weight:400;font-size:30px;line-height:1;${OUT('var(--cd)', 2.5)}}
-.fl-wh-res small{display:block;font-size:14px;margin-top:2px;${OUT('var(--cd)', 1)}}
-.fl-wheel.fetih .fl-wh-res{box-shadow:0 0 0 4px #fff3b0,0 6px 0 rgba(0,0,0,.4),0 0 40px 10px rgba(255,210,90,.6)}
 
-/* "Fetih!" kategori seçimi */
-.fl-catpick{width:min(calc(calc(100 * var(--vw)) - 24px),420px);padding:14px;border-radius:26px;background:var(--panel);border:3px solid var(--gold);box-shadow:0 0 0 2.5px var(--gold-dd),0 8px 0 var(--navy-d),0 0 60px rgba(255,210,90,.35);
-  transform:scale(.7);opacity:0}
-.fl-wheel.pick .fl-catpick{animation:flWhIn .4s cubic-bezier(.3,1.6,.5,1) forwards}
-.fl-catpick .hd{display:flex;flex-direction:column;align-items:center;margin:-46px 0 10px}
-.fl-catpick .cr{width:66px;height:66px;border-radius:50%;display:grid;place-items:center;font-size:40px;background:radial-gradient(circle at 45% 35%,#fff6c8,#ffc93a 55%,#c98a12);border:4px solid #fff;box-shadow:0 5px 0 var(--gold-dd)}
-.fl-catpick .hd b{margin-top:2px;font-family:'Lilita One';font-weight:400;font-size:36px;line-height:1;color:var(--gold);${OUT('#5a2a00', 3)}}
-.fl-catpick .hd small{font-size:15px;color:#fff}
-.fl-catpick .gr{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.fl-catpick button{display:flex;align-items:center;gap:9px;min-height:60px;padding:6px 10px 7px 6px;border-radius:16px;text-align:left;font-size:16px;line-height:1.1;
-  background:linear-gradient(var(--cc),var(--cd));border:3px solid #fff;box-shadow:0 5px 0 rgba(0,0,0,.4);transition:transform .08s;animation:flPopIn .35s calc(.15s + var(--k) * .05s) cubic-bezier(.3,1.7,.5,1) both;${OUT('rgba(0,0,0,.4)', 1)}}
+/* başlık: kimin sırası (sade: portre, ad, tek satır) */
+.fl-wh-cap{display:flex;align-items:center;gap:12px;margin-bottom:20px;opacity:0;transform:translateY(-10px)}
+.fl-wheel.on .fl-wh-cap{animation:flCapIn .35s .05s ease-out forwards}
+@keyframes flCapIn{to{opacity:1;transform:none}}
+.fl-wh-cap .av{flex:none;width:46px;height:46px;border-radius:50%;padding:2.5px;background:var(--pc,#fff)}
+.fl-wh-cap .av .fl-av{width:100%;height:100%;border-radius:50%;border:2px solid #0e1736;box-shadow:none}
+.fl-wh-cap b{display:block;font-family:'Lilita One';font-weight:400;font-size:26px;line-height:1.05;letter-spacing:.01em;color:#fff;white-space:nowrap}
+.fl-wh-cap small{display:block;margin-top:2px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:13px;color:#aebbd8;white-space:nowrap}
+
+/* sahne: giriş hafif büyüyerek, çıkış sönerek */
+.fl-wh-stage{position:relative;width:var(--ws);margin-top:calc(var(--ws) * .06);opacity:0;transform:scale(.88)}
+.fl-wheel.on .fl-wh-stage{animation:flWhIn .42s cubic-bezier(.2,.9,.3,1.1) forwards}
+@keyframes flWhIn{to{opacity:1;transform:none}}
+.fl-wheel.out .fl-wh-stage,.fl-wheel.out .fl-wh-cap,.fl-wheel.out .fl-wh-act{opacity:1;transform:none;animation:flWhOut .26s ease-in forwards}
+@keyframes flWhOut{to{opacity:0;transform:scale(.96)}}
+.fl-wh-box{position:relative;width:100%;aspect-ratio:1}
+.fl-wh-box>svg,.fl-wh-spin,.fl-wh-dim,.fl-wh-pop{position:absolute;left:0;top:0;width:100%;height:100%}
+.fl-wh-spin{will-change:transform}
+.fl-wh-spin>svg{width:100%;height:100%}
+.fl-wh-blur{position:absolute;inset:5%;border-radius:50%;opacity:0;will-change:opacity}
+.fl-wh.sb .fl-wh-blur{inset:7.5%}
+
+/* sonuç: diğerleri kararır, kazanan dilim sakince öne çıkar */
+.fl-wh-dim{opacity:0;will-change:opacity;pointer-events:none}
+.fl-wh-dim svg{width:100%;height:100%}
+.fl-wheel.done .fl-wh-dim{opacity:.58;transition:opacity .4s ease-out}
+.fl-wh-pop{pointer-events:none}
+.fl-wh-pop .pz{position:absolute;inset:0;opacity:0}
+.fl-wh-pop .pz>svg{position:absolute;inset:0;width:100%;height:100%}
+.fl-wheel.done .fl-wh-pop .pz{animation:flSliceUp .45s cubic-bezier(.2,.9,.3,1.15) forwards}
+@keyframes flSliceUp{0%{opacity:0;transform:none}30%{opacity:1}100%{opacity:1;transform:translateY(-2.2%) scale(1.045)}}
+
+/* göbek */
+.fl-wh-hub{position:absolute;left:39%;top:39%;width:22%;height:22%;display:grid;place-items:center;z-index:2;pointer-events:none}
+.fl-wh.sb .fl-wh-hub{left:37%;top:37%;width:26%;height:26%}
+.fl-wh.sc .fl-wh-hub{left:36.5%;top:36.5%;width:27%;height:27%}
+.fl-wh-hub>svg{position:absolute;inset:0;width:100%;height:100%}
+.fl-wh-hub .fl-av{position:relative;width:76%;height:76%;border-radius:50%;border:0;box-shadow:none}
+
+/* mandal: jantın tepesinde, dilim sınırlarına değince hafifçe sapar */
+.fl-wh-tk{position:absolute;left:50%;top:-10%;width:14%;margin-left:-7%;aspect-ratio:60/64;transform-origin:50% 21.9%;will-change:transform;z-index:3;pointer-events:none}
+.fl-wh.sb .fl-wh-tk{top:-8%}
+.fl-wh.sc .fl-wh-tk{top:-6.2%;width:12%;margin-left:-6%}
+.fl-wh-tk svg{width:100%;height:100%}
+
+/* çarkın altı: tek büyük ÇEVİR düğmesi; bot sırasında durum yazısı; sonuçta kategori kartı */
+.fl-wh-act{position:relative;width:var(--ws);height:96px;margin-top:22px;opacity:0}
+.fl-wheel.on .fl-wh-act{animation:flCapIn .35s .12s ease-out forwards}
+.fl-wh-act>*{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);transition:opacity .2s,transform .25s}
+.fl-wh-act .go{width:62%;--b1:#ffd54a;--b2:#f2a414;--b3:#9a5a06;color:#3a2200;font-size:clamp(24px,calc(7.4 * var(--vw)),30px);letter-spacing:.06em;text-shadow:0 1px 0 rgba(255,255,255,.45);opacity:0;pointer-events:none}
+.fl-wheel.me.idle .fl-wh-act .go{opacity:1;pointer-events:auto;animation:flGoBreath 1.6s ease-in-out infinite}
+@keyframes flGoBreath{0%,100%{transform:translate(-50%,-50%)}50%{transform:translate(-50%,-50%) scale(1.04)}}
+.fl-wheel.press .fl-wh-act .go{transform:translate(-50%,calc(-50% + 4px))}
+.fl-wh-act .st{white-space:nowrap;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:14px;letter-spacing:.04em;color:#c9d4ee;opacity:0}
+.fl-wheel.bot:not(.done) .fl-wh-act .st{opacity:1}
+.fl-wh-card{display:flex;align-items:center;gap:14px;width:min(94%,350px);padding:12px 22px 12px 12px;border-radius:22px;background:#fff;
+  box-shadow:0 2px 0 rgba(0,0,0,.08),0 14px 30px rgba(0,0,0,.4);opacity:0;transform:translate(-50%,-38%) scale(.96)}
+.fl-wheel.done .fl-wh-card{opacity:1;transform:translate(-50%,-50%);transition:opacity .3s .12s ease-out,transform .4s .12s cubic-bezier(.2,.9,.3,1.1)}
+.fl-wh-card .ic{flex:none;width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:var(--cc)}
+.fl-wh-card .ic .fl-gl{width:62%;height:62%}
+.fl-wh-card .tx{min-width:0;display:flex;flex-direction:column}
+.fl-wh-card b{font-family:'Lilita One';font-weight:400;font-size:calc(30px * var(--fz,1));line-height:1.05;color:#14214a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-wh-card small{margin-top:3px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:14px;color:#5b6a8c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+/* "Fetih!" kategori seçimi: taçlı başlık, süre çubuğu, büyük kategori kartları */
+.fl-catpick{position:relative;width:min(calc(calc(100 * var(--vw)) - 24px),420px);display:flex;flex-direction:column;align-items:center;margin-top:calc(-1 * min(36px,calc(4 * var(--vh))))}
+.fl-catpick .hd{position:relative;display:flex;flex-direction:column;align-items:center;margin-bottom:14px}
+.fl-catpick .cr{position:relative;width:min(96px,calc(11 * var(--vh)));aspect-ratio:1;display:grid;place-items:center;transform:scale(0) rotate(-40deg)}
+.fl-wheel.pick .fl-catpick .cr{animation:flMedIn .55s .05s cubic-bezier(.3,1.7,.5,1) forwards}
+.fl-catpick .cr .fl-ci{position:relative;width:100%;height:100%}
+.fl-catpick .hd b{position:relative;margin-top:-4px;font-family:'Lilita One';font-weight:400;font-size:clamp(38px,min(calc(12 * var(--vw)),calc(6.2 * var(--vh))),54px);line-height:1;letter-spacing:.03em;color:#ffe066;${OUT('#5a2a00', 3.5)};
+  opacity:0;transform:scale(1.8)}
+.fl-wheel.pick .fl-catpick .hd b{animation:flTitleIn .4s .15s cubic-bezier(.3,1.5,.5,1) forwards}
+@keyframes flTitleIn{to{opacity:1;transform:none}}
+.fl-catpick .hd small{position:relative;margin-top:7px;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:12.5px;letter-spacing:.24em;margin-right:-.24em;text-transform:uppercase;color:#fff4dc;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.fl-catpick .tm{position:relative;display:flex;align-items:center;gap:10px;margin-top:10px;width:min(250px,64%)}
+.fl-catpick .tm .br{flex:1;height:11px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.14);box-shadow:inset 0 2px 0 rgba(0,0,0,.4),0 0 0 2px rgba(0,0,0,.35)}
+.fl-catpick .tm .br i{display:block;height:100%;border-radius:6px;background:linear-gradient(180deg,#fff4b0,#ffc21a 60%,#e08a0a);transform-origin:0 50%;animation:flTimer 8s linear forwards}
+@keyframes flTimer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+.fl-catpick .tm em{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-family:'Lilita One';font-size:19px;color:#3a2000;
+  background:radial-gradient(circle at 45% 35%,#fff6c8,#ffc93a 60%,#c98a12);border:2.5px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.4)}
+.fl-catpick .tm.hot .br i{background:linear-gradient(180deg,#ffb4a4,#ff5a3a 60%,#c42a1a)}
+.fl-catpick .tm.hot em{color:#fff;background:radial-gradient(circle at 45% 35%,#ff9a8a,#e8402a 60%,#8a1406);animation:flBeat .5s ease-in-out infinite alternate}
+.fl-catpick .gr{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.fl-catpick button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:clamp(80px,calc(12.5 * var(--vh)),124px);padding:8px 8px 11px;border-radius:20px;overflow:hidden;
+  background:linear-gradient(180deg,var(--cl) 0%,var(--cc) 46%,var(--cd) 100%);border:3px solid rgba(255,255,255,.95);
+  box-shadow:inset 0 3px 0 rgba(255,255,255,.35),inset 0 -5px 0 rgba(0,0,0,.16),0 0 0 2px var(--ce),0 6px 0 var(--ce),0 10px 18px rgba(0,0,0,.35);
+  transition:transform .08s,opacity .25s;animation:flCardIn .42s calc(.14s + var(--k) * .05s) cubic-bezier(.3,1.6,.5,1) backwards}
+@keyframes flCardIn{from{opacity:0;transform:translateY(26px) scale(.7)}}
+.fl-catpick button::before{content:'';position:absolute;left:0;right:0;top:0;height:46%;background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,0));pointer-events:none}
 .fl-catpick button:active{transform:translateY(4px)}
-.fl-catpick button.chosen{animation:flPop .35s;box-shadow:0 0 0 4px var(--gold),0 5px 0 rgba(0,0,0,.4)}
-.fl-catpick .ci{flex:none;width:40px;height:40px;border-radius:50%;display:grid;place-items:center;font-size:24px;background:#fff}
+.fl-catpick .ci{position:relative;width:min(64px,calc(16 * var(--vw)),calc(7.6 * var(--vh)));aspect-ratio:1}
+.fl-catpick .ci .fl-ci{width:100%;height:100%}
+.fl-catpick button b{position:relative;font-family:'Lilita One';font-weight:400;font-size:clamp(16px,calc(5 * var(--vw)),21px);line-height:1.05;letter-spacing:.02em;text-align:center;color:#fff;${OUT('var(--ce)', 2)}}
+.fl-catpick.chosen button:not(.chosen){opacity:.32;transform:scale(.93)}
+.fl-catpick button.chosen{z-index:1;animation:flChosen .5s cubic-bezier(.3,1.7,.5,1) forwards;box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 0 0 2px var(--ce),0 0 0 6px #ffd25a,0 6px 0 var(--ce),0 0 34px 6px rgba(255,214,90,.6)}
+@keyframes flChosen{0%{transform:none}40%{transform:scale(1.12)}100%{transform:scale(1.05)}}
+
+@media (prefers-reduced-motion:reduce){
+  .fl-ui .fl-catpick .tm .br i{animation-duration:var(--sec,8s)!important}
+}
 
 /* ---------------------------------------------------------------- düello sahnesi */
 .fl-duel{position:absolute;inset:0;display:none;pointer-events:auto;overflow:hidden}
@@ -137,14 +188,6 @@ export const CSS_WHEEL = /* css */ `
 .fl-rank .rw>em.z{background:#46557a}
 
 ${LAND}{
-  .fl-wh{flex-direction:row;gap:18px}
-  .fl-wh-cap{flex-direction:column;text-align:center;padding:8px 12px;max-width:180px;transform:translateX(-14px)}
-  .fl-wh-box{width:min(calc(78 * var(--vh)),330px)}
-  .fl-wh-res{flex-direction:column;padding:10px 14px;min-width:150px;text-align:center}
-  .fl-catpick{width:min(calc(calc(100 * var(--vw)) - 24px),620px);padding:10px 12px 12px}
-  .fl-catpick .gr{grid-template-columns:1fr 1fr 1fr}
-  .fl-catpick .hd{margin:-30px 0 6px;flex-direction:row;gap:10px}
-  .fl-catpick .cr{width:50px;height:50px;font-size:30px}
   .fl-duel .dz.a{clip-path:polygon(0 0,57% 0,43% 100%,0 100%)}
   .fl-duel .dz.d{clip-path:polygon(57% 0,100% 0,100% 100%,43% 100%)}
   .fl-duel .slash{left:50%;right:auto;top:-10%;bottom:-10%;width:10px;height:auto;margin:0 0 0 -5px;background:linear-gradient(180deg,transparent,#fff 15%,#fff6c8 50%,#fff 85%,transparent);transform:rotate(var(--sa,15deg)) scaleY(0);animation-name:flSlashL}

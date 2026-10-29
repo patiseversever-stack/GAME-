@@ -89,6 +89,192 @@ export const ico = (name, { o = 0, w = 2.4, c = '#fff', oc = 'rgba(0,0,0,.4)', c
 /** Dolu 4 köşeli parıltı. */
 export const SPARK = 'M12 1.5l2.4 8.1 8.1 2.4-8.1 2.4L12 22.5l-2.4-8.1L1.5 12l8.1-2.4z';
 
+// ------------------------------------------------------------------ kategori çıkartmaları (çark, kategori seçimi)
+//
+// 64×64 dolu "çıkartma" simgeleri: tek parça koyu dış hat (kategori renginin koyusu), hafif hacimli beyaz
+// gövde, kategori renginde ayrıntı ve altta duruk gölge. Çarkın diliminde, kategori kartında ve sonuç
+// şeridinde aynı çizim kullanılır. Gövde iki kez çizilir: önce kalın dış hat (bütün parçalar tek siluet),
+// sonra dolgular; ayrıntılar en üstte.
+
+let UID = 0;
+const n1 = (v) => +v.toFixed(2);
+const circ = (x, y, r) => `M${n1(x - r)} ${n1(y)}a${r} ${r} 0 1 0 ${n1(2 * r)} 0a${r} ${r} 0 1 0 ${n1(-2 * r)} 0z`;
+/** Noktalardan geçen yumuşak kapalı eğri (Catmull-Rom). */
+const blob = (pts) => {
+	const n = pts.length;
+	let d = `M${pts[0][0]} ${pts[0][1]}`;
+	for (let i = 0; i < n; i++) {
+		const [a, b, c, e] = [pts[(i + n - 1) % n], pts[i], pts[(i + 1) % n], pts[(i + 2) % n]];
+		d += `C${n1(b[0] + (c[0] - a[0]) / 6)} ${n1(b[1] + (c[1] - a[1]) / 6)} ${n1(c[0] - (e[0] - b[0]) / 6)} ${n1(c[1] - (e[1] - b[1]) / 6)} ${c[0]} ${c[1]}`;
+	}
+	return d + 'Z';
+};
+const ring = (cx, cy, r, n, a0 = -90, rot = 0) =>
+	Array.from({ length: n }, (_, k) => {
+		const a = ((a0 + (360 / n) * k) * Math.PI) / 180;
+		return [n1(cx + r * Math.cos(a + rot)), n1(cy + r * Math.sin(a + rot))];
+	});
+const poly = (pts) => 'M' + pts.map((p) => p.join(' ')).join('L') + 'Z';
+
+// Gövde parçaları: {d, f} dolu ya da {d, s, w} çizgi (ikisi de dış hat alır); t: dönüşüm.
+// Dolgu anahtarları: W beyaz (hacimli), G altın, Y ampul sarısı, l açık, t ton, m kategori, k koyu, o dış hat.
+const CAT_ART = {
+	// Tarih: antik tapınak (alınlık, dört sütun, basamaklar)
+	tarih: () => ({
+		body: [
+			{ d: 'M5.5 24.5L32 9l26.5 15.5z', f: 'W' },
+			{ d: 'M8 24h48v6.5H8z', f: 't' },
+			...[10.5, 22.5, 34.5, 46.5].map((x) => ({ d: `M${x} 30h7v17h-7z`, f: 'W' })),
+			{ d: 'M7 47h50v5.5H7z', f: 't' },
+			{ d: 'M4 52.5h56v6H4z', f: 'W' },
+		],
+		detail: (P) =>
+			`<path d="${circ(32, 19, 3.2)}" fill="${P.t}" stroke="${P.o}" stroke-width="2"/><path d="M14 32.5v12M26 32.5v12M38 32.5v12M50 32.5v12" stroke="${P.t}" stroke-width="2.2" stroke-linecap="round"/>`,
+	}),
+	// Coğrafya: ayaklı yerküre (açık okyanus, beyaz kıtalar)
+	cografya: () => ({
+		body: [
+			{ d: 'M17.7 10.4A21.5 21.5 0 1 0 39.1 47.5', s: 'W', w: 4.4 },
+			{ d: 'M29.6 48h4.8v7h-4.8z', f: 'W' },
+			{ d: 'M20 59.5h24l-2.6-5H22.6z', f: 't' },
+			{ d: circ(30, 28, 17), f: 't' },
+		],
+		detail: (P) =>
+			`<path d="M13.4 28q16.6 6.5 33.2 0M30 11.2q-9.5 16.8 0 33.6" fill="none" stroke="${P.m}" stroke-width="1.7" opacity=".45"/>
+<path d="${blob([[17, 20], [22, 15], [29, 13.5], [34, 16], [35, 21], [38.5, 24], [34, 27.5], [30, 26.5], [28, 31], [24, 33], [21, 29], [17, 27]])}" fill="#fff" stroke="${P.o}" stroke-width="1.6"/>
+<path d="${blob([[37, 31.5], [42, 30], [45, 34], [41.5, 39.5], [37, 41], [35, 36]])}" fill="#fff" stroke="${P.o}" stroke-width="1.6"/>
+<path d="${blob([[23.5, 38.5], [28, 39.5], [27, 43], [22.8, 41.8]])}" fill="#fff" stroke="${P.o}" stroke-width="1.6"/>
+<path d="M17.8 17.6a14.5 14.5 0 0 1 6.8-5.2" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".9"/>`,
+	}),
+	// Spor: futbol topu
+	spor: (P, ids) => {
+		const cx = 32;
+		const cy = 31.5;
+		const center = ring(cx, cy, 7.4, 5);
+		// kenar beşgenleri merkezdekinin köşeleri yönünde, bir köşesi merkeze bakar
+		const patches = [-90, -18, 54, 126, 198].map((a) => {
+			const r = (a * Math.PI) / 180;
+			return poly(ring(cx + 21 * Math.cos(r), cy + 21 * Math.sin(r), 7.4, 5, a + 180));
+		});
+		const seams = center
+			.map(([x, y], k) => {
+				const a = ((-90 + 72 * k) * Math.PI) / 180;
+				return `M${x} ${y}L${n1(cx + 14 * Math.cos(a))} ${n1(cy + 14 * Math.sin(a))}`;
+			})
+			.join('');
+		return {
+			body: [{ d: circ(cx, cy, 21.5), f: 'W' }],
+			detail: () =>
+				`<clipPath id="${ids.u}b"><path d="${circ(cx, cy, 21.5)}"/></clipPath><g clip-path="url(#${ids.u}b)" fill="${P.o}">${patches.map((d) => `<path d="${d}"/>`).join('')}</g>
+<path d="${poly(center)}" fill="${P.o}" stroke="${P.o}" stroke-width="1.5" stroke-linejoin="round"/><path d="${seams}" stroke="${P.o}" stroke-width="2.2" stroke-linecap="round"/>
+<path d="M18.2 22.5a15.5 15.5 0 0 1 6.5-7.2" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".95"/>`,
+		};
+	},
+	// Bilim: erlenmeyer (kategori renginde sıvı, kabarcıklar)
+	bilim: () => ({
+		body: [{ d: 'M23 7h18v5h-3v12.5l12.6 22.3c2.2 4-.6 9.2-5.2 9.2H18.6c-4.6 0-7.4-5.2-5.2-9.2L26 24.5V12h-3z', f: 'l' }],
+		detail: (P) =>
+			`<path d="M18.4 38c3-2 6 2 9 0s6-2 9 0 6 2 9.2 0l5 8.8c2.2 4-.6 9.2-5.2 9.2H18.6c-4.6 0-7.4-5.2-5.2-9.2z" fill="${P.m}"/>
+<path d="M18.4 38c3-2 6 2 9 0s6-2 9 0 6 2 9.2 0" fill="none" stroke="${P.t}" stroke-width="2" stroke-linecap="round"/>
+<path d="${circ(27, 48.5, 2.7)}${circ(35, 45, 1.9)}${circ(31.5, 52, 1.4)}${circ(33.5, 29.5, 1.7)}${circ(30.5, 21, 1.2)}" fill="#fff"/>
+<path d="M21.6 35.5l-4 7.2M29.2 13.5v9" fill="none" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>`,
+	}),
+	// Sanat & edebiyat: boya paleti ve fırça
+	sanat: () => ({
+		body: [
+			{ d: 'M31 8C16.5 8 6 18 6 31.5 6 44 15.5 54 28 54c4.5 0 6-2.5 4.4-5.6-1.8-3.6.6-6.9 4.6-6.9h6.5C51.5 41.5 58 36 58 28 58 16 46 8 31 8z', f: 'W' },
+			{ d: 'M-2.7 8h5.4v13a2.7 2.7 0 0 1-5.4 0z', f: '#f0a848', t: 'translate(43.5 39.5) rotate(-45)' },
+			{ d: 'M-3.3 1.5h6.6v6.8h-6.6z', f: '#dfe6f2', t: 'translate(43.5 39.5) rotate(-45)' },
+			{ d: 'M-3.3 1.5C-3.3-4-1.5-9 0-12.8 1.5-9 3.3-4 3.3 1.5z', f: 'm', t: 'translate(43.5 39.5) rotate(-45)' },
+		],
+		detail: (P) =>
+			[
+				[16.5, 30, '#ff4d4d'],
+				[23.5, 19, '#ffd23a'],
+				[36, 15.5, '#3fa9ff'],
+				[47.5, 22, '#4fd16a'],
+			]
+				.map(([x, y, c]) => `<path d="${circ(x, y, 4.6)}" fill="${c}" stroke="${P.o}" stroke-width="1.8"/><path d="${circ(x - 1.4, y - 1.5, 1.3)}" fill="#fff" opacity=".85"/>`)
+				.join('') + `<path d="M-1 -6.5Q-.6-9 0-10.5" transform="translate(43.5 39.5) rotate(-45)" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".8"/>`,
+	}),
+	// Genel kültür: ışık saçan ampul
+	eglence: () => ({
+		body: [
+			...[-90, -50, -130, -12, -168].map((a) => {
+				const r = (a * Math.PI) / 180;
+				return { d: `M${n1(32 + 19.5 * Math.cos(r))} ${n1(27.5 + 19.5 * Math.sin(r))}L${n1(32 + 24 * Math.cos(r))} ${n1(27.5 + 24 * Math.sin(r))}`, s: '#fff', w: 3.6 };
+			}),
+			{ d: 'M32 12.5C23.2 12.5 17 19.1 17 27.1c0 5.2 2.7 8.6 5.5 11.3 1.8 1.7 2.8 3.8 2.8 6.2v1.9h13.4v-1.9c0-2.4 1-4.5 2.8-6.2 2.8-2.7 5.5-6.1 5.5-11.3 0-8-6.2-14.6-15-14.6z', f: 'Y' },
+			{ d: 'M24.6 46.5h14.8v4H24.6z', f: '#e6ebf4' },
+			{ d: 'M25.4 50.5h13.2v3.8H25.4z', f: '#b9c2d6' },
+			{ d: 'M28 54.3h8l-1.5 3.4h-5z', f: 'o' },
+		],
+		detail: () =>
+			`<path d="M28.3 46V35.5l1.9 3.1 1.8-3.1 1.8 3.1 1.9-3.1V46" fill="none" stroke="#e08a00" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+<path d="M21.2 25a11.5 11.5 0 0 1 7-8.6" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`,
+	}),
+	// Fetih: mücevherli taç
+	fetih: () => ({
+		body: [
+			{ d: 'M9 46.5L5.5 21l13.5 11.5L32 13l13 19.5L58.5 21 55 46.5z', f: 'G' },
+			{ d: 'M8.5 44.5h47v10h-47z', f: '#f2a01c' },
+			{ d: circ(5.5, 19.5, 4.2) + circ(58.5, 19.5, 4.2), f: '#fff0a0' },
+			{ d: circ(32, 11, 4.8), f: '#fff0a0' },
+		],
+		detail: (P) =>
+			`<path d="M32 26.5l4.6 6.2-4.6 6.2-4.6-6.2z" fill="#ff4a5a" stroke="${P.o}" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="${circ(20, 49.5, 2.9)}" fill="#3fa9ff" stroke="${P.o}" stroke-width="1.6"/><path d="${circ(32, 49.5, 3.3)}" fill="#ff4a5a" stroke="${P.o}" stroke-width="1.6"/><path d="${circ(44, 49.5, 2.9)}" fill="#4fd16a" stroke="${P.o}" stroke-width="1.6"/>
+<path d="M13.6 41.5L11.6 28" stroke="#fff" stroke-width="2.6" stroke-linecap="round" opacity=".85"/><path d="M12 47.2h40" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>
+<path d="${circ(4.3, 18.2, 1.3)}${circ(30.6, 9.5, 1.5)}${circ(57.3, 18.2, 1.3)}" fill="#fff"/>`,
+	}),
+};
+CAT_ART.star = () => ({ body: [{ d: poly(ring(32, 33, 24, 10).map((p, k) => (k % 2 ? [n1(32 + (p[0] - 32) * 0.45), n1(33 + (p[1] - 33) * 0.45)] : p))), f: 'W' }], detail: () => '' });
+
+/** Kategori renginden çıkartma paleti. */
+export const catPalette = (key, color) =>
+	key === 'fetih' ? { o: '#5e2c00', t: '#ffd77a', l: '#fff4c8', m: '#f5a31a', k: '#c97a0a' } : { o: shade(color, -0.6), t: shade(color, 0.5), l: shade(color, 0.8), m: color, k: shade(color, -0.2) };
+
+/** Çıkartma gradyanları (bir SVG'de bir kez; ids.w / ids.g / ids.y). */
+export const catDefs = (ids) =>
+	`<linearGradient id="${ids.w}" x1="0" y1="0" x2="0" y2="1"><stop offset=".42" stop-color="#fff"/><stop offset="1" stop-color="#dbe3f0"/></linearGradient>` +
+	`<linearGradient id="${ids.g}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3a8"/><stop offset=".5" stop-color="#ffcc2e"/><stop offset="1" stop-color="#e58e0c"/></linearGradient>` +
+	`<radialGradient id="${ids.y}" cx=".45" cy=".4" r=".65"><stop offset="0" stop-color="#fffef0"/><stop offset=".55" stop-color="#fff2a0"/><stop offset="1" stop-color="#ffd23f"/></radialGradient>`;
+
+/** Yeni benzersiz kimlik takımı (aynı sayfada birden çok SVG). */
+export const catIds = () => {
+	const u = 'flc' + (++UID).toString(36);
+	return { u, w: u + 'w', g: u + 'g', y: u + 'y' };
+};
+
+/**
+ * Kategori çıkartması: 64×64 kutuda <g> (ids.* gradyanları aynı SVG'de tanımlı olmalı).
+ * shadow: alttaki duruk gölgenin koyuluğu (0: yok).
+ */
+export function catSticker(key, color, ids, { shadow = 0.32, ow = 6.4 } = {}) {
+	const P = catPalette(key, color);
+	const art = (CAT_ART[key] || CAT_ART.star)(P, ids);
+	const fill = (f) => (f === 'W' ? `url(#${ids.w})` : f === 'G' ? `url(#${ids.g})` : f === 'Y' ? `url(#${ids.y})` : P[f] || f);
+	const pass = (mode) =>
+		art.body
+			.map((s) => {
+				const t = s.t ? ` transform="${s.t}"` : '';
+				if (s.s) {
+					const c = mode ? mode : fill(s.s);
+					return `<path d="${s.d}" fill="none" stroke="${c}" stroke-width="${mode ? s.w + ow : s.w}" stroke-linecap="round" stroke-linejoin="round"${t}/>`;
+				}
+				return mode ? `<path d="${s.d}" fill="${mode}" stroke="${mode}" stroke-width="${ow}" stroke-linejoin="round"${t}/>` : `<path d="${s.d}" fill="${fill(s.f)}"${t}/>`;
+			})
+			.join('');
+	const sh = shadow ? `<g transform="translate(0 3.4)" opacity="${shadow}">${pass('#000')}</g>` : '';
+	return `<g>${sh}${pass(P.o)}${pass(null)}${art.detail(P)}</g>`;
+}
+
+/** Tek başına kategori simgesi (kendi gradyanlarıyla). */
+export function catIcon(key, color, { cls = '', shadow = 0.32 } = {}) {
+	const ids = catIds();
+	return `<svg class="fl-ci ${cls}" viewBox="-4 -4 72 72" overflow="visible"><defs>${catDefs(ids)}</defs>${catSticker(key, color, ids, { shadow })}</svg>`;
+}
+
 // ------------------------------------------------------------------ komutan portreleri
 
 export const AVATARS = [
