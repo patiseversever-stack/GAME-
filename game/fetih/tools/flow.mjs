@@ -4,7 +4,7 @@
 // çalışır (çizim yok), görüntü yalnızca çekim anında çizilir. Böylece yavaş yazılım çiziciyle bile
 // geçişler gerçek cihazdaki zamanlamayla görünür.
 //
-//   node tools/flow.mjs çıktı-dizini [--q=2 --w=412 --h=892 --dpr=1 --seed=7 --region=ege --mode=ffa3 --only=a,b --seq]
+//   node tools/flow.mjs çıktı-dizini [--html=eski.html --q=2 --w=412 --h=892 --dpr=1 --seed=7 --region=ege --mode=ffa3 --only=a,b --seq]
 //
 // Çekimler:
 //   a_baskent    insan başkentini seçerken (kamera tepeden, seçilebilir iller aydınlık)
@@ -43,7 +43,7 @@ const page = await browser.newPage({ viewport: { width: W, height: H }, deviceSc
 const logs = [];
 page.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`));
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}\n${e.stack || ''}`));
-const url = 'file://' + resolve('dist/FetihLigi.html') + `?debug&q=${Q}`;
+const url = 'file://' + resolve(opt.html || 'dist/FetihLigi.html') + `?debug&q=${Q}`; // --html: başka bir derleme (kıyas için)
 const t0 = Date.now();
 await page.goto(url);
 await page.waitForFunction(() => window.__fl, null, { timeout: 240000 });
