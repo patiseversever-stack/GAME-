@@ -106,7 +106,7 @@ export function inversions(seq, items, dir = 'asc') {
 const up = (s) => String(s).toLocaleUpperCase('tr-TR');
 
 export const order = {
-	time: 20,
+	time: 23,
 	label: 'Sırala',
 	kind: 'closest',
 	keep: true, // arayüz sıralama tablosunu tahtanın altına ekler (tahtayı silmez)

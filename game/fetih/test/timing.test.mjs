@@ -1,15 +1,20 @@
 // Soru süresi sınaması (düz node, bağımlılık yok):  node test/timing.test.mjs [--all]
-// Bütün bankada süre bütçesini (src/quiz/timing.js, model v0.6) hesaplar; tip başına önceki sürümle (v0.5) kıyaslı
+// Bütün bankada süre bütçesini (src/quiz/timing.js, model v0.7) hesaplar; tip başına önceki sürümle (v0.6) kıyaslı
 // dağılımı, en kısa ve en uzun soruları yazar (insan gözüyle denetim için). Denetler:
 //   - sayı ve sınır içinde, belirlenimci (kopya soru, prepare, publicView), hızlı < ortanca < yavaş oyuncu
-//   - KIRMIZI kuralı: ortanca oyuncu son 5 sn'lik kırmızı uyarı başlamadan, yavaş oyuncu süre bitmeden bitirir
-//   - metin uzadıkça, zorluk arttıkça, cevap uzadıkça süre kısalmaz; azalan sıralama artandan kısa değil
+//   - KIRMIZI kuralı: ortanca oyuncu son 5 sn'lik kırmızı uyarı başlamadan, yavaş oyuncu süre bitmeden (PAY kala) bitirir
+//   - metin uzadıkça, zorluk arttıkça, cevap uzadıkça süre kısalmaz; azalan sıralama artandan kısa değil;
+//     kısa kelimeli metin harf sayısı aynı uzun kelimeli metinden kısa sürmez; bilmece kökü iki kez okunur
+//   - adalet: modelden bağımsız "denetim oyuncusu" (ekrandaki kelimeler 110 kelime/dk, dokunuş 0,85 sn, sıralamada en
+//     kötü başlangıç, adam asmacada sık harflerle açılış; ref/soru-v06/sure-raporu.md, Playwright ölçümünün eşi)
+//     bankadaki hiçbir soruda süreye yetişmezlik yaşamaz
 //   - botlar ne anında ne süre dolarken cevaplar; jokerler (ekstra süre, sabotaj) bütçeyle ölçeklenir
 //   - ağ: uzak koltuk aynı saati alır
 // --all: her tipin bütün sorularını sırayla yazar.
 import { BANK } from '../src/data/bank.js';
 import { TYPES } from '../src/quiz/types.js';
-import { timing, budget, PROFILE, HOT, PLAYERS } from '../src/quiz/timing.js';
+import { direction } from '../src/quiz/t_order.js';
+import { timing, budget, PROFILE, HOT, SLACK, PLAYERS } from '../src/quiz/timing.js';
 import { questionTime, extraFor, cutFor, computeEffect, JOKERS, EXTRA, SABOTAGE } from '../src/game/jokers.js';
 import { publicView, LocalTransport, RemoteController, PROTOCOL } from '../src/game/net.js';
 import { rng } from '../src/core/math.js';
@@ -24,24 +29,24 @@ const ok = (cond, msg) => {
 	}
 };
 const ALL = process.argv.includes('--all');
-// önceki sürüm (v0.5, 4'lü sırala/eşleştir): tip başına [en az, ortanca, en çok, ortalama] (sn)
-const V05 = {
-	choice: [9, 12, 20, 12.7],
-	num: [12, 14, 19, 14.5],
-	pin: [10, 12, 17, 12.3],
-	hang: [15, 19, 25, 19.4],
-	tf: [8, 8, 11, 8.4],
-	order: [16, 20, 28, 20.2],
-	match: [18, 22, 26, 21.6],
-	hilo: [8, 10, 13, 10.1],
-	odd: [10, 12, 17, 12.3],
-	emoji: [11, 13, 17, 13.2],
-	riddle: [12, 15, 18, 14.7],
-	proverb: [9, 10, 13, 10.3],
-	anagram: [12, 20, 27, 19.7],
-	cross: [29, 62, 62, 45.5],
-	img: [14, 14, 19, 15.7],
-	blitz: [10, 18, 18, 14],
+// önceki sürüm (v0.6): tip başına [en az, ortanca, en çok, ortalama] (sn)
+const V06 = {
+	choice: [11, 14, 23, 14.3],
+	num: [14, 16, 20, 16.6],
+	pin: [13, 15, 18, 14.7],
+	hang: [15, 18, 25, 18.8],
+	tf: [9, 11, 13, 11],
+	order: [16, 20, 26, 19.7],
+	match: [16, 18, 21, 17.9],
+	hilo: [11, 13, 15, 12.8],
+	odd: [12, 14, 18, 14.3],
+	emoji: [14, 15, 18, 15.1],
+	riddle: [14, 16, 19, 16],
+	proverb: [12, 13, 14, 12.9],
+	anagram: [14, 21, 28, 21],
+	cross: [32, 66, 66, 49],
+	img: [16, 17, 21, 18],
+	blitz: [10, 20, 20, 15],
 };
 const clone = (q) => JSON.parse(JSON.stringify(q));
 const short = (s, n = 70) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
@@ -105,12 +110,12 @@ for (const q of SET) {
 	if (P) ok(t.sec >= P.min && t.sec <= P.max, `${q.id}: süre ${t.sec} sınır dışı [${P.min}, ${P.max}]`);
 	ok(t.fast > 0 && t.fast < t.sec, `${q.id}: hızlı oyuncu süresi ${t.fast} (bütçe ${t.sec})`);
 	ok(t.fast <= t.med && t.med <= t.slow, `${q.id}: oyuncu sırası bozuk (hızlı ${t.fast}, ortanca ${t.med}, yavaş ${t.slow})`);
-	ok([t.wait, t.look, t.read, t.think, t.act].every(Number.isFinite), `${q.id}: bileşen NaN`);
-	// kırmızı uyarı: ortanca oyuncu son HOT sn başlamadan, yavaş oyuncu süre dolmadan biter (yuvarlama payı 0,5 sn;
-	// tipin üst sınırına kırpılan uç sorular ve sabit turlu yıldırım hariç)
+	ok([t.wait, t.look, t.read, t.words, t.think, t.act].every(Number.isFinite), `${q.id}: bileşen NaN`);
+	// kırmızı uyarı: ortanca oyuncu son HOT sn başlamadan, yavaş oyuncu süre dolmadan (en az PAY kala) biter
+	// (yuvarlama payı 0,5 sn; tipin üst sınırına kırpılan uç sorular ve sabit turlu yıldırım hariç)
 	if (P && !P.round && t.sec < P.max) {
 		ok(t.med + HOT <= t.sec + 0.5, `${q.id}: ortanca oyuncu (${t.med} sn) kırmızı uyarıya kalıyor (bütçe ${t.sec})`);
-		ok(t.slow + 1 <= t.sec + 0.5, `${q.id}: yavaş oyuncu (${t.slow} sn) süreye yetişmiyor (bütçe ${t.sec})`);
+		ok(t.slow + SLACK <= t.sec + 0.5, `${q.id}: yavaş oyuncu (${t.slow} sn) ${SLACK} sn pay bırakamıyor (bütçe ${t.sec})`);
 	}
 	// belirlenim: kopya soru (önbellek yok), prepare ve publicView sonrası aynı süre
 	const c = timing(clone(q));
@@ -124,8 +129,8 @@ for (const q of SET) {
 }
 
 // ---------------------------------------------------------------- 2) dağılım: önce → sonra
-console.log(`\n2) Tip başına süre (sn): v0.5 → v0.6   (oyuncular: hızlı ${PLAYERS.fast.cps}, ortanca ${PLAYERS.med.cps}, yavaş ${PLAYERS.slow.cps} harf/sn; kırmızı uyarı son ${HOT} sn)`);
-console.log('  tip       adet │ v0.5 en az ortanca en çok  ort. │ v0.6 en az  %10 ortanca  %90 en çok  ort. │ ortanca oyuncu  sınırda');
+console.log(`\n2) Tip başına süre (sn): v0.6 → v0.7   (okuma: hızlı ${PLAYERS.fast.cps}, ortanca ${PLAYERS.med.cps}, yavaş ${PLAYERS.slow.cps} harf/sn + kelime başına ${PLAYERS.fast.word}/${PLAYERS.med.word}/${PLAYERS.slow.word} sn; kırmızı uyarı son ${HOT} sn; yavaşa pay ${SLACK} sn)`);
+console.log('  tip       adet │ v0.6 en az ortanca en çok  ort. │ v0.7 en az  %10 ortanca  %90 en çok  ort. │ ortanca oyuncu  sınırda');
 const byType = {};
 for (const r of rows) (byType[r.q.type] ||= []).push(r);
 for (const [type, list] of Object.entries(byType)) {
@@ -136,7 +141,7 @@ for (const [type, list] of Object.entries(byType)) {
 	const P = PROFILE[type];
 	const lo = list.filter((r) => r.raw < P.min).length;
 	const hi = list.filter((r) => r.raw > P.max).length;
-	const o = V05[type] || ['?', '?', '?', '?'];
+	const o = V06[type] || ['?', '?', '?', '?'];
 	const pad = (x, n) => String(x).padStart(n);
 	console.log(
 		`  ${type.padEnd(8)} ${pad(list.length, 5)} │ ${pad(o[0], 10)} ${pad(o[1], 7)} ${pad(o[2], 6)} ${pad(o[3], 5)} │ ${pad(s[0], 10)} ${pad(at(0.1), 4)} ${pad(at(0.5), 7)} ${pad(at(0.9), 4)} ${pad(s[s.length - 1], 6)} ${pad(mean.toFixed(1), 5)} │ ${pad(meds[Math.floor(meds.length / 2)].toFixed(1), 9)} sn   ${lo}/${hi}`,
@@ -148,7 +153,7 @@ for (const [type, list] of Object.entries(byType)) {
 // ---------------------------------------------------------------- 3) uçlar (insan gözüyle)
 console.log('\n3) En kısa ve en uzun süreler');
 const sorted = rows.filter((r) => !r.q.id.startsWith('y-')).sort((a, b) => a.raw - b.raw || a.q.id.localeCompare(b.q.id));
-const line = (r) => `  ${String(r.sec).padStart(2)} sn (v0.5 ort. ${String(V05[r.q.type]?.[1] ?? '?').padStart(2)})  ${r.q.type.padEnd(7)} z${r.q.diff}${r.q.dir === 'desc' ? '↓' : ' '} ${text(r.q)}`;
+const line = (r) => `  ${String(r.sec).padStart(2)} sn (v0.6 ort. ${String(V06[r.q.type]?.[1] ?? '?').padStart(2)})  ${r.q.type.padEnd(7)} z${r.q.diff}${r.q.dir === 'desc' ? '↓' : ' '} ${text(r.q)}`;
 console.log(' en kısa:');
 for (const r of sorted.slice(0, 6)) console.log(line(r));
 console.log(' en uzun:');
@@ -221,6 +226,18 @@ grows('resimli yazı', (w) => ({ type: 'img', diff: 2, q: 'Bu ne?', img: 'x', mo
 	const b2 = timing(SYN.find((q) => q.id === 'y-bz2'));
 	ok(b2.sec > b1.sec, `yıldırım: uzun ifadeler (${b2.sec}) kısa ifadelerden (${b1.sec}) uzun sürmeli`);
 	console.log(`  yıldırım       kısa ifadeler → ${b1.sec} sn, uzun ifadeler → ${b2.sec} sn`);
+}
+// v0.7: okuma kelimeye de bakar; bilmece kökü iki kez okunur
+{
+	// aynı harf sayısı (boşluk dahil 40), kısa kelimeli metin göz her kelimeye durduğu için daha uzun sürer
+	const shortW = { type: 'tf', diff: 2, q: 'Bu da bir şey mi ne o bu ki en az ya da?' };
+	const longW = { type: 'tf', diff: 2, q: 'Kapadokyalılar peribacalarında yaşarlar.' };
+	ok([...shortW.q].length === [...longW.q].length, 'sınama metinleri aynı uzunlukta değil');
+	ok(timing(shortW).raw > timing(longW).raw, `okuma: kısa kelimeli metin (${timing(shortW).raw}) uzun kelimeliden (${timing(longW).raw}) kısa`);
+	const rid = first('riddle');
+	const asChoice = { ...rid, type: 'choice' };
+	ok(timing(rid).read > timing(asChoice).read && timing(rid).words > timing(asChoice).words, 'bilmece: kök ikinci kez okunmuyor');
+	console.log(`  okuma          aynı 40 harf: 13 kısa kelime → ${timing(shortW).raw} sn, 3 uzun kelime → ${timing(longW).raw} sn; bilmece kökü ${timing(asChoice).words} → ${timing(rid).words} kelime`);
 }
 // tip sırası: tek dokunuşlu tiplerin ortancası çok adımlı tiplerinkinden kısa
 {
@@ -343,7 +360,101 @@ console.log('\n7) Ağ: uzak koltuk');
 console.log('\n8) Örnekler: bileşenler (yavaş-rahat oyuncu) ve üç oyuncunun bitirme süresi');
 for (let i = 0; i < sorted.length; i += Math.floor(sorted.length / 9)) {
 	const r = sorted[i];
-	console.log(line(r) + `\n        [bekleme ${r.wait} + bakış ${r.look} + okuma ${r.read} harf + düşünme ${r.think} + giriş ${r.act}]  hızlı ${r.fast} · ortanca ${r.med} · yavaş ${r.slow} → ${r.raw}`);
+	console.log(line(r) + `\n        [bekleme ${r.wait} + bakış ${r.look} + okuma ${r.read} harf/${r.words} kelime + düşünme ${r.think} + giriş ${r.act}]  hızlı ${r.fast} · ortanca ${r.med} · yavaş ${r.slow} → ${r.raw}`);
+}
+
+// ---------------------------------------------------------------- 9) adalet: bağımsız denetim oyuncusu
+// Playwright'ta gerçek kartları oynatan "yavaş ama bilen" oyuncunun çevrimdışı eşi (ref/soru-v06/sure-raporu.md).
+// Modelin harf/bakış sabitlerini KULLANMAZ: ekrandaki kelimeler 110 kelime/dk (kart açılınca 0,35 sn sonra başlar),
+// her dokunuş 0,85 sn, sürükleme 1,82 sn (0,6 bul + 0,77 sürükle + 0,45 izle), sıralamada en kötü başlangıç (n − 1),
+// eşleştirmede sol + sağ dokunuş, kaydırıcıda iki ince ayar, haritada 1 sn kadraj + ara + bak + onayla, adam asmacada
+// Türkçe harf sıklığıyla açılış (desen %34 açılınca ya da 3 ıskada tanır; tanımadan önce her tahmin 1,4 sn),
+// bilmece kökünün %60'ı ikinci kez okunur. Düşünme süresi modelin yavaş oyuncusundan alınır (ölçülemez: varsayım).
+// Bu oyuncu bankadaki hiçbir soruda süre dolmadan önce yarım saniyeden fazla geride kalmamalı.
+console.log('\n9) Adalet: denetim oyuncusu (110 kelime/dk, dokunuş 0,85 sn, en kötü başlangıç) bütçeye sığıyor mu');
+{
+	const FREQ = 'AEİNRLIKDMYUTSBOÜŞZGÇHĞVCÖPFJ';
+	const wc = (s) => String(s ?? '').split(/\s+/).filter(Boolean).length;
+	const TAP = 0.85;
+	const audit = (q, t) => {
+		let words = wc(q.q);
+		let act = TAP;
+		const add = (list) => (words += (list || []).reduce((s, x) => s + wc(x), 0));
+		switch (q.type) {
+			case 'tf':
+				break;
+			case 'choice':
+			case 'riddle':
+			case 'emoji':
+				add(q.a);
+				break;
+			case 'odd':
+				add(q.opts);
+				break;
+			case 'proverb':
+				words += wc(q.text.replace('___', '?'));
+				add(q.a);
+				break;
+			case 'hilo':
+				words += wc(q.left.t) + wc(q.right.t) + 2 * wc(q.prop); // özellik iki kartta da yazar
+				break;
+			case 'order': {
+				const D = direction(q);
+				words += q.items.reduce((s, x) => s + wc(x.t), 0) + wc(D.top) + wc(D.bottom);
+				act = (q.items.length - 1) * 1.82 + 0.7 + TAP;
+				break;
+			}
+			case 'match':
+				add(q.pairs.flat());
+				act = (q.pairs.length - 1) * TAP * 1.8 + 0.6 + TAP;
+				break;
+			case 'num':
+				words += wc(q.unit);
+				act = 0.6 + 1.08 + 0.8 + 0.45 + TAP;
+				break;
+			case 'pin':
+				act = 1 + 1.2 + 1.2 + TAP;
+				break;
+			case 'hang': {
+				const w = [...q.w.toLocaleUpperCase('tr-TR')].filter((c) => c !== ' ');
+				const set = new Set(w);
+				const shown = new Set();
+				let g = 0;
+				let miss = 0;
+				for (const c of FREQ) {
+					if (w.filter((x) => shown.has(x)).length / w.length >= 0.34 || miss >= 3) break;
+					g++;
+					if (set.has(c)) shown.add(c);
+					else miss++;
+				}
+				act = g * 1.4 + [...set].filter((c) => !shown.has(c)).length * TAP;
+				break;
+			}
+			default:
+				return null;
+		}
+		let read = 0.35 + (words / 110) * 60;
+		if (q.type === 'riddle') read += (wc(q.q) / 110) * 60 * 0.6;
+		if (q.type === 'emoji') read += 0.9;
+		return read + t.think + act;
+	};
+	const res = [];
+	for (const r of rows) {
+		if (r.q.id.startsWith('y-')) continue;
+		const a = audit(r.q, r);
+		if (a == null) continue;
+		res.push({ r, a, slack: r.sec - a });
+		ok(r.sec - a >= -0.5, `${r.q.id}: denetim oyuncusu süreye yetişmiyor (${a.toFixed(1)} sn, bütçe ${r.sec})`);
+	}
+	const per = {};
+	for (const x of res) (per[x.r.q.type] ||= []).push(x.slack);
+	for (const [t, s] of Object.entries(per))
+		console.log(`  ${t.padEnd(8)} pay (bütçe − denetim) ort. ${(s.reduce((a, b) => a + b, 0) / s.length).toFixed(1).padStart(4)} sn, en az ${Math.min(...s).toFixed(1).padStart(4)} sn`);
+	const neg = res.filter((x) => x.slack < 0).length;
+	ok(neg <= res.length * 0.01, `denetim oyuncusu ${neg}/${res.length} soruda süre dolarken bitiriyor`);
+	console.log(`  en dar 10 (${neg}/${res.length} soruda pay < 0):`);
+	for (const x of res.sort((a, b) => a.slack - b.slack).slice(0, 10))
+		console.log(`   ${x.slack.toFixed(1).padStart(5)} sn  bütçe ${String(x.r.sec).padStart(2)}  denetim ${x.a.toFixed(1).padStart(4)}  ${x.r.q.type.padEnd(7)} ${x.r.q.id.padEnd(11)} ${text(x.r.q)}`);
 }
 
 console.log(`\n${checks} denetim, ${fails} hata`);

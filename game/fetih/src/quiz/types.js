@@ -91,7 +91,7 @@ export const TYPES = {
 	},
 
 	num: {
-		time: 16,
+		time: 17,
 		label: 'Tahmin',
 		kind: 'closest',
 		prepare(q) {
@@ -174,7 +174,7 @@ export const TYPES = {
 	},
 
 	pin: {
-		time: 14,
+		time: 15,
 		label: 'Haritada bul',
 		kind: 'closest',
 		needsMap: true,
