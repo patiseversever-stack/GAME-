@@ -94,6 +94,7 @@ uniform vec4 uFBox;
 uniform vec2 uFRes;
 uniform float uMe; // insan oyuncunun kimliği (gecede kendi toprağı aydınlık ve net)
 uniform float uAct; // sırası gelen oyuncu (bot seçerken onun toprağı da net; -5: yok)
+uniform float uSelAny; // gece odağında seçenekler arasından seçim sürüyor mu (1/0)
 uniform float uSelEdge; // seçim dış hattının gücü: çok seçenekte (başkent, geniş yayılma) ince, beyaz ağ olmasın
 varying vec3 vW;
 varying vec3 vN;
@@ -361,9 +362,9 @@ void main() {
 	if (skirt) c *= mix(1.0, 0.5, uNight.x * sel * smoothstep(0.03, 0.12, vDepth));
 	// yumuşak nabız: dolgu çok hafif parlar
 	c *= 1.0 + sel * sp * 0.05 * pulse;
-	// gündüze çıkmayan seçim (başkent: uSelLit düşük): seçilebilir il gölgede renk tonunda kalır (parlatılınca
-	// bozkır beyaza kaçıyordu); fark seçilemeyen ilin daha da kararmasıyla
-	c *= 1.0 - (1.0 - sel) * uSelOn * (1.0 - uSelLit) * uNight.x * 0.5;
+	// gündüze çıkmayan seçim (başkent: uSelLit düşük): bütün harita koyu, premium gece (gölgede renk yarı
+	// kararır, pencere ışıkları seçilir); seçilemeyen il bir kademe daha koyu
+	c *= 1.0 - uSelOn * (1.0 - uSelLit) * uNight.x * (0.5 + 0.25 * (1.0 - sel) * uSelAny);
 	// eski parlama (fx: kale inişi, fetih anı): yalnızca hafif aydınlanma, kenar ışıması yok
 	vec3 gcol = ownedK > 0.5 ? ownCol : vec3(1.0, 0.95, 0.85);
 	c = c * (1.0 + 0.14 * glow * sp * (skirt ? 0.0 : 1.0)) + gcol * glow * sp * (skirt ? 0.0 : 0.035 * (0.7 + 0.3 * sin(uTime * 6.0 + vPid * 0.7)));
@@ -655,7 +656,8 @@ export class Board {
 		this.uMe = { value: -5 };
 		this.uAct = { value: -5 };
 		this.uSelEdge = { value: 1 };
-		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct, uSelEdge: this.uSelEdge };
+		this.uSelAny = { value: 0 };
+		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct, uSelEdge: this.uSelEdge, uSelAny: this.uSelAny };
 		this.uniforms = uniforms;
 		this.mat = new THREE.ShaderMaterial({
 			vertexShader: PROV_VS,
@@ -841,6 +843,7 @@ export class Board {
 			this._nightOff = -1;
 			this.selTo.fill(0);
 			if (list) for (const i of list) this.selTo[i] = 1;
+			this.uSelAny.value = list && list.length > 1 ? 1 : 0; // gerçek bir seçim (tek il: seçilmiş, karar verildi)
 			this.selOnTo = 1;
 			if (this.nightTo < 1) this.onNight?.(true);
 			this.nightTo = 1;

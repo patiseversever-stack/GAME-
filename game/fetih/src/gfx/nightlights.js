@@ -53,7 +53,7 @@ void main() {
 		p.y += fx.x * uPLift + fx.z * uPSel;
 		if (kind < 0.5) {
 			// pencere: hafif titrek, gündüz ışığındaki (aydınlık) ilde söner
-			a *= (0.78 + 0.22 * sin(t * (0.8 + ph * 2.0) + ph * 40.0)) * (1.0 - sel * 0.9) * (1.0 - dim * 0.3);
+			a *= (0.78 + 0.22 * sin(t * (0.8 + ph * 2.0) + ph * 40.0)) * (1.0 - sel * 0.9 * uSelLit) * (1.0 - dim * 0.3);
 			col = mix(vec3(1.0, 0.46, 0.14), vec3(1.0, 0.7, 0.36), iB.w) * 1.1;
 			px0 = 1.3;
 			px1 = 2.6;
@@ -73,7 +73,7 @@ void main() {
 			px1 = 3.8;
 		} else {
 			// şehir / yapı halesi
-			a *= iB.w * (1.0 - sel * 0.75) * (1.0 - dim * 0.4) * (0.9 + 0.1 * sin(t * 1.3 + ph * 9.0));
+			a *= iB.w * (1.0 - sel * 0.75 * uSelLit) * (1.0 - dim * 0.4) * (0.9 + 0.1 * sin(t * 1.3 + ph * 9.0));
 			col = vec3(1.0, 0.5, 0.2) * 0.26;
 			p.y += 0.25;
 			pull = iA.w * 0.8;
