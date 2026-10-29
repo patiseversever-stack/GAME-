@@ -104,7 +104,7 @@ export const TIE_BREAK = { golden: true };
  * sorunda ya da yayılma sorusunda) kurulur.
  */
 export const SHIELD_IN_DEFENSE = false;
-const SHIELD_WHY = 'Saldırı başladı: kalkan önceden kurulur';
+const SHIELD_WHY = 'Saldırıdan önce kurulur';
 
 /**
  * Botun başkente saldırma isteği (v0.8). Eskiden 0,65 beceride bir uçurum vardı (+0,6 / −0,6): 'er' botlar maç başına
@@ -940,11 +940,12 @@ export class Match {
 		}
 		if (!this.endReason) this.endReason = 'tur';
 		b.clearFx();
+		// bütün harita kadraja gelir; eşitlik varsa altın soru bu kadrajın önünde sorulur
+		await this.cinema.overview(this.map);
+		this.tick(EST.overview);
 		await this.goldenQuestion();
 		this.phase = 'bitis';
 		const ranking = this.standings();
-		await this.cinema.overview(this.map);
-		this.tick(EST.overview);
 		this.over = true;
 		this.refreshJokers();
 		const rewards = this.finish(ranking);
@@ -1007,7 +1008,7 @@ export class Match {
 		this.turn = -1; // HUD'daki "SIRA" rozeti son saldırıda kalmasın
 		if (!this.ui.fast) this.ui.hud(this);
 		this.refreshJokers();
-		this.emit('phase', { phase: this.phase, round: this.round, tied: tied.map((x) => (x.players ? x.team : x.i)) });
+		this.emit('phase', { phase: this.phase, round: this.rounds, tied: tied.map((x) => (x.players ? x.team : x.i)) });
 		await this.ui.banner('EŞİTLİK!', 'Altın soru: en yakın tahmin kazanır', { tone: 'gold' });
 		this.tick(EST.banner);
 		const q = this.pick({ types: ['num'], who });

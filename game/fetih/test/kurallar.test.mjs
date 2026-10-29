@@ -199,7 +199,7 @@ console.log('5) Kalkan kuralı');
 					const row = m.jokerList().find((j) => j.id === 'kalkan');
 					if (ctx.defender === me) {
 						ok(!r.ok, 'savunduğu düelloda kalkan kuruldu');
-						ok(row && !row.usable && row.why.includes('önceden'), 'joker çubuğu savunmada kalkanı kullanılabilir gösteriyor');
+						ok(row && !row.usable && row.why.includes('önce kurulur'), 'joker çubuğu savunmada kalkanı kullanılabilir gösteriyor');
 						if (!r.ok) blocked++;
 					} else ok(r.ok, 'saldırı ya da yayılma sorusunda kalkan kurulamadı: ' + r.reason);
 				}
