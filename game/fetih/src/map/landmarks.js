@@ -146,8 +146,14 @@ ${PROV}
 ${FADE}
 attribute float tag;
 attribute float anim;
+attribute vec2 mat;
 uniform float uPLift, uPSel;
 void main() {
+	// yere serili avlu, su ve alev gölge yapmaz (gölge geçişinde piksel işi yok)
+	if (mat.x > 7.5 && mat.x < 8.5 || mat.x > 0.5 && mat.x < 1.5 || mat.x > 5.5 && mat.x < 6.5) {
+		gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+		return;
+	}
 	vec4 fx = provRow(tag, 3);
 	vec3 p = position;
 	if (anim > 0.5) p.y += sin(uTime * 0.6 + anim * 7.31) * 0.14;
