@@ -59,7 +59,7 @@ void main() {
 	}
 	float sh = shadowAt(vW, N);
 	vec3 V = normalize(cameraPosition - vW);
-	gLit = vSel.x;
+	gLit = vSel.x * uSelLit;
 	vec3 c = shade(alb, N, V, 1.0, sh, gloss, 0.55);
 	// gece: kapı, pencere ve kemer boşlukları (koyu taş rengi) içeriden sıcak ışıkla yanar
 	float nk = nightK();

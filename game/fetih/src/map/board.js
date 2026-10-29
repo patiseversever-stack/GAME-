@@ -260,7 +260,7 @@ void main() {
 	}
 
 	float sh = shadowAt(vW, N);
-	gLit = sel; // gece odağı: yalnızca seçilebilir il gündüz ışığında kalır (komşuya hale yok)
+	gLit = sel * uSelLit; // gece odağı: yalnızca seçilebilir il gündüz ışığında kalır (komşuya hale yok)
 	float nk = nightK();
 	vec3 c;
 	if (water > 0.01) {
@@ -333,6 +333,8 @@ void main() {
 	if (skirt) c *= mix(1.0, 0.5, uNight.x * sel * smoothstep(0.03, 0.12, vDepth));
 	// yumuşak nabız: dolgu çok hafif parlar
 	c *= 1.0 + sel * sp * 0.05 * pulse;
+	// gündüze çıkmayan seçim (başkent: uSelLit düşük): seçilebilir il gece tonunun aydınlığı, komşusundan açık
+	c *= 1.0 + sel * (1.0 - uSelLit) * uNight.x * 0.5;
 	// eski parlama (fx: kale inişi, fetih anı): yalnızca hafif aydınlanma, kenar ışıması yok
 	vec3 gcol = ownedK > 0.5 ? ownCol : vec3(1.0, 0.95, 0.85);
 	c = c * (1.0 + 0.14 * glow * sp * (skirt ? 0.0 : 1.0)) + gcol * glow * sp * (skirt ? 0.0 : 0.035 * (0.7 + 0.3 * sin(uTime * 6.0 + vPid * 0.7)));
@@ -792,7 +794,8 @@ export class Board {
 		const on = !!(list && list.length);
 		// sırası gelen oyuncu (insan seçerken kendisi, bot seçerken bot): toprağı gecede net, oklar onun renginde
 		this.uAct.value = on ? (act != null ? act : this.uMe.value) : -5;
-		if (on) this.uSelEdge.value = list.length > 6 ? 0.3 : 1;
+		// dış hat: az seçenekte belirgin; çokta ince (beyaz ağ olmasın); başkentte (bütün harita seçilebilir) neredeyse yok
+		if (on) this.uSelEdge.value = list.length <= 6 ? 1 : this.G.uSelLit.value < 1 ? 0.12 : 0.3;
 		this.night(on, list);
 		this.cues.hide(); // seçimde ok yok: seçilebilir iller parlar, etiketler adlarını söyler (ok yalnız saldırı yürüyüşünde)
 	}

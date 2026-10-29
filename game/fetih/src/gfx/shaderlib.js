@@ -25,6 +25,10 @@ uniform vec3 uGain;
 uniform vec3 uVigCol;
 uniform vec4 uFocus;    // xyz odak (zincirin ucu), w yarıçap: odak çevresi hafif ışıltı
 uniform vec4 uNightTone; // gece odağında arazinin tonu (env.js NIGHT_TONES): rgb çarpan, a doygunluk
+#ifndef FL_SELLIT
+#define FL_SELLIT
+uniform float uSelLit; // seçilebilir ilin gündüz ışığı payı (1: tam gündüz; başkent seçiminde düşük: gece tonunun aydınlığı)
+#endif
 uniform vec4 uNight;    // x gece (0 gündüz, 1 gece odağı), y ay kenarı gücü, z şafak (dönüşte sıcak ufuk), w yıldızlar
 uniform vec4 uSpot;     // sinematik ışık havuzu (yakın çekim): xy ekran merkezi (0..1), z yarıçap (ekran yüksekliği), w güç
 #ifndef FL_GLOBALS
@@ -314,13 +318,17 @@ float gOwn = 0.0;
 #endif
 uniform sampler2D uState;
 uniform float uSelOn;   // seçim kipi açık (0..1): seçilemeyen iller kararır
+#ifndef FL_SELLIT
+#define FL_SELLIT
+uniform float uSelLit;
+#endif
 vec4 provRow(float pid, int row) {
 	return texelFetch(uState, ivec2(int(pid + 0.5), row), 0);
 }
 /** Seçim kipinde seçilemeyen ve maç dışı iller: renk solar, kararır. */
 vec3 provDim(vec3 c, float sel, float dim) {
 	// seçim kipinde gri karartma yok: gece odağı finish() içinde; seçilebilir il aydınlık kalır
-	gLit = max(gLit, sel);
+	gLit = max(gLit, sel * uSelLit);
 	float k = clamp(dim * 0.7, 0.0, 1.0);
 	float l = dot(c, vec3(0.3, 0.59, 0.11));
 	c = mix(c, vec3(l) * vec3(0.9, 0.95, 1.08), k * 0.72);

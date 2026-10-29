@@ -26,6 +26,7 @@ export function createGlobals() {
 		uFocus: { value: new THREE.Vector4(0, -99, 0, 3) },
 		uNight: { value: new THREE.Vector4(0, 1, 0, 0) }, // gece odağı (board.night)
 		uNightTone: { value: new THREE.Vector4(...NIGHT_TONES.normal) }, // gece odağının tonu: rgb çarpan, a doygunluk
+		uSelLit: { value: 1 }, // seçilebilir ilin gündüz ışığı payı (setNightTone)
 		uSpot: { value: new THREE.Vector4(0.5, 0.5, 0.3, 0) }, // gece ışık havuzu (nightlights.focus)
 		uNoise: { value: noiseTexture() }, // döşenebilir gürültü (noise.js)
 		uShadowMap: { value: null },
@@ -121,17 +122,20 @@ ENVS.harita = {
 };
 
 /**
- * Gece odağı sırasında seçilemeyen arazinin ay ışığı tonu: [r, g, b çarpanı, korunan doygunluk].
- *   normal: gri-lacivert (yayılma, saldırı, düello)
- *   baskent: "gölgede renk" — başkent seçerken arazinin yeşili ve kahvesi kalır, yalnızca kararır
+ * Gece odağının tonu: [r, g, b çarpanı, korunan doygunluk, seçilebilir ilin gündüz ışığı payı].
+ *   normal: seçilemeyen arazi gri-lacivert, seçilebilir il gündüz renginde (yayılma, saldırı, düello)
+ *   baskent: "gölgede renk" — bütün harita yeşili ve kahvesiyle koyu kalır (hepsi seçilebilir olsa da
+ *     sapsarı gündüze çıkmaz); seçilebilir iller aynı tonun biraz aydınlığı, başkente komşu iller koyu
  */
 export const NIGHT_TONES = {
-	normal: [1, 1, 1, 0.22],
-	baskent: [1.9, 1.75, 1.6, 0.95],
+	normal: [1, 1, 1, 0.22, 1],
+	baskent: [1.9, 1.75, 1.6, 0.95, 0],
 };
 
 export function setNightTone(G, key) {
-	G.uNightTone.value.set(...(NIGHT_TONES[key] || NIGHT_TONES.normal));
+	const t = NIGHT_TONES[key] || NIGHT_TONES.normal;
+	G.uNightTone.value.set(t[0], t[1], t[2], t[3]);
+	G.uSelLit.value = t[4];
 }
 
 export function applyEnv(G, e) {

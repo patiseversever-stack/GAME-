@@ -67,7 +67,7 @@ void main() {
 	alb = mix(vec3(0.16, 0.09, 0.05), alb, smoothstep(0.08, 0.16, vH)); // gövde
 	float sh = shadowAt(vW, N);
 	float ao = mix(0.55, 1.0, smoothstep(0.05, 0.7, vH));
-	gLit = vSel.x;
+	gLit = vSel.x * uSelLit;
 	vec3 c = shade(alb, N, normalize(cameraPosition - vW), ao, sh, 0.05, 0.7);
 	c = provDim(c, vSel.x, vSel.y);
 	c = applyFog(c, vW);
