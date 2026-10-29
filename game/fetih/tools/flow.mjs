@@ -7,6 +7,7 @@
 //   node tools/flow.mjs çıktı-dizini [--q=2 --w=412 --h=892 --dpr=1 --seed=7 --region=ege --mode=ffa3 --only=a,b --seq]
 //
 // Çekimler:
+//   a_baskent    insan başkentini seçerken (kamera tepeden, seçilebilir iller aydınlık)
 //   a0_rozetler  başkentler yerleşince kalelerin üstünde SEN ve bot rozetleri (gündüz)
 //   a_secim      insan il seçerken (gece, seçilebilir iller ışık adası)
 //   b_bot        bot seçerken (seçenekleri aydınlık) ve b2_bot_secti (seçimi + boya dalgası)
@@ -74,11 +75,12 @@ await page.evaluate((cfg) => {
 	}, 1000 / 30);
 	// --- insan: il seçimi (gece tam düşünce çek, sonra seç)
 	const pick = ui.pickProvince;
-	ui.pickProvince = function (m, options, text) {
-		const pr = pick.call(this, m, options, text);
+	ui.pickProvince = function (m, options, text, sec) {
+		const pr = pick.call(this, m, options, text, sec);
 		const attack = /Saldır/i.test(text || '');
-		const k = attack ? W.attacks++ : W.picks++;
-		const name = attack ? (k === 0 ? 'c_saldiri' : null) : k === 0 ? 'a_secim' : null;
+		const capital = m.phase === 'baskent';
+		const k = capital ? 0 : attack ? W.attacks++ : W.picks++;
+		const name = capital ? 'a_baskent' : attack ? (k === 0 ? 'c_saldiri' : null) : k === 0 ? 'a_secim' : null;
 		if (name) want(name, 1500);
 		// --seq: gece düşüşünün ara kareleri (geçişi denetlemek için)
 		if (name === 'a_secim' && W.seq) for (const ms of [200, 450, 700, 950]) want('t_gecis_' + ms, ms);

@@ -269,7 +269,8 @@ vec3 tonemap(vec3 c) {
 // ay kenarı lavanta. Yeniden aydınlatılan pikseller (gRelit) buraya girmez.
 vec3 nightGrade(vec3 c) {
 	float l = dot(c, vec3(0.3, 0.59, 0.11));
-	vec3 n = mix(vec3(l), c, 0.3) * vec3(0.07, 0.085, 0.15) + vec3(0.001, 0.0015, 0.004);
+	// seçilemeyen yer iyice karanlık: göz yalnızca aydınlık illere gider (yapılar ay ışığında seçilir kalır)
+	vec3 n = mix(vec3(l), c, 0.3) * vec3(0.045, 0.056, 0.105) + vec3(0.001, 0.0015, 0.004);
 	n += N_RIM * gRim * 0.25 * uNight.y;
 	return n;
 }

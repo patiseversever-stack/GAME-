@@ -91,6 +91,7 @@ uniform vec4 uFBox;
 uniform vec2 uFRes;
 uniform float uMe; // insan oyuncunun kimliği (gecede kendi toprağı aydınlık ve net)
 uniform float uAct; // sırası gelen oyuncu (bot seçerken onun toprağı da net; -5: yok)
+uniform float uSelEdge; // seçim dış hattının gücü: çok seçenekte (başkent, geniş yayılma) ince, beyaz ağ olmasın
 varying vec3 vW;
 varying vec3 vN;
 varying vec4 vBio;
@@ -204,9 +205,10 @@ void main() {
 	float nkE = uNight.x * (1.0 - sel);
 	float ownW = ownedK * (0.9 - snowK * 0.3) * (1.0 - nkE * mix(0.26, 0.0, hiE));
 	alb = mix(alb, tint, ownW);
-	// seçilebilir tarafsız il: nötr krem (sarı sahiplerle ya da altın çizgiyle karışmasın), arazi ışığı kalır
+	// seçilebilir tarafsız il: haritanın kendi rengi kalır (düz krem boya soluk ve beyaz görünüyordu);
+	// gece odağında aydınlık kalması ve beyaz dış hat onu zaten ayırır, burada yalnızca hafif canlanır
 	float freeSel = sel * (1.0 - ownedK);
-	alb = mix(alb, vec3(0.84, 0.8, 0.7) * (0.3 + 0.95 * lum), freeSel * 0.85);
+	alb = mix(alb, alb * 1.08 + 0.015, freeSel);
 	gOwn = ownW;
 
 	// --- sınırlar
@@ -322,7 +324,7 @@ void main() {
 	float fwD = max(fwidth(vDepth), 1e-4);
 	// yüzeyde: il içinde sınıra bitişik bant; duvarda: üst kenarda ince çizgi
 	float edgeW = skirt ? 1.0 - smoothstep(1.2 * fwD, 2.8 * fwD, vDepth) : lineAA(d, wOut, px);
-	c = mix(c, white * 1.6, edgeW * sel * bk * (0.82 + 0.18 * pulse));
+	c = mix(c, white * 1.6, edgeW * sel * bk * (0.82 + 0.18 * pulse) * uSelEdge);
 	// beyaz bandın iç kenarında ince koyu çizgi: açık dolguda (krem, sarı) bant ayrı okunur
 	c *= 1.0 - (skirt ? 0.0 : lineAA(abs(d - wOut - 0.9 * px), max(0.012, 0.55 * px), px)) * sel * bk * 0.3;
 	// en dışta koyu kıl çizgi: beyaz bant komşu aydınlık ya da açık renkli yüzeyden ayrı okunur
@@ -620,7 +622,8 @@ export class Board {
 		const geo = built.geometry;
 		this.uMe = { value: -5 };
 		this.uAct = { value: -5 };
-		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct };
+		this.uSelEdge = { value: 1 };
+		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct, uSelEdge: this.uSelEdge };
 		this.uniforms = uniforms;
 		this.mat = new THREE.ShaderMaterial({
 			vertexShader: PROV_VS,
@@ -789,6 +792,7 @@ export class Board {
 		const on = !!(list && list.length);
 		// sırası gelen oyuncu (insan seçerken kendisi, bot seçerken bot): toprağı gecede net, oklar onun renginde
 		this.uAct.value = on ? (act != null ? act : this.uMe.value) : -5;
+		if (on) this.uSelEdge.value = list.length > 6 ? 0.3 : 1;
 		this.night(on, list);
 		this.cues.hide(); // seçimde ok yok: seçilebilir iller parlar, etiketler adlarını söyler (ok yalnız saldırı yürüyüşünde)
 	}
@@ -833,8 +837,8 @@ export class Board {
 	}
 
 	/** İl adları: dizi (vurgulu), 'all' (sığanlar) ya da null (kapalı). */
-	showLabels(list) {
-		this.labelLayer.show(list);
+	showLabels(list, opts) {
+		this.labelLayer.show(list, opts);
 	}
 
 	update(dt) {

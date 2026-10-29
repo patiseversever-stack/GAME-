@@ -6,7 +6,7 @@
 
 import { CATS, WHEEL, FETIH_SLICE } from '../quiz/categories.js';
 import { esc, ico, shade, avatar, SPARK } from './art.js';
-import { clock, sleep, setTimeout, clearTimeout } from '../core/clock.js';
+import { clock, sleep, setTimeout, clearTimeout, setInterval, clearInterval } from '../core/clock.js';
 
 const C = 160;
 const R = 137;
@@ -295,12 +295,13 @@ export class WheelView {
 	}
 
 	/** "Fetih!" dilimi: oyuncu kategorisini seçer. */
-	async choose(keys) {
+	/** Fetih dilimi: kategori seç. sec: süre; dolunca rastgele bir kategori seçilir. */
+	async choose(keys, sec = 0) {
 		const ui = this.ui;
 		const el = this.el;
 		const host = document.createElement('div');
 		host.className = 'fl-catpick';
-		host.innerHTML = `<div class="hd"><span class="cr">${ico('crown', { w: 2.4, c: '#7a4a06' })}</span><b>FETİH!</b><small>Kategorini seç</small></div>
+		host.innerHTML = `<div class="hd"><span class="cr">${ico('crown', { w: 2.4, c: '#7a4a06' })}</span><b>FETİH!</b><small>Kategorini seç${sec ? ` · <em>${sec}</em>` : ''}</small></div>
 			<div class="gr">${keys
 				.map((k, i) => {
 					const c = CATS[k];
@@ -313,6 +314,7 @@ export class WheelView {
 		el.style.pointerEvents = 'auto';
 		void el.offsetWidth;
 		el.classList.add('on', 'pick');
+		let tick = 0;
 		const k = await new Promise((res) => {
 			host.addEventListener('click', (e) => {
 				const b = e.target.closest('[data-c]');
@@ -321,7 +323,18 @@ export class WheelView {
 					res(b.dataset.c);
 				}
 			});
+			if (!sec) return;
+			const em = host.querySelector('.hd em');
+			const t0 = clock.now();
+			tick = setInterval(() => {
+				const left = Math.max(0, sec - (clock.now() - t0) / 1000);
+				em.textContent = String(Math.ceil(left));
+				if (left > 0) return;
+				const all = host.querySelectorAll('[data-c]');
+				all[Math.floor(Math.random() * all.length)].click(); // süre doldu: rastgele kategori
+			}, 200);
 		});
+		clearInterval(tick);
 		ui.sfx('tap');
 		await sleep(ui.rm ? 50 : 380);
 		el.classList.remove('on');

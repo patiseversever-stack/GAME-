@@ -313,16 +313,18 @@ export class Labels {
 	/**
 	 * 'all' (ya da 'auto'): akıllı genel kip, yakınlaştıkça önem sırasıyla daha çok ad, çakışan elenir.
 	 * dizi: yalnızca bu iller (seçim, düello), vurgulu, her zaman görünür; çakışırsa küçülür ve kayar.
+	 *   zoom: true → çok seçenekli seçim: yalnızca bu iller, ama genel kip gibi yakınlaştıkça önem sırasıyla
+	 *   ve çakışmasız (bütün Türkiye'de 70 ad birden çıkmaz; yaklaşınca o alandakiler görünür).
 	 * []: listeyi bırak, genel kipe dön. null: hepsini kapat.
 	 */
-	show(list) {
+	show(list, { zoom = false } = {}) {
 		this.forced.fill(0);
 		this.hiTo.fill(0);
 		if (list === 'all' || list === 'auto') {
 			this.base = 'auto';
 			this.mode = 'auto';
 		} else if (Array.isArray(list) && list.length) {
-			this.mode = 'list';
+			this.mode = zoom ? 'pick' : 'list';
 			for (const i of list) {
 				this.forced[i] = 1;
 				this.hiTo[i] = 1;
@@ -409,6 +411,7 @@ export class Labels {
 		const e = m.elements;
 		const p11 = camera.projectionMatrix.elements[5];
 		const list = this.mode === 'list';
+		const pick = this.mode === 'pick';
 		const B = this.board;
 		for (let i = 0; i < N; i++) {
 			const x = this.pos[i * 3];
@@ -443,7 +446,7 @@ export class Labels {
 		const acc = this._acc;
 		for (let a = 0; a < N; a++) {
 			const i = ord[a];
-			if (list ? !this.forced[i] : B.dimTo[i] > 0.5) continue;
+			if (list || pick ? !this.forced[i] : B.dimTo[i] > 0.5) continue;
 			let sx = this._sx[i];
 			let sy = this._sy[i];
 			if (this._far[i]) continue; // ekranın çok dışında
@@ -452,7 +455,8 @@ export class Labels {
 				// önem eşiği: büyük şehirler hep aday; diğerleri ancak ekranda yeterince büyükse
 				const rk = this.rank[i];
 				const rpx = this._pp[i] * this.inner[i];
-				const need = (rk === 0 ? 0 : rk === 1 ? 26 : 40) * dpr;
+				// seçimde büyük şehirler de ancak biraz yaklaşınca (uzaktan bakışta ad kalabalığı olmasın)
+				const need = (rk === 0 ? (pick ? 22 : 0) : rk === 1 ? 28 : 40) * dpr;
 				if (rpx < need) continue;
 			}
 			let ok = true;

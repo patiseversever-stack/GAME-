@@ -125,11 +125,11 @@ export class UIController {
 		this.kind = 'ui';
 		this.remote = false;
 	}
-	pick(p, kind, options, text) {
-		return this.m.ui.pickProvince(this.m, options, text);
+	pick(p, kind, options, text, sec) {
+		return this.m.ui.pickProvince(this.m, options, text, sec);
 	}
-	category() {
-		return this.m.ui.chooseCategory(this.m);
+	category(p, sec) {
+		return this.m.ui.chooseCategory(this.m, sec);
 	}
 }
 
@@ -213,13 +213,14 @@ export class RemoteController {
 		this.pending.clear();
 	}
 
-	async pick(p, kind, options, text) {
-		const r = await this.request('pick', { kind, options, text });
+	// sec: seçim süresi (istemci sayacı); sunucu ağ payıyla biraz daha bekler, sonra seçimi bot yapar
+	async pick(p, kind, options, text, sec) {
+		const r = await this.request('pick', { kind, options, text, time: sec }, sec ? (sec + 3) * 1000 : this.timeoutMs);
 		return typeof r === 'number' && options.includes(r) ? r : null;
 	}
 
-	async category() {
-		const r = await this.request('category', {});
+	async category(p, sec) {
+		const r = await this.request('category', { time: sec }, sec ? (sec + 3) * 1000 : this.timeoutMs);
 		return typeof r === 'string' ? r : null;
 	}
 

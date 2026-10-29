@@ -32,7 +32,7 @@ import { ensureSystems } from './campaign.js';
 import { targetDiff } from './progress.js';
 import { UIController, BotController, RemoteController, publicView, PROTOCOL } from './net.js';
 import { botLook } from './commanders.js';
-import { setTimeout, clearTimeout } from '../core/clock.js';
+import { clock, setTimeout, clearTimeout } from '../core/clock.js';
 
 export const MODES = {
 	'1v1': { players: 2, teams: null, label: "1'e 1" },
@@ -52,6 +52,14 @@ const WHEEL_CATS = Object.keys(CATS);
  * büyür (tek bölge 3–4 kişiye dar geliyordu: herkese 2–3 il düşüyor, maç başlamadan bitiyordu).
  */
 export const PROVINCES_PER_PLAYER = 6;
+
+/**
+ * Seçim süreleri (sn). Her koltuk aynı kurala tabidir: süre uzak koltuğa da gönderilir, dolunca seçimi bot yapar.
+ * Yayılmada bir oyuncunun sırası bir süre havuzudur: ilk il için `first`, sonraki her il için `next` eklenir
+ * (4 il seçen 1 il seçenden uzun düşünür); havuz azalsa da her seçimde en az `floor` sn kalır.
+ */
+export const PICK_TIME = { capital: 15, attack: 12, category: 8, first: 10, next: 5, floor: 4 };
+export const pickPool = (n) => PICK_TIME.first + PICK_TIME.next * Math.max(0, n - 1);
 
 export const PACE = {
 	quick: { duels: 11 },
@@ -899,7 +907,8 @@ export class Match {
 		this.tick(EST.rank);
 		for (let k = 0; k < n; k++) {
 			const total = Math.min(picks[k] * mult, this.free().length);
-			for (let j = 0; j < total && this.free().length; j++) await this.choose(order[k].p, 'free', [j + 1, total]);
+			const pool = { left: pickPool(total) };
+			for (let j = 0; j < total && this.free().length; j++) await this.choose(order[k].p, 'free', [j + 1, total], pool);
 		}
 	}
 
@@ -919,9 +928,9 @@ export class Match {
 
 	/**
 	 * Oyuncu bir il seçer: 'capital' başkent, 'free' boş il (komşu öncelikli), 'attack' saldırılacak düşman ili.
-	 * step: [kaçıncı, kaç] — aynı oyuncunun art arda seçimleri (yayılma hakları).
+	 * step: [kaçıncı, kaç] — aynı oyuncunun art arda seçimleri (yayılma hakları); pool: { left } süre havuzu (sn).
 	 */
-	async choose(p, kind, step = null) {
+	async choose(p, kind, step = null, pool = null) {
 		let options;
 		if (kind === 'capital') options = this.capitalOptions();
 		else if (kind === 'free') {
@@ -936,9 +945,13 @@ export class Match {
 		if (!options.length) return -1;
 		const n = step && step[1] > 1 ? ` · ${step[0]}/${step[1]}` : '';
 		const text = kind === 'capital' ? 'Başkentini seç' : kind === 'free' ? `Bir il al${n}` : 'Saldıracağın ili seç';
-		let pickI = await p.ctl.pick(p, kind, options, text);
+		const sec = pool ? Math.max(PICK_TIME.floor, Math.round(pool.left)) : PICK_TIME[kind === 'free' ? 'first' : kind];
+		const t0 = clock.now();
+		let pickI = await p.ctl.pick(p, kind, options, text, sec);
+		if (pool) pool.left -= (clock.now() - t0) / 1000;
 		if (pickI == null || !options.includes(pickI)) {
-			// uzak koltuk cevap vermedi ya da geçersiz il: bot karar verir
+			// süre doldu, uzak koltuk cevap vermedi ya da geçersiz il: bot karar verir
+			if (p.human) this.ui.toast?.('Süre doldu. İl senin yerine seçildi.', { tone: 'warn' });
 			pickI = this.botChoose(p, options, kind);
 			await this.ui.botPick(this, p, pickI);
 		} else if (p.ctl.remote) await this.ui.botPick(this, p, pickI);
@@ -1004,7 +1017,7 @@ export class Match {
 		this.tick(EST.wheel);
 		this.emit('wheel', { player: p.i, cat });
 		if (cat === 'fetih') {
-			cat = (await p.ctl.category(p)) || this.botCategory(p);
+			cat = (await p.ctl.category(p, PICK_TIME.category)) || this.botCategory(p);
 			if (!CATS[cat]) cat = this.botCategory(p);
 			this.tick(p.human ? EST.chooseCat : 0.3);
 		}

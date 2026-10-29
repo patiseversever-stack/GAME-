@@ -389,7 +389,8 @@ export class UI {
 
 	// ---------------------------------------------------------------- il seçimi
 
-	async pickProvince(m, options, text) {
+	/** İnsan il seçer. sec: seçim süresi; dolunca null döner (seçimi Match bot kuralıyla yapar). */
+	async pickProvince(m, options, text, sec = 0) {
 		const app = this.app;
 		const b = app.board;
 		const me = m.players.find((p) => p.human) || m.players[0];
@@ -402,20 +403,41 @@ export class UI {
 		const head = esc(String(text || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')));
 		const hint = capital ? 'Parlayan bir ile dokun, kalen oraya kurulur' : attack ? 'Saldırmak için parlayan bir ile dokun' : 'Parlayan bir ile dokun, senin olsun';
 		const ey = capital ? 'BAŞKENT · SIRA SENDE' : attack ? 'FETİH · SIRA SENDE' : 'YAYILMA · SIRA SENDE';
-		this.prompt(`<span class="ey">${ey}</span><b>${head}</b><small>${hint}</small>`, { tone: attack ? 'red' : '' });
+		const tm = sec ? `<i class="tm"><u></u><em>${sec}</em></i>` : '';
+		this.prompt(`<span class="ey">${ey}</span><b>${head}</b><small>${hint}</small>${tm}`, { tone: (attack ? 'red' : '') + (sec ? ' timed' : '') });
 		app.cam.fit(app.boundsOf(m.map), { pitch: 0.98 });
+		let tick = 0;
 		const pick = await new Promise((res) => {
 			this._pickRes = res;
 			app.onTap = (idx, x, y) => {
 				if (options.includes(idx)) return res(idx);
 				this._badTap(m, me, idx, x, y, attack, options);
 			};
+			if (!sec) return;
+			// süre: altın çizgi erir, son 3 sn kızarır; dolunca seçim boş döner
+			const box = this.$.prompt.querySelector('.tm');
+			const em = box.querySelector('em');
+			const t0 = clock.now();
+			let last = sec;
+			tick = setInterval(() => {
+				const left = Math.max(0, sec - (clock.now() - t0) / 1000);
+				box.style.setProperty('--k', (left / sec).toFixed(3));
+				const s = Math.ceil(left);
+				if (s !== last) {
+					last = s;
+					em.textContent = String(s);
+					box.classList.toggle('hot', s <= 3);
+					if (s <= 3 && s > 0) this.sfx('count', { left: s });
+				}
+				if (left <= 0) res(null);
+			}, 100);
 		});
+		clearInterval(tick);
 		app.onTap = null;
 		this._pickRes = null;
 		this._selOff(options);
 		this.prompt(null);
-		this.sfx('tap');
+		if (pick != null) this.sfx('tap');
 		return pick;
 	}
 
@@ -430,7 +452,7 @@ export class UI {
 			}
 		} else for (const i of options) b.fx(i, 0.18, 0.75);
 		// etiketler: ilin adı + sahibi (saldırıda çapraz kılıç); oyuncunun kendi toprağında "SEN" rozeti
-		this.tagsOn(this.tagSpecs(m, options, capital ? 'cap' : attack ? 'attack' : 'pick'), { badges: capital ? [] : this.homeBadges(m, me, options), tap: true });
+		this.selNames(options, capital ? [] : this.homeBadges(m, me, options));
 	}
 
 	_selOff(options) {
@@ -479,6 +501,19 @@ export class UI {
 	tagsOff() {
 		this.tags.clear();
 		this.app.board.labelLayer?.suspend?.(false);
+		this.app.board.labelLayer?.show?.([]); // seçim adları bitti: genel kipe dön
+	}
+
+	/**
+	 * Seçim adları: haritanın 3B ad katmanında küçük haplar (DOM etiketi yok). Az seçenekte hepsi görünür;
+	 * çok seçenekte yalnızca yakınlaştıkça görünen alandakiler, üst üste binmeden. badges: "SEN" rozeti.
+	 */
+	selNames(list, badges = []) {
+		if (this.fast) return;
+		const b = this.app.board;
+		this.tags.set([], { badges, tap: false });
+		b.labelLayer?.suspend?.(false);
+		b.showLabels?.(list, { zoom: list.length > 6 });
 	}
 
 	_badTap(m, me, idx, x, y, attack, options) {
@@ -1166,9 +1201,9 @@ export class UI {
 		return this.wheelView.spin(m, p, pick, jit);
 	}
 
-	async chooseCategory(m) {
+	async chooseCategory(m, sec = 0) {
 		if (this.fast) return 'tarih';
-		return this.wheelView.choose(Object.keys(CATS));
+		return this.wheelView.choose(Object.keys(CATS), sec);
 	}
 
 	// ---------------------------------------------------------------- bitiş

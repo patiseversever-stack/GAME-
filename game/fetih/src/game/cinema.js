@@ -63,8 +63,8 @@ export class Cinema {
 	bind(ui) {
 		const app = this.app;
 		const pick = ui.pickProvince.bind(ui);
-		ui.pickProvince = (m, options, text) => {
-			const pr = pick(m, options, text);
+		ui.pickProvince = (m, options, text, sec) => {
+			const pr = pick(m, options, text, sec);
 			// kadraj: seçenekler; başkent seçiminde kamera yükselip bütün maç haritasına tepeden bakar
 			if (!ui.fast && !this.fast) {
 				if (m.phase === 'baskent') this.frameTop(m.map);
@@ -85,16 +85,15 @@ export class Cinema {
 			// seçenekler gecede ışık adası; sırası gelen botun toprağı net, okları ve rozeti kendi renginde,
 			// hedeflerin adı ve sahibi etiketlerde
 			b.select?.(opts, { attack, me: me ? me.i : null, act: p.i });
-			ui.tagsOn(ui.tagSpecs(m, opts, attack ? 'attack' : 'pick'), { badges: ui.homeBadges(m, p, opts) });
+			ui.selNames(opts, capital ? [] : ui.homeBadges(m, p, opts));
 			const frame = opts.slice();
 			if (p.capital >= 0 && opts.length < 9) frame.push(p.capital);
 			if (capital) this.frameTop(m.map);
 			else this.frameList(frame);
-			const kind = capital ? 'cap' : attack ? 'attack' : 'pick';
 			ui.caption?.(`SIRA · ${p.name}`, capital ? 'Başkentini seçiyor' : attack ? 'Hedefini seçiyor' : 'Bir il seçiyor', null, { p, tone: attack ? 'red' : '' });
 			await sleep(880);
 			b.select?.([i], { attack, me: me ? me.i : null, act: p.i });
-			ui.tagsOn(ui.tagSpecs(m, [i], kind), { badges: capital ? [] : ui.homeBadges(m, p, [i]) });
+			ui.selNames([i], capital ? [] : ui.homeBadges(m, p, [i]));
 			ui.caption?.(`${p.name} · ${capital ? 'BAŞKENT' : attack ? 'SALDIRI' : 'YAYILMA'}`, b.provinces[i].name, capital ? 'KALE KURULUYOR' : attack ? 'SAVAŞ BAŞLIYOR' : 'YENİ TOPRAK', { p, tone: attack ? 'red' : '' });
 			await bot(m, p, i);
 			b.cues?.hide(); // seçim bitti: oklar söner (fetih ve düello oksuz)

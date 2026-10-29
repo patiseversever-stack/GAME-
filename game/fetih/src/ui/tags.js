@@ -18,7 +18,6 @@ const up = (s) => String(s).toLocaleUpperCase('tr-TR');
 const ICON = {
 	attack: ['atk', 'swords', '#fff'],
 	pick: ['pk', 'plus', '#fff'],
-	cap: ['pk', 'castle', '#fff'],
 	conq: ['cq', 'crown', '#4a2800'],
 	src: ['src', 'arrow', '#fff'],
 };

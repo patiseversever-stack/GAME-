@@ -357,10 +357,10 @@ export class App {
 
 	// ---------------------------------------------------------------- duraklat ve çık
 
-	/** Sürmekte olan (insanın oynadığı) maç var mı. */
+	/** Duraklatılabilir maç: insanın yerel oynadığı, sürmekte olan maç. */
 	get inMatch() {
 		const m = this.match;
-		return !!m && !m.over && !m.aborted && !!m.humanPlayer && !this.ui.fast;
+		return !!m && !m.over && !m.aborted && !!m.humanPlayer && !this.ui.fast && !m.players.some((p) => p.ctl.remote); // çevrimiçi maç duraklamaz
 	}
 
 	/** Maçı duraklat: oyun saati, çizim, ses durur; duraklatma ekranı açılır. Dönüş: duraklatıldı mı. */
