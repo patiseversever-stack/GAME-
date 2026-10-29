@@ -3,7 +3,8 @@
 // Değer (value): value[solIndeks] = ekrandaki sağ sıra numarası (-1: bağlanmamış)
 // Sıralama türü 'closest': err = yanlış ya da boş eşleşme sayısı (0..4).
 
-import { css, esc, shuffle, pCorrect, thinkTime, buzz, isLand, LAND } from './util.js';
+import { css, esc, shuffle, pCorrect, buzz, isLand, LAND } from './util.js';
+import { botTime } from './timing.js';
 
 const COLORS = ['#ffd25a', '#5ad1ff', '#ff7ab8', '#9dff7a'];
 
@@ -47,7 +48,7 @@ ${LAND}{
 `;
 
 export const match = {
-	time: 25,
+	time: 22,
 	label: 'Eşleştir',
 	kind: 'closest',
 	keep: true, // arayüz sıralama tablosunu tahtanın altına ekler (tahtayı silmez)
@@ -271,6 +272,6 @@ export const match = {
 			const vals = picks.map((l) => m[l]);
 			picks.forEach((l, i) => (m[l] = vals[(i + 1) % picks.length]));
 		}
-		return { value: m, time: thinkTime(R, 7, 9) };
+		return { value: m, time: botTime(v, R, skill, 0.1, 0.9) };
 	},
 };

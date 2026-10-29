@@ -225,7 +225,7 @@ function makeUI({ human = false, policy = 0.5, accuracy = 0.7 } = {}) {
 			}
 			// bildi: bot gibi cevapla (süre ve ekstra süre dahil)
 			const b = T.bot(v, accuracy, m.R);
-			const total = questionTime(T, clock.extra);
+			const total = questionTime(v.sec, clock.extra);
 			check(total >= 3, `süre ${total} sn çok kısa`);
 			if (b.time > total) return { human: { value: T.kind === 'exact' ? null : b.value, time: total, timeout: true } };
 			return { human: { value: b.value, time: b.time } };

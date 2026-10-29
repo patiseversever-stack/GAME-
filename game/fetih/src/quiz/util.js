@@ -13,7 +13,6 @@ export const gauss = (R) => {
 	const v = R();
 	return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v);
 };
-export const thinkTime = (R, base, span) => base + R() * span;
 
 /** Yatay kısa ekran (arayüzdeki LAND ile aynı): kart sağda durur, gövdeye az yer kalır. */
 export const LAND = '@media (orientation:landscape) and (max-height:560px)';

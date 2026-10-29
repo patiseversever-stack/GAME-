@@ -9,7 +9,8 @@
 // Erken doğru cevap daha çok puan: judge → { correct, err (= f), score (100..40) }.
 // Tür 'exact': doğru olanlar arasında hızlı olan öne geçer (eşitlik bozma `time` ile).
 
-import { css, esc, shuffle, pCorrect, thinkTime, mountChoice, typedWord, clamp, trUp, chips, buzz, isLand, LAND } from './util.js';
+import { css, esc, shuffle, pCorrect, mountChoice, typedWord, clamp, trUp, chips, buzz, isLand, LAND } from './util.js';
+import { botTime, secOf } from './timing.js';
 import { ASSETS, drawAsset, drawSilhouette, assetFocus, whenReady } from './assets.js';
 
 const CSS = /* css */ `
@@ -47,7 +48,7 @@ const LEVELS = [8, 11, 15, 21, 30, 44, 64, 96, 148, 230, 360, 480];
 const ease = (x) => 1 - Math.pow(1 - x, 2.2);
 
 export const img = {
-	time: 20,
+	time: 15,
 	label: 'Resimli',
 	kind: 'exact',
 	prepare(q, R) {
@@ -63,7 +64,7 @@ export const img = {
 	},
 	mount(el, v, api) {
 		css('img', CSS);
-		const T = img.time;
+		const T = secOf(v); // sorunun süre bütçesi (timing.js)
 		const span = T * 0.85 * 1000; // bonus bu sürede erir
 		const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
 		const typed = !!v.word;
@@ -271,8 +272,9 @@ export const img = {
 		return { correct: ok, err: ok ? f : 99, score: ok ? Math.round(100 - 60 * f) : 0 };
 	},
 	bot(v, skill, R) {
-		const time = thinkTime(R, 3, v.mode === 'rebus' ? 9 : 10);
-		const f = clamp(time / (img.time * 0.85), 0, 1);
+		// bütçe yazma süresini de içerir (timing.js)
+		const time = botTime(v, R, skill, 0.05, v.mode === 'rebus' ? 0.85 : 0.8);
+		const f = clamp(time / (secOf(v) * 0.85), 0, 1);
 		let p = pCorrect(skill, v.q.diff);
 		if (v.mode === 'blur' || v.mode === 'zoom') p *= Math.min(1, 0.55 + f * 1.1);
 		if (v.word) p *= 0.85; // yazmak daha zor
@@ -284,7 +286,7 @@ export const img = {
 			if (!ok) do i = Math.floor(R() * 4); while (i === v.right);
 			value = { i, f };
 		}
-		return { value, time: v.word ? time + 3 : time };
+		return { value, time };
 	},
 };
 

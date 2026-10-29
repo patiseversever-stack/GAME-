@@ -1,17 +1,19 @@
 // Soru tipleri. Her tip aynı sözleşmeyi uygular:
 //
-//   time            : süre (sn)
+//   time            : tipik süre (sn; bankanın ortancası). Asıl süre her sorunun kendi verisinden
+//                     hesaplanır: timing.js → v.sec (prepare koyar). time yalnız belge ve yedektir.
 //   label           : kartın üstündeki tip adı
 //   prepare(q, R)   : oyuna hazır görünüm (şıklar karıştırılır vb.)
 //   mount(el, v, api): kartın gövdesini çizer; oyuncu cevaplayınca api.answer(value).
 //                     Dönen nesne: { reveal(results), destroy() }
 //   judge(v, value) : { correct, err } (err: tahmin/haritada uzaklık; küçük olan kazanır)
-//   bot(v, skill, R): { value, time } botun cevabı ve düşünme süresi
+//   bot(v, skill, R): { value, time } botun cevabı ve düşünme süresi (timing.js botTime: bütçeye göre)
 //   kind            : 'exact' (bildi/bilemedi) ya da 'closest' (en yakın kazanır)
 //
 // Botların doğruluk modeli: P(doğru) = skill + 0.25 − 0.15·zorluk (0.08..0.95 arası).
 
-import { pCorrect, gauss, thinkTime, esc, mountChoice } from './util.js';
+import { pCorrect, gauss, esc, mountChoice } from './util.js';
+import { timing, botTime } from './timing.js';
 import { order } from './t_order.js';
 import { match } from './t_match.js';
 import { hilo, odd, emoji, proverb, riddle } from './t_pick.js';
@@ -27,7 +29,7 @@ export const KM_PER_UNIT = 111.2 / GEO.K;
 
 export const TYPES = {
 	choice: {
-		time: 15,
+		time: 12,
 		label: 'Test',
 		kind: 'exact',
 		prepare(q, R) {
@@ -45,7 +47,7 @@ export const TYPES = {
 			const ok = R() < pCorrect(skill, v.q.diff);
 			let value = v.right;
 			if (!ok) do value = Math.floor(R() * 4); while (value === v.right);
-			return { value, time: thinkTime(R, 2.5, 7) };
+			return { value, time: botTime(v, R, skill, 0.05, 0.8) };
 		},
 	},
 
@@ -84,12 +86,12 @@ export const TYPES = {
 		},
 		bot(v, skill, R) {
 			const ok = R() < Math.min(0.97, pCorrect(skill, v.q.diff) + 0.1);
-			return { value: ok ? v.right : 1 - v.right, time: thinkTime(R, 1.5, 4) };
+			return { value: ok ? v.right : 1 - v.right, time: botTime(v, R, skill, 0, 0.7) };
 		},
 	},
 
 	num: {
-		time: 20,
+		time: 14,
 		label: 'Tahmin',
 		kind: 'closest',
 		prepare(q) {
@@ -167,12 +169,12 @@ export const TYPES = {
 			const span = q.max - q.min;
 			let value = exact ? q.ans : q.ans + gauss(R) * sigma * Math.min(span, Math.abs(q.ans) + span * 0.2) * 0.5;
 			value = Math.round(Math.max(q.min, Math.min(q.max, value)));
-			return { value, time: thinkTime(R, 4, 11) };
+			return { value, time: botTime(v, R, skill, 0.1, 0.9) };
 		},
 	},
 
 	pin: {
-		time: 15,
+		time: 12,
 		label: 'Haritada bul',
 		kind: 'closest',
 		needsMap: true,
@@ -219,12 +221,12 @@ export const TYPES = {
 			const km = Math.abs(gauss(R)) * ((1 - skill) * 260 + 25) * (0.7 + 0.25 * v.q.diff);
 			const a = R() * Math.PI * 2;
 			const d = km / KM_PER_UNIT;
-			return { value: { x: v.target.x + Math.cos(a) * d, z: v.target.z + Math.sin(a) * d }, time: thinkTime(R, 3, 8) };
+			return { value: { x: v.target.x + Math.cos(a) * d, z: v.target.z + Math.sin(a) * d }, time: botTime(v, R, skill, 0.05, 0.85) };
 		},
 	},
 
 	hang: {
-		time: 30,
+		time: 19,
 		label: 'Adam asmaca',
 		kind: 'exact',
 		prepare(q) {
@@ -291,13 +293,27 @@ export const TYPES = {
 		bot(v, skill, R) {
 			const ok = R() < pCorrect(skill, v.q.diff) + 0.05;
 			const wrong = Math.floor(R() * (ok ? 4 : 1)) + (ok ? 0 : 6);
-			return { value: { ok, wrong: ok ? wrong : 6 }, time: thinkTime(R, 7, 14) };
+			return { value: { ok, wrong: ok ? wrong : 6 }, time: botTime(v, R, skill, 0.15, 0.95) };
 		},
 	},
 };
 
 // ---------------------------------------------------------------- yeni tipler (src/quiz/t_*.js)
 Object.assign(TYPES, { order, match, hilo, odd, emoji, anagram, cross, proverb, riddle, img, blitz });
+
+// ---------------------------------------------------------------- süre bütçesi
+// Her görünüm kendi sorusunun süresini taşır: v.sec (saat, tam sn) ve v.fast (hızlı oyuncu, botların alt sınırı).
+// Tek kaynak burası: maç, arayüz, botlar ve uzak koltuklar (publicView v'yi kopyalar) aynı değeri görür.
+for (const T of Object.values(TYPES)) {
+	const prep = T.prepare;
+	T.prepare = function (q, R) {
+		const v = prep.call(this, q, R);
+		const t = timing(q);
+		v.sec = t.sec;
+		v.fast = t.fast;
+		return v;
+	};
+}
 
 // ---------------------------------------------------------------- kategori başına tip ağırlıkları
 // Oynanış ajanı bunu okur: attack = fetih düellosu (2 kişi), expand = yayılma turu (herkes aynı soruyu çözer;

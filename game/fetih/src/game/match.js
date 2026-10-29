@@ -23,10 +23,11 @@
 //   ranked    true: ELO güncellenir; persist=false: ilerleme kaydedilmez
 
 import { TYPES, pickType } from '../quiz/types.js';
+import { secOf } from '../quiz/timing.js';
 import { CATS } from '../quiz/categories.js';
 import { BANK as QUESTIONS } from '../data/bank.js';
 import { rng } from '../core/math.js';
-import { JOKERS, JOKER_ORDER, PER_QUESTION, BOT_BOOST, SABOTAGE, makeLoadout, botLoadout, support, computeEffect, botPlan } from './jokers.js';
+import { JOKERS, JOKER_ORDER, PER_QUESTION, BOT_BOOST, SABOTAGE, makeLoadout, botLoadout, support, computeEffect, botPlan, questionTime } from './jokers.js';
 import { ensureSystems } from './campaign.js';
 import { targetDiff } from './progress.js';
 import { UIController, BotController, RemoteController, publicView, PROTOCOL } from './net.js';
@@ -332,11 +333,14 @@ export class Match {
 	async ask(q, who, ctx = {}) {
 		const T = TYPES[q.type];
 		const v = T.prepare(q, this.R);
+		// süre bütçesi sorunun verisinden (timing.js); bütün koltuklar aynı saati görür, uzaklara `time` olarak gider
+		const sec = secOf(v);
 		const clock = { extra: 0 };
 		const cur = {
 			q,
 			v,
 			T,
+			sec,
 			who,
 			clock,
 			ctx,
@@ -356,11 +360,11 @@ export class Match {
 		const human = who.find((p) => p.human);
 		const remote = who.filter((p) => p.ctl.remote);
 		const pv = remote.length || this.listeners.has('ask') ? publicView(T, v) : null;
-		if (pv) this.emit('ask', { q: pv.q, v: pv, who: who.map((p) => p.i), title: ctx.title || '' });
+		if (pv) this.emit('ask', { q: pv.q, v: pv, time: sec, who: who.map((p) => p.i), title: ctx.title || '' });
 		this.refreshJokers();
 		this.tick(EST.qOpen);
-		// uzak koltuklardan cevaplar eşzamanlı toplanır
-		const remoteWait = remote.map((p) => p.ctl.answer(p, { q: pv.q, v: pv, time: T.time, who: who.map((x) => x.i), phase: ctx.phase || '', cat: q.cat, attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1 }, (T.time + 12) * 1000));
+		// uzak koltuklardan cevaplar eşzamanlı toplanır (bekleme: süre + ekstra süre jokeri + ağ payı = sec + 12 sn)
+		const remoteWait = remote.map((p) => p.ctl.answer(p, { q: pv.q, v: pv, time: sec, who: who.map((x) => x.i), phase: ctx.phase || '', cat: q.cat, attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1 }, (sec + 12) * 1000));
 		const res = await this.ui.question(this, { q, v, T, who, bots: cur.bots, human, clock, botJokers: cur.botUses, ...ctx });
 		const ra = await Promise.all(remoteWait);
 		cur.closed = true;
@@ -372,11 +376,14 @@ export class Match {
 			const ri = remote.indexOf(p);
 			let a;
 			if (p.human) a = res?.human;
-			else if (ri >= 0) a = ra[ri] || (b ? { value: b.value, time: b.time } : null);
-			else a = b ? { value: b.value, time: b.time } : null;
-			if (!a) a = { value: null, time: T.time };
+			else if (ri >= 0) {
+				// istemcinin bildirdiği süre saatin dışına taşamaz: [0, süre + ekstra] (eksi ya da dev değer eşitliği bozmasın)
+				const r = ra[ri];
+				a = r ? { value: r.value, time: clamp(Number.isFinite(r.time) ? r.time : sec, 0, questionTime(sec, Math.max(0, clock.extra))) } : b ? { value: b.value, time: b.time } : null;
+			} else a = b ? { value: b.value, time: b.time } : null;
+			if (!a) a = { value: null, time: sec };
 			const j = T.judge(v, a.value);
-			return { p, i: p.i, name: p.name, color: p.css, value: a.value, time: a.time ?? T.time, ...j };
+			return { p, i: p.i, name: p.name, color: p.css, value: a.value, time: a.time ?? sec, ...j };
 		});
 		this.estimateQuestion(T, out, cur);
 		this.afterQuestion(q, T, out);
@@ -428,7 +435,7 @@ export class Match {
 		const times = out.filter((r) => r !== seat0).map((r) => r.time);
 		const maxOther = times.length ? Math.max(...times) : 0;
 		let sec;
-		if (seat0) sec = Math.min(T.time + cur.clock.extra, seat0.time) + 0.4 + Math.min(1.2, Math.max(0, maxOther - seat0.time));
+		if (seat0) sec = Math.min(cur.sec + cur.clock.extra, seat0.time) + 0.4 + Math.min(1.2, Math.max(0, maxOther - seat0.time));
 		else sec = Math.min(2.8, maxOther * Math.min(1, 2.6 / Math.max(maxOther, 0.1))) + 0.2;
 		this.tick(sec + (T.kind === 'closest' ? 2.55 : 1.95));
 	}

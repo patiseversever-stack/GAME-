@@ -301,9 +301,11 @@ export function botPlan(slots, { T, v, R, duel, capital, rivalHuman }) {
 }
 
 /**
- * Sorunun toplam süresi. extra: ekstra süre (+) ve sabotaj (−) toplamı; floor: sabotaj anından itibaren
+ * Sorunun toplam süresi. base: sorunun süre bütçesi (sn; timing.js, görünümde v.sec). Eski çağrılar için tip
+ * nesnesi de olur (T.time). extra: ekstra süre (+) ve sabotaj (−) toplamı; floor: sabotaj anından itibaren
  * en az 3 sn kalması için arayüzün tuttuğu alt sınır (sabotaj anı + 3). Süre hiçbir zaman 3 sn'nin altına inmez.
  */
-export function questionTime(T, extra = 0, floor = 0) {
-	return Math.max(T.time + extra, floor, 3);
+export function questionTime(base, extra = 0, floor = 0) {
+	const sec = typeof base === 'number' ? base : base?.time || 0;
+	return Math.max(sec + extra, floor, 3);
 }

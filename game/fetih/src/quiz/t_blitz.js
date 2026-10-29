@@ -1,4 +1,5 @@
-// YILDIRIM TURU: 10 saniyede olabildiğince çok "doğru mu yanlış mı" bil.
+// YILDIRIM TURU: kısa sürede olabildiğince çok "doğru mu yanlış mı" bil. Tur süresi ifadelerin uzunluğuna göre
+// 10–18 sn (timing.js: ortalama bir oyuncu ~7 ifade okuyup cevaplayabilsin).
 // Veri: items: [{t, ans}, ×12..16]  (t kısa ifade, ans true/false). Her oyunda karıştırılır.
 // Değer: { score, n }  (score = doğru sayısı, n = cevaplanan ifade sayısı).
 //
@@ -8,6 +9,7 @@
 // Yanlış cevap 0.6 sn'lik bir kilitlenme getirir (rastgele basarak puan toplanmasın).
 
 import { css, esc, shuffle, pCorrect, clamp, buzz, chips, LAND } from './util.js';
+import { secOf } from './timing.js';
 
 const CSS = /* css */ `
 .fl-bz{display:flex;flex-direction:column;gap:10px}
@@ -42,7 +44,7 @@ ${LAND}{
 `;
 
 export const blitz = {
-	time: 10,
+	time: 12,
 	label: 'Yıldırım',
 	kind: 'closest',
 	fmt: (v, value) => `${value?.score || 0} doğru`,
@@ -146,19 +148,21 @@ export const blitz = {
 		return { correct: score >= 5, err: -score, score };
 	},
 	bot(v, skill, R) {
-		// her ifade ~ (1.5 − 0.6·beceri) sn: okuma ve dokunma. Yanlış: 0.6 sn ceza.
-		const per = 1.55 - 0.6 * skill;
+		// her ifade: okuma (ortalama uzunluğa göre, timing.js ile aynı ölçü) ve dokunma; usta bot daha çabuk. Yanlış: 0.6 sn ceza.
+		const sec = secOf(v);
+		const avg = v.items.reduce((s, x) => s + String(x.t).length, 0) / Math.max(1, v.items.length);
+		const per = (avg / 20 + 0.55) * (1.15 - 0.5 * skill);
 		const p = clamp(pCorrect(skill, v.q.diff) + 0.12, 0.2, 0.97);
 		let t = 0;
 		let score = 0;
 		let n = 0;
 		while (n < v.items.length) {
 			t += per * (0.75 + R() * 0.5);
-			if (t > blitz.time) break;
+			if (t > sec) break;
 			n++;
 			if (R() < p) score++;
 			else t += 0.6;
 		}
-		return { value: { score, n }, time: n >= v.items.length ? Math.min(t, blitz.time) : blitz.time };
+		return { value: { score, n }, time: n >= v.items.length ? Math.min(t, sec) : sec };
 	},
 };
