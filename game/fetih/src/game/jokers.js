@@ -5,7 +5,8 @@
 //   yari    Yarı Yarıya   iki yanlış şıkkı eler. Şıksız tiplerde karşılığı: tahminde dar aralık,
 //                         adam asmacada açık harfler, haritada bölge ipucu.
 //   sure    Ekstra Süre   sorunun süresi yarısı kadar uzar (en az 5, en çok 15 sn; extraFor).
-//   kalkan  Kalkan        bir kaybedilen savunmayı yok sayar (il ya da kule elde kalır).
+//   kalkan  Kalkan        bir kaybedilen savunmayı yok sayar (il ya da kule elde kalır). Savunulan düellonun içinde
+//                         kurulamaz (v0.8, match.js SHIELD_IN_DEFENSE): bot da insan da soruyu görmeden karar verir.
 //   ikinci  İkinci Şans   yanlış bilirsen aynı kategoriden yeni bir soru daha (yalnız bildi/bilemedi tipleri).
 //   sabotaj Sabotaj       rakibin süresinin üçte biri gider (en az 3, en çok 10 sn; cutFor), ekranı 2 sn kararır.
 //                         Sabotaj anından sonra en az 3 sn kalır (arayüzün alt sınırı).
@@ -84,7 +85,7 @@ export const JOKERS = {
 		id: 'kalkan',
 		name: 'Kalkan',
 		short: 'Kalkan',
-		desc: 'Bir kaybedilen savunmayı yok sayar. İlk saldırıda devreye girer.',
+		desc: 'Bir kaybedilen savunmayı yok sayar. Saldırıdan önce kurulur, ilk saldırıda devreye girer.',
 		color: '#f2a51a',
 		icon: 'shield',
 		free: 1,

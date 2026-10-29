@@ -5,7 +5,7 @@
 import { esc, ico } from './art.js';
 import { OUT, LAND } from './cssutil.js';
 
-const PHASE = { baslangic: 'Maç başlıyor', baskent: 'Başkentler', yayilma: 'Yayılma', fetih: 'Fetih', bitis: 'Maç sonu' };
+const PHASE = { baslangic: 'Maç başlıyor', baskent: 'Başkentler', yayilma: 'Yayılma', fetih: 'Fetih', altin: 'Altın soru', bitis: 'Maç sonu' };
 
 export const CSS_PAUSE = /* css */ `
 /* ---------------------------------------------------------------- duraklat düğmesi ve ekranı */

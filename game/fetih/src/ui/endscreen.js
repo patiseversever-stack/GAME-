@@ -71,8 +71,11 @@ export async function showEnd(ui, m, ranking, rw = null) {
 		const l = levelOf(x);
 		return l.max ? 1 : l.into / l.need;
 	};
-	const title = won ? 'ZAFER!' : place === 1 ? 'İKİNCİ!' : 'MAÇ BİTTİ';
-	const sub = me ? `${place + 1}. oldun · ${owned} il · ${fmt(me.score)} puan` : 'Maç sona erdi';
+	// iki taraflı maçta (1'e 1, eşli) ikincilik yenilgidir: eskiden 1'e 1'de kaybedene "İKİNCİ!" yazıyordu
+	const title = won ? 'ZAFER!' : E.length <= 2 ? 'YENİLGİ' : place === 1 ? 'İKİNCİ!' : 'MAÇ BİTTİ';
+	// eşit birincilik altın soruyla ayrıldıysa (Match.tieWin) söylenir: puanlar eşit görünür
+	const golden = m.tieWin != null && place <= 1 ? ' · altın soruyla' : '';
+	const sub = me ? `${place + 1}. oldun · ${me.alive ? `${owned} il · ${fmt(me.score)} puan` : 'kalen düştü'}${golden}` : 'Maç sona erdi';
 
 	// ---- sefer bloğu
 	let campHTML = '';

@@ -281,8 +281,12 @@ async function play(cfg, { human = false, store, policy, accuracy } = {}) {
 	if (!human) {
 		const top = out.slice ? out : m.standings();
 		void top;
-		const sc = (m.mode.teams ? m.standings().map((x) => x.score) : m.standings().map((x) => x.score)).slice(0, 2);
-		if (sc.length > 1 && sc[0] === sc[1]) bump(stats.ties, cfg.mode);
+		const st = m.standings();
+		if (st.length > 1 && st[0].alive && st[1].alive && st[0].score === st[1].score) {
+			bump(stats.ties, cfg.mode);
+			// eşit birincilik altın soruyla ayrılır (match.js TIE_BREAK); koltuk sırası belirlememeli
+			check(m.tieWin != null && (st[0].players ? st[0].team : st[0].i) === m.tieWin, `${cfg.mode}: eşit birincilik altın soruyla ayrılmadı`);
+		}
 	}
 	// tutarlılık
 	check(r.questions > 0, 'hiç soru sorulmadı');
@@ -395,7 +399,7 @@ console.log('joker × tip (ok: uygulanır, na: gizlenir)');
 console.log('  ' + ''.padEnd(8) + JOKER_ORDER.filter((j) => JOKERS[j].scope === 'question').map((j) => JOKERS[j].short.padEnd(8)).join(''));
 for (const [t, row] of Object.entries(stats.matrix)) console.log('  ' + t.padEnd(8) + JOKER_ORDER.filter((j) => JOKERS[j].scope === 'question').map((j) => (row[j] || '-').padEnd(8)).join(''));
 console.log('kazanan koltuk (yalnız eşit seviye bot maçları): ' + JSON.stringify(stats.wins));
-console.log('puan eşitliği (ilk iki sıra aynı puan): ' + JSON.stringify(stats.ties));
+console.log('puan eşitliği (ilk iki sıra aynı puan; altın soruyla ayrıldı): ' + JSON.stringify(stats.ties));
 const topRefused = Object.entries(stats.refused).sort((a, b) => b[1] - a[1]).slice(0, 6);
 console.log('reddedilen joker istekleri: ' + JSON.stringify(Object.fromEntries(topRefused)));
 
