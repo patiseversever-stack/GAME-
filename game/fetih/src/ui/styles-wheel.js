@@ -1,22 +1,22 @@
 // Çark, "Fetih!" kategori seçimi, düello sahnesi ve seçim sırası stilleri.
-// Çark: jant, disk, bulanık disk, göbek, mandal ve sonuç kartı ayrı katmanlar; canlanan yalnızca transform ve
-// opacity (gölgeler duruk, filtre yok).
+// Çark (kart dilimli): koyu zemin, aralıklı yuvarlak köşeli dilim kartları, göbek, mandal ve sonuç kartı ayrı
+// katmanlar; canlanan yalnızca transform ve opacity (gölgeler duruk, filtre yok).
 
 import { OUT, LAND } from './cssutil.js';
 
 export const CSS_WHEEL = /* css */ `
-/* ---------------------------------------------------------------- çark */
+/* ---------------------------------------------------------------- çark (kart dilimli) */
 /* --ws: çarkın genişliği; dar ya da kısa ekranda küçülür, üstte HUD ve duraklat düğmesi için yer kalır */
 .fl-wheel{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;opacity:0;transition:opacity .25s;
   --ws:min(calc(90 * var(--vw)),390px,calc((calc(100 * var(--vh)) - 330px) / 1.04));
   padding:calc(var(--sat) + 100px) 0 calc(var(--sab) + min(40px,calc(4 * var(--vh))));
-  background:linear-gradient(180deg,rgba(4,8,20,.32) 0,rgba(4,8,20,.32) calc(var(--sat) + 92px),rgba(4,8,20,.82) calc(var(--sat) + 190px),rgba(4,8,20,.9))}
+  background:linear-gradient(180deg,rgba(4,8,20,.32) 0,rgba(4,8,20,.32) calc(var(--sat) + 92px),rgba(4,8,20,.86) calc(var(--sat) + 136px),rgba(4,8,20,.9))}
 .fl-wheel.on{opacity:1}
 .fl-wh{display:flex;flex-direction:column;align-items:center}
 .fl-wh.hide{display:none}
 @keyframes flRot{to{transform:rotate(360deg)}}
 
-/* başlık: kimin sırası (sade: portre, ad, tek satır) */
+/* başlık: kimin sırası (portre, ad, tek satır) */
 .fl-wh-cap{display:flex;align-items:center;gap:12px;margin-bottom:20px;opacity:0;transform:translateY(-10px)}
 .fl-wheel.on .fl-wh-cap{animation:flCapIn .35s .05s ease-out forwards}
 @keyframes flCapIn{to{opacity:1;transform:none}}
@@ -26,39 +26,36 @@ export const CSS_WHEEL = /* css */ `
 .fl-wh-cap small{display:block;margin-top:2px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:13px;color:#aebbd8;white-space:nowrap}
 
 /* sahne: giriş hafif büyüyerek, çıkış sönerek */
-.fl-wh-stage{position:relative;width:var(--ws);margin-top:calc(var(--ws) * .06);opacity:0;transform:scale(.88)}
-.fl-wheel.on .fl-wh-stage{animation:flWhIn .42s cubic-bezier(.2,.9,.3,1.1) forwards}
+.fl-wh-stage{position:relative;width:var(--ws);margin-top:calc(var(--ws) * .045);opacity:0;transform:scale(.9)}
+.fl-wheel.on .fl-wh-stage{animation:flWhIn .42s cubic-bezier(.2,.9,.3,1.08) forwards}
 @keyframes flWhIn{to{opacity:1;transform:none}}
 .fl-wheel.out .fl-wh-stage,.fl-wheel.out .fl-wh-cap,.fl-wheel.out .fl-wh-act{opacity:1;transform:none;animation:flWhOut .26s ease-in forwards}
 @keyframes flWhOut{to{opacity:0;transform:scale(.96)}}
 .fl-wh-box{position:relative;width:100%;aspect-ratio:1}
-.fl-wh-box>svg,.fl-wh-spin,.fl-wh-dim,.fl-wh-pop{position:absolute;left:0;top:0;width:100%;height:100%}
+.fl-wh-box>svg,.fl-wh-spin,.fl-wh-dim,.fl-wh-pop,.fl-wh-ctw{position:absolute;left:0;top:0;width:100%;height:100%}
 .fl-wh-spin{will-change:transform}
-.fl-wh-spin>svg{width:100%;height:100%}
+.fl-wh-spin>svg,.fl-wh-ctw>svg{display:block;width:100%;height:100%}
+.fl-wh-ctw{transition:opacity .16s ease-out}
+.fl-wh-ctw.swap{opacity:0}
 .fl-wh-blur{position:absolute;inset:5%;border-radius:50%;opacity:0;will-change:opacity}
-.fl-wh.sb .fl-wh-blur{inset:7.5%}
 
-/* sonuç: diğerleri kararır, kazanan dilim sakince öne çıkar */
+/* sonuç: diğerleri kararır, kazanan kart hafif kalkar */
 .fl-wh-dim{opacity:0;will-change:opacity;pointer-events:none}
 .fl-wh-dim svg{width:100%;height:100%}
 .fl-wheel.done .fl-wh-dim{opacity:.58;transition:opacity .4s ease-out}
 .fl-wh-pop{pointer-events:none}
 .fl-wh-pop .pz{position:absolute;inset:0;opacity:0}
 .fl-wh-pop .pz>svg{position:absolute;inset:0;width:100%;height:100%}
-.fl-wheel.done .fl-wh-pop .pz{animation:flSliceUp .45s cubic-bezier(.2,.9,.3,1.15) forwards}
-@keyframes flSliceUp{0%{opacity:0;transform:none}30%{opacity:1}100%{opacity:1;transform:translateY(-2.2%) scale(1.045)}}
+.fl-wheel.done .fl-wh-pop .pz{animation:flSliceUp .45s cubic-bezier(.2,.9,.3,1.12) forwards}
+@keyframes flSliceUp{0%{opacity:0;transform:none}30%{opacity:1}100%{opacity:1;transform:translateY(-1.4%) scale(1.045)}}
 
-/* göbek */
-.fl-wh-hub{position:absolute;left:39%;top:39%;width:22%;height:22%;display:grid;place-items:center;z-index:2;pointer-events:none}
-.fl-wh.sb .fl-wh-hub{left:37%;top:37%;width:26%;height:26%}
-.fl-wh.sc .fl-wh-hub{left:36.5%;top:36.5%;width:27%;height:27%}
+/* göbek: koyu disk, ince beyaz halka, portre */
+.fl-wh-hub{position:absolute;left:36.5%;top:36.5%;width:27%;height:27%;display:grid;place-items:center;z-index:2;pointer-events:none}
 .fl-wh-hub>svg{position:absolute;inset:0;width:100%;height:100%}
 .fl-wh-hub .fl-av{position:relative;width:76%;height:76%;border-radius:50%;border:0;box-shadow:none}
 
-/* mandal: jantın tepesinde, dilim sınırlarına değince hafifçe sapar */
-.fl-wh-tk{position:absolute;left:50%;top:-10%;width:14%;margin-left:-7%;aspect-ratio:60/64;transform-origin:50% 21.9%;will-change:transform;z-index:3;pointer-events:none}
-.fl-wh.sb .fl-wh-tk{top:-8%}
-.fl-wh.sc .fl-wh-tk{top:-6.2%;width:12%;margin-left:-6%}
+/* mandal: küçük beyaz üçgen, kart sınırlarına değince hafifçe sapar */
+.fl-wh-tk{position:absolute;left:50%;top:-7.4%;width:13%;margin-left:-6.5%;aspect-ratio:60/64;transform-origin:50% 34%;will-change:transform;z-index:3;pointer-events:none}
 .fl-wh-tk svg{width:100%;height:100%}
 
 /* çarkın altı: tek büyük ÇEVİR düğmesi; bot sırasında durum yazısı; sonuçta kategori kartı */
@@ -80,39 +77,34 @@ export const CSS_WHEEL = /* css */ `
 .fl-wh-card b{font-family:'Lilita One';font-weight:400;font-size:calc(30px * var(--fz,1));line-height:1.05;color:#14214a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fl-wh-card small{margin-top:3px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:14px;color:#5b6a8c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* "Fetih!" kategori seçimi: taçlı başlık, süre çubuğu, büyük kategori kartları */
-.fl-catpick{position:relative;width:min(calc(calc(100 * var(--vw)) - 24px),420px);display:flex;flex-direction:column;align-items:center;margin-top:calc(-1 * min(36px,calc(4 * var(--vh))))}
-.fl-catpick .hd{position:relative;display:flex;flex-direction:column;align-items:center;margin-bottom:14px}
-.fl-catpick .cr{position:relative;width:min(96px,calc(11 * var(--vh)));aspect-ratio:1;display:grid;place-items:center;transform:scale(0) rotate(-40deg)}
-.fl-wheel.pick .fl-catpick .cr{animation:flMedIn .55s .05s cubic-bezier(.3,1.7,.5,1) forwards}
-.fl-catpick .cr .fl-ci{position:relative;width:100%;height:100%}
-.fl-catpick .hd b{position:relative;margin-top:-4px;font-family:'Lilita One';font-weight:400;font-size:clamp(38px,min(calc(12 * var(--vw)),calc(6.2 * var(--vh))),54px);line-height:1;letter-spacing:.03em;color:#ffe066;${OUT('#5a2a00', 3.5)};
-  opacity:0;transform:scale(1.8)}
-.fl-wheel.pick .fl-catpick .hd b{animation:flTitleIn .4s .15s cubic-bezier(.3,1.5,.5,1) forwards}
-@keyframes flTitleIn{to{opacity:1;transform:none}}
-.fl-catpick .hd small{position:relative;margin-top:7px;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:12.5px;letter-spacing:.24em;margin-right:-.24em;text-transform:uppercase;color:#fff4dc;text-shadow:0 1px 3px rgba(0,0,0,.9)}
-.fl-catpick .tm{position:relative;display:flex;align-items:center;gap:10px;margin-top:10px;width:min(250px,64%)}
-.fl-catpick .tm .br{flex:1;height:11px;border-radius:6px;overflow:hidden;background:rgba(255,255,255,.14);box-shadow:inset 0 2px 0 rgba(0,0,0,.4),0 0 0 2px rgba(0,0,0,.35)}
-.fl-catpick .tm .br i{display:block;height:100%;border-radius:6px;background:linear-gradient(180deg,#fff4b0,#ffc21a 60%,#e08a0a);transform-origin:0 50%;animation:flTimer 8s linear forwards}
+/* "Fetih!" kategori seçimi: çarkın kart dilinde; taç, süre çubuğu, büyük kategori kartları */
+.fl-catpick{width:min(calc(calc(100 * var(--vw)) - 28px),400px);display:flex;flex-direction:column;align-items:center}
+.fl-catpick .hd{display:flex;flex-direction:column;align-items:center;width:100%;margin-bottom:18px;opacity:0;transform:translateY(-10px)}
+.fl-wheel.pick .fl-catpick .hd{animation:flCapIn .35s .05s ease-out forwards}
+.fl-catpick .cr{width:min(64px,calc(7.5 * var(--vh)));aspect-ratio:1;border-radius:20px;display:grid;place-items:center;background:radial-gradient(circle at 50% 30%,#ffc94a,#f5b324 60%,#d9940f);
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3),0 8px 18px rgba(0,0,0,.35)}
+.fl-catpick .cr .fl-gl{width:60%;height:60%}
+.fl-catpick .hd b{margin-top:10px;font-family:'Lilita One';font-weight:400;font-size:clamp(30px,calc(9 * var(--vw)),38px);line-height:1;letter-spacing:.01em;color:#fff}
+.fl-catpick .hd small{margin-top:5px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:13.5px;color:#aebbd8}
+.fl-catpick .tm{display:flex;align-items:center;gap:10px;margin-top:14px;width:min(240px,64%)}
+.fl-catpick .tm .br{flex:1;height:6px;border-radius:3px;overflow:hidden;background:rgba(255,255,255,.14)}
+.fl-catpick .tm .br i{display:block;height:100%;border-radius:3px;background:#fff;transform-origin:0 50%;animation:flTimer 8s linear forwards}
 @keyframes flTimer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-.fl-catpick .tm em{flex:none;width:36px;height:36px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-family:'Lilita One';font-size:19px;color:#3a2000;
-  background:radial-gradient(circle at 45% 35%,#fff6c8,#ffc93a 60%,#c98a12);border:2.5px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.4)}
-.fl-catpick .tm.hot .br i{background:linear-gradient(180deg,#ffb4a4,#ff5a3a 60%,#c42a1a)}
-.fl-catpick .tm.hot em{color:#fff;background:radial-gradient(circle at 45% 35%,#ff9a8a,#e8402a 60%,#8a1406);animation:flBeat .5s ease-in-out infinite alternate}
-.fl-catpick .gr{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.fl-catpick button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;min-height:clamp(80px,calc(12.5 * var(--vh)),124px);padding:8px 8px 11px;border-radius:20px;overflow:hidden;
-  background:linear-gradient(180deg,var(--cl) 0%,var(--cc) 46%,var(--cd) 100%);border:3px solid rgba(255,255,255,.95);
-  box-shadow:inset 0 3px 0 rgba(255,255,255,.35),inset 0 -5px 0 rgba(0,0,0,.16),0 0 0 2px var(--ce),0 6px 0 var(--ce),0 10px 18px rgba(0,0,0,.35);
-  transition:transform .08s,opacity .25s;animation:flCardIn .42s calc(.14s + var(--k) * .05s) cubic-bezier(.3,1.6,.5,1) backwards}
-@keyframes flCardIn{from{opacity:0;transform:translateY(26px) scale(.7)}}
-.fl-catpick button::before{content:'';position:absolute;left:0;right:0;top:0;height:46%;background:linear-gradient(180deg,rgba(255,255,255,.26),rgba(255,255,255,0));pointer-events:none}
-.fl-catpick button:active{transform:translateY(4px)}
-.fl-catpick .ci{position:relative;width:min(64px,calc(16 * var(--vw)),calc(7.6 * var(--vh)));aspect-ratio:1}
-.fl-catpick .ci .fl-ci{width:100%;height:100%}
-.fl-catpick button b{position:relative;font-family:'Lilita One';font-weight:400;font-size:clamp(16px,calc(5 * var(--vw)),21px);line-height:1.05;letter-spacing:.02em;text-align:center;color:#fff;${OUT('var(--ce)', 2)}}
-.fl-catpick.chosen button:not(.chosen){opacity:.32;transform:scale(.93)}
-.fl-catpick button.chosen{z-index:1;animation:flChosen .5s cubic-bezier(.3,1.7,.5,1) forwards;box-shadow:inset 0 3px 0 rgba(255,255,255,.35),0 0 0 2px var(--ce),0 0 0 6px #ffd25a,0 6px 0 var(--ce),0 0 34px 6px rgba(255,214,90,.6)}
-@keyframes flChosen{0%{transform:none}40%{transform:scale(1.12)}100%{transform:scale(1.05)}}
+.fl-catpick .tm em{flex:none;min-width:30px;font-style:normal;font-family:'Lilita One';font-size:20px;line-height:1;text-align:right;color:#fff}
+.fl-catpick .tm.hot .br i{background:#ff5a4a}
+.fl-catpick .tm.hot em{color:#ff7a6a}
+.fl-catpick .gr{width:100%;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fl-catpick button{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:clamp(84px,calc(13 * var(--vh)),122px);padding:10px 8px;border-radius:20px;
+  background:radial-gradient(130% 120% at 50% 100%,var(--cd) 0%,var(--cc) 55%,var(--cl) 100%);
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.16),0 8px 18px rgba(0,0,0,.3);
+  transition:transform .12s ease-out,opacity .25s;animation:flCardIn .36s calc(.1s + var(--k) * .04s) cubic-bezier(.2,.9,.3,1.1) backwards}
+@keyframes flCardIn{from{opacity:0;transform:translateY(16px) scale(.94)}}
+.fl-catpick button:active{transform:scale(.97)}
+.fl-catpick .ci{width:min(46px,calc(6 * var(--vh)));aspect-ratio:1}
+.fl-catpick .ci .fl-gl{width:100%;height:100%}
+.fl-catpick button b{font-family:'Lilita One';font-weight:400;font-size:19px;line-height:1;letter-spacing:.04em;color:#fff}
+.fl-catpick.chosen button:not(.chosen){opacity:.32;transform:scale(.96)}
+.fl-catpick button.chosen{z-index:1;transform:translateY(-3px) scale(1.03);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.16),0 0 0 3.5px #fff,0 12px 24px rgba(0,0,0,.4)}
 
 @media (prefers-reduced-motion:reduce){
   .fl-ui .fl-catpick .tm .br i{animation-duration:var(--sec,8s)!important}
