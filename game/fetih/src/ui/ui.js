@@ -22,6 +22,7 @@ import { buildTitle, refreshTitle, showMenu, showCommander, showEnd } from './me
 import { showCampaign } from './campaign.js';
 import { renderBar, jokerUsed, sabotage, clearZone, showBotJokers } from './jokerfx.js';
 import { questionTime } from '../game/jokers.js';
+import { HOT } from '../quiz/timing.js';
 import { debugShot } from './debug.js';
 import { buildPause, showPause } from './pause.js';
 import { clock, sleep, setTimeout, clearTimeout, setInterval, clearInterval } from '../core/clock.js';
@@ -726,7 +727,7 @@ export class UI {
 				if (s !== lastS) {
 					lastS = s;
 					clockB.textContent = String(s);
-					const h = left <= 5 && left > 0;
+					const h = left <= HOT && left > 0; // son HOT sn kırmızı: süre bütçesi bunu hesaba katar (timing.js)
 					if (h !== hot) card.classList.toggle('hot', (hot = h));
 					if (h) this.sfx('count', { left: s });
 				}

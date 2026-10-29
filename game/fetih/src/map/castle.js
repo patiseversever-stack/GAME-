@@ -333,10 +333,32 @@ export class Castle {
 		this._last.copy(this.group.position);
 	}
 
+	/**
+	 * Kuşatmanın geldiği yön (dünya x/z; null: yok): bir sonraki hit() taşların döverdiği, saldırana en yakın
+	 * ayakta kuleyi yıkar (savaş filminde kule saldıranların gözü önünde düşer).
+	 */
+	aim(x, z) {
+		this._aim = x == null ? null : { x, z };
+	}
+
 	/** Bir kule düşer. Kalan can döner. */
 	hit() {
-		const i = HIT_ORDER.find((k) => this.towers[k].alive);
+		let i = HIT_ORDER.find((k) => this.towers[k].alive);
 		if (i == null) return 0;
+		if (this._aim) {
+			const gp = this.group.position;
+			const s = this.group.scale.x;
+			let bd = Infinity;
+			for (let k = 0; k < 3; k++) {
+				if (!this.towers[k].alive) continue;
+				const d = Math.hypot(gp.x + TOWERS[k][0] * s - this._aim.x, gp.z + TOWERS[k][1] * s - this._aim.z);
+				if (d < bd) {
+					bd = d;
+					i = k;
+				}
+			}
+			this._aim = null;
+		}
 		this.towers[i].alive = 0;
 		this.hp--;
 		this.lastHit = i;
@@ -344,6 +366,7 @@ export class Castle {
 	}
 
 	repair() {
+		this._aim = null;
 		for (const t of this.towers) {
 			t.alive = 1;
 			t.fall = 0;
@@ -378,6 +401,13 @@ export class Castle {
 		for (const c of this.casters) c.matrix.copy(this.mesh.matrixWorld);
 	}
 }
+
+/**
+ * Sur yürüyüş yolları (yerel, ölçeksiz): [x0, z0, x1, z1, y] üç sur boyunca (kuleden kuleye). Savaşta savunan
+ * okçular saldırana bakan surun üstünde durur (battle.js, stage.js). Kale ölçeği Castle.scale.
+ */
+Castle.walls = [0, 1, 2].map((k) => [...TOWERS[k], ...TOWERS[(k + 1) % 3], BASE_Y + 0.66]);
+Castle.scale = 1.25;
 
 /** Harita (Board kurulunca kendini yazar): kaleler araziye oturur ve ilin yükselmesini izler. */
 Castle.board = null;

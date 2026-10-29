@@ -336,6 +336,53 @@ vec3 provDim(vec3 c, float sel, float dim) {
 }
 `;
 
+// Savaş alanı açıklığı (yalnızca köşe shader'ı): savaş sürerken sahnenin çevresindeki ağaç ve yapılar
+// alçalır (ordular ve kuşatma makineleri hiç örtülmez). Kapsül: A → B doğru parçası, yarıçap uClearR.x,
+// güç uClearR.y (0 kapalı; sinema yumuşakça açıp kapatır), kenar yumuşaklığı uClearR.z. İkinci kapsül
+// (uClear2, yarıçap uClearR.w) kameranın görüş çizgisi: alçak çekimde ön plandaki ağaç kadrajı kapatmasın.
+export const CLEAR = /* glsl */ `
+uniform vec4 uClear;
+uniform vec4 uClearR;
+uniform vec4 uClear2; // kameranın görüş çizgisi: kamera altı → bakılan nokta (yarıçap uClearR.w); yalnızca ağaçlar
+float clearK(vec2 q, float pad) {
+	if (uClearR.y < 0.001) return 0.0;
+	vec2 a = uClear.xy;
+	vec2 ab = uClear.zw - a;
+	float t = clamp(dot(q - a, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+	float d = length(q - a - ab * t) - pad;
+	vec2 a2 = uClear2.xy;
+	vec2 ab2 = uClear2.zw - a2;
+	float t2 = clamp(dot(q - a2, ab2) / max(dot(ab2, ab2), 1e-4), 0.0, 1.0);
+	float d2 = length(q - a2 - ab2 * t2) - pad;
+	float k = max(1.0 - smoothstep(uClearR.x - uClearR.z, uClearR.x, d), 1.0 - smoothstep(uClearR.w - 0.5, uClearR.w, d2));
+	return uClearR.y * k;
+}
+// savaş zemini: orduların altında sahip boyası çiğnenmiş toprağa döner (uStage.x yarıçap, z kenar); güç uClearR.y
+uniform vec4 uStage;
+float stageK(vec2 q) {
+	if (uClearR.y < 0.001) return 0.0;
+	vec2 a = uClear.xy;
+	vec2 ab = uClear.zw - a;
+	float t = clamp(dot(q - a, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+	return uClearR.y * (1.0 - smoothstep(uStage.x - uStage.z, uStage.x, length(q - a - ab * t)));
+}
+// savaş kapsülüne uzaklık (balonlar gibi geniş alana yayılan süsler için)
+float clearDist(vec2 q) {
+	vec2 a = uClear.xy;
+	vec2 ab = uClear.zw - a;
+	float t = clamp(dot(q - a, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+	return length(q - a - ab * t);
+}
+// keskin kenarlı: yapı ya tamamen alçalır ya hiç (yarım basık yapı olmasın)
+float clearHard(vec2 q, float pad) {
+	if (uClearR.y < 0.001) return 0.0;
+	vec2 a = uClear.xy;
+	vec2 ab = uClear.zw - a;
+	float t = clamp(dot(q - a, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+	return uClearR.y * step(length(q - a - ab * t) - pad, uClearR.x - uClearR.z * 0.5);
+}
+`;
+
 // Haritanın çevresi yumuşak bir pusa gömülür: göz Türkiye'de kalır, uzak kara parçalarının kesik
 // kenarları görünmez (mobil oyun haritalarındaki bulut çerçevesi gibi).
 export const MIST = /* glsl */ `

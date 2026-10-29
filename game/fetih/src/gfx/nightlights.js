@@ -258,7 +258,7 @@ export class NightLights {
 			this.uniforms.uDpr.value = renderer.getPixelRatio();
 		};
 		this.triangles = n * 2;
-		this.spot = { on: false, x: 0, y: 0, z: 0, r: 4, str: 0.9, k: 0 };
+		this.spot = { on: false, x: 0, y: 0, z: 0, r: 4, str: 0.9, k: 0, max: 0.17, ref: null };
 		this._m = new THREE.Matrix4();
 		this._p = new THREE.Vector3();
 	}
@@ -274,6 +274,11 @@ export class NightLights {
 			U.w = 0;
 			return;
 		}
+		if (s.ref) {
+			s.x = s.ref.x;
+			s.y = s.ref.y;
+			s.z = s.ref.z;
+		}
 		camera.updateMatrixWorld();
 		const m = this._m.copy(camera.matrixWorld).invert();
 		const p = this._p.set(s.x, s.y, s.z).applyMatrix4(m);
@@ -286,16 +291,18 @@ export class NightLights {
 		// ekran merkezi (0..1) ve yarıçap (ekran yüksekliği cinsinden)
 		U.x = ((e[0] * p.x + e[8] * p.z) / depth) * 0.5 + 0.5;
 		U.y = ((e[5] * p.y + e[9] * p.z) / depth) * 0.5 + 0.5;
-		U.z = Math.min(0.17, Math.max(0.1, (s.r * e[5]) / depth / 2)); // sıkı havuz: yakın çekimde kadrajın kenarları gece
+		U.z = Math.min(s.max, Math.max(0.1, (s.r * e[5]) / depth / 2)); // sıkı havuz: yakın çekimde kadrajın kenarları gece
 		U.w = s.str * s.k;
 	}
 
 	/**
 	 * Sinematik ışık havuzu (yakın çekim: saldırı, kuşatma, fetih): dünya noktası ve yarıçapı. Aydınlık
 	 * iller havuzun içinde gündüz renginde kalır, ekran kenarına doğru geceye karışır. null → kapalı
-	 * (gece bitince kendiliğinden kapanır).
+	 * (gece bitince kendiliğinden kapanır). max: havuzun ekrandaki en büyük yarıçapı (ekran yüksekliği
+	 * payı; savaş yakın çekiminde bütün sahne aydınlık kalsın diye büyük). ref: verilirse havuz her karede bu
+	 * noktayı izler (savaş filmi: kameranın baktığı yer, yürüyen ordu kadrajdan çıkıp karanlıkta kalmasın).
 	 */
-	focus(x, y = 0, z = 0, r = 4, k = 0.95) {
+	focus(x, y = 0, z = 0, r = 4, k = 0.95, max = 0.17, ref = null) {
 		const s = this.spot;
 		if (x == null) {
 			s.on = false;
@@ -307,6 +314,8 @@ export class NightLights {
 		s.z = z;
 		s.r = r;
 		s.str = k;
+		s.max = max;
+		s.ref = ref;
 	}
 
 	/** Kare başına: kale konumları, ışık havuzu ve görünürlük (gündüz hiç çizilmez). */

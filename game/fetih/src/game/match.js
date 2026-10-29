@@ -27,7 +27,7 @@ import { secOf } from '../quiz/timing.js';
 import { CATS } from '../quiz/categories.js';
 import { BANK as QUESTIONS } from '../data/bank.js';
 import { rng } from '../core/math.js';
-import { JOKERS, JOKER_ORDER, PER_QUESTION, BOT_BOOST, SABOTAGE, makeLoadout, botLoadout, support, computeEffect, botPlan, questionTime } from './jokers.js';
+import { JOKERS, JOKER_ORDER, PER_QUESTION, BOT_BOOST, SABOTAGE, cutFor, makeLoadout, botLoadout, support, computeEffect, botPlan, questionTime } from './jokers.js';
 import { ensureSystems } from './campaign.js';
 import { targetDiff } from './progress.js';
 import { UIController, BotController, RemoteController, publicView, PROTOCOL } from './net.js';
@@ -67,7 +67,8 @@ export const PACE = {
 };
 
 // Tahmini süre (sn), insan oyuncu varsayımıyla; yalnızca denge raporu için (tools/sim.mjs).
-const EST = { overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, attack: 2.6, wheel: 4, chooseCat: 2.2, conquer: 2.4, tower: 3, defend: 2, nobody: 1.5, elim: 3.5, qOpen: 0.5 };
+// Savaş filmi (v0.6, cinema.js): saldırı ~4,9–6,4 sn (kuşatma uzun), fetih ~4, kule ~3,3, savunma ~2,7.
+const EST = { overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, attack: 5.4, wheel: 4, chooseCat: 2.2, conquer: 4.0, tower: 3.4, defend: 2.7, nobody: 1.6, elim: 3.5, qOpen: 0.5 };
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 
@@ -186,7 +187,7 @@ export class Match {
 			};
 			p.jk = human ? makeLoadout(this.progress.jokerStock) : botLoadout(skill, this.R, p.boss, p.boss ? this.perks.botJokers || 0 : 0);
 			p.ctl = kind === 'ui' ? new UIController(this) : kind === 'remote' ? new RemoteController(this.transports[i], { seat: i }) : new BotController(this);
-			if (kind === 'remote') p.ctl.onAct = (k, d) => k === 'joker' && this.useJoker(d?.id, p);
+			if (kind === 'remote') p.ctl.onAct = (k, d) => (k === 'joker' ? this.useJoker(d?.id, p) : k === 'harf' ? this.letterHint(p, d?.ch) : null);
 			return p;
 		});
 		this.humanPlayer = this.players.find((p) => p.human) || null;
@@ -476,7 +477,8 @@ export class Match {
 		this.estimateQuestion(T, out, cur);
 		this.afterQuestion(q, T, out);
 		await this.ui.reveal(this, { q, v, T, results: out, ...ctx });
-		this.emit('reveal', { results: out.map((r) => ({ i: r.i, value: r.value, time: r.time, correct: r.correct, err: Number.isFinite(r.err) ? r.err : -1 })) });
+		// answer: tam görünüm (doğru cevap, değerler, konum); istemciye soru sırasında gitmez, burada gider
+		this.emit('reveal', { results: out.map((r) => ({ i: r.i, value: r.value, time: r.time, correct: r.correct, err: Number.isFinite(r.err) ? r.err : -1 })), answer: v });
 		// ikinci şans: yanlış bilenlere aynı kategoriden yeni soru
 		if (T.kind === 'exact' && cur.second.size) {
 			for (let k = 0; k < out.length; k++) {
@@ -529,6 +531,19 @@ export class Match {
 	}
 
 	// ---------------------------------------------------------------- jokerler
+
+	/**
+	 * Uzak koltuğun adam asmaca harf denemesi: kelime istemciye gitmediği için harfin yerlerini yalnız o
+	 * koltuğa sunucu söyler. Yalnızca o soruyu cevaplayan koltuk ve soru açıkken.
+	 */
+	letterHint(p, ch) {
+		const cur = this.cur;
+		if (!cur || cur.closed || !cur.who.includes(p) || typeof cur.v.word !== 'string' || typeof ch !== 'string') return;
+		const c = ch.toLocaleUpperCase('tr-TR').charAt(0);
+		const at = [];
+		[...cur.v.word].forEach((x, i) => x === c && at.push(i));
+		p.ctl.event('harf', { ch: c, at });
+	}
 
 	/** Botların soru başı joker kararı. Kullanımlar kart açılınca arayüzde gösterilir (cur.botUses). */
 	planBotJokers(cur) {
@@ -595,22 +610,26 @@ export class Match {
 		return effect;
 	}
 
-	/** Sabotaj: rakiplerin süresi kısalır ve ekranı kararır. Bot kurbanın yeteneği düşer ve geç cevaplar. Dönüş: kurbanlar. */
+	/**
+	 * Sabotaj: rakiplerin süresi kısalır (sorunun süresinin üçte biri, cutFor) ve ekranı kararır. Bot kurbanın yeteneği
+	 * düşer ve kesintinin yarısı kadar geç cevaplar. Dönüş: kurbanlar.
+	 */
 	sabotage(p, cur) {
 		const victims = cur.who.filter((x) => x !== p && !this.ally(x.i, p.i));
-		const effect = { id: 'sabotaj', kind: 'sabotage', victims: victims.map((x) => x.i), by: p.i, cut: SABOTAGE.cut, blurMs: SABOTAGE.blurMs };
+		const cut = cutFor(cur.sec);
+		const effect = { id: 'sabotaj', kind: 'sabotage', victims: victims.map((x) => x.i), by: p.i, cut, blurMs: SABOTAGE.blurMs };
 		for (const x of victims) {
 			if (x.human) {
 				const fire = () => {
 					if (cur.closed) return;
-					cur.clock.extra -= SABOTAGE.cut;
+					cur.clock.extra -= cut;
 					this.ui.sabotage?.(effect, cur);
 				};
-				if (this.ui.fast) cur.clock.extra -= SABOTAGE.cut;
+				if (this.ui.fast) cur.clock.extra -= cut;
 				else cur.timers.push(setTimeout(fire, 1500 + this.R() * 3000));
 			} else if (!x.ctl.remote) {
 				cur.boost.set(x.i, (cur.boost.get(x.i) || 0) + SABOTAGE.botSkill);
-				cur.delay.set(x.i, (cur.delay.get(x.i) || 0) + SABOTAGE.botDelay);
+				cur.delay.set(x.i, (cur.delay.get(x.i) || 0) + cut * SABOTAGE.botDelay);
 				const b = cur.bots.find((y) => y.p === x);
 				if (b) Object.assign(b, this.botAnswer(cur, x));
 			} else x.ctl.event('sabotage', effect);
@@ -1046,7 +1065,6 @@ export class Match {
 			this.refreshJokers();
 			await this.ui.banner('KALKAN!', `${d.name} saldırıyı savuşturdu`, { tone: 'gold', short: true });
 			this.tick(EST.bannerShort);
-			app.fx?.shield?.(target, d);
 			await (this.cinema.shield ? this.cinema.shield(d, target) : this.cinema.defend(d, target));
 			this.tick(EST.defend);
 		} else if (winner === p) {

@@ -4,10 +4,14 @@
 // Altı joker:
 //   yari    Yarı Yarıya   iki yanlış şıkkı eler. Şıksız tiplerde karşılığı: tahminde dar aralık,
 //                         adam asmacada açık harfler, haritada bölge ipucu.
-//   sure    Ekstra Süre   sorunun süresine +8 sn.
+//   sure    Ekstra Süre   sorunun süresi yarısı kadar uzar (en az 5, en çok 15 sn; extraFor).
 //   kalkan  Kalkan        bir kaybedilen savunmayı yok sayar (il ya da kule elde kalır).
 //   ikinci  İkinci Şans   yanlış bilirsen aynı kategoriden yeni bir soru daha (yalnız bildi/bilemedi tipleri).
-//   sabotaj Sabotaj       rakibin süresi 5 sn kısalır, ekranı 2 sn kararır.
+//   sabotaj Sabotaj       rakibin süresinin üçte biri gider (en az 3, en çok 10 sn; cutFor), ekranı 2 sn kararır.
+//                         Sabotaj anından sonra en az 3 sn kalır (arayüzün alt sınırı).
+//   Süre jokerleri sorunun kendi süresiyle ölçeklenir (v0.6): sabit +8/−5 sn, 9 sn'lik doğru/yanlışta süreyi ikiye
+//   katlıyor ya da yarıya indiriyor, 60 sn'lik çengelde fark edilmiyordu. Oran her tipte aynı etkiyi verir; saf ve
+//   belirlenimci (sunucu aynı bütçeden aynı saniyeyi bulur).
 //   kahin   Seyirci       seyircinin oy dağılımı (bot yeteneğinden benzetilir); tahminde kalabalık
 //                         değeri, haritada olası bölge, adam asmacada önerilen harf.
 //
@@ -36,12 +40,21 @@
 // `T.joker(id, v, R, env) → effect | null` tanımlarsa o tip için etki üretilir; kartın kontrolü
 // `ctl.joker?.(effect)` ile uygular. Tanımlamazsa yukarıdaki tablo geçerlidir.
 
+import { secOf } from '../quiz/timing.js';
+
 const pCorrect = (skill, diff) => Math.min(0.95, Math.max(0.08, skill + 0.25 - 0.15 * diff));
 const gauss = (R) => Math.sqrt(-2 * Math.log(Math.max(1e-6, R()))) * Math.cos(2 * Math.PI * R());
 
 export const PER_QUESTION = 2; // bir soruda en çok iki joker
-export const EXTRA_SECONDS = 8;
-export const SABOTAGE = { cut: 5, blurMs: 2000, botSkill: -0.1, botDelay: 2.5 };
+/** Ekstra süre: sorunun süresinin yarısı (share), [min, max] sn arası. */
+export const EXTRA = { share: 1 / 2, min: 5, max: 15 };
+/** Sabotaj: rakibin süresinin üçte biri gider; bot kurbanın yeteneği düşer ve kesintinin yarısı kadar geç cevaplar. */
+export const SABOTAGE = { share: 1 / 3, min: 3, max: 10, blurMs: 2000, botSkill: -0.1, botDelay: 1 / 2 };
+const clampS = (x, a, b) => Math.max(a, Math.min(b, x));
+/** Ekstra süre jokerinin eklediği saniye (sec: sorunun süre bütçesi, v.sec). */
+export const extraFor = (sec) => clampS(Math.round((Number(sec) || 0) * EXTRA.share), EXTRA.min, EXTRA.max);
+/** Sabotajın kestiği saniye (sec: sorunun süre bütçesi, v.sec). */
+export const cutFor = (sec) => clampS(Math.round((Number(sec) || 0) * SABOTAGE.share), SABOTAGE.min, SABOTAGE.max);
 export const BOT_BOOST = { yari: 0.2, kahin: 0.12 }; // bot yetenek artışı (soru başına)
 
 export const JOKERS = {
@@ -60,7 +73,7 @@ export const JOKERS = {
 		id: 'sure',
 		name: 'Ekstra Süre',
 		short: 'Süre',
-		desc: `Bu sorunun süresine +${EXTRA_SECONDS} sn.`,
+		desc: `Bu sorunun süresi yarısı kadar uzar (+${EXTRA.min}–${EXTRA.max} sn).`,
 		color: '#33b86b',
 		icon: 'clock',
 		free: 1,
@@ -93,7 +106,7 @@ export const JOKERS = {
 		id: 'sabotaj',
 		name: 'Sabotaj',
 		short: 'Sabotaj',
-		desc: `Rakibin süresi ${SABOTAGE.cut} sn kısalır, ekranı ${SABOTAGE.blurMs / 1000} sn kararır.`,
+		desc: `Rakibin süresinin üçte biri gider (−${SABOTAGE.min}–${SABOTAGE.max} sn), ekranı ${SABOTAGE.blurMs / 1000} sn kararır.`,
 		color: '#e0583a',
 		icon: 'bolt',
 		free: 0,
@@ -205,10 +218,10 @@ export function computeEffect(id, env) {
 	const { T, v, R, board } = env;
 	const q = v.q || {};
 	const diff = q.diff || 2;
-	if (id === 'sure') return { id, kind: 'time', add: EXTRA_SECONDS };
+	if (id === 'sure') return { id, kind: 'time', add: extraFor(secOf(v)) };
 	if (id === 'kalkan') return { id, kind: 'shield' };
 	if (id === 'ikinci') return { id, kind: 'second' };
-	if (id === 'sabotaj') return { id, kind: 'sabotage', victims: [], cut: SABOTAGE.cut, blurMs: SABOTAGE.blurMs };
+	if (id === 'sabotaj') return { id, kind: 'sabotage', victims: [], cut: cutFor(secOf(v)), blurMs: SABOTAGE.blurMs };
 	if (T?.joker && T.jokers?.includes(id)) {
 		const e = T.joker(id, v, R, env);
 		return e ? { id, kind: 'custom', data: e } : null;

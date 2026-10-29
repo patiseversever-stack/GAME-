@@ -18,7 +18,7 @@
 // kaybolur (ve geri gelir). Zaman uTime'dan: kare başına CPU işi yok; tam kaybolunca çizilmez.
 
 import * as THREE from 'three';
-import { COMMON, SHADOW, LIGHT, FINISH, PROV, glslColor as C } from '../gfx/shaderlib.js';
+import { COMMON, SHADOW, LIGHT, FINISH, PROV, CLEAR, glslColor as C } from '../gfx/shaderlib.js';
 import { Kit, archShape, facadeShape } from '../gfx/kit.js';
 import { pointInPoly } from './board.js';
 
@@ -26,6 +26,7 @@ import { pointInPoly } from './board.js';
 const M = { STONE: 0, WATER: 1, WIN: 2, GOLD: 3, LEAD: 4, FLAG: 5, FLAME: 6, LEAF: 7, GROUND: 8, TILE: 9, CLOTH: 10 };
 
 const FADE = /* glsl */ `
+${CLEAR}
 uniform vec3 uFade; // x başlangıç zamanı, y yön (1 beliriyor, 0 kayboluyor), z süre
 uniform vec4 uCastle[4]; // kaleler: konum, w görünür (nightlights.js her karede yazar)
 attribute vec4 site; // yapının merkezi x, taban y, merkez z, ölçek
@@ -44,6 +45,10 @@ float showK(bool fly) {
 			k = min(k, 1.0 - near * (1.0 - smoothstep(0.4, 2.5, c.y - site.y)));
 		}
 	}
+	// savaş alanı açıklığı: ordular ve mancınıklar yapının arkasında kalmasın (sahne planı yapılardan kaçınır; nadir)
+	if (!fly) k = min(k, 1.0 - clearHard(site.xz, site.w * 0.45));
+	// Kapadokya balonları savaş yakınındaysa (savaş boyunca) iner: alçak kamera açısını kaplamasınlar
+	else k = min(k, 1.0 - uClearR.y * step(clearDist(site.xz), 13.0));
 	return k;
 }
 vec3 fadeP(vec3 p, float k) {

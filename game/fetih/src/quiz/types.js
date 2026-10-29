@@ -7,7 +7,7 @@
 //   mount(el, v, api): kartın gövdesini çizer; oyuncu cevaplayınca api.answer(value).
 //                     Dönen nesne: { reveal(results), destroy() }
 //   judge(v, value) : { correct, err } (err: tahmin/haritada uzaklık; küçük olan kazanır)
-//   bot(v, skill, R): { value, time } botun cevabı ve düşünme süresi (timing.js botTime: bütçeye göre)
+//   bot(v, skill, R): { value, time } botun cevabı ve düşünme süresi (timing.js botTime: hızlı–ortanca/yavaş oyuncu arası)
 //   kind            : 'exact' (bildi/bilemedi) ya da 'closest' (en yakın kazanır)
 //
 // Botların doğruluk modeli: P(doğru) = skill + 0.25 − 0.15·zorluk (0.08..0.95 arası).
@@ -29,7 +29,7 @@ export const KM_PER_UNIT = 111.2 / GEO.K;
 
 export const TYPES = {
 	choice: {
-		time: 12,
+		time: 14,
 		label: 'Test',
 		kind: 'exact',
 		prepare(q, R) {
@@ -52,7 +52,7 @@ export const TYPES = {
 	},
 
 	tf: {
-		time: 8,
+		time: 11,
 		label: 'Doğru mu?',
 		kind: 'exact',
 		prepare(q) {
@@ -91,7 +91,7 @@ export const TYPES = {
 	},
 
 	num: {
-		time: 14,
+		time: 16,
 		label: 'Tahmin',
 		kind: 'closest',
 		prepare(q) {
@@ -174,7 +174,7 @@ export const TYPES = {
 	},
 
 	pin: {
-		time: 12,
+		time: 14,
 		label: 'Haritada bul',
 		kind: 'closest',
 		needsMap: true,
@@ -302,8 +302,9 @@ export const TYPES = {
 Object.assign(TYPES, { order, match, hilo, odd, emoji, anagram, cross, proverb, riddle, img, blitz });
 
 // ---------------------------------------------------------------- süre bütçesi
-// Her görünüm kendi sorusunun süresini taşır: v.sec (saat, tam sn) ve v.fast (hızlı oyuncu, botların alt sınırı).
-// Tek kaynak burası: maç, arayüz, botlar ve uzak koltuklar (publicView v'yi kopyalar) aynı değeri görür.
+// Her görünüm kendi sorusunun süresini taşır: v.sec (saat, tam sn) ve v.fast / v.med / v.slow (hızlı, ortanca ve
+// yavaş-rahat oyuncunun bitirme süresi; botların cevap aralığı). Tek kaynak burası: maç, arayüz, botlar ve uzak
+// koltuklar (publicView v'yi kopyalar) aynı değeri görür.
 for (const T of Object.values(TYPES)) {
 	const prep = T.prepare;
 	T.prepare = function (q, R) {
@@ -311,6 +312,8 @@ for (const T of Object.values(TYPES)) {
 		const t = timing(q);
 		v.sec = t.sec;
 		v.fast = t.fast;
+		v.med = t.med;
+		v.slow = t.slow;
 		return v;
 	};
 }
