@@ -63,7 +63,7 @@ export const CSS_TAGS = /* css */ `
 .fl-tag.bd.ps s{display:none}
 @keyframes flBadgeBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 
-@media (orientation:landscape) and (max-height:560px){
+@media not all{ /* dikey kilit: yatay kurallar kapalı */
   .fl-tag .pl{height:26px;font-size:14px}
   .fl-tag.bd .bn{height:32px;font-size:18px;padding-left:40px}
   .fl-tag.bd .bn .fl-av{width:40px;height:40px;margin-top:-20px}

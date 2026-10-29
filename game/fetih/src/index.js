@@ -3,9 +3,11 @@
 //   import { createFetih } from './fetih/src/index.js';
 //   const game = await createFetih({ container: document.body });
 //   game.open(); game.close(); game.destroy();
+//   Oyun dikey kilitlidir (core/portrait.js); gömen uygulama kendi kilidini kuruyorsa: { portrait: false }.
 
 import { App } from './app.js';
 import { createStore } from './core/store.js';
+import { lockPortrait } from './core/portrait.js';
 
 export async function createFetih(opts = {}) {
 	const store = createStore(opts.store);
@@ -13,8 +15,10 @@ export async function createFetih(opts = {}) {
 	root.className = 'fl-root';
 	root.style.cssText = 'position:fixed;inset:0;z-index:50;overflow:hidden;background:#1b2a4a;touch-action:none;';
 	(opts.container || document.body).appendChild(root);
+	const portrait = opts.portrait === false ? null : lockPortrait(root);
 	const app = new App({ container: root, store, hooks: opts.hooks || {}, quality: opts.quality || 'auto', power: opts.power || 'auto' });
 	await app.init();
+	portrait?.bind(app);
 	return {
 		app,
 		open() {

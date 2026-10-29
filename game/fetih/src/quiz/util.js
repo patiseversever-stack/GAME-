@@ -16,8 +16,8 @@ export const gauss = (R) => {
 export const thinkTime = (R, base, span) => base + R() * span;
 
 /** Yatay kısa ekran (arayüzdeki LAND ile aynı): kart sağda durur, gövdeye az yer kalır. */
-export const LAND = '@media (orientation:landscape) and (max-height:560px)';
-export const isLand = () => typeof matchMedia !== 'undefined' && matchMedia('(orientation:landscape) and (max-height:560px)').matches;
+export const LAND = '@media not all'; // oyun dikey kilitli (core/portrait.js); yatay kurallar hiç eşleşmez
+export const isLand = () => false; // oyun dikey kilitli (core/portrait.js)
 
 /** Fisher-Yates; R() kullanır. */
 export function shuffle(arr, R) {

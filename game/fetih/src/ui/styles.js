@@ -5,7 +5,7 @@
 // - Her yazı düz bir panel ya da kalın kontur üstünde: altta haritanın hangi rengi olursa olsun okunur.
 // - Animasyonlar yalnızca transform ve opacity. backdrop-filter yok. Gölgeler duruk (canlandırılmaz).
 // - "Azaltılmış hareket" açıkken süs animasyonları kapanır, geçişler kısalır.
-// - Dikey ve yatay telefon: yatay düzen @media (orientation:landscape) and (max-height:560px).
+// - Oyun dikey kilitli (core/portrait.js); eski yatay kurallar LAND ile kapalı.
 //
 // Diğer stil dosyaları: styles-q.js (soru kartı ve soru tiplerinin ortak sınıfları),
 // styles-wheel.js (çark, düello sahnesi, sıralama), styles-menu.js (başlık, menüler, bitiş),

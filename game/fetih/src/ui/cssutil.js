@@ -15,5 +15,8 @@ export const OUT = (c, w = 2) =>
 		.map(([x, y]) => `${x}px ${y}px 0 ${c}`)
 		.join(',')},0 ${w + 2}px 0 ${c}`;
 
-/** Yatay telefon düzeni. */
-export const LAND = '@media (orientation:landscape) and (max-height:560px)';
+/**
+ * Yatay telefon düzeni: oyun dikey kilitli (core/portrait.js), bu yüzden hiç eşleşmez.
+ * Eski yatay kurallar dikey ekranlar elden geçirilirken kaldırılacak.
+ */
+export const LAND = '@media not all';
