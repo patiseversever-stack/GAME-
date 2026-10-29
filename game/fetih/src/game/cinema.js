@@ -17,6 +17,7 @@
 
 import * as THREE from 'three';
 import { clock, sleep, setTimeout, clearTimeout } from '../core/clock.js';
+import { setNightTone } from '../gfx/env.js';
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 const wrapPi = (a) => a - Math.PI * 2 * Math.round(a / (Math.PI * 2));
@@ -64,6 +65,7 @@ export class Cinema {
 		const app = this.app;
 		const pick = ui.pickProvince.bind(ui);
 		ui.pickProvince = (m, options, text, sec) => {
+			setNightTone(app.G, m.phase === 'baskent' ? 'baskent' : 'normal');
 			const pr = pick(m, options, text, sec);
 			// kadraj: seçenekler; başkent seçiminde kamera yükselip bütün maç haritasına tepeden bakar
 			if (!ui.fast && !this.fast) {
@@ -79,6 +81,7 @@ export class Cinema {
 			const opts = this._options(m, p, i);
 			const attack = b.provinces[i].owner >= 0;
 			const capital = m.phase === 'baskent';
+			setNightTone(app.G, capital ? 'baskent' : 'normal');
 			const me = m.players?.find((q) => q.human);
 			m.turn = p.i; // oyuncu kartlarındaki SIRA işareti rozetle aynı anda
 			ui.hud?.(m);

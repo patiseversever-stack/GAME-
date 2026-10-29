@@ -17,7 +17,7 @@ export async function createFetih(opts = {}) {
 	root.style.cssText = 'position:fixed;inset:0;z-index:50;overflow:hidden;background:#1b2a4a;touch-action:none;--vw:1vw;--vh:1vh;';
 	(opts.container || document.body).appendChild(root);
 	const portrait = opts.portrait === false ? null : lockPortrait(root);
-	const app = new App({ container: root, store, hooks: opts.hooks || {}, quality: opts.quality || 'auto', power: opts.power || 'auto', gece: opts.gece ?? null });
+	const app = new App({ container: root, store, hooks: opts.hooks || {}, quality: opts.quality || 'auto', power: opts.power || 'auto' });
 	await app.init();
 	portrait?.bind(app);
 	return {
