@@ -25,6 +25,7 @@
 //   Eylemler (t='act'):
 //     k='joker'    d={ id }                  sunucu match.useJoker(id, koltuk) çağırır; sonuç 'ev' ile döner
 //     k='ayril'    d={}                      koltuk botla devam eder
+//     k='harf'     d={ ch }                  adam asmaca harf denemesi; sunucu yalnız o koltuğa 'harf' olayı döner
 //   Olaylar (t='ev'), k:
 //     'state'   d=snapshot()                tam durum (yeniden bağlanma)
 //     'phase'   d={ phase, round }          capital|expansion|attack|siege|end
@@ -32,16 +33,18 @@
 //     'owner'   d={ i, p, value }           il sahibi değişti (p=-1 boş)
 //     'score'   d={ scores:[…], hp:[…] }
 //     'ask'     d={ q, v, time, who, title } soru açıldı (seyirci içi; time: süre bütçesi, sn)
-//     'reveal'  d={ results:[{i,value,time,correct,err}], answer }
+//     'reveal'  d={ results:[{i,value,time,correct,err}], answer }  answer: sunucudaki tam soru görünümü (cevap, değerler)
+//     'harf'    d={ ch, at:[konum,…] }       adam asmaca: koltuğun denediği harfin kelimedeki yerleri (yalnız o koltuğa)
 //     'wheel'   d={ player, cat }
 //     'joker'   d={ player, id, effect }    yalnızca herkese açık kısmı (oy yüzdesi gizli kalır)
 //     'shield'  d={ player, target }
 //     'elim'    d={ player, by }
 //     'over'    d={ ranking, reason, rewards? }
 //
-//   Güvenlik notu: bugün `v` içinde doğru cevap bulunur (yerel güven). Çevrimiçi sürümde sunucu
-//   `publicView(T, v)` ile doğru cevabı ayıklar; tipler gerekirse `T.publicView(v)` tanımlar. Kontroller
-//   doğrulaması sunucuda yapılır: gelen il `options` içinde değilse, cevap süresi dışındaysa reddedilir.
+//   Güvenlik: uzak koltuğa giden soru `publicView(T, v)` ile ayıklanır (SECRET: doğru şık, sıra, değerler,
+//   çiftler, konum, kelime gizli); cevap 'reveal' olayında gelir. Doğrulama sunucuda: gelen il `options`
+//   içinde değilse, cevap süresi dışındaysa reddedilir; yargı (judge) sunucudaki tam görünümle yapılır.
+//   test/net.test.mjs bankadaki her sorunun görünümünde cevap kalmadığını denetler.
 // ===================================================================================================
 
 import { TYPES } from '../quiz/types.js';
@@ -108,15 +111,72 @@ export class LocalTransport {
 /** Doğru cevabı ayıkla (çevrimiçi). Tip kendi görünümünü `T.publicView(v)` ile verebilir. */
 export function publicView(T, v) {
 	if (T?.publicView) return T.publicView(v);
-	const out = { ...v };
-	delete out.right;
+	const out = JSON.parse(JSON.stringify(v)); // derin kopya: sunucudaki v'ye dokunulmaz
+	if (typeof out.right === 'number') delete out.right; // doğru şıkkın sırası (match'te right sağ sütun yazılarıdır)
 	if (out.q) {
-		out.q = { ...out.q };
 		delete out.q.ans;
-		if (Array.isArray(v.opts)) delete out.q.a; // şıklar zaten v.opts'ta (karışık)
+		if (Array.isArray(out.opts)) delete out.q.a; // şıklar zaten v.opts'ta (karışık)
 	}
+	SECRET[out.q?.type]?.(out);
 	return out;
 }
+
+/** Boşluk ve noktalama kalır, harfler '_' (adam asmaca, anagram: istemci yalnız kelimenin kalıbını bilir). */
+const maskOf = (w) => [...String(w || '')].map((c) => (/[\s\-'’.]/.test(c) ? c : '_')).join('');
+
+/**
+ * Tiplere özgü gizliler: istemci soruyu çizebilir ama cevabı çıkaramaz. Doğru cevap ve değerler cevap
+ * açılınca 'reveal' olayında (answer: sunucudaki tam görünüm) gelir; istemci onu görünüme katıp gösterir.
+ */
+const SECRET = {
+	pin(o) {
+		delete o.target;
+		delete o.q.lat;
+		delete o.q.lon;
+	},
+	hang(o) {
+		o.mask = maskOf(o.word); // harf denemeleri sunucuya sorulur: act 'harf' → ev 'harf' { ch, at }
+		delete o.word;
+		delete o.q.w;
+	},
+	anagram(o) {
+		o.mask = maskOf(o.word); // taşlar kelimenin karışık harfleridir (tipin doğası); sıra gizli
+		delete o.word;
+		delete o.q.w;
+	},
+	cross(o) {
+		if (o.L) {
+			o.L.cells = o.L.cells.map(({ r, c }) => ({ r, c }));
+			o.L.words = o.L.words.map(({ w, ...rest }) => ({ ...rest, len: [...w].length }));
+		}
+		if (o.q.words) o.q.words = o.q.words.map(({ clue }) => ({ clue }));
+	},
+	order(o) {
+		o.q.items = o.q.items.map(({ t }) => ({ t })); // değerler (yıl, sayı) ve doğru sıra gizli
+		delete o.correct;
+	},
+	match(o) {
+		delete o.q.pairs; // sol ve sağ sütun yazıları (left, right) kalır; hangisinin hangisiyle eşi olduğu gizli
+		delete o.ord;
+	},
+	hilo(o) {
+		const t = (s) => (s && typeof s === 'object' ? { t: s.t } : s);
+		o.q.left = t(o.q.left);
+		o.q.right = t(o.q.right);
+		if (Array.isArray(o.sides)) o.sides = o.sides.map(t);
+	},
+	odd(o) {
+		delete o.q.odd;
+		delete o.q.why;
+		delete o.q.opts; // asıl sıra farklı olanın yerini verir; karışık şıklar v.opts'ta
+	},
+	blitz(o) {
+		if (Array.isArray(o.items)) o.items = o.items.map(({ t }) => ({ t }));
+		delete o.q.items;
+	},
+	// img: görsel kimliği (ids) çizim için gider; kimlik adları cevabı ele vermesin diye görsel paketi
+	// çevrimiçi sürümde anlamsız adlarla (karma) yayımlanmalı
+};
 
 /** Yerel insan koltuğu: kararları arayüzden alır. */
 export class UIController {
@@ -253,9 +313,14 @@ export class BotClient {
 		if (m.k === 'pick') d = m.d.options[Math.floor(this.R() * m.d.options.length)];
 		else if (m.k === 'category') d = ['tarih', 'cografya', 'spor', 'bilim', 'sanat', 'eglence'][Math.floor(this.R() * 6)];
 		else if (m.k === 'answer') {
+			// istemci görünümü ayıklanmıştır (cevap yok): bot bazı tiplerde cevap üretemez, o zaman boş cevap verir
 			const T = TYPES[m.d.q.type];
-			const b = T.bot(m.d.v, this.skill, this.R);
-			d = { value: b.value, time: b.time };
+			try {
+				const b = T.bot(m.d.v, this.skill, this.R);
+				d = { value: b.value, time: b.time };
+			} catch (e) {
+				d = { value: null, time: m.d.time ?? 5 };
+			}
 		}
 		this.t.send(envelope('res', m.k, d, { id: m.id, seat: m.seat }));
 	}

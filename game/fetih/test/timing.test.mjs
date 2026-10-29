@@ -313,8 +313,14 @@ console.log('\n7) Ağ: uzak koltuk');
 	const seen = [];
 	cli.onmessage((m) => {
 		if (m.t !== 'req' || m.k !== 'answer') return;
+		// görünüm ayıklanmıştır (cevap, konum, kelime yok): bot bazı tiplerde cevap üretemez, süre yine sınanır
 		const T = TYPES[m.d.v.q.type];
-		const b = T.bot(m.d.v, 0.6, rng(m.id));
+		let b;
+		try {
+			b = T.bot(m.d.v, 0.6, rng(m.id));
+		} catch (e) {
+			b = { value: null, time: m.d.v.med ?? m.d.time / 2 };
+		}
 		seen.push({ time: m.d.time, vsec: m.d.v.sec, bot: b.time });
 		cli.send({ v: PROTOCOL, t: 'res', k: 'answer', id: m.id, seat: m.seat, d: { value: b.value, time: b.time } });
 	});
@@ -324,7 +330,7 @@ console.log('\n7) Ağ: uzak koltuk');
 		const T = TYPES[type];
 		const v = T.prepare(q, rng(3));
 		const pv = publicView(T, v);
-		// (şıklı tiplerde bot doğru şıkkı bilemez: publicView onu siler; burada yalnız süre denetlenir)
+		// (görünümde cevap yok: bot doğru cevabı bilemez; burada yalnız süre denetlenir, sızıntı test/net.test.mjs'te)
 		await ctl.answer({ i: 1 }, { q: pv.q, v: pv, time: v.sec }, (v.sec + 12) * 1000);
 		const s = seen[seen.length - 1];
 		ok(s && s.time === budget(q) && s.vsec === budget(q), `${type}: uzak koltuk farklı süre aldı (${s?.time}, ${s?.vsec}, ${budget(q)})`);

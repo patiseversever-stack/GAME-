@@ -186,7 +186,7 @@ export class Match {
 			};
 			p.jk = human ? makeLoadout(this.progress.jokerStock) : botLoadout(skill, this.R, p.boss, p.boss ? this.perks.botJokers || 0 : 0);
 			p.ctl = kind === 'ui' ? new UIController(this) : kind === 'remote' ? new RemoteController(this.transports[i], { seat: i }) : new BotController(this);
-			if (kind === 'remote') p.ctl.onAct = (k, d) => k === 'joker' && this.useJoker(d?.id, p);
+			if (kind === 'remote') p.ctl.onAct = (k, d) => (k === 'joker' ? this.useJoker(d?.id, p) : k === 'harf' ? this.letterHint(p, d?.ch) : null);
 			return p;
 		});
 		this.humanPlayer = this.players.find((p) => p.human) || null;
@@ -476,7 +476,8 @@ export class Match {
 		this.estimateQuestion(T, out, cur);
 		this.afterQuestion(q, T, out);
 		await this.ui.reveal(this, { q, v, T, results: out, ...ctx });
-		this.emit('reveal', { results: out.map((r) => ({ i: r.i, value: r.value, time: r.time, correct: r.correct, err: Number.isFinite(r.err) ? r.err : -1 })) });
+		// answer: tam görünüm (doğru cevap, değerler, konum); istemciye soru sırasında gitmez, burada gider
+		this.emit('reveal', { results: out.map((r) => ({ i: r.i, value: r.value, time: r.time, correct: r.correct, err: Number.isFinite(r.err) ? r.err : -1 })), answer: v });
 		// ikinci şans: yanlış bilenlere aynı kategoriden yeni soru
 		if (T.kind === 'exact' && cur.second.size) {
 			for (let k = 0; k < out.length; k++) {
@@ -529,6 +530,19 @@ export class Match {
 	}
 
 	// ---------------------------------------------------------------- jokerler
+
+	/**
+	 * Uzak koltuğun adam asmaca harf denemesi: kelime istemciye gitmediği için harfin yerlerini yalnız o
+	 * koltuğa sunucu söyler. Yalnızca o soruyu cevaplayan koltuk ve soru açıkken.
+	 */
+	letterHint(p, ch) {
+		const cur = this.cur;
+		if (!cur || cur.closed || !cur.who.includes(p) || typeof cur.v.word !== 'string' || typeof ch !== 'string') return;
+		const c = ch.toLocaleUpperCase('tr-TR').charAt(0);
+		const at = [];
+		[...cur.v.word].forEach((x, i) => x === c && at.push(i));
+		p.ctl.event('harf', { ch: c, at });
+	}
 
 	/** Botların soru başı joker kararı. Kullanımlar kart açılınca arayüzde gösterilir (cur.botUses). */
 	planBotJokers(cur) {
