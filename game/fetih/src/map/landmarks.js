@@ -1138,7 +1138,7 @@ const B = {
 		}
 		g.translate(0, 0.08, 0);
 		k.grad('#8a7b65', '#a99880', -0.1, 0.35).add(g);
-		k.color('#8f8069').cyl(0.7, 0.75, 0.3, 10, 0, -0.3);
+		grounds(k, 0.64, '#9a8a72', { rz: 0.5, ring: 0.86, jit: 0.06 });
 		const S = '#c9b48f';
 		const top = (x) => 0.08 + 0.18 * (0.5 + 0.9 * (1 - Math.abs(x) / 0.6));
 		for (let i = 0; i < 7; i++) {
@@ -1266,7 +1266,7 @@ const SITES = [
 	['gobekli', 38.92, 37.22, 1.89, 0, 63],
 	['truva', 26.24, 39.96, 1.89, -0.3, 17],
 	['aspendos', 31.17, 36.94, 1.82, 0, 7],
-	['vankalesi', 43.34, 38.5, 1.82, 0.2, 65],
+	['vankalesi', 43.34, 38.5, 1.82, 0.2, 65, 0, 'shore'],
 	['kizkalesi', 34.15, 36.43, 1.54, 0, 33, 0, 'sea'],
 	['bodrum', 27.43, 37.04, 1.61, 0, 48],
 	['ciftemin', 41.28, 39.9, 1.82, 0, 25],
@@ -1348,7 +1348,7 @@ export class Landmarks {
 					let wz = 0;
 					for (let i = 0; i < 12; i++) {
 						const a = (i / 12) * Math.PI * 2;
-						if (water(x + Math.cos(a) * rad, z + Math.sin(a) * rad)) {
+						if (where !== 'shore' && water(x + Math.cos(a) * rad, z + Math.sin(a) * rad)) {
 							wx += Math.cos(a);
 							wz += Math.sin(a);
 						}

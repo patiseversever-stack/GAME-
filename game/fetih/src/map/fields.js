@@ -1,6 +1,8 @@
 // Harita alan dokuları: açılışta ekran kartında bir kez çizilir, sonra yalnızca okunur.
 //
-//   uBorder (RGBA8): r = en yakın il sınırına işaretli uzaklık (0.5 + 0.5 * d / RB; okurken |2r - 1| * RB),
+//   uBorder (RGBA8): r = en yakın il sınırına işaretli uzaklık (0.5 + 0.5 * d / RB), b = işaretsiz uzaklık / RB.
+//                    Okurken max(|2r - 1|, b - pay) * RB: işaretli alan çizginin üstünde tam sıfıra iner (ince çizgi kesiksiz),
+//                    işaretsiz alan il içindeki işaret dönüşlerinde sahte sıfırı bastırır;
 //                    g = o sınırın öbür yanındaki il (255 deniz, 254 yabancı)
 //   uWater  (RGBA8): r = kıyıya yakınlık (1 kıyıda, 0 RC uzakta), g = nehir (0.5 üstü nehir yatağı),
 //                    b = göl içi, a = göl kıyısına yakınlık
@@ -55,7 +57,7 @@ void main() {
 	// işaretli uzaklık (parçanın sol yanı +, sağ yanı -): doğrusal süzgeçte sıfır tam çizginin üstüne düşer.
 	// İşaretsiz uzaklık iki doku hücresi arasında sıfıra inemiyordu (ince çizgi kesik kesik görünüyordu).
 	float sd = side < 0.0 ? d : -d;
-	gl_FragColor = vec4(0.5 + 0.5 * sd / uR, other / 255.0, 0.0, 1.0);
+	gl_FragColor = vec4(0.5 + 0.5 * sd / uR, other / 255.0, d / uR, 1.0);
 }`;
 
 const WATER_FS = /* glsl */ `
@@ -246,7 +248,7 @@ export function bakeFields(renderer, data, indexOf, res) {
 	renderer.setRenderTarget(border);
 	renderer.setClearColor(0x000000, 0);
 	// boş pikseller: en uzak, deniz
-	renderer.setClearColor(new THREE.Color(1, 1, 0), 1);
+	renderer.setClearColor(new THREE.Color(1, 1, 1), 1);
 	renderer.clear(true, true, false);
 	scene.add(bm);
 	renderer.render(scene, cam);

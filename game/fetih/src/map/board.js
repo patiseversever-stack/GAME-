@@ -50,10 +50,12 @@ ${PROV}
 attribute float pid;
 attribute vec4 bio;
 attribute float surf;
+attribute float cav;
 varying vec3 vW;
 varying vec3 vN;
 varying vec4 vBio;
 varying float vDepth;
+varying float vCav;
 flat varying float vPid;
 flat varying vec4 vOwn;
 flat varying vec4 vPrev;
@@ -73,6 +75,7 @@ void main() {
 	vBio = bio;
 	vPid = pid;
 	vDepth = surf + lift - p.y;
+	vCav = cav * 0.7 + 0.55;
 	gl_Position = projectionMatrix * viewMatrix * w;
 }`;
 
@@ -96,6 +99,7 @@ varying vec3 vW;
 varying vec3 vN;
 varying vec4 vBio;
 varying float vDepth;
+varying float vCav;
 flat varying float vPid;
 flat varying vec4 vOwn;
 flat varying vec4 vPrev;
@@ -107,7 +111,7 @@ float lineAA(float d, float w, float px) {
 }
 
 // v0.5 (sinematik palet): bozkır hardal değil sıcak buğday-kehribar; geçiş kuşağı taze adaçayı yeşili;
-// kıyı ve Karadeniz canlı zümrüt; yayla serin zeytin-gri; dağ kayası mor-gri; doruklarda kar. Renk
+// kıyı ve Karadeniz canlı zümrüt; yayla serin alp çayırı; dağ kayası mor-gri; doruklarda kar. Renk
 // alanları birbirinden ton olarak ayrışır (çamurlu zeytin ara ton yok). Tarla deseni q=0'da da var
 // (tek doku okuması), yakında ince tane dokusu: telefon ekranında keskin okunur.
 vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float snowK, out float rockK) {
@@ -124,8 +128,8 @@ vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float sno
 	vec3 lush = mix(${C('#3a8638')}, ${C('#5daa48')}, n2 * 0.8 + n3 * 0.2);
 	vec3 mid = mix(${C('#76a250')}, ${C('#91b25c')}, n2);
 	vec3 c = green < 0.5 ? mix(dry, mid, smoothstep(0.18, 0.5, green)) : mix(mid, lush, smoothstep(0.5, 0.85, green));
-	// yayla: serin zeytin-gri
-	c = mix(c, mix(${C('#8b9466')}, ${C('#79825c')}, n3), smoothstep(1500.0, 2500.0, e) * 0.6);
+	// yayla: serin alp çayırı (çamurlu zeytin değil)
+	c = mix(c, mix(${C('#7f9858')}, ${C('#93976a')}, n3), smoothstep(1500.0, 2400.0, e) * 0.65);
 	// tarla deseni: düz, ormansız, alçak yerlerde parsel parsel (her ovada farklı yöne bakar)
 	float farm = (1.0 - smoothstep(0.1, 0.4, bio.x)) * (1.0 - smoothstep(0.15, 0.45, bio.z)) * smoothstep(0.985, 0.998, N.y) * (1.0 - smoothstep(1300.0, 1800.0, e));
 #if TIER > 0
@@ -175,7 +179,9 @@ void main() {
 	float h = vW.y - lift;
 	bool skirt = vBio.w > 0.25;
 	vec2 uv = (vW.xz - uFBox.xy) * uFBox.zw;
-	float d = abs(texture(uBorder, uv).r * 2.0 - 1.0) * ${f(RB)}; // işaretli alan (fields.js)
+	// işaretli alan çizgide tam sıfır; işaretsiz alan il içindeki sahte sıfırları (işaret dönüşü) bastırır (fields.js)
+	vec4 bt = texture(uBorder, uv);
+	float d = max(abs(bt.r * 2.0 - 1.0), bt.b - 0.065) * ${f(RB)};
 	float px = max(fwidth(d), 1e-4);
 	float nb = floor(texelFetch(uBorder, ivec2(uv * uFRes), 0).g * 255.0 + 0.5);
 	vec4 fw = texture(uWater, uv);
@@ -232,7 +238,7 @@ void main() {
 	float wG = max(0.014, 0.85 * px);
 	float isLand = nb > 254.5 ? 0.3 : 1.0;
 	float groove = (1.0 - smoothstep(wG - 0.6 * px, wG + 0.6 * px, d)) * isLand;
-	float ridgeL = smoothstep(wG + 0.2 * px, wG + 1.0 * px, d) * (1.0 - smoothstep(wG + 1.6 * px, wG + 2.8 * px, d)) * isLand * (1.0 - same * ownedK);
+	float ridgeL = smoothstep(wG + 0.2 * px, wG + 1.0 * px, d) * (1.0 - smoothstep(wG + 1.6 * px, wG + 2.8 * px, d)) * isLand * (1.0 - same * ownedK) * smoothstep(0.09, 0.03, px);
 	float ownEdge = ownedK * (1.0 - same);
 	// gecede oyuncunun (ve sırası gelenin) toprağının dış çizgisi daha kalın ve keskin
 	float wBand = max(0.08, mix(2.3, 3.3, hiE * uNight.x) * px);
@@ -260,7 +266,8 @@ void main() {
 	float water = max(lake, river) * (skirt ? 0.0 : 1.0);
 
 	float gloss = 0.06 + 0.1 * ownedK + snowK * 0.15;
-	float ao = 1.0;
+	float ao = vCav; // kabartma çukurluğu (terrain.js): vadi koyu, sırt açık
+	alb *= mix(1.0, vCav, 0.4);
 	if (skirt) {
 		// il duvarı: toprak katmanları (pasta dilimi), kıyıda falez
 		float dep = vDepth;

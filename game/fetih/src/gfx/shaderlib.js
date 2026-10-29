@@ -200,7 +200,7 @@ vec3 shade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, float r
 	vec3 amb = skyAmbient(N) * ao;
 	vec3 shadeCol = mix(uShadeTint, vec3(1.0), lit);
 	// gece odağındaki aydınlık il: gündüz ışığı ama biraz yumuşak (v0.4: kırmızı turuncuya, sarı neona kaçmasın)
-	float sunK = 1.0 - 0.4 * uNight.x * clamp(gLit, 0.0, 1.0);
+	float sunK = 1.0 - 0.28 * uNight.x * clamp(gLit, 0.0, 1.0);
 	vec3 c = albedo * amb * shadeCol + albedo * uSunCol * lit * sunK;
 	// cila: güneş parıltısı + gök yansıması (Fresnel)
 	float ndv = clamp(dot(N, V), 0.0, 1.0);
@@ -279,7 +279,7 @@ vec4 finish(vec3 c, float a) {
 	float nk = uNight.x * (1.0 - clamp(gLit, 0.0, 1.0) * spotK());
 	if (nk > 0.001 && gRelit < 0.5) c = mix(c, nightGrade(c), nk);
 	// gecede aydınlık ada: biraz kısık pozlama (beyaza yanmasın, sahip rengi doygun kalsın)
-	c *= 1.0 - 0.22 * (uNight.x - nk);
+	c *= 1.0 - 0.14 * (uNight.x - nk);
 	c = tonemap(c * uGrade.z);
 	c = pow(c, vec3(1.0 / 2.2));
 	c = c * uGain + uLift * (1.0 - c);
