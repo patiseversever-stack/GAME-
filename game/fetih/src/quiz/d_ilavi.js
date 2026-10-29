@@ -16,7 +16,7 @@
 import { css, esc, pCorrect, clamp, buzz } from './util.js';
 import { botTime } from './timing.js';
 import { KM_PER_UNIT } from './types.js';
-import { appOf, stamp, guard, onClose, cardTop, tag, sfx, rule, stampLater, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
+import { appOf, stamp, guard, onClose, cardTop, tag, pop, sfx, rule, stampLater, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { setTimeout } from '../core/clock.js';
 import DATA from '../data/turkiye.json';
 
@@ -196,6 +196,7 @@ export const ilavi = {
 				dot?.classList.add('win');
 				tag(app, `<b>${esc(p.name)}</b><em>✓</em>`, p.x, p.z, 'big').el.style.setProperty('--tc', '#7dff9a');
 				root.querySelector('.dn-ia-sil').classList.add('won');
+				pop(app, p.x, p.z, 'BULDUN!', { colors: ['#ffd25a', '#7dff9a', '#fff'], n: 18, dist: 90, cls: 'dn dn-gold' });
 				sfx(app, 'right');
 				buzz(14);
 				return finish();
@@ -208,6 +209,7 @@ export const ilavi = {
 			dot?.classList.add('used');
 			tag(app, `<b>${esc(p.name)}</b><em>${d.km} km ${d.dir}</em>`, p.x, p.z).el.style.setProperty('--tc', h[1]);
 			log.insertAdjacentHTML('beforeend', `<span style="--hc:${h[1]}"><i></i>${esc(p.name)}<em>${d.km} km ${d.dir}</em></span>`);
+			pop(app, p.x, p.z, `${h[2]}!`, { colors: [h[1], '#fff'], n: d.km < 250 ? 12 : 6, dist: 46, cls: `dn ${d.km < 450 ? 'dn-hot' : 'dn-cold'}` });
 			sfx(app, d.km < 250 ? 'star' : 'tap');
 			buzz(d.km < 250 ? 20 : 8);
 			open(taps.length);
@@ -265,6 +267,15 @@ export const ilavi = {
 			return i == null ? null : { zone: [i], text: `Seyirci: gizli il ${PROV[i].name}'e komşu` };
 		}
 		return null;
+	},
+	/** Çevrimiçi görünüm: gizli il ve sonraki ipuçları sunucuda; siluet ve ilk ipucu gider. */
+	publicView(v) {
+		const o = JSON.parse(JSON.stringify(v));
+		delete o.hedef;
+		delete o.q.il;
+		o.hints = o.hints.map((h, k) => (k ? '' : h)); // sonrakiler yanlış denemede sunucudan gelir
+		delete o.q.hints;
+		return o;
 	},
 	judge(v, value) {
 		const r = result(v, value?.taps);

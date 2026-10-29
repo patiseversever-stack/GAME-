@@ -86,7 +86,7 @@ export const kusbakisi = {
 	prepare(q, R) {
 		const order = shuffle([0, 1, 2, 3], R);
 		const v = { q, opts: order.map((i) => q.a[i]), right: order.indexOf(0) };
-		return stamp(v, q, (q2, k, P, text) => {
+		stamp(v, q, (q2, k, P, text) => {
 			for (const a of q2.a) text(a);
 			return {
 				// kart açılınca kamera bir an maketin dibinde durur, sonra yükselir: ortalama oyuncu birkaç sn uzaklaşmayı izler
@@ -94,6 +94,9 @@ export const kusbakisi = {
 				look: LOOK.orient + 4 * LOOK.gaze + LOOK.image,
 			};
 		});
+		// yükseliş filminin süresi: sorunun kendi bütçesi (galerinin "Sınırsız" kipinde v.sec 600 olur, film yine aynı)
+		v.film = v.sec;
+		return v;
 	},
 	mount(el, v, api) {
 		css('deneme', DENEME_CSS);
@@ -105,7 +108,8 @@ export const kusbakisi = {
 		</div>`;
 		const c = mountChoice(el.querySelector('[data-r=o]'), v, api, { onPick: () => sfx(app, 'tap') });
 		const bar = el.querySelector('.dn-kb-bar i');
-		bar.style.setProperty('--t', (v.sec || 20) + 's');
+		const FILM = Math.min(v.sec || 20, v.film || v.sec || 20);
+		bar.style.setProperty('--t', FILM + 's');
 		if (!app) return { lock: c.lock, reveal: (r) => c.reveal(r), destroy() {} };
 		const q = v.q;
 		const sp = spotOf(app, q);
@@ -117,7 +121,7 @@ export const kusbakisi = {
 		// dürbün halkası: kartın altındaki boş alanın ortasında
 		const scope = document.createElement('div');
 		scope.className = 'dn-scope';
-		scope.style.setProperty('--t', (v.sec || 20) * 0.9 + 's');
+		scope.style.setProperty('--t', FILM * 0.9 + 's');
 		app.ui.$.pins.appendChild(scope);
 		const yaw0 = typeof q.yaw === 'number' ? q.yaw : 0.6;
 		const near = q.near || 4.2 + sp?.r * 0.8;
@@ -129,7 +133,7 @@ export const kusbakisi = {
 		};
 		// yükseliş planı: soru saatine bağlı (kare hızından bağımsız; çevrimiçinde iki oyuncu aynı anda aynı kadrajı
 		// görür). Uzaklık logaritmik (sabit hızda açılır), eğim yandan tepeye hızlı başlayıp yavaşlar, yarım tur dönüş.
-		const T = (v.sec || 20) * 0.92;
+		const T = FILM * 0.92;
 		const y0 = sp ? sp.y + sp.r * 0.45 : 0;
 		const O = { y: 0, dist: near, pitch: 0.3, yaw: yaw0, dur: 0.25, arc: 0, ease: LINEAR, distMin: 1, lens: 0 };
 		const at = (t) => {
@@ -197,6 +201,18 @@ export const kusbakisi = {
 			},
 			destroy: close,
 		};
+	},
+	/**
+	 * Çevrimiçi görünüm: doğru şık ve il gizli. Kameranın gideceği yer (site) istemciye gitmek zorunda (tipin doğası);
+	 * hile yapan bir istemci konumdan ili çıkarabilir: bu yüzden çevrimiçi sürümde site adı yerine anlamsız bir kimlik
+	 * ve konum gönderilmeli, düelloda iki oyuncu aynı anda aynı kadrajı görür (kamera soru saatine bağlı).
+	 */
+	publicView(v) {
+		const o = JSON.parse(JSON.stringify(v));
+		delete o.right;
+		delete o.q.a;
+		delete o.q.il;
+		return o;
 	},
 	judge(v, value) {
 		return { correct: value === v.right, err: value === v.right ? 0 : 1 };

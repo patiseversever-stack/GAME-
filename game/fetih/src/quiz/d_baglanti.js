@@ -133,6 +133,11 @@ export const baglanti = {
 		};
 		const take = (g) => {
 			found.push(g);
+			const fx = app?.ui?.fx;
+			if (fx) {
+				const r = root.querySelector('.dn-bg-grid').getBoundingClientRect();
+				fx.burst(r.left + r.width / 2, r.top + 18, { n: 14, dist: 80, colors: [COLORS[g % COLORS.length][0], '#fff'], kind: 'star', size: 11, life: 650 });
+			}
 			btns.forEach((b, i) => {
 				if (v.key[i] === g) {
 					b.classList.remove('sel', 'hint');
@@ -236,6 +241,14 @@ export const baglanti = {
 		const g = Math.floor(R() * v.n);
 		const idx = v.key.map((x, i) => (x === g ? i : -1)).filter((i) => i >= 0);
 		return { pair: shuffle(idx, R).slice(0, 2) };
+	},
+	/** Çevrimiçi görünüm: yalnız taş yazıları; grup üyeliği ve adları sunucuda (her deneme act 'grup' ile sorulur). */
+	publicView(v) {
+		const o = JSON.parse(JSON.stringify(v));
+		delete o.key;
+		delete o.names;
+		delete o.q.groups;
+		return o;
 	},
 	judge(v, value) {
 		const s = score(v, value?.tries);

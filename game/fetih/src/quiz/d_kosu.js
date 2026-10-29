@@ -12,7 +12,7 @@
 
 import { css, esc, pCorrect, clamp, buzz } from './util.js';
 import { botTime } from './timing.js';
-import { appOf, stamp, guard, onClose, onOpen, cardTop, tag, tapX, sfx, rule, stampLater, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
+import { appOf, stamp, guard, onClose, onOpen, cardTop, tag, tapX, pop, sfx, rule, stampLater, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { setTimeout, clearTimeout } from '../core/clock.js';
 import DATA from '../data/turkiye.json';
 
@@ -85,7 +85,7 @@ export const kosu = {
 	},
 	prepare(q) {
 		const targets = q.ids.map((id) => BY_ID.get(id)).filter((i) => i != null);
-		const v = { q, targets, frame: frameOf(q, targets) };
+		const v = { q, n: targets.length, targets, frame: frameOf(q, targets) };
 		return stamp(v, q, (q2, k) => {
 			const n = targets.length;
 			return {
@@ -100,14 +100,16 @@ export const kosu = {
 		css('deneme', DENEME_CSS);
 		css('kosu', CSS);
 		const app = appOf();
-		const n = v.targets.length;
+		const n = v.n;
 		const me = app?.match?.humanPlayer;
+		// bütün Türkiye kadrajında küçük iller (Kilis, Yalova…) için yakınlaştırma ipucu
+		const HINT = v.frame.length >= 60 ? 'İllere dokun · iki parmakla yakınlaştır' : 'Haritada illere dokun · yanlış dokunuş 1 sn kilitler';
 		const color = me?.css || '#ff3030';
 		el.innerHTML = `<div class="dn-ks" style="--pc:${color}">
 			<div class="dn-ks-top"><div class="dn-ks-cnt"><b>0</b><small>/ ${n}</small></div>
 				<div class="dn-ks-last">son fetih<span>—</span></div><button class="fl-send">BİTİR</button></div>
 			<div class="dn-ks-seg">${'<i></i>'.repeat(n)}</div>
-			<div class="dn-ks-hint">Haritada illere dokun · yanlış dokunuş 1 sn kilitler</div>
+			<div class="dn-ks-hint">${HINT}</div>
 		</div>`;
 		rule(el, 'En çok il alan');
 		const root = el.querySelector('.dn-ks');
@@ -136,7 +138,7 @@ export const kosu = {
 			if (!el.isConnected) return;
 			app.cam.fit(app.boundsOf(v.frame), { pitch: 1.0, pad: 1.06, top: cardTop(el), dur: 0.9, arc: 4 });
 		});
-		const stopOpen = onOpen(el, () => sfx(app, 'march'));
+		const stopOpen = onOpen(el, () => sfx(app, 'whoosh'));
 		api.onMapTap((pt) => {
 			if (done || locked) return;
 			const i = b.pick(pt.x, pt.z);
@@ -160,6 +162,7 @@ export const kosu = {
 				last.textContent = p.name;
 				last.classList.remove('no');
 				sfx(app, found.size >= 3 ? 'combo' : 'paint', { n: found.size });
+				pop(app, p.x, p.z, found.size === n ? 'HEPSİ!' : `+1`, { colors: [color, '#fff', '#ffd25a'], cls: 'dn dn-gold' });
 				buzz(10);
 				if (found.size === n) setTimeout(finish, 350);
 			} else {
@@ -174,7 +177,7 @@ export const kosu = {
 				lockT = setTimeout(() => {
 					locked = false;
 					root.classList.remove('lock');
-					hint.textContent = 'Haritada illere dokun · yanlış dokunuş 1 sn kilitler';
+					hint.textContent = HINT;
 				}, 800);
 			}
 		});
@@ -214,7 +217,12 @@ export const kosu = {
 					const order = results.slice().sort((a, b2) => a.err - b2.err || a.time - b2.time);
 					const c = count(v, meR.value?.taps).ok;
 					if (order[0] === meR) stampLater(app, c === n ? 'HEPSİ SENİN!' : `${c} İL ALDIN!`, 'gold', `${n} ilin ${c} tanesini fethettin`);
-					else stampLater(app, `${c} İL`, 'bad', `${order[0].name} ${count(v, order[0].value?.taps).ok} il aldı`);
+					else {
+						const w = count(v, order[0].value?.taps);
+						const mine = count(v, meR.value?.taps);
+						const why = w.ok > c ? `${order[0].name} ${w.ok} il aldı` : w.bad < mine.bad ? `Eşit: ${order[0].name} daha az yanlış yaptı` : `Eşit: ${order[0].name} daha erken bitirdi`;
+						stampLater(app, `${c} İL`, 'bad', why);
+					}
 				}
 				setTimeout(() => {
 					const w = el.closest('.fl-q')?.querySelector('.fl-cr.win .tag');
@@ -232,6 +240,13 @@ export const kosu = {
 			[list[i], list[j]] = [list[j], list[i]];
 		}
 		return { glow: list.slice(0, 2) };
+	},
+	/** Çevrimiçi görünüm: hedefler gizli (her dokunuşu sunucu yanıtlar: act 'il' → ev { plaka, ok }). */
+	publicView(v) {
+		const o = JSON.parse(JSON.stringify(v));
+		delete o.targets;
+		delete o.q.ids;
+		return o;
 	},
 	judge(v, value) {
 		const c = count(v, value?.taps);

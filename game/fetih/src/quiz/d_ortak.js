@@ -259,6 +259,21 @@ export function screenOf(app, x, z) {
 	return { x: _s.x + r.left - u.left, y: _s.y + r.top - u.top };
 }
 
+/**
+ * Haritadaki bir noktada arayüz efekti: yıldız patlaması ve isteğe bağlı uçan yazı ("+1", "Kızgın!").
+ * Arayüzün kendi Fx katmanı (DOM, yalnız transform/opacity; düşük kademede yarı sayıda parçacık).
+ */
+export function pop(app, x, z, text = '', { colors = ['#ffd25a', '#fff'], n = 12, dist = 60, cls = 'good' } = {}) {
+	const fx = app?.ui?.fx;
+	if (!fx) return;
+	const p = screenOf(app, x, z);
+	const u = app.ui.el.getBoundingClientRect();
+	const cx = p.x + u.left;
+	const cy = p.y + u.top;
+	fx.burst(cx, cy, { n, dist, colors, kind: 'star', size: 11, life: 650 });
+	if (text) fx.text(cx, cy - 26, text, { cls, life: 900 });
+}
+
 /** Haritada yanlış dokunuş işareti (arayüzün kırmızı çarpısı). */
 export function tapX(app, x, z) {
 	const p = screenOf(app, x, z);
@@ -291,4 +306,8 @@ export const DENEME_CSS = /* css */ `
 .dn-tag em{font-style:normal;font-family:'Lilita One';font-size:13px;color:var(--tc,#ffd25a)}
 .dn-tag.big>div{font-size:15px;padding:3px 11px 4px}
 .dn-tag.big b{font-size:17px}
+.fl-ftxt.dn{font-size:24px}
+.fl-ftxt.dn-gold{color:#ffd25a}
+.fl-ftxt.dn-hot{color:#ff9a5a}
+.fl-ftxt.dn-cold{color:#9fd8ff}
 `;
