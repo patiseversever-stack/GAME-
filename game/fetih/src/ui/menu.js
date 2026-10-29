@@ -115,7 +115,7 @@ export function showMenu(ui) {
 		)
 		.join('');
 	const lens = [
-		['quick', 'HIZLI', '5–7 dk · tek bölge', 'bolt'],
+		['quick', 'HIZLI', 'bölge ve çevresi', 'bolt'],
 		['long', 'UZUN', '15–20 dk · tüm Türkiye', 'hourglass'],
 	]
 		.map(
@@ -126,7 +126,7 @@ export function showMenu(ui) {
 	const maps = REGION_ORDER.map(
 		(k) => `<button class="fl-map ${c.region === k ? 'on' : ''} ${k === 'random' ? 'rnd' : ''}" data-k="region" data-v="${k}">
 			${k === 'random' ? `<span class="mm-r">${regionMap('random', ui.vb)}<span class="dice">${ico('dice', { w: 2.2 })}</span></span>` : regionMap(k, ui.vb)}
-			<b>${esc(REGION_NAMES[k])}</b><small>${k === 'random' ? 'sürpriz bölge' : count(k) + ' il'}</small><i class="ck">${ico('check', { w: 3.4 })}</i></button>`,
+			<b>${esc(REGION_NAMES[k])}</b><small>${k === 'random' ? 'sürpriz bölge' : k === 'all' ? count(k) + ' il' : 've çevresi'}</small><i class="ck">${ico('check', { w: 3.4 })}</i></button>`,
 	).join('');
 	const bots = BOTS.map(
 		([k, t, n]) => `<button class="fl-bot ${c.bot === k ? 'on' : ''}" data-k="bot" data-v="${k}"><span class="st">${

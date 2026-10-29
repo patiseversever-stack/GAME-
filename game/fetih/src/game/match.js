@@ -47,6 +47,12 @@ const VALUE = { pick: 200, conquer: 200, defend: 100, castle: 1000 };
 const WHEEL_CATS = Object.keys(CATS);
 
 /** Tempo: bir maçtaki hedef düello sayısı (tur sayısı = düello / oyuncu). Hızlı maç 5–7 dk hedefler. */
+/**
+ * Maç haritası büyüklüğü: hızlı maçta seçilen bölge, oyuncu başına bu kadar il olana dek komşu illerle
+ * büyür (tek bölge 3–4 kişiye dar geliyordu: herkese 2–3 il düşüyor, maç başlamadan bitiyordu).
+ */
+export const PROVINCES_PER_PLAYER = 6;
+
 export const PACE = {
 	quick: { duels: 11 },
 	long: { duels: 32 },
@@ -56,6 +62,42 @@ export const PACE = {
 const EST = { overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, attack: 2.6, wheel: 4, chooseCat: 2.2, conquer: 2.4, tower: 3, defend: 2, nobody: 1.5, elim: 3.5, qOpen: 0.5 };
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+
+/**
+ * Bölgeyi komşu illerle hedef büyüklüğe büyüt: her adımda sınırdaki illerden bölgenin ortasına en yakını
+ * eklenir (toprak bitişik ve toparlak kalır). Rastgelelik yok: aynı bölge ve oyuncu sayısı her yerde
+ * (sunucuda da) aynı haritayı verir.
+ */
+export function growMap(board, base, size) {
+	const P = board.provinces;
+	const set = new Set(base);
+	if (set.size >= size) return [...set];
+	let cx = 0;
+	let cz = 0;
+	for (const i of set) {
+		cx += P[i].x;
+		cz += P[i].z;
+	}
+	cx /= set.size;
+	cz /= set.size;
+	while (set.size < size) {
+		let best = -1;
+		let bd = Infinity;
+		for (const i of set)
+			for (const id of P[i].nb) {
+				const j = board.byId.get(id)?.index;
+				if (j == null || set.has(j)) continue;
+				const d = Math.hypot(P[j].x - cx, P[j].z - cz);
+				if (d < bd) {
+					bd = d;
+					best = j;
+				}
+			}
+		if (best < 0) break;
+		set.add(best);
+	}
+	return [...set];
+}
 
 /** Maçtan çıkıldı: yarım kalan akış bu hatayla durur (App.startMatch yakalar). */
 export class Abort extends Error {
@@ -143,7 +185,7 @@ export class Match {
 		// kaleler koltuk rengine boyanır (kale i. koltukta durur; rengi shader birimi uOwner'dan gelir)
 		for (const p of this.players) app.castles?.[p.i]?.uniforms?.uOwner?.value?.setHex?.(p.color);
 		const b = app.board;
-		this.map = cfg.region === 'all' ? b.provinces.map((p) => p.index) : b.region(cfg.region);
+		this.map = cfg.region === 'all' ? b.provinces.map((p) => p.index) : growMap(b, b.region(cfg.region), cfg.size ?? n * PROVINCES_PER_PLAYER);
 		this.inMap = new Set(this.map);
 		// komşuluk bir kez hesaplanır (tur başına dizi üretme yok)
 		this.adj = new Map(this.map.map((i) => [i, b.provinces[i].nb.map((id) => b.byId.get(id).index).filter((j) => this.inMap.has(j))]));
