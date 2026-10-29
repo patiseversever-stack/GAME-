@@ -66,11 +66,14 @@ Hepsi Promise döner; `fast` true iken anında biter.
 `TYPES[tip] = {time, label, kind:'exact'|'closest', needsMap?, prepare(q,R), mount(el,v,api), judge(v,value), bot(v,skill,R)}`
 - `mount` dönüşü: `{lock(), reveal(results), destroy(), value?()}`
 - `api`: `{answer(value), onMapTap(fn), showPin(p)}`
-- **Süre (v0.6):** `time` yalnız tipik süredir (belge ve yedek). Her sorunun süresi kendi verisinden ve tipin ekrandaki
-  mekaniğinden hesaplanır: `src/quiz/timing.js` (`timing(q)`, `budget(q)`, `botTime(v, R, skill, lo, hi)`, `HOT`).
-  Bekleme (kart açılışı) + bakış + okuma + düşünme (tip, zorluk) + giriş (dokunma, sürükleme, bağlama, tuş, kaydırıcı,
-  ONAYLA) üç oyuncu için (hızlı, ortanca, yavaş-rahat) hesaplanır; süre = en büyüğü(yavaş + 1, ortanca + `HOT`), tipin
-  sınırlarına kırpılmış tam saniye (`HOT` = 5: arayüzün son 5 sn kırmızı uyarısı). `prepare` görünüme `v.sec` (saat)
+- **Süre (v0.7):** `time` yalnız tipik süredir (belge ve yedek). Her sorunun süresi kendi verisinden ve tipin ekrandaki
+  mekaniğinden hesaplanır: `src/quiz/timing.js` (`timing(q)`, `budget(q)`, `botTime(v, R, skill, lo, hi)`, `HOT`, `SLACK`).
+  Bekleme (kart açılışı) + bakış + okuma (harf ve kelime: göz her kelimeye durur; bilmece kökü iki kez) + düşünme (tip,
+  zorluk) + giriş (dokunma, sürükleme: sıralamada en kötü başlangıç, bağlama, tuş, kaydırıcı, ONAYLA) üç oyuncu için
+  (hızlı, ortanca, yavaş-rahat) hesaplanır; süre = en büyüğü(yavaş + `SLACK` (1,5), ortanca + `HOT`), tipin
+  sınırlarına kırpılmış tam saniye (`HOT` = 5: arayüzün son 5 sn kırmızı uyarısı). Adalet raporu ve rakip kıyası:
+  `ref/soru-v06/sure-raporu.md`; `test/timing.test.mjs` bağımsız bir "denetim oyuncusu"yla (110 kelime/dk, 0,85 sn
+  dokunuş) bankadaki her sorunun sığdığını denetler. `prepare` görünüme `v.sec` (saat)
   ve `v.fast` / `v.med` / `v.slow` (botların cevap aralığı) koyar; maç, arayüz (`questionTime(v.sec, extra, floor)`),
   botlar ve uzak koltuklar (`answer` isteğinde `time`) aynı değeri kullanır. Ekstra süre jokeri süreyi yarısı kadar
   uzatır (`extraFor`, 5–15 sn), sabotaj üçte birini keser (`cutFor`, 3–10 sn). Saf ve belirlenimci: sunucu aynı

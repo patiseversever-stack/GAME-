@@ -223,7 +223,7 @@ export const proverb = {
 
 // ---------------------------------------------------------------- riddle
 export const riddle = {
-	time: 16,
+	time: 19,
 	label: 'Bilmece',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {
