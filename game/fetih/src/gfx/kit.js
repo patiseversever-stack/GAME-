@@ -157,7 +157,7 @@ export class Kit {
 	 * Yere serilen parça: geometri geçerli dönüşümle yerleşir, sonra her köşe hf(x, z) arazi yüksekliğine
 	 * oturtulur (yerel y, araziden yukarı uzaklık olarak korunur). Yalnızca y çevresinde dönmüş yığında.
 	 */
-	drape(geo, hf, lift = 0) {
+	drape(geo, hf, lift = 0, tf = null) {
 		const g = geo.index ? geo.toNonIndexed() : geo;
 		g.applyMatrix4(this.m);
 		const y0 = this.m.elements[13];
@@ -167,8 +167,11 @@ export class Kit {
 		g.computeVertexNormals();
 		const save = this._hs;
 		this._hs = 0; // zemin: tabandan yükseklik 0 (örtme yok)
+		const start = this.tag.length;
 		this._push(g);
 		this._hs = save;
+		// köşe başına etiket (tf(x, z)): komşu ile taşan zemin o ilin kimliğini alır, onunla kalkar ve söner
+		if (tf) for (let i = 0; i < p.count; i++) this.tag[start + i] = tf(p.getX(i), p.getZ(i));
 		geo.dispose();
 		if (g !== geo) g.dispose();
 		return this;

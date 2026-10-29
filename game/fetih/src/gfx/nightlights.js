@@ -227,7 +227,8 @@ export class NightLights {
 		g.setAttribute('iA', new THREE.InstancedBufferAttribute(new Float32Array(A), 4));
 		g.setAttribute('iB', new THREE.InstancedBufferAttribute(new Float32Array(B), 4));
 		g.instanceCount = n;
-		this.castleU = [0, 1, 2, 3].map(() => new THREE.Vector4(0, -50, 0, 0));
+		// ünlü yapılar da aynı kale dizisini okur (kale yerine kurulan yapı toprağa gömülür)
+		this.castleU = landmarks.castleU || [0, 1, 2, 3].map(() => new THREE.Vector4(0, -50, 0, 0));
 		this.uniforms = {
 			...G,
 			uState: { value: board.stateTex },

@@ -20,18 +20,31 @@
 import * as THREE from 'three';
 import { COMMON, SHADOW, LIGHT, FINISH, PROV, glslColor as C } from '../gfx/shaderlib.js';
 import { Kit, archShape, facadeShape } from '../gfx/kit.js';
+import { pointInPoly } from './board.js';
 
 // malzeme kimlikleri (köşe özniteliği mat.x)
 const M = { STONE: 0, WATER: 1, WIN: 2, GOLD: 3, LEAD: 4, FLAG: 5, FLAME: 6, LEAF: 7, GROUND: 8, TILE: 9, CLOTH: 10 };
 
 const FADE = /* glsl */ `
 uniform vec3 uFade; // x başlangıç zamanı, y yön (1 beliriyor, 0 kayboluyor), z süre
+uniform vec4 uCastle[4]; // kaleler: konum, w görünür (nightlights.js her karede yazar)
 attribute vec4 site; // yapının merkezi x, taban y, merkez z, ölçek
 // görünürlük (0..1): yapılar sırayla (konuma göre hafif gecikmeli) toprağa gömülür
-float showK() {
+float showK(bool fly) {
 	float t = clamp((uTime - uFade.x) / uFade.z * 1.35 - fract(site.x * 0.173 + site.z * 0.311) * 0.35, 0.0, 1.0);
 	t = t * t * (3.0 - 2.0 * t);
-	return mix(1.0 - t, t, uFade.y);
+	float k = mix(1.0 - t, t, uFade.y);
+	// başkent kalesi yapının yerine kurulursa (küçük illerde ikisi sığmaz) yapı kale inerken toprağa gömülür
+	for (int i = 0; i < 4; i++) {
+		vec4 c = uCastle[i];
+		if (c.w > 0.5 && !fly) { // balonlar süzülmeye devam eder
+			float d = distance(c.xz, site.xz);
+			float T = 2.2 + site.w * 0.38; // kale yarıçapı + yapı gövdesi: ya tam görünür ya gömülü (yarım basık yapı yok)
+			float near = 1.0 - smoothstep(T - 0.06, T + 0.06, d);
+			k = min(k, 1.0 - near * (1.0 - smoothstep(0.4, 2.5, c.y - site.y)));
+		}
+	}
+	return k;
 }
 vec3 fadeP(vec3 p, float k) {
 	if (k > 0.999) return p;
@@ -74,7 +87,7 @@ void main() {
 		p.y += sin(ph * 0.5 + 1.0) * 0.012 * u;
 		p.x -= (1.0 - cos(sin(ph) * 0.6)) * 0.03 * u;
 	}
-	p = fadeP(p, showK());
+	p = fadeP(p, showK(anim > 0.5));
 	p.y += fx.x * uPLift + fx.z * uPSel;
 	vW = p;
 	vN = normal;
@@ -128,6 +141,8 @@ void main() {
 	} else if (nk > 0.001) {
 		// gece: pencere, kapı ve kemer boşlukları içeriden sıcak ışıkla yanar
 		if (id == ${M.WIN}.0) c += N_WARM * nk * (2.2 + 0.4 * sin(uTime * 3.1 + vW.x * 9.0));
+		// bayrak gecede de projektörle aydınlık (al rengi kararmasın)
+		else if (id == ${M.FLAG}.0) c += vec3(1.0, 0.72, 0.5) * alb * nk * 0.75;
 		// yapıyı alttan yalayan sıcak projektör ışığı (gece manzarasında yapılar mücevher gibi seçilir)
 		else if (!bare) c += vec3(1.0, 0.66, 0.34) * alb * nk * 0.38 * exp(-hgt * 2.4) * (0.55 + 0.45 * max(N.y, 0.0) + 0.4 * max(dot(N, V), 0.0));
 		// balon kumaşı: içindeki ocak kumaşı fener gibi aydınlatır
@@ -158,7 +173,7 @@ void main() {
 	vec3 p = position;
 	if (anim > 0.5) p.y += sin(uTime * 0.6 + anim * 7.31) * 0.14;
 	else if (anim < -0.5) p.z += sin(uTime * 5.2 - (-anim - 1.0) * 5.5 + tag * 1.3) * 0.055 * (-anim - 1.0);
-	p = fadeP(p, showK());
+	p = fadeP(p, showK(anim > 0.5));
 	p.y += fx.x * uPLift + fx.z * uPSel;
 	gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
 }`;
@@ -257,12 +272,12 @@ function grounds(k, r, pave, { rz = 1, ring = 0.72, ox = 0, oz = 0, jit = 0.05, 
 	const seg = Math.max(14, Math.round(26 * k.seg));
 	k.push().move(ox, 0, oz);
 	k.color(pave).mat(M.GROUND);
-	k.drape(ringGeo(0, r * ring * 0.55, rz, 0.004, 0.004, seg, jit, 3), hf);
-	k.drape(ringGeo(r * ring * 0.55, r * ring, rz, 0.004, 0.003, seg, jit, 3), hf);
+	k.drape(ringGeo(0, r * ring * 0.55, rz, 0.004, 0.004, seg, jit, 3), hf, 0, k.tagAt);
+	k.drape(ringGeo(r * ring * 0.55, r * ring, rz, 0.004, 0.003, seg, jit, 3), hf, 0, k.tagAt);
 	const t = tone || k.tone;
 	k.raw(t.r, t.g, t.b).mat(M.GROUND);
-	k.drape(ringGeo(r * ring, r * (ring + 1) / 2, rz, 0.003, 0.0, seg, jit, 3), hf);
-	k.drape(ringGeo(r * (ring + 1) / 2, r, rz, 0.0, -0.035, seg, jit, 3), hf);
+	k.drape(ringGeo(r * ring, r * (ring + 1) / 2, rz, 0.003, 0.0, seg, jit, 3), hf, 0, k.tagAt);
+	k.drape(ringGeo(r * (ring + 1) / 2, r, rz, 0.0, -0.035, seg, jit, 3), hf, 0, k.tagAt);
 	k.pop();
 	k.mat(0);
 }
@@ -1254,8 +1269,8 @@ const B = {
 
 // [yapı, boylam, enlem, ölçek, dönüş, il kimliği (plaka), merkezden en az uzaklık]
 const SITES = [
-	['galata', 28.93, 41.12, 2.0, 0, 34],
-	['ayasofya', 28.78, 41.03, 2.0, 0.1, 34],
+	['ayasofya', 28.9, 41.02, 1.9, 0.1, 34, 0, 'shore'],
+	['galata', 28.97, 41.1, 1.8, 0, 34, 0, 'shore-w'],
 	['kizkulesi', 29.004, 41.021, 1.05, 0, 34, 0, 'sea'],
 	['kopru', 29.036, 41.052, 1.4, 0.15, 34, 0, 'sea'],
 	['anitkabir', 32.84, 39.93, 2.45, 0, 6],
@@ -1328,60 +1343,56 @@ export class Landmarks {
 			if (!p) continue;
 			let [x, z] = lonlat(board, lon, lat);
 			if (where !== 'sea') {
-				// il merkezine (kale + yazı) çok yakınsa uzaklaştır
-				const minD = Math.max(1.9, sc * 0.95);
-				const dx = x - p.x;
-				const dz = z - p.z;
-				const d = Math.hypot(dx, dz);
-				if (d < minD) {
-					const a = d > 1e-3 ? Math.atan2(dz, dx) : 0;
-					let ok = false;
-					for (let t = 0; t < 12 && !ok; t++) {
-						const aa = a + (t % 2 ? 1 : -1) * Math.ceil(t / 2) * 0.5;
-						const nx = p.x + Math.cos(aa) * minD;
-						const nz = p.z + Math.sin(aa) * minD;
-						if (board.pick(nx, nz) === p.index) {
-							x = nx;
-							z = nz;
-							ok = true;
+				// yerleşim: gerçek yerin çevresinde (±3 birim) en iyi nokta aranır. Ceza: yapının gövdesi komşu ile
+				// taşarsa (il seçimde kalkınca havada kalır), avlu denize/göle ya da komşuya taşarsa, il merkezine
+				// (kale ve il adı) yaklaşırsa, başka yapının avlusuna binerse; gerçek yerden uzaklaştıkça hafif ceza.
+				const minD = Math.max(1.9, 2.2 + sc * 0.42); // kale yarıçapı (≈2,2) + yapı gövdesi
+				const rc = sc * 0.42;
+				const rp = sc * 0.7;
+				const inP = (tx, tz) => p.rings.some((r) => pointInPoly(tx, -tz, r));
+				const x0 = x;
+				const z0 = z;
+				let best = -1e9;
+				for (let gx = -3; gx <= 3.001; gx += 0.4)
+					for (let gz = -3; gz <= 3.001; gz += 0.4) {
+						const cx = x0 + gx;
+						const cz = z0 + gz;
+						if (!inP(cx, cz)) continue;
+						if (where === 'shore-w' && gx > 0.2) continue; // Galata boğazın Avrupa yakasında kalsın
+						let sco = -Math.hypot(gx, gz) * 0.6;
+						const cd = Math.hypot(cx - p.x, cz - p.z);
+						if (cd < minD) sco -= (minD - cd) * 6;
+						for (let i = 0; i < 8; i++) {
+							const a = (i / 8) * Math.PI * 2 + 0.2;
+							const ca = Math.cos(a);
+							const sa = Math.sin(a);
+							if (!inP(cx + ca * rc, cz + sa * rc) && !water(cx + ca * rc, cz + sa * rc)) sco -= 5;
+							const px = cx + ca * rp;
+							const pz = cz + sa * rp;
+							if (water(px, pz)) sco -= String(where).startsWith('shore') ? 0.2 : 2;
+							else if (!inP(px, pz)) sco -= 0.8;
+						}
+						for (const o of this.sites) {
+							if (o.sea) continue;
+							const lim = (o.r + sc * 0.72) * 0.92;
+							const d = Math.hypot(cx - o.x, cz - o.z);
+							if (d < lim) sco -= (lim - d) * 8;
+						}
+						if (sco > best) {
+							best = sco;
+							x = cx;
+							z = cz;
 						}
 					}
-				}
-				// avlu denize ya da göle taşıyorsa karaya doğru çek (Ayasofya kıyıda havada kalıyordu)
-				// ve başka bir yapının avlusuna binerse (İstanbul: Galata ile Ayasofya üst üsteydi) ondan uzaklaş
-				const rad = sc * 0.6;
-				for (let it = 0; it < 24; it++) {
-					let wx = 0;
-					let wz = 0;
-					for (let i = 0; i < 12; i++) {
-						const a = (i / 12) * Math.PI * 2;
-						if (where !== 'shore' && water(x + Math.cos(a) * rad, z + Math.sin(a) * rad)) {
-							wx += Math.cos(a);
-							wz += Math.sin(a);
-						}
-					}
-					for (const o of this.sites) {
-						if (o.sea) continue;
-						const dx = x - o.x;
-						const dz = z - o.z;
-						const d = Math.hypot(dx, dz);
-						if (d < (o.r + sc * 0.72) * 0.92) {
-							wx -= (dx / (d || 1)) * 3;
-							wz -= (dz / (d || 1)) * 3;
-						}
-					}
-					if (!wx && !wz) break;
-					const l = Math.hypot(wx, wz) || 1;
-					const nx = x - (wx / l) * 0.12;
-					const nz = z - (wz / l) * 0.12;
-					if (board.pick(nx, nz) !== p.index) break;
-					x = nx;
-					z = nz;
-				}
 			}
 			const y = where === 'sea' ? 0.0 : kit.hf(x, z);
 			kit.site = { x, y, z, s: sc, ry };
 			kit.tone = groundTone(rel, x, z);
+			const own = p.index;
+			kit.tagAt = (tx, tz) => {
+				const i = board.pick(tx, tz);
+				return i >= 0 ? i : own;
+			};
 			kit.setTag(p.index);
 			kit.base(y, 1 / sc);
 			const v0 = kit.count;
@@ -1402,8 +1413,11 @@ export class Landmarks {
 		this.triangles = kit.count / 3;
 		const taps = String(tier.shadowTaps);
 		this.uFade = { value: new THREE.Vector3(-10, 1, 0.45) };
+		// kale konumları: NightLights her karede yazar (sites.castleU ile paylaşılır; kare başına iş ve nesne yok)
+		this.castleU = [0, 1, 2, 3].map(() => new THREE.Vector4(0, -50, 0, 0));
+		this.sites.castleU = this.castleU;
 		this.G = G;
-		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade };
+		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU } };
 		this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms, side: THREE.DoubleSide }));
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
