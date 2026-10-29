@@ -23,8 +23,9 @@ import { showCampaign } from './campaign.js';
 import { renderBar, jokerUsed, sabotage, clearZone, showBotJokers } from './jokerfx.js';
 import { questionTime } from '../game/jokers.js';
 import { debugShot } from './debug.js';
+import { buildPause, showPause } from './pause.js';
+import { clock, sleep, setTimeout, clearTimeout, setInterval, clearInterval } from '../core/clock.js';
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const svgURL = (inner, vb = '0 0 24 24') => `url("data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="${vb}">${inner}</svg>`)}")`;
 const strokeURL = (d, c = '#000', w = 2.8) => svgURL(`<path d="${d}" fill="none" stroke="${c}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round"/>`);
 const fillURL = (d) => svgURL(`<path d="${d}" fill="#000" fill-rule="evenodd"/>`);
@@ -81,7 +82,9 @@ export class UI {
 			<div class="fl-scr off" data-r="menu"></div>
 			<div class="fl-scr off" data-r="cmd"></div>
 			<div class="fl-scr fl-camp off" data-r="camp"></div>
-			<div class="fl-scr fl-end off" data-r="end"></div>`;
+			<div class="fl-scr fl-end off" data-r="end"></div>
+			<button class="fl-pbtn off" data-r="pbtn"></button>
+			<div class="fl-scr fl-pause off" data-r="pause"></div>`;
 		const vars = {
 			'--tw': fillURL(TOWER),
 			'--crown': fillURL(CROWN),
@@ -139,6 +142,7 @@ export class UI {
 			/* yazı tipi API'si yok */
 		}
 		buildTitle(this);
+		buildPause(this);
 	}
 
 	// ---------------------------------------------------------------- yardımcılar
@@ -270,6 +274,7 @@ export class UI {
 		}
 		if (!this.$.title.classList.contains('off') || !this.$.menu.classList.contains('off')) hud.classList.add('off');
 		else hud.classList.remove('off');
+		this.$.pbtn.classList.toggle('off', hud.classList.contains('off') || !!m.over || !!m.aborted || this.fast);
 		for (const p of m.players) {
 			const s = this._pl[p.i];
 			if (!s) continue;
@@ -600,7 +605,7 @@ export class UI {
 		let answerRes;
 		let answered = false;
 		const done = new Promise((r) => (answerRes = r));
-		let t0 = performance.now();
+		let t0 = clock.now();
 		let tapHandler = null;
 		let cur = null;
 		const finish = (val) => {
@@ -610,7 +615,7 @@ export class UI {
 			answerRes(val);
 		};
 		const api = {
-			answer: (value) => finish({ value, time: (performance.now() - t0) / 1000 }),
+			answer: (value) => finish({ value, time: (clock.now() - t0) / 1000 }),
 			onMapTap: (fn) => (tapHandler = fn),
 			showPin: (p) => this.setPins([{ x: p.x, z: p.z, p: human }]),
 		};
@@ -636,7 +641,7 @@ export class UI {
 		await sleep(20);
 		card.classList.add('on');
 		this.sfx('question', { type: q.type, cat: q.cat });
-		t0 = performance.now();
+		t0 = clock.now();
 		showBotJokers(this, ctx.botJokers, gen);
 		// botların "cevapladı" işaretleri
 		const spectate = !human;
@@ -658,7 +663,7 @@ export class UI {
 			let lastS = -1;
 			let hot = false;
 			tick = setInterval(() => {
-				const t = (performance.now() - t0) / 1000;
+				const t = (clock.now() - t0) / 1000;
 				// ekstra süre ve sabotaj: saat Match'te tutulur (ctx.clock.extra), çubuk ve sayaç buna uyar
 				const ex = ctx.clock ? ctx.clock.extra : this._extra;
 				if (ex !== this._extra) {
@@ -850,7 +855,7 @@ export class UI {
 	/** Bekle; kart açıkken dokunulursa (en az 0.8 sn sonra) erken geç. */
 	_hold(ms) {
 		return new Promise((res) => {
-			const t0 = performance.now();
+			const t0 = clock.now();
 			const card = this.$.q;
 			let tm = 0;
 			const end = () => {
@@ -860,7 +865,7 @@ export class UI {
 				res();
 			};
 			const skip = () => {
-				if (performance.now() - t0 > 800) end();
+				if (clock.now() - t0 > 800) end();
 			};
 			tm = setTimeout(end, ms);
 			card.addEventListener('pointerdown', skip);
@@ -1088,7 +1093,7 @@ export class UI {
 	/** Ekstra süre jokeri (hata ayıklama): insan oyuncunun süresine sn ekler. */
 	addTime(sec = 10) {
 		if (!this.current || this.current.answered) return;
-		const el = (performance.now() - this._t0) / 1000;
+		const el = (clock.now() - this._t0) / 1000;
 		this._clockFx(sec);
 		this._extra += sec;
 		this._runBar(el);
@@ -1193,6 +1198,14 @@ export class UI {
 		return ranking;
 	}
 
+	// ---------------------------------------------------------------- duraklatma (çizim: pause.js)
+
+	/** Duraklatma ekranı ve donmuş arayüz (CSS animasyonları durur). App.pause / resume çağırır. */
+	paused(on) {
+		this.el.classList.toggle('paused', on);
+		showPause(this, on);
+	}
+
 	// ---------------------------------------------------------------- sıfırlama ve geliştirme
 
 	/** Açık her şeyi kapat (maçtan çıkış, ekran görüntüsü sahneleri). */
@@ -1224,7 +1237,8 @@ export class UI {
 		for (const mk of this.marks) mk.el.remove();
 		this.marks = [];
 		clearZone(this);
-		for (const k of ['menu', 'cmd', 'end', 'title', 'camp']) $[k].classList.add('off');
+		for (const k of ['menu', 'cmd', 'end', 'title', 'camp', 'pause', 'pbtn', 'hud']) $[k].classList.add('off');
+		this.el.classList.remove('paused');
 		this.app.onTap = null;
 		this.app.onGround = null;
 		this._pickRes = null;

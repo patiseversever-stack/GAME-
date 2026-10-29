@@ -11,6 +11,7 @@
 
 import { css, esc, shuffle, pCorrect, thinkTime, mountChoice, typedWord, clamp, trUp, chips, buzz, isLand, LAND } from './util.js';
 import { ASSETS, drawAsset, drawSilhouette, assetFocus, whenReady } from './assets.js';
+import { clock, setTimeout } from '../core/clock.js';
 
 const CSS = /* css */ `
 .fl-img{display:flex;flex-direction:column;gap:10px}
@@ -81,10 +82,10 @@ export const img = {
 		const root = el.querySelector('.fl-img');
 		const ansEl = el.querySelector('[data-r=ans]');
 		const bonusEl = el.querySelector('.fl-img-bonus');
-		const t0 = performance.now();
+		const t0 = clock.now();
 		let done = false;
 		let alive = true;
-		const fNow = () => clamp((performance.now() - t0) / span, 0, 1);
+		const fNow = () => clamp((clock.now() - t0) / span, 0, 1);
 
 		// ------- tuvaller
 		let canvas = null;
@@ -245,7 +246,7 @@ export const img = {
 					stage.querySelector('.fl-img-tag')?.remove();
 					if (v.mode === 'zoom') {
 						// kalan yakınlaştırmayı hızlıca aç
-						const a = performance.now();
+						const a = clock.now();
 						const s0 = curS;
 						const step = (t) => {
 							const k = clamp((t - a) / 500, 0, 1);

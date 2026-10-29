@@ -8,6 +8,7 @@
 
 import * as THREE from 'three';
 import { esc, ico, avatar, shade } from './art.js';
+import { setTimeout } from '../core/clock.js';
 
 const lumOf = (css) => {
 	const n = parseInt(String(css).slice(1), 16);

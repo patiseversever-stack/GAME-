@@ -31,6 +31,7 @@ import { ensureSystems } from './campaign.js';
 import { targetDiff } from './progress.js';
 import { UIController, BotController, RemoteController, publicView, PROTOCOL } from './net.js';
 import { botLook } from './commanders.js';
+import { setTimeout, clearTimeout } from '../core/clock.js';
 
 export const MODES = {
 	'1v1': { players: 2, teams: null, label: "1'e 1" },
@@ -55,13 +56,36 @@ const EST = { overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 
+/** Maçtan çıkıldı: yarım kalan akış bu hatayla durur (App.startMatch yakalar). */
+export class Abort extends Error {
+	constructor() {
+		super('maçtan çıkıldı');
+		this.name = 'Abort';
+	}
+}
+
+/** Maçtan çıkılınca arayüz ve sinema çağrıları Abort fırlatır; böylece akış bir sonraki adımda kesilir. */
+const guard = (m, o) =>
+	new Proxy(o, {
+		get(t, k) {
+			const v = t[k];
+			if (typeof v !== 'function') return v;
+			return (...a) => {
+				m.check();
+				return v.apply(t, a);
+			};
+		},
+	});
+
 export class Match {
 	/**
 	 * app: harita, kaleler, kamera; ui: arayüz
 	 */
 	constructor(app, ui, cfg) {
 		this.app = app;
-		this.ui = ui;
+		this.aborted = false;
+		this.ui = guard(this, ui);
+		this.cinema = guard(this, app.cinema);
 		this.cfg = cfg;
 		const sys = ensureSystems(app);
 		this.progress = sys.progress;
@@ -192,6 +216,18 @@ export class Match {
 		this.est += sec;
 	}
 
+	/** Maçtan çıkıldıysa akışı kes. */
+	check() {
+		if (this.aborted) throw new Abort();
+	}
+
+	/** Maçtan çık: ilerleme kaydedilmez, yarım kalan akış bir sonraki adımında durur. */
+	abort() {
+		this.aborted = true;
+		this.over = true;
+		if (this.cur) this.cur.closed = true;
+	}
+
 	// ---------------------------------------------------------------- yardımcılar
 
 	owner(i) {
@@ -216,6 +252,7 @@ export class Match {
 
 	/** wave: boya dalgası ortak sınırdan yayılsın (hızlı benzetimde yok). */
 	setOwner(i, p, value, wave = false) {
+		this.check();
 		const pl = p >= 0 ? this.players[p] : null;
 		const o = wave && pl && !this.ui.fast ? this.waveFrom(i, p) : null;
 		this.app.board.setOwner(i, p, pl ? pl.color : null, o?.x, o?.z);
@@ -363,6 +400,7 @@ export class Match {
 		const remoteWait = remote.map((p) => p.ctl.answer(p, { q: pv.q, v: pv, time: T.time, who: who.map((x) => x.i), phase: ctx.phase || '', cat: q.cat, attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1 }, (T.time + 12) * 1000));
 		const res = await this.ui.question(this, { q, v, T, who, bots: cur.bots, human, clock, botJokers: cur.botUses, ...ctx });
 		const ra = await Promise.all(remoteWait);
+		this.check(); // çıkışta kapanan soru sayılmaz (beceri puanına yanlış diye işlenmesin)
 		cur.closed = true;
 		for (const t of cur.timers) clearTimeout(t);
 		cur.timers.length = 0;
@@ -657,13 +695,13 @@ export class Match {
 		for (const i of this.map) this.setOwner(i, -1, 0);
 		this.ui.hud(this);
 		this.refreshJokers();
-		await app.cinema.overview(this.map);
+		await this.cinema.overview(this.map);
 		this.tick(EST.overview);
 		if (this.stageDef) await this.stageIntro();
 		this.phase = 'baskent';
 		this.emit('phase', { phase: this.phase, round: 0 });
 		await this.placeCapitals();
-		await app.cinema.introBadges?.(this.players); // "hangisi benim?": kalelerin üstünde SEN ve bot rozetleri
+		await this.cinema.introBadges?.(this.players); // "hangisi benim?": kalelerin üstünde SEN ve bot rozetleri
 		await this.startBonus();
 		// yayılma: haritada boş il kalmayana kadar
 		this.phase = 'yayilma';
@@ -702,7 +740,7 @@ export class Match {
 		b.clearFx();
 		this.phase = 'bitis';
 		const ranking = this.standings();
-		await app.cinema.overview(this.map);
+		await this.cinema.overview(this.map);
 		this.tick(EST.overview);
 		this.over = true;
 		this.refreshJokers();
@@ -778,7 +816,7 @@ export class Match {
 			k.repair();
 			k.group.visible = true;
 			k.place(b.topAt(i, new app.V3()));
-			await app.cinema.castleDrop(p, i);
+			await this.cinema.castleDrop(p, i);
 			this.tick(EST.castle);
 		}
 		this.rescore();
@@ -795,7 +833,7 @@ export class Match {
 				if (!cand.length) break;
 				const i = cand[Math.floor(this.R() * cand.length)];
 				this.setOwner(i, p.i, VALUE.pick);
-				await this.app.cinema.claim(p, i);
+				await this.cinema.claim(p, i);
 				this.tick(EST.claim);
 			}
 		}
@@ -857,7 +895,7 @@ export class Match {
 		this.tick(p.human ? EST.humanPick : EST.botPick);
 		if (kind === 'free') {
 			this.setOwner(pickI, p.i, VALUE.pick, true);
-			await this.app.cinema.claim(p, pickI);
+			await this.cinema.claim(p, pickI);
 			this.tick(EST.claim);
 		}
 		return pickI;
@@ -908,7 +946,7 @@ export class Match {
 		const app = this.app;
 		this.duels++;
 		this.botShield(d, isCap);
-		await app.cinema.attack(p, d, target, isCap);
+		await this.cinema.attack(p, d, target, isCap);
 		this.tick(EST.attack);
 		// çark: kategori (fetih dilimi: saldıran seçer)
 		let cat = await this.ui.wheel(this, p);
@@ -944,29 +982,29 @@ export class Match {
 			await this.ui.banner('KALKAN!', `${d.name} saldırıyı savuşturdu`, { tone: 'gold', short: true });
 			this.tick(EST.bannerShort);
 			app.fx?.shield?.(target, d);
-			await (app.cinema.shield ? app.cinema.shield(d, target) : app.cinema.defend(d, target));
+			await (this.cinema.shield ? this.cinema.shield(d, target) : this.cinema.defend(d, target));
 			this.tick(EST.defend);
 		} else if (winner === p) {
 			if (isCap) {
 				const left = app.castles[d.i].hit();
 				this.towersLost[d.i]++;
-				await app.cinema.towerDown(p, d, target, left);
+				await this.cinema.towerDown(p, d, target, left);
 				this.tick(EST.tower);
 				if (left <= 0) await this.eliminate(d, p);
 				else this.rescore();
 			} else {
 				const v = (this.value.get(target) || VALUE.pick) + VALUE.conquer;
 				this.setOwner(target, p.i, v, true);
-				await app.cinema.conquer(p, target);
+				await this.cinema.conquer(p, target);
 				this.tick(EST.conquer);
 			}
 		} else if (winner === d) {
 			this.value.set(target, (this.value.get(target) || VALUE.pick) + VALUE.defend);
 			this.rescore();
-			await app.cinema.defend(d, target);
+			await this.cinema.defend(d, target);
 			this.tick(EST.defend);
 		} else {
-			await app.cinema.nobody(target);
+			await this.cinema.nobody(target);
 			this.tick(EST.nobody);
 		}
 		return true;
@@ -987,7 +1025,7 @@ export class Match {
 		for (const i of this.owned(d.i)) this.setOwner(i, by.i, (this.value.get(i) || VALUE.pick) + VALUE.conquer);
 		this.rescore();
 		this.emit('elim', { player: d.i, by: by.i });
-		await app.cinema.eliminated(d, by);
+		await this.cinema.eliminated(d, by);
 		this.tick(EST.elim);
 	}
 

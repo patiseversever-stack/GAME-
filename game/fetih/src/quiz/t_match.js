@@ -4,6 +4,7 @@
 // Sıralama türü 'closest': err = yanlış ya da boş eşleşme sayısı (0..4).
 
 import { css, esc, shuffle, pCorrect, thinkTime, buzz, isLand, LAND } from './util.js';
+import { setTimeout } from '../core/clock.js';
 
 const COLORS = ['#ffd25a', '#5ad1ff', '#ff7ab8', '#9dff7a'];
 

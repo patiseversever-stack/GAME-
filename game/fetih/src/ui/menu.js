@@ -3,8 +3,8 @@
 
 import { MODES } from '../game/match.js';
 import { esc, ico, avatar, bannerSVG, AVATARS, BANNERS, regionMap } from './art.js';
+import { sleep } from '../core/clock.js';
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export const REGION_NAMES = { marmara: 'Marmara', ege: 'Ege', akdeniz: 'Akdeniz', icanadolu: 'İç Anadolu', karadeniz: 'Karadeniz', dogu: 'Doğu Anadolu', guneydogu: 'Güneydoğu', all: 'Tüm Türkiye', random: 'Rastgele' };
 const REGION_ORDER = ['random', 'all', 'marmara', 'ege', 'akdeniz', 'icanadolu', 'karadeniz', 'dogu', 'guneydogu'];
 const BOTS = [

@@ -8,6 +8,7 @@
 // Yanlış cevap 0.6 sn'lik bir kilitlenme getirir (rastgele basarak puan toplanmasın).
 
 import { css, esc, shuffle, pCorrect, clamp, buzz, chips, LAND } from './util.js';
+import { setTimeout } from '../core/clock.js';
 
 const CSS = /* css */ `
 .fl-bz{display:flex;flex-direction:column;gap:10px}

@@ -10,8 +10,8 @@ import { TYPES } from '../quiz/types.js';
 import { QUESTIONS } from '../data/questions.js';
 import { showCommander } from './menu.js';
 import { duelIntro } from './duel.js';
+import { sleep, setTimeout } from '../core/clock.js';
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function setup(ui, cfg = {}, { partial = false } = {}) {
 	const app = ui.app;

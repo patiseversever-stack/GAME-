@@ -5,8 +5,8 @@
 import { esc, ico, avatar } from './art.js';
 import { levelOf } from '../game/progress.js';
 import { STAR_RULES, REGION_NAMES } from '../game/campaign.js';
+import { sleep, setTimeout } from '../core/clock.js';
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const fmt = (n) => Math.round(n).toLocaleString('tr-TR');
 const STAR = 'M12 2.8l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.4l-5.4 2.9 1.2-6L3.3 9.1l6.1-.7z';
 

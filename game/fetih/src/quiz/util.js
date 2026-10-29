@@ -1,7 +1,7 @@
 // Soru tipleri için ortak yardımcılar: rastgelelik, kaçış, CSS enjeksiyonu,
 // Türkçe ekran klavyesi ve çoktan seçmeli gövde (choice, emoji, odd, proverb, riddle, img paylaşır).
 
-export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+export { sleep } from '../core/clock.js';
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 export const clamp = (x, a, b) => Math.max(a, Math.min(b, x));
 export const trUp = (s) => String(s).toLocaleUpperCase('tr-TR');

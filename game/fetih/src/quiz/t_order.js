@@ -5,6 +5,7 @@
 // Sıralama türü 'closest': err = ters çevrilmiş çift sayısı (0..6); 0 = tam doğru.
 
 import { css, esc, shuffle, pCorrect, gauss, thinkTime, clamp, buzz, fmtNum, isLand, LAND } from './util.js';
+import { setTimeout } from '../core/clock.js';
 
 // satır yüksekliği ve adım (px): dikey telefon / yatay (kısa ekran) / yatayda cevap açılınca
 const GEO = { port: { row: 52, pitch: 60 }, land: { row: 40, pitch: 45 }, cmp: { row: 28, pitch: 33 } };

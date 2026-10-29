@@ -123,8 +123,13 @@ Test: `node tools/flow.mjs ÇIKTI [--only=a,b --seq --q --dpr]` gerçek maçı o
 Kalan zayıflar: kuşatma yakın çekiminde kadrajın çoğu hâlâ aydınlık; yan bulut tutamları q2'de baloncuk gibi; şafak karesi gri-düz;
 kıyı illerinin kalkık yamaçları fetihte parlak.
 
-**Sıradaki (kullanıcının listesi):** ses yaması (`wip/ses.patch`, temiz uygulanır), maçtan çık + duraklat ekranları,
+**Sıradaki (kullanıcının listesi):** ses yaması (`wip/ses.patch`, temiz uygulanır),
 mağaza ekranı, 1'e 1'de ilk oyuncu avantajı (%55–65) ve puan eşitliği kuralı.
+
+**Yapıldı: duraklat ve maçtan çık.** Sağ üstte duraklat düğmesi (masaüstünde Esc); sekme arka plana geçince maç
+kendiliğinden duraklar. Duraklatınca oyun saati (`src/core/clock.js`: arayüz, sinema ve soru tiplerinin bütün
+zamanlayıcıları), çizim döngüsü, CSS animasyonları ve ses durur. "Maçtan Çık" onay ister; ilerleme kaydedilmez,
+`Match.abort()` sonrası arayüz ve sinema çağrıları `Abort` fırlatır, böylece yarım kalan akış bir sonraki adımda kesilir.
 
 
 > "Rezalet, istediğimle alakası yok. Gündönümü'ndeki karartma böyle. Sinematiklik yok."

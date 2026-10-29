@@ -3,8 +3,8 @@
 
 import { CATS } from '../quiz/categories.js';
 import { esc, ico, shade, avatar, bannerSVG } from './art.js';
+import { clock, sleep, setTimeout, clearTimeout } from '../core/clock.js';
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function duelIntro(ui, ctx) {
 	const { attacker: a, defender: d, target, T, q } = ctx;
@@ -46,9 +46,9 @@ export async function duelIntro(ui, ctx) {
 	ui.sfx('whoosh');
 	let skip = null;
 	const skipped = new Promise((r) => (skip = r));
-	const t0 = performance.now();
+	const t0 = clock.now();
 	el.onpointerdown = () => {
-		if (performance.now() - t0 > 450) skip();
+		if (clock.now() - t0 > 450) skip();
 	};
 	const clash = setTimeout(() => {
 		ui.sfx('vs');

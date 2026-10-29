@@ -71,6 +71,11 @@ export const ICONS = {
 	arrow: 'M5 12h14M13 6l6 6-6 6',
 	back: 'M19 12H5M11 6l-6 6 6 6',
 	skull: 'M12 3a8 8 0 0 0-5 14.2V20h10v-2.8A8 8 0 0 0 12 3zM9 11.5h.1M15 11.5h.1M10 20v-2M14 20v-2',
+	pause: 'M8.5 5v14M15.5 5v14',
+	play: 'M7.5 4.8v14.4L19 12z',
+	sound: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM15.5 9a4.2 4.2 0 0 1 0 6M18.2 6.5a7.8 7.8 0 0 1 0 11',
+	mute: 'M4 9.5h3.5L12 5.5v13l-4.5-4H4zM16 9.5l5 5M21 9.5l-5 5',
+	exit: 'M10 4H5v16h5M14.5 8l4 4-4 4M18.5 12H9',
 };
 
 /** Çizgi simgesi. o: koyu dış hat kalınlığı (0: yok). */

@@ -10,8 +10,8 @@
 import { ico, esc, shade } from './art.js';
 import { Fx } from './fx.js';
 import { JOKERS } from '../game/jokers.js';
+import { sleep, setTimeout } from '../core/clock.js';
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const trUp = (s) => String(s).toLocaleUpperCase('tr-TR');
 const yearish = (q, v) => !q.unit && Number.isInteger(v) && v >= 500 && v <= 2100;
 

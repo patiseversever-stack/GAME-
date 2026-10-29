@@ -19,11 +19,12 @@ import { MapCamera } from './game/camera.js';
 import { COMMON, LIGHT, FINISH } from './gfx/shaderlib.js';
 import { Cinema } from './game/cinema.js';
 import { FX } from './gfx/fx.js';
-import { Match } from './game/match.js';
+import { Match, Abort } from './game/match.js';
 import { ensureSystems } from './game/campaign.js';
 import { UI } from './ui/ui.js';
 import { Sfx } from './audio/sfx.js';
 import { NightLights } from './gfx/nightlights.js';
+import { clock } from './core/clock.js';
 
 const SKY_VS = /* glsl */ `
 varying vec3 vD;
@@ -152,6 +153,7 @@ export class App {
 		window.addEventListener('resize', this._onResize);
 		this._onVis = () => {
 			this.visible = document.visibilityState === 'visible';
+			if (!this.visible) this.pause(); // arka plana geçen maç duraklar; dönünce oyuncu "Devam" der
 			if (this.visible && this.running) {
 				this.gov.reset();
 				this._prev = 0;
@@ -345,8 +347,59 @@ export class App {
 		this.match = m;
 		this.board.setActive?.(m.map.length < this.board.count ? m.map : null);
 		this.board.showLabels?.('all'); // akıllı adlar: yakınlaştıkça önem sırasıyla, çakışmasız
-		await m.run();
+		try {
+			await m.run();
+		} catch (e) {
+			if (!(e instanceof Abort)) throw e;
+		}
+		if (this.match === m) this.lowFps = true;
+	}
+
+	// ---------------------------------------------------------------- duraklat ve çık
+
+	/** Sürmekte olan (insanın oynadığı) maç var mı. */
+	get inMatch() {
+		const m = this.match;
+		return !!m && !m.over && !m.aborted && !!m.humanPlayer && !this.ui.fast;
+	}
+
+	/** Maçı duraklat: oyun saati, çizim, ses durur; duraklatma ekranı açılır. Dönüş: duraklatıldı mı. */
+	pause() {
+		if (!this.inMatch || clock.paused) return false;
+		clock.pause();
+		this.stop();
+		this.sfx.pause?.();
+		this.ui.paused(true);
+		return true;
+	}
+
+	resume() {
+		if (!clock.paused) return;
+		this.ui.paused(false);
+		clock.resume();
+		this.sfx.resume?.();
+		this.gov.reset();
+		this.start();
+	}
+
+	/** Maçtan çık: ilerleme kaydedilmez; harita temizlenir, başlık ekranına dönülür. */
+	exitMatch() {
+		const m = this.match;
+		if (!m) return;
+		m.abort();
+		clock.drop(); // yarım kalan akışın beklemeleri bir daha uyanmaz
+		this.resume();
+		this.ui.reset();
+		this.resetBoard();
+		this.board.select?.(null);
+		this.board.night?.(false, null, { hold: 0 });
+		this.nightLights.focus?.(null);
+		this.match = null;
+		this.game = null;
 		this.lowFps = true;
+		this.cam.setLimit?.(null);
+		this.cam.fit(this.boundsOf(this.board.provinces.map((p) => p.index)), { pitch: 0.98 });
+		this.ui.title(true);
 	}
 
 	// ---------------------------------------------------------------- geliştirme yardımcıları

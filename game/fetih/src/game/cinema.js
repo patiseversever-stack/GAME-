@@ -16,8 +16,8 @@
 //   victory(m)               kazananın kalesi çevresinde yörünge, havai fişek, konfeti
 
 import * as THREE from 'three';
+import { clock, sleep, setTimeout, clearTimeout } from '../core/clock.js';
 
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 const wrapPi = (a) => a - Math.PI * 2 * Math.round(a / (Math.PI * 2));
 const _v = new THREE.Vector3();
@@ -39,7 +39,7 @@ export class Cinema {
 		app.container?.addEventListener(
 			'pointerdown',
 			() => {
-				if (this._skip && performance.now() - this._t0 > 160) this._skip();
+				if (this._skip && !clock.paused && clock.now() - this._t0 > 160) this._skip(); // duraklatma ekranına dokunuş atlatmaz
 			},
 			true,
 		);
@@ -194,7 +194,7 @@ export class Cinema {
 			};
 			const id = setTimeout(done, ms);
 			this._skip = done;
-			this._t0 = performance.now();
+			this._t0 = clock.now();
 		});
 	}
 

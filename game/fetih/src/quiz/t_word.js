@@ -2,6 +2,7 @@
 
 import { css, esc, shuffle, pCorrect, thinkTime, buzz, clamp, trUp, keyboard, physicalKeys, chips, isLand, LAND } from './util.js';
 import { layout } from './crossgen.js';
+import { setTimeout } from '../core/clock.js';
 
 const CSS = /* css */ `
 /* anagram */

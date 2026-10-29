@@ -6,11 +6,11 @@
 
 import { CATS, WHEEL, FETIH_SLICE } from '../quiz/categories.js';
 import { esc, ico, shade, avatar, SPARK } from './art.js';
+import { clock, sleep, setTimeout, clearTimeout } from '../core/clock.js';
 
 const C = 160;
 const R = 137;
 const SHORT = { tarih: 'TARİH', cografya: 'COĞRAFYA', spor: 'SPOR', fetih: 'FETİH!', bilim: 'BİLİM', sanat: 'SANAT', eglence: 'KÜLTÜR' };
-const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const pt = (a, r) => {
 	const t = (a * Math.PI) / 180;
 	return [C + r * Math.sin(t), C - r * Math.cos(t)];
@@ -225,9 +225,9 @@ export class WheelView {
 		let lastC = Math.floor(from / S);
 		let lastT = 0;
 		let prevTh = from;
-		let prevNow = performance.now();
+		let prevNow = clock.now();
 		const onFrame = (th) => {
-			const now = performance.now();
+			const now = clock.now();
 			const dt = Math.max(1e-3, (now - prevNow) / 1000);
 			const speed = Math.abs(th - prevTh) / dt;
 			prevTh = th;

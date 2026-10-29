@@ -2,6 +2,7 @@
 // Hepsi 'exact' türünde: bildi / bilemedi; eşitlikte hızlı olan kazanır.
 
 import { css, esc, shuffle, pCorrect, thinkTime, mountChoice, buzz, fmtNum, clamp } from './util.js';
+import { clock, setTimeout } from '../core/clock.js';
 
 const CSS = /* css */ `
 /* hilo */
@@ -97,7 +98,7 @@ export const hilo = {
 				api.answer(Number(b.dataset.i));
 			});
 		const countUp = (node, to, dur = 900) => {
-			const t0 = performance.now();
+			const t0 = clock.now();
 			const step = (t) => {
 				if (!node.isConnected) return;
 				const k = Math.min(1, (t - t0) / dur);

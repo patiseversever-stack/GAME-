@@ -2,6 +2,8 @@
 // Parçacıklar kısa ömürlü DOM öğeleridir; yalnızca transform ve opacity canlandırılır.
 // Kademe 0'da (düşük cihaz) ve "azaltılmış hareket" açıkken sayı yarıya iner ya da hiç çıkmaz.
 
+import { clock, setTimeout } from '../core/clock.js';
+
 const PALETTE = ['#ffd25a', '#ffffff', '#ff7a5a', '#7dff9a', '#6ac8ff'];
 
 export class Fx {
@@ -11,7 +13,7 @@ export class Fx {
 		this.rm = !!opts.rm;
 		this._tw = [];
 		this._raf = 0;
-		this._step = (now) => this._run(now);
+		this._step = () => this._run(clock.now()); // oyun saati: duraklatınca ara değerler de durur
 	}
 
 	_n(n) {
@@ -101,7 +103,7 @@ export class Fx {
 
 	/** ms boyunca fn(t: 0..1) çağırır; done sonunda. Yalnızca etkin ara değer varken kare ister. */
 	tween(ms, fn, done) {
-		const t = { t0: performance.now(), ms: Math.max(1, ms), fn, done };
+		const t = { t0: clock.now(), ms: Math.max(1, ms), fn, done };
 		this._tw.push(t);
 		if (!this._raf) this._raf = requestAnimationFrame(this._step);
 		return t;

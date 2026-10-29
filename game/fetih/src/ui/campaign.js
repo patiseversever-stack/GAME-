@@ -5,6 +5,7 @@ import { esc, ico, avatar, regionMap } from './art.js';
 import { MODES } from '../game/match.js';
 import { STAR_RULES, REGION_ORDER } from '../game/campaign.js';
 import { ALL_ITEMS, botLook } from '../game/commanders.js';
+import { setTimeout } from '../core/clock.js';
 
 const COLORS = { ege: '#2fb6a5', marmara: '#e8693a', akdeniz: '#f2a51a', icanadolu: '#c98a3c', karadeniz: '#33b86b', guneydogu: '#d8503f', dogu: '#7a8fe8', all: '#ffd25a' };
 const STAR = 'M12 2.8l2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.4l-5.4 2.9 1.2-6L3.3 9.1l6.1-.7z';
