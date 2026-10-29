@@ -125,3 +125,30 @@ Ortak alanlar: `{ id, cat, diff: 1|2|3, type, q }`.
 - **Benzetim:** `{call:'debugSim', args:[{mode, region, length}]}` botlarla maçı baştan sona oynatır.
 - Sık sık commit (küçük ara commitler serbest, Türkçe mesaj). Oturum sınırı gelirse iş kaybolmasın.
 - **Son rapor:** ne değişti, dosyalar, yeni API'ler, başka alana dokunulan satırlar, `app.stats()` (q=0 ve q=2), ekran görüntüsü yolları.
+
+## v0.4 okunurluk sözleşmesi (kim, nereden, kime)
+
+Kullanıcı: "saldıracak mı, hangisi saldıracak, hangisi benim? Çok fosforlu, tüm haritada netlik sorunu var."
+Kural: gece odağında (seçim, bot seçimi, saldırı, düello, fetih) bir yeni oyuncu bir saniyede **kendi toprağını,
+saldırabileceği illeri ve her ilin sahibini** okuyabilmeli. Altın ışıma, hale ve bloom yok.
+
+- **Toprak (board.js shader):** `uMe` (insan) ve `uAct` (sırası gelen oyuncu) kendi renginde aydınlık ve 3,3 px
+  dış çizgili; başkalarının toprağı sönük ama renkli (kahverengi leke yok). Tüm il sınırlarında soluk kıl çizgi,
+  kıyıda ince çizgi (kara-deniz ayrışır). `board.select(list, {attack, me, act})` hepsini ayarlar.
+- **Hedef il:** hafif kalkar (`SEL_LIFT` 0,26), gündüz ışığında (yumuşatılmış güneş) kalır; sahipliyse sahibinin
+  rengi, tarafsızsa nötr krem; temiz beyaz dış hat + ince koyu iç/dış kıl çizgi + yumuşak nabız. Duvar gölgede,
+  üst kenarda beyaz çizgi.
+- **Oklar (`src/map/cues.js`):** `board.cues.show(hedefler, oyuncu, {attack})`: oyuncunun renginde, beyaz kenarlı,
+  koyu dış çizgili, kalın; kendi toprağından (çıkış noktası yuvarlağıyla) hedefe. `cues.tails/tips/main` etiket
+  ve kadraj için okların uçlarını verir. `board.ownerHex[oyuncu]` sahip rengini tutar.
+- **Etiketler ve rozet (`src/ui/tags.js`, HTML, ekran uzayı):** `ui.tagsOn(specs, {badges, tap})`, `ui.tagsOff()`,
+  `ui.tagSpecs(m, liste, tür, roller)`, `ui.homeBadges(m, oyuncu, hedefler)`. İl adı plakası + sahip şeridi
+  (portre + ad, oyuncunun renginde; insan "SEN"), saldırı hedefinde çapraz kılıç, tarafsız ilde sahip yok.
+  Rozet: oyuncunun portresi + "SEN" (botta adı), okların çıktığı yerde. 3B il adları bu sırada susar
+  (`board.labelLayer.suspend(true)`). Çakışma ekranda giderilir, ok uçları açık kalır, ekran ve arayüze taşmaz.
+- **Düello:** saldıranın ilinden hedefe saldıranın renginde ok; iki ilde etiket (SALDIRAN / SAVUNAN ya da KALE).
+- **Bulanıklık:** `post.focus(y, 1 - gece)` her karede: gündüz kenarda en çok ~2,4 css px; gece odağında 0 →
+  tilt-shift geçişi hiç çalışmaz (q≥1'de de gecede tam ekran geçiş yok), bloom kaldırıldı.
+- **Perf:** çizim çağrısı ve üçgen sayısı değişmedi (q0 ≈ 113k, q2 ≈ 172–182k üçgen; 11–17 çağrı); etiketler HTML,
+  kare başına yalnızca transform yazılır; shader'lar açılışta derlenir.
+- **Test:** `node tools/flow.mjs ÇIKTI --seed=3 [--dpr=2 --q=2 --only=…]` (yeni kare: `d3_soru`, soru kartı açıkken).

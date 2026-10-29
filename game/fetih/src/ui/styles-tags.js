@@ -14,6 +14,7 @@ export const CSS_TAGS = /* css */ `
 .fl-tag.on .in{opacity:1;transform:none}
 .fl-tag.bye .in{opacity:0;transform:translateY(-6px) scale(.9);transition:opacity .2s,transform .2s}
 .fl-tag.far .in{opacity:0}
+.fl-ui .fl-tag.tp:active .in{transform:scale(.93);transition-duration:.08s}
 .fl-tag.nudge .in{animation:flTagNudge .45s}
 @keyframes flTagNudge{0%,100%{transform:none}35%{transform:scale(1.14)}65%{transform:scale(.97)}}
 
@@ -57,6 +58,8 @@ export const CSS_TAGS = /* css */ `
 .fl-tag.bd .bn .fl-av{position:absolute;left:-8px;top:50%;width:42px;height:42px;margin-top:-21px;border-radius:50%;border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.45)}
 .fl-tag.bd.me .bn{padding-right:17px}
 .fl-tag.bd s{border-top-color:#fff;margin-top:1px}
+.fl-tag.bd.pu s{order:-1;margin:0 0 1px;border-top:0;border-bottom:8px solid #fff}
+.fl-tag.bd.ps s{display:none}
 @keyframes flBadgeBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-3px)}}
 
 @media (orientation:landscape) and (max-height:560px){

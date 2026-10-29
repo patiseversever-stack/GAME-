@@ -38,6 +38,8 @@ export class Tags {
 		this.right = 400;
 		this._rects = [];
 		this._n = 0;
+		this._na = 0;
+		this._pts = null;
 	}
 
 	get count() {
@@ -58,6 +60,8 @@ export class Tags {
 			if (!it) {
 				it = make();
 				it.key = key;
+				// sırayla belirir (yelpaze gibi; yalnızca opacity/transform geçişi)
+				it.inner.style.transitionDelay = Math.min(list.length, 8) * 40 + 'ms';
 				this.el.appendChild(it.el);
 				const el = it.el;
 				// bir sonraki karede belirir (geçiş çalışsın)
@@ -73,6 +77,7 @@ export class Tags {
 		for (const [k, it] of this.map) {
 			if (next.has(k)) continue;
 			const el = it.el;
+			it.inner.style.transitionDelay = '0ms';
 			el.classList.add('bye');
 			el.classList.remove('on');
 			setTimeout(() => el.remove(), 260);
@@ -145,6 +150,84 @@ export class Tags {
 		this.right = W - 8;
 	}
 
+	/** Okların ekrandaki örnek noktaları (kuyruktan uca, kareler arası çizgi boyunca). */
+	_arrowPoints(cues) {
+		const app = this.ui.app;
+		const v = this._v;
+		const s = this._s;
+		const pts = this._pts || (this._pts = new Float32Array(28 * 14 * 2));
+		let n = 0;
+		for (const g of cues.segs) {
+			v.set(g.tx, g.ty, g.tz);
+			app.toScreen(v, s);
+			const ax = s.x;
+			const ay = s.y;
+			v.set(g.ex, g.ey, g.ez);
+			app.toScreen(v, s);
+			for (let k = 0; k < 14 && n < 28 * 14; k++) {
+				const u = k / 13;
+				pts[n * 2] = ax + (s.x - ax) * u;
+				pts[n * 2 + 1] = ay + (s.y - ay) * u;
+				n++;
+			}
+		}
+		this._na = n;
+	}
+
+	/**
+	 * Rozet: okların çıktığı noktanın üstünde, okları örtmüyorsa; örtüyorsa altında ya da yanında
+	 * (en az ok noktasını örten aday; önceki seçime hafif ağırlık: kamera kayarken titremesin).
+	 */
+	_placeBadge(it, w, h) {
+		const px = it.px;
+		const py = it.py;
+		const pts = this._pts;
+		const n = this._na;
+		const cand = [
+			[0, -3 - h / 2, 0, ''],
+			[0, 12 + h / 2, 0.3, 'pu'],
+			[-w * 0.42, -3 - h / 2, 0.15, ''],
+			[w * 0.42, -3 - h / 2, 0.15, ''],
+			[-w * 0.42, 12 + h / 2, 0.45, 'pu'],
+			[w * 0.42, 12 + h / 2, 0.45, 'pu'],
+			[-(w / 2 + 14), 0, 0.6, 'ps'],
+			[w / 2 + 14, 0, 0.6, 'ps'],
+		];
+		let best = 0;
+		let bs = Infinity;
+		for (let c = 0; c < cand.length; c++) {
+			const cx = Math.min(this.right - w / 2, Math.max(this.left + w / 2, px + cand[c][0]));
+			const cy = py + cand[c][1];
+			const x0 = cx - w / 2 - 6;
+			const x1 = cx + w / 2 + 6;
+			const y0 = cy - h / 2 - 6;
+			const y1 = cy + h / 2 + 6;
+			let sc = cand[c][2] + (c === it.slot ? -0.6 : 0);
+			for (let k = 0; k < n; k++) {
+				const X = this._pts[k * 2];
+				const Y = this._pts[k * 2 + 1];
+				if (X > x0 && X < x1 && Y > y0 && Y < y1) sc += 1;
+			}
+			// üst ve alt sınır: arayüze taşmasın
+			if (y0 < this.top) sc += (this.top - y0) / 8;
+			if (y1 > this.bot) sc += (y1 - this.bot) / 8;
+			if (sc < bs) {
+				bs = sc;
+				best = c;
+			}
+		}
+		void pts;
+		it.slot = best;
+		const c = cand[best];
+		it.cx = px + c[0];
+		it.cy = py + c[1];
+		if (it.pose !== c[3]) {
+			it.pose = c[3];
+			it.el.classList.toggle('pu', c[3] === 'pu');
+			it.el.classList.toggle('ps', c[3] === 'ps');
+		}
+	}
+
 	update() {
 		const items = this.items;
 		if (!items.length) return;
@@ -158,6 +241,8 @@ export class Tags {
 		const s = this._s;
 		// 1) ekrana izdüşüm: etiket ilin üstünde ortalı (cx, cy merkez); rozet okların çıktığı yerin/kalenin tepesinde
 		const cues = b.cues?.on ? b.cues : null;
+		this._na = 0; // ok örnek noktaları (rozet yerleşimi için), gerektiğinde bir kez hesaplanır
+		let arrowsDone = false;
 		const P = app.camera.projectionMatrix.elements;
 		// yazı tipi geç yüklenirse (Türkçe harf eki) ölçüler bir süre yenilenir
 		const remeasure = (this._n = (this._n + 1) % 20) === 0;
@@ -184,6 +269,10 @@ export class Tags {
 			it.px = s.x;
 			it.py = s.y;
 			it.far = s.behind;
+			if (it.kind === 'badge' && it.tail && cues && !arrowsDone) {
+				arrowsDone = true;
+				this._arrowPoints(cues);
+			}
 			// yakınlaştıkça büyür: küçük il üstünde dev etiket olmasın (0,74 .. 1)
 			if (lift) {
 				const cw = Math.max(1e-3, app.camera.matrixWorldInverse.elements[2] * v.x + app.camera.matrixWorldInverse.elements[6] * v.y + app.camera.matrixWorldInverse.elements[10] * v.z + app.camera.matrixWorldInverse.elements[14]);
@@ -194,6 +283,7 @@ export class Tags {
 			const h = it.h * it.sc;
 			it.cx = s.x;
 			it.cy = it.kind === 'badge' ? s.y - 3 - h / 2 : s.y - 4 + (h - 26 * it.sc) / 2 - 2; // etiketin plakası ilin merkezinde
+			if (it.kind === 'badge' && it.tail && this._na) this._placeBadge(it, w, h);
 			// ok ucu varsa etiket ucun ötesinde durur (ok etiketin altında kalmasın): ok yönünde kay
 			const tp = lift && cues ? cues.tips.get(it.i) : null;
 			if (tp) {

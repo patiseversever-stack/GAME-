@@ -40,7 +40,7 @@ float gOwn = 0.0;
 // Aydınlık (seçilebilir) iller ekrandaki tek parlak ve renkli şey olsun; gece manzarası yalnızca ince
 // ay kabartması ve birkaç sıcak şehir ışığıyla okunur. Ay kuzeybatıda, yüksekte.
 const vec3 N_MOON = vec3(-0.3498, 0.7795, -0.5197);
-const vec3 N_MOONC = vec3(0.2, 0.28, 0.5);
+const vec3 N_MOONC = vec3(0.187, 0.26, 0.46);
 const vec3 N_SKY = vec3(0.022, 0.035, 0.085);
 const vec3 N_GND = vec3(0.005, 0.006, 0.012);
 const vec3 N_RIM = vec3(0.16, 0.22, 0.38);

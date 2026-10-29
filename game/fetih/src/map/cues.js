@@ -200,6 +200,7 @@ export class Cues {
 		this.tails = new Map(); // kaynak il → {x, y, z (okların çıkış noktası, ortalama), n (ok sayısı)}
 		this.tips = new Map(); // hedef il → {x, y, z (ok ucu), bx, by, bz (okun ucundan biraz önceki noktası)}
 		this.main = -1; // en çok ok çıkan kaynak il
+		this.segs = []; // her okun dünya uçları {tx,ty,tz, ex,ey,ez}: rozet okları örtmesin diye
 		this._a = new THREE.Vector3();
 		this._b = new THREE.Vector3();
 		this._key = '';
@@ -222,6 +223,7 @@ export class Cues {
 		this.sources.length = 0;
 		this.tails.clear();
 		this.tips.clear();
+		this.segs.length = 0;
 		this.main = -1;
 		const hex = B.ownerHex?.[me];
 		const col = hex != null ? [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255] : [1, 0.82, 0.3];
@@ -248,6 +250,7 @@ export class Cues {
 				const r = this._arrow(nA++, src, t, ord++, col);
 				if (!this.sources.includes(src)) this.sources.push(src);
 				this.tips.set(t, r.tip);
+				this.segs.push({ tx: r.tail.x, ty: r.tail.y, tz: r.tail.z, ex: r.tip.x, ey: r.tip.y, ez: r.tip.z });
 				const tl = this.tails.get(src) || { x: 0, y: 0, z: 0, n: 0 };
 				tl.x += r.tail.x;
 				tl.y += r.tail.y;
