@@ -1,20 +1,20 @@
-// Savaş ve kutlama efektleri: ordu yürüyüşü, mancınık, ateşli oklar, kule enkazı, toz, fetih patlaması,
-// sancak, kalkan, kale çöküşü, havai fişek ve konfeti.
+// Savaş ve kutlama efektleri: ordular ve kuşatma makineleri (battle.js), ateşli oklar, mancınık taşı,
+// kule enkazı, toz, fetih patlaması, sancak, kalkan, kale çöküşü, havai fişek ve konfeti.
 //
 // Çizim çağrısı bütçesi (yalnızca o an kullanılan görünür; boşta hiç çağrı yok):
-//   1 asker      : örneklenmiş (instanced) minik askerler, her dördüncüsü sancaktar; sahip renginde
-//   2 makine     : mancınıklar ve fetih sancakları (aynı malzeme, ayrı geometri)
-//   3 sancak     : fetihte yerden yükselen büyük sancak
-//   4 taş        : örneklenmiş taş parçaları (mancınık taşı, kule enkazı, çöküş)
-//   5 parçacık   : tek örneklenmiş dörtgen sistemi; ışıltı, kıvılcım, duman, alev, konfeti, iz
+//   1-3 savaş    : yaya askerler, atlılar, makineler (battle.js; her biri örneklenmiş, gölgeli)
+//   4 sancak     : fetihte yerden yükselen büyük sancak
+//   5 taş        : örneklenmiş taş parçaları (mancınık taşı, kule enkazı, çöküş)
+//   6 parçacık   : tek örneklenmiş dörtgen sistemi; ışıltı, kıvılcım, duman, alev, konfeti, iz
 //                  (önçarpımlı karışım: aynı çağrıda toplamalı ve normal karışım birlikte)
-//   6 dalga      : yere yayılan halka, kalkan kubbesi, ışık sütunu
-// En çok 6 çağrı. Bütün malzemeler açılışta kurulur ve ilk derlemede sahnede görünürdür; havuzlar
-// sabit boyutlu, kare başına nesne üretilmez (geçici vektörler önceden ayrılmış).
+//   7 dalga      : yere yayılan halka, kalkan kubbesi, ışık sütunu
+// En çok 7 çağrı (+ savaşta 3 gölge çağrısı). Bütün malzemeler açılışta kurulur ve ilk derlemede sahnede
+// görünürdür; havuzlar sabit boyutlu, kare başına nesne üretilmez (geçici vektörler önceden ayrılmış).
 
 import * as THREE from 'three';
 import { COMMON, LIGHT, FINISH } from './shaderlib.js';
 import { Kit } from './kit.js';
+import { Battle } from './battle.js';
 
 const _v = new THREE.Vector3();
 const _w = new THREE.Vector3();
@@ -36,7 +36,7 @@ ${COMMON}
 attribute vec3 color;
 attribute float tag;
 attribute float anim;
-attribute vec4 iVar; // x evre, y yürüyüş (0..1), z mancınık kolu açısı, w görünürlük (eriyerek kaybolur)
+attribute vec4 iVar; // x evre, y salınım (0..1), z kullanılmıyor, w görünürlük (eriyerek kaybolur)
 varying vec3 vW;
 varying vec3 vN;
 varying vec3 vC;
@@ -47,34 +47,12 @@ void main() {
 	vec3 n = normal;
 	float ph = iVar.x;
 	float walk = iVar.y;
-	float cyc = uTime * 12.0 + ph;
-	if (tag > 0.5 && tag < 2.5) {
-		// bacaklar: kalçadan salınır
-		float sgn = tag < 1.5 ? 1.0 : -1.0;
-		float k = clamp((0.13 - p.y) / 0.13, 0.0, 1.0);
-		p.z += sin(cyc) * sgn * 0.055 * walk * k;
-	}
-	if (tag < 3.5) {
-		// gövde hoplar; dururken hafif nefes
-		p.y += abs(sin(cyc)) * 0.018 * walk + sin(uTime * 2.0 + ph) * 0.004 * (1.0 - walk) * step(0.13, p.y);
-	}
 	if (anim > 0.0) {
-		// bez dalgalanır (direkten uzaklaştıkça), yürürken daha çok
+		// bez dalgalanır (direkten uzaklaştıkça)
 		float a = anim * (0.6 + 0.4 * walk);
-		p.x += sin(p.z * 9.0 - uTime * 9.0 + ph) * 0.06 * a * (tag > 5.5 ? 2.2 : 1.0);
+		p.x += sin(p.z * 9.0 - uTime * 9.0 + ph) * 0.06 * a * 2.2;
 		p.y += sin(p.z * 6.0 - uTime * 6.0 + ph) * 0.015 * a;
 	}
-	if (tag > 4.5 && tag < 5.5) {
-		// mancınık kolu: mil çevresinde döner
-		vec3 pv = vec3(0.0, 0.2, 0.02);
-		vec3 l = p - pv;
-		float c = cos(iVar.z);
-		float s = sin(iVar.z);
-		p = pv + vec3(l.x, c * l.y - s * l.z, s * l.y + c * l.z);
-		n = vec3(n.x, c * n.y - s * n.z, s * n.y + c * n.z);
-	}
-	// sancak parçaları (tag 3) yalnızca sancaktarda: diğer askerlerde tek noktaya büzülür
-	if (tag > 2.5 && tag < 3.5 && iVar.z < 0.5) p = vec3(0.0, 0.1, 0.0);
 	vec4 w = modelMatrix * instanceMatrix * vec4(p, 1.0);
 	vW = w.xyz;
 	vN = normalize(mat3(modelMatrix) * mat3(instanceMatrix) * n);
@@ -105,7 +83,7 @@ void main() {
 		gloss = 0.3;
 	}
 	vec3 V = normalize(cameraPosition - vW);
-	gLit = 0.85; // ordu sahnenin odağı: gecede de seçilir
+	gLit = 0.85; // sancak sahnenin odağı: gecede de seçilir
 	vec3 c = shade(alb, N, V, 1.0, 1.0, gloss, 0.9);
 	c = applyFog(c, vW);
 	gl_FragColor = finish(c, 1.0);
@@ -126,77 +104,6 @@ function cloth(kit, W, H, x0, y0, segs = 5) {
 	const start = kit.count;
 	kit.add(g);
 	for (let i = start; i < kit.count; i++) kit.anim[i] = Math.max(0.001, -kit.pos[i * 3 + 2] / W);
-}
-
-function soldierGeo(lo) {
-	const k = new Kit();
-	k.seg = lo ? 0.75 : 1;
-	// bacaklar
-	k.setTag(1).color('#4a3424').box(0.034, 0.13, 0.04, -0.026, 0, 0);
-	k.setTag(2).color('#4a3424').box(0.034, 0.13, 0.04, 0.026, 0, 0);
-	// gövde: sahip renginde kaftan, altın kemer
-	k.setTag(0);
-	OWN(k, 1).cyl(0.045, 0.07, 0.14, 6, 0, 0.11, 0);
-	k.color('#e8b64a').cyl(0.052, 0.054, 0.018, 6, 0, 0.17, 0);
-	OWN(k, 0.8).cyl(0.03, 0.05, 0.05, 6, 0, 0.2, 0);
-	// baş ve sivri miğfer
-	k.color('#efc39a').sphere(0.038, 6, 0, 0.27, 0);
-	k.color('#cfd6de').cone(0.044, 0.075, 6, 0, 0.285, 0);
-	// kalkan (sol), mızrak (sağ)
-	k.push().move(-0.07, 0.16, 0.01).rot(0, 0, Math.PI / 2);
-	OWN(k, 0.75).cyl(0.055, 0.055, 0.016, 7);
-	k.color('#f2c14e').cyl(0.018, 0.018, 0.02, 4, 0, -0.002, 0);
-	k.pop();
-	k.color('#7a5634').cyl(0.007, 0.007, 0.44, 4, 0.068, 0.04, 0.02);
-	k.color('#dfe6ee').cone(0.016, 0.05, 4, 0.068, 0.48, 0.02);
-	return k;
-}
-
-function bannerGeo(lo) {
-	// asker + sancak direği ve bezi (tag 3): sancaksız askerde shader'da büzülür (iVar.z = 0)
-	const k = soldierGeo(lo);
-	k.setTag(3);
-	k.color('#6b4a2e').cyl(0.008, 0.008, 0.62, 4, 0.068, 0.04, -0.03);
-	k.color('#f2c14e').sphere(0.016, 4, 0.068, 0.67, -0.03);
-	OWN(k, 1.05);
-	cloth(k, 0.22, 0.14, 0.068, 0.64, 5);
-	// beyaz hilal benzeri şerit (sade)
-	k.color('#fff6e0');
-	cloth(k, 0.22, 0.02, 0.0695, 0.52, 5);
-	return k.build();
-}
-
-function catapultGeo(lo) {
-	const k = new Kit();
-	k.seg = lo ? 0.75 : 1;
-	k.setTag(4);
-	const wood = '#8a5a32';
-	const dark = '#5e3c20';
-	// kızaklar ve çerçeve
-	k.color(dark).box(0.05, 0.05, 0.62, -0.13, 0.05, 0).box(0.05, 0.05, 0.62, 0.13, 0.05, 0);
-	k.color(wood).box(0.31, 0.04, 0.05, 0, 0.07, 0.22).box(0.31, 0.04, 0.05, 0, 0.07, -0.22);
-	// A ayakları
-	k.color(wood).box(0.04, 0.2, 0.04, -0.13, 0.08, 0.02).box(0.04, 0.2, 0.04, 0.13, 0.08, 0.02);
-	k.color(dark).box(0.3, 0.03, 0.03, 0, 0.19, 0.02);
-	// tekerlekler
-	for (const [x, z] of [[-0.17, 0.2], [0.17, 0.2], [-0.17, -0.2], [0.17, -0.2]]) {
-		k.push().move(x, 0.07, z).rot(0, 0, Math.PI / 2);
-		k.color(dark).cyl(0.07, 0.07, 0.03, 7, 0, -0.015, 0);
-		k.pop();
-	}
-	// karşı ağırlık sandığı
-	OWN(k, 0.6).box(0.12, 0.08, 0.1, 0, 0.1, -0.2);
-	// kol (tag 5): mil (0, 0.2, 0.02) çevresinde döner; dururken geriye yatık
-	k.setTag(5);
-	k.color(wood).box(0.035, 0.035, 0.56, 0, 0.19, -0.1);
-	k.color(dark).box(0.09, 0.03, 0.09, 0, 0.2, -0.38);
-	k.color('#9e9e96').ico(0.04, 0, 0.24, -0.38);
-	// sahip rengi flama
-	k.setTag(4);
-	k.color(dark).cyl(0.006, 0.006, 0.32, 3, -0.13, 0.2, 0.25);
-	OWN(k, 1);
-	cloth(k, 0.12, 0.07, -0.13, 0.5, 3);
-	return k.build();
 }
 
 function standardGeo(lo) {
@@ -436,17 +343,17 @@ export class FX {
 		this.group = new THREE.Group();
 		this.group.name = 'fx';
 		this.time = 0;
-		// minyatür ölçekleri (dünya birimi)
-		this._unitScale = 1.25;
-		this._catScale = 1.6;
-		this._stdScale = 1.55;
+		// minyatür ölçeği (dünya birimi)
+		this._stdScale = 1.2; // savaş yakın çekiminde kadrajı doldurmasın (asker 0,6; sancak ~2,5 birim)
 
-		// --- askerler
-		this.maxSoldiers = lo ? 20 : 32;
+		// --- savaş: ordular ve kuşatma makineleri (battle.js)
+		this.battle = new Battle(G, tier, app, this);
+		this.group.add(this.battle.group);
+		this.casters = this.battle.casters;
+
+		// --- fetih sancağı
 		const umat = new THREE.ShaderMaterial({ vertexShader: UNIT_VS, fragmentShader: UNIT_FS, uniforms: { ...G }, side: THREE.DoubleSide });
 		this.unitMat = umat;
-		this.soldiers = this._units(bannerGeo(lo), this.maxSoldiers, umat);
-		this.machines = this._units(catapultGeo(lo), 4, umat);
 		this.standards = this._units(standardGeo(lo), 4, umat);
 
 		// --- taşlar
@@ -540,38 +447,7 @@ export class FX {
 			colors: null,
 		}));
 
-		// --- ordu ve zaman çizelgesi
-		this.army = {
-			on: false,
-			n: 0,
-			state: 'off',
-			t: 0,
-			fade: 1,
-			p0: new THREE.Vector3(),
-			p1: new THREE.Vector3(),
-			p2: new THREE.Vector3(),
-			len: 1,
-			head: 0,
-			speed: 1,
-			color: new THREE.Color(),
-			goal: new THREE.Vector3(),
-			cats: 0,
-		};
-		this.sold = Array.from({ length: this.maxSoldiers }, (_, i) => ({
-			lat: 0,
-			row: 0,
-			p: new THREE.Vector3(),
-			y: 0,
-			yaw: 0,
-			walk: 0,
-			ph: rnd() * 6.28,
-			banner: false,
-			dir: new THREE.Vector3(),
-			delay: 0,
-			ox: 0,
-			oz: 0,
-		}));
-		this.cats = Array.from({ length: 4 }, () => ({ on: false, p: new THREE.Vector3(), yaw: 0, arm: -0.9, fire: -1, fade: 0 }));
+		// --- sancaklar ve zaman çizelgesi
 		this.stds = Array.from({ length: 4 }, () => ({ on: false, p: new THREE.Vector3(), yaw: 0, age: 0, life: 3, c: new THREE.Color(), rise: 0 }));
 		this.timeline = Array.from({ length: 32 }, () => ({ on: false, t: 0, fn: null }));
 		this.anims = Array.from({ length: 8 }, () => ({ on: false, t: 0, dur: 1, fn: null, done: null }));
@@ -594,13 +470,14 @@ export class FX {
 
 	/** Açılış derlemesi için bütün çizimler görünür (ilk karede kendiliğinden kapanır). */
 	warm(on) {
-		for (const m of [this.soldiers, this.machines, this.standards, this.rockMesh, this.partMesh, this.waveMesh]) m.visible = on;
+		for (const m of [this.standards, this.rockMesh, this.partMesh, this.waveMesh]) m.visible = on;
+		this.battle.warm(on);
 		this._warm = on;
 	}
 
 	get calls() {
-		let n = 0;
-		for (const m of [this.soldiers, this.machines, this.standards, this.rockMesh, this.partMesh, this.waveMesh]) if (m.visible) n++;
+		let n = this.battle.calls;
+		for (const m of [this.standards, this.rockMesh, this.partMesh, this.waveMesh]) if (m.visible) n++;
 		return n;
 	}
 
@@ -610,7 +487,6 @@ export class FX {
 		for (const r of this.rocks) r.on = false;
 		for (const w of this.waves) w.on = false;
 		for (const e of this.emitters) e.on = false;
-		for (const c of this.cats) c.on = false;
 		for (const s of this.stds) s.on = false;
 		for (const t of this.timeline) {
 			t.on = false;
@@ -623,9 +499,7 @@ export class FX {
 			a.done?.();
 			a.fn = a.done = null;
 		}
-		this.army.on = false;
-		this.army.state = 'off';
-		this.army.cats = 0;
+		this.battle.clear();
 	}
 
 	/** t saniye sonra fn (dokunarak atlansa bile çalışır; sıfırlamada iptal). */
@@ -912,250 +786,7 @@ export class FX {
 		this.app.cam?.impulse?.(a);
 	}
 
-	// ============================================================ ordu
-
-	/**
-	 * Ordu yürüyüşü: from (saldıranın ilinden) to (hedef) arasındaki yay boyunca, sahip renginde.
-	 * opts: {count, dur (sn), siege (kale önünde durur, mancınık kurar), bend (yay eğriliği)}
-	 */
-	march(from, to, color, { count = null, dur = 1.25, siege = false, bend = 0.22, stopShort = 0 } = {}) {
-		const A = this.army;
-		A.on = true;
-		A.state = 'march';
-		A.t = 0;
-		A.fade = 1;
-		A.color.set(color);
-		const dx = to.x - from.x;
-		const dz = to.z - from.z;
-		const L = Math.hypot(dx, dz) || 1;
-		const ux = dx / L;
-		const uz = dz / L;
-		A.p0.copy(from);
-		A.p2.set(to.x - ux * stopShort, to.y, to.z - uz * stopShort);
-		// yay: ortadan yana kayan kontrol noktası
-		const side = rnd() < 0.5 ? -1 : 1;
-		A.p1.set((from.x + A.p2.x) / 2 - uz * L * bend * side, 0, (from.z + A.p2.z) / 2 + ux * L * bend * side);
-		A.len = Math.max(0.5, L - stopShort);
-		A.head = 0;
-		A.speed = 1 / dur;
-		const n = Math.min(this.maxSoldiers, count ?? this.maxSoldiers);
-		A.n = n;
-		const across = this.tier.id === 0 ? 3 : 4;
-		for (let i = 0; i < n; i++) {
-			const s = this.sold[i];
-			const row = Math.floor(i / across);
-			const col = i % across;
-			s.row = row;
-			s.lat = (col - (across - 1) / 2) * 0.17 + rr(-0.03, 0.03);
-			s.banner = col === 1 && row % 2 === 0;
-			s.walk = 1;
-			s.y = this.ground(from.x, from.z);
-			s.delay = row * 0.05;
-			s.ox = 0;
-			s.oz = 0;
-		}
-		A.rows = Math.ceil(n / across);
-		// kuşatma: iki mancınık, ordunun gerisinde, kaleye dönük
-		A.cats = 0;
-		for (const c of this.cats) c.on = false;
-		if (siege) {
-			for (let k = 0; k < 2; k++) {
-				const c = this.cats[k];
-				const sd = k ? 1 : -1;
-				const bx = A.p2.x - ux * 1.1 - uz * sd * 0.75;
-				const bz = A.p2.z - uz * 1.1 + ux * sd * 0.75;
-				c.on = true;
-				c.p.set(bx, this.ground(bx, bz), bz);
-				c.yaw = Math.atan2(ux, uz);
-				c.arm = -0.95;
-				c.fire = -1;
-				c.fade = 0;
-			}
-			A.cats = 2;
-		}
-		return A;
-	}
-
-	/** Mancınık k ateş eder: taş hedefe uçar. Dönen: uçuş süresi. */
-	catapult(k, target, onHit, T = 0.62) {
-		const c = this.cats[k % 2];
-		if (!c.on) {
-			// mancınık yoksa taş ordunun gerisinden gelir
-			_v.copy(this.army.p0);
-			_v.y += 0.4;
-			this.stone(_v, target, T, 3, onHit);
-			return T;
-		}
-		c.fire = 0;
-		// kolun ucu (kabaca): mancınığın önü, yukarıda
-		const from = new THREE.Vector3(Math.sin(c.yaw) * 0.25, 0.62, Math.cos(c.yaw) * 0.25).multiplyScalar(this._catScale).add(c.p);
-		const to = target.clone();
-		this.after(0.09, () => {
-			this.stone(from, to, T, 2.6 + rnd(), onHit, 0.12);
-			_w.copy(c.p);
-			this.dust(_w, 5, 0.35, 0xcab995, 0.3);
-		});
-		return T + 0.09;
-	}
-
-	/** Ordu hedefe hücum eder ve erir (fetih). */
-	armyCharge(to) {
-		const A = this.army;
-		if (!A.on) return;
-		A.state = 'charge';
-		A.t = 0;
-		A.goal.copy(to);
-	}
-
-	/** Ordu geri çekilir ve erir (savunma, kimse bilemedi). */
-	armyRetreat() {
-		const A = this.army;
-		if (!A.on) return;
-		A.state = 'retreat';
-		A.t = 0;
-	}
-
-	/** Ordu sevinir (kule düştü), sonra erir. */
-	armyCheer(fadeAfter = 1.4) {
-		const A = this.army;
-		if (!A.on) return;
-		A.state = 'cheer';
-		A.t = 0;
-		A.cheerLife = fadeAfter;
-	}
-
-	armyFade() {
-		const A = this.army;
-		if (A.on && A.state !== 'fade') {
-			A.state = 'fade';
-			A.t = 0;
-		}
-	}
-
-	_bez(t, out) {
-		const A = this.army;
-		const u = 1 - t;
-		out.x = u * u * A.p0.x + 2 * u * t * A.p1.x + t * t * A.p2.x;
-		out.z = u * u * A.p0.z + 2 * u * t * A.p1.z + t * t * A.p2.z;
-		return out;
-	}
-
-	_bezD(t, out) {
-		const A = this.army;
-		out.x = 2 * (1 - t) * (A.p1.x - A.p0.x) + 2 * t * (A.p2.x - A.p1.x);
-		out.z = 2 * (1 - t) * (A.p1.z - A.p0.z) + 2 * t * (A.p2.z - A.p1.z);
-		out.y = 0;
-		const l = Math.hypot(out.x, out.z) || 1;
-		out.x /= l;
-		out.z /= l;
-		return out;
-	}
-
-	_army(dt) {
-		const A = this.army;
-		const M = this.soldiers;
-		if (!A.on) {
-			M.count = 0;
-			return;
-		}
-		A.t += dt;
-		const gap = 0.19 / A.len;
-		let alive = 0;
-		if (A.state === 'march') A.head = Math.min(1 + (A.rows - 1) * gap, A.head + dt * A.speed * (1 + (A.rows - 1) * gap));
-		if (A.state === 'fade' || A.state === 'retreat' || (A.state === 'charge' && A.t > 0.45) || (A.state === 'cheer' && A.t > A.cheerLife)) A.fade = Math.max(0, A.fade - dt * 2.2);
-		const k = 1 - Math.exp(-dt * 12);
-		for (let i = 0; i < A.n; i++) {
-			const s = this.sold[i];
-			let moving = 0;
-			if (A.state === 'march' || A.state === 'hold' || A.state === 'cheer') {
-				const t = clamp(A.head - s.row * gap, 0, 1);
-				this._bez(t, s.p);
-				this._bezD(t, s.dir);
-				s.p.x += -s.dir.z * s.lat;
-				s.p.z += s.dir.x * s.lat;
-				moving = t > 0 && t < 1 ? 1 : 0;
-				s.yaw = Math.atan2(s.dir.x, s.dir.z);
-			} else if (A.state === 'charge') {
-				// hedefe koş, sıra sıra
-				const dx = A.goal.x - s.p.x;
-				const dz = A.goal.z - s.p.z;
-				const d = Math.hypot(dx, dz);
-				if (d > 0.3 && A.t > s.row * 0.03) {
-					const sp = Math.min(d, dt * 4.5);
-					s.p.x += (dx / d) * sp;
-					s.p.z += (dz / d) * sp;
-					s.yaw = Math.atan2(dx, dz);
-					moving = 1;
-				}
-			} else if (A.state === 'retreat') {
-				s.yaw = Math.atan2(-s.dir.x, -s.dir.z);
-				s.p.x -= s.dir.x * dt * 1.6;
-				s.p.z -= s.dir.z * dt * 1.6;
-				moving = 1;
-			}
-			s.walk += ((moving ? 1 : 0) - s.walk) * k;
-			const gy = this.ground(s.p.x, s.p.z);
-			s.y += (gy - s.y) * Math.min(1, dt * 14);
-			let hop = 0;
-			if (A.state === 'cheer') hop = Math.max(0, Math.sin(A.t * 11 + s.ph)) * 0.07;
-			_v.set(s.p.x, s.y + hop, s.p.z);
-			_q.setFromAxisAngle(UP, s.yaw);
-			const sc = this._unitScale;
-			_s.set(sc, sc, sc);
-			_m.compose(_v, _q, _s);
-			M.setMatrixAt(alive, _m);
-			M.setColorAt(alive, A.color);
-			const o = alive * 4;
-			M.iVar.array[o] = s.ph;
-			M.iVar.array[o + 1] = s.walk;
-			M.iVar.array[o + 2] = s.banner ? 1 : 0;
-			M.iVar.array[o + 3] = A.fade;
-			alive++;
-		}
-		M.count = A.fade > 0.001 ? alive : 0;
-		if (A.state === 'march' && A.head >= 1 + (A.rows - 1) * gap - 1e-4) A.state = 'hold';
-		if (A.fade <= 0.001 && A.state !== 'march' && A.state !== 'hold') {
-			A.on = false;
-			A.state = 'off';
-		}
-		M.instanceMatrix.needsUpdate = true;
-		M.instanceColor.needsUpdate = true;
-		M.iVar.needsUpdate = true;
-	}
-
-	_machines(dt) {
-		const M = this.machines;
-		const A = this.army;
-		let n = 0;
-		for (const c of this.cats) {
-			if (!c.on) continue;
-			c.fade = Math.min(1, c.fade + dt * 3);
-			if (!A.on || A.fade < 1) c.fade = Math.min(c.fade, A.on ? A.fade : 0);
-			if (c.fire >= 0) {
-				c.fire += dt;
-				// kol fırlar (0.12 sn), sonra yavaşça geri kurulur
-				const f = c.fire;
-				c.arm = f < 0.12 ? -0.95 + (f / 0.12) * 2.25 : Math.max(-0.95, 1.3 - (f - 0.12) * 2.6);
-				if (f > 1.2) c.fire = -1;
-			}
-			if (!A.on && c.fade <= 0.001) {
-				c.on = false;
-				continue;
-			}
-			_v.copy(c.p);
-			_q.setFromAxisAngle(UP, c.yaw);
-			const sc = this._catScale;
-			_s.set(sc, sc, sc);
-			_m.compose(_v, _q, _s);
-			M.setMatrixAt(n, _m);
-			M.setColorAt(n, A.color);
-			const o = n * 4;
-			M.iVar.array[o] = 0;
-			M.iVar.array[o + 1] = 0.5;
-			M.iVar.array[o + 2] = c.arm;
-			M.iVar.array[o + 3] = c.fade;
-			n++;
-		}
+	_standards(dt) {
 		// fetih sancakları
 		const S = this.standards;
 		let m = 0;
@@ -1189,13 +820,7 @@ export class FX {
 			S.iVar.array[o + 3] = 1;
 			m++;
 		}
-		M.count = n;
 		S.count = m;
-		if (n) {
-			M.instanceMatrix.needsUpdate = true;
-			M.instanceColor.needsUpdate = true;
-			M.iVar.needsUpdate = true;
-		}
 		if (m) {
 			S.instanceMatrix.needsUpdate = true;
 			S.instanceColor.needsUpdate = true;
@@ -1230,15 +855,13 @@ export class FX {
 				d?.();
 			}
 		}
-		this._army(dt);
-		this._machines(dt);
+		this.battle.update(dt);
+		this._standards(dt);
 		this._emitters(dt);
 		this._rocks(dt);
 		this._parts(dt);
 		this._waves(dt);
 		if (this._warm) this._warm = false;
-		this.soldiers.visible = this.soldiers.count > 0;
-		this.machines.visible = this.machines.count > 0;
 		this.standards.visible = this.standards.count > 0;
 		this.rockMesh.visible = this.rockMesh.count > 0;
 		this.partMesh.visible = this.partMesh.geometry.instanceCount > 0;
@@ -1246,7 +869,7 @@ export class FX {
 	}
 
 	get busy() {
-		return this.np > 0 || this.army.on || this.rocks.some((r) => r.on) || this.waves.some((w) => w.on) || this.emitters.some((e) => e.on);
+		return this.np > 0 || this.battle.on || this.rocks.some((r) => r.on) || this.waves.some((w) => w.on) || this.emitters.some((e) => e.on);
 	}
 
 	_emitters(dt) {
@@ -1265,11 +888,12 @@ export class FX {
 				const vx = (e.p.x - px) / Math.max(dt, 1e-3);
 				const vy = (e.p.y - py) / Math.max(dt, 1e-3);
 				const vz = (e.p.z - pz) / Math.max(dt, 1e-3);
-				_c.setRGB(3.2, 1.3, 0.35);
-				let o = this.emit(e.p.x, e.p.y, e.p.z, vx, vy, vz, 0.06, 0.045, 0.045, _c, 1, STREAK, 1);
-				if (o >= 0) this.P[o + STR] = 0.1;
+				// ince parlak çizgi ve kısa kıvılcım izi (yakın çekimde bulanık leke olmasın)
+				_c.setRGB(3.2, 1.5, 0.45);
+				let o = this.emit(e.p.x, e.p.y, e.p.z, vx, vy, vz, 0.05, 0.022, 0.022, _c, 1, STREAK, 1);
+				if (o >= 0) this.P[o + STR] = 0.16;
 				_c.setRGB(2.4, 0.8, 0.15);
-				o = this.emit(e.p.x, e.p.y, e.p.z, rr(-0.2, 0.2), rr(0, 0.4), rr(-0.2, 0.2), rr(0.25, 0.4), 0.07, 0.01, _c, 0.8, GLOW, 1, 1, -0.5);
+				if (rnd() < 0.5) o = this.emit(e.p.x, e.p.y, e.p.z, rr(-0.15, 0.15), rr(0, 0.3), rr(-0.15, 0.15), rr(0.15, 0.25), 0.03, 0.006, _c, 0.7, GLOW, 1, 1, -0.5);
 				if (u >= 1) {
 					e.on = false;
 					this.sparks(e.b, 5, 1.6, 0xffb050, 2.4, 0.05, 4);

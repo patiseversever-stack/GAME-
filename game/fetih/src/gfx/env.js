@@ -28,6 +28,10 @@ export function createGlobals() {
 		uNightTone: { value: new THREE.Vector4(...NIGHT_TONES.normal) }, // gece odağının tonu: rgb çarpan, a doygunluk
 		uSelLit: { value: 1 }, // seçilebilir ilin gündüz ışığı payı (setNightTone)
 		uSpot: { value: new THREE.Vector4(0.5, 0.5, 0.3, 0) }, // gece ışık havuzu (nightlights.focus)
+		// savaş alanı açıklığı (shaderlib CLEAR): kapsül uçları A (x, z), B (x, z); yarıçap, güç, kenar yumuşaklığı
+		uClear: { value: new THREE.Vector4(0, 0, 0, 0) },
+		uClearR: { value: new THREE.Vector4(1, 0, 0.8, 0.9) },
+		uClear2: { value: new THREE.Vector4(0, 0, 0, 0) },
 		uNoise: { value: noiseTexture() }, // döşenebilir gürültü (noise.js)
 		uShadowMap: { value: null },
 		uShadowMat: { value: new THREE.Matrix4() },

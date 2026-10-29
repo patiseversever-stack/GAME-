@@ -549,6 +549,63 @@ function edgeDist(x, y, flat) {
 	return md;
 }
 
+/** İlin kutusunda 0,08 birimlik içerik ızgarası (1 içeride): her satırda halka kesişimleri arası doldurulur. */
+function provMask(p) {
+	const st = 0.08;
+	const [bx0, bz0, bx1, bz1] = p.box;
+	const nx = Math.max(1, Math.ceil((bx1 - bx0) / st));
+	const nz = Math.max(1, Math.ceil((bz1 - bz0) / st));
+	const d = new Uint8Array(nx * nz);
+	const xs = [];
+	for (let j = 0; j < nz; j++) {
+		const z = bz0 + (j + 0.5) * st;
+		const y = -z;
+		xs.length = 0;
+		for (const r of p.rings) {
+			const n = r.length / 2;
+			for (let i = 0, k = n - 1; i < n; k = i++) {
+				const yi = r[i * 2 + 1];
+				const yk = r[k * 2 + 1];
+				if (yi > y !== yk > y) xs.push(r[i * 2] + ((r[k * 2] - r[i * 2]) * (y - yi)) / (yk - yi));
+			}
+		}
+		xs.sort((a, b) => a - b);
+		for (let k = 0; k + 1 < xs.length; k += 2) {
+			const i0 = Math.max(0, Math.ceil((xs[k] - bx0) / st - 0.5));
+			const i1 = Math.min(nx - 1, Math.floor((xs[k + 1] - bx0) / st - 0.5));
+			for (let i = i0; i <= i1; i++) d[j * nx + i] = 1;
+		}
+	}
+	return { x0: bx0, z0: bz0, st, nx, nz, d };
+}
+
+/** Sınır parçaları (dünya x/z) 1 birimlik ızgarada: her hücre, içinden geçen parçaların listesi. */
+function borderIndex(borders) {
+	const x0 = FIELD_BOX.x0;
+	const z0 = FIELD_BOX.z0;
+	const nx = Math.ceil(FIELD_BOX.w);
+	const nz = Math.ceil(FIELD_BOX.d);
+	const cell = new Array(nx * nz);
+	const seg = [];
+	for (const b of borders) {
+		const p = b.pts;
+		for (let i = 0; i + 3 < p.length; i += 2) {
+			const ax = p[i];
+			const az = -p[i + 1];
+			const bx = p[i + 2];
+			const bz = -p[i + 3];
+			const s = seg.length / 4;
+			seg.push(ax, az, bx, bz);
+			const i0 = Math.max(0, Math.floor(Math.min(ax, bx) - x0));
+			const i1 = Math.min(nx - 1, Math.floor(Math.max(ax, bx) - x0));
+			const j0 = Math.max(0, Math.floor(Math.min(az, bz) - z0));
+			const j1 = Math.min(nz - 1, Math.floor(Math.max(az, bz) - z0));
+			for (let j = j0; j <= j1; j++) for (let k = i0; k <= i1; k++) (cell[j * nx + k] ||= []).push(s);
+		}
+	}
+	return { cell, seg: new Float32Array(seg), x0, z0, nx, nz };
+}
+
 // boya dalgası cephesi: hızlı çıkış ama cephe il boyunca görünür kalsın
 const waveEase = (t) => {
 	const u = Math.min(1, Math.max(0, t));
@@ -651,6 +708,9 @@ export class Board {
 
 		// --- il yüzeyleri ve duvarları
 		const step = tier.id === 0 ? 0.5 : tier.id === 1 ? 0.4 : 0.33;
+		this.gridStep = step; // groundAt: birimler çizilen yüzeye oturur
+		this._gk = new Int32Array(64).fill(-1 >>> 1); // ızgara köşe yükseklikleri için küçük önbellek (kare başına nesne yok)
+		this._gv = new Float64Array(64 * 4);
 		const built = buildBoardGeometry(this.provinces, this.relief, step);
 		this.geoStats = { vertices: built.vertices, triangles: built.triangles };
 		const geo = built.geometry;
@@ -952,6 +1012,122 @@ export class Board {
 	/** Dünya noktasındaki kara yüksekliği (yükselme hariç). */
 	heightAt(x, z) {
 		return this.relief.height(x, -z);
+	}
+
+	/**
+	 * Çizilen arazi yüzeyinin yüksekliği (yükselme hariç). heightAt gerçek kabartmadır (ince sırt gürültüsü
+	 * dahil); harita ağı onu ızgara köşelerinde örnekler ve aradaki yüzey düzdür. Yerde duran birimler (asker,
+	 * mancınık) buna oturur: dağlık ilde de ne havada kalır ne toprağa gömülür. Köşe yükseklikleri küçük bir
+	 * önbellekte (aynı hücredeki birimler yeniden hesaplatmaz).
+	 */
+	groundAt(x, z) {
+		const st = this.gridStep;
+		const y = -z;
+		const gx = Math.floor(x / st);
+		const gy = Math.floor(y / st);
+		const fx = x / st - gx;
+		const fy = y / st - gy;
+		const key = (gx + 512) * 1024 + gy + 512;
+		const slot = (Math.imul(key, 0x9e3779b1) >>> 26) & 63;
+		const V = this._gv;
+		const o = slot * 4;
+		if (this._gk[slot] !== key) {
+			const rel = this.relief;
+			const x0 = gx * st;
+			const y0 = gy * st;
+			V[o] = rel.height(x0, y0);
+			V[o + 1] = rel.height(x0 + st, y0);
+			V[o + 2] = rel.height(x0, y0 + st);
+			V[o + 3] = rel.height(x0 + st, y0 + st);
+			this._gk[slot] = key;
+		}
+		const a = V[o] + (V[o + 1] - V[o]) * fx;
+		const b = V[o + 2] + (V[o + 3] - V[o + 2]) * fx;
+		return a + (b - a) * fy;
+	}
+
+	/**
+	 * Nokta (dünya x/z) bu ilin içinde mi. İlk sorguda ilin kutusu 0,08 birimlik ızgarada taranır (satır satır
+	 * kesişim, çokgen başına ~1 ms); sonra her sorgu tek okuma. Savaş sahnesi planı binlerce nokta sorar.
+	 */
+	inProv(index, x, z) {
+		const p = this.provinces[index];
+		const b = p.box;
+		if (x < b[0] || x > b[2] || z < b[1] || z > b[3]) return false;
+		const m = p._mask || (p._mask = provMask(p));
+		const i = Math.floor((x - m.x0) / m.st);
+		const j = Math.floor((z - m.z0) / m.st);
+		if (i < 0 || j < 0 || i >= m.nx || j >= m.nz) return false;
+		return m.d[j * m.nx + i] === 1;
+	}
+
+	/** Göl ya da baraj gölü üstünde mi (gerçek göl çokgenleri; kutu ön denetimiyle). */
+	lakeAt(x, z) {
+		const L = (this._lakes ||= DATA.lakes.map((l) => {
+			const r = l.ring;
+			let x0 = Infinity;
+			let x1 = -Infinity;
+			let y0 = Infinity;
+			let y1 = -Infinity;
+			for (let k = 0; k < r.length; k += 2) {
+				x0 = Math.min(x0, r[k]);
+				x1 = Math.max(x1, r[k]);
+				y0 = Math.min(y0, r[k + 1]);
+				y1 = Math.max(y1, r[k + 1]);
+			}
+			return { r, x0, x1, y0, y1 };
+		}));
+		const y = -z;
+		for (const l of L) if (x >= l.x0 && x <= l.x1 && y >= l.y0 && y <= l.y1 && pointInPoly(x, y, l.r)) return true;
+		return false;
+	}
+
+	/**
+	 * Noktanın en yakın il sınırına ya da kıyıya uzaklığı (R'den uzaksa R). Sınır parçaları ilk çağrıda
+	 * 1 birimlik ızgaraya dizinlenir (ağaç yerleşimi ve savaş sahnesi kullanır; kare başına çağrılmaz).
+	 */
+	borderDist(x, z, R = 1) {
+		const ix = this._bidx || (this._bidx = borderIndex(DATA.borders));
+		const { cell, seg, x0, z0, nx, nz } = ix;
+		const cx = Math.floor(x - x0);
+		const cz = Math.floor(z - z0);
+		const k = Math.ceil(R);
+		let best = R * R;
+		for (let j = Math.max(0, cz - k); j <= Math.min(nz - 1, cz + k); j++)
+			for (let i = Math.max(0, cx - k); i <= Math.min(nx - 1, cx + k); i++) {
+				const list = cell[j * nx + i];
+				if (!list) continue;
+				for (const s of list) {
+					const o = s * 4;
+					const ax = seg[o];
+					const az = seg[o + 1];
+					const dx = seg[o + 2] - ax;
+					const dz = seg[o + 3] - az;
+					const t = Math.max(0, Math.min(1, ((x - ax) * dx + (z - az) * dz) / (dx * dx + dz * dz || 1e-9)));
+					const ex = x - ax - dx * t;
+					const ez = z - az - dz * t;
+					const d = ex * ex + ez * ez;
+					if (d < best) best = d;
+				}
+			}
+		return Math.sqrt(best);
+	}
+
+	/** İki ilin ortak sınır çizgileri: dünya x/z dizileri [[x0, z0, x1, z1, …], …] (yoksa boş). */
+	sharedBorder(a, b) {
+		const ida = this.provinces[a].id;
+		const idb = this.provinces[b].id;
+		const out = [];
+		for (const s of DATA.borders) {
+			if (!((s.a === ida && s.b === idb) || (s.a === idb && s.b === ida))) continue;
+			const l = new Float32Array(s.pts.length);
+			for (let k = 0; k < s.pts.length; k += 2) {
+				l[k] = s.pts[k];
+				l[k + 1] = -s.pts[k + 1];
+			}
+			out.push(l);
+		}
+		return out;
 	}
 
 	/** İlin şu anki toplam yükselmesi (birim). */

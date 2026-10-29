@@ -67,7 +67,8 @@ export const PACE = {
 };
 
 // Tahmini süre (sn), insan oyuncu varsayımıyla; yalnızca denge raporu için (tools/sim.mjs).
-const EST = { overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, attack: 2.6, wheel: 4, chooseCat: 2.2, conquer: 2.4, tower: 3, defend: 2, nobody: 1.5, elim: 3.5, qOpen: 0.5 };
+// Savaş filmi (v0.6, cinema.js): saldırı ~4,9–6,4 sn (kuşatma uzun), fetih ~4, kule ~3,3, savunma ~2,7.
+const EST = { overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, attack: 5.4, wheel: 4, chooseCat: 2.2, conquer: 4.0, tower: 3.4, defend: 2.7, nobody: 1.6, elim: 3.5, qOpen: 0.5 };
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 
@@ -1046,7 +1047,6 @@ export class Match {
 			this.refreshJokers();
 			await this.ui.banner('KALKAN!', `${d.name} saldırıyı savuşturdu`, { tone: 'gold', short: true });
 			this.tick(EST.bannerShort);
-			app.fx?.shield?.(target, d);
 			await (this.cinema.shield ? this.cinema.shield(d, target) : this.cinema.defend(d, target));
 			this.tick(EST.defend);
 		} else if (winner === p) {
