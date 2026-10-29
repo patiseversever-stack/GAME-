@@ -24,6 +24,7 @@ import { ensureSystems } from './game/campaign.js';
 import { UI } from './ui/ui.js';
 import { Sfx } from './audio/sfx.js';
 import { NightLights } from './gfx/nightlights.js';
+import { Weather } from './gfx/weather.js';
 import { clock } from './core/clock.js';
 
 const SKY_VS = /* glsl */ `
@@ -139,6 +140,9 @@ export class App {
 		// gece ışıkları (pencereler, ışık tozu, haleler): tek çizim, yalnızca gece odağında
 		this.nightLights = new NightLights(G, R.tier, this.board, { landmarks: this.props.landmarks.sites, castles: this.castles, clouds: this.board.clouds });
 		this.scene.add(this.nightLights.mesh);
+		// bölge havası (Karadeniz sisi, Doğu kar tozu, Akdeniz sıcak ışığı): ışık tonu ve sis bütün malzemelerde, kar tek çizim
+		this.weather = new Weather(G, R.tier, this.board);
+		this.scene.add(this.weather.mesh);
 		this.playerColors = PLAYER_COLORS;
 		this.fx = new FX(G, R.tier, this);
 		this.scene.add(this.fx.group);
@@ -304,6 +308,7 @@ export class App {
 		this.fx.update(dt);
 		this.nightLights.update(dt, this.camera);
 		this.cam.update(dt);
+		this.weather.update(dt, this.cam);
 		if (draw) {
 			this.ui.update();
 			this.render();

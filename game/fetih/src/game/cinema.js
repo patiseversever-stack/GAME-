@@ -129,6 +129,7 @@ export class Cinema {
 	clues(on) {
 		const b = this.app.board;
 		b.labelLayer?.suspend?.(!on);
+		this.app.weather?.calm(!on); // bölge havası hafifler: harita net
 		const lm = this.app.props?.landmarks;
 		if (!lm) return;
 		if (lm.fade) lm.fade(on);

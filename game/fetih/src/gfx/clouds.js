@@ -178,7 +178,6 @@ void main() {
 const FFS = /* glsl */ `
 ${COMMON}
 ${FINISH}
-uniform sampler2D uNoise;
 varying vec2 vUv;
 varying vec2 vS;
 varying vec4 vSeed;
