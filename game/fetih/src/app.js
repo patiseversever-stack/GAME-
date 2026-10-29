@@ -239,7 +239,7 @@ export class App {
 	toScreen(v, out = { x: 0, y: 0 }) {
 		const p = this._sv || (this._sv = new THREE.Vector3());
 		p.copy(v).project(this.camera);
-		const r = this.canvas.getBoundingClientRect();
+		const r = this._rc || (this._rc = this.canvas.getBoundingClientRect()); // kare başına bir kez (arayüz çok kez sorar)
 		out.x = (p.x * 0.5 + 0.5) * r.width;
 		out.y = (-p.y * 0.5 + 0.5) * r.height;
 		out.behind = p.z > 1;
@@ -247,6 +247,7 @@ export class App {
 	}
 
 	resize() {
+		this._rc = null;
 		const w = Math.max(1, this.container.clientWidth || window.innerWidth);
 		const h = Math.max(1, this.container.clientHeight || window.innerHeight);
 		const pr = this.gov.pixelRatio(w, h);
@@ -291,6 +292,7 @@ export class App {
 	}
 
 	frame(dt, draw = true) {
+		this._rc = null;
 		this.time += dt;
 		this.G.uTime.value = this.time;
 		this.game?.update(dt);
@@ -326,6 +328,8 @@ export class App {
 		b.clearFx();
 		b.setActive?.(null);
 		b.showLabels?.(null);
+		b.labelLayer?.suspend?.(false);
+		this.ui?.tags?.clear?.();
 		for (const k of this.castles) {
 			k.group.visible = false;
 			k.repair();

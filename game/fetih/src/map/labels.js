@@ -214,6 +214,7 @@ export class Labels {
 			.map((p) => p.index)
 			.sort((a, b) => this.rank[a] - this.rank[b] || (this.rank[a] === 0 ? MAJOR.indexOf(board.provinces[a].id) - MAJOR.indexOf(board.provinces[b].id) : board.provinces[b].area - board.provinces[a].area));
 		this.base = null;
+		this.hold = false; // true: adlar geçici susar (arayüz etiketleri gece odağında gösterilir)
 		this._pp = new Float32Array(N);
 		this._ox = new Float32Array(N);
 		this._oy = new Float32Array(N);
@@ -334,6 +335,11 @@ export class Labels {
 		this._dirty = true;
 	}
 
+	/** Geçici sustur / geri aç (liste ve genel kip durumu korunur). */
+	suspend(on) {
+		this.hold = !!on;
+	}
+
 	_before(renderer, camera) {
 		this.uniforms.uDpr.value = renderer.getPixelRatio();
 		if (this._cam !== camera) {
@@ -363,7 +369,7 @@ export class Labels {
 		let dirty = false;
 		let vis = 0;
 		for (let i = 0; i < N; i++) {
-			const w = this.mode ? this._ok[i] : 0;
+			const w = this.mode && !this.hold ? this._ok[i] : 0;
 			this.want[i] = w;
 			const a = this.alpha[i] + (w - this.alpha[i]) * k;
 			const h = this.hi[i] + (this.hiTo[i] - this.hi[i]) * k;

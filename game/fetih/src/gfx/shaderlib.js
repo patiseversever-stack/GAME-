@@ -40,8 +40,8 @@ float gOwn = 0.0;
 // Aydınlık (seçilebilir) iller ekrandaki tek parlak ve renkli şey olsun; gece manzarası yalnızca ince
 // ay kabartması ve birkaç sıcak şehir ışığıyla okunur. Ay kuzeybatıda, yüksekte.
 const vec3 N_MOON = vec3(-0.3498, 0.7795, -0.5197);
-const vec3 N_MOONC = vec3(0.17, 0.235, 0.42);
-const vec3 N_SKY = vec3(0.018, 0.029, 0.07);
+const vec3 N_MOONC = vec3(0.2, 0.28, 0.5);
+const vec3 N_SKY = vec3(0.022, 0.035, 0.085);
 const vec3 N_GND = vec3(0.005, 0.006, 0.012);
 const vec3 N_RIM = vec3(0.16, 0.22, 0.38);
 const vec3 N_ZEN = vec3(0.0015, 0.0022, 0.006);
@@ -197,14 +197,16 @@ vec3 shade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, float r
 	float lit = diff * sh;
 	vec3 amb = skyAmbient(N) * ao;
 	vec3 shadeCol = mix(uShadeTint, vec3(1.0), lit);
-	vec3 c = albedo * amb * shadeCol + albedo * uSunCol * lit;
+	// gece odağındaki aydınlık il: gündüz ışığı ama biraz yumuşak (v0.4: kırmızı turuncuya, sarı neona kaçmasın)
+	float sunK = 1.0 - 0.4 * uNight.x * clamp(gLit, 0.0, 1.0);
+	vec3 c = albedo * amb * shadeCol + albedo * uSunCol * lit * sunK;
 	// cila: güneş parıltısı + gök yansıması (Fresnel)
 	float ndv = clamp(dot(N, V), 0.0, 1.0);
 	float fres = 0.04 + 0.96 * pow(1.0 - ndv, 5.0);
 	vec3 H = normalize(uSunDir + V);
 	float spec = pow(max(dot(N, H), 0.0), mix(16.0, 140.0, gloss)) * mix(0.15, 2.2, gloss) * sh;
 	vec3 R = reflect(-V, N);
-	c += uSunCol * spec * (0.6 + 0.4 * fres);
+	c += uSunCol * spec * (0.6 + 0.4 * fres) * sunK;
 	c += skyReflect(R) * fres * gloss * 0.55 * ao;
 	// kenar ışığı: siluet sıcak ışıkla parlar
 	float rim = pow(1.0 - ndv, 3.0) * rimK;
@@ -233,7 +235,7 @@ vec3 applyFog(vec3 c, vec3 wp) {
 	if (nk > 0.001) {
 		fc = mix(fc, N_FOG, nk);
 		// gece pusu: uzak yerler mor sise gömülür (derinlik, Gündönümü'ndeki gibi); sahip rengi daha az
-		f = max(f, (1.0 - exp(-max(dist - 22.0, 0.0) * 0.026)) * 0.7 * nk * (1.0 - 0.45 * clamp(gOwn, 0.0, 1.0)));
+		f = max(f, (1.0 - exp(-max(dist - 34.0, 0.0) * 0.02)) * 0.5 * nk * (1.0 - 0.5 * clamp(gOwn, 0.0, 1.0)));
 	}
 	return mix(c, fc, clamp(f, 0.0, 1.0));
 }
@@ -289,7 +291,7 @@ vec4 finish(vec3 c, float a) {
 	vec2 q = gl_FragCoord.xy / uRes.xy - 0.5;
 	q.x *= uRes.x / uRes.y * 0.8;
 	float vg = smoothstep(0.3, 0.95, length(q));
-	c *= mix(vec3(1.0), mix(uVigCol, vec3(0.04, 0.05, 0.09), uNight.x), (uRes.z + 0.5 * uNight.x) * vg);
+	c *= mix(vec3(1.0), mix(uVigCol, vec3(0.04, 0.05, 0.09), uNight.x), (uRes.z + 0.32 * uNight.x) * vg);
 	c += (hash12(gl_FragCoord.xy + fract(uTime) * 61.0) - 0.5) * uGrade.w;
 	return vec4(clamp(c, 0.0, 1.0), a);
 }

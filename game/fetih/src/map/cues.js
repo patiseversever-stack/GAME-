@@ -197,6 +197,9 @@ export class Cues {
 		this.grow = 0;
 		this.nA = 0;
 		this.sources = []; // okların çıktığı iller (arayüz: "SEN" rozeti ve kadraj için)
+		this.tails = new Map(); // kaynak il → {x, y, z (okların çıkış noktası, ortalama), n (ok sayısı)}
+		this.tips = new Map(); // hedef il → {x, y, z (ok ucu), bx, by, bz (okun ucundan biraz önceki noktası)}
+		this.main = -1; // en çok ok çıkan kaynak il
 		this._a = new THREE.Vector3();
 		this._b = new THREE.Vector3();
 		this._key = '';
@@ -217,6 +220,9 @@ export class Cues {
 		const P = B.provinces;
 		let ord = 0;
 		this.sources.length = 0;
+		this.tails.clear();
+		this.tips.clear();
+		this.main = -1;
 		const hex = B.ownerHex?.[me];
 		const col = hex != null ? [((hex >> 16) & 255) / 255, ((hex >> 8) & 255) / 255, (hex & 255) / 255] : [1, 0.82, 0.3];
 		// oklar ekranda soldan sağa sırayla belirsin
@@ -239,8 +245,25 @@ export class Cues {
 				}
 			}
 			if (src >= 0 && nA < MAXA) {
-				this._arrow(nA++, src, t, ord++, col);
+				const r = this._arrow(nA++, src, t, ord++, col);
 				if (!this.sources.includes(src)) this.sources.push(src);
+				this.tips.set(t, r.tip);
+				const tl = this.tails.get(src) || { x: 0, y: 0, z: 0, n: 0 };
+				tl.x += r.tail.x;
+				tl.y += r.tail.y;
+				tl.z += r.tail.z;
+				tl.n++;
+				this.tails.set(src, tl);
+			}
+		}
+		let bn = 0;
+		for (const [i, tl] of this.tails) {
+			tl.x /= tl.n;
+			tl.y /= tl.n;
+			tl.z /= tl.n;
+			if (tl.n > bn) {
+				bn = tl.n;
+				this.main = i;
 			}
 		}
 		this.nA = nA;
@@ -264,13 +287,20 @@ export class Cues {
 		const sdx = ps.x - bx;
 		const sdz = ps.z - bz;
 		const sl = Math.hypot(sdx, sdz) || 1;
-		const tail = Math.min(sl * 0.7, 1.5);
-		const sx = bx + (sdx / sl) * tail;
-		const sz = bz + (sdz / sl) * tail;
+		let tail = Math.min(sl * 0.7, 1.5);
 		const tdx = pt.x - bx;
 		const tdz = pt.z - 0.3 - bz;
 		const tl = Math.hypot(tdx, tdz) || 1;
-		const reach = Math.min(Math.max(tl * 0.56, 0.9), tl);
+		let reach = Math.min(Math.max(tl * 0.5, 0.9), tl);
+		// çok kısa ok okunmaz (komşu iller yakınsa): kuyruğu geriye, ucu ileriye uzat
+		const need = 3.0 - tail - reach;
+		if (need > 0) {
+			const t2 = Math.min(sl * 0.95, tail + need * 0.55);
+			reach = Math.min(tl, reach + need - (t2 - tail));
+			tail = t2;
+		}
+		const sx = bx + (sdx / sl) * tail;
+		const sz = bz + (sdz / sl) * tail;
 		const ex = bx + (tdx / tl) * reach;
 		const ez = bz + (tdz / tl) * reach;
 		const sy = B.heightAt(sx, sz) + 0.1;
@@ -324,6 +354,8 @@ export class Cues {
 		const C = [-1, -1, 1, -1, 1, 1, -1, 1];
 		const d = o + STRIPS * VPS;
 		for (let k = 0; k < 4; k++) put(d + k, sx, sy, sz, 0, 0, 1, C[k * 2], C[k * 2 + 1], 1, 0, 0, ord);
+		const pb = P(0.8, this._b);
+		return { tail: { x: sx, y: sy, z: sz }, tip: { x: ex, y: ey, z: ez, bx: pb.x, by: pb.y, bz: pb.z } };
 	}
 
 	update(dt) {

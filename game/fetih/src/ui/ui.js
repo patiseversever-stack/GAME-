@@ -15,6 +15,7 @@ import { CSS } from './styles.js';
 import { CATS, WHEEL } from '../quiz/categories.js';
 import { esc, ico, ICONS, SPARK, AVATARS, avatar, avatarURL, lookOf, shade, rgbOf, hash, regionSymbols } from './art.js';
 import { Fx } from './fx.js';
+import { Tags } from './tags.js';
 import { WheelView } from './wheel.js';
 import { duelIntro } from './duel.js';
 import { buildTitle, refreshTitle, showMenu, showCommander, showEnd } from './menu.js';
@@ -66,6 +67,7 @@ export class UI {
 		el.innerHTML = `${syms.svg}
 			<div class="fl-cine" data-r="cine"><i></i><i></i></div>
 			<div class="fl-pins" data-r="pins"></div>
+			<div class="fl-tags" data-r="tags"></div>
 			<div class="fl-hud off" data-r="hud"></div>
 			<div class="fl-toasts" data-r="toasts"></div>
 			<div class="fl-prompt" data-r="prompt"></div>
@@ -113,6 +115,7 @@ export class UI {
 		this.cfg = { mode: 'ffa3', length: 'quick', region: 'random', bot: 'er', ...(store?.get?.('menu') || {}) };
 		this.cmd = { name: 'Sen', avatar: 'gokturk', banner: 'duz', color: 0, skin: 0, ...(store?.get?.('commander') || {}) };
 		this.fx = new Fx(this.$.fx, { low: app.tier?.id === 0, rm: this.rm });
+		this.tags = new Tags(this);
 		this.wheelView = new WheelView(this);
 		this.pins = [];
 		this.lines = [];
@@ -421,7 +424,8 @@ export class UI {
 				for (const i of options) b.fx(i, 0.18, 0.75);
 			}
 		} else for (const i of options) b.fx(i, 0.18, 0.75);
-		this.showLabels(options, { m, tap: true });
+		// etiketler: ilin adı + sahibi (saldırıda çapraz kılıç); oyuncunun kendi toprağında "SEN" rozeti
+		this.tagsOn(this.tagSpecs(m, options, attack ? 'attack' : 'pick'), { badges: this.homeBadges(m, me, options), tap: true });
 	}
 
 	_selOff(options) {
@@ -434,8 +438,41 @@ export class UI {
 			}
 		}
 		for (const i of options) b.fx(i, 0, 0);
-		this.showLabels([]);
+		this.tagsOff();
 		this._selList = null;
+	}
+
+	/** İl etiketi tanımları: [{i, kind, p (sahip oyuncu ya da null), role}]. */
+	tagSpecs(m, list, kind, roles = null) {
+		const b = this.app.board;
+		return list.map((i) => {
+			const o = b.provinces[i].owner;
+			return { i, kind, p: o >= 0 ? m?.players?.[o] || null : null, role: roles?.[i] || null };
+		});
+	}
+
+	/** Oyuncunun toprağında rozet: okların çıktığı yerde (hedeflere en çok ok çıkan il); ok yoksa başkentte. */
+	homeBadges(m, p, targets = []) {
+		if (!p) return [];
+		const b = this.app.board;
+		const cs = b.cues;
+		if (cs?.on && cs.main >= 0 && cs.tails.has(cs.main)) return [{ p, i: cs.main, tail: true }];
+		const best = p.capital >= 0 ? p.capital : (m?.owned?.(p.i) || [])[0] ?? -1;
+		if (best < 0) return [];
+		const k = this.app.castles?.[p.i];
+		return [{ p, i: best, castle: best === p.capital && !!k?.group.visible }];
+	}
+
+	/** Gece odağı etiketlerini göster (3B il adları susar). */
+	tagsOn(specs, { badges = [], tap = false } = {}) {
+		if (this.fast) return;
+		this.app.board.labelLayer?.suspend?.(true);
+		this.tags.set(specs, { badges, tap });
+	}
+
+	tagsOff() {
+		this.tags.clear();
+		this.app.board.labelLayer?.suspend?.(false);
 	}
 
 	_badTap(m, me, idx, x, y, attack, options) {
@@ -473,11 +510,7 @@ export class UI {
 				if (this._selList === options) for (const i of options) b.fx(i, 0.18, 0.75);
 			}, 380);
 		}
-		for (const l of this.labels) {
-			l.el.classList.remove('pop');
-			void l.el.offsetWidth;
-			l.el.classList.add('pop');
-		}
+		this.tags.nudge();
 	}
 
 	async botPick(m, p, i) {
@@ -485,7 +518,6 @@ export class UI {
 		m.turn = p.i;
 		this.hud(m);
 		this.app.board.fx(i, 0.3, 1);
-		this.mark(i, p, 900);
 		await sleep(380);
 		this.app.board.fx(i, 0, 0);
 	}
@@ -507,34 +539,10 @@ export class UI {
 		}, ms);
 	}
 
-	/** İl adları (seçim sırasında). Harita 3B etiket verirse onu kullanır; yoksa dokunulabilir DOM etiketleri. */
+	/** İl adları (seçim sırasında): liste → etiketler (ad + sahip), boş → kapat ve 3B genel adlara dön. */
 	showLabels(list, { m = this.app.match, tap = false } = {}) {
-		const b = this.app.board;
-		if (typeof b.showLabels === 'function') {
-			try {
-				b.showLabels(list);
-				for (const l of this.labels) l.el.remove();
-				this.labels = [];
-				this._lsort = [];
-				return;
-			} catch (e) {
-				/* DOM etiketlerine düş */
-			}
-		}
-		for (const l of this.labels) l.el.remove();
-		this.labels = list.map((i) => {
-			const pv = b.provinces[i];
-			const own = pv.owner >= 0 ? m?.players?.[pv.owner] : null;
-			const cap = own && own.capital === i;
-			const e = document.createElement(tap ? 'button' : 'div');
-			e.className = 'fl-label opt pop';
-			if (own) e.style.setProperty('--oc', own.css);
-			e.innerHTML = `${own ? '<i></i>' : ''}<span>${esc(pv.name)}</span>${cap ? ico('castle', { w: 2.4, c: '#ffd25a' }) : ''}`;
-			if (tap) e.addEventListener('click', () => this._pickRes?.(i));
-			this.$.pins.appendChild(e);
-			return { el: e, i, w: 0, h: 0, x: 0, y: 0 };
-		});
-		this._lsort = this.labels.slice();
+		if (list && list.length) this.tagsOn(this.tagSpecs(m, list, 'plain'), { tap });
+		else this.tagsOff();
 	}
 
 	// ---------------------------------------------------------------- soru
@@ -1037,6 +1045,7 @@ export class UI {
 			}
 			mk.el.style.transform = `translate(${(s.x - mk.w / 2).toFixed(1)}px,${(s.y - mk.h - 8).toFixed(1)}px)`;
 		}
+		this.tags.update();
 	}
 
 	// ---------------------------------------------------------------- jokerler (çizim: jokerfx.js)
@@ -1210,7 +1219,7 @@ export class UI {
 		$.fx.innerHTML = '';
 		this.prompt(null);
 		this.setPins([]);
-		this.showLabels([]);
+		this.tagsOff();
 		for (const mk of this.marks) mk.el.remove();
 		this.marks = [];
 		clearZone(this);

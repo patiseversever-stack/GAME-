@@ -305,8 +305,10 @@ void main() {
 	// gece: sahiplerin dış çizgisi kendi renginde ışır; tüm il sınırlarında ince soluk çizgi (harita yapısı okunur)
 	if (nk > 0.001) {
 		c += ownCol * (band * mix(0.3, 0.6, hiE) + inner * mix(0.02, 0.07, hiE)) * nk * (skirt ? 0.4 : 1.0);
-		float hair = lineAA(d, max(0.02, 0.85 * px), px) * (skirt ? 0.0 : 1.0) * (nb > 254.5 ? 0.0 : 1.0);
-		c += vec3(0.3, 0.4, 0.62) * hair * nk * (1.0 - 0.7 * ownedK) * 0.13 * uTune.z;
+		float hair = lineAA(d, max(0.022, 1.0 * px), px) * (skirt ? 0.0 : 1.0) * (nb > 254.5 ? 0.0 : 1.0);
+		c += vec3(0.32, 0.42, 0.66) * hair * nk * (1.0 - 0.7 * ownedK) * 0.2 * uTune.z;
+		// kıyı çizgisi: kara ile deniz ayrışsın (ay ışığında ince soğuk parıltı)
+		c += vec3(0.28, 0.4, 0.66) * smoothstep(0.935, 0.99, coast) * (skirt ? 0.0 : 1.0) * nk * 0.07 * uTune.w;
 	}
 	// --- seçim (v0.4): hedef kendi renginde (tarafsızsa krem), temiz beyaz dış hat, yumuşak nabız.
 	// Altın parlama, hale ve iç ışıltı yok: sahip rengi ve sarı arazi çizgiyle karışmaz.
@@ -317,7 +319,7 @@ void main() {
 	float fwD = max(fwidth(vDepth), 1e-4);
 	// yüzeyde: il içinde sınıra bitişik bant; duvarda: üst kenarda ince çizgi
 	float edgeW = skirt ? 1.0 - smoothstep(1.2 * fwD, 2.8 * fwD, vDepth) : lineAA(d, wOut, px);
-	c = mix(c, white * 1.3, edgeW * sel * bk * (0.88 + 0.12 * pulse));
+	c = mix(c, white * 1.3, edgeW * sel * bk * (0.8 + 0.2 * pulse));
 	// en dışta koyu kıl çizgi: beyaz bant komşu aydınlık ya da açık renkli yüzeyden ayrı okunur
 	c = mix(c, vec3(0.012, 0.016, 0.034), (skirt ? 0.0 : lineAA(d, max(0.024, 0.85 * px), px)) * sel * bk * 0.9);
 	// kalkık ilin duvarı gölgede (beyaz çizgi öne çıksın)

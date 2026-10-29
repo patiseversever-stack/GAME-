@@ -64,7 +64,8 @@ export class Cinema {
 		const pick = ui.pickProvince.bind(ui);
 		ui.pickProvince = (m, options, text) => {
 			const pr = pick(m, options, text);
-			if (!ui.fast && !this.fast) this.frameList(options);
+			// kadraj: seçenekler ve okların çıktığı yerler (rozet ve ok başları görünsün)
+			if (!ui.fast && !this.fast) this.frameList(options, this._tails());
 			return pr;
 		};
 		const bot = ui.botPick.bind(ui);
@@ -73,19 +74,20 @@ export class Cinema {
 			const b = app.board;
 			const opts = this._options(m, p, i);
 			const attack = b.provinces[i].owner >= 0;
-			// kamera botun üstünde: başkenti ve seçenekleri birlikte; seçenekler gecede ışık adası
 			const me = m.players?.find((q) => q.human);
-			if (me && b.uMe) b.uMe.value = me.i;
-			b.night?.(true, opts);
-			b.showLabels?.(opts);
-			b.cues?.show(opts, p.i, { attack });
-			const cap = p.capital >= 0 && opts.length < 9 ? [...opts, p.capital] : opts;
-			this.frameList(cap);
+			m.turn = p.i; // oyuncu kartlarındaki SIRA işareti rozetle aynı anda
+			ui.hud?.(m);
+			// seçenekler gecede ışık adası; sırası gelen botun toprağı net, okları ve rozeti kendi renginde,
+			// hedeflerin adı ve sahibi etiketlerde
+			b.select?.(opts, { attack, me: me ? me.i : null, act: p.i });
+			ui.tagsOn(ui.tagSpecs(m, opts, attack ? 'attack' : 'pick'), { badges: ui.homeBadges(m, p, opts) });
+			const frame = opts.slice();
+			if (p.capital >= 0 && opts.length < 9 && !b.cues?.tails.size) frame.push(p.capital);
+			this.frameList(frame, this._tails());
 			ui.caption?.(`SIRA · ${p.name}`, attack ? 'Hedefini seçiyor' : 'Bir il seçiyor', null, { p, tone: attack ? 'red' : '' });
 			await sleep(880);
-			b.night?.(true, [i]);
-			b.showLabels?.([i]);
-			b.cues?.show([i], p.i, { attack });
+			b.select?.([i], { attack, me: me ? me.i : null, act: p.i });
+			ui.tagsOn(ui.tagSpecs(m, [i], attack ? 'attack' : 'pick'), { badges: ui.homeBadges(m, p, [i]) });
 			ui.caption?.(`${p.name} · ${attack ? 'SALDIRI' : 'YAYILMA'}`, b.provinces[i].name, attack ? 'SAVAŞ BAŞLIYOR' : 'YENİ TOPRAK', { p, tone: attack ? 'red' : '' });
 			await bot(m, p, i);
 			b.cues?.hide(); // seçim bitti: oklar söner (fetih ve düello oksuz)
@@ -95,18 +97,27 @@ export class Cinema {
 			ui.caption?.(null);
 			if (!ui.fast && ctx?.T?.needsMap) {
 				app.board.night?.(false, null, { hold: 0 });
-				app.board.showLabels?.([]);
+				ui.tagsOff?.();
 			}
 			return q(m, ctx);
 		};
 	}
 
 	/** Kamera listedeki illerin hepsini çerçeveler (çok küçükse en az ~14 birim). */
-	frameList(list) {
+	frameList(list, pts = null) {
 		const app = this.app;
 		if (!list || !list.length) return;
 		this._spot(null); // seçimde bütün seçenekler aydınlık: ışık havuzu yok
 		const b = app.boundsOf(list);
+		// ek noktalar (okların çıkış yerleri): rozet için üstte biraz pay
+		if (pts) {
+			for (const q of pts) {
+				b.x0 = Math.min(b.x0, q.x - 1.2);
+				b.x1 = Math.max(b.x1, q.x + 1.2);
+				b.z0 = Math.min(b.z0, q.z - 3.4);
+				b.z1 = Math.max(b.z1, q.z + 1.2);
+			}
+		}
 		const cx = (b.x0 + b.x1) / 2;
 		const cz = (b.z0 + b.z1) / 2;
 		const w = Math.max(14, b.x1 - b.x0);
@@ -119,6 +130,12 @@ export class Cinema {
 		// gece süzülüşü: kamera yolda hafifçe kalkar (kavis), varınca ağır ağır döner ve yaklaşır
 		this._drift = -(this._drift || 1);
 		app.cam.fit({ ...box }, { pitch: 0.95, pad: 1.2, dur: 0.95, arc: 4.5, yawRate: 0.03 * this._drift, distRate: -0.014, decay: 0.32 });
+	}
+
+	/** Okların çıkış noktaları (dünya x/z): kadraj bunları da içersin. */
+	_tails() {
+		const c = this.app.board.cues;
+		return c?.on && c.tails.size ? [...c.tails.values()] : null;
 	}
 
 	/** Botun bu seçimdeki seçenekleri (maç akışıyla aynı kural). */
@@ -151,7 +168,7 @@ export class Cinema {
 		const b = this.app.board;
 		this._spot(null);
 		b.night?.(false, null, { hold });
-		b.showLabels?.([]);
+		this.app.ui?.tagsOff?.();
 		this.app.ui?.caption?.(null);
 	}
 
@@ -341,8 +358,9 @@ export class Cinema {
 		b.fx(i, 0.6, 1);
 		this.app.sfx?.play?.('claim');
 		if (!this.fast) {
+			b.uAct.value = p.i;
 			b.night?.(true, [i]); // boya dalgası gecede, sonra gündüz
-			b.showLabels?.([i]);
+			this.app.ui?.tagsOn?.(this.app.ui.tagSpecs(this.app.match, [i], 'pick'));
 		}
 		if (!this.fast && this.fx) {
 			const c = this._center(i, this.c, 0.6);
@@ -372,9 +390,19 @@ export class Cinema {
 			return;
 		}
 		// yol: saldıranın ilinden ortak sınıra, oradan hedefe (kuşatmada kalenin önüne)
+		b.uAct.value = p.i;
 		b.night?.(true, [src, target]);
-		b.showLabels?.([src, target]);
-		app.ui?.caption?.(isCap ? 'KUŞATMA' : 'SALDIRI', t.name, `${p.name} · ${d.name}`, { p, tone: 'red' });
+		// kim kime: saldıranın ilinden hedefe saldıranın renginde ok; iki ilin etiketinde sahipleri (SALDIRAN / SAVUNAN)
+		b.cues?.show([target], p.i, { attack: true });
+		const ui = app.ui;
+		ui?.tagsOn?.(
+			[
+				{ i: src, kind: 'src', p, role: 'SALDIRAN' },
+				{ i: target, kind: 'attack', p: d, role: isCap ? 'KALE' : 'SAVUNAN' },
+			],
+			{},
+		);
+		ui?.caption?.(isCap ? 'KUŞATMA' : 'SALDIRI', t.name, `${p.name} · ${d.name}`, { p, tone: 'red' });
 		const S = b.provinces[src];
 		const border = b.borderPoint ? b.borderPoint(src, target, this.a) : this.a.set((S.x + t.x) / 2, 0, (S.z + t.z) / 2);
 		const from = this.b.set(S.x + (border.x - S.x) * 0.35, 0, S.z + (border.z - S.z) * 0.35);
@@ -423,12 +451,14 @@ export class Cinema {
 			this.at(0.6, () => cam.shot(fx2, fz2, { dist: Math.max(21, d0 * 0.9), pitch: 0.74, yaw, dur: 0.95, arc: 0, distRate: -0.015, distMin: 19 }));
 			await this.beat(1600);
 		}
+		b.cues?.hide(); // yürüyüş bitti: ok söner (çark ve düello oksuz; etiketler kalır)
 		this._hold();
 	}
 
 	async conquer(p, i) {
 		const app = this.app;
 		const b = app.board;
+		b.cues?.hide();
 		b.fx(i, 0.6, 1);
 		if (this.fast) {
 			b.fx(i, 0, 0);
@@ -447,8 +477,9 @@ export class Cinema {
 		} else cam.shake = 0.5;
 		app.sfx?.play?.('conquer');
 		// boya dalgası her zaman gecede (harita sorusundan gündüzde gelinse bile)
+		b.uAct.value = p.i;
 		b.night?.(true, [i], { fast: (b.nightAmt ?? 1) < 0.5 });
-		b.showLabels?.([i]);
+		app.ui?.tagsOn?.(app.ui.tagSpecs(app.match, [i], 'conq'));
 		app.ui?.caption?.('FETİH', b.provinces[i].name, `${p.name} topraklarına katıldı`, { p });
 		this._spot(c, 3.6);
 		// uzaktan geliniyorsa (harita sorusundan) hızlı kesme: boya dalgası kaçmasın
