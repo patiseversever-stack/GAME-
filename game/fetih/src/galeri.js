@@ -4,11 +4,15 @@
 // Üstte galeri şeridi (tip, örnek, sahne ve süre seçimi); altındaki alan telefondaki oyun ekranının aynısı. Her
 // örnek gerçek akışla oynar: düello sahnesinde önce saldırı filminin son hali (ordular cephede, gece odağı),
 // sonra VS girişi ve soru kartı; cevaplayınca bot da cevaplar ve cevap ekranı açılır.
+//
+// YENİ · deneme tipleri (src/quiz/deneme.js): tip listesinin başında ayrı bir bölümde; maçta çıkmazlar, yalnız
+// burada denenir. Galeri ilk açılışta ilk deneme tipiyle başlar; adresin sonuna #kosu gibi tip adı yazılırsa o açılır.
 
 import { createFetih } from './index.js';
 import { TYPES } from './quiz/types.js';
 import { CATS } from './quiz/categories.js';
 import { BANK } from './data/bank.js';
+import { DENEME_TYPES, DENEME_ORDER, DENEME_SAMPLES, bindApp } from './quiz/deneme.js';
 
 const ORDER = [
 	['choice', 'Çoktan seçmeli'],
@@ -28,6 +32,10 @@ const ORDER = [
 	['img', 'Resimli'],
 	['blitz', 'Yıldırım'],
 ];
+// galerideki bütün tipler: önce YENİ · deneme tipleri (3. alan true), sonra oyundakiler
+const LIST = [...DENEME_ORDER.map(([t, n, s]) => [t, n, true, s]), ...ORDER];
+const ALLT = { ...TYPES, ...DENEME_TYPES };
+const isNew = (t) => !!DENEME_TYPES[t];
 
 // bankada sorusu olmayan tipler: oyunun kendi denemelerindeki örnek sorular
 const BLITZ = [
@@ -77,6 +85,7 @@ const SAMPLES = {
 
 /** Bankadan tip başına 4 örnek: zorluk 1, 2, 3 ve bir tane daha; sıralamada iki artan, iki azalan. */
 function examples(type) {
+	if (DENEME_SAMPLES[type]) return DENEME_SAMPLES[type];
 	if (SAMPLES[type]) return SAMPLES[type];
 	const list = BANK.filter((q) => q.type === type).sort((a, b) => a.id.localeCompare(b.id));
 	const pick = (pred, n) => list.filter((q) => pred(q) && !out.includes(q)).slice(0, n);
@@ -124,6 +133,15 @@ const CSS = `
 .gal-pn button small em{font-style:normal;color:#ffb894}
 .gal-pn button.on{background:#ffd25a;border-color:#ffd25a;color:#3a2200}
 .gal-pn button.on small{color:rgba(58,34,0,.7)}
+.gal-pn[hidden]{display:none}
+/* YENİ · deneme tipleri */
+.gal .meta .yeni,.gal-pn small .yeni{font-style:normal;color:#ffd25a}
+.gal .ty .nw{flex:none;padding:1px 6px 2px;border-radius:6px;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:9.5px;letter-spacing:.1em;color:#3a2200;background:#ffd25a}
+.gal-pn h4{grid-column:1/-1;margin:4px 2px -2px;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:10.5px;letter-spacing:.18em;color:#8fa2cf}
+.gal-pn h4 b{color:#ffd25a}
+.gal-pn button.nw{border-color:rgba(255,210,90,.55);background:linear-gradient(160deg,#243a72,#16254d)}
+.gal-pn button.nw i{font-style:normal;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:11px;line-height:1.25;color:#cfd9f2}
+.gal-pn button.nw.on i{color:rgba(58,34,0,.75)}
 `;
 
 export async function galeri() {
@@ -142,6 +160,7 @@ export async function galeri() {
 
 	const game = await createFetih({ container: document.body });
 	const app = game.app;
+	bindApp(app); // deneme tipleri haritaya, kameraya ve arayüze buradan ulaşır
 	const root = app.container;
 	const ui = app.ui;
 	window.__fl = game;
@@ -170,30 +189,36 @@ export async function galeri() {
 	const [me, foe] = m.players;
 	const jk0 = JSON.stringify(me.jk);
 
-	const S = { type: 'choice', k: 0, scene: 'duel', time: 'real', run: 0 };
-	const ex = Object.fromEntries(ORDER.map(([t]) => [t, examples(t)]));
+	// ilk açılış: adresteki #tip, yoksa ilk deneme tipi
+	const want = decodeURIComponent(location.hash.slice(1));
+	const S = { type: LIST.some(([t]) => t === want) ? want : LIST[0][0], k: 0, scene: 'duel', time: 'real', run: 0 };
+	const ex = Object.fromEntries(LIST.map(([t]) => [t, examples(t)]));
 	const R = () => Math.random();
 
 	const draw = () => {
 		const list = ex[S.type];
 		const q = list[S.k];
-		const name = ORDER.find(([t]) => t === S.type)[1];
+		const name = LIST.find(([t]) => t === S.type)[1];
 		const cat = CATS[q.cat]?.name || q.cat;
-		const T = TYPES[S.type];
+		const T = ALLT[S.type];
 		const v = T.prepare(q, R);
-		const ti = ORDER.findIndex(([t]) => t === S.type);
+		const ti = LIST.findIndex(([t]) => t === S.type);
+		const nw = isNew(S.type);
 		bar.innerHTML = `<span class="ey">FETİH LİGİ · SORU GALERİSİ</span>
-			<div class="hd"><button class="ty" id="g-type" aria-haspopup="listbox" aria-expanded="${!pn.hidden}"><b>${esc(name)}</b><small>${ti + 1}/${ORDER.length}</small><i>▼</i></button>
+			<div class="hd"><button class="ty" id="g-type" aria-haspopup="listbox" aria-expanded="${!pn.hidden}">${nw ? '<span class="nw">YENİ</span>' : ''}<b>${esc(name)}</b><small>${ti + 1}/${LIST.length}</small><i>▼</i></button>
 				<div class="nv"><button class="ar" id="g-prev" aria-label="Önceki örnek">‹</button><b>${S.k + 1}/${list.length}<small>ÖRNEK</small></b><button class="ar" id="g-next" aria-label="Sonraki örnek">›</button></div></div>
-			<div class="meta"><b>${esc(q.id)}</b> · ${esc(cat)} · ${DIFF[q.diff] || ''} · süre <b>${v.sec ?? T.time} sn</b>${SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok, örnek soru</span>' : ''}</div>
+			<div class="meta"><b>${esc(q.id)}</b> · ${esc(cat)} · ${DIFF[q.diff] || ''} · süre <b>${v.sec ?? T.time} sn</b>${
+				nw ? ' · <em class="yeni">YENİ · deneme</em> <span class="note">maçta çıkmaz</span>' : SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok, örnek soru</span>' : ''
+			}</div>
 			<div class="ft"><button class="tg" id="g-scene">Sahne: <em>${S.scene === 'duel' ? 'Düello' : 'Herkes cevaplıyor'}</em></button>
 				<button class="tg" id="g-time">Süre: <em>${S.time === 'real' ? 'Gerçek' : 'Sınırsız'}</em></button>
 				<button class="tg" id="g-again">↻ Yeniden</button></div>`;
 		bar.classList.toggle('open', !pn.hidden);
-		pn.innerHTML = ORDER.map(
-			([t, n]) =>
-				`<button data-t="${t}" role="option" aria-selected="${t === S.type}" class="${t === S.type ? 'on' : ''}">${esc(n)}<small>${SAMPLES[t] ? '<em>örnek soru</em>' : `${ex[t].length} soru`}</small></button>`,
-		).join('');
+		const item = ([t, n, nw2, sub]) =>
+			`<button data-t="${t}" role="option" aria-selected="${t === S.type}" class="${t === S.type ? 'on' : ''}${nw2 ? ' nw' : ''}">${esc(n)}${nw2 ? `<i>${esc(sub)}</i>` : ''}<small>${
+				nw2 ? `<em class="yeni">YENİ · deneme</em> · ${ex[t].length} soru` : SAMPLES[t] ? '<em>örnek soru</em>' : `${ex[t].length} soru`
+			}</small></button>`;
+		pn.innerHTML = `<h4><b>YENİ</b> · DENEME TİPLERİ (MAÇTA ÇIKMAZ)</h4>${LIST.filter((x) => x[2]).map(item).join('')}<h4>OYUNDAKİ TİPLER</h4>${ORDER.map(item).join('')}`;
 		fit();
 		return { q, v, T };
 	};
@@ -230,11 +255,11 @@ export async function galeri() {
 	addEventListener('keydown', (e) => {
 		if (e.key === 'Escape' && !pn.hidden) return panel(false);
 		if (!bar.contains(document.activeElement) && !pn.contains(document.activeElement)) return;
-		const ti = ORDER.findIndex(([t]) => t === S.type);
+		const ti = LIST.findIndex(([t]) => t === S.type);
 		if (e.key === 'ArrowRight') go(S.type, S.k + 1);
 		else if (e.key === 'ArrowLeft') go(S.type, S.k - 1);
-		else if (e.key === 'ArrowDown') go(ORDER[(ti + 1) % ORDER.length][0]);
-		else if (e.key === 'ArrowUp') go(ORDER[(ti - 1 + ORDER.length) % ORDER.length][0]);
+		else if (e.key === 'ArrowDown') go(LIST[(ti + 1) % LIST.length][0]);
+		else if (e.key === 'ArrowUp') go(LIST[(ti - 1 + LIST.length) % LIST.length][0]);
 		else return;
 		e.preventDefault();
 		bar.querySelector('#g-type')?.focus({ preventScroll: true });

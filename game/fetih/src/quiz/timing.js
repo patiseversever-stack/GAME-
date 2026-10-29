@@ -101,6 +101,12 @@ export const PROFILE = {
 	match: { min: 13, max: 36, think: [0, 0.4] }, // karar başına: aşağıda
 	cross: { min: 25, max: 100, think: [3, 1] }, // kelime başına: aşağıda
 	blitz: { min: 10, max: 20, think: [0, 0], round: true }, // sabit tur: KIRMIZI kuralı yok
+	// YENİ · deneme tipleri (yalnız soru galerisi, src/quiz/deneme.js): ekrandaki işleri d_ortak.js stamp() sayar,
+	// süre bu dosyadaki formül ve sabitlerle hesaplanır. Tip benimsenince parts() içine bir `case` olarak taşınır.
+	kusbakisi: { min: 15, max: 30, think: [3, 1.25] }, // yükselen kamerada yeri tanı, dört şıktan seç
+	kosu: { min: 18, max: 55, think: [0, 0], round: true }, // sabit tur: hedef il başına hatırla, bul, dokun
+	ilavi: { min: 20, max: 45, think: [3, 1.5] }, // siluet ve ipucu; en çok 4 deneme, her biri uzaklık rengiyle
+	baglanti: { min: 30, max: 90, think: [5, 2.5] }, // grup başına: dört ortak taşı bul, tuzağı sayarak ele
 };
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
