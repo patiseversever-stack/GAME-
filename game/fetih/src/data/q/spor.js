@@ -26,7 +26,7 @@ export default [
 	{ id: "spo-ch-030", cat: "spor", diff: 2, type: "choice", q: "Türkiye, 2002 Dünya Kupası'ndaki son maçında hangi takımı yendi?", a: ["Güney Kore", "Japonya", "Brezilya", "Almanya"] },
 	{ id: "spo-ch-031", cat: "spor", diff: 3, type: "choice", q: "2002 Dünya Kupası'nda Türk Milli Takımı'nın teknik direktörü kimdi?", a: ["Şenol Güneş", "Fatih Terim", "Mustafa Denizli", "Abdullah Avcı"] },
 	{ id: "spo-ch-032", cat: "spor", diff: 3, type: "choice", q: "Türkiye, EURO 2008'de yarı finalde hangi takıma yenildi?", a: ["Almanya", "Hırvatistan", "Portekiz", "İspanya"] },
-	{ id: "spo-ch-096", cat: "spor", diff: 2, type: "choice", q: "Halter efsanesi Halil Mutlu'nun lakabı nedir?", a: ["Küçük Dev", "Cep Herkülü", "Demir Bilek", "Altın Kol"] },
+	{ id: "spo-ch-096", cat: "spor", diff: 2, type: "choice", q: "Halter efsanesi Halil Mutlu'nun lakabı nedir?", a: ["Küçük Dinamo", "Cep Herkülü", "Demir Bilek", "Altın Kol"] },
 	{ id: "spo-ch-034", cat: "spor", diff: 2, type: "choice", q: "Mete Gazoz Tokyo 2020'de hangi dalda olimpiyat şampiyonu oldu?", a: ["Okçuluk", "Atıcılık", "Eskrim", "Yüzme"] },
 	{ id: "spo-ch-035", cat: "spor", diff: 2, type: "choice", q: "Busenaz Sürmeneli Tokyo 2020'de hangi dalda olimpiyat şampiyonu oldu?", a: ["Boks", "Judo", "Güreş", "Halter"] },
 	{ id: "spo-ch-036", cat: "spor", diff: 1, type: "choice", q: "Paris 2024'te elini cebine koyduğu rahat duruşuyla dünyaca ünlenen Yusuf Dikeç hangi branşta madalya kazandı?", a: ["Atıcılık", "Okçuluk", "Eskrim", "Golf"], tag: "internet" },
