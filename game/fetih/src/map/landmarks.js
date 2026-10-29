@@ -585,7 +585,7 @@ const B = {
 			k.smooth(true).grad('#cc9a79', '#f2e2c4', 0, h).lathe(pts, 9, x, 0, z).smooth(false);
 			if (cap) {
 				const c = [[0.0, -0.004], [r * 1.0, -0.004], [r * 1.28, 0.014], [r * 1.12, 0.036], [r * 0.62, 0.056], [0, 0.062]];
-				k.smooth(true).color(R() < 0.5 ? '#8a7061' : '#7a6556').lathe(c, 9, x, h * 0.92, z).smooth(false);
+				k.smooth(true).color(R() < 0.5 ? '#9a7f6e' : '#8a7262').lathe(c, 9, x, h * 0.92, z).smooth(false);
 			}
 			// kayaya oyulmuş kapı ve pencere (ön yüz)
 			k.color(DARK);
