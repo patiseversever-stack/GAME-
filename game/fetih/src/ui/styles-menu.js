@@ -9,26 +9,26 @@ export const CSS_MENU = /* css */ `
 .fl-ib:active{transform:translateY(3px)}
 
 /* ---------------------------------------------------------------- başlık */
-.fl-title{justify-content:space-between;padding:calc(7vh + var(--sat)) 16px calc(5vh + var(--sab));background:linear-gradient(180deg,rgba(8,14,32,.75),rgba(8,14,32,0) 42%,rgba(8,14,32,0) 58%,rgba(8,14,32,.8))}
+.fl-title{justify-content:space-between;padding:calc(calc(7 * var(--vh)) + var(--sat)) 16px calc(calc(5 * var(--vh)) + var(--sab));background:linear-gradient(180deg,rgba(8,14,32,.75),rgba(8,14,32,0) 42%,rgba(8,14,32,0) 58%,rgba(8,14,32,.8))}
 .fl-logo{position:relative;display:flex;flex-direction:column;align-items:center}
-.fl-logo .rays{position:absolute;left:50%;top:38%;width:min(150vw,760px);aspect-ratio:1;margin-left:min(-75vw,-380px);transform:translateY(-50%);border-radius:50%;opacity:.55;pointer-events:none;
+.fl-logo .rays{position:absolute;left:50%;top:38%;width:min(calc(150 * var(--vw)),760px);aspect-ratio:1;margin-left:min(-75vw,-380px);transform:translateY(-50%);border-radius:50%;opacity:.55;pointer-events:none;
   background:repeating-conic-gradient(rgba(255,226,140,.55) 0deg 6deg,rgba(255,226,140,0) 6deg 18deg);-webkit-mask:radial-gradient(circle,#000 12%,transparent 60%);mask:radial-gradient(circle,#000 12%,transparent 60%);animation:flRot2 40s linear infinite}
 @keyframes flRot2{from{transform:translateY(-50%) rotate(0)}to{transform:translateY(-50%) rotate(360deg)}}
-.fl-logo .emb{position:relative;width:min(38vw,170px);aspect-ratio:1;margin-bottom:-22px;animation:flEmbIn .7s cubic-bezier(.3,1.6,.5,1) both,flFloat 3.4s 1s ease-in-out infinite}
+.fl-logo .emb{position:relative;width:min(calc(38 * var(--vw)),170px);aspect-ratio:1;margin-bottom:-22px;animation:flEmbIn .7s cubic-bezier(.3,1.6,.5,1) both,flFloat 3.4s 1s ease-in-out infinite}
 .fl-emb{width:100%;height:100%;filter:drop-shadow(0 6px 0 rgba(0,0,0,.35))}
 @keyframes flEmbIn{from{opacity:0;transform:scale(.2) rotate(-30deg)}}
 @keyframes flFloat{50%{transform:translateY(-6px)}}
-.fl-logo .w1{position:relative;display:flex;font-family:'Lilita One';font-size:min(23vw,112px);line-height:.92;letter-spacing:.01em}
+.fl-logo .w1{position:relative;display:flex;font-family:'Lilita One';font-size:min(calc(23 * var(--vw)),112px);line-height:.92;letter-spacing:.01em}
 .fl-logo .w1 i{display:block;font-style:normal;color:#fff;${OUT('#14245a', 6)};animation:flDropL .55s calc(.25s + var(--k) * .08s) cubic-bezier(.3,1.6,.5,1) both,flWave 2.8s calc(1.4s + var(--k) * .14s) ease-in-out infinite}
 @keyframes flDropL{from{opacity:0;transform:translateY(-120px) scale(1.4)}}
 @keyframes flWave{0%,100%{transform:none}50%{transform:translateY(-5px)}}
 .fl-logo .w2{position:relative;margin-top:6px;padding:3px 34px 8px;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#ffe98a,#f5b324 60%,#e0950e);border:4.5px solid #fff;box-shadow:0 7px 0 #8a5206,0 12px 22px rgba(0,0,0,.35);animation:flPopIn .45s .7s cubic-bezier(.3,1.7,.5,1) both}
-.fl-logo .w2 span{display:block;font-family:'Lilita One';font-size:min(12vw,56px);line-height:1;letter-spacing:.08em;color:#5a3000;text-shadow:0 2px 0 rgba(255,255,255,.55)}
+.fl-logo .w2 span{display:block;font-family:'Lilita One';font-size:min(calc(12 * var(--vw)),56px);line-height:1;letter-spacing:.08em;color:#5a3000;text-shadow:0 2px 0 rgba(255,255,255,.55)}
 .fl-logo .w2 .sh{position:absolute;top:0;bottom:0;left:0;width:40%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:translateX(-150%) skewX(-20deg);animation:flShn 3.2s 1.4s ease-in-out infinite}
 @keyframes flShn{0%{transform:translateX(-150%) skewX(-20deg)}35%,100%{transform:translateX(320%) skewX(-20deg)}}
 .fl-logo small{display:block;margin-top:16px;padding:5px 16px 6px;border-radius:999px;font-size:17px;background:rgba(10,21,52,.85);border:2px solid rgba(255,210,90,.6);animation:flUp .4s 1s ease-out both;opacity:0;transform:translateY(10px)}
 .fl-tbtns{display:flex;flex-direction:column;align-items:center;gap:16px;width:min(100%,400px);animation:flUp .45s 1.1s ease-out both;opacity:0;transform:translateY(20px)}
-.fl-play{width:100%;font-size:clamp(30px,10vw,40px);padding:14px 20px 18px;animation:flPulse 1.6s 2s ease-in-out infinite}
+.fl-play{width:100%;font-size:clamp(30px,calc(10 * var(--vw)),40px);padding:14px 20px 18px;animation:flPulse 1.6s 2s ease-in-out infinite}
 .fl-play .fl-i{font-size:38px}
 @keyframes flPulse{0%,100%{transform:none}50%{transform:scale(1.04)}}
 .fl-tbtns .row{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
@@ -48,7 +48,7 @@ export const CSS_MENU = /* css */ `
 .fl-cmdchip b{min-width:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fl-cmdchip .fl-i{font-size:16px;opacity:.8}
 .fl-mbody{flex:1;min-height:0;width:100%;max-width:640px;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;padding:0 12px 12px;-webkit-overflow-scrolling:touch}
-.fl-mbody section{margin-top:clamp(10px,2.4vh,24px)}
+.fl-mbody section{margin-top:clamp(10px,calc(2.4 * var(--vh)),24px)}
 .fl-mbody h4{display:flex;align-items:center;gap:6px;margin:0 0 7px 2px;font-size:13px;letter-spacing:.16em;color:var(--gold)}
 .fl-mbody h4 .fl-i{font-size:16px}
 .fl-mbody button{position:relative;transition:transform .12s cubic-bezier(.3,1.5,.5,1)}
@@ -58,7 +58,7 @@ export const CSS_MENU = /* css */ `
 .fl-modes{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fl-mode{display:flex;flex-direction:column;border-radius:18px;overflow:visible;background:var(--panel);border:3px solid rgba(255,255,255,.2);box-shadow:0 5px 0 var(--navy-d);text-align:left;animation:flPopIn .35s calc(var(--k) * .05s) cubic-bezier(.3,1.5,.5,1) both}
 .fl-mode.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-d),0 5px 0 var(--gold-dd)}
-.fl-mode .art{position:relative;height:clamp(64px,10vh,88px);margin:3px 3px 0;border-radius:14px 14px 8px 8px;display:flex;align-items:center;justify-content:center;gap:4px;overflow:hidden;
+.fl-mode .art{position:relative;height:clamp(64px,calc(10 * var(--vh)),88px);margin:3px 3px 0;border-radius:14px 14px 8px 8px;display:flex;align-items:center;justify-content:center;gap:4px;overflow:hidden;
   background:linear-gradient(160deg,#3a6ad0,#1d3770);}
 .fl-mode .art::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(-30deg,rgba(255,255,255,.07) 0 10px,transparent 10px 26px)}
 .fl-mode.on .art{background:linear-gradient(160deg,#ffcf4a,#d8780e)}
@@ -83,7 +83,7 @@ export const CSS_MENU = /* css */ `
 .fl-map{flex:none;width:126px;display:flex;flex-direction:column;align-items:center;padding:6px 6px 7px;border-radius:16px;scroll-snap-align:start;background:var(--panel);border:3px solid rgba(255,255,255,.2);box-shadow:0 5px 0 var(--navy-d)}
 .fl-map.on{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-d),0 5px 0 var(--gold-dd)}
 .fl-map:last-child{margin-right:12px}
-.fl-mm{width:100%;height:clamp(48px,8vh,64px);margin-bottom:4px;overflow:visible}
+.fl-mm{width:100%;height:clamp(48px,calc(8 * var(--vh)),64px);margin-bottom:4px;overflow:visible}
 .fl-mm .base{fill:#36548c;stroke:#0d1733;stroke-width:.3}
 .fl-mm .hi{fill:#ffcf4a;stroke:#7a4a06;stroke-width:.3}
 .fl-map:not(.on) .fl-mm .hi{fill:#9ad06a;stroke:#2a5a1a}
@@ -142,7 +142,7 @@ export const CSS_MENU = /* css */ `
 .fl-end .hdr .rays{position:absolute;left:50%;top:50%;width:420px;height:420px;margin:-210px 0 0 -210px;border-radius:50%;opacity:0;pointer-events:none;
   background:repeating-conic-gradient(rgba(255,226,140,.6) 0deg 8deg,rgba(255,226,140,0) 8deg 20deg);-webkit-mask:radial-gradient(circle,#000 10%,transparent 62%);mask:radial-gradient(circle,#000 10%,transparent 62%)}
 .fl-end.win .hdr .rays{opacity:1;animation:flRot 18s linear infinite}
-.fl-end .hdr b{position:relative;font-family:'Lilita One';font-weight:400;font-size:min(17vw,80px);line-height:1;color:var(--gold);${OUT('#5a2a00', 5)};animation:flStampIn .6s .1s cubic-bezier(.3,1.7,.5,1) both}
+.fl-end .hdr b{position:relative;font-family:'Lilita One';font-weight:400;font-size:min(calc(17 * var(--vw)),80px);line-height:1;color:var(--gold);${OUT('#5a2a00', 5)};animation:flStampIn .6s .1s cubic-bezier(.3,1.7,.5,1) both}
 .fl-end.lose .hdr b{color:#cfe0ff;${OUT('#14245a', 5)}}
 .fl-end .hdr span{position:relative;margin-top:6px;padding:4px 14px 5px;border-radius:999px;font-size:16px;background:var(--ink);border:2px solid rgba(255,210,90,.6);animation:flUp .35s .45s ease-out both;opacity:0;transform:translateY(10px)}
 @keyframes flStampIn{from{opacity:0;transform:scale(2.6)}}
@@ -187,14 +187,14 @@ export const CSS_MENU = /* css */ `
 .fl-rew .gd b{font-family:'Lilita One';font-weight:400;font-size:19px;color:var(--gold)}
 .fl-rew .gd small{font-size:10px;letter-spacing:.1em;color:#cfe0ff}
 .fl-end .btns{display:grid;grid-template-columns:auto 1fr;gap:10px;width:100%;animation:flUp .4s 1.1s ease-out both;opacity:0;transform:translateY(12px)}
-.fl-end .btns .fl-btn.big{font-size:clamp(19px,6.4vw,26px);padding:12px 10px 15px}
+.fl-end .btns .fl-btn.big{font-size:clamp(19px,calc(6.4 * var(--vw)),26px);padding:12px 10px 15px}
 
 ${LAND}{
   .fl-title{flex-direction:row;justify-content:space-around;padding:calc(12px + var(--sat)) 24px calc(12px + var(--sab))}
-  .fl-logo .emb{width:min(26vh,120px)}
-  .fl-logo .w1{font-size:min(19vh,92px)}
-  .fl-logo .w2 span{font-size:min(10vh,44px)}
-  .fl-tbtns{width:min(42vw,380px)}
+  .fl-logo .emb{width:min(calc(26 * var(--vh)),120px)}
+  .fl-logo .w1{font-size:min(calc(19 * var(--vh)),92px)}
+  .fl-logo .w2 span{font-size:min(calc(10 * var(--vh)),44px)}
+  .fl-tbtns{width:min(calc(42 * var(--vw)),380px)}
   .fl-mbody{display:grid;grid-template-columns:1fr 1fr;column-gap:16px;align-content:start;max-width:900px}
   .fl-mtop,.fl-mfoot{max-width:900px}
   .fl-mtop{padding-top:calc(6px + var(--sat));padding-bottom:4px}
@@ -221,7 +221,7 @@ ${LAND}{
   .fl-cbox>.fl-btn{grid-column:1/3}
   .fl-ein{display:grid;grid-template-columns:1fr 1fr;grid-template-areas:'h h' 'p r' 'p b' 'p x';column-gap:18px;row-gap:10px;width:min(100%,840px);align-items:end}
   .fl-end .hdr{grid-area:h}
-  .fl-end .hdr b{font-size:min(13vh,60px)}
+  .fl-end .hdr b{font-size:min(calc(13 * var(--vh)),60px)}
   .fl-podium{grid-area:p}
   .fl-rest{grid-area:x}
   .fl-rew{grid-area:r}

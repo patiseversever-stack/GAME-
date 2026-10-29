@@ -762,56 +762,18 @@ export class Match {
 		this.tick(EST.banner);
 	}
 
+	/**
+	 * Başkent seçimi: koltuklar rastgele sırayla başkentini seçer (insan haritada dokunur, bot karar verir).
+	 * Başkent başka bir başkente komşu olamaz; seçilir seçilmez kale oraya iner.
+	 */
 	async placeCapitals() {
 		const app = this.app;
 		const b = app.board;
-		// başkentler birbirinden olabildiğince uzak
-		const chosen = [];
-		const list = this.map.slice();
-		const d = (a, c) => Math.hypot(b.provinces[a].x - b.provinces[c].x, b.provinces[a].z - b.provinces[c].z);
-		chosen.push(list[Math.floor(this.R() * list.length)]);
-		while (chosen.length < this.players.length) {
-			let best = -1;
-			let bd = -1;
-			for (const i of list) {
-				if (chosen.includes(i)) continue;
-				const m = Math.min(...chosen.map((c) => d(i, c))) * (0.85 + this.R() * 0.3);
-				if (m > bd) {
-					bd = m;
-					best = i;
-				}
-			}
-			chosen.push(best);
-		}
-		let order = chosen.sort(() => this.R() - 0.5);
-		if (this.mode.teams) {
-			// eşli modda takım arkadaşlarının başkentleri en yakın ikili olacak biçimde eşleşir
-			const pairs = [[[0, 1], [2, 3]], [[0, 2], [1, 3]], [[0, 3], [1, 2]]];
-			let bestP = pairs[0];
-			let bs = Infinity;
-			for (const pr of pairs) {
-				const s = pr.reduce((a, [x, y]) => a + d(order[x], order[y]), 0);
-				if (s < bs) {
-					bs = s;
-					bestP = pr;
-				}
-			}
-			const t0 = this.R() < 0.5 ? 0 : 1;
-			const seats = [[], []];
-			this.players.forEach((p) => seats[p.team].push(p.i));
-			const next = [];
-			bestP.forEach((pr, k) => {
-				const team = (k + t0) % 2;
-				const swap = this.R() < 0.5;
-				next[seats[team][0]] = order[pr[swap ? 1 : 0]];
-				next[seats[team][1]] = order[pr[swap ? 0 : 1]];
-			});
-			order = next;
-		}
-		for (const p of this.players) {
-			const i = order[p.i];
+		const order = this.players.slice().sort(() => this.R() - 0.5);
+		for (const p of order) {
+			const i = await this.choose(p, 'capital');
 			p.capital = i;
-			this.setOwner(i, p.i, VALUE.pick);
+			this.setOwner(i, p.i, VALUE.pick, true);
 			const k = app.castles[p.i];
 			k.repair();
 			k.group.visible = true;
@@ -820,6 +782,39 @@ export class Match {
 			this.tick(EST.castle);
 		}
 		this.rescore();
+	}
+
+	/** Başkent olabilecek iller: boş ve hiçbir başkente komşu değil (yer kalmazsa herhangi bir boş il). */
+	capitalOptions() {
+		const caps = this.players.filter((p) => p.capital >= 0).map((p) => p.capital);
+		const free = this.free();
+		const ok = free.filter((i) => !caps.some((c) => this.neighbors(c).includes(i)));
+		return ok.length ? ok : free;
+	}
+
+	/** Botun başkenti: rakip başkentlerinden uzak, takım arkadaşına yakın, komşusu bol bir il. */
+	botCapital(p, options) {
+		const P = this.app.board.provinces;
+		const d = (a, c) => Math.hypot(P[a].x - P[c].x, P[a].z - P[c].z);
+		let best = options[0];
+		let bs = -Infinity;
+		for (const i of options) {
+			let foe = 0;
+			let near = Infinity;
+			let mate = 0;
+			for (const q of this.players) {
+				if (q === p || q.capital < 0) continue;
+				if (this.ally(q.i, p.i)) mate = Math.max(mate, d(i, q.capital));
+				else near = Math.min(near, d(i, q.capital));
+			}
+			if (near < Infinity) foe = near;
+			const s = foe - mate * 0.6 + this.neighbors(i).length * 0.4 + this.R() * 1.5;
+			if (s > bs) {
+				bs = s;
+				best = i;
+			}
+		}
+		return best;
 	}
 
 	/** Sefer patronlarının başlangıç ayrıcalığı: başkentine komşu ek iller. */
@@ -854,7 +849,8 @@ export class Match {
 		await this.ui.ranking(this, order, picks.map((k) => k * mult));
 		this.tick(EST.rank);
 		for (let k = 0; k < n; k++) {
-			for (let j = 0; j < picks[k] * mult && this.free().length; j++) await this.choose(order[k].p, 'free');
+			const total = Math.min(picks[k] * mult, this.free().length);
+			for (let j = 0; j < total && this.free().length; j++) await this.choose(order[k].p, 'free', [j + 1, total]);
 		}
 	}
 
@@ -872,10 +868,14 @@ export class Match {
 		return [...set];
 	}
 
-	/** Oyuncu bir il seçer: 'free' boş il (komşu öncelikli), 'attack' saldırılacak düşman ili. */
-	async choose(p, kind) {
+	/**
+	 * Oyuncu bir il seçer: 'capital' başkent, 'free' boş il (komşu öncelikli), 'attack' saldırılacak düşman ili.
+	 * step: [kaçıncı, kaç] — aynı oyuncunun art arda seçimleri (yayılma hakları).
+	 */
+	async choose(p, kind, step = null) {
 		let options;
-		if (kind === 'free') {
+		if (kind === 'capital') options = this.capitalOptions();
+		else if (kind === 'free') {
 			const free = this.free();
 			const adj = free.filter((i) => this.neighbors(i).some((j) => this.owner(j) === p.i));
 			options = adj.length ? adj : free;
@@ -885,7 +885,8 @@ export class Match {
 			if (!options.length) options = this.map.filter((i) => this.owner(i) >= 0 && !this.ally(this.owner(i), p.i));
 		}
 		if (!options.length) return -1;
-		const text = kind === 'free' ? 'Bir il seç' : 'Saldıracağın ili seç';
+		const n = step && step[1] > 1 ? ` · ${step[0]}/${step[1]}` : '';
+		const text = kind === 'capital' ? 'Başkentini seç' : kind === 'free' ? `Bir il al${n}` : 'Saldıracağın ili seç';
 		let pickI = await p.ctl.pick(p, kind, options, text);
 		if (pickI == null || !options.includes(pickI)) {
 			// uzak koltuk cevap vermedi ya da geçersiz il: bot karar verir
@@ -902,6 +903,7 @@ export class Match {
 	}
 
 	botChoose(p, options, kind) {
+		if (kind === 'capital') return this.botCapital(p, options);
 		let best = options[0];
 		let bs = -Infinity;
 		for (const i of options) {

@@ -46,12 +46,12 @@ const BASE = /* css */ `
 .fl-btn.green{--b1:#72e36a;--b2:#2fa83c;--b3:#16661f}
 .fl-btn.gold{--b1:#ffe680;--b2:#f5b324;--b3:#a0620a;color:#4a2800;text-shadow:0 1px 0 rgba(255,255,255,.5)}
 .fl-btn.navy{--b1:#2f5299;--b2:#1d3770;--b3:#0b1839;border-color:rgba(255,255,255,.5)}
-.fl-btn.big{font-size:clamp(22px,7.4vw,30px);padding:14px clamp(16px,6vw,40px) 17px;border-radius:22px;border-width:4px}
+.fl-btn.big{font-size:clamp(22px,calc(7.4 * var(--vw)),30px);padding:14px clamp(16px,calc(6 * var(--vw)),40px) 17px;border-radius:22px;border-width:4px}
 .fl-btn:disabled{filter:grayscale(.7);opacity:.6}
 .fl-btn .fl-i{width:1.1em;height:1.1em}
 
 /* ---------------------------------------------------------------- oyuncu kartları (HUD) */
-.fl-hud{position:absolute;top:calc(8px + var(--sat));left:50%;transform:translateX(-50%);display:flex;gap:6px;width:min(calc(100vw - 16px),600px);justify-content:center;transition:opacity .3s,transform .3s}
+.fl-hud{position:absolute;top:calc(8px + var(--sat));left:50%;transform:translateX(-50%);display:flex;gap:6px;width:min(calc(calc(100 * var(--vw)) - 16px),600px);justify-content:center;transition:opacity .3s,transform .3s}
 .fl-hud.off{opacity:0;transform:translate(-50%,-30px)}
 .fl-pl{position:relative;flex:1 1 0;min-width:0;max-width:150px;display:flex;align-items:center;gap:6px;padding:4px 7px 9px 4px;border-radius:15px;
   background:var(--panel);border:2.5px solid rgba(255,255,255,.2);box-shadow:0 4px 0 var(--navy-d),0 6px 10px rgba(0,0,0,.25);transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .3s}
@@ -91,7 +91,7 @@ const BASE = /* css */ `
 .fl-banner .emb{position:relative;flex:none;width:58px;height:58px;border-radius:17px;display:grid;place-items:center;font-size:36px;opacity:0;
   background:linear-gradient(var(--t1),var(--t2));border:3.5px solid #fff;box-shadow:0 5px 0 var(--t3);transform:rotate(45deg) scale(0)}
 .fl-banner .emb .fl-i{transform:rotate(-45deg)}
-.fl-banner b{position:relative;display:flex;font-family:'Lilita One';font-weight:400;font-size:min(16vw,76px);line-height:1;letter-spacing:.03em;color:#fff;${OUT('var(--t2)', 4)}}
+.fl-banner b{position:relative;display:flex;font-family:'Lilita One';font-weight:400;font-size:min(calc(16 * var(--vw)),76px);line-height:1;letter-spacing:.03em;color:#fff;${OUT('var(--t2)', 4)}}
 .fl-banner b i{display:block;font-style:normal;opacity:0;transform:translateY(-40px) scale(2.2)}
 .fl-banner span{position:relative;margin-top:6px;padding:5px 18px 6px;border-radius:999px;font-size:17px;background:var(--ink);border:2.5px solid var(--t1);opacity:0;transform:translateY(10px)}
 .fl-banner.on .band{animation:flBand .32s cubic-bezier(.2,.9,.3,1) forwards}
@@ -108,7 +108,7 @@ const BASE = /* css */ `
 @keyframes flOut{to{opacity:0;transform:translateX(-8%) scale(1.04)}}
 
 /* ---------------------------------------------------------------- bildirimler */
-.fl-toasts{position:absolute;left:50%;top:calc(82px + var(--sat));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:min(calc(100vw - 32px),420px)}
+.fl-toasts{position:absolute;left:50%;top:calc(82px + var(--sat));transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;width:min(calc(calc(100 * var(--vw)) - 32px),420px)}
 .fl-toast{display:flex;align-items:center;gap:8px;max-width:100%;padding:7px 14px 8px 8px;border-radius:14px;font-size:15px;line-height:1.2;background:var(--ink);border:2.5px solid var(--tc,var(--gold));
   box-shadow:0 4px 0 rgba(0,0,0,.4);animation:flToastIn .3s cubic-bezier(.3,1.5,.5,1) both}
 .fl-toast .ti{flex:none;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;font-size:18px;background:var(--tc,var(--gold))}
@@ -121,8 +121,8 @@ const BASE = /* css */ `
 /* ---------------------------------------------------------------- sinematik şeritler (gece odağı) */
 .fl-cine{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .fl-cine i{position:absolute;left:0;right:0;will-change:transform;transition:transform .85s cubic-bezier(.22,.8,.24,1)}
-.fl-cine i:first-child{top:0;height:calc(15vh + var(--sat, 0px));background:linear-gradient(180deg,#020309 0,#020309 52%,rgba(2,3,9,.72) 74%,rgba(2,3,9,0));transform:translateY(-101%)}
-.fl-cine i:last-child{bottom:0;height:calc(25vh + var(--sab, 0px));background:linear-gradient(0deg,#020309 0,rgba(2,3,9,.94) 34%,rgba(2,3,9,.55) 66%,rgba(2,3,9,0));transform:translateY(101%)}
+.fl-cine i:first-child{top:0;height:calc(calc(15 * var(--vh)) + var(--sat, 0px));background:linear-gradient(180deg,#020309 0,#020309 52%,rgba(2,3,9,.72) 74%,rgba(2,3,9,0));transform:translateY(-101%)}
+.fl-cine i:last-child{bottom:0;height:calc(calc(25 * var(--vh)) + var(--sab, 0px));background:linear-gradient(0deg,#020309 0,rgba(2,3,9,.94) 34%,rgba(2,3,9,.55) 66%,rgba(2,3,9,0));transform:translateY(101%)}
 .fl-cine.on i{transform:none}
 
 /* ---------------------------------------------------------------- il seçimi ipucu */
@@ -147,12 +147,12 @@ const BASE = /* css */ `
 .fl-prompt .pd{flex:none;width:8px;height:8px;border-radius:50%;background:var(--pc);box-shadow:0 0 0 1.5px rgba(255,244,226,.8),0 0 10px var(--pc);margin-right:2px}
 /* başlık: italik serif (Gündönümü'nün ada adı gibi) */
 .fl-prompt .pt b{display:block;margin-top:9px;max-width:100%;white-space:nowrap;overflow:visible;font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:700;
-  font-size:clamp(38px,11.5vw,54px);line-height:1.05;letter-spacing:.005em;color:#fff7e8;padding:0 .12em;
+  font-size:clamp(38px,calc(11.5 * var(--vw)),54px);line-height:1.05;letter-spacing:.005em;color:#fff7e8;padding:0 .12em;
   text-shadow:0 0 26px rgba(255,186,90,.75),0 0 6px rgba(255,210,140,.5),0 2px 3px rgba(0,0,0,.95);animation:flPromptBreath 1.6s ease-in-out infinite}
 /* ipucu: küçük, aralıklı, lavanta */
 .fl-prompt .pt small{display:block;margin-top:10px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:12.5px;line-height:1.45;letter-spacing:.16em;margin-right:-.16em;text-transform:uppercase;color:#eef2fa;text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 10px rgba(0,0,0,.6)}
 .fl-prompt .pt::after{content:'';display:block;margin-top:14px;width:150px;height:2px;background:linear-gradient(90deg,rgba(255,210,122,0),#ffd27a,rgba(255,210,122,0))}
-.fl-prompt.cap .pt b{font-size:clamp(32px,9.5vw,44px);animation:none}
+.fl-prompt.cap .pt b{font-size:clamp(32px,calc(9.5 * var(--vw)),44px);animation:none}
 .fl-prompt.cap .pt::before{animation:none;opacity:.6}
 .fl-prompt.shake{animation:flShakeP .4s}
 @keyframes flShakeP{0%,100%{transform:none}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
@@ -209,7 +209,7 @@ ${LAND}{
   .fl-pl.turn::after{left:auto;right:-46px;bottom:auto;top:50%;transform:translateY(-50%);animation:flBobX 1s ease-in-out infinite}
   .fl-toasts{top:calc(10px + var(--sat))}
   .fl-banner{top:42%}
-  .fl-banner b{font-size:min(11vw,70px)}
+  .fl-banner b{font-size:min(calc(11 * var(--vw)),70px)}
 }
 @keyframes flBobX{0%,100%{transform:translateY(-50%) translateX(0)}50%{transform:translateY(-50%) translateX(-3px)}}
 `;

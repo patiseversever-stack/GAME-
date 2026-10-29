@@ -143,13 +143,13 @@ export const CSS_PLAY = /* css */ `
 .fl-sheet .rules .fl-i{font-size:16px;flex:none}
 .fl-sheet .rw{display:flex;align-items:center;gap:7px;padding:5px 12px 6px 8px;border-radius:13px;font-size:14px;color:#4a2800;background:linear-gradient(#ffe680,#f5b324);border:2px solid #fff}
 .fl-sheet .bt{display:grid;grid-template-columns:auto 1fr;gap:10px;margin-top:2px}
-.fl-sheet .bt .fl-btn.big{font-size:clamp(20px,6.6vw,26px);padding:11px 10px 14px}
+.fl-sheet .bt .fl-btn.big{font-size:clamp(20px,calc(6.6 * var(--vw)),26px);padding:11px 10px 14px}
 
 /* ---------------------------------------------------------------- bitiş: ödül ve yıldızlar */
 .fl-end{overflow-y:auto;justify-content:flex-start;touch-action:pan-y}
 .fl-ein{margin:auto 0}
 .fl-end .btns{position:sticky;bottom:calc(-1 * var(--sab));z-index:2;padding:8px 0 2px;background:linear-gradient(rgba(6,11,28,0),rgba(6,11,28,.92) 28%)}
-.fl-end .btns .fl-btn.big{font-size:clamp(17px,5.3vw,24px);padding:11px 8px 14px}
+.fl-end .btns .fl-btn.big{font-size:clamp(17px,calc(5.3 * var(--vw)),24px);padding:11px 8px 14px}
 .fl-end.camp .fl-ein{gap:8px}
 .fl-end.camp .fl-cres{padding:6px 10px 8px}
 .fl-end.camp .cs-rules{font-size:12.5px;gap:2px;margin-top:4px}
@@ -157,7 +157,7 @@ export const CSS_PLAY = /* css */ `
 .fl-end.camp .fl-lines .ln{padding:2px 8px}
 .fl-end.camp .fl-adbtn{padding:5px 12px 8px;font-size:16px}
 .fl-end.camp .fl-rew{padding:6px 8px}
-.fl-end.camp .hdr b{font-size:min(13vw,58px)}
+.fl-end.camp .hdr b{font-size:min(calc(13 * var(--vw)),58px)}
 .fl-end.camp .fl-podium .p1 .ped{height:60px}
 .fl-end.camp .fl-podium .p2 .ped{height:44px}
 .fl-end.camp .fl-podium .p3 .ped{height:34px}

@@ -12,7 +12,7 @@ const CSS = /* css */ `
 .fl-hl.a{background:linear-gradient(160deg,#4a7be0,#2a4aa8)}
 .fl-hl.b{background:linear-gradient(160deg,#f08a3a,#c8501a)}
 .fl-hl:active{transform:translateY(3px)}
-.fl-hl strong{font-family:'Lilita One';font-weight:400;font-size:clamp(20px,6vw,27px);line-height:1.05;text-wrap:balance;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.fl-hl strong{font-family:'Lilita One';font-weight:400;font-size:clamp(20px,calc(6 * var(--vw)),27px);line-height:1.05;text-wrap:balance;text-shadow:0 2px 0 rgba(0,0,0,.35)}
 .fl-hl small{font-size:12px;letter-spacing:.1em;text-transform:uppercase;opacity:.8}
 .fl-hl .val{font-family:'Lilita One';font-size:30px;min-height:36px;color:var(--gold);text-shadow:0 2px 0 rgba(0,0,0,.4);opacity:0;transform:scale(.6);transition:opacity .25s,transform .35s cubic-bezier(.3,1.6,.5,1)}
 .fl-hl .val u{display:block;text-decoration:none;font-family:'Fredoka';font-size:12px;color:#fff;opacity:.85}
@@ -32,10 +32,10 @@ const CSS = /* css */ `
 /* emoji */
 .fl-emo{display:flex;justify-content:center;flex-wrap:wrap;gap:2px 6px;margin:0 0 12px;padding:10px 6px;border-radius:18px;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.18),rgba(255,255,255,.04));
   border:2px solid rgba(255,255,255,.14)}
-.fl-emo span{font-size:clamp(42px,13vw,60px);line-height:1.15;font-family:'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;opacity:0;animation:flq-bounce .55s cubic-bezier(.3,1.7,.5,1) forwards}
+.fl-emo span{font-size:clamp(42px,calc(13 * var(--vw)),60px);line-height:1.15;font-family:'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;opacity:0;animation:flq-bounce .55s cubic-bezier(.3,1.7,.5,1) forwards}
 /* proverb */
 .fl-prv{margin:0 0 12px;padding:14px 12px;border-radius:18px;background:linear-gradient(180deg,rgba(255,235,190,.22),rgba(255,235,190,.1));border:2px solid rgba(255,210,90,.4);
-  text-align:center;font-size:clamp(19px,5.4vw,24px);line-height:1.5;text-wrap:balance}
+  text-align:center;font-size:clamp(19px,calc(5.4 * var(--vw)),24px);line-height:1.5;text-wrap:balance}
 .fl-prv::before{content:'❝';display:block;font-size:26px;line-height:.8;color:var(--gold);opacity:.8}
 .fl-blank{display:inline-block;min-width:4.2em;padding:0 8px;margin:0 2px;border-radius:9px;background:rgba(0,0,0,.28);border-bottom:3px solid var(--gold);color:var(--gold);
   font-family:'Lilita One';animation:flq-pulse 1.1s ease-in-out infinite}

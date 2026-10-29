@@ -21,10 +21,10 @@ export const CSS_PAUSE = /* css */ `
 .fl-pause .box{width:min(100%,360px);display:flex;flex-direction:column;align-items:stretch;gap:12px;padding:20px 16px 18px;border-radius:26px;
   background:var(--panel);border:3px solid rgba(255,210,90,.55);box-shadow:0 8px 0 var(--navy-d),0 14px 30px rgba(0,0,0,.4);transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
 .fl-pause.off .box{transform:scale(.9)}
-.fl-pause h3{margin:0;text-align:center;font-family:'Lilita One';font-weight:400;font-size:clamp(30px,9vw,40px);line-height:1;color:var(--gold);${OUT('#3a2000', 3)}}
+.fl-pause h3{margin:0;text-align:center;font-family:'Lilita One';font-weight:400;font-size:clamp(30px,calc(9 * var(--vw)),40px);line-height:1;color:var(--gold);${OUT('#3a2000', 3)}}
 .fl-pause .st{align-self:center;padding:3px 14px 4px;border-radius:999px;font-size:14.5px;background:var(--ink);border:2px solid rgba(255,255,255,.22);color:#cfe0ff}
 .fl-pause .fl-btn{width:100%}
-.fl-pause .fl-btn.big{font-size:clamp(22px,7vw,28px);padding:12px 16px 15px}
+.fl-pause .fl-btn.big{font-size:clamp(22px,calc(7 * var(--vw)),28px);padding:12px 16px 15px}
 .fl-pause .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
 .fl-pause .row .fl-btn{font-size:17px;padding:9px 8px 11px}
 .fl-pause p{margin:0;text-align:center;font-size:15.5px;line-height:1.35;color:#e4ecff}

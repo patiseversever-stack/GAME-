@@ -2,7 +2,8 @@
 // - Geniş ekranda (masaüstü, yatay tablet) oyun ortada telefon oranında bir sütundur; yanlar boş zemin.
 // - Telefon yan çevrilince "telefonunu dik tut" perdesi çıkar ve sürmekte olan maç duraklar.
 // - Destekleyen tarayıcılarda (Android tam ekran ya da ana ekrana eklenmiş uygulama) ekran yönü dikeye kilitlenir.
-// Kök öğenin boyu ve eni burada ayarlanır; App bunu kendi resize dinleyicisinde okur (bu dinleyici önce kurulur).
+// Kök öğenin eni burada ayarlanır; App bunu kendi resize dinleyicisinde okur (bu dinleyici önce kurulur).
+// Arayüz stilleri vw/vh yerine --vw/--vh kullanır (sütunun yüzdesi), böylece kartlar sütuna sığar.
 
 const RATIO = 9 / 16; // sütunun en geniş oranı (en / boy); daha dar ekranlar tam genişlik kullanır
 const PHONE_LAND = '(orientation:landscape) and (max-height:560px) and (pointer:coarse)';
@@ -40,6 +41,8 @@ export function lockPortrait(root) {
 		root.style.width = w + 'px';
 		root.style.left = Math.round((W - w) / 2) + 'px';
 		root.style.right = 'auto';
+		root.style.setProperty('--vw', w / 100 + 'px'); // arayüzün vw yerine kullandığı birim: sütunun yüzdesi
+		root.style.setProperty('--vh', H / 100 + 'px');
 		root.style.boxShadow = w < W ? '0 0 48px rgba(0,0,0,.55)' : '';
 		const side = mq.matches;
 		turn.classList.toggle('on', side);

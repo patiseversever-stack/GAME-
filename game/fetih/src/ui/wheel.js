@@ -286,7 +286,7 @@ export class WheelView {
 		const y = r.top + r.height * 0.22;
 		ui.fx.ring(x, r.top + r.height / 2, { color: fet ? '#ffd25a' : c.color, size: r.width * 1.5, life: 700 });
 		ui.fx.burst(x, y, { n: fet ? 26 : 16, dist: r.width * 0.55, colors: fet ? ['#ffd25a', '#fff', '#ffb400'] : [c.color, '#fff', '#ffd25a'], kind: 'star', size: 14, life: 900 });
-		if (fet) ui.fx.confetti(window.innerWidth, { n: 36, life: 2200 });
+		if (fet) ui.fx.confetti(ui.el.clientWidth, { n: 36, life: 2200 });
 	}
 
 	_anim(ms, fn) {

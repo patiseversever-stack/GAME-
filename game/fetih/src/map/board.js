@@ -790,8 +790,7 @@ export class Board {
 		// sırası gelen oyuncu (insan seçerken kendisi, bot seçerken bot): toprağı gecede net, oklar onun renginde
 		this.uAct.value = on ? (act != null ? act : this.uMe.value) : -5;
 		this.night(on, list);
-		if (on) this.cues.show(list, this.uAct.value, { attack });
-		else this.cues.hide();
+		this.cues.hide(); // seçimde ok yok: seçilebilir iller parlar, etiketler adlarını söyler (ok yalnız saldırı yürüyüşünde)
 	}
 
 	/**

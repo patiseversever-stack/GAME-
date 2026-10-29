@@ -65,8 +65,11 @@ export class Cinema {
 		const pick = ui.pickProvince.bind(ui);
 		ui.pickProvince = (m, options, text) => {
 			const pr = pick(m, options, text);
-			// kadraj: seçenekler ve okların çıktığı yerler (rozet ve ok başları görünsün)
-			if (!ui.fast && !this.fast) this.frameList(options, this._tails());
+			// kadraj: seçenekler; başkent seçiminde kamera yükselip bütün maç haritasına tepeden bakar
+			if (!ui.fast && !this.fast) {
+				if (m.phase === 'baskent') this.frameTop(m.map);
+				else this.frameList(options, this._tails());
+			}
 			return pr;
 		};
 		const bot = ui.botPick.bind(ui);
@@ -75,6 +78,7 @@ export class Cinema {
 			const b = app.board;
 			const opts = this._options(m, p, i);
 			const attack = b.provinces[i].owner >= 0;
+			const capital = m.phase === 'baskent';
 			const me = m.players?.find((q) => q.human);
 			m.turn = p.i; // oyuncu kartlarındaki SIRA işareti rozetle aynı anda
 			ui.hud?.(m);
@@ -83,13 +87,15 @@ export class Cinema {
 			b.select?.(opts, { attack, me: me ? me.i : null, act: p.i });
 			ui.tagsOn(ui.tagSpecs(m, opts, attack ? 'attack' : 'pick'), { badges: ui.homeBadges(m, p, opts) });
 			const frame = opts.slice();
-			if (p.capital >= 0 && opts.length < 9 && !b.cues?.tails.size) frame.push(p.capital);
-			this.frameList(frame, this._tails());
-			ui.caption?.(`SIRA · ${p.name}`, attack ? 'Hedefini seçiyor' : 'Bir il seçiyor', null, { p, tone: attack ? 'red' : '' });
+			if (p.capital >= 0 && opts.length < 9) frame.push(p.capital);
+			if (capital) this.frameTop(m.map);
+			else this.frameList(frame);
+			const kind = capital ? 'cap' : attack ? 'attack' : 'pick';
+			ui.caption?.(`SIRA · ${p.name}`, capital ? 'Başkentini seçiyor' : attack ? 'Hedefini seçiyor' : 'Bir il seçiyor', null, { p, tone: attack ? 'red' : '' });
 			await sleep(880);
 			b.select?.([i], { attack, me: me ? me.i : null, act: p.i });
-			ui.tagsOn(ui.tagSpecs(m, [i], attack ? 'attack' : 'pick'), { badges: ui.homeBadges(m, p, [i]) });
-			ui.caption?.(`${p.name} · ${attack ? 'SALDIRI' : 'YAYILMA'}`, b.provinces[i].name, attack ? 'SAVAŞ BAŞLIYOR' : 'YENİ TOPRAK', { p, tone: attack ? 'red' : '' });
+			ui.tagsOn(ui.tagSpecs(m, [i], kind), { badges: capital ? [] : ui.homeBadges(m, p, [i]) });
+			ui.caption?.(`${p.name} · ${capital ? 'BAŞKENT' : attack ? 'SALDIRI' : 'YAYILMA'}`, b.provinces[i].name, capital ? 'KALE KURULUYOR' : attack ? 'SAVAŞ BAŞLIYOR' : 'YENİ TOPRAK', { p, tone: attack ? 'red' : '' });
 			await bot(m, p, i);
 			b.cues?.hide(); // seçim bitti: oklar söner (fetih ve düello oksuz)
 		};
@@ -133,6 +139,12 @@ export class Cinema {
 		app.cam.fit({ ...box }, { pitch: 0.95, pad: 1.2, dur: 0.95, arc: 4.5, yawRate: 0.03 * this._drift, distRate: -0.014, decay: 0.32 });
 	}
 
+	/** Kamera yükselir ve listedeki illere neredeyse tepeden bakar (başkent seçimi: bütün harita görünsün). */
+	frameTop(list) {
+		this._spot(null);
+		this.app.cam.fit(this.app.boundsOf(list), { pitch: 1.22, pad: 1.08, dur: 1.1, arc: 6 });
+	}
+
 	/** Okların çıkış noktaları (dünya x/z): kadraj bunları da içersin. */
 	_tails() {
 		const c = this.app.board.cues;
@@ -143,6 +155,7 @@ export class Cinema {
 	_options(m, p, i) {
 		const b = this.app.board;
 		if (!m?.neighbors) return [i];
+		if (m.phase === 'baskent') return m.capitalOptions();
 		if (b.provinces[i].owner < 0) {
 			const free = m.free();
 			const adj = free.filter((j) => m.neighbors(j).some((k) => m.owner(k) === p.i));

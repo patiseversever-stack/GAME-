@@ -13,7 +13,8 @@ export async function createFetih(opts = {}) {
 	const store = createStore(opts.store);
 	const root = document.createElement('div');
 	root.className = 'fl-root';
-	root.style.cssText = 'position:fixed;inset:0;z-index:50;overflow:hidden;background:#1b2a4a;touch-action:none;';
+	// --vw / --vh: arayüz ölçüleri ekranın değil oyun alanının yüzdesi (dikey sütunda kart sütuna sığsın)
+	root.style.cssText = 'position:fixed;inset:0;z-index:50;overflow:hidden;background:#1b2a4a;touch-action:none;--vw:1vw;--vh:1vh;';
 	(opts.container || document.body).appendChild(root);
 	const portrait = opts.portrait === false ? null : lockPortrait(root);
 	const app = new App({ container: root, store, hooks: opts.hooks || {}, quality: opts.quality || 'auto', power: opts.power || 'auto' });

@@ -13,7 +13,7 @@ export const CSS_WHEEL = /* css */ `
 .fl-wh-cap .fl-av{width:44px;height:44px;border-radius:13px}
 .fl-wh-cap b{display:block;font-family:'Lilita One';font-weight:400;font-size:22px;line-height:1.05;letter-spacing:.02em}
 .fl-wh-cap small{display:block;font-size:14px;color:#cfe0ff}
-.fl-wh-box{position:relative;width:min(84vw,370px);aspect-ratio:1;transform:scale(.6);opacity:0}
+.fl-wh-box{position:relative;width:min(calc(84 * var(--vw)),370px);aspect-ratio:1;transform:scale(.6);opacity:0}
 .fl-wheel.on .fl-wh-box{animation:flWhIn .45s cubic-bezier(.3,1.5,.5,1) forwards}
 @keyframes flWhIn{to{transform:scale(1);opacity:1}}
 .fl-wh-box>svg,.fl-wh-spin{position:absolute;inset:0;width:100%;height:100%}
@@ -36,7 +36,7 @@ export const CSS_WHEEL = /* css */ `
 .fl-wheel.done .fl-wh-hl{animation:flHl .9s ease-out forwards}
 @keyframes flHl{0%{opacity:0}25%{opacity:.75}100%{opacity:.32}}
 .fl-wh-hub{position:absolute;left:50%;top:50%;width:17%;height:17%;margin:-8.5% 0 0 -8.5%;border-radius:50%;display:grid;place-items:center;overflow:hidden}
-.fl-wh-hub b{font-family:'Lilita One';font-weight:400;font-size:min(4.4vw,18px);color:#fff;${OUT('#7a1a0a', 1.5)}}
+.fl-wh-hub b{font-family:'Lilita One';font-weight:400;font-size:min(calc(4.4 * var(--vw)),18px);color:#fff;${OUT('#7a1a0a', 1.5)}}
 .fl-wh-hub.me{background:radial-gradient(circle at 45% 35%,#ff8a6a,#d8301e 70%);border:2px solid #fff}
 .fl-wh-hub.me:not(.go){animation:flHubP .9s ease-in-out infinite}
 @keyframes flHubP{50%{transform:scale(1.12)}}
@@ -53,7 +53,7 @@ export const CSS_WHEEL = /* css */ `
 .fl-wheel.fetih .fl-wh-res{box-shadow:0 0 0 4px #fff3b0,0 6px 0 rgba(0,0,0,.4),0 0 40px 10px rgba(255,210,90,.6)}
 
 /* "Fetih!" kategori seçimi */
-.fl-catpick{width:min(calc(100vw - 24px),420px);padding:14px;border-radius:26px;background:var(--panel);border:3px solid var(--gold);box-shadow:0 0 0 2.5px var(--gold-dd),0 8px 0 var(--navy-d),0 0 60px rgba(255,210,90,.35);
+.fl-catpick{width:min(calc(calc(100 * var(--vw)) - 24px),420px);padding:14px;border-radius:26px;background:var(--panel);border:3px solid var(--gold);box-shadow:0 0 0 2.5px var(--gold-dd),0 8px 0 var(--navy-d),0 0 60px rgba(255,210,90,.35);
   transform:scale(.7);opacity:0}
 .fl-wheel.pick .fl-catpick{animation:flWhIn .4s cubic-bezier(.3,1.6,.5,1) forwards}
 .fl-catpick .hd{display:flex;flex-direction:column;align-items:center;margin:-46px 0 10px}
@@ -79,38 +79,38 @@ export const CSS_WHEEL = /* css */ `
 .fl-duel .slash{position:absolute;left:-30%;right:-30%;top:50%;height:10px;margin-top:-5px;background:linear-gradient(90deg,transparent,#fff 15%,#fff6c8 50%,#fff 85%,transparent);
   box-shadow:0 0 18px 6px rgba(255,230,140,.8);transform:rotate(var(--sa,-12deg)) scaleX(0);animation:flSlash .3s .3s ease-out forwards}
 @keyframes flSlash{to{transform:rotate(var(--sa,-12deg)) scaleX(1)}}
-.fl-duel .lay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:calc(4.5vh + var(--sat)) 5% calc(4.5vh + var(--sab))}
-.fl-duel .sd{display:flex;flex-direction:column;align-items:center;gap:8px;width:min(56vw,240px)}
+.fl-duel .lay{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:calc(calc(4.5 * var(--vh)) + var(--sat)) 5% calc(calc(4.5 * var(--vh)) + var(--sab))}
+.fl-duel .sd{display:flex;flex-direction:column;align-items:center;gap:8px;width:min(calc(56 * var(--vw)),240px)}
 .fl-duel .sd.a{align-self:flex-start;animation:flSideA .45s .12s cubic-bezier(.2,1.3,.4,1) both}
 .fl-duel .sd.d{align-self:flex-end;flex-direction:column-reverse;animation:flSideD .45s .12s cubic-bezier(.2,1.3,.4,1) both}
 @keyframes flSideA{from{opacity:0;transform:translate(-60%,-10%) rotate(-8deg) scale(.7)}}
 @keyframes flSideD{from{opacity:0;transform:translate(60%,10%) rotate(8deg) scale(.7)}}
 .fl-duel .mid{display:flex;flex-direction:column;align-items:center;gap:6px;min-width:0}
-.fl-duel .pt{position:relative;width:min(40vw,21vh,176px);aspect-ratio:1}
+.fl-duel .pt{position:relative;width:min(calc(40 * var(--vw)),calc(21 * var(--vh)),176px);aspect-ratio:1}
 .fl-duel .pt .flag{position:absolute;left:-26%;top:-8%;width:44%;transform:rotate(-10deg);opacity:.95}
 .fl-duel .sd.d .pt .flag{left:auto;right:-26%;transform:rotate(10deg)}
 .fl-duel .pt .fl-av{position:absolute;inset:0;border-radius:26%;border:5px solid #fff;box-shadow:0 8px 0 rgba(0,0,0,.35),0 0 0 4px var(--pc)}
 .fl-duel .nm{display:flex;flex-direction:column;align-items:center;padding:4px 18px 6px;border-radius:14px;background:var(--ink);border:3px solid #fff;box-shadow:0 5px 0 rgba(0,0,0,.4)}
-.fl-duel .nm b{font-family:'Lilita One';font-weight:400;font-size:min(8vw,32px);line-height:1;letter-spacing:.02em;max-width:52vw;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-duel .nm b{font-family:'Lilita One';font-weight:400;font-size:min(calc(8 * var(--vw)),32px);line-height:1;letter-spacing:.02em;max-width:calc(52 * var(--vw));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .fl-duel .nm small{font-size:12px;letter-spacing:.16em;color:var(--gold)}
 .fl-duel .nm .hp{display:flex;gap:3px;margin-top:3px}
 .fl-duel .nm .hp i{width:15px;height:15px;background:var(--gold);-webkit-mask:var(--tw) center/contain no-repeat;mask:var(--tw) center/contain no-repeat}
 .fl-duel .nm .hp i.off{opacity:.25}
-.fl-duel .vs{position:relative;width:min(110px,13vh);aspect-ratio:1;display:grid;place-items:center;opacity:0;transform:scale(3.2);animation:flVs .38s .42s cubic-bezier(.3,1.5,.5,1) forwards}
+.fl-duel .vs{position:relative;width:min(110px,calc(13 * var(--vh)));aspect-ratio:1;display:grid;place-items:center;opacity:0;transform:scale(3.2);animation:flVs .38s .42s cubic-bezier(.3,1.5,.5,1) forwards}
 .fl-duel .vs .sw{position:absolute;inset:-8%;opacity:.9}
 .fl-duel .vs .sw .fl-i{width:100%;height:100%}
-.fl-duel .vs b{position:relative;font-family:'Lilita One';font-weight:400;font-size:min(70px,8.5vh);line-height:1;color:var(--gold);letter-spacing:-.02em;${OUT('#5a1a00', 5)}}
+.fl-duel .vs b{position:relative;font-family:'Lilita One';font-weight:400;font-size:min(70px,calc(8.5 * var(--vh)));line-height:1;color:var(--gold);letter-spacing:-.02em;${OUT('#5a1a00', 5)}}
 @keyframes flVs{to{opacity:1;transform:scale(1)}}
 .fl-duel .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;animation:flFlash .45s .48s ease-out}
 @keyframes flFlash{0%{opacity:0}15%{opacity:.75}100%{opacity:0}}
 .fl-duel.on .shk{animation:flShk .32s .5s}
 @keyframes flShk{0%,100%{transform:none}25%{transform:translate(-7px,4px)}50%{transform:translate(6px,-5px)}75%{transform:translate(-3px,3px)}}
 .fl-duel .shk{position:absolute;inset:0}
-.fl-duel .rib{display:flex;flex-direction:column;align-items:center;gap:4px;max-width:calc(100vw - 24px);transform:scaleX(0);animation:flRib .35s .7s cubic-bezier(.3,1.4,.5,1) forwards}
+.fl-duel .rib{display:flex;flex-direction:column;align-items:center;gap:4px;max-width:calc(calc(100 * var(--vw)) - 24px);transform:scaleX(0);animation:flRib .35s .7s cubic-bezier(.3,1.4,.5,1) forwards}
 @keyframes flRib{to{transform:none}}
 .fl-duel .rib .k{display:flex;align-items:center;gap:6px;padding:2px 12px 3px;border-radius:9px;font-family:'Lilita One';font-size:14px;letter-spacing:.14em;color:#4a2800;background:linear-gradient(#ffe680,#f5b324);border:2px solid #fff}
 .fl-duel .rib .k .fl-i{font-size:16px}
-.fl-duel .rib>b{display:block;padding:4px 30px 7px;font-family:'Lilita One';font-weight:400;font-size:min(9vw,40px);line-height:1;letter-spacing:.03em;white-space:nowrap;color:#fff;background:linear-gradient(#e8402a,#a8231a);border:3px solid #fff;border-radius:12px;box-shadow:0 6px 0 #5a0d05;${OUT('#5a0d05', 2.5)}}
+.fl-duel .rib>b{display:block;padding:4px 30px 7px;font-family:'Lilita One';font-weight:400;font-size:min(calc(9 * var(--vw)),40px);line-height:1;letter-spacing:.03em;white-space:nowrap;color:#fff;background:linear-gradient(#e8402a,#a8231a);border:3px solid #fff;border-radius:12px;box-shadow:0 6px 0 #5a0d05;${OUT('#5a0d05', 2.5)}}
 .fl-duel .rib .c{display:flex;align-items:center;gap:6px;padding:3px 12px 4px 4px;border-radius:999px;font-size:15px;background:var(--ink);border:2.5px solid var(--cc)}
 .fl-duel .rib .c .ci{width:24px;height:24px;border-radius:50%;display:grid;place-items:center;font-size:15px;background:var(--cc)}
 .fl-duel.siege .rib>b{background:linear-gradient(#5a3a2a,#2a1a10);box-shadow:0 6px 0 #120a05}
@@ -120,7 +120,7 @@ export const CSS_WHEEL = /* css */ `
 @keyframes flDuelOut{to{opacity:0;transform:scale(1.06)}}
 
 /* ---------------------------------------------------------------- seçim sırası */
-.fl-rank{position:absolute;left:50%;top:46%;width:min(calc(100vw - 32px),380px);padding:12px 12px 14px;border-radius:24px;background:var(--panel);border:3px solid var(--gold);box-shadow:0 0 0 2.5px var(--gold-dd),0 8px 0 var(--navy-d);
+.fl-rank{position:absolute;left:50%;top:46%;width:min(calc(calc(100 * var(--vw)) - 32px),380px);padding:12px 12px 14px;border-radius:24px;background:var(--panel);border:3px solid var(--gold);box-shadow:0 0 0 2.5px var(--gold-dd),0 8px 0 var(--navy-d);
   opacity:0;transform:translate(-50%,-50%) scale(.8);transition:opacity .25s,transform .35s cubic-bezier(.3,1.5,.5,1)}
 .fl-rank.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .fl-rank h4{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 0 8px;font-family:'Lilita One';font-weight:400;font-size:24px;color:var(--gold);${OUT('#3a2000', 2)}}
@@ -139,9 +139,9 @@ export const CSS_WHEEL = /* css */ `
 ${LAND}{
   .fl-wh{flex-direction:row;gap:18px}
   .fl-wh-cap{flex-direction:column;text-align:center;padding:8px 12px;max-width:180px;transform:translateX(-14px)}
-  .fl-wh-box{width:min(78vh,330px)}
+  .fl-wh-box{width:min(calc(78 * var(--vh)),330px)}
   .fl-wh-res{flex-direction:column;padding:10px 14px;min-width:150px;text-align:center}
-  .fl-catpick{width:min(calc(100vw - 24px),620px);padding:10px 12px 12px}
+  .fl-catpick{width:min(calc(calc(100 * var(--vw)) - 24px),620px);padding:10px 12px 12px}
   .fl-catpick .gr{grid-template-columns:1fr 1fr 1fr}
   .fl-catpick .hd{margin:-30px 0 6px;flex-direction:row;gap:10px}
   .fl-catpick .cr{width:50px;height:50px;font-size:30px}
@@ -149,12 +149,12 @@ ${LAND}{
   .fl-duel .dz.d{clip-path:polygon(57% 0,100% 0,100% 100%,43% 100%)}
   .fl-duel .slash{left:50%;right:auto;top:-10%;bottom:-10%;width:10px;height:auto;margin:0 0 0 -5px;background:linear-gradient(180deg,transparent,#fff 15%,#fff6c8 50%,#fff 85%,transparent);transform:rotate(var(--sa,15deg)) scaleY(0);animation-name:flSlashL}
   .fl-duel .lay{flex-direction:row;align-items:center;padding:calc(10px + var(--sat)) 4% calc(10px + var(--sab))}
-  .fl-duel .sd{width:28vw;align-self:center!important}
+  .fl-duel .sd{width:calc(28 * var(--vw));align-self:center!important}
   .fl-duel .sd.d{flex-direction:column}
-  .fl-duel .pt{width:min(22vw,42vh)}
+  .fl-duel .pt{width:min(calc(22 * var(--vw)),calc(42 * var(--vh)))}
   .fl-duel .mid{flex:1;gap:10px}
-  .fl-duel .vs{width:min(110px,24vh)}
-  .fl-duel .vs b{font-size:min(70px,15vh)}
+  .fl-duel .vs{width:min(110px,calc(24 * var(--vh)))}
+  .fl-duel .vs b{font-size:min(70px,calc(15 * var(--vh)))}
   .fl-rank{top:50%}
 }
 @keyframes flSlashL{to{transform:rotate(var(--sa,15deg)) scaleY(1)}}

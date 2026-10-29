@@ -392,16 +392,16 @@ export class UI {
 	async pickProvince(m, options, text) {
 		const app = this.app;
 		const b = app.board;
-		if (this.fast) return m.botChoose(m.players[0], options, 'free');
 		const me = m.players.find((p) => p.human) || m.players[0];
+		const capital = m.phase === 'baskent';
+		if (this.fast) return m.botChoose(me, options, capital ? 'capital' : 'free');
 		m.turn = me.i;
 		this.hud(m);
 		const attack = options.some((i) => b.provinces[i].owner >= 0 && b.provinces[i].owner !== me.i);
-		const adj = !attack && options.some((i) => (m.neighbors?.(i) || []).some((j) => b.provinces[j].owner === me.i));
-		this._selOn(m, options, attack, me);
+		this._selOn(m, options, attack, me, capital);
 		const head = esc(String(text || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')));
-		const hint = attack ? 'Işıklı sınır illerinden birine dokun' : adj ? 'Komşu ışıklı illerden birini al' : 'Işıklı boş illerden birini al';
-		const ey = attack ? 'FETİH · SIRA SENDE' : 'YAYILMA · SIRA SENDE';
+		const hint = capital ? 'Parlayan bir ile dokun, kalen oraya kurulur' : attack ? 'Saldırmak için parlayan bir ile dokun' : 'Parlayan bir ile dokun, senin olsun';
+		const ey = capital ? 'BAŞKENT · SIRA SENDE' : attack ? 'FETİH · SIRA SENDE' : 'YAYILMA · SIRA SENDE';
 		this.prompt(`<span class="ey">${ey}</span><b>${head}</b><small>${hint}</small>`, { tone: attack ? 'red' : '' });
 		app.cam.fit(app.boundsOf(m.map), { pitch: 0.98 });
 		const pick = await new Promise((res) => {
@@ -419,7 +419,7 @@ export class UI {
 		return pick;
 	}
 
-	_selOn(m, options, attack, me = null) {
+	_selOn(m, options, attack, me = null, capital = false) {
 		const b = this.app.board;
 		this._selList = options;
 		if (typeof b.select === 'function') {
@@ -430,7 +430,7 @@ export class UI {
 			}
 		} else for (const i of options) b.fx(i, 0.18, 0.75);
 		// etiketler: ilin adı + sahibi (saldırıda çapraz kılıç); oyuncunun kendi toprağında "SEN" rozeti
-		this.tagsOn(this.tagSpecs(m, options, attack ? 'attack' : 'pick'), { badges: this.homeBadges(m, me, options), tap: true });
+		this.tagsOn(this.tagSpecs(m, options, capital ? 'cap' : attack ? 'attack' : 'pick'), { badges: capital ? [] : this.homeBadges(m, me, options), tap: true });
 	}
 
 	_selOff(options) {
@@ -504,6 +504,7 @@ export class UI {
 		if (!pv) msg = 'Orası deniz. Parlayan illerden birine dokun.';
 		else if (o === me.i) msg = `${pv.name} zaten senin.`;
 		else if (!m.inMap?.has(idx)) msg = `${pv.name} bu maçın haritasında değil.`;
+		else if (m.phase === 'baskent') msg = o >= 0 ? `${pv.name} başka bir oyuncunun başkenti.` : `${pv.name} bir başkente komşu. Parlayan illerden birini seç.`;
 		else if (o >= 0 && m.ally?.(o, me.i)) msg = `${pv.name} takım arkadaşının.`;
 		else if (attack) msg = `${pv.name} sınırında değil. Yalnızca komşu illere saldırabilirsin.`;
 		else if (o >= 0) msg = `${pv.name} dolu. Parlayan boş illerden birini seç.`;

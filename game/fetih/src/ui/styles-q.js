@@ -31,7 +31,7 @@ import { OUT, LAND } from './cssutil.js';
 
 export const CSS_Q = /* css */ `
 /* ---------------------------------------------------------------- kart */
-.fl-q{position:absolute;left:50%;bottom:calc(8px + var(--sab));width:min(calc(100vw - 12px),560px);transform:translate(-50%,60px);opacity:0;visibility:hidden;pointer-events:none;
+.fl-q{position:absolute;left:50%;bottom:calc(8px + var(--sab));width:min(calc(calc(100 * var(--vw)) - 12px),560px);transform:translate(-50%,60px);opacity:0;visibility:hidden;pointer-events:none;
   transition:opacity .22s,transform .38s cubic-bezier(.3,1.35,.5,1),visibility 0s .38s;--cc:#4a8cff;--cd:#1d47a8}
 .fl-q.on{opacity:1;transform:translate(-50%,0);visibility:visible;transition:opacity .22s,transform .38s cubic-bezier(.3,1.35,.5,1)}
 .fl-q.on .fl-qc,.fl-q.on .fl-qwho{pointer-events:auto}
@@ -60,7 +60,7 @@ export const CSS_Q = /* css */ `
 .fl-q.rv .fl-tbar i,.fl-q.locked .fl-tbar i{animation-play-state:paused}
 @keyframes flTimer{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 .fl-qtext{display:flex;align-items:center;justify-content:center;min-height:62px;padding:10px 14px 11px;border-radius:16px;text-align:center;
-  font-size:clamp(18px,5vw,22px);line-height:1.25;font-weight:600;color:var(--tdark);background:linear-gradient(180deg,#fffdf6,var(--cream));border:2.5px solid #fff;box-shadow:0 4px 0 var(--cream-d),inset 0 -3px 0 rgba(0,0,0,.04);text-wrap:balance}
+  font-size:clamp(18px,calc(5 * var(--vw)),22px);line-height:1.25;font-weight:600;color:var(--tdark);background:linear-gradient(180deg,#fffdf6,var(--cream));border:2.5px solid #fff;box-shadow:0 4px 0 var(--cream-d),inset 0 -3px 0 rgba(0,0,0,.04);text-wrap:balance}
 .fl-q.on .fl-qtext{animation:flQText .45s .08s cubic-bezier(.3,1.5,.5,1) both}
 @keyframes flQText{from{opacity:0;transform:scale(.85)}}
 .fl-qbody{position:relative;margin-top:12px}
@@ -96,7 +96,7 @@ export const CSS_Q = /* css */ `
 
 /* sonuç damgası */
 .fl-stamp{position:absolute;left:50%;top:-18px;z-index:5;transform:translate(-50%,-100%) rotate(-6deg);pointer-events:none;opacity:0;white-space:nowrap;
-  font-family:'Lilita One';font-size:min(13vw,52px);letter-spacing:.02em;padding:2px 22px 6px;border-radius:18px;border:4px solid #fff;color:#fff;background:var(--sc,#2fa84a);box-shadow:0 6px 0 var(--sd,#16661f),0 12px 26px rgba(0,0,0,.4);${OUT('var(--sd,#16661f)', 2.5)}}
+  font-family:'Lilita One';font-size:min(calc(13 * var(--vw)),52px);letter-spacing:.02em;padding:2px 22px 6px;border-radius:18px;border:4px solid #fff;color:#fff;background:var(--sc,#2fa84a);box-shadow:0 6px 0 var(--sd,#16661f),0 12px 26px rgba(0,0,0,.4);${OUT('var(--sd,#16661f)', 2.5)}}
 .fl-stamp.on{animation:flStamp .45s cubic-bezier(.3,1.7,.5,1) forwards}
 .fl-stamp.bad{--sc:#e53a2a;--sd:#7a120a}
 .fl-stamp.warn{--sc:#ff8a2a;--sd:#8a3a00}
@@ -113,16 +113,16 @@ export const CSS_Q = /* css */ `
 .fl-q.map .fl-qhead{height:30px}
 .fl-q.map .fl-clock{width:40px;height:40px}
 .fl-q.map .fl-tbar{margin:6px 2px 8px;height:7px}
-.fl-q.map .fl-qtext{min-height:0;padding:7px 10px 8px;font-size:clamp(16px,4.4vw,19px)}
+.fl-q.map .fl-qtext{min-height:0;padding:7px 10px 8px;font-size:clamp(16px,calc(4.4 * var(--vw)),19px)}
 .fl-q.map .fl-qbody{margin-top:8px}
-.fl-q.map .fl-stamp{top:calc(100vh - 150px - var(--sat) - var(--sab));font-size:min(10vw,40px);animation-name:flStampB}
+.fl-q.map .fl-stamp{top:calc(calc(100 * var(--vh)) - 150px - var(--sat) - var(--sab));font-size:min(calc(10 * var(--vw)),40px);animation-name:flStampB}
 @keyframes flStampB{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(2.4)}60%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(.92)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}}
 
 /* ---------------------------------------------------------------- şıklar */
 .fl-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px 9px}
 .fl-opts.one{grid-template-columns:1fr;gap:8px}
 .fl-opts.three{grid-template-columns:1fr 1fr 1fr}
-.fl-opt{position:relative;display:flex;align-items:center;gap:9px;min-height:56px;padding:7px 12px 8px 7px;border-radius:16px;text-align:left;font-size:clamp(15.5px,4.3vw,18px);line-height:1.15;font-weight:600;
+.fl-opt{position:relative;display:flex;align-items:center;gap:9px;min-height:56px;padding:7px 12px 8px 7px;border-radius:16px;text-align:left;font-size:clamp(15.5px,calc(4.3 * var(--vw)),18px);line-height:1.15;font-weight:600;
   color:var(--tdark);background:linear-gradient(180deg,#fff,#eef1f8);border:3px solid #fff;box-shadow:0 5px 0 #aab6cf,0 8px 12px rgba(0,0,0,.22);transition:transform .08s,opacity .25s}
 .fl-opt:active{transform:translateY(4px);box-shadow:0 1px 0 #aab6cf,0 3px 6px rgba(0,0,0,.2)}
 .fl-opt>i{flex:none;width:32px;height:32px;border-radius:10px;display:grid;place-items:center;font-style:normal;font-family:'Lilita One';font-size:18px;color:#fff;background:var(--lc,#3d7dff);box-shadow:inset 0 -3px 0 rgba(0,0,0,.2);${OUT('rgba(0,0,0,.25)', 1)}}
@@ -199,7 +199,7 @@ export const CSS_Q = /* css */ `
 .fl-towers i{width:16px;height:20px;background:linear-gradient(#ffe680,#e8980e);-webkit-mask:var(--tw) center/contain no-repeat;mask:var(--tw) center/contain no-repeat;transition:transform .35s cubic-bezier(.5,0,.7,.4),opacity .35s;transform-origin:50% 100%}
 .fl-towers i.down{transform:rotate(28deg) translateY(4px) scale(.85);opacity:.22}
 .fl-word{display:flex;gap:5px;flex-wrap:wrap;justify-content:center;max-width:100%}
-.fl-word b{width:clamp(26px,7.4vw,36px);height:42px;border-radius:9px;display:grid;place-items:center;font-family:'Lilita One';font-weight:400;font-size:24px;color:var(--tdark);
+.fl-word b{width:clamp(26px,calc(7.4 * var(--vw)),36px);height:42px;border-radius:9px;display:grid;place-items:center;font-family:'Lilita One';font-weight:400;font-size:24px;color:var(--tdark);
   background:linear-gradient(#fffdf6,var(--cream));border:2px solid #fff;box-shadow:0 4px 0 var(--cream-d)}
 .fl-word b:empty{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.35);box-shadow:0 4px 0 rgba(0,0,0,.3)}
 .fl-word s{width:12px}
@@ -239,8 +239,8 @@ export const CSS_Q = /* css */ `
 .fl-card2.pick{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-d),0 6px 0 var(--gold-dd)}
 .fl-card2.right{color:#fff;background:linear-gradient(#7fe88a,#2fa84a);box-shadow:0 6px 0 var(--green-d)}
 .fl-card2.wrong{color:#fff;background:linear-gradient(#ff8a78,#d53b2c);box-shadow:0 6px 0 #7a120a}
-.fl-emoji{font-size:clamp(40px,12vw,58px);line-height:1.15;text-align:center;letter-spacing:.06em;padding:6px 10px;margin-bottom:10px;border-radius:16px;background:#0a1534;border:2.5px solid rgba(255,255,255,.25)}
-.fl-media{position:relative;display:grid;place-items:center;height:min(34vh,200px);margin-bottom:10px;border-radius:16px;overflow:hidden;background:#0a1534;border:3px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.fl-emoji{font-size:clamp(40px,calc(12 * var(--vw)),58px);line-height:1.15;text-align:center;letter-spacing:.06em;padding:6px 10px;margin-bottom:10px;border-radius:16px;background:#0a1534;border:2.5px solid rgba(255,255,255,.25)}
+.fl-media{position:relative;display:grid;place-items:center;height:min(calc(34 * var(--vh)),200px);margin-bottom:10px;border-radius:16px;overflow:hidden;background:#0a1534;border:3px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.35)}
 .fl-media>img,.fl-media>svg{width:100%;height:100%;object-fit:contain;transition:transform .6s,opacity .4s}
 .fl-media.blur>img{filter:blur(10px)}
 .fl-media.sil>img{filter:brightness(0)}
@@ -287,10 +287,10 @@ export const CSS_Q = /* css */ `
 /* jokerler: styles-play.js */
 
 ${LAND}{
-  .fl-q{left:auto;right:8px;bottom:auto;top:50%;width:min(52vw,480px);transform:translate(40px,-50%)}
+  .fl-q{left:auto;right:8px;bottom:auto;top:50%;width:min(calc(52 * var(--vw)),480px);transform:translate(40px,-50%)}
   .fl-q.on{transform:translate(0,-50%)}
   .fl-qc{padding:8px 10px 10px}
-  .fl-qtext{min-height:48px;padding:7px 12px 8px;font-size:clamp(16px,2.4vw,19px)}
+  .fl-qtext{min-height:48px;padding:7px 12px 8px;font-size:clamp(16px,calc(2.4 * var(--vw)),19px)}
   .fl-qbody{margin-top:9px}
   .fl-opt{min-height:46px}
   .fl-tf .fl-opt{min-height:66px}
@@ -298,12 +298,12 @@ ${LAND}{
   .fl-key{height:34px}
   .fl-word b{height:36px}
   .fl-num-val b{font-size:36px}
-  .fl-q.map{top:calc(6px + var(--sat));transform:translate(0,-30px);width:min(46vw,440px)}
+  .fl-q.map{top:calc(6px + var(--sat));transform:translate(0,-30px);width:min(calc(46 * var(--vw)),440px)}
   .fl-q.map.on{transform:none}
   .fl-jk{margin-top:8px}
-  .fl-stamp{left:auto;right:calc(100% + 18px);top:50%;transform:translate(0,-50%) rotate(-6deg);font-size:min(6vw,44px)}
+  .fl-stamp{left:auto;right:calc(100% + 18px);top:50%;transform:translate(0,-50%) rotate(-6deg);font-size:min(calc(6 * var(--vw)),44px)}
   .fl-stamp.on{animation-name:flStampL}
-  .fl-q.map .fl-stamp{top:calc(100vh - 110px);right:auto;left:50%;animation-name:flStampB}
+  .fl-q.map .fl-stamp{top:calc(calc(100 * var(--vh)) - 110px);right:auto;left:50%;animation-name:flStampB}
   .fl-q.kc.rv:not(.map) .fl-qtext{display:none}
   .fl-q.kc.rv .fl-qbody{margin-top:6px}
   .fl-ans{padding:3px 10px 5px}

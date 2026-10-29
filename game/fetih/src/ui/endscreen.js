@@ -130,7 +130,7 @@ export async function showEnd(ui, m, ranking, rw = null) {
 	</div>`;
 	el.classList.remove('off');
 	ui.sfx(won ? 'win' : 'lose');
-	if (won) setTimeout(() => ui.fx.confetti(innerWidth, { n: 60, life: 3000 }), 350);
+	if (won) setTimeout(() => ui.fx.confetti(ui.el.clientWidth, { n: 60, life: 3000 }), 350);
 	const q = (s) => el.querySelector(s);
 
 	// ---- sayaçlar ve seviye çubuğu

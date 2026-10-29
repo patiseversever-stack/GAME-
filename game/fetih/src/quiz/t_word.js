@@ -12,8 +12,8 @@ const CSS = /* css */ `
 .fl-ana .fl-word.bad b{background:#c8352a;border-bottom-color:#fff}
 .fl-ana .fl-word.good b{background:#2a9a44;border-bottom-color:#fff}
 .fl-tiles{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:100%}
-.fl-tile{width:clamp(38px,11.5vw,48px);height:clamp(44px,13vw,54px);border-radius:12px;background:linear-gradient(180deg,#ffe27a,#f2b02a);color:#3a2000;border:2px solid #fff;
-  box-shadow:0 5px 0 #a86a0a;font-family:'Lilita One';font-size:clamp(22px,6.4vw,28px);touch-action:manipulation;transition:transform .12s,opacity .2s,box-shadow .12s}
+.fl-tile{width:clamp(38px,calc(11.5 * var(--vw)),48px);height:clamp(44px,calc(13 * var(--vw)),54px);border-radius:12px;background:linear-gradient(180deg,#ffe27a,#f2b02a);color:#3a2000;border:2px solid #fff;
+  box-shadow:0 5px 0 #a86a0a;font-family:'Lilita One';font-size:clamp(22px,calc(6.4 * var(--vw)),28px);touch-action:manipulation;transition:transform .12s,opacity .2s,box-shadow .12s}
 .fl-tile:active{transform:translateY(4px);box-shadow:0 1px 0 #a86a0a}
 .fl-tile.used{opacity:.18;transform:scale(.82);pointer-events:none}
 .fl-ana-row{display:flex;gap:8px}
@@ -193,7 +193,7 @@ export const cross = {
 		// yatay kısa ekranda tahta solda (en çok ~200 px), ipucu ve klavye sağda
 		const cs = isLand()
 			? clamp(Math.min(Math.floor((200 - (L.cols - 1) * 3) / L.cols), Math.floor((200 - (L.rows - 1) * 3) / L.rows)), 18, 34)
-			: clamp(Math.floor((Math.min(window.innerWidth * 0.96, 520) - 36 - (L.cols - 1) * 3) / L.cols), 26, 44);
+			: clamp(Math.floor((Math.min((el.closest('.fl-ui')?.clientWidth || innerWidth) * 0.96, 520) - 36 - (L.cols - 1) * 3) / L.cols), 26, 44);
 		const idxAt = new Map(L.cells.map((c, i) => [c.r + ',' + c.c, i]));
 		// her hücre için hangi kelimeler (yatay/dikey) geçiyor
 		const wordsAt = L.cells.map(() => ({}));

@@ -19,7 +19,7 @@ const CSS = /* css */ `
 .fl-bz-combo{margin-left:auto;font-family:'Lilita One';font-size:18px;color:#ff8a3a;opacity:0;transform:scale(.6);transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
 .fl-bz-combo.on{opacity:1;transform:scale(1)}
 .fl-bz-stage{position:relative;min-height:116px;display:grid;place-items:center;overflow:hidden;border-radius:18px;padding:14px;text-align:center;
-  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06));border:2.5px solid rgba(255,255,255,.28);font-size:clamp(19px,5.4vw,24px);line-height:1.25;text-wrap:balance}
+  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06));border:2.5px solid rgba(255,255,255,.28);font-size:clamp(19px,calc(5.4 * var(--vw)),24px);line-height:1.25;text-wrap:balance}
 .fl-bz-stage span{display:block;animation:flq-slide .2s ease-out}
 .fl-bz-stage.ok{border-color:#7dff9a;box-shadow:0 0 0 3px rgba(125,255,154,.35)}
 .fl-bz-stage.no{border-color:#ff6a5a;box-shadow:0 0 0 3px rgba(255,106,90,.35);animation:flq-shake .38s}
