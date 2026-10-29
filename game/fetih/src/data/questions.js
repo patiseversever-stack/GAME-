@@ -15,7 +15,6 @@ export const QUESTIONS = [
 	{ id: 'c003', cat: 'tarih', diff: 2, type: 'choice', q: 'Malazgirt Meydan Muharebesi hangi yıl yapıldı?', a: ['1071', '1176', '1453', '1243'] },
 	{ id: 'c004', cat: 'tarih', diff: 2, type: 'choice', q: "Osmanlı Devleti'nin kurucusu kimdir?", a: ['Osman Bey', 'Orhan Bey', 'Ertuğrul Gazi', 'I. Murad'] },
 	{ id: 'c005', cat: 'tarih', diff: 2, type: 'choice', q: 'Çanakkale Kara ve Deniz Savaşları hangi yıl başladı?', a: ['1915', '1912', '1918', '1922'] },
-	{ id: 'c006', cat: 'cografya', diff: 1, type: 'choice', q: "Türkiye'nin başkenti neresidir?", a: ['Ankara', 'İstanbul', 'İzmir', 'Bursa'] },
 	{ id: 'c007', cat: 'cografya', diff: 1, type: 'choice', q: 'Peri bacalarıyla ünlü Göreme hangi ildedir?', a: ['Nevşehir', 'Kayseri', 'Aksaray', 'Niğde'] },
 	{ id: 'c008', cat: 'cografya', diff: 1, type: 'choice', q: 'Pamukkale travertenleri hangi ildedir?', a: ['Denizli', 'Aydın', 'Muğla', 'Uşak'] },
 	{ id: 'c009', cat: 'cografya', diff: 2, type: 'choice', q: "Nemrut Dağı'ndaki dev heykeller hangi ildedir?", a: ['Adıyaman', 'Malatya', 'Şanlıurfa', 'Diyarbakır'] },
@@ -26,9 +25,6 @@ export const QUESTIONS = [
 	{ id: 'c014', cat: 'sanat', diff: 1, type: 'choice', q: "İstiklal Marşı'nın şairi kimdir?", a: ['Mehmet Akif Ersoy', 'Namık Kemal', 'Nazım Hikmet', 'Yahya Kemal Beyatlı'] },
 	{ id: 'c015', cat: 'sanat', diff: 2, type: 'choice', q: "Nobel Edebiyat Ödülü'nü kazanan Türk yazar kimdir?", a: ['Orhan Pamuk', 'Yaşar Kemal', 'Sabahattin Ali', 'Orhan Kemal'] },
 	{ id: 'c016', cat: 'bilim', diff: 2, type: 'choice', q: "2015 Nobel Kimya Ödülü'nü kazanan Türk bilim insanı kimdir?", a: ['Aziz Sancar', 'Cahit Arf', 'Gazi Yaşargil', 'Oktay Sinanoğlu'] },
-	{ id: 'c017', cat: 'bilim', diff: 1, type: 'choice', q: "Güneş Sistemi'nin en büyük gezegeni hangisidir?", a: ['Jüpiter', 'Satürn', 'Neptün', 'Dünya'] },
-	{ id: 'c018', cat: 'bilim', diff: 1, type: 'choice', q: 'Suyun kimyasal formülü nedir?', a: ['H₂O', 'CO₂', 'O₂', 'NaCl'] },
-	{ id: 'c019', cat: 'bilim', diff: 1, type: 'choice', q: "Güneş'e en yakın gezegen hangisidir?", a: ['Merkür', 'Venüs', 'Mars', 'Dünya'] },
 	{ id: 'c020', cat: 'spor', diff: 1, type: 'choice', q: 'Futbolda bir takım maça sahada kaç oyuncuyla başlar?', a: ['11', '10', '9', '12'] },
 	{ id: 'c021', cat: 'spor', diff: 1, type: 'choice', q: 'Basketbolda üç sayı çizgisinin dışından atılan basket kaç sayıdır?', a: ['3', '2', '4', '1'] },
 	{ id: 'c022', cat: 'spor', diff: 2, type: 'choice', q: "Türkiye A Milli Futbol Takımı 2002 Dünya Kupası'nı kaçıncı sırada bitirdi?", a: ['Üçüncü', 'İkinci', 'Dördüncü', 'Beşinci'] },
@@ -38,7 +34,6 @@ export const QUESTIONS = [
 	{ id: 'c026', cat: 'eglence', diff: 1, type: 'choice', q: 'Satrançta oyunun başında her oyuncunun kaç piyonu vardır?', a: ['8', '6', '10', '16'] },
 	{ id: 'c027', cat: 'eglence', diff: 1, type: 'choice', q: 'Türk kahvesi geleneksel olarak hangi kapta pişirilir?', a: ['Cezve', 'Demlik', 'Semaver', 'Güğüm'] },
 	{ id: 'c028', cat: 'eglence', diff: 2, type: 'choice', q: 'Türk lirası simgesi (₺) hangi yıl kullanılmaya başlandı?', a: ['2012', '2005', '2009', '2016'] },
-	{ id: 'c029', cat: 'cografya', diff: 2, type: 'choice', q: "Mevlana Müzesi'nin bulunduğu il hangisidir?", a: ['Konya', 'Karaman', 'Kayseri', 'Sivas'] },
 	{ id: 'c030', cat: 'cografya', diff: 2, type: 'choice', q: 'Efes Antik Kenti hangi ildedir?', a: ['İzmir', 'Aydın', 'Manisa', 'Muğla'] },
 
 	// --- tahmin (sayı)
@@ -46,12 +41,10 @@ export const QUESTIONS = [
 	{ id: 'n002', cat: 'cografya', diff: 2, type: 'num', q: "Ağrı Dağı'nın yüksekliği kaç metredir?", ans: 5137, unit: 'm', min: 2000, max: 8000 },
 	{ id: 'n003', cat: 'cografya', diff: 1, type: 'num', q: "Türkiye'de kaç il vardır?", ans: 81, unit: 'il', min: 40, max: 120 },
 	{ id: 'n004', cat: 'bilim', diff: 1, type: 'num', q: "Ay'a ilk insanlı iniş hangi yıl yapıldı?", ans: 1969, unit: '', min: 1900, max: 2020 },
-	{ id: 'n005', cat: 'cografya', diff: 3, type: 'num', q: "Kızılırmak'ın uzunluğu kaç kilometredir?", ans: 1355, unit: 'km', min: 300, max: 3000 },
 	{ id: 'n006', cat: 'bilim', diff: 2, type: 'num', q: "Everest Dağı'nın yüksekliği yaklaşık kaç metredir?", ans: 8849, unit: 'm', min: 4000, max: 12000 },
 	{ id: 'n007', cat: 'tarih', diff: 2, type: 'num', q: 'Boğaziçi Köprüsü (15 Temmuz Şehitler Köprüsü) hangi yıl açıldı?', ans: 1973, unit: '', min: 1900, max: 2020 },
-	{ id: 'n008', cat: 'tarih', diff: 2, type: 'num', q: 'Malazgirt Meydan Muharebesi hangi yıl yapıldı?', ans: 1071, unit: '', min: 600, max: 1600 },
+	{ id: 'n008', cat: 'tarih', diff: 2, type: 'num', q: 'Malazgirt Zaferi hangi yılda kazanıldı?', ans: 1071, unit: '', min: 600, max: 1600 },
 	{ id: 'n009', cat: 'bilim', diff: 1, type: 'num', q: 'Saf su deniz seviyesinde kaç °C sıcaklıkta kaynar?', ans: 100, unit: '°C', min: 0, max: 300 },
-	{ id: 'n010', cat: 'cografya', diff: 3, type: 'num', q: "Van Gölü'nün yüzölçümü yaklaşık kaç km²'dir?", ans: 3713, unit: 'km²', min: 500, max: 10000 },
 	{ id: 'n011', cat: 'sanat', diff: 3, type: 'num', q: 'Süleymaniye Camii hangi yıl tamamlandı?', ans: 1557, unit: '', min: 1400, max: 1700 },
 	{ id: 'n012', cat: 'spor', diff: 1, type: 'num', q: 'Bir futbol maçının normal süresi kaç dakikadır?', ans: 90, unit: 'dk', min: 30, max: 180 },
 
@@ -73,7 +66,6 @@ export const QUESTIONS = [
 	{ id: 'h001', cat: 'cografya', diff: 1, type: 'hang', q: "Kapadokya'nın simgesi olan doğal kaya oluşumları", w: 'PERİBACASI' },
 	{ id: 'h002', cat: 'cografya', diff: 1, type: 'hang', q: "Mevlana'nın türbesinin bulunduğu şehir", w: 'KONYA' },
 	{ id: 'h003', cat: 'eglence', diff: 1, type: 'hang', q: 'Türk kahvesinin pişirildiği kap', w: 'CEZVE' },
-	{ id: 'h004', cat: 'eglence', diff: 1, type: 'hang', q: "Karadeniz'in meşhur küçük balığı", w: 'HAMSİ' },
 	{ id: 'h005', cat: 'sanat', diff: 2, type: 'hang', q: "Mimar Sinan'ın Edirne'deki ustalık eseri cami", w: 'SELİMİYE' },
 	{ id: 'h006', cat: 'bilim', diff: 1, type: 'hang', q: "Güneş'e en yakın gezegen", w: 'MERKÜR' },
 	{ id: 'h007', cat: 'sanat', diff: 2, type: 'hang', q: "İstiklal Marşı'nın şairinin soyadı", w: 'ERSOY' },
@@ -81,9 +73,5 @@ export const QUESTIONS = [
 
 	// --- doğru mu yanlış mı
 	{ id: 't001', cat: 'cografya', diff: 1, type: 'tf', q: "Ankara, Türkiye'nin en kalabalık şehridir.", ans: false },
-	{ id: 't002', cat: 'bilim', diff: 1, type: 'tf', q: "Ay, Dünya'nın tek doğal uydusudur.", ans: true },
-	{ id: 't003', cat: 'cografya', diff: 2, type: 'tf', q: "İstanbul Boğazı, Karadeniz'i Marmara Denizi'ne bağlar.", ans: true },
-	{ id: 't004', cat: 'bilim', diff: 1, type: 'tf', q: 'Penguenler doğada Kuzey Kutbu çevresinde yaşar.', ans: false },
-	{ id: 't005', cat: 'eglence', diff: 1, type: 'tf', q: 'Bir satranç tahtasında 64 kare vardır.', ans: true },
 	{ id: 't006', cat: 'cografya', diff: 2, type: 'tf', q: 'Van Gölü bir tatlı su gölüdür.', ans: false },
 ];

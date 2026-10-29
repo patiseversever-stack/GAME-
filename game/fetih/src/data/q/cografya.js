@@ -1,4 +1,4 @@
-// Coğrafya: soru bankası (257 soru). Biçimler: DESIGN.md "Soru veri biçimleri".
+// Coğrafya: soru bankası (255 soru). Biçimler: DESIGN.md "Soru veri biçimleri".
 export default [
 	{ id: "cog-ch-001", cat: "cografya", diff: 1, type: "choice", q: "Türkiye'de kaç coğrafi bölge vardır?", a: ["7", "5", "8", "9"] },
 	{ id: "cog-ch-002", cat: "cografya", diff: 1, type: "choice", q: "Türkiye'nin en kalabalık ili hangisidir?", a: ["İstanbul", "Ankara", "İzmir", "Bursa"], tag: "il" },
@@ -100,7 +100,6 @@ export default [
 	{ id: "cog-tf-010", cat: "cografya", diff: 1, type: "tf", q: "Bursa, Ege Bölgesi'ndedir.", ans: false },
 	{ id: "cog-tf-011", cat: "cografya", diff: 1, type: "tf", q: "Antalya, Ege Bölgesi'ndedir.", ans: false },
 	{ id: "cog-tf-012", cat: "cografya", diff: 2, type: "tf", q: "Edirne hem Bulgaristan hem Yunanistan ile sınır komşusudur.", ans: true },
-	{ id: "cog-tf-013", cat: "cografya", diff: 2, type: "tf", q: "Çanakkale Boğazı, Karadeniz'i Marmara Denizi'ne bağlar.", ans: false },
 	{ id: "cog-tf-016", cat: "cografya", diff: 2, type: "tf", q: "Hatay'ın plaka kodu 31'dir.", ans: true },
 	{ id: "cog-tf-017", cat: "cografya", diff: 2, type: "tf", q: "Türkiye'nin Romanya ile kara sınırı vardır.", ans: false },
 	{ id: "cog-tf-021", cat: "cografya", diff: 2, type: "tf", q: "Dünyanın en büyük çölü Sahra'dır.", ans: false },
@@ -180,7 +179,6 @@ export default [
 	{ id: "cog-pi-044", cat: "cografya", diff: 3, type: "pin", q: "Iğdır nerede?", lat: 39.92, lon: 44.05, tag: "il" },
 	{ id: "cog-pi-045", cat: "cografya", diff: 2, type: "pin", q: "Çanakkale nerede?", lat: 40.15, lon: 26.41, tag: "il" },
 	{ id: "cog-pi-046", cat: "cografya", diff: 3, type: "pin", q: "Artvin nerede?", lat: 41.18, lon: 41.82, tag: "il" },
-	{ id: "cog-ha-001", cat: "cografya", diff: 1, type: "hang", q: "Türkiye'nin en kalabalık şehri", w: "İSTANBUL" },
 	{ id: "cog-ha-003", cat: "cografya", diff: 1, type: "hang", q: "Dünyayı kuzey ve güney yarımküreye ayıran hayali çizgi", w: "EKVATOR" },
 	{ id: "cog-ha-004", cat: "cografya", diff: 1, type: "hang", q: "Denizin karaya sokulan kısmı", w: "KÖRFEZ" },
 	{ id: "cog-ha-005", cat: "cografya", diff: 1, type: "hang", q: "Üç yanı sularla çevrili kara parçası", w: "YARIMADA" },

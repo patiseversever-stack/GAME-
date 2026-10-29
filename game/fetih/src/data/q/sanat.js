@@ -1,4 +1,4 @@
-// Sanat: soru bankası (212 soru). Biçimler: DESIGN.md "Soru veri biçimleri".
+// Sanat: soru bankası (211 soru). Biçimler: DESIGN.md "Soru veri biçimleri".
 export default [
 	{ id: "san-ch-002", cat: "sanat", diff: 1, type: "choice", q: "\"Çalıkuşu\" romanının yazarı kimdir?", a: ["Reşat Nuri Güntekin", "Halide Edib Adıvar", "Yakup Kadri Karaosmanoğlu", "Ömer Seyfettin"] },
 	{ id: "san-ch-003", cat: "sanat", diff: 1, type: "choice", q: "\"İnce Memed\" romanının yazarı kimdir?", a: ["Yaşar Kemal", "Orhan Kemal", "Kemal Tahir", "Aziz Nesin"] },
@@ -32,7 +32,7 @@ export default [
 	{ id: "san-ch-034", cat: "sanat", diff: 2, type: "choice", q: "Neşet Ertaş hangi çalgıyla tanınır?", a: ["Bağlama", "Ud", "Kanun", "Keman"] },
 	{ id: "san-ch-036", cat: "sanat", diff: 1, type: "choice", q: "Guernica tablosunun ressamı kimdir?", a: ["Pablo Picasso", "Salvador Dalí", "Joan Miró", "Francisco Goya"] },
 	{ id: "san-ch-037", cat: "sanat", diff: 1, type: "choice", q: "\"Don Kişot\" romanının yazarı kimdir?", a: ["Miguel de Cervantes", "William Shakespeare", "Victor Hugo", "Dante Alighieri"] },
-	{ id: "san-ch-038", cat: "sanat", diff: 1, type: "choice", q: "Finalinde \"Neşeye Övgü\" korosu yer alan 9. Senfoni kimin eseridir?", a: ["Ludwig van Beethoven", "Wolfgang Amadeus Mozart", "Johann Sebastian Bach", "Frédéric Chopin"] },
+	{ id: "san-ch-038", cat: "sanat", diff: 2, type: "choice", q: "Finalinde \"Neşeye Övgü\" korosu yer alan 9. Senfoni kimin eseridir?", a: ["Ludwig van Beethoven", "Wolfgang Amadeus Mozart", "Johann Sebastian Bach", "Frédéric Chopin"] },
 	{ id: "san-ch-039", cat: "sanat", diff: 1, type: "choice", q: "Sistina Şapeli'nin tavan freskolarını kim yapmıştır?", a: ["Michelangelo", "Leonardo da Vinci", "Raffaello", "Botticelli"] },
 	{ id: "san-ch-040", cat: "sanat", diff: 1, type: "choice", q: "\"Çığlık\" tablosunun ressamı kimdir?", a: ["Edvard Munch", "Vincent van Gogh", "Gustav Klimt", "Paul Cézanne"] },
 	{ id: "san-ch-041", cat: "sanat", diff: 1, type: "choice", q: "\"Kuğu Gölü\" balesinin bestecisi kimdir?", a: ["Çaykovski", "Mozart", "Chopin", "Vivaldi"] },
@@ -95,7 +95,6 @@ export default [
 	{ id: "san-tf-010", cat: "sanat", diff: 1, type: "tf", q: "Kemençe, yaylı bir çalgıdır.", ans: true },
 	{ id: "san-tf-012", cat: "sanat", diff: 2, type: "tf", q: "Wolfgang Amadeus Mozart Salzburg'da doğmuştur.", ans: true },
 	{ id: "san-tf-015", cat: "sanat", diff: 2, type: "tf", q: "Beethoven, bazı ünlü eserlerini işitme yetisini kaybettikten sonra bestelemiştir.", ans: true },
-	{ id: "san-tf-016", cat: "sanat", diff: 2, type: "tf", q: "Nobel Edebiyat Ödülü alan tek Türk yazar Orhan Pamuk'tur.", ans: true },
 	{ id: "san-tf-017", cat: "sanat", diff: 2, type: "tf", q: "Yaşar Kemal, Nobel Edebiyat Ödülü kazanmıştır.", ans: false },
 	{ id: "san-tf-018", cat: "sanat", diff: 2, type: "tf", q: "Nazım Hikmet, Nobel Edebiyat Ödülü kazanmıştır.", ans: false },
 	{ id: "san-tf-019", cat: "sanat", diff: 1, type: "tf", q: "Âşık Veysel, görme engelli bir halk ozanıdır.", ans: true },

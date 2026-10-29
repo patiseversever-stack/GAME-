@@ -1,0 +1,939 @@
+diff --git a/game/fetih/src/audio/dsp.js b/game/fetih/src/audio/dsp.js
+index d363e03..35d7437 100644
+--- a/game/fetih/src/audio/dsp.js
++++ b/game/fetih/src/audio/dsp.js
+@@ -1,9 +1,11 @@
+ // Ses: örnek (sample) üretimi. Dosya yok; bütün vuruşlar ve teller JS ile sentezlenir.
+ // Çalışma zamanında yalnızca AudioBufferSource çalınır: düşük cihazlarda CPU'yu en aza indirir.
++// Üretilen diziler modül düzeyinde saklanır; her motor (canlı ya da çevrimdışı) kendi AudioBuffer'ını bundan kurar.
+ 
+ const TAU = Math.PI * 2;
+ 
+ // Tohumlu rastgele (mulberry32): çevrimdışı ölçüm her seferinde aynı sonucu verir.
++// Oyunun Math.random'ına dokunmaz (akış testi tohumlu Math.random kullanır).
+ export function rng(seed) {
+ 	let a = seed >>> 0;
+ 	return () => {
+@@ -31,7 +33,7 @@ function add(a, b, g = 1) {
+ }
+ 
+ // RBJ ikinci derece süzgeç (diziye uygulanır)
+-function biquad(x, type, f, q, sr) {
++export function biquad(x, type, f, q, sr) {
+ 	const w = (TAU * Math.min(f, sr * 0.45)) / sr;
+ 	const cw = Math.cos(w);
+ 	const al = Math.sin(w) / (2 * q);
+@@ -172,23 +174,89 @@ const DEFS = {
+ 		const r = noise(rng(19));
+ 		return norm(biquad(make(0.09, sr, (t) => r() * Math.exp(-t * 48)), 'lp', 1400, 0.9, sr), 0.9, 0.004);
+ 	},
++	// kös: mehter kazanı. Derin, uzun, perdesi düşen; sert vurucu
++	kos(sr) {
++		const r = noise(rng(21));
++		let ph = 0;
++		const body = make(1.3, sr, (t) => {
++			ph += (TAU * (44 + 64 * Math.exp(-t * 20))) / sr;
++			return Math.sin(ph) * Math.exp(-t * 4.0) + 0.3 * Math.sin(ph * 1.5) * Math.exp(-t * 8) + 0.18 * Math.sin(TAU * 112 * t) * Math.exp(-t * 11);
++		});
++		const thud = biquad(make(0.07, sr, (t) => r() * Math.exp(-t * 60)), 'lp', 1000, 0.7, sr);
++		return norm(add(body, thud, 0.6), 0.93, 0.04);
++	},
++	// bendir: tef, tok gövde ve tel (çıngırak) cızırtısı
++	bendir(sr) {
++		const r = noise(rng(22));
++		let ph = 0;
++		const body = make(0.5, sr, (t) => {
++			ph += (TAU * (92 + 60 * Math.exp(-t * 40))) / sr;
++			return Math.sin(ph) * Math.exp(-t * 9) + 0.25 * Math.sin(TAU * 236 * t) * Math.exp(-t * 17);
++		});
++		const rattle = biquad(make(0.3, sr, (t) => r() * Math.exp(-t * 16) * (0.6 + 0.4 * Math.sin(TAU * 83 * t))), 'bp', 5200, 0.8, sr);
++		return norm(add(body, rattle, 0.45), 0.9, 0.03);
++	},
++	// çevgen / tef zili: kısa parlak şıkırtı
++	shake(sr) {
++		const r = noise(rng(23));
++		return norm(biquad(make(0.09, sr, (t) => r() * Math.exp(-t * 48)), 'hp', 6200, 0.8, sr), 0.85, 0.01);
++	},
++	// mehter küçük davulu: tel sesli, ince
++	snare(sr) {
++		const r = noise(rng(24));
++		const n = biquad(make(0.16, sr, (t) => r() * Math.exp(-t * 34)), 'bp', 3300, 0.6, sr);
++		const b = make(0.16, sr, (t) => Math.sin(TAU * 195 * t) * Math.exp(-t * 42));
++		return norm(add(n, b, 0.55), 0.9, 0.01);
++	},
++	// çan / çıngırak: düzensiz üst seslerle parlak, uzun
++	chime(sr) {
++		const ratio = [1, 2.756, 5.404, 8.933];
++		const amp = [1, 0.55, 0.3, 0.16];
++		const dec = [3.2, 4.5, 6.5, 9];
++		const base = 880;
++		return norm(
++			make(1.4, sr, (t) => {
++				let s = 0;
++				for (let k = 0; k < 4; k++) if (base * ratio[k] < sr * 0.45) s += Math.sin(TAU * base * ratio[k] * t) * amp[k] * Math.exp(-t * dec[k]);
++				return s * (1 - Math.exp(-t * 900));
++			}),
++			0.9,
++			0.04,
++		);
++	},
++	// küçük "pop": baloncuk ya da tıklama
++	pop(sr) {
++		return norm(make(0.06, sr, (t) => Math.sin(TAU * (520 + 520 * Math.exp(-t * 75)) * t) * Math.exp(-t * 52) * (1 - Math.exp(-t * 2500))), 0.9, 0.006);
++	},
+ };
+ 
+ export const BANK_NAMES = Object.keys(DEFS);
+ 
++const CACHE = new Map();
++
++/** Örnek verisi (Float32Array); modül düzeyinde bir kez üretilir. */
+ export function buildSample(name, sr = BANK_RATE) {
+-	const d = DEFS[name];
+-	return d ? d(sr) : null;
++	const key = name + '@' + sr;
++	let d = CACHE.get(key);
++	if (d) return d;
++	const f = DEFS[name];
++	if (!f) return null;
++	d = f(sr);
++	CACHE.set(key, d);
++	return d;
+ }
+ 
+ // ---------------------------------------------------------------- Karplus-Strong tel
+ // Tel boyu tam sayı olsun diye AudioBuffer örnekleme hızı = frekans * N seçilir.
+ // Böylece mikrotonal (makam) perdeler bile tam doğru çalar; çalma sırasında oynatıcı yeniden örnekler.
++// body: [merkez Hz, Q, karışım]: gövde (kasa) yankılanması; teli ahşap bir çalgı gibi renklendirir.
+ const KS = {
+-	// bağlama: parlak, kısa
+-	baglama: { rate: 24000, t60: 0.85, damp: 0.5, bright: 0.85, pick: 0.2, len: 0.9 },
++	// bağlama: parlak, kısa, ahşap gövdeli
++	baglama: { rate: 24000, t60: 0.95, damp: 0.5, bright: 0.85, pick: 0.2, len: 1.0, body: [[190, 4, 0.34], [430, 5, 0.26], [1080, 6, 0.14]] },
+ 	// kanun: çok parlak, uzun, tınlayan
+-	kanun: { rate: 24000, t60: 1.7, damp: 0.5, bright: 1, pick: 0.12, len: 1.5 },
++	kanun: { rate: 24000, t60: 1.8, damp: 0.5, bright: 1, pick: 0.12, len: 1.6, body: [[260, 3, 0.1], [900, 4, 0.08]] },
++	// tambur: koyu, yumuşak, uzun saplı
++	tambur: { rate: 24000, t60: 1.3, damp: 0.42, bright: 0.55, pick: 0.27, len: 1.3, body: [[170, 4, 0.38], [380, 5, 0.22]] },
+ };
+ 
+ export function pluckSample(kind, freq, seed = 1) {
+@@ -210,7 +278,7 @@ export function pluckSample(kind, freq, seed = 1) {
+ 	// döngü başına kayıp: T60 sabit kalsın
+ 	const loss = Math.pow(10, -3 / (p.t60 * freq));
+ 	const n = Math.floor(p.len * sr);
+-	const out = new Float32Array(n);
++	let out = new Float32Array(n);
+ 	let idx = 0;
+ 	let prev = line[N - 1];
+ 	for (let i = 0; i < n; i++) {
+@@ -220,6 +288,15 @@ export function pluckSample(kind, freq, seed = 1) {
+ 		prev = cur;
+ 		if (++idx >= N) idx = 0;
+ 	}
++	// gövde: sabit frekanslı yankılanmalar (kasa); perde değişse de aynı ahşap rengi
++	if (p.body) {
++		const dry = out;
++		out = dry.slice();
++		for (const [f, q, g] of p.body) {
++			const b = biquad(dry, 'bp', f, q, sr);
++			for (let i = 0; i < n; i++) out[i] += b[i] * g * 3.2;
++		}
++	}
+ 	// tırnak vuruşu: ilk milisaniyelere vurgu
+ 	const cl = Math.min(n, Math.floor(0.004 * sr));
+ 	for (let i = 0; i < cl; i++) out[i] *= 1 + 0.6 * (1 - i / cl);
+diff --git a/game/fetih/src/audio/engine.js b/game/fetih/src/audio/engine.js
+index 790ec83..367ef74 100644
+--- a/game/fetih/src/audio/engine.js
++++ b/game/fetih/src/audio/engine.js
+@@ -1,19 +1,69 @@
+-// Ses motoru: AudioContext, ana karıştırıcı (sıkıştırıcı + yumuşak sınırlayıcı), müzik/efekt hatları,
+-// yankı, ducking, ses havuzu ve eşzamanlılık sınırı. Hiçbir yerde istisna fırlatmaz.
++// Ses motoru. İki kipte çalışır:
++//   canlı (live): gerçek AudioContext. Ana karıştırıcı (sıkıştırıcı + yumuşak sınırlayıcı), efekt ve müzik hatları,
++//     ducking, ses havuzu ve eşzamanlılık sınırı. Kare başına iş yok; yalnızca olay anında birkaç düğüm.
++//   pişirme (bake): OfflineAudioContext. Müzik döngüleri ve ağır efektler açılışta bir kez çizilir; çalarken tek
++//     AudioBufferSource yeter. Bu kipte yankı (reverb) hatları vardır ve çıkış ham bırakılır (son işlem JS'de).
++// Hiçbir yerde istisna fırlatmaz.
+ import { rng, buildSample, pluckSample, BANK_RATE } from './dsp.js';
+ 
+ const POOL_MAX = 64;
+ const MASTER = 0.55; // sıkıştırıcı öncesi pay: Chrome sıkıştırıcısı kendi telafi kazancını ekler
+ 
++// Pişirme kipinde hat ayarları: gain, wet (yankıya gönderim oranı)
++const BUS = {
++	perc: { gain: 1, wet: 0.14 }, // davul, darbuka, zil
++	string: { gain: 1, wet: 0.24 }, // bağlama, kanun
++	wind: { gain: 1, wet: 0.3 }, // ney, zurna, boru
++	pad: { gain: 1, wet: 0.42 }, // bordo, yaylı, koro
++	fx: { gain: 1, wet: 0.2 }, // diğer
++};
++
++/** Yankı dürtü yanıtı: ilk yansımalar + üstel sönen, yukarı doğru yutulan gürültü. Stereo, ilintisiz. */
++export function makeIR(ctx, { seconds = 2.2, rt60 = 1.9, pre = 0.012, seed = 5 } = {}) {
++	const sr = ctx.sampleRate;
++	const n = Math.floor(seconds * sr);
++	const buf = ctx.createBuffer(2, n, sr);
++	for (let ch = 0; ch < 2; ch++) {
++		const d = buf.getChannelData(ch);
++		const r = rng(seed * 131 + ch * 7919);
++		let lp = 0;
++		const p0 = Math.floor(pre * sr);
++		for (let i = p0; i < n; i++) {
++			const t = (i - p0) / sr;
++			const env = Math.exp((-6.9 * t) / rt60);
++			// zamanla koyulaşan ton: yüksek frekanslar önce söner
++			const a = Math.max(0.1, 0.85 * Math.exp(-t * 1.1));
++			lp += ((r() * 2 - 1) - lp) * a;
++			// ilk 40 ms daha seyrek ve yumuşak: oda hissi, "çınlama" yok
++			const soft = t < 0.04 ? t / 0.04 : 1;
++			d[i] = lp * env * soft;
++		}
++		// birkaç ilk yansıma
++		for (let k = 0; k < 6; k++) {
++			const at = Math.floor((0.014 + r() * 0.07) * sr);
++			if (at < n) d[at] += (r() < 0.5 ? -1 : 1) * (0.5 - k * 0.06);
++		}
++	}
++	return buf;
++}
++
+ export class Engine {
+-	constructor({ ctx = null, low = false, sync = false } = {}) {
++	/**
++	 * ctx: AudioContext ya da OfflineAudioContext. low: düşük cihaz (yankı yok, daha az düğüm).
++	 * bake: çevrimdışı çizim kipi. wet: yankı çarpanı (pişirme). seed: yerel rastgele tohumu.
++	 */
++	constructor({ ctx = null, low = false, bake = false, wet = 1, seed = 0xfe71, ir = null } = {}) {
+ 		this.ctx = null;
+-		this.low = low; // düşük cihaz: yankı yok, daha az ses
+-		this.sync = sync; // çevrimdışı ölçümde örnekleri hemen üret
+-		this.r = rng(0xfe71);
++		this.low = low;
++		this.bake = bake;
++		this.wet = wet;
++		this.irOpts = ir;
++		this.r = rng(seed);
+ 		this.bufs = new Map();
+ 		this.pool = [];
+ 		this.voices = [];
++		this.buses = {};
++		this.log = null; // doğrulama: açıksa her nota buraya yazılır
+ 		this.musicVol = 0.7;
+ 		this.sfxVol = 0.9;
+ 		this.muted = false;
+@@ -44,72 +94,50 @@ export class Engine {
+ 		try {
+ 			const c = ctx;
+ 			this.ctx = c;
+-			// ana hat: toplam → sıkıştırıcı → yumuşak sınırlayıcı → çıkış
+ 			this.master = c.createGain();
+-			this.master.gain.value = this.muted ? 0 : MASTER;
+-			this.comp = c.createDynamicsCompressor();
+-			this.comp.threshold.value = -16;
+-			this.comp.knee.value = 14;
+-			this.comp.ratio.value = 4;
+-			this.comp.attack.value = 0.003;
+-			this.comp.release.value = 0.2;
+-			this.clip = c.createWaveShaper();
+-			const curve = new Float32Array(1024);
+-			for (let i = 0; i < curve.length; i++) curve[i] = Math.tanh(((i / (curve.length - 1)) * 2 - 1) * 1.15) / Math.tanh(1.15) * 0.97;
+-			this.clip.curve = curve;
+-			this.master.connect(this.comp);
+-			this.comp.connect(this.clip);
+-			this.clip.connect(c.destination);
+-			// efekt ve müzik hatları
+-			this.sfxIn = c.createGain();
+-			this.sfxIn.gain.value = this.sfxVol;
+-			this.sfxIn.connect(this.master);
+-			this.dest = this.sfxIn;
+-			this.musicIn = c.createGain();
+-			this.musicIn.gain.value = this.musicVol;
+-			this.duckG = c.createGain();
+-			this.musicIn.connect(this.duckG);
+-			this.duckG.connect(this.master);
+-			// yankı (ping-pong gecikme): düşük cihazda kurulmaz
+-			this.echoIn = null;
+-			if (!this.low) {
+-				const eIn = c.createGain();
+-				const dl = c.createDelay(1);
+-				const dr = c.createDelay(1);
+-				dl.delayTime.value = 0.19;
+-				dr.delayTime.value = 0.29;
+-				const fa = c.createGain();
+-				const fb = c.createGain();
+-				fa.gain.value = fb.gain.value = 0.36;
+-				const lp = c.createBiquadFilter();
+-				lp.type = 'lowpass';
+-				lp.frequency.value = 3200;
+-				const out = c.createGain();
+-				out.gain.value = 0.8;
+-				const pl = c.createStereoPanner();
+-				const pr = c.createStereoPanner();
+-				pl.pan.value = -0.65;
+-				pr.pan.value = 0.65;
+-				eIn.connect(dl);
+-				dl.connect(fa);
+-				fa.connect(lp);
+-				lp.connect(dr);
+-				dr.connect(fb);
+-				fb.connect(dl);
+-				dl.connect(pl);
+-				dr.connect(pr);
+-				pl.connect(out);
+-				pr.connect(out);
+-				out.connect(this.master);
+-				const ms = c.createGain();
+-				ms.gain.value = 0.2;
+-				this.musicIn.connect(ms);
+-				ms.connect(eIn);
+-				const ss = c.createGain();
+-				ss.gain.value = 0.1;
+-				this.sfxIn.connect(ss);
+-				ss.connect(eIn);
+-				this.echoIn = eIn;
++			if (this.bake) {
++				this.master.gain.value = 1;
++				this.master.connect(c.destination);
++				// yankı: tek evrişim (convolver); hatlar oranla gönderir
++				this.rvIn = null;
++				if (!this.low && this.wet > 0 && c.createConvolver) {
++					this.rvIn = c.createGain();
++					const cv = c.createConvolver();
++					cv.buffer = makeIR(c, this.irOpts || {});
++					const out = c.createGain();
++					out.gain.value = 1;
++					this.rvIn.connect(cv);
++					cv.connect(out);
++					out.connect(this.master);
++				}
++				this.dest = this.bus('fx');
++			} else {
++				this.master.gain.value = this.muted ? 0 : MASTER;
++				// ana hat: toplam → sıkıştırıcı → yumuşak sınırlayıcı → çıkış
++				this.comp = c.createDynamicsCompressor();
++				this.comp.threshold.value = -16;
++				this.comp.knee.value = 14;
++				this.comp.ratio.value = 4;
++				this.comp.attack.value = 0.003;
++				this.comp.release.value = 0.2;
++				this.clip = c.createWaveShaper();
++				const curve = new Float32Array(1024);
++				for (let i = 0; i < curve.length; i++) curve[i] = (Math.tanh(((i / (curve.length - 1)) * 2 - 1) * 1.15) / Math.tanh(1.15)) * 0.97;
++				this.clip.curve = curve;
++				this.master.connect(this.comp);
++				this.comp.connect(this.clip);
++				this.clip.connect(c.destination);
++				// efekt ve müzik hatları
++				this.sfxIn = c.createGain();
++				this.sfxIn.gain.value = this.sfxVol;
++				this.sfxIn.connect(this.master);
++				this.dest = this.sfxIn;
++				this.musicIn = c.createGain();
++				this.musicIn.gain.value = this.musicVol;
++				this.duckG = c.createGain();
++				this.musicIn.connect(this.duckG);
++				this.duckG.connect(this.master);
++				this.echoIn = null;
+ 			}
+ 			// ortak gürültü
+ 			const n = Math.floor(c.sampleRate * 2);
+@@ -125,24 +153,44 @@ export class Engine {
+ 		}
+ 	}
+ 
+-	// ---------------------------------------------------------------- hat ayarları
++	/** Pişirme kipinde adlı hat (yankı gönderimli); canlı kipte efekt hattı. */
++	bus(name) {
++		if (!this.bake) return this.dest;
++		let b = this.buses[name];
++		if (b) return b;
++		const c = this.ctx;
++		const cfg = BUS[name] || BUS.fx;
++		b = c.createGain();
++		b.gain.value = cfg.gain;
++		b.connect(this.master);
++		if (this.rvIn) {
++			const s = c.createGain();
++			s.gain.value = cfg.wet * this.wet;
++			b.connect(s);
++			s.connect(this.rvIn);
++		}
++		this.buses[name] = b;
++		return b;
++	}
++
++	// ---------------------------------------------------------------- hat ayarları (canlı)
+ 
+ 	setMusicVolume(v) {
+ 		this.musicVol = v;
+-		if (this.ctx) this.musicIn.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
++		if (this.ctx && this.musicIn) this.musicIn.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
+ 	}
+ 	setSfxVolume(v) {
+ 		this.sfxVol = v;
+-		if (this.ctx) this.sfxIn.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
++		if (this.ctx && this.sfxIn) this.sfxIn.gain.setTargetAtTime(v, this.ctx.currentTime, 0.03);
+ 	}
+-	setMuted(on) {
++	setMuted(on, tc = 0.04) {
+ 		this.muted = on;
+-		if (this.ctx) this.master.gain.setTargetAtTime(on ? 0 : MASTER, this.ctx.currentTime, 0.04);
++		if (this.ctx && this.master) this.master.gain.setTargetAtTime(on ? 0 : MASTER, this.ctx.currentTime, tc);
+ 	}
+ 
+ 	// Büyük anlarda müziği kıs: depth 0..1, hold sn, rel sn
+ 	duck(depth = 0.5, hold = 0.6, rel = 0.8, at = 0) {
+-		if (!this.ctx) return;
++		if (!this.ctx || !this.duckG) return;
+ 		const g = this.duckG.gain;
+ 		const t = this.ctx.currentTime + at;
+ 		try {
+@@ -158,7 +206,7 @@ export class Engine {
+ 	// ---------------------------------------------------------------- ses havuzu
+ 
+ 	gain(v = 1) {
+-		const g = this.pool.pop() || this.ctx.createGain();
++		const g = (!this.bake && this.pool.pop()) || this.ctx.createGain();
+ 		g.gain.cancelScheduledValues(0);
+ 		g.gain.value = v;
+ 		return g;
+@@ -169,7 +217,7 @@ export class Engine {
+ 		} catch (e) {
+ 			/* yok say */
+ 		}
+-		if (this.pool.length < POOL_MAX) this.pool.push(g);
++		if (!this.bake && this.pool.length < POOL_MAX) this.pool.push(g);
+ 	}
+ 
+ 	// Eşzamanlılık: t anında çalan ses sayısı sınırı aşıyorsa, öncelik düşük olan düşer.
+@@ -186,15 +234,21 @@ export class Engine {
+ 		return true;
+ 	}
+ 
+-	// ---------------------------------------------------------------- yardımcı sesler
++	// ---------------------------------------------------------------- yardımcı düğümler
++
++	/** Stereo kaydırıcı; destek yoksa null (eski tarayıcı: ses ortada kalır). */
++	panner(pan) {
++		if (!pan || !this.ctx.createStereoPanner) return null;
++		const pn = this.ctx.createStereoPanner();
++		pn.pan.value = pan > 1 ? 1 : pan < -1 ? -1 : pan;
++		return pn;
++	}
+ 
+ 	// bir kaynağı gain'e bağlayıp çalar; bitince gain havuza döner
+ 	_play(src, g, to, t, stop, pan = 0, extra = null) {
+ 		let tail = g;
+-		let pn = null;
+-		if (pan) {
+-			pn = this.ctx.createStereoPanner();
+-			pn.pan.value = pan;
++		const pn = this.panner(pan);
++		if (pn) {
+ 			g.connect(pn);
+ 			tail = pn;
+ 		}
+@@ -219,6 +273,7 @@ export class Engine {
+ 		if (stop) src.stop(stop);
+ 	}
+ 
++	/** Banka örneğinin AudioBuffer'ı (motor başına bir kez kurulur). */
+ 	buf(name) {
+ 		let b = this.bufs.get(name);
+ 		if (b) return b;
+@@ -234,6 +289,7 @@ export class Engine {
+ 	hit(name, t, vol = 1, rate = 1, pan = 0, to = null) {
+ 		const b = this.buf(name);
+ 		if (!b) return;
++		if (this.log) this.log.push({ k: 'hit', n: name, t, v: vol });
+ 		const s = this.ctx.createBufferSource();
+ 		s.buffer = b;
+ 		s.playbackRate.value = rate;
+@@ -242,7 +298,7 @@ export class Engine {
+ 		this._play(s, g, to, t, 0, pan);
+ 	}
+ 
+-	// tel çal (bağlama/kanun), freq Hz
++	// tel çal (bağlama/kanun/tambur), freq Hz
+ 	pluck(kind, freq, t, vol = 0.6, pan = 0, to = null, detune = 0) {
+ 		const key = kind + ':' + Math.round(freq * 20);
+ 		let b = this.bufs.get(key);
+@@ -251,7 +307,7 @@ export class Engine {
+ 			b = this.ctx.createBuffer(1, d.data.length, d.rate);
+ 			b.getChannelData(0).set(d.data);
+ 			this.bufs.set(key, b);
+-			if (this.bufs.size > 140) {
++			if (this.bufs.size > 160) {
+ 				// en eski telleri at
+ 				for (const k of this.bufs.keys()) {
+ 					if (k.indexOf(':') > 0) {
+@@ -261,6 +317,7 @@ export class Engine {
+ 				}
+ 			}
+ 		}
++		if (this.log) this.log.push({ k: 'pluck', kind, f: freq, t, v: vol });
+ 		const s = this.ctx.createBufferSource();
+ 		s.buffer = b;
+ 		if (detune) s.detune.value = detune;
+@@ -270,7 +327,7 @@ export class Engine {
+ 	}
+ 
+ 	// ses dalgası: frekans süpürmeli, zarflı
+-	// o: {a: atak, bus, pan, curve:'exp'|'lin', det}
++	// o: {a: atak, to, pan, lp, sweep}
+ 	tone(type, f0, f1, t, dur, vol, o = {}) {
+ 		const c = this.ctx;
+ 		const s = c.createOscillator();
+@@ -282,7 +339,7 @@ export class Engine {
+ 		g.gain.setValueAtTime(0.0001, t);
+ 		g.gain.linearRampToValueAtTime(vol, t + a);
+ 		g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+-		let src = s;
++		if (this.log) this.log.push({ k: 'tone', f: f0, t, v: vol });
+ 		if (o.lp) {
+ 			const f = c.createBiquadFilter();
+ 			f.type = 'lowpass';
+@@ -290,11 +347,11 @@ export class Engine {
+ 			s.connect(f);
+ 			f.connect(g);
+ 		} else s.connect(g);
+-		this._play(src, g, o.to, t, t + dur + 0.03, o.pan || 0);
++		this._play(s, g, o.to, t, t + dur + 0.03, o.pan || 0);
+ 	}
+ 
+ 	// filtreli gürültü: f0→f1 süpürme
+-	// o: {type, q, a, to, pan, off}
++	// o: {type, q, a, to, pan, hold}
+ 	noise(t, dur, vol, f0, f1, o = {}) {
+ 		const c = this.ctx;
+ 		const s = c.createBufferSource();
+@@ -314,12 +371,9 @@ export class Engine {
+ 		s.connect(f);
+ 		f.connect(g);
+ 		s.start(t, this.r() * 1.5);
+-		// _play start çağırır; burada kendi başlatmamız var
++		const pn = this.panner(o.pan);
+ 		let tail = g;
+-		let pn = null;
+-		if (o.pan) {
+-			pn = c.createStereoPanner();
+-			pn.pan.value = o.pan;
++		if (pn) {
+ 			g.connect(pn);
+ 			tail = pn;
+ 		}
+diff --git a/game/fetih/src/audio/voices.js b/game/fetih/src/audio/voices.js
+index f8b5e01..dc65f94 100644
+--- a/game/fetih/src/audio/voices.js
++++ b/game/fetih/src/audio/voices.js
+@@ -1,23 +1,23 @@
+-// Sürekli sesli çalgılar: zurna, ney, boru (alçak nefesli) ve bordo (drone).
+-// Hepsi az sayıda düğümle kurulur; eşzamanlı sayıları çağıran tarafça sınırlanır.
++// Sürekli sesli çalgılar: zurna, ney, boru (alçak nefesli), bordo, yaylı ve koro.
++// Hepsi az sayıda düğümle kurulur; her biri kendi bitiminde düğümlerini söker.
++// Hepsi `to` (hedef hat) alır; verilmezse motorun varsayılan hattı.
+ 
+-function connectEnd(src, nodes, e, g) {
+-	src.onended = () => {
+-		for (const n of nodes) {
+-			try {
+-				n.disconnect();
+-			} catch (err) {
+-				/* yok say */
+-			}
++function release(nodes, e, g) {
++	for (const n of nodes) {
++		try {
++			n.disconnect();
++		} catch (err) {
++			/* yok say */
+ 		}
+-		if (g) e.freeGain(g);
+-	};
++	}
++	if (g) e.freeGain(g);
+ }
+ 
+ // Zurna: testere dalgası + çift kamış (hafif detune) + gırtlak (formant) süzgeçleri + vibrato.
+ // o: {to, bend (sent, aşağıdan kayma), vib (paylaşılan titreşim), pan, bright}
+ export function zurna(e, t, f, dur, vol, o = {}) {
+ 	const c = e.ctx;
++	if (e.log) e.log.push({ k: 'zurna', f, t, d: dur, v: vol });
+ 	const a = c.createOscillator();
+ 	a.type = 'sawtooth';
+ 	a.frequency.value = f;
+@@ -64,10 +64,8 @@ export function zurna(e, t, f, dur, vol, o = {}) {
+ 	p2.connect(lp);
+ 	lp.connect(g);
+ 	let tail = g;
+-	let pn = null;
+-	if (o.pan) {
+-		pn = c.createStereoPanner();
+-		pn.pan.value = o.pan;
++	const pn = e.panner(o.pan);
++	if (pn) {
+ 		g.connect(pn);
+ 		tail = pn;
+ 		nodes.push(pn);
+@@ -83,12 +81,11 @@ export function zurna(e, t, f, dur, vol, o = {}) {
+ 		}
+ 	}
+ 	// titreşim: paylaşılan ya da kendi
+-	let own = null;
+ 	if (o.vib) {
+ 		o.vib.connect(a.detune);
+ 		if (b) o.vib.connect(b.detune);
+ 	} else if (dur > 0.35) {
+-		own = c.createOscillator();
++		const own = c.createOscillator();
+ 		own.frequency.value = 5.6;
+ 		const og = c.createGain();
+ 		og.gain.setValueAtTime(0, t);
+@@ -118,20 +115,14 @@ export function zurna(e, t, f, dur, vol, o = {}) {
+ 				/* yok say */
+ 			}
+ 		}
+-		for (const n of [mix, hp, p1, p2, lp, ...nodes]) {
+-			try {
+-				n.disconnect();
+-			} catch (err) {
+-				/* yok say */
+-			}
+-		}
+-		e.freeGain(g);
++		release([mix, hp, p1, p2, lp, ...nodes], e, g);
+ 	};
+ }
+ 
+-// Ney: yumuşak, nefesli. Yavaş atak, geç gelen vibrato, perdeye aşağıdan kayış.
++// Ney: yumuşak, nefesli. Yavaş atak, geç gelen vibrato, perdeye aşağıdan kayış (scoop), isteğe bağlı sonda düşüş (fall).
+ export function ney(e, t, f, dur, vol, o = {}) {
+ 	const c = e.ctx;
++	if (e.log) e.log.push({ k: 'ney', f, t, d: dur, v: vol });
+ 	const a = c.createOscillator();
+ 	a.type = 'sine';
+ 	a.frequency.value = f;
+@@ -145,20 +136,20 @@ export function ney(e, t, f, dur, vol, o = {}) {
+ 	lp.frequency.value = Math.min(6000, f * 5);
+ 	const g = e.gain(0.0001);
+ 	const att = o.attack === undefined ? 0.11 : o.attack;
++	const rel = o.release || 0.25;
+ 	const end = t + dur;
+ 	g.gain.setValueAtTime(0.0001, t);
+ 	g.gain.linearRampToValueAtTime(vol, t + att);
+ 	g.gain.setValueAtTime(vol, Math.max(t + att, end - 0.05));
+-	g.gain.linearRampToValueAtTime(0.0001, end + (o.release || 0.25));
++	g.gain.linearRampToValueAtTime(0.0001, end + rel);
+ 	a.connect(lp);
+ 	b.connect(bg);
+ 	bg.connect(lp);
+ 	lp.connect(g);
+ 	// nefes: perde etrafında dar bantlı gürültü
+ 	const nodes = [a, b, bg, lp];
+-	let ns = null;
+ 	if (!e.low) {
+-		ns = c.createBufferSource();
++		const ns = c.createBufferSource();
+ 		ns.buffer = e.noiseBuf;
+ 		ns.loop = true;
+ 		const nf = c.createBiquadFilter();
+@@ -171,22 +162,30 @@ export function ney(e, t, f, dur, vol, o = {}) {
+ 		nf.connect(ng);
+ 		ng.connect(g);
+ 		ns.start(t, e.r());
+-		ns.stop(end + (o.release || 0.25) + 0.05);
++		ns.stop(end + rel + 0.05);
+ 		nodes.push(ns, nf, ng);
+ 	}
+ 	let tail = g;
+-	if (o.pan) {
+-		const pn = c.createStereoPanner();
+-		pn.pan.value = o.pan;
++	const pn = e.panner(o.pan);
++	if (pn) {
+ 		g.connect(pn);
+ 		tail = pn;
+ 		nodes.push(pn);
+ 	}
+ 	tail.connect(o.to || e.dest);
+-	a.detune.setValueAtTime(o.scoop === undefined ? -55 : -o.scoop, t);
++	const sc = o.scoop === undefined ? -55 : -o.scoop;
++	a.detune.setValueAtTime(sc, t);
+ 	a.detune.linearRampToValueAtTime(0, t + 0.14);
+-	b.detune.setValueAtTime(o.scoop === undefined ? -55 : -o.scoop, t);
++	b.detune.setValueAtTime(sc, t);
+ 	b.detune.linearRampToValueAtTime(0, t + 0.14);
++	if (o.fall) {
++		// nota bitmeden perde aşağı kayar (hüzün, yenilgi)
++		const t1 = Math.max(t + 0.2, end - Math.min(0.5, dur * 0.6));
++		a.detune.setValueAtTime(0, t1);
++		a.detune.linearRampToValueAtTime(-o.fall, end + rel * 0.6);
++		b.detune.setValueAtTime(0, t1);
++		b.detune.linearRampToValueAtTime(-o.fall, end + rel * 0.6);
++	}
+ 	if (o.vib) {
+ 		o.vib.connect(a.detune);
+ 		o.vib.connect(b.detune);
+@@ -206,7 +205,7 @@ export function ney(e, t, f, dur, vol, o = {}) {
+ 	}
+ 	a.start(t);
+ 	b.start(t);
+-	const stopAt = end + (o.release || 0.25) + 0.05;
++	const stopAt = end + rel + 0.05;
+ 	a.stop(stopAt);
+ 	b.stop(stopAt);
+ 	a.onended = () => {
+@@ -218,20 +217,14 @@ export function ney(e, t, f, dur, vol, o = {}) {
+ 				/* yok say */
+ 			}
+ 		}
+-		for (const n of nodes) {
+-			try {
+-				n.disconnect();
+-			} catch (err) {
+-				/* yok say */
+-			}
+-		}
+-		e.freeGain(g);
++		release(nodes, e, g);
+ 	};
+ }
+ 
+ // Boru/borazan: alçak, kalın, süzgeci açılan testere (kuşatma çağrısı)
+ export function horn(e, t, f, dur, vol, o = {}) {
+ 	const c = e.ctx;
++	if (e.log) e.log.push({ k: 'horn', f, t, d: dur, v: vol });
+ 	const a = c.createOscillator();
+ 	a.type = 'sawtooth';
+ 	a.frequency.setValueAtTime(f * 0.97, t);
+@@ -260,67 +253,180 @@ export function horn(e, t, f, dur, vol, o = {}) {
+ 	b.start(t);
+ 	a.stop(t + dur + 0.3);
+ 	b.stop(t + dur + 0.3);
+-	connectEnd(a, [a, b, bg, lp], e, g);
++	a.onended = () => release([a, b, bg, lp], e, g);
+ }
+ 
+-// Bordo: köklü, yumuşak, ağır; süzgeci çok yavaş nefes alır. {stop(t, fade)} döner.
+-export function drone(e, f, vol, to) {
++// Bordo: köklü, yumuşak, ağır tek nota. Ardışık notalar örtüşünce kesintisiz bordo olur (döngüde de dikiş görünmez).
++// o: {to, attack, release, cut (süzgeç), fifth (beşli karışımı), wob (süzgeç nefesi, Hz)}
++export function bordo(e, t, f, dur, vol, o = {}) {
+ 	const c = e.ctx;
+-	const t = c.currentTime;
+-	const g = c.createGain();
++	if (e.log) e.log.push({ k: 'bordo', f, t, d: dur, v: vol });
++	const att = o.attack === undefined ? 1.2 : o.attack;
++	const rel = o.release === undefined ? 1.6 : o.release;
++	const end = t + dur;
++	const g = e.gain(0.0001);
+ 	g.gain.setValueAtTime(0.0001, t);
+-	g.gain.linearRampToValueAtTime(vol, t + 2.2);
++	g.gain.linearRampToValueAtTime(vol, t + att);
++	g.gain.setValueAtTime(vol, Math.max(t + att, end));
++	g.gain.linearRampToValueAtTime(0.0001, end + rel);
+ 	const lp = c.createBiquadFilter();
+ 	lp.type = 'lowpass';
+-	lp.frequency.value = 420;
++	lp.frequency.value = o.cut || 420;
+ 	lp.Q.value = 0.8;
+-	const list = [];
++	const nodes = [lp];
+ 	const mk = (type, fr, gv) => {
+-		const o = c.createOscillator();
+-		o.type = type;
+-		o.frequency.value = fr;
++		const os = c.createOscillator();
++		os.type = type;
++		os.frequency.value = fr;
+ 		const og = c.createGain();
+ 		og.gain.value = gv;
+-		o.connect(og);
++		os.connect(og);
+ 		og.connect(lp);
+-		o.start(t);
+-		list.push(o, og);
+-		return o;
++		os.start(t);
++		os.stop(end + rel + 0.05);
++		nodes.push(os, og);
++		return os;
+ 	};
+-	mk('sawtooth', f, 0.5);
++	const first = mk('sawtooth', f, 0.5);
+ 	if (!e.low) mk('sawtooth', f * 1.0035, 0.4);
+ 	mk('sine', f * 0.5, 0.7);
+-	mk('sine', f * 1.5, 0.12); // beşli
++	mk('sine', f * 1.5, o.fifth === undefined ? 0.12 : o.fifth); // beşli
+ 	lp.connect(g);
+-	g.connect(to || e.musicIn);
+-	const lfo = c.createOscillator();
+-	lfo.frequency.value = 0.09;
+-	const lg = c.createGain();
+-	lg.gain.value = 130;
+-	lfo.connect(lg);
+-	lg.connect(lp.frequency);
+-	lfo.start(t);
+-	list.push(lfo, lg);
+-	return {
+-		gain: g,
+-		stop(at, fade = 1) {
+-			try {
+-				g.gain.cancelScheduledValues(at);
+-				g.gain.setValueAtTime(g.gain.value, at);
+-				g.gain.linearRampToValueAtTime(0.0001, at + fade);
+-				for (const n of list) if (n.stop) n.stop(at + fade + 0.05);
+-				list[0].onended = () => {
+-					for (const n of [...list, lp, g]) {
+-						try {
+-							n.disconnect();
+-						} catch (err) {
+-							/* yok say */
+-						}
+-					}
+-				};
+-			} catch (err) {
+-				/* yok say */
+-			}
+-		},
+-	};
++	g.connect(o.to || e.dest);
++	if (!e.low && o.wob !== 0) {
++		const lfo = c.createOscillator();
++		lfo.frequency.value = o.wob || 0.09;
++		const lg = c.createGain();
++		lg.gain.value = (o.cut || 420) * 0.3;
++		lfo.connect(lg);
++		lg.connect(lp.frequency);
++		lfo.start(t);
++		lfo.stop(end + rel + 0.05);
++		nodes.push(lfo, lg);
++	}
++	first.onended = () => release(nodes, e, g);
++}
++
++// Yaylı pad: dört detuneli testere, süzgeç yavaş açılır. Sıcak, geniş.
++// o: {to, attack, release, cut, pan}
++export function strings(e, t, f, dur, vol, o = {}) {
++	const c = e.ctx;
++	if (e.log) e.log.push({ k: 'strings', f, t, d: dur, v: vol });
++	const att = o.attack === undefined ? 0.7 : o.attack;
++	const rel = o.release === undefined ? 1.0 : o.release;
++	const end = t + dur;
++	const g = e.gain(0.0001);
++	g.gain.setValueAtTime(0.0001, t);
++	g.gain.linearRampToValueAtTime(vol, t + att);
++	g.gain.setValueAtTime(vol, Math.max(t + att, end));
++	g.gain.linearRampToValueAtTime(0.0001, end + rel);
++	const lp = c.createBiquadFilter();
++	lp.type = 'lowpass';
++	lp.Q.value = 0.6;
++	lp.frequency.setValueAtTime((o.cut || 1700) * 0.45, t);
++	lp.frequency.linearRampToValueAtTime(o.cut || 1700, t + att + 0.4);
++	const nodes = [lp];
++	const n = e.low ? 2 : 4;
++	let first = null;
++	for (let i = 0; i < n; i++) {
++		const os = c.createOscillator();
++		os.type = 'sawtooth';
++		os.frequency.value = f;
++		os.detune.value = (i - (n - 1) / 2) * 8;
++		const og = c.createGain();
++		og.gain.value = 1 / n;
++		os.connect(og);
++		og.connect(lp);
++		os.start(t);
++		os.stop(end + rel + 0.05);
++		nodes.push(os, og);
++		if (!first) first = os;
++	}
++	lp.connect(g);
++	let tail = g;
++	const pn = e.panner(o.pan);
++	if (pn) {
++		g.connect(pn);
++		tail = pn;
++		nodes.push(pn);
++	}
++	tail.connect(o.to || e.dest);
++	first.onended = () => release(nodes, e, g);
++}
++
++// Koro: "aa/oo" ünlüsü. Testere yığını üç formant süzgecinden geçer; yavaş atak, ince titreşim.
++// o: {to, attack, release, vowel: 'a'|'o'|'u', pan}
++const VOWELS = {
++	a: [[690, 9, 1], [1080, 10, 0.5], [2400, 12, 0.22]],
++	o: [[500, 9, 1], [830, 10, 0.45], [2380, 12, 0.18]],
++	u: [[320, 8, 1], [850, 9, 0.38], [2250, 12, 0.14]],
++};
++export function choir(e, t, f, dur, vol, o = {}) {
++	const c = e.ctx;
++	if (e.log) e.log.push({ k: 'choir', f, t, d: dur, v: vol });
++	const att = o.attack === undefined ? 0.9 : o.attack;
++	const rel = o.release === undefined ? 1.2 : o.release;
++	const end = t + dur;
++	const g = e.gain(0.0001);
++	g.gain.setValueAtTime(0.0001, t);
++	g.gain.linearRampToValueAtTime(vol, t + att);
++	g.gain.setValueAtTime(vol, Math.max(t + att, end));
++	g.gain.linearRampToValueAtTime(0.0001, end + rel);
++	const src = c.createGain();
++	src.gain.value = 1;
++	const nodes = [src];
++	const n = e.low ? 2 : 3;
++	const oscs = [];
++	for (let i = 0; i < n; i++) {
++		const os = c.createOscillator();
++		os.type = 'sawtooth';
++		os.frequency.value = f;
++		os.detune.value = (i - (n - 1) / 2) * 9;
++		const og = c.createGain();
++		og.gain.value = 0.9 / n;
++		os.connect(og);
++		og.connect(src);
++		os.start(t);
++		os.stop(end + rel + 0.05);
++		nodes.push(os, og);
++		oscs.push(os);
++	}
++	const mix = c.createGain();
++	mix.gain.value = 1;
++	nodes.push(mix);
++	for (const [fc, q, gv] of VOWELS[o.vowel || 'a']) {
++		const bp = c.createBiquadFilter();
++		bp.type = 'bandpass';
++		bp.frequency.value = fc;
++		bp.Q.value = q;
++		const bg = c.createGain();
++		bg.gain.value = gv * 3.2;
++		src.connect(bp);
++		bp.connect(bg);
++		bg.connect(mix);
++		nodes.push(bp, bg);
++	}
++	// ince titreşim (geç gelir)
++	if (!e.low) {
++		const lfo = c.createOscillator();
++		lfo.frequency.value = 5.2 + e.r() * 0.6;
++		const lg = c.createGain();
++		lg.gain.setValueAtTime(0, t);
++		lg.gain.linearRampToValueAtTime(9, t + att + 0.3);
++		lfo.connect(lg);
++		for (const os of oscs) lg.connect(os.detune);
++		lfo.start(t);
++		lfo.stop(end + rel + 0.05);
++		nodes.push(lfo, lg);
++	}
++	mix.connect(g);
++	let tail = g;
++	const pn = e.panner(o.pan);
++	if (pn) {
++		g.connect(pn);
++		tail = pn;
++		nodes.push(pn);
++	}
++	tail.connect(o.to || e.dest);
++	oscs[0].onended = () => release(nodes, e, g);
+ }

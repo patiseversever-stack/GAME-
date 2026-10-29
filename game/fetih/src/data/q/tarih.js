@@ -1,4 +1,4 @@
-// Tarih: soru bankası (246 soru). Biçimler: DESIGN.md "Soru veri biçimleri".
+// Tarih: soru bankası (245 soru). Biçimler: DESIGN.md "Soru veri biçimleri".
 export default [
 	{ id: "tar-ch-001", cat: "tarih", diff: 1, type: "choice", q: "Mustafa Kemal Atatürk hangi şehirde doğdu?", a: ["Selanik", "Manastır", "İzmir", "Edirne"] },
 	{ id: "tar-ch-003", cat: "tarih", diff: 1, type: "choice", q: "Cumhuriyet Bayramı hangi tarihte kutlanır?", a: ["29 Ekim", "23 Nisan", "19 Mayıs", "30 Ağustos"] },
@@ -115,7 +115,6 @@ export default [
 	{ id: "tar-tf-014", cat: "tarih", diff: 2, type: "tf", q: "Osmanlı Devleti, Edirne'den önce Bursa'yı başkent yapmıştır.", ans: true },
 	{ id: "tar-tf-016", cat: "tarih", diff: 2, type: "tf", q: "Türkiye 1952'de NATO'ya üye oldu.", ans: true },
 	{ id: "tar-tf-017", cat: "tarih", diff: 2, type: "tf", q: "Mimar Sinan, Fatih Sultan Mehmet döneminin başmimarıydı.", ans: false },
-	{ id: "tar-tf-018", cat: "tarih", diff: 2, type: "tf", q: "Ankara Savaşı'nda Yıldırım Bayezid, Timur'a yenildi.", ans: true },
 	{ id: "tar-tf-019", cat: "tarih", diff: 2, type: "tf", q: "TBMM, Sevr Antlaşması'nı onayladı.", ans: false },
 	{ id: "tar-tf-021", cat: "tarih", diff: 2, type: "tf", q: "Magna Carta İngiltere'de imzalanmıştır.", ans: true },
 	{ id: "tar-tf-024", cat: "tarih", diff: 3, type: "tf", q: "Piri Reis'in 1513 tarihli haritası kâğıda değil ceylan derisine çizilmiştir.", ans: true },

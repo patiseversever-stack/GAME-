@@ -176,7 +176,7 @@ export default [
 	{ id: "bil-ma-011", cat: "bilim", diff: 2, type: "match", q: "Ölçü aletlerini ölçtükleri şeylerle eşleştir.", pairs: [["Barometre", "Hava basıncı"], ["Termometre", "Sıcaklık"], ["Sismograf", "Deprem"], ["Anemometre", "Rüzgâr hızı"]] },
 	{ id: "bil-ma-012", cat: "bilim", diff: 3, type: "match", q: "Elementleri simgeleriyle eşleştir.", pairs: [["Bakır", "Cu"], ["Potasyum", "K"], ["Kurşun", "Pb"], ["Cıva", "Hg"]] },
 	{ id: "bil-ma-013", cat: "bilim", diff: 3, type: "match", q: "Birimleri ölçtükleri büyüklüklerle eşleştir.", pairs: [["Newton", "Kuvvet"], ["Joule", "Enerji"], ["Pascal", "Basınç"], ["Hertz", "Frekans"]] },
-	{ id: "bil-ma-014", cat: "bilim", diff: 3, type: "match", q: "Bilim insanlarını buluşlarıyla eşleştir.", pairs: [["Edward Jenner", "Çiçek aşısı"], ["Louis Pasteur", "Kuduz aşısı"], ["Wilhelm Röntgen", "X-ışınları"], ["Marie Curie", "Radyoaktivite"]] },
+	{ id: "bil-ma-014", cat: "bilim", diff: 3, type: "match", q: "Bilim insanlarını buluşlarıyla eşleştir.", pairs: [["Edward Jenner", "Çiçek aşısı"], ["Louis Pasteur", "Kuduz aşısı"], ["Wilhelm Röntgen", "X-ışınları"], ["Marie Curie", "Radyum"]] },
 	{ id: "bil-hl-003", cat: "bilim", diff: 2, type: "hilo", q: "Hangisi Güneş'e daha uzaktır?", left: { t: "Satürn", v: 1.43 }, right: { t: "Uranüs", v: 2.87 }, prop: "Güneş'e uzaklığı", unit: "milyar km" },
 	{ id: "bil-hl-004", cat: "bilim", diff: 2, type: "hilo", q: "Hangisinin yoğunluğu daha fazladır?", left: { t: "Demir", v: 7.87 }, right: { t: "Altın", v: 19.3 }, prop: "yoğunluğu", unit: "g/cm³" },
 	{ id: "bil-hl-005", cat: "bilim", diff: 2, type: "hilo", q: "Hangisi ortalama olarak daha ağırdır?", left: { t: "Karaciğer", v: 1.5 }, right: { t: "Kalp", v: 0.3 }, prop: "ağırlığı", unit: "kg (ortalama)" },

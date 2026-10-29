@@ -1,4 +1,4 @@
-// Spor: soru bankası (195 soru). Biçimler: DESIGN.md "Soru veri biçimleri".
+// Spor: soru bankası (193 soru). Biçimler: DESIGN.md "Soru veri biçimleri".
 export default [
 	{ id: "spo-ch-001", cat: "spor", diff: 1, type: "choice", q: "Futbolda hakemin bir oyuncuyu oyundan attığını gösteren kart hangisidir?", a: ["Kırmızı kart", "Sarı kart", "Mavi kart", "Yeşil kart"] },
 	{ id: "spo-ch-002", cat: "spor", diff: 1, type: "choice", q: "Basketbolda serbest atış çizgisinden atılan basket kaç sayıdır?", a: ["1", "2", "3", "4"] },
@@ -87,8 +87,6 @@ export default [
 	{ id: "spo-ch-092", cat: "spor", diff: 3, type: "choice", q: "Usain Bolt'un 9,58'lik 100 metre dünya rekoru hangi şehirde kırıldı?", a: ["Berlin", "Pekin", "Londra", "Roma"] },
 	{ id: "spo-ch-093", cat: "spor", diff: 3, type: "choice", q: "Türkiye, 2002 Dünya Kupası'ndaki ilk maçında hangi takımla oynadı?", a: ["Brezilya", "Kosta Rika", "Çin", "Güney Kore"] },
 	{ id: "spo-tf-003", cat: "spor", diff: 1, type: "tf", q: "Maraton 42,195 kilometredir.", ans: true },
-	{ id: "spo-tf-005", cat: "spor", diff: 1, type: "tf", q: "Türkiye A Milli Futbol Takımı 2002 Dünya Kupası'nı üçüncü bitirdi.", ans: true },
-	{ id: "spo-tf-009", cat: "spor", diff: 1, type: "tf", q: "Galatasaray, UEFA Kupası'nı 2000 yılında kazandı.", ans: true },
 	{ id: "spo-tf-011", cat: "spor", diff: 2, type: "tf", q: "Michael Schumacher Formula 1'de 7 kez dünya şampiyonu oldu.", ans: true },
 	{ id: "spo-tf-012", cat: "spor", diff: 2, type: "tf", q: "Naim Süleymanoğlu olimpiyatlarda 3 altın madalya kazandı.", ans: true },
 	{ id: "spo-tf-013", cat: "spor", diff: 2, type: "tf", q: "Pelé, Dünya Kupası'nı oyuncu olarak 3 kez kazandı.", ans: true },
