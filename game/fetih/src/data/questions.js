@@ -38,15 +38,15 @@ export const QUESTIONS = [
 
 	// --- tahmin (sayı)
 	{ id: 'n001', cat: 'tarih', diff: 1, type: 'num', q: "İstanbul'un fethi hangi yılda gerçekleşti?", ans: 1453, unit: '', min: 1000, max: 1700 },
-	{ id: 'n002', cat: 'cografya', diff: 2, type: 'num', q: "Ağrı Dağı'nın yüksekliği kaç metredir?", ans: 5137, unit: 'm', min: 2000, max: 8000 },
-	{ id: 'n003', cat: 'cografya', diff: 1, type: 'num', q: "Türkiye'de kaç il vardır?", ans: 81, unit: 'il', min: 40, max: 120 },
-	{ id: 'n004', cat: 'bilim', diff: 1, type: 'num', q: "Ay'a ilk insanlı iniş hangi yıl yapıldı?", ans: 1969, unit: '', min: 1900, max: 2020 },
-	{ id: 'n006', cat: 'bilim', diff: 2, type: 'num', q: "Everest Dağı'nın yüksekliği yaklaşık kaç metredir?", ans: 8849, unit: 'm', min: 4000, max: 12000 },
-	{ id: 'n007', cat: 'tarih', diff: 2, type: 'num', q: 'Boğaziçi Köprüsü (15 Temmuz Şehitler Köprüsü) hangi yıl açıldı?', ans: 1973, unit: '', min: 1900, max: 2020 },
-	{ id: 'n008', cat: 'tarih', diff: 2, type: 'num', q: 'Malazgirt Zaferi hangi yılda kazanıldı?', ans: 1071, unit: '', min: 600, max: 1600 },
+	{ id: 'n002', cat: 'cografya', diff: 2, type: 'num', q: "Ağrı Dağı'nın yüksekliği kaç metredir?", ans: 5137, unit: 'm', min: 3000, max: 10000 },
+	{ id: 'n003', cat: 'cografya', diff: 1, type: 'num', q: "Türkiye'de kaç il vardır?", ans: 81, unit: 'il', min: 50, max: 200 },
+	{ id: 'n004', cat: 'bilim', diff: 1, type: 'num', q: "Ay'a ilk insanlı iniş hangi yıl yapıldı?", ans: 1969, unit: '', min: 1900, max: 2000 },
+	{ id: 'n006', cat: 'bilim', diff: 2, type: 'num', q: "Everest Dağı'nın yüksekliği yaklaşık kaç metredir?", ans: 8849, unit: 'm', min: 3000, max: 12000 },
+	{ id: 'n007', cat: 'tarih', diff: 2, type: 'num', q: 'Boğaziçi Köprüsü (15 Temmuz Şehitler Köprüsü) hangi yıl açıldı?', ans: 1973, unit: '', min: 1900, max: 2000 },
+	{ id: 'n008', cat: 'tarih', diff: 2, type: 'num', q: 'Malazgirt Zaferi hangi yılda kazanıldı?', ans: 1071, unit: '', min: 900, max: 1600 },
 	{ id: 'n009', cat: 'bilim', diff: 1, type: 'num', q: 'Saf su deniz seviyesinde kaç °C sıcaklıkta kaynar?', ans: 100, unit: '°C', min: 0, max: 300 },
-	{ id: 'n011', cat: 'sanat', diff: 3, type: 'num', q: 'Süleymaniye Camii hangi yıl tamamlandı?', ans: 1557, unit: '', min: 1400, max: 1700 },
-	{ id: 'n012', cat: 'spor', diff: 1, type: 'num', q: 'Bir futbol maçının normal süresi kaç dakikadır?', ans: 90, unit: 'dk', min: 30, max: 180 },
+	{ id: 'n011', cat: 'sanat', diff: 3, type: 'num', q: 'Süleymaniye Camii hangi yıl tamamlandı?', ans: 1557, unit: '', min: 1450, max: 1800 },
+	{ id: 'n012', cat: 'spor', diff: 1, type: 'num', q: 'Bir futbol maçının normal süresi kaç dakikadır?', ans: 90, unit: 'dk', min: 30, max: 240 },
 
 	// --- haritada işaretle
 	{ id: 'p001', cat: 'cografya', diff: 1, type: 'pin', q: 'Pamukkale travertenleri nerede? Haritada işaretle.', lat: 37.92, lon: 29.12 },
@@ -63,9 +63,9 @@ export const QUESTIONS = [
 	{ id: 'p012', cat: 'tarih', diff: 3, type: 'pin', q: 'Ani Harabeleri nerede?', lat: 40.51, lon: 43.57 },
 
 	// --- adam asmaca
-	{ id: 'h001', cat: 'cografya', diff: 1, type: 'hang', q: "Kapadokya'nın simgesi olan doğal kaya oluşumları", w: 'PERİBACASI' },
+	{ id: 'h001', cat: 'cografya', diff: 1, type: 'hang', q: "Kapadokya'nın simgesi olan doğal kaya oluşumları", w: 'PERİ BACASI' },
 	{ id: 'h002', cat: 'cografya', diff: 1, type: 'hang', q: "Mevlana'nın türbesinin bulunduğu şehir", w: 'KONYA' },
-	{ id: 'h003', cat: 'eglence', diff: 1, type: 'hang', q: 'Türk kahvesinin pişirildiği kap', w: 'CEZVE' },
+	{ id: 'h009', cat: 'eglence', diff: 2, type: 'hang', q: 'Kışın tarçın ve leblebiyle içilen ekşimsi içecek', w: 'BOZA' },
 	{ id: 'h005', cat: 'sanat', diff: 2, type: 'hang', q: "Mimar Sinan'ın Edirne'deki ustalık eseri cami", w: 'SELİMİYE' },
 	{ id: 'h006', cat: 'bilim', diff: 1, type: 'hang', q: "Güneş'e en yakın gezegen", w: 'MERKÜR' },
 	{ id: 'h007', cat: 'sanat', diff: 2, type: 'hang', q: "İstiklal Marşı'nın şairinin soyadı", w: 'ERSOY' },
