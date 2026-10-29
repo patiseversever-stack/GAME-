@@ -164,3 +164,23 @@ saldırabileceği illeri ve her ilin sahibini** okuyabilmeli. Altın ışıma, h
 - **Perf:** çizim çağrısı ve üçgen sayısı değişmedi (q0 ≈ 113k, q2 ≈ 172–182k üçgen; 11–17 çağrı); etiketler HTML,
   kare başına yalnızca transform yazılır; shader'lar açılışta derlenir.
 - **Test:** `node tools/flow.mjs ÇIKTI --seed=3 [--dpr=2 --q=2 --only=…]` (yeni kare: `d3_soru`, soru kartı açıkken).
+
+## v0.7 bölge havası (`src/gfx/weather.js`, yalnızca görsel)
+
+Kullanıcı: "Bölgelere göre hava: Karadeniz'de sis, Doğu'da kar tozu, Akdeniz'de sıcak ışık." ve "Haritayı çok kaplamasın;
+görünsün ama yoğun olmasın." Kıyas: `ref/hava-v07/`.
+
+- **Ağırlık dokusu:** `bakeRegionField(provinces, coast)` açılışta CPU'da 192 × 96 RGBA8 pişirir (il çokgenleri satır satır,
+  deniz ve komşu ülke en yakın bölgeyi alır, kıyıdan uzaklaştıkça söner, yumuşatılır). r sis (Karadeniz kıyı kuşağı 1, iç kesim
+  0,22; Marmara 0,22), g kar (Doğu), b sıcak ışık (Akdeniz 1, Güneydoğu 0,55, Ege 0,4), a kuru toz (İç Anadolu 0,75, Güneydoğu 0,5).
+- **`app.weather`:** `calm(on)` harita sorusunda havayı %30'a indirir (`cinema.clues` çağırır); `update(dt, cam)` her kare
+  `G.uWx` = (güç = calm × (1 − gece), kamera yakınlığı, kademe, savaş açıklığı yarıçapı) ve `G.uWxStage` (savaş kapsülü) yazar.
+  Gece odağında (seçim, düello, savaş, fetih) hava tamamen çekilir, şafakla döner.
+- **Shader:** COMMON'da `uRegion, uWxBox, uWx, uWxStage` ve **`uNoise`** (artık yalnız COMMON bildirir; başka parçada yeniden
+  bildirme), `wxAt(xz)`, `wxStage(xz)`. LIGHT'ta `regionWx()` `applyFog`'un başında: yerel ışık tonu ve sis / pus katmanları
+  (sis en yoğun yerde ~%28, sahip renginde %45 daha ince); bütün malzemeler (arazi, deniz, ağaç, yapı, kale, ordu) aynı havada.
+  Malzeme çarpanı `gWxK` (deniz: kıyı çizgisinde 0,4, kıyı okunur), `gWxW` (ağırlığı zaten okuyan malzeme verir: ikinci okuma yok).
+- **Harita:** Doğu'da kırağılı sırtlar (yükseklik + kuzey yamaç; sahip boyası üstüne biner), q≥1 karda pırıltı; deniz: Akdeniz
+  turkuaz sığlık ve q≥1 güneş pırıltısı, Karadeniz koyu, yeşile çalan deniz.
+- **Perf:** 1 örneklemeli çağrı (kar tanesi q0 160 / q1 600 / q2 1000; Karadeniz sis tutamı q1 10 / q2 16), gecede gizli.
+  Gündüz q0 9 → 10 çağrı, 134.204 → 134.524 üçgen; q2 10 → 11, 221.007 → 223.029; gece odağında değişmez. Kare başına nesne yok.

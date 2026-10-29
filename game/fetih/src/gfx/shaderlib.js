@@ -48,6 +48,7 @@ float gRim = 0.0;
 float gRelit = 0.0;
 float gOwn = 0.0;
 float gWxK = 1.0; // malzemenin bölge havası çarpanı (deniz: kıyı çizgisinde ince, kıyı okunur)
+vec4 gWxW = vec4(-1.0); // malzeme bölge ağırlığını zaten okuduysa (harita, deniz): applyFog yeniden okumaz
 #endif
 // Gece paleti (doğrusal). v0.3: siyaha yakın lacivert gece, serin ay ışığı, düşük doygunluk.
 // Aydınlık (seçilebilir) iller ekrandaki tek parlak ve renkli şey olsun; gece manzarası yalnızca ince
@@ -258,7 +259,7 @@ vec3 shade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, float r
  */
 vec3 regionWx(vec3 c, vec3 wp, vec3 v) {
 	if (uWx.x < 0.002) return c;
-	vec4 w = wxAt(wp.xz) * (uWx.x * wxStage(wp.xz) * gWxK);
+	vec4 w = (gWxW.x < 0.0 ? wxAt(wp.xz) : gWxW) * (uWx.x * wxStage(wp.xz) * gWxK);
 	if (w.r + w.g + w.b + w.a < 0.004) return c;
 	float own = clamp(gOwn, 0.0, 1.0);
 	float keep = 1.0 - 0.45 * own; // sahip renginde katmanlar daha ince
@@ -278,8 +279,9 @@ vec3 regionWx(vec3 c, vec3 wp, vec3 v) {
 	c = mix(c, vec3(l) * vec3(0.95, 1.0, 1.1), 0.05 * w.g * gk);
 	c *= 1.0 + 0.1 * w.g * gk * smoothstep(0.25, 0.9, l);
 	// sıcak ışık yalnızca güneşli yüzeyde (gölge serin kalır: altın saat karşıtlığı); kuru toprakta kehribar
-	vec3 warm = mix(vec3(1.18, 1.03, 0.76), vec3(1.16, 0.95, 0.72), clamp(w.a * 1.6, 0.0, 1.0));
+	vec3 warm = mix(vec3(1.22, 1.05, 0.74), vec3(1.16, 0.95, 0.72), clamp(w.a * 1.6, 0.0, 1.0));
 	c *= mix(vec3(1.0), warm, w.b * gk * smoothstep(0.03, 0.4, l));
+	c *= mix(vec3(1.0), vec3(0.95, 0.96, 1.06), w.b * gk * (1.0 - smoothstep(0.02, 0.18, l))); // gölge serin (altın saat karşıtlığı)
 	c *= mix(vec3(1.0), vec3(1.05, 1.0, 0.9), w.a * gk * 0.6);
 	vec3 skyL = uSkyTop * 1.3 + uSunCol * 0.28;
 	if (w.r > 0.01) {
@@ -299,17 +301,17 @@ vec3 regionWx(vec3 c, vec3 wp, vec3 v) {
 	if (w.g > 0.01) {
 		// --- Doğu: rüzgârla savrulan kar tozu; yaylada ve dorukların üstünde ince, parlak, akan pus
 		vec2 sq = mat2(0.86, 0.5, -0.5, 0.86) * q;
-		float n = texture(uNoise, (sq * vec2(0.45, 1.0) - vec2(t * 0.5, 0.0)) / 18.0).r;
+		float n = uWx.z > 0.5 ? texture(uNoise, (sq * vec2(0.45, 1.0) - vec2(t * 0.5, 0.0)) / 18.0).r : 0.62;
 		float s = smoothstep(0.5, 0.85, n) * smoothstep(0.9, 1.7, wp.y);
 		float a = (1.0 - exp(-0.45 * s / sinT)) * w.g * mix(0.7, 1.0, near) * 0.2 * keep;
 		c = mix(c, skyL * vec3(0.97, 1.0, 1.06) * 1.05, a);
 	}
 	if (w.b > 0.01) {
 		// --- Akdeniz: kıyıda alçak, altın, sıcak pus (güneşli öğleden sonra); yavaşça dalgalanır
-		float n = texture(uNoise, (q - vec2(t * 0.05, t * 0.02)) / 30.0).a;
+		float n = uWx.z > 0.5 ? texture(uNoise, (q - vec2(t * 0.05, t * 0.02)) / 30.0).a : 0.5;
 		float coastal = 1.0 - smoothstep(0.1, 0.5, wp.y);
-		float a = (1.0 - exp(-coastal * (0.55 + 0.9 * n) / sinT * 0.5)) * w.b * mix(0.6, 1.0, near) * 0.22 * keep;
-		c = mix(c, uSunCol * vec3(0.4, 0.34, 0.25) + uSkyHor * 0.4, a);
+		float a = (1.0 - exp(-coastal * (0.55 + 0.9 * n) / sinT * 0.6)) * w.b * mix(0.7, 1.0, near) * 0.26 * keep;
+		c = mix(c, uSunCol * vec3(0.46, 0.36, 0.22) + uSkyHor * 0.3, a);
 	}
 	if (w.a > 0.01) {
 		// --- kuru toz (İç Anadolu, Güneydoğu): alçak çekimde ufka doğru soluk, sıcak pus
@@ -408,6 +410,7 @@ float gRim = 0.0;
 float gRelit = 0.0;
 float gOwn = 0.0;
 float gWxK = 1.0; // malzemenin bölge havası çarpanı (deniz: kıyı çizgisinde ince, kıyı okunur)
+vec4 gWxW = vec4(-1.0); // malzeme bölge ağırlığını zaten okuduysa (harita, deniz): applyFog yeniden okumaz
 #endif
 uniform sampler2D uState;
 uniform float uSelOn;   // seçim kipi açık (0..1): seçilemeyen iller kararır

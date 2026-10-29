@@ -212,11 +212,16 @@ void main() {
 	vec3 alb = terrainAlbedo(vW, N, vBio, h, coast, snowK, rockK);
 	// bölge havası (Doğu): yaylada ve kuzey yamaçlarda ince kırağı, karlı doruklara bağlanır (yamalı; sahip boyası
 	// üstüne biner, il rengi okunur)
-	vec4 wxR = skirt ? vec4(0.0) : wxAt(vW.xz);
+	vec4 wxR = wxAt(vW.xz);
+	gWxW = wxR; // applyFog aynı değeri kullanır (ikinci doku okuması yok)
 	float frost = 0.0;
-	if (wxR.g > 0.02) {
+	if (wxR.g > 0.02 && !skirt) {
 		float fe = (h - ${f(BASE)}) / ${f(VS)};
+#if TIER > 0
 		float fn = texture(uNoise, vW.xz / 9.0 + 0.3).b * 0.65 + texture(uNoise, vW.xz / 2.5).g * 0.35;
+#else
+		float fn = texture(uNoise, vW.xz / 9.0 + 0.3).b;
+#endif
 		frost = wxR.g * smoothstep(1900.0, 2800.0, fe + (fn - 0.5) * 1100.0 - N.z * 700.0) * (1.0 - snowK) * (1.0 - smoothstep(0.93, 0.99, coast));
 		alb = mix(alb, mix(${C('#dbe3ef')}, ${C('#f7f9fd')}, fn), frost * 0.4);
 	}
@@ -510,7 +515,8 @@ void main() {
 	vec3 base = mix(deep, uSea, smoothstep(2.2, 0.3, dist));
 	base = mix(base, ${C('#62e3d4')}, smoothstep(0.32, 0.02, dist) * 0.75);
 	// bölge havası: Akdeniz (ve Ege) kıyısında geniş turkuaz sığlık; Karadeniz koyu, serin, yeşile çalan
-	vec4 wx = wxAt(p) * uWx.x;
+	gWxW = wxAt(p);
+	vec4 wx = gWxW * uWx.x;
 	gWxK = 0.4 + 0.6 * smoothstep(0.15, 1.5, dist); // kıyı çizgisinde sis ince: kıyı ve il sınırı okunur
 	base = mix(base, ${C('#38d0d2')}, wx.b * smoothstep(4.5, 0.25, dist) * 0.55);
 	base *= mix(vec3(1.0), vec3(1.06, 1.03, 0.94), wx.b); // sıcak güneşte ılık deniz

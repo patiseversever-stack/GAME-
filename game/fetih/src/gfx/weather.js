@@ -12,8 +12,8 @@
 // Bölge ağırlıkları açılışta CPU'da bir kez küçük bir dokuya pişirilir (192 × 96, il çokgenleri satır satır
 // taranır; deniz ve komşu ülkeler en yakın bölgeyi alır ve kıyıdan uzaklaştıkça söner; sonra yumuşatılır).
 // Işık tonu ve sis katmanları bütün malzemelerin applyFog'unda (shaderlib regionWx): ağaç, yapı, kale ve deniz
-// aynı havanın içinde, ek çizim yok. Kar tozu tek örneklemeli çizim (dörtgenler; hareket köşe shader'ında,
-// kare başına CPU işi yalnızca birkaç uniform).
+// aynı havanın içinde, ek çizim yok. Kar taneleri ve Karadeniz kıyı dağlarının yamacındaki sis tutamları (q≥1)
+// tek örneklemeli çizim (dörtgenler; hareket köşe shader'ında, kare başına CPU işi yalnızca birkaç uniform).
 //
 // Okunurluk (kullanıcı: "haritayı çok kaplamasın, görünsün ama yoğun olmasın"): sis en yoğun yerde ~%28 ve
 // yamalı, sahip renginde daha hafif; kar seyrek. Gece odağında (seçim, düello, fetih), harita sorusunda
@@ -334,7 +334,7 @@ export class Weather {
 		this.mistCount = mist.length;
 
 		// --- kar taneleri: Doğu'da (yükseklerde daha sık), ağırlık alanıyla seyrelerek komşu bölgelere taşar
-		const want = tier.id === 0 ? 160 : tier.id === 1 ? 520 : 900;
+		const want = tier.id === 0 ? 160 : tier.id === 1 ? 600 : 1000;
 		const db = boxOf('dogu', 3);
 		let snow = 0;
 		for (let k = 0; k < want * 40 && snow < want; k++) {
