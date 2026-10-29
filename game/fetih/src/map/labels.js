@@ -455,9 +455,11 @@ export class Labels {
 				// önem eşiği: büyük şehirler hep aday; diğerleri ancak ekranda yeterince büyükse
 				const rk = this.rank[i];
 				const rpx = this._pp[i] * this.inner[i];
-				// büyük şehirler uzaktan da görünür (yön bulmak için), diğerleri yaklaştıkça
-				const need = (rk === 0 ? 0 : rk === 1 ? 28 : 40) * dpr;
+				const need = (rk === 0 ? 0 : rk === 1 ? 26 : 40) * dpr;
 				if (rpx < need) continue;
+				// seçimde ad ancak ilin içine sığınca: uzaktan hiç ad yok, yaklaştıkça önce büyük iller,
+				// sonra ekrandaki bütün iller; ad hep kendi sınırının içinde durur
+				if (pick && this._sw[i] > rpx * 2.1) continue;
 			}
 			let ok = true;
 			for (let tries = 0; tries < (list ? 6 : 1); tries++) {

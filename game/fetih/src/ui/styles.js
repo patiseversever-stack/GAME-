@@ -158,8 +158,8 @@ const BASE = /* css */ `
 /* seçim sayacı: altın çizgi erir, sayı yanında; son 3 sn kızıl */
 .fl-prompt.timed .pt::after{display:none}
 .fl-prompt .tm{display:flex;align-items:center;gap:10px;margin-top:12px}
-.fl-prompt .tm u{display:block;width:150px;height:3px;border-radius:2px;background:linear-gradient(90deg,rgba(255,210,122,.25),#ffd27a,rgba(255,210,122,.25));transform:scaleX(var(--k,1));transition:transform .1s linear}
-.fl-prompt .tm em{min-width:2ch;font-family:'Manrope',system-ui,sans-serif;font-style:normal;font-weight:800;font-size:15px;line-height:1;color:#ffd27a;text-shadow:0 1px 3px rgba(0,0,0,.95)}
+.fl-prompt .tm u{display:block;width:190px;height:7px;border-radius:4px;box-shadow:0 0 10px rgba(255,210,122,.35);background:linear-gradient(90deg,rgba(255,210,122,.25),#ffd27a,rgba(255,210,122,.25));transform:scaleX(var(--k,1));transition:transform .1s linear}
+.fl-prompt .tm em{min-width:2ch;font-family:'Manrope',system-ui,sans-serif;font-style:normal;font-weight:800;font-size:19px;line-height:1;color:#ffd27a;text-shadow:0 1px 3px rgba(0,0,0,.95)}
 .fl-prompt .tm.hot u{background:linear-gradient(90deg,rgba(255,110,80,.3),#ff7a5a,rgba(255,110,80,.3))}
 .fl-prompt .tm.hot em{color:#ff8a6a;animation:flPulse .5s ease-in-out infinite alternate}
 @keyframes flShakeP{0%,100%{transform:none}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
