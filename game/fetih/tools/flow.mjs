@@ -17,6 +17,9 @@
 //   e_fetih      fetih: gecede boya dalgası
 //   f_safak      fetihten sonra şafak, f2_gunduz gündüze dönmüş hali
 //   m_harita_0..6  ilk harita sorusu: kamera geçişi (0–3), oturmuş kadraj (4), cevap açılışı (5–6)
+//   s_savas_0..8   insanın ilk sahra saldırısı: cinema.attack başından sabit anlarda (S_AT ms) savaş filmi
+//   s_cark         aynı saldırıda çark dönerken (sahne arkada), s_fetih_0..3 / s_savunma_0..2 sonucu
+//   k_kusatma_0..8 ilk kuşatma (kim saldırırsa), k_kule_0..3 kule yıkılışı
 //   gunduz       sade gündüz (maç başı)
 // Çıktıda HATA satırı = sayfada hata. Maç sonuna kadar oynanır; "maç bitti" satırı başarı demektir.
 import { chromium } from 'playwright-core';
@@ -31,6 +34,7 @@ const Q = opt.q ?? '2';
 const DPR = Number(opt.dpr || 1);
 const ONLY = opt.only ? new Set(opt.only.split(',')) : null;
 const STEP = 1000 / 30; // oyun adımı (ms)
+const S_AT = [400, 1300, 2200, 3100, 3900, 4600, 5300, 6100, 6900]; // savaş filmi çekim anları (ms, saldırı başından)
 mkdirSync(outDir, { recursive: true });
 
 const exe =
@@ -54,7 +58,7 @@ console.log(`hazır: ${((Date.now() - t0) / 1000).toFixed(1)} sn`);
 await page.clock.install();
 await page.clock.pauseAt(Date.now() + 1000);
 
-const cfg = { mode: opt.mode || 'ffa3', length: opt.length || 'quick', region: opt.region || 'ege', bot: 'er', seed: Number(opt.seed || 7), seq: 'seq' in opt };
+const cfg = { mode: opt.mode || 'ffa3', length: opt.length || 'quick', region: opt.region || 'ege', bot: 'er', seed: Number(opt.seed || 7), seq: 'seq' in opt, sat: S_AT };
 await page.evaluate((cfg) => {
 	// tekrarlanabilir akış: sayfanın Math.random'ı tohumdan (aynı tohum → aynı seçimler ve cevaplar)
 	let rs = (cfg.seed * 2654435761) | 0;
@@ -67,7 +71,16 @@ await page.evaluate((cfg) => {
 	const app = window.__fl.app;
 	const ui = app.ui;
 	app.stop();
-	const W = (window.__flow = { want: [], log: [], done: false, err: null, picks: 0, attacks: 0, bots: 0, conq: 0, duel: 0, d3: 0, t: 0, seq: cfg.seq });
+	const W = (window.__flow = { want: [], log: [], done: false, err: null, picks: 0, attacks: 0, bots: 0, conq: 0, duel: 0, d3: 0, t: 0, seq: cfg.seq, siege: 0, tower: 0, def: 0 });
+	// betiğin kendi seçimleri (insan oyuncunun il seçimi ve cevapları) ayrı tohumlu üreteçten: çizim tarafındaki
+	// rastgelelik (parçacık, ordu) değişse de eski ve yeni derleme aynı maçı oynar (kıyas aynı anları gösterir)
+	let rs2 = (cfg.seed * 40503 + 977) | 0;
+	W.R = () => {
+		rs2 = (rs2 + 0x6d2b79f5) | 0;
+		let t = Math.imul(rs2 ^ (rs2 >>> 15), 1 | rs2);
+		t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+		return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+	};
 	const want = (name, ms) => setTimeout(() => W.want.push(name), ms);
 	// oyun adımı: sahte saatte 30 kare/sn mantık (çizim yok)
 	setInterval(() => {
@@ -87,7 +100,7 @@ await page.evaluate((cfg) => {
 		if (name === 'a_secim' && W.seq) for (const ms of [200, 450, 700, 950]) want('t_gecis_' + ms, ms);
 		setTimeout(() => {
 			// en çok komşusu olan seçeneği al (gerçek oyuncu gibi)
-			const o = options[Math.floor(Math.random() * options.length)];
+			const o = options[Math.floor(W.R() * options.length)];
 			app.onTap?.(o);
 		}, name ? 1700 : 1100);
 		return pr;
@@ -107,7 +120,39 @@ await page.evaluate((cfg) => {
 	const attack = cin.attack.bind(cin);
 	cin.attack = (p, d, target, isCap) => {
 		if (p.human && !W.duel++) want('d_duello', 1250);
-		return attack(p, d, target, isCap);
+		// savaş filmi: insanın ilk sahra saldırısı ve ilk kuşatma (kimin olursa)
+		if (p.human && !isCap && !W.film) {
+			W.film = 1;
+			W.filmOn = true;
+			cfg.sat.forEach((ms, k) => want('s_savas_' + k, ms));
+		}
+		if (isCap && !W.siege++) {
+			W.siegeOn = true;
+			cfg.sat.forEach((ms, k) => want('k_kusatma_' + k, ms));
+		}
+		return attack(p, d, target, isCap).then((r) => {
+			if (W.filmOn) want('s_cark', 1800);
+			return r;
+		});
+	};
+	const tower = cin.towerDown.bind(cin);
+	cin.towerDown = (p, d, i, left) => {
+		if (W.siegeOn && !W.tower++) [300, 900, 1700, 2600].forEach((ms, k) => want('k_kule_' + k, ms));
+		W.siegeOn = false;
+		return tower(p, d, i, left);
+	};
+	const nobody = cin.nobody.bind(cin);
+	cin.nobody = (i) => {
+		W.filmOn = false;
+		W.siegeOn = false;
+		return nobody(i);
+	};
+	const defend = cin.defend.bind(cin);
+	cin.defend = (d, i, o) => {
+		if (W.filmOn) [300, 1100, 2000].forEach((ms, k) => want('s_savunma_' + k, ms));
+		W.filmOn = false;
+		W.siegeOn = false;
+		return defend(d, i, o);
 	};
 	const intro = cin.introBadges?.bind(cin);
 	if (intro)
@@ -117,6 +162,8 @@ await page.evaluate((cfg) => {
 		};
 	const conquer = cin.conquer.bind(cin);
 	cin.conquer = (p, i) => {
+		if (W.filmOn) [300, 1000, 1800, 2700].forEach((ms, k) => want('s_fetih_' + k, ms));
+		W.filmOn = false;
 		if (!W.conq++) {
 			want('e_fetih', 450);
 			want('f_safak', 1400 + 420);
@@ -148,7 +195,7 @@ await page.evaluate((cfg) => {
 				if (!c || this._gen !== gen) return;
 				if (!c.card.classList.contains('on')) return setTimeout(go, 200);
 				if (ctx?.phase === 'duel' && ctx.attacker?.human && !W.d3++) want('d3_soru', 700);
-				const b = c.ctx.T.bot(c.ctx.v, 0.8, Math.random);
+				const b = c.ctx.T.bot(c.ctx.v, 0.8, W.R);
 				c.api.answer(b.value);
 			};
 			setTimeout(go, 2600);
