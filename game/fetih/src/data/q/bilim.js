@@ -80,7 +80,7 @@ export default [
 	{ id: "bil-ch-083", cat: "bilim", diff: 2, type: "choice", q: "Su donarak buza dönüşürken hacmine ne olur?", a: ["Artar", "Azalır", "Değişmez", "Önce artar sonra azalır"] },
 	{ id: "bil-ch-084", cat: "bilim", diff: 2, type: "choice", q: "Sesin şiddeti hangi birimle ölçülür?", a: ["Desibel", "Hertz", "Watt", "Lümen"] },
 	{ id: "bil-ch-085", cat: "bilim", diff: 1, type: "choice", q: "Güneş ışığı yardımıyla ciltte hangi vitamin üretilir?", a: ["D vitamini", "C vitamini", "K vitamini", "A vitamini"] },
-	{ id: "bil-ch-086", cat: "bilim", diff: 2, type: "choice", q: "Vücutta oksijen taşıyan kan hücrelerine ne ad verilir?", a: ["Alyuvar", "Akyuvar", "Kan pulcuğu", "Plazma"] },
+	{ id: "bil-ch-086", cat: "bilim", diff: 1, type: "choice", q: "Vücutta oksijen taşıyan kan hücrelerine ne ad verilir?", a: ["Alyuvar", "Akyuvar", "Kan pulcuğu", "Plazma"] },
 	{ id: "bil-ch-087", cat: "bilim", diff: 2, type: "choice", q: "İnsan vücudundaki en sert madde hangisidir?", a: ["Diş minesi", "Kemik", "Tırnak", "Kıkırdak"] },
 	{ id: "bil-ch-088", cat: "bilim", diff: 1, type: "choice", q: "Kanı süzerek idrar oluşturan organ hangisidir?", a: ["Böbrek", "Mide", "Dalak", "Pankreas"] },
 	{ id: "bil-ch-089", cat: "bilim", diff: 3, type: "choice", q: "Mide özsuyunda bulunan asit hangisidir?", a: ["Hidroklorik asit", "Sülfürik asit", "Nitrik asit", "Sitrik asit"] },
