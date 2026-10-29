@@ -145,6 +145,32 @@ for (const q of [...BANK, ...SAMPLES]) {
 		ok(jokers > 0, `${tag}: maçta joker kullanılmadı (sızıntı sınanamadı)`);
 	}
 	ok(events > 500, "uzak koltuk olay almadı");
+
+	// cevabını gönderen uzak koltuk o soruda joker kullanamaz (yerelde arayüz kilitler): istemci cevaptan önce
+	// "Ekstra Süre" (kabul edilmeli), cevapla aynı anda "Sabotaj" (reddedilmeli) gönderir
+	{
+		class Greedy extends BotClient {
+			_recv(m) {
+				const ans = m && m.t === 'req' && m.k === 'answer';
+				if (ans) this.t.send({ v: 1, t: 'act', k: 'joker', d: { id: 'sure' } });
+				super._recv(m);
+				if (ans) this.t.send({ v: 1, t: 'act', k: 'joker', d: { id: 'sabotaj' } });
+			}
+		}
+		const app = makeApp();
+		const [srv, cli] = LocalTransport.pair();
+		let s = 5;
+		new Greedy(cli, { skill: 0.6, R: () => ((s = (s * 16807) % 2147483647) / 2147483647) });
+		const m = new Match(app, makeUI(), { mode: '1v1', length: 'quick', region: 'ege', seed: 9, seats: ['bot', 'remote'], transports: { 1: srv }, allBots: true, persist: false });
+		m.players[1].jk.sure = { left: 99, free: 99 };
+		m.players[1].jk.sabotaj = { left: 99, free: 99 };
+		const used = { sure: 0, sabotaj: 0 };
+		m.on('joker', (d) => d.player === 1 && d.id in used && used[d.id]++);
+		await m.run();
+		console.log(`cevaptan önce ekstra süre: ${used.sure} kabul; cevapla birlikte sabotaj: ${used.sabotaj} kabul`);
+		ok(used.sure > 5, 'uzak koltuk cevaptan önce joker kullanamadı');
+		ok(used.sabotaj === 0, `uzak koltuk cevabını verdikten sonra ${used.sabotaj} kez sabotaj yaptı`);
+	}
 	console.log(`uzak koltuklu 5 maç: istemciye ${events} olay`);
 }
 

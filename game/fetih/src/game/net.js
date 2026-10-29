@@ -235,6 +235,7 @@ export class RemoteController {
 		this.nextId = 1;
 		this.pending = new Map();
 		this.onAct = null; // (k, d) => void; Match joker eylemlerini buradan alır
+		this.onRes = null; // (k) => void; bir isteğin cevabı geldi (zaman uyumlu: aynı paketten sonra gelen eylemden önce)
 		this.closed = false;
 		transport.onmessage((m) => this._recv(m));
 	}
@@ -246,6 +247,7 @@ export class RemoteController {
 			if (p) {
 				this.pending.delete(m.id);
 				clearTimeout(p.timer);
+				this.onRes?.(p.k);
 				p.resolve(m.d ?? null);
 			}
 		} else if (m.t === 'act') {
@@ -262,7 +264,7 @@ export class RemoteController {
 				this.pending.delete(id);
 				resolve(null);
 			}, ms);
-			this.pending.set(id, { resolve, timer });
+			this.pending.set(id, { resolve, timer, k });
 			this.t.send(envelope('req', k, d, { id, seat: this.seat }));
 		});
 	}

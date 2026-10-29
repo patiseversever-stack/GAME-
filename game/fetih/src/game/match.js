@@ -235,7 +235,14 @@ export class Match {
 			};
 			p.jk = human ? makeLoadout(this.progress.jokerStock) : botLoadout(skill, this.R, p.boss, p.boss ? this.perks.botJokers || 0 : 0);
 			p.ctl = kind === 'ui' ? new UIController(this) : kind === 'remote' ? new RemoteController(this.transports[i], { seat: i }) : new BotController(this);
-			if (kind === 'remote') p.ctl.onAct = (k, d) => (k === 'joker' ? this.useJoker(d?.id, p) : k === 'harf' ? this.letterHint(p, d?.ch) : null);
+			if (kind === 'remote') {
+				p.ctl.onAct = (k, d) => (k === 'joker' ? this.useJoker(d?.id, p) : k === 'harf' ? this.letterHint(p, d?.ch) : null);
+				// cevabını gönderen koltuk o soruda artık joker kullanamaz (yerelde arayüz kilitler); işaret zaman uyumlu
+				// konur ki cevapla aynı anda gelen joker isteği de reddedilsin
+				p.ctl.onRes = (k) => {
+					if (k === 'answer' && this.cur && !this.cur.closed && this.cur.who.includes(p)) this.cur.done.add(p.i);
+				};
+			}
 			return p;
 		});
 		this.humanPlayer = this.players.find((p) => p.human) || null;
@@ -514,6 +521,7 @@ export class Match {
 			bots: [],
 			used: new Map(who.map((p) => [p.i, new Set()])),
 			second: new Set(),
+			done: new Set(), // cevabını göndermiş uzak koltuklar (cevaptan sonra soru jokeri yok; yerelde arayüz kilitler)
 			boost: new Map(),
 			delay: new Map(),
 			timers: [],
@@ -822,6 +830,7 @@ export class Match {
 			return { ok: true, effect, left: slot.left };
 		}
 		if (!cur || cur.closed || !cur.who.includes(p)) return fail('Soru sırasında kullanılır');
+		if (cur.done.has(p.i)) return fail('Cevabını verdin');
 		const used = cur.used.get(p.i);
 		if (used.has(id)) return fail('Bu soruda kullandın');
 		if (used.size >= PER_QUESTION) return fail(`Bir soruda en çok ${PER_QUESTION} joker`);
