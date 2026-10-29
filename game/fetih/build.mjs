@@ -88,6 +88,28 @@ body{position:fixed;inset:0}
 	console.log(`paylaşım sayfası: ${out} ${kb(Buffer.byteLength(page))}`);
 }
 
+// 1c) Soru galerisi (dist/SoruGalerisi.html): bütün soru tipleri oyunun kendisiyle, örnek sorularla. İskeletsiz
+// paylaşım sayfası biçiminde (yayın ortamı doctype/head/body ekler).
+if (!dev) {
+	const gal = await build({ ...common, entryPoints: [join(root, 'src/galeri-sayfa.js')], format: 'iife', write: false });
+	const gjs = gal.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
+	const gpage = `<title>Fetih Ligi Soru Galerisi</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#0a1230">
+<style>${fontFaces()}
+:root{color-scheme:dark;--bg:#0a1230;--fg:#eef2fa}
+html,body{height:100%;width:100%;margin:0;overflow:hidden;background:var(--bg);color:var(--fg);overscroll-behavior:none;touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent}
+body{position:fixed;inset:0}
+#uk-boot{position:fixed;inset:0;z-index:90;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;font-family:'Lilita One',system-ui,sans-serif;text-align:center;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));background:radial-gradient(circle at 50% 40%,#2b4a7e,#0f1a33)}
+#uk-boot b{font-size:40px;font-weight:400;color:#fff;text-shadow:0 4px 0 #2a64b8}
+#uk-boot span{font-family:'Fredoka',system-ui,sans-serif;font-weight:600;font-size:13px;letter-spacing:.2em;text-transform:uppercase;color:#ffd76a}
+</style>
+<div id="uk-boot"><b>Soru Galerisi</b><span>Harita ve sorular hazırlanıyor</span></div>
+<script>${gjs}</script>`;
+	writeFileSync(join(dist, 'SoruGalerisi.html'), gpage);
+	console.log(`SoruGalerisi.html ${kb(Buffer.byteLength(gpage))}`);
+}
+
 // 2) Ana oyuna bağlamak için modül: three dışarıdan gelir (ana oyunun kendi three kopyası kullanılır).
 await build({
 	...common,
