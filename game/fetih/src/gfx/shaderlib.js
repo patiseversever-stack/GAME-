@@ -24,6 +24,7 @@ uniform vec3 uLift;
 uniform vec3 uGain;
 uniform vec3 uVigCol;
 uniform vec4 uFocus;    // xyz odak (zincirin ucu), w yarıçap: odak çevresi hafif ışıltı
+uniform vec4 uNightTone; // gece odağında arazinin tonu (env.js NIGHT_TONES): rgb çarpan, a doygunluk
 uniform vec4 uNight;    // x gece (0 gündüz, 1 gece odağı), y ay kenarı gücü, z şafak (dönüşte sıcak ufuk), w yıldızlar
 uniform vec4 uSpot;     // sinematik ışık havuzu (yakın çekim): xy ekran merkezi (0..1), z yarıçap (ekran yüksekliği), w güç
 #ifndef FL_GLOBALS
@@ -158,7 +159,8 @@ vec3 moonShade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, flo
 	// Sahip rengi (gOwn) solmaz ve mor ışık almaz: kırmızı gecede koyu kırmızı kalır, pembeye kaçmaz.
 	float ow = clamp(gOwn, 0.0, 1.0);
 	// (sahip rengi tam doygun ama koyu: gece ilinde kırmızı derin kırmızı, aydınlık adadan ayrı okunur)
-	vec3 a = pow(max(mix(vec3(l), albedo, 0.22 + 0.3 * ow), 0.0), vec3(0.8)) * (1.0 - 0.35 * ow);
+	// ton (uNightTone): a = arazinin korunan doygunluğu, rgb = renk çarpanı (sahip rengine dokunmaz)
+	vec3 a = pow(max(mix(vec3(l), albedo, mix(uNightTone.a, 0.52, ow)), 0.0), vec3(0.8)) * (1.0 - 0.35 * ow);
 	float w = clamp((dot(N, N_MOON) + 0.3) / 1.3, 0.0, 1.0);
 	float up = N.y * 0.5 + 0.5;
 	vec3 amb = mix(N_GND, N_SKY, smoothstep(0.1, 1.0, up)) * ao;
@@ -170,7 +172,7 @@ vec3 moonShade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, flo
 	vec3 sc = mix(N_MOONC, vec3(0.3, 0.3, 0.36), ow) * (1.0 - 0.6 * ow);
 	c += sc * pow(max(dot(N, H), 0.0), mix(16.0, 140.0, gloss)) * mix(0.08, 1.6, gloss) * sh;
 	c += N_RIM * pow(1.0 - ndv, 3.0) * (0.08 + rimK * 0.22) * ao * (0.4 + 0.6 * uNight.y) * (1.0 - 0.5 * ow);
-	return c;
+	return c * mix(uNightTone.rgb, vec3(1.0), ow);
 }
 vec3 skyAmbient(vec3 N) {
 	float up = N.y * 0.5 + 0.5;
@@ -269,8 +271,7 @@ vec3 tonemap(vec3 c) {
 // ay kenarı lavanta. Yeniden aydınlatılan pikseller (gRelit) buraya girmez.
 vec3 nightGrade(vec3 c) {
 	float l = dot(c, vec3(0.3, 0.59, 0.11));
-	// seçilemeyen yer iyice karanlık: göz yalnızca aydınlık illere gider (yapılar ay ışığında seçilir kalır)
-	vec3 n = mix(vec3(l), c, 0.3) * vec3(0.045, 0.056, 0.105) + vec3(0.001, 0.0015, 0.004);
+	vec3 n = mix(vec3(l), c, 0.3) * vec3(0.07, 0.085, 0.15) + vec3(0.001, 0.0015, 0.004);
 	n += N_RIM * gRim * 0.25 * uNight.y;
 	return n;
 }
@@ -333,7 +334,10 @@ export const MIST = /* glsl */ `
 uniform sampler2D uNoise;
 vec3 edgeMist(vec3 c, vec3 w) {
 	vec2 q = w.xz + vec2(uTime * 0.17, 0.0);
-	float n = texture(uNoise, q * 0.07 / 8.0).a * 0.65 + texture(uNoise, q * 0.19 / 16.0 + 0.3).r * 0.35;
+	// değer gürültüsü ızgaraya hizalı: katmanlar döndürülmüş eksenlerde okunur, yoksa pus kare kare görünür
+	vec2 q2 = mat2(0.8, -0.6, 0.6, 0.8) * q;
+	vec2 q3 = mat2(0.28, 0.96, -0.96, 0.28) * q;
+	float n = texture(uNoise, q * 0.07 / 8.0).a * 0.5 + texture(uNoise, q2 * 0.19 / 16.0 + 0.3).r * 0.32 + texture(uNoise, q3 * 0.46 / 64.0 + 0.7).g * 0.18;
 	float e = length(w.xz / vec2(68.0, 36.0)) + (n - 0.5) * 0.22;
 	float m = smoothstep(0.97, 1.32, e);
 	// bulut denizi: tepeleri beyaz, aralar açık gök mavisi

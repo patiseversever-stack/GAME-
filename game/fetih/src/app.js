@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 import { createRenderer } from './core/renderer.js';
 import { Governor } from './core/quality.js';
-import { createGlobals, ENVS, applyEnv } from './gfx/env.js';
+import { createGlobals, ENVS, applyEnv, setNightTone } from './gfx/env.js';
 import { ShadowSystem } from './gfx/shadow.js';
 import { TiltShift } from './gfx/post.js';
 import { Board } from './map/board.js';
@@ -57,12 +57,13 @@ void main() {
 export const PLAYER_COLORS = [0xff3030, 0x2a6bff, 0xffbe12, 0x9b3dff]; // güçlü oyun renkleri (pembeye/soluğa kaçmaz)
 
 export class App {
-	constructor({ container, store, hooks = {}, quality = 'auto', power = 'auto' }) {
+	constructor({ container, store, hooks = {}, quality = 'auto', power = 'auto', gece = null }) {
 		this.container = container;
 		this.store = store;
 		this.hooks = hooks;
 		this.qualityOpt = quality;
 		this.power = power;
+		this.gece = gece;
 		this.running = false;
 		this.visible = true;
 		this.time = 0;
@@ -105,6 +106,7 @@ export class App {
 			vignette: 0.3,
 		};
 		applyEnv(G, ENVS.harita || env);
+		if (this.gece != null) setNightTone(G, this.gece); // seçim gecesinin tonu (deneme: ?gece=1..3)
 		this.shadow = new ShadowSystem(G, R.tier.shadowSize, R.tier.shadowHalf);
 		this.post = new TiltShift(this.renderer, R.tier, G);
 

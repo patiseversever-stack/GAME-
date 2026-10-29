@@ -25,6 +25,7 @@ export function createGlobals() {
 		uVigCol: { value: new THREE.Color() },
 		uFocus: { value: new THREE.Vector4(0, -99, 0, 3) },
 		uNight: { value: new THREE.Vector4(0, 1, 0, 0) }, // gece odağı (board.night)
+		uNightTone: { value: new THREE.Vector4(...NIGHT_TONES[0]) }, // gece odağının tonu: rgb çarpan, a doygunluk
 		uSpot: { value: new THREE.Vector4(0.5, 0.5, 0.3, 0) }, // gece ışık havuzu (nightlights.focus)
 		uNoise: { value: noiseTexture() }, // döşenebilir gürültü (noise.js)
 		uShadowMap: { value: null },
@@ -121,6 +122,23 @@ ENVS.harita = {
 	vignette: 0.34,
 	vig: C('#1f2a66'),
 };
+
+/**
+ * Gece odağı (seçim, düello) sırasında seçilemeyen arazinin ay ışığı tonu: [r, g, b çarpanı, korunan doygunluk].
+ *   0 şimdiki gri-lacivert · 1 lacivert gece (arazi rengi seçilir) · 2 savaş masası (koyu sepya)
+ *   3 gölgede renk (renkler kalır, yalnızca kararır)
+ */
+export const NIGHT_TONES = [
+	[1, 1, 1, 0.22],
+	[1.15, 1.3, 1.65, 0.6],
+	[1.7, 1.25, 0.8, 0.04],
+	[1.9, 1.75, 1.6, 0.95],
+];
+
+export function setNightTone(G, k) {
+	const t = NIGHT_TONES[Number(k)] || NIGHT_TONES[0];
+	G.uNightTone.value.set(...t);
+}
 
 export function applyEnv(G, e) {
 	const az = THREE.MathUtils.degToRad(e.sunAz);
