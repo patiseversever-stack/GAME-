@@ -9,6 +9,13 @@
 //
 // Renkler sRGB onaltılık verilir, doğrusala çevrilerek saklanır. Varsayılan düz gölgeleme (yüzey
 // normalleri): alçak çokgen maket görünümü. smooth(true) ile yumuşak normal.
+//
+// Ünlü yapılar için ek öznitelik `mat` (x malzeme kimliği, y yapı tabanından yükseklik, yerel birim):
+//   k.base(y, 1 / ölçek) yapının zemin yüksekliğini bildirir; her köşenin tabandan yüksekliği pişirilir
+//   (shader bununla ortam örtmesi ve gece projektör ışığı verir).
+//   k.mat(id) malzeme kimliği (pencere, altın, kurşun, bayrak…; anlamı shader'da).
+//   k.grad(renk0, renk1, y0, y1) taban yüksekliğine göre renk geçişi (kaya katmanı, güneş yanığı uç…).
+//   k.drape(geo, yükseklik(x, z)) yere serilen parça: köşeler arazinin üstüne oturtulur.
 
 import * as THREE from 'three';
 
@@ -33,12 +40,38 @@ export class Kit {
 		this._tag = 0;
 		this._anim = 0;
 		this._smooth = false;
+		this.mats = [];
+		this._mat = 0;
+		this._base = 0;
+		this._hs = 0;
+		this._grad = null;
 		this.seg = 1; // segment çarpanı (düşük kademede azaltılır)
 	}
 
 	color(hex, k = 1) {
 		_c.set(hex);
 		this._col = [_c.r * k, _c.g * k, _c.b * k];
+		this._grad = null;
+		return this;
+	}
+	/** Malzeme kimliği (köşe özniteliği mat.x). */
+	mat(id) {
+		this._mat = id;
+		return this;
+	}
+	/** Yapı tabanı: dünya y'si ve yükseklik ölçeği (1 / yapı ölçeği); 0 ölçek: yükseklik yazılmaz. */
+	base(y, hs) {
+		this._base = y;
+		this._hs = hs;
+		return this;
+	}
+	/** Tabandan yüksekliğe göre renk geçişi (yerel birim, y0 → y1). color() geçişi kapatır. */
+	grad(a, b, y0, y1) {
+		_c.set(a);
+		const c0 = [_c.r, _c.g, _c.b];
+		_c.set(b);
+		this._col = c0;
+		this._grad = [c0, [_c.r, _c.g, _c.b], y0, y1];
 		return this;
 	}
 	/** Ham doğrusal renk (işaret değerleri için). */
@@ -93,15 +126,48 @@ export class Kit {
 			g.deleteAttribute('normal');
 			g.computeVertexNormals();
 		}
+		this._push(g);
+		geo.dispose();
+		if (g !== geo) g.dispose();
+		return this;
+	}
+
+	_push(g) {
 		const p = g.getAttribute('position');
 		const n = g.getAttribute('normal');
+		const gr = this._grad;
 		for (let i = 0; i < p.count; i++) {
-			this.pos.push(p.getX(i), p.getY(i), p.getZ(i));
+			const y = p.getY(i);
+			const h = (y - this._base) * this._hs;
+			this.pos.push(p.getX(i), y, p.getZ(i));
 			this.nor.push(n.getX(i), n.getY(i), n.getZ(i));
-			this.col.push(this._col[0], this._col[1], this._col[2]);
+			if (gr) {
+				let t = Math.min(1, Math.max(0, (h - gr[2]) / (gr[3] - gr[2])));
+				t = t * t * (3 - 2 * t);
+				this.col.push(gr[0][0] + (gr[1][0] - gr[0][0]) * t, gr[0][1] + (gr[1][1] - gr[0][1]) * t, gr[0][2] + (gr[1][2] - gr[0][2]) * t);
+			} else this.col.push(this._col[0], this._col[1], this._col[2]);
 			this.tag.push(this._tag);
 			this.anim.push(this._anim);
+			this.mats.push(this._mat, h);
 		}
+	}
+
+	/**
+	 * Yere serilen parça: geometri geçerli dönüşümle yerleşir, sonra her köşe hf(x, z) arazi yüksekliğine
+	 * oturtulur (yerel y, araziden yukarı uzaklık olarak korunur). Yalnızca y çevresinde dönmüş yığında.
+	 */
+	drape(geo, hf, lift = 0) {
+		const g = geo.index ? geo.toNonIndexed() : geo;
+		g.applyMatrix4(this.m);
+		const y0 = this.m.elements[13];
+		const p = g.getAttribute('position');
+		for (let i = 0; i < p.count; i++) p.setY(i, hf(p.getX(i), p.getZ(i)) + (p.getY(i) - y0) + lift);
+		g.deleteAttribute('normal');
+		g.computeVertexNormals();
+		const save = this._hs;
+		this._hs = 0; // zemin: tabandan yükseklik 0 (örtme yok)
+		this._push(g);
+		this._hs = save;
 		geo.dispose();
 		if (g !== geo) g.dispose();
 		return this;
@@ -184,6 +250,7 @@ export class Kit {
 		g.setAttribute('color', new THREE.Float32BufferAttribute(this.col, 3));
 		g.setAttribute('tag', new THREE.Float32BufferAttribute(this.tag, 1));
 		g.setAttribute('anim', new THREE.Float32BufferAttribute(this.anim, 1));
+		if (this.mats.some((v) => v !== 0)) g.setAttribute('mat', new THREE.Float32BufferAttribute(this.mats, 2));
 		g.computeBoundingSphere();
 		return g;
 	}

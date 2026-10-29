@@ -140,7 +140,7 @@ export class Props {
 		// önce ünlü yapılar: ağaçlar onların ve il merkezlerinin (kale yeri) çevresinde bitmesin
 		this.landmarks = new Landmarks(G, tier, board);
 		const clear = [
-			...this.landmarks.sites.map((s) => [s.x, s.z, 0.95]),
+			...this.landmarks.sites.map((s) => [s.x, s.z, s.r ?? 0.95]), // avlu (v0.5) içine orman taşmasın
 			...board.provinces.map((p) => [p.x, p.z, 1.6]),
 		];
 		const blocked = (x, z) => {
