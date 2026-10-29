@@ -134,6 +134,7 @@ export class UI {
 		this._extra = 0;
 		this.current = null;
 		this._gen = 0;
+		this._mapTop = 0.34; // harita sorusu kartının ekranı örttüğü pay (ilk tahmin; her soruda ölçülür)
 		this.setAssets(app.hooks?.assets);
 		// gece istemi yazı tipleri ilk gecede hazır olsun (yedek yazı tipiyle bir kare görünmesin)
 		try {
@@ -602,8 +603,12 @@ export class UI {
 		const duel = !!(ctx.attacker && ctx.defender);
 		const tie = /EŞİTLİK/i.test(ctx.title || '');
 		const gen = ++this._gen;
+		// harita sorusu: kamera hemen (düello girişi sürerken) yükselip bütün haritaya süzülür; kart açıldığında
+		// harita yerine oturmuş olur
+		if (T.needsMap) this._mapFrame(this._mapTop, { dur: 1.6, arc: 12 });
 		// düello girişi yalnızca saldırı sorusunda (maç phase: 'duel' verir); eşitlik bozmada yok
-		if (duel && !tie && ctx.phase === 'duel' && !ctx.noIntro) await duelIntro(this, ctx);
+		const intro = duel && !tie && ctx.phase === 'duel' && !ctx.noIntro;
+		if (intro) await duelIntro(this, ctx);
 		if (gen !== this._gen) return { human: null };
 		const card = this.$.q;
 		const cat = CATS[q.cat] || CATS[ctx.cat] || { name: 'Genel Kültür', color: '#4a8cff', icon: ICONS.star };
@@ -671,10 +676,14 @@ export class UI {
 		this._enhance(body, v);
 		this._renderJokers();
 		if (map) {
-			const bb = app.boundsOf(app.board.provinces.map((p) => p.index));
-			if (!(innerWidth > innerHeight && innerHeight < 560)) bb.z0 -= (bb.z1 - bb.z0) * 0.5;
-			app.cam.fit(bb, { pitch: 1.05 });
+			// kartın gerçek boyu ölçülür: kadraj tahminden farklıysa yumuşakça düzeltilir
+			const top = this._cardTop();
+			if (Math.abs(top - this._mapTop) > 0.012) this._mapFrame(top, { dur: 0.7 });
+			this._mapTop = top;
 			app.onGround = (pt) => tapHandler?.(pt);
+			// düello girişi yoksa kart kameranın süzülüşü bitmeye yakın açılır (ikisi birbirine karışmasın)
+			if (!intro) await sleep(this.rm ? 0 : 950);
+			if (gen !== this._gen) return { human: null };
 		}
 		await sleep(20);
 		card.classList.add('on');
@@ -1005,14 +1014,23 @@ export class UI {
 		// kamera hedefi ve tahminleri birlikte görsün
 		const xs = [tg.x, ...results.filter((r) => r.value).map((r) => r.value.x)];
 		const zs = [tg.z, ...results.filter((r) => r.value).map((r) => r.value.z)];
-		const b = { x0: Math.min(...xs) - 6, x1: Math.max(...xs) + 6, z0: Math.min(...zs) - 5, z1: Math.max(...zs) + 9 };
-		if (!(innerWidth > innerHeight && innerHeight < 560)) b.z0 -= (b.z1 - b.z0) * 0.6;
-		else b.x1 += (b.x1 - b.x0) * 0.8;
-		try {
-			app.cam.fit(b, { pitch: 1.0 });
-		} catch (e) {
-			/* yoksay */
-		}
+		const b = { x0: Math.min(...xs) - 6, x1: Math.max(...xs) + 6, z0: Math.min(...zs) - 5, z1: Math.max(...zs) + 5 };
+		// sonuç kartı büyüdü: tahminler kartın altında kalan alana ortalanır (aynı eğim, lens kaydırma)
+		app.cam.fit(b, { pitch: 1.02, top: this._cardTop(), dur: 1.1, arc: 3 });
+	}
+
+	/** Kartın ekranın üstünden örttüğü pay: alt kenarı + nefes payı (yerleşimden, dönüşümsüz). */
+	_cardTop() {
+		const c = this.$.q;
+		const H = this.el.clientHeight || innerHeight;
+		return Math.min(0.62, Math.max(0, (c.offsetTop + c.offsetHeight + 14) / H));
+	}
+
+	/** Harita sorusu kadrajı: bütün Türkiye aynı eğimde, üstteki kartın altında kalan boş alana ortalanmış. */
+	_mapFrame(top, opt = {}) {
+		const app = this.app;
+		const bb = (this._allB ||= app.boundsOf(app.board.provinces.map((p) => p.index)));
+		app.cam.fit({ ...bb }, { pitch: 1.02, pad: 1.03, top, ...opt });
 	}
 
 	setPins(list) {

@@ -16,6 +16,7 @@
 //                d3_soru (soru kartı açıkken: etiketler ve harita kartın arkasında)
 //   e_fetih      fetih: gecede boya dalgası
 //   f_safak      fetihten sonra şafak, f2_gunduz gündüze dönmüş hali
+//   m_harita_0..6  ilk harita sorusu: kamera geçişi (0–3), oturmuş kadraj (4), cevap açılışı (5–6)
 //   gunduz       sade gündüz (maç başı)
 // Çıktıda HATA satırı = sayfada hata. Maç sonuna kadar oynanır; "maç bitti" satırı başarı demektir.
 import { chromium } from 'playwright-core';
@@ -133,6 +134,11 @@ await page.evaluate((cfg) => {
 			d2 = true;
 			W.want.push('d2_kart_oncesi');
 			await new Promise((r) => setTimeout(r, 400));
+		}
+		// harita sorusu ("X nerede?"): kameranın geçişi, oturmuş kadraj ve cevap açılışı
+		if (ctx?.T?.needsMap && ctx?.human && !W.mapSeen) {
+			W.mapSeen = 1;
+			[[0, 40], [1, 350], [2, 700], [3, 1100], [4, 2200], [5, 3500], [6, 4700]].forEach(([k, ms]) => want('m_harita_' + k, ms));
 		}
 		const pr = q.call(this, m, ctx);
 		if (ctx?.human) {

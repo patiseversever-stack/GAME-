@@ -60,6 +60,11 @@ export class MapCamera {
 		this.zoomMin = 9;
 		this.zoomMax = 140;
 		this._roll = 0;
+		// lens kaydırma: görüntü merkezi ekran boyunun bu payı kadar aşağıda (üstte kart varken harita altta
+		// kalan boş alana ortalanır; bakış açısı ve ölçek değişmez)
+		this.lens = 0;
+		this.lensTo = 0;
+		this._lensA = 0;
 	}
 
 	setAspect(a) {
@@ -67,26 +72,29 @@ export class MapCamera {
 		if (this.bounds && this.mode === 'fit') this.fit(this.bounds, { ...this._fitOpt, dur: 0.3 });
 	}
 
-	/** Kutuyu (dünya x/z) bu eğimde ekrana sığdıran uzaklık. */
-	fitDist(b, pitch = 0.98, pad = 1.12) {
+	/** Kutuyu (dünya x/z) bu eğimde ekrana sığdıran uzaklık. top: ekranın üstten örtülü payı (kart). */
+	fitDist(b, pitch = 0.98, pad = 1.12, top = 0) {
 		const w = (b.x1 - b.x0) * pad;
 		const d = (b.z1 - b.z0) * pad;
 		const vfov = THREE.MathUtils.degToRad(this.cam.fov);
 		const hfov = 2 * Math.atan(Math.tan(vfov / 2) * this.aspect);
-		// eğik bakışta derinlik ekranda kısalır: sin(eğim)
-		const needH = (d * Math.sin(pitch)) / 2 / Math.tan(vfov / 2);
+		// eğik bakışta derinlik ekranda kısalır: sin(eğim); üstü örtülüyse yalnızca kalan boy kullanılır
+		const needH = (d * Math.sin(pitch)) / 2 / (Math.tan(vfov / 2) * (1 - top));
 		const needW = w / 2 / Math.tan(hfov / 2);
 		return Math.max(needH, needW) + 2;
 	}
 
-	/** Dikdörtgen bölgeyi (dünya x/z) ekrana sığdır: yumuşak, kavisli geçiş. */
-	fit(b, { pitch = 0.98, yaw = 0, pad = 1.12, dur = null, arc = null, yawRate = 0, distRate = 0, decay = 0 } = {}) {
+	/**
+	 * Dikdörtgen bölgeyi (dünya x/z) ekrana sığdır: yumuşak, kavisli geçiş. top: ekranın üstten örtülü payı
+	 * (soru kartı); bölge kalan boş alana sığar ve lens kaydırmayla oraya ortalanır.
+	 */
+	fit(b, { pitch = 0.98, yaw = 0, pad = 1.12, dur = null, arc = null, yawRate = 0, distRate = 0, decay = 0, top = 0 } = {}) {
 		this.bounds = b;
-		this._fitOpt = { pitch, yaw, pad };
+		this._fitOpt = { pitch, yaw, pad, top };
 		const x = (b.x0 + b.x1) / 2;
 		const z = (b.z0 + b.z1) / 2;
-		const dist = this.fitDist(b, pitch, pad);
-		this.shot(x, z, { dist, pitch, yaw, dur, arc, yawRate, distRate, decay });
+		const dist = this.fitDist(b, pitch, pad, top);
+		this.shot(x, z, { dist, pitch, yaw, dur, arc, yawRate, distRate, decay, lens: top / 2 });
 		this.mode = 'fit';
 	}
 
@@ -101,7 +109,8 @@ export class MapCamera {
 	 * (verilmezse yolun uzunluğuyla orantılı). Bitince yawRate (rad/sn) ve distRate (sn başına oran)
 	 * ile sürüklenir: yörünge ve yavaş yaklaşma çekimleri.
 	 */
-	shot(x, z, { dist = this.dist, pitch = this.pitch, yaw = this.yaw, dur = null, arc = null, yawRate = 0, distRate = 0, distMin = 6, ease = null, decay = 0 } = {}) {
+	shot(x, z, { dist = this.dist, pitch = this.pitch, yaw = this.yaw, dur = null, arc = null, yawRate = 0, distRate = 0, distMin = 6, ease = null, decay = 0, lens = 0 } = {}) {
+		this.lensTo = lens;
 		const s = this.sh;
 		const moving = s.on && s.t < s.dur;
 		s.a.x = this.target.x;
@@ -140,6 +149,7 @@ export class MapCamera {
 
 	/** Anahtar karelerden geçen uçuş: keys [{x, z, dist, yaw, pitch}] (ilki şimdiki durum olabilir). */
 	path(keys, dur = 2) {
+		this.lensTo = 0;
 		const n = Math.min(8, keys.length);
 		for (let i = 0; i < n; i++) Object.assign(this.pathKeys[i], keys[i]);
 		this.pathN = n;
@@ -372,6 +382,14 @@ export class MapCamera {
 
 	_apply(dt) {
 		const c = this.cam;
+		// lens kaydırma: geçişle birlikte yumuşakça (yalnızca değişince projeksiyon yeniden kurulur)
+		this.lens += (this.lensTo - this.lens) * (1 - Math.exp(-4 * dt));
+		if (Math.abs(this.lens - this.lensTo) < 1e-4) this.lens = this.lensTo;
+		if (this.lens !== this._lensA) {
+			this._lensA = this.lens;
+			if (this.lens === 0) c.clearViewOffset();
+			else c.setViewOffset(c.aspect, 1, 0, -this.lens, c.aspect, 1); // tam boy c.aspect: setViewOffset en-boy oranını bununla ezer
+		}
 		const cp = Math.cos(this.pitch);
 		c.position.set(
 			this.target.x - Math.sin(this.yaw) * cp * this.dist,
