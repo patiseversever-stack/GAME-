@@ -126,6 +126,10 @@ kıyı illerinin kalkık yamaçları fetihte parlak.
 **Sıradaki (kullanıcının listesi):** ses yaması (`wip/ses.patch`, temiz uygulanır),
 mağaza ekranı, 1'e 1'de ilk oyuncu avantajı (%55–65) ve puan eşitliği kuralı.
 
+**Yapıldı (gece denetimi v0.8, 29 Ekim):** ilk oyuncu avantajı ve puan eşitliği kuralı (son tur puana göre, altın soru),
+joker düğmeleri (hiç çalışmıyordu), kalkan kuralı, botların kuşatması, çevrimiçi protokol açıkları. Rakip kıyası, hata listesi,
+kural değişiklikleri ve yapılmamış öneriler: `ref/gece-v08/rapor.md`.
+
 **Yapıldı: duraklat ve maçtan çık.** Sağ üstte duraklat düğmesi (masaüstünde Esc); sekme arka plana geçince maç
 kendiliğinden duraklar. Duraklatınca oyun saati (`src/core/clock.js`: arayüz, sinema ve soru tiplerinin bütün
 zamanlayıcıları), çizim döngüsü, CSS animasyonları ve ses durur. "Maçtan Çık" onay ister; ilerleme kaydedilmez,

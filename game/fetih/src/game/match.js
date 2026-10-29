@@ -770,6 +770,10 @@ export class Match {
 				usable = false;
 				why = SHIELD_WHY;
 			}
+			if (usable && id === 'kalkan' && this.phase === 'altin') {
+				usable = false;
+				why = 'Saldırı kalmadı';
+			}
 			if (usable && d.scope === 'question') {
 				const used = cur?.used.get(p.i);
 				if (!inQ) {
@@ -819,6 +823,7 @@ export class Match {
 		if (id === 'kalkan') {
 			if (p.shield) return fail('Kalkan zaten hazır');
 			if (this.defending(p)) return fail(SHIELD_WHY);
+			if (this.phase === 'altin') return fail('Saldırı kalmadı');
 			this.spendJoker(p, id);
 			p.shield = true;
 			this.app.fx?.joker?.(id, p);
@@ -999,6 +1004,9 @@ export class Match {
 		const who = tied.flatMap((x) => (x.players ? x.players.filter((p) => p.alive) : [x]));
 		if (who.length < 2) return;
 		this.phase = 'altin';
+		this.turn = -1; // HUD'daki "SIRA" rozeti son saldırıda kalmasın
+		if (!this.ui.fast) this.ui.hud(this);
+		this.refreshJokers();
 		this.emit('phase', { phase: this.phase, round: this.round, tied: tied.map((x) => (x.players ? x.team : x.i)) });
 		await this.ui.banner('EŞİTLİK!', 'Altın soru: en yakın tahmin kazanır', { tone: 'gold' });
 		this.tick(EST.banner);

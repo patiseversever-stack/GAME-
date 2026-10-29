@@ -487,7 +487,7 @@ export class Progress {
 		const long = res.length === 'long';
 		const mult = (long ? 1.8 : 1) * ({ caylak: 0.8, er: 1, usta: 1.2, efsane: 1.4 }[res.level] || 1);
 		let xp = 30;
-		lines.push({ label: 'Katılım', xp: 30, gold: 0 });
+		lines.push({ label: 'Katılım', xp: 30, gold: 12 });
 		let gold = 12;
 		const cx = Math.min(20, res.stat.correct) * 5;
 		if (cx) lines.push({ label: 'Doğru cevaplar', xp: cx, gold: 0 });
@@ -516,8 +516,14 @@ export class Progress {
 			gold += g;
 			lines.push({ label: res.boss ? 'Komutan yenildi' : 'İlk geçiş', xp: 0, gold: g });
 		}
-		xp = Math.round(xp * mult);
-		gold = Math.round(gold * mult);
+		// çarpan (uzun maç, rakip seviyesi) her satıra uygulanır ve toplam satırların toplamıdır: bitiş ekranındaki
+		// döküm toplamla tutsun (eskiden satırlar çarpansızdı ve katılım altını hiçbir satırda yoktu)
+		for (const l of lines) {
+			l.xp = Math.round(l.xp * mult);
+			l.gold = Math.round(l.gold * mult);
+		}
+		xp = lines.reduce((a, l) => a + l.xp, 0);
+		gold = lines.reduce((a, l) => a + l.gold, 0);
 		this.d.gold += gold;
 		const levelUps = this.addXp(xp);
 		st.played++;

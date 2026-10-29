@@ -293,5 +293,26 @@ console.log('7) Kuşatma ve kule istatistiği');
 	ok(sieges.er > 0.6 && sieges.er < 3, `'er' botlar maç başına ${sieges.er.toFixed(2)} kuşatma (0,6–3 beklenir)`);
 }
 
+// ---------------------------------------------------------------- 8. ödül dökümü toplamla tutar
+console.log('8) Ödül dökümü');
+{
+	const { Progress } = await import('../src/game/progress.js');
+	const { memStore } = await import('./dunya.mjs');
+	let n = 0;
+	for (const length of ['quick', 'long'])
+		for (const level of ['caylak', 'er', 'usta', 'efsane'])
+			for (const won of [true, false])
+				for (const stars of [0, 2]) {
+					const p = new Progress(memStore(), {});
+					const r = p.recordMatch({ won, rank: won ? 1 : 2, players: 3, stat: { q: 20, correct: 13 }, provinces: 7, towers: 1, length, level, stars, firstClear: stars > 0, boss: stars > 0 && won });
+					const sx = r.lines.reduce((a, l) => a + l.xp, 0);
+					const sg = r.lines.reduce((a, l) => a + l.gold, 0);
+					ok(sx === r.xp && sg === r.gold, `${length}/${level}/${won}/${stars}: satırlar ${sx} XP ${sg} altın, toplam ${r.xp} XP ${r.gold} altın (bitiş ekranı dökümü tutmuyor)`);
+					ok(p.xp === r.xp && p.gold === 150 + r.gold + r.levelUps.reduce((a, u) => a + u.gold, 0), `${length}/${level}: kayıttaki XP/altın ödülle tutmuyor`);
+					n++;
+				}
+	console.log(`   ${n} ödül durumu: satırların toplamı = verilen XP ve altın`);
+}
+
 console.log(`\n${checks} denetim, ${fails} hata`);
 process.exit(fails ? 1 : 0);

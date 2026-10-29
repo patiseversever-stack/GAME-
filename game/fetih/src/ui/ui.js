@@ -630,7 +630,7 @@ export class UI {
 		const whoHTML = duel
 			? `${plate(ctx.attacker, 'a', 'SALDIRAN')}<div class="fl-qvs"><b>VS</b>${prov ? `<span>${esc(prov.name)}</span>` : ''}</div>${plate(ctx.defender, 'd', siege ? 'KALE' : 'SAVUNAN')}`
 			: who.map((p) => plate(p, '', '')).join('');
-		const rule = !human ? 'İzliyorsun' : tie ? 'Eşitlik bozma' : closest ? 'En yakın kazanır' : '';
+		const rule = !human ? 'İzliyorsun' : ctx.phase === 'altin' ? 'Altın soru' : tie ? 'Eşitlik bozma' : closest ? 'En yakın kazanır' : '';
 		card.className = `fl-q${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}`;
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));

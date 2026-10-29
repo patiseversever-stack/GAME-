@@ -59,6 +59,13 @@ Hepsi Promise döner; `fast` true iken anında biter.
 - `Match`: `useJoker(id, p?) → {ok, reason?, effect?}`, `jokerList(p?)` (`na`: tipe uymaz, düğme gizlenir), `ask(q, who, ctx)`, `finish(ranking)` (ödül + sefer kaydı), `report()`.
   `cfg.commander` = menüdeki komutan `{name, avatar, banner, skin, color, colorHex}`; insan o renge boyanır, botlar kalan renkleri alır.
 - Arayüzün Match'ten duyduğu (hepsi `?.`): `ui.jokers(list, cb)`, `ui.jokerUsed(p, id, effect, cur)`, `ui.sabotage(effect)`, `ui.end(m, ranking, rewards)`; `ctx.clock.extra` (ekstra süre/sabotaj) ve `ctx.botJokers`.
+  `ui.jokers` geri çağrısı soru başında kurulur; `ui.question` onu silmez (silerse joker düğmeleri ölür; v0.8 hatası).
+- **Kurallar (v0.8, `match.js` başındaki sabitler):** `TURN_ORDER` (ilk tur tohumdan karışık, son tur puana göre: geride olan son
+  saldırır), `TIE_BREAK` (eşit birincilikte altın soru: `goldenQuestion()`, `m.tieWin`; sonra il, kule, doğru sayısı; elenende geç
+  elenen önde), `SHIELD_IN_DEFENSE` (kalkan savunulan düelloda kurulamaz: `m.duel`, `m.defending(p)`), `BOT_SIEGE` (botun
+  başkente saldırma isteği beceriyle sürekli). Soru saati koltuk başına: `cur.clocks` (koltuk → `{extra}`), `ctx.clock` insanın
+  kendi saati. Ağ olayları ve gizlilik: `net.js` başındaki şema (`turn`, `attack`, `result`, `score`, `state`; joker etkisinin
+  tamamı yalnız kullanana). Sınama: `node test/kurallar.test.mjs`, `node test/net.test.mjs`. Rapor: `ref/gece-v08/rapor.md`.
 - `app.progress` (`Progress`: XP, altın, joker stoğu, `watchAd(placement)`, `purchase(id)`, `interstitialDue()`; gerçek SDK `hooks.rewardedAd/purchase/interstitial` ile bağlanır) ve `app.campaign` (`Campaign`: `regions()`, `cfgFor(id)`, `report(id, res)`).
 - Soru tipi `ctl.joker(effect)` tanımlarsa joker etkisini kendisi uygular (şimdilik yalnız `num`: kaydırıcı daralır).
 
