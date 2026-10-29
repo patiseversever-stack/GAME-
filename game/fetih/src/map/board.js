@@ -146,7 +146,9 @@ vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float sno
 #else
 	// q=0: parsel yerine ucuz yamalı ekin lekeleri (hazır gürültüden)
 	float pr = f3.r;
-	c = mix(c, c * (pr < 0.4 ? vec3(0.82, 1.0, 0.7) : pr > 0.62 ? vec3(1.1, 1.0, 0.76) : vec3(1.0)), farm * 0.55);
+	vec3 pt = mix(vec3(0.8, 1.0, 0.66), vec3(1.0), smoothstep(0.34, 0.42, pr));
+	pt = mix(pt, vec3(1.12, 0.98, 0.72), smoothstep(0.6, 0.68, pr));
+	c = mix(c, c * pt * (0.94 + 0.12 * f3.b), farm * 0.85);
 #endif
 	// orman tabanı: derin, serin yeşil
 	c = mix(c, mix(${C('#24552c')}, ${C('#356b36')}, n3), smoothstep(0.2, 0.65, bio.x) * 0.85);

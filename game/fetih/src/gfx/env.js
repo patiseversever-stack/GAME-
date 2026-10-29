@@ -103,7 +103,7 @@ export const ENVS = {
 ENVS.harita = {
 	sunAz: 148,
 	sunEl: 40,
-	sun: C('#fff2df', 3.1),
+	sun: C('#fff5ea', 3.1),
 	skyTop: C('#86acff', 0.5),
 	skyHor: C('#bcd6ff', 0.44),
 	ground: C('#ffcf9a', 0.26),

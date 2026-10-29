@@ -77,6 +77,7 @@ export class Kit {
 	/** Ham doğrusal renk (işaret değerleri için). */
 	raw(r, g, b) {
 		this._col = [r, g, b];
+		this._grad = null;
 		return this;
 	}
 	setTag(t) {

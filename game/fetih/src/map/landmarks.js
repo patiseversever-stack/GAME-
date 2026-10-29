@@ -726,12 +726,13 @@ const B = {
 
 	// ---------------------------------------------------------------- Pamukkale
 	pamukkale(k, R) {
-		grounds(k, 0.72, '#eef0ea', { ring: 0.82 });
-		const W = '#f6f7f3';
-		const W2 = '#e3e7e0';
-		const AQ = [0.16, 0.72, 0.82];
+		grounds(k, 0.72, '#e6edf0', { ring: 0.82 });
+		const W = '#f2f8fc';
+		const W2 = '#d9e4ec';
+		const AQ = [0.08, 0.68, 0.86];
 		// arkada Hierapolis düzlüğü: beyaz traverten yamaç
-		k.grad('#d9ddd5', '#f7f8f4', 0, 0.42).add(rock(0.66, 0.22, 0.3, 4), new THREE.Matrix4().makeTranslation(0, 0.16, -0.46));
+		const hill = jitter(new THREE.SphereGeometry(1, Math.round(16 * k.seg), 6, 0, Math.PI * 2, 0, Math.PI / 2), 0.04, 4, true).scale(0.62, 0.36, 0.3);
+		k.smooth(true).grad('#d6e0e8', '#f2f7fb', 0, 0.36).add(hill, new THREE.Matrix4().makeTranslation(0, 0.0, -0.42)).smooth(false);
 		// basamak basamak traverten havuzları: her basamakta dilimli beyaz dudak, üstünde turkuaz su,
 		// dudağın altında sarkıt saçağı. Aşağı indikçe basamaklar genişler (kaskad)
 		const N = k.seg < 1 ? 5 : 6;
@@ -745,25 +746,27 @@ const B = {
 			for (let j = 0; j < n; j++) {
 				const cx = -Wd / 2 + lw * (j + 0.5) + (R() - 0.5) * lw * 0.15;
 				const rr = lw * 0.55;
+				// dudak dizisi ortada öne taşar, hafif düzensiz (doğal kaskad, merdiven değil)
+				const zl = zf + 0.045 * Math.cos((cx / Wd) * Math.PI) - 0.02 + (R() - 0.5) * 0.025;
 				const lip = new THREE.CylinderGeometry(rr, rr * 1.12, 0.07, Math.round(9 * k.seg) + 1, 1, false, -Math.PI / 2, Math.PI);
-				lip.scale(1, 1, 0.75).translate(cx, y - 0.035, zf);
+				lip.scale(1, 1, 0.42).translate(cx, y - 0.035, zl);
 				k.grad(W2, W, y - 0.07, y).add(lip);
 				const pool = new THREE.CylinderGeometry(rr * 0.92, rr * 0.92, 0.004, Math.round(9 * k.seg) + 1, 1, false, -Math.PI / 2, Math.PI);
-				pool.scale(1, 1, 0.7).translate(cx, y + 0.002, zf - 0.006);
+				pool.scale(1, 1, 0.36).translate(cx, y + 0.002, zl - 0.004);
 				k.raw(AQ[0], AQ[1], AQ[2]).mat(M.WATER).add(pool);
 				// sarkıt saçağı
 				k.color('#eef1ec');
 				for (const d of [-0.3, 0.32]) {
 					const a = d * Math.PI;
-					k.add(new THREE.ConeGeometry(0.006, 0.025 + R() * 0.015, 4).rotateX(Math.PI).translate(cx + Math.sin(a) * rr * 0.9, y - 0.085, zf + Math.cos(a) * rr * 0.68));
+					k.add(new THREE.ConeGeometry(0.006, 0.025 + R() * 0.015, 4).rotateX(Math.PI).translate(cx + Math.sin(a) * rr * 0.9, y - 0.085, zl + Math.cos(a) * rr * 0.4));
 				}
 			}
 			// basamağın gerisi: geniş havuz
-			const back = new THREE.PlaneGeometry(Wd * 0.94, 0.09).rotateX(-Math.PI / 2).translate(0, y + 0.003, zf - 0.075);
+			const back = new THREE.PlaneGeometry(Wd * 0.96, 0.1).rotateX(-Math.PI / 2).translate(0, y + 0.003, zf - 0.052);
 			k.raw(AQ[0] * 0.8, AQ[1] * 0.95, AQ[2]).mat(M.WATER).add(back);
 		}
 		// tepede antik havuz ve Hierapolis sütunları, yamaçta yeşil
-		k.raw(0.12, 0.62, 0.78).mat(M.WATER).cyl(0.12, 0.12, 0.006, 12, -0.25, 0.42, -0.42);
+		k.raw(0.12, 0.62, 0.78).mat(M.WATER).cyl(0.1, 0.1, 0.006, 12, -0.26, 0.335, -0.5);
 		k.color(MARBLE);
 		for (let i = 0; i < 6; i++) k.cyl(0.013, 0.015, 0.1 + (i % 3) * 0.035, 6, 0.06 + i * 0.07, 0.38, -0.5);
 		k.color('#e1d6bf').box(0.18, 0.02, 0.03, 0.12, 0.48, -0.5);
@@ -817,7 +820,7 @@ const B = {
 		const kinds = ['aslan', 'tanri', 'tanri', 'tanri', 'tanri', 'tanri', 'kartal'];
 		for (let i = 0; i < 7; i++) {
 			const x = -0.45 + i * 0.15;
-			head(x, 0.34 + (i % 2) * 0.04, (R() - 0.5) * 0.5, i === 0 || i === 6 ? 0.85 : 1.05, i % 2 ? S : '#cbb58f', kinds[i]);
+			head(x, 0.34 + (i % 2) * 0.04, (R() - 0.5) * 0.5, i === 0 || i === 6 ? 1.05 : 1.32, i % 2 ? S : '#cbb58f', kinds[i]);
 		}
 		// dağınık taş blokları
 		k.color('#b5a283');
@@ -1244,22 +1247,22 @@ const B = {
 
 // [yapı, boylam, enlem, ölçek, dönüş, il kimliği (plaka), merkezden en az uzaklık]
 const SITES = [
-	['galata', 28.93, 41.12, 1.85, 0, 34],
-	['ayasofya', 28.78, 41.03, 1.8, 0.1, 34],
+	['galata', 28.93, 41.12, 2.0, 0, 34],
+	['ayasofya', 28.78, 41.03, 2.0, 0.1, 34],
 	['kizkulesi', 29.004, 41.021, 1.05, 0, 34, 0, 'sea'],
 	['kopru', 29.036, 41.052, 1.4, 0.15, 34, 0, 'sea'],
-	['anitkabir', 32.84, 39.93, 2.15, 0, 6],
-	['peri', 34.83, 38.64, 1.95, 0, 50],
-	['nemrut', 38.74, 37.98, 2.0, 0, 2],
-	['pamukkale', 29.12, 37.92, 2.0, 0, 20],
-	['sumela', 39.66, 40.69, 1.82, 0, 61],
+	['anitkabir', 32.84, 39.93, 2.45, 0, 6],
+	['peri', 34.83, 38.64, 2.25, 0, 50],
+	['nemrut', 38.74, 37.98, 2.3, 0, 2],
+	['pamukkale', 29.12, 37.92, 2.25, 0, 20],
+	['sumela', 39.66, 40.69, 2.0, 0, 61],
 	['uzungol', 40.29, 40.62, 1.6, 0, 61],
-	['celsus', 27.34, 37.94, 2.0, 0, 35],
+	['celsus', 27.34, 37.94, 2.2, 0, 35],
 	['saatkulesi', 27.13, 38.42, 1.54, 0, 35],
-	['mevlana', 32.5, 37.87, 2.0, 0, 42],
-	['selimiye', 26.56, 41.68, 1.9, 0, 22],
-	['ishakpasa', 44.13, 39.52, 1.89, 0, 4],
-	['safranbolu', 32.69, 41.25, 1.8, 0, 78],
+	['mevlana', 32.5, 37.87, 2.2, 0, 42],
+	['selimiye', 26.56, 41.68, 2.1, 0, 22],
+	['ishakpasa', 44.13, 39.52, 2.05, 0, 4],
+	['safranbolu', 32.69, 41.25, 2.0, 0, 78],
 	['gobekli', 38.92, 37.22, 1.89, 0, 63],
 	['truva', 26.24, 39.96, 1.89, -0.3, 17],
 	['aspendos', 31.17, 36.94, 1.82, 0, 7],
@@ -1319,7 +1322,7 @@ export class Landmarks {
 			let [x, z] = lonlat(board, lon, lat);
 			if (where !== 'sea') {
 				// il merkezine (kale + yazı) çok yakınsa uzaklaştır
-				const minD = 1.9;
+				const minD = Math.max(1.9, sc * 0.95);
 				const dx = x - p.x;
 				const dz = z - p.z;
 				const d = Math.hypot(dx, dz);

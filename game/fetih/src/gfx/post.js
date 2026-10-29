@@ -55,7 +55,7 @@ void main() {
 }`;
 
 // kenarda en büyük bulanıklık yarıçapı (css pikseli) ve keskin bant: okunurluk için hafif (v0.4)
-const BLUR_PX = 2.4;
+const BLUR_PX = 1.8; // v0.5: keskinlik önce (kenarda en çok ~1,8 css px)
 const SHARP = 0.3; // ekran yüksekliğinin ortasında bu yarı genişlik kadar tam keskin
 
 export class TiltShift {
