@@ -75,7 +75,7 @@ function prepChoice(q, R, extra = {}) {
 
 // ---------------------------------------------------------------- hilo
 export const hilo = {
-	time: 13,
+	time: 20,
 	label: 'Karşılaştır',
 	prepare(q, R) {
 		const flip = R() < 0.5; // doğru taraf rastgele zaten veride; ekranda yerlerini de karıştır
@@ -142,7 +142,7 @@ export const hilo = {
 
 // ---------------------------------------------------------------- odd
 export const odd = {
-	time: 14,
+	time: 20,
 	label: 'Farklı olan',
 	prepare(q, R) {
 		const ord = shuffle([0, 1, 2, 3], R);
@@ -168,7 +168,7 @@ export const odd = {
 
 // ---------------------------------------------------------------- emoji
 export const emoji = {
-	time: 15,
+	time: 20,
 	label: 'Emoji',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {
@@ -184,7 +184,7 @@ export const emoji = {
 
 // ---------------------------------------------------------------- proverb
 export const proverb = {
-	time: 13,
+	time: 20,
 	label: 'Atasözü',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {
@@ -223,7 +223,7 @@ export const proverb = {
 
 // ---------------------------------------------------------------- riddle
 export const riddle = {
-	time: 19,
+	time: 23,
 	label: 'Bilmece',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {

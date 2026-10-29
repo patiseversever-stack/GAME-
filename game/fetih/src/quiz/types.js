@@ -29,7 +29,7 @@ export const KM_PER_UNIT = 111.2 / GEO.K;
 
 export const TYPES = {
 	choice: {
-		time: 14,
+		time: 20,
 		label: 'Test',
 		kind: 'exact',
 		prepare(q, R) {
@@ -52,7 +52,7 @@ export const TYPES = {
 	},
 
 	tf: {
-		time: 11,
+		time: 20,
 		label: 'Doğru mu?',
 		kind: 'exact',
 		prepare(q) {
@@ -91,7 +91,7 @@ export const TYPES = {
 	},
 
 	num: {
-		time: 17,
+		time: 20,
 		label: 'Tahmin',
 		kind: 'closest',
 		prepare(q) {
@@ -174,7 +174,7 @@ export const TYPES = {
 	},
 
 	pin: {
-		time: 15,
+		time: 20,
 		label: 'Haritada bul',
 		kind: 'closest',
 		needsMap: true,
@@ -226,7 +226,7 @@ export const TYPES = {
 	},
 
 	hang: {
-		time: 19,
+		time: 23,
 		label: 'Adam asmaca',
 		kind: 'exact',
 		prepare(q) {

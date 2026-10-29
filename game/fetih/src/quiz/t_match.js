@@ -47,7 +47,7 @@ const CSS = /* css */ `
 `;
 
 export const match = {
-	time: 19,
+	time: 22,
 	label: 'Eşleştir',
 	kind: 'closest',
 	keep: true, // arayüz sıralama tablosunu tahtanın altına ekler (tahtayı silmez)

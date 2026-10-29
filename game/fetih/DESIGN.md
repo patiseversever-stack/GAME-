@@ -66,12 +66,14 @@ Hepsi Promise döner; `fast` true iken anında biter.
 `TYPES[tip] = {time, label, kind:'exact'|'closest', needsMap?, prepare(q,R), mount(el,v,api), judge(v,value), bot(v,skill,R)}`
 - `mount` dönüşü: `{lock(), reveal(results), destroy(), value?()}`
 - `api`: `{answer(value), onMapTap(fn), showPin(p)}`
-- **Süre (v0.7):** `time` yalnız tipik süredir (belge ve yedek). Her sorunun süresi kendi verisinden ve tipin ekrandaki
+- **Süre (v0.8):** `time` yalnız tipik süredir (belge ve yedek). Her sorunun süresi kendi verisinden ve tipin ekrandaki
   mekaniğinden hesaplanır: `src/quiz/timing.js` (`timing(q)`, `budget(q)`, `botTime(v, R, skill, lo, hi)`, `HOT`, `SLACK`).
   Bekleme (kart açılışı) + bakış + okuma (harf ve kelime: göz her kelimeye durur; bilmece kökü iki kez) + düşünme (tip,
   zorluk) + giriş (dokunma, sürükleme: sıralamada en kötü başlangıç, bağlama, tuş, kaydırıcı, ONAYLA) üç oyuncu için
   (hızlı, ortanca, yavaş-rahat) hesaplanır; süre = en büyüğü(yavaş + `SLACK` (1,5), ortanca + `HOT`), tipin
-  sınırlarına kırpılmış tam saniye (`HOT` = 5: arayüzün son 5 sn kırmızı uyarısı). Adalet raporu ve rakip kıyası:
+  sınırlarına kırpılmış tam saniye (`HOT` = 5: arayüzün son 5 sn kırmızı uyarısı). v0.8 (kullanıcı kararı): bu bütçe
+  `GENEROUS` (×1,2) ile uzatılır ve hiçbir soru `FLOOR` (20 sn: Trivia Crack ve Kahoot standardı) altına inmez; tipin
+  geçerli sınırları `limits(type)` (yıldırım turu sabit, kurala girmez). Adalet raporu ve rakip kıyası:
   `ref/soru-v06/sure-raporu.md`; `test/timing.test.mjs` bağımsız bir "denetim oyuncusu"yla (110 kelime/dk, 0,85 sn
   dokunuş) bankadaki her sorunun sığdığını denetler. `prepare` görünüme `v.sec` (saat)
   ve `v.fast` / `v.med` / `v.slow` (botların cevap aralığı) koyar; maç, arayüz (`questionTime(v.sec, extra, floor)`),

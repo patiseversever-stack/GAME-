@@ -1,5 +1,5 @@
 // Soru süresi sınaması (düz node, bağımlılık yok):  node test/timing.test.mjs [--all]
-// Bütün bankada süre bütçesini (src/quiz/timing.js, model v0.7) hesaplar; tip başına önceki sürümle (v0.6) kıyaslı
+// Bütün bankada süre bütçesini (src/quiz/timing.js, model v0.8: v0.7 × %20 cömertlik, en az 20 sn) hesaplar; tip başına önceki sürümle (v0.7) kıyaslı
 // dağılımı, en kısa ve en uzun soruları yazar (insan gözüyle denetim için). Denetler:
 //   - sayı ve sınır içinde, belirlenimci (kopya soru, prepare, publicView), hızlı < ortanca < yavaş oyuncu
 //   - KIRMIZI kuralı: ortanca oyuncu son 5 sn'lik kırmızı uyarı başlamadan, yavaş oyuncu süre bitmeden (PAY kala) bitirir
@@ -14,7 +14,7 @@
 import { BANK } from '../src/data/bank.js';
 import { TYPES } from '../src/quiz/types.js';
 import { direction } from '../src/quiz/t_order.js';
-import { timing, budget, PROFILE, HOT, SLACK, PLAYERS } from '../src/quiz/timing.js';
+import { timing, budget, PROFILE, HOT, SLACK, PLAYERS, limits, GENEROUS, FLOOR } from '../src/quiz/timing.js';
 import { questionTime, extraFor, cutFor, computeEffect, JOKERS, EXTRA, SABOTAGE } from '../src/game/jokers.js';
 import { publicView, LocalTransport, RemoteController, PROTOCOL } from '../src/game/net.js';
 import { rng } from '../src/core/math.js';
@@ -29,24 +29,24 @@ const ok = (cond, msg) => {
 	}
 };
 const ALL = process.argv.includes('--all');
-// önceki sürüm (v0.6): tip başına [en az, ortanca, en çok, ortalama] (sn)
-const V06 = {
-	choice: [11, 14, 23, 14.3],
-	num: [14, 16, 20, 16.6],
-	pin: [13, 15, 18, 14.7],
-	hang: [15, 18, 25, 18.8],
+// önceki sürüm (v0.7, cömertlik ve rakip tabanı öncesi): tip başına [en az, ortanca, en çok, ortalama] (sn)
+const V07 = {
+	choice: [12, 14, 24, 14.6],
+	num: [14, 17, 21, 16.9],
+	pin: [13, 15, 19, 14.9],
+	hang: [16, 19, 25, 19.6],
 	tf: [9, 11, 13, 11],
-	order: [16, 20, 26, 19.7],
-	match: [16, 18, 21, 17.9],
-	hilo: [11, 13, 15, 12.8],
-	odd: [12, 14, 18, 14.3],
-	emoji: [14, 15, 18, 15.1],
-	riddle: [14, 16, 19, 16],
-	proverb: [12, 13, 14, 12.9],
-	anagram: [14, 21, 28, 21],
-	cross: [32, 66, 66, 49],
-	img: [16, 17, 21, 18],
-	blitz: [10, 20, 20, 15],
+	order: [19, 23, 29, 22.7],
+	match: [17, 19, 22, 18.9],
+	hilo: [11, 13, 16, 12.9],
+	odd: [12, 14, 18, 14.5],
+	emoji: [14, 15, 19, 15.3],
+	riddle: [15, 19, 22, 18.8],
+	proverb: [12, 13, 14, 13.1],
+	anagram: [14, 24, 33, 24],
+	cross: [34, 72, 72, 53],
+	img: [16, 22, 24, 20],
+	blitz: [10, 15, 20, 15],
 };
 const clone = (q) => JSON.parse(JSON.stringify(q));
 const short = (s, n = 70) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
@@ -107,13 +107,16 @@ for (const q of SET) {
 	const P = PROFILE[q.type];
 	ok(P, `${q.id}: ${q.type} için süre profili yok`);
 	ok(Number.isInteger(t.sec) && Number.isFinite(t.raw), `${q.id}: süre sayı değil (${t.sec}, ${t.raw})`);
-	if (P) ok(t.sec >= P.min && t.sec <= P.max, `${q.id}: süre ${t.sec} sınır dışı [${P.min}, ${P.max}]`);
+	const L = limits(q.type);
+	if (P) ok(t.sec >= L.lo && t.sec <= L.hi, `${q.id}: süre ${t.sec} sınır dışı [${L.lo}, ${L.hi}]`);
+	// rakip standardı: hiçbir soru FLOOR sn'nin altında değil (sabit turlu yıldırım hariç)
+	if (P && !P.round) ok(t.sec >= FLOOR, `${q.id}: süre ${t.sec} rakip standardının (${FLOOR} sn) altında`);
 	ok(t.fast > 0 && t.fast < t.sec, `${q.id}: hızlı oyuncu süresi ${t.fast} (bütçe ${t.sec})`);
 	ok(t.fast <= t.med && t.med <= t.slow, `${q.id}: oyuncu sırası bozuk (hızlı ${t.fast}, ortanca ${t.med}, yavaş ${t.slow})`);
 	ok([t.wait, t.look, t.read, t.words, t.think, t.act].every(Number.isFinite), `${q.id}: bileşen NaN`);
 	// kırmızı uyarı: ortanca oyuncu son HOT sn başlamadan, yavaş oyuncu süre dolmadan (en az PAY kala) biter
 	// (yuvarlama payı 0,5 sn; tipin üst sınırına kırpılan uç sorular ve sabit turlu yıldırım hariç)
-	if (P && !P.round && t.sec < P.max) {
+	if (P && !P.round && t.sec < L.hi) {
 		ok(t.med + HOT <= t.sec + 0.5, `${q.id}: ortanca oyuncu (${t.med} sn) kırmızı uyarıya kalıyor (bütçe ${t.sec})`);
 		ok(t.slow + SLACK <= t.sec + 0.5, `${q.id}: yavaş oyuncu (${t.slow} sn) ${SLACK} sn pay bırakamıyor (bütçe ${t.sec})`);
 	}
@@ -129,8 +132,8 @@ for (const q of SET) {
 }
 
 // ---------------------------------------------------------------- 2) dağılım: önce → sonra
-console.log(`\n2) Tip başına süre (sn): v0.6 → v0.7   (okuma: hızlı ${PLAYERS.fast.cps}, ortanca ${PLAYERS.med.cps}, yavaş ${PLAYERS.slow.cps} harf/sn + kelime başına ${PLAYERS.fast.word}/${PLAYERS.med.word}/${PLAYERS.slow.word} sn; kırmızı uyarı son ${HOT} sn; yavaşa pay ${SLACK} sn)`);
-console.log('  tip       adet │ v0.6 en az ortanca en çok  ort. │ v0.7 en az  %10 ortanca  %90 en çok  ort. │ ortanca oyuncu  sınırda');
+console.log(`\n2) Tip başına süre (sn): v0.7 → v0.8   (okuma: hızlı ${PLAYERS.fast.cps}, ortanca ${PLAYERS.med.cps}, yavaş ${PLAYERS.slow.cps} harf/sn + kelime başına ${PLAYERS.fast.word}/${PLAYERS.med.word}/${PLAYERS.slow.word} sn; kırmızı uyarı son ${HOT} sn; yavaşa pay ${SLACK} sn)`);
+console.log('  tip       adet │ v0.7 en az ortanca en çok  ort. │ v0.8 en az  %10 ortanca  %90 en çok  ort. │ ortanca oyuncu  sınırda');
 const byType = {};
 for (const r of rows) (byType[r.q.type] ||= []).push(r);
 for (const [type, list] of Object.entries(byType)) {
@@ -139,9 +142,10 @@ for (const [type, list] of Object.entries(byType)) {
 	const mean = s.reduce((a, b) => a + b, 0) / s.length;
 	const meds = list.map((r) => r.med).sort((a, b) => a - b);
 	const P = PROFILE[type];
-	const lo = list.filter((r) => r.raw < P.min).length;
-	const hi = list.filter((r) => r.raw > P.max).length;
-	const o = V06[type] || ['?', '?', '?', '?'];
+	const L = limits(type);
+	const lo = list.filter((r) => r.raw < L.lo).length;
+	const hi = list.filter((r) => r.raw > L.hi).length;
+	const o = V07[type] || ['?', '?', '?', '?'];
 	const pad = (x, n) => String(x).padStart(n);
 	console.log(
 		`  ${type.padEnd(8)} ${pad(list.length, 5)} │ ${pad(o[0], 10)} ${pad(o[1], 7)} ${pad(o[2], 6)} ${pad(o[3], 5)} │ ${pad(s[0], 10)} ${pad(at(0.1), 4)} ${pad(at(0.5), 7)} ${pad(at(0.9), 4)} ${pad(s[s.length - 1], 6)} ${pad(mean.toFixed(1), 5)} │ ${pad(meds[Math.floor(meds.length / 2)].toFixed(1), 9)} sn   ${lo}/${hi}`,
@@ -153,7 +157,7 @@ for (const [type, list] of Object.entries(byType)) {
 // ---------------------------------------------------------------- 3) uçlar (insan gözüyle)
 console.log('\n3) En kısa ve en uzun süreler');
 const sorted = rows.filter((r) => !r.q.id.startsWith('y-')).sort((a, b) => a.raw - b.raw || a.q.id.localeCompare(b.q.id));
-const line = (r) => `  ${String(r.sec).padStart(2)} sn (v0.6 ort. ${String(V06[r.q.type]?.[1] ?? '?').padStart(2)})  ${r.q.type.padEnd(7)} z${r.q.diff}${r.q.dir === 'desc' ? '↓' : ' '} ${text(r.q)}`;
+const line = (r) => `  ${String(r.sec).padStart(2)} sn (v0.7 ort. ${String(V07[r.q.type]?.[1] ?? '?').padStart(2)})  ${r.q.type.padEnd(7)} z${r.q.diff}${r.q.dir === 'desc' ? '↓' : ' '} ${text(r.q)}`;
 console.log(' en kısa:');
 for (const r of sorted.slice(0, 6)) console.log(line(r));
 console.log(' en uzun:');
@@ -245,7 +249,13 @@ grows('resimli yazı', (w) => ({ type: 'img', diff: 2, q: 'Bu ne?', img: 'x', mo
 		const s = byType[t].map((r) => r.sec).sort((a, b) => a - b);
 		return s[Math.floor(s.length / 2)];
 	};
-	ok(med('tf') < med('choice') && med('hilo') < med('choice'), 'doğru/yanlış ve karşılaştır testten kısa olmalı');
+	// (v0.8: kısa tiplerin çoğu rakip tabanında, FLOOR; sıra kırpma öncesi ham bütçede denetlenir)
+	const raw = (t) => {
+		const s = byType[t].map((r) => r.raw).sort((a, b) => a - b);
+		return s[Math.floor(s.length / 2)];
+	};
+	ok(med('tf') <= med('choice') && med('hilo') <= med('choice'), 'doğru/yanlış ve karşılaştır testten uzun olmamalı');
+	ok(raw('tf') < raw('choice') && raw('hilo') < raw('choice'), 'ham bütçede doğru/yanlış ve karşılaştır testten kısa olmalı');
 	ok(med('choice') < med('order') && med('choice') < med('match') && med('choice') < med('hang'), 'test, sırala/eşleştir/adam asmacadan kısa olmalı');
 	console.log(`  ortancalar     doğru/yanlış ${med('tf')}, karşılaştır ${med('hilo')}, test ${med('choice')}, eşleştir ${med('match')}, adam asmaca ${med('hang')}, sırala ${med('order')}`);
 }
@@ -281,7 +291,8 @@ for (const [type, s] of Object.entries(botStat)) {
 	const mean = s.sum / s.n;
 	console.log(`  ${type.padEnd(8)} ort. %${Math.round(mean * 100)}  en az %${Math.round(s.min * 100)} (${s.abs.toFixed(1)} sn)  en çok %${Math.round(s.max * 100)}`);
 	if (type !== 'blitz') {
-		ok(mean > 0.3 && mean < 0.75, `${type}: bot ortalama süresi bütçenin %${Math.round(mean * 100)}'i`);
+		// (v0.8: bütçe cömert; bot gerçek oyuncu hızında cevaplar, bütçenin daha küçük payını kullanır)
+		ok(mean > 0.15 && mean < 0.75, `${type}: bot ortalama süresi bütçenin %${Math.round(mean * 100)}'i`);
 		ok(s.max <= 0.85 + 1e-9, `${type}: bot süreyi zorluyor (%${Math.round(s.max * 100)})`);
 	}
 }

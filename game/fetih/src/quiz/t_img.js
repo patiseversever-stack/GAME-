@@ -49,7 +49,7 @@ const LEVELS = [8, 11, 15, 21, 30, 44, 64, 96, 148, 230, 360, 480];
 const ease = (x) => 1 - Math.pow(1 - x, 2.2);
 
 export const img = {
-	time: 15,
+	time: 22,
 	label: 'Resimli',
 	kind: 'exact',
 	prepare(q, R) {

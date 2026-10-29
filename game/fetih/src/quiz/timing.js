@@ -54,6 +54,13 @@
 export const HOT = 5;
 /** Yavaş-rahat oyuncunun süre bitmeden kalan en az payı (sn). */
 export const SLACK = 1.5;
+/**
+ * Cömertlik (kullanıcı kararı, v0.8): hesaplanan bütçe %20 uzatılır (okumak, düşünmek ve cevaplamak için rahat
+ * pay; maç süresi ikincil) ve hiçbir soru rakiplerin standart süresinin altına inmez (Trivia Crack her soruda 20 sn,
+ * Kahoot varsayılanı 20 sn). Yıldırım turu (sabit tur) bu kurala girmez.
+ */
+export const GENEROUS = 1.2;
+export const FLOOR = 20;
 
 /**
  * Oyuncu profilleri: okuma (harf/sn ve kelime başına sabit bakış, sn) ve bakış, düşünme, giriş çarpanları
@@ -97,6 +104,14 @@ export const PROFILE = {
 };
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
+
+/** Tipin geçerli süre sınırları (sn): profil sınırları cömertlikle kayar, alt sınır en az FLOOR (sabit tur hariç). */
+export function limits(type) {
+	const P = PROFILE[type] || { min: 8, max: 30 };
+	if (P.round) return { lo: P.min, hi: P.max };
+	const lo = Math.max(P.min, FLOOR);
+	return { lo, hi: Math.max(Math.round(P.max * GENEROUS), lo) };
+}
 /** Kod noktası sayısı (UTF-16 birimi değil: sunucu dili ne olursa olsun aynı sonuç). */
 function len(s) {
 	let n = 0;
@@ -288,8 +303,9 @@ export function timing(q) {
 	const fast = finish(p, PLAYERS.fast);
 	const med = finish(p, PLAYERS.med);
 	const slow = finish(p, PLAYERS.slow);
-	const raw = P.round ? med : Math.max(slow + SLACK, med + HOT);
-	const sec = Math.round(clamp(raw, P.min, P.max));
+	const raw = P.round ? med : Math.max(slow + SLACK, med + HOT) * GENEROUS;
+	const L = limits(q.type);
+	const sec = Math.round(clamp(raw, L.lo, L.hi));
 	const out = {
 		sec,
 		fast: r1(Math.min(fast, sec * 0.6)),
