@@ -1457,8 +1457,8 @@ void main() {
 	c *= 1.0 + sel * sp * 0.05 * pulse;
 	// g\xFCnd\xFCze \xE7\u0131kmayan se\xE7im (ba\u015Fkent: uSelLit d\xFC\u015F\xFCk): b\xFCt\xFCn harita koyu, premium gece (g\xF6lgede renk yar\u0131
 	// karar\u0131r, pencere \u0131\u015F\u0131klar\u0131 se\xE7ilir); se\xE7ilemeyen bo\u015F il (rakip ba\u015Fkente kom\u015Fu) belirgin bi\xE7imde daha koyu.
-	// Rakip ba\u015Fkent (sahipli il) kararmaz: kendi renginde se\xE7ilir
-	c *= 1.0 - uSelOn * (1.0 - uSelLit) * uNight.x * (0.5 + 0.38 * (1.0 - sel) * uSelAny) * (1.0 - ownedK);
+	// Rakip ba\u015Fkent (sahipli il) yar\u0131 yar\u0131ya karar\u0131r: tam kendi renginde de\u011Fil ama koyu bo\u015F illerden ayr\u0131 se\xE7ilir
+	c *= 1.0 - uSelOn * (1.0 - uSelLit) * uNight.x * (0.5 + 0.38 * (1.0 - sel) * uSelAny) * (1.0 - 0.55 * ownedK);
 	// eski parlama (fx: kale ini\u015Fi, fetih an\u0131): yaln\u0131zca hafif ayd\u0131nlanma, kenar \u0131\u015F\u0131mas\u0131 yok
 	vec3 gcol = ownedK > 0.5 ? ownCol : vec3(1.0, 0.95, 0.85);
 	c = c * (1.0 + 0.14 * glow * sp * (skirt ? 0.0 : 1.0)) + gcol * glow * sp * (skirt ? 0.0 : 0.035 * (0.7 + 0.3 * sin(uTime * 6.0 + vPid * 0.7)));
