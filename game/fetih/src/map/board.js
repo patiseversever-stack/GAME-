@@ -124,7 +124,7 @@ vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float sno
 	float n3 = f3.g;
 	float slope = 1.0 - N.y;
 	float green = clamp(bio.y + (n1 - 0.5) * 0.3, 0.0, 1.0);
-	vec3 dry = mix(${C('#bea27c')}, ${C('#d6c299')}, n2);
+	vec3 dry = mix(${C('#c4a676')}, ${C('#dbc490')}, n2);
 	vec3 lush = mix(${C('#3a8638')}, ${C('#5daa48')}, n2 * 0.8 + n3 * 0.2);
 	vec3 mid = mix(${C('#76a250')}, ${C('#91b25c')}, n2);
 	vec3 c = green < 0.5 ? mix(dry, mid, smoothstep(0.18, 0.5, green)) : mix(mid, lush, smoothstep(0.5, 0.85, green));
@@ -143,10 +143,10 @@ vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float sno
 	float fade = 1.0 - smoothstep(0.3, 0.75, fpx);
 	float r = hash12(cell + zone * 17.0);
 	// buğday, taze ekin, nadas, sürülmüş toprak, ayçiçeği: sıcak ve yeşil parseller dengeli
-	vec3 fc = c * (r < 0.2 ? vec3(1.12, 1.04, 0.72) : r < 0.42 ? vec3(0.78, 1.0, 0.66) : r < 0.6 ? vec3(1.05, 1.0, 0.92) : r < 0.8 ? vec3(0.92, 0.8, 0.66) : vec3(1.1, 0.96, 0.6));
+	vec3 fc = c * (r < 0.2 ? vec3(1.16, 1.06, 0.62) : r < 0.4 ? vec3(0.6, 0.94, 0.48) : r < 0.55 ? vec3(1.04, 1.0, 0.9) : r < 0.75 ? vec3(0.84, 0.68, 0.54) : vec3(1.12, 1.06, 0.82));
 	float edge = min(min(fr.x, 1.0 - fr.x), min(fr.y, 1.0 - fr.y));
-	fc *= mix(0.86, 1.0, smoothstep(0.0, 0.05 + fpx, edge));
-	c = mix(c, fc, farm * fade * 0.8);
+	fc *= mix(0.8, 1.0, smoothstep(0.0, 0.05 + fpx, edge));
+	c = mix(c, fc, farm * fade * 0.92);
 #else
 	// q=0: parsel yerine ucuz yamalı ekin lekeleri (hazır gürültüden)
 	float pr = f3.r;

@@ -251,8 +251,8 @@ function grounds(k, r, pave, { rz = 1, ring = 0.72, ox = 0, oz = 0, jit = 0.05, 
 	const seg = Math.max(14, Math.round(26 * k.seg));
 	k.push().move(ox, 0, oz);
 	k.color(pave).mat(M.GROUND);
-	k.drape(ringGeo(0, r * ring * 0.55, rz, 0.004, 0.004, seg), hf);
-	k.drape(ringGeo(r * ring * 0.55, r * ring, rz, 0.004, 0.003, seg, jit * 0.5, 3), hf);
+	k.drape(ringGeo(0, r * ring * 0.55, rz, 0.004, 0.004, seg, jit, 3), hf);
+	k.drape(ringGeo(r * ring * 0.55, r * ring, rz, 0.004, 0.003, seg, jit, 3), hf);
 	const t = tone || k.tone;
 	k.raw(t.r, t.g, t.b).mat(M.GROUND);
 	k.drape(ringGeo(r * ring, r * (ring + 1) / 2, rz, 0.003, 0.0, seg, jit, 3), hf);
@@ -448,9 +448,9 @@ const B = {
 		const T3 = '#b9aa8e';
 		grounds(k, 0.62, '#d8cdb6', { rz: 1.42, oz: 0.2, ring: 0.8 });
 		// Tören Meydanı: kilim desenli taş döşeme
-		const KIL = ['#ddd2bb', '#a8473c', '#e9e0cd', '#5e4c43'];
-		const nx = 9;
-		const nz = 6;
+		const KIL = ['#dcd0b8', '#b97c66', '#e8dfcc', '#8c7867'];
+		const nx = 13;
+		const nz = 8;
 		const x0 = -0.36;
 		const z0 = -0.1;
 		const cw = 0.72 / nx;
@@ -458,8 +458,9 @@ const B = {
 		k.color(T2).box(0.76, 0.03, 0.48, 0, -0.024, z0 + 0.22);
 		for (let i = 0; i < nx; i++)
 			for (let j = 0; j < nz; j++) {
-				const v = (Math.abs(i - 4) + Math.abs(j * 1.5 - 3.75)) | 0;
-				const col = v % 4 === 0 ? KIL[1] : v % 4 === 2 ? KIL[3] : (i + j) % 2 ? KIL[0] : KIL[2];
+				const v = (Math.abs(i - 6) + Math.abs(j - 3.5) * 1.2) | 0;
+				const edge = i === 0 || j === 0 || i === nx - 1 || j === nz - 1;
+				const col = edge ? KIL[3] : v % 3 === 0 ? KIL[1] : v % 3 === 1 ? KIL[2] : KIL[0];
 				k.color(col).mat(M.GROUND).add(new THREE.PlaneGeometry(cw * 0.96, cd * 0.96).rotateX(-Math.PI / 2).translate(x0 + cw * (i + 0.5), 0.0075, z0 + cd * (j + 0.5)));
 			}
 		k.mat(0);
@@ -563,7 +564,7 @@ const B = {
 			k.smooth(true).grad('#cc9a79', '#f2e2c4', 0, h).lathe(pts, 9, x, 0, z).smooth(false);
 			if (cap) {
 				const c = [[0.0, -0.004], [r * 1.0, -0.004], [r * 1.28, 0.014], [r * 1.12, 0.036], [r * 0.62, 0.056], [0, 0.062]];
-				k.smooth(true).color(R() < 0.5 ? '#7a6152' : '#685446').lathe(c, 9, x, h * 0.92, z).smooth(false);
+				k.smooth(true).color(R() < 0.5 ? '#8a7061' : '#7a6556').lathe(c, 9, x, h * 0.92, z).smooth(false);
 			}
 			// kayaya oyulmuş kapı ve pencere (ön yüz)
 			k.color(DARK);
