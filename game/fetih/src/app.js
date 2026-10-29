@@ -258,7 +258,7 @@ export class App {
 		this.cam.setAspect(w / h);
 		this.G.uRes.value.x = Math.round(w * pr);
 		this.G.uRes.value.y = Math.round(h * pr);
-		this.post?.setSize(this.G.uRes.value.x, this.G.uRes.value.y);
+		this.post?.setSize(this.G.uRes.value.x, this.G.uRes.value.y, pr);
 	}
 
 	start() {
@@ -309,6 +309,8 @@ export class App {
 		const r = this.renderer;
 		this.shadow.place(this.cam.target, this.G.uSunDir.value, this.cam.dist);
 		this.shadow.render(r);
+		// okunurluk: gündüz çok hafif alan derinliği, gece odağında (seçim, düello, fetih) hiç bulanıklık ve geçiş yok
+		this.post?.focus(0.52, 1 - this.G.uNight.value.x);
 		if (this.post?.render(r, this.scene, this.camera)) return;
 		r.setRenderTarget(null);
 		r.clear();

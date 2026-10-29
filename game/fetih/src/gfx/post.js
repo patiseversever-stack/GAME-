@@ -3,11 +3,15 @@
 // Sahne çoklu örneklemeli (MSAA) bir hedefe çizilir, sonra ekranın üst ve alt kenarı yumuşakça
 // bulanıklaşır; orta bant keskin kalır (masadaki maketi yakından fotoğraflamak gibi). Bulanıklık
 // 12 örnekli altın açılı disk; keskin bantta tek örnek (pikselin çoğu ucuz yoldan geçer).
+// v0.4: okunurluk önce. Bulanıklık hafif (kenarda en çok ~2,5 piksel), keskin bant geniş; gece odağında
+// (seçim, düello, fetih) tamamen kapanır ve geçiş hiç çalışmaz (strength 0 → render() false).
+// Parlama (bloom) kaldırıldı: aydınlık iller çevresine ışık saçmaz.
 // Hedef açılışta kurulur, shader açılışta derlenir. q=0'da hiç çalışmaz (render() false döner).
 //
 // Bağlantı (app.js):
 //   this.post = new TiltShift(this.renderer, R.tier);                 // init
-//   this.post?.setSize(Math.round(w * pr), Math.round(h * pr));       // resize
+//   this.post?.setSize(Math.round(w * pr), Math.round(h * pr), pr);   // resize
+//   this.post?.focus(0.52, 1 - gece);                                 // her karede (gece: 0 → geçiş çalışmaz)
 //   if (!this.post?.render(r, this.scene, this.camera)) { …eski çizim… } // render
 
 import * as THREE from 'three';
@@ -23,29 +27,16 @@ const FS = /* glsl */ `
 uniform sampler2D uTex;
 uniform vec2 uPx;      // 1 / çözünürlük
 uniform vec4 uTilt;    // x odak bandı merkezi (0..1, aşağıdan), y keskin yarı genişlik, z geçiş, w en büyük yarıçap (piksel)
-uniform vec4 uNight;   // gece odağı (env.js): x gece miktarı
-uniform float uBloom;  // gece ışıltısı gücü (0: kapalı)
 varying vec2 vUv;
-// gece ışıltısı (bloom): aynı geçişte, sahne dokusunun mip zincirinden geniş ve yumuşak hale.
-// Ayrı bulanıklık geçişi yok; mip'ler çizim sonunda donanımda üretilir (yalnızca gecede).
-vec3 glow() {
-	vec3 b = textureLod(uTex, vUv, 3.0).rgb * 0.25 + textureLod(uTex, vUv, 4.5).rgb * 0.4 + textureLod(uTex, vUv, 6.0).rgb * 0.35;
-	float l = dot(b, vec3(0.3, 0.59, 0.11));
-	// göz uyumu: kare zaten aydınlıksa (yakın çekimde gündüz ışığındaki il) ışıltı söner, patlamasın
-	float avg = dot(textureLod(uTex, vec2(0.5), 9.0).rgb, vec3(0.3, 0.59, 0.11));
-	return b * b * smoothstep(0.3, 0.85, l) * smoothstep(0.62, 0.32, avg) * vec3(1.0, 0.84, 0.66);
-}
 void main() {
 	float d = abs(vUv.y - uTilt.x);
 	float k = smoothstep(uTilt.y, uTilt.y + uTilt.z, d);
 	vec4 c = textureLod(uTex, vUv, 0.0);
-	float bk = uBloom * uNight.x;
 	if (k < 0.02) {
-		if (bk > 0.001) c.rgb += glow() * bk;
 		gl_FragColor = c;
 		return;
 	}
-	float r = k * uTilt.w * (1.0 + 0.7 * uNight.x); // gecede alan derinliği biraz daha yumuşak (sinematik)
+	float r = k * uTilt.w;
 	vec3 acc = c.rgb;
 	float wsum = 1.0;
 	// altın açılı disk (12 örnek)
@@ -60,10 +51,12 @@ void main() {
 		acc += s * w;
 		wsum += w;
 	}
-	vec3 o = acc / wsum;
-	if (bk > 0.001) o += glow() * bk;
-	gl_FragColor = vec4(o, 1.0);
+	gl_FragColor = vec4(acc / wsum, 1.0);
 }`;
+
+// kenarda en büyük bulanıklık yarıçapı (css pikseli) ve keskin bant: okunurluk için hafif (v0.4)
+const BLUR_PX = 2.4;
+const SHARP = 0.3; // ekran yüksekliğinin ortasında bu yarı genişlik kadar tam keskin
 
 export class TiltShift {
 	constructor(renderer, tier, G = null) {
@@ -77,21 +70,17 @@ export class TiltShift {
 			type: THREE.UnsignedByteType,
 			depthBuffer: true,
 			stencilBuffer: false,
-			// gece ışıltısı için mip zinciri (yalnızca gecede her kare üretilir; gündüz bayat ama okunmaz)
-			generateMipmaps: true,
-			minFilter: THREE.LinearMipmapLinearFilter,
+			generateMipmaps: false,
+			minFilter: THREE.LinearFilter,
 			magFilter: THREE.LinearFilter,
 		});
 		this.rt.texture.colorSpace = THREE.NoColorSpace;
 		this.uniforms = {
 			uTex: { value: this.rt.texture },
 			uPx: { value: new THREE.Vector2(1 / 4, 1 / 4) },
-			// odak bandı: ekranın ortası; kenarda en çok ~7 piksel (yüksek çözünürlükte ölçeklenir)
-			uTilt: { value: new THREE.Vector4(0.52, 0.24, 0.3, 5) },
-			uNight: G ? G.uNight : { value: new THREE.Vector4() },
-			uBloom: { value: 0.3 },
+			// odak bandı: ekranın ortası geniş ve keskin; kenarda en çok ~2,4 css pikseli bulanıklık
+			uTilt: { value: new THREE.Vector4(0.52, SHARP, 0.34, BLUR_PX) },
 		};
-		this._mipFresh = 0; // yeniden boyutlanınca mip'ler bir kez üretilsin (doku eksiksiz kalsın)
 		const geo = new THREE.BufferGeometry();
 		geo.setAttribute('position', new THREE.Float32BufferAttribute([-1, -1, 0, 3, -1, 0, -1, 3, 0], 3));
 		this.mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS, uniforms: this.uniforms, depthTest: false, depthWrite: false });
@@ -102,29 +91,38 @@ export class TiltShift {
 		this.cam = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 		renderer.compile(this.scene, this.cam);
 		this.strength = 1;
+		this._dpr = 1;
 	}
 
-	/** Çizim çözünürlüğü (cihaz pikseli). */
-	setSize(w, h) {
+	/** Çizim çözünürlüğü (cihaz pikseli); dpr: cihaz pikseli / css pikseli (yarıçap css pikseline göre). */
+	setSize(w, h, dpr = 1) {
 		if (!this.enabled) return;
 		this.rt.setSize(Math.max(1, w), Math.max(1, h));
-		this._mipFresh = 2;
+		this._dpr = dpr;
 		this.uniforms.uPx.value.set(1 / Math.max(1, w), 1 / Math.max(1, h));
-		this.uniforms.uTilt.value.w = 5 * Math.max(1, h / 900) * this.strength;
+		this._radius();
 	}
 
-	/** Odak bandının dikey yeri (0 alt, 1 üst) ve bulanıklık gücü (0 kapalı). */
+	_radius() {
+		this.uniforms.uTilt.value.w = BLUR_PX * Math.max(1, this._dpr) * this.strength;
+	}
+
+	/**
+	 * Odak bandının dikey yeri (0 alt, 1 üst) ve bulanıklık gücü (0 kapalı: geçiş hiç çalışmaz).
+	 * Her karede çağrılabilir (yalnızca uniform yazar).
+	 */
 	focus(y = 0.52, strength = 1) {
 		if (!this.enabled) return;
 		this.uniforms.uTilt.value.x = y;
 		this.strength = strength;
-		this.uniforms.uTilt.value.w = 5 * Math.max(1, this.rt.height / 900) * strength;
+		this._radius();
 	}
 
 	/** Sahneyi çizer; tilt-shift kapalıysa false döner (çağıran eski yoldan çizer). */
 	render(renderer, scene, camera) {
-		if (!this.enabled || this.strength <= 0) return false;
-		// üst katman (il adları, userData.overlay): bulanıklaşmasın, en son ekrana çizilir
+		// çok hafif bulanıklık (yarım pikselden az) göze görünmez: geçişi hiç çalıştırma
+		if (!this.enabled || this.uniforms.uTilt.value.w < 0.5) return false;
+		// üst katman (il adları, oklar; userData.overlay): bulanıklaşmasın, en son ekrana çizilir
 		if (this._scene !== scene) {
 			this._scene = scene;
 			this.overlays = [];
@@ -138,9 +136,6 @@ export class TiltShift {
 			ov[i].userData._vis = ov[i].visible;
 			ov[i].visible = false;
 		}
-		const night = this.uniforms.uNight.value.x > 0.001;
-		this.rt.texture.generateMipmaps = night || this._mipFresh > 0;
-		if (this._mipFresh > 0) this._mipFresh--;
 		renderer.setRenderTarget(this.rt);
 		renderer.clear();
 		renderer.render(scene, camera);

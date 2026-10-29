@@ -38,7 +38,7 @@ export const REGIONS = {
 	guneydogu: { name: 'Güneydoğu Anadolu', color: 0xe39a5c },
 };
 
-const SEL_LIFT = 0.36; // seçilebilir il bu kadar kalkar
+const SEL_LIFT = 0.26; // seçilebilir il bu kadar kalkar (hafif: alçak kaide)
 const TOP = 0.5; // tipik kara yüksekliği (eski kullanım için; doğrusu heightAt)
 const f = (v) => v.toFixed(4);
 
@@ -87,7 +87,9 @@ uniform sampler2D uWater;
 uniform sampler2D uNoise;
 uniform vec4 uFBox;
 uniform vec2 uFRes;
-uniform float uMe; // insan oyuncunun kimliği (gecede kendi toprağı biraz daha okunur)
+uniform float uMe; // insan oyuncunun kimliği (gecede kendi toprağı aydınlık ve net)
+uniform float uAct; // sırası gelen oyuncu (bot seçerken onun toprağı da net; -5: yok)
+uniform vec4 uTune; // geliştirme ayarı (varsayılan 1,1,1,1)
 varying vec3 vW;
 varying vec3 vN;
 varying vec4 vBio;
@@ -193,22 +195,27 @@ void main() {
 	// ışıkta beyaza/pembeye kaçmasın diye albedo orta tonda tutulur
 	// (orman tabanı gibi koyu yerler sahip renginde kara leke olmasın: parlaklık farkı sınırlı)
 	vec3 tint = ownCol * (0.62 + 0.65 * lum);
-	// gece, ışıkta olmayan il: başkalarının toprağı yalnızca hafif renk tonu (ay ışıklı arazi okunur),
-	// oyuncunun kendi toprağı biraz daha kendi renginde
+	// gece (v0.4): kimin toprağı olduğu bir bakışta okunur. Oyuncunun kendisi (uMe) ve sırası gelen oyuncu
+	// (uAct) tam renkte ve aydınlık, başkalarınınki daha sönük ama renk tonu belli (kahverengi leke değil)
 	float mineE = abs(ownerId - uMe) < 0.5 ? 1.0 : 0.0;
-	float nkE = uNight.x * (1.0 - vFx.z);
-	float ownW = ownedK * (0.9 - snowK * 0.3) * (1.0 - nkE * mix(0.5, 0.2, mineE));
+	float hiE = max(mineE, abs(ownerId - uAct) < 0.5 ? 1.0 : 0.0);
+	float sel = vFx.z;
+	float nkE = uNight.x * (1.0 - sel);
+	float ownW = ownedK * (0.9 - snowK * 0.3) * (1.0 - nkE * mix(0.26, 0.0, hiE));
 	alb = mix(alb, tint, ownW);
+	// seçilebilir tarafsız il: nötr krem (sarı sahiplerle ya da altın çizgiyle karışmasın), arazi ışığı kalır
+	float freeSel = sel * (1.0 - ownedK);
+	alb = mix(alb, vec3(0.84, 0.8, 0.7) * (0.3 + 0.95 * lum), freeSel * 0.85);
 	gOwn = ownW;
 
 	// --- sınırlar
-	float sel = vFx.z;
 	float glow = vFx.y;
-	float pulse = 0.62 + 0.38 * sin(uTime * 5.2 + vPid * 1.7);
+	float pulse = 0.5 + 0.5 * sin(uTime * 3.6 + vPid * 1.3); // yumuşak nabız (0..1)
 	float wG = max(0.03, 1.0 * px);
 	float groove = lineAA(d, wG, px) * (nb > 254.5 ? 0.3 : 1.0);
 	float ownEdge = ownedK * (1.0 - same);
-	float wBand = max(0.08, 2.3 * px);
+	// gecede oyuncunun (ve sırası gelenin) toprağının dış çizgisi daha kalın ve keskin
+	float wBand = max(0.08, mix(2.3, 3.3, hiE * uNight.x) * px);
 	float band = lineAA(d, wBand, px) * ownEdge;
 	float inner = exp(-d / 0.42) * ownEdge;
 	// sahipli ilin dış sınırı: içe doğru renk ışıltısı + kalın parlak şerit + ince koyu dış çizgi
@@ -250,10 +257,7 @@ void main() {
 	}
 
 	float sh = shadowAt(vW, N);
-	// gece odağı: seçilebilir il (ve komşuya taşan hale) gündüz ışığında kalır
-	float hw = max(0.2, 5.0 * px);
-	float halo = (1.0 - sel) * nbSel * exp(-d / hw) * uSelOn;
-	gLit = sel; // hale komşuyu aydınlatmaz: yalnızca seçilebilir il ışıkta
+	gLit = sel; // gece odağı: yalnızca seçilebilir il gündüz ışığında kalır (komşuya hale yok)
 	float nk = nightK();
 	vec3 c;
 	if (water > 0.01) {
@@ -287,48 +291,50 @@ void main() {
 		c = shade(alb, N, V, ao, sh, gloss, 0.35);
 	}
 
-	// gece: sahiplerin sınırları kendi renginde ışır (karanlıkta toprak okunur)
-	// (sakin: başkalarınınki ince, oyuncunun kendi toprağı biraz daha belirgin)
-	if (nk > 0.001) {
-		float mine = abs(ownerId - uMe) < 0.5 ? 1.0 : 0.0;
-		c += ownCol * (band * mix(0.28, 0.55, mine) + inner * mix(0.02, 0.06, mine)) * nk * (skirt ? 0.4 : 1.0);
+	// gece (v0.4): sahipli toprak kendi renginde aydınlık. Oyuncunun (ve sırası gelenin) toprağı parlak ve net,
+	// başkalarınınki sönük ama rengi belli. Parlama yok: renk, ay ışığıyla verilen kabartmaya oturur.
+	if (nk > 0.001 && ownedK > 0.01 && !skirt && water < 0.5) {
+		float dm = clamp(dot(N, N_MOON) * 0.5 + 0.5, 0.0, 1.0);
+		float yel = smoothstep(0.34, 0.62, dot(ownCol, vec3(0.3, 0.59, 0.11)));
+		float boost = 1.0 + 1.1 * yel; // açık renkler (sarı) gecede daha çok ışık ister, yoksa kahverengi okunur
+		float E = mix(0.03, 0.095, hiE) * boost * uTune.x;
+		float Dd = mix(0.1, 0.3, hiE) * boost * uTune.y;
+		vec3 Lc = ownCol * (E + Dd * dm * dm * mix(0.55, 1.0, sh)) * (0.62 + 0.8 * lum);
+		c = mix(c, Lc, ownedK * nk * 0.92);
 	}
-	// --- seçim: altın dış hat, iç ışıltı, komşuya taşan hale
-	vec3 gold = vec3(1.0, 0.58, 0.06);
-	float wSel = max(0.13, 4.2 * px);
-	float selBand = lineAA(d, wSel, px) * sel;
-	float selCore = lineAA(d, wSel * 0.45, px) * sel;
-	float selIn = exp(-d / 0.55) * sel;
-	// gece ışık havuzunun dışında süsler de söner (yakın çekimde kenarlar geceye karışsın)
-	float sp = mix(1.0, spotK(), uNight.x);
-	float selL = sel * sp;
-	c *= 1.0 + selL * (0.12 + 0.04 * uNight.x);
-	// gece adası: kalkık ilin duvarı alttan altın ışıkla yanar
-	// gece adasının duvarı gölgede kalır (yakın çekimde soluk, çizgili falez parlamasın), üst kenarı altın ışıkla yanar
-	if (skirt) c *= mix(1.0, 0.42, uNight.x * sel * smoothstep(0.03, 0.12, vDepth));
-	if (skirt) c += gold * selL * uNight.x * exp(-vDepth * 7.0) * (0.3 + 0.15 * pulse);
-	float bk = 0.45 + 0.55 * sp; // dış hat havuz dışında da seçilir (daha sönük)
-	c = mix(c, gold * (1.5 + 0.7 * pulse), selBand * bk * (0.8 + 0.2 * pulse));
-	c = mix(c, mix(vec3(1.0, 0.96, 0.82), vec3(1.0, 0.8, 0.42), uNight.x) * (1.6 + 0.6 * pulse), selCore * bk * mix(0.8, 0.6, uNight.x));
-	// altın şeridin iç kenarında ince koyu çizgi: sarı/turuncu sahipte de çerçeve ayrı okunur (mine işi)
-	c = mix(c, vec3(0.08, 0.04, 0.0), lineAA(abs(d - wSel * 1.06), max(0.012, 0.6 * px), px) * sel * bk * 0.7 * uNight.x);
-	// iki seçilebilir il yan yana: aralarında ince koyu yarık (iki altın şerit arasında), iller ayrı okunur
-	float split = sel * nbSel * lineAA(d, max(0.03, 1.7 * px), px);
-	c = mix(c, vec3(0.05, 0.03, 0.004), split * 0.9);
-	// iç ışıltı: hafif altın (karışım yok: mavi il altınla soluklaşıp beyaza yanmasın)
-	c += gold * selIn * sp * 0.16 * pulse;
-	c += gold * halo * sp * mix(0.9, 0.55, uNight.x) * (0.55 + 0.45 * pulse);
-	// eski parlama (fx): nabız gibi ışır (gecede ve havuz dışında kısık: hedef il patlamasın)
-	vec3 gcol = ownedK > 0.5 ? ownCol * 1.4 + 0.1 : vec3(1.0, 0.88, 0.55);
-	c += gcol * glow * sp * (1.0 - 0.5 * uNight.x) * (skirt ? 0.2 : 1.0) * (0.35 + 0.35 * sin(uTime * 6.0 + vPid * 0.7)) * (0.35 + lineAA(d, wSel, px) * 0.9);
+	// gece: sahiplerin dış çizgisi kendi renginde ışır; tüm il sınırlarında ince soluk çizgi (harita yapısı okunur)
+	if (nk > 0.001) {
+		c += ownCol * (band * mix(0.3, 0.6, hiE) + inner * mix(0.02, 0.07, hiE)) * nk * (skirt ? 0.4 : 1.0);
+		float hair = lineAA(d, max(0.02, 0.85 * px), px) * (skirt ? 0.0 : 1.0) * (nb > 254.5 ? 0.0 : 1.0);
+		c += vec3(0.3, 0.4, 0.62) * hair * nk * (1.0 - 0.7 * ownedK) * 0.13 * uTune.z;
+	}
+	// --- seçim (v0.4): hedef kendi renginde (tarafsızsa krem), temiz beyaz dış hat, yumuşak nabız.
+	// Altın parlama, hale ve iç ışıltı yok: sahip rengi ve sarı arazi çizgiyle karışmaz.
+	float sp = mix(1.0, spotK(), uNight.x); // yakın çekimde ışık havuzunun dışı
+	float bk = 0.55 + 0.45 * sp;
+	vec3 white = vec3(1.0, 0.985, 0.95);
+	float wOut = max(0.055, 2.5 * px) * (0.94 + 0.12 * pulse);
+	float fwD = max(fwidth(vDepth), 1e-4);
+	// yüzeyde: il içinde sınıra bitişik bant; duvarda: üst kenarda ince çizgi
+	float edgeW = skirt ? 1.0 - smoothstep(1.2 * fwD, 2.8 * fwD, vDepth) : lineAA(d, wOut, px);
+	c = mix(c, white * 1.3, edgeW * sel * bk * (0.88 + 0.12 * pulse));
+	// en dışta koyu kıl çizgi: beyaz bant komşu aydınlık ya da açık renkli yüzeyden ayrı okunur
+	c = mix(c, vec3(0.012, 0.016, 0.034), (skirt ? 0.0 : lineAA(d, max(0.024, 0.85 * px), px)) * sel * bk * 0.9);
+	// kalkık ilin duvarı gölgede (beyaz çizgi öne çıksın)
+	if (skirt) c *= mix(1.0, 0.5, uNight.x * sel * smoothstep(0.03, 0.12, vDepth));
+	// yumuşak nabız: dolgu çok hafif parlar
+	c *= 1.0 + sel * sp * 0.035 * pulse;
+	// eski parlama (fx: kale inişi, fetih anı): yalnızca hafif aydınlanma, kenar ışıması yok
+	vec3 gcol = ownedK > 0.5 ? ownCol : vec3(1.0, 0.95, 0.85);
+	c = c * (1.0 + 0.14 * glow * sp * (skirt ? 0.0 : 1.0)) + gcol * glow * sp * (skirt ? 0.0 : 0.035 * (0.7 + 0.3 * sin(uTime * 6.0 + vPid * 0.7)));
 	// boya dalgası cephesi
 	c += (ownCol * 1.8 + vec3(0.9)) * rim * (skirt ? 0.3 : 1.0);
 
 	// seçim kipi ve maç dışı iller sönük
 	c = provDim(c, sel, vFx.w);
 #if TIER > 0
-	// bulut gölgeleri
-	float cs = smoothstep(0.58, 0.82, texture(uNoise, vW.xz / 160.0 + uTime * vec2(0.0019, 0.0008)).a);
+	// bulut gölgeleri (gecede yok: aydınlık hedefte çamurlu leke olmasın)
+	float cs = smoothstep(0.58, 0.82, texture(uNoise, vW.xz / 160.0 + uTime * vec2(0.0019, 0.0008)).a) * (1.0 - uNight.x);
 	c *= 1.0 - cs * 0.16;
 #endif
 	c = applyFog(c, vW);
@@ -573,6 +579,7 @@ export class Board {
 		this.selTo = new Float32Array(N);
 		this.dim = new Float32Array(N);
 		this.dimTo = new Float32Array(N);
+		this.ownerHex = []; // oyuncu kimliği → renk (sRGB onaltılık): oklar, etiketler
 		this.wave = this.provinces.map(() => ({ on: false, t: 0, dur: 1, maxR: 1, flash: 0 }));
 		this.uSelOn = { value: 0 };
 		this.selOnTo = 0;
@@ -605,7 +612,9 @@ export class Board {
 		this.geoStats = { vertices: built.vertices, triangles: built.triangles };
 		const geo = built.geometry;
 		this.uMe = { value: -5 };
-		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe };
+		this.uAct = { value: -5 };
+		this.uTune = { value: new THREE.Vector4(1, 1, 1, 1) };
+		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct, uTune: this.uTune };
 		this.uniforms = uniforms;
 		this.mat = new THREE.ShaderMaterial({
 			vertexShader: PROV_VS,
@@ -684,6 +693,7 @@ export class Board {
 	setOwner(index, owner, color, ox, oz) {
 		const p = this.provinces[index];
 		p.owner = owner;
+		if (owner >= 0 && color != null) this.ownerHex[owner] = this._c.set(color).getHex(); // oklar ve etiketler için sahip rengi
 		const o = (0 * this.count + index) * 4;
 		const S = this.S;
 		// önceki = şimdiki
@@ -768,10 +778,13 @@ export class Board {
 	}
 
 	/** Seçilebilir iller: gece odağı; yalnızca bunlar gündüz renginde, kalkık ve altın hatlı. null → gündüz. */
-	select(list, { attack = false, me = null } = {}) {
+	select(list, { attack = false, me = null, act = null } = {}) {
 		if (me != null) this.uMe.value = me;
-		this.night(!!(list && list.length), list);
-		if (list && list.length) this.cues.show(list, me != null ? me : this.uMe.value, { attack });
+		const on = !!(list && list.length);
+		// sırası gelen oyuncu (insan seçerken kendisi, bot seçerken bot): toprağı gecede net, oklar onun renginde
+		this.uAct.value = on ? (act != null ? act : this.uMe.value) : -5;
+		this.night(on, list);
+		if (on) this.cues.show(list, this.uAct.value, { attack });
 		else this.cues.hide();
 	}
 
