@@ -157,11 +157,15 @@ const BASE = /* css */ `
 .fl-prompt.shake{animation:flShakeP .4s}
 /* seçim sayacı: altın çizgi erir, sayı yanında; son 3 sn kızıl */
 .fl-prompt.timed .pt::after{display:none}
-.fl-prompt .tm{display:flex;align-items:center;gap:10px;margin-top:12px}
-.fl-prompt .tm u{display:block;width:190px;height:7px;border-radius:4px;box-shadow:0 0 10px rgba(255,210,122,.35);background:linear-gradient(90deg,rgba(255,210,122,.25),#ffd27a,rgba(255,210,122,.25));transform:scaleX(var(--k,1));transition:transform .1s linear}
-.fl-prompt .tm em{min-width:2ch;font-family:'Manrope',system-ui,sans-serif;font-style:normal;font-weight:800;font-size:19px;line-height:1;color:#ffd27a;text-shadow:0 1px 3px rgba(0,0,0,.95)}
-.fl-prompt .tm.hot u{background:linear-gradient(90deg,rgba(255,110,80,.3),#ff7a5a,rgba(255,110,80,.3))}
-.fl-prompt .tm.hot em{color:#ff8a6a;animation:flPulse .5s ease-in-out infinite alternate}
+.fl-prompt .tm{position:relative;display:grid;place-items:center;width:50px;height:50px;margin-top:14px;border-radius:50%;background:radial-gradient(circle,rgba(10,14,30,.85) 58%,rgba(10,14,30,0) 72%)}
+.fl-prompt .tm svg{position:absolute;inset:0;width:100%;height:100%;transform:rotate(-90deg);overflow:visible}
+.fl-prompt .tm circle{fill:none;stroke-width:4}
+.fl-prompt .tm .bg{stroke:rgba(255,232,180,.16)}
+.fl-prompt .tm .fg{stroke:#ffd27a;stroke-linecap:round;stroke-dasharray:100;stroke-dashoffset:0;transition:stroke-dashoffset .1s linear,stroke .3s;filter:drop-shadow(0 0 4px rgba(255,200,100,.55))}
+.fl-prompt .tm em{position:relative;font-family:'Manrope',system-ui,sans-serif;font-style:normal;font-weight:800;font-size:18px;line-height:1;letter-spacing:0;color:#fff4dc;text-shadow:0 1px 3px rgba(0,0,0,.9)}
+.fl-prompt .tm.hot .fg{stroke:#ff6a4a;filter:drop-shadow(0 0 6px rgba(255,90,60,.8))}
+.fl-prompt .tm.hot em{color:#ffb4a2}
+.fl-prompt .tm.hot{animation:flBeat .5s ease-in-out infinite alternate}
 @keyframes flShakeP{0%,100%{transform:none}20%{transform:translateX(-10px)}40%{transform:translateX(9px)}60%{transform:translateX(-6px)}80%{transform:translateX(4px)}}
 @keyframes flTap{0%,100%{transform:translateY(0)}40%{transform:translateY(4px) scale(.92)}60%{transform:translateY(4px) scale(.92)}}
 

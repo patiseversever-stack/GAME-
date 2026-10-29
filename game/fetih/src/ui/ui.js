@@ -403,7 +403,8 @@ export class UI {
 		const head = esc(String(text || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')));
 		const hint = capital ? 'Parlayan bir ile dokun, kalen oraya kurulur' : attack ? 'Saldırmak için parlayan bir ile dokun' : 'Parlayan bir ile dokun, senin olsun';
 		const ey = capital ? 'BAŞKENT · SIRA SENDE' : attack ? 'FETİH · SIRA SENDE' : 'YAYILMA · SIRA SENDE';
-		const tm = sec ? `<i class="tm"><u></u><em>${sec}</em></i>` : '';
+		// süre: dairesel sayaç (ortada saniye, altın halka erir)
+		const tm = sec ? `<i class="tm"><svg viewBox="0 0 48 48"><circle class="bg" cx="24" cy="24" r="20"/><circle class="fg" cx="24" cy="24" r="20" pathLength="100"/></svg><em>${sec}</em></i>` : '';
 		this.prompt(`<span class="ey">${ey}</span><b>${head}</b><small>${hint}</small>${tm}`, { tone: (attack ? 'red' : '') + (sec ? ' timed' : '') });
 		app.cam.fit(app.boundsOf(m.map), { pitch: 0.98 });
 		let tick = 0;
@@ -414,14 +415,15 @@ export class UI {
 				this._badTap(m, me, idx, x, y, attack, options);
 			};
 			if (!sec) return;
-			// süre: altın çizgi erir, son 3 sn kızarır; dolunca seçim boş döner
+			// süre: halka erir, son 3 sn kızarır ve atar; dolunca seçim boş döner
 			const box = this.$.prompt.querySelector('.tm');
 			const em = box.querySelector('em');
+			const fg = box.querySelector('.fg');
 			const t0 = clock.now();
 			let last = sec;
 			tick = setInterval(() => {
 				const left = Math.max(0, sec - (clock.now() - t0) / 1000);
-				box.style.setProperty('--k', (left / sec).toFixed(3));
+				fg.style.strokeDashoffset = (100 * (1 - left / sec)).toFixed(2);
 				const s = Math.ceil(left);
 				if (s !== last) {
 					last = s;
