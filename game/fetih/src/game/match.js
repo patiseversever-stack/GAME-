@@ -61,6 +61,16 @@ export const PROVINCES_PER_PLAYER = 6;
 export const PICK_TIME = { capital: 15, attack: 12, category: 8, first: 10, next: 5, floor: 4 };
 export const pickPool = (n) => PICK_TIME.first + PICK_TIME.next * Math.max(0, n - 1);
 
+/**
+ * İki botun savaşında filmin hız çarpanı (kullanıcı kararı: seçilen moda ve haritaya göre). Oyuncu sayısı ve
+ * harita büyüdükçe botlar arası savaş çoğalır, film kısalır; insanın katıldığı savaş hep tam film (1).
+ * Kısa film, dokunarak atlamayla aynı yoldan biter: an erken kapanır, ordular o anın son haline yerleşir.
+ */
+export const BOT_FILM = {
+	quick: { '1v1': 1, ffa3: 0.75, ffa4: 0.6, team: 0.6 },
+	long: { '1v1': 1, ffa3: 0.55, ffa4: 0.45, team: 0.45 },
+};
+
 export const PACE = {
 	quick: { duels: 11 },
 	long: { duels: 32 },
@@ -932,6 +942,12 @@ export class Match {
 		}
 	}
 
+	/** Savaş filminin hız çarpanı: insan ya da uzak koltuk varsa 1 (tam film), iki botsa moda ve haritaya göre. */
+	filmTempo(p, d) {
+		if (p.human || d.human || p.ctl.remote || d.ctl.remote) return 1;
+		return BOT_FILM[this.cfg.length === 'long' ? 'long' : 'quick'][this.cfg.mode] ?? 1;
+	}
+
 	/** Saldırılabilir iller: yalnızca sınır boyundaki düşman illeri (kendi ya da takım arkadaşının komşusu). */
 	attackable(p) {
 		const set = new Set();
@@ -1018,6 +1034,16 @@ export class Match {
 
 	/** Saldıran oyuncunun tur hamlesi. Dönüş: hamle yapıldı mı. */
 	async attackTurn(p) {
+		// iki botun savaşı (insan ve uzak koltuk yok): film moda ve haritaya göre kısalır (BOT_FILM)
+		const cin = this.app.cinema;
+		try {
+			return await this._attackTurn(p, cin);
+		} finally {
+			if (cin) cin.tempo = 1;
+		}
+	}
+
+	async _attackTurn(p, cin) {
 		this.phase = 'fetih';
 		const target = await this.choose(p, 'attack');
 		if (target < 0) {
@@ -1030,8 +1056,10 @@ export class Match {
 		const app = this.app;
 		this.duels++;
 		this.botShield(d, isCap);
+		const k = this.filmTempo(p, d);
+		if (cin) cin.tempo = k;
 		await this.cinema.attack(p, d, target, isCap);
-		this.tick(EST.attack);
+		this.tick(EST.attack * k);
 		// çark: kategori (fetih dilimi: saldıran seçer)
 		let cat = await this.ui.wheel(this, p);
 		this.tick(EST.wheel);
@@ -1066,29 +1094,29 @@ export class Match {
 			await this.ui.banner('KALKAN!', `${d.name} saldırıyı savuşturdu`, { tone: 'gold', short: true });
 			this.tick(EST.bannerShort);
 			await (this.cinema.shield ? this.cinema.shield(d, target) : this.cinema.defend(d, target));
-			this.tick(EST.defend);
+			this.tick(EST.defend * k);
 		} else if (winner === p) {
 			if (isCap) {
 				const left = app.castles[d.i].hit();
 				this.towersLost[d.i]++;
 				await this.cinema.towerDown(p, d, target, left);
-				this.tick(EST.tower);
+				this.tick(EST.tower * k);
 				if (left <= 0) await this.eliminate(d, p);
 				else this.rescore();
 			} else {
 				const v = (this.value.get(target) || VALUE.pick) + VALUE.conquer;
 				this.setOwner(target, p.i, v, true);
 				await this.cinema.conquer(p, target);
-				this.tick(EST.conquer);
+				this.tick(EST.conquer * k);
 			}
 		} else if (winner === d) {
 			this.value.set(target, (this.value.get(target) || VALUE.pick) + VALUE.defend);
 			this.rescore();
 			await this.cinema.defend(d, target);
-			this.tick(EST.defend);
+			this.tick(EST.defend * k);
 		} else {
 			await this.cinema.nobody(target);
-			this.tick(EST.nobody);
+			this.tick(EST.nobody * k);
 		}
 		return true;
 	}
@@ -1108,6 +1136,7 @@ export class Match {
 		for (const i of this.owned(d.i)) this.setOwner(i, by.i, (this.value.get(i) || VALUE.pick) + VALUE.conquer);
 		this.rescore();
 		this.emit('elim', { player: d.i, by: by.i });
+		if (this.app.cinema) this.app.cinema.tempo = 1; // elenme hep tam film
 		await this.cinema.eliminated(d, by);
 		this.tick(EST.elim);
 	}

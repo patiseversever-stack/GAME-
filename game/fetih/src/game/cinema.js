@@ -33,6 +33,7 @@ export class Cinema {
 	constructor(app) {
 		this.app = app;
 		this.fast = false;
+		this.tempo = 1; // anların süre çarpanı (iki botun savaşında Match.filmTempo kısaltır)
 		this._skip = null;
 		this._t0 = 0;
 		this._cur = null;
@@ -236,7 +237,7 @@ export class Cinema {
 				tok.alive = false;
 				res();
 			};
-			const id = setTimeout(done, ms);
+			const id = setTimeout(done, ms * this.tempo);
 			this._skip = done;
 			this._t0 = clock.now();
 		});

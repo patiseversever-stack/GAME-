@@ -27,6 +27,25 @@ const COS0 = Math.cos((GEO.lat0 * Math.PI) / 180);
 export const lonLatToWorld = (lon, lat) => ({ x: (lon - GEO.lon0) * COS0 * GEO.K, z: -(lat - GEO.lat0) * GEO.K });
 export const KM_PER_UNIT = 111.2 / GEO.K;
 
+/** 1, 2, 5 × 10^k: x'e en yakın küçük "yuvarlak" adım. */
+const niceStep = (x) => {
+	if (x <= 1) return 1;
+	const p = 10 ** Math.floor(Math.log10(x));
+	const m = x / p;
+	return (m >= 5 ? 5 : m >= 2 ? 2 : 1) * p;
+};
+/**
+ * Tahmin kaydırıcısının ince ve kaba adımı: aralık 1000'e kadar ±1 / ±10 (yıllar tam ayarlanır); daha geniş
+ * aralıkta ince adım aralığın binde biri (yuvarlak), kaba adım onun 10 katı.
+ */
+export function numSteps(min, max) {
+	const span = Math.abs(Number(max) - Number(min)) || 1;
+	const fine = span <= 1000 ? 1 : niceStep(span / 1000);
+	return { fine, big: fine * 10 };
+}
+/** Adım düğmesi yazısı: 10 bin, 2 mn gibi kısa (düğmeye sığsın). */
+const stepLabel = (n) => (n >= 1e6 ? `${(n / 1e6).toLocaleString('tr-TR')} mn` : n >= 1e4 ? `${(n / 1e3).toLocaleString('tr-TR')} bin` : n.toLocaleString('tr-TR'));
+
 export const TYPES = {
 	choice: {
 		time: 20,
@@ -100,18 +119,18 @@ export const TYPES = {
 		mount(el, v, api) {
 			const q = v.q;
 			const mid = Math.round((q.min + q.max) / 2);
+			const S = numSteps(q.min, q.max);
 			el.innerHTML = `<div class="fl-num">
 				<div class="fl-num-val"><b data-r="val">${mid}</b><small>${esc(q.unit || '')}</small></div>
 				<input class="fl-range" type="range" min="${q.min}" max="${q.max}" step="1" value="${mid}" aria-label="tahmin">
 				<div class="fl-num-row">
-					<button class="fl-step" data-d="-10">−10</button><button class="fl-step" data-d="-1">−1</button>
-					<button class="fl-step" data-d="1">+1</button><button class="fl-step" data-d="10">+10</button>
+					<button class="fl-step" data-d="${-S.big}">−${stepLabel(S.big)}</button><button class="fl-step" data-d="${-S.fine}">−${stepLabel(S.fine)}</button>
+					<button class="fl-step" data-d="${S.fine}">+${stepLabel(S.fine)}</button><button class="fl-step" data-d="${S.big}">+${stepLabel(S.big)}</button>
 				</div>
 				<button class="fl-send">GÖNDER</button>
 			</div>`;
 			const range = el.querySelector('.fl-range');
 			const val = el.querySelector('[data-r=val]');
-			const big = Math.max(1, Math.round((q.max - q.min) / 200));
 			let lo = q.min; // yarı yarıya jokeri aralığı daraltabilir
 			let hi = q.max;
 			const set = (x) => {
@@ -121,7 +140,8 @@ export const TYPES = {
 			};
 			set(mid);
 			range.addEventListener('input', () => set(Number(range.value)));
-			for (const b of el.querySelectorAll('.fl-step')) b.addEventListener('click', () => set(Number(range.value) + Number(b.dataset.d) * (Math.abs(b.dataset.d) > 1 ? big : 1)));
+			// düğme üstünde yazan kadar kaydırır (data-d: adım, aralığa göre numSteps)
+			for (const b of el.querySelectorAll('.fl-step')) b.addEventListener('click', () => set(Number(range.value) + Number(b.dataset.d)));
 			let done = false;
 			el.querySelector('.fl-send').addEventListener('click', () => {
 				if (done) return;
