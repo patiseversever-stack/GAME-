@@ -759,6 +759,7 @@ export class Match {
 		this.emit('phase', { phase: this.phase, round: 0 });
 		await this.placeCapitals();
 		await this.cinema.introBadges?.(this.players); // "hangisi benim?": kalelerin üstünde SEN ve bot rozetleri
+		if (!this.ui.fast) this.app.board.showLabels?.('all'); // il adları buradan sonra: yaklaşınca, ilin içine sığanlar
 		await this.startBonus();
 		// yayılma: haritada boş il kalmayana kadar
 		this.phase = 'yayilma';

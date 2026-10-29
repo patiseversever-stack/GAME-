@@ -346,7 +346,7 @@ export class App {
 		const m = new Match(this, this.ui, cfg);
 		this.match = m;
 		this.board.setActive?.(m.map.length < this.board.count ? m.map : null);
-		this.board.showLabels?.('all'); // akıllı adlar: yakınlaştıkça önem sırasıyla, çakışmasız
+		this.board.showLabels?.(null); // açılışta ad yok: genel adlar başkentler kurulunca açılır (Match.run)
 		try {
 			await m.run();
 		} catch (e) {

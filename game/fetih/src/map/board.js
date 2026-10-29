@@ -363,8 +363,9 @@ void main() {
 	// yumuşak nabız: dolgu çok hafif parlar
 	c *= 1.0 + sel * sp * 0.05 * pulse;
 	// gündüze çıkmayan seçim (başkent: uSelLit düşük): bütün harita koyu, premium gece (gölgede renk yarı
-	// kararır, pencere ışıkları seçilir); seçilemeyen il bir kademe daha koyu
-	c *= 1.0 - uSelOn * (1.0 - uSelLit) * uNight.x * (0.5 + 0.25 * (1.0 - sel) * uSelAny);
+	// kararır, pencere ışıkları seçilir); seçilemeyen boş il (rakip başkente komşu) belirgin biçimde daha koyu.
+	// Rakip başkent (sahipli il) kararmaz: kendi renginde seçilir
+	c *= 1.0 - uSelOn * (1.0 - uSelLit) * uNight.x * (0.5 + 0.38 * (1.0 - sel) * uSelAny) * (1.0 - ownedK);
 	// eski parlama (fx: kale inişi, fetih anı): yalnızca hafif aydınlanma, kenar ışıması yok
 	vec3 gcol = ownedK > 0.5 ? ownCol : vec3(1.0, 0.95, 0.85);
 	c = c * (1.0 + 0.14 * glow * sp * (skirt ? 0.0 : 1.0)) + gcol * glow * sp * (skirt ? 0.0 : 0.035 * (0.7 + 0.3 * sin(uTime * 6.0 + vPid * 0.7)));
