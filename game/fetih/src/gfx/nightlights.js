@@ -5,8 +5,8 @@
 //
 // Türler (iB.x):
 //   0 pencere   : şehir ve köylerde yanan sıcak pencereler (nüfusla yoğunlaşır; büyük şehirde yüzlerce)
-//   1 ışık tozu : ateş böceği gibi süzülen altın parçacıklar; seçilebilir (aydınlık) illerin üstünde
-//                 yoğun, diğerlerinde çok seyrek
+//   1 ışık tozu : ateş böceği gibi süzülen sönük krem parçacıklar; yalnızca seçilebilir (aydınlık) illerin
+//                 üstünde (v0.4: altın ve hale azaltıldı, fosforlu görünmesin)
 //   2 hale      : şehir ve ünlü yapıların çevresinde sıcak ışık halesi (q=0'da bloom yerine)
 //   3 kale      : kalelerin meşale halesi (kale konumu uniform'dan)
 //   4 bulut     : bulutların arasından sızan sıcak ışık (bulutla birlikte rüzgârda kayar)
@@ -65,10 +65,10 @@ void main() {
 			p.z += cos(t * 0.29 + ph * 9.1) * 0.3 + sin(t * 0.71 + ph * 5.0) * 0.06;
 			p.y += rise * 0.9 + sin(t * 0.53 + ph * 4.0) * 0.1;
 			float pulse = 0.3 + 0.7 * pow(0.5 + 0.5 * sin(t * (1.4 + ph * 2.1) + ph * 30.0), 2.0);
-			a *= sel * sel * pulse * sin(3.14159 * rise) * (1.0 - dim); // yalnızca seçilebilir illerin üstünde
-			col = mix(vec3(1.0, 0.55, 0.14), vec3(1.0, 0.78, 0.36), iB.w) * 1.4;
-			px0 = 2.2;
-			px1 = 5.5;
+			a *= sel * sel * pulse * sin(3.14159 * rise) * (1.0 - dim) * 0.65; // yalnızca seçilebilir illerin üstünde
+			col = mix(vec3(1.0, 0.8, 0.55), vec3(1.0, 0.93, 0.78), iB.w) * 0.9; // v0.4: altın değil, sönük krem (fosfor yok)
+			px0 = 2.0;
+			px1 = 3.8;
 		} else {
 			// şehir / yapı halesi
 			a *= iB.w * (1.0 - sel * 0.75) * (1.0 - dim * 0.4) * (0.9 + 0.1 * sin(t * 1.3 + ph * 9.0));
@@ -121,7 +121,7 @@ void main() {
 	if (r2 > 1.0) discard;
 	float a;
 	if (vKind < 0.5) a = exp(-r2 * 9.0) * 1.3 + exp(-r2 * 2.5) * 0.12;
-	else if (vKind < 1.5) a = exp(-r2 * 16.0) * 1.6 + exp(-r2 * 3.0) * 0.3;
+	else if (vKind < 1.5) a = exp(-r2 * 16.0) * 1.6 + exp(-r2 * 3.0) * 0.1;
 	else {
 		float k = 1.0 - r2;
 		a = k * k * (0.35 + 0.65 * exp(-r2 * 3.0));

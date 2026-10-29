@@ -10,7 +10,8 @@
 //   a_secim      insan il seçerken (gece, seçilebilir iller ışık adası)
 //   b_bot        bot seçerken (seçenekleri aydınlık) ve b2_bot_secti (seçimi + boya dalgası)
 //   c_saldiri    insan saldıracağı düşman ilini seçerken
-//   d_duello     saldırı yürüyüşü (yalnızca saldıran ve hedef aydınlık), d2_kart_oncesi (soru kartından hemen önce)
+//   d_duello     saldırı yürüyüşü (yalnızca saldıran ve hedef aydınlık), d2_kart_oncesi (soru kartından hemen önce),
+//                d3_soru (soru kartı açıkken: etiketler ve harita kartın arkasında)
 //   e_fetih      fetih: gecede boya dalgası
 //   f_safak      fetihten sonra şafak, f2_gunduz gündüze dönmüş hali
 //   gunduz       sade gündüz (maç başı)
@@ -63,7 +64,7 @@ await page.evaluate((cfg) => {
 	const app = window.__fl.app;
 	const ui = app.ui;
 	app.stop();
-	const W = (window.__flow = { want: [], log: [], done: false, err: null, picks: 0, attacks: 0, bots: 0, conq: 0, duel: 0, t: 0, seq: cfg.seq });
+	const W = (window.__flow = { want: [], log: [], done: false, err: null, picks: 0, attacks: 0, bots: 0, conq: 0, duel: 0, d3: 0, t: 0, seq: cfg.seq });
 	const want = (name, ms) => setTimeout(() => W.want.push(name), ms);
 	// oyun adımı: sahte saatte 30 kare/sn mantık (çizim yok)
 	setInterval(() => {
@@ -131,6 +132,7 @@ await page.evaluate((cfg) => {
 				const c = this.current;
 				if (!c || this._gen !== gen) return;
 				if (!c.card.classList.contains('on')) return setTimeout(go, 200);
+				if (ctx?.phase === 'duel' && ctx.attacker?.human && !W.d3++) want('d3_soru', 700);
 				const b = c.ctx.T.bot(c.ctx.v, 0.8, Math.random);
 				c.api.answer(b.value);
 			};

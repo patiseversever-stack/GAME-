@@ -445,7 +445,8 @@ export class UI {
 	/** İl etiketi tanımları: [{i, kind, p (sahip oyuncu ya da null), role}]. */
 	tagSpecs(m, list, kind, roles = null) {
 		const b = this.app.board;
-		return list.map((i) => {
+		// çok seçenek (bağlantısız harita): yalnızca ilk 14'ü adlanır, hepsi yine de aydınlık ve dokunulur
+		return (list.length > 14 ? list.slice(0, 14) : list).map((i) => {
 			const o = b.provinces[i].owner;
 			return { i, kind, p: o >= 0 ? m?.players?.[o] || null : null, role: roles?.[i] || null };
 		});

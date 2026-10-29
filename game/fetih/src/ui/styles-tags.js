@@ -44,7 +44,7 @@ export const CSS_TAGS = /* css */ `
 .fl-tag.cmp .ow b,.fl-tag.cmp .ow em{display:none}
 .fl-tag.cmp .ow{padding:5px 4px 2px 4px}
 /* ucu: ilin üstünü gösteren üçgen */
-.fl-tag s{display:block;width:0;height:0;margin-top:0;border:7px solid transparent;border-bottom:0;border-top:8px solid #fff;filter:drop-shadow(0 2px 0 rgba(0,0,0,.4))}
+.fl-tag s{display:block;width:0;height:0;margin-top:0;border:7px solid transparent;border-bottom:0;border-top:8px solid #fff}
 .fl-tag.hasow s{border-top-color:var(--oc)}
 
 /* oyuncu rozeti: "SEN" (ya da botun adı) */

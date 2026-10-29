@@ -10,8 +10,10 @@
 //   keskin, piksel olarak en az kalınlıkta. Tarafsız il sınırı ince bir oyuk; sahipli ilin dış sınırı
 //   sahibin renginde kalın bir şerit ve içe doğru ışıltı. Aynı sahibin iki ili arasında sınır incelir,
 //   oyuncunun toprağı tek bir ülke gibi okunur.
-// - select(list): seçilebilen iller kalkar ve nabız gibi parlayan altın dış hatla çevrilir, komşulara
-//   hale taşar; diğer bütün iller solar ve kararır.
+// - select(list): seçilebilen iller hafifçe kalkar (alçak kaide), gündüz ışığında kalır; tarafsız hedef nötr
+//   krem, sahipli hedef sahibinin renginde; temiz beyaz dış hat (ince koyu kıl çizgili) ve yumuşak nabız.
+//   Altın parlama, hale ve bloom yok (v0.4: "fosforlu" değil). Diğer bütün iller gecede kalır: oyuncunun ve
+//   sırası gelenin toprağı kendi renginde aydınlık ve kalın çizgili, başkalarınınki daha sönük ama renkli.
 // - paint(i, renk, x, z): dokunulan noktadan dışa yayılan boya dalgası ve dalga cephesinde parlak çizgi.
 // - showLabels(list | 'all' | null): il adları 3D yazı katmanında (labels.js).
 //
@@ -89,7 +91,6 @@ uniform vec4 uFBox;
 uniform vec2 uFRes;
 uniform float uMe; // insan oyuncunun kimliği (gecede kendi toprağı aydınlık ve net)
 uniform float uAct; // sırası gelen oyuncu (bot seçerken onun toprağı da net; -5: yok)
-uniform vec4 uTune; // geliştirme ayarı (varsayılan 1,1,1,1)
 varying vec3 vW;
 varying vec3 vN;
 varying vec4 vBio;
@@ -295,10 +296,12 @@ void main() {
 	// başkalarınınki sönük ama rengi belli. Parlama yok: renk, ay ışığıyla verilen kabartmaya oturur.
 	if (nk > 0.001 && ownedK > 0.01 && !skirt && water < 0.5) {
 		float dm = clamp(dot(N, N_MOON) * 0.5 + 0.5, 0.0, 1.0);
-		float yel = smoothstep(0.34, 0.62, dot(ownCol, vec3(0.3, 0.59, 0.11)));
-		float boost = 1.0 + 1.1 * yel; // açık renkler (sarı) gecede daha çok ışık ister, yoksa kahverengi okunur
-		float E = mix(0.03, 0.095, hiE) * boost * uTune.x;
-		float Dd = mix(0.1, 0.3, hiE) * boost * uTune.y;
+		float ol = dot(ownCol, vec3(0.3, 0.59, 0.11));
+		float yel = smoothstep(0.34, 0.62, ol);
+		// açık renkler (sarı) gecede daha çok ışık ister, yoksa kahverengi okunur; koyu renkler (mavi) de biraz
+		float boost = 1.0 + 1.1 * yel + 0.7 * (1.0 - smoothstep(0.12, 0.3, ol));
+		float E = mix(0.03, 0.095, hiE) * boost;
+		float Dd = mix(0.1, 0.3, hiE) * boost;
 		vec3 Lc = ownCol * (E + Dd * dm * dm * mix(0.55, 1.0, sh)) * (0.62 + 0.8 * lum);
 		c = mix(c, Lc, ownedK * nk * 0.92);
 	}
@@ -306,20 +309,22 @@ void main() {
 	if (nk > 0.001) {
 		c += ownCol * (band * mix(0.3, 0.6, hiE) + inner * mix(0.02, 0.07, hiE)) * nk * (skirt ? 0.4 : 1.0);
 		float hair = lineAA(d, max(0.022, 1.0 * px), px) * (skirt ? 0.0 : 1.0) * (nb > 254.5 ? 0.0 : 1.0);
-		c += vec3(0.32, 0.42, 0.66) * hair * nk * (1.0 - 0.7 * ownedK) * 0.2 * uTune.z;
+		c += vec3(0.32, 0.42, 0.66) * hair * nk * (1.0 - 0.7 * ownedK) * 0.2;
 		// kıyı çizgisi: kara ile deniz ayrışsın (ay ışığında ince soğuk parıltı)
-		c += vec3(0.28, 0.4, 0.66) * smoothstep(0.935, 0.99, coast) * (skirt ? 0.0 : 1.0) * nk * 0.07 * uTune.w;
+		c += vec3(0.28, 0.4, 0.66) * smoothstep(0.935, 0.99, coast) * (skirt ? 0.0 : 1.0) * nk * 0.07;
 	}
 	// --- seçim (v0.4): hedef kendi renginde (tarafsızsa krem), temiz beyaz dış hat, yumuşak nabız.
 	// Altın parlama, hale ve iç ışıltı yok: sahip rengi ve sarı arazi çizgiyle karışmaz.
 	float sp = mix(1.0, spotK(), uNight.x); // yakın çekimde ışık havuzunun dışı
 	float bk = 0.55 + 0.45 * sp;
 	vec3 white = vec3(1.0, 0.985, 0.95);
-	float wOut = max(0.055, 2.5 * px) * (0.94 + 0.12 * pulse);
+	float wOut = max(0.06, 3.0 * px) * (0.93 + 0.14 * pulse);
 	float fwD = max(fwidth(vDepth), 1e-4);
 	// yüzeyde: il içinde sınıra bitişik bant; duvarda: üst kenarda ince çizgi
 	float edgeW = skirt ? 1.0 - smoothstep(1.2 * fwD, 2.8 * fwD, vDepth) : lineAA(d, wOut, px);
-	c = mix(c, white * 1.3, edgeW * sel * bk * (0.8 + 0.2 * pulse));
+	c = mix(c, white * 1.6, edgeW * sel * bk * (0.9 + 0.1 * pulse));
+	// beyaz bandın iç kenarında ince koyu çizgi: açık dolguda (krem, sarı) bant ayrı okunur
+	c *= 1.0 - (skirt ? 0.0 : lineAA(abs(d - wOut - 0.9 * px), max(0.012, 0.55 * px), px)) * sel * bk * 0.3;
 	// en dışta koyu kıl çizgi: beyaz bant komşu aydınlık ya da açık renkli yüzeyden ayrı okunur
 	c = mix(c, vec3(0.012, 0.016, 0.034), (skirt ? 0.0 : lineAA(d, max(0.024, 0.85 * px), px)) * sel * bk * 0.9);
 	// kalkık ilin duvarı gölgede (beyaz çizgi öne çıksın)
@@ -615,8 +620,7 @@ export class Board {
 		const geo = built.geometry;
 		this.uMe = { value: -5 };
 		this.uAct = { value: -5 };
-		this.uTune = { value: new THREE.Vector4(1, 1, 1, 1) };
-		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct, uTune: this.uTune };
+		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct };
 		this.uniforms = uniforms;
 		this.mat = new THREE.ShaderMaterial({
 			vertexShader: PROV_VS,

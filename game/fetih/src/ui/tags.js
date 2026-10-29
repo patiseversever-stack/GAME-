@@ -37,6 +37,7 @@ export class Tags {
 		this.left = 8;
 		this.right = 400;
 		this._rects = [];
+		this._n = 0;
 	}
 
 	get count() {
@@ -152,16 +153,18 @@ export class Tags {
 		this._rect();
 		const { W, H } = this;
 		const land = W > H && H < 560;
-		this.bot = H - (this.ui.$.prompt.classList.contains('on') ? (land ? 130 : 200) : 28);
+		this.bot = H - (this.ui.$.prompt.classList.contains("on") ? (land ? 165 : 200) : 28);
 		const v = this._v;
 		const s = this._s;
 		// 1) ekrana izdüşüm: etiket ilin üstünde ortalı (cx, cy merkez); rozet okların çıktığı yerin/kalenin tepesinde
 		const cues = b.cues?.on ? b.cues : null;
 		const P = app.camera.projectionMatrix.elements;
+		// yazı tipi geç yüklenirse (Türkçe harf eki) ölçüler bir süre yenilenir
+		const remeasure = (this._n = (this._n + 1) % 20) === 0;
 		for (const it of items) {
-			if (!it.w) {
-				it.w = it.inner.offsetWidth || 90;
-				it.h = it.inner.offsetHeight || 50;
+			if (!it.w || remeasure) {
+				it.w = it.inner.offsetWidth || it.w || 90;
+				it.h = it.inner.offsetHeight || it.h || 50;
 			}
 			let lift = 0;
 			if (it.kind === 'badge') {
@@ -244,10 +247,10 @@ export class Tags {
 					}
 				}
 			}
-			// ekranın ve arayüzün içinde kalsın (rozet kıstırılmaz)
+			// ekranın ve arayüzün içinde kalsın (rozet yalnızca yatayda kıstırılır: ucu okların çıktığı yerde kalsın)
 			for (const it of items) {
-				if (it.kind === 'badge') continue;
 				it.cx = Math.min(hi - it.ew / 2, Math.max(lo + it.ew / 2, it.cx));
+				if (it.kind === 'badge') continue;
 				it.cy = Math.min(this.bot - it.eh / 2, Math.max(this.top + it.eh / 2, it.cy));
 			}
 			if (!moved) break;

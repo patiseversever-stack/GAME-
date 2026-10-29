@@ -112,8 +112,8 @@ export class Cinema {
 		// ek noktalar (okların çıkış yerleri): rozet için üstte biraz pay
 		if (pts) {
 			for (const q of pts) {
-				b.x0 = Math.min(b.x0, q.x - 1.2);
-				b.x1 = Math.max(b.x1, q.x + 1.2);
+				b.x0 = Math.min(b.x0, q.x - 2.4);
+				b.x1 = Math.max(b.x1, q.x + 2.4);
 				b.z0 = Math.min(b.z0, q.z - 3.4);
 				b.z1 = Math.max(b.z1, q.z + 1.2);
 			}
