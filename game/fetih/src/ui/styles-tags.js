@@ -9,6 +9,7 @@ export const CSS_TAGS = /* css */ `
 .fl-tag{position:absolute;left:0;top:0;transform-origin:0 0;display:block;padding:0;margin:0;background:none;border:0;text-align:center;will-change:transform;pointer-events:none;
   font-family:'Lilita One','Fredoka',system-ui,sans-serif;font-weight:400}
 .fl-ui .fl-tag.tp{pointer-events:auto}
+.fl-tag:focus,.fl-tag:focus-visible{outline:none}
 .fl-tag .in{display:flex;flex-direction:column;align-items:center;opacity:0;transform:translateY(8px) scale(.7);transform-origin:50% 60%;
   transition:opacity .2s,transform .34s cubic-bezier(.3,1.6,.5,1)}
 .fl-tag.on .in{opacity:1;transform:none}

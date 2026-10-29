@@ -119,6 +119,7 @@ export class Tags {
 		const el = document.createElement(tap ? 'button' : 'div');
 		el.className = `fl-tag${tap ? ' tp' : ''}${p ? ' hasow' : ''}${compact ? ' cmp' : ''}`;
 		if (p) el.style.setProperty('--oc', p.css);
+		el.dataset.i = s.i;
 		if (tap) el.addEventListener('click', () => this.ui._pickRes?.(s.i));
 		const ic = ICON[s.kind];
 		// kaynak ili simgesi (SALDIRAN): saldıranın renginde
@@ -233,7 +234,7 @@ export class Tags {
 		this._rect();
 		const { W, H } = this;
 		const land = W > H && H < 560;
-		this.bot = H - (this.ui.$.prompt.classList.contains("on") ? (land ? 165 : 200) : 28);
+		this.bot = H - (this.ui.$.prompt.classList.contains('on') ? (land ? 165 : 200) : 28);
 		const v = this._v;
 		const s = this._s;
 		// 1) ekrana izdüşüm: etiket ilin üstünde ortalı (cx, cy merkez); rozet okların çıktığı yerin/kalenin tepesinde
