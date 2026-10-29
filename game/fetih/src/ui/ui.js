@@ -620,7 +620,9 @@ export class UI {
 		const siege = duel && prov && ctx.defender.capital === ctx.target;
 		this._extra = 0;
 		this._floor = 0;
-		this._jkCb = null;
+		// joker geri çağrısı (_jkCb) burada SİLİNMEZ: Match.ask onu soru kartı açılmadan hemen önce
+		// refreshJokers → ui.jokers(list, cb) ile kurar. Eskiden burada null'lanıyordu; insanın joker düğmeleri
+		// hiçbir şey yapmıyordu (v0.8 gece denetimi). Maçtan çıkınca reset() temizler.
 		const plate = (p, k, sub) =>
 			`<div class="fl-qp ${k}" data-p="${p.i}" style="--pc:${p.css}"><span class="fl-av">${avatar(this.look(p))}</span><span class="nm"><b>${esc(p.name)}</b>${
 				sub ? `<small>${sub}</small>` : ''
@@ -1300,6 +1302,8 @@ export class UI {
 		this.app.onGround = null;
 		this._pickRes = null;
 		this.current = null;
+		this._jkCb = null; // biten maçın joker geri çağrısı yeni maça kalmasın
+		this._jk = [];
 	}
 
 	debug(opts) {

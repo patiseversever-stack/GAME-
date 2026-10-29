@@ -76,6 +76,44 @@ export const PACE = {
 	long: { duels: 32 },
 };
 
+/**
+ * Fetih turlarında saldırı sırası (v0.8 kuralı). Eskiden 1. tur hep 0. koltukla (yerelde insan) başlar, sıra her tur
+ * bir kayardı; son turu en son oynayan koltuk ölçülebilir avantaj alıyordu (eşit botlarla 4 kişide son turu açan
+ * koltuk %16,5, kapatan %31 kazanıyordu; 1'e 1'de 0. koltuk %53,8, uzun maçta %55,8).
+ *   first: 'seed'  ilk turun sırası maç tohumundan karışık (koltuk numarasından bağımsız; sunucu aynı sırayı bulur),
+ *                  sonraki turlarda sıra bir kayar. 'seat': eski davranış (0. koltuk başlar).
+ *   last:  'score' son turda sıra puana göre: önde olan önce, geride olan en son saldırır (Bil ve Fethet / Triviador
+ *                  kuralı: son sözü geride olan söyler). Eşli modda takımlar dönüşümlü kalır, önde olan takım başlar.
+ *                  'rotate': eski davranış.
+ */
+export const TURN_ORDER = { first: 'seed', last: 'score' };
+
+/**
+ * Puan eşitliği (v0.8 kuralı). Eskiden eşit puanda koltuk sırası belirliyordu (yerelde hep insan kazanıyordu;
+ * eşit botlarla 1'e 1 maçların %1,8'i, 4 kişide %4,4'ü).
+ *   golden: birinciliği paylaşan taraflar maç sonunda tek bir "altın soru" (tahmin, en yakın kazanır; eşitlikte hızlı)
+ *           çözer (Triviador düello kuralı: berabere biten maçı tahmin sorusu bitirir).
+ *   Diğer sıralar ve altın sorusuz durumlar için: daha çok il, kalede daha çok kule, daha çok doğru cevap.
+ *   Elenenler arasında geç elenen önde.
+ */
+export const TIE_BREAK = { golden: true };
+
+/**
+ * Kalkan jokeri savunulan düellonun içinde kurulamaz (v0.8 kuralı): botlar kalkan kararını saldırı başında, soruyu
+ * görmeden verir; insan ise soruyu görüp "bilmiyorum" deyince kurabiliyordu. Kalkan saldırıdan önce (kendi
+ * sorunda ya da yayılma sorusunda) kurulur.
+ */
+export const SHIELD_IN_DEFENSE = false;
+const SHIELD_WHY = 'Saldırı başladı: kalkan önceden kurulur';
+
+/**
+ * Botun başkente saldırma isteği (v0.8). Eskiden 0,65 beceride bir uçurum vardı (+0,6 / −0,6): 'er' botlar maç başına
+ * 0,08 kuşatma yapıyordu (kaleler hiç sarsılmıyordu), 'usta' botlar 4,4. Şimdi beceriyle sürekli artar:
+ * tercih = slope × (beceri − pivot) (+ wounded: iki kulesi kalmış kale), tek kulesi kalmışsa kill. Çaylak neredeyse hiç,
+ * 'er' maç başına ~1,3, 'usta' ~4,3 kuşatma (eşit botlarla, test/kurallar.test.mjs ölçer).
+ */
+export const BOT_SIEGE = { slope: 3, pivot: 0.55, wounded: 0.4, kill: 2.5 };
+
 // Tahmini süre (sn), insan oyuncu varsayımıyla; yalnızca denge raporu için (tools/sim.mjs).
 // Savaş filmi (v0.6, cinema.js): saldırı ~4,9–6,4 sn (kuşatma uzun), fetih ~4, kule ~3,3, savunma ~2,7.
 const EST = { overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, attack: 5.4, wheel: 4, chooseCat: 2.2, conquer: 4.0, tower: 3.4, defend: 2.7, nobody: 1.6, elim: 3.5, qOpen: 0.5 };
@@ -159,7 +197,7 @@ export class Match {
 		this.perks = cfg.perks || this.stageDef?.perks || { startProvinces: 0, botJokers: 0 };
 		this.diffBias = cfg.diffBias ?? this.stageDef?.diffBias ?? 0;
 		const colors = app.playerColors;
-		const names = BOT_NAMES.slice().sort(() => this.R() - 0.5);
+		const names = this.shuffle(BOT_NAMES);
 		const n = this.mode.players;
 		const opps = cfg.opponents || [];
 		const humanSkill = this.progress.skill();
@@ -219,6 +257,11 @@ export class Match {
 		this.cur = null; // şu an sorulan soru (joker bağlamı)
 		this.stat = this.players.map(() => ({ q: 0, correct: 0 }));
 		this.towersLost = this.players.map(() => 0);
+		this.towersBy = this.players.map(() => 0); // koltuğun kendi yıktığı kuleler (istatistik)
+		this.outSeq = 0; // elenme sırası (sıralamada geç elenen önde)
+		this.duel = null; // süren düello { attacker, defender, target } (kalkan kuralı)
+		this.tieWin = null; // altın soruyu kazanan taraf (koltuk ya da takım)
+		this.lastScore = '';
 		this.jokerUse = {};
 		this.nq = 0;
 		this.duels = 0;
@@ -256,6 +299,18 @@ export class Match {
 		for (const p of this.players) if (p.ctl.remote) p.ctl.event(name, data);
 		const fns = this.listeners.get(name);
 		if (fns) for (const fn of fns) fn(data);
+	}
+
+	/** Koltuğa göre değişen olay: of(koltuk) uzak koltuğun verisi, of(null) yerel dinleyicilerin (herkese açık kısım). */
+	emitEach(name, of) {
+		for (const p of this.players) if (p.ctl.remote) p.ctl.event(name, of(p));
+		const fns = this.listeners.get(name);
+		if (fns) for (const fn of fns) fn(of(null));
+	}
+
+	/** Uzak koltuk ya da dinleyici var mı (olay verisi hazırlamaya değer mi). */
+	get watched() {
+		return this.players.some((p) => p.ctl.remote) || this.listeners.size > 0;
 	}
 
 	on(name, fn) {
@@ -339,6 +394,15 @@ export class Match {
 			const k = this.app.castles[p.i];
 			if (p.alive && k.group.visible) s += (VALUE.castle / 3) * k.hp;
 			p.score = Math.round(s);
+		}
+		// 'score' olayı: yalnız değişince (kule yıkılışı ve savunma değeri 'owner' olayından çıkarılamaz)
+		if (this.watched) {
+			const d = { scores: this.players.map((p) => p.score), hp: this.players.map((p) => (p.alive && this.app.castles[p.i].group.visible ? this.app.castles[p.i].hp : 0)), alive: this.players.map((p) => p.alive) };
+			const key = JSON.stringify(d);
+			if (key !== this.lastScore) {
+				this.lastScore = key;
+				this.emit('score', d);
+			}
 		}
 		if (!this.ui.fast) this.ui.hud(this);
 	}
@@ -433,14 +497,19 @@ export class Match {
 		const v = T.prepare(q, this.R);
 		// süre bütçesi sorunun verisinden (timing.js); bütün koltuklar aynı saati görür, uzaklara `time` olarak gider
 		const sec = secOf(v);
-		const clock = { extra: 0 };
+		// koltuk başına saat (ekstra süre +, sabotaj −): bir oyuncunun süre jokeri yalnız kendi süresini uzatır.
+		// Eskiden tek ortak saat vardı: uzak rakibin "Ekstra Süre"si yerel insanın sayacını da uzatıyordu.
+		const clocks = new Map(who.map((p) => [p.i, { extra: 0 }]));
+		const human = who.find((p) => p.human);
+		const qclock = human ? clocks.get(human.i) : { extra: 0 }; // arayüzün sayacı: insanın kendi saati
 		const cur = {
 			q,
 			v,
 			T,
 			sec,
 			who,
-			clock,
+			clock: qclock,
+			clocks,
 			ctx,
 			bots: [],
 			used: new Map(who.map((p) => [p.i, new Set()])),
@@ -455,15 +524,16 @@ export class Match {
 		this.nq++;
 		this.planBotJokers(cur);
 		cur.bots = who.filter((p) => !p.human).map((p) => ({ p, ...this.botAnswer(cur, p) }));
-		const human = who.find((p) => p.human);
 		const remote = who.filter((p) => p.ctl.remote);
-		const pv = remote.length || this.listeners.has('ask') ? publicView(T, v) : null;
-		if (pv) this.emit('ask', { q: pv.q, v: pv, time: sec, who: who.map((p) => p.i), title: ctx.title || '' });
+		// 'ask' bütün uzak koltuklara gider (düelloyu izleyenler de kartı görür; eskiden yalnız soruyu cevaplayanlar
+		// alıyordu, izleyiciler görmediği sorunun 'reveal'ini alıyordu)
+		const pv = remote.length || this.watched ? publicView(T, v) : null;
+		if (pv) this.emit('ask', { q: pv.q, v: pv, time: sec, who: who.map((p) => p.i), title: ctx.title || '', phase: ctx.phase || '', attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1 });
 		this.refreshJokers();
 		this.tick(EST.qOpen);
 		// uzak koltuklardan cevaplar eşzamanlı toplanır (bekleme: süre + ekstra süre jokeri + ağ payı = sec + 12 sn)
 		const remoteWait = remote.map((p) => p.ctl.answer(p, { q: pv.q, v: pv, time: sec, who: who.map((x) => x.i), phase: ctx.phase || '', cat: q.cat, attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1 }, (sec + 12) * 1000));
-		const res = await this.ui.question(this, { q, v, T, who, bots: cur.bots, human, clock, botJokers: cur.botUses, ...ctx });
+		const res = await this.ui.question(this, { q, v, T, who, bots: cur.bots, human, clock: qclock, botJokers: cur.botUses, ...ctx });
 		const ra = await Promise.all(remoteWait);
 		this.check(); // çıkışta kapanan soru sayılmaz (beceri puanına yanlış diye işlenmesin)
 		cur.closed = true;
@@ -478,7 +548,7 @@ export class Match {
 			else if (ri >= 0) {
 				// istemcinin bildirdiği süre saatin dışına taşamaz: [0, süre + ekstra] (eksi ya da dev değer eşitliği bozmasın)
 				const r = ra[ri];
-				a = r ? { value: r.value, time: clamp(Number.isFinite(r.time) ? r.time : sec, 0, questionTime(sec, Math.max(0, clock.extra))) } : b ? { value: b.value, time: b.time } : null;
+				a = r ? { value: r.value, time: clamp(Number.isFinite(r.time) ? r.time : sec, 0, questionTime(sec, Math.max(0, clocks.get(p.i).extra))) } : b ? { value: b.value, time: b.time } : null;
 			} else a = b ? { value: b.value, time: b.time } : null;
 			if (!a) a = { value: null, time: sec };
 			const j = T.judge(v, a.value);
@@ -605,7 +675,7 @@ export class Match {
 	applyJoker(p, id, cur, silent = false) {
 		const effect = computeEffect(id, { T: cur.T, v: cur.v, R: this.R, board: this.app.board });
 		if (!effect) return null;
-		if (id === 'sure') cur.clock.extra += effect.add;
+		if (id === 'sure') cur.clocks.get(p.i).extra += effect.add;
 		else if (id === 'ikinci') cur.second.add(p.i);
 		else if (id === 'yari' || id === 'kahin') {
 			// bot yeteneğini yükseltir; insanın etkisi arayüzde görünür
@@ -616,8 +686,21 @@ export class Match {
 		}
 		this.app.fx?.joker?.(id, p);
 		if (!silent && !this.ui.fast) this.ui.jokerUsed?.(p, id, effect, cur);
-		this.emit('joker', { player: p.i, id, effect: effect.kind === 'poll' || effect.kind === 'crowd' ? { id, kind: effect.kind } : effect });
+		this.emitJoker(p, id, effect);
 		return effect;
+	}
+
+	/**
+	 * 'joker' olayı: etkinin tamamı yalnız kullananın koltuğuna gider; diğerleri (rakip dahil) yalnız herkese açık kısmı
+	 * görür. Eskiden tam etki herkese gidiyordu: rakibin yarı yarıyası elenen şıkları, tahmin aralığı cevabın aralığını,
+	 * adam asmaca harfleri, harita bölgesi hedefi soru sürerken öbür oyuncuya söylüyordu.
+	 */
+	emitJoker(p, id, effect) {
+		if (!this.watched) return;
+		const pub = { id, kind: effect.kind };
+		if (effect.kind === 'time') pub.add = effect.add;
+		else if (effect.kind === 'sabotage') Object.assign(pub, { victims: effect.victims, by: effect.by, cut: effect.cut, blurMs: effect.blurMs });
+		this.emitEach('joker', (to) => ({ player: p.i, id, effect: to === p ? effect : pub }));
 	}
 
 	/**
@@ -629,20 +712,24 @@ export class Match {
 		const cut = cutFor(cur.sec);
 		const effect = { id: 'sabotaj', kind: 'sabotage', victims: victims.map((x) => x.i), by: p.i, cut, blurMs: SABOTAGE.blurMs };
 		for (const x of victims) {
+			const xc = cur.clocks.get(x.i);
 			if (x.human) {
 				const fire = () => {
 					if (cur.closed) return;
-					cur.clock.extra -= cut;
+					xc.extra -= cut;
 					this.ui.sabotage?.(effect, cur);
 				};
-				if (this.ui.fast) cur.clock.extra -= cut;
+				if (this.ui.fast) xc.extra -= cut;
 				else cur.timers.push(setTimeout(fire, 1500 + this.R() * 3000));
 			} else if (!x.ctl.remote) {
 				cur.boost.set(x.i, (cur.boost.get(x.i) || 0) + SABOTAGE.botSkill);
 				cur.delay.set(x.i, (cur.delay.get(x.i) || 0) + cut * SABOTAGE.botDelay);
 				const b = cur.bots.find((y) => y.p === x);
 				if (b) Object.assign(b, this.botAnswer(cur, x));
-			} else x.ctl.event('sabotage', effect);
+			} else {
+				xc.extra -= cut;
+				x.ctl.event('sabotage', effect);
+			}
 		}
 		return effect.victims;
 	}
@@ -670,6 +757,10 @@ export class Match {
 			if (usable && armed) {
 				usable = false;
 				why = id === 'kalkan' ? 'Kalkan zaten hazır' : 'İkinci şans zaten hazır';
+			}
+			if (usable && id === 'kalkan' && this.defending(p)) {
+				usable = false;
+				why = SHIELD_WHY;
 			}
 			if (usable && d.scope === 'question') {
 				const used = cur?.used.get(p.i);
@@ -719,6 +810,7 @@ export class Match {
 		const cur = this.cur;
 		if (id === 'kalkan') {
 			if (p.shield) return fail('Kalkan zaten hazır');
+			if (this.defending(p)) return fail(SHIELD_WHY);
 			this.spendJoker(p, id);
 			p.shield = true;
 			this.app.fx?.joker?.(id, p);
@@ -746,6 +838,11 @@ export class Match {
 		used.add(id);
 		this.refreshJokers();
 		return { ok: true, effect, left: slot.left };
+	}
+
+	/** Oyuncu şu an süren bir düelloda savunuyor mu (kalkan o düelloda kurulamaz; SHIELD_IN_DEFENSE). */
+	defending(p) {
+		return !SHIELD_IN_DEFENSE && !!this.duel && this.duel.defender === p;
 	}
 
 	/** Kalkanı bot için hazırla (saldırı başlarken). */
@@ -779,6 +876,7 @@ export class Match {
 		const b = app.board;
 		this.phase = 'baslangic';
 		for (const i of this.map) this.setOwner(i, -1, 0);
+		if (this.watched) this.emit('state', this.snapshot()); // maç haritası ve koltuklar (selamda henüz yoktu)
 		this.ui.hud(this);
 		this.refreshJokers();
 		await this.cinema.overview(this.map);
@@ -805,15 +903,18 @@ export class Match {
 		const rounds = Math.max(2, Math.ceil((this.cfg.duels || pace.duels) / this.players.length));
 		this.rounds = rounds;
 		this.phase = 'fetih';
+		// ilk turun sırası koltuktan bağımsız (TURN_ORDER.first); tohumdan, sunucuda da aynı
+		this.turnBase = TURN_ORDER.first === 'seat' ? this.players.slice() : this.shuffle(this.players);
 		for (this.round = 1; this.round <= rounds && !this.over; this.round++) {
-			this.emit('phase', { phase: this.phase, round: this.round });
-			await this.ui.banner(this.round === rounds ? 'SON TUR' : 'FETİH', `Tur ${this.round} / ${rounds}`, { tone: 'red' });
+			const last = this.round === rounds;
+			const order = this.turnOrder(this.round, rounds);
+			this.emit('phase', { phase: this.phase, round: this.round, order: order.map((p) => p.i) });
+			const scoreOrder = last && rounds > 1 && TURN_ORDER.last === 'score';
+			await this.ui.banner(last ? 'SON TUR' : 'FETİH', scoreOrder ? `Tur ${this.round} / ${rounds} · son saldırı gerideki oyuncunun` : `Tur ${this.round} / ${rounds}`, { tone: 'red' });
 			this.tick(EST.banner);
-			// başlayan oyuncu her tur kayar (ilk hamle avantajı dağılsın)
-			const n = this.players.length;
 			let moved = false;
-			for (let k = 0; k < n && !this.over; k++) {
-				const p = this.players[(k + this.round - 1) % n];
+			for (const p of order) {
+				if (this.over) break;
 				if (!p.alive) continue;
 				if (await this.attackTurn(p)) moved = true;
 				this.checkOver();
@@ -825,6 +926,7 @@ export class Match {
 		}
 		if (!this.endReason) this.endReason = 'tur';
 		b.clearFx();
+		await this.goldenQuestion();
 		this.phase = 'bitis';
 		const ranking = this.standings();
 		await this.cinema.overview(this.map);
@@ -835,6 +937,69 @@ export class Match {
 		this.emit('over', { ranking: ranking.map((x) => (x.players ? { team: x.team, score: x.score } : { i: x.i, score: x.score })), reason: this.endReason });
 		app.lastSim = this.report(ranking);
 		return this.ui.end(this, ranking, rewards);
+	}
+
+	/** Tohumlu karıştırma (Fisher–Yates; Array.sort ile rastgele karşılaştırma eşit dağılmaz). */
+	shuffle(list) {
+		const a = list.slice();
+		for (let i = a.length - 1; i > 0; i--) {
+			const j = Math.floor(this.R() * (i + 1));
+			[a[i], a[j]] = [a[j], a[i]];
+		}
+		return a;
+	}
+
+	/** Oyuncunun tarafı: eşli modda takım, yoksa koltuk. */
+	side(p) {
+		return this.mode.teams ? p.team : p.i;
+	}
+
+	/** Tarafın puanı (eşli modda takım toplamı). */
+	sideScore(s) {
+		let t = 0;
+		for (const p of this.players) if (this.side(p) === s) t += p.score;
+		return t;
+	}
+
+	/**
+	 * Bir fetih turunun saldırı sırası (TURN_ORDER). Temel sıra her tur bir kayar; son turda (puan kuralı) taraflar
+	 * puana göre dizilir: önde olan önce, geride olan en son. Eşitlikte kayan sıra korunur; eşli modda takımlar
+	 * dönüşümlü kalır (A, B, A, B: önde olan takım başlar).
+	 */
+	turnOrder(round, rounds) {
+		const base = this.turnBase || this.players;
+		const n = base.length;
+		const rot = base.map((_, k) => base[(k + round - 1) % n]);
+		if (!(round === rounds && rounds > 1 && TURN_ORDER.last === 'score')) return rot;
+		const sides = [...new Set(rot.map((p) => this.side(p)))].sort((a, b) => this.sideScore(b) - this.sideScore(a)); // kararlı: eşitte kayan sıra
+		const queues = sides.map((s) => rot.filter((p) => this.side(p) === s));
+		const out = [];
+		while (queues.some((q) => q.length)) for (const q of queues) if (q.length) out.push(q.shift());
+		return out;
+	}
+
+	/**
+	 * Puan eşitliği (TIE_BREAK.golden): birinciliği paylaşan taraflar tek bir tahmin sorusu çözer; en yakın (eşitse
+	 * hızlı) kazanır. Puanlar değişmez, yalnız sıralama (standings) kazananı öne alır.
+	 */
+	async goldenQuestion() {
+		if (!TIE_BREAK.golden || this.aborted) return;
+		const st = this.standings();
+		if (st.length < 2 || !st[0].alive || !st[1].alive || st[0].score !== st[1].score) return;
+		const tied = st.filter((x) => x.alive && x.score === st[0].score);
+		const who = tied.flatMap((x) => (x.players ? x.players.filter((p) => p.alive) : [x]));
+		if (who.length < 2) return;
+		this.phase = 'altin';
+		this.emit('phase', { phase: this.phase, round: this.round, tied: tied.map((x) => (x.players ? x.team : x.i)) });
+		await this.ui.banner('EŞİTLİK!', 'Altın soru: en yakın tahmin kazanır', { tone: 'gold' });
+		this.tick(EST.banner);
+		const q = this.pick({ types: ['num'], who });
+		const res = await this.ask(q, who, { title: 'ALTIN SORU', phase: 'altin' });
+		const best = this.rank(res, 'closest')[0];
+		this.tieWin = this.side(best.p);
+		const name = this.mode.teams ? this.players.filter((p) => p.team === best.p.team).map((p) => p.name).join(' & ') : best.p.name;
+		await this.ui.banner('ALTIN SORU', `${name} kazandı`, { tone: 'gold', short: true });
+		this.tick(EST.bannerShort);
 	}
 
 	/** Sefer sahnesi girişi: sahne adı, patron ise bölge komutanı ve sözü. */
@@ -852,11 +1017,13 @@ export class Match {
 	/**
 	 * Başkent seçimi: koltuklar rastgele sırayla başkentini seçer (insan haritada dokunur, bot karar verir).
 	 * Başkent başka bir başkente komşu olamaz; seçilir seçilmez kale oraya iner.
+	 * Sıra eşit olasılıklı karıştırılır (v0.8): eski `sort(() => R() - 0.5)` 4 kişide 0. koltuğu %36, 1. koltuğu %14
+	 * ilk seçtiriyordu (ilk seçen en iyi yeri alır).
 	 */
 	async placeCapitals() {
 		const app = this.app;
 		const b = app.board;
-		const order = this.players.slice().sort(() => this.R() - 0.5);
+		const order = this.shuffle(this.players);
 		for (const p of order) {
 			const i = await this.choose(p, 'capital');
 			p.capital = i;
@@ -1014,7 +1181,7 @@ export class Match {
 				const k = this.app.castles[o];
 				const isCap = this.players[o].capital === i;
 				s += (this.value.get(i) || 0) / 400;
-				if (isCap) s += k.hp <= 1 ? 2.5 : p.skill > 0.65 ? 0.6 : -0.6;
+				if (isCap) s += k.hp <= 1 ? BOT_SIEGE.kill : BOT_SIEGE.slope * (p.skill - BOT_SIEGE.pivot) + (k.hp === 2 ? BOT_SIEGE.wounded : 0);
 				// kalkanlı rakibi tercih etme
 				if (this.players[o].shield) s -= 0.5;
 				// insan oyuncuya biraz daha az yüklen (keyifli olsun)
@@ -1040,11 +1207,13 @@ export class Match {
 			return await this._attackTurn(p, cin);
 		} finally {
 			if (cin) cin.tempo = 1;
+			this.duel = null;
 		}
 	}
 
 	async _attackTurn(p, cin) {
 		this.phase = 'fetih';
+		this.emit('turn', { player: p.i, round: this.round });
 		const target = await this.choose(p, 'attack');
 		if (target < 0) {
 			this.idle++;
@@ -1056,6 +1225,8 @@ export class Match {
 		const app = this.app;
 		this.duels++;
 		this.botShield(d, isCap);
+		this.duel = { attacker: p, defender: d, target };
+		this.emit('attack', { player: p.i, defender: d.i, target, capital: isCap });
 		const k = this.filmTempo(p, d);
 		if (cin) cin.tempo = k;
 		await this.cinema.attack(p, d, target, isCap);
@@ -1086,10 +1257,12 @@ export class Match {
 			const tr = await this.ask(tq, [p, d], { title: 'EŞİTLİK BOZMA', attacker: p, defender: d, target, phase: 'duel' });
 			winner = this.closestWinner(tr[0], tr[1], p, d);
 		}
+		const result = (kind, extra = {}) => this.emit('result', { kind, player: p.i, defender: d.i, target, ...extra });
 		if (winner === p && d.shield) {
 			// kalkan: kaybedilen savunma yok sayılır
 			d.shield = false;
 			this.emit('shield', { player: d.i, target });
+			result('shield');
 			this.refreshJokers();
 			await this.ui.banner('KALKAN!', `${d.name} saldırıyı savuşturdu`, { tone: 'gold', short: true });
 			this.tick(EST.bannerShort);
@@ -1099,22 +1272,28 @@ export class Match {
 			if (isCap) {
 				const left = app.castles[d.i].hit();
 				this.towersLost[d.i]++;
+				this.towersBy[p.i]++;
+				result('tower', { left });
 				await this.cinema.towerDown(p, d, target, left);
 				this.tick(EST.tower * k);
 				if (left <= 0) await this.eliminate(d, p);
 				else this.rescore();
 			} else {
 				const v = (this.value.get(target) || VALUE.pick) + VALUE.conquer;
+				result('conquer');
 				this.setOwner(target, p.i, v, true);
 				await this.cinema.conquer(p, target);
 				this.tick(EST.conquer * k);
 			}
 		} else if (winner === d) {
 			this.value.set(target, (this.value.get(target) || VALUE.pick) + VALUE.defend);
+			result('defend');
+			this.emit('owner', { i: target, p: d.i, value: this.value.get(target) }); // il değeri arttı (istemci puanı tutsun)
 			this.rescore();
 			await this.cinema.defend(d, target);
 			this.tick(EST.defend * k);
 		} else {
+			result('nobody');
 			await this.cinema.nobody(target);
 			this.tick(EST.nobody * k);
 		}
@@ -1131,6 +1310,7 @@ export class Match {
 	async eliminate(d, by) {
 		d.alive = false;
 		d.shield = false;
+		d.out = ++this.outSeq; // elenme sırası: sıralamada geç elenen önde
 		const app = this.app;
 		app.castles[d.i].group.visible = false;
 		for (const i of this.owned(d.i)) this.setOwner(i, by.i, (this.value.get(i) || VALUE.pick) + VALUE.conquer);
@@ -1170,12 +1350,32 @@ export class Match {
 		return false;
 	}
 
+	/**
+	 * Sıralama (TIE_BREAK): ayakta olan önde; elenenler arasında geç elenen önde; sonra puan; eşit puanda altın soruyu
+	 * kazanan, sonra daha çok il, kalede daha çok kule, daha çok doğru cevap. Eskiden eşitlikte koltuk sırası
+	 * belirliyordu (yerelde hep insan öne geçiyordu) ve elenenlerin hepsi 0 puanla koltuk sırasına diziliyordu.
+	 */
 	standings() {
-		if (this.mode.teams) {
-			const t = [0, 1].map((k) => ({ team: k, score: this.players.filter((p) => p.team === k).reduce((s, p) => s + p.score, 0), alive: this.players.some((p) => p.team === k && p.alive), players: this.players.filter((p) => p.team === k) }));
-			return t.sort((a, b) => (a.alive !== b.alive ? (a.alive ? -1 : 1) : b.score - a.score));
-		}
-		return this.players.slice().sort((a, b) => (a.alive !== b.alive ? (a.alive ? -1 : 1) : b.score - a.score));
+		const hp = (p) => (p.alive && this.app.castles[p.i].group.visible ? this.app.castles[p.i].hp : 0);
+		const sides = this.mode.teams
+			? [0, 1].map((k) => {
+					const players = this.players.filter((p) => p.team === k);
+					return { team: k, score: players.reduce((s, p) => s + p.score, 0), alive: players.some((p) => p.alive), players, out: Math.max(0, ...players.map((p) => p.out || 0)) };
+				})
+			: this.players.slice();
+		const key = new Map(
+			sides.map((x) => {
+				const ps = x.players || [x];
+				const side = x.players ? x.team : x.i;
+				return [x, [x.alive ? 1 : 0, x.alive ? 0 : x.out || 0, x.score, this.tieWin === side ? 1 : 0, ps.reduce((a, p) => a + this.owned(p.i).length, 0), ps.reduce((a, p) => a + hp(p), 0), ps.reduce((a, p) => a + this.stat[p.i].correct, 0)]];
+			}),
+		);
+		return sides.sort((a, b) => {
+			const ka = key.get(a);
+			const kb = key.get(b);
+			for (let j = 0; j < ka.length; j++) if (ka[j] !== kb[j]) return kb[j] - ka[j];
+			return 0;
+		});
 	}
 
 	// ---------------------------------------------------------------- sonuç, ödül, rapor
@@ -1199,7 +1399,8 @@ export class Match {
 			provinces: this.owned(me.i).length,
 			share,
 			towersLost: team ? this.players.filter((p) => p.team === me.team).reduce((a, p) => a + this.towersLost[p.i], 0) : this.towersLost[me.i],
-			towers: this.towersLost.reduce((a, b, k) => a + (k !== me.i && !this.ally(k, me.i) ? b : 0), 0),
+			// kendi (eşlide takımın) yıktığı kuleler; eskiden 3–4 kişide botların birbirine yıktıkları da sayılıyordu
+			towers: team ? this.players.filter((p) => p.team === me.team).reduce((a, p) => a + this.towersBy[p.i], 0) : this.towersBy[me.i],
 			accuracy: s.q ? s.correct / s.q : 0,
 			stat: { ...s },
 		};

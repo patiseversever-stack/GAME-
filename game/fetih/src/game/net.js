@@ -27,19 +27,30 @@
 //     k='ayril'    d={}                      koltuk botla devam eder
 //     k='harf'     d={ ch }                  adam asmaca harf denemesi; sunucu yalnız o koltuğa 'harf' olayı döner
 //   Olaylar (t='ev'), k:
-//     'state'   d=snapshot()                tam durum (yeniden bağlanma)
-//     'phase'   d={ phase, round }          capital|expansion|attack|siege|end
-//     'turn'    d={ player }
-//     'owner'   d={ i, p, value }           il sahibi değişti (p=-1 boş)
-//     'score'   d={ scores:[…], hp:[…] }
-//     'ask'     d={ q, v, time, who, title } soru açıldı (seyirci içi; time: süre bütçesi, sn)
+//     'state'   d=snapshot()                tam durum: maç başında (harita ve koltuklar) ve yeniden bağlanmada
+//     'phase'   d={ phase, round, order?, tied? }  baskent|yayilma|fetih|altin (order: o fetih turunun saldırı sırası,
+//                                           koltuklar; tied: altın soruya kalan taraflar)
+//     'turn'    d={ player, round }         saldırı sırası bu koltukta
+//     'attack'  d={ player, defender, target, capital }  saldırı ilan edildi
+//     'result'  d={ kind, player, defender, target, left? }  düello sonucu: conquer|tower|shield|defend|nobody
+//     'owner'   d={ i, p, value }           il sahibi ya da değeri değişti (p=-1 boş; savunmada değer +100)
+//     'score'   d={ scores:[…], hp:[…], alive:[…] }  puan, kale kulesi ve hayatta olma (yalnız değişince)
+//     'ask'     d={ q, v, time, who, title, phase, attacker, defender, target }  soru açıldı (bütün uzak koltuklara;
+//                                           izleyen de kartı görür. time: süre bütçesi, sn)
 //     'reveal'  d={ results:[{i,value,time,correct,err}], answer }  answer: sunucudaki tam soru görünümü (cevap, değerler)
 //     'harf'    d={ ch, at:[konum,…] }       adam asmaca: koltuğun denediği harfin kelimedeki yerleri (yalnız o koltuğa)
 //     'wheel'   d={ player, cat }
-//     'joker'   d={ player, id, effect }    yalnızca herkese açık kısmı (oy yüzdesi gizli kalır)
+//     'joker'   d={ player, id, effect }    etkinin tamamı yalnız kullananın koltuğuna; diğerleri { id, kind } (süre
+//                                           jokerinde add, sabotajda victims/by/cut/blurMs) görür. Rakibin yarı yarıyası
+//                                           elenen şıkları, aralığı, harfleri ya da bölgeyi soru sürerken ele vermez.
+//     'sabotage' d={ victims, by, cut, blurMs }  yalnız kurban koltuğa: süresinden cut sn düşer
 //     'shield'  d={ player, target }
 //     'elim'    d={ player, by }
 //     'over'    d={ ranking, reason, rewards? }
+//
+//   Saat: her koltuğun soru saati ayrıdır (ekstra süre yalnız kullananın, sabotaj yalnız kurbanın süresini değiştirir).
+//   Bilinen açık: cevap süresini istemci bildirir; sunucu yalnız [0, süre + kendi ekstra süresi] aralığına kırpar.
+//   Gerçek sunucuda süre sunucu saatinden ölçülmeli (kart açılış onayı + varış zamanı).
 //
 //   Güvenlik: uzak koltuğa giden soru `publicView(T, v)` ile ayıklanır (SECRET: doğru şık, sıra, değerler,
 //   çiftler, konum, kelime gizli); cevap 'reveal' olayında gelir. Doğrulama sunucuda: gelen il `options`

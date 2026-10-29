@@ -99,5 +99,54 @@ for (const q of [...BANK, ...SAMPLES]) {
 	ok(sent.length === 1, 'soru kapandıktan sonra harf cevabı gitmemeli');
 }
 
+// uzak koltuklu tam maç (v0.8): istemci yalnız olaylardan maçın durumunu kurabilmeli (il sahibi ve değeri, puan,
+// kale kuleleri) ve başkasının joker etkisini (elenen şıklar, aralık, harfler, bölge, oylar) hiç görmemeli.
+// Eskiden kule yıkılışı, savunma değeri ve puan hiç gönderilmiyor, rakibin yarı yarıyası herkese gidiyordu.
+{
+	const { makeApp, makeUI } = await import('./dunya.mjs');
+	const { LocalTransport, BotClient } = await import('../src/game/net.js');
+	const SECRET_KEYS = ['hide', 'min', 'max', 'letters', 'provinces', 'pct', 'value', 'spread', 'data'];
+	let events = 0;
+	for (const [mode, n, seed] of [['1v1', 2, 50], ['1v1', 2, 53], ['ffa3', 3, 51], ['ffa4', 4, 52], ['team', 4, 54]]) {
+		const app = makeApp();
+		const seats = Array.from({ length: n }, (_, i) => (i === 1 ? 'remote' : 'bot'));
+		const [srv, cli] = LocalTransport.pair();
+		let s = seed;
+		const client = new BotClient(cli, { skill: 0.7, R: () => ((s = (s * 16807) % 2147483647) / 2147483647) });
+		const view = { owners: new Map(), values: new Map(), score: null, asks: 0, reveals: 0, attacks: 0, results: 0, leaks: [] };
+		const recv = client._recv.bind(client);
+		cli.onmessage((m) => {
+			if (m.t === 'ev') {
+				events++;
+				const d = m.d;
+				if (m.k === 'owner') view.owners.set(d.i, d.p), view.values.set(d.i, d.value);
+				else if (m.k === 'score') view.score = d;
+				else if (m.k === 'ask') view.asks++;
+				else if (m.k === 'reveal') view.reveals++;
+				else if (m.k === 'attack') view.attacks++;
+				else if (m.k === 'result') view.results++;
+				else if (m.k === 'joker' && d.player !== 1) for (const k of SECRET_KEYS) if (d.effect && k in d.effect) view.leaks.push(`${d.id}.${k}`);
+			}
+			recv(m);
+		});
+		const m = new Match(app, makeUI(), { mode, length: 'quick', bot: 'usta', region: 'ege', seed, seats, transports: { 1: srv }, allBots: true, persist: false });
+		let jokers = 0;
+		m.on('joker', () => jokers++);
+		await m.run();
+		await new Promise((r) => setTimeout(r, 5));
+		const tag = `${mode}/${seed}`;
+		ok(m.map.every((i) => view.owners.get(i) === m.owner(i)), `${tag}: istemcinin il sahipleri sunucuyla aynı değil`);
+		ok(m.map.every((i) => (view.values.get(i) || 0) === (m.value.get(i) || 0)), `${tag}: istemcinin il değerleri sunucuyla aynı değil (savunma değeri gelmiyor)`);
+		ok(view.score && view.score.scores.join() === m.players.map((p) => p.score).join(), `${tag}: istemcinin puanları sunucuyla aynı değil`);
+		ok(view.score && view.score.hp.join() === m.players.map((p) => (p.alive ? app.castles[p.i].hp : 0)).join(), `${tag}: istemci kale kulelerini bilmiyor`);
+		ok(view.asks === view.reveals, `${tag}: izleyen koltuk ${view.reveals} sorunun cevabını aldı ama ${view.asks} soruyu gördü`);
+		ok(view.attacks === m.duels && view.results === m.duels, `${tag}: saldırı/sonuç olayı eksik (${view.attacks}/${view.results}, düello ${m.duels})`);
+		ok(!view.leaks.length, `${tag}: başkasının joker etkisi sızdı: ${view.leaks.join(', ')}`);
+		ok(jokers > 0, `${tag}: maçta joker kullanılmadı (sızıntı sınanamadı)`);
+	}
+	ok(events > 500, "uzak koltuk olay almadı");
+	console.log(`uzak koltuklu 5 maç: istemciye ${events} olay`);
+}
+
 console.log(`${checks} denetim, ${fails} hata`);
 if (fails) process.exit(1);

@@ -12,7 +12,7 @@
 // Yıldız kuralları (sahne kazanılırsa):
 //   ★   kazan
 //   ★★  kazan ve bölgenin en az %45'ine sahip ol
-//   ★★★ kazan, kalen hiç kule kaybetmesin ve doğruluğun %60'ı geçsin
+//   ★★★ kazan, kalen hiç kule kaybetmesin ve doğruluğun en az %60 olsun (kural >= 0,6; eski metin "geçsin" diyordu)
 
 import { Progress } from './progress.js';
 import { REGION_THEME } from './commanders.js';
@@ -32,7 +32,7 @@ export const REGION_NAMES = {
 // Bölgeye giriş için gereken toplam yıldız (önceki bölgenin komutanını yenmek de şart)
 export const STAR_GATE = [0, 3, 7, 11, 16, 21, 27];
 
-export const STAR_RULES = ['Kazan', "Bölgenin en az %45'ine sahip ol", "Kalen hiç kule kaybetmesin ve doğruluğun %60'ı geçsin"];
+export const STAR_RULES = ['Kazan', "Bölgenin en az %45'ine sahip ol", "Kalen hiç kule kaybetmesin, doğruluğun en az %60 olsun"];
 
 // Komutan seçkisi: [ad, unvan, kostüm, söz]. Sıra: A, B, C, D (D takım arkadaşı), patron.
 const ROSTER = {
