@@ -188,7 +188,8 @@ function polyArea(p) {
 
 /**
  * Bütün illerin yüzey + duvar ağını tek geometride kurar.
- * Öznitelikler: position, normal, pid (il), bio (orman, yeşillik, dağlık, yan: 0 üst / 0.5 duvar üstü / 1 duvar altı), surf (yüzey yüksekliği).
+ * Öznitelikler: position, normal, pid (il), bio (orman, yeşillik, dağlık, yan: 0 üst / 0.5 duvar üstü / 1 duvar altı), surf (yüzey yüksekliği),
+ * cav (çukurluk: vadi koyu, sırt açık; 0..1 → 0.55..1.25).
  */
 export function buildBoardGeometry(provinces, relief, s, { skirts = true } = {}) {
 	const P = [];
@@ -196,6 +197,21 @@ export function buildBoardGeometry(provinces, relief, s, { skirts = true } = {})
 	const PID = [];
 	const BIO = [];
 	const SURF = [];
+	// çukurluk (ortam örtmesi): köşe çevresindeki ortalama yükseklik kendisinden yüksekse vadi (koyu), alçaksa
+	// sırt (açık). 0..255 → 0.55..1.25 (170 ≈ 1). Uzaktan bakışta dağlar ve vadiler derinlik kazanır.
+	const CAV = [];
+	const cavity = (x, y, h) => {
+		let s1 = 0;
+		let s2 = 0;
+		for (let i = 0; i < 8; i++) {
+			const a = (i * Math.PI) / 4 + 0.39;
+			s1 += relief.height(x + Math.cos(a) * 0.45, y + Math.sin(a) * 0.45);
+			s2 += relief.height(x + Math.cos(a) * 1.5, y + Math.sin(a) * 1.5);
+		}
+		const d = (s1 / 8 - h) * 0.55 + (s2 / 8 - h) * 0.45;
+		const ao = Math.min(1.25, Math.max(0.55, 1 - d * 3.2));
+		return Math.round(((ao - 0.55) / 0.7) * 255);
+	};
 	const IDX = [];
 	const v2 = [];
 	const eps = 0.1;
@@ -237,6 +253,7 @@ export function buildBoardGeometry(provinces, relief, s, { skirts = true } = {})
 				0,
 			);
 			SURF.push(h);
+			CAV.push(cavity(x, y, h));
 			return i;
 		};
 		const tri = (a, b, c) => {
@@ -315,6 +332,7 @@ export function buildBoardGeometry(provinces, relief, s, { skirts = true } = {})
 					PID.push(p.index);
 					BIO.push(fo, gr, ro, k ? 255 : 128);
 					SURF.push(h);
+					CAV.push(170);
 					(k ? bot : top).push(vcount++);
 				}
 			}
@@ -332,6 +350,7 @@ export function buildBoardGeometry(provinces, relief, s, { skirts = true } = {})
 	g.setAttribute('pid', new THREE.Float32BufferAttribute(PID, 1));
 	g.setAttribute('bio', new THREE.Uint8BufferAttribute(BIO, 4, true));
 	g.setAttribute('surf', new THREE.Float32BufferAttribute(SURF, 1));
+	g.setAttribute('cav', new THREE.Uint8BufferAttribute(CAV, 1, true));
 	g.setIndex(vcount > 65535 ? new THREE.Uint32BufferAttribute(IDX, 1) : new THREE.Uint16BufferAttribute(IDX, 1));
 	g.computeBoundingSphere();
 	return { geometry: g, stats, vertices: vcount, triangles: IDX.length / 3 };
