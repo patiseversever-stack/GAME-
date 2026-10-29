@@ -138,10 +138,16 @@ export class Cinema {
 		app.cam.fit({ ...box }, { pitch: 0.95, pad: 1.2, dur: 0.95, arc: 4.5, yawRate: 0.03 * this._drift, distRate: -0.014, decay: 0.32 });
 	}
 
-	/** Kamera yükselir ve listedeki illere neredeyse tepeden bakar (başkent seçimi: bütün harita görünsün). */
+	/**
+	 * Başkent seçimi kadrajı: kamera yükselir, bütün maç haritası ekranı doldurur. Alttaki istem yazısı
+	 * haritayı örtmesin diye kutu aşağı uzatılır (harita yukarıda, yazının üstünde ortalanır); eğim
+	 * hafif kalır ki harita düz atlas değil, kabartmalı minyatür gibi görünsün.
+	 */
 	frameTop(list) {
 		this._spot(null);
-		this.app.cam.fit(this.app.boundsOf(list), { pitch: 1.22, pad: 1.08, dur: 1.1, arc: 6 });
+		const b = this.app.boundsOf(list);
+		b.z1 += (b.z1 - b.z0) * 0.45;
+		this.app.cam.fit(b, { pitch: 1.02, pad: 1.0, dur: 1.1, arc: 6 });
 	}
 
 	/** Okların çıkış noktaları (dünya x/z): kadraj bunları da içersin. */
