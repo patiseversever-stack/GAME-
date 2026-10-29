@@ -4,7 +4,9 @@
 //   fit    : bir bölgeyi ya da bütün haritayı ekrana sığdır (yumuşak yaylı geçiş)
 //   focus  : bir noktaya sinematik yaklaşma
 //   shot   : süreli, yumuşatılmış (ease) ve kavisli (arc: yolda hafif yükselir) geçiş; bitince
-//            isteğe bağlı sürüklenme (yörünge dönüşü, yavaş yaklaşma) sürer
+//            isteğe bağlı sürüklenme (yörünge dönüşü, yavaş yaklaşma) sürer. y: odak yüksekliği (dağlık
+//            ilde sahne kadrajın ortasında kalsın); follow: hareketli bir noktayı izleyen çekim (yürüyen
+//            orduyu yandan izleyen kamera: hedef her karede o noktadan okunur)
 //   path   : anahtar karelerden geçen uçuş (açılış: Türkiye üstünden maç bölgesine)
 //   free   : parmakla kaydırma / iki parmakla yakınlaştırma; ataletli, maç bölgesine sınırlı ve
 //            sınırda lastik gibi geri yaylanır
@@ -25,7 +27,7 @@ const crom = (p0, p1, p2, p3, t) => {
 };
 
 function state() {
-	return { x: 0, z: 0, dist: 0, yaw: 0, pitch: 0 };
+	return { x: 0, y: 0, z: 0, dist: 0, yaw: 0, pitch: 0 };
 }
 
 export class MapCamera {
@@ -47,7 +49,7 @@ export class MapCamera {
 		this.bounds = null; // son sığdırılan kutu
 		this.limit = null; // kullanıcı kaydırmasının sınırı (maç bölgesi)
 		// geçiş
-		this.sh = { on: false, t: 0, dur: 1, arc: 0, ease: easeInOut, a: state(), b: state(), yawRate: 0, distRate: 0, distMin: 6, pitchDip: 0, decay: 0 };
+		this.sh = { on: false, t: 0, dur: 1, arc: 0, ease: easeInOut, a: state(), b: state(), yawRate: 0, distRate: 0, distMin: 6, pitchDip: 0, decay: 0, follow: null, fx: 0, fz: 0 };
 		// uçuş yolu (en çok 8 anahtar)
 		this.pathKeys = Array.from({ length: 8 }, state);
 		this.pathN = 0;
@@ -109,16 +111,27 @@ export class MapCamera {
 	 * (verilmezse yolun uzunluğuyla orantılı). Bitince yawRate (rad/sn) ve distRate (sn başına oran)
 	 * ile sürüklenir: yörünge ve yavaş yaklaşma çekimleri.
 	 */
-	shot(x, z, { dist = this.dist, pitch = this.pitch, yaw = this.yaw, dur = null, arc = null, yawRate = 0, distRate = 0, distMin = 6, ease = null, decay = 0, lens = 0 } = {}) {
+	shot(x, z, { y = 0, dist = this.dist, pitch = this.pitch, yaw = this.yaw, dur = null, arc = null, yawRate = 0, distRate = 0, distMin = 6, ease = null, decay = 0, lens = 0, follow = null, fx = 0, fz = 0 } = {}) {
 		this.lensTo = lens;
 		const s = this.sh;
 		const moving = s.on && s.t < s.dur;
 		s.a.x = this.target.x;
+		s.a.y = this.target.y;
 		s.a.z = this.target.z;
 		s.a.dist = this.dist;
 		s.a.yaw = this.yaw;
 		s.a.pitch = this.pitch;
+		// izleme: hedef her karede follow + (fx, fz) noktasından okunur (x/z yalnızca ilk tahmin)
+		s.follow = follow;
+		s.fx = fx;
+		s.fz = fz;
+		if (follow) {
+			x = follow.x + fx;
+			z = follow.z + fz;
+			y = follow.y;
+		}
 		s.b.x = x;
+		s.b.y = y;
 		s.b.z = z;
 		s.b.dist = dist;
 		s.b.yaw = s.a.yaw + wrapPi(yaw - s.a.yaw);
@@ -134,7 +147,7 @@ export class MapCamera {
 		s.distRate = distRate;
 		s.distMin = distMin;
 		s.decay = decay; // sürüklenme sönümü (1/sn): gece süzülüşü yavaşça durur
-		this.goal.set(x, 0, z);
+		this.goal.set(x, y, z);
 		this.distTo = dist;
 		this.yawTo = s.b.yaw;
 		this.pitchTo = pitch;
@@ -151,14 +164,17 @@ export class MapCamera {
 	path(keys, dur = 2) {
 		this.lensTo = 0;
 		const n = Math.min(8, keys.length);
-		for (let i = 0; i < n; i++) Object.assign(this.pathKeys[i], keys[i]);
+		for (let i = 0; i < n; i++) {
+			this.pathKeys[i].y = 0;
+			Object.assign(this.pathKeys[i], keys[i]);
+		}
 		this.pathN = n;
 		this.pathT = 0;
 		this.pathDur = dur;
 		this.mode = 'path';
 		this.sh.on = false;
 		const e = this.pathKeys[n - 1];
-		this.goal.set(e.x, 0, e.z);
+		this.goal.set(e.x, e.y, e.z);
 		this.distTo = e.dist;
 		this.yawTo = e.yaw;
 		this.pitchTo = e.pitch;
@@ -284,11 +300,17 @@ export class MapCamera {
 	_shot(dt) {
 		const s = this.sh;
 		s.t += dt;
+		if (s.follow) {
+			s.b.x = s.follow.x + s.fx;
+			s.b.y = s.follow.y;
+			s.b.z = s.follow.z + s.fz;
+		}
 		if (s.t < s.dur) {
 			const u = s.t / s.dur;
 			const e = s.ease(u);
 			const bump = Math.sin(Math.PI * e);
 			this.target.x = s.a.x + (s.b.x - s.a.x) * e;
+			this.target.y = s.a.y + (s.b.y - s.a.y) * e;
 			this.target.z = s.a.z + (s.b.z - s.a.z) * e;
 			// uzaklık logaritmik ara değer + kavis
 			this.dist = Math.exp(Math.log(s.a.dist) + (Math.log(s.b.dist) - Math.log(s.a.dist)) * e) + s.arc * bump;
@@ -302,8 +324,17 @@ export class MapCamera {
 			s.yawRate *= k;
 			s.distRate *= k;
 		}
-		this.target.x = s.b.x;
-		this.target.z = s.b.z;
+		if (s.follow) {
+			// izleme: hedefe yumuşakça yetiş (titremesin)
+			const k = 1 - Math.exp(-dt * 6);
+			this.target.x += (s.b.x - this.target.x) * k;
+			this.target.y += (s.b.y - this.target.y) * k;
+			this.target.z += (s.b.z - this.target.z) * k;
+		} else {
+			this.target.x = s.b.x;
+			this.target.y = s.b.y;
+			this.target.z = s.b.z;
+		}
 		this.pitch = s.b.pitch;
 		if (s.yawRate) this.yaw += s.yawRate * dt;
 		else this.yaw = s.b.yaw;
@@ -313,7 +344,7 @@ export class MapCamera {
 		this.dist = s.b.dist;
 		this.yawTo = this.yaw;
 		this.distTo = this.dist;
-		this.goal.set(this.target.x, 0, this.target.z);
+		this.goal.set(this.target.x, this.target.y, this.target.z);
 	}
 
 	_path(dt) {
@@ -328,6 +359,7 @@ export class MapCamera {
 		const p2 = K[i + 1];
 		const p3 = K[Math.min(n - 1, i + 2)];
 		this.target.x = crom(p0.x, p1.x, p2.x, p3.x, f);
+		this.target.y = crom(p0.y, p1.y, p2.y, p3.y, f);
 		this.target.z = crom(p0.z, p1.z, p2.z, p3.z, f);
 		this.dist = Math.max(4, crom(p0.dist, p1.dist, p2.dist, p3.dist, f));
 		this.yaw = crom(p0.yaw, p1.yaw, p2.yaw, p3.yaw, f);
@@ -335,7 +367,7 @@ export class MapCamera {
 		if (this.pathT >= this.pathDur) {
 			// son kareye yerleş: sığdırma kipi gibi dur
 			const e = K[n - 1];
-			this.target.set(e.x, 0, e.z);
+			this.target.set(e.x, e.y, e.z);
 			this.dist = e.dist;
 			this.yaw = e.yaw;
 			this.pitch = e.pitch;

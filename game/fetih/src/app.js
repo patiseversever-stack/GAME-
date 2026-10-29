@@ -142,6 +142,7 @@ export class App {
 		this.playerColors = PLAYER_COLORS;
 		this.fx = new FX(G, R.tier, this);
 		this.scene.add(this.fx.group);
+		for (const c of this.fx.casters) this.shadow.add(c); // ordular ve makineler gölge yapar
 		this.cinema = new Cinema(this);
 		this.sfx = new Sfx(this.hooks);
 		ensureSystems(this); // app.progress (XP, altın, kozmetik) ve app.campaign (sefer)

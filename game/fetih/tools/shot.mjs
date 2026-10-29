@@ -1,9 +1,9 @@
 // Ekran görüntüsü aracı (geliştirme için): oyunu başsız Chromium'da açar,
 // istenen anları çizip PNG kaydeder.
-//   node tools/shot.mjs views.json out-dir [--w=412 --h=892 --q=2]
+//   node tools/shot.mjs views.json out-dir [--w=412 --h=892 --q=2 --html=eski.html]
 // views.json: [{ "name": "bahar", "call": "debugView", "args": [{ "level": 0 }] }, ...]
 import { chromium } from 'playwright-core';
-import { readFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, mkdirSync, existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
 const [viewsFile, outDir = 'verify-out'] = process.argv.slice(2).filter((a) => !a.startsWith('--'));
@@ -15,14 +15,16 @@ const views = JSON.parse(readFileSync(viewsFile, 'utf8'));
 mkdirSync(outDir, { recursive: true });
 
 const browser = await chromium.launch({
-	executablePath: process.env.CHROMIUM || '/opt/pw-browsers/chromium-1194/chrome-linux/chrome',
+	executablePath:
+		process.env.CHROMIUM ||
+		['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', '/opt/pw-browsers/chromium/chrome-linux64/chrome'].find((p) => existsSync(p)),
 	args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'],
 });
 const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: Number(opt.dpr || 1) });
 const logs = [];
 page.on('console', (m) => logs.push(`[${m.type()}] ${m.text()}`));
 page.on('pageerror', (e) => logs.push(`[pageerror] ${e.message}`));
-const url = 'file://' + resolve('dist/FetihLigi.html') + `?debug&q=${Q}` + (opt.extra ? '&' + opt.extra : '');
+const url = 'file://' + resolve(opt.html || 'dist/FetihLigi.html') + `?debug&q=${Q}` + (opt.extra ? '&' + opt.extra : ''); // --html: başka bir derleme (kıyas)
 const t0 = Date.now();
 await page.goto(url);
 await page.waitForFunction(() => window.__fl, null, { timeout: 180000 });

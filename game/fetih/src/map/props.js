@@ -5,9 +5,16 @@
 // Ağaçlar gerçek orman kuşaklarına dikilir (kabartma ızgarasının orman kanalı): Karadeniz'in kuzey
 // yamaçları, Istranca, Kaz Dağları, Menteşe ve Toros yamaçları, Sarıkamış… Yükseklerde çam, alçakta
 // yapraklı ağaç. Yoğunluk kademeden gelir.
+//
+// v0.6 (savaş filmi): ağaçlar minyatür ölçeğinde kalır (en uzun çam ~0,8 birim: asker boyunun ~1,3 katı;
+// eskiden 1,4 birimdi, il sınırlarını ve kaleleri örtüyordu). Ağaç tacı hiçbir il sınırına ve kıyıya
+// taşmaz (taç yarıçapı + pay kadar uzak: sınır çizgisi ve kalkan ilin duvarı açık), il adının yeri ve ünlü
+// yapı avluları açık. Kale kurulunca altındaki ağaçlar kale inerken toprağa gömülür (uCastle; kale yeri
+// önceden bilinmez, 81 ilin ortasını boşaltmak ormanı yok ederdi). Ormanlar küçülen ağaçlar sıklaşarak gür
+// kalır. Savaş sırasında sahnenin çevresindeki ağaçlar alçalır (shaderlib CLEAR; kare başına CPU işi yok).
 
 import * as THREE from 'three';
-import { COMMON, SHADOW, LIGHT, FINISH, PROV } from '../gfx/shaderlib.js';
+import { COMMON, SHADOW, LIGHT, FINISH, PROV, CLEAR } from '../gfx/shaderlib.js';
 import { rng } from '../core/math.js';
 import { BASE, VS as VSCALE } from './terrain.js';
 import { Landmarks } from './landmarks.js';
@@ -15,9 +22,20 @@ import { Landmarks } from './landmarks.js';
 const VS = /* glsl */ `
 ${COMMON}
 ${PROV}
+${CLEAR}
 attribute vec4 iP;    // x, z, ölçek, dönüş
 attribute vec4 iQ;    // zemin y, en/boy oranı (yükseklik çarpanı), il, renk tonu
 uniform float uPLift, uPSel;
+uniform vec4 uCastle[4]; // kaleler: konum, w görünür (nightlights.js her karede yazar)
+// kale tepesinin altında kalan ağaç: kale inerken (yere yaklaştıkça) toprağa gömülür
+float castleK(vec2 q, float y) {
+	float k = 0.0;
+	for (int i = 0; i < 4; i++) {
+		vec4 c = uCastle[i];
+		if (c.w > 0.5) k = max(k, (1.0 - smoothstep(2.3, 2.75, distance(c.xz, q))) * (1.0 - smoothstep(0.3, 2.0, c.y - y)));
+	}
+	return k;
+}
 varying vec3 vW;
 varying vec3 vN;
 varying float vH;
@@ -27,11 +45,13 @@ void main() {
 	vec4 fx = provRow(iQ.z, 3);
 	float lift = fx.x * uPLift + fx.z * uPSel;
 	float c = cos(iP.w), s = sin(iP.w);
-	vec3 p = position * vec3(iP.z, iP.z * iQ.y, iP.z);
+	// savaş alanında çalılık boyuna iner (sahne açık kalsın); kale tepesinin altında tamamen gömülür
+	float ck = clearK(iP.xy, 0.0);
+	vec3 p = position * vec3(iP.z, iP.z * iQ.y, iP.z) * (1.0 - 0.8 * ck) * (1.0 - castleK(iP.xy, iQ.x));
 	// hafif rüzgâr salınımı (tepede)
 	p.x += sin(uTime * 1.3 + iP.x * 0.7 + iP.y) * 0.012 * position.y;
 	p = vec3(p.x * c + p.z * s, p.y, -p.x * s + p.z * c);
-	vec3 w = p + vec3(iP.x, iQ.x + lift, iP.y);
+	vec3 w = p + vec3(iP.x, iQ.x + lift - ck * 0.03, iP.y);
 	vW = w;
 	vN = vec3(normal.x * c + normal.z * s, normal.y / max(iQ.y, 0.3), -normal.x * s + normal.z * c);
 	vH = position.y;
@@ -76,13 +96,23 @@ void main() {
 
 const DEPTH_VS = /* glsl */ `
 ${PROV}
+${CLEAR}
 attribute vec4 iP;
 attribute vec4 iQ;
 uniform float uPLift, uPSel;
+uniform vec4 uCastle[4];
+float castleK(vec2 q, float y) {
+	float k = 0.0;
+	for (int i = 0; i < 4; i++) {
+		vec4 c = uCastle[i];
+		if (c.w > 0.5) k = max(k, (1.0 - smoothstep(2.3, 2.75, distance(c.xz, q))) * (1.0 - smoothstep(0.3, 2.0, c.y - y)));
+	}
+	return k;
+}
 void main() {
 	vec4 fx = provRow(iQ.z, 3);
 	float c = cos(iP.w), s = sin(iP.w);
-	vec3 p = position * vec3(iP.z, iP.z * iQ.y, iP.z);
+	vec3 p = position * vec3(iP.z, iP.z * iQ.y, iP.z) * (1.0 - 0.8 * clearK(iP.xy, 0.0)) * (1.0 - castleK(iP.xy, iQ.x));
 	p = vec3(p.x * c + p.z * s, p.y, -p.x * s + p.z * c);
 	vec3 w = p + vec3(iP.x, iQ.x + fx.x * uPLift + fx.z * uPSel, iP.y);
 	gl_Position = projectionMatrix * viewMatrix * vec4(w, 1.0);
@@ -128,7 +158,10 @@ function mergeSimple(list) {
 	return out;
 }
 
-const TREES = [1850, 1350, 700]; // kademe 2, 1, 0 (ters sıra)
+const TREES = [2250, 1850, 760]; // kademe 2, 1, 0 (ters sıra); küçük ağaç, sık orman (üçgen bütçesi: q0 ≤ 150k)
+const CROWN = 0.21; // ağaç tacının yarıçapı (ölçek 1); sınırdan en az taç + BORDER_PAD uzakta
+const BORDER_PAD = 0.07;
+const CENTER_GAP = 1.15; // il ortası: il adı ve kalenin gövdesi (kale tepesinin geri kalanı uCastle ile)
 
 export class Props {
 	constructor(G, tier, board) {
@@ -140,8 +173,8 @@ export class Props {
 		// önce ünlü yapılar: ağaçlar onların ve il merkezlerinin (kale yeri) çevresinde bitmesin
 		this.landmarks = new Landmarks(G, tier, board);
 		const clear = [
-			...this.landmarks.sites.map((s) => [s.x, s.z, s.r ?? 0.95]), // avlu (v0.5) içine orman taşmasın
-			...board.provinces.map((p) => [p.x, p.z, 1.6]),
+			...this.landmarks.sites.map((s) => [s.x, s.z, (s.r ?? 0.95) + 0.35]), // avlu (v0.5) içine ve kenarına orman taşmasın
+			...board.provinces.map((p) => [p.x, p.z, CENTER_GAP]),
 		];
 		const blocked = (x, z) => {
 			for (const [cx, cz, r] of clear) if ((x - cx) * (x - cx) + (z - cz) * (z - cz) < r * r) return true;
@@ -150,7 +183,7 @@ export class Props {
 		const lists = [[], []];
 		const budget = TREES[2 - tier.id] ?? 1000;
 		// orman kuşaklarında titreşimli ızgara: olasılık = orman yoğunluğu
-		const step = 0.3;
+		const step = 0.2;
 		const cand = [];
 		for (let y = -20; y < 20; y += step)
 			for (let x = -45; x < 46; x += step) {
@@ -164,19 +197,25 @@ export class Props {
 				if (la > 0.05 || pr <= 0) continue;
 				if (R() > pr) continue;
 				if (blocked(jx, -jy)) continue;
-				cand.push([jx, jy, fo]);
+				cand.push([jx, jy, fo, R()]);
 			}
-		// bütçeye indir (eşit seyreltme)
-		const keep = Math.min(1, budget / Math.max(1, cand.length));
-		for (const [x, y, fo] of cand) {
-			if (R() > keep) continue;
+		// sınır ve kıyı denetiminden geçenler bütçeye indirilir (eşit seyreltme)
+		const pass = [];
+		for (const [x, y, fo, sr] of cand) {
 			const idx = board.pick(x, -y);
 			if (idx < 0) continue;
 			const e = relief.elev(x, y);
 			const p = board.provinces[idx];
 			const conifer = e > 950 || (p.region === 'akdeniz' && e > 300) || (p.region === 'ege' && e > 500) || (p.region === 'dogu' && fo > 0.5) ? 1 : R() < 0.15 ? 1 : 0;
-			lists[conifer ? 0 : 1].push({ x, z: -y, y: relief.height(x, y) - 0.02, pid: idx, e });
+			// boy: çam en çok ~0,8, yapraklı ~0,55 birim (minyatür ölçek: asker 0,6; kale 3)
+			const s = conifer ? 0.6 + sr * 0.28 : 0.66 + sr * 0.3;
+			// taç sınıra ve kıyıya taşmasın (sınır çizgisi, kalkan ilin duvarı ve kıyı falezi açık kalır)
+			const need = CROWN * s + BORDER_PAD;
+			if (board.borderDist(x, -y, need) < need) continue;
+			pass.push([conifer, { x, z: -y, y: relief.height(x, y) - 0.02, pid: idx, e, s }]);
 		}
+		const keep = Math.min(1, budget / Math.max(1, pass.length));
+		for (const [conifer, o] of pass) if (R() <= keep) lists[conifer ? 0 : 1].push(o);
 		for (let k = 0; k < 2; k++) {
 			const list = lists[k];
 			const base = makeGeo(k);
@@ -186,14 +225,13 @@ export class Props {
 			const P = new Float32Array(list.length * 4);
 			const Q = new Float32Array(list.length * 4);
 			list.forEach((o, i) => {
-				const s = (k === 0 ? 0.85 : 0.8) + R() * 0.55;
-				P.set([o.x, o.z, s, R() * 6.28], i * 4);
-				Q.set([o.y, k === 0 ? 1 + R() * 0.35 : 0.9 + R() * 0.25, o.pid, R()], i * 4);
+				P.set([o.x, o.z, o.s, R() * 6.28], i * 4);
+				Q.set([o.y, k === 0 ? 1 + R() * 0.2 : 0.9 + R() * 0.2, o.pid, R()], i * 4);
 			});
 			g.setAttribute('iP', new THREE.InstancedBufferAttribute(P, 4));
 			g.setAttribute('iQ', new THREE.InstancedBufferAttribute(Q, 4));
 			g.instanceCount = list.length;
-			const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit } };
+			const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uCastle: { value: this.landmarks.castleU } };
 			const m = new THREE.Mesh(g, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps).replace('__KIND__', String(k)), uniforms }));
 			m.frustumCulled = false;
 			this.group.add(m);
