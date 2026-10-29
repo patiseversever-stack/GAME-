@@ -99,14 +99,33 @@ export class Cinema {
 			b.cues?.hide(); // seçim bitti: oklar söner (fetih ve düello oksuz)
 		};
 		const q = ui.question.bind(ui);
-		ui.question = (m, ctx) => {
+		ui.question = async (m, ctx) => {
 			ui.caption?.(null);
-			if (!ui.fast && ctx?.T?.needsMap) {
+			const map = !ui.fast && !!ctx?.T?.needsMap;
+			if (map) {
 				app.board.night?.(false, null, { hold: 0 });
 				ui.tagsOff?.();
+				this.clues(false); // "Sinop nerede?": il adları ve yapı maketleri cevabı ele vermesin
 			}
-			return q(m, ctx);
+			try {
+				return await q(m, ctx);
+			} finally {
+				if (map) this.clues(true); // cevap açıklanırken geri gelir
+			}
 		};
+	}
+
+	/**
+	 * Haritadaki ipuçları: il adları (3B ad katmanı yumuşakça söner) ve ünlü yapı maketleri. Harita
+	 * sorusunda kapanır. Maketler fade(on) destekliyorsa yere gömülerek kaybolur, yoksa gizlenir.
+	 */
+	clues(on) {
+		const b = this.app.board;
+		b.labelLayer?.suspend?.(!on);
+		const lm = this.app.props?.landmarks;
+		if (!lm) return;
+		if (lm.fade) lm.fade(on);
+		else lm.mesh.visible = lm.caster.visible = on;
 	}
 
 	/** Kamera listedeki illerin hepsini çerçeveler (çok küçükse en az ~14 birim). */
