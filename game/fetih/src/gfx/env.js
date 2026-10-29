@@ -6,6 +6,14 @@ import { noiseTexture } from './noise.js';
 
 const C = (hex, k = 1) => new THREE.Color(hex).multiplyScalar(k);
 
+/** Hava dokusu kurulana kadar boş (sıfır ağırlık) doku: hava yok. */
+function blankRegion() {
+	const t = new THREE.DataTexture(new Uint8Array(4), 1, 1);
+	t.colorSpace = THREE.NoColorSpace;
+	t.needsUpdate = true;
+	return t;
+}
+
 export function createGlobals() {
 	return {
 		uTime: { value: 0 },
@@ -34,6 +42,11 @@ export function createGlobals() {
 		uClear2: { value: new THREE.Vector4(0, 0, 0, 0) },
 		uStage: { value: new THREE.Vector4(1, 0, 0.6, 0) }, // savaş zemini (board.js): yarıçap, -, kenar yumuşaklığı
 		uNoise: { value: noiseTexture() }, // döşenebilir gürültü (noise.js)
+		// bölge havası (weather.js): bölge ağırlık dokusu, alan kutusu, güç / yakınlık / kademe / savaş açıklığı
+		uRegion: { value: blankRegion() },
+		uWxBox: { value: new THREE.Vector4(0, 0, 1, 1) },
+		uWx: { value: new THREE.Vector4(0, 0, 0, 0) },
+		uWxStage: { value: new THREE.Vector4(0, 0, 0, 0) },
 		uShadowMap: { value: null },
 		uShadowMat: { value: new THREE.Matrix4() },
 		uShadowP: { value: new THREE.Vector4(1 / 1024, 0.04, 0.0008, 1) },
