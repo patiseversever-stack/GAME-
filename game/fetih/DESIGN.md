@@ -66,6 +66,11 @@ Hepsi Promise döner; `fast` true iken anında biter.
 `TYPES[tip] = {time, label, kind:'exact'|'closest', needsMap?, prepare(q,R), mount(el,v,api), judge(v,value), bot(v,skill,R)}`
 - `mount` dönüşü: `{lock(), reveal(results), destroy(), value?()}`
 - `api`: `{answer(value), onMapTap(fn), showPin(p)}`
+- **Süre (v0.5):** `time` artık yalnız tipik süredir (belge ve yedek). Her sorunun süresi kendi verisinden hesaplanır:
+  `src/quiz/timing.js` (`timing(q)`, `budget(q)`, `botTime(v, R, skill, lo, hi)`); okuma + düşünme (tip, zorluk) + giriş
+  mekaniği, tipin sınırlarına kırpılmış tam saniye. `prepare` görünüme `v.sec` (saat) ve `v.fast` (hızlı oyuncu) koyar;
+  maç, arayüz (`questionTime(v.sec, extra, floor)`), botlar ve uzak koltuklar (`answer` isteğinde `time`) aynı değeri
+  kullanır. Saf ve belirlenimci: sunucu aynı modülle aynı süreyi bulur. Sınama: `node test/timing.test.mjs [--all]`.
 
 ### Ses (`src/audio/sfx.js`)
 - `unlock()`, `play(name, opts)`, `music(theme)`, `mute(on)`

@@ -1,7 +1,8 @@
 // Seçmeli tipler: hilo, odd, emoji, proverb, riddle.
 // Hepsi 'exact' türünde: bildi / bilemedi; eşitlikte hızlı olan kazanır.
 
-import { css, esc, shuffle, pCorrect, thinkTime, mountChoice, buzz, fmtNum, clamp } from './util.js';
+import { css, esc, shuffle, pCorrect, mountChoice, buzz, fmtNum, clamp } from './util.js';
+import { botTime } from './timing.js';
 import { clock, setTimeout } from '../core/clock.js';
 
 const CSS = /* css */ `
@@ -58,12 +59,12 @@ const choiceKind = (extra) => ({
 	...extra,
 });
 
-/** 4 şıklı tipler için ortak bot. */
-function choiceBot(v, skill, R, [base, span] = [3, 6], bonus = 0) {
+/** 4 şıklı tipler için ortak bot. [lo, hi]: cevap anının süre penceresindeki dilimi (timing.js botTime). */
+function choiceBot(v, skill, R, [lo, hi] = [0.05, 0.8], bonus = 0) {
 	const ok = R() < Math.min(0.96, pCorrect(skill, v.q.diff) + bonus);
 	let value = v.right;
 	if (!ok) do value = Math.floor(R() * v.opts.length); while (value === v.right);
-	return { value, time: thinkTime(R, base, span) };
+	return { value, time: botTime(v, R, skill, lo, hi) };
 }
 
 /** a: [doğru, y1, y2, y3] → karıştırılmış şıklar */
@@ -134,14 +135,14 @@ export const hilo = {
 			const ratio = Math.max(a, b) / Math.max(1e-9, Math.min(a, b));
 			const close = clamp((1.6 - ratio) * 0.35, 0, 0.3);
 			const ok = R() < clamp(pCorrect(skill, v.q.diff) + 0.12 - close, 0.3, 0.96);
-			return { value: ok ? v.right : 1 - v.right, time: thinkTime(R, 1.8, 4) };
+			return { value: ok ? v.right : 1 - v.right, time: botTime(v, R, skill, 0, 0.7) };
 		},
 	}),
 };
 
 // ---------------------------------------------------------------- odd
 export const odd = {
-	time: 15,
+	time: 12,
 	label: 'Farklı olan',
 	prepare(q, R) {
 		const ord = shuffle([0, 1, 2, 3], R);
@@ -162,12 +163,12 @@ export const odd = {
 			destroy() {},
 		};
 	},
-	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [3, 6]) }),
+	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [0.05, 0.8]) }),
 };
 
 // ---------------------------------------------------------------- emoji
 export const emoji = {
-	time: 15,
+	time: 13,
 	label: 'Emoji',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {
@@ -178,12 +179,12 @@ export const emoji = {
 		const ctl = mountChoice(el.querySelector('[data-r=o]'), v, api);
 		return { lock: ctl.lock, reveal: (r) => ctl.reveal(r), destroy() {} };
 	},
-	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [2.5, 6]) }),
+	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [0.05, 0.8]) }),
 };
 
 // ---------------------------------------------------------------- proverb
 export const proverb = {
-	time: 15,
+	time: 10,
 	label: 'Atasözü',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {
@@ -217,12 +218,12 @@ export const proverb = {
 			destroy() {},
 		};
 	},
-	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [3, 6], 0.03) }),
+	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [0.05, 0.75], 0.03) }),
 };
 
 // ---------------------------------------------------------------- riddle
 export const riddle = {
-	time: 20,
+	time: 15,
 	label: 'Bilmece',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {
@@ -231,5 +232,5 @@ export const riddle = {
 		const ctl = mountChoice(el.querySelector('[data-r=o]'), v, api);
 		return { lock: ctl.lock, reveal: (r) => ctl.reveal(r), destroy() {} };
 	},
-	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [4, 8], -0.02) }),
+	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [0.1, 0.85], -0.02) }),
 };

@@ -572,7 +572,7 @@ export class UI {
 		const cat = CATS[q.cat] || CATS[ctx.cat] || { name: 'Genel Kültür', color: '#4a8cff', icon: ICONS.star };
 		const map = !!T.needsMap;
 		const closest = T.kind === 'closest';
-		const sec = T.time;
+		const sec = v.sec ?? T.time; // süre bütçesi sorunun verisinden (quiz/timing.js), maçla aynı
 		const prov = ctx.target != null ? app.board.provinces[ctx.target] : null;
 		const siege = duel && prov && ctx.defender.capital === ctx.target;
 		this._extra = 0;
@@ -674,7 +674,7 @@ export class UI {
 					this._extra = ex;
 					this._runBar(t);
 				}
-				const total = questionTime(T, this._extra, this._floor);
+				const total = questionTime(sec, this._extra, this._floor);
 				const left = Math.max(0, total - t);
 				const s = Math.ceil(left);
 				if (s !== lastS) {

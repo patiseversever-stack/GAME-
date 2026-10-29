@@ -131,7 +131,7 @@ for (const q of BANK) {
 			const R = rng(1000 + k * 31 + q.id.length);
 			const v = T.prepare(q, R);
 			const b = T.bot(v, skill, R);
-			ok(b && Number.isFinite(b.time) && b.time > 0 && b.time <= T.time + 0.001, `${q.id}: bot süresi ${b?.time} (en çok ${T.time})`);
+			ok(b && Number.isFinite(b.time) && b.time > 0 && b.time <= v.sec + 0.001, `${q.id}: bot süresi ${b?.time} (en çok ${v.sec})`);
 			const j = T.judge(v, b.value);
 			ok(j && typeof j.correct === 'boolean' && (Number.isFinite(j.err) || j.err === Infinity), `${q.id}: bot cevabı değerlendirilemedi`);
 			const key = q.type + '@' + skill;

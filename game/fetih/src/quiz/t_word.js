@@ -1,6 +1,7 @@
 // Kelime tipleri: anagram ve mini çengel bulmaca (cross).
 
-import { css, esc, shuffle, pCorrect, thinkTime, buzz, clamp, trUp, keyboard, physicalKeys, chips, isLand, LAND } from './util.js';
+import { css, esc, shuffle, pCorrect, buzz, clamp, trUp, keyboard, physicalKeys, chips, isLand, LAND } from './util.js';
+import { botTime } from './timing.js';
 import { layout } from './crossgen.js';
 import { setTimeout } from '../core/clock.js';
 
@@ -54,7 +55,7 @@ ${LAND}{
 
 // ---------------------------------------------------------------- anagram
 export const anagram = {
-	time: 30,
+	time: 18,
 	label: 'Anagram',
 	kind: 'exact',
 	prepare(q, R) {
@@ -170,13 +171,13 @@ export const anagram = {
 	bot(v, skill, R) {
 		const n = v.tiles.length;
 		const ok = R() < clamp(pCorrect(skill, v.q.diff) - (n > 8 ? 0.08 : 0), 0.08, 0.95);
-		return { value: { ok, tries: ok ? (R() < 0.25 ? 1 : 0) : 3 }, time: thinkTime(R, 6 + n * 0.5, 10) };
+		return { value: { ok, tries: ok ? (R() < 0.25 ? 1 : 0) : 3 }, time: botTime(v, R, skill, 0.1, 0.9) };
 	},
 };
 
 // ---------------------------------------------------------------- cross
 export const cross = {
-	time: 50,
+	time: 45,
 	label: 'Çengel',
 	kind: 'closest',
 	keep: true, // arayüz sıralama tablosunu tahtanın altına ekler
@@ -360,7 +361,6 @@ export const cross = {
 		return { correct: err === 0, err };
 	},
 	bot(v, skill, R) {
-		const n = v.L.cells.length;
 		const p = clamp(pCorrect(skill, v.q.diff) + 0.05, 0.1, 0.96);
 		// kelime kelime çözer: bilinmeyen kelimenin yalnızca kesişen harfleri doğru çıkar
 		const known = v.L.words.map(() => R() < p);
@@ -380,6 +380,6 @@ export const cross = {
 				}
 			}
 		});
-		return { value, time: thinkTime(R, 14 + n * 0.5, 16) };
+		return { value, time: botTime(v, R, skill, 0.2, 1) };
 	},
 };

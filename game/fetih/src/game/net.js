@@ -19,6 +19,9 @@
 //     k='category' d={}                                                                → res.d = kategori anahtarı
 //     k='answer'   d={ q, v, time, extra, who:[koltuk,…], phase, cat, attacker, defender, target }
 //                                                                                      → res.d = { value, time }
+//                  time: sorunun süre bütçesi (sn), sunucu sorunun verisinden hesaplar (src/quiz/timing.js; v.sec ile
+//                  aynı). İstemci saati bununla kurar, kendisi yeniden hesaplamaz (publicView şıkları sildiği için
+//                  istemcideki hesap farklı çıkabilir). Cevap süresi sunucuda [0, time + ekstra] aralığına kırpılır.
 //   Eylemler (t='act'):
 //     k='joker'    d={ id }                  sunucu match.useJoker(id, koltuk) çağırır; sonuç 'ev' ile döner
 //     k='ayril'    d={}                      koltuk botla devam eder
@@ -28,7 +31,7 @@
 //     'turn'    d={ player }
 //     'owner'   d={ i, p, value }           il sahibi değişti (p=-1 boş)
 //     'score'   d={ scores:[…], hp:[…] }
-//     'ask'     d={ q, v, who, title }      soru açıldı (seyirci içi)
+//     'ask'     d={ q, v, time, who, title } soru açıldı (seyirci içi; time: süre bütçesi, sn)
 //     'reveal'  d={ results:[{i,value,time,correct,err}], answer }
 //     'wheel'   d={ player, cat }
 //     'joker'   d={ player, id, effect }    yalnızca herkese açık kısmı (oy yüzdesi gizli kalır)

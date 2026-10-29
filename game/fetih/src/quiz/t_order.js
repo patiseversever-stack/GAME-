@@ -4,7 +4,8 @@
 // Değer (value): öğe indekslerinin sırası, örn. [2,0,3,1]
 // Sıralama türü 'closest': err = ters çevrilmiş çift sayısı (0..6); 0 = tam doğru.
 
-import { css, esc, shuffle, pCorrect, gauss, thinkTime, clamp, buzz, fmtNum, isLand, LAND } from './util.js';
+import { css, esc, shuffle, pCorrect, gauss, clamp, buzz, fmtNum, isLand, LAND } from './util.js';
+import { botTime } from './timing.js';
 import { setTimeout } from '../core/clock.js';
 
 // satır yüksekliği ve adım (px): dikey telefon / yatay (kısa ekran) / yatayda cevap açılınca
@@ -71,7 +72,7 @@ export function ends(q) {
 }
 
 export const order = {
-	time: 25,
+	time: 20,
 	label: 'Sırala',
 	kind: 'closest',
 	keep: true, // arayüz sıralama tablosunu tahtanın altına ekler (tahtayı silmez)
@@ -230,6 +231,6 @@ export const order = {
 				[seq[a], seq[a + 1]] = [seq[a + 1], seq[a]];
 			}
 		}
-		return { value: seq, time: thinkTime(R, 6, 10) };
+		return { value: seq, time: botTime(v, R, skill, 0.1, 0.9) };
 	},
 };
