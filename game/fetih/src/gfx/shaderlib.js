@@ -357,6 +357,15 @@ float clearK(vec2 q, float pad) {
 	float k = max(1.0 - smoothstep(uClearR.x - uClearR.z, uClearR.x, d), 1.0 - smoothstep(uClearR.w - 0.5, uClearR.w, d2));
 	return uClearR.y * k;
 }
+// savaş zemini: orduların altında sahip boyası çiğnenmiş toprağa döner (uStage.x yarıçap, z kenar); güç uClearR.y
+uniform vec4 uStage;
+float stageK(vec2 q) {
+	if (uClearR.y < 0.001) return 0.0;
+	vec2 a = uClear.xy;
+	vec2 ab = uClear.zw - a;
+	float t = clamp(dot(q - a, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+	return uClearR.y * (1.0 - smoothstep(uStage.x - uStage.z, uStage.x, length(q - a - ab * t)));
+}
 // savaş kapsülüne uzaklık (balonlar gibi geniş alana yayılan süsler için)
 float clearDist(vec2 q) {
 	vec2 a = uClear.xy;

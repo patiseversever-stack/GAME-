@@ -21,7 +21,7 @@
 // nehirler; kıyıda kumsal ya da falez. Hepsi aynı shader'da, ek çizim çağrısı olmadan.
 
 import * as THREE from 'three';
-import { COMMON, SHADOW, LIGHT, FINISH, PROV, MIST, glslColor as C } from '../gfx/shaderlib.js';
+import { COMMON, SHADOW, LIGHT, FINISH, PROV, MIST, CLEAR, glslColor as C } from '../gfx/shaderlib.js';
 import DATA from '../data/turkiye.json';
 import { Relief, buildBoardGeometry, BASE, VS, BOTTOM, LIFT } from './terrain.js';
 import { bakeFields, FIELD_BOX, RB, RC, RL } from './fields.js';
@@ -87,6 +87,7 @@ ${SHADOW}
 ${LIGHT}
 ${FINISH}
 ${PROV}
+${CLEAR}
 uniform sampler2D uBorder;
 uniform sampler2D uWater;
 uniform sampler2D uNoise;
@@ -230,6 +231,16 @@ void main() {
 	float freeSel = sel * (1.0 - ownedK);
 	alb = mix(alb, alb * 1.08 + 0.015, freeSel * uSelLit);
 	gOwn = ownW;
+	// savaş zemini (v0.6): ordular kendi renginde ilin üstünde kaybolmasın; orduların altında sahip boyası koyu,
+	// az doygun çiğnenmiş toprağa döner (rengin izi kalır: kimin toprağı olduğu yine okunur). Kenar yumuşak;
+	// il sınırı ve boya dalgası çizgileri sonra çizilir, bozulmaz.
+	float bf = skirt ? 0.0 : stageK(vW.xz);
+	if (bf > 0.001) {
+		vec3 dirt = mix(${C('#4f4134')}, ${C('#6f5d49')}, f1.g * 0.7 + f1.r * 0.3);
+		dirt = mix(dirt, dirt * (0.55 + 0.9 * ownCol), 0.22 * ownedK);
+		alb = mix(alb, dirt, bf * 0.82);
+		gOwn *= 1.0 - bf;
+	}
 
 	// --- sınırlar
 	float glow = vFx.y;
@@ -334,7 +345,7 @@ void main() {
 		float E = mix(0.03, 0.095, hiE) * boost;
 		float Dd = mix(0.1, 0.3, hiE) * boost;
 		vec3 Lc = ownCol * (E + Dd * dm * dm * mix(0.55, 1.0, sh)) * (0.62 + 0.8 * lum);
-		c = mix(c, Lc, ownedK * nk * 0.92);
+		c = mix(c, Lc, ownedK * nk * 0.92 * (1.0 - bf));
 	}
 	// gece: sahiplerin dış çizgisi kendi renginde ışır; tüm il sınırlarında ince soluk çizgi (harita yapısı okunur)
 	if (nk > 0.001) {

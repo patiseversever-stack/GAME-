@@ -185,8 +185,8 @@ void main() {
 	vec3 alb = vC;
 	float gloss = 0.14;
 	if (vC.r < -0.5) {
-		// sahip rengi (g: parlaklık): kaftan, kalkan, örtü, flama
-		alb = vOwn * vC.g;
+		// sahip rengi (g: parlaklık, b: soluklaştırma): kaftan koyu-soluk; kalkan, sorguç, örtü, flama parlak
+		alb = mix(vOwn, vec3(dot(vOwn, vec3(0.3, 0.59, 0.11))), vC.b) * vC.g;
 		gloss = 0.32;
 		gOwn = 1.0;
 	}
@@ -197,7 +197,7 @@ void main() {
 	gLit = 0.88; // savaş sahnenin odağı: gecede de gündüz ışığında okunur
 	vec3 c = shade(alb, N, V, ao, sh, gloss, 0.6);
 	// siluet kenarı koyulaşır: minyatür asker parlak il zemininden ayrışır (çizgi film kontur hissi)
-	c *= mix(1.0, 0.58, pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 2.2));
+	c *= mix(1.0, 0.45, pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 2.0));
 	c = applyFog(c, vW);
 	gl_FragColor = finish(c, 1.0);
 }`;
@@ -210,9 +210,30 @@ void main() {
 	gl_FragColor = vec4(1.0);
 }`;
 
+// ayak gölgesi: her birimin altında yumuşak koyu leke (birim zemine basar, her renkte ilde ayrışır)
+const BLOB_VS = /* glsl */ `
+attribute float iF;
+varying vec2 vUv;
+varying float vF;
+void main() {
+	vUv = position.xz;
+	vF = iF;
+	gl_Position = projectionMatrix * viewMatrix * modelMatrix * instanceMatrix * vec4(position, 1.0);
+}`;
+const BLOB_FS = /* glsl */ `
+varying vec2 vUv;
+varying float vF;
+void main() {
+	float r = length(vUv);
+	float a = (1.0 - smoothstep(0.35, 1.0, r)) * 0.62 * vF;
+	if (a < 0.004) discard;
+	gl_FragColor = vec4(0.03, 0.02, 0.025, a);
+}`;
+
 // ------------------------------------------------------------------ geometri
 
-const OWN = (k, m = 1) => k.raw(-1, m, 0);
+// sahip rengi işareti: g parlaklık, b soluklaştırma (0 doygun, 1 gri)
+const OWN = (k, m = 1, ds = 0) => k.raw(-1, m, ds);
 const SKIN = '#e8b48c';
 const WOOD = '#8a5a32';
 const DWOOD = '#5e3c20';
@@ -237,24 +258,27 @@ function cloth(k, W, H, x0, y0, z0, segs) {
 
 /** Üst gövde (0), mızrak kolu (4), kalkan (5), sancak (3): yaya ve binici ortak. */
 function upperBody(k) {
-	// gövde: sahip renginin koyu tonunda kaftan (kendi renginde ilin üstünde de seçilsin), altın kuşak,
-	// omuzlar, baş, sarıklı sivri miğfer; kalkan ve sancak parlak sahip renginde (kim kimdir uzaktan okunur)
+	// gövde (v0.6 okunurluk): kaftan sahip renginin koyu ve soluk tonunda (kendi renginde ilin üstünde de
+	// seçilsin); üstünde açık krem-çelik zırh yeleği, çelik omuzluk, beyaz sarık ve çelik miğfer: tepeden
+	// bakışta asker her zeminde açık bir siluet. Parlak sahip rengi kalkanda, sorguçta ve sancakta toplanır.
 	k.setTag(0);
-	OWN(k, 0.58).cyl(0.046, 0.07, 0.165, 6, 0, 0.09, 0, true); // kapakları omuz ve kuşakla örtülü: açık silindir
-	k.color(GOLD).cyl(0.054, 0.056, 0.022, 6, 0, 0.165, 0, true);
-	OWN(k, 0.46).cyl(0.03, 0.052, 0.045, 6, 0, 0.245, 0);
+	OWN(k, 0.48, 0.45).cyl(0.046, 0.07, 0.165, 6, 0, 0.09, 0, true); // kapakları zırh ve omuzlukla örtülü: açık silindir
+	k.color('#d6cdb8').cyl(0.051, 0.059, 0.07, 6, 0, 0.175, 0, true);
+	k.color(GOLD).cyl(0.06, 0.062, 0.02, 6, 0, 0.162, 0, true);
+	k.color('#aab2bb').cyl(0.03, 0.055, 0.045, 6, 0, 0.245, 0);
 	k.color(SKIN).ico(0.036, 0, 0.312, 0);
-	k.color('#f3eee2').cyl(0.04, 0.041, 0.024, 6, 0, 0.31, 0, true);
-	k.color('#cfd6de').cone(0.031, 0.075, 6, 0, 0.332, 0);
+	k.color('#f3eee2').cyl(0.041, 0.042, 0.026, 6, 0, 0.308, 0, true);
+	k.color('#cfd6de').cone(0.032, 0.075, 6, 0, 0.332, 0);
+	OWN(k, 1.2).box(0.016, 0.055, 0.03, 0, 0.39, -0.01); // sorguç
 	// mızrak kolu: omuzdan iner ve dürter
 	k.setTag(4);
-	OWN(k, 0.5).box(0.028, 0.1, 0.032, 0.062, 0.16, 0.012);
+	OWN(k, 0.48, 0.45).box(0.028, 0.1, 0.032, 0.062, 0.16, 0.012);
 	k.color(SKIN).box(0.026, 0.026, 0.028, 0.066, 0.135, 0.022);
 	k.color('#7a5634').cyl(0.0068, 0.0068, 0.52, 3, 0.068, -0.03, 0.025, true);
 	k.color('#e8eef4').cone(0.016, 0.06, 4, 0.068, 0.49, 0.025);
 	// kalkan: sol önde, hafif dışa dönük; sahip renginde, altın kenar ve umbo
 	k.setTag(5);
-	OWN(k, 0.5).box(0.026, 0.1, 0.03, -0.062, 0.16, 0.0);
+	OWN(k, 0.48, 0.45).box(0.026, 0.1, 0.03, -0.062, 0.16, 0.0);
 	k.push().move(-0.058, 0.175, 0.052).rot(0, -0.55, 0).rot(Math.PI / 2, 0, 0);
 	k.color('#f4e3b0').cyl(0.067, 0.067, 0.008, 8, 0, -0.012, 0, true);
 	OWN(k, 1.1).cyl(0.059, 0.059, 0.014, 8, 0, -0.006, 0);
@@ -282,7 +306,7 @@ function infantryGeo(lo) {
 	upperBody(k);
 	// okçu (6 yay kolu, 7 sadak)
 	k.setTag(6);
-	OWN(k, 0.5).box(0.026, 0.028, 0.11, -0.06, 0.222, 0.05);
+	OWN(k, 0.48, 0.45).box(0.026, 0.028, 0.11, -0.06, 0.222, 0.05);
 	const r = 0.1;
 	const arc = 2.3;
 	const bow = new THREE.TorusGeometry(r, 0.0065, 3, 5, arc).rotateZ(-arc / 2).rotateY(-Math.PI / 2);
@@ -516,6 +540,22 @@ export class Battle {
 		this.mach = this._mesh(machineGeo(lo), 4);
 		this.meshes = [this.foot, this.horse, this.mach];
 		this.casters = this.meshes.map((m) => m.caster);
+		// ayak gölgeleri: düz disk, örnek başına konum + yön + ölçek ve görünürlük (yaya ve atlı birlikte)
+		const nb = this.maxFoot + this.maxCav;
+		const bg = new THREE.CircleGeometry(1, 12).rotateX(-Math.PI / 2);
+		this.blobF = new THREE.InstancedBufferAttribute(new Float32Array(nb), 1).setUsage(THREE.DynamicDrawUsage);
+		this.blobF.array[0] = 1;
+		bg.setAttribute('iF', this.blobF);
+		this.blob = new THREE.InstancedMesh(
+			bg,
+			new THREE.ShaderMaterial({ vertexShader: BLOB_VS, fragmentShader: BLOB_FS, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -4 }),
+			nb,
+		);
+		this.blob.instanceMatrix.setUsage(THREE.DynamicDrawUsage);
+		this.blob.frustumCulled = false;
+		this.blob.count = 1;
+		this.blob.renderOrder = 3;
+		this.group.add(this.blob);
 		this.units = [...Array.from({ length: this.maxFoot }, () => unitRec(false)), ...Array.from({ length: this.maxCav }, () => unitRec(true))];
 		this.machines = Array.from({ length: 4 }, () => ({ on: false, kind: CATAPULT, lat: 0, dep: 0, x: 0, z: 0, y: 0, yaw: 0, arm: 0, fire: -1, fade: 0, fadeTo: 1, target: new THREE.Vector3(), onHit: null, shot: false, T: 1, pi: -1, px: 1e9, pz: 0 }));
 		this.armies = [armyRec(0), armyRec(1)];
@@ -526,8 +566,8 @@ export class Battle {
 		this._acc = 0;
 		this._dust = 0;
 		this.clearTo = 0; // savaş alanı açıklığı (ağaçlar alçalır)
-		// ordu ortaları (kamera izler; her karede güncellenir)
-		this.focus = [new THREE.Vector3(), new THREE.Vector3()];
+		// ordu ortaları ve ikisinin ortası (kamera izler; her karede güncellenir)
+		this.focus = [new THREE.Vector3(), new THREE.Vector3(), new THREE.Vector3()];
 		this.lineY = 0;
 		this.warm(true);
 	}
@@ -565,11 +605,13 @@ export class Battle {
 			m.visible = on;
 			if (on) m.count = m.caster.count = 1;
 		}
+		this.blob.visible = on;
+		if (on) this.blob.count = 1;
 		this._warm = on;
 	}
 
 	get calls() {
-		let n = 0;
+		let n = this.blob.visible ? 1 : 0;
 		for (const m of this.meshes) if (m.visible) n++;
 		return n;
 	}
@@ -742,6 +784,8 @@ export class Battle {
 		this.G.uClear.value.set(c[0], c[1], c[2], c[3]);
 		this.G.uClearR.value.x = c[4];
 		this.G.uClearR.value.z = 0.9;
+		// savaş zemini: orduların ayak izi kadar (kenarı yumuşak)
+		this.G.uStage.value.set(plan.width * 0.5 + 0.6, 0, 0.7, 0);
 		this.clearTo = 1;
 		const L = this.clashLine;
 		L.x = plan.line.x;
@@ -762,6 +806,7 @@ export class Battle {
 			const z = A.sz + (A.ez - A.sz) * e - A.uz * A.dc;
 			f.set(x, b.groundAt(x, z) + this.lineY, z);
 		}
+		this.focus[2].addVectors(this.focus[0], this.focus[1]).multiplyScalar(0.5);
 	}
 
 	_army(A, spec, color) {
@@ -1084,6 +1129,7 @@ export class Battle {
 		}
 		let nf = 0;
 		let nc = 0;
+		let nb = 0;
 		let live = 0;
 		const F = this.foot;
 		const H = this.horse;
@@ -1096,6 +1142,23 @@ export class Battle {
 			const M = u.cav ? H : F;
 			const i = u.cav ? nc++ : nf++;
 			this._write(M, i, u);
+			// ayak gölgesi (devrilen askerde boyu uzar)
+			_v.set(u.x, u.y + 0.012, u.z);
+			_q.setFromAxisAngle(UP, u.yaw);
+			if (u.cav) _s.set(0.11, 1, 0.22);
+			else _s.set(0.095, 1, 0.095 + 0.2 * u.fall);
+			_m.compose(_v, _q, _s);
+			this.blob.setMatrixAt(nb, _m);
+			this.blobF.array[nb++] = u.fade;
+		}
+		this.blob.count = nb;
+		if (nb) {
+			this.blob.instanceMatrix.clearUpdateRanges();
+			this.blob.instanceMatrix.addUpdateRange(0, nb * 16);
+			this.blob.instanceMatrix.needsUpdate = true;
+			this.blobF.clearUpdateRanges();
+			this.blobF.addUpdateRange(0, nb);
+			this.blobF.needsUpdate = true;
 		}
 		F.count = F.caster.count = nf;
 		H.count = H.caster.count = nc;
@@ -1108,6 +1171,7 @@ export class Battle {
 		if (live) this._focus();
 		if (this._warm) this._warm = false;
 		for (const m of this.meshes) m.visible = m.count > 0;
+		this.blob.visible = this.blob.count > 0;
 	}
 
 	_unit(u, dt) {

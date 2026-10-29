@@ -32,6 +32,7 @@ export function createGlobals() {
 		uClear: { value: new THREE.Vector4(0, 0, 0, 0) },
 		uClearR: { value: new THREE.Vector4(1, 0, 0.8, 0.9) },
 		uClear2: { value: new THREE.Vector4(0, 0, 0, 0) },
+		uStage: { value: new THREE.Vector4(1, 0, 0.6, 0) }, // savaş zemini (board.js): yarıçap, -, kenar yumuşaklığı
 		uNoise: { value: noiseTexture() }, // döşenebilir gürültü (noise.js)
 		uShadowMap: { value: null },
 		uShadowMat: { value: new THREE.Matrix4() },

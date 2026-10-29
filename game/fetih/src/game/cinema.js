@@ -437,12 +437,14 @@ export class Cinema {
 	// önünde) dizilişlerin sığdığı, yapılardan uzak yeri seçer. Kamera hep eylem ekseninin aynı yanında kalır
 	// (180° kuralı) ve her çekimin açısı arazi, kale ve yapılar sahneyi örtmeyecek şekilde seçilir.
 	// Sahra savaşı (~5–6 sn):
-	//   0,0  kuruluş: yüksek 3/4 bakış; iki il, ordular belirir; SALDIRAN / SAVUNAN etiketleri ve ok
+	//   0,0  kuruluş (vinç): kamera saldıranın ili üstünden alçalarak sahneye iner; ordular belirir;
+	//        SALDIRAN / SAVUNAN etiketleri ve ok
 	//   0,6  savunan safını kurar (geriden öne çıkar)
-	//   1,0  alçak izleme çekimi: kamera ordunun önünde yanda, ordu kameraya doğru yürür; davullar, ayak tozu
-	//   ~2,2 okçular yaylım ateşi açar (önce saldıran, sonra savunan)
-	//   ~3,0 çarpışma çekimi: ön saflar karşılaşır, mızraklar iner, kıvılcım ve toz
+	//   1,2  izleme: yukarıdan (~56°) iki orduyu birlikte tutan, yürüyüşle kayan ve yavaşça dönen kamera
+	//        (paralaks), ordular yaklaştıkça yaklaşır; davullar, ayak tozu; okçular yaylım ateşi açar
+	//   ~3,0 çarpışma: kamera cepheye dalar ve yana süzülür (yörünge); mızraklar iner, kıvılcım ve toz
 	//   ~4,4 bekleyiş: kamera geri çekilir; sahne çark ve soru boyunca kartın üstünde görünür
+	// Kamera eğimi bütün çekimlerde yukarıdan (~50–65°): saflar tepeden okunur, ufuk az.
 	// Kuşatma (~5,5–6,5 sn): mancınıklar ordunun gerisinde yürür, varınca sırayla ateş eder; taşlar alevli iz
 	// bırakarak surlara çarpar; iki taraf ok atar. Sonuç anları ~2,6–3,8 sn: hücum ve bozgun + cephede
 	// yükselen sancak ve cepheden yayılan boya dalgası; kalkan ve geri çekilme; kule yıkılışı. Hepsi
@@ -473,9 +475,9 @@ export class Cinema {
 		let best = 1;
 		let bs = Infinity;
 		for (const s of [1, -1]) {
-			const a = occlusion(app, plan, plan.attC.x, plan.attC.y, plan.attC.z, yawAt(plan, s, 2.45), 0.42, 9);
-			const c = occlusion(app, plan, plan.mid.x, plan.mid.y, plan.mid.z, yawAt(plan, s, 1.42), 0.48, 10);
-			const e = occlusion(app, plan, plan.mid.x, plan.mid.y, plan.mid.z, yawAt(plan, s, 0.42), 0.72, 13);
+			const a = occlusion(app, plan, plan.mid.x, plan.mid.y, plan.mid.z, yawAt(plan, s, 0.62), 0.98, 13);
+			const c = occlusion(app, plan, plan.mid.x, plan.mid.y, plan.mid.z, yawAt(plan, s, 0.95), 0.9, 10);
+			const e = occlusion(app, plan, plan.mid.x, plan.mid.y, plan.mid.z, yawAt(plan, s, 0.45), 1.02, 14);
 			const sc = a + c + e * 0.5;
 			if (sc < bs - 0.05) {
 				bs = sc;
@@ -496,9 +498,29 @@ export class Cinema {
 	_settle(plan, side, quick = false) {
 		const p = plan.siege ? this._pt(plan.mid.x + (plan.castle.x - plan.mid.x) * 0.3, plan.mid.z + (plan.castle.z - plan.mid.z) * 0.3) : plan.mid;
 		const y = yawAt(plan, side, 0.45);
-		const dist = stageDist(this.app, plan, p, y, 0.72, 'both', { pad: 1.45, min: 11, max: 20 });
-		this._view(p, y, OFF, 0.72, dist, { dur: quick ? 0.55 : 1.15, lens: -0.17, yawRate: side * 0.012, decay: 0.15 });
+		const dist = stageDist(this.app, plan, p, y, 1.02, 'both', { pad: 1.5, min: 11, max: 20 });
+		this._view(p, y, OFF, 1.02, dist, { dur: quick ? 0.55 : 1.2, lens: -0.17, yawRate: -side * 0.012, decay: 0.15 });
 		if (this._tags) this.app.ui?.tagsOn?.(this._tags, {});
+	}
+
+	/**
+	 * Vinç çekimi: şimdiki kadrajdan p1 (yüksek, geniş) üstünden geçip p2'ye alçalan tek akıcı hareket
+	 * (Catmull-Rom yolu, baştan sona yumuşak hızlanma ve yavaşlama; ara durak yok).
+	 */
+	_crane(p1, y1, pitch1, d1, p2, y2, pitch2, d2, dur) {
+		const cam = this.app.cam;
+		const t = cam.target;
+		const yaw0 = cam.yaw;
+		const ya = yaw0 + wrapPi(y1 - yaw0);
+		const yb = ya + wrapPi(y2 - ya);
+		cam.path(
+			[
+				{ x: t.x, y: t.y, z: t.z, dist: cam.dist, yaw: yaw0, pitch: cam.pitch },
+				{ x: p1.x, y: p1.y, z: p1.z, dist: d1, yaw: ya, pitch: pitch1 },
+				{ x: p2.x, y: p2.y, z: p2.z, dist: d2, yaw: yb, pitch: pitch2 },
+			],
+			dur,
+		);
 	}
 
 	/** Atlanabilir savaş anı: atlanırsa ordular o anın son haline yerleşir, sonra end() (son kadraj). */
@@ -554,11 +576,11 @@ export class Cinema {
 		this._stageSpot(plan);
 		const u = plan.u;
 		const side = (this.side = this._side(plan));
-		// kuruluş çekimi: saldıranın arkasından yüksek 3/4 bakış, iki ordu ve iki il
+		// kuruluş (vinç): saldıranın ili üstünden yüksekten alçalarak sahneye; saldıranın arkasından 3/4 bakış
 		const e = this._pt((plan.startC.x + (isCap ? plan.castle.x : plan.defC.x)) / 2, (plan.startC.z + (isCap ? plan.castle.z : plan.defC.z)) / 2, this.c);
-		const yE = yawAt(plan, side, 0.32);
-		const pE = isCap ? 0.72 : 0.8;
-		this._view(e, yE, OFF, pE, stageDist(app, plan, e, yE, pE, 'all', { pad: 1.4, min: 12 }), { dur: 1.05 });
+		const yE = clearView(app, plan, e, yawAt(plan, side, 0.32), OFF, 1.0, 16).yaw;
+		const dE = stageDist(app, plan, e, yE, 1.0, 'all', { pad: 1.32, min: 12, max: 22 });
+		this._crane(plan.startC, yawAt(plan, side, 0.08), 1.2, dE * 1.4, e, yE, 1.0, dE, 1.25);
 		// savunan safını kurar
 		bt.cue(0.55, () => bt.march(1, 1.45));
 		// yürüyüş: ordu kendi ilinden sınıra (yamuk hız; arka saflar biraz gecikir); davullar
@@ -568,25 +590,28 @@ export class Cinema {
 			bt.march(0, Tm);
 			app.sfx?.play?.('march', { dur: Tm });
 		});
-		// alçak izleme çekimi: kamera ordunun önünde, yan tarafta; ordu kameraya doğru yürür, kamera geri çekilerek izler
-		this.at(1.0, () => {
+		// izleme: iki orduyu birlikte tutan nokta (yürüdükçe kayar), yukarıdan; kamera yana süzülerek döner
+		// (paralaks) ve ordular yaklaştıkça yaklaşır
+		this.at(1.15, () => {
 			ui?.tagsOff?.();
 			b.labelLayer?.suspend?.(true); // yakın çekimde il adları da susar (ordunun ortasında yazı olmasın)
 			b.cues?.hide();
-			const y = yawAt(plan, side, 2.45);
-			const d = stageDist(app, plan, plan.attC, y, 0.42, 'att', { pad: 1.1, min: 7.5, max: 13 });
-			const v = clearView(app, plan, plan.startC, y, OFF, 0.42, d);
-			cam.shot(0, 0, { follow: bt.focus[0], dist: d, pitch: v.pitch, yaw: v.yaw, dur: 1.15, arc: 0, yawRate: side * 0.06, decay: 0.2 });
+			const y = yawAt(plan, side, 0.6);
+			const d0 = stageDist(app, plan, bt.focus[2], y, 0.98, 'all', { pad: 1.1, min: 9, max: 18 });
+			const d1 = stageDist(app, plan, plan.mid, y, 0.98, 'both', { pad: 1.1, min: 8, max: 16 });
+			const v = clearView(app, plan, plan.mid, y, OFF, 0.98, d0);
+			cam.shot(0, 0, { follow: bt.focus[2], dist: d0, pitch: v.pitch, yaw: v.yaw, dur: 0.95, arc: 0, yawRate: -side * 0.13, distRate: -0.07, distMin: d1, decay: 0.35 });
 		});
 		const tA = t0 + Tm + 0.1; // ordu vardı
 		const L = this._pt(plan.line.x, plan.line.z, this.d);
 		if (!isCap) {
 			bt.cue(t0 + Tm * 0.45, () => bt.volley(0, 10));
 			bt.cue(t0 + Tm * 0.78, () => bt.volley(1, 7));
-			// çarpışma çekimi: eksenin yanından, iki cephe birlikte
+			// çarpışma: kamera cepheye dalar, sonra yana süzülerek yörüngede yaklaşır (iki cephe hep kadrajda)
 			this.at(tA - 0.3, () => {
-				const y = yawAt(plan, side, 1.42);
-				this._view(L, y, OFF, 0.48, stageDist(app, plan, L, y, 0.48, 'both', { pad: 1.12, min: 8 }), { dur: 0.8 });
+				const y = yawAt(plan, side, 0.85);
+				const d = stageDist(app, plan, L, y, 0.9, 'both', { pad: 1.12, min: 8 });
+				this._view(L, y, OFF, 0.9, d, { dur: 0.75, yawRate: -side * 0.16, distRate: -0.05, distMin: d * 0.86, decay: 0.55 });
 			});
 			bt.cue(tA + 0.1, () => bt.engage(1.35, plan.engage));
 			bt.cue(tA + 1.5, () => bt.standoff());
@@ -596,10 +621,11 @@ export class Cinema {
 			// kuşatma: makineler sırayla ateş eder (önce karşı ağırlıklı), taşlar surun saldırana bakan yüzüne
 			const K = plan.castle;
 			const C = this._pt(plan.attC.x + (K.x - plan.attC.x) * 0.45, plan.attC.z + (K.z - plan.attC.z) * 0.45);
-			// makinelerin yanından kaleye: önde mancınıklar, arkada surlar
+			// makinelerin yanından kaleye: önde mancınıklar, arkada surlar; ağır yörünge
 			this.at(tA - 0.25, () => {
-				const y = yawAt(plan, side, 0.78);
-				this._view(C, y, OFF, 0.42, stageDist(app, plan, C, y, 0.42, 'all', { pad: 1.1, min: 9, max: 16 }), { dur: 0.9 });
+				const y = yawAt(plan, side, 0.72);
+				const d = stageDist(app, plan, C, y, 0.88, 'all', { pad: 1.08, min: 9, max: 17 });
+				this._view(C, y, OFF, 0.88, d, { dur: 0.9, yawRate: -side * 0.08, distRate: -0.025, distMin: d * 0.9, decay: 0.3 });
 			});
 			const n = plan.machines.length;
 			for (let k = 0; k < n; k++)
@@ -663,10 +689,10 @@ export class Cinema {
 		// hücum ve bozgun; boya dalgası cepheden, ordunun ardından yayılır
 		bt.charge(plan.charge);
 		b.paint?.(i, p.color, L.x, L.z);
-		const yC = yawAt(plan, side, 1.3);
-		const dC = stageDist(app, plan, L, yC, 0.45, 'both', { pad: 1.2, min: 8.5 });
-		const v = clearView(app, plan, L, yC, OFF, 0.45, dC);
-		cam.shot(0, 0, { follow: bt.focus[0], fx: u.x * 0.6, fz: u.z * 0.6, dist: dC, pitch: v.pitch, yaw: v.yaw, dur: 0.6, arc: 0 });
+		const yC = yawAt(plan, side, 0.75);
+		const dC = stageDist(app, plan, L, yC, 0.95, 'both', { pad: 1.2, min: 8.5 });
+		const v = clearView(app, plan, L, yC, OFF, 0.95, dC);
+		cam.shot(0, 0, { follow: bt.focus[0], fx: u.x * 0.6, fz: u.z * 0.6, dist: dC, pitch: v.pitch, yaw: v.yaw, dur: 0.6, arc: 0, yawRate: -side * 0.12, decay: 0.4 });
 		// zafer sancağı cephede yükselir
 		const fp = this._pt(L.x + u.x * 1.35, L.z + u.z * 1.35, new THREE.Vector3());
 		fx.after(1.0, () => {
@@ -679,7 +705,7 @@ export class Cinema {
 		const span = Math.max(P.box[2] - P.box[0], P.box[3] - P.box[1]);
 		this.at(1.5, () => {
 			const q = this._pt(fp.x + (c.x - fp.x) * 0.4, fp.z + (c.z - fp.z) * 0.4);
-			cam.shot(q.x, q.z, { y: q.y, dist: clamp(span * 1.6 + 6, 15, 26), pitch: 0.84, yaw: v.yaw + wrapPi(base - v.yaw) * 0.4, dur: 1.3, arc: 0, ease: (s) => 1 - Math.pow(1 - s, 3) });
+			cam.shot(q.x, q.z, { y: q.y, dist: clamp(span * 1.6 + 6, 15, 26), pitch: 1.08, yaw: cam.yaw + wrapPi(base - cam.yaw) * 0.35, dur: 1.3, arc: 0, ease: (s) => 1 - Math.pow(1 - s, 3) });
 		});
 		await this._battleBeat(2850);
 		bt.fade(-1, 1.4);
@@ -728,11 +754,12 @@ export class Cinema {
 				for (const phi of [0.6, 0.85, 1.1, 1.35]) {
 					const y = yawAt(plan, s, phi);
 					const dot = Math.sin(y) * tx - Math.cos(y) * tz; // kulenin bakış yönündeki payı (+: donjonun arkasında)
-					const sc = (dot > 0.25 ? 2 + dot : 0) + (s !== s0 ? 0.8 : 0) + Math.abs(phi - 0.85) * 0.5 + occlusion(app, plan, f.x, f.y, f.z, y, 0.42, 13) * 0.5;
+					const sc = (dot > 0.25 ? 2 + dot : 0) + (s !== s0 ? 0.8 : 0) + Math.abs(phi - 0.85) * 0.5 + occlusion(app, plan, f.x, f.y, f.z, y, 0.75, 13) * 0.5;
 					if (!best || sc < best.sc) best = { sc, y };
 				}
-			const d = stageDist(app, plan, f, best.y, 0.42, 'all', { pad: 1.08, min: 11, max: 17 });
-			cam.shot(f.x, f.z, { y: f.y, dist: d, pitch: 0.42, yaw: best.y, dur: 0.6, arc: 0 });
+			// kule yıkılışı yandan okunsun diye eğim biraz daha alçak (~43°); ağır yaklaşma
+			const d = stageDist(app, plan, f, best.y, 0.75, 'all', { pad: 1.08, min: 11, max: 17 });
+			cam.shot(f.x, f.z, { y: f.y, dist: d, pitch: 0.75, yaw: best.y, dur: 0.6, arc: 0, distRate: -0.03, distMin: d * 0.9, decay: 0.4 });
 		} else {
 			const ol = Math.hypot(ox, oz) || 1;
 			const s1 = (-oz / ol) * ox + (ox / ol) * oz > 0 ? 1 : -1;
@@ -820,12 +847,14 @@ export class Cinema {
 		fx.sparks(L, 18, 2.6, 0xbfe0ff, 2.6, 0.06, 4);
 		bt.repel();
 		this._stageSpot(plan);
-		const yD = yawAt(plan, side, 1.45);
-		this._view(L, yD, OFF, 0.5, stageDist(app, plan, L, yD, 0.5, isCap ? 'all' : 'both', { pad: 1.15, min: 9 }), { dur: 0.8 });
+		// kalkan cephede parlar: kamera cepheye yaklaşıp süzülür; sonra geri çekilen orduyu yukarıdan izler
+		const yD = yawAt(plan, side, 0.8);
+		const dD = stageDist(app, plan, L, yD, 0.92, isCap ? 'all' : 'both', { pad: 1.15, min: 9 });
+		this._view(L, yD, OFF, 0.92, dD, { dur: 0.8, yawRate: -side * 0.1, distRate: -0.03, distMin: dD * 0.9, decay: 0.5 });
 		this.at(1.3, () => {
 			const q = this._pt((plan.mid.x + plan.attC.x) / 2, (plan.mid.z + plan.attC.z) / 2);
-			const y = yawAt(plan, side, 0.9);
-			this._view(q, y, OFF, 0.6, stageDist(app, plan, q, y, 0.6, 'all', { pad: 1.35, min: 11 }), { dur: 1.2, yawRate: -side * 0.03, decay: 0.3 });
+			const y = yawAt(plan, side, 0.5);
+			this._view(q, y, OFF, 1.0, stageDist(app, plan, q, y, 1.0, 'all', { pad: 1.35, min: 11 }), { dur: 1.2, yawRate: -side * 0.03, decay: 0.3 });
 		});
 		await this._battleBeat(2600);
 		bt.fade(-1, 1.5);
@@ -864,7 +893,7 @@ export class Cinema {
 		const k = app.castles[d.i];
 		const c0 = k.group.position.clone();
 		const cam = app.cam;
-		cam.shot(c0.x, c0.z, { y: c0.y + 0.5, dist: 15, pitch: 0.5, yaw: cam.yaw, dur: 0.5, arc: 0.5 });
+		cam.shot(c0.x, c0.z, { y: c0.y + 0.5, dist: 16, pitch: 0.82, yaw: cam.yaw, dur: 0.5, arc: 0.5 });
 		// kale bir an daha görünür, sarsılarak toprağa gömülür
 		k.group.visible = true;
 		this.battle?.fade(-1, 1.2);
