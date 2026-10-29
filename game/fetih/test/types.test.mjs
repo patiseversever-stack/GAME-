@@ -3,6 +3,7 @@
 // botlar geçerli ve makul cevap üretmeli; pickType() verisiz tipleri hiç çekmemeli.
 import { BANK } from '../src/data/bank.js';
 import { TYPES, TYPE_WEIGHTS, pickType } from '../src/quiz/types.js';
+import { phrases, direction, inversions } from '../src/quiz/t_order.js';
 import { rng } from '../src/core/math.js';
 
 let fails = 0;
@@ -28,8 +29,16 @@ const SHAPE = {
 	num: (q) => [q.ans, q.min, q.max].every(Number.isFinite) && q.min <= q.ans && q.ans <= q.max && q.min < q.max,
 	pin: (q) => Number.isFinite(q.lat) && Number.isFinite(q.lon) && q.lat > 35 && q.lat < 43 && q.lon > 25 && q.lon < 45,
 	hang: (q) => nonEmpty(q.w) && /^[A-ZÇĞİÖŞÜ ]+$/.test(q.w.toLocaleUpperCase('tr-TR')),
-	order: (q) => Array.isArray(q.items) && q.items.length === 4 && q.items.every((x) => nonEmpty(x.t) && Number.isFinite(x.v)) && distinct(q.items.map((x) => x.v)) && distinct(q.items.map((x) => x.t)),
-	match: (q) => Array.isArray(q.pairs) && q.pairs.length === 4 && q.pairs.every((p) => p.length === 2 && nonEmpty(p[0]) && nonEmpty(p[1])) && distinct(q.pairs.map((p) => p[0])) && distinct(q.pairs.map((p) => p[1])),
+	// sırala: 3 öğe, değerler farklı; yön verisi (dir) yoksa artan, varsa 'asc' | 'desc'
+	order: (q) =>
+		Array.isArray(q.items) &&
+		q.items.length === 3 &&
+		q.items.every((x) => nonEmpty(x.t) && Number.isFinite(x.v)) &&
+		distinct(q.items.map((x) => x.v)) &&
+		distinct(q.items.map((x) => x.t)) &&
+		(q.dir == null || q.dir === 'asc' || q.dir === 'desc'),
+	// eşleştir: 3 çift, iki sütun da tekrarsız
+	match: (q) => Array.isArray(q.pairs) && q.pairs.length === 3 && q.pairs.every((p) => p.length === 2 && nonEmpty(p[0]) && nonEmpty(p[1])) && distinct(q.pairs.map((p) => p[0])) && distinct(q.pairs.map((p) => p[1])),
 	hilo: (q) => nonEmpty(q.left?.t) && nonEmpty(q.right?.t) && Number.isFinite(q.left.v) && Number.isFinite(q.right.v) && q.left.v !== q.right.v && nonEmpty(q.prop),
 	odd: (q) => Array.isArray(q.opts) && q.opts.length === 4 && q.opts.every(nonEmpty) && distinct(q.opts) && Number.isInteger(q.odd) && q.odd >= 0 && q.odd < 4,
 	emoji: (q) => nonEmpty(q.e) && ANS4(q),
@@ -104,9 +113,19 @@ for (const q of BANK) {
 		ok(distinct(v.opts), `${q.id}: şıklar tekrarlı`);
 	}
 	if (q.type === 'order') {
+		// yön: soru metninde tam bir yön ifadesi ("eskiden yeniye", "büyükten küçüğe"…) ve veri onunla uyuşur
+		const ph = phrases(q.q);
+		ok(ph.length === 1, `${q.id}: soru metninde ${ph.length} yön ifadesi var (tam bir tane olmalı): ${q.q}`);
+		const D = direction(q);
+		if (ph.length) ok(ph[0].dir === D.dir, `${q.id}: metin "${ph[0].dir}" diyor, veri dir "${D.dir}"`);
+		ok(v.dir === D.dir, `${q.id}: görünümün yönü ${v.dir}`);
+		ok(D.top === (D.dir === 'desc' ? D.hi : D.lo) && D.bottom === (D.dir === 'desc' ? D.lo : D.hi), `${q.id}: uç etiketleri yönü izlemiyor`);
 		const vals = v.correct.map((i) => q.items[i].v);
-		ok(vals.every((x, i) => !i || vals[i - 1] <= x), `${q.id}: doğru sıra küçükten büyüğe değil`);
+		const sign = D.dir === 'desc' ? -1 : 1;
+		ok(vals.every((x, i) => !i || sign * (x - vals[i - 1]) > 0), `${q.id}: doğru sıra ${D.dir === 'desc' ? 'büyükten küçüğe' : 'küçükten büyüğe'} değil`);
 		ok(v.start.join() !== v.correct.join(), `${q.id}: başlangıç sırası zaten doğru`);
+		ok(inversions(v.correct, q.items, D.dir) === 0 && inversions(v.correct.slice().reverse(), q.items, D.dir) === 3, `${q.id}: ters çift sayımı yöne uymuyor`);
+		(count.orderDir ||= { asc: 0, desc: 0 })[D.dir]++;
 	}
 	if (q.type === 'match') {
 		ok(v.ord.join() !== v.ord.map((_, i) => i).join(), `${q.id}: sağ sütun zaten hizalı`);
@@ -117,6 +136,22 @@ for (const q of BANK) {
 		const o = v.sides[1 - v.right].v;
 		ok(r > o, `${q.id}: hilo doğru taraf büyük olmalı`);
 	}
+}
+
+// sırala: azalan sorular toplamın %35–50'si (hep "küçükten büyüğe" olmasın, ama alışılmış yön de baskın kalsın)
+{
+	const d = count.orderDir || { asc: 0, desc: 0 };
+	delete count.orderDir;
+	const share = d.desc / Math.max(1, d.asc + d.desc);
+	console.log(`  sırala yönü: artan ${d.asc}, azalan ${d.desc} (%${Math.round(share * 100)})`);
+	ok(share >= 0.35 && share <= 0.5, `sırala: azalan payı %${Math.round(share * 100)} (hedef %35–50)`);
+	// yön ifadesi ve uç etiketleri: azalan soruda üst uç büyük değerin etiketi
+	const D = direction({ q: 'Olayları yeniden eskiye sırala.', dir: 'desc' });
+	ok(D.top === 'en yeni' && D.bottom === 'en eski', `yön: yeniden eskiye → üst "${D.top}", alt "${D.bottom}"`);
+	const A = direction({ q: 'Dağları alçaktan yükseğe sırala.' });
+	ok(A.dir === 'asc' && A.top === 'en alçak' && A.bottom === 'en yüksek', 'yön: alçaktan yükseğe');
+	ok(direction({ q: 'Harfleri Türk alfabesindeki yerlerine göre sondan başa sırala.' }).dir === 'desc', 'yön: alfabe sondan başa');
+	ok(direction({ q: 'Sırala.' }).dir === 'asc', 'yön ifadesi yoksa artan');
 }
 
 // ---------------------------------------------------------------- 3) botlar
