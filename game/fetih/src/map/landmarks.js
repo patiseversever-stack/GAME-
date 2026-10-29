@@ -35,10 +35,10 @@ float showK() {
 }
 vec3 fadeP(vec3 p, float k) {
 	if (k > 0.999) return p;
-	// merkeze doğru hafif küçülür ve ölçeğiyle orantılı derinliğe iner (zemin altında kalır)
+	// yapı tabanına doğru basılır (balonlar da), yanlara hafif küçülür ve toprağın altına iner
 	vec3 c = vec3(site.x, site.y, site.z);
-	vec3 q = c + (p - c) * mix(0.55, 1.0, k);
-	q.y -= (1.0 - k) * site.w * 0.75;
+	vec3 q = c + (p - c) * vec3(mix(0.6, 1.0, k), k, mix(0.6, 1.0, k));
+	q.y -= (1.0 - k) * site.w * 0.3;
 	return q;
 }
 `;
