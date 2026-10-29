@@ -93,29 +93,37 @@ const DIFF = ['', 'Kolay', 'Orta', 'Zor'];
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
 
 const CSS = `
-.gal{position:fixed;top:0;z-index:70;box-sizing:border-box;display:flex;flex-direction:column;gap:8px;
-  padding:calc(8px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 8px max(12px,env(safe-area-inset-left,0px));
-  background:#0a1230;border-bottom:1px solid rgba(255,214,120,.22);color:#eef2fa;font-family:'Fredoka',system-ui,sans-serif;font-weight:600}
-.gal .hd{display:flex;align-items:center;gap:10px;min-width:0}
-.gal .hd h1{flex:1;min-width:0;margin:0;font-family:'Lilita One',system-ui,sans-serif;font-weight:400;font-size:21px;line-height:1.1;color:#ffd25a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gal .hd h1 small{margin-left:8px;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:11px;letter-spacing:.14em;color:#9fb0d6;vertical-align:3px}
-.gal .nv{display:flex;align-items:center;gap:6px;flex:none}
-.gal .nv b{min-width:42px;text-align:center;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;color:#cfd9f2}
+.gal{position:fixed;top:0;z-index:70;box-sizing:border-box;display:flex;flex-direction:column;gap:7px;
+  padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 9px max(12px,env(safe-area-inset-left,0px));
+  background:linear-gradient(180deg,#0e1a42,#0a1230);border-bottom:1px solid rgba(255,214,120,.25);color:#eef2fa;font-family:'Fredoka',system-ui,sans-serif;font-weight:600}
 .gal button{font:inherit;color:inherit;cursor:pointer;border:0;touch-action:manipulation}
-.gal .ar{width:34px;height:34px;border-radius:11px;background:#1d3266;border:1.5px solid rgba(255,255,255,.18);font-size:20px;line-height:1}
-.gal .ar:focus-visible,.gal .ch:focus-visible,.gal .tg:focus-visible{outline:2px solid #ffd25a;outline-offset:2px}
-.gal .chips{display:flex;gap:6px;overflow-x:auto;scrollbar-width:none;margin:0 -12px;padding:0 12px}
-.gal .chips::-webkit-scrollbar{display:none}
-.gal .ch{flex:none;padding:6px 11px 7px;border-radius:999px;background:#16254d;border:1.5px solid rgba(255,255,255,.12);font-size:13.5px;color:#cfd9f2;white-space:nowrap}
-.gal .ch.on{background:#ffd25a;border-color:#ffd25a;color:#3a2200}
-.gal .ch i{font-style:normal;margin-left:5px;padding:0 5px;border-radius:6px;font-size:10.5px;background:rgba(255,255,255,.14)}
-.gal .ch.on i{background:rgba(58,34,0,.15)}
-.gal .ft{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:11.5px;color:#9fb0d6;letter-spacing:.02em}
-.gal .ft .meta{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.gal .ft .meta b{color:#eef2fa}
-.gal .tg{padding:4px 9px;border-radius:8px;background:#16254d;border:1px solid rgba(255,255,255,.14);font-size:11.5px;color:#cfd9f2}
+.gal button:focus-visible,.gal-pn button:focus-visible{outline:2px solid #ffd25a;outline-offset:2px}
+.gal .ey{font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:10px;letter-spacing:.2em;color:#8fa2cf}
+.gal .hd{display:flex;align-items:center;gap:8px;min-width:0}
+/* tip düğmesi: dokununca bütün tipler açılır */
+.gal .ty{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:6px 10px 7px 12px;border-radius:13px;background:#16254d;border:1.5px solid rgba(255,210,90,.45);text-align:left}
+.gal .ty b{flex:1;min-width:0;font-family:'Lilita One',system-ui,sans-serif;font-weight:400;font-size:20px;line-height:1.1;color:#ffd25a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gal .ty small{flex:none;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:11px;color:#9fb0d6;font-variant-numeric:tabular-nums}
+.gal .ty i{flex:none;font-style:normal;font-size:12px;color:#ffd25a;transition:transform .2s}
+.gal.open .ty i{transform:rotate(180deg)}
+.gal .nv{display:flex;align-items:center;gap:4px;flex:none}
+.gal .nv b{min-width:38px;text-align:center;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:13px;font-variant-numeric:tabular-nums;color:#eef2fa}
+.gal .nv b small{display:block;font-size:9px;letter-spacing:.14em;color:#8fa2cf}
+.gal .ar{width:36px;height:36px;border-radius:11px;background:#1d3266;border:1.5px solid rgba(255,255,255,.16);font-size:20px;line-height:1}
+.gal .meta{font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:12px;line-height:1.35;color:#9fb0d6}
+.gal .meta b{color:#eef2fa}
+.gal .meta .note{color:#ffb894}
+.gal .ft{display:flex;gap:6px;flex-wrap:wrap}
+.gal .tg{display:flex;align-items:center;gap:5px;padding:5px 10px 6px;border-radius:9px;background:#16254d;border:1px solid rgba(255,255,255,.14);font-size:12.5px;color:#cfd9f2}
 .gal .tg em{font-style:normal;color:#ffd25a}
-.gal .note{color:#ffb894}
+/* tip ızgarası: şeridin altında, oyunun üstünde */
+.gal-pn{position:fixed;z-index:71;box-sizing:border-box;display:grid;grid-template-columns:repeat(2,1fr);gap:8px;max-height:70vh;overflow-y:auto;touch-action:pan-y;
+  padding:12px max(12px,env(safe-area-inset-right,0px)) 14px max(12px,env(safe-area-inset-left,0px));background:#0a1230;border-bottom:1px solid rgba(255,214,120,.25);box-shadow:0 18px 30px rgba(0,0,0,.55)}
+.gal-pn button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:9px 11px 10px;border-radius:12px;background:#16254d;border:1.5px solid rgba(255,255,255,.1);color:#eef2fa;font:inherit;font-family:'Fredoka',system-ui,sans-serif;font-weight:600;font-size:14.5px;text-align:left;cursor:pointer}
+.gal-pn button small{font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:11px;color:#8fa2cf}
+.gal-pn button small em{font-style:normal;color:#ffb894}
+.gal-pn button.on{background:#ffd25a;border-color:#ffd25a;color:#3a2200}
+.gal-pn button.on small{color:rgba(58,34,0,.7)}
 `;
 
 export async function galeri() {
@@ -125,6 +133,12 @@ export async function galeri() {
 	const bar = document.createElement('div');
 	bar.className = 'gal';
 	document.body.appendChild(bar);
+	const pn = document.createElement('div');
+	pn.className = 'gal-pn';
+	pn.hidden = true;
+	pn.setAttribute('role', 'listbox');
+	pn.setAttribute('aria-label', 'Soru tipleri');
+	document.body.appendChild(pn);
 
 	const game = await createFetih({ container: document.body });
 	const app = game.app;
@@ -138,8 +152,11 @@ export async function galeri() {
 	const fit = () => {
 		const H = innerHeight;
 		const h = bar.offsetHeight;
-		bar.style.left = root.style.left || '0px';
-		bar.style.width = root.style.width || '100%';
+		for (const e of [bar, pn]) {
+			e.style.left = root.style.left || '0px';
+			e.style.width = root.style.width || '100%';
+		}
+		pn.style.top = h + 'px';
 		root.style.top = h + 'px';
 		root.style.setProperty('--vh', (H - h) / 100 + 'px');
 		app.resize();
@@ -164,32 +181,63 @@ export async function galeri() {
 		const cat = CATS[q.cat]?.name || q.cat;
 		const T = TYPES[S.type];
 		const v = T.prepare(q, R);
-		bar.innerHTML = `<div class="hd"><h1>${esc(name)}<small>SORU GALERİSİ</small></h1>
-			<div class="nv"><button class="ar" id="g-prev" aria-label="Önceki örnek">‹</button><b>${S.k + 1} / ${list.length}</b><button class="ar" id="g-next" aria-label="Sonraki örnek">›</button></div></div>
-			<div class="chips" role="tablist">${ORDER.map(
-				([t, n]) => `<button class="ch ${t === S.type ? 'on' : ''}" data-t="${t}" role="tab" aria-selected="${t === S.type}">${esc(n)}${SAMPLES[t] ? '<i>örnek</i>' : ''}</button>`,
-			).join('')}</div>
-			<div class="ft"><span class="meta"><b>${esc(q.id)}</b> · ${esc(cat)} · ${DIFF[q.diff] || ''} · süre <b>${v.sec ?? T.time} sn</b>${SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok</span>' : ''}</span>
-				<button class="tg" id="g-scene">Sahne: <em>${S.scene === 'duel' ? 'Düello' : 'Herkes cevaplıyor'}</em></button>
+		const ti = ORDER.findIndex(([t]) => t === S.type);
+		bar.innerHTML = `<span class="ey">FETİH LİGİ · SORU GALERİSİ</span>
+			<div class="hd"><button class="ty" id="g-type" aria-haspopup="listbox" aria-expanded="${!pn.hidden}"><b>${esc(name)}</b><small>${ti + 1}/${ORDER.length}</small><i>▼</i></button>
+				<div class="nv"><button class="ar" id="g-prev" aria-label="Önceki örnek">‹</button><b>${S.k + 1}/${list.length}<small>ÖRNEK</small></b><button class="ar" id="g-next" aria-label="Sonraki örnek">›</button></div></div>
+			<div class="meta"><b>${esc(q.id)}</b> · ${esc(cat)} · ${DIFF[q.diff] || ''} · süre <b>${v.sec ?? T.time} sn</b>${SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok, örnek soru</span>' : ''}</div>
+			<div class="ft"><button class="tg" id="g-scene">Sahne: <em>${S.scene === 'duel' ? 'Düello' : 'Herkes cevaplıyor'}</em></button>
 				<button class="tg" id="g-time">Süre: <em>${S.time === 'real' ? 'Gerçek' : 'Sınırsız'}</em></button>
-				<button class="tg" id="g-again">Yeniden</button></div>`;
-		bar.querySelector('.ch.on')?.scrollIntoView({ inline: 'center', block: 'nearest' });
+				<button class="tg" id="g-again">↻ Yeniden</button></div>`;
+		bar.classList.toggle('open', !pn.hidden);
+		pn.innerHTML = ORDER.map(
+			([t, n]) =>
+				`<button data-t="${t}" role="option" aria-selected="${t === S.type}" class="${t === S.type ? 'on' : ''}">${esc(n)}<small>${SAMPLES[t] ? '<em>örnek soru</em>' : `${ex[t].length} soru`}</small></button>`,
+		).join('');
 		fit();
 		return { q, v, T };
 	};
 
+	const panel = (on) => {
+		pn.hidden = !on;
+		bar.classList.toggle('open', on);
+		bar.querySelector('#g-type')?.setAttribute('aria-expanded', String(on));
+		if (on) pn.querySelector('.on')?.focus({ preventScroll: true });
+	};
+	const go = (type, k = 0) => {
+		S.type = type;
+		S.k = (k + ex[type].length) % ex[type].length;
+		panel(false);
+		play();
+	};
 	bar.addEventListener('click', (e) => {
 		const b = e.target.closest('button');
 		if (!b) return;
-		if (b.dataset.t) {
-			S.type = b.dataset.t;
-			S.k = 0;
-		} else if (b.id === 'g-prev') S.k = (S.k - 1 + ex[S.type].length) % ex[S.type].length;
-		else if (b.id === 'g-next') S.k = (S.k + 1) % ex[S.type].length;
-		else if (b.id === 'g-scene') S.scene = S.scene === 'duel' ? 'all' : 'duel';
+		if (b.id === 'g-type') return panel(pn.hidden);
+		if (b.id === 'g-prev') return go(S.type, S.k - 1);
+		if (b.id === 'g-next') return go(S.type, S.k + 1);
+		if (b.id === 'g-scene') S.scene = S.scene === 'duel' ? 'all' : 'duel';
 		else if (b.id === 'g-time') S.time = S.time === 'real' ? 'free' : 'real';
 		else if (b.id !== 'g-again') return;
+		panel(false);
 		play();
+	});
+	pn.addEventListener('click', (e) => {
+		const b = e.target.closest('[data-t]');
+		if (b) go(b.dataset.t);
+	});
+	// klavye: ← → örnek, ↑ ↓ tip, Esc tip listesini kapatır (yazma tiplerinde klavye oyunundur: yalnız şerit odaktayken)
+	addEventListener('keydown', (e) => {
+		if (e.key === 'Escape' && !pn.hidden) return panel(false);
+		if (!bar.contains(document.activeElement) && !pn.contains(document.activeElement)) return;
+		const ti = ORDER.findIndex(([t]) => t === S.type);
+		if (e.key === 'ArrowRight') go(S.type, S.k + 1);
+		else if (e.key === 'ArrowLeft') go(S.type, S.k - 1);
+		else if (e.key === 'ArrowDown') go(ORDER[(ti + 1) % ORDER.length][0]);
+		else if (e.key === 'ArrowUp') go(ORDER[(ti - 1 + ORDER.length) % ORDER.length][0]);
+		else return;
+		e.preventDefault();
+		bar.querySelector('#g-type')?.focus({ preventScroll: true });
 	});
 
 	// cevap ekranı incelemek için daha uzun kalır (dokununca geçer)
