@@ -66,6 +66,8 @@ void main() {
 			p.y += rise * 0.9 + sin(t * 0.53 + ph * 4.0) * 0.1;
 			float pulse = 0.3 + 0.7 * pow(0.5 + 0.5 * sin(t * (1.4 + ph * 2.1) + ph * 30.0), 2.0);
 			a *= sel * sel * pulse * sin(3.14159 * rise) * (1.0 - dim) * 0.65; // yalnızca seçilebilir illerin üstünde
+			// v0.5: uzaktan (bütün ülke, başkent seçimi) toz piksel kumu gibi görünüp haritayı kirletiyordu: uzakta söner
+			a *= smoothstep(120.0, 70.0, distance(cameraPosition, p));
 			col = mix(vec3(1.0, 0.8, 0.55), vec3(1.0, 0.93, 0.78), iB.w) * 0.9; // v0.4: altın değil, sönük krem (fosfor yok)
 			px0 = 2.0;
 			px1 = 3.8;

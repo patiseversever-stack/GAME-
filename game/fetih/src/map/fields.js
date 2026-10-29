@@ -1,6 +1,7 @@
 // Harita alan dokuları: açılışta ekran kartında bir kez çizilir, sonra yalnızca okunur.
 //
-//   uBorder (RGBA8): r = en yakın il sınırına uzaklık / RB, g = o sınırın öbür yanındaki il (255 deniz, 254 yabancı)
+//   uBorder (RGBA8): r = en yakın il sınırına işaretli uzaklık (0.5 + 0.5 * d / RB; okurken |2r - 1| * RB),
+//                    g = o sınırın öbür yanındaki il (255 deniz, 254 yabancı)
 //   uWater  (RGBA8): r = kıyıya yakınlık (1 kıyıda, 0 RC uzakta), g = nehir (0.5 üstü nehir yatağı),
 //                    b = göl içi, a = göl kıyısına yakınlık
 //
@@ -51,7 +52,10 @@ void main() {
 	// z = -y olduğundan işaret ters: side < 0 → sol (il a)
 	float other = side < 0.0 ? vInfo.y : vInfo.x;
 	gl_FragDepth = d / uR;
-	gl_FragColor = vec4(d / uR, other / 255.0, 0.0, 1.0);
+	// işaretli uzaklık (parçanın sol yanı +, sağ yanı -): doğrusal süzgeçte sıfır tam çizginin üstüne düşer.
+	// İşaretsiz uzaklık iki doku hücresi arasında sıfıra inemiyordu (ince çizgi kesik kesik görünüyordu).
+	float sd = side < 0.0 ? d : -d;
+	gl_FragColor = vec4(0.5 + 0.5 * sd / uR, other / 255.0, 0.0, 1.0);
 }`;
 
 const WATER_FS = /* glsl */ `

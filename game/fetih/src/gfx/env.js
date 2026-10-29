@@ -96,27 +96,30 @@ export const ENVS = {
  * güneşi. Kabartma soldan aydınlanır (batı yamaçları parlak, doğu yamaçları gölgede), minyatürlerin
  * kameraya bakan yüzü yarı ışıkta kalır. Gölgeler serin mavi-mor; deniz canlı turkuazdan laciverde.
  */
+// v0.5 sinematik ışık: daha sıcak ve güçlü ana ışık, daha az (serin) ortam ışığı → kabartma ve yapılar
+// hacimli, renkler soluk değil derin. Gölgeler mavi-mor, parlak yerler sıcak (turuncu-camgöbeği karşıtlığı);
+// uzak yerler hafif mavi pusa girer (hava perspektifi), yakın çekimde derinlik okunur.
 ENVS.harita = {
 	sunAz: 148,
-	sunEl: 41,
-	sun: C('#fff1db', 3.0),
-	skyTop: C('#8fbaff', 0.6),
-	skyHor: C('#c4e1ff', 0.52),
-	ground: C('#ffdcb0', 0.3),
-	shade: C('#a9b4ff', 1),
-	fog: C('#cfe6ff'),
-	fogSun: C('#fff1d4'),
-	fogP: [0.0021, 110, 0.02, 8],
-	zenith: C('#3d86e6'),
-	horizon: C('#cfeeff'),
+	sunEl: 40,
+	sun: C('#fff2df', 3.1),
+	skyTop: C('#86acff', 0.5),
+	skyHor: C('#bcd6ff', 0.44),
+	ground: C('#ffcf9a', 0.26),
+	shade: C('#97a2ff', 1),
+	fog: C('#bcd8f6'),
+	fogSun: C('#ffe9c8'),
+	fogP: [0.0022, 105, 0.02, 8],
+	zenith: C('#2f78de'),
+	horizon: C('#c6e6ff'),
 	sunGlow: C('#fff0c8', 1.2),
-	sea: C('#22a6dc'),
-	seaDeep: C('#1a66bd'),
-	grade: [1.1, 1.07, 1.0],
-	lift: C('#10204a', 0.04),
-	gain: C('#fffaf2'),
-	vignette: 0.3,
-	vig: C('#24306e'),
+	sea: C('#1c9fd6'),
+	seaDeep: C('#1455ad'),
+	grade: [1.12, 1.1, 0.97],
+	lift: C('#14214e', 0.05),
+	gain: C('#fff6ea'),
+	vignette: 0.34,
+	vig: C('#1f2a66'),
 };
 
 export function applyEnv(G, e) {
