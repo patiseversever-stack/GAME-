@@ -14,7 +14,7 @@ import { dirname, join } from 'node:path';
 import { Match, MODES } from '../src/game/match.js';
 import { Progress } from '../src/game/progress.js';
 import { Campaign, STAGES, REGION_ORDER } from '../src/game/campaign.js';
-import { JOKERS, JOKER_ORDER, PER_QUESTION, questionTime } from '../src/game/jokers.js';
+import { JOKERS, JOKER_ORDER, PER_QUESTION, questionTime, extraFor, cutFor } from '../src/game/jokers.js';
 import { TYPES } from '../src/quiz/types.js';
 import { WHEEL } from '../src/quiz/categories.js';
 
@@ -145,10 +145,11 @@ function checkEffect(m, id, effect, cur) {
 			break;
 		}
 		case 'time':
-			check(effect.add > 0, `${tag}: süre eklenmedi`);
+			check(effect.add > 0 && effect.add === extraFor(v.sec), `${tag}: ekstra süre ${effect.add} sn, bütçe ${v.sec} sn için ${extraFor(v.sec)} olmalı`);
 			break;
 		case 'sabotage':
 			check(effect.victims.length > 0 && !effect.victims.includes(effect.by), `${tag}: kurban yok ya da kendisi`);
+			check(effect.cut === cutFor(v.sec), `${tag}: sabotaj ${effect.cut} sn, bütçe ${v.sec} sn için ${cutFor(v.sec)} olmalı`);
 			break;
 		case 'shield':
 		case 'second':

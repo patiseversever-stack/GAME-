@@ -27,7 +27,7 @@ import { secOf } from '../quiz/timing.js';
 import { CATS } from '../quiz/categories.js';
 import { BANK as QUESTIONS } from '../data/bank.js';
 import { rng } from '../core/math.js';
-import { JOKERS, JOKER_ORDER, PER_QUESTION, BOT_BOOST, SABOTAGE, makeLoadout, botLoadout, support, computeEffect, botPlan, questionTime } from './jokers.js';
+import { JOKERS, JOKER_ORDER, PER_QUESTION, BOT_BOOST, SABOTAGE, cutFor, makeLoadout, botLoadout, support, computeEffect, botPlan, questionTime } from './jokers.js';
 import { ensureSystems } from './campaign.js';
 import { targetDiff } from './progress.js';
 import { UIController, BotController, RemoteController, publicView, PROTOCOL } from './net.js';
@@ -595,22 +595,26 @@ export class Match {
 		return effect;
 	}
 
-	/** Sabotaj: rakiplerin süresi kısalır ve ekranı kararır. Bot kurbanın yeteneği düşer ve geç cevaplar. Dönüş: kurbanlar. */
+	/**
+	 * Sabotaj: rakiplerin süresi kısalır (sorunun süresinin üçte biri, cutFor) ve ekranı kararır. Bot kurbanın yeteneği
+	 * düşer ve kesintinin yarısı kadar geç cevaplar. Dönüş: kurbanlar.
+	 */
 	sabotage(p, cur) {
 		const victims = cur.who.filter((x) => x !== p && !this.ally(x.i, p.i));
-		const effect = { id: 'sabotaj', kind: 'sabotage', victims: victims.map((x) => x.i), by: p.i, cut: SABOTAGE.cut, blurMs: SABOTAGE.blurMs };
+		const cut = cutFor(cur.sec);
+		const effect = { id: 'sabotaj', kind: 'sabotage', victims: victims.map((x) => x.i), by: p.i, cut, blurMs: SABOTAGE.blurMs };
 		for (const x of victims) {
 			if (x.human) {
 				const fire = () => {
 					if (cur.closed) return;
-					cur.clock.extra -= SABOTAGE.cut;
+					cur.clock.extra -= cut;
 					this.ui.sabotage?.(effect, cur);
 				};
-				if (this.ui.fast) cur.clock.extra -= SABOTAGE.cut;
+				if (this.ui.fast) cur.clock.extra -= cut;
 				else cur.timers.push(setTimeout(fire, 1500 + this.R() * 3000));
 			} else if (!x.ctl.remote) {
 				cur.boost.set(x.i, (cur.boost.get(x.i) || 0) + SABOTAGE.botSkill);
-				cur.delay.set(x.i, (cur.delay.get(x.i) || 0) + SABOTAGE.botDelay);
+				cur.delay.set(x.i, (cur.delay.get(x.i) || 0) + cut * SABOTAGE.botDelay);
 				const b = cur.bots.find((y) => y.p === x);
 				if (b) Object.assign(b, this.botAnswer(cur, x));
 			} else x.ctl.event('sabotage', effect);

@@ -66,11 +66,15 @@ Hepsi Promise döner; `fast` true iken anında biter.
 `TYPES[tip] = {time, label, kind:'exact'|'closest', needsMap?, prepare(q,R), mount(el,v,api), judge(v,value), bot(v,skill,R)}`
 - `mount` dönüşü: `{lock(), reveal(results), destroy(), value?()}`
 - `api`: `{answer(value), onMapTap(fn), showPin(p)}`
-- **Süre (v0.5):** `time` artık yalnız tipik süredir (belge ve yedek). Her sorunun süresi kendi verisinden hesaplanır:
-  `src/quiz/timing.js` (`timing(q)`, `budget(q)`, `botTime(v, R, skill, lo, hi)`); okuma + düşünme (tip, zorluk) + giriş
-  mekaniği, tipin sınırlarına kırpılmış tam saniye. `prepare` görünüme `v.sec` (saat) ve `v.fast` (hızlı oyuncu) koyar;
-  maç, arayüz (`questionTime(v.sec, extra, floor)`), botlar ve uzak koltuklar (`answer` isteğinde `time`) aynı değeri
-  kullanır. Saf ve belirlenimci: sunucu aynı modülle aynı süreyi bulur. Sınama: `node test/timing.test.mjs [--all]`.
+- **Süre (v0.6):** `time` yalnız tipik süredir (belge ve yedek). Her sorunun süresi kendi verisinden ve tipin ekrandaki
+  mekaniğinden hesaplanır: `src/quiz/timing.js` (`timing(q)`, `budget(q)`, `botTime(v, R, skill, lo, hi)`, `HOT`).
+  Bekleme (kart açılışı) + bakış + okuma + düşünme (tip, zorluk) + giriş (dokunma, sürükleme, bağlama, tuş, kaydırıcı,
+  ONAYLA) üç oyuncu için (hızlı, ortanca, yavaş-rahat) hesaplanır; süre = en büyüğü(yavaş + 1, ortanca + `HOT`), tipin
+  sınırlarına kırpılmış tam saniye (`HOT` = 5: arayüzün son 5 sn kırmızı uyarısı). `prepare` görünüme `v.sec` (saat)
+  ve `v.fast` / `v.med` / `v.slow` (botların cevap aralığı) koyar; maç, arayüz (`questionTime(v.sec, extra, floor)`),
+  botlar ve uzak koltuklar (`answer` isteğinde `time`) aynı değeri kullanır. Ekstra süre jokeri süreyi yarısı kadar
+  uzatır (`extraFor`, 5–15 sn), sabotaj üçte birini keser (`cutFor`, 3–10 sn). Saf ve belirlenimci: sunucu aynı
+  modülle aynı süreyi bulur. Sınama: `node test/timing.test.mjs [--all]`.
 
 ### Ses (`src/audio/sfx.js`)
 - `unlock()`, `play(name, opts)`, `music(theme)`, `mute(on)`
@@ -93,8 +97,8 @@ Ortak alanlar: `{ id, cat, diff: 1|2|3, type, q }`.
 | `num` | `ans, unit, min, max` (en yakın kazanır) |
 | `pin` | `lat, lon` (haritada işaretle; Türkiye içinde) |
 | `hang` | `w` (BÜYÜK HARF kelime; `q` ipucu) |
-| `order` | `items: [{t, v}, ×4]`, küçükten büyüğe sırala (yıl, uzunluk…). `q` ne sıralanacağını söyler. |
-| `match` | `pairs: [[sol, sağ], ×4]` |
+| `order` | `items: [{t, v, s?}, ×3]`, `dir?: 'desc'`, `unit?`. Varsayılan küçükten büyüğe; `dir: 'desc'` büyükten küçüğe. `q` ne sıralanacağını ve yönü açıkça söyler ("eskiden yeniye" / "yeniden eskiye", "büyükten küçüğe"…; `t_order.js` `DIRS`), metin ile `dir` uyuşmalı. Azalan payı %35–50. |
+| `match` | `pairs: [[sol, sağ], ×3]` (iki çift bağlanınca son çift kendiliğinden bağlanır) |
 | `hilo` | `left: {t, v}, right: {t, v}, prop` ("Hangisinin X'i daha fazla?") |
 | `odd` | `opts: [4 öğe], odd: index` |
 | `emoji` | `e: '🐟🍞…', a: [doğru, y1, y2, y3]` |
