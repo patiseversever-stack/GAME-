@@ -31,6 +31,13 @@ uniform float uSelLit; // seçilebilir ilin gündüz ışığı payı (1: tam g�
 #endif
 uniform vec4 uNight;    // x gece (0 gündüz, 1 gece odağı), y ay kenarı gücü, z şafak (dönüşte sıcak ufuk), w yıldızlar
 uniform vec4 uSpot;     // sinematik ışık havuzu (yakın çekim): xy ekran merkezi (0..1), z yarıçap (ekran yüksekliği), w güç
+uniform sampler2D uNoise; // döşenebilir gürültü (noise.js): r 16, g 64, b 32, a 8 hücre
+// Bölge havası (weather.js): alan dokusu bölgelerin ağırlığını tutar; r sis (Karadeniz, hafifçe Marmara),
+// g kar tozu (Doğu Anadolu), b sıcak ışık (Akdeniz; daha az Ege ve Güneydoğu), a kuru toz (İç Anadolu, Güneydoğu)
+uniform sampler2D uRegion;
+uniform vec4 uWxBox;   // alan kutusu: x0, z0, 1/en, 1/boy
+uniform vec4 uWx;      // x güç (gece odağında, harita sorusunda söner), y yakınlık (0 bütün ülke, 1 yakın çekim), z kademe, w savaş açıklığı yarıçapı
+uniform vec4 uWxStage; // savaş sahnesi kapsülü: A (x, z), B (x, z); hava çevresinde açılır
 #ifndef FL_GLOBALS
 #define FL_GLOBALS
 // gece odağı: gLit 1 olan piksel gündüz renginde kalır (seçilebilir il, efekt ışığı); gRim ay kenarı;
@@ -40,6 +47,8 @@ float gLit = 0.0;
 float gRim = 0.0;
 float gRelit = 0.0;
 float gOwn = 0.0;
+float gWxK = 1.0; // malzemenin bölge havası çarpanı (deniz: kıyı çizgisinde ince, kıyı okunur)
+vec4 gWxW = vec4(-1.0); // malzeme bölge ağırlığını zaten okuduysa (harita, deniz): applyFog yeniden okumaz
 #endif
 // Gece paleti (doğrusal). v0.3: siyaha yakın lacivert gece, serin ay ışığı, düşük doygunluk.
 // Aydınlık (seçilebilir) iller ekrandaki tek parlak ve renkli şey olsun; gece manzarası yalnızca ince
@@ -65,6 +74,18 @@ float vnoise(vec2 p) {
 	vec2 f = fract(p);
 	vec2 u = f * f * (3.0 - 2.0 * f);
 	return mix(mix(hash12(i), hash12(i + vec2(1, 0)), u.x), mix(hash12(i + vec2(0, 1)), hash12(i + vec2(1, 1)), u.x), u.y);
+}
+/** Dünya noktasındaki bölge havası ağırlıkları (gücü uygulanmamış ham değer). */
+vec4 wxAt(vec2 xz) {
+	return texture(uRegion, (xz - uWxBox.xy) * uWxBox.zw);
+}
+/** Savaş sahnesinin çevresinde hava açılır: kapsülün içinde 0, dışında 1 (savaş yoksa hep 1). */
+float wxStage(vec2 q) {
+	if (uWx.w < 0.01) return 1.0;
+	vec2 a = uWxStage.xy;
+	vec2 ab = uWxStage.zw - a;
+	float t = clamp(dot(q - a, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+	return smoothstep(uWx.w * 0.6, uWx.w, length(q - a - ab * t));
 }
 `;
 
@@ -227,10 +248,83 @@ vec3 shade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, float r
 	}
 	return c;
 }
+/**
+ * Bölge havası (v0.7, yalnızca görsel, gündüz): Karadeniz'de vadilere ve kıyıya çöken ince sis, Doğu'da berrak
+ * soğuk ışık ve rüzgârla savrulan kar tozu, Akdeniz'de altın güneş ve kıyıda sıcak pus; Ege, Güneydoğu ve İç
+ * Anadolu'da çok hafif dokunuşlar. Katmanlar ince ve yamalı (sis en yoğun yerde ~%28): il sınırları, sahip
+ * renkleri ve kaleler hep okunur; sahip renkli pikselde daha da hafif. Gece odağında, harita sorusunda ve savaş
+ * sahnesinin çevresinde söner (uWx). Kalınlık bakış açısına göre: tepeden bakışta yalnız vadilerde yama yama,
+ * alçak çekimde katman derinleşir (ışın katmanın içinde daha uzun yol alır) ama sınırlı kalır.
+ * Bütün malzemeler applyFog'dan geçer: ağaç, yapı, kale ve deniz aynı havanın içinde.
+ */
+vec3 regionWx(vec3 c, vec3 wp, vec3 v) {
+	if (uWx.x < 0.002) return c;
+	vec4 w = (gWxW.x < 0.0 ? wxAt(wp.xz) : gWxW) * (uWx.x * wxStage(wp.xz) * gWxK);
+	if (w.r + w.g + w.b + w.a < 0.004) return c;
+	float own = clamp(gOwn, 0.0, 1.0);
+	float keep = 1.0 - 0.45 * own; // sahip renginde katmanlar daha ince
+	float near = uWx.y;
+	float t = uTime;
+	vec2 q = wp.xz;
+	float sinT = clamp(-v.y, 0.18, 1.0); // bakış ışınının eğimi (tepeden 1)
+	float land = smoothstep(0.0, 0.06, wp.y);
+	float l = dot(c, vec3(0.3, 0.59, 0.11));
+	// --- yerel ışık tonu (sahip renginde yarı yarıya: kırmızı turuncuya, mavi griye kaçmasın)
+	float gk = mix(0.85, 1.0, near) * (1.0 - 0.5 * own);
+	// Karadeniz: serin, nemli, daha gür yeşil
+	c *= mix(vec3(1.0), vec3(0.92, 1.03, 0.99), w.r * gk);
+	c = mix(vec3(l), c, 1.0 + 0.14 * w.r * gk);
+	// Doğu: berrak, soğuk ışık; renkler biraz solar (kuru soğuk hava), parlak yüzeyler parlar
+	c *= mix(vec3(1.0), vec3(0.88, 0.96, 1.12), w.g * gk);
+	c = mix(c, vec3(l) * vec3(0.95, 1.0, 1.1), 0.05 * w.g * gk);
+	c *= 1.0 + 0.1 * w.g * gk * smoothstep(0.25, 0.9, l);
+	// sıcak ışık yalnızca güneşli yüzeyde (gölge serin kalır: altın saat karşıtlığı); kuru toprakta kehribar
+	vec3 warm = mix(vec3(1.22, 1.05, 0.74), vec3(1.16, 0.95, 0.72), clamp(w.a * 1.6, 0.0, 1.0));
+	c *= mix(vec3(1.0), warm, w.b * gk * smoothstep(0.03, 0.4, l));
+	c *= mix(vec3(1.0), vec3(0.95, 0.96, 1.06), w.b * gk * (1.0 - smoothstep(0.02, 0.18, l))); // gölge serin (altın saat karşıtlığı)
+	c *= mix(vec3(1.0), vec3(1.05, 1.0, 0.9), w.a * gk * 0.6);
+	vec3 skyL = uSkyTop * 1.3 + uSunCol * 0.28;
+	if (w.r > 0.01) {
+		// --- Karadeniz sisi: kıyıya ve kıyı vadilerine çöken alçak sis kümeleri (açık denizde sis şeridi), ağır
+		// ağır kıyı boyunca sürüklenir; kümelerin arası açık. Kalınlık: ışının katmanın üstüne kadar aldığı yol.
+		// (gürültü kıyı boyunca uzun: sis şeritleri doğu-batı uzanır)
+		// (iki kat gürültü döndürülmüş eksenlerde: değer gürültüsünün ızgara izi benek benek görünmesin)
+		float n1 = texture(uNoise, (q * vec2(0.5, 1.0) + vec2(t * 0.12, t * 0.04)) / 40.0).a;
+		float n2 = uWx.z > 0.5 ? texture(uNoise, (mat2(0.8, -0.6, 0.6, 0.8) * q * vec2(0.6, 1.0) - vec2(t * 0.09, 0.0)) / 64.0).b : 0.5;
+		float n = n1 * 0.7 + n2 * 0.3;
+		float top = 0.12 + 0.62 * n;
+		// küme maskesi örtüyü çarpar (yolu değil): alçak çekimde de kümelerin arası açık kalır
+		float a = (1.0 - exp(-max(top - wp.y, 0.0) / sinT * 5.0)) * smoothstep(0.42, 0.7, n);
+		a *= mix(0.28, 0.18, land) * w.r * mix(0.8, 1.0, near) * keep;
+		c = mix(c, skyL * vec3(1.0, 1.0, 0.93) * 1.15, a);
+	}
+	if (w.g > 0.01) {
+		// --- Doğu: rüzgârla savrulan kar tozu; yaylada ve dorukların üstünde ince, parlak, akan pus
+		vec2 sq = mat2(0.86, 0.5, -0.5, 0.86) * q;
+		float n = uWx.z > 0.5 ? texture(uNoise, (sq * vec2(0.45, 1.0) - vec2(t * 0.5, 0.0)) / 18.0).r : 0.62;
+		float s = smoothstep(0.5, 0.85, n) * smoothstep(0.9, 1.7, wp.y);
+		float a = (1.0 - exp(-0.45 * s / sinT)) * w.g * mix(0.7, 1.0, near) * 0.2 * keep;
+		c = mix(c, skyL * vec3(0.97, 1.0, 1.06) * 1.05, a);
+	}
+	if (w.b > 0.01) {
+		// --- Akdeniz: kıyıda alçak, altın, sıcak pus (güneşli öğleden sonra); yavaşça dalgalanır
+		float n = uWx.z > 0.5 ? texture(uNoise, (q - vec2(t * 0.05, t * 0.02)) / 30.0).a : 0.5;
+		float coastal = 1.0 - smoothstep(0.1, 0.5, wp.y);
+		float a = (1.0 - exp(-coastal * (0.55 + 0.9 * n) / sinT * 0.6)) * w.b * mix(0.7, 1.0, near) * 0.26 * keep;
+		c = mix(c, uSunCol * vec3(0.46, 0.36, 0.22) + uSkyHor * 0.3, a);
+	}
+	if (w.a > 0.01) {
+		// --- kuru toz (İç Anadolu, Güneydoğu): alçak çekimde ufka doğru soluk, sıcak pus
+		float a = (1.0 - exp(-0.15 / sinT)) * w.a * mix(0.4, 1.0, near) * 0.09 * keep;
+		c = mix(c, uSunCol * vec3(0.36, 0.3, 0.22) + uSkyHor * 0.3, a);
+	}
+	return c;
+}
 vec3 applyFog(vec3 c, vec3 wp) {
 	vec3 d = wp - cameraPosition;
 	float dist = length(d);
 	vec3 v = d / max(dist, 1e-3);
+	c = regionWx(c, wp, v);
 	float x = max(dist - uFogP.y, 0.0) * uFogP.x;
 	float hk = exp(-max(wp.y, 0.0) * uFogP.z);
 	float f = 1.0 - exp(-x * x * hk);
@@ -315,6 +409,8 @@ float gLit = 0.0;
 float gRim = 0.0;
 float gRelit = 0.0;
 float gOwn = 0.0;
+float gWxK = 1.0; // malzemenin bölge havası çarpanı (deniz: kıyı çizgisinde ince, kıyı okunur)
+vec4 gWxW = vec4(-1.0); // malzeme bölge ağırlığını zaten okuduysa (harita, deniz): applyFog yeniden okumaz
 #endif
 uniform sampler2D uState;
 uniform float uSelOn;   // seçim kipi açık (0..1): seçilemeyen iller kararır
@@ -386,7 +482,6 @@ float clearHard(vec2 q, float pad) {
 // Haritanın çevresi yumuşak bir pusa gömülür: göz Türkiye'de kalır, uzak kara parçalarının kesik
 // kenarları görünmez (mobil oyun haritalarındaki bulut çerçevesi gibi).
 export const MIST = /* glsl */ `
-uniform sampler2D uNoise;
 vec3 edgeMist(vec3 c, vec3 w) {
 	vec2 q = w.xz + vec2(uTime * 0.17, 0.0);
 	// değer gürültüsü ızgaraya hizalı: katmanlar döndürülmüş eksenlerde okunur, yoksa pus kare kare görünür

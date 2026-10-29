@@ -90,7 +90,6 @@ ${PROV}
 ${CLEAR}
 uniform sampler2D uBorder;
 uniform sampler2D uWater;
-uniform sampler2D uNoise;
 uniform vec4 uFBox;
 uniform vec2 uFRes;
 uniform float uMe; // insan oyuncunun kimliği (gecede kendi toprağı aydınlık ve net)
@@ -211,6 +210,21 @@ void main() {
 
 	float snowK, rockK;
 	vec3 alb = terrainAlbedo(vW, N, vBio, h, coast, snowK, rockK);
+	// bölge havası (Doğu): yaylada ve kuzey yamaçlarda ince kırağı, karlı doruklara bağlanır (yamalı; sahip boyası
+	// üstüne biner, il rengi okunur)
+	vec4 wxR = wxAt(vW.xz);
+	gWxW = wxR; // applyFog aynı değeri kullanır (ikinci doku okuması yok)
+	float frost = 0.0;
+	if (wxR.g > 0.02 && !skirt) {
+		float fe = (h - ${f(BASE)}) / ${f(VS)};
+#if TIER > 0
+		float fn = texture(uNoise, vW.xz / 9.0 + 0.3).b * 0.65 + texture(uNoise, vW.xz / 2.5).g * 0.35;
+#else
+		float fn = texture(uNoise, vW.xz / 9.0 + 0.3).b;
+#endif
+		frost = wxR.g * smoothstep(1900.0, 2800.0, fe + (fn - 0.5) * 1100.0 - N.z * 700.0) * (1.0 - snowK) * (1.0 - smoothstep(0.93, 0.99, coast));
+		alb = mix(alb, mix(${C('#dbe3ef')}, ${C('#f7f9fd')}, fn), frost * 0.4);
+	}
 
 	// --- sahip boyası: arazinin açık-koyu dokusu korunur
 	float lum = dot(alb, vec3(0.3, 0.59, 0.11));
@@ -333,6 +347,19 @@ void main() {
 	} else {
 		c = shade(alb, NL, V, ao, sh, gloss, 0.35);
 	}
+#if TIER > 0
+	// karda pırıltı (Doğu): kar ve kırağıda tek tek yanıp sönen kristaller; yakında görünür, uzakta ve gecede söner
+	float sg = max(snowK, frost) * wxR.g * uWx.x * (1.0 - water);
+	if (sg > 0.03) {
+		vec2 gq = vW.xz * 6.0;
+		vec2 gc = floor(gq);
+		float hh = hash12(gc);
+		vec2 gf = fract(gq) - 0.5 - (vec2(hash12(gc + 5.3), hash12(gc + 9.1)) - 0.5) * 0.5;
+		float tw = pow(max(sin(uTime * (1.5 + hh * 3.0) + hh * 50.0), 0.0), 10.0);
+		float gpx = fwidth(gq.x) + fwidth(gq.y);
+		c += uSunCol * 0.5 * step(0.8, hh) * tw * smoothstep(0.17, 0.05, length(gf)) * smoothstep(0.6, 0.25, gpx) * sg * sh;
+	}
+#endif
 
 	// gece (v0.4): sahipli toprak kendi renginde aydınlık. Oyuncunun (ve sırası gelenin) toprağı parlak ve net,
 	// başkalarınınki sönük ama rengi belli. Parlama yok: renk, ay ışığıyla verilen kabartmaya oturur.
@@ -487,6 +514,13 @@ void main() {
 	vec3 deep = uSeaDeep * mix(0.93, 1.03, texture(uNoise, p * 0.04 / 8.0).a);
 	vec3 base = mix(deep, uSea, smoothstep(2.2, 0.3, dist));
 	base = mix(base, ${C('#62e3d4')}, smoothstep(0.32, 0.02, dist) * 0.75);
+	// bölge havası: Akdeniz (ve Ege) kıyısında geniş turkuaz sığlık; Karadeniz koyu, serin, yeşile çalan
+	gWxW = wxAt(p);
+	vec4 wx = gWxW * uWx.x;
+	gWxK = 0.4 + 0.6 * smoothstep(0.15, 1.5, dist); // kıyı çizgisinde sis ince: kıyı ve il sınırı okunur
+	base = mix(base, ${C('#38d0d2')}, wx.b * smoothstep(4.5, 0.25, dist) * 0.55);
+	base *= mix(vec3(1.0), vec3(1.06, 1.03, 0.94), wx.b); // sıcak güneşte ılık deniz
+	base *= mix(vec3(1.0), vec3(0.78, 0.94, 0.9), wx.r * 0.75);
 	float ndv = clamp(dot(N, V), 0.0, 1.0);
 	float fres = 0.02 + 0.98 * pow(1.0 - ndv, 5.0);
 	vec3 c = base * (uSkyTop * 1.05 + uSunCol * 0.26 * max(dot(N, uSunDir), 0.0));
@@ -500,6 +534,18 @@ void main() {
 	float wave = sin(dist * 26.0 - t * 1.8 + texture(uNoise, p * 0.8 / 32.0).b * 5.0) * 0.5 + 0.5;
 	float foam = smoothstep(0.35, 0.08, dist) * smoothstep(0.72, 0.98, wave) * 0.55 + smoothstep(0.07, 0.015, dist);
 	c = mix(c, vec3(1.0) * (uSkyTop + uSunCol * 0.32), clamp(foam, 0.0, 1.0) * 0.82);
+#if TIER > 0
+	// Akdeniz güneşi: dalga sırtlarında yanıp sönen sıcak pırıltılar (yakında; uzakta piksel kumu olmasın diye söner)
+	if (wx.b > 0.03) {
+		vec2 sq = p * 4.0 + vec2(t * 0.25, t * 0.1);
+		vec2 sc = floor(sq);
+		float hh = hash12(sc);
+		vec2 sf = fract(sq) - 0.5 - (vec2(hash12(sc + 3.7), hash12(sc + 8.2)) - 0.5) * 0.5;
+		float tw = pow(max(sin(t * (2.0 + hh * 3.0) + hh * 40.0), 0.0), 12.0);
+		float spx = fwidth(sq.x) + fwidth(sq.y);
+		c += uSunCol * vec3(1.0, 0.92, 0.74) * step(0.84, hh) * tw * smoothstep(0.14, 0.03, length(sf)) * smoothstep(0.7, 0.3, spx) * wx.b * smoothstep(5.0, 1.0, dist) * 0.8;
+	}
+#endif
 	// şafak: deniz ufku ısınır
 	if (uNight.z > 0.001) c += DAWN * uNight.z * fres * 0.5;
 	vec3 stars = vec3(0.0);
