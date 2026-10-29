@@ -24,8 +24,8 @@
 //            (v0.6'da 1 sn idi; 0,5 sn erişilebilirlik payı: yaşlı oyuncu, ana dili Türkçe olmayan, titrek el.)
 //
 // v0.7 (sure-raporu.md, ref/soru-v06): gerçek kartlar Playwright'ta "yavaş ama bilen" oyuncuyla oynatıldı (ekrandaki
-// kelimeler 110 kelime/dk, dokunuşlar 0,85 sn arayla). Bilmecede 4/4, sıralamada 4/5 soru süreye yetişmiyordu.
-// Değişenler: okuma kelime başına sabit bakış içerir (kısa kelimeli metin: bilmece, karşılaştır, sırala etiketleri);
+// kelimeler 110 kelime/dk, dokunuşlar 0,85 sn arayla). v0.6'da 54 sorunun 11'inde süre doldu (bilmece 4/4, sırala 5/5,
+// adam asmaca 1/5, karşılaştır 1/3); v0.7'de 2 soru sınırda (0,0 ve −0,1 sn). Değişenler: okuma kelime başına sabit bakış içerir (kısa kelimeli metin: bilmece, karşılaştır, sırala etiketleri);
 // bilmece kökü ikinci kez (kısmen) okunur; sıralamada karışık başlangıcın en kötüsü (n − 1 sürükleme) sığar;
 // eşleştirmede bağ, adam asmacada açılış tahminleri, haritada yakınlaştırıp düzeltme, anagramda karo arama gerçeğe
 // göre uzadı; PAY 1 → 1,5 sn.
