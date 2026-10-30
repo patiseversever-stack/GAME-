@@ -1068,9 +1068,39 @@ export class UI {
 			this.$.cine.classList.toggle('on', cine);
 		}
 		const hb = typeof b.heightAt === 'function';
-		for (const p of this.pins) {
+		const P = this.pins;
+		for (const p of P) {
 			app.toScreen(v.set(p.x, hb ? b.heightAt(p.x, p.z) : top, p.z), s);
-			p.el.style.transform = `translate(${s.x.toFixed(1)}px,${s.y.toFixed(1)}px)`;
+			p.sx = s.x;
+			p.sy = s.y;
+			if (p.w == null && p.el.classList.contains('dn-tag')) {
+				p.w = p.el.firstElementChild?.offsetWidth || 0;
+				p.h = p.el.firstElementChild?.offsetHeight || 0;
+			}
+			p.ty = 0;
+		}
+		// yazı rozetleri çarpışmasın: üst üste binenleri dikeyde ayır (yalnız ölçülü rozetler; az sayıda, O(n²))
+		for (let it = 0; it < 3; it++)
+			for (let i = 0; i < P.length; i++) {
+				const a = P[i];
+				if (!a.w) continue;
+				for (let j = i + 1; j < P.length; j++) {
+					const c = P[j];
+					if (!c.w) continue;
+					const ox = (a.w + c.w) / 2 + 4 - Math.abs(a.sx - c.sx);
+					const ay = a.sy + a.ty;
+					const cy = c.sy + c.ty;
+					const oy = (a.h + c.h) / 2 + 3 - Math.abs(ay - cy);
+					if (ox <= 0 || oy <= 0) continue;
+					const up = ay <= cy ? a : c;
+					const dn = up === a ? c : a;
+					up.ty -= oy / 2;
+					dn.ty += oy / 2;
+				}
+			}
+		for (const p of P) {
+			p.dy = (p.dy || 0) + (p.ty - (p.dy || 0)) * 0.25; // yumuşak: titremesin
+			p.el.style.transform = `translate(${p.sx.toFixed(1)}px,${(p.sy + p.dy).toFixed(1)}px)`;
 		}
 		for (const l of this.lines) {
 			app.toScreen(v.set(l.a.x, hb ? b.heightAt(l.a.x, l.a.z) : top, l.a.z), s);
