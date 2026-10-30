@@ -4,7 +4,9 @@
 // çalışır (çizim yok), görüntü yalnızca çekim anında çizilir. Böylece yavaş yazılım çiziciyle bile
 // geçişler gerçek cihazdaki zamanlamayla görünür.
 //
-//   node tools/flow.mjs çıktı-dizini [--html=eski.html --ek=gece=2 --q=2 --w=412 --h=892 --dpr=1 --seed=7 --region=ege --mode=ffa3 --only=a,b --seq]
+//   node tools/flow.mjs çıktı-dizini [--html=eski.html --ek=gece=2 --q=2 --w=412 --h=892 --dpr=1 --seed=7 --region=ege --mode=ffa3 --length=long --only=a,b --tam --seq]
+//   (--tam: --only verilse de maç sonuna dek oynanır. y_<tip>, y_<tip>_cevap: yeni tipin ilk kartı ve cevap filmi;
+//   sonda soru akışı: an:tip listesi)
 //
 // Çekimler:
 //   a_baskent    insan başkentini seçerken (kamera tepeden, seçilebilir iller aydınlık)
@@ -73,7 +75,7 @@ await page.evaluate((cfg) => {
 	const app = window.__fl.app;
 	const ui = app.ui;
 	app.stop();
-	const W = (window.__flow = { want: [], log: [], done: false, err: null, picks: 0, attacks: 0, bots: 0, conq: 0, duel: 0, d3: 0, t: 0, seq: cfg.seq, siege: 0, tower: 0, def: 0 });
+	const W = (window.__flow = { want: [], log: [], done: false, err: null, picks: 0, attacks: 0, bots: 0, conq: 0, duel: 0, d3: 0, t: 0, seq: cfg.seq, siege: 0, tower: 0, def: 0, ySeen: {}, yRev: null, yeni: ['kusbakisi', 'ilavi', 'kimim', 'sive', 'halat', 'mancinik', 'yanlis', 'ikidogru', 'harfal', 'azbilinen', 'tufan', 'kayip', 'fitil', 'golge'] });
 	// betiğin kendi seçimleri (insan oyuncunun il seçimi ve cevapları) ayrı tohumlu üreteçten: çizim tarafındaki
 	// rastgelelik (parçacık, ordu) değişse de eski ve yeni derleme aynı maçı oynar (kıyas aynı anları gösterir)
 	let rs2 = (cfg.seed * 40503 + 977) | 0;
@@ -190,19 +192,46 @@ await page.evaluate((cfg) => {
 			[[0, 40], [1, 350], [2, 700], [3, 1100], [4, 2200], [5, 3500], [6, 4700]].forEach(([k, ms]) => want('m_harita_' + k, ms));
 		}
 		const pr = q.call(this, m, ctx);
+		// v1.2 soru düzeni: soru akışı günlüğü (an:tip) ve yeni tiplerin ilk kartı (insan cevaplarken) ile cevap filmi
+		const type = ctx?.q?.type;
+		W.log.push(`${ctx?.phase || ''}:${type}${ctx?.human ? '' : '(izle)'}`);
+		const yeni = W.yeni.includes(type);
+		const first = yeni && ctx?.human && !W.ySeen[type];
+		if (first) W.ySeen[type] = 1;
+		const live = type === 'halat' || type === 'fitil';
 		if (ctx?.human) {
 			const gen = this._gen;
 			const go = () => {
 				const c = this.current;
-				if (!c || this._gen !== gen) return;
-				if (!c.card.classList.contains('on')) return setTimeout(go, 200);
+				if (this._gen !== gen) return;
+				// düello girişi sürerken kart henüz kurulmamış olabilir: kart açılana dek bekle
+				if (!c || c.ctx !== ctx || !c.card.classList.contains('on')) return setTimeout(go, 200);
 				if (ctx?.phase === 'duel' && ctx.attacker?.human && !W.d3++) want('d3_soru', 700);
-				const b = c.ctx.T.bot(c.ctx.v, 0.8, W.R);
-				c.api.answer(b.value);
+				if (first) {
+					want('y_' + type, live ? 6000 : 1800);
+					W.yRev = type;
+				}
+				// canlı turda (Halat, Fitil) insan cevabı turun kendisi: kart kendi bitirir (betik basmaz)
+				if (live) return;
+				setTimeout(() => {
+					if (this.current !== c || this._gen !== gen) return;
+					const b = c.ctx.T.bot(c.ctx.v, 0.8, W.R);
+					c.api.answer(b.value);
+				}, first ? 2700 : 0); // ilk kart: önce çekim (1,8 sn), sonra cevap
 			};
-			setTimeout(go, 2600);
+			setTimeout(go, first ? 1700 : 2600);
 		}
 		return pr;
+	};
+	// cevap filmi: yeni tipin ilk cevabı (film ortası)
+	const rv = ui.reveal;
+	ui.reveal = function (m, ctx) {
+		const t = ctx?.q?.type;
+		if (W.yRev && t === W.yRev) {
+			want('y_' + t + '_cevap', t === 'tufan' ? 5200 : 1500);
+			W.yRev = null;
+		}
+		return rv.call(this, m, ctx);
 	};
 	// --- çark: insanın ilk çevirişi (betik 0,7 sn sonra dokunur), "Fetih!" diliminde kategori seçimi
 	const wheel = ui.wheel;
@@ -292,9 +321,12 @@ for (let it = 0; it < 40000; it++) {
 	}
 	if (s.done) {
 		console.log(`maç bitti: oyun ${s.t.toFixed(0)} sn, gerçek ${((Date.now() - wall) / 1000).toFixed(0)} sn`);
+		const fl = await page.evaluate(() => window.__flow.log);
+		const yeni = fl.filter((x) => /:(kusbakisi|ilavi|kimim|sive|halat|mancinik|yanlis|ikidogru|harfal|azbilinen|tufan|kayip|fitil|golge)/.test(x)).length;
+		console.log(`soru akışı (${fl.length} soru, ${yeni} yeni tip): ${fl.join(' ')}`);
 		break;
 	}
-	if (ONLY && [...ONLY].every((k) => shots.some((n) => n[0] === k || n === k))) {
+	if (ONLY && !('tam' in opt) && [...ONLY].every((k) => shots.some((n) => n[0] === k || n === k))) {
 		console.log('istenen çekimler alındı');
 		break;
 	}
