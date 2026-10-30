@@ -10,6 +10,7 @@ export class ShadowSystem {
 		this.size = size;
 		this.half = half; // haritanın yarı genişliği (birim)
 		this.maxHalf = half;
+		this.minHalf = 14;
 		this.scene = new THREE.Scene();
 		this.scene.matrixWorldAutoUpdate = false;
 		this.cam = new THREE.OrthographicCamera(-this.half, this.half, this.half, -this.half, 1, 300);
@@ -51,11 +52,16 @@ export class ShadowSystem {
 	 */
 	place(focus, sunDir, dist) {
 		if (dist != null) {
-			const want = Math.min(this.maxHalf, Math.max(14, dist * 0.8));
+			// minHalf (vars. 14): Kuşbakışı'nın kahraman maketi yakın çekimde daha dar (keskin) kapsam ister
+			const want = Math.min(this.maxHalf, Math.max(this.minHalf, dist * 0.8));
 			const stepH = 14 * Math.pow(1.25, Math.round(Math.log(want / 14) / Math.log(1.25)));
 			const h = Math.min(this.maxHalf, stepH);
 			if (h !== this.half) {
 				this.half = h;
+				// dar kapsamda doku pikseli küçülür: normal kaydırma ve derinlik payı da onunla küçülür (ince ayrıntı gölgesi)
+				const k = Math.min(1, h / 14);
+				this.G.uShadowP.value.y = 0.035 * k;
+				this.G.uShadowP.value.z = 0.0007 * Math.max(0.35, k);
 				const c = this.cam;
 				c.left = -h;
 				c.right = h;
