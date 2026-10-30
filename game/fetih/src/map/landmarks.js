@@ -53,7 +53,7 @@ float showK(bool fly) {
 	float k = mix(1.0 - t, t, uFade.y);
 	// yakın çekimde yerine kahraman model konan yapı (avlusu dahil) tamamen gömülür
 	if (uHide.w > 0.5 && abs(site.x - uHide.x) + abs(site.z - uHide.y) < 0.01) return 0.0;
-	if (uHide.w > 0.5 && uHide.z > 0.01 && !fly) k = min(k, smoothstep(uHide.z * 0.85, uHide.z, distance(site.xz, uHide.xy)));
+	if (uHide.w > 0.5 && uHide.z > 0.01 && !fly) k = min(k, smoothstep(uHide.z, uHide.z + 0.3, distance(site.xz, uHide.xy)));
 	// başkent kalesi yapının yerine kurulursa (küçük illerde ikisi sığmaz) yapı kale inerken toprağa gömülür
 	for (int i = 0; i < 4; i++) {
 		vec4 c = uCastle[i];

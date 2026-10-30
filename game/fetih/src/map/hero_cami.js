@@ -1,9 +1,9 @@
-// Kahraman maketler: camiler, külliyeler, medrese ve türbe (Selimiye, Sultanahmet, Bursa Ulu Camii, Mevlana,
-// Divriği, Çifte Minareli Medrese). Gerçek oranlar: kubbe çapı / minare boyu / avlu, kasnak pencereleri, payanda
+// Kahraman maketler: camiler, külliyeler, medrese ve türbe (Selimiye, Sultanahmet, Bursa Ulu Camii, Mevlana;
+// Divriği ve Çifte Minareli Medrese v1.1: hero_yeni2.js). Gerçek oranlar: kubbe çapı / minare boyu / avlu, kasnak pencereleri, payanda
 // kuleleri, kademeli kubbe dizisi.
 
 import * as THREE from 'three';
-import { H, COL, wall, block, dome, drumPart, semiDome, minaret, arcade, ground, tree, cypress, alem, muqarnasRing, openingPts, rockMass } from './hero_parts.js';
+import { H, COL, wall, block, dome, drumPart, semiDome, minaret, arcade, ground, tree, cypress, alem, openingPts } from './hero_parts.js';
 
 const shape = (pts) => new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
 
@@ -41,7 +41,7 @@ function hallWalls(k, { w, d, h, z = 0, col, sides = [5, 4, 5, 4], tiers = 2 }) 
 }
 
 /** Yivli geometri (Mevlana kubbesi, tuğla minare): açıya göre yarıçap dalgası. */
-function flute(g, n, a, pos = false) {
+export function flute(g, n, a, pos = false) {
 	const p = g.getAttribute('position');
 	for (let i = 0; i < p.count; i++) {
 		const ang = Math.atan2(p.getZ(i), p.getX(i));
@@ -236,85 +236,5 @@ export const CAMI = {
 		yield;
 		for (const [x, z] of [[-0.42, 0.28], [0.44, 0.26], [-0.2, 0.32], [0.26, 0.3], [-0.52, -0.2], [0.52, -0.3]]) cypress(k, x, z, 1.15);
 		for (const [x, z] of [[-0.5, 0.44], [0.48, 0.46], [0.0, 0.52]]) tree(k, x, z, 1.1, R);
-	},
-
-	// ---------------------------------------------------------------- Divriği Ulu Camii ve Darüşşifası (Sivas)
-	*divrigi(k, R) {
-		ground(k, 0.74, { pave: '#b8ad98', paveR: 0.78, rect: 1 });
-		const S = '#b6a48a';
-		const S2 = '#a69378';
-		// uzun taş yapı: cami (doğu) + darüşşifa (batı), sağır duvarlar, dar pencereler
-		block(k, { w: 0.74, d: 0.42, h: 0.17, z: -0.08, sides: [4, 2, 4, 2], rows: [[0.45, 0.25]], ww: 0.018, kind: 'pointed', col: S, roof: 'flat', roofCol: '#8f8170' });
-		yield;
-		// sekizgen piramit taş külah (mihrap önü kubbesinin üstü) ve darüşşifanın kubbesi
-		k.mc(H.ASHLAR, S2).flat().cyl(0.09, 0.095, 0.05, 8, 0.18, 0.17, -0.12);
-		k.mc(H.ASHLAR, S2).cone(0.1, 0.17, 8, 0.18, 0.22, -0.12, Math.PI / 8).soft();
-		k.mc(H.ASHLAR, S2).flat().cyl(0.065, 0.07, 0.03, 8, -0.22, 0.17, -0.1).soft();
-		dome(k, { r: 0.066, x: -0.22, y: 0.2, z: -0.1, sy: 0.7, ribs: 12, seg: 16, ring: false, col: '#9a8c7a', mat: H.ASHLAR });
-		// Cennet Kapısı (kuzey taç kapısı): cepheden taşan dev çerçeve, iç içe kemerler, yoğun kabartma
-		const pz = 0.13 + 0.025;
-		const PX = 0.08;
-		k.mc(H.CARVE, '#c4b294').flat().box(0.24, 0.3, 0.05, PX, 0, pz).soft();
-		for (let i = 0; i < 4; i++) {
-			const w = 0.19 - i * 0.03;
-			const h = 0.26 - i * 0.03;
-			wall(k, { w: w + 0.02, h: h + 0.01, t: 0.012, x: PX, z: pz + 0.026 - i * 0.012, holes: [{ x: 0, y: 0, w, h, kind: 'pointed' }], mat: H.CARVE, col: i % 2 ? '#c8b698' : '#bba98b', glass: false });
-		}
-		k.mc(H.WIN, '#1c1612').slab(shape(openingPts('round', 0, 0, 0.07, 0.13)), 0.01, PX, 0, pz - 0.022);
-		// taşan kabartma topuzları ve rozetler (kapının "barok" bezemesi)
-		for (let i = 0; i < 14; i++) {
-			const a = (i / 13) * Math.PI;
-			const rr = 0.115;
-			k.mc(H.CARVE, '#cdbb9d').sphere(0.012 + (i % 3) * 0.003, 8, PX - Math.cos(a) * rr, 0.13 + Math.sin(a) * rr * 1.25, pz + 0.03);
-		}
-		for (const sx of [-1, 1]) {
-			k.mc(H.CARVE, '#c7b597').cyl(0.022, 0.022, 0.012, 12, PX + sx * 0.085, 0.24, pz + 0.03);
-			k.mc(H.CARVE, '#c7b597').sphere(0.02, 10, PX + sx * 0.09, 0.08, pz + 0.032);
-		}
-		yield;
-		// darüşşifa kapısı (batıda, mukarnaslı niş)
-		wall(k, { w: 0.15, h: 0.2, t: 0.03, x: -0.22, z: pz - 0.01, holes: [{ x: 0, y: 0, w: 0.08, h: 0.15, kind: 'pointed' }], mat: H.CARVE, col: '#c2b091', glass: false });
-		muqarnasRing(k, { r: 0.03, x: -0.22, y: 0.15, z: pz - 0.03, n: 8, d: 0.01, rows: 2, col: '#c2b091' });
-		// tek minare: Selçuklu silindir gövde, şerefe ve külah
-		minaret(k, 0.4, 0.06, { h: 0.5, r: 0.022, balconies: 1, col: '#b9a88e', sides: 16, capH: 0.18, cap: '#8f8170' });
-		yield;
-		// yamaç: arkada kaya ve ağaçlar
-		rockMass(k, { rx: 0.4, ry: 0.18, rz: 0.15, x: -0.1, y: 0.0, z: -0.52, seed: 4, col: '#8d7f6c', col2: '#a99a84' });
-		for (const [x, z] of [[-0.52, 0.3], [0.56, 0.32], [0.6, -0.2], [-0.6, -0.1]]) tree(k, x, z, 1.1, R);
-		for (const [x, z] of [[-0.42, 0.4], [0.38, 0.42]]) cypress(k, x, z, 1.2);
-	},
-
-	// ---------------------------------------------------------------- Çifte Minareli Medrese (Erzurum)
-	*ciftemin(k, R) {
-		ground(k, 0.6, { pave: '#b6aa92', paveR: 0.8, rect: 1 });
-		const S = '#c9a983';
-		block(k, { w: 0.56, d: 0.4, h: 0.17, z: -0.1, sides: [0, 3, 3, 3], rows: [[0.45, 0.3]], ww: 0.022, kind: 'pointed', col: S, roof: 'flat', roofCol: '#8a7c6c' });
-		yield;
-		// taç kapı: cepheden taşan çerçeve, mukarnaslı niş
-		const pz = 0.1 + 0.03;
-		k.mc(H.CARVE, '#d3b48c').flat().box(0.24, 0.3, 0.06, 0, 0, pz).soft();
-		wall(k, { w: 0.16, h: 0.24, t: 0.02, x: 0, z: pz + 0.031, holes: [{ x: 0, y: 0, w: 0.11, h: 0.2, kind: 'pointed' }], mat: H.CARVE, col: '#d8bb94', glass: false });
-		k.mc(H.WIN, '#1d1510').box(0.07, 0.11, 0.004, 0, 0, pz - 0.02);
-		muqarnasRing(k, { r: 0.04, y: 0.2, z: pz, n: 10, d: 0.012, rows: 3, col: '#d8bb94' });
-		// iki tuğla minare: yivli gövde, firuze çini kuşaklar, külahsız (yarım kalmış)
-		for (const sx of [-1, 1]) {
-			const x = sx * 0.1;
-			k.mc(H.ASHLAR, S).flat().box(0.07, 0.3, 0.07, x, 0, pz).soft();
-			// kare kaideden yuvarlak gövdeye geçiş, ince yivli tuğla gövde, çini kuşaklar, şerefe çıkıntısı
-			k.mc(H.ASHLAR, S).flat().cyl(0.03, 0.04, 0.03, 8, x, 0.3, pz).soft();
-			const g = flute(new THREE.CylinderGeometry(0.024, 0.028, 0.3, k._n(48), 6, true), 16, 0.09, true);
-			k.mc(H.BRICK, '#a85f3e').add(g.translate(0, 0.15, 0), new THREE.Matrix4().makeTranslation(x, 0.33, pz));
-			for (const y of [0.38, 0.47]) k.mc(H.TILE, '#2a9d8f').cyl(0.029, 0.029, 0.014, 24, x, y, pz);
-			for (let i = 0; i < 6; i++) k.mc(H.GLAZE, '#2a8f9d').box(0.006, 0.07, 0.004, x + Math.sin((i / 6) * Math.PI * 2) * 0.027, 0.395, pz + Math.cos((i / 6) * Math.PI * 2) * 0.027, (i / 6) * Math.PI * 2);
-			k.mc(H.STONE, '#b9906a').lathe([[0.027, 0], [0.036, 0.012], [0.04, 0.02], [0, 0.02]], 16, x, 0.6, pz);
-			k.mc(H.BRICK, '#9a573a').cyl(0.022, 0.024, 0.045, 16, x, 0.62, pz);
-			k.mc(H.STONE, '#7c6a58').cyl(0.023, 0.023, 0.004, 16, x, 0.665, pz);
-		}
-		yield;
-		// arkada Hatuniye kümbeti: on iki köşeli gövde, piramit külah
-		k.mc(H.ASHLAR, S).flat().cyl(0.07, 0.075, 0.16, 12, 0, 0, -0.42);
-		k.mc(H.CARVE, '#d0b089').cyl(0.072, 0.072, 0.02, 12, 0, 0.12, -0.42);
-		k.mc(H.ASHLAR, '#b8977a').cone(0.08, 0.1, 12, 0, 0.16, -0.42).soft();
-		for (const [x, z] of [[-0.45, 0.22], [0.46, 0.2], [-0.48, -0.3], [0.47, -0.32]]) tree(k, x, z, 1.1, R);
 	},
 };

@@ -8,6 +8,9 @@
 //   --ids   örnek kimlikleri (vars. hepsi); çekim adı: <kimlik>_<an>.png (an: kart açıldıktan sonra sn)
 //   --pick  her örnekte bir şıkka dokunur ve cevap ekranını da çeker (<kimlik>_cevap.png)
 //   --map   ek çekim: bütün harita (harita_tum.png) ve --ids yapılarının çevresi (harita_<kimlik>.png)
+//   --after cevap filminde çekim anları (seçimden sonra sn; --pick ile): <kimlik>_r_<an>.png
+//   --bolt  Tufan: soru anındaki ilk şimşekten sonra çekim anları (ms, ör. 80,200)
+//   --type  başka bir galeri tipi (ör. tufan): örnek adları <tip><sıra> (tufan1, tufan2…)
 // Çıktıda HATA satırı = sayfada hata. Son satırda harita çizim çağrısı ve üçgen sayısı (app.stats()).
 import { chromium } from 'playwright-core';
 import { mkdirSync, existsSync } from 'node:fs';
@@ -30,7 +33,8 @@ page.on('pageerror', (e) => errs.push(e.message + '\n' + (e.stack || '')));
 page.on('console', (m) => {
 	if (m.type() === 'error') errs.push('[console] ' + m.text());
 });
-const url = 'file://' + resolve(opt.html || 'dist/SoruGalerisi.html') + '#kusbakisi';
+const TYPE = opt.type || 'kusbakisi';
+const url = 'file://' + resolve(opt.html || 'dist/SoruGalerisi.html') + '#' + TYPE;
 const t0 = Date.now();
 await page.goto(url);
 await page.waitForFunction(() => window.__fl && document.querySelector('#g-next'), null, { timeout: 300000 });
@@ -68,7 +72,7 @@ for (let k = 0; k < n; k++) {
 		// örnek kimliği galeri modülünde gizli: deneme örnek listesi sırasıyla aynı
 		return 'k' + (k + 1);
 	}, k);
-	const key = `dn-kb${k + 1}`;
+	const key = TYPE === 'kusbakisi' ? `dn-kb${k + 1}` : `${TYPE}${k + 1}`;
 	if (want && !want.has(key) && !want.has(id)) continue;
 	// kart açılana dek (düello girişi + kart) zamanı ilerlet
 	let waited = 0;
@@ -82,10 +86,31 @@ for (let k = 0; k < n; k++) {
 		tcur = at * 1000;
 		await shot(`${key}_${String(at).replace('.', '_')}`);
 	}
+	if (opt.bolt) {
+		// Tufan: soru anında ilk şimşeği bekle, çakıştan sonra belli anlarda çek (<kimlik>_simsek_<ms>.png)
+		const n0 = await page.evaluate(() => window.__fl.tfBolt || 0);
+		for (let w = 0; w < 200 && (await page.evaluate(() => window.__fl.tfBolt || 0)) === n0; w++) await run(50);
+		let tc = 0;
+		for (const ms of opt.bolt.split(',').map(Number)) {
+			await run(Math.max(0, ms - tc));
+			tc = ms;
+			await shot(`${key}_simsek_${ms}`);
+		}
+	}
 	if (opt.pick) {
 		await page.evaluate(() => document.querySelector('.fl-q.on .fl-opt')?.click());
-		await run(3500);
-		await shot(`${key}_cevap`);
+		if (opt.after) {
+			// cevap filminin belli anları (seçimden sonra sn): r_<an>.png
+			let tc = 0;
+			for (const at of opt.after.split(',').map(Number)) {
+				await run(Math.max(0, at * 1000 - tc));
+				tc = at * 1000;
+				await shot(`${key}_r_${String(at).replace('.', '_')}`);
+			}
+		} else {
+			await run(3500);
+			await shot(`${key}_cevap`);
+		}
 	}
 	console.log(key + ' tamam');
 }

@@ -574,7 +574,7 @@ export const YENI = {
 			['aslan', 0.58, 0.3, -0.45],
 		];
 		for (const [kind, x, z, ry] of heads) {
-			nemrutHead(k, kind, x, 0.03, z, ry + (R() - 0.5) * 0.15, 0.105, R);
+			nemrutHead(k, kind, x, 0.03, z, ry + (R() - 0.5) * 0.15, 0.112, R);
 			yield;
 		}
 		// ateş sunağı (basamaklı) ve dikili kabartma stelleri; terasın dışında düşmüş taşlar
@@ -846,8 +846,10 @@ export const YENI = {
 			}
 		};
 		const zw = -0.06;
-		cyclo(-0.82, -0.36, 0.08, 0.16, zw, 0.1);
-		cyclo(0.36, 0.82, 0.08, 0.16, zw, 0.1);
+		// kapı ve aslanlar sahnenin öznesi: bütün kapı grubu iri (gerçekte söve taşları ~4 m)
+		k.push().move(0, 0, 0.04).scale(1.4);
+		cyclo(-0.58, -0.36, 0.08, 0.16, zw, 0.1);
+		cyclo(0.36, 0.58, 0.08, 0.16, zw, 0.1);
 		yield;
 		// kapı kuleleri (öne taşan kare burçlar, yıkık üst)
 		for (const sx of [-1, 1]) {
@@ -865,10 +867,11 @@ export const YENI = {
 			}
 			const pp = sx > 0 ? pts : pts.slice().reverse();
 			k.mc(H.ASHLAR, '#b3a88f').uvS(0.25).flat().slab(shape(pp), 0.13, 0, 0.04, zw + 0.06).uvS(1).soft();
-			lionProtome(k, sx * 0.13, 0.05, zw + 0.125, sx * 0.1, R);
+			lionProtome(k, sx * 0.13, 0.04, zw + 0.125, sx * 0.12, R);
 		}
 		// eşik ve kapıdan geçen yol
 		k.mc(H.PAVE, '#a39a82').flat().box(0.15, 0.04, 0.14, 0, 0.0, zw + 0.03).soft();
+		k.pop();
 		k.mc(H.DIRT, '#a18f6e').flat().box(0.14, 0.006, 0.5, 0, 0.0, 0.25).soft();
 		for (const [x, z] of [[-0.62, 0.32], [0.64, 0.3], [0.5, -0.45], [-0.56, -0.42]]) tree(k, x, z, 0.85, R, ramp(x, z) - 0.005, '#7a8f45');
 	},
@@ -903,15 +906,26 @@ export const YENI = {
 				k.mc(H.MOSAIC, '#d8c7a3').flat().uvGeo(0.64, 0.4).box(w - 0.016, 0.006, d - 0.016, cx + x, y, cz + z).uvBox().soft();
 				for (const [a, b, c, e] of [[-w / 2, -d / 2, w / 2, -d / 2], [-w / 2, d / 2, w / 2, d / 2], [-w / 2, -d / 2, -w / 2, d / 2], [w / 2, -d / 2, w / 2, d / 2]]) {
 					const L = Math.hypot(c - a, e - b);
-					k.mc(H.ASHLAR, '#c2ab86').uvS(1.4).flat().box(L + 0.014, 0.025 + R() * 0.035, 0.014, cx + x + (a + c) / 2, y, cz + z + (b + e) / 2, -Math.atan2(e - b, c - a)).uvS(1).soft();
+					const hh = 0.035 + R() * 0.05;
+					const ry2 = -Math.atan2(e - b, c - a);
+					k.mc(H.ASHLAR, '#c2ab86').uvS(1.4).flat().box(L + 0.014, hh, 0.014, cx + x + (a + c) / 2, y, cz + z + (b + e) / 2, ry2).uvS(1).soft();
+					// iç yüzde fresk: kırmızı ve hardal panolar (Zeugma villalarının boyalı sıvası)
+					if (hh > 0.05) k.mc(H.PLASTER, R() < 0.5 ? '#a84a34' : '#c99a45').flat().box(L * 0.8, hh * 0.55, 0.004, cx + x + (a + c) / 2 - Math.sin(-ry2) * 0.0, y + 0.008, cz + z + (b + e) / 2, ry2).soft();
 				}
 			}
 		};
-		villa(0, 0.02, 0.12, [[0, 0, 0.3, 0.2], [-0.25, -0.02, 0.18, 0.18], [0.24, 0.0, 0.17, 0.16], [-0.06, 0.15, 0.18, 0.1]]);
-		villa(-0.05, -0.32, 0.24, [[0, 0, 0.26, 0.16], [0.22, 0, 0.16, 0.16], [-0.22, 0.0, 0.16, 0.14]]);
-		for (const [x, z, y] of [[-0.11, -0.07, 0.12], [0.11, -0.07, 0.12], [-0.11, 0.1, 0.12], [0.11, 0.1, 0.12], [-0.13, -0.38, 0.24], [0.09, -0.38, 0.24]]) {
+		villa(0, 0.02, 0.12, [[-0.25, -0.02, 0.18, 0.18], [0.24, 0.0, 0.17, 0.16], [-0.06, 0.17, 0.18, 0.1], [0.14, 0.17, 0.14, 0.1], [-0.4, 0.14, 0.12, 0.12], [0.4, 0.13, 0.12, 0.12]]);
+		villa(-0.05, -0.32, 0.24, [[0, 0, 0.26, 0.16], [0.22, 0, 0.16, 0.16], [-0.22, 0.0, 0.16, 0.14], [0.0, -0.13, 0.2, 0.1], [-0.38, -0.05, 0.12, 0.14]]);
+		// ana avlu: mozaikli havuz, çevresinde peristil (kırmızı sıvalı alt gövdeli sütunlar)
+		k.mc(H.MOSAIC, '#d8c7a3').flat().uvGeo(0.64, 0.4).box(0.3, 0.006, 0.2, 0, 0.12, 0.02).uvBox().soft();
+		k.mc(H.ASHLAR, '#cdb895').flat().box(0.12, 0.012, 0.07, 0, 0.122, 0.02).soft();
+		k.mc(H.WATER, '#43a7b4').flat().box(0.1, 0.004, 0.05, 0, 0.132, 0.02).soft();
+		const cols = [[-0.13, -0.38, 0.24], [0.09, -0.38, 0.24], [-0.02, -0.38, 0.24]];
+		for (const x of [-0.13, -0.065, 0, 0.065, 0.13]) for (const z of [-0.07, 0.11]) cols.push([x, z, 0.12]);
+		for (const z of [-0.01, 0.05]) for (const x of [-0.13, 0.13]) cols.push([x, z, 0.12]);
+		for (const [x, z, y] of cols) {
 			k.mc(H.PLASTER, '#a8462f').cyl(0.012, 0.014, 0.055, 12, x, y, z);
-			column(k, x, y + 0.055, z, { h: 0.11, r: 0.011, order: 'doric', col: '#e8dcc2', mat: H.PLASTER, flutes: 12 });
+			column(k, x, y + 0.055, z, { h: 0.1 + (R() < 0.3 ? -0.04 : 0), r: 0.01, order: 'doric', col: '#e8dcc2', mat: H.PLASTER, flutes: 12 });
 		}
 		yield;
 		// ahşap gezi yolu (mozaiklerin üstünden geçen iskele; koruma çatısı yok: yakın çekimde mozaikler görünsün)
@@ -1007,7 +1021,7 @@ export const YENI = {
 		});
 		yield;
 		// çevre duvarları: kuru taş örgü (yuvarlak/oval), içinde ışınsal T dikilitaşlar; ortada iki büyük dikilitaş
-		const encl = [[-0.2, 0.0, 0.25, 8], [0.24, -0.12, 0.21, 7], [0.08, 0.34, 0.16, 5]];
+		const encl = [[-0.2, 0.0, 0.27, 6], [0.25, -0.14, 0.23, 5], [0.06, 0.37, 0.17, 4]];
 		for (const [cx, cz, r, n] of encl) {
 			const ns = k._n(30);
 			for (let i = 0; i < ns; i++) {
@@ -1019,9 +1033,9 @@ export const YENI = {
 			}
 			for (let i = 0; i < n; i++) {
 				const a = (i / n) * Math.PI * 2 + 0.3;
-				tPillar(k, cx + Math.cos(a) * r, cz + Math.sin(a) * r, -a + Math.PI / 2, 0.9 + R() * 0.1, R);
+				tPillar(k, cx + Math.cos(a) * r, cz + Math.sin(a) * r, -a, 0.95 + R() * 0.1, R);
 			}
-			for (const dx of [-0.055, 0.055]) tPillar(k, cx + dx, cz, 0.0, 1.7, R, true);
+			for (const dx of [-0.065, 0.065]) tPillar(k, cx + dx, cz, Math.PI / 2, 1.55, R, true);
 			yield;
 		}
 		// ziyaretçi gezi yolu: ahşap iskele, korkuluk
@@ -1037,49 +1051,76 @@ export const YENI = {
 	},
 };
 
-/** Göbeklitepe T dikilitaşı: gövde, başlık (T), yanlarda kol ve el kabartması (büyüklerde), hayvan kabartması. */
+/** Göbeklitepe T dikilitaşı: kalın gövde, öne taşan T başlık; yan yüzde hayvan kabartması (tilki, yaban domuzu,
+ * turna); büyüklerde kollar, eller, kemer. Geniş yüz ışınsal (kameraya yandan T okunur). */
 function tPillar(k, x, z, ry, s, R, big = false) {
-	k.push().move(x, 0.0, z).rot(0, ry, (R() - 0.5) * 0.06).scale(s);
-	const C = big ? '#e0cba3' : '#d6c09a';
-	k.mc(H.CARVE, C).flat().box(0.026, 0.16, 0.05, 0, 0, 0).box(0.034, 0.04, 0.095, 0, 0.16, 0.012);
+	k.push().move(x, 0.0, z).rot(0, ry, (R() - 0.5) * 0.05).scale(s);
+	const C = big ? '#e2cda6' : '#d9c39d';
+	k.mc(H.CARVE, C).flat().box(0.024, 0.17, 0.06, 0, 0, 0).box(0.034, 0.045, 0.115, 0, 0.17, 0.02).soft();
 	if (big) {
-		// kollar ve eller (iki yanda), kemer ve tilki postu
 		for (const sx of [-1, 1]) {
-			k.mc(H.STONE, '#cdb690').box(0.004, 0.08, 0.008, sx * 0.0145, 0.07, -0.006).box(0.004, 0.008, 0.03, sx * 0.0145, 0.07, 0.008);
+			k.mc(H.STONE, '#cdb690').box(0.004, 0.09, 0.009, sx * 0.0165, 0.07, -0.01).box(0.004, 0.009, 0.04, sx * 0.0165, 0.07, 0.012);
+			for (let f = 0; f < 4; f++) k.mc(H.STONE, '#c8b08a').box(0.004, 0.004, 0.012, sx * 0.0165, 0.072 + f * 0.005, 0.03);
 		}
-		k.mc(H.STONE, '#c4ad87').box(0.03, 0.008, 0.054, 0, 0.06, 0);
+		k.mc(H.STONE, '#c4ad87').box(0.034, 0.01, 0.074, 0, 0.055, 0);
+		k.mc(H.STONE, '#bfa680').box(0.032, 0.03, 0.018, 0, 0.025, 0.035); // tilki postu
 	} else {
-		// hayvan kabartması (tilki, yaban domuzu, akbaba): yan yüzde küçük kabarık leke
+		// hayvan kabartması (yan yüzde): gövde, baş, kuyruk/gaga, ayaklar
 		const a = Math.floor(R() * 3);
-		k.mc(H.STONE, '#c8b28c').box(0.004, 0.028, 0.03, 0.0145, 0.08 + a * 0.012, 0.004);
+		const sx = R() < 0.5 ? -1 : 1;
+		const X = sx * 0.017;
+		const Y = 0.08 + R() * 0.03;
+		k.mc(H.STONE, '#c6ae87').cached('gt-g' + a, () => sculpt(new THREE.SphereGeometry(1, 10, 8), (v) => {
+			v.x *= 0.3;
+			v.z *= a === 2 ? 0.8 : 1.5;
+			v.y *= a === 1 ? 0.75 : 0.55;
+		}), M4(X, Y, 0.0, 0.012, 0.012, 0.012));
+		k.mc(H.STONE, '#c6ae87').box(0.004, 0.008, 0.012, X, Y + 0.004, 0.022); // baş
+		if (a === 0) k.mc(H.STONE, '#c6ae87').box(0.004, 0.005, 0.02, X, Y + 0.006, -0.024); // tilki kuyruğu
+		if (a === 2) k.mc(H.STONE, '#c6ae87').box(0.004, 0.022, 0.004, X, Y - 0.018, 0.0); // turna bacağı
+		for (const dz of [-0.01, 0.01]) k.mc(H.STONE, '#c6ae87').box(0.004, 0.012, 0.004, X, Y - 0.014, dz);
 	}
-	k.soft();
 	k.pop();
 }
 
-/** Hitit aslan protomu: kapı taşından taşan baş (yele, açık ağız) ve göğüs, ön ayaklar kabartma. */
+/** Hitit aslan protomu: kapı taşından taşan baş (iri yele yakası, açık ağız, belirgin burun) ve göğüs, pençeli ön ayaklar. */
 function lionProtome(k, x, y, z, ry, R) {
-	k.push().move(x, y, z).rot(0, ry, 0);
-	const C = '#ada38c';
-	// göğüs ve ön gövde
+	k.push().move(x, y, z).rot(0, ry, 0).scale(1.25);
+	const C = '#b1a68f';
+	// göğüs ve ön gövde (taştan taşan)
 	k.mc(H.ROCK, C).cached('hl-gogus', () => sculpt(new THREE.SphereGeometry(1, 18, 14), (v) => {
-		v.x *= 0.55;
-		v.y *= 0.9;
-		v.z = v.z * 0.6 - 0.2;
-	}), M4(0, 0.07, 0, 0.07, 0.08, 0.08));
-	// ön ayaklar (kabartma)
-	for (const sx of [-1, 1]) k.mc(H.ROCK, '#a69c84').cyl(0.012, 0.014, 0.07, 8, sx * 0.022, 0.0, 0.012);
-	// baş: yele yakası (yassı, pürüzlü halka), öne çıkan ağız-burun, açık ağız, kaş
-	k.mc(H.CARVE, '#a39880').cached('hl-yele', () => sculpt(new THREE.SphereGeometry(1, 20, 14), (v) => {
-		v.z *= 0.45;
-		v.multiplyScalar(1 + 0.12 * Math.sin(Math.atan2(v.y, v.x) * 9));
-	}), M4(0, 0.165, 0.025, 0.06, 0.06, 0.06));
-	k.mc(H.ROCK, C).cached('hl-bas', () => sculpt(new THREE.SphereGeometry(1, 18, 14), (v) => {
-		v.x *= 0.85;
-		v.z = v.z * 0.9 + 0.5 * gauss(v.y + 0.3, 0.35) * sm(0.2, 0.8, v.z) * gauss(v.x, 0.55);
-		v.z += 0.15 * gauss(v.y - 0.3, 0.12) * sm(0.2, 0.8, v.z);
-	}), M4(0, 0.165, 0.05, 0.04, 0.042, 0.04));
-	k.mc(H.WIN, '#2a2118').box(0.03, 0.012, 0.012, 0, 0.142, 0.085);
+		v.x *= 0.6;
+		v.y *= 0.95;
+		v.z = v.z * 0.65 - 0.15;
+	}), M4(0, 0.07, 0.0, 0.065, 0.085, 0.08));
+	// ön ayaklar ve pençeler
+	for (const sx of [-1, 1]) {
+		k.mc(H.ROCK, '#a99e87').cyl(0.013, 0.016, 0.07, 8, sx * 0.024, 0.0, 0.03);
+		k.mc(H.ROCK, '#a99e87').cached('hl-pence', () => sculpt(new THREE.SphereGeometry(1, 10, 8), (v) => {
+			v.y *= 0.5;
+			v.z = v.z * 1.3 + 0.2;
+		}), M4(sx * 0.024, 0.006, 0.042, 0.016, 0.016, 0.016));
+	}
+	// yele: başın çevresinde kalın, dalgalı yaka (Hitit üslubu: iri, düzenli lüleler)
+	k.mc(H.CARVE, '#a69b83').cached('hl-yele2', () => sculpt(new THREE.SphereGeometry(1, 24, 16), (v) => {
+		const a = Math.atan2(v.y, v.x);
+		v.z = v.z * 0.5 - 0.1;
+		v.multiplyScalar(1 + 0.1 * Math.sin(a * 11) + 0.05 * Math.sin(v.z * 20));
+	}), M4(0, 0.165, 0.035, 0.068, 0.07, 0.065));
+	// baş: geniş alın, öne çıkan ağız-burun, kaş çıkıntısı, yanaklar
+	k.mc(H.ROCK, C).cached('hl-bas2', () => sculpt(new THREE.SphereGeometry(1, 22, 16), (v) => {
+		const fx = v.x;
+		const fy = v.y;
+		v.x *= 0.92;
+		const front = sm(0.1, 0.7, v.z);
+		v.z += front * (0.55 * gauss(fy + 0.25, 0.32) * gauss(fx, 0.5) + 0.18 * gauss(fy - 0.32, 0.12) * gauss(Math.abs(fx) - 0.3, 0.25));
+		v.z -= front * 0.14 * gauss(fy + 0.55, 0.07) * gauss(fx, 0.4); // açık ağız yarığı
+	}), M4(0, 0.168, 0.07, 0.045, 0.046, 0.045));
+	k.mc(H.WIN, '#2a2118').box(0.034, 0.014, 0.014, 0, 0.14, 0.112);
+	for (const sx of [-1, 1]) {
+		k.mc(H.STONE, '#8a8070').sphere(0.0065, 8, sx * 0.018, 0.182, 0.104); // göz
+		k.mc(H.ROCK, C).cone(0.011, 0.02, 6, sx * 0.034, 0.205, 0.06); // kulak
+	}
 	k.pop();
 }
 
@@ -1091,7 +1132,7 @@ function lionProtome(k, x, y, z, ry, R) {
  */
 function nemrutHead(k, kind, x, y, z, ry, s, R) {
 	const STONE = '#d6c7a6';
-	const CAP = '#cbbb98';
+	const CAP = '#ddd0b2'; // başlık yüzden açık: uzaktan külah/taç silueti seçilir
 	const tilt = (R() - 0.5) * 0.12;
 	k.push().move(x, y, z).rot(0, ry, tilt);
 	if (kind === 'kartal') {
@@ -1172,12 +1213,12 @@ function nemrutHead(k, kind, x, y, z, ry, s, R) {
 	}), M4(0, s * 1.15, -s * 0.05, s * 0.9, s * 0.95, s * 0.95));
 	if (kind === 'kral') {
 		// Ermeni tacı: yukarı hafif daralan yüksek külah, tepede beş diş
-		k.mc(H.STONE, CAP).lathe([[s * 0.84, 0], [s * 0.8, s * 0.4], [s * 0.72, s * 0.8], [s * 0.66, s * 0.95], [0, s * 0.95]], 24, 0, s * 1.7, -s * 0.06);
+		k.mc(H.STONE, CAP).lathe([[s * 0.84, 0], [s * 0.8, s * 0.5], [s * 0.72, s * 1.0], [s * 0.66, s * 1.2], [0, s * 1.2]], 24, 0, s * 1.7, -s * 0.06);
 		for (let i = 0; i < 5; i++) {
 			const a = (i / 5) * Math.PI * 2 + Math.PI / 2;
-			k.mc(H.CARVE, CAP).cone(s * 0.2, s * 0.34, 6, Math.cos(a) * s * 0.55, s * 2.64, Math.sin(a) * s * 0.55 - s * 0.06);
+			k.mc(H.CARVE, CAP).cone(s * 0.22, s * 0.42, 6, Math.cos(a) * s * 0.55, s * 2.88, Math.sin(a) * s * 0.55 - s * 0.06);
 		}
-		k.mc(H.CARVE, '#c2b08b').cyl(s * 0.75, s * 0.75, s * 0.12, 24, 0, s * 2.05, -s * 0.06);
+		k.mc(H.CARVE, '#c9b893').cyl(s * 0.75, s * 0.75, s * 0.12, 24, 0, s * 2.3, -s * 0.06);
 	} else if (fem) {
 		// Tykhe: kalathos (yukarı genişleyen sepet taç), üstünde meyve ve başak
 		k.mc(H.CARVE, CAP).lathe([[s * 0.8, 0], [s * 0.86, s * 0.4], [s * 0.95, s * 0.62], [0, s * 0.62]], 24, 0, s * 1.68, -s * 0.06);
@@ -1189,7 +1230,7 @@ function nemrutHead(k, kind, x, y, z, ry, s, R) {
 		for (const sx of [-1, 1]) k.mc(H.CARVE, CAP).cached('nb-sac', () => blob(1, 5, 1, 0.3), M4(sx * s * 0.72, s * 0.9, -s * 0.1, s * 0.28, s * 0.7, s * 0.4));
 	} else {
 		// Frig külahı: yüksek, ucu öne kıvrılan koni (Zeus-Oromasdes, Apollon-Mithras, Herakles-Artagnes)
-		const h = kind === 'herakles' ? 1.05 : 1.3;
+		const h = kind === 'herakles' ? 1.25 : 1.55;
 		k.mc(H.STONE, CAP).cached('nb-kulah' + h, () => sculpt(new THREE.CylinderGeometry(0.0, 0.84, h, 22, 10, false), (v) => {
 			const t = Math.min(1, Math.max(0, (v.y + h / 2) / h)); // 0 dip, 1 uç
 			const r = Math.hypot(v.x, v.z);
@@ -1205,3 +1246,6 @@ function nemrutHead(k, kind, x, y, z, ry, s, R) {
 	}
 	k.pop();
 }
+
+// ortak yapı taşları (hero_yeni2.js de kullanır)
+export { hfield, sculpt, rockWall, sm, fbm, mixc, gauss, M4, nemrutHead };

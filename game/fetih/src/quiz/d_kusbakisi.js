@@ -151,7 +151,7 @@ function buried(app, s) {
 
 /**
  * Başlangıç yönü ve eğimi: yükselişin ilk bölümünde (kamera alçakken) yapıyla kamera arasına yamaç ya da başka bir
- * maket girmesin. Adaylar 16 yön × 3 başlangıç eğimi; puan = örtme (arazi ve komşu maketler; gömülen komşular
+ * maket girmesin. Adaylar 16 yön × 4 başlangıç eğimi; puan = örtme (arazi ve komşu maketler; gömülen komşular
  * sayılmaz) + tercihten (q.yaw ya da yapının ön yüzü) sapma + eğim cezası. Belirlenimci: iki oyuncu aynı kadrajı
  * görür. Dönen: { yaw, lift }.
  */
@@ -160,9 +160,9 @@ function pickYaw(app, sp, plan, pref, bury = 0) {
 	const sites = app.props?.landmarks?.sites || [];
 	let best = { yaw: pref, lift: 0 };
 	let bestS = Infinity;
-	for (let n = 0; n < 48; n++) {
+	for (let n = 0; n < 64; n++) {
 		const i = n % 16;
-		const lift = [0, 0.16, 0.32][Math.floor(n / 16)];
+		const lift = [0, 0.16, 0.32, 0.5][Math.floor(n / 16)];
 		const yaw0 = pref + (i < 8 ? i : i - 16) * (Math.PI / 8);
 		let occ = 0;
 		const ty = sp.y + sp.r * 0.15;
@@ -252,7 +252,9 @@ export const kusbakisi = {
 		// ipucu kademeleri: yapının ili ve bölgesi (çevrimiçinde il gizli: yapının konumundan)
 		const il = sp ? b.pick(sp.x, sp.z) : -1;
 		const region = il >= 0 ? b.provinces[il].region : null;
-		const bury = sp?.site ? Math.max(1.6, sp.r * 1.7) : 0;
+		// gömme yarıçapı: yapının çevresi; çok yakın komşu (Uzungöl–Sümela gibi) varsa onu da içine alır
+		let bury = sp?.site ? Math.max(1.6, sp.r * 1.7) : 0;
+		if (sp?.site) for (const t of lm?.sites || []) if (t !== sp.site && Math.hypot(t.x - sp.x, t.z - sp.z) < 3.4) bury = Math.max(bury, Math.hypot(t.x - sp.x, t.z - sp.z) + 0.1);
 		// sınırlar kadraja ne zaman girer (yükseliş payı): bölgenin dış sınırına ve ilin sınırına uzaklıktan
 		// dürbün halkası: kartın altındaki boş alanın ortasında
 		const scope = document.createElement('div');

@@ -1,8 +1,8 @@
-// Kahraman maketler: antik yerler (Efes Celsus, Aspendos, Bergama Akropolü). Nemrut, Göbeklitepe, Truva Atı, Myra,
+// Kahraman maketler: antik yerler (Efes Celsus, Aspendos; Bergama v1.1: hero_yeni2.js). Nemrut, Göbeklitepe, Truva Atı, Myra,
 // Zeugma, Hattuşa ve Amasya v1.0'da hero_yeni.js'te yeniden yapıldı (tiyatro ve Likya mezarı parçaları buradan).
 
 import * as THREE from 'three';
-import { H, COL, wall, column, entablature, pediment, stairs, ground, tree, cypress, pine, rockMass, openingPts } from './hero_parts.js';
+import { H, COL, wall, column, entablature, pediment, stairs, ground, tree, cypress, pine, openingPts } from './hero_parts.js';
 
 const shape = (pts) => new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
 
@@ -136,30 +136,5 @@ export const ANTIK = {
 		for (const sx of [-1, 1]) k.mc(H.ASHLAR, S).flat().box(0.06, 0.42, 0.12, sx * 0.5, 0, 0.12).soft();
 		yield;
 		for (const [x, z] of [[-0.6, 0.35], [0.6, 0.35], [0.62, -0.2], [-0.62, -0.2]]) pine(k, x, z, 1.1, 0, R);
-	},
-
-	// ---------------------------------------------------------------- Bergama Akropolü
-	*bergama(k, R) {
-		ground(k, 0.76, { pave: '#b6a585', paveR: 0.3, jit: 0.06 });
-		// akropol tepesi: dik yamaç
-		rockMass(k, { rx: 0.6, ry: 0.34, rz: 0.5, y: -0.05, z: -0.12, seed: 9, col: '#8f8270', col2: '#b4a68d', amp: 0.18, freq: 1.2 });
-		yield;
-		// dünyanın en dik antik tiyatrosu: yamaca oyulmuş dar ve yüksek oturma basamakları
-		cavea(k, { r0: 0.12, r1: 0.42, n: 16, a0: Math.PI * 0.72, a1: Math.PI * 1.28, dh: 0.024, x: 0.08, z: 0.4, col: '#d1c3a6', col2: '#c3b496', aisles: 4 });
-		// sahne terası (uzun teras yolu)
-		k.mc(H.PAVE, '#cbbd9f').flat().box(0.7, 0.01, 0.07, 0.08, 0.0, 0.32).soft();
-		yield;
-		// tepede Trajan tapınağı: kemerli dolgu üstünde teras, korint sütunlar (bir kısmı ayakta)
-		const ty = 0.3;
-		wall(k, { w: 0.4, h: 0.1, t: 0.05, x: -0.12, y: ty - 0.1, z: -0.06, holes: [0, 1, 2, 3].map((i) => ({ x: -0.15 + i * 0.1, y: 0, w: 0.06, h: 0.08, kind: 'round' })), col: '#c8b894', dark: true });
-		k.mc(H.MARBLE, '#e9e2d2').flat().box(0.42, 0.03, 0.3, -0.12, ty, -0.2).soft();
-		k.mc(H.MARBLE, '#efe9dc').flat().box(0.24, 0.025, 0.16, -0.12, ty + 0.03, -0.2).soft();
-		for (let i = 0; i < 6; i++) for (const z of [-0.13, -0.27]) column(k, -0.24 + i * 0.048, ty + 0.055, z, { h: 0.16, r: 0.008, order: 'corinthian', col: COL.MARBLE });
-		for (const x of [-0.24, 0.0]) column(k, x, ty + 0.055, -0.2, { h: 0.16, r: 0.008, order: 'corinthian', col: COL.MARBLE });
-		entablature(k, { x0: -0.26, x1: 0.0, y: ty + 0.215, z: -0.13, d: 0.03, h: 0.03, col: COL.MARBLE });
-		pediment(k, { w: 0.06, h: 0.03, x: -0.24, y: ty + 0.245, z: -0.2, d: 0.03, col: COL.MARBLE, ry: Math.PI / 2 });
-		yield;
-		for (const [x, z] of [[-0.6, 0.4], [0.62, 0.36], [0.5, -0.5]]) pine(k, x, z, 1.1, 0, R);
-		for (const [x, z] of [[0.4, 0.42], [-0.45, 0.48]]) tree(k, x, z, 1, R);
 	},
 };
