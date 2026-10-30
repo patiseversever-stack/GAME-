@@ -1,30 +1,40 @@
 // TUFAN (deneme): "Deniz yükselirse hangisi EN SON batar?" (ya da ÖNCE). Dört il, il merkezi rakımları.
 //
-// Soru anı: gece ve fırtına. Dört il kaidesinde ışıkta; deniz dalgalı, yağmur çiseler, ufukta şimşek çakar ve deniz
-// yavaş yavaş kabarır (gösterge "+6 m"). Kart altında bekleyen bir tehdit.
-// Cevap (film, `revealMs`): gün fırtınayla doğar, su 3B haritada GERÇEKTEN yükselir. Sinematografi:
-//   1 geniş plan (yüksek, yavaş yaklaşma)  →  KESME: su yüzeyine yakın alçak takip, kıyıdan içeri yürüyen cephenin
-//   önünde (kamera suyla yükselir)  →  ilk il: yakın plan, yavaş yörünge, el kamerası, batış (halka dalga,
-//   kabarcıklar, ad + rakım damgası)  →  KESME (eşleşen kadraj): ikinci il  →  KESME: üçüncü il ön planda batarken
-//   son il arka planda bekler  →  KESME: son adaya su seviyesinden bakış, sonra yükselen vinç çekimi; fırtına
-//   dağılır, altın güneş adaya vurur, "SON ADA". Kamera hiç araziye girmez (çekim kurulurken çizgi denetimi), kart
-//   kadrajı kapatmaz (lens kaydırması), cevap damgası filmin ortasında çekilip sonda geri gelir.
+// Soru anı: gece, fırtına öncesi. Dört il kaidesinde ışıkta; yağmur yağar, deniz dalgalı ve yavaş kabarır (gösterge
+// "+6 m"), seyrek (8–15 sn) dallanan bir şimşek ufukta çakar; gök ve deniz yumuşakça aydınlanır, uzaktan gök gürler.
+// Cevap (film, `revealMs`): tek bir akan kamera yolculuğu (anahtar karelerden geçen, zamanla parametrelenmiş Hermite
+// eğrisi; hız sürekli, ani dönüş yok, ufuk düz, kesme yok):
+//
+//   ÇEKİM LİSTESİ (sn)  yol                                                     hedef
+//   0.0 – 1.7   açılış      sorunun yüksek kadrajından ağır yaklaşma ve hafif yörünge   dört il, deniz tarafı
+//   1.7 – 3.5   vinç inişi  kıyıya iner, deniz üstünden karaya bakar; su kıyıdan girer   ilk ilin kıyısı → ili
+//   3.5 – 4.3   ilk batış   yakında ağır yaklaşma ve yörünge                            ilk il (batar)
+//   4.3 – 5.3   süzülüş     yükselir, öbür ile süzülür, gelinen yönden iner             ikinci il (batar)
+//   5.3 – 7.1   aynı dil    süzülüş, iniş, ağır yaklaşma                               üçüncü il (batar)
+//   7.1 – 8.8   su seviyesi son adaya alçaktan, suyun üstünden bakış                     son ada
+//   8.8 – 10.9  vinç        yavaşça yükselir ve döner; fırtına dağılır, altın ışık        son ada, sular altındaki ülke
+//
+// Film boyunca il sahiplerinin renkleri ve başkent kaleleri gizli (doğal arazi); soru bitince geri gelir. Kamera
+// araziye ve büyük yapılara girmez (yol önceden örneklenir, gereken anahtar karede eğim artar), kart kadrajı kapatmaz.
+// Ses: d_tufan_ses.js (yağmur yatağı, yükseliş uğultusu, uzak gök gürültüsü, batışta gulp, son adada sıcak pad).
 //
 // Veri: mode: 'son' | 'once', ils: [[plaka, rakım m], …] (dört il). Doğru şık mode'a göre en yüksek ya da en alçak.
 //       Rakımlar: il merkezi rakımı (Harita Genel Komutanlığı il merkezi rakımları tablosu; ansiklopedik kaynaklarla
 //       aynı); seçenekler arası en az 150 m fark (sınama denetler). Ekranda 10 m'ye yuvarlanmış "≈1.890 m" yazılır:
 //       kaynaklar arası birkaç on metrelik oynama yanlış görünmesin.
 // Değer: şık indeksi. Tür 'exact'.
-// Sahne (su, yağmur, fırtına ışığı): d_tufan_film.js. Harita koduna kanca yok: board.sea.visible, il yükselme dizileri
-// (lift/liftTo) ve ortak ışık uniform'ları (kaydedilir, soru bitince geri konur).
+// Sahne (su, yağmur, şimşek, fırtına ışığı): d_tufan_film.js. Harita koduna kanca yok: board.sea.visible, il yükselme
+// dizileri (lift/liftTo), sahip boyası (guard) ve ortak ışık uniform'ları (kaydedilir, soru bitince geri konur).
 // Süre: `revealMs` filmin uzunluğu (ui.reveal cevap ekranını bu kadar tutar; dokununca erken geçer).
 // Çevrimiçi: publicView doğru şıkkı, il plakalarını ve rakımları taşımaz (illerin yeri istemciye kart kapanınca
 // cevapla gelir; soru anındaki etiketler yalnız ad ve konum).
 
+import * as THREE from 'three';
 import { css, esc, shuffle, pCorrect, mountChoice, buzz } from './util.js';
 import { botTime } from './timing.js';
-import { appOf, stamp, guard, camLock, onClose, onOpen, cardTop, tag, pop, sfx, rule, stampLater, cut, LOOK, DENEME_CSS } from './d_ortak.js';
-import { floodOf, holdLift, rainFrame, flashAt } from './d_tufan_film.js';
+import { appOf, stamp, guard, camLock, onClose, onOpen, cardTop, tag, sfx, rule, stampLater, LOOK, DENEME_CSS } from './d_ortak.js';
+import { floodOf, holdLift, rainFrame, boltAt, glowAt } from './d_tufan_film.js';
+import { sesOf } from './d_tufan_ses.js';
 import { clock, setTimeout } from '../core/clock.js';
 import { BASE, VS, LIFT } from '../map/terrain.js';
 import DATA from '../data/turkiye.json';
@@ -33,26 +43,83 @@ export { floodOf, holdLift };
 
 const PROV = DATA.provinces;
 const BY_ID = new Map(PROV.map((p, i) => [p.id, i]));
-/** Ekrandaki rakım: 10 m'ye yuvarlanmış, "≈1.890 m" (kaynaklar arası küçük farklar yanlış görünmesin). */
-const fmtM = (m) => '≈' + (Math.round(Number(m) / 10) * 10).toLocaleString('tr-TR') + ' m';
+/** Ekrandaki rakım: 10 m'ye yuvarlanmış, "≈1.890 m" (kaynaklar arası küçük farklar yanlış görünmesin); 100 m altı olduğu gibi. */
+const fmtM = (m) => (m < 100 ? Math.round(m) + ' m' : '≈' + (Math.round(Number(m) / 10) * 10).toLocaleString('tr-TR') + ' m'); // kıyı illeri (4 m) olduğu gibi
 const fmtG = (m) => '+' + Math.round(m).toLocaleString('tr-TR') + ' m';
 
 /** Metre → su düzleminin yüksekliği (birim): 0 m'de deniz (y 0), ~30 m'de kıyı kara yüksekliği (BASE). */
 const levelY = (m) => (m <= 0 ? 0 : BASE * Math.min(1, m / 30) + m * VS);
 const PED = 0.3; // soru anı: seçenek illerin kaidesi (lift)
 const PED_R = 0.14; // tufan: alçak kaide (il merkezi rakımına dek su üstünde; alçak yerlerine su sızar, yan duvarı ince)
-const SINK = 1.1; // batış süresi (sn)
+const SINK = 1.3; // batış süresi (sn)
 const Q_RISE = 14; // soru boyunca deniz en çok bu kadar kabarır (m)
 
-// film takvimi (cevaptan sonra sn): su yükselmeye başlar, dört seçenek rakımı, son
-const OPEN = 0.5;
-const KT = [OPEN, 2.6, 4.25, 5.9, 6.9];
-const END = 9.4;
+// film takvimi (cevaptan sonra sn): su yükselmeye başlar, dört seçenek rakımı; son
+const KT = [0.9, 3.7, 5.5, 7.3, 8.8];
+const END = 10.9;
 
 const smooth = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
-const ease3 = (u) => (u < 0.5 ? 4 * u * u * u : 1 - Math.pow(-2 * u + 2, 3) / 2);
+const TAU = Math.PI * 2;
+const wrapPi = (a) => a - TAU * Math.round(a / TAU);
 /** (dx, dz) yönünde duran kameranın yaw'ı (camera.js: kamera = hedef + (-sin yaw, cos yaw) · uzaklık). */
 const yawFrom = (dx, dz) => Math.atan2(-dx, dz);
+
+/**
+ * Kamera yolu: anahtar kareler { t, x, y, z, d (uzaklık), p (eğim), w (yaw) } üzerinden zamanla parametrelenmiş
+ * kübik Hermite (teğetler komşulardan, tepe ve diplerde sıfır: aşma yok; uçlarda sıfır: yumuşak kalkış ve duruş).
+ * Uzaklık logaritmik, yaw sarmasız. at(t, out) kare başına nesne üretmez.
+ */
+function camPath(keys) {
+	const n = keys.length;
+	const F = ['x', 'y', 'z', 'd', 'p', 'w'];
+	for (let i = 0; i < n; i++) {
+		keys[i].d = Math.log(keys[i].dist);
+		if (i) keys[i].w = keys[i - 1].w + wrapPi(keys[i].w - keys[i - 1].w);
+	}
+	const M = keys.map(() => ({}));
+	const tangents = () => {
+		for (let i = 0; i < n; i++)
+			for (const f of F) {
+				if (i === 0 || i === n - 1) {
+					M[i][f] = 0;
+					continue;
+				}
+				const a = keys[i][f] - keys[i - 1][f];
+				const b = keys[i + 1][f] - keys[i][f];
+				M[i][f] = a * b <= 0 ? 0 : (keys[i + 1][f] - keys[i - 1][f]) / (keys[i + 1].t - keys[i - 1].t);
+			}
+	};
+	tangents();
+	return {
+		keys,
+		tangents,
+		at(t, o) {
+			let i = 0;
+			if (t <= keys[0].t) i = 0;
+			else if (t >= keys[n - 1].t) i = n - 2;
+			else while (i < n - 2 && t >= keys[i + 1].t) i++;
+			const A = keys[i];
+			const B = keys[i + 1];
+			const h = B.t - A.t;
+			const u = Math.max(0, Math.min(1, (t - A.t) / h));
+			const u2 = u * u;
+			const u3 = u2 * u;
+			const h00 = 2 * u3 - 3 * u2 + 1;
+			const h10 = u3 - 2 * u2 + u;
+			const h01 = -2 * u3 + 3 * u2;
+			const h11 = u3 - u2;
+			const ma = M[i];
+			const mb = M[i + 1];
+			o.x = h00 * A.x + h10 * h * ma.x + h01 * B.x + h11 * h * mb.x;
+			o.y = h00 * A.y + h10 * h * ma.y + h01 * B.y + h11 * h * mb.y;
+			o.z = h00 * A.z + h10 * h * ma.z + h01 * B.z + h11 * h * mb.z;
+			o.dist = Math.exp(h00 * A.d + h10 * h * ma.d + h01 * B.d + h11 * h * mb.d);
+			o.p = h00 * A.p + h10 * h * ma.p + h01 * B.p + h11 * h * mb.p;
+			o.w = h00 * A.w + h10 * h * ma.w + h01 * B.w + h11 * h * mb.w;
+			return o;
+		},
+	};
+}
 
 // ---------------------------------------------------------------- tip
 
@@ -86,14 +153,14 @@ const CSS = /* css */ `
 .dn-tag.tf.isle>div{--tc:#ffd25a;background:linear-gradient(180deg,#3a2a00,#1a1200);box-shadow:0 0 18px rgba(255,210,90,.7),0 3px 0 rgba(0,0,0,.35)}
 .fl-q.dn-tf-film .fl-stamp.on{animation:flStampB .45s cubic-bezier(.3,1.7,.5,1) forwards,dnTfOut .4s 1.3s ease-in forwards}
 .dn-tf-cap{position:absolute;left:0;right:0;display:flex;flex-direction:column;align-items:center;gap:2px;pointer-events:none;z-index:6;opacity:0}
-.dn-tf-cap.on{animation:dnTfCap 1.25s cubic-bezier(.2,.8,.2,1) forwards}
-.dn-tf-cap.stay{animation:dnTfCapIn .6s cubic-bezier(.2,.8,.2,1) forwards}
-.dn-tf-cap b{font-family:'Lilita One';font-weight:400;font-size:32px;line-height:1;letter-spacing:.16em;color:#fff;text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.5),0 0 22px rgba(70,160,255,.75)}
-.dn-tf-cap small{font-family:'Fredoka';font-weight:600;font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:#bfefff;padding:3px 12px 0;border-top:1px solid rgba(191,239,255,.55);text-shadow:0 1px 0 rgba(0,0,0,.6)}
-.dn-tf-cap.gold b{color:#ffd25a;text-shadow:0 2px 0 rgba(60,30,0,.6),0 0 26px rgba(255,190,70,.9)}
+.dn-tf-cap.on{animation:dnTfCap 1.5s cubic-bezier(.25,.6,.3,1) forwards}
+.dn-tf-cap.stay{animation:dnTfCapIn 1.1s cubic-bezier(.25,.6,.3,1) forwards}
+.dn-tf-cap b{font-family:'Lilita One';font-weight:400;font-size:32px;line-height:1;letter-spacing:.16em;color:#fff;text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.55),0 0 14px rgba(4,12,30,.7),0 0 26px rgba(70,160,255,.6)}
+.dn-tf-cap small{font-family:'Fredoka';font-weight:600;font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:#bfefff;padding:3px 12px 0;border-top:1px solid rgba(191,239,255,.55);text-shadow:0 1px 0 rgba(0,0,0,.7),0 0 8px rgba(4,12,30,.8)}
+.dn-tf-cap.gold b{color:#ffd25a;text-shadow:0 2px 0 rgba(60,30,0,.7),0 0 12px rgba(30,15,0,.75),0 0 28px rgba(255,190,70,.8)}
 .dn-tf-cap.gold small{color:#ffe7a8;border-color:rgba(255,215,120,.6)}
-@keyframes dnTfCap{0%{opacity:0;transform:scale(1.18)}16%{opacity:1;transform:scale(1)}78%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-8px)}}
-@keyframes dnTfCapIn{0%{opacity:0;transform:scale(1.25)}100%{opacity:1;transform:none}}
+@keyframes dnTfCap{0%{opacity:0;transform:translateY(8px)}22%{opacity:1;transform:none}76%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-4px)}}
+@keyframes dnTfCapIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 @keyframes dnTfOut{to{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(.8)}}
 @keyframes dnTfPulse{50%{opacity:.6}}
 @keyframes dnTfWave{to{-webkit-mask-position:18px 0;mask-position:18px 0}}
@@ -133,12 +200,14 @@ export const tufan = {
 		const b = app.board;
 		const C = app.cam;
 		const idx = v.ils.map((id) => BY_ID.get(id));
-		const gQ = guard(app); // soru anı: gece, dört il ışıkta
+		const gQ = guard(app); // soru anı: gece, dört il ışıkta (sahip renkleri gizli)
 		const gR = guard(app); // tufan: kaideler ve batış
+		const gH = guard(app); // film: sahip renkleri gizli kalır (soru bitince dalgayla geri gelir)
 		gQ.allActive();
 		gQ.dark(idx);
 		for (const i of idx) gR.fx(i, PED, 0.35);
 		const fl = floodOf(app);
+		let snd = sesOf(app); // ses bağlamı ilk dokunuşla açılır: cevapta yeniden denenir
 		const unlock = camLock(app);
 		const tags = idx.map((i, k) => {
 			const p = b.provinces[i];
@@ -155,7 +224,7 @@ export const tufan = {
 		const bar = root.querySelector('.dn-tf-g u');
 		const card = el.closest('.fl-q');
 		const host = card?.parentElement;
-		// film yazısı (il adı + rakım damgası): kartın hemen altında, haritanın üstünde
+		// film yazısı (il adı + rakım): kartın hemen altında, haritanın üstünde
 		const cap = document.createElement('div');
 		cap.className = 'dn-tf-cap';
 		cap.innerHTML = '<b></b><small></small>';
@@ -175,42 +244,64 @@ export const tufan = {
 			// düello filmi sahneyi gündüze döndürebilir: gece, kart açılınca (ve az sonra) yeniden kurulur
 			gQ.dark(idx);
 			setTimeout(() => !reveal && el.isConnected && gQ.dark(idx), 1200);
-			frame(0.88, 4, { yawRate: 0.02 });
+			frame(0.86, 5, { yawRate: 0.012 });
+			snd.bed();
+			nextBolt = (clock.now() - tq0) / 1000 + 1.4; // ilk şimşek kart açıldıktan az sonra
 		});
 
-		// ------------------------------------------------ ortak kare durumu (kare başına nesne yok)
+		// ------------------------------------------------ hava: yağmur, şimşek, fırtına ışığı (kare başına nesne yok)
 		const U = fl?.U;
-		const F = { x: 0, y: 0, z: 0 }; // kameranın izlediği nokta (el kamerası salınımı eklenir)
-		const base = { x: 0, y: 0, z: 0 };
-		const trk = { on: false, x0: 0, z0: 0, x1: 0, z1: 0, t0: 0, t1: 1 }; // alçak takip: kıyıdan ile
-		let hand = 0;
 		let lastNow = -1;
 		let tq0 = clock.now();
 		let qM = 0; // soru anındaki kabarma (m)
-		let flashT = -9;
-		let nextBolt = 1.2;
-		let bolts = 0;
-		let lastG = -1;
-		let storm = 0;
-		let rainK = 0;
-		const bolt = (t, gap) => {
-			flashT = t;
-			bolts++;
-			nextBolt = t + gap + 2.2 * (0.5 + 0.5 * Math.sin(bolts * 12.9898));
-			sfx(app, 'crumble', { rate: 0.5, vol: 0.5, delay: 0.3 + 0.25 * (bolts % 2) });
-		};
-		const handheld = (t) => {
-			F.x = base.x + hand * (Math.sin(t * 2.1) + 0.5 * Math.sin(t * 3.7 + 1.3));
-			F.z = base.z + hand * (Math.sin(t * 1.7 + 0.5) + 0.5 * Math.sin(t * 4.3 + 2.1));
-			F.y = base.y + hand * 0.5 * Math.sin(t * 2.9 + 0.7);
+		let boltT = -9;
+		let nextBolt = 2.6;
+		let boltN = 0;
+		const pxAng = () => (2 * Math.tan((app.camera.fov * Math.PI) / 360)) / Math.max(200, app.canvas?.clientHeight || innerHeight);
+		/**
+		 * Şimşek: kartın hemen altındaki görünen şeridin bir yanında (ekrandan dünyaya ışın). Alçak bakışta ışın zemine
+		 * uzaktan değer ya da hiç değmez: şimşek ufukta, gökte çakar; yüksek bakışta denize iner. Kameradan hep uzak.
+		 */
+		const strike = (t, near = 0.35) => {
+			boltT = t;
+			boltN++;
+			const cam = app.camera;
+			const side = boltN % 2 ? 1 : -1;
+			const d = C.dist;
+			const ndcY = 1 - 2 * Math.min(0.85, cardTop(el) + 0.07);
+			const o = new THREE.Vector3(cam.position.x, cam.position.y, cam.position.z);
+			const r = new THREE.Vector3(side * (0.3 + 0.25 * Math.random()), ndcY, 0.5).unproject(cam).sub(o).normalize();
+			let k = r.y < -0.02 ? -o.y / r.y : Infinity;
+			const far = d * 2.6;
+			if (k > far) k = far;
+			const ox = o.x + r.x * k;
+			const oz = o.z + r.z * k;
+			let fx = r.x;
+			let fz = r.z;
+			const fL = Math.hypot(fx, fz) || 1;
+			fx /= fL;
+			fz /= fL;
+			const H = Math.min(d * (0.28 + 0.12 * Math.random()) * (k >= far ? 2 : 1), Math.max(2, cam.position.y * 0.6));
+			fl.bolt.strike(ox, k >= far ? -H * 0.15 : 0, oz, H, -fz, fx, Math.random());
+			U.uBolt.value.set(ox, oz, 0, d * 0.45);
+			snd.thunder(0.9 + Math.random() * 1.3, side * 0.6, near);
 		};
 		const atmos = (t, S, rain, gold, rise, wet) => {
-			const Fk = flashAt(t - flashT);
-			fl.storm.apply(S, Fk, gold, b.G.uNight.value.x);
-			U.uFl.value.set(S, Fk, rise, wet);
-			rainFrame(fl, C, rain, Fk, t, b.G.uNight.value.x);
+			const db = t - boltT;
+			const Lb = boltAt(db);
+			const Lg = glowAt(db);
+			const night = b.G.uNight.value.x;
+			fl.bolt.U.uI.value = Lb;
+			fl.bolt.U.uPx.value = pxAng();
+			fl.bolt.mesh.visible = Lb > 0.003;
+			fl.storm.apply(S, Lg, gold, night);
+			U.uFl.value.set(S, Lg * 0.5, rise, wet);
+			U.uBolt.value.z = Lg;
+			U.uRain.value = rain;
+			rainFrame(fl, C, rain, t, night, fl.bolt.U.uPx.value);
 		};
-		// soru anı: gece fırtınası, deniz kabarır, ufukta şimşek
+		let lastG = -1;
+		// soru anı: gece fırtınası, deniz kabarır, seyrek şimşek
 		const qTick = () => {
 			const now = clock.now();
 			if (now === lastNow) return;
@@ -218,10 +309,11 @@ export const tufan = {
 			const t = (now - tq0) / 1000;
 			qM = Math.min(Q_RISE, t * 0.6);
 			fl.level(levelY(qM));
-			if (t >= nextBolt) bolt(t, 3.2);
-			storm = Math.min(0.55, t * 0.4);
-			rainK = Math.min(0.42, t * 0.3);
-			atmos(t, storm, rainK, 0, 0.12, 0.006);
+			if (t >= nextBolt) {
+				strike(t, 0.3);
+				nextBolt = t + 8 + 7 * (0.5 + 0.5 * Math.sin(boltN * 12.9898));
+			}
+			atmos(t, 0.6 * smooth(t / 2), 0.6 * smooth(t / 2.5), 0, 0.12, 0.006);
 			const r = Math.round(qM);
 			if (r !== lastG) {
 				lastG = r;
@@ -240,56 +332,46 @@ export const tufan = {
 				fl.tick = qTick;
 			});
 		}
-		let ended = false;
-		const end = () => {
-			if (ended) return;
-			ended = true;
-			if (fl) fl.off();
-		};
 		const wx = app.weather;
 		const calm0 = wx?.calmTo;
+		const castles = (app.castles || []).map((k) => [k, k.group.visible]);
 		const close = onClose(el, () => {
 			closed = true;
 			stopOpen();
-			end();
+			if (fl) fl.off();
+			snd.stop();
 			unlock();
 			cap.remove();
 			card?.classList.remove('dn-tf-film');
 			if (wx && calm0 != null) wx.calmTo = calm0;
+			for (const [k, vis] of castles) k.group.visible = vis;
 			gR.restore(false);
 			gQ.restore();
+			gH.restore(true);
 		});
 
-		// ------------------------------------------------ kamera: çekim kurulumu
-		/** Kartın (üstte) ve isteğe bağlı alt payın dışında kalan alana ortalayan lens kaydırması. */
-		const lensOf = (bottom = 0) => (cardTop(el) - bottom) / 2;
-		/** Zemin: il içi kabartma (seçenek illeri kaidesiyle) ve büyük yapılar, il dışı deniz; su yüksekse su. */
-		let waterY = 0;
-		const sites = app.props?.landmarks?.sites || [];
+		// ------------------------------------------------ kamera yardımcıları
+		// büyük yapılar: yalnız dört ilin çevresindekiler (yol denetimi ucuz kalsın)
+		const sites = (app.props?.landmarks?.sites || []).filter((st) => st.x > bb.x0 - 25 && st.x < bb.x1 + 25 && st.z > bb.z0 - 25 && st.z < bb.z1 + 25);
 		let ped = PED;
+		let waterY = 0;
+		/** Zemin: il içi kabartma (seçenek illeri kaidesiyle) ve büyük yapılar, il dışı deniz; su yüksekse su. */
 		const ground = (x, z) => {
 			const q = fl ? fl.pidAt(x, z) : 1;
 			let g = q ? b.heightAt(x, z) + (idx.includes(q - 1) ? ped * LIFT + 0.08 : 0) : 0.06;
-			// büyük yapılar (cami, kale, anıt): kamera minarelerin arasına girmesin
 			for (const st of sites) if (Math.abs(st.x - x) < 3 && Math.abs(st.z - z) < 3 && Math.hypot(st.x - x, st.z - z) < st.r * 1.6 + 0.6) g = Math.max(g, st.y + st.s * 2.4);
 			return Math.max(g, waterY);
 		};
-		/** Kamera hattı araziye girmesin: kamera noktası zeminden en az 0.3, bakış hattı 0.06 yukarıda (gerekirse eğim artar; yörünge payı dahil). */
-		const clearP = (x, y, z, dist, pitch, yaw, drift = 0) => {
-			for (let n = 0; n < 16; n++) {
-				const cp = Math.cos(pitch);
-				const sp = Math.sin(pitch);
-				let ok = true;
-				for (const yw of drift ? [yaw, yaw + drift] : [yaw])
-					for (let s = 0.25; s <= 1.0001 && ok; s += 0.075) {
-						const px = x - Math.sin(yw) * cp * dist * s;
-						const pz = z + Math.cos(yw) * cp * dist * s;
-						if (y + sp * dist * s < ground(px, pz) + (s > 0.95 ? 0.3 : 0.06)) ok = false;
-					}
-				if (ok) return pitch;
-				pitch += 0.04;
+		/** Kamera noktası ve bakış hattı zeminin üstünde mi (nokta 0.3, hat 0.06 pay). */
+		const clear = (o) => {
+			const cp = Math.cos(o.p);
+			const sp = Math.sin(o.p);
+			for (let s = 0.3; s <= 1.0001; s += 0.1) {
+				const px = o.x - Math.sin(o.w) * cp * o.dist * s;
+				const pz = o.z + Math.cos(o.w) * cp * o.dist * s;
+				if (o.y + sp * o.dist * s < ground(px, pz) + (s > 0.95 ? 0.3 : 0.06)) return false;
 			}
-			return pitch;
+			return true;
 		};
 		/** İlden en yakın denize (hiçbir ilin içi olmayan yere) yön ve uzaklık. */
 		const seaDir = (i) => {
@@ -297,8 +379,8 @@ export const tufan = {
 			let best = { dx: 0, dz: 1, r: 99 };
 			if (!fl) return best;
 			for (let a = 0; a < 24; a++) {
-				const dx = Math.cos((a / 24) * Math.PI * 2);
-				const dz = Math.sin((a / 24) * Math.PI * 2);
+				const dx = Math.cos((a / 24) * TAU);
+				const dz = Math.sin((a / 24) * TAU);
 				for (let r = 0.5; r < best.r && r < 60; r += 0.5)
 					if (fl.pidAt(p.x + dx * r, p.z + dz * r) === 0) {
 						if (r < best.r) best = { dx, dz, r };
@@ -307,33 +389,13 @@ export const tufan = {
 			}
 			return best;
 		};
-		/**
-		 * Çekim: odak (x, y, z), uzaklık, eğim, yaw; dur sürede varır, sonra yörünge/yaklaşma. from: önce bu kadraja
-		 * KESME (eşleşen geçiş için başlangıç), hand: el kamerası salınımı (uzaklığa oranla).
-		 */
-		const take = (x, y, z, o) => {
-			const lens = lensOf(o.bottom || 0);
-			waterY = o.water ?? 0;
-			const drift = (o.yawRate || 0) * ((o.dur || 1) + 2);
-			const pitch = clearP(x, y, z, o.dist, o.pitch, o.yaw, drift);
-			base.x = x;
-			base.y = y;
-			base.z = z;
-			hand = (o.hand || 0) * o.dist;
-			handheld(clock.now() / 1000);
-			if (o.from) {
-				const f = o.from;
-				cut(app, x, z, { y, dist: f.dist, pitch: clearP(x, y, z, f.dist, f.pitch, f.yaw ?? o.yaw), yaw: f.yaw ?? o.yaw, lens });
-			}
-			C.shot(x, z, { follow: F, dist: o.dist, pitch, yaw: o.yaw, dur: o.dur ?? 1, arc: o.arc ?? 0, yawRate: o.yawRate || 0, distRate: o.distRate || 0, distMin: 2, decay: o.decay || 0, lens, ease: o.ease || null });
-		};
 		const sizeOf = (i) => {
 			const q = app.boundsOf([i]);
 			return { b: q, s: Math.max(q.x1 - q.x0, q.z1 - q.z0) };
 		};
 		const closeDist = (i, pitch, k = 1) => {
 			const { b: q } = sizeOf(i);
-			return C.fitDist({ x0: q.x0 - 1, x1: q.x1 + 1, z0: q.z0 - 1, z1: q.z1 + 1 }, pitch, 1.15, cardTop(el)) * k;
+			return C.fitDist({ x0: q.x0 - 1.5, x1: q.x1 + 1.5, z0: q.z0 - 1.5, z1: q.z1 + 1.5 }, pitch, 1.15, cardTop(el)) * k;
 		};
 
 		return {
@@ -343,12 +405,21 @@ export const tufan = {
 				c.reveal(results);
 				card?.classList.add('dn-tf-rv', 'dn-tf-film'); // joker satırı kalkar; cevap damgası filmin ortasında çekilir
 				gBox.classList.remove('hot');
-				gQ.restore(); // şafak: gün fırtınayla doğar, sahip renkleri geri gelir
+				// sahip renkleri film boyunca gizli: gecenin gizlediği boyalar gH'ye geçer (gece kalkar, renkler gelmez)
+				for (const i of gQ.painted) gH.painted.add(i);
+				gQ.painted.clear();
+				gQ.restore(); // şafak: gün fırtınayla doğar
 				gR.allActive(); // tufan bütün ülkede
-				for (const i of idx) gR.fx(i, PED_R, 0.6);
+				for (const i of idx) gR.fx(i, PED_R, 0.25);
 				ped = PED_R;
-				if (wx) wx.calm(true); // bölge sisi/karı hafifler: fırtına ve su okunur
-				// suyun planı: her seçeneğin rakımına sırayla, aralarda yavaşlayarak; sonunda son adanın eteğine kadar
+				for (const [k] of castles) k.group.visible = false; // başkent kaleleri (oyuncu renkleri) filmde yok
+				if (wx) wx.calm(true); // bölge sisi/karı hafifler: yağmur ve su okunur
+				if (!snd.ok) {
+					snd = sesOf(app);
+					snd.bed();
+				}
+				app.sfx?.duck?.(0.6, END, 1.5);
+				// suyun planı: her seçeneğin rakımına sırayla; sonunda son adanın eteğine kadar
 				const ord = idx.map((_, k) => k).sort((a, b2) => v.alt[a] - v.alt[b2]);
 				const a = ord.map((k) => v.alt[k]);
 				const KM = [qM, a[0], a[1], a[2], a[2] + (a[3] - a[2]) * 0.72];
@@ -359,7 +430,6 @@ export const tufan = {
 				let lastM = -1;
 				const btns = c.btns;
 				const t0 = clock.now();
-				// gösterge: dört seçeneğin rakımı çizgide (su geçtikçe maviye döner)
 				const sBar = root.querySelector('.dn-tf-g s');
 				const ticks = idx.map((_, k) => {
 					const e = document.createElement('em');
@@ -374,7 +444,6 @@ export const tufan = {
 					return KM[4] + (a[3] - a[2]) * 0.1 * smooth((t - KT[4]) / 2.4);
 				};
 				const P = (k) => b.provinces[idx[k]];
-				const yOf = (k) => levelY(v.alt[k]) + PED_R * LIFT * 0.5;
 				const sink = (k, t) => {
 					sunk[k] = true;
 					sinkT[k] = t;
@@ -390,10 +459,8 @@ export const tufan = {
 					btns[k].querySelector('span').insertAdjacentHTML('beforeend', `<em>${gold ? 'İLK BATTI · ' : 'BATTI · '}${fmtM(v.alt[k])}</em>`);
 					ticks[k].classList.add('wet');
 					caption(p.name, gold ? `İlk batan · ${fmtM(v.alt[k])}` : `${fmtM(v.alt[k])} · Battı`, gold);
-					if (U) U.uSp.value.set(p.x, p.z, 0, sizeOf(i).s * 0.42);
-					sfx(app, 'crumble', { rate: 0.8 });
-					sfx(app, 'whoosh', { rate: 0.55, vol: 0.8 });
-					C.impulse?.(0.22);
+					U.uSp.value.set(p.x, p.z, 0, sizeOf(i).s * 0.42);
+					snd.gulp();
 					buzz(12);
 				};
 				const isle = () => {
@@ -401,7 +468,7 @@ export const tufan = {
 					const k = ord[3];
 					const i = idx[k];
 					const p = b.provinces[i];
-					gR.fx(i, 0.55, 1);
+					gR.fx(i, 0.4, 0.45);
 					const e = tags[k].el;
 					const win = v.q.mode !== 'once';
 					e.classList.add(win ? 'isle' : 'sunk');
@@ -412,113 +479,9 @@ export const tufan = {
 					btns[k].querySelector('span').insertAdjacentHTML('beforeend', `<em>${win ? 'SON ADA · ' : 'KALDI · '}${fmtM(v.alt[k])}</em>`);
 					ticks[k].classList.add('top');
 					caption(win ? 'Son ada' : p.name, win ? `${p.name} · ${fmtM(v.alt[k])}` : `Kaldı · ${fmtM(v.alt[k])}`, true, true);
-					if (win) setTimeout(() => !closed && pop(app, p.x, p.z, '', { colors: ['#ffd25a', '#fff', '#7dff9a'], n: 22, dist: 100, cls: 'dn dn-gold' }), 900);
-					sfx(app, win ? 'star' : 'tap');
+					snd.hope();
 					buzz(win ? 25 : 8);
 				};
-				// ------------------------------------------------ çekim listesi (film)
-				const shots = [];
-				const p0 = P(ord[0]);
-				const d0 = seaDir(idx[ord[0]]);
-				const y0 = yawFrom(d0.dx, d0.dz);
-				// 1 geniş plan: yüksekten, denizin geldiği yöne hafif dönük, yavaş yaklaşma
-				shots.push([
-					0,
-					() => {
-						const w = { x0: bb.x0 - 6, x1: bb.x1 + 6, z0: bb.z0 - 5, z1: bb.z1 + 4 };
-						const dist = C.fitDist(w, 0.78, 1.0, cardTop(el)) * 0.82;
-						const yw = Math.max(-0.45, Math.min(0.45, y0 * 0.3));
-						take((w.x0 + w.x1) / 2, 0, (w.z0 + w.z1) / 2, { dist, pitch: 0.78, yaw: yw, dur: 1.1, arc: 3, distRate: -0.06 });
-					},
-				]);
-				// 2 KESME: su yüzeyine yakın alçak takip; kıyıdan ilk ile, dalganın önünde (kamera denizde, karaya bakar)
-				shots.push([
-					1.25,
-					() => {
-						// takip hattı: kıyının biraz açığından ilin sınırına (ilin kaidesi arka planda kalır)
-						const r = Math.min(d0.r, 16);
-						let rb = 0.5;
-						while (rb < r && fl?.pidAt(p0.x + d0.dx * rb, p0.z + d0.dz * rb) === idx[ord[0]] + 1) rb += 0.5;
-						const r1 = Math.min(r, rb + 1.2);
-						const r0 = Math.max(r + 1.5, r1 + 3);
-						trk.x0 = p0.x + d0.dx * r0;
-						trk.z0 = p0.z + d0.dz * r0;
-						trk.x1 = p0.x + d0.dx * r1;
-						trk.z1 = p0.z + d0.dz * r1;
-						trk.t0 = 1.25;
-						trk.t1 = KT[1] - 0.3;
-						trk.on = true;
-						for (const tg of tags) tg.el.classList.add('off'); // alçak açıda uzak etiketler kartın üstüne düşmesin
-						const dist = 9 + sizeOf(idx[ord[0]]).s * 0.2;
-						take(trk.x0, levelY(meters(1.25)), trk.z0, { water: levelY(KM[1]), from: { dist: dist * 1.15, pitch: 0.12 }, dist, pitch: 0.16, yaw: y0 + 0.25, dur: trk.t1 - trk.t0, hand: 0.01, ease: (u) => u });
-					},
-				]);
-				// 3 ilk il: yakın plan, yavaş yörünge (kesmesiz: takipten yükselerek)
-				shots.push([
-					KT[1] - 0.3,
-					() => {
-						trk.on = false;
-						for (const tg of tags) tg.el.classList.remove('off');
-						const k = ord[0];
-						take(p0.x, yOf(k), p0.z, { water: levelY(KM[1]), dist: closeDist(idx[k], 0.42, 0.95), pitch: 0.42, yaw: y0 + 0.65, dur: 0.75, arc: 1, yawRate: 0.1, distRate: -0.03, hand: 0.006 });
-					},
-				]);
-				// 4 KESME (eşleşen kadraj): ikinci il, ters yörünge, ağır yaklaşma
-				shots.push([
-					KT[2] - 0.8,
-					() => {
-						const k = ord[1];
-						const p = P(k);
-						const d = seaDir(idx[k]);
-						const yw = yawFrom(d.dx, d.dz) - 0.55;
-						const dist = closeDist(idx[k], 0.4, 0.95);
-						take(p.x, yOf(k), p.z, { water: levelY(KM[2]), from: { dist: dist * 1.3, pitch: 0.34 }, dist, pitch: 0.4, yaw: yw, dur: 1.5, yawRate: -0.1, distRate: -0.03, hand: 0.006 });
-					},
-				]);
-				// 5 KESME: üçüncü il ön planda batar, son il arka planda bekler (alçak, yan)
-				shots.push([
-					KT[3] - 0.8,
-					() => {
-						const k2 = ord[2];
-						const p2 = P(k2);
-						const p3 = P(ord[3]);
-						let ux = p2.x - p3.x;
-						let uz = p2.z - p3.z;
-						const L = Math.hypot(ux, uz) || 1;
-						ux /= L;
-						uz /= L;
-						const tx = p2.x - ux * L * 0.3;
-						const tz = p2.z - uz * L * 0.3;
-						const dist = Math.min(70, L * 0.85 + sizeOf(idx[k2]).s * 0.9 + 6);
-						take(tx, yOf(k2), tz, { water: levelY(KM[3]), from: { dist: dist * 1.12, pitch: 0.26 }, dist, pitch: 0.3, yaw: yawFrom(ux, uz) + 0.18, dur: 1.6, yawRate: 0.05, hand: 0.005 });
-					},
-				]);
-				// 6 KESME: son ada su seviyesinden; sonra yükselen vinç çekimi (fırtına dağılır, altın güneş)
-				const k3 = ord[3];
-				const p3 = P(k3);
-				const d3 = (() => {
-					const p2 = P(ord[2]);
-					const L = Math.hypot(p2.x - p3.x, p2.z - p3.z) || 1;
-					return { dx: (p2.x - p3.x) / L, dz: (p2.z - p3.z) / L };
-				})();
-				const y3 = yawFrom(d3.dx, d3.dz);
-				shots.push([
-					KT[4] - 0.3,
-					() => {
-						const dist = closeDist(idx[k3], 0.2, 0.9);
-						take(p3.x, yOf(k3), p3.z, { water: levelY(KM[4]), from: { dist: dist * 1.05, pitch: 0.14 }, dist, pitch: 0.16, yaw: y3, dur: 0.3, hand: 0.004 });
-					},
-				]);
-				shots.push([
-					KT[4] + 0.05,
-					() => {
-						const w = app.boundsOf(idx);
-						const dist = Math.max(closeDist(idx[k3], 0.95, 2.6), C.fitDist({ x0: w.x0 - 2, x1: w.x1 + 2, z0: w.z0 - 2, z1: w.z1 + 2 }, 0.9, 1.05, cardTop(el)) * 0.7);
-						take(p3.x, yOf(k3), p3.z, { water: levelY(KM[4]), dist, pitch: 0.92, yaw: y3 + 0.75, dur: 2.2, arc: 0, yawRate: 0.035, decay: 0.3, hand: 0.002, bottom: 0.24, ease: ease3 });
-					},
-				]);
-				let shotI = 0;
-				let restamp = false;
 				const me = results.find((r) => r.p?.human);
 				const verdict = me
 					? [
@@ -528,65 +491,148 @@ export const tufan = {
 						]
 					: null;
 				if (verdict) stampLater(app, ...verdict);
-				sfx(app, 'whoosh', { rate: 0.5, vol: 0.9, delay: 0.45 });
-				if (fl) {
-					fl.on();
-					nextBolt = 0.15;
-					bolts = 0;
-					flashT = -9;
-					fl.tick = () => {
-						const now = clock.now();
-						if (now === lastNow) return;
-						lastNow = now;
-						const t = (now - t0) / 1000;
-						while (shotI < shots.length && t >= shots[shotI][0]) shots[shotI++][1]();
-						const mm = meters(t);
-						const L = levelY(mm);
-						fl.level(L);
-						if (trk.on) {
-							const u = smooth((t - trk.t0) / (trk.t1 - trk.t0));
-							base.x = trk.x0 + (trk.x1 - trk.x0) * u;
-							base.z = trk.z0 + (trk.z1 - trk.z0) * u;
-							base.y = L;
-						}
-						handheld(t);
-						// fırtına: cevapla birlikte sertleşir, son adada dağılır; şimşekler sinmelerle
-						if (t >= nextBolt && t < KT[4] - 0.5) bolt(t, 2.6);
-						const clear = smooth((t - KT[4] + 0.4) / 1.6);
-						storm = (0.55 + 0.33 * smooth(t / 0.6)) * (1 - clear * 0.85);
-						rainK = 0.9 * smooth(t / 0.5) * (1 - clear);
-						const rise = t > KT[0] && t < KT[4] ? 1 : Math.max(0.15, 1 - (t - KT[4]) * 0.8);
-						atmos(t, storm, rainK, clear, rise, 0.014);
-						const r = Math.round(mm / 10) * 10;
-						if (r !== lastM) {
-							lastM = r;
-							gauge.textContent = fmtG(r);
-							bar.style.transform = `scaleX(${Math.min(1, mm / top).toFixed(3)})`;
-						}
-						for (let s = 0; s < 3; s++) {
-							const k = ord[s];
-							if (!sunk[k] && t >= KT[s + 1] - 0.15) sink(k, t);
-							// batış: önce ağır ağır suya gömülür, sonra dibe; üstündeki su derinleşir
-							if (sunk[k]) {
-								const u = Math.min(1, (t - sinkT[k]) / SINK);
-								holdLift(b, idx[k], PED_R - 0.4 * smooth(Math.min(1, u * 1.6)) - 2.4 * u * u * u);
-								U.uSunk.value.setComponent(k, smooth(u));
-							}
-						}
-						const sp = U.uSp.value;
-						if (sp.w > 0) sp.z = t - sinkT[ord[sunk[ord[2]] ? 2 : sunk[ord[1]] ? 1 : 0]]; // son batanın halkası
-						if (!final && t >= KT[4] - 0.05) isle();
-						if (!restamp && verdict && t >= KT[4] + 1.6) {
-							restamp = true;
-							card?.classList.remove('dn-tf-film');
-							app.ui?.stamp?.(...verdict);
-						}
-					};
-				} else {
+				if (!fl) {
 					ord.slice(0, 3).forEach((k, s) => setTimeout(() => sink(k, 0), 400 + s * 700));
 					setTimeout(isle, 2600);
 					frame(0.6, 1.5, { yawRate: 0.035 });
+					return;
 				}
+				// ------------------------------------------------ çekim listesi → kamera yolu (bkz. dosya başı)
+				const top0 = cardTop(el);
+				const at = (t) => levelY(meters(t));
+				const p0 = P(ord[0]);
+				const d0 = seaDir(idx[ord[0]]);
+				const ys0 = yawFrom(d0.dx, d0.dz);
+				const keys = [{ t: 0, x: C.target.x, y: C.target.y, z: C.target.z, dist: C.dist, p: C.pitch, w: C.yaw }];
+				// açılış: dört il, ilk ile doğru hafif kayık; yüksek, ağır yaklaşma
+				{
+					const w = { x0: bb.x0 - 4, x1: bb.x1 + 4, z0: bb.z0 - 4, z1: bb.z1 + 3 };
+					const cx = (w.x0 + w.x1) / 2;
+					const cz = (w.z0 + w.z1) / 2;
+					keys.push({ t: 1.7, x: cx + (p0.x - cx) * 0.35, y: 0, z: cz + (p0.z - cz) * 0.35, dist: C.fitDist(w, 0.7, 1.0, top0) * 0.66, p: 0.7, w: Math.max(-0.5, Math.min(0.5, wrapPi(ys0) * 0.4)) });
+				}
+				// vinç inişi: kıyıya, deniz tarafından
+				{
+					const r = Math.min(d0.r, 14);
+					const s0 = sizeOf(idx[ord[0]]).s;
+					keys.push({ t: 2.75, x: p0.x + d0.dx * r * 0.55, y: at(2.75), z: p0.z + d0.dz * r * 0.55, dist: 26 + s0 * 0.5, p: 0.46, w: ys0 + 0.18 });
+				}
+				// her il: varış (batıştan hemen önce), ağır yaklaşma; aralarda yükselip süzülme
+				let yPrev = ys0 + 0.3;
+				for (let s = 0; s < 3; s++) {
+					const k = ord[s];
+					const p = P(k);
+					const ta = KT[s + 1] - 0.3;
+					let yw = yPrev;
+					if (s > 0) {
+						const q = P(ord[s - 1]);
+						const L = Math.hypot(p.x - q.x, p.z - q.z) || 1;
+						yw = yawFrom((q.x - p.x) / L, (q.z - p.z) / L) + 0.2; // gelinen yandan
+						const prev = keys[keys.length - 1];
+						const wm = prev.w + wrapPi(yw - prev.w) * 0.5;
+						const dm = Math.max(closeDist(idx[k], 0.55), prev.dist, L * 0.85);
+						keys.push({ t: ta - 0.6, x: (p.x + q.x) / 2, y: (at(ta - 0.6) + 0.3) / 2, z: (p.z + q.z) / 2, dist: dm, p: 0.58, w: wm });
+					}
+					const dc = closeDist(idx[k], 0.42, 1.2);
+					keys.push({ t: ta, x: p.x, y: at(KT[s + 1]), z: p.z, dist: dc, p: 0.4, w: yw });
+					keys.push({ t: ta + 0.8, x: p.x, y: at(KT[s + 1] + 0.5), z: p.z, dist: dc * 0.86, p: 0.45, w: yw + 0.14 });
+					yPrev = yw + 0.14;
+				}
+				// son ada: su seviyesinden, sonra yükselen vinç ve yavaş yörünge
+				const k3 = ord[3];
+				const p3 = P(k3);
+				{
+					const q = P(ord[2]);
+					const L = Math.hypot(p3.x - q.x, p3.z - q.z) || 1;
+					const y3 = yawFrom((q.x - p3.x) / L, (q.z - p3.z) / L) + 0.25;
+					const prev = keys[keys.length - 1];
+					keys.push({ t: KT[4] - 0.75, x: (p3.x + q.x) / 2, y: at(KT[4] - 0.75), z: (p3.z + q.z) / 2, dist: Math.max(prev.dist, L * 0.8, closeDist(idx[k3], 0.4)), p: 0.42, w: prev.w + wrapPi(y3 - prev.w) * 0.6 });
+					const dl = closeDist(idx[k3], 0.2, 1.1);
+					keys.push({ t: KT[4] - 0.1, x: p3.x, y: at(KT[4]) + 0.05, z: p3.z, dist: dl, p: 0.2, w: y3 });
+					const all = app.boundsOf(idx);
+					const dTop = Math.max(dl * 2.4, C.fitDist({ x0: all.x0 - 2, x1: all.x1 + 2, z0: all.z0 - 2, z1: all.z1 + 2 }, 0.85, 1.0, top0) * 0.6);
+					keys.push({ t: END, x: p3.x, y: at(END), z: p3.z, dist: dTop, p: 0.84, w: y3 + 0.6 });
+				}
+				const path = camPath(keys);
+				// yol denetimi: kamera ve bakış hattı araziye girmesin (gereken anahtar karede eğim artar)
+				const o = { x: 0, y: 0, z: 0, dist: 1, p: 0, w: 0 };
+				for (let it = 0; it < 60; it++) {
+					let bad = -1;
+					for (let t = 0.08; t <= END && bad < 0; t += 0.08) {
+						waterY = at(t);
+						path.at(t, o);
+						if (!clear(o)) bad = t;
+					}
+					if (bad < 0) break;
+					let ki = 1;
+					for (let i = 1; i < keys.length; i++) if (Math.abs(keys[i].t - bad) < Math.abs(keys[ki].t - bad)) ki = i;
+					keys[ki].p = Math.min(1.2, keys[ki].p + 0.04);
+					path.tangents();
+				}
+				waterY = 0;
+				C.shake = 0;
+				C.sh.on = false;
+				C.mode = 'tufan'; // kamera bu yoldan sürülür (kare başına; camera.js dinlenmede bekler)
+				fl.on();
+				boltT = -9;
+				nextBolt = 0.55;
+				let lens = C.lens;
+				snd.rise(KT[4] + 0.8);
+				let restamp = false;
+				fl.tick = () => {
+					const now = clock.now();
+					if (now === lastNow) return;
+					lastNow = now;
+					const t = (now - t0) / 1000;
+					// kamera
+					path.at(Math.min(t, END), o);
+					C.target.set(o.x, o.y, o.z);
+					C.goal.copy(C.target);
+					C.dist = C.distTo = o.dist;
+					C.pitch = C.pitchTo = o.p;
+					C.yaw = C.yawTo = o.w;
+					const want = t > KT[4] + 0.6 && verdict ? (top0 - 0.22) / 2 : top0 / 2;
+					lens += (want - lens) * 0.04;
+					C.lensTo = lens;
+					// alçak inişte uzak etiketler kartın üstüne düşmesin
+					const hide = t > 2.2 && t < KT[1] - 0.4;
+					for (const tg of tags) tg.el.classList.toggle('off', hide);
+					// su
+					const mm = meters(t);
+					fl.level(levelY(mm));
+					// hava: açılışta bir şimşek, ortada bir tane; son adada fırtına dağılır
+					if (t >= nextBolt) {
+						strike(t, 0.55);
+						nextBolt = nextBolt < 1 ? 5.1 : 99;
+					}
+					const clr = smooth((t - KT[4] + 0.5) / 2);
+					atmos(t, 0.9 * (1 - clr * 0.85), 0.85 * (1 - clr), clr, t > KT[0] && t < KT[4] ? 1 : Math.max(0.15, 1 - (t - KT[4]) * 0.8), 0.014);
+					const r = Math.round(mm / 10) * 10;
+					if (r !== lastM) {
+						lastM = r;
+						gauge.textContent = fmtG(r);
+						bar.style.transform = `scaleX(${Math.min(1, mm / top).toFixed(3)})`;
+					}
+					let last = -1;
+					for (let s = 0; s < 3; s++) {
+						const k = ord[s];
+						if (!sunk[k] && t >= KT[s + 1] - 0.15) sink(k, t);
+						// batış: önce ağır ağır suya gömülür, sonra dibe; üstündeki su derinleşir
+						if (sunk[k]) {
+							last = k;
+							const u = Math.min(1, (t - sinkT[k]) / SINK);
+							holdLift(b, idx[k], PED_R - 0.35 * smooth(Math.min(1, u * 1.5)) - 2.4 * u * u * u);
+							U.uSunk.value.setComponent(k, smooth(u));
+						}
+					}
+					if (last >= 0) U.uSp.value.z = t - sinkT[last]; // son batanın halkası
+					if (!final && t >= KT[4] - 0.05) isle();
+					if (!restamp && verdict && t >= KT[4] + 1.5) {
+						restamp = true;
+						card?.classList.remove('dn-tf-film');
+						app.ui?.stamp?.(...verdict);
+					}
+				};
 			},
 			destroy: close,
 		};
