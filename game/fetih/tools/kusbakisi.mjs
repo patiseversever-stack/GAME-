@@ -3,7 +3,7 @@
 // Playwright'ın sahte saatiyle ilerler (yavaş yazılım çizicide de kamera gerçek zamanlamada).
 //
 //   node tools/kusbakisi.mjs çıktı-dizini [--html=dist/SoruGalerisi.html] [--ids=dn-kb1,dn-kb7] [--at=0.6,8]
-//                            [--w=412 --h=892] [--pick=1] [--map=1]
+//                            [--w=412 --h=892 --dpr=1] [--pick=1] [--map=1]
 //
 //   --ids   örnek kimlikleri (vars. hepsi); çekim adı: <kimlik>_<an>.png (an: kart açıldıktan sonra sn)
 //   --pick  her örnekte bir şıkka dokunur ve cevap ekranını da çeker (<kimlik>_cevap.png)
@@ -24,7 +24,7 @@ const exe =
 	process.env.CHROMIUM ||
 	['/opt/pw-browsers/chromium-1194/chrome-linux/chrome', '/opt/pw-browsers/chromium-1243/chrome-linux64/chrome', '/opt/pw-browsers/chromium/chrome-linux64/chrome'].find((p) => existsSync(p));
 const browser = await chromium.launch({ executablePath: exe, args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--enable-webgl'] });
-const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: 1 });
+const page = await browser.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: Number(opt.dpr || 1) });
 const errs = [];
 page.on('pageerror', (e) => errs.push(e.message + '\n' + (e.stack || '')));
 page.on('console', (m) => {

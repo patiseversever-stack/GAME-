@@ -300,11 +300,15 @@ export const CAMI = {
 		for (const sx of [-1, 1]) {
 			const x = sx * 0.1;
 			k.mc(H.ASHLAR, S).flat().box(0.07, 0.3, 0.07, x, 0, pz).soft();
-			const g = flute(new THREE.CylinderGeometry(0.032, 0.036, 0.3, k._n(40), 4, true), 12, 0.08, true);
-			k.mc(H.BRICK, '#a85f3e').add(g.translate(0, 0.15, 0), new THREE.Matrix4().makeTranslation(x, 0.3, pz));
-			for (const y of [0.34, 0.44, 0.54]) k.mc(H.TILE, '#2a9d8f').cyl(0.037, 0.037, 0.018, 24, x, y, pz);
-			k.mc(H.BRICK, '#9a573a').cyl(0.03, 0.033, 0.05, 16, x, 0.6, pz);
-			k.mc(H.STONE, '#7c6a58').cyl(0.03, 0.03, 0.004, 16, x, 0.65, pz);
+			// kare kaideden yuvarlak gövdeye geçiş, ince yivli tuğla gövde, çini kuşaklar, şerefe çıkıntısı
+			k.mc(H.ASHLAR, S).flat().cyl(0.03, 0.04, 0.03, 8, x, 0.3, pz).soft();
+			const g = flute(new THREE.CylinderGeometry(0.024, 0.028, 0.3, k._n(48), 6, true), 16, 0.09, true);
+			k.mc(H.BRICK, '#a85f3e').add(g.translate(0, 0.15, 0), new THREE.Matrix4().makeTranslation(x, 0.33, pz));
+			for (const y of [0.38, 0.47]) k.mc(H.TILE, '#2a9d8f').cyl(0.029, 0.029, 0.014, 24, x, y, pz);
+			for (let i = 0; i < 6; i++) k.mc(H.GLAZE, '#2a8f9d').box(0.006, 0.07, 0.004, x + Math.sin((i / 6) * Math.PI * 2) * 0.027, 0.395, pz + Math.cos((i / 6) * Math.PI * 2) * 0.027, (i / 6) * Math.PI * 2);
+			k.mc(H.STONE, '#b9906a').lathe([[0.027, 0], [0.036, 0.012], [0.04, 0.02], [0, 0.02]], 16, x, 0.6, pz);
+			k.mc(H.BRICK, '#9a573a').cyl(0.022, 0.024, 0.045, 16, x, 0.62, pz);
+			k.mc(H.STONE, '#7c6a58').cyl(0.023, 0.023, 0.004, 16, x, 0.665, pz);
 		}
 		yield;
 		// arkada Hatuniye kümbeti: on iki köşeli gövde, piramit külah

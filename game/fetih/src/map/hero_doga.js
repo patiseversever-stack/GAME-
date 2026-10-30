@@ -233,24 +233,27 @@ export const DOGA = {
 	// ---------------------------------------------------------------- Mardin: yamaçta taş evler
 	*mardin(k, R) {
 		ground(k, 0.78, { pave: '#c7a87d', paveR: 0.3 });
-		// yamaç: kademeli teraslar
-		for (let t = 0; t < 4; t++) k.mc(H.ASHLAR, '#c19f74').uvS(0.7).flat().box(1.1 - t * 0.12, 0.08 * (t + 1), 0.2, 0, 0, 0.32 - t * 0.2).uvS(1).soft();
+		// dik yamaç: kademeli teraslar (her sıra bir öncekinin damına basar)
+		for (let t = 0; t < 4; t++) k.mc(H.ASHLAR, '#c19f74').uvS(0.7).flat().box(1.1 - t * 0.1, 0.1 * (t + 1), 0.2, 0, 0, 0.32 - t * 0.2).uvS(1).soft();
 		yield;
-		// taş evler: kubik, düz damlı, sivri ve yuvarlak kemerli pencereler, revaklar
-		const C = ['#dcb98b', '#d2ad7e', '#e2c398', '#d9b585'];
+		// taş evler: kübik, düz damlı, sivri ve yuvarlak kemerli pencereler; bazıları iki katlı, damda korkuluk
+		const C = ['#dcb98b', '#d2ad7e', '#e2c398', '#d9b585', '#e6c9a0'];
 		for (let row = 0; row < 4; row++) {
-			const n = 5 - (row > 2 ? 1 : 0);
-			for (let i = 0; i < n; i++) {
-				const x = -0.42 + i * 0.2 + (row % 2) * 0.08 + (R() - 0.5) * 0.03;
-				const z = 0.34 - row * 0.2;
-				const y = 0.08 * (row + 1);
-				tasEv(k, { x, z, y, w: 0.15 + R() * 0.03, d: 0.12, h: 0.08 + R() * 0.04, col: C[(i + row) % 4], arches: 2 + Math.floor(R() * 2), R });
+			let x = -0.52 + R() * 0.06;
+			while (x < 0.5) {
+				const w = 0.12 + R() * 0.07;
+				const z = 0.36 - row * 0.2 + (R() - 0.5) * 0.04;
+				const y = 0.1 * (row + 1);
+				const h = 0.07 + R() * 0.06;
+				tasEv(k, { x: x + w / 2, z, y, w, d: 0.11 + R() * 0.03, h, col: C[Math.floor(R() * C.length)], arches: w > 0.16 ? 3 : 2, R });
+				if (R() < 0.35) tasEv(k, { x: x + w / 2 + (R() - 0.5) * 0.02, z: z - 0.02, y: y + h, w: w * 0.7, d: 0.08, h: 0.06, col: C[Math.floor(R() * C.length)], arches: 2, R });
+				x += w + 0.01 + R() * 0.03;
 			}
 			yield;
 		}
 		// Zinciriye Medresesi'nin yivli kubbeleri ve Ulu Cami minaresi; tepede Mardin Kalesi
 		for (const [x, z] of [[-0.18, -0.36], [-0.04, -0.36]]) {
-			k.mc(H.ASHLAR, '#d6b386').flat().cyl(0.05, 0.055, 0.03, 12, x, 0.32, z).soft();
+			k.mc(H.ASHLAR, '#d6b386').flat().cyl(0.05, 0.055, 0.03, 12, x, 0.4, z).soft();
 			const g = new THREE.SphereGeometry(0.05, k._n(32), 8, 0, Math.PI * 2, 0, Math.PI / 2);
 			const p = g.getAttribute('position');
 			for (let i = 0; i < p.count; i++) {
@@ -260,10 +263,10 @@ export const DOGA = {
 				p.setZ(i, p.getZ(i) * f);
 			}
 			g.computeVertexNormals();
-			k.mc(H.ASHLAR, '#dcbb8c').add(g, new THREE.Matrix4().compose(new THREE.Vector3(x, 0.35, z), new THREE.Quaternion(), new THREE.Vector3(1, 1.3, 1)));
+			k.mc(H.ASHLAR, '#dcbb8c').add(g, new THREE.Matrix4().compose(new THREE.Vector3(x, 0.43, z), new THREE.Quaternion(), new THREE.Vector3(1, 1.3, 1)));
 		}
-		minaret(k, 0.3, -0.34, { y0: 0.32, h: 0.4, r: 0.02, balconies: 1, col: '#d9b585', sides: 16, capH: 0.12, cap: '#c9a679' });
-		curtain(k, -0.5, -0.56, 0.5, -0.58, { h: 0.08, y: 0.32, t: 0.04, col: '#b99a70' });
+		minaret(k, 0.3, -0.34, { y0: 0.4, h: 0.4, r: 0.02, balconies: 1, col: '#d9b585', sides: 16, capH: 0.12, cap: '#c9a679' });
+		curtain(k, -0.5, -0.56, 0.5, -0.58, { h: 0.08, y: 0.4, t: 0.04, col: '#b99a70' });
 		for (const [x, z] of [[-0.62, 0.42], [0.62, 0.4]]) tree(k, x, z, 1, R, 0, '#6d8f3e');
 	},
 
@@ -305,7 +308,8 @@ export const DOGA = {
 	*hasankeyf(k, R) {
 		ground(k, 0.78, { pave: '#bba98b', paveR: 0.3, jit: 0.08 });
 		// Dicle kıyısında yalçın kayalar ve mağara evler
-		rockMass(k, { rx: 0.42, ry: 0.42, rz: 0.22, x: -0.28, y: 0.1, z: -0.36, seed: 15, col: '#8f7b62', col2: '#c3ab88', amp: 0.16 });
+		rockMass(k, { rx: 0.5, ry: 0.36, rz: 0.16, x: -0.22, y: 0.12, z: -0.36, seed: 15, col: '#8f7b62', col2: '#c3ab88', amp: 0.12, freq: 2.2 });
+		rockMass(k, { rx: 0.3, ry: 0.26, rz: 0.14, x: 0.3, y: 0.08, z: -0.44, seed: 25, col: '#937f65', col2: '#bea684', amp: 0.12, freq: 2.2 });
 		for (let i = 0; i < 12; i++) {
 			const x = -0.55 + (i % 6) * 0.09 + (R() - 0.5) * 0.02;
 			const y = 0.1 + Math.floor(i / 6) * 0.13 + R() * 0.03;

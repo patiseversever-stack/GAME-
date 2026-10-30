@@ -295,7 +295,7 @@ void mosaic(vec2 uv) {
 	vec2 fc = fract(uv / s);
 	vec2 f = fwidth(uv) / s;
 	gFar = farK(max(f.x, f.y));
-	vec2 q = uv;
+	vec2 q = uv - vec2(0.32, 0.2); // oda zemininin ortası (desen koordinatı geometrinin kendi 0..1 yüzü × 0,64 × 0,4)
 	float r = length(q);
 	float ang = atan(q.y, q.x);
 	vec3 terr = vec3(0.62, 0.3, 0.18);

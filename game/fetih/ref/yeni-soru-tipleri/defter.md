@@ -122,6 +122,16 @@ profili; süre = en büyüğü(yavaş + 1,5 sn, ortanca + 5 sn) × 1,2, en az 20
   ~150'ye çıkar (`at: [boylam, enlem]` destekleniyor). Yeni maketler (Zeugma, Ani, Hasankeyf, Sultanahmet…) her biri
   2–3 soru. **Fırsat:** bu gece eklenen bölgesel hava durumu ipucu olabilir (Rize'de yağmur, Erzurum'da kar).
 - **Emek:** M (prototip hazır). **Wow:** 9,5.
+- **v0.9 (kullanıcı: "çizimler rezalet, oha seviyesinde olmalı, yerler çoğalsın"):** soru açılınca YALNIZ o yapının
+  yüksek ayrıntılı kahraman maketi kurulur (`src/map/heroes.js` + `hero_*.js`; kare kare, ilk kullanımda, son 2'si
+  önbellekte) ve haritadaki yalın kopyanın yerine konur, kart kapanınca kaldırılır. Gerçek oyuklu kemerli cepheler,
+  kasnak pencereleri, şerefeli minareler, revaklar, sütun başlıkları; shader'da kesme taş, tuğla, kurşun dikişi,
+  kiremit, çini, mermer, döşeme, kaya deseni ve kabartması; kurulurken pişirilen ortam örtmesi; yakın çekimde
+  daralan gölge kapsamı. Soru boyunca sahne gündüzde; başlangıç yönü yamaç ya da komşu maket yapıyı örtmesin diye
+  kendiliğinden seçilir. Harita 23 → 42 yapı (`src/map/landmarks2.js`), Kuşbakışı örnekleri 6 → 42. Gömülü yapı
+  kuralı korunur: `kusbakisi.usable(q, app)` başkent kalesinin altındaki yapıda false döner (o soru o maçta sorulmaz),
+  yine de açılırsa kahraman kurulmaz. Bakıcı: `node tools/kahraman.mjs`, çekim: `node tools/kusbakisi.mjs`,
+  bütçe sınaması: `node test/kahraman.test.mjs`. Kıyas: `ref/kusbakisi-v09/`.
 
 ### 2. Fetih Koşusu ✅ prototip
 - **Tek cümle:** "Ege Bölgesi'nin 8 ilini fethet!", "Plakası 10–19 olan iller", "Adı K ile başlayan iller": süre

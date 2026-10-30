@@ -8,15 +8,19 @@ const shape = (pts) => new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, 
 
 /** Basamaklı oturma sırası (tiyatro): yarıçap r0'dan r1'e n sıra, açı a0..a1, her sıra dh yükselir. */
 function cavea(k, { r0, r1, n, a0, a1, dh, x = 0, y = 0, z = 0, col = '#d6c3a0', col2 = '#c9b591', aisles = 7 }) {
-	const seg = k._n(Math.round(((a1 - a0) / Math.PI) * 28));
+	const seg = k._n(Math.max(8, Math.round(((a1 - a0) / Math.PI) * 30)));
+	const M = new THREE.Matrix4().makeTranslation(x, y, z);
+	const ring = (pts, c) => k.mc(H.ASHLAR, c).add(new THREE.LatheGeometry(pts.map(([r, h]) => new THREE.Vector2(r, h)), seg, a0, a1 - a0), M);
+	k.flat();
+	// her sıra: dik yüz (oturak önü) + basamak (oturak), dışa doğru yükselir; arkada destek duvarı
 	for (let i = 0; i < n; i++) {
 		const r = r0 + ((r1 - r0) * i) / n;
 		const r2 = r0 + ((r1 - r0) * (i + 1)) / n;
-		const g = new THREE.CylinderGeometry(r2, r2, dh * (i + 1), seg, 1, false, a0, a1 - a0);
-		k.mc(H.ASHLAR, i % 2 ? col : col2).add(g.translate(0, (dh * (i + 1)) / 2, 0), new THREE.Matrix4().makeTranslation(x, y, z));
-		// sıranın önündeki gölge çizgisi (oturak kenarı)
-		void r;
+		ring([[r, dh * i], [r, dh * (i + 1)]], i % 2 ? col2 : col);
+		ring([[r, dh * (i + 1)], [r2, dh * (i + 1)]], i % 2 ? col : col2);
 	}
+	ring([[r1, dh * n], [r1 + 0.01, dh * n], [r1 + 0.01, 0]], col2);
+	k.soft();
 	// merdiven yolları (ışınsal)
 	for (let j = 1; j < aisles; j++) {
 		const a = a0 + ((a1 - a0) * j) / aisles;
@@ -189,7 +193,7 @@ export const ANTIK = {
 			const r = 0.5;
 			wall(k, { w: (Math.PI * r) / ng + 0.002, h: 0.06, t: 0.012, x: Math.sin(a) * r, y: 0.31, z: 0.02 + Math.cos(a) * r, ry: a + Math.PI, holes: [{ x: 0, y: 0, w: ((Math.PI * r) / ng) * 0.6, h: 0.045, kind: 'round' }], col: S, glass: false });
 		}
-		k.mc(H.ASHLAR, '#c7ab80').flat().cyl(0.52, 0.53, 0.012, k._n(30), 0, 0.37, 0.02).soft();
+		k.mc(H.ASHLAR, '#c7ab80').flat().add(new THREE.LatheGeometry([new THREE.Vector2(0.49, 0.372), new THREE.Vector2(0.535, 0.372)], k._n(30), Math.PI / 2, Math.PI), new THREE.Matrix4().makeTranslation(0, 0, 0.02)).soft();
 		yield;
 		// orkestra ve sahne, sahne binası (scaenae frons): iki kat nişler, ortada kral kapısı
 		k.mc(H.PAVE, '#cdb184').cyl(0.17, 0.17, 0.004, 24, 0, 0, 0.02);
@@ -259,19 +263,18 @@ export const ANTIK = {
 			}
 			yield;
 		}
-		// koruma çatısı: çelik dikmeler ve hafif dalgalı zar (yarı açık)
+		// koruma çatısının çelik taşıyıcıları: dikmeler ve kavisli kirişler (örtü açık bırakıldı: taşlar görünsün)
 		k.mc(H.METAL, '#c9ccd0');
-		for (const [x, z] of [[-0.5, -0.32], [0.5, -0.32], [-0.5, 0.48], [0.5, 0.48], [0, -0.36], [0, 0.52]]) k.cyl(0.006, 0.008, 0.44, 6, x, 0, z);
-		const m = new THREE.PlaneGeometry(1.1, 0.92, 12, 10);
-		const p = m.getAttribute('position');
-		for (let i = 0; i < p.count; i++) {
-			const x = p.getX(i);
-			const y = p.getY(i);
-			p.setZ(i, 0.03 * Math.sin(x * 9) * Math.cos(y * 7));
+		for (const [x, z] of [[-0.5, -0.32], [0.5, -0.32], [-0.5, 0.48], [0.5, 0.48]]) k.cyl(0.006, 0.008, 0.4, 6, x, 0, z);
+		for (const z of [-0.32, 0.08, 0.48]) {
+			const pts = [];
+			for (let i = 0; i <= 8; i++) {
+				const t = i / 8;
+				pts.push(new THREE.Vector3(-0.5 + t, 0.4 + Math.sin(t * Math.PI) * 0.08, z));
+			}
+			k.mc(H.METAL, '#d3d6da').add(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 10, 0.005, 5, false));
 		}
-		m.computeVertexNormals();
-		m.rotateX(-Math.PI / 2);
-		k.mc(H.CLOTH, '#eef0f0').add(m, new THREE.Matrix4().makeTranslation(0, 0.45, 0.08));
+		for (const x of [-0.5, 0.5]) k.mc(H.METAL, '#d3d6da').box(0.008, 0.008, 0.8, x, 0.4, 0.08);
 		// ziyaretçi yürüme yolu (ahşap iskele)
 		k.mc(H.WOOD, '#8d6a48').flat().box(0.9, 0.006, 0.05, 0, 0.06, -0.38).soft();
 		for (const [x, z] of [[-0.62, 0.5], [0.62, 0.52]]) tree(k, x, z, 0.9, R);
@@ -297,19 +300,21 @@ export const ANTIK = {
 		for (let i = 0; i < 7; i++) k.mc(H.WOOD, '#6b4528').flat().box(0.004, 0.004, 0.06, -0.03, 0.06 + i * 0.035, 0).soft();
 		k.mc(H.WOOD, '#6b4528').box(0.006, 0.26, 0.006, -0.03, 0.04, -0.03).box(0.006, 0.26, 0.006, -0.03, 0.04, 0.03);
 		yield;
-		// boyun, baş, yele, kulaklar, kuyruk
-		k.push().move(0.2, 0.47, 0).rot(0, 0, -0.6);
-		k.mc(H.WOOD, W).flat().box(0.1, 0.22, 0.09, 0, 0, 0);
-		for (let i = 0; i < 6; i++) k.mc(H.WOOD, W2).box(0.02, 0.025, 0.1, -0.05, 0.03 + i * 0.03, 0);
+		// boyun (dik, tahta yeleli), uzun at başı (öne ve aşağı bakar), kulaklar
+		k.push().move(0.2, 0.5, 0).rot(0, 0, -0.38);
+		k.mc(H.WOOD, W).flat().box(0.1, 0.2, 0.09, 0, 0, 0);
+		for (let i = 0; i < 7; i++) k.mc(H.WOOD, W2).box(0.02, 0.026, 0.026, -0.05, 0.02 + i * 0.026, 0);
 		k.pop();
-		k.push().move(0.32, 0.64, 0).rot(0, 0, 0.3);
-		k.mc(H.WOOD, W).flat().box(0.2, 0.08, 0.085, 0, 0, 0);
-		k.mc(H.WIN, '#1d140c').box(0.02, 0.016, 0.088, 0.03, 0.045, 0);
-		k.mc(H.WOOD, W2).box(0.025, 0.05, 0.02, -0.04, 0.08, 0.025).box(0.025, 0.05, 0.02, -0.04, 0.08, -0.025);
+		k.push().move(0.29, 0.66, 0).rot(0, 0, -0.32);
+		k.mc(H.WOOD, W).flat().box(0.16, 0.085, 0.09, 0, 0, 0);
+		k.mc(H.WOOD, W).box(0.08, 0.065, 0.075, 0.1, 0.005, 0);
+		k.mc(H.WOOD, W2).box(0.012, 0.07, 0.08, 0.142, 0.0, 0);
+		k.mc(H.WIN, '#1d140c').box(0.022, 0.018, 0.094, -0.02, 0.045, 0).box(0.012, 0.01, 0.08, 0.135, 0.02, 0);
+		k.mc(H.WOOD, W2).box(0.022, 0.05, 0.02, -0.06, 0.085, 0.026).box(0.022, 0.05, 0.02, -0.06, 0.085, -0.026);
 		k.soft();
 		k.pop();
-		k.push().move(-0.22, 0.42, 0).rot(0, 0, 0.5);
-		k.mc(H.WOOD, W2).flat().box(0.03, 0.16, 0.03, 0, -0.16, 0).soft();
+		k.push().move(-0.22, 0.42, 0).rot(0, 0, 0.45);
+		k.mc(H.WOOD, W2).flat().box(0.035, 0.18, 0.03, 0, -0.18, 0).soft();
 		k.pop();
 		yield;
 		// Truva surları (VI. katman kalıntısı) ve ağaçlar
@@ -325,12 +330,7 @@ export const ANTIK = {
 		rockMass(k, { rx: 0.6, ry: 0.34, rz: 0.5, y: -0.05, z: -0.12, seed: 9, col: '#8f8270', col2: '#b4a68d', amp: 0.18, freq: 1.2 });
 		yield;
 		// dünyanın en dik antik tiyatrosu: yamaca oyulmuş dar ve yüksek oturma basamakları
-		const n = 16;
-		for (let i = 0; i < n; i++) {
-			const r = 0.42 - i * 0.017;
-			const g = new THREE.CylinderGeometry(r, r, 0.024, k._n(16), 1, false, Math.PI * 0.72, Math.PI * 0.56);
-			k.mc(H.ASHLAR, i % 2 ? '#d1c3a6' : '#c3b496').add(g.translate(0.08, 0.012 + i * 0.024, 0.2 - i * 0.012));
-		}
+		cavea(k, { r0: 0.12, r1: 0.42, n: 16, a0: Math.PI * 0.72, a1: Math.PI * 1.28, dh: 0.024, x: 0.08, z: 0.4, col: '#d1c3a6', col2: '#c3b496', aisles: 4 });
 		// sahne terası (uzun teras yolu)
 		k.mc(H.PAVE, '#cbbd9f').flat().box(0.7, 0.01, 0.07, 0.08, 0.0, 0.32).soft();
 		yield;
@@ -351,10 +351,12 @@ export const ANTIK = {
 	// ---------------------------------------------------------------- Myra (Demre): Likya kaya mezarları ve tiyatro
 	*myra(k, R) {
 		ground(k, 0.76, { pave: '#c6b796', paveR: 0.3 });
-		rockMass(k, { rx: 0.62, ry: 0.55, rz: 0.22, y: 0.05, z: -0.42, seed: 31, col: '#9a8a74', col2: '#c9bb9f', amp: 0.16, freq: 1.3 });
+		// dik kaya yüzü: önü düz (mezarlar oyulmuş), arkası ve tepesi kayalık
+		k.mc(H.ROCK, '#b3a387').flat().box(1.0, 0.46, 0.16, 0, 0, -0.36).soft();
+		rockMass(k, { rx: 0.6, ry: 0.36, rz: 0.15, y: 0.34, z: -0.56, seed: 31, col: '#9a8a74', col2: '#c9bb9f', amp: 0.16, freq: 1.3 });
 		yield;
 		// kayaya oyulmuş ev tipi mezar cepheleri (kademe kademe)
-		const tombs = [[-0.36, 0.08, -0.25, 0.1, 0.09, false], [-0.22, 0.14, -0.23, 0.09, 0.08, true], [-0.08, 0.06, -0.22, 0.1, 0.1, false], [0.06, 0.18, -0.24, 0.1, 0.09, true], [0.2, 0.08, -0.23, 0.09, 0.08, false], [0.34, 0.16, -0.26, 0.09, 0.08, false], [-0.15, 0.28, -0.28, 0.1, 0.09, true], [0.12, 0.32, -0.3, 0.09, 0.08, false], [-0.32, 0.26, -0.3, 0.08, 0.08, false]];
+		const tombs = [[-0.38, 0.06, -0.27, 0.12, 0.1, false], [-0.22, 0.12, -0.27, 0.11, 0.1, true], [-0.06, 0.04, -0.27, 0.13, 0.12, false], [0.1, 0.16, -0.27, 0.12, 0.1, true], [0.26, 0.06, -0.27, 0.11, 0.1, false], [0.4, 0.18, -0.27, 0.1, 0.09, false], [-0.16, 0.28, -0.27, 0.12, 0.1, true], [0.12, 0.32, -0.27, 0.11, 0.09, false], [-0.36, 0.27, -0.27, 0.1, 0.09, false], [0.34, 0.33, -0.27, 0.1, 0.08, true]];
 		for (const [x, y, z, w, h, p] of tombs) lycian(k, x, y, z, 0, w, h, p);
 		yield;
 		// Roma tiyatrosu (önde)
@@ -372,7 +374,7 @@ export const ANTIK = {
 		const Wl = '#c2ab86';
 		const rooms = [[0, 0.04, 0.34, 0.24], [-0.32, 0.06, 0.2, 0.2], [0.32, 0.06, 0.2, 0.2], [-0.2, 0.32, 0.22, 0.16], [0.2, 0.32, 0.22, 0.16]];
 		for (const [x, z, w, d] of rooms) {
-			k.mc(H.MOSAIC, '#d8c7a3').flat().box(w - 0.02, 0.006, d - 0.02, x, 0, z).soft();
+			k.mc(H.MOSAIC, '#d8c7a3').flat().uvGeo(0.64, 0.4).box(w - 0.02, 0.006, d - 0.02, x, 0, z).uvBox().soft();
 			for (const [a, b, c, e] of [[x - w / 2, z - d / 2, x + w / 2, z - d / 2], [x - w / 2, z + d / 2, x + w / 2, z + d / 2], [x - w / 2, z - d / 2, x - w / 2, z + d / 2], [x + w / 2, z - d / 2, x + w / 2, z + d / 2]]) {
 				const L = Math.hypot(c - a, e - b);
 				k.mc(H.ASHLAR, Wl).uvS(1.6).flat().box(L + 0.016, 0.03 + R() * 0.02, 0.016, (a + c) / 2, 0, (b + e) / 2, -Math.atan2(e - b, c - a)).uvS(1).soft();
@@ -384,10 +386,8 @@ export const ANTIK = {
 			k.mc(H.PLASTER, '#a8462f').cyl(0.014, 0.016, 0.06, 12, x, 0, z);
 			column(k, x, 0.06, z, { h: 0.12, r: 0.013, order: 'doric', col: '#e8dcc2', mat: H.PLASTER, flutes: 12 });
 		}
-		// koruma çatısı: dikmeler ve hafif çatı (yarısı)
-		k.mc(H.METAL, '#bfc4c8');
-		for (const [x, z] of [[-0.48, -0.16], [0.48, -0.16]]) k.cyl(0.006, 0.006, 0.3, 6, x, 0, z);
-		k.mc(H.METAL, '#d7dadd').flat().box(1.0, 0.008, 0.16, 0, 0.3, -0.2).soft();
+		// ziyaretçi yolu (ahşap iskele): mozaikler yukarıdan açıkça görünür
+		k.mc(H.WOOD, '#8d6a48').flat().box(0.04, 0.008, 0.6, 0.48, 0.04, 0.08).soft();
 		for (const [x, z] of [[-0.6, 0.45], [0.6, 0.44], [-0.62, -0.25], [0.62, -0.28]]) tree(k, x, z, 1, R, 0, '#6d8f3e');
 	},
 
