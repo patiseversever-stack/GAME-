@@ -74,15 +74,16 @@ for (const kind of kinds) {
 				const y0 = info.y + info.r * 0.45;
 				const plan = (u, yw, lift = 0) => ({ dist: near * Math.pow(64 / near, u), pitch: 0.3 + lift * (1 - u) * (1 - u) + (0.68 - lift * 0.4) * (1 - Math.pow(1 - u, 1.7)), yaw: yw + 0.9 * u, y: y0 + (info.y - y0) * Math.min(1, u * 1.5) });
 				const pref = -(s0?.ry || 0) + 0.45;
-				const bury = Math.max(1.6, info.r * 1.7);
+				let bury = Math.max(1.6, info.r * 1.7);
+				for (const t of app.props.landmarks.sites) if (t !== s0 && Math.hypot(t.x - info.x, t.z - info.z) < 3.4) bury = Math.max(bury, Math.hypot(t.x - info.x, t.z - info.z) + 0.1);
 				if (!info.yalin && app.props.landmarks.uHide) app.props.landmarks.uHide.value.z = bury;
 				let yaw = pref;
 				let lift0 = 0;
 				let bestS = Infinity;
 				const b = app.board;
-				for (let n = 0; n < 48; n++) {
+				for (let n = 0; n < 64; n++) {
 					const i = n % 16;
-					const lift = [0, 0.16, 0.32][Math.floor(n / 16)];
+					const lift = [0, 0.16, 0.32, 0.5][Math.floor(n / 16)];
 					const yw = pref + (i < 8 ? i : i - 16) * (Math.PI / 8);
 					let occ = 0;
 					for (const [u, w] of [[0, 3], [0.1, 2], [0.22, 1]]) {
@@ -123,7 +124,7 @@ for (const kind of kinds) {
 				c.yaw = V.yaw;
 				for (let i = 0; i < 40; i++) app.frame(1 / 30, false);
 				app.render();
-				return { yaw: +yaw.toFixed(2), lift: lift0, occ: +bestS.toFixed(1) };
+				return { yaw: +yaw.toFixed(2), lift: lift0, occ: +bestS.toFixed(1), bury: +bury.toFixed(2), komsu: app.props.landmarks.sites.filter((t) => t !== s0).map((t) => [t.kind, +Math.hypot(t.x - info.x, t.z - info.z).toFixed(1)]).sort((a, b) => a[1] - b[1]).slice(0, 2) };
 			},
 			{ info, v },
 		);

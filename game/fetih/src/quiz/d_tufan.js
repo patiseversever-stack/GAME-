@@ -157,8 +157,9 @@ const CSS = /* css */ `
 .dn-tf-cap.stay{animation:dnTfCapIn 1.1s cubic-bezier(.25,.6,.3,1) forwards}
 .dn-tf-cap b{font-family:'Lilita One';font-weight:400;font-size:32px;line-height:1;letter-spacing:.16em;color:#fff;text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.55),0 0 14px rgba(4,12,30,.7),0 0 26px rgba(70,160,255,.6)}
 .dn-tf-cap small{font-family:'Fredoka';font-weight:600;font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:#bfefff;padding:3px 12px 0;border-top:1px solid rgba(191,239,255,.55);text-shadow:0 1px 0 rgba(0,0,0,.7),0 0 8px rgba(4,12,30,.8)}
-.dn-tf-cap.gold b{color:#ffd25a;text-shadow:0 2px 0 rgba(60,30,0,.7),0 0 12px rgba(30,15,0,.75),0 0 28px rgba(255,190,70,.8)}
-.dn-tf-cap.gold small{color:#ffe7a8;border-color:rgba(255,215,120,.6)}
+.dn-tf-cap.gold{padding:8px 0 9px;background:radial-gradient(ellipse 52% 100% at 50% 50%,rgba(8,12,28,.62),rgba(8,12,28,.38) 55%,rgba(8,12,28,0) 100%)}
+.dn-tf-cap.gold b{color:#ffd25a;-webkit-text-stroke:1.2px rgba(52,26,0,.85);paint-order:stroke fill;text-shadow:0 2px 0 rgba(40,18,0,.9),0 0 10px rgba(8,10,24,.9),0 0 24px rgba(8,10,24,.7),0 0 34px rgba(255,190,70,.45)}
+.dn-tf-cap.gold small{color:#ffeab4;border-color:rgba(255,215,120,.7);text-shadow:0 1px 0 rgba(0,0,0,.85),0 0 8px rgba(8,10,24,.95)}
 @keyframes dnTfCap{0%{opacity:0;transform:translateY(8px)}22%{opacity:1;transform:none}76%{opacity:1;transform:none}100%{opacity:0;transform:translateY(-4px)}}
 @keyframes dnTfCapIn{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 @keyframes dnTfOut{to{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(.8)}}
@@ -218,7 +219,9 @@ export const tufan = {
 		const bb = app.boundsOf(idx);
 		const frame = (pitch, dur, extra = {}) =>
 			C.fit({ x0: bb.x0 - 3, x1: bb.x1 + 3, z0: bb.z0 - 3, z1: bb.z1 + 2 }, { pitch, pad: 1.18, top: cardTop(el), dur, arc: 3, ...extra });
-		queueMicrotask(() => el.isConnected && frame(0.95, 0.9));
+		// soru anı: alçak, eğik bakış (dört il önde, ufuk ve fırtınalı gök kadrajda): şimşek ufukta çakar
+		const Q_PITCH = 0.36;
+		queueMicrotask(() => el.isConnected && frame(Q_PITCH + 0.08, 0.9));
 		const gauge = root.querySelector('.dn-tf-g b');
 		const gBox = root.querySelector('.dn-tf-g');
 		const bar = root.querySelector('.dn-tf-g u');
@@ -240,11 +243,20 @@ export const tufan = {
 		};
 		let reveal = false;
 		let closed = false;
+		// gece okunur kalsın: dört il gölgede renk tonunun aydınlık yüzüyle (tam gündüz değil), kıyılar ay ışığında
+		const litUp = () => {
+			if (reveal) return;
+			b.G.uSelLit.value = Math.max(b.G.uSelLit.value, 0.6);
+			// gölgede renk tonunun biraz aydınlığı: kıyılar, dağlar ve il sınırları gecede seçilir (guard.restore geri alır)
+			b.G.uNightTone.value.set(2.7, 2.5, 2.3, 0.95);
+		};
+		litUp();
 		const stopOpen = onOpen(el, () => {
 			// düello filmi sahneyi gündüze döndürebilir: gece, kart açılınca (ve az sonra) yeniden kurulur
 			gQ.dark(idx);
-			setTimeout(() => !reveal && el.isConnected && gQ.dark(idx), 1200);
-			frame(0.86, 5, { yawRate: 0.012 });
+			litUp();
+			setTimeout(() => !reveal && el.isConnected && (gQ.dark(idx), litUp()), 1200);
+			frame(Q_PITCH, 5, { yawRate: 0.012 });
 			snd.bed();
 			nextBolt = (clock.now() - tq0) / 1000 + 1.4; // ilk şimşek kart açıldıktan az sonra
 		});
@@ -262,17 +274,18 @@ export const tufan = {
 		 * Şimşek: kartın hemen altındaki görünen şeridin bir yanında (ekrandan dünyaya ışın). Alçak bakışta ışın zemine
 		 * uzaktan değer ya da hiç değmez: şimşek ufukta, gökte çakar; yüksek bakışta denize iner. Kameradan hep uzak.
 		 */
-		const strike = (t, near = 0.35) => {
+		const strike = (t, near = 0.35, sky = false) => {
 			boltT = t;
 			boltN++;
 			const cam = app.camera;
 			const side = boltN % 2 ? 1 : -1;
 			const d = C.dist;
-			const ndcY = 1 - 2 * Math.min(0.85, cardTop(el) + 0.07);
+			// kartın altındaki görünen şerit: alçak bakışta (sky) ufuk çizgisinden göğe yükselen iri şimşek, ortaya yakın
+			const ndcY = 1 - 2 * Math.min(0.9, cardTop(el) + (sky ? 0.3 : 0.1));
 			const o = new THREE.Vector3(cam.position.x, cam.position.y, cam.position.z);
-			const r = new THREE.Vector3(side * (0.3 + 0.25 * Math.random()), ndcY, 0.5).unproject(cam).sub(o).normalize();
+			const r = new THREE.Vector3(side * (sky ? 0.12 + 0.22 * Math.random() : 0.3 + 0.25 * Math.random()), ndcY, 0.5).unproject(cam).sub(o).normalize();
 			let k = r.y < -0.02 ? -o.y / r.y : Infinity;
-			const far = d * 2.6;
+			const far = d * 1.5; // ufuktaki şimşek kameraya yakınca: gökte iri görünür
 			if (k > far) k = far;
 			const ox = o.x + r.x * k;
 			const oz = o.z + r.z * k;
@@ -281,10 +294,13 @@ export const tufan = {
 			const fL = Math.hypot(fx, fz) || 1;
 			fx /= fL;
 			fz /= fL;
-			const H = Math.min(d * (0.28 + 0.12 * Math.random()) * (k >= far ? 2 : 1), Math.max(2, cam.position.y * 0.6));
-			fl.bolt.strike(ox, k >= far ? -H * 0.15 : 0, oz, H, -fz, fx, Math.random());
+			// ufukta (alçak bakış): gökte iri, yere kadar inen dallı şimşek; yüksek bakışta denize iner
+			const big = sky || k >= far;
+			const H = big ? d * (0.8 + 0.25 * Math.random()) : Math.min(d * (0.28 + 0.12 * Math.random()), Math.max(2, cam.position.y * 0.6));
+			fl.bolt.strike(ox, big && k >= far ? -H * 0.15 : 0, oz, H, -fz, fx, Math.random());
 			U.uBolt.value.set(ox, oz, 0, d * 0.45);
 			snd.thunder(0.9 + Math.random() * 1.3, side * 0.6, near);
+			if (globalThis.__fl) globalThis.__fl.tfBolt = (globalThis.__fl.tfBolt || 0) + 1; // çekim araçları için (geliştirme)
 		};
 		const atmos = (t, S, rain, gold, rise, wet) => {
 			const db = t - boltT;
@@ -310,7 +326,7 @@ export const tufan = {
 			qM = Math.min(Q_RISE, t * 0.6);
 			fl.level(levelY(qM));
 			if (t >= nextBolt) {
-				strike(t, 0.3);
+				strike(t, 0.3, true); // soru anı: alçak bakışta ufukta iri, dallı şimşek
 				nextBolt = t + 8 + 7 * (0.5 + 0.5 * Math.sin(boltN * 12.9898));
 			}
 			atmos(t, 0.6 * smooth(t / 2), 0.6 * smooth(t / 2.5), 0, 0.12, 0.006);
@@ -388,6 +404,48 @@ export const tufan = {
 					}
 			}
 			return best;
+		};
+		/** Bu kadrajda alt kenarda kesilen büyük yapı sayısı (yapının ekrandaki alt payı, kenar şeridi). */
+		const cutAt = (x, y, z, dist, p, w, top) => {
+			const cp = Math.cos(p);
+			const cx = x - Math.sin(w) * cp * dist;
+			const cy = y + Math.sin(p) * dist;
+			const cz = z + Math.cos(w) * cp * dist;
+			let fx = x - cx;
+			let fy = y - cy;
+			let fz = z - cz;
+			const fl0 = Math.hypot(fx, fy, fz) || 1;
+			fx /= fl0;
+			fy /= fl0;
+			fz /= fl0;
+			// sağ = f × yukarı, yukarı' = sağ × f
+			let rx = -fz;
+			let rz = fx;
+			const rl = Math.hypot(rx, rz) || 1;
+			rx /= rl;
+			rz /= rl;
+			const ux = -rz * fy;
+			const uy = rz * fx - rx * fz;
+			const uz = rx * fy;
+			const tv = Math.tan((app.camera.fov * Math.PI) / 360);
+			const asp = app.camera.aspect || 0.46;
+			let n = 0;
+			for (const st of sites) {
+				for (const hy of [0.2, 1.4]) {
+					const vx = st.x - cx;
+					const vy = st.y + st.s * hy - cy;
+					const vz = st.z - cz;
+					const dd = vx * fx + vy * fy + vz * fz;
+					if (dd < 0.5) continue;
+					const sx = (vx * rx + vz * rz) / dd / (tv * asp);
+					const sy = (vx * ux + vy * uy + vz * uz) / dd / tv - top; // kart: görüntü merkezi ekranda aşağıda (lens kaydırma)
+					if (Math.abs(sx) < 1.05 && sy < -0.72 && sy > -1.45) {
+						n += st.s;
+						break;
+					}
+				}
+			}
+			return n;
 		};
 		const sizeOf = (i) => {
 			const q = app.boundsOf([i]);
@@ -511,11 +569,26 @@ export const tufan = {
 					const cz = (w.z0 + w.z1) / 2;
 					keys.push({ t: 1.7, x: cx + (p0.x - cx) * 0.35, y: 0, z: cz + (p0.z - cz) * 0.35, dist: C.fitDist(w, 0.7, 1.0, top0) * 0.66, p: 0.7, w: Math.max(-0.5, Math.min(0.5, wrapPi(ys0) * 0.4)) });
 				}
-				// vinç inişi: kıyıya, deniz tarafından
+				// vinç inişi: kıyıya, deniz tarafından; önde kalan büyük yapılar (İstanbul) alt kenarda kesilmesin diye
+				// yön (±0,3/0,6/0,9) ve eğim adaylarından en az kesen seçilir
 				{
 					const r = Math.min(d0.r, 14);
 					const s0 = sizeOf(idx[ord[0]]).s;
-					keys.push({ t: 2.75, x: p0.x + d0.dx * r * 0.55, y: at(2.75), z: p0.z + d0.dz * r * 0.55, dist: 26 + s0 * 0.5, p: 0.46, w: ys0 + 0.18 });
+					const x = p0.x + d0.dx * r * 0.55;
+					const z = p0.z + d0.dz * r * 0.55;
+					const dist = 26 + s0 * 0.5;
+					let best = { w: ys0 + 0.18, p: 0.46 };
+					let bs = Infinity;
+					for (const dw of [0, 0.3, -0.3, 0.6, -0.6, 0.9, -0.9]) {
+						for (const p of [0.46, 0.56, 0.68]) {
+							const sc = cutAt(x, at(2.75), z, dist, p, ys0 + 0.18 + dw, top0) * 3 + Math.abs(dw) * 1.2 + (p - 0.46) * 4;
+							if (sc < bs) {
+								bs = sc;
+								best = { w: ys0 + 0.18 + dw, p };
+							}
+						}
+					}
+					keys.push({ t: 2.75, x, y: at(2.75), z, dist, p: best.p, w: best.w });
 				}
 				// her il: varış (batıştan hemen önce), ağır yaklaşma; aralarda yükselip süzülme
 				let yPrev = ys0 + 0.3;
@@ -552,6 +625,21 @@ export const tufan = {
 					const all = app.boundsOf(idx);
 					const dTop = Math.max(dl * 2.4, C.fitDist({ x0: all.x0 - 2, x1: all.x1 + 2, z0: all.z0 - 2, z1: all.z1 + 2 }, 0.85, 1.0, top0) * 0.6);
 					keys.push({ t: END, x: p3.x, y: at(END), z: p3.z, dist: dTop, p: 0.84, w: y3 + 0.6 });
+				}
+				// yakın anahtar kareler (batış, son ada): önde kalan büyük yapılar alt kenarda kesilmesin; yön hafifçe döner
+				for (let i = 2; i < keys.length; i++) {
+					const kf = keys[i];
+					if (kf.p > 0.6) continue;
+					let bw = kf.w;
+					let bsc = cutAt(kf.x, kf.y, kf.z, kf.dist, kf.p, kf.w, top0) * 3;
+					for (const dw of [0.35, -0.35, 0.7, -0.7]) {
+						const sc = cutAt(kf.x, kf.y, kf.z, kf.dist, kf.p, kf.w + dw, top0) * 3 + Math.abs(dw) * 1.2;
+						if (sc < bsc) {
+							bsc = sc;
+							bw = kf.w + dw;
+						}
+					}
+					kf.w = bw;
 				}
 				const path = camPath(keys);
 				// yol denetimi: kamera ve bakış hattı araziye girmesin (gereken anahtar karede eğim artar)

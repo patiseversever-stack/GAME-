@@ -1,8 +1,8 @@
 // Kahraman maketler: kaleler, surlar ve saray (Van Kalesi, Kız Kalesi, Bodrum Kalesi, Alanya Kızıl Kule, Ankara
-// Kalesi, Diyarbakır Surları ve On Gözlü Köprü, İshak Paşa Sarayı, Ani Harabeleri).
+// Kalesi, İshak Paşa Sarayı, Ani Harabeleri). Diyarbakır Surları v1.1: hero_yeni2.js.
 
 import * as THREE from 'three';
-import { H, COL, wall, block, dome, minaret, ground, tree, cypress, pine, flag, rockMass, roofHip, curtain, crenel, towerRound, towerSquare, stairs, konak, openingPts, muqarnasRing, blob, vn3 } from './hero_parts.js';
+import { H, COL, wall, block, dome, minaret, ground, tree, cypress, flag, rockMass, curtain, crenel, towerRound, towerSquare, konak, openingPts, muqarnasRing } from './hero_parts.js';
 
 const shape = (pts) => new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
 
@@ -172,38 +172,6 @@ export const KALE = {
 		for (const [x, z, ry] of [[-0.18, 0.08, 0.2], [-0.05, 0.16, -0.3], [0.15, 0.1, 0.5], [-0.2, -0.1, -0.1], [0.22, -0.05, 0.1]]) konak(k, { x, z, y: 0.1, ry, w: 0.12, d: 0.1, floors: 1, s: 0.9, R, plaster: '#f0eadc', stone: '#b5a68a' });
 		minaret(k, -0.08, -0.18, { y0: 0.1, h: 0.28, r: 0.014, balconies: 1, col: '#e6dccb', sides: 10, capH: 0.22 });
 		for (const [x, z] of [[-0.55, 0.4], [0.55, 0.38], [0.6, -0.3]]) tree(k, x, z, 1, R);
-	},
-
-	// ---------------------------------------------------------------- Diyarbakır Surları ve On Gözlü Köprü
-	*diyarbakir(k, R) {
-		ground(k, 0.76, { pave: '#6f6b60', paveR: 0.3, jit: 0.06 });
-		const B = '#46423e';
-		// bazalt sur: kalın perde duvar, dev yuvarlak burçlar (Ulu Beden, Yedi Kardeş)
-		const zw = -0.28;
-		for (const [a, b] of [[-0.62, -0.3], [-0.18, 0.12], [0.3, 0.6]]) curtain(k, a, zw, b, zw, { h: 0.16, t: 0.05, col: B, mat: H.ASHLAR, batter: 0.012 });
-		for (const x of [-0.24, 0.21]) {
-			towerRound(k, x, zw + 0.02, { r: 0.09, h: 0.22, col: '#3f3b38', slits: 5 });
-			k.mc(H.CARVE, '#5b5650').cyl(0.092, 0.092, 0.025, 24, x, 0.14, zw + 0.02);
-		}
-		towerRound(k, -0.62, zw, { r: 0.06, h: 0.19, col: B });
-		towerRound(k, 0.6, zw, { r: 0.06, h: 0.19, col: B });
-		yield;
-		// Dicle ve On Gözlü Köprü (kesme taş, on kemer, sivri kemerli)
-		k.mc(H.WATER, '#2f6f78').flat().box(1.5, 0.004, 0.2, 0, -0.012, 0.3).soft();
-		const nb = 10;
-		const L = 1.1;
-		const holes = [];
-		for (let i = 0; i < nb; i++) holes.push({ x: -L / 2 + (L / nb) * (i + 0.5), y: -0.02, w: (L / nb) * 0.62, h: 0.075 + (i === 4 || i === 5 ? 0.012 : 0), kind: 'pointed' });
-		wall(k, { w: L, h: 0.1, t: 0.07, x: 0, y: -0.02, z: 0.3, holes, mat: H.ASHLAR, col: '#a69a84', glass: false });
-		k.mc(H.PAVE, '#9f947f').flat().box(L, 0.004, 0.068, 0, 0.08, 0.3).soft();
-		for (let i = 0; i <= nb; i++) {
-			const x = -L / 2 + (L / nb) * i;
-			for (const sz of [-1, 1]) k.mc(H.ASHLAR, '#9d927c').flat().cone(0.022, 0.06, 4, x, -0.02, 0.3 + sz * 0.035, Math.PI / 4).soft();
-		}
-		yield;
-		// Hevsel Bahçeleri: kıyıda yeşillik
-		for (let i = 0; i < 12; i++) tree(k, -0.6 + i * 0.11 + (R() - 0.5) * 0.04, 0.05 + (R() - 0.5) * 0.08, 1.05, R);
-		for (const [x, z] of [[-0.5, 0.5], [0.4, 0.52]]) tree(k, x, z, 1.1, R);
 	},
 
 	// ---------------------------------------------------------------- İshak Paşa Sarayı (Doğubayazıt)

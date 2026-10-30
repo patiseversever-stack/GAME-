@@ -1,8 +1,8 @@
-// Kahraman maketler: doğa ve kent dokusu, anıtlar (Kapadokya, Uzungöl, Safranbolu, Harran, Ahlat, Akdamar, Anıtkabir,
-// İzmir Saat Kulesi, Çanakkale Şehitler Abidesi). Pamukkale, Sümela, Mardin ve Hasankeyf v1.0'da hero_yeni.js'te.
+// Kahraman maketler: doğa ve kent dokusu, anıtlar (Kapadokya, Safranbolu, Harran, Ahlat, Akdamar, Anıtkabir,
+// İzmir Saat Kulesi, Çanakkale Şehitler Abidesi). Pamukkale, Sümela, Mardin, Hasankeyf (v1.0) ve Uzungöl (v1.1) hero_yeni*.js'te.
 
 import * as THREE from 'three';
-import { H, COL, block, dome, drumPart, minaret, ground, tree, cypress, pine, flag, rockMass, roofGable, konak, curtain, openingPts, alem, stairs, vn3 } from './hero_parts.js';
+import { H, COL, block, dome, drumPart, minaret, ground, tree, cypress, flag, rockMass, roofGable, konak, curtain, openingPts, alem, stairs, vn3 } from './hero_parts.js';
 import { sadirvan } from './hero_cami.js';
 
 const shape = (pts) => new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
@@ -100,39 +100,6 @@ export const DOGA = {
 			const [x, y, z, r] = pos[i];
 			balloon(k, x, y, z, r * 1.25, cols[i][0], cols[i][1], i + 1);
 		}
-	},
-
-	// ---------------------------------------------------------------- Uzungöl
-	*uzungol(k, R) {
-		ground(k, 0.7, { pave: '#6a9a50', paveR: 0.2, mid: '#5d9447' });
-		k.mc(H.WATER, '#2c7f8e').cyl(0.4, 0.4, 0.004, 40, 0.05, 0.001, -0.06);
-		// kıyıdaki beyaz cami: kubbe, tek minare
-		block(k, { w: 0.16, d: 0.14, h: 0.1, x: -0.28, z: 0.36, sides: [3, 2, 3, 2], rows: [[0.25, 0.5]], ww: 0.02, kind: 'round', mat: H.PLASTER, col: '#f4f0e7', frame: 0.003, roof: 'flat' });
-		dome(k, { r: 0.065, x: -0.28, y: 0.11, z: 0.36, sy: 0.85, ribs: 14, seg: 18, alemS: 0.45 });
-		minaret(k, -0.17, 0.42, { h: 0.34, r: 0.014, balconies: 1, col: '#f4f0e7', mat: H.PLASTER, sides: 12, capH: 0.24 });
-		yield;
-		// ahşap dağ evleri (Karadeniz yayla evi)
-		for (const [x, z, ry] of [[0.38, 0.3, 0.2], [0.46, 0.06, -0.3], [-0.44, -0.12, 0.4], [0.2, 0.46, 0.0]]) {
-			k.push().move(x, 0, z).rot(0, ry, 0);
-			k.mc(H.ASHLAR, '#9a917e').flat().box(0.12, 0.04, 0.1, 0, 0, 0);
-			k.mc(H.WOOD, '#8a5a34').box(0.13, 0.08, 0.11, 0, 0.04, 0);
-			for (const dx of [-0.03, 0.03]) {
-				k.mc(H.WIN, COL.GLASS).box(0.02, 0.03, 0.003, dx, 0.065, 0.056);
-				k.mc(H.WOOD, '#5f3d22').box(0.026, 0.004, 0.004, dx, 0.064, 0.057);
-			}
-			k.soft();
-			roofGable(k, { w: 0.15, d: 0.13, h: 0.05, y: 0.12, col: '#8b8f95' });
-			k.pop();
-		}
-		yield;
-		// çam ormanı ve dağ yamacı (arkada)
-		rockMass(k, { rx: 0.6, ry: 0.32, rz: 0.2, y: 0, z: -0.6, seed: 61, col: '#4f6a3e', col2: '#6f8a56', mat: H.GRASS, amp: 0.2 });
-		for (let i = 0; i < 18; i++) {
-			const x = -0.6 + (i % 9) * 0.15 + (R() - 0.5) * 0.06;
-			const z = -0.42 - Math.floor(i / 9) * 0.12 + (R() - 0.5) * 0.04;
-			pine(k, x, z, 1 + R() * 0.3, 0.05 + Math.floor(i / 9) * 0.1, R);
-		}
-		for (const [x, z] of [[-0.5, 0.42], [0.55, 0.42], [-0.58, 0.18]]) pine(k, x, z, 1.1, 0, R);
 	},
 
 	// ---------------------------------------------------------------- Safranbolu evleri
