@@ -182,7 +182,8 @@ function pickItems(q, R) {
 const FUSE_D = 'M60 30 C60 16 70 8 82 10 C94 12 96 26 106 24 C113 22 114 12 112 6';
 let UID = 0;
 
-const CSS = /* css */ `
+const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4px;height:14px;border-radius:7px;background:linear-gradient(90deg,rgba(255,210,90,.85) var(--p),rgba(19,34,74,.12) var(--p));font:700 10px/14px Fredoka,system-ui,sans-serif;font-style:normal;color:#3a2000;text-align:right;padding-right:6px;pointer-events:none}
+
 .fl-q.dn-fz-card .fl-clock,.fl-q.dn-fz-card .fl-tbar{visibility:hidden}
 .fl-q.dn-fz-card.dn-boom .fl-qc{animation:dnFzShake .7s cubic-bezier(.36,.07,.19,.97) both}
 .dn-fz{display:flex;flex-direction:column;gap:8px;--red:#ff4a2a}
@@ -233,7 +234,7 @@ const CSS = /* css */ `
 .dn-fz-qt em{flex:none;font-style:normal;font-family:'Lilita One';font-size:11px;letter-spacing:.08em;padding:2px 6px;border-radius:6px;background:var(--gold);color:#3a2000}
 .dn-fz-qt.in{animation:dnFzIn .32s cubic-bezier(.3,1.4,.5,1)}
 .dn-fz-o{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.dn-fz-o .fl-opt{justify-content:center;text-align:center;min-height:52px;font-family:'Lilita One';font-weight:400;letter-spacing:.02em;font-size:clamp(15px,calc(4.4 * var(--vw,4px)),19px);padding:6px 8px}
+.dn-fz-o .fl-opt{position:relative;justify-content:center;text-align:center;min-height:52px;font-family:'Lilita One';font-weight:400;letter-spacing:.02em;font-size:clamp(15px,calc(4.4 * var(--vw,4px)),19px);padding:6px 8px}
 .dn-fz-o .fl-opt.ok{background:linear-gradient(180deg,#b8ffc8,#58d878);border-color:#2fa84a;color:#0a3a14}
 .dn-fz-o .fl-opt.no{background:linear-gradient(180deg,#ffc8bc,#ff7a62);border-color:#d83a20;color:#4a0a00;animation:flq-shake .38s}
 .dn-fz-o .fl-opt.dim{opacity:.45}
@@ -305,7 +306,8 @@ export const fitil = {
 	time: 30,
 	label: 'Fitil',
 	kind: 'exact',
-	jokers: [], // yarı yarıya ve seyirci yok (iki şıklı, saniyelik sorular); süre ve kalkan tur boyunca anlamsız değil ama etkisiz
+	// seyirci: sıradaki 3 mini soruda seyircinin oyu (iki şıklı sorularda yarı yarıya anlamsız); sabotaj ve kalkan genel kuralla
+	jokers: ['kahin'],
 	prepare(q, R) {
 		const items = pickItems(q, R);
 		const fuse = Math.round((FUSE[0] + R() * (FUSE[1] - FUSE[0])) * 10) / 10;
@@ -381,6 +383,8 @@ export const fitil = {
 				if (f === 0) buzz(18);
 			}
 		};
+		let aud = null;
+		let audLeft = 0;
 		const show = (k) => {
 			if (k === shown) return;
 			shown = k;
@@ -394,6 +398,12 @@ export const fitil = {
 				b.disabled = false;
 				b.textContent = it.o[i];
 			});
+			// seyirci jokeri: şıkların üstünde oy yüzdesi (doğru şık çoğunlukla önde, her zaman değil)
+			if (aud && audLeft > 0) {
+				audLeft--;
+				const pr = aud[k % v.items.length];
+				btns.forEach((b, i) => b.insertAdjacentHTML('beforeend', `<i class="dn-fz-aud" style="--p:${pr[i]}%">%${pr[i]}</i>`));
+			}
 		};
 		const lockUI = (until) => {
 			lockT = until;
@@ -536,6 +546,15 @@ export const fitil = {
 				btns.forEach((b) => (b.disabled = true));
 			},
 			value: () => ({ side: 0, me: { log: log.slice() }, vs: foeSpec }),
+			joker(e) {
+				if (!e?.aud) return;
+				aud = e.aud;
+				audLeft = 3;
+				const k = shown;
+				shown = -1;
+				if (k != null && k >= 0 && !over) show(k); // açık soruya hemen uygula
+				app?.ui?.toast?.('Seyirci sıradaki 3 soruda oy veriyor', { tone: 'good', ms: 1600 });
+			},
 			reveal(results) {
 				const meR = results.find((r) => r.p?.human);
 				if (!meR) return;
@@ -545,6 +564,16 @@ export const fitil = {
 			},
 			destroy: close,
 		};
+	},
+	joker(id, v, R) {
+		if (id !== 'kahin') return null;
+		// her mini soru için seyirci oyu: doğruya %58–86, ara sıra (%12) seyirci yanılır
+		const aud = v.items.map((it) => {
+			let pr = Math.round(58 + R() * 28);
+			if (R() < 0.12) pr = 100 - pr;
+			return it.right === 0 ? [pr, 100 - pr] : [100 - pr, pr];
+		});
+		return { aud };
 	},
 	/** Çevrimiçi görünüm: fitilin süresi ve mini soruların cevapları sunucuda. */
 	publicView(v) {

@@ -892,7 +892,8 @@ export class UI {
 			}
 		} else this.sfx('reveal');
 		if (T.needsMap) this._mapReveal(v, results);
-		await this._hold(closest ? 3000 : 1900);
+		// tip kendi cevap filmini isteyebilir (T.revealMs, ör. Tufan'da deniz yükselişi); dokununca yine erken geçilir
+		await this._hold(Math.max(closest ? 3000 : 1900, Math.min(12000, Number(T.revealMs) || 0)));
 		if (gen !== this._gen) return;
 		card.classList.remove('on');
 		this.setPins([]);
