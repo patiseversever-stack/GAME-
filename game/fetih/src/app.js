@@ -308,6 +308,7 @@ export class App {
 		this.fx.update(dt);
 		this.nightLights.update(dt, this.camera);
 		this.cam.update(dt);
+		this.props.landmarks?.lod?.update(dt, this.camera, this.cam); // ekran boyuna göre kahraman maketler
 		this.weather.update(dt, this.cam);
 		if (draw) {
 			this.ui.update();

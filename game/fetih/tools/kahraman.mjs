@@ -43,6 +43,7 @@ for (const kind of kinds) {
 		({ kind, yalin }) => {
 			const app = window.__fl.app;
 			const lm = app.props.landmarks;
+			if (lm.lod) lm.lod.enabled = false; // yalın kıyasta ekran boyu kahramanı gelmesin
 			lm.heroOff?.();
 			const s = lm.sites.find((x) => x.kind === kind);
 			if (!s) return null;
