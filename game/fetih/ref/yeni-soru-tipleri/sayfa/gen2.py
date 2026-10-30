@@ -351,6 +351,7 @@ for key, n, name, wow, eff, st, tags, what, how, why in T:
       <button type="button" class="b-tut" data-v="tut" id="tut-{key}" aria-pressed="false">✓ Tut</button>
       <button type="button" class="b-ele" data-v="ele" id="ele-{key}" aria-pressed="false">✕ Ele</button>
     </div>
+    <div class="cm"><label for="not-{key}">Yorumun</label><textarea id="not-{key}" rows="2" placeholder="Ne düşünüyorsun? Neyi değiştirelim?"></textarea></div>
   </div>
 </article>'''
 

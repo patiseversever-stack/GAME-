@@ -248,6 +248,14 @@ h1 { font-size: clamp(36px, 8.5vw, 56px); line-height: 1; color: var(--gold); te
 .rope .lbl { fill: #ff8a7e; font: 700 9px var(--body); text-anchor: middle; letter-spacing: .1em }
 .mp .r1 { fill: #6b4ab8 } .mp .r2 { fill: #2f8f55 } .mp .r3 { fill: #c97a2a } .mp .r4 { fill: #b79a3a } .mp .r5 { fill: #2d7f86 } .mp .r6 { fill: #7a5a9a } .mp .r7 { fill: #b0503c }
 
+.cm { display: grid; gap: 4px }
+.cm label { font-size: 13px; font-weight: 600; color: var(--mute) }
+.cm textarea { font: 400 15px/1.45 var(--body); color: var(--fg); background: var(--navy-d); border: 1px solid rgba(255, 255, 255, .14); border-radius: 12px; padding: 9px 11px; resize: vertical; min-height: 44px; width: 100% }
+.cm textarea::placeholder { color: #7d89ad }
+.cm textarea:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 3px rgba(255, 210, 90, .18) }
+.cm.gen { margin-bottom: 18px; max-width: 680px }
+.cnt .y b { color: var(--gold) }
+
 section.res { padding-top: 40px; display: grid; gap: 12px }
 section.res h2 { font-size: 28px }
 .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 12px }
@@ -271,7 +279,7 @@ section.res ol, section.res ul { padding-left: 20px; display: grid; gap: 6px }
 </header>
 
 <div class="bar">
-  <div class="cnt" aria-live="polite"><span class="t"><b id="n-tut">0</b>tutulan</span><span class="e"><b id="n-ele">0</b>elenen</span><span><b id="n-bos">30</b>karar bekliyor</span></div>
+  <div class="cnt" aria-live="polite"><span class="t"><b id="n-tut">0</b>tutulan</span><span class="e"><b id="n-ele">0</b>elenen</span><span><b id="n-bos">30</b>karar bekliyor</span><span class="y"><b id="n-not">0</b>yorum</span></div>
   <div class="flt" role="group" aria-label="Göster">
     <button type="button" id="f-hepsi" data-f="hepsi" aria-pressed="true">Hepsi</button>
     <button type="button" id="f-bos" data-f="bos" aria-pressed="false">Bekleyen</button>
@@ -280,6 +288,8 @@ section.res ol, section.res ul { padding-left: 20px; display: grid; gap: 6px }
   </div>
   <div class="save" id="save">Seçimlerin kaydediliyor…</div>
 </div>
+
+<div class="cm gen" data-k="genel"><label for="not-genel">Genel yorumun</label><textarea id="not-genel" rows="2" placeholder="Bütün defter için söylemek istediğin bir şey var mı?"></textarea></div>
 
 <div class="list" id="list">{{CARDS}}
   <p class="empty" id="empty" hidden>Bu filtrede tip yok.</p>
@@ -299,15 +309,17 @@ section.res ol, section.res ul { padding-left: 20px; display: grid; gap: 6px }
   let filter = 'hepsi';
   let db = null;
   const saveEl = document.getElementById('save');
-  const LS = 'fl-defter-secim';
+  const LS = 'fl-defter-secim2';
   const loadLocal = () => { try { return JSON.parse(localStorage.getItem(LS) || '{}') || {}; } catch { return {}; } };
   const saveLocal = () => { try { localStorage.setItem(LS, JSON.stringify(state)); } catch {} };
   const note = (t, err) => { saveEl.textContent = t; saveEl.classList.toggle('err', !!err); };
+  const ta = (k) => document.getElementById('not-' + k);
 
   function render() {
-    let t = 0, e = 0, shown = 0;
+    let t = 0, e = 0, n = 0, shown = 0;
+    for (const k of Object.keys(state)) if ((state[k].not || '').trim()) n++;
     for (const c of cards) {
-      const v = state[c.dataset.k] || '';
+      const v = state[c.dataset.k]?.karar || '';
       if (v === 'tut') t++; else if (v === 'ele') e++;
       if (v) c.dataset.karar = v; else delete c.dataset.karar;
       c.querySelector('.b-tut').setAttribute('aria-pressed', String(v === 'tut'));
@@ -316,30 +328,55 @@ section.res ol, section.res ul { padding-left: 20px; display: grid; gap: 6px }
       c.hidden = !vis;
       if (vis) shown++;
     }
+    for (const k of [...keys, 'genel']) {
+      const el = ta(k);
+      if (el && document.activeElement !== el && !timers[k]) el.value = state[k]?.not || '';
+    }
     document.getElementById('n-tut').textContent = t;
     document.getElementById('n-ele').textContent = e;
     document.getElementById('n-bos').textContent = keys.length - t - e;
+    document.getElementById('n-not').textContent = n;
     document.getElementById('empty').hidden = shown > 0;
   }
 
-  // bir belgeye aynı anda tek yazma
+  // bir belgeye aynı anda tek yazma; yazı bitince (duraklayınca) kaydet
   const chain = {};
-  function write(k, v) {
-    if (!db) { saveLocal(); return; }
+  const timers = {};
+  function write(k) {
+    saveLocal();
+    if (!db) { note('Bu cihazda kaydedildi.'); return; }
+    const s = state[k] || {};
+    const karar = s.karar || '';
+    const not = (s.not || '').trim();
     const ref = db.collection('secim').doc(k);
-    chain[k] = (chain[k] || Promise.resolve()).then(() => (v ? ref.set({ karar: v, zaman: Date.now() }) : ref.delete()))
-      .then(() => note('Seçimlerin kaydedildi, bana ulaşıyor.'))
-      .catch(() => note('Kaydedilemedi. Bağlantını kontrol edip tekrar dokun.', true));
+    chain[k] = (chain[k] || Promise.resolve()).then(() => (karar || not ? ref.set({ karar, not, zaman: Date.now() }) : ref.delete()))
+      .then(() => note('Kaydedildi, bana ulaşıyor.'))
+      .catch(() => note('Kaydedilemedi. Bağlantını kontrol edip tekrar dene.', true));
   }
 
   document.getElementById('list').addEventListener('click', (ev) => {
     const b = ev.target.closest('.dec button');
     if (!b) return;
     const k = b.closest('.tc').dataset.k;
-    const v = state[k] === b.dataset.v ? '' : b.dataset.v;
-    if (v) state[k] = v; else delete state[k];
+    const cur = state[k] || (state[k] = {});
+    cur.karar = cur.karar === b.dataset.v ? '' : b.dataset.v;
     render();
-    write(k, v);
+    write(k);
+  });
+  document.addEventListener('input', (ev) => {
+    const el = ev.target.closest('.cm textarea');
+    if (!el) return;
+    const k = el.id.slice(4);
+    (state[k] || (state[k] = {})).not = el.value;
+    note('Yazıyorsun…');
+    clearTimeout(timers[k]);
+    timers[k] = setTimeout(() => { timers[k] = 0; write(k); render(); }, 900);
+  });
+  document.addEventListener('focusout', (ev) => {
+    const el = ev.target.closest && ev.target.closest('.cm textarea');
+    if (!el) return;
+    const k = el.id.slice(4);
+    if (timers[k]) { clearTimeout(timers[k]); timers[k] = 0; write(k); render(); }
   });
   document.querySelector('.flt').addEventListener('click', (ev) => {
     const b = ev.target.closest('button');
@@ -351,20 +388,25 @@ section.res ol, section.res ul { padding-left: 20px; display: grid; gap: 6px }
 
   state = loadLocal();
   render();
-  note('Seçimlerin bu cihazda tutuluyor.');
+  note('Seçimlerin ve yorumların bu cihazda tutuluyor.');
   const c = window.claude;
   if (c && c.use) {
     c.use('db').then((d) => {
       if (!d) { note('Seçimlerin yalnız bu cihazda. Kararlarını bana yazman yeterli.'); return; }
       db = d;
-      note('Seçimlerin kaydediliyor ve bana ulaşıyor.');
+      note('Seçimlerin ve yorumların kaydediliyor, bana ulaşıyor.');
       db.collection('secim').onSnapshot((s) => {
         const next = {};
-        for (const doc of s.docs) { const v = doc.data()?.karar; if (v === 'tut' || v === 'ele') next[doc.id] = v; }
+        for (const doc of s.docs) {
+          const x = doc.data() || {};
+          next[doc.id] = { karar: x.karar === 'tut' || x.karar === 'ele' ? x.karar : '', not: typeof x.not === 'string' ? x.not : '' };
+        }
+        // yazılmakta olan yorumu ezme
+        for (const k of Object.keys(timers)) if (timers[k] && state[k]) next[k] = { ...(next[k] || {}), not: state[k].not };
         state = next;
         saveLocal();
         render();
-      }, () => note('Seçimler okunamadı; dokunduklarını yine kaydetmeye çalışırım.', true));
+      }, () => note('Kayıtlar okunamadı; yazdıklarını yine kaydetmeye çalışırım.', true));
     }).catch(() => note('Seçimlerin yalnız bu cihazda. Kararlarını bana yazman yeterli.'));
   }
 })();
