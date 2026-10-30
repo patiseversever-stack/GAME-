@@ -428,6 +428,7 @@ void main() {
 	if (!bare && id != ${H.GOLD}.0 && id != ${H.WIN}.0) alb *= mix(vec3(0.78, 0.74, 0.7), vec3(1.0), smoothstep(0.0, 0.05, hgt));
 	float sh = shadowAt(vW, normalize(vN));
 	gLit = 1.0; // kahraman sahnenin öznesi: gece odağında da ışık havuzunda
+	gPool = poolK(vW.xz);
 	vec3 c = shade(alb, N, V, ao, sh, gGloss, rimK);
 	if (id == ${H.GOLD}.0) c += uSunCol * alb * 0.3;
 	if (id == ${H.WATER}.0) c = mix(c, skyReflect(reflect(-V, N)) * 0.8, 0.35);
@@ -571,7 +572,8 @@ export class HKit extends Kit {
 		const pa = g.getAttribute('position');
 		const na = this._smooth ? g.getAttribute('normal') : null;
 		const ua = this._uvm === 1 ? g.getAttribute('uv') : null;
-		this._write(pa.array, pa.itemSize, na ? na.array : null, ua ? ua.array : null, M, this._hs, null, g.index ? g.index.array : null);
+		const ca = g.getAttribute('color');
+		this._write(pa.array, pa.itemSize, na ? na.array : null, ua ? ua.array : null, M, this._hs, null, g.index ? g.index.array : null, ca ? ca.array : null);
 	}
 
 	drape(geo, hf, lift = 0, tf = null) {
@@ -620,7 +622,8 @@ export class HKit extends Kit {
 		return this._prim(key, make, _mm.multiplyMatrices(this.m, local));
 	}
 
-	_write(src, isz, nsrc, uvsrc, M, hs, dr, idx = null) {
+	/** csrc: köşe başına doğrusal renk (geometrinin `color` özniteliği; arazi parçası, kaya yüzü): k.color yerine. */
+	_write(src, isz, nsrc, uvsrc, M, hs, dr, idx = null, csrc = null) {
 		const cnt = idx ? idx.length : (src.length / isz) | 0;
 		const tri = cnt - (cnt % 3);
 		if (!tri) return;
@@ -685,7 +688,12 @@ export class HKit extends Kit {
 		for (let i = 0; i < tri; i++) {
 			const y = pa[p0 + i * 3 + 1];
 			const h = (y - this._base) * hs;
-			if (gr) {
+			if (csrc) {
+				const v = (idx ? idx[i] : i) * 3;
+				ca[c0 + i * 3] = csrc[v];
+				ca[c0 + i * 3 + 1] = csrc[v + 1];
+				ca[c0 + i * 3 + 2] = csrc[v + 2];
+			} else if (gr) {
 				let t = Math.min(1, Math.max(0, (h - gr[2]) / (gr[3] - gr[2])));
 				t = t * t * (3 - 2 * t);
 				ca[c0 + i * 3] = gr[0][0] + (gr[1][0] - gr[0][0]) * t;

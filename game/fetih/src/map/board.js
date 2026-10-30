@@ -96,6 +96,7 @@ uniform float uMe; // insan oyuncunun kimliği (gecede kendi toprağı aydınlı
 uniform float uAct; // sırası gelen oyuncu (bot seçerken onun toprağı da net; -5: yok)
 uniform float uSelAny; // gece odağında seçenekler arasından seçim sürüyor mu (1/0)
 uniform float uSelEdge; // seçim dış hattının gücü: çok seçenekte (başkent, geniş yayılma) ince, beyaz ağ olmasın
+uniform vec4 uGlow; // sınır ışıması (Kuşbakışı ipucu): x bölge, y il başlangıcı (uTime; < 0 kapalı), z belirme süresi, w sönme başlangıcı (< 0 yok)
 varying vec3 vW;
 varying vec3 vN;
 varying vec4 vBio;
@@ -314,7 +315,8 @@ void main() {
 	float sh = shadowAt(vW, N);
 	// kabartma ışığı abartılır (yalnız ışıkta): tepeden bakışta da dağlar, sırtlar ve vadiler hacimli okunur
 	vec3 NL = skirt ? N : normalize(vec3(N.x * 1.7, N.y, N.z * 1.7));
-	gLit = sel * uSelLit; // gece odağı: yalnızca seçilebilir il gündüz ışığında kalır (komşuya hale yok)
+	gPool = skirt ? 0.0 : poolK(vW.xz);
+	gLit = max(sel * uSelLit, gPool); // gece odağı: yalnızca seçilebilir il (ve ışık havuzu) gündüz ışığında kalır
 	float nk = nightK();
 	vec3 c;
 	if (water > 0.01) {
@@ -381,6 +383,25 @@ void main() {
 		c += vec3(0.32, 0.42, 0.66) * hair * nk * (1.0 - 0.7 * ownedK) * 0.2;
 		// kıyı çizgisi: kara ile deniz ayrışsın (ay ışığında ince soğuk parıltı)
 		c += vec3(0.28, 0.4, 0.66) * smoothstep(0.935, 0.99, coast) * (skirt ? 0.0 : 1.0) * nk * 0.07;
+	}
+	// --- sınır ışıması (Kuşbakışı ipucu): işaretli bölgenin (state satır 4 x) dış sınırı ve işaretli ilin (y) sınırı
+	// ince altın hat olarak nabız gibi parlar; içe doğru yumuşak hale. Başlangıç uTime'a bağlı: CPU işi yok.
+	if (uGlow.x > 0.0 && !skirt && d < ${f(RB * 0.97)}) {
+		vec4 me4 = texelFetch(uState, ivec2(int(vPid), 4), 0);
+		vec4 nb4 = nb < 250.0 ? texelFetch(uState, ivec2(int(nb), 4), 0) : vec4(0.0);
+		float off = uGlow.w > 0.0 ? 1.0 - smoothstep(uGlow.w, uGlow.w + 0.6, uTime) : 1.0;
+		float kr = smoothstep(uGlow.x, uGlow.x + uGlow.z, uTime) * step(0.5, me4.x) * step(nb4.x, 0.5);
+		float kp = uGlow.y > 0.0 ? smoothstep(uGlow.y, uGlow.y + uGlow.z, uTime) * step(0.5, me4.y) * step(nb4.y, 0.5) : 0.0;
+		float pr = 0.72 + 0.28 * sin(uTime * 2.6);
+		float pp = 0.7 + 0.3 * sin(uTime * 3.4 + 1.0);
+		float line = lineAA(d, max(0.04, 1.5 * px), px);
+		float core = lineAA(d, max(0.016, 0.6 * px), px);
+		float halo = exp(-d / max(0.3, 6.0 * px));
+		vec3 gold = vec3(1.0, 0.66, 0.2);
+		c = mix(c, gold * 2.2, line * kr * pr * off * 0.85);
+		c += gold * (core * 1.2 + halo * 0.55) * kr * pr * off;
+		c = mix(c, vec3(1.0, 0.86, 0.5) * 2.6, line * kp * pp * off * 0.9);
+		c += vec3(1.0, 0.8, 0.45) * (core * 1.4 + halo * 0.6) * kp * pp * off;
 	}
 	// --- seçim (v0.4): hedef kendi renginde (tarafsızsa krem), temiz beyaz dış hat, yumuşak nabız.
 	// Altın parlama, hale ve iç ışıltı yok: sahip rengi ve sarı arazi çizgiyle karışmaz.
@@ -496,6 +517,8 @@ uniform vec3 uSea, uSeaDeep;
 uniform float uSelOn;
 varying vec3 vW;
 void main() {
+	gPool = poolK(vW.xz);
+	gLit = gPool; // ışık havuzundaki deniz (Kız Kulesi, kıyı yapıları) gecede de gündüz renginde
 	vec2 uv = (vW.xz - uFBox.xy) * uFBox.zw;
 	float eb = min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y));
 	float coast = texture(uWater, clamp(uv, 0.0, 1.0)).r * smoothstep(0.0, 0.06, eb);
@@ -715,9 +738,9 @@ export class Board {
 			p.box = [bx0, bz0, bx1, bz1];
 		}
 
-		// --- il durumu dokusu (kayan noktalı, N × 4)
-		this.S = new Float32Array(N * 4 * 4);
-		this.stateTex = new THREE.DataTexture(this.S, N, 4, THREE.RGBAFormat, THREE.FloatType);
+		// --- il durumu dokusu (kayan noktalı, N × 5; satır 4: sınır ışıması işaretleri, glow())
+		this.S = new Float32Array(N * 5 * 4);
+		this.stateTex = new THREE.DataTexture(this.S, N, 5, THREE.RGBAFormat, THREE.FloatType);
 		this.stateTex.magFilter = this.stateTex.minFilter = THREE.NearestFilter;
 		this.stateTex.colorSpace = THREE.NoColorSpace;
 		this.stateTex.generateMipmaps = false;
@@ -775,7 +798,8 @@ export class Board {
 		this.uAct = { value: -5 };
 		this.uSelEdge = { value: 1 };
 		this.uSelAny = { value: 0 };
-		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct, uSelEdge: this.uSelEdge, uSelAny: this.uSelAny };
+		this.uGlow = { value: new THREE.Vector4(-1, -1, 1.2, -1) };
+		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct, uSelEdge: this.uSelEdge, uSelAny: this.uSelAny, uGlow: this.uGlow };
 		this.uniforms = uniforms;
 		this.mat = new THREE.ShaderMaterial({
 			vertexShader: PROV_VS,
@@ -936,6 +960,37 @@ export class Board {
 	clearFx() {
 		this.liftTo.fill(0);
 		this.glowTo.fill(0);
+	}
+
+	/**
+	 * Sınır ışıması (ipucu): region (bölge anahtarı, ör. 'icanadolu') ve il (indeks) işaretlenir; at.region / at.il
+	 * ışımanın başlayacağı an (uTime, sn; G.uTime.value + gecikme), dur belirme süresi. edgeGlow(null) söndürür
+	 * (~0,6 sn). Işıma shader'da uTime'a bağlı süzülür: kare başına CPU işi yok.
+	 */
+	edgeGlow(region, il = -1, { at = null, dur = 1.2 } = {}) {
+		const U = this.uGlow.value;
+		const now = this.G.uTime.value;
+		if (region == null && il < 0) {
+			if (U.x > 0 && U.w < 0) U.w = now;
+			return;
+		}
+		for (let i = 0; i < this.count; i++) {
+			const r = this._row(i, 4);
+			r[0] = this.provinces[i].region === region ? 1 : 0;
+			r[1] = i === il ? 1 : 0;
+		}
+		this.stateTex.needsUpdate = true;
+		U.set(at?.region ?? now, at?.il ?? -1, dur, -1);
+	}
+	/** Işıma başlangıçları (uTime): yalnız zaman değişir, işaretler aynı kalır. */
+	edgeGlowAt(region, il) {
+		const U = this.uGlow.value;
+		if (region != null) U.x = region;
+		if (il != null) U.y = il;
+	}
+	/** Işımayı hemen kapat (soru kapanınca). */
+	edgeGlowOff() {
+		this.uGlow.value.set(-1, -1, 1.2, -1);
 	}
 
 	/** Seçilebilir iller: gece odağı; yalnızca bunlar gündüz renginde, kalkık ve altın hatlı. null → gündüz. */

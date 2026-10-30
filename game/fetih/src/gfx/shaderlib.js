@@ -31,6 +31,7 @@ uniform float uSelLit; // seçilebilir ilin gündüz ışığı payı (1: tam g�
 #endif
 uniform vec4 uNight;    // x gece (0 gündüz, 1 gece odağı), y ay kenarı gücü, z şafak (dönüşte sıcak ufuk), w yıldızlar
 uniform vec4 uSpot;     // sinematik ışık havuzu (yakın çekim): xy ekran merkezi (0..1), z yarıçap (ekran yüksekliği), w güç
+uniform vec4 uPool;     // dünya uzayında sıcak ışık havuzu (gecede gündüz kalan daire): x, z merkez, yarıçap, güç
 uniform sampler2D uNoise; // döşenebilir gürültü (noise.js): r 16, g 64, b 32, a 8 hücre
 // Bölge havası (weather.js): alan dokusu bölgelerin ağırlığını tutar; r sis (Karadeniz, hafifçe Marmara),
 // g kar tozu (Doğu Anadolu), b sıcak ışık (Akdeniz; daha az Ege ve Güneydoğu), a kuru toz (İç Anadolu, Güneydoğu)
@@ -49,6 +50,7 @@ float gRelit = 0.0;
 float gOwn = 0.0;
 float gWxK = 1.0; // malzemenin bölge havası çarpanı (deniz: kıyı çizgisinde ince, kıyı okunur)
 vec4 gWxW = vec4(-1.0); // malzeme bölge ağırlığını zaten okuduysa (harita, deniz): applyFog yeniden okumaz
+float gPool = 0.0; // piksel ışık havuzunda (poolK): finish() sıcak projektör tonu verir
 #endif
 // Gece paleti (doğrusal). v0.3: siyaha yakın lacivert gece, serin ay ışığı, düşük doygunluk.
 // Aydınlık (seçilebilir) iller ekrandaki tek parlak ve renkli şey olsun; gece manzarası yalnızca ince
@@ -64,6 +66,11 @@ const vec3 N_FOG = vec3(0.006, 0.009, 0.02);
 const vec3 N_WARM = vec3(1.0, 0.56, 0.2);
 const vec3 DAWN = vec3(1.0, 0.5, 0.28);
 
+/** Dünya ışık havuzu (uPool): merkezde 1, kenara doğru yumuşakça 0; kapalıyken 0. */
+float poolK(vec2 q) {
+	if (uPool.w < 0.001) return 0.0;
+	return uPool.w * (1.0 - smoothstep(uPool.z * 0.5, uPool.z, distance(q, uPool.xy)));
+}
 float hash12(vec2 p) {
 	vec3 p3 = fract(vec3(p.xyx) * 0.1031);
 	p3 += dot(p3, p3.yzx + 33.33);
@@ -378,6 +385,8 @@ vec4 finish(vec3 c, float a) {
 	if (nk > 0.001 && gRelit < 0.5) c = mix(c, nightGrade(c), nk);
 	// gecede aydınlık ada: biraz kısık pozlama (beyaza yanmasın, sahip rengi doygun kalsın)
 	c *= 1.0 - 0.14 * (uNight.x - nk);
+	// ışık havuzu: sıcak projektör tonu (gecenin içinde altın bir ada)
+	c *= mix(vec3(1.0), vec3(1.12, 0.98, 0.8), gPool * uNight.x * 0.75);
 	c = tonemap(c * uGrade.z);
 	c = pow(c, vec3(1.0 / 2.2));
 	c = c * uGain + uLift * (1.0 - c);
@@ -411,6 +420,7 @@ float gRelit = 0.0;
 float gOwn = 0.0;
 float gWxK = 1.0; // malzemenin bölge havası çarpanı (deniz: kıyı çizgisinde ince, kıyı okunur)
 vec4 gWxW = vec4(-1.0); // malzeme bölge ağırlığını zaten okuduysa (harita, deniz): applyFog yeniden okumaz
+float gPool = 0.0; // piksel ışık havuzunda (poolK): finish() sıcak projektör tonu verir
 #endif
 uniform sampler2D uState;
 uniform float uSelOn;   // seçim kipi açık (0..1): seçilemeyen iller kararır

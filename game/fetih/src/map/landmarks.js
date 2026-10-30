@@ -32,7 +32,8 @@ const FADE = /* glsl */ `
 ${CLEAR}
 uniform vec3 uFade; // x başlangıç zamanı, y yön (1 beliriyor, 0 kayboluyor), z süre
 uniform vec4 uCastle[4]; // kaleler: konum, w görünür (nightlights.js her karede yazar)
-uniform vec4 uHide; // kahraman maket (heroes.js) gösterilirken yalın kopyası gizlenir: xy merkez (x, z), w açık
+uniform vec4 uHide; // kahraman maket (heroes.js) gösterilirken yalın kopyası gizlenir: xy merkez (x, z), w açık;
+// z: yakın çekimde komşu yapıların gömüldüğü yarıçap (İstanbul gibi sık yerlerde kahramanı örtmesinler; 0 kapalı)
 attribute vec4 site; // yapının merkezi x, taban y, merkez z, ölçek
 // görünürlük (0..1): yapılar sırayla (konuma göre hafif gecikmeli) toprağa gömülür
 float showK(bool fly) {
@@ -41,6 +42,7 @@ float showK(bool fly) {
 	float k = mix(1.0 - t, t, uFade.y);
 	// yakın çekimde yerine kahraman model konan yapı (avlusu dahil) tamamen gömülür
 	if (uHide.w > 0.5 && abs(site.x - uHide.x) + abs(site.z - uHide.y) < 0.01) return 0.0;
+	if (uHide.w > 0.5 && uHide.z > 0.01 && !fly) k = min(k, smoothstep(uHide.z * 0.85, uHide.z, distance(site.xz, uHide.xy)));
 	// başkent kalesi yapının yerine kurulursa (küçük illerde ikisi sığmaz) yapı kale inerken toprağa gömülür
 	for (int i = 0; i < 4; i++) {
 		vec4 c = uCastle[i];
@@ -141,7 +143,8 @@ void main() {
 	else if (id == ${M.LEAF}.0) { gloss = 0.04; rimK = 0.8; }
 	else if (id == ${M.CLOTH}.0) gloss = 0.2;
 	float sh = shadowAt(vW, N);
-	gLit = vSel.x * uSelLit;
+	gPool = poolK(vW.xz);
+	gLit = max(vSel.x * uSelLit, gPool);
 	vec3 c = shade(alb, N, V, ao, sh, gloss, rimK);
 	// altın: sıcak parıltı (kubbe alemi, yazı)
 	if (id == ${M.GOLD}.0) c += uSunCol * alb * 0.25;
