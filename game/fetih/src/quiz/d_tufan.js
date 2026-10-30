@@ -219,9 +219,9 @@ export const tufan = {
 		const bb = app.boundsOf(idx);
 		const frame = (pitch, dur, extra = {}) =>
 			C.fit({ x0: bb.x0 - 3, x1: bb.x1 + 3, z0: bb.z0 - 3, z1: bb.z1 + 2 }, { pitch, pad: 1.18, top: cardTop(el), dur, arc: 3, ...extra });
-		// soru anı: alçak, eğik bakış (dört il önde, ufuk ve fırtınalı gök kadrajda): şimşek ufukta çakar
-		const Q_PITCH = 0.36;
-		queueMicrotask(() => el.isConnected && frame(Q_PITCH + 0.08, 0.9));
+		// soru anı: tepeden bakış (dört il yerinde, dönmeden okunur); eğik sinematik açılar yalnız cevap filminde
+		const Q_PITCH = 1.42; // ~81°: neredeyse dik bakış
+		queueMicrotask(() => el.isConnected && frame(Q_PITCH, 0.9));
 		const gauge = root.querySelector('.dn-tf-g b');
 		const gBox = root.querySelector('.dn-tf-g');
 		const bar = root.querySelector('.dn-tf-g u');
@@ -256,7 +256,7 @@ export const tufan = {
 			gQ.dark(idx);
 			litUp();
 			setTimeout(() => !reveal && el.isConnected && (gQ.dark(idx), litUp()), 1200);
-			frame(Q_PITCH, 5, { yawRate: 0.012 });
+			frame(Q_PITCH, 1.2);
 			snd.bed();
 			nextBolt = (clock.now() - tq0) / 1000 + 1.4; // ilk şimşek kart açıldıktan az sonra
 		});
