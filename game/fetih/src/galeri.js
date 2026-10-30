@@ -88,8 +88,8 @@ const SAMPLES = {
 /** Bankadan tip başına 4 örnek: zorluk 1, 2, 3 ve bir tane daha; sıralamada iki artan, iki azalan. */
 function examples(type) {
 	if (DENEME_SAMPLES[type]) return DENEME_SAMPLES[type];
-	if (SAMPLES[type]) return SAMPLES[type];
 	const list = BANK.filter((q) => q.type === type).sort((a, b) => a.id.localeCompare(b.id));
+	if (!list.length && SAMPLES[type]) return SAMPLES[type]; // bankada sorusu olmayan tip (resimli): örnek soru
 	const pick = (pred, n) => list.filter((q) => pred(q) && !out.includes(q)).slice(0, n);
 	const out = [];
 	if (type === 'order') {

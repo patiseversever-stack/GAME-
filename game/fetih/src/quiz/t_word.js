@@ -55,7 +55,7 @@ ${LAND}{
 
 // ---------------------------------------------------------------- anagram
 export const anagram = {
-	time: 29,
+	time: 26, // belge/yedek: bankanın ortancası (timing.test)
 	label: 'Anagram',
 	kind: 'exact',
 	prepare(q, R) {
@@ -177,7 +177,7 @@ export const anagram = {
 
 // ---------------------------------------------------------------- cross
 export const cross = {
-	time: 60,
+	time: 63, // belge/yedek: bankanın ortancası (timing.test)
 	label: 'Çengel',
 	kind: 'closest',
 	keep: true, // arayüz sıralama tablosunu tahtanın altına ekler

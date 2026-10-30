@@ -45,7 +45,7 @@ ${LAND}{
 `;
 
 export const blitz = {
-	time: 12,
+	time: 18, // belge/yedek: bankanın ortancası (timing.test)
 	label: 'Yıldırım',
 	kind: 'closest',
 	fmt: (v, value) => `${value?.score || 0} doğru`,
