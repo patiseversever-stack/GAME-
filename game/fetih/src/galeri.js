@@ -235,7 +235,7 @@ export async function galeri() {
 			}</div>
 			<div class="ft"><button class="tg" id="g-scene">Sahne: <em>${S.scene === 'duel' ? 'Düello' : 'Herkes cevaplıyor'}</em></button>
 				<button class="tg" id="g-time">Süre: <em>${S.time === 'real' ? 'Gerçek' : 'Sınırsız'}</em></button>
-				<button class="tg" id="g-again">↻ Yeniden</button></div>`;
+				<button class="tg" id="g-again">↻ Yeniden</button>${document.fullscreenEnabled || document.documentElement.webkitRequestFullscreen ? '<button class="tg" id="g-full">⛶ Tam ekran</button>' : ''}</div>`;
 		bar.classList.toggle('open', !pn.hidden);
 		const item = ([t, n, nw2, sub]) =>
 			`<button data-t="${t}" role="option" aria-selected="${t === S.type}" class="${t === S.type ? 'on' : ''}${nw2 ? ' nw' : ''}">${esc(n)}${nw2 ? `<i>${esc(sub)}</i>` : ''}<small>${
@@ -264,6 +264,17 @@ export async function galeri() {
 		if (!b) return;
 		if (b.id === 'g-type') return panel(pn.hidden);
 		if (b.id === 'g-close') return drawer(false);
+		if (b.id === 'g-full') {
+			const d = document.documentElement;
+			const on = document.fullscreenElement || document.webkitFullscreenElement;
+			try {
+				const r = on ? (document.exitFullscreen || document.webkitExitFullscreen).call(document) : (d.requestFullscreen || d.webkitRequestFullscreen).call(d);
+				r?.catch?.(() => ui.toast?.('Bu görünüm tam ekrana izin vermiyor', { tone: 'warn', ms: 1800 }));
+			} catch {
+				ui.toast?.('Bu görünüm tam ekrana izin vermiyor', { tone: 'warn', ms: 1800 });
+			}
+			return drawer(false);
+		}
 		if (b.id === 'g-prev') return go(S.type, S.k - 1);
 		if (b.id === 'g-next') return go(S.type, S.k + 1);
 		if (b.id === 'g-scene') S.scene = S.scene === 'duel' ? 'all' : 'duel';
@@ -289,6 +300,12 @@ export async function galeri() {
 		e.preventDefault();
 		bar.querySelector('#g-type')?.focus({ preventScroll: true });
 	});
+
+	// galeri: sayfa açılırken (görünmezken) gelen otomatik duraklatma, sayfa görünür olunca kendiliğinden kalkar
+	const wake = () => document.visibilityState === 'visible' && app.resume();
+	document.addEventListener('visibilitychange', () => setTimeout(wake, 50));
+	setTimeout(wake, 300);
+	addEventListener('fullscreenchange', () => setTimeout(fit, 60));
 
 	// cevap ekranı incelemek için daha uzun kalır (dokununca geçer)
 	const hold = ui._hold.bind(ui);
