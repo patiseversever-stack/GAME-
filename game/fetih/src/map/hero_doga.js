@@ -1,8 +1,8 @@
-// Kahraman maketler: doğa ve kent dokusu, anıtlar (Kapadokya, Pamukkale, Sümela, Uzungöl, Safranbolu, Mardin, Harran,
-// Hasankeyf, Ahlat, Akdamar, Anıtkabir, İzmir Saat Kulesi, Çanakkale Şehitler Abidesi).
+// Kahraman maketler: doğa ve kent dokusu, anıtlar (Kapadokya, Uzungöl, Safranbolu, Harran, Ahlat, Akdamar, Anıtkabir,
+// İzmir Saat Kulesi, Çanakkale Şehitler Abidesi). Pamukkale, Sümela, Mardin ve Hasankeyf v1.0'da hero_yeni.js'te.
 
 import * as THREE from 'three';
-import { H, COL, wall, block, dome, drumPart, minaret, ground, tree, cypress, pine, flag, rockMass, roofHip, roofGable, konak, tasEv, curtain, towerRound, openingPts, alem, stairs, column, entablature, blob, vn3, muqarnasRing } from './hero_parts.js';
+import { H, COL, block, dome, drumPart, minaret, ground, tree, cypress, pine, flag, rockMass, roofGable, konak, curtain, openingPts, alem, stairs, vn3 } from './hero_parts.js';
 import { sadirvan } from './hero_cami.js';
 
 const shape = (pts) => new THREE.Shape(pts.map(([x, y]) => new THREE.Vector2(x, y)));
@@ -102,84 +102,6 @@ export const DOGA = {
 		}
 	},
 
-	// ---------------------------------------------------------------- Pamukkale travertenleri ve Hierapolis
-	*pamukkale(k, R) {
-		ground(k, 0.78, { pave: '#e8eef0', paveR: 0.75, midMat: H.TRAV, mid: '#e6ecee' });
-		const W = '#f3f8fb';
-		const W2 = '#d9e4ec';
-		const AQ = '#2fb3cf';
-		// arkada Hierapolis düzlüğüne çıkan beyaz traverten yamaç
-		const hill = new THREE.SphereGeometry(1, k._n(28), 8, 0, Math.PI * 2, 0, Math.PI / 2);
-		hill.scale(0.66, 0.38, 0.32);
-		k.grad('#d6e0e8', '#f4f8fb', 0, 0.38);
-		k._mat = H.TRAV;
-		k.add(hill, new THREE.Matrix4().makeTranslation(0, 0.0, -0.44));
-		yield;
-		// basamak basamak havuzlar: her basamakta dalgalı beyaz dudak, turkuaz su, sarkıt saçağı
-		const N = k.seg < 1 ? 6 : 7;
-		for (let i = 0; i < N; i++) {
-			const y = 0.36 - i * 0.055;
-			const zf = -0.26 + i * 0.09;
-			const Wd = 0.42 + i * 0.07;
-			k.grad(W2, W, y - 0.12, y);
-			k._mat = H.TRAV;
-			k.box(Wd, y + 0.06, 0.1, 0, -0.06, zf - 0.05);
-			const n = 3 + i;
-			const lw = Wd / n;
-			for (let j = 0; j < n; j++) {
-				const cx = -Wd / 2 + lw * (j + 0.5) + (R() - 0.5) * lw * 0.15;
-				const rr = lw * 0.56;
-				const zl = zf + 0.04 * Math.cos((cx / Wd) * Math.PI) - 0.02 + (R() - 0.5) * 0.025;
-				const lip = new THREE.CylinderGeometry(rr, rr * 1.14, 0.065, k._n(16), 2, false, -Math.PI / 2, Math.PI);
-				lip.scale(1, 1, 0.42);
-				k.grad(W2, W, y - 0.065, y);
-				k._mat = H.TRAV;
-				k.add(lip, new THREE.Matrix4().makeTranslation(cx, y - 0.0325, zl));
-				const pool = new THREE.CylinderGeometry(rr * 0.93, rr * 0.93, 0.004, k._n(16), 1, false, -Math.PI / 2, Math.PI);
-				pool.scale(1, 1, 0.36);
-				k.mc(H.WATER, AQ).add(pool, new THREE.Matrix4().makeTranslation(cx, y + 0.001, zl - 0.004));
-				// sarkıt saçağı (dudağın altında)
-				for (let d = 0; d < 4; d++) {
-					const a = (-0.4 + d * 0.27) * Math.PI;
-					k.mc(H.TRAV, '#eef3f2').add(new THREE.ConeGeometry(0.006, 0.03 + R() * 0.02, 5).rotateX(Math.PI).translate(cx + Math.sin(a) * rr * 0.9, y - 0.08, zl + Math.cos(a) * rr * 0.4));
-				}
-			}
-			const back = new THREE.PlaneGeometry(Wd * 0.96, 0.09).rotateX(-Math.PI / 2);
-			k.mc(H.WATER, '#45c3d8').add(back, new THREE.Matrix4().makeTranslation(0, y + 0.002, zf - 0.05));
-			if (i % 2) yield;
-		}
-		// tepede antik havuz ve Hierapolis sütunları, yamaçta ağaçlar
-		k.mc(H.WATER, '#22a6c4').cyl(0.1, 0.1, 0.006, 20, -0.26, 0.365, -0.5);
-		for (let i = 0; i < 6; i++) column(k, 0.06 + i * 0.07, 0.38, -0.52, { h: 0.12 + (i % 3) * 0.03, r: 0.012, order: i % 2 ? 'ionic' : 'none', col: COL.MARBLE });
-		for (const [x, z] of [[-0.6, 0.0], [0.62, -0.05], [-0.52, 0.32], [0.55, 0.34], [-0.42, -0.54]]) tree(k, x, z, 1.1, R);
-	},
-
-	// ---------------------------------------------------------------- Sümela Manastırı (kayaya yapışık)
-	*sumela(k, R) {
-		ground(k, 0.62, { pave: '#5d7d48', paveR: 0.2, mid: '#4f7a3e' });
-		// sarp kaya yüzü (Karadağ'ın dik yamacı)
-		rockMass(k, { rx: 0.5, ry: 1.1, rz: 0.26, y: 0.5, z: -0.26, seed: 3, col: '#5f5c54', col2: '#8c887b', amp: 0.18, freq: 1.4 });
-		rockMass(k, { rx: 0.32, ry: 0.7, rz: 0.22, x: 0.32, y: 0.85, z: -0.3, seed: 9, col: '#5c594f', col2: '#837f72' });
-		rockMass(k, { rx: 0.3, ry: 0.55, rz: 0.22, x: -0.36, y: 0.75, z: -0.2, seed: 5, col: '#66625a', col2: '#8d897c' });
-		yield;
-		// manastır: kayadaki kovuğa oturan kat kat yapılar, sıra sıra pencereler, kiremit damlar
-		const y0 = 0.45;
-		const C2 = '#efe7d6';
-		k.mc(H.ASHLAR, '#cfc5b0').flat().box(0.58, 0.12, 0.14, 0, y0 - 0.12, 0.06).soft();
-		block(k, { w: 0.52, d: 0.13, h: 0.18, y: y0, z: 0.08, sides: [7, 1, 0, 1], rows: [[0.15, 0.3], [0.58, 0.3]], ww: 0.022, kind: 'round', mat: H.PLASTER, col: C2, frame: 0.003, roof: 'none' });
-		roofGable(k, { w: 0.54, d: 0.15, h: 0.04, y: y0 + 0.18, z: 0.08, col: '#b9533a' });
-		block(k, { w: 0.34, d: 0.11, h: 0.12, x: 0.06, y: y0 + 0.2, z: 0.06, sides: [5, 1, 0, 1], rows: [[0.25, 0.45]], ww: 0.02, kind: 'round', mat: H.PLASTER, col: C2, frame: 0.003, roof: 'none' });
-		roofGable(k, { w: 0.36, d: 0.13, h: 0.035, x: 0.06, y: y0 + 0.32, z: 0.06, col: '#c25a3c' });
-		block(k, { w: 0.13, d: 0.1, h: 0.1, x: -0.17, y: y0 + 0.2, z: 0.05, sides: [2, 1, 0, 1], rows: [[0.3, 0.4]], ww: 0.02, kind: 'round', mat: H.PLASTER, col: '#e9dfcb', roof: 'none' });
-		roofGable(k, { w: 0.15, d: 0.12, h: 0.03, x: -0.17, y: y0 + 0.3, z: 0.05, col: '#b04c34' });
-		// su kemeri (soldan kayaya) ve merdivenli yol
-		wall(k, { w: 0.3, h: 0.12, t: 0.03, x: -0.38, y: y0 - 0.02, z: 0.1, holes: [-0.09, 0, 0.09].map((x) => ({ x, y: 0, w: 0.05, h: 0.09, kind: 'round' })), col: '#d7cdb8', glass: false });
-		for (let i = 0; i < 10; i++) k.mc(H.ASHLAR, '#a59e8c').flat().box(0.05, 0.012, 0.03, 0.32 - i * 0.012, i * 0.04, 0.2 - i * 0.008).soft();
-		yield;
-		// orman: çamlar (vadi tabanı ve yamaç)
-		for (const [x, z, s] of [[-0.4, 0.28, 1.1], [0.42, 0.24, 1.0], [0.24, 0.4, 0.9], [-0.12, 0.42, 0.85], [0.5, -0.02, 1.0], [-0.52, 0.06, 1.0], [0.02, 0.48, 0.9], [-0.3, 0.46, 0.8], [0.36, 0.48, 0.85]]) pine(k, x, z, s * 1.1, 0, R);
-	},
-
 	// ---------------------------------------------------------------- Uzungöl
 	*uzungol(k, R) {
 		ground(k, 0.7, { pave: '#6a9a50', paveR: 0.2, mid: '#5d9447' });
@@ -230,46 +152,6 @@ export const DOGA = {
 		for (const [x, z] of [[-0.6, 0.3], [0.0, 0.1], [-0.56, -0.44], [0.6, -0.3]]) tree(k, x, z, 1.1, R);
 	},
 
-	// ---------------------------------------------------------------- Mardin: yamaçta taş evler
-	*mardin(k, R) {
-		ground(k, 0.78, { pave: '#c7a87d', paveR: 0.3 });
-		// dik yamaç: kademeli teraslar (her sıra bir öncekinin damına basar)
-		for (let t = 0; t < 4; t++) k.mc(H.ASHLAR, '#c19f74').uvS(0.7).flat().box(1.1 - t * 0.1, 0.1 * (t + 1), 0.2, 0, 0, 0.32 - t * 0.2).uvS(1).soft();
-		yield;
-		// taş evler: kübik, düz damlı, sivri ve yuvarlak kemerli pencereler; bazıları iki katlı, damda korkuluk
-		const C = ['#dcb98b', '#d2ad7e', '#e2c398', '#d9b585', '#e6c9a0'];
-		for (let row = 0; row < 4; row++) {
-			let x = -0.52 + R() * 0.06;
-			while (x < 0.5) {
-				const w = 0.12 + R() * 0.07;
-				const z = 0.36 - row * 0.2 + (R() - 0.5) * 0.04;
-				const y = 0.1 * (row + 1);
-				const h = 0.07 + R() * 0.06;
-				tasEv(k, { x: x + w / 2, z, y, w, d: 0.11 + R() * 0.03, h, col: C[Math.floor(R() * C.length)], arches: w > 0.16 ? 3 : 2, R });
-				if (R() < 0.35) tasEv(k, { x: x + w / 2 + (R() - 0.5) * 0.02, z: z - 0.02, y: y + h, w: w * 0.7, d: 0.08, h: 0.06, col: C[Math.floor(R() * C.length)], arches: 2, R });
-				x += w + 0.01 + R() * 0.03;
-			}
-			yield;
-		}
-		// Zinciriye Medresesi'nin yivli kubbeleri ve Ulu Cami minaresi; tepede Mardin Kalesi
-		for (const [x, z] of [[-0.18, -0.36], [-0.04, -0.36]]) {
-			k.mc(H.ASHLAR, '#d6b386').flat().cyl(0.05, 0.055, 0.03, 12, x, 0.4, z).soft();
-			const g = new THREE.SphereGeometry(0.05, k._n(32), 8, 0, Math.PI * 2, 0, Math.PI / 2);
-			const p = g.getAttribute('position');
-			for (let i = 0; i < p.count; i++) {
-				const a = Math.atan2(p.getZ(i), p.getX(i));
-				const f = 1 + 0.08 * Math.cos(a * 16) * Math.sin(Math.acos(Math.min(1, p.getY(i) / 0.05)));
-				p.setX(i, p.getX(i) * f);
-				p.setZ(i, p.getZ(i) * f);
-			}
-			g.computeVertexNormals();
-			k.mc(H.ASHLAR, '#dcbb8c').add(g, new THREE.Matrix4().compose(new THREE.Vector3(x, 0.43, z), new THREE.Quaternion(), new THREE.Vector3(1, 1.3, 1)));
-		}
-		minaret(k, 0.3, -0.34, { y0: 0.4, h: 0.4, r: 0.02, balconies: 1, col: '#d9b585', sides: 16, capH: 0.12, cap: '#c9a679' });
-		curtain(k, -0.5, -0.56, 0.5, -0.58, { h: 0.08, y: 0.4, t: 0.04, col: '#b99a70' });
-		for (const [x, z] of [[-0.62, 0.42], [0.62, 0.4]]) tree(k, x, z, 1, R, 0, '#6d8f3e');
-	},
-
 	// ---------------------------------------------------------------- Harran kümbet evleri
 	*harran(k, R) {
 		ground(k, 0.74, { pave: '#d2b78b', paveR: 0.75, midMat: H.DIRT, mid: '#ccb084' });
@@ -302,52 +184,6 @@ export const DOGA = {
 		}
 		k.mc(H.ASHLAR, '#bf9e74').box(0.07, 0.05, 0.07, -0.42, 0.42, -0.38).soft();
 		for (const [x, z] of [[0.55, 0.42], [-0.6, 0.35]]) tree(k, x, z, 0.9, R, 0, '#7d8f45');
-	},
-
-	// ---------------------------------------------------------------- Hasankeyf
-	*hasankeyf(k, R) {
-		ground(k, 0.78, { pave: '#bba98b', paveR: 0.3, jit: 0.08 });
-		// Dicle kıyısında yalçın kayalar ve mağara evler
-		rockMass(k, { rx: 0.5, ry: 0.36, rz: 0.16, x: -0.22, y: 0.12, z: -0.36, seed: 15, col: '#8f7b62', col2: '#c3ab88', amp: 0.12, freq: 2.2 });
-		rockMass(k, { rx: 0.3, ry: 0.26, rz: 0.14, x: 0.3, y: 0.08, z: -0.44, seed: 25, col: '#937f65', col2: '#bea684', amp: 0.12, freq: 2.2 });
-		for (let i = 0; i < 12; i++) {
-			const x = -0.55 + (i % 6) * 0.09 + (R() - 0.5) * 0.02;
-			const y = 0.1 + Math.floor(i / 6) * 0.13 + R() * 0.03;
-			k.push().move(x, y, -0.16 - Math.floor(i / 6) * 0.04);
-			k.mc(H.WIN, '#2a1d14').slab(shape(openingPts(i % 3 ? 'rect' : 'round', 0, 0, 0.03, 0.035)), 0.02, 0, 0, 0);
-			k.pop();
-		}
-		yield;
-		// Dicle ve Eski Köprü'nün dev ayakları (biri yıkık kemer başlangıcıyla)
-		k.mc(H.WATER, '#2f6f78').flat().box(1.5, 0.004, 0.24, 0, -0.012, 0.32).soft();
-		for (const [x, h] of [[-0.24, 0.24], [0.12, 0.26]]) {
-			k.mc(H.ASHLAR, '#b8a07c').flat().box(0.08, h, 0.1, x, -0.012, 0.32);
-			k.mc(H.ASHLAR, '#b8a07c').cone(0.06, 0.08, 4, x, -0.012, 0.32 + 0.06, Math.PI / 4).soft();
-		}
-		k.push().move(0.12, 0.2, 0.32);
-		const arc = new THREE.TorusGeometry(0.12, 0.03, 6, 12, Math.PI * 0.35);
-		k.mc(H.ASHLAR, '#b39a76').add(arc.rotateZ(Math.PI * 0.5));
-		k.pop();
-		yield;
-		// El-Rızk Camii minaresi: silindir gövde, süslü kuşaklar, şerefe, leylek yuvası
-		const mx = 0.3;
-		const mz = -0.08;
-		k.mc(H.ASHLAR, '#c2a986').flat().box(0.1, 0.06, 0.1, mx, 0, mz).soft();
-		k.mc(H.ASHLAR, '#c8af8b').uvGeo(0.25, 0.42).cyl(0.036, 0.042, 0.42, 16, mx, 0.06, mz).uvBox();
-		for (const y of [0.2, 0.32, 0.43]) k.mc(H.CARVE, '#d4bb95').cyl(0.044, 0.044, 0.018, 16, mx, y, mz);
-		muqarnasRing(k, { r: 0.05, x: mx, y: 0.48, z: mz, n: 16, d: 0.01, rows: 2, col: '#cdb490' });
-		k.mc(H.STONE, '#cdb490').cyl(0.058, 0.058, 0.008, 16, mx, 0.48, mz);
-		k.mc(H.ASHLAR, '#d9c7a8').cyl(0.022, 0.024, 0.05, 12, mx, 0.488, mz);
-		k.mc(H.WOOD, '#6b5a44').cyl(0.03, 0.022, 0.012, 10, mx, 0.538, mz);
-		// Zeynel Bey Türbesi: silindir gövde, firuze ve lacivert çini örgüsü, soğan kubbe
-		const tx = 0.02;
-		const tz = 0.06;
-		k.mc(H.BRICK, '#b98a62').cyl(0.075, 0.078, 0.14, 24, tx, 0, tz);
-		k.mc(H.TILE, '#2a8c9c').cyl(0.077, 0.077, 0.03, 24, tx, 0.09, tz);
-		k.mc(H.BRICK, '#a97b55').cyl(0.06, 0.07, 0.03, 24, tx, 0.14, tz);
-		const og = new THREE.LatheGeometry([[0.062, 0], [0.068, 0.02], [0.06, 0.05], [0.035, 0.08], [0.01, 0.1], [0, 0.11]].map(([a, b]) => new THREE.Vector2(a, b)), k._n(20));
-		k.mc(H.TILE, '#2f8fa0').add(og, new THREE.Matrix4().makeTranslation(tx, 0.17, tz));
-		for (const [x, z] of [[0.55, 0.0], [-0.1, 0.16], [0.5, -0.4]]) tree(k, x, z, 1, R, 0, '#6a8f3e');
 	},
 
 	// ---------------------------------------------------------------- Ahlat Selçuklu Meydan Mezarlığı

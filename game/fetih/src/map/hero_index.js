@@ -6,5 +6,6 @@ import { ISTANBUL } from './hero_istanbul.js';
 import { KALE } from './hero_kale.js';
 import { ANTIK } from './hero_antik.js';
 import { DOGA } from './hero_doga.js';
+import { YENI } from './hero_yeni.js';
 
-export const HEROES = { ...CAMI, ...ISTANBUL, ...KALE, ...ANTIK, ...DOGA };
+export const HEROES = { ...CAMI, ...ISTANBUL, ...KALE, ...ANTIK, ...DOGA, ...YENI };

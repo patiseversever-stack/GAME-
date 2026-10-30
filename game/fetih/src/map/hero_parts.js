@@ -682,6 +682,9 @@ export function ground(k, r, { pave = '#cdbfa3', paveR = 0.62, mid = null, midMa
 	k.push().move(ox, 0, oz);
 	const pr = r * paveR;
 	k.flat();
+	// avlunun bütün halkaları grup 200 (heroes.js vGnd): haritadaki ekran boyu kahramanı haritadaki yalın kopyanın
+	// avlusuna oturur (kendi avlusu çizilmez; kıyıda ya da harita kenarında havada disk kalmaz)
+	k.group(200);
 	k.mc(H.PAVE, pave);
 	const nIn = 4;
 	for (let i = 0; i < nIn; i++) k.drape(ring((pr * i) / nIn, (pr * (i + 1)) / nIn, 0.003, 0.003), hf, 0, k.tagAt);
@@ -696,6 +699,7 @@ export function ground(k, r, { pave = '#cdbfa3', paveR = 0.62, mid = null, midMa
 	k._mat = H.GRASS;
 	k.drape(ring(r * 0.78, r * 0.9, 0.002, 0.0), hf, 0, k.tagAt);
 	k.drape(ring(r * 0.9, r, 0.0, -0.03), hf, 0, k.tagAt);
+	k.group(0);
 	k.soft();
 	k.pop();
 }

@@ -22,6 +22,7 @@ import { COMMON, SHADOW, LIGHT, FINISH, PROV, CLEAR, glslColor as C } from '../g
 import { Kit, archShape, facadeShape } from '../gfx/kit.js';
 import { pointInPoly } from './board.js';
 import { Heroes } from './heroes.js';
+import { HeroLod } from './herolod.js';
 import { HEROES } from './hero_index.js';
 import { extraSites, EXTRA_SITES } from './landmarks2.js';
 
@@ -32,8 +33,19 @@ const FADE = /* glsl */ `
 ${CLEAR}
 uniform vec3 uFade; // x başlangıç zamanı, y yön (1 beliriyor, 0 kayboluyor), z süre
 uniform vec4 uCastle[4]; // kaleler: konum, w görünür (nightlights.js her karede yazar)
-uniform vec4 uHide; // kahraman maket (heroes.js) gösterilirken yalın kopyası gizlenir: xy merkez (x, z), w açık
+uniform vec4 uHide; // kahraman maket (heroes.js) gösterilirken yalın kopyası gizlenir: xy merkez (x, z), w açık;
+// z: yakın çekimde komşu yapıların gömüldüğü yarıçap (İstanbul gibi sık yerlerde kahramanı örtmesinler; 0 kapalı)
 attribute vec4 site; // yapının merkezi x, taban y, merkez z, ölçek
+uniform vec4 uLod[3]; // ekran boyuna göre kahraman (herolod.js): x, z merkez, z: kahramanın görünürlüğü, w açık
+/** Bu yapının yerinde kahraman ne kadar göründü (0..1): yalın kopya o payda titreşimle çekilir. */
+float lodK() {
+	float f = 0.0;
+	for (int i = 0; i < 3; i++) {
+		vec4 l = uLod[i];
+		if (l.w > 0.5 && abs(site.x - l.x) + abs(site.z - l.y) < 0.01) f = max(f, l.z);
+	}
+	return f;
+}
 // görünürlük (0..1): yapılar sırayla (konuma göre hafif gecikmeli) toprağa gömülür
 float showK(bool fly) {
 	float t = clamp((uTime - uFade.x) / uFade.z * 1.35 - fract(site.x * 0.173 + site.z * 0.311) * 0.35, 0.0, 1.0);
@@ -41,6 +53,7 @@ float showK(bool fly) {
 	float k = mix(1.0 - t, t, uFade.y);
 	// yakın çekimde yerine kahraman model konan yapı (avlusu dahil) tamamen gömülür
 	if (uHide.w > 0.5 && abs(site.x - uHide.x) + abs(site.z - uHide.y) < 0.01) return 0.0;
+	if (uHide.w > 0.5 && uHide.z > 0.01 && !fly) k = min(k, smoothstep(uHide.z * 0.85, uHide.z, distance(site.xz, uHide.xy)));
 	// başkent kalesi yapının yerine kurulursa (küçük illerde ikisi sığmaz) yapı kale inerken toprağa gömülür
 	for (int i = 0; i < 4; i++) {
 		vec4 c = uCastle[i];
@@ -81,9 +94,11 @@ varying vec3 vN;
 varying vec3 vC;
 varying vec2 vSel;
 varying vec2 vM;
+varying float vLod;
 void main() {
 	vec4 fx = provRow(tag, 3);
 	vec3 p = position;
+	vLod = lodK();
 	// balon: süzülme (anim = balon kimliği)
 	if (anim > 0.5) {
 		float ph = anim * 7.31;
@@ -120,7 +135,11 @@ varying vec3 vN;
 varying vec3 vC;
 varying vec2 vSel;
 varying vec2 vM;
+varying float vLod;
 void main() {
+	// kahraman gelirken yalın kopya aynı ekran eşiğiyle çekilir (heroes.js uFade: tamamlayıcı titreşim)
+	// (avlu zemini kalır: kahraman ona oturur)
+	if (vLod > 0.001 && abs(vM.x - ${M.GROUND}.0) > 0.5 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < vLod) discard;
 	vec3 N = normalize(vN);
 	vec3 V = normalize(cameraPosition - vW);
 	if (dot(N, V) < 0.0 && vM.x > 4.5 && vM.x < 5.5) N = -N; // bayrağın arka yüzü
@@ -141,7 +160,8 @@ void main() {
 	else if (id == ${M.LEAF}.0) { gloss = 0.04; rimK = 0.8; }
 	else if (id == ${M.CLOTH}.0) gloss = 0.2;
 	float sh = shadowAt(vW, N);
-	gLit = vSel.x * uSelLit;
+	gPool = poolK(vW.xz);
+	gLit = max(vSel.x * uSelLit, gPool);
 	vec3 c = shade(alb, N, V, ao, sh, gloss, rimK);
 	// altın: sıcak parıltı (kubbe alemi, yazı)
 	if (id == ${M.GOLD}.0) c += uSunCol * alb * 0.25;
@@ -184,6 +204,11 @@ void main() {
 	vec3 p = position;
 	if (anim > 0.5) p.y += sin(uTime * 0.6 + anim * 7.31) * 0.14;
 	else if (anim < -0.5) p.z += sin(uTime * 5.2 - (-anim - 1.0) * 5.5 + tag * 1.3) * 0.055 * (-anim - 1.0);
+	// kahramanı yarıdan çok gelmiş yapının gölgesini kahraman verir
+	if (lodK() > 0.5) {
+		gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+		return;
+	}
 	p = fadeP(p, showK(anim > 0.5));
 	p.y += fx.x * uPLift + fx.z * uPSel;
 	gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
@@ -1433,7 +1458,8 @@ export class Landmarks {
 		this.sites.castleU = this.castleU;
 		this.G = G;
 		this.uHide = { value: new THREE.Vector4(0, 0, 0, 0) };
-		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU }, uHide: this.uHide };
+		this.uLod = [0, 1, 2].map(() => new THREE.Vector4(0, 0, 0, 0));
+		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU }, uHide: this.uHide, uLod: { value: this.uLod } };
 		this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms, side: THREE.DoubleSide }));
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
@@ -1450,6 +1476,8 @@ export class Landmarks {
 		this.heroes = new Heroes(G, tier, board, this, HEROES);
 		this.mesh.add(this.heroes.mesh);
 		this.caster.add(this.heroes.caster);
+		// haritada ekran boyuna göre ayrıntı: yaklaşınca kahraman maket titreşimli geçişle gelir (herolod.js)
+		this.lod = new HeroLod(this, G, tier, board, HEROES);
 	}
 
 	/**

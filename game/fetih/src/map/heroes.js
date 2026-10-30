@@ -47,12 +47,16 @@ varying vec3 vC;
 varying vec4 vI;
 varying vec2 vP;
 varying vec2 vSel;
+varying float vGnd;
 void main() {
 	vec4 fx = provRow(info.y, 3);
 	vec3 p = position;
 	float id = info.x;
 	float grp = floor(col.a * 255.0 + 0.5);
-	if (grp > 0.5) {
+	// grup 200: avlunun dış halkaları (ground()); haritadaki ekran boyu kahramanında çizilmez, haritanın kendi
+	// zemini kalır (yapının tabanı yalın kopyayla aynı yere oturur, kıyıda havada disk olmaz)
+	vGnd = grp > 199.5 ? 1.0 : 0.0;
+	if (grp > 0.5 && grp < 199.5) {
 		// balon: süzülme (haritadaki maketle aynı hareket)
 		float ph = grp * 0.37 * 7.31;
 		p.y += sin(uTime * 0.6 + ph) * 0.14;
@@ -325,7 +329,13 @@ void mosaic(vec2 uv) {
 	gGloss = 0.2;
 }
 
+varying float vGnd;
+uniform float uLodMode; // 1: haritadaki ekran boyu kahramanı (avlunun dış halkaları çizilmez)
+uniform float uFade; // haritada ekran boyuna göre geliş (herolod.js): yalın kopyayla tamamlayıcı titreşimli geçiş
 void main() {
+	// aynı ekran eşiği yalın kopyada ters yönde (landmarks.js): ikisi birlikte her pikseli tam bir kez örter
+	if (uFade < 0.999 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) >= uFade) discard;
+	if (uLodMode > 0.5 && vGnd > 0.5) discard;
 	vec3 N = normalize(vN);
 	vec3 V = normalize(cameraPosition - vW);
 	float id = floor(vI.x + 0.5);
@@ -428,6 +438,7 @@ void main() {
 	if (!bare && id != ${H.GOLD}.0 && id != ${H.WIN}.0) alb *= mix(vec3(0.78, 0.74, 0.7), vec3(1.0), smoothstep(0.0, 0.05, hgt));
 	float sh = shadowAt(vW, normalize(vN));
 	gLit = 1.0; // kahraman sahnenin öznesi: gece odağında da ışık havuzunda
+	gPool = poolK(vW.xz);
 	vec3 c = shade(alb, N, V, ao, sh, gGloss, rimK);
 	if (id == ${H.GOLD}.0) c += uSunCol * alb * 0.3;
 	if (id == ${H.WATER}.0) c = mix(c, skyReflect(reflect(-V, N)) * 0.8, 0.35);
@@ -454,7 +465,7 @@ void main() {
 	vec4 fx = provRow(info.y, 3);
 	vec3 p = position;
 	float grp = floor(col.a * 255.0 + 0.5);
-	if (grp > 0.5) p.y += sin(uTime * 0.6 + grp * 0.37 * 7.31) * 0.14;
+	if (grp > 0.5 && grp < 199.5) p.y += sin(uTime * 0.6 + grp * 0.37 * 7.31) * 0.14;
 	p.y += fx.x * uPLift + fx.z * uPSel;
 	gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
 }`;
@@ -571,7 +582,8 @@ export class HKit extends Kit {
 		const pa = g.getAttribute('position');
 		const na = this._smooth ? g.getAttribute('normal') : null;
 		const ua = this._uvm === 1 ? g.getAttribute('uv') : null;
-		this._write(pa.array, pa.itemSize, na ? na.array : null, ua ? ua.array : null, M, this._hs, null, g.index ? g.index.array : null);
+		const ca = g.getAttribute('color');
+		this._write(pa.array, pa.itemSize, na ? na.array : null, ua ? ua.array : null, M, this._hs, null, g.index ? g.index.array : null, ca ? ca.array : null);
 	}
 
 	drape(geo, hf, lift = 0, tf = null) {
@@ -620,7 +632,8 @@ export class HKit extends Kit {
 		return this._prim(key, make, _mm.multiplyMatrices(this.m, local));
 	}
 
-	_write(src, isz, nsrc, uvsrc, M, hs, dr, idx = null) {
+	/** csrc: köşe başına doğrusal renk (geometrinin `color` özniteliği; arazi parçası, kaya yüzü): k.color yerine. */
+	_write(src, isz, nsrc, uvsrc, M, hs, dr, idx = null, csrc = null) {
 		const cnt = idx ? idx.length : (src.length / isz) | 0;
 		const tri = cnt - (cnt % 3);
 		if (!tri) return;
@@ -685,7 +698,12 @@ export class HKit extends Kit {
 		for (let i = 0; i < tri; i++) {
 			const y = pa[p0 + i * 3 + 1];
 			const h = (y - this._base) * hs;
-			if (gr) {
+			if (csrc) {
+				const v = (idx ? idx[i] : i) * 3;
+				ca[c0 + i * 3] = csrc[v];
+				ca[c0 + i * 3 + 1] = csrc[v + 1];
+				ca[c0 + i * 3 + 2] = csrc[v + 2];
+			} else if (gr) {
 				let t = Math.min(1, Math.max(0, (h - gr[2]) / (gr[3] - gr[2])));
 				t = t * t * (3 - 2 * t);
 				ca[c0 + i * 3] = gr[0][0] + (gr[1][0] - gr[0][0]) * t;
@@ -910,19 +928,23 @@ function* bakeAO(pos, nor, info, n) {
 
 /**
  * Kahramanların yöneticisi: tek mesh + tek gölge mesh'i; geometri soru açılınca kurulur. Shader açılışta derlenir
- * (yer tutucu üçgen bir kez çizilir, sonra gizlenir).
+ * (yer tutucu üçgen bir kez çizilir, sonra gizlenir). Haritadaki ekran boyuna göre ayrıntı (herolod.js) aynı sınıftan
+ * birkaç yuva kurar: shared { cache, max, used(kind) } ile model önbelleği ortak (aynı yapı iki kez kurulmaz).
  */
 export class Heroes {
-	constructor(G, tier, board, lm, builders) {
+	constructor(G, tier, board, lm, builders, shared = null) {
 		this.G = G;
 		this.tier = tier;
 		this.board = board;
 		this.lm = lm;
 		this.builders = builders;
-		this.cache = new Map();
+		this.shared = shared;
+		this.cache = shared ? shared.cache : new Map();
 		this.active = null;
 		this.uHS = { value: 2 };
 		this.uAO = { value: 1e9 };
+		this.uFade = { value: 1 };
+		this.uLodMode = { value: 0 };
 		const ph = new THREE.BufferGeometry();
 		ph.setAttribute('position', new THREE.BufferAttribute(new Float32Array([0, -90, 0, 0.01, -90, 0, 0, -90, 0.01]), 3));
 		ph.setAttribute('normal', new THREE.BufferAttribute(new Int8Array([0, 127, 0, 0, 0, 127, 0, 0, 0, 127, 0, 0]), 4, true));
@@ -930,7 +952,7 @@ export class Heroes {
 		ph.setAttribute('info', new THREE.BufferAttribute(new Uint8Array(12), 4));
 		ph.setAttribute('pat', new THREE.BufferAttribute(new Float32Array(6), 2));
 		this.placeholder = ph;
-		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uHS: this.uHS, uAO: this.uAO };
+		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uHS: this.uHS, uAO: this.uAO, uFade: this.uFade, uLodMode: this.uLodMode };
 		this.mesh = new THREE.Mesh(ph, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', String(tier.shadowTaps)), uniforms, side: THREE.DoubleSide }));
 		this.caster = new THREE.Mesh(ph, new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms, side: THREE.DoubleSide }));
 		for (const m of [this.mesh, this.caster]) {
@@ -989,10 +1011,11 @@ export class Heroes {
 		this.stats = { kind: site.kind, tris: k.count / 3, build: Math.round(busy), wall: Math.round(performance.now() - t0) };
 		g.userData.tris = k.count / 3;
 		this.cache.set(site.kind, g);
-		// önbellek: son 2 model (etkin olan atılmaz)
-		while (this.cache.size > 2) {
-			const [old, og] = this.cache.entries().next().value;
-			if (this.active && this.active.kind === old) break;
+		// önbellek: son birkaç model (en eski önce; gösterilen atılmaz)
+		const max = this.shared ? this.shared.max : 2;
+		for (const [old, og] of this.cache) {
+			if (this.cache.size <= max) break;
+			if (old === site.kind || (this.shared ? this.shared.used(old) : this.active && this.active.kind === old)) continue;
 			this.cache.delete(old);
 			og.dispose();
 		}
@@ -1003,7 +1026,7 @@ export class Heroes {
 	 * Kahramanı iste: önbellekteyse hemen gösterir; değilse ~10 ms'lik dilimlerle kurar (kare akmaya devam eder) ve
 	 * hazır olunca gösterip done(site) çağırır. sync: hemen kur ve göster. Dönüş: hemen gösterildiyse true.
 	 */
-	request(site, done = null, sync = false) {
+	request(site, done = null, sync = false, show = true) {
 		this.cancel();
 		if (!site || !this.has(site.kind)) {
 			done?.(null);
@@ -1013,14 +1036,14 @@ export class Heroes {
 		if (g0) {
 			this.cache.delete(site.kind);
 			this.cache.set(site.kind, g0);
-			this._show(site, g0);
+			if (show) this._show(site, g0);
 			done?.(site);
 			return true;
 		}
 		const job = this._job(site);
 		const end = (g) => {
 			this._pending = null;
-			this._show(site, g);
+			if (show) this._show(site, g);
 			done?.(site);
 		};
 		if (sync) {
@@ -1052,6 +1075,11 @@ export class Heroes {
 		let r;
 		while (!(r = p.job.next()).done);
 		p.end(r.value);
+	}
+
+	/** Kurulum sürüyor mu. */
+	get busy() {
+		return !!this._pending;
 	}
 
 	/** Bekleyen kurulumu bırak (önbelleğe girmez). */

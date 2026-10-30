@@ -11,10 +11,17 @@
 //
 // v0.9 yakın çekim: soru açılınca YALNIZ o yapının yüksek ayrıntılı "kahraman" maketi kurulur (landmarks.hero →
 // heroes.js; kare kare, ilk kullanımda) ve haritadaki yalın kopyanın yerine konur; kart kapanınca kaldırılır. Kamera
-// kahraman hazır olunca yapının dibine kesilir (kart açılırken; en geç saat başlarken). Soru boyunca sahne gündüzde
-// (gece odağı varsa kart kapanınca geri gelir) ve gölge kapsamı yakın çekime daralır (keskin gölge). Başlangıç yönü
-// kendiliğinden seçilir: yamaç ya da komşu maket yapıyı örtmesin (yaw yalnız tercih). Başkent kalesi yapının yerine
-// kurulduysa (yapı gömülü) kahraman kurulmaz; bu soru o maçta sorulmamalı: `kusbakisi.usable(q, app)`.
+// kahraman hazır olunca yapının dibine kesilir (kart açılırken; en geç saat başlarken). Gölge kapsamı yakın çekime
+// daralır (keskin gölge). Başlangıç yönü ve eğimi kendiliğinden seçilir: yamaç yapıyı örtmesin (yaw yalnız tercih);
+// İstanbul gibi sık yerlerde komşu yapılar alçak çekimde toprağa gömülür, kamera yükselirken geri çıkar. Başkent
+// kalesi yapının yerine kurulduysa (yapı gömülü) kahraman kurulmaz; bu soru o maçta sorulmamalı: `usable(q, app)`.
+//
+// v1.0 gece ve sinematik ipucu: soru boyunca harita GECE ("Gölgede Renk", guard.dark); yalnız yapı ve yakın çevresi
+// sıcak bir ışık havuzunda (G.uPool: dünya uzayında daire, gecede gündüz kalır, projektör tonu). Kıyı ve göller ay
+// ışığıyla seçilir. Kamera yükseldikçe ve oyuncu hâlâ bilmediyse soru saatine bağlı kademeler: önce bölgenin dış
+// sınırı ince altın hat olarak nabız gibi belirir, sonra ilin sınırı (board.edgeGlow; ışıma shader'da süzülür, iki oyuncu
+// aynı anı görür). Cevapta hedef il tam aydınlanır (gündüz), kamera ili ve yapıyı birlikte kadrajlar. Kart kapanınca
+// gece, ton, ışık havuzu ve ışımalar eski haline döner.
 
 import { css, esc, shuffle, pCorrect, mountChoice } from './util.js';
 import { botTime } from './timing.js';
@@ -92,8 +99,31 @@ const SCOPE = '<svg viewBox="0 0 24 24" fill="none" stroke="#ffd25a" stroke-widt
 const LINEAR = (t) => t;
 const HERO_SHADOW = 4; // kahraman varken gölge kapsamının en dar yarı genişliği (birim; harita vars. 14)
 // en son açılan Kuşbakışı kartı: eski kartın kapanışı (yeni kart açıldıktan sonra gelebilir) yeninin kahramanını,
-// gölgesini ve gündüzünü bozmasın
+// gölgesini ve gecesini bozmasın. Yeni kart açılırken eskisinin temizliği önce (hemen) yapılır: gece tonunun
+// "soru öncesi" hali yanlışlıkla eski kartın gecesi olarak kaydedilmesin.
 let LIVE = 0;
+let PREV = null;
+// kademeler: bölge sınırı, sonra il sınırı; ışıma, o sınır kadraja girdiği an gelir (yükseliş filminin payı, en
+// erken/en geç). Komşu yapılar yükselişin bu payında geri çıkar.
+const CLUE_REGION = [0.38, 0.8];
+const CLUE_IL = [0.14, 0.92];
+const BURY = [0.16, 0.42];
+// kadrajın yarı genişliği / kamera uzaklığı (dikey telefon, yukarıdan bakış; yaklaşık)
+const VIEW_HALF = 0.36;
+
+/** Noktanın, verilen illerin dışında kalan illere (bölgenin dış sınırına) en yakın uzaklığı (dünya birimi). */
+function outsideDist(b, x, z, inside) {
+	let best = Infinity;
+	for (const p of b.provinces) {
+		if (inside(p)) continue;
+		for (const r of p.rings)
+			for (let k = 0; k < r.length; k += 2) {
+				const d = (r[k] - x) ** 2 + (-r[k + 1] - z) ** 2;
+				if (d < best) best = d;
+			}
+	}
+	return Math.sqrt(best);
+}
 
 /** Kimlikten (maket ya da boylam/enlem) dünya noktası: { x, y (taban), z, r (yapının yarıçapı), site? }. */
 function spotOf(app, q) {
@@ -120,41 +150,46 @@ function buried(app, s) {
 }
 
 /**
- * Başlangıç yönü: yükselişin ilk bölümünde (kamera alçakken) yapıyla kamera arasına yamaç ya da başka bir maket
- * girmesin. Adaylar 16 yön; puan = örtme (arazi ve komşu maketler) + tercihten (q.yaw ya da yapının ön yüzü)
- * sapma cezası. Belirlenimci: iki oyuncu aynı kadrajı görür.
+ * Başlangıç yönü ve eğimi: yükselişin ilk bölümünde (kamera alçakken) yapıyla kamera arasına yamaç ya da başka bir
+ * maket girmesin. Adaylar 16 yön × 3 başlangıç eğimi; puan = örtme (arazi ve komşu maketler; gömülen komşular
+ * sayılmaz) + tercihten (q.yaw ya da yapının ön yüzü) sapma + eğim cezası. Belirlenimci: iki oyuncu aynı kadrajı
+ * görür. Dönen: { yaw, lift }.
  */
-function pickYaw(app, sp, plan, pref) {
+function pickYaw(app, sp, plan, pref, bury = 0) {
 	const b = app.board;
 	const sites = app.props?.landmarks?.sites || [];
-	let best = pref;
+	let best = { yaw: pref, lift: 0 };
 	let bestS = Infinity;
-	for (let i = 0; i < 16; i++) {
+	for (let n = 0; n < 48; n++) {
+		const i = n % 16;
+		const lift = [0, 0.16, 0.32][Math.floor(n / 16)];
 		const yaw0 = pref + (i < 8 ? i : i - 16) * (Math.PI / 8);
 		let occ = 0;
+		const ty = sp.y + sp.r * 0.15;
 		for (const [u, w] of [[0, 3], [0.1, 2], [0.22, 1]]) {
-			const o = plan(u, yaw0);
+			const o = plan(u, yaw0, undefined, lift);
 			const cp = Math.cos(o.pitch);
 			const cx = sp.x - Math.sin(o.yaw) * cp * o.dist;
 			const cy = o.y + Math.sin(o.pitch) * o.dist;
 			const cz = sp.z + Math.cos(o.yaw) * cp * o.dist;
-			for (let s = 0.2; s < 1.0; s += 0.08) {
+			for (let s = 0.16; s < 1.0; s += 0.06) {
 				const x = sp.x + (cx - sp.x) * s;
-				const y = o.y + (cy - o.y) * s;
+				const y = ty + (cy - ty) * s; // yapının alt kısmına bakış (gövde örtülmesin)
 				const z = sp.z + (cz - sp.z) * s;
-				if (Math.hypot(x - sp.x, z - sp.z) < sp.r * 1.1) continue;
-				if (b.heightAt && b.heightAt(x, z) + 0.06 > y) occ += w;
+				if (Math.hypot(x - sp.x, z - sp.z) < sp.r * 0.55) continue; // yapının kendisi (çevresindeki sırt sayılır)
+				if (b.heightAt && b.heightAt(x, z) + 0.12 > y) occ += w;
 				for (const t of sites) {
-					if (t === sp.site) continue;
+					if (t === sp.site || (u < BURY[0] && Math.hypot(t.x - sp.x, t.z - sp.z) < bury)) continue;
 					if (Math.hypot(x - t.x, z - t.z) < t.r * 0.8 && y < t.y + (t.s || 1) * 0.75) occ += w * 0.7;
 				}
 			}
 		}
 		const d = Math.abs(Math.atan2(Math.sin(yaw0 - pref), Math.cos(yaw0 - pref)));
-		const sc = occ + d * 0.9;
+		// alçak, önden bakış tercih; yamaç örtüyorsa kamera biraz daha yüksekten başlar
+		const sc = occ + d * 0.9 + lift * 5;
 		if (sc < bestS) {
 			bestS = sc;
-			best = yaw0;
+			best = { yaw: yaw0, lift };
 		}
 	}
 	return best;
@@ -200,18 +235,25 @@ export const kusbakisi = {
 		bar.style.setProperty('--t', FILM + 's');
 		if (!app) return { lock: c.lock, reveal: (r) => c.reveal(r), destroy() {} };
 		const q = v.q;
+		PREV?.(); // önceki Kuşbakışı kartının temizliği önce
 		const sp = spotOf(app, q);
 		const lm = app.props?.landmarks;
 		const me = ++LIVE;
 		const b = app.board;
+		const G = b.G;
 		const g = guard(app);
 		g.allActive();
 		const unlock = camLock(app);
 		// maketler ipucudur: harita sorusu onları gömmüştü, geri çıkar (il adları kapalı kalır)
 		lm?.fade?.(true);
-		// gündüz: yapı ve çevresi (kıyı, göl, dağ) gün ışığında okunur; gece odağı varsa kart kapanınca geri gelir
-		const night0 = b.nightTo > 0 ? Array.from(b.selTo || []).flatMap((x, i) => (x > 0.5 ? [i] : [])) : null;
-		b.night?.(false, null, { hold: 0 });
+		// gece ("Gölgede Renk"): yalnız yapının çevresi sıcak ışık havuzunda; kıyı ve göller ay ışığında seçilir
+		g.dark([]);
+		if (sp && G.uPool) G.uPool.value.set(sp.x, sp.z, Math.max(2.2, sp.r * 2.0), 1);
+		// ipucu kademeleri: yapının ili ve bölgesi (çevrimiçinde il gizli: yapının konumundan)
+		const il = sp ? b.pick(sp.x, sp.z) : -1;
+		const region = il >= 0 ? b.provinces[il].region : null;
+		const bury = sp?.site ? Math.max(1.6, sp.r * 1.7) : 0;
+		// sınırlar kadraja ne zaman girer (yükseliş payı): bölgenin dış sınırına ve ilin sınırına uzaklıktan
 		// dürbün halkası: kartın altındaki boş alanın ortasında
 		const scope = document.createElement('div');
 		scope.className = 'dn-scope';
@@ -229,17 +271,21 @@ export const kusbakisi = {
 		const T = FILM * 0.92;
 		const y0 = sp ? sp.y + sp.r * 0.45 : 0;
 		const O = { y: 0, dist: near, pitch: 0.3, yaw: 0, dur: 0.25, arc: 0, ease: LINEAR, distMin: 1, lens: 0 };
-		const plan = (u, yaw0, o = { y: 0, dist: 0, pitch: 0, yaw: 0 }) => {
+		const plan = (u, yaw0, o = { y: 0, dist: 0, pitch: 0, yaw: 0 }, lift = 0) => {
 			o.dist = near * Math.pow(far / near, u);
-			o.pitch = 0.3 + 0.68 * (1 - Math.pow(1 - u, 1.7));
+			o.pitch = 0.3 + lift * (1 - u) * (1 - u) + (0.68 - lift * 0.4) * (1 - Math.pow(1 - u, 1.7));
 			o.yaw = yaw0 + 0.9 * u;
 			o.y = y0 + (sp.y - y0) * Math.min(1, u * 1.5);
 			return o;
 		};
 		// tercih: soruda verilen yön, yoksa yapının ön yüzüne hafif sağdan bakış
 		const pref = typeof q.yaw === 'number' ? q.yaw : sp?.site ? -(sp.site.ry || 0) + 0.45 : 0.6;
-		const yaw0 = sp ? pickYaw(app, sp, plan, pref) : pref;
-		const at = (t) => plan(Math.min(1, Math.max(0, t / T)), yaw0, O);
+		const pick = sp ? pickYaw(app, sp, plan, pref, bury) : { yaw: pref, lift: 0 };
+		const uSee = (d) => Math.log(Math.max(1e-3, d / (VIEW_HALF * near))) / Math.log(far / near);
+		const cl = (u, [a, b]) => Math.min(b, Math.max(a, u));
+		const uR = sp && region ? cl(uSee(outsideDist(b, sp.x, sp.z, (p) => p.region === region)) + 0.04, CLUE_REGION) : 1;
+		const uP = sp && il >= 0 ? cl(Math.max(uR + 0.14, uSee(outsideDist(b, sp.x, sp.z, (p) => p.index === il)) + 0.04), CLUE_IL) : 1;
+		const at = (t) => plan(Math.min(1, Math.max(0, t / T)), pick.yaw, O, pick.lift);
 		// kahraman maket: kare kare kurulur; kamera hazır olunca (en geç kart açılınca) yapının dibine kesilir
 		const useHero = !!(sp?.site && lm?.hero && !buried(app, sp.site));
 		let ready = !useHero;
@@ -257,6 +303,7 @@ export const kusbakisi = {
 				if (!el.isConnected) return LIVE === me && lm.heroOff();
 				heroOn = !!info;
 				if (heroOn && app.shadow) app.shadow.minHalf = HERO_SHADOW;
+				if (heroOn && lm.uHide) lm.uHide.value.z = bury;
 				place();
 			});
 		} else queueMicrotask(place);
@@ -269,12 +316,24 @@ export const kusbakisi = {
 			O.lens = frame() / 2;
 			const t0 = clock.now();
 			const STEP = 0.25;
-			// her çeyrek saniyede bir sonraki çeyreğin kadrajına doğrusal geçiş (kare başına iş ve nesne yok)
+			let clue = 0;
+			// her çeyrek saniyede bir sonraki çeyreğin kadrajına doğrusal geçiş (kare başına iş ve nesne yok); kademeler
+			// (komşu yapıların geri çıkışı, bölge ve il sınırı ışıması) soru saatine bağlı
 			const step = () => {
 				if (!el.isConnected) return clearInterval(tick);
 				const t = (clock.now() - t0) / 1000 + STEP;
 				app.cam.shot(sp.x, sp.z, at(t));
-				if (t >= T) clearInterval(tick);
+				const u = t / T;
+				if (heroOn && lm.uHide && LIVE === me) lm.uHide.value.z = bury * (1 - Math.min(1, Math.max(0, (u - BURY[0]) / (BURY[1] - BURY[0]))));
+				if (clue === 0 && u >= uR && region) {
+					clue = 1;
+					b.edgeGlow?.(region, il, { at: { region: G.uTime.value, il: -1 }, dur: 1.6 });
+				}
+				if (clue === 1 && u >= uP) {
+					clue = 2;
+					b.edgeGlowAt?.(null, G.uTime.value);
+				}
+				if (t >= T + 0.5 || (t >= T && clue === 2)) clearInterval(tick);
 			};
 			step();
 			tick = setInterval(step, STEP * 1000);
@@ -287,12 +346,16 @@ export const kusbakisi = {
 			clearInterval(tick);
 			unlock();
 			scope.remove();
-			g.restore();
+			if (PREV === close) PREV = null;
 			if (LIVE !== me) return; // yeni bir Kuşbakışı kartı açıldı: sahne artık onun
+			g.restore();
+			b.edgeGlowOff?.();
+			if (G.uPool) G.uPool.value.w = 0;
 			if (useHero) lm.heroOff();
+			if (lm?.uHide) lm.uHide.value.z = 0;
 			if (app.shadow) app.shadow.minHalf = 14;
-			if (night0) b.night?.(true, night0);
 		});
+		PREV = close;
 		return {
 			lock: c.lock,
 			reveal(results) {
@@ -303,13 +366,17 @@ export const kusbakisi = {
 				const i = b.byId.get(q.il)?.index ?? (sp ? b.pick(sp.x, sp.z) : -1);
 				if (i < 0) return;
 				const p = b.provinces[i];
+				// cevap: hedef il gecenin içinde tam gün ışığına çıkar (beyaz dış hat), il sınırı ışıması sürer
+				g.dark([i]);
+				G.uSelLit.value = 1;
+				if (b.uGlow && !(b.uGlow.value.y > 0)) b.edgeGlow?.(b.provinces[i].region, i, { at: { region: G.uTime.value, il: G.uTime.value }, dur: 0.8 });
 				g.fx(i, 0.45, 1);
 				const pt = sp || p;
 				tag(app, `<b>${esc(p.name)}</b>${q.site && SITE_NAMES[q.site] ? `<em>${esc(SITE_NAMES[q.site])}</em>` : ''}`, pt.x, pt.z, 'big').el.style.setProperty('--tc', '#ffd25a');
 				// kadraj: il ve yapı birlikte, kartın altında
 				const bb = app.boundsOf([i]);
 				const m = 3;
-				app.cam.fit({ x0: Math.min(bb.x0, pt.x) - m, x1: Math.max(bb.x1, pt.x) + m, z0: Math.min(bb.z0, pt.z) - m, z1: Math.max(bb.z1, pt.z) + m }, { pitch: 0.9, pad: 1.25, top: cardTop(el), dur: 1.3, arc: 3 });
+				app.cam.fit({ x0: Math.min(bb.x0, pt.x) - m, x1: Math.max(bb.x1, pt.x) + m, z0: Math.min(bb.z0, pt.z) - m, z1: Math.max(bb.z1, pt.z) + m }, { pitch: 0.82, pad: 1.2, top: cardTop(el), dur: 1.7, arc: 3 });
 			},
 			destroy: close,
 		};
