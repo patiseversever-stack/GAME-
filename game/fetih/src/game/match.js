@@ -80,7 +80,7 @@ export const BOT_FILM = {
  */
 export const PACE = {
 	quick: { duels: 11, byMode: { '1v1': 10, ffa3: 11, ffa4: 11, team: 11 } },
-	long: { duels: 32, byMode: { '1v1': 22, ffa3: 28, ffa4: 32, team: 32 } },
+	long: { duels: 32, byMode: { '1v1': 20, ffa3: 27, ffa4: 28, team: 28 } },
 };
 
 /**

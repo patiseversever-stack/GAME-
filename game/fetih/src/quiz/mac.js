@@ -137,7 +137,9 @@ export const KAT = {
 const katK = (t, cat) => KAT[t]?.[cat] ?? 1;
 
 /** Eski tiplerde ana çarpan: 4 şıklı klasik düelloda baskın kalsın (Trivia Crack ve Bil ve Fethet'in omurgası). */
-export const KLASIK = { attack: { choice: 1.6 }, siege: { choice: 1.6 } };
+export const KLASIK = { attack: { choice: 1.6 }, siege: { choice: 1.6, cross: 0.5 }, expand: { cross: 0.6 } };
+// Çengel bulmaca (cross) 25–100 sn: yayılmada herkes en yavaşı bekler, kuşatmada tempo düşer; ikisinde de geri (v1.2,
+// banka anagram/cross/blitz sorularıyla birlikte). Anagram ve yıldırım turu olduğu gibi (kategori ağırlıkları).
 
 /**
  * İzlenen bot düellosu (yerel insan yalnız seyrediyor): harita tipleri kamerayı savaştan koparır, Tufan'ın filmi uzun.
@@ -161,6 +163,10 @@ export const SINIR = {
 	kayip: [2, 3],
 	fitil: [2, 3],
 	golge: [1, 2],
+	// eski tiplerden yalnız uzun olanlar sınırlı (banka v1.2: anagram 26, çengel 25, yıldırım 25 soru)
+	cross: [1, 2],
+	blitz: [2, 3],
+	anagram: [2, 3],
 };
 export const sinir = (t, length) => (SINIR[t] ? SINIR[t][length === 'long' ? 1 : 0] : Infinity);
 
