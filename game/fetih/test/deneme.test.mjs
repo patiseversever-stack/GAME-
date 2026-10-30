@@ -60,7 +60,7 @@ for (const [type, list] of Object.entries(DENEME_SAMPLES)) {
 			for (let g = 0; g < v.n - 1; g++) tries.push(v.key.map((x, i) => (x === g ? i : -1)).filter((i) => i >= 0));
 			good = { tries };
 			bad = { tries: [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]].filter((t) => !t.every((k) => v.key[k] === v.key[t[0]])) };
-		}
+		} else if (typeof T.ornek === 'function') ({ good, bad } = T.ornek(v)); // ek gruplar: tipin kendi doğru/yanlış örneği
 		const jg = T.judge(v, good);
 		const jb = T.judge(v, bad);
 		ok(jg.correct === true, q.id + ': doğru cevap kabul edilmedi ' + JSON.stringify(jg));
