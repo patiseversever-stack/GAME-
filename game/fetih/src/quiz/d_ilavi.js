@@ -248,7 +248,15 @@ export const ilavi = {
 				// kadraj: gizli il ve bütün denemeler
 				const list = [v.hedef, ...taps.map((id) => BY_ID.get(id))];
 				const bb = app.boundsOf(list);
-				app.cam.fit({ x0: bb.x0 - 4, x1: bb.x1 + 4, z0: bb.z0 - 4, z1: bb.z1 + 3 }, { pitch: 1.0, pad: 1.15, top: cardTop(el), dur: 1.1, arc: 3 });
+				const top = cardTop(el);
+				app.cam.fit({ x0: bb.x0 - 4, x1: bb.x1 + 4, z0: bb.z0 - 4, z1: bb.z1 + 3 }, { pitch: 1.0, pad: 1.15, top, dur: 0.9, arc: 3 });
+				// sinematik son: genel bakıştan sonra kamera gizli ile alçalarak yaklaşır ve yavaşça etrafında döner
+				const tb = app.boundsOf([v.hedef]);
+				const size = Math.max(tb.x1 - tb.x0, tb.z1 - tb.z0);
+				setTimeout(() => {
+					if (!el.isConnected) return;
+					app.cam.shot(t.x, t.z, { dist: size * 2.1 + 9, pitch: 0.6, yaw: app.cam.yaw + 0.35, dur: 1.8, arc: 5, yawRate: 0.045, distRate: -0.015, decay: 0.2, lens: top / 2 });
+				}, 1100);
 				const meR = results.find((r) => r.p?.human);
 				if (meR) {
 					const order = results.slice().sort((a, b2) => a.err - b2.err || a.time - b2.time);
