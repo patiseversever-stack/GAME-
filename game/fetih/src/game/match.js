@@ -297,7 +297,7 @@ export class Match {
 		this.est = 0;
 		this.listeners = new Map();
 		this.bar = null;
-		for (const p of this.players) if (p.ctl.remote) p.ctl.hello({ seat: p.i, protocol: PROTOCOL, cfg: { mode: cfg.mode, length: cfg.length, region: cfg.region }, snapshot: null });
+		for (const p of this.players) if (p.ctl.remote) p.ctl.hello({ seat: p.i, protocol: PROTOCOL, cfg: { mode: cfg.mode, length: cfg.length, region: cfg.region, salt: this.salt }, snapshot: null });
 	}
 
 	/**

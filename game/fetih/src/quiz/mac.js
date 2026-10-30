@@ -18,6 +18,7 @@
 //                 src/game/sunucu.js.
 
 import { TYPES, TYPE_WEIGHTS } from './types.js';
+import { DIS_ZAMAN } from './timing.js';
 import { DENEME_TYPES, DENEME_SAMPLES } from './deneme.js';
 import { BANK } from '../data/bank.js';
 import { CATS } from './categories.js';
@@ -48,6 +49,8 @@ for (const t of YENI) {
 	const T = DENEME_TYPES[t];
 	if (!T) continue;
 	TYPES[t] = { ...T, publicView: hardened(t, T.publicView), ...(CANLI.has(t) ? { duo: true } : {}) };
+	// süre: tipin kendi prepare'i (stamp) timing(q) / budget(q) üzerinden de okunur (sabit tohumla belirlenimci)
+	DIS_ZAMAN.set(t, (q) => T.prepare(q, () => 0.5));
 }
 
 // ---------------------------------------------------------------- köprü: yeni tiplerin soruları
@@ -463,6 +466,8 @@ function hardened(type, base) {
 			o.sil = kabaSiluet(v.hedef, (karma(salt + v.q.id).charCodeAt(0) * 7919) | 1);
 		} else if (type === 'kayip' && Number.isInteger(v.hedef)) {
 			o.kuyu = kabaKuyu(v.hedef);
+		} else if (type === 'mancinik' && o.q) {
+			delete o.q.src; // bankadaki kardeş tahmin sorusunun kimliği (cevabı oradan okunurdu)
 		}
 		return o;
 	};

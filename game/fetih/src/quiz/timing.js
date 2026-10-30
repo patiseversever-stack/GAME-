@@ -292,6 +292,13 @@ const r1 = (x) => Math.round(x * 10) / 10;
 const memo = new WeakMap();
 
 /**
+ * Benimsenen yeni tiplerin süre kaynağı (v1.2, quiz/mac.js kaydeder: tip → q → görünüm { sec, fast, med, slow }). Yeni
+ * tiplerin ekrandaki işleri tipin kendi dosyasında sayılır (d_*.js stamp: aynı formül ve sabitler; PROFILE girdileri
+ * grup dosyalarında); timing(q) ve budget(q) onları da aynı biçimde verir (sunucu, sınama, belge).
+ */
+export const DIS_ZAMAN = new Map();
+
+/**
  * Sorunun süre ayrıntısı: { sec, fast, med, slow, raw, wait, look, read, words, think, act }.
  *   sec  : süre bütçesi (tam sn; oyunun saati)
  *   fast : hızlı ve bilen oyuncunun süresi (botların alt sınırı)
@@ -304,6 +311,14 @@ export function timing(q) {
 	if (!q || typeof q !== 'object') return { sec: 15, fast: 3, med: 6, slow: 9, raw: 15, wait: 0, look: 0, read: 0, words: 0, think: 0, act: 0 };
 	const hit = memo.get(q);
 	if (hit) return hit;
+	const ext = DIS_ZAMAN.get(q.type);
+	if (ext) {
+		// v1.2 yeni tip: süre kendi prepare'inden (d_ortak.js zaman(): bu dosyanın formülü, sabitleri ve PROFILE girdisi)
+		const v = ext(q);
+		const out = { sec: v.sec, fast: v.fast, med: v.med, slow: v.slow, raw: v.sec, wait: 0, look: 0, read: 0, words: 0, think: 0, act: 0 };
+		memo.set(q, out);
+		return out;
+	}
 	const p = parts(q);
 	const P = PROFILE[q.type] || { min: 8, max: 30 };
 	const fast = finish(p, PLAYERS.fast);

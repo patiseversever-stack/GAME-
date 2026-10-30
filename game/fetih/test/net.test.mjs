@@ -151,11 +151,18 @@ for (const q of [...BANK, ...SAMPLES]) {
 	// "Ekstra Süre" (kabul edilmeli), cevapla aynı anda "Sabotaj" (reddedilmeli) gönderir
 	{
 		class Greedy extends BotClient {
+			constructor(t, o) {
+				super(t, o);
+				// cevabı gönderdiği paketin hemen ardından sabotaj (yeni tiplerde cevap eylemlerden sonra gelir)
+				const send = t.send.bind(t);
+				t.send = (msg) => {
+					send(msg);
+					if (msg.t === 'res' && msg.k === 'answer') send({ v: 1, t: 'act', k: 'joker', d: { id: 'sabotaj' } });
+				};
+			}
 			_recv(m) {
-				const ans = m && m.t === 'req' && m.k === 'answer';
-				if (ans) this.t.send({ v: 1, t: 'act', k: 'joker', d: { id: 'sure' } });
+				if (m && m.t === 'req' && m.k === 'answer') this.t.send({ v: 1, t: 'act', k: 'joker', d: { id: 'sure' } });
 				super._recv(m);
-				if (ans) this.t.send({ v: 1, t: 'act', k: 'joker', d: { id: 'sabotaj' } });
 			}
 		}
 		const app = makeApp();
@@ -173,6 +180,174 @@ for (const q of [...BANK, ...SAMPLES]) {
 		ok(used.sabotaj === 0, `uzak koltuk cevabını verdikten sonra ${used.sabotaj} kez sabotaj yaptı`);
 	}
 	console.log(`uzak koltuklu 5 maç: istemciye ${events} olay`);
+}
+
+// ---------------------------------------------------------------- v1.2: yeni tiplerin sunucu adımları
+// Uzak koltuklu tam maçlar (bütün modlar, sanal saat: 20 sn'lik Halat turu ve 11 sn'lik Tufan filmi beklenmeden ama
+// gerçek sırasıyla). Uzak koltuğun cevapladığı her soru sırayla yeni tiplerden gelir (Zorla), 4 kişide iki uzak koltuk
+// birbiriyle de düello yapar. Denetimler: her yeni tipte görünüm sızıntısı (gizliler yok, Kuşbakışı/Gölge'de anlamsız
+// kimlik), istemcinin cevaptaki tam görünümle yeniden yargılaması sunucuyla aynı, süre sunucu saatiyle, sunucu adımı
+// olayları (harf, il, yer, ipucu saatleri, halat 'ip', fitil 'top'), sunucunun cevap filmini beklemesi, istatistik
+// (Şive ısı haritası, Az Bilinen oranları) ve olaylardan kurulan durumun sunucuyla aynılığı.
+{
+	const { kur } = await import('./sanal-saat.mjs');
+	const { makeApp, makeUI } = await import('./dunya.mjs');
+	const { LocalTransport, BotClient } = await import('../src/game/net.js');
+	const MAC = await import('../src/quiz/mac.js');
+	const { Istatistik } = await import('../src/game/sunucu.js');
+	const { GAP: KGAP } = await import('../src/quiz/d_kimim.js');
+	const S = kur();
+	const stats = new Istatistik();
+	const typed = {}; // tip → uzak koltuğun cevapladığı soru sayısı
+	const leak = (type, pv, full, salt) => {
+		const has2 = (o, ...ks) => ks.some((k) => o && Object.prototype.hasOwnProperty.call(o, k));
+		const q = pv.q || {};
+		switch (type) {
+			case 'kusbakisi':
+				return has2(pv, 'right') || has2(q, 'site', 'il', 'a') || q.sid !== MAC.sidOf(full.q.site, salt) || MAC.siteOfSid(q.sid, salt, [full.q.site, 'galata', 'nemrut']) !== full.q.site;
+			case 'golge':
+				return has2(pv, 'right') || has2(q, 'model', 'a') || !q.sid;
+			case 'ilavi':
+				return has2(pv, 'hedef') || has2(q, 'il', 'hints') || pv.hints.slice(1).some((h) => h) || pv.sil === full.sil;
+			case 'kimim':
+				return has2(pv, 'hedef') || has2(q, 'il', 'clues') || pv.clues.slice(1).some((h) => h);
+			case 'sive':
+				return has2(pv, 'region', 'ils') || has2(q, 'region', 'ils', 'mean', 'note');
+			case 'halat':
+				return has2(pv, 'key') || has2(q, 'items');
+			case 'mancinik':
+				return has2(pv, 'hedef') || has2(q, 'ans', 'src');
+			case 'yanlis':
+				return has2(pv, 'bad', 'right', 'opts') || has2(q, 't', 'ok', 'alt', 'n');
+			case 'ikidogru':
+				return has2(pv, 'right', 'notes') || has2(q, 'f', 'lie');
+			case 'harfal':
+				return has2(pv, 'word') || has2(q, 'w') || JSON.stringify(pv).includes(JSON.stringify(full.word));
+			case 'azbilinen':
+				return has2(pv, 'pct', 'alias') || has2(q, 'ans', 'wrong');
+			case 'tufan':
+				return has2(pv, 'right', 'alt') || has2(q, 'ils');
+			case 'kayip':
+				return has2(pv, 'right', 'hedef', 'nb', 'hints') || has2(q, 'a', 'il', 'hint') || !Array.isArray(pv.kuyu);
+			case 'fitil':
+				return has2(pv, 'fuse') || pv.items.some((it) => has2(it, 'right'));
+		}
+		return false;
+	};
+	// uzak koltuğun cevapladığı soruların tipi sırayla yeni tiplerden (yayılmada canlı tur yok)
+	class Zorla extends Match {
+		pickTyped(cat, moment, who) {
+			if (!who?.some((p) => p.ctl.remote) || moment === 'tie' || moment === 'golden') return super.pickTyped(cat, moment, who);
+			// yayılma ve düello ayrı sırayla: düelloda canlı turlar (Halat, Fitil) başta
+			const ex = moment === 'expand';
+			const list = ex ? MAC.YENI.filter((t) => !MAC.CANLI.has(t)) : ['halat', 'fitil', ...MAC.YENI.filter((t) => !MAC.CANLI.has(t))];
+			const key = ex ? 'zy' : 'zd';
+			Zorla[key] = (Zorla[key] ?? -1) + 1; // sıra maçlar boyunca sürer (her tip en az bir kez)
+			const t = list[Zorla[key] % list.length];
+			const q = this.pick({ types: [t], who });
+			this.qlog.push({ moment, type: q.type });
+			this.recent.push(q.type);
+			return q;
+		}
+	}
+	let total = 0;
+	let durs = [];
+	for (const [mode, n, seed, remotes] of [['1v1', 2, 61, [1]], ['ffa3', 3, 62, [1]], ['ffa4', 4, 63, [1, 2]], ['team', 4, 64, [1, 2]], ['1v1', 2, 65, [0]], ['ffa3', 3, 66, [0, 2]]]) {
+		const app = makeApp();
+		const seats = Array.from({ length: n }, (_, i) => (remotes.includes(i) ? 'remote' : 'bot'));
+		const transports = {};
+		const views = {};
+		for (const i of remotes) {
+			const [srv, cli] = LocalTransport.pair();
+			transports[i] = srv;
+			let s = seed * 7 + i;
+			const client = new BotClient(cli, { skill: 0.6, R: () => ((s = (s * 16807) % 2147483647) / 2147483647) });
+			const view = (views[i] = { owners: new Map(), values: new Map(), score: null, ev: [], salt: null });
+			const recv = client._recv.bind(client);
+			cli.onmessage((m) => {
+				if (m.t === 'hello') view.salt = m.d.cfg.salt;
+				if (m.t === 'ev') {
+					view.ev.push({ k: m.k, d: m.d, at: S.now() });
+					if (m.k === 'owner') view.owners.set(m.d.i, m.d.p), view.values.set(m.d.i, m.d.value);
+					else if (m.k === 'score') view.score = m.d;
+				}
+				recv(m);
+			});
+		}
+		const m = new Zorla(app, makeUI(), { mode, length: 'quick', bot: 'er', region: 'ege', seed, seats, transports, allBots: true, persist: false, serverPace: 1, istatistik: stats, yeni: { golge: true } });
+		const t0 = S.now();
+		await S.surdur(m.run());
+		durs.push(`${mode} ${((S.now() - t0) / 60000).toFixed(1)} dk`);
+		const tag = `yeni/${mode}/${seed}`;
+		for (const i of remotes) {
+			const view = views[i];
+			ok(m.map.every((j) => view.owners.get(j) === m.owner(j)), `${tag}: koltuk ${i} il sahipleri sunucuyla aynı değil`);
+			ok(m.map.every((j) => (view.values.get(j) || 0) === (m.value.get(j) || 0)), `${tag}: koltuk ${i} il değerleri sunucuyla aynı değil`);
+			ok(view.score && view.score.scores.join() === m.players.map((p) => p.score).join(), `${tag}: koltuk ${i} puanları sunucuyla aynı değil`);
+			// soru soru: ask → (adım olayları) → reveal
+			let ask = null;
+			let inQ = [];
+			view.ev.forEach((e, k) => {
+				if (e.k === 'ask') {
+					ask = e;
+					inQ = [];
+					return;
+				}
+				if (e.k !== 'reveal') {
+					if (ask) inQ.push(e);
+					return;
+				}
+				if (!ask) return;
+				const type = ask.d.q.type;
+				const T = TYPES[type];
+				const full = e.d.answer;
+				const mine = e.d.results.find((r) => r.i === i);
+				// cevaptaki tam görünümle yeniden yargı: sunucunun sonucu
+				for (const r of e.d.results) {
+					const j = T.judge(full, r.value);
+					ok(j.correct === r.correct && (Number.isFinite(j.err) ? j.err : -1) === r.err, `${tag}: ${type} yeniden yargı farklı (koltuk ${r.i})`);
+					ok(r.time >= 0 && r.time <= ask.d.time + 16, `${tag}: ${type} süre ${r.time} aralık dışında`);
+				}
+				// sunucu filmi bekler: bir sonraki olay en erken film kadar sonra
+				const next = view.ev[k + 1];
+				if (next) ok(next.at - e.at >= e.d.film - 1, `${tag}: ${type} sonrası olay ${next.at - e.at} ms sonra geldi, film ${e.d.film} ms`);
+				if (MAC.isYeni(type) && ask.d.who.includes(i)) {
+					typed[type] = (typed[type] || 0) + 1;
+					ok(!leak(type, ask.d.v, full, view.salt), `${tag}: ${type} görünümünde gizli bilgi`);
+					const evs = (kk) => inQ.filter((x) => x.k === kk);
+					if (type === 'harfal') ok(evs('harf').filter((x) => x.d.i >= 0).length === mine.value.al.length, `${tag}: Harf Al sunucu kaydı (${mine.value.al.length}) ile olaylar uyuşmuyor`);
+					if (type === 'ilavi') ok(evs('il').filter((x) => !x.d.rejected).length === mine.value.taps.length, `${tag}: İl Avı dokunuşları sunucu kaydıyla uyuşmuyor`);
+					if (type === 'kimim') {
+						const ip = evs('ipucu');
+						const askAt = ask.at;
+						ok(ip.every((x, z) => x.d.k === z + 1 && Math.abs(x.at - askAt - x.d.k * KGAP * 1000) < 50), `${tag}: Kimim ipuçları sunucu saatinde değil`);
+					}
+					if (type === 'kayip') {
+						const ip = evs('ipucu');
+						ok(ip.length >= 1 && ip.every((x) => Math.abs(x.at - ask.at - full.hintAt[x.d.k] * 1000) < 50), `${tag}: Kayıp İl ipuçları saatinde değil`);
+					}
+					if (type === 'yanlis' && mine.value) ok(evs('yer').length === 1 && evs('yer')[0].d.ok === (mine.value.w === full.bad), `${tag}: Yanlışı Bul yer cevabı`);
+					if (type === 'halat') {
+						ok(evs('ip').length > 0, `${tag}: Halat 'ip' yayını yok`);
+						const log = mine.value?.log || [];
+						ok(log.every((a, z) => !z || a[2] >= log[z - 1][2]) && log.every((a) => a[2] <= full.sec + 0.5), `${tag}: Halat kaydı sunucu saatinde değil`);
+					}
+					if (type === 'fitil') {
+						ok(evs('top').some((x) => x.d.ev.some((y) => y.type === 'boom')), `${tag}: Fitil patlaması yayınlanmadı`);
+						ok(e.d.results.filter((r) => r.correct).length === 1, `${tag}: Fitil: tam bir taraf kurtulmalı`);
+					}
+					if (type === 'sive') ok(Array.isArray(full.heat) && full.heat.length > 0, `${tag}: Şive ısı haritası sunucudan gelmedi`);
+				}
+				ask = null;
+			});
+		}
+		total++;
+	}
+	S.kaldir();
+	const miss = MAC.YENI.filter((t) => !typed[t]);
+	ok(!miss.length, `uzak koltukla hiç oynanmayan yeni tip: ${miss.join(', ')}`);
+	ok(Object.keys(stats.data.sive || {}).length > 0 && Object.keys(stats.data.azbilinen || {}).length > 0, 'sunucu istatistiği birikmedi');
+	console.log(`yeni tipler uzak koltukla (${total} maç, sanal saat; süre ${durs.join(', ')}): ${Object.entries(typed).map(([t, c]) => `${t} ${c}`).join(' · ')}`);
 }
 
 console.log(`${checks} denetim, ${fails} hata`);

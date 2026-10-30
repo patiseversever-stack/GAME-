@@ -210,7 +210,7 @@ export const ADIM = {
 			if (D.halat) return;
 			// botların kaydı (önceden üretilmiş, gerçekçi okuma hızı) sunucu saatinde canlı yayınlanır
 			D.halat = true;
-			D.bots = S.cur.bots.filter((b) => S.cur.who.includes(b.p));
+			D.bots = S.cur.bots.filter((b) => S.cur.who.includes(b.p) && !b.p.ctl.remote); // uzak koltuğun yedek bot cevabı sayılmaz
 			const times = new Set();
 			for (const b of D.bots) for (const a of b.value?.log || []) times.add(Math.round(a[2] * 1000));
 			for (const ms of [...times].sort((a, b) => a - b)) S.later(() => ADIM.halat.ip(S), ms + 5);
@@ -252,8 +252,9 @@ export const ADIM = {
 			if (D.E) return;
 			// ortak tur: iki taraf tek motorda (saldıran 0, savunan 1); botun planı (sheet) motorda, uzak koltuk canlı
 			const P = S.cur.who.map((p) => {
+				if (p.ctl.remote) return { log: [] };
 				const b = S.cur.bots.find((x) => x.p === p);
-				return b ? { sheet: b.value?.me?.sheet || [] } : { log: [] };
+				return { sheet: b?.value?.me?.sheet || [] };
 			});
 			D.P = P;
 			D.E = engine(S.v, P);
