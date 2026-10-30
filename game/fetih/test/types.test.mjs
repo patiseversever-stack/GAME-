@@ -182,7 +182,7 @@ for (const t of Object.keys(count)) {
 	const b = mean(hi);
 	console.log(`  ${t.padEnd(8)} doğru oranı: çaylak ${(a * 100).toFixed(0)}%  usta+ ${(b * 100).toFixed(0)}%`);
 	ok(b > a - 0.02, `${t}: beceri arttıkça bot doğruluğu artmalı`);
-	if (t === 'pin' || t === 'num') continue; // yakınlık tipleri: 'correct' çok sıkı bir eşik
+	if (TYPES[t].kind === 'closest') continue; // yakınlık tipleri (pin, num, çengel, yıldırım): 'correct' çok sıkı bir eşik; sıralama err'e göre
 	ok(a > 0.1 && a < 0.9, `${t}: çaylak botun doğru oranı makul değil (${a})`);
 	ok(b > 0.4 && b <= 1, `${t}: usta botun doğru oranı makul değil (${b})`);
 }

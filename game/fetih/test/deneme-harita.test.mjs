@@ -82,10 +82,15 @@ for (const [type, list] of Object.entries(SAMPLES)) {
 	console.log('  ' + type.padEnd(6) + row.join(' · '));
 }
 
-// Kimim: en az 15 il, her biri farklı tarz, 5 ipucu, il adı ipucunda geçmez
+// Kimim: en az 15 il, tarzlar dengeli (hepsi kullanılır, sayıları en çok 1 farklı, art arda aynı tarz yok), 5 ipucu,
+// il adı ipucunda geçmez
 const KM = SAMPLES.kimim;
 ok(KM.length >= 15, 'kimim: en az 15 örnek');
-ok(new Set(KM.map((q) => q.style)).size === KM.length && KM.every((q) => STYLES[q.style]), 'kimim: her örnek farklı ve tanımlı tarzda değil');
+const nst = {};
+for (const q of KM) nst[q.style] = (nst[q.style] || 0) + 1;
+ok(KM.every((q) => STYLES[q.style]) && Object.keys(nst).length === Math.min(KM.length, Object.keys(STYLES).length), 'kimim: tarz tanımsız ya da kullanılmayan tarz var');
+ok(Math.max(...Object.values(nst)) - Math.min(...Object.values(nst)) <= 1, 'kimim: tarzlar dengesiz ' + JSON.stringify(nst));
+ok(KM.every((q, i) => !i || q.style !== KM[i - 1].style), 'kimim: art arda aynı tarz');
 ok(new Set(KM.map((q) => q.il)).size === KM.length, 'kimim: yinelenen il');
 for (const q of KM) {
 	ok(q.clues.length === 5 && q.clues.every((c) => c.length > 10), q.id + ': 5 dolu ipucu yok');

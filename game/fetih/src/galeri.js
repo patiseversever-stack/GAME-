@@ -88,8 +88,8 @@ const SAMPLES = {
 /** Bankadan tip başına 4 örnek: zorluk 1, 2, 3 ve bir tane daha; sıralamada iki artan, iki azalan. */
 function examples(type) {
 	if (DENEME_SAMPLES[type]) return DENEME_SAMPLES[type];
-	if (SAMPLES[type]) return SAMPLES[type];
 	const list = BANK.filter((q) => q.type === type).sort((a, b) => a.id.localeCompare(b.id));
+	if (!list.length && SAMPLES[type]) return SAMPLES[type]; // bankada sorusu olmayan tip (resimli): örnek soru
 	const pick = (pred, n) => list.filter((q) => pred(q) && !out.includes(q)).slice(0, n);
 	const out = [];
 	if (type === 'order') {
@@ -107,6 +107,12 @@ const CSS = `
 .gal{position:fixed;top:0;z-index:70;box-sizing:border-box;display:flex;flex-direction:column;gap:7px;
   padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 9px max(12px,env(safe-area-inset-left,0px));
   background:linear-gradient(180deg,#0e1a42,#0a1230);border-bottom:1px solid rgba(255,214,120,.25);color:#eef2fa;font-family:'Fredoka',system-ui,sans-serif;font-weight:600}
+.gal{transform:translateY(-104%);transition:transform .24s cubic-bezier(.2,.8,.2,1);box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.gal.show{transform:none}
+.gal-fab{position:fixed;z-index:69;top:calc(8px + env(safe-area-inset-top,0px));width:38px;height:38px;border-radius:12px;border:1.5px solid rgba(255,214,120,.5);
+  background:rgba(14,26,66,.82);color:#ffd25a;font:800 18px/1 system-ui,sans-serif;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.4);touch-action:manipulation}
+.gal-fab:focus-visible{outline:2px solid #ffd25a;outline-offset:2px}
+.gal-fab[hidden]{display:none}
 .gal button{font:inherit;color:inherit;cursor:pointer;border:0;touch-action:manipulation}
 .gal button:focus-visible,.gal-pn button:focus-visible{outline:2px solid #ffd25a;outline-offset:2px}
 .gal .ey{font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:10px;letter-spacing:.2em;color:#8fa2cf}
@@ -159,6 +165,19 @@ export async function galeri() {
 	pn.setAttribute('role', 'listbox');
 	pn.setAttribute('aria-label', 'Soru tipleri');
 	document.body.appendChild(pn);
+	// galeri denetimleri gizli bir çekmecede: ekran telefondaki oyunun birebir aynısı; sol üstteki küçük düğme açar
+	const fab = document.createElement('button');
+	fab.className = 'gal-fab';
+	fab.setAttribute('aria-label', 'Galeri: soru tipi ve örnek seç');
+	fab.textContent = '☰';
+	document.body.appendChild(fab);
+	const drawer = (on) => {
+		bar.classList.toggle('show', on);
+		fab.hidden = on;
+		if (!on) panel(false);
+		fit();
+	};
+	fab.addEventListener('click', () => drawer(true));
 
 	const game = await createFetih({ container: document.body });
 	const app = game.app;
@@ -178,8 +197,10 @@ export async function galeri() {
 			e.style.width = root.style.width || '100%';
 		}
 		pn.style.top = h + 'px';
-		root.style.top = h + 'px';
-		root.style.setProperty('--vh', (H - h) / 100 + 'px');
+		fab.style.left = `calc(${root.style.left || '0px'} + max(8px, env(safe-area-inset-left, 0px)))`;
+		// oyun tam ekran: şerit yalnız açıkken üstte durur (oyunu itmez)
+		root.style.top = '0px';
+		root.style.setProperty('--vh', H / 100 + 'px');
 		app.resize();
 	};
 	addEventListener('resize', fit);
@@ -208,7 +229,7 @@ export async function galeri() {
 		const nw = isNew(S.type);
 		bar.innerHTML = `<span class="ey">FETİH LİGİ · SORU GALERİSİ</span>
 			<div class="hd"><button class="ty" id="g-type" aria-haspopup="listbox" aria-expanded="${!pn.hidden}">${nw ? '<span class="nw">YENİ</span>' : ''}<b>${esc(name)}</b><small>${ti + 1}/${LIST.length}</small><i>▼</i></button>
-				<div class="nv"><button class="ar" id="g-prev" aria-label="Önceki örnek">‹</button><b>${S.k + 1}/${list.length}<small>ÖRNEK</small></b><button class="ar" id="g-next" aria-label="Sonraki örnek">›</button></div></div>
+				<div class="nv"><button class="ar" id="g-prev" aria-label="Önceki örnek">‹</button><b>${S.k + 1}/${list.length}<small>ÖRNEK</small></b><button class="ar" id="g-next" aria-label="Sonraki örnek">›</button><button class="ar" id="g-close" aria-label="Kapat">✕</button></div></div>
 			<div class="meta"><b>${esc(q.id)}</b> · ${esc(cat)} · ${DIFF[q.diff] || ''} · süre <b>${v.sec ?? T.time} sn</b>${
 				nw ? ' · <em class="yeni">YENİ</em> <span class="note">maça henüz eklenmedi</span>' : SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok, örnek soru</span>' : ''
 			}</div>
@@ -225,28 +246,30 @@ export async function galeri() {
 		return { q, v, T };
 	};
 
-	const panel = (on) => {
+	function panel(on) {
+		if (on && !bar.classList.contains('show')) drawer(true);
 		pn.hidden = !on;
 		bar.classList.toggle('open', on);
 		bar.querySelector('#g-type')?.setAttribute('aria-expanded', String(on));
 		if (on) pn.querySelector('.on')?.focus({ preventScroll: true });
-	};
+	}
 	const go = (type, k = 0) => {
 		S.type = type;
 		S.k = (k + ex[type].length) % ex[type].length;
-		panel(false);
+		drawer(false);
 		play();
 	};
 	bar.addEventListener('click', (e) => {
 		const b = e.target.closest('button');
 		if (!b) return;
 		if (b.id === 'g-type') return panel(pn.hidden);
+		if (b.id === 'g-close') return drawer(false);
 		if (b.id === 'g-prev') return go(S.type, S.k - 1);
 		if (b.id === 'g-next') return go(S.type, S.k + 1);
 		if (b.id === 'g-scene') S.scene = S.scene === 'duel' ? 'all' : 'duel';
 		else if (b.id === 'g-time') S.time = S.time === 'real' ? 'free' : 'real';
 		else if (b.id !== 'g-again') return;
-		panel(false);
+		drawer(false);
 		play();
 	});
 	pn.addEventListener('click', (e) => {
@@ -255,7 +278,7 @@ export async function galeri() {
 	});
 	// klavye: ← → örnek, ↑ ↓ tip, Esc tip listesini kapatır (yazma tiplerinde klavye oyunundur: yalnız şerit odaktayken)
 	addEventListener('keydown', (e) => {
-		if (e.key === 'Escape' && !pn.hidden) return panel(false);
+		if (e.key === 'Escape' && bar.classList.contains('show')) return drawer(false);
 		if (!bar.contains(document.activeElement) && !pn.contains(document.activeElement)) return;
 		const ti = LIST.findIndex(([t]) => t === S.type);
 		if (e.key === 'ArrowRight') go(S.type, S.k + 1);
