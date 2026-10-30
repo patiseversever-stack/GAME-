@@ -193,3 +193,115 @@ görünsün ama yoğun olmasın." Kıyas: `ref/hava-v07/`.
   turkuaz sığlık ve q≥1 güneş pırıltısı, Karadeniz koyu, yeşile çalan deniz.
 - **Perf:** 1 örneklemeli çağrı (kar tanesi q0 160 / q1 600 / q2 1000; Karadeniz sis tutamı q1 10 / q2 16), gecede gizli.
   Gündüz q0 9 → 10 çağrı, 134.204 → 134.524 üçgen; q2 10 → 11, 221.007 → 223.029; gece odağında değişmez. Kare başına nesne yok.
+
+## v1.2 maç soru düzeni: 14 yeni tip maçta (`src/quiz/mac.js`, `src/game/sunucu.js`)
+
+Kullanıcı: "Her tipin hangi turda ve ne sıklıkla geleceği ayarlanmalı. Çevrimiçi sunucu adımları yazılmalı. Tufan gibi uzun
+filmlerin maçtaki yeri belirlenmeli." Rapor ve görüntüler: `ref/mac-entegrasyon-v12/`. Ölçüm: `node test/sim.mjs --plan=500`
+(4.000 maç), `node test/net.test.mjs` (uzak koltuklu tam maçlar, sanal saat), `node tools/flow.mjs … --mode=… --only=y --tam`.
+
+**Tipler.** Maçta: kusbakisi, ilavi, kimim, sive, halat, mancinik, yanlis, ikidogru, harfal, azbilinen, tufan, kayip, fitil.
+**golge** kayıtlı ama `BAYRAK.golge = false` (onay bekliyor; `cfg.yeni = { golge: true }` maç başına açar). kosu ve baglanti
+maça hiç girmez. Eski 16 tip olduğu gibi (bankaya yeni giren anagram, çengel ve yıldırım dahil: kategori ağırlıklarıyla).
+**Köprü:** `yeniBank()` yeni tiplerin sorularını galeri örneklerinden (`DENEME_SAMPLES`) okur; örnek dizilerine eklenen her
+soru maça kendiliğinden girer. Süre: `timing(q)`/`budget(q)` yeni tiplerde tipin kendi `prepare` damgasını verir
+(`DIS_ZAMAN`; aynı formül, sabitler ve `PROFILE`).
+
+**Anlar.** `expand` yayılma (herkes cevaplar, sıralama il hakkı verir) · `attack` sahra düellosu · `siege` kale kuşatması ·
+`tie` düelloda eşitlik bozma · `golden` maç sonu altın soru. İkinci şans aynı tipten taze soru (canlı turda ya da tip
+tükenince 4 şıklı test).
+
+### Yeni tip payı (an × mod, `PAY`) ve gerçekleşen (4.000 maç)
+
+| an | 1'e 1 | 3 kişi | 4 kişi | eşli | gerçekleşen | gerekçe |
+|---|---|---|---|---|---|---|
+| yayılma | 0,45 | 0,50 | 0,50 | 0,50 | %45–50 | harita boşken: sıralama üreten yeni tipler (harita, "en yakın") |
+| düello | 0,55 | 0,50 | 0,45 | 0,45 | %38–44 | 4 şıklı klasik omurga kalsın (Trivia Crack, Bil ve Fethet); 4 kişide düelloların çoğu iki bot |
+| kuşatma | 0,65 | 0,65 | 0,65 | 0,65 | %43–52 | maçın en büyük anı: yıldız tipler (Halat, Fitil, Tufan) |
+| eşitlik bozma | 0,30 | 0,30 | 0,30 | 0,30 | %19–29 | yalnız "en yakın kazanır": Tahmin ya da Mancınık (Triviador kuralı) |
+| altın soru | 0,50 | 0,50 | 0,50 | 0,50 | (seyrek) | Tahmin ya da Mancınık |
+
+Bütün maçta yeni tip payı %39–43; maç başına 6–7 (hızlı) / 9,5–10,5 (uzun) farklı yeni tip. Pay kategori başına ölçeklenir:
+kategorinin yeni tip zenginliği (`Σ ağırlık / kapsam`) ortalamanın üstündeyse payı da o oranda büyük (en çok `PAY_UST` 0,85).
+Böylece yalnız Coğrafya'da sorusu olan haritalı tipler, her kategoride sorusu olan Halat kadar sık gelir (`kapsam()`):
+Coğrafya dilimi çoğunlukla haritalı yeni tiplerle, Spor dilimi çoğunlukla klasiklerle oynanır. Maç içi denge: o ana dek
+hedeften az yeni tip geldiyse pay ×(1 + 1,4·açık), [0,6, 1,5] aralığında.
+
+### Tip × an ağırlıkları (`YENI_W`), sınıf, üst sınır, film
+
+| tip | yayılma | düello | kuşatma | eşitlik / altın | sınıf | kategori uyumu | maçta en çok (hızlı/uzun) | film tam / kısa (ms) | gerekçe |
+|---|---|---|---|---|---|---|---|---|---|
+| kusbakisi | 1,8 | 2,5 | 2 | – | harita, erken bilen | Coğrafya ×1,3, Tarih ×1,2 | 2 / 4 | 4.400 / 2.800 | "ilk bilen" gerilimi; başkent ilindeki yapı sorulmaz |
+| ilavi | 2,5 | 1,2 | 1 | – | harita, en yakın | Coğrafya ×1,3 | 1 / 2 | 4.600 / 3.200 | 4 deneme × uzaklık: ince sıralama; uzun (32–35 sn) |
+| kimim | 2,5 | 2 | 1,5 | – | harita, erken bilen | Coğrafya ×1,3 | 2 / 3 | 4.600 / 3.000 | ipucu sırası doğal sıralama |
+| sive | 2,5 | 1,2 | 1 | – | harita, en yakın | Genel Kültür ×1,4, Sanat ×1,2 | 2 / 3 | 4.800 / 3.400 | ısı haritası çok kişide anlamlı |
+| halat | – | 2,5 | 3 | – | canlı (2 kişi) | her kategori | 2 / 3 | 3.600 / 2.400 | yalnız düello; kuşatmanın yıldızı |
+| fitil | – | 2,5 | 3 | – | canlı (2 kişi) | her kategori | 2 / 3 | 3.800 / 2.400 | yalnız düello; tek tur, tek kaybeden |
+| mancinik | 2,2 | 1,5 | 1,5 | 1 | en yakın | – | 2 / 3 | 4.600 / 3.200 | "aşmadan en yakın": eşitlikte Tahmin'in eşi |
+| yanlis | 1,5 | 1,5 | 1 | – | okuma ağır | Tarih, Bilim ×1,1 | 1 / 2 | 3.800 / 2.600 | yayılmada yalnız ≤30 sn'lik soru, kısa soru öne |
+| ikidogru | 1 | 2 | 1 | – | okuma ağır | Bilim, Genel Kültür ×1,2 | 1 / 2 | 4.600 / 2.600 | açıklamalar okunur: tam film insanın düellosunda |
+| harfal | 2 | 1,5 | 1 | – | en yakın | – | 2 / 3 | 3.400 / 2.400 | alınan harf sayısı: sıralama |
+| azbilinen | 2,5 | 1 | 0,5 | – | okuma ağır, en yakın | Coğrafya, Genel Kültür ×1,1 | 1 / 2 | 4.200 / 3.000 | Pointless: kalabalıkta anlamlı |
+| tufan | 1,5 | 2,5 | 2,5 | – | harita, sinematik | Coğrafya ×1,2 | 1 / 2 | 11.000 / 5.200 | 11 sn'lik film: hızlı maçta bir kez, insanın düellosunda tam |
+| kayip | 1,5 | 2 | 2 | – | harita, erken bilen | Coğrafya ×1,3 | 2 / 3 | 4.600 / 3.000 | ipuçları saatinde: erken bilen kazanır |
+| golge | 1 | 2 | 2 | – | erken bilen | Tarih | 1 / 2 | 5.600 / 3.200 | bayrakla |
+
+Eski tipler: kategori ağırlıkları (`TYPE_WEIGHTS`) olduğu gibi; düello ve kuşatmada `choice` ×1,6 (4 şıklı test düellonun en sık
+tipi: %15–16). Bankaya yeni giren çengel (25–100 sn) yayılmada ×0,6, kuşatmada ×0,5 ve maçta en çok 1 / 2; yıldırım ve
+anagram en çok 2 / 3.
+
+**Mod çarpanları (`modK`).** 3–4 kişi ve eşli yayılma: en yakın tipler ×1,25, bildi/bilemedi ×0,8, okuma ağır ×0,7 (herkes en
+yavaşı bekler; sıralama ince olmalı). 1'e 1 düello ve kuşatmada canlı tur ×1,2 (her düello insanla). 4 kişi ve eşli düelloda
+haritalı tipler ×0,85. **İzlenen bot düellosu** (yerel insan yalnız seyrediyor): haritalı tipler ×0,4, Tufan ×0,3 (kamera
+savaştan kopmasın, uzun film yok).
+
+**Kurallar.** Aynı tip art arda hiç (4.000 maçta 0); yeni tip son 3 soruda geldiyse ×0,15; iki canlı tur art arda yok; iki
+haritalı soru art arda ×0,3; yasaklar her şeyi elerse yalnız "bir önceki tip değil" kalır. Canlı tur (Halat, Fitil) yalnız
+düelloda ve kuşatmada; süre, sabotaj ve ikinci şans jokeri canlı turda yok (`jokers.support`, `T.duo`). "Erken bilen
+kazanır" tipleri (`HIZLI`: Kuşbakışı, Kayıp İl, Kimim, Gölge) düelloda ikisi de bilirse eşitlik sorusu yerine erken bilen
+(Kimim'de erken ipucu) kazanır. Fitil iki oyuncunun ortak turu: iki değer birbirinin oyununu taşır (`eslestir`), iki yargı
+çelişmez. Mancınık ile bankadaki kardeş tahmin sorusu aynı maçta çıkmaz (`q.src`). Yayılma kategorisi: Coğrafya ×2,5 (harita
+boşken haritalı tipler en anlamlı anında; yayılma turlarının ~üçte biri).
+
+**Zorluk eğrisi (`egri`).** Hedef zorluk maç ilerledikçe −0,3'ten +0,3'e; kuşatma +0,2, altın soru +0,3; yeni bir tipin
+maçtaki ilk sorusu −0,5 (oyuncu kuralı tanırken soru kolay).
+
+### Uzun filmler (`filmMs` → `ctx.film` → `ui.reveal`)
+
+| an | film | gerekçe |
+|---|---|---|
+| insanın ya da uzak oyuncunun düellosu / kuşatması | tam | cevap filmi tipin ödülü (Tufan'ın batışı, Kayıp İl'in inişi) |
+| altın soru | tam | maçın son anı |
+| 1'e 1 yayılma | tam | iki kişi, ardından kısa sıralama |
+| 3–4 kişi yayılma | kısa | ardından sıralama ekranı gelir; herkes bekler |
+| iki botun düellosu | kısa × `BOT_FILM` (en az arayüz süresi) | savaş filminin tempo kuralıyla aynı |
+| ikinci şans | kısa | tek kişilik ara soru |
+
+Yerelde dokununca erken geçer. Çevrimiçinde süre 'ask' ve 'reveal' olaylarında gider; sunucu `serverPace` ile filmin
+bitişini bekler (herkes aynı anda ilerler; erken geçen istemci yalnız bekler). Maç süresine etkisi (4.000 maç): hızlı maçta
+24–27 sn, uzun maçta 54–59 sn cevap filmi.
+
+**Maç süresi (hedef hızlı 6–8, uzun 15–20 dk).** `PACE.byMode`: hızlı 1'e 1 10 düello, diğerleri 11; uzun 1'e 1 20, 3 kişi 27,
+4 kişi ve eşli 28. Tahmini ortalama (4.000 maç): hızlı 7,5–7,9, uzun 17,8–18,5 dk. Koltuk adaleti: `test/kurallar.test.mjs`
+(1'e 1 %50,2 / 49,8, eşli %50 / 50; 1.000–1.500 maç).
+
+### Çevrimiçi (sunucu otoriter, `src/game/sunucu.js`, şema `net.js` başı)
+
+| tip | istemci → sunucu (act) | sunucu → istemci (ev) | son değer (sunucunun kaydı) |
+|---|---|---|---|
+| hepsi | `acildi` (kart açıldı) | — | süre = cevabın varışı − onayın varışı (sunucu saati) |
+| harfal | `harf` {} | `harf` {i, c} | {g, al: sunucunun açtıkları}; 50/50'nin bedava harfleri sayılmaz |
+| ilavi | `il` {il} | `il` {il, km, dir, found, left, hint} | {taps} |
+| kimim | `il` {il} | `il` {il, ok, lock} · `ipucu` {k, text} her 3 sn | {taps, at: doğru dokunuşun sunucu zamanından} |
+| kayip | — | `ipucu` {k, text, bolge / il} `hintAt` saatinde | şık |
+| sive | — | reveal: `heat` (gerçek dokunuşlar, istatistik) | {il} |
+| yanlis | `yer` {w} (bir kez) | `yer` {w, ok, opts?} | {w: ilk işaret, f} |
+| halat | `halat` {k, c} | `halat` {k, ok, r} · herkese `ip` {nets} | {log: sunucu damgalı} (tally) |
+| fitil | `fitil` {k, c} | herkese `top` {ev} (open, ans, close, boom) | iki tarafın kaydı (ortak motor) |
+| azbilinen | — | reveal: gerçek oranlar (`pct`, 20 cevaplık önsel) | sıra |
+| tufan, kusbakisi, golge, ikidogru / mancinik | — | — | şık doğrulaması / sayı [min, max] |
+
+Görünüm sertleştirme: Kuşbakışı ve Gölge'de yapı adı yerine maça tuzlu anlamsız kimlik (`q.sid`, tuz `hello` cfg.salt),
+İl Avı silueti ve Kayıp İl boşluğu sadeleştirilmiş, tamsayıya yuvarlanmış çokgen, Mancınık'ta bankadaki kardeş soru kimliği
+yok. Sınama: `test/net.test.mjs` (6 uzak koltuklu tam maç, her yeni tipte sızıntı, yeniden yargı, adım olayları, ipucu
+saatleri, film beklemesi, olaylardan kurulan durum).
