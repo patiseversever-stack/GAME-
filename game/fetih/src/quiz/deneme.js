@@ -17,9 +17,18 @@ import { kusbakisi } from './d_kusbakisi.js';
 import { kosu } from './d_kosu.js';
 import { ilavi } from './d_ilavi.js';
 import { baglanti } from './d_baglanti.js';
+// ek deneme grupları: her grup kendi dosyasında { TYPES, ORDER, SAMPLES } verir, süre profillerini timing.js PROFILE'a
+// kendisi ekler (Object.assign). Böylece gruplar birbirine dokunmadan büyür.
+import * as harita from './deneme-harita.js';
+import * as duello from './deneme-duello.js';
+import * as akil from './deneme-akil.js';
+import * as icat3b from './deneme-icat3b.js';
+import * as icat from './deneme-icat.js';
 export { bindApp } from './d_ortak.js';
 
-export const DENEME_TYPES = { kusbakisi, kosu, ilavi, baglanti };
+const GROUPS = [harita, duello, akil, icat3b, icat];
+
+export const DENEME_TYPES = Object.assign({ kusbakisi, kosu, ilavi, baglanti }, ...GROUPS.map((g) => g.TYPES));
 
 /** Galeri sırası: [tip, galerideki adı, bir satırlık tanıtım]. */
 export const DENEME_ORDER = [
@@ -27,6 +36,7 @@ export const DENEME_ORDER = [
 	['kosu', 'Fetih Koşusu', 'Kurala uyan illeri fethet'],
 	['ilavi', 'İl Avı · Sıcak Soğuk', 'Siluet, uzaklık rengi, ipucu'],
 	['baglanti', 'Bağlantı Duvarı', '12 taş, 3 gizli grup'],
+	...GROUPS.flatMap((g) => g.ORDER),
 ];
 
 const KB = (id, diff, q, site, il, a, extra = {}) => ({ id, cat: 'cografya', diff, type: 'kusbakisi', q, site, il, a, ...extra });
@@ -34,7 +44,7 @@ const KS = (id, diff, q, ids, frame) => ({ id, cat: 'cografya', diff, type: 'kos
 const IA = (id, diff, il, hints) => ({ id, cat: 'cografya', diff, type: 'ilavi', q: 'Siluetteki gizli ili haritada bul!', il, hints });
 const BG = (id, cat, diff, groups) => ({ id, cat, diff, type: 'baglanti', q: 'Taşları dörderli 3 gruba ayır', groups: groups.map(([n, w]) => ({ n, w })) });
 
-export const DENEME_SAMPLES = {
+export const DENEME_SAMPLES = Object.assign({
 	kusbakisi: [
 		KB('dn-kb1', 1, 'Kamera hangi ilin üzerinde?', 'galata', 34, ['İstanbul', 'İzmir', 'Çanakkale', 'Edirne'], { yaw: 0.5 }),
 		KB('dn-kb2', 2, 'Burası hangi il?', 'pamukkale', 20, ['Denizli', 'Aydın', 'Muğla', 'Burdur'], { yaw: -0.4 }),
@@ -85,4 +95,4 @@ export const DENEME_SAMPLES = {
 			['Voleybol terimleri', ['Manşet', 'Servis', 'Blok', 'Smaç']],
 		]),
 	],
-};
+}, ...GROUPS.map((g) => g.SAMPLES));
