@@ -61,6 +61,7 @@ for (const [type, list] of Object.entries(DENEME_SAMPLES)) {
 			good = { tries };
 			bad = { tries: [[0, 1, 2, 3], [4, 5, 6, 7], [8, 9, 10, 11]].filter((t) => !t.every((k) => v.key[k] === v.key[t[0]])) };
 		} else if (typeof T.ornek === 'function') ({ good, bad } = T.ornek(v)); // ek gruplar: tipin kendi doğru/yanlış örneği
+		else if (typeof T.sinama === 'function') ({ good, bad } = T.sinama(v, q)); // aynı kanca, öbür ad
 		const jg = T.judge(v, good);
 		const jb = T.judge(v, bad);
 		ok(jg.correct === true, q.id + ': doğru cevap kabul edilmedi ' + JSON.stringify(jg));
