@@ -386,6 +386,8 @@ section.res ol, section.res ul { padding-left: 20px; display: grid; gap: 6px }
     render();
   });
 
+  const H = { '#tutulan': 'tut', '#elenen': 'ele', '#bekleyen': 'bos' }[location.hash];
+  if (H) { filter = H; for (const x of document.querySelectorAll('.flt button')) x.setAttribute('aria-pressed', String(x.dataset.f === H)); }
   state = loadLocal();
   render();
   note('Seçimlerin ve yorumların bu cihazda tutuluyor.');
