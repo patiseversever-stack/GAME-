@@ -347,6 +347,148 @@ rengine dalgayla geri döner, kalkan iller iner, kamera kilidi açılır.
 
 ---
 
+## 8. Yeni öneriler 19–30 (wow 9 ve üstü)
+
+30 Ekim. İstek: "wow etkisi 8,5’ten yüksek, oha seviyesinde, kimsenin aklına gelmeyen tipler; listenin sonuna ekle." Hepsi defter sayfasında telefon çizimiyle ve Tut/Ele düğmesiyle duruyor; henüz oynanabilir değiller. Sayfanın üreteci: `sayfa/`.
+
+| # | Tip | Tek cümle | Wow | Emek |
+|---|---|---|---|---|
+| 19 | **Plaka Hesabı** | İllerin plaka kodlarıyla hesap yap. İzmir (35) + Ankara (06) = 41, yani Kocaeli. | 9 | S |
+| 20 | **Haritadaki Hata** | Haritada bilerek bir hata yapılmış: bir göl, nehir ya da yapı yanlış yerde. İlk fark eden kazanır. | 9,5 | M |
+| 21 | **Tufan** | Deniz seviyesi yükselir. Hangi ilin en son ya da ilk batacağını bil. | 9,5 | M |
+| 22 | **Artırma** | “Ege’nin illerinden 6’sını bulurum!” “Ben 7!” Sayıyı artır ya da rakibine “Göster!” de. | 9,5 | M |
+| 23 | **Akıl Okuma** | Soruyu cevaplarsın, sonra rakibinin ne cevap verdiğini tahmin edersin. | 9 | S |
+| 24 | **Kayıp İl** | Haritadan bir il silinmiş, yerinde simsiyah bir boşluk var. Hangi il? | 9 | S |
+| 25 | **Harita Yapbozu** | Haritada üç boşluk, altta üç il parçası. Parçaları çevirip yerine oturt. | 9 | M |
+| 26 | **Sisi Dağıt** | Büyük bir yapı sisin arkasında saklı. Hızlı sorulara doğru cevap verdikçe sis açılır; arkadakini ilk tanıyan kazanır. | 9 | M |
+| 27 | **Şifreli Harita** | İller sırayla yanar, adları yazmaz. Baş harfleri bir kelime yazar: Sinop, Ankara, Rize, Aydın, Yozgat → SARAY. | 9 | S |
+| 28 | **Fitil** | Aranızda fitili yanan bir top var. Doğru cevap topu rakibe çevirir. Patladığında kime dönükse o kaybeder. | 9 | M |
+| 29 | **Şive Haritası** | Yöresel bir söz gelir: “Ula, n’apıyon?” Hangi yörenin ağzı olduğunu haritada bulursun. | 9 | S |
+| 30 | **Gölge Oyunu** | Bir yapının yalnız gölgesi duvara düşer. Işık döndükçe gölge değişir. Yapıyı tanı. | 9,5 | S |
+
+### 19. Plaka Hesabı (`plaka`)
+- **Tek cümle:** İllerin plaka kodlarıyla hesap yap. İzmir (35) + Ankara (06) = 41, yani Kocaeli.
+- **Nasıl oynanır:** İki ilin adı ve arada bir işlem gelir; Plaka kodlarını aklından topla ya da çıkar; Sonucun hangi il olduğunu seç.
+- **Neden eğlenceli:** Türkiye’ye özgü, kimsenin yapmadığı bir fikir; “Konya eksi Bursa eşittir Eskişehir” cümlesi bile eğlenceli.
+- Neden yeni: plaka kodları Türkiye’de herkesin bildiği gizli bir sayı sistemi; “İzmir + Ankara = Kocaeli” cümlesi bile güldürür.
+- Biçimler: toplama, çıkarma (“Konya − Bursa = ?” → 26 Eskişehir), “iki katı” ve zincir işlemler.
+- Adalet: cevap her zaman 1–81 arası; dört şık ya da haritada il.
+- İçerik: sınırsız üretilir. Emek: S.
+- **Wow:** 9 · **Emek:** S
+
+### 20. Haritadaki Hata (`hata`)
+- **Tek cümle:** Haritada bilerek bir hata yapılmış: bir göl, nehir ya da yapı yanlış yerde. İlk fark eden kazanır.
+- **Nasıl oynanır:** Harita açılır, bir şey yanlış; Hatayı gördüğün an oraya dokun; Cevapta doğrusu yerine kayarak oturur.
+- **Neden eğlenceli:** “Farkı bul” oyunu, ama bilgiyle. Örnekte Van Gölü Sivas’a taşınmış.
+- Neden yeni: “farkı bul” oyunu, ama bilgiyle; haritayı ezberleyen değil gerçekten tanıyan kazanır.
+- Hata türleri: yeri değişmiş göl/yapı, ters akan nehir, yer değiştirmiş iki il adı, yanlış denize kıyı.
+- Adalet: herkese aynı kadraj ve aynı hata; dokunma bölgesi cömert.
+- Çevrimiçi: hatanın yeri sunucuda; istemci yalnız bozulmuş haritayı çizer.
+- İçerik: haritadaki göl, nehir, yapı ve il verisinden üretilir (sınırsız). Emek: M.
+- **Wow:** 9,5 · **Emek:** M
+
+### 21. Tufan (`tufan`)
+- **Tek cümle:** Deniz seviyesi yükselir. Hangi ilin en son ya da ilk batacağını bil.
+- **Nasıl oynanır:** Soru gelir: “Hangisi en son batar?”; Dört ilden birini seç; Cevapta deniz gerçekten yükselir, iller tek tek sular altında kalır.
+- **Neden eğlenceli:** Oyunun 3B haritası sorunun kendisi olur; cevap anı bir felaket filmi gibi.
+- Neden yeni: oyunun 3B kabartmalı haritası sorunun kendisi olur; cevap anında deniz gerçekten yükselir ve iller tek tek sular altında kalır.
+- Soru biçimleri: “hangisi en son batar”, “hangisi önce batar”, “şu yükseklikte kaç il kalır” (tahmin).
+- Adalet: il merkezi rakımları resmî kaynaktan; seçenekler arasında en az 150 m fark.
+- İçerik: 81 il merkezi rakımıyla yüzlerce karşılaştırma üretilir. Emek: M (su yüzeyi zaten var, seviyesi oynatılır).
+- **Wow:** 9,5 · **Emek:** M
+
+### 22. Artırma (`artirma`)
+- **Tek cümle:** “Ege’nin illerinden 6’sını bulurum!” “Ben 7!” Sayıyı artır ya da rakibine “Göster!” de.
+- **Nasıl oynanır:** Sırayla kaç tane bulacağını söylersin; Rakip ya artırır ya “Göster!” der; Son söyleyen, söylediği kadarını süre içinde haritada bulur.
+- **Neden eğlenceli:** Bilgi artı blöf. Kendine güvenen artırır, şüphelenen meydan okur.
+- Neden yeni: TV’deki “Bid-a-Note / Tenable” gerilimi; bilgi + blöf. Kendine güvenen artırır, şüphelenen “Göster!” der.
+- Akış: sırayla artır ya da “Göster!”; son artıran söylediği kadarını süre içinde haritada bulur (Fetih Koşusu altyapısı).
+- Adalet: artırma süresi kısa (10 sn), bulma süresi sayıya göre ölçeklenir.
+- İçerik: Fetih Koşusu kurallarının hepsi kullanılır. Emek: M.
+- **Wow:** 9,5 · **Emek:** M
+
+### 23. Akıl Okuma (`akil`)
+- **Tek cümle:** Soruyu cevaplarsın, sonra rakibinin ne cevap verdiğini tahmin edersin.
+- **Nasıl oynanır:** Önce kendi cevabını seç; Sonra “Arda ne dedi?” diye tahmin et; Doğru cevap ve doğru tahmin ayrı puan.
+- **Neden eğlenceli:** Bilgi yarışmasına zihin okuma katar; arkadaşla oynarken çok güldürür.
+- Neden yeni: bilgi yarışmasına zihin okuma katmanı; rakibini tanıdıkça daha iyi tahmin edersin. Arkadaşla oynarken çok güldürür.
+- Puan: doğru cevap + rakibin cevabını doğru tahmin; iki puan ayrı sayılır.
+- Adalet: iki seçim aynı süre içinde; rakibin cevabı ikisi de seçince açılır.
+- Çevrimiçi: tahmin sunucuda saklanır, rakibin cevabı ancak süre bitince gelir. Emek: S.
+- **Wow:** 9 · **Emek:** S
+
+### 24. Kayıp İl (`kayip`)
+- **Tek cümle:** Haritadan bir il silinmiş, yerinde simsiyah bir boşluk var. Hangi il?
+- **Nasıl oynanır:** Kamera boşluğun etrafında döner; Dört şıktan kayıp ili seç; Cevapta il gökten iner ve yerine oturur.
+- **Neden eğlenceli:** İlleri adıyla değil şekli ve komşularıyla tanımayı ödüllendirir.
+- Neden yeni: haritada simsiyah bir boşluk; kamera boşluğun etrafında döner. İllerin şeklini ve komşuluğunu tanımayı ödüllendirir.
+- Cevapta kayıp il gökten iner ve yerine oturur (oyunun il kaldırma efekti).
+- Zorluk: kolayda kıyı ve göl ipucu görünür, zorda yalnız komşular.
+- İçerik: 81 il, sınırsız. Emek: S.
+- **Wow:** 9 · **Emek:** S
+
+### 25. Harita Yapbozu (`yapboz`)
+- **Tek cümle:** Haritada üç boşluk, altta üç il parçası. Parçaları çevirip yerine oturt.
+- **Nasıl oynanır:** Parçayı sürükle; İki parmakla çevir; Doğru yere bırakınca “tık” diye oturur; en hızlı bitiren kazanır.
+- **Neden eğlenceli:** Elle tutulur bir bulmaca; telefonda en tatmin edici dokunuş.
+- Neden yeni: elle tutulur bir bulmaca; parça yerine oturunca 3B haritaya düşer ve sallanır. Telefonda çok tatmin edici.
+- Akış: 3 boşluk, 3 parça; hepsini en hızlı yerleştiren kazanır. Zorda parçalar ters de gelir.
+- Adalet: yakına bırakınca yapışır (5 mm hoşgörü).
+- İçerik: 81 ilden sınırsız. Emek: M.
+- **Wow:** 9 · **Emek:** M
+
+### 26. Sisi Dağıt (`sis`)
+- **Tek cümle:** Büyük bir yapı sisin arkasında saklı. Hızlı sorulara doğru cevap verdikçe sis açılır; arkadakini ilk tanıyan kazanır.
+- **Nasıl oynanır:** Hızlı doğru/yanlış soruları gelir; Her doğru cevap bir sis bulutunu dağıtır; İstediğin an “Tahmin et” deyip yapıyı söyle.
+- **Neden eğlenceli:** İki oyun bir arada: hızlı soru yarışı ve büyük bir “o ne?” bilmecesi.
+- Neden yeni: iki oyun bir arada; hızlı doğru/yanlış soruları sisi açar, asıl ödül arkadaki büyük yapıyı ilk tanımak. Bu gece eklenen hava sistemini kullanır.
+- Akış: sis içinde 3B maket; her doğru cevap bir delik açar; istediğin an “Tahmin et”.
+- Adalet: delikler herkes için aynı sırayla açılır; yalnız hızın ve bilgin farklıdır.
+- İçerik: 23 maket + doğru/yanlış bankası. Emek: M.
+- **Wow:** 9 · **Emek:** M
+
+### 27. Şifreli Harita (`sifre`)
+- **Tek cümle:** İller sırayla yanar, adları yazmaz. Baş harfleri bir kelime yazar: Sinop, Ankara, Rize, Aydın, Yozgat → SARAY.
+- **Nasıl oynanır:** İller teker teker parlar; Her ilin baş harfini aklında tut; Kelimeyi ilk yazan kazanır.
+- **Neden eğlenceli:** Harita bir şifre çözücüye dönüşür; illeri tanıyan şifreyi okur.
+- Neden yeni: harita bir şifre çözücü olur; illeri tanıyan kelimeyi okur. Örnek: Sinop, Ankara, Rize, Aydın, Yozgat → SARAY.
+- Puan: kelimeyi ne kadar erken yazarsan o kadar çok.
+- Adalet: iller adsız ama sınırları ve komşuları görünür.
+- İçerik: il baş harfleriyle yazılabilen kelimeler kendiliğinden bulunur (Ğ, J, L, P, V… ile başlayan il yok, onları içermeyen kelimeler). Emek: S.
+- **Wow:** 9 · **Emek:** S
+
+### 28. Fitil (`fitil`)
+- **Tek cümle:** Aranızda fitili yanan bir top var. Doğru cevap topu rakibe çevirir. Patladığında kime dönükse o kaybeder.
+- **Nasıl oynanır:** Art arda kısa sorular gelir; Doğru cevap topu rakibe, yanlış sana çevirir; Fitilin ne zaman biteceğini kimse bilmez.
+- **Neden eğlenceli:** Sıcak patates, fetih hâli. Son saniyelerde nefes kesen bir düello.
+- Neden yeni: “sıcak patates”in fetih hâli; fitil gizli sürede yanar, top patladığında kime dönükse o kule kaybeder.
+- Akış: art arda kısa sorular; her doğru cevap topu rakibe çevirir, yanlış sana.
+- Adalet: fitil süresi sunucuda rastgele (12–25 sn); iki oyuncu aynı soruları görür.
+- İçerik: doğru/yanlış ve karşılaştır bankası hazır. Emek: M.
+- **Wow:** 9 · **Emek:** M
+
+### 29. Şive Haritası (`sive`)
+- **Tek cümle:** Yöresel bir söz gelir: “Ula, n’apıyon?” Hangi yörenin ağzı olduğunu haritada bulursun.
+- **Nasıl oynanır:** Söz kartta yazar; Haritada bölgeye dokun; Cevapta herkesin dokunuşu ısı haritası olarak yanar.
+- **Neden eğlenceli:** Herkesin bir yöresi var; her soru “bizim oralarda böyle denir!” anı.
+- Neden yeni: Türkiye’nin ağızları ilk kez bir oyunda; herkesin bir yöresi var, her soru bir “bizim oralarda böyle denir!” anı.
+- Akış: söz gelir, bölgeye dokunursun; doğru bölge ve doğru il ayrı puan.
+- Adalet: bölge düzeyinde cevap (il değil); sözler iki kaynaktan doğrulanır.
+- İçerik: her bölgeden 15–20 bilinen söz (uşağum, ula, gakkoş, hemşo…). Emek: S.
+- **Wow:** 9 · **Emek:** S
+
+### 30. Gölge Oyunu (`golge`)
+- **Tek cümle:** Bir yapının yalnız gölgesi duvara düşer. Işık döndükçe gölge değişir. Yapıyı tanı.
+- **Nasıl oynanır:** Duvarda bir gölge belirir; Işık yavaşça döner, şekil netleşir; Erken tanıyan çok puan alır.
+- **Neden eğlenceli:** Oyunun 3B maketleriyle gölge bilmecesi; kimsenin yapmadığı bir şey.
+- Neden yeni: 3B maketler ışığın önünde döner ve duvara yalnız gölgesi düşer; ışık döndükçe gölge değişir. Shadowmatic hissi, ama bilgi yarışmasında.
+- Puan: erken bilen kazanır; ışık her saniye biraz döner ve şekli ele verir.
+- Adalet: gölge herkes için aynı açıdan başlar ve aynı hızla döner.
+- İçerik: haritadaki 23 maket hazır; yeni maketler eklendikçe büyür. Emek: S (maketler ve ışık var).
+- **Wow:** 9,5 · **Emek:** S
+
+---
+
 ## 7. Kaynaklar
 
 - Kahoot soru tipleri: https://support.kahoot.com/hc/articles/115002308428
