@@ -21,6 +21,9 @@ import * as THREE from 'three';
 import { COMMON, SHADOW, LIGHT, FINISH, PROV, CLEAR, glslColor as C } from '../gfx/shaderlib.js';
 import { Kit, archShape, facadeShape } from '../gfx/kit.js';
 import { pointInPoly } from './board.js';
+import { Heroes } from './heroes.js';
+import { HEROES } from './hero_index.js';
+import { extraSites, EXTRA_SITES } from './landmarks2.js';
 
 // malzeme kimlikleri (köşe özniteliği mat.x)
 const M = { STONE: 0, WATER: 1, WIN: 2, GOLD: 3, LEAD: 4, FLAG: 5, FLAME: 6, LEAF: 7, GROUND: 8, TILE: 9, CLOTH: 10 };
@@ -29,12 +32,15 @@ const FADE = /* glsl */ `
 ${CLEAR}
 uniform vec3 uFade; // x başlangıç zamanı, y yön (1 beliriyor, 0 kayboluyor), z süre
 uniform vec4 uCastle[4]; // kaleler: konum, w görünür (nightlights.js her karede yazar)
+uniform vec4 uHide; // kahraman maket (heroes.js) gösterilirken yalın kopyası gizlenir: xy merkez (x, z), w açık
 attribute vec4 site; // yapının merkezi x, taban y, merkez z, ölçek
 // görünürlük (0..1): yapılar sırayla (konuma göre hafif gecikmeli) toprağa gömülür
 float showK(bool fly) {
 	float t = clamp((uTime - uFade.x) / uFade.z * 1.35 - fract(site.x * 0.173 + site.z * 0.311) * 0.35, 0.0, 1.0);
 	t = t * t * (3.0 - 2.0 * t);
 	float k = mix(1.0 - t, t, uFade.y);
+	// yakın çekimde yerine kahraman model konan yapı (avlusu dahil) tamamen gömülür
+	if (uHide.w > 0.5 && abs(site.x - uHide.x) + abs(site.z - uHide.y) < 0.01) return 0.0;
 	// başkent kalesi yapının yerine kurulursa (küçük illerde ikisi sığmaz) yapı kale inerken toprağa gömülür
 	for (int i = 0; i < 4; i++) {
 		vec4 c = uCastle[i];
@@ -1297,7 +1303,10 @@ const SITES = [
 	['kizkalesi', 34.15, 36.43, 1.54, 0, 33, 0, 'sea'],
 	['bodrum', 27.43, 37.04, 1.61, 0, 48],
 	['ciftemin', 41.28, 39.9, 1.82, 0, 25],
+	// v0.9: 19 yeni yapı (landmarks2.js). Sona eklenir: eski 23 yapının yeri ve görünüşü aynı kalır.
+	...EXTRA_SITES,
 ];
+Object.assign(B, extraSites({ M, grounds, minaret, windows, flag, tree, cypress, pine, rock, jitter, archShape, facadeShape, LEAD, LEAD2, GOLD, DARK, ROOF, WOOD, MARBLE, CREAM }));
 
 const lonlat = (board, lon, lat) => {
 	const m = board.data.meta;
@@ -1347,7 +1356,7 @@ export class Landmarks {
 			const p = board.byId.get(plate);
 			if (!p) continue;
 			let [x, z] = lonlat(board, lon, lat);
-			if (where !== 'sea') {
+			if (where !== 'sea' && where !== 'lake') {
 				// yerleşim: gerçek yerin çevresinde (±3 birim) en iyi nokta aranır. Ceza: yapının gövdesi komşu ile
 				// taşarsa (il seçimde kalkınca havada kalır), avlu denize/göle ya da komşuya taşarsa, il merkezine
 				// (kale ve il adı) yaklaşırsa, başka yapının avlusuna binerse; gerçek yerden uzaklaştıkça hafif ceza.
@@ -1405,7 +1414,8 @@ export class Landmarks {
 			B[kind](kit, R);
 			kit.pop();
 			ranges.push([v0, kit.count, x, y, z, sc]);
-			this.sites.push({ kind, index: p.index, x, y, z, r: where === 'sea' ? 0.6 : sc * 0.72, sea: where === 'sea' });
+			const wet = where === 'sea' || where === 'lake'; // suda (ada): yerleşim aranmaz, öteki yapılar kaçınmaz
+			this.sites.push({ kind, index: p.index, x, y, z, r: wet ? 0.6 : sc * 0.72, sea: wet, s: sc, ry, tone: kit.tone.clone() });
 		}
 		kit.setTag(0);
 		const geo = kit.build();
@@ -1422,7 +1432,8 @@ export class Landmarks {
 		this.castleU = [0, 1, 2, 3].map(() => new THREE.Vector4(0, -50, 0, 0));
 		this.sites.castleU = this.castleU;
 		this.G = G;
-		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU } };
+		this.uHide = { value: new THREE.Vector4(0, 0, 0, 0) };
+		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU }, uHide: this.uHide };
 		this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms, side: THREE.DoubleSide }));
 		this.mesh.frustumCulled = false;
 		this.mesh.matrixAutoUpdate = false;
@@ -1434,6 +1445,50 @@ export class Landmarks {
 			const f = this.uFade.value;
 			if (f.y < 0.5 && this.G.uTime.value - f.x > f.z * 1.1) this.mesh.visible = this.caster.visible = false;
 		};
+		// kahraman maketler (Kuşbakışı yakın çekimi): tek mesh, geometri ilk kullanımda kurulur
+		this.hf = kit.hf;
+		this.heroes = new Heroes(G, tier, board, this, HEROES);
+		this.mesh.add(this.heroes.mesh);
+		this.caster.add(this.heroes.caster);
+	}
+
+	/**
+	 * Yapının yüksek ayrıntılı kahraman modelini kur ve yalın kopyanın yerine koy (kind: SITES adı). done verilirse
+	 * kurulum kare kare ilerler, hazır olunca takas yapılır ve done(bilgi) çağrılır (önbellekteyse hemen); sync ya da
+	 * done yoksa hemen kurulur. Bilgi: { site, tris, r } (dünya birimi yarıçap); kahramanı yoksa null (yalın kalır).
+	 */
+	hero(kind, done = null, sync = false) {
+		const s = this.sites.find((x) => x.kind === kind);
+		const info = () => {
+			const g = this.heroes.mesh.geometry;
+			return { site: s, tris: g.userData.tris, r: g.boundingSphere?.radius ?? s.r };
+		};
+		if (!s || !this.heroes.has(kind)) {
+			done?.(null);
+			return null;
+		}
+		const on = () => this.uHide.value.set(s.x, s.z, 0, 1);
+		if (sync || !done) {
+			this.heroes.request(s, null, true);
+			on();
+			return info();
+		}
+		this.heroes.request(s, () => {
+			on();
+			done(info());
+		});
+		return null;
+	}
+
+	/** Bekleyen kahraman kurulumunu hemen bitir. */
+	heroNow() {
+		this.heroes.finish();
+	}
+
+	/** Kahramanı kaldır, yalın kopyayı geri getir. */
+	heroOff() {
+		this.heroes.hide();
+		this.uHide.value.w = 0;
 	}
 
 	/**
