@@ -17,6 +17,7 @@
 import * as THREE from 'three';
 import { PLAYERS, HOT, SLACK, GENEROUS, limits, PROFILE } from './timing.js';
 import { setTimeout } from '../core/clock.js';
+import { setNightTone } from '../gfx/env.js';
 
 let APP = null;
 export const bindApp = (app) => {
@@ -168,6 +169,7 @@ export function guard(app) {
 	const painted = new Set();
 	const lifted = new Set();
 	let dim = null;
+	let darkS = null;
 	return {
 		paint(i, color, x, z) {
 			painted.add(i);
@@ -183,6 +185,25 @@ export function guard(app) {
 			dim = Array.from(b.dimTo);
 			if (dim.some((x) => x > 0.5)) b.setActive(null);
 			else dim = null;
+		},
+		/**
+		 * Karanlık harita ("Gölgede Renk", başkent seçimindeki koyu ton): bütün iller gecede, sahip renkleri
+		 * gizli (p.owner değişmez, yalnız boya), yalnız `lit` illeri aydınlık. Tekrar çağrılınca aydınlık
+		 * listesi güncellenir; restore() tonu, gece durumunu ve sahip renklerini geri koyar.
+		 */
+		dark(lit = []) {
+			if (!darkS) {
+				darkS = { tone: b.G.uNightTone.value.clone(), selLit: b.G.uSelLit.value, night: b.nightTo > 0, sel: Array.from(b.selTo) };
+				setNightTone(b.G, 'baskent');
+				b.provinces.forEach((p, i) => {
+					if (p.owner < 0 || painted.has(i)) return;
+					const ow = p.owner;
+					b.setOwner(i, -1, null);
+					p.owner = ow;
+					painted.add(i);
+				});
+			}
+			b.night(true, lit.length ? lit : null);
 		},
 		get painted() {
 			return painted;
@@ -200,6 +221,14 @@ export function guard(app) {
 			if (dim) {
 				b.setActive(dim.map((x, i) => (x > 0.5 ? -1 : i)).filter((i) => i >= 0));
 				dim = null;
+			}
+			if (darkS) {
+				b.G.uNightTone.value.copy(darkS.tone);
+				b.G.uSelLit.value = darkS.selLit;
+				const sel = darkS.sel.map((x, i) => (x > 0.5 ? i : -1)).filter((i) => i >= 0);
+				if (darkS.night) b.night(true, sel.length ? sel : null);
+				else b.night(false, null, { hold: 0 });
+				darkS = null;
 			}
 		},
 	};

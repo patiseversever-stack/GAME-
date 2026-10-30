@@ -169,6 +169,8 @@ export const ilavi = {
 		const b = app.board;
 		const g = guard(app);
 		g.allActive();
+		const lit = [];
+		g.dark(lit); // karanlık harita: sahip renkleri yok, yalnız denenen iller ışıkta
 		queueMicrotask(() => {
 			if (!el.isConnected) return;
 			app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.02, pad: 1.03, top: cardTop(el), dur: 0.7 });
@@ -190,6 +192,8 @@ export const ilavi = {
 			}
 			taps.push(p.id);
 			const dot = dots[taps.length - 1];
+			lit.push(i);
+			g.dark(lit);
 			if (i === v.hedef) {
 				g.paint(i, '#ffd25a', pt.x, pt.z);
 				g.fx(i, 0.6, 1);
@@ -225,6 +229,7 @@ export const ilavi = {
 			joker(e) {
 				if (e?.zone) {
 					for (const i of e.zone) g.fx(i, 0.15, 1);
+					g.dark([...lit, ...e.zone]); // ipucu bölgesi karanlıkta aydınlanır
 					app.ui.toast?.(e.text, { tone: 'good', ms: 2000 });
 				}
 			},
@@ -234,6 +239,8 @@ export const ilavi = {
 				const t = b.provinces[v.hedef];
 				const won = taps.includes(t.id);
 				if (!won) {
+					lit.push(v.hedef);
+					g.dark(lit);
 					g.paint(v.hedef, '#ffd25a', t.x, t.z);
 					g.fx(v.hedef, 0.6, 1);
 					tag(app, `<b>${esc(t.name)}</b>`, t.x, t.z, 'big').el.style.setProperty('--tc', '#ffd25a');
