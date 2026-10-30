@@ -9,8 +9,10 @@
 //  5. Kalkan savunulan düellonun içinde kurulamaz (insan da bot gibi soruyu görmeden karar verir).
 //  6. Soru saati koltuk başına: rakibin ekstra süresi insanın sayacını uzatmaz; sabotaj yalnız kurbanı keser.
 //  7. Kule istatistiği: oyuncunun kendi yıktığı kuleler (botların birbirine yıktıkları sayılmaz).
-import { Match, TURN_ORDER, TIE_BREAK } from '../src/game/match.js';
-import { makeApp, makeUI } from './dunya.mjs';
+// maç modülleri (yeni soru tipleri) harita verisini JSON olarak içe aktarır: önce kanca, sonra dinamik içe aktarma
+await import('./kanca.mjs');
+const { Match, TURN_ORDER, TIE_BREAK } = await import('../src/game/match.js');
+const { makeApp, makeUI } = await import('./dunya.mjs');
 
 const opt = Object.fromEntries(process.argv.filter((a) => a.startsWith('--')).map((a) => a.slice(2).split('=')));
 const N = Number(opt.n || 500);

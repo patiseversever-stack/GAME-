@@ -120,8 +120,8 @@ export class LocalTransport {
 // ------------------------------------------------------------------------ kontrolcüler
 
 /** Doğru cevabı ayıkla (çevrimiçi). Tip kendi görünümünü `T.publicView(v)` ile verebilir. */
-export function publicView(T, v) {
-	if (T?.publicView) return T.publicView(v);
+export function publicView(T, v, ctx = {}) {
+	if (T?.publicView) return T.publicView(v, ctx);
 	const out = JSON.parse(JSON.stringify(v)); // derin kopya: sunucudaki v'ye dokunulmaz
 	if (typeof out.right === 'number') delete out.right; // doğru şıkkın sırası (match'te right sağ sütun yazılarıdır)
 	if (out.q) {

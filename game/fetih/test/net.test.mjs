@@ -5,10 +5,11 @@
 // gizlilerin silindiği denetlenir: doğru şık, sıra, değerler, çiftler, konum, kelime. Ayrıca sunucudaki
 // tam görünüme dokunulmadığı ve adam asmaca harf denemesinin yalnız soran koltuğa döndüğü sınanır.
 
-import { TYPES } from '../src/quiz/types.js';
-import { BANK } from '../src/data/bank.js';
-import { publicView } from '../src/game/net.js';
-import { Match } from '../src/game/match.js';
+await import('./kanca.mjs');
+const { TYPES } = await import('../src/quiz/types.js');
+const { BANK } = await import('../src/data/bank.js');
+const { publicView } = await import('../src/game/net.js');
+const { Match } = await import('../src/game/match.js');
 
 let fails = 0;
 let checks = 0;

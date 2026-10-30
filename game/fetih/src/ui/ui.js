@@ -892,8 +892,11 @@ export class UI {
 			}
 		} else this.sfx('reveal');
 		if (T.needsMap) this._mapReveal(v, results);
-		// tip kendi cevap filmini isteyebilir (T.revealMs, ör. Tufan'da deniz yükselişi); dokununca yine erken geçilir
-		await this._hold(Math.max(closest ? 3000 : 1900, Math.min(12000, Number(T.revealMs) || 0)));
+		// tip kendi cevap filmini isteyebilir (T.revealMs, ör. Tufan'da deniz yükselişi); dokununca yine erken geçilir.
+		// Maçta süreyi soru düzeni verir (ctx.film, quiz/mac.js filmMs): insanın içinde olduğu anda tam film, iki botun
+		// düellosunda ve çok oyunculu yayılmada kısa sürüm; çevrimiçinde sunucunun 'reveal' olayındaki süre
+		const film = Number.isFinite(ctx.film) ? ctx.film : Number(T.revealMs) || 0;
+		await this._hold(Math.max(closest ? 3000 : 1900, Math.min(12000, film)));
 		if (gen !== this._gen) return;
 		card.classList.remove('on');
 		this.setPins([]);

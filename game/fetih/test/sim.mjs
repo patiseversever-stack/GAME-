@@ -11,12 +11,15 @@
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
-import { Match, MODES } from '../src/game/match.js';
-import { Progress } from '../src/game/progress.js';
-import { Campaign, STAGES, REGION_ORDER } from '../src/game/campaign.js';
-import { JOKERS, JOKER_ORDER, PER_QUESTION, questionTime, extraFor, cutFor } from '../src/game/jokers.js';
-import { TYPES } from '../src/quiz/types.js';
-import { WHEEL } from '../src/quiz/categories.js';
+// maç modülleri (yeni soru tipleri) harita verisini JSON olarak içe aktarır: önce kanca, sonra dinamik içe aktarma
+await import('./kanca.mjs');
+const { Match, MODES, PACE } = await import('../src/game/match.js');
+const { Progress } = await import('../src/game/progress.js');
+const { Campaign, STAGES, REGION_ORDER } = await import('../src/game/campaign.js');
+const { JOKERS, JOKER_ORDER, PER_QUESTION, questionTime, extraFor, cutFor } = await import('../src/game/jokers.js');
+const { TYPES } = await import('../src/quiz/types.js');
+const { WHEEL } = await import('../src/quiz/categories.js');
+const MAC = await import('../src/quiz/mac.js');
 
 const here = dirname(fileURLToPath(import.meta.url));
 const DATA = JSON.parse(readFileSync(join(here, '../src/data/turkiye.json'), 'utf8'));
@@ -153,6 +156,9 @@ function checkEffect(m, id, effect, cur) {
 			break;
 		case 'shield':
 		case 'second':
+			break;
+		case 'custom': // yeni tipin kendi joker etkisi (T.joker): tip destekliyor olmalı ve veri üretmeli
+			check(T.jokers?.includes(id) && effect.data && typeof effect.data === 'object', `${tag}: yeni tip joker etkisi`);
 			break;
 		default:
 			bad(`${tag}: bilinmeyen etki`);
@@ -384,13 +390,87 @@ console.log('3) Sefer: bütün sahneler');
 	void wonAll;
 }
 
+// ---------------------------------------------------------------- 4) soru düzeni (v1.2): binlerce maç
+
+// Her mod × uzunluk için PLAN maç (eşit 'er' botlar, 0. koltuk "insan" varsayımıyla süre): tip dağılımı (an × tip),
+// yeni tip payı, art arda tekrar, maç başına üst sınır, canlı tur yalnız düelloda, Gölge kapalı, Kuşbakışı yapısı
+// başkent ilinde değil, maç süresi (hedef hızlı 6–8, uzun 15–20 dk), film payı ve koltuk adaleti.
+const PLAN = Number(opt.plan ?? 150);
+const plan = {};
+console.log(`4) Soru düzeni: ${PLAN * 8} maç (her mod × uzunluk ${PLAN})`);
+{
+	const POOL = new Map([...MAC.yeniBank()].map((q) => [q.id, q]));
+	for (const mode of Object.keys(MODES))
+		for (const length of ['quick', 'long']) {
+			const key = `${mode}/${length}`;
+			const P = (plan[key] = { n: 0, q: 0, yeni: 0, est: [], film: [], moments: {}, perMatch: {}, maxPer: {}, seat: {}, distinct: 0, repeat: 0 });
+			for (let k = 0; k < PLAN; k++) {
+				const seed = 90000 + k * 31 + mode.length * 7 + length.length;
+				const app = makeApp();
+				const ui = makeUI({});
+				const m = new Match(app, ui, { mode, length, region: length === 'long' ? 'all' : REGIONS[k % 7], bot: 'er', seed, allBots: true, persist: false });
+				app.match = m;
+				try {
+					await m.run();
+				} catch (e) {
+					bad(`düzen ${key}/${seed}: ${e.stack || e}`);
+					continue;
+				}
+				const r = app.lastSim;
+				P.n++;
+				P.est.push(r.estSeconds);
+				P.film.push(r.filmSeconds);
+				const win = Array.isArray(r.winnerSeat) ? r.winnerSeat[0] : r.winner;
+				P.seat[win] = (P.seat[win] || 0) + 1;
+				const log = r.qlog;
+				const seenT = new Set();
+				log.forEach((e, j) => {
+					P.q++;
+					const yeni = MAC.isYeni(e.type);
+					if (yeni) P.yeni++;
+					const M = (P.moments[e.moment] ||= { n: 0, yeni: 0, t: {} });
+					M.n++;
+					if (yeni) M.yeni++;
+					M.t[e.type] = (M.t[e.type] || 0) + 1;
+					if (yeni) seenT.add(e.type);
+					if (j && log[j - 1].type === e.type) P.repeat++;
+					if (MAC.CANLI.has(e.type)) check(e.moment === 'attack' || e.moment === 'siege', `${key}: canlı tur ${e.type} düello dışında (${e.moment})`);
+					check(e.type !== 'golge', `${key}: Gölge bayrağı kapalıyken sorulmadı olmalı`);
+				});
+				P.distinct += seenT.size;
+				for (const [t, c] of Object.entries(r.types)) {
+					P.perMatch[t] = (P.perMatch[t] || 0) + c;
+					P.maxPer[t] = Math.max(P.maxPer[t] || 0, c);
+					check(c <= MAC.sinir(t, length), `${key}: ${t} maçta ${c} kez (sınır ${MAC.sinir(t, length)})`);
+				}
+				// Kuşbakışı: sorulan yapının ilinde başkent kalesi olmamalı
+				for (const id of m.used) {
+					const q = POOL.get(id);
+					if (q?.type === 'kusbakisi') {
+						const i = app.board.byId.get(q.il)?.index;
+						check(!m.players.some((p) => p.capital === i), `${key}: Kuşbakışı ${q.id} başkent ilinde`);
+					}
+				}
+			}
+			check(P.repeat === 0, `${key}: ${P.repeat} kez aynı tip art arda`);
+		}
+	// Gölge bayrakla açılır
+	{
+		const app = makeApp();
+		const m = new Match(app, makeUI({}), { mode: '1v1', length: 'long', region: 'all', bot: 'er', seed: 5, allBots: true, persist: false, yeni: { golge: true } });
+		app.match = m;
+		await m.run();
+		check(m.pool.some((q) => q.type === 'golge') && m.typeOn('golge'), 'Gölge bayrakla açılmadı');
+	}
+}
+
 // ---------------------------------------------------------------- rapor
 
 const avg = (a) => a.reduce((x, y) => x + y, 0) / (a.length || 1);
 const mins = (s) => (s / 60).toFixed(1);
 console.log('\n=== RAPOR ===');
 console.log(`maç: ${stats.matches}, soru: ${stats.questions}, bitiş nedenleri: ${JSON.stringify(stats.endReasons)}`);
-console.log('tahmini süre (dk): ort [en az–en çok]  (hedef: hızlı 5–7, uzun 15–20)');
+console.log('tahmini süre (dk): ort [en az–en çok]  (hedef: hızlı 6–8, uzun 15–20)');
 for (const [k, a] of Object.entries(stats.est)) console.log(`  ${k.padEnd(12)} ${mins(avg(a))} [${mins(Math.min(...a))}–${mins(Math.max(...a))}]`);
 console.log('joker kullanımı  bot: ' + JSON.stringify(stats.jokers.bot) + '  insan: ' + JSON.stringify(stats.jokers.human));
 console.log(`ikinci şans yeniden sorusu: ${stats.flow.second}, sabotaj: ${stats.flow.sabotage}`);
@@ -406,8 +486,8 @@ console.log('reddedilen joker istekleri: ' + JSON.stringify(Object.fromEntries(t
 // denge uyarıları
 for (const [k, a] of Object.entries(stats.est)) {
 	const [, length] = k.split('/');
-	const lo = length === 'long' ? 15 : 5;
-	const hi = length === 'long' ? 20 : 7;
+	const lo = length === 'long' ? 15 : 6;
+	const hi = length === 'long' ? 20 : 8;
 	const m = avg(a) / 60;
 	if (m < lo * 0.85 || m > hi * 1.15) console.log(`  UYARI: ${k} tahmini ${m.toFixed(1)} dk, hedef ${lo}–${hi}`);
 }
@@ -416,6 +496,65 @@ check(bj > 0, 'botlar hiç joker kullanmadı');
 check(Object.keys(stats.jokers.bot).length >= 4, 'botlar yeterince çeşitli joker kullanmadı');
 for (const id of ['yari', 'sure', 'ikinci', 'sabotaj', 'kahin']) check((stats.jokers.human[id] || 0) > 0, `insan ${id} jokerini hiç kullanamadı`);
 for (const t of ['choice', 'tf', 'num', 'pin', 'hang', 'order', 'match', 'hilo', 'odd', 'emoji', 'proverb', 'riddle']) check(stats.matrix[t], `${t} tipi hiç sorulmadı`);
+
+// soru düzeni raporu (4. bölüm)
+{
+	const pct = (a, b) => (b ? Math.round((100 * a) / b) : 0);
+	const MOM = ['expand', 'attack', 'siege', 'tie', 'golden'];
+	console.log('\n=== SORU DÜZENİ (4. bölüm) ===');
+	console.log('mod/uzunluk   maç  soru/maç  yeni%  ' + MOM.map((x) => (x + '%').padEnd(9)).join('') + 'süre dk [en az–en çok]  film sn  farklı yeni tip/maç  koltuk kazanma %');
+	for (const [key, P] of Object.entries(plan)) {
+		const mm = (a) => (a.reduce((x, y) => x + y, 0) / (a.length || 1) / 60).toFixed(1);
+		const seats = Object.keys(P.seat)
+			.sort()
+			.map((s) => pct(P.seat[s], P.n))
+			.join('/');
+		console.log(
+			`${key.padEnd(13)} ${String(P.n).padStart(4)}  ${(P.q / P.n).toFixed(1).padStart(8)}  ${String(pct(P.yeni, P.q)).padStart(5)}  ` +
+				MOM.map((x) => `${pct(P.moments[x]?.yeni || 0, P.moments[x]?.n || 0)}/${((P.moments[x]?.n || 0) / P.n).toFixed(1)}`.padEnd(9)).join('') +
+				`${mm(P.est)} [${(Math.min(...P.est) / 60).toFixed(1)}–${(Math.max(...P.est) / 60).toFixed(1)}]`.padEnd(24) +
+				`${(P.film.reduce((a, b) => a + b, 0) / P.n).toFixed(0).padStart(6)}  ${(P.distinct / P.n).toFixed(1).padStart(10)}           ${seats}`,
+		);
+		const lo = key.endsWith('long') ? 15 : 6;
+		const hi = key.endsWith('long') ? 20 : 8;
+		const avgMin = P.est.reduce((a, b) => a + b, 0) / P.est.length / 60;
+		check(avgMin >= lo && avgMin <= hi, `${key}: ortalama süre ${avgMin.toFixed(1)} dk hedef ${lo}–${hi} dışında`);
+		// koltuk adaleti: eşit botlarda hiçbir koltuk/taraf payı beklenenden çok sapmasın (örneklem: PLAN maç)
+		const sides = key.startsWith('team') || key.startsWith('1v1') ? 2 : Number(key[3]);
+		const tol = 2.6 * Math.sqrt((1 / sides) * (1 - 1 / sides) / Math.max(1, P.n)) + 0.02;
+		for (const s of Object.keys(P.seat)) check(Math.abs(P.seat[s] / P.n - 1 / sides) <= tol, `${key}: koltuk ${s} kazanma payı ${pct(P.seat[s], P.n)}% (beklenen ${pct(1, sides)}%)`);
+	}
+	// an × tip dağılımı (bütün modlar birlikte ve mod başına yeni tiplerin maç başına sayısı)
+	const all = {};
+	for (const P of Object.values(plan))
+		for (const [mo, M] of Object.entries(P.moments)) {
+			const A = (all[mo] ||= { n: 0, t: {} });
+			A.n += M.n;
+			for (const [t, c] of Object.entries(M.t)) A.t[t] = (A.t[t] || 0) + c;
+		}
+	console.log('\nan × tip (o anın sorularındaki pay %, bütün modlar):');
+	for (const mo of MOM) {
+		const A = all[mo];
+		if (!A) continue;
+		const row = Object.entries(A.t)
+			.sort((a, b) => b[1] - a[1])
+			.map(([t, c]) => `${MAC.isYeni(t) ? '*' : ''}${t} ${((100 * c) / A.n).toFixed(1)}`)
+			.join(' · ');
+		console.log(`  ${mo.padEnd(7)} (${A.n}) ${row}`);
+	}
+	console.log('\nyeni tip başına maçtaki ortalama sayı (en çok) · mod/uzunluk:');
+	const keys = Object.keys(plan);
+	console.log('  ' + 'tip'.padEnd(10) + keys.map((k) => k.padEnd(12)).join(''));
+	for (const t of MAC.YENI) console.log('  ' + t.padEnd(10) + keys.map((k) => `${((plan[k].perMatch[t] || 0) / plan[k].n).toFixed(2)} (${plan[k].maxPer[t] || 0})`.padEnd(12)).join(''));
+	const order = (mode, length) => {
+		// örnek soru akışı: bir maçın soru sırası (an:tip)
+		const app = makeApp();
+		const m = new Match(app, makeUI({}), { mode, length, region: length === 'long' ? 'all' : 'ege', bot: 'er', seed: 4242, allBots: true, persist: false });
+		app.match = m;
+		return m.run().then(() => app.lastSim.qlog.map((e) => `${{ expand: 'Y', attack: 'D', siege: 'K', tie: 'E', golden: 'A' }[e.moment]}:${e.type}`).join(' '));
+	};
+	if (!QUIET || 'akis' in opt) for (const mode of Object.keys(MODES)) console.log(`\nörnek akış ${mode}/quick: ${await order(mode, 'quick')}`);
+}
 
 console.log(fails ? `\n${fails} HATA` : '\nhepsi temiz');
 process.exit(fails ? 1 : 0);

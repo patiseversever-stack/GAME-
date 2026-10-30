@@ -183,6 +183,9 @@ export function support(id, T, v) {
 	const no = (why, na = true) => ({ ok: false, why, na });
 	const ok = { ok: true, why: '', na: false };
 	if (!T) return no('Soru yok', false);
+	// iki oyunculu canlı tur (Halat, Fitil: quiz/mac.js CANLI): tur ikisi için aynı saatte akar; süre, sabotaj ve ikinci
+	// şans uymaz (ikinci şans tek kişilik bir soru ister)
+	if (T.duo && (id === 'sure' || id === 'sabotaj' || id === 'ikinci')) return no('Canlı turda yok');
 	if (id === 'sure' || id === 'sabotaj' || id === 'kalkan') return ok;
 	if (id === 'ikinci') return T.kind === 'exact' ? ok : no('Tahmin sorusunda işe yaramaz');
 	if (T.jokers) return T.jokers.includes(id) ? ok : no('Bu soru tipinde yok');

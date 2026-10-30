@@ -22,8 +22,11 @@
 //   seats     ['ui'|'bot'|'remote', …] koltuk türleri; transports: { koltuk: Transport }
 //   ranked    true: ELO güncellenir; persist=false: ilerleme kaydedilmez
 
-import { TYPES, pickType } from '../quiz/types.js';
+import { TYPES } from '../quiz/types.js';
 import { secOf } from '../quiz/timing.js';
+import { BAYRAK, CANLI, HIZLI, isYeni, yeniBank, kapsam, tipSec, payOf, egri, okumaK, filmMs, varsayilan, kusbakisiUygun, eslestir, karma, yayilmaKat } from '../quiz/mac.js';
+import { bindApp } from '../quiz/d_ortak.js';
+import { ADIM, Oturum } from './sunucu.js';
 import { CATS } from '../quiz/categories.js';
 import { BANK as QUESTIONS } from '../data/bank.js';
 import { rng } from '../core/math.js';
@@ -71,9 +74,13 @@ export const BOT_FILM = {
 	long: { '1v1': 1, ffa3: 0.55, ffa4: 0.45, team: 0.45 },
 };
 
+/**
+ * v1.2: yeni tiplerin soruları ve cevap filmleri daha uzun (Tufan 11 sn, canlı turlar 20–30 sn); mod başına düello sayısı
+ * hedef süreye göre (hızlı 6–8, uzun 15–20 dk; test/sim.mjs 4. bölüm ölçer). 1'e 1'de her düelloda insan var (tam film).
+ */
 export const PACE = {
-	quick: { duels: 11 },
-	long: { duels: 32 },
+	quick: { duels: 11, byMode: { '1v1': 10, ffa3: 11, ffa4: 11, team: 11 } },
+	long: { duels: 32, byMode: { '1v1': 22, ffa3: 28, ffa4: 32, team: 32 } },
 };
 
 /**
@@ -116,7 +123,7 @@ export const BOT_SIEGE = { slope: 3, pivot: 0.55, wounded: 0.4, kill: 2.5 };
 
 // Tahmini süre (sn), insan oyuncu varsayımıyla; yalnızca denge raporu için (tools/sim.mjs).
 // Savaş filmi (v0.6, cinema.js): saldırı ~4,9–6,4 sn (kuşatma uzun), fetih ~4, kule ~3,3, savunma ~2,7.
-const EST = { overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, attack: 5.4, wheel: 4, chooseCat: 2.2, conquer: 4.0, tower: 3.4, defend: 2.7, nobody: 1.6, elim: 3.5, qOpen: 0.5 };
+const EST = { mapOpen: 0.95, overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, attack: 5.4, wheel: 4, chooseCat: 2.2, conquer: 4.0, tower: 3.4, defend: 2.7, nobody: 1.6, elim: 3.5, qOpen: 0.5 };
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 
@@ -236,7 +243,7 @@ export class Match {
 			p.jk = human ? makeLoadout(this.progress.jokerStock) : botLoadout(skill, this.R, p.boss, p.boss ? this.perks.botJokers || 0 : 0);
 			p.ctl = kind === 'ui' ? new UIController(this) : kind === 'remote' ? new RemoteController(this.transports[i], { seat: i }) : new BotController(this);
 			if (kind === 'remote') {
-				p.ctl.onAct = (k, d) => (k === 'joker' ? this.useJoker(d?.id, p) : k === 'harf' ? this.letterHint(p, d?.ch) : null);
+				p.ctl.onAct = (k, d) => this.remoteAct(p, k, d);
 				// cevabını gönderen koltuk o soruda artık joker kullanamaz (yerelde arayüz kilitler); işaret zaman uyumlu
 				// konur ki cevapla aynı anda gelen joker isteği de reddedilsin
 				p.ctl.onRes = (k) => {
@@ -257,6 +264,20 @@ export class Match {
 		this.used = new Set();
 		this.seen = this.persist ? this.progress.seenSet() : new Set();
 		this.recent = []; // son çıkan soru tipleri (art arda aynı tip gelmesin)
+		// v1.2 soru düzeni (src/quiz/mac.js): yeni tiplerin açık olanları, maçın soru havuzu (eski banka + köprü),
+		// tip sayaçları, eski/yeni dengesi ve soru günlüğü (an, tip; rapor ve sınama için)
+		this.flags = { ...BAYRAK, ...(cfg.yeni || {}) };
+		this.pool = [...QUESTIONS, ...yeniBank()].filter((q) => this.typeOn(q.type));
+		this.tcount = {};
+		this.cov = kapsam(this.pool, WHEEL_CATS); // yeni tiplerin kategori kapsamı (mac.js agirliklar)
+		this.mix = { n: 0, yeni: 0, hedef: 0 };
+		this.qlog = [];
+		this.filmSec = 0; // cevap filmlerine giden toplam süre (sn, tahmin)
+		// maç tuzu: çevrimiçi görünümde yapı adlarının yerine giden anlamsız kimlikler maça özgü (mac.js sidOf)
+		this.salt = karma('tuz|' + (cfg.seed ?? Math.random()));
+		this.stats = cfg.istatistik || null; // sunucu istatistiği (Az Bilinen oranları, Şive ısı haritası); yoksa tahmini
+		this.serverPace = cfg.serverPace ?? 0; // çevrimiçi sunucu: cevap filmini gerçekten bekle (1 = gerçek süre)
+		bindApp(app); // yeni tipler haritaya, kameraya ve arayüze buradan ulaşır (d_ortak.js)
 		this.round = 0;
 		this.over = false;
 		this.endReason = '';
@@ -438,21 +459,47 @@ export class Match {
 		return clamp((n ? sum / n : 2) + this.diffBias, 1, 3);
 	}
 
+	/** Tip bu maçta açık mı: kayıtlı ve (yeni tipse) bayrağı kapalı değil. */
+	typeOn(t) {
+		return !!TYPES[t] && (!isYeni(t) || this.flags[t] !== false);
+	}
+
+	/** Maçın ilerleyişi 0..1 (zorluk eğrisi): yayılma turları ilk %30, fetih turları kalan. */
+	progressOf() {
+		if (this.phase === 'yayilma' || this.phase === 'baskent' || this.phase === 'baslangic') return Math.min(0.3, (this.expRound || 0) * 0.06);
+		if (this.phase === 'altin' || this.phase === 'bitis') return 1;
+		const R = this.rounds || 1;
+		return 0.3 + 0.7 * Math.min(1, Math.max(0, (this.round - 1) / Math.max(1, R - 1)));
+	}
+
+	/** Soru bu maçta sorulabilir mi (havuzda değil, kardeşi sorulmamış, Kuşbakışı yapısı gömülü değil). */
+	askable(q) {
+		return !(q.src && this.used.has(q.src)) && kusbakisiUygun(q, this);
+	}
+
 	/**
 	 * Kategoriye ve tipe göre kullanılmamış soru seç; hedef zorluğa yakın olanlar daha olası,
 	 * daha önce görülenler (kayıtlı) seyrek çıkar. who: soruyu cevaplayacaklar, diff: zorluğu doğrudan ver.
+	 * moment: soru düzenindeki an (okuma ağır tiplerde kısa soru öne; mac.js okumaK).
 	 */
-	pick({ cat = null, types = null, who = null, diff = null } = {}) {
-		const ok = (q) => !this.used.has(q.id) && (!cat || q.cat === cat) && (!types || types.includes(q.type));
-		let list = QUESTIONS.filter(ok);
-		if (!list.length) list = QUESTIONS.filter((q) => (!cat || q.cat === cat) && (!types || types.includes(q.type)));
-		if (!list.length) list = QUESTIONS.filter((q) => !types || types.includes(q.type));
+	pick({ cat = null, types = null, who = null, diff = null, moment = null } = {}) {
+		const P = this.pool;
+		const fit = (q) => (!types || types.includes(q.type)) && this.askable(q);
+		const ok = (q) => !this.used.has(q.id) && (!cat || q.cat === cat) && fit(q);
+		let list = P.filter(ok);
+		if (!list.length) list = P.filter((q) => (!cat || q.cat === cat) && fit(q));
+		if (!list.length) list = P.filter(fit);
+		if (!list.length) list = P.filter((q) => !types || types.includes(q.type));
 		if (!list.length) list = QUESTIONS; // istenen tipte hiç soru yok: herhangi biri
 		const target = diff ?? this.targetDiffFor(who, cat);
 		let total = 0;
 		const w = list.map((q) => {
 			const d = q.diff - target;
-			const x = (Math.exp(-(d * d) / 0.6) + 0.03) * (this.seen.has(q.id) ? 0.3 : 1) * (this.used.has(q.id) ? 0.2 : 1);
+			let x = (Math.exp(-(d * d) / 0.6) + 0.03) * (this.seen.has(q.id) ? 0.3 : 1) * (this.used.has(q.id) ? 0.2 : 1);
+			if (moment) {
+				const k = okumaK(q.type, isYeni(q.type) ? this.secOfQ(q) : NaN, moment);
+				x *= k || 0.001;
+			}
 			total += x;
 			return x;
 		});
@@ -461,32 +508,60 @@ export class Match {
 		for (; k < list.length - 1; k++) if ((r -= w[k]) <= 0) break;
 		const q = list[k];
 		this.used.add(q.id);
+		if (q.src) this.used.add(q.src); // Mancınık sorusu bankadaki tahmin sorusunun kardeşi: ikisi aynı maçta çıkmaz
 		return q;
+	}
+
+	/** Yeni tipin sorusunun süre bütçesi (okuma ağır tiplerde kısa soru seçimi için; önbellekli). */
+	secOfQ(q) {
+		const c = (this._secQ ||= new Map());
+		if (!c.has(q.id)) {
+			let s = NaN;
+			try {
+				s = TYPES[q.type].prepare(q, () => 0.5).sec;
+			} catch {
+				s = NaN;
+			}
+			c.set(q.id, s);
+		}
+		return c.get(q.id);
 	}
 
 	/** Kategoride (önce kullanılmamış) sorusu olan tipler; verisiz tipler hiç çekilmez. */
 	haveTypes(cat) {
-		const of = (fresh) => new Set(QUESTIONS.filter((q) => (!cat || q.cat === cat) && (!fresh || !this.used.has(q.id))).map((q) => q.type));
+		const P = this.pool;
+		const of = (fresh) => new Set(P.filter((q) => (!cat || q.cat === cat) && (!fresh || !this.used.has(q.id)) && this.askable(q)).map((q) => q.type));
 		let s = of(true);
 		if (!s.size) s = of(false);
-		if (!s.size) s = new Set(QUESTIONS.map((q) => q.type));
+		if (!s.size) s = new Set(P.map((q) => q.type));
 		return s;
 	}
 
 	/**
-	 * Ağırlıklı tip seçimiyle soru: phase 'attack' (düello) ya da 'expand' (yayılma).
-	 * Son iki tipten biri gelirse birkaç kez yeniden çekilir, böylece çeşit artar.
+	 * Soru düzeniyle (mac.js tipSec) soru seç. moment: 'expand' (yayılma), 'attack' (düello), 'siege' (kale kuşatması),
+	 * 'tie' (eşitlik bozma), 'golden' (altın soru). An × mod × kategori ağırlıkları, yeni tip payı ve maç içi denge, maç
+	 * başına üst sınır, art arda gelme yasakları; yerel insanın yalnız izlediği bot düellosunda harita tipleri geri.
 	 */
-	pickTyped(cat, phase, who = null) {
-		const have = this.haveTypes(cat);
-		let t = 'choice';
-		for (let k = 0; k < 6; k++) {
-			t = pickType(cat || 'default', phase, this.R, have);
-			if (!this.recent.includes(t) || have.size < 3) break;
-		}
+	pickTyped(cat, moment, who = null) {
+		const tie = moment === 'tie' || moment === 'golden';
+		const have = tie ? null : this.haveTypes(cat);
+		const watch = !!this.humanPlayer && !!who && !who.some((p) => p.human || p.ctl.remote) && (moment === 'attack' || moment === 'siege');
+		const { type } = tipSec({ moment, mode: this.cfg.mode in MODES ? this.cfg.mode : 'ffa3', length: this.cfg.length, cat: cat || 'default', have, recent: this.recent, counts: this.tcount, mix: this.mix, watch, on: (t) => this.typeOn(t), cov: this.cov, R: this.R });
+		const first = isYeni(type) && !this.tcount[type];
+		const base = this.targetDiffFor(who, cat);
+		const diff = clamp(base + egri(this.progressOf(), moment, first), 1, 3);
+		const q = this.pick({ cat: tie ? null : cat, types: [type], who, diff, moment });
+		// sayaçlar sorulan sorunun tipiyle (soru bulunamazsa havuz başka tipe düşebilir)
+		const t = q.type;
 		this.recent.push(t);
-		if (this.recent.length > 2) this.recent.shift();
-		return this.pick({ cat, types: [t], who });
+		if (this.recent.length > 4) this.recent.shift();
+		this.tcount[t] = (this.tcount[t] || 0) + 1;
+		// eski/yeni dengesi: hedef pay birikir, gerçekleşen yeni tip sayısı ona yaklaştırılır
+		this.mix.n++;
+		this.mix.hedef += payOf(moment, this.cfg.mode in MODES ? this.cfg.mode : 'ffa3');
+		if (isYeni(t)) this.mix.yeni++;
+		this.qlog.push({ moment, type: q.type, cat: q.cat, diff: q.diff, round: this.phase === 'yayilma' ? this.expRound || 0 : this.round, n: who?.length || 0 });
+		return q;
 	}
 
 	// ---------------------------------------------------------------- soru sorma ve jokerler
@@ -535,38 +610,62 @@ export class Match {
 		const remote = who.filter((p) => p.ctl.remote);
 		// 'ask' bütün uzak koltuklara gider (düelloyu izleyenler de kartı görür; eskiden yalnız soruyu cevaplayanlar
 		// alıyordu, izleyiciler görmediği sorunun 'reveal'ini alıyordu)
-		const pv = remote.length || this.watched ? publicView(T, v) : null;
-		if (pv) this.emit('ask', { q: pv.q, v: pv, time: sec, who: who.map((p) => p.i), title: ctx.title || '', phase: ctx.phase || '', attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1 });
+		const pv = remote.length || this.watched ? publicView(T, v, { salt: this.salt }) : null;
+		// cevap filmi (mac.js filmMs): insanın ya da uzak oyuncunun içinde olduğu anda tam film, iki botun düellosunda ve
+		// çok oyunculu yayılmada kısa sürüm; çevrimiçinde 'ask' ve 'reveal' ile gider, sunucu tur zamanlamasına katar
+		const involved = who.some((p) => p.human || p.ctl.remote);
+		const film = filmMs({ type: q.type, T, phase: ctx.phase || '', who, involved, tempo: ctx.attacker && ctx.defender ? this.filmTempo(ctx.attacker, ctx.defender) : 1 });
+		if (pv) this.emit('ask', { q: pv.q, v: pv, time: sec, who: who.map((p) => p.i), title: ctx.title || '', phase: ctx.phase || '', attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1, film: film ?? varsayilan(T) });
 		this.refreshJokers();
 		this.tick(EST.qOpen);
+		// sunucu oturumu (sunucu.js): uzak koltuğun saati kart açılış onayıyla başlar, tipin eylemleri sunucuda yürür
+		const ses = remote.length ? new Oturum(this, cur) : null;
+		cur.ses = ses;
 		// uzak koltuklardan cevaplar eşzamanlı toplanır (bekleme: süre + ekstra süre jokeri + ağ payı = sec + 12 sn)
-		const remoteWait = remote.map((p) => p.ctl.answer(p, { q: pv.q, v: pv, time: sec, who: who.map((x) => x.i), phase: ctx.phase || '', cat: q.cat, attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1 }, (sec + 12) * 1000));
+		const remoteWait = remote.map((p) => {
+			const w = p.ctl.answer(p, { q: pv.q, v: pv, time: sec, who: who.map((x) => x.i), phase: ctx.phase || '', cat: q.cat, attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1, film: film ?? varsayilan(T) }, (sec + 12) * 1000);
+			ses.sent(p);
+			return w.then((r) => (r ? { ...r, at: clock.now() } : null));
+		});
 		const res = await this.ui.question(this, { q, v, T, who, bots: cur.bots, human, clock: qclock, botJokers: cur.botUses, ...ctx });
 		const ra = await Promise.all(remoteWait);
 		this.check(); // çıkışta kapanan soru sayılmaz (beceri puanına yanlış diye işlenmesin)
+		// uzak koltuğun son değeri sunucunun kaydı, süresi sunucu saatiyle (istemcinin bildirdiği süre kullanılmaz)
+		const finals = remote.map((p, k) => ses.final(p, ra[k], questionTime(sec, Math.max(0, clocks.get(p.i).extra))));
 		cur.closed = true;
+		ses?.close();
 		for (const t of cur.timers) clearTimeout(t);
 		cur.timers.length = 0;
 		this.cur = null;
-		const out = who.map((p) => {
+		const ans = who.map((p) => {
 			const b = cur.bots.find((x) => x.p === p);
 			const ri = remote.indexOf(p);
 			let a;
 			if (p.human) a = res?.human;
-			else if (ri >= 0) {
-				// istemcinin bildirdiği süre saatin dışına taşamaz: [0, süre + ekstra] (eksi ya da dev değer eşitliği bozmasın)
-				const r = ra[ri];
-				a = r ? { value: r.value, time: clamp(Number.isFinite(r.time) ? r.time : sec, 0, questionTime(sec, Math.max(0, clocks.get(p.i).extra))) } : b ? { value: b.value, time: b.time } : null;
-			} else a = b ? { value: b.value, time: b.time } : null;
-			if (!a) a = { value: null, time: sec };
+			else if (ri >= 0) a = ra[ri] ? finals[ri] : b ? { value: b.value, time: b.time } : null; // koptu: bot devralır
+			else a = b ? { value: b.value, time: b.time } : null;
+			return a || { value: null, time: sec };
+		});
+		// iki oyunculu ortak tur (Fitil): değerler birbirinin oyununu taşır, iki yargı çelişmez
+		if (CANLI.has(q.type) && ans.length === 2) {
+			const pv2 = eslestir(q.type, ans.map((a) => a.value));
+			pv2.forEach((x, k) => (ans[k] = { ...ans[k], value: x }));
+		}
+		ADIM[q.type]?.before?.(this, cur);
+		const out = who.map((p, k) => {
+			const a = ans[k];
 			const j = T.judge(v, a.value);
 			return { p, i: p.i, name: p.name, color: p.css, value: a.value, time: a.time ?? sec, ...j };
 		});
-		this.estimateQuestion(T, out, cur);
+		ADIM[q.type]?.after?.(this, cur, out);
+		this.estimateQuestion(T, out, cur, film, q);
 		this.afterQuestion(q, T, out);
-		await this.ui.reveal(this, { q, v, T, results: out, ...ctx });
-		// answer: tam görünüm (doğru cevap, değerler, konum); istemciye soru sırasında gitmez, burada gider
-		this.emit('reveal', { results: out.map((r) => ({ i: r.i, value: r.value, time: r.time, correct: r.correct, err: Number.isFinite(r.err) ? r.err : -1 })), answer: v });
+		await this.ui.reveal(this, { q, v, T, results: out, film, ...ctx });
+		// answer: tam görünüm (doğru cevap, değerler, konum); istemciye soru sırasında gitmez, burada gider.
+		// film: cevap ekranının süresi (ms); bütün istemciler bu kadar bekler, sunucu da (serverPace) sonra ilerler
+		const fms = film ?? varsayilan(T);
+		this.emit('reveal', { results: out.map((r) => ({ i: r.i, value: r.value, time: r.time, correct: r.correct, err: Number.isFinite(r.err) ? r.err : -1 })), answer: v, film: fms });
+		if (this.serverPace > 0) await this.pace(fms * this.serverPace);
 		// ikinci şans: yanlış bilenlere aynı kategoriden yeni soru
 		if (T.kind === 'exact' && cur.second.size) {
 			for (let k = 0; k < out.length; k++) {
@@ -578,11 +677,18 @@ export class Match {
 		return out;
 	}
 
+	/** Sunucu tur zamanlaması: cevap filmi bitene dek bekle (herkes aynı anda bir sonraki adıma geçer). */
+	pace(ms) {
+		return new Promise((r) => setTimeout(r, ms));
+	}
+
 	async secondChance(q, r) {
 		const p = r.p;
 		await this.ui.banner('İKİNCİ ŞANS', p.name, { tone: 'gold', short: true });
 		this.tick(EST.bannerShort);
-		const q2 = this.pick({ cat: q.cat, types: [q.type], who: [p], diff: Math.max(1, q.diff - 0.5) });
+		// iki oyunculu canlı tur tek kişiyle oynanmaz; yeni tipin taze sorusu kalmadıysa da 4 şıklı test gelir
+		const same = !CANLI.has(q.type) && this.pool.some((x) => x.type === q.type && !this.used.has(x.id) && this.askable(x));
+		const q2 = this.pick({ cat: q.cat, types: [same ? q.type : 'choice'], who: [p], diff: Math.max(1, q.diff - 0.5) });
 		const T2 = TYPES[q2.type];
 		if (T2.kind !== 'exact') return r;
 		let r2;
@@ -608,14 +714,21 @@ export class Match {
 		}
 	}
 
-	estimateQuestion(T, out, cur) {
+	/**
+	 * Tahmini süre (insan oyuncu varsayımı; 0. koltuk "insan" sayılır): cevap süresi + cevap ekranı. Yeni tiplerde cevap
+	 * ekranı filmin süresi (film), haritalı tiplerde kartın açılmasından önce kameranın süzülüşü (EST.mapOpen).
+	 */
+	estimateQuestion(T, out, cur, film = null, q = null) {
 		const seat0 = out.find((r) => r.i === 0 && !r.p.ctl.remote);
 		const times = out.filter((r) => r !== seat0).map((r) => r.time);
 		const maxOther = times.length ? Math.max(...times) : 0;
 		let sec;
 		if (seat0) sec = Math.min(cur.sec + cur.clock.extra, seat0.time) + 0.4 + Math.min(1.2, Math.max(0, maxOther - seat0.time));
 		else sec = Math.min(2.8, maxOther * Math.min(1, 2.6 / Math.max(maxOther, 0.1))) + 0.2;
-		this.tick(sec + (T.kind === 'closest' ? 2.55 : 1.95));
+		const rv = film != null ? film / 1000 + 0.26 : T.kind === 'closest' ? 2.55 : 1.95;
+		if (film != null) this.filmSec += rv;
+		const open = T.needsMap && !(cur.ctx?.attacker && cur.ctx?.phase === 'duel') ? EST.mapOpen : 0;
+		this.tick(sec + rv + open);
 	}
 
 	// ---------------------------------------------------------------- jokerler
@@ -631,6 +744,21 @@ export class Match {
 		const at = [];
 		[...cur.v.word].forEach((x, i) => x === c && at.push(i));
 		p.ctl.event('harf', { ch: c, at });
+	}
+
+	/**
+	 * Uzak koltuğun eylemi: joker, kart açılış onayı ('acildi': saat sunucuda başlar), adam asmaca harfi ya da sorunun
+	 * tipine ait sunucu adımı (sunucu.js ADIM: 'harf' Harf Al, 'il', 'yer', 'halat', 'fitil'). Soruyu cevaplamayan
+	 * koltuğun ve kapanmış sorunun eylemi yok sayılır.
+	 */
+	remoteAct(p, k, d) {
+		if (k === 'joker') return this.useJoker(d?.id, p);
+		const cur = this.cur;
+		if (!cur || cur.closed || !cur.who.includes(p) || !cur.ses) return null;
+		if (k === 'acildi') return cur.ses.open(p, true);
+		if (k === 'harf' && cur.q.type === 'hang') return this.letterHint(p, d?.ch);
+		if (cur.done.has(p.i)) return null; // cevabını vermiş
+		return cur.ses.act(p, k, d);
 	}
 
 	/** Botların soru başı joker kararı. Kullanımlar kart açılınca arayüzde gösterilir (cur.botUses). */
@@ -694,6 +822,7 @@ export class Match {
 		}
 		this.app.fx?.joker?.(id, p);
 		if (!silent && !this.ui.fast) this.ui.jokerUsed?.(p, id, effect, cur);
+		if (p.ctl.remote) cur.ses?.joker(p, effect); // Harf Al: bedava açılan harfler sunucunun kaydına
 		this.emitJoker(p, id, effect);
 		return effect;
 	}
@@ -908,13 +1037,14 @@ export class Match {
 		while (this.free().length && r < 12) {
 			r++;
 			this.emit('phase', { phase: this.phase, round: r });
+			this.expRound = r;
 			await this.ui.banner('YAYILMA', `Tur ${r}`, { tone: 'gold' });
 			this.tick(EST.banner);
 			await this.expansionRound(r);
 		}
 		this.expansionRounds = r;
 		const pace = PACE[this.cfg.length === 'long' ? 'long' : 'quick'];
-		const rounds = Math.max(2, Math.ceil((this.cfg.duels || pace.duels) / this.players.length));
+		const rounds = Math.max(2, Math.ceil((this.cfg.duels || pace.byMode?.[this.cfg.mode] || pace.duels) / this.players.length));
 		this.rounds = rounds;
 		this.phase = 'fetih';
 		// ilk turun sırası koltuktan bağımsız (TURN_ORDER.first); tohumdan, sunucuda da aynı
@@ -1011,7 +1141,7 @@ export class Match {
 		this.emit('phase', { phase: this.phase, round: this.rounds, tied: tied.map((x) => (x.players ? x.team : x.i)) });
 		await this.ui.banner('EŞİTLİK!', 'Altın soru: en yakın tahmin kazanır', { tone: 'gold' });
 		this.tick(EST.banner);
-		const q = this.pick({ types: ['num'], who });
+		const q = this.pickTyped(null, 'golden', who);
 		const res = await this.ask(q, who, { title: 'ALTIN SORU', phase: 'altin' });
 		const best = this.rank(res, 'closest')[0];
 		this.tieWin = this.side(best.p);
@@ -1109,7 +1239,7 @@ export class Match {
 	async expansionRound(r) {
 		// her yayılma turu başka bir kategoriden; tip kategorinin 'expand' ağırlıklarıyla seçilir
 		const alive = this.players.filter((p) => p.alive);
-		const q = this.pickTyped(WHEEL_CATS[Math.floor(this.R() * WHEEL_CATS.length)], 'expand', alive);
+		const q = this.pickTyped(yayilmaKat(this.R), 'expand', alive); // Coğrafya ağırlıklı (mac.js YAYILMA_KAT)
 		const res = await this.ask(q, alive, { title: 'Herkes cevaplıyor', phase: 'yayilma' });
 		const order = this.rank(res, TYPES[q.type].kind);
 		// seçim hakları: birinciye 2, ikinciye 1 (4 kişide üçüncüye de 1); 1'e 1'de 2 ve 1
@@ -1258,7 +1388,8 @@ export class Match {
 			if (!CATS[cat]) cat = this.botCategory(p);
 			this.tick(p.human ? EST.chooseCat : 0.3);
 		}
-		const q = this.pickTyped(cat, 'attack', [p, d]);
+		// soru anı: kale kuşatması ayrı bir an (yıldız tipler: Halat, Fitil, Tufan…), sahra düellosu 'attack'
+		const q = this.pickTyped(cat, isCap ? 'siege' : 'attack', [p, d]);
 		const res = await this.ask(q, [p, d], { title: isCap ? 'KUŞATMA' : 'DÜELLO', attacker: p, defender: d, target, cat, phase: 'duel' });
 		const A = res[0];
 		const D = res[1];
@@ -1267,11 +1398,15 @@ export class Match {
 		if (kind === 'closest') winner = this.closestWinner(A, D, p, d);
 		else if (A.correct && !D.correct) winner = p;
 		else if (!A.correct) winner = D.correct ? d : null;
-		else {
-			// ikisi de bildi: eşitlik bozan tahmin sorusu
+		else if (HIZLI.has(q.type)) {
+			// "erken bilen kazanır" tipleri (Kuşbakışı, Kayıp İl, Kimim, Gölge): ikisi de bildiyse erken bilen (Kimim'de
+			// daha erken ipucu) kazanır; tam eşitlikte savunan
+			winner = this.closestWinner({ ...A, err: Number.isFinite(A.err) ? A.err : 0 }, { ...D, err: Number.isFinite(D.err) ? D.err : 0 }, p, d);
+		} else {
+			// ikisi de bildi: eşitlik bozan tahmin sorusu (en yakın kazanır: Tahmin ya da Mancınık)
 			await this.ui.banner('EŞİTLİK!', 'En yakın tahmin kazanır', { tone: 'gold', short: true });
 			this.tick(EST.bannerShort);
-			const tq = this.pick({ types: ['num'], who: [p, d] });
+			const tq = this.pickTyped(null, 'tie', [p, d]);
 			const tr = await this.ask(tq, [p, d], { title: 'EŞİTLİK BOZMA', attacker: p, defender: d, target, phase: 'duel' });
 			winner = this.closestWinner(tr[0], tr[1], p, d);
 		}
@@ -1474,6 +1609,9 @@ export class Match {
 			accuracy: this.stat.map((s) => (s.q ? s.correct / s.q : 0)),
 			asked: this.stat.map((s) => s.q),
 			jokers: { ...this.jokerUse },
+			types: { ...this.tcount },
+			qlog: this.qlog.slice(),
+			filmSeconds: Math.round(this.filmSec),
 		};
 	}
 }
