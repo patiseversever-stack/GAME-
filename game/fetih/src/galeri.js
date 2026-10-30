@@ -32,8 +32,10 @@ const ORDER = [
 	['img', 'Resimli'],
 	['blitz', 'Yıldırım'],
 ];
-// galerideki bütün tipler: önce YENİ · deneme tipleri (3. alan true), sonra oyundakiler
-const LIST = [...DENEME_ORDER.map(([t, n, s]) => [t, n, true, s]), ...ORDER];
+// galerideki bütün tipler tek listede: oyundakiler, ardından kullanıcının defterde tuttuğu yeni tipler (3. alan true).
+// Defterde elenen prototipler (Fetih Koşusu, Bağlantı Duvarı) listede yok; kodları src/quiz/ altında duruyor.
+const ELENEN = new Set(['kosu', 'baglanti']);
+const LIST = [...ORDER, ...DENEME_ORDER.filter(([t]) => !ELENEN.has(t)).map(([t, n, s]) => [t, n, true, s])];
 const ALLT = { ...TYPES, ...DENEME_TYPES };
 const isNew = (t) => !!DENEME_TYPES[t];
 
@@ -208,7 +210,7 @@ export async function galeri() {
 			<div class="hd"><button class="ty" id="g-type" aria-haspopup="listbox" aria-expanded="${!pn.hidden}">${nw ? '<span class="nw">YENİ</span>' : ''}<b>${esc(name)}</b><small>${ti + 1}/${LIST.length}</small><i>▼</i></button>
 				<div class="nv"><button class="ar" id="g-prev" aria-label="Önceki örnek">‹</button><b>${S.k + 1}/${list.length}<small>ÖRNEK</small></b><button class="ar" id="g-next" aria-label="Sonraki örnek">›</button></div></div>
 			<div class="meta"><b>${esc(q.id)}</b> · ${esc(cat)} · ${DIFF[q.diff] || ''} · süre <b>${v.sec ?? T.time} sn</b>${
-				nw ? ' · <em class="yeni">YENİ · deneme</em> <span class="note">maçta çıkmaz</span>' : SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok, örnek soru</span>' : ''
+				nw ? ' · <em class="yeni">YENİ</em> <span class="note">maça henüz eklenmedi</span>' : SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok, örnek soru</span>' : ''
 			}</div>
 			<div class="ft"><button class="tg" id="g-scene">Sahne: <em>${S.scene === 'duel' ? 'Düello' : 'Herkes cevaplıyor'}</em></button>
 				<button class="tg" id="g-time">Süre: <em>${S.time === 'real' ? 'Gerçek' : 'Sınırsız'}</em></button>
@@ -216,9 +218,9 @@ export async function galeri() {
 		bar.classList.toggle('open', !pn.hidden);
 		const item = ([t, n, nw2, sub]) =>
 			`<button data-t="${t}" role="option" aria-selected="${t === S.type}" class="${t === S.type ? 'on' : ''}${nw2 ? ' nw' : ''}">${esc(n)}${nw2 ? `<i>${esc(sub)}</i>` : ''}<small>${
-				nw2 ? `<em class="yeni">YENİ · deneme</em> · ${ex[t].length} soru` : SAMPLES[t] ? '<em>örnek soru</em>' : `${ex[t].length} soru`
+				nw2 ? `<em class="yeni">YENİ</em> · ${ex[t].length} soru` : SAMPLES[t] ? '<em>örnek soru</em>' : `${ex[t].length} soru`
 			}</small></button>`;
-		pn.innerHTML = `<h4><b>YENİ</b> · DENEME TİPLERİ (MAÇTA ÇIKMAZ)</h4>${LIST.filter((x) => x[2]).map(item).join('')}<h4>OYUNDAKİ TİPLER</h4>${ORDER.map(item).join('')}`;
+		pn.innerHTML = `<h4>TÜM SORU TİPLERİ · ${LIST.length}</h4>${LIST.map(item).join('')}`;
 		fit();
 		return { q, v, T };
 	};
