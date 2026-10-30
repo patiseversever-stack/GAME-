@@ -49,6 +49,8 @@ for (const [type, list] of Object.entries(SAMPLES)) {
 		let good;
 		let bad;
 		if (type === 'tufan') {
+			// cevap filmi: ui.reveal cevap ekranını revealMs kadar tutar (en çok 12 sn)
+			ok(Number.isInteger(T.revealMs) && T.revealMs >= 4000 && T.revealMs <= 12000, q.id + ': revealMs ' + T.revealMs);
 			ok(pv.right == null && pv.alt == null && pv.q.ils == null && pv.opts.length === 4 && !/\\d{2,} ?m\\b/.test(s), q.id + ': publicView cevabı sızdırıyor');
 			const alts = q.ils.map((x) => x[1]).sort((a, b) => a - b);
 			for (let k = 1; k < 4; k++) ok(alts[k] - alts[k - 1] >= 150, q.id + ': rakım farkı 150 m altında (' + alts + ')');
