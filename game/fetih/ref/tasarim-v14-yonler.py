@@ -17,7 +17,7 @@ ICO = {
 }
 JK = [('yari', '50/50', 2), ('seyirci', 'Seyirci', 1), ('sure', 'Süre', 2), ('sans', 'Şans', 1), ('sabotaj', 'Sabotaj', 1), ('kalkan', 'Kalkan', 1)]
 
-FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=Manrope:wght@600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Cinzel:wght@700;800&family=Oswald:wght@500;600;700&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&display=swap">'
+FONTS = '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@600;700;800&family=Playfair+Display:ital,wght@0,700;0,800;1,700&family=Cinzel:wght@700;800&family=Oswald:wght@500;600;700&family=Barlow+Condensed:ital,wght@0,600;0,700;0,800;1,800&display=swap">'
 
 BASE = """
 *{box-sizing:border-box;margin:0;padding:0}
@@ -167,9 +167,9 @@ C_CSS = """
 .c h2{font-family:Fredoka;font-weight:700;line-height:1.18;text-wrap:balance;padding:0 2px;margin-bottom:12px;color:#fff;letter-spacing:-.003em}
 .c .ops{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .c .ops.list{grid-template-columns:1fr;gap:6px}
-.c .op{position:relative;min-height:48px;display:flex;align-items:center;background:linear-gradient(180deg,#ffffff,#e4e9f4);border:0;
+.c .op{position:relative;min-height:52px;display:flex;align-items:center;background:linear-gradient(180deg,#ffffff,#e4e9f4);border:0;
   clip-path:polygon(0 0,100% 0,96% 100%,0 100%);font-family:Fredoka;font-weight:700;line-height:1.12;color:#0e1430;padding-right:18px}
-.c .ops.list .op{min-height:42px;clip-path:polygon(0 0,100% 0,98.4% 100%,0 100%)}
+.c .ops.list .op{min-height:46px;clip-path:polygon(0 0,100% 0,98.4% 100%,0 100%)}
 .c .op i{flex:none;align-self:stretch;width:38px;display:grid;place-items:center;margin-right:11px;font:italic 800 23px 'Barlow Condensed';font-style:italic;color:#fff;background:var(--lc);clip-path:polygon(0 0,100% 0,80% 100%,0 100%);text-shadow:0 2px 0 rgba(0,0,0,.25)}
 .c .op:nth-child(1) i{--lc:#2f7bff}.c .op:nth-child(2) i{--lc:#ff8a1f}.c .op:nth-child(3) i{--lc:#22c46a}.c .op:nth-child(4) i{--lc:#a24bff}
 .c .op.pk{background:linear-gradient(90deg,#ffe066,#ffbb1f);color:#1a1200;box-shadow:0 0 0 2px #fff}
@@ -179,9 +179,9 @@ C_CSS = """
 .c .op.pk::after{content:'';position:absolute;right:16px;top:50%;width:28px;height:28px;transform:translateY(-50%);border-radius:7px;border:2px solid #1a1200;background:url(XSENX) center/cover;box-shadow:0 2px 0 rgba(0,0,0,.25)}
 .c .ops.list .op.pk::after{width:24px;height:24px;right:14px}
 .c .jk{display:flex;gap:7px;margin-top:14px}
-.c .j{position:relative;flex:1;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-size:0!important;background:linear-gradient(180deg,var(--jc),var(--jd));border:1.5px solid rgba(255,255,255,.5);transform:skewX(-8deg);
-  font:italic 800 9.5px 'Barlow Condensed';letter-spacing:.12em;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);box-shadow:0 3px 0 rgba(0,0,0,.4)}
-.c .j svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:skewX(8deg)}
+.c .j{position:relative;flex:1;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:linear-gradient(180deg,var(--jc),var(--jd));border:1.5px solid rgba(255,255,255,.5);transform:skewX(-8deg);
+  font:italic 800 12px 'Barlow Condensed';letter-spacing:.08em;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);box-shadow:0 3px 0 rgba(0,0,0,.4)}
+.c .j svg{width:23px;height:23px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:skewX(8deg)}
 .c .j sup{position:absolute;right:-5px;top:-7px;min-width:17px;height:17px;padding:0 4px;transform:skewX(8deg);background:#fff;color:#111;border-radius:4px;font:italic 800 12px/17px 'Barlow Condensed';text-align:center;box-shadow:0 2px 0 rgba(0,0,0,.35)}
 .c .ruler{position:absolute;left:0;right:0;top:50%;border-top:1px dashed rgba(255,255,255,.35)}
 .c .ruler span{position:absolute;right:6px;top:-16px;font:700 10px Manrope;color:rgba(255,255,255,.6)}
@@ -190,9 +190,9 @@ JC = {'yari': ('#3d8bff', '#1a4fc2'), 'seyirci': ('#ff5fa2', '#c42a6a'), 'sure':
 def C(q=Q, opts=OPTS, cat='BİLİM', cc='#22c46a', ruler=False):
     grid = max(len(o) for o in opts) <= 16                  # kısa şıklar 2×2, uzunlar ince tek sütun
     qf = 25 if len(q) <= 50 else 22 if len(q) <= 80 else 20  # soru uzadıkça yazı küçülür
-    of = (19 if grid else (16 if max(len(o) for o in opts) > 34 else 17))
+    of = (20 if grid else (17.5 if max(len(o) for o in opts) > 34 else 18.5))
     ops = ''.join(f'<div class="op{" pk" if k == 0 else ""}"><i>{"ABCD"[k]}</i>{o}</div>' for k, o in enumerate(opts))
-    jk = ''.join(f'<div class="j" style="--jc:{JC[k][0]};--jd:{JC[k][1]}">{ICO[k]}{n.upper()}<sup>{c}</sup></div>' for k, n, c in JK)
+    jk = ''.join(f'<div class="j" style="--jc:{JC[k][0]};--jd:{JC[k][1]}">{ICO[k]}{n.replace('i','İ').upper()}<sup>{c}</sup></div>' for k, n, c in JK)
     seg = ''.join(f'<i class="{"off" if k >= 13 else ""}"></i>' for k in range(20))
     rl = '<div class="ruler"><span>ekranın yarısı</span></div>' if ruler else ''
     return f'''<div class="ph c" style="--cc:{cc}">{rl}
@@ -201,7 +201,8 @@ def C(q=Q, opts=OPTS, cat='BİLİM', cc='#22c46a', ruler=False):
 <div class="box"><div class="hd"><span class="cat">{cat}</span><span class="tm">13<small> SN</small></span></div>
 <div class="seg">{seg}</div><h2 style="font-size:{qf}px">{q}</h2><div class="ops{"" if grid else " list"}" style="font-size:{of}px">{ops}</div><div class="jk">{jk}</div></div></div>'''
 
-html = f'''<!DOCTYPE html><html><head><meta charset="utf-8">{FONTS}<style>{BASE}{C_CSS}</style></head><body>
+GAMEF = open(D + 'oyun_fontlar.css', encoding='utf-8').read()
+html = f'''<!DOCTYPE html><html><head><meta charset="utf-8">{FONTS}<style>{GAMEF}{BASE}{C_CSS}</style></head><body>
 <div class="col"><div class="cap">KISA SORU<b>2×2 şık</b></div>{C(ruler=True)}</div>
 <div class="col"><div class="cap">EN UZUN SORU (109 harf)<b>yazı küçülür</b></div>{C("Paris 2024’te elini cebine koyduğu rahat duruşuyla dünyaca ünlenen Yusuf Dikeç hangi branşta madalya kazandı?", ["Atıcılık","Okçuluk","Eskrim","Golf"], "SPOR", "#ff8a1f", True)}</div>
 <div class="col"><div class="cap">EN UZUN ŞIKLAR (49 harf)<b>ince tek sütun</b></div>{C("Karadeniz kıyısında bol yağış görülmesinin nedeni nedir?", ["Nemli rüzgârların kıyıya paralel dağlara çarpması","Karadeniz’in Akdeniz’den daha sıcak olması","Kıyı boyunca geniş ovaların uzanması","Güneş ışınlarının yıl boyu dik gelmesi"], "COĞRAFYA", "#2fb8ff", True)}</div>
