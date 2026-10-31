@@ -19,6 +19,8 @@ const _v = new THREE.Vector3();
 const TAU = Math.PI * 2;
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+/** Sinematik dolly: sinüs yumuşaklığında kalkış ve iniş (ivme sıçraması yok). */
+export const easeCine = (t) => (1 - Math.cos(Math.PI * t)) / 2;
 const easeOut = (t) => 1 - Math.pow(1 - t, 3);
 const wrapPi = (a) => a - TAU * Math.round(a / TAU);
 const crom = (p0, p1, p2, p3, t) => {
@@ -318,7 +320,10 @@ export class MapCamera {
 			this.pitch = s.a.pitch + (s.b.pitch - s.a.pitch) * e + s.arc * 0.004 * bump;
 			return;
 		}
-		// vardı: sürüklenme (yörünge / yavaş yaklaşma)
+		// vardı: sürüklenme (yörünge / yavaş yaklaşma). Sürüklenme 0,6 sn'de yumuşakça açılır: geçiş durur durmaz
+		// ani dönme başlamasın (hız sürekli kalsın, sinematik)
+		const ramp = Math.min(1, (s.t - s.dur) / 0.6);
+		const rk = ramp * ramp * (3 - 2 * ramp);
 		if (s.decay) {
 			const k = Math.exp(-s.decay * dt);
 			s.yawRate *= k;
@@ -336,10 +341,10 @@ export class MapCamera {
 			this.target.z = s.b.z;
 		}
 		this.pitch = s.b.pitch;
-		if (s.yawRate) this.yaw += s.yawRate * dt;
+		if (s.yawRate) this.yaw += s.yawRate * rk * dt;
 		else this.yaw = s.b.yaw;
 		if (s.distRate) {
-			s.b.dist = Math.max(s.distMin, s.b.dist * (1 + s.distRate * dt));
+			s.b.dist = Math.max(s.distMin, s.b.dist * (1 + s.distRate * rk * dt));
 		}
 		this.dist = s.b.dist;
 		this.yawTo = this.yaw;

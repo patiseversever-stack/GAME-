@@ -13,7 +13,7 @@ import { PROFILE } from './timing.js';
 import { TYPES as BASE } from './types.js';
 import { BANK } from '../data/bank.js';
 import { setTimeout } from '../core/clock.js';
-import { appOf, sfx } from './d_ortak.js';
+import { appOf, sfx, stamp, LOOK, ACT } from './d_ortak.js';
 
 const ABC = [...'ABCÇDEFGĞHIİJKLMNOÖPRSŞTUÜVYZ'];
 // tuzak harf havuzu: Türkçede sık geçen harfler (tuzak inandırıcı olsun)
@@ -86,8 +86,23 @@ export const asmaca_gulle = {
 		const uniq = [...new Set([...word].filter((c) => ABC.includes(c)))];
 		const nTrap = uniq.length >= 8 ? 3 : 4;
 		const traps = shuffle(COMMON.filter((c) => !uniq.includes(c)), R).slice(0, Math.min(nTrap, 13 - uniq.length));
-		return { q, word, balls: shuffle([...uniq, ...traps], R) };
+		const v = { q, word, n: [...word].length, balls: shuffle([...uniq, ...traps], R) };
+		// süre bütçesi (timing modeli): ipucunu oku, kelimeyi düşün, harf güllelerini at
+		return stamp(v, q, (q2, k, P) => ({
+			look: LOOK.orient + v.balls.length * LOOK.gaze * 0.5,
+			think: P.think[0] + P.think[1] * k,
+			act: uniq.length * ACT.tap,
+		}));
 	},
+	/** Çevrimiçi görünüm: kelime yok (her gülle sunucuya sorulmalı, Harf Al gibi); yalnız uzunluk ve gülleler. */
+	publicView(v) {
+		const o = JSON.parse(JSON.stringify(v));
+		delete o.word;
+		delete o.q.w;
+		return o;
+	},
+	// test kancası (test/deneme.test.mjs): doğru ve yanlış örnek cevap
+	ornek: () => ({ good: { ok: true, wrong: 0 }, bad: { ok: false, wrong: MAX } }),
 	mount(el, v, api) {
 		css('gulle', CSS);
 		const app = appOf();

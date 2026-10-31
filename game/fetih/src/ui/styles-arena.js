@@ -245,6 +245,15 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-tmh.d{padding-left:12cqw}
 .fl-q:not(.map) .fl-tmh .fl-qp .sc,.fl-q:not(.map) .fl-tmh .fl-qp .nm small,.fl-q:not(.map) .fl-tmh .fl-qp .rk,.fl-q:not(.map) .fl-tmh .tn b{display:none}
 
+/* 1'e 1 (düello, yayılma): VS rozeti afişin içinde, dikişin tam ortasında; ANKARA etiketi alt kenarda */
+.fl-q:not(.map) .fl-qwho.duel .fl-qvs{top:calc(var(--sat) + 11.5cqw);bottom:auto;transform:translate(-50%,-50%) skewX(-8deg)}
+.fl-q:not(.map) .fl-qwho.duel .fl-qvs span{top:calc(100% + 9cqw)}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp{--pr:11.5cqw}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp.d{--pl:15.5cqw;--pr:3cqw}
+.fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .vx::before{top:calc(50% + var(--sat) / 2);bottom:auto;left:-1.5cqw;transform:translate(-50%,-50%) skewX(-8deg)}
+.fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .fl-qp:has(+ .vx){--pr:10cqw}
+.fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .vx + .fl-qp{--pl:10cqw}
+.fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams)::after{top:calc(var(--sat) + 25cqw)}
 /* ---------------------------------------------------------------- maç HUD'u (soru dışı üst şerit): afiş dilinde, daha ince
    Tam genişlik eğik renkli dilimler; resim + kalın isim (12 harf, tek satır) + koyu hapta puan + kale burçları.
    4'lü: resim üstte ortada, altında isim, puan ve burçlar. */
@@ -293,4 +302,12 @@ export const CSS_ARENA = /* css */ `
 /* duraklat düğmesi HUD'un altında */
 .fl-pbtn{top:calc(var(--sat) + 10px + min(calc(100 * var(--vw)),560px) * .2)}
 .fl-ui:has(.fl-hud:is([data-n="3"],[data-n="4"])) .fl-pbtn{top:calc(var(--sat) + 10px + min(calc(100 * var(--vw)),560px) * .22)}
+
+/* ---------------------------------------------------------------- süre rengi: ilk tasarım (parçalı çubuk, büyük italik rakam)
+   üstüne kalan süreyle akan renk (ui.js timeColor → --tcol: yeşil → sarı → turuncu → kırmızı; kırmızıya erken döner). */
+.fl-q:not(.map){--tcol:rgb(48,209,88)}
+.fl-q:not(.map) .fl-tbar i,.fl-q.hot:not(.map) .fl-tbar i{background:var(--tcol);box-shadow:0 0 8px color-mix(in srgb,var(--tcol) 70%,transparent);transition:background-color .9s linear,box-shadow .9s linear}
+.fl-q:not(.map) .fl-clock b{text-shadow:0 0 18px color-mix(in srgb,var(--tcol) 55%,transparent);transition:text-shadow .9s linear}
+.fl-q:not(.map) .fl-clock::after{color:var(--tcol);transition:color .9s linear}
+.fl-q.hot:not(.map) .fl-clock b{color:#ff6a55;text-shadow:0 0 18px rgba(255,80,60,.65)}
 `;

@@ -9,21 +9,22 @@
 //   * tamamlayıcı titreşim: kahraman ekran eşiğinin f payında, yalın kopya (1 − f) payında çizilir (aynı eşik
 //     dokusu, heroes.js uFade ve landmarks.js vLod): her piksel tam bir kez örtülür, saydamlık ve sıralama yok;
 //     f ~0,35 sn'de (kamera dururken ~0,7 sn) 0 → 1.
-//   * histerezis: giriş eşiği (ekran boyunun %14'ü) çıkıştan (%10) büyük; sınırda gidip gelme yok.
+//   * histerezis: giriş eşiği (ekran boyunun %3,2'si) çıkıştan (%2,5) büyük; sınırda gidip gelme yok. Erken giriş:
+//     yapı ekranda küçükken kahramana geçer, yakınlaşınca görülen her şey zaten ayrıntılı model (geçiş göze batmaz).
 //   * kurulum boşta ~10 ms dilimlerle (heroes.js), kare donmaz; kamera bir yere yönelince (shot) varış kadrajında
 //     büyük görünecek yapı önceden kurulur (önbelleğe; gösterilmez).
 //   * gölge: kahraman yarıdan çok gelince gölgeyi o verir, yalın kopyanınki çekilir.
 //   * taban: kahraman kendi avlusunu çizmez (uLodMode), yalın kopyanın avlusu kalır: yapı aynı zemine oturur.
 //   * uzak = yalın birleşik maket (impostor yok: 42 yapı × açı × renk/normal dokusu telefon belleğini aşar).
-// Kademe: aynı anda en çok [1, 2, 3] kahraman (q0/q1/q2); kare süresi 3 sn boyunca 1/26 sn.yi aşarsa bir azalır,
+// Kademe: aynı anda en çok [2, 4, 6] kahraman (q0/q1/q2); kare süresi 3 sn boyunca 1/26 sn.yi aşarsa bir azalır,
 // uzun süre rahatsa geri artar (telefonun gerçek gücüne göre). Kuşbakışı kendi kahramanını açınca (uHide) bu
 // yuvalar çekilir. Kare başına iş: yalnız 1–3 yuvanın geçiş değeri; seçim 0,2 sn'de bir (nesne yok).
 
 import * as THREE from 'three';
 import { Heroes } from './heroes.js';
 
-const ENTER = 0.14; // yapı yarıçapı / ekran yüksekliği: kahraman gelir
-const EXIT = 0.1; // bunun altına inince bırakılır
+const ENTER = 0.032; // yapı yarıçapı / ekran yüksekliği: kahraman gelir (erken: yapı ekranda küçükken, geçiş göze batmaz)
+const EXIT = 0.025; // bunun altına inince bırakılır
 const STEP = 0.2; // seçim aralığı (sn)
 const FADE_MOVE = 0.35; // geçiş süresi, kamera hareket ederken (sn)
 const FADE_STILL = 0.7; // kamera dururken (daha yavaş: göze batmasın)
@@ -36,14 +37,14 @@ export class HeroLod {
 		this.lm = lm;
 		this.G = G;
 		this.tier = tier;
-		this.max = [1, 2, 3][tier.id] ?? 1;
+		this.max = [2, 4, 6][tier.id] ?? 2;
 		this.limit = this.max;
 		this.enabled = true;
 		const shared = { cache: lm.heroes.cache, max: this.max + 2, used: (kind) => this._used(kind) };
 		// birincil kahraman (Kuşbakışı) da aynı önbelleği kullanır
 		lm.heroes.shared = shared;
 		this.slots = [];
-		for (let i = 0; i < 3; i++) {
+		for (let i = 0; i < this.max; i++) {
 			const h = new Heroes(G, tier, board, lm, builders, shared);
 			h.uFade.value = 0;
 			h.uLodMode.value = 1;

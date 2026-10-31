@@ -21,6 +21,7 @@ import * as THREE from 'three';
 import { clock, sleep, setTimeout, clearTimeout } from '../core/clock.js';
 import { setNightTone } from '../gfx/env.js';
 import { planStage, clearView, occlusion, yawOf, yawAt, stageDist, SEL_LIFT } from './stage.js';
+import { easeCine } from './camera.js';
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 const wrapPi = (a) => a - Math.PI * 2 * Math.round(a / (Math.PI * 2));
@@ -492,7 +493,7 @@ export class Cinema {
 	/** Örtülmeyen açıdan çekim (p: odak, base: eksen yönü, offs: denenecek sapmalar). */
 	_view(p, base, offs, pitch, dist, opt = {}) {
 		const v = clearView(this.app, this.plan, p, base, offs, pitch, dist);
-		this.app.cam.shot(p.x, p.z, { y: p.y, dist, pitch: v.pitch, yaw: v.yaw, arc: 0, ...opt });
+		this.app.cam.shot(p.x, p.z, { y: p.y, dist, pitch: v.pitch, yaw: v.yaw, arc: 0, ease: easeCine, ...opt });
 		return v;
 	}
 
@@ -582,7 +583,7 @@ export class Cinema {
 		const e = this._pt((plan.startC.x + (isCap ? plan.castle.x : plan.defC.x)) / 2, (plan.startC.z + (isCap ? plan.castle.z : plan.defC.z)) / 2, this.c);
 		const yE = clearView(app, plan, e, yawAt(plan, side, 0.32), OFF, 1.0, 16).yaw;
 		const dE = stageDist(app, plan, e, yE, 1.0, 'all', { pad: 1.32, min: 12, max: 22 });
-		this._crane(plan.startC, yawAt(plan, side, 0.08), 1.2, dE * 1.4, e, yE, 1.0, dE, 1.25);
+		this._crane(plan.startC, yawAt(plan, side, 0.08), 1.2, dE * 1.4, e, yE, 1.0, dE, 1.3);
 		// savunan safını kurar
 		bt.cue(0.55, () => bt.march(1, 1.45));
 		// yürüyüş: ordu kendi ilinden sınıra (yamuk hız; arka saflar biraz gecikir); davullar
@@ -594,7 +595,8 @@ export class Cinema {
 		});
 		// izleme: iki orduyu birlikte tutan nokta (yürüdükçe kayar), yukarıdan; kamera yana süzülerek döner
 		// (paralaks) ve ordular yaklaştıkça yaklaşır
-		this.at(1.15, () => {
+		// uzaktan yakına: tek, sinüs yumuşaklığında dolly (yavaş kalkar, yavaşlayarak oturur; ardından süzülme yumuşakça açılır)
+		this.at(1.2, () => {
 			ui?.tagsOff?.();
 			b.labelLayer?.suspend?.(true); // yakın çekimde il adları da susar (ordunun ortasında yazı olmasın)
 			b.cues?.hide();
@@ -602,7 +604,7 @@ export class Cinema {
 			const d0 = stageDist(app, plan, bt.focus[2], y, 0.98, 'all', { pad: 1.1, min: 9, max: 18 });
 			const d1 = stageDist(app, plan, plan.mid, y, 0.98, 'both', { pad: 1.1, min: 8, max: 16 });
 			const v = clearView(app, plan, plan.mid, y, OFF, 0.98, d0);
-			cam.shot(0, 0, { follow: bt.focus[2], dist: d0, pitch: v.pitch, yaw: v.yaw, dur: 0.95, arc: 0, yawRate: -side * 0.13, distRate: -0.07, distMin: d1, decay: 0.35 });
+			cam.shot(0, 0, { follow: bt.focus[2], dist: d0, pitch: v.pitch, yaw: v.yaw, dur: 1.55, arc: 0, ease: easeCine, yawRate: -side * 0.13, distRate: -0.07, distMin: d1, decay: 0.35 });
 		});
 		const tA = t0 + Tm + 0.1; // ordu vardı
 		const L = this._pt(plan.line.x, plan.line.z, this.d);

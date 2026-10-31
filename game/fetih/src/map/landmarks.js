@@ -36,11 +36,11 @@ uniform vec4 uCastle[4]; // kaleler: konum, w görünür (nightlights.js her kar
 uniform vec4 uHide; // kahraman maket (heroes.js) gösterilirken yalın kopyası gizlenir: xy merkez (x, z), w açık;
 // z: yakın çekimde komşu yapıların gömüldüğü yarıçap (İstanbul gibi sık yerlerde kahramanı örtmesinler; 0 kapalı)
 attribute vec4 site; // yapının merkezi x, taban y, merkez z, ölçek
-uniform vec4 uLod[3]; // ekran boyuna göre kahraman (herolod.js): x, z merkez, z: kahramanın görünürlüğü, w açık
+uniform vec4 uLod[6]; // ekran boyuna göre kahraman (herolod.js): x, z merkez, z: kahramanın görünürlüğü, w açık
 /** Bu yapının yerinde kahraman ne kadar göründü (0..1): yalın kopya o payda titreşimle çekilir. */
 float lodK() {
 	float f = 0.0;
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 6; i++) {
 		vec4 l = uLod[i];
 		if (l.w > 0.5 && abs(site.x - l.x) + abs(site.z - l.y) < 0.01) f = max(f, l.z);
 	}
@@ -1458,7 +1458,7 @@ export class Landmarks {
 		this.sites.castleU = this.castleU;
 		this.G = G;
 		this.uHide = { value: new THREE.Vector4(0, 0, 0, 0) };
-		this.uLod = [0, 1, 2].map(() => new THREE.Vector4(0, 0, 0, 0));
+		this.uLod = [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector4(0, 0, 0, 0));
 		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU }, uHide: this.uHide, uLod: { value: this.uLod } };
 		this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms, side: THREE.DoubleSide }));
 		this.mesh.frustumCulled = false;

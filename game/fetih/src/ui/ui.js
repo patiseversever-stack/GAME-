@@ -46,6 +46,27 @@ const JK_ICON = [
 const TONE_ICON = { info: 'star', good: 'check', bad: 'cross', warn: 'cross', gold: 'crown' };
 const yearish = (q) => q && !q.unit && Number.isInteger(q.ans) && q.ans >= 500 && q.ans <= 2100 && /yıl/i.test(q.q || '');
 
+/** Süre rengi (kalan oran f: 1 → 0): yeşil → sarı → turuncu → kırmızı (son çeyrekte tam kırmızı), aradaki tonlar yumuşak geçiş. */
+const TCOL = [
+	[1, [48, 209, 88]],
+	[0.72, [255, 214, 10]],
+	[0.48, [255, 149, 0]],
+	[0.26, [255, 59, 48]],
+	[0, [255, 40, 40]],
+];
+export function timeColor(f) {
+	f = Math.max(0, Math.min(1, f));
+	for (let k = 1; k < TCOL.length; k++) {
+		const [fa, a] = TCOL[k - 1];
+		const [fb, b] = TCOL[k];
+		if (f >= fb) {
+			const u = (f - fb) / (fa - fb || 1);
+			return `rgb(${a.map((x, j) => Math.round(b[j] + (x - b[j]) * u)).join(',')})`;
+		}
+	}
+	return 'rgb(255,69,58)';
+}
+
 export class UI {
 	constructor(root, app, h = {}) {
 		this.app = app;
@@ -759,6 +780,7 @@ export class UI {
 				const total = questionTime(sec, this._extra, this._floor);
 				const left = Math.max(0, total - t);
 				const s = Math.ceil(left);
+				card.style.setProperty('--tcol', timeColor(total > 0 ? left / total : 0));
 				if (s !== lastS) {
 					lastS = s;
 					clockB.textContent = String(s);
