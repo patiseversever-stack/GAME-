@@ -224,4 +224,27 @@ export const CSS_ARENA = /* css */ `
 .fl-q .fl-tf.vd .fl-who:first-of-type{margin-left:2px}
 .fl-q .fl-tf.vd .fl-opt.dim .fl-who{width:26px;height:26px;filter:grayscale(0)}
 .fl-q.locked .fl-tf.vd .fl-opt{opacity:1}
+
+/* ---------------------------------------------------------------- atasözü: renkli çini kartı (ref/tasarim-v14-atasozu-*.jpg)
+   "Atasözünü tamamla." satırı kartın başlığına taşınır; kart mor→eflatun, üstünde soluk sekiz köşeli çini yıldızları;
+   boşluk altın hap (nabız gibi parlar) → seçince beyaz → cevapta yeşil/kırmızı. */
+.fl-q:not(.map):has(.fl-prv) .fl-qtext{display:none}
+.fl-q .fl-prv{position:relative;overflow:hidden;margin:2px 0 14px;padding:12px 16px 18px;border:0;border-radius:0;color:#fff;text-align:center;
+  font-family:'Fredoka',sans-serif;font-weight:700;font-size:23px;line-height:1.5;text-shadow:0 2px 0 rgba(40,0,60,.35);text-wrap:balance;
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'%3E%3Cg fill='none' stroke='white' stroke-opacity='.14' stroke-width='1.6'%3E%3Crect x='14' y='14' width='18' height='18'/%3E%3Crect x='14' y='14' width='18' height='18' transform='rotate(45 23 23)'/%3E%3C/g%3E%3Ccircle cx='23' cy='23' r='2.4' fill='white' fill-opacity='.16'/%3E%3C/svg%3E") center/46px 46px,
+    radial-gradient(120% 90% at 50% 0%,rgba(255,255,255,.18),transparent 60%),linear-gradient(125deg,#3d2bd8 0%,#8a2be2 48%,#d6337f 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.18);transition:box-shadow .3s}
+.fl-q .fl-prv::before{content:'❝  ATASÖZÜNÜ TAMAMLA  ❞';display:block;margin:0 0 6px;font:italic 800 13px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.24em;color:#ffd25a;opacity:1;text-shadow:0 1px 0 rgba(0,0,0,.3);
+  background:linear-gradient(90deg,transparent,rgba(255,210,90,.6)) no-repeat 0 55%/14% 1px,linear-gradient(90deg,rgba(255,210,90,.6),transparent) no-repeat 100% 55%/14% 1px}
+.fl-q .fl-prv:has(.fl-blank.right){box-shadow:inset 0 0 0 3px #5ff08a,inset 0 0 30px rgba(95,240,138,.35)}
+.fl-q .fl-blank{min-width:3.6em;padding:0 12px;margin:0 3px;border:0;border-radius:10px;background:linear-gradient(180deg,#ffe680,#ffbb1f);color:#3a1a00;text-shadow:none;
+  font-family:'Lilita One',sans-serif;line-height:1.3;box-shadow:0 3px 0 #b06a00,0 0 0 2px rgba(255,255,255,.55);animation:flPrvGlow 1.1s ease-in-out infinite alternate}
+.fl-q .fl-blank.set{background:#fff;color:#4b1fb0;box-shadow:0 3px 0 #b9a8e8,0 0 0 2px #ffd25a;animation:flPrvPop .35s cubic-bezier(.3,1.8,.5,1)}
+.fl-q .fl-blank.right{background:linear-gradient(180deg,#5ff08a,#16a64c);color:#fff;text-shadow:0 2px 0 rgba(0,60,20,.35);box-shadow:0 3px 0 #0b6a2a,0 0 0 2px #fff,0 0 18px rgba(95,240,138,.8);animation:flPrvPop .45s cubic-bezier(.3,1.8,.5,1)}
+.fl-q .fl-blank.wrong{background:linear-gradient(180deg,#ff7a66,#c42a1a);color:#fff;text-shadow:0 2px 0 rgba(80,0,0,.35);box-shadow:0 3px 0 #7a120a,0 0 0 2px #fff;animation:flPrvShake .4s ease-in-out}
+@keyframes flPrvGlow{from{box-shadow:0 3px 0 #b06a00,0 0 0 2px rgba(255,255,255,.55),0 0 0 rgba(255,210,90,0)}to{box-shadow:0 3px 0 #b06a00,0 0 0 2px rgba(255,255,255,.9),0 0 18px rgba(255,210,90,.9)}}
+@keyframes flPrvPop{0%{transform:scale(.7)}100%{transform:none}}
+@keyframes flPrvShake{0%,100%{transform:none}25%{transform:translateX(-6px) rotate(-3deg)}75%{transform:translateX(6px) rotate(3deg)}}
+.fl-q:not(.map):has(.fl-prv) .fl-qbody{margin-bottom:22px}
 `;
