@@ -26,6 +26,7 @@ const FONTS = [
 	['manrope', '800'],
 	['barlow-condensed', '800-italic'], // Arena soru ekranı (v1.4): afiş, süre, etiketler
 	['barlow-condensed', '700-italic'],
+	['barlow-condensed', '900-italic'], // afiş isimleri (12 harf, kalın)
 ];
 
 function fontFaces() {

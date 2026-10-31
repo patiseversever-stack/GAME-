@@ -35,61 +35,21 @@ const pre = process.argv[3];
   const word = q.w.toLocaleUpperCase('tr-TR');
   console.log('kelime', word);
   await snap(pre + '1');
-  if (type === 'asmaca_kasa') {
-    const dw = await p.$('.as-dw');
-    const box = await dw.boundingBox();
-    // sürükle: kadranı sola çevir
-    await p.mouse.move(box.x + box.width * 0.7, box.y + 100);
-    await p.mouse.down();
-    for (let k = 1; k <= 8; k++) await p.mouse.move(box.x + box.width * 0.7 - k * 14, box.y + 100);
-    await p.mouse.up();
+  {
+    const tray = await p.evaluate(() => [...document.querySelectorAll('.gl-ball')].map((b) => b.textContent));
+    const W = [...word];
+    const good = tray.map((c, i) => [c, i]).filter(([c]) => W.includes(c)).map(([, i]) => i);
+    const bad = tray.map((c, i) => [c, i]).filter(([c]) => !W.includes(c)).map(([, i]) => i);
+    const tap = async (i) => { const r = await (await p.$$('.gl-ball'))[i].boundingBox(); await p.mouse.move(r.x + r.width / 2, r.y + r.height / 2); await p.mouse.down(); await p.mouse.move(r.x + r.width / 2, r.y + r.height / 2 - 20, { steps: 3 }); await p.mouse.up(); };
+    await tap(good[0]); await p.waitForTimeout(900);
+    await tap(bad[0]); await p.waitForTimeout(250);
+    await snap(pre + '2a');
     await p.waitForTimeout(900);
-    // harfler: bir yanlış, sonra kelimenin harfleri (sonuncusu hariç)
-    const uniq = [...new Set([...word].filter((c) => c !== ' '))];
-    const seq = ['Ö', uniq[0], 'Ğ', ...uniq.slice(1, -1)];
-    const tapLetter = async (c) => {
-      // görünür değilse önce kadranı o harfe çevir: pencereye dokunmadan önce programla çevir
-      await p.evaluate((c) => document.querySelector(`.as-kasa .fl-key[data-k="${c}"]`).click(), c);
-      await p.waitForTimeout(650);
-    };
-    for (const c of seq) await tapLetter(c);
+    await tap(good[1]); await p.waitForTimeout(150);
     await snap(pre + '2');
-    // son harfi gerçek dokunuşla: önce kadrana sürükleyerek getirmek yerine görünürse dokun
-    await tapLetter(uniq[uniq.length - 1]);
-    await p.waitForTimeout(300);
-    await snap(pre + '3');
-  } else {
-    const path = await p.evaluate(() => null);
-    // doğru yolu bul: ızgara harfleri + kelime → DFS
-    const grid = await p.evaluate(() => [...document.querySelectorAll('.as-c')].map((b) => b.textContent));
-    const L = [...word].filter((c) => c !== ' ');
-    const near = (a, b) => a !== b && Math.abs((a % 8) - (b % 8)) <= 1 && Math.abs(Math.floor(a / 8) - Math.floor(b / 8)) <= 1;
-    let sol = null;
-    const dfs = (pth) => {
-      if (pth.length === L.length) return (sol = pth.slice()), true;
-      for (let c = 0; c < 24; c++) if (grid[c] === L[pth.length] && !pth.includes(c) && (!pth.length || near(c, pth[pth.length - 1]))) { pth.push(c); if (dfs(pth)) return true; pth.pop(); }
-      return false;
-    };
-    dfs([]);
-    const centers = await p.evaluate(() => [...document.querySelectorAll('.as-c')].map((b) => { const r = b.getBoundingClientRect(); return [r.x + r.width / 2, r.y + r.height / 2]; }));
-    const drawTo = async (cells, release) => {
-      await p.mouse.move(...centers[cells[0]]);
-      await p.mouse.down();
-      for (let i = 1; i < cells.length; i++) await p.mouse.move(...centers[cells[i]], { steps: 4 });
-      if (release) await p.mouse.up();
-    };
-    // yanlış deneme: doğru yolun ilk yarısı + komşu yanlış hücre(ler) tam uzunlukta
-    const wrongPath = sol.slice(0, L.length - 1);
-    const alt = [...Array(24).keys()].find((c) => near(c, wrongPath[wrongPath.length - 1]) && !wrongPath.includes(c) && c !== sol[L.length - 1]);
-    if (alt != null) { await drawTo([...wrongPath, alt], true); await p.waitForTimeout(1600); }
-    // çizerken: doğru yolun 2/3'ü, parmak basılı
-    await drawTo(sol.slice(0, Math.ceil(L.length * 0.66)), false);
-    await snap(pre + '2');
-    await p.mouse.up();
-    await p.waitForTimeout(500);
-    await p.waitForTimeout(300);
-    await drawTo(sol, true);
-    await p.waitForTimeout(700);
+    await p.waitForTimeout(900);
+    for (const i of good.slice(2)) { await tap(i); await p.waitForTimeout(500); }
+    await p.waitForTimeout(900);
     await snap(pre + '3');
   }
   await p.waitForSelector('.fl-q.rv', { timeout: 40000 }).catch(() => {});

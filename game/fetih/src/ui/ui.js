@@ -668,6 +668,7 @@ export class UI {
 				<div class="fl-jk"></div>
 			</div>
 			<div class="fl-stamp"></div>`;
+		this._fitNames(card);
 		const body = card.querySelector('.fl-qbody');
 		const clockB = card.querySelector('.fl-clock b');
 		let answerRes;
@@ -819,6 +820,23 @@ export class UI {
 		bar.style.setProperty('--tt', total + 's');
 		bar.style.animationDelay = `-${Math.max(0, elapsed).toFixed(2)}s`;
 		bar.classList.add('run');
+	}
+
+	/** Afişteki isimler (en çok 12 harf) kesilmeden, alt satıra inmeden sığsın: taşan isim yarımşar piksel küçülür. */
+	_fitNames(card) {
+		const fit = () => {
+			for (const b of card.querySelectorAll('.fl-qwho .nm b')) {
+				b.style.fontSize = '';
+				let fs = parseFloat(getComputedStyle(b).fontSize) || 16;
+				for (let k = 0; k < 40 && b.scrollWidth > b.clientWidth + 0.5 && fs > 10; k++) b.style.fontSize = (fs -= 0.5) + 'px';
+			}
+		};
+		fit();
+		// kalın yazı tipi ilk kullanımda iner: inince ve kısa süre sonra yeniden ölç
+		document.fonts?.load?.('italic 900 20px "Barlow Condensed"').then(fit, () => {});
+		document.fonts?.ready?.then(fit);
+		setTimeout(fit, 300);
+		setTimeout(fit, 1000);
 	}
 
 	/** Tiplerin çizdiği gövdeye ortak dokunuşlar: uzun şıklar tek sütun, kaydırıcı dolgusu, yıl biçimi. */
