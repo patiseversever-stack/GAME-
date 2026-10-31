@@ -144,17 +144,17 @@ def B():
 
 # ------------------------------------------------------------------ C · ARENA (v3: esnek yerleşim)
 C_CSS = """
-.c .ban{position:absolute;left:0;right:0;top:0;height:124px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))}
-.c .sd{position:absolute;top:0;height:100px;width:54%;display:flex;align-items:center;gap:11px;padding:16px 16px 0}
+.c .ban{position:absolute;left:0;right:0;top:0;height:110px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))}
+.c .sd{position:absolute;top:0;height:84px;width:54%;display:flex;align-items:center;gap:10px;padding:8px 14px 0}
 .c .sd.l{left:0;padding-right:66px;background:linear-gradient(100deg,#ff4433,#b0170c);clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
 .c .sd.r{right:0;padding-left:66px;justify-content:flex-end;flex-direction:row-reverse;background:linear-gradient(260deg,#3b86ff,#1440b0);clip-path:polygon(18% 0,100% 0,100% 100%,0 100%);text-align:right}
-.c .sd img{width:56px;height:56px;border-radius:12px;border:3px solid #fff;transform:skewX(-6deg);box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.c .sd img{width:48px;height:48px;border-radius:12px;border:3px solid #fff;transform:skewX(-6deg);box-shadow:0 4px 0 rgba(0,0,0,.35)}
 .c .sd small{display:block;font:italic 800 11px 'Barlow Condensed';letter-spacing:.22em;color:rgba(255,255,255,.9)}
-.c .sd b{display:block;font:italic 800 32px/0.95 'Barlow Condensed';text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.c .sd b{display:block;font:italic 800 28px/0.95 'Barlow Condensed';text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.3)}
 .c .sd em{display:block;font:italic 800 16px 'Barlow Condensed';color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
-.c .vs{position:absolute;left:50%;top:28px;z-index:2;transform:translateX(-50%) skewX(-8deg);padding:3px 11px;background:#0a0b14;border:2.5px solid #fff;font:italic 800 30px 'Barlow Condensed';letter-spacing:.04em;color:#ffd25a;box-shadow:0 6px 20px rgba(0,0,0,.6)}
-.c .tg{position:absolute;left:50%;top:104px;transform:translateX(-50%);padding:3px 13px;background:#ffd25a;color:#1a1200;font:800 11.5px 'Barlow Condensed';letter-spacing:.26em;clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
-.c .ok{position:absolute;right:14px;top:106px;padding:3px 9px;background:#16c060;color:#04210f;font:italic 800 11.5px 'Barlow Condensed';letter-spacing:.14em;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%)}
+.c .vs{position:absolute;left:50%;top:20px;z-index:2;transform:translateX(-50%) skewX(-8deg);padding:2px 10px;background:#0a0b14;border:2.5px solid #fff;font:italic 800 27px 'Barlow Condensed';letter-spacing:.04em;color:#ffd25a;box-shadow:0 6px 20px rgba(0,0,0,.6)}
+.c .tg{position:absolute;left:50%;top:88px;transform:translateX(-50%);padding:3px 13px;background:#ffd25a;color:#1a1200;font:800 11.5px 'Barlow Condensed';letter-spacing:.26em;clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
+.c .ok{position:absolute;right:14px;top:90px;padding:3px 9px;background:#16c060;color:#04210f;font:italic 800 11.5px 'Barlow Condensed';letter-spacing:.14em;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%)}
 /* panel: içeriği kadar yüksek, alttan büyür; üstünde yumuşak gölge geçişi (harita kesilmez) */
 .c .box{position:absolute;left:0;right:0;bottom:0;padding:62px 12px 14px;background:linear-gradient(180deg,rgba(7,8,15,0),rgba(7,8,15,.9) 46px,#07080f 70px)}
 .c .hd{display:flex;align-items:center;gap:10px}
@@ -188,15 +188,17 @@ C_CSS = """
 
 /* çok oyunculu afiş (v2, sinematik): eğik paneller, aralarında koyu çizik, büyük eğik avatar ve isim */
 .c .ban.m{background:#06070d}
-.c .ban.m .sg{position:absolute;top:0;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding-top:6px;
+.c .ban.m .sg{position:absolute;top:0;height:84px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding-top:4px;
   background:linear-gradient(160deg,var(--c1),var(--c2));clip-path:polygon(var(--l) 0,100% 0,calc(100% - var(--r)) 100%,0 100%)}
 .c .ban.m .sg::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.22) 0 22%,rgba(255,255,255,0) 22% 100%);pointer-events:none}
-.c .ban.m .sg img{width:48px;height:48px;border-radius:11px;border:3px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:skewX(-8deg)}
-.c .ban.m .sg b{font:italic 800 21px/1 'Barlow Condensed';text-transform:uppercase;letter-spacing:.01em;text-shadow:0 2px 0 rgba(0,0,0,.35)}
-.c .ban.m .sg em{font:italic 800 14px/1 'Barlow Condensed';color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.c .ban.m .sg img{width:38px;height:38px;border-radius:11px;border:3px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:skewX(-8deg)}
+.c .ban.m .sg b{font:italic 800 19px/1 'Barlow Condensed';text-transform:uppercase;letter-spacing:.01em;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.c .ban.m .sg em{font:italic 800 13px/1 'Barlow Condensed';color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
 .c .ban.m .sg .st{position:absolute;top:8px;right:calc(var(--r) + 8px);width:19px;height:19px;border-radius:50%;background:#16c060;border:2px solid #fff;display:grid;place-items:center;font:800 10px Manrope;color:#fff}
-.c .ban.m .sg .rk{position:absolute;top:6px;left:calc(var(--l) + 6px);font:italic 800 15px 'Barlow Condensed';color:rgba(255,255,255,.75)}
-.c .ban.m .lb{position:absolute;left:50%;top:104px;transform:translateX(-50%);padding:3px 14px;background:#ffd25a;color:#1a1200;font:800 11.5px 'Barlow Condensed';letter-spacing:.24em;white-space:nowrap;clip-path:polygon(5% 0,100% 0,95% 100%,0 100%)}
+.c .ban.m .sg .rk{position:absolute;bottom:4px;left:8px;font:italic 800 15px 'Barlow Condensed';color:rgba(255,255,255,.75)}
+.c .ban.m .lb{position:absolute;left:50%;top:88px;transform:translateX(-50%);padding:3px 14px;background:#ffd25a;color:#1a1200;font:800 11.5px 'Barlow Condensed';letter-spacing:.24em;white-space:nowrap;clip-path:polygon(5% 0,100% 0,95% 100%,0 100%)}
+/* birleşimlerdeki VS rozetleri */
+.c .ban.m .vx{position:absolute;top:26px;z-index:3;transform:translateX(-50%) skewX(-8deg);padding:1px 6px;background:#0a0b14;border:2px solid #fff;font:italic 800 17px/1.1 'Barlow Condensed';color:#ffd25a;box-shadow:0 4px 12px rgba(0,0,0,.6)}
 /* eşli: düello gibi iki yarı, her yarıda iki avatar */
 .c .ban.t .sd{gap:12px}
 .c .ban.t .sd .two{display:flex}
@@ -206,7 +208,8 @@ C_CSS = """
 .c .ban.t .sd b{font-size:19px;line-height:.95;white-space:nowrap}
 .c .ban.t .sd small{font-size:10px;letter-spacing:.14em;white-space:nowrap}
 .c .ban.t .sd small i{font-style:italic;color:#ffe680}
-.c .ban.t .sd .two img{width:40px;height:40px;margin-right:-10px}
+.c .ban.t .sd .two{gap:5px}
+.c .ban.t .sd .two img{width:38px;height:38px;margin:0!important}
 .c .ban.t .sd.r .two img{margin-left:-10px;margin-right:0}
 .c .ban.t .sd.l .two img:last-child{margin-right:0}
 .c .ban.t .sd.r .two img:first-child{margin-left:0}
@@ -253,7 +256,8 @@ def M(n=3, team=False, stack=0):
             r = 0 if j == n - 1 else S
             ok = '<span class="st">✓</span>' if j in (1, 3) else ''
             segs += f'<div class="sg" style="left:{left + (3 if j else 0):.1f}px;width:{w - (3 if j else 0):.1f}px;--l:{l}px;--r:{r}px;--c1:{c1};--c2:{c2}"><span class="rk">{rank.index(j) + 1}.</span><img src="{av}"><b>{nm}</b><em>{sc}</em>{ok}</div>'
-        ban = f'<div class="ban m">{segs}<div class="lb">YAYILMA · HERKES CEVAPLIYOR</div></div>'
+        vx = ''.join(f'<span class="vx" style="left:{j * (w - S) + S / 2 + 1.5:.1f}px">VS</span>' for j in range(1, n))
+        ban = f'<div class="ban m">{segs}{vx}<div class="lb">YAYILMA · HERKES CEVAPLIYOR</div></div>'
     html = C()
     html = html[:html.index('<div class="ban">')] + ban + html[html.index('<div class="box">'):]
     if stack:
