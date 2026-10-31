@@ -172,25 +172,39 @@ export const CSS_ARENA = /* css */ `
   --pl:3cqw;--pr:3cqw;display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto auto;grid-template-areas:"av sb" "av sc" "nm nm";
   align-content:center;align-items:center;justify-items:start;column-gap:2cqw;row-gap:.6cqw;padding:var(--sat) var(--pr) 0 var(--pl)}
 .fl-q:not(.map) .fl-qwho .fl-qp .nm{display:contents}
-.fl-q:not(.map) .fl-qwho .fl-qp .fl-av{grid-area:av;align-self:center;width:var(--av,10cqw);height:var(--av,10cqw);border-radius:22%;border-width:2px}
+.fl-q:not(.map) .fl-qwho .fl-qp .fl-av{grid-area:av;align-self:center;width:var(--av,10cqw);height:var(--av,10cqw);border-radius:22%;border-width:.5cqw}
 .fl-q:not(.map) .fl-qwho .fl-qp .nm small{grid-area:sb;align-self:end;margin:0;font-size:2.6cqw;letter-spacing:.2em;line-height:1}
 .fl-q:not(.map) .fl-qwho .fl-qp .nm b,.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp .nm b{grid-area:nm;position:relative;z-index:1;min-width:0;justify-self:stretch;
   font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:900;font-size:var(--nf,5.8cqw);line-height:1;letter-spacing:.01em;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:clip;padding-right:.6cqw;box-sizing:border-box;
   text-shadow:0 .5cqw 0 rgba(0,0,0,.45),0 0 1px rgba(0,0,0,.8);-webkit-text-stroke:.15cqw rgba(0,0,0,.25);paint-order:stroke fill}
 .fl-q:not(.map) .fl-qwho .fl-qp .sc,.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp .sc{grid-area:sc;align-self:start;position:relative;z-index:1;display:inline-block;padding:.3cqw 1.4cqw .1cqw;border-radius:1cqw;
-  background:rgba(6,7,13,.6);box-shadow:inset 0 0 0 1px rgba(255,230,128,.35);font-family:'Lilita One',sans-serif;font-style:normal;font-weight:400;font-size:var(--sf,3.6cqw);line-height:1.15;letter-spacing:.02em;color:#ffe680;text-shadow:none}
+  background:rgba(6,7,13,.6);box-shadow:inset 0 0 0 1px rgba(255,230,128,.35);font-family:'Lilita One',sans-serif;font-style:normal;font-weight:400;font-size:var(--sf,4.6cqw);line-height:1.15;letter-spacing:.02em;color:#ffe680;text-shadow:none}
 .fl-q:not(.map) .fl-qwho .fl-qp:not(:has(small)) .sc{align-self:center}
+/* başlıksız dilimler (yayılma, 3/4'lü): puan resmin tam ortasında (boş başlık satırı yok) */
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp:not(:has(small)){grid-template-rows:auto auto;grid-template-areas:"av sc" "nm nm"}
+.fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .vx + .fl-qp:not(:has(small)){grid-template-rows:auto auto;grid-template-areas:"sc av" "nm nm"}
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp:not(:has(small)) .sc{align-self:center}
 /* düello: saldıran solda, savunan aynalı; isim eğik dikişe kadar */
 .fl-q:not(.map) .fl-qwho.duel .fl-qp{--pr:9cqw}
 .fl-q:not(.map) .fl-qwho.duel .fl-qp.d,.fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .vx + .fl-qp{--pl:calc(12% + 7cqw);--pr:3cqw;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"sb av" "sc av" "nm nm";justify-items:end;text-align:right}
 .fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .vx + .fl-qp{--pl:7cqw}
 .fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .fl-qp:has(+ .vx){--pr:7cqw}
 /* 3'lü ve 4'lü */
-.fl-q:not(.map) .fl-qwho[style*="--n:3"]:not(.duel):not(.teams) .fl-qp{--av:8.4cqw;--nf:4.5cqw;--sf:3.3cqw;--pl:4.4cqw;--pr:3.6cqw}
+.fl-q:not(.map) .fl-qwho[style*="--n:3"]:not(.duel):not(.teams) .fl-qp{--av:8.4cqw;--nf:4.5cqw;--sf:3.9cqw;--pl:4.4cqw;--pr:3.6cqw}
 .fl-q:not(.map) .fl-qwho[style*="--n:3"]:not(.duel):not(.teams) .fl-qp:first-of-type{--pl:2.4cqw}
-.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp{--av:7.6cqw;--nf:3.75cqw;--sf:3cqw;--pl:3.6cqw;--pr:2.4cqw}
+.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp{--av:7.6cqw;--nf:3.75cqw;--sf:3.2cqw;--pl:3.6cqw;--pr:2.4cqw}
 .fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp:first-of-type{--pl:2cqw}
 .fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .vx{display:none}
+/* 4'lü: dikey kart: resim üstte ortada, altında isim, altında puan */
+.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp,.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp:not(:has(small)){
+  --av:8.6cqw;--nf:3.9cqw;--sf:3.4cqw;--pl:3.8cqw;--pr:3.2cqw;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto auto;grid-template-areas:"av" "nm" "sc";justify-items:center;row-gap:.7cqw;text-align:center}
+.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp:first-of-type{--pl:2.4cqw}
+.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp:last-of-type{--pr:2.4cqw}
+.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp .nm b{text-align:center;padding:0 .3cqw}
+.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp .sc,.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp:not(:has(small)) .sc{align-self:center;justify-self:center}
+.fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams) .fl-qp .st{justify-self:center;margin:0 -9.4cqw -1cqw 0}
+/* sıra rozetleri yok */
+.fl-q:not(.map) .fl-qwho .fl-qp .rk,.fl-q:not(.map) .fl-qwho:is([style*="--n:3"],[style*="--n:4"]):not(.duel):not(.teams) .fl-qp .rk{display:none}
 /* durum tiki, sıra rozeti: resmin köşesinde (ızgarada resimle aynı hücre) */
 .fl-q:not(.map) .fl-qwho .fl-qp .st,.fl-q:not(.map) .fl-qwho.duel .fl-qp.d .st,.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp .st{position:relative;inset:auto;grid-area:av;align-self:end;justify-self:end;
   width:4.2cqw;height:4.2cqw;margin:0 -1.2cqw -1cqw 0;font-size:2.4cqw}
