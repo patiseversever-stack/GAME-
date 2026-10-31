@@ -63,6 +63,7 @@ function makeBoard() {
 			provinces[i].owner = p;
 		},
 		topAt: (i, out) => out.set(provinces[i].x, 0, provinces[i].z),
+		castleAt: (i, out) => out.set(provinces[i].x, 0, provinces[i].z),
 		pick(x, z) {
 			let best = -1;
 			let bd = 9;

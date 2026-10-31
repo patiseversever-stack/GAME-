@@ -121,13 +121,38 @@ export const ANTIK = {
 			wall(k, { w: (Math.PI * r) / ng + 0.002, h: 0.06, t: 0.012, x: Math.sin(a) * r, y: 0.31, z: 0.02 + Math.cos(a) * r, ry: a + Math.PI, holes: [{ x: 0, y: 0, w: ((Math.PI * r) / ng) * 0.6, h: 0.045, kind: 'round' }], col: S, glass: false });
 		}
 		k.mc(H.ASHLAR, '#c7ab80').flat().add(new THREE.LatheGeometry([new THREE.Vector2(0.49, 0.372), new THREE.Vector2(0.535, 0.372)], k._n(30), Math.PI / 2, Math.PI), new THREE.Matrix4().makeTranslation(0, 0, 0.02)).soft();
+		// dış cephe (kameraya bakan kavisli duvar): iki sıra kemerli açıklık, kat silmesi; düz ve koyu bir silindir
+		// gibi görünmesin (Aspendos'un dış cephesi gibi)
+		for (let i = 0; i < ng; i++) {
+			const a = Math.PI / 2 + ((i + 0.5) / ng) * Math.PI;
+			const r = 0.512;
+			const w = (Math.PI * r) / ng;
+			wall(k, { w: w + 0.003, h: 0.31, t: 0.014, x: Math.sin(a) * r, y: 0, z: 0.02 + Math.cos(a) * r, ry: a + Math.PI, holes: [{ x: 0, y: 0.03, w: w * 0.55, h: 0.085, kind: 'round' }, { x: 0, y: 0.165, w: w * 0.45, h: 0.07, kind: 'round' }], col: '#e1c69a', glass: false, dark: true });
+		}
+		k.mc(H.ASHLAR, '#ccb084').flat().add(new THREE.LatheGeometry([new THREE.Vector2(0.519, 0.14), new THREE.Vector2(0.527, 0.14), new THREE.Vector2(0.527, 0.152), new THREE.Vector2(0.519, 0.152)], k._n(30), Math.PI / 2, Math.PI), new THREE.Matrix4().makeTranslation(0, 0, 0.02)).soft();
 		yield;
 		// orkestra ve sahne, sahne binası (scaenae frons): iki kat nişler, ortada kral kapısı
 		k.mc(H.PAVE, '#cdb184').cyl(0.17, 0.17, 0.004, 24, 0, 0, 0.02);
-		k.mc(H.WOOD, '#8a6844').flat().box(0.72, 0.03, 0.06, 0, 0, 0.06).soft();
+		k.mc(H.WOOD, '#8a6844').flat().box(0.72, 0.035, 0.06, 0, 0, 0.065).soft();
 		const holes = [];
 		for (const [x, w, h, y] of [[-0.24, 0.06, 0.1, 0.05], [-0.12, 0.06, 0.1, 0.05], [0, 0.08, 0.13, 0.03], [0.12, 0.06, 0.1, 0.05], [0.24, 0.06, 0.1, 0.05], [-0.24, 0.05, 0.08, 0.22], [-0.12, 0.05, 0.08, 0.22], [0, 0.05, 0.08, 0.22], [0.12, 0.05, 0.08, 0.22], [0.24, 0.05, 0.08, 0.22]]) holes.push({ x, y, w, h, kind: 'round' });
 		wall(k, { w: 0.98, h: 0.42, t: 0.06, z: 0.12, holes, mat: H.ASHLAR, col: '#dbbf92', dark: true, frame: 0.005, frameCol: '#e6cfa6' });
+		// sahne cephesi (scaenae frons) iki katlı sütunlu: her nişin iki yanında mermer sütun çifti, kat saçakları,
+		// nişlerin üstünde sırayla üçgen ve yay alınlıklar; ortada kral kapısının üstünde büyük alınlık
+		yield;
+		const zc = 0.075;
+		for (const [fy, fh] of [[0.0, 0.19], [0.205, 0.165]]) {
+			for (const nx of [-0.24, -0.12, 0, 0.12, 0.24]) {
+				const half = nx === 0 ? 0.062 : 0.048;
+				for (const sx of [-1, 1]) column(k, nx + sx * half, fy + 0.012, zc, { h: fh - 0.012, r: 0.0075, order: 'corinthian', col: '#efe6d2', flutes: 6 });
+				entablature(k, { x0: nx - half - 0.012, x1: nx + half + 0.012, y: fy + fh, z: zc, d: 0.028, h: 0.016, col: '#eadfc8' });
+			}
+			k.mc(H.ASHLAR, '#d2b68a').flat().box(0.98, 0.012, 0.05, 0, fy, zc + 0.01).soft();
+		}
+		for (const [i, nx] of [-0.24, -0.12, 0.12, 0.24].entries()) pediment(k, { w: 0.1, h: 0.026, x: nx, y: 0.205 + 0.181, z: zc, d: 0.026, col: '#eee4cf' + (i % 2 ? '' : '') });
+		pediment(k, { w: 0.15, h: 0.04, x: 0, y: 0.19 + 0.016, z: zc - 0.004, d: 0.03, col: '#f2e9d6' });
+		// sahne (pulpitum) önü: alçak taş cephe, küçük nişler
+		wall(k, { w: 0.74, h: 0.035, t: 0.02, z: 0.03, holes: [-0.3, -0.18, -0.06, 0.06, 0.18, 0.3].map((x) => ({ x, y: 0.006, w: 0.03, h: 0.022, kind: 'round' })), col: '#cfb388', dark: true });
 		// arka (dış) cephe: üç sıra kemerli pencere
 		const back = [];
 		for (let r = 0; r < 3; r++) for (let i = 0; i < 9; i++) back.push({ x: -0.4 + i * 0.1, y: 0.06 + r * 0.12, w: 0.03, h: 0.06, kind: 'round' });

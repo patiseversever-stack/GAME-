@@ -103,6 +103,12 @@ void main() {
 		alb = uOwner * vC.g;
 		gloss = 0.35;
 		gOwn = 1.0;
+		if (vC.b > 0.5) {
+			// kayalık tepe sahibin renginde boyalı (ilin rengiyle aynı ülke): mat, kaya yüzü gibi hafif benekli ve katmanlı
+			gloss = 0.05;
+			alb *= 0.86 + 0.16 * hash12(floor(vW.xz * 6.0) + floor(vW.y * 9.0));
+			alb *= 0.9 + 0.1 * smoothstep(-0.2, 0.25, sin(vW.y * 18.0 + vW.x * 2.0));
+		}
 	} else if (vC.b > 0.0 && vC.r > 0.0) {
 		// taş dokusu: sıra sıra kesme taş
 		float row = floor(vL * 16.0);
@@ -115,6 +121,7 @@ void main() {
 	vec3 V = normalize(cameraPosition - vW);
 	gLit = uLit; // gece odağında ilin aydınlıksa kale de aydınlık
 	vec3 c = shade(alb, N, V, 1.0, sh, gloss, 0.6);
+	c = structInk(c, N, normalize(vN), vW);
 	float nk = nightK();
 	if (nk > 0.001) {
 		// gece: mazgal ve kapılar içeriden yanar; surların dibi meşale ışığında; sancak ay ışığında seçilir
@@ -209,7 +216,9 @@ function castleGeo(tier) {
 	const R = [1.78, 1.62, 1.46, 1.34];
 	const g = new THREE.LatheGeometry(
 		[
-			[R[0], -0.8],
+			[2.15, -1.6], // etek: yerleştirilince araziye serilir (Castle._drape): yamaçta dağ eteği gibi iner
+			[R[0] * 1.06, -0.95],
+			[R[0], -0.6],
 			[R[1], -0.3],
 			[R[2], 0.02],
 			[R[3], 0.14],
@@ -223,7 +232,9 @@ function castleGeo(tier) {
 		const j = 1 + 0.09 * Math.sin(a * 5 + 1.3) + 0.05 * Math.sin(a * 11);
 		if (p.getY(i) < 0.1) p.setXYZ(i, p.getX(i) * j, p.getY(i), p.getZ(i) * j);
 	}
-	kit.color('#8b7a66').add(g);
+	const r0 = kit.count;
+	kit.raw(-1, 0.86, 1).add(g); // sahibin rengi (kaya dokusu shader'da)
+	const r1 = kit.count;
 	kit.color('#6aa04a').cyl(1.2, 1.34, 0.04, 11, 0, 0.13);
 	// avlu
 	kit.color('#b9a585').cyl(0.75, 0.78, 0.03, 10, 0, BASE_Y);
@@ -288,7 +299,9 @@ function castleGeo(tier) {
 		kit.color(STONE2).ico(0.22, o[0], BASE_Y + 0.02, o[1], 0.55).ico(0.14, o[0] + 0.16, BASE_Y, o[1] - 0.1, 0.6);
 		kit.color(STONE).ico(0.12, o[0] - 0.15, BASE_Y, o[1] + 0.08, 0.7).box(0.14, 0.1, 0.1, o[0] + 0.05, BASE_Y + 0.08, o[1] + 0.12, 0.6);
 	}
-	return kit.build();
+	const geo = kit.build();
+	geo.userData.rock = [r0, r1];
+	return geo;
 }
 
 let SHARED = null;
@@ -305,13 +318,16 @@ export class Castle {
 		this.fall = new THREE.Vector3();
 		this.uniforms = { ...G, uOwner: { value: new THREE.Color(color) }, uFade: { value: 1 }, uFall: { value: this.fall }, uLit: { value: 0 } };
 		const mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms: this.uniforms, side: THREE.DoubleSide });
-		this.mesh = new THREE.Mesh(SHARED, mat);
+		// her kalenin kendi kopyası: kaya eteği yerleştiği araziye serilir (_drape); geri kalan aynı
+		this.geo = SHARED.clone();
+		this.geo.userData.rock = SHARED.userData.rock;
+		this.mesh = new THREE.Mesh(this.geo, mat);
 		this.mesh.frustumCulled = false;
 		this.group.add(this.mesh);
 		this.group.scale.setScalar(1.25);
 		// gölge kopyası: aynı geometri ve aynı çökme, yalnızca derinlik; görünürlük kaleyi izler
 		const dm = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: DEPTH_FS, uniforms: this.uniforms, side: THREE.DoubleSide });
-		const c = new THREE.Mesh(SHARED, dm);
+		const c = new THREE.Mesh(this.geo, dm);
 		c.matrixAutoUpdate = false;
 		c.frustumCulled = false;
 		const grp = this.group;
@@ -329,8 +345,60 @@ export class Castle {
 		this.group.position.copy(pos);
 		const b = Castle.board;
 		this._prov = b ? b.pick(pos.x, pos.z) : -1;
-		if (b) this.group.position.y = b.heightAt(pos.x, pos.z) + (this._prov >= 0 ? b.liftOf(this._prov) : 0);
+		// ölçek ilin genişliğine göre (board.castleScale): kale ilin içinde kalır, komşuya ya da denize taşmaz
+		this.group.scale.setScalar(b && b.castleScale && this._prov >= 0 ? b.castleScale(this._prov) : Castle.scale);
+		this._dy = b ? this._seat(b, pos.x, pos.z) : 0;
+		if (b) this.group.position.y = b.heightAt(pos.x, pos.z) + this._dy + (this._prov >= 0 ? b.liftOf(this._prov) : 0);
 		this._last.copy(this.group.position);
+		if (b) this._drape(b, pos.x, pos.z);
+	}
+
+	/**
+	 * Kaya eteğinin dış iki halkası yerleştiği arazinin yüksekliğine serilir: yokuş aşağı tarafta kaya yamaca doğal bir
+	 * etek gibi iner (havada kaide ya da dik kaya sütunu olmaz), yokuş yukarı tarafta toprağa gömülür. Yalnız
+	 * yerleştirmede (kare başına iş yok); ~2×11 köşe.
+	 */
+	_drape(b, x, z) {
+		const [a, e] = this.geo.userData.rock || [0, 0];
+		if (e <= a) return;
+		const src = SHARED.getAttribute('position').array;
+		const pa = this.geo.getAttribute('position');
+		const dst = pa.array;
+		const s = this.group.scale.x;
+		const y0 = b.heightAt(x, z) + (this._dy || 0); // yükselme hariç kale tabanı
+		for (let i = a; i < e; i++) {
+			const ly = src[i * 3 + 1];
+			if (ly > -0.9) continue;
+			const lx = src[i * 3];
+			const lz = src[i * 3 + 2];
+			const want = (b.heightAt(x + lx * s, z + lz * s) - y0) / s - 0.06;
+			// dış halka araziye; iç (-0.95) halka kayanın gövdesiyle etek arasında yarı yolda
+			dst[i * 3 + 1] = ly < -1.2 ? Math.min(want, -0.62) : Math.min(-0.62, (-0.6 + want) / 2);
+		}
+		pa.needsUpdate = true;
+	}
+
+	/**
+	 * Oturma payı: kale tepesinin düzlüğü (ölçekli yarıçap ~1,5) ayak izindeki en yüksek araziye göre kurulur
+	 * (yokuş yukarı toprak surların ve kulelerin dibini örtmez); kayalık tepenin eteği aşağı taraftaki boşluğu
+	 * doldurur (etek ~1 birim aşağı iner). Merkezin altına inilmez. Bir kez hesaplanır (kare başına iş yok).
+	 */
+	_seat(b, x, z) {
+		const s = this.group.scale.x;
+		const h0 = b.heightAt(x, z);
+		// iç avlu (r 0.6): toprak hiç örtmez; sur ve kule halkası (r 1.2–1.42): örneklerin %70'i açıkta kalır (yokuş
+		// yukarıda bir iki kule dibi yamaca hafifçe gömülebilir: kale tepeye yaslanmış gibi, doğal); dev kaide olmasın
+		// diye pay en çok 0.6 birim (ölçekli). Eteği _drape araziye serer.
+		let inner = h0;
+		const ring = [];
+		for (let i = 0; i < 12; i++) {
+			const a = (i / 12) * Math.PI * 2;
+			inner = Math.max(inner, b.heightAt(x + Math.cos(a) * 0.6 * s, z + Math.sin(a) * 0.6 * s) - 0.17 * s + 0.02);
+			for (const [r, top] of [[1.2, 0.17], [1.42, 0.1]]) ring.push(b.heightAt(x + Math.cos(a) * r * s, z + Math.sin(a) * r * s) - top * s + 0.02);
+		}
+		ring.sort((p, q) => p - q);
+		const y = Math.max(inner, ring[Math.floor(ring.length * 0.7)]);
+		return Math.max(0, Math.min(y - h0, 0.6 * s));
 	}
 
 	/**
@@ -388,7 +456,7 @@ export class Castle {
 		const b = Castle.board;
 		const gp = this.group.position;
 		if (b && this._prov >= 0 && gp.equals(this._last)) {
-			gp.y = b.heightAt(gp.x, gp.z) + b.liftOf(this._prov);
+			gp.y = b.heightAt(gp.x, gp.z) + (this._dy || 0) + b.liftOf(this._prov);
 			this._last.copy(gp);
 		}
 		this.uniforms.uLit.value = b && this._prov >= 0 ? b.sel[this._prov] : 0;
@@ -404,7 +472,8 @@ export class Castle {
 
 /**
  * Sur yürüyüş yolları (yerel, ölçeksiz): [x0, z0, x1, z1, y] üç sur boyunca (kuleden kuleye). Savaşta savunan
- * okçular saldırana bakan surun üstünde durur (battle.js, stage.js). Kale ölçeği Castle.scale.
+ * okçular saldırana bakan surun üstünde durur (battle.js, stage.js). Kale ölçeği Castle.scale (varsayılan; yerleşince
+ * ilin genişliğine göre group.scale).
  */
 Castle.walls = [0, 1, 2].map((k) => [...TOWERS[k], ...TOWERS[(k + 1) % 3], BASE_Y + 0.66]);
 Castle.scale = 1.25;

@@ -2,7 +2,7 @@
 // ekranı) birkaç örnek soruyla gösterir. Tasarım, grafik ve mantık incelemesi için.
 //
 // Üstte galeri şeridi (tip, örnek, sahne ve süre seçimi); altındaki alan telefondaki oyun ekranının aynısı. Her
-// örnek gerçek akışla oynar: düello sahnesinde önce saldırı filminin son hali (ordular cephede, gece odağı),
+// örnek gerçek akışla oynar: düello sahnesinde önce saldırı filmi (maçtaki hızında, dokununca atlanır),
 // sonra VS girişi ve soru kartı; cevaplayınca bot da cevaplar ve cevap ekranı açılır.
 //
 // YENİ · deneme tipleri (src/quiz/deneme.js): tip listesinin başında ayrı bir bölümde; maçta çıkmazlar, yalnız
@@ -325,10 +325,9 @@ export async function galeri() {
 		let target = -1;
 		if (duel) {
 			target = m.attackable(me)[0] ?? m.owned(foe.i)[0];
-			// gerçek akış: saldırı filminin son hali (ordular cephede), sonra soru
-			app.cinema.tempo = 0.01;
-			await app.cinema.attack(me, foe, target, false);
+			// gerçek akış: saldırı filmi maçtaki hızında (uzaktan vinç, yakınlaşma, çarpışma; dokununca atlanır), sonra soru
 			app.cinema.tempo = 1;
+			await app.cinema.attack(me, foe, target, false);
 			if (!live()) return;
 		} else {
 			app.board.night?.(false, null, { hold: 0 });

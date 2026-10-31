@@ -389,14 +389,14 @@ export class Cinema {
 	async castleDrop(p, i) {
 		const app = this.app;
 		const k = app.castles[p.i];
-		const top = app.board.topAt(i, _v);
+		const top = app.board.castleAt(i, _v);
 		app.board.fx(i, 0.25, 1);
 		// kale yukarıdan iner
 		if (!this.fast) {
 			const y0 = top.y + 8;
 			const tx = top.x;
 			const tz = top.z;
-			const ty = top.y;
+			const ty = top.y + (k._dy || 0); // oturma payı (castle.js _seat): yamaçta toprağa gömülmez
 			const fall = (t) => k.group.position.set(tx, y0 + (ty - y0) * t * t * t, tz); // hızlanarak düşer
 			if (this.fx) await new Promise((res) => this.fx.anim(0.52, fall, res));
 			else fall(1);
@@ -410,7 +410,7 @@ export class Cinema {
 			app.cam.impulse ? app.cam.impulse(0.5) : (app.cam.shake = 0.35);
 			app.sfx?.play?.('castle');
 		}
-		k.place(app.board.topAt(i, _v));
+		k.place(app.board.castleAt(i, _v));
 		await this.wait(250);
 		app.board.fx(i, 0, 0);
 	}

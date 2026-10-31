@@ -9,25 +9,23 @@
 //   * tamamlayıcı titreşim: kahraman ekran eşiğinin f payında, yalın kopya (1 − f) payında çizilir (aynı eşik
 //     dokusu, heroes.js uFade ve landmarks.js vLod): her piksel tam bir kez örtülür, saydamlık ve sıralama yok;
 //     f ~0,35 sn'de (kamera dururken ~0,7 sn) 0 → 1.
-//   * histerezis: giriş eşiği (ekran boyunun %3,2'si) çıkıştan (%2,5) büyük; sınırda gidip gelme yok. Erken giriş:
+//   * histerezis: giriş eşiği (ekran boyunun %6'sı) çıkıştan (%4,5) büyük; sınırda gidip gelme yok. Erken giriş:
 //     yapı ekranda küçükken kahramana geçer, yakınlaşınca görülen her şey zaten ayrıntılı model (geçiş göze batmaz).
 //   * kurulum boşta ~10 ms dilimlerle (heroes.js), kare donmaz; kamera bir yere yönelince (shot) varış kadrajında
 //     büyük görünecek yapı önceden kurulur (önbelleğe; gösterilmez).
 //   * gölge: kahraman yarıdan çok gelince gölgeyi o verir, yalın kopyanınki çekilir.
 //   * taban: kahraman kendi avlusunu çizmez (uLodMode), yalın kopyanın avlusu kalır: yapı aynı zemine oturur.
 //   * uzak = yalın birleşik maket (impostor yok: 42 yapı × açı × renk/normal dokusu telefon belleğini aşar).
-// Kademe: aynı anda en çok [2, 4, 6] kahraman (q0/q1/q2); kare süresi 3 sn boyunca 1/26 sn.yi aşarsa bir azalır,
+// Kademe: aynı anda en çok [1, 2, 3] kahraman (q0/q1/q2), giriş eşiği [%10, %6, %5]; kare süresi 3 sn boyunca 1/26 sn.yi aşarsa bir azalır,
 // uzun süre rahatsa geri artar (telefonun gerçek gücüne göre). Kuşbakışı kendi kahramanını açınca (uHide) bu
 // yuvalar çekilir. Kare başına iş: yalnız 1–3 yuvanın geçiş değeri; seçim 0,2 sn'de bir (nesne yok).
 
 import * as THREE from 'three';
 import { Heroes } from './heroes.js';
 
-const ENTER = 0.032; // yapı yarıçapı / ekran yüksekliği: kahraman gelir (erken: yapı ekranda küçükken, geçiş göze batmaz)
-const EXIT = 0.025; // bunun altına inince bırakılır
 const STEP = 0.2; // seçim aralığı (sn)
-const FADE_MOVE = 0.35; // geçiş süresi, kamera hareket ederken (sn)
-const FADE_STILL = 0.7; // kamera dururken (daha yavaş: göze batmasın)
+const FADE_MOVE = 0.2; // geçiş süresi, kamera hareket ederken (sn): kısa, titreşim deseni göze görünmez
+const FADE_STILL = 0.35; // kamera dururken
 
 const _p = new THREE.Vector3();
 const _last = new THREE.Vector3();
@@ -37,7 +35,8 @@ export class HeroLod {
 		this.lm = lm;
 		this.G = G;
 		this.tier = tier;
-		this.max = [2, 4, 6][tier.id] ?? 2;
+		this.max = [1, 2, 3][tier.id] ?? 1; // düşük kademe tek kahraman: harita + 1 yapı ≈ 170–190 bin üçgen (Mali-G52 bütçesi)
+		this.enter = [0.1, 0.06, 0.05][tier.id] ?? 0.1; // düşük kademede kahraman yalnız gerçekten yakında
 		this.limit = this.max;
 		this.enabled = true;
 		const shared = { cache: lm.heroes.cache, max: this.max + 2, used: (kind) => this._used(kind) };
@@ -155,7 +154,7 @@ export class HeroLod {
 				if (!lm.heroes.has(s.kind)) continue;
 				const held = this.slots.find((x) => x.site === s);
 				if (held && held.want) continue;
-				const need = held ? EXIT : ENTER;
+				const need = held ? this.enter * 0.75 : this.enter;
 				if (this.size[i] >= need && this.size[i] > bs) {
 					bs = this.size[i];
 					best = i;
@@ -188,7 +187,7 @@ export class HeroLod {
 				const s = sites[i];
 				if (!lm.heroes.has(s.kind) || this.warmer.cache.has(s.kind)) continue;
 				if (Math.hypot(s.x - g.x, s.z - g.z) > dist * 0.35) continue;
-				if ((s.r * e[5]) / dist / 2 < ENTER * 0.85) continue;
+				if ((s.r * e[5]) / dist / 2 < this.enter * 0.85) continue;
 				this.warmer.request(s, null, false, false);
 				break;
 			}

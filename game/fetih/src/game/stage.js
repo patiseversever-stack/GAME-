@@ -350,7 +350,7 @@ export function planStage(app, src, target, isCap) {
 	if (isCap && !machines.length && fa.machines.length) machines.push(fa.machines[0]); // kuşatmada en az bir makine
 	// kuşatma: savunan okçular saldırana bakan surun üstünde (kale önünde yer olmasa da savunma görünür)
 	if (isCap && KO) {
-		const sc = Castle.scale;
+		const sc = KO.group.scale.x; // kalenin gerçek ölçeği (ilin genişliğine göre)
 		let bw = null;
 		let bd = -2;
 		for (const w of Castle.walls) {

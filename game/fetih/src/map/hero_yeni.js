@@ -61,6 +61,40 @@ function hfield(k, { x0, x1, z0, z1, cell, h, col, mat = H.ROCK, keep = null, gr
 			pos[v * 3 + 2] = z;
 			if (!grid) hs[v] = y;
 		}
+	// haritaya karışma: dikdörtgen alanın kenarı haritanın arazisine iner (yükseklik ve renk), köşeler yuvarlanır;
+	// kare plaka, havada kenar ya da gömülü sınır görünmez. w: 1 içte, 0 kenarda (süperelips p=4, kenar bandı %16).
+	const wgt = new Float32Array(n);
+	const cx = (x0 + x1) / 2;
+	const cz = (z0 + z1) / 2;
+	const ax = (x1 - x0) / 2;
+	const az = (z1 - z0) / 2;
+	const se = (x, z) => Math.pow(Math.pow(Math.abs(x - cx) / ax, 4) + Math.pow(Math.abs(z - cz) / az, 4), 0.25);
+	const T = k.m.clone();
+	if (M) T.multiply(M);
+	const w0 = new THREE.Vector3();
+	const w1 = new THREE.Vector3();
+	// yalnız yere yatık alan karışır: döndürülmüş (dikey) alan — kaya duvarı, uçurum yüzü — olduğu gibi kalır
+	w0.set(cx, 0, cz).applyMatrix4(T);
+	w1.set(cx, 1, cz).applyMatrix4(T).sub(w0);
+	const flat = w1.y > 0.85 * w1.length();
+	for (let v = 0; v < n; v++) {
+		if (!flat) {
+			wgt[v] = 1;
+			continue;
+		}
+		const x = pos[v * 3];
+		const z = pos[v * 3 + 2];
+		const r = se(x, z);
+		const u = Math.min(1, Math.max(0, (1 - r) / 0.16));
+		const w = u * u * (3 - 2 * u);
+		wgt[v] = w;
+		if (w >= 1 || !k.hf) continue;
+		w0.set(x, 0, z).applyMatrix4(T);
+		w1.set(x, 1, z).applyMatrix4(T);
+		const dy = w1.y - w0.y || 1;
+		const tl = (k.hf(w0.x, w0.z) - w0.y) / dy - 0.008 / dy; // arazinin yerel yüksekliği (kenar hafif gömülü)
+		pos[v * 3 + 1] = tl + (pos[v * 3 + 1] - tl) * w;
+	}
 	const idx = [];
 	for (let j = 0; j < nz; j++)
 		for (let i = 0; i < nx; i++) {
@@ -68,6 +102,8 @@ function hfield(k, { x0, x1, z0, z1, cell, h, col, mat = H.ROCK, keep = null, gr
 			const b = a + 1;
 			const d = a + nx + 1;
 			const e = d + 1;
+			// köşe dışı (süperelipsin dışında kalan) hücre çizilmez
+			if (flat && se(pos[a * 3], pos[a * 3 + 2]) > 1.01 && se(pos[b * 3], pos[b * 3 + 2]) > 1.01 && se(pos[d * 3], pos[d * 3 + 2]) > 1.01 && se(pos[e * 3], pos[e * 3 + 2]) > 1.01) continue;
 			if (keep && !keep(a, b, d, e, pos)) continue;
 			idx.push(a, d, b, b, d, e);
 		}
@@ -77,11 +113,13 @@ function hfield(k, { x0, x1, z0, z1, cell, h, col, mat = H.ROCK, keep = null, gr
 	g.computeVertexNormals();
 	const nr = g.getAttribute('normal').array;
 	const cl = new Float32Array(n * 3);
+	const tone = k.tone;
 	for (let v = 0; v < n; v++) {
 		const r = col(pos[v * 3], pos[v * 3 + 1], pos[v * 3 + 2], nr[v * 3 + 1], v, nr[v * 3], nr[v * 3 + 2]);
-		cl[v * 3] = r.r;
-		cl[v * 3 + 1] = r.g;
-		cl[v * 3 + 2] = r.b;
+		const w = tone ? wgt[v] : 1;
+		cl[v * 3] = tone ? tone.r + (r.r - tone.r) * w : r.r;
+		cl[v * 3 + 1] = tone ? tone.g + (r.g - tone.g) * w : r.g;
+		cl[v * 3 + 2] = tone ? tone.b + (r.b - tone.b) * w : r.b;
 	}
 	g.setAttribute('color', new THREE.BufferAttribute(cl, 3));
 	k._mat = mat;

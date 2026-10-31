@@ -473,7 +473,7 @@ export class App {
 		for (const [o, pid] of castles) {
 			const k = this.castles[o];
 			k.group.visible = true;
-			k.place(b.topAt(b.byId.get(pid).index, new THREE.Vector3()));
+			k.place(b.castleAt(b.byId.get(pid).index, new THREE.Vector3()));
 		}
 		for (const pid of glow) b.fx(b.byId.get(pid).index, 0.35, 1);
 		if (region) {

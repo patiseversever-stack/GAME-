@@ -24,7 +24,8 @@ import { pointInPoly } from './board.js';
 import { Heroes } from './heroes.js';
 import { HeroLod } from './herolod.js';
 import { HEROES } from './hero_index.js';
-import { extraSites, EXTRA_SITES } from './landmarks2.js';
+import { extraSites } from './landmarks2.js';
+import { planSites, gridHeight } from './siteplan.js';
 
 // malzeme kimlikleri (köşe özniteliği mat.x)
 const M = { STONE: 0, WATER: 1, WIN: 2, GOLD: 3, LEAD: 4, FLAG: 5, FLAME: 6, LEAF: 7, GROUND: 8, TILE: 9, CLOTH: 10 };
@@ -36,11 +37,11 @@ uniform vec4 uCastle[4]; // kaleler: konum, w görünür (nightlights.js her kar
 uniform vec4 uHide; // kahraman maket (heroes.js) gösterilirken yalın kopyası gizlenir: xy merkez (x, z), w açık;
 // z: yakın çekimde komşu yapıların gömüldüğü yarıçap (İstanbul gibi sık yerlerde kahramanı örtmesinler; 0 kapalı)
 attribute vec4 site; // yapının merkezi x, taban y, merkez z, ölçek
-uniform vec4 uLod[6]; // ekran boyuna göre kahraman (herolod.js): x, z merkez, z: kahramanın görünürlüğü, w açık
+uniform vec4 uLod[4]; // ekran boyuna göre kahraman (herolod.js): x, z merkez, z: kahramanın görünürlüğü, w açık
 /** Bu yapının yerinde kahraman ne kadar göründü (0..1): yalın kopya o payda titreşimle çekilir. */
 float lodK() {
 	float f = 0.0;
-	for (int i = 0; i < 6; i++) {
+	for (int i = 0; i < 4; i++) {
 		vec4 l = uLod[i];
 		if (l.w > 0.5 && abs(site.x - l.x) + abs(site.z - l.y) < 0.01) f = max(f, l.z);
 	}
@@ -138,8 +139,8 @@ varying vec2 vM;
 varying float vLod;
 void main() {
 	// kahraman gelirken yalın kopya aynı ekran eşiğiyle çekilir (heroes.js uFade: tamamlayıcı titreşim)
-	// (avlu zemini kalır: kahraman ona oturur)
-	if (vLod > 0.001 && abs(vM.x - ${M.GROUND}.0) > 0.5 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < vLod) discard;
+	// (avlu dahil: kahraman kendi avlusunu çizer, yapının planına uyar)
+	if (vLod > 0.001 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) < vLod) discard;
 	vec3 N = normalize(vN);
 	vec3 V = normalize(cameraPosition - vW);
 	if (dot(N, V) < 0.0 && vM.x > 4.5 && vM.x < 5.5) N = -N; // bayrağın arka yüzü
@@ -163,6 +164,7 @@ void main() {
 	gPool = poolK(vW.xz);
 	gLit = max(vSel.x * uSelLit, gPool);
 	vec3 c = shade(alb, N, V, ao, sh, gloss, rimK);
+	if (!bare && id != ${M.LEAF}.0) c = structInk(c, N, normalize(vN), vW);
 	// altın: sıcak parıltı (kubbe alemi, yazı)
 	if (id == ${M.GOLD}.0) c += uSunCol * alb * 0.25;
 	float nk = nightK();
@@ -1303,41 +1305,8 @@ const B = {
 	},
 };
 
-// [yapı, boylam, enlem, ölçek, dönüş, il kimliği (plaka), merkezden en az uzaklık]
-const SITES = [
-	['ayasofya', 28.9, 41.02, 1.9, 0.1, 34, 0, 'shore'],
-	['galata', 28.97, 41.1, 1.8, 0, 34, 0, 'shore-w'],
-	['kizkulesi', 29.004, 41.021, 1.05, 0, 34, 0, 'sea'],
-	['kopru', 29.036, 41.052, 1.4, 0.15, 34, 0, 'sea'],
-	['anitkabir', 32.84, 39.93, 2.45, 0, 6],
-	['peri', 34.83, 38.64, 2.25, 0, 50],
-	['nemrut', 38.74, 37.98, 2.3, 0, 2],
-	['pamukkale', 29.12, 37.92, 2.25, 0, 20],
-	['sumela', 39.66, 40.69, 2.0, 0, 61],
-	['uzungol', 40.29, 40.62, 1.6, 0, 61],
-	['celsus', 27.34, 37.94, 2.2, 0, 35],
-	['saatkulesi', 27.13, 38.42, 1.54, 0, 35],
-	['mevlana', 32.5, 37.87, 2.2, 0, 42],
-	['selimiye', 26.56, 41.68, 2.1, 0, 22],
-	['ishakpasa', 44.13, 39.52, 2.05, 0, 4],
-	['safranbolu', 32.69, 41.25, 2.0, 0, 78],
-	['gobekli', 38.92, 37.22, 1.89, 0, 63],
-	['truva', 26.24, 39.96, 1.89, -0.3, 17],
-	['aspendos', 31.17, 36.94, 1.82, 0, 7],
-	['vankalesi', 43.34, 38.5, 1.82, 0.2, 65, 0, 'shore'],
-	['kizkalesi', 34.15, 36.43, 1.54, 0, 33, 0, 'sea'],
-	['bodrum', 27.43, 37.04, 1.61, 0, 48],
-	['ciftemin', 41.28, 39.9, 1.82, 0, 25],
-	// v0.9: 19 yeni yapı (landmarks2.js). Sona eklenir: eski 23 yapının yeri ve görünüşü aynı kalır.
-	...EXTRA_SITES,
-];
 Object.assign(B, extraSites({ M, grounds, minaret, windows, flag, tree, cypress, pine, rock, jitter, archShape, facadeShape, LEAD, LEAD2, GOLD, DARK, ROOF, WOOD, MARBLE, CREAM }));
 
-const lonlat = (board, lon, lat) => {
-	const m = board.data.meta;
-	const c = Math.cos((m.lat0 * Math.PI) / 180);
-	return [(lon - m.lon0) * c * m.K, -(lat - m.lat0) * m.K];
-};
 
 /** Arazinin aşağı yukarı rengi (doğrusal): avlunun dış halkası buna karışır (harita shader'ının paleti). */
 function groundTone(rel, x, z) {
@@ -1359,71 +1328,17 @@ export class Landmarks {
 		const kit = new LKit();
 		kit.seg = tier.id === 0 ? 0.7 : 1;
 		const rel = board.relief;
-		// harita ağıyla aynı ızgarada çift doğrusal yükseklik: serilen avlu ağın içine gömülmez, üstünde süzülmez
+		// harita ağıyla aynı ızgarada çift doğrusal yükseklik (teraslar dahil: siteplan.js): avlu ağa tam oturur
 		const st = tier.id === 0 ? 0.5 : tier.id === 1 ? 0.4 : 0.33;
-		kit.hf = (x, z) => {
-			const y = -z;
-			const gx = Math.floor(x / st);
-			const gy = Math.floor(y / st);
-			const fx = x / st - gx;
-			const fy = y / st - gy;
-			const h = (i, j) => rel.height((gx + i) * st, (gy + j) * st);
-			const a = h(0, 0) + (h(1, 0) - h(0, 0)) * fx;
-			const b = h(0, 1) + (h(1, 1) - h(0, 1)) * fx;
-			return a + (b - a) * fy;
-		};
-		const water = (x, z) => board.pick(x, z) < 0 || rel.bil(rel.La, x, -z) > 0.05;
+		kit.hf = gridHeight(rel, st);
 		let s = 7;
 		const R = () => ((s = (s * 16807) % 2147483647) / 2147483647);
 		this.sites = [];
 		const ranges = [];
-		for (const [kind, lon, lat, sc, ry, plate, , where] of SITES) {
+		// yerleşim harita kurulmadan önce yapıldı (board.sitePlan): her yapının altında düzleştirilmiş arazi terası var
+		for (const { kind, plate, x, z, sc, ry, where } of board.sitePlan || planSites(board, st)) {
 			const p = board.byId.get(plate);
 			if (!p) continue;
-			let [x, z] = lonlat(board, lon, lat);
-			if (where !== 'sea' && where !== 'lake') {
-				// yerleşim: gerçek yerin çevresinde (±3 birim) en iyi nokta aranır. Ceza: yapının gövdesi komşu ile
-				// taşarsa (il seçimde kalkınca havada kalır), avlu denize/göle ya da komşuya taşarsa, il merkezine
-				// (kale ve il adı) yaklaşırsa, başka yapının avlusuna binerse; gerçek yerden uzaklaştıkça hafif ceza.
-				const minD = Math.max(1.9, 2.2 + sc * 0.42); // kale yarıçapı (≈2,2) + yapı gövdesi
-				const rc = sc * 0.42;
-				const rp = sc * 0.7;
-				const inP = (tx, tz) => p.rings.some((r) => pointInPoly(tx, -tz, r));
-				const x0 = x;
-				const z0 = z;
-				let best = -1e9;
-				for (let gx = -3; gx <= 3.001; gx += 0.4)
-					for (let gz = -3; gz <= 3.001; gz += 0.4) {
-						const cx = x0 + gx;
-						const cz = z0 + gz;
-						if (!inP(cx, cz)) continue;
-						if (where === 'shore-w' && gx > 0.2) continue; // Galata boğazın Avrupa yakasında kalsın
-						let sco = -Math.hypot(gx, gz) * 0.6;
-						const cd = Math.hypot(cx - p.x, cz - p.z);
-						if (cd < minD) sco -= (minD - cd) * 6;
-						for (let i = 0; i < 8; i++) {
-							const a = (i / 8) * Math.PI * 2 + 0.2;
-							const ca = Math.cos(a);
-							const sa = Math.sin(a);
-							if (!inP(cx + ca * rc, cz + sa * rc) && !water(cx + ca * rc, cz + sa * rc)) sco -= 5;
-							const px = cx + ca * rp;
-							const pz = cz + sa * rp;
-							if (water(px, pz)) sco -= String(where).startsWith('shore') ? 0.2 : 2;
-							else if (!inP(px, pz)) sco -= 0.8;
-						}
-						for (const o of this.sites) {
-							if (o.sea) continue;
-							const lim = (o.r + sc * 0.72) * 0.92;
-							const d = Math.hypot(cx - o.x, cz - o.z);
-							if (d < lim) sco -= (lim - d) * 8;
-						}
-						if (sco > best) {
-							best = sco;
-							x = cx;
-							z = cz;
-						}
-					}
-			}
 			const y = where === 'sea' ? 0.0 : kit.hf(x, z);
 			kit.site = { x, y, z, s: sc, ry };
 			kit.tone = groundTone(rel, x, z);
@@ -1458,7 +1373,7 @@ export class Landmarks {
 		this.sites.castleU = this.castleU;
 		this.G = G;
 		this.uHide = { value: new THREE.Vector4(0, 0, 0, 0) };
-		this.uLod = [0, 1, 2, 3, 4, 5].map(() => new THREE.Vector4(0, 0, 0, 0));
+		this.uLod = [0, 1, 2, 3].map(() => new THREE.Vector4(0, 0, 0, 0));
 		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU }, uHide: this.uHide, uLod: { value: this.uLod } };
 		this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms, side: THREE.DoubleSide }));
 		this.mesh.frustumCulled = false;

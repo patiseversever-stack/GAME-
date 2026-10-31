@@ -101,7 +101,44 @@ export class Relief {
 		const dry = 1 - Math.min(1, la * 2);
 		// dağlıkta sivri sırtlar, her yerde hafif dalga
 		const d = ro * (ridge(x * 0.85 + 3.1, y * 0.85) * 0.2 + ridge(x * 2.3, y * 2.3 - 7) * 0.07) + (vnoise(x * 2.7, y * 2.7) - 0.5) * 0.03;
-		return BASE + e * VS + d * dry;
+		const h = BASE + e * VS + d * dry;
+		return this.pads ? this._pad(x, y, h) : h;
+	}
+
+	/**
+	 * Yapı terasları (siteplan.js padsOf): ayak izinde arazi düzleşir (iç yarıçapta tam, dışa doğru yumuşak geçiş).
+	 * Harita kurulmadan önce verilir; bütün yükseklik okuyucuları (ağ, avlu, birimler, etiket, kale) aynı zemini görür.
+	 */
+	setPads(pads) {
+		this.pads = pads && pads.length ? pads : null;
+		// kaba ızgara (hücre 3 birim): her yükseklik okuması yalnız kendi hücresindeki 0–2 terasa bakar
+		this._pg = new Map();
+		for (const p of pads || [])
+			for (let i = Math.floor((p.x - p.r1) / 3); i <= Math.floor((p.x + p.r1) / 3); i++)
+				for (let j = Math.floor((p.y - p.r1) / 3); j <= Math.floor((p.y + p.r1) / 3); j++) {
+					const k = i * 4096 + j;
+					if (!this._pg.has(k)) this._pg.set(k, []);
+					this._pg.get(k).push(p);
+				}
+	}
+
+	_pad(x, y, h) {
+		const list = this._pg.get(Math.floor(x / 3) * 4096 + Math.floor(y / 3));
+		if (!list) return h;
+		for (const p of list) {
+			const dx = x - p.x;
+			const dy = y - p.y;
+			if (dx > p.r1 || dx < -p.r1 || dy > p.r1 || dy < -p.r1) continue;
+			const d = Math.sqrt(dx * dx + dy * dy);
+			if (d >= p.r1) continue;
+			let t = 1;
+			if (d > p.r0) {
+				const u = (d - p.r0) / (p.r1 - p.r0);
+				t = 1 - u * u * (3 - 2 * u);
+			}
+			h += (p.h - h) * t;
+		}
+		return h;
 	}
 }
 

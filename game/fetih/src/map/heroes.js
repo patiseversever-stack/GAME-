@@ -335,7 +335,8 @@ uniform float uFade; // haritada ekran boyuna göre geliş (herolod.js): yalın 
 void main() {
 	// aynı ekran eşiği yalın kopyada ters yönde (landmarks.js): ikisi birlikte her pikseli tam bir kez örter
 	if (uFade < 0.999 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) >= uFade) discard;
-	if (uLodMode > 0.5 && vGnd > 0.5) discard;
+	// (v1.4) arazi yapının altında düz teras olduğundan kahraman kendi avlusunu da çizer: yapının planına uyan avlu
+	// (Anıtkabir'de yuvarlatılmış dikdörtgen); yalın kopyanın yuvarlak avlusu titreşimle çekilir, köşelerden taşmaz
 	vec3 N = normalize(vN);
 	vec3 V = normalize(cameraPosition - vW);
 	float id = floor(vI.x + 0.5);
@@ -407,9 +408,10 @@ void main() {
 		bare = true;
 	}
 	else if (id == ${H.WATER}.0) {
-		float t = uTime;
+		// durağan su (havuz, traverten, göl): desen zamanla kaymaz (yüzey "yeniden çiziliyor" gibi kıpırdamasın);
+		// canlılığı gök yansıması ve güneş parıltısı verir, bakış açısıyla doğal olarak değişir
 		vec2 q = vW.xz / uHS;
-		float w = nz(q * 1.4 + vec2(t * 0.05, t * 0.03)) + nz(q * 2.1 - vec2(t * 0.04, -t * 0.02));
+		float w = nz(q * 1.4) + nz(q * 2.1 + vec2(3.7, 1.3));
 		gH = w * 0.004;
 		gGloss = 0.95;
 		bare = true;
@@ -440,6 +442,9 @@ void main() {
 	gLit = 1.0; // kahraman sahnenin öznesi: gece odağında da ışık havuzunda
 	gPool = poolK(vW.xz);
 	vec3 c = shade(alb, N, V, ao, sh, gGloss, rimK);
+	// okunurluk çizgisi yalnız yapıda (doğal yüzeyde değil: kaya, toprak, çimen, döşeme, traverten çizgilenmesin)
+	bool natural = id == ${H.ROCK}.0 || id == ${H.GRASS}.0 || id == ${H.DIRT}.0 || id == ${H.GROUND}.0 || id == ${H.PAVE}.0 || id == ${H.TRAV}.0 || id == ${H.LEAF}.0;
+	if (!bare && !natural) c = structInk(c, N, normalize(vN), vW);
 	if (id == ${H.GOLD}.0) c += uSunCol * alb * 0.3;
 	if (id == ${H.WATER}.0) c = mix(c, skyReflect(reflect(-V, N)) * 0.8, 0.35);
 	if (id == ${H.FLAME}.0) c = vec3(1.0, 0.52, 0.16) * (2.2 + 0.8 * sin(uTime * 17.0 + vW.x * 30.0));

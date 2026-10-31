@@ -1179,7 +1179,7 @@ export class Match {
 			const k = app.castles[p.i];
 			k.repair();
 			k.group.visible = true;
-			k.place(b.topAt(i, new app.V3()));
+			k.place(b.castleAt(i, new app.V3()));
 			await this.cinema.castleDrop(p, i);
 			this.tick(EST.castle);
 		}

@@ -234,9 +234,10 @@ export function extraSites(L) {
 				const g = new THREE.CylinderGeometry(r, r, 0.03, 10, 1, false, Math.PI * 0.62, Math.PI * 0.76);
 				k.color(i % 2 ? '#d1c3a6' : '#c3b496').add(g.translate(0.05, 0.03 + i * 0.05, 0.12));
 			}
-			k.color(MARBLE).box(0.26, 0.03, 0.16, -0.06, 0.38, -0.18);
-			for (let i = 0; i < 6; i++) k.color(MARBLE).cyl(0.012, 0.014, 0.13, 6, -0.17 + i * 0.044, 0.41, -0.11);
-			k.color('#f2ece0').box(0.26, 0.02, 0.06, -0.06, 0.54, -0.11);
+			// tapınak tiyatronun arkasında (basamaklarla çakışmaz)
+			k.color(MARBLE).box(0.26, 0.03, 0.16, -0.06, 0.38, -0.3);
+			for (let i = 0; i < 6; i++) k.color(MARBLE).cyl(0.012, 0.014, 0.13, 6, -0.17 + i * 0.044, 0.41, -0.23);
+			k.color('#f2ece0').box(0.26, 0.02, 0.06, -0.06, 0.54, -0.23);
 		},
 		// ------------------------------------------------------------ Ankara Kalesi: tepede surlar ve evler
 		ankarakalesi(k, R) {

@@ -206,6 +206,24 @@ vec3 moonShade(vec3 albedo, vec3 N, vec3 V, float ao, float sh, float gloss, flo
 	c += N_RIM * pow(1.0 - ndv, 3.0) * (0.08 + rimK * 0.22) * ao * (0.4 + 0.6 * uNight.y) * (1.0 - 0.5 * ow);
 	return c * mix(uNightTone.rgb, vec3(1.0), ow);
 }
+/**
+ * Yapı okunurluğu (maliyetsiz: doku, ek geçiş, ek çizim yok; birkaç ALU): güçlü güneşte açık taş yapılar düz bir
+ * krem lekesine dönmesin. (1) Kırık çizgisi: geometrik normalin ekran türevi bitişik yüzlerin buluştuğu kenarda
+ * büyür → ince koyu çizgi (yakında belirgin, uzakta piksel başına çok yüz düştüğünde söner: küçük yapı kararmaz).
+ * (2) Güneşe sırtı dönük düşey yüz hafif serin ve koyu: hacim okunur. Genel ışık ve renkler değişmez.
+ */
+vec3 structInk(vec3 c, vec3 N, vec3 Ng, vec3 W) {
+	vec3 dn = fwidth(Ng);
+	float px = length(fwidth(W));
+	float e = clamp((dn.x + dn.y + dn.z) * 1.3 - 0.12, 0.0, 1.0) * (1.0 - smoothstep(0.012, 0.045, px));
+	c *= 1.0 - 0.3 * e;
+	float vert = 1.0 - abs(N.y);
+	vec2 h = N.xz;
+	float hl = length(h);
+	float away = hl > 1e-3 ? clamp(-dot(h / hl, normalize(uSunDir.xz + 1e-5)), 0.0, 1.0) : 0.0;
+	c *= mix(vec3(1.0), vec3(0.82, 0.86, 0.95), vert * (0.3 + 0.7 * away) * 0.85);
+	return c;
+}
 vec3 skyAmbient(vec3 N) {
 	float up = N.y * 0.5 + 0.5;
 	vec3 a = mix(uGround, uSkyHor, smoothstep(0.0, 0.55, up));

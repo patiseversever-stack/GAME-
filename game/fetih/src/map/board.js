@@ -29,6 +29,7 @@ import { Labels } from './labels.js';
 import { Castle } from './castle.js';
 import { Clouds, CloudFrame } from '../gfx/clouds.js';
 import { Cues } from './cues.js';
+import { planSites, padsOf } from './siteplan.js';
 
 export const REGIONS = {
 	marmara: { name: 'Marmara', color: 0x8fd16a },
@@ -789,6 +790,10 @@ export class Board {
 		// --- il yüzeyleri ve duvarları
 		const step = tier.id === 0 ? 0.5 : tier.id === 1 ? 0.4 : 0.33;
 		this.gridStep = step; // groundAt: birimler çizilen yüzeye oturur
+		// yapı yerleşimi ve arazi terasları (siteplan.js): ağ kurulmadan önce; yapılar düz zemine oturur
+		this.sitePlan = planSites(this, step);
+		this.relief.setPads(padsOf(this.sitePlan, this.relief, step));
+		for (const p of this.provinces) p.y = this.relief.height(p.x, -p.z);
 		this._gk = new Int32Array(64).fill(-1 >>> 1); // ızgara köşe yükseklikleri için küçük önbellek (kare başına nesne yok)
 		this._gv = new Float64Array(64 * 4);
 		const built = buildBoardGeometry(this.provinces, this.relief, step);
@@ -1251,6 +1256,61 @@ export class Board {
 	topAt(index, out) {
 		const p = this.provinces[index];
 		return out.set(p.x, p.y + this.liftOf(index), p.z);
+	}
+
+	/**
+	 * Başkent kalesinin yeri (yükselme dahil) ve ölçeği: il merkezinin çevresinde (±2,1 birim) kale ilin İÇİNDE kalacak
+	 * en büyük boyda ve en düz yerde kurulur. Kalenin ölçeği ilin o noktadaki iç genişliğine göre (sınıra/kıyıya
+	 * uzaklık / 2,05; 0,72–1,25): küçük illerde (Kilis, Yalova, Bartın…) kale küçülür, komşu ile ya da denize taşmaz.
+	 * Yapıların avlusundan uzak durur; merkezden uzaklaştıkça hafif ceza. İl başına bir kez hesaplanır.
+	 */
+	_castleSpot(index) {
+		this._castle = this._castle || [];
+		let c = this._castle[index];
+		if (c) return c;
+		const p = this.provinces[index];
+		const h = (x, z) => this.relief.height(x, -z);
+		const span = (x, z, s) => {
+			let lo = Infinity;
+			let hi = -Infinity;
+			for (const r of [0.6, 1.2, 1.56])
+				for (let k = 0; k < 10; k++) {
+					const a = (k / 10) * Math.PI * 2;
+					const y = h(x + Math.cos(a) * r * s, z + Math.sin(a) * r * s);
+					if (y < lo) lo = y;
+					if (y > hi) hi = y;
+				}
+			return hi - lo;
+		};
+		let best = null;
+		for (let gx = -2.1; gx <= 2.101; gx += 0.35)
+			for (let gz = -2.1; gz <= 2.101; gz += 0.35) {
+				const x = p.x + gx;
+				const z = p.z + gz;
+				if (this.pick(x, z) !== index) continue;
+				const room = this.borderDist(x, z, 2.7);
+				const s = Math.max(0.72, Math.min(1.25, room / 2.05));
+				let sc = span(x, z, s) + Math.hypot(gx, gz) * 0.1 - s * 1.6 + (room < 2.05 * 0.72 ? (2.05 * 0.72 - room) * 4 : 0);
+				for (const st of this.sitePlan || []) {
+					if (st.wet) continue;
+					const lim = 1.85 * s + st.r;
+					const d = Math.hypot(st.x - x, st.z - z);
+					if (d < lim) sc += (lim - d) * 2;
+				}
+				if (!best || sc < best.sc) best = { x, z, s, sc };
+			}
+		c = this._castle[index] = best || { x: p.x, z: p.z, s: 0.9 };
+		return c;
+	}
+
+	castleAt(index, out) {
+		const c = this._castleSpot(index);
+		return out.set(c.x, this.relief.height(c.x, -c.z) + this.liftOf(index), c.z);
+	}
+
+	/** Bu ilin başkent kalesinin ölçeği (castleAt ile aynı hesap). */
+	castleScale(index) {
+		return this._castleSpot(index).s;
 	}
 
 	/** İl adının dünya noktası (rest: yükselme hariç). */

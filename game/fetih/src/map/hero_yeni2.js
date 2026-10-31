@@ -370,18 +370,24 @@ export const YENI2 = {
 		});
 		yield;
 		// dünyanın en dik antik tiyatrosu: yamaca oyulmuş dar ve yüksek oturma basamakları
-		cavea(k, { r0: 0.1, r1: 0.42, n: 18, a0: Math.PI * 0.7, a1: Math.PI * 1.3, dh: 0.0225, x: 0.06, z: 0.24, col: '#d4c6a8', col2: '#c4b597', aisles: 4 });
+		// (oturma basamakları tepedeki tapınağa değmez: üst sıra z ≈ -0.14, tapınak terası z ≤ -0.21)
+		cavea(k, { r0: 0.1, r1: 0.38, n: 16, a0: Math.PI * 0.7, a1: Math.PI * 1.3, dh: 0.0235, x: 0.06, z: 0.24, col: '#d4c6a8', col2: '#c4b597', aisles: 4 });
 		k.mc(H.PAVE, '#cbbd9f').flat().box(0.7, 0.01, 0.07, 0.06, 0.0, 0.3).soft();
 		yield;
-		// tepede Trajan tapınağı: kemerli dolgu teras, beyaz mermer korint sütunlar, saçak ve alınlık parçası
-		const ty = hill(-0.12, -0.24) + 0.005;
-		wall(k, { w: 0.42, h: 0.08, t: 0.05, x: -0.12, y: ty - 0.08, z: -0.06, holes: [0, 1, 2, 3].map((i) => ({ x: -0.15 + i * 0.1, y: 0, w: 0.06, h: 0.065, kind: 'round' })), col: '#c8b894', dark: true });
+		// tepede Trajan tapınağı (tiyatronun arkasında ve üstünde): kemerli dolgu teras, beyaz mermer korint sütunlar,
+		// saçak ve alınlık parçası. Terasın en yüksek arazisine oturur (yamaç terası örtmez)
+		k.push().move(0.02, 0, -0.16);
+		let ty = 0;
+		for (const [ax, az] of [[-0.34, -0.2], [0.1, -0.2], [-0.34, -0.5], [0.1, -0.5], [-0.12, -0.36], [-0.12, -0.2], [-0.12, -0.5]]) ty = Math.max(ty, hill(ax + 0.02, az - 0.16));
+		ty += 0.005;
+		wall(k, { w: 0.42, h: 0.12, t: 0.05, x: -0.12, y: ty - 0.12, z: -0.06, holes: [0, 1, 2, 3].map((i) => ({ x: -0.15 + i * 0.1, y: 0, w: 0.06, h: 0.065, kind: 'round' })), col: '#c8b894', dark: true });
 		k.mc(H.MARBLE, '#e9e2d2').flat().box(0.44, 0.03, 0.3, -0.12, ty, -0.2).soft();
 		k.mc(H.MARBLE, '#efe9dc').flat().box(0.24, 0.025, 0.16, -0.12, ty + 0.03, -0.2).soft();
 		for (let i = 0; i < 6; i++) for (const z of [-0.13, -0.27]) column(k, -0.24 + i * 0.048, ty + 0.055, z, { h: 0.17, r: 0.0085, order: 'corinthian', col: COL.MARBLE });
 		for (const x of [-0.24, 0.0]) column(k, x, ty + 0.055, -0.2, { h: 0.17, r: 0.0085, order: 'corinthian', col: COL.MARBLE });
 		entablature(k, { x0: -0.26, x1: 0.0, y: ty + 0.225, z: -0.13, d: 0.03, h: 0.03, col: COL.MARBLE });
 		pediment(k, { w: 0.06, h: 0.03, x: -0.24, y: ty + 0.255, z: -0.2, d: 0.03, col: COL.MARBLE, ry: Math.PI / 2 });
+		k.pop();
 		// yamaçta sur kalıntıları ve Athena terası duvarı
 		curtain(k, -0.5, -0.05, -0.3, 0.1, { h: 0.05, y: hill(-0.4, 0.02) - 0.02, t: 0.03, col: '#a99a80', slits: false });
 		curtain(k, 0.32, -0.2, 0.5, -0.02, { h: 0.05, y: hill(0.4, -0.1) - 0.02, t: 0.03, col: '#a99a80', slits: false });
