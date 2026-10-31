@@ -5668,6 +5668,12 @@ ${t1}{
 .fl-hud .fl-pl.turn::before{box-shadow:inset 0 -1.1cqw 0 #ffd25a,inset 0 -2.6cqw 2.4cqw -1cqw rgba(255,210,90,.55),inset 0 1.5px 0 rgba(255,255,255,.4)}
 .fl-hud .fl-pl.turn::after{display:none}
 .fl-hud .fl-pl.dead{opacity:.55;filter:grayscale(.6)}
+/* 1'e 1: sa\u011Fdaki oyuncu aynal\u0131, resmi sa\u011F k\xF6\u015Fede */
+.fl-hud[data-n="2"] .fl-pl:last-of-type{--pl:7cqw;--pr:2.4cqw;grid-template-columns:minmax(0,1fr) auto auto;grid-template-areas:"nm nm av" "cs sc av";justify-items:end;text-align:right;
+  background:radial-gradient(70% 130% at 88% 20%,rgba(255,255,255,.16),rgba(255,255,255,0) 60%),linear-gradient(195deg,var(--pc),color-mix(in srgb,var(--pc) 58%,#000))}
+.fl-hud[data-n="2"] .fl-pl:last-of-type .cs{justify-self:end}
+.fl-hud[data-n="2"] .fl-pl:first-child{--pr:7cqw}
+.fl-hud[data-n="2"] .fl-pl:last-of-type .sd{left:auto;right:calc(var(--pr) - 1.4cqw)}
 /* 3'l\xFC ve 4'l\xFC: dikey (resim \xFCstte ortada, alt\u0131nda isim, alt\u0131nda puan + bur\xE7lar) */
 .fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl{--pl:3.6cqw;--pr:2.6cqw;grid-template-columns:auto auto;grid-template-areas:"av av" "nm nm" "sc cs";justify-items:center;justify-content:center;row-gap:.5cqw;column-gap:1cqw;height:19cqw}
 .fl-hud[data-n="3"] .fl-pl{--av:8cqw;--nf:4.4cqw;--sf:3.6cqw}
