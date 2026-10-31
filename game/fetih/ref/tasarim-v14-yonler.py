@@ -142,57 +142,64 @@ def B():
 <div class="hd"><span class="cat">BİLİM <em>· ÇOKTAN SEÇMELİ</em></span><span class="hg">{hg}13</span></div>
 <div class="orn"><i></i><s></s><i></i></div><h2>{Q}</h2><div class="tl"><i></i></div><div class="ops">{ops}</div><div class="jk">{jk}</div><div class="jn">{jn}</div></div></div>'''
 
-# ------------------------------------------------------------------ C · ARENA (v2: net)
+# ------------------------------------------------------------------ C · ARENA (v3: esnek yerleşim)
 C_CSS = """
-.c .scrim{position:absolute;inset:0;background:linear-gradient(180deg,rgba(5,6,16,.15) 0,rgba(5,6,16,0) 26%,rgba(6,7,15,.92) 42%,#07080f 50%)}
 .c .ban{position:absolute;left:0;right:0;top:0;height:124px;filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))}
-.c .sd{position:absolute;top:0;height:106px;width:54%;display:flex;align-items:center;gap:12px;padding:20px 18px 0}
-.c .sd.l{left:0;padding-right:70px;background:linear-gradient(100deg,#ff4433,#b0170c);clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
-.c .sd.r{right:0;padding-left:70px;justify-content:flex-end;flex-direction:row-reverse;background:linear-gradient(260deg,#3b86ff,#1440b0);clip-path:polygon(18% 0,100% 0,100% 100%,0 100%);text-align:right}
-.c .sd img{width:60px;height:60px;border-radius:12px;border:3px solid #fff;transform:skewX(-6deg);box-shadow:0 4px 0 rgba(0,0,0,.35)}
-.c .sd small{display:block;font:italic 800 11.5px 'Barlow Condensed';letter-spacing:.22em;color:rgba(255,255,255,.9)}
-.c .sd b{display:block;font:italic 800 32px/0.95 'Barlow Condensed';letter-spacing:.01em;text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.3)}
-.c .sd em{display:block;font:italic 800 17px 'Barlow Condensed';color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
-.c .vs{position:absolute;left:50%;top:32px;z-index:2;transform:translateX(-50%) skewX(-8deg);padding:4px 12px;background:#0a0b14;border:2.5px solid #fff;font:italic 800 32px 'Barlow Condensed';letter-spacing:.04em;color:#ffd25a;box-shadow:0 6px 20px rgba(0,0,0,.6)}
-.c .tg{position:absolute;left:50%;top:110px;transform:translateX(-50%);padding:4px 14px;background:#ffd25a;color:#1a1200;font:800 12px 'Barlow Condensed';letter-spacing:.26em;clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
-.c .ok{position:absolute;right:14px;top:112px;display:flex;align-items:center;gap:5px;padding:3px 9px;background:#16c060;color:#04210f;font:italic 800 12px 'Barlow Condensed';letter-spacing:.14em;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%)}
-.c .box{position:absolute;left:12px;right:12px;top:398px;bottom:86px}
+.c .sd{position:absolute;top:0;height:100px;width:54%;display:flex;align-items:center;gap:11px;padding:16px 16px 0}
+.c .sd.l{left:0;padding-right:66px;background:linear-gradient(100deg,#ff4433,#b0170c);clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
+.c .sd.r{right:0;padding-left:66px;justify-content:flex-end;flex-direction:row-reverse;background:linear-gradient(260deg,#3b86ff,#1440b0);clip-path:polygon(18% 0,100% 0,100% 100%,0 100%);text-align:right}
+.c .sd img{width:56px;height:56px;border-radius:12px;border:3px solid #fff;transform:skewX(-6deg);box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.c .sd small{display:block;font:italic 800 11px 'Barlow Condensed';letter-spacing:.22em;color:rgba(255,255,255,.9)}
+.c .sd b{display:block;font:italic 800 30px/0.95 'Barlow Condensed';text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.c .sd em{display:block;font:italic 800 16px 'Barlow Condensed';color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.c .vs{position:absolute;left:50%;top:28px;z-index:2;transform:translateX(-50%) skewX(-8deg);padding:3px 11px;background:#0a0b14;border:2.5px solid #fff;font:italic 800 30px 'Barlow Condensed';letter-spacing:.04em;color:#ffd25a;box-shadow:0 6px 20px rgba(0,0,0,.6)}
+.c .tg{position:absolute;left:50%;top:104px;transform:translateX(-50%);padding:3px 13px;background:#ffd25a;color:#1a1200;font:800 11.5px 'Barlow Condensed';letter-spacing:.26em;clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
+.c .ok{position:absolute;right:14px;top:106px;padding:3px 9px;background:#16c060;color:#04210f;font:italic 800 11.5px 'Barlow Condensed';letter-spacing:.14em;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%)}
+/* panel: içeriği kadar yüksek, alttan büyür; üstünde yumuşak gölge geçişi (harita kesilmez) */
+.c .box{position:absolute;left:0;right:0;bottom:0;padding:62px 12px 14px;background:linear-gradient(180deg,rgba(7,8,15,0),rgba(7,8,15,.9) 46px,#07080f 70px)}
 .c .hd{display:flex;align-items:center;gap:10px}
-.c .cat{padding:5px 12px;background:#22c46a;color:#03210f;font:italic 800 14px 'Barlow Condensed';letter-spacing:.18em;clip-path:polygon(0 0,100% 0,92% 100%,0 100%)}
-.c .ty{font:italic 800 14px 'Barlow Condensed';letter-spacing:.2em;color:rgba(255,255,255,.75)}
-.c .tm{margin-left:auto;font:italic 800 46px/0.85 'Barlow Condensed';color:#fff;text-shadow:0 0 18px rgba(255,210,90,.45)}
-.c .tm small{font-size:17px;color:#ffd25a}
-.c .seg{display:flex;gap:3px;margin:11px 0 14px}
-.c .seg i{flex:1;height:7px;background:#ffd25a;transform:skewX(-20deg);box-shadow:0 0 8px rgba(255,210,90,.6)}.c .seg i.off{background:rgba(255,255,255,.16);box-shadow:none}
-.c h2{font:700 26px/1.2 Fredoka;text-wrap:balance;padding:4px 4px 4px 14px;margin-bottom:12px;border-left:5px solid #22c46a;color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
-.c .ops{display:grid;grid-template-columns:1fr;gap:8px}
-.c .op{position:relative;height:52px;display:flex;align-items:center;background:linear-gradient(180deg,#232a44,#161b30);border:1.5px solid rgba(255,255,255,.28);
-  clip-path:polygon(0 0,100% 0,97.5% 100%,0 100%);font:700 21px Fredoka;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.12)}
-.c .op i{width:54px;height:100%;display:grid;place-items:center;margin-right:16px;font:italic 800 26px 'Barlow Condensed';font-style:italic;color:#fff;background:var(--lc);clip-path:polygon(0 0,100% 0,82% 100%,0 100%);text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.c .cat{padding:4px 11px;background:var(--cc);color:#03210f;font:italic 800 13px 'Barlow Condensed';letter-spacing:.18em;clip-path:polygon(0 0,100% 0,92% 100%,0 100%)}
+.c .ty{font:italic 800 13px 'Barlow Condensed';letter-spacing:.2em;color:rgba(255,255,255,.75)}
+.c .tm{margin-left:auto;font:italic 800 40px/0.85 'Barlow Condensed';color:#fff;text-shadow:0 0 18px rgba(255,210,90,.45)}
+.c .tm small{font-size:15px;color:#ffd25a}
+.c .seg{display:flex;gap:3px;margin:8px 0 10px}
+.c .seg i{flex:1;height:6px;background:#ffd25a;transform:skewX(-20deg);box-shadow:0 0 8px rgba(255,210,90,.6)}.c .seg i.off{background:rgba(255,255,255,.16);box-shadow:none}
+.c h2{font-family:Fredoka;font-weight:700;line-height:1.2;text-wrap:balance;padding:2px 4px 2px 12px;margin-bottom:10px;border-left:5px solid var(--cc);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+.c .ops{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.c .ops.list{grid-template-columns:1fr;gap:6px}
+.c .op{position:relative;min-height:50px;display:flex;align-items:center;background:linear-gradient(180deg,#232a44,#161b30);border:1.5px solid rgba(255,255,255,.28);
+  clip-path:polygon(0 0,100% 0,96% 100%,0 100%);font-family:Fredoka;font-weight:700;line-height:1.15;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);padding-right:18px}
+.c .ops.list .op{min-height:44px;clip-path:polygon(0 0,100% 0,98.4% 100%,0 100%)}
+.c .op i{flex:none;align-self:stretch;width:40px;display:grid;place-items:center;margin-right:11px;font:italic 800 22px 'Barlow Condensed';font-style:italic;color:#fff;background:var(--lc);clip-path:polygon(0 0,100% 0,80% 100%,0 100%);text-shadow:0 2px 0 rgba(0,0,0,.25)}
 .c .op:nth-child(1) i{--lc:#2f7bff}.c .op:nth-child(2) i{--lc:#ff8a1f}.c .op:nth-child(3) i{--lc:#22c46a}.c .op:nth-child(4) i{--lc:#a24bff}
-.c .op.pk{background:linear-gradient(90deg,#ffd84d,#ffb21a);color:#1a1200;border-color:#fff3b0;box-shadow:0 0 24px rgba(255,200,40,.5)}
+.c .op.pk{background:linear-gradient(90deg,#ffd84d,#ffb21a);color:#1a1200;border-color:#fff3b0}
 .c .op.pk i{background:#1a1200;color:#ffd25a}
-.c .op.pk::after{content:'';position:absolute;right:22px;top:50%;width:30px;height:30px;margin-top:-15px;border-radius:8px;border:2px solid #1a1200;background:url(SEN) center/cover}
-.c .jk{position:absolute;left:12px;right:12px;bottom:16px;display:flex;gap:6px}
-.c .j{position:relative;flex:1;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;background:linear-gradient(180deg,var(--jc),var(--jd));border:1.5px solid rgba(255,255,255,.5);transform:skewX(-8deg);
-  font:italic 800 10.5px 'Barlow Condensed';letter-spacing:.12em;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);box-shadow:0 4px 0 rgba(0,0,0,.4)}
-.c .j svg{width:22px;height:22px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:skewX(8deg)}
-.c .j sup{position:absolute;right:-5px;top:-7px;min-width:19px;height:19px;padding:0 4px;transform:skewX(8deg);background:#fff;color:#111;border-radius:4px;font:italic 800 13px/19px 'Barlow Condensed';text-align:center;box-shadow:0 2px 0 rgba(0,0,0,.35)}
-""".replace('SEN', SEN)
+.c .jk{display:flex;gap:6px;margin-top:12px}
+.c .j{position:relative;flex:1;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:linear-gradient(180deg,var(--jc),var(--jd));border:1.5px solid rgba(255,255,255,.5);transform:skewX(-8deg);
+  font:italic 800 9.5px 'Barlow Condensed';letter-spacing:.12em;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);box-shadow:0 3px 0 rgba(0,0,0,.4)}
+.c .j svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:skewX(8deg)}
+.c .j sup{position:absolute;right:-5px;top:-7px;min-width:17px;height:17px;padding:0 4px;transform:skewX(8deg);background:#fff;color:#111;border-radius:4px;font:italic 800 12px/17px 'Barlow Condensed';text-align:center;box-shadow:0 2px 0 rgba(0,0,0,.35)}
+.c .ruler{position:absolute;left:0;right:0;top:50%;border-top:1px dashed rgba(255,255,255,.35)}
+.c .ruler span{position:absolute;right:6px;top:-16px;font:700 10px Manrope;color:rgba(255,255,255,.6)}
+"""
 JC = {'yari': ('#3d8bff', '#1a4fc2'), 'seyirci': ('#ff5fa2', '#c42a6a'), 'sure': ('#2fd07a', '#138a45'), 'sans': ('#b25bff', '#6f22c2'), 'sabotaj': ('#ff6a3a', '#c2301a'), 'kalkan': ('#ffb21a', '#c27a06')}
-def C():
-    ops = ''.join(f'<div class="op{" pk" if k==0 else ""}"><i>{"ABCD"[k]}</i>{o}</div>' for k, o in enumerate(OPTS))
+def C(q=Q, opts=OPTS, cat='BİLİM', cc='#22c46a', ruler=False):
+    grid = max(len(o) for o in opts) <= 16                  # kısa şıklar 2×2, uzunlar ince tek sütun
+    qf = 24 if len(q) <= 50 else 21 if len(q) <= 80 else 19  # soru uzadıkça yazı küçülür
+    of = (18 if grid else (16 if max(len(o) for o in opts) > 34 else 17))
+    ops = ''.join(f'<div class="op"><i>{"ABCD"[k]}</i>{o}</div>' for k, o in enumerate(opts))
     jk = ''.join(f'<div class="j" style="--jc:{JC[k][0]};--jd:{JC[k][1]}">{ICO[k]}{n.upper()}<sup>{c}</sup></div>' for k, n, c in JK)
     seg = ''.join(f'<i class="{"off" if k >= 13 else ""}"></i>' for k in range(20))
-    return f'''<div class="ph c"><div class="scrim"></div>
+    rl = '<div class="ruler"><span>ekranın yarısı</span></div>' if ruler else ''
+    return f'''<div class="ph c" style="--cc:{cc}">{rl}
 <div class="ban"><div class="sd l"><img src="{SEN}"><div><small>SALDIRAN</small><b>Sen</b><em>2.200</em></div></div>
 <div class="sd r"><img src="{DEF}"><div><small>SAVUNAN</small><b>Defne</b><em>2.400</em></div></div><div class="vs">VS</div><div class="tg">ANKARA</div><div class="ok">✓ CEVAPLADI</div></div>
-<div class="box"><div class="hd"><span class="cat">BİLİM</span><span class="ty">ÇOKTAN SEÇMELİ</span><span class="tm">13<small> SN</small></span></div>
-<div class="seg">{seg}</div><h2>{Q}</h2><div class="ops">{ops}</div></div><div class="jk">{jk}</div></div>'''
+<div class="box"><div class="hd"><span class="cat">{cat}</span><span class="ty">ÇOKTAN SEÇMELİ</span><span class="tm">13<small> SN</small></span></div>
+<div class="seg">{seg}</div><h2 style="font-size:{qf}px">{q}</h2><div class="ops{"" if grid else " list"}" style="font-size:{of}px">{ops}</div><div class="jk">{jk}</div></div></div>'''
 
-html = f'''<!DOCTYPE html><html><head><meta charset="utf-8">{FONTS}<style>{BASE}{A_CSS}{B_CSS}{C_CSS}</style></head><body>
-<div class="col"><div class="cap">A<b>Sinema</b></div>{A()}</div>
-<div class="col"><div class="cap">B<b>Saray</b></div>{B()}</div>
-<div class="col"><div class="cap">C<b>Arena</b></div>{C()}</div>
+html = f'''<!DOCTYPE html><html><head><meta charset="utf-8">{FONTS}<style>{BASE}{C_CSS}</style></head><body>
+<div class="col"><div class="cap">KISA SORU<b>2×2 şık</b></div>{C(ruler=True)}</div>
+<div class="col"><div class="cap">EN UZUN SORU (109 harf)<b>yazı küçülür</b></div>{C("Paris 2024’te elini cebine koyduğu rahat duruşuyla dünyaca ünlenen Yusuf Dikeç hangi branşta madalya kazandı?", ["Atıcılık","Okçuluk","Eskrim","Golf"], "SPOR", "#ff8a1f", True)}</div>
+<div class="col"><div class="cap">EN UZUN ŞIKLAR (49 harf)<b>ince tek sütun</b></div>{C("Karadeniz kıyısında bol yağış görülmesinin nedeni nedir?", ["Nemli rüzgârların kıyıya paralel dağlara çarpması","Karadeniz’in Akdeniz’den daha sıcak olması","Kıyı boyunca geniş ovaların uzanması","Güneş ışınlarının yıl boyu dik gelmesi"], "COĞRAFYA", "#2fb8ff", True)}</div>
 </body></html>'''
 open(D + 'mock.html', 'w', encoding='utf-8').write(html)
