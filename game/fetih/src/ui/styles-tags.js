@@ -45,6 +45,15 @@ export const CSS_TAGS = /* css */ `
 .fl-tag .ow.lt em{background:rgba(0,0,0,.2);color:#1a1200}
 .fl-tag.cmp .ow b,.fl-tag.cmp .ow em{display:none}
 .fl-tag.cmp .ow{padding:5px 4px 2px 4px}
+/* sahipli etiket: plaka + sahip satırı tek kart (v1.3): üst ve alt aynı genişlikte, sahip rengi solda ince şerit */
+.fl-tag.hasow .pl{height:23px;border-radius:11px 11px 0 0;border-width:2px;border-bottom:0;box-shadow:none;padding-right:11px}
+.fl-tag.hasow .ow{margin:0;padding:3px 9px 4px 4px;border-radius:0 0 11px 11px;border:2px solid #fff;border-top:1px solid rgba(255,255,255,.18);
+  background:linear-gradient(90deg,var(--oc) 0 4px,#0b1431 4px);box-shadow:0 3px 0 rgba(0,0,0,.45),0 6px 12px rgba(0,0,0,.3);color:#fff;font-size:10.5px}
+.fl-tag.hasow .ow.lt{color:#fff}
+.fl-tag.hasow .ow.lt b{text-shadow:0 1px 0 rgba(0,0,0,.45)}
+.fl-tag.hasow .ow em{background:var(--oc);color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35)}
+.fl-tag.hasow .ow.lt em{color:#1a1200;text-shadow:none}
+.fl-tag.hasow s{border-top-color:#fff}
 /* ucu: ilin üstünü gösteren üçgen */
 .fl-tag s{display:block;width:0;height:0;margin-top:0;border:7px solid transparent;border-bottom:0;border-top:8px solid #fff}
 .fl-tag.hasow s{border-top-color:var(--oc)}

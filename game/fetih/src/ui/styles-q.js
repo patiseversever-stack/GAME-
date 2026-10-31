@@ -84,25 +84,50 @@ export const CSS_Q = /* css */ `
 .fl-q.rv .fl-qp .tt{opacity:1;transition:opacity .2s .2s}
 .fl-qp.win{border-color:var(--gold)}
 .fl-qp.win::before{content:'';position:absolute;left:8px;top:-17px;width:24px;height:18px;background:var(--gold);-webkit-mask:var(--crown) center/contain no-repeat;mask:var(--crown) center/contain no-repeat;animation:flPopIn .4s cubic-bezier(.3,1.8,.5,1) both}
-.fl-qwho.duel .fl-qp{flex:1;max-width:44%;padding:4px 10px 4px 4px}
-.fl-qwho.duel .fl-qp .fl-av{width:44px;height:44px;border-radius:12px}
-.fl-qwho.duel .fl-qp .nm b{font-size:15px}
-.fl-qwho.duel .fl-qp.d{flex-direction:row-reverse;padding:4px 4px 4px 10px;text-align:right}
-.fl-qwho.duel .fl-qp.d .st{left:auto;right:22px}
-.fl-qwho.duel .fl-qp.d .tt{right:auto;left:-6px}
+/* düello: tek kapsül (saldıran | VS madalyonu | savunan); kartın üstünde, araya boşlukla: üst üste binmez */
+.fl-qwho.duel{align-items:stretch;gap:0;height:54px;margin:16px 2px 10px;border-radius:18px;background:#0a1430;
+  border:1.5px solid rgba(255,214,120,.42);box-shadow:0 8px 18px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,255,255,.07)}
+.fl-qwho.duel .fl-qp{flex:1 1 0;max-width:none;gap:9px;padding:0 34px 0 7px;border:0;border-radius:16.5px 0 0 16.5px;background:transparent;box-shadow:none;overflow:visible}
+.fl-qwho.duel .fl-qp::after{content:'';position:absolute;inset:0;border-radius:inherit;background:linear-gradient(90deg,var(--pc),transparent 78%);opacity:.34;pointer-events:none}
+.fl-qwho.duel .fl-qp.d{flex-direction:row-reverse;padding:0 7px 0 34px;border-radius:0 16.5px 16.5px 0;text-align:right}
+.fl-qwho.duel .fl-qp.d::after{background:linear-gradient(270deg,var(--pc),transparent 78%)}
+.fl-qwho.duel .fl-qp .fl-av{position:relative;z-index:1;width:40px;height:40px;border-radius:12px;border:2.5px solid #fff;box-shadow:0 0 0 2px var(--pc),0 3px 6px rgba(0,0,0,.35)}
+.fl-qwho.duel .fl-qp .nm{position:relative;z-index:1}
+.fl-qwho.duel .fl-qp .nm b{font-size:15.5px;letter-spacing:.01em}
+.fl-qwho.duel .fl-qp .nm small{margin-top:2px;font-size:9px;letter-spacing:.16em;color:rgba(255,255,255,.62)}
+/* cevapladı / doğru / yanlış: avatarın köşesinde küçük, temiz rozet (plakanın içinde) */
+.fl-qwho.duel .fl-qp .st{z-index:2;left:35px;top:31px;width:18px;height:18px;font-size:11px;border-width:2px;box-shadow:0 2px 4px rgba(0,0,0,.4)}
+.fl-qwho.duel .fl-qp.d .st{left:auto;right:35px}
+/* süre: cevap açılınca rol yazısının yerine geçer (kenara taşan etiket yok) */
+.fl-qwho.duel .fl-qp .tt{left:56px;right:auto;top:auto;bottom:8px;padding:0;border-radius:0;background:none;font-family:'Fredoka';font-weight:700;font-size:10.5px;line-height:1;letter-spacing:.04em;color:#8fe8a0}
+.fl-qwho.duel .fl-qp.d .tt{left:auto;right:56px}
+.fl-qwho.duel .fl-qp.no .tt{color:#ff9a8a}
+.fl-q.rv .fl-qwho.duel .fl-qp .nm small{visibility:hidden}
+.fl-qwho.duel .fl-qp.win{border:0}
+.fl-qwho.duel .fl-qp.win .fl-av{box-shadow:0 0 0 2px var(--gold),0 0 14px rgba(255,210,90,.75)}
+.fl-qwho.duel .fl-qp.win::before{left:15px;top:-15px;width:22px;height:16px}
+.fl-qwho.duel .fl-qp.d.win::before{left:auto;right:15px}
+/* VS madalyonu ve hedef il */
 .fl-qvs{flex:none;display:flex;flex-direction:column;align-items:center;margin-bottom:6px}
+.fl-qwho.duel .fl-qvs{position:absolute;left:50%;top:50%;z-index:3;width:50px;height:50px;margin:-25px 0 0 -25px;border-radius:50%;justify-content:center;
+  background:radial-gradient(circle at 50% 32%,#fff3b8,#ffc93a 55%,#d48a0c);border:2.5px solid #fff6d6;box-shadow:0 0 0 2px #7a4a06,0 4px 10px rgba(0,0,0,.45)}
 .fl-qvs b{font-family:'Lilita One';font-weight:400;font-size:26px;line-height:.9;color:var(--gold);${OUT('#5a2a00', 2.5)}}
+.fl-qwho.duel .fl-qvs b{font-size:21px;letter-spacing:-.02em;color:#5a2a00;text-shadow:0 1px 0 rgba(255,255,255,.55)}
 .fl-qvs span{margin-top:3px;max-width:96px;padding:1px 7px 2px;border-radius:7px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#c42a1a;border:1.5px solid #fff}
+.fl-qwho.duel .fl-qvs span{position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);margin:0;max-width:110px;padding:2px 8px 3px;border-radius:8px;
+  font-family:'Fredoka';font-weight:700;font-size:10.5px;letter-spacing:.03em;line-height:1.1;background:#0a1430;color:#ffd25a;border:1.5px solid rgba(255,214,120,.55);box-shadow:0 2px 6px rgba(0,0,0,.4)}
 
 /* sonuç damgası */
-.fl-stamp{position:absolute;left:50%;top:-18px;z-index:5;transform:translate(-50%,-100%) rotate(-6deg);pointer-events:none;opacity:0;white-space:nowrap;
-  font-family:'Lilita One';font-size:min(calc(13 * var(--vw)),52px);letter-spacing:.02em;padding:2px 22px 6px;border-radius:18px;border:4px solid #fff;color:#fff;background:var(--sc,#2fa84a);box-shadow:0 6px 0 var(--sd,#16661f),0 12px 26px rgba(0,0,0,.4);${OUT('var(--sd,#16661f)', 2.5)}}
+.fl-stamp{position:absolute;left:50%;top:-18px;z-index:5;transform:translate(-50%,-100%) rotate(-3deg);pointer-events:none;opacity:0;white-space:nowrap;
+  font-family:'Lilita One';font-size:min(calc(11.5 * var(--vw)),46px);letter-spacing:.04em;padding:4px 26px 8px;border-radius:999px;border:3px solid rgba(255,255,255,.95);color:#fff;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--sc,#2fa84a) 70%,#fff),var(--sc,#2fa84a) 55%,var(--sd,#16661f));
+  box-shadow:0 0 0 2px var(--sd,#16661f),0 14px 34px rgba(0,0,0,.5),0 0 40px color-mix(in srgb,var(--sc,#2fa84a) 45%,transparent),inset 0 2px 0 rgba(255,255,255,.35);${OUT('var(--sd,#16661f)', 2)}}
 .fl-stamp.on{animation:flStamp .45s cubic-bezier(.3,1.7,.5,1) forwards}
 .fl-stamp.bad{--sc:#e53a2a;--sd:#7a120a}
 .fl-stamp.warn{--sc:#ff8a2a;--sd:#8a3a00}
 .fl-stamp.gold{--sc:#f5b324;--sd:#7a4a06}
 .fl-stamp small{display:block;margin-top:-4px;font-family:'Fredoka';font-weight:600;font-size:15px;letter-spacing:0;text-align:center;text-shadow:none}
-@keyframes flStamp{0%{opacity:0;transform:translate(-50%,-100%) rotate(-6deg) scale(2.4)}60%{opacity:1;transform:translate(-50%,-100%) rotate(-6deg) scale(.92)}100%{opacity:1;transform:translate(-50%,-100%) rotate(-6deg) scale(1)}}
+@keyframes flStamp{0%{opacity:0;transform:translate(-50%,-100%) rotate(-3deg) scale(1.9)}60%{opacity:1;transform:translate(-50%,-100%) rotate(-3deg) scale(.96)}100%{opacity:1;transform:translate(-50%,-100%) rotate(-3deg) scale(1)}}
 
 /* haritalı soru: kart üst çubuğa iner, harita tamamen dokunulabilir */
 .fl-q.map{top:calc(66px + var(--sat));bottom:auto;transform:translate(-50%,-40px)}

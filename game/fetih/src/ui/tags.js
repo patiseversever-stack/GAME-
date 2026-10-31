@@ -153,7 +153,9 @@ export class Tags {
 		const land = W > H && H < 560;
 		const hud = ui.$.hud.getBoundingClientRect();
 		const root = ui.el.getBoundingClientRect();
-		this.top = land ? 14 : Math.max(60, hud.bottom - root.top) + 26;
+		const pb = ui.el.querySelector('.fl-pbtn')?.getBoundingClientRect();
+		const below = Math.max(hud.bottom, pb && pb.height ? pb.bottom : 0) - root.top;
+		this.top = land ? 14 : Math.max(60, below) + 14;
 		this.left = land ? 176 : 8;
 		this.right = W - 8;
 	}

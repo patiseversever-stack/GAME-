@@ -500,7 +500,7 @@ export class Cinema {
 	_settle(plan, side, quick = false) {
 		const p = plan.siege ? this._pt(plan.mid.x + (plan.castle.x - plan.mid.x) * 0.3, plan.mid.z + (plan.castle.z - plan.mid.z) * 0.3) : plan.mid;
 		const y = yawAt(plan, side, 0.45);
-		const dist = stageDist(this.app, plan, p, y, 1.02, 'both', { pad: 1.5, min: 11, max: 20 });
+		const dist = stageDist(this.app, plan, p, y, 1.02, 'both', { pad: 1.68, min: 12.4, max: 22.5 }); // biraz daha uzaktan (v1.3)
 		this._view(p, y, OFF, 1.02, dist, { dur: quick ? 0.55 : 1.2, lens: -0.17, yawRate: -side * 0.012, decay: 0.15 });
 		if (this._tags) this.app.ui?.tagsOn?.(this._tags, {});
 	}
