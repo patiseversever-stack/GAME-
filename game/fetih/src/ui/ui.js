@@ -260,6 +260,7 @@ export class UI {
 		if (key !== this._hudKey || this._hudM !== m) {
 			this._hudKey = key;
 			this._hudM = m;
+			hud.dataset.n = m.players.length;
 			hud.innerHTML = m.players
 				.map((p) => {
 					const tcol = m.mode?.teams ? m.players.find((x) => x.team === p.team)?.css : null;
@@ -269,6 +270,7 @@ export class UI {
 						<span class="cs"><i></i><i></i><i></i></span><span class="sd">${ico('shield', { w: 3, c: '#4a2800' })}</span>${team}</div>`;
 				})
 				.join('');
+			this._fitHud(hud);
 			this._pl = m.players.map((p) => {
 				const e = hud.querySelector(`[data-p="${p.i}"]`);
 				return { e, em: e.querySelector('em'), cs: [...e.querySelectorAll('.cs i')], score: p.score, hp: 3, turn: false, dead: false, shd: false };
@@ -820,6 +822,21 @@ export class UI {
 		bar.style.setProperty('--tt', total + 's');
 		bar.style.animationDelay = `-${Math.max(0, elapsed).toFixed(2)}s`;
 		bar.classList.add('run');
+	}
+
+	/** HUD'daki isimler de (en çok 12 harf) kesilmeden tek satıra sığsın. */
+	_fitHud(hud) {
+		const fit = () => {
+			for (const b of hud.querySelectorAll('.fl-pl .tx b')) {
+				b.style.fontSize = '';
+				let fs = parseFloat(getComputedStyle(b).fontSize) || 14;
+				for (let k = 0; k < 40 && b.scrollWidth > b.clientWidth + 0.5 && fs > 9; k++) b.style.fontSize = (fs -= 0.5) + 'px';
+			}
+		};
+		requestAnimationFrame(fit);
+		document.fonts?.load?.('italic 900 20px "Barlow Condensed"').then(fit, () => {});
+		setTimeout(fit, 400);
+		setTimeout(fit, 1200);
 	}
 
 	/** Afişteki isimler (en çok 12 harf) kesilmeden, alt satıra inmeden sığsın: taşan isim yarımşar piksel küçülür. */

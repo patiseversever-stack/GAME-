@@ -238,5 +238,54 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-tmh .fl-qp .nm{display:contents}
 .fl-q:not(.map) .fl-tmh .fl-qp .nm b{text-align:inherit;width:auto}
 .fl-q:not(.map) .fl-tmh .fl-qp .st{width:3.6cqw;height:3.6cqw;margin:0 -1cqw -.8cqw 0;font-size:2cqw}
+/* düello ve eşli: iki yarı tam eşit; dikiş tam ortadan geçer (üstte %50+4cqw, altta %50-4cqw) */
+.fl-q:not(.map) .fl-qwho.duel .fl-qp,.fl-q:not(.map) .fl-tmh{flex:0 0 calc(50% + 4cqw);margin-left:0;clip-path:polygon(0 0,100% 0,calc(100% - 8cqw) 100%,0 100%)}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp.d,.fl-q:not(.map) .fl-tmh.d{flex:0 0 calc(50% + 4cqw);margin-left:-8cqw;clip-path:polygon(8cqw 0,100% 0,100% 100%,0 100%)}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp.d{--pl:12cqw}
+.fl-q:not(.map) .fl-tmh.d{padding-left:12cqw}
 .fl-q:not(.map) .fl-tmh .fl-qp .sc,.fl-q:not(.map) .fl-tmh .fl-qp .nm small,.fl-q:not(.map) .fl-tmh .fl-qp .rk,.fl-q:not(.map) .fl-tmh .tn b{display:none}
+
+/* ---------------------------------------------------------------- maç HUD'u (soru dışı üst şerit): afiş dilinde, daha ince
+   Tam genişlik eğik renkli dilimler; resim + kalın isim (12 harf, tek satır) + koyu hapta puan + kale burçları.
+   4'lü: resim üstte ortada, altında isim, puan ve burçlar. */
+.fl-hud{container-type:inline-size;top:var(--sat);left:50%;width:min(calc(100 * var(--vw)),560px);gap:0;justify-content:stretch;filter:drop-shadow(0 5px 12px rgba(0,0,0,.5))}
+.fl-hud.off{transform:translate(-50%,-110%)}
+.fl-hud .fl-pl{--pl:3cqw;--pr:3cqw;--av:9cqw;flex:1 1 0;max-width:none;min-width:0;display:grid;grid-template-columns:auto auto minmax(0,1fr);grid-template-areas:"av nm nm" "av sc cs";
+  align-content:center;align-items:center;justify-items:start;column-gap:1.8cqw;row-gap:.6cqw;height:calc(16cqw + var(--sat) * 0);padding:0 var(--pr) 0 var(--pl);margin-left:-2.7cqw;border:0;border-radius:0;
+  background:radial-gradient(70% 130% at 12% 20%,rgba(255,255,255,.16),rgba(255,255,255,0) 60%),linear-gradient(165deg,var(--pc),color-mix(in srgb,var(--pc) 58%,#000));
+  clip-path:polygon(3.4cqw 0,100% 0,calc(100% - 3.4cqw) 100%,0 100%);box-shadow:none;transform:none}
+.fl-hud .fl-pl:first-child{margin-left:0;--pl:2.4cqw;clip-path:polygon(0 0,100% 0,calc(100% - 3.4cqw) 100%,0 100%)}
+.fl-hud .fl-pl:last-of-type{clip-path:polygon(3.4cqw 0,100% 0,100% 100%,0 100%)}
+.fl-hud .fl-pl::before{content:'';position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(255,255,255,.2) 0,rgba(255,255,255,.07) 34%,rgba(255,255,255,0) 50%,rgba(0,0,0,.2) 100%);
+  box-shadow:inset 0 1.5px 0 rgba(255,255,255,.4),inset 0 -3px 0 rgba(0,0,0,.28)}
+.fl-hud .fl-pl .tx{display:contents}
+.fl-hud .fl-pl .fl-av{grid-area:av;position:relative;z-index:1;width:var(--av);height:var(--av);border-radius:22%;border:.5cqw solid #fff;box-shadow:0 .6cqw 0 rgba(0,0,0,.3)}
+.fl-hud .fl-pl .tx b{grid-area:nm;position:relative;z-index:1;justify-self:stretch;min-width:0;padding-right:.6cqw;box-sizing:border-box;white-space:nowrap;overflow:hidden;text-overflow:clip;
+  font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:900;font-size:var(--nf,4.6cqw);line-height:1;letter-spacing:.01em;text-transform:uppercase;color:#fff;
+  text-shadow:0 .5cqw 0 rgba(0,0,0,.45),0 0 1px rgba(0,0,0,.8)}
+.fl-hud .fl-pl .tx em{grid-area:sc;position:relative;z-index:1;padding:.2cqw 1.3cqw 0;border-radius:1cqw;background:rgba(6,7,13,.6);box-shadow:inset 0 0 0 1px rgba(255,230,128,.35);
+  font-family:'Lilita One',sans-serif;font-size:var(--sf,3.8cqw);line-height:1.15;color:#ffe680;text-shadow:none}
+.fl-hud .fl-pl .cs{grid-area:cs;position:relative;z-index:1;inset:auto;transform:none;flex-direction:row;gap:.6cqw;justify-self:start}
+.fl-hud .fl-pl .cs i{width:3cqw;height:3.4cqw;background:#fff;filter:drop-shadow(0 .3cqw 0 rgba(0,0,0,.35))}
+.fl-hud .fl-pl .cs i.off{opacity:.25}
+.fl-hud .fl-pl .sd{left:calc(var(--pl) - 1.4cqw);top:1cqw;width:5cqw;height:5cqw;z-index:3}
+.fl-hud .fl-pl .tm{top:.8cqw;right:calc(var(--pr) + .4cqw);z-index:3;font-size:2.6cqw;line-height:1.5;padding:0 1.2cqw;border-radius:1cqw}
+.fl-hud .fl-pl .d{z-index:3;right:var(--pr);top:auto;bottom:.6cqw;font-size:4cqw}
+/* sıra: dilim parlar, altın iç çerçeve, altında SIRA etiketi */
+.fl-hud .fl-pl.turn{transform:none;filter:brightness(1.12)}
+.fl-hud .fl-pl.turn::before{box-shadow:inset 0 0 0 .7cqw #ffd25a,inset 0 1.5px 0 rgba(255,255,255,.4)}
+.fl-hud .fl-pl.turn::after{bottom:auto;top:calc(16cqw - 1px);left:50%;font-size:2.8cqw;padding:.1cqw 2cqw .3cqw;border-radius:0 0 1.2cqw 1.2cqw;border-top:0}
+.fl-hud .fl-pl.dead{opacity:.55;filter:grayscale(.6)}
+/* 3'lü ve 4'lü: dikey (resim üstte ortada, altında isim, altında puan + burçlar) */
+.fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl{--pl:3.6cqw;--pr:2.6cqw;grid-template-columns:auto auto;grid-template-areas:"av av" "nm nm" "sc cs";justify-items:center;justify-content:center;row-gap:.5cqw;column-gap:1cqw;height:19cqw}
+.fl-hud[data-n="3"] .fl-pl{--av:8cqw;--nf:4.4cqw;--sf:3.6cqw}
+.fl-hud[data-n="4"] .fl-pl{--av:7.4cqw;--nf:3.7cqw;--sf:3.2cqw}
+.fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl:first-child{--pl:2.2cqw}
+.fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl:last-of-type{--pr:2.2cqw}
+.fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl .tx b{text-align:center}
+.fl-hud[data-n="4"] .fl-pl .cs i{width:2.4cqw;height:2.8cqw}
+.fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl.turn::after{top:calc(19cqw - 1px)}
+/* duraklat düğmesi HUD'un altında */
+.fl-pbtn{top:calc(var(--sat) + 10px + min(calc(100 * var(--vw)),560px) * .2)}
+.fl-ui:has(.fl-hud:is([data-n="3"],[data-n="4"])) .fl-pbtn{top:calc(var(--sat) + 10px + min(calc(100 * var(--vw)),560px) * .22)}
 `;
