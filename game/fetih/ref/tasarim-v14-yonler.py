@@ -185,6 +185,39 @@ C_CSS = """
 .c .j sup{position:absolute;right:-5px;top:-7px;min-width:17px;height:17px;padding:0 4px;transform:skewX(8deg);background:#fff;color:#111;border-radius:4px;font:italic 800 12px/17px 'Barlow Condensed';text-align:center;box-shadow:0 2px 0 rgba(0,0,0,.35)}
 .c .ruler{position:absolute;left:0;right:0;top:50%;border-top:1px dashed rgba(255,255,255,.35)}
 .c .ruler span{position:absolute;right:6px;top:-16px;font:700 10px Manrope;color:rgba(255,255,255,.6)}
+
+/* çok oyunculu afiş (v2, sinematik): eğik paneller, aralarında koyu çizik, büyük eğik avatar ve isim */
+.c .ban.m{background:#06070d}
+.c .ban.m .sg{position:absolute;top:0;height:100px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding-top:6px;
+  background:linear-gradient(160deg,var(--c1),var(--c2));clip-path:polygon(var(--l) 0,100% 0,calc(100% - var(--r)) 100%,0 100%)}
+.c .ban.m .sg::before{content:'';position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.22) 0 22%,rgba(255,255,255,0) 22% 100%);pointer-events:none}
+.c .ban.m .sg img{width:48px;height:48px;border-radius:11px;border:3px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:skewX(-8deg)}
+.c .ban.m .sg b{font:italic 800 21px/1 'Barlow Condensed';text-transform:uppercase;letter-spacing:.01em;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+.c .ban.m .sg em{font:italic 800 14px/1 'Barlow Condensed';color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+.c .ban.m .sg .st{position:absolute;top:8px;right:calc(var(--r) + 8px);width:19px;height:19px;border-radius:50%;background:#16c060;border:2px solid #fff;display:grid;place-items:center;font:800 10px Manrope;color:#fff}
+.c .ban.m .sg .rk{position:absolute;top:6px;left:calc(var(--l) + 6px);font:italic 800 15px 'Barlow Condensed';color:rgba(255,255,255,.75)}
+.c .ban.m .lb{position:absolute;left:50%;top:104px;transform:translateX(-50%);padding:3px 14px;background:#ffd25a;color:#1a1200;font:800 11.5px 'Barlow Condensed';letter-spacing:.24em;white-space:nowrap;clip-path:polygon(5% 0,100% 0,95% 100%,0 100%)}
+/* eşli: düello gibi iki yarı, her yarıda iki avatar */
+.c .ban.t .sd{gap:12px}
+.c .ban.t .sd .two{display:flex}
+.c .ban.t .sd .two img{width:48px;height:48px;margin-right:-12px}
+.c .ban.t .sd.r .two img{margin-right:0;margin-left:-12px}
+.c .ban.t .sd>div:last-child{margin:0 8px;min-width:0}
+.c .ban.t .sd b{font-size:19px;line-height:.95;white-space:nowrap}
+.c .ban.t .sd small{font-size:10px;letter-spacing:.14em;white-space:nowrap}
+.c .ban.t .sd small i{font-style:italic;color:#ffe680}
+.c .ban.t .sd .two img{width:40px;height:40px;margin-right:-10px}
+.c .ban.t .sd.r .two img{margin-left:-10px;margin-right:0}
+.c .ban.t .sd.l .two img:last-child{margin-right:0}
+.c .ban.t .sd.r .two img:first-child{margin-left:0}
+.c .ban.t .sd>div:last-child{margin:0}
+.c .ban.t .sd.l{padding-right:62px}.c .ban.t .sd.r{padding-left:62px}
+/* aynı şıkkı seçenler: üst üste binen küçük avatarlar, şıkkın içinde sağda ortalı */
+.c .stk{position:absolute;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:row-reverse}
+.c .stk img{width:26px;height:26px;border-radius:7px;border:2px solid #1a1200;margin-left:-9px;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.c .stk img:last-child{margin-left:0}
+.c .op.st4{padding-right:96px}
+.c .op.nopk::after{display:none}
 """.replace("XSENX", SEN)
 JC = {'yari': ('#3d8bff', '#1a4fc2'), 'seyirci': ('#ff5fa2', '#c42a6a'), 'sure': ('#2fd07a', '#138a45'), 'sans': ('#b25bff', '#6f22c2'), 'sabotaj': ('#ff6a3a', '#c2301a'), 'kalkan': ('#ffb21a', '#c27a06')}
 def C(q=Q, opts=OPTS, cat='BİLİM', cc='#22c46a', ruler=False):
@@ -201,10 +234,36 @@ def C(q=Q, opts=OPTS, cat='BİLİM', cc='#22c46a', ruler=False):
 <div class="box"><div class="hd"><span class="cat">{cat}</span><span class="tm">13<small> SN</small></span></div>
 <div class="seg">{seg}</div><h2 style="font-size:{qf}px">{q}</h2><div class="ops{"" if grid else " list"}" style="font-size:{of}px">{ops}</div><div class="jk">{jk}</div></div></div>'''
 
+PL = [('Sen', '2.200', '#ff4433', '#b0170c', SEN), ('Defne', '2.400', '#3b86ff', '#1440b0', DEF), ('Elif', '1.900', '#ffbf1f', '#c27a06', SEN), ('Mert', '1.700', '#2fd07a', '#138a45', DEF)]
+def M(n=3, team=False, stack=0):
+    if team:
+        tA = f'<div class="sd l"><div class="two"><img src="{SEN}"><img src="{SEN}"></div><div><small>TAKIM A · <i>4.100</i></small><b>Sen</b><b>Elif</b></div></div>'
+        tB = f'<div class="sd r"><div class="two"><img src="{DEF}"><img src="{DEF}"></div><div><small>TAKIM B · <i>4.100</i></small><b>Defne</b><b>Mert</b></div></div>'
+        ban = f'<div class="ban t">{tA}{tB}<div class="vs">VS</div><div class="tg">TAKIMLAR</div></div>'
+    else:
+        S = 22  # eğim payı (px)
+        W = 412 + S * (n - 1)
+        w = W / n
+        segs = ''
+        rank = sorted(range(n), key=lambda k: -int(PL[k][1].replace('.', '')))
+        for j in range(n):
+            nm, sc, c1, c2, av = PL[j]
+            left = j * (w - S)
+            l = 0 if j == 0 else S
+            r = 0 if j == n - 1 else S
+            ok = '<span class="st">✓</span>' if j in (1, 3) else ''
+            segs += f'<div class="sg" style="left:{left + (3 if j else 0):.1f}px;width:{w - (3 if j else 0):.1f}px;--l:{l}px;--r:{r}px;--c1:{c1};--c2:{c2}"><span class="rk">{rank.index(j) + 1}.</span><img src="{av}"><b>{nm}</b><em>{sc}</em>{ok}</div>'
+        ban = f'<div class="ban m">{segs}<div class="lb">YAYILMA · HERKES CEVAPLIYOR</div></div>'
+    html = C()
+    html = html[:html.index('<div class="ban">')] + ban + html[html.index('<div class="box">'):]
+    if stack:
+        avs = ''.join(f'<img src="{PL[k][4]}">' for k in range(stack))
+        html = html.replace('<div class="op pk"><i>A</i>Jüpiter</div>', f'<div class="op pk st4 nopk"><i>A</i>Jüpiter<span class="stk">{avs}</span></div>')
+    return html
 GAMEF = open(D + 'oyun_fontlar.css', encoding='utf-8').read()
 html = f'''<!DOCTYPE html><html><head><meta charset="utf-8">{FONTS}<style>{GAMEF}{BASE}{C_CSS}</style></head><body>
-<div class="col"><div class="cap">KISA SORU<b>2×2 şık</b></div>{C(ruler=True)}</div>
-<div class="col"><div class="cap">EN UZUN SORU (109 harf)<b>yazı küçülür</b></div>{C("Paris 2024’te elini cebine koyduğu rahat duruşuyla dünyaca ünlenen Yusuf Dikeç hangi branşta madalya kazandı?", ["Atıcılık","Okçuluk","Eskrim","Golf"], "SPOR", "#ff8a1f", True)}</div>
-<div class="col"><div class="cap">EN UZUN ŞIKLAR (49 harf)<b>ince tek sütun</b></div>{C("Karadeniz kıyısında bol yağış görülmesinin nedeni nedir?", ["Nemli rüzgârların kıyıya paralel dağlara çarpması","Karadeniz’in Akdeniz’den daha sıcak olması","Kıyı boyunca geniş ovaların uzanması","Güneş ışınlarının yıl boyu dik gelmesi"], "COĞRAFYA", "#2fb8ff", True)}</div>
+<div class="col"><div class="cap">3 KİŞİ<b>yayılma afişi</b></div>{M(3)}</div>
+<div class="col"><div class="cap">4 KİŞİ · AYNI CEVAP<b>4 avatar üst üste</b></div>{M(4, stack=4)}</div>
+<div class="col"><div class="cap">EŞLİ (2’ye 2)<b>takım renkleri</b></div>{M(4, team=True, stack=2)}</div>
 </body></html>'''
 open(D + 'mock.html', 'w', encoding='utf-8').write(html)
