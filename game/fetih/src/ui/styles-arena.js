@@ -273,8 +273,8 @@ export const CSS_ARENA = /* css */ `
 .fl-hud .fl-pl .d{z-index:3;right:var(--pr);top:auto;bottom:.6cqw;font-size:4cqw}
 /* sıra: dilim parlar, altın iç çerçeve, altında SIRA etiketi */
 .fl-hud .fl-pl.turn{transform:none;filter:brightness(1.12)}
-.fl-hud .fl-pl.turn::before{box-shadow:inset 0 0 0 .7cqw #ffd25a,inset 0 1.5px 0 rgba(255,255,255,.4)}
-.fl-hud .fl-pl.turn::after{bottom:auto;top:calc(16cqw - 1px);left:50%;font-size:2.8cqw;padding:.1cqw 2cqw .3cqw;border-radius:0 0 1.2cqw 1.2cqw;border-top:0}
+.fl-hud .fl-pl.turn::before{box-shadow:inset 0 -1.1cqw 0 #ffd25a,inset 0 -2.6cqw 2.4cqw -1cqw rgba(255,210,90,.55),inset 0 1.5px 0 rgba(255,255,255,.4)}
+.fl-hud .fl-pl.turn::after{display:none}
 .fl-hud .fl-pl.dead{opacity:.55;filter:grayscale(.6)}
 /* 3'lü ve 4'lü: dikey (resim üstte ortada, altında isim, altında puan + burçlar) */
 .fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl{--pl:3.6cqw;--pr:2.6cqw;grid-template-columns:auto auto;grid-template-areas:"av av" "nm nm" "sc cs";justify-items:center;justify-content:center;row-gap:.5cqw;column-gap:1cqw;height:19cqw}
@@ -284,7 +284,6 @@ export const CSS_ARENA = /* css */ `
 .fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl:last-of-type{--pr:2.2cqw}
 .fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl .tx b{text-align:center}
 .fl-hud[data-n="4"] .fl-pl .cs i{width:2.4cqw;height:2.8cqw}
-.fl-hud:is([data-n="3"],[data-n="4"]) .fl-pl.turn::after{top:calc(19cqw - 1px)}
 /* duraklat düğmesi HUD'un altında */
 .fl-pbtn{top:calc(var(--sat) + 10px + min(calc(100 * var(--vw)),560px) * .2)}
 .fl-ui:has(.fl-hud:is([data-n="3"],[data-n="4"])) .fl-pbtn{top:calc(var(--sat) + 10px + min(calc(100 * var(--vw)),560px) * .22)}
