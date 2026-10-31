@@ -150,7 +150,7 @@ C_CSS = """
 .c .sd.r{right:0;padding-left:66px;justify-content:flex-end;flex-direction:row-reverse;background:linear-gradient(260deg,#3b86ff,#1440b0);clip-path:polygon(18% 0,100% 0,100% 100%,0 100%);text-align:right}
 .c .sd img{width:56px;height:56px;border-radius:12px;border:3px solid #fff;transform:skewX(-6deg);box-shadow:0 4px 0 rgba(0,0,0,.35)}
 .c .sd small{display:block;font:italic 800 11px 'Barlow Condensed';letter-spacing:.22em;color:rgba(255,255,255,.9)}
-.c .sd b{display:block;font:italic 800 30px/0.95 'Barlow Condensed';text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.c .sd b{display:block;font:italic 800 32px/0.95 'Barlow Condensed';text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.3)}
 .c .sd em{display:block;font:italic 800 16px 'Barlow Condensed';color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
 .c .vs{position:absolute;left:50%;top:28px;z-index:2;transform:translateX(-50%) skewX(-8deg);padding:3px 11px;background:#0a0b14;border:2.5px solid #fff;font:italic 800 30px 'Barlow Condensed';letter-spacing:.04em;color:#ffd25a;box-shadow:0 6px 20px rgba(0,0,0,.6)}
 .c .tg{position:absolute;left:50%;top:104px;transform:translateX(-50%);padding:3px 13px;background:#ffd25a;color:#1a1200;font:800 11.5px 'Barlow Condensed';letter-spacing:.26em;clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
@@ -158,30 +158,30 @@ C_CSS = """
 /* panel: içeriği kadar yüksek, alttan büyür; üstünde yumuşak gölge geçişi (harita kesilmez) */
 .c .box{position:absolute;left:0;right:0;bottom:0;padding:62px 12px 14px;background:linear-gradient(180deg,rgba(7,8,15,0),rgba(7,8,15,.9) 46px,#07080f 70px)}
 .c .hd{display:flex;align-items:center;gap:10px}
-.c .cat{padding:4px 11px;background:var(--cc);color:#03210f;font:italic 800 13px 'Barlow Condensed';letter-spacing:.18em;clip-path:polygon(0 0,100% 0,92% 100%,0 100%)}
+.c .cat{padding:5px 14px 5px 12px;background:var(--cc);color:#fff;font:italic 800 16px 'Barlow Condensed';letter-spacing:.14em;clip-path:polygon(0 0,100% 0,92% 100%,0 100%);text-shadow:0 1px 0 rgba(0,0,0,.3)}
 .c .ty{font:italic 800 13px 'Barlow Condensed';letter-spacing:.2em;color:rgba(255,255,255,.75)}
-.c .tm{margin-left:auto;font:italic 800 40px/0.85 'Barlow Condensed';color:#fff;text-shadow:0 0 18px rgba(255,210,90,.45)}
+.c .tm{margin-left:auto;font:italic 800 44px/0.85 'Barlow Condensed';color:#fff;text-shadow:0 0 18px rgba(255,210,90,.45)}
 .c .tm small{font-size:15px;color:#ffd25a}
 .c .seg{display:flex;gap:3px;margin:8px 0 10px}
 .c .seg i{flex:1;height:6px;background:#ffd25a;transform:skewX(-20deg);box-shadow:0 0 8px rgba(255,210,90,.6)}.c .seg i.off{background:rgba(255,255,255,.16);box-shadow:none}
-.c h2{font-family:Fredoka;font-weight:700;line-height:1.2;text-wrap:balance;padding:2px 4px 2px 12px;margin-bottom:10px;border-left:5px solid var(--cc);color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
-.c .ops{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.c h2{font-family:Fredoka;font-weight:700;line-height:1.18;text-wrap:balance;padding:0 2px;margin-bottom:12px;color:#fff;letter-spacing:-.003em}
+.c .ops{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .c .ops.list{grid-template-columns:1fr;gap:6px}
-.c .op{position:relative;min-height:44px;display:flex;align-items:center;background:linear-gradient(180deg,#232a44,#161b30);border:1.5px solid rgba(255,255,255,.28);
-  clip-path:polygon(0 0,100% 0,96% 100%,0 100%);font-family:Fredoka;font-weight:700;line-height:1.15;color:#fff;box-shadow:inset 0 1px 0 rgba(255,255,255,.12);padding-right:18px}
-.c .ops.list .op{min-height:39px;clip-path:polygon(0 0,100% 0,98.4% 100%,0 100%)}
-.c .op i{flex:none;align-self:stretch;width:34px;display:grid;place-items:center;margin-right:10px;font:italic 800 19px 'Barlow Condensed';font-style:italic;color:#fff;background:var(--lc);clip-path:polygon(0 0,100% 0,80% 100%,0 100%);text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.c .op{position:relative;min-height:48px;display:flex;align-items:center;background:linear-gradient(180deg,#ffffff,#e4e9f4);border:0;
+  clip-path:polygon(0 0,100% 0,96% 100%,0 100%);font-family:Fredoka;font-weight:700;line-height:1.12;color:#0e1430;padding-right:18px}
+.c .ops.list .op{min-height:42px;clip-path:polygon(0 0,100% 0,98.4% 100%,0 100%)}
+.c .op i{flex:none;align-self:stretch;width:38px;display:grid;place-items:center;margin-right:11px;font:italic 800 23px 'Barlow Condensed';font-style:italic;color:#fff;background:var(--lc);clip-path:polygon(0 0,100% 0,80% 100%,0 100%);text-shadow:0 2px 0 rgba(0,0,0,.25)}
 .c .op:nth-child(1) i{--lc:#2f7bff}.c .op:nth-child(2) i{--lc:#ff8a1f}.c .op:nth-child(3) i{--lc:#22c46a}.c .op:nth-child(4) i{--lc:#a24bff}
-.c .op.pk{background:linear-gradient(90deg,#ffd84d,#ffb21a);color:#1a1200;border-color:#fff3b0}
+.c .op.pk{background:linear-gradient(90deg,#ffe066,#ffbb1f);color:#1a1200;box-shadow:0 0 0 2px #fff}
 .c .op.pk i{background:#1a1200;color:#ffd25a}
 .c .op.pk{padding-right:48px}
 /* seçenin avatarı: sağda, şıkkın içinde dikeyde tam ortada; eğik kenardan payı var */
 .c .op.pk::after{content:'';position:absolute;right:16px;top:50%;width:28px;height:28px;transform:translateY(-50%);border-radius:7px;border:2px solid #1a1200;background:url(XSENX) center/cover;box-shadow:0 2px 0 rgba(0,0,0,.25)}
 .c .ops.list .op.pk::after{width:24px;height:24px;right:14px}
-.c .jk{display:flex;gap:6px;margin-top:12px}
-.c .j{position:relative;flex:1;height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;background:linear-gradient(180deg,var(--jc),var(--jd));border:1.5px solid rgba(255,255,255,.5);transform:skewX(-8deg);
+.c .jk{display:flex;gap:7px;margin-top:14px}
+.c .j{position:relative;flex:1;height:46px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0;font-size:0!important;background:linear-gradient(180deg,var(--jc),var(--jd));border:1.5px solid rgba(255,255,255,.5);transform:skewX(-8deg);
   font:italic 800 9.5px 'Barlow Condensed';letter-spacing:.12em;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.35);box-shadow:0 3px 0 rgba(0,0,0,.4)}
-.c .j svg{width:19px;height:19px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:skewX(8deg)}
+.c .j svg{width:26px;height:26px;fill:none;stroke:#fff;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;transform:skewX(8deg)}
 .c .j sup{position:absolute;right:-5px;top:-7px;min-width:17px;height:17px;padding:0 4px;transform:skewX(8deg);background:#fff;color:#111;border-radius:4px;font:italic 800 12px/17px 'Barlow Condensed';text-align:center;box-shadow:0 2px 0 rgba(0,0,0,.35)}
 .c .ruler{position:absolute;left:0;right:0;top:50%;border-top:1px dashed rgba(255,255,255,.35)}
 .c .ruler span{position:absolute;right:6px;top:-16px;font:700 10px Manrope;color:rgba(255,255,255,.6)}
@@ -189,8 +189,8 @@ C_CSS = """
 JC = {'yari': ('#3d8bff', '#1a4fc2'), 'seyirci': ('#ff5fa2', '#c42a6a'), 'sure': ('#2fd07a', '#138a45'), 'sans': ('#b25bff', '#6f22c2'), 'sabotaj': ('#ff6a3a', '#c2301a'), 'kalkan': ('#ffb21a', '#c27a06')}
 def C(q=Q, opts=OPTS, cat='BİLİM', cc='#22c46a', ruler=False):
     grid = max(len(o) for o in opts) <= 16                  # kısa şıklar 2×2, uzunlar ince tek sütun
-    qf = 24 if len(q) <= 50 else 21 if len(q) <= 80 else 19  # soru uzadıkça yazı küçülür
-    of = (16 if grid else (14.5 if max(len(o) for o in opts) > 34 else 15.5))
+    qf = 25 if len(q) <= 50 else 22 if len(q) <= 80 else 20  # soru uzadıkça yazı küçülür
+    of = (19 if grid else (16 if max(len(o) for o in opts) > 34 else 17))
     ops = ''.join(f'<div class="op{" pk" if k == 0 else ""}"><i>{"ABCD"[k]}</i>{o}</div>' for k, o in enumerate(opts))
     jk = ''.join(f'<div class="j" style="--jc:{JC[k][0]};--jd:{JC[k][1]}">{ICO[k]}{n.upper()}<sup>{c}</sup></div>' for k, n, c in JK)
     seg = ''.join(f'<i class="{"off" if k >= 13 else ""}"></i>' for k in range(20))
@@ -198,7 +198,7 @@ def C(q=Q, opts=OPTS, cat='BİLİM', cc='#22c46a', ruler=False):
     return f'''<div class="ph c" style="--cc:{cc}">{rl}
 <div class="ban"><div class="sd l"><img src="{SEN}"><div><small>SALDIRAN</small><b>Sen</b><em>2.200</em></div></div>
 <div class="sd r"><img src="{DEF}"><div><small>SAVUNAN</small><b>Defne</b><em>2.400</em></div></div><div class="vs">VS</div><div class="tg">ANKARA</div><div class="ok">✓ CEVAPLADI</div></div>
-<div class="box"><div class="hd"><span class="cat">{cat}</span><span class="ty">ÇOKTAN SEÇMELİ</span><span class="tm">13<small> SN</small></span></div>
+<div class="box"><div class="hd"><span class="cat">{cat}</span><span class="tm">13<small> SN</small></span></div>
 <div class="seg">{seg}</div><h2 style="font-size:{qf}px">{q}</h2><div class="ops{"" if grid else " list"}" style="font-size:{of}px">{ops}</div><div class="jk">{jk}</div></div></div>'''
 
 html = f'''<!DOCTYPE html><html><head><meta charset="utf-8">{FONTS}<style>{BASE}{C_CSS}</style></head><body>
