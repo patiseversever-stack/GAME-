@@ -1262,7 +1262,8 @@ export class Board {
 	 * Başkent kalesinin yeri (yükselme dahil) ve ölçeği: il merkezinin çevresinde (±2,1 birim) kale ilin İÇİNDE kalacak
 	 * en büyük boyda ve en düz yerde kurulur. Kalenin ölçeği ilin o noktadaki iç genişliğine göre (sınıra/kıyıya
 	 * uzaklık / 2,05; 0,72–1,25): küçük illerde (Kilis, Yalova, Bartın…) kale küçülür, komşu ile ya da denize taşmaz.
-	 * Yapıların avlusundan uzak durur; merkezden uzaklaştıkça hafif ceza. İl başına bir kez hesaplanır.
+	 * Önünde (kamera tarafında) kaleyi örten dağ olan yerlerden kaçınır; yapıların avlusundan uzak durur; merkezden
+	 * uzaklaştıkça hafif ceza. İl başına bir kez hesaplanır.
 	 */
 	_castleSpot(index) {
 		this._castle = this._castle || [];
@@ -1291,6 +1292,15 @@ export class Board {
 				const room = this.borderDist(x, z, 2.7);
 				const s = Math.max(0.72, Math.min(1.25, room / 2.05));
 				let sc = span(x, z, s) + Math.hypot(gx, gz) * 0.1 - s * 1.6 + (room < 2.05 * 0.72 ? (2.05 * 0.72 - room) * 4 : 0);
+				// görünürlük: oyunun bakışı güneyden (kamera +z yönünde, alçak çekimde ~40°). Kalenin önündeki dağ ya da sırt
+				// kaleyi örtüyorsa ağır ceza: kale dağın arkasında değil, görünen yamaçta ya da düzlükte kurulur
+				const base = h(x, z) + 0.35 * s;
+				let occ = 0;
+				for (let d = 0.6; d <= 6.01; d += 0.6) {
+					const t = h(x, z + d * 0.766) - (base + d * 0.643);
+					if (t > occ) occ = t;
+				}
+				sc += occ * 4;
 				for (const st of this.sitePlan || []) {
 					if (st.wet) continue;
 					const lim = 1.85 * s + st.r;

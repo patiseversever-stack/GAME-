@@ -144,7 +144,13 @@ export const ANTIK = {
 		for (const [fy, fh] of [[0.0, 0.19], [0.205, 0.165]]) {
 			for (const nx of [-0.24, -0.12, 0, 0.12, 0.24]) {
 				const half = nx === 0 ? 0.062 : 0.048;
-				for (const sx of [-1, 1]) column(k, nx + sx * half, fy + 0.012, zc, { h: fh - 0.012, r: 0.0075, order: 'corinthian', col: '#efe6d2', flutes: 6 });
+				// hafif sütun (bu ölçekte yiv görünmez): kaide, 8 yüzlü gövde, başlık — tam sütunun ~1/10 üçgeni
+				for (const sx of [-1, 1]) {
+					const cx = nx + sx * half;
+					k.mc(H.MARBLE, '#e6dcc6').flat().box(0.02, 0.008, 0.02, cx, fy + 0.012, zc).soft();
+					k.mc(H.MARBLE, '#efe6d2').cyl(0.0068, 0.0078, fh - 0.034, 8, cx, fy + 0.02, zc);
+					k.mc(H.MARBLE, '#f2eadb').flat().box(0.019, 0.012, 0.019, cx, fy + fh - 0.014, zc).soft();
+				}
 				entablature(k, { x0: nx - half - 0.012, x1: nx + half + 0.012, y: fy + fh, z: zc, d: 0.028, h: 0.016, col: '#eadfc8' });
 			}
 			k.mc(H.ASHLAR, '#d2b68a').flat().box(0.98, 0.012, 0.05, 0, fy, zc + 0.01).soft();

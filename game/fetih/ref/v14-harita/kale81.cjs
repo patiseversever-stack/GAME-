@@ -28,7 +28,7 @@ const pre = process.argv[2] || 'k';
       k.group.visible = true;
       const v = (b.castleAt || b.topAt).call(b, i, new k.group.position.constructor());
       k.place(v);
-      app.cam.shot(v.x, v.z, { y: k.group.position.y + 0.6, dist: 16, pitch: 0.78, yaw: 0, dur: 0.01, arc: 0 });
+      app.cam.shot(v.x, v.z, { y: k.group.position.y + 0.6, dist: 16, pitch: 0.62, yaw: 0, dur: 0.01, arc: 0 });
       for (let f = 0; f < 4; f++) app.frame(1 / 30, false);
       app.render();
       const c = app.renderer.domElement; const t = document.createElement('canvas'); t.width = 300; t.height = 300; t.getContext('2d').drawImage(c, 0, (c.height - c.width) / 2, c.width, c.width, 0, 0, 300, 300); const url = t.toDataURL('image/jpeg', 0.85);
