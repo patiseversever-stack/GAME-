@@ -17,7 +17,7 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-qwho{transform:translateY(-110%);transition:transform .38s cubic-bezier(.25,1.2,.4,1)}
 .fl-q.on:not(.map) .fl-qwho{transform:none}
 .fl-ui.qon .fl-hud{opacity:0;pointer-events:none}
-.fl-ui.qon .fl-pbtn{top:calc(var(--sat) + 116px);width:36px;height:36px}
+.fl-ui.qon .fl-pbtn{width:36px;height:36px}
 
 /* ---------------------------------------------------------------- panel */
 .fl-qc{padding:58px 12px calc(12px + var(--sab));border:0;border-radius:0;background:linear-gradient(180deg,rgba(7,8,15,0),rgba(7,8,15,.9) 42px,#07080f 64px);box-shadow:none}
@@ -87,49 +87,68 @@ export const CSS_ARENA = /* css */ `
 .fl-jkb.zero>i{background:#5d6680;color:#e8eefc}
 .fl-jkb.arm::after{inset:-5px;border-radius:0}
 
-/* ---------------------------------------------------------------- düello afişi */
-.fl-q:not(.map) .fl-qwho{margin:0;height:auto;align-items:stretch;justify-content:stretch;gap:0;pointer-events:none;filter:drop-shadow(0 8px 18px rgba(0,0,0,.55))}
-.fl-qwho.duel{height:calc(100px + var(--sat));border:0;border-radius:0;background:none;box-shadow:none}
-.fl-qwho.duel .fl-qp{flex:1 1 0;min-width:0;max-width:none;gap:11px;padding:var(--sat) 66px 0 14px;border:0;border-radius:0;box-shadow:none;
-  background:linear-gradient(100deg,var(--pc),color-mix(in srgb,var(--pc) 62%,#000));clip-path:polygon(0 0,100% 0,82% 100%,0 100%)}
-.fl-qwho.duel .fl-qp.d{flex-direction:row-reverse;padding:var(--sat) 14px 0 66px;background:linear-gradient(260deg,var(--pc),color-mix(in srgb,var(--pc) 62%,#000));clip-path:polygon(18% 0,100% 0,100% 100%,0 100%);text-align:right}
-.fl-qwho.duel .fl-qp::after{display:none}
-.fl-qwho.duel .fl-qp+.fl-qvs+.fl-qp{margin-left:-14%}
-.fl-qwho.duel .fl-qp .fl-av{width:54px;height:54px;border-radius:12px;border:3px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.35);transform:skewX(-6deg)}
-.fl-qwho.duel .fl-qp .nm small{order:-1;margin:0 0 1px;font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:11px;letter-spacing:.22em;color:rgba(255,255,255,.9)}
-.fl-qwho.duel .fl-qp .nm{display:flex;flex-direction:column}
-.fl-qwho.duel .fl-qp.d .nm{align-items:flex-end}
-.fl-qwho.duel .fl-qp .nm b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:30px;line-height:.95;text-transform:uppercase;text-shadow:0 2px 0 rgba(0,0,0,.3)}
-.fl-qp .sc{display:block;font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:16px;line-height:1.05;color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
-.fl-qwho.duel .fl-qvs{position:absolute;left:50%;top:calc(var(--sat) + 26px);z-index:3;width:auto;height:auto;margin:0;border-radius:0;transform:translateX(-50%) skewX(-8deg);
-  padding:3px 11px;background:#0a0b14;border:2.5px solid #fff;box-shadow:0 6px 20px rgba(0,0,0,.6)}
-.fl-qwho.duel .fl-qvs b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:30px;line-height:1;letter-spacing:.04em;color:#ffd25a;text-shadow:none}
-.fl-qwho.duel .fl-qvs span{top:calc(100% + 34px);bottom:auto;max-width:150px;padding:3px 13px;border:0;border-radius:0;transform:translateX(-50%) skewX(8deg);
-  background:#ffd25a;color:#1a1200;box-shadow:none;font-family:'Barlow Condensed',sans-serif;font-style:normal;font-weight:800;font-size:11.5px;letter-spacing:.26em;text-transform:uppercase;clip-path:polygon(6% 0,100% 0,94% 100%,0 100%)}
-/* cevapladı: köşede yeşil etiket; cevap açılınca süre ya da çarpı */
-.fl-qwho.duel .fl-qp .st{left:52px;top:calc(var(--sat) + 62px);width:20px;height:20px;font-size:12px;border:2px solid #fff;background:#16c060}
-.fl-qwho.duel .fl-qp.d .st{left:auto;right:52px}
-.fl-qwho.duel .fl-qp.no .st{background:#ff3a2a}
-.fl-qwho.duel .fl-qp .tt{left:auto;right:76px;top:auto;bottom:10px;font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:14px;color:#fff;background:rgba(0,0,0,.35);padding:1px 6px;border-radius:0}
-.fl-qwho.duel .fl-qp.d .tt{right:auto;left:76px}
-.fl-q.rv .fl-qwho.duel .fl-qp .nm small{visibility:visible}
-.fl-qwho.duel .fl-qp.win .fl-av{box-shadow:0 0 0 3px var(--gold),0 0 18px rgba(255,210,90,.8)}
-.fl-qwho.duel .fl-qp.win::before{left:30px;top:calc(var(--sat) + 4px)}
-.fl-qwho.duel .fl-qp.d.win::before{left:auto;right:30px}
-
-/* ---------------------------------------------------------------- çok oyunculu afiş (yayılma, altın soru): eğik dilimler */
-.fl-q:not(.map) .fl-qwho:not(.duel){height:calc(94px + var(--sat));gap:0}
-.fl-q:not(.map) .fl-qwho:not(.duel) .fl-qp{flex:1 1 0;min-width:0;flex-direction:column;justify-content:center;gap:3px;padding:calc(var(--sat) + 8px) 4px 0;border:0;border-left:5px solid #0a0b14;border-radius:0;box-shadow:none;
-  background:linear-gradient(180deg,var(--pc),color-mix(in srgb,var(--pc) 62%,#000));text-align:center}
-.fl-q:not(.map) .fl-qwho:not(.duel) .fl-qp:first-child{border-left:0}
-.fl-q:not(.map) .fl-qwho:not(.duel) .fl-qp .fl-av{width:40px;height:40px;border-radius:10px;border:2.5px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.35)}
-.fl-q:not(.map) .fl-qwho:not(.duel) .fl-qp .nm b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:17px;line-height:1;text-transform:uppercase}
-.fl-q:not(.map) .fl-qwho:not(.duel) .fl-qp .sc{font-size:13px}
-.fl-q:not(.map) .fl-qwho:not(.duel) .fl-qp .st{left:auto;right:10px;top:calc(var(--sat) + 8px);width:18px;height:18px;font-size:11px;border:2px solid #fff;background:#16c060}
-.fl-q:not(.map) .fl-qwho:not(.duel) .fl-qp.no .st{background:#ff3a2a}
-.fl-q:not(.map) .fl-qwho:not(.duel) .fl-qp .tt{left:50%;right:auto;top:auto;bottom:-20px;transform:translateX(-50%);font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:12px;color:#fff;background:#0a0b14;padding:1px 6px;border-radius:0}
-.fl-q:not(.map) .fl-qwho:not(.duel)::after{content:attr(data-lb);position:absolute;left:50%;top:calc(var(--sat) + 98px);transform:translateX(-50%);white-space:nowrap;padding:3px 14px;background:#ffd25a;color:#1a1200;
-  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:11.5px;letter-spacing:.24em;clip-path:polygon(5% 0,100% 0,95% 100%,0 100%)}
+/* ---------------------------------------------------------------- ince afiş (seçenek 2): düello, çok oyunculu, takımlar */
+.fl-q:not(.map) .fl-qwho{position:relative;margin:0;height:calc(58px + var(--sat));align-items:stretch;justify-content:stretch;gap:0;border:0;border-radius:0;background:#06070d;box-shadow:none;
+  pointer-events:none;filter:drop-shadow(0 6px 14px rgba(0,0,0,.5))}
+.fl-q:not(.map) .fl-qwho .fl-qp{position:relative;flex:1 1 0;min-width:0;max-width:none;display:flex;align-items:center;gap:8px;padding:var(--sat) 12px 0;border:0;border-radius:0;box-shadow:none;
+  background:linear-gradient(160deg,var(--pc),color-mix(in srgb,var(--pc) 60%,#000))}
+.fl-q:not(.map) .fl-qwho .fl-qp::after{content:'';position:absolute;inset:0;background:linear-gradient(115deg,rgba(255,255,255,.2) 0 22%,rgba(255,255,255,0) 22%);opacity:1;border-radius:0;pointer-events:none}
+.fl-q:not(.map) .fl-qwho .fl-qp .fl-av{width:38px;height:38px;border-radius:10px;border:2.5px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.35);transform:skewX(-6deg)}
+.fl-q:not(.map) .fl-qwho .fl-qp .nm{position:relative;z-index:1;display:flex;flex-direction:column;min-width:0}
+.fl-q:not(.map) .fl-qwho .fl-qp .nm small{order:-1;margin:0;font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:9px;letter-spacing:.2em;line-height:1.1;color:rgba(255,255,255,.92)}
+.fl-q:not(.map) .fl-qwho .fl-qp .nm b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:20px;line-height:.95;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.fl-q:not(.map) .fl-qp .sc{display:block;font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:13px;line-height:1.05;color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
+/* düello: iki eğik yarı, ortada VS, altta hedef il */
+.fl-q:not(.map) .fl-qwho.duel .fl-qp{clip-path:polygon(0 0,100% 0,84% 100%,0 100%);padding-right:54px}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp.d{flex-direction:row-reverse;text-align:right;padding:var(--sat) 12px 0 54px;margin-left:-12%;clip-path:polygon(16% 0,100% 0,100% 100%,0 100%);background:linear-gradient(200deg,var(--pc),color-mix(in srgb,var(--pc) 60%,#000))}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp.d .nm{align-items:flex-end}
+.fl-q:not(.map) .fl-qwho .fl-qvs{position:absolute;left:50%;top:calc(var(--sat) + 12px);z-index:3;width:auto;height:auto;margin:0;border-radius:0;transform:translateX(-50%) skewX(-8deg);
+  padding:1px 8px;background:#0a0b14;border:2px solid #fff;box-shadow:0 4px 14px rgba(0,0,0,.6)}
+.fl-q:not(.map) .fl-qwho .fl-qvs b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:21px;line-height:1.05;letter-spacing:.04em;color:#ffd25a;text-shadow:none}
+.fl-q:not(.map) .fl-qwho .fl-qvs span{position:absolute;left:50%;top:calc(100% + 8px);bottom:auto;max-width:150px;padding:2px 11px;border:0;border-radius:0;transform:translateX(-50%) skewX(8deg);
+  background:#ffd25a;color:#1a1200;box-shadow:none;font-family:'Barlow Condensed',sans-serif;font-style:normal;font-weight:800;font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;white-space:nowrap}
+/* durum: cevapladı tiki avatar köşesinde; cevapta yanlışsa kırmızı, süre adın altında */
+.fl-q:not(.map) .fl-qwho .fl-qp .st{z-index:2;left:36px;top:calc(var(--sat) + 32px);width:17px;height:17px;font-size:10px;border:2px solid #fff;background:#16c060}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp.d .st{left:auto;right:36px}
+.fl-q:not(.map) .fl-qwho .fl-qp.no .st{background:#ff3a2a}
+.fl-q:not(.map) .fl-qwho .fl-qp .tt{z-index:2;left:auto;right:auto;top:auto;bottom:-17px;padding:1px 6px;border-radius:0;font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:12px;line-height:1.2;color:#fff;background:#0a0b14}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp.a .tt{left:10px}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp.d .tt{right:10px}
+.fl-q:not(.map) .fl-qwho .fl-qp.win .fl-av{box-shadow:0 0 0 3px var(--gold),0 0 16px rgba(255,210,90,.8)}
+.fl-q:not(.map) .fl-qwho .fl-qp.win::before{z-index:3;left:18px;top:calc(var(--sat) - 2px);width:18px;height:13px}
+.fl-q:not(.map) .fl-qwho.duel .fl-qp.d.win::before{left:auto;right:18px}
+/* çok oyunculu: eğik paneller, birleşimlerde VS, sol altta sıra */
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp{gap:6px;padding:var(--sat) 6px 0 14px;clip-path:polygon(14px 0,100% 0,calc(100% - 14px) 100%,0 100%);margin-left:-11px}
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp:first-of-type{margin-left:0;padding-left:8px;clip-path:polygon(0 0,100% 0,calc(100% - 14px) 100%,0 100%)}
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp:last-of-type{clip-path:polygon(14px 0,100% 0,100% 100%,0 100%)}
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp .fl-av{width:32px;height:32px;border-radius:9px;border-width:2px}
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp .nm b{font-size:16px}
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp .sc{font-size:12px}
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp .st{left:auto;right:12px;top:calc(var(--sat) + 4px)}
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp .tt{left:14px}
+.fl-q:not(.map) .fl-qwho .fl-qp .rk{position:absolute;z-index:2;left:4px;bottom:2px;font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:12px;color:rgba(255,255,255,.8)}
+.fl-q:not(.map) .fl-qwho .vx{position:relative;z-index:3;flex:none;width:0;align-self:center;margin-top:var(--sat)}
+.fl-q:not(.map) .fl-qwho .vx::before{content:'VS';position:absolute;left:-4px;top:50%;transform:translate(-50%,-50%) skewX(-8deg);padding:0 5px;background:#0a0b14;border:2px solid #fff;
+  font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:14px;line-height:1.25;color:#ffd25a;box-shadow:0 3px 10px rgba(0,0,0,.6)}
+.fl-q:not(.map) .fl-qwho:not(.duel)::after{content:attr(data-lb);position:absolute;left:50%;top:calc(var(--sat) + 62px);transform:translateX(-50%);white-space:nowrap;padding:2px 12px;background:#ffd25a;color:#1a1200;
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:10.5px;letter-spacing:.22em;clip-path:polygon(5% 0,100% 0,95% 100%,0 100%)}
+.fl-q:not(.map) .fl-qwho:not(.duel):not([data-lb])::after{display:none}
+/* takımlar: düello gibi iki yarı, her yarıda iki avatar yan yana + takım adı, puanı, isimler */
+.fl-q:not(.map) .fl-tmh{position:relative;flex:1 1 0;min-width:0;display:flex;align-items:center;gap:9px;padding:var(--sat) 50px 0 10px;background:linear-gradient(160deg,var(--pc),color-mix(in srgb,var(--pc) 60%,#000));clip-path:polygon(0 0,100% 0,84% 100%,0 100%)}
+.fl-q:not(.map) .fl-tmh.d{flex-direction:row-reverse;text-align:right;padding:var(--sat) 10px 0 50px;margin-left:-12%;clip-path:polygon(16% 0,100% 0,100% 100%,0 100%)}
+.fl-q:not(.map) .fl-tmh .avs{display:flex;gap:5px}
+.fl-q:not(.map) .fl-tmh .fl-qp{flex:none!important;padding:0!important;background:none!important;clip-path:none!important}
+.fl-q:not(.map) .fl-tmh .fl-qp::after{display:none}
+.fl-q:not(.map) .fl-tmh .fl-qp .nm{display:none}
+.fl-q:not(.map) .fl-tmh .fl-qp .fl-av{width:34px;height:34px}
+.fl-q:not(.map) .fl-tmh .fl-qp .st{left:auto;right:-4px;top:auto;bottom:-4px}
+.fl-q:not(.map) .fl-tmh .fl-qp .tt{left:50%!important;transform:translateX(-50%);bottom:-19px}
+.fl-q:not(.map) .fl-tmh .tn{display:flex;flex-direction:column;min-width:0}
+.fl-q:not(.map) .fl-tmh.d .tn{align-items:flex-end}
+.fl-q:not(.map) .fl-tmh .tn small{font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:9.5px;letter-spacing:.14em;white-space:nowrap}
+.fl-q:not(.map) .fl-tmh .tn small i{color:#ffe680}
+.fl-q:not(.map) .fl-tmh .tn b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:15px;line-height:.95;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-ui.qon .fl-pbtn{top:calc(var(--sat) + 70px)}
 
 /* ---------------------------------------------------------------- sonuç damgası: harita alanının ortasında */
 .fl-q:not(.map) .fl-stamp{top:44%;animation-name:flStampB}

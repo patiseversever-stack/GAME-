@@ -109,7 +109,7 @@ const CSS = `
   background:linear-gradient(180deg,#0e1a42,#0a1230);border-bottom:1px solid rgba(255,214,120,.25);color:#eef2fa;font-family:'Fredoka',system-ui,sans-serif;font-weight:600}
 .gal{transform:translateY(-104%);transition:transform .24s cubic-bezier(.2,.8,.2,1);box-shadow:0 10px 30px rgba(0,0,0,.45)}
 .gal.show{transform:none}
-.gal-fab{position:fixed;z-index:69;top:calc(8px + env(safe-area-inset-top,0px));width:38px;height:38px;border-radius:12px;border:1.5px solid rgba(255,214,120,.5);
+.gal-fab{position:fixed;z-index:69;top:calc(66px + env(safe-area-inset-top,0px));width:38px;height:38px;border-radius:12px;border:1.5px solid rgba(255,214,120,.5);
   background:rgba(14,26,66,.82);color:#ffd25a;font:800 18px/1 system-ui,sans-serif;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.4);touch-action:manipulation}
 .gal-fab:focus-visible{outline:2px solid #ffd25a;outline-offset:2px}
 .gal-fab[hidden]{display:none}

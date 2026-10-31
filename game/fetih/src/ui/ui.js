@@ -623,19 +623,41 @@ export class UI {
 		// joker geri çağrısı (_jkCb) burada SİLİNMEZ: Match.ask onu soru kartı açılmadan hemen önce
 		// refreshJokers → ui.jokers(list, cb) ile kurar. Eskiden burada null'lanıyordu; insanın joker düğmeleri
 		// hiçbir şey yapmıyordu (v0.8 gece denetimi). Maçtan çıkınca reset() temizler.
-		const plate = (p, k, sub) =>
-			`<div class="fl-qp ${k}" data-p="${p.i}" style="--pc:${p.css}"><span class="fl-av">${avatar(this.look(p))}</span><span class="nm"><b>${esc(p.name)}</b>${
+		// Arena afişi (v1.4): plaka = avatar + ad + puan (+ sıra); cevapladı/doğru/yanlış .st, süre .tt
+		const score = (p) => (Number.isFinite(p.score) ? `<span class="sc">${p.score.toLocaleString('tr-TR')}</span>` : '');
+		const ranks = new Map(
+			who
+				.slice()
+				.sort((a, b) => (b.score || 0) - (a.score || 0))
+				.map((p, k) => [p.i, k + 1]),
+		);
+		const plate = (p, k, sub, rk = 0) =>
+			`<div class="fl-qp ${k}" data-p="${p.i}" style="--pc:${p.css}">${rk ? `<span class="rk">${rk}.</span>` : ''}<span class="fl-av">${avatar(this.look(p))}</span><span class="nm"><b>${esc(p.name)}</b>${
 				sub ? `<small>${sub}</small>` : ''
-			}</span><i class="st">${ico('check', { w: 3.4 })}</i><span class="tt"></span></div>`;
+			}${score(p)}</span><i class="st">${ico('check', { w: 3.4 })}</i><span class="tt"></span></div>`;
+		const teams = !duel && !!m.mode?.teams && who.length > 2;
+		const half = (tm, k) => {
+			const ps = who.filter((p) => p.team === tm);
+			const sum = ps.reduce((a, p) => a + (p.score || 0), 0);
+			return `<div class="fl-tmh ${k}" style="--pc:${ps[0]?.css || '#888'}"><div class="avs">${ps.map((p) => plate(p, '', '')).join('')}</div><div class="tn"><small>TAKIM ${tm ? 'B' : 'A'} · <i>${sum.toLocaleString(
+				'tr-TR',
+			)}</i></small>${ps.map((p) => `<b>${esc(p.name)}</b>`).join('')}</div></div>`;
+		};
 		const whoHTML = duel
 			? `${plate(ctx.attacker, 'a', 'SALDIRAN')}<div class="fl-qvs"><b>VS</b>${prov ? `<span>${esc(prov.name)}</span>` : ''}</div>${plate(ctx.defender, 'd', siege ? 'KALE' : 'SAVUNAN')}`
-			: who.map((p) => plate(p, '', '')).join('');
+			: teams
+				? `${half(0, 'a')}<div class="fl-qvs"><b>VS</b></div>${half(1, 'd')}`
+				: who.map((p, k) => (k ? '<i class="vx">VS</i>' : '') + plate(p, '', '', who.length > 2 ? ranks.get(p.i) : 0)).join('');
+		const lbl = ctx.phase === 'altin' ? 'ALTIN SORU' : teams ? 'TAKIMLAR · HERKES CEVAPLIYOR' : ctx.phase === 'yayilma' ? 'YAYILMA · HERKES CEVAPLIYOR' : '';
 		const rule = !human ? 'İzliyorsun' : ctx.phase === 'altin' ? 'Altın soru' : tie ? 'Eşitlik bozma' : closest ? 'En yakın kazanır' : '';
 		card.className = `fl-q${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}`;
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));
 		card.style.setProperty('--me', human ? avatarURL(this.look(human)) : 'none');
-		card.innerHTML = `<div class="fl-qwho${duel ? ' duel' : ''}">${whoHTML}</div>
+		const qlen = String(q.q || '').length;
+		card.classList.toggle('qmid', qlen > 50 && qlen <= 80);
+		card.classList.toggle('qlong', qlen > 80);
+		card.innerHTML = `<div class="fl-qwho${duel ? ' duel' : teams ? ' teams' : ''}" style="--n:${who.length}"${lbl ? ` data-lb="${lbl}"` : ''}>${whoHTML}</div>
 			<div class="fl-qc">
 				<div class="fl-qhead"><span class="fl-cat"><span class="ci">${ico(cat.icon, { w: 2.6, c: cat.color })}</span><b>${esc(cat.name)}</b></span><span class="fl-type">${esc(
 					String(T.label || '').toLocaleUpperCase('tr-TR'),
@@ -677,6 +699,13 @@ export class UI {
 		cur = { m, ctx, card, body, ctl, api, answered, finish };
 		this.current = cur;
 		this._enhance(body, v);
+		// Arena: şıklar kısaysa 2×2, biri uzunsa ince tek sütun (kart ekranın yarısını aşmasın)
+		const os = body.querySelector('.fl-opts');
+		if (os && !os.classList.contains('three') && !os.classList.contains('one')) {
+			const mx = Math.max(0, ...[...os.children].map((b) => (b.querySelector('span')?.textContent || b.textContent).trim().length));
+			if (mx > 17) os.classList.add('one');
+			card.classList.toggle('olong', mx > 34);
+		}
 		this._renderJokers();
 		if (map) {
 			// kartın gerçek boyu ölçülür: kadraj tahminden farklıysa yumuşakça düzeltilir
@@ -690,6 +719,7 @@ export class UI {
 		}
 		await sleep(20);
 		card.classList.add('on');
+		this.el.classList.toggle('qon', !map); // haritasız soruda üst oyuncu kartları afişe yer açar
 		this.sfx('question', { type: q.type, cat: q.cat });
 		t0 = clock.now();
 		showBotJokers(this, ctx.botJokers, gen);
@@ -899,6 +929,7 @@ export class UI {
 		await this._hold(Math.max(closest ? 3000 : 1900, Math.min(12000, film)));
 		if (gen !== this._gen) return;
 		card.classList.remove('on');
+		this.el.classList.remove('qon');
 		this.setPins([]);
 		await sleep(260);
 		if (gen !== this._gen) return;
@@ -935,6 +966,7 @@ export class UI {
 			const r = byRGB.get(w.style.backgroundColor) || results.find((x) => x.color === w.style.background);
 			if (!r) continue;
 			w.dataset.av = '1';
+			w.parentElement?.style.setProperty('--wn', w.parentElement.querySelectorAll('.fl-who').length);
 			w.style.borderColor = '#fff';
 			w.innerHTML = avatar({ ...this.look(r.p), img: null });
 		}
@@ -1313,6 +1345,7 @@ export class UI {
 		const $ = this.$;
 		$.q.className = 'fl-q';
 		$.q.innerHTML = '';
+		this.el.classList.remove('qon');
 		$.wheel.classList.remove('on', 'pick', 'done', 'spinning', 'fetih');
 		$.wheel.style.display = 'none';
 		$.wheel.style.pointerEvents = 'none';
