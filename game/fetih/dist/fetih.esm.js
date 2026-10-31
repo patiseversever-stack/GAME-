@@ -5573,7 +5573,7 @@ ${t1}{
   background:rgba(6,7,13,.6);box-shadow:inset 0 0 0 1px rgba(255,230,128,.35);font-family:'Lilita One',sans-serif;font-style:normal;font-weight:400;font-size:var(--sf,4.6cqw);line-height:1.15;letter-spacing:.02em;color:#ffe680;text-shadow:none}
 .fl-q:not(.map) .fl-qwho .fl-qp:not(:has(small)) .sc{align-self:center}
 /* ba\u015Fl\u0131ks\u0131z dilimler (yay\u0131lma, 3/4'l\xFC): puan resmin tam ortas\u0131nda (bo\u015F ba\u015Fl\u0131k sat\u0131r\u0131 yok) */
-.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp:not(:has(small)){grid-template-rows:auto auto;grid-template-areas:"av sc" "nm nm"}
+.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp:not(:has(small)),.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp:has(+ .vx):not(:has(small)),.fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .vx + .fl-qp:not(:has(small)){grid-template-rows:auto auto;grid-template-areas:"av sc" "nm nm"}
 .fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .vx + .fl-qp:not(:has(small)){grid-template-rows:auto auto;grid-template-areas:"sc av" "nm nm"}
 .fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp:not(:has(small)) .sc{align-self:center}
 /* d\xFCello: sald\u0131ran solda, savunan aynal\u0131; isim e\u011Fik diki\u015Fe kadar */
