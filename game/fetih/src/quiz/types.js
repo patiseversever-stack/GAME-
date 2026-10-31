@@ -78,7 +78,9 @@ export const TYPES = {
 			return { q, right: q.ans ? 0 : 1 };
 		},
 		mount(el, v, api) {
-			el.innerHTML = `<div class="fl-tf"><button class="fl-opt fl-yes" data-i="0"><span>DOĞRU</span></button><button class="fl-opt fl-no" data-i="1"><span>YANLIŞ</span></button></div>`;
+			// Arena "HÜKÜM": tek eğik levhanın iki yarısı, ortada "YA DA" dikişi (stil: styles-arena.js .fl-tf.vd)
+			el.innerHTML = `<div class="fl-tf vd"><button class="fl-opt fl-yes" data-i="0"><em class="ic"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg></em><span>DOĞRU</span></button><div class="fl-tfmid"><i></i><b>YA DA</b></div><button class="fl-opt fl-no" data-i="1"><em class="ic"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></em><span>YANLIŞ</span></button></div>`;
+			el.closest('.fl-q')?.classList.add('tf');
 			const btns = [...el.querySelectorAll('.fl-opt')];
 			let done = false;
 			for (const b of btns)
@@ -95,7 +97,16 @@ export const TYPES = {
 				reveal(results) {
 					btns[v.right].classList.add('right');
 					btns[1 - v.right].classList.add('dim');
+					if (btns[1 - v.right].classList.contains('pick')) btns[1 - v.right].classList.add('wrong');
 					for (const r of results) if (r.value != null) btns[r.value]?.insertAdjacentHTML('beforeend', `<b class="fl-who" style="background:${r.color}"></b>`);
+					// iddia kartının tamamı hükme döner (yeşil/kırmızı silme + parıltı + büyük işaret)
+					const card = el.closest('.fl-q');
+					const qt = card?.querySelector('.fl-qtext');
+					if (qt && !qt.querySelector('.fl-tfx')) {
+						card.classList.add(v.right ? 'tfn' : 'tfy');
+						const ic = v.right ? '<path d="M6 6l12 12M18 6 6 18"/>' : '<path d="M4.5 12.5l5 5 10-11"/>';
+						qt.insertAdjacentHTML('beforeend', `<i class="fl-tfx"></i><b class="fl-tfbig"><svg viewBox="0 0 24 24">${ic}</svg></b>`);
+					}
 				},
 				destroy() {},
 			};

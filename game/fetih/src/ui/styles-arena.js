@@ -161,4 +161,67 @@ export const CSS_ARENA = /* css */ `
 .fl-q.map{top:calc(var(--sat) + 4px);width:min(calc(100 * var(--vw) - 8px),560px)}
 .fl-q.map .fl-qtext{font-size:20px;margin-bottom:8px}
 .fl-q.map .fl-clock b{font-size:34px}
+
+/* ---------------------------------------------------------------- doğru/yanlış: HÜKÜM (ref/tasarim-v14-tf-*.jpg)
+   üstte İDDİA kartı; altta tek eğik levhanın iki yarısı (DOĞRU | YA DA | YANLIŞ); seçilen yarı genişler, öteki söner;
+   cevapta iddia kartının TAMAMI hükme döner (yeşil/kırmızı silme + parıltı + büyük işaret). Levha ile jokerler arası geniş. */
+.fl-q.tf .fl-qtext{position:relative;isolation:isolate;overflow:hidden;margin:0 0 14px;padding:12px 54px 15px 16px;border-left:5px solid var(--cc);
+  background:linear-gradient(180deg,#151b33,#0d1124);clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);
+  font-size:22px;line-height:1.2;text-shadow:none;text-wrap:balance;transition:border-color .25s .3s}
+.fl-q.tf.qmid .fl-qtext{font-size:20px}
+.fl-q.tf.qlong .fl-qtext{font-size:18.5px}
+.fl-q.tf .fl-qtext::before{content:'İDDİA';display:block;margin-bottom:6px;font:italic 800 12px/1.25 'Barlow Condensed',sans-serif;letter-spacing:.26em;color:var(--cc);
+  background:linear-gradient(90deg,rgba(255,255,255,.25),transparent) no-repeat 64px 55%/calc(100% - 64px) 1px}
+.fl-q.tf .fl-qtext::after{content:'”';position:absolute;right:12px;top:-2px;font:400 64px/1 'Lilita One',sans-serif;color:rgba(255,255,255,.07);transition:opacity .2s}
+.fl-q.tf .fl-qbody{margin-bottom:30px}
+/* hüküm: kart dönüşür */
+.fl-q.tfy{--vg:linear-gradient(160deg,#4fe07e,#129a45);--vk:#129a45}
+.fl-q.tfn{--vg:linear-gradient(200deg,#ff6f5a,#b8261a);--vk:#c42a1a}
+.fl-q.tf .fl-tfx{position:absolute;inset:0;z-index:-1;overflow:hidden;background:repeating-linear-gradient(115deg,rgba(255,255,255,.08) 0 10px,transparent 10px 22px),var(--vg);
+  clip-path:polygon(0 0,0 0,-30px 100%,-30px 100%);animation:flTfWipe .55s .1s cubic-bezier(.75,0,.2,1) forwards}
+.fl-q.tf .fl-tfx::after{content:'';position:absolute;top:0;bottom:0;left:0;width:60%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.6) 50%,transparent);transform:translateX(-120%);animation:flTfGlint .6s .6s ease-out forwards}
+.fl-q.tfy .fl-qtext,.fl-q.tfn .fl-qtext{border-left-color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.22);animation:flTfPunch .5s .45s cubic-bezier(.3,1.6,.5,1) both}
+.fl-q.tfy .fl-qtext::before{content:'HÜKÜM · DOĞRU';color:#fff;background-image:linear-gradient(90deg,rgba(255,255,255,.6),transparent);background-position:118px 55%;background-size:calc(100% - 118px) 1px;animation:flTfFade .3s .35s both}
+.fl-q.tfn .fl-qtext::before{content:'HÜKÜM · YANLIŞ';color:#fff;background-image:linear-gradient(90deg,rgba(255,255,255,.6),transparent);background-position:124px 55%;background-size:calc(100% - 124px) 1px;animation:flTfFade .3s .35s both}
+.fl-q.tfy .fl-qtext::after,.fl-q.tfn .fl-qtext::after{opacity:0}
+.fl-q.tf .fl-tfbig{position:absolute;right:10px;top:50%;width:40px;height:40px;margin-top:-20px;border-radius:50%;display:grid;place-items:center;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.22);
+  animation:flTfBig .5s .5s cubic-bezier(.3,1.8,.5,1) both}
+.fl-q.tf .fl-tfbig svg{width:26px;height:26px;fill:none;stroke:var(--vk);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+@keyframes flTfWipe{to{clip-path:polygon(0 0,calc(100% + 30px) 0,100% 100%,0 100%)}}
+@keyframes flTfGlint{to{transform:translateX(220%)}}
+@keyframes flTfPunch{0%,100%{transform:none}40%{transform:scale(1.03)}}
+@keyframes flTfFade{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@keyframes flTfBig{from{transform:scale(0) rotate(-50deg)}to{transform:none}}
+/* hüküm levhası */
+.fl-tf.vd{display:flex;gap:0;height:90px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.45))}
+.fl-q .fl-tf.vd .fl-opt{position:relative;flex:1;min-width:0;min-height:0;height:100%;padding:0 10px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;overflow:hidden;
+  border:0;border-radius:0;color:#fff;font:italic 800 30px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;text-shadow:0 3px 0 rgba(0,0,0,.25);
+  box-shadow:none!important;opacity:1;transition:flex .32s cubic-bezier(.3,1.3,.5,1),filter .3s,font-size .25s}
+.fl-q .fl-tf.vd .fl-yes{background:linear-gradient(160deg,#5ff08a,#16a64c)!important;clip-path:polygon(0 0,100% 0,calc(100% - 28px) 100%,0 100%);margin-right:-14px;padding-right:24px}
+.fl-q .fl-tf.vd .fl-no{background:linear-gradient(200deg,#ff7a66,#c42a1a)!important;clip-path:polygon(28px 0,100% 0,100% 100%,0 100%);margin-left:-14px;padding-left:24px}
+.fl-q .fl-tf.vd .fl-opt::before{content:'';position:absolute;inset:0;width:auto;height:auto;-webkit-mask:none;mask:none;pointer-events:none;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.07) 0 10px,transparent 10px 22px),linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%)}
+.fl-q .fl-tf.vd .fl-opt:active{transform:translateY(2px)}
+.fl-tf.vd .ic{position:relative;flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.95);box-shadow:0 3px 0 rgba(0,0,0,.2);transition:width .25s,height .25s}
+.fl-tf.vd .ic svg{width:66%;height:66%;fill:none;stroke:#16a64c;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.fl-tf.vd .fl-no .ic svg{stroke:#c42a1a}
+.fl-tf.vd .fl-opt span{position:relative}
+.fl-tfmid{position:relative;flex:none;width:0;z-index:2;pointer-events:none}
+.fl-tfmid i{position:absolute;left:-4px;top:0;bottom:0;width:8px;background:#07080f;transform:skewX(-16deg)}
+.fl-tfmid b{position:absolute;left:-6px;bottom:7px;transform:translateX(-50%) skewX(-8deg);padding:2px 7px;background:#07080f;border:2px solid #fff;font:italic 800 13px 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#ffd25a;white-space:nowrap;transition:opacity .2s}
+/* seçim: seçilen yarı genişler, altın çerçeve; seçenin portresi yazının hemen yanında, altın halkalı "oy pulu" */
+.fl-q .fl-tf.vd .fl-opt.pick{flex:1.3;box-shadow:inset 0 0 0 3px #ffe680!important}
+.fl-q .fl-tf.vd:has(.pick) .fl-opt:not(.pick),.fl-q .fl-tf.vd .fl-opt.dim{flex:.7;font-size:22px;gap:6px;filter:saturate(.35) brightness(.6)}
+.fl-q .fl-tf.vd:has(.pick) .fl-opt:not(.pick) .ic,.fl-q .fl-tf.vd .fl-opt.dim .ic{width:28px;height:28px}
+.fl-q .fl-tf.vd:has(.pick) .fl-tfmid b,.fl-q.rv .fl-tfmid b{opacity:0}
+.fl-q .fl-tf.vd .fl-opt.pick::after{content:'';position:relative;inset:auto;flex:none;width:34px;height:34px;margin:0 0 0 2px;transform:none;border-radius:50%;
+  border:2.5px solid #fff;background:var(--me) center/cover;box-shadow:0 0 0 2.5px #ffd25a,0 3px 0 2px rgba(0,0,0,.3);animation:flPopIn .3s cubic-bezier(.3,1.8,.5,1) both}
+.fl-q.rv .fl-tf.vd .fl-opt.pick::after{display:none}
+/* cevap: doğru yarı parlar, öteki külleşir; cevaplayanların portreleri aynı yerde yan yana */
+.fl-q .fl-tf.vd .fl-opt.right{flex:1.3;filter:none;box-shadow:inset 0 0 0 3px #fff!important}
+.fl-q .fl-tf.vd .fl-opt.dim,.fl-q.locked .fl-tf.vd .fl-opt.dim{opacity:1;filter:grayscale(.85) brightness(.42)}
+.fl-q .fl-tf.vd .fl-who{position:relative;inset:auto;flex:none;width:32px;height:32px;margin:0 0 0 -3px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.3);overflow:hidden;animation:flPopIn .3s cubic-bezier(.3,1.8,.5,1) both}
+.fl-q .fl-tf.vd .fl-who:first-of-type{margin-left:2px}
+.fl-q .fl-tf.vd .fl-opt.dim .fl-who{width:26px;height:26px;filter:grayscale(0)}
+.fl-q.locked .fl-tf.vd .fl-opt{opacity:1}
 `;
