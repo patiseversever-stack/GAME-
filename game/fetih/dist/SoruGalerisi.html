@@ -9443,6 +9443,13 @@ ${lr}{
 .fl-q:not(.map) .fl-qwho .fl-qvs b{font-size:5.6cqw}
 .fl-q:not(.map) .fl-qwho .fl-qvs span{top:calc(100% + 1.6cqw);max-width:60cqw;padding:.5cqw 3.2cqw;font-size:3.4cqw;letter-spacing:.2em}
 .fl-q:not(.map) .fl-qwho .vx::before{top:auto;bottom:-4.4cqw;transform:translate(-50%,0) skewX(-8deg);padding:0 1.4cqw;font-size:4.4cqw}
+/* VS rozeti v2: alt\u0131n degrade \xE7er\xE7eve, koyu i\xE7, parlayan alt\u0131n yaz\u0131; birle\u015Fim diki\u015Finin alt ucunda ortal\u0131 */
+.fl-q:not(.map) .fl-qwho .fl-qvs,.fl-q:not(.map) .fl-qwho .vx::before{border:.55cqw solid transparent;border-radius:1.4cqw;
+  background:linear-gradient(180deg,#2b3150,#0b0d18) padding-box,linear-gradient(135deg,#fff4b8,#ffc23a 40%,#b8730a 75%,#ffe27a) border-box;
+  box-shadow:0 .8cqw 2cqw rgba(0,0,0,.65),0 0 0 .35cqw rgba(6,7,13,.85),0 0 2.4cqw rgba(255,190,40,.35)}
+.fl-q:not(.map) .fl-qwho .fl-qvs b,.fl-q:not(.map) .fl-qwho .vx::before{color:#ffe27a;text-shadow:0 0 1.6cqw rgba(255,190,40,.75),0 .3cqw 0 rgba(0,0,0,.6);letter-spacing:.06em}
+.fl-q:not(.map) .fl-qwho .fl-qvs{padding:.1cqw 2.4cqw .3cqw}
+.fl-q:not(.map) .fl-qwho .vx::before{left:-3cqw;padding:.1cqw 1.8cqw .3cqw;font-size:4.6cqw;line-height:1.2}
 .fl-q:not(.map) .fl-qwho:not(.duel)::after{top:calc(var(--sat) + 28.5cqw);padding:.5cqw 3.6cqw;font-size:3.4cqw;letter-spacing:.2em}
 .fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams)::after{top:calc(var(--sat) + 25.5cqw)}
 .fl-ui.qon .fl-pbtn{top:calc(var(--sat) + 28px + min(100vw, 560px) * .23)}
