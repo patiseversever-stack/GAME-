@@ -868,6 +868,11 @@ export class FX {
 		this.waveMesh.visible = this.waveMesh.geometry.instanceCount > 0;
 	}
 
+	/** Gölgeyi etkileyen bir şey hareket ediyor mu (ordular, makineler, taşlar, kale inişi gibi zamanlı canlandırmalar). */
+	get moving() {
+		return this.np > 0 || this.battle.moving || this.rocks.some((r) => r.on) || this.waves.some((w) => w.on) || this.emitters.some((e) => e.on) || this.anims.some((a) => a.on) || this.timeline.some((e) => e.on);
+	}
+
 	get busy() {
 		return this.np > 0 || this.battle.on || this.rocks.some((r) => r.on) || this.waves.some((w) => w.on) || this.emitters.some((e) => e.on);
 	}

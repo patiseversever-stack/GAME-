@@ -513,6 +513,14 @@ export class Cinema {
 	_crane(p1, y1, pitch1, d1, p2, y2, pitch2, d2, dur) {
 		const cam = this.app.cam;
 		const t = cam.target;
+		// çok uzaktaysa (bütün harita, bölge görünümü) uzun bir uçuş yerine kesme: kamera saldıranın ilinin üstünde,
+		// vincin ilk yüksekliğinin biraz üstünde başlar (gece kararırken; film kısa ve odaklı, uzaktan süzülme yok)
+		if (cam.dist > d1 * 1.6) {
+			t.set(p1.x, p1.y, p1.z);
+			cam.dist = d1 * 1.45;
+			cam.yaw = cam.yaw + wrapPi(y1 - cam.yaw);
+			cam.pitch = Math.min(1.25, pitch1 + 0.08);
+		}
 		const yaw0 = cam.yaw;
 		const ya = yaw0 + wrapPi(y1 - yaw0);
 		const yb = ya + wrapPi(y2 - ya);

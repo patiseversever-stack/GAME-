@@ -145,6 +145,18 @@ export class Tags {
 
 	_rect() {
 		const ui = this.ui;
+		// boyut her karede okunmaz (kareler arası yazılan dönüşümlerden sonra okumak tarayıcıya stil hesabı yaptırır):
+		// yalnız katman boyu değişince (ResizeObserver) ya da arayüz düzeni değişince (soru kartı açılıp kapanınca)
+		if (!this._ro && typeof ResizeObserver === 'function') {
+			this._ro = new ResizeObserver(() => (this._dirty = true));
+			this._ro.observe(this.el);
+			this._dirty = true;
+		}
+		const lay = ui.el.className;
+		if (this._ro && !this._dirty && lay === this._lay) return;
+		this._dirty = false;
+		this._lay = lay;
+		this.W = -1;
 		const W = this.el.clientWidth;
 		const H = this.el.clientHeight;
 		if (W === this.W && H === this.H) return;

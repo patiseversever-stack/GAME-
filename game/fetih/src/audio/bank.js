@@ -7,6 +7,65 @@
 //   devam eder, müzik sessiz kalır (oyun etkilenmez).
 // - Müzik döngüleri bellek tavanını aşınca en eski kullanılan (çalmayan) döngü atılır; gerekirse yeniden pişirilir.
 import { canBake, renderSfx, renderTheme, sfxToBuffer, toBuffers } from './bake.js';
+import { reverbPass } from './reverb.js';
+
+/**
+ * Ses işçisi (audio/worker.js, derlemede metin olarak gömülür: __AUDIO_WORKER__). Pişirme hesabı oyun karesiyle
+ * yarışmasın diye ayrı iş parçacığında koşar; yankı geçişi için işçi ana tarafa döner (tarayıcının ses iş parçacığı).
+ * İşçi kurulamazsa ya da çökerse null: pişirme eskisi gibi ana iş parçacığında, dilimlerle.
+ */
+let WK;
+export function audioWorker() {
+	if (WK !== undefined) return WK;
+	WK = null;
+	try {
+		// eslint-disable-next-line no-undef
+		const code = typeof __AUDIO_WORKER__ !== 'undefined' ? __AUDIO_WORKER__ : null;
+		if (!code || typeof Worker !== 'function' || typeof Blob !== 'function' || typeof URL === 'undefined') return WK;
+		const w = new Worker(URL.createObjectURL(new Blob([code], { type: 'text/javascript' })));
+		const calls = new Map();
+		let id = 0;
+		const fail = () => {
+			WK = null;
+			for (const r of calls.values()) r.rej(new Error('ses işçisi durdu'));
+			calls.clear();
+			try {
+				w.terminate();
+			} catch (e) {
+				/* yok say */
+			}
+		};
+		w.onerror = fail;
+		w.onmessage = (e) => {
+			const m = e.data;
+			if (m.t === 'rv') {
+				reverbPass(m.wL, m.wR, m.sr, m.ir).then(
+					(out) => {
+						const o = out ? { L: out.L.slice(), R: out.R.slice() } : null;
+						w.postMessage({ t: 'rv', k: m.k, out: o }, o ? [o.L.buffer, o.R.buffer] : []);
+					},
+					() => w.postMessage({ t: 'rv', k: m.k, out: null }),
+				);
+				return;
+			}
+			const c = calls.get(m.id);
+			calls.delete(m.id);
+			c?.res(m.r);
+		};
+		WK = {
+			call(msg) {
+				return new Promise((res, rej) => {
+					const i = ++id;
+					calls.set(i, { res, rej });
+					w.postMessage({ ...msg, id: i });
+				});
+			},
+		};
+	} catch (e) {
+		WK = null;
+	}
+	return WK;
+}
 
 const gap = (ms) => new Promise((r) => (typeof setTimeout === 'function' ? setTimeout(r, ms) : r()));
 
@@ -94,12 +153,14 @@ export class Bank {
 		this.run = job;
 		const t0 = typeof performance !== 'undefined' ? performance.now() : 0;
 		try {
+			const wk = this.worker === false ? null : audioWorker();
 			if (job.kind === 'sfx') {
-				const r = await renderSfx(job.name, job.opts, { low: this.low });
+				const r = wk ? await wk.call({ t: 'sfx', name: job.name, opts: job.opts, low: this.low }) : await renderSfx(job.name, job.opts, { low: this.low });
 				if (r) this.sfx.set(job.key, { buf: sfxToBuffer(r), dur: r.dur, gain: r.gain });
 				else this.fail.add(job.key);
 			} else {
-				const r = await renderTheme(job.name, { low: this.low });
+				const r = wk ? await wk.call({ t: 'music', name: job.name, low: this.low }) : await renderTheme(job.name, { low: this.low });
+				if (!r) throw new Error('pişmedi');
 				const stems = toBuffers(r);
 				const bytes = stems.reduce((a, b) => a + b.length * b.numberOfChannels * 4, 0);
 				this.music.set(job.name, { stems, len: r.len, sr: r.sr, sync: r.sync, hot: r.hot, bytes, used: Date.now() });

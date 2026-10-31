@@ -4,7 +4,7 @@
 
 import * as THREE from 'three';
 import { mergeVertices } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { H } from './heroes.js';
+import { H } from './herokit.js';
 
 export { H };
 

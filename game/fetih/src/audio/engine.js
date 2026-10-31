@@ -11,6 +11,8 @@ const MASTER = 0.55; // sıkıştırıcı öncesi pay: Chrome sıkıştırıcıs
 
 // Bağlamlar arası paylaşılan AudioBuffer'lar (spesifikasyon izin verir): vuruş ve tel örnekleri bir kez kurulur.
 const SHARED = new Map();
+// ses işçisinin açılışta (kilit açılmadan, AudioContext yokken) ürettiği ham örnekler: ilk dokunuşun sesi hazır bulunur
+export const PRE = new Map();
 const SHARED_PLUCK = new Map();
 
 export class Engine {
@@ -186,11 +188,19 @@ export class Engine {
 		if (stop) src.stop(stop);
 	}
 
+	/** Önceden (ses işçisinde) üretilmiş vuruş örneğini yerleştir. */
+	put(name, d) {
+		if (!this.ctx || SHARED.has(name) || !d) return;
+		const b = this.ctx.createBuffer(1, d.length, BANK_RATE);
+		b.getChannelData(0).set(d);
+		SHARED.set(name, b);
+	}
+
 	/** Vuruş örneği (paylaşılan AudioBuffer). */
 	buf(name) {
 		let b = SHARED.get(name);
 		if (b) return b;
-		const d = buildSample(name, BANK_RATE);
+		const d = PRE.get(name) || buildSample(name, BANK_RATE);
 		if (!d) return null;
 		b = this.ctx.createBuffer(1, d.length, BANK_RATE);
 		b.getChannelData(0).set(d);

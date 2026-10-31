@@ -15,11 +15,11 @@
 // Mimari: ağır sesler ve müzik açılışta çevrimdışı bağlamda pişirilir (bake.js, bank.js); çalarken tek AudioBufferSource.
 // Pişmemiş efekt aynı tarifle canlı çalınır (sessizlik yok), arkada pişirilir. Müzik pişince başlar.
 // Garanti: AudioContext yoksa, çökmüşse ya da sayfa gizliyse hiçbir çağrı istisna fırlatmaz.
-import { Engine } from './engine.js';
+import { Engine, PRE } from './engine.js';
 import { Music } from './music.js';
 import { THEME_NAMES } from './songs.js';
 import { SOUNDS, SOUND_NAMES } from './sounds.js';
-import { Bank } from './bank.js';
+import { Bank, audioWorker } from './bank.js';
 import { BANK_NAMES } from './dsp.js';
 
 const STORE_KEY = 'fetih.audio';
@@ -91,6 +91,19 @@ export class Sfx {
 		this._armed = false;
 		this._sus = 0;
 		this._load();
+		// vuruş örnekleri hemen (kilit açılmadan) ses işçisinde üretilmeye başlar: ilk dokunuşun tıkı ana iş parçacığında
+		// sentezlenmez (eskiden ilk dokunuşta ~150 ms takılma)
+		const wk = options.bake === false ? null : audioWorker();
+		if (wk) {
+			const names = [...LIVE_HITS, ...BANK_NAMES.filter((n) => LIVE_HITS.indexOf(n) < 0)];
+			this._preq = wk.call({ t: 'samples', names }).then(
+				(r) => {
+					if (r) for (const n of names) if (r[n]) PRE.set(n, r[n]);
+					return r;
+				},
+				() => null,
+			);
+		}
 		if (options.ctx) this.unlock();
 		else this.armUnlock();
 	}
@@ -254,6 +267,13 @@ export class Sfx {
 	_prewarm() {
 		const e = this.e;
 		const names = [...LIVE_HITS, ...BANK_NAMES.filter((n) => LIVE_HITS.indexOf(n) < 0)];
+		// ses işçisi varsa örnekler orada üretilir (her biri ana iş parçacığında 10–90 ms'lik hesaptı)
+		if (this._preq) {
+			this._preq.then((r) => {
+				if (r) for (const n of names) e.put(n, r[n]);
+			});
+			return;
+		}
 		let k = 0;
 		const next = () => {
 			if (!e.ctx || k >= names.length) return;

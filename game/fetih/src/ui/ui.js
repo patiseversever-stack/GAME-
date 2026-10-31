@@ -282,6 +282,7 @@ export class UI {
 			this._hudKey = key;
 			this._hudM = m;
 			hud.dataset.n = m.players.length;
+			this.el.classList.toggle('h34', m.players.length >= 3); // (kökte :has yerine sınıf: her DOM değişiminde yeniden eşleşme yok)
 			hud.innerHTML = m.players
 				.map((p) => {
 					const tcol = m.mode?.teams ? m.players.find((x) => x.team === p.team)?.css : null;
@@ -744,6 +745,8 @@ export class UI {
 		await sleep(20);
 		card.classList.add('on');
 		this.el.classList.toggle('qon', !map); // haritasız soruda üst oyuncu kartları afişe yer açar
+		this.app.calmQ = !map && !!T.calm; // klasik soru tipi: harita arkada durgun (mobilde 30 kare, app._loop)
+		this.el.classList.toggle('qmap', map); // haritalı soruda üst şerit gizlenir, duraklat düğmesi alta iner
 		this.sfx('question', { type: q.type, cat: q.cat });
 		t0 = clock.now();
 		showBotJokers(this, ctx.botJokers, gen);
@@ -780,7 +783,13 @@ export class UI {
 				const total = questionTime(sec, this._extra, this._floor);
 				const left = Math.max(0, total - t);
 				const s = Math.ceil(left);
-				card.style.setProperty('--tcol', timeColor(total > 0 ? left / total : 0));
+				// süre rengi: yalnız saat ve çubukta (kartın bütün alt ağacı her 100 ms'de yeniden stillenmesin), değişince
+				const tc = timeColor(total > 0 ? left / total : 0);
+				if (tc !== this._tc) {
+					this._tc = tc;
+					this._tcEls = this._tcEls?.[0]?.isConnected ? this._tcEls : [card.querySelector('.fl-clock'), card.querySelector('.fl-tbar')].filter(Boolean);
+					for (const e of this._tcEls) e.style.setProperty('--tcol', tc);
+				}
 				if (s !== lastS) {
 					lastS = s;
 					clockB.textContent = String(s);
@@ -986,7 +995,8 @@ export class UI {
 		await this._hold(Math.max(closest ? 3000 : 1900, Math.min(12000, film)));
 		if (gen !== this._gen) return;
 		card.classList.remove('on');
-		this.el.classList.remove('qon');
+		this.el.classList.remove('qon', 'qmap');
+		this.app.calmQ = false;
 		this.setPins([]);
 		await sleep(260);
 		if (gen !== this._gen) return;
@@ -1402,7 +1412,8 @@ export class UI {
 		const $ = this.$;
 		$.q.className = 'fl-q';
 		$.q.innerHTML = '';
-		this.el.classList.remove('qon');
+		this.el.classList.remove('qon', 'qmap');
+		this.app.calmQ = false;
 		$.wheel.classList.remove('on', 'pick', 'done', 'spinning', 'fetih');
 		$.wheel.style.display = 'none';
 		$.wheel.style.pointerEvents = 'none';

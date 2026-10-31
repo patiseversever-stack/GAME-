@@ -254,6 +254,108 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .fl-qp:has(+ .vx){--pr:10cqw}
 .fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams) .vx + .fl-qp{--pl:10cqw}
 .fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams)::after{top:calc(var(--sat) + 25cqw)}
+/* ---------------------------------------------------------------- sonuç damgası: harita alanının ortasında */
+.fl-q:not(.map) .fl-stamp{top:44%;animation-name:flStampB}
+.fl-stamp{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:0;
+  clip-path:none;transform:translate(-50%,-50%) skewX(-8deg)}
+@keyframes flStampB{0%{opacity:0;transform:translate(-50%,-50%) skewX(-8deg) scale(1.9)}60%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(.96)}100%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(1)}}
+
+/* ---------------------------------------------------------------- haritalı soru: üstte koyu panel */
+.fl-q.map .fl-qc{padding:10px 12px 12px;border-radius:0 0 16px 16px;background:rgba(7,8,15,.94);border-bottom:2px solid rgba(255,210,90,.35);box-shadow:0 10px 26px rgba(0,0,0,.45)}
+.fl-q.map{top:calc(var(--sat) + 4px);width:min(calc(100 * var(--vw) - 8px),560px)}
+.fl-q.map .fl-qtext{font-size:20px;margin-bottom:8px}
+.fl-q.map .fl-clock b{font-size:34px}
+
+/* ---------------------------------------------------------------- doğru/yanlış: HÜKÜM (ref/tasarim-v14-tf-*.jpg)
+   üstte İDDİA kartı; altta tek eğik levhanın iki yarısı (DOĞRU | YA DA | YANLIŞ); seçilen yarı genişler, öteki söner;
+   cevapta iddia kartının TAMAMI hükme döner (yeşil/kırmızı silme + parıltı + büyük işaret). Levha ile jokerler arası geniş. */
+.fl-q.tf .fl-qtext{position:relative;isolation:isolate;overflow:hidden;margin:0 0 14px;padding:12px 54px 15px 16px;border-left:5px solid var(--cc);
+  background:linear-gradient(180deg,#151b33,#0d1124);clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);
+  font-size:22px;line-height:1.2;text-shadow:none;text-wrap:balance;transition:border-color .25s .3s}
+.fl-q.tf.qmid .fl-qtext{font-size:20px}
+.fl-q.tf.qlong .fl-qtext{font-size:18.5px}
+.fl-q.tf .fl-qtext::before{content:'İDDİA';display:block;margin-bottom:6px;font:italic 800 12px/1.25 'Barlow Condensed',sans-serif;letter-spacing:.26em;color:var(--cc);
+  background:linear-gradient(90deg,rgba(255,255,255,.25),transparent) no-repeat 64px 55%/calc(100% - 64px) 1px}
+.fl-q.tf .fl-qtext::after{content:'”';position:absolute;right:12px;top:-2px;font:400 64px/1 'Lilita One',sans-serif;color:rgba(255,255,255,.07);transition:opacity .2s}
+.fl-q.tf .fl-qbody{margin-bottom:30px}
+/* hüküm: kart dönüşür */
+.fl-q.tfy{--vg:linear-gradient(160deg,#4fe07e,#129a45);--vk:#129a45}
+.fl-q.tfn{--vg:linear-gradient(200deg,#ff6f5a,#b8261a);--vk:#c42a1a}
+.fl-q.tf .fl-tfx{position:absolute;inset:0;z-index:-1;overflow:hidden;background:repeating-linear-gradient(115deg,rgba(255,255,255,.08) 0 10px,transparent 10px 22px),var(--vg);
+  clip-path:polygon(0 0,0 0,-30px 100%,-30px 100%);animation:flTfWipe .55s .1s cubic-bezier(.75,0,.2,1) forwards}
+.fl-q.tf .fl-tfx::after{content:'';position:absolute;top:0;bottom:0;left:0;width:60%;background:linear-gradient(105deg,transparent,rgba(255,255,255,.6) 50%,transparent);transform:translateX(-120%);animation:flTfGlint .6s .6s ease-out forwards}
+.fl-q.tfy .fl-qtext,.fl-q.tfn .fl-qtext{border-left-color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.22);animation:flTfPunch .5s .45s cubic-bezier(.3,1.6,.5,1) both}
+.fl-q.tfy .fl-qtext::before{content:'HÜKÜM · DOĞRU';color:#fff;background-image:linear-gradient(90deg,rgba(255,255,255,.6),transparent);background-position:118px 55%;background-size:calc(100% - 118px) 1px;animation:flTfFade .3s .35s both}
+.fl-q.tfn .fl-qtext::before{content:'HÜKÜM · YANLIŞ';color:#fff;background-image:linear-gradient(90deg,rgba(255,255,255,.6),transparent);background-position:124px 55%;background-size:calc(100% - 124px) 1px;animation:flTfFade .3s .35s both}
+.fl-q.tfy .fl-qtext::after,.fl-q.tfn .fl-qtext::after{opacity:0}
+.fl-q.tf .fl-tfbig{position:absolute;right:10px;top:50%;width:40px;height:40px;margin-top:-20px;border-radius:50%;display:grid;place-items:center;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.22);
+  animation:flTfBig .5s .5s cubic-bezier(.3,1.8,.5,1) both}
+.fl-q.tf .fl-tfbig svg{width:26px;height:26px;fill:none;stroke:var(--vk);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+@keyframes flTfWipe{to{clip-path:polygon(0 0,calc(100% + 30px) 0,100% 100%,0 100%)}}
+@keyframes flTfGlint{to{transform:translateX(220%)}}
+@keyframes flTfPunch{0%,100%{transform:none}40%{transform:scale(1.03)}}
+@keyframes flTfFade{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:none}}
+@keyframes flTfBig{from{transform:scale(0) rotate(-50deg)}to{transform:none}}
+/* hüküm levhası */
+.fl-tf.vd{display:flex;gap:0;height:90px;filter:drop-shadow(0 8px 16px rgba(0,0,0,.45))}
+.fl-q .fl-tf.vd .fl-opt{position:relative;flex:1;min-width:0;min-height:0;height:100%;padding:0 10px;display:flex;flex-direction:row;align-items:center;justify-content:center;gap:10px;overflow:hidden;
+  border:0;border-radius:0;color:#fff;font:italic 800 30px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;text-shadow:0 3px 0 rgba(0,0,0,.25);
+  box-shadow:none!important;opacity:1;transition:flex .32s cubic-bezier(.3,1.3,.5,1),filter .3s,font-size .25s}
+.fl-q .fl-tf.vd .fl-yes{background:linear-gradient(160deg,#5ff08a,#16a64c)!important;clip-path:polygon(0 0,100% 0,calc(100% - 28px) 100%,0 100%);margin-right:-14px;padding-right:24px}
+.fl-q .fl-tf.vd .fl-no{background:linear-gradient(200deg,#ff7a66,#c42a1a)!important;clip-path:polygon(28px 0,100% 0,100% 100%,0 100%);margin-left:-14px;padding-left:24px}
+.fl-q .fl-tf.vd .fl-opt::before{content:'';position:absolute;inset:0;width:auto;height:auto;-webkit-mask:none;mask:none;pointer-events:none;
+  background:repeating-linear-gradient(115deg,rgba(255,255,255,.07) 0 10px,transparent 10px 22px),linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,0) 45%)}
+.fl-q .fl-tf.vd .fl-opt:active{transform:translateY(2px)}
+.fl-tf.vd .ic{position:relative;flex:none;width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:rgba(255,255,255,.95);box-shadow:0 3px 0 rgba(0,0,0,.2);transition:width .25s,height .25s}
+.fl-tf.vd .ic svg{width:66%;height:66%;fill:none;stroke:#16a64c;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.fl-tf.vd .fl-no .ic svg{stroke:#c42a1a}
+.fl-tf.vd .fl-opt span{position:relative}
+.fl-tfmid{position:relative;flex:none;width:0;z-index:2;pointer-events:none}
+.fl-tfmid i{position:absolute;left:-4px;top:0;bottom:0;width:8px;background:#07080f;transform:skewX(-16deg)}
+.fl-tfmid b{position:absolute;left:-6px;bottom:7px;transform:translateX(-50%) skewX(-8deg);padding:2px 7px;background:#07080f;border:2px solid #fff;font:italic 800 13px 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#ffd25a;white-space:nowrap;transition:opacity .2s}
+/* seçim: seçilen yarı genişler, altın çerçeve; seçenin portresi yazının hemen yanında, altın halkalı "oy pulu" */
+.fl-q .fl-tf.vd .fl-opt.pick{flex:1.3;box-shadow:inset 0 0 0 3px #ffe680!important}
+.fl-q .fl-tf.vd:has(.pick) .fl-opt:not(.pick),.fl-q .fl-tf.vd .fl-opt.dim{flex:.7;font-size:22px;gap:6px;filter:saturate(.35) brightness(.6)}
+.fl-q .fl-tf.vd:has(.pick) .fl-opt:not(.pick) .ic,.fl-q .fl-tf.vd .fl-opt.dim .ic{width:28px;height:28px}
+.fl-q .fl-tf.vd:has(.pick) .fl-tfmid b,.fl-q.rv .fl-tfmid b{opacity:0}
+.fl-q .fl-tf.vd .fl-opt.pick::after{content:'';position:relative;inset:auto;flex:none;width:34px;height:34px;margin:0 0 0 2px;transform:none;border-radius:50%;
+  border:2.5px solid #fff;background:var(--me) center/cover;box-shadow:0 0 0 2.5px #ffd25a,0 3px 0 2px rgba(0,0,0,.3);animation:flPopIn .3s cubic-bezier(.3,1.8,.5,1) both}
+.fl-q.rv .fl-tf.vd .fl-opt.pick::after{display:none}
+/* cevap: doğru yarı parlar, öteki külleşir; cevaplayanların portreleri aynı yerde yan yana */
+.fl-q .fl-tf.vd .fl-opt.right{flex:1.3;filter:none;box-shadow:inset 0 0 0 3px #fff!important}
+.fl-q .fl-tf.vd .fl-opt.dim,.fl-q.locked .fl-tf.vd .fl-opt.dim{opacity:1;filter:grayscale(.85) brightness(.42)}
+.fl-q .fl-tf.vd .fl-who{position:relative;inset:auto;flex:none;width:32px;height:32px;margin:0 0 0 -3px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.3);overflow:hidden;animation:flPopIn .3s cubic-bezier(.3,1.8,.5,1) both}
+.fl-q .fl-tf.vd .fl-who:first-of-type{margin-left:2px}
+.fl-q .fl-tf.vd .fl-opt.dim .fl-who{width:26px;height:26px;filter:grayscale(0)}
+.fl-q.locked .fl-tf.vd .fl-opt{opacity:1}
+
+/* ---------------------------------------------------------------- atasözü: renkli çini kartı (ref/tasarim-v14-atasozu-*.jpg)
+   "Atasözünü tamamla." satırı kartın başlığına taşınır; kart mor→eflatun, üstünde soluk sekiz köşeli çini yıldızları;
+   boşluk altın hap (nabız gibi parlar) → seçince beyaz → cevapta yeşil/kırmızı. */
+.fl-q:not(.map):has(.fl-prv) .fl-qtext{display:none}
+.fl-q .fl-prv{position:relative;overflow:hidden;margin:2px 0 14px;padding:12px 16px 18px;border:0;border-radius:0;color:#fff;text-align:center;
+  font-family:'Fredoka',sans-serif;font-weight:700;font-size:23px;line-height:1.5;text-shadow:0 2px 0 rgba(40,0,60,.35);text-wrap:balance;
+  clip-path:polygon(14px 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%,0 14px);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='46' height='46' viewBox='0 0 46 46'%3E%3Cg fill='none' stroke='%23ffd25a' stroke-opacity='.075' stroke-width='1.4'%3E%3Crect x='14' y='14' width='18' height='18'/%3E%3Crect x='14' y='14' width='18' height='18' transform='rotate(45 23 23)'/%3E%3C/g%3E%3C/svg%3E") center/46px 46px,
+    radial-gradient(70% 110% at 100% 0%,rgba(226,58,140,.42),transparent 62%),radial-gradient(70% 120% at 0% 100%,rgba(84,62,240,.45),transparent 62%),
+    linear-gradient(160deg,#1c1640,#120e28 55%,#1a0e28);
+  box-shadow:inset 0 0 0 1.5px rgba(190,150,255,.28);transition:box-shadow .3s}
+.fl-q .fl-prv::after{content:'';position:absolute;left:14px;right:0;top:0;height:3px;background:linear-gradient(90deg,#6a4bff,#d6337f 55%,#ffd25a)}
+.fl-q .fl-prv::before{content:'❝  ATASÖZÜNÜ TAMAMLA  ❞';display:block;margin:0 0 6px;font:italic 800 13px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.24em;color:#ffd25a;opacity:1;text-shadow:0 1px 0 rgba(0,0,0,.3);
+  background:linear-gradient(90deg,transparent,rgba(255,210,90,.6)) no-repeat 0 55%/14% 1px,linear-gradient(90deg,rgba(255,210,90,.6),transparent) no-repeat 100% 55%/14% 1px}
+.fl-q .fl-prv:has(.fl-blank.right){box-shadow:inset 0 0 0 3px #5ff08a,inset 0 0 30px rgba(95,240,138,.35)}
+.fl-q .fl-blank{min-width:3.6em;padding:0 12px;margin:0 3px;border:0;border-radius:10px;background:linear-gradient(180deg,#ffe680,#ffbb1f);color:#3a1a00;text-shadow:none;
+  font-family:'Lilita One',sans-serif;line-height:1.3;box-shadow:0 3px 0 #b06a00,0 0 0 2px rgba(255,255,255,.55);position:relative}
+.fl-q .fl-blank::after{content:'';position:absolute;inset:-2px;border-radius:12px;box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 18px rgba(255,210,90,.9);pointer-events:none;opacity:0;will-change:opacity;animation:flPrvGlow 1.1s ease-in-out infinite alternate}
+.fl-q .fl-blank:is(.set,.right,.wrong)::after{animation:none;opacity:0}
+.fl-q .fl-blank.set{background:#fff;color:#4b1fb0;box-shadow:0 3px 0 #b9a8e8,0 0 0 2px #ffd25a;animation:flPrvPop .35s cubic-bezier(.3,1.8,.5,1)}
+.fl-q .fl-blank.right{background:linear-gradient(180deg,#5ff08a,#16a64c);color:#fff;text-shadow:0 2px 0 rgba(0,60,20,.35);box-shadow:0 3px 0 #0b6a2a,0 0 0 2px #fff,0 0 18px rgba(95,240,138,.8);animation:flPrvPop .45s cubic-bezier(.3,1.8,.5,1)}
+.fl-q .fl-blank.wrong{background:linear-gradient(180deg,#ff7a66,#c42a1a);color:#fff;text-shadow:0 2px 0 rgba(80,0,0,.35);box-shadow:0 3px 0 #7a120a,0 0 0 2px #fff;animation:flPrvShake .4s ease-in-out}
+@keyframes flPrvGlow{to{opacity:1}}
+@keyframes flPrvPop{0%{transform:scale(.7)}100%{transform:none}}
+@keyframes flPrvShake{0%,100%{transform:none}25%{transform:translateX(-6px) rotate(-3deg)}75%{transform:translateX(6px) rotate(3deg)}}
+.fl-q:not(.map):has(.fl-prv) .fl-qbody{margin-bottom:22px}
+
 /* ---------------------------------------------------------------- maç HUD'u (soru dışı üst şerit): afiş dilinde, daha ince
    Tam genişlik eğik renkli dilimler; resim + kalın isim (12 harf, tek satır) + koyu hapta puan + kale burçları.
    4'lü: resim üstte ortada, altında isim, puan ve burçlar. */
@@ -301,13 +403,18 @@ export const CSS_ARENA = /* css */ `
 .fl-hud[data-n="4"] .fl-pl .cs i{width:2.4cqw;height:2.8cqw}
 /* duraklat düğmesi HUD'un altında */
 .fl-pbtn{top:calc(var(--sat) + 10px + min(calc(100 * var(--vw)),560px) * .2)}
-.fl-ui:has(.fl-hud:is([data-n="3"],[data-n="4"])) .fl-pbtn{top:calc(var(--sat) + 10px + min(calc(100 * var(--vw)),560px) * .22)}
+.fl-ui.h34 .fl-pbtn{top:calc(var(--sat) + 10px + min(calc(100 * var(--vw)),560px) * .22)}
 
 /* ---------------------------------------------------------------- süre rengi: ilk tasarım (parçalı çubuk, büyük italik rakam)
+   (renk 100 ms adımlarla değişir; geçiş canlandırması yok: süre boyunca her karede yeniden boyama olmasın)
    üstüne kalan süreyle akan renk (ui.js timeColor → --tcol: yeşil → sarı → turuncu → kırmızı; kırmızıya erken döner). */
 .fl-q:not(.map){--tcol:rgb(48,209,88)}
-.fl-q:not(.map) .fl-tbar i,.fl-q.hot:not(.map) .fl-tbar i{background:var(--tcol);box-shadow:0 0 8px color-mix(in srgb,var(--tcol) 70%,transparent);transition:background-color .9s linear,box-shadow .9s linear}
-.fl-q:not(.map) .fl-clock b{text-shadow:0 0 18px color-mix(in srgb,var(--tcol) 55%,transparent);transition:text-shadow .9s linear}
-.fl-q:not(.map) .fl-clock::after{color:var(--tcol);transition:color .9s linear}
+.fl-q:not(.map) .fl-tbar i,.fl-q.hot:not(.map) .fl-tbar i{background:var(--tcol);box-shadow:0 0 8px color-mix(in srgb,var(--tcol) 70%,transparent)}
+.fl-q:not(.map) .fl-clock b{text-shadow:0 0 18px color-mix(in srgb,var(--tcol) 55%,transparent)}
+.fl-q:not(.map) .fl-clock::after{color:var(--tcol)}
 .fl-q.hot:not(.map) .fl-clock b{color:#ff6a55;text-shadow:0 0 18px rgba(255,80,60,.65)}
+
+/* haritalı soru: üst şerit kartın altında kalmasın diye gizli; duraklat düğmesi sağ altta (kartın düğmeleriyle çakışmaz) */
+.fl-ui.qmap .fl-hud{opacity:0;pointer-events:none}
+.fl-ui.qmap .fl-pbtn{top:auto;bottom:calc(var(--sab) + 14px)}
 `;

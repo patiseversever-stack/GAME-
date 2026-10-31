@@ -1331,6 +1331,7 @@ export class Landmarks {
 		// harita ağıyla aynı ızgarada çift doğrusal yükseklik (teraslar dahil: siteplan.js): avlu ağa tam oturur
 		const st = tier.id === 0 ? 0.5 : tier.id === 1 ? 0.4 : 0.33;
 		kit.hf = gridHeight(rel, st);
+		this.gridStep = st; // yapı işçisi aynı ızgarayı kurar (heroes.js)
 		let s = 7;
 		const R = () => ((s = (s * 16807) % 2147483647) / 2147483647);
 		this.sites = [];

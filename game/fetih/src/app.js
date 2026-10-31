@@ -85,7 +85,7 @@ export class App {
 		this.renderer.autoClear = false;
 		this.tier = R.tier;
 		this.info = R;
-		this.gov = new Governor({ tier: R.tier.id, gpu: R.gpu, store: this.store, power: saved.power || this.power });
+		this.gov = new Governor({ tier: R.tier.id, gpu: R.gpu, store: this.store, power: saved.power || this.power, mobile: R.mobile });
 		this.gov.onScale = () => this.resize();
 
 		const G = createGlobals();
@@ -107,7 +107,7 @@ export class App {
 		};
 		applyEnv(G, ENVS.harita || env);
 		this.shadow = new ShadowSystem(G, R.tier.shadowSize, R.tier.shadowHalf);
-		this.post = new TiltShift(this.renderer, R.tier, G);
+		this.post = new TiltShift(this.renderer, R.tier, G, R.mobile);
 
 		this.scene = new THREE.Scene();
 		this.camera = new THREE.PerspectiveCamera(32, 1, 1, 1500);
@@ -186,6 +186,7 @@ export class App {
 		let pinch = 0;
 		c.addEventListener('pointerdown', (e) => {
 			this.sfx.unlock();
+			this._touching = true;
 			pts.set(e.pointerId, { x: e.clientX, y: e.clientY, x0: e.clientX, y0: e.clientY, t: performance.now() });
 			try {
 				c.setPointerCapture(e.pointerId);
@@ -214,6 +215,7 @@ export class App {
 		const up = (e) => {
 			const p = pts.get(e.pointerId);
 			pts.delete(e.pointerId);
+			this._touching = pts.size > 0;
 			if (pts.size < 2) pinch = 0;
 			if (!p) return;
 			const moved = Math.hypot(e.clientX - p.x0, e.clientY - p.y0);
@@ -288,7 +290,9 @@ export class App {
 			this._raf = requestAnimationFrame(step);
 			const rafDelta = this._prevRaf ? now - this._prevRaf : 16.7;
 			this._prevRaf = now;
-			this.gov.menu = !!this.lowFps;
+			// menü, başlık; mobilde ayrıca sakin soru kartı açıkken (harita arkada ağır süzülür, arayüz canlandırmaları
+			// tarayıcının kendi iş parçacığında 60 karede akar) ve parmak haritada değilken: 30 kare (yarı GPU, yarı ısı)
+			this.gov.menu = !!this.lowFps || (!!this.calmQ && this.info.mobile && !this._touching);
 			if (!this.gov.tick(now, rafDelta)) return;
 			const dt = this._prev ? Math.min(0.05, (now - this._prev) / 1000) : 1 / 60;
 			this._prev = now;
@@ -299,7 +303,7 @@ export class App {
 	}
 
 	frame(dt, draw = true) {
-		this._rc = null;
+		// (tuvalin ekran dikdörtgeni her karede yeniden okunmaz: yalnız resize() sıfırlar; okuma tarayıcıya stil hesabı yaptırır)
 		this.time += dt;
 		this.G.uTime.value = this.time;
 		this.game?.update(dt);
@@ -318,8 +322,25 @@ export class App {
 
 	render() {
 		const r = this.renderer;
-		this.shadow.place(this.cam.target, this.G.uSunDir.value, this.cam.dist);
-		this.shadow.render(r);
+		// gölge önbelleği: gölge haritası yalnız gerektiğinde yeniden çizilir — yerleşim değişti (kamera odağı kaydı,
+		// yakınlık basamağı, güneş), ordular/makineler/kale inişi gibi zamanlı canlandırma var, il kalkıyor, kahraman
+		// maket geliyor/gidiyor, kale görünürlüğü ya da yeri değişti. Durgun sahnede (soru okunurken, menüde, kamera
+		// yalnız dönerken) gölge geçişi her 6 karede bir (balon gibi yavaş canlıların gölgesi akıcı kalır). Gölge geçişi
+		// sahnenin üçgenlerinin yarısı kadardı: durgun sahnede ~%40 daha az köşe işi.
+		const moved = this.shadow.place(this.cam.target, this.G.uSunDir.value, this.cam.dist);
+		let sig = 0;
+		for (const k of this.castles) if (k.group.visible) sig += k.group.position.x * 7.1 + k.group.position.y * 3.3 + k.group.position.z * 1.7 + k.fall.x + k.fall.y + k.fall.z + 1;
+		const uh = this.props.landmarks?.uHide?.value;
+		if (uh) sig += uh.x * 0.37 + uh.y * 0.71 + uh.z * 13 + uh.w * 5;
+		const dyn = moved || this.fx.moving || this.board.moving || this.props.landmarks?.lod?.moving || sig !== this._shSig || this.props.landmarks?.uFade?.value?.x > this.time - 2 || !this._shOk;
+		this._shSig = sig;
+		this._shN = (this._shN || 0) + 1;
+		if (dyn || this._shN >= 6) {
+			this.shadow.render(r);
+			this._shN = 0;
+			this._shOk = true;
+			this.shadowPasses = (this.shadowPasses || 0) + 1;
+		}
 		// okunurluk: gündüz çok hafif alan derinliği, gece odağında (seçim, düello, fetih) hiç bulanıklık ve geçiş yok
 		this.post?.focus(0.52, 1 - this.G.uNight.value.x);
 		if (this.post?.render(r, this.scene, this.camera)) return;

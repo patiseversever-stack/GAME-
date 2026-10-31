@@ -1,4 +1,4 @@
-// Tilt-shift (minyatür alan derinliği): tek tam ekran geçişi, yalnızca kademe ≥ 1.
+// Tilt-shift (minyatür alan derinliği): tek tam ekran geçişi, yalnızca masaüstünde ve kademe ≥ 1.
 //
 // Sahne çoklu örneklemeli (MSAA) bir hedefe çizilir, sonra ekranın üst ve alt kenarı yumuşakça
 // bulanıklaşır; orta bant keskin kalır (masadaki maketi yakından fotoğraflamak gibi). Bulanıklık
@@ -59,8 +59,10 @@ const BLUR_PX = 1.8; // v0.5: keskinlik önce (kenarda en çok ~1,8 css px)
 const SHARP = 0.3; // ekran yüksekliğinin ortasında bu yarı genişlik kadar tam keskin
 
 export class TiltShift {
-	constructor(renderer, tier, G = null) {
-		this.enabled = tier.id >= 1;
+	constructor(renderer, tier, G = null, mobile = false) {
+		// telefonda kapalı: bulanıklık kenarda en çok ~1,8 css pikseli (telefon ekranında seçilmez) ama bedeli tam ekran bir
+		// geçiş + çok örneklemeli hedefin çözümlenmesi + kenar bantlarında 13 doku okuması. Masaüstünde açık.
+		this.enabled = tier.id >= 1 && !mobile;
 		this.G = G;
 		this.renderer = renderer;
 		if (!this.enabled) return;

@@ -45,6 +45,16 @@ export function makeIR(ctx, { seconds = 2.2, rt60 = 1.9, pre = 0.014, seed = 5, 
 
 const OC = () => globalThis.OfflineAudioContext || globalThis.webkitOfflineAudioContext;
 
+// dürtü yanıtı önbelleği: AudioBuffer bağlamdan bağımsızdır, aynı örnekleme hızındaki her çevrimdışı bağlamda kullanılır.
+// (Her pişirmede yeniden üretmek ana iş parçacığında ~100–150 bin örneklik döngüydü.)
+const IRS = new Map();
+function irOf(ctx, opts) {
+	const key = ctx.sampleRate + JSON.stringify(opts);
+	let b = IRS.get(key);
+	if (!b) IRS.set(key, (b = makeIR(ctx, opts)));
+	return b;
+}
+
 export function canReverb() {
 	return typeof OC() === 'function';
 }
@@ -86,7 +96,7 @@ export async function reverbPass(wL, wR, sr, irOpts) {
 		const src = oc.createBufferSource();
 		src.buffer = buf;
 		const cv = oc.createConvolver();
-		cv.buffer = makeIR(oc, irOpts || {});
+		cv.buffer = irOf(oc, irOpts || {});
 		src.connect(cv);
 		cv.connect(oc.destination);
 		src.start(0);

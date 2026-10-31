@@ -331,6 +331,8 @@ export const TYPES = {
 
 // ---------------------------------------------------------------- yeni tipler (src/quiz/t_*.js)
 Object.assign(TYPES, { order, match, hilo, odd, emoji, anagram, cross, proverb, riddle, img, blitz });
+// sakin tipler: soru boyunca 3B sahneyi canlandırmazlar (haritasız olanlarda harita arkada durgun: mobilde 30 kare)
+for (const T of Object.values(TYPES)) if (!T.needsMap) T.calm = true;
 
 // ---------------------------------------------------------------- süre bütçesi
 // Her görünüm kendi sorusunun süresini taşır: v.sec (saat, tam sn) ve v.fast / v.med / v.slow (hızlı, ortanca ve

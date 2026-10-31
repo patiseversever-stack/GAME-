@@ -1,5 +1,6 @@
 // Güneş gölgesi: kameranın baktığı bölgeyi kapsayan tek bir dik izdüşümlü derinlik haritası.
-// Harita doku ızgarasına kenetlenir (kamera kayarken gölge kenarları titremez). Kapsamın
+// Harita doku ızgarasına kenetlenir (kamera kayarken gölge kenarları titremez). Yerleşim ve gölge yapan nesneler
+// değişmedikçe harita yeniden çizilmez (app.render: önbellek). Kapsamın
 // dışında gölge yumuşakça söner; uzak yerlerde yapıların altındaki koyuluk köşe renginde boyalıdır.
 
 import * as THREE from 'three';
@@ -78,7 +79,7 @@ export class ShadowSystem {
 		const texel = (this.half * 2) / this.size;
 		const pr = Math.round(focus.dot(r) / texel) * texel;
 		const pu = Math.round(focus.dot(u) / texel) * texel;
-		const pf = focus.dot(f);
+		const pf = Math.round(focus.dot(f) / 2) * 2; // derinlik ekseni de basamaklı: süzülen kamerada matris (ve önbellek) bozulmasın
 		const p = this._p.set(0, 0, 0).addScaledVector(r, pr).addScaledVector(u, pu).addScaledVector(f, pf);
 		const cam = this.cam;
 		cam.position.copy(p).addScaledVector(f, -150);
@@ -86,7 +87,13 @@ export class ShadowSystem {
 		cam.lookAt(p);
 		cam.updateMatrixWorld(true);
 		cam.updateProjectionMatrix();
-		this.G.uShadowMat.value.copy(this._bias).multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse);
+		const M = this.G.uShadowMat.value;
+		this._m0 = this._m0 || new THREE.Matrix4();
+		this._m0.copy(M);
+		M.copy(this._bias).multiply(cam.projectionMatrix).multiply(cam.matrixWorldInverse);
+		// yerleşim değişti mi (odak bir doku pikselinden çok kaydı, kapsam ya da güneş döndü): gölge yeniden çizilmeli
+		this.moved = !this._m0.equals(M);
+		return this.moved;
 	}
 
 	render(renderer) {

@@ -616,6 +616,11 @@ export class Battle {
 		return n;
 	}
 
+	/** Ordular kımıldıyor mu (yürüyüş, hücum, düşme) ya da zamanlanmış savaş olayı var mı. Mevzide bekleyen ordu: hayır. */
+	get moving() {
+		return this.on && (this._spd > 0.03 || this.tl.some((e) => e.on) || this.units.some((u) => u.on && (Math.abs(u.fall - u.fallTo) > 0.01 || Math.abs(u.fade - Math.max(0, u.fadeTo)) > 0.01)));
+	}
+
 	get on() {
 		return this.armies[0].on || this.armies[1].on;
 	}
@@ -1104,6 +1109,7 @@ export class Battle {
 
 	update(dt) {
 		this.time += dt;
+		this._spd = 0; // bu karede en hızlı birim (gölge önbelleği: duran ordu gölgesini her karede yeniden çizdirmez)
 		for (const e of this.tl) {
 			if (!e.on) continue;
 			e.t -= dt;
@@ -1198,6 +1204,7 @@ export class Battle {
 		const dx = u.x - ox;
 		const dz = u.z - oz;
 		if (dt > 0) speed = Math.hypot(dx, dz) / dt;
+		if (speed > this._spd) this._spd = speed;
 		if (speed > 0.12) yawTo = Math.atan2(dx, dz);
 		else if (u.mode === FREE && u.run > 0) yawTo = Math.atan2(u.vx, u.vz);
 		u.yaw += wrapPi(yawTo - u.yaw) * Math.min(1, dt * 7);

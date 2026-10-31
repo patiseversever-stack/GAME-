@@ -1122,6 +1122,7 @@ export class Board {
 		const so = this.uSelOn.value + (this.selOnTo - this.uSelOn.value) * Math.min(1, k * 1.3);
 		this.uSelOn.value = Math.abs(so - this.selOnTo) < 1e-3 ? this.selOnTo : so;
 		if (dirty) this.stateTex.needsUpdate = true;
+		this.moving = dirty; // il kalkıyor/iniyor ya da boya dalgası: gölge önbelleği tazelenir (app.render)
 	}
 
 	// ---------------------------------------------------------------- konum sorguları

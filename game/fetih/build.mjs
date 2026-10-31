@@ -49,15 +49,29 @@ function fontFaces() {
 	return css;
 }
 
-const common = {
+const base = {
 	bundle: true,
 	target: ['es2020', 'chrome80', 'safari14'],
 	legalComments: 'none',
 	logLevel: 'warning',
 	minify: !dev,
-	sourcemap: dev ? 'inline' : false,
 	define: { 'import.meta.env.DEV': JSON.stringify(dev) },
 };
+
+// İşçiler (Web Worker): ayrı derlenir, ana pakete metin olarak gömülür (tek dosya; blob: adresinden çalışır)
+async function workerCode(entry) {
+	const r = await build({ ...base, entryPoints: [join(root, entry)], format: 'iife', write: false, sourcemap: false });
+	return r.outputFiles[0].text;
+}
+const AUDIO_WORKER = await workerCode('src/audio/worker.js');
+const HERO_WORKER = await workerCode('src/map/heroworker.js');
+
+const common = {
+	...base,
+	sourcemap: dev ? 'inline' : false,
+	define: { ...base.define, __AUDIO_WORKER__: JSON.stringify(AUDIO_WORKER), __HERO_WORKER__: JSON.stringify(HERO_WORKER) },
+};
+console.log(`ses işçisi ${kb(Buffer.byteLength(AUDIO_WORKER))} · yapı işçisi ${kb(Buffer.byteLength(HERO_WORKER))}`);
 
 // 1) Tek başına test sayfası: three.js dahil her şey içinde.
 const app = await build({
@@ -93,7 +107,7 @@ body{position:fixed;inset:0}
 
 // 1c) Soru galerisi (dist/SoruGalerisi.html): bütün soru tipleri oyunun kendisiyle, örnek sorularla. İskeletsiz
 // paylaşım sayfası biçiminde (yayın ortamı doctype/head/body ekler).
-if (!dev) {
+if (!dev || process.argv.includes('--galeri')) {
 	const gal = await build({ ...common, entryPoints: [join(root, 'src/galeri-sayfa.js')], format: 'iife', write: false });
 	const gjs = gal.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
 	const gpage = `<title>Fetih Ligi Soru Galerisi</title>

@@ -63,8 +63,8 @@ const CSS = /* css */ `
 .gl-ball.pull{transition:none}
 .gl-ball.used{pointer-events:none;opacity:.22;filter:grayscale(1);transform:scale(.8)}
 .gl-ball.used.ok{opacity:.35;filter:none}
-.gl-ball.sug{animation:glSug .55s ease-in-out infinite alternate}
-@keyframes glSug{to{box-shadow:0 0 0 3px #ec4f93,0 0 18px #ec4f93,0 4px 0 #05060c}}
+.gl-ball.sug::after{content:'';position:absolute;inset:-3px;border-radius:50%;box-shadow:0 0 0 3px #ec4f93,0 0 18px #ec4f93;opacity:0;will-change:opacity;animation:glSug .55s ease-in-out infinite alternate;pointer-events:none}
+@keyframes glSug{to{opacity:1}}
 .gl-fly{position:absolute;z-index:5;width:var(--bs,46px);height:var(--bs,46px);margin:calc(var(--bs,46px) / -2) 0 0 calc(var(--bs,46px) / -2);border-radius:50%;pointer-events:none;display:grid;place-items:center;
   background:radial-gradient(circle at 32% 28%,#ffe680 0,#ff9a1f 35%,#7a2a00 100%);box-shadow:0 0 18px #ff9a1f,0 0 40px rgba(255,120,30,.6);
   font:400 calc(var(--bs,46px) * .5)/1 'Lilita One',sans-serif;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.5)}

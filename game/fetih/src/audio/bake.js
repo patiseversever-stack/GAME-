@@ -14,6 +14,13 @@ import { compose } from './songs.js';
 import { SOUNDS } from './sounds.js';
 import { masterChain, softLimit, peakOf, loudness, fadeEdges, clearPlucks } from './dsp.js';
 
+// Yankı geçişi değiştirilebilir: ses işçisinde (audio/worker.js) OfflineAudioContext yoktur; işçi yankıyı ana tarafa
+// (tarayıcının ses iş parçacığında koşan ConvolverNode) yaptırır.
+let RV = reverbPass;
+export function setReverb(f) {
+	RV = f || reverbPass;
+}
+
 export const MUSIC_SR = 32000;
 export const MUSIC_SR_LOW = 24000;
 
@@ -130,7 +137,7 @@ export async function renderTheme(name, { low = false, pause = yieldMain } = {})
 		}
 		const L = e.dL;
 		const R = e.dR;
-		const rv = await reverbPass(e.wL, e.wR, sr, low ? MUSIC_IR_LOW : MUSIC_IR);
+		const rv = await RV(e.wL, e.wR, sr, low ? MUSIC_IR_LOW : MUSIC_IR);
 		e.wL = e.wR = null;
 		if (rv) {
 			for (let i = 0; i < L.length; i++) {
@@ -224,7 +231,7 @@ export async function renderSfx(name, opts = {}, { low = false } = {}) {
 	def.fn(e, lead, opts);
 	const L = e.dL;
 	const R = e.dR;
-	const rv = await reverbPass(e.wL, e.wR, sr, SFX_IR);
+	const rv = await RV(e.wL, e.wR, sr, SFX_IR);
 	e.wL = e.wR = null;
 	if (rv) {
 		for (let i = 0; i < L.length; i++) {

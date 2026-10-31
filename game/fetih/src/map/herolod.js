@@ -95,6 +95,7 @@ export class HeroLod {
 			this.t = 0;
 		}
 		const U = this.lm.uLod;
+		this.moving = false;
 		for (let i = 0; i < this.slots.length; i++) {
 			const s = this.slots[i];
 			if (!s.site) {
@@ -104,7 +105,9 @@ export class HeroLod {
 			const ready = s.h.active === s.site;
 			const to = ready ? s.want : 0;
 			const sp = dt / (this.moving ? FADE_MOVE : FADE_STILL);
+			const f0 = s.fade;
 			s.fade = to > s.fade ? Math.min(to, s.fade + sp) : Math.max(to, s.fade - sp);
+			if (s.fade !== f0) this.moving = true; // kahraman geliyor/gidiyor: gölgesi değişir
 			s.h.uFade.value = s.fade;
 			s.h.caster.visible = ready && s.fade > 0.5;
 			U[i].set(s.site.x, s.site.z, s.fade, 1);

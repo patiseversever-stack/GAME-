@@ -68,8 +68,9 @@ export function detectTier(gl) {
  * - Bulduğu ayarı ekran kartına göre kaydeder; bir sonraki açılış doğru ayarla başlar.
  */
 export class Governor {
-	constructor({ tier, gpu, store, power = 'auto' }) {
+	constructor({ tier, gpu, store, power = 'auto', mobile = false }) {
 		this.T = TIERS[tier];
+		this.mobile = mobile;
 		this.gpu = gpu;
 		this.store = store;
 		this.power = power; // 'auto' | 'saver' | 'performance'
@@ -242,7 +243,10 @@ export class Governor {
 	/** Çizim çözünürlüğü (cihaz pikseli / CSS pikseli). */
 	pixelRatio(w, h) {
 		let pr = Math.min(window.devicePixelRatio || 1, this.T.maxDpr);
-		if (w * h * pr * pr > this.T.maxPixels) pr = Math.sqrt(this.T.maxPixels / (w * h));
+		// telefonda piksel tavanı biraz aşağıda: 6 inçte 2,0 ile 2,6 kat çözünürlük gözle ayırt edilmez, doldurma maliyeti
+		// alanla orantılı (MSAA açık: kenarlar zaten pürüzsüz)
+		const cap = this.mobile ? this.T.maxPixels * (this.T.id >= 1 ? 0.8 : 1) : this.T.maxPixels;
+		if (w * h * pr * pr > cap) pr = Math.sqrt(cap / (w * h));
 		return Math.max(0.75, pr * this.effScale);
 	}
 }
