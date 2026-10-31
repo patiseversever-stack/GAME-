@@ -1,0 +1,92 @@
+{
+ "q0": {
+  "scene": 281,
+  "tier": 0,
+  "lodMax": 1,
+  "heightMs": 47.9,
+  "harita": {
+   "tris": 159137,
+   "calls": 14,
+   "ms": 340.1,
+   "heroes": 0
+  },
+  "istanbul": {
+   "tris": 159137,
+   "calls": 14,
+   "ms": 356.4,
+   "heroes": 0
+  },
+  "yakin": {
+   "tris": 189484,
+   "calls": 15,
+   "ms": 630.9,
+   "heroes": 1
+  },
+  "landmarkTris": 50330,
+  "board": {
+   "vertices": 56244,
+   "triangles": 64869
+  },
+  "boot": 4491
+ },
+ "q1": {
+  "scene": 293,
+  "tier": 1,
+  "lodMax": 2,
+  "heightMs": 38.3,
+  "harita": {
+   "tris": 224480,
+   "calls": 15,
+   "ms": 522.9,
+   "heroes": 0
+  },
+  "istanbul": {
+   "tris": 277201,
+   "calls": 17,
+   "ms": 589.8,
+   "heroes": 2
+  },
+  "yakin": {
+   "tris": 262128,
+   "calls": 16,
+   "ms": 805.1,
+   "heroes": 1
+  },
+  "landmarkTris": 67401,
+  "board": {
+   "vertices": 62815,
+   "triangles": 76464
+  },
+  "boot": 5333
+ },
+ "q2": {
+  "scene": 294,
+  "tier": 2,
+  "lodMax": 3,
+  "heightMs": 65,
+  "harita": {
+   "tris": 254629,
+   "calls": 15,
+   "ms": 519.4,
+   "heroes": 0
+  },
+  "istanbul": {
+   "tris": 322192,
+   "calls": 18,
+   "ms": 674.4,
+   "heroes": 3
+  },
+  "yakin": {
+   "tris": 292277,
+   "calls": 16,
+   "ms": 844.4,
+   "heroes": 1
+  },
+  "landmarkTris": 67401,
+  "board": {
+   "vertices": 71052,
+   "triangles": 91239
+  },
+  "boot": 4586
+ }
+}
