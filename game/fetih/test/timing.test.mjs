@@ -14,6 +14,7 @@
 import { BANK } from '../src/data/bank.js';
 import { TYPES } from '../src/quiz/types.js';
 import { direction } from '../src/quiz/t_order.js';
+import { crossCount } from '../src/quiz/crossgen.js';
 import { timing, budget, PROFILE, HOT, SLACK, PLAYERS, limits, GENEROUS, FLOOR } from '../src/quiz/timing.js';
 import { questionTime, extraFor, cutFor, computeEffect, JOKERS, EXTRA, SABOTAGE } from '../src/game/jokers.js';
 import { publicView, LocalTransport, RemoteController, PROTOCOL } from '../src/game/net.js';
@@ -198,8 +199,13 @@ grows('resimli yazı', (w) => ({ type: 'img', diff: 2, q: 'Bu ne?', img: 'x', mo
 	const base = SYN.find((q) => q.id === 'y-cr2');
 	const sets = [2, 3, 4, 5].map((n) => ({ ...base, words: base.words.slice(0, n) }));
 	const secs = sets.map((q) => timing(q).sec);
-	for (let i = 1; i < secs.length; i++) ok(secs[i] > secs[i - 1], `çengel: ${i + 2} kelime (${secs[i]}) ≤ ${i + 1} kelime (${secs[i - 1]})`);
-	console.log(`  çengel         ` + secs.map((s, i) => `${i + 2} kelime → ${s} sn`).join(', '));
+	// v1.5: tahtaya 3 ya da 4 kelime girer (crossCount): süre tahtadaki kelimeyle artar, fazla yazılan kelimeyle oynamaz
+	const ks = sets.map((q) => crossCount(q.words));
+	for (let i = 1; i < secs.length; i++) {
+		if (ks[i] > ks[i - 1]) ok(secs[i] > secs[i - 1], `çengel: tahtada ${ks[i]} kelime (${secs[i]}) ≤ ${ks[i - 1]} kelime (${secs[i - 1]})`);
+		else ok(Math.abs(secs[i] - secs[i - 1]) <= 4, `çengel: tahtada yine ${ks[i]} kelime, süre ${secs[i - 1]} → ${secs[i]} oynamamalı`);
+	}
+	console.log(`  çengel         ` + secs.map((s, i) => `${i + 2} yazılı (${ks[i]} tahtada) → ${s} sn`).join(', '));
 }
 // sırala / eşleştir: öğe metni, öğe sayısı ve yön
 {

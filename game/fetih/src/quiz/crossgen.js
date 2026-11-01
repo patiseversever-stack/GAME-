@@ -91,6 +91,17 @@ function attempt(items, R) {
 	return { placed, b, crossings, grid };
 }
 
+/**
+ * Bulmacaya girecek kelime sayısı (v1.5: kısa ve hızlı): kelimeler kısaysa (ortalama ≤ 5 harf) 4, uzunsa 3. Soru 5 kelime
+ * yazılmış olsa da tahta küçük kalır, süre kısalır (timing.js aynı kuralı kullanır).
+ */
+export function crossCount(words) {
+	const n = words.length;
+	if (n <= 3) return n;
+	const avg = words.reduce((s, x) => s + [...String(x.w).replace(/ /g, '')].length, 0) / n;
+	return avg <= 5 ? 4 : 3;
+}
+
 export function layout(words, R = Math.random) {
 	const base = words.map((x) => ({ w: x.w, clue: x.clue }));
 	let best = null;

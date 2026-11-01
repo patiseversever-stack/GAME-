@@ -51,6 +51,8 @@
 //           bakıp gerekirse iki parmakla yakınlaştırıp düzelt 1,6 sn (Türkiye ekranda ~370 px: 1 px ≈ 4,4 km).
 
 /** Kırmızı uyarı penceresi (sn): ui.js son HOT saniyede kartı kırmızı yakar ve saati tıklatır. */
+import { crossCount } from './crossgen.js';
+
 export const HOT = 5;
 /** Yavaş-rahat oyuncunun süre bitmeden kalan en az payı (sn). */
 export const SLACK = 1.5;
@@ -247,15 +249,17 @@ function parts(q) {
 			break;
 		}
 		case 'cross': {
-			const list = q.words || [];
-			const n = list.length;
-			const total = list.reduce((s, x) => s + letters(x.w).length, 0);
-			const longest = list.reduce((m, x) => Math.max(m, letters(x.w).length), 0);
-			const cells = Math.max(longest, total - Math.max(0, n - 1)); // her yeni kelime en az bir harfte kesişir
-			for (const x of list) text(x.clue);
+			// v1.5: tahtaya 3 (uzun kelimeler) ya da 4 (kısa) kelime girer (crossgen.crossCount); harfler klavye yerine
+			// kelimenin kendi karışık kartlarından seçilir (az seçenek: tuş aramaktan hızlı)
+			const all = q.words || [];
+			const n = crossCount(all);
+			const avgLen = all.length ? all.reduce((s, x) => s + letters(x.w).length, 0) / all.length : 0;
+			const longest = all.reduce((m, x) => Math.max(m, letters(x.w).length), 0);
+			const cells = Math.max(longest, Math.round(avgLen * n) - Math.max(0, n - 1)); // her yeni kelime en az bir harfte kesişir
+			for (const x of all) text(x.clue, all.length ? n / all.length : 1); // tahtadaki n kelimenin ipucu (ortalama)
 			look += 1.5;
 			think = n * (P.think[0] + P.think[1] * k); // kelime başına ipucunu çöz (Kelime Oyunu: 14 kelime 4 dk)
-			act = cells * ACT.key + n * ACT.nav + ACT.fix;
+			act = cells * ACT.key * 0.8 + n * ACT.nav + ACT.fix;
 			break;
 		}
 		case 'img': {

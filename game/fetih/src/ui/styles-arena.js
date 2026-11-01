@@ -256,6 +256,8 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams)::after{top:calc(var(--sat) + 25cqw)}
 /* ---------------------------------------------------------------- sonuç damgası: harita alanının ortasında */
 .fl-q:not(.map) .fl-stamp{top:44%;animation-name:flStampB}
+.fl-q:not(.map) .fl-stamp.brief.on{animation:flStampB .45s cubic-bezier(.3,1.7,.5,1) forwards,flStampOut .4s 1.8s ease-in forwards}
+@keyframes flStampOut{to{opacity:0;transform:translate(-50%,-50%) skewX(-8deg) scale(.85)}}
 .fl-stamp{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:0;
   clip-path:none;transform:translate(-50%,-50%) skewX(-8deg)}
 @keyframes flStampB{0%{opacity:0;transform:translate(-50%,-50%) skewX(-8deg) scale(1.9)}60%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(.96)}100%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(1)}}

@@ -331,6 +331,14 @@ yerleşmeden yeni kahraman girmez, ekrandaki kahraman giriş eşiğinin %35'ine 
 durunca kahraman gelir. Balon, bayrak ve ağaç salınımı kameradan 42–62 birim ötede durur (görünmeyen hareket çizilmez).
 İl adları istem yazısının altına düşmez (`labels.avoid`: genel kipte gizlenir, seçim listesinde üstüne kayar).
 
+**Anagram ve çengel (v1.5, `quiz/t_word.js`).** Şerit'in arena dili: eğik kutular, tek renk lacivert eğik harf kartları
+(renkli jokerlerle karışmaz), siyah plaka düğmeler (Karıştır / Geri al / Temizle, çizim simgeli). Dolu kutu beyaz zeminde
+koyu harf (eskiden koyu üstüne koyu, yazılan okunmuyordu), sıradaki kutu altın nabız; kullanılan kart çekilir, yerinde boş
+yuva kalır. Çengel klavyesiz: tahtaya 3 (uzun kelimeler) ya da 4 (kısa) kelime girer (`crossgen.crossCount`), seçili
+kelimenin harfleri karışık kart; kesişen kutu öteki kelimeden doluysa o harfin kartı verilmiş sayılır. Kelime dolunca
+sonrakine geçer. Süre ortancası 63 → 45 sn. Çevrimiçinde kelime gizli, kartlar (karışık harfler) gelir. Sonuç damgası cevap
+alanının üstüne binmez (`ui.stamp`: alanın üstüne kayar, sığmazsa 1,8 sn'de söner).
+
 **Tek tasarım, iki yoğunluk (v1.5, `landmarks.js` `_buildFar`, `herokit.cluster`).** Sade model ayrı bir tasarımdı (kaide,
 renk, biçim farklı): yakına gelince ayrıntılıya geçiş göze batıyordu. Orta ve yüksek kademede haritadaki model artık ayrıntılı
 modelin kendisinin uzak sürümü: segment ×0,35, yapı ölçeğinin %12'sinden küçük parça yok, malzeme başına köşe kümeleme

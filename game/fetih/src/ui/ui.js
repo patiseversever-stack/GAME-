@@ -959,6 +959,24 @@ export class UI {
 		}
 		s.className = `fl-stamp ${tone}`;
 		s.innerHTML = `${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ''}`;
+		// v1.5: damga cevap alanının (çengel tahtası, kelime kutuları) üstüne binmez: doğru cevap görülsün. Binecekse alanın
+		// hemen üstüne kayar; oraya da sığmıyorsa kısa görünüp kaybolur.
+		const zone = !q.classList.contains('map') && q.querySelector('.xw-grid,.an-word,.hr-word,.fl-word');
+		if (zone) {
+			const qr = q.getBoundingClientRect();
+			const zr = zone.getBoundingClientRect();
+			const h = s.offsetHeight || 84;
+			const cy = s.style.top ? parseFloat(s.style.top) : s.offsetTop; // damganın ortası (kart birimi)
+			const zt = zr.top - qr.top;
+			const zb = zr.bottom - qr.top;
+			if (cy + h / 2 > zt && cy - h / 2 < zb) {
+				const who = q.querySelector('.fl-qwho');
+				const minC = (who ? who.getBoundingClientRect().bottom - qr.top : 0) + h / 2 - 24;
+				const want = zt - h / 2 - 6;
+				s.style.top = Math.round(Math.max(minC, want)) + 'px';
+				if (want < minC - 4) s.classList.add('brief');
+			}
+		}
 		void s.offsetWidth;
 		s.classList.add('on');
 	}
