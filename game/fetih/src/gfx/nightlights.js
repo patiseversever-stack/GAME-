@@ -268,7 +268,8 @@ export class NightLights {
 		const U = this.G.uSpot.value;
 		if (s.on && !(this.board.nightTo > 0)) s.on = false; // gündüze dönünce havuz kapanır
 		const want = s.on ? 1 : 0;
-		s.k += (want - s.k) * Math.min(1, dt * 3.5);
+		s.k += (want - s.k) * Math.min(1, dt * (s.fast && !s.on ? 14 : 3.5));
+		if (s.on) s.fast = false;
 		if (Math.abs(want - s.k) < 0.002) s.k = want;
 		if (s.k < 0.002 || !camera) {
 			U.w = 0;
@@ -302,6 +303,12 @@ export class NightLights {
 	 * payı; savaş yakın çekiminde bütün sahne aydınlık kalsın diye büyük). ref: verilirse havuz her karede bu
 	 * noktayı izler (savaş filmi: kameranın baktığı yer, yürüyen ordu kadrajdan çıkıp karanlıkta kalmasın).
 	 */
+	/** Havuzu hızla söndür (~0,25 sn): sahne değişirken (harita sorusu) eski çekimin ışığı kamerayla gezmesin. */
+	release() {
+		this.spot.on = false;
+		this.spot.fast = true;
+	}
+
 	focus(x, y = 0, z = 0, r = 4, k = 0.95, max = 0.17, ref = null) {
 		const s = this.spot;
 		if (x == null) {

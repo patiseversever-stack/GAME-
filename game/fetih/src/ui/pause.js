@@ -75,7 +75,12 @@ export function showPause(ui, on) {
 		return;
 	}
 	const m = ui.app.match;
-	const phase = m?.phase === 'fetih' && m.rounds ? `Fetih · Tur ${Math.min(m.round, m.rounds)} / ${m.rounds}` : PHASE[m?.phase] || '';
+	const phase =
+		m?.phase === 'fetih' && m.rounds
+			? `Fetih · Tur ${Math.min(m.round, m.rounds)} / ${m.rounds}`
+			: m?.phase === 'yayilma' && m.expOf
+				? `Yayılma · Tur ${m.expRound} / ${m.expOf}`
+				: PHASE[m?.phase] || '';
 	el.innerHTML = `<div class="box" role="dialog" aria-modal="true" aria-label="Duraklatıldı">
 		<div data-v="ana">
 			<h3>DURAKLATILDI</h3>

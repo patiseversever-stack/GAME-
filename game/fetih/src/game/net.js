@@ -39,7 +39,7 @@
 //     k='fitil'    d={ k, c }                Fitil: ortak motorda (sunucu) cevap → herkese 'top' { ev:[olaylar] }
 //   Olaylar (t='ev'), k:
 //     'state'   d=snapshot()                tam durum: maç başında (harita ve koltuklar) ve yeniden bağlanmada
-//     'phase'   d={ phase, round, order?, tied? }  baskent|yayilma|fetih|altin (order: o fetih turunun saldırı sırası,
+//     'phase'   d={ phase, round, of?, order?, tied? }  baskent|yayilma|fetih|altin (order: o fetih turunun saldırı sırası,
 //                                           koltuklar; tied: altın soruya kalan taraflar)
 //     'turn'    d={ player, round }         saldırı sırası bu koltukta
 //     'attack'  d={ player, defender, target, capital }  saldırı ilan edildi

@@ -413,6 +413,26 @@ export class UI {
 		this._cap = key;
 	}
 
+	/**
+	 * Kim kime: saldıranın ve savunanın portresi, adı (kendi renginde) ve rolü, arada kılıçlar; üstte hedef il.
+	 * Saldırı filminin başından düello sorusuna kadar ekranın altında kalır (12 karakterlik adlar kesilmeden sığar).
+	 */
+	versusCaption(p, d, target, { siege = false } = {}) {
+		if (this.fast) return;
+		const key = `vs|${p.i}|${d.i}|${target}|${siege}`;
+		if (this._cap === key) return;
+		const me = (q) => (q.human ? ' me' : '');
+		// insan koltuğu "SEN" ile işaretlenir (adı zaten "Sen" ise tekrar edilmez)
+		const you = (q) => (q.human && String(q.name).toLocaleUpperCase('tr-TR') !== 'SEN' ? 'SEN · ' : '');
+		const side = (q, role, k) =>
+			`<span class="vss ${k}${me(q)}" style="--pc:${q.css}"><span class="fl-av">${avatar(this.look(q))}</span><span class="vsn"><i>${you(q)}${role}</i><em>${esc(q.name)}</em></span></span>`;
+		this.prompt(
+			`<span class="ey">${siege ? 'KUŞATMA' : 'SALDIRI'}</span><b>${esc(target)}</b><span class="vsr">${side(p, 'SALDIRAN', 'a')}<span class="vsx">${ico('swords', { w: 2.6 })}</span>${side(d, siege ? 'KALESİ' : 'SAVUNAN', 'd')}</span>`,
+			{ tone: 'cap red vs' },
+		);
+		this._cap = key;
+	}
+
 	// ---------------------------------------------------------------- il seçimi
 
 	/** İnsan il seçer. sec: seçim süresi; dolunca null döner (seçimi Match bot kuralıyla yapar). */

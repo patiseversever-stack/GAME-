@@ -157,6 +157,22 @@ const BASE = /* css */ `
 .fl-prompt.cap .pt b{font-size:clamp(32px,calc(9.5 * var(--vw)),44px);animation:none}
 .fl-prompt.cap .pt::before{animation:none;opacity:.6}
 .fl-prompt.shake{animation:flShakeP .4s}
+/* kim kime (saldırı filmi): [ad · portre] ⚔ [portre · ad]; adlar kendi renginde çizgiyle, rol üstte */
+.fl-prompt.vs{padding-top:34px}
+.fl-prompt.vs .pt::after{display:none}
+.fl-prompt .vsr{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;gap:min(10px,2.4vw);margin-top:12px;width:min(calc(100vw - 28px),420px)}
+.fl-prompt .vss{display:flex;align-items:center;gap:min(8px,2vw);min-width:0}
+.fl-prompt .vss.a{flex-direction:row-reverse;text-align:right}
+.fl-prompt .vss .fl-av{width:min(40px,10vw);height:min(40px,10vw);border-radius:28%;border:2.5px solid var(--pc);box-shadow:0 0 0 1.5px rgba(0,0,0,.55),0 0 14px var(--pc)}
+.fl-prompt .vsn{display:flex;flex-direction:column;gap:4px;min-width:0}
+.fl-prompt .vsn i{font-style:normal;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:min(9.5px,2.5vw);line-height:1;letter-spacing:.2em;color:rgba(255,236,214,.82);text-shadow:0 1px 2px rgba(0,0,0,.9);white-space:nowrap}
+.fl-prompt .vss.a .vsn i{margin-right:-.2em}
+.fl-prompt .vsn em{font-style:normal;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:min(17px,4.1vw);line-height:1.1;color:#fff;white-space:nowrap;padding-bottom:3px;
+  background:linear-gradient(var(--pc),var(--pc)) no-repeat 0 100%/100% 2.5px;text-shadow:0 1px 3px rgba(0,0,0,.95),0 0 10px rgba(0,0,0,.6)}
+.fl-prompt .vss.me .vsn i{color:#ffd27a}
+.fl-prompt .vsx{display:grid;place-items:center;width:min(34px,8.6vw);height:min(34px,8.6vw);border-radius:50%;color:#ffe2cf;
+  background:radial-gradient(circle at 50% 40%,#5a160c,#1a0604 70%);border:1.5px solid rgba(255,160,120,.7);box-shadow:0 0 16px rgba(255,90,50,.6),inset 0 1px 0 rgba(255,220,200,.25)}
+.fl-prompt .vsx svg{width:62%;height:62%}
 /* seçim sayacı: altın çizgi erir, sayı yanında; son 3 sn kızıl */
 .fl-prompt.timed .pt::after{display:none}
 .fl-prompt .tm{position:relative;display:grid;place-items:center;width:50px;height:50px;margin-top:14px;border-radius:50%;background:radial-gradient(circle,rgba(10,14,30,.85) 58%,rgba(10,14,30,0) 72%)}

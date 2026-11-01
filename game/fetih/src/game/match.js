@@ -65,13 +65,42 @@ export const PICK_TIME = { capital: 15, attack: 12, category: 8, first: 10, next
 export const pickPool = (n) => PICK_TIME.first + PICK_TIME.next * Math.max(0, n - 1);
 
 /**
+ * Yayılma planı: kalan boş iller kaç turda, her turda sıralamaya göre kaçar il. Tur sayısı haritaya göre
+ * (≈11 boş ile bir tur; en az 3, en çok 7: küçük bölge haritası 3 tur, 81 illik Türkiye 7 tur). Her turun
+ * toplamı kalanın kalan tura bölümü (turlar eşit; son tur artanı süpürür, boşta il kalmaz). Tur içinde pay
+ * sıralama ağırlığıyla (1'e 1: 2:1, 3 kişi: 2:1:0, 4 kişi: 2:1:1:0) en büyük kalan yöntemiyle bölünür.
+ * T: kalan tur sayısı (yayılma başında expansionRoundsFor ile bir kez belirlenir, her turda T − geçen).
+ * Dönüş: her tur için koltuk sırasına (1., 2., …) göre il sayıları. Belirlenimci (sunucu ve istemci aynı).
+ */
+export const EXPANSION = { perRound: 11, min: 3, max: 7 };
+export const expansionRoundsFor = (free, cfg = EXPANSION) => Math.min(cfg.max, Math.max(cfg.min, Math.round(free / cfg.perRound)));
+export function expansionPlan(free, n, T = expansionRoundsFor(free)) {
+	const w = n <= 2 ? [2, 1] : n === 3 ? [2, 1, 0] : [2, 1, 1, 0];
+	const sw = w.reduce((a, b) => a + b, 0);
+	const plan = [];
+	while (free > 0 && plan.length < 50) {
+		const left = Math.max(1, T - plan.length);
+		const G = Math.min(free, Math.max(1, Math.ceil(free / left)));
+		const raw = w.map((k) => (G * k) / sw);
+		const a = raw.map(Math.floor);
+		let rest = G - a.reduce((x, y) => x + y, 0);
+		const ord = raw.map((v, k) => [v - a[k], k]).filter(([, k]) => w[k] > 0).sort((x, y) => y[0] - x[0] || x[1] - y[1]);
+		for (let j = 0; rest > 0; j = (j + 1) % ord.length, rest--) a[ord[j][1]]++;
+		plan.push(a);
+		free -= G;
+	}
+	return plan;
+}
+
+/**
  * İki botun savaşında filmin hız çarpanı (kullanıcı kararı: seçilen moda ve haritaya göre). Oyuncu sayısı ve
  * harita büyüdükçe botlar arası savaş çoğalır, film kısalır; insanın katıldığı savaş hep tam film (1).
  * Kısa film, dokunarak atlamayla aynı yoldan biter: an erken kapanır, ordular o anın son haline yerleşir.
  */
 export const BOT_FILM = {
-	quick: { '1v1': 1, ffa3: 0.75, ffa4: 0.6, team: 0.6 },
-	long: { '1v1': 1, ffa3: 0.55, ffa4: 0.45, team: 0.45 },
+	// v1.4: daha az kısalır (kullanıcı: "her şey bir anda oluyor"); ilan anı (kim kime) ve sonuç yazısı hiç kısalmaz
+	quick: { '1v1': 1, ffa3: 0.9, ffa4: 0.8, team: 0.8 },
+	long: { '1v1': 1, ffa3: 0.8, ffa4: 0.7, team: 0.7 },
 };
 
 /**
@@ -123,7 +152,7 @@ export const BOT_SIEGE = { slope: 3, pivot: 0.55, wounded: 0.4, kill: 2.5 };
 
 // Tahmini süre (sn), insan oyuncu varsayımıyla; yalnızca denge raporu için (tools/sim.mjs).
 // Savaş filmi (v0.6, cinema.js): saldırı ~4,9–6,4 sn (kuşatma uzun), fetih ~4, kule ~3,3, savunma ~2,7.
-const EST = { mapOpen: 0.95, overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, attack: 5.4, wheel: 4, chooseCat: 2.2, conquer: 4.0, tower: 3.4, defend: 2.7, nobody: 1.6, elim: 3.5, qOpen: 0.5 };
+const EST = { mapOpen: 0.95, overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, declare: 1.8, attack: 6.3, wheel: 4, chooseCat: 2.2, conquer: 4.3, tower: 3.9, defend: 3.4, nobody: 2.1, elim: 4.3, qOpen: 0.5, resultMin: 2.3 };
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 
@@ -1034,14 +1063,20 @@ export class Match {
 		// yayılma: haritada boş il kalmayana kadar
 		this.phase = 'yayilma';
 		let r = 0;
-		while (this.free().length && r < 12) {
+		// tur sayısı baştan belli (expansionPlan): küçük haritada 3, Türkiye'de 7; her tur aynı sayıda il dağıtılır
+		this.expT = expansionRoundsFor(this.free().length);
+		const of = () => r - 1 + expansionPlan(this.free().length, this.players.filter((p) => p.alive).length, Math.max(1, this.expT - r + 1)).length;
+		while (this.free().length && r < 20) {
 			r++;
-			this.emit('phase', { phase: this.phase, round: r });
+			const total = of();
+			this.emit('phase', { phase: this.phase, round: r, of: total });
 			this.expRound = r;
-			await this.ui.banner('YAYILMA', `Tur ${r}`, { tone: 'gold' });
+			this.expOf = total;
+			await this.ui.banner('YAYILMA', r === total ? `Son tur · ${r} / ${total}` : `Tur ${r} / ${total}`, { tone: 'gold' });
 			this.tick(EST.banner);
 			await this.expansionRound(r);
 		}
+		await this.sweepFree(); // güvenlik ağı: hiçbir il boşta kalmaz
 		this.expansionRounds = r;
 		const pace = PACE[this.cfg.length === 'long' ? 'long' : 'quick'];
 		const rounds = Math.max(2, Math.ceil((this.cfg.duels || pace.byMode?.[this.cfg.mode] || pace.duels) / this.players.length));
@@ -1242,18 +1277,38 @@ export class Match {
 		const q = this.pickTyped(yayilmaKat(this.R), 'expand', alive); // Coğrafya ağırlıklı (mac.js YAYILMA_KAT)
 		const res = await this.ask(q, alive, { title: 'Herkes cevaplıyor', phase: 'yayilma' });
 		const order = this.rank(res, TYPES[q.type].kind);
-		// seçim hakları: birinciye 2, ikinciye 1 (4 kişide üçüncüye de 1); 1'e 1'de 2 ve 1
-		const n = order.length;
-		const picks = n <= 2 ? [2, 1] : n === 3 ? [2, 1, 0] : [2, 1, 1, 0];
-		// büyük haritada hızlansın: boş il çoksa haklar katlanır
-		const free = this.free().length;
-		const mult = Math.max(1, Math.round(free / (n * 3 * 2)));
-		await this.ui.ranking(this, order, picks.map((k) => k * mult));
+		// bu turun payı (expansionPlan): sıralamaya göre 2:1 (3 kişide 2:1:0, 4 kişide 2:1:1:0)
+		const picks = expansionPlan(this.free().length, order.length, Math.max(1, (this.expT || 1) - r + 1))[0];
+		await this.ui.ranking(this, order, picks);
 		this.tick(EST.rank);
-		for (let k = 0; k < n; k++) {
-			const total = Math.min(picks[k] * mult, this.free().length);
+		for (let k = 0; k < order.length; k++) {
+			const total = Math.min(picks[k] || 0, this.free().length);
 			const pool = { left: pickPool(total) };
 			for (let j = 0; j < total && this.free().length; j++) await this.choose(order[k].p, 'free', [j + 1, total], pool);
+		}
+	}
+
+	/** Yayılma bittiğinde boş il kalmışsa (olmamalı) komşusu en çok olan oyuncuya verilir. */
+	async sweepFree() {
+		for (let guard = 0; guard < 200 && this.free().length; guard++) {
+			let best = null;
+			for (const i of this.free()) {
+				const cnt = new Map();
+				for (const j of this.neighbors(i)) {
+					const o = this.owner(j);
+					if (o >= 0 && this.players[o].alive) cnt.set(o, (cnt.get(o) || 0) + 1);
+				}
+				for (const [o, c] of cnt) if (!best || c > best.c) best = { i, o, c };
+			}
+			if (!best) {
+				// kara bağlantısı yok: en az ili olana
+				const alive = this.players.filter((p) => p.alive);
+				const p = alive.reduce((a, b) => (this.owned(b.i).length < this.owned(a.i).length ? b : a), alive[0]);
+				best = { i: this.free()[0], o: p.i };
+			}
+			this.setOwner(best.i, best.o, VALUE.pick);
+			await this.cinema.claim(this.players[best.o], best.i);
+			this.tick(EST.claim);
 		}
 	}
 
@@ -1306,7 +1361,7 @@ export class Match {
 			pickI = this.botChoose(p, options, kind);
 			await this.ui.botPick(this, p, pickI);
 		} else if (p.ctl.remote) await this.ui.botPick(this, p, pickI);
-		this.tick(p.human ? EST.humanPick : EST.botPick);
+		this.tick(p.human ? EST.humanPick : kind === 'attack' ? EST.botPick + 0.85 : EST.botPick); // saldırı seçimi daha uzun okunur
 		if (kind === 'free') {
 			this.setOwner(pickI, p.i, VALUE.pick, true);
 			await this.cinema.claim(p, pickI);
@@ -1378,7 +1433,7 @@ export class Match {
 		const k = this.filmTempo(p, d);
 		if (cin) cin.tempo = k;
 		await this.cinema.attack(p, d, target, isCap);
-		this.tick(EST.attack * k);
+		this.tick(EST.declare + EST.attack * k); // ilan anı (kim kime) film hızından bağımsız
 		// çark: kategori (fetih dilimi: saldıran seçer)
 		let cat = await this.ui.wheel(this, p);
 		this.tick(EST.wheel);
@@ -1420,7 +1475,7 @@ export class Match {
 			await this.ui.banner('KALKAN!', `${d.name} saldırıyı savuşturdu`, { tone: 'gold', short: true });
 			this.tick(EST.bannerShort);
 			await (this.cinema.shield ? this.cinema.shield(d, target) : this.cinema.defend(d, target));
-			this.tick(EST.defend * k);
+			this.tick(Math.max(EST.resultMin, EST.defend * k));
 		} else if (winner === p) {
 			if (isCap) {
 				const left = app.castles[d.i].hit();
@@ -1428,7 +1483,7 @@ export class Match {
 				this.towersBy[p.i]++;
 				result('tower', { left });
 				await this.cinema.towerDown(p, d, target, left);
-				this.tick(EST.tower * k);
+				this.tick(Math.max(EST.resultMin, EST.tower * k));
 				if (left <= 0) await this.eliminate(d, p);
 				else this.rescore();
 			} else {
@@ -1436,7 +1491,7 @@ export class Match {
 				result('conquer');
 				this.setOwner(target, p.i, v, true);
 				await this.cinema.conquer(p, target);
-				this.tick(EST.conquer * k);
+				this.tick(Math.max(EST.resultMin, EST.conquer * k));
 			}
 		} else if (winner === d) {
 			this.value.set(target, (this.value.get(target) || VALUE.pick) + VALUE.defend);
@@ -1444,11 +1499,11 @@ export class Match {
 			this.emit('owner', { i: target, p: d.i, value: this.value.get(target) }); // il değeri arttı (istemci puanı tutsun)
 			this.rescore();
 			await this.cinema.defend(d, target);
-			this.tick(EST.defend * k);
+			this.tick(Math.max(EST.resultMin, EST.defend * k));
 		} else {
 			result('nobody');
 			await this.cinema.nobody(target);
-			this.tick(EST.nobody * k);
+			this.tick(Math.max(1.7, EST.nobody * k));
 		}
 		return true;
 	}

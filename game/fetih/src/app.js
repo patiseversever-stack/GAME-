@@ -26,6 +26,7 @@ import { Sfx } from './audio/sfx.js';
 import { NightLights } from './gfx/nightlights.js';
 import { Weather } from './gfx/weather.js';
 import { clock } from './core/clock.js';
+import { quizWarm } from './quiz/warm.js';
 
 const SKY_VS = /* glsl */ `
 varying vec3 vD;
@@ -168,13 +169,16 @@ export class App {
 		document.addEventListener('visibilitychange', this._onVis);
 		this._bindInput();
 		this.resize();
-		// derleme: bütün malzemeler sahnede (kaleler dahil) görünür haldeyken
+		// derleme: bütün malzemeler sahnede (kaleler dahil) görünür haldeyken; nadir soru sahneleri de (Tufan suyu, yağmur,
+		// şimşek; Kayıp İl perdesi): ilk Tufan sorusunda gölgelendirici bağlama donması olmasın (quiz/warm.js)
 		for (const k of this.castles) k.group.visible = true;
+		const qw = quizWarm(this);
 		try {
 			await this.renderer.compileAsync(this.scene, this.camera);
 		} catch (e) {
 			this.renderer.compile(this.scene, this.camera);
 		}
+		qw.done(this.renderer);
 		for (const k of this.castles) k.group.visible = false;
 		this.cam.update(1 / 60);
 		this.render();

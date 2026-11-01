@@ -140,7 +140,8 @@ export class MapCamera {
 		s.b.pitch = pitch;
 		const travel = Math.hypot(x - s.a.x, z - s.a.z);
 		const zoom = Math.abs(Math.log(dist / Math.max(1, this.dist)));
-		s.dur = dur ?? clamp(0.45 + travel * 0.018 + zoom * 0.5, 0.45, 1.3);
+		// süre belirtilmemişse yola göre: v1.4 biraz daha ağır (kullanıcı: "kamera hareketi çok hızlı, anlamıyorum")
+		s.dur = dur ?? clamp(0.6 + travel * 0.02 + zoom * 0.55, 0.6, 1.6);
 		s.arc = arc ?? Math.min(travel * 0.35, 30);
 		s.ease = ease || (moving ? easeOut : easeInOut);
 		s.t = 0;

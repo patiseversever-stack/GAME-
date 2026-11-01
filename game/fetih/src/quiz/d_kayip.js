@@ -58,7 +58,8 @@ void main() {
 }`;
 
 let MATS = null;
-function mats(app) {
+/** Kuyu malzemeleri (açılış derlemesi de kullanır: quiz/warm.js). */
+export function mats(app) {
 	if (MATS) return MATS;
 	MATS = {
 		floor: new THREE.MeshBasicMaterial({ color: 0x000000 }),

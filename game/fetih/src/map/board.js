@@ -194,12 +194,13 @@ void main() {
 	// --- boya dalgası: dalga içinde yeni sahip, dışında eski
 	float dO = distance(vW.xz, vPaint.xy);
 	float pw = max(fwidth(dO), 1e-4);
-	float painted = 1.0 - smoothstep(vPaint.z - pw, vPaint.z + pw, dO);
+	// z ≤ −1: dalgasız geçiş (bütün il birden eski renkten yeniye; −1 − z oranında), ör. soru sahnesinden çıkış
+	float painted = vPaint.z <= -1.0 ? clamp(-1.0 - vPaint.z, 0.0, 1.0) : 1.0 - smoothstep(vPaint.z - pw, vPaint.z + pw, dO);
 	float ownerId = painted > 0.5 ? vOwn.w : vPrev.w;
 	float ownedK = mix(vPrev.w >= 0.0 ? 1.0 : 0.0, vOwn.w >= 0.0 ? 1.0 : 0.0, painted);
 	vec3 ownCol = vPrev.w >= 0.0 ? mix(vPrev.rgb, vOwn.rgb, painted) : vOwn.rgb;
 	float rimW = max(0.22, 5.0 * pw);
-	float rim = exp(-pow((dO - vPaint.z) / rimW, 2.0)) * vPaint.w;
+	float rim = vPaint.z <= -1.0 ? 0.0 : exp(-pow((dO - vPaint.z) / rimW, 2.0)) * vPaint.w;
 
 	// --- komşu: sınırın öbür yanı
 	float nbOwner = nb > 254.5 ? -3.0 : -2.0;
@@ -880,6 +881,17 @@ export class Board {
 	 * yayılır; verilmezse anında boyanır (ama önceki renk saklanır: hemen ardından paint() çağrılırsa
 	 * dalga eski renkten başlar).
 	 */
+	/** Sahip rengini dalgasız, yumuşak geçişle değiştir (bütün il birden, dur sn): çok ili birden geri boyarken. */
+	setOwnerFade(index, owner, color, dur = 0.7) {
+		this.setOwner(index, owner, color);
+		const w = this.wave[index];
+		w.on = true;
+		w.fade = true;
+		w.t = 0;
+		w.dur = dur;
+		this._setRow(index, 2, 0, 0, -1, 0);
+	}
+
 	setOwner(index, owner, color, ox, oz) {
 		const p = this.provinces[index];
 		p.owner = owner;
@@ -924,6 +936,7 @@ export class Board {
 			for (let k = 0; k < r.length; k += 2) maxR = Math.max(maxR, Math.hypot(r[k] - ox, -r[k + 1] - oz));
 		const w = this.wave[index];
 		w.on = true;
+		w.fade = false;
 		w.t = 0;
 		w.maxR = maxR + 0.3;
 		w.dur = Math.min(1.6, Math.max(0.85, 0.6 + maxR * 0.09));
@@ -1107,9 +1120,16 @@ export class Board {
 				w.t += dt;
 				const o = (2 * N + i) * 4;
 				const u = w.t / w.dur;
-				S[o + 2] = w.maxR * waveEase(u);
-				S[o + 3] = u < 1 ? 1 : Math.max(0, 1 - (u - 1) * 3);
-				if (u >= 1.35) {
+				if (w.fade) {
+					// dalgasız geçiş: −1 … −2 (oran), parlak cephe yok
+					const e = Math.min(1, u);
+					S[o + 2] = -1 - e * e * (3 - 2 * e);
+					S[o + 3] = 0;
+				} else {
+					S[o + 2] = w.maxR * waveEase(u);
+					S[o + 3] = u < 1 ? 1 : Math.max(0, 1 - (u - 1) * 3);
+				}
+				if (u >= (w.fade ? 1 : 1.35)) {
 					w.on = false;
 					S[o + 2] = 1e5;
 					S[o + 3] = 0;

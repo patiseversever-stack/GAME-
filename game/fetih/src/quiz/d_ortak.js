@@ -208,11 +208,18 @@ export function guard(app) {
 		get painted() {
 			return painted;
 		},
+		/**
+		 * wave: true → sahip rengi geri gelir. Birkaç il dalgayla (il merkezinden); çok il birden (karanlık harita,
+		 * Tufan) dalgasız yumuşak geçişle: bütün haritada aynı anda onlarca dalga "harita baştan çiziliyor" gibi
+		 * görünüyordu ve her karede durum dokusunu tazeliyordu. false → hemen.
+		 */
 		restore(wave = true) {
+			const many = painted.size > 4;
 			for (const i of painted) {
 				const p = b.provinces[i];
 				const c = p.owner >= 0 ? b.ownerHex?.[p.owner] : null;
-				if (wave) b.setOwner(i, p.owner, c ?? null, p.x, p.z);
+				if (wave && many && b.setOwnerFade) b.setOwnerFade(i, p.owner, c ?? null, 0.7);
+				else if (wave) b.setOwner(i, p.owner, c ?? null, p.x, p.z);
 				else b.setOwner(i, p.owner, c ?? null);
 			}
 			painted.clear();

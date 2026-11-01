@@ -266,6 +266,11 @@ async function play(cfg, { human = false, store, policy, accuracy } = {}) {
 	const ui = makeUI({ human, policy, accuracy });
 	const m = new Match(app, ui, { ...cfg, allBots: !human, persist: human ? cfg.persist : false });
 	app.match = m;
+	// yayılma bitince haritada boş il kalmamalı; tur sayısı planı aşmamalı (küçük harita 3, Türkiye 7)
+	m.on('phase', (d) => {
+		if (d.phase === 'yayilma') check(d.of >= 1 && d.of <= 7 && d.round <= d.of, `${cfg.mode}/${cfg.length}/${cfg.region}/seed ${cfg.seed}: yayılma turu ${d.round}/${d.of}`);
+		if (d.phase === 'fetih' && d.round === 1) check(m.free().length === 0, `${cfg.mode}/${cfg.length}/${cfg.region}/seed ${cfg.seed}: yayılma sonrası ${m.free().length} il boşta`);
+	});
 	const t0 = performance.now();
 	let out;
 	try {
@@ -395,7 +400,7 @@ console.log('3) Sefer: bütün sahneler');
 
 // Her mod × uzunluk için PLAN maç (eşit 'er' botlar, 0. koltuk "insan" varsayımıyla süre): tip dağılımı (an × tip),
 // yeni tip payı, art arda tekrar, maç başına üst sınır, canlı tur yalnız düelloda, Gölge kapalı, Kuşbakışı yapısı
-// başkent ilinde değil, maç süresi (hedef hızlı 6–8, uzun 15–20 dk), film payı ve koltuk adaleti.
+// başkent ilinde değil, maç süresi (hedef hızlı 6–8,5, uzun 15–21 dk), film payı ve koltuk adaleti.
 const PLAN = Number(opt.plan ?? 150);
 const plan = {};
 console.log(`4) Soru düzeni: ${PLAN * 8} maç (her mod × uzunluk ${PLAN})`);
@@ -471,7 +476,7 @@ const avg = (a) => a.reduce((x, y) => x + y, 0) / (a.length || 1);
 const mins = (s) => (s / 60).toFixed(1);
 console.log('\n=== RAPOR ===');
 console.log(`maç: ${stats.matches}, soru: ${stats.questions}, bitiş nedenleri: ${JSON.stringify(stats.endReasons)}`);
-console.log('tahmini süre (dk): ort [en az–en çok]  (hedef: hızlı 6–8, uzun 15–20)');
+console.log('tahmini süre (dk): ort [en az–en çok]  (hedef: hızlı 6–8,5, uzun 15–21)');
 for (const [k, a] of Object.entries(stats.est)) console.log(`  ${k.padEnd(12)} ${mins(avg(a))} [${mins(Math.min(...a))}–${mins(Math.max(...a))}]`);
 console.log('joker kullanımı  bot: ' + JSON.stringify(stats.jokers.bot) + '  insan: ' + JSON.stringify(stats.jokers.human));
 console.log(`ikinci şans yeniden sorusu: ${stats.flow.second}, sabotaj: ${stats.flow.sabotage}`);
@@ -488,7 +493,7 @@ console.log('reddedilen joker istekleri: ' + JSON.stringify(Object.fromEntries(t
 for (const [k, a] of Object.entries(stats.est)) {
 	const [, length] = k.split('/');
 	const lo = length === 'long' ? 15 : 6;
-	const hi = length === 'long' ? 20 : 8;
+	const hi = length === 'long' ? 21 : 8.5;
 	const m = avg(a) / 60;
 	if (m < lo * 0.85 || m > hi * 1.15) console.log(`  UYARI: ${k} tahmini ${m.toFixed(1)} dk, hedef ${lo}–${hi}`);
 }
@@ -516,8 +521,9 @@ for (const t of ['choice', 'tf', 'num', 'pin', 'hang', 'order', 'match', 'hilo',
 				`${mm(P.est)} [${(Math.min(...P.est) / 60).toFixed(1)}–${(Math.max(...P.est) / 60).toFixed(1)}]`.padEnd(24) +
 				`${(P.film.reduce((a, b) => a + b, 0) / P.n).toFixed(0).padStart(6)}  ${(P.distinct / P.n).toFixed(1).padStart(10)}           ${seats}`,
 		);
+		// v1.4 okunur tempo (saldırı ilanı, ağır kamera, sonuç yazıları): maç ~1 dk uzadı; hedef hızlı 6–8,5, uzun 15–21
 		const lo = key.endsWith('long') ? 15 : 6;
-		const hi = key.endsWith('long') ? 20 : 8;
+		const hi = key.endsWith('long') ? 21 : 8.5;
 		const avgMin = P.est.reduce((a, b) => a + b, 0) / P.est.length / 60;
 		check(avgMin >= lo && avgMin <= hi, `${key}: ortalama süre ${avgMin.toFixed(1)} dk hedef ${lo}–${hi} dışında`);
 		// koltuk adaleti: eşit botlarda hiçbir koltuk/taraf payı beklenenden çok sapmasın (örneklem: PLAN maç)

@@ -281,9 +281,20 @@ Yerelde dokununca erken geçer. Çevrimiçinde süre 'ask' ve 'reveal' olayları
 bitişini bekler (herkes aynı anda ilerler; erken geçen istemci yalnız bekler). Maç süresine etkisi (4.000 maç): hızlı maçta
 24–27 sn, uzun maçta 54–59 sn cevap filmi.
 
-**Maç süresi (hedef hızlı 6–8, uzun 15–20 dk).** `PACE.byMode`: hızlı 1'e 1 10 düello, diğerleri 11; uzun 1'e 1 20, 3 kişi 27,
-4 kişi ve eşli 28. Tahmini ortalama (4.000 maç): hızlı 7,5–7,9, uzun 17,8–18,5 dk. Koltuk adaleti: `test/kurallar.test.mjs`
+**Maç süresi (hedef hızlı 6–8,5, uzun 15–21 dk).** `PACE.byMode`: hızlı 1'e 1 10 düello, diğerleri 11; uzun 1'e 1 20, 3 kişi 27,
+4 kişi ve eşli 28. Tahmini ortalama (v1.4, 1.200 maç): hızlı 7,9–8,2, uzun 18,3–19,9 dk. Koltuk adaleti: `test/kurallar.test.mjs`
 (1'e 1 %50,2 / 49,8, eşli %50 / 50; 1.000–1.500 maç).
+
+**Yayılma planı (v1.4, `expansionPlan`).** Tur sayısı baştan belli: ≈11 boş il bir tur, en az 3 en çok 7 (bölge haritası 3 tur,
+81 illik Türkiye 7 tur). Her turda kalanın kalan tura bölümü dağıtılır (turlar eşit, son tur artanı süpürür); tur içinde pay
+sıralama ağırlığıyla (1'e 1 2:1, 3 kişi 2:1:0, 4 kişi 2:1:1:0) en büyük kalan yöntemiyle bölünür. Eskiden boş il çokken haklar
+katlanıyor, azaldıkça tura 3 il düşüyordu: Türkiye'de 11–12 tur, 12 tur sınırında 3 ve 4 kişide 1–6 il boşta kalıyordu.
+`sweepFree` güvenlik ağı: yayılma bitince boş il kalmaz (benzetim denetler).
+
+**Saldırı temposu (v1.4).** Her saldırı bir ilan anıyla başlar (`DECLARE_MS` 1,8 sn, film hızından bağımsız): iki il birlikte,
+saldıranın ilinden hedefe ok, etiketlerde SALDIRAN / SAVUNAN, altta portreli kim kime yazısı (`ui.versusCaption`, düello
+sorusuna kadar kalır). Vinç 1,75 sn, izleme 2 sn; sonuç anları en az 2,3 sn ve yazılı (FETİH · X aldı · Y kaybetti, SAVUNMA,
+KULE YIKILDI, KİMSE BİLEMEDİ, ELENDİ). İki botun filmi daha az kısalır (`BOT_FILM` hızlı 0,8–0,9, uzun 0,7–0,8).
 
 ### Çevrimiçi (sunucu otoriter, `src/game/sunucu.js`, şema `net.js` başı)
 
