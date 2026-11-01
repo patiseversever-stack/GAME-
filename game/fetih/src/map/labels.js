@@ -337,6 +337,17 @@ export class Labels {
 		this._dirty = true;
 	}
 
+	/**
+	 * Yasak alan: bu DOM öğesinin kutusuna düşen ad gösterilmez (seçim listesindeki ad kutunun üstüne kayar).
+	 * Kutu, eleme sırasında okunur (kare başında; düzen zaten hesaplı) ve istem belirme geçişi bitince bir kez daha.
+	 */
+	avoid(el) {
+		this._avoidEl = el || null;
+		this._dirty = true;
+		clearTimeout(this._avoidT);
+		if (el) this._avoidT = setTimeout(() => (this._dirty = true), 480);
+	}
+
 	/** Geçici sustur / geri aç (liste ve genel kip durumu korunur). */
 	suspend(on) {
 		this.hold = !!on;
@@ -344,6 +355,7 @@ export class Labels {
 
 	_before(renderer, camera) {
 		this.uniforms.uDpr.value = renderer.getPixelRatio();
+		this._canvas = renderer.domElement;
 		if (this._cam !== camera) {
 			this._cam = camera;
 			this._dirty = true;
@@ -441,6 +453,22 @@ export class Labels {
 			this._oy[i] = 0;
 			this._os[i] = 1;
 		}
+		// yasak alan (istem yazısı): css pikselden çizim pikseline, y yukarı
+		let ax0 = 0;
+		let ax1 = -1;
+		let ay0 = 0;
+		let ay1 = -1;
+		const el = this._avoidEl;
+		if (el && el.isConnected) {
+			const r = el.getBoundingClientRect();
+			const c = this._canvas?.getBoundingClientRect?.() || { left: 0, top: 0 };
+			if (r.width > 0) {
+				ax0 = (r.left - c.left - 6) * dpr;
+				ax1 = (r.right - c.left + 6) * dpr;
+				ay0 = res.y - (r.bottom - c.top + 4) * dpr;
+				ay1 = res.y - (r.top - c.top - 4) * dpr;
+			}
+		}
 		const ord = this.order;
 		let n = 0;
 		const acc = this._acc;
@@ -484,6 +512,11 @@ export class Labels {
 				if (ok || !list) break;
 			}
 			if (!ok && !list) continue;
+			// istemin üstüne binen ad: genel kipte gösterilmez, seçim listesinde istemin hemen üstüne kayar
+			if (ax1 > ax0 && Math.abs(sx - (ax0 + ax1) / 2) * 2 < this._sw[i] + (ax1 - ax0) && Math.abs(sy - (ay0 + ay1) / 2) * 2 < this._sh[i] + (ay1 - ay0)) {
+				if (!list) continue;
+				sy = ay1 + this._sh[i] / 2 + 2 * dpr;
+			}
 			if (list) this._oy[i] = (sy - this._sy[i]) / dpr; // kırpma uzayında y yukarı
 			this._ok[i] = 1;
 			acc[n++] = i;

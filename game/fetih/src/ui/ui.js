@@ -391,12 +391,16 @@ export class UI {
 	 */
 	prompt(html, { tone = '', icon = null } = {}) {
 		const p = this.$.prompt;
+		const L = this.app.board?.labelLayer;
 		if (!html) {
 			this._cap = null;
+			L?.avoid(null);
 			return p.classList.remove('on');
 		}
 		p.className = `fl-prompt ${tone} on`;
 		p.innerHTML = `<span class="pt">${html}</span>`;
+		// il adları istemin altında kalmasın (3D yazı katmanı DOM'u bilmez): istemin yazı kutusu yasak alan
+		L?.avoid(p.firstChild);
 	}
 
 	/** Gece altyazısı (bot seçimi, saldırı, fetih): üst satır, başlık, alt satır. null → kapat. */

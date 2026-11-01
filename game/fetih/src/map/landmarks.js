@@ -100,16 +100,19 @@ void main() {
 	vec4 fx = provRow(tag, 3);
 	vec3 p = position;
 	vLod = lodK();
+	// uzakta (bütün harita, bölge görünümü) yapı hareketleri durur: o boyda seçilmez, yalnız kıpırtı yapar
+	float ak = abs(anim) > 0.5 ? 1.0 - smoothstep(42.0, 62.0, distance(cameraPosition, site.xyz)) : 0.0;
 	// balon: süzülme (anim = balon kimliği)
-	if (anim > 0.5) {
+	if (anim > 0.5 && ak > 0.0) {
 		float ph = anim * 7.31;
-		p.y += sin(uTime * 0.6 + ph) * 0.14;
-		p.x += sin(uTime * 0.27 + ph * 1.7) * 0.08;
-		p.z += cos(uTime * 0.21 + ph * 2.3) * 0.04;
-	} else if (anim < -0.5) {
+		p.y += sin(uTime * 0.6 + ph) * 0.14 * ak;
+		p.x += sin(uTime * 0.27 + ph * 1.7) * 0.08 * ak;
+		p.z += cos(uTime * 0.21 + ph * 2.3) * 0.04 * ak;
+	} else if (anim < -0.5 && ak > 0.0) {
 		// bayrak bezi: direkten uca büyüyen dalga (anim = -(1 + direkten uzaklık oranı))
 		float u = -anim - 1.0;
 		float ph = uTime * 5.2 - u * 5.5 + tag * 1.3;
+		u *= ak;
 		p.z += sin(ph) * 0.055 * u;
 		p.y += sin(ph * 0.5 + 1.0) * 0.012 * u;
 		p.x -= (1.0 - cos(sin(ph) * 0.6)) * 0.03 * u;

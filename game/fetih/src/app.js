@@ -8,7 +8,8 @@
 
 import * as THREE from 'three';
 import { createRenderer } from './core/renderer.js';
-import { Governor } from './core/quality.js';
+import { Governor, launchTier } from './core/quality.js';
+import { GpuTimer } from './core/gputimer.js';
 import { createGlobals, ENVS, applyEnv } from './gfx/env.js';
 import { ShadowSystem } from './gfx/shadow.js';
 import { TiltShift } from './gfx/post.js';
@@ -81,12 +82,15 @@ export class App {
 
 		const saved = this.store.get('settings') || {};
 		const qOpt = this.qualityOpt !== 'auto' ? this.qualityOpt : saved.quality ?? 'auto';
-		const R = createRenderer(canvas, qOpt === 'auto' ? null : Number(qOpt));
+		// otomatik kademe: ekran kartından tanınan + bu cihazda ölçülen düzeltme (güçlü çıkan cihaz bir üst kademeyle açılır)
+		const forced = qOpt === 'auto' ? null : Number(qOpt);
+		const R = createRenderer(canvas, forced, (info) => launchTier(info.tier, this.store, info.gpu));
 		this.renderer = R.renderer;
 		this.renderer.autoClear = false;
 		this.tier = R.tier;
 		this.info = R;
-		this.gov = new Governor({ tier: R.tier.id, gpu: R.gpu, store: this.store, power: saved.power || this.power, mobile: R.mobile });
+		this.gov = new Governor({ tier: R.tier.id, base: R.base, fixed: forced != null && forced >= 0 && forced <= 2, gpu: R.gpu, store: this.store, power: saved.power || this.power, mobile: R.mobile });
+		this.gpuTimer = R.mobile ? null : new GpuTimer(this.renderer.getContext()); // mobilde GPU saati güvenilmez (quality.js)
 		this.gov.onScale = () => this.resize();
 
 		const G = createGlobals();
@@ -302,7 +306,12 @@ export class App {
 			if (!this.gov.tick(now, rafDelta)) return;
 			const dt = this._prev ? Math.min(0.05, (now - this._prev) / 1000) : 1 / 60;
 			this._prev = now;
+			const t0 = performance.now();
 			this.frame(dt);
+			// kare JS süresi (işlemci darboğazında çözünürlük boşuna kısılmasın) ve GPU süresi (ölçülebiliyorsa)
+			const g = this.gov;
+			g.cpuMs += (performance.now() - t0 - g.cpuMs) * 0.1;
+			if (this.gpuTimer) g.gpuMs = this.gpuTimer.poll();
 		};
 		this._prevRaf = 0;
 		this._raf = requestAnimationFrame(step);
@@ -365,6 +374,12 @@ export class App {
 	}
 
 	render() {
+		this.gpuTimer?.begin();
+		this._draw();
+		this.gpuTimer?.end();
+	}
+
+	_draw() {
 		const r = this.renderer;
 		// gölge önbelleği: gölge haritası yalnız gerektiğinde yeniden çizilir — yerleşim değişti (kamera odağı kaydı,
 		// yakınlık basamağı, güneş), ordular/makineler/kale inişi gibi zamanlı canlandırma var, il kalkıyor, kahraman

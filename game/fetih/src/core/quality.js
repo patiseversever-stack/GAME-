@@ -60,20 +60,42 @@ export function detectTier(gl) {
 	return { tier, gpu, mobile };
 }
 
+/** Ölçek tavanı: piksel bütçesinin üstüne en çok bu kat (cihaz kanıtlarsa; ekranın kendi çözünürlüğünü aşmaz). */
+export const HI = 1.35;
+
 /**
- * Kare hızı yöneticisi (v1.4: "yağ gibi").
+ * Açılışta kullanılacak kademe: ekran kartından tanınan kademe + bu cihazda ölçülerek bulunan düzeltme
+ * (yönetici önceki oturumlarda yükseltti ya da düşürdü). Kademe oyun sırasında değişmez (shader ve geometri ona göre
+ * kurulur): düzeltme bir sonraki açılışta uygulanır.
+ */
+export function launchTier(detected, store, gpu) {
+	const m = store?.get?.('perf');
+	if (!m || m.v !== 3 || m.gpu !== gpu) return detected;
+	return clamp(detected + (m.adj | 0), 0, Math.max(0, Math.min(2, m.top ?? 2)));
+}
+
+/**
+ * Kare hızı ve kalite yöneticisi (v1.5: "cihaz neyse onun en iyisi").
  * - Hedef ekranın kendi yenileme hızıdır: 60 Hz ekranda 60, 90'da 90, 120'de 120 kare. rAF aralıklarından ölçülür.
- * - Kareler gecikirse önce yüksek yenilemeli ekranda yarı hıza (120 → 60) iner; 60'ta çözünürlük basamak basamak kısılır;
- *   o da yetmezse 30. Her zaman eşit aralık (bölen tam sayı): 90 Hz ekranda 60 yerine 45 (titremesiz).
- * - Ekranda hiçbir şey kıpırdamıyorsa (kamera durgun, canlandırma yok: app.active false) 30 kare: GPU ve ısı yarıya
- *   iner, telefon ısınıp kendini yavaşlatmaz. En ufak harekette (kamera, dokunuş, efekt) aynı karede tam hıza döner.
+ * - Kareler gecikirse sırayla: süper örnekleme (ölçek > 1) bırakılır → yüksek yenilemede yarı hız (120 → 60) →
+ *   çözünürlük basamak basamak → 30 kare. Her zaman eşit aralık (bölen tam sayı): 90 Hz ekranda 60 yerine 45.
+ *   İşlemci darboğazında (kare JS süresi bütçeyi yiyor) çözünürlük boşuna kısılmaz, doğrudan kare sınırı iner.
+ * - Rahatsa sırayla geri alır: önce akıcılık (kare sınırı), sonra keskinlik; ekran hızını tutuyorsa ölçek 1'in üstüne
+ *   (piksel bütçesinin üstüne, ekranın kendi çözünürlüğüne kadar) çıkar. Tutmayan deneme geri alınır ve bir süre
+ *   (her başarısızlıkta iki katı) tekrar denenmez: gidip gelme yok, ısınıp yavaşlayan telefon sonradan toparlanır.
+ * - Kademe (gölge, ağaç yoğunluğu, geometri): ekran hızını süper örneklemede ya da GPU süresi bütçenin yarısının altında
+ *   uzun süre tutan cihaz bir sonraki açılışta bir üst kademeyle başlar; en düşük çözünürlükte bile tutamayan bir alt
+ *   kademeyle (ve o kademe bir daha denenmez). launchTier.
+ * - Ekranda hiçbir şey kıpırdamıyorsa (kamera durgun, canlandırma yok) 30 kare: GPU ve ısı yarıya iner. En ufak
+ *   harekette aynı karede tam hıza döner.
  * - Çözünürlük değişimi (çizim tamponu yeniden kurulur, bir kare takılır) yalnızca durgunken uygulanır.
  * - Pil %20'nin altına iner ve şarjda değilse pil koruma moduna geçer.
- * - Bulduğu ayarı ekran kartına göre kaydeder; bir sonraki açılış doğru ayarla başlar.
+ * - Bulduğunu ekran kartı ve kademe başına kaydeder; bir sonraki açılış doğru ayarla başlar.
  */
 export class Governor {
-	constructor({ tier, gpu, store, power = 'auto', mobile = false }) {
+	constructor({ tier, gpu, store, power = 'auto', mobile = false, base = tier, fixed = false }) {
 		this.T = TIERS[tier];
+		this.base = base; // ekran kartından tanınan kademe (düzeltmesiz)
 		this.mobile = mobile;
 		this.gpu = gpu;
 		this.store = store;
@@ -81,10 +103,15 @@ export class Governor {
 		this.battery = { saver: false, level: 1, charging: true };
 
 		const mem = store.get('perf') || {};
-		const known = mem.gpu === gpu && mem.v === 2;
-		this.scale = known ? clamp(mem.scale ?? 1, this.T.minScale, 1) : 1;
-		this.cap = known ? mem.cap ?? 120 : 120; // en yüksek kare hızı (ekran izin verirse)
-		this.ceil = known ? mem.ceil ?? 1 : 1; // bu cihazda denenip kaldırılamayan en yüksek ölçek
+		let q = null;
+		if (mem.gpu === gpu && mem.v === 3) q = mem.q?.[tier] || null;
+		else if (mem.gpu === gpu && mem.v === 2) q = { scale: mem.scale, cap: mem.cap };
+		this.adj = mem.gpu === gpu && mem.v === 3 ? mem.adj | 0 : 0;
+		this.top = mem.gpu === gpu && mem.v === 3 ? mem.top ?? 2 : 2; // tutmadığı görülen kademenin bir altı
+		this._q = mem.gpu === gpu && mem.v === 3 ? { ...mem.q } : {};
+		this.scale = q ? clamp(q.scale ?? 1, this.T.minScale, HI) : 1;
+		this.cap = q ? q.cap ?? 120 : 120; // en yüksek kare hızı (ekran izin verirse)
+		this.hi = 1; // ölçeğin üst sınırı: pixelRatio() ekranın kendi çözünürlüğünden hesaplar
 
 		this.vsync = 16.67;
 		this._deltas = new Float32Array(30);
@@ -97,6 +124,13 @@ export class Governor {
 		this._cool = 0;
 		this._probe = null;
 		this._ups = 0;
+		this._back = { cap: 0, scale: 0 }; // bu ana kadar o tür yükseltme denenmez
+		this._backMs = { cap: 20000, scale: 15000 };
+		this._upT = 0; // kademe yükseltme kanıtı (sn)
+		this._tierSet = fixed; // kademeyi oyuncu seçtiyse kendiliğinden değişmez
+		this._dnT = 0; // kademe düşürme kanıtı (sn)
+		this.cpuMs = 0; // kare başına JS süresi (app ölçer)
+		this.gpuMs = 0; // GPU süresi (zaman sorgusu varsa; yoksa 0)
 		this._dirty = false;
 		this._pend = null; // durgunluğu bekleyen ölçek değişimi
 		this.onScale = null; // çözünürlük değişince çağrılır
@@ -112,20 +146,25 @@ export class Governor {
 		return Math.round(f);
 	}
 
+	get saver() {
+		return this.power === 'saver' || (this.power === 'auto' && this.battery.saver);
+	}
+
 	get targetFps() {
 		const hz = this.hz;
 		if (this.menu || this.idle) return Math.min(30, hz); // durgun ekran: 30 yeter (hareket başlayınca anında tam hız)
-		if (this.power === 'saver' || (this.power === 'auto' && this.battery.saver)) return Math.min(30, hz);
+		if (this.saver) return Math.min(30, hz);
 		return Math.min(this.cap, hz);
 	}
 
 	get maxScale() {
-		if (this.power === 'saver' || (this.power === 'auto' && this.battery.saver)) return Math.min(this.ceil, 0.8);
-		return this.ceil;
+		if (this.saver) return Math.min(0.8, this.hi);
+		// ekran hızını tutamayan cihazda süper örnekleme yok (önce akıcılık)
+		return Math.min(this.cap, this.hz) >= this.hz ? this.hi : 1;
 	}
 
 	get effScale() {
-		return Math.min(this.scale, this.maxScale);
+		return Math.min(this.scale, Math.max(this.maxScale, this.T.minScale));
 	}
 
 	/** Her requestAnimationFrame çağrısında: bu vsync'te çizilmeli mi? */
@@ -165,6 +204,7 @@ export class Governor {
 			const s = this._pend;
 			this._pend = null;
 			this.scale = s;
+			if (this._probe && this._probe.from != null) this._probe.t = now; // deneme, ölçek uygulandığı andan sayılır
 			if (this.onScale) this.onScale();
 		}
 		return true;
@@ -173,7 +213,9 @@ export class Governor {
 	/** Duraklatma ekranı için kısa özet: ekran kartı, kademe, Hz, son saniyenin kare hızı, çözünürlük ölçeği. */
 	summary() {
 		const g = String(this.gpu || '?').replace(/^ANGLE \(|\)$/g, '').slice(0, 42);
-		return `${g} · q${this.T.id} · ${this.hz} Hz · ${this.fps ?? 0} kare · ölçek ${this.effScale.toFixed(2)}`;
+		const t = this.T.id !== this.base ? `q${this.base}→${this.T.id}` : `q${this.T.id}`;
+		const nx = this.adj + this.base !== this.T.id ? ` (sonraki q${clamp(this.base + this.adj, 0, 2)})` : '';
+		return `${g} · ${t}${nx} · ${this.hz} Hz · ${this.fps ?? 0} kare · ölçek ${this.effScale.toFixed(2)}${this.gpuMs ? ` · gpu ${this.gpuMs.toFixed(1)} ms` : ''}`;
 	}
 
 	/** Kaç vsync'te bir çizileceği: hep tam sayı ve yukarı yuvarlanır (eşit aralık, hedefi aşmaz). */
@@ -192,24 +234,26 @@ export class Governor {
 		if (period > expected * 4) return; // tek seferlik takılma (sekme değişimi vb.)
 		this._ema = this._ema ? this._ema + (period - this._ema) * 0.08 : period;
 		const dt = period / 1000;
+		const late = this._ema > expected * 1.2;
+		this._tierEvidence(dt, late, expected);
 		if (now < this._cool) return;
 
-		const late = this._ema > expected * 1.2;
 		if (late) {
-			this._slow += dt;
+			// ağır yük (bütçenin 1,6 katı): iki kat çabuk tepki
+			this._slow += this._ema > expected * 1.6 ? dt * 2 : dt;
 			this._good = 0;
 		} else {
 			this._slow = Math.max(0, this._slow - dt * 0.5);
 			this._good += dt;
 		}
 
-		// Deneme amaçlı yükseltme geri tepti: geri al ve tavanı işaretle.
+		// Deneme amaçlı yükseltme geri tepti: geri al, tavanı işaretle, bir süre o tür deneme yok.
 		if (this._probe && late && this._slow > 1.2) {
-			if (this._probe.cap) this.cap = this._probe.cap;
-			else {
-				this.ceil = this._probe.from;
-				this._setScale(this._probe.from);
-			}
+			const k = this._probe.cap != null ? 'cap' : 'scale';
+			if (k === 'cap') this.cap = this._probe.cap;
+			else this._setScale(this._probe.from);
+			this._back[k] = now + this._backMs[k];
+			this._backMs[k] = Math.min(240000, this._backMs[k] * 2);
 			this._probe = null;
 			this._cool = now + 4000;
 			this._slow = 0;
@@ -223,35 +267,67 @@ export class Governor {
 
 		const hz = this.hz;
 		if (this._slow > 1.5) {
-			// Basamaklar: yüksek yenilemede önce yarı hız (120 → 60, keskinlik korunur); 60'ta çözünürlük biraz, sonra
-			// en alta; en son 30 kare.
 			this._slow = 0;
 			this._cool = now + 2200;
 			const s = this.effScale;
 			const fps = Math.min(this.cap, hz);
-			if (fps > 60) this.cap = 60;
-			else if (s > 0.81) this._setScale(Math.max(0.8, s - 0.1));
-			else if (s > this.T.minScale + 0.01) this._setScale(Math.max(this.T.minScale, s - 0.1));
+			// işlemci darboğazı: çizim süresinin çoğu JS; çözünürlük kısmak işe yaramaz, keskinlik korunur
+			const cpu = this.cpuMs > expected * 0.7;
+			if (s > 1.01) this._setScale(1);
+			else if (fps > 60) this.cap = 60;
+			else if (!cpu && s > 0.81) this._setScale(Math.max(0.8, s - 0.1));
+			else if (!cpu && s > this.T.minScale + 0.01) this._setScale(Math.max(this.T.minScale, s - 0.1));
 			else if (fps > 30) this.cap = 30;
 			this._dirty = true;
-		} else if (this._good > 8 && this._ups < 4) {
+		} else if (this._good > 8 && this._ups < 40) {
 			this._good = 0;
 			const fps = Math.min(this.cap, hz);
-			if (this.scale < this.maxScale - 0.01) {
-				// önce keskinlik geri gelir
-				this._probe = { from: this.scale, t: now };
-				this._setScale(Math.min(this.maxScale, this.scale + 0.08));
-				this._ups++;
-				this._cool = now + 2500;
-			} else if (fps < hz && this.power !== 'saver' && !this.battery.saver) {
-				// rahatsa bir üst kare hızını dene (30 → 60 → ekranın hızı)
+			if (fps < hz && !this.saver && now >= this._back.cap) {
+				// önce akıcılık: bir üst kare hızı (30 → 60 → ekranın hızı)
 				this._probe = { cap: this.cap, t: now };
 				this.cap = fps < 60 ? 60 : 120;
+				if (this.scale > 1) this._setScale(1); // süper örneklemeyle yeni kare hızı denenmez
 				this._ups++;
 				this._cool = now + 3000;
+			} else if (this.scale < this.maxScale - 0.01 && now >= this._back.scale) {
+				// sonra keskinlik: 1'in altındaysa geri gelir, ekran hızını tutuyorsa 1'in üstüne (ekranın çözünürlüğüne)
+				this._probe = { from: this.scale, t: now };
+				this._setScale(Math.min(this.maxScale, this.scale + (this.scale < 1 ? 0.08 : 0.12)));
+				this._ups++;
+				this._cool = now + 2500;
 			}
 		}
 		if (this._dirty && now > this._cool) this.save();
+	}
+
+	/**
+	 * Kademe kanıtı (yalnız hareketli karelerde): ekranın hızını süper örneklemede (ölçek ≥ 1,1 ve tavanında) ya da (masaüstünde) GPU
+	 * süresi bütçenin %42'sinin altındayken toplam 20 sn tutan cihaz bir sonraki açılışta bir üst kademe; en düşük
+	 * çözünürlükte bile 60 (ya da hedef) tutamayan cihaz 15 sn sonra bir alt kademe.
+	 */
+	_tierEvidence(dt, late, expected) {
+		if (this.saver || this._tierSet) return;
+		const hz = this.hz;
+		const full = Math.min(this.cap, hz) >= hz && !late;
+		const s = this.effScale;
+		const ss = this.hi > 1.1 && s >= this.hi - 0.01;
+		// GPU saati yalnız masaüstünde: döşemeli mobil kartlarda (Mali, Adreno, PowerVR) iş sunuma ertelenir, ölçüm eksik çıkar
+		const gpu = !this.mobile && this.gpuMs > 0 && s >= 0.99 && this.gpuMs < expected * 0.42 && this.cpuMs < expected * 0.5;
+		if (full && (ss || gpu) && this.T.id < Math.min(2, this.top)) this._upT += dt;
+		else if (late) this._upT = Math.max(0, this._upT - dt * 2);
+		const floor = s <= this.T.minScale + 0.01;
+		if (floor && (late || this.cap <= 30) && this.T.id > 0) this._dnT += dt;
+		else this._dnT = Math.max(0, this._dnT - dt * 0.25);
+		if (this._upT > 20) {
+			this.adj = this.T.id + 1 - this.base;
+			this._tierSet = true;
+			this._dirty = true;
+		} else if (this._dnT > 15) {
+			this.adj = this.T.id - 1 - this.base;
+			this.top = Math.min(this.top, this.T.id - 1);
+			this._tierSet = true;
+			this._dirty = true;
+		}
 	}
 
 	/** Ölçek değişimi durgun ana ertelenir (çizim tamponu yeniden kurulurken kare takılır); en geç 3 sn sonra. */
@@ -262,11 +338,12 @@ export class Governor {
 
 	save() {
 		this._dirty = false;
-		this.store.set('perf', { v: 2, gpu: this.gpu, scale: this._pend ?? this.scale, cap: this.cap, ceil: this.ceil });
+		this._q[this.T.id] = { scale: this._pend ?? this.scale, cap: this.cap };
+		this.store.set('perf', { v: 3, gpu: this.gpu, adj: this.adj, top: this.top, q: this._q });
 	}
 
 	_watchBattery() {
-		if (!navigator.getBattery) return;
+		if (typeof navigator === 'undefined' || !navigator.getBattery) return;
 		navigator
 			.getBattery()
 			.then((b) => {
@@ -285,14 +362,20 @@ export class Governor {
 			.catch(() => {});
 	}
 
-	/** Çizim çözünürlüğü (cihaz pikseli / CSS pikseli). */
+	/**
+	 * Çizim çözünürlüğü (cihaz pikseli / CSS pikseli). Kademenin piksel bütçesi × ölçek; ölçek 1'in üstüne yalnız ekranın
+	 * kendi çözünürlüğüne kadar çıkabilir (hi).
+	 */
 	pixelRatio(w, h) {
-		let pr = Math.min(window.devicePixelRatio || 1, this.T.maxDpr);
+		const dpr = (typeof window !== 'undefined' && window.devicePixelRatio) || 1;
+		let pr = Math.min(dpr, this.T.maxDpr);
 		// telefonda piksel tavanı biraz aşağıda: 6 inçte 2,0 ile 2,6 kat çözünürlük gözle ayırt edilmez, doldurma maliyeti
-		// alanla orantılı (MSAA açık: kenarlar zaten pürüzsüz)
+		// alanla orantılı (MSAA açık: kenarlar zaten pürüzsüz). Cihaz kanıtlarsa ölçek > 1 ile tavanın üstüne çıkar.
 		const cap = this.mobile ? this.T.maxPixels * (this.T.id >= 1 ? 0.8 : 1) : this.T.maxPixels;
 		if (w * h * pr * pr > cap) pr = Math.sqrt(cap / (w * h));
-		return Math.max(0.75, pr * this.effScale);
+		const top = Math.min(dpr, TIERS[2].maxDpr);
+		this.hi = clamp(top / pr, 1, HI);
+		return Math.max(0.75, Math.min(top, pr * this.effScale));
 	}
 }
 

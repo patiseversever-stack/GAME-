@@ -24,8 +24,13 @@ import * as THREE from 'three';
 import { Heroes } from './heroes.js';
 
 const STEP = 0.2; // seçim aralığı (sn)
-const FADE_MOVE = 0.2; // geçiş süresi, kamera hareket ederken (sn): kısa, titreşim deseni göze görünmez
-const FADE_STILL = 0.35; // kamera dururken
+const FADE_MOVE = 0.3; // çıkış (yapı ekrandan çıkarken / küçülürken)
+const FADE_STILL = 0.6; // giriş: yalnız kamera yerleşince, ağır geçiş
+// v1.4: kaydırırken ayrıntılı model gelip gitmez (biçim, kaide ve renk farkı "yeniden çiziliyor" gibi görünüyordu: 20 sn
+// kaydırmada 16 geçiş). Yeni giriş yalnız kamera SETTLE sn durgunken; giren model ekranda kaldıkça (boyu girişin
+// %35'inden büyük) bırakılmaz.
+const SETTLE = 0.45;
+const HOLD = 0.35;
 
 const _p = new THREE.Vector3();
 const _last = new THREE.Vector3();
@@ -87,9 +92,15 @@ export class HeroLod {
 			this.limit++;
 			this.easy = 0;
 		}
+		// kamera yerleşti mi: odak ve uzaklık değişimi (ekranda ~piksel altı) birikimli süre
+		const mv = Math.hypot(cam.target.x - (this._tx ?? cam.target.x), cam.target.z - (this._tz ?? cam.target.z)) / Math.max(1, cam.dist) + Math.abs(cam.dist - (this._td ?? cam.dist)) / Math.max(1, cam.dist) + Math.abs(cam.yaw - (this._ty ?? cam.yaw));
+		this._tx = cam.target.x;
+		this._tz = cam.target.z;
+		this._td = cam.dist;
+		this._ty = cam.yaw;
+		this.still = mv / Math.max(dt, 1e-3) < 0.012 ? (this.still || 0) + dt : 0;
 		this.t += dt;
 		if (this.t >= STEP) {
-			this.moving = _last.distanceToSquared(camera.position) > 1e-4 * (1 + cam.dist * cam.dist) * 0.01;
 			_last.copy(camera.position);
 			this._select(camera, cam, this.t);
 			this.t = 0;
@@ -146,10 +157,16 @@ export class HeroLod {
 			}
 			this.size[i] = size;
 		}
-		// istenenler: en büyük `limit` yapı (yeni giriş ENTER, kalan EXIT eşiği)
-		for (const s of this.slots) s.want = 0;
+		// istenenler: önce ekranda kalan kahramanlar (HOLD eşiği), sonra boş yuvaya en büyük yeni yapı (ENTER; yalnız
+		// kamera yerleşmişken)
 		let n = 0;
-		for (let k = 0; k < this.limit; k++) {
+		for (const s of this.slots) {
+			const i = s.site ? sites.indexOf(s.site) : -1;
+			s.want = i >= 0 && s.want && this.size[i] >= this.enter * HOLD ? 1 : 0;
+			n += s.want;
+		}
+		const settled = (this.still || 0) >= SETTLE;
+		for (let k = n; k < this.limit && settled; k++) {
 			let best = -1;
 			let bs = 0;
 			for (let i = 0; i < sites.length; i++) {
