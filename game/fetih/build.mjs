@@ -2,7 +2,8 @@
 //   node build.mjs          → dist/FetihLigi.html (tek dosya, çevrimdışı açılır) + dist/fetih.esm.js
 //   node build.mjs --dev    → küçültmesiz, kaynak haritalı (hata ayıklama ve ekran görüntüsü için)
 import { build } from 'esbuild';
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -66,12 +67,28 @@ async function workerCode(entry) {
 const AUDIO_WORKER = await workerCode('src/audio/worker.js');
 const HERO_WORKER = await workerCode('src/map/heroworker.js');
 
+// Sürüm damgası: kaynağın (src/) içerik özeti. Oyun ve defter aynı derlemeden çıkar, ikisinde de görünür (duraklatma
+// ekranı, defter başlığı): aynı damga = birebir aynı kod.
+function sourceStamp() {
+	const h = createHash('sha1');
+	const walk = (d) => {
+		for (const f of readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+			const p = join(d, f.name);
+			if (f.isDirectory()) walk(p);
+			else if (/\.(js|json|mjs)$/.test(f.name)) h.update(f.name).update(readFileSync(p));
+		}
+	};
+	walk(join(root, 'src'));
+	return h.digest('hex').slice(0, 7);
+}
+const BUILD = sourceStamp();
+
 const common = {
 	...base,
 	sourcemap: dev ? 'inline' : false,
-	define: { ...base.define, __AUDIO_WORKER__: JSON.stringify(AUDIO_WORKER), __HERO_WORKER__: JSON.stringify(HERO_WORKER) },
+	define: { ...base.define, __AUDIO_WORKER__: JSON.stringify(AUDIO_WORKER), __HERO_WORKER__: JSON.stringify(HERO_WORKER), __BUILD__: JSON.stringify(BUILD) },
 };
-console.log(`ses işçisi ${kb(Buffer.byteLength(AUDIO_WORKER))} · yapı işçisi ${kb(Buffer.byteLength(HERO_WORKER))}`);
+console.log(`ses işçisi ${kb(Buffer.byteLength(AUDIO_WORKER))} · yapı işçisi ${kb(Buffer.byteLength(HERO_WORKER))} · sürüm ${BUILD}`);
 
 // 1) Tek başına test sayfası: three.js dahil her şey içinde.
 const app = await build({

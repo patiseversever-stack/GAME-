@@ -20,6 +20,7 @@ import { hilo, odd, emoji, proverb, riddle } from './t_pick.js';
 import { anagram, cross } from './t_word.js';
 import { img } from './t_img.js';
 import { blitz } from './t_blitz.js';
+import { hang } from './t_hang.js';
 
 // harita izdüşümü (tools/geo.mjs ile aynı)
 export const GEO = { K: 6, lon0: 35.2, lat0: 39.0 };
@@ -255,82 +256,10 @@ export const TYPES = {
 			return { value: { x: v.target.x + Math.cos(a) * d, z: v.target.z + Math.sin(a) * d }, time: botTime(v, R, skill, 0.05, 0.85) };
 		},
 	},
-
-	hang: {
-		time: 23,
-		label: 'Adam asmaca',
-		kind: 'exact',
-		prepare(q) {
-			return { q, word: q.w.toLocaleUpperCase('tr-TR') };
-		},
-		mount(el, v, api) {
-			const KEYS = 'ERTYUIOPĞÜ|ASDFGHJKLŞİ|ZCVBNMÖÇ'.split('|');
-			const word = [...v.word];
-			const shown = word.map((c) => (c === ' ' ? ' ' : null));
-			let wrong = 0;
-			const MAX = 6;
-			el.innerHTML = `<div class="fl-hang">
-				<div class="fl-towers" data-r="tw">${Array.from({ length: MAX }, () => '<i></i>').join('')}</div>
-				<div class="fl-word" data-r="word"></div>
-				<div class="fl-keys">${KEYS.map((row) => `<div>${[...row].map((k) => `<button class="fl-key" data-k="${k}">${k}</button>`).join('')}</div>`).join('')}</div>
-			</div>`;
-			const wEl = el.querySelector('[data-r=word]');
-			const tw = [...el.querySelectorAll('.fl-towers i')];
-			const draw = () => {
-				wEl.innerHTML = shown.map((c, i) => (word[i] === ' ' ? '<s></s>' : `<b>${c || ''}</b>`)).join('');
-				tw.forEach((t, i) => t.classList.toggle('down', i < wrong));
-			};
-			draw();
-			let done = false;
-			for (const b of el.querySelectorAll('.fl-key'))
-				b.addEventListener('click', () => {
-					if (done || b.disabled) return;
-					b.disabled = true;
-					const k = b.dataset.k;
-					let hit = false;
-					word.forEach((c, i) => {
-						if (c === k) {
-							shown[i] = c;
-							hit = true;
-						}
-					});
-					b.classList.add(hit ? 'hit' : 'miss');
-					if (!hit) wrong++;
-					draw();
-					if (shown.every((c, i) => c != null || word[i] === ' ')) {
-						done = true;
-						api.answer({ ok: true, wrong });
-					} else if (wrong >= MAX) {
-						done = true;
-						api.answer({ ok: false, wrong });
-					}
-				});
-			return {
-				lock() {
-					done = true;
-				},
-				reveal() {
-					word.forEach((c, i) => (shown[i] = c));
-					draw();
-					wEl.classList.add('revealed');
-				},
-				destroy() {},
-			};
-		},
-		judge(v, value) {
-			if (!value) return { correct: false, err: 99 };
-			return { correct: !!value.ok, err: value.ok ? value.wrong : 99 };
-		},
-		bot(v, skill, R) {
-			const ok = R() < pCorrect(skill, v.q.diff) + 0.05;
-			const wrong = Math.floor(R() * (ok ? 4 : 1)) + (ok ? 0 : 6);
-			return { value: { ok, wrong: ok ? wrong : 6 }, time: botTime(v, R, skill, 0.15, 0.95) };
-		},
-	},
 };
 
 // ---------------------------------------------------------------- yeni tipler (src/quiz/t_*.js)
-Object.assign(TYPES, { order, match, hilo, odd, emoji, anagram, cross, proverb, riddle, img, blitz });
+Object.assign(TYPES, { hang, order, match, hilo, odd, emoji, anagram, cross, proverb, riddle, img, blitz });
 // sakin tipler: soru boyunca 3B sahneyi canlandırmazlar (haritasız olanlarda harita arkada durgun: mobilde 30 kare)
 for (const T of Object.values(TYPES)) if (!T.needsMap) T.calm = true;
 

@@ -24,10 +24,9 @@ import * as duello from './deneme-duello.js';
 import * as akil from './deneme-akil.js';
 import * as icat3b from './deneme-icat3b.js';
 import * as icat from './deneme-icat.js';
-import * as asmaca from './d_asmaca.js';
 export { bindApp } from './d_ortak.js';
 
-const GROUPS = [asmaca, harita, duello, akil, icat3b, icat];
+const GROUPS = [harita, duello, akil, icat3b, icat];
 
 export const DENEME_TYPES = Object.assign({ kusbakisi, kosu, ilavi, baglanti }, ...GROUPS.map((g) => g.TYPES));
 

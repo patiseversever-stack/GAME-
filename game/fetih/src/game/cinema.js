@@ -524,12 +524,14 @@ export class Cinema {
 	 * Vinç çekimi: şimdiki kadrajdan p1 (yüksek, geniş) üstünden geçip p2'ye alçalan tek akıcı hareket
 	 * (Catmull-Rom yolu, baştan sona yumuşak hızlanma ve yavaşlama; ara durak yok).
 	 */
-	_crane(p1, y1, pitch1, d1, p2, y2, pitch2, d2, dur) {
+	_crane(p1, y1, pitch1, d1, p2, y2, pitch2, d2, dur, { cut = true } = {}) {
 		const cam = this.app.cam;
 		const t = cam.target;
 		// çok uzaktaysa (bütün harita, bölge görünümü) uzun bir uçuş yerine kesme: kamera saldıranın ilinin üstünde,
-		// vincin ilk yüksekliğinin biraz üstünde başlar (gece kararırken; film kısa ve odaklı, uzaktan süzülme yok)
-		if (cam.dist > d1 * 1.6) {
+		// vincin ilk yüksekliğinin biraz üstünde başlar (gece kararırken; film kısa ve odaklı, uzaktan süzülme yok).
+		// Saldırı filminde kesme yok (cut: false): ilan anı iki ili zaten kadrajlamıştır, oradan kesintisiz inilir
+		// (v1.4'te ilan kadrajı uzak kalınca bu kural kamerayı ışınlıyordu: "buradan buraya atlıyor")
+		if (cut && cam.dist > d1 * 1.6) {
 			t.set(p1.x, p1.y, p1.z);
 			cam.dist = d1 * 1.45;
 			cam.yaw = cam.yaw + wrapPi(y1 - cam.yaw);
@@ -611,12 +613,14 @@ export class Cinema {
 		const e = this._pt((plan.startC.x + (isCap ? plan.castle.x : plan.defC.x)) / 2, (plan.startC.z + (isCap ? plan.castle.z : plan.defC.z)) / 2, this.c);
 		const yE = clearView(app, plan, e, yawAt(plan, side, 0.32), OFF, 1.0, 16).yaw;
 		const dE = stageDist(app, plan, e, yE, 1.0, 'all', { pad: 1.32, min: 12, max: 22 });
-		this._crane(plan.startC, yawAt(plan, side, 0.08), 1.2, dE * 1.4, e, yE, 1.0, dE, 1.75);
+		// ilan kadrajından (iki il, uzak) kesintisiz iniş: yükseklik farkı büyüdükçe vinç biraz uzar (hız sabit kalsın)
+		const far = Math.min(1.1, Math.max(0, Math.log(cam.dist / (dE * 1.4))) * 0.8);
+		this._crane(plan.startC, yawAt(plan, side, 0.08), 1.2, dE * 1.4, e, yE, 1.0, dE, 1.75 + far, { cut: false });
 		// savunan safını kurar
-		bt.cue(0.7, () => bt.march(1, 1.45));
+		bt.cue(0.7 + far, () => bt.march(1, 1.45));
 		// yürüyüş: ordu kendi ilinden sınıra (yamuk hız; arka saflar biraz gecikir); davullar
 		const Tm = clamp(plan.march / (isCap ? 0.8 : 0.92), 1.4, 2.5);
-		const t0 = 1.55;
+		const t0 = 1.55 + far;
 		bt.cue(t0, () => {
 			bt.march(0, Tm);
 			app.sfx?.play?.('march', { dur: Tm });

@@ -152,7 +152,7 @@ export const BOT_SIEGE = { slope: 3, pivot: 0.55, wounded: 0.4, kill: 2.5 };
 
 // Tahmini süre (sn), insan oyuncu varsayımıyla; yalnızca denge raporu için (tools/sim.mjs).
 // Savaş filmi (v0.6, cinema.js): saldırı ~4,9–6,4 sn (kuşatma uzun), fetih ~4, kule ~3,3, savunma ~2,7.
-const EST = { mapOpen: 0.95, overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, declare: 1.8, attack: 6.3, wheel: 4, chooseCat: 2.2, conquer: 4.3, tower: 3.9, defend: 3.4, nobody: 2.1, elim: 4.3, qOpen: 0.5, resultMin: 2.3 };
+const EST = { mapOpen: 0.95, overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, declare: 1.8, attack: 6.6, wheel: 4, chooseCat: 2.2, conquer: 4.3, tower: 3.9, defend: 3.4, nobody: 2.1, elim: 4.3, qOpen: 0.5, resultMin: 2.3 };
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 

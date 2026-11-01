@@ -291,9 +291,22 @@ sıralama ağırlığıyla (1'e 1 2:1, 3 kişi 2:1:0, 4 kişi 2:1:1:0) en büyü
 katlanıyor, azaldıkça tura 3 il düşüyordu: Türkiye'de 11–12 tur, 12 tur sınırında 3 ve 4 kişide 1–6 il boşta kalıyordu.
 `sweepFree` güvenlik ağı: yayılma bitince boş il kalmaz (benzetim denetler).
 
+**Adam asmaca · Harf Çemberi (v1.4, `quiz/t_hang.js`).** Klavye yok: kelimenin harfleri (tekrarlar ayrı) fildişi sikkeler
+olarak altın kenarlı mühür çemberinde karışık durur; parmakla sikkeden sikkeye sürüklenir (ya da sırayla dokunulur), altın ip
+bağlar, üstteki kutular canlı dolar, geri sürükleme son harfi bırakır. Bütün harfler bağlanınca denenir: doğru → kutular
+yeşile döner; yanlış → bir burç yıkılır (3 hak), doğru yerdeki harfler altınla kilitlenir ve sikkeleri çemberden çekilir
+(her deneme kelimeyi biraz açar). Yarım sürükleme cezasız geri döner; ortadaki mühür karıştırır. Cevap `{ ok, wrong }`
+(eski adam asmacayla aynı). Jokerler ve hata ayıklama gizli `.fl-key` düğmeleriyle konuşur (Yarı Yarıya harf açar, Seyirci
+sikkeyi ve kutusunu parlatır). Defterdeki Gülle yedeği kaldırıldı.
+
+**Defter = oyun.** Oyun (`dist/FetihLigi.html`) ve defter (`dist/SoruGalerisi.html`) aynı `node build.mjs` çağrısında aynı
+kaynaktan derlenir; ikisi de aynı sürüm damgasını taşır (kaynağın içerik özeti: duraklatma ekranında ve defter başlığında
+"sürüm …"). Damga aynıysa kod birebir aynıdır. Defter oyunun içine gömülmedi: oyuncu paketine galeri kodu ve örnek sorular
+eklenirdi (boyut ve açılış maliyeti), kazancı yok.
+
 **Saldırı temposu (v1.4).** Her saldırı bir ilan anıyla başlar (`DECLARE_MS` 1,8 sn, film hızından bağımsız): iki il birlikte,
 saldıranın ilinden hedefe ok, etiketlerde SALDIRAN / SAVUNAN, altta portreli kim kime yazısı (`ui.versusCaption`, düello
-sorusuna kadar kalır). Vinç 1,75 sn, izleme 2 sn; sonuç anları en az 2,3 sn ve yazılı (FETİH · X aldı · Y kaybetti, SAVUNMA,
+sorusuna kadar kalır). İlan kadrajından savaşa kesintisiz iniş (kesme yok; uzaklık farkına göre vinç 1,75–2,85 sn), izleme 2 sn; sonuç anları en az 2,3 sn ve yazılı (FETİH · X aldı · Y kaybetti, SAVUNMA,
 KULE YIKILDI, KİMSE BİLEMEDİ, ELENDİ). İki botun filmi daha az kısalır (`BOT_FILM` hızlı 0,8–0,9, uzun 0,7–0,8).
 
 ### Çevrimiçi (sunucu otoriter, `src/game/sunucu.js`, şema `net.js` başı)

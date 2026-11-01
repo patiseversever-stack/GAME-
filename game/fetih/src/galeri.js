@@ -227,7 +227,7 @@ export async function galeri() {
 		const v = T.prepare(q, R);
 		const ti = LIST.findIndex(([t]) => t === S.type);
 		const nw = isNew(S.type);
-		bar.innerHTML = `<span class="ey">FETİH LİGİ · SORU GALERİSİ</span>
+		bar.innerHTML = `<span class="ey">FETİH LİGİ · SORU GALERİSİ · SÜRÜM ${esc(typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'yerel')}</span>
 			<div class="hd"><button class="ty" id="g-type" aria-haspopup="listbox" aria-expanded="${!pn.hidden}">${nw ? '<span class="nw">YENİ</span>' : ''}<b>${esc(name)}</b><small>${ti + 1}/${LIST.length}</small><i>▼</i></button>
 				<div class="nv"><button class="ar" id="g-prev" aria-label="Önceki örnek">‹</button><b>${S.k + 1}/${list.length}<small>ÖRNEK</small></b><button class="ar" id="g-next" aria-label="Sonraki örnek">›</button><button class="ar" id="g-close" aria-label="Kapat">✕</button></div></div>
 			<div class="meta"><b>${esc(q.id)}</b> · ${esc(cat)} · ${DIFF[q.diff] || ''} · süre <b>${v.sec ?? T.time} sn</b>${
