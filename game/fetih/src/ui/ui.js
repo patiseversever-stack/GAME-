@@ -1158,7 +1158,7 @@ export class UI {
 				return `<div class="sr-r${k === 0 ? ' win' : ''}${r.p.human ? ' me' : ''}${n ? '' : ' z'}${good ? '' : ' miss'}" style="--c:${r.color};--k:${k}">
 					<span class="sr-n">${k + 1}</span>
 					<span class="sr-av">${k === 0 ? crown : ''}<span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span></span>
-					<span class="sr-who"><b>${tm}${esc(r.name)}${r.p.human ? '<em>SEN</em>' : ''}</b><small>${mark}${val}<u>${sub}</u></small></span>
+					<span class="sr-who"><b>${tm}<span class="nm">${esc(r.name)}</span>${r.p.human ? '<em>SEN</em>' : ''}</b><small>${mark}${val}<u>${sub}</u></small></span>
 					<span class="sr-pk">${n ? `<span class="sr-fl">${fl}</span><small>${n} İL</small>` : '<small>İL YOK</small>'}</span>
 				</div>`;
 			})

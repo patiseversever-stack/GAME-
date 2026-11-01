@@ -354,6 +354,9 @@ export const CSS_ARENA = /* css */ `
 @keyframes srFl{0%{opacity:0;transform:translateY(-22px) scale(.4) rotate(-20deg)}100%{opacity:1;transform:none}}
 @keyframes srCr{0%{opacity:0;transform:translateY(-12px) rotate(-30deg) scale(.4)}100%{opacity:1;transform:rotate(-12deg)}}
 @keyframes srShine{0%{transform:translateX(-110%)}100%{transform:translateX(110%)}}
+.sr-who b .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* dar telefon (320–340 px): satır öğeleri sıkışır, ad üç noktayla biter */
+@media (max-width:340px){.sr-h h3{font-size:40px}.sr-n{width:44px;font-size:32px}.sr-rows::before{left:21px}.sr-r{gap:8px}.sr-who b{font-size:16px}.sr-pk{min-width:46px}.sr-fl span{width:17px;height:21px}.sr-av,.sr-av .fl-av{width:38px;height:38px}}
 @media (prefers-reduced-motion:reduce){.sr-h,.sr-me,.sr-r,.sr-fl span,.sr-cr,.sr-rows::before{animation:none}.sr-r.win::after{display:none}}
 @media (orientation:landscape) and (max-height:520px){.fl-res{gap:12px;padding-bottom:0}.rs-r{min-height:46px}.rs-rows{gap:7px}.fl-res.sira{gap:8px}.sr-h h3{font-size:32px}.sr-r{min-height:46px}.sr-rows{gap:6px}}
 
