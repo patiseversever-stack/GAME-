@@ -262,6 +262,54 @@ export const CSS_ARENA = /* css */ `
   clip-path:none;transform:translate(-50%,-50%) skewX(-8deg)}
 @keyframes flStampB{0%{opacity:0;transform:translate(-50%,-50%) skewX(-8deg) scale(1.9)}60%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(.96)}100%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(1)}}
 
+/* ---------------------------------------------------------------- sonuç ekranı (v1.5): kart kapanınca haritanın ortasında
+   büyük sonuç ve oyuncu satırları (eğik plakalar, kazanan altın). Kartta yalnız doğru cevap kalır, hiçbir şey üst üste binmez. */
+.fl-res{position:absolute;left:0;right:0;top:46%;z-index:40;display:flex;flex-direction:column;align-items:center;gap:20px;
+  padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));transform:translateY(-50%);opacity:0;pointer-events:none;transition:opacity .22s}
+.fl-res.on{opacity:1;pointer-events:auto}
+.fl-res::before{content:'';position:absolute;left:-30%;right:-30%;top:-45%;bottom:-45%;z-index:-1;pointer-events:none;
+  background:radial-gradient(ellipse at center,rgba(4,6,16,.82) 0,rgba(4,6,16,.6) 42%,rgba(4,6,16,0) 72%)}
+.fl-res .fl-stamp{position:relative;left:auto;top:auto;opacity:1;transform:skewX(-8deg);animation:rsSt .45s cubic-bezier(.3,1.7,.5,1) both}
+@keyframes rsSt{0%{opacity:0;transform:skewX(-8deg) scale(1.9)}60%{opacity:1;transform:skewX(-8deg) scale(.96)}100%{opacity:1;transform:skewX(-8deg)}}
+.rs-rows{width:min(100%,400px);display:flex;flex-direction:column;gap:10px}
+.rs-r{display:flex;align-items:center;gap:11px;min-height:58px;padding:0 18px 0 0;color:#fff;background:#0a0b14;transform:skewX(-8deg);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.9),0 6px 18px rgba(0,0,0,.5);animation:rsIn .38s calc(var(--k) * 90ms + .3s) cubic-bezier(.2,.9,.3,1.2) both}
+.rs-r>*{transform:skewX(8deg)}
+.rs-r .rk{flex:none;align-self:stretch;width:46px;display:grid;place-items:center;transform:none;background:var(--c);
+  font:italic 800 28px/1 'Barlow Condensed','Lilita One',sans-serif;text-shadow:0 2px 0 rgba(0,0,0,.3);box-shadow:inset -2px 0 0 rgba(255,255,255,.9)}
+.rs-r .fl-av{flex:none;width:40px;height:40px}
+.rs-r b{flex:1;min-width:0;font-weight:700;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs-r b i{display:inline-block;margin-left:8px;padding:3px 7px;vertical-align:2px;font:italic 800 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;color:#1a1200;background:#ffd25a}
+.rs-r.win b i{color:#ffd25a;background:#1a1200}
+.rs-r em{flex:none;text-align:right;font:italic 800 23px/1 'Barlow Condensed','Lilita One',sans-serif}
+.rs-r em small{display:block;margin-top:3px;font:600 12.5px/1 'Fredoka',sans-serif;opacity:.82}
+.rs-r.win{color:#1a1200;background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:inset 0 0 0 2px #fff,0 0 26px rgba(255,210,90,.55),0 6px 18px rgba(0,0,0,.45)}
+.rs-r.no em{color:#ff9a88}
+@keyframes rsIn{0%{opacity:0;transform:skewX(-8deg) translateX(-40px)}100%{opacity:1;transform:skewX(-8deg)}}
+@media (orientation:landscape) and (max-height:520px){.fl-res{top:50%;gap:12px}.rs-r{min-height:46px}.rs-rows{gap:7px}}
+
+/* ---------------------------------------------------------------- sırala (v1.5): arena dili. Satırlar şık gibi eğik
+   kesim beyaz plaka, numaralar altın eğik blok, uçlar siyah plaka; seçili altın, doğru yeşil, yanlış kırmızı. */
+.fl-q .fl-ord-end>b{height:30px;margin-left:6px;padding:0 14px 0 8px;gap:8px;border:0;border-radius:0;transform:skewX(-8deg);color:#ffd25a;background:#0a0b14;
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.92),0 4px 12px rgba(0,0,0,.5);font:italic 800 16px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.07em}
+.fl-q .fl-ord-end>b i{width:18px;height:18px;border-radius:0;font-size:10px;color:#0a0b14;background:#ffd25a}
+.fl-q .fl-ord-end.bot>b{color:#9ec1ff;background:#0a0b14;box-shadow:inset 0 0 0 2px rgba(255,255,255,.92),0 4px 12px rgba(0,0,0,.5)}
+.fl-q .fl-ord-end.bot>b i{color:#0a0b14;background:#9ec1ff}
+.fl-q .fl-ord-rail::before{width:6px;margin-left:-3px;clip-path:none;background:linear-gradient(180deg,rgba(255,210,90,.12),#ffd25a)}
+.fl-q .fl-ord.desc .fl-ord-rail::before{clip-path:none;background:linear-gradient(0deg,rgba(255,210,90,.12),#ffd25a)}
+.fl-q .fl-ord-rail b{width:36px;height:32px;margin-left:-18px;border:0;border-radius:0;transform:skewX(-8deg);color:#1a1200;background:linear-gradient(180deg,#ffe066,#ffbb1f);
+  box-shadow:0 3px 0 #8a5a00,0 4px 10px rgba(0,0,0,.35);font:italic 800 22px/1 'Barlow Condensed','Lilita One',sans-serif}
+.fl-q .fl-ord-rail b.hot{transform:skewX(-8deg) scale(1.15)}
+.fl-q .fl-ord-row{padding:0 16px 0 18px;border:0;border-radius:0;clip-path:polygon(0 0,100% 0,97% 100%,0 100%);color:#0e1430;background:linear-gradient(180deg,#fff,#e4e9f4);box-shadow:none}
+.fl-q .fl-ord-row span{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(17px,calc(4.9 * var(--vw)),20px)}
+.fl-q .fl-ord-row .fl-grip{background:radial-gradient(circle,#8f9ab6 2.1px,transparent 2.6px) 2px 1px/9px 9.5px}
+.fl-q .fl-ord-row.drag{color:#1a1200;background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:none}
+.fl-q .fl-ord-row.sel{color:#1a1200;background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:none;animation:none}
+.fl-q .fl-ord-row.ok,.fl-q .fl-ord-row.fin{color:#fff;background:linear-gradient(90deg,#5ff08a,#22b85a);box-shadow:none;text-shadow:0 1px 0 rgba(0,60,20,.35)}
+.fl-q .fl-ord-row.bad{color:#fff;background:linear-gradient(90deg,#ff7a66,#d8392a);box-shadow:none;text-shadow:0 1px 0 rgba(80,0,0,.35)}
+.fl-q .fl-ord-row em{border-radius:0;color:#ffd25a;background:#0a0b14;transform:skewX(-8deg) scale(.6);font:italic 800 17px/1.05 'Barlow Condensed','Lilita One',sans-serif;padding:5px 10px}
+.fl-q .fl-ord-row.ok em,.fl-q .fl-ord-row.bad em,.fl-q .fl-ord-row.fin em{transform:skewX(-8deg)}
+
 /* ---------------------------------------------------------------- haritalı soru: üstte koyu panel */
 .fl-q.map .fl-qc{padding:10px 12px 12px;border-radius:0 0 16px 16px;background:rgba(7,8,15,.94);border-bottom:2px solid rgba(255,210,90,.35);box-shadow:0 10px 26px rgba(0,0,0,.45)}
 .fl-q.map{top:calc(var(--sat) + 4px);width:min(calc(100 * var(--vw) - 8px),560px)}

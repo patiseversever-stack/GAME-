@@ -1022,47 +1022,126 @@ export class UI {
 			const c = Fx.center(w);
 			this.fx.burst(c.x, c.y, { n: 7, dist: 44, colors: ['#ff5a4a', '#ffb0a0'], size: 9, life: 500 });
 		}
+		// v1.5: kartta yalnız doğru cevap görünür (damga ve oyuncu satırları cevabın üstüne binmez); sonuç kart kapanınca
+		// kendi ekranında (_showResult), şehir filmi sonuç ekranı kapanınca başlar
 		const me = results.find((r) => r.p.human);
-		if (me) {
-			if (closest) {
-				const rank = order.indexOf(me);
-				if (rank === 0) this.stamp(me.err === 0 ? 'TAM İSABET!' : 'EN YAKIN SEN!', 'gold');
-				else this.stamp(`${rank + 1}. SIRADASIN`, 'bad', `${order[0].name} daha yakın`);
-				this.sfx(rank === 0 ? 'right' : 'wrong');
-			} else {
-				this.stamp(me.correct ? 'BİLDİN!' : me.value == null ? 'SÜRE DOLDU' : 'BİLEMEDİN', me.correct ? '' : me.value == null ? 'warn' : 'bad');
-				this.sfx(me.correct ? 'right' : 'wrong');
-			}
-			if (me.correct || (closest && order[0] === me)) {
-				const s = card.querySelector('.fl-stamp');
-				if (s) {
-					const c = Fx.center(s);
-					this.fx.burst(c.x, c.y, { n: 18, dist: 140, kind: 'star', size: 14, life: 900 });
-				}
-			}
-		} else this.sfx('reveal');
+		if (me) this.sfx((closest ? order[0] === me : me.correct) ? 'right' : 'wrong');
+		else this.sfx('reveal');
 		if (T.needsMap) this._mapReveal(v, results);
 		// tip kendi cevap filmini isteyebilir (T.revealMs, ör. Tufan'da deniz yükselişi); dokununca yine erken geçilir.
 		// Maçta süreyi soru düzeni verir (ctx.film, quiz/mac.js filmMs): insanın içinde olduğu anda tam film, iki botun
 		// düellosunda ve çok oyunculu yayılmada kısa sürüm; çevrimiçinde sunucunun 'reveal' olayındaki süre
 		const film = Number.isFinite(ctx.film) ? ctx.film : Number(T.revealMs) || 0;
-		await this._hold(Math.max(closest ? 3000 : 1900, Math.min(12000, film)));
+		// süre: cevap anı + sonuç ekranı. Çevrimiçinde toplam sunucunun verdiği süreyi aşmaz (cevap anı kısalır)
+		const resMs = me ? 2300 : 1500;
+		const ansMs = Number.isFinite(ctx.film) ? Math.max(1200, Math.max(closest ? 3000 : 1900, Math.min(12000, film)) - resMs) : Math.max(closest ? 2200 : 1600, Math.min(12000, film));
+		await this._hold(ansMs);
 		if (gen !== this._gen) return;
 		card.classList.remove('on');
 		this.el.classList.remove('qon', 'qmap');
 		this.app.calmQ = false;
 		this.setPins([]);
-		await sleep(260);
+		await sleep(220);
 		if (gen !== this._gen) return;
 		card.className = 'fl-q';
+		const res = this._showResult(results, order, closest, T, v, me);
+		await this._hold(resMs, res);
+		res.classList.remove('on');
+		await sleep(200);
+		if (gen !== this._gen) return;
 		this.current = null;
 	}
 
-	/** Bekle; kart açıkken dokunulursa (en az 0.8 sn sonra) erken geç. */
-	_hold(ms) {
+	/**
+	 * Sonuç ekranı (v1.5): soru kartı kapanınca haritanın ortasında büyük sonuç (BİLDİN! / 2. SIRADASIN…) ve oyuncu
+	 * satırları (sıra, portre, ad, süre ya da yakınlık). Arena dili: eğik plakalar, kazanan altın.
+	 */
+	_showResult(results, order, closest, T, v, me) {
+		let el = this._res;
+		if (!el) {
+			el = this._res = document.createElement('div');
+			el.className = 'fl-res';
+		}
+		if (!el.isConnected) this.el.appendChild(el);
+		let st = '';
+		let tone = '';
+		let sub = '';
+		const w = order[0];
+		if (me) {
+			if (closest) {
+				const rank = order.indexOf(me);
+				if (rank === 0) {
+					st = me.err === 0 ? 'TAM İSABET!' : 'EN YAKIN SEN!';
+					tone = 'gold';
+				} else {
+					st = `${rank + 1}. SIRADASIN`;
+					tone = 'bad';
+					sub = `${w.name} daha yakın`;
+				}
+			} else if (me.correct) st = 'BİLDİN!';
+			else if (me.value == null) {
+				st = 'SÜRE DOLDU';
+				tone = 'warn';
+			} else {
+				st = 'BİLEMEDİN';
+				tone = 'bad';
+			}
+		} else if (closest || w?.correct) {
+			st = `${w.name} KAZANDI`;
+			tone = 'gold';
+		} else {
+			st = 'KİMSE BİLEMEDİ';
+			tone = 'warn';
+		}
+		const rows = order
+			.map((r, k) => {
+				const { val, sub: rs, ok } = this._resVal(T, v, r, closest);
+				const win = k === 0 && (closest ? ok : r.correct);
+				const tag = win ? `<i>${closest ? (r.err === 0 || (T.needsMap && r.correct) ? 'TAM İSABET' : 'EN YAKIN') : 'EN HIZLI'}</i>` : '';
+				const no = !closest && !r.correct;
+				return `<div class="rs-r${win ? ' win' : ''}${no ? ' no' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span><b>${esc(r.name)}${tag}</b><em>${val}<small>${rs}</small></em></div>`;
+			})
+			.join('');
+		el.innerHTML = `<div class="fl-stamp ${tone}">${esc(st)}${sub ? `<small>${esc(sub)}</small>` : ''}</div><div class="rs-rows">${rows}</div>`;
+		void el.offsetWidth;
+		el.classList.add('on');
+		if (me && (closest ? w === me : me.correct)) {
+			const s = el.querySelector('.fl-stamp');
+			setTimeout(() => {
+				const c = Fx.center(s);
+				this.fx.burst(c.x, c.y, { n: 18, dist: 140, kind: 'star', size: 14, life: 900 });
+			}, 260);
+		}
+		return el;
+	}
+
+	/** Sonuç satırının değeri: yakınlık tiplerinde fark / km / tipin biçimi; ötekilerde süre. */
+	_resVal(T, v, r, closest) {
+		if (!closest) {
+			if (r.value == null) return { val: '—', sub: 'cevap yok', ok: false };
+			return { val: `${(r.time ?? 0).toFixed(1)} sn`, sub: r.correct ? 'doğru' : 'yanlış', ok: r.correct };
+		}
+		const q = v.q || {};
+		const map = !!T.needsMap;
+		const yr = yearish(q);
+		const fmt = (x) => (yr ? String(Math.round(x)) : (Math.round(Number(x) * 100) / 100).toLocaleString('tr-TR'));
+		const unit = q.unit || '';
+		const ok = Number.isFinite(r.err) && r.value != null;
+		if (!ok) return { val: '—', sub: 'cevap yok', ok };
+		let val;
+		if (typeof T.fmt === 'function') val = esc(T.fmt(v, r.value, r));
+		else if (map) val = `${Math.round(r.err).toLocaleString('tr-TR')} km`;
+		else if (typeof r.value === 'number') val = `${fmt(r.value)}${unit ? ' ' + esc(unit) : ''}`;
+		else val = fmt(r.err);
+		const sub = typeof T.sub === 'function' ? esc(T.sub(v, r.value, r)) : map ? (r.correct ? 'tam isabet' : 'uzaklık') : r.err === 0 ? 'tam isabet' : `fark ${fmt(r.err)}`;
+		return { val, sub, ok };
+	}
+
+	/** Bekle; kart (ya da verilen öğe) açıkken dokunulursa (en az 0.8 sn sonra) erken geç. */
+	_hold(ms, el = null) {
 		return new Promise((res) => {
 			const t0 = clock.now();
-			const card = this.$.q;
+			const card = el || this.$.q;
 			let tm = 0;
 			const end = () => {
 				clearTimeout(tm);
@@ -1149,10 +1228,14 @@ export class UI {
 					<span class="nm"><b>${esc(r.name)}${tag}</b><i class="bar"><u style="--w:${w.toFixed(3)}"></u></i></span><em>${val}<small>${sub}</small></em></div>`;
 			})
 			.join('');
-		const panel = `<div class="fl-close">${html}<div class="fl-crs">${rows}</div></div>`;
-		// T.keep: tip kendi cevap tahtasını (sıralama, eşleşme...) korur; sıralama altına eklenir
-		if (T.keep) body.insertAdjacentHTML('beforeend', panel);
-		else body.innerHTML = panel;
+		// v1.5: oyuncu satırları kartta değil, sonuç ekranında (_showResult); kartta yalnız doğru cevap (sayı doğrusu)
+		void rows;
+		if (html) {
+			const panel = `<div class="fl-close">${html}</div>`;
+			// T.keep: tip kendi cevap tahtasını (sıralama, eşleşme...) korur
+			if (T.keep) body.insertAdjacentHTML('beforeend', panel);
+			else body.innerHTML = panel;
+		}
 		const ans = body.querySelector('[data-r=ans]');
 		if (ans && !this.rm) this.fx.count(ans, q.min ?? 0, q.ans, 800, fmt);
 	}

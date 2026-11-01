@@ -331,6 +331,12 @@ yerleşmeden yeni kahraman girmez, ekrandaki kahraman giriş eşiğinin %35'ine 
 durunca kahraman gelir. Balon, bayrak ve ağaç salınımı kameradan 42–62 birim ötede durur (görünmeyen hareket çizilmez).
 İl adları istem yazısının altına düşmez (`labels.avoid`: genel kipte gizlenir, seçim listesinde üstüne kayar).
 
+**Sonuç akışı (v1.5, `ui.reveal` / `_showResult`).** Cevap anında kartta yalnız doğru cevap görünür (damga ve oyuncu
+satırları artık cevabın üstüne binmez). Kart kapanınca haritanın ortasında sonuç ekranı: büyük sonuç (BİLDİN! / 2.
+SIRADASIN…) ve oyuncu plakaları (sıra, portre, süre ya da yakınlık; kazanan altın). Şehir filmi sonuç ekranı kapanınca
+başlar. Çevrimiçinde toplam süre sunucunun verdiği süreyi aşmaz (cevap anı kısalır). Sırala arena dilinde: eğik kesim
+beyaz satırlar, altın eğik numaralar, siyah uç plakaları.
+
 **Anagram ve çengel (v1.5, `quiz/t_word.js`).** Şerit'in arena dili: eğik kutular, tek renk lacivert eğik harf kartları
 (renkli jokerlerle karışmaz), siyah plaka düğmeler (Karıştır / Geri al / Temizle, çizim simgeli). Dolu kutu beyaz zeminde
 koyu harf (eskiden koyu üstüne koyu, yazılan okunmuyordu), sıradaki kutu altın nabız; kullanılan kart çekilir, yerinde boş
