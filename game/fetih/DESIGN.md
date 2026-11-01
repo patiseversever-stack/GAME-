@@ -337,6 +337,14 @@ SIRADASIN…) ve oyuncu plakaları (sıra, portre, süre ya da yakınlık; kazan
 başlar. Çevrimiçinde toplam süre sunucunun verdiği süreyi aşmaz (cevap anı kısalır). Sırala arena dilinde: eğik kesim
 beyaz satırlar, altın eğik numaralar, siyah uç plakaları.
 
+**Eşleştir ve sırala krem (v1.5c, `quiz/t_match.js`, `ui/styles-arena.js`).** Neon ve koyu cam denendi, premium
+durmadı; eski düzen korunup krem arena diline çekildi. Krem kart (lacivert yazı, ince altın kenar, alçak 3 px gölge, 9–10 px
+köşe). Eşleştir: iki sütun, iç kenarda yuva, bağ gölgeli tek renk çizgi (kısık tonlar) ve çizilirken bir kez kayan ince
+ışıltı; kartlar kademeli girer, bağlanınca kısa parıltı. Açılış: 1 sn senin bağların yeşil/kırmızı, sonra yanlışlar söner,
+doğrular sırayla çizilir; düzelen kartta dış kenarda kırmızı iz kalır. Sırala satırı 44 px, açılışta açık yeşil/kırmızı
+zemin + kenar şeridi + lacivert değer etiketi. Soru kartındaki onay düğmesi 55 → 40 px. Tahta (412×892): eşleştir 222 →
+167 px, sırala 180 → 159 px; harita sırala'da ~36, eşleştir'de ~70 px daha çok görünür.
+
 **Anagram ve çengel (v1.5, `quiz/t_word.js`).** Şerit'in arena dili: eğik kutular, tek renk lacivert eğik harf kartları
 (renkli jokerlerle karışmaz), siyah plaka düğmeler (Karıştır / Geri al / Temizle, çizim simgeli). Dolu kutu beyaz zeminde
 koyu harf (eskiden koyu üstüne koyu, yazılan okunmuyordu), sıradaki kutu altın nabız; kullanılan kart çekilir, yerinde boş

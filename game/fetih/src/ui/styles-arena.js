@@ -287,31 +287,36 @@ export const CSS_ARENA = /* css */ `
 @keyframes rsIn{0%{opacity:0;transform:skewX(-8deg) translateX(-40px)}100%{opacity:1;transform:skewX(-8deg)}}
 @media (orientation:landscape) and (max-height:520px){.fl-res{gap:12px;padding-bottom:0}.rs-r{min-height:46px}.rs-rows{gap:7px}}
 
-/* ---------------------------------------------------------------- sırala (v1.5b): ince, premium. Koyu cam satırlar
-   (lacivert, ince beyaz çerçeve, beyaz yazı), küçük altın numaralar, ince uç etiketleri; seçili altın çerçeve, doğru/yanlış
-   renkli zemin ve kenar şeridi. */
-.fl-q .fl-ord{--row:52px;--rail:34px;gap:7px}
-.fl-q .fl-ord-end>b{height:22px;margin-left:2px;padding:0 9px 0 5px;gap:6px;border:0;border-radius:0;transform:skewX(-8deg);color:#ffd25a;background:rgba(255,210,90,.08);
-  box-shadow:inset 0 0 0 1px rgba(255,210,90,.55);font:italic 800 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em}
-.fl-q .fl-ord-end>b i{width:12px;height:12px;border-radius:0;font-size:7px;color:#0a0b14;background:#ffd25a}
-.fl-q .fl-ord-end.bot>b{color:#a9c6ff;background:rgba(140,180,255,.08);box-shadow:inset 0 0 0 1px rgba(160,195,255,.55)}
+/* ---------------------------------------------------------------- sırala (v1.5c): krem, ince, premium. Krem kart satırlar
+   (lacivert yazı, ince altın kenar, alçak gölge), küçük altın eğik numaralar, ince uç etiketleri; seçili altın çerçeve,
+   doğru/yanlış açık yeşil/kırmızı zemin ve kenar şeridi. Satır 44 px, ONAYLA alçak: haritaya yer kalır. */
+.fl-q .fl-ord{--row:clamp(42px,calc(5 * var(--vh)),48px);--rail:32px;gap:6px}
+.fl-q .fl-ord-end{min-height:20px}
+.fl-q .fl-ord-end>b{height:20px;margin-left:2px;padding:0 8px 0 4px;gap:5px;border:0;border-radius:0;transform:skewX(-8deg);color:#ffd25a;background:rgba(255,210,90,.08);
+  box-shadow:inset 0 0 0 1px rgba(255,210,90,.5);font:italic 800 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em}
+.fl-q .fl-ord-end>b i{width:11px;height:11px;border-radius:0;font-size:7px;color:#0a0b14;background:#ffd25a}
+.fl-q .fl-ord-end.bot>b{color:#a9c6ff;background:rgba(140,180,255,.08);box-shadow:inset 0 0 0 1px rgba(160,195,255,.5)}
 .fl-q .fl-ord-end.bot>b i{background:#a9c6ff}
-.fl-q .fl-ord-hint{font-size:11.5px;opacity:.7}
-.fl-q .fl-ord-rail::before{width:2px;margin-left:-1px;clip-path:none;background:linear-gradient(180deg,rgba(255,210,90,.1),rgba(255,210,90,.8))}
-.fl-q .fl-ord.desc .fl-ord-rail::before{clip-path:none;background:linear-gradient(0deg,rgba(255,210,90,.1),rgba(255,210,90,.8))}
-.fl-q .fl-ord-rail b{width:24px;height:24px;margin-left:-12px;border:0;border-radius:0;transform:skewX(-8deg);color:#1a1200;background:linear-gradient(180deg,#ffe066,#f5b324);
-  box-shadow:0 2px 0 #8a5a00;font:italic 800 16px/1 'Barlow Condensed','Lilita One',sans-serif}
+.fl-q .fl-ord-hint{font-size:11px;opacity:.65}
+.fl-q .fl-ord-rail::before{width:2px;margin-left:-1px;clip-path:none;background:linear-gradient(180deg,rgba(255,210,90,.1),rgba(255,210,90,.75))}
+.fl-q .fl-ord.desc .fl-ord-rail::before{clip-path:none;background:linear-gradient(0deg,rgba(255,210,90,.1),rgba(255,210,90,.75))}
+.fl-q .fl-ord-rail b{width:22px;height:22px;margin-left:-11px;border:0;border-radius:0;transform:skewX(-8deg);color:#1a1200;background:linear-gradient(180deg,#ffe066,#f5b324);
+  box-shadow:0 2px 0 #8a5a00;font:italic 800 15px/1 'Barlow Condensed','Lilita One',sans-serif}
 .fl-q .fl-ord-rail b.hot{transform:skewX(-8deg) scale(1.15)}
-.fl-q .fl-ord-row{padding:0 12px 0 16px;gap:8px;border:0;border-radius:0;clip-path:none;transform-origin:center;color:#f2f5fc;
-  background:linear-gradient(180deg,rgba(38,52,96,.96),rgba(20,28,58,.96));box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),inset 3px 0 0 rgba(255,210,90,.0),0 6px 14px rgba(0,0,0,.35)}
-.fl-q .fl-ord-row span{font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;line-height:1.15}
-.fl-q .fl-ord-row .fl-grip{width:16px;height:22px;opacity:.55;background:radial-gradient(circle,#dfe6f7 1.5px,transparent 2px) 1px 1px/7px 7px}
-.fl-q .fl-ord-row.drag{color:#fff;background:linear-gradient(180deg,rgba(52,68,120,.98),rgba(30,40,80,.98));box-shadow:inset 0 0 0 1.5px #ffd25a,0 0 18px rgba(255,210,90,.35),0 14px 24px rgba(0,0,0,.5)}
-.fl-q .fl-ord-row.sel{color:#fff;background:linear-gradient(180deg,rgba(52,68,120,.98),rgba(30,40,80,.98));box-shadow:inset 0 0 0 1.5px #ffd25a,0 0 16px rgba(255,210,90,.4);animation:none}
-.fl-q .fl-ord-row.ok,.fl-q .fl-ord-row.fin{color:#fff;background:linear-gradient(90deg,rgba(40,170,85,.55),rgba(20,60,40,.85));box-shadow:inset 0 0 0 1px rgba(120,255,160,.6),inset 4px 0 0 #3fe07a;text-shadow:none}
-.fl-q .fl-ord-row.bad{color:#fff;background:linear-gradient(90deg,rgba(210,60,45,.55),rgba(70,20,20,.85));box-shadow:inset 0 0 0 1px rgba(255,140,120,.6),inset 4px 0 0 #ff5a48;text-shadow:none}
-.fl-q .fl-ord-row em{padding:3px 8px;border-radius:0;color:#ffd25a;background:rgba(0,0,0,.35);transform:skewX(-8deg) scale(.6);font:italic 800 15px/1.05 'Barlow Condensed','Lilita One',sans-serif}
+.fl-q .fl-ord-row{padding:0 10px 0 14px;gap:8px;border:0;border-radius:9px;clip-path:none;transform-origin:center;color:#1c2442;
+  background:linear-gradient(180deg,#fffaf0,#efe5cf);box-shadow:inset 0 0 0 1px rgba(176,140,70,.45),inset 0 1px 0 #fff,0 3px 0 #9c8a66,0 6px 12px rgba(0,0,0,.28)}
+.fl-q .fl-ord-row span{font-family:'Fredoka',sans-serif;font-weight:600;font-size:clamp(14.5px,calc(3.9 * var(--vw)),16px);line-height:1.12}
+.fl-q .fl-ord-row .fl-grip{width:14px;height:20px;opacity:.6;background:radial-gradient(circle,#a8946c 1.5px,transparent 2px) 1px 1px/6.5px 6.5px}
+.fl-q .fl-ord-row.drag{background:linear-gradient(180deg,#fffdf6,#f7ecd2);box-shadow:inset 0 0 0 2px #e8a917,0 0 0 3px rgba(255,210,90,.35),0 14px 22px rgba(0,0,0,.45)}
+.fl-q .fl-ord-row.sel{background:linear-gradient(180deg,#fff8dc,#fbe6a6);box-shadow:inset 0 0 0 2px #e8a917,0 3px 0 #a8770c,0 0 14px rgba(255,210,90,.4);animation:none}
+.fl-q .fl-ord-row.ok,.fl-q .fl-ord-row.fin{color:#123a1e;background:linear-gradient(180deg,#f1fbef,#cdeecf);box-shadow:inset 0 0 0 1px rgba(47,168,74,.55),inset 4px 0 0 #2fa84a,0 3px 0 #5f9a68;text-shadow:none}
+.fl-q .fl-ord-row.bad{color:#4a1410;background:linear-gradient(180deg,#fdf0ee,#f5cfc9);box-shadow:inset 0 0 0 1px rgba(213,59,44,.55),inset 4px 0 0 #d53b2c,0 3px 0 #a3655d;text-shadow:none}
+.fl-q .fl-ord-row em{padding:2px 7px;border-radius:0;color:#ffd25a;background:#1c2442;transform:skewX(-8deg) scale(.6);font:italic 800 14px/1.05 'Barlow Condensed','Lilita One',sans-serif}
 .fl-q .fl-ord-row.ok em,.fl-q .fl-ord-row.bad em,.fl-q .fl-ord-row.fin em{transform:skewX(-8deg)}
+
+/* ---------------------------------------------------------------- onay düğmesi (soru kartında): alçak, harita görünür kalır */
+.fl-q .fl-send{padding:7px 14px 8px;border-radius:12px;border-width:2px;font-size:18px;box-shadow:0 4px 0 #a0620a,0 6px 10px rgba(0,0,0,.25)}
+.fl-q .fl-send:active{transform:translateY(3px);box-shadow:0 1px 0 #a0620a}
 
 /* ---------------------------------------------------------------- haritalı soru: üstte koyu panel */
 .fl-q.map .fl-qc{padding:10px 12px 12px;border-radius:0 0 16px 16px;background:rgba(7,8,15,.94);border-bottom:2px solid rgba(255,210,90,.35);box-shadow:0 10px 26px rgba(0,0,0,.45)}

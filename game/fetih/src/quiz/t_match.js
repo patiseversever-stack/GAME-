@@ -8,42 +8,67 @@ import { css, esc, shuffle, pCorrect, buzz } from './util.js';
 import { botTime } from './timing.js';
 import { setTimeout } from '../core/clock.js';
 
-// çift renkleri: lacivert panelde ve beyaz kartta ayrı ayrı seçilir
-const COLORS = ['#ffb21a', '#18b4f0', '#f0509a', '#5ad16a'];
+// çift renkleri: krem kart ve lacivert panelde okunan, doygunluğu kısık tonlar (neon yok)
+const COLORS = ['#3d8fd6', '#d9577a', '#e0a21c', '#8a6fd1'];
+const OK = '#2fa84a';
+const BAD = '#d53b2c';
 
+// v1.5c: eski düzen (iki sütun kart, iç kenarda yuva, aralarında bağ) krem/premium arena dilinde: krem kart, ince altın
+// kenar, alçak gölge; bağ gölgeli tek renk çizgi, çizilirken bir kez kayan ince ışıltı. Kartlar kademeli girer, bağlanınca
+// kısa bir parıltı. Hareket transform/opacity ya da küçük SVG çizgisi.
 const CSS = /* css */ `
-.fl-mat{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 58px minmax(0,1fr);align-items:stretch;user-select:none;-webkit-user-select:none}
-.fl-mat-col{display:flex;flex-direction:column;gap:12px;grid-row:1}
+.fl-mat{position:relative;display:grid;grid-template-columns:minmax(0,1fr) 46px minmax(0,1fr);align-items:stretch;user-select:none;-webkit-user-select:none}
+.fl-mat-col{display:flex;flex-direction:column;gap:7px;grid-row:1}
 .fl-mat-col.l{grid-column:1}.fl-mat-col.r{grid-column:3}
-.fl-mat-it{position:relative;min-height:clamp(58px,calc(7.4 * var(--vh)),72px);padding:6px 10px 7px;border-radius:17px;display:flex;align-items:center;justify-content:center;text-align:center;
-  font-size:clamp(15px,calc(4.2 * var(--vw)),18px);font-weight:600;line-height:1.14;text-wrap:balance;overflow-wrap:anywhere;color:var(--tdark);
-  background:linear-gradient(180deg,#fff,#eef1f8);border:3px solid #fff;box-shadow:0 5px 0 #aab6cf,0 8px 12px rgba(0,0,0,.22);touch-action:none;
-  transition:transform .14s,border-color .2s,background .2s,box-shadow .2s,color .2s}
-.fl-mat-it:active{transform:translateY(3px)}
-.fl-mat-it i{position:absolute;top:50%;width:18px;height:18px;margin-top:-9px;border-radius:50%;background:#dfe5f2;border:3px solid #fff;box-shadow:0 0 0 2px #aab6cf;transition:background .2s,box-shadow .2s,transform .25s cubic-bezier(.3,1.7,.5,1)}
-.fl-mat-col.l .fl-mat-it i{right:-12px}
-.fl-mat-col.r .fl-mat-it i{left:-12px}
-.fl-mat-it.sel{background:linear-gradient(180deg,#fff7d2,#ffe08a);border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-d),0 5px 0 var(--gold-dd);transform:scale(1.04);animation:flq-matsel 1s ease-in-out infinite}
-.fl-mat-it.sel i{background:var(--gold);transform:scale(1.2)}
-.fl-mat-it.on{border-color:var(--c);box-shadow:0 0 0 2px var(--c),0 5px 0 #aab6cf,0 8px 12px rgba(0,0,0,.22)}
-.fl-mat-it.on i{background:var(--c);box-shadow:0 0 0 2px var(--c);transform:scale(1.15)}
-.fl-mat-it.tgt{border-color:var(--gold);transform:scale(1.04)}
-.fl-mat-it.ok{color:#fff;background:linear-gradient(180deg,#7fe88a,#2fa84a);border-color:#fff;box-shadow:0 5px 0 var(--green-d),0 8px 14px rgba(40,200,80,.3);text-shadow:0 1px 0 rgba(0,60,20,.45)}
-.fl-mat-it.bad{color:#fff;background:linear-gradient(180deg,#ff8a78,#d53b2c);border-color:#fff;box-shadow:0 5px 0 #7a120a;text-shadow:0 1px 0 rgba(80,0,0,.45)}
-.fl-mat-it.ok i,.fl-mat-it.bad i{background:#fff;box-shadow:none}
+.fl-mat-it{--c:#e8a917;position:relative;isolation:isolate;overflow:visible;min-height:clamp(46px,calc(5.7 * var(--vh)),54px);padding:5px 12px;margin:0;border:0;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;text-align:center;font:600 clamp(14px,calc(3.8 * var(--vw)),16px)/1.12 'Fredoka',sans-serif;
+  text-wrap:balance;overflow-wrap:anywhere;color:#1c2442;background:linear-gradient(180deg,#fffaf0,#efe5cf);
+  box-shadow:inset 0 0 0 1px rgba(176,140,70,.45),inset 0 1px 0 #fff,0 3px 0 #9c8a66,0 6px 12px rgba(0,0,0,.28);touch-action:none;
+  transition:transform .2s cubic-bezier(.3,1.5,.5,1),background .25s,box-shadow .25s,color .25s;animation:flq-matinL .5s cubic-bezier(.2,.9,.3,1) backwards;animation-delay:calc(var(--k) * 70ms + 60ms)}
+.fl-mat-col.r .fl-mat-it{animation-name:flq-matinR}
+.fl-mat-it::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;
+  background:linear-gradient(105deg,transparent 35%,rgba(255,255,255,.75) 50%,transparent 65%) no-repeat;background-size:250% 100%;background-position:120% 0}
+.fl-mat-it:active{transform:translateY(2px)}
+.fl-mat-it i{position:absolute;top:50%;z-index:1;width:14px;height:14px;margin-top:-7px;border-radius:50%;background:#efe5cf;box-shadow:0 0 0 2px #fffaf0,0 0 0 3.5px rgba(156,138,102,.9);
+  transition:background .2s,box-shadow .2s,transform .25s cubic-bezier(.3,1.7,.5,1)}
+.fl-mat-col.l .fl-mat-it i{right:-9px}
+.fl-mat-col.r .fl-mat-it i{left:-9px}
+.fl-mat-it.sel,.fl-mat-it.tgt{background:linear-gradient(180deg,#fff8dc,#fbe6a6);box-shadow:inset 0 0 0 2px #e8a917,0 3px 0 #a8770c,0 0 16px rgba(255,210,90,.45);transform:translateY(-2px)}
+.fl-mat-it.sel i,.fl-mat-it.tgt i{background:#e8a917;transform:scale(1.15)}
+.fl-mat-it.sel::after{opacity:1;animation:flq-matglint 1.6s ease-in-out infinite}
+.fl-mat-it.on{box-shadow:inset 0 0 0 2px var(--c),inset 0 1px 0 #fff,0 3px 0 #9c8a66,0 6px 12px rgba(0,0,0,.28)}
+.fl-mat-it.on i{background:var(--c);transform:scale(1.1)}
+.fl-mat-it.zap::after{opacity:1;animation:flq-matglint .6s ease-out 1 forwards}
+.fl-mat-it.ok,.fl-mat-it.fix{color:#123a1e;background:linear-gradient(180deg,#f1fbef,#cdeecf);box-shadow:inset 0 0 0 1px rgba(47,168,74,.6),0 3px 0 #5f9a68,0 6px 12px rgba(0,0,0,.25)}
+.fl-mat-it.bad{color:#4a1410;background:linear-gradient(180deg,#fdf0ee,#f5cfc9);box-shadow:inset 0 0 0 1px rgba(213,59,44,.6),0 3px 0 #a3655d,0 6px 12px rgba(0,0,0,.25)}
+.fl-mat-col.l .fl-mat-it.ok,.fl-mat-col.l .fl-mat-it.fix{box-shadow:inset 0 0 0 1px rgba(47,168,74,.6),inset 4px 0 0 #2fa84a,0 3px 0 #5f9a68,0 6px 12px rgba(0,0,0,.25)}
+.fl-mat-col.r .fl-mat-it.ok,.fl-mat-col.r .fl-mat-it.fix{box-shadow:inset 0 0 0 1px rgba(47,168,74,.6),inset -4px 0 0 #2fa84a,0 3px 0 #5f9a68,0 6px 12px rgba(0,0,0,.25)}
+.fl-mat-col.l .fl-mat-it.bad,.fl-mat-col.l .fl-mat-it.fix{box-shadow:inset 0 0 0 1px rgba(213,59,44,.6),inset 4px 0 0 #d53b2c,0 3px 0 #a3655d,0 6px 12px rgba(0,0,0,.25)}
+.fl-mat-col.r .fl-mat-it.bad,.fl-mat-col.r .fl-mat-it.fix{box-shadow:inset 0 0 0 1px rgba(213,59,44,.6),inset -4px 0 0 #d53b2c,0 3px 0 #a3655d,0 6px 12px rgba(0,0,0,.25)}
+.fl-mat-col.l .fl-mat-it.fix{box-shadow:inset 0 0 0 1px rgba(47,168,74,.6),inset 4px 0 0 #d53b2c,0 3px 0 #5f9a68,0 6px 12px rgba(0,0,0,.25)}
+.fl-mat-col.r .fl-mat-it.fix{box-shadow:inset 0 0 0 1px rgba(47,168,74,.6),inset -4px 0 0 #d53b2c,0 3px 0 #5f9a68,0 6px 12px rgba(0,0,0,.25)}
+.fl-mat-it.ok i,.fl-mat-it.fix i{background:#2fa84a}
+.fl-mat-it.bad i{background:#d53b2c}
 .fl-mat svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-.fl-mat path{fill:none;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .32s ease-out,opacity .3s}
-.fl-mat path.sh{stroke:#0a1534;stroke-width:10;opacity:.55}
-.fl-mat path.ln{stroke-width:6}
+.fl-mat path{fill:none;stroke-linecap:round;stroke-dasharray:1;stroke-dashoffset:1;transition:stroke-dashoffset .4s cubic-bezier(.5,0,.2,1),opacity .3s,stroke .3s}
+.fl-mat path.sh{stroke:#05091a;stroke-width:8;opacity:.5}
+.fl-mat path.ln{stroke-width:4.5}
 .fl-mat path.in{stroke-dashoffset:0}
 .fl-mat path.late{transition-delay:.18s}
-.fl-mat path.drag{stroke:#fff;stroke-width:5;stroke-dasharray:none;stroke-dashoffset:0;transition:none;opacity:.9}
+.fl-mat path.sp{stroke:#fff;stroke-width:2;stroke-dasharray:.08 1.2;stroke-dashoffset:.08;opacity:0;transition:none}
+.fl-mat path.sp.in{animation:flq-matspark .7s .15s cubic-bezier(.4,0,.6,1) 1 both}
+.fl-mat path.sp.late.in{animation-delay:.33s}
+.fl-mat path.drag{stroke:#ffd25a;stroke-width:3.5;stroke-dasharray:none;stroke-dashoffset:0;transition:none;opacity:.9}
 .fl-mat path.out{opacity:0}
-.fl-mat-hint{margin:10px 0 -2px;font-size:12.5px;line-height:1.2;text-align:center;color:#cfe0ff;opacity:.9;transition:opacity .3s}
+.fl-mat-hint{margin:8px 0 -2px;font-size:11px;line-height:1.2;text-align:center;color:#cfe0ff;opacity:.65;transition:opacity .3s}
 .fl-mat-hint.off{opacity:0}
 .fl-mat-send{margin-top:8px;width:100%}
 .fl-mat.sent~.fl-mat-send,.fl-mat.sent~.fl-mat-hint{display:none}
-@keyframes flq-matsel{50%{box-shadow:0 0 0 5px rgba(255,210,90,.6),0 5px 0 var(--gold-dd)}}
+@keyframes flq-matinL{0%{opacity:0;transform:translateX(-24px)}}
+@keyframes flq-matinR{0%{opacity:0;transform:translateX(24px)}}
+@keyframes flq-matglint{0%{background-position:120% 0}100%{background-position:-20% 0}}
+@keyframes flq-matspark{0%{stroke-dashoffset:.08;opacity:.85}85%{opacity:.85}100%{stroke-dashoffset:-1;opacity:0}}
+@media (prefers-reduced-motion:reduce){.fl-mat-it{animation:none}.fl-mat path.sp{display:none}}
 `;
 
 export const match = {
@@ -67,8 +92,8 @@ export const match = {
 		const n = v.n;
 		el.innerHTML = `<div class="fl-mat">
 			<svg></svg>
-			<div class="fl-mat-col l">${v.left.map((t, i) => `<button class="fl-mat-it" data-s="l" data-i="${i}">${esc(t)}<i></i></button>`).join('')}</div>
-			<div class="fl-mat-col r">${v.right.map((t, i) => `<button class="fl-mat-it" data-s="r" data-i="${i}">${esc(t)}<i></i></button>`).join('')}</div>
+			<div class="fl-mat-col l">${v.left.map((t, i) => `<button class="fl-mat-it" data-s="l" data-i="${i}" style="--k:${i}">${esc(t)}<i></i></button>`).join('')}</div>
+			<div class="fl-mat-col r">${v.right.map((t, i) => `<button class="fl-mat-it" data-s="r" data-i="${i}" style="--k:${i + 0.5}">${esc(t)}<i></i></button>`).join('')}</div>
 		</div>
 		<div class="fl-mat-hint">Bir öğeye, sonra eşine dokun</div>
 		<button class="fl-send fl-mat-send" disabled>ONAYLA</button>`;
@@ -92,7 +117,7 @@ export const match = {
 		const makePath = (l, r, color, late = false) => {
 			const d = curve(anchor(L[l], 'l'), anchor(Rt[r], 'r'));
 			const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-			for (const cls of ['sh', 'ln']) {
+			for (const cls of ['sh', 'ln', 'sp']) {
 				const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
 				p.setAttribute('d', d);
 				p.setAttribute('pathLength', '1');
@@ -104,6 +129,15 @@ export const match = {
 			svg.appendChild(g);
 			requestAnimationFrame(() => requestAnimationFrame(() => g.querySelectorAll('path').forEach((p) => p.classList.add('in'))));
 			return g;
+		};
+		// bağlanan iki kartta kısa bir parıltı
+		const zap = (...bs) => {
+			for (const b of bs) {
+				b.classList.remove('zap');
+				void b.offsetWidth;
+				b.classList.add('zap');
+				setTimeout(() => b.classList.remove('zap'), 700);
+			}
 		};
 		const clearSel = () => {
 			sel = null;
@@ -137,6 +171,7 @@ export const match = {
 			if (prev >= 0) drop(prev);
 			m[l] = r;
 			paths.set(l, makePath(l, r, COLORS[l % COLORS.length], late));
+			setTimeout(() => zap(L[l], Rt[r]), late ? 380 : 200);
 		};
 		const connect = (l, r) => {
 			link(l, r);
@@ -246,26 +281,40 @@ export const match = {
 				done = true;
 				root.classList.add('sent');
 				clearSel();
-				for (const g of paths.values()) g.querySelectorAll('path').forEach((p) => p.classList.add('out'));
+				const good = (l) => m[l] >= 0 && v.ord[m[l]] === l;
+				// 1) senin bağların yeşil/kırmızı yanar
+				for (const [l, g] of paths) g.querySelectorAll('.ln').forEach((p) => (p.style.stroke = good(l) ? OK : BAD));
 				L.forEach((b, l) => {
-					b.classList.remove('on');
-					b.classList.add(m[l] >= 0 && v.ord[m[l]] === l ? 'ok' : 'bad');
+					b.classList.remove('on', 'zap');
+					b.classList.add(good(l) ? 'ok' : 'bad');
 				});
 				Rt.forEach((b, j) => {
 					const l = m.indexOf(j);
-					b.classList.remove('on');
+					b.classList.remove('on', 'zap');
 					b.classList.add(l >= 0 && v.ord[j] === l ? 'ok' : 'bad');
 				});
-				// doğru bağlar sırayla belirir
+				// 2) yanlış bağlar söner, doğruları sırayla çizilir; yanlış kartlar yeşile döner (dış kenarda kırmızı iz kalır)
 				setTimeout(() => {
-					svg.innerHTML = '';
-					paths.clear();
-					L.forEach((b, l) => setTimeout(() => makePath(l, v.ord.indexOf(l), '#7dff9a'), l * 150));
-					for (const b of [...L, ...Rt]) {
-						b.classList.remove('bad');
-						b.classList.add('ok');
+					let k = 0;
+					for (let l = 0; l < n; l++) {
+						if (good(l)) continue;
+						const g = paths.get(l);
+						if (g) {
+							g.querySelectorAll('path').forEach((p) => p.classList.add('out'));
+							setTimeout(() => g.remove(), 320);
+							paths.delete(l);
+						}
+						const r = v.ord.indexOf(l);
+						setTimeout(() => {
+							makePath(l, r, OK);
+							for (const b of [L[l], Rt[r]]) {
+								b.classList.remove('bad');
+								b.classList.add('fix');
+							}
+							setTimeout(() => zap(L[l], Rt[r]), 260);
+						}, 120 + k++ * 170);
 					}
-				}, 750);
+				}, 1000);
 			},
 			destroy() {},
 		};
