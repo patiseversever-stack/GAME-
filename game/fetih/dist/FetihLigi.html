@@ -13673,11 +13673,10 @@ ${gs}{
 
 /* ---------------------------------------------------------------- sonu\xE7 ekran\u0131 (v1.5): kart kapan\u0131nca haritan\u0131n ortas\u0131nda
    b\xFCy\xFCk sonu\xE7 ve oyuncu sat\u0131rlar\u0131 (e\u011Fik plakalar, kazanan alt\u0131n). Kartta yaln\u0131z do\u011Fru cevap kal\u0131r, hi\xE7bir \u015Fey \xFCst \xFCste binmez. */
-.fl-res{position:absolute;left:0;right:0;top:46%;z-index:40;display:flex;flex-direction:column;align-items:center;gap:20px;
-  padding:0 max(16px,env(safe-area-inset-right,0px)) 0 max(16px,env(safe-area-inset-left,0px));transform:translateY(-50%);opacity:0;pointer-events:none;transition:opacity .22s}
+.fl-res{position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;
+  padding:0 max(16px,env(safe-area-inset-right,0px)) 6% max(16px,env(safe-area-inset-left,0px));opacity:0;pointer-events:none;transition:opacity .25s;
+  background:radial-gradient(ellipse at 50% 46%,rgba(3,5,12,.72) 0,rgba(3,5,12,.86) 70%)}
 .fl-res.on{opacity:1;pointer-events:auto}
-.fl-res::before{content:'';position:absolute;left:-30%;right:-30%;top:-45%;bottom:-45%;z-index:-1;pointer-events:none;
-  background:radial-gradient(ellipse at center,rgba(4,6,16,.82) 0,rgba(4,6,16,.6) 42%,rgba(4,6,16,0) 72%)}
 .fl-res .fl-stamp{position:relative;left:auto;top:auto;opacity:1;transform:skewX(-8deg);animation:rsSt .45s cubic-bezier(.3,1.7,.5,1) both}
 @keyframes rsSt{0%{opacity:0;transform:skewX(-8deg) scale(1.9)}60%{opacity:1;transform:skewX(-8deg) scale(.96)}100%{opacity:1;transform:skewX(-8deg)}}
 .rs-rows{width:min(100%,400px);display:flex;flex-direction:column;gap:10px}
@@ -13695,28 +13694,32 @@ ${gs}{
 .rs-r.win{color:#1a1200;background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:inset 0 0 0 2px #fff,0 0 26px rgba(255,210,90,.55),0 6px 18px rgba(0,0,0,.45)}
 .rs-r.no em{color:#ff9a88}
 @keyframes rsIn{0%{opacity:0;transform:skewX(-8deg) translateX(-40px)}100%{opacity:1;transform:skewX(-8deg)}}
-@media (orientation:landscape) and (max-height:520px){.fl-res{top:50%;gap:12px}.rs-r{min-height:46px}.rs-rows{gap:7px}}
+@media (orientation:landscape) and (max-height:520px){.fl-res{gap:12px;padding-bottom:0}.rs-r{min-height:46px}.rs-rows{gap:7px}}
 
-/* ---------------------------------------------------------------- s\u0131rala (v1.5): arena dili. Sat\u0131rlar \u015F\u0131k gibi e\u011Fik
-   kesim beyaz plaka, numaralar alt\u0131n e\u011Fik blok, u\xE7lar siyah plaka; se\xE7ili alt\u0131n, do\u011Fru ye\u015Fil, yanl\u0131\u015F k\u0131rm\u0131z\u0131. */
-.fl-q .fl-ord-end>b{height:30px;margin-left:6px;padding:0 14px 0 8px;gap:8px;border:0;border-radius:0;transform:skewX(-8deg);color:#ffd25a;background:#0a0b14;
-  box-shadow:inset 0 0 0 2px rgba(255,255,255,.92),0 4px 12px rgba(0,0,0,.5);font:italic 800 16px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.07em}
-.fl-q .fl-ord-end>b i{width:18px;height:18px;border-radius:0;font-size:10px;color:#0a0b14;background:#ffd25a}
-.fl-q .fl-ord-end.bot>b{color:#9ec1ff;background:#0a0b14;box-shadow:inset 0 0 0 2px rgba(255,255,255,.92),0 4px 12px rgba(0,0,0,.5)}
-.fl-q .fl-ord-end.bot>b i{color:#0a0b14;background:#9ec1ff}
-.fl-q .fl-ord-rail::before{width:6px;margin-left:-3px;clip-path:none;background:linear-gradient(180deg,rgba(255,210,90,.12),#ffd25a)}
-.fl-q .fl-ord.desc .fl-ord-rail::before{clip-path:none;background:linear-gradient(0deg,rgba(255,210,90,.12),#ffd25a)}
-.fl-q .fl-ord-rail b{width:36px;height:32px;margin-left:-18px;border:0;border-radius:0;transform:skewX(-8deg);color:#1a1200;background:linear-gradient(180deg,#ffe066,#ffbb1f);
-  box-shadow:0 3px 0 #8a5a00,0 4px 10px rgba(0,0,0,.35);font:italic 800 22px/1 'Barlow Condensed','Lilita One',sans-serif}
+/* ---------------------------------------------------------------- s\u0131rala (v1.5b): ince, premium. Koyu cam sat\u0131rlar
+   (lacivert, ince beyaz \xE7er\xE7eve, beyaz yaz\u0131), k\xFC\xE7\xFCk alt\u0131n numaralar, ince u\xE7 etiketleri; se\xE7ili alt\u0131n \xE7er\xE7eve, do\u011Fru/yanl\u0131\u015F
+   renkli zemin ve kenar \u015Feridi. */
+.fl-q .fl-ord{--row:52px;--rail:34px;gap:7px}
+.fl-q .fl-ord-end>b{height:22px;margin-left:2px;padding:0 9px 0 5px;gap:6px;border:0;border-radius:0;transform:skewX(-8deg);color:#ffd25a;background:rgba(255,210,90,.08);
+  box-shadow:inset 0 0 0 1px rgba(255,210,90,.55);font:italic 800 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em}
+.fl-q .fl-ord-end>b i{width:12px;height:12px;border-radius:0;font-size:7px;color:#0a0b14;background:#ffd25a}
+.fl-q .fl-ord-end.bot>b{color:#a9c6ff;background:rgba(140,180,255,.08);box-shadow:inset 0 0 0 1px rgba(160,195,255,.55)}
+.fl-q .fl-ord-end.bot>b i{background:#a9c6ff}
+.fl-q .fl-ord-hint{font-size:11.5px;opacity:.7}
+.fl-q .fl-ord-rail::before{width:2px;margin-left:-1px;clip-path:none;background:linear-gradient(180deg,rgba(255,210,90,.1),rgba(255,210,90,.8))}
+.fl-q .fl-ord.desc .fl-ord-rail::before{clip-path:none;background:linear-gradient(0deg,rgba(255,210,90,.1),rgba(255,210,90,.8))}
+.fl-q .fl-ord-rail b{width:24px;height:24px;margin-left:-12px;border:0;border-radius:0;transform:skewX(-8deg);color:#1a1200;background:linear-gradient(180deg,#ffe066,#f5b324);
+  box-shadow:0 2px 0 #8a5a00;font:italic 800 16px/1 'Barlow Condensed','Lilita One',sans-serif}
 .fl-q .fl-ord-rail b.hot{transform:skewX(-8deg) scale(1.15)}
-.fl-q .fl-ord-row{padding:0 16px 0 18px;border:0;border-radius:0;clip-path:polygon(0 0,100% 0,97% 100%,0 100%);color:#0e1430;background:linear-gradient(180deg,#fff,#e4e9f4);box-shadow:none}
-.fl-q .fl-ord-row span{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(17px,calc(4.9 * var(--vw)),20px)}
-.fl-q .fl-ord-row .fl-grip{background:radial-gradient(circle,#8f9ab6 2.1px,transparent 2.6px) 2px 1px/9px 9.5px}
-.fl-q .fl-ord-row.drag{color:#1a1200;background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:none}
-.fl-q .fl-ord-row.sel{color:#1a1200;background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:none;animation:none}
-.fl-q .fl-ord-row.ok,.fl-q .fl-ord-row.fin{color:#fff;background:linear-gradient(90deg,#5ff08a,#22b85a);box-shadow:none;text-shadow:0 1px 0 rgba(0,60,20,.35)}
-.fl-q .fl-ord-row.bad{color:#fff;background:linear-gradient(90deg,#ff7a66,#d8392a);box-shadow:none;text-shadow:0 1px 0 rgba(80,0,0,.35)}
-.fl-q .fl-ord-row em{border-radius:0;color:#ffd25a;background:#0a0b14;transform:skewX(-8deg) scale(.6);font:italic 800 17px/1.05 'Barlow Condensed','Lilita One',sans-serif;padding:5px 10px}
+.fl-q .fl-ord-row{padding:0 12px 0 16px;gap:8px;border:0;border-radius:0;clip-path:none;transform-origin:center;color:#f2f5fc;
+  background:linear-gradient(180deg,rgba(38,52,96,.96),rgba(20,28,58,.96));box-shadow:inset 0 0 0 1px rgba(255,255,255,.28),inset 3px 0 0 rgba(255,210,90,.0),0 6px 14px rgba(0,0,0,.35)}
+.fl-q .fl-ord-row span{font-family:'Fredoka',sans-serif;font-weight:600;font-size:17px;line-height:1.15}
+.fl-q .fl-ord-row .fl-grip{width:16px;height:22px;opacity:.55;background:radial-gradient(circle,#dfe6f7 1.5px,transparent 2px) 1px 1px/7px 7px}
+.fl-q .fl-ord-row.drag{color:#fff;background:linear-gradient(180deg,rgba(52,68,120,.98),rgba(30,40,80,.98));box-shadow:inset 0 0 0 1.5px #ffd25a,0 0 18px rgba(255,210,90,.35),0 14px 24px rgba(0,0,0,.5)}
+.fl-q .fl-ord-row.sel{color:#fff;background:linear-gradient(180deg,rgba(52,68,120,.98),rgba(30,40,80,.98));box-shadow:inset 0 0 0 1.5px #ffd25a,0 0 16px rgba(255,210,90,.4);animation:none}
+.fl-q .fl-ord-row.ok,.fl-q .fl-ord-row.fin{color:#fff;background:linear-gradient(90deg,rgba(40,170,85,.55),rgba(20,60,40,.85));box-shadow:inset 0 0 0 1px rgba(120,255,160,.6),inset 4px 0 0 #3fe07a;text-shadow:none}
+.fl-q .fl-ord-row.bad{color:#fff;background:linear-gradient(90deg,rgba(210,60,45,.55),rgba(70,20,20,.85));box-shadow:inset 0 0 0 1px rgba(255,140,120,.6),inset 4px 0 0 #ff5a48;text-shadow:none}
+.fl-q .fl-ord-row em{padding:3px 8px;border-radius:0;color:#ffd25a;background:rgba(0,0,0,.35);transform:skewX(-8deg) scale(.6);font:italic 800 15px/1.05 'Barlow Condensed','Lilita One',sans-serif}
 .fl-q .fl-ord-row.ok em,.fl-q .fl-ord-row.bad em,.fl-q .fl-ord-row.fin em{transform:skewX(-8deg)}
 
 /* ---------------------------------------------------------------- harital\u0131 soru: \xFCstte koyu panel */
@@ -13958,7 +13961,7 @@ ${gs} {
 		<div data-v="ana">
 			<h3>DURAKLATILDI</h3>
 			${i?`<span class="st">${Rt(i)}</span>`:""}
-			<small class="bld">s\xFCr\xFCm ${Rt("791635f")}</small>
+			<small class="bld">s\xFCr\xFCm ${Rt("e6686dc")}</small>
 			<small class="bld perf">${Rt(((o=(r=(s=a.app)==null?void 0:s.gov)==null?void 0:r.summary)==null?void 0:o.call(r))||"")}</small>
 			<button class="fl-btn big green" data-p="devam">${Vt("play",{w:2.8})}DEVAM ET</button>
 			<div class="row">
