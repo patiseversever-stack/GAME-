@@ -1,0 +1,16 @@
+kahraman geçiş olayı: 15 · gölge yeniden ortalama: 0 / 600 kare
+0: dolmabahce:1,-
+49: -,-
+56: ayasofya:1,-
+126: -,-
+133: bursaulu:1,-
+168: -,-
+175: ayasofya:1,-
+224: -,-
+231: bergama:1,-
+287: -,-
+294: truva:1,-
+336: -,-
+343: bergama:1,-
+546: -,-
+553: saatkulesi:1,-

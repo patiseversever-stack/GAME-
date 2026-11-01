@@ -316,6 +316,38 @@ tamponu yeniden kurulur) yalnız durgun anda. Soru kartı açıkken mobilde 30 k
 bin). Gece denizi gündüz yolunu hesaplamaz; köpük, dalga çizgisi ve pırıltı yalnız etkili oldukları uzaklıkta. Komşu ülke
 karası gölge haritası örneklemez.
 
+**Cihaz neyse onun en iyisi (v1.5, `core/quality.js`).** Kademe açılışta seçilir (shader ve geometri ona göre kurulur) ama
+artık kalıcı ölçümle düzelir: ekranın hızını süper örneklemede (ekranın kendi çözünürlüğüne kadar, ölçek ≤ 1,35) 20 sn tutan
+cihaz bir sonraki açılışta bir üst kademe; en düşük çözünürlükte bile tutamayan bir alt kademe ve o kademe bir daha denenmez
+(`launchTier`, kayıt v3: ekran kartı başına düzeltme + kademe başına ölçek/kare sınırı). Masaüstünde GPU saati
+(`EXT_disjoint_timer_query_webgl2`, `core/gputimer.js`) da kanıt sayılır; mobilde sayılmaz (döşemeli kartta ölçüm eksik).
+Oyun sırasında geri çekilme sırası: süper örnekleme → 120'den 60'a → çözünürlük → 30; işlemci darboğazında (kare JS süresi
+bütçenin %70'i) çözünürlük boşuna kısılmaz. Yükseltme sırası önce akıcılık sonra keskinlik; tutmayan deneme geri alınır ve
+her seferinde iki kat (15 → 240 sn) beklenir. Duraklatma ekranı özeti: `q0→1 (sonraki q…)`.
+
+**Titremesiz yapı (v1.5, `map/herolod.js`).** Sade yapı ile ayrıntılı (kahraman) maket biçim, kaide ve renkte ayrı; kaydırma
+sırasında gidip gelmeleri "yeniden çizim / renk değişimi" gibi görünüyordu (20 sn'lik kaydırmada 15 değişim). Kamera 0,45 sn
+yerleşmeden yeni kahraman girmez, ekrandaki kahraman giriş eşiğinin %35'ine kadar tutulur: kaydırmada 0 değişim, kamera
+durunca kahraman gelir. Balon, bayrak ve ağaç salınımı kameradan 42–62 birim ötede durur (görünmeyen hareket çizilmez).
+İl adları istem yazısının altına düşmez (`labels.avoid`: genel kipte gizlenir, seçim listesinde üstüne kayar).
+
+**Tek tasarım, iki yoğunluk (v1.5, `landmarks.js` `_buildFar`, `herokit.cluster`).** Sade model ayrı bir tasarımdı (kaide,
+renk, biçim farklı): yakına gelince ayrıntılıya geçiş göze batıyordu. Orta ve yüksek kademede haritadaki model artık ayrıntılı
+modelin kendisinin uzak sürümü: segment ×0,35, yapı ölçeğinin %12'sinden küçük parça yok, malzeme başına köşe kümeleme
+(hücre ölçeğin %3,5'i); pencere, alem, bayrak, alev ve işaretli desen (`k.keep`, Anıtkabir kilimi) üç kat ince ızgarada
+korunur. 42 yapı 785 bin → 130 bin üçgen (sade 68 bin). İşçide açılışta kurulur (~4–6 sn), 16 birimlik ızgara parçalarında
+birleşir, sade modelden 0,8 sn titreşimli geçişle yerine geçer, sade model bellekten atılır. Gömülme, kale altı, savaş
+açıklığı, Kuşbakışı gizleme ve kahramana geçiş sade modelle aynı kod (FADE). Geçişte belirgin değişen piksel gündüz %13–44 →
+%3–10, gece %34–69 → %4–13. Düşük kademede sade model kalır, haritada ayrıntılıya geçiş yapılmaz.
+Haritadaki ayrıntılı model (uzak ve yakın) haritanın ışığını kullanır: gece pencereler yanar, projektör yapıyı alttan
+yalar; eskiden yakına gelen ayrıntılı model gecede gündüz gibi aydınlık, avlusunun çimeni yemyeşil çiziliyordu
+(Kuşbakışı yakın çekimi sahnenin öznesi olarak aydınlık kalır).
+
+**Zemin sürekliliği (v1.5).** Tarla parselleri ~6 birimlik bloklarda farklı yöne döner; blok sınırı bıçak kesiği gibi
+görünüyordu: artık parsellerin dayandığı ince toprak yol (piksel cinsinden genişlik, yol boyu hafif çit gölgesi). Harita
+kendi üstüne gölge düşürmez: kaba kabartma kopyasının gölgesi dağ arkalarında siyah, testere dişi lekeler yapıyordu; dağ
+biçimini yamaç ışığı veriyor (gölge geçişi ~18 bin üçgen hafif). Ağaç, yapı, kale, ordu gölgeleri sürer.
+
 **Defter = oyun.** Oyun (`dist/FetihLigi.html`) ve defter (`dist/SoruGalerisi.html`) aynı `node build.mjs` çağrısında aynı
 kaynaktan derlenir; ikisi de aynı sürüm damgasını taşır (kaynağın içerik özeti: duraklatma ekranında ve defter başlığında
 "sürüm …"). Damga aynıysa kod birebir aynıdır. Defter oyunun içine gömülmedi: oyuncu paketine galeri kodu ve örnek sorular

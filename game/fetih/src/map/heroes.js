@@ -25,9 +25,12 @@ import { H, HKit, bakeAO } from './herokit.js';
 
 export { H, HKit };
 
-const VS = /* glsl */ `
+// FAR: haritadaki uzak sürüm (landmarks.js; aynı tasarımın az yoğunluklu hali, bütün yapılar birleşik). /*FAR_FADE*/
+// yerine landmarks.js'in FADE parçası (site özniteliği, gömülme, kale, savaş açıklığı, kahramana geçiş) konur.
+export const VS = /* glsl */ `
 ${COMMON}
 ${PROV}
+/*FAR_FADE*/
 attribute vec4 col;  // sRGB renk; a: hareket grubu (0 durağan, 1.. balon)
 attribute vec4 info; // x malzeme, y il (tag), z tabandan yükseklik ×100 (yerel), w ortam örtmesi ×255
 attribute vec2 pat;  // desen koordinatı (yerel birim)
@@ -41,28 +44,46 @@ varying vec4 vI;
 varying vec2 vP;
 varying vec2 vSel;
 varying float vGnd;
+#ifdef FAR
+varying float vLod;
+varying float vHS;
+#define HSC site.w
+#else
+#define HSC uHS
+#endif
 void main() {
 	vec4 fx = provRow(info.y, 3);
 	vec3 p = position;
 	float id = info.x;
 	float grp = floor(col.a * 255.0 + 0.5);
+#ifdef FAR
+	vLod = lodK();
+	vHS = site.w;
+	// uzakta (bütün harita, bölge görünümü) balon ve bayrak durur (sade modelle aynı)
+	float ak = 1.0 - smoothstep(42.0, 62.0, distance(cameraPosition, site.xyz));
+#else
+	float ak = 1.0;
+#endif
 	// grup 200: avlunun dış halkaları (ground()); haritadaki ekran boyu kahramanında çizilmez, haritanın kendi
 	// zemini kalır (yapının tabanı yalın kopyayla aynı yere oturur, kıyıda havada disk olmaz)
 	vGnd = grp > 199.5 ? 1.0 : 0.0;
-	if (grp > 0.5 && grp < 199.5) {
+	if (grp > 0.5 && grp < 199.5 && ak > 0.0) {
 		// balon: süzülme (haritadaki maketle aynı hareket)
 		float ph = grp * 0.37 * 7.31;
-		p.y += sin(uTime * 0.6 + ph) * 0.14;
-		p.x += sin(uTime * 0.27 + ph * 1.7) * 0.08;
-		p.z += cos(uTime * 0.21 + ph * 2.3) * 0.04;
+		p.y += sin(uTime * 0.6 + ph) * 0.14 * ak;
+		p.x += sin(uTime * 0.27 + ph * 1.7) * 0.08 * ak;
+		p.z += cos(uTime * 0.21 + ph * 2.3) * 0.04 * ak;
 	}
-	if (abs(id - ${H.FLAG}.0) < 0.5) {
+	if (abs(id - ${H.FLAG}.0) < 0.5 && ak > 0.0) {
 		// bayrak: direkten uca büyüyen dalga (pat.x: direkten uzaklık oranı)
-		float u = pat.x;
+		float u = pat.x * ak;
 		float ph = uTime * 5.2 - u * 5.5;
-		p.z += sin(ph) * 0.03 * u * uHS;
-		p.y += sin(ph * 0.5 + 1.0) * 0.006 * u * uHS;
+		p.z += sin(ph) * 0.03 * u * HSC;
+		p.y += sin(ph * 0.5 + 1.0) * 0.006 * u * HSC;
 	}
+#ifdef FAR
+	p = fadeP(p, showK(grp > 0.5 && grp < 199.5));
+#endif
 	p.y += fx.x * uPLift + fx.z * uPSel;
 	vW = p;
 	vN = normal;
@@ -74,7 +95,7 @@ void main() {
 	gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
 }`;
 
-const FS = /* glsl */ `
+export const FS = /* glsl */ `
 #define SHADOW_TAPS __TAPS__
 ${COMMON}
 ${SHADOW}
@@ -324,10 +345,24 @@ void mosaic(vec2 uv) {
 
 varying float vGnd;
 uniform float uLodMode; // 1: haritadaki ekran boyu kahramanı (avlunun dış halkaları çizilmez)
+#ifdef FAR
+varying float vLod;
+varying float vHS;
+uniform vec2 uFarT; // sade modelden uzak sürüme geçiş: başlangıç (uTime), süre
+#define HS vHS
+#else
 uniform float uFade; // haritada ekran boyuna göre geliş (herolod.js): yalın kopyayla tamamlayıcı titreşimli geçiş
+#define HS uHS
+#endif
 void main() {
 	// aynı ekran eşiği yalın kopyada ters yönde (landmarks.js): ikisi birlikte her pikseli tam bir kez örter
-	if (uFade < 0.999 && fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715)))) >= uFade) discard;
+	float hd = fract(52.9829189 * fract(dot(gl_FragCoord.xy, vec2(0.06711056, 0.00583715))));
+#ifdef FAR
+	// uzak sürüm: kahramanın gelmediği ve sade modelden geçişin tamamlandığı pikseller
+	if (hd < vLod || hd >= clamp((uTime - uFarT.x) / uFarT.y, 0.0, 1.0)) discard;
+#else
+	if (uFade < 0.999 && hd >= uFade) discard;
+#endif
 	// (v1.4) arazi yapının altında düz teras olduğundan kahraman kendi avlusunu da çizer: yapının planına uyan avlu
 	// (Anıtkabir'de yuvarlatılmış dikdörtgen); yalın kopyanın yuvarlak avlusu titreşimle çekilir, köşelerden taşmaz
 	vec3 N = normalize(vN);
@@ -403,7 +438,7 @@ void main() {
 	else if (id == ${H.WATER}.0) {
 		// durağan su (havuz, traverten, göl): desen zamanla kaymaz (yüzey "yeniden çiziliyor" gibi kıpırdamasın);
 		// canlılığı gök yansıması ve güneş parıltısı verir, bakış açısıyla doğal olarak değişir
-		vec2 q = vW.xz / uHS;
+		vec2 q = vW.xz / HS;
 		float w = nz(q * 1.4) + nz(q * 2.1 + vec2(3.7, 1.3));
 		gH = w * 0.004;
 		gGloss = 0.95;
@@ -414,7 +449,7 @@ void main() {
 	else if (id == ${H.CLOTH}.0 || id == ${H.FLAG}.0) { gGloss = 0.2; bare = true; }
 	else if (id == ${H.FLAME}.0) bare = true;
 	// kabartma: desen yüksekliğinin ekran uzayı türevi (teğet gerekmez)
-	float hW = gH * uHS;
+	float hW = gH * HS;
 	vec3 dpx = dFdx(vW);
 	vec3 dpy = dFdy(vW);
 	float dhx = dFdx(hW);
@@ -432,8 +467,15 @@ void main() {
 	// zemin seviyesindeki kir ve yağmur izi
 	if (!bare && id != ${H.GOLD}.0 && id != ${H.WIN}.0) alb *= mix(vec3(0.78, 0.74, 0.7), vec3(1.0), smoothstep(0.0, 0.05, hgt));
 	float sh = shadowAt(vW, normalize(vN));
-	gLit = 1.0; // kahraman sahnenin öznesi: gece odağında da ışık havuzunda
 	gPool = poolK(vW.xz);
+#ifdef FAR
+	bool onMap = true;
+#else
+	bool onMap = uLodMode > 0.5;
+#endif
+	// Kuşbakışı yakın çekiminde kahraman sahnenin öznesi (gece odağında da ışık havuzunda); haritada (uzak sürüm ve
+	// yakına gelen kahraman) haritanın kendi ışığı: geçişte gece ışık sıçraması olmaz
+	gLit = onMap ? max(vSel.x * uSelLit, gPool) : 1.0;
 	vec3 c = shade(alb, N, V, ao, sh, gGloss, rimK);
 	// okunurluk çizgisi yalnız yapıda (doğal yüzeyde değil: kaya, toprak, çimen, döşeme, traverten çizgilenmesin)
 	bool natural = id == ${H.ROCK}.0 || id == ${H.GRASS}.0 || id == ${H.DIRT}.0 || id == ${H.GROUND}.0 || id == ${H.PAVE}.0 || id == ${H.TRAV}.0 || id == ${H.LEAF}.0;
@@ -441,14 +483,25 @@ void main() {
 	if (id == ${H.GOLD}.0) c += uSunCol * alb * 0.3;
 	if (id == ${H.WATER}.0) c = mix(c, skyReflect(reflect(-V, N)) * 0.8, 0.35);
 	if (id == ${H.FLAME}.0) c = vec3(1.0, 0.52, 0.16) * (2.2 + 0.8 * sin(uTime * 17.0 + vW.x * 30.0));
+	float nk = onMap ? nightK() : 0.0;
+	if (nk > 0.001) {
+		// gece (sade modelle aynı): pencereler içeriden yanar, bayrak projektörde, yapıyı alttan sıcak ışık yalar
+		if (id == ${H.FLAME}.0) c *= 1.0 + nk;
+		else if (id == ${H.WIN}.0) c += N_WARM * nk * (2.2 + 0.4 * sin(uTime * 3.1 + vW.x * 9.0));
+		else if (id == ${H.FLAG}.0) c += vec3(1.0, 0.72, 0.5) * alb * nk * 0.75;
+		else if (!bare && (!natural || id == ${H.ROCK}.0)) c += vec3(1.0, 0.66, 0.34) * alb * nk * 0.38 * exp(-hgt * HS * 2.4) * (0.55 + 0.45 * max(N.y, 0.0) + 0.4 * max(dot(N, V), 0.0));
+		if (id == ${H.CLOTH}.0) c += N_WARM * alb * nk * (0.3 + 0.5 * max(-N.y, 0.0)) * (0.85 + 0.15 * sin(uTime * 2.3 + vW.y * 5.0));
+		if (id == ${H.GROUND}.0 || id == ${H.PAVE}.0) c += N_WARM * alb * nk * 0.05;
+	}
 	c = provDim(c, vSel.x, vSel.y);
 	c = applyFog(c, vW);
 	gl_FragColor = finish(c, 1.0);
 }`;
 
-const DEPTH_VS = /* glsl */ `
+export const DEPTH_VS = /* glsl */ `
 uniform float uTime;
 ${PROV}
+/*FAR_FADE*/
 attribute vec4 col;
 attribute vec4 info;
 attribute vec2 pat;
@@ -464,10 +517,18 @@ void main() {
 	vec3 p = position;
 	float grp = floor(col.a * 255.0 + 0.5);
 	if (grp > 0.5 && grp < 199.5) p.y += sin(uTime * 0.6 + grp * 0.37 * 7.31) * 0.14;
+#ifdef FAR
+	// kahramanı yarıdan çok gelmiş yapının gölgesini kahraman verir
+	if (lodK() > 0.5) {
+		gl_Position = vec4(2.0, 2.0, 2.0, 1.0);
+		return;
+	}
+	p = fadeP(p, showK(grp > 0.5 && grp < 199.5));
+#endif
 	p.y += fx.x * uPLift + fx.z * uPSel;
 	gl_Position = projectionMatrix * viewMatrix * vec4(p, 1.0);
 }`;
-const DEPTH_FS = /* glsl */ `void main(){ gl_FragColor = vec4(1.0); }`;
+export const DEPTH_FS = /* glsl */ `void main(){ gl_FragColor = vec4(1.0); }`;
 
 // ------------------------------------------------------------------ kit
 
@@ -563,7 +624,8 @@ export class Heroes {
 		const t0 = performance.now();
 		let busy = 0;
 		const k = new HKit();
-		k.seg = this.tier.id === 0 ? 0.75 : 1;
+		k.seg = this.lodOpt?.seg ?? (this.tier.id === 0 ? 0.75 : 1);
+		k.minPart = (this.lodOpt?.minPart ?? 0) * site.s;
 		k.hi = true;
 		k.hf = this.lm.hf;
 		k.site = { x: site.x, y: site.y, z: site.z, s: site.s, ry: site.ry };
@@ -591,6 +653,7 @@ export class Heroes {
 		} else busy = performance.now() - t0;
 		k.pop();
 		const t1 = performance.now();
+		if (this.lodOpt?.cluster) k.cluster(this.lodOpt.cluster * site.s);
 		const g = k.buildHero(true);
 		busy += performance.now() - t1;
 		this.stats = { kind: site.kind, tris: k.count / 3, build: Math.round(busy), wall: Math.round(performance.now() - t0) };
@@ -615,7 +678,7 @@ export class Heroes {
 	 * İşçide kur (ana iş parçacığı yalnız ~200 arazi düğümü okur ve yakın illerin çokgenlerini gönderir). Dönen söz:
 	 * geometri ya da null (işçi yok/başarısız).
 	 */
-	_workerBuild(site) {
+	_workerBuild(site, lod = null) {
 		const wk = heroWorker();
 		if (!wk) return null;
 		const st = this.lm.gridStep || 0.4;
@@ -636,9 +699,10 @@ export class Heroes {
 			provs.push({ index: p.index, box: b, rings: p.rings });
 		}
 		const t = site.tone;
-		const msg = { kind: site.kind, site: { x: site.x, y: site.y, z: site.z, s: site.s, ry: site.ry, index: site.index }, tone: [t.r, t.g, t.b], seg: this.tier.id === 0 ? 0.75 : 1, grid: { st, gx0, gy0, nx, ny, h }, provs };
+		const msg = { kind: site.kind, site: { x: site.x, y: site.y, z: site.z, s: site.s, ry: site.ry, index: site.index }, tone: [t.r, t.g, t.b], seg: lod?.seg ?? (this.tier.id === 0 ? 0.75 : 1), minPart: lod?.minPart || 0, cluster: lod?.cluster || 0, grid: { st, gx0, gy0, nx, ny, h }, provs };
 		return wk.build(msg).then((r) => {
 			if (!r) return null;
+			if (lod) return r; // uzak sürüm: ham diziler (landmarks.js birleştirir)
 			const g = new THREE.BufferGeometry();
 			g.setAttribute('position', new THREE.BufferAttribute(r.pos, 3));
 			g.setAttribute('normal', new THREE.BufferAttribute(r.nor, 4, true));
@@ -650,6 +714,15 @@ export class Heroes {
 			this.stats = { kind: site.kind, tris: r.tris, build: 0, wall: r.ms, worker: true };
 			return g;
 		});
+	}
+
+	/**
+	 * Uzak sürüm (aynı tasarım, az yoğunluk): işçide kurulur, ham dizileri döner { pos, nor, col, info, pat, tris };
+	 * işçi yoksa null (harita sade modelle kalır, ana iş parçacığı bloklanmaz).
+	 */
+	buildFar(site, lod) {
+		const p = this._workerBuild(site, lod);
+		return p || Promise.resolve(null);
 	}
 
 	/**

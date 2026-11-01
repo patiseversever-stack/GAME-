@@ -5,7 +5,8 @@
 import * as THREE from 'three';
 import { detectTier, TIERS } from './quality.js';
 
-export function createRenderer(canvas, forcedTier) {
+/** forcedTier: oyuncunun seçtiği kademe; adjust(info): otomatikte ölçülmüş düzeltmeyi uygular (quality.launchTier). */
+export function createRenderer(canvas, forcedTier, adjust = null) {
 	let info = { tier: 0, gpu: '', mobile: true };
 	try {
 		const probe = document.createElement('canvas').getContext('webgl2');
@@ -17,7 +18,9 @@ export function createRenderer(canvas, forcedTier) {
 	} catch (e) {
 		/* tanınamadı: düşük kademe */
 	}
+	const base = info.tier;
 	if (forcedTier != null && forcedTier >= 0 && forcedTier <= 2) info.tier = forcedTier;
+	else if (adjust) info.tier = adjust(info);
 	const swiftshader = /swiftshader|llvmpipe/i.test(info.gpu);
 
 	const renderer = new THREE.WebGLRenderer({
@@ -40,5 +43,5 @@ export function createRenderer(canvas, forcedTier) {
 	const maxAniso = renderer.capabilities.getMaxAnisotropy();
 	const tier = TIERS[info.tier];
 	const aniso = Math.min(maxAniso, tier.id >= 1 ? 8 : 4);
-	return { renderer, tier, gpu: info.gpu, mobile: info.mobile, msaa, aniso };
+	return { renderer, tier, base: forcedTier != null && forcedTier >= 0 && forcedTier <= 2 ? info.tier : base, gpu: info.gpu, mobile: info.mobile, msaa, aniso };
 }

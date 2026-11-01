@@ -21,7 +21,7 @@ import * as THREE from 'three';
 import { COMMON, SHADOW, LIGHT, FINISH, PROV, CLEAR, glslColor as C } from '../gfx/shaderlib.js';
 import { Kit, archShape, facadeShape } from '../gfx/kit.js';
 import { pointInPoly } from './board.js';
-import { Heroes } from './heroes.js';
+import { Heroes, VS as HERO_VS, FS as HERO_FS, DEPTH_VS as HERO_DEPTH_VS, DEPTH_FS as HERO_DEPTH_FS } from './heroes.js';
 import { HeroLod } from './herolod.js';
 import { HEROES } from './hero_index.js';
 import { extraSites } from './landmarks2.js';
@@ -90,6 +90,7 @@ attribute float tag;
 attribute float anim;
 attribute vec2 mat;
 uniform float uPLift, uPSel;
+uniform vec2 uFarT; // uzak sürüme (aynı tasarımın az yoğunluklu hali) geçiş: başlangıç, süre (0: yok)
 varying vec3 vW;
 varying vec3 vN;
 varying vec3 vC;
@@ -99,17 +100,21 @@ varying float vLod;
 void main() {
 	vec4 fx = provRow(tag, 3);
 	vec3 p = position;
-	vLod = lodK();
+	// sade model: kahramanın ve uzak sürümün geldiği pikseller çekilir (tamamlayıcı titreşim)
+	vLod = max(lodK(), uFarT.y > 0.0 ? clamp((uTime - uFarT.x) / uFarT.y, 0.0, 1.0) : 0.0);
+	// uzakta (bütün harita, bölge görünümü) yapı hareketleri durur: o boyda seçilmez, yalnız kıpırtı yapar
+	float ak = abs(anim) > 0.5 ? 1.0 - smoothstep(42.0, 62.0, distance(cameraPosition, site.xyz)) : 0.0;
 	// balon: süzülme (anim = balon kimliği)
-	if (anim > 0.5) {
+	if (anim > 0.5 && ak > 0.0) {
 		float ph = anim * 7.31;
-		p.y += sin(uTime * 0.6 + ph) * 0.14;
-		p.x += sin(uTime * 0.27 + ph * 1.7) * 0.08;
-		p.z += cos(uTime * 0.21 + ph * 2.3) * 0.04;
-	} else if (anim < -0.5) {
+		p.y += sin(uTime * 0.6 + ph) * 0.14 * ak;
+		p.x += sin(uTime * 0.27 + ph * 1.7) * 0.08 * ak;
+		p.z += cos(uTime * 0.21 + ph * 2.3) * 0.04 * ak;
+	} else if (anim < -0.5 && ak > 0.0) {
 		// bayrak bezi: direkten uca büyüyen dalga (anim = -(1 + direkten uzaklık oranı))
 		float u = -anim - 1.0;
 		float ph = uTime * 5.2 - u * 5.5 + tag * 1.3;
+		u *= ak;
 		p.z += sin(ph) * 0.055 * u;
 		p.y += sin(ph * 0.5 + 1.0) * 0.012 * u;
 		p.x -= (1.0 - cos(sin(ph) * 0.6)) * 0.03 * u;
@@ -1448,7 +1453,10 @@ export class Landmarks {
 		this.G = G;
 		this.uHide = { value: new THREE.Vector4(0, 0, 0, 0) };
 		this.uLod = [0, 1, 2, 3].map(() => new THREE.Vector4(0, 0, 0, 0));
-		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU }, uHide: this.uHide, uLod: { value: this.uLod } };
+		this.uFarT = { value: new THREE.Vector2(0, 0) };
+		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU }, uHide: this.uHide, uLod: { value: this.uLod }, uFarT: this.uFarT };
+		this.uniforms = uniforms;
+		this.taps = taps;
 		// ekran dışı kırpma: yapılar ızgara parçalarına bölünür (parça başına sınır küresi); kameranın (ve gölge
 		// kamerasının) görmediği parça çizilmez. Eskiden 42 yapı (~68 bin üçgen) her karede, ekran dışındakiler de çizilirdi.
 		const mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms, side: THREE.DoubleSide });
@@ -1461,15 +1469,28 @@ export class Landmarks {
 			const f = this.uFade.value;
 			if (f.y < 0.5 && this.G.uTime.value - f.x > f.z * 1.1) this.mesh.visible = this.caster.visible = false;
 		};
+		this._hide = hide;
 		this.parts = splitSites(geo, ranges, kit.count, 16);
+		this.lean = [];
+		this.leanCasters = [];
 		for (const g of this.parts) {
 			const m = new THREE.Mesh(g, mat);
 			m.matrixAutoUpdate = false;
-			m.onBeforeRender = hide;
+			// uzak sürüme geçiş bitince sade model çizilmez ve bellekten atılır
+			m.onBeforeRender = () => {
+				hide();
+				const f = this.uFarT.value;
+				if (f.y > 0 && this.G.uTime.value - f.x > f.y + 0.1) {
+					m.visible = false;
+					g.dispose();
+				}
+			};
 			this.mesh.add(m);
+			this.lean.push(m);
 			const c = new THREE.Mesh(g, dmat);
 			c.matrixAutoUpdate = false;
 			this.caster.add(c);
+			this.leanCasters.push(c);
 		}
 		geo.dispose();
 		// kahraman maketler (Kuşbakışı yakın çekimi): tek mesh, geometri ilk kullanımda kurulur
@@ -1479,6 +1500,114 @@ export class Landmarks {
 		this.caster.add(this.heroes.caster);
 		// haritada ekran boyuna göre ayrıntı: yaklaşınca kahraman maket titreşimli geçişle gelir (herolod.js)
 		this.lod = new HeroLod(this, G, tier, board, HEROES);
+		// v1.5 tek tasarım: sade model ayrı bir tasarımdı (kaide, renk, biçim farklı; yakına gelince ayrıntılıya geçiş
+		// göze batıyordu). Orta ve yüksek kademede haritada ayrıntılı modelin kendisinin az yoğunluklu hali durur (uzak
+		// sürüm: aynı biçim, kaide, renk; piksel altı parçalar yok); yaklaşınca tam ayrıntıya geçiş görünmez. İşçide
+		// açılışta kurulur, hazır olunca sade modelden titreşimli geçişle yerine geçer. Düşük kademede (zayıf telefon)
+		// sade model kalır ve haritada ayrıntılıya geçiş yapılmaz (iki farklı tasarım arasında geçiş hiç görünmez).
+		this.far = null;
+		if (tier.id >= 1) this.farReady = this._buildFar();
+		else this.lod.enabled = false;
+	}
+
+	/** Uzak sürümün ayarı: yoğunluk, küçük parça eşiği ve köşe kümeleme hücresi (yapı ölçeği cinsinden). */
+	static FAR = { seg: 0.35, minPart: 0.12, cluster: 0.035 };
+
+	async _buildFar() {
+		const list = [];
+		const t0 = performance.now();
+		for (const s of this.sites) {
+			if (!this.heroes.has(s.kind)) return false;
+			const r = await this.heroes.buildFar(s, Landmarks.FAR);
+			if (!r) return false; // işçi yok: sade model kalır
+			list.push([s, r]);
+		}
+		this._mountFar(list);
+		this.farStats = { ms: Math.round(performance.now() - t0), tris: this.far.tris };
+		return true;
+	}
+
+	/** Uzak sürümleri ızgara parçalarına birleştir (ekran dışı kırpma, az çizim çağrısı) ve sade modelden geçişi başlat. */
+	_mountFar(list) {
+		const u = this.uniforms;
+		const fu = { ...u, uHS: { value: 1 }, uAO: { value: -100 }, uLodMode: { value: 1 } };
+		const mat = new THREE.ShaderMaterial({ defines: { FAR: 1 }, vertexShader: HERO_VS.replace('/*FAR_FADE*/', FADE), fragmentShader: HERO_FS.replace('__TAPS__', this.taps), uniforms: fu, side: THREE.DoubleSide });
+		const dmat = new THREE.ShaderMaterial({ defines: { FAR: 1 }, vertexShader: HERO_DEPTH_VS.replace('/*FAR_FADE*/', FADE), fragmentShader: HERO_DEPTH_FS, uniforms: fu, side: THREE.DoubleSide });
+		const CH = 16;
+		const groups = new Map();
+		for (const it of list) {
+			const k = Math.floor(it[0].x / CH) + ',' + Math.floor(it[0].z / CH);
+			if (!groups.has(k)) groups.set(k, []);
+			groups.get(k).push(it);
+		}
+		let tris = 0;
+		this.far = { meshes: [], casters: [], tris: 0 };
+		for (const items of groups.values()) {
+			// (avlunun dış halkaları da: yakına gelen kahraman da onları çizer, geçişte kaide aynı)
+			let n = 0;
+			for (const [, r] of items) n += r.pos.length / 3;
+			const pos = new Float32Array(n * 3);
+			const nor = new Int8Array(n * 4);
+			const col = new Uint8Array(n * 4);
+			const info = new Uint8Array(n * 4);
+			const pat = new Float32Array(n * 2);
+			const site = new Float32Array(n * 4);
+			let o = 0;
+			for (const [s, r] of items) {
+				const v = r.pos.length / 3;
+				for (let t = 0; t < v; t += 3) {
+					for (let j = 0; j < 3; j++) {
+						const a = t + j;
+						const b = o + j;
+						pos[b * 3] = r.pos[a * 3];
+						pos[b * 3 + 1] = r.pos[a * 3 + 1];
+						pos[b * 3 + 2] = r.pos[a * 3 + 2];
+						for (let q = 0; q < 4; q++) {
+							nor[b * 4 + q] = r.nor[a * 4 + q];
+							col[b * 4 + q] = r.col[a * 4 + q];
+							info[b * 4 + q] = r.info[a * 4 + q];
+						}
+						pat[b * 2] = r.pat[a * 2];
+						pat[b * 2 + 1] = r.pat[a * 2 + 1];
+						site[b * 4] = s.x;
+						site[b * 4 + 1] = s.y;
+						site[b * 4 + 2] = s.z;
+						site[b * 4 + 3] = s.s;
+					}
+					o += 3;
+				}
+			}
+			const g = new THREE.BufferGeometry();
+			g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+			g.setAttribute('normal', new THREE.BufferAttribute(nor, 4, true));
+			g.setAttribute('col', new THREE.BufferAttribute(col, 4, true));
+			g.setAttribute('info', new THREE.BufferAttribute(info, 4));
+			g.setAttribute('pat', new THREE.BufferAttribute(pat, 2));
+			g.setAttribute('site', new THREE.BufferAttribute(site, 4));
+			g.computeBoundingSphere();
+			g.boundingSphere.radius += 1.5; // il kalkışı, balon süzülmesi
+			const m = new THREE.Mesh(g, mat);
+			m.matrixAutoUpdate = false;
+			m.onBeforeRender = this._hide;
+			this.mesh.add(m);
+			const c = new THREE.Mesh(g, dmat);
+			c.matrixAutoUpdate = false;
+			this.caster.add(c);
+			this.far.meshes.push(m);
+			this.far.casters.push(c);
+			tris += n / 3;
+		}
+		this.far.tris = tris;
+		// geçiş: gölgeyi hemen uzak sürüm verir; görüntü 0,8 sn'de titreşimle (piksel piksel) yer değiştirir
+		for (const c of this.leanCasters) c.visible = false;
+		this.uFarT.value.set(this.G.uTime.value, 0.8);
+		this.farAt = this.G.uTime.value;
+	}
+
+	/** Geçiş sürüyor mu (kare temposu: hareket sayılır). */
+	get moving() {
+		const f = this.uFarT.value;
+		return f.y > 0 && this.G.uTime.value - f.x < f.y + 0.15;
 	}
 
 	/**

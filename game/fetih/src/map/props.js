@@ -49,7 +49,8 @@ void main() {
 	float ck = clearK(iP.xy, 0.0);
 	vec3 p = position * vec3(iP.z, iP.z * iQ.y, iP.z) * (1.0 - 0.8 * ck) * (1.0 - castleK(iP.xy, iQ.x));
 	// hafif rüzgâr salınımı (tepede)
-	p.x += sin(uTime * 1.3 + iP.x * 0.7 + iP.y) * 0.012 * position.y;
+	// (uzakta durur: o boyda seçilmez, yalnız kıpırtı yapar)
+	p.x += sin(uTime * 1.3 + iP.x * 0.7 + iP.y) * 0.012 * position.y * (1.0 - smoothstep(42.0, 62.0, distance(cameraPosition.xz, iP.xy)));
 	p = vec3(p.x * c + p.z * s, p.y, -p.x * s + p.z * c);
 	vec3 w = p + vec3(iP.x, iQ.x + lift - ck * 0.03, iP.y);
 	vW = w;

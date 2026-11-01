@@ -235,6 +235,7 @@ export const DOGA = {
 		const nz = 9;
 		const cw = 0.72 / nx;
 		const cd = 0.44 / nz;
+		k.keep = true; // uzak sürümde de kilim deseni kalır (yapının kimliği)
 		for (let i = 0; i < nx; i++)
 			for (let j = 0; j < nz; j++) {
 				const v = (Math.abs(i - 7) + Math.abs(j - 4) * 1.2) | 0;
@@ -242,6 +243,7 @@ export const DOGA = {
 				const col = edge ? KIL[3] : v % 3 === 0 ? KIL[1] : v % 3 === 1 ? KIL[2] : KIL[0];
 				k.mc(H.PAVE, col).flat().box(cw * 0.97, 0.004, cd * 0.97, -0.36 + cw * (i + 0.5), 0, -0.1 + cd * (j + 0.5)).soft();
 			}
+		k.keep = false;
 		yield;
 		// meydanı çevreleyen revaklar ve köşe kuleleri
 		for (const s of [-1, 1]) {

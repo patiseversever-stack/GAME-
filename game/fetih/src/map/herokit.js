@@ -197,6 +197,24 @@ export class HKit extends Kit {
 			pa[p0 + i * 3 + 1] = wy;
 			pa[p0 + i * 3 + 2] = wz;
 		}
+		// uzak sürüm (aynı tasarım, az yoğunluk): uzaktan piksel altı kalan küçük parça (pencere, korkuluk, insan) yazılmaz
+		// (pencere, alem, bayrak, alev ve keep ile işaretli desen: küçük ama yapının kimliği, kalır)
+		const keep = this.keep || this._mat === H.WIN || this._mat === H.GOLD || this._mat === H.FLAG || this._mat === H.FLAME;
+		if (keep && this.minPart > 0) (this._keeps ||= []).push(p0 / 3, p0 / 3 + tri);
+		if (this.minPart > 0 && !dr && !keep) {
+			let x0 = Infinity, y0 = Infinity, z0 = Infinity, x1 = -Infinity, y1 = -Infinity, z1 = -Infinity;
+			for (let i = 0; i < tri; i++) {
+				const o = p0 + i * 3;
+				const x = pa[o], y = pa[o + 1], z = pa[o + 2];
+				if (x < x0) x0 = x;
+				if (x > x1) x1 = x;
+				if (y < y0) y0 = y;
+				if (y > y1) y1 = y;
+				if (z < z0) z0 = z;
+				if (z > z1) z1 = z;
+			}
+			if (Math.max(x1 - x0, y1 - y0, z1 - z0) < this.minPart) return;
+		}
 		// normaller: yumuşakta geometrinin normali (normal matrisiyle), düzde yüz normali
 		const na = N.a;
 		const n0 = N.n;
@@ -303,6 +321,84 @@ export class HKit extends Kit {
 	 * Derlenmiş, sıkıştırılmış geometri. Ortam örtmesi: aoOn 'sync' ise hemen pişirilir; true ise iş
 	 * g.userData.ao üreteci olarak döner (Heroes kare kare dilimler, bitince yumuşakça belirir).
 	 */
+	/**
+	 * Uzak sürüm sadeleştirmesi (köşe kümeleme): c boyunda ızgara hücresine düşen köşeler hücrenin ortalamasında birleşir;
+	 * iki köşesi aynı hücreye düşen (piksel altı) üçgen ve aynı üç hücreyi paylaşan kopya üçgen atılır. Renk, malzeme,
+	 * normal üçgenin kendisinde kalır (aynı tasarım, aynı boya). Örtme pişirmeden önce.
+	 */
+	cluster(c) {
+		const n = this.count;
+		if (!(c > 0) || n < 3) return;
+		const P = this.P.a, N = this.N.a, Cl = this.Cl.a, I = this.I.a, U = this.U.a;
+		// kimlik parçaları (pencere, alem, bayrak, desen; _write'ta işaretlenir) üç kat ince ızgarada: biçimi kalır
+		const fixed = new Uint8Array(n);
+		const K = this._keeps || [];
+		for (let i = 0; i < K.length; i += 2) fixed.fill(1, K[i], K[i + 1]);
+		const cell = new Map();
+		const cid = new Int32Array(n);
+		let sx = new Float64Array(1024), sy = new Float64Array(1024), sz = new Float64Array(1024), sc = new Float64Array(1024);
+		let m = 0;
+		const inv = 1 / Math.max(c, 0.008);
+		for (let i = 0; i < n; i++) {
+			const x = P[i * 3], y = P[i * 3 + 1], z = P[i * 3 + 2];
+			// malzeme ayrı kümelenir: havuz suyu travertene, kurşun kubbe taşa karışıp kaybolmaz
+			const f = fixed[i] ? inv * 3 : inv;
+			const key = (((Math.floor(x * f) + 8192) * 16384 + (Math.floor(y * f) + 8192)) * 16384 + (Math.floor(z * f) + 8192)) * 64 + (I[i * 4] & 31) + fixed[i] * 32;
+			let k = cell.get(key);
+			if (k === undefined) {
+				k = m++;
+				cell.set(key, k);
+				if (m > sx.length) {
+					const grow = (a) => {
+						const b = new Float64Array(a.length * 2);
+						b.set(a);
+						return b;
+					};
+					sx = grow(sx);
+					sy = grow(sy);
+					sz = grow(sz);
+					sc = grow(sc);
+				}
+			}
+			cid[i] = k;
+			sx[k] += x;
+			sy[k] += y;
+			sz[k] += z;
+			sc[k]++;
+		}
+		const seen = new Set();
+		let o = 0;
+		for (let t = 0; t < n; t += 3) {
+			const a = cid[t], b = cid[t + 1], d = cid[t + 2];
+			if (a === b || b === d || a === d) continue;
+			// kopya: aynı üç hücre (çift yüzlü malzemede arka yüz de aynı üçgen)
+			const lo = Math.min(a, b, d), hi = Math.max(a, b, d), mid = a + b + d - lo - hi;
+			const key = lo + ',' + mid + ',' + hi;
+			if (seen.has(key)) continue;
+			seen.add(key);
+			for (let j = 0; j < 3; j++) {
+				const v = t + j, w = o + j, k = cid[v];
+				P[w * 3] = sx[k] / sc[k];
+				// yere serili kimlik deseni (kilim) birleşen zeminin altında kalmasın: biraz kalkar
+				P[w * 3 + 1] = sy[k] / sc[k] + (fixed[v] && N[v * 3 + 1] > 0.9 ? c * 0.12 : 0);
+				P[w * 3 + 2] = sz[k] / sc[k];
+				for (let q = 0; q < 3; q++) {
+					N[w * 3 + q] = N[v * 3 + q];
+					Cl[w * 3 + q] = Cl[v * 3 + q];
+				}
+				for (let q = 0; q < 4; q++) I[w * 4 + q] = I[v * 4 + q];
+				U[w * 2] = U[v * 2];
+				U[w * 2 + 1] = U[v * 2 + 1];
+			}
+			o += 3;
+		}
+		this.P.n = o * 3;
+		this.N.n = o * 3;
+		this.Cl.n = o * 3;
+		this.I.n = o * 4;
+		this.U.n = o * 2;
+	}
+
 	buildHero(aoOn = true) {
 		const n = this.count;
 		const pos = this.P.a.slice(0, n * 3);

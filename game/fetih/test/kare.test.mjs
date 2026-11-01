@@ -96,3 +96,96 @@ test('60 Hz, GPU yetişemiyor: çözünürlük kısılır ama yalnız durgun and
 	assert.ok(first.idle || first.t >= 3000, `ölçek hareket sürerken hemen uygulandı (t=${first.t})`);
 	assert.ok(g.scale < 1, 'ölçek düşmedi');
 });
+
+// --- v1.5: cihaz neyse onun en iyisi -------------------------------------------------------------------------------
+import { launchTier, HI } from '../src/core/quality.js';
+
+test('güçlü cihaz (60 Hz, 3 ms): ölçek 1’in üstüne (ekranın çözünürlüğüne) çıkar, sonraki açılış bir üst kademe', () => {
+	const st = store();
+	const g = new Governor({ tier: 0, gpu: 'güçlü', store: st, mobile: true });
+	g.hi = HI; // pixelRatio: ekranın kendi çözünürlüğü bütçenin 1,35 katı
+	sim(g, { hz: 60, seconds: 120, work: () => 3, idleAt: (t) => t % 10000 > 9500 }); // arada kısa durgunluklar
+	assert.ok(g.scale >= HI - 0.01, `ölçek ${g.scale} (beklenen ${HI})`);
+	assert.equal(st.get('perf').adj, 1, 'kademe yükseltmesi kaydedilmedi');
+	assert.equal(launchTier(0, st, 'güçlü'), 1);
+	assert.equal(launchTier(0, st, 'başka kart'), 0, 'başka ekran kartına uygulanmamalı');
+});
+
+test('masaüstü, GPU süresi ölçülebiliyorsa (4 ms / 16,7): süper örnekleme gerekmeden kademe yükselir; mobilde GPU saatine güvenilmez', () => {
+	const m0 = store();
+	const gm = new Governor({ tier: 1, gpu: 'mobil', store: m0, mobile: true });
+	gm.gpuMs = 4;
+	gm.cpuMs = 2;
+	sim(gm, { hz: 60, seconds: 40, work: () => 4 });
+	assert.equal(launchTier(1, m0, 'mobil'), 1, 'mobilde GPU saatiyle yükseltildi');
+	const st = store();
+	const g = new Governor({ tier: 1, gpu: 'ölçülü', store: st, mobile: false });
+	g.gpuMs = 4;
+	g.cpuMs = 2;
+	sim(g, { hz: 60, seconds: 40, work: () => 4 });
+	assert.equal(launchTier(1, st, 'ölçülü'), 2);
+});
+
+test('120 Hz ekranda 120’yi tutamayan cihaz yükselmez, 60’ta süper örnekleme yapmaz (önce akıcılık)', () => {
+	const st = store();
+	const g = new Governor({ tier: 1, gpu: 'orta', store: st, mobile: true });
+	g.hi = HI;
+	sim(g, { hz: 120, seconds: 90, work: (t) => (t < 1000 ? 2 : 11), idleAt: (t) => t < 1000 || t % 10000 > 9500 });
+	assert.ok(g.cap === 60 || g._probe?.cap === 60, `kare sınırı ${g.cap}`); // (o an bir 120 denemesi sürüyor olabilir)
+	assert.ok(g.scale <= 1.001, `ölçek ${g.scale}: 120 tutmayan cihazda süper örnekleme`);
+	assert.equal(launchTier(1, st, 'orta'), 1, 'tutamayan cihaz yükseltildi');
+});
+
+test('zayıf cihaz yüksek kademede (her kare 40 ms): en alta iner, sonraki açılış bir alt kademe ve o kademe bir daha denenmez', () => {
+	const st = store();
+	const g = new Governor({ tier: 2, gpu: 'zayıf', store: st, mobile: true });
+	sim(g, { hz: 60, seconds: 60, work: () => 40, idleAt: (t) => t % 6000 > 5600 });
+	assert.ok(g.scale <= g.T.minScale + 0.01, `ölçek ${g.scale}`);
+	assert.equal(g.cap, 30);
+	assert.equal(launchTier(2, st, 'zayıf'), 1);
+	// yeni oturum q1'de: rahat olsa bile q2'ye geri çıkmaz
+	const g2 = new Governor({ tier: 1, base: 2, gpu: 'zayıf', store: st, mobile: true });
+	g2.hi = HI;
+	sim(g2, { hz: 60, seconds: 40, work: () => 3 });
+	assert.equal(launchTier(2, st, 'zayıf'), 1, 'tutmadığı görülen kademeye geri çıktı');
+});
+
+test('işlemci darboğazı (JS 14 ms): çözünürlük boşuna kısılmaz, kare sınırı iner', () => {
+	const g = new Governor({ tier: 1, gpu: 'cpu', store: store(), mobile: true });
+	g.cpuMs = 14;
+	sim(g, { hz: 60, seconds: 20, work: () => 20, idleAt: (t) => t % 5000 > 4700 });
+	assert.ok(g.scale >= 0.99, `ölçek kısıldı: ${g.scale}`);
+	assert.equal(g.cap, 30);
+});
+
+test('tutmayan yükseltme denemesi: geri alınır ve her seferinde iki kat uzun beklenir (gidip gelme yok)', () => {
+	const g = new Governor({ tier: 1, gpu: 'sınır', store: store(), mobile: true });
+	// 120 Hz ekran, 60 kareyi rahat (7 ms) ama 120'yi tutmuyor: 9 ms
+	let probes = 0;
+	let last = g.cap;
+	sim(g, {
+		hz: 120,
+		seconds: 180,
+		work: (t) => (t < 1000 ? 2 : 9),
+		idleAt: (t) => t < 1000,
+		onFrame: () => {
+			if (g.cap > last) probes++;
+			last = g.cap;
+		},
+	});
+	assert.equal(g.cap, 60);
+	assert.ok(probes <= 5, `3 dakikada ${probes} kez 120 denendi`);
+});
+
+test('kayıt v2 (eski sürüm) okunur, kademe başına ayrı tutulur', () => {
+	const st = store();
+	st.set('perf', { v: 2, gpu: 'eski', scale: 0.8, cap: 60, ceil: 1 });
+	const g = new Governor({ tier: 1, gpu: 'eski', store: st, mobile: true });
+	assert.equal(g.scale, 0.8);
+	assert.equal(g.cap, 60);
+	g.save();
+	const m = st.get('perf');
+	assert.equal(m.v, 3);
+	assert.deepEqual(m.q[1], { scale: 0.8, cap: 60 });
+	assert.equal(launchTier(1, st, 'eski'), 1);
+});

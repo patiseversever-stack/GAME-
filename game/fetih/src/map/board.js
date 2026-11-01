@@ -897,9 +897,10 @@ export class Board {
 		this.chunks = chunkMeshes(built, this.provinces, this.mat, CHUNK);
 		for (const m of this.chunks) this.group.add(m);
 		this.mesh = this.chunks[0];
-		// gölge: kaba kabartma (yalnızca yüzey), biraz alçaltılmış (kendi gölgesi kirlenmesin)
-		// q=0: harita gölge yapmaz (yalnızca ağaç, yapı ve kaleler), gölge geçişi hafif kalsın
-		const sbuilt = tier.id === 0 ? { geometry: emptyGeo(), triangles: 0 } : buildBoardGeometry(this.provinces, this.relief, 1.3, { skirts: false });
+		// v1.5: harita kendi üstüne gölge düşürmez (hiçbir kademede). Kaba kabartma kopyasının gölgesi dağ arkalarında
+		// simsiyah, testere dişi kenarlı lekeler yapıyordu (Erciyes, Kaçkar, Toros); dağın biçimini yamaç ışığı zaten
+		// veriyor. Ağaç, yapı, kale ve ordu gölgeleri sürer. Gölge geçişi her kademede ~18 bin üçgen hafifler.
+		const sbuilt = { geometry: emptyGeo(), triangles: 0 };
 		this.shadowGeoStats = { triangles: sbuilt.triangles };
 		const smat = new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms: { uState: uniforms.uState, uSelOn: this.uSelOn, uDrop: { value: 0.1 } } });
 		// gölge geçişi de parçalı: gölge kamerasının kapsamı dışındaki parçalar çizilmez
