@@ -10118,7 +10118,7 @@ ${d1} {
 		<div data-v="ana">
 			<h3>DURAKLATILDI</h3>
 			${i?`<span class="st">${ca(i)}</span>`:""}
-			<small class="bld">s\xFCr\xFCm ${ca("1db8e76")}</small>
+			<small class="bld">s\xFCr\xFCm ${ca("791635f")}</small>
 			<small class="bld perf">${ca(((r=(o=(n=t.app)==null?void 0:n.gov)==null?void 0:o.summary)==null?void 0:r.call(o))||"")}</small>
 			<button class="fl-btn big green" data-p="devam">${Ba("play",{w:2.8})}DEVAM ET</button>
 			<div class="row">

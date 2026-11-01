@@ -107,8 +107,8 @@ const CSS = `
 .gal{position:fixed;top:0;z-index:70;box-sizing:border-box;display:flex;flex-direction:column;gap:7px;
   padding:calc(10px + env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) 9px max(12px,env(safe-area-inset-left,0px));
   background:linear-gradient(180deg,#0e1a42,#0a1230);border-bottom:1px solid rgba(255,214,120,.25);color:#eef2fa;font-family:'Fredoka',system-ui,sans-serif;font-weight:600}
-.gal{transform:translateY(-104%);transition:transform .24s cubic-bezier(.2,.8,.2,1);box-shadow:0 10px 30px rgba(0,0,0,.45)}
-.gal.show{transform:none}
+.gal{transform:translateY(-104%);transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s .24s;visibility:hidden;box-shadow:0 10px 30px rgba(0,0,0,.45)}
+.gal.show{transform:none;visibility:visible;transition:transform .24s cubic-bezier(.2,.8,.2,1),visibility 0s}
 .gal-fab{position:fixed;z-index:69;top:calc(28px + min(100vw, 560px) * .23 + env(safe-area-inset-top,0px));width:38px;height:38px;border-radius:12px;border:1.5px solid rgba(255,214,120,.5);
   background:rgba(14,26,66,.82);color:#ffd25a;font:800 18px/1 system-ui,sans-serif;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.4);touch-action:manipulation}
 .gal-fab:focus-visible{outline:2px solid #ffd25a;outline-offset:2px}
@@ -189,18 +189,33 @@ export async function galeri() {
 	ui.title(false);
 
 	// yerleşim: şerit oyun sütununun üstünde, oyun alanı altında kalan yer (telefon ekranı gibi)
+	// v1.5: defter telefon ekranının birebir boyutunda (412×892, telefondaki oyunla aynı en/boy ve aynı yerleşim).
+	// Panel daha küçükse aynı oranda küçülür; dönüşüm (scale) yok, oyun o boyutta çizilir (dokunuş ve etiketler kaymaz).
+	const PW = 412;
+	const PH = 892;
 	const fit = () => {
+		const W = innerWidth;
 		const H = innerHeight;
+		const phone = W > PW + 24 || H > PH + 24; // gerçek telefonda (ekran zaten telefon) çerçeve yok, tam ekran
+		const w = phone ? Math.min(PW, W - 16, Math.floor(((H - 16) * PW) / PH)) : W;
+		const gh = phone ? Math.round((w * PH) / PW) : H;
+		const x = Math.round((W - w) / 2);
+		const y = Math.round((H - gh) / 2);
+		Object.assign(root.style, { left: x + 'px', top: y + 'px', width: w + 'px', height: gh + 'px', right: 'auto', bottom: 'auto' });
+		root.style.setProperty('--vw', w / 100 + 'px');
+		root.style.setProperty('--vh', gh / 100 + 'px');
+		root.style.borderRadius = phone ? '26px' : '';
+		root.style.boxShadow = phone ? '0 0 0 9px #05070d,0 0 0 10.5px #2c3656,0 26px 60px rgba(0,0,0,.65)' : '';
+		document.body.style.background = '#0b0f1c';
 		const h = bar.offsetHeight;
 		for (const e of [bar, pn]) {
-			e.style.left = root.style.left || '0px';
-			e.style.width = root.style.width || '100%';
+			e.style.left = x + 'px';
+			e.style.width = w + 'px';
 		}
-		pn.style.top = h + 'px';
-		fab.style.left = `calc(${root.style.left || '0px'} + max(8px, env(safe-area-inset-left, 0px)))`;
-		// oyun tam ekran: şerit yalnız açıkken üstte durur (oyunu itmez)
-		root.style.top = '0px';
-		root.style.setProperty('--vh', H / 100 + 'px');
+		bar.style.top = y + 'px';
+		pn.style.top = y + h + 'px';
+		fab.style.left = `${x + 8}px`;
+		fab.style.top = `${Math.round(y + 28 + w * 0.23)}px`; // oyuncu afişlerinin altında (telefondaki yeri)
 		app.resize();
 	};
 	addEventListener('resize', fit);
