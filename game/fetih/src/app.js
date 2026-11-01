@@ -14,6 +14,7 @@ import { ShadowSystem } from './gfx/shadow.js';
 import { TiltShift } from './gfx/post.js';
 import { Board } from './map/board.js';
 import { Props } from './map/props.js';
+import { Hayat } from './map/hayat.js'; // TASLAK (doku-taslak): yakın çekimde canlı minyatür hayatı
 import { Castle } from './map/castle.js';
 import { MapCamera } from './game/camera.js';
 import { COMMON, LIGHT, FINISH } from './gfx/shaderlib.js';
@@ -120,6 +121,11 @@ export class App {
 		this.props = new Props(G, R.tier, this.board);
 		this.scene.add(this.props.group);
 		for (const c of this.props.casters) this.shadow.add(c);
+		// TASLAK (doku-taslak): köyler, traktörler, sürüler, değirmenler… (yakın çekimde tek çizim, uzakta kapalı)
+		this.hayat = new Hayat(G, R.tier, this.board, this.props.landmarks);
+		this.board.uniforms.uVil.value = this.hayat.vilTex; // köy ızgarası: harita aynı köylerin harman yerini çizer
+		this.scene.add(this.hayat.mesh);
+		this.shadow.add(this.hayat.caster);
 
 		const sky = new THREE.Mesh(
 			new THREE.SphereGeometry(900, 32, 16),
@@ -172,6 +178,7 @@ export class App {
 		// derleme: bütün malzemeler sahnede (kaleler dahil) görünür haldeyken; nadir soru sahneleri de (Tufan suyu, yağmur,
 		// şimşek; Kayıp İl perdesi): ilk Tufan sorusunda gölgelendirici bağlama donması olmasın (quiz/warm.js)
 		for (const k of this.castles) k.group.visible = true;
+		this.hayat.mesh.visible = this.hayat.caster.visible = true; // açılışta derlensin (oyun sırasında derleme yok)
 		const qw = quizWarm(this);
 		try {
 			await this.renderer.compileAsync(this.scene, this.camera);
@@ -182,6 +189,7 @@ export class App {
 		for (const k of this.castles) k.group.visible = false;
 		this.cam.update(1 / 60);
 		this.render();
+		this.hayat.mesh.visible = this.hayat.caster.visible = false;
 	}
 
 	_bindInput() {
@@ -357,6 +365,7 @@ export class App {
 		this.cam.update(dt);
 		this.props.landmarks?.lod?.update(dt, this.camera, this.cam); // ekran boyuna göre kahraman maketler
 		this.weather.update(dt, this.cam);
+		this.hayat?.update(this.cam);
 		this._moved = this._motion(dt);
 		if (draw) {
 			this.ui.update();
@@ -376,11 +385,12 @@ export class App {
 		for (const k of this.castles) if (k.group.visible) sig += k.group.position.x * 7.1 + k.group.position.y * 3.3 + k.group.position.z * 1.7 + k.fall.x + k.fall.y + k.fall.z + 1;
 		const uh = this.props.landmarks?.uHide?.value;
 		if (uh) sig += uh.x * 0.37 + uh.y * 0.71 + uh.z * 13 + uh.w * 5;
-		const dyn = moved || this.fx.moving || this.board.moving || this.props.landmarks?.lod?.moving || sig !== this._shSig || this.props.landmarks?.uFade?.value?.x > this.time - 2 || !this._shOk;
+		const dyn = moved || this.fx.moving || this.board.moving || this.props.landmarks?.lod?.moving || sig !== this._shSig || this.props.landmarks?.uFade?.value?.x > this.time - 2 || !this._shOk || this.hayat?.dirty;
 		this._shSig = sig;
 		this._shN = (this._shN || 0) + 1;
 		if (dyn || this._shN >= 6) {
 			this.shadow.render(r);
+			if (this.hayat) this.hayat.dirty = false;
 			this._shN = 0;
 			this._shOk = true;
 			this.shadowPasses = (this.shadowPasses || 0) + 1;
