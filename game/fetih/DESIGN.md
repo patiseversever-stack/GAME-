@@ -291,13 +291,15 @@ sıralama ağırlığıyla (1'e 1 2:1, 3 kişi 2:1:0, 4 kişi 2:1:1:0) en büyü
 katlanıyor, azaldıkça tura 3 il düşüyordu: Türkiye'de 11–12 tur, 12 tur sınırında 3 ve 4 kişide 1–6 il boşta kalıyordu.
 `sweepFree` güvenlik ağı: yayılma bitince boş il kalmaz (benzetim denetler).
 
-**Adam asmaca · Harf Çemberi (v1.4, `quiz/t_hang.js`).** Klavye yok: kelimenin harfleri (tekrarlar ayrı) fildişi sikkeler
-olarak altın kenarlı mühür çemberinde karışık durur; parmakla sikkeden sikkeye sürüklenir (ya da sırayla dokunulur), altın ip
-bağlar, üstteki kutular canlı dolar, geri sürükleme son harfi bırakır. Bütün harfler bağlanınca denenir: doğru → kutular
-yeşile döner; yanlış → bir burç yıkılır (3 hak), doğru yerdeki harfler altınla kilitlenir ve sikkeleri çemberden çekilir
-(her deneme kelimeyi biraz açar). Yarım sürükleme cezasız geri döner; ortadaki mühür karıştırır. Cevap `{ ok, wrong }`
-(eski adam asmacayla aynı). Jokerler ve hata ayıklama gizli `.fl-key` düğmeleriyle konuşur (Yarı Yarıya harf açar, Seyirci
-sikkeyi ve kutusunu parlatır). Defterdeki Gülle yedeği kaldırıldı.
+**Adam asmaca · Şerit (v1.4, `quiz/t_hang.js`; kullanıcı üç taslaktan seçti: Arena çarkı, Petek, Şerit).** Klavye yok:
+kelimenin harfleri (tekrarlar ayrı) eğik koyu bir şeritte bir ya da iki sıra iri, renkli eğik kart (oyunun arena dili:
+eğik kesim, beyaz çerçeve, kalın alt gölge, Barlow Condensed italik; her harf kendi renginde). Kartlar 48–60 px yüksek,
+76 px'e kadar geniş: parmakla rahat. Dokunarak ya da sürükleyerek seçilir; seçilen kart beyaza döner, altın çerçeve
+alır, harfi kutusuna uçar, aralarında altın çizgi. Bütün harfler seçilince denenir: doğru → kutular sırayla yeşile döner;
+yanlış → şerit sallanır, bir hak çubuğu söner (3 hak), doğru yerdeki harfler sarıyla kilitlenir ve kartları çekilir.
+Sağ üstte karıştır düğmesi (VS rozeti gibi). Kart kısa: harita alanı klavyeli eski karttan büyük (412×892'de 322 → 391 px).
+Cevap `{ ok, wrong }` (eski adam asmacayla aynı). Jokerler ve hata ayıklama gizli `.fl-key` düğmeleriyle konuşur.
+Öbür taslaklar ve Gülle yedeği silindi.
 
 **Defter = oyun.** Oyun (`dist/FetihLigi.html`) ve defter (`dist/SoruGalerisi.html`) aynı `node build.mjs` çağrısında aynı
 kaynaktan derlenir; ikisi de aynı sürüm damgasını taşır (kaynağın içerik özeti: duraklatma ekranında ve defter başlığında

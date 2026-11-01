@@ -1,23 +1,24 @@
-// ADAM ASMACA · HARF TABLASI (v1.4): klavye yok. Tasarım dili: iOS karanlık (cam yüzeyler, beyaz düğmeler, sistem
-// renkleri: yeşil #30d158, kırmızı #ff453a, sarı #ffd60a; yaylanan geçişler).
+// ADAM ASMACA · ŞERİT (v1.4, kullanıcının seçtiği taslak): klavye yok.
 //
-// Kelimenin harfleri (her harf bir tuş, tekrar edenler ayrı tuş) masada yatan koyu cam bir tablanın (perspektifli disk)
-// yörüngesinde karışık durur. Tabla yana geniş, boyca kısa: tuşlar büyük (44–60 px) ve aralıkları geniş, kart uzamaz.
-// Parmağı tuştan tuşa sürükle (ya da sırayla dokun): tuş sarı-turuncu dolar, harfi kutusuna uçar, aralarında parlak
-// çizgi gerilir. Geri sürüklemek son harfi bırakır. Bütün harfler bağlanınca kelime denenir:
-//   doğru  → tuşlar göbeğe çekilir, göbek yeşil parlar ve kıvılcım saçar, kutular sırayla yeşile döner;
-//   yanlış → çizgi kızarır, tabla iOS şifre ekranı gibi sallanır, bir hak noktası söner (3 hak). DOĞRU YERDEKİ harfler
-//            kutularına sarıyla kilitlenir ve tuşları çekilir, kalanlar yeniden dizilir: her deneme kelimeyi biraz açar.
-// Bütün harfler bağlanmadan parmak kalkarsa ceza yok: harfler geri döner. Göbek mühür kadranı karıştırır (ve yarım
-// kalan dizilişi siler). Masaüstünde harf tuşları da sikke seçer, ⌫ son harfi bırakır.
+// Kelimenin harfleri (her harf bir kart, tekrar edenler ayrı kart) eğik koyu bir şeritte bir ya da iki sıra iri, renkli
+// eğik kart olarak karışık durur (oyunun arena dili: şıklar, jokerler, VS rozeti gibi eğik kesim, beyaz çerçeve, kalın
+// alt gölge, Barlow Condensed italik). Kartlar büyük (48–60 px yüksek, 76 px'e kadar geniş): parmakla rahat seçilir.
+// Kartlara sırayla dokun ya da parmağı karttan karta sürükle: kart beyaza döner, altın çerçeve alır, harfi kutusuna uçar,
+// aralarında altın çizgi gerilir. Geri sürüklemek ya da son karta yeniden dokunmak son harfi bırakır. Bütün harfler
+// seçilince kelime denenir:
+//   doğru  → kartlar ortaya çekilir, kutular sırayla yeşile döner;
+//   yanlış → çizgi kızarır, şerit sallanır, bir hak çubuğu söner (3 hak). DOĞRU YERDEKİ harfler kutularına sarıyla
+//            kilitlenir ve kartları çekilir, kalanlar yeniden dizilir: her deneme kelimeyi biraz açar.
+// Sürükleme yarım kalırsa ceza yok: harfler geri döner; şeridin boş yerine dokunmak yarım dizilişi siler. Sağ üstteki
+// düğme kartları karıştırır. Masaüstünde harf tuşları da kart seçer, ⌫ son harfi bırakır.
 //
-// Bütün canlandırmalar
-// transform / opacity (GPU); kare başına yerleşim okuması yok, ip yalnız değişince çizilir.
+// Bütün canlandırmalar transform / opacity (GPU); kare başına yerleşim okuması yok, çizgi yalnız değişince çizilir.
+// Kart kısa: harita alanı klavyeli eski karttan büyük (412×892'de 356 px, eskisi 322 px).
 //
 // Cevap biçimi eski adam asmacayla aynı: { ok, wrong } (judge aynı; bot 3 hakka göre). Kart kapanınca (süre) lock().
 // Jokerler ve hata ayıklama gizli .fl-key düğmeleriyle konuşur (eski klavyenin sözleşmesi): Yarı Yarıya harf açar →
-// o harfin bütün kutuları kilitlenir, sikkeleri çekilir; Seyirci önerisi .fl-key.sug → o harfin sikkesi ve kutusu
-// parlar. Kelimede olmayan harfe basılırsa (yalnız hata ayıklama) ıska sayılır.
+// o harfin bütün kutuları kilitlenir, kartları çekilir; Seyirci önerisi .fl-key.sug → o harfin kartı ve kutusu parlar.
+// Kelimede olmayan harfe basılırsa (yalnız hata ayıklama) ıska sayılır.
 // Çevrimiçi: v.tiles kelimenin karışık harfleridir (anagram gibi, tipin doğası); sıra (v.word) gizli kalır.
 
 import { css, esc, shuffle, buzz, trUp, pCorrect, KEYS, physicalKeys } from './util.js';
@@ -27,7 +28,6 @@ import { appOf, sfx } from './d_ortak.js';
 
 const MAX = 3; // yanlış deneme hakkı (kale burcu)
 const ABC = KEYS.join('');
-let UID = 0;
 
 const MIX_SVG =
 	'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="M4 4l5 5"/></svg>';
@@ -76,7 +76,6 @@ const CSS = /* css */ `
 .hr-stage{position:relative;display:flex;justify-content:center;width:100%}
 .hr-plat{position:relative;flex:none;width:var(--w);height:var(--h);touch-action:none}
 .hr-face{position:absolute;inset:0;pointer-events:none}
-.hr-face svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
 .hr-plat.shake{animation:hrShake .45s}
 @keyframes hrShake{0%,100%{transform:none}15%{transform:translateX(-10px)}30%{transform:translateX(9px)}45%{transform:translateX(-7px)}60%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
 /* çizgi: altın, koyu konturlu, beyaz çekirdek (yayın grafiği) */
@@ -104,8 +103,8 @@ const CSS = /* css */ `
 .hr-t.suck{transition:transform .42s cubic-bezier(.6,0,.8,.4),opacity .42s}
 .hr-t.sug{box-shadow:0 0 0 3px #ec4f93,0 0 20px rgba(236,79,147,.8),0 4px 0 rgba(0,0,0,.5)}
 @keyframes hrNope{0%,100%{}30%,70%{background:linear-gradient(180deg,#ff6a5a,#d42a1c);color:#fff}}
-/* göbek: VS rozeti gibi eğik siyah plaka, beyaz çerçeve, altın simge */
-.hr-mix{position:absolute;left:50%;top:50%;z-index:2;width:50px;height:40px;margin:-20px 0 0 -25px;display:grid;place-items:center;border:0;padding:0;cursor:pointer;
+/* karıştır: VS rozeti gibi eğik siyah plaka, beyaz çerçeve, altın simge (kelime şeridinin sağında); seçerken kalan sayı */
+.hr-mix{position:relative;flex:none;width:44px;height:34px;display:grid;place-items:center;border:0;padding:0;cursor:pointer;
   color:#ffd25a;background:#0a0b14;box-shadow:inset 0 0 0 2px #fff,0 4px 14px rgba(0,0,0,.6);transform:skewX(-8deg);transition:transform .15s}
 .hr-mix svg{width:22px;height:22px;transform:skewX(8deg);transition:opacity .15s}
 .hr-mix:active{transform:skewX(-8deg) scale(.9)}
@@ -120,72 +119,9 @@ const CSS = /* css */ `
 .hr .fl-key{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);border:0;padding:0;margin:0;opacity:0;pointer-events:none}
 .hr-fly{position:absolute;left:0;top:0;z-index:8;pointer-events:none;font:italic 800 28px/1 ${FONT};color:#fff;text-shadow:0 0 12px rgba(255,210,90,.95),0 2px 0 rgba(0,0,0,.4)}
 .hr-spark{position:absolute;left:0;top:0;z-index:6;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:var(--c,#ffd25a);transform-origin:center;pointer-events:none}
-/* =================================================== A · ARENA ÇARKI: koyu disk, segmentli altın halka */
-.hr.t-arena .hr-face::before{content:'';position:absolute;inset:0;border-radius:50%;
-  background:radial-gradient(circle at 50% 42%,#1b2346 0,#0e1430 55%,#070a18 100%);box-shadow:0 14px 30px rgba(0,0,0,.6),inset 0 0 0 1.5px rgba(255,255,255,.12)}
-.hr.t-arena .hr-face::after{content:'';position:absolute;inset:-8px;border-radius:50%;
-  background:repeating-conic-gradient(from -2.5deg,#ffd25a 0 6deg,rgba(255,210,90,.14) 6deg 9deg);
-  -webkit-mask:radial-gradient(circle closest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(circle closest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));
-  filter:drop-shadow(0 0 6px rgba(255,190,40,.45))}
-/* =================================================== B · PETEK: altıgen karolar, petek desenli disk */
-.hr.t-petek .hr-t,.hr.t-petek .hr-t.on{--sk:0deg;background:none;box-shadow:none;filter:drop-shadow(0 4px 0 rgba(0,0,0,.55)) drop-shadow(0 8px 10px rgba(0,0,0,.3))}
-.hr.t-petek .hr-t::before{display:none}
-.hr.t-petek .hr-t span{position:relative}
-.hr.t-petek .hx{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
-.hr.t-petek .hx .b{fill:var(--c2);stroke:rgba(255,255,255,.8);stroke-width:4.5;stroke-linejoin:round}
-.hr.t-petek .hx .g{fill:rgba(255,255,255,.22)}
-.hr.t-petek .hx .d{fill:var(--c3);opacity:.55}
-.hr.t-petek .hr-t.on .hx .b{fill:#fff;stroke:#ffd25a;stroke-width:7}
-.hr.t-petek .hr-t.on .hx .d{fill:#d9e0ee}
-.hr.t-petek .hr-t.on{filter:drop-shadow(0 0 9px rgba(255,210,90,.95)) drop-shadow(0 4px 0 rgba(0,0,0,.55))}
-.hr.t-petek .hr-t.nope .hx .b{fill:#e5483a}
-.hr.t-petek .hr-mix{width:54px;height:48px;margin:-24px 0 0 -27px;transform:none;clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%);box-shadow:none;background:#ffd25a;color:#1a1200}
-.hr.t-petek .hr-mix svg,.hr.t-petek .hr-mix b{transform:none;color:#1a1200}
-.hr.t-petek .hr-mix:active{transform:scale(.9)}
-.hr.t-petek .hr-face::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 42%,#1b2346 0,#0e1430 55%,#070a18 100%);box-shadow:0 14px 30px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,210,90,.55)}
-/* =================================================== C · ŞERİT: iki sıra büyük eğik kart (çark yok) */
-.hr.t-serit .hr-face::before{content:'';position:absolute;inset:-8px -6px;transform:skewX(-8deg);background:linear-gradient(180deg,#121a3a,#0a0f24);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12),0 10px 24px rgba(0,0,0,.5)}
-.hr.t-serit .hr-mix{position:static;margin:0;width:44px;height:34px}
+/* şerit zemini: eğik koyu plaka */
+.hr-face::before{content:'';position:absolute;inset:-8px -6px;transform:skewX(-8deg);background:linear-gradient(180deg,#121a3a,#0a0f24);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12),0 10px 24px rgba(0,0,0,.5)}
 `;
-
-/** Petek karosu: altıgen gövde, alt yarıda koyu ton, üst yarıda parlaklık, beyaz çerçeve. */
-const HEX =
-	'<svg class="hx" viewBox="0 0 116 100" preserveAspectRatio="none" aria-hidden="true"><polygon class="b" points="29,3 87,3 113,50 87,97 29,97 3,50"/><polygon class="d" points="3,50 113,50 87,97 29,97"/><polygon class="g" points="29,3 87,3 107,39 9,39"/></svg>';
-
-/** Tema: defterdeki A/B/C düğmesi ya da URL ?hang=arena|petek|serit; yoksa varsayılan. */
-const THEMES = ['arena', 'petek', 'serit'];
-const HANG_THEME = () => {
-	const g = globalThis.__hangTheme;
-	if (THEMES.includes(g)) return g;
-	try {
-		const t = new URLSearchParams(globalThis.location?.search || '').get('hang');
-		if (THEMES.includes(t)) return t;
-	} catch {
-		/* yok */
-	}
-	return 'arena';
-};
-
-/** Petek deseni (disk yüzü): soluk altıgen ağ. */
-const honey = (W) => {
-	const r = 13;
-	const h = r * Math.sqrt(3);
-	let p = '';
-	for (let y = -h; y < W + h; y += h)
-		for (let x = -r * 3, k = 0; x < W + r * 3; x += r * 3, k++) {
-			const hex = (cx, cy) => `M${cx - r},${cy}l${r / 2},${-h / 2}h${r}l${r / 2},${h / 2}l${-r / 2},${h / 2}h${-r}z`;
-			p += hex(x, y) + hex(x + r * 1.5, y + h / 2);
-		}
-	return p;
-};
-
-/** Tablanın yüz çizimi (tema başına). */
-const FACE = {
-	arena: () => '',
-	petek: (W) => `<svg viewBox="0 0 ${W} ${W}" aria-hidden="true"><defs><clipPath id="hrC${W}"><circle cx="${W / 2}" cy="${W / 2}" r="${W / 2 - 2}"/></clipPath></defs>
-		<path d="${honey(W)}" fill="none" stroke="rgba(255,210,90,.09)" stroke-width="1.2" clip-path="url(#hrC${W})"/></svg>`,
-	serit: () => '',
-};
 
 export const hang = {
 	time: 23,
@@ -207,45 +143,26 @@ export const hang = {
 		const lock = word.map((c) => c === ' ');
 		const free = () => word.map((c, i) => i).filter((i) => !lock[i]); // açılmamış konumlar
 		const vw = Math.min(innerWidth || 400, 560);
-		// tema (taslak): arena (çark, eğik karolar) · petek (çark, altıgen karolar) · serit (iki sıra kart, çark yok)
-		const THEME = HANG_THEME();
-		const round = THEME !== 'serit';
+		// şerit: bir (≤5 harf) ya da iki sıra kart; genişlik ekrana, kart boyu sıraya göre
 		const nt = v.tiles.length;
-		let W;
-		let H;
-		let TW;
-		let TH;
-		let A = 0;
-		let rows = 1;
-		let colsMax = nt;
 		const GX = 10;
 		const GY = 12;
-		if (round) {
-			W = H = Math.round(Math.min(vw * 0.62, (innerHeight || 800) * 0.27, 240));
-			TH = Math.round(Math.max(40, Math.min(54, (nt <= 5 ? 0.24 : nt <= 7 ? 0.215 : nt <= 9 ? 0.188 : 0.172) * W)));
-			TW = Math.round(TH * 1.16);
-			A = W / 2 - TW / 2 - 12;
-		} else {
-			W = Math.round(Math.min(vw - 36, 380));
-			rows = nt <= 5 ? 1 : 2;
-			colsMax = Math.ceil(nt / rows);
-			TW = Math.round(Math.min(76, (W - 12 - (colsMax - 1) * GX) / colsMax));
-			TH = Math.round(Math.min(60, Math.max(48, TW * 0.86)));
-			H = rows * TH + (rows - 1) * GY + 8;
-		}
+		const W = Math.round(Math.min(vw - 36, 380));
+		const rows = nt <= 5 ? 1 : 2;
+		const colsMax = Math.ceil(nt / rows);
+		const TW = Math.round(Math.min(76, (W - 12 - (colsMax - 1) * GX) / colsMax));
+		const TH = Math.round(Math.min(60, Math.max(48, TW * 0.86)));
+		const H = rows * TH + (rows - 1) * GY + 8;
 		const K = Math.max(TW, TH);
-		const sw = Math.min(40, Math.floor((Math.min(vw - 40, 380) - (round ? 46 : 110) - (n - 1) * 6) / n));
-		const uid = ++UID;
-		const face = FACE[THEME](W, H);
+		const sw = Math.min(40, Math.floor((Math.min(vw - 40, 380) - 110 - (n - 1) * 6) / n));
 		const mixBtn = `<button class="hr-mix" aria-label="Karıştır">${MIX_SVG}<b></b></button>`;
-		el.innerHTML = `<div class="hr t-${THEME}${round ? ' round' : ''}" style="--w:${W}px;--h:${H}px;--tw:${TW}px;--th:${TH}px;--sw:${sw}px">
-			<div class="hr-top"><div class="hr-word">${word.map((c, i) => (c === ' ' ? '<s></s>' : `<b class="hr-s" data-i="${i}"></b>`)).join('')}</div><div class="hr-hp" aria-label="Hak">${'<i></i>'.repeat(MAX)}</div>${round ? '' : mixBtn}</div>
+		el.innerHTML = `<div class="hr" style="--w:${W}px;--h:${H}px;--tw:${TW}px;--th:${TH}px;--sw:${sw}px">
+			<div class="hr-top"><div class="hr-word">${word.map((c, i) => (c === ' ' ? '<s></s>' : `<b class="hr-s" data-i="${i}"></b>`)).join('')}</div><div class="hr-hp" aria-label="Hak">${'<i></i>'.repeat(MAX)}</div>${mixBtn}</div>
 			<div class="hr-stage">
 				<div class="hr-plat">
-					<div class="hr-face">${face}</div>
+					<div class="hr-face"></div>
 					<svg class="hr-svg" viewBox="0 0 ${W} ${H}"><polyline class="gl"/><polyline class="rp"/><polyline class="fx"/><line class="tl"/></svg>
-					${round ? mixBtn : ''}
-					${v.tiles.map((c, i) => `<b class="hr-t in" data-i="${i}" style="--c1:${PAL[i % 8][0]};--c2:${PAL[i % 8][1]};--c3:${PAL[i % 8][2]}">${THEME === 'petek' ? HEX : ''}<span>${esc(c)}</span></b>`).join('')}
+					${v.tiles.map((c, i) => `<b class="hr-t in" data-i="${i}" style="--c1:${PAL[i % 8][0]};--c2:${PAL[i % 8][1]};--c3:${PAL[i % 8][2]}"><span>${esc(c)}</span></b>`).join('')}
 				</div>
 			</div>
 			${[...ABC].map((k) => `<button class="fl-key" data-k="${k}" tabindex="-1" aria-hidden="true"></button>`).join('')}
@@ -264,7 +181,6 @@ export const hang = {
 		let wrong = 0;
 		let done = false;
 		let busy = false; // deneme sonucu canlanırken giriş yok
-		let rot = 0; // çarkta başlangıç açısı payı (0..1; 0 = tepe)
 		const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 		const setPos = (t) => {
@@ -272,19 +188,10 @@ export const hang = {
 			t.el.style.setProperty('--y', t.y.toFixed(1) + 'px');
 			t.el.style.setProperty('--s', t.s.toFixed(3));
 		};
-		// ------------------------------------------------ dizilim: çarkta eşit açıyla (tepeden başlar); şeritte satırlar
+		// ------------------------------------------------ dizilim: satırlar ortalı (kalan kart azaldıkça tek sıraya iner)
 		const layout = () => {
 			const on = T.filter((t) => t.on);
 			const m = on.length;
-			if (round) {
-				on.forEach((t, k) => {
-					const a = -Math.PI / 2 + (rot + k / m) * Math.PI * 2;
-					t.x = W / 2 + A * Math.cos(a);
-					t.y = H / 2 + A * Math.sin(a);
-					setPos(t);
-				});
-				return;
-			}
 			const r = m <= colsMax ? 1 : 2;
 			const per = Math.ceil(m / r);
 			on.forEach((t, k) => {
@@ -297,7 +204,7 @@ export const hang = {
 				setPos(t);
 			});
 		};
-		// açılış: sikkeler göbekten yörüngeye sırayla açılır
+		// açılış: kartlar ortadan yerlerine sırayla açılır
 		for (const t of T) setPos(t);
 		requestAnimationFrame(() =>
 			requestAnimationFrame(() => {
@@ -310,7 +217,7 @@ export const hang = {
 			}),
 		);
 
-		// ------------------------------------------------ çizim: ip, kuyruk, canlı kutular, göbek sayacı
+		// ------------------------------------------------ çizim: çizgi, kuyruk, canlı kutular, kalan sayısı
 		let finger = null;
 		const draw = () => {
 			const pts = path.map((t) => `${t.x.toFixed(1)},${t.y.toFixed(1)}`).join(' ');
@@ -411,7 +318,7 @@ export const hang = {
 			root.classList.remove('drag');
 			for (const pos of slots.keys()) lock[pos] = true; // kutular artık çizimin dışında (kart kilitlenince boşalmasın)
 			root.classList.add('win');
-			// sikkeler göbeğe çekilir, göbek parlar ve kıvılcım saçar
+			// kartlar ortaya çekilir, karıştır düğmesi yeşil parlar ve kıvılcım saçar
 			T.forEach((t, k) => {
 				if (!t.on) return;
 				t.el.style.transitionDelay = k * 28 + 'ms';
@@ -440,7 +347,7 @@ export const hang = {
 			}, 360);
 			buzz(25);
 		};
-		/** Konumu altına kilitle; bu harfin yörüngedeki sikkesi (verilmişse o sikke) çekilir. */
+		/** Konumu sarıya kilitle; bu harfin şeritteki kartı (verilmişse o kart) çekilir. */
 		const lockAt = (pos, tile = null) => {
 			lock[pos] = true;
 			const t = tile || T.find((x) => x.on && x.c === word[pos]);
@@ -591,7 +498,6 @@ export const hang = {
 		ring.addEventListener('pointercancel', (e) => up(e, true));
 		mix.addEventListener('click', () => {
 			if (done || busy) return;
-			rot += round ? 0.18 + Math.random() * 0.3 : 0;
 			const sh = shuffle(
 				T.filter((t) => t.on),
 				Math.random,
