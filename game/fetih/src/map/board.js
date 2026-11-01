@@ -30,6 +30,7 @@ import { Castle } from './castle.js';
 import { Clouds, CloudFrame } from '../gfx/clouds.js';
 import { Cues } from './cues.js';
 import { planSites, padsOf } from './siteplan.js';
+import { TARLA, cropUniforms, cropTexture, reliefTexture, CROP } from './tarla.js'; // TASLAK v2 (doku-taslak): bölgeye göre ekin dokusu
 
 export const REGIONS = {
 	marmara: { name: 'Marmara', color: 0x8fd16a },
@@ -62,7 +63,14 @@ flat varying vec4 vOwn;
 flat varying vec4 vPrev;
 flat varying vec4 vPaint;
 flat varying vec4 vFx;
+uniform highp sampler2D uCrop; // TASLAK v2: il ekin profili (köşede bir kez okunur, düz aktarılır)
+flat varying vec4 vPm;
+flat varying vec4 vPc;
+flat varying vec4 vPx;
 void main() {
+	vPm = texelFetch(uCrop, ivec2(int(pid + 0.5), 0), 0);
+	vPc = texelFetch(uCrop, ivec2(int(pid + 0.5), 1), 0);
+	vPx = texelFetch(uCrop, ivec2(int(pid + 0.5), 2), 0);
 	vOwn = provRow(pid, 0);
 	vPrev = provRow(pid, 1);
 	vPaint = provRow(pid, 2);
@@ -89,6 +97,7 @@ ${LIGHT}
 ${FINISH}
 ${PROV}
 ${CLEAR}
+${TARLA}
 uniform sampler2D uBorder;
 uniform sampler2D uWater;
 uniform vec4 uFBox;
@@ -108,10 +117,13 @@ flat varying vec4 vOwn;
 flat varying vec4 vPrev;
 flat varying vec4 vPaint;
 flat varying vec4 vFx;
+flat varying vec4 vPm; // TASLAK v2: il ekin profili maske satırı
 
 float lineAA(float d, float w, float px) {
 	return 1.0 - smoothstep(w - px, w + px, d);
 }
+float gUpx = 1.0; // pikselin dünya izi (birim): ayrıntı ve kenar yumuşatma (main başında, dallanmadan önce)
+float gHpx = 1.0; // yüksekliğin piksel izi (yamaç terasları)
 
 // v0.5 (sinematik palet): bozkır hardal değil sıcak buğday-kehribar; geçiş kuşağı taze adaçayı yeşili;
 // kıyı ve Karadeniz canlı zümrüt; yayla serin alp çayırı; dağ kayası mor-gri; doruklarda kar. Renk
@@ -133,43 +145,44 @@ vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float sno
 	vec3 c = green < 0.5 ? mix(dry, mid, smoothstep(0.18, 0.5, green)) : mix(mid, lush, smoothstep(0.5, 0.85, green));
 	// yayla: serin alp çayırı (çamurlu zeytin değil)
 	c = mix(c, mix(${C('#7f9858')}, ${C('#93976a')}, n3), smoothstep(1500.0, 2400.0, e) * 0.65);
-	// tarla deseni: düz, ormansız, alçak yerlerde parsel parsel (her ovada farklı yöne bakar)
-	float farm = (1.0 - smoothstep(0.1, 0.4, bio.x)) * (1.0 - smoothstep(0.15, 0.45, bio.z)) * smoothstep(0.985, 0.998, N.y) * (1.0 - smoothstep(1300.0, 1800.0, e));
+	// tarla deseni: düz, ormansız, alçak yerlerde parsel parsel (her ovada farklı yöne bakar). TASLAK v2 (tarla.js):
+	// düzen ana dalın aynısı, renk ilin ekininden; yakın çekimde hafif sıra / taç / çay terası. q0: ana dalın ucuz yamaları.
+	gPm = vPm; // il profili: maske satırı (köşe gölgelendiricisi okudu)
+	float eTop = gPm.r * 100.0;
+	float sa = gPm.g; // yamaç payı
+	gRed = gPm.b;
+	int pa = int(gPm.a + 0.5);
+	gSlopeK = pa & 31;
+	float farm = (1.0 - smoothstep(0.1, 0.4, bio.x)) * (1.0 - smoothstep(0.15, 0.45, bio.z)) * smoothstep(0.985, 0.998, N.y) * (1.0 - smoothstep(eTop - 250.0, eTop + 250.0, e));
 #if TIER > 0
-	vec2 zq = q * 0.16 + n1 * 0.6;
-	vec2 zone = floor(zq);
-	float ang = hash12(zone) * 3.14159;
-	vec2 rq = mat2(cos(ang), -sin(ang), sin(ang), cos(ang)) * q;
-	vec2 fq = rq * vec2(1.7, 0.95) + vec2(n2 * 0.7, n1 * 0.9);
-	vec2 cell = floor(fq);
-	vec2 fr = fract(fq);
-	float fpx = fwidth(fq.x) + fwidth(fq.y);
-	float fade = 1.0 - smoothstep(0.3, 0.75, fpx);
-	float r = hash12(cell + zone * 17.0);
-	// buğday, taze ekin, nadas, sürülmüş toprak, ayçiçeği: sıcak ve yeşil parseller dengeli
-	vec3 fc = c * (r < 0.2 ? vec3(1.16, 1.06, 0.62) : r < 0.4 ? vec3(0.6, 0.94, 0.48) : r < 0.55 ? vec3(1.04, 1.0, 0.9) : r < 0.75 ? vec3(0.84, 0.68, 0.54) : vec3(1.12, 1.06, 0.82));
-	float edge = min(min(fr.x, 1.0 - fr.x), min(fr.y, 1.0 - fr.y));
-	fc *= mix(0.8, 1.0, smoothstep(0.0, 0.05 + fpx, edge));
-	// blok sınırı tarla yolu: parsel deseni bloktan bloğa döner; sınır bıçak kesiği gibi değil, parsellerin dayandığı
-	// toprak yol olarak okunur (yol boyu hafif çit gölgesi). Uzaklık piksel cinsinden: her yakınlıkta ince ve keskin.
-	vec2 zw = max(fwidth(zq), vec2(1e-5));
-	vec2 zd = (0.5 - abs(fract(zq) - 0.5)) / zw;
-	float zpx = min(zd.x, zd.y);
-	float hw = max(0.0056 / max(zw.x, zw.y), 0.7);
-	float road = 1.0 - smoothstep(hw - 0.7, hw + 0.7, zpx);
-	float hedge = (1.0 - smoothstep(hw, hw * 2.2 + 1.5, zpx)) * (1.0 - road);
-	fc *= 1.0 - hedge * 0.14;
-	fc = mix(fc, mix(${C('#b59d76')}, ${C('#cdb790')}, n3), road);
-	c = mix(c, fc, farm * fade * 0.92);
+	// orman tabanı: derin, serin yeşil (q1+: ekinden önce; ormanlık kuşaktaki çay ve fındık bunun üstüne biner)
+	c = mix(c, mix(${C('#24552c')}, ${C('#356b36')}, n3), smoothstep(0.2, 0.65, bio.x) * 0.85);
+	float mS = 0.0;
+	if (sa > 0.01) {
+		// yamaç tarımı (çay, fındık, zeytin, bağ, fıstık, kayısı, mera): ilin yamaç ekini, kendi yükselti sınırına kadar
+		int ks = gSlopeK;
+		float sTop = float(pa >> 5);
+		float fOK = (ks == ${CROP.cay} || ks == ${CROP.findik}) ? 1.0 : 1.0 - smoothstep(0.25, 0.6, bio.x); // çay ve fındık ormanlık kuşakta
+		// çay: eğim pürüzsüz yükseltiden (ağın üçgen yüzleri yamacı yama yama bölmesin; teraslar da aynı değeri kullanır)
+		float ny = N.y;
+		if (ks == ${CROP.cay}) {
+			relGrad(q);
+			ny = inversesqrt(1.0 + dot(gRelG, gRelG));
+		}
+		mS = sa * smoothstep(0.42, 0.66, ny) * (1.0 - smoothstep(0.985, 0.996, ny)) * (1.0 - smoothstep(sTop - 150.0, sTop + 150.0, e)) * fOK * (1.0 - smoothstep(0.35, 0.65, bio.z));
+	}
+	c = tarla(c, q, f1, f3, gUpx, gHpx, farm, mS, N, vPid);
 #else
+	// q=0: ana dalın aynısı (yükselti sınırı dahil)
+	farm = (1.0 - smoothstep(0.1, 0.4, bio.x)) * (1.0 - smoothstep(0.15, 0.45, bio.z)) * smoothstep(0.985, 0.998, N.y) * (1.0 - smoothstep(1300.0, 1800.0, e));
 	// q=0: parsel yerine ucuz yamalı ekin lekeleri (hazır gürültüden)
 	float pr = f3.r;
 	vec3 pt = mix(vec3(0.8, 1.0, 0.66), vec3(1.0), smoothstep(0.34, 0.42, pr));
 	pt = mix(pt, vec3(1.12, 0.98, 0.72), smoothstep(0.6, 0.68, pr));
 	c = mix(c, c * pt * (0.94 + 0.12 * f3.b), farm * 0.85);
-#endif
-	// orman tabanı: derin, serin yeşil
+	// orman tabanı: derin, serin yeşil (q0: ana dalın sırası, görünüş birebir aynı)
 	c = mix(c, mix(${C('#24552c')}, ${C('#356b36')}, n3), smoothstep(0.2, 0.65, bio.x) * 0.85);
+#endif
 	// kaya: dik yamaç ve sarp dağlar (serin mor-gri, açık damarlı)
 	rockK = clamp(smoothstep(0.22, 0.5, slope + bio.z * 0.22 + (n2 - 0.5) * 0.22), 0.0, 1.0) * smoothstep(250.0, 1300.0, e);
 	c = mix(c, mix(${C('#7b6f6c')}, ${C('#aea193')}, n3), rockK);
@@ -182,7 +195,7 @@ vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float sno
 	c = mix(c, mix(${C('#e8d29a')}, ${C('#f4e4b4')}, n3), beach);
 	// ince tane: yakında küçük ölçekli açık-koyu benek (düz renk değil, minyatür arazi dokusu)
 	float grain = texture(uNoise, q / 3.0).g - 0.5;
-	c *= 1.0 + grain * 0.16 * (1.0 - snowK * 0.7);
+	c *= 1.0 + grain * 0.16 * (1.0 - snowK * 0.7) * (1.0 - 0.65 * gCropK);
 	return c;
 }
 
@@ -223,6 +236,11 @@ void main() {
 	float same = (ownerId >= 0.0 && abs(nbOwner - ownerId) < 0.5) ? 1.0 : 0.0;
 
 	float snowK, rockK;
+#if TIER > 0 && TARLA_YAKIN
+	gUpx = max(fwidth(vW.x), fwidth(vW.z));
+	gHpx = fwidth(h);
+	gEyeD = distance(cameraPosition, vW);
+#endif
 	vec3 alb = terrainAlbedo(vW, N, vBio, h, coast, snowK, rockK);
 	// bölge havası (Doğu): yaylada ve kuzey yamaçlarda ince kırağı, karlı doruklara bağlanır (yamalı; sahip boyası
 	// üstüne biner, il rengi okunur)
@@ -328,6 +346,14 @@ void main() {
 	float sh = shadowAt(vW, N);
 	// kabartma ışığı abartılır (yalnız ışıkta): tepeden bakışta da dağlar, sırtlar ve vadiler hacimli okunur
 	vec3 NL = skirt ? N : normalize(vec3(N.x * 1.7, N.y, N.z * 1.7));
+#if TIER > 0 && TARLA_YAKIN
+	if (!skirt) {
+		// ekin mikro kabartması ve taç/balya gölgesi (tarla.js): ışık normali eğilir, güneş payı azalır
+		NL = normalize(NL + vec3(gDn.x, 0.0, gDn.y));
+		sh *= gMsh;
+		gloss += gGl;
+	}
+#endif
 	gPool = skirt ? 0.0 : poolK(vW.xz);
 	gLit = max(sel * uSelLit, gPool); // gece odağı: yalnızca seçilebilir il (ve ışık havuzu) gündüz ışığında kalır
 	float nk = nightK();
@@ -876,13 +902,19 @@ export class Board {
 		this.uSelEdge = { value: 1 };
 		this.uSelAny = { value: 0 };
 		this.uGlow = { value: new THREE.Vector4(-1, -1, 1.2, -1) };
-		const uniforms = { ...G, ...fieldU, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct, uSelEdge: this.uSelEdge, uSelAny: this.uSelAny, uGlow: this.uGlow };
+		this.cropTex = cropTexture(this.provinces); // TASLAK v2: il başına ekin profili
+		const rel = reliefTexture(this.relief); // çay terası: pürüzsüz yükselti (24 KB)
+		const vilBlank = new THREE.DataTexture(new Uint8Array(58 * 29 * 4), 58, 29); // köy ızgarası: hayat.js doldurur (uVil)
+		vilBlank.needsUpdate = true;
+		const uniforms = { ...G, ...fieldU, ...cropUniforms(), uCrop: { value: this.cropTex }, uVil: { value: vilBlank }, uRel: { value: rel.tex }, uRelBox: { value: rel.box }, uState: { value: this.stateTex }, uSelOn: this.uSelOn, uMe: this.uMe, uAct: this.uAct, uSelEdge: this.uSelEdge, uSelAny: this.uSelAny, uGlow: this.uGlow };
 		this.uniforms = uniforms;
-		this.mat = new THREE.ShaderMaterial({
-			vertexShader: PROV_VS,
-			fragmentShader: PROV_FS.replace('__TAPS__', taps).replace('__TIER__', tierId),
-			uniforms,
-		});
+		// iki program, aynı uniform'lar: uzak/oyun zumu (yakın çekim ayrıntısı derlenmez: ana dalın maliyeti) ve yakın zum
+		// (ekin ayrıntısı, çay terası, köy toprağı). Geçiş hayat.js'te kamera eşiğinde (ayrıntı orada zaten görünmez);
+		// ikisi de açılışta derlenir (app.js).
+		const fs = PROV_FS.replace('__TAPS__', taps).replace('__TIER__', tierId);
+		this.mat = new THREE.ShaderMaterial({ vertexShader: PROV_VS, fragmentShader: '#define TARLA_YAKIN 0\n' + fs, uniforms });
+		this.matNear = new THREE.ShaderMaterial({ vertexShader: PROV_VS, fragmentShader: '#define TARLA_YAKIN 1\n' + fs, uniforms });
+		this.near = false;
 		// ekran dışı kırpma: il yüzeyleri ızgara parçalarına bölünür (aynı köşe tamponu, parça başına indeks); kameranın
 		// görmediği parça hiç çizilmez (oyun yakınlığında yüzeyin çoğu ekran dışında: köşe ve döşeme işi o kadar az)
 		this.chunks = chunkMeshes(built, this.provinces, this.mat, CHUNK);
@@ -1480,6 +1512,14 @@ export class Board {
 		if (hit < 0) hit = t1;
 		out.set(o.x + d.x * hit, o.y + d.y * hit, o.z + d.z * hit);
 		return this.pick(out.x, out.z);
+	}
+
+	/** TASLAK v2: yakın zum programı (ekin ayrıntısı) ya da uzak/oyun zumu programı; yalnız değişince takılır. */
+	setNear(on) {
+		if (on === this.near) return;
+		this.near = on;
+		const m = on ? this.matNear : this.mat;
+		for (const c of this.chunks) c.material = m;
 	}
 
 	/** İlin içinde, kenardan en az m uzaklıkta rastgele nokta (süsler için). */
