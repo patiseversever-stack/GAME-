@@ -22,6 +22,7 @@ export const CSS_PAUSE = /* css */ `
   background:var(--panel);border:3px solid rgba(255,210,90,.55);box-shadow:0 8px 0 var(--navy-d),0 14px 30px rgba(0,0,0,.4);transition:transform .3s cubic-bezier(.3,1.5,.5,1)}
 .fl-pause.off .box{transform:scale(.9)}
 .fl-pause h3{margin:0;text-align:center;font-family:'Lilita One';font-weight:400;font-size:clamp(30px,calc(9 * var(--vw)),40px);line-height:1;color:var(--gold);${OUT('#3a2000', 3)}}
+.fl-pause .bld.perf{margin-top:-8px;letter-spacing:.04em;text-transform:none;font-size:10px}
 .fl-pause .bld{align-self:center;margin-top:-4px;font:700 10.5px/1 'Manrope',system-ui,sans-serif;letter-spacing:.14em;color:rgba(207,224,255,.45)}
 .fl-pause .st{align-self:center;padding:3px 14px 4px;border-radius:999px;font-size:14.5px;background:var(--ink);border:2px solid rgba(255,255,255,.22);color:#cfe0ff}
 .fl-pause .fl-btn{width:100%}
@@ -87,6 +88,7 @@ export function showPause(ui, on) {
 			<h3>DURAKLATILDI</h3>
 			${phase ? `<span class="st">${esc(phase)}</span>` : ''}
 			<small class="bld">sürüm ${esc(typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'yerel')}</small>
+			<small class="bld perf">${esc(ui.app?.gov?.summary?.() || '')}</small>
 			<button class="fl-btn big green" data-p="devam">${ico('play', { w: 2.8 })}DEVAM ET</button>
 			<div class="row">
 				<button class="fl-btn navy" data-p="ses"></button>

@@ -1,0 +1,18 @@
+{
+ "kareCPUms": 1.1,
+ "kareCPUp95": 2.5,
+ "kareToplamMs": 574.5,
+ "golgeKareBasina": 1,
+ "cagri": 14,
+ "ucgen": 222211,
+ "piksel": 367504,
+ "cpu_board": 0.03,
+ "cpu_fx": 0.17,
+ "cpu_gece": 0.01,
+ "cpu_kamera": 0.04,
+ "cpu_lod": 0.12,
+ "cpu_hava": 0,
+ "cpu_arayuz": 0.01,
+ "cpu_cizimGonder": 0.87,
+ "cpu_golge": 0.36
+}

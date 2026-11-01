@@ -5,6 +5,9 @@
 
 import * as THREE from 'three';
 
+/** Gölge kapsamı görülen alandan bu kat geniş (kaydırmada yeniden çizimi seyrekleştirir; doku boyu buna göre). */
+export const MARGIN = 1.35;
+
 export class ShadowSystem {
 	constructor(G, size, half = 24) {
 		this.G = G;
@@ -53,10 +56,14 @@ export class ShadowSystem {
 	 */
 	place(focus, sunDir, dist) {
 		if (dist != null) {
-			// minHalf (vars. 14): Kuşbakışı'nın kahraman maketi yakın çekimde daha dar (keskin) kapsam ister
-			const want = Math.min(this.maxHalf, Math.max(this.minHalf, dist * 0.8));
+			// minHalf (vars. 14): Kuşbakışı'nın kahraman maketi yakın çekimde daha dar (keskin) kapsam ister.
+			// Kapsam görülen alandan MARGIN kat geniş: kamera bu payın içinde kaydıkça harita yeniden çizilmez (aşağıda)
+			const want = Math.min(this.maxHalf, Math.max(this.minHalf, dist * 0.8 * MARGIN));
 			const stepH = 14 * Math.pow(1.25, Math.round(Math.log(want / 14) / Math.log(1.25)));
-			const h = Math.min(this.maxHalf, stepH);
+			let h = Math.min(this.maxHalf, stepH);
+			// yakınlaşırken geniş kapsam bir süre korunur (hâlâ kapsıyor; yakınlaşıp uzaklaşan sinematik kamerada her
+			// basamakta yeniden çizilmesin); uzaklaşınca hemen genişler (kapsam yetmez)
+			if (h < this.half && h > this.half / 1.6) h = this.half;
 			if (h !== this.half) {
 				this.half = h;
 				// dar kapsamda doku pikseli küçülür: normal kaydırma ve derinlik payı da onunla küçülür (ince ayrıntı gölgesi)
@@ -75,11 +82,20 @@ export class ShadowSystem {
 		const up = Math.abs(f.y) > 0.98 ? this._u.set(1, 0, 0) : this._u.set(0, 1, 0);
 		const r = this._r.crossVectors(f, up).normalize();
 		const u = this._u.crossVectors(r, f).normalize();
-		// odak noktasını doku ızgarasına kenetle
+		// odak noktası: kamera kayarken merkez sabit kalır; odak kapsamın iç payından (görülen alan + pay) çıkınca yeni
+		// merkez seçilir (doku ızgarasına kenetli). Eskiden her doku pikseli kayışında (hareketin her karesinde) bütün
+		// sahne gölge haritasına yeniden çiziliyordu: kaydırma ve sinematik kamera karelerinin ~%18'i.
 		const texel = (this.half * 2) / this.size;
-		const pr = Math.round(focus.dot(r) / texel) * texel;
-		const pu = Math.round(focus.dot(u) / texel) * texel;
-		const pf = Math.round(focus.dot(f) / 2) * 2; // derinlik ekseni de basamaklı: süzülen kamerada matris (ve önbellek) bozulmasın
+		const fr = focus.dot(r);
+		const fu = focus.dot(u);
+		const slack = this.half * (1 - 1 / MARGIN) * 0.9;
+		const c0 = this._c0;
+		if (!c0 || c0.half !== this.half || Math.abs(fr - c0.r) > slack || Math.abs(fu - c0.u) > slack || !c0.sun.equals(f)) {
+			this._c0 = { r: Math.round(fr / texel) * texel, u: Math.round(fu / texel) * texel, half: this.half, sun: (c0?.sun || new THREE.Vector3()).copy(f) };
+		}
+		const pr = this._c0.r;
+		const pu = this._c0.u;
+		const pf = Math.round(focus.dot(f) / 4) * 4; // derinlik ekseni basamaklı (kapsam derinliği 300 birim: bol pay)
 		const p = this._p.set(0, 0, 0).addScaledVector(r, pr).addScaledVector(u, pu).addScaledVector(f, pf);
 		const cam = this.cam;
 		cam.position.copy(p).addScaledVector(f, -150);

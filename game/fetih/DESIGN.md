@@ -301,6 +301,21 @@ Sağ üstte karıştır düğmesi (VS rozeti gibi). Kart kısa: harita alanı kl
 Cevap `{ ok, wrong }` (eski adam asmacayla aynı). Jokerler ve hata ayıklama gizli `.fl-key` düğmeleriyle konuşur.
 Öbür taslaklar ve Gülle yedeği silindi.
 
+**Kare temposu (v1.4, `core/quality.js` Governor, `app._wake/_motion`).** Hedef ekranın kendi hızı (60 / 90 / 120 Hz,
+rAF aralığından; ekran hızı durgun pencerelerden öğrenilir, kaçan karelerle şişmez). Ekranda görülür hareket varsa
+(kamera ekranda ≥12 piksel/sn kayıyor, çekim/yol sürüyor, dokunuş, efekt, il kalkması, yapı geçişi, gece geçişi, soru
+sahnesi kare sürücüsü) tam hız; tamamen durgunsa 30 (ısınma ve pil), harekette aynı vsync'te tam hıza döner. Çizim
+kararı geçen süreye göre (çağrı saymak yavaş karede bir vsync daha kaybettiriyordu). Gecikirse: yüksek yenilemede önce
+eşit yarı hız (120 → 60, 90 → 45), 60'ta çözünürlük basamakları (en az %70), en son 30. Çözünürlük değişimi (çizim
+tamponu yeniden kurulur) yalnız durgun anda. Soru kartı açıkken mobilde 30 kare kuralı kaldırıldı. Duraklatma ekranında
+ölçüm satırı: ekran kartı, kademe, Hz, son saniyenin kare hızı, ölçek. Sınama: `test/kare.test.mjs`.
+
+**Görünmeyen iş yok (v1.4).** Gölge haritası kapsamı görülen alandan 1,35 kat geniş, kamera bu payda kaldıkça yeniden
+çizilmez (kaydırmada 1,00 → 0,34 geçiş/kare); yakınlaşırken geniş kapsam korunur. q0 gölge dokusu 1536 (netlik aynı).
+İl yüzeyi (12 parça), gölge ağı ve yapılar (13 parça) ekran dışı kırpmalı parçalara bölündü (kaydırmada üçgen 222 → 120
+bin). Gece denizi gündüz yolunu hesaplamaz; köpük, dalga çizgisi ve pırıltı yalnız etkili oldukları uzaklıkta. Komşu ülke
+karası gölge haritası örneklemez.
+
 **Defter = oyun.** Oyun (`dist/FetihLigi.html`) ve defter (`dist/SoruGalerisi.html`) aynı `node build.mjs` çağrısında aynı
 kaynaktan derlenir; ikisi de aynı sürüm damgasını taşır (kaynağın içerik özeti: duraklatma ekranında ve defter başlığında
 "sürüm …"). Damga aynıysa kod birebir aynıdır. Defter oyunun içine gömülmedi: oyuncu paketine galeri kodu ve örnek sorular

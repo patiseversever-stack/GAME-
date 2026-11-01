@@ -1343,6 +1343,59 @@ function groundTone(rel, x, z) {
 	return c;
 }
 
+/**
+ * Birleşik yapı ağını (dizinsiz) kırpma parçalarına böler: yapı merkezine göre ızgara hücresi; her parça yapılarının
+ * köşe aralıklarının kopyası ve kendi sınır küresi (il ve seçim kalkması için yukarı pay). Hiçbir yapıya ait olmayan
+ * köşe varsa kendi parçasına girer.
+ */
+function splitSites(geo, ranges, count, cell) {
+	const groups = new Map();
+	const used = new Uint8Array(count);
+	for (const r of ranges) {
+		const [a, b, x, , z] = r;
+		if (b <= a) continue;
+		const key = Math.floor(x / cell) * 1000 + Math.floor(z / cell);
+		if (!groups.has(key)) groups.set(key, []);
+		groups.get(key).push([a, b]);
+		used.fill(1, a, b);
+	}
+	const rest = [];
+	for (let i = 0, s0 = -1; i <= count; i++) {
+		const free = i < count && !used[i];
+		if (free && s0 < 0) s0 = i;
+		if (!free && s0 >= 0) {
+			rest.push([s0, i]);
+			s0 = -1;
+		}
+	}
+	if (rest.length) groups.set('rest', rest);
+	const out = [];
+	const box = new THREE.Box3();
+	const v = new THREE.Vector3();
+	const pos = geo.getAttribute('position').array;
+	for (const list of groups.values()) {
+		const n = list.reduce((s, [a, b]) => s + b - a, 0);
+		const g = new THREE.BufferGeometry();
+		for (const [name, attr] of Object.entries(geo.attributes)) {
+			const k = attr.itemSize;
+			const arr = new attr.array.constructor(n * k);
+			let o = 0;
+			for (const [a, b] of list) {
+				arr.set(attr.array.subarray(a * k, b * k), o);
+				o += (b - a) * k;
+			}
+			g.setAttribute(name, new THREE.BufferAttribute(arr, k, attr.normalized));
+		}
+		box.makeEmpty();
+		for (const [a, b] of list) for (let i = a; i < b; i++) box.expandByPoint(v.set(pos[i * 3], pos[i * 3 + 1], pos[i * 3 + 2]));
+		box.max.y += 1.5;
+		g.boundingBox = box.clone();
+		g.boundingSphere = box.getBoundingSphere(new THREE.Sphere());
+		out.push(g);
+	}
+	return out;
+}
+
 export class Landmarks {
 	constructor(G, tier, board) {
 		const kit = new LKit();
@@ -1396,17 +1449,29 @@ export class Landmarks {
 		this.uHide = { value: new THREE.Vector4(0, 0, 0, 0) };
 		this.uLod = [0, 1, 2, 3].map(() => new THREE.Vector4(0, 0, 0, 0));
 		const uniforms = { ...G, uState: { value: board.stateTex }, uSelOn: board.uSelOn, uPLift: { value: board.liftUnit }, uPSel: { value: board.selLiftUnit }, uFade: this.uFade, uCastle: { value: this.castleU }, uHide: this.uHide, uLod: { value: this.uLod } };
-		this.mesh = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms, side: THREE.DoubleSide }));
-		this.mesh.frustumCulled = false;
-		this.mesh.matrixAutoUpdate = false;
-		this.caster = new THREE.Mesh(geo, new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms, side: THREE.DoubleSide }));
-		this.caster.frustumCulled = false;
-		this.caster.matrixAutoUpdate = false;
+		// ekran dışı kırpma: yapılar ızgara parçalarına bölünür (parça başına sınır küresi); kameranın (ve gölge
+		// kamerasının) görmediği parça çizilmez. Eskiden 42 yapı (~68 bin üçgen) her karede, ekran dışındakiler de çizilirdi.
+		const mat = new THREE.ShaderMaterial({ vertexShader: VS, fragmentShader: FS.replace('__TAPS__', taps), uniforms, side: THREE.DoubleSide });
+		const dmat = new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms, side: THREE.DoubleSide });
+		this.mesh = new THREE.Group();
+		this.caster = new THREE.Group();
+		this.mesh.matrixAutoUpdate = this.caster.matrixAutoUpdate = false;
 		// kaybolma bitince çizim yok (kare başına iş yok: yalnızca çizilirken bakılır)
-		this.mesh.onBeforeRender = () => {
+		const hide = () => {
 			const f = this.uFade.value;
 			if (f.y < 0.5 && this.G.uTime.value - f.x > f.z * 1.1) this.mesh.visible = this.caster.visible = false;
 		};
+		this.parts = splitSites(geo, ranges, kit.count, 16);
+		for (const g of this.parts) {
+			const m = new THREE.Mesh(g, mat);
+			m.matrixAutoUpdate = false;
+			m.onBeforeRender = hide;
+			this.mesh.add(m);
+			const c = new THREE.Mesh(g, dmat);
+			c.matrixAutoUpdate = false;
+			this.caster.add(c);
+		}
+		geo.dispose();
 		// kahraman maketler (Kuşbakışı yakın çekimi): tek mesh, geometri ilk kullanımda kurulur
 		this.hf = kit.hf;
 		this.heroes = new Heroes(G, tier, board, this, HEROES);

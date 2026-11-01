@@ -492,8 +492,8 @@ void main() {
 	vec3 alb = mix(${C('#c6c0b1')}, ${C('#d3cdbd')}, n) * (0.94 + 0.08 * n2);
 	alb = mix(alb, ${C('#e6dcc4')}, smoothstep(0.93, 0.99, coast));
 	alb = mix(${C('#9d8f7c')}, alb, smoothstep(0.6, 0.95, N.y));
-	float sh = shadowAt(vW, N);
-	vec3 c = shade(alb, N, normalize(cameraPosition - vW), 0.95, sh, 0.03, 0.2);
+	// komşu ülkelerde gölge yapan bir şey yok (yapı, kale, ordu yalnız Türkiye'de): gölge haritası örneklenmez
+	vec3 c = shade(alb, N, normalize(cameraPosition - vW), 0.95, 1.0, 0.03, 0.2);
 	c = mix(c, mix(uFogCol * 0.8, N_FOG, nightK()), 0.22);
 	c = applyFog(c, vW);
 	c = edgeMist(c, vW);
@@ -548,20 +548,28 @@ void main() {
 	base *= mix(vec3(1.0), vec3(0.78, 0.94, 0.9), wx.r * 0.75);
 	float ndv = clamp(dot(N, V), 0.0, 1.0);
 	float fres = 0.02 + 0.98 * pow(1.0 - ndv, 5.0);
-	vec3 c = base * (uSkyTop * 1.05 + uSunCol * 0.26 * max(dot(N, uSunDir), 0.0));
+	// kıyı köpüğü: kıyıya paralel nefes alan çizgiler + kıyı çizgisinde beyaz yaka (gece de kullanılır)
+	float foam = 0.0;
+	if (dist < 0.4) {
+		float wave = sin(dist * 26.0 - t * 1.8 + texture(uNoise, p * 0.8 / 32.0).b * 5.0) * 0.5 + 0.5;
+		foam = smoothstep(0.35, 0.08, dist) * smoothstep(0.72, 0.98, wave) * 0.55 + smoothstep(0.07, 0.015, dist);
+	}
+	vec3 c = vec3(0.0);
+	// gündüz denizi: tam gecede (seçim, savaş, soru anı) hiç hesaplanmaz (eskiden hesaplanıp gece rengiyle örtülüyordu)
+	if (uNight.x < 0.999) {
+	c = base * (uSkyTop * 1.05 + uSunCol * 0.26 * max(dot(N, uSunDir), 0.0));
 	c = mix(c, skyReflect(reflect(-V, N)), fres * 0.7);
 	vec3 H = normalize(uSunDir + V);
 	c += uSunCol * pow(max(dot(N, H), 0.0), 320.0) * 2.4;
-	// kıyı köpüğü: kıyıya paralel nefes alan çizgiler + kıyı çizgisinde beyaz yaka
-	// açık denizde ağır kayan ince dalga çizgileri
-	float wl = smoothstep(0.985, 1.0, sin(dot(p, vec2(0.42, 0.91)) * 1.1 + texture(uNoise, p * 0.22 / 16.0).r * 9.0 + t * 0.5)) * smoothstep(0.8, 2.6, dist) * texture(uNoise, p * 0.15 / 8.0 + 0.3).a;
-	c += uSunCol * wl * 0.018;
-	float wave = sin(dist * 26.0 - t * 1.8 + texture(uNoise, p * 0.8 / 32.0).b * 5.0) * 0.5 + 0.5;
-	float foam = smoothstep(0.35, 0.08, dist) * smoothstep(0.72, 0.98, wave) * 0.55 + smoothstep(0.07, 0.015, dist);
+	// açık denizde ağır kayan ince dalga çizgileri (kıyıdan uzakta)
+	if (dist > 0.8) {
+		float wl = smoothstep(0.985, 1.0, sin(dot(p, vec2(0.42, 0.91)) * 1.1 + texture(uNoise, p * 0.22 / 16.0).r * 9.0 + t * 0.5)) * smoothstep(0.8, 2.6, dist) * texture(uNoise, p * 0.15 / 8.0 + 0.3).a;
+		c += uSunCol * wl * 0.018;
+	}
 	c = mix(c, vec3(1.0) * (uSkyTop + uSunCol * 0.32), clamp(foam, 0.0, 1.0) * 0.82);
 #if TIER > 0
 	// Akdeniz güneşi: dalga sırtlarında yanıp sönen sıcak pırıltılar (yakında; uzakta piksel kumu olmasın diye söner)
-	if (wx.b > 0.03) {
+	if (wx.b > 0.03 && dist < 5.0) {
 		vec2 sq = p * 4.0 + vec2(t * 0.25, t * 0.1);
 		vec2 sc = floor(sq);
 		float hh = hash12(sc);
@@ -571,6 +579,7 @@ void main() {
 		c += uSunCol * vec3(1.0, 0.92, 0.74) * step(0.84, hh) * tw * smoothstep(0.14, 0.03, length(sf)) * smoothstep(0.7, 0.3, spx) * wx.b * smoothstep(5.0, 1.0, dist) * 0.8;
 	}
 #endif
+	}
 	// şafak: deniz ufku ısınır
 	if (uNight.z > 0.001) c += DAWN * uNight.z * fres * 0.5;
 	vec3 stars = vec3(0.0);
@@ -603,6 +612,57 @@ void main() {
 }`;
 
 // ------------------------------------------------------------------ yardımcılar
+
+/** Kırpma parçası ızgara aralığı (birim): oyun yakınlığında görülen alan ~25–40 birim; ~20 parça. */
+const CHUNK = 16;
+
+/**
+ * İl yüzeyi ağını ekran dışı kırpma parçalarına böler: il merkezine göre ızgara hücresi; her parça aynı köşe
+ * özniteliklerini paylaşır (GPU'ya bir kez yüklenir), kendi indeks dizisi ve sınır küresi vardır. Köşe kabuğu
+ * (il kalkması, seçim kalkması) için küre biraz büyütülür.
+ */
+function chunkMeshes(built, provinces, mat, cell) {
+	const src = built.geometry;
+	const idx = src.index.array;
+	const pos = src.getAttribute('position').array;
+	const groups = new Map();
+	provinces.forEach((p, k) => {
+		const st = built.stats[k];
+		if (!st || !st.count) return;
+		const key = Math.floor(p.x / cell) * 1000 + Math.floor(p.z / cell);
+		let g = groups.get(key);
+		if (!g) groups.set(key, (g = []));
+		g.push(st);
+	});
+	const out = [];
+	const box = new THREE.Box3();
+	const v = new THREE.Vector3();
+	for (const list of groups.values()) {
+		const n = list.reduce((a, st) => a + st.count, 0);
+		const I = idx instanceof Uint32Array ? new Uint32Array(n) : new Uint16Array(n);
+		let o = 0;
+		box.makeEmpty();
+		for (const st of list) {
+			const sub = idx.subarray(st.start, st.start + st.count);
+			I.set(sub, o);
+			o += st.count;
+			for (let i = 0; i < sub.length; i++) {
+				const j = sub[i] * 3;
+				box.expandByPoint(v.set(pos[j], pos[j + 1], pos[j + 2]));
+			}
+		}
+		box.max.y += 1.5; // il ve seçim kalkması (köşe gölgelendiricisinde)
+		const g = new THREE.BufferGeometry();
+		for (const [name, a] of Object.entries(src.attributes)) g.setAttribute(name, a);
+		g.setIndex(new THREE.BufferAttribute(I, 1));
+		g.boundingBox = box.clone();
+		g.boundingSphere = box.getBoundingSphere(new THREE.Sphere());
+		const m = new THREE.Mesh(g, mat);
+		m.matrixAutoUpdate = false;
+		out.push(m);
+	}
+	return out;
+}
 
 export function pointInPoly(x, y, flat) {
 	let inside = false;
@@ -812,17 +872,19 @@ export class Board {
 			fragmentShader: PROV_FS.replace('__TAPS__', taps).replace('__TIER__', tierId),
 			uniforms,
 		});
-		this.mesh = new THREE.Mesh(geo, this.mat);
-		this.mesh.matrixAutoUpdate = false;
-		this.group.add(this.mesh);
+		// ekran dışı kırpma: il yüzeyleri ızgara parçalarına bölünür (aynı köşe tamponu, parça başına indeks); kameranın
+		// görmediği parça hiç çizilmez (oyun yakınlığında yüzeyin çoğu ekran dışında: köşe ve döşeme işi o kadar az)
+		this.chunks = chunkMeshes(built, this.provinces, this.mat, CHUNK);
+		for (const m of this.chunks) this.group.add(m);
+		this.mesh = this.chunks[0];
 		// gölge: kaba kabartma (yalnızca yüzey), biraz alçaltılmış (kendi gölgesi kirlenmesin)
 		// q=0: harita gölge yapmaz (yalnızca ağaç, yapı ve kaleler), gölge geçişi hafif kalsın
 		const sbuilt = tier.id === 0 ? { geometry: emptyGeo(), triangles: 0 } : buildBoardGeometry(this.provinces, this.relief, 1.3, { skirts: false });
 		this.shadowGeoStats = { triangles: sbuilt.triangles };
-		this.shadowMesh = new THREE.Mesh(
-			sbuilt.geometry,
-			new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms: { uState: uniforms.uState, uSelOn: this.uSelOn, uDrop: { value: 0.1 } } }),
-		);
+		const smat = new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms: { uState: uniforms.uState, uSelOn: this.uSelOn, uDrop: { value: 0.1 } } });
+		// gölge geçişi de parçalı: gölge kamerasının kapsamı dışındaki parçalar çizilmez
+		this.shadowMesh = new THREE.Group();
+		if (sbuilt.stats) for (const m of chunkMeshes(sbuilt, this.provinces, smat, CHUNK)) this.shadowMesh.add(m);
 		this.shadowMesh.matrixAutoUpdate = false;
 
 		// --- komşu ülkeler (alçak, soluk)

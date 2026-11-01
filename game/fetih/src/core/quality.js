@@ -11,7 +11,8 @@ export const TIERS = [
 	{
 		id: 0, name: 'Düşük',
 		maxPixels: 1.15e6, maxDpr: 2, minScale: 0.7,
-		shadowSize: 1024, shadowTaps: 1, shadowHalf: 60,
+		// gölge kapsamı 1,35 kat geniş (shadow.js MARGIN: kaydırmada yeniden çizilmez): doku 1024 → 1536, netlik aynı
+		shadowSize: 1536, shadowTaps: 1, shadowHalf: 60,
 		props: 0.5, particles: 300,
 	},
 	{
@@ -23,7 +24,7 @@ export const TIERS = [
 	{
 		id: 2, name: 'Yüksek',
 		maxPixels: 3.0e6, maxDpr: 3, minScale: 0.7,
-		shadowSize: 2048, shadowTaps: 4, shadowHalf: 60,
+		shadowSize: 2560, shadowTaps: 4, shadowHalf: 60,
 		props: 1, particles: 1200,
 	},
 ];
@@ -60,10 +61,13 @@ export function detectTier(gl) {
 }
 
 /**
- * Kare hızı yöneticisi.
- * - Ekran yenileme hızını ölçer (60/90/120 Hz) ve kareleri eşit aralıkla çizer:
- *   120 Hz ekranda 60 kare, gerektiğinde 30 kare. Boşa kare çizilmez, telefon ısınmaz.
- * - Kareler gecikirse önce çözünürlüğü kısar; o da yetmezse sabit 30 kareye geçer.
+ * Kare hızı yöneticisi (v1.4: "yağ gibi").
+ * - Hedef ekranın kendi yenileme hızıdır: 60 Hz ekranda 60, 90'da 90, 120'de 120 kare. rAF aralıklarından ölçülür.
+ * - Kareler gecikirse önce yüksek yenilemeli ekranda yarı hıza (120 → 60) iner; 60'ta çözünürlük basamak basamak kısılır;
+ *   o da yetmezse 30. Her zaman eşit aralık (bölen tam sayı): 90 Hz ekranda 60 yerine 45 (titremesiz).
+ * - Ekranda hiçbir şey kıpırdamıyorsa (kamera durgun, canlandırma yok: app.active false) 30 kare: GPU ve ısı yarıya
+ *   iner, telefon ısınıp kendini yavaşlatmaz. En ufak harekette (kamera, dokunuş, efekt) aynı karede tam hıza döner.
+ * - Çözünürlük değişimi (çizim tamponu yeniden kurulur, bir kare takılır) yalnızca durgunken uygulanır.
  * - Pil %20'nin altına iner ve şarjda değilse pil koruma moduna geçer.
  * - Bulduğu ayarı ekran kartına göre kaydeder; bir sonraki açılış doğru ayarla başlar.
  */
@@ -77,17 +81,15 @@ export class Governor {
 		this.battery = { saver: false, level: 1, charging: true };
 
 		const mem = store.get('perf') || {};
-		const known = mem.gpu === gpu;
+		const known = mem.gpu === gpu && mem.v === 2;
 		this.scale = known ? clamp(mem.scale ?? 1, this.T.minScale, 1) : 1;
-		this.cap = known && mem.cap === 30 ? 30 : 60;
+		this.cap = known ? mem.cap ?? 120 : 120; // en yüksek kare hızı (ekran izin verirse)
 		this.ceil = known ? mem.ceil ?? 1 : 1; // bu cihazda denenip kaldırılamayan en yüksek ölçek
-		this.half = known ? !!mem.half : tier === 0;
 
 		this.vsync = 16.67;
-		this._deltas = new Float32Array(24);
+		this._deltas = new Float32Array(30);
 		this._di = 0;
 		this._count = 0;
-		this._frame = 0;
 		this._lastRender = 0;
 		this._ema = 0;
 		this._slow = 0;
@@ -96,15 +98,25 @@ export class Governor {
 		this._probe = null;
 		this._ups = 0;
 		this._dirty = false;
+		this._pend = null; // durgunluğu bekleyen ölçek değişimi
 		this.onScale = null; // çözünürlük değişince çağrılır
 		this.menu = false;
+		this.idle = false; // ekranda hareket yok (app._loop her karede yazar)
 		this._watchBattery();
 	}
 
+	/** Ekranın yenileme hızı (Hz): ölçülen vsync aralığından, bilinen değerlere yuvarlanır. */
+	get hz() {
+		const f = 1000 / this.vsync;
+		for (const h of [30, 48, 50, 60, 72, 75, 90, 100, 120, 144, 165]) if (Math.abs(f - h) < h * 0.06) return h;
+		return Math.round(f);
+	}
+
 	get targetFps() {
-		if (this.menu) return 30; // menüler ve başlık ekranı: 30 kare yeter
-		if (this.power === 'saver' || (this.power === 'auto' && this.battery.saver)) return 30;
-		return this.cap;
+		const hz = this.hz;
+		if (this.menu || this.idle) return Math.min(30, hz); // durgun ekran: 30 yeter (hareket başlayınca anında tam hız)
+		if (this.power === 'saver' || (this.power === 'auto' && this.battery.saver)) return Math.min(30, hz);
+		return Math.min(this.cap, hz);
 	}
 
 	get maxScale() {
@@ -122,32 +134,56 @@ export class Governor {
 			this._deltas[this._di] = rafDelta;
 			this._di = (this._di + 1) % this._deltas.length;
 			this._count++;
-			if (this._count % 24 === 0) this.vsync = median(this._deltas);
+			// vsync: GPU yetişemeyince rAF aralığı uzar (kaçan kareler); ekranın gerçek hızını durgun pencerelerden
+			// (çoğu vsync çizilmeden geçer) öğreniriz. Çizilen pencerede yalnız aşağı düzeltilir (daha hızlı aralık görüldüyse).
+			if (this._count % 30 === 0) {
+				const lq = low(this._deltas);
+				const quiet = (this._wn || 0) <= 10; // pencerede 30 rAF'tan en çok 10'u çizildi
+				this.vsync = quiet ? lq : Math.min(this.vsync, lq);
+				this._wn = 0;
+			}
 		}
-		const interval = 1000 / this.targetFps;
-		const n = this._divisor(interval);
-		this._frame++;
-		if (this._frame < n) return false;
-		this._frame = 0;
-		const period = this._lastRender ? now - this._lastRender : interval;
+		const n = this._divisor();
+		// ölçüm (duraklatma ekranı): son 1 sn'de çizilen kare sayısı
+		if (!this._fs || now - this._fs > 1000) {
+			this.fps = this._fn || 0;
+			this._fn = 0;
+			this._fs = now;
+		}
+		// zamana göre: son çizimden bu yana n vsync geçtiyse çiz (yarım vsync pay). Çağrı saymak yanlıştı: vsync'ten
+		// uzun süren kare sonraki rAF'ı geciktirince bir vsync daha boşa gidiyordu (120 Hz'de 60 yerine 40 kare).
+		// Hareket başladı: beklemeden çiz.
+		const due = this._lastRender ? this._lastRender + (n - 0.5) * this.vsync : 0;
+		if (now < due && !(this._wasIdle && !this.idle && !this.menu)) return false;
+		this._wasIdle = this.idle || this.menu;
+		this._wn = (this._wn || 0) + 1;
+		this._fn = (this._fn || 0) + 1;
+		const period = this._lastRender ? now - this._lastRender : n * this.vsync;
 		this._lastRender = now;
-		this._adapt(now, period, n * this.vsync);
+		if (!this.idle && !this.menu) this._adapt(now, period, n * this.vsync);
+		if (this._pend != null && (this.idle || now > this._pendAt)) {
+			const s = this._pend;
+			this._pend = null;
+			this.scale = s;
+			if (this.onScale) this.onScale();
+		}
 		return true;
 	}
 
-	/**
-	 * Kaç vsync'te bir çizileceği. 90 Hz ekranda 60 kare eşit dağıtılamaz: güçlü cihaz 90,
-	 * zayıf cihaz eşit aralıklı 45 çizer (titreşimli 60'tan daha akıcı görünür).
-	 */
-	_divisor(interval) {
-		const r = interval / this.vsync;
-		return Math.max(1, this.half ? Math.ceil(r - 0.05) : Math.round(r - 0.15));
+	/** Duraklatma ekranı için kısa özet: ekran kartı, kademe, Hz, son saniyenin kare hızı, çözünürlük ölçeği. */
+	summary() {
+		const g = String(this.gpu || '?').replace(/^ANGLE \(|\)$/g, '').slice(0, 42);
+		return `${g} · q${this.T.id} · ${this.hz} Hz · ${this.fps ?? 0} kare · ölçek ${this.effScale.toFixed(2)}`;
+	}
+
+	/** Kaç vsync'te bir çizileceği: hep tam sayı ve yukarı yuvarlanır (eşit aralık, hedefi aşmaz). */
+	_divisor() {
+		return Math.max(1, Math.ceil(this.hz / this.targetFps - 0.05));
 	}
 
 	/** Sekme gizlenip geri gelince ölçümler sıfırlanır (uzun aradan sahte "yavaşlık" çıkmasın). */
 	reset() {
 		this._lastRender = 0;
-		this._frame = 0;
 		this._slow = 0;
 		this._good = 0;
 	}
@@ -158,7 +194,7 @@ export class Governor {
 		const dt = period / 1000;
 		if (now < this._cool) return;
 
-		const late = this._ema > expected * 1.22;
+		const late = this._ema > expected * 1.2;
 		if (late) {
 			this._slow += dt;
 			this._good = 0;
@@ -169,8 +205,11 @@ export class Governor {
 
 		// Deneme amaçlı yükseltme geri tepti: geri al ve tavanı işaretle.
 		if (this._probe && late && this._slow > 1.2) {
-			this.ceil = this._probe.from;
-			this._setScale(this._probe.from);
+			if (this._probe.cap) this.cap = this._probe.cap;
+			else {
+				this.ceil = this._probe.from;
+				this._setScale(this._probe.from);
+			}
 			this._probe = null;
 			this._cool = now + 4000;
 			this._slow = 0;
@@ -182,42 +221,48 @@ export class Governor {
 			this._dirty = true;
 		}
 
-		if (this._slow > 1.6) {
-			// Basamaklar: önce çözünürlük biraz, sonra yüksek yenilemeli ekranda yarı hız,
-			// sonra çözünürlük en alta, en son sabit 30 kare.
+		const hz = this.hz;
+		if (this._slow > 1.5) {
+			// Basamaklar: yüksek yenilemede önce yarı hız (120 → 60, keskinlik korunur); 60'ta çözünürlük biraz, sonra
+			// en alta; en son 30 kare.
 			this._slow = 0;
 			this._cool = now + 2200;
 			const s = this.effScale;
-			if (s > 0.81) this._setScale(Math.max(0.8, s - 0.1));
-			else if (!this.half && this.vsync < 14) this.half = true;
+			const fps = Math.min(this.cap, hz);
+			if (fps > 60) this.cap = 60;
+			else if (s > 0.81) this._setScale(Math.max(0.8, s - 0.1));
 			else if (s > this.T.minScale + 0.01) this._setScale(Math.max(this.T.minScale, s - 0.1));
-			else if (this.cap === 60) this.cap = 30;
+			else if (fps > 30) this.cap = 30;
 			this._dirty = true;
-		} else if (this._good > 9 && this._ups < 3) {
+		} else if (this._good > 8 && this._ups < 4) {
 			this._good = 0;
-			if (this.cap === 30 && this.power !== 'saver' && !this.battery.saver && this.effScale >= 0.8) {
-				// 30'da rahatsa 60'ı bir kez dene
-				this.cap = 60;
-				this._ups++;
-				this._cool = now + 3000;
-			} else if (this.scale < this.maxScale - 0.01) {
+			const fps = Math.min(this.cap, hz);
+			if (this.scale < this.maxScale - 0.01) {
+				// önce keskinlik geri gelir
 				this._probe = { from: this.scale, t: now };
 				this._setScale(Math.min(this.maxScale, this.scale + 0.08));
 				this._ups++;
 				this._cool = now + 2500;
+			} else if (fps < hz && this.power !== 'saver' && !this.battery.saver) {
+				// rahatsa bir üst kare hızını dene (30 → 60 → ekranın hızı)
+				this._probe = { cap: this.cap, t: now };
+				this.cap = fps < 60 ? 60 : 120;
+				this._ups++;
+				this._cool = now + 3000;
 			}
 		}
 		if (this._dirty && now > this._cool) this.save();
 	}
 
+	/** Ölçek değişimi durgun ana ertelenir (çizim tamponu yeniden kurulurken kare takılır); en geç 3 sn sonra. */
 	_setScale(s) {
-		this.scale = Math.round(s * 100) / 100;
-		if (this.onScale) this.onScale();
+		this._pend = Math.round(s * 100) / 100;
+		this._pendAt = (globalThis.performance?.now?.() ?? 0) + 3000;
 	}
 
 	save() {
 		this._dirty = false;
-		this.store.set('perf', { gpu: this.gpu, scale: this.scale, cap: this.cap, ceil: this.ceil, half: this.half });
+		this.store.set('perf', { v: 2, gpu: this.gpu, scale: this._pend ?? this.scale, cap: this.cap, ceil: this.ceil });
 	}
 
 	_watchBattery() {
@@ -251,7 +296,8 @@ export class Governor {
 	}
 }
 
-function median(arr) {
+/** Ekranın vsync aralığı: ölçülen rAF aralıklarının alt çeyreği (kaçan kareler ortalamayı şişirmesin). */
+function low(arr) {
 	const a = Array.from(arr).filter((x) => x > 0).sort((x, y) => x - y);
-	return a.length ? a[a.length >> 1] : 16.67;
+	return a.length ? a[a.length >> 2] : 16.67;
 }

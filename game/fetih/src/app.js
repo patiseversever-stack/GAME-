@@ -294,9 +294,11 @@ export class App {
 			this._raf = requestAnimationFrame(step);
 			const rafDelta = this._prevRaf ? now - this._prevRaf : 16.7;
 			this._prevRaf = now;
-			// menü, başlık; mobilde ayrıca sakin soru kartı açıkken (harita arkada ağır süzülür, arayüz canlandırmaları
-			// tarayıcının kendi iş parçacığında 60 karede akar) ve parmak haritada değilken: 30 kare (yarı GPU, yarı ısı)
-			this.gov.menu = !!this.lowFps || (!!this.calmQ && this.info.mobile && !this._touching);
+			// kare hızı: ekranda bir şey kıpırdıyorsa ekranın tam hızı (60/90/120), tamamen durgunsa 30 (quality.js).
+			// Başlık ve menüde de aynı kural (eskiden hep 30; soru kartı açıkken de 30'du: harita süzülürken takılıyordu).
+			if (this._wake()) this._activeUntil = now + 400;
+			this.gov.menu = false;
+			this.gov.idle = now > (this._activeUntil || 0);
 			if (!this.gov.tick(now, rafDelta)) return;
 			const dt = this._prev ? Math.min(0.05, (now - this._prev) / 1000) : 1 / 60;
 			this._prev = now;
@@ -304,6 +306,43 @@ export class App {
 		};
 		this._prevRaf = 0;
 		this._raf = requestAnimationFrame(step);
+	}
+
+	/** Hareket başlıyor mu (kare çizilmeden önce, ucuz): dokunuş, kamera çekimi/yolu, efekt, harita canlandırması. */
+	_wake() {
+		const c = this.cam;
+		const sh = c.sh;
+		return !!(
+			this._touching ||
+			this._moved ||
+			(sh && sh.on && sh.t < sh.dur + 0.2) ||
+			(c.mode === 'path' && c.pathT < c.pathDur) ||
+			this.fx?.moving ||
+			this.board?.moving ||
+			this.props?.landmarks?.lod?.moving ||
+			this.scene.onBeforeRender !== THREE.Object3D.prototype.onBeforeRender // soru sahnesi kare sürücüsü (Tufan)
+		);
+	}
+
+	/**
+	 * Bu karede ekranda görülür hareket oldu mu: kameranın ekrandaki kayması (piksel/sn; piksel altı sürüklenme durgun
+	 * sayılır), gece/gündüz geçişi.
+	 */
+	_motion(dt) {
+		const c = this.cam;
+		const m = (this._mv ||= { x: c.target.x, z: c.target.z, d: c.dist, yaw: c.yaw, pitch: c.pitch, n: this.G.uNight.value.x });
+		const d = Math.max(1e-3, c.dist);
+		const ang = Math.hypot(c.target.x - m.x, c.target.z - m.z) / d + Math.abs(c.dist - m.d) / d + Math.abs(c.yaw - m.yaw) + Math.abs(c.pitch - m.pitch);
+		const px = (ang * (this.G.uRes.value.y || 900)) / ((this.camera.fov * Math.PI) / 180);
+		const nn = this.G.uNight.value.x;
+		const moved = px / Math.max(dt, 1e-3) > 12 || Math.abs(nn - m.n) > 1e-4;
+		m.x = c.target.x;
+		m.z = c.target.z;
+		m.d = c.dist;
+		m.yaw = c.yaw;
+		m.pitch = c.pitch;
+		m.n = nn;
+		return moved;
 	}
 
 	frame(dt, draw = true) {
@@ -318,6 +357,7 @@ export class App {
 		this.cam.update(dt);
 		this.props.landmarks?.lod?.update(dt, this.camera, this.cam); // ekran boyuna göre kahraman maketler
 		this.weather.update(dt, this.cam);
+		this._moved = this._motion(dt);
 		if (draw) {
 			this.ui.update();
 			this.render();
