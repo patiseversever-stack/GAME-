@@ -331,6 +331,11 @@ yerleşmeden yeni kahraman girmez, ekrandaki kahraman giriş eşiğinin %35'ine 
 durunca kahraman gelir. Balon, bayrak ve ağaç salınımı kameradan 42–62 birim ötede durur (görünmeyen hareket çizilmez).
 İl adları istem yazısının altına düşmez (`labels.avoid`: genel kipte gizlenir, seçim listesinde üstüne kayar).
 
+**Zemin sürekliliği (v1.5).** Tarla parselleri ~6 birimlik bloklarda farklı yöne döner; blok sınırı bıçak kesiği gibi
+görünüyordu: artık parsellerin dayandığı ince toprak yol (piksel cinsinden genişlik, yol boyu hafif çit gölgesi). Harita
+kendi üstüne gölge düşürmez: kaba kabartma kopyasının gölgesi dağ arkalarında siyah, testere dişi lekeler yapıyordu; dağ
+biçimini yamaç ışığı veriyor (gölge geçişi ~18 bin üçgen hafif). Ağaç, yapı, kale, ordu gölgeleri sürer.
+
 **Defter = oyun.** Oyun (`dist/FetihLigi.html`) ve defter (`dist/SoruGalerisi.html`) aynı `node build.mjs` çağrısında aynı
 kaynaktan derlenir; ikisi de aynı sürüm damgasını taşır (kaynağın içerik özeti: duraklatma ekranında ve defter başlığında
 "sürüm …"). Damga aynıysa kod birebir aynıdır. Defter oyunun içine gömülmedi: oyuncu paketine galeri kodu ve örnek sorular

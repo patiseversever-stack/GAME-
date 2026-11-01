@@ -563,7 +563,8 @@ export class Heroes {
 		const t0 = performance.now();
 		let busy = 0;
 		const k = new HKit();
-		k.seg = this.tier.id === 0 ? 0.75 : 1;
+		k.seg = this.lodOpt?.seg ?? (this.tier.id === 0 ? 0.75 : 1);
+		k.minPart = (this.lodOpt?.minPart ?? 0) * site.s;
 		k.hi = true;
 		k.hf = this.lm.hf;
 		k.site = { x: site.x, y: site.y, z: site.z, s: site.s, ry: site.ry };

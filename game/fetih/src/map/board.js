@@ -136,7 +136,8 @@ vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float sno
 	// tarla deseni: düz, ormansız, alçak yerlerde parsel parsel (her ovada farklı yöne bakar)
 	float farm = (1.0 - smoothstep(0.1, 0.4, bio.x)) * (1.0 - smoothstep(0.15, 0.45, bio.z)) * smoothstep(0.985, 0.998, N.y) * (1.0 - smoothstep(1300.0, 1800.0, e));
 #if TIER > 0
-	vec2 zone = floor(q * 0.16 + n1 * 0.6);
+	vec2 zq = q * 0.16 + n1 * 0.6;
+	vec2 zone = floor(zq);
 	float ang = hash12(zone) * 3.14159;
 	vec2 rq = mat2(cos(ang), -sin(ang), sin(ang), cos(ang)) * q;
 	vec2 fq = rq * vec2(1.7, 0.95) + vec2(n2 * 0.7, n1 * 0.9);
@@ -149,6 +150,16 @@ vec3 terrainAlbedo(vec3 w, vec3 N, vec4 bio, float h, float coast, out float sno
 	vec3 fc = c * (r < 0.2 ? vec3(1.16, 1.06, 0.62) : r < 0.4 ? vec3(0.6, 0.94, 0.48) : r < 0.55 ? vec3(1.04, 1.0, 0.9) : r < 0.75 ? vec3(0.84, 0.68, 0.54) : vec3(1.12, 1.06, 0.82));
 	float edge = min(min(fr.x, 1.0 - fr.x), min(fr.y, 1.0 - fr.y));
 	fc *= mix(0.8, 1.0, smoothstep(0.0, 0.05 + fpx, edge));
+	// blok sınırı tarla yolu: parsel deseni bloktan bloğa döner; sınır bıçak kesiği gibi değil, parsellerin dayandığı
+	// toprak yol olarak okunur (yol boyu hafif çit gölgesi). Uzaklık piksel cinsinden: her yakınlıkta ince ve keskin.
+	vec2 zw = max(fwidth(zq), vec2(1e-5));
+	vec2 zd = (0.5 - abs(fract(zq) - 0.5)) / zw;
+	float zpx = min(zd.x, zd.y);
+	float hw = max(0.0056 / max(zw.x, zw.y), 0.7);
+	float road = 1.0 - smoothstep(hw - 0.7, hw + 0.7, zpx);
+	float hedge = (1.0 - smoothstep(hw, hw * 2.2 + 1.5, zpx)) * (1.0 - road);
+	fc *= 1.0 - hedge * 0.14;
+	fc = mix(fc, mix(${C('#b59d76')}, ${C('#cdb790')}, n3), road);
 	c = mix(c, fc, farm * fade * 0.92);
 #else
 	// q=0: parsel yerine ucuz yamalı ekin lekeleri (hazır gürültüden)
@@ -877,9 +888,10 @@ export class Board {
 		this.chunks = chunkMeshes(built, this.provinces, this.mat, CHUNK);
 		for (const m of this.chunks) this.group.add(m);
 		this.mesh = this.chunks[0];
-		// gölge: kaba kabartma (yalnızca yüzey), biraz alçaltılmış (kendi gölgesi kirlenmesin)
-		// q=0: harita gölge yapmaz (yalnızca ağaç, yapı ve kaleler), gölge geçişi hafif kalsın
-		const sbuilt = tier.id === 0 ? { geometry: emptyGeo(), triangles: 0 } : buildBoardGeometry(this.provinces, this.relief, 1.3, { skirts: false });
+		// v1.5: harita kendi üstüne gölge düşürmez (hiçbir kademede). Kaba kabartma kopyasının gölgesi dağ arkalarında
+		// simsiyah, testere dişi kenarlı lekeler yapıyordu (Erciyes, Kaçkar, Toros); dağın biçimini yamaç ışığı zaten
+		// veriyor. Ağaç, yapı, kale ve ordu gölgeleri sürer. Gölge geçişi her kademede ~18 bin üçgen hafifler.
+		const sbuilt = { geometry: emptyGeo(), triangles: 0 };
 		this.shadowGeoStats = { triangles: sbuilt.triangles };
 		const smat = new THREE.ShaderMaterial({ vertexShader: DEPTH_VS, fragmentShader: DEPTH_FS, uniforms: { uState: uniforms.uState, uSelOn: this.uSelOn, uDrop: { value: 0.1 } } });
 		// gölge geçişi de parçalı: gölge kamerasının kapsamı dışındaki parçalar çizilmez

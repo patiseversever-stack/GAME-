@@ -197,6 +197,21 @@ export class HKit extends Kit {
 			pa[p0 + i * 3 + 1] = wy;
 			pa[p0 + i * 3 + 2] = wz;
 		}
+		// uzak sürüm (aynı tasarım, az yoğunluk): uzaktan piksel altı kalan küçük parça (pencere, korkuluk, insan) yazılmaz
+		if (this.minPart > 0 && !dr) {
+			let x0 = Infinity, y0 = Infinity, z0 = Infinity, x1 = -Infinity, y1 = -Infinity, z1 = -Infinity;
+			for (let i = 0; i < tri; i++) {
+				const o = p0 + i * 3;
+				const x = pa[o], y = pa[o + 1], z = pa[o + 2];
+				if (x < x0) x0 = x;
+				if (x > x1) x1 = x;
+				if (y < y0) y0 = y;
+				if (y > y1) y1 = y;
+				if (z < z0) z0 = z;
+				if (z > z1) z1 = z;
+			}
+			if (Math.max(x1 - x0, y1 - y0, z1 - z0) < this.minPart) return;
+		}
 		// normaller: yumuşakta geometrinin normali (normal matrisiyle), düzde yüz normali
 		const na = N.a;
 		const n0 = N.n;
