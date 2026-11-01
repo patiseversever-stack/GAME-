@@ -1,13 +1,18 @@
-// ADAM ASMACA · HARF ÇEMBERİ (v1.4): klavye yok.
+// ADAM ASMACA · HARF TABLASI (v1.4): klavye yok. Tasarım dili: iOS karanlık (cam yüzeyler, beyaz düğmeler, sistem
+// renkleri: yeşil #30d158, kırmızı #ff453a, sarı #ffd60a; yaylanan geçişler).
 //
-// Kelimenin harfleri (her harf bir sikke, tekrar edenler ayrı sikke) bir mühür çemberinin üstüne karışık dizilir.
-// Parmağı sikkeden sikkeye sürükle (ya da sırayla dokun): altın ip harfleri birleştirir, üstteki kutular canlı dolar.
-// Geri sürüklemek son harfi bırakır. Bütün harfler bağlanınca kelime denenir:
-//   doğru  → kutular sırayla yeşile döner, sikkeler saçılır;
-//   yanlış → bir burç yıkılır (3 hak). DOĞRU YERDEKİ harfler kutularına altınla kilitlenir ve sikkeleri çemberden
-//            çekilir, kalanlar yeniden dizilir: her deneme kelimeyi biraz açar (adam asmacanın ruhu, harf harf açılış).
-// Bütün harfler bağlanmadan parmak kalkarsa ceza yok: harfler geri döner. Ortadaki mühür çemberi karıştırır (ve yarım
+// Kelimenin harfleri (her harf bir tuş, tekrar edenler ayrı tuş) masada yatan koyu cam bir tablanın (perspektifli disk)
+// yörüngesinde karışık durur. Tabla yana geniş, boyca kısa: tuşlar büyük (44–60 px) ve aralıkları geniş, kart uzamaz.
+// Parmağı tuştan tuşa sürükle (ya da sırayla dokun): tuş sarı-turuncu dolar, harfi kutusuna uçar, aralarında parlak
+// çizgi gerilir. Geri sürüklemek son harfi bırakır. Bütün harfler bağlanınca kelime denenir:
+//   doğru  → tuşlar göbeğe çekilir, göbek yeşil parlar ve kıvılcım saçar, kutular sırayla yeşile döner;
+//   yanlış → çizgi kızarır, tabla iOS şifre ekranı gibi sallanır, bir hak noktası söner (3 hak). DOĞRU YERDEKİ harfler
+//            kutularına sarıyla kilitlenir ve tuşları çekilir, kalanlar yeniden dizilir: her deneme kelimeyi biraz açar.
+// Bütün harfler bağlanmadan parmak kalkarsa ceza yok: harfler geri döner. Göbek mühür kadranı karıştırır (ve yarım
 // kalan dizilişi siler). Masaüstünde harf tuşları da sikke seçer, ⌫ son harfi bırakır.
+//
+// Bütün canlandırmalar
+// transform / opacity (GPU); kare başına yerleşim okuması yok, ip yalnız değişince çizilir.
 //
 // Cevap biçimi eski adam asmacayla aynı: { ok, wrong } (judge aynı; bot 3 hakka göre). Kart kapanınca (süre) lock().
 // Jokerler ve hata ayıklama gizli .fl-key düğmeleriyle konuşur (eski klavyenin sözleşmesi): Yarı Yarıya harf açar →
@@ -22,90 +27,165 @@ import { appOf, sfx } from './d_ortak.js';
 
 const MAX = 3; // yanlış deneme hakkı (kale burcu)
 const ABC = KEYS.join('');
+let UID = 0;
 
 const MIX_SVG =
-	'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="M4 4l5 5"/></svg>';
+	'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M16 3h5v5"/><path d="M4 20 21 3"/><path d="M21 16v5h-5"/><path d="m15 15 6 6"/><path d="M4 4l5 5"/></svg>';
 
+// Görsel dil: oyunun arena dili (şıklar, jokerler, VS rozeti, afiş): eğik kesim (skewX −8°), keskin beyaz çerçeve, kalın
+// alt gölge, Barlow Condensed italik 800, doygun renk blokları, segmentli altın halka (süre çubuğu gibi).
+const FONT = `'Barlow Condensed','Lilita One',sans-serif`;
+/** Karo renkleri (şık harf blokları ve joker paletinden): her harf kendi renginde. */
+const PAL = [
+	['#5a9bff', '#2f7bff', '#1a4fb8'],
+	['#ffad55', '#ff8a1f', '#b9560a'],
+	['#4fdc8a', '#22c46a', '#12803f'],
+	['#c27cff', '#a24bff', '#6a22b8'],
+	['#ff7eb0', '#ec4f93', '#a0225a'],
+	['#4fd6e0', '#14b8c4', '#0b7880'],
+	['#ff7a6a', '#e5483a', '#9a1d12'],
+	['#ffd25a', '#f5b324', '#a36a06'],
+];
 const CSS = /* css */ `
-.hr{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;margin-top:4px;user-select:none;-webkit-user-select:none}
-/* --------------------------------------------------- kelime şeridi: boş kutu lacivert oyuk, dolarken fildişi, kilitte altın */
-.hr-word{display:flex;justify-content:center;gap:5px;max-width:100%}
+.hr{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;margin:2px 0 12px;user-select:none;-webkit-user-select:none}
+/* --------------------------------------------------- kelime şeridi: eğik kutular (şık dili) */
+.hr-top{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+.hr-word{display:flex;justify-content:center;gap:6px;max-width:100%}
 .hr-word s{flex:none;width:10px}
-.hr-s{position:relative;flex:none;width:var(--sw,36px);height:calc(var(--sw,36px) * 1.22);max-height:46px;border-radius:9px;display:grid;place-items:center;
-  font:400 calc(min(var(--sw,36px), 38px) * .66)/1 'Lilita One',sans-serif;color:#1b2340;
-  background:linear-gradient(180deg,#0c1430,#16224a);box-shadow:inset 0 3px 6px rgba(0,0,0,.55),inset 0 -1px 0 rgba(255,214,120,.35),0 1px 0 rgba(255,255,255,.06)}
-.hr-s::after{content:'';position:absolute;left:22%;right:22%;bottom:6px;height:2px;border-radius:2px;background:rgba(255,214,120,.38)}
-.hr-s.pv,.hr-s.lk,.hr-s.ok,.hr-s.bad,.hr-s.miss{box-shadow:none}
-.hr-s.pv::after,.hr-s.lk::after,.hr-s.ok::after,.hr-s.bad::after,.hr-s.miss::after{display:none}
-.hr-s.pv{background:linear-gradient(180deg,#fffaf0,#efe1c2);box-shadow:0 3px 0 #b9a27a,0 0 0 1.5px rgba(255,255,255,.7) inset;animation:hrPop .22s cubic-bezier(.3,1.7,.5,1)}
-.hr-s.lk{color:#4a2600;background:linear-gradient(180deg,#ffe58a,#f2b52a);box-shadow:0 3px 0 #a8660a,0 0 14px rgba(255,190,50,.55);animation:hrLock .5s cubic-bezier(.3,1.6,.5,1) both}
-.hr-s.bad{color:#fff;background:linear-gradient(180deg,#ff7a6a,#c8352a);box-shadow:0 3px 0 #6e140c;animation:hrNo .42s}
-.hr-s.ok{color:#fff;text-shadow:0 2px 0 rgba(0,70,20,.35);background:linear-gradient(180deg,#7ef09a,#1fae55);box-shadow:0 3px 0 #0b6a2c,0 0 16px rgba(95,240,138,.55);
-  animation:hrWin .55s calc(var(--k) * 55ms) cubic-bezier(.3,1.8,.5,1) both}
-.hr-s.miss{color:#ffd2c8;background:linear-gradient(180deg,#5a2a30,#3a161c);box-shadow:0 3px 0 #1d0a0d}
-.hr-s.sug{box-shadow:0 0 0 2.5px #ec4f93,0 0 16px #ec4f93,inset 0 3px 6px rgba(0,0,0,.5)}
-@keyframes hrPop{0%{transform:scale(.6)}100%{transform:none}}
-@keyframes hrLock{0%{transform:translateY(10px) scale(.7);filter:brightness(1.8)}100%{transform:none}}
-@keyframes hrNo{0%,100%{transform:none}25%{transform:translateX(-4px) rotate(-3deg)}75%{transform:translateX(4px) rotate(3deg)}}
-@keyframes hrWin{0%{transform:none}40%{transform:translateY(-9px) scale(1.12)}100%{transform:none}}
-/* --------------------------------------------------- sahne: hak (burçlar), çember, ipucu */
-.hr-stage{position:relative;display:flex;flex-direction:column;align-items:center;gap:6px}
-.hr-hp{position:absolute;right:calc(50% - var(--d) / 2 - 34px);top:4px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:7px 5px;border-radius:12px;
-  background:linear-gradient(180deg,rgba(10,18,44,.9),rgba(6,10,26,.9));box-shadow:inset 0 0 0 1px rgba(255,214,120,.22)}
-.hr-hp i{width:15px;height:17px;background:linear-gradient(#ffe680,#e8980e);-webkit-mask:var(--tw) center/contain no-repeat;mask:var(--tw) center/contain no-repeat;
-  transition:transform .5s cubic-bezier(.5,0,.7,.4),opacity .5s;transform-origin:50% 100%}
-.hr-hp i.down{transform:rotate(38deg) translateY(4px) scale(.8);opacity:.16}
-/* mühür çemberi: altın kenar, lacivert kadife, ortada Selçuklu yıldızı (iki dönük kare), dışta ince yazı halkası */
-.hr-ring{position:relative;width:var(--d);height:var(--d);border-radius:50%;touch-action:none;flex:none;
-  background:conic-gradient(from 210deg,#7a4d10,#ffe08a 12%,#b9781a 26%,#fff0b8 38%,#9a6012 52%,#ffd56a 66%,#7a4d10 80%,#f7cf6a 92%,#7a4d10);
-  box-shadow:0 14px 28px rgba(0,0,0,.55),0 0 0 1px rgba(0,0,0,.5)}
-.hr-disc{position:absolute;inset:5px;border-radius:50%;overflow:hidden;
-  background:radial-gradient(circle at 50% 38%,#24346e 0,#141f48 46%,#0a1130 80%,#070b20 100%);box-shadow:inset 0 0 0 1.5px rgba(0,0,0,.6),inset 0 10px 24px rgba(120,160,255,.12),inset 0 -14px 26px rgba(0,0,0,.55)}
-.hr-disc::before,.hr-disc::after{content:'';position:absolute;left:50%;top:50%;width:46%;height:46%;margin:-23% 0 0 -23%;border:1.5px solid rgba(255,214,120,.16);border-radius:4px}
-.hr-disc::after{transform:rotate(45deg)}
-.hr-disc i{position:absolute;inset:9%;border-radius:50%;border:1px dashed rgba(255,214,120,.13)}
-.hr-ring.shake{animation:hrShake .42s}
-@keyframes hrShake{0%,100%{transform:none}20%{transform:translateX(-7px) rotate(-2deg)}40%{transform:translateX(6px) rotate(2deg)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+.hr-s{position:relative;flex:none;width:var(--sw,34px);height:min(calc(var(--sw,34px) * 1.25),44px);display:grid;place-items:center;transform:skewX(-8deg);overflow:hidden;
+  font:italic 800 min(calc(var(--sw,34px) * .8),30px)/1 ${FONT};color:#0e1430;
+  background:rgba(255,255,255,.05);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.28),inset 0 -3px 0 rgba(255,255,255,.08)}
+.hr-s.pv{background:linear-gradient(180deg,#fff,#e4e9f4);box-shadow:0 3px 0 rgba(0,0,0,.45);animation:hrSlam .26s cubic-bezier(.2,.9,.3,1.3) both}
+.hr-s.lk{color:#1a1200;background:linear-gradient(180deg,#ffe066,#ffbb1f);box-shadow:0 3px 0 #8a5a00,0 0 16px rgba(255,190,40,.45);animation:hrSlam .36s cubic-bezier(.2,.9,.3,1.3) both}
+.hr-s.bad{color:#fff;background:linear-gradient(180deg,#ff6a5a,#d42a1c);box-shadow:0 3px 0 #6e0c05;animation:hrNo .42s}
+.hr-s.ok{color:#fff;background:linear-gradient(180deg,#7fe88a,#2fa84a);box-shadow:0 3px 0 #0f5a22,0 0 18px rgba(95,232,120,.5);text-shadow:0 2px 0 rgba(0,60,20,.35);
+  animation:hrWin .5s calc(var(--k) * 50ms) cubic-bezier(.2,.9,.3,1.3) both}
+.hr-s.miss{color:#ffd1cc;background:rgba(229,58,42,.25);box-shadow:inset 0 0 0 1.5px rgba(255,90,70,.7)}
+.hr-s.sug{box-shadow:0 0 0 2.5px #ec4f93,0 0 16px rgba(236,79,147,.7)}
+.hr-s::after{content:'';position:absolute;inset:0;background:linear-gradient(110deg,transparent 35%,rgba(255,255,255,.75) 50%,transparent 65%);transform:translateX(-130%);pointer-events:none}
+.hr-s.ok::after,.hr-s.lk::after{animation:hrWipe .6s calc(var(--k,0) * 50ms + .1s) ease-out}
+@keyframes hrSlam{0%{transform:skewX(-8deg) scale(1.45);opacity:0}100%{transform:skewX(-8deg)}}
+@keyframes hrNo{0%,100%{transform:skewX(-8deg)}20%{transform:skewX(-8deg) translateX(-6px)}40%{transform:skewX(-8deg) translateX(5px)}60%{transform:skewX(-8deg) translateX(-3px)}80%{transform:skewX(-8deg) translateX(2px)}}
+@keyframes hrWin{0%{transform:skewX(-8deg)}40%{transform:skewX(-8deg) translateY(-7px) scale(1.12)}100%{transform:skewX(-8deg)}}
+@keyframes hrWipe{to{transform:translateX(130%)}}
+/* hak: üç eğik çubuk (süre çubuğu dili) */
+.hr-hp{display:flex;gap:4px}
+.hr-hp i{width:9px;height:20px;transform:skewX(-8deg);background:linear-gradient(180deg,#ffe066,#ffbb1f);box-shadow:0 2px 0 #8a5a00;transition:background .3s,box-shadow .3s,transform .4s cubic-bezier(.2,.9,.3,1.3)}
+.hr-hp i.down{background:rgba(255,255,255,.12);box-shadow:none;transform:skewX(-8deg) scaleY(.6)}
+/* --------------------------------------------------- sahne */
+.hr-stage{position:relative;display:flex;justify-content:center;width:100%}
+.hr-plat{position:relative;flex:none;width:var(--w);height:var(--h);touch-action:none}
+.hr-face{position:absolute;inset:0;pointer-events:none}
+.hr-face svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.hr-plat.shake{animation:hrShake .45s}
+@keyframes hrShake{0%,100%{transform:none}15%{transform:translateX(-10px)}30%{transform:translateX(9px)}45%{transform:translateX(-7px)}60%{transform:translateX(5px)}75%{transform:translateX(-3px)}}
+/* çizgi: altın, koyu konturlu, beyaz çekirdek (yayın grafiği) */
 .hr-svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none;z-index:2}
-.hr-svg polyline,.hr-svg line{fill:none;stroke-linecap:round;stroke-linejoin:round}
-.hr-svg .gl{stroke:rgba(255,190,60,.5);stroke-width:calc(var(--c) * .34);filter:blur(5px)}
-.hr-svg .rp{stroke:#ffcf4a;stroke-width:calc(var(--c) * .2)}
-.hr-svg .hi{stroke:rgba(255,250,225,.9);stroke-width:calc(var(--c) * .06)}
-.hr-svg .tl{stroke:#ffcf4a;stroke-width:calc(var(--c) * .2);opacity:.75}
-/* sikkeler: fildişi, kabartma yazı, altın halka; seçilince altına döner ve büyür */
-.hr-t{position:absolute;left:0;top:0;z-index:3;width:var(--c);height:var(--c);margin:calc(var(--c) / -2) 0 0 calc(var(--c) / -2);border-radius:50%;display:grid;place-items:center;
-  font:400 calc(var(--c) * .52)/1 'Lilita One',sans-serif;color:#1b2340;
-  background:radial-gradient(circle at 35% 28%,#fffdf6 0,#f6ead0 46%,#dcc49a 100%);
-  box-shadow:0 0 0 2px #c9a35a,0 0 0 3.5px rgba(30,20,0,.45),0 5px 10px rgba(0,0,0,.45),inset 0 -3px 5px rgba(120,80,20,.28),inset 0 2px 2px rgba(255,255,255,.8);
-  transform:translate(var(--x),var(--y));transition:transform .42s cubic-bezier(.3,1.25,.5,1),opacity .3s,background .15s,color .15s;will-change:transform}
-.hr-t::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid #ffd25a;opacity:0;transform:scale(.7);pointer-events:none}
-.hr-t.on{color:#3a1d00;background:radial-gradient(circle at 35% 28%,#fff6c8 0,#ffd560 50%,#e09a1c 100%);
-  box-shadow:0 0 0 2px #fff1b0,0 0 0 4px rgba(120,60,0,.5),0 0 22px rgba(255,190,50,.8),inset 0 -3px 5px rgba(150,80,0,.35)}
-.hr-t.on::after{animation:hrRip .45s ease-out}
-.hr-t.gone{opacity:0;transform:translate(var(--x),var(--y)) scale(.2);pointer-events:none}
-.hr-t.sug{box-shadow:0 0 0 2.5px #ec4f93,0 0 20px #ec4f93,0 5px 10px rgba(0,0,0,.45)}
-@keyframes hrRip{0%{opacity:.9;transform:scale(.8)}100%{opacity:0;transform:scale(1.45)}}
-.hr.win .hr-t{opacity:0;transform:translate(var(--x),var(--y)) scale(1.6);transition:transform .5s cubic-bezier(.2,.8,.3,1),opacity .5s}
-/* orta mühür: karıştır */
-.hr-mix{position:absolute;left:50%;top:50%;z-index:2;width:calc(var(--d) * .25);height:calc(var(--d) * .25);margin:calc(var(--d) * -.125) 0 0 calc(var(--d) * -.125);border-radius:50%;
-  display:grid;place-items:center;border:0;cursor:pointer;color:#ffe08a;padding:0;
-  background:radial-gradient(circle at 40% 32%,#2e417e,#16224c 70%);box-shadow:0 0 0 1.5px rgba(255,214,120,.55),0 0 0 4px rgba(10,16,40,.9),0 4px 10px rgba(0,0,0,.5);transition:transform .15s}
-.hr-mix svg{width:44%;height:44%;filter:drop-shadow(0 1px 1px rgba(0,0,0,.6))}
-.hr-mix:active{transform:scale(.9)}
-.hr-mix.spin svg{animation:hrSpin .45s cubic-bezier(.3,1.4,.5,1)}
-@keyframes hrSpin{to{transform:rotate(360deg)}}
-.hr-mix b{position:absolute;inset:0;display:grid;place-items:center;font:400 calc(var(--d) * .085)/1 'Lilita One',sans-serif;color:#fff3cc;opacity:0;transition:opacity .15s}
+.hr-svg polyline,.hr-svg line{fill:none;stroke-linecap:round;stroke-linejoin:round;transition:stroke .2s,opacity .3s}
+.hr-svg .gl{stroke:#1a1200;stroke-width:15px;opacity:.9}
+.hr-svg .rp{stroke:#ffd25a;stroke-width:10px}
+.hr-svg .fx{stroke:#fff8dc;stroke-width:3.5px}
+.hr-svg .tl{stroke:#ffd25a;stroke-width:8px;opacity:.85}
+.hr-svg.bad .rp,.hr-svg.bad .tl{stroke:#ff5a48}
+.hr-svg.bad .fx{stroke:#ffd1cc}
+.hr-svg.snap{opacity:0;transition:opacity .3s .15s}
+/* karolar: eğik renkli blok, beyaz çerçeve, kalın alt gölge, üst parlaklık; seçilince beyaza döner (harf kendi renginde) */
+.hr-t{position:absolute;left:0;top:0;z-index:3;width:var(--tw);height:var(--th);margin:calc(var(--th) / -2) 0 0 calc(var(--tw) / -2);display:grid;place-items:center;
+  font:italic 800 calc(var(--th) * .66)/1 ${FONT};color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.3);
+  background:linear-gradient(180deg,var(--c1) 0,var(--c2) 55%,var(--c3) 100%);
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.6),inset 0 2px 0 rgba(255,255,255,.35),0 4px 0 rgba(0,0,0,.5),0 8px 14px rgba(0,0,0,.35);
+  transform:translate(var(--x),var(--y)) skewX(var(--sk,-8deg)) scale(var(--s,1));transition:transform .42s cubic-bezier(.2,.9,.3,1.25),opacity .3s,background .15s,color .15s;will-change:transform}
+.hr-t::before{content:'';position:absolute;left:0;right:0;top:0;height:46%;background:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,0));pointer-events:none}
+.hr-t.on{color:var(--c2);text-shadow:none;background:linear-gradient(180deg,#fff,#e4e9f4);
+  box-shadow:0 0 0 3px #ffd25a,0 0 18px rgba(255,210,90,.75),0 4px 0 rgba(0,0,0,.5);transform:translate(var(--x),var(--y)) skewX(var(--sk,-8deg)) translateY(-3px) scale(calc(var(--s,1) * 1.1))}
+.hr-t.nope{animation:hrNope .42s}
+.hr-t.in{transform:translate(var(--x),var(--y)) skewX(var(--sk,-8deg)) scale(.3);opacity:0}
+.hr-t.gone,.hr-t.suck{transform:translate(var(--x),var(--y)) skewX(var(--sk,-8deg)) scale(.2);opacity:0;pointer-events:none}
+.hr-t.suck{transition:transform .42s cubic-bezier(.6,0,.8,.4),opacity .42s}
+.hr-t.sug{box-shadow:0 0 0 3px #ec4f93,0 0 20px rgba(236,79,147,.8),0 4px 0 rgba(0,0,0,.5)}
+@keyframes hrNope{0%,100%{}30%,70%{background:linear-gradient(180deg,#ff6a5a,#d42a1c);color:#fff}}
+/* göbek: VS rozeti gibi eğik siyah plaka, beyaz çerçeve, altın simge */
+.hr-mix{position:absolute;left:50%;top:50%;z-index:2;width:50px;height:40px;margin:-20px 0 0 -25px;display:grid;place-items:center;border:0;padding:0;cursor:pointer;
+  color:#ffd25a;background:#0a0b14;box-shadow:inset 0 0 0 2px #fff,0 4px 14px rgba(0,0,0,.6);transform:skewX(-8deg);transition:transform .15s}
+.hr-mix svg{width:22px;height:22px;transform:skewX(8deg);transition:opacity .15s}
+.hr-mix:active{transform:skewX(-8deg) scale(.9)}
+.hr-mix.spin svg{animation:hrSpin .45s cubic-bezier(.2,.9,.3,1.3)}
+.hr-mix.flash{animation:hrHub .6s cubic-bezier(.2,.9,.3,1.3)}
+@keyframes hrSpin{to{transform:skewX(8deg) rotate(360deg)}}
+@keyframes hrHub{40%{transform:skewX(-8deg) scale(1.35);background:#2fa84a}100%{transform:skewX(-8deg)}}
+.hr-mix b{position:absolute;inset:0;display:grid;place-items:center;transform:skewX(8deg);font:italic 800 24px/1 ${FONT};color:#ffd25a;opacity:0;transition:opacity .15s}
 .hr.drag .hr-mix svg{opacity:0}
 .hr.drag .hr-mix b{opacity:1}
-.hr-tip{font:800 10.5px/1 'Manrope',system-ui,sans-serif;letter-spacing:.22em;margin-right:-.22em;color:rgba(255,232,180,.62);text-transform:uppercase;transition:opacity .4s}
-.hr.used .hr-tip{opacity:0}
-.hr.done .hr-ring{pointer-events:none}
+.hr.done .hr-plat{pointer-events:none}
 .hr .fl-key{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);border:0;padding:0;margin:0;opacity:0;pointer-events:none}
-.hr-spark{position:absolute;z-index:6;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;border-radius:50%;background:var(--c,#ffd25a);pointer-events:none;box-shadow:0 0 8px var(--c,#ffd25a)}
+.hr-fly{position:absolute;left:0;top:0;z-index:8;pointer-events:none;font:italic 800 28px/1 ${FONT};color:#fff;text-shadow:0 0 12px rgba(255,210,90,.95),0 2px 0 rgba(0,0,0,.4)}
+.hr-spark{position:absolute;left:0;top:0;z-index:6;width:7px;height:7px;margin:-3.5px 0 0 -3.5px;background:var(--c,#ffd25a);transform-origin:center;pointer-events:none}
+/* =================================================== A · ARENA ÇARKI: koyu disk, segmentli altın halka */
+.hr.t-arena .hr-face::before{content:'';position:absolute;inset:0;border-radius:50%;
+  background:radial-gradient(circle at 50% 42%,#1b2346 0,#0e1430 55%,#070a18 100%);box-shadow:0 14px 30px rgba(0,0,0,.6),inset 0 0 0 1.5px rgba(255,255,255,.12)}
+.hr.t-arena .hr-face::after{content:'';position:absolute;inset:-8px;border-radius:50%;
+  background:repeating-conic-gradient(from -2.5deg,#ffd25a 0 6deg,rgba(255,210,90,.14) 6deg 9deg);
+  -webkit-mask:radial-gradient(circle closest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));mask:radial-gradient(circle closest-side,transparent calc(100% - 7px),#000 calc(100% - 6px));
+  filter:drop-shadow(0 0 6px rgba(255,190,40,.45))}
+/* =================================================== B · PETEK: altıgen karolar, petek desenli disk */
+.hr.t-petek .hr-t,.hr.t-petek .hr-t.on{--sk:0deg;background:none;box-shadow:none;filter:drop-shadow(0 4px 0 rgba(0,0,0,.55)) drop-shadow(0 8px 10px rgba(0,0,0,.3))}
+.hr.t-petek .hr-t::before{display:none}
+.hr.t-petek .hr-t span{position:relative}
+.hr.t-petek .hx{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.hr.t-petek .hx .b{fill:var(--c2);stroke:rgba(255,255,255,.8);stroke-width:4.5;stroke-linejoin:round}
+.hr.t-petek .hx .g{fill:rgba(255,255,255,.22)}
+.hr.t-petek .hx .d{fill:var(--c3);opacity:.55}
+.hr.t-petek .hr-t.on .hx .b{fill:#fff;stroke:#ffd25a;stroke-width:7}
+.hr.t-petek .hr-t.on .hx .d{fill:#d9e0ee}
+.hr.t-petek .hr-t.on{filter:drop-shadow(0 0 9px rgba(255,210,90,.95)) drop-shadow(0 4px 0 rgba(0,0,0,.55))}
+.hr.t-petek .hr-t.nope .hx .b{fill:#e5483a}
+.hr.t-petek .hr-mix{width:54px;height:48px;margin:-24px 0 0 -27px;transform:none;clip-path:polygon(25% 3%,75% 3%,100% 50%,75% 97%,25% 97%,0 50%);box-shadow:none;background:#ffd25a;color:#1a1200}
+.hr.t-petek .hr-mix svg,.hr.t-petek .hr-mix b{transform:none;color:#1a1200}
+.hr.t-petek .hr-mix:active{transform:scale(.9)}
+.hr.t-petek .hr-face::before{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle at 50% 42%,#1b2346 0,#0e1430 55%,#070a18 100%);box-shadow:0 14px 30px rgba(0,0,0,.6),inset 0 0 0 2px rgba(255,210,90,.55)}
+/* =================================================== C · ŞERİT: iki sıra büyük eğik kart (çark yok) */
+.hr.t-serit .hr-face::before{content:'';position:absolute;inset:-8px -6px;transform:skewX(-8deg);background:linear-gradient(180deg,#121a3a,#0a0f24);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12),0 10px 24px rgba(0,0,0,.5)}
+.hr.t-serit .hr-mix{position:static;margin:0;width:44px;height:34px}
 `;
 
-/** Sikke boyu (px): çember çapına ve sikke sayısına göre. */
-const coinSize = (d, n) => Math.round((n <= 5 ? 0.25 : n <= 7 ? 0.225 : n <= 9 ? 0.195 : 0.178) * d);
+/** Petek karosu: altıgen gövde, alt yarıda koyu ton, üst yarıda parlaklık, beyaz çerçeve. */
+const HEX =
+	'<svg class="hx" viewBox="0 0 116 100" preserveAspectRatio="none" aria-hidden="true"><polygon class="b" points="29,3 87,3 113,50 87,97 29,97 3,50"/><polygon class="d" points="3,50 113,50 87,97 29,97"/><polygon class="g" points="29,3 87,3 107,39 9,39"/></svg>';
+
+/** Tema: defterdeki A/B/C düğmesi ya da URL ?hang=arena|petek|serit; yoksa varsayılan. */
+const THEMES = ['arena', 'petek', 'serit'];
+const HANG_THEME = () => {
+	const g = globalThis.__hangTheme;
+	if (THEMES.includes(g)) return g;
+	try {
+		const t = new URLSearchParams(globalThis.location?.search || '').get('hang');
+		if (THEMES.includes(t)) return t;
+	} catch {
+		/* yok */
+	}
+	return 'arena';
+};
+
+/** Petek deseni (disk yüzü): soluk altıgen ağ. */
+const honey = (W) => {
+	const r = 13;
+	const h = r * Math.sqrt(3);
+	let p = '';
+	for (let y = -h; y < W + h; y += h)
+		for (let x = -r * 3, k = 0; x < W + r * 3; x += r * 3, k++) {
+			const hex = (cx, cy) => `M${cx - r},${cy}l${r / 2},${-h / 2}h${r}l${r / 2},${h / 2}l${-r / 2},${h / 2}h${-r}z`;
+			p += hex(x, y) + hex(x + r * 1.5, y + h / 2);
+		}
+	return p;
+};
+
+/** Tablanın yüz çizimi (tema başına). */
+const FACE = {
+	arena: () => '',
+	petek: (W) => `<svg viewBox="0 0 ${W} ${W}" aria-hidden="true"><defs><clipPath id="hrC${W}"><circle cx="${W / 2}" cy="${W / 2}" r="${W / 2 - 2}"/></clipPath></defs>
+		<path d="${honey(W)}" fill="none" stroke="rgba(255,210,90,.09)" stroke-width="1.2" clip-path="url(#hrC${W})"/></svg>`,
+	serit: () => '',
+};
 
 export const hang = {
 	time: 23,
@@ -124,60 +204,120 @@ export const hang = {
 		const app = appOf();
 		const word = [...v.word];
 		const n = word.length;
-		const free = () => word.map((c, i) => i).filter((i) => word[i] !== ' ' && !lock[i]); // açılmamış konumlar
 		const lock = word.map((c) => c === ' ');
+		const free = () => word.map((c, i) => i).filter((i) => !lock[i]); // açılmamış konumlar
 		const vw = Math.min(innerWidth || 400, 560);
-		const D = Math.round(Math.max(172, Math.min(236, vw * 0.6, (innerHeight || 800) * 0.27)));
-		const C = coinSize(D, v.tiles.length);
-		const RAD = D / 2 - C / 2 - 9;
-		const sw = Math.min(38, Math.floor((Math.min(vw - 40, 380) - (n - 1) * 5) / n));
-		el.innerHTML = `<div class="hr" style="--d:${D}px;--c:${C}px;--sw:${sw}px">
-			<div class="hr-word">${word.map((c, i) => (c === ' ' ? '<s></s>' : `<b class="hr-s" data-i="${i}"></b>`)).join('')}</div>
+		// tema (taslak): arena (çark, eğik karolar) · petek (çark, altıgen karolar) · serit (iki sıra kart, çark yok)
+		const THEME = HANG_THEME();
+		const round = THEME !== 'serit';
+		const nt = v.tiles.length;
+		let W;
+		let H;
+		let TW;
+		let TH;
+		let A = 0;
+		let rows = 1;
+		let colsMax = nt;
+		const GX = 10;
+		const GY = 12;
+		if (round) {
+			W = H = Math.round(Math.min(vw * 0.62, (innerHeight || 800) * 0.27, 240));
+			TH = Math.round(Math.max(40, Math.min(54, (nt <= 5 ? 0.24 : nt <= 7 ? 0.215 : nt <= 9 ? 0.188 : 0.172) * W)));
+			TW = Math.round(TH * 1.16);
+			A = W / 2 - TW / 2 - 12;
+		} else {
+			W = Math.round(Math.min(vw - 36, 380));
+			rows = nt <= 5 ? 1 : 2;
+			colsMax = Math.ceil(nt / rows);
+			TW = Math.round(Math.min(76, (W - 12 - (colsMax - 1) * GX) / colsMax));
+			TH = Math.round(Math.min(60, Math.max(48, TW * 0.86)));
+			H = rows * TH + (rows - 1) * GY + 8;
+		}
+		const K = Math.max(TW, TH);
+		const sw = Math.min(40, Math.floor((Math.min(vw - 40, 380) - (round ? 46 : 110) - (n - 1) * 6) / n));
+		const uid = ++UID;
+		const face = FACE[THEME](W, H);
+		const mixBtn = `<button class="hr-mix" aria-label="Karıştır">${MIX_SVG}<b></b></button>`;
+		el.innerHTML = `<div class="hr t-${THEME}${round ? ' round' : ''}" style="--w:${W}px;--h:${H}px;--tw:${TW}px;--th:${TH}px;--sw:${sw}px">
+			<div class="hr-top"><div class="hr-word">${word.map((c, i) => (c === ' ' ? '<s></s>' : `<b class="hr-s" data-i="${i}"></b>`)).join('')}</div><div class="hr-hp" aria-label="Hak">${'<i></i>'.repeat(MAX)}</div>${round ? '' : mixBtn}</div>
 			<div class="hr-stage">
-				<div class="hr-hp" aria-label="Hak">${'<i></i>'.repeat(MAX)}</div>
-				<div class="hr-ring">
-					<div class="hr-disc"><i></i></div>
-					<svg class="hr-svg" viewBox="0 0 ${D} ${D}"><polyline class="gl"/><polyline class="rp"/><polyline class="hi"/><line class="tl"/></svg>
-					<button class="hr-mix" aria-label="Karıştır">${MIX_SVG}<b></b></button>
-					${v.tiles.map((c, i) => `<b class="hr-t" data-i="${i}">${esc(c)}</b>`).join('')}
+				<div class="hr-plat">
+					<div class="hr-face">${face}</div>
+					<svg class="hr-svg" viewBox="0 0 ${W} ${H}"><polyline class="gl"/><polyline class="rp"/><polyline class="fx"/><line class="tl"/></svg>
+					${round ? mixBtn : ''}
+					${v.tiles.map((c, i) => `<b class="hr-t in" data-i="${i}" style="--c1:${PAL[i % 8][0]};--c2:${PAL[i % 8][1]};--c3:${PAL[i % 8][2]}">${THEME === 'petek' ? HEX : ''}<span>${esc(c)}</span></b>`).join('')}
 				</div>
-				<div class="hr-tip">Harfleri sırayla birleştir</div>
 			</div>
 			${[...ABC].map((k) => `<button class="fl-key" data-k="${k}" tabindex="-1" aria-hidden="true"></button>`).join('')}
 		</div>`;
 		const root = el.querySelector('.hr');
-		const ring = el.querySelector('.hr-ring');
+		const ring = el.querySelector('.hr-plat');
+		const svg = el.querySelector('.hr-svg');
 		const mix = el.querySelector('.hr-mix');
 		const cnt = mix.querySelector('b');
 		const slots = new Map([...el.querySelectorAll('.hr-s')].map((s) => [+s.dataset.i, s]));
 		const hp = [...el.querySelectorAll('.hr-hp i')];
-		const [pGl, pRp, pHi] = el.querySelectorAll('.hr-svg polyline');
-		const tail = el.querySelector('.hr-svg line');
-		const T = v.tiles.map((c, i) => ({ c, i, el: el.querySelector(`.hr-t[data-i="${i}"]`), on: true, x: 0, y: 0 }));
+		const [pGl, pRp, pFx] = svg.querySelectorAll('polyline');
+		const tail = svg.querySelector('line');
+		const T = v.tiles.map((c, i) => ({ c, i, el: el.querySelector(`.hr-t[data-i="${i}"]`), on: true, x: W / 2, y: H / 2, s: 1 }));
 		let path = [];
 		let wrong = 0;
 		let done = false;
 		let busy = false; // deneme sonucu canlanırken giriş yok
-		let rot = -Math.PI / 2;
+		let rot = 0; // çarkta başlangıç açısı payı (0..1; 0 = tepe)
+		const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-		// ------------------------------------------------ dizilim: çemberdeki sikkeler eşit aralıkla (üstten başlar)
+		const setPos = (t) => {
+			t.el.style.setProperty('--x', t.x.toFixed(1) + 'px');
+			t.el.style.setProperty('--y', t.y.toFixed(1) + 'px');
+			t.el.style.setProperty('--s', t.s.toFixed(3));
+		};
+		// ------------------------------------------------ dizilim: çarkta eşit açıyla (tepeden başlar); şeritte satırlar
 		const layout = () => {
 			const on = T.filter((t) => t.on);
+			const m = on.length;
+			if (round) {
+				on.forEach((t, k) => {
+					const a = -Math.PI / 2 + (rot + k / m) * Math.PI * 2;
+					t.x = W / 2 + A * Math.cos(a);
+					t.y = H / 2 + A * Math.sin(a);
+					setPos(t);
+				});
+				return;
+			}
+			const r = m <= colsMax ? 1 : 2;
+			const per = Math.ceil(m / r);
 			on.forEach((t, k) => {
-				const a = rot + (k / on.length) * Math.PI * 2;
-				t.x = D / 2 + RAD * Math.cos(a);
-				t.y = D / 2 + RAD * Math.sin(a);
-				t.el.style.setProperty('--x', t.x.toFixed(1) + 'px');
-				t.el.style.setProperty('--y', t.y.toFixed(1) + 'px');
+				const row = Math.floor(k / per);
+				const inRow = row === r - 1 ? m - per * (r - 1) : per;
+				const c = k - row * per;
+				const rw = inRow * TW + (inRow - 1) * GX;
+				t.x = W / 2 - rw / 2 + c * (TW + GX) + TW / 2;
+				t.y = r === 1 ? H / 2 : H / 2 + (row ? 1 : -1) * ((TH + GY) / 2);
+				setPos(t);
 			});
 		};
-		layout();
+		// açılış: sikkeler göbekten yörüngeye sırayla açılır
+		for (const t of T) setPos(t);
+		requestAnimationFrame(() =>
+			requestAnimationFrame(() => {
+				layout();
+				T.forEach((t, k) => {
+					t.el.style.transitionDelay = reduce ? '0ms' : k * 38 + 'ms';
+					t.el.classList.remove('in');
+				});
+				setTimeout(() => T.forEach((t) => (t.el.style.transitionDelay = '')), 700);
+			}),
+		);
 
-		// ------------------------------------------------ çizim: ip (sikke merkezleri), kuyruk (parmağa), canlı kutular
+		// ------------------------------------------------ çizim: ip, kuyruk, canlı kutular, göbek sayacı
 		let finger = null;
 		const draw = () => {
 			const pts = path.map((t) => `${t.x.toFixed(1)},${t.y.toFixed(1)}`).join(' ');
-			for (const p of [pGl, pRp, pHi]) p.setAttribute('points', path.length > 1 ? pts : '');
+			const show = path.length > 1 ? pts : '';
+			pGl.setAttribute('points', show);
+			pRp.setAttribute('points', show);
+			pFx.setAttribute('points', show);
 			const last = path[path.length - 1];
 			if (last && finger) {
 				tail.setAttribute('x1', last.x);
@@ -186,25 +326,66 @@ export const hang = {
 				tail.setAttribute('y2', finger[1]);
 				tail.style.display = '';
 			} else tail.style.display = 'none';
-			const fr = free();
-			fr.forEach((pos, j) => {
-				const s = slots.get(pos);
-				const t = path[j];
-				const want = t ? t.c : '';
-				if (s.textContent !== want) {
-					s.textContent = want;
-					s.classList.toggle('pv', !!t);
-				}
-			});
+			if (!root.classList.contains('win'))
+				free().forEach((pos, j) => {
+					const s = slots.get(pos);
+					const t = path[j];
+					const want = t ? t.c : '';
+					if (s.textContent !== want) {
+						s.textContent = want;
+						s.classList.toggle('pv', !!t);
+					}
+				});
 			for (const t of T) t.el.classList.toggle('on', path.includes(t));
 			const left = T.filter((t) => t.on).length - path.length;
 			cnt.textContent = path.length ? String(left || '✓') : '';
 		};
 		draw();
 
+		const relOf = (e) => {
+			const a = e.getBoundingClientRect();
+			const b = root.getBoundingClientRect();
+			return [a.left - b.left + a.width / 2, a.top - b.top + a.height / 2];
+		};
+		/** Harf sikkeden kutusuna uçar (yalnız transform / opacity). */
+		const fly = (t, slot) => {
+			if (reduce || !slot) return;
+			const [x0, y0] = relOf(t.el);
+			const [x1, y1] = relOf(slot);
+			const f = document.createElement('i');
+			f.className = 'hr-fly';
+			f.textContent = t.c;
+			root.appendChild(f);
+			const w = f.offsetWidth / 2;
+			const h = f.offsetHeight / 2;
+			f.animate(
+				[
+					{ transform: `translate(${x0 - w}px,${y0 - h}px) scale(1.15)`, opacity: 1 },
+					{ transform: `translate(${(x0 + x1) / 2 - w}px,${Math.min(y0, y1) - 22 - h}px) scale(1.05)`, opacity: 1, offset: 0.55 },
+					{ transform: `translate(${x1 - w}px,${y1 - h}px) scale(.8)`, opacity: 0 },
+				],
+				{ duration: 230, easing: 'cubic-bezier(.3,.6,.5,1)', fill: 'forwards' },
+			).onfinish = () => f.remove();
+		};
+		const sparks = (x, y, c, k = 8, d0 = 16, d1 = 30) => {
+			for (let i = 0; i < k; i++) {
+				const s = document.createElement('i');
+				s.className = 'hr-spark';
+				s.style.setProperty('--c', c);
+				root.appendChild(s);
+				const a = (i / k) * Math.PI * 2 + Math.random() * 0.5;
+				const d = d0 + Math.random() * (d1 - d0);
+				s.animate([{ transform: `translate(${x}px,${y}px) scale(1)`, opacity: 1 }, { transform: `translate(${x + Math.cos(a) * d}px,${y + Math.sin(a) * d}px) scale(.25)`, opacity: 0 }], {
+					duration: 420 + Math.random() * 240,
+					easing: 'cubic-bezier(.2,.7,.4,1)',
+				}).onfinish = () => s.remove();
+			}
+		};
+
 		const add = (t) => {
 			path.push(t);
 			root.classList.add('used');
+			fly(t, slots.get(free()[path.length - 1]));
 			sfx(app, 'tap', { vol: 0.55, rate: 0.9 + path.length * 0.07 });
 			buzz(6);
 		};
@@ -219,27 +400,6 @@ export const hang = {
 			draw();
 		};
 
-		// ------------------------------------------------ kıvılcım (kutu ya da sikke üstünde)
-		const relOf = (e) => {
-			const a = e.getBoundingClientRect();
-			const b = root.getBoundingClientRect();
-			return [a.left - b.left + a.width / 2, a.top - b.top + a.height / 2];
-		};
-		const sparks = (x, y, c, k = 8) => {
-			for (let i = 0; i < k; i++) {
-				const s = document.createElement('i');
-				s.className = 'hr-spark';
-				s.style.cssText = `left:${x}px;top:${y}px;--c:${c}`;
-				root.appendChild(s);
-				const a = Math.random() * Math.PI * 2;
-				const d = 16 + Math.random() * 26;
-				s.animate([{ transform: 'translate(0,0) scale(1)', opacity: 1 }, { transform: `translate(${Math.cos(a) * d}px,${Math.sin(a) * d - 6}px) scale(.3)`, opacity: 0 }], {
-					duration: 360 + Math.random() * 220,
-					easing: 'cubic-bezier(.2,.7,.4,1)',
-				}).onfinish = () => s.remove();
-			}
-		};
-
 		// ------------------------------------------------ sonuç
 		const finish = (ok) => {
 			done = true;
@@ -247,11 +407,21 @@ export const hang = {
 			api.answer({ ok, wrong });
 		};
 		const win = () => {
-			path = [];
 			finger = null;
 			root.classList.remove('drag');
-			draw();
 			for (const pos of slots.keys()) lock[pos] = true; // kutular artık çizimin dışında (kart kilitlenince boşalmasın)
+			root.classList.add('win');
+			// sikkeler göbeğe çekilir, göbek parlar ve kıvılcım saçar
+			T.forEach((t, k) => {
+				if (!t.on) return;
+				t.el.style.transitionDelay = k * 28 + 'ms';
+				t.x = W / 2;
+				t.y = H / 2;
+				setPos(t);
+				t.el.classList.add('suck');
+			});
+			path = [];
+			draw();
 			let k = 0;
 			for (const [pos, s] of slots) {
 				s.textContent = word[pos];
@@ -259,25 +429,25 @@ export const hang = {
 				s.style.setProperty('--k', k++);
 				s.classList.add('ok');
 			}
-			root.classList.add('win');
 			finish(true);
 			sfx(app, 'right');
 			setTimeout(() => {
-				for (const s of slots.values()) {
-					const [x, y] = relOf(s);
-					sparks(x, y, '#7ef09a', 4);
-				}
-			}, 120);
+				mix.classList.add('flash');
+				const [x, y] = relOf(mix);
+				sparks(x, y, '#ffd25a', 14, H * 0.25, W * 0.42);
+				sparks(x, y, '#7fe88a', 8, H * 0.15, W * 0.3);
+				sfx(app, 'sparkle', { vol: 0.6 });
+			}, 360);
 			buzz(25);
 		};
-		/** Konumu altına kilitle; bu harfin çemberdeki sikkesi (verilmişse o sikke) çekilir. */
+		/** Konumu altına kilitle; bu harfin yörüngedeki sikkesi (verilmişse o sikke) çekilir. */
 		const lockAt = (pos, tile = null) => {
 			lock[pos] = true;
 			const t = tile || T.find((x) => x.on && x.c === word[pos]);
 			if (t) {
 				t.on = false;
 				t.el.classList.add('gone');
-				t.el.classList.remove('sug');
+				t.el.classList.remove('sug', 'on');
 			}
 			const s = slots.get(pos);
 			s.textContent = word[pos];
@@ -309,15 +479,21 @@ export const hang = {
 			busy = true;
 			finger = null;
 			root.classList.remove('drag');
-			// doğru yerdeki harfler kilitlenir; yanlış yerdekiler kızarır ve boşalır
+			draw();
+			// ip kızarıp kopar; yanlış yerdeki sikkeler sarsılır, kutuları kızarır; doğru yerdekiler altına kilitlenir
+			svg.classList.add('bad');
 			const good = pairs.filter(([pos, t]) => t.c === word[pos]);
-			for (const [pos] of pairs) {
-				const s = slots.get(pos);
+			for (const [pos, t] of pairs) {
 				if (good.some(([p]) => p === pos)) continue;
+				const s = slots.get(pos);
 				s.classList.remove('pv');
 				s.classList.add('bad');
+				t.el.classList.remove('nope');
+				void t.el.offsetWidth;
+				t.el.classList.add('nope');
 			}
 			const over = miss();
+			setTimeout(() => svg.classList.add('snap'), 120);
 			setTimeout(() => {
 				for (const [pos, t] of good) {
 					lockAt(pos, t);
@@ -332,25 +508,28 @@ export const hang = {
 						s.textContent = '';
 					}
 				}
+				for (const t of T) t.el.classList.remove('nope');
 				path = [];
+				svg.classList.remove('bad', 'snap');
 				layout();
 				draw();
 				busy = false;
 				if (!over && allOpen()) win();
-			}, 430);
+			}, 520);
 		};
 
 		// ------------------------------------------------ giriş: sürükle ya da dokun
 		let down = null; // { moved, popOnUp }
 		let rect = null;
-		const at = (e) => [((e.clientX - rect.left) / rect.width) * D, ((e.clientY - rect.top) / rect.height) * D];
-		const hit = (x, y, r = C * 0.5) => {
+		const at = (e) => [((e.clientX - rect.left) / rect.width) * W, ((e.clientY - rect.top) / rect.height) * H];
+		const hit = (x, y, r) => {
 			let best = null;
-			let bd = r * r;
+			let bd = Infinity;
 			for (const t of T) {
 				if (!t.on) continue;
 				const d = (t.x - x) ** 2 + (t.y - y) ** 2;
-				if (d < bd) {
+				const rr = r * t.s;
+				if (d < rr * rr && d < bd) {
 					bd = d;
 					best = t;
 				}
@@ -361,7 +540,7 @@ export const hang = {
 			if (done || busy || e.target.closest('.hr-mix')) return;
 			rect = ring.getBoundingClientRect();
 			const [x, y] = at(e);
-			const t = hit(x, y, C * 0.62);
+			const t = hit(x, y, K * 0.62);
 			if (!t) {
 				if (path.length) clear(); // boş kadifeye dokunmak yarım dizilişi siler
 				return;
@@ -380,7 +559,7 @@ export const hang = {
 			if (Math.hypot(e.clientX - down.x, e.clientY - down.y) > 6) down.moved = true;
 			const [x, y] = at(e);
 			finger = [x, y];
-			const t = hit(x, y, C * 0.44);
+			const t = hit(x, y, K * 0.48);
 			if (t) {
 				if (!path.includes(t)) {
 					add(t);
@@ -400,16 +579,11 @@ export const hang = {
 			if (done || busy) return;
 			if (cancel) return clear();
 			if (!d.moved && d.popOnUp) pop();
-			const all = path.length === free().length;
-			if (all) {
+			if (path.length === free().length) {
 				draw();
 				return submit();
 			}
-			if (d.moved && path.length > 1) {
-				// sürükleme yarım kaldı: harfler geri döner (ceza yok)
-				for (const pos of free()) slots.get(pos).classList.remove('pv');
-				return clear();
-			}
+			if (d.moved && path.length > 1) return clear(); // sürükleme yarım kaldı: harfler geri döner (ceza yok)
 			root.classList.remove('drag');
 			draw();
 		};
@@ -417,12 +591,15 @@ export const hang = {
 		ring.addEventListener('pointercancel', (e) => up(e, true));
 		mix.addEventListener('click', () => {
 			if (done || busy) return;
-			rot += Math.PI * (0.35 + Math.random() * 0.5);
-			const on = T.filter((t) => t.on);
-			const sh = shuffle(on, Math.random);
-			// sırayı karıştır (dizi içindeki yerler): T dizisinde "on" olanların sırası değişir
+			rot += round ? 0.18 + Math.random() * 0.3 : 0;
+			const sh = shuffle(
+				T.filter((t) => t.on),
+				Math.random,
+			);
 			const order = T.map((t) => (t.on ? sh.shift() : t));
 			T.splice(0, T.length, ...order);
+			T.forEach((t, k) => (t.el.style.transitionDelay = k * 22 + 'ms'));
+			setTimeout(() => T.forEach((t) => (t.el.style.transitionDelay = '')), 650);
 			mix.classList.remove('spin');
 			void mix.offsetWidth;
 			mix.classList.add('spin');

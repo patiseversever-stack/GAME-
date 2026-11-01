@@ -17,10 +17,21 @@ function balloon(k, x, y, z, r, a, b, grp) {
 		k.mc(H.CLOTH, i % 2 ? a : b).add(g, new THREE.Matrix4().makeTranslation(x, y, z));
 	}
 	k.mc(H.CLOTH, b).add(new THREE.CylinderGeometry(0.24 * r, 0.2 * r, 0.16 * r, 12, 1, true), new THREE.Matrix4().makeTranslation(x, y - r * 1.12, z));
-	const by = y - r * 1.12 - 0.42 * r;
-	k.mc(H.WOOD, '#7a5230').box(0.2 * r, 0.16 * r, 0.2 * r, x, by, z);
-	for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) k.mc(H.WOOD, '#5b4636').box(0.008, 0.3 * r, 0.008, x + dx * 0.09 * r, by + 0.14 * r, z + dz * 0.09 * r);
-	k.mc(H.FLAME, '#ffb347').cone(0.05 * r, 0.16 * r, 5, x, by + 0.2 * r, z);
+	// sepet (binme yeri): hasır gövde + koyu kenar, eteğe dört halat, ocak ve alevi, iki yolcu (landmarks.js basket ile aynı ölçü)
+	const sk = y - r * 1.2;
+	const top = sk - 0.34 * r;
+	const h = 0.26 * r;
+	const w = 0.34 * r;
+	k.mc(H.WOOD, '#c98f4e').box(w * 0.9, h, w * 0.9, x, top - h, z);
+	k.mc(H.WOOD, '#6b4220').box(w, 0.06 * r, w, x, top - 0.06 * r, z);
+	k.mc(H.WOOD, '#8d5a2b').box(w * 0.95, 0.03 * r, w * 0.95, x, top - h * 0.55, z);
+	const q = 0.13 * r;
+	const t = 0.035 * r;
+	for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) k.mc(H.WOOD, '#3a2c22').box(t, sk - top, t, x + dx * q, top, z + dz * q);
+	k.mc(H.METAL, '#2a2a30').box(0.12 * r, 0.05 * r, 0.12 * r, x, top + 0.14 * r, z);
+	k.mc(H.PLASTER, '#e2b48a').sphere(0.05 * r, 8, x - 0.08 * r, top + 0.025 * r, z + 0.05 * r);
+	k.mc(H.PLASTER, '#d9a57c').sphere(0.05 * r, 8, x + 0.08 * r, top + 0.025 * r, z - 0.05 * r);
+	k.mc(H.FLAME, '#ffb347').cone(0.07 * r, 0.2 * r, 6, x, top + 0.19 * r, z);
 	k.group(0);
 }
 

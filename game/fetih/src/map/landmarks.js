@@ -488,13 +488,33 @@ function balloon(k, x, y, z, r, a, b, id) {
 	// tepe şeridi ve etek
 	k.color(b).mat(M.CLOTH).add(new THREE.CylinderGeometry(0.24 * r, 0.2 * r, 0.16 * r, 10, 1, true).translate(x, y - 1.0 * r * 1.12, z));
 	k.smooth(false);
-	const by = y - r * 1.12 - 0.42 * r;
-	k.color('#7a5230').box(0.2 * r, 0.16 * r, 0.2 * r, x, by, z);
-	k.color('#5b4636');
-	for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) k.box(0.012, 0.3 * r, 0.012, x + dx * 0.09 * r, by + 0.14 * r, z + dz * 0.09 * r);
-	k.color('#ffb347').mat(M.FLAME).cone(0.05 * r, 0.16 * r, 5, x, by + 0.2 * r, z);
+	basket(k, x, y, z, r);
 	k.mat(0);
 	k.setAnim(0);
+}
+
+/**
+ * Balon sepeti (binme yeri): hasır gövde + koyu kenar, eteğe dört halat, ocak ve alevi, iki yolcu başı. Okunur boyda
+ * (zarf çapının ~%17'si; gerçekte ~%10, maket ölçeğinde abartılı) ve ucuz: kutular, düşük kademede yolcu yok.
+ */
+function basket(k, x, y, z, r) {
+	const sk = y - r * 1.2; // etek altı
+	const top = sk - 0.34 * r; // sepet üstü
+	const h = 0.26 * r;
+	const w = 0.34 * r;
+	k.color('#c98f4e').box(w * 0.9, h, w * 0.9, x, top - h, z); // hasır gövde (altta biraz dar görünsün diye kenar geniş)
+	k.color('#6b4220').box(w, 0.06 * r, w, x, top - 0.06 * r, z); // üst kenar
+	k.color('#8d5a2b').box(w * 0.95, 0.03 * r, w * 0.95, x, top - h * 0.55, z); // örgü bandı
+	k.color('#3a2c22');
+	const q = 0.13 * r;
+	const t = 0.035 * r;
+	for (const [dx, dz] of [[-1, -1], [1, -1], [-1, 1], [1, 1]]) k.box(t, sk - top, t, x + dx * q, top, z + dz * q); // halatlar
+	k.color('#2a2a30').box(0.12 * r, 0.05 * r, 0.12 * r, x, top + 0.14 * r, z); // ocak
+	if (k.seg >= 1) {
+		k.color('#e2b48a').sphere(0.05 * r, 6, x - 0.08 * r, top + 0.025 * r, z + 0.05 * r);
+		k.color('#d9a57c').sphere(0.05 * r, 6, x + 0.08 * r, top + 0.025 * r, z - 0.05 * r);
+	}
+	k.color('#ffb347').mat(M.FLAME).cone(0.07 * r, 0.2 * r, 6, x, top + 0.19 * r, z);
 }
 
 // ------------------------------------------------------------------ yapılar (yerel: y = 0 zemin, ön yüz +z)

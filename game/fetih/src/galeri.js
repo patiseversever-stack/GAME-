@@ -235,7 +235,7 @@ export async function galeri() {
 			}</div>
 			<div class="ft"><button class="tg" id="g-scene">Sahne: <em>${S.scene === 'duel' ? 'Düello' : 'Herkes cevaplıyor'}</em></button>
 				<button class="tg" id="g-time">Süre: <em>${S.time === 'real' ? 'Gerçek' : 'Sınırsız'}</em></button>
-				<button class="tg" id="g-again">↻ Yeniden</button>${document.fullscreenEnabled || document.documentElement.webkitRequestFullscreen ? '<button class="tg" id="g-full">⛶ Tam ekran</button>' : ''}</div>`;
+				<button class="tg" id="g-again">↻ Yeniden</button>${S.type === 'hang' ? ['arena', 'petek', 'serit'].map((t, i) => `<button class="tg" data-hang="${t}">${'ABC'[i]} · ${['Arena', 'Petek', 'Şerit'][i]}${(globalThis.__hangTheme || 'arena') === t ? ' ✓' : ''}</button>`).join('') : ''}${document.fullscreenEnabled || document.documentElement.webkitRequestFullscreen ? '<button class="tg" id="g-full">⛶ Tam ekran</button>' : ''}</div>`;
 		bar.classList.toggle('open', !pn.hidden);
 		const item = ([t, n, nw2, sub]) =>
 			`<button data-t="${t}" role="option" aria-selected="${t === S.type}" class="${t === S.type ? 'on' : ''}${nw2 ? ' nw' : ''}">${esc(n)}${nw2 ? `<i>${esc(sub)}</i>` : ''}<small>${
@@ -274,6 +274,11 @@ export async function galeri() {
 				ui.toast?.('Bu görünüm tam ekrana izin vermiyor', { tone: 'warn', ms: 1800 });
 			}
 			return drawer(false);
+		}
+		if (b.dataset.hang) {
+			// adam asmaca taslakları (A Cam · B Neon · C Çini): seçilen tasarımla yeniden oynat
+			globalThis.__hangTheme = b.dataset.hang;
+			return go(S.type, S.k);
 		}
 		if (b.id === 'g-prev') return go(S.type, S.k - 1);
 		if (b.id === 'g-next') return go(S.type, S.k + 1);

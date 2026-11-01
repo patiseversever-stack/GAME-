@@ -203,7 +203,19 @@ Epik ve Türk enstrümanları, sentezle.
 ## Performans kuralları (değişmez)
 
 - Realme ve Mali-G52 sınıfı cihazlarda akıcı olmalı.
-- Shader'lar açılışta derlenir.
+- Shader'lar açılışta derlenir (nadir soru sahneleri dahil: `quiz/warm.js`).
 - Kare başına nesne üretimi yok.
 - Çizim çağrısı 40'tan az.
 - q=0 kademesinde tam ekran efekt geçişi yok.
+- **Ucuz ama çok kaliteli (1 Kasım, kullanıcı kararı, kalıcı):** her yeni iş ve her değişiklikte en ucuz yöntem seçilir,
+  yeter ki görüntü aynı kalsın. Pahalı bir yöntem ancak ucuzu gözle görülür biçimde daha kötüyse kullanılır. Görünmeyen
+  yere (harita dışı, ekran dışı, sis arkası, uzak) iş harcanmaz. Her optimizasyon önce/sonra ölçümle ve önce/sonra
+  görselle kanıtlanır; kalite düşmez.
+
+## Çalışma kuralları (kullanıcı, kalıcı)
+
+- Her değişiklikte hem oyun hem defter (soru galerisi) güncellenir ve yayınlanır; ikisi aynı derlemedendir (sürüm damgası
+  duraklatma ekranında ve defter başlığında aynı olmalı).
+- Her işte önce/sonra görsel verilir; ölçülebilir işte önce/sonra tablosu.
+- Onaylanan tasarım defterde ve oyunda birebir aynıdır; defterde eski yedek/deneme bırakılmaz (onaylanınca yedek silinir).
+- İzin sormadan ilerle; yanıtlar Türkçe.

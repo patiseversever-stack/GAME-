@@ -941,6 +941,18 @@ export class UI {
 	stamp(text, tone = '', sub = '') {
 		const s = this.$.q.querySelector('.fl-stamp');
 		if (!s) return;
+		// haritasız soru (dikey ekran): damga oyuncu afişiyle kart arasındaki harita alanının ortasında. Yüzdeyle (%44)
+		// konumlanınca uzun kartlarda (adam asmaca) sorunun üstüne biniyordu.
+		s.style.top = '';
+		const q = this.$.q;
+		const qc = !q.classList.contains('map') && q.querySelector('.fl-qc');
+		if (qc) {
+			const r = q.getBoundingClientRect();
+			const who = q.querySelector('.fl-qwho');
+			const top0 = who ? who.getBoundingClientRect().bottom : r.top;
+			const bot = qc.getBoundingClientRect().top;
+			if (bot - top0 > 90) s.style.top = Math.round((top0 + bot) / 2 - r.top) + 'px';
+		}
 		s.className = `fl-stamp ${tone}`;
 		s.innerHTML = `${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ''}`;
 		void s.offsetWidth;
