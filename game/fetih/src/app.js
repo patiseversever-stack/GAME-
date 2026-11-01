@@ -126,10 +126,13 @@ export class App {
 		this.scene.add(this.props.group);
 		for (const c of this.props.casters) this.shadow.add(c);
 		// TASLAK (doku-taslak): köyler, traktörler, sürüler, değirmenler… (yakın çekimde tek çizim, uzakta kapalı)
-		this.hayat = new Hayat(G, R.tier, this.board, this.props.landmarks);
-		this.board.uniforms.uVil.value = this.hayat.vilTex; // köy ızgarası: harita aynı köylerin harman yerini çizer
-		this.scene.add(this.hayat.mesh);
-		this.shadow.add(this.hayat.caster);
+		// q0 (zayıf telefon): hayat katmanı hiç kurulmaz (çizim, bellek ve yerleşim işi yok)
+		if (R.tier.id >= 1) {
+			this.hayat = new Hayat(G, R.tier, this.board, this.props);
+			this.board.uniforms.uVil.value = this.hayat.vilTex; // köy ızgarası: harita aynı köylerin toprağını çizer
+			this.scene.add(this.hayat.mesh);
+			this.shadow.add(this.hayat.caster);
+		}
 
 		const sky = new THREE.Mesh(
 			new THREE.SphereGeometry(900, 32, 16),
@@ -182,7 +185,7 @@ export class App {
 		// derleme: bütün malzemeler sahnede (kaleler dahil) görünür haldeyken; nadir soru sahneleri de (Tufan suyu, yağmur,
 		// şimşek; Kayıp İl perdesi): ilk Tufan sorusunda gölgelendirici bağlama donması olmasın (quiz/warm.js)
 		for (const k of this.castles) k.group.visible = true;
-		this.hayat.mesh.visible = this.hayat.caster.visible = true; // açılışta derlensin (oyun sırasında derleme yok)
+		if (this.hayat) this.hayat.mesh.visible = this.hayat.caster.visible = true; // açılışta derlensin (oyun sırasında derleme yok)
 		const qw = quizWarm(this);
 		try {
 			await this.renderer.compileAsync(this.scene, this.camera);
@@ -190,10 +193,23 @@ export class App {
 			this.renderer.compile(this.scene, this.camera);
 		}
 		qw.done(this.renderer);
+		// TASLAK v2: zeminin yakın zum programı da açılışta derlensin (yakınlaşınca derleme takılması olmasın)
+		if (this.hayat) {
+			this.board.setNear(true);
+			try {
+				await this.renderer.compileAsync(this.scene, this.camera);
+			} catch (e) {
+				this.renderer.compile(this.scene, this.camera);
+			}
+			this.board.setNear(false);
+		}
 		for (const k of this.castles) k.group.visible = false;
 		this.cam.update(1 / 60);
 		this.render();
-		this.hayat.mesh.visible = this.hayat.caster.visible = false;
+		if (this.hayat) {
+			this.hayat.mesh.visible = this.hayat.caster.visible = false;
+			this.hayat.start(); // yerleşim küçük dilimlerle (uzun iş yok)
+		}
 	}
 
 	_bindInput() {
