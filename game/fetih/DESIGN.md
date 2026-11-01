@@ -344,6 +344,13 @@ rozeti; insan ikinci ama takım arkadaşı birinciyse "TAKIMIN KAZANDI". İzlene
 damga, eşlide rakip takım kazandıysa kırmızı. 4 kişide satırlar alçak (50 px). Gerçek akışla 1'e 1, eşli, 3'lü, 4'lü
 denetlendi; kart kapanmadan sonuç ekranı açılmıyor.
 
+**SEÇİM SIRASI (v1.5d, `ui._draftHTML`).** Yayılmanın birleşik ekranı kendi tasarımında: ışın deseni ve altın sıcak
+arka plan, "YAYILMA" üst yazısı ve büyük altın degrade "SEÇİM SIRASI", insanın sonucu eğik şerit (BİLDİN yeşil, BİLEMEDİN
+kırmızı, payıyla), sırayı bağlayan altın zincir, oyuncu renginde konturlu büyük sıra numaraları (birinci altın blok), birinciye
+taç ve bir kez parıltı süpürmesi, il payı oyuncunun renginde tek tek düşen bayraklar ("2 İL"; payı olmayan "İL YOK", soluk).
+Defterde sahne düğmesi: Düello / Yayılma 2 kişi / Yayılma 4 kişi / Eşli 2v2 (defterdeki yayılma sahnesi artık sonuç ekranını da
+gösterir). Bütün hareket transform/opacity; harita kararır, kamera kıpırdamaz.
+
 **Eşleştir ve sırala krem (v1.5c, `quiz/t_match.js`, `ui/styles-arena.js`).** Neon ve koyu cam denendi, premium
 durmadı; eski düzen korunup krem arena diline çekildi. Krem kart (lacivert yazı, ince altın kenar, alçak 3 px gölge, 9–10 px
 köşe). Eşleştir: iki sütun, iç kenarda yuva, bağ gölgeli tek renk çizgi (kısık tonlar) ve çizilirken bir kez kayan ince

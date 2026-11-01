@@ -228,6 +228,12 @@ export async function galeri() {
 	const jk0 = JSON.stringify(me.jk);
 
 	// ilk açılış: adresteki #tip, yoksa ilk deneme tipi
+	// sahneler: düello; yayılma (herkes cevaplıyor) 2 ve 4 kişi, eşli 2'ye 2 — yayılmada sonuç SEÇİM SIRASI ekranıdır
+	const SCENES = { duel: 'Düello', all: 'Yayılma · 2 kişi', all4: 'Yayılma · 4 kişi', esli: 'Yayılma · Eşli 2v2' };
+	const extra = [
+		{ ...foe, i: 2, name: 'Baran', color: 0xf5b324, css: '#f5b324', look: null, human: false, skill: foe.skill * 0.9 },
+		{ ...foe, i: 3, name: 'Elif', color: 0x8a5cf0, css: '#8a5cf0', look: null, human: false, skill: foe.skill * 1.05 },
+	];
 	const want = decodeURIComponent(location.hash.slice(1));
 	const S = { type: LIST.some(([t]) => t === want) ? want : LIST[0][0], k: 0, scene: 'duel', time: 'real', run: 0 };
 	const ex = Object.fromEntries(LIST.map(([t]) => [t, examples(t)]));
@@ -248,7 +254,7 @@ export async function galeri() {
 			<div class="meta"><b>${esc(q.id)}</b> · ${esc(cat)} · ${DIFF[q.diff] || ''} · süre <b>${v.sec ?? T.time} sn</b>${
 				nw ? ' · <em class="yeni">YENİ</em> <span class="note">maça henüz eklenmedi</span>' : SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok, örnek soru</span>' : ''
 			}</div>
-			<div class="ft"><button class="tg" id="g-scene">Sahne: <em>${S.scene === 'duel' ? 'Düello' : 'Herkes cevaplıyor'}</em></button>
+			<div class="ft"><button class="tg" id="g-scene">Sahne: <em>${SCENES[S.scene]}</em></button>
 				<button class="tg" id="g-time">Süre: <em>${S.time === 'real' ? 'Gerçek' : 'Sınırsız'}</em></button>
 				<button class="tg" id="g-again">↻ Yeniden</button>${document.fullscreenEnabled || document.documentElement.webkitRequestFullscreen ? '<button class="tg" id="g-full">⛶ Tam ekran</button>' : ''}</div>`;
 		bar.classList.toggle('open', !pn.hidden);
@@ -292,7 +298,10 @@ export async function galeri() {
 		}
 		if (b.id === 'g-prev') return go(S.type, S.k - 1);
 		if (b.id === 'g-next') return go(S.type, S.k + 1);
-		if (b.id === 'g-scene') S.scene = S.scene === 'duel' ? 'all' : 'duel';
+		if (b.id === 'g-scene') {
+			const ks = Object.keys(SCENES);
+			S.scene = ks[(ks.indexOf(S.scene) + 1) % ks.length];
+		}
 		else if (b.id === 'g-time') S.time = S.time === 'real' ? 'free' : 'real';
 		else if (b.id !== 'g-again') return;
 		drawer(false);
@@ -349,12 +358,18 @@ export async function galeri() {
 			app.cam.fit(app.boundsOf(m.map), { pitch: 0.98 });
 		}
 		const ctx = duel ? { title: 'DÜELLO', attacker: me, defender: foe, target, cat: q.cat, phase: 'duel' } : { title: 'Herkes cevaplıyor', phase: 'yayilma', cat: q.cat };
-		const who = [me, foe];
+		const four = S.scene === 'all4' || S.scene === 'esli';
+		const who = four ? [me, foe, ...extra] : [me, foe];
+		// eşli: A (sen, Baran) – B (Defne, Elif); öteki sahnelerde maçın kendi düzeni (1'e 1)
+		const mode0 = m.mode;
+		m.mode = S.scene === 'esli' ? { ...mode0, teams: [0, 1, 0, 1] } : { ...mode0, teams: null };
+		extra[0].team = S.scene === 'esli' ? 0 : 2;
+		extra[1].team = S.scene === 'esli' ? 1 : 3;
 		const clock = { extra: 0 };
 		// joker bağlamı (Match.ask ile aynı biçim): jokerler soruda gerçekten çalışır
 		m.cur = { q, v, T, who, clock, ctx, bots: [], used: new Map(who.map((p) => [p.i, new Set()])), second: new Set(), done: new Set(), boost: new Map(), delay: new Map(), timers: [], botUses: [], closed: false };
 		const cur = m.cur;
-		cur.bots = [{ p: foe, ...m.botAnswer(cur, foe) }];
+		cur.bots = who.filter((p) => p !== me).map((p) => ({ p, ...m.botAnswer(cur, p) }));
 		m.refreshJokers();
 		const res = await ui.question(m, { q, v, T, who, bots: cur.bots, human: me, clock, botJokers: [], ...ctx });
 		cur.closed = true;
@@ -362,10 +377,17 @@ export async function galeri() {
 		if (m.cur === cur) m.cur = null; // başka örneğe geçildiyse yeni soru kendi bağlamını kurmuştur
 		if (!live() || !res?.human) return;
 		const results = who.map((p) => {
-			const a = p === me ? res.human : { value: cur.bots[0].value, time: cur.bots[0].time };
+			const b = cur.bots.find((x) => x.p === p);
+			const a = p === me ? res.human : { value: b.value, time: b.time };
 			return { p, i: p.i, name: p.name, color: p.css, value: a.value, time: a.time ?? v.sec, ...T.judge(v, a.value) };
 		});
 		await ui.reveal(m, { q, v, T, results, ...ctx });
+		// yayılma: sonuç + il payı (maçtaki gibi sıralama ve 2:1 / 2:1:1:0 pay)
+		if (!duel && live()) {
+			const order = m.rank(results, T.kind === 'closest' ? 'closest' : 'exact');
+			await ui.ranking(m, order, four ? [2, 1, 1, 0] : [2, 1]);
+		}
+		m.mode = mode0;
 	}
 
 	play();

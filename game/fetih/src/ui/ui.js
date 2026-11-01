@@ -1122,24 +1122,51 @@ export class UI {
 				return `<div class="rs-r${win ? ' win' : ''}${no ? ' no' : ''}${r.p.human ? ' me' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span><b>${tm}${esc(r.name)}${tag}</b><em>${val}<small>${rs}</small></em>${pk}</div>`;
 			})
 			.join('');
-		// yayılma: insanın il payı alt satırda; satırların başında SEÇİM SIRASI başlığı
-		if (picks && me) {
-			const n = picks[order.indexOf(me)] || 0;
-			sub = n ? `${n} il seçiyorsun` : 'bu tur il yok';
-		}
-		const head = picks ? `<h5 class="rs-h">SEÇİM SIRASI</h5>` : '';
 		el.classList.toggle('n4', order.length >= 4);
-		el.innerHTML = `<div class="fl-stamp ${tone}">${esc(st)}${sub ? `<small>${esc(sub)}</small>` : ''}</div><div class="rs-rows">${head}${rows}</div>`;
+		el.classList.toggle('sira', !!picks);
+		if (picks) el.innerHTML = this._draftHTML(order, picks, closest, T, v, me, st, tone, teams, tcol);
+		else el.innerHTML = `<div class="fl-stamp ${tone}">${esc(st)}${sub ? `<small>${esc(sub)}</small>` : ''}</div><div class="rs-rows">${rows}</div>`;
 		void el.offsetWidth;
 		el.classList.add('on');
 		if (me && (closest ? w === me : me.correct)) {
-			const s = el.querySelector('.fl-stamp');
-			setTimeout(() => {
+			const s = el.querySelector('.fl-stamp, .sr-r.me .sr-av');
+			if (s) setTimeout(() => {
+				if (!s.isConnected) return;
 				const c = Fx.center(s);
 				this.fx.burst(c.x, c.y, { n: 18, dist: 140, kind: 'star', size: 14, life: 900 });
 			}, 260);
 		}
 		return el;
+	}
+
+	/**
+	 * SEÇİM SIRASI (v1.5d, yayılma): soru sonucu ve il payı tek ekran. Büyük altın başlık, insanın sonucu şerit, sırayı
+	 * bağlayan altın zincir, konturlu büyük sıra numaraları, birinciye taç ve parıltı süpürmesi; il payı oyuncunun renginde
+	 * tek tek düşen bayraklar. Bütün hareket transform/opacity.
+	 */
+	_draftHTML(order, picks, closest, T, v, me, st, tone, teams, tcol) {
+		const flag = `<svg viewBox="0 0 22 26" aria-hidden="true"><path d="M4 2v22" stroke="#ffe08a" stroke-width="2.4" stroke-linecap="round"/><path d="M5 3h14l-4.2 5.2L19 13.4H5z" fill="var(--c)" stroke="#fff" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
+		const crown = `<svg class="sr-cr" viewBox="0 0 24 24" aria-hidden="true"><path d="${ICONS.crown}" fill="#ffd25a" stroke="#7a4a06" stroke-width="1.4" stroke-linejoin="round"/></svg>`;
+		const rows = order
+			.map((r, k) => {
+				const { val, sub, ok } = this._resVal(T, v, r, closest);
+				const good = closest ? ok && k === 0 : r.correct;
+				const mark = r.value == null ? '' : `<i class="${(closest ? r.err === 0 : r.correct) ? 'ok' : 'no'}">${ico((closest ? r.err === 0 : r.correct) ? 'check' : 'cross', { w: 3.6 })}</i>`;
+				const n = picks[k] || 0;
+				const fl = n ? Array.from({ length: Math.min(n, 3) }, (_, j) => `<span style="--j:${j}">${flag}</span>`).join('') : '';
+				const tm = teams ? `<span class="tm" style="--tc:${tcol(r.p.team)}">${r.p.team ? 'B' : 'A'}</span>` : '';
+				return `<div class="sr-r${k === 0 ? ' win' : ''}${r.p.human ? ' me' : ''}${n ? '' : ' z'}${good ? '' : ' miss'}" style="--c:${r.color};--k:${k}">
+					<span class="sr-n">${k + 1}</span>
+					<span class="sr-av">${k === 0 ? crown : ''}<span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span></span>
+					<span class="sr-who"><b>${tm}${esc(r.name)}${r.p.human ? '<em>SEN</em>' : ''}</b><small>${mark}${val}<u>${sub}</u></small></span>
+					<span class="sr-pk">${n ? `<span class="sr-fl">${fl}</span><small>${n} İL</small>` : '<small>İL YOK</small>'}</span>
+				</div>`;
+			})
+			.join('');
+		const mine = me ? picks[order.indexOf(me)] || 0 : 0;
+		const pt = tone || 'ok';
+		const pill = me ? `<div class="sr-me ${pt}"><b>${esc(st)}</b><span>${mine ? `${mine} il seçiyorsun` : 'bu tur il yok'}</span></div>` : `<div class="sr-me ${pt}"><b>${esc(st)}</b></div>`;
+		return `<div class="sr-h"><small>YAYILMA</small><h3>SEÇİM SIRASI</h3></div>${pill}<div class="sr-rows">${rows}</div>`;
 	}
 
 	/** Sonuç satırının değeri: yakınlık tiplerinde fark / km / tipin biçimi; ötekilerde süre. */

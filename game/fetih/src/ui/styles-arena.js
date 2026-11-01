@@ -285,19 +285,77 @@ export const CSS_ARENA = /* css */ `
 .rs-r.win{color:#1a1200;background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:inset 0 0 0 2px #fff,0 0 26px rgba(255,210,90,.55),0 6px 18px rgba(0,0,0,.45)}
 .rs-r.no em{color:#ff9a88}
 @keyframes rsIn{0%{opacity:0;transform:skewX(-8deg) translateX(-40px)}100%{opacity:1;transform:skewX(-8deg)}}
-/* takım (eşli) rozeti, yayılmada il payı plakası, insanın satırı, 4 kişide alçak satır */
+/* takım (eşli) rozeti, insanın satırı, 4 kişide alçak satır */
 .rs-r b .tm{display:inline-grid;place-items:center;width:18px;height:18px;margin-right:7px;vertical-align:2px;font:italic 800 12px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff;background:var(--tc);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
-.rs-r .pk{flex:none;min-width:48px;margin-right:-6px;padding:6px 7px;text-align:center;font:italic 800 21px/1 'Barlow Condensed','Lilita One',sans-serif;color:#1a1200;background:linear-gradient(180deg,#ffe066,#f5b324);box-shadow:0 2px 0 #8a5a00}
-.rs-r .pk small{display:block;margin-top:1px;font-size:10px;letter-spacing:.1em}
-.rs-r .pk.z{color:rgba(255,255,255,.45);background:rgba(255,255,255,.08);box-shadow:none;font-size:18px;padding:11px 7px}
-.rs-r.win .pk{color:#ffd25a;background:#1a1200;box-shadow:none}
 .rs-r.me:not(.win){box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55),0 6px 18px rgba(0,0,0,.45)}
-.rs-h{margin:0 0 -2px 4px;font:italic 800 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.14em;color:#ffd25a;opacity:.9}
 .fl-res.n4 .rs-r{min-height:50px}
 .fl-res.n4 .rs-rows{gap:8px}
 .fl-res.n4 .rs-r .fl-av{width:34px;height:34px}
 .fl-res.n4 .rs-r b{font-size:17px}
-@media (orientation:landscape) and (max-height:520px){.fl-res{gap:12px;padding-bottom:0}.rs-r{min-height:46px}.rs-rows{gap:7px}}
+
+/* ---------------------------------------------------------------- SEÇİM SIRASI (v1.5d, yayılma): büyük altın başlık, insanın
+   sonucu şerit, altın zincirle bağlı sıra kartları, konturlu numaralar, birinciye taç + parıltı, il payı düşen bayraklar */
+.fl-res.sira{gap:14px;background:repeating-conic-gradient(from -4deg at 50% 18%,rgba(255,210,90,.045) 0 5deg,transparent 5deg 15deg),radial-gradient(ellipse at 50% 30%,rgba(40,28,6,.6) 0,rgba(3,5,12,.88) 62%)}
+.sr-h{display:flex;flex-direction:column;align-items:center;gap:2px;animation:srH .55s cubic-bezier(.2,1.4,.4,1) both}
+.sr-h small{display:flex;align-items:center;gap:10px;font:italic 800 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.32em;color:#ffd25a}
+.sr-h small::before,.sr-h small::after{content:'';width:44px;height:2px;background:linear-gradient(90deg,transparent,#ffd25a)}
+.sr-h small::after{transform:scaleX(-1)}
+.sr-h h3{margin:0;transform:skewX(-8deg);font:italic 900 46px/.95 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.02em;
+  color:#ffe27a;background:linear-gradient(180deg,#fff6c8 0,#ffd25a 48%,#e89a12 52%,#ffcf4a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 3px 0 #6a3c00) drop-shadow(0 0 18px rgba(255,190,60,.35))}
+.sr-me{display:flex;align-items:center;gap:10px;padding:6px 14px 6px 12px;transform:skewX(-8deg);color:#fff;background:#14182a;box-shadow:inset 3px 0 0 #8fa3d8,0 6px 14px rgba(0,0,0,.4);
+  animation:srIn .4s .2s cubic-bezier(.2,.9,.3,1.2) both}
+.sr-me>*{transform:skewX(8deg)}
+.sr-me b{font:italic 800 19px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em}
+.sr-me span{font:600 13px/1 'Fredoka',sans-serif;opacity:.85}
+.sr-me.ok{box-shadow:inset 3px 0 0 #3fe07a,0 6px 14px rgba(0,0,0,.4)}.sr-me.ok b{color:#7dff9a}
+.sr-me.gold{box-shadow:inset 3px 0 0 #ffd25a,0 6px 14px rgba(0,0,0,.4)}.sr-me.gold b{color:#ffd25a}
+.sr-me.bad{box-shadow:inset 3px 0 0 #ff5a48,0 6px 14px rgba(0,0,0,.4)}.sr-me.bad b{color:#ff8a78}
+.sr-me.warn{box-shadow:inset 3px 0 0 #ff9a3a,0 6px 14px rgba(0,0,0,.4)}.sr-me.warn b{color:#ffb070}
+.sr-rows{position:relative;width:min(100%,400px);display:flex;flex-direction:column;gap:10px}
+.sr-rows::before{content:'';position:absolute;left:27px;top:20px;bottom:20px;width:3px;background:linear-gradient(180deg,#ffd25a,rgba(255,210,90,.15));transform:skewX(-8deg);transform-origin:top;animation:srLine .6s .25s ease-out both}
+.sr-r{position:relative;display:flex;align-items:center;gap:10px;min-height:60px;padding:0 10px 0 0;color:#fff;transform:skewX(-8deg);overflow:hidden;
+  background:linear-gradient(90deg,color-mix(in srgb,var(--c) 34%,#0b0e1a) 0,#0b0e1a 38%,#0b0e1a);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.12),0 8px 18px rgba(0,0,0,.5);
+  animation:srIn .42s calc(var(--k) * 120ms + .35s) cubic-bezier(.2,.9,.3,1.15) both}
+.sr-r>*{transform:skewX(8deg)}
+.sr-r.me{box-shadow:inset 0 0 0 2px #fff,0 0 0 1px rgba(0,0,0,.4),0 8px 18px rgba(0,0,0,.5)}
+.sr-n{flex:none;width:56px;align-self:stretch;display:grid;place-items:center;transform:none!important;font:italic 900 40px/1 'Barlow Condensed','Lilita One',sans-serif;
+  color:#0b0e1a;-webkit-text-stroke:2px var(--c);paint-order:stroke fill;text-shadow:0 0 14px color-mix(in srgb,var(--c) 70%,transparent)}
+.sr-r.win .sr-n{color:#1a1200;-webkit-text-stroke:0;background:linear-gradient(180deg,#ffe680,#f5b324);text-shadow:0 2px 0 rgba(255,255,255,.5)}
+.sr-av{position:relative;flex:none;width:44px;height:44px}
+.sr-av .fl-av{width:44px;height:44px;box-shadow:0 0 0 2px var(--c),0 0 12px color-mix(in srgb,var(--c) 60%,transparent)}
+.sr-cr{position:absolute;left:50%;top:-11px;z-index:2;width:22px;height:22px;margin-left:-11px;transform:rotate(-12deg);filter:drop-shadow(0 2px 0 rgba(0,0,0,.4));animation:srCr .5s calc(.35s + .45s) cubic-bezier(.3,1.8,.5,1) both}
+.sr-r.win .sr-av{margin-top:8px}
+.sr-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
+.sr-who b{display:flex;align-items:center;gap:6px;min-width:0;font-weight:700;font-size:18px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sr-who b .tm{flex:none;display:inline-grid;place-items:center;width:17px;height:17px;font:italic 800 11px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff;background:var(--tc);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+.sr-who b em{flex:none;padding:2px 5px;font:italic 800 11px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;font-style:normal;color:#0b0e1a;background:#fff}
+.sr-who small{display:flex;align-items:center;gap:5px;font:italic 800 16px/1 'Barlow Condensed','Lilita One',sans-serif;color:#e8eefc}
+.sr-who small u{text-decoration:none;font:600 11.5px/1 'Fredoka',sans-serif;opacity:.7}
+.sr-who small i{display:grid;place-items:center;width:15px;height:15px;border-radius:50%}
+.sr-who small i svg{width:10px;height:10px}
+.sr-who small i.ok{background:#2fbf5a}.sr-who small i.no{background:#e5483a}
+.sr-pk{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:58px}
+.sr-fl{display:flex;gap:1px}
+.sr-fl span{display:block;width:21px;height:25px;animation:srFl .45s calc(var(--k) * 120ms + .75s + var(--j) * 110ms) cubic-bezier(.3,1.9,.5,1) both}
+.sr-fl svg{width:100%;height:100%;filter:drop-shadow(0 2px 0 rgba(0,0,0,.45))}
+.sr-pk small{font:italic 800 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em;color:#ffd25a}
+.sr-r.z .sr-pk small{color:rgba(255,255,255,.38)}
+.sr-r.z{background:linear-gradient(90deg,color-mix(in srgb,var(--c) 18%,#0b0e1a) 0,#0b0e1a 38%,#0b0e1a)}
+.sr-r.z .sr-who,.sr-r.z .sr-av{opacity:.78}
+.sr-r.win{background:linear-gradient(90deg,#3a2a06 0,#1a1405 45%,#0f0d08);box-shadow:inset 0 0 0 2px #ffd25a,0 0 24px rgba(255,200,70,.35),0 8px 18px rgba(0,0,0,.5)}
+.sr-r.win.me{box-shadow:inset 0 0 0 2px #ffd25a,inset 0 0 0 4px #fff,0 0 24px rgba(255,200,70,.4),0 8px 18px rgba(0,0,0,.5)}
+.sr-r.win::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-110%);background:linear-gradient(100deg,transparent 30%,rgba(255,236,160,.32) 50%,transparent 70%);animation:srShine .9s 1.15s ease-out both}
+.fl-res.sira.n4 .sr-r{min-height:54px}.fl-res.sira.n4 .sr-rows{gap:8px}.fl-res.sira.n4 .sr-n{font-size:34px;width:50px}.fl-res.sira.n4 .sr-rows::before{left:24px}
+.fl-res.sira.n4 .sr-av,.fl-res.sira.n4 .sr-av .fl-av{width:38px;height:38px}
+@keyframes srH{0%{opacity:0;transform:scale(1.6)}100%{opacity:1;transform:none}}
+@keyframes srIn{0%{opacity:0;transform:skewX(-8deg) translateX(-46px)}100%{opacity:1;transform:skewX(-8deg)}}
+@keyframes srLine{0%{transform:skewX(-8deg) scaleY(0)}100%{transform:skewX(-8deg) scaleY(1)}}
+@keyframes srFl{0%{opacity:0;transform:translateY(-22px) scale(.4) rotate(-20deg)}100%{opacity:1;transform:none}}
+@keyframes srCr{0%{opacity:0;transform:translateY(-12px) rotate(-30deg) scale(.4)}100%{opacity:1;transform:rotate(-12deg)}}
+@keyframes srShine{0%{transform:translateX(-110%)}100%{transform:translateX(110%)}}
+@media (prefers-reduced-motion:reduce){.sr-h,.sr-me,.sr-r,.sr-fl span,.sr-cr,.sr-rows::before{animation:none}.sr-r.win::after{display:none}}
+@media (orientation:landscape) and (max-height:520px){.fl-res{gap:12px;padding-bottom:0}.rs-r{min-height:46px}.rs-rows{gap:7px}.fl-res.sira{gap:8px}.sr-h h3{font-size:32px}.sr-r{min-height:46px}.sr-rows{gap:6px}}
 
 /* ---------------------------------------------------------------- sırala (v1.5c): krem, ince, premium. Krem kart satırlar
    (lacivert yazı, ince altın kenar, alçak gölge), küçük altın eğik numaralar, ince uç etiketleri; seçili altın çerçeve,
