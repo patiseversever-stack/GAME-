@@ -10,6 +10,7 @@
 
 import { createFetih } from './index.js';
 import { TYPES } from './quiz/types.js';
+import { expansionPlan } from './game/match.js';
 import { CATS } from './quiz/categories.js';
 import { BANK } from './data/bank.js';
 import { DENEME_TYPES, DENEME_ORDER, DENEME_SAMPLES, bindApp } from './quiz/deneme.js';
@@ -385,7 +386,8 @@ export async function galeri() {
 		// yayılma: sonuç + il payı (maçtaki gibi sıralama ve 2:1 / 2:1:1:0 pay)
 		if (!duel && live()) {
 			const order = m.rank(results, T.kind === 'closest' ? 'closest' : 'exact');
-			await ui.ranking(m, order, four ? [2, 1, 1, 0] : [2, 1]);
+			// pay maçtaki hesapla: bölge haritası (oyuncu başına 6 il, başkentler düşülür) ilk tur
+			await ui.ranking(m, order, expansionPlan(who.length * 5, who.length)[0]);
 		}
 		m.mode = mode0;
 	}

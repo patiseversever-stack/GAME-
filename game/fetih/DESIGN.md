@@ -344,12 +344,17 @@ rozeti; insan ikinci ama takım arkadaşı birinciyse "TAKIMIN KAZANDI". İzlene
 damga, eşlide rakip takım kazandıysa kırmızı. 4 kişide satırlar alçak (50 px). Gerçek akışla 1'e 1, eşli, 3'lü, 4'lü
 denetlendi; kart kapanmadan sonuç ekranı açılmıyor.
 
-**SEÇİM SIRASI (v1.5d, `ui._draftHTML`).** Yayılmanın birleşik ekranı kendi tasarımında: ışın deseni ve altın sıcak
-arka plan, "YAYILMA" üst yazısı ve büyük altın degrade "SEÇİM SIRASI", insanın sonucu eğik şerit (BİLDİN yeşil, BİLEMEDİN
-kırmızı, payıyla), sırayı bağlayan altın zincir, oyuncu renginde konturlu büyük sıra numaraları (birinci altın blok), birinciye
-taç ve bir kez parıltı süpürmesi, il payı oyuncunun renginde tek tek düşen bayraklar ("2 İL"; payı olmayan "İL YOK", soluk).
-Defterde sahne düğmesi: Düello / Yayılma 2 kişi / Yayılma 4 kişi / Eşli 2v2 (defterdeki yayılma sahnesi artık sonuç ekranını da
-gösterir). Bütün hareket transform/opacity; harita kararır, kamera kıpırdamaz.
+**SEÇİM SIRASI (v1.5e, `ui._draftHTML`).** Yayılmanın birleşik ekranı (soru sonucu + il payı). v1.5d kaba bulundu (kalın
+kontur, büyük bloklar, tekrarlanan bayraklar) ve 3 bayrakta kesiyordu; gerçek sınırlar koddan çıkarıldı:
+- il payı bir turda 0–8 (`expansionPlan`; tüm Türkiye haritasında 1'e 1 ve 3'lüde birinci 8, 4 kişide 5; bölge haritasında en
+  çok 3). Pay rakamla gösterilir (+1 … +8) ve oyuncu renginde küçük bayrak imi; payı olmayan "— İL YOK" soluk;
+- ad: komutan adı 12 harf (menü sınırı), sefer patronları 21 harfe dek ("Akdeniz Sultanı Güneş"); ad en çok iki satır,
+  kelime ortasından bölünmez; SEN rozeti portrenin altında (ada yer kalır);
+- yakınlık değeri uzun olabilir ("8.400.000 kişi · fark 1.250.000"): dar telefonda fark alt satıra geçer.
+Görünüm: ince koyu cam satır (1 px kenar, solda 3 px oyuncu rengi), küçük numara (birinci altın + taç), birinci satırda hafif
+altın ton ve bir kez parıltı. Üst yazı turu da söyler ("YAYILMA · TUR 2/7"). `tools/denetim/uc.cjs` ile 4 senaryo × 320/360/412 px
+ölçüldü: taşma, kesik ad ve çakışma yok; `sig.cjs` ile 7 telefon boyunda dikeyde sığıyor (320×568'de altta 118 px boşluk).
+Defterde Sahne düğmesi: Düello / Yayılma 2 kişi / Yayılma 4 kişi / Eşli 2v2; pay maçtaki hesapla (`expansionPlan`).
 
 **Eşleştir ve sırala krem (v1.5c, `quiz/t_match.js`, `ui/styles-arena.js`).** Neon ve koyu cam denendi, premium
 durmadı; eski düzen korunup krem arena diline çekildi. Krem kart (lacivert yazı, ince altın kenar, alçak 3 px gölge, 9–10 px

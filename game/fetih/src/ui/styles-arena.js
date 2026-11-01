@@ -293,72 +293,68 @@ export const CSS_ARENA = /* css */ `
 .fl-res.n4 .rs-r .fl-av{width:34px;height:34px}
 .fl-res.n4 .rs-r b{font-size:17px}
 
-/* ---------------------------------------------------------------- SEÇİM SIRASI (v1.5d, yayılma): büyük altın başlık, insanın
-   sonucu şerit, altın zincirle bağlı sıra kartları, konturlu numaralar, birinciye taç + parıltı, il payı düşen bayraklar */
-.fl-res.sira{gap:14px;background:repeating-conic-gradient(from -4deg at 50% 18%,rgba(255,210,90,.045) 0 5deg,transparent 5deg 15deg),radial-gradient(ellipse at 50% 30%,rgba(40,28,6,.6) 0,rgba(3,5,12,.88) 62%)}
-.sr-h{display:flex;flex-direction:column;align-items:center;gap:2px;animation:srH .55s cubic-bezier(.2,1.4,.4,1) both}
-.sr-h small{display:flex;align-items:center;gap:10px;font:italic 800 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.32em;color:#ffd25a}
-.sr-h small::before,.sr-h small::after{content:'';width:44px;height:2px;background:linear-gradient(90deg,transparent,#ffd25a)}
+/* ---------------------------------------------------------------- SEÇİM SIRASI (v1.5e, yayılma): ince, sade, premium. Koyu
+   cam satırlar (ince çizgi kenar, solda oyuncu renginde şerit), küçük numara (birinci altın + taç), ad iki satıra dek,
+   il payı rakamla (+1 … +8). Kalın kontur, büyük blok ve zincir yok. */
+.fl-res.sira{gap:12px;background:repeating-conic-gradient(from -4deg at 50% 16%,rgba(255,210,90,.028) 0 5deg,transparent 5deg 15deg),radial-gradient(ellipse at 50% 28%,rgba(30,22,6,.55) 0,rgba(3,5,12,.9) 60%)}
+.sr-h{display:flex;flex-direction:column;align-items:center;gap:4px;animation:srH .5s cubic-bezier(.2,1.2,.4,1) both}
+.sr-h small{display:flex;align-items:center;gap:9px;font:italic 700 11.5px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.3em;color:rgba(255,214,110,.85)}
+.sr-h small::before,.sr-h small::after{content:'';width:28px;height:1px;background:linear-gradient(90deg,transparent,rgba(255,210,90,.8))}
 .sr-h small::after{transform:scaleX(-1)}
-.sr-h h3{margin:0;transform:skewX(-8deg);font:italic 900 46px/.95 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.02em;
-  color:#ffe27a;background:linear-gradient(180deg,#fff6c8 0,#ffd25a 48%,#e89a12 52%,#ffcf4a 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
-  filter:drop-shadow(0 3px 0 #6a3c00) drop-shadow(0 0 18px rgba(255,190,60,.35))}
-.sr-me{display:flex;align-items:center;gap:10px;padding:6px 14px 6px 12px;transform:skewX(-8deg);color:#fff;background:#14182a;box-shadow:inset 3px 0 0 #8fa3d8,0 6px 14px rgba(0,0,0,.4);
-  animation:srIn .4s .2s cubic-bezier(.2,.9,.3,1.2) both}
+.sr-h h3{margin:0;transform:skewX(-8deg);font:italic 800 34px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;
+  background:linear-gradient(180deg,#fff3c4 0,#ffd25a 55%,#e9a21c 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 1px 0 rgba(90,50,0,.9)) drop-shadow(0 0 14px rgba(255,190,60,.22))}
+.sr-me{display:flex;align-items:baseline;gap:8px;padding:5px 12px 6px;transform:skewX(-8deg);color:#fff;background:rgba(14,18,34,.85);
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 2px 0 0 #8fa3d8;animation:srIn .4s .15s cubic-bezier(.2,.9,.3,1.1) both}
 .sr-me>*{transform:skewX(8deg)}
-.sr-me b{font:italic 800 19px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em}
-.sr-me span{font:600 13px/1 'Fredoka',sans-serif;opacity:.85}
-.sr-me.ok{box-shadow:inset 3px 0 0 #3fe07a,0 6px 14px rgba(0,0,0,.4)}.sr-me.ok b{color:#7dff9a}
-.sr-me.gold{box-shadow:inset 3px 0 0 #ffd25a,0 6px 14px rgba(0,0,0,.4)}.sr-me.gold b{color:#ffd25a}
-.sr-me.bad{box-shadow:inset 3px 0 0 #ff5a48,0 6px 14px rgba(0,0,0,.4)}.sr-me.bad b{color:#ff8a78}
-.sr-me.warn{box-shadow:inset 3px 0 0 #ff9a3a,0 6px 14px rgba(0,0,0,.4)}.sr-me.warn b{color:#ffb070}
-.sr-rows{position:relative;width:min(100%,400px);display:flex;flex-direction:column;gap:10px}
-.sr-rows::before{content:'';position:absolute;left:27px;top:20px;bottom:20px;width:3px;background:linear-gradient(180deg,#ffd25a,rgba(255,210,90,.15));transform:skewX(-8deg);transform-origin:top;animation:srLine .6s .25s ease-out both}
-.sr-r{position:relative;display:flex;align-items:center;gap:10px;min-height:60px;padding:0 10px 0 0;color:#fff;transform:skewX(-8deg);overflow:hidden;
-  background:linear-gradient(90deg,color-mix(in srgb,var(--c) 34%,#0b0e1a) 0,#0b0e1a 38%,#0b0e1a);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.22),inset 0 1px 0 rgba(255,255,255,.12),0 8px 18px rgba(0,0,0,.5);
-  animation:srIn .42s calc(var(--k) * 120ms + .35s) cubic-bezier(.2,.9,.3,1.15) both}
+.sr-me b{font:italic 800 15px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em}
+.sr-me span{font:500 12px/1 'Fredoka',sans-serif;opacity:.75}
+.sr-me.ok{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 2px 0 0 #3fe07a}.sr-me.ok b{color:#7dff9a}
+.sr-me.gold{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 2px 0 0 #ffd25a}.sr-me.gold b{color:#ffd25a}
+.sr-me.bad{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 2px 0 0 #ff5a48}.sr-me.bad b{color:#ff8a78}
+.sr-me.warn{box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 2px 0 0 #ff9a3a}.sr-me.warn b{color:#ffb070}
+.sr-rows{width:min(100%,380px);display:flex;flex-direction:column;gap:6px}
+.sr-r{position:relative;display:flex;align-items:center;gap:10px;min-height:54px;padding:6px 12px 6px 0;color:#f2f5fc;transform:skewX(-8deg);overflow:hidden;
+  background:linear-gradient(90deg,rgba(22,27,48,.92),rgba(10,13,26,.9));box-shadow:inset 0 0 0 1px rgba(255,255,255,.1),inset 3px 0 0 var(--c),0 6px 16px rgba(0,0,0,.35);
+  animation:srIn .4s calc(var(--k) * 90ms + .3s) cubic-bezier(.2,.9,.3,1.05) both}
 .sr-r>*{transform:skewX(8deg)}
-.sr-r.me{box-shadow:inset 0 0 0 2px #fff,0 0 0 1px rgba(0,0,0,.4),0 8px 18px rgba(0,0,0,.5)}
-.sr-n{flex:none;width:56px;align-self:stretch;display:grid;place-items:center;transform:none!important;font:italic 900 40px/1 'Barlow Condensed','Lilita One',sans-serif;
-  color:#0b0e1a;-webkit-text-stroke:2px var(--c);paint-order:stroke fill;text-shadow:0 0 14px color-mix(in srgb,var(--c) 70%,transparent)}
-.sr-r.win .sr-n{color:#1a1200;-webkit-text-stroke:0;background:linear-gradient(180deg,#ffe680,#f5b324);text-shadow:0 2px 0 rgba(255,255,255,.5)}
-.sr-av{position:relative;flex:none;width:44px;height:44px}
-.sr-av .fl-av{width:44px;height:44px;box-shadow:0 0 0 2px var(--c),0 0 12px color-mix(in srgb,var(--c) 60%,transparent)}
-.sr-cr{position:absolute;left:50%;top:-11px;z-index:2;width:22px;height:22px;margin-left:-11px;transform:rotate(-12deg);filter:drop-shadow(0 2px 0 rgba(0,0,0,.4));animation:srCr .5s calc(.35s + .45s) cubic-bezier(.3,1.8,.5,1) both}
-.sr-r.win .sr-av{margin-top:8px}
-.sr-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
-.sr-who b{display:flex;align-items:center;gap:6px;min-width:0;font-weight:700;font-size:18px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.sr-who b .tm{flex:none;display:inline-grid;place-items:center;width:17px;height:17px;font:italic 800 11px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff;background:var(--tc);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
-.sr-who b em{flex:none;padding:2px 5px;font:italic 800 11px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;font-style:normal;color:#0b0e1a;background:#fff}
-.sr-who small{display:flex;align-items:center;gap:5px;font:italic 800 16px/1 'Barlow Condensed','Lilita One',sans-serif;color:#e8eefc}
-.sr-who small u{text-decoration:none;font:600 11.5px/1 'Fredoka',sans-serif;opacity:.7}
-.sr-who small i{display:grid;place-items:center;width:15px;height:15px;border-radius:50%}
-.sr-who small i svg{width:10px;height:10px}
-.sr-who small i.ok{background:#2fbf5a}.sr-who small i.no{background:#e5483a}
-.sr-pk{flex:none;display:flex;flex-direction:column;align-items:center;gap:2px;min-width:58px}
-.sr-fl{display:flex;gap:1px}
-.sr-fl span{display:block;width:21px;height:25px;animation:srFl .45s calc(var(--k) * 120ms + .75s + var(--j) * 110ms) cubic-bezier(.3,1.9,.5,1) both}
-.sr-fl svg{width:100%;height:100%;filter:drop-shadow(0 2px 0 rgba(0,0,0,.45))}
-.sr-pk small{font:italic 800 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em;color:#ffd25a}
-.sr-r.z .sr-pk small{color:rgba(255,255,255,.38)}
-.sr-r.z{background:linear-gradient(90deg,color-mix(in srgb,var(--c) 18%,#0b0e1a) 0,#0b0e1a 38%,#0b0e1a)}
-.sr-r.z .sr-who,.sr-r.z .sr-av{opacity:.78}
-.sr-r.win{background:linear-gradient(90deg,#3a2a06 0,#1a1405 45%,#0f0d08);box-shadow:inset 0 0 0 2px #ffd25a,0 0 24px rgba(255,200,70,.35),0 8px 18px rgba(0,0,0,.5)}
-.sr-r.win.me{box-shadow:inset 0 0 0 2px #ffd25a,inset 0 0 0 4px #fff,0 0 24px rgba(255,200,70,.4),0 8px 18px rgba(0,0,0,.5)}
-.sr-r.win::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-110%);background:linear-gradient(100deg,transparent 30%,rgba(255,236,160,.32) 50%,transparent 70%);animation:srShine .9s 1.15s ease-out both}
-.fl-res.sira.n4 .sr-r{min-height:54px}.fl-res.sira.n4 .sr-rows{gap:8px}.fl-res.sira.n4 .sr-n{font-size:34px;width:50px}.fl-res.sira.n4 .sr-rows::before{left:24px}
-.fl-res.sira.n4 .sr-av,.fl-res.sira.n4 .sr-av .fl-av{width:38px;height:38px}
-@keyframes srH{0%{opacity:0;transform:scale(1.6)}100%{opacity:1;transform:none}}
-@keyframes srIn{0%{opacity:0;transform:skewX(-8deg) translateX(-46px)}100%{opacity:1;transform:skewX(-8deg)}}
-@keyframes srLine{0%{transform:skewX(-8deg) scaleY(0)}100%{transform:skewX(-8deg) scaleY(1)}}
-@keyframes srFl{0%{opacity:0;transform:translateY(-22px) scale(.4) rotate(-20deg)}100%{opacity:1;transform:none}}
-@keyframes srCr{0%{opacity:0;transform:translateY(-12px) rotate(-30deg) scale(.4)}100%{opacity:1;transform:rotate(-12deg)}}
+.sr-r.me{box-shadow:inset 0 0 0 1px rgba(255,255,255,.42),inset 3px 0 0 var(--c),0 6px 16px rgba(0,0,0,.35)}
+.sr-r.win{background:linear-gradient(90deg,rgba(255,200,70,.16),rgba(22,20,14,.92) 55%,rgba(10,13,26,.9));box-shadow:inset 0 0 0 1px rgba(255,210,90,.6),inset 3px 0 0 var(--c),0 0 18px rgba(255,190,60,.16),0 6px 16px rgba(0,0,0,.35)}
+.sr-r.win.me{box-shadow:inset 0 0 0 1px rgba(255,210,90,.75),inset 3px 0 0 var(--c),0 0 18px rgba(255,190,60,.2),0 6px 16px rgba(0,0,0,.35)}
+.sr-r.win::after{content:'';position:absolute;inset:0;pointer-events:none;transform:translateX(-110%);background:linear-gradient(100deg,transparent 35%,rgba(255,236,170,.16) 50%,transparent 65%);animation:srShine 1s 1s ease-out both}
+.sr-n{position:relative;flex:none;width:34px;padding-left:6px;text-align:center;font:italic 800 21px/1 'Barlow Condensed','Lilita One',sans-serif;color:rgba(255,255,255,.5)}
+.sr-r.win .sr-n{color:#ffd25a}
+.sr-cr{position:absolute;left:50%;top:-12px;width:14px;height:14px;margin-left:-4px;animation:srCr .45s 1s cubic-bezier(.3,1.8,.5,1) both}
+.sr-r .fl-av{flex:none;width:36px;height:36px;box-shadow:0 0 0 1.5px var(--c)}
+.sr-who{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.sr-who b{display:flex;align-items:center;gap:6px;min-width:0;font:600 15.5px/1.12 'Fredoka',sans-serif}
+.sr-who b .nm{min-width:0;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;overflow-wrap:break-word}
+.sr-who b .tm{flex:none;display:inline-grid;place-items:center;width:15px;height:15px;font:italic 800 10px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff;background:var(--tc)}
+.sr-av{position:relative;flex:none;display:flex}
+.sr-av em{position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);padding:1px 4px;font:italic 800 8.5px/1.15 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em;font-style:normal;color:#0b0e1a;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.5)}
+.sr-who small{display:flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;font:600 12px/1 'Fredoka',sans-serif;color:rgba(232,238,252,.62)}
+.sr-who small span{flex:none;font:italic 700 13.5px/1 'Barlow Condensed','Lilita One',sans-serif;color:rgba(242,245,252,.9)}
+.sr-who small u{min-width:0;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
+.sr-who small i{flex:none;display:grid;place-items:center;width:13px;height:13px;border-radius:50%}
+.sr-who small i svg{width:8px;height:8px}
+.sr-who small i.ok{background:#2fbf5a}.sr-who small i.no{background:#d9483a}
+.sr-pk{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:3px;min-width:44px}
+.sr-pk b{display:flex;align-items:center;gap:4px;font:italic 800 24px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffd25a;animation:srPk .4s calc(var(--k) * 90ms + .7s) cubic-bezier(.3,1.7,.5,1) both}
+.sr-pk b svg{width:13px;height:15px}
+.sr-pk small{font:italic 700 9.5px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.2em;color:rgba(255,214,110,.7)}
+.sr-r.z .sr-pk b{color:rgba(255,255,255,.3);font-size:20px}
+.sr-r.z .sr-pk small{color:rgba(255,255,255,.3)}
+.sr-r.z .sr-av,.sr-r.z .sr-who{opacity:.72}
+.fl-res.sira.n4 .sr-r{min-height:50px}
+@keyframes srH{0%{opacity:0;transform:translateY(-10px) scale(1.08)}100%{opacity:1;transform:none}}
+@keyframes srIn{0%{opacity:0;transform:skewX(-8deg) translateX(-28px)}100%{opacity:1;transform:skewX(-8deg)}}
+@keyframes srPk{0%{opacity:0;transform:scale(.4)}100%{opacity:1;transform:none}}
+@keyframes srCr{0%{opacity:0;transform:translateY(-8px) scale(.5)}100%{opacity:1;transform:none}}
 @keyframes srShine{0%{transform:translateX(-110%)}100%{transform:translateX(110%)}}
-.sr-who b .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-/* dar telefon (320–340 px): satır öğeleri sıkışır, ad üç noktayla biter */
-@media (max-width:340px){.sr-h h3{font-size:40px}.sr-n{width:44px;font-size:32px}.sr-rows::before{left:21px}.sr-r{gap:8px}.sr-who b{font-size:16px}.sr-pk{min-width:46px}.sr-fl span{width:17px;height:21px}.sr-av,.sr-av .fl-av{width:38px;height:38px}}
-@media (prefers-reduced-motion:reduce){.sr-h,.sr-me,.sr-r,.sr-fl span,.sr-cr,.sr-rows::before{animation:none}.sr-r.win::after{display:none}}
-@media (orientation:landscape) and (max-height:520px){.fl-res{gap:12px;padding-bottom:0}.rs-r{min-height:46px}.rs-rows{gap:7px}.fl-res.sira{gap:8px}.sr-h h3{font-size:32px}.sr-r{min-height:46px}.sr-rows{gap:6px}}
+/* dar telefon (320–340 px) */
+@media (max-width:340px){.sr-h h3{font-size:30px}.sr-r{gap:8px;padding-right:9px}.sr-n{width:28px;font-size:18px}.sr-r .fl-av{width:32px;height:32px}.sr-who b{font-size:14.5px}.sr-pk{min-width:38px}.sr-pk b{font-size:21px}.sr-who small{flex-wrap:wrap;row-gap:3px}.sr-who small u{overflow:visible}}
+@media (prefers-reduced-motion:reduce){.sr-h,.sr-me,.sr-r,.sr-pk b,.sr-cr{animation:none}.sr-r.win::after{display:none}}
+@media (orientation:landscape) and (max-height:520px){.fl-res{gap:12px;padding-bottom:0}.rs-r{min-height:46px}.rs-rows{gap:7px}.fl-res.sira{gap:7px}.sr-h h3{font-size:26px}.sr-r{min-height:44px}.sr-rows{gap:5px}}
 
 /* ---------------------------------------------------------------- sırala (v1.5c): krem, ince, premium. Krem kart satırlar
    (lacivert yazı, ince altın kenar, alçak gölge), küçük altın eğik numaralar, ince uç etiketleri; seçili altın çerçeve,
