@@ -331,6 +331,18 @@ yerleşmeden yeni kahraman girmez, ekrandaki kahraman giriş eşiğinin %35'ine 
 durunca kahraman gelir. Balon, bayrak ve ağaç salınımı kameradan 42–62 birim ötede durur (görünmeyen hareket çizilmez).
 İl adları istem yazısının altına düşmez (`labels.avoid`: genel kipte gizlenir, seçim listesinde üstüne kayar).
 
+**Tek tasarım, iki yoğunluk (v1.5, `landmarks.js` `_buildFar`, `herokit.cluster`).** Sade model ayrı bir tasarımdı (kaide,
+renk, biçim farklı): yakına gelince ayrıntılıya geçiş göze batıyordu. Orta ve yüksek kademede haritadaki model artık ayrıntılı
+modelin kendisinin uzak sürümü: segment ×0,35, yapı ölçeğinin %12'sinden küçük parça yok, malzeme başına köşe kümeleme
+(hücre ölçeğin %3,5'i); pencere, alem, bayrak, alev ve işaretli desen (`k.keep`, Anıtkabir kilimi) üç kat ince ızgarada
+korunur. 42 yapı 785 bin → 130 bin üçgen (sade 68 bin). İşçide açılışta kurulur (~4–6 sn), 16 birimlik ızgara parçalarında
+birleşir, sade modelden 0,8 sn titreşimli geçişle yerine geçer, sade model bellekten atılır. Gömülme, kale altı, savaş
+açıklığı, Kuşbakışı gizleme ve kahramana geçiş sade modelle aynı kod (FADE). Geçişte belirgin değişen piksel gündüz %13–44 →
+%3–10, gece %34–69 → %4–13. Düşük kademede sade model kalır, haritada ayrıntılıya geçiş yapılmaz.
+Haritadaki ayrıntılı model (uzak ve yakın) haritanın ışığını kullanır: gece pencereler yanar, projektör yapıyı alttan
+yalar; eskiden yakına gelen ayrıntılı model gecede gündüz gibi aydınlık, avlusunun çimeni yemyeşil çiziliyordu
+(Kuşbakışı yakın çekimi sahnenin öznesi olarak aydınlık kalır).
+
 **Zemin sürekliliği (v1.5).** Tarla parselleri ~6 birimlik bloklarda farklı yöne döner; blok sınırı bıçak kesiği gibi
 görünüyordu: artık parsellerin dayandığı ince toprak yol (piksel cinsinden genişlik, yol boyu hafif çit gölgesi). Harita
 kendi üstüne gölge düşürmez: kaba kabartma kopyasının gölgesi dağ arkalarında siyah, testere dişi lekeler yapıyordu; dağ

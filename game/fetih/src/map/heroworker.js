@@ -4,7 +4,7 @@
 //
 // Ana taraf (heroes.js) yapının çevresindeki arazi düğüm yüksekliklerini (harita ızgarası) ve yakın illerin
 // çokgenlerini gönderir; işçi landmarks.js'in kit.hf'ini ve board.pick'ini birebir aynı hesapla yeniden kurar.
-// İleti: { id, kind, site, tone, seg, grid: { st, gx0, gy0, nx, ny, h }, provs: [{ index, box, rings }] }
+// İleti: { id, kind, site, tone, seg, minPart?, cluster?, grid: { st, gx0, gy0, nx, ny, h }, provs: [{ index, box, rings }] }
 //      → { id, ok, n, tris, ms, pos, nor, col, info, pat } (diziler aktarılır)
 import { HKit } from './herokit.js';
 import { HEROES } from './hero_index.js';
@@ -56,6 +56,8 @@ self.onmessage = (e) => {
 		const site = m.site;
 		const k = new HKit();
 		k.seg = m.seg;
+		// uzak sürüm (landmarks.js): küçük parça eşiği ve köşe kümeleme (yapı ölçeği cinsinden)
+		k.minPart = (m.minPart || 0) * site.s;
 		k.hi = true;
 		k.hf = hf;
 		k.site = { x: site.x, y: site.y, z: site.z, s: site.s, ry: site.ry };
@@ -74,6 +76,7 @@ self.onmessage = (e) => {
 		const it = HEROES[m.kind](k, R);
 		if (it && typeof it.next === 'function') while (!it.next().done);
 		k.pop();
+		if (m.cluster) k.cluster(m.cluster * site.s);
 		const g = k.buildHero('sync');
 		const A = (n) => g.getAttribute(n).array;
 		const out = { id: m.id, ok: true, n: k.count, tris: k.count / 3, ms: Math.round(performance.now() - t0), pos: A('position'), nor: A('normal'), col: A('col'), info: A('info'), pat: A('pat') };

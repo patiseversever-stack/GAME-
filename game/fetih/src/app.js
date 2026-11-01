@@ -329,6 +329,7 @@ export class App {
 			this.fx?.moving ||
 			this.board?.moving ||
 			this.props?.landmarks?.lod?.moving ||
+			this.props?.landmarks?.moving || // sade modelden uzak sürüme geçiş (açılışta bir kez)
 			this.scene.onBeforeRender !== THREE.Object3D.prototype.onBeforeRender // soru sahnesi kare sürücüsü (Tufan)
 		);
 	}
@@ -391,7 +392,7 @@ export class App {
 		for (const k of this.castles) if (k.group.visible) sig += k.group.position.x * 7.1 + k.group.position.y * 3.3 + k.group.position.z * 1.7 + k.fall.x + k.fall.y + k.fall.z + 1;
 		const uh = this.props.landmarks?.uHide?.value;
 		if (uh) sig += uh.x * 0.37 + uh.y * 0.71 + uh.z * 13 + uh.w * 5;
-		const dyn = moved || this.fx.moving || this.board.moving || this.props.landmarks?.lod?.moving || sig !== this._shSig || this.props.landmarks?.uFade?.value?.x > this.time - 2 || !this._shOk;
+		const dyn = moved || this.fx.moving || this.board.moving || this.props.landmarks?.lod?.moving || this.props.landmarks?.moving || sig !== this._shSig || this.props.landmarks?.uFade?.value?.x > this.time - 2 || !this._shOk;
 		this._shSig = sig;
 		this._shN = (this._shN || 0) + 1;
 		if (dyn || this._shN >= 6) {
