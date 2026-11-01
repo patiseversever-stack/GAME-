@@ -285,6 +285,18 @@ export const CSS_ARENA = /* css */ `
 .rs-r.win{color:#1a1200;background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:inset 0 0 0 2px #fff,0 0 26px rgba(255,210,90,.55),0 6px 18px rgba(0,0,0,.45)}
 .rs-r.no em{color:#ff9a88}
 @keyframes rsIn{0%{opacity:0;transform:skewX(-8deg) translateX(-40px)}100%{opacity:1;transform:skewX(-8deg)}}
+/* takım (eşli) rozeti, yayılmada il payı plakası, insanın satırı, 4 kişide alçak satır */
+.rs-r b .tm{display:inline-grid;place-items:center;width:18px;height:18px;margin-right:7px;vertical-align:2px;font:italic 800 12px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff;background:var(--tc);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.7)}
+.rs-r .pk{flex:none;min-width:48px;margin-right:-6px;padding:6px 7px;text-align:center;font:italic 800 21px/1 'Barlow Condensed','Lilita One',sans-serif;color:#1a1200;background:linear-gradient(180deg,#ffe066,#f5b324);box-shadow:0 2px 0 #8a5a00}
+.rs-r .pk small{display:block;margin-top:1px;font-size:10px;letter-spacing:.1em}
+.rs-r .pk.z{color:rgba(255,255,255,.45);background:rgba(255,255,255,.08);box-shadow:none;font-size:18px;padding:11px 7px}
+.rs-r.win .pk{color:#ffd25a;background:#1a1200;box-shadow:none}
+.rs-r.me:not(.win){box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.55),0 6px 18px rgba(0,0,0,.45)}
+.rs-h{margin:0 0 -2px 4px;font:italic 800 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.14em;color:#ffd25a;opacity:.9}
+.fl-res.n4 .rs-r{min-height:50px}
+.fl-res.n4 .rs-rows{gap:8px}
+.fl-res.n4 .rs-r .fl-av{width:34px;height:34px}
+.fl-res.n4 .rs-r b{font-size:17px}
 @media (orientation:landscape) and (max-height:520px){.fl-res{gap:12px;padding-bottom:0}.rs-r{min-height:46px}.rs-rows{gap:7px}}
 
 /* ---------------------------------------------------------------- sırala (v1.5c): krem, ince, premium. Krem kart satırlar

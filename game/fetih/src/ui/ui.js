@@ -1044,7 +1044,14 @@ export class UI {
 		await sleep(220);
 		if (gen !== this._gen) return;
 		card.className = 'fl-q';
-		const res = this._showResult(results, order, closest, T, v, me);
+		// yayılmada sonuç ekranı il payıyla (SEÇİM SIRASI) tek ekran: ranking() gösterir, burada ikinci kez sıralanmaz
+		this._pend = null;
+		if (ctx.phase === 'yayilma') {
+			this._pend = { results, closest, T, v, me, gen };
+			this.current = null;
+			return;
+		}
+		const res = this._showResult(results, order, closest, T, v, me, { m });
 		await this._hold(resMs, res);
 		res.classList.remove('on');
 		await sleep(200);
@@ -1056,7 +1063,7 @@ export class UI {
 	 * Sonuç ekranı (v1.5): soru kartı kapanınca haritanın ortasında büyük sonuç (BİLDİN! / 2. SIRADASIN…) ve oyuncu
 	 * satırları (sıra, portre, ad, süre ya da yakınlık). Arena dili: eğik plakalar, kazanan altın.
 	 */
-	_showResult(results, order, closest, T, v, me) {
+	_showResult(results, order, closest, T, v, me, { m = null, picks = null } = {}) {
 		let el = this._res;
 		if (!el) {
 			el = this._res = document.createElement('div');
@@ -1067,12 +1074,18 @@ export class UI {
 		let tone = '';
 		let sub = '';
 		const w = order[0];
+		const teams = !!m?.mode?.teams;
+		const tcol = (t) => m.players.find((x) => x.team === t)?.css || '#888';
 		if (me) {
 			if (closest) {
 				const rank = order.indexOf(me);
 				if (rank === 0) {
 					st = me.err === 0 ? 'TAM İSABET!' : 'EN YAKIN SEN!';
 					tone = 'gold';
+				} else if (teams && w.p.team === me.p.team) {
+					st = 'TAKIMIN KAZANDI';
+					tone = 'gold';
+					sub = `${w.name} en yakın`;
 				} else {
 					st = `${rank + 1}. SIRADASIN`;
 					tone = 'bad';
@@ -1087,8 +1100,13 @@ export class UI {
 				tone = 'bad';
 			}
 		} else if (closest || w?.correct) {
-			st = `${w.name} KAZANDI`;
-			tone = 'gold';
+			// izlenen düello: kazanan takım arkadaşınsa altın, rakibinse kırmızı; insan yoksa altın
+			const hu = m?.players?.find((p) => p.human);
+			// 3–4 kişide izlenen düello nötr (altın); eşlide rakip takım kazandıysa kırmızı
+			const mine = teams && hu ? w.p.team === hu.team : null;
+			st = mine ? 'TAKIMIN KAZANDI' : `${w.name} KAZANDI`;
+			sub = mine ? w.name : '';
+			tone = mine === false ? 'bad' : 'gold';
 		} else {
 			st = 'KİMSE BİLEMEDİ';
 			tone = 'warn';
@@ -1099,10 +1117,19 @@ export class UI {
 				const win = k === 0 && (closest ? ok : r.correct);
 				const tag = win ? `<i>${closest ? (r.err === 0 || (T.needsMap && r.correct) ? 'TAM İSABET' : 'EN YAKIN') : 'EN HIZLI'}</i>` : '';
 				const no = !closest && !r.correct;
-				return `<div class="rs-r${win ? ' win' : ''}${no ? ' no' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span><b>${esc(r.name)}${tag}</b><em>${val}<small>${rs}</small></em></div>`;
+				const tm = teams ? `<span class="tm" style="--tc:${tcol(r.p.team)}">${r.p.team ? 'B' : 'A'}</span>` : '';
+				const pk = picks ? `<span class="pk${picks[k] ? '' : ' z'}">${picks[k] ? `+${picks[k]}<small>İL</small>` : '—'}</span>` : '';
+				return `<div class="rs-r${win ? ' win' : ''}${no ? ' no' : ''}${r.p.human ? ' me' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span><b>${tm}${esc(r.name)}${tag}</b><em>${val}<small>${rs}</small></em>${pk}</div>`;
 			})
 			.join('');
-		el.innerHTML = `<div class="fl-stamp ${tone}">${esc(st)}${sub ? `<small>${esc(sub)}</small>` : ''}</div><div class="rs-rows">${rows}</div>`;
+		// yayılma: insanın il payı alt satırda; satırların başında SEÇİM SIRASI başlığı
+		if (picks && me) {
+			const n = picks[order.indexOf(me)] || 0;
+			sub = n ? `${n} il seçiyorsun` : 'bu tur il yok';
+		}
+		const head = picks ? `<h5 class="rs-h">SEÇİM SIRASI</h5>` : '';
+		el.classList.toggle('n4', order.length >= 4);
+		el.innerHTML = `<div class="fl-stamp ${tone}">${esc(st)}${sub ? `<small>${esc(sub)}</small>` : ''}</div><div class="rs-rows">${head}${rows}</div>`;
 		void el.offsetWidth;
 		el.classList.add('on');
 		if (me && (closest ? w === me : me.correct)) {
@@ -1464,6 +1491,18 @@ export class UI {
 
 	async ranking(m, order, picks) {
 		if (this.fast) return;
+		const pd = this._pend;
+		this._pend = null;
+		if (pd && pd.gen === this._gen) {
+			// sonuç + il payı tek ekran (v1.5): order maçın sıralaması (match.rank), sonuç nesneleri aynı
+			const g = this._gen;
+			const res = this._showResult(pd.results, order, pd.closest, pd.T, pd.v, pd.me, { m, picks });
+			await this._hold(pd.me ? 2800 : 2000, res);
+			if (g !== this._gen) return;
+			res.classList.remove('on');
+			await sleep(220);
+			return;
+		}
 		const r = this.$.rank;
 		r.innerHTML = `<h4>${ico('flag', { w: 2.6 })}SEÇİM SIRASI</h4>${order
 			.map(

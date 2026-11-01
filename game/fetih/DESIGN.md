@@ -337,6 +337,13 @@ SIRADASIN…) ve oyuncu plakaları (sıra, portre, süre ya da yakınlık; kazan
 başlar. Çevrimiçinde toplam süre sunucunun verdiği süreyi aşmaz (cevap anı kısalır). Sırala arena dilinde: eğik kesim
 beyaz satırlar, altın eğik numaralar, siyah uç plakaları.
 
+**Sonuç ekranı kiplerde (v1.5c).** Yayılmada sonuç ekranı ile SEÇİM SIRASI tek ekran: `reveal` yayılmada sonucu bekletir
+(`_pend`), `ranking` aynı satırlara il payı plakasını (+2 İL / —) ve "SEÇİM SIRASI" başlığını ekler; insanın payı damganın
+altında ("1 il seçiyorsun"). Eskiden iki ayrı ekran 6.3 sn, şimdi tek ekran 5.0 sn (4 kişi). Eşlide satırlarda A/B takım
+rozeti; insan ikinci ama takım arkadaşı birinciyse "TAKIMIN KAZANDI". İzlenen düello (insan yok): 3–4 kişide altın nötr
+damga, eşlide rakip takım kazandıysa kırmızı. 4 kişide satırlar alçak (50 px). Gerçek akışla 1'e 1, eşli, 3'lü, 4'lü
+denetlendi; kart kapanmadan sonuç ekranı açılmıyor.
+
 **Eşleştir ve sırala krem (v1.5c, `quiz/t_match.js`, `ui/styles-arena.js`).** Neon ve koyu cam denendi, premium
 durmadı; eski düzen korunup krem arena diline çekildi. Krem kart (lacivert yazı, ince altın kenar, alçak 3 px gölge, 9–10 px
 köşe). Eşleştir: iki sütun, iç kenarda yuva, bağ gölgeli tek renk çizgi (kısık tonlar) ve çizilirken bir kez kayan ince
