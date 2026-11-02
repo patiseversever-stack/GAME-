@@ -334,7 +334,8 @@ durunca kahraman gelir. Balon, bayrak ve ağaç salınımı kameradan 42–62 bi
 **Sonuç akışı (v1.5, `ui.reveal` / `_showResult`).** Cevap anında kartta yalnız doğru cevap görünür (damga ve oyuncu
 satırları artık cevabın üstüne binmez). Kart kapanınca haritanın ortasında sonuç ekranı: büyük sonuç (BİLDİN! / 2.
 SIRADASIN…) ve oyuncu plakaları (sıra, portre, süre ya da yakınlık; kazanan altın). Şehir filmi sonuç ekranı kapanınca
-başlar. Çevrimiçinde toplam süre sunucunun verdiği süreyi aşmaz (cevap anı kısalır). Sırala arena dilinde: eğik kesim
+başlar. Cevap filmi (Tufan 11 sn) tam oynar, sonuç ekranı ondan sonra gelir; çevrimiçi sunucu film + sonuç ekranı
+(`RESULT_MS` 2,3 sn) kadar bekler (eskiden sonuç ekranı filmden düşülüyor, Tufan 8,7 sn'de kesiliyordu). Sırala arena dilinde: eğik kesim
 beyaz satırlar, altın eğik numaralar, siyah uç plakaları.
 
 **Sonuç ekranı kiplerde (v1.5c).** Yayılmada sonuç ekranı ile SEÇİM SIRASI tek ekran: `reveal` yayılmada sonucu bekletir

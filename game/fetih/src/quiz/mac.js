@@ -328,6 +328,11 @@ export const FILM = {
 	halat: [3600, 2400],
 	fitil: [3800, 2400],
 };
+/**
+ * Sonuç ekranının süresi (ms, insanın içinde olduğu soru): cevap filminden sonra gelir. Sunucu cevap filmi + bu süre kadar
+ * bekler (match.js), istemciler aynı anda ilerler.
+ */
+export const RESULT_MS = 2300;
 /** Arayüzün öntanımlı cevap süresi (ui.reveal): en yakın 3 sn, bildi/bilemedi 1,9 sn. */
 export const varsayilan = (T) => (T?.kind === 'closest' ? 3000 : 1900);
 

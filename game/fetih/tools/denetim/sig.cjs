@@ -11,7 +11,7 @@ const dist = process.argv[2], tag = process.argv[3];
     await p.waitForFunction(() => window.__fl?.app, null, { timeout: 90000 });
     await p.evaluate(async () => {
       const app = window.__fl.app;
-      await app.debugScene({ show: 'none', cfg: { mode: 'ffa4', region: 'icanadolu', seed: 7, bot: 'er' }, seconds: 0.2 });
+      await app.debugScene({ show: 'none', cfg: { mode: 'ffa4', region: 'icanadolu', seed: 7, bot: 'er' }, seconds: 0.2 }); window.__fl.app.start?.();
       const m = app.match, ui = app.ui;
       ['ŞAHİNBEYOĞLU', 'MUSTAFAKEMAL', 'AYŞEGÜLÇİÇEK'].forEach((n, k) => (m.players[k + 1].name = n));
       ui.$.hud.classList.remove('off'); ui.hud(m);

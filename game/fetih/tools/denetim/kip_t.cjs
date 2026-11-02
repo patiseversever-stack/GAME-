@@ -8,7 +8,7 @@ const [dist, tag, mode, typ = 'choice'] = process.argv.slice(2);
   p.on('pageerror', (e) => errs.push(String(e).slice(0, 200)));
   await p.goto(`file://${dist}/FetihLigi.html?q=0&debug`);
   await p.waitForFunction(() => window.__fl?.app, null, { timeout: 90000 });
-  await p.evaluate(async ({ mode }) => { await window.__fl.app.debugScene({ show: 'none', cfg: { mode, region: 'icanadolu', seed: 7, bot: 'er' }, seconds: 0.2 }); }, { mode });
+  await p.evaluate(async ({ mode }) => { await window.__fl.app.debugScene({ show: 'none', cfg: { mode, region: 'icanadolu', seed: 7, bot: 'er' }, seconds: 0.2 }); window.__fl.app.start?.(); }, { mode });
   await p.waitForTimeout(1500);
   const log = [];
   const t0 = Date.now();

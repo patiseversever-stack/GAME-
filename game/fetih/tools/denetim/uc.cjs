@@ -19,7 +19,7 @@ const CASES = [
     await p.waitForFunction(() => window.__fl?.app, null, { timeout: 90000 });
     await p.evaluate(async (c) => {
       const app = window.__fl.app;
-      await app.debugScene({ show: 'none', cfg: { mode: c.mode, region: 'icanadolu', seed: 7, bot: 'er' }, seconds: 0.2 });
+      await app.debugScene({ show: 'none', cfg: { mode: c.mode, region: 'icanadolu', seed: 7, bot: 'er' }, seconds: 0.2 }); window.__fl.app.start?.();
       const m = app.match, ui = app.ui;
       c.names.forEach((n, k) => (m.players[k].name = n));
       ui.$.hud.classList.remove('off'); ui.hud(m);

@@ -23,6 +23,7 @@ import { showCampaign } from './campaign.js';
 import { renderBar, jokerUsed, sabotage, clearZone, showBotJokers } from './jokerfx.js';
 import { questionTime } from '../game/jokers.js';
 import { HOT } from '../quiz/timing.js';
+import { RESULT_MS } from '../quiz/mac.js';
 import { debugShot } from './debug.js';
 import { buildPause, showPause } from './pause.js';
 import { clock, sleep, setTimeout, clearTimeout, setInterval, clearInterval } from '../core/clock.js';
@@ -1032,9 +1033,11 @@ export class UI {
 		// Maçta süreyi soru düzeni verir (ctx.film, quiz/mac.js filmMs): insanın içinde olduğu anda tam film, iki botun
 		// düellosunda ve çok oyunculu yayılmada kısa sürüm; çevrimiçinde sunucunun 'reveal' olayındaki süre
 		const film = Number.isFinite(ctx.film) ? ctx.film : Number(T.revealMs) || 0;
-		// süre: cevap anı + sonuç ekranı. Çevrimiçinde toplam sunucunun verdiği süreyi aşmaz (cevap anı kısalır)
-		const resMs = me ? 2300 : 1500;
-		const ansMs = Number.isFinite(ctx.film) ? Math.max(1200, Math.max(closest ? 3000 : 1900, Math.min(12000, film)) - resMs) : Math.max(closest ? 2200 : 1600, Math.min(12000, film));
+		// süre: cevap anı (tipin filmi tam oynar: Tufan'da deniz yükselişi 11 sn) + ardından sonuç ekranı. Eskiden çevrimiçi
+		// toplamı tutturmak için sonuç ekranı filmden düşülüyordu ve uzun filmler erken kesiliyordu; şimdi sunucu sonuç
+		// ekranının süresini de bekler (match.js RESULT_MS)
+		const resMs = me ? RESULT_MS : 1500;
+		const ansMs = Number.isFinite(ctx.film) ? Math.max(closest ? 3000 : 1900, Math.min(15000, film)) : Math.max(closest ? 2200 : 1600, Math.min(15000, film));
 		await this._hold(ansMs);
 		if (gen !== this._gen) return;
 		card.classList.remove('on');

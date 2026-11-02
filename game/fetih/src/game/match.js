@@ -24,7 +24,7 @@
 
 import { TYPES } from '../quiz/types.js';
 import { secOf } from '../quiz/timing.js';
-import { BAYRAK, CANLI, HIZLI, isYeni, yeniBank, kapsam, tipSec, payOf, egri, okumaK, filmMs, varsayilan, kusbakisiUygun, eslestir, karma, yayilmaKat } from '../quiz/mac.js';
+import { BAYRAK, CANLI, HIZLI, isYeni, yeniBank, kapsam, tipSec, payOf, egri, okumaK, filmMs, varsayilan, RESULT_MS, kusbakisiUygun, eslestir, karma, yayilmaKat } from '../quiz/mac.js';
 import { bindApp } from '../quiz/d_ortak.js';
 import { ADIM, Oturum } from './sunucu.js';
 import { CATS } from '../quiz/categories.js';
@@ -694,7 +694,8 @@ export class Match {
 		// film: cevap ekranının süresi (ms); bütün istemciler bu kadar bekler, sunucu da (serverPace) sonra ilerler
 		const fms = film ?? varsayilan(T);
 		this.emit('reveal', { results: out.map((r) => ({ i: r.i, value: r.value, time: r.time, correct: r.correct, err: Number.isFinite(r.err) ? r.err : -1 })), answer: v, film: fms });
-		if (this.serverPace > 0) await this.pace(fms * this.serverPace);
+		// sunucu: cevap filmi + sonuç ekranı (istemciler filmi tam oynar, ardından sonuç ekranını gösterir)
+		if (this.serverPace > 0) await this.pace((fms + RESULT_MS) * this.serverPace);
 		// ikinci şans: yanlış bilenlere aynı kategoriden yeni soru
 		if (T.kind === 'exact' && cur.second.size) {
 			for (let k = 0; k < out.length; k++) {
