@@ -1377,8 +1377,17 @@ export class Match {
 		if (fix) options = [...options, p.capital];
 		if (!options.length) return -1;
 		const n = step && step[1] > 1 ? ` · ${step[0]}/${step[1]}` : '';
+		// saldırı: başlık sade; zincir sayacı üst etikette, onarım ipucu alt satırda (uzun başlık telefona sığmıyordu)
 		const text =
-			kind === 'capital' ? 'Başkentini seç' : kind === 'free' ? `Bir il al${n}` : fix ? `Saldıracağın ili seç${n} · ya da kalene dokun: kule onar` : `Saldıracağın ili seç${n}`;
+			kind === 'capital'
+				? 'Başkentini seç'
+				: kind === 'free'
+					? `Bir il al${n}`
+					: {
+							head: 'Saldıracağın ili seç',
+							ey: step && step[1] > 1 ? `FETİH · SALDIRI ${step[0]} / ${step[1]}` : 'FETİH · SIRA SENDE',
+							hint: fix ? 'Parlayan ile saldır ya da kendi kalene dokun: kule onar' : step?.[0] > 1 ? 'Kazandın, devam: parlayan bir ile dokun' : 'Saldırmak için parlayan bir ile dokun',
+						};
 		const sec = pool ? Math.max(PICK_TIME.floor, Math.round(pool.left)) : kind === 'attack' && step?.[0] > 1 ? PICK_TIME.chain : PICK_TIME[kind === 'free' ? 'first' : kind];
 		const t0 = clock.now();
 		let pickI = await p.ctl.pick(p, kind, options, text, sec);

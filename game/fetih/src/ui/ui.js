@@ -451,9 +451,11 @@ export class UI {
 		this.hud(m);
 		const attack = options.some((i) => b.provinces[i].owner >= 0 && b.provinces[i].owner !== me.i);
 		this._selOn(m, options, attack, me, capital);
-		const head = esc(String(text || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')));
-		const hint = capital ? 'Parlayan bir ile dokun, kalen oraya kurulur' : attack ? 'Saldırmak için parlayan bir ile dokun' : 'Parlayan bir ile dokun, senin olsun';
-		const ey = capital ? 'BAŞKENT · SIRA SENDE' : attack ? 'FETİH · SIRA SENDE' : 'YAYILMA · SIRA SENDE';
+		// metin: düz yazı ya da { head, ey, hint } (v2 zincir: başlık sade kalır, sayaç üst etikette, onarım ipucu altta)
+		const T = text && typeof text === 'object' ? text : { head: text };
+		const head = esc(String(T.head || (attack ? 'Saldıracağın ili seç' : 'Bir il seç')));
+		const hint = esc(T.hint || (capital ? 'Parlayan bir ile dokun, kalen oraya kurulur' : attack ? 'Saldırmak için parlayan bir ile dokun' : 'Parlayan bir ile dokun, senin olsun'));
+		const ey = esc(T.ey || (capital ? 'BAŞKENT · SIRA SENDE' : attack ? 'FETİH · SIRA SENDE' : 'YAYILMA · SIRA SENDE'));
 		// süre: dairesel sayaç (ortada saniye, altın halka erir)
 		const tm = sec ? `<i class="tm"><svg viewBox="0 0 48 48"><circle class="bg" cx="24" cy="24" r="20"/><circle class="fg" cx="24" cy="24" r="20" pathLength="100"/></svg><em>${sec}</em></i>` : '';
 		this.prompt(`<span class="ey">${ey}</span><b>${head}</b><small>${hint}</small>${tm}`, { tone: (attack ? 'red' : '') + (sec ? ' timed' : '') });
