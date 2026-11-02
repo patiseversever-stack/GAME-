@@ -138,9 +138,10 @@ export function expansionPlan(free, n, T = expansionRoundsFor(free)) {
  * Kısa film, dokunarak atlamayla aynı yoldan biter: an erken kapanır, ordular o anın son haline yerleşir.
  */
 export const BOT_FILM = {
-	// v1.4: daha az kısalır (kullanıcı: "her şey bir anda oluyor"); ilan anı (kim kime) ve sonuç yazısı hiç kısalmaz
-	quick: { '1v1': 1, ffa3: 0.9, ffa4: 0.8, team: 0.8 },
-	long: { '1v1': 1, ffa3: 0.8, ffa4: 0.7, team: 0.7 },
+	// v1.4: daha az kısalır (kullanıcı: "her şey bir anda oluyor"); ilan anı (kim kime) ve sonuç yazısı hiç kısalmaz.
+	// v2: iki botun savaşı soru kartısız izleme özetiyle oynar (KARARLAR 6: "bir saat oyalıyor"); film 0,55 hızda
+	quick: { '1v1': 1, ffa3: 0.55, ffa4: 0.55, team: 0.55 },
+	long: { '1v1': 1, ffa3: 0.55, ffa4: 0.55, team: 0.55 },
 };
 
 /**
@@ -192,7 +193,7 @@ export const BOT_SIEGE = { slope: 3, pivot: 0.55, wounded: 0.4, kill: 2.5 };
 
 // Tahmini süre (sn), insan oyuncu varsayımıyla; yalnızca denge raporu için (tools/sim.mjs).
 // Savaş filmi (v0.6, cinema.js): saldırı ~4,9–6,4 sn (kuşatma uzun), fetih ~4, kule ~3,3, savunma ~2,7.
-const EST = { mapOpen: 0.95, overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, declare: 1.8, attack: 6.6, wheel: 4, chooseCat: 2.2, conquer: 4.3, tower: 3.9, defend: 3.4, nobody: 2.1, elim: 4.3, qOpen: 0.5, resultMin: 2.3 };
+const EST = { mapOpen: 0.95, overview: 2.5, castle: 1.6, banner: 1.4, bannerShort: 1.0, rank: 1.9, humanPick: 3, botPick: 0.8, claim: 1.5, declare: 1.8, attack: 6.6, wheel: 4, chooseCat: 2.2, conquer: 4.3, tower: 3.9, defend: 3.4, nobody: 2.1, elim: 4.3, qOpen: 0.5, resultMin: 2.3, summary: 2.0, summaryAlly: 3.6 };
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
 
@@ -684,6 +685,11 @@ export class Match {
 		// cevap filmi (mac.js filmMs): insanın ya da uzak oyuncunun içinde olduğu anda tam film, iki botun düellosunda ve
 		// çok oyunculu yayılmada kısa sürüm; çevrimiçinde 'ask' ve 'reveal' ile gider, sunucu tur zamanlamasına katar
 		const involved = who.some((p) => p.human || p.ctl.remote);
+		// izleme özeti (v2, KARARLAR 6): yerel maçta insanın ve uzak oyuncunun olmadığı soru (iki botun düellosu,
+		// botun tarafsız ili ya da onarımı) kart açılmadan çözülür; arayüz kısa özet kartı gösterir (ui.botDuel).
+		// Çevrimiçinde izleyiciler soruyu canlı görür (özet yok).
+		const watchOnly = !involved && !this.players.some((p) => p.ctl.remote);
+		cur.watchOnly = watchOnly;
 		const film = filmMs({ type: q.type, T, phase: ctx.phase || '', who, involved, tempo: ctx.attacker && ctx.defender ? this.filmTempo(ctx.attacker, ctx.defender) : 1 });
 		if (pv) this.emit('ask', { q: pv.q, v: pv, time: sec, who: who.map((p) => p.i), title: ctx.title || '', phase: ctx.phase || '', attacker: ctx.attacker?.i ?? -1, defender: ctx.defender?.i ?? -1, target: ctx.target ?? -1, film: film ?? varsayilan(T) });
 		this.refreshJokers();
@@ -697,7 +703,7 @@ export class Match {
 			ses.sent(p);
 			return w.then((r) => (r ? { ...r, at: clock.now() } : null));
 		});
-		const res = await this.ui.question(this, { q, v, T, who, bots: cur.bots, human, clock: qclock, botJokers: cur.botUses, ...ctx });
+		const res = watchOnly ? { human: null } : await this.ui.question(this, { q, v, T, who, bots: cur.bots, human, clock: qclock, botJokers: cur.botUses, ...ctx });
 		const ra = await Promise.all(remoteWait);
 		this.check(); // çıkışta kapanan soru sayılmaz (beceri puanına yanlış diye işlenmesin)
 		// uzak koltuğun son değeri sunucunun kaydı, süresi sunucu saatiyle (istemcinin bildirdiği süre kullanılmaz)
@@ -730,7 +736,8 @@ export class Match {
 		ADIM[q.type]?.after?.(this, cur, out);
 		this.estimateQuestion(T, out, cur, film, q);
 		this.afterQuestion(q, T, out);
-		await this.ui.reveal(this, { q, v, T, results: out, film, ...ctx });
+		if (watchOnly) await this.ui.botDuel?.(this, { q, v, T, results: out, ...ctx });
+		else await this.ui.reveal(this, { q, v, T, results: out, film, ...ctx });
 		// answer: tam görünüm (doğru cevap, değerler, konum); istemciye soru sırasında gitmez, burada gider.
 		// film: cevap ekranının süresi (ms); bütün istemciler bu kadar bekler, sunucu da (serverPace) sonra ilerler
 		const fms = film ?? varsayilan(T);
@@ -755,8 +762,10 @@ export class Match {
 
 	async secondChance(q, r) {
 		const p = r.p;
-		await this.ui.banner('İKİNCİ ŞANS', p.name, { tone: 'gold', short: true });
-		this.tick(EST.bannerShort);
+		if (!this.watchOnly(p)) {
+			await this.ui.banner('İKİNCİ ŞANS', p.name, { tone: 'gold', short: true });
+			this.tick(EST.bannerShort);
+		}
 		// iki oyunculu canlı tur tek kişiyle oynanmaz; yeni tipin taze sorusu kalmadıysa da 4 şıklı test gelir
 		const same = !CANLI.has(q.type) && this.pool.some((x) => x.type === q.type && !this.used.has(x.id) && this.askable(x));
 		const q2 = this.pick({ cat: q.cat, types: [same ? q.type : 'choice'], who: [p], diff: Math.max(1, q.diff - 0.5) });
@@ -790,6 +799,12 @@ export class Match {
 	 * ekranı filmin süresi (film), haritalı tiplerde kartın açılmasından önce kameranın süzülüşü (EST.mapOpen).
 	 */
 	estimateQuestion(T, out, cur, film = null, q = null) {
+		// izleme özeti: kart yok; özet kartı (takım arkadaşı uzun). Benzetimde 0. koltuk insan yerine sayılır
+		const viewer = this.humanPlayer || this.players[0];
+		if (!out.some((r) => r.p === viewer || r.p.ctl.remote) && !this.players.some((p) => p.ctl.remote)) {
+			this.tick(this.allyOf(viewer, out) ? EST.summaryAlly : EST.summary);
+			return;
+		}
 		const seat0 = out.find((r) => r.i === 0 && !r.p.ctl.remote);
 		const times = out.filter((r) => r !== seat0).map((r) => r.time);
 		const maxOther = times.length ? Math.max(...times) : 0;
@@ -1166,6 +1181,9 @@ export class Match {
 			}
 		}
 		if (!this.endReason) this.endReason = this.rule === 'sureli' && this.timeUp() ? 'sure' : 'tur';
+		this.skipAll = false;
+		this.setSkip(false);
+		this.ui.skipBtn?.(false);
 		b.clearFx();
 		// bütün harita kadraja gelir; eşitlik varsa altın soru bu kadrajın önünde sorulur
 		await this.cinema.overview(this.map);
@@ -1584,6 +1602,49 @@ export class Match {
 		}
 	}
 
+	/**
+	 * Atla (v2): botların sırasında "Atla ⏩" basılınca kalan bot hamleleri anında uygulanır (arayüz ve sinema hızlı
+	 * kipte, olaylar ve puanlar aynı), insanın işin içinde olduğu ilk anda (kendi sırası ya da savunması) normale
+	 * döner. Elenen insan "SONUCU GÖR" derse maç sonuna dek hızlı kip.
+	 */
+	setSkip(on) {
+		on = !!on;
+		if (on === !!this._skipping) return;
+		const cin = this.app.cinema;
+		if (on) {
+			this._skipSave = [this.ui.fast, cin?.fast];
+			this.ui.skipBtn?.(false);
+			this.ui.fast = true;
+			if (cin) cin.fast = true;
+		} else {
+			this.ui.fast = this._skipSave?.[0] ?? false;
+			if (cin) cin.fast = this._skipSave?.[1] ?? false;
+			this.ui.hud(this);
+			this.app.cam?.fit?.(this.app.boundsOf(this.map), { pitch: 0.98 });
+		}
+		this._skipping = on;
+	}
+
+	/** Botun sırası başlıyor/bitti: Atla düğmesi (yerel maçta, insan izliyorsa). */
+	botTurnUI(p, on) {
+		const show = on && !p.human && !p.ctl?.remote && !!this.humanPlayer && !this.players.some((x) => x.ctl?.remote) && !this.skipAll;
+		if (this.skipBots && show) this.setSkip(true);
+		else if (!this.skipAll) this.ui.skipBtn?.(show && !this.skipBots, () => {
+			this.skipBots = true;
+			this.setSkip(true);
+		});
+	}
+
+	/** Sorudaki oyunculardan biri izleyenin (insanın) takım arkadaşı mı (eşli). */
+	allyOf(viewer, out) {
+		return !!this.mode.teams && !!viewer && out.some((r) => r.p !== viewer && r.p.team === viewer.team);
+	}
+
+	/** İzleme özeti mi: yerel maçta iki botun işi (insan ve uzak koltuk yok). */
+	watchOnly(...ps) {
+		return !ps.some((p) => p && (p.human || p.ctl?.remote)) && !this.players.some((p) => p.ctl?.remote);
+	}
+
 	/** Bu turun zincir hakkı (CHAIN): haritaya göre; en az ili olan +1. */
 	chainCap(p) {
 		if (this.suddenDeath) return 99; // ani ölüm: zincir sınırı yok
@@ -1609,6 +1670,11 @@ export class Match {
 	async _attackTurn(p, cin) {
 		this.phase = 'fetih';
 		this.emit('turn', { player: p.i, round: this.round });
+		if (p.human && !this.skipAll) {
+			this.skipBots = false; // insanın sırası: atlama biter
+			this.setSkip(false);
+		}
+		this.botTurnUI(p, true);
 		this.botShieldTurn(p);
 		const cap = this.chainCap(p);
 		this.chain = { player: p.i, cap, wins: 0 };
@@ -1638,6 +1704,7 @@ export class Match {
 		}
 		if (!moved) this.idle++;
 		this.chain = null;
+		this.ui.skipBtn?.(false);
 		return moved;
 	}
 
@@ -1648,6 +1715,12 @@ export class Match {
 	async duelAt(p, target, turn, cin) {
 		if (this.owner(target) < 0) return this.neutralAt(p, target, turn);
 		const d = this.players[this.owner(target)];
+		if (d.human && this._skipping && !this.skipAll) {
+			// bot insana saldırıyor: atlama biter, savunma tam gösterilir
+			this.skipBots = false;
+			this.setSkip(false);
+			this.ui.skipBtn?.(false);
+		}
 		const isCap = d.capital === target;
 		const app = this.app;
 		this.duels++;
@@ -1671,6 +1744,14 @@ export class Match {
 			return 'shield';
 		}
 		// çark: kategori turun başında bir kez (fetih dilimi: saldıran seçer); zincirdeki sorular aynı kategoriden
+		const watch = this.watchOnly(p, d);
+		if (turn.cat == null && watch) {
+			// izleme: çark dönmez (kategori bot seçer), soru kartı açılmaz
+			turn.cat = this.botCategory(p);
+			this.emit('wheel', { player: p.i, cat: turn.cat });
+			const viewer = this.humanPlayer || this.players[0];
+			if (p === viewer || d === viewer) this.tick(EST.wheel); // benzetim: 0. koltuk insan yerine (çarkı görür)
+		}
 		if (turn.cat == null) {
 			let cat = await this.ui.wheel(this, p);
 			this.tick(EST.wheel);
@@ -1699,8 +1780,10 @@ export class Match {
 			winner = this.closestWinner({ ...A, err: Number.isFinite(A.err) ? A.err : 0 }, { ...D, err: Number.isFinite(D.err) ? D.err : 0 }, p, d);
 		} else {
 			// ikisi de bildi: eşitlik bozan tahmin sorusu (en yakın kazanır: Tahmin ya da Mancınık)
-			await this.ui.banner('EŞİTLİK!', 'En yakın tahmin kazanır', { tone: 'gold', short: true });
-			this.tick(EST.bannerShort);
+			if (!watch) {
+				await this.ui.banner('EŞİTLİK!', 'En yakın tahmin kazanır', { tone: 'gold', short: true });
+				this.tick(EST.bannerShort);
+			}
 			const tq = this.pickTyped(null, 'tie', [p, d]);
 			const tr = await this.ask(tq, [p, d], { title: 'EŞİTLİK BOZMA', attacker: p, defender: d, target, phase: 'duel' });
 			winner = this.closestWinner(tr[0], tr[1], p, d);
@@ -1814,8 +1897,18 @@ export class Match {
 		this.rescore();
 		this.emit('elim', { player: d.i, by: by.i });
 		if (this.app.cinema) this.app.cinema.tempo = 1; // elenme hep tam film
+		const skipping = this._skipping;
+		if (skipping && d.human) this.setSkip(false);
 		await this.cinema.eliminated(d, by);
 		this.tick(EST.elim);
+		// insan elendi, maç sürüyor: İZLE (Atla düğmesiyle) ya da SONUCU GÖR (kalan maç hızlı kipte biter)
+		if (d.human && !this.checkOver() && !this.ui.fast) {
+			const act = await this.ui.elimChoice?.(this, by);
+			if (act === 'sonuc') {
+				this.skipAll = true;
+				this.setSkip(true);
+			}
+		}
 	}
 
 	/**

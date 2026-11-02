@@ -480,7 +480,7 @@ const avg = (a) => a.reduce((x, y) => x + y, 0) / (a.length || 1);
 const mins = (s) => (s / 60).toFixed(1);
 console.log('\n=== RAPOR ===');
 console.log(`maç: ${stats.matches}, soru: ${stats.questions}, bitiş nedenleri: ${JSON.stringify(stats.endReasons)}`);
-console.log('tahmini süre (dk): ort [en az–en çok]  (hedef: hızlı 6–8,5, uzun 15–21)');
+console.log('tahmini süre (dk): ort [en az–en çok]  (v2 Klasik hedef: bölge 8–17, Türkiye 8–15)');
 for (const [k, a] of Object.entries(stats.est)) console.log(`  ${k.padEnd(12)} ${mins(avg(a))} [${mins(Math.min(...a))}–${mins(Math.max(...a))}]`);
 console.log('joker kullanımı  bot: ' + JSON.stringify(stats.jokers.bot) + '  insan: ' + JSON.stringify(stats.jokers.human));
 console.log(`ikinci şans yeniden sorusu: ${stats.flow.second}, sabotaj: ${stats.flow.sabotage}`);
@@ -496,8 +496,9 @@ console.log('reddedilen joker istekleri: ' + JSON.stringify(Object.fromEntries(t
 // denge uyarıları
 for (const [k, a] of Object.entries(stats.est)) {
 	const [, length] = k.split('/');
-	const lo = length === 'long' ? 15 : 6;
-	const hi = length === 'long' ? 21 : 8.5;
+	// v2 Klasik (6 savaş turu, zincir, izleme özeti): bölge 8–17, Türkiye (yarısı tarafsız) 8–15 dk
+	const lo = 8;
+	const hi = length === 'long' ? 15 : 17;
 	const m = avg(a) / 60;
 	if (m < lo * 0.85 || m > hi * 1.15) console.log(`  UYARI: ${k} tahmini ${m.toFixed(1)} dk, hedef ${lo}–${hi}`);
 }
@@ -525,9 +526,11 @@ for (const t of ['choice', 'tf', 'num', 'pin', 'hang', 'order', 'match', 'hilo',
 				`${mm(P.est)} [${(Math.min(...P.est) / 60).toFixed(1)}–${(Math.max(...P.est) / 60).toFixed(1)}]`.padEnd(24) +
 				`${(P.film.reduce((a, b) => a + b, 0) / P.n).toFixed(0).padStart(6)}  ${(P.distinct / P.n).toFixed(1).padStart(10)}           ${seats}`,
 		);
-		// v1.4 okunur tempo (saldırı ilanı, ağır kamera, sonuç yazıları): maç ~1 dk uzadı; hedef hızlı 6–8,5, uzun 15–21
-		const lo = key.endsWith('long') ? 15 : 6;
-		const hi = key.endsWith('long') ? 21 : 8.5;
+		// v2 kural hedefleri (--rule; varsayılan Klasik): Klasik bölge 8–17 / Türkiye 8–15 dk (1'e 1 bölge 11–12: bütün
+		// düellolar insanın); Süreli 13–16; Hakimiyet ve Ölüm maçı ortalama 45 dk altı (25/30. dakikadan sonra kesin biter)
+		const R = opt.rule || 'klasik';
+		const lo = R === 'sureli' ? 13 : R === 'klasik' ? 8 : 0;
+		const hi = R === 'sureli' ? 16 : R === 'klasik' ? (key.endsWith('long') ? 15 : 17) : 45;
 		const avgMin = P.est.reduce((a, b) => a + b, 0) / P.est.length / 60;
 		check(avgMin >= lo && avgMin <= hi, `${key}: ortalama süre ${avgMin.toFixed(1)} dk hedef ${lo}–${hi} dışında`);
 		// koltuk adaleti: eşit botlarda hiçbir koltuk/taraf payı beklenenden çok sapmasın (örneklem: PLAN maç)

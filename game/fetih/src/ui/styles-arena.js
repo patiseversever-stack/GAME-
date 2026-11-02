@@ -558,4 +558,42 @@ export const CSS_ARENA = /* css */ `
 .fl-rule.hot{color:#ff8a78;box-shadow:inset 0 0 0 1px rgba(255,90,72,.7),0 4px 12px rgba(0,0,0,.45);animation:flRuleHot 1s ease-in-out infinite}
 @keyframes flRuleHot{50%{opacity:.7}}
 .fl-rule.off,.fl-ui.qon .fl-rule,.fl-ui.qmap .fl-rule,.fl-ui.paused .fl-rule{opacity:0}
+
+/* ---------------------------------------------------------------- izleme özeti (v2): iki botun düellosu, soru kartı yok.
+   Altta eğik koyu kart: başlık (DÜELLO · il), iki portre, BİLDİ/BİLEMEDİ ve süre; eşlide takım arkadaşında soru + cevap */
+.fl-bd{position:absolute;left:50%;bottom:calc(18px + var(--sab));z-index:30;width:min(calc(100 * var(--vw) - 24px),420px);padding:10px 12px 12px;
+  transform:translate(-50%,24px) skewX(-6deg);opacity:0;pointer-events:none;color:#f2f5fc;background:linear-gradient(180deg,rgba(14,18,34,.94),rgba(6,8,16,.96));
+  box-shadow:inset 0 0 0 1px rgba(255,210,90,.4),0 10px 26px rgba(0,0,0,.5);transition:opacity .2s,transform .3s cubic-bezier(.2,.9,.3,1.1)}
+.fl-bd.on{opacity:1;transform:translate(-50%,0) skewX(-6deg);pointer-events:auto}
+.fl-bd>*{transform:skewX(6deg)}
+.fl-bd .bd-h{display:flex;align-items:baseline;justify-content:center;gap:8px;margin-bottom:8px;font:italic 800 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.24em;color:#ffd25a}
+.fl-bd .bd-h b{font:600 15px/1 'Fredoka',sans-serif;letter-spacing:0;color:#fff}
+.fl-bd .bd-q{display:flex;flex-direction:column;gap:4px;margin:0 2px 9px;padding:7px 9px;font:600 13px/1.25 'Fredoka',sans-serif;background:rgba(255,255,255,.06);box-shadow:inset 3px 0 0 #ffd25a}
+.fl-bd .bd-q b{color:#7dff9a;font-size:14px}
+.fl-bd .bd-rows{display:flex;align-items:center;gap:8px}
+.fl-bd .bd-rows.one{justify-content:center}
+.fl-bd .vs{flex:none;font:italic 900 16px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffd25a;font-style:normal}
+.fl-bd .bd-p{flex:1;min-width:0;display:grid;grid-template-columns:auto 1fr;grid-template-rows:auto auto auto;column-gap:8px;align-items:center;padding:6px 8px;
+  background:rgba(255,255,255,.05);box-shadow:inset 3px 0 0 var(--c)}
+.fl-bd .bd-rows.one .bd-p{flex:0 1 260px}
+.fl-bd .bd-p .fl-av{grid-row:1/4;width:38px;height:38px;box-shadow:0 0 0 1.5px var(--c)}
+.fl-bd .bd-p b{min-width:0;font:600 14.5px/1.1 'Fredoka',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-bd .bd-p em{font:italic 800 14px/1.1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;font-style:normal;color:#ffd25a}
+.fl-bd .bd-p em.ok{color:#7dff9a}.fl-bd .bd-p em.no{color:#ff8a78}
+.fl-bd .bd-p small{font:500 11px/1 'Fredoka',sans-serif;opacity:.6}
+.fl-bd .bd-p.ok{background:linear-gradient(90deg,rgba(63,224,122,.16),rgba(255,255,255,.04))}
+/* Atla düğmesi (botların sırası) */
+.fl-skip{position:absolute;right:calc(12px + env(safe-area-inset-right,0px));top:calc(var(--sat) + 132px);z-index:31;display:flex;align-items:center;gap:6px;padding:8px 14px 9px;
+  border:0;transform:skewX(-8deg);color:#1a1200;background:linear-gradient(180deg,#ffe066,#f5b324);box-shadow:0 3px 0 #8a5a00,0 8px 16px rgba(0,0,0,.4);transition:opacity .2s,transform .2s}
+.fl-skip>*{transform:skewX(8deg)}
+.fl-skip b{font:italic 800 16px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em}
+.fl-skip svg{width:18px;height:18px}
+.fl-skip.off{opacity:0;pointer-events:none;transform:skewX(-8deg) translateY(10px)}
+/* elenme seçimi */
+.fl-elim{position:absolute;inset:0;z-index:45;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;opacity:0;pointer-events:none;
+  background:radial-gradient(ellipse at 50% 45%,rgba(3,5,12,.7),rgba(3,5,12,.88) 70%);transition:opacity .25s}
+.fl-elim.on{opacity:1;pointer-events:auto}
+.fl-elim .fl-stamp{position:relative;left:auto;top:auto;opacity:1;transform:skewX(-8deg)}
+.fl-elim .el-b{display:flex;gap:12px}
+.fl-elim .el-b .fl-btn{min-width:140px}
 `;

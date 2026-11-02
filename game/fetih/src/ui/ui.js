@@ -1231,6 +1231,92 @@ export class UI {
 		return `<div class="sr-h"><small>YAYILMA${tur}</small><h3>SEÇİM SIRASI</h3></div>${pill}<div class="sr-rows">${rows}</div>`;
 	}
 
+	/**
+	 * İzleme özeti (v2): iki botun düellosu (ya da botun tarafsız ili / onarımı) soru kartı açılmadan özetlenir: altta eğik
+	 * koyu kart, iki portre, BİLDİ / BİLEMEDİ ve süre (yakınlıkta değer). Eşlide takım arkadaşının düellosu daha uzun ve
+	 * sorunun metni ile doğru cevap da görünür. Dokununca geçer; ardından il el değiştirme filmi oynar.
+	 */
+	async botDuel(m, ctx) {
+		if (this.fast) return;
+		const { results, T, v, q } = ctx;
+		const closest = T.kind === 'closest';
+		const order = results.slice();
+		const viewer = m.players.find((p) => p.human);
+		const ally = !!m.mode?.teams && !!viewer && results.some((r) => r.p !== viewer && r.p.team === viewer.team);
+		const tgt = ctx.target != null && ctx.target >= 0 ? this.app.board.provinces[ctx.target]?.name : '';
+		const head = ctx.phase === 'neutral' ? 'TARAFSIZ İL' : ctx.phase === 'repair' ? 'KULE ONARIMI' : ctx.title === 'KUŞATMA' ? 'KUŞATMA' : ctx.title === 'EŞİTLİK BOZMA' ? 'EŞİTLİK' : 'DÜELLO';
+		const row = (r) => {
+			const hit = closest ? null : r.correct;
+			const { val } = this._resVal(T, v, r, closest);
+			const tag = closest ? `<em>${val}</em>` : `<em class="${hit ? 'ok' : 'no'}">${hit ? 'BİLDİ' : r.value == null ? 'SÜRE DOLDU' : 'BİLEMEDİ'}</em>`;
+			return `<div class="bd-p${!closest && hit ? ' ok' : ''}" style="--c:${r.color}"><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span><b>${esc(r.name)}</b>${tag}<small>${(r.time ?? 0).toFixed(1)} sn</small></div>`;
+		};
+		let el = this._bd;
+		if (!el) {
+			el = this._bd = document.createElement('div');
+			el.className = 'fl-bd';
+			this.el.appendChild(el);
+		}
+		let extra = '';
+		if (ally && q) {
+			const ans = Array.isArray(v?.opts) && Number.isInteger(v?.right) ? v.opts[v.right] : q.ans != null && typeof q.ans !== 'object' ? `${q.ans}${q.unit ? ' ' + q.unit : ''}` : '';
+			extra = `<div class="bd-q"><span>${esc(String(q.q || '').slice(0, 120))}</span>${ans !== '' ? `<b>${esc(String(ans))}</b>` : ''}</div>`;
+		}
+		this.caption(null); // saldırı altyazısı kartın üstünden taşmasın
+		el.innerHTML = `<div class="bd-h"><span>${head}</span>${tgt ? `<b>${esc(tgt)}</b>` : ''}</div>${extra}<div class="bd-rows${order.length === 1 ? ' one' : ''}">${order.map(row).join(order.length === 2 ? '<i class="vs">VS</i>' : '')}</div>`;
+		void el.offsetWidth;
+		el.classList.add('on');
+		await this._hold(ally ? 3400 : 1800, el);
+		el.classList.remove('on');
+		await sleep(180);
+	}
+
+	/** Atla düğmesi (botların sırasında): on=false gizler. */
+	skipBtn(on, act = null) {
+		let b = this._skip;
+		if (!b) {
+			b = this._skip = document.createElement('button');
+			b.className = 'fl-skip off';
+			b.innerHTML = `<b>ATLA</b><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5l8 7-8 7zM12 5l8 7-8 7z" fill="currentColor"/></svg>`;
+			b.addEventListener('click', () => {
+				this.sfx('tap');
+				b.classList.add('off');
+				const f = this._skipAct;
+				this._skipAct = null;
+				f?.();
+			});
+			this.el.appendChild(b);
+		}
+		if (on && act) this._skipAct = act;
+		b.classList.toggle('off', !on || this.fast);
+	}
+
+	/** İnsan elendi, maç sürüyor: İZLE ya da SONUCU GÖR. Dönüş: 'izle' | 'sonuc'. */
+	elimChoice(m, by) {
+		if (this.fast) return Promise.resolve('sonuc');
+		let el = this._elim;
+		if (!el) {
+			el = this._elim = document.createElement('div');
+			el.className = 'fl-elim';
+			this.el.appendChild(el);
+		}
+		const left = m.players.filter((p) => p.alive).length;
+		el.innerHTML = `<div class="fl-stamp bad">ELENDİN<small>${esc(by?.name || '')} kaleni yıktı · ${left} komutan sürüyor</small></div>
+			<div class="el-b"><button class="fl-btn" data-a="izle">İZLE</button><button class="fl-btn red" data-a="sonuc">SONUCU GÖR</button></div>`;
+		void el.offsetWidth;
+		el.classList.add('on');
+		return new Promise((res) => {
+			el.onclick = (e) => {
+				const b = e.target.closest('[data-a]');
+				if (!b) return;
+				this.sfx('tap');
+				el.classList.remove('on');
+				el.onclick = null;
+				res(b.dataset.a);
+			};
+		});
+	}
+
 	/** Sonuç satırının değeri: yakınlık tiplerinde fark / km / tipin biçimi; ötekilerde süre. */
 	_resVal(T, v, r, closest) {
 		if (!closest) {
@@ -1671,6 +1757,9 @@ export class UI {
 		if (this._ruleT) clearInterval(this._ruleT);
 		this._ruleT = 0;
 		this.$.rule?.classList.add('off');
+		this._bd?.classList.remove('on');
+		this._skip?.classList.add('off');
+		this._elim?.classList.remove('on');
 		try {
 			this._cancel?.();
 		} catch (e) {
