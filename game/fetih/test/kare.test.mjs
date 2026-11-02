@@ -147,7 +147,13 @@ test('zayıf cihaz yüksek kademede (her kare 40 ms): en alta iner, sonraki aç�
 	const g2 = new Governor({ tier: 1, base: 2, gpu: 'zayıf', store: st, mobile: true });
 	g2.hi = HI;
 	sim(g2, { hz: 60, seconds: 40, work: () => 3 });
-	assert.equal(launchTier(2, st, 'zayıf'), 1, 'tutmadığı görülen kademeye geri çıktı');
+	assert.equal(launchTier(2, st, 'zayıf'), 1, 'kısa rahat oturumla tutmadığı görülen kademeye geri çıktı');
+	// ama düşüş geçici bir sebepten olduysa (ısınma, pil tasarrufu): uzun süre (60 sn kanıt) süper örneklemede ekran
+	// hızını tutan cihaz o kademeyi yeniden dener (bir kez kötü gün yaşayan cihaz sonsuza dek düşük kalmasın)
+	const g3 = new Governor({ tier: 1, base: 2, gpu: 'zayıf', store: st, mobile: true });
+	g3.hi = HI;
+	sim(g3, { hz: 60, seconds: 240, work: () => 3, idleAt: (t) => t % 10000 > 9500 });
+	assert.equal(launchTier(2, st, 'zayıf'), 2, 'uzun ve kesin kanıtla bile eski kademeye dönmedi');
 });
 
 test('işlemci darboğazı (JS 14 ms): çözünürlük boşuna kısılmaz, kare sınırı iner', () => {

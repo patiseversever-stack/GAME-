@@ -321,13 +321,16 @@ export class Governor {
 		const ss = this.hi > 1.1 && s >= this.hi - 0.01;
 		// GPU saati yalnız masaüstünde: döşemeli mobil kartlarda (Mali, Adreno, PowerVR) iş sunuma ertelenir, ölçüm eksik çıkar
 		const gpu = !this.mobile && this.gpuMs > 0 && s >= 0.99 && this.gpuMs < expected * 0.42 && this.cpuMs < expected * 0.5;
-		if (full && (ss || gpu) && this.T.id < Math.min(2, this.top)) this._upT += dt;
+		// daha önce tutmadığı görülen kademeye de dönülebilir (ısınma, pil tasarrufu, arka plan yükü geçicidir), ama
+		// kanıt üç kat uzun istenir (60 sn): bir kez kötü gün yaşayan cihaz sonsuza dek düşük kademede kalmasın
+		if (full && (ss || gpu) && this.T.id < 2) this._upT += this.T.id < this.top ? dt : dt / 3;
 		else if (late) this._upT = Math.max(0, this._upT - dt * 2);
 		const floor = s <= this.T.minScale + 0.01;
 		if (floor && (late || this.cap <= 30) && this.T.id > 0) this._dnT += dt;
 		else this._dnT = Math.max(0, this._dnT - dt * 0.25);
 		if (this._upT > 20) {
 			this.adj = this.T.id + 1 - this.base;
+			this.top = Math.max(this.top, this.T.id + 1);
 			this._tierSet = true;
 			this._dirty = true;
 		} else if (this._dnT > 15) {
