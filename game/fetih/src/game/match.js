@@ -70,6 +70,24 @@ export const PICK_TIME = { capital: 15, attack: 12, chain: 8, category: 8, first
  * yer; kalkanın savuşturduğu saldırı hak yemez. En az ili olan (geride kalan) +1 hak alır.
  */
 export const CHAIN = { share: 0.15, min: 2, max: 5, underdog: 1 };
+
+/**
+ * Maç kuralları (v2, KARARLAR.md 1, 8, 9). Kural oyuncu sayısından (mode) ve haritadan (region/length) ayrıdır.
+ *   klasik     sabit tur: yayılma + 6 savaş turu (~10 dk); son turda geride olan en son saldırır
+ *   sureli     15 dk; süre dolunca yarım düello tamamlanır, puanla biter
+ *   hakimiyet  illerin %70'ini ilk ele geçiren taraf kazanır; 25. dakikadan sonra eşik her 2 dk'da %5 iner (taban: 1/taraf + %5)
+ *   olum       tek taraf kalana dek; 30. dakikadan sonra ani ölüm (kaleler tek kuleye iner, kalkan ve kule onarımı yok,
+ *              zincir sınırı kalkar, düşman başkentleri komşu olmasa da saldırıya açılır, botlar başkentlere yüklenir)
+ * Hepsinde tur güvenlik sınırı (120): asla sonsuz döngü yok.
+ */
+export const RULES = {
+	klasik: { label: 'Klasik', rounds: 6 },
+	sureli: { label: 'Süreli', minutes: 15 },
+	hakimiyet: { label: 'Hakimiyet', share: 0.7, after: 25, step: 0.05, every: 2 },
+	olum: { label: 'Ölüm maçı', sudden: 30 },
+};
+export const RULE_ORDER = ['klasik', 'sureli', 'hakimiyet', 'olum'];
+const ROUND_GUARD = 120;
 export const chainCapFor = (mapSize, players) => clamp(Math.round((mapSize / Math.max(1, players)) * CHAIN.share), CHAIN.min, CHAIN.max);
 
 /**
@@ -245,6 +263,7 @@ export class Match {
 		this.persist = !cfg.allBots && cfg.persist !== false;
 		this.R = rng(cfg.seed ?? (Math.random() * 1e9) | 0);
 		this.mode = MODES[cfg.mode] || MODES.ffa3;
+		this.rule = RULES[cfg.rule] ? cfg.rule : 'klasik'; // maç kuralı (RULES)
 		this.stageDef = cfg.campaign && cfg.stage ? this.campaign.stage(cfg.stage) : null;
 		this.perks = cfg.perks || this.stageDef?.perks || { startProvinces: 0, botJokers: 0 };
 		this.diffBias = cfg.diffBias ?? this.stageDef?.diffBias ?? 0;
@@ -1071,6 +1090,7 @@ export class Match {
 		const app = this.app;
 		const b = app.board;
 		this.phase = 'baslangic';
+		this.t0 = clock.now();
 		for (const i of this.map) this.setOwner(i, -1, 0);
 		if (this.watched) this.emit('state', this.snapshot()); // maç haritası ve koltuklar (selamda henüz yoktu)
 		this.ui.hud(this);
@@ -1103,31 +1123,38 @@ export class Match {
 		await this.sweepFree(); // güvenlik ağı: hiçbir il boşta kalmaz
 		this.expansionRounds = r;
 		const pace = PACE[this.cfg.length === 'long' ? 'long' : 'quick'];
-		const rounds = Math.max(2, Math.ceil((this.cfg.duels || pace.byMode?.[this.cfg.mode] || pace.duels) / this.players.length));
+		const R = RULES[this.rule];
+		const fixed = this.rule === 'klasik';
+		// klasik: 6 savaş turu (sefer sahneleri eski tempo: düello hedefi / oyuncu)
+		const rounds = fixed ? (this.stageDef ? Math.max(2, Math.ceil((this.cfg.duels || pace.byMode?.[this.cfg.mode] || pace.duels) / this.players.length)) : R.rounds) : 0;
 		this.rounds = rounds;
 		this.phase = 'fetih';
+		this.fetihT0 = this.matchSec();
 		// ilk turun sırası koltuktan bağımsız (TURN_ORDER.first); tohumdan, sunucuda da aynı
 		this.turnBase = TURN_ORDER.first === 'seat' ? this.players.slice() : this.shuffle(this.players);
-		for (this.round = 1; this.round <= rounds && !this.over; this.round++) {
-			const last = this.round === rounds;
-			const order = this.turnOrder(this.round, rounds);
-			this.emit('phase', { phase: this.phase, round: this.round, order: order.map((p) => p.i) });
+		for (this.round = 1; !this.over; this.round++) {
+			if (fixed && this.round > rounds) break;
+			if (this.round > ROUND_GUARD || this.timeUp()) break;
+			const last = fixed && this.round === rounds;
+			const order = this.turnOrder(this.round, fixed ? rounds : 0);
+			this.emit('phase', { phase: this.phase, round: this.round, order: order.map((p) => p.i), rule: this.rule });
 			const scoreOrder = last && rounds > 1 && TURN_ORDER.last === 'score';
-			await this.ui.banner(last ? 'SON TUR' : 'FETİH', scoreOrder ? `Tur ${this.round} / ${rounds} · son saldırı gerideki oyuncunun` : `Tur ${this.round} / ${rounds}`, { tone: 'red' });
+			await this.ui.banner(last ? 'SON TUR' : 'FETİH', this.roundSub(scoreOrder), { tone: 'red' });
 			this.tick(EST.banner);
 			let moved = false;
 			for (const p of order) {
-				if (this.over) break;
+				if (this.over || this.timeUp()) break;
 				if (!p.alive) continue;
+				await this.ruleTick();
 				if (await this.attackTurn(p)) moved = true;
 				this.checkOver();
 			}
-			if (!moved && !this.over) {
+			if (!moved && !this.over && !this.timeUp()) {
 				this.over = true;
 				this.endReason = 'tikanma';
 			}
 		}
-		if (!this.endReason) this.endReason = 'tur';
+		if (!this.endReason) this.endReason = this.rule === 'sureli' && this.timeUp() ? 'sure' : 'tur';
 		b.clearFx();
 		// bütün harita kadraja gelir; eşitlik varsa altın soru bu kadrajın önünde sorulur
 		await this.cinema.overview(this.map);
@@ -1141,6 +1168,80 @@ export class Match {
 		this.emit('over', { ranking: ranking.map((x) => (x.players ? { team: x.team, score: x.score } : { i: x.i, score: x.score })), reason: this.endReason });
 		app.lastSim = this.report(ranking);
 		return this.ui.end(this, ranking, rewards);
+	}
+
+	/** Maç süresi (sn): gerçek oyunda oyun saati (duraklamalar hariç), benzetimde tahmini süre (tick). */
+	matchSec() {
+		if (this.ui.fast || this.t0 == null) return this.est;
+		return (clock.now() - this.t0) / 1000;
+	}
+
+	/** Süreli kuralda süre doldu mu. */
+	timeUp() {
+		return this.rule === 'sureli' && this.matchSec() >= RULES.sureli.minutes * 60;
+	}
+
+	/** Süreli kuralda kalan süre (sn). */
+	timeLeft() {
+		return Math.max(0, RULES.sureli.minutes * 60 - this.matchSec());
+	}
+
+	/**
+	 * Hakimiyet eşiği (pay): 25. dakikadan sonra her 2 dk'da %5 iner. Taban taraf sayısına göre: 1/taraf + %5 (1'e 1 ve
+	 * eşli %55, 3 kişi %38, 4 kişi %30); tabanda en büyük taraf zaten eşiktedir, maç kesin biter.
+	 */
+	domShare() {
+		const H = RULES.hakimiyet;
+		const min = this.matchSec() / 60;
+		if (min < H.after) return H.share;
+		const sides = new Set(this.players.filter((p) => p.alive).map((p) => this.side(p))).size || 2;
+		const floor = Math.min(H.share, 1 / sides + 0.05);
+		return Math.max(floor, H.share - H.step * (1 + Math.floor((min - H.after) / H.every)));
+	}
+
+	/** Tarafların il payı (eşli: takım). */
+	sideShares() {
+		const n = this.map.length || 1;
+		const m = new Map();
+		for (const i of this.map) {
+			const o = this.owner(i);
+			if (o < 0) continue;
+			const s = this.side(this.players[o]);
+			m.set(s, (m.get(s) || 0) + 1);
+		}
+		return [...m].map(([side, c]) => ({ side, share: c / n })).sort((a, b) => b.share - a.share);
+	}
+
+	/** Tur başı kural denetimi: ölüm maçında 30. dakikada ani ölüm (bir kez ilan edilir). */
+	async ruleTick() {
+		if (this.rule !== 'olum' || this.suddenDeath) return;
+		if (this.matchSec() < RULES.olum.sudden * 60) return;
+		this.suddenDeath = true;
+		for (const p of this.players) p.shield = false;
+		// kaleler zayıflar: ayakta tek kule kalır (yıkılış filmi kale başına kısa)
+		for (const p of this.players) {
+			const k = this.app.castles?.[p.i];
+			if (!p.alive || !k) continue;
+			while (k.hp > 1) {
+				k.hit();
+				this.towersLost[p.i]++;
+			}
+		}
+		this.rescore(); // 'score' olayı kuleleri istemciye taşır
+		this.emit('sudden', {});
+		this.refreshJokers();
+		await this.ui.banner('ANİ ÖLÜM!', 'Kaleler tek kule, bütün başkentler saldırıya açık', { tone: 'red' });
+		this.tick(EST.banner);
+	}
+
+	/** Fetih turu afişinin alt yazısı (kurala göre). */
+	roundSub(scoreOrder) {
+		const r = this.round;
+		if (this.rule === 'klasik') return scoreOrder ? `Tur ${r} / ${this.rounds} · son saldırı gerideki oyuncunun` : `Tur ${r} / ${this.rounds}`;
+		const mm = (sec) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+		if (this.rule === 'sureli') return `Tur ${r} · ${mm(this.timeLeft())} kaldı`;
+		if (this.rule === 'hakimiyet') return `Tur ${r} · hedef illerin %${Math.round(this.domShare() * 100)}'i`;
+		return this.suddenDeath ? `Tur ${r} · ani ölüm` : `Tur ${r} · son kalan kazanır`;
 	}
 
 	/** Tohumlu karıştırma (Fisher–Yates; Array.sort ile rastgele karşılaştırma eşit dağılmaz). */
@@ -1371,6 +1472,8 @@ export class Match {
 			options = this.attackable(p);
 			// kara bağlantısı kopuk haritada son çare: herhangi bir düşman ili
 			if (!options.length) options = this.map.filter((i) => this.owner(i) >= 0 && !this.ally(this.owner(i), p.i));
+			// ani ölüm (ölüm maçı): düşman başkentleri komşu olmasa da saldırıya açık; maç kesin biter
+			if (this.suddenDeath) for (const q of this.players) if (q.alive && !this.ally(q.i, p.i) && q.capital >= 0 && !options.includes(q.capital)) options.push(q.capital);
 		}
 		// sıranın ilk seçiminde yaralı başkent seçenekler arasında: kendi kaleye dokunmak onarımdır
 		const fix = kind === 'attack' && step?.[0] === 1 && this.canRepair(p);
@@ -1427,6 +1530,7 @@ export class Match {
 				const isCap = this.players[o].capital === i;
 				s += (this.value.get(i) || 0) / 400;
 				if (isCap) s += k.hp <= 1 ? BOT_SIEGE.kill : BOT_SIEGE.slope * (p.skill - BOT_SIEGE.pivot) + (k.hp === 2 ? BOT_SIEGE.wounded : 0);
+				if (isCap && this.suddenDeath) s += 2; // ani ölüm: maçı bitirmek için başkentlere
 				// kalkanlı rakibi tercih etme
 				if (this.players[o].shield) s -= 0.5;
 				// insan oyuncuya biraz daha az yüklen (keyifli olsun)
@@ -1458,6 +1562,7 @@ export class Match {
 
 	/** Bu turun zincir hakkı (CHAIN): haritaya göre; en az ili olan +1. */
 	chainCap(p) {
+		if (this.suddenDeath) return 99; // ani ölüm: zincir sınırı yok
 		const base = chainCapFor(this.map.length, this.players.length);
 		const alive = this.players.filter((x) => x.alive);
 		const n = (x) => this.owned(x.i).length;
@@ -1486,7 +1591,7 @@ export class Match {
 		const turn = { cat: null };
 		let moved = false;
 		let step = 1;
-		while (this.chain.wins < cap && !this.over && p.alive) {
+		while (this.chain.wins < cap && !this.over && p.alive && !this.timeUp()) {
 			const target = await this.choose(p, 'attack', [step, cap]);
 			if (target < 0) break;
 			moved = true;
@@ -1675,15 +1780,27 @@ export class Match {
 			return true;
 		}
 		const owners = new Set();
+		let neutral = 0;
 		for (const i of this.map) {
 			const o = this.owner(i);
-			if (o < 0) return false;
-			owners.add(this.players[o].team);
+			if (o < 0) neutral++;
+			else owners.add(this.players[o].team);
 		}
-		if (owners.size === 1) {
+		// tam hakimiyet: tarafsız il kalmadan haritanın tamamı tek takımın (tarafsız il varken yayılma sürüyor olabilir)
+		if (owners.size === 1 && !neutral && this.phase === 'fetih') {
 			this.over = true;
 			this.endReason = 'hakimiyet';
 			return true;
+		}
+		// hakimiyet kuralı: bir taraf illerin eşik payına ulaştı
+		if (this.rule === 'hakimiyet' && this.phase === 'fetih') {
+			const top = this.sideShares()[0];
+			if (top && top.share >= this.domShare() - 1e-9) {
+				this.over = true;
+				this.endReason = 'hakimiyet';
+				this.domWin = top.side;
+				return true;
+			}
 		}
 		return false;
 	}
@@ -1705,7 +1822,7 @@ export class Match {
 			sides.map((x) => {
 				const ps = x.players || [x];
 				const side = x.players ? x.team : x.i;
-				return [x, [x.alive ? 1 : 0, x.alive ? 0 : x.out || 0, x.score, this.tieWin === side ? 1 : 0, ps.reduce((a, p) => a + this.owned(p.i).length, 0), ps.reduce((a, p) => a + hp(p), 0), ps.reduce((a, p) => a + this.stat[p.i].correct, 0)]];
+				return [x, [x.alive ? 1 : 0, this.domWin === side ? 1 : 0, x.alive ? 0 : x.out || 0, x.score, this.tieWin === side ? 1 : 0, ps.reduce((a, p) => a + this.owned(p.i).length, 0), ps.reduce((a, p) => a + hp(p), 0), ps.reduce((a, p) => a + this.stat[p.i].correct, 0)]];
 			}),
 		);
 		return sides.sort((a, b) => {

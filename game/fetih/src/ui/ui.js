@@ -138,7 +138,7 @@ export class UI {
 			if (a === 'camp') this.h.campaign?.();
 		});
 		const store = app.store;
-		this.cfg = { mode: 'ffa3', length: 'quick', region: 'random', bot: 'er', ...(store?.get?.('menu') || {}) };
+		this.cfg = { mode: 'ffa3', length: 'quick', region: 'random', bot: 'er', ...(store?.get?.('menu') || {}), rule: 'klasik' }; // kural her açılışta Klasik (KARARLAR 9)
 		this.cmd = { name: 'Sen', avatar: 'gokturk', banner: 'duz', color: 0, skin: 0, ...(store?.get?.('commander') || {}) };
 		this.fx = new Fx(this.$.fx, { low: app.tier?.id === 0, rm: this.rm });
 		this.tags = new Tags(this);
@@ -340,6 +340,62 @@ export class UI {
 				s.score = p.score;
 			}
 		}
+		this._ruleChip(m);
+	}
+
+	/**
+	 * Kural göstergesi (v2): üst çubuğun altında ince eğik şerit. Klasik: tur; Süreli: kalan süre (son dakika kırmızı);
+	 * Hakimiyet: liderin il payı çubuğu ve eşik çizgisi; Ölüm maçı: ani ölüme kalan süre. Saniyede bir güncellenir
+	 * (oyun saatiyle: duraklayınca durur). Soru açıkken gizlenir.
+	 */
+	_ruleChip(m) {
+		let el = this.$.rule;
+		if (!el) {
+			el = this.$.rule = document.createElement('div');
+			el.className = 'fl-rule off';
+			this.el.appendChild(el);
+		}
+		const on = m.phase === 'fetih' && !m.over && !m.aborted && !this.fast && !this.$.hud.classList.contains('off') && !!m.rule;
+		el.classList.toggle('off', !on);
+		if (!on) {
+			if (this._ruleT) clearInterval(this._ruleT);
+			this._ruleT = 0;
+			return;
+		}
+		const mm = (sec) => `${Math.floor(sec / 60)}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+		const draw = () => {
+			if (m.over || m.phase !== 'fetih') return;
+			let html = '';
+			let hot = false;
+			if (m.rule === 'klasik') html = `${ico('flag', { w: 2.6 })}<b>TUR ${Math.min(m.round, m.rounds)} / ${m.rounds}</b>`;
+			else if (m.rule === 'sureli') {
+				const left = m.timeLeft();
+				hot = left <= 60;
+				html = `${ico('clock', { w: 2.6 })}<b>${mm(left)}</b><small>KALDI</small>`;
+			} else if (m.rule === 'hakimiyet') {
+				const top = m.sideShares()[0] || { share: 0, side: 0 };
+				const goal = m.domShare();
+				const lead = m.mode?.teams ? m.players.find((p) => p.team === top.side) : m.players[top.side];
+				html = `${ico('crown', { w: 2.6 })}<span class="bar" style="--c:${lead?.css || '#ffd25a'}"><i style="width:${(Math.min(1, top.share / goal) * 100).toFixed(1)}%"></i></span><b>%${Math.round(top.share * 100)}</b><small>/ %${Math.round(goal * 100)}</small>`;
+			} else if (m.rule === 'olum') {
+				if (m.suddenDeath) {
+					hot = true;
+					html = `${ico('skull', { w: 2.6 })}<b>ANİ ÖLÜM</b>`;
+				} else html = `${ico('skull', { w: 2.6 })}<small>ANİ ÖLÜM</small><b>${mm(Math.max(0, 30 * 60 - m.matchSec()))}</b>`;
+			}
+			if (html !== el._h) el.innerHTML = el._h = html;
+			el.classList.toggle('hot', hot);
+			// konum: üst çubuğun hemen altı (çubuk o karede yerleşmemiş olabilir: bir sonraki karede de ölç)
+			// yerleşim ölçüsü (offset): çubuğun giriş kayması (transform) konumu bozmaz
+			const place = () => {
+				const h = this.$.hud;
+				if (h.offsetHeight) el.style.top = `${h.offsetTop + h.offsetHeight + 6}px`;
+			};
+			place();
+			requestAnimationFrame(place);
+		};
+		draw();
+		if (!this._ruleT && m.rule !== 'klasik') this._ruleT = setInterval(draw, 1000);
 	}
 
 	// ---------------------------------------------------------------- sahne bayrağı ve bildirim
@@ -1612,6 +1668,9 @@ export class UI {
 	/** Açık her şeyi kapat (maçtan çıkış, ekran görüntüsü sahneleri). */
 	reset() {
 		this._gen++;
+		if (this._ruleT) clearInterval(this._ruleT);
+		this._ruleT = 0;
+		this.$.rule?.classList.add('off');
 		try {
 			this._cancel?.();
 		} catch (e) {

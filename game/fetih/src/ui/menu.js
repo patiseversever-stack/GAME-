@@ -1,7 +1,7 @@
 // Menüler: canlı başlık logosu, yeni maç (resimli mod kartları, süre, bölge haritaları, rakip seviyesi),
 // komutan seçimi (ad, renk, sancak, portre) ve bitiş ekranı (kürsü, ödüller, tekrar oyna).
 
-import { MODES } from '../game/match.js';
+import { MODES, RULE_ORDER } from '../game/match.js';
 import { esc, ico, avatar, bannerSVG, AVATARS, BANNERS, regionMap } from './art.js';
 import { sleep } from '../core/clock.js';
 
@@ -20,6 +20,13 @@ const MODE_INFO = {
 	team: ['Eşli', "2'ye 2 takım"],
 };
 const KINDS = ['gokturk', 'yeniceri', 'sultan', 'kalpak'];
+/** Kural kartları (v2): başlık, kısa açıklama, simge. */
+const RULE_INFO = {
+	klasik: ['KLASİK', '6 savaş turu · ~10 dk', 'flag'],
+	sureli: ['SÜRELİ', '15 dk · en çok puan', 'clock'],
+	hakimiyet: ['HAKİMİYET', "illerin %70'ini al", 'crown'],
+	olum: ['ÖLÜM MAÇI', 'son kalan kazanır', 'skull'],
+};
 
 export const EMBLEM = `<svg class="fl-emb" viewBox="0 0 200 200"><defs>
 <linearGradient id="fle-bl" x1="0" x2="1"><stop offset="0" stop-color="#fff"/><stop offset=".5" stop-color="#dfe6f2"/><stop offset="1" stop-color="#9aa8c0"/></linearGradient>
@@ -114,15 +121,13 @@ export function showMenu(ui) {
 			<span class="lb"><b>${esc(m.label)}</b><small>${esc(MODE_INFO[k]?.[1] || '')}</small></span><i class="ck">${ico('check', { w: 3.4 })}</i></button>`,
 		)
 		.join('');
-	const lens = [
-		['quick', 'HIZLI', 'bölge ve çevresi', 'bolt'],
-		['long', 'UZUN', '15–20 dk · tüm Türkiye', 'hourglass'],
-	]
-		.map(
-			([k, t, s, icn]) => `<button class="fl-len ${c.length === k ? 'on' : ''}" data-k="length" data-v="${k}"><span class="li">${ico(icn, { w: 2.4 })}</span>
-			<span class="lb"><b>${t}</b><small>${s}</small></span><i class="ck">${ico('check', { w: 3.4 })}</i></button>`,
-		)
-		.join('');
+	// kural (v2): maçın nasıl bittiği. Harita (bölge / tüm Türkiye) ayrı seçilir
+	if (!RULE_INFO[c.rule]) c.rule = 'klasik';
+	const lens = RULE_ORDER.map((k) => {
+		const [t, sub, icn] = RULE_INFO[k];
+		return `<button class="fl-len ${c.rule === k ? 'on' : ''}" data-k="rule" data-v="${k}"><span class="li">${ico(icn, { w: 2.4 })}</span>
+			<span class="lb"><b>${t}</b><small>${sub}</small></span><i class="ck">${ico('check', { w: 3.4 })}</i></button>`;
+	}).join('');
 	const maps = REGION_ORDER.map(
 		(k) => `<button class="fl-map ${c.region === k ? 'on' : ''} ${k === 'random' ? 'rnd' : ''}" data-k="region" data-v="${k}">
 			${k === 'random' ? `<span class="mm-r">${regionMap('random', ui.vb)}<span class="dice">${ico('dice', { w: 2.2 })}</span></span>` : regionMap(k, ui.vb)}
@@ -141,7 +146,7 @@ export function showMenu(ui) {
 		</div>
 		<div class="fl-mbody">
 			<section class="s-mode"><h4>${ico('users', { w: 2.4 })}MAÇ TÜRÜ</h4><div class="fl-modes">${modes}</div></section>
-			<section class="s-len"><h4>${ico('clock', { w: 2.4 })}SÜRE</h4><div class="fl-lens">${lens}</div></section>
+			<section class="s-len"><h4>${ico('flag', { w: 2.4 })}KURAL</h4><div class="fl-lens">${lens}</div></section>
 			<section class="s-map"><h4>${ico('map', { w: 2.4 })}HARİTA</h4><div class="fl-maps">${maps}</div></section>
 			<section class="s-bot"><h4>${ico('bot', { w: 2.4 })}RAKİPLER</h4><div class="fl-bots">${bots}</div></section>
 		</div>
@@ -157,8 +162,7 @@ export function showMenu(ui) {
 		ui.sfx('tap');
 		if (bt.dataset.k) {
 			set(bt.dataset.k, bt.dataset.v);
-			// uzun maç tüm Türkiye'de oynanır; tek bölge hızlıdır
-			if (bt.dataset.k === 'length') set('region', bt.dataset.v === 'long' ? 'all' : c.region === 'all' ? 'random' : c.region);
+			// harita büyüklüğü: tüm Türkiye 'long', tek bölge (ve çevresi) 'quick'
 			if (bt.dataset.k === 'region') set('length', bt.dataset.v === 'all' ? 'long' : 'quick');
 			ui.saveCfg();
 		}

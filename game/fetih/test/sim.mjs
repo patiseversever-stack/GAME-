@@ -264,7 +264,7 @@ Match.prototype.secondChance = function (...a) {
 async function play(cfg, { human = false, store, policy, accuracy } = {}) {
 	const app = makeApp(store);
 	const ui = makeUI({ human, policy, accuracy });
-	const m = new Match(app, ui, { ...cfg, allBots: !human, persist: human ? cfg.persist : false });
+	const m = new Match(app, ui, { rule: opt.rule, ...cfg, allBots: !human, persist: human ? cfg.persist : false });
 	app.match = m;
 	// yayılma bitince haritada boş il kalmamalı; tur sayısı planı aşmamalı (küçük harita 3, Türkiye 7)
 	m.on('phase', (d) => {
@@ -414,7 +414,7 @@ console.log(`4) Soru düzeni: ${PLAN * 8} maç (her mod × uzunluk ${PLAN})`);
 				const seed = 90000 + k * 31 + mode.length * 7 + length.length;
 				const app = makeApp();
 				const ui = makeUI({});
-				const m = new Match(app, ui, { mode, length, region: length === 'long' ? 'all' : REGIONS[k % 7], bot: 'er', seed, allBots: true, persist: false });
+				const m = new Match(app, ui, { mode, length, rule: opt.rule, region: length === 'long' ? 'all' : REGIONS[k % 7], bot: 'er', seed, allBots: true, persist: false });
 				app.match = m;
 				try {
 					await m.run();
