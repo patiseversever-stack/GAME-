@@ -28,6 +28,55 @@ const COS0 = Math.cos((GEO.lat0 * Math.PI) / 180);
 export const lonLatToWorld = (lon, lat) => ({ x: (lon - GEO.lon0) * COS0 * GEO.K, z: -(lat - GEO.lat0) * GEO.K });
 export const KM_PER_UNIT = 111.2 / GEO.K;
 
+// ---------------------------------------------------------------- harita sorusu: alan tabanlı değerlendirme (v1.6)
+// İl sorusunda ilin sınırı içi, göl sorusunda gölün içi tam isabettir (hata 0); dışındaysa en yakın kenara uzaklık.
+// Nokta sorularında r (km) yarıçap içi tam isabet; haritadaki maket gerçek konumdan kayıksa ikisi de doğru sayılır.
+// Halkalar turkiye.json'da dünya biriminde (x, −z).
+// Veri (turkiye.json) buraya gömülmez (oyun paketine ikinci kez girerdi): haritayı yükleyen taraf kaydeder
+// (board.js, sunucu.js, testler). Kayıt yoksa il/göl sorusu nokta + yarıçap gibi değerlendirilir.
+let AREAS = null;
+export function setPinAreas(data) {
+	if (AREAS || !data) return;
+	AREAS = { il: new Map(), gol: new Map() };
+	for (const p of data.provinces) AREAS.il.set(p.name, p.rings);
+	for (const l of data.lakes || []) if (!AREAS.gol.has(l.name)) AREAS.gol.set(l.name, [l.ring]);
+}
+const ringsOf = (kind, name) => AREAS?.[kind].get(name) || null;
+function inRing(r, x, y) {
+	let c = false;
+	for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+		const xi = r[i], yi = r[i + 1], xj = r[j], yj = r[j + 1];
+		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+	}
+	return c;
+}
+function ringDist(r, x, y) {
+	let d = Infinity;
+	for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+		const ax = r[j], ay = r[j + 1], bx = r[i] - ax, by = r[i + 1] - ay;
+		const t = Math.max(0, Math.min(1, ((x - ax) * bx + (y - ay) * by) / (bx * bx + by * by || 1)));
+		d = Math.min(d, Math.hypot(x - ax - bx * t, y - ay - by * t));
+	}
+	return d;
+}
+/** Alan (il ya da göl) hatası, dünya birimi: içindeyse 0. */
+function areaErr(rings, x, z) {
+	const y = -z;
+	if (rings.some((r) => inRing(r, x, y))) return 0;
+	return Math.min(...rings.map((r) => ringDist(r, x, y)));
+}
+/** Harita sorusu hatası (km) ve isabet. */
+export function pinJudge(q, value, real, alt) {
+	const rings = q.il ? ringsOf('il', q.il) : q.gol ? ringsOf('gol', q.gol) : null;
+	let km;
+	if (rings) km = Math.max(0, areaErr(rings, value.x, value.z) * KM_PER_UNIT - 3); // (kıyı ve sınır çizgisi kaba: 3 km pay)
+	else {
+		const d = Math.min(Math.hypot(value.x - real.x, value.z - real.z), alt ? Math.hypot(value.x - alt.x, value.z - alt.z) : Infinity);
+		km = Math.max(0, d * KM_PER_UNIT - (q.r ?? (q.il ? 25 : q.gol ? 12 : 5)));
+	}
+	return { correct: km < 15, err: km };
+}
+
 /** 1, 2, 5 × 10^k: x'e en yakın küçük "yuvarlak" adım. */
 const niceStep = (x) => {
 	if (x <= 1) return 1;
@@ -211,18 +260,31 @@ export const TYPES = {
 		kind: 'closest',
 		needsMap: true,
 		prepare(q) {
-			return { q, target: lonLatToWorld(q.lon, q.lat) };
+			// hedef: haritadaki maket ya da doruk varsa o (iğne cevapta orada görünür), yoksa gerçek konum
+			const real = lonLatToWorld(q.lon, q.lat);
+			const alt = q.alt ? lonLatToWorld(q.alt[1], q.alt[0]) : null;
+			return { q, target: alt || real, real, alt };
 		},
 		mount(el, v, api) {
-			el.innerHTML = `<div class="fl-pin-hint"><span>Haritaya dokun, iğneyi yerleştir</span><button class="fl-send" disabled>ONAYLA</button></div>`;
+			const what = v.q.il ? 'İlin içine dokun' : v.q.gol ? 'Gölün üstüne dokun' : 'Haritaya dokun, iğneyi yerleştir';
+			el.innerHTML = `<div class="fl-pin-hint"><span class="ph"><i class="pi"></i><b data-r="h">${what}</b><small data-r="z">İki parmakla yakınlaşabilirsin</small></span><button class="fl-send" disabled>ONAYLA</button></div>`;
 			const send = el.querySelector('.fl-send');
+			const hint = el.querySelector('[data-r=h]');
+			const sub = el.querySelector('[data-r=z]');
 			let pt = null;
 			let done = false;
 			api.onMapTap((p) => {
 				if (done) return;
+				const first = !pt;
 				pt = p;
 				api.showPin(p);
 				send.disabled = false;
+				if (first) {
+					// ilk dokunuş: iğnenin çevresine yaklaş (bütün Türkiye ekranda ~150 px; parmakla ince ayar imkânsızdı)
+					api.zoomTo?.(p);
+					hint.textContent = 'Düzeltmek için yeniden dokun';
+					sub.textContent = 'Eminsen onayla';
+				}
 			});
 			send.addEventListener('click', () => {
 				if (done || !pt) return;
@@ -246,8 +308,7 @@ export const TYPES = {
 		},
 		judge(v, value) {
 			if (!value) return { correct: false, err: Infinity };
-			const km = Math.hypot(value.x - v.target.x, value.z - v.target.z) * KM_PER_UNIT;
-			return { correct: km < 40, err: km };
+			return pinJudge(v.q, value, v.real || v.target, v.alt);
 		},
 		bot(v, skill, R) {
 			const km = Math.abs(gauss(R)) * ((1 - skill) * 260 + 25) * (0.7 + 0.25 * v.q.diff);

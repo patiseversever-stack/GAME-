@@ -164,8 +164,11 @@ const maskOf = (w) => [...String(w || '')].map((c) => (/[\s\-'’.]/.test(c) ? c
 const SECRET = {
 	pin(o) {
 		delete o.target;
+		delete o.real;
+		delete o.alt;
 		delete o.q.lat;
 		delete o.q.lon;
+		delete o.q.alt;
 	},
 	hang(o) {
 		o.mask = maskOf(o.word); // harf denemeleri sunucuya sorulur: act 'harf' → ev 'harf' { ch, at }

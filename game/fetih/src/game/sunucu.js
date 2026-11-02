@@ -30,6 +30,8 @@ import { between } from '../quiz/d_ilavi.js';
 import { GAP as KIMIM_GAP, LOCK as KIMIM_LOCK } from '../quiz/d_kimim.js';
 import { karma } from '../quiz/mac.js';
 import DATA from '../data/turkiye.json';
+import { setPinAreas } from '../quiz/types.js';
+setPinAreas(DATA); // harita sorusu: il ve göl sınırları (types.js pinJudge)
 
 const PROV = DATA.provinces;
 const BY_ID = new Map(PROV.map((p, i) => [p.id, i]));

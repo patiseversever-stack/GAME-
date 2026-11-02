@@ -798,6 +798,11 @@ export class UI {
 			answer: (value) => finish({ value, time: (clock.now() - t0) / 1000 }),
 			onMapTap: (fn) => (tapHandler = fn),
 			showPin: (p) => this.setPins([{ x: p.x, z: p.z, p: human }]),
+			// harita sorusu: ilk dokunuşta iğnenin çevresine yaklaş (kart payı korunur; iki parmakla yine yaklaşılır/uzaklaşılır)
+			zoomTo: (p) => {
+				const c = app.cam;
+				c.shot(p.x, p.z, { dist: Math.max(60, c.dist * 0.45), pitch: c.pitch, yaw: c.yaw, dur: 0.55, lens: this._mapTop / 2 });
+			},
 		};
 		let ctl;
 		try {
@@ -1479,7 +1484,7 @@ export class UI {
 	_mapFrame(top, opt = {}) {
 		const app = this.app;
 		const bb = (this._allB ||= app.boundsOf(app.board.provinces.map((p) => p.index)));
-		app.cam.fit({ ...bb }, { pitch: 1.02, pad: 1.03, top, ...opt });
+		app.cam.fit({ ...bb }, { pitch: 1.3, pad: 1.03, top, ...opt }); // (yataydan 74°, eskiden 58°: kuzey basılmasın, her yer eşit hassas)
 	}
 
 	setPins(list) {

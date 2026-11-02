@@ -2,6 +2,7 @@
 // Yalnızca oyunda tipi tanımlı olan sorular alınır; aynı soru bir kez girer.
 import { QUESTIONS as SEED } from './questions.js';
 import { ALL } from './q/index.js';
+import HARITA from './q/harita.js';
 import { TYPES } from '../quiz/types.js';
 
 /**
@@ -34,7 +35,8 @@ export function dupKey(q) {
 }
 
 const seen = new Set();
-export const BANK = [...SEED, ...ALL].filter((q) => {
+// harita soruları yalnız q/harita.js'ten (v1.6: alan tabanlı, elden geçmiş metin); eski dağınık iğne soruları alınmaz
+export const BANK = [...[...SEED, ...ALL].filter((q) => q.type !== 'pin'), ...HARITA].filter((q) => {
 	if (!TYPES[q.type]) return false;
 	const k = q.type === 'choice' || q.type === 'tf' || q.type === 'num' || q.type === 'pin' || q.type === 'hang' ? q.q : dupKey(q);
 	if (seen.has(k)) return false;

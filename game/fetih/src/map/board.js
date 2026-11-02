@@ -23,6 +23,8 @@
 import * as THREE from 'three';
 import { COMMON, SHADOW, LIGHT, FINISH, PROV, MIST, CLEAR, glslColor as C } from '../gfx/shaderlib.js';
 import DATA from '../data/turkiye.json';
+import { setPinAreas } from '../quiz/types.js';
+setPinAreas(DATA); // harita sorusu: il ve göl sınırları (types.js pinJudge)
 import { Relief, buildBoardGeometry, BASE, VS, BOTTOM, LIFT } from './terrain.js';
 import { bakeFields, FIELD_BOX, RB, RC, RL } from './fields.js';
 import { Labels } from './labels.js';

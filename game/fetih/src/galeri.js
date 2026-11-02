@@ -115,6 +115,8 @@ const CSS = `
   background:rgba(14,26,66,.82);color:#ffd25a;font:800 18px/1 system-ui,sans-serif;display:grid;place-items:center;cursor:pointer;box-shadow:0 3px 10px rgba(0,0,0,.4);touch-action:manipulation}
 .gal-fab:focus-visible{outline:2px solid #ffd25a;outline-offset:2px}
 .gal-fab[hidden]{display:none}
+/* haritalı soruda kart üstte: düğme kartın yazısına binmesin, sol alta iner */
+body:has(.fl-ui.qmap) .gal-fab{top:auto;bottom:calc(14px + env(safe-area-inset-bottom,0px))}
 .gal button{font:inherit;color:inherit;cursor:pointer;border:0;touch-action:manipulation}
 .gal button:focus-visible,.gal-pn button:focus-visible{outline:2px solid #ffd25a;outline-offset:2px}
 .gal .ey{font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:10px;letter-spacing:.2em;color:#8fa2cf}
