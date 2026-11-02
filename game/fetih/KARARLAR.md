@@ -43,3 +43,33 @@ Kaynak: kullanıcının cevapları (2026-11-02). Kodlamaya sorular bitince geçi
 - Çevrimiçinde dört mod da açık; çıkanın yerine bot geçer.
 - Seçim süreleri: ilk hedef 12 sn, zincirdeki sonraki hedefler 8 sn; diğerleri aynı.
 - Kopan oyuncu maç bitene kadar her an dönebilir (dönene kadar bot oynar).
+
+## 8. Bitiş, kazanan, elenme, eşli
+- Ölüm maçı: 30 dk; sonra ani ölüm (kalkan çalışmaz, kule onarılmaz, zincir sınırı kalkar), tek kalan kazanır.
+- Kazanan puanla (il + başkent + savunma); eşitlikte altın soru.
+- Elenen insan: "İZLE" (Atla düğmesiyle) ya da "SONUCU GÖR" (kalan maç anında arkada biter).
+- Eşli sıra dönüşümlü kalır (A1, B1, A2, B2).
+
+## 9. Mod ayrıntıları
+- Klasik kısa: yayılma 3–4 tur + 6 savaş turu (~10 dk), zincir sınırı haritaya göre.
+- Hakimiyet: 25. dakikadan sonra eşik her 2 dk'da %5 iner (%70 → %65 → …).
+- Tarafsız ile saldırı: tek kişilik kolay soru (zorluk −0,5); bilirsen il senin (+200), zincir devam; bilemezsen sıra geçer.
+- Menüde varsayılan mod: Klasik kısa.
+
+## 10. Hatalar (soru değil, düzeltilecek)
+- Tufan (ve uzun filmli tipler): sonuç ekranı süresi cevap filminden düşülüyor, film erken kesiliyor. Film tam oynamalı,
+  sonuç ekranı üstüne eklenmeli; çevrimiçinde sunucunun film süresi buna göre büyümeli (12 sn tavanı da kesiyordu).
+- İzlenen bot düellosunda sayaç gerçek süreyi, çubuk 2,6 sn'yi gösteriyor (bot özetiyle soru kalkacak; çevrimiçi canlı
+  izlemede gerçek süre).
+- Kalkan sonrası sıra bitiyordu; başkentte tek kule yıkılınca sıra geçiyordu (zincir kuralıyla çözülür).
+
+## Uygulama sırası
+1. Hatalar: Tufan film süresi.
+2. Zincir saldırı + sınır + çark turda 1 + geride kalana +1; kalkan sorusuz; kule zinciri + kule onarımı.
+3. Modlar: Klasik kısa (6 savaş turu), Süreli 15 dk, Hakimiyet %70 (+25 dk eşik düşüşü), Ölüm maçı (30 dk ani ölüm);
+   menüde mod seçimi (varsayılan Klasik), HUD'da süre / hakimiyet çubuğu.
+4. Harita: kişi başı 8 il; 81 ilde yarı yayılma + tarafsız iller (tek kişilik kolay soru).
+5. Bot izleme: sorusuz özet (~5 sn), eşlide takım arkadaşı uzun, "Atla ⏩"; elenince İZLE / SONUCU GÖR.
+6. Jokerler maç içinde kazanılır.
+7. Çevrimiçi: canlı izleme + izleyici tahmini (+20), zincirde 8 sn hedef seçimi, kopan oyuncu her an dönebilir.
+8. Her aşamada: benzetim (test/sim.mjs) ile süre/bitiş nedeni ölçümü, önce/sonra görseli, oyun + defter yayını.
