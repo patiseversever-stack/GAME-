@@ -846,6 +846,17 @@ export class Cinema {
 		this._day();
 	}
 
+	/** Tarafsız ile saldırı (v2): kamera ile yaklaşır, il parlar (soru ilin önünde sorulur). */
+	async neutralStart(p, i) {
+		const app = this.app;
+		app.board.fx(i, 0.45, 1);
+		if (this.fast || !this.fx) return this.wait(300);
+		const c = this._center(i, this.a, 0.15);
+		app.cam.shot(c.x, c.z, { y: c.y, dist: 20, pitch: 0.78, yaw: app.cam.yaw, dur: 1.0, arc: 0.3, ease: easeCine });
+		this._spot(c, 3.2, 0.9, 0.3);
+		await this.wait(1000);
+	}
+
 	/** Kule onarımı başlıyor: kamera kendi kalesine (soru kalenin önünde sorulur). */
 	async repairStart(p, i) {
 		const app = this.app;

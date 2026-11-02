@@ -54,7 +54,13 @@ const WHEEL_CATS = Object.keys(CATS);
  * Maç haritası büyüklüğü: hızlı maçta seçilen bölge, oyuncu başına bu kadar il olana dek komşu illerle
  * büyür (tek bölge 3–4 kişiye dar geliyordu: herkese 2–3 il düşüyor, maç başlamadan bitiyordu).
  */
-export const PROVINCES_PER_PLAYER = 6;
+export const PROVINCES_PER_PLAYER = 8; // v2: 6 → 8 (zincir saldırıya yer; KARARLAR 5)
+
+/**
+ * Tüm Türkiye haritası (v2): yayılmada boş illerin yarısı 4 turda dağıtılır, kalanı tarafsız kalır. Tarafsız ile
+ * saldırı tek kişilik kolay sorudur (zorluk −0,5): bilirsen il senin, zincir devam; bilemezsen sıra geçer.
+ */
+export const NEUTRAL = { share: 0.5, rounds: 4, diff: -0.5 };
 
 /**
  * Seçim süreleri (sn). Her koltuk aynı kurala tabidir: süre uzak koltuğa da gönderilir, dolunca seçimi bot yapar.
@@ -1108,9 +1114,14 @@ export class Match {
 		this.phase = 'yayilma';
 		let r = 0;
 		// tur sayısı baştan belli (expansionPlan): küçük haritada 3, Türkiye'de 7; her tur aynı sayıda il dağıtılır
-		this.expT = expansionRoundsFor(this.free().length);
-		const of = () => r - 1 + expansionPlan(this.free().length, this.players.filter((p) => p.alive).length, Math.max(1, this.expT - r + 1)).length;
-		while (this.free().length && r < 20) {
+		// tüm Türkiye: boş illerin yarısı 4 turda (kalanı tarafsız); bölge haritası: hepsi
+		const free0 = this.free().length;
+		this.neutralMap = this.cfg.region === 'all' && !this.stageDef;
+		this.expLeft = this.neutralMap ? Math.ceil(free0 * NEUTRAL.share) : free0;
+		this.expT = this.neutralMap ? NEUTRAL.rounds : expansionRoundsFor(free0);
+		const pool = () => Math.min(this.expLeft, this.free().length);
+		const of = () => r - 1 + expansionPlan(pool(), this.players.filter((p) => p.alive).length, Math.max(1, this.expT - r + 1)).length;
+		while (pool() > 0 && r < 20) {
 			r++;
 			const total = of();
 			this.emit('phase', { phase: this.phase, round: r, of: total });
@@ -1120,7 +1131,7 @@ export class Match {
 			this.tick(EST.banner);
 			await this.expansionRound(r);
 		}
-		await this.sweepFree(); // güvenlik ağı: hiçbir il boşta kalmaz
+		if (!this.neutralMap) await this.sweepFree(); // güvenlik ağı: bölge haritasında hiçbir il boşta kalmaz (Türkiye'de kalanlar tarafsız)
 		this.expansionRounds = r;
 		const pace = PACE[this.cfg.length === 'long' ? 'long' : 'quick'];
 		const R = RULES[this.rule];
@@ -1403,13 +1414,17 @@ export class Match {
 		const res = await this.ask(q, alive, { title: 'Herkes cevaplıyor', phase: 'yayilma' });
 		const order = this.rank(res, TYPES[q.type].kind);
 		// bu turun payı (expansionPlan): sıralamaya göre 2:1 (3 kişide 2:1:0, 4 kişide 2:1:1:0)
-		const picks = expansionPlan(this.free().length, order.length, Math.max(1, (this.expT || 1) - r + 1))[0];
+		const left = this.expLeft ?? this.free().length;
+		const picks = expansionPlan(Math.min(left, this.free().length), order.length, Math.max(1, (this.expT || 1) - r + 1))[0];
 		await this.ui.ranking(this, order, picks);
 		this.tick(EST.rank);
 		for (let k = 0; k < order.length; k++) {
 			const total = Math.min(picks[k] || 0, this.free().length);
 			const pool = { left: pickPool(total) };
-			for (let j = 0; j < total && this.free().length; j++) await this.choose(order[k].p, 'free', [j + 1, total], pool);
+			for (let j = 0; j < total && this.free().length; j++) {
+				await this.choose(order[k].p, 'free', [j + 1, total], pool);
+				if (this.expLeft != null) this.expLeft--;
+			}
 		}
 	}
 
@@ -1451,7 +1466,7 @@ export class Match {
 			if (o < 0 || this.players[o].team !== p.team) continue;
 			for (const j of this.adj.get(i)) {
 				const oj = this.owner(j);
-				if (oj >= 0 && !this.ally(oj, p.i)) set.add(j);
+				if (oj < 0 ? this.phase === 'fetih' : !this.ally(oj, p.i)) set.add(j); // fetihte tarafsız komşu da hedef
 			}
 		}
 		return [...set];
@@ -1489,7 +1504,13 @@ export class Match {
 					: {
 							head: 'Saldıracağın ili seç',
 							ey: step && step[1] > 1 ? `FETİH · SALDIRI ${step[0]} / ${step[1]}` : 'FETİH · SIRA SENDE',
-							hint: fix ? 'Parlayan ile saldır ya da kendi kalene dokun: kule onar' : step?.[0] > 1 ? 'Kazandın, devam: parlayan bir ile dokun' : 'Saldırmak için parlayan bir ile dokun',
+							hint: fix
+								? 'Parlayan ile saldır ya da kendi kalene dokun: kule onar'
+								: options.some((i) => this.owner(i) < 0)
+									? 'Parlayan ile saldır · boyasız iller tarafsız: tek soru'
+									: step?.[0] > 1
+										? 'Kazandın, devam: parlayan bir ile dokun'
+										: 'Saldırmak için parlayan bir ile dokun',
 						};
 		const sec = pool ? Math.max(PICK_TIME.floor, Math.round(pool.left)) : kind === 'attack' && step?.[0] > 1 ? PICK_TIME.chain : PICK_TIME[kind === 'free' ? 'first' : kind];
 		const t0 = clock.now();
@@ -1519,6 +1540,9 @@ export class Match {
 			if (kind === 'free') {
 				// komşusu çok olan, kendi topraklarını birleştiren il
 				s += this.neighbors(i).filter((j) => this.owner(j) === p.i).length * 0.5;
+			} else if (this.owner(i) < 0) {
+				// tarafsız il: tek kişilik kolay soru, rakip yok (değer +200); kalesi olmayan cepheyi büyütür
+				s += 0.75 + this.neighbors(i).filter((j) => this.owner(j) === p.i).length * 0.08;
 			} else if (i === p.capital) {
 				// kendi yaralı kalesi: tek kulesi kaldıysa çoğu zaman onarır; çevresinde düşman çoksa daha çok
 				const hp = this.app.castles[p.i].hp;
@@ -1622,6 +1646,7 @@ export class Match {
 	 * 'nobody'. turn.cat turun kategorisini taşır (çark bir kez döner).
 	 */
 	async duelAt(p, target, turn, cin) {
+		if (this.owner(target) < 0) return this.neutralAt(p, target, turn);
 		const d = this.players[this.owner(target)];
 		const isCap = d.capital === target;
 		const app = this.app;
@@ -1711,6 +1736,35 @@ export class Match {
 		result('nobody');
 		await this.cinema.nobody(target);
 		this.tick(Math.max(1.7, EST.nobody * k));
+		return 'nobody';
+	}
+
+	/**
+	 * Tarafsız il (v2, tüm Türkiye): tek kişilik kolay soru (zorluk −0,5; bildi/bilemedi tipleri). Bilirse il onun
+	 * (+200, yayılmadaki gibi boya dalgası), zincir sürer; bilemezse sıra geçer. Olay protokolü düello ile aynı
+	 * ('attack' defender −1, 'result' claim|nobody).
+	 */
+	async neutralAt(p, target, turn) {
+		this.duels++;
+		this.duel = { attacker: p, defender: null, target };
+		this.emit('attack', { player: p.i, defender: -1, target, capital: false });
+		const name = this.app.board.provinces[target]?.name || '';
+		await this.cinema.neutralStart?.(p, target);
+		this.app.ui?.caption?.('TARAFSIZ İL', name, p.human ? 'Bil, il senin olsun' : `${p.name} alıyor`, { p });
+		this.tick(EST.declare);
+		const q = this.pick({ cat: turn?.cat && turn.cat !== 'fetih' ? turn.cat : null, types: REPAIR_TYPES, who: [p], diff: this.targetDiffFor([p], null) + NEUTRAL.diff });
+		const [r] = await this.ask(q, [p], { title: 'TARAFSIZ İL', phase: 'neutral', cat: q.cat });
+		if (r?.correct) {
+			this.emit('result', { kind: 'claim', player: p.i, defender: -1, target });
+			this.setOwner(target, p.i, VALUE.pick, true);
+			await this.cinema.claim(p, target);
+			this.tick(EST.claim);
+			return 'win';
+		}
+		this.emit('result', { kind: 'nobody', player: p.i, defender: -1, target });
+		this.app.ui?.caption?.('ALINAMADI', name, 'Tarafsız kaldı', { p, tone: 'red' });
+		await this.cinema.wait?.(1300);
+		this.tick(1.3);
 		return 'nobody';
 	}
 

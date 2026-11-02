@@ -367,7 +367,7 @@ export class UI {
 			if (m.over || m.phase !== 'fetih') return;
 			let html = '';
 			let hot = false;
-			if (m.rule === 'klasik') html = `${ico('flag', { w: 2.6 })}<b>TUR ${Math.min(m.round, m.rounds)} / ${m.rounds}</b>`;
+			if (m.rule === 'klasik') html = m.rounds > 0 && m.round >= 1 ? `${ico('flag', { w: 2.6 })}<b>TUR ${Math.min(m.round, m.rounds)} / ${m.rounds}</b>` : `${ico('flag', { w: 2.6 })}<b>KLASİK</b>`;
 			else if (m.rule === 'sureli') {
 				const left = m.timeLeft();
 				hot = left <= 60;

@@ -269,7 +269,11 @@ async function play(cfg, { human = false, store, policy, accuracy } = {}) {
 	// yayılma bitince haritada boş il kalmamalı; tur sayısı planı aşmamalı (küçük harita 3, Türkiye 7)
 	m.on('phase', (d) => {
 		if (d.phase === 'yayilma') check(d.of >= 1 && d.of <= 7 && d.round <= d.of, `${cfg.mode}/${cfg.length}/${cfg.region}/seed ${cfg.seed}: yayılma turu ${d.round}/${d.of}`);
-		if (d.phase === 'fetih' && d.round === 1) check(m.free().length === 0, `${cfg.mode}/${cfg.length}/${cfg.region}/seed ${cfg.seed}: yayılma sonrası ${m.free().length} il boşta`);
+		// bölge haritasında yayılma bütün illeri dağıtır; tüm Türkiye'de (v2) yarısı tarafsız kalır
+		if (d.phase === 'fetih' && d.round === 1) {
+			if (m.neutralMap) check(Math.abs(m.free().length - Math.floor((m.map.length - m.players.length) * 0.5)) <= 2, `${cfg.mode}/${cfg.length}/seed ${cfg.seed}: Türkiye haritasında tarafsız il ${m.free().length}, beklenen yarısı`);
+			else check(m.free().length === 0, `${cfg.mode}/${cfg.length}/${cfg.region}/seed ${cfg.seed}: yayılma sonrası ${m.free().length} il boşta`);
+		}
 	});
 	const t0 = performance.now();
 	let out;
