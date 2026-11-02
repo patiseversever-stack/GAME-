@@ -596,4 +596,29 @@ export const CSS_ARENA = /* css */ `
 .fl-elim .fl-stamp{position:relative;left:auto;top:auto;opacity:1;transform:skewX(-8deg)}
 .fl-elim .el-b{display:flex;gap:12px}
 .fl-elim .el-b .fl-btn{min-width:140px}
+
+/* ---------------------------------------------------------------- tahmin (sayı) · Arena v1 (kullanıcı seçti: defter "Tasarım dili")
+   koyu eğik değer kutusu, altın italik sayı; ince düz iz, altın dikdörtgen tutamak; koyu eğik adım düğmeleri; altın eğik GÖNDER */
+.fl-q .fl-num{gap:9px;padding:0 9px}
+.fl-q .fl-num-val{gap:8px;padding:5px 12px 3px;border:1px solid rgba(255,255,255,.09);border-radius:0;background:#11131d;box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);transform:skewX(-8deg);transition:box-shadow .2s,border-color .2s}
+.fl-q .fl-num-val b,.fl-q .fl-num-val small{transform:skewX(8deg)}
+.fl-q .fl-num-val b{font:italic 900 56px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffc83a;-webkit-text-stroke:0;text-shadow:0 0 18px rgba(255,200,58,.25);font-variant-numeric:tabular-nums}
+.fl-q .fl-num-val small{font:italic 800 16px/1 'Barlow Condensed','Fredoka',sans-serif;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.55);opacity:1}
+.fl-q .fl-num.narrow .fl-num-val{border-color:#2f9bd8;box-shadow:0 0 0 2px rgba(47,155,216,.55),0 0 16px rgba(47,155,216,.35)}
+.fl-q .fl-num .fl-range{height:36px}
+.fl-q .fl-num .fl-range::-webkit-slider-runnable-track{height:6px;border:0;border-radius:0;background:linear-gradient(90deg,#ffc83a var(--p),#232637 var(--p));box-shadow:none}
+.fl-q .fl-num .fl-range::-webkit-slider-thumb{width:16px;height:30px;margin-top:-12px;border:0;border-radius:2px;background:#ffc83a;box-shadow:0 0 0 2px #07080f,0 0 12px rgba(255,200,58,.5)}
+.fl-q .fl-num .fl-range::-moz-range-track{height:6px;border:0;border-radius:0;background:#232637}
+.fl-q .fl-num .fl-range::-moz-range-progress{height:6px;border-radius:0;background:#ffc83a}
+.fl-q .fl-num .fl-range::-moz-range-thumb{width:16px;height:30px;border:0;border-radius:2px;background:#ffc83a;box-shadow:0 0 0 2px #07080f,0 0 12px rgba(255,200,58,.5)}
+.fl-q .fl-num-row{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 4px}
+.fl-q .fl-num .fl-step{min-width:0;height:44px;padding:0;border:1px solid rgba(255,255,255,.12);border-radius:0;background:#151826;box-shadow:none;transform:skewX(-10deg);
+  font:italic 800 21px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff;text-shadow:none;transition:transform .08s,background .12s}
+.fl-q .fl-num .fl-step:active{transform:skewX(-10deg) translateY(2px);background:#1e2236;box-shadow:none}
+.fl-q .fl-num .fl-send{height:50px;padding:0;border:0;border-radius:0;background:linear-gradient(90deg,#ffd25a,#ffb92a);clip-path:polygon(0 0,100% 0,97.5% 100%,0 100%);box-shadow:none;
+  font:italic 900 25px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.2em;color:#1b1200;text-shadow:none;transition:transform .08s,filter .08s}
+.fl-q .fl-num .fl-send:active{transform:translateY(2px);filter:brightness(1.08);box-shadow:none}
+.fl-q .fl-num-ans small{font:italic 800 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em}
+.fl-q .fl-num-ans b{font:italic 900 40px/1.05 'Barlow Condensed','Lilita One',sans-serif;color:#7dff9a;-webkit-text-stroke:0;text-shadow:0 0 16px rgba(125,255,154,.3)}
+@media (max-height:700px){.fl-q .fl-num-val b{font-size:44px}.fl-q .fl-num .fl-step{height:38px}.fl-q .fl-num .fl-send{height:44px;font-size:22px}}
 `;
