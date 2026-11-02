@@ -13,6 +13,16 @@ yayınlı (sürüm: `dist/` derlemesinin üst şeridinde ve oyunun `__BUILD__` d
 - Kiplerde sonuç ekranı: eşli A/B rozeti, izlenen düelloda doğru renk, yayılmada sonuç + SEÇİM SIRASI tek ekran.
 - SEÇİM SIRASI v1.5e: ince tasarım, pay +1…+8, 21 harfli adlar, uzun yakınlık değerleri; 320–430 px dikey ölçüldü.
 
+## v2 kural tasarımı (KARARLAR.md: 36 karar, kullanıcıyla soru-cevap)
+- Aşama 1 bitti: Tufan filmi tam (8,7 → 11 sn), sonuç ekranı ardından; sunucu film + RESULT_MS bekler.
+- Aşama 2 bitti: zincir saldırı (CHAIN, chainCapFor), çark turda 1, sorusuz kalkan (botShieldTurn), kule zinciri,
+  kule onarımı (kendi kalene dokun → tek kişilik soru → castle.heal + cinema.towerUp), seçim yazısı { head, ey, hint }.
+  Görsel: ref/v2-kural/kalkan_zincir_onarim.jpg; benzetim: 72 maçta 7 elenme (önce 0).
+- Sıradaki: Aşama 3 (modlar: Klasik 6 savaş turu, Süreli 15 dk, Hakimiyet %70 + 25 dk eşik düşüşü, Ölüm maçı 30 dk ani
+  ölüm; menüde mod seçimi, HUD süre/hakimiyet çubuğu; test/sim.mjs süre hedefleri yeni modlara göre).
+- Test ortamı notu: `?debug` sayfasında çizim döngüsü kapalı → `app.start()`; SwiftShader'da kare ~0,5 sn, oyun dt'yi 0,05'e
+  kıstığı için kamera/film yavaş görünür → çekimde `app.frame`'e gerçek dt verilir (an.cjs). Duraklatma soru kartını gizler.
+
 ## Sıradaki
 - Kullanıcı soru tiplerini tek tek atıyor; her tipte: arena/premium tasarım, sonuç akışı, uç durumlar (en uzun metin,
   en çok öğe, en dar telefon 320×568), önce/sonra görseli sohbette, oyun + defter aynı sürümle yayın.
