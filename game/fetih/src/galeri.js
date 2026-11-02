@@ -14,6 +14,7 @@ import { expansionPlan } from './game/match.js';
 import { CATS } from './quiz/categories.js';
 import { BANK } from './data/bank.js';
 import { DENEME_TYPES, DENEME_ORDER, DENEME_SAMPLES, bindApp } from './quiz/deneme.js';
+import { designBook } from './ui/tasarim.js';
 
 const ORDER = [
 	['choice', 'Çoktan seçmeli'],
@@ -236,6 +237,8 @@ export async function galeri() {
 		{ ...foe, i: 3, name: 'Elif', color: 0x8a5cf0, css: '#8a5cf0', look: null, human: false, skill: foe.skill * 1.05 },
 	];
 	const want = decodeURIComponent(location.hash.slice(1));
+	if (want === 'tasarim') setTimeout(() => designBook(true), 0); // #tasarim: tasarım dili sayfası doğrudan açılır
+	addEventListener('hashchange', () => location.hash === '#tasarim' && designBook(true));
 	const S = { type: LIST.some(([t]) => t === want) ? want : LIST[0][0], k: 0, scene: 'duel', time: 'real', run: 0 };
 	const ex = Object.fromEntries(LIST.map(([t]) => [t, examples(t)]));
 	const R = () => Math.random();
@@ -257,7 +260,7 @@ export async function galeri() {
 			}</div>
 			<div class="ft"><button class="tg" id="g-scene">Sahne: <em>${SCENES[S.scene]}</em></button>
 				<button class="tg" id="g-time">Süre: <em>${S.time === 'real' ? 'Gerçek' : 'Sınırsız'}</em></button>
-				<button class="tg" id="g-again">↻ Yeniden</button>${document.fullscreenEnabled || document.documentElement.webkitRequestFullscreen ? '<button class="tg" id="g-full">⛶ Tam ekran</button>' : ''}</div>`;
+				<button class="tg" id="g-again">↻ Yeniden</button><button class="tg" id="g-design"><em>◆</em> Tasarım dili</button>${document.fullscreenEnabled || document.documentElement.webkitRequestFullscreen ? '<button class="tg" id="g-full">⛶ Tam ekran</button>' : ''}</div>`;
 		bar.classList.toggle('open', !pn.hidden);
 		const item = ([t, n, nw2, sub]) =>
 			`<button data-t="${t}" role="option" aria-selected="${t === S.type}" class="${t === S.type ? 'on' : ''}${nw2 ? ' nw' : ''}">${esc(n)}${nw2 ? `<i>${esc(sub)}</i>` : ''}<small>${
@@ -286,6 +289,10 @@ export async function galeri() {
 		if (!b) return;
 		if (b.id === 'g-type') return panel(pn.hidden);
 		if (b.id === 'g-close') return drawer(false);
+		if (b.id === 'g-design') {
+			drawer(false);
+			return designBook(true);
+		}
 		if (b.id === 'g-full') {
 			const d = document.documentElement;
 			const on = document.fullscreenElement || document.webkitFullscreenElement;
