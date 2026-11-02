@@ -352,7 +352,7 @@ export class UI {
 		let el = this.$.rule;
 		if (!el) {
 			el = this.$.rule = document.createElement('div');
-			el.className = 'fl-rule off';
+			el.className = 'fl-kural off';
 			this.el.appendChild(el);
 		}
 		const on = m.phase === 'fetih' && !m.over && !m.aborted && !this.fast && !this.$.hud.classList.contains('off') && !!m.rule;
@@ -435,9 +435,13 @@ export class UI {
 			: `<span class="ti">${ico(icon || TONE_ICON[tone] || 'star', { w: 2.8 })}</span>`;
 		t.innerHTML = `${lead}<span>${html ? text : esc(text)}</span>`;
 		box.appendChild(t);
+		this.el.classList.add('toaston'); // kural göstergesi bildirimin altında kalmasın (aynı yer)
 		setTimeout(() => {
 			t.classList.add('bye');
-			setTimeout(() => t.remove(), 280);
+			setTimeout(() => {
+				t.remove();
+				if (!box.children.length) this.el.classList.remove('toaston');
+			}, 280);
 		}, ms);
 		return t;
 	}
@@ -756,7 +760,7 @@ export class UI {
 				? `${half(0, 'a')}<div class="fl-qvs"><b>VS</b></div>${half(1, 'd')}`
 				: who.map((p, k) => (k ? '<i class="vx">VS</i>' : '') + plate(p, '', '', who.length > 2 ? ranks.get(p.i) : 0)).join('');
 		const lbl = ctx.phase === 'altin' ? 'ALTIN SORU' : teams ? 'TAKIMLAR · HERKES CEVAPLIYOR' : ctx.phase === 'yayilma' ? 'YAYILMA · HERKES CEVAPLIYOR' : '';
-		const rule = !human ? 'İzliyorsun' : ctx.phase === 'altin' ? 'Altın soru' : tie ? 'Eşitlik bozma' : closest ? 'En yakın kazanır' : '';
+		const rule = ctx.predict ? `Tahmin et · +20` : !human ? 'İzliyorsun' : ctx.phase === 'altin' ? 'Altın soru' : tie ? 'Eşitlik bozma' : closest ? 'En yakın kazanır' : '';
 		card.className = `fl-q${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}`;
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));

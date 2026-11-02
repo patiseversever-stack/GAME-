@@ -213,9 +213,11 @@ console.log('5) Kalkan kuralı');
 		});
 	for (let k = 0; k < 30; k++) {
 		const m = new Match(makeApp(), tryIn((ctx, me) => ctx.defender === me), { mode: k % 2 ? 'ffa3' : '1v1', length: 'quick', bot: 'usta', region: REGIONS[k % 7], seed: 1200 + k, persist: false });
+		let won = 0; // v2: maç içi ödülle kazanılan kalkanlar (REWARD)
+		m.on('reward', (d) => d.player === m.humanPlayer.i && d.id === 'kalkan' && won++);
 		await m.run();
 		ok(m.duel === null, 'düello kaydı maç sonunda temizlenmedi');
-		ok(m.humanPlayer.jk.kalkan.left === 1, 'reddedilen kalkanın hakkı düştü');
+		ok(m.humanPlayer.jk.kalkan.left === 1 + won, 'reddedilen kalkanın hakkı düştü');
 	}
 	const triedA = tried;
 	// b) saldırırken ya da yayılmada kurulur

@@ -62,6 +62,10 @@
 //     'sabotage' d={ victims, by, cut, blurMs }  yalnız kurban koltuğa: süresinden cut sn düşer
 //     'shield'  d={ player, target }  kalkan saldırıyı soru sorulmadan savuşturdu (v2; saldıranın hakkı yanmaz)
 //     'chain'   d={ player, left, cap }  zincir: saldıran kazandı, aynı turda left hak daha var (v2)
+//     'reward'  d={ player, id }  maç içi joker ödülü (her 3 fetihte bir; başkent yıkan kalkan) (v2)
+//     'predict' d={ player, correct }  izleyici tahmini sonucu; bilen +20 puan ('score' ile gelir) (v2)
+//     'rejoin'  d={ player }  kopan oyuncu geri döndü (v2)
+//   İstek (v2): k='predict' d={ q, v, time }  izleyen koltuk soruyu tahmin eder → res.d = { value, time }
 //     'repair'  d={ player, target, hp }  kule onarımı başladı (tek kişilik soru); sonucu 'result' kind repair|repairFail
 //     'elim'    d={ player, by }
 //     'over'    d={ ranking, reason, rewards? }
@@ -291,6 +295,13 @@ export class RemoteController {
 		if (!this.closed) this.t.send(envelope('ev', name, data, { seat: this.seat }));
 	}
 
+	/** Kopan koltuk geri döndü (Match.rejoin): yeni taşıyıcıya bağlan; maç bitene kadar her an (v2). */
+	reattach(transport) {
+		this.t = transport;
+		this.closed = false;
+		transport.onmessage((m) => this._recv(m));
+	}
+
 	hello(data) {
 		this.t.send(envelope('hello', 'hello', data, { seat: this.seat }));
 	}
@@ -351,6 +362,15 @@ export class BotClient {
 		let d = null;
 		if (m.k === 'pick') d = m.d.options[Math.floor(this.R() * m.d.options.length)];
 		else if (m.k === 'category') d = ['tarih', 'cografya', 'spor', 'bilim', 'sanat', 'eglence'][Math.floor(this.R() * 6)];
+		else if (m.k === 'predict') {
+			// izleyici tahmini (v2): basit tipler, sunucu adımı yok
+			try {
+				const b = TYPES[m.d.q.type].bot(m.d.v, this.skill, this.R);
+				d = { value: b.value, time: b.time };
+			} catch (e) {
+				d = null;
+			}
+		}
 		else if (m.k === 'answer') {
 			// kart açıldı: saat sunucuda bu onayla başlar (cevap süresini sunucu ölçer)
 			this.act('acildi', {});

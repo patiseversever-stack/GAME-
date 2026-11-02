@@ -357,6 +357,17 @@ altın ton ve bir kez parıltı. Üst yazı turu da söyler ("YAYILMA · TUR 2/7
 ölçüldü: taşma, kesik ad ve çakışma yok; `sig.cjs` ile 7 telefon boyunda dikeyde sığıyor (320×568'de altta 118 px boşluk).
 Defterde Sahne düğmesi: Düello / Yayılma 2 kişi / Yayılma 4 kişi / Eşli 2v2; pay maçtaki hesapla (`expansionPlan`).
 
+**v2 maç kuralları (KARARLAR.md, kullanıcıyla 36 karar).** Zincir saldırı (kazandıkça devam, hak kişi başı ilin %15'i,
+2–5; geride kalana +1), çark turda bir kez, kalkan soru sormadan savuşturur (hak yemez), kuleler zincirde arka arkaya
+yıkılır, kule onarımı (kendi kalene dokun → tek kişilik soru → castle.heal). Kurallar: Klasik 6 savaş turu, Süreli 15 dk,
+Hakimiyet %70 (25. dk'dan sonra her 2 dk %5 iner, taban 1/taraf + %5), Ölüm maçı (30. dk ani ölüm: kaleler tek kule,
+kalkan/onarım yok, zincir sınırsız, başkentler açık). Harita kişi başı 8 il; Türkiye'de yayılma yarısı (4 tur), kalan
+tarafsız (tek kişilik kolay soru). İki botun düellosu soru kartısız özet (ui.botDuel; eşlide takım arkadaşı uzun), bot
+filmi 0,55 hız, Atla düğmesi, elenince İZLE / SONUCU GÖR. Joker ödülü (her 3 fetihte bir, başkent yıkana kalkan).
+Çevrimiçi: izleyici tahmini (+20, PREDICT.types), kopan koltuk her an döner (Match.rejoin). Kural göstergesi .fl-kural
+(üst çubuğun altında; soru kartının .fl-rule etiketiyle karışmasın: ilk sürümde aynı sınıfı kullanıp kart etiketlerini
+gizliyordu, düzeltildi).
+
 **Eşleştir ve sırala krem (v1.5c, `quiz/t_match.js`, `ui/styles-arena.js`).** Neon ve koyu cam denendi, premium
 durmadı; eski düzen korunup krem arena diline çekildi. Krem kart (lacivert yazı, ince altın kenar, alçak 3 px gölge, 9–10 px
 köşe). Eşleştir: iki sütun, iç kenarda yuva, bağ gölgeli tek renk çizgi (kısık tonlar) ve çizilirken bir kez kayan ince

@@ -18,7 +18,8 @@ yayınlı (sürüm: `dist/` derlemesinin üst şeridinde ve oyunun `__BUILD__` d
 - Aşama 2 bitti: zincir saldırı (CHAIN, chainCapFor), çark turda 1, sorusuz kalkan (botShieldTurn), kule zinciri,
   kule onarımı (kendi kalene dokun → tek kişilik soru → castle.heal + cinema.towerUp), seçim yazısı { head, ey, hint }.
   Görsel: ref/v2-kural/kalkan_zincir_onarim.jpg; benzetim: 72 maçta 7 elenme (önce 0).
-- Sıradaki: Aşama 3 (modlar: Klasik 6 savaş turu, Süreli 15 dk, Hakimiyet %70 + 25 dk eşik düşüşü, Ölüm maçı 30 dk ani
+- Aşama 3–7 bitti (modlar, harita/tarafsız, bot özeti/Atla/elenme, joker ödülü, izleyici tahmini, geri dönüş).
+- Eski sıradaki notu: Aşama 3 (modlar: Klasik 6 savaş turu, Süreli 15 dk, Hakimiyet %70 + 25 dk eşik düşüşü, Ölüm maçı 30 dk ani
   ölüm; menüde mod seçimi, HUD süre/hakimiyet çubuğu; test/sim.mjs süre hedefleri yeni modlara göre).
 - Test ortamı notu: `?debug` sayfasında çizim döngüsü kapalı → `app.start()`; SwiftShader'da kare ~0,5 sn, oyun dt'yi 0,05'e
   kıstığı için kamera/film yavaş görünür → çekimde `app.frame`'e gerçek dt verilir (an.cjs). Duraklatma soru kartını gizler.

@@ -108,13 +108,14 @@ for (const q of [...BANK, ...SAMPLES]) {
 	const { LocalTransport, BotClient } = await import('../src/game/net.js');
 	const SECRET_KEYS = ['hide', 'min', 'max', 'letters', 'provinces', 'pct', 'value', 'spread', 'data'];
 	let events = 0;
+	let predictsAll = 0;
 	for (const [mode, n, seed] of [['1v1', 2, 50], ['1v1', 2, 53], ['ffa3', 3, 51], ['ffa4', 4, 52], ['team', 4, 54]]) {
 		const app = makeApp();
 		const seats = Array.from({ length: n }, (_, i) => (i === 1 ? 'remote' : 'bot'));
 		const [srv, cli] = LocalTransport.pair();
 		let s = seed;
 		const client = new BotClient(cli, { skill: 0.7, R: () => ((s = (s * 16807) % 2147483647) / 2147483647) });
-		const view = { owners: new Map(), values: new Map(), score: null, asks: 0, reveals: 0, attacks: 0, results: 0, repairs: 0, repairRes: 0, leaks: [] };
+		const view = { owners: new Map(), values: new Map(), score: null, asks: 0, reveals: 0, attacks: 0, results: 0, repairs: 0, repairRes: 0, predicts: 0, leaks: [] };
 		const recv = client._recv.bind(client);
 		cli.onmessage((m) => {
 			if (m.t === 'ev') {
@@ -128,6 +129,7 @@ for (const q of [...BANK, ...SAMPLES]) {
 				else if (m.k === 'result' && (d.kind === 'repair' || d.kind === 'repairFail')) view.repairRes++;
 				else if (m.k === 'result') view.results++;
 				else if (m.k === 'repair') view.repairs++;
+				else if (m.k === 'predict') view.predicts++;
 				else if (m.k === 'joker' && d.player !== 1) for (const k of SECRET_KEYS) if (d.effect && k in d.effect) view.leaks.push(`${d.id}.${k}`);
 			}
 			recv(m);
@@ -145,6 +147,8 @@ for (const q of [...BANK, ...SAMPLES]) {
 		ok(view.asks === view.reveals, `${tag}: izleyen koltuk ${view.reveals} sorunun cevabını aldı ama ${view.asks} soruyu gördü`);
 		ok(view.attacks === m.duels && view.results === m.duels, `${tag}: saldırı/sonuç olayı eksik (${view.attacks}/${view.results}, düello ${m.duels})`);
 		ok((view.repairs || 0) === (view.repairRes || 0), `${tag}: kule onarımı olayı ile sonucu eşleşmiyor (${view.repairs}/${view.repairRes})`);
+		// izleyici tahmini (v2): 3+ oyuncuda uzak koltuk başkalarının basit tipli düellosunu tahmin eder (toplamda sınanır)
+		if (n > 2) predictsAll += view.predicts;
 		ok(!view.leaks.length, `${tag}: başkasının joker etkisi sızdı: ${view.leaks.join(', ')}`);
 		ok(jokers > 0, `${tag}: maçta joker kullanılmadı (sızıntı sınanamadı)`);
 	}
@@ -182,7 +186,8 @@ for (const q of [...BANK, ...SAMPLES]) {
 		ok(used.sure > 5, 'uzak koltuk cevaptan önce joker kullanamadı');
 		ok(used.sabotaj === 0, `uzak koltuk cevabını verdikten sonra ${used.sabotaj} kez sabotaj yaptı`);
 	}
-	console.log(`uzak koltuklu 5 maç: istemciye ${events} olay`);
+	ok(predictsAll > 0, 'izleyici tahmini 3+ oyunculu maçlarda hiç yapılmadı');
+	console.log(`uzak koltuklu 5 maç: istemciye ${events} olay, izleyici tahmini ${predictsAll}`);
 }
 
 // ---------------------------------------------------------------- v1.2: yeni tiplerin sunucu adımları
@@ -351,6 +356,37 @@ for (const q of [...BANK, ...SAMPLES]) {
 	ok(!miss.length, `uzak koltukla hiç oynanmayan yeni tip: ${miss.join(', ')}`);
 	ok(Object.keys(stats.data.sive || {}).length > 0 && Object.keys(stats.data.azbilinen || {}).length > 0, 'sunucu istatistiği birikmedi');
 	console.log(`yeni tipler uzak koltukla (${total} maç, sanal saat; süre ${durs.join(', ')}): ${Object.entries(typed).map(([t, c]) => `${t} ${c}`).join(' · ')}`);
+}
+
+// kopan oyuncu geri döner (v2, KARARLAR 7): ayrılan koltuğa bot geçer; yeni taşıyıcıyla döndüğünde selam (anlık görüntü)
+// gelir ve sonraki istekler yeniden oyuncuya gider
+{
+	const { makeApp, makeUI } = await import('./dunya.mjs');
+	const { LocalTransport, BotClient } = await import('../src/game/net.js');
+	const app = makeApp();
+	const [srv, cli] = LocalTransport.pair();
+	let s1 = 9;
+	const R = () => ((s1 = (s1 * 16807) % 2147483647) / 2147483647);
+	const c1 = new BotClient(cli, { skill: 0.7, R });
+	const m = new Match(app, makeUI(), { mode: 'ffa3', length: 'quick', bot: 'usta', region: 'ege', seed: 61, seats: ['bot', 'remote', 'bot'], transports: { 1: srv }, allBots: true, persist: false });
+	let c2 = null;
+	let dropped = false;
+	m.on('phase', (d) => {
+		if (d.phase === 'fetih' && d.round === 1 && !dropped) {
+			dropped = true;
+			c1.act('ayril', {}); // koptu: bot devralır
+		}
+		if (d.phase === 'fetih' && d.round === 2 && dropped && !c2) {
+			const [srv2, cli2] = LocalTransport.pair();
+			c2 = new BotClient(cli2, { skill: 0.7, R });
+			ok(m.rejoin(1, srv2), 'kopan koltuk geri dönemedi');
+		}
+	});
+	await m.run();
+	await new Promise((r) => setTimeout(r, 5));
+	ok(!!c2 && !!c2.hello?.snapshot, 'geri dönen koltuğa anlık görüntülü selam gitmedi');
+	ok(!!c2 && c2.log.some((x) => x.startsWith('req:')), 'geri dönen koltuğa istek gitmedi');
+	console.log(`kopan oyuncu geri döndü: selam ${c2?.hello?.snapshot ? 'anlık görüntülü' : 'yok'}, dönüşten sonra ${c2 ? c2.log.filter((x) => x.startsWith('req:')).length : 0} istek`);
 }
 
 console.log(`${checks} denetim, ${fails} hata`);

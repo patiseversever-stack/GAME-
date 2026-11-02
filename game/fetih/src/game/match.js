@@ -102,6 +102,18 @@ export const chainCapFor = (mapSize, players) => clamp(Math.round((mapSize / Mat
  * Soru tipleri tek kişiyle anlamlı olanlar (bildi/bilemedi).
  */
 export const REPAIR_TYPES = ['choice', 'tf', 'odd', 'hilo', 'proverb', 'emoji', 'riddle'];
+
+/**
+ * Maç içi joker ödülü (v2, KARARLAR 4): her 3 fetihte (düşman ili ya da tarafsız il) rastgele bir joker; bir oyuncuyu
+ * eleyen (başkentini yıkan) bir kalkan kazanır. Ödül yalnız bu maçta geçerli (kalıcı stoka eklenmez).
+ */
+export const REWARD = { every: 3, pool: ['yari', 'kahin', 'sure', 'ikinci', 'sabotaj', 'kalkan'] };
+
+/**
+ * İzleyici tahmini (v2, KARARLAR 7): çevrimiçinde başka iki oyuncunun sorusunu izleyen de cevaplar; bilirse +20 puan.
+ * Yalnız sunucuda adımı olmayan, bildi/bilemedi ile yargılanan tiplerde (PREDICT.types).
+ */
+export const PREDICT = { bonus: 20, types: [...REPAIR_TYPES, 'blitz', 'img', 'order', 'match'] };
 export const pickPool = (n) => PICK_TIME.first + PICK_TIME.next * Math.max(0, n - 1);
 
 /**
@@ -492,6 +504,7 @@ export class Match {
 			for (const i of this.map) if (this.owner(i) === p.i) s += this.value.get(i) || 0;
 			const k = this.app.castles[p.i];
 			if (p.alive && k.group.visible) s += (VALUE.castle / 3) * k.hp;
+			s += p.bonus || 0; // izleyici tahmini (PREDICT)
 			p.score = Math.round(s);
 		}
 		// 'score' olayı: yalnız değişince (kule yıkılışı ve savunma değeri 'owner' olayından çıkarılamaz)
@@ -703,7 +716,19 @@ export class Match {
 			ses.sent(p);
 			return w.then((r) => (r ? { ...r, at: clock.now() } : null));
 		});
-		const res = watchOnly ? { human: null } : await this.ui.question(this, { q, v, T, who, bots: cur.bots, human, clock: qclock, botJokers: cur.botUses, ...ctx });
+		// izleyici tahmini (çevrimiçi): soruda olmayan yaşayan oyuncular da cevaplar; bilen +20 (PREDICT)
+		const online = this.players.some((p) => p.ctl.remote);
+		const predictable = online && !watchOnly && PREDICT.types.includes(q.type) && ctx.phase === 'duel';
+		const viewer = this.humanPlayer;
+		const predHuman = predictable && viewer && viewer.alive && !who.includes(viewer) ? viewer : null;
+		if (predictable && pv) {
+			for (const s of this.players) {
+				if (!s.alive || who.includes(s) || !s.ctl.remote || s.ctl.closed) continue;
+				s.ctl.request('predict', { q: pv.q, v: pv, time: sec }, (sec + 3) * 1000).then((r) => this.scorePrediction(s, T, v, r));
+			}
+		}
+		const res = watchOnly ? { human: null } : await this.ui.question(this, { q, v, T, who, bots: cur.bots, human: human || predHuman, clock: qclock, botJokers: cur.botUses, ...ctx, predict: !!predHuman });
+		if (predHuman) this.scorePrediction(predHuman, T, v, res?.human);
 		const ra = await Promise.all(remoteWait);
 		this.check(); // çıkışta kapanan soru sayılmaz (beceri puanına yanlış diye işlenmesin)
 		// uzak koltuğun son değeri sunucunun kaydı, süresi sunucu saatiyle (istemcinin bildirdiği süre kullanılmaz)
@@ -1635,6 +1660,51 @@ export class Match {
 		});
 	}
 
+	/** İzleyici tahminini değerlendir: bilen +PREDICT.bonus (puana eklenir). */
+	scorePrediction(p, T, v, r) {
+		if (!r || r.value == null || this.over) return;
+		let ok = false;
+		try {
+			ok = !!T.judge(v, r.value).correct;
+		} catch (e) {
+			ok = false;
+		}
+		this.emit('predict', { player: p.i, correct: ok });
+		if (!ok) return;
+		p.bonus = (p.bonus || 0) + PREDICT.bonus;
+		this.rescore();
+		if (p.human && !this.ui.fast) this.ui.toast?.(`Tahminin doğru: +${PREDICT.bonus} puan`, { p, tone: 'gold', ms: 1800 });
+	}
+
+	/** Joker ödülü (REWARD): yalnız bu maçta; insan için bildirim. */
+	reward(p, id) {
+		const slot = p?.jk?.[id];
+		if (!slot) return;
+		slot.left++;
+		this.emit('reward', { player: p.i, id });
+		this.refreshJokers();
+		if (p.human && !this.ui.fast) this.ui.toast?.(`+1 joker: ${JOKERS[id]?.name || id}`, { p, tone: 'gold', icon: JOKERS[id]?.icon, ms: 2200 });
+	}
+
+	/** Fetih sayacı: her REWARD.every fetihte rastgele joker. */
+	afterConquest(p) {
+		p.conquests = (p.conquests || 0) + 1;
+		if (p.conquests % REWARD.every === 0) this.reward(p, REWARD.pool[Math.floor(this.R() * REWARD.pool.length)]);
+	}
+
+	/**
+	 * Kopan uzak oyuncu geri döner (v2, KARARLAR 7: maç bitene kadar her an): koltuğun kontrolcüsü yeni taşıyıcıya
+	 * bağlanır, maçın anlık görüntüsüyle selam gider. Kopukken kararlarını bot verdi; sonraki istekler oyuncuya gider.
+	 */
+	rejoin(seat, transport) {
+		const p = this.players[seat];
+		if (!p || !p.ctl?.remote || this.over || this.aborted) return false;
+		p.ctl.reattach(transport);
+		p.ctl.hello({ seat, protocol: PROTOCOL, cfg: { mode: this.cfg.mode, length: this.cfg.length, region: this.cfg.region, rule: this.rule, salt: this.salt }, snapshot: this.snapshot() });
+		this.emit('rejoin', { player: seat });
+		return true;
+	}
+
 	/** Sorudaki oyunculardan biri izleyenin (insanın) takım arkadaşı mı (eşli). */
 	allyOf(viewer, out) {
 		return !!this.mode.teams && !!viewer && out.some((r) => r.p !== viewer && r.p.team === viewer.team);
@@ -1804,6 +1874,7 @@ export class Match {
 				this.setOwner(target, p.i, v, true);
 				await this.cinema.conquer(p, target);
 				this.tick(Math.max(EST.resultMin, EST.conquer * k));
+				this.afterConquest(p);
 			}
 			return 'win';
 		}
@@ -1842,6 +1913,7 @@ export class Match {
 			this.setOwner(target, p.i, VALUE.pick, true);
 			await this.cinema.claim(p, target);
 			this.tick(EST.claim);
+			this.afterConquest(p);
 			return 'win';
 		}
 		this.emit('result', { kind: 'nobody', player: p.i, defender: -1, target });
@@ -1901,6 +1973,7 @@ export class Match {
 		if (skipping && d.human) this.setSkip(false);
 		await this.cinema.eliminated(d, by);
 		this.tick(EST.elim);
+		if (by?.alive) this.reward(by, 'kalkan'); // başkent yıkan bir kalkan kazanır
 		// insan elendi, maç sürüyor: İZLE (Atla düğmesiyle) ya da SONUCU GÖR (kalan maç hızlı kipte biter)
 		if (d.human && !this.checkOver() && !this.ui.fast) {
 			const act = await this.ui.elimChoice?.(this, by);

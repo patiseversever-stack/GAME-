@@ -63,6 +63,13 @@ Kaynak: kullanıcının cevapları (2026-11-02). Kodlamaya sorular bitince geçi
   izlemede gerçek süre).
 - Kalkan sonrası sıra bitiyordu; başkentte tek kule yıkılınca sıra geçiyordu (zincir kuralıyla çözülür).
 
+## Uygulama durumu (2026-11-02)
+- 1–7 aşamaların hepsi uygulandı (ayrıntı DESIGN.md ve commit geçmişi). Görseller: ref/v2-kural/.
+- Ölçülen süreler (test/sim.mjs, 40'ar maç, 0. koltuk insan yerine): Klasik bölge 1'e 1 11,5 / 3 kişi 13,3 /
+  4 kişi ve eşli ~15 dk, Türkiye 9,5–12 dk; Süreli 15 dk; Hakimiyet bölge 16–35, Türkiye 33–40 dk; Ölüm maçı 24–37 dk
+  (hepsi elenmeyle). Klasik'te "~10 dk" tahmini 3–4 kişide tutmadı (insanın kendi düelloları süreyi belirliyor).
+- Çevrimiçi: gerçek sunucu/istemci uygulaması yok; izleyici tahmini ve geri dönüş protokolde ve testte (net.test).
+
 ## Uygulama sırası
 1. Hatalar: Tufan film süresi.
 2. Zincir saldırı + sınır + çark turda 1 + geride kalana +1; kalkan sorusuz; kule zinciri + kule onarımı.

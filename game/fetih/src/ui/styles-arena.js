@@ -546,18 +546,18 @@ export const CSS_ARENA = /* css */ `
 .fl-ui.qmap .fl-pbtn{top:auto;bottom:calc(var(--sab) + 14px)}
 /* ---------------------------------------------------------------- kural göstergesi (v2): üst çubuğun altında ince eğik
    şerit; soru açıkken gizli */
-.fl-rule{position:absolute;left:50%;top:80px;z-index:6;display:flex;align-items:center;gap:7px;padding:4px 12px 5px;pointer-events:none;
+.fl-kural{position:absolute;left:50%;top:80px;z-index:6;display:flex;align-items:center;gap:7px;padding:4px 12px 5px;pointer-events:none;
   transform:translateX(-50%) skewX(-8deg);color:#ffd25a;background:rgba(8,10,20,.84);box-shadow:inset 0 0 0 1px rgba(255,210,90,.45),0 4px 12px rgba(0,0,0,.45);
   transition:opacity .25s;font:italic 800 15px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em}
-.fl-rule>*{transform:skewX(8deg)}
-.fl-rule .fl-i{width:15px;height:15px}
-.fl-rule small{font-size:11px;letter-spacing:.14em;opacity:.75}
-.fl-rule .bar{position:relative;width:86px;height:7px;background:rgba(255,255,255,.14);transform:none}
-.fl-rule .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--c);box-shadow:0 0 8px var(--c);transition:width .6s}
-.fl-rule .bar::after{content:'';position:absolute;right:-1px;top:-3px;bottom:-3px;width:2px;background:#fff}
-.fl-rule.hot{color:#ff8a78;box-shadow:inset 0 0 0 1px rgba(255,90,72,.7),0 4px 12px rgba(0,0,0,.45);animation:flRuleHot 1s ease-in-out infinite}
-@keyframes flRuleHot{50%{opacity:.7}}
-.fl-rule.off,.fl-ui.qon .fl-rule,.fl-ui.qmap .fl-rule,.fl-ui.paused .fl-rule{opacity:0}
+.fl-kural>*{transform:skewX(8deg)}
+.fl-kural .fl-i{width:15px;height:15px}
+.fl-kural small{font-size:11px;letter-spacing:.14em;opacity:.75}
+.fl-kural .bar{position:relative;width:86px;height:7px;background:rgba(255,255,255,.14);transform:none}
+.fl-kural .bar i{position:absolute;left:0;top:0;bottom:0;background:var(--c);box-shadow:0 0 8px var(--c);transition:width .6s}
+.fl-kural .bar::after{content:'';position:absolute;right:-1px;top:-3px;bottom:-3px;width:2px;background:#fff}
+.fl-kural.hot{color:#ff8a78;box-shadow:inset 0 0 0 1px rgba(255,90,72,.7),0 4px 12px rgba(0,0,0,.45);animation:flKuralHot 1s ease-in-out infinite}
+@keyframes flKuralHot{50%{opacity:.7}}
+.fl-kural.off,.fl-ui.qon .fl-kural,.fl-ui.qmap .fl-kural,.fl-ui.paused .fl-kural,.fl-ui.toaston .fl-kural{opacity:0}
 
 /* ---------------------------------------------------------------- izleme özeti (v2): iki botun düellosu, soru kartı yok.
    Altta eğik koyu kart: başlık (DÜELLO · il), iki portre, BİLDİ/BİLEMEDİ ve süre; eşlide takım arkadaşında soru + cevap */
