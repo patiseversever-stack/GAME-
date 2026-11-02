@@ -123,6 +123,27 @@ export class ShadowSystem {
 		renderer.setRenderTarget(prev);
 	}
 
+	/**
+	 * Gölge geçişinin programlarını derler (açılışta; ilk gölge çiziminde derleme donması olmasın). Hedef doku
+	 * bağlıyken derlenir: programın çıkış biçimi gerçek çizimle aynı olsun (yoksa ilk karede yine derlenir).
+	 */
+	async compile(renderer) {
+		const prev = renderer.getRenderTarget();
+		renderer.setRenderTarget(this.rt);
+		let p;
+		try {
+			p = renderer.compileAsync(this.scene, this.cam);
+		} catch (e) {
+			renderer.compile(this.scene, this.cam);
+		}
+		renderer.setRenderTarget(prev);
+		try {
+			await p;
+		} catch (e) {
+			/* derleme sürüyorsa ilk çizim bekler */
+		}
+	}
+
 	dispose() {
 		this.rt.depthTexture.dispose();
 		this.rt.dispose();

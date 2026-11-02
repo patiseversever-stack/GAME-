@@ -125,6 +125,20 @@ export class App {
 		this.props = new Props(G, R.tier, this.board);
 		this.scene.add(this.props.group);
 		for (const c of this.props.casters) this.shadow.add(c);
+		// sonradan kurulan büyük geometrileri (uzak yapı sürümleri) ayrı karelerde GPU'ya yükle: görünmez malzemeyle
+		// çizim çağrısız bir geçiş tamponları yükler; ilk görünür karede ya da kaydırırken yükleme donması olmaz
+		const up = { scene: new THREE.Scene(), mat: new THREE.MeshBasicMaterial({ visible: false }) };
+		this.props.landmarks.uploader = (g) => {
+			const m = new THREE.Mesh(g, up.mat);
+			m.frustumCulled = false;
+			up.scene.add(m);
+			const r = this.renderer;
+			const ac = r.autoClear;
+			r.autoClear = false;
+			r.render(up.scene, this.camera);
+			r.autoClear = ac;
+			up.scene.remove(m);
+		};
 		// TASLAK (doku-taslak): köyler, traktörler, sürüler, değirmenler… (yakın çekimde tek çizim, uzakta kapalı)
 		// q0 (zayıf telefon): hayat katmanı hiç kurulmaz (çizim, bellek ve yerleşim işi yok)
 		if (R.tier.id >= 1) {
@@ -192,6 +206,7 @@ export class App {
 		} catch (e) {
 			this.renderer.compile(this.scene, this.camera);
 		}
+		await this.shadow.compile(this.renderer); // gölge geçişi ayrı sahne: ilk gölge çiziminde derleme donması olmasın
 		qw.done(this.renderer);
 		// TASLAK v2: zeminin yakın zum programı da açılışta derlensin (yakınlaşınca derleme takılması olmasın)
 		if (this.hayat) {
@@ -208,7 +223,7 @@ export class App {
 		this.render();
 		if (this.hayat) {
 			this.hayat.mesh.visible = this.hayat.caster.visible = false;
-			this.hayat.start(); // yerleşim küçük dilimlerle (uzun iş yok)
+			this.hayat.start(this.store); // yerleşim: cihazda saklanmışsa anında, değilse küçük dilimlerle (uzun iş yok)
 		}
 	}
 
@@ -280,7 +295,7 @@ export class App {
 	toScreen(v, out = { x: 0, y: 0 }) {
 		const p = this._sv || (this._sv = new THREE.Vector3());
 		p.copy(v).project(this.camera);
-		const r = this._rc || (this._rc = this.canvas.getBoundingClientRect()); // kare başına bir kez (arayüz çok kez sorar)
+		const r = this._rc || (this._rc = this.canvas.getBoundingClientRect()); // resize() doldurur (yerleşim okuması yok)
 		out.x = (p.x * 0.5 + 0.5) * r.width;
 		out.y = (-p.y * 0.5 + 0.5) * r.height;
 		out.behind = p.z > 1;
@@ -288,9 +303,11 @@ export class App {
 	}
 
 	resize() {
-		this._rc = null;
 		const w = Math.max(1, this.container.clientWidth || window.innerWidth);
 		const h = Math.max(1, this.container.clientHeight || window.innerHeight);
+		// tuval kabı tam doldurur: ekran boyu buradan bilinir (toScreen film ortasında getBoundingClientRect ile
+		// okuyunca tarayıcıya zorunlu yerleşim hesabı yaptırıyordu; ölçüldü: 4× yavaş işlemcide ~80 ms'lik kare)
+		this._rc = { left: 0, top: 0, width: w, height: h };
 		const pr = this.gov.pixelRatio(w, h);
 		this.renderer.setPixelRatio(pr);
 		this.renderer.setSize(w, h, false);
@@ -334,11 +351,54 @@ export class App {
 			this.frame(dt);
 			// kare JS süresi (işlemci darboğazında çözünürlük boşuna kısılmasın) ve GPU süresi (ölçülebiliyorsa)
 			const g = this.gov;
-			g.cpuMs += (performance.now() - t0 - g.cpuMs) * 0.1;
+			const js = performance.now() - t0;
+			g.cpuMs += (js - g.cpuMs) * 0.1;
 			if (this.gpuTimer) g.gpuMs = this.gpuTimer.poll();
+			if (this._perf) this._perfTick(now, js);
 		};
 		this._prevRaf = 0;
 		this._raf = requestAnimationFrame(step);
+	}
+
+	/**
+	 * Performans sayacı (?perf ya da ayarlarda 'perf'): gerçek cihazda ölçmek için köşede küçük yazı. Son 2 sn'nin kare
+	 * aralıkları (ortanca, %95, en kötü), 50 ms'yi aşan kare sayısı, kare JS süresi, yöneticinin özeti (kart, kademe, Hz,
+	 * ölçek). Yazı saniyede iki kez güncellenir (kare başına DOM yazımı yok).
+	 */
+	perfOverlay(on = true) {
+		if (!on) {
+			this._perf?.el.remove();
+			this._perf = null;
+			return;
+		}
+		if (this._perf) return;
+		const el = document.createElement('div');
+		el.className = 'fl-perf';
+		el.style.cssText = 'position:fixed;left:6px;bottom:calc(6px + env(safe-area-inset-bottom,0px));z-index:9999;max-width:calc(100vw - 12px);padding:5px 7px;border-radius:6px;background:rgba(0,0,0,.72);color:#9ff59f;font:600 10.5px/1.35 ui-monospace,Menlo,monospace;white-space:pre;pointer-events:none';
+		(this.container || document.body).appendChild(el);
+		this._perf = { el, gaps: new Float32Array(240), js: new Float32Array(240), n: 0, last: 0, shown: 0, long: 0 };
+	}
+
+	_perfTick(now, js) {
+		const P = this._perf;
+		if (P.last) {
+			const gap = now - P.last;
+			P.gaps[P.n % 240] = gap;
+			P.js[P.n % 240] = js;
+			P.n++;
+			if (gap > 50) P.long++;
+		}
+		P.last = now;
+		if (now - P.shown < 500) return;
+		P.shown = now;
+		const k = Math.min(P.n, 240);
+		if (!k) return;
+		const a = Array.from(P.gaps.subarray(0, k)).sort((x, y) => x - y);
+		const j = Array.from(P.js.subarray(0, k)).sort((x, y) => x - y);
+		const q = (arr, f) => arr[Math.min(arr.length - 1, Math.floor(arr.length * f))];
+		const fps = Math.round(1000 / (a.reduce((x, y) => x + y, 0) / k));
+		const r = this.renderer.getContext();
+		P.el.textContent = `${fps} fps · kare ${q(a, 0.5).toFixed(1)} / %95 ${q(a, 0.95).toFixed(1)} / en kötü ${a[k - 1].toFixed(0)} ms\n` + `uzun kare (>50ms) ${P.long} · JS ${q(j, 0.5).toFixed(1)} / ${q(j, 0.95).toFixed(1)} ms · ${r.drawingBufferWidth}×${r.drawingBufferHeight}\n` + this.gov.summary();
 	}
 
 	/** Hareket başlıyor mu (kare çizilmeden önce, ucuz): dokunuş, kamera çekimi/yolu, efekt, harita canlandırması. */

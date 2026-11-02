@@ -114,6 +114,19 @@ function formation(side, siege, level, lo) {
  *   mid {x, y, z} sahne ortası, u {x, z} saldırı yönü, castle {x, y, z} | null, span (sahne boyu)
  */
 export function planStage(app, src, target, isCap) {
+	const it = planStageGen(app, src, target, isCap);
+	let r;
+	do r = it.next();
+	while (!r.done);
+	return r.value;
+}
+
+/**
+ * Sahne planı, dilim dilim (v2 performans): aday konumlar × dizilişler binlerce nokta dener (il içi, göl, sınır uzaklığı);
+ * tek karede yavaş telefonda 100 ms'yi aşıyordu. Üretici aday başına durur; sinema planı "kim kime" ilanı boyunca kare
+ * başına birkaç ms ilerletir. Sonuç planStage ile birebir aynıdır (yalnız iş zamana yayılır).
+ */
+export function* planStageGen(app, src, target, isCap) {
 	const b = app.board;
 	const lo = app.tier?.id === 0;
 	const S = b.provinces[src];
@@ -272,9 +285,10 @@ export function planStage(app, src, target, isCap) {
 	};
 	// iki aşama: her aday ve diziliş ayak izi örnekleriyle kabaca puanlanır; en iyi 12 tanesi saf saf sayılır.
 	// Puan: dengeli asker sayısı (savunan az kalırsa sahne boş görünür), sınırın ortasına yakınlık, yapılardan uzaklık
-	const choose = () => {
+	const choose = function* () {
 		const list = [];
 		for (const c of cands) {
+			yield;
 			// yapıya yakın sahne: yapı savaşta alçalır, olabildiğince kaçın
 			let lm = 0;
 			const cx = isCap ? K.x - Math.sin(c.a) * 4 : c.x;
@@ -307,19 +321,20 @@ export function planStage(app, src, target, isCap) {
 		}
 		return best;
 	};
-	let best = choose();
+	let best = yield* choose();
 	if (best.nD < 4) {
 		relaxD = true;
-		const b2 = choose();
+		const b2 = yield* choose();
 		if (b2.score > best.score) best = b2;
 		else relaxD = false;
 	}
 	if (isCap && best.nA < 8) {
 		relaxA = true;
-		const b2 = choose();
+		const b2 = yield* choose();
 		if (b2.score > best.score) best = b2;
 		else relaxA = false;
 	}
+	yield;
 	const { g, L } = best;
 	const [fa, fd] = forms[L];
 	const ux = g.ux;

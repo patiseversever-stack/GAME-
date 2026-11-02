@@ -1394,6 +1394,21 @@ export class Board {
 	 */
 	_castleSpot(index) {
 		this._castle = this._castle || [];
+		if (this._castle[index]) return this._castle[index];
+		const it = this.castleSpotSteps(index);
+		let r;
+		do r = it.next();
+		while (!r.done);
+		return this._castle[index];
+	}
+
+	/**
+	 * Kale yeri araması, satır satır (v2 performans): il başına 13 × 13 nokta × ~45 yükseklik örneği; yavaş telefonda tek
+	 * adımda 70–90 ms sürüyordu. Arka plan yerleşimi (hayat.js) bunu satır başına durarak ilerletir; sonuç _castleSpot ile
+	 * aynı önbelleğe yazılır.
+	 */
+	*castleSpotSteps(index) {
+		this._castle = this._castle || [];
 		let c = this._castle[index];
 		if (c) return c;
 		const p = this.provinces[index];
@@ -1411,7 +1426,7 @@ export class Board {
 			return hi - lo;
 		};
 		let best = null;
-		for (let gx = -2.1; gx <= 2.101; gx += 0.35)
+		for (let gx = -2.1; gx <= 2.101; gx += 0.35) {
 			for (let gz = -2.1; gz <= 2.101; gz += 0.35) {
 				const x = p.x + gx;
 				const z = p.z + gz;
@@ -1436,6 +1451,8 @@ export class Board {
 				}
 				if (!best || sc < best.sc) best = { x, z, s, sc };
 			}
+			yield;
+		}
 		c = this._castle[index] = best || { x: p.x, z: p.z, s: 0.9 };
 		return c;
 	}

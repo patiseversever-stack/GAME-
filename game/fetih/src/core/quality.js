@@ -30,7 +30,7 @@ export const TIERS = [
 ];
 
 /**
- * Ekran kartını adından tanır. Realme / Oppo / Xiaomi'de yaygın kartlar (Mali-G52/G57/G68,
+ * Ekran kartını adından tanır. Realme / Oppo / Xiaomi / Samsung'da yaygın kartlar (Mali-G52/G57/G68/G71/G72,
  * Adreno 610-619, PowerVR GE8xxx) özellikle listelidir. Bilinmeyen mobil kart düşükten başlar;
  * yönetici yeterli güç görürse bir sonraki açılışta kademeyi yükseltir.
  */
@@ -47,10 +47,18 @@ export function detectTier(gl) {
 	let tier = mobile ? 0 : 1;
 
 	if (/swiftshader|llvmpipe|software|microsoft basic/.test(g)) tier = 0;
-	else if (/mali-[234]\d\d|mali-t\d|mali-g(31|51|52|57)\b|powervr|ge8\d{3}|sgx|img bxm|adreno \(tm\) ([2-5]\d\d|60\d|61[0-6])\b/.test(g)) tier = 0;
-	else if (/mali-g(68|71|72|76|610|615)\b|adreno \(tm\) (61[7-9]|62\d|63\d|64\d)\b/.test(g)) tier = 1;
+	else if (/mali-[234]\d\d|mali-t\d|mali-g(31|51|52|57|71|72)\b|powervr|ge8\d{3}|sgx|img bxm|adreno \(tm\) ([2-5]\d\d|60\d|61[0-6])\b/.test(g)) tier = 0;
+	else if (/mali-g(68|76|610|615)\b|adreno \(tm\) (61[7-9]|62\d|63\d|64\d)\b/.test(g)) tier = 1;
 	else if (/mali-g(77|78|710|715|720|725|620|625|9\d\d)\b|immortalis|xclipse|adreno \(tm\) (6[5-9]\d|7\d\d|8\d\d)\b/.test(g)) tier = 2;
-	else if (/apple/.test(g)) tier = mobile ? 2 : 2;
+	else if (/apple/.test(g)) {
+		// iPhone/iPad: Safari kartın adını yalnız "Apple GPU" verir, belleği hiç vermez (deviceMemory yok): iPhone 7 de
+		// iPhone 15 de aynı görünür. Eskiden hepsi Yüksek başlıyordu (2 GB'lık eski telefonda ağır). Küçük ekranlı
+		// modeller (6s/7/8/SE: kısa kenar ≤ 375, uzun ≤ 667) Düşük, ötekiler Orta başlar; yönetici gücü görünce bir
+		// sonraki açılışta yükseltir (launchTier). Mac (dokunmatik değil) Yüksek.
+		const W = Math.min(screen.width, screen.height);
+		const H = Math.max(screen.width, screen.height);
+		tier = !mobile ? 2 : W <= 375 && H <= 667 ? 0 : 1;
+	}
 	else if (!mobile && /nvidia|geforce|radeon|rtx|gtx|\barc\b/.test(g)) tier = 2;
 	else if (!mobile && /intel/.test(g)) tier = 1;
 

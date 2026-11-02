@@ -20,7 +20,7 @@
 import * as THREE from 'three';
 import { clock, sleep, setTimeout, clearTimeout } from '../core/clock.js';
 import { setNightTone } from '../gfx/env.js';
-import { planStage, clearView, occlusion, yawOf, yawAt, stageDist, SEL_LIFT } from './stage.js';
+import { planStage, planStageGen, clearView, occlusion, yawOf, yawAt, stageDist, SEL_LIFT } from './stage.js';
 import { easeCine } from './camera.js';
 
 const clamp = (x, a, b) => (x < a ? a : x > b ? b : x);
@@ -595,13 +595,32 @@ export class Cinema {
 		ui?.tagsOn?.(this._tags, {});
 		if (ui?.versusCaption) ui.versusCaption(p, d, t.name, { siege: isCap });
 		else ui?.caption?.(isCap ? 'KUŞATMA' : 'SALDIRI', t.name, `${p.name} · ${d.name}`, { p, tone: 'red' });
-		// sahne: nerede, hangi yönde, hangi dizilişle; ordular görünmez başlar (plan kamera dururken kurulur)
-		const plan = (this.plan = planStage(app, src, target, isCap));
+		// sahne: nerede, hangi yönde, hangi dizilişle; ordular görünmez başlar. Plan ilan boyunca kare başına ~3 ms
+		// ilerler (planStageGen: tek karede yavaş telefonda 100 ms'yi aşıyordu); ilan bitince eksik kalırsa tamamlanır
+		this.plan = null;
+		const job = { it: planStageGen(app, src, target, isCap), plan: null };
+		const pump = (ms) => {
+			if (job.plan) return true;
+			const s0 = performance.now();
+			let r;
+			do r = job.it.next();
+			while (!r.done && performance.now() - s0 < ms);
+			if (r.done) job.plan = r.value;
+			return r.done;
+		};
+		if (!pump(3)) {
+			const tick = () => {
+				if (!pump(3)) requestAnimationFrame(tick);
+			};
+			requestAnimationFrame(tick);
+		}
 		// 0) ilan: kim kime, hangi il. İki il birlikte yukarıdan; ok saldıranın ilinden hedefe, etiketlerde sahipleri
 		// (SALDIRAN / SAVUNAN), altta portreli kim kime yazısı. Kamera sakin süzülür; iki botun kısaltılmış
 		// filminde de bu an hep tam (DECLARE_MS): oyuncu kimin kime saldırdığını görmeden savaş başlamaz.
 		this.frameList([src, target], this._tails());
 		await this.beat(DECLARE_MS, DECLARE_MS);
+		pump(Infinity);
+		const plan = (this.plan = job.plan);
 		bt.setup(plan, p.color, d.color);
 		if (isCap) app.castles[d.i]?.aim?.(plan.attC.x, plan.attC.z); // kazanırsa taşların dövdüğü kule yıkılır
 		bt.appear(1, 2.2);

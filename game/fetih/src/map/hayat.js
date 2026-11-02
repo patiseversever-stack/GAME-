@@ -775,27 +775,97 @@ export class Hayat {
 	 * Yerleşimi küçük dilimler hâlinde yap (her dilim ≤ ~4 ms, araya kareler girer: uzun iş yok). Bitince ready.
 	 * Dönen söz yerleşim bitince çözülür.
 	 */
-	start() {
+	start(store = null) {
 		if (this._done) return this._done;
 		const t0 = performance.now();
+		// yerleşim sabit tohumla (rng 2025) ve sabit haritayla: aynı sürüm ve kademede sonuç hep aynı. Sonuç (~30 KB) cihazda
+		// saklanır; ilk açılıştan sonra yerleşim hesabı hiç yapılmaz (zayıf telefonda ~11 sn arka plan işi ve takılmalar)
+		const key = `hayat:${typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'yerel'}:${this.tier.id}`;
+		const hit = this._restore(store, key);
+		if (hit) {
+			this._finish();
+			this.placeMs = Math.round(performance.now() - t0);
+			this.cached = true;
+			return (this._done = Promise.resolve());
+		}
 		this._done = Promise.resolve(this.props.landmarks.farReady).catch(() => null).then(() => new Promise((resolve) => {
 			const gen = this._place();
-			const step = () => {
+			// boşta kalan zamanda (requestIdleCallback: kare çizimine dokunmaz, karenin kalan süresi kadar); yoksa (Safari)
+			// 4 ms'lik dilimler. Adımlar zaten kısa (ağaç ızgarası dahil dilimli)
+			const idle = typeof requestIdleCallback === 'function';
+			const step = (dl) => {
 				const s = performance.now();
+				const budget = idle && dl ? Math.max(1, Math.min(8, dl.timeRemaining() - 1)) : 4;
 				let r;
 				do r = gen.next();
-				while (!r.done && performance.now() - s < 4);
+				while (!r.done && performance.now() - s < budget);
 				if (!r.done) {
-					setTimeout(step, 0);
+					if (idle) requestIdleCallback(step, { timeout: 120 });
+					else setTimeout(step, 0);
 					return;
 				}
 				this._finish();
+				this._save(store, key);
 				this.placeMs = Math.round(performance.now() - t0);
 				resolve();
 			};
-			setTimeout(step, 0);
+			if (idle) requestIdleCallback(step, { timeout: 120 });
+			else setTimeout(step, 0);
 		}));
 		return this._done;
+	}
+
+	/**
+	 * Yerleşim önbelleği tek yuvada: tarayıcıda ayrı localStorage anahtarı (ana kaydı her yazımda 30 KB şişirmesin; yeni
+	 * sürüm eskisinin üstüne yazar, birikme yok), yoksa ana oyunun kayıt yuvası.
+	 */
+	_slot(store) {
+		try {
+			if (typeof localStorage !== 'undefined') {
+				return { get: () => JSON.parse(localStorage.getItem('fetih.hayat') || 'null'), set: (v) => localStorage.setItem('fetih.hayat', JSON.stringify(v)) };
+			}
+		} catch (e) {
+			/* depolama kapalı */
+		}
+		return { get: () => store?.get?.('hayat'), set: (v) => store?.set?.('hayat', v) };
+	}
+
+	/** Saklanan yerleşimi geri yükle (yoksa false). */
+	_restore(store, key) {
+		try {
+			const c = this._slot(store).get();
+			if (!c || c.key !== key) return false;
+			if (!c || !Array.isArray(c.l) || !Array.isArray(c.c)) return false;
+			const F = 12;
+			const list = [];
+			for (let i = 0; i + F <= c.l.length; i += F) {
+				const [x, y, z, yaw, k, s, pid, ph, c0, c1, v, w] = c.l.slice(i, i + F);
+				list.push({ x, y, z, yaw, k, s, pid, ph, c0, c1, v, w, r: FOOT[k] * s });
+			}
+			this.list = list;
+			this.castles = c.c.map(([x, z, r, core]) => ({ x, z, r, core }));
+			// haritanın kale yerleri de aynı aramanın sonucu (il sırasıyla): oyun içinde başkent kurulurken yeniden aranmaz
+			const B = this.board;
+			B._castle = B._castle || [];
+			this.castles.forEach((k, i) => {
+				if (!B._castle[i]) B._castle[i] = { x: k.x, z: k.z, s: k.core / 1.1 };
+			});
+			return true;
+		} catch (e) {
+			return false;
+		}
+	}
+
+	/** Yerleşimi sakla (sığmazsa sessizce geç: bir sonraki açılış yeniden hesaplar). */
+	_save(store, key) {
+		try {
+			const r4 = (x) => Math.round(x * 1e4) / 1e4;
+			const l = [];
+			for (const o of this.list) l.push(r4(o.x), r4(o.y), r4(o.z), r4(o.yaw), o.k, r4(o.s), o.pid, r4(o.ph), r4(o.c0), r4(o.c1), o.v, r4(o.w));
+			this._slot(store).set({ key, l, c: this.castles.map((c) => [r4(c.x), r4(c.z), r4(c.r), r4(c.core)]) });
+		} catch (e) {
+			/* depolama dolu ya da yok */
+		}
 	}
 
 	_finish() {
@@ -936,6 +1006,14 @@ export class Hayat {
 
 	_rules() {
 		if (this._R) return this._R;
+		const it = this._rulesGen();
+		while (!it.next().done);
+		return this._R;
+	}
+
+	/** Çakışma kuralları, dilim dilim (yerleşimde: ağaç ızgarası binlerce örnek; tek adımda yavaş telefonda uzun kare). */
+	*_rulesGen() {
+		if (this._R) return;
 		const board = this.board;
 		const rel = board.relief;
 		// yapılar: uzak sürüm hazırsa gerçek ayak izi (avlu dahil; köşelerin yapı merkezine en büyük yatay uzaklığı) + pay,
@@ -1004,7 +1082,9 @@ export class Hayat {
 				const k = Math.floor(x / TG) * 4096 + Math.floor(z / TG);
 				if (!trees.has(k)) trees.set(k, []);
 				trees.get(k).push([x, z, 0.21 * s]);
+				if ((i & 511) === 511) yield;
 			}
+			yield;
 		}
 		const treeHit = (x, z, r) => {
 			for (let gx = Math.floor(x / TG) - 1; gx <= Math.floor(x / TG) + 1; gx++)
@@ -1016,7 +1096,6 @@ export class Hayat {
 		};
 		const noise = this.G.uNoise.value.image.data;
 		this._R = { sites, castles, labels, riverD, treeHit, noise, rel };
-		return this._R;
 	}
 
 	/**
@@ -1127,12 +1206,12 @@ export class Hayat {
 		// kale yerleri (il başına ağır bir arama: her biri ayrı dilimde)
 		this.castles = [];
 		for (const p of board.provinces) {
-			const c = board._castleSpot(p.index);
+			const c = board.castleSpotSteps ? yield* board.castleSpotSteps(p.index) : board._castleSpot(p.index);
 			this.castles.push({ x: c.x, z: c.z, r: 2.0 * c.s + 0.1, core: 1.1 * c.s });
 			yield;
 		}
 		yield* this._farGen(); // uzak sürüm ayak izleri (dilim dilim)
-		this._rules();
+		yield* this._rulesGen(); // çakışma kuralları (dilim dilim)
 		yield;
 		const styleOf = (p) => (p.region === 'karadeniz' ? 2 : p.id === 50 ? 3 : p.region === 'dogu' || p.region === 'guneydogu' ? 0 : p.region === 'icanadolu' ? (R() < 0.5 ? 0 : 1) : 1);
 		const animOf = (p) => (p.region === 'dogu' ? (R() < 0.6 ? 2 : 3) : p.region === 'karadeniz' ? 2 : p.region === 'guneydogu' ? (R() < 0.5 ? 1 : 0) : R() < 0.8 ? 0 : 1);

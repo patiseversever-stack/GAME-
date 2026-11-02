@@ -76,6 +76,7 @@ export class Tags {
 				it.shown = false;
 				it.w = 0;
 				it.h = 0;
+				this._watch(it);
 			}
 			next.set(key, it);
 			list.push(it);
@@ -85,6 +86,7 @@ export class Tags {
 		for (const [k, it] of this.map) {
 			if (next.has(k)) continue;
 			const el = it.el;
+			this._iro?.unobserve(it.inner);
 			it.inner.style.transitionDelay = '0ms';
 			el.classList.add('bye');
 			el.classList.remove('on');
@@ -96,6 +98,30 @@ export class Tags {
 
 	clear() {
 		this.set([], { badges: [] });
+	}
+
+	/**
+	 * Öğe boyutu gözlemciyle (v2 performans): eskiden yeni öğede ve her 20 karede bir offsetWidth okunuyordu; okuma
+	 * kare ortasında tarayıcıya bütün arayüzün stil ve yerleşimini zorla hesaplatır (savaş başında yavaş telefonda ~80 ms,
+	 * film boyunca düzenli küçük takılma). Gözlemci boyutu yerleşimden sonra bildirir; yazı tipi geç yüklenirse de.
+	 */
+	_watch(it) {
+		if (typeof ResizeObserver !== 'function') return;
+		if (!this._iro) {
+			this._byEl = new WeakMap();
+			this._iro = new ResizeObserver((list) => {
+				for (const e of list) {
+					const o = this._byEl.get(e.target);
+					if (!o) continue;
+					const bs = e.borderBoxSize?.[0];
+					o.w = bs ? bs.inlineSize : e.contentRect.width;
+					o.h = bs ? bs.blockSize : e.contentRect.height;
+				}
+			});
+		}
+		this._byEl.set(it.inner, it);
+		this._iro.observe(it.inner);
+		it.watched = true;
 	}
 
 	/** Hatalı dokunuş: etiketler bir kez irkilir. */
@@ -148,14 +174,32 @@ export class Tags {
 		// boyut her karede okunmaz (kareler arası yazılan dönüşümlerden sonra okumak tarayıcıya stil hesabı yaptırır):
 		// yalnız katman boyu değişince (ResizeObserver) ya da arayüz düzeni değişince (soru kartı açılıp kapanınca)
 		if (!this._ro && typeof ResizeObserver === 'function') {
-			this._ro = new ResizeObserver(() => (this._dirty = true));
+			// katman, üst çubuk ve duraklat düğmesi boyutu değişince gözlemcinin kendi çağrısında ölç: orada yerleşim zaten
+			// hesaplanmış, okuma ücretsiz (eskiden arayüzün her sınıf değişiminde kare ortasında zorla ölçülüyordu: savaş
+			// başında yavaş telefonda ~50–80 ms). İlk bildirime dek ekran boyu tahmin.
+			this._ro = new ResizeObserver(() => this._measure());
 			this._ro.observe(this.el);
-			this._dirty = true;
+			this._ro.observe(ui.$.hud);
+			const pbo = ui.el.querySelector('.fl-pbtn');
+			if (pbo) this._ro.observe(pbo);
+			if (this.W == null || this.W < 0) {
+				this.W = innerWidth;
+				this.H = innerHeight;
+				this.top = 74;
+				this.left = 8;
+				this.right = this.W - 8;
+			}
 		}
+		if (this._ro) return;
 		const lay = ui.el.className;
-		if (this._ro && !this._dirty && lay === this._lay) return;
-		this._dirty = false;
+		if (lay === this._lay) return;
 		this._lay = lay;
+		this._measure();
+	}
+
+	/** Katman ve üst çubuk ölçüsü (gözlemciden, yerleşimden sonra; gözlemci yoksa düzen değişince). */
+	_measure() {
+		const ui = this.ui;
 		this.W = -1;
 		const W = this.el.clientWidth;
 		const H = this.el.clientHeight;
@@ -267,12 +311,16 @@ export class Tags {
 				}
 			}
 		}
-		// yazı tipi geç yüklenirse (Türkçe harf eki) ölçüler bir süre yenilenir
-		const remeasure = (this._n = (this._n + 1) % 20) === 0;
+		// boyut gözlemciden (_watch); gözlemci yoksa eski yol (yazı tipi geç yüklenirse ölçüler bir süre yenilenir)
+		const remeasure = !this._iro && (this._n = (this._n + 1) % 20) === 0;
 		for (const it of items) {
-			if (!it.w || remeasure) {
+			if (!it.watched && (!it.w || remeasure)) {
 				it.w = it.inner.offsetWidth || it.w || 90;
 				it.h = it.inner.offsetHeight || it.h || 50;
+			}
+			if (!it.w) {
+				it.w = 90; // gözlemci ilk bildirimi yapana dek tahmin (öğe zaten gece oturunca belirir)
+				it.h = 50;
 			}
 			let lift = 0;
 			if (it.kind === 'badge') {

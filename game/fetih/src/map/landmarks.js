@@ -1506,8 +1506,36 @@ export class Landmarks {
 		// açılışta kurulur, hazır olunca sade modelden titreşimli geçişle yerine geçer. Düşük kademede (zayıf telefon)
 		// sade model kalır ve haritada ayrıntılıya geçiş yapılmaz (iki farklı tasarım arasında geçiş hiç görünmez).
 		this.far = null;
-		if (tier.id >= 1) this.farReady = this._buildFar();
-		else this.lod.enabled = false;
+		if (tier.id >= 1) {
+			// uzak sürümün programları açılışta (app.init derlemesinde) derlensin: sürüm oyun sırasında hazır olunca ilk
+			// çizimde derlenip kareyi saniyelerce dondurmasın. Tek boş üçgenli yer tutucu, derlemede görünür; takasta kalkar.
+			const { mat, dmat } = this._farMats();
+			const g = new THREE.BufferGeometry();
+			g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(9), 3));
+			g.setAttribute('normal', new THREE.BufferAttribute(new Int8Array(12), 4, true));
+			g.setAttribute('col', new THREE.BufferAttribute(new Uint8Array(12), 4, true));
+			g.setAttribute('info', new THREE.BufferAttribute(new Uint8Array(12), 4));
+			g.setAttribute('pat', new THREE.BufferAttribute(new Float32Array(6), 2));
+			g.setAttribute('site', new THREE.BufferAttribute(new Float32Array(12), 4));
+			this._farWarm = [new THREE.Mesh(g, mat), new THREE.Mesh(g, dmat)];
+			for (const m of this._farWarm) {
+				m.matrixAutoUpdate = false;
+				m.frustumCulled = false;
+			}
+			this.mesh.add(this._farWarm[0]);
+			this.caster.add(this._farWarm[1]);
+			this.farReady = this._buildFar();
+		} else this.lod.enabled = false;
+	}
+
+	/** Uzak sürümün malzemeleri (bir kez kurulur: açılış derlemesi ile takas aynı programı kullanır). */
+	_farMats() {
+		if (this._fm) return this._fm;
+		const u = this.uniforms;
+		const fu = { ...u, uHS: { value: 1 }, uAO: { value: -100 }, uLodMode: { value: 1 } };
+		const mat = new THREE.ShaderMaterial({ defines: { FAR: 1 }, vertexShader: HERO_VS.replace('/*FAR_FADE*/', FADE), fragmentShader: HERO_FS.replace('__TAPS__', this.taps), uniforms: fu, side: THREE.DoubleSide });
+		const dmat = new THREE.ShaderMaterial({ defines: { FAR: 1 }, vertexShader: HERO_DEPTH_VS.replace('/*FAR_FADE*/', FADE), fragmentShader: HERO_DEPTH_FS, uniforms: fu, side: THREE.DoubleSide });
+		return (this._fm = { mat, dmat });
 	}
 
 	/** Uzak sürümün ayarı: yoğunluk, küçük parça eşiği ve köşe kümeleme hücresi (yapı ölçeği cinsinden). */
@@ -1522,17 +1550,19 @@ export class Landmarks {
 			if (!r) return false; // işçi yok: sade model kalır
 			list.push([s, r]);
 		}
-		this._mountFar(list);
+		await this._mountFar(list);
 		this.farStats = { ms: Math.round(performance.now() - t0), tris: this.far.tris };
 		return true;
 	}
 
-	/** Uzak sürümleri ızgara parçalarına birleştir (ekran dışı kırpma, az çizim çağrısı) ve sade modelden geçişi başlat. */
-	_mountFar(list) {
-		const u = this.uniforms;
-		const fu = { ...u, uHS: { value: 1 }, uAO: { value: -100 }, uLodMode: { value: 1 } };
-		const mat = new THREE.ShaderMaterial({ defines: { FAR: 1 }, vertexShader: HERO_VS.replace('/*FAR_FADE*/', FADE), fragmentShader: HERO_FS.replace('__TAPS__', this.taps), uniforms: fu, side: THREE.DoubleSide });
-		const dmat = new THREE.ShaderMaterial({ defines: { FAR: 1 }, vertexShader: HERO_DEPTH_VS.replace('/*FAR_FADE*/', FADE), fragmentShader: HERO_DEPTH_FS, uniforms: fu, side: THREE.DoubleSide });
+	/**
+	 * Uzak sürümleri ızgara parçalarına birleştir (ekran dışı kırpma, az çizim çağrısı) ve sade modelden geçişi başlat.
+	 * Kare kare yürür: her parça birleştirilir, GPU'ya ayrı karede yüklenir (uploader; tek karede ~19 MB yükleme
+	 * kareyi yarım saniye dondururdu); hepsi yüklenince tek seferde sahneye girer, geçiş başlar.
+	 */
+	async _mountFar(list) {
+		const { mat, dmat } = this._farMats();
+		const frame = () => new Promise((r) => (typeof requestAnimationFrame === 'function' ? requestAnimationFrame(() => r()) : setTimeout(r, 16)));
 		const CH = 16;
 		const groups = new Map();
 		for (const it of list) {
@@ -1541,7 +1571,7 @@ export class Landmarks {
 			groups.get(k).push(it);
 		}
 		let tris = 0;
-		this.far = { meshes: [], casters: [], tris: 0 };
+		const far = { meshes: [], casters: [], tris: 0 };
 		for (const items of groups.values()) {
 			// (avlunun dış halkaları da: yakına gelen kahraman da onları çizer, geçişte kaide aynı)
 			let n = 0;
@@ -1554,28 +1584,19 @@ export class Landmarks {
 			const site = new Float32Array(n * 4);
 			let o = 0;
 			for (const [s, r] of items) {
+				// düz kopya (köşe sırası aynı): öğe öğe döngü yerine blok kopya
 				const v = r.pos.length / 3;
-				for (let t = 0; t < v; t += 3) {
-					for (let j = 0; j < 3; j++) {
-						const a = t + j;
-						const b = o + j;
-						pos[b * 3] = r.pos[a * 3];
-						pos[b * 3 + 1] = r.pos[a * 3 + 1];
-						pos[b * 3 + 2] = r.pos[a * 3 + 2];
-						for (let q = 0; q < 4; q++) {
-							nor[b * 4 + q] = r.nor[a * 4 + q];
-							col[b * 4 + q] = r.col[a * 4 + q];
-							info[b * 4 + q] = r.info[a * 4 + q];
-						}
-						pat[b * 2] = r.pat[a * 2];
-						pat[b * 2 + 1] = r.pat[a * 2 + 1];
-						site[b * 4] = s.x;
-						site[b * 4 + 1] = s.y;
-						site[b * 4 + 2] = s.z;
-						site[b * 4 + 3] = s.s;
-					}
-					o += 3;
-				}
+				pos.set(r.pos, o * 3);
+				nor.set(r.nor, o * 4);
+				col.set(r.col, o * 4);
+				info.set(r.info, o * 4);
+				pat.set(r.pat, o * 2);
+				site[o * 4] = s.x;
+				site[o * 4 + 1] = s.y;
+				site[o * 4 + 2] = s.z;
+				site[o * 4 + 3] = s.s;
+				for (let w = 1; w < v; w *= 2) site.copyWithin((o + w) * 4, o * 4, (o + Math.min(w, v - w)) * 4);
+				o += v;
 			}
 			const g = new THREE.BufferGeometry();
 			g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
@@ -1589,15 +1610,25 @@ export class Landmarks {
 			const m = new THREE.Mesh(g, mat);
 			m.matrixAutoUpdate = false;
 			m.onBeforeRender = this._hide;
-			this.mesh.add(m);
 			const c = new THREE.Mesh(g, dmat);
 			c.matrixAutoUpdate = false;
-			this.caster.add(c);
-			this.far.meshes.push(m);
-			this.far.casters.push(c);
+			far.meshes.push(m);
+			far.casters.push(c);
 			tris += n / 3;
+			await frame();
+			this.uploader?.(g); // GPU'ya bu karede yükle (görünmez çizim; ekran dışı parçalar kaydırırken takılmasın)
+			await frame();
 		}
-		this.far.tris = tris;
+		far.tris = tris;
+		for (const m of far.meshes) this.mesh.add(m);
+		for (const c of far.casters) this.caster.add(c);
+		if (this._farWarm) {
+			this.mesh.remove(this._farWarm[0]);
+			this.caster.remove(this._farWarm[1]);
+			this._farWarm[0].geometry.dispose();
+			this._farWarm = null;
+		}
+		this.far = far;
 		// geçiş: gölgeyi hemen uzak sürüm verir; görüntü 0,8 sn'de titreşimle (piksel piksel) yer değiştirir
 		for (const c of this.leanCasters) c.visible = false;
 		this.uFarT.value.set(this.G.uTime.value, 0.8);
