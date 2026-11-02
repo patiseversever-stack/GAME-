@@ -61,7 +61,23 @@ export const PROVINCES_PER_PLAYER = 6;
  * Yayılmada bir oyuncunun sırası bir süre havuzudur: ilk il için `first`, sonraki her il için `next` eklenir
  * (4 il seçen 1 il seçenden uzun düşünür); havuz azalsa da her seçimde en az `floor` sn kalır.
  */
-export const PICK_TIME = { capital: 15, attack: 12, category: 8, first: 10, next: 5, floor: 4 };
+export const PICK_TIME = { capital: 15, attack: 12, chain: 8, category: 8, first: 10, next: 5, floor: 4 };
+
+/**
+ * Zincir saldırı (v2, KARARLAR.md 2): saldıran kazandıkça aynı turda yeni hedefe devam eder; kaybedince (savunan bildi ya
+ * da kimse bilemedi) sıra geçer. Turdaki en çok kazanım haritaya göre: kişi başı il sayısının %15'i, en az 2 en çok 5
+ * (bölge haritası kişi başı 8 il: 2; Türkiye 4 kişi ~20 il: 3; Türkiye 1'e 1 ~40 il: 5). Her yıkılan kule de bir hak
+ * yer; kalkanın savuşturduğu saldırı hak yemez. En az ili olan (geride kalan) +1 hak alır.
+ */
+export const CHAIN = { share: 0.15, min: 2, max: 5, underdog: 1 };
+export const chainCapFor = (mapSize, players) => clamp(Math.round((mapSize / Math.max(1, players)) * CHAIN.share), CHAIN.min, CHAIN.max);
+
+/**
+ * Kule onarımı (v2): sıranın başında, başkentinin en az bir kulesi yıkık ama en az biri ayaktaysa saldırı yerine kendi
+ * başkentine dokunup tek kişilik bir soru çözersin; bilirsen bir kule geri gelir. O tur saldırı yapılmaz.
+ * Soru tipleri tek kişiyle anlamlı olanlar (bildi/bilemedi).
+ */
+export const REPAIR_TYPES = ['choice', 'tf', 'odd', 'hilo', 'proverb', 'emoji', 'riddle'];
 export const pickPool = (n) => PICK_TIME.first + PICK_TIME.next * Math.max(0, n - 1);
 
 /**
@@ -1019,14 +1035,21 @@ export class Match {
 	}
 
 	/** Kalkanı bot için hazırla (saldırı başlarken). */
-	botShield(d, isCap) {
-		if (d.human || d.shield || d.jk.kalkan.left <= 0) return;
-		const hp = this.app.castles[d.i].hp;
-		const p = isCap ? (hp <= 2 ? 0.95 : 0.7) : 0.25 + d.skill * 0.3;
-		if (this.R() < p) {
-			this.spendJoker(d, 'kalkan');
-			d.shield = true;
-			this.emit('joker', { player: d.i, id: 'kalkan', effect: { id: 'kalkan', kind: 'shield' } });
+	/**
+	 * Botun kalkan kararı (v2): kalkan saldırıdan önce kurulur ve sonraki ilk saldırıyı soru sorulmadan karşılar. Bot
+	 * kendi sırasının başında karar verir (insan gibi soruyu görmeden): kalesi yaralıysa ya da sınırında çok düşman varsa.
+	 */
+	botShieldTurn(p) {
+		if (p.human || p.ctl?.remote || p.shield || !p.jk?.kalkan || p.jk.kalkan.left <= 0 || this.suddenDeath) return;
+		const hp = this.app.castles[p.i]?.hp ?? 3;
+		const own = this.owned(p.i);
+		let foes = 0;
+		for (const i of own) if (this.neighbors(i).some((j) => this.owner(j) >= 0 && !this.ally(this.owner(j), p.i))) foes++;
+		const pr = hp <= 1 ? 0.85 : hp === 2 ? 0.5 : Math.min(0.35, 0.08 + (foes / Math.max(1, own.length)) * 0.3 + p.skill * 0.1);
+		if (this.R() < pr) {
+			this.spendJoker(p, 'kalkan');
+			p.shield = true;
+			this.emit('joker', { player: p.i, id: 'kalkan', effect: { id: 'kalkan', kind: 'shield' } });
 			if (!this.ui.fast) this.ui.hud(this);
 		}
 	}
@@ -1349,10 +1372,14 @@ export class Match {
 			// kara bağlantısı kopuk haritada son çare: herhangi bir düşman ili
 			if (!options.length) options = this.map.filter((i) => this.owner(i) >= 0 && !this.ally(this.owner(i), p.i));
 		}
+		// sıranın ilk seçiminde yaralı başkent seçenekler arasında: kendi kaleye dokunmak onarımdır
+		const fix = kind === 'attack' && step?.[0] === 1 && this.canRepair(p);
+		if (fix) options = [...options, p.capital];
 		if (!options.length) return -1;
 		const n = step && step[1] > 1 ? ` · ${step[0]}/${step[1]}` : '';
-		const text = kind === 'capital' ? 'Başkentini seç' : kind === 'free' ? `Bir il al${n}` : 'Saldıracağın ili seç';
-		const sec = pool ? Math.max(PICK_TIME.floor, Math.round(pool.left)) : PICK_TIME[kind === 'free' ? 'first' : kind];
+		const text =
+			kind === 'capital' ? 'Başkentini seç' : kind === 'free' ? `Bir il al${n}` : fix ? `Saldıracağın ili seç${n} · ya da kalene dokun: kule onar` : `Saldıracağın ili seç${n}`;
+		const sec = pool ? Math.max(PICK_TIME.floor, Math.round(pool.left)) : kind === 'attack' && step?.[0] > 1 ? PICK_TIME.chain : PICK_TIME[kind === 'free' ? 'first' : kind];
 		const t0 = clock.now();
 		let pickI = await p.ctl.pick(p, kind, options, text, sec);
 		if (pool) pool.left -= (clock.now() - t0) / 1000;
@@ -1380,6 +1407,11 @@ export class Match {
 			if (kind === 'free') {
 				// komşusu çok olan, kendi topraklarını birleştiren il
 				s += this.neighbors(i).filter((j) => this.owner(j) === p.i).length * 0.5;
+			} else if (i === p.capital) {
+				// kendi yaralı kalesi: tek kulesi kaldıysa çoğu zaman onarır; çevresinde düşman çoksa daha çok
+				const hp = this.app.castles[p.i].hp;
+				const foes = this.neighbors(i).filter((j) => this.owner(j) >= 0 && !this.ally(this.owner(j), p.i)).length;
+				s += (hp <= 1 ? 1.25 : 0.45) + foes * 0.12;
 			} else {
 				const o = this.owner(i);
 				const k = this.app.castles[o];
@@ -1415,35 +1447,103 @@ export class Match {
 		}
 	}
 
+	/** Bu turun zincir hakkı (CHAIN): haritaya göre; en az ili olan +1. */
+	chainCap(p) {
+		const base = chainCapFor(this.map.length, this.players.length);
+		const alive = this.players.filter((x) => x.alive);
+		const n = (x) => this.owned(x.i).length;
+		const mine = n(p);
+		const low = alive.length > 1 && alive.every((x) => x === p || n(x) > mine);
+		return base + (low ? CHAIN.underdog : 0);
+	}
+
+	/** Kule onarılabilir mi: başkenti ayakta, en az bir kulesi yıkık, en az biri ayakta. */
+	canRepair(p) {
+		const k = this.app.castles?.[p.i];
+		return !!k && p.alive && p.capital >= 0 && this.owner(p.capital) === p.i && k.hp > 0 && k.hp < 3 && !this.suddenDeath;
+	}
+
+	/**
+	 * Saldırı turu (v2, KARARLAR.md 2–4): kategori çarkı turun başında bir kez; kazandıkça yeni hedefe devam (zincir hakkı
+	 * kadar kazanım), kaybedince sıra geçer. Kalkanlı hedef soru sorulmadan savuşturulur ve hak yemez. İlk seçimde kendi
+	 * yaralı kalesine dokunan kule onarır (o tur saldırı yok).
+	 */
 	async _attackTurn(p, cin) {
 		this.phase = 'fetih';
 		this.emit('turn', { player: p.i, round: this.round });
-		const target = await this.choose(p, 'attack');
-		if (target < 0) {
-			this.idle++;
-			return false;
+		this.botShieldTurn(p);
+		const cap = this.chainCap(p);
+		this.chain = { player: p.i, cap, wins: 0 };
+		const turn = { cat: null };
+		let moved = false;
+		let step = 1;
+		while (this.chain.wins < cap && !this.over && p.alive) {
+			const target = await this.choose(p, 'attack', [step, cap]);
+			if (target < 0) break;
+			moved = true;
+			this.idle = 0;
+			if (target === p.capital) {
+				await this.repair(p);
+				break;
+			}
+			const r = await this.duelAt(p, target, turn, cin);
+			if (this.checkOver()) break;
+			if (r === 'shield') continue; // kalkan: hak yemez, başka (ya da aynı) hedefe devam
+			if (r !== 'win') break;
+			this.chain.wins++;
+			step++;
+			const left = cap - this.chain.wins;
+			if (left > 0 && p.alive && this.attackable(p).length) {
+				this.emit('chain', { player: p.i, left, cap });
+				this.ui.toast?.(p.human ? `Devam! ${left} saldırı hakkın kaldı` : `${p.name} devam ediyor · ${left} hak`, { p, tone: 'gold', ms: 1500 });
+			}
 		}
-		this.idle = 0;
+		if (!moved) this.idle++;
+		this.chain = null;
+		return moved;
+	}
+
+	/**
+	 * Tek düello: ilan filmi, (turun ilk düellosunda) çark, soru, sonuç ve filmi. Dönüş: 'win' | 'shield' | 'defend' |
+	 * 'nobody'. turn.cat turun kategorisini taşır (çark bir kez döner).
+	 */
+	async duelAt(p, target, turn, cin) {
 		const d = this.players[this.owner(target)];
 		const isCap = d.capital === target;
 		const app = this.app;
 		this.duels++;
-		this.botShield(d, isCap);
 		this.duel = { attacker: p, defender: d, target };
 		this.emit('attack', { player: p.i, defender: d.i, target, capital: isCap });
 		const k = this.filmTempo(p, d);
 		if (cin) cin.tempo = k;
 		await this.cinema.attack(p, d, target, isCap);
 		this.tick(EST.declare + EST.attack * k); // ilan anı (kim kime) film hızından bağımsız
-		// çark: kategori (fetih dilimi: saldıran seçer)
-		let cat = await this.ui.wheel(this, p);
-		this.tick(EST.wheel);
-		this.emit('wheel', { player: p.i, cat });
-		if (cat === 'fetih') {
-			cat = (await p.ctl.category(p, PICK_TIME.category)) || this.botCategory(p);
-			if (!CATS[cat]) cat = this.botCategory(p);
-			this.tick(p.human ? EST.chooseCat : 0.3);
+		const result = (kind, extra = {}) => this.emit('result', { kind, player: p.i, defender: d.i, target, ...extra });
+		if (d.shield) {
+			// kalkan (v2): soru sorulmaz, saldırı savuşturulur; saldıranın hakkı yanmaz
+			d.shield = false;
+			this.emit('shield', { player: d.i, target });
+			result('shield');
+			this.refreshJokers();
+			await this.ui.banner('KALKAN!', d.human ? 'Saldırıyı savuşturdun' : `${d.name} saldırıyı savuşturdu`, { tone: 'gold', short: true });
+			this.tick(EST.bannerShort);
+			await (this.cinema.shield ? this.cinema.shield(d, target) : this.cinema.defend(d, target));
+			this.tick(Math.max(EST.resultMin, EST.defend * k));
+			return 'shield';
 		}
+		// çark: kategori turun başında bir kez (fetih dilimi: saldıran seçer); zincirdeki sorular aynı kategoriden
+		if (turn.cat == null) {
+			let cat = await this.ui.wheel(this, p);
+			this.tick(EST.wheel);
+			this.emit('wheel', { player: p.i, cat });
+			if (cat === 'fetih') {
+				cat = (await p.ctl.category(p, PICK_TIME.category)) || this.botCategory(p);
+				if (!CATS[cat]) cat = this.botCategory(p);
+				this.tick(p.human ? EST.chooseCat : 0.3);
+			}
+			turn.cat = cat;
+		}
+		const cat = turn.cat;
 		// soru anı: kale kuşatması ayrı bir an (yıldız tipler: Halat, Fitil, Tufan…), sahra düellosu 'attack'
 		const q = this.pickTyped(cat, isCap ? 'siege' : 'attack', [p, d]);
 		const res = await this.ask(q, [p, d], { title: isCap ? 'KUŞATMA' : 'DÜELLO', attacker: p, defender: d, target, cat, phase: 'duel' });
@@ -1466,18 +1566,7 @@ export class Match {
 			const tr = await this.ask(tq, [p, d], { title: 'EŞİTLİK BOZMA', attacker: p, defender: d, target, phase: 'duel' });
 			winner = this.closestWinner(tr[0], tr[1], p, d);
 		}
-		const result = (kind, extra = {}) => this.emit('result', { kind, player: p.i, defender: d.i, target, ...extra });
-		if (winner === p && d.shield) {
-			// kalkan: kaybedilen savunma yok sayılır
-			d.shield = false;
-			this.emit('shield', { player: d.i, target });
-			result('shield');
-			this.refreshJokers();
-			await this.ui.banner('KALKAN!', `${d.name} saldırıyı savuşturdu`, { tone: 'gold', short: true });
-			this.tick(EST.bannerShort);
-			await (this.cinema.shield ? this.cinema.shield(d, target) : this.cinema.defend(d, target));
-			this.tick(Math.max(EST.resultMin, EST.defend * k));
-		} else if (winner === p) {
+		if (winner === p) {
 			if (isCap) {
 				const left = app.castles[d.i].hit();
 				this.towersLost[d.i]++;
@@ -1494,19 +1583,50 @@ export class Match {
 				await this.cinema.conquer(p, target);
 				this.tick(Math.max(EST.resultMin, EST.conquer * k));
 			}
-		} else if (winner === d) {
+			return 'win';
+		}
+		if (winner === d) {
 			this.value.set(target, (this.value.get(target) || VALUE.pick) + VALUE.defend);
 			result('defend');
 			this.emit('owner', { i: target, p: d.i, value: this.value.get(target) }); // il değeri arttı (istemci puanı tutsun)
 			this.rescore();
 			await this.cinema.defend(d, target);
 			this.tick(Math.max(EST.resultMin, EST.defend * k));
-		} else {
-			result('nobody');
-			await this.cinema.nobody(target);
-			this.tick(Math.max(1.7, EST.nobody * k));
+			return 'defend';
 		}
-		return true;
+		result('nobody');
+		await this.cinema.nobody(target);
+		this.tick(Math.max(1.7, EST.nobody * k));
+		return 'nobody';
+	}
+
+	/**
+	 * Kule onarımı (v2): tek kişilik bildi/bilemedi sorusu; bilirse yıkık kulelerden biri kalkar (kale.heal).
+	 * Kategori çarkı dönmez (onarım soruları karışık).
+	 */
+	async repair(p) {
+		const app = this.app;
+		const k = app.castles[p.i];
+		const at = p.capital;
+		this.emit('repair', { player: p.i, target: at, hp: k.hp });
+		await this.ui.banner('KULE ONARIMI', p.human ? 'Bilirsen bir kulen geri gelir' : `${p.name} kalesini onarıyor`, { tone: 'gold', short: true });
+		this.tick(EST.bannerShort);
+		await this.cinema.repairStart?.(p, at);
+		const q = this.pick({ cat: null, types: REPAIR_TYPES, who: [p], diff: this.targetDiffFor([p], null) });
+		const [r] = await this.ask(q, [p], { title: 'KULE ONARIMI', phase: 'repair', cat: q.cat });
+		if (r?.correct) {
+			const hp = k.heal ? k.heal() : k.hp;
+			this.towersLost[p.i] = Math.max(0, this.towersLost[p.i] - 1);
+			this.emit('result', { kind: 'repair', player: p.i, target: at, left: hp });
+			await (this.cinema.towerUp ? this.cinema.towerUp(p, at, hp) : this.cinema.defend(p, at));
+			this.tick(EST.tower);
+			this.rescore();
+		} else {
+			this.emit('result', { kind: 'repairFail', player: p.i, target: at, left: k.hp });
+			app.ui?.caption?.('ONARILAMADI', p.human ? 'Kalen' : `${p.name} kalesi`, `${k.hp} kule ayakta`, { p, tone: 'red' });
+			await this.cinema.wait?.(1400);
+			this.tick(1.4);
+		}
 	}
 
 	/** En yakın tahmin kazanır; tam eşitlikte savunan kazanır. */

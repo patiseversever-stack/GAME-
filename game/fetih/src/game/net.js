@@ -43,7 +43,7 @@
 //                                           koltuklar; tied: altın soruya kalan taraflar)
 //     'turn'    d={ player, round }         saldırı sırası bu koltukta
 //     'attack'  d={ player, defender, target, capital }  saldırı ilan edildi
-//     'result'  d={ kind, player, defender, target, left? }  düello sonucu: conquer|tower|shield|defend|nobody
+//     'result'  d={ kind, player, defender, target, left? }  düello sonucu: conquer|tower|shield|defend|nobody|repair|repairFail
 //     'owner'   d={ i, p, value }           il sahibi ya da değeri değişti (p=-1 boş; savunmada değer +100)
 //     'score'   d={ scores:[…], hp:[…], alive:[…] }  puan, kale kulesi ve hayatta olma (yalnız değişince)
 //     'ask'     d={ q, v, time, who, title, phase, attacker, defender, target }  soru açıldı (bütün uzak koltuklara;
@@ -60,7 +60,9 @@
 //                                           jokerinde add, sabotajda victims/by/cut/blurMs) görür. Rakibin yarı yarıyası
 //                                           elenen şıkları, aralığı, harfleri ya da bölgeyi soru sürerken ele vermez.
 //     'sabotage' d={ victims, by, cut, blurMs }  yalnız kurban koltuğa: süresinden cut sn düşer
-//     'shield'  d={ player, target }
+//     'shield'  d={ player, target }  kalkan saldırıyı soru sorulmadan savuşturdu (v2; saldıranın hakkı yanmaz)
+//     'chain'   d={ player, left, cap }  zincir: saldıran kazandı, aynı turda left hak daha var (v2)
+//     'repair'  d={ player, target, hp }  kule onarımı başladı (tek kişilik soru); sonucu 'result' kind repair|repairFail
 //     'elim'    d={ player, by }
 //     'over'    d={ ranking, reason, rewards? }
 //

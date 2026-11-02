@@ -114,7 +114,7 @@ for (const q of [...BANK, ...SAMPLES]) {
 		const [srv, cli] = LocalTransport.pair();
 		let s = seed;
 		const client = new BotClient(cli, { skill: 0.7, R: () => ((s = (s * 16807) % 2147483647) / 2147483647) });
-		const view = { owners: new Map(), values: new Map(), score: null, asks: 0, reveals: 0, attacks: 0, results: 0, leaks: [] };
+		const view = { owners: new Map(), values: new Map(), score: null, asks: 0, reveals: 0, attacks: 0, results: 0, repairs: 0, repairRes: 0, leaks: [] };
 		const recv = client._recv.bind(client);
 		cli.onmessage((m) => {
 			if (m.t === 'ev') {
@@ -125,7 +125,9 @@ for (const q of [...BANK, ...SAMPLES]) {
 				else if (m.k === 'ask') view.asks++;
 				else if (m.k === 'reveal') view.reveals++;
 				else if (m.k === 'attack') view.attacks++;
+				else if (m.k === 'result' && (d.kind === 'repair' || d.kind === 'repairFail')) view.repairRes++;
 				else if (m.k === 'result') view.results++;
+				else if (m.k === 'repair') view.repairs++;
 				else if (m.k === 'joker' && d.player !== 1) for (const k of SECRET_KEYS) if (d.effect && k in d.effect) view.leaks.push(`${d.id}.${k}`);
 			}
 			recv(m);
@@ -142,6 +144,7 @@ for (const q of [...BANK, ...SAMPLES]) {
 		ok(view.score && view.score.hp.join() === m.players.map((p) => (p.alive ? app.castles[p.i].hp : 0)).join(), `${tag}: istemci kale kulelerini bilmiyor`);
 		ok(view.asks === view.reveals, `${tag}: izleyen koltuk ${view.reveals} sorunun cevabını aldı ama ${view.asks} soruyu gördü`);
 		ok(view.attacks === m.duels && view.results === m.duels, `${tag}: saldırı/sonuç olayı eksik (${view.attacks}/${view.results}, düello ${m.duels})`);
+		ok((view.repairs || 0) === (view.repairRes || 0), `${tag}: kule onarımı olayı ile sonucu eşleşmiyor (${view.repairs}/${view.repairRes})`);
 		ok(!view.leaks.length, `${tag}: başkasının joker etkisi sızdı: ${view.leaks.join(', ')}`);
 		ok(jokers > 0, `${tag}: maçta joker kullanılmadı (sızıntı sınanamadı)`);
 	}

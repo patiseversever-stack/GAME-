@@ -846,6 +846,50 @@ export class Cinema {
 		this._day();
 	}
 
+	/** Kule onarımı başlıyor: kamera kendi kalesine (soru kalenin önünde sorulur). */
+	async repairStart(p, i) {
+		const app = this.app;
+		const k = app.castles[p.i];
+		app.board.fx(i, 0, 0.5);
+		if (this.fast || !this.fx) return this.wait(300);
+		const c = k.group.position;
+		app.cam.shot(c.x, c.z, { y: c.y + 0.5, dist: 15, pitch: 0.62, yaw: app.cam.yaw, dur: 1.0, arc: 0.3, ease: easeCine });
+		this._spot(c, 3.4, 0.9, 0.3);
+		await this.wait(1000);
+	}
+
+	/** Kule onarıldı: yıkık kule molozdan yükselir (kale.heal), taş tozu, oyuncu renginde halka. */
+	async towerUp(p, i, left) {
+		const app = this.app;
+		const k = app.castles[p.i];
+		app.sfx?.play?.('defend');
+		app.ui?.caption?.('KULE ONARILDI', p.human ? 'Kalen' : `${p.name} kalesi`, `${left} kule ayakta`, { p, tone: 'gold' });
+		if (this.fast || !this.fx) {
+			await this.wait(800);
+			app.board.fx(i, 0, 0);
+			return;
+		}
+		const fx = this.fx;
+		const ti = k.lastHealed ?? 1;
+		const tp = k.towerPos(ti, new THREE.Vector3());
+		const c = k.group.position;
+		const ox = tp.x - c.x;
+		const oz = tp.z - c.z;
+		const ol = Math.hypot(ox, oz) || 1;
+		// kule yandan görünsün (yükselişini donjon örtmesin)
+		const yaw = Math.atan2(-(-oz / ol), ox / ol);
+		app.cam.shot(c.x + ox * 0.6, c.z + oz * 0.6, { y: c.y + 0.6, dist: 12.5, pitch: 0.45, yaw, dur: 0.9, arc: 0.6, ease: easeCine });
+		const base = c.clone().add(new THREE.Vector3(ox * 1.1, 0.2, oz * 1.1));
+		this.at(0.35, () => {
+			fx.dust(base, 18, 1.0, 0xd5c4a2, 0.7);
+			fx.ring(base.x, base.y, base.z, 0.4, 2.4, p.color, 0.65, 0.9, 0.25);
+			fx.sparks(tp, 14, 2.2, 0xffe6a0, 2.2, 0.05, 3);
+		});
+		await this.beat(2200, 1600);
+		app.board.fx(i, 0, 0);
+		this._day();
+	}
+
 	/** Savunma kazandı: kalkan parlar, saldıranlar sendeler, bir kısmı düşer, ordu geri çekilir; savunanlar sevinir. */
 	async defend(d, i, { shield = false } = {}) {
 		const app = this.app;

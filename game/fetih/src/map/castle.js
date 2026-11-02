@@ -433,6 +433,24 @@ export class Castle {
 		return this.hp;
 	}
 
+	/**
+	 * Kule onarımı (v2): son yıkılan (yoksa ilk yıkık) kule ayağa kalkar; molozdan geri yükselme update'te (yıkılışın
+	 * tersi, ~0,9 sn). Kalan can döner.
+	 */
+	heal() {
+		let i = this.lastHit != null && !this.towers[this.lastHit].alive ? this.lastHit : HIT_ORDER.slice().reverse().find((k) => !this.towers[k].alive);
+		if (i == null) return this.hp;
+		this.towers[i].alive = 1;
+		this.hp = Math.min(3, this.hp + 1);
+		this.lastHealed = i;
+		return this.hp;
+	}
+
+	/** Yükselmekte olan kule var mı (kare çizimi uyansın). */
+	get rising() {
+		return this.towers.some((t) => t.alive && t.fall > 0);
+	}
+
 	repair() {
 		this._aim = null;
 		for (const t of this.towers) {
@@ -461,7 +479,10 @@ export class Castle {
 		}
 		this.uniforms.uLit.value = b && this._prov >= 0 ? b.sel[this._prov] : 0;
 		for (const t of this.towers) {
-			if (t.alive) continue;
+			if (t.alive) {
+				if (t.fall > 0) t.fall = Math.max(0, t.fall - dt * 1.1); // onarım: molozdan geri yükselir
+				continue;
+			}
 			t.fall = Math.min(1, t.fall + dt * 1.4);
 		}
 		this.fall.set(fallEase(this.towers[0].fall), fallEase(this.towers[1].fall), fallEase(this.towers[2].fall));
