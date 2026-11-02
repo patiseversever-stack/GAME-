@@ -31,3 +31,15 @@ Kaynak: kullanıcının cevapları (2026-11-02). Kodlamaya sorular bitince geçi
 - Tüm Türkiye: yayılmada yarısı dağıtılır (4 tur), kalan iller tarafsız; tarafsıza saldırı tek kişilik kolay soru.
 - İl değerleri eşit (200; fetih +200, savunma +100; başkent 1000).
 - Geride kalana hafif yardım: en az ili olanın zincir sınırı +1.
+
+## 6. Bot savaşlarını izleme
+- İki botun düellosunda soru yok: ~5 sn özet (kim kime ok → "X BİLDİ · Y BİLEMEDİ" kartı → il rengi yavaşça değişir / kule yıkılır).
+- Eşlide takım arkadaşının düellosu daha uzun (soru metni ve açılan cevap görünür); diğerleri özet.
+- Botların sırasında "Atla ⏩" düğmesi: kalan bot hamleleri anında uygulanır, sıra sana gelir; dokunmak tek anı geçer.
+- Botların bütün hamleleri özetle gösterilir.
+
+## 7. Çevrimiçi
+- Başka iki oyuncunun düellosu canlı izlenir (soru + gerçek süre); izleyen de cevaplar, bilirse küçük puan (+20).
+- Çevrimiçinde dört mod da açık; çıkanın yerine bot geçer.
+- Seçim süreleri: ilk hedef 12 sn, zincirdeki sonraki hedefler 8 sn; diğerleri aynı.
+- Kopan oyuncu maç bitene kadar her an dönebilir (dönene kadar bot oynar).
