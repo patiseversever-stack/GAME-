@@ -832,7 +832,7 @@ export class UI {
 		await sleep(20);
 		card.classList.add('on');
 		this.el.classList.toggle('qon', !map); // haritasız soruda üst oyuncu kartları afişe yer açar
-		this.app.calmQ = !map && !!T.calm; // klasik soru tipi: harita arkada durgun (mobilde 30 kare, app._loop)
+		this.app.calmQ = !map && !!T.calm; // klasik soru tipi: harita arkada durgun (kare hızı: core/quality.js)
 		this.el.classList.toggle('qmap', map); // haritalı soruda üst şerit gizlenir, duraklat düğmesi alta iner
 		this.sfx('question', { type: q.type, cat: q.cat });
 		t0 = clock.now();

@@ -1,6 +1,6 @@
 // Kare temposu yöneticisi (core/quality.js Governor): 60 / 90 / 120 Hz ekran benzetimi.
 //   1. Hareket varken ekranın kendi hızı (60 → 60, 90 → 90, 120 → 120), eşit aralık.
-//   2. Durgunken 30 kare; hareket başlayınca beklemeden (aynı vsync'te) çizer.
+//   2. Durgunken de ekranın hızı (eskiden 30: su, bulut, sürüler takılıyor gibi görünüyordu); 30 son çare.
 //   3. GPU yetişemezse: 120 Hz'de önce 60'a (eşit bölen), 60 Hz'de çözünürlük kısılır; hiçbir zaman düzensiz bölen yok.
 //   4. Çözünürlük değişimi hareket sürerken uygulanmaz, durgun ilk anda uygulanır.
 //   5. vsync ölçümü kaçan karelerle şişmez (GPU yavaşken ekran hızı yanlış okunmaz).
@@ -49,14 +49,14 @@ const gaps = (frames, t0, t1) => {
 };
 
 for (const hz of [60, 90, 120]) {
-	test(`${hz} Hz: hareket varken ekranın hızı, durgunken 30, hareket başlayınca beklemeden`, () => {
+	test(`${hz} Hz: hareket varken de durgunken de ekranın hızı, hareket başlayınca beklemeden`, () => {
 		const g = new Governor({ tier: 1, gpu: 'test', store: store(), mobile: true });
 		const idleAt = (t) => t > 3000 && t < 6000; // 0–3 sn hareket, 3–6 durgun, 6–9 hareket
 		const { frames } = sim(g, { hz, seconds: 9, idleAt });
 		const moving = rate(frames, 1000, 3000);
 		const still = rate(frames, 4000, 6000);
 		assert.ok(Math.abs(moving - hz) <= hz * 0.03, `hareket: ${moving} kare/sn (beklenen ${hz})`);
-		assert.ok(Math.abs(still - Math.min(30, hz)) <= 3, `durgun: ${still} kare/sn (beklenen 30)`);
+		assert.ok(Math.abs(still - hz) <= hz * 0.03, `durgun: ${still} kare/sn (beklenen ${hz})`);
 		// eşit aralık: hareket sırasında tek bir kare aralığı
 		const gm = gaps(frames, 1000, 3000);
 		assert.equal(gm.length, 1, `hareket aralıkları eşit değil: ${gm}`);
@@ -75,6 +75,21 @@ test('120 Hz, GPU 120 kareye yetişemiyor (11 ms): 60 kareye iner, düzensiz bö
 	assert.ok(Math.abs(end - 60) <= 2, `son durum ${end} kare/sn (beklenen 60)`);
 	for (const gp of gaps(frames, 8000, 12000)) assert.ok(Math.abs(gp - 16.67) < 0.6, `aralık ${gp} ms`);
 	assert.equal(g.hz, 120, 'ekran hızı yanlış okundu (kaçan kareler vsync ölçümünü şişirdi)');
+});
+
+test('120 Hz, GPU 60 kareye de yetişemiyor (20 ms): 30 değil 40 kare (eşit aralık), önce çözünürlük tabana iner', () => {
+	const g = new Governor({ tier: 1, gpu: 'test', store: store(), mobile: true });
+	const { frames } = sim(g, { hz: 120, seconds: 30, work: (t) => (t < 1000 ? 2 : 20), idleAt: (t) => t < 1000 || t % 5000 > 4700 });
+	const end = rate(frames, 26000, 29500);
+	assert.ok(Math.abs(end - 40) <= 2, `son durum ${end} kare/sn (beklenen 40)`);
+	assert.ok(g.scale <= g.deepScale + 0.01, `ölçek ${g.scale}: kare sınırından önce çözünürlük tabana inmeli`);
+});
+
+test('pil koruma: 30 değil 60 kare (120 Hz ekranda)', () => {
+	const g = new Governor({ tier: 1, gpu: 'test', store: store(), mobile: true, power: 'saver' });
+	const { frames } = sim(g, { hz: 120, seconds: 4 });
+	const r = rate(frames, 2000, 4000);
+	assert.ok(Math.abs(r - 60) <= 2, `pil korumada ${r} kare/sn (beklenen 60)`);
 });
 
 test('90 Hz, GPU 90 kareye yetişemiyor: 45 kare (eşit), 60 gibi düzensiz değil', () => {

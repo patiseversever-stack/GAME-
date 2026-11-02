@@ -130,6 +130,19 @@ export class HeroLod {
 		}
 	}
 
+	/** Yapı savaş alanı açıklığında mı (shaderlib clearHard: yapı merkezi kapsüle yarıçap − kenar/2 + gövde payından yakın). */
+	_inClear(s) {
+		const G = this.G;
+		const R = G.uClearR?.value;
+		if (!R || R.y < 0.001) return false;
+		const c = G.uClear.value;
+		const abx = c.z - c.x;
+		const abz = c.w - c.y;
+		const t = Math.min(1, Math.max(0, ((s.x - c.x) * abx + (s.z - c.y) * abz) / Math.max(abx * abx + abz * abz, 1e-4)));
+		const d = Math.hypot(s.x - c.x - abx * t, s.z - c.y - abz * t) - (s.s || 2) * 0.45;
+		return d < R.x - R.z * 0.5 + 0.3; // (küçük pay: kenardaki yapı kahramanla alçalan arasında gidip gelmesin)
+	}
+
 	/** Ekran boyları ve seçim (histerezis), ön ısıtma. */
 	_select(camera, cam) {
 		const lm = this.lm;
@@ -154,6 +167,9 @@ export class HeroLod {
 				}
 				// başkent kalesinin altına gömülü yapı kahraman olmaz
 				for (const c of castles) if (c.w > 0.5 && Math.hypot(c.x - s.x, c.z - s.z) < 2.2 + (s.s || 2) * 0.38 + 0.06) size = 0;
+				// savaş alanı açıklığında alçalan yapı da (landmarks.js clearHard ile aynı ölçü): kahraman model alçalmaz,
+				// askerler onun içinden geçiyordu (Karabük'te Safranbolu evleri, Bolu–Çankırı'da Anıtkabir)
+				if (size > 0 && this._inClear(s)) size = 0;
 			}
 			this.size[i] = size;
 		}

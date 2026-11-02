@@ -748,6 +748,9 @@ export class Battle {
 				u.fadeTo = -1;
 				u.fadeK = 2.6;
 				u.late = 0;
+				u.vis = null; // karada mı (yeniden kullanılan birim: önceki savaştan kalmasın)
+				u.lx = 1e9;
+				u.land = true;
 				u.yFix = s.yFix ?? NaN;
 				u.fix = !!s.fix;
 				if (s.fix) {
@@ -1155,7 +1158,7 @@ export class Battle {
 			else _s.set(0.095, 1, 0.095 + 0.2 * u.fall);
 			_m.compose(_v, _q, _s);
 			this.blob.setMatrixAt(nb, _m);
-			this.blobF.array[nb++] = u.fade;
+			this.blobF.array[nb++] = u.fade * (u.vis ?? 1);
 		}
 		this.blob.count = nb;
 		if (nb) {
@@ -1224,6 +1227,16 @@ export class Battle {
 			u.on = false;
 			return;
 		}
+		// karada değilse (dar kıyı ve sınır illerinde yürüyüş başı denizde ya da harita dışında kalabiliyor) görünmez;
+		// karaya basınca belirir: asker suyun üstünde ya da sisli sınır dışında yürümez
+		if (!u.cas && Math.abs(u.x - (u.lx ?? 1e9)) + Math.abs(u.z - (u.lz ?? 1e9)) > 0.06) {
+			u.lx = u.x;
+			u.lz = u.z;
+			const b = this.app.board;
+			u.land = !b.lakeAt(u.x, u.z) && b.pick(u.x, u.z) >= 0;
+		}
+		const lv = u.cas || u.land !== false ? 1 : 0;
+		u.vis = u.vis == null ? lv : u.vis + clamp(lv - u.vis, -dt * 6, dt * 4);
 		const gy = this._ground(u);
 		u.y += (gy - u.y) * Math.min(1, dt * 16);
 	}
@@ -1242,7 +1255,7 @@ export class Battle {
 		V[o] = u.ph;
 		V[o + 1] = u.walk;
 		V[o + 2] = u.kind;
-		V[o + 3] = u.fade;
+		V[o + 3] = u.fade * (u.vis ?? 1);
 		const T = M.iAct.array;
 		T[o] = u.thrust;
 		T[o + 1] = u.fall;

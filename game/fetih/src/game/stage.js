@@ -386,40 +386,70 @@ export function* planStageGen(app, src, target, isCap) {
 		}
 	}
 
-	// --- yürüyüş: saldıran kendi ilinin içinden (il kenarına dayanmadan) başlar; en çok 1,9, en az 0,6 birim
+	// --- yürüyüş, savunanın kuruluşu ve zafer hücumu: her asker tek tek denetlenir (eskiden 5 × 3 örnekten %80'i
+	// yetiyordu; kıyı ve sınır illerinde birkaç asker yürüyüşe denizden ya da harita dışından başlıyordu)
+	const land = (x, z) => !b.lakeAt(x, z) && (inS(x, z) || inT(x, z));
+	const onMap = (x, z) => !b.lakeAt(x, z) && b.pick(x, z) >= 0;
+	// kaç asker (dizilişin yerel konumları) o çapada geçerli
+	const fitA = (ox, oz, ok) => {
+		let n = 0;
+		for (const s of att) if (ok(ox + vx * s.lat - ux * s.dep, oz + vz * s.lat - uz * s.dep)) n++;
+		for (const m of machines) if (ok(ox + vx * m.lat - ux * m.dep, oz + vz * m.lat - uz * m.dep)) n++;
+		return n;
+	};
+	const fitD = (ox, oz, ok) => {
+		let n = 0;
+		for (const s of def) if (!s.fix && ok(ox - vx * s.lat + ux * s.dep, oz - vz * s.lat + uz * s.dep)) n++;
+		return n;
+	};
+	const nA = att.length + machines.length;
+	const nDf = def.filter((s) => !s.fix).length;
+	// saldıran kendi ilinin içinden (il kenarına dayanmadan) başlar; en çok 1,9, en az 0,6 birim. Önce herkes
+	// geçerli yerde olan en uzun yürüyüş; yoksa en çok askerin karada başladığı (eşitse uzun olan)
 	const deep = isCap || amphib ? allowA : (x, z) => allowA(x, z) && b.borderDist(x, z, 0.4) >= 0.4;
 	let march = 0.6;
-	for (const m of [1.9, 1.65, 1.4, 1.15, 0.9]) {
+	let marchN = -1;
+	for (const m of [1.9, 1.65, 1.4, 1.15, 0.9, 0.6]) {
 		const bx = g.ax - ux * m;
 		const bz = g.az - uz * m;
-		if (probe(bx, bz, ux, uz, fa.W, fa.D, deep) >= 0.8) {
+		if (fitA(bx, bz, deep) === nA) {
 			march = m;
+			marchN = nA;
 			break;
+		}
+		const n = fitA(bx, bz, onMap);
+		if (n > marchN) {
+			marchN = n;
+			march = m;
 		}
 	}
 	// çarpışma: ön saflar arasındaki boşluk karaysa ortada buluşurlar; su varsa (göl, boğaz) kıyıda durup ok atarlar
-	const land = (x, z) => !b.lakeAt(x, z) && (inS(x, z) || inT(x, z));
 	const gp = isCap ? 0.6 : (best.c.gap || 0);
 	let lineLand = true;
 	for (const l of [-0.33, 0, 0.33]) if (!land(g.bx + vx * l * fa.W, g.bz + vz * l * fa.W)) lineLand = false;
 	const engage = 0.17 + (lineLand ? gp / 2 : 0);
-	// zafer hücumu: saldıranlar hedef ilin karasında ne kadar ilerleyebilir (suya yürümesinler)
+	// zafer hücumu: saldıranlar hedef ilin karasında ne kadar ilerleyebilir (suya yürümesinler); bütün saf denetlenir
 	let charge = 0.5;
-	for (const d of [1.9, 1.6, 1.3, 1.0, 0.75]) {
+	for (const d of [1.9, 1.6, 1.3, 1.0, 0.75, 0.5]) {
 		let ok = true;
 		for (const l of [-0.35, 0, 0.35]) {
 			const x = g.ax + ux * d + vx * l * fa.W;
 			const z = g.az + uz * d + vz * l * fa.W;
 			if (!land(x, z)) ok = false;
 		}
-		if (ok) {
+		// hücum sonunda bütün saldıranlar karada (atlılar 0,6 ileri koşar: onları da say)
+		if (ok && fitA(g.ax + ux * (d + 0.3), g.az + uz * (d + 0.3), onMap) >= nA - 1) {
 			charge = d;
 			break;
 		}
 	}
-	// savunan safını kurar: biraz geriden öne çıkar
-	let form = 0.75;
-	if (probe(g.dx + ux * form, g.dz + uz * form, -ux, -uz, fd.W, fd.D, allowD) < 0.6) form = 0.35;
+	// savunan safını kurar: biraz geriden öne çıkar (bütün askerler karada başlamalı; yoksa daha yakından)
+	let form = -1;
+	for (const ok of [allowD, onMap])
+		for (const f of [0.75, 0.5, 0.35, 0.2]) {
+			if (form < 0 && fitD(g.dx + ux * f, g.dz + uz * f, ok) >= nDf) form = f;
+		}
+	if (form < 0) form = 0;
 
 	const gy = (x, z) => b.groundAt(x, z) + SEL_LIFT;
 	const lineW = Math.max(fa.front, fd.front ?? fd.W) + 0.3;

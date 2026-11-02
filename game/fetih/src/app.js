@@ -2,7 +2,7 @@
 //
 // Pil ve akıcılık kuralları:
 // - Kareler ekran yenilemesine göre eşit aralıkla çizilir (Governor), boşa kare yok.
-// - Menülerde ve soru ekranlarında 30 kare (harita arkada ağır akar).
+// - Menülerde ve soru ekranlarında da ekranın tam hızı (core/quality.js; 30 kare yalnız son çare).
 // - Bütün shader'lar açılışta derlenir; oyun sırasında malzeme ya da hedef kurulmaz.
 // - İl durumu (sahip, yükselme, parlama) küçük bir veri dokusunda; fetih geometriye dokunmaz.
 

@@ -94,10 +94,12 @@ export function launchTier(detected, store, gpu) {
  * - Kademe (gölge, ağaç yoğunluğu, geometri): ekran hızını süper örneklemede ya da GPU süresi bütçenin yarısının altında
  *   uzun süre tutan cihaz bir sonraki açılışta bir üst kademeyle başlar; en düşük çözünürlükte bile tutamayan bir alt
  *   kademeyle (ve o kademe bir daha denenmez). launchTier.
- * - Ekranda hiçbir şey kıpırdamıyorsa (kamera durgun, canlandırma yok) 30 kare: GPU ve ısı yarıya iner. En ufak
- *   harekette aynı karede tam hıza döner.
+ * - Durgunken de tam hız (su, bulut, sürüler hep oynar; 30 karede takılıyor gibi görünüyordu). Durgun karelerde yalnız
+ *   aşağı yönlü uyum yapılır (yetişemezse iner); yükseltme kanıtı yalnız hareketli karelerden toplanır.
+ * - 30 kare son çaredir: önce çözünürlük bir basamak daha iner (0,6), sonra ekranın bir alt eşit böleni (120 Hz'de 40,
+ *   90 Hz'de 45); 30'a yalnız 60 Hz ekranda hiçbir şey yetmezse inilir.
  * - Çözünürlük değişimi (çizim tamponu yeniden kurulur, bir kare takılır) yalnızca durgunken uygulanır.
- * - Pil %20'nin altına iner ve şarjda değilse pil koruma moduna geçer.
+ * - Pil %20'nin altına iner ve şarjda değilse pil koruma moduna geçer (en çok 60 kare, keskinlik 0,8).
  * - Bulduğunu ekran kartı ve kademe başına kaydeder; bir sonraki açılış doğru ayarla başlar.
  */
 export class Governor {
@@ -117,7 +119,7 @@ export class Governor {
 		this.adj = mem.gpu === gpu && mem.v === 3 ? mem.adj | 0 : 0;
 		this.top = mem.gpu === gpu && mem.v === 3 ? mem.top ?? 2 : 2; // tutmadığı görülen kademenin bir altı
 		this._q = mem.gpu === gpu && mem.v === 3 ? { ...mem.q } : {};
-		this.scale = q ? clamp(q.scale ?? 1, this.T.minScale, HI) : 1;
+		this.scale = q ? clamp(q.scale ?? 1, Math.max(0.6, this.T.minScale - 0.1), HI) : 1;
 		this.cap = q ? q.cap ?? 120 : 120; // en yüksek kare hızı (ekran izin verirse)
 		this.hi = 1; // ölçeğin üst sınırı: pixelRatio() ekranın kendi çözünürlüğünden hesaplar
 
@@ -160,9 +162,26 @@ export class Governor {
 
 	get targetFps() {
 		const hz = this.hz;
-		if (this.menu || this.idle) return Math.min(30, hz); // durgun ekran: 30 yeter (hareket başlayınca anında tam hız)
-		if (this.saver) return Math.min(30, hz);
+		// durgunken de tam hız (eskiden 30): soru, menü ve beklemede su, bulut, sürüler, balonlar hep oynuyor; 30 karede
+		// takılıyor gibi görünüyordu. Cihaz neyi tutuyorsa (kare sınırı hareketli karelerden öğrenilir) onda kalır.
+		// Pil koruma (pil %20 altı, şarjda değil): 60 (120 Hz ekranda yarı enerji, yine akıcı)
+		if (this.saver) return Math.min(60, this.cap, hz);
 		return Math.min(this.cap, hz);
+	}
+
+	/** Bir alt eşit aralıklı kare hızı (ekran hızının tam böleni): 120 Hz'de 60 → 40 → 30, 90'da 45 → 30, 60'ta 30. */
+	_lowerCap(fps) {
+		const hz = this.hz;
+		for (let k = 2; k < 8; k++) {
+			const r = hz / k;
+			if (r < fps - 0.5) return Math.max(30, Math.round(r));
+		}
+		return 30;
+	}
+
+	/** Son çare çözünürlük tabanı (kare sınırını 30'a indirmeden önce bir basamak daha). */
+	get deepScale() {
+		return Math.max(0.6, this.T.minScale - 0.1);
 	}
 
 	get maxScale() {
@@ -207,7 +226,7 @@ export class Governor {
 		this._fn = (this._fn || 0) + 1;
 		const period = this._lastRender ? now - this._lastRender : n * this.vsync;
 		this._lastRender = now;
-		if (!this.idle && !this.menu) this._adapt(now, period, n * this.vsync);
+		this._adapt(now, period, n * this.vsync, this.idle || this.menu);
 		if (this._pend != null && (this.idle || now > this._pendAt)) {
 			const s = this._pend;
 			this._pend = null;
@@ -238,12 +257,13 @@ export class Governor {
 		this._good = 0;
 	}
 
-	_adapt(now, period, expected) {
+	_adapt(now, period, expected, still = false) {
 		if (period > expected * 4) return; // tek seferlik takılma (sekme değişimi vb.)
 		this._ema = this._ema ? this._ema + (period - this._ema) * 0.08 : period;
 		const dt = period / 1000;
 		const late = this._ema > expected * 1.2;
-		this._tierEvidence(dt, late, expected);
+		// durgun kareler hafiftir (gölge önbellekte): yükseltme ve kademe kanıtı yalnız hareketten; yetişemezse iner
+		if (!still) this._tierEvidence(dt, late, expected);
 		if (now < this._cool) return;
 
 		if (late) {
@@ -252,7 +272,7 @@ export class Governor {
 			this._good = 0;
 		} else {
 			this._slow = Math.max(0, this._slow - dt * 0.5);
-			this._good += dt;
+			if (!still) this._good += dt;
 		}
 
 		// Deneme amaçlı yükseltme geri tepti: geri al, tavanı işaretle, bir süre o tür deneme yok.
@@ -281,11 +301,14 @@ export class Governor {
 			const fps = Math.min(this.cap, hz);
 			// işlemci darboğazı: çizim süresinin çoğu JS; çözünürlük kısmak işe yaramaz, keskinlik korunur
 			const cpu = this.cpuMs > expected * 0.7;
+			// sıra: süper örnekleme → 60 kare (yüksek Hz ekranda) → çözünürlük adım adım → son çare taban → bir alt eşit
+			// aralıklı kare hızı (120 Hz'de 40, 90'da 45; 30 yalnız 60 Hz ekranda ve hiçbir şey yetmezse)
 			if (s > 1.01) this._setScale(1);
 			else if (fps > 60) this.cap = 60;
 			else if (!cpu && s > 0.81) this._setScale(Math.max(0.8, s - 0.1));
 			else if (!cpu && s > this.T.minScale + 0.01) this._setScale(Math.max(this.T.minScale, s - 0.1));
-			else if (fps > 30) this.cap = 30;
+			else if (!cpu && s > this.deepScale + 0.01) this._setScale(this.deepScale);
+			else if (fps > 30) this.cap = this._lowerCap(fps);
 			this._dirty = true;
 		} else if (this._good > 8 && this._ups < 40) {
 			this._good = 0;
@@ -325,7 +348,7 @@ export class Governor {
 		// kanıt üç kat uzun istenir (60 sn): bir kez kötü gün yaşayan cihaz sonsuza dek düşük kademede kalmasın
 		if (full && (ss || gpu) && this.T.id < 2) this._upT += this.T.id < this.top ? dt : dt / 3;
 		else if (late) this._upT = Math.max(0, this._upT - dt * 2);
-		const floor = s <= this.T.minScale + 0.01;
+		const floor = s <= this.deepScale + 0.01;
 		if (floor && (late || this.cap <= 30) && this.T.id > 0) this._dnT += dt;
 		else this._dnT = Math.max(0, this._dnT - dt * 0.25);
 		if (this._upT > 20) {
