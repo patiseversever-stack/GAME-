@@ -284,7 +284,7 @@ export const SAMPLES = {
 			['Aksaray', 'Ardahan', 'Bursa', 'Bolu', 'Kars', 'Iğdır', 'Osmaniye', 'Burdur']),
 		A('dn-ab05', 'tarih', 3, 'UNESCO Dünya Mirası Listesi’nde olan Türkiye’den bir yer söyle',
 			[['Kapadokya', 55, 'Göreme'], ['Pamukkale', 50, 'Hierapolis'], ['Efes', 45], ['İstanbul’un Tarihi Alanları', 40], ['Göbeklitepe', 38], ['Truva', 30, 'Troya'], ['Nemrut Dağı', 25], ['Safranbolu', 18], ['Hattuşa', 12], ['Selimiye Camii ve Külliyesi', 11], ['Çatalhöyük', 10], ['Bergama', 9], ['Diyarbakır Kalesi ve Hevsel Bahçeleri', 7], ['Bursa ve Cumalıkızık', 6], ['Afrodisias', 5], ['Ani', 5], ['Divriği Ulu Camii ve Darüşşifası', 4], ['Arslantepe', 3], ['Gordion', 3], ['Ksanthos-Letoon', 2]],
-			['Sümela Manastırı', 'Zeugma', 'İshak Paşa Sarayı', 'Aspendos', 'Anıtkabir', 'Ölüdeniz', 'Akdamar Kilisesi', 'Kızkalesi']),
+			['Anıtkabir', 'Ölüdeniz', 'Dolmabahçe Sarayı', 'Galata Kulesi', 'Kız Kulesi', 'Uzungöl', 'Rumeli Hisarı', 'Kaleiçi']),
 		A('dn-ab06', 'cografya', 2, 'Karadeniz’e kıyısı olan bir il söyle',
 			[['Trabzon', 70], ['Samsun', 55], ['Rize', 50], ['Sinop', 35], ['Giresun', 33], ['Ordu', 30], ['Zonguldak', 25], ['Artvin', 18], ['Kastamonu', 15], ['İstanbul', 14], ['Bartın', 10], ['Düzce', 6], ['Sakarya', 6], ['Kocaeli', 5], ['Kırklareli', 3]],
 			['Tokat', 'Amasya', 'Gümüşhane', 'Bayburt', 'Bolu', 'Karabük', 'Tekirdağ', 'Edirne', 'Çorum']),
@@ -303,7 +303,7 @@ export const SAMPLES = {
 		A('dn-ab11', 'sanat', 2, 'Orhan Pamuk’un bir romanını söyle',
 			[['Benim Adım Kırmızı', 42], ['Masumiyet Müzesi', 38], ['Kar', 35], ['Kara Kitap', 20], ['Beyaz Kale', 15], ['Kırmızı Saçlı Kadın', 12], ['Kafamda Bir Tuhaflık', 10], ['Veba Geceleri', 9], ['Sessiz Ev', 7], ['Yeni Hayat', 6], ['Cevdet Bey ve Oğulları', 5]],
 			['İnce Memed', 'Tutunamayanlar', 'Saatleri Ayarlama Enstitüsü', 'Huzur', 'Kürk Mantolu Madonna', 'Çalıkuşu', 'Puslu Kıtalar Atlası', 'Aşk-ı Memnu']),
-		// v1.1 (listeler resmî ve kapalı: bölge il listesi, IOC madalya tablosu, TFF şampiyonlar listesi, UNESCO, BM üye
+		// v1.1 (listeler resmî ve kapalı: bölge il listesi, IOC madalya ve ev sahibi listeleri, UNESCO, BM üye
 		// ülkeleri; tartışmalı adlar havuza hiç konmadı)
 		A('dn-ab12', 'bilim', 2, 'Suda yaşayan bir memeli hayvan söyle',
 			[['Yunus', 70], ['Balina', 65], ['Fok', 30], ['Deniz aslanı', 20], ['Mors', 12], ['Su samuru', 8], ['Deniz ineği', 6]],
