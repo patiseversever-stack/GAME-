@@ -164,11 +164,19 @@ function pool() {
 function pickItems(q, R) {
 	const all = pool();
 	const maxD = clamp(Number(q.diff) || 2, 1, 3);
-	let list = all.filter((x) => (q.pool && q.pool !== 'karisik' ? x.cat === q.pool : true) && (x.diff || 2) <= maxD);
-	if (list.length < N_ITEMS) list = all.filter((x) => (x.diff || 2) <= maxD);
-	if (list.length < N_ITEMS) list = all;
+	// konu önce: seçilen konunun (zorluk sınırı içindeki, sonra üstündeki) soruları tükenmeden başka konuya geçilmez;
+	// eksik kalan yer karışık havuzdan dolar (eskiden konu havuzu 32'ye yetmeyince tur bütünüyle karışığa dönüyordu)
+	const topic = q.pool && q.pool !== 'karisik' ? q.pool : null;
+	const d = (x) => x.diff || 2;
+	const tiers = topic
+		? [all.filter((x) => x.cat === topic && d(x) <= maxD), all.filter((x) => x.cat === topic && d(x) > maxD), all.filter((x) => x.cat !== topic && d(x) <= maxD), all.filter((x) => x.cat !== topic && d(x) > maxD)]
+		: [all.filter((x) => d(x) <= maxD), all.filter((x) => d(x) > maxD)];
+	const list = [];
+	for (const t of tiers) {
+		if (list.length >= N_ITEMS) break;
+		list.push(...shuffle(t, R).slice(0, N_ITEMS - list.length));
+	}
 	return shuffle(list, R)
-		.slice(0, N_ITEMS)
 		.map((x) => {
 			if (x.type === 'tf') return { t: 'tf', q: x.q, o: ['DOĞRU', 'YANLIŞ'], right: x.ans ? 0 : 1, d: x.diff || 2 };
 			const flip = R() < 0.5;
