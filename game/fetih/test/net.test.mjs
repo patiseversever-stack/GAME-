@@ -109,7 +109,10 @@ for (const q of [...BANK, ...SAMPLES]) {
 	const SECRET_KEYS = ['hide', 'min', 'max', 'letters', 'provinces', 'pct', 'value', 'spread', 'data'];
 	let events = 0;
 	let predictsAll = 0;
-	for (const [mode, n, seed] of [['1v1', 2, 50], ['1v1', 2, 53], ['ffa3', 3, 51], ['ffa4', 4, 52], ['team', 4, 54]]) {
+	// son maç yeni tipler kapalı: izleyici tahmini yalnız eski basit tiplerin düellosunda açılır; yeni tip havuzları büyüyünce
+	// (v1.6: 237 → ~740 soru) karışık maçlarda bu düellolar seyrekleşti, mekanizma tohum şansına kalmasın
+	const NOYENI = Object.fromEntries(Object.keys((await import('../src/quiz/deneme.js')).DENEME_SAMPLES).map((k) => [k, false]));
+	for (const [mode, n, seed, eski] of [['1v1', 2, 50], ['1v1', 2, 53], ['ffa3', 3, 51], ['ffa4', 4, 52], ['team', 4, 54], ['ffa4', 4, 57, true]]) {
 		const app = makeApp();
 		const seats = Array.from({ length: n }, (_, i) => (i === 1 ? 'remote' : 'bot'));
 		const [srv, cli] = LocalTransport.pair();
@@ -134,7 +137,7 @@ for (const q of [...BANK, ...SAMPLES]) {
 			}
 			recv(m);
 		});
-		const m = new Match(app, makeUI(), { mode, length: 'quick', bot: 'usta', region: 'ege', seed, seats, transports: { 1: srv }, allBots: true, persist: false });
+		const m = new Match(app, makeUI(), { mode, length: 'quick', bot: 'usta', region: 'ege', seed, seats, transports: { 1: srv }, allBots: true, persist: false, ...(eski ? { yeni: NOYENI } : {}) });
 		let jokers = 0;
 		m.on('joker', () => jokers++);
 		await m.run();
@@ -187,7 +190,7 @@ for (const q of [...BANK, ...SAMPLES]) {
 		ok(used.sabotaj === 0, `uzak koltuk cevabını verdikten sonra ${used.sabotaj} kez sabotaj yaptı`);
 	}
 	ok(predictsAll > 0, 'izleyici tahmini 3+ oyunculu maçlarda hiç yapılmadı');
-	console.log(`uzak koltuklu 5 maç: istemciye ${events} olay, izleyici tahmini ${predictsAll}`);
+	console.log(`uzak koltuklu 6 maç: istemciye ${events} olay, izleyici tahmini ${predictsAll}`);
 }
 
 // ---------------------------------------------------------------- v1.2: yeni tiplerin sunucu adımları
