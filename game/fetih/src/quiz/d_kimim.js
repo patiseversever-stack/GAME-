@@ -454,7 +454,7 @@ export const kimim = {
 const KM = (id, diff, il, style, clues) => ({ id, cat: 'cografya', diff, type: 'kimim', q: STYLES[style].q, il, style, clues });
 
 export const KIMIM_SAMPLES = [
-	KM('dn-km1', 2, 42, 'ben', [
+	KM('dn-km1', 1, 42, 'ben', [
 		'Dokuz bin yıllık komşularım var: Çatalhöyük benim ovamda. Yaşımı sormayın.',
 		'Tuz Gölü’nü komşularımla paylaşırım. Tuzu kuru bir ilim yani.',
 		'Etliekmeğim kol boyu uzar, sofraya sığmaz; bıçak arası da benden sorulur.',
@@ -468,14 +468,14 @@ export const KIMIM_SAMPLES = [
 		'Kahvaltıda gravyer peyniri, akşam yemeğinde kaz eti.',
 		'Ankara’dan bindiğim Doğu Ekspresi’nin son durağı burası; bir günden uzun sürdü!',
 	]),
-	KM('dn-km3', 2, 22, 'manset', [
+	KM('dn-km3', 1, 22, 'manset', [
 		'Sınır kentinde iki komşu kapısı: Yunanistan ve Bulgaristan aynı gün ziyarette',
 		'500 yılı aşkın darüşşifada müzikle tedavi sergisi açıldı',
 		'Tava ciğer kuyruğu köprüye dayandı',
 		'Sinan’ın “ustalık eserim” dediği camiye ziyaretçi akını',
 		'Kırkpınar’da altın kemer sahibini buldu: er meydanı coştu',
 	]),
-	KM('dn-km4', 2, 16, 'tarihci', [
+	KM('dn-km4', 1, 16, 'tarihci', [
 		'Cumalıkızık köyü, 2014’te “Osmanlı’nın doğuşu” başlığıyla UNESCO Dünya Mirası oldu.',
 		'Yeşil Türbe’nin firuze çinileri Çelebi Mehmed’in sandukasını örter.',
 		'Rivayete göre Karagöz ile Hacivat’ın hikâyesi buradaki bir cami inşaatında başlar ve biter.',
@@ -489,7 +489,7 @@ export const KIMIM_SAMPLES = [
 		'Yeşil fıstığı ince döv; dünya onu bu şehrin adıyla anar.',
 		'Son adım: AB tescilli baklavanı şerbetle ve kaymakla servis et.',
 	]),
-	KM('dn-km6', 2, 17, 'bilmece', [
+	KM('dn-km6', 1, 17, 'bilmece', [
 		'Türkiye’nin en büyük adası Gökçeada bana bağlanır,',
 		'Assos’un sütunları Ege’ye karşı uzanır,',
 		'Homeros’un Truva’sı toprağımda saklanır,',
@@ -532,10 +532,10 @@ export const KIMIM_SAMPLES = [
 		'Anıtkabir’de nöbet değişimini izledik, tüylerim diken diken!',
 	]),
 	KM('dn-km12', 2, 65, 'dedektif', [
-		'Şüpheli en son, bir adadaki 10. yüzyıldan kalma Akdamar Kilisesi’nde görüldü.',
 		'Ses kaydında Muradiye Şelalesi’nin uğultusu duyuluyor.',
-		'Ayak izleri Türkiye’nin en büyük gölünün sodalı kıyısında bitiyor.',
 		'Olay yerinde yarım kalmış bir kahvaltı: otlu peynir ve murtuğa.',
+		'Şüpheli en son, bir adadaki 10. yüzyıldan kalma Akdamar Kilisesi’nde görüldü.',
+		'Ayak izleri Türkiye’nin en büyük gölünün sodalı kıyısında bitiyor.',
 		'Tek tanık: bir gözü mavi, bir gözü yeşil, beyaz bir kedi.',
 	]),
 	KM('dn-km13', 2, 63, 'rehber', [
