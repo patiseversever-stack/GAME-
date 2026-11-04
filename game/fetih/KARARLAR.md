@@ -107,3 +107,7 @@ Kaynak: kullanıcının cevapları (2026-11-02). Kodlamaya sorular bitince geçi
 | Spor içeriği | Spor aletleri · spor sahaları (kuşbakışı çizgiler) · geleneksel Türk sporları (yağlı güreş, cirit, okçuluk…); hareket siluetleri yok |
 | Meslek içeriği | Eski ve kaybolan meslekler · günümüz meslekleri · meslek aletleri · usta-çırak zanaatları |
 | Bayrak sayısı | 100+ ülke (kodla çizilir) |
+| Üslup havuzu | Supercell kalitesinde 3D · gerçekçi fotoğraf · klasik yağlı boya · Yıldızlı Gece fırçası (Van Gogh) · Osmanlı minyatürü · eski gravür · Japon ahşap baskısı (yalnız telifi dolmuş ustaların üslubu; yaşayan sanatçı adı yok) |
+| Üslup dağılımı | Konuya göre (tarih sahneleri minyatür/yağlı boya, hayvanlar gerçekçi, uzay Yıldızlı Gece, eşyalar 3D…), konu içinde birkaç sürpriz |
+| Tablo soruları | 50 tablo; sorular: tablonun adı · ressamı · Türk ressamlar; yarısı dünya klasikleri, yarısı Türk ve Osmanlı (yalnız kamu malı: ressam en az 70 yıl önce ölmüş); açılış ayrıntıdan bütüne |
+| Tablo kaynağı | ChatGPT yeniden üretir (kullanıcı seçimi); her biri aslına sadakat için tek tek denetlenir, aslına benzemeyen reddedilir |
