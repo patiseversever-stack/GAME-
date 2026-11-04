@@ -80,3 +80,26 @@ Kaynak: kullanıcının cevapları (2026-11-02). Kodlamaya sorular bitince geçi
 6. Jokerler maç içinde kazanılır.
 7. Çevrimiçi: canlı izleme + izleyici tahmini (+20), zincirde 8 sn hedef seçimi, kopan oyuncu her an dönebilir.
 8. Her aşamada: benzetim (test/sim.mjs) ile süre/bitiş nedeni ölçümü, önce/sonra görseli, oyun + defter yayını.
+
+## Göz Kararı (v1.6, görselli soru tipi; emojinin yerine) — kullanıcı anketi
+
+| Konu | Karar |
+|---|---|
+| Emoji | Maçtan tamamen kalktı (veri galeride durur) |
+| Ad | Göz Kararı |
+| Konular | Hayvanlar (yarı Türkiye, yarı dünya) · Dinozor ve deniz canlıları · İcatlar · Genel tarih sahneleri (Türk + dünya, gerçek kişi yüzü yok) · Uzay · Bilim aletleri · Doğa olayları · Eşyalar ve aletler · Eski ev eşyaları · Ulaşım araçları · Meslekler · Spor · El sanatları · Bayraklar |
+| Görseli kim üretir | Kullanıcı ChatGPT ile (stil seçimi bekliyor: A oyun stili 3D / B gerçekçi foto / C düz çizim); bayraklar kodla çizilir (yapay zekâ ayrıntıyı bozar) |
+| Sayı | Konu başına 20 (~260 görsel + bayraklar); görseller ayrı dosyadan yüklenir |
+| Üretim akışı | Bütün komut listesi bir kerede; kullanıcı hepsini üretip toplu yükler |
+| Gösterim | Bulanıktan netleşir · yakından uzaklaşır · siluet (her soru birini kullanır); bayrak parça parça açılır |
+| Cevap | 4 şık; çeldiriciler zorluğa göre (kolayda farklı, zorda benzer görünen) |
+| Soru metni | İpuçlu tek cümle ("1877'de sesi ilk kez kaydedip çalan bu icat hangisi?") |
+| Cevap sonrası | Görsel tamamen netleşir + tek satır ilginç bilgi |
+| Puan | Erken bilen çok puan (100 → 40) |
+| Süre | 20 sn |
+| Zorluk | Dengeli (⅓ kolay, ⅓ orta, ⅓ zor) |
+| Bayraklar | Tanınmış ülkeler + benzer bayrak tuzakları (Çad–Romanya, İrlanda–Fildişi, Endonezya–Monako, Hollanda–Lüksemburg) |
+| Sıklık | Sık (maçta 4–6); anlar: düello, yayılma, kale kuşatması (altın soruda yok) |
+| Jokerler | Bu tipte joker yok |
+| Kart | Görsel orta boy (harita arkada görünür kalır) |
+| Görsel yoksa | O soru maçta hiç çıkmaz (yedek çizim gösterilmez) |
