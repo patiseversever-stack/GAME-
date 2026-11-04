@@ -103,3 +103,7 @@ Kaynak: kullanıcının cevapları (2026-11-02). Kodlamaya sorular bitince geçi
 | Jokerler | Bu tipte joker yok |
 | Kart | Görsel orta boy (harita arkada görünür kalır) |
 | Görsel yoksa | O soru maçta hiç çıkmaz (yedek çizim gösterilmez) |
+| Uzay içeriği | Gezegenler ve uydular · uzay araçları (logosuz) · gök olayları (tutulma, kuyruklu yıldız, Ay evreleri) · galaksi ve bulutsular |
+| Spor içeriği | Spor aletleri · spor sahaları (kuşbakışı çizgiler) · geleneksel Türk sporları (yağlı güreş, cirit, okçuluk…); hareket siluetleri yok |
+| Meslek içeriği | Eski ve kaybolan meslekler · günümüz meslekleri · meslek aletleri · usta-çırak zanaatları |
+| Bayrak sayısı | 100+ ülke (kodla çizilir) |
