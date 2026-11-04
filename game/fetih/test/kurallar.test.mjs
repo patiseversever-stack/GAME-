@@ -193,6 +193,7 @@ console.log('5) Kalkan kuralı');
 	// a) insan yalnız savunduğu düelloda kalkan kurmayı dener: hep reddedilmeli
 	let blocked = 0;
 	let tried = 0;
+	let setUp = 0; // saldırı/yayılmada başarıyla kurulan kalkan
 	const tryIn = (when) =>
 		makeUI({
 			question(m, ctx) {
@@ -205,7 +206,10 @@ console.log('5) Kalkan kuralı');
 						ok(!r.ok, 'savunduğu düelloda kalkan kuruldu');
 						ok(row && !row.usable && row.why.includes('önce kurulur'), 'joker çubuğu savunmada kalkanı kullanılabilir gösteriyor');
 						if (!r.ok) blocked++;
-					} else ok(r.ok, 'saldırı ya da yayılma sorusunda kalkan kurulamadı: ' + r.reason);
+					} else {
+						ok(r.ok, 'saldırı ya da yayılma sorusunda kalkan kurulamadı: ' + r.reason);
+						if (r.ok) setUp++;
+					}
 				}
 				const b = ctx.human ? ctx.T.bot(ctx.v, 0.6, m.R) : null;
 				return { human: b ? { value: b.value, time: b.time } : null };
@@ -224,8 +228,10 @@ console.log('5) Kalkan kuralı');
 	let armed = 0;
 	for (let k = 0; k < 6; k++) {
 		const m = new Match(makeApp(), tryIn((ctx, me) => ctx.defender !== me), { mode: '1v1', length: 'quick', region: REGIONS[k % 7], seed: 1300 + k, persist: false });
+		// maçta en az bir kez kuruldu mu (kalan hak sayısına bakılmaz: maç içi ödül yeni kalkan verebilir)
+		const before = setUp;
 		await m.run();
-		if (m.humanPlayer.jk.kalkan.left === 0) armed++;
+		if (setUp > before) armed++;
 	}
 	console.log(`   savunmada ${blocked}/${triedA} deneme reddedildi; saldırı/yayılmada ${armed}/6 maçta kuruldu`);
 	ok(blocked > 5 && blocked === triedA && armed === 6, 'kalkan kuralı sınanamadı');

@@ -101,7 +101,7 @@ export const chainCapFor = (mapSize, players) => clamp(Math.round((mapSize / Mat
  * başkentine dokunup tek kişilik bir soru çözersin; bilirsen bir kule geri gelir. O tur saldırı yapılmaz.
  * Soru tipleri tek kişiyle anlamlı olanlar (bildi/bilemedi).
  */
-export const REPAIR_TYPES = ['choice', 'tf', 'odd', 'hilo', 'proverb', 'emoji', 'riddle'];
+export const REPAIR_TYPES = ['choice', 'tf', 'odd', 'hilo', 'proverb', 'riddle']; // (emoji v1.6'da maçtan kalktı)
 
 /**
  * Maç içi joker ödülü (v2, KARARLAR 4): her 3 fetihte (düşman ili ya da tarafsız il) rastgele bir joker; bir oyuncuyu
