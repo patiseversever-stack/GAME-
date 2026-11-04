@@ -13,15 +13,18 @@ const CSS = /* css */ `
 .fl-hl{position:relative;display:block;min-height:0;padding:0;border:0;border-radius:0;background:none;box-shadow:none;color:inherit;font:inherit;text-align:left;cursor:pointer;
   touch-action:manipulation;transition:transform .16s cubic-bezier(.3,1.4,.5,1),opacity .3s,filter .35s;-webkit-tap-highlight-color:transparent;animation:flHlIn .42s cubic-bezier(.2,1.25,.4,1) both}
 .fl-hl.b{margin-left:-16px;animation-name:flHlInB;animation-delay:.06s}
-.fl-hl .pl{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:space-between;padding:14px 26px 14px 14px;overflow:hidden}
+.fl-hl .pl{position:absolute;inset:0;display:block;overflow:hidden}
 .fl-hl.a .pl{clip-path:polygon(0 0,100% 0,calc(100% - 26px) 100%,0 100%);background:linear-gradient(165deg,#ffffff,#e6e9f1);color:#0b0c12}
-.fl-hl.b .pl{clip-path:polygon(26px 0,100% 0,100% 100%,0 100%);padding:14px 14px 14px 34px;background:linear-gradient(165deg,#2a2f42,#171a26);color:#fff;text-align:right;align-items:flex-end}
+.fl-hl.b .pl{clip-path:polygon(26px 0,100% 0,100% 100%,0 100%);background:linear-gradient(165deg,#2a2f42,#171a26);color:#fff;text-align:right}
 .fl-hl.b .pl::before{content:'';position:absolute;inset:0;clip-path:inherit;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);pointer-events:none}
-.fl-hl .nm{display:block;max-width:100%;font:italic 900 28px/0.98 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.01em;text-transform:uppercase;text-wrap:balance;
-  overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
-.fl-hl.long .nm{font-size:23px}
-.fl-hl.xlong .nm{font-size:19px}
-.fl-hl .vl{display:flex;align-items:baseline;gap:5px;min-height:44px}
+/* isim: ilk satır tam genişlik, alt satırlar VS elmasının çevresinden dolanır (iç kenarda yüzen boşluk); yazı boyu JS'te kalan
+   yüksekliğe sığana kadar küçülür (kelime bölünmez) */
+.fl-hl .nm{position:absolute;top:14px;left:14px;right:18px;display:block;font:italic 900 28px/1.02 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.01em;text-transform:uppercase;text-wrap:balance;overflow-wrap:normal;word-break:normal;hyphens:none}
+.fl-hl .nm::before{content:'';float:right;width:38px;height:92px;margin-top:22px}
+.fl-hl.b .nm::before{float:left}
+.fl-hl.b .nm{left:30px;right:14px}
+.fl-hl .vl{position:absolute;left:14px;right:30px;bottom:16px;display:flex;align-items:baseline;gap:5px;min-height:44px;white-space:nowrap}
+.fl-hl.b .vl{left:30px;right:14px}
 .fl-hl.b .vl{flex-direction:row-reverse}
 .fl-hl .val{font:italic 900 44px/1 'Barlow Condensed','Lilita One',sans-serif;font-variant-numeric:tabular-nums;color:transparent;-webkit-text-stroke:1.5px currentColor;opacity:.32;transition:opacity .25s,color .25s}
 .fl-hl.a .val{-webkit-text-stroke-color:#0b0c12}
@@ -47,27 +50,35 @@ const CSS = /* css */ `
 .fl-hl.right{opacity:1!important;filter:drop-shadow(0 0 14px rgba(255,200,58,.55)) drop-shadow(0 6px 10px rgba(0,0,0,.45));animation:flHlWin .55s cubic-bezier(.3,1.6,.5,1)}
 .fl-hl.right .bar i{background:#ffc83a;opacity:1}
 .fl-hl.right .pl::after{transform:scaleX(1);background:#ffc83a}
-.fl-hl.right::after{content:'♛ DOĞRU';position:absolute;bottom:-12px;z-index:3;padding:3px 10px;background:#ffc83a;color:#1b1200;font:italic 900 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;transform:skewX(-10deg);animation:flq-pop .4s .35s cubic-bezier(.3,1.6,.5,1) both}
+.fl-hl.right::after{content:'♛ DOĞRU';position:absolute;bottom:-12px;z-index:3;padding:3px 10px;background:#ffc83a;color:#1b1200;font:italic 900 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;transform:skewX(-10deg);animation:flHlTag .4s .35s cubic-bezier(.3,1.6,.5,1) both}
 .fl-hl.a.right::after{left:14px}.fl-hl.b.right::after{right:14px}
 .fl-hl.lose{opacity:.5!important;filter:grayscale(.7)}
-.fl-hl .fl-who{position:absolute;top:-8px;z-index:3;width:16px;height:16px;border-radius:50%;box-shadow:0 0 0 2.5px #0b0c12,0 0 0 4px rgba(255,255,255,.85)}
-.fl-hl.a .fl-who{right:40px}.fl-hl.b .fl-who{left:44px}
-.fl-hl.a .fl-who+.fl-who{right:62px}.fl-hl.b .fl-who+.fl-who{left:66px}
-.fl-hl.a .fl-who+.fl-who+.fl-who{right:84px}.fl-hl.b .fl-who+.fl-who+.fl-who{left:88px}
+.fl-hl.show.pick::before{display:none}
+/* kim neyi seçti: isim ile değerin arasındaki boşlukta, levhanın dış kenarına yaslı portreler (VS elmasından uzak) */
+.fl-hl .wh{position:absolute;left:14px;bottom:66px;display:flex;align-items:center;gap:5px;min-height:26px;animation:flq-pop .35s .2s cubic-bezier(.3,1.6,.5,1) both}
+.fl-hl.b .wh{left:auto;right:14px;justify-content:flex-end}
+.fl-q .fl-hl .wh .fl-who,.fl-hl .wh .fl-who{position:relative;inset:auto;top:auto;right:auto;left:auto;margin:0;flex:none;width:24px;height:24px;border-radius:50%;
+  border:2px solid currentColor;box-shadow:0 2px 6px rgba(0,0,0,.35);overflow:hidden;animation:none}
+.fl-hl .wh .fl-who .fl-avs{width:100%;height:100%;display:block}
 /* VS elması: kesiğin tam ortasında */
 .fl-hilo i.vs{position:absolute;left:50%;top:50%;z-index:4;width:46px;height:46px;margin:-23px 0 0 -31px;display:grid;place-items:center;font-style:normal;
   background:#0b0c12;transform:rotate(45deg);box-shadow:0 0 0 2px #ffc83a,0 0 0 5px #0b0c12,0 6px 16px rgba(0,0,0,.55);animation:flHlVs .45s .18s cubic-bezier(.3,1.7,.5,1) both}
 .fl-hilo i.vs b{transform:rotate(-45deg);font:italic 900 19px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffc83a}
-.fl-hilo .df{position:absolute;left:50%;bottom:-34px;z-index:4;transform:translateX(-50%) skewX(-10deg);white-space:nowrap;padding:5px 12px;background:#0b0c12;
-  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);font:italic 800 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#fff;animation:flq-pop .4s .9s cubic-bezier(.3,1.6,.5,1) both}
+.fl-hilo .df{position:absolute;left:50%;bottom:-34px;z-index:4;transform:translateX(-50%) skewX(-10deg);white-space:nowrap;max-width:calc(100% - 12px);overflow:hidden;text-overflow:ellipsis;padding:5px 12px;background:#0b0c12;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);font:italic 800 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#fff;animation:flHlDf .4s .9s cubic-bezier(.3,1.6,.5,1) both}
+.fl-hilo .df.sm{font-size:11px;letter-spacing:.08em;padding:5px 9px}
+.fl-hilo .df.sm b{font-size:13px}
 .fl-hilo .df b{color:#ffc83a;font-weight:900;letter-spacing:.04em;font-size:15px}
 .fl-hilo.done{margin-bottom:30px}
 @keyframes flHlIn{from{opacity:0;transform:translateX(-26px) skewX(6deg)}}
 @keyframes flHlInB{from{opacity:0;transform:translateX(26px) skewX(6deg)}}
 @keyframes flHlVs{from{opacity:0;transform:rotate(45deg) scale(.3)}}
 @keyframes flHlWin{40%{transform:translateY(-6px) scale(1.03)}}
+/* (genel flq-pop transform'u ezer: ortalama ve eğiklik kaybolurdu) */
+@keyframes flHlTag{from{opacity:0;transform:skewX(-10deg) scale(.5)}to{opacity:1;transform:skewX(-10deg)}}
+@keyframes flHlDf{from{opacity:0;transform:translateX(-50%) skewX(-10deg) scale(.5)}to{opacity:1;transform:translateX(-50%) skewX(-10deg)}}
 @media (prefers-reduced-motion:reduce){.fl-hl,.fl-hilo i.vs,.fl-hl.right,.fl-hl.right::after,.fl-hilo .df{animation:none}}
-@media (max-height:700px){.fl-hilo{height:150px}.fl-hl .nm{font-size:24px}.fl-hl.long .nm{font-size:20px}.fl-hl .val{font-size:36px}}
+@media (max-height:700px){.fl-hilo{height:156px}.fl-hl .val{font-size:38px}}
 /* odd */
 .fl-odd .fl-opt{min-height:64px;justify-content:center;text-align:center;font-size:17px}
 .fl-odd .fl-opt i{position:absolute;top:5px;left:5px;width:20px;height:20px;font-size:12px}
@@ -134,15 +145,46 @@ export const hilo = {
 		const mo = unit === 'MÖ' || unit === 'MS';
 		// yıl karşılaştırması (icat, kuruluş, tamamlanma yılı…): güç çubuğu anlamsız, fark "yıl" olarak söylenir
 		const year = mo || /yıl/i.test(v.q.prop || '') || (!unit && v.sides.every((s) => Number.isInteger(s.v) && s.v >= 1000 && s.v <= 2100));
-		const size = (t) => (t.length > 22 ? ' xlong' : t.length > 13 ? ' long' : '');
 		el.innerHTML = `<div class="fl-hilo${year ? ' yil' : ''}" lang="tr">${v.sides
 			.map(
 				(s, i) =>
-					`<button class="fl-hl ${'ab'[i]}${size(s.t)}" data-i="${i}" aria-label="${esc(s.t)}"><span class="pl"><span class="nm">${esc(s.t)}</span><span class="vl"><b class="val">?</b><u>${esc(unit)}</u></span><span class="bar"><i></i></span></span></button>`,
+					`<button class="fl-hl ${'ab'[i]}" data-i="${i}" aria-label="${esc(s.t)}"><span class="pl"><span class="nm">${esc(s.t)}</span><span class="vl"><b class="val">?</b><u>${esc(unit)}</u></span><span class="bar"><i></i></span></span></button>`,
 			)
 			.join('')}<i class="vs"><b>VS</b></i></div>`;
 		const box = el.querySelector('.fl-hilo');
 		const btns = [...el.querySelectorAll('.fl-hl')];
+		// sığdır: isim en çok 3 satır ve yatayda taşmadan (uzun tek kelime de), değer + birim levhanın içinde
+		// isim: levhada değer satırının (ve varsa oyuncu rozetlerinin) üstünde kalan yüksekliğe sığana kadar küçülür
+		const fitName = (b) => {
+			const nm = b.querySelector('.nm');
+			const wh = b.querySelector('.wh');
+			// isim üstten başlar; altında rozet şeridi (varsa) ve değer satırı vardır
+			const floor = (wh || b.querySelector('.vl')).getBoundingClientRect().top - 6;
+			const avail = floor - nm.getBoundingClientRect().top;
+			// yazının gerçek yüksekliği satırlardan (kutunun scrollHeight'ı VS çevresindeki yüzen boşlukla şişer)
+			const rg = document.createRange();
+			const textH = () => {
+				rg.selectNodeContents(nm);
+				let bot = 0;
+				for (const r of rg.getClientRects()) bot = Math.max(bot, r.bottom);
+				return bot ? bot - nm.getBoundingClientRect().top : 0;
+			};
+			let px = 28;
+			nm.style.fontSize = `${px}px`;
+			while (px > 15 && (nm.scrollWidth > nm.clientWidth + 1 || textH() > avail)) nm.style.fontSize = `${(px -= 1)}px`;
+		};
+		const fitVal = (b) => {
+			const vl = b.querySelector('.vl');
+			const val = b.querySelector('.val');
+			const u = b.querySelector('.vl u');
+			// genişlik çocukların toplamından (b levhasında satır sağdan sola: taşma solda kalır, scrollWidth onu saymaz)
+			const need = () => val.offsetWidth + (u.textContent ? u.offsetWidth + 5 : 0);
+			let px = parseFloat(getComputedStyle(val).fontSize) || 44;
+			while (px > 20 && need() > vl.clientWidth) val.style.fontSize = `${(px -= 2)}px`;
+		};
+		const fit = () => btns.forEach(fitName);
+		fit();
+		requestAnimationFrame(fit); // yazı tipi ve yerleşim oturduktan sonra bir kez daha
 		let done = false;
 		for (const b of btns)
 			b.addEventListener('click', () => {
@@ -177,6 +219,10 @@ export const hilo = {
 					const val = b.querySelector('.val');
 					val.textContent = year && !mo ? String(Math.round(vals[i] * 0.6)) : '0';
 					b.classList.add('show', i === v.right ? 'right' : 'lose');
+					// son değerle ölç: sayım sırasında boy oynamasın diye en geniş hal (son değer) önceden yazılıp sığdırılır
+					val.textContent = fmtNum(vals[i]);
+					fitVal(b);
+					val.textContent = year && !mo ? String(Math.round(vals[i] * 0.6)) : '0';
 					countUp(val, vals[i], year && !mo ? 700 : 950);
 					// güç çubuğu: büyüklükle orantılı (en küçüğü de görünsün diye %6 taban)
 					const bar = b.querySelector('.bar i');
@@ -189,9 +235,15 @@ export const hilo = {
 				const du = year ? 'yıl' : unit;
 				const num = Number.isInteger(d) ? fmtNum(d) : Number(d.toFixed(1)).toLocaleString('tr-TR');
 				const kat = !year && ratio >= 2 ? ` · <b>${ratio >= 10 ? Math.round(ratio) : ratio.toFixed(1).replace('.', ',')}</b> KAT` : '';
-				box.insertAdjacentHTML('beforeend', `<span class="df">FARK ${approx ? '≈ ' : ''}<b>${num}</b> ${esc(du)}${kat}</span>`);
+				box.insertAdjacentHTML('beforeend', `<span class="df${num.length + du.length + (kat ? 9 : 0) > 14 ? ' sm' : ''}">FARK ${approx ? '≈ ' : ''}<b>${num}</b> ${esc(du)}${kat}</span>`);
 				box.classList.add('done');
-				for (const r of results) if (r.value != null) btns[r.value]?.insertAdjacentHTML('beforeend', `<b class="fl-who" style="background:${r.color}"></b>`);
+				const dots = btns.map(() => []);
+				for (const r of results) if (r.value != null && dots[r.value]) dots[r.value].push(`<b class="fl-who" style="background:${r.color}"></b>`);
+				btns.forEach((b, i) => {
+					if (!dots[i].length) return;
+					b.querySelector('.vl').insertAdjacentHTML('beforebegin', `<span class="wh">${dots[i].join('')}</span>`);
+					fitName(b);
+				});
 			},
 			destroy() {},
 		};

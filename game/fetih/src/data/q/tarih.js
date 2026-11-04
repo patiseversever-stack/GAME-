@@ -226,7 +226,7 @@ export default [
 	{ id: "tar-ma-012", cat: "tarih", diff: 2, type: "match", q: "Yunan tanrılarını alanlarıyla eşleştir.", pairs: [["Poseidon", "Denizler"], ["Hades", "Ölüler diyarı"], ["Athena", "Bilgelik"]], tag: "mitoloji" },
 	{ id: "tar-ma-013", cat: "tarih", diff: 2, type: "match", q: "Yunan tanrılarını Roma karşılıklarıyla eşleştir.", pairs: [["Ares", "Mars"], ["Afrodit", "Venüs"], ["Poseidon", "Neptün"]], tag: "mitoloji" },
 	{ id: "tar-hl-012", cat: "tarih", diff: 2, type: "hilo", q: "Hangisi daha geç icat edildi?", left: { t: "Konserve kutusu", v: 1810 }, right: { t: "Konserve açacağı", v: 1858 }, prop: "icat yılı" },
-	{ id: "tar-hl-013", cat: "tarih", diff: 2, type: "hilo", q: "Hangisi daha uzun ayakta kaldı?", left: { t: "Bizans İmparatorluğu", v: 1100 }, right: { t: "Osmanlı Devleti", v: 620 }, prop: "ömrü", unit: "yıl (yaklaşık)" },
+	{ id: "tar-hl-013", cat: "tarih", diff: 2, type: "hilo", q: "Hangisi daha uzun ayakta kaldı?", left: { t: "Bizans", v: 1100 }, right: { t: "Osmanlı Devleti", v: 620 }, prop: "ömrü", unit: "yıl (yaklaşık)" },
 	{ id: "tar-hl-003", cat: "tarih", diff: 2, type: "hilo", q: "Hangisi daha eskidir?", left: { t: "Göbeklitepe", v: 9600 }, right: { t: "Çatalhöyük", v: 7400 }, prop: "yapım tarihi (yaklaşık)", unit: "MÖ" },
 	{ id: "tar-hl-006", cat: "tarih", diff: 3, type: "hilo", q: "Hangisi daha geç tamamlandı?", left: { t: "Özgürlük Heykeli", v: 1886 }, right: { t: "Eyfel Kulesi", v: 1889 }, prop: "tamamlanma yılı" },
 	{ id: "tar-hl-007", cat: "tarih", diff: 2, type: "hilo", q: "Hangisi daha uzun yaşadı?", left: { t: "Atatürk", v: 57 }, right: { t: "Fatih Sultan Mehmet", v: 49 }, prop: "yaşam süresi", unit: "yıl" },
