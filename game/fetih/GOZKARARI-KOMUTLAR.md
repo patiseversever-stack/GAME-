@@ -32,8 +32,9 @@ Bayraklar bu listede yok, onları kodla çiziyorum (yapay zekâ bayrak ayrıntı
 1. **Yeni bir ChatGPT sohbeti aç**, en başta aşağıdaki **başlangıç mesajını** bir kez yapıştır.
 2. **Paketleri sırayla yapıştır.** Aşağıdaki "Paketler" bölümünde 31 paket var, her biri 10 komut. Her paket tek kutu, tek kopyala-yapıştır.
 3. **Tablolar paketlerinden önce** (Paket 27, GK-261'den itibaren) **tablo ek mesajını** bir kez yapıştır.
-4. **ZIP'i indirip bana at.** Her paketin sonunda ChatGPT'den 10 görseli `Paket-05.zip` gibi tek ZIP'te, dosya adları `GK-047.png` biçiminde vermesini isteyen bir satır var; paketle birlikte kopyalanıyor. ZIP'i olduğu gibi buraya at, ben açarım.
-   - ChatGPT ZIP yapamazsa (bazen ürettiği görsellere kendi dosya aracından ulaşamıyor) "görselleri tek tek indirilebilir ver" de; tek tek de atabilirsin, hangisinin hangi maddeye ait olduğunu kendim bulurum.
+4. **En sonda tek ZIP iste.** Bütün paketler bitince aşağıdaki **ZIP mesajını** yapıştır; ChatGPT 310 görselin hepsini `GozKarari.zip` içinde `GK-001.png … GK-310.png` adlarıyla verir. O tek ZIP'i buraya at, ben açarım.
+   - **Yeni sohbete geçmek zorunda kalırsan** (kurallar kayarsa ya da sohbet kilitlenirse) geçmeden önce aynı ZIP mesajını o sohbette de yapıştır: önceki sohbetin görselleri yeni sohbete taşınmaz. Sonra elinde 2–3 ZIP olur, hepsini at, birleştirmeyi ben yaparım.
+   - ChatGPT ZIP'i hazırlarken "görsellere erişemiyorum" derse (bazen ürettiği görsellere kendi dosya aracından ulaşamıyor) tek tek indirip at; hangisinin hangi maddeye ait olduğunu kendim bulurum.
 5. Her görseli tek tek denetlerim: yazı çıkmış mı, nesne doğru mu, tablo aslına benziyor mu. Uymayanları sana tek satırlık düzeltilmiş komutla geri veririm.
 
 **Bilmen gerekenler**
@@ -53,7 +54,13 @@ Kurallar (her görselde geçerli):
 - Konu tek, net ve ortada olacak; kenarlardan taşmayacak, arka plan sade olacak.
 - Komutta yazan üsluba tam sadık kal; üslupları birbirine karıştırma.
 - Her görselin altına yalnızca komutun numarasını yaz (ör. GK-047).
-- Bir paketteki bütün görselleri bitirince hepsini tek bir ZIP dosyası olarak ver. ZIP'teki her dosyanın adı komut numarası olsun (ör. GK-047.png), ZIP'in adı paketin adı olsun (ör. Paket-05.zip).
+- Ürettiğin her görseli, adı komut numarası olacak şekilde (ör. GK-047.png) sakla; en sonda hepsini tek bir ZIP dosyasında isteyeceğim.
+```
+
+## ZIP mesajı (en sonda bir kez)
+
+```
+Bu sohbette ürettiğin bütün görselleri tek bir ZIP dosyasında ver. ZIP'in adı GozKarari.zip olsun; içindeki her dosyanın adı komut numarası olsun (GK-001.png, GK-002.png …). Eksik ya da üretemediğin numara varsa ZIP'ten sonra listesini yaz.
 ```
 
 ## Tablo ek mesajı (Paket 27'den önce bir kez)
@@ -96,8 +103,6 @@ An Anatolian wild sheep ram (Konya wild sheep) standing on a dry steppe hill, fu
 
 GK-010 · Gerçekçi fotoğraf
 A pearl mullet (Alburnus tarichi), a small slender fish with a greyish-green back, shining pearly silver sides and a forked tail, swimming upstream in a shallow, clear, rocky stream, one fish sharp in the centre of the frame with a few others softly blurred behind it, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-01.zip adlı tek ZIP dosyasında ver; dosya adları GK-001.png … GK-010.png olsun.
 ```
 
 ### Paket 2 · GK-011–GK-020 · Hayvanlar
@@ -132,8 +137,6 @@ A Malayan tapir standing at the edge of a forest stream, full body in side view 
 
 GK-020 · Eski gravür
 A platypus standing on a riverbank in side view, in the centre of the frame: a low, flat, furry body, a wide flat duck-like bill, webbed front feet, clawed hind feet, small eyes and a broad flat beaver-like tail, plain background, 19th century encyclopedia engraving, fine cross-hatched line work, sepia ink on aged paper, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-02.zip adlı tek ZIP dosyasında ver; dosya adları GK-011.png … GK-020.png olsun.
 ```
 
 ### Paket 3 · GK-021–GK-030 · Dinozor ve deniz canlıları
@@ -168,8 +171,6 @@ A scientifically accurate Velociraptor standing in side view in the centre of th
 
 GK-030 · Supercell 3D
 A Spinosaurus standing in side profile, the whole animal in the centre of the frame: a large predatory dinosaur with a long narrow crocodile-like snout full of conical teeth, a tall sail on its back held up by long bony spines, short hind legs, strong arms with large claws and a deep paddle-like tail, isolated against a plain flat pale teal background, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-03.zip adlı tek ZIP dosyasında ver; dosya adları GK-021.png … GK-030.png olsun.
 ```
 
 ### Paket 4 · GK-031–GK-040 · Dinozor ve deniz canlıları
@@ -204,8 +205,6 @@ A deep-sea anglerfish in pitch-black water in the centre of the frame: a round d
 
 GK-040 · Eski gravür
 A narwhal swimming in side profile, the whole animal in the centre of the frame: a mottled grey-and-white spotted whale with a rounded head, no dorsal fin, small flippers, a notched tail fluke, and a single long straight spiral tusk projecting forward from the left side of its upper jaw, alone on a plain empty background, 19th century encyclopedia engraving, fine cross-hatched line work, sepia ink on aged paper, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-04.zip adlı tek ZIP dosyasında ver; dosya adları GK-031.png … GK-040.png olsun.
 ```
 
 ### Paket 5 · GK-041–GK-050 · İcatlar
@@ -240,8 +239,6 @@ An old master still life of an antique mariner's compass: a round brass compass 
 
 GK-050 · Supercell 3D
 An early incandescent light bulb from 1879 as a single centered object standing upright: a pear-shaped clear glass bulb with a small pointed glass tip on top, a thin glowing horseshoe-shaped carbon filament held by two wires, a simple threaded metal base, the whole shape clearly outlined against a solid flat deep blue background, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-05.zip adlı tek ZIP dosyasında ver; dosya adları GK-041.png … GK-050.png olsun.
 ```
 
 ### Paket 6 · GK-051–GK-060 · İcatlar
@@ -276,8 +273,6 @@ The 1800 voltaic pile as a single centered object: a vertical column of alternat
 
 GK-060 · Eski gravür
 The first parachute descent in 1797 over Paris: high in the sky a large hydrogen balloon drifting away, below it a big round ribbed fabric canopy shaped like an umbrella with a small wicker basket hanging beneath it carrying one tiny anonymous figure, far below tiny crowds and rooftops, the canopy centered in the frame, 19th century encyclopedia engraving, fine cross-hatched line work, sepia ink on aged paper, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-06.zip adlı tek ZIP dosyasında ver; dosya adları GK-051.png … GK-060.png olsun.
 ```
 
 ### Paket 7 · GK-061–GK-070 · Genel tarih sahneleri
@@ -312,8 +307,6 @@ A spring day in Ankara in 1920: a modest two-story stone building with a red til
 
 GK-070 · Osmanlı minyatürü
 A winter scene in the Anatolian countryside in the early 1920s: a long caravan of ox-drawn carts with solid wooden wheels loaded with wooden ammunition crates and artillery shells, pulled along a snowy mountain road, small anonymous village women in headscarves and old men walking beside the oxen, snow-covered hills, no facial detail, Ottoman miniature painting, flat perspective, gold leaf details, vivid mineral pigments, fine outlines, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-07.zip adlı tek ZIP dosyasında ver; dosya adları GK-061.png … GK-070.png olsun.
 ```
 
 ### Paket 8 · GK-071–GK-080 · Genel tarih sahneleri
@@ -348,8 +341,6 @@ A dark underground ancient Egyptian tomb chamber lit by a single candle: piles o
 
 GK-080 · Eski gravür
 The first crewed Moon landing in 1969: a four-legged lunar lander with a foil-wrapped descent stage and an angular upper cabin standing on the gray dusty lunar surface, a single astronaut in a white spacesuit with a backpack seen from the side, a reflective visor fully covering the face, bootprints in the dust, a small flag on a pole, black sky with the Earth hanging above the horizon, no logos or emblems, 19th century encyclopedia engraving, fine cross-hatched line work, sepia ink on aged paper, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-08.zip adlı tek ZIP dosyasında ver; dosya adları GK-071.png … GK-080.png olsun.
 ```
 
 ### Paket 9 · GK-081–GK-090 · Uzay
@@ -384,8 +375,6 @@ A single giant white radio telescope: a huge parabolic dish antenna tilted towar
 
 GK-090 · Supercell 3D
 A generic six-wheeled planetary rover robot seen from the side, flat box-shaped body, tall mast with a camera head like two eyes, a jointed robotic arm reaching forward, six chunky wheels on rocker suspension, small rust-red rocks under its wheels, centered and fully inside the frame, plain flat pale sky-blue background, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, no flags, no insignia, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-09.zip adlı tek ZIP dosyasında ver; dosya adları GK-081.png … GK-090.png olsun.
 ```
 
 ### Paket 10 · GK-091–GK-100 · Uzay
@@ -420,8 +409,6 @@ A colorful nebula filling the frame: huge glowing clouds of gas and dust in mage
 
 GK-100 · Gerçekçi fotoğraf
 A scientifically accurate black hole in deep space: a perfectly black round shadow in the center, encircled by a thin bright photon ring, a glowing orange and golden accretion disk of hot gas seen nearly edge-on, its far side bent by gravity into a bright arc over the top and under the bottom of the shadow, scattered distant stars, centered and fully inside the frame, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-10.zip adlı tek ZIP dosyasında ver; dosya adları GK-091.png … GK-100.png olsun.
 ```
 
 ### Paket 11 · GK-101–GK-110 · Bilim aletleri
@@ -456,8 +443,6 @@ A single chunky laboratory Bunsen burner: a heavy round metal base, a short vert
 
 GK-110 · Supercell 3D
 A single chunky brass equal-arm balance scale: a central vertical pillar on a round base, a horizontal beam on top balanced perfectly level, two round shallow pans hanging from chains at each end, a few small cylindrical weights in one pan, centered, plain flat mint green background, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-11.zip adlı tek ZIP dosyasında ver; dosya adları GK-101.png … GK-110.png olsun.
 ```
 
 ### Paket 12 · GK-111–GK-120 · Bilim aletleri
@@ -492,8 +477,6 @@ A medieval copper alembic distillation apparatus: a round-bellied pot sitting ov
 
 GK-120 · Eski gravür
 An antique armillary sphere: a skeletal globe made of several interlocking metal rings, a wide tilted band crossing diagonally, a small solid ball at the very center, a vertical axis through the middle, mounted on an ornate stand with a horizontal ring and curved legs, centered on a plain background, 19th century encyclopedia engraving, fine cross-hatched line work, sepia ink on aged paper, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-12.zip adlı tek ZIP dosyasında ver; dosya adları GK-111.png … GK-120.png olsun.
 ```
 
 ### Paket 13 · GK-121–GK-130 · Doğa olayları
@@ -528,8 +511,6 @@ A 22-degree solar halo: a large thin circular ring of light around the bright mi
 
 GK-130 · Gerçekçi fotoğraf
 A desert mirage on a hot day: flat sandy ground stretching to the horizon, a shimmering silvery band that looks like a lake of water, in which distant dunes and a few palm trees appear reflected upside down, wavy heat haze, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-13.zip adlı tek ZIP dosyasında ver; dosya adları GK-121.png … GK-130.png olsun.
 ```
 
 ### Paket 14 · GK-131–GK-140 · Doğa olayları
@@ -564,8 +545,6 @@ Macro close-up of hoarfrost: delicate white feathery ice crystals and needles gr
 
 GK-140 · Japon ahşap baskısı
 A snow-capped cone-shaped mountain with a smooth stacked lens-shaped lenticular cloud hovering like a cap just above its summit, a few more saucer-shaped clouds in a pale blue sky, green foothills below, Japanese ukiyo-e woodblock print in the style of Hokusai, flat colors, bold outlines, textured paper, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-14.zip adlı tek ZIP dosyasında ver; dosya adları GK-131.png … GK-140.png olsun.
 ```
 
 ### Paket 15 · GK-141–GK-150 · Eşyalar ve aletler
@@ -600,8 +579,6 @@ A single Ottoman divit, a long slender engraved brass pen case made to be tucked
 
 GK-150 · Supercell 3D
 A small rectangular metal pencil sharpener with a single angled blade held by one screw, a yellow wooden pencil inserted in it and curly pencil shavings around it, close-up on a plain soft mint background, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-15.zip adlı tek ZIP dosyasında ver; dosya adları GK-141.png … GK-150.png olsun.
 ```
 
 ### Paket 16 · GK-151–GK-160 · Eşyalar ve aletler
@@ -636,8 +613,6 @@ A single large round traditional farm sieve with a wide bent-wood rim and a coar
 
 GK-160 · Supercell 3D
 A single classic ship anchor: a long vertical iron shank with a ring at the top, a horizontal stock bar near the top, and two curved arms at the bottom ending in pointed spade-shaped flukes, a short coil of rope tied to the ring, centered on a plain flat sky-blue background, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-16.zip adlı tek ZIP dosyasında ver; dosya adları GK-151.png … GK-160.png olsun.
 ```
 
 ### Paket 17 · GK-161–GK-170 · Eski ev eşyaları
@@ -672,8 +647,6 @@ A still life close-up of a small shallow tin-lined copper pan with two small loo
 
 GK-170 · Supercell 3D
 A single traditional copper Turkish coffee pot: a small body wider at the bottom and narrowing toward a flared pouring lip, with a long straight brass handle, centered on a plain flat light blue background, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-17.zip adlı tek ZIP dosyasında ver; dosya adları GK-161.png … GK-170.png olsun.
 ```
 
 ### Paket 18 · GK-171–GK-180 · Eski ev eşyaları
@@ -708,8 +681,6 @@ A single long, very thin straight wooden rolling pin, about the length of an arm
 
 GK-180 · Gerçekçi fotoğraf
 A single old wooden kitchen food cabinet with fine wire mesh screen panels on its doors and sides, standing on four short legs against a plain wall, bowls of cheese and a covered plate faintly visible behind the mesh, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-18.zip adlı tek ZIP dosyasında ver; dosya adları GK-171.png … GK-180.png olsun.
 ```
 
 ### Paket 19 · GK-181–GK-190 · Ulaşım araçları
@@ -744,8 +715,6 @@ A single 19th century steam locomotive in side view on rails: a long cylindrical
 
 GK-190 · Eski gravür
 A single traditional Anatolian ox cart in side view: a simple wooden cart bed with slanted side rails, two solid wooden disc wheels without spokes fixed to a wooden axle, and a long central pole yoked to two oxen, loaded with wooden crates, centered with empty margins, 19th century encyclopedia engraving, fine cross-hatched line work, sepia ink on aged paper, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-19.zip adlı tek ZIP dosyasında ver; dosya adları GK-181.png … GK-190.png olsun.
 ```
 
 ### Paket 20 · GK-191–GK-200 · Ulaşım araçları
@@ -780,8 +749,6 @@ A single Japanese rickshaw in side view on a quiet street: a light two-wheeled c
 
 GK-200 · Supercell 3D
 A single wooden dog sled on snow pulled by a team of six husky dogs in pairs, long thin runners curving up at the front, a cargo basket with a bundle, and a musher seen from behind in a fur parka, on a wide snowy plain, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-20.zip adlı tek ZIP dosyasında ver; dosya adları GK-191.png … GK-200.png olsun.
 ```
 
 ### Paket 21 · GK-201–GK-210 · Meslekler
@@ -816,8 +783,6 @@ An excavation trench divided by a taut string grid, its walls showing clearly la
 
 GK-210 · Supercell 3D
 An underwater scene in clear turquoise water: an anonymous scuba diver in a black wetsuit with a yellow air tank, a mask covering the face, long fins and a regulator releasing a column of silver bubbles, swimming above a colorful coral reef next to an old sunken clay amphora, small fish around; single scene centered, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-21.zip adlı tek ZIP dosyasında ver; dosya adları GK-201.png … GK-210.png olsun.
 ```
 
 ### Paket 22 · GK-211–GK-220 · Meslekler
@@ -852,8 +817,6 @@ An anonymous luthier's hands at a wooden workbench fitting a long slender wooden
 
 GK-220 · Klasik yağlı boya
 An anonymous leather craftsman at a wooden bench hand-stitching a brown leather horse riding saddle with an awl and waxed thread, bridles, harnesses and leather straps hanging on the wall behind, leather offcuts on the floor; face bent down and without detail; single scene centered and fully inside the frame, classical oil painting, rich chiaroscuro, dark background, visible canvas texture, old master style, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-22.zip adlı tek ZIP dosyasında ver; dosya adları GK-211.png … GK-220.png olsun.
 ```
 
 ### Paket 23 · GK-221–GK-230 · Spor
@@ -888,8 +851,6 @@ A straight top-down aerial view of a single blue hard court with crisp white lin
 
 GK-230 · Supercell 3D
 A straight top-down view of an indoor volleyball court: an orange rectangular playing area twice as long as it is wide, white boundary lines, a center line under a high net, an attack line on each side close to the net, and a light green free zone all around; no people, no advertising; the court centered and fully inside the frame, stylized 3D game art, soft clay-like materials, chunky readable shapes, bold saturated colors, warm key light with soft rim light, premium mobile game quality, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-23.zip adlı tek ZIP dosyasında ver; dosya adları GK-221.png … GK-230.png olsun.
 ```
 
 ### Paket 24 · GK-231–GK-240 · Spor
@@ -924,8 +885,6 @@ Two anonymous wrestlers in white shirts and loose white trousers stand chest to 
 
 GK-240 · Gerçekçi fotoğraf
 A festival field in winter sunlight: a single large camel standing calmly, its hump covered with a richly embroidered saddle cloth with tassels, small bells and woven pompoms on its neck and head, an anonymous handler beside it holding a rope; spectators small and blurred far behind; a peaceful show, no fighting; faces without detail; single subject centered, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-24.zip adlı tek ZIP dosyasında ver; dosya adları GK-231.png … GK-240.png olsun.
 ```
 
 ### Paket 25 · GK-241–GK-250 · El sanatları
@@ -960,8 +919,6 @@ Close-up of a very fine hand-knotted silk carpet: tiny dense knots, a lustrous s
 
 GK-250 · Gerçekçi fotoğraf
 Macro close-up of Turkish needle lace edging along the border of a white cotton headscarf: tiny three-dimensional flowers, leaves and buds made entirely of knotted colored silk thread in pink, green, yellow and purple; the lace fills the frame, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-25.zip adlı tek ZIP dosyasında ver; dosya adları GK-241.png … GK-250.png olsun.
 ```
 
 ### Paket 26 · GK-251–GK-260 · El sanatları
@@ -996,8 +953,6 @@ A single traditional Turkish shadow puppet made of thin translucent dyed leather
 
 GK-260 · Gerçekçi fotoğraf
 Close-up of a prayer bead string of polished jet-black stone beads with a soft glossy sheen, fine silver inlay lines on the beads, a long elongated end piece and a silver tassel, lying in a curve on a plain light linen cloth; the beads fill the frame, realistic professional photograph, natural light, sharp focus, high detail, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-26.zip adlı tek ZIP dosyasında ver; dosya adları GK-251.png … GK-260.png olsun.
 ```
 
 ### Paket 27 · GK-261–GK-270 · Tablolar
@@ -1032,8 +987,6 @@ A faithful full reproduction of the painting "Sunflowers" by Vincent van Gogh (1
 
 GK-270 · Tablo (aslına sadık)
 A faithful full reproduction of the painting "The Kiss" by Gustav Klimt (1907–1908), entire composition exactly as the original, accurate colors and details, public domain artwork, no frame, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo. A couple embrace at the edge of a small flowery meadow: the man in a golden robe patterned with black and white rectangles bends his head with an ivy wreath to kiss the cheek of a kneeling woman whose eyes are closed, her golden dress covered with colorful circles and flowers, flowers in her hair, both wrapped together in a single glowing golden halo shape, flat speckled gold-bronze background, real gold leaf look; square painting: fit the full painting within a 4:3 landscape canvas with plain dark museum wall on the sides, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-27.zip adlı tek ZIP dosyasında ver; dosya adları GK-261.png … GK-270.png olsun.
 ```
 
 ### Paket 28 · GK-271–GK-280 · Tablolar
@@ -1068,8 +1021,6 @@ A faithful full reproduction of the fresco "The School of Athens" by Raphael (15
 
 GK-280 · Tablo (aslına sadık)
 A faithful full reproduction of the painting "Wanderer above the Sea of Fog" by Caspar David Friedrich (c. 1818), entire composition exactly as the original, accurate colors and details, public domain artwork, no frame, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo. A man seen from behind in a dark green frock coat, holding a walking stick, stands on a dark rocky outcrop in the center foreground, his hair tousled by the wind, gazing out over a vast sea of white fog with rocky ridges and a few trees emerging, distant mountains on the horizon, a pale hazy sky, cool greys, blues and soft whites; vertical painting: fit the full painting within a 4:3 landscape canvas with plain dark museum wall on the sides, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-28.zip adlı tek ZIP dosyasında ver; dosya adları GK-271.png … GK-280.png olsun.
 ```
 
 ### Paket 29 · GK-281–GK-290 · Tablolar
@@ -1104,8 +1055,6 @@ A faithful full reproduction of the painting "The Hay Wain" by John Constable (1
 
 GK-290 · Tablo (aslına sadık)
 A faithful full reproduction of the painting "The Arnolfini Portrait" by Jan van Eyck (1434), entire composition exactly as the original, accurate colors and details, public domain artwork, no frame, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo. A pale merchant in a huge broad-brimmed black straw hat and a dark purple fur-trimmed tabard raises his right hand while holding the hand of a woman in a voluminous green dress with fur-lined sleeves and a white folded headdress, standing in a small bedroom with a red-curtained bed, a brass chandelier with a single lit candle, a small brown griffon dog at their feet, oranges on the windowsill, wooden pattens on the floor, a round convex mirror on the back wall reflecting the room, an open window at left, minute detail, glowing oil colors; vertical painting: fit the full painting within a 4:3 landscape canvas with plain dark museum wall on the sides, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-29.zip adlı tek ZIP dosyasında ver; dosya adları GK-281.png … GK-290.png olsun.
 ```
 
 ### Paket 30 · GK-291–GK-300 · Tablolar
@@ -1140,8 +1089,6 @@ A faithful full reproduction of the painting "Mihrap (The Mihrab)" by Osman Hamd
 
 GK-300 · Tablo (aslına sadık)
 A faithful full reproduction of the painting "İki Müzisyen Kız (Two Musician Girls)" by Osman Hamdi Bey (1880), entire composition exactly as the original, accurate colors and details, public domain artwork, no frame, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo. Two young women in 19th century Ottoman indoor dress with long silk robes in rich colors stand in an ornate Ottoman interior with tiled walls, one holding a long-necked lute and the other a frame drum, carpets and carved woodwork around them, soft light, realistic 19th century academic oil painting, no calligraphy, no inscriptions; vertical painting: fit the full painting within a 4:3 landscape canvas with plain dark museum wall on the sides, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-30.zip adlı tek ZIP dosyasında ver; dosya adları GK-291.png … GK-300.png olsun.
 ```
 
 ### Paket 31 · GK-301–GK-310 · Tablolar
@@ -1176,8 +1123,6 @@ A faithful full reproduction of an Ottoman miniature painting of the courts of T
 
 GK-310 · Tablo (aslına sadık)
 A faithful full reproduction of the painting "Portrait of Sultan Mehmed II" by Gentile Bellini (1480), entire composition exactly as the original, accurate colors and details, public domain artwork, no frame, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo. A half-length profile portrait of an Ottoman sultan facing left, with a large white turban wound around a red cap, a thin face with a hooked nose and short beard, a dark red caftan with a fur collar, framed by a painted stone arch, a parapet in front draped with a richly jewelled embroidered cloth, three small golden crowns on each side in the upper corners, dark background, worn Renaissance oil surface, no inscriptions; vertical painting: fit the full painting within a 4:3 landscape canvas with plain dark museum wall on the sides, 4:3 landscape, no text, no letters, no numbers, no watermark, no logo
-
-Bu 10 görseli bitirince hepsini Paket-31.zip adlı tek ZIP dosyasında ver; dosya adları GK-301.png … GK-310.png olsun.
 ```
 
 ## Sorular, şıklar ve bilgiler (oyuna girecek metin)

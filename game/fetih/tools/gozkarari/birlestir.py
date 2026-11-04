@@ -28,8 +28,9 @@ w('''## Nasıl kullanılır
 1. **Yeni bir ChatGPT sohbeti aç**, en başta aşağıdaki **başlangıç mesajını** bir kez yapıştır.
 2. **Paketleri sırayla yapıştır.** Aşağıdaki "Paketler" bölümünde 31 paket var, her biri 10 komut. Her paket tek kutu, tek kopyala-yapıştır.
 3. **Tablolar paketlerinden önce** (Paket 27, GK-261'den itibaren) **tablo ek mesajını** bir kez yapıştır.
-4. **ZIP'i indirip bana at.** Her paketin sonunda ChatGPT'den 10 görseli `Paket-05.zip` gibi tek ZIP'te, dosya adları `GK-047.png` biçiminde vermesini isteyen bir satır var; paketle birlikte kopyalanıyor. ZIP'i olduğu gibi buraya at, ben açarım.
-   - ChatGPT ZIP yapamazsa (bazen ürettiği görsellere kendi dosya aracından ulaşamıyor) "görselleri tek tek indirilebilir ver" de; tek tek de atabilirsin, hangisinin hangi maddeye ait olduğunu kendim bulurum.
+4. **En sonda tek ZIP iste.** Bütün paketler bitince aşağıdaki **ZIP mesajını** yapıştır; ChatGPT 310 görselin hepsini `GozKarari.zip` içinde `GK-001.png … GK-310.png` adlarıyla verir. O tek ZIP'i buraya at, ben açarım.
+   - **Yeni sohbete geçmek zorunda kalırsan** (kurallar kayarsa ya da sohbet kilitlenirse) geçmeden önce aynı ZIP mesajını o sohbette de yapıştır: önceki sohbetin görselleri yeni sohbete taşınmaz. Sonra elinde 2–3 ZIP olur, hepsini at, birleştirmeyi ben yaparım.
+   - ChatGPT ZIP'i hazırlarken "görsellere erişemiyorum" derse (bazen ürettiği görsellere kendi dosya aracından ulaşamıyor) tek tek indirip at; hangisinin hangi maddeye ait olduğunu kendim bulurum.
 5. Her görseli tek tek denetlerim: yazı çıkmış mı, nesne doğru mu, tablo aslına benziyor mu. Uymayanları sana tek satırlık düzeltilmiş komutla geri veririm.
 
 **Bilmen gerekenler**
@@ -49,7 +50,13 @@ Kurallar (her görselde geçerli):
 - Konu tek, net ve ortada olacak; kenarlardan taşmayacak, arka plan sade olacak.
 - Komutta yazan üsluba tam sadık kal; üslupları birbirine karıştırma.
 - Her görselin altına yalnızca komutun numarasını yaz (ör. GK-047).
-- Bir paketteki bütün görselleri bitirince hepsini tek bir ZIP dosyası olarak ver. ZIP'teki her dosyanın adı komut numarası olsun (ör. GK-047.png), ZIP'in adı paketin adı olsun (ör. Paket-05.zip).
+- Ürettiğin her görseli, adı komut numarası olacak şekilde (ör. GK-047.png) sakla; en sonda hepsini tek bir ZIP dosyasında isteyeceğim.
+```
+
+## ZIP mesajı (en sonda bir kez)
+
+```
+Bu sohbette ürettiğin bütün görselleri tek bir ZIP dosyasında ver. ZIP'in adı GozKarari.zip olsun; içindeki her dosyanın adı komut numarası olsun (GK-001.png, GK-002.png …). Eksik ya da üretemediğin numara varsa ZIP'ten sonra listesini yaz.
 ```
 
 ## Tablo ek mesajı (Paket 27'den önce bir kez)
@@ -65,7 +72,6 @@ for p in range(31):
     w(f"### Paket {p+1} · {L[0]['id']}–{L[-1]['id']} · {' / '.join(ks)}\n")
     w('```')
     w('\n\n'.join(f"{i['id']} · {i['us']}\n{i['cmd']}" for i in L))
-    w(f"\nBu 10 görseli bitirince hepsini Paket-{p+1:02d}.zip adlı tek ZIP dosyasında ver; dosya adları {L[0]['id']}.png … {L[-1]['id']}.png olsun.")
     w('```\n')
 w('## Sorular, şıklar ve bilgiler (oyuna girecek metin)\n')
 w('Bu bölüm ChatGPT için değil; görsel geldiğinde oyunda neyin çıkacağını görmen için. Düzeltmek istediğin soru varsa numarasıyla söyle.\n')
