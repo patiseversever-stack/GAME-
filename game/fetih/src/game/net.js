@@ -374,7 +374,7 @@ export class BotClient {
 				// görünümde doğru şık gizli (SECRET): bot "bildim" dediğinde cevabı undefined kalıyor, sunucu bunu boş
 				// sayıp atıyordu (yalnız yanlış tahminler sayılıyordu). Bilmeyen izleyici gibi şıklar arasından tahmin eder.
 				let value = b.value;
-				if (value === undefined && /^(choice|tf|odd|hilo|proverb|emoji|riddle)$/.test(m.d.q.type)) value = Math.floor(this.R() * (Array.isArray(m.d.v.opts) ? m.d.v.opts.length : 2));
+				if (value === undefined && /^(choice|tf|odd|hilo|proverb|riddle)$/.test(m.d.q.type)) value = Math.floor(this.R() * (Array.isArray(m.d.v.opts) ? m.d.v.opts.length : 2));
 				d = { value, time: b.time };
 			} catch (e) {
 				d = null;

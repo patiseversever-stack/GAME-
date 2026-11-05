@@ -1,4 +1,4 @@
-// Seçmeli tipler: hilo, odd, emoji, proverb, riddle (bilmece: sır kartı).
+// Seçmeli tipler: hilo, odd, proverb, riddle (bilmece: sır kartı).
 // Hepsi 'exact' türünde: bildi / bilemedi; eşitlikte hızlı olan kazanır.
 
 import { css, esc, shuffle, pCorrect, mountChoice, buzz, fmtNum, clamp } from './util.js';
@@ -85,10 +85,6 @@ const CSS = /* css */ `
 .fl-why{margin-top:10px;padding:9px 12px;border-radius:12px;background:rgba(255,210,90,.16);border:1.5px solid var(--line);font-size:14.5px;line-height:1.3;text-align:center;
   animation:flq-pop .35s cubic-bezier(.3,1.5,.5,1)}
 .fl-why b{color:var(--gold)}
-/* emoji */
-.fl-emo{display:flex;justify-content:center;flex-wrap:wrap;gap:2px 6px;margin:0 0 12px;padding:10px 6px;border-radius:18px;background:radial-gradient(circle at 50% 40%,rgba(255,255,255,.18),rgba(255,255,255,.04));
-  border:2px solid rgba(255,255,255,.14)}
-.fl-emo span{font-size:clamp(42px,calc(13 * var(--vw)),60px);line-height:1.15;font-family:'Noto Color Emoji','Apple Color Emoji','Segoe UI Emoji',sans-serif;opacity:0;animation:flq-bounce .55s cubic-bezier(.3,1.7,.5,1) forwards}
 /* proverb */
 .fl-prv{margin:0 0 12px;padding:14px 12px;border-radius:18px;background:linear-gradient(180deg,rgba(255,235,190,.22),rgba(255,235,190,.1));border:2px solid rgba(255,210,90,.4);
   text-align:center;font-size:clamp(19px,calc(5.4 * var(--vw)),24px);line-height:1.5;text-wrap:balance}
@@ -322,22 +318,6 @@ export const odd = {
 			},
 			destroy() {},
 		};
-	},
-	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [0.05, 0.8]) }),
-};
-
-// ---------------------------------------------------------------- emoji
-export const emoji = {
-	time: 20,
-	label: 'Emoji',
-	prepare: (q, R) => prepChoice(q, R),
-	mount(el, v, api) {
-		css('pick', CSS);
-		// her emoji ayrı bir kutu (bayrak/ZWJ dizileri ve renk tonları tek parça)
-		const parts = v.q.e.match(/\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic}️?|[\u{1F3FB}-\u{1F3FF}])*|\S/gu) || [];
-		el.innerHTML = `<div class="fl-emo">${parts.map((e, i) => `<span style="animation-delay:${0.08 + i * 0.12}s">${e}</span>`).join('')}</div><div data-r="o"></div>`;
-		const ctl = mountChoice(el.querySelector('[data-r=o]'), v, api);
-		return { lock: ctl.lock, reveal: (r) => ctl.reveal(r), destroy() {} };
 	},
 	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [0.05, 0.8]) }),
 };

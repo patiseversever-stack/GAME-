@@ -1,5 +1,5 @@
 // Soru tipleri için ortak yardımcılar: rastgelelik, kaçış, CSS enjeksiyonu,
-// Türkçe ekran klavyesi ve çoktan seçmeli gövde (choice, emoji, odd, proverb, riddle, img paylaşır).
+// Türkçe ekran klavyesi ve çoktan seçmeli gövde (choice, odd, proverb, riddle, img paylaşır).
 
 export { sleep } from '../core/clock.js';
 export const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);

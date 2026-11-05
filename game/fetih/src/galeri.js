@@ -29,7 +29,6 @@ const ORDER = [
 	['pin', 'Harita'],
 	['hilo', 'Karşılaştırma'],
 	['odd', 'Farklı olan'],
-	['emoji', 'Emoji'],
 	['riddle', 'Bilmece'],
 	// 'img' (Resimli): eski prosedürel çizimli tip; görselli soruların yerini Göz Kararı aldı (bankada sorusu yok)
 	['blitz', 'Yıldırım'],

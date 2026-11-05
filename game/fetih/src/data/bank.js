@@ -19,8 +19,6 @@ export function dupKey(q) {
 			return 'hilo|' + [q.left?.t, q.right?.t].sort().join('|') + '|' + q.prop;
 		case 'odd':
 			return 'odd|' + q.q + '|' + (q.opts || []).slice().sort().join('|');
-		case 'emoji':
-			return 'emoji|' + q.e;
 		case 'proverb':
 			return 'proverb|' + q.text;
 		case 'cross':

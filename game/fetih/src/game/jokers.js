@@ -17,7 +17,7 @@
 //                         değeri, haritada olası bölge, adam asmacada önerilen harf.
 //
 // Hangi tipte hangi joker (support):
-//   şıklı (test, farklı olan, emoji, atasözü, bilmece)  hepsi
+//   şıklı (test, farklı olan, atasözü, bilmece)  hepsi
 //   doğru/yanlış, karşılaştır (iki şık)                 yarı yarıya YOK; seyirci var
 //   tahmin (num)                                         yarı yarıya = dar aralık; seyirci = kalabalık değeri
 //   harita (pin)                                         yarı yarıya = bölge; seyirci = olası il

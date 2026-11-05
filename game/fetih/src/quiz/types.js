@@ -16,7 +16,7 @@ import { pCorrect, gauss, esc, mountChoice } from './util.js';
 import { timing, botTime } from './timing.js';
 import { order } from './t_order.js';
 import { match } from './t_match.js';
-import { hilo, odd, emoji, proverb, riddle } from './t_pick.js';
+import { hilo, odd, proverb, riddle } from './t_pick.js';
 import { anagram, cross } from './t_word.js';
 import { img } from './t_img.js';
 import { blitz } from './t_blitz.js';
@@ -320,7 +320,7 @@ export const TYPES = {
 };
 
 // ---------------------------------------------------------------- yeni tipler (src/quiz/t_*.js)
-Object.assign(TYPES, { hang, order, match, hilo, odd, emoji, anagram, cross, proverb, riddle, img, blitz });
+Object.assign(TYPES, { hang, order, match, hilo, odd, anagram, cross, proverb, riddle, img, blitz });
 // sakin tipler: soru boyunca 3B sahneyi canlandırmazlar (haritasız olanlarda harita arkada durgun: mobilde 30 kare)
 for (const T of Object.values(TYPES)) if (!T.needsMap) T.calm = true;
 
@@ -347,7 +347,6 @@ for (const T of Object.values(TYPES)) {
 // tahmin, sıralama, eşleştirme, çengel ve yıldırım turu ağırlıklıdır).
 //
 // Anahtarlar tip adları, değerler göreli ağırlık (0 = hiç).
-// emoji (v1.6): kullanıcı kararıyla maçtan kalktı (ağırlık yok); tip ve sorular galeride durur, ağırlık eklenirse geri gelir
 export const TYPE_WEIGHTS = {
 	tarih: {
 		attack: { choice: 4, tf: 2, order: 3, match: 2, odd: 1, hang: 1, anagram: 1, cross: 1, pin: 2, hilo: 1, img: 1, blitz: 1, riddle: 0.5 },

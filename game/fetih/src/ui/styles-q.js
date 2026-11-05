@@ -17,7 +17,6 @@
 //   .fl-list > .fl-item           sıralanabilir liste (kronoloji): .fl-item > b sıra no, .pick .right .wrong .up .down
 //   .fl-cols > .fl-col > .fl-item eşleştirme sütunları (.sel .paired .right .wrong), --pc: eş rengi
 //   .fl-hilo > .fl-card2          iki büyük karşılaştırma kartı (yüksek mi alçak mı), .fl-card2 > b değer
-//   .fl-emoji                     büyük emoji satırı
 //   .fl-media > img|svg           görsel çerçevesi (.blur .sil .zoom)
 //   .fl-grid > .fl-cell           bulmaca ızgarası (.on .right .blank)
 //   .fl-proverb > u               atasözü boşluğu
@@ -264,7 +263,6 @@ export const CSS_Q = /* css */ `
 .fl-card2.pick{border-color:var(--gold);box-shadow:0 0 0 3px var(--gold-d),0 6px 0 var(--gold-dd)}
 .fl-card2.right{color:#fff;background:linear-gradient(#7fe88a,#2fa84a);box-shadow:0 6px 0 var(--green-d)}
 .fl-card2.wrong{color:#fff;background:linear-gradient(#ff8a78,#d53b2c);box-shadow:0 6px 0 #7a120a}
-.fl-emoji{font-size:clamp(40px,calc(12 * var(--vw)),58px);line-height:1.15;text-align:center;letter-spacing:.06em;padding:6px 10px;margin-bottom:10px;border-radius:16px;background:#0a1534;border:2.5px solid rgba(255,255,255,.25)}
 .fl-media{position:relative;display:grid;place-items:center;height:min(calc(34 * var(--vh)),200px);margin-bottom:10px;border-radius:16px;overflow:hidden;background:#0a1534;border:3px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.35)}
 .fl-media>img,.fl-media>svg{width:100%;height:100%;object-fit:contain;transition:transform .6s,opacity .4s}
 .fl-media.blur>img{filter:blur(10px)}

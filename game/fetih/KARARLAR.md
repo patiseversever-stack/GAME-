@@ -85,7 +85,7 @@ Kaynak: kullanıcının cevapları (2026-11-02). Kodlamaya sorular bitince geçi
 
 | Konu | Karar |
 |---|---|
-| Emoji | Maçtan tamamen kalktı (veri galeride durur) |
+| Emoji | Her yerden kaldırıldı (Kasım 2026): tip, 71 soru, defter girişi, süre ayarı ve testler |
 | Ad | Göz Kararı |
 | Konular | Hayvanlar (yarı Türkiye, yarı dünya) · Dinozor ve deniz canlıları · İcatlar · Genel tarih sahneleri (Türk + dünya, gerçek kişi yüzü yok) · Uzay · Bilim aletleri · Doğa olayları · Eşyalar ve aletler · Eski ev eşyaları · Ulaşım araçları · Meslekler · Spor · El sanatları · Bayraklar |
 | Görseli kim üretir | Kullanıcı ChatGPT ile (stil seçimi bekliyor: A oyun stili 3D / B gerçekçi foto / C düz çizim); bayraklar kodla çizilir (yapay zekâ ayrıntıyı bozar) |

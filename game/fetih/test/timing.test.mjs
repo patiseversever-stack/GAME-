@@ -41,7 +41,6 @@ const V07 = {
 	match: [17, 19, 22, 18.9],
 	hilo: [11, 13, 16, 12.9],
 	odd: [12, 14, 18, 14.5],
-	emoji: [14, 15, 19, 15.3],
 	riddle: [15, 19, 22, 18.8],
 	proverb: [12, 13, 14, 13.1],
 	anagram: [14, 24, 33, 24],
@@ -230,8 +229,6 @@ grows('resimli yazı', (w) => ({ type: 'img', diff: 2, q: 'Bu ne?', img: 'x', mo
 	ok(timing({ ...c, a: c.a.map((x) => x + ' ve uzun bir açıklama') }).raw > timing(c).raw, 'test: uzun şıklar süreyi artırmadı');
 	const p = first('proverb');
 	ok(timing({ ...p, text: p.text + ' uzun bir ek' }).raw > timing(p).raw, 'atasözü: uzun atasözü süreyi artırmadı');
-	const e = first('emoji');
-	ok(timing({ ...e, e: e.e + '🐟🐟' }).raw > timing(e).raw, 'emoji: fazla emoji süreyi artırmadı');
 	const b1 = timing(SYN.find((q) => q.id === 'y-bz1'));
 	const b2 = timing(SYN.find((q) => q.id === 'y-bz2'));
 	ok(b2.sec > b1.sec, `yıldırım: uzun ifadeler (${b2.sec}) kısa ifadelerden (${b1.sec}) uzun sürmeli`);
@@ -402,7 +399,6 @@ console.log('\n9) Adalet: denetim oyuncusu (110 kelime/dk, dokunuş 0,85 sn, en 
 				break;
 			case 'choice':
 			case 'riddle':
-			case 'emoji':
 				add(q.a);
 				break;
 			case 'odd':
@@ -452,7 +448,6 @@ console.log('\n9) Adalet: denetim oyuncusu (110 kelime/dk, dokunuş 0,85 sn, en 
 		}
 		let read = 0.35 + (words / 110) * 60;
 		if (q.type === 'riddle') read += (wc(q.q) / 110) * 60 * 0.6;
-		if (q.type === 'emoji') read += 0.9;
 		return read + t.think + act;
 	};
 	const res = [];

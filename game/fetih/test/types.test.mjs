@@ -41,7 +41,6 @@ const SHAPE = {
 	match: (q) => Array.isArray(q.pairs) && q.pairs.length === 3 && q.pairs.every((p) => p.length === 2 && nonEmpty(p[0]) && nonEmpty(p[1])) && distinct(q.pairs.map((p) => p[0])) && distinct(q.pairs.map((p) => p[1])),
 	hilo: (q) => nonEmpty(q.left?.t) && nonEmpty(q.right?.t) && Number.isFinite(q.left.v) && Number.isFinite(q.right.v) && q.left.v !== q.right.v && nonEmpty(q.prop),
 	odd: (q) => Array.isArray(q.opts) && q.opts.length === 4 && q.opts.every(nonEmpty) && distinct(q.opts) && Number.isInteger(q.odd) && q.odd >= 0 && q.odd < 4,
-	emoji: (q) => nonEmpty(q.e) && ANS4(q),
 	proverb: (q) => typeof q.text === 'string' && q.text.split('___').length === 2 && ANS4(q),
 	riddle: (q) => ANS4(q),
 };
@@ -56,7 +55,6 @@ const CASES = {
 	match: (v) => [v.ord.map((_, l) => v.ord.indexOf(l)), v.ord.map((_, l) => (v.ord.indexOf(l) + 1) % v.ord.length)],
 	hilo: (v) => [v.right, 1 - v.right],
 	odd: (v) => [v.right, (v.right + 1) % 4],
-	emoji: (v) => [v.right, (v.right + 1) % 4],
 	proverb: (v) => [v.right, (v.right + 1) % 4],
 	riddle: (v) => [v.right, (v.right + 1) % 4],
 };
@@ -69,7 +67,7 @@ for (const [name, T] of Object.entries(TYPES)) {
 	ok(T.kind === 'exact' || T.kind === 'closest', `${name}: kind`);
 	for (const f of ['prepare', 'mount', 'judge', 'bot']) ok(typeof T[f] === 'function', `${name}: ${f}()`);
 }
-const REQUIRED = ['choice', 'tf', 'num', 'pin', 'hang', 'order', 'match', 'hilo', 'odd', 'emoji', 'anagram', 'cross', 'proverb', 'riddle', 'img', 'blitz'];
+const REQUIRED = ['choice', 'tf', 'num', 'pin', 'hang', 'order', 'match', 'hilo', 'odd', 'anagram', 'cross', 'proverb', 'riddle', 'img', 'blitz'];
 for (const t of REQUIRED) ok(TYPES[t], `${t} kayıtlı değil`);
 
 // ---------------------------------------------------------------- 2) bankadaki her soru

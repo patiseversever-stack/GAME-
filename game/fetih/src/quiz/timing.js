@@ -7,7 +7,7 @@
 // ------------------------------------------------------------------------------------------------ MODEL (v0.7)
 // Her tip için telefonda (dikey, 412×892, tek başparmak) oyuncunun bu arayüzde YAPTIĞI işler adım adım sayılır:
 //
-//   bekleme (sabit)  arayüzün kendi süreleri: kartın açılışı, emojilerin düşmesi, anagramda yanlış kilidi…
+//   bekleme (sabit)  arayüzün kendi süreleri: kartın açılışı, anagramda yanlış kilidi…
 //   bakış            göz metne oturur, şıklar/öğeler arasında gezinir (sakkad + bakış)
 //   okuma            soru metni + ekranda okunması gereken bütün yazı (şıklar, öğeler, ipucu…): harf VE kelime sayısı
 //   düşünme          hatırlama / karşılaştırma / karar (tipe ve zorluğa göre)
@@ -76,7 +76,7 @@ export const PLAYERS = {
 
 // sabit arayüz bekleme ve bakış süreleri (sn)
 const OPEN = 0.5; // kart açılış canlandırması (bekleme)
-const LOOK = { orient: 0.5, gaze: 0.3, map: 1, image: 2, rebus: 1.5, reveal: 4, emoji: 0.6, tile: 0.12, ends: 1 };
+const LOOK = { orient: 0.5, gaze: 0.3, map: 1, image: 2, rebus: 1.5, reveal: 4, tile: 0.12, ends: 1 };
 // giriş hareketleri (sn, yavaş-rahat oyuncu)
 const ACT = { tap: 0.75, confirm: 0.9, move: 1.8, link: 1.5, key: 0.85, miss: 1.6, slide: 2.2, step: 0.45, mapTap: 1.2, mapFix: 1.6, tile: 0.45, tileScan: 0.03, retry: 1.5, nav: 0.6, fix: 2 };
 /** Bilmece kökü iki kez okunur: ilk okuma + anahtar yerlerin ikinci (kısmi) okuması. */
@@ -92,7 +92,6 @@ export const PROFILE = {
 	proverb: { min: 10, max: 18, think: [2, 1] }, // tanıdık kalıbı tamamla
 	choice: { min: 10, max: 25, think: [2.5, 1.25] }, // hatırla, şıklarda bul
 	odd: { min: 11, max: 24, think: [3.5, 1.25] }, // ortak kuralı bul
-	emoji: { min: 11, max: 24, think: [2.5, 1.25] }, // resimleri çöz
 	riddle: { min: 12, max: 28, think: [4, 1.5] }, // bilmeceyi çöz
 	img: { min: 12, max: 34, think: [3, 1.25] },
 	num: { min: 12, max: 28, think: [3.5, 1.5] }, // tahmin et
@@ -134,8 +133,6 @@ function wordsOf(s) {
 	return n;
 }
 const letters = (w) => [...String(w ?? '').toLocaleUpperCase('tr-TR')].filter((c) => c !== ' ');
-// emoji sayımı: kartın çizdiği kutu sayısıyla aynı (bayrak, ZWJ dizisi ve ten rengi tek emoji)
-const EMOJI = /\p{Extended_Pictographic}(?:️|‍\p{Extended_Pictographic}️?|[\u{1F3FB}-\u{1F3FF}])*|\S/gu;
 /**
  * Sürenin bileşenleri (yavaş-rahat oyuncu): { wait (sn), look (sn), read (harf), words (kelime), think (sn), act (sn) }.
  * read harf, words kelime sayısıdır; profilin okuma hızıyla (harf/sn + kelime başına sabit bakış) saniyeye çevrilir.
@@ -179,14 +176,6 @@ function parts(q) {
 			look += LOOK.gaze; // atasözü kartına geçiş
 			opts(q.a);
 			break;
-		case 'emoji': {
-			// emojiler sırayla düşer (0,08 + i·0,12 sn, her biri 0,55 sn): sonuncusu oturana dek bekle, sonra çöz
-			const n = (String(q.e ?? '').match(EMOJI) || []).length;
-			wait += Math.max(0, 0.08 + 0.12 * (n - 1) + 0.55 - 0.35);
-			look += n * LOOK.emoji;
-			opts(q.a);
-			break;
-		}
 		case 'hilo': // iki kart: adlar ve özellik; ikisini de hatırla, büyük olana bas
 			text(q.left?.t);
 			text(q.right?.t);
