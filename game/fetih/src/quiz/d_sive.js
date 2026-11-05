@@ -359,15 +359,13 @@ export const sive = {
 			const c = regionPoint(b, r);
 			return tag(app, esc(RNAME[r]), c.x, c.z, 'sv-rgt');
 		});
-		queueMicrotask(() => {
-			if (!el.isConnected) return;
-			app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.02, pad: 1.03, top: cardTop(el), dur: 0.7 });
-		});
+		// kadraj: arayüzün haritalı soru kadrajı (ui._mapFrame, kartın altındaki alanda bütün Türkiye) yeterli; ikinci
+		// bir kadraj onunla yarışıp kamerayı soru boyunca uzaklaştırıyordu
 		let selTag = null;
 		const lightRegion = (r, on, from) => {
 			for (const i of IN_REG[r]) {
 				g.paint(i, on ? RHOT[r] : base(i), from?.x, from?.z);
-				g.fx(i, on ? 0.28 : 0, on ? 0.55 : 0);
+				g.fx(i, 0, on ? 0.55 : 0);
 			}
 		};
 		api.onMapTap((pt) => {
@@ -384,24 +382,13 @@ export const sive = {
 			if (prev && prev !== r) lightRegion(prev, false);
 			if (sel >= 0 && prev === r) {
 				g.paint(sel, RHOT[r]);
-				g.fx(sel, 0.28, 0.55);
+				g.fx(sel, 0, 0.55);
 			}
 			sel = i;
 			if (prev !== r) lightRegion(r, true, pt);
-			// seçilen il: beyaz, haritadan kopup göğe yükselir (bölge renkleriyle karışmasın); öncekisi yerine iner
+			// seçilen il: beyaz ve parlak (bölge renkleriyle karışmasın); harita yerinde kalır, kamera oynamaz
 			g.paint(i, '#ffffff', pt.x, pt.z);
-			g.fx(i, 2.1, 1);
-			// kamera takibi: seçilen bölgeyi yumuşakça kadraja alır (komşular görünür kalır, başka yere dokunulabilir)
-			const rb = app.boundsOf(IN_REG[r]);
-			const mx = Math.max(6, (rb.x1 - rb.x0) * 0.35);
-			const mz = Math.max(5, (rb.z1 - rb.z0) * 0.35);
-			app.cam.fit({ x0: rb.x0 - mx, x1: rb.x1 + mx, z0: rb.z0 - mz - 3, z1: rb.z1 + mz }, { pitch: 0.92, pad: 1.05, top: cardTop(el), dur: 0.9, arc: 2 });
-			if (selTag) {
-				selTag.el.remove();
-				app.ui.pins.splice(app.ui.pins.indexOf(selTag), 1);
-			}
-			selTag = tag(app, `<b>${esc(RNAME[r])}</b><em>${esc(p.name)}</em>`, p.x, p.z, 'big');
-			selTag.el.style.setProperty('--tc', RHOT[r]);
+			g.fx(i, 0, 1);
 			pick.style.setProperty('--rc', RHOT[r]);
 			pick.innerHTML = `<i></i><b>${esc(RNAME[r])}</b><em>· ${esc(p.name)}</em>`;
 			pick.classList.remove('on');
@@ -486,7 +473,7 @@ export const sive = {
 				if (myI != null) {
 					const p = b.provinces[myI];
 					g.paint(myI, myD.right ? '#3ad06e' : '#ff5a46', p.x, p.z);
-					g.fx(myI, 2.1, 1);
+					g.fx(myI, 0, 1);
 					tag(app, `<b>SEÇİMİN</b><em>${esc(p.name)}</em>`, p.x, p.z, 'big').el.style.setProperty('--tc', myD.right ? '#3ad06e' : '#ff5a46');
 					const m = sizeOf([myI]);
 					app.cam.shot(m.x, m.z, { dist: m.s * 2.6 + 16, pitch: 0.78, yaw: app.cam.yaw + 0.2, dur: 1.1, arc: 3, lens });
@@ -497,12 +484,8 @@ export const sive = {
 					for (const i of IN_REG[v.region]) {
 						if (i === myI) continue;
 						g.paint(i, '#ffe08a', hp.x, hp.z);
-						g.fx(i, 0.3, 0.8);
+						g.fx(i, 0, 0.8);
 					}
-					const c = regionPoint(b, v.region);
-					tag(app, `<b>${esc(RNAME[v.region])}</b><em>✓</em>`, c.x, c.z).el.style.setProperty('--tc', '#ffd25a');
-					const rb = app.boundsOf(IN_REG[v.region]);
-					app.cam.fit({ x0: rb.x0 - 1, x1: rb.x1 + 1, z0: rb.z0 - 1, z1: rb.z1 + 4 }, { pitch: 0.84, pad: 1.02, top, dur: 1.4, arc: 4 });
 					sfx(app, 'reveal');
 				});
 				// 3) il bonusu: asıl il haritadan kopar, en yükseğe çıkar; kamera alçalarak yaklaşır ve etrafında döner
@@ -511,7 +494,7 @@ export const sive = {
 						const i = BY_ID.get(plate);
 						const p = b.provinces[i];
 						g.paint(i, i === homeI ? '#ffd25a' : '#ffe9a8', p.x, p.z);
-						g.fx(i, i === homeI ? 2.5 : 0.9, 1);
+						g.fx(i, 0, 1);
 					}
 					const hp = b.provinces[homeI];
 					tag(app, `<b>${esc(homeName)}</b><em>★ İL</em>`, hp.x, hp.z, 'big').el.style.setProperty('--tc', '#ffd25a');
