@@ -23,7 +23,7 @@ Oyuncu kendi yarışmacısını oynar. Takım parkurları, kamp hayatı, ittifak
 | Elenince | Jüri olursun. Yeni yarışmacı dalgasıyla geri dönme şansın var. |
 | Yetenekler | Parkuru asıl oyuncunun becerisi kazanır, yetenekler küçük avantaj verir. Sosyal yetenekler kampta önemli. |
 | Botlar | Her botun kişiliği ve hafızası var (hırslı, sadık, entrikacı, sessiz...). İhaneti unutmazlar. |
-| Görsel | Her şey yarı gerçekçi: karakterler ve ada aynı seviyede, ne çizgi film ne tam gerçek. |
+| Görsel | Gerçekçi ve sinematik: film gibi ışık ve derinlik, gerçekten kurulmuş yarışma parkurları. Stilize ya da büyülü görünüm yok. Referanslar: `konsept/tur2/` C, D, A. |
 | Dil | Sadece Türkçe |
 | Ada | Tropik: turkuaz deniz, kumsal, sık orman, şelaleler. Ormanda eski taş kalıntılar var, adanın sırrına bağlanır. |
 

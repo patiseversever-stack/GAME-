@@ -30,7 +30,14 @@ Her oturumun başında bu dosyayı oku. Her oturumun sonunda güncelle: yapılan
 - [x] Hikaye ve adanın sırrı
 - [x] Dünya, sunucular ve ilk sezon kadrosu, Aslı "Ayna" dahil (`KARAKTERLER.md`)
 - [x] Konsept görseller, tur 1 (`konsept/tur1/`): ada manzarası, hız parkuru, Yankı Çemberi, karakter stil kartı. Meshy'de Nano Banana Pro ile; görsel başına 9 kredi, toplam 36. Kullanıcı stilize ve "büyülü" görünümü reddetti: gerçekçi ve derinlikli istiyor.
-- [x] Konsept görseller, tur 2 (`konsept/tur2/`): hız parkurunun 4 gerçekçi tarz taslağı (A: gerçek TV şovu, B: AAA oyun, C: sinematik film, D: spor yayını). 36 kredi. Kalan Meshy bakiyesi 1.022. Kullanıcının seçimi bekleniyor.
+- [x] Konsept görseller, tur 2 (`konsept/tur2/`): hız parkurunun 4 gerçekçi tarz taslağı (A: gerçek TV şovu, B: AAA oyun, C: sinematik film, D: spor yayını). 36 kredi. Kalan Meshy bakiyesi 1.022.
+  - **Seçim: C, D, A (bu sırayla).** B elendi; koşucunun belinde silaha benzeyen bir şey vardı.
+  - **Görsel yön kararı:** gerçekçi.
+    - C'nin sinematik ışığı ve gerilimi: gün batımı, uçurum, derinlik.
+    - D'nin profesyonel kurulmuş parkuru: net, spor yayını gibi.
+    - A'nın doğal ahşap ve ip parkuru, gerçek TV şovu hissi.
+  - Stilize, büyülü, parlayan semboller ve fantastik görünüm yok.
+  - Kendi markamız için parkurlara gerçekçi, parlamayan eski kalıntılar karışır; takım renkleri Şafak (altın-turuncu) ve Yakamoz (turkuaz-mor), engeller kendi tasarımımız.
 
 ## Sırada
 1. [ ] **İlk prototip (kredi harcamaz).**
