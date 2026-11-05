@@ -8,3 +8,6 @@ verify-out/
 # oyuna gömülecek ara video çıktıları (node scripts/render-film.mjs oyun|test ile yeniden üretilir)
 game/media/
 .claude/worktrees/
+
+# ses doğrulaması çıktısı (src/audio/verify.mjs: WAV + rapor)
+.audio-out/
