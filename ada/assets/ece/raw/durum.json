@@ -1,0 +1,10 @@
+{
+ "baslangic_bakiye": 995,
+ "model_task": "01a1ac2a-dacb-74e7-a02f-c1f759e509e4",
+ "rig_task": "01a1ac2c-ceec-77a7-888e-55711adef423",
+ "anim_tasks": {
+  "Jump": "01a1ac2d-4aed-7432-8dc0-715d3088d35f",
+  "Slide": "01a1ac2d-4ccb-751d-9fc1-968e210c54b8",
+  "RopeHang": "01a1ac2d-4e3c-725f-89b1-3956adb74fc8"
+ }
+}

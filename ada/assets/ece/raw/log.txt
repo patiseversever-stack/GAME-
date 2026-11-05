@@ -1,0 +1,32 @@
+başlangıç bakiyesi: 995
+1) görselden 3D: 01a1ac2a-dacb-74e7-a02f-c1f759e509e4
+  model: IN_PROGRESS 1%
+  model: IN_PROGRESS 1%
+  model: IN_PROGRESS 1%
+  model: IN_PROGRESS 12%
+  model: IN_PROGRESS 45%
+  model: IN_PROGRESS 45%
+  model: IN_PROGRESS 45%
+  model: IN_PROGRESS 74%
+  model: IN_PROGRESS 84%
+  model: IN_PROGRESS 99%
+  model: SUCCEEDED 100%
+  indirildi model.glb (10238 KB)
+  indirildi onizleme_0.png (66 KB)
+2) iskelet: 01a1ac2c-ceec-77a7-888e-55711adef423
+  iskelet: IN_PROGRESS 0%
+  iskelet: IN_PROGRESS 42%
+  iskelet: SUCCEEDED 100%
+  indirildi rigged.glb (11359 KB)
+  indirildi anim_Walk.glb (11339 KB)
+  indirildi anim_Run.glb (11329 KB)
+  animasyon Jump: IN_PROGRESS 10%
+  animasyon Jump: SUCCEEDED 100%
+  indirildi anim_Jump.glb (11373 KB)
+  animasyon Slide: SUCCEEDED 100%
+  indirildi anim_Slide.glb (11352 KB)
+  animasyon RopeHang: SUCCEEDED 100%
+  indirildi anim_RopeHang.glb (11379 KB)
+bitiş bakiyesi: 951
+harcanan: 44
+TAMAM
