@@ -54,6 +54,10 @@ Her sezon farklı eşyalar çıkar. Örnekler:
 
 ## Parkurlar
 - **İlk sürüm:** hız parkuru, denge, bulmaca kulesi.
+  - **Hız parkuru (karma):** karakter kendisi koşar, sen kaydırarak zıplar, eğilir ve şerit değiştirirsin. Bazı bölümlerde tırmanma ve ip üzerinden kayma gibi özel hareketler var.
+  - **Denge (dar kütük + eğme):** su üstündeki dar kütükte yürürsün, telefonu eğerek dengede kalırsın. Rüzgar ve dalga seni sallar.
+  - **Bulmaca kulesi (parça bul ve diz):** parçaları kumdan çıkarıp taşırsın, ipucuna göre doğru sırayla dizip kuleyi tamamlarsın. Kule yıkılabilir.
+- **Takım yarışı (bire bir düellolar):** kaptanlar kimin kimle yarışacağını seçer, 3 düelloyu ilk alan takım kazanır.
 - **Hemen ardından:** su altında sandık.
 - **Sonra:** halat çekme ve diğerleri.
 
