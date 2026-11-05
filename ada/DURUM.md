@@ -91,6 +91,24 @@ Kredi harcamadan maliyet sorgusuyla ölçüldü.
 - Sınırsızlar sadece görsel ve video modellerini kapsıyor, 3D modelleri kapsamıyor.
 - 7 günlük sınırsızlar satın almadan sonraki 7 gün geçerli. 365 günlük sınırsızlar bir yıl geçerli; kampanya 6 Kasım'da bitiyor.
 
+### Meshy (kullanıcının ayrıca Meshy aboneliği var, yaklaşık 1.100 kredi)
+- Higgsfield'daki "Meshy 6/7" modelleri Meshy'nin kendisi. Aynı model seçilirse kalite aynı; fark fiyatta ve araçlarda.
+- Meshy API fiyatları (dokümana göre, kontrol edilmeli):
+  - Görselden 3D, dokulu: 20-30 kredi
+  - İskelet takma: 5 kredi
+  - Animasyon: 3 kredi
+  - Yani karakter başına 30-40 kredi; 1.100 kredi yaklaşık 28-35 karaktere yeter.
+- Uyarı: Meshy dokümanı API'yi "önceden ödemeli" diye tanımlıyor. Abonelik kredisinin API'de geçip geçmediği Meshy hesabında kontrol edilmeli.
+- Bağlama yolu (sanat aşamasında):
+  1. Kullanıcı Meshy API anahtarını ortam ayarlarına `MESHY_API_KEY` olarak ekler (Network secrets ya da ortam değişkeni). Anahtar asla sohbete yazılmaz.
+  2. Ağ erişimine `api.meshy.ai` ve `assets.meshy.ai` eklenir.
+  3. Yeni oturum bu dalda açılır.
+- Plan:
+  - Meshy: karakterler, iskelet ve animasyonlar.
+  - Higgsfield: konsept görseller, video ve fragman; Tripo (ucuz obje) ve Hunyuan (detaylı kalıntı) seçenekleri.
+  - Ada (zemin, kumsal, deniz, gökyüzü, ışık, bitki yerleşimi): kodla yapılır, yapay zekâ parçaları üstüne yerleştirilir.
+- Kalite kararı için aynı konsept görsel 2-3 modelden geçirilip karşılaştırılacak.
+
 ### Öneri
 1. İskelet kredisiz yapılır, şimdilik paket gerekmiyor.
 2. Görsel yön testi için 3 günlük ücretsiz deneme kullanılır.
