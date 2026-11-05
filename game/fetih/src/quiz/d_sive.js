@@ -291,7 +291,7 @@ function verdict(v, il) {
 export const sive = {
 	time: 22,
 	label: 'Şive Haritası',
-	revealMs: 6600, // cevap sahnesi: seçimin → doğru yöre → il bonusu → Türkiye (adım adım; dokununca erken geçer)
+	revealMs: 6200, // cevap filmi: seçimin (kopar, kamera iner) → doğru yöre (altın dalga) → il bonusu (en yükseğe kopar, kamera yaklaşır)
 	kind: 'closest',
 	needsMap: true,
 	jokers: ['yari', 'kahin'],
@@ -367,7 +367,7 @@ export const sive = {
 		const lightRegion = (r, on, from) => {
 			for (const i of IN_REG[r]) {
 				g.paint(i, on ? RHOT[r] : base(i), from?.x, from?.z);
-				g.fx(i, on ? 0.38 : 0, on ? 0.8 : 0);
+				g.fx(i, on ? 0.28 : 0, on ? 0.55 : 0);
 			}
 		};
 		api.onMapTap((pt) => {
@@ -384,12 +384,18 @@ export const sive = {
 			if (prev && prev !== r) lightRegion(prev, false);
 			if (sel >= 0 && prev === r) {
 				g.paint(sel, RHOT[r]);
-				g.fx(sel, 0.38, 0.8);
+				g.fx(sel, 0.28, 0.55);
 			}
 			sel = i;
 			if (prev !== r) lightRegion(r, true, pt);
-			g.paint(i, '#ffd25a', pt.x, pt.z);
-			g.fx(i, 0.5, 1);
+			// seçilen il: beyaz, haritadan kopup göğe yükselir (bölge renkleriyle karışmasın); öncekisi yerine iner
+			g.paint(i, '#ffffff', pt.x, pt.z);
+			g.fx(i, 2.1, 1);
+			// kamera takibi: seçilen bölgeyi yumuşakça kadraja alır (komşular görünür kalır, başka yere dokunulabilir)
+			const rb = app.boundsOf(IN_REG[r]);
+			const mx = Math.max(6, (rb.x1 - rb.x0) * 0.35);
+			const mz = Math.max(5, (rb.z1 - rb.z0) * 0.35);
+			app.cam.fit({ x0: rb.x0 - mx, x1: rb.x1 + mx, z0: rb.z0 - mz - 3, z1: rb.z1 + mz }, { pitch: 0.92, pad: 1.05, top: cardTop(el), dur: 0.9, arc: 2 });
 			if (selTag) {
 				selTag.el.remove();
 				app.ui.pins.splice(app.ui.pins.indexOf(selTag), 1);
@@ -458,34 +464,21 @@ export const sive = {
 				const meR = results.find((r) => r.p?.human);
 				const myI = BY_ID.get(meR?.value?.il);
 				const myD = myI != null ? verdict(v, PROV[myI].id) : null;
-				const votes = Array.isArray(v.heat) ? v.heat.map((id) => BY_ID.get(id)).filter((i) => i != null) : crowd(v);
-				for (const r of results) {
-					const i = BY_ID.get(r.value?.il);
-					if (i != null) votes.push(i);
-				}
-				const poll = pollOf(votes);
 				// kart: anlam kutusu soru yazısının yerine; üstünde adım şeridi, altında kalabalık
 				root.querySelector('.sv-from').textContent = homeName;
 				for (const mk of root.querySelectorAll('.sv-say mark')) {
 					const g = glossOf(mk.textContent, q.mean);
 					if (g) mk.dataset.g = g;
 				}
-				const myCls = myD ? (myD.right ? 'ok' : 'no') : '';
-				const mean = `<div class="sv-mean" style="--rc:${RHOT[v.region]}"><div class="sv-steps"><i class="${myCls}">SEÇİMİN</i><i>DOĞRU YÖRE</i><i>İL BONUSU</i><i>TÜRKİYE</i></div><div class="sv-w">${(q.mean || []).map(([w, m]) => `<span><b>${esc(w)}</b> = ${esc(m)}</span>`).join('')}</div><p><span class="sv-rg">${esc(RNAME[v.region])}</span>${esc(q.note || '')}</p><div class="sv-crowd"><small>TÜRKİYE NE DEDİ?</small><div class="cb">${poll
-					.map(([r, pct], k) => `<span class="${r === v.region ? 'win' : ''}${myD && myD.r === r ? ' me' : ''}" style="--p:${pct};--k:${k}"><em>%${pct}</em><i></i>${esc(RNAME[r].split(' ')[0].slice(0, 8))}</span>`)
-					.join('')}</div></div></div>`;
-				const qt = el.closest('.fl-q')?.querySelector('.fl-qtext');
-				if (qt) {
-					qt.classList.add('sv-qt');
-					qt.innerHTML = mean;
-				} else root.insertAdjacentHTML('beforeend', mean);
-				const box = (qt || root).querySelector('.sv-mean');
-				const steps = [...box.querySelectorAll('.sv-steps i')];
-				const step = (k) => steps.forEach((s, j) => s.classList.toggle('on', j === k && !(j === 0 && myCls)));
+				// açıklama kutusu yok (haritayı kapatıyordu): anlam, sözün altında altyazıda. Kart küçük kalır, harita görünür.
 				const top = cardTop(el);
 				const later = (ms, fn) => setTimeout(() => el.isConnected && fn(), ms);
-				const T = [];
-				// 1) seçimin: harita sade koyu, yalnız senin ilin
+				const sizeOf = (list) => {
+					const bb = app.boundsOf(list);
+					return { x: (bb.x0 + bb.x1) / 2, z: (bb.z0 + bb.z1) / 2, s: Math.max(bb.x1 - bb.x0, bb.z1 - bb.z0) };
+				};
+				const lens = top / 2 - (1 - top) * 0.22; // hedef ekranın altındaki damganın üstünde kalsın
+				// 1) senin seçimin: harita sade koyu, senin ilin yeşil/kırmızı kopar ve yükselir, kamera ona iner
 				PROV.forEach((_, i) => {
 					g.fx(i, 0, 0);
 					g.paint(i, '#272d42');
@@ -493,57 +486,40 @@ export const sive = {
 				if (myI != null) {
 					const p = b.provinces[myI];
 					g.paint(myI, myD.right ? '#3ad06e' : '#ff5a46', p.x, p.z);
-					g.fx(myI, 0.45, 1);
-					const tg = tag(app, `<b>SENİN SEÇİMİN</b><em>${esc(p.name)}</em>`, p.x, p.z, 'big');
-					tg.el.style.setProperty('--tc', myD.right ? '#3ad06e' : '#ff5a46');
-					T.push(tg);
-				}
-				step(myCls ? -1 : 0);
-				app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.0, pad: 1.05, top, dur: 0.8, arc: 3 });
-				// 2) doğru yöre: yuvasından dalgayla altına boyanır, adı çıkar, kamera iner
-				later(1200, () => {
-					step(1);
+					g.fx(myI, 2.1, 1);
+					tag(app, `<b>SEÇİMİN</b><em>${esc(p.name)}</em>`, p.x, p.z, 'big').el.style.setProperty('--tc', myD.right ? '#3ad06e' : '#ff5a46');
+					const m = sizeOf([myI]);
+					app.cam.shot(m.x, m.z, { dist: m.s * 2.6 + 16, pitch: 0.78, yaw: app.cam.yaw + 0.2, dur: 1.1, arc: 3, lens });
+				} else app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.0, pad: 1.05, top, dur: 0.8, arc: 3 });
+				// 2) doğru yöre: yuvasından altın dalgayla boyanır, kamera bölgeyi kucaklar
+				later(1300, () => {
 					const hp = b.provinces[homeI];
 					for (const i of IN_REG[v.region]) {
 						if (i === myI) continue;
 						g.paint(i, '#ffe08a', hp.x, hp.z);
-						g.fx(i, 0.32, 0.9);
+						g.fx(i, 0.3, 0.8);
 					}
 					const c = regionPoint(b, v.region);
-					const tg = tag(app, `<b>${esc(RNAME[v.region])}</b><em>✓ DOĞRU YÖRE</em>`, c.x, c.z, 'big');
-					tg.el.style.setProperty('--tc', '#ffd25a');
-					T.push(tg);
+					tag(app, `<b>${esc(RNAME[v.region])}</b><em>✓</em>`, c.x, c.z).el.style.setProperty('--tc', '#ffd25a');
 					const rb = app.boundsOf(IN_REG[v.region]);
-					app.cam.fit({ x0: rb.x0 - 1, x1: rb.x1 + 1, z0: rb.z0 - 1, z1: rb.z1 + 4 }, { pitch: 0.84, pad: 1.02, top, dur: 1.5, arc: 4 });
+					app.cam.fit({ x0: rb.x0 - 1, x1: rb.x1 + 1, z0: rb.z0 - 1, z1: rb.z1 + 4 }, { pitch: 0.84, pad: 1.02, top, dur: 1.4, arc: 4 });
 					sfx(app, 'reveal');
 				});
-				// 3) il bonusu: asıl il(ler) kalkar ve parlar
-				later(2700, () => {
-					step(2);
+				// 3) il bonusu: asıl il haritadan kopar, en yükseğe çıkar; kamera alçalarak yaklaşır ve etrafında döner
+				later(2800, () => {
 					for (const plate of v.ils) {
 						const i = BY_ID.get(plate);
 						const p = b.provinces[i];
-						g.paint(i, '#ffd25a', p.x, p.z);
-						g.fx(i, 0.8, 1);
+						g.paint(i, i === homeI ? '#ffd25a' : '#ffe9a8', p.x, p.z);
+						g.fx(i, i === homeI ? 2.5 : 0.9, 1);
 					}
 					const hp = b.provinces[homeI];
-					const tg = tag(app, `<b>${esc(homeName)}</b><em>İL BONUSU</em>`, hp.x, hp.z, 'big');
-					tg.el.style.setProperty('--tc', '#fff');
-					T.push(tg);
-					pop(app, hp.x, hp.z, '', { colors: ['#ffd25a', '#fff', RHOT[v.region]], n: 18, dist: 80 });
-					// kamera asıl ile alçalarak yaklaşır ve yavaşça etrafında döner; hedef damganın üstünde kalsın (lens yukarı)
-					const ib = app.boundsOf(v.ils.map((id) => BY_ID.get(id)).filter((i) => i != null));
-					const size = Math.max(ib.x1 - ib.x0, ib.z1 - ib.z0);
-					app.cam.shot((ib.x0 + ib.x1) / 2, (ib.z0 + ib.z1) / 2, { dist: size * 2.2 + 9, pitch: 0.66, yaw: app.cam.yaw + 0.3, dur: 2, arc: 4, yawRate: 0.04, distRate: -0.012, decay: 0.2, lens: top / 2 - (1 - top) * 0.22 });
+					tag(app, `<b>${esc(homeName)}</b><em>★ İL</em>`, hp.x, hp.z, 'big').el.style.setProperty('--tc', '#ffd25a');
+					pop(app, hp.x, hp.z, '', { colors: ['#ffd25a', '#fff', RHOT[v.region]], n: 22, dist: 90 });
 					sfx(app, myD?.bonus ? 'right' : 'star', { n: 4 });
+					const h = sizeOf([homeI]);
+					app.cam.shot(h.x, h.z, { dist: h.s * 2.1 + 13, pitch: 0.62, yaw: app.cam.yaw + 0.35, dur: 2.1, arc: 5, yawRate: 0.045, distRate: -0.014, decay: 0.2, lens });
 				});
-				// 4) Türkiye ne dedi: kalabalık çubukları kartta
-				later(3900, () => {
-					step(3);
-					box.querySelector('.sv-crowd').classList.add('on');
-					sfx(app, 'tap');
-				});
-				void T;
 				if (meR) {
 					const order = results.slice().sort((a, b2) => a.err - b2.err || a.time - b2.time);
 					const win = order[0] === meR;
