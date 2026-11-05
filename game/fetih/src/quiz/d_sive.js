@@ -101,7 +101,11 @@ function sayHTML(s) {
 		if (!part) continue;
 		const hot = part.startsWith('[');
 		const txt = hot ? part.slice(1, -1) : part;
-		const chars = [...txt].map((c) => (c === ' ' ? ' ' : `<i style="--d:${(k++ * 0.035).toFixed(3)}s">${esc(c)}</i>`)).join('');
+		// harfler kelime kelime gruplanır: satır yalnız kelime arasında kırılır ("sofray / a" olmasın)
+		const chars = txt
+			.split(/( +)/)
+			.map((w) => (/^ +$/.test(w) || !w ? w : `<span class="w">${[...w].map((c) => `<i style="--d:${(k++ * 0.035).toFixed(3)}s">${esc(c)}</i>`).join('')}</span>`))
+			.join('');
 		out += hot ? `<mark>${chars}</mark>` : chars;
 	}
 	return out;
@@ -166,15 +170,16 @@ const CSS = /* css */ `
 .dn-sv .sv-hd em{font-style:normal;color:rgba(255,255,255,.45)}
 .dn-sv .sv-say{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(20px,calc(5.6 * var(--vw,4px)),25px);line-height:1.18;color:#fff;text-wrap:balance}
 .dn-sv .sv-say::before{content:'“';margin-right:2px;color:var(--cc,#ffd25a);font-family:'Lilita One'}
+.dn-sv .sv-say .w{white-space:nowrap}
 .dn-sv .sv-say i{font-style:normal;display:inline-block;animation:svCh .3s cubic-bezier(.3,1.7,.5,1) var(--d) both}
 .dn-sv .sv-say mark{position:relative;display:inline-block;color:#ffd25a;background:linear-gradient(180deg,transparent 78%,rgba(255,210,90,.55) 78% 92%,transparent 92%);padding:0 1px}
 .dn-sv .sv-say mark[data-g]::after{content:attr(data-g);position:absolute;left:50%;top:100%;margin-top:1px;transform:translate(-50%,-4px);opacity:0;white-space:nowrap;
   padding:1px 6px 2px;background:#fff;color:#0d1124;font:600 11.5px/1.2 'Fredoka',sans-serif;letter-spacing:0;pointer-events:none;transition:opacity .35s .2s,transform .35s .2s}
-.dn-sv.done .sv-say{padding-bottom:14px}
+.dn-sv.done .sv-say{line-height:2.05;padding-bottom:4px}
 .dn-sv.done .sv-say mark[data-g]::after{opacity:1;transform:translate(-50%,0)}
 .dn-sv .sv-bar{display:flex;align-items:stretch;gap:8px;min-height:44px}
 .dn-sv .sv-pick{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:6px 11px;background:rgba(255,255,255,.07);border-left:5px solid var(--rc,rgba(255,255,255,.25));
-  font:600 13.5px/1.15 'Fredoka',sans-serif;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;transition:border-color .25s}
+  font:600 13.5px/1.15 'Fredoka',sans-serif;color:rgba(255,255,255,.7);overflow:hidden;transition:border-color .25s}
 .dn-sv .sv-pick i{flex:none;width:12px;height:12px;background:var(--rc,rgba(255,255,255,.3));transform:skewX(-10deg)}
 .dn-sv .sv-pick b{font:400 17px/1 'Lilita One',sans-serif;color:#fff}
 .dn-sv .sv-pick em{font-style:normal;opacity:.75;overflow:hidden;text-overflow:ellipsis}
@@ -206,6 +211,23 @@ const CSS = /* css */ `
 .dn-tag.sv-rgt>div::after{display:none}
 .dn-tag.sv-pct>div{border-color:var(--tc);font-family:'Lilita One';font-weight:400;font-size:13px}
 .dn-tag.sv-pct.win>div{font-size:17px;padding:3px 11px 4px;background:#ffd25a;color:#1a1200;border-color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.45)}
+/* cevap sahnesi: adım şeridi (SEÇİMİN → DOĞRU YÖRE → İL BONUSU → TÜRKİYE), kalabalık çubukları */
+.sv-steps{display:flex;gap:4px;margin-bottom:7px}
+.sv-steps i{flex:1;padding:3px 0 2px;text-align:center;font:italic 800 9.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;font-style:normal;color:rgba(255,255,255,.35);background:rgba(255,255,255,.06);transform:skewX(-10deg);transition:background .3s,color .3s}
+.sv-steps i.on{background:#fff;color:#0d1124;animation:svStep .4s cubic-bezier(.3,1.7,.5,1)}
+.sv-steps i.ok{background:#3ad06e;color:#06210f}
+.sv-steps i.no{background:#ff5a46;color:#fff}
+.sv-crowd{display:none;margin-top:7px}
+.sv-crowd.on{display:block;animation:svMean .4s both}
+.sv-crowd small{display:block;margin-bottom:4px;font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.18em;color:rgba(255,255,255,.55)}
+.sv-crowd .cb{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;align-items:end;height:40px}
+.sv-crowd .cb span{display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font:italic 800 8.5px/1.05 'Barlow Condensed',sans-serif;color:rgba(255,255,255,.6);text-align:center}
+.sv-crowd .cb span i{width:72%;transform:skewX(-8deg);background:rgba(255,255,255,.28);height:calc(var(--p) * .26px + 2px);animation:svGrow .6s cubic-bezier(.3,1.4,.5,1) both;animation-delay:calc(var(--k) * .06s)}
+.sv-crowd .cb span em{font-style:normal;font-family:'Lilita One';font-size:10.5px;color:#fff}
+.sv-crowd .cb span.win i{background:#ffd25a}
+.sv-crowd .cb span.win{color:#ffd25a}
+.sv-crowd .cb span.me i{box-shadow:0 0 0 2px #fff}
+@keyframes svStep{from{transform:skewX(-10deg) scale(.7)}to{transform:skewX(-10deg)}}
 @keyframes svCh{from{opacity:0;transform:translateY(7px) scale(.6) rotate(-8deg)}to{opacity:1;transform:none}}
 @keyframes svTalk{from{transform:scaleY(.35)}to{transform:scaleY(1.15)}}
 @keyframes svWave{from{transform:scaleY(.15)}to{transform:scaleY(var(--wh,.9))}}
@@ -269,6 +291,7 @@ function verdict(v, il) {
 export const sive = {
 	time: 22,
 	label: 'Şive Haritası',
+	revealMs: 6600, // cevap sahnesi: seçimin → doğru yöre → il bonusu → Türkiye (adım adım; dokununca erken geçer)
 	kind: 'closest',
 	needsMap: true,
 	jokers: ['yari', 'kahin'],
@@ -301,7 +324,7 @@ export const sive = {
 				<div class="sv-bub"><div class="sv-hd"><span class="rec"><i></i>KAYIT</span><span class="wv">${Array.from({ length: 22 }, (_, k) => `<i style="--wd:${((k * 37) % 11) * 0.03}s;--wh:${(0.35 + (((k * 53) % 13) / 13) * 0.65).toFixed(2)}"></i>`).join('')}</span><em>AĞIZ ATLASI</em></div><div class="sv-say">${sayHTML(v.say)}</div></div>
 			</div>
 			<div class="sv-poll"></div>
-			<div class="sv-bar"><div class="sv-pick"><i></i><em>Haritada bu ağzın yöresine dokun</em></div><button class="sv-go" disabled>BU YÖRE!</button></div>
+			<div class="sv-bar"><div class="sv-pick"><i></i><em>Haritadan yöreyi seç</em></div><button class="sv-go" disabled>BU YÖRE!</button></div>
 		</div>`;
 		rule(el, 'Yöreyi bul, ili bil');
 		const root = el.querySelector('.dn-sv');
@@ -427,86 +450,103 @@ export const sive = {
 				root.classList.add('done');
 				go.disabled = true;
 				dropTags([...names, selTag]);
-				// ısı haritası: herkesin dokunuşu (kalabalık + oyuncular)
+				// CEVAP SAHNESİ (adım adım, ~6,5 sn; revealMs): 1) senin seçimin (il yeşil/kırmızı, harita sade koyu)
+				// 2) doğru yöre yuvasından dalgayla altına boyanır, kamera iner 3) il bonusu kalkar 4) Türkiye ne dedi (kartta)
+				const q = v.q;
+				const homeI = BY_ID.get(v.ils[0]);
+				const homeName = PROV[homeI]?.name || '';
+				const meR = results.find((r) => r.p?.human);
+				const myI = BY_ID.get(meR?.value?.il);
+				const myD = myI != null ? verdict(v, PROV[myI].id) : null;
 				const votes = Array.isArray(v.heat) ? v.heat.map((id) => BY_ID.get(id)).filter((i) => i != null) : crowd(v);
 				for (const r of results) {
 					const i = BY_ID.get(r.value?.il);
 					if (i != null) votes.push(i);
 				}
-				const cnt = new Map();
-				for (const i of votes) cnt.set(i, (cnt.get(i) || 0) + 1);
-				const max = Math.max(1, ...cnt.values());
-				// dokunulmamış iller arduvaz (ısı öne çıksın), dokunulanlar yoğunluk renginde
-				PROV.forEach((_, i) => {
-					g.fx(i, 0, 0);
-					if (!cnt.has(i)) g.paint(i, '#2c3248');
-				});
-				for (const [i, c] of cnt) {
-					const p = b.provinces[i];
-					g.paint(i, heatCol(Math.pow(c / max, 0.6)), p.x, p.z);
-					g.fx(i, 0.08 + 0.3 * (c / max), 0.2);
-				}
 				const poll = pollOf(votes);
-				const pctTags = [];
-				// cevap: önce ısı, sonra doğru yöre kalkar ve yüzdeler çıkar
-				setTimeout(() => {
-					if (!el.isConnected) return;
-					for (const i of IN_REG[v.region]) {
-						const c = cnt.get(i) || 0;
-						if (!c) g.paint(i, '#ffe9a8');
-						g.fx(i, 0.45, 1);
-					}
-					for (const plate of v.ils) {
-						const i = BY_ID.get(plate);
-						const p = b.provinces[i];
-						g.paint(i, '#ffd25a', p.x, p.z);
-						g.fx(i, 0.75, 1);
-					}
-					for (const [r, p] of poll) {
-						if (!p && r !== v.region) continue;
-						const c = regionPoint(b, r);
-						const t = tag(app, r === v.region ? `${esc(RNAME[r])} ✓ %${p}` : `%${p}`, c.x, c.z, `sv-pct${r === v.region ? ' win' : ''}`);
-						t.el.style.setProperty('--tc', r === v.region ? '#ffd25a' : RHOT[r]);
-						pctTags.push(t);
-					}
-					const home = b.provinces[BY_ID.get(v.ils[0])];
-					pop(app, home.x, home.z, RNAME[v.region].toLocaleUpperCase('tr-TR') + '!', { colors: ['#ffd25a', '#fff', RHOT[v.region]], n: 20, dist: 90, cls: 'dn dn-gold' });
-					sfx(app, 'reveal');
-				}, 1300);
-				// kadraj: Türkiye ısısı, sonra doğru yöreye alçalarak yaklaşma
-				const top = cardTop(el);
-				app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.0, pad: 1.05, top, dur: 0.8, arc: 3 });
-				setTimeout(() => {
-					if (!el.isConnected) return;
-					const rb = app.boundsOf(IN_REG[v.region]);
-					app.cam.fit({ x0: rb.x0 - 2, x1: rb.x1 + 2, z0: rb.z0 - 2, z1: rb.z1 + 2 }, { pitch: 0.82, pad: 1.1, top, dur: 1.8, arc: 4 });
-				}, 2600);
-				// kart: sözün anlamı, açıklaması, karakterin yöresi. Arayüz 'closest' tiplerde gövdeye sıralamayı
-				// yazar; anlam soru yazısının yerine (kartın üstünde kalan kutu) konur.
-				const homeName = PROV[BY_ID.get(v.ils[0])]?.name || '';
-				const q = v.q;
-				// altyazı: her ağız kelimesinin altına standart karşılığı
+				// kart: anlam kutusu soru yazısının yerine; üstünde adım şeridi, altında kalabalık
+				root.querySelector('.sv-from').textContent = homeName;
 				for (const mk of root.querySelectorAll('.sv-say mark')) {
 					const g = glossOf(mk.textContent, q.mean);
 					if (g) mk.dataset.g = g;
 				}
-				root.querySelector('.sv-from').textContent = homeName;
-				const mean = `<div class="sv-mean" style="--rc:${RHOT[v.region]}"><div class="sv-w">${(q.mean || []).map(([w, m]) => `<span><b>${esc(w)}</b> = ${esc(m)}</span>`).join('')}</div><p><span class="sv-rg" style="--rc:${RHOT[v.region]}">${esc(RNAME[v.region])}</span>${esc(q.note || '')}</p><small>${esc(v.who.ad)} · ${esc(homeName)} · “${esc(plain(v.say))}”</small></div>`;
+				const myCls = myD ? (myD.right ? 'ok' : 'no') : '';
+				const mean = `<div class="sv-mean" style="--rc:${RHOT[v.region]}"><div class="sv-steps"><i class="${myCls}">SEÇİMİN</i><i>DOĞRU YÖRE</i><i>İL BONUSU</i><i>TÜRKİYE</i></div><div class="sv-w">${(q.mean || []).map(([w, m]) => `<span><b>${esc(w)}</b> = ${esc(m)}</span>`).join('')}</div><p><span class="sv-rg">${esc(RNAME[v.region])}</span>${esc(q.note || '')}</p><div class="sv-crowd"><small>TÜRKİYE NE DEDİ?</small><div class="cb">${poll
+					.map(([r, pct], k) => `<span class="${r === v.region ? 'win' : ''}${myD && myD.r === r ? ' me' : ''}" style="--p:${pct};--k:${k}"><em>%${pct}</em><i></i>${esc(RNAME[r].split(' ')[0].slice(0, 8))}</span>`)
+					.join('')}</div></div></div>`;
 				const qt = el.closest('.fl-q')?.querySelector('.fl-qtext');
 				if (qt) {
 					qt.classList.add('sv-qt');
 					qt.innerHTML = mean;
 				} else root.insertAdjacentHTML('beforeend', mean);
-				const meR = results.find((r) => r.p?.human);
+				const box = (qt || root).querySelector('.sv-mean');
+				const steps = [...box.querySelectorAll('.sv-steps i')];
+				const step = (k) => steps.forEach((s, j) => s.classList.toggle('on', j === k && !(j === 0 && myCls)));
+				const top = cardTop(el);
+				const later = (ms, fn) => setTimeout(() => el.isConnected && fn(), ms);
+				const T = [];
+				// 1) seçimin: harita sade koyu, yalnız senin ilin
+				PROV.forEach((_, i) => {
+					g.fx(i, 0, 0);
+					g.paint(i, '#272d42');
+				});
+				if (myI != null) {
+					const p = b.provinces[myI];
+					g.paint(myI, myD.right ? '#3ad06e' : '#ff5a46', p.x, p.z);
+					g.fx(myI, 0.45, 1);
+					const tg = tag(app, `<b>SENİN SEÇİMİN</b><em>${esc(p.name)}</em>`, p.x, p.z, 'big');
+					tg.el.style.setProperty('--tc', myD.right ? '#3ad06e' : '#ff5a46');
+					T.push(tg);
+				}
+				step(myCls ? -1 : 0);
+				app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.0, pad: 1.05, top, dur: 0.8, arc: 3 });
+				// 2) doğru yöre: yuvasından dalgayla altına boyanır, adı çıkar, kamera iner
+				later(1200, () => {
+					step(1);
+					const hp = b.provinces[homeI];
+					for (const i of IN_REG[v.region]) {
+						if (i === myI) continue;
+						g.paint(i, '#ffe08a', hp.x, hp.z);
+						g.fx(i, 0.32, 0.9);
+					}
+					const c = regionPoint(b, v.region);
+					const tg = tag(app, `<b>${esc(RNAME[v.region])}</b><em>✓ DOĞRU YÖRE</em>`, c.x, c.z, 'big');
+					tg.el.style.setProperty('--tc', '#ffd25a');
+					T.push(tg);
+					const rb = app.boundsOf(IN_REG[v.region]);
+					app.cam.fit({ x0: rb.x0 - 2, x1: rb.x1 + 2, z0: rb.z0 - 2, z1: rb.z1 + 6 }, { pitch: 0.86, pad: 1.1, top, dur: 1.7, arc: 4 });
+					sfx(app, 'reveal');
+				});
+				// 3) il bonusu: asıl il(ler) kalkar ve parlar
+				later(2700, () => {
+					step(2);
+					for (const plate of v.ils) {
+						const i = BY_ID.get(plate);
+						const p = b.provinces[i];
+						g.paint(i, '#ffd25a', p.x, p.z);
+						g.fx(i, 0.8, 1);
+					}
+					const hp = b.provinces[homeI];
+					const tg = tag(app, `<b>${esc(homeName)}</b><em>İL BONUSU</em>`, hp.x, hp.z, 'big');
+					tg.el.style.setProperty('--tc', '#fff');
+					T.push(tg);
+					pop(app, hp.x, hp.z, '', { colors: ['#ffd25a', '#fff', RHOT[v.region]], n: 18, dist: 80 });
+					sfx(app, myD?.bonus ? 'right' : 'star', { n: 4 });
+				});
+				// 4) Türkiye ne dedi: kalabalık çubukları kartta
+				later(3900, () => {
+					step(3);
+					box.querySelector('.sv-crowd').classList.add('on');
+					sfx(app, 'tap');
+				});
+				void T;
 				if (meR) {
-					const d = verdict(v, meR.value?.il);
 					const order = results.slice().sort((a, b2) => a.err - b2.err || a.time - b2.time);
 					const win = order[0] === meR;
-					if (d?.bonus) stampLater(app, 'TAM İSABET!', 'gold', `Doğru yöre, doğru il: ${PROV[d.i].name}`);
-					else if (d?.right) stampLater(app, 'DOĞRU YÖRE!', win ? 'gold' : '', `${RNAME[v.region]}; il bonusu ${homeName}`);
+					if (myD?.bonus) stampLater(app, 'TAM İSABET!', 'gold', `Doğru yöre, doğru il: ${PROV[myD.i].name}`);
+					else if (myD?.right) stampLater(app, 'DOĞRU YÖRE!', win ? 'gold' : '', `${RNAME[v.region]}; il bonusu ${homeName}`);
 					else stampLater(app, 'YANLIŞ YÖRE', 'bad', `Bu ağız ${RNAME[v.region]}'in`);
 				}
-				void pctTags;
 			},
 			destroy: close,
 		};
