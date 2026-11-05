@@ -50,19 +50,12 @@ const CSS = /* css */ `
 .dn-mc-msg.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
 .dn-mc-msg.good{color:#7dff9a}.dn-mc-msg.gold{color:#ffd25a;text-shadow:0 4px 0 #7a4a00,0 0 30px rgba(255,210,90,.9)}.dn-mc-msg.bad{color:#ff6a5a;text-shadow:0 4px 0 #6a0a08,0 0 30px rgba(255,60,40,.8)}.dn-mc-msg.cold{color:#bfe3ff}
 .dn-mc-msg small{display:block;margin-top:5px;font:600 13px/1.2 'Fredoka',sans-serif;letter-spacing:0;color:#fff;opacity:.92}
-.dn-mc .fl-range{height:38px;-webkit-appearance:none;appearance:none;background:transparent}
-.dn-mc .fl-range::-webkit-slider-runnable-track{height:14px;border-radius:8px;background:linear-gradient(90deg,#2fbf5a,#ffd25a 55%,#ff5a3a);box-shadow:inset 0 0 0 2px rgba(0,0,0,.35),0 2px 0 rgba(0,0,0,.4)}
-.dn-mc .fl-range::-moz-range-track{height:14px;border-radius:8px;background:linear-gradient(90deg,#2fbf5a,#ffd25a 55%,#ff5a3a)}
-.dn-mc .fl-range::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:34px;margin-top:-10px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e8b06a,#9a5a22 60%,#5a3010);box-shadow:0 0 0 3px #2a1606,0 4px 8px rgba(0,0,0,.5),inset 0 -3px 0 rgba(0,0,0,.25)}
-.dn-mc .fl-range::-moz-range-thumb{width:30px;height:30px;border:3px solid #2a1606;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e8b06a,#9a5a22 60%,#5a3010)}
+.dn-mc .fl-range{height:34px}
 .dn-mc-row{display:flex;gap:6px}
-.dn-mc-row .fl-step{flex:1;min-width:0;padding:8px 4px 9px;font:italic 800 17px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;color:#fff3d8;border:0;border-radius:10px;
-  background:linear-gradient(180deg,#8a5428,#5a3214);box-shadow:inset 0 0 0 2px #2a1606,inset 0 2px 0 rgba(255,255,255,.18),0 3px 0 #1a0c04}
-.dn-mc-row .fl-step:active{transform:translateY(2px);box-shadow:inset 0 0 0 2px #2a1606,0 1px 0 #1a0c04}
-.dn-mc .fl-send{height:54px;padding:0 16px;font:italic 900 26px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;color:#fff;border:0;border-radius:12px;
-  background:linear-gradient(180deg,#ffb23a,#ff5a1a 55%,#c8241a);box-shadow:inset 0 0 0 2px rgba(255,255,255,.5),0 5px 0 #6a0e08,0 0 22px rgba(255,110,40,.55);text-shadow:0 2px 0 rgba(0,0,0,.35);animation:mcGlow 1.4s ease-in-out infinite alternate}
+.dn-mc-row .fl-step{flex:1;min-width:0;padding:7px 4px 8px;font-size:16px}
+.dn-mc .fl-send{height:50px;padding:0 16px}
 .dn-mc.sent .fl-range,.dn-mc.sent .dn-mc-row{opacity:.35;pointer-events:none}
-.dn-mc.sent .fl-send{opacity:.5;pointer-events:none;animation:none}
+.dn-mc.sent .fl-send{opacity:.5;pointer-events:none}
 .dn-mc.done .dn-mc-val{opacity:0;transition:opacity .4s}
 .dn-mc.done .fl-range,.dn-mc.done .dn-mc-row,.dn-mc.done .fl-send{display:none}
 .dn-mc .fog{animation:dnMcFog 7s ease-in-out infinite alternate}
@@ -87,6 +80,21 @@ const CSS = /* css */ `
 .dn-mc .smk{animation:mcSmoke .9s ease-out forwards}
 .dn-mc .fire{animation:mcFlick .12s linear infinite alternate}
 .dn-mc .torch{animation:mcFlick .18s linear infinite alternate}
+.mc-res{display:none;flex-direction:column;gap:6px}
+.dn-mc.done .mc-res{display:flex}
+.mc-res div{display:flex;align-items:center;gap:9px;min-height:44px;padding:0 12px 0 0;transform:skewX(-8deg);background:#0a0b14;box-shadow:inset 0 0 0 2px rgba(255,255,255,.75);animation:mcRow .35s calc(var(--k) * 120ms + .6s) cubic-bezier(.2,.9,.3,1.2) both}
+.mc-res div>*{transform:skewX(8deg)}
+.mc-res div.win{background:linear-gradient(90deg,#ffe066,#ffbb1f);color:#1a1200;box-shadow:inset 0 0 0 2px #fff,0 0 22px rgba(255,210,90,.5)}
+.mc-res .rk{align-self:stretch;width:38px;display:grid;place-items:center;transform:none;background:var(--c);font:italic 900 22px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff}
+.mc-res b{flex:0 1 auto;min-width:0;max-width:40%;font:700 16px/1.1 'Fredoka',sans-serif;white-space:nowrap;overflow:hidden}
+.mc-res em{flex:1 1 0;min-width:0;text-align:right;font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;white-space:nowrap}
+.mc-res u{flex:none;text-decoration:none;padding:3px 8px;border-radius:6px;font:italic 900 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;white-space:nowrap;color:#fff;background:#2fbf5a}
+.mc-res u.over{background:#e8343c}.mc-res u.gold{background:#1a1200;color:#ffd25a}
+.mc-res div.win u{background:#1a1200;color:#ffd25a}
+.dn-mc .ms{opacity:0;animation:mcIn .4s ease-out forwards}
+.dn-mc .ms text{font:italic 900 12px 'Barlow Condensed','Lilita One',sans-serif;paint-order:stroke;stroke:#05070f;stroke-width:3.6px}
+@keyframes mcRow{0%{opacity:0;transform:skewX(-8deg) translateX(-30px)}100%{opacity:1;transform:skewX(-8deg)}}
+@keyframes mcIn{to{opacity:1}}
 .dn-mc .moon{filter:drop-shadow(0 0 10px rgba(255,240,200,.6))}
 .dn-mc .dust,.dn-mc .chunk,.dn-mc .flash,.dn-mc .smk,.dn-mc .fire,.dn-mc .torch{transform-box:fill-box;transform-origin:50% 50%}
 @keyframes dnMcFog{to{transform:translateX(-18px)}}
@@ -97,9 +105,8 @@ const CSS = /* css */ `
 @keyframes mcSmoke{from{opacity:.55;transform:scale(.6)}to{opacity:0;transform:scale(2) translateY(-6px)}}
 @keyframes mcFlick{from{opacity:.75;transform:scale(.92)}to{opacity:1;transform:scale(1.08)}}
 @keyframes mcDash{to{stroke-dashoffset:-14}}
-@keyframes mcGlow{from{box-shadow:inset 0 0 0 2px rgba(255,255,255,.5),0 5px 0 #6a0e08,0 0 14px rgba(255,110,40,.4)}to{box-shadow:inset 0 0 0 2px rgba(255,255,255,.5),0 5px 0 #6a0e08,0 0 30px rgba(255,140,40,.85)}}
-@media (max-height:700px){.mc-sw{min-height:110px}.dn-mc .fl-send{height:44px;font-size:22px}.dn-mc-row .fl-step{padding:6px 4px 7px;font-size:15px}.dn-mc .fl-range{height:30px}}
-@media (prefers-reduced-motion:reduce){.dn-mc .fog,.dn-mc .pvarc,.dn-mc .fl-send,.dn-mc .torch{animation:none}}
+@media (max-height:700px){.mc-sw{min-height:110px}}
+@media (prefers-reduced-motion:reduce){.dn-mc .fog,.dn-mc .pvarc,.dn-mc .torch{animation:none}}
 `;
 
 const fmtOf = (v) => (x) => (v.yil ? String(Math.round(x)) : Math.round(x).toLocaleString('tr-TR'));
@@ -266,6 +273,7 @@ export const mancinik = {
 				<button class="fl-step" data-d="${S.fine}">+${stepLabel(S.fine)}</button><button class="fl-step" data-d="${S.big}">+${stepLabel(S.big)}</button>
 			</div>
 			<button class="fl-send">FIRLAT!</button>
+			<div class="mc-res"></div>
 		</div>`;
 		rule(el, 'Aşmadan en yakın');
 		const root = el.querySelector('.dn-mc');
@@ -284,6 +292,7 @@ export const mancinik = {
 		let done = false;
 		let mine = null; // gönderilen değer
 		let myThrow = null; // kendi atışım: { known, landed, next }
+		let revealed = false;
 		const anims = new Set();
 		const ab = arm.querySelector('.ab');
 		const af = arm.querySelector('.af');
@@ -427,6 +436,43 @@ export const mancinik = {
 			if (delay) setTimeout(go, delay);
 			else go();
 		};
+		/** Ölçü çizgisi: taşın düştüğü yerden sura (ya da surdan taşa) yatay çizgi ve fark yazısı. */
+		const measure = (value, color, row = 0) => {
+			if (v.hedef == null) return;
+			const wx = wallX();
+			const ex = landX(v, value, wx);
+			const o = outcome(v, value);
+			const y = GY + 9 + row * 11;
+			const x0 = Math.min(ex, wx);
+			const x1 = Math.max(ex, wx);
+			const txt = o.d === 0 ? 'TAM İSABET' : o.over ? `${fmt(o.d)} AŞTI` : `${fmt(-o.d)} KISA`;
+			const col = o.d === 0 ? '#ffd25a' : o.over ? '#ff6a5a' : '#7dff9a';
+			const g = document.createElementNS(NS, 'g');
+			g.setAttribute('class', 'ms');
+			g.innerHTML = `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="${col}" stroke-width="1.8"/><line x1="${x0}" y1="${y - 4}" x2="${x0}" y2="${y + 4}" stroke="${col}" stroke-width="1.8"/><line x1="${x1}" y1="${y - 4}" x2="${x1}" y2="${y + 4}" stroke="${col}" stroke-width="1.8"/>
+				<circle cx="${ex}" cy="${y}" r="3" fill="${color}" stroke="#fff" stroke-width="1"/><text x="${(x0 + x1) / 2}" y="${y - 3}" text-anchor="middle" fill="${col}">${esc(txt)}</text>`;
+			stones.appendChild(g);
+		};
+		/** Kamera: sahnenin görünen alanını (viewBox) sur ve taşların çevresine yumuşakça daraltır. */
+		const zoomTo = (xs, ms = 900) => {
+			const lo = Math.max(0, Math.min(...xs) - 46);
+			const hi = Math.min(W, Math.max(...xs) + 46);
+			const w = Math.max(150, hi - lo);
+			const h = (w * H) / W;
+			const tx = Math.max(0, Math.min(W - w, (lo + hi) / 2 - w / 2));
+			const ty = Math.min(H - h, GY + 34 - h);
+			const a0 = performance.now();
+			const from = [0, 0, W, H];
+			const to = [tx, ty, w, h];
+			const st = () => {
+				if (!svg.isConnected) return;
+				const k = Math.min(1, (performance.now() - a0) / ms);
+				const e = k < 0.5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2;
+				svg.setAttribute('viewBox', from.map((f, i) => (f + (to[i] - f) * e).toFixed(1)).join(' '));
+				if (k < 1) requestAnimationFrame(st);
+			};
+			requestAnimationFrame(st);
+		};
 		const verdict = (value) => {
 			const o = outcome(v, value);
 			if (o.d === 0) return ['TAM İSABET!', 'gold', 'surun tam dibinde'];
@@ -452,9 +498,11 @@ export const mancinik = {
 				onLand: () => {
 					myThrow.landed = true;
 					setTimeout(() => myThrow.next?.(), 700);
+					if (revealed) return; // sonuç ekranı geldi: liste ve ölçü çizgileri söyler
 					if (!known) return say('Taş sise daldı…<small>sonuç birazdan</small>', 'cold', 0);
 					const [t, tone, sub] = verdict(mine);
 					say(`${t}<small>${esc(sub)}</small>`, tone, 0);
+					if (!revealed) measure(mine, '#ffd25a');
 					if (outcome(v, mine).over) {
 						wall.classList.add('hit');
 						sfx(app, 'wrong');
@@ -496,7 +544,10 @@ export const mancinik = {
 			},
 			reveal(results) {
 				done = true;
+				revealed = true;
 				root.classList.add('done');
+				// sahnedeki atış yazısı kalkar (sonuç damgası ve listesi söyler); ölçü çizgileri yakınlaşmadan sonra yeniden
+				setTimeout(() => msg.classList.remove('on'), 700);
 				showWall();
 				// herkesin taşı sırayla atılır. Kendi taşım sur bilinirken atıldıysa yerinde kalır (uçuşu bitince
 				// ötekiler gelir); sur sisteyken atıldıysa sonuç yeniden, doğru yerine atılır.
@@ -515,6 +566,25 @@ export const mancinik = {
 				// sıralama ve damga: aşmayanlardan en yakın; hepsi aştıysa en az aşan
 				const order = results.slice().sort((a, b) => a.err - b.err || a.time - b.time);
 				const win = order[0];
+				// ne kadar yaklaştın: kamera sura ve taşlara yaklaşır, fark çizgileri ve sıralı sonuç listesi
+				if (v.hedef != null) {
+					const shot = results.filter((r) => r.value != null);
+					const xs = [wallX(), ...shot.map((r) => landX(v, Number(r.value), wallX()))];
+					setTimeout(() => zoomTo(xs), 450 + list.length * 520);
+					setTimeout(() => {
+						stones.querySelectorAll('.ms').forEach((e) => e.remove());
+						const meR0 = shot.find((r) => r.p?.human);
+						const marks = [win, meR0 && meR0 !== win ? meR0 : null].filter((r) => r && r.value != null);
+						marks.forEach((r, i) => measure(Number(r.value), r.color, i));
+					}, 1400 + list.length * 520);
+					const rows = order.map((r, k) => {
+						if (r.value == null) return `<div style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><b>${esc(r.name)}</b><em>—</em><u class="over">ATIŞ YOK</u></div>`;
+						const o = outcome(v, Number(r.value));
+						const tag = o.d === 0 ? ['TAM İSABET', 'gold'] : o.over ? [`${fmt(o.d)} AŞTI`, 'over'] : [`${fmt(-o.d)} KISA`, ''];
+						return `<div class="${r === win ? 'win' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><b>${esc(r.name)}</b><em>${fmt(Number(r.value))}${q.unit ? ' ' + esc(q.unit) : ''}</em><u class="${tag[1]}">${esc(tag[0])}</u></div>`;
+					});
+					root.querySelector('.mc-res').innerHTML = `<div style="--c:#7dff9a;--k:0;background:#06140a"><span class="rk" style="background:#2a6a3a">✓</span><b>Doğru cevap</b><em>${fmt(v.hedef)}${q.unit ? ' ' + esc(q.unit) : ''}</em></div>` + rows.join('');
+				}
 				const winOver = win && win.value != null && outcome(v, win.value).over;
 				const meR = results.find((r) => r.p?.human);
 				if (meR && app && win) {

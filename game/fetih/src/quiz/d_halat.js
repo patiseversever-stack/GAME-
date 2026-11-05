@@ -151,10 +151,16 @@ export const halat = {
 		const meS = who.findIndex((w) => w.human);
 		const [L, Rt] = who;
 		const side = (w, cls) => `<div class="ht-side ${cls}" style="--pc:${w.color}">${w.av}<b>0</b></div>`;
-		el.innerHTML = `<div class="dn-ht">
-			<div class="ht-hud">${side(L, 'L')}<div class="ht-meter"><span class="ht-mid">HALAT ORTADA</span><div class="ht-bar">${'<i></i>'.repeat(14)}</div></div>${side(Rt, 'R')}</div>
-			<div class="ht-sw"><div class="ht-arena">${sahneSVG(L.color, Rt.color)}<span class="ht-combo L"></span><span class="ht-combo R"></span><span class="ht-big"></span></div></div>
-			<div class="dn-ht-q"><i></i><u></u><span></span></div>
+		const short = (w) => (w.human ? 'SEN' : String(w.name || '').toLocaleUpperCase('tr-TR'));
+		const tagOf = (w, cls) => `<span class="ht-tag ${cls}" style="--pc:${w.color}">${w.av}<b>${esc(short(w))}</b></span>`;
+		el.innerHTML = `<div class="dn-ht" style="--cl:${L.color};--cr:${Rt.color}">
+			<div class="ht-hud">${side(L, 'L')}<div class="ht-meter"><span class="ht-mid">HALAT ORTADA</span>
+				<div class="ht-track"><i class="hl"></i><i class="hr"></i><i class="c0"></i><b class="ht-knot"></b></div>
+				<div class="ht-ends"><span>${esc(short(L))}</span><span>${esc(short(Rt))}</span></div></div>${side(Rt, 'R')}</div>
+			<div class="ht-sw"><div class="ht-arena">${sahneSVG(L.color, Rt.color)}${tagOf(L, 'L')}${tagOf(Rt, 'R')}
+				<span class="ht-ev L"></span><span class="ht-ev R"></span><span class="ht-combo L"></span><span class="ht-combo R"></span><span class="ht-big"></span></div></div>
+			<div class="ht-log"></div>
+			<div class="dn-ht-q"><i></i><u></u><span></span><em class="ht-gate"></em></div>
 			<div class="ht-dots"></div>
 			<div class="dn-ht-a"><i class="dn-ht-rd"></i><div class="dn-ht-btns"></div><i class="dn-ht-lk"></i></div>
 			<div class="dn-ht-rows"></div>
@@ -165,7 +171,11 @@ export const halat = {
 		const combo = [root.querySelector('.ht-combo.L'), root.querySelector('.ht-combo.R')];
 		const mid = root.querySelector('.ht-mid');
 		const big = root.querySelector('.ht-big');
-		const segs = [...root.querySelectorAll('.ht-bar i')];
+		const knotEl = root.querySelector('.ht-knot');
+		const evs = [root.querySelector('.ht-ev.L'), root.querySelector('.ht-ev.R')];
+		const logEl = root.querySelector('.ht-log');
+		const gateEl = root.querySelector('.ht-gate');
+		const events = [];
 		const dots = root.querySelector('.ht-dots');
 		const stage = root.querySelector('.dn-ht-q');
 		const sTxt = stage.querySelector('span');
@@ -189,11 +199,25 @@ export const halat = {
 			if (ms) setTimeout(() => big.classList.remove('on'), ms);
 		};
 		const meter = () => {
-			// 14 parça: ortadan önde olanın yanına doğru dolar
+			// düğüm: ortadan önde olanın yanına kayar (en uç 7 adım)
 			const p = Math.max(-STEPS, Math.min(STEPS, pos()));
-			const lead = p > 0 ? L : Rt;
-			root.style.setProperty('--lc', lead.color);
-			segs.forEach((e, i) => e.classList.toggle('on', p > 0 ? i >= 7 - p && i < 7 : p < 0 ? i >= 7 && i < 7 - p : false));
+			knotEl.style.left = `${50 - (p / STEPS) * 46}%`;
+			root.style.setProperty('--lc', p > 0 ? L.color : p < 0 ? Rt.color : '#ffd25a');
+		};
+		/** Olay: takımın üstünde büyük yazı + alttaki kayıt ("Defne doğru bildi → halat Defne'ye"). */
+		const event = (s, right) => {
+			const w = who[s];
+			const nm = short(w);
+			const e = evs[s];
+			e.innerHTML = right ? `<b>${esc(nm)}</b><span>+1 DOĞRU</span><i>${s ? '▶▶' : '◀◀'}</i>` : `<b>${esc(nm)}</b><span>−1 YANLIŞ</span><i>${s ? '◀◀' : '▶▶'}</i>`;
+			e.className = `ht-ev ${s ? 'R' : 'L'} ${right ? 'ok' : 'no'}`;
+			void e.offsetWidth;
+			e.classList.add('on');
+			const to = right ? w : who[1 - s];
+			const nmL = w.human ? 'Sen' : w.name;
+			events.unshift(`<div class="${right ? 'ok' : 'no'}" style="--pc:${w.color}"><i></i><span><b>${esc(nmL)}</b> ${right ? (w.human ? 'doğru bildin' : 'doğru bildi') : w.human ? 'yanıldın' : 'yanıldı'}</span><em style="color:${to.color}">halat → ${esc(to.human ? 'sana' : to.name)}</em></div>`);
+			events.length = Math.min(events.length, 2);
+			logEl.innerHTML = events.join('');
 		};
 		const midText = () => {
 			meter();
@@ -214,6 +238,7 @@ export const halat = {
 			combo[s].textContent = w.combo >= 3 ? `SERİ ×${w.combo}` : '';
 			combo[s].classList.toggle('on', w.combo >= 3);
 			sh.pull(s, right, w.color);
+			event(s, right);
 			if (right) {
 				app?.cam?.impulse?.(s === meS ? 0.14 : 0.08);
 				if (w.combo === 3 || w.combo === 6) sayBig(w.combo === 6 ? 'DURDURULAMAZ!' : 'ALEV ALDI!', 'gold', 800);
@@ -286,6 +311,8 @@ export const halat = {
 			ans.classList.remove('read');
 			void ans.offsetWidth;
 			ans.classList.add('read');
+			gateEl.textContent = 'OKU…';
+			gateEl.className = 'ht-gate';
 			gateTick(now());
 		};
 		/** Kare başına: kilit bittiyse sıradaki soru, kapı açıldıysa düğmeler (hakemle aynı saat: kartın açılışı). */
@@ -300,11 +327,15 @@ export const halat = {
 			if (!lock && e >= readyAt && btnHost.querySelector('.fl-opt.wait')) {
 				for (const b of btnHost.querySelectorAll('.fl-opt.wait')) b.classList.remove('wait');
 				ans.classList.remove('read');
+				gateEl.textContent = 'BAS!';
+				gateEl.className = 'ht-gate go';
 			}
 		}
 		show();
 		onOpen(el, () => {
 			t0 = clock.now();
+			sayBig('HALATI ÇEK!', 'gold', 1300);
+			logEl.innerHTML = '<div class="rule"><span>Her doğru halatı <b>sana</b> bir adım çeker, yanlış <b>rakibe</b>. Süre bitince halat kimdeyse o kazanır.</span></div>';
 		});
 		btnHost.addEventListener('click', (e) => {
 			const b = e.target.closest('.fl-opt');

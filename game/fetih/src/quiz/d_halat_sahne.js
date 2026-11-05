@@ -130,22 +130,48 @@ export const SAHNE_CSS = /* css */ `
 .ht-side .fl-av{width:34px;height:34px;flex:none;border-radius:10px;box-shadow:0 0 0 2.5px var(--pc),0 3px 0 rgba(0,0,0,.45)}
 .ht-side b{min-width:44px;padding:2px 8px 3px;transform:skewX(-10deg);text-align:center;font:italic 900 24px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff;background:var(--pc);box-shadow:inset 0 0 0 2px rgba(255,255,255,.7),0 3px 0 rgba(0,0,0,.4);transition:transform .15s}
 .ht-side b.pop{transform:skewX(-10deg) scale(1.28)}
-.ht-meter{position:relative;height:30px;display:flex;flex-direction:column;justify-content:flex-end}
-.ht-bar{position:relative;height:14px;display:grid;grid-template-columns:repeat(14,1fr);gap:2px;padding:2px;transform:skewX(-12deg);background:#05070f;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35)}
-.ht-bar i{background:rgba(255,255,255,.08);transition:background .18s,box-shadow .18s}
-.ht-bar i.on{background:var(--lc);box-shadow:0 0 8px var(--lc)}
-.ht-bar::after{content:'';position:absolute;left:50%;top:-5px;bottom:-5px;width:2px;margin-left:-1px;background:#ffd25a;box-shadow:0 0 6px #ffd25a}
-.ht-mid{position:absolute;left:50%;top:-1px;transform:translateX(-50%);white-space:nowrap;font:italic 800 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#ffe7a0;text-shadow:0 1px 0 #000}
-.dn-ht.hot .ht-mid{color:#ff8a7a;animation:htBeat .5s ease-in-out infinite}
-.ht-sw{position:relative;flex:1 1 auto;min-height:150px;container-type:size}
-.ht-arena{position:absolute;inset:0;margin:auto;width:100%;height:min(100%,55cqw + 70px,340px);overflow:hidden;background:radial-gradient(rgba(255,255,255,.5) .7px,transparent 1px) 0 0/37px 29px,#191446;border-radius:18px;box-shadow:0 0 0 2px rgba(255,255,255,.22),0 12px 28px rgba(0,0,0,.55)}
+.ht-meter{position:relative;display:flex;flex-direction:column;gap:3px;min-width:0}
+.ht-mid{text-align:center;white-space:nowrap;font:italic 900 15px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;color:var(--lc,#ffe7a0);text-shadow:0 1px 0 #000,0 0 10px color-mix(in srgb,var(--lc,#ffd25a) 60%,transparent)}
+.dn-ht.hot .ht-mid{color:#ff8a7a;animation:htBeat2 .5s ease-in-out infinite}
+.ht-track{position:relative;height:12px;border-radius:7px;overflow:visible;background:#05070f;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}
+.ht-track .hl,.ht-track .hr{position:absolute;top:2px;bottom:2px;width:calc(50% - 3px);border-radius:5px;opacity:.85}
+.ht-track .hl{left:2px;background:linear-gradient(90deg,var(--cl),color-mix(in srgb,var(--cl) 40%,transparent))}
+.ht-track .hr{right:2px;background:linear-gradient(270deg,var(--cr),color-mix(in srgb,var(--cr) 40%,transparent))}
+.ht-track .c0{position:absolute;left:50%;top:-4px;bottom:-4px;width:2px;margin-left:-1px;background:#ffd25a;box-shadow:0 0 6px #ffd25a}
+.ht-knot{position:absolute;top:50%;left:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#ff8a8a,#e8343c 60%,#8a0e14);box-shadow:0 0 0 2.5px #fff,0 0 14px var(--lc,#fff);transition:left .25s cubic-bezier(.3,1.5,.5,1)}
+.ht-ends{display:flex;justify-content:space-between;font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;color:rgba(255,255,255,.6)}
+.ht-ends span{max-width:48%;white-space:nowrap;overflow:hidden}
+.ht-tag{position:absolute;top:7%;z-index:2;display:flex;align-items:center;gap:6px;padding:3px 10px 3px 3px;border-radius:999px;background:var(--pc);box-shadow:0 0 0 2px #fff,0 4px 10px rgba(0,0,0,.45)}
+.ht-tag.L{left:5%}.ht-tag.R{right:5%;flex-direction:row-reverse;padding:3px 3px 3px 10px}
+.ht-tag .fl-av{width:26px;height:26px;border-radius:50%}
+.ht-tag b{font:italic 900 15px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;color:#fff;text-shadow:0 1px 0 rgba(0,0,0,.4);white-space:nowrap}
+.ht-ev{position:absolute;top:36%;z-index:3;display:flex;flex-direction:column;align-items:center;gap:1px;opacity:0;transform:translateY(8px) scale(.6);pointer-events:none;
+  font:italic 900 22px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;color:#fff;text-shadow:0 3px 0 rgba(0,0,0,.55)}
+.ht-ev.L{left:8%}.ht-ev.R{right:8%}
+.ht-ev b{font-size:14px;letter-spacing:.1em;padding:1px 8px;border-radius:5px;background:rgba(0,0,0,.55)}
+.ht-ev i{font-style:normal;font-size:18px}
+.ht-ev.ok span,.ht-ev.ok i{color:#7dff9a}.ht-ev.no span,.ht-ev.no i{color:#ff7a6a}
+.ht-ev.on{animation:htEv 1.1s cubic-bezier(.2,1.2,.4,1) forwards}
+@keyframes htEv{0%{opacity:0;transform:translateY(10px) scale(.6)}15%{opacity:1;transform:translateY(0) scale(1.08)}70%{opacity:1;transform:translateY(-4px) scale(1)}100%{opacity:0;transform:translateY(-16px) scale(.96)}}
+@keyframes htBeat2{50%{transform:scale(1.12)}}
+.ht-log{display:flex;flex-direction:column;gap:3px;min-height:46px}
+.ht-log div{display:flex;align-items:center;gap:7px;padding:4px 9px;border-radius:9px;background:rgba(255,255,255,.06);font:500 13px/1.2 'Fredoka',sans-serif;color:#e8eefc;animation:htLog .3s ease-out}
+.ht-log div:nth-child(2){opacity:.6}
+.ht-log div i{flex:none;width:9px;height:9px;border-radius:50%;background:var(--pc)}
+.ht-log div.ok{box-shadow:inset 3px 0 0 #3ee07a}.ht-log div.no{box-shadow:inset 3px 0 0 #ff5a4a}
+.ht-log div span{flex:1;min-width:0}
+.ht-log div em{flex:none;font-style:normal;font:italic 900 14px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em}
+.ht-log .rule{justify-content:center;text-align:center;background:rgba(255,210,90,.1);box-shadow:inset 0 0 0 1.5px rgba(255,210,90,.4)}
+@keyframes htLog{from{transform:translateY(-6px) scale(.97)}}
+.ht-sw{position:relative;flex:1 1 auto;min-height:150px;max-height:calc(55cqw + 8px);container-type:size}
+.ht-arena{position:absolute;inset:0;margin:auto;width:100%;height:min(100%,55cqw);overflow:hidden;background:radial-gradient(rgba(255,255,255,.5) .7px,transparent 1px) 0 0/37px 29px,#191446;border-radius:18px;box-shadow:0 0 0 2px rgba(255,255,255,.22),0 12px 28px rgba(0,0,0,.55)}
 .fl-q:not(.cover) .ht-sw{flex:none;height:190px}
 .ht-arena svg{position:absolute;inset:0;width:100%;height:100%}
 .ht-arena::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;box-shadow:inset 0 0 0 0 rgba(255,40,30,0);transition:box-shadow .3s}
 .dn-ht.hot .ht-arena::after{animation:htHot .5s ease-in-out infinite alternate}
-.ht-combo{position:absolute;top:10px;z-index:2;padding:3px 10px 4px;transform:skewX(-10deg) scale(.5);opacity:0;font:italic 900 16px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;color:#fff;
+.ht-combo{position:absolute;top:calc(7% + 38px);z-index:2;padding:3px 10px 4px;transform:skewX(-10deg) scale(.5);opacity:0;font:italic 900 16px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;color:#fff;
   background:linear-gradient(180deg,#ffd25a,#ff6a1a 60%,#e8243c);box-shadow:0 0 0 2px #fff,0 0 18px rgba(255,120,40,.8);transition:opacity .2s,transform .3s cubic-bezier(.3,1.7,.5,1)}
-.ht-combo.L{left:10px}.ht-combo.R{right:10px}
+.ht-combo.L{left:5%}.ht-combo.R{right:5%}
 .ht-combo.on{opacity:1;transform:skewX(-10deg) scale(1)}
 .ht-big{position:absolute;left:50%;top:34%;z-index:2;transform:translate(-50%,-50%) scale(.4);opacity:0;white-space:nowrap;pointer-events:none;
   font:italic 900 44px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;color:#fff;text-shadow:0 4px 0 #8a0e14,0 0 28px rgba(255,60,40,.9);transition:opacity .2s,transform .35s cubic-bezier(.3,1.7,.5,1)}
@@ -164,14 +190,16 @@ export const SAHNE_CSS = /* css */ `
 .dn-ht .drop{animation:htDrop .9s cubic-bezier(.2,.6,.5,1) forwards}
 .dn-ht.hot .rope{animation:htTaut .07s linear infinite}
 /* soru tahtası */
-.dn-ht-q{position:relative;min-height:68px;display:grid;place-items:center;padding:18px 12px 9px;border-radius:14px;text-align:center;overflow:hidden;
-  background:linear-gradient(180deg,#1b2350,#0d1233);box-shadow:inset 0 0 0 2px rgba(255,210,90,.5),0 6px 16px rgba(0,0,0,.45);font-size:clamp(16px,calc(4.6 * var(--vw)),20px);line-height:1.22;font-weight:600;color:#fff;text-wrap:balance}
+.dn-ht-q{position:relative;min-height:72px;display:grid;place-items:center;padding:20px 12px 12px;border-radius:16px;text-align:center;overflow:hidden;
+  background:linear-gradient(180deg,#fffdf6,#f3ead6);border:2.5px solid #fff;box-shadow:0 4px 0 #c9b48a,0 8px 18px rgba(0,0,0,.4);font-size:clamp(17px,calc(4.9 * var(--vw)),21px);line-height:1.22;font-weight:700;color:#1a1f3a;text-wrap:balance}
+.ht-gate{position:absolute;right:10px;bottom:4px;font-style:normal;font:italic 900 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#8a7a5a}
+.ht-gate.go{color:#1f9a4a;animation:htBeat2 .6s ease-in-out infinite}
 .dn-ht-q>span{display:block;animation:dnHtIn .24s cubic-bezier(.3,1.4,.5,1)}
-.dn-ht-q>i{position:absolute;left:10px;top:5px;padding:1px 7px;border-radius:4px;font-style:normal;font:italic 800 10.5px/1.3 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#0b1230;background:#9fc4ff}
-.dn-ht-q>u{position:absolute;right:10px;top:5px;text-decoration:none;font:italic 800 10.5px/1.3 'Barlow Condensed',sans-serif;letter-spacing:.1em;color:#ffd25a}
+.dn-ht-q>i{position:absolute;left:10px;top:5px;padding:1px 7px;border-radius:4px;font-style:normal;font:italic 800 10.5px/1.3 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#fff;background:#2a3a7a}
+.dn-ht-q>u{position:absolute;right:10px;top:5px;text-decoration:none;font:italic 800 10.5px/1.3 'Barlow Condensed',sans-serif;letter-spacing:.1em;color:#8a6a2a}
 .dn-ht-q.ok{box-shadow:inset 0 0 0 2.5px #7dff9a,0 0 22px rgba(125,255,154,.45)}
 .dn-ht-q.no{box-shadow:inset 0 0 0 2.5px #ff6a5a,0 0 22px rgba(255,106,90,.45);animation:flq-shake .38s}
-.dn-ht-q .fix{display:block;margin-top:4px;font-size:13px;color:#ffb0a0}
+.dn-ht-q .fix{display:block;margin-top:4px;font-size:13px;color:#c8352a}
 .ht-dots{display:flex;justify-content:center;gap:4px;min-height:8px}
 .ht-dots i{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.14)}
 .ht-dots i.y{background:#3ee07a;box-shadow:0 0 6px #3ee07a}.ht-dots i.n{background:#ff5a4a;box-shadow:0 0 6px #ff5a4a}
@@ -181,14 +209,14 @@ export const SAHNE_CSS = /* css */ `
 .dn-ht-g{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
 .dn-ht-g .fl-opt{min-height:52px;justify-content:center;text-align:center;padding:6px 8px 7px;font-size:clamp(14.5px,calc(4.1 * var(--vw)),17px)}
 .dn-ht-g.n3 .fl-opt:first-child{grid-column:1/3}
-.dn-ht-a .fl-opt.wait{pointer-events:none;opacity:.5;filter:saturate(.6)}
+.dn-ht-a .fl-opt.wait{pointer-events:none;opacity:.78;filter:saturate(.75)}
 .dn-ht-a .fl-opt.gone{opacity:.14;pointer-events:none}
 .dn-ht-a.lock .fl-opt{opacity:.35;pointer-events:none;filter:grayscale(.6)}
 .dn-ht-rd{position:absolute;left:8%;right:8%;top:-5px;height:3px;border-radius:2px;background:#9fc4ff;transform-origin:left;transform:scaleX(0);opacity:0}
 .dn-ht-a.read .dn-ht-rd{opacity:.8;animation:dnHtRd var(--gt) linear forwards}
 .dn-ht-lk{position:absolute;left:8%;right:8%;bottom:-6px;height:5px;border-radius:3px;background:#ff6a5a;transform-origin:left;transform:scaleX(0);opacity:0}
 .dn-ht-a.lock .dn-ht-lk{opacity:1;animation:dnHtLk var(--lk) linear forwards}
-.dn-ht.done .dn-ht-q,.dn-ht.done .dn-ht-a,.dn-ht.done .ht-dots{display:none}
+.dn-ht.done .dn-ht-q,.dn-ht.done .dn-ht-a,.dn-ht.done .ht-dots,.dn-ht.done .ht-log{display:none}
 .dn-ht-rows{display:none;flex-direction:column;gap:4px;font-size:12.5px;text-align:left}
 .dn-ht.done .dn-ht-rows{display:flex}
 .dn-ht-rows div{display:flex;gap:7px;align-items:center;padding:4px 9px;border-radius:9px;background:rgba(255,255,255,.07)}
@@ -196,7 +224,7 @@ export const SAHNE_CSS = /* css */ `
 .dn-ht-rows span:nth-child(2){min-width:0;overflow:hidden;white-space:nowrap}
 .dn-ht-rows em{margin-left:auto;flex:none;font-style:normal;font-family:'Lilita One';opacity:.85}
 @media (max-height:700px){.ht-sw{min-height:110px}.dn-ht-q{min-height:56px;padding:16px 10px 6px;font-size:15px}.dn-ht-a .fl-tf .fl-opt{min-height:48px;font-size:19px}.dn-ht-g .fl-opt{min-height:42px}.ht-side .fl-av{width:28px;height:28px}.ht-side b{font-size:20px}}
-@keyframes dnHtIn{from{transform:translateY(12px) scale(.94);opacity:.3}}
+@keyframes dnHtIn{from{transform:translateY(12px) scale(.94)}}
 @keyframes dnHtRd{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes dnHtLk{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @keyframes htBeat{50%{transform:translateX(-50%) scale(1.15)}}
