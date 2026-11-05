@@ -125,11 +125,20 @@ Ada, dürüst ve hileli hamlelerini sayar.
 - Oyun kancası: Lakırtı kampta duyduklarını tekrarlar. Fısıldadığın sır yanlış kişinin önünde papağanın ağzından çıkabilir. Bu, duyum mekaniğinin bir parçası.
 - Sözü: "Herkes bir şeyden korkar, sadece bazıları itiraf eder."
 
-### 10. Okan "Bonus" Şahin (41) · Gece yarısı televizyon satış sunucusu
-- Tip: pazarlıkçı + neşeli.
-- Her şeyi satar, oyları bile. Kampta takas pazarı kurar.
-- Sırrı: aslında çok yalnız. Satış dili onun zırhı.
-- Sözü: "Ama durun, dahası var!"
+### 10. Aslı "Ayna" (yaklaşık 30) · Kendini "zihin koçu" olarak tanıtıyor
+- Tip: entrikacı + hırslı. Sezonun ana kötü karakteri.
+- Lakabı Ayna, çünkü herkese görmek istediği şeyi gösterir, sonra arkasını döner.
+- "Kazananın Zihni" adlı bir kitabı var. Kendi parasıyla bastırmış, kimse okumamış. Kampta herkese imzalı kopya dağıtmaya çalışır.
+- Davranışı:
+  - Her ittifakı bir yedek planla kurar, çoğu zaman aynı anda iki ittifakın içindedir.
+  - Başkasının başarısını sahiplenir.
+  - Takım kaybedince suçu en sessiz olana atar.
+- İtirafta: "Ben burada oyun oynamıyorum, oyunu ben yazıyorum."
+- Bulmaca kulesinde kendini dahi sanar, ama ipuçlarını Zeynep'in defterinden çalar.
+- Zaafı: kendinden o kadar emin ki kimsenin onu fark etmediğini sanır.
+- Oyun kancası: tanık ve duyumla kanıt toplarsan, Yankı Çemberi'nde herkesin önünde maskesini düşürebilirsin. Bu "Ayna kırıldı" sinematik anıdır; özel bir klip ve rozet açar.
+- İz sistemi: semboller ona hiç altın parlamaz.
+- Sözü: "Ben zaten biliyordum." Her şey olup bittikten sonra söyler.
 
 ### 11. Mavi (yaşı belirsiz, yaklaşık 26) · "Kayıp eşya bürosunda çalışıyorum"
 - Tip: sessiz gözlemci + entrikacı.
@@ -138,11 +147,25 @@ Ada, dürüst ve hileli hamlelerini sayar.
 - Görünüş: tek kulağında, kalıntılardaki sembolle aynı desende taş bir küpe.
 - Hikayedeki rolü: sırrın anahtar karakteri. Kule'nin adamı mı, Suskunlar'ın soyundan mı, belli değil.
 
+## İlk sürpriz dalga
+İlk tekneyle gelen yarışmacılar. Sezonun ortasında adaya yanaşır.
+
+### Okan "Bonus" Şahin (41) · Gece yarısı televizyon satış sunucusu
+- Tip: pazarlıkçı + neşeli.
+- Her şeyi satar, oyları bile. Kampta takas pazarı kurar.
+- Sırrı: aslında çok yalnız. Satış dili onun zırhı.
+- Sözü: "Ama durun, dahası var!"
+- Girişi: tekneden atlarken bağırır: "Ama durun, dahası var!"
+
 ## Karakterler arası bağlar
 Sezon başlamadan var olan ilişkiler:
 - **Murat ve Hatice:** Hatice yıllarca Murat'ın fenerini denizden gördü. İlk gün birbirlerini tanırlar ve hemen ittifak kurarlar.
-- **Selin ve Okan:** Selin, Okan'ın batan şirketinin arabulucusuydu. İkisi de bunu gizler.
+- **Selin ve Okan:** Selin, Okan'ın batan şirketinin arabulucusuydu. Okan tekneyle gelince ikisi de bunu gizler.
 - **Emir ve Ece:** Emir bir videosunda Ece'yle alay etmişti, aralarında açık rekabet var.
 - **Zeynep ve Mavi:** Mavi, Zeynep'in takma adını biliyor. Yıllardır bulmacalarına imzasız notlar gönderen okuyucu o.
 - **Can ve Mavi:** geceleri kalıntılarda karşılaşırlar, birbirlerini ele vermezler.
 - **Lakırtı ve Okan:** papağan Okan'ı hiç sevmez, onu görünce bağırır.
+- **Aslı ve Selin:** iki entrikacı birbirini ilk gün tanır. Ya sezonun en tehlikeli ittifakı olurlar ya da en büyük düşmanı.
+- **Aslı ve Zeynep:** Aslı, Zeynep'in defterini çalmaya çalışır. Oyuncu bunu görürse büyük bir koz kazanır.
+- **Aslı ve Emir:** Aslı, Emir'in takipçilerini kitabının reklamı için kullanmaya çalışır.
+- **Aslı ve Lakırtı:** papağan, Aslı'nın kendi kendine fısıldadığı "Kimse fark etmez" sözünü öğrenir. Bu sözü en kötü anda, eleme gecesinde tekrarlar.
