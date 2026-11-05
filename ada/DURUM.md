@@ -44,6 +44,20 @@ Her oturumun başında bu dosyayı oku. Her oturumun sonunda güncelle: yapılan
 7. [ ] Ağır çekim klip, tek dokunuşla paylaşma, rekor meydan okuma linki.
 8. [ ] Kalite ayarları (düşük/orta/yüksek) ve telefon testleri.
 
+## Araştırma notu: Higgsfield ile oyun yapımı (5 Kasım 2026)
+- **Higgsfield Games** tek bir yazıdan tarayıcı oyunu kurabiliyor: kodu bir yapay zekâ yazıyor, görselleri Higgsfield üretiyor.
+  - Oyun Higgsfield'ın kendi şablonunda ve higgsfield.app adresinde yaşıyor.
+  - Bağımsız bir deneme yazısının başlığı: "şekil üretiyor, sahne değil". Kısa demolar için iyi; uzun, online ve mağazaya çıkacak bir oyun için ana yol olarak uygun değil.
+- **3D Jutsu:** Higgsfield'ın bulutta çalışan Blender sahnesi. Ada ve kalıntılar için sahne kurmak, fragman görüntüsü almak ve model dışa aktarmak için kullanılabilir. Işık ve özel malzemeler dışa aktarımda tam taşınmayabilir.
+- **Yazıdan ya da görselden 3D (Meshy 6/7, Tripo, Hunyuan3D):** karakterler ve objeler için.
+- **Karar:** Oyunun beyni bizim kodumuz olacak (Three.js; online'a ve Capacitor'a hazır). Higgsfield sanat atölyemiz olacak: karakterler, objeler, animasyonlar, konsept görseller, fragman.
+- **En kaliteli sonuç için:**
+  1. Önce tek bir "stil formülü" yazılır, her görsel aynı formülle üretilir.
+  2. Karakterlerde önce temiz bir konsept görsel çıkar: tek kişi, tam boy, düz arka plan, kollar gövdeden ayrık. Onaylanınca 3D'ye çevrilir (T-poz, iskelet ve hazır animasyonlar).
+  3. Telefonda akıcılık için poligon bütçesi: oyuncu 15-30 bin, bot 5-15 bin, obje 1-5 bin, arka plan 300-1.500.
+  4. PBR haritaları sadece gerekiyorsa açılır.
+- Terminal Higgsfield'ın dosya sunucusuna ulaşamazsa, üretilen modelleri oyuna koymak için ağ izni gerekecek.
+
 ## Açık sorular (acil değil)
 - Küçük satın alınabilir avantajlar online modda nasıl dengelenecek?
 - İz sistemi kesinleşsin mi?
