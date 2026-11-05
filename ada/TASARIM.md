@@ -13,7 +13,7 @@ Oyuncu kendi yarışmacısını oynar. Takım parkurları, kamp hayatı, ittifak
 | Oyuncu | Kendi karakteri. Takım oyunlarına katılır, kaptanlığa aday olur, birini destekler. |
 | Kadro | 12 yarışmacı, 6+6 iki takım |
 | Sezon | 6 kişi kalınca takımlar birleşir, herkes bireysel. Son 3 finale kalır, jüri kazananı seçer. |
-| Uzunluk | Çok uzun. Sezonlar haftalarca sürebilir; 3-4 saatte bitirilemez. Hikaye güçlü olacak. |
+| Uzunluk | Çok uzun. Bir sezon yaklaşık 60 oyun günü: günü 15-20 dakikadan 15-20 saat oyun eder. 3-4 saatte bitirilemez. Hikaye güçlü olacak. |
 | Yeni gelenler | Sürpriz dalgalar: belirli günlerde tekne gelir, yeni yarışmacılar katılır, elenenlerden biri geri dönebilir. |
 | Zaman | Karışık: istediğin kadar gün oynarsın. Bazı büyük olaylar (tekne gelişi, özel görevler, final) gerçek günlere bağlı açılır. |
 | Bir gün | Ödül parkuru → kamp → kurtulma parkuru → eleme gecesi |
@@ -23,8 +23,10 @@ Oyuncu kendi yarışmacısını oynar. Takım parkurları, kamp hayatı, ittifak
 | Botlar | Her botun kişiliği ve hafızası var (hırslı, sadık, entrikacı, sessiz...). İhaneti unutmazlar. |
 | Görsel | Her şey yarı gerçekçi: karakterler ve ada aynı seviyede, ne çizgi film ne tam gerçek. |
 | Dil | Sadece Türkçe |
+| Ada | Tropik: turkuaz deniz, kumsal, sık orman, şelaleler. Ormanda eski taş kalıntılar var, adanın sırrına bağlanır. |
 
 ## Kaptanlık
+- Seçim her 3-4 günde bir yapılır.
 - Aday olmak için başarı, kazanma oranı ve yetenek önemli.
 - Seçim kampanyası var: ittifak kurarsın, destek toplarsın, takım oylar. Gerekirse botlarla kaptanlık için yarışırsın.
 - Kaptanın yetkileri:
@@ -66,6 +68,7 @@ Her sezon farklı eşyalar çıkar. Örnekler:
 
 ## Ses
 - Ekranda görünen, kendine özgü bir sunucu ve bir yardımcı anlatıcı var.
+- Sunucunun kişiliği karışık: karizmatik. Eleme gecesinde ciddi ve gerilimli, rahat anlarda esprili. Adanın sırrına dair ipuçları veren gizemli bir yanı da var.
 - Karakterler konuşur: yarışırken, birbirini desteklerken, kampta.
 - Adada arka plan konuşmaları, ortam sesleri ve efektler var.
 - Not: çok sayıda ses satırı ElevenLabs kredisi demek. Üretimden önce maliyet planı çıkarılacak.
@@ -105,9 +108,5 @@ Her sezon farklı eşyalar çıkar. Örnekler:
 - Uzun sezon yapısı baştan kurulur; içerik sonraki sürümlerde büyür.
 
 ## Açık sorular
-- Kaptanlık seçimi ne sıklıkla yapılacak?
-- Bir sezon kaç oyun günü sürecek?
-- Adanın teması ve havası ne olacak?
-- Sunucunun kişiliği nasıl olacak?
 - Küçük avantajlar online modda nasıl dengelenecek?
 - Ses ve görsel üretimi için kredi planı.
