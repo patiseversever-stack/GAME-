@@ -4,6 +4,9 @@
 const { chromium } = require('playwright');
 const DIST = process.argv[2] || '/home/user/GAME-/game/fetih/dist';
 const W = +(process.argv[3] || 412), H = +(process.argv[4] || 892);
+const WAIT = +(process.argv[5] || 800); // son dokunuştan sonra bekleme (ms): yavaş yazılım GPU'sunda ekran gecikir
+const ONLY = process.argv[6] ? new Set(process.argv[6].split(',')) : null; // yalnız bu sorular
+const SHOT = process.argv[7] || '';
 const SAMPLES = JSON.parse(require('child_process').execSync(`node --input-type=module -e "await import('/home/user/GAME-/game/fetih/test/kanca.mjs'); const {DENEME_SAMPLES}=await import('/home/user/GAME-/game/fetih/src/quiz/deneme.js'); console.log(JSON.stringify(DENEME_SAMPLES.ilavi.map(q=>[q.id,q.il])))"`).toString());
 (async () => {
   const b = await chromium.launch({ args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
@@ -48,6 +51,7 @@ const SAMPLES = JSON.parse(require('child_process').execSync(`node --input-type=
   const all = [];
   for (let k = 0; k < SAMPLES.length; k++) {
     if (k) await p.evaluate(() => document.getElementById('g-next').click());
+    if (ONLY && !ONLY.has(SAMPLES[k][0])) continue;
     await p.waitForFunction((id) => document.querySelector('.meta b')?.textContent === id && document.querySelector('.fl-q.on .dn-ia') && !document.querySelector('.fl-q.on.rv') && +document.querySelector('.fl-q.on .fl-clock b').textContent > 100, SAMPLES[k][0], { timeout: 120000, polling: 100 });
     await p.waitForTimeout(900);
     // gizli ile en yakın 4 il (merkezler arası)
@@ -57,9 +61,10 @@ const SAMPLES = JSON.parse(require('child_process').execSync(`node --input-type=
     }, SAMPLES[k][1]);
     for (let i = 0; i < taps.length; i++) {
       await p.evaluate((name) => { const app = window.__fl.app; const pr = app.board.provinces.find((x) => x.name === name); app.onGround({ x: pr.x, z: pr.z }); }, taps[i]);
-      await p.waitForTimeout(i < 3 ? 550 : 800);
+      await p.waitForTimeout(i < 3 ? 550 : WAIT);
     }
     const a1 = await audit('son dokunuş');
+    if (SHOT) await p.screenshot({ path: `${SHOT}_${SAMPLES[k][0]}.png`, timeout: 180000 });
     await p.waitForFunction(() => document.querySelector('.fl-q.rv'), null, { timeout: 60000, polling: 50 });
     await p.waitForTimeout(3600);
     const a2 = await audit('cevap filmi');
