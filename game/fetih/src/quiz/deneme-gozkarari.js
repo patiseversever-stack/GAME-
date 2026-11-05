@@ -14,13 +14,15 @@ export const TYPES = { gozkarari };
 
 export const ORDER = [['gozkarari', 'Göz Kararı', 'Bulanık, yakın, siluet: görseli erken tanı']];
 
-// galeride konular sırayla dönsün (ilk sorular her konudan ve her kipten birer örnek)
+// galeride önce vitrin: her kipten ikişer örnek (uzaklaşma, ayrıntıdan bütüne, siluet, netleşme); sonra konular sırayla döner
+const VITRIN = ['GK-013', 'GK-043', 'GK-263', 'GK-265', 'GK-021', 'GK-050', 'GK-001', 'GK-011'];
 const byKonu = new Map();
 for (const q of GK) {
+	if (VITRIN.includes(q.img)) continue;
 	if (!byKonu.has(q.konu)) byKonu.set(q.konu, []);
 	byKonu.get(q.konu).push({ ...q, type: 'gozkarari' });
 }
-const rr = [];
+const rr = VITRIN.map((id) => ({ ...GK.find((q) => q.img === id), type: 'gozkarari' }));
 for (let i = 0; rr.length < GK.length; i++) for (const l of byKonu.values()) if (l[i]) rr.push(l[i]);
 
 export const SAMPLES = { gozkarari: rr };

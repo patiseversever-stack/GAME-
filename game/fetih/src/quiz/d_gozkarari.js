@@ -105,8 +105,12 @@ const CSS = /* css */ `
 .fl-q.cover .gk-st{width:min(100cqw,133.3cqh);max-width:100%;margin:0}
 .fl-q.cover .fl-jk{display:none} /* bu tipte joker yok: çubuk da yer kaplamaz */
 /* şıklar hep iki sütun: uzun ad (Pachycephalosaurus) küçülerek sığar (fit.js), en çok iki satır */
-.fl-q.cover .fl-opts.one{grid-template-columns:1fr 1fr}
-.fl-q.cover .fl-opt span{overflow-wrap:normal;word-break:normal}
+/* sütunlar ekrana kilitli (minmax 0): tek uzun kelime sütunu genişletip ekrandan taşırmaz; kelime bölünmez, küçülür */
+.fl-q.cover .fl-opts,.fl-q.cover .fl-opts.one{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fl-q.cover .fl-opt{min-width:0}
+.fl-q.cover .fl-opt>span{flex:1 1 auto;min-width:0;overflow:hidden;overflow-wrap:normal;word-break:normal}
+/* son çare (320 px): küçülse de sığmayan tek kelime iki satıra bölünür */
+.fl-q.cover .fl-opt>span.fit-2{overflow-wrap:anywhere}
 .dn-gk.rv .gk-hd .md{display:none}
 /* kısa ekran (≤ 700 px): bant, soru ve şıklar sıkışır; görsel yine kalan yeri alır */
 @media (max-height:700px){

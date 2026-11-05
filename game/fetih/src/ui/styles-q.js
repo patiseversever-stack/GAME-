@@ -144,7 +144,7 @@ export const CSS_Q = /* css */ `
 @keyframes flStampB{0%{opacity:0;transform:translate(-50%,-50%) rotate(-6deg) scale(2.4)}60%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(.92)}100%{opacity:1;transform:translate(-50%,-50%) rotate(-6deg) scale(1)}}
 
 /* ---------------------------------------------------------------- şıklar */
-.fl-opts{display:grid;grid-template-columns:1fr 1fr;gap:9px 9px}
+.fl-opts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px 9px}
 .fl-opts.one{grid-template-columns:1fr;gap:8px}
 .fl-opts.three{grid-template-columns:1fr 1fr 1fr}
 .fl-opt{position:relative;display:flex;align-items:center;gap:9px;min-height:56px;padding:7px 12px 8px 7px;border-radius:16px;text-align:left;font-size:clamp(15.5px,calc(4.3 * var(--vw)),18px);line-height:1.15;font-weight:600;

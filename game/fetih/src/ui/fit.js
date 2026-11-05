@@ -38,10 +38,9 @@ const NAMES = [
 	'.fl-cat b',
 	'.gk-hd .kn b',
 	'.gk-cap',
-	'.fl-q.cover .fl-opt span',
 ];
 /** Cümle türü: küçülür, yine sığmazsa iki satıra iner. */
-const LINES = ['.rs-r>em', '.rs-r>em small', '.fl-rule', '.fl-q .fl-pin-hint .ph b', '.fl-lines .ln span', '.dn-ab-b>span', '.sv-mean small', '.fl-hilo .df'];
+const LINES = ['.fl-q.cover .fl-opt>span', '.rs-r>em', '.rs-r>em small', '.fl-rule', '.fl-q .fl-pin-hint .ph b', '.fl-lines .ln span', '.dn-ab-b>span', '.sv-mean small', '.fl-hilo .df'];
 
 export const FIT_NAMES = NAMES.join(',');
 export const FIT_LINES = LINES.join(',');
