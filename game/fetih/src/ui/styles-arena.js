@@ -648,7 +648,8 @@ export const CSS_ARENA = /* css */ `
     radial-gradient(130% 62% at 50% 0%,color-mix(in srgb,var(--cc) 34%,#0b0f22) 0%,#090c1b 52%,#05060d 100%)}
 .fl-q.cover .fl-qc::before{content:attr(data-cv);display:flex;align-items:center;gap:8px;position:absolute;inset:34px auto auto 50%;height:24px;padding:0;border-radius:0;opacity:1;transform:translateX(-50%);background:none;
   font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.4),0 0 18px color-mix(in srgb,var(--cc) 70%,transparent);white-space:nowrap}
-.fl-q.cover .fl-qbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:10px}
+.fl-q.cover .fl-qbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding-top:12px;margin-top:-2px}
+.fl-q.cover .fl-qbody::-webkit-scrollbar{display:none}
 @media (max-height:700px){
   .fl-q.cover .fl-qc{padding-top:54px}
   .fl-q.cover .fl-qc::before{top:22px;font-size:17px;height:20px}
