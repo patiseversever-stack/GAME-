@@ -6,6 +6,8 @@ import { createTerrain } from './island/terrain.js';
 import { createWater } from './island/water.js';
 import { createTrack } from './island/track.js';
 import { createFoliage } from './island/foliage.js';
+import { createDecor } from './island/decor.js';
+import { createLife } from './island/life.js';
 import { rockNormal, waterNormal } from './textures.js';
 
 export function buildWorld({ scene, renderer, course, path, quality }) {
@@ -24,7 +26,9 @@ export function buildWorld({ scene, renderer, course, path, quality }) {
   const track = createTrack({ scene, course, path, quality, instanced, mats, detailNormal });
   const foliage = createFoliage({ scene, course, path, terrain, quality, instanced });
   console.log('bitki sayıları', JSON.stringify(foliage.counts));
-  const extras = [];
+  const decor = createDecor({ scene, course, path, terrain, quality, instanced, mats, deckWidth: track.deckWidth });
+  const life = createLife({ scene, course, path, terrain, quality, instanced, mats, deckWidth: track.deckWidth });
+  const extras = [decor.update, life.update];
 
   return {
     sunDir: sky.sunDir,
