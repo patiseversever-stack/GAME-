@@ -27,7 +27,7 @@ const CSS = /* css */ `
 .dn-ks-cnt b.pop{transform:scale(1.3)}
 .dn-ks-cnt small{font-family:'Lilita One';font-size:17px;color:#cfe0ff}
 .dn-ks-last{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:#cfe0ff}
-.dn-ks-last span{font-family:'Fredoka';font-weight:600;font-size:16px;letter-spacing:0;text-transform:none;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-ks-last span{font-family:'Fredoka';font-weight:600;font-size:16px;letter-spacing:0;text-transform:none;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .dn-ks-last span.no{color:#ff9a8a}
 .dn-ks .fl-send{flex:none;width:auto;min-width:92px;padding:0 14px;height:44px;font-size:17px}
 .dn-ks-seg{display:flex;gap:3px;height:12px}

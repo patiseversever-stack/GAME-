@@ -25,6 +25,7 @@ import { questionTime } from '../game/jokers.js';
 import { HOT } from '../quiz/timing.js';
 import { RESULT_MS } from '../quiz/mac.js';
 import { debugShot } from './debug.js';
+import { autoFit, refitAll } from './fit.js';
 import { buildPause, showPause } from './pause.js';
 import { clock, sleep, setTimeout, clearTimeout, setInterval, clearInterval } from '../core/clock.js';
 
@@ -74,6 +75,8 @@ export class UI {
 		this.h = { campaign: () => this.showCampaign(), ...(h || {}) };
 		this.fast = false;
 		this.assets = {};
+		// isimler/rozetler hiçbir ekranda "…" ile kesilmez: taşan yazı küçülerek sığar
+		autoFit(document.body);
 		const mq = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
 		this.rm = !!mq?.matches;
 		mq?.addEventListener?.('change', (e) => {
@@ -962,21 +965,11 @@ export class UI {
 		setTimeout(fit, 1200);
 	}
 
-	/** Afişteki isimler (en çok 12 harf) kesilmeden, alt satıra inmeden sığsın: taşan isim yarımşar piksel küçülür. */
-	_fitNames(card) {
-		const fit = () => {
-			for (const b of card.querySelectorAll('.fl-qwho .nm b')) {
-				b.style.fontSize = '';
-				let fs = parseFloat(getComputedStyle(b).fontSize) || 16;
-				for (let k = 0; k < 40 && b.scrollWidth > b.clientWidth + 0.5 && fs > 10; k++) b.style.fontSize = (fs -= 0.5) + 'px';
-			}
-		};
-		fit();
-		// kalın yazı tipi ilk kullanımda iner: inince ve kısa süre sonra yeniden ölç
-		document.fonts?.load?.('italic 900 20px "Barlow Condensed"').then(fit, () => {});
-		document.fonts?.ready?.then(fit);
-		setTimeout(fit, 300);
-		setTimeout(fit, 1000);
+	/** Afişteki isimler kesilmeden sığsın: ortak sığdırıcıya (fit.js) bırak; kart açılış animasyonu oturunca bir tur daha ölç. */
+	_fitNames() {
+		refitAll();
+		setTimeout(refitAll, 300);
+		setTimeout(refitAll, 1000);
 	}
 
 	/** Tiplerin çizdiği gövdeye ortak dokunuşlar: uzun şıklar tek sütun, kaydırıcı dolgusu, yıl biçimi. */
@@ -1194,11 +1187,11 @@ export class UI {
 			.map((r, k) => {
 				const { val, sub: rs, ok } = this._resVal(T, v, r, closest);
 				const win = k === 0 && (closest ? ok : r.correct);
-				const tag = win ? `<i>${closest ? (r.err === 0 || (T.needsMap && r.correct) ? 'TAM İSABET' : 'EN YAKIN') : 'EN HIZLI'}</i>` : '';
+				const tag = win ? `<i class="rt">${closest ? (r.err === 0 || (T.needsMap && r.correct) ? 'TAM İSABET' : 'EN YAKIN') : 'EN HIZLI'}</i>` : '';
 				const no = !closest && !r.correct;
 				const tm = teams ? `<span class="tm" style="--tc:${tcol(r.p.team)}">${r.p.team ? 'B' : 'A'}</span>` : '';
 				const pk = picks ? `<span class="pk${picks[k] ? '' : ' z'}">${picks[k] ? `+${picks[k]}<small>İL</small>` : '—'}</span>` : '';
-				return `<div class="rs-r${win ? ' win' : ''}${no ? ' no' : ''}${r.p.human ? ' me' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span><b>${tm}${esc(r.name)}${tag}</b><em>${val}<small>${rs}</small></em>${pk}</div>`;
+				return `<div class="rs-r${win ? ' win' : ''}${no ? ' no' : ''}${r.p.human ? ' me' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span><b>${tm}${esc(r.name)}</b>${tag}<em>${val}<small>${rs}</small></em>${pk}</div>`;
 			})
 			.join('');
 		el.classList.toggle('n4', order.length >= 4);

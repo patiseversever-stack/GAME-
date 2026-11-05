@@ -74,8 +74,8 @@ export const CSS_WHEEL = /* css */ `
 .fl-wh-card .ic{flex:none;width:64px;height:64px;border-radius:18px;display:grid;place-items:center;background:var(--cc)}
 .fl-wh-card .ic .fl-gl{width:62%;height:62%}
 .fl-wh-card .tx{min-width:0;display:flex;flex-direction:column}
-.fl-wh-card b{font-family:'Lilita One';font-weight:400;font-size:calc(30px * var(--fz,1));line-height:1.05;color:#14214a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.fl-wh-card small{margin-top:3px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:14px;color:#5b6a8c;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-wh-card b{font-family:'Lilita One';font-weight:400;font-size:calc(30px * var(--fz,1));line-height:1.05;color:#14214a;white-space:nowrap;overflow:hidden;text-overflow:clip}
+.fl-wh-card small{margin-top:3px;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:14px;color:#5b6a8c;white-space:nowrap;overflow:hidden;text-overflow:clip}
 
 /* "Fetih!" kategori seçimi: çarkın kart dilinde; taç, süre çubuğu, büyük kategori kartları */
 .fl-catpick{width:min(calc(calc(100 * var(--vw)) - 28px),400px);display:flex;flex-direction:column;align-items:center}
@@ -134,7 +134,7 @@ export const CSS_WHEEL = /* css */ `
 .fl-duel .sd.d .pt .flag{left:auto;right:-26%;transform:rotate(10deg)}
 .fl-duel .pt .fl-av{position:absolute;inset:0;border-radius:26%;border:5px solid #fff;box-shadow:0 8px 0 rgba(0,0,0,.35),0 0 0 4px var(--pc)}
 .fl-duel .nm{display:flex;flex-direction:column;align-items:center;padding:4px 18px 6px;border-radius:14px;background:var(--ink);border:3px solid #fff;box-shadow:0 5px 0 rgba(0,0,0,.4)}
-.fl-duel .nm b{font-family:'Lilita One';font-weight:400;font-size:min(calc(8 * var(--vw)),32px);line-height:1;letter-spacing:.02em;max-width:calc(52 * var(--vw));white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-duel .nm b{font-family:'Lilita One';font-weight:400;font-size:min(calc(8 * var(--vw)),32px);line-height:1;letter-spacing:.02em;max-width:calc(52 * var(--vw));white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-duel .nm small{font-size:12px;letter-spacing:.16em;color:var(--gold)}
 .fl-duel .nm .hp{display:flex;gap:3px;margin-top:3px}
 .fl-duel .nm .hp i{width:15px;height:15px;background:var(--gold);-webkit-mask:var(--tw) center/contain no-repeat;mask:var(--tw) center/contain no-repeat}
@@ -175,7 +175,7 @@ export const CSS_WHEEL = /* css */ `
 .fl-rank .rw:nth-of-type(2) .md{background:linear-gradient(#fff,#b8c4d8)}
 .fl-rank .rw:nth-of-type(3) .md{background:linear-gradient(#ffc89a,#c8763a)}
 .fl-rank .fl-av{width:36px;height:36px;border-radius:11px;border-width:2px}
-.fl-rank .rw>b{flex:1;min-width:0;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-rank .rw>b{flex:1;min-width:0;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-rank .rw>em{flex:none;font-style:normal;font-family:'Lilita One';font-size:17px;padding:1px 10px 2px;border-radius:9px;color:#fff;background:#2fa84a;border:2px solid #fff}
 .fl-rank .rw>em.z{background:#46557a}
 

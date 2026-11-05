@@ -123,7 +123,7 @@ body:has(.fl-ui.qmap) .gal-fab{top:auto!important;bottom:calc(14px + env(safe-ar
 .gal .hd{display:flex;align-items:center;gap:8px;min-width:0}
 /* tip düğmesi: dokununca bütün tipler açılır */
 .gal .ty{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:6px 10px 7px 12px;border-radius:13px;background:#16254d;border:1.5px solid rgba(255,210,90,.45);text-align:left}
-.gal .ty b{flex:1;min-width:0;font-family:'Lilita One',system-ui,sans-serif;font-weight:400;font-size:20px;line-height:1.1;color:#ffd25a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gal .ty b{flex:1;min-width:0;font-family:'Lilita One',system-ui,sans-serif;font-weight:400;font-size:20px;line-height:1.1;color:#ffd25a;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .gal .ty small{flex:none;font-family:'Manrope',system-ui,sans-serif;font-weight:800;font-size:11px;color:#9fb0d6;font-variant-numeric:tabular-nums}
 .gal .ty i{flex:none;font-style:normal;font-size:12px;color:#ffd25a;transition:transform .2s}
 .gal.open .ty i{transform:rotate(180deg)}

@@ -96,7 +96,7 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-qwho .fl-qp .fl-av{width:44px;height:44px;border-radius:10px;border:2.5px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.35);transform:skewX(-6deg)}
 .fl-q:not(.map) .fl-qwho .fl-qp .nm{position:relative;z-index:1;display:flex;flex-direction:column;min-width:0}
 .fl-q:not(.map) .fl-qwho .fl-qp .nm small{order:-1;margin:0;font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:10px;letter-spacing:.2em;line-height:1.1;color:rgba(255,255,255,.92)}
-.fl-q:not(.map) .fl-qwho .fl-qp .nm b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:23px;line-height:.95;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+.fl-q:not(.map) .fl-qwho .fl-qp .nm b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:23px;line-height:.95;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:clip;text-shadow:0 2px 0 rgba(0,0,0,.3)}
 .fl-q:not(.map) .fl-qp .sc{display:block;font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:14.5px;line-height:1.05;color:#ffe680;text-shadow:0 1px 0 rgba(0,0,0,.4)}
 /* düello: iki eğik yarı, ortada VS, altta hedef il */
 .fl-q:not(.map) .fl-qwho.duel .fl-qp{clip-path:polygon(0 0,100% 0,84% 100%,0 100%);padding-right:54px}
@@ -147,7 +147,7 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-tmh.d .tn{align-items:flex-end}
 .fl-q:not(.map) .fl-tmh .tn small{font-family:'Barlow Condensed',sans-serif;font-style:italic;font-weight:800;font-size:9.5px;letter-spacing:.14em;white-space:nowrap}
 .fl-q:not(.map) .fl-tmh .tn small i{color:#ffe680}
-.fl-q:not(.map) .fl-tmh .tn b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:15px;line-height:.95;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-q:not(.map) .fl-tmh .tn b{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;font-size:15px;line-height:.95;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-ui.qon .fl-pbtn{top:calc(var(--sat) + 80px)}
 /* ---------------------------------------------------------------- afiş v3: her ekranda aynı (ölçüler kart genişliğine
    oranlı: cqw), 12 harflik isimler kalın ve tek satır, puan koyu hap içinde (her renkte okunur), etiketler büyük.
@@ -277,11 +277,13 @@ export const CSS_ARENA = /* css */ `
 .rs-r .rk{flex:none;align-self:stretch;width:46px;display:grid;place-items:center;transform:none;background:var(--c);
   font:italic 800 28px/1 'Barlow Condensed','Lilita One',sans-serif;text-shadow:0 2px 0 rgba(0,0,0,.3);box-shadow:inset -2px 0 0 rgba(255,255,255,.9)}
 .rs-r .fl-av{flex:none;width:40px;height:40px}
-.rs-r b{flex:1;min-width:0;font-weight:700;font-size:19px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.rs-r b i{display:inline-block;margin-left:8px;padding:3px 7px;vertical-align:2px;font:italic 800 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;color:#1a1200;background:#ffd25a}
-.rs-r.win b i{color:#ffd25a;background:#1a1200}
-.rs-r em{flex:none;text-align:right;font:italic 800 23px/1 'Barlow Condensed','Lilita One',sans-serif}
-.rs-r em small{display:block;margin-top:3px;font:600 12.5px/1 'Fredoka',sans-serif;opacity:.82}
+/* isim önceliklidir: doğal boyunda durur (en çok satırın %62'si), değer kalan yere küçülerek sığar; hiçbiri "…" ile kesilmez */
+.rs-r{position:relative}
+.rs-r>b{flex:0 1 auto;min-width:0;max-width:62%;font-weight:700;font-size:19px;white-space:nowrap;overflow:hidden}
+.rs-r>i.rt{position:absolute;top:-9px;left:96px;z-index:2;padding:3px 8px;font:italic 800 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;color:#1a1200;background:#ffd25a;box-shadow:0 0 0 1.5px #1a1200,0 3px 8px rgba(0,0,0,.4)}
+.rs-r.win>i.rt{color:#ffd25a;background:#1a1200;box-shadow:0 0 0 1.5px #ffd25a,0 3px 8px rgba(0,0,0,.4)}
+.rs-r>em{flex:1 1 0;min-width:0;text-align:right;white-space:nowrap;overflow:hidden;font:italic 800 23px/1 'Barlow Condensed','Lilita One',sans-serif}
+.rs-r>em small{display:block;margin-top:3px;white-space:nowrap;overflow:hidden;font:600 12.5px/1 'Fredoka',sans-serif;opacity:.82}
 .rs-r.win{color:#1a1200;background:linear-gradient(90deg,#ffe066,#ffbb1f);box-shadow:inset 0 0 0 2px #fff,0 0 26px rgba(255,210,90,.55),0 6px 18px rgba(0,0,0,.45)}
 .rs-r.no em{color:#ff9a88}
 @keyframes rsIn{0%{opacity:0;transform:skewX(-8deg) translateX(-40px)}100%{opacity:1;transform:skewX(-8deg)}}
@@ -291,7 +293,7 @@ export const CSS_ARENA = /* css */ `
 .fl-res.n4 .rs-r{min-height:50px}
 .fl-res.n4 .rs-rows{gap:8px}
 .fl-res.n4 .rs-r .fl-av{width:34px;height:34px}
-.fl-res.n4 .rs-r b{font-size:17px}
+.fl-res.n4 .rs-r>b{font-size:17px}
 
 /* ---------------------------------------------------------------- SEÇİM SIRASI (v1.5e, yayılma): ince, sade, premium. Koyu
    cam satırlar (ince çizgi kenar, solda oyuncu renginde şerit), küçük numara (birinci altın + taç), ad iki satıra dek,
@@ -334,7 +336,7 @@ export const CSS_ARENA = /* css */ `
 .sr-av em{position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);padding:1px 4px;font:italic 800 8.5px/1.15 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em;font-style:normal;color:#0b0e1a;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.5)}
 .sr-who small{display:flex;align-items:center;gap:5px;min-width:0;white-space:nowrap;font:600 12px/1 'Fredoka',sans-serif;color:rgba(232,238,252,.62)}
 .sr-who small span{flex:none;font:italic 700 13.5px/1 'Barlow Condensed','Lilita One',sans-serif;color:rgba(242,245,252,.9)}
-.sr-who small u{min-width:0;overflow:hidden;text-overflow:ellipsis;text-decoration:none}
+.sr-who small u{min-width:0;overflow:hidden;text-overflow:clip;text-decoration:none}
 .sr-who small i{flex:none;display:grid;place-items:center;width:13px;height:13px;border-radius:50%}
 .sr-who small i svg{width:8px;height:8px}
 .sr-who small i.ok{background:#2fbf5a}.sr-who small i.no{background:#d9483a}
@@ -577,7 +579,7 @@ export const CSS_ARENA = /* css */ `
   background:rgba(255,255,255,.05);box-shadow:inset 3px 0 0 var(--c)}
 .fl-bd .bd-rows.one .bd-p{flex:0 1 260px}
 .fl-bd .bd-p .fl-av{grid-row:1/4;width:38px;height:38px;box-shadow:0 0 0 1.5px var(--c)}
-.fl-bd .bd-p b{min-width:0;font:600 14.5px/1.1 'Fredoka',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-bd .bd-p b{min-width:0;font:600 14.5px/1.1 'Fredoka',sans-serif;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-bd .bd-p em{font:italic 800 14px/1.1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;font-style:normal;color:#ffd25a}
 .fl-bd .bd-p em.ok{color:#7dff9a}.fl-bd .bd-p em.no{color:#ff8a78}
 .fl-bd .bd-p small{font:500 11px/1 'Fredoka',sans-serif;opacity:.6}
@@ -631,7 +633,7 @@ export const CSS_ARENA = /* css */ `
 .fl-q .fl-pin-hint .ph::before{display:none}
 .fl-q .fl-pin-hint .pi{grid-row:1/3;width:30px;height:30px;display:grid;place-items:center;background:#262b3d;border:1px solid rgba(255,255,255,.2);transform:skewX(-8deg)}
 .fl-q .fl-pin-hint .pi::before{content:'';width:18px;height:18px;transform:skewX(8deg);background:#ffc83a;-webkit-mask:var(--pinm) center/contain no-repeat;mask:var(--pinm) center/contain no-repeat;animation:flBob2 1s ease-in-out infinite}
-.fl-q .fl-pin-hint .ph b{font:600 14px/1.15 'Fredoka',sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-q .fl-pin-hint .ph b{font:600 14px/1.15 'Fredoka',sans-serif;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-q .fl-pin-hint .ph small{font:italic 700 11px/1.1 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.55)}
 .fl-q .fl-pin-hint .fl-send{flex:none;width:112px;height:46px;padding:0;border:0;border-radius:0;clip-path:polygon(7% 0,100% 0,93% 100%,0 100%);background:linear-gradient(180deg,#fff,#e9ecf3);box-shadow:none;
   font:italic 900 21px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#0b0c12;text-shadow:none;transition:transform .08s,background .15s,color .15s}

@@ -63,7 +63,7 @@ const CSS = /* css */ `
 .dn-km{position:relative;border-radius:14px;padding:8px 10px 7px;overflow:hidden;color:var(--ink);background:var(--paper);box-shadow:0 4px 0 rgba(0,0,0,.35),inset 0 0 0 2px rgba(255,255,255,.18);transition:transform .2s}
 .dn-km .km-hd{display:flex;align-items:baseline;justify-content:space-between;gap:8px;padding-bottom:5px;margin-bottom:5px;border-bottom:1.5px solid var(--rule,rgba(0,0,0,.18))}
 .dn-km .km-hd b{font-family:'Lilita One';font-weight:400;font-size:15px;letter-spacing:.03em;white-space:nowrap}
-.dn-km .km-hd em{font-style:normal;font-family:'Manrope';font-weight:800;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-km .km-hd em{font-style:normal;font-family:'Manrope';font-weight:800;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .dn-km .km-ls{display:flex;flex-direction:column;gap:4px}
 .dn-km .km-l{display:flex;align-items:flex-start;gap:7px;font-family:'Fredoka';font-weight:500;font-size:14px;line-height:1.24}
 .dn-km .km-l.on{animation:kmIn .45s cubic-bezier(.25,1.4,.5,1) both}
@@ -225,7 +225,7 @@ const CSS = /* css */ `
 .dn-km .km-ans .pl i{width:13px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;background:#1f4fb4;color:#fff;font:700 7px/1 'Manrope',sans-serif;font-style:normal}
 .dn-km .km-ans .pl b{padding:0 8px;display:grid;place-items:center;font:700 19px/1 ui-monospace,'DejaVu Sans Mono',monospace;color:#111;letter-spacing:.04em}
 .dn-km .km-ans .nm{min-width:0;display:flex;flex-direction:column;gap:2px}
-.dn-km .km-ans .nm b{font:400 22px/1 'Lilita One',sans-serif;color:#ffd25a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-km .km-ans .nm b{font:400 22px/1 'Lilita One',sans-serif;color:#ffd25a;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .dn-km .km-ans .nm small{font:italic 800 10.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:rgba(255,255,255,.6);text-transform:uppercase}
 .dn-km .km-ans .st{margin-left:auto;display:flex;gap:2px}
 .dn-km .km-ans .st i{width:13px;height:13px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);background:#ffd25a}

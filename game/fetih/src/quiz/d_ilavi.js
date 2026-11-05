@@ -126,7 +126,7 @@ const CSS = /* css */ `
 .dn-ia-slots .sl{position:relative;min-width:0;height:50px;display:flex;flex-direction:column;justify-content:center;padding:4px 7px;overflow:hidden;
   background:rgba(255,255,255,.06);border-bottom:3px solid rgba(255,255,255,.16);transform:skewX(-8deg)}
 .dn-ia-slots .sl>*{transform:skewX(8deg)}
-.dn-ia-slots .sl .nm{font:italic 800 11.5px/1.1 'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-ia-slots .sl .nm{font:italic 800 11.5px/1.1 'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:clip}
 .dn-ia-slots .sl .km{font:400 17px/1.05 'Lilita One',sans-serif;color:rgba(255,255,255,.25);white-space:nowrap}
 .dn-ia-slots .sl .km i{font-style:normal;margin-left:3px}
 .dn-ia-slots .sl.on{background:linear-gradient(160deg,color-mix(in srgb,var(--hc) 92%,#fff),color-mix(in srgb,var(--hc) 70%,#000));border-bottom-color:#fff;animation:dnIaSlot .45s cubic-bezier(.3,1.6,.5,1)}

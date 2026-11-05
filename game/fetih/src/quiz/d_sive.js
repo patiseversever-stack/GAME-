@@ -182,7 +182,7 @@ const CSS = /* css */ `
   font:600 13.5px/1.15 'Fredoka',sans-serif;color:rgba(255,255,255,.7);overflow:hidden;transition:border-color .25s}
 .dn-sv .sv-pick i{flex:none;width:12px;height:12px;background:var(--rc,rgba(255,255,255,.3));transform:skewX(-10deg)}
 .dn-sv .sv-pick b{font:400 17px/1 'Lilita One',sans-serif;color:#fff}
-.dn-sv .sv-pick em{font-style:normal;opacity:.75;overflow:hidden;text-overflow:ellipsis}
+.dn-sv .sv-pick em{font-style:normal;opacity:.75;overflow:hidden;text-overflow:clip}
 .dn-sv .sv-pick.on{animation:svPick .35s cubic-bezier(.3,1.6,.5,1)}
 .dn-sv .sv-go{flex:none;padding:0 16px;border:0;background:#fff;color:#0d1124;font:italic 800 19px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;
   transform:skewX(-8deg);box-shadow:0 4px 0 rgba(0,0,0,.35);cursor:pointer;transition:transform .12s,opacity .2s}
@@ -206,7 +206,7 @@ const CSS = /* css */ `
 .sv-mean .sv-w b{font:400 18px/1 'Lilita One',sans-serif;color:#ffd25a}
 .sv-mean p{margin:0;font:600 12.5px/1.35 'Fredoka',sans-serif;color:rgba(255,255,255,.8)}
 .sv-mean .sv-rg{display:inline-block;margin-right:6px;padding:1px 7px 2px;background:var(--rc);color:#0d1124;font:italic 800 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;transform:skewX(-8deg)}
-.sv-mean small{display:block;margin-top:4px;font:italic 800 10.5px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.08em;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sv-mean small{display:block;margin-top:4px;font:italic 800 10.5px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.08em;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:clip}
 .dn-tag.sv-rgt>div{background:rgba(7,10,24,.62);border-color:transparent;box-shadow:none;padding:1px 7px 2px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.92}
 .dn-tag.sv-rgt>div::after{display:none}
 .dn-tag.sv-pct>div{border-color:var(--tc);font-family:'Lilita One';font-weight:400;font-size:13px}

@@ -47,7 +47,7 @@ const CSS = /* css */ `
 .dn-ab-b{position:relative;display:flex;align-items:center;gap:8px;min-height:25px;padding:2px 8px 3px;border-radius:9px;background:rgba(10,21,52,.75);overflow:hidden;
   animation:dnAbIn .35s both;animation-delay:calc(var(--k) * 45ms)}
 .dn-ab-b>u{position:absolute;left:0;top:0;bottom:0;width:calc(var(--p) * 1%);background:linear-gradient(90deg,rgba(94,200,255,.38),rgba(94,200,255,.16));transform-origin:0 50%;animation:dnAbBar .7s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(120ms + var(--k) * 45ms)}
-.dn-ab-b>span{position:relative;flex:1;min-width:0;font-size:13.5px;font-weight:600;color:#eef2fa;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-ab-b>span{position:relative;flex:1;min-width:0;font-size:13.5px;font-weight:600;color:#eef2fa;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .dn-ab-b>em{position:relative;flex:none;font-style:normal;font-family:'Manrope';font-weight:800;font-size:11.5px;color:#9fb0d6;font-variant-numeric:tabular-nums}
 .dn-ab-b>b{position:relative;flex:none;min-width:40px;text-align:right;font-family:'Lilita One';font-weight:400;font-size:15px;color:#ffd25a;font-variant-numeric:tabular-nums}
 .dn-ab-b.low>b{color:#7dff9a}

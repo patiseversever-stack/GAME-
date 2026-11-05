@@ -59,7 +59,7 @@ const BASE = /* css */ `
   transition:transform .25s cubic-bezier(.3,1.6,.5,1),opacity .3s,border-color .25s}
 .fl-pl .fl-av{width:36px;height:36px;border-radius:11px;border:2px solid #fff;box-shadow:0 0 0 2px var(--pc)}
 .fl-pl .tx{min-width:0;flex:1}
-.fl-pl b{display:block;font-size:10.5px;line-height:1.15;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-pl b{display:block;font-size:10.5px;line-height:1.15;letter-spacing:.07em;text-transform:uppercase;color:rgba(255,255,255,.72);white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-pl em{display:block;font-style:normal;font-family:'Lilita One';font-size:18px;line-height:1.05;letter-spacing:.01em;font-variant-numeric:tabular-nums;color:var(--gold);${OUT('#3a2300', 1)}}
 .fl-pl .cs{position:absolute;right:7px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:2px;padding:0;background:none;border:0}
 .fl-pl .cs i{width:11px;height:11px;background:var(--pc);-webkit-mask:var(--tw) center/contain no-repeat;mask:var(--tw) center/contain no-repeat;transition:opacity .3s,transform .3s}
@@ -241,6 +241,8 @@ ${LAND}{
   .fl-banner b{font-size:min(calc(11 * var(--vw)),70px)}
 }
 @keyframes flBobX{0%,100%{transform:translateY(-50%) translateX(0)}50%{transform:translateY(-50%) translateX(-3px)}}
+/* sığdırıcı (fit.js): küçülerek de sığmayan cümle iki satıra iner, asla "…" ile kesilmez */
+.fit-2{white-space:normal!important;overflow-wrap:normal;line-height:1.06!important;text-overflow:clip!important}
 `;
 
 const RM = /* css */ `

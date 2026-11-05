@@ -64,7 +64,7 @@ const CSS = /* css */ `
 .fl-hilo i.vs{position:absolute;left:50%;top:50%;z-index:4;width:46px;height:46px;margin:-23px 0 0 -31px;display:grid;place-items:center;font-style:normal;
   background:#0b0c12;transform:rotate(45deg);box-shadow:0 0 0 2px #ffc83a,0 0 0 5px #0b0c12,0 6px 16px rgba(0,0,0,.55);animation:flHlVs .45s .18s cubic-bezier(.3,1.7,.5,1) both}
 .fl-hilo i.vs b{transform:rotate(-45deg);font:italic 900 19px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffc83a}
-.fl-hilo .df{position:absolute;left:50%;bottom:-34px;z-index:4;transform:translateX(-50%) skewX(-10deg);white-space:nowrap;max-width:calc(100% - 12px);overflow:hidden;text-overflow:ellipsis;padding:5px 12px;background:#0b0c12;
+.fl-hilo .df{position:absolute;left:50%;bottom:-34px;z-index:4;transform:translateX(-50%) skewX(-10deg);white-space:nowrap;max-width:calc(100% - 12px);overflow:hidden;text-overflow:clip;padding:5px 12px;background:#0b0c12;
   box-shadow:inset 0 0 0 1px rgba(255,255,255,.22);font:italic 800 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#fff;animation:flHlDf .4s .9s cubic-bezier(.3,1.6,.5,1) both}
 .fl-hilo .df.sm{font-size:11px;letter-spacing:.08em;padding:5px 9px}
 .fl-hilo .df.sm b{font-size:13px}

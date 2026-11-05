@@ -162,7 +162,7 @@ const CSS = /* css */ `
 .dn-ht.done .dn-ht-rows{display:flex}
 .dn-ht-rows div{display:flex;gap:7px;align-items:center;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06)}
 .dn-ht-rows div.n{background:rgba(255,80,60,.2)}
-.dn-ht-rows span:nth-child(2){min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dn-ht-rows span:nth-child(2){min-width:0;overflow:hidden;text-overflow:clip;white-space:nowrap}
 .dn-ht-rows em{margin-left:auto;flex:none;font-style:normal;font-family:'Lilita One';opacity:.85}
 .dn-ht.hot .rope{animation:dnHtTaut .09s linear infinite}
 @keyframes dnHtIn{from{transform:translateY(12px) scale(.96)}}

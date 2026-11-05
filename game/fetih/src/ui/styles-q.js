@@ -45,9 +45,9 @@ export const CSS_Q = /* css */ `
 .fl-cat{flex:0 0 auto;display:flex;align-items:center;gap:6px;min-width:0;max-width:62%;padding:3px 12px 3px 3px;border-radius:999px;background:rgba(0,0,0,.28);border:2px solid rgba(255,255,255,.5)}
 .fl-cat .ci{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;font-size:16px;background:#fff}
 .fl-cat .ci .fl-i path:last-child{stroke:var(--cd)}
-.fl-cat b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;${OUT('rgba(0,0,0,.35)', 1)}}
+.fl-cat b{font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:clip;${OUT('rgba(0,0,0,.35)', 1)}}
 .fl-type{flex:none;font-family:'Lilita One';font-size:13px;letter-spacing:.1em;white-space:nowrap;padding:3px 9px;border-radius:9px;color:var(--cd);background:#fff}
-.fl-rule{flex:0 100 auto;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;${OUT('rgba(0,0,0,.4)', 1)}}
+.fl-rule{flex:0 100 auto;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:clip;min-width:0;${OUT('rgba(0,0,0,.4)', 1)}}
 .fl-clock{position:relative;margin-left:auto;flex:none;width:46px;height:46px;margin-top:-4px;margin-right:-4px;border-radius:50%;display:grid;place-items:center;
   background:radial-gradient(circle at 50% 35%,#2f5299,#12234a);border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.4)}
 .fl-clock b{font-family:'Lilita One';font-weight:400;font-size:21px;line-height:1;${OUT('#0a1534', 1.5)}}
@@ -74,7 +74,7 @@ export const CSS_Q = /* css */ `
 .fl-qp{position:relative;display:flex;align-items:center;gap:6px;min-width:0;padding:3px 10px 3px 3px;border-radius:14px;background:var(--ink);border:2.5px solid var(--pc);box-shadow:0 4px 0 rgba(0,0,0,.4)}
 .fl-qp .fl-av{width:34px;height:34px;border-radius:10px;border-width:2px}
 .fl-qp .nm{min-width:0}
-.fl-qp .nm b{display:block;font-size:13px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-qp .nm b{display:block;font-size:13px;line-height:1.1;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-qp .nm small{display:block;font-size:9.5px;letter-spacing:.1em;line-height:1.1;color:var(--pc2,#cfe0ff)}
 .fl-qp .st{position:absolute;left:22px;top:-7px;width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:14px;background:#3fc45a;border:2px solid #fff;opacity:0;transform:scale(.3)}
 .fl-qp.done .st{opacity:1;transform:none;transition:opacity .15s,transform .3s cubic-bezier(.3,1.8,.5,1)}
@@ -113,7 +113,7 @@ export const CSS_Q = /* css */ `
   background:radial-gradient(circle at 50% 32%,#fff3b8,#ffc93a 55%,#d48a0c);border:2.5px solid #fff6d6;box-shadow:0 0 0 2px #7a4a06,0 4px 10px rgba(0,0,0,.45)}
 .fl-qvs b{font-family:'Lilita One';font-weight:400;font-size:26px;line-height:.9;color:var(--gold);${OUT('#5a2a00', 2.5)}}
 .fl-qwho.duel .fl-qvs b{font-size:21px;letter-spacing:-.02em;color:#5a2a00;text-shadow:0 1px 0 rgba(255,255,255,.55)}
-.fl-qvs span{margin-top:3px;max-width:96px;padding:1px 7px 2px;border-radius:7px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;background:#c42a1a;border:1.5px solid #fff}
+.fl-qvs span{margin-top:3px;max-width:96px;padding:1px 7px 2px;border-radius:7px;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:clip;background:#c42a1a;border:1.5px solid #fff}
 .fl-qwho.duel .fl-qvs span{position:absolute;left:50%;bottom:calc(100% + 2px);transform:translateX(-50%);margin:0;max-width:110px;padding:2px 8px 3px;border-radius:8px;
   font-family:'Fredoka';font-weight:700;font-size:10.5px;letter-spacing:.03em;line-height:1.1;background:#0a1430;color:#ffd25a;border:1.5px solid rgba(255,214,120,.55);box-shadow:0 2px 6px rgba(0,0,0,.4)}
 
@@ -297,7 +297,7 @@ export const CSS_Q = /* css */ `
 .fl-cr .rk{font-family:'Lilita One';font-size:17px;text-align:center;color:#cfe0ff}
 .fl-cr .fl-av{width:30px;height:30px;border-radius:9px;border-width:2px;border-color:var(--c)}
 .fl-cr .nm{min-width:0}
-.fl-cr .nm b{display:block;font-size:14.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-cr .nm b{display:block;font-size:14.5px;line-height:1.15;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-cr .bar{display:block;height:8px;margin-top:3px;border-radius:4px;background:rgba(255,255,255,.12);overflow:hidden}
 .fl-cr .bar u{display:block;height:100%;border-radius:4px;background:var(--c);transform-origin:0 50%;transform:scaleX(var(--w));animation:flGrow .7s calc(.45s + var(--k) * .12s) cubic-bezier(.2,.8,.3,1) both}
 .fl-cr em{font-style:normal;text-align:right;font-family:'Lilita One';font-size:17px;line-height:1.05}

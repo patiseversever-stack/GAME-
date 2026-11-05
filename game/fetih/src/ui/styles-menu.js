@@ -37,7 +37,7 @@ export const CSS_MENU = /* css */ `
 .fl-tbtns .fl-av{width:38px;height:38px;border-radius:11px;border-width:2.5px}
 .fl-tbtns .tx{min-width:0}
 .fl-tbtns .tx small{display:block;font-family:'Fredoka';font-size:11px;letter-spacing:.12em;color:#cfe0ff;text-shadow:none}
-.fl-tbtns .tx b{display:block;font-weight:400;font-size:18px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-tbtns .tx b{display:block;font-weight:400;font-size:18px;line-height:1.05;white-space:nowrap;overflow:hidden;text-overflow:clip}
 
 /* ---------------------------------------------------------------- yeni maç */
 .fl-menu{justify-content:flex-start;gap:0;padding:0;background:linear-gradient(180deg,rgba(9,17,42,.9),rgba(9,17,42,.97))}
@@ -45,7 +45,7 @@ export const CSS_MENU = /* css */ `
 .fl-mtop h2{flex:1;margin:0;font-family:'Lilita One';font-weight:400;font-size:28px;letter-spacing:.03em;color:var(--gold);${OUT('#3a2000', 2)}}
 .fl-cmdchip{display:flex;align-items:center;gap:7px;max-width:44%;padding:3px 10px 3px 3px;border-radius:14px;background:var(--ink);border:2.5px solid rgba(255,255,255,.6);box-shadow:0 3px 0 rgba(0,0,0,.4)}
 .fl-cmdchip .fl-av{width:36px;height:36px;border-radius:10px;border-width:2px}
-.fl-cmdchip b{min-width:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-cmdchip b{min-width:0;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-cmdchip .fl-i{font-size:16px;opacity:.8}
 .fl-mbody{flex:1;min-height:0;width:100%;max-width:640px;overflow-y:auto;overflow-x:hidden;touch-action:pan-y;padding:0 12px 12px;-webkit-overflow-scrolling:touch}
 .fl-mbody section{margin-top:clamp(10px,calc(2.4 * var(--vh)),24px)}
@@ -155,7 +155,7 @@ export const CSS_MENU = /* css */ `
 .fl-podium .hs .fl-av+.fl-av{margin-left:-12px}
 .fl-podium .crown{width:40px;height:30px;margin-bottom:-4px;display:grid;place-items:center;font-size:34px;color:#7a4a06;filter:drop-shadow(0 3px 0 rgba(0,0,0,.3))}
 .fl-podium .crown .fl-i path:last-child{fill:#ffd25a}
-.fl-podium .who b{max-width:100%;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:1px 8px;border-radius:8px;background:var(--ink)}
+.fl-podium .who b{max-width:100%;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:clip;padding:1px 8px;border-radius:8px;background:var(--ink)}
 .fl-podium .me .who b{background:var(--gold);color:#4a2800}
 .fl-podium .who em{font-style:normal;font-family:'Lilita One';font-size:18px;color:var(--gold);${OUT('#3a2000', 1.5)}}
 .fl-podium .ped{position:relative;width:100%;border-radius:12px 12px 4px 4px;display:flex;justify-content:center;padding-top:6px;transform-origin:50% 100%;animation:flRise .5s calc(.6s - var(--k) * .2s) cubic-bezier(.3,1.4,.5,1) both;

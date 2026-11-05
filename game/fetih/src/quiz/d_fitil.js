@@ -203,7 +203,7 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
 .dn-fz-pl{position:absolute;bottom:10px;width:78px;display:flex;flex-direction:column;align-items:center;gap:3px;transition:transform .3s}
 .dn-fz-pl.a{left:6px}.dn-fz-pl.b{right:6px}
 .dn-fz-pl i{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;font-style:normal;font-family:'Lilita One';font-size:22px;color:#fff;background:var(--pc);border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.4);transition:box-shadow .3s,filter .3s}
-.dn-fz-pl b{max-width:78px;font-family:'Fredoka';font-weight:600;font-size:12.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-fz-pl b{max-width:78px;font-family:'Fredoka';font-weight:600;font-size:12.5px;color:#fff;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .dn-fz-pl small{font-family:'Lilita One';font-size:11px;letter-spacing:.06em;color:#ffb4a0;opacity:0;transform:translateY(3px);transition:opacity .25s,transform .25s}
 .dn-fz-pl.hot i{box-shadow:0 0 0 3px var(--red),0 0 18px rgba(255,80,40,.85),0 3px 0 rgba(0,0,0,.4);animation:dnFzHot .5s ease-in-out infinite alternate}
 .dn-fz-pl.hot small{opacity:1;transform:none}

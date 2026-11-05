@@ -87,7 +87,7 @@ export const CSS_PLAY = /* css */ `
 .rg .fl-mm .hi{fill:#fff;stroke:#0d1733;stroke-width:.4}
 .rg .nm{flex:1;min-width:0}
 .rg .nm b{display:block;font-family:'Lilita One';font-weight:400;font-size:21px;line-height:1.05;${OUT('rgba(0,0,0,.45)', 2)}}
-.rg .nm small{display:block;font-size:12px;color:#fff;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rg .nm small{display:block;font-size:12px;color:#fff;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .rg .nm em{display:inline-flex;align-items:center;gap:4px;margin-top:2px;padding:1px 9px 2px 6px;border-radius:999px;font-style:normal;font-size:12px;color:#4a2800;background:var(--gold);border:2px solid #fff}
 .rg .bs{position:relative;flex:none;display:flex;flex-direction:column;align-items:center;gap:3px}
 .rg .bs .fl-av{width:46px;height:46px;border-radius:14px}
@@ -184,7 +184,7 @@ export const CSS_PLAY = /* css */ `
 .nt.gold{color:#4a2800;background:var(--gold);border-color:#fff}
 .fl-lines{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 .fl-lines .ln{display:flex;align-items:center;gap:6px;padding:3px 9px;border-radius:10px;font-size:12.5px;background:rgba(10,21,52,.8);border:1.5px solid rgba(255,255,255,.14);animation:flRowIn .35s calc(1.1s + var(--k) * .08s) both}
-.fl-lines .ln span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fl-lines .ln span{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .fl-lines .ln b{font-family:'Lilita One';font-weight:400;font-size:13.5px}
 .fl-lines .ln .x{color:#a9c4ff}
 .fl-lines .ln .g{color:var(--gold)}
