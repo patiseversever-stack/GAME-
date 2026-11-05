@@ -76,26 +76,76 @@ export const SITE_NAMES = {
 };
 
 const CSS = /* css */ `
-.dn-kb{display:flex;flex-direction:column;gap:9px}
-.dn-kb-top{display:flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#cfe0ff}
-.dn-kb-top .sc{flex:none;width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#0a1534;border:2px solid var(--gold)}
-.dn-kb-top .sc svg{width:16px;height:16px}
-.dn-kb-bar{flex:1;height:8px;border-radius:6px;background:rgba(255,255,255,.14);overflow:hidden;position:relative}
-.dn-kb-bar i{position:absolute;inset:0;border-radius:6px;background:linear-gradient(90deg,#ffd25a,#ff8a3a);transform-origin:0 50%}
-.dn-kb-bar i.run{animation:dnShrink var(--t,20s) linear forwards}
-.fl-q.locked .dn-kb-bar i{animation-play-state:paused}
-.dn-kb-top b{font-family:'Lilita One';font-weight:400;font-size:14px;letter-spacing:.04em;color:var(--gold)}
+/* VİZÖR (Arena v1 siyah/beyaz): kartta irtifa göstergesi + ipucu kademeleri; haritada kamera vizörü (köşe parantezleri,
+   yönle dönen kerteriz halkası, artı imleci, canlı irtifa ve pusula). Bölge/il sınırı ışırken vizörde "İPUCU" uyarısı
+   çakar; cevapta parantezler hedefe kilitlenir. Hepsi transform/opacity; yazılar çeyrek saniyede bir güncellenir. */
+.dn-kb{display:flex;flex-direction:column;gap:10px}
+.dn-kb-top{display:flex;align-items:center;gap:10px;min-height:40px}
+.dn-kb-top .sc{flex:none;width:34px;height:34px;display:grid;place-items:center;background:#fff;transform:skewX(-8deg);box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.dn-kb-top .sc svg{width:20px;height:20px;transform:skewX(8deg)}
+.dn-kb-top .al{display:flex;flex-direction:column;gap:2px;flex:none;min-width:84px}
+.dn-kb-top small{font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.22em;color:rgba(255,255,255,.6)}
+.dn-kb-top .al b{font:400 22px/1 'Lilita One',sans-serif;color:#fff;font-variant-numeric:tabular-nums}
+.dn-kb-bar{flex:1;min-width:0;height:22px;position:relative;overflow:hidden;
+  background:repeating-linear-gradient(90deg,rgba(255,255,255,.22) 0 2px,transparent 2px 10px) 0 100%/100% 7px no-repeat,repeating-linear-gradient(90deg,rgba(255,255,255,.4) 0 2px,transparent 2px 50px) 0 100%/100% 12px no-repeat}
+.dn-kb-bar i{position:absolute;left:0;right:0;bottom:0;height:3px;background:#ffd25a;box-shadow:0 0 8px rgba(255,210,90,.7);transform-origin:0 50%;transform:scaleX(0)}
+.dn-kb-bar i.run{animation:dnRise var(--t,20s) linear forwards}
+.dn-kb-bar s{position:absolute;bottom:3px;width:0;height:0;border:6px solid transparent;border-bottom:8px solid #ffd25a;margin-left:-6px;transform:translateX(0);text-decoration:none}
+.dn-kb-bar s.run{animation:dnRiseM var(--t,20s) linear forwards}
+.fl-q.locked .dn-kb-bar i,.fl-q.locked .dn-kb-bar s{animation-play-state:paused}
+.dn-kb-top .ip{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:4px}
+.dn-kb-top .ip span{display:flex;gap:4px}
+.dn-kb-top .ip i{width:16px;height:8px;transform:skewX(-18deg);background:rgba(255,255,255,.16);transition:background .3s}
+.dn-kb-top .ip i.on{background:#ffd25a;box-shadow:0 0 8px rgba(255,210,90,.8);animation:dnPip .5s cubic-bezier(.3,1.8,.5,1)}
 .dn-kb .fl-opt{min-height:50px}
 /* dürbün: haritanın kenarları kararır, ortası açık; zamanla açılır (yalnız transform ve opacity) */
 .dn-scope{position:absolute;left:50%;top:var(--cy,60%);width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;pointer-events:none;border-radius:50%;
   background:radial-gradient(circle,transparent 0 13%,rgba(255,226,140,.55) 13.4%,rgba(4,8,22,.0) 14.2%,rgba(4,8,22,.55) 19%,rgba(4,8,22,.92) 33%);transform:scale(1);opacity:1}
 .dn-scope.run{animation:dnScope var(--t,20s) cubic-bezier(.45,0,.7,1) forwards}
 .dn-scope.off{transition:opacity .5s;opacity:0}
-@keyframes dnShrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+/* vizör */
+.dn-vf{position:absolute;left:50%;top:var(--cy,60%);width:var(--vs,300px);height:var(--vs,300px);margin:calc(var(--vs,300px) / -2) 0 0 calc(var(--vs,300px) / -2);pointer-events:none;
+  animation:dnVfIn .7s .15s cubic-bezier(.2,.9,.3,1.2) both}
+.dn-vf .br{position:absolute;width:15%;height:15%;border:0 solid #fff;filter:drop-shadow(0 0 3px rgba(0,0,0,.6));transition:transform .45s cubic-bezier(.6,0,.3,1.4)}
+.dn-vf .br.a{left:0;top:0;border-width:3px 0 0 3px}.dn-vf .br.b{right:0;top:0;border-width:3px 3px 0 0}
+.dn-vf .br.c{left:0;bottom:0;border-width:0 0 3px 3px}.dn-vf .br.d{right:0;bottom:0;border-width:0 3px 3px 0}
+.dn-vf .bz{position:absolute;inset:9%;border-radius:50%;opacity:.55;transition:transform .25s linear;
+  background:repeating-conic-gradient(from -1deg,#fff 0 2deg,transparent 2deg 15deg);-webkit-mask:radial-gradient(circle,transparent 0 47%,#000 47.5% 50%,transparent 50.5%);mask:radial-gradient(circle,transparent 0 47%,#000 47.5% 50%,transparent 50.5%)}
+.dn-vf .bz::after{content:'';position:absolute;left:50%;top:-1%;width:0;height:0;margin-left:-6px;border:6px solid transparent;border-top:9px solid #ff5a46}
+.dn-vf .ch{position:absolute;left:50%;top:50%;width:22px;height:22px;margin:-11px 0 0 -11px;opacity:.85;
+  background:linear-gradient(#fff,#fff) 50% 0/2px 7px no-repeat,linear-gradient(#fff,#fff) 50% 100%/2px 7px no-repeat,linear-gradient(#fff,#fff) 0 50%/7px 2px no-repeat,linear-gradient(#fff,#fff) 100% 50%/7px 2px no-repeat}
+.dn-vf .rd{position:absolute;left:50%;bottom:-6px;transform:translate(-50%,100%);display:flex;gap:10px;align-items:center;white-space:nowrap;padding:4px 10px;background:rgba(7,8,15,.82);
+  font:italic 800 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:#fff;font-variant-numeric:tabular-nums}
+.dn-vf .rd b{font-weight:800;color:#ffd25a}
+.dn-vf .rd i{width:7px;height:7px;border-radius:50%;background:#ff5a46;animation:dnRec 1s steps(2) infinite}
+.dn-vf .cmp{position:absolute;left:50%;top:-6px;transform:translate(-50%,-100%);padding:3px 9px;background:rgba(7,8,15,.82);font:italic 800 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em;color:#fff}
+.dn-vf .cl{position:absolute;left:50%;top:22%;transform:translate(-50%,-50%) scale(.6);opacity:0;padding:6px 12px;border:2px solid #ffd25a;background:rgba(7,8,15,.86);
+  font:italic 800 16px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#ffd25a;white-space:nowrap}
+.dn-vf .cl.go{animation:dnClue 2.2s cubic-bezier(.3,1.5,.5,1) forwards}
+.dn-vf.lock .br{transform:var(--lk)}
+.dn-vf.lock .br.a{--lk:translate(140%,140%)}.dn-vf.lock .br.b{--lk:translate(-140%,140%)}.dn-vf.lock .br.c{--lk:translate(140%,-140%)}.dn-vf.lock .br.d{--lk:translate(-140%,-140%)}
+.dn-vf.lock .bz{opacity:0;transition:opacity .3s}
+.dn-vf.lock .rd b{color:#4fe07e}
+.dn-vf.lock::after{content:'';position:absolute;inset:30%;border-radius:50%;border:3px solid #fff;animation:dnLock .7s .3s ease-out both}
+.dn-vf.off{opacity:0;transition:opacity .5s 1.1s}
+@keyframes dnRise{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@keyframes dnRiseM{from{left:0}to{left:100%}}
 @keyframes dnScope{0%{transform:scale(1);opacity:1}70%{opacity:.85}100%{transform:scale(3.4);opacity:0}}
+@keyframes dnVfIn{from{opacity:0;transform:scale(1.35)}to{opacity:1;transform:none}}
+@keyframes dnRec{50%{opacity:0}}
+@keyframes dnPip{50%{transform:skewX(-18deg) scale(1.5)}}
+@keyframes dnClue{0%{opacity:0;transform:translate(-50%,-50%) scale(.6)}12%{opacity:1;transform:translate(-50%,-50%) scale(1.06)}20%{transform:translate(-50%,-50%) scale(1)}80%{opacity:1}100%{opacity:0;transform:translate(-50%,-62%)}}
+@keyframes dnLock{from{transform:scale(2.2);opacity:0}40%{opacity:1}to{transform:scale(.9);opacity:0}}
+@media (prefers-reduced-motion:reduce){.dn-vf .rd i{animation:none}}
 `;
+/** Kurgusal irtifa (maketler büyütülmüş): yükseliş payı u'dan metre; 60 m'den 12 km'ye logaritmik. */
+const altText = (u) => {
+	const m = 60 * Math.pow(200, Math.min(1, Math.max(0, u)));
+	return m < 1000 ? `${Math.round(m / 10) * 10} m` : `${(m / 1000).toLocaleString('tr-TR', { minimumFractionDigits: 1, maximumFractionDigits: 1 })} km`;
+};
+const COMPASS = ['K', 'KD', 'D', 'GD', 'G', 'GB', 'B', 'KB'];
 
-const SCOPE = '<svg viewBox="0 0 24 24" fill="none" stroke="#ffd25a" stroke-width="2.4" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="M14.5 14.5L20 20"/></svg>';
+const SCOPE = '<svg viewBox="0 0 24 24" fill="none" stroke="#0d1124" stroke-width="2.6" stroke-linecap="round"><circle cx="10" cy="10" r="6"/><path d="M14.5 14.5L20 20"/></svg>';
 const LINEAR = (t) => t;
 const HERO_SHADOW = 4; // kahraman varken gölge kapsamının en dar yarı genişliği (birim; harita vars. 14)
 // en son açılan Kuşbakışı kartı: eski kartın kapanışı (yeni kart açıldıktan sonra gelebilir) yeninin kahramanını,
@@ -226,13 +276,17 @@ export const kusbakisi = {
 		css('kusbakisi', CSS);
 		const app = appOf();
 		el.innerHTML = `<div class="dn-kb">
-			<div class="dn-kb-top"><span class="sc">${SCOPE}</span><span>Dürbün yükseliyor</span><span class="dn-kb-bar"><i></i></span><b>ERKEN BİL</b></div>
+			<div class="dn-kb-top"><span class="sc">${SCOPE}</span><span class="al"><small>İRTİFA</small><b>60 m</b></span><span class="dn-kb-bar"><i></i><s></s></span><span class="ip"><small>İPUCU</small><span><i></i><i></i></span></span></div>
 			<div data-r="o"></div>
 		</div>`;
 		const c = mountChoice(el.querySelector('[data-r=o]'), v, api, { onPick: () => sfx(app, 'tap') });
 		const bar = el.querySelector('.dn-kb-bar i');
+		const mk = el.querySelector('.dn-kb-bar s');
+		const altEl = el.querySelector('.dn-kb-top .al b');
+		const pipEls = [...el.querySelectorAll('.dn-kb-top .ip i')];
 		const FILM = Math.min(v.sec || 20, v.film || v.sec || 20);
-		bar.style.setProperty('--t', FILM + 's');
+		bar.style.setProperty('--t', FILM * 0.92 + 's');
+		mk.style.setProperty('--t', FILM * 0.92 + 's');
 		if (!app) return { lock: c.lock, reveal: (r) => c.reveal(r), destroy() {} };
 		const q = v.q;
 		PREV?.(); // önceki Kuşbakışı kartının temizliği önce
@@ -261,11 +315,33 @@ export const kusbakisi = {
 		scope.className = 'dn-scope';
 		scope.style.setProperty('--t', FILM * 0.9 + 's');
 		app.ui.$.pins.appendChild(scope);
+		const vf = document.createElement('div');
+		vf.className = 'dn-vf';
+		vf.innerHTML = '<i class="bz"></i><i class="br a"></i><i class="br b"></i><i class="br c"></i><i class="br d"></i><i class="ch"></i><span class="cmp">K</span><span class="cl"></span><span class="rd"><i></i>İRTİFA <b>60 m</b></span>';
+		app.ui.$.pins.appendChild(vf);
+		const vfAlt = vf.querySelector('.rd b');
+		const vfCmp = vf.querySelector('.cmp');
+		const vfBz = vf.querySelector('.bz');
+		const vfCl = vf.querySelector('.cl');
+		const clueFx = (k, text) => {
+			pipEls[k]?.classList.add('on');
+			vfCl.textContent = text;
+			vfCl.classList.remove('go');
+			void vfCl.offsetWidth;
+			vfCl.classList.add('go');
+			sfx(app, 'kbPing', { n: k });
+		};
 		const near = q.near || 4.2 + (sp?.r || 1) * 0.8;
 		const far = q.far || 64;
 		const frame = () => {
 			const top = cardTop(el);
-			scope.style.setProperty('--cy', ((top + (1 - top) / 2) * 100).toFixed(1) + '%');
+			const cy = ((top + (1 - top) / 2) * 100).toFixed(1) + '%';
+			scope.style.setProperty('--cy', cy);
+			vf.style.setProperty('--cy', cy);
+			const host = app.ui.$.pins;
+			const W = host.clientWidth || innerWidth;
+			const H = host.clientHeight || innerHeight;
+			vf.style.setProperty('--vs', Math.round(Math.min(W * 0.8, (1 - top) * H * 0.62)) + 'px');
 			return top;
 		};
 		// yükseliş planı: soru saatine bağlı (kare hızından bağımsız; çevrimiçinde iki oyuncu aynı anda aynı kadrajı
@@ -324,30 +400,42 @@ export const kusbakisi = {
 			const step = () => {
 				if (!el.isConnected) return clearInterval(tick);
 				const t = (clock.now() - t0) / 1000 + STEP;
-				app.cam.shot(sp.x, sp.z, at(t));
+				const o = at(t);
+				app.cam.shot(sp.x, sp.z, o);
 				const u = t / T;
+				const al = altText(u);
+				altEl.textContent = al;
+				vfAlt.textContent = al;
+				const deg = (((o.yaw * 180) / Math.PI) % 360 + 360) % 360;
+				vfBz.style.transform = `rotate(${(-deg).toFixed(1)}deg)`;
+				vfCmp.textContent = `${COMPASS[Math.round(deg / 45) % 8]} · ${String(Math.round(deg)).padStart(3, '0')}°`;
 				if (heroOn && lm.uHide && LIVE === me) lm.uHide.value.z = bury * (1 - Math.min(1, Math.max(0, (u - BURY[0]) / (BURY[1] - BURY[0]))));
 				if (clue === 0 && u >= uR && region) {
 					clue = 1;
 					b.edgeGlow?.(region, il, { at: { region: G.uTime.value, il: -1 }, dur: 1.6 });
+					clueFx(0, 'İPUCU · BÖLGE SINIRI');
 				}
 				if (clue === 1 && u >= uP) {
 					clue = 2;
 					b.edgeGlowAt?.(null, G.uTime.value);
+					clueFx(1, 'İPUCU · İL SINIRI');
 				}
 				if (t >= T + 0.5 || (t >= T && clue === 2)) clearInterval(tick);
 			};
 			step();
 			tick = setInterval(step, STEP * 1000);
 			bar.classList.add('run');
+			mk.classList.add('run');
 			scope.classList.add('run');
 			sfx(app, 'whoosh');
+			sfx(app, 'kbRise');
 		});
 		const close = onClose(el, () => {
 			stopOpen();
 			clearInterval(tick);
 			unlock();
 			scope.remove();
+			vf.remove();
 			if (PREV === close) PREV = null;
 			if (LIVE !== me) return; // yeni bir Kuşbakışı kartı açıldı: sahne artık onun
 			g.restore();
@@ -365,6 +453,8 @@ export const kusbakisi = {
 				clearInterval(tick);
 				unlock();
 				scope.classList.add('off');
+				vf.classList.add('lock', 'off');
+				sfx(app, 'kbLock');
 				const i = b.byId.get(q.il)?.index ?? (sp ? b.pick(sp.x, sp.z) : -1);
 				if (i < 0) return;
 				const p = b.provinces[i];

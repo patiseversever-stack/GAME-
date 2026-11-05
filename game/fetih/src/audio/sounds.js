@@ -773,6 +773,94 @@ export const SOUNDS = {
 		},
 	},
 
+	// ---------------------------------------------------------------- yıldırım turu (kısa, art arda basılır)
+	// doğru: kartın fırlama savruluşu + seriyle yükselen iki notalı kanun "ding"; 5+ seride zil
+	bzRight: {
+		prio: 1, cd: 0.04, max: 3, dur: 0.45, len: 0.5, tail: 0.4, peak: 0.55, intensity: 0,
+		variant: (o) => ({ n: clamp(o.n | 0, 0, 8) }),
+		all: () => [0, 1, 2, 3, 4, 5, 6, 7, 8].map((n) => ({ n })),
+		fn(e, t, o) {
+			const n = clamp(o.n | 0, 0, 8);
+			whoosh(e, t, 0.16, 0.09, 2400, 600, { pan: -0.5 });
+			e.hit('woodTap', t, 0.45, 1.35 + n * 0.03);
+			e.pluck('kanun', R(4 + n), t + 0.015, 0.42, -0.1);
+			e.pluck('kanun', R(7 + n), t + 0.07, 0.36, 0.12);
+			if (n >= 3) sparkle(e, t + 0.08, 0.08 + n * 0.012, 2 + Math.min(3, n - 2), 1800 + n * 140);
+			if (n >= 5) e.hit('zil', t + 0.06, 0.12 + (n - 5) * 0.03, 1.5);
+		},
+	},
+	// yanlış: tok gümbür + kısa, aşağı kayan vızıltı (eşek arısı değil, "ceza" düdüğü)
+	bzWrong: {
+		prio: 1, cd: 0.06, max: 2, dur: 0.5, len: 0.55, tail: 0.4, peak: 0.6, intensity: 0,
+		fn(e, t) {
+			whoosh(e, t, 0.16, 0.08, 2000, 500, { pan: 0.5 });
+			e.hit('dum', t, 0.75, 1.05);
+			e.tone('square', 196, 98, t + 0.01, 0.26, 0.07, { a: 0.005, lp: 1100 });
+			e.tone('sawtooth', 147, 73, t + 0.01, 0.3, 0.06, { a: 0.005, lp: 800 });
+			e.hit('rim', t + 0.02, 0.3, 0.75);
+		},
+	},
+	// seri şimşeği: çatırtı + yukarı süpürülen elektrik + parıltı (her 3 seride)
+	bzZap: {
+		prio: 2, cd: 0.25, max: 1, dur: 0.8, len: 0.85, tail: 0.6, peak: 0.6, intensity: 0,
+		variant: (o) => ({ n: clamp(((o.n | 0) / 3) | 0, 0, 4) }),
+		all: () => [0, 1, 2, 3, 4].map((n) => ({ n: n * 3 })),
+		fn(e, t, o) {
+			const k = clamp(((o.n | 0) / 3) | 0, 0, 4);
+			for (let i = 0; i < 5; i++) e.noise(t + i * 0.035 + e.r() * 0.01, 0.03, 0.16 - i * 0.02, 6000, 2500, { type: 'highpass', a: 0.002 });
+			e.tone('sawtooth', 220 + k * 40, 1760 + k * 220, t, 0.22, 0.05, { a: 0.01, lp: 4000, sweep: 1 });
+			e.hit('zil', t + 0.05, 0.22, 1.3 + k * 0.08);
+			sparkle(e, t + 0.12, 0.14, 4 + k, 2000 + k * 200);
+			e.hit('dum', t, 0.35, 1.3);
+		},
+	},
+	// karne sayacı: yükselen tahta tıkırtısı (o.n: kaçıncı sayı)
+	bzCount: {
+		prio: 0, cd: 0.02, max: 4, dur: 0.12, live: true,
+		fn(e, t, o) {
+			const n = clamp(o.n | 0, 0, 20);
+			e.hit('woodTap', t, 0.32, 1.05 + n * 0.045);
+			if (n % 3 === 0) e.hit('dbTek', t, 0.12, 1.1 + n * 0.02);
+		},
+	},
+
+	// ---------------------------------------------------------------- kuşbakışı vizörü
+	// kalkış: kamera maketin dibinden yükselirken kabaran rüzgâr + alçak uğultu (3 sn)
+	kbRise: {
+		prio: 1, cd: 1, max: 1, dur: 3.2, len: 3.3, tail: 0.8, peak: 0.45, intensity: 0,
+		fn(e, t) {
+			e.noise(t, 3.0, 0.11, 260, 2600, { q: 0.7, a: 1.6 });
+			e.noise(t + 0.4, 2.4, 0.06, 1800, 5200, { type: 'highpass', a: 1.4, pan: 0.4 });
+			e.tone('sine', 55, 82, t, 3.0, 0.1, { a: 1.2, sweep: 1 });
+			e.pluck('kanun', R(0), t + 0.05, 0.22, -0.2);
+			e.pluck('kanun', R(4), t + 0.35, 0.18, 0.2);
+		},
+	},
+	// ipucu: radar sinyali (iki yankılı bip); n=0 bölge, n=1 il (daha tiz)
+	kbPing: {
+		prio: 2, cd: 0.4, max: 1, dur: 1.0, len: 1.1, tail: 0.6, peak: 0.55, intensity: 0,
+		variant: (o) => ({ n: clamp(o.n | 0, 0, 1) }),
+		all: () => [{ n: 0 }, { n: 1 }],
+		fn(e, t, o) {
+			const f = o.n ? 1760 : 1320;
+			[0, 0.18, 0.42].forEach((d, i) => e.tone('sine', f, f * 0.995, t + d, 0.16, 0.16 * Math.pow(0.45, i), { a: 0.004 }));
+			e.tone('sine', f / 2, f / 2, t, 0.3, 0.06, { a: 0.004 });
+			e.hit('zil', t, 0.14, o.n ? 1.6 : 1.35);
+		},
+	},
+	// cevap: hedefe kilitlenme (iki ton yukarı) + deklanşör tıkırtısı + davul
+	kbLock: {
+		prio: 2, cd: 0.4, max: 1, dur: 1.0, len: 1.1, tail: 0.7, peak: 0.6, intensity: 0,
+		fn(e, t) {
+			e.tone('square', 880, 880, t, 0.07, 0.05, { a: 0.003, lp: 3000 });
+			e.tone('square', 1320, 1320, t + 0.09, 0.12, 0.05, { a: 0.003, lp: 3000 });
+			e.noise(t + 0.22, 0.04, 0.22, 5000, 2000, { type: 'highpass', a: 0.001 });
+			e.hit('woodTap', t + 0.23, 0.5, 1.6);
+			e.hit('dum', t + 0.26, 0.55, 1.0);
+			sparkle(e, t + 0.3, 0.12, 4, 1700);
+		},
+	},
+
 	// ---------------------------------------------------------------- sonuç
 	win: {
 		prio: 3, cd: 1, max: 1, dur: 4.4, len: 4.3, tail: 1.4, peak: 0.95, wet: 1.6, duck: [0.6, 3.2, 1.2], music: ['victory', 2.6],

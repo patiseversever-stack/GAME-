@@ -11,6 +11,7 @@
 import { css, esc, shuffle, pCorrect, clamp, buzz } from './util.js';
 import { secOf } from './timing.js';
 import { setTimeout } from '../core/clock.js';
+import { playSfx as snd } from './appref.js';
 
 const CSS = /* css */ `
 /* YILDIRIM (Arena v1 siyah/beyaz): üstte skor + ilerleme çentikleri + SERİ; ortada deste (önde ifade kartı, arkada iki
@@ -182,6 +183,8 @@ export const blitz = {
 		};
 		const strike = () => replay(zap, 'go');
 		setTimeout(strike, 260); // açılış: deste otururken şimşek çakar
+		snd('whoosh', { vol: 0.6 });
+		setTimeout(() => snd('bzZap', { n: 0, vol: 0.7 }), 260);
 		let k = 0; // sıradaki ifade
 		let score = 0;
 		let combo = 0;
@@ -234,10 +237,14 @@ export const blitz = {
 				scoreEl.classList.add('pop');
 				setTimeout(() => scoreEl.classList.remove('pop'), 160);
 				buzz(6);
+				snd('bzRight', { n: combo - 1 });
 				comboEl.querySelector('b').textContent = `SERİ ×${combo}`;
 				comboEl.classList.toggle('on', combo >= 3);
 				deck.classList.toggle('c3', combo >= 3);
-				if (combo >= 3 && combo % 3 === 0) strike(); // her 3 seride bir şimşek
+				if (combo >= 3 && combo % 3 === 0) {
+					strike(); // her 3 seride bir şimşek
+					snd('bzZap', { n: combo, delay: 0.05 });
+				}
 				if (combo > 3) {
 					comboEl.classList.remove('up');
 					void comboEl.offsetWidth;
@@ -249,6 +256,7 @@ export const blitz = {
 				deck.classList.remove('c3');
 				replay(deck, 'shk');
 				buzz(40);
+				snd('bzWrong');
 				lock = true;
 				root.classList.add('lock');
 				setTimeout(() => {
@@ -306,6 +314,7 @@ export const blitz = {
 				let c = 0;
 				const tick = () => {
 					cnt.textContent = c;
+					if (c > 0) snd('bzCount', { n: c });
 					if (c++ < score) setTimeout(tick, Math.max(40, 380 / Math.max(1, score)));
 				};
 				setTimeout(tick, 220);

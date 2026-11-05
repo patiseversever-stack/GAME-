@@ -19,11 +19,8 @@ import { PLAYERS, HOT, SLACK, GENEROUS, limits, PROFILE } from './timing.js';
 import { setTimeout } from '../core/clock.js';
 import { setNightTone } from '../gfx/env.js';
 
-let APP = null;
-export const bindApp = (app) => {
-	APP = app;
-};
-export const appOf = () => APP;
+import { bindApp, appOf } from './appref.js';
+export { bindApp, appOf };
 
 // ---------------------------------------------------------------- süre (timing.js ile aynı model)
 // timing.js'teki sabitlerin aynısı (orada dışa açık değil): kart açılışı, bakış ve giriş hareketleri (yavaş-rahat oyuncu, sn)
