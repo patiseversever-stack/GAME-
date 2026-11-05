@@ -29,7 +29,8 @@ Her oturumun başında bu dosyayı oku. Her oturumun sonunda güncelle: yapılan
 - [x] Kamp kuralları: diyalog, ilişkiler, ihanet, gizli oy, hayatta kalma mini oyunları
 - [x] Hikaye ve adanın sırrı
 - [x] Dünya, sunucular ve ilk sezon kadrosu, Aslı "Ayna" dahil (`KARAKTERLER.md`)
-- [x] Konsept görseller, tur 1 (`konsept/tur1/`): ada manzarası, hız parkuru, Yankı Çemberi, karakter stil kartı. Meshy'de Nano Banana Pro ile; görsel başına 9 kredi, toplam 36. Kalan Meshy bakiyesi 1.058.
+- [x] Konsept görseller, tur 1 (`konsept/tur1/`): ada manzarası, hız parkuru, Yankı Çemberi, karakter stil kartı. Meshy'de Nano Banana Pro ile; görsel başına 9 kredi, toplam 36. Kullanıcı stilize ve "büyülü" görünümü reddetti: gerçekçi ve derinlikli istiyor.
+- [x] Konsept görseller, tur 2 (`konsept/tur2/`): hız parkurunun 4 gerçekçi tarz taslağı (A: gerçek TV şovu, B: AAA oyun, C: sinematik film, D: spor yayını). 36 kredi. Kalan Meshy bakiyesi 1.022. Kullanıcının seçimi bekleniyor.
 
 ## Sırada
 1. [ ] **İlk prototip (kredi harcamaz).**

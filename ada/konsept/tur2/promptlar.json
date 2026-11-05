@@ -1,0 +1,26 @@
+[
+  {
+    "id": "A_gercek_tv_sovu",
+    "model": "nano-banana-pro",
+    "aspect": "9:16",
+    "prompt": "Photorealistic frame from a high-budget reality competition TV show, shot on a cinema camera, absolutely no fantasy, no magic, no glowing symbols, no text, no logos. Third-person view from behind and slightly above an athletic female contestant in a sweat-soaked orange athletic top and shorts, sprinting away from the camera on a real obstacle course built on a tropical island beach: rough timber platforms, thick hemp ropes, a balance log over shallow water, a cargo net wall, weathered wooden posts with orange flags. Two rival contestants in turquoise athletic wear on parallel lanes slightly behind. Real tropical location with limestone cliffs, palm trees and turquoise sea in the background. Late afternoon natural sunlight, realistic skin with sweat and sand, wet footprints, flying sand, true-to-life colors, deep perspective, documentary realism."
+  },
+  {
+    "id": "B_aaa_oyun_gercekcilik",
+    "model": "nano-banana-pro",
+    "aspect": "9:16",
+    "prompt": "Photorealistic AAA video game screenshot, next-generation real-time rendering like a high-end cinematic action adventure game, physically based materials, absolutely no fantasy, no magic, no glowing symbols, no interface, no text, no logos. Third-person camera behind and slightly above an athletic female contestant in a realistic orange and gold sports outfit, running away from the camera along a weathered ancient stone causeway through dense tropical jungle ruins. Real-world archaeological ruins: eroded carved limestone, collapsed columns covered in moss and roots, a crumbling stone arch, a gap over a muddy stream, a frayed rope bridge ahead. Two rivals in turquoise outfits behind on the sides. Humid air, volumetric light shafts through the canopy, wet stone reflections, realistic vegetation, deep depth and scale, natural color grading."
+  },
+  {
+    "id": "C_sinematik_film",
+    "model": "nano-banana-pro",
+    "aspect": "9:16",
+    "prompt": "Photorealistic still from a big-budget adventure feature film, anamorphic lens, shallow depth of field, cinematic color grade, absolutely no fantasy, no magic, no glowing symbols, no text, no logos. Low dramatic camera behind an athletic female contestant in an orange athletic outfit sprinting along a narrow rocky ridge path on a sea cliff of a remote tropical island at golden hour, ancient weathered stone steps and collapsed ruin walls along the path, ropes and wooden planks bridging a gap ahead, ocean waves crashing far below, two rivals in turquoise outfits chasing behind. Dust and sea spray in the backlight, lens flare from the low sun, realistic textures, intense sense of speed and danger, epic scale and depth."
+  },
+  {
+    "id": "D_spor_yayini",
+    "model": "nano-banana-pro",
+    "aspect": "9:16",
+    "prompt": "Photorealistic live sports broadcast image of an extreme obstacle race, crisp and high-contrast like a premium televised athletics event, absolutely no fantasy, no magic, no glowing symbols, no text, no logos. Camera behind and above an athletic female contestant in a bright orange competition suit sprinting away from the camera through a professional obstacle course built along a white sand beach on a tropical island: modern timber and steel structures, padded balance beams over a turquoise lagoon, swinging rings, a rope traverse, orange and turquoise team flags marking the lanes. Two rival athletes in turquoise suits on parallel lanes. Bright midday sun, clear blue sky, vivid but natural colors, sharp focus, splashing water, realistic muscles and motion, strong depth and sense of speed."
+  }
+]
