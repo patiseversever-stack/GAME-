@@ -70,6 +70,11 @@ export const CSS_ARENA = /* css */ `
 /* aynı şıkkı seçenler: şıkkın içinde sağda, üst üste binen küçük avatarlar */
 .fl-opt:has(.fl-who){padding-right:calc(20px + 17px * var(--wn,1))}
 .fl-who{top:50%;right:14px;width:26px;height:26px;margin-top:-13px;border-radius:7px;border:2px solid #1a1200;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+/* portre konan şıkta yazı portrelerin soluna kadar: hiçbir harf portrenin altında kalmaz (1–4 portre, 17 px aralık) */
+.fl-q .fl-opt:has(>.fl-who){padding-right:46px}
+.fl-q .fl-opt:has(>.fl-who+.fl-who){padding-right:63px}
+.fl-q .fl-opt:has(>.fl-who+.fl-who+.fl-who){padding-right:80px}
+.fl-q .fl-opt:has(>.fl-who+.fl-who+.fl-who+.fl-who){padding-right:97px}
 .fl-who+.fl-who{right:31px}
 .fl-who+.fl-who+.fl-who{right:48px}
 .fl-who+.fl-who+.fl-who+.fl-who{right:65px}
@@ -256,6 +261,13 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-qwho[style*="--n:2"]:not(.duel):not(.teams)::after{top:calc(var(--sat) + 25cqw)}
 /* ---------------------------------------------------------------- sonuç damgası: harita alanının ortasında */
 .fl-q:not(.map) .fl-stamp{top:44%;animation-name:flStampB}
+/* tam ekran kart: damga ui.stamp'in verdiği alana (soru yeri ya da tipin sahnesi) --k ölçeğiyle sığar */
+.fl-q.cover .fl-stamp{font-size:min(calc(9 * var(--vw)),38px);transform:translate(-50%,-50%) skewX(-8deg) scale(var(--k,1))}
+.fl-q.cover .fl-stamp.on{animation:flStampC .45s cubic-bezier(.3,1.7,.5,1) forwards}
+.fl-q.cover .fl-stamp.brief.on{animation:flStampC .45s cubic-bezier(.3,1.7,.5,1) forwards,flStampCo .4s 1.8s ease-in forwards}
+@keyframes flStampC{0%{opacity:0;transform:translate(-50%,-50%) skewX(-8deg) scale(calc(var(--k,1) * 1.9))}60%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(calc(var(--k,1) * .96))}100%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(var(--k,1))}}
+@keyframes flStampCo{to{opacity:0;transform:translate(-50%,-50%) skewX(-8deg) scale(calc(var(--k,1) * .85))}}
+.fl-q.cover.stamped .fl-qtext{visibility:hidden}
 .fl-q:not(.map) .fl-stamp.brief.on{animation:flStampB .45s cubic-bezier(.3,1.7,.5,1) forwards,flStampOut .4s 1.8s ease-in forwards}
 @keyframes flStampOut{to{opacity:0;transform:translate(-50%,-50%) skewX(-8deg) scale(.85)}}
 .fl-stamp{font-family:'Barlow Condensed','Lilita One',sans-serif;font-style:italic;font-weight:800;letter-spacing:.04em;text-transform:uppercase;border-radius:0;
@@ -394,6 +406,7 @@ export const CSS_ARENA = /* css */ `
 .fl-q.map{top:calc(var(--sat) + 4px);width:min(calc(100 * var(--vw) - 8px),560px)}
 .fl-q.map .fl-qtext{font-size:20px;margin-bottom:8px}
 .fl-q.map .fl-clock b{font-size:34px}
+.fl-q.map .fl-clock{width:auto;height:auto;flex:none} /* styles-q'nun 40 px yuvarlak saati: 'SN' kartın kenarından taşıyordu */
 
 /* ---------------------------------------------------------------- doğru/yanlış: HÜKÜM (ref/tasarim-v14-tf-*.jpg)
    üstte İDDİA kartı; altta tek eğik levhanın iki yarısı (DOĞRU | YA DA | YANLIŞ); seçilen yarı genişler, öteki söner;
@@ -643,16 +656,22 @@ export const CSS_ARENA = /* css */ `
 
 /* ---------------------------------------------------------------- tam ekran kart (tip .cover ister: Göz Kararı, Halat, Mancınık)
    üstte düello afişi, altında opak soru paneli; harita görünmez. Menü/durdur düğmelerinin bandında tipin adı (data-cv). */
-.fl-q.cover .fl-qc{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding-top:76px;
+/* üst bant: kartın tepesinden 28 px aşağıda menü ve durdur düğmeleri (36–38 px; konumları genişliğe bağlı ve kartın
+   tepesiyle aynı formül: sat + 28 + 0,23 × genişlik); tipin adı (.fl-cvt) bandın ortasında. Başlık satırı bandın altında
+   başlar: her ekran boyunda 72 px (kısa ekranda da küçülmez; yer cevap anında joker çubuğundan açılır). */
+.fl-q.cover .fl-qc{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding-top:72px;
   background:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1.5px) 0 0/15px 15px,
     radial-gradient(130% 62% at 50% 0%,color-mix(in srgb,var(--cc) 34%,#0b0f22) 0%,#090c1b 52%,#05060d 100%)}
-.fl-q.cover .fl-qc::before{content:attr(data-cv);display:flex;align-items:center;gap:8px;position:absolute;inset:34px auto auto 50%;height:24px;padding:0;border-radius:0;opacity:1;transform:translateX(-50%);background:none;
-  font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.4),0 0 18px color-mix(in srgb,var(--cc) 70%,transparent);white-space:nowrap}
+.fl-q.cover .fl-qc::before{display:none}
+.fl-cvt{position:absolute;left:50%;top:28px;height:38px;max-width:calc(100% - 120px);display:block;text-align:center;transform:translateX(-50%);pointer-events:none;overflow:visible;
+  font:italic 900 20px/38px 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.4),0 0 18px color-mix(in srgb,var(--cc) 70%,transparent);white-space:nowrap}
+.fl-ui.qcover .fl-tags,.fl-ui.qcover .fl-pins{opacity:0;visibility:hidden}
+/* cevap anında jokerler işe yaramaz: çubuk kalkar, açıklamalara yer açılır */
+.fl-q.cover.rv .fl-jk{display:none}
 .fl-q.cover .fl-qbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding-top:12px;margin-top:-2px}
 .fl-q.cover .fl-qbody::-webkit-scrollbar{display:none}
 @media (max-height:700px){
-  .fl-q.cover .fl-qc{padding-top:54px}
-  .fl-q.cover .fl-qc::before{top:22px;font-size:17px;height:20px}
+  .fl-cvt{font-size:17px}
   .fl-q.cover .fl-qtext{min-height:0;padding:6px 10px;font-size:15.5px;line-height:1.2}
   .fl-q.cover .fl-tbar{margin:5px 2px 6px}
   .fl-q.cover .fl-qbody{margin-top:6px}

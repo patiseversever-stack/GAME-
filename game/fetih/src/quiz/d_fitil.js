@@ -267,10 +267,43 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
 @keyframes dnFzPop{0%{transform:scale(1)}60%{transform:scale(1.35);filter:brightness(3)}100%{transform:scale(1.9);opacity:0;filter:brightness(4)}}
 @keyframes dnFzRing{0%{transform:scale(.4);opacity:1;border-width:10px}100%{transform:scale(7);opacity:0;border-width:1px}}
 @keyframes dnFzBoomT{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-8deg)}35%{opacity:1;transform:translate(-50%,-50%) scale(1.15) rotate(-4deg)}100%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-4deg)}}
-@keyframes dnFzIn{from{transform:translateX(26px);opacity:0}to{transform:none;opacity:1}}
+@keyframes dnFzIn{from{transform:translateX(26px)}to{transform:none}}
 @keyframes dnFzFlash{0%{opacity:1}100%{opacity:0}}
 @keyframes dnFzShake{10%,90%{transform:translate(-2px,1px)}20%,80%{transform:translate(5px,-3px) rotate(.6deg)}30%,50%,70%{transform:translate(-9px,4px) rotate(-1deg)}40%,60%{transform:translate(9px,-4px) rotate(1deg)}}
 @keyframes dnShrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+/* ---------------------------------------------------------------- tam ekran FİTİL ARENASI (cover)
+   gece sahnesi: tahta zemin, ortada sıcak spot; iki yanda gerçek portreli oyuncular, aralarında fitili yanan iri bomba.
+   Mini soru kâğıt bir kartta, iki şık eğik levha (DOĞRU yeşil, YANLIŞ kırmızı). */
+.fl-q.cover .dn-fz{flex:1 1 auto;gap:12px;justify-content:space-between}
+.fl-q.cover .dn-fz-ar{flex:1 1 auto;height:auto;min-height:190px;max-height:290px;border:0;border-radius:16px;
+  background:radial-gradient(55% 60% at 50% 40%,rgba(255,160,70,.2),rgba(255,160,70,0) 70%),linear-gradient(180deg,#170f2c 0%,#0d0a1c 63%,#2a1a18 63.4%,#1a100e 100%);
+  box-shadow:inset 0 0 0 2px rgba(255,255,255,.1),inset 0 -30px 40px rgba(0,0,0,.45),0 14px 30px rgba(0,0,0,.5)}
+.fl-q.cover .dn-fz-ar::after{content:'';position:absolute;left:0;right:0;bottom:0;height:36.6%;pointer-events:none;
+  background:repeating-linear-gradient(90deg,rgba(0,0,0,.28) 0 2px,transparent 2px 52px),linear-gradient(180deg,rgba(255,170,90,.12),transparent 60%)}
+.fl-q.cover .dn-fz-fl{bottom:30%;height:5px;left:18%;right:18%;opacity:.55;box-shadow:0 0 10px rgba(255,140,60,.35)}
+.fl-q.cover .dn-fz-bomb{top:auto;bottom:calc(30% - 6px);transform:translateX(calc(var(--bx,0px) * 1.35)) scale(1.3);transform-origin:50% 100%}
+.fl-q.cover .dn-fz-pl{bottom:calc(30% - 34px);width:96px;gap:4px}
+.fl-q.cover .dn-fz-pl.a{left:8px}.fl-q.cover .dn-fz-pl.b{right:8px}
+.fl-q.cover .dn-fz-pl i{width:64px;height:64px;overflow:hidden;font-size:28px}
+.fl-q.cover .dn-fz-pl i .fl-av{width:100%;height:100%;border-radius:50%}
+.fl-q.cover .dn-fz-pl b{max-width:96px;padding:2px 10px 3px;font:italic 900 14px/1.1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--pc);clip-path:polygon(8% 0,100% 0,92% 100%,0 100%)}
+.fl-q.cover .dn-fz-pl small{order:3;font:italic 900 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em} /* durum etiketi adın altında: bomba yana yatınca üstüne binmez */
+.fl-q.cover .dn-fz-tag{top:10px;font:italic 900 12px/1.2 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;padding:3px 12px}
+.fl-q.cover .dn-fz-q{gap:10px}
+.fl-q.cover .dn-fz-qt{min-height:66px;padding:10px 14px;border-radius:10px;font:600 clamp(16px,calc(4.6 * var(--vw,4px)),20px)/1.22 'Fredoka',sans-serif;color:#1d2238;
+  background:linear-gradient(180deg,#fffdf6,#f1e8d2);box-shadow:0 2px 0 #d9c9a2,0 4px 0 #c9b688,0 10px 18px rgba(0,0,0,.4)}
+.fl-q.cover .dn-fz-qt em{font:italic 900 12px/1.2 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em;padding:3px 8px;border-radius:4px;color:#fff;background:#e8562a}
+.fl-q.cover .dn-fz-o{gap:10px}
+.fl-q.cover .dn-fz-o .fl-opt{min-height:62px;border:0;border-radius:0;clip-path:polygon(5% 0,100% 0,95% 100%,0 100%);font:italic 900 clamp(19px,calc(5.4 * var(--vw,4px)),24px)/1.05 'Barlow Condensed','Lilita One',sans-serif;
+  letter-spacing:.08em;text-transform:uppercase;color:#1d2238;background:linear-gradient(180deg,#fff,#e6e9f2);box-shadow:none}
+.fl-q.cover .dn-fz-o .fl-opt.tf-d{color:#fff;background:linear-gradient(180deg,#46c46e,#1f8a46)}
+.fl-q.cover .dn-fz-o .fl-opt.tf-y{color:#fff;background:linear-gradient(180deg,#ea5a48,#b52a1e)}
+.fl-q.cover .dn-fz-o .fl-opt.ok{background:linear-gradient(180deg,#b8ffc8,#58d878);color:#0a3a14}
+.fl-q.cover .dn-fz-o .fl-opt.no{background:linear-gradient(180deg,#ffc8bc,#ff7a62);color:#4a0a00}
+.fl-q.cover .dn-fz-lk{height:62px;border-radius:4px}
+.fl-q.cover .dn-fz-res{gap:8px}
+.fl-q.cover .dn-fz-res span{padding:4px 12px;border-radius:999px;font:600 13px/1.2 'Fredoka',sans-serif;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
+@media (max-height:700px){.fl-q.cover .dn-fz-ar{min-height:150px}.fl-q.cover .dn-fz-pl i{width:50px;height:50px}.fl-q.cover .dn-fz-bomb{transform:translateX(calc(var(--bx,0px) * 1.2)) scale(1.08)}.fl-q.cover .dn-fz-o .fl-opt{min-height:52px}.fl-q.cover .dn-fz-qt{min-height:56px}}
 `;
 
 function bombSVG(id) {
@@ -314,6 +347,7 @@ export const fitil = {
 	time: 30,
 	label: 'Fitil',
 	kind: 'exact',
+	cover: true, // tam ekran fitil arenası (harita gizli)
 	// seyirci: sıradaki 3 mini soruda seyircinin oyu (iki şıklı sorularda yarı yarıya anlamsız); sabotaj ve kalkan genel kuralla
 	jokers: ['kahin'],
 	prepare(q, R) {
@@ -334,6 +368,8 @@ export const fitil = {
 		const foe = botE?.p || { name: 'Rakip', css: '#e04a3a' };
 		const me = cur?.who?.find((p) => p !== botE?.p) || { name: 'Sen', css: '#2f8cff' };
 		const foeSpec = botE?.value?.me?.sheet ? { sheet: botE.value.me.sheet } : { sheet: sheetFor(v, 0.6, Math.random) };
+		// portreler: kartın düello afişindeki plakalardan (yoksa baş harf)
+		const avOf = (p) => (p?.i != null && card?.querySelector(`.fl-qwho .fl-qp[data-p="${p.i}"] .fl-av`)?.outerHTML) || esc([...String(p?.name || '?')][0] || '?');
 		const id = ++UID;
 		const L = 84.2; // fitil yolunun boyu (FUSE_D, birim)
 		const F = FUSE[1];
@@ -341,8 +377,8 @@ export const fitil = {
 			<div class="dn-fz-ar" style="--ca:${esc(me.css)};--cb:${esc(foe.css)}">
 				<div class="dn-fz-fl"></div>
 				<div class="dn-fz-tag">HER AN PATLAYABİLİR</div>
-				<div class="dn-fz-pl a" style="--pc:${esc(me.css)}"><small>TOP SENDE!</small><i>${esc([...String(me.name)][0] || '?')}</i><b>${esc(me.name)}</b></div>
-				<div class="dn-fz-pl b" style="--pc:${esc(foe.css)}"><small>TOP ONDA</small><i>${esc([...String(foe.name)][0] || '?')}</i><b>${esc(foe.name)}</b></div>
+				<div class="dn-fz-pl a" style="--pc:${esc(me.css)}"><small>TOP SENDE!</small><i>${avOf(me)}</i><b>${esc(me.name)}</b></div>
+				<div class="dn-fz-pl b" style="--pc:${esc(foe.css)}"><small>TOP ONDA</small><i>${avOf(foe)}</i><b>${esc(foe.name)}</b></div>
 				<div class="dn-fz-bomb"><div>${bombSVG(id)}<span class="dn-fz-sp"><b></b><s></s>${EMBERS.map(([dx, dy], k) => `<i style="--k:${k};--dx:${dx};--dy:${dy}"></i>`).join('')}</span></div></div>
 				<div class="dn-fz-ring"></div><div class="boomt">BOOM!</div>
 			</div>
@@ -402,7 +438,7 @@ export const fitil = {
 			void qt.offsetWidth;
 			qt.classList.add('in');
 			btns.forEach((b, i) => {
-				b.className = 'fl-opt';
+				b.className = 'fl-opt' + (it.t === 'tf' ? (i === 0 ? ' tf-d' : ' tf-y') : '');
 				b.disabled = false;
 				b.textContent = it.o[i];
 			});

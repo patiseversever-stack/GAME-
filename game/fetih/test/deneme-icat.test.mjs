@@ -86,7 +86,7 @@ for (const [type, list] of Object.entries(SAMPLES)) {
 		const GH = 300;
 		const shade = (u) => {
 			const a = lightAt(u, q.path);
-			modelMatrix(a.az, a.el, q.c || [0, 0.15, 0], M);
+			modelMatrix(a.az, a.el, q.c || [0, 0.15, 0], M, q.s || 1);
 			const grid = new Uint8Array(GW * GH);
 			const xy = new Float32Array(6);
 			let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
@@ -134,10 +134,26 @@ for (const [type, list] of Object.entries(SAMPLES)) {
 		const g0 = maxGaps(shade(0));
 		const g1 = maxGaps(shade(1));
 		const area = (sh) => sh.grid.reduce((a, b) => a + b, 0) / (GW * GH);
-		ok(g0 <= 2, q.id + ': başta gölge tanınmaz olmalı (sütun aralığı ' + g0 + ')');
-		ok(g1 >= 8, q.id + ': sonda sütun aralıkları görünmeli (' + g1 + ')');
 		const a1 = area(shade(1));
-		ok(a1 > 0.12 && a1 < 0.5, q.id + ': sondaki gölge perdenin uygun payı değil (' + a1.toFixed(2) + ')');
+		if (q.sutun) {
+			// sütunlu / mazgallı cephe: başta düz kütle, sonda sütun aralıklarından ışık geçer
+			ok(g0 <= 2, q.id + ': başta gölge tanınmaz olmalı (sütun aralığı ' + g0 + ')');
+			ok(g1 >= 8, q.id + ': sonda sütun aralıkları görünmeli (' + g1 + ')');
+			ok(a1 > 0.12 && a1 < 0.5, q.id + ': sondaki gölge perdenin uygun payı değil (' + a1.toFixed(2) + ')');
+		} else {
+			// kule, heykel, köprü, kubbe: gölge baştan sona belirgin biçimde değişir (başta tanınmaz, sonda cephe silueti)
+			const s0 = shade(0).grid;
+			const s1 = shade(1).grid;
+			let both = 0;
+			let any = 0;
+			for (let k = 0; k < s0.length; k++) {
+				both += s0[k] & s1[k];
+				any += s0[k] | s1[k];
+			}
+			const iou = any ? both / any : 1;
+			ok(iou < 0.6, q.id + ': gölge baştan sona yeterince değişmiyor (örtüşme ' + iou.toFixed(2) + ')');
+			ok(a1 > 0.05 && a1 < 0.5, q.id + ': sondaki gölge perdenin uygun payı değil (' + a1.toFixed(2) + ')');
+		}
 		console.log('  ' + q.id + ': ' + tris.length + ' gölge üçgeni, aralık başta ' + g0 + ' sonda ' + g1 + ', alan %' + Math.round(a1 * 100));
 	}
 }

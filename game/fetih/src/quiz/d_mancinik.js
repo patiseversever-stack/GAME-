@@ -73,7 +73,9 @@ const CSS = /* css */ `
 .dn-mc .crowd{opacity:0;transition:opacity .3s}
 .dn-mc .crowd.on{opacity:1}
 .dn-mc .lt{font:italic 900 13px 'Barlow Condensed','Lilita One',sans-serif;paint-order:stroke;stroke:#0a1534;stroke-width:3.4px}
-.dn-mc .tk{font:italic 800 10px 'Barlow Condensed',sans-serif;fill:#f4e4c4}
+.dn-mc .tk{font:italic 800 10px 'Barlow Condensed',sans-serif;fill:#f4e4c4;transition:opacity .3s}
+/* kamera yaklaşınca ölçek yazıları çekilir: kenarda kesilmez, ölçü çizgilerinin yazılarının altında kalmaz */
+.dn-mc.zoom .tk{opacity:0}
 .dn-mc .dust{animation:dnMcDust .7s ease-out forwards}
 .dn-mc .chunk{animation:mcChunk .9s cubic-bezier(.2,.6,.5,1) forwards}
 .dn-mc .flash{animation:mcFlash .45s ease-out forwards}
@@ -455,6 +457,7 @@ export const mancinik = {
 		};
 		/** Kamera: sahnenin görünen alanını (viewBox) sur ve taşların çevresine yumuşakça daraltır. */
 		const zoomTo = (xs, ms = 900) => {
+			svg.closest('.dn-mc')?.classList.add('zoom');
 			const lo = Math.max(0, Math.min(...xs) - 46);
 			const hi = Math.min(W, Math.max(...xs) + 46);
 			const w = Math.max(150, hi - lo);

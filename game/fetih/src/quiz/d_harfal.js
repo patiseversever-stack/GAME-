@@ -14,38 +14,65 @@ import { appOf, stamp, rule, stampLater, sfx, LOOK, ACT } from './d_ortak.js';
 import { setTimeout } from '../core/clock.js';
 
 const CSS = /* css */ `
-.dn-ha{display:flex;flex-direction:column;gap:9px;align-items:stretch;user-select:none;-webkit-user-select:none}
-.dn-ha-top{display:flex;align-items:center;gap:10px}
-.dn-ha-pts{flex:1;display:flex;align-items:baseline;gap:6px;padding:3px 12px 5px;border-radius:14px;background:#0a1534;border:2px solid rgba(255,255,255,.18);box-shadow:inset 0 3px 0 rgba(0,0,0,.35)}
-.dn-ha-pts b{font-family:'Lilita One';font-weight:400;font-size:34px;line-height:1.05;color:var(--gold);font-variant-numeric:tabular-nums;text-shadow:0 2px 0 #3a2000;transition:color .3s}
+/* HARF PANOSU: perçinli koyu pano, ikiye bölünmüş döner kutular (her kutunun altında 100 puanlık jeton), kasa ve
+   HARF AL kolu panonun başlığında; klavye panoyla aynı malzemeden, GÖNDER klavyenin son satırında. Harf alınca kutu
+   döner, altındaki jeton düşer ve kasa 100 eksilir: puanın nereden gittiği gözle görülür. */
+.dn-ha{display:flex;flex-direction:column;gap:10px;align-items:stretch;user-select:none;-webkit-user-select:none}
+.fl-q.cover .dn-ha{flex:1 1 auto;justify-content:flex-start}
+.fl-q.cover .dn-ha [data-r=kb]{margin-top:auto}
+.ha-pano{position:relative;display:flex;flex-direction:column;gap:9px;padding:10px 12px 12px;border-radius:14px;
+  background:radial-gradient(120% 90% at 50% 0%,#262b40 0%,#141724 70%),#141724;
+  box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1),inset 0 2px 0 rgba(255,255,255,.08),0 0 0 3px #0a0c14,0 14px 30px rgba(0,0,0,.55)}
+.ha-pano::before,.ha-pano::after{content:'';position:absolute;top:8px;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8a93b0,#3a4058)}
+.ha-pano::before{left:8px}.ha-pano::after{right:8px}
+.ha-hd{display:flex;align-items:center;gap:10px;padding:0 6px}
+.dn-ha-pts{flex:1;min-width:0;display:flex;align-items:baseline;gap:7px}
+.dn-ha-pts small{font:italic 900 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.18em;color:#8f97b8}
+.dn-ha-pts b{font:400 34px/1 'Lilita One',sans-serif;color:#ffd25a;font-variant-numeric:tabular-nums;text-shadow:0 2px 0 #5a3a00,0 0 18px rgba(255,200,60,.35);transition:color .3s}
 .dn-ha-pts b.drop{animation:dnHaDrop .45s}
-.dn-ha-pts small{font-family:'Manrope';font-weight:800;font-size:11px;letter-spacing:.16em;color:#8fa2cf}
-.dn-ha-pts em{margin-left:auto;font-style:normal;font-size:12.5px;color:#9fb0d6}
-.dn-ha-al{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:104px;height:52px;padding:0 12px;border-radius:15px;
-  font-family:'Lilita One';font-weight:400;font-size:20px;letter-spacing:.04em;line-height:1;color:#fff;background:linear-gradient(180deg,#5ec8ff,#1f7ab0);border:3px solid #fff;box-shadow:0 5px 0 #0c3e60,0 8px 12px rgba(0,0,0,.25);transition:transform .08s,opacity .2s}
-.dn-ha-al small{font-family:'Manrope';font-weight:800;font-size:10.5px;letter-spacing:.08em;opacity:.9;margin-top:2px}
-.dn-ha-al:active{transform:translateY(4px);box-shadow:0 1px 0 #0c3e60}
-.dn-ha-al:disabled{opacity:.4;filter:grayscale(.6)}
-.dn-ha-w{display:flex;gap:5px;justify-content:center;flex-wrap:nowrap}
-.dn-ha-w b{flex:0 1 38px;min-width:0;height:46px;border-radius:10px;display:grid;place-items:center;font-family:'Lilita One';font-weight:400;font-size:clamp(20px,calc(6.2 * var(--vw)),27px);color:var(--tdark);
-  background:linear-gradient(#fff,#e7ecf6);border:2.5px solid #fff;box-shadow:0 4px 0 #aab6cf;transition:background .2s}
-.dn-ha-w b:empty{background:rgba(255,255,255,.1);border-color:rgba(255,255,255,.35);box-shadow:0 4px 0 rgba(0,0,0,.3)}
-.dn-ha-w b.cur{border-color:var(--gold);box-shadow:0 0 0 2px var(--gold-d),0 4px 0 rgba(0,0,0,.3)}
-.dn-ha-w b.al{color:#fff;background:linear-gradient(#5ec8ff,#1f7ab0);box-shadow:0 4px 0 #0c3e60;animation:dnHaFlip .5s ease-out}
-.dn-ha-w b.free{color:#3a2200;background:linear-gradient(#ffe680,#f5b324);box-shadow:0 4px 0 #a0620a;animation:dnHaFlip .5s ease-out}
+.dn-ha-pts em{font-style:normal;font:italic 800 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;color:#8f97b8;white-space:nowrap}
+.dn-ha-al{flex:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:108px;height:46px;padding:0 16px;border:0;border-radius:0;
+  clip-path:polygon(9% 0,100% 0,91% 100%,0 100%);font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em;color:#fff;
+  background:linear-gradient(180deg,#4fb6ff,#1a62c8);box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 -4px 0 rgba(0,0,0,.25);transition:transform .08s,filter .2s;touch-action:manipulation}
+.dn-ha-al small{font:800 10.5px/1 'Fredoka',sans-serif;letter-spacing:.06em;color:#ffe6a0;margin-top:3px}
+.dn-ha-al:active{transform:translateY(2px) scale(.98)}
+.dn-ha-al:disabled{filter:grayscale(.8) brightness(.6)}
+/* kutular ve jetonlar aynı ızgarada: her jeton kendi kutusunun altında */
+.dn-ha-w,.ha-chips{display:flex;gap:5px;justify-content:center;flex-wrap:nowrap}
+.dn-ha-w b,.ha-chips i{flex:0 0 min(60px,calc((100% - (var(--n) - 1) * 5px) / var(--n)));min-width:0}
+.dn-ha-w b{position:relative;aspect-ratio:4/5;border-radius:7px;display:grid;place-items:center;font:400 clamp(20px,calc(6.6 * var(--vw)),34px)/1 'Lilita One',sans-serif;color:#f7ecd0;
+  background:linear-gradient(180deg,#323850 0 49%,#0c0e16 49% 51%,#262b3e 51% 100%);box-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 3px 0 #07080d,0 5px 10px rgba(0,0,0,.4);transform-origin:50% 50%}
+.dn-ha-w b::after{content:'';position:absolute;left:3px;right:3px;bottom:5px;height:3px;border-radius:2px;background:rgba(255,255,255,.08)}
+.dn-ha-w b.cur::after{background:#ffd25a;box-shadow:0 0 10px #ffd25a;animation:dnHaCur 1s ease-in-out infinite}
+.dn-ha-w b.al{color:#8fd8ff;text-shadow:0 0 12px rgba(80,180,255,.6);animation:dnHaFlip .5s ease-out}
+.dn-ha-w b.free{color:#ffd25a;text-shadow:0 0 12px rgba(255,200,60,.6);animation:dnHaFlip .5s ease-out}
 .dn-ha-w.shake{animation:flq-shake .38s}
-.dn-ha-w.sent b:not(.al):not(.free){background:linear-gradient(#fff7d2,#ffe08a)}
+.dn-ha-w.sent b:not(.al):not(.free){color:#fff3c4}
 .dn-ha-w.rv b{animation:dnHaFlip .45s ease-out both;animation-delay:calc(var(--k) * 70ms)}
-.dn-ha-w.rv.ok b:not(.al):not(.free){color:#fff;background:linear-gradient(#7fe88a,#2fa84a);box-shadow:0 4px 0 var(--green-d)}
-.dn-ha-w.rv.no b:not(.al):not(.free){color:#fff;background:linear-gradient(#ff8a78,#d53b2c);box-shadow:0 4px 0 #7a120a}
-.dn-ha-g{text-align:center;font-size:13.5px;color:#cfe0ff;min-height:18px}
+.dn-ha-w.rv.ok b{color:#fff;background:linear-gradient(180deg,#3fc46a 0 49%,#0b3a1c 49% 51%,#2aa356 51% 100%);text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.dn-ha-w.rv.no b{color:#fff;background:linear-gradient(180deg,#e2503e 0 49%,#4a0d08 49% 51%,#c23a2a 51% 100%)}
+.ha-chips i{height:20px;display:grid;place-items:center;border-radius:10px;font:italic 900 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.04em;font-style:normal;color:#5a3a00;
+  background:radial-gradient(circle at 40% 30%,#fff2b0,#f5b324 60%,#b8760a);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2),0 2px 0 #6a4000;transition:transform .45s cubic-bezier(.5,0,.8,.5),opacity .45s,filter .45s}
+.ha-chips i.gone{transform:translateY(8px) rotate(-14deg);opacity:.28;filter:grayscale(1);text-decoration:line-through;text-decoration-thickness:2px}
+.ha-chips i.free{background:radial-gradient(circle at 40% 30%,#e8fff0,#7fe8a0 60%,#2a9a52);color:#0b3a1c;box-shadow:inset 0 -2px 0 rgba(0,0,0,.2),0 2px 0 #145a2a}
+.ha-chips.win i:not(.gone){animation:dnHaWin .6s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--k) * 60ms)}
+.dn-ha-g{min-height:18px;text-align:center;font:500 13.5px/1.3 'Fredoka',sans-serif;color:#aab4d6}
 .dn-ha-g s{color:#ff9a8a;text-decoration-thickness:2px}
-.dn-ha-g b{color:#7dff9a}
-.dn-ha .fl-keys .fl-key{height:40px}
+.dn-ha-g b{color:#7dff9a;font-weight:700}
+/* klavye: panoyla aynı malzeme; GÖNDER son satırda */
+.dn-ha .fl-keys{gap:5px}
+.dn-ha .fl-keys div{gap:4px}
+.dn-ha .fl-key{height:42px;max-width:36px;border:0;border-radius:7px;color:#f7ecd0;background:linear-gradient(180deg,#30364c,#22263a);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 3px 0 #07080d;font-size:18px}
+.dn-ha .fl-key:active{transform:translateY(2px);box-shadow:0 1px 0 #07080d}
 .dn-ha .fl-back{max-width:52px;flex:1.4}
-.dn-ha.done .fl-keys,.dn-ha.done .fl-send,.dn-ha.done .dn-ha-al{display:none}
-@keyframes dnHaFlip{0%{transform:rotateX(90deg)}60%{transform:rotateX(-14deg)}100%{transform:none}}
+.dn-ha .fl-keys .fl-send{flex:3.2;max-width:none;width:auto;height:42px;margin:0 0 0 2px;padding:0 8px;font-size:17px}
+.dn-ha .fl-keys .fl-send:disabled{opacity:.45}
+.dn-ha.done .fl-keys,.dn-ha.done .dn-ha-al{display:none}
+@media (max-height:700px){.dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:36px}.dn-ha-w b,.ha-chips i{flex-basis:min(48px,calc((100% - (var(--n) - 1) * 5px) / var(--n)))}.dn-ha-pts b{font-size:30px}.dn-ha-al{height:42px}.ha-pano{gap:7px;padding:8px 10px 10px}}
+@keyframes dnHaFlip{0%{transform:perspective(200px) rotateX(90deg)}60%{transform:perspective(200px) rotateX(-14deg)}100%{transform:none}}
 @keyframes dnHaDrop{30%{color:#ff7a6a;transform:scale(.88)}}
+@keyframes dnHaCur{50%{opacity:.35}}
+@keyframes dnHaWin{40%{transform:translateY(-10px) scale(1.2)}100%{transform:none}}
 `;
 
 // sayfa windows-1252 okunabilir: düzenli ifadede ASCII dışı harf yok (esbuild dizeleri kaçışlar, düzenli ifadeyi değil)
@@ -63,6 +90,7 @@ export const harfal = {
 	time: 30,
 	label: 'Harf Al',
 	kind: 'closest',
+	cover: true, // tam ekran harf panosu (harita gizli)
 	keep: true,
 	jokers: ['yari'],
 	fmt: (v, value) => `${score(v, value).pts} puan`,
@@ -90,8 +118,11 @@ export const harfal = {
 		const al = [];
 		let done = false;
 		el.innerHTML = `<div class="dn-ha">
-			<div class="dn-ha-top"><span class="dn-ha-pts"><b>${n * 100}</b><small>PUAN</small><em>${n} harf</em></span><button class="dn-ha-al">HARF AL<small>−100 PUAN</small></button></div>
-			<div class="dn-ha-w">${'<b></b>'.repeat(n)}</div>
+			<div class="ha-pano">
+				<div class="ha-hd"><span class="dn-ha-pts"><small>KASA</small><b>${n * 100}</b><em>${n} HARF</em></span><button class="dn-ha-al">HARF AL<small>−100 puan</small></button></div>
+				<div class="dn-ha-w" style="--n:${n}">${'<b></b>'.repeat(n)}</div>
+				<div class="ha-chips" style="--n:${n}">${Array.from({ length: n }, (_, i) => `<i style="--k:${i}">100</i>`).join('')}</div>
+			</div>
 			<div class="dn-ha-g">Bilince boş kutuları doldur</div>
 			<div data-r="kb"></div>
 			<button class="fl-send" disabled>GÖNDER</button>
@@ -104,6 +135,7 @@ export const harfal = {
 		const alBtn = root.querySelector('.dn-ha-al');
 		const send = root.querySelector('.fl-send');
 		const gEl = root.querySelector('.dn-ha-g');
+		const chips = [...root.querySelectorAll('.ha-chips i')];
 		const pts = () => (n - al.length) * 100;
 		const draw = () => {
 			const cur = slot.findIndex((s) => !s.c);
@@ -120,6 +152,7 @@ export const harfal = {
 			b.classList.remove('al', 'free');
 			void b.offsetWidth;
 			b.classList.add(kind);
+			chips[i]?.classList.add(kind === 'al' ? 'gone' : 'free'); // alınan harfin jetonu düşer, bedava harfinki kalır
 		};
 		const take = () => {
 			if (done) return;
@@ -180,6 +213,7 @@ export const harfal = {
 		};
 		send.addEventListener('click', submit);
 		keyboard(root.querySelector('[data-r=kb]'), { onKey, onBack });
+		root.querySelector('[data-r=kb]').lastElementChild?.append(send); // GÖNDER klavyenin son satırında
 		const off = physicalKeys(root, { onKey, onBack });
 		const onEnter = (e) => {
 			if (!root.isConnected) return document.removeEventListener('keydown', onEnter);
@@ -220,6 +254,7 @@ export const harfal = {
 				});
 				wEl.classList.remove('sent');
 				wEl.classList.add('rv', mine?.ok ? 'ok' : 'no');
+				if (mine?.ok) root.querySelector('.ha-chips')?.classList.add('win'); // kalan jetonlar kasaya zıplar
 				gEl.innerHTML = mine?.ok ? `Cevap <b>${esc(v.word)}</b> · ${al.length ? `${al.length} harf aldın` : 'hiç harf almadın!'}` : guess ? `Senin cevabın <s>${esc(guess)}</s> · doğrusu <b>${esc(v.word)}</b>` : `Doğrusu <b>${esc(v.word)}</b>`;
 				if (mine?.ok) {
 					ptsEl.textContent = String(mine.pts);

@@ -30,6 +30,8 @@
 //     k='ayril'    d={}                      koltuk botla devam eder
 //     k='harf'     d={ ch }                  adam asmaca harf denemesi; sunucu yalnız o koltuğa 'harf' olayı döner
 //     k='acildi'   d={}                      kart açıldı (soru saati sunucuda bu an başlar; ipuçları buna göre akar)
+//     k='hafiza'   d=Hafiza.ozet()           soru hafızası (2026-11, src/quiz/hafiza.js): istemci 'hello' alır almaz (ve yeniden
+//                                           bağlanınca) son gördüğü sorular; sunucu soruyu odadaki herkesin görmediklerinden seçer
 //   Yeni tiplerin eylemleri (v1.2, yalnız soruyu cevaplayan koltuktan ve soru açıkken; ayrıntı src/game/sunucu.js):
 //     k='harf'     d={}                      Harf Al: rastgele kapalı kutu → ev 'harf' { i, c } (puanı sunucu sayar)
 //     k='il'       d={ il: plaka }           İl Avı → ev 'il' { il, km, dir, found, left, hint } · Kimim → ev 'il'
@@ -82,6 +84,7 @@
 //   test/net.test.mjs bankadaki her sorunun görünümünde cevap kalmadığını denetler.
 // ===================================================================================================
 
+import { Hafiza } from '../quiz/hafiza.js';
 import { TYPES } from '../quiz/types.js';
 
 export const PROTOCOL = 1;
@@ -342,10 +345,11 @@ export class RemoteController {
  * Gerçek istemci (telefon uygulaması) aynı mesajları arayüze bağlar. Test ve "sunucusuz yapay zekâ" içindir.
  */
 export class BotClient {
-	constructor(transport, { skill = 0.6, R = Math.random } = {}) {
+	constructor(transport, { skill = 0.6, R = Math.random, hafiza = null } = {}) {
 		this.t = transport;
 		this.skill = skill;
 		this.R = R;
+		this.hafiza = hafiza ? Hafiza.from(hafiza) : null; // istemcinin soru hafızası (gerçek istemcide ilerleme kaydı)
 		this.log = [];
 		this.hello = null;
 		this.waiters = new Map(); // olay adı → bekleyen çözücüler (yeni tiplerin eylem cevapları)
@@ -356,8 +360,15 @@ export class BotClient {
 	_recv(m) {
 		if (!m || m.v !== PROTOCOL) return;
 		this.log.push(m.t + ':' + m.k);
-		if (m.t === 'hello') this.hello = m.d;
+		if (m.t === 'hello') {
+			this.hello = m.d;
+			if (this.hafiza) {
+				this.hafiza.yeniMac();
+				this.act('hafiza', this.hafiza.ozet());
+			}
+		}
 		if (m.t === 'ev') {
+			if (m.k === 'ask' && m.d?.q) this.hafiza?.gor(m.d.q);
 			this.listeners.get(m.k)?.(m.d);
 			const w = this.waiters.get(m.k);
 			if (w && w.length) w.shift()(m.d);

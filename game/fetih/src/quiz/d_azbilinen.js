@@ -18,48 +18,78 @@ import { appOf, stamp, rule, stampLater, sfx, LOOK, ACT } from './d_ortak.js';
 import { setTimeout } from '../core/clock.js';
 
 const CSS = /* css */ `
-.dn-ab{display:flex;flex-direction:column;gap:8px;user-select:none;-webkit-user-select:none}
-.dn-ab-s{position:relative}
-.dn-ab-s input{width:100%;height:42px;padding:0 38px 0 14px;border-radius:13px;font:inherit;font-family:'Fredoka';font-weight:600;font-size:16px;color:#fff;background:#0a1534;border:2px solid rgba(255,255,255,.22);
+/* KALABALIK ANKETİ: 100 kişiye soruldu; seçenekler oy pusulası gibi akan kartlar. Cevapta senin cevabın için
+   "100 kişiden kaçı" nokta tablosu yanar; bütün doğrular en az bilinenden en çok bilinene akar (en nadiri altın taç,
+   tuzaklar kırmızı). Liste uzunsa (31 seçeneğe kadar) yalnız liste kendi içinde kayar, başlığıyla görünür kalır. */
+.dn-ab{display:flex;flex-direction:column;gap:9px;user-select:none;-webkit-user-select:none}
+.fl-q.cover .dn-ab{flex:1 1 auto;min-height:0}
+.ab-crowd{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(180,91,255,.16),rgba(236,79,147,.1));box-shadow:inset 0 0 0 1.5px rgba(200,140,255,.25)}
+.ab-crowd i{flex:none;width:58px;height:26px;background:
+  radial-gradient(circle at 50% 30%,#d9b8ff 0 3px,transparent 3.5px) 0 0/10px 13px,
+  radial-gradient(ellipse 4px 5px at 50% 95%,#a77ee6 0 99%,transparent) 0 0/10px 13px;opacity:.9}
+.ab-crowd span{flex:1;min-width:0;font:500 13px/1.25 'Fredoka',sans-serif;color:#d8ccff}
+.ab-crowd b{font-weight:700;color:#fff}
+.dn-ab-s{position:relative;flex:none}
+.dn-ab-s input{width:100%;height:42px;padding:0 38px 0 14px;border-radius:11px;font:600 16px 'Fredoka',sans-serif;color:#fff;background:#0b0f20;border:2px solid rgba(255,255,255,.18);
   box-shadow:inset 0 3px 0 rgba(0,0,0,.35);outline:none;user-select:text;-webkit-user-select:text}
-.dn-ab-s input:focus{border-color:var(--gold)}
-.dn-ab-s input::placeholder{color:#7f90b8}
-.dn-ab-s::after{content:'';position:absolute;right:13px;top:50%;width:13px;height:13px;margin-top:-9px;border:2.5px solid #8fa2cf;border-radius:50%}
-.dn-ab-s::before{content:'';position:absolute;right:10px;top:50%;width:2.5px;height:8px;margin-top:2px;background:#8fa2cf;transform:rotate(-45deg);border-radius:2px}
-.dn-ab-l{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;max-height:calc(27 * var(--vh));overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 4px;scrollbar-width:thin}
-.dn-ab-i{min-height:40px;padding:5px 9px 6px;border-radius:12px;text-align:left;font-family:'Fredoka';font-weight:600;font-size:clamp(13.5px,calc(3.8 * var(--vw)),15.5px);line-height:1.12;color:var(--tdark);
-  background:linear-gradient(180deg,#fff,#eef1f8);border:2px solid #fff;box-shadow:0 3px 0 #aab6cf;touch-action:manipulation;transition:transform .08s,opacity .25s}
-.dn-ab-i:active{transform:translateY(2px);box-shadow:0 1px 0 #aab6cf}
-.dn-ab-i.sel{background:linear-gradient(180deg,#fff7d2,#ffd25a);box-shadow:0 0 0 2.5px var(--gold-d),0 3px 0 var(--gold-dd)}
+.dn-ab-s input:focus{border-color:#c79bff;box-shadow:inset 0 3px 0 rgba(0,0,0,.35),0 0 0 3px rgba(180,91,255,.25)}
+.dn-ab-s input::placeholder{color:#7f88ad}
+.dn-ab-s::after{content:'';position:absolute;right:13px;top:50%;width:13px;height:13px;margin-top:-9px;border:2.5px solid #8f97b8;border-radius:50%}
+.dn-ab-s::before{content:'';position:absolute;right:10px;top:50%;width:2.5px;height:8px;margin-top:2px;background:#8f97b8;transform:rotate(-45deg);border-radius:2px}
+/* oy pusulaları: içeriği kadar genişleyen, akan kartlar */
+.dn-ab-l{flex:0 1 auto;min-height:0;display:flex;flex-wrap:wrap;align-content:flex-start;gap:7px;overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 6px;scrollbar-width:thin;scrollbar-color:rgba(200,160,255,.5) transparent}
+.dn-ab-i{flex:0 1 auto;max-width:100%;min-height:38px;padding:6px 12px 7px;border:0;border-radius:9px;text-align:center;font:600 clamp(14px,calc(3.9 * var(--vw)),16px)/1.15 'Fredoka',sans-serif;color:#1d2238;
+  background:linear-gradient(180deg,#fffdf6,#efe8d6);box-shadow:0 2px 0 #cbbf9e,0 4px 8px rgba(0,0,0,.3);touch-action:manipulation;transition:transform .08s,opacity .25s;overflow-wrap:anywhere}
+.dn-ab-i:active{transform:translateY(2px)}
+.dn-ab-i.sel{color:#2a1400;background:linear-gradient(180deg,#fff1b8,#ffcf4a);box-shadow:0 0 0 3px #fff,0 0 0 5.5px #b45bff,0 4px 10px rgba(0,0,0,.35)}
 .dn-ab-i.gone{display:none}
 .dn-ab-i.top{order:-1}
-.dn-ab-none{grid-column:1/-1;padding:10px;text-align:center;font-size:13.5px;color:#9fb0d6}
-.dn-ab-f{display:flex;align-items:center;gap:10px}
-.dn-ab-f span{flex:1;min-width:0;font-size:13px;line-height:1.25;color:#cfe0ff}
-.dn-ab-f span b{color:var(--gold);font-weight:700}
-.dn-ab .fl-send{flex:none;width:auto;min-width:112px;height:46px;padding:0 16px;font-size:18px}
-/* cevap: bütün doğru cevaplar, tahmini seçilme oranıyla */
-.dn-ab.done .dn-ab-s,.dn-ab.done .dn-ab-l,.dn-ab.done .dn-ab-f{display:none}
-.dn-ab-r{display:flex;flex-direction:column;gap:4px}
-.dn-ab-h{display:flex;justify-content:space-between;align-items:baseline;padding:0 4px;font-family:'Manrope';font-weight:800;font-size:10.5px;letter-spacing:.12em;color:#8fa2cf}
-.dn-ab-h em{font-style:normal;color:#ffb894;letter-spacing:.04em}
-.dn-ab-bars{display:flex;flex-direction:column;gap:3px;max-height:calc(30 * var(--vh));overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 2px 0;scrollbar-width:thin}
-.dn-ab-b{position:relative;display:flex;align-items:center;gap:8px;min-height:25px;padding:2px 8px 3px;border-radius:9px;background:rgba(10,21,52,.75);overflow:hidden;
-  animation:dnAbIn .35s both;animation-delay:calc(var(--k) * 45ms)}
-.dn-ab-b>u{position:absolute;left:0;top:0;bottom:0;width:calc(var(--p) * 1%);background:linear-gradient(90deg,rgba(94,200,255,.38),rgba(94,200,255,.16));transform-origin:0 50%;animation:dnAbBar .7s cubic-bezier(.2,.8,.3,1) both;animation-delay:calc(120ms + var(--k) * 45ms)}
-.dn-ab-b>span{position:relative;flex:1;min-width:0;font-size:13.5px;font-weight:600;color:#eef2fa;white-space:nowrap;overflow:hidden;text-overflow:clip}
-.dn-ab-b>em{position:relative;flex:none;font-style:normal;font-family:'Manrope';font-weight:800;font-size:11.5px;color:#9fb0d6;font-variant-numeric:tabular-nums}
-.dn-ab-b>b{position:relative;flex:none;min-width:40px;text-align:right;font-family:'Lilita One';font-weight:400;font-size:15px;color:#ffd25a;font-variant-numeric:tabular-nums}
-.dn-ab-b.low>b{color:#7dff9a}
-.dn-ab-b.me{background:linear-gradient(90deg,#3a2a00,#1a1530);box-shadow:0 0 0 2.5px var(--gold),0 0 16px rgba(255,210,90,.45)}
-.dn-ab-b.me>u{background:linear-gradient(90deg,rgba(255,210,90,.6),rgba(255,210,90,.2))}
-.dn-ab-b.me>span::after{content:'SEN';margin-left:6px;padding:0 5px 1px;border-radius:5px;font-family:'Manrope';font-weight:800;font-size:9.5px;letter-spacing:.08em;color:#3a2200;background:var(--gold);vertical-align:2px}
-.dn-ab-b.bad{background:linear-gradient(90deg,#5a1610,#2a0e18);box-shadow:0 0 0 2px #ff5a4a}
-.dn-ab-b.bad>b{color:#ff8a78}
-.dn-ab-b .fl-who{position:relative;top:auto;right:auto;flex:none;width:20px;height:20px;border-radius:6px;border-width:2px}
-.dn-ab-b .fl-who+.fl-who{right:auto}
-@keyframes dnAbIn{from{opacity:0;transform:translateX(-10px)}}
-@keyframes dnAbBar{from{transform:scaleX(0)}}
+.dn-ab-none{flex:1 0 100%;padding:10px;text-align:center;font-size:13.5px;color:#9fb0d6}
+.dn-ab-f{flex:none;display:flex;align-items:center;gap:10px}
+.dn-ab-f span{flex:1;min-width:0;font:500 13px/1.25 'Fredoka',sans-serif;color:#cfd6f0}
+.dn-ab-f span b{color:#ffd25a;font-weight:700}
+.dn-ab .fl-send{flex:none;width:auto;min-width:118px;height:48px;padding:0 16px;font-size:18px}
+/* cevap */
+.dn-ab.done .ab-crowd,.dn-ab.done .dn-ab-s,.dn-ab.done .dn-ab-l,.dn-ab.done .dn-ab-f{display:none}
+.ab-me{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;
+  background:linear-gradient(135deg,#2a1a4a,#16122a);box-shadow:inset 0 0 0 2px rgba(200,140,255,.35),0 10px 24px rgba(0,0,0,.45);animation:abUp .45s cubic-bezier(.3,1.4,.5,1) both}
+.ab-me.gold{background:linear-gradient(135deg,#4a3200,#1e1508);box-shadow:inset 0 0 0 2.5px #ffd25a,0 0 26px rgba(255,200,60,.35),0 10px 24px rgba(0,0,0,.45)}
+.ab-me.bad{background:linear-gradient(135deg,#4a120c,#1e0a0a);box-shadow:inset 0 0 0 2.5px #ff5a4a,0 10px 24px rgba(0,0,0,.45)}
+.ab-dots{flex:none;width:clamp(64px,calc(22 * var(--vw)),96px);aspect-ratio:1;display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);gap:1.6px}
+.ab-dots u{border-radius:50%;background:rgba(255,255,255,.14);text-decoration:none}
+.ab-dots u.on{background:#ffd25a;box-shadow:0 0 4px rgba(255,210,90,.8);animation:abDot .3s both;animation-delay:calc(var(--k) * 14ms)}
+.ab-me.bad .ab-dots u.on{background:#ff6a5a;box-shadow:none}
+.ab-tx{min-width:0;display:flex;flex-direction:column;gap:2px}
+.ab-tx small{font:italic 900 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:#bda8e8}
+.ab-tx b{font:400 clamp(19px,calc(5.6 * var(--vw)),24px)/1.05 'Lilita One',sans-serif;color:#fff;overflow-wrap:anywhere}
+.ab-tx span{font:500 13px/1.25 'Fredoka',sans-serif;color:#e6dcff}
+.ab-tx span em{font-style:normal;font-weight:700;color:#ffd25a}
+.ab-me>strong{font:400 34px/1 'Lilita One',sans-serif;color:#ffd25a;text-shadow:0 2px 0 #5a3a00}
+.ab-me.bad>strong{color:#ff8a78;text-shadow:0 2px 0 #5a0a00}
+.ab-me .fl-who{position:absolute;inset:auto;top:-10px;left:-8px;width:24px;height:24px;margin:0;border-radius:7px}
+.ab-me .fl-who+.fl-who{left:12px;right:auto}
+.dn-ab-r{display:flex;flex-direction:column;gap:7px;min-height:0}
+.dn-ab-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0 2px;font:italic 900 11.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#a8a0c8}
+.dn-ab-h em{font-style:normal;letter-spacing:.04em;color:#c6a8ff;white-space:nowrap}
+.dn-ab-bars{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.dn-ab-b{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:3px 4px 3px 10px;border-radius:8px;background:#161a30;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);
+  overflow:hidden;animation:abIn .32s both;animation-delay:calc(var(--k) * 35ms)}
+.dn-ab-b>u{position:absolute;left:0;top:0;bottom:0;width:calc(var(--p) * 1%);background:rgba(160,110,255,.22);text-decoration:none}
+.dn-ab-b>span{position:relative;font:600 13.5px/1.15 'Fredoka',sans-serif;color:#eef0fa}
+.dn-ab-b>em{position:relative;flex:none;padding:2px 6px;border-radius:6px;font-style:normal;font:800 11.5px/1.2 'Fredoka',sans-serif;color:#d8ccff;background:rgba(255,255,255,.08);font-variant-numeric:tabular-nums}
+.dn-ab-b.low{background:linear-gradient(90deg,#4a3200,#2a1e08);box-shadow:inset 0 0 0 2px #ffd25a,0 0 14px rgba(255,200,60,.35)}
+.dn-ab-b.low>span::before{content:'';display:inline-block;width:14px;height:10px;margin-right:5px;vertical-align:-1px;background:#ffd25a;clip-path:polygon(0 100%,0 20%,25% 55%,50% 0,75% 55%,100% 20%,100% 100%)}
+.dn-ab-b.low>em{color:#3a2400;background:#ffd25a}
+.dn-ab-b.me{box-shadow:inset 0 0 0 2.5px #fff,0 0 0 2px #b45bff}
+.dn-ab-b.bad{background:#3a0e0e;box-shadow:inset 0 0 0 2px #ff5a4a}
+.dn-ab-b.bad>em{color:#fff;background:#d53b2c}
+.dn-ab-b .fl-who{position:relative;inset:auto;flex:none;width:18px;height:18px;margin:0;border-radius:5px;border-width:2px}
+.dn-ab-b .fl-who+.fl-who{right:auto;margin-left:-6px}
+.dn-ab-l.more{-webkit-mask:linear-gradient(180deg,#000 calc(100% - 34px),transparent);mask:linear-gradient(180deg,#000 calc(100% - 34px),transparent)}
+@media (max-height:700px){.ab-crowd{display:none}.dn-ab-i{min-height:34px;padding:5px 10px 6px}.ab-dots{width:62px}}
+@keyframes abIn{from{transform:translateY(6px) scale(.96)}}
+@keyframes abUp{from{transform:translateY(10px) scale(.97)}}
+@keyframes abDot{from{transform:scale(0)}}
 `;
 
 /** Arama için sadeleştir: küçük harf, Türkçe harfler düz, harf ve rakam dışı yok. */
@@ -116,6 +146,7 @@ export const azbilinen = {
 	time: 30,
 	label: 'Az Bilinen',
 	kind: 'closest',
+	cover: true, // tam ekran kalabalık anketi
 	keep: true,
 	jokers: ['yari'],
 	fmt: (v, value) => {
@@ -144,8 +175,9 @@ export const azbilinen = {
 		css('azbilinen', CSS);
 		const app = appOf();
 		el.innerHTML = `<div class="dn-ab">
+			<div class="ab-crowd"><i></i><span><b>100 kişiye</b> soruldu. En az söylenen <b>doğru</b> cevap en çok puanı alır.</span></div>
 			<label class="dn-ab-s"><input type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ara ya da listeden seç (${v.pool.length})" aria-label="Cevap ara"></label>
-			<div class="dn-ab-l">${v.pool.map((n, i) => `<button class="dn-ab-i" data-i="${i}">${esc(n)}</button>`).join('')}<div class="dn-ab-none" hidden>Listede yok: başka türlü yaz</div></div>
+			<div class="dn-ab-l" data-kaydir>${v.pool.map((n, i) => `<button class="dn-ab-i" data-i="${i}">${esc(n)}</button>`).join('')}<div class="dn-ab-none" hidden>Listede yok: başka türlü yaz</div></div>
 			<div class="dn-ab-f"><span>Doğru ama <b>az bilinen</b> cevap çok puan</span><button class="fl-send" disabled>GÖNDER</button></div>
 		</div>`;
 		rule(el, 'Nadiri kazanır');
@@ -169,6 +201,11 @@ export const azbilinen = {
 			});
 			none.hidden = items.some((b) => !b.classList.contains('gone'));
 		};
+		// liste ekrana sığmıyorsa altı solar: devamı olduğu görülür (yalnız liste kayar)
+		const more = () => list.classList.toggle('more', list.scrollHeight > list.clientHeight + 2 && list.scrollTop + list.clientHeight < list.scrollHeight - 2);
+		list.addEventListener('scroll', more, { passive: true });
+		requestAnimationFrame(more);
+		input.addEventListener('input', () => requestAnimationFrame(more));
 		input.addEventListener('input', filter);
 		input.addEventListener('keydown', (e) => {
 			if (e.key !== 'Enter') return;
@@ -225,20 +262,28 @@ export const azbilinen = {
 						.filter((r) => pick(v, r.value) === i)
 						.map((r) => `<b class="fl-who" style="background:${r.color}"></b>`)
 						.join('');
-				const row = (i, k) =>
-					`<div class="dn-ab-b${i === mine ? ' me' : ''}${v.pct[i] === minP ? ' low' : ''}" style="--p:${v.pct[i]};--k:${k}"><u></u><span>${esc(v.pool[i])}</span>${who(i)}<em>%${v.pct[i]}</em><b>+${100 - v.pct[i]}</b></div>`;
-				const badRows = [...new Set(results.map((r) => pick(v, r.value)).filter((i) => i >= 0 && v.pct[i] < 0))]
-					.map((i) => `<div class="dn-ab-b bad${i === mine ? ' me' : ''}" style="--p:0;--k:0"><u></u><span>${esc(v.pool[i])} · doğru değil</span>${who(i)}<b>0</b></div>`)
+				// doğrular en az bilinenden en çok bilinene; oyuncuların seçtiği tuzaklar başta kırmızı
+				const asc = ok.slice().sort((a, b) => v.pct[a] - v.pct[b]);
+				const chip = (i, k) =>
+					`<div class="dn-ab-b${i === mine ? ' me' : ''}${v.pct[i] === minP ? ' low' : ''}" style="--p:${v.pct[i]};--k:${k}"><u></u><span>${esc(v.pool[i])}</span>${who(i)}<em>%${v.pct[i]}</em></div>`;
+				const badChips = [...new Set(results.map((r) => pick(v, r.value)).filter((i) => i >= 0 && v.pct[i] < 0))]
+					.map((i) => `<div class="dn-ab-b bad${i === mine ? ' me' : ''}" style="--p:0;--k:0"><u></u><span>${esc(v.pool[i])}</span>${who(i)}<em>TUZAK</em></div>`)
 					.join('');
+				// senin cevabın: 100 kişiden kaçı söyledi (nokta tablosu)
+				let meCard = '';
+				if (meR) {
+					const good = mine >= 0 && v.pct[mine] >= 0;
+					const p = good ? v.pct[mine] : mine >= 0 ? 0 : 0;
+					const dots = Array.from({ length: 100 }, (_, k) => `<u${k < p ? ` class="on" style="--k:${k}"` : ''}></u>`).join('');
+					const cls = good ? (v.pct[mine] === minP ? ' gold' : '') : ' bad';
+					const name = mine >= 0 ? esc(v.pool[mine]) : 'Cevap yok';
+					const line = good ? `100 kişiden <em>${p}</em> kişi bunu söyledi` : mine >= 0 ? 'Doğru cevaplardan değil: tuzak' : 'Süre doldu';
+					meCard = `<div class="ab-me${cls}"><div class="ab-dots">${dots}</div><div class="ab-tx"><small>SENİN CEVABIN</small><b>${name}</b><span>${line}</span></div><strong>${good ? '+' + (100 - p) : '0'}</strong></div>`;
+				}
 				root.insertAdjacentHTML(
 					'beforeend',
-					`<div class="dn-ab-r"><div class="dn-ab-h"><span>${ok.length} DOĞRU CEVAP · SEÇİLME ORANI</span><em>tahmini oran</em></div><div class="dn-ab-bars">${badRows}${ok.map((i, k) => row(i, k + 1)).join('')}</div></div>`,
+					`${meCard}<div class="dn-ab-r"><div class="dn-ab-h"><span>${ok.length} DOĞRU · EN AZ BİLİNENDEN EN ÇOK BİLİNENE</span><em>tahmini oran</em></div><div class="dn-ab-bars">${badChips}${asc.map((i, k) => chip(i, k + 1)).join('')}</div></div>`,
 				);
-				const me = root.querySelector('.dn-ab-b.me');
-				if (me) {
-					const box = root.querySelector('.dn-ab-bars');
-					setTimeout(() => (box.scrollTop = Math.max(0, me.offsetTop - box.offsetTop - box.clientHeight / 2 + 12)), 60);
-				}
 				if (meR && app) {
 					const order = results.slice().sort((a, b2) => a.err - b2.err || a.time - b2.time);
 					const win = order[0] === meR;

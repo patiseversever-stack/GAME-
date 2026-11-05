@@ -765,6 +765,7 @@ export class UI {
 		const lbl = ctx.phase === 'altin' ? 'ALTIN SORU' : teams ? 'TAKIMLAR · HERKES CEVAPLIYOR' : ctx.phase === 'yayilma' ? 'YAYILMA · HERKES CEVAPLIYOR' : '';
 		const rule = ctx.predict ? `Tahmin et · +20` : !human ? 'İzliyorsun' : ctx.phase === 'altin' ? 'Altın soru' : tie ? 'Eşitlik bozma' : closest ? T.rule || 'En yakın kazanır' : '';
 		card.className = `fl-q t-${q.type}${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}${T.cover && !map ? ' cover' : ''}`;
+		if (T.cover && !map && T.stampAt) card.dataset.st = T.stampAt; // damganın oturacağı alan (yoksa sorunun yeri)
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));
 		card.style.setProperty('--me', human ? avatarURL(this.look(human)) : 'none');
@@ -772,7 +773,7 @@ export class UI {
 		card.classList.toggle('qmid', qlen > 50 && qlen <= 80);
 		card.classList.toggle('qlong', qlen > 80);
 		card.innerHTML = `<div class="fl-qwho${duel ? ' duel' : teams ? ' teams' : ''}" style="--n:${who.length}"${lbl ? ` data-lb="${lbl}"` : ''}>${whoHTML}</div>
-			<div class="fl-qc"${T.cover && !map ? ` data-cv="${esc(String(T.label || '').toLocaleUpperCase('tr-TR'))}"` : ''}>
+			<div class="fl-qc">${T.cover && !map ? `<div class="fl-cvt">${esc(String(T.label || '').toLocaleUpperCase('tr-TR'))}</div>` : ''}
 				<div class="fl-qhead"><span class="fl-cat"><span class="ci">${ico(cat.icon, { w: 2.6, c: cat.color })}</span><b>${esc(cat.name)}</b></span><span class="fl-type">${esc(
 					String(T.label || '').toLocaleUpperCase('tr-TR'),
 				)}</span>${rule ? `<span class="fl-rule">${esc(rule)}</span>` : ''}<span class="fl-clock"><b>${sec}</b></span></div>
@@ -819,6 +820,7 @@ export class UI {
 		cur = { m, ctx, card, body, ctl, api, answered, finish };
 		this.current = cur;
 		this._enhance(body, v);
+		this._coverFit(card, body);
 		// Arena: şıklar kısaysa 2×2, biri uzunsa ince tek sütun (kart ekranın yarısını aşmasın)
 		const os = body.querySelector('.fl-opts');
 		if (os && !os.classList.contains('three') && !os.classList.contains('one')) {
@@ -842,6 +844,7 @@ export class UI {
 		this.el.classList.toggle('qon', !map); // haritasız soruda üst oyuncu kartları afişe yer açar
 		this.app.calmQ = !map && !!T.calm; // klasik soru tipi: harita arkada durgun (kare hızı: core/quality.js)
 		this.el.classList.toggle('qmap', map); // haritalı soruda üst şerit gizlenir, duraklat düğmesi alta iner
+		this.el.classList.toggle('qcover', !map && !!(T.cover || T.sahne)); // tam ekran kart ya da kendi sahnesini çizen tip (Gölge): haritanın il etiketleri ve iğneleri susar
 		this.sfx('question', { type: q.type, cat: q.cat });
 		t0 = clock.now();
 		showBotJokers(this, ctx.botJokers, gen);
@@ -1003,6 +1006,52 @@ export class UI {
 		}
 	}
 
+	/**
+	 * Tam ekran kart: gövdenin içeriği ekrana sığmazsa (kısa ekran, en uzun soru, cevap notları) içerik orantılı küçülür
+	 * (CSS zoom, en az 0,7): hiçbir şey kaydırmaya ya da kesilmeye kalmaz. İçerik ve sınıflar değiştikçe yeniden ölçülür.
+	 */
+	_coverFit(card, body) {
+		this._cfo?.disconnect();
+		this._cfo = null;
+		if (!card.classList.contains('cover') || typeof ResizeObserver === 'undefined') return;
+		let raf = 0;
+		const fit = () => {
+			raf = 0;
+			if (!body.isConnected) return this._cfo?.disconnect();
+			const kids = [...body.children];
+			for (const k of kids) ro.observe(k); // içerik kendi boyunu değiştirince (sahne, satır içi stil) de ölç
+			for (const k of kids) k.style.zoom = '';
+			const over = () => body.scrollHeight - body.clientHeight > 1;
+			let z = 1;
+			if (over()) {
+				z = Math.max(0.7, Math.floor((body.clientHeight / body.scrollHeight) * 100) / 100);
+				for (let i = 0; i < 10; i++) {
+					for (const k of kids) k.style.zoom = String(z);
+					if (!over() || z <= 0.7) break;
+					z = Math.max(0.7, +(z - 0.02).toFixed(2));
+				}
+			}
+			body.dataset.fz = String(z);
+		};
+		const kick = () => {
+			if (!raf) raf = requestAnimationFrame(fit);
+		};
+		const ro = new ResizeObserver(kick);
+		ro.observe(body);
+		const mo = new MutationObserver(kick);
+		mo.observe(body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] });
+		document.fonts?.ready?.then(kick);
+		this._cfo = {
+			disconnect: () => {
+				ro.disconnect();
+				mo.disconnect();
+				if (raf) cancelAnimationFrame(raf);
+				this._cfo = null;
+			},
+		};
+		kick();
+	}
+
 	stamp(text, tone = '', sub = '') {
 		const s = this.$.q.querySelector('.fl-stamp');
 		if (!s) return;
@@ -1011,7 +1060,31 @@ export class UI {
 		s.style.top = '';
 		const q = this.$.q;
 		const qc = !q.classList.contains('map') && q.querySelector('.fl-qc');
-		if (qc) {
+		s.style.left = '';
+		s.style.removeProperty('--k');
+		q.classList.remove('stamped');
+		let fit = null;
+		if (qc && q.classList.contains('cover')) {
+			// tam ekran tip: harita boşluğu yok. Damga tipin gösterdiği alana (Göz Kararı: resim, Halat/Mancınık: sahne)
+			// ya da sorunun yerine oturur: başlık satırının altından cevapların başladığı yere kadar; soru yazısı o an
+			// gizlenir (cevap belli), damga alana sığacak kadar küçülür. Cevaplara, sahnedeki yazılara binmez.
+			const zone = (q.dataset.st && q.querySelector(q.dataset.st)) || null;
+			const r = q.getBoundingClientRect();
+			const c = qc.getBoundingClientRect();
+			let box;
+			if (zone) box = zone.getBoundingClientRect();
+			else {
+				const hd = q.querySelector('.fl-qhead').getBoundingClientRect();
+				const bd = q.querySelector('.fl-qbody');
+				const first = [...bd.children].find((e) => e.getBoundingClientRect().height > 0);
+				const bt = first ? first.getBoundingClientRect().top : bd.getBoundingClientRect().top;
+				box = { left: c.left + 10, right: c.right - 10, top: hd.bottom + 3, bottom: bt - 3 };
+				q.classList.add('stamped');
+			}
+			fit = { w: box.right - box.left, h: box.bottom - box.top };
+			s.style.top = Math.round((box.top + box.bottom) / 2 - r.top) + 'px';
+			s.style.left = Math.round((box.left + box.right) / 2 - r.left) + 'px';
+		} else if (qc) {
 			const r = q.getBoundingClientRect();
 			const who = q.querySelector('.fl-qwho');
 			const top0 = who ? who.getBoundingClientRect().bottom : r.top;
@@ -1020,6 +1093,13 @@ export class UI {
 		}
 		s.className = `fl-stamp ${tone}`;
 		s.innerHTML = `${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ''}`;
+		if (fit) {
+			// doğal boyu (dönüşümsüz) ölç, eğiklik (skewX −8°) payıyla alana sığdır
+			const w0 = s.offsetWidth + s.offsetHeight * 0.15;
+			const h0 = s.offsetHeight;
+			const k = Math.max(0.45, Math.min(1, (fit.w - 6) / w0, (fit.h - 2) / h0));
+			s.style.setProperty('--k', k.toFixed(3));
+		}
 		// haritadaki yazı rozetleri damganın altına girmesin (yerleşim engeli; kart kapanınca setPins([]) siler)
 		const measure = () => {
 			if (!s.isConnected || !s.textContent) return (this._stampBox = null);
@@ -1067,6 +1147,7 @@ export class UI {
 			console.error('cevap gösterilemedi', e);
 		}
 		this._whoAvatars(card, results);
+		refitAll(); // şıklara portre geldi: yazının payı daraldı (styles-arena .fl-opt:has(>.fl-who))
 		const closest = T.kind === 'closest';
 		const order = results.slice().sort((a, b) => (closest ? a.err - b.err || a.time - b.time : (b.correct ? 1 : 0) - (a.correct ? 1 : 0) || a.time - b.time));
 		for (const r of results) {
@@ -1110,7 +1191,7 @@ export class UI {
 		await this._hold(ansMs);
 		if (gen !== this._gen) return;
 		card.classList.remove('on');
-		this.el.classList.remove('qon', 'qmap');
+		this.el.classList.remove('qon', 'qmap', 'qcover');
 		this.app.calmQ = false;
 		this.setPins([]);
 		await sleep(220);
@@ -1843,7 +1924,7 @@ export class UI {
 		const $ = this.$;
 		$.q.className = 'fl-q';
 		$.q.innerHTML = '';
-		this.el.classList.remove('qon', 'qmap');
+		this.el.classList.remove('qon', 'qmap', 'qcover');
 		this.app.calmQ = false;
 		$.wheel.classList.remove('on', 'pick', 'done', 'spinning', 'fetih');
 		$.wheel.style.display = 'none';

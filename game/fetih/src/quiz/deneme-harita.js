@@ -4,6 +4,8 @@
 
 import { kimim, KIMIM_SAMPLES, STYLES } from './d_kimim.js';
 import { sive, SIVE_SAMPLES } from './d_sive.js';
+import EK_KIMIM from '../data/ek/kimim.js';
+import EK_SIVE from '../data/ek/sive.js';
 
 export const TYPES = { kimim, sive };
 export const ORDER = [
@@ -352,4 +354,4 @@ const W = {
 // kaynaklı ağız sözleri (d_sive.js SIVE_SAMPLES). Yöresel lezzetler genel kültür sorularında duruyor.
 const SIVE_EK = [];
 
-export const SAMPLES = { kimim: [...KIMIM_SAMPLES, ...KIMIM_EK], sive: [...SIVE_SAMPLES, ...SIVE_EK] };
+export const SAMPLES = { kimim: [...KIMIM_SAMPLES, ...KIMIM_EK, ...EK_KIMIM], sive: [...SIVE_SAMPLES, ...SIVE_EK, ...EK_SIVE] };

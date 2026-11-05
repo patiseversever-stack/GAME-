@@ -16,14 +16,19 @@ const CSS = /* css */ `
 /* YALAN MAKİNESİ: titreyen iğne, üç dosya kartı, mürekkepli DOĞRU / YALAN damgaları */
 .dn-id{display:flex;flex-direction:column;gap:10px;user-select:none;-webkit-user-select:none}
 .fl-q.cover .dn-id{flex:1 1 auto;gap:14px}
-.fl-q.cover .dn-id-c{flex:1 1 0;min-height:0;max-height:170px;font-size:clamp(16px,calc(4.7 * var(--vw)),20px)}
+.fl-q.cover .dn-id-c{flex:1 1 0;min-height:auto;max-height:170px;font-size:clamp(16px,calc(4.7 * var(--vw)),20px)}
 .fl-q.cover .dn-id-c>div{display:flex;flex-direction:column;justify-content:center}
 .fl-q.cover .dn-id-c>i b{font-size:30px}
 .fl-q.cover .id-pg{flex:none;height:62px}
 /* cevap: kartlar içerik kadar uzar (not eklenir), yazı biraz küçülür; hiçbir şey üst üste binmez */
-.fl-q.cover .dn-id.done{gap:10px}
-.fl-q.cover .dn-id.done .dn-id-c{flex:0 0 auto;max-height:none;font-size:clamp(14.5px,calc(4 * var(--vw)),17px)}
-.fl-q.cover .dn-id.done .id-pg{height:44px}
+.fl-q.cover .dn-id.done{gap:12px}
+.fl-q.cover .dn-id.done .dn-id-c{flex:0 0 auto;max-height:none;font-size:clamp(14px,calc(3.8 * var(--vw)),16px);line-height:1.22}
+.fl-q.cover .dn-id.done .dn-id-c>div{display:block;padding:13px 11px 9px}
+.fl-q.cover .dn-id.done .dn-id-nt{margin-top:5px;padding-top:5px;font-size:.84em;line-height:1.25}
+.fl-q.cover .dn-id.done .id-pg{height:26px}
+.fl-q.cover .dn-id.done .id-pg b{top:4px;font-size:9.5px}
+.fl-q.cover .dn-id.done .id-pg i{top:8px;width:8px;height:8px}
+.fl-q.cover .dn-id.done .dn-id-c>i b{font-size:24px}
 .id-pg{position:relative;height:54px;border-radius:12px;overflow:hidden;background:linear-gradient(180deg,#f4f8f2,#e2ecdf);box-shadow:inset 0 0 0 2px #0b1a10,0 6px 14px rgba(0,0,0,.4)}
 .id-pg::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 11px,rgba(40,120,60,.18) 11px 12px),repeating-linear-gradient(180deg,transparent 0 10px,rgba(40,120,60,.12) 10px 11px)}
 .id-pg svg{position:absolute;left:0;top:0;width:200%;height:100%;animation:idScroll 3.2s linear infinite}
@@ -49,19 +54,18 @@ const CSS = /* css */ `
 .dn-id-c.pick{box-shadow:0 0 0 3px #fff,0 0 0 6px #e8343c,0 10px 18px rgba(0,0,0,.45)}
 .dn-id-c.pick::before{content:'ŞÜPHELİ';position:absolute;right:10px;bottom:-11px;z-index:2;padding:2px 9px;border-radius:5px;font:italic 900 13px/1.2 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em;color:#fff;background:#e8343c;box-shadow:0 3px 0 #7a0e14}
 .dn-id-c.gone{opacity:.4;pointer-events:none}
-.dn-id-c.gone::before{content:'DOĞRU';position:absolute;right:14px;top:50%;transform:translateY(-50%) rotate(-10deg);padding:3px 10px;border-radius:6px;font:400 17px/1 'Lilita One',sans-serif;color:#1f9a4a;box-shadow:inset 0 0 0 3px #1f9a4a}
+.dn-id-c.gone::before{content:'DOĞRU';position:absolute;right:12px;top:-12px;z-index:2;transform:rotate(-6deg);background:#fffdf6;padding:3px 10px;border-radius:6px;font:400 17px/1 'Lilita One',sans-serif;color:#1f9a4a;box-shadow:inset 0 0 0 3px #1f9a4a}
 .dn-id-c .dn-id-pl{display:block;height:7px;margin-top:8px;border-radius:4px;background:rgba(10,21,52,.12);overflow:hidden}
 .dn-id-c .dn-id-pl u{display:block;height:100%;width:calc(var(--p) * 1%);background:linear-gradient(90deg,#b45bff,#ec4f93);transition:width .6s}
 .dn-id-c .dn-id-pq{position:absolute;right:12px;bottom:5px;font-family:'Lilita One';font-size:13px;color:#b45bff;text-decoration:none}
 /* cevap: damgalar */
 .dn-id.done .dn-id-c{pointer-events:none;animation:none}
-.dn-id-c .dn-id-tg{position:absolute;right:8px;top:-12px;z-index:2;padding:3px 10px 4px;border-radius:7px;font:400 17px/1 'Lilita One',sans-serif;letter-spacing:.08em;
+/* damga yazı sütununun sağ üstünde yüzer: metin onun çevresinden akar, hiçbir harfin üstüne binmez */
+.dn-id-c .dn-id-tg{float:right;position:relative;z-index:2;margin:-4px -4px 6px 12px;padding:3px 10px 4px;border-radius:7px;font:400 17px/1 'Lilita One',sans-serif;letter-spacing:.08em;
   color:var(--sc);background:#fffdf6;box-shadow:inset 0 0 0 3px var(--sc),0 3px 8px rgba(0,0,0,.3);transform:rotate(-6deg);animation:dnIdTag .42s cubic-bezier(.3,1.8,.5,1) both}
 .dn-id-c.ok{--sc:#1f9a4a}
-.dn-id-c.ok>div{padding-top:16px}
 .dn-id-c.lie{--sc:#c8241a;background:linear-gradient(180deg,#ffe6e0,#ffc9bf);box-shadow:0 0 0 3px #e8343c,0 0 26px rgba(255,60,40,.55),0 10px 18px rgba(0,0,0,.45);animation:dnIdLie .55s cubic-bezier(.3,1.6,.5,1)}
 .dn-id-c.lie>i{background:#c8241a}
-.dn-id-c.lie>div{padding-top:16px}
 .dn-id-c.lie .dn-id-tg{font-size:20px;color:#fff;background:#c8241a;box-shadow:0 0 0 2.5px #fff,0 4px 10px rgba(0,0,0,.35);transform:rotate(5deg)}
 .dn-id-c.lie p{text-decoration:line-through;text-decoration-color:rgba(200,36,26,.75);text-decoration-thickness:2.5px}
 .dn-id-c .dn-id-nt{display:block;margin-top:7px;padding-top:7px;border-top:1.5px dashed rgba(10,21,52,.2);font-size:.82em;font-weight:500;line-height:1.32;color:#2a3a60;text-decoration:none;animation:dnIdNote .45s both}
@@ -69,9 +73,8 @@ const CSS = /* css */ `
 .dn-id-c.lie .dn-id-nt{color:#5a1a14;text-decoration:none}
 .dn-id-c.lie .dn-id-nt b{color:#c8241a}
 .dn-id-c:nth-child(3) .dn-id-nt,.dn-id-c:nth-child(3) .dn-id-tg{animation-delay:.18s}.dn-id-c:nth-child(4) .dn-id-nt,.dn-id-c:nth-child(4) .dn-id-tg{animation-delay:.36s}
-.dn-id-c .fl-who{top:-12px;right:auto;left:-8px}
-.dn-id-c .fl-who+.fl-who{left:20px;right:auto}
-@media (max-height:700px){.id-pg{height:40px}.dn-id-c>div{padding:9px 10px 10px}.dn-id{gap:8px}}
+.dn-id-c>i .fl-who{position:relative;inset:auto;width:24px;height:24px;margin-top:6px;border-radius:7px;box-shadow:0 0 0 2px #fff}
+@media (max-height:700px){.id-pg{height:40px}.dn-id-c>div{padding:9px 10px 10px}.dn-id{gap:8px}.fl-q.cover .dn-id.done .id-pg{display:none}}
 @keyframes idScroll{to{transform:translateX(-50%)}}
 @keyframes idBlink{50%{opacity:.2}}
 @keyframes dnIdIn{from{transform:translateY(14px) rotate(-1deg)}}
@@ -154,11 +157,12 @@ export const ikidogru = {
 					c.classList.remove('pick', 'gone');
 					c.querySelectorAll('.dn-id-pl,.dn-id-pq').forEach((x) => x.remove());
 					c.classList.add(lie ? 'lie' : 'ok');
-					c.insertAdjacentHTML('beforeend', `<b class="dn-id-tg">${lie ? 'YALAN' : 'DOĞRU'}</b>`);
+					c.querySelector('div').insertAdjacentHTML('afterbegin', `<b class="dn-id-tg">${lie ? 'YALAN' : 'DOĞRU'}</b>`);
 					const note = v.notes?.[i] || v.q.f?.find((x) => x.t === v.facts[i])?.n;
 					if (note) c.querySelector('div').insertAdjacentHTML('beforeend', `<span class="dn-id-nt"><b>${lie ? 'Gerçek:' : 'Neden şaşırtıcı:'}</b> ${esc(note)}</span>`);
 				});
-				for (const r of results) if (Number.isInteger(r.value) && cards[r.value]) cards[r.value].insertAdjacentHTML('beforeend', `<b class="fl-who" style="background:${r.color}"></b>`);
+				// kim neyi seçti: avatarlar kartın numara şeridinde (yazıya, damgaya binmez)
+				for (const r of results) if (Number.isInteger(r.value) && cards[r.value]) cards[r.value].querySelector('i').insertAdjacentHTML('beforeend', `<b class="fl-who" style="background:${r.color}"></b>`);
 				const fx = app?.ui?.fx;
 				if (fx) {
 					const rc = cards[v.right].getBoundingClientRect();

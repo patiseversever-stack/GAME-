@@ -38,6 +38,7 @@ const NAMES = [
 	'.fl-cat b',
 	'.gk-hd .kn b',
 	'.gk-cap',
+	'.fl-cvt',
 ];
 /** Cümle türü: küçülür, yine sığmazsa iki satıra iner. */
 const LINES = ['.fl-q.cover .fl-opt>span', '.rs-r>em', '.rs-r>em small', '.fl-rule', '.fl-q .fl-pin-hint .ph b', '.fl-lines .ln span', '.dn-ab-b>span', '.sv-mean small', '.fl-hilo .df'];

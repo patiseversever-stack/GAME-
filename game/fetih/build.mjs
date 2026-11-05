@@ -50,7 +50,18 @@ function fontFaces() {
 	return css;
 }
 
+// --ek-yok: soru bankasının ek dosyaları (src/data/q/ek/*.js, src/data/ek/*.js) boş dizi olarak derlenir. Ajanlar ek
+// soruları yazarken ara derlemelere yarım (henüz son okumadan geçmemiş) soru girmesin diye.
+const EK_YOK = process.argv.includes('--ek-yok');
+const ekYok = {
+	name: 'ek-yok',
+	setup(b) {
+		b.onResolve({ filter: /\/ek\/[a-z]+\.js$/ }, (a) => (/[\\/]data[\\/]/.test(a.importer) || /data/.test(a.path) ? { path: a.path, namespace: 'ek-yok' } : null));
+		b.onLoad({ filter: /.*/, namespace: 'ek-yok' }, () => ({ contents: 'export default [];', loader: 'js' }));
+	},
+};
 const base = {
+	plugins: EK_YOK ? [ekYok] : [],
 	bundle: true,
 	target: ['es2020', 'chrome80', 'safari14'],
 	legalComments: 'none',

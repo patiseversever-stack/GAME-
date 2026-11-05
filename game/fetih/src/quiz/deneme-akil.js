@@ -11,6 +11,10 @@ import { yanlis } from './d_yanlis.js';
 import { ikidogru } from './d_ikidogru.js';
 import { harfal } from './d_harfal.js';
 import { azbilinen } from './d_azbilinen.js';
+import EK_YANLIS from '../data/ek/yanlis.js';
+import EK_IKIDOGRU from '../data/ek/ikidogru.js';
+import EK_HARFAL from '../data/ek/harfal.js';
+import EK_AZBILINEN from '../data/ek/azbilinen.js';
 
 // süre profilleri (timing.js'e dokunmadan): en az 20 sn
 Object.assign(PROFILE, {
@@ -592,3 +596,8 @@ export const SAMPLES = {
 			['Haft', 'Heşt', 'Nüh', 'Deh', 'Mars', 'Pul']),
 	],
 };
+// 2026-11 büyütmesi: ek dosyalar (src/data/ek/), biçim yukarıdaki örneklerin son hali
+SAMPLES.yanlis.push(...EK_YANLIS);
+SAMPLES.ikidogru.push(...EK_IKIDOGRU);
+SAMPLES.harfal.push(...EK_HARFAL);
+SAMPLES.azbilinen.push(...EK_AZBILINEN);

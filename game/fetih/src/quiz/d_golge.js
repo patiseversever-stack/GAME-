@@ -89,10 +89,11 @@ export function project(L, w, out) {
 }
 
 /** Maketin dönüşü: maket yerelinden sahneye (fener (0, ly, MZ − LR) noktasında sabit). */
-export function modelMatrix(az, el, c, m = new THREE.Matrix4()) {
+export function modelMatrix(az, el, c, m = new THREE.Matrix4(), s = 1) {
 	const rx = _m1.makeRotationX(-el);
 	const ry = _m2.makeRotationY(az);
-	m.makeTranslation(0, el * 0.06, MZ).multiply(rx).multiply(ry).multiply(_m4.makeScale(MS, MS, MS)).multiply(_m3.makeTranslation(-c[0], -c[1], -c[2]));
+	const k = MS * s; // s: sorunun maket ölçeği (q.s; büyük maket perdeye sığsın, küçük olan okunur boyda olsun)
+	m.makeTranslation(0, el * 0.06, MZ).multiply(rx).multiply(ry).multiply(_m4.makeScale(k, k, k)).multiply(_m3.makeTranslation(-c[0], -c[1], -c[2]));
 	return m;
 }
 const _m1 = new THREE.Matrix4();
@@ -714,6 +715,7 @@ function freeArea(el, app, out) {
 }
 
 export const golge = {
+	sahne: true, // harita yerine kendi gölge tiyatrosunu çizer: haritanın il etiketleri susar (ui.js qcover)
 	time: 24,
 	label: 'Gölge Oyunu',
 	kind: 'exact',
@@ -920,7 +922,7 @@ export const golge = {
 				a = az + (0.62 - az) * k + Math.max(0, tr - 2.2) * 0.07;
 				e = el0 * (1 - k);
 			}
-			modelMatrix(a, e, c0, M);
+			modelMatrix(a, e, c0, M, q.s || 1);
 			pivot.matrix.copy(M);
 			pivot.matrixWorldNeedsUpdate = true;
 			if (model) model.material.uniforms.uShow.value = EASE(tr / 1.2);

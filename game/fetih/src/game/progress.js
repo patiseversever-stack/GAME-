@@ -4,6 +4,7 @@
 // Kayıt biçimi sürümlüdür (v). Bozuk ya da eski kayıt varsayılanlarla birleştirilir.
 // Çevrimiçi sürümde `serialize()` çıktısı sunucuya gönderilebilir (bulut kaydı).
 
+import { Hafiza } from '../quiz/hafiza.js';
 import { COSTUMES, BANNERS, ALL_ITEMS, DEFAULT_LOADOUT, item, unlockedByLevel } from './commanders.js';
 import { JOKERS, JOKER_ORDER } from './jokers.js';
 
@@ -76,6 +77,7 @@ const defaults = () => ({
 	stats: { played: 0, won: 0, answered: 0, correct: 0, provinces: 0, bestStreak: 0, streak: 0, towers: 0 },
 	daily: { last: '', streak: 0 },
 	seen: [],
+	hafiza: null, // soru hafızası (src/quiz/hafiza.js): kimlik → görüldüğü maç; v1 'seen' (son 400) buraya taşınır
 	ads: { noAds: false, matches: 0, shown: 0 },
 	updatedAt: 0,
 });
@@ -109,11 +111,14 @@ export class Progress {
 		out.rating.cat = { ...(s.rating?.cat || {}) };
 		out.owned.costume = [...new Set([...d.owned.costume, ...(s.owned?.costume || [])])];
 		out.owned.banner = [...new Set([...d.owned.banner, ...(s.owned?.banner || [])])];
-		out.seen = Array.isArray(s.seen) ? s.seen.slice(-400) : [];
+		// v2 soru hafızası; eski kayıttaki son 400 kimlik hafızaya "bir önceki maçta görüldü" diye geçer
+		out.hafiza = s.hafiza && typeof s.hafiza === 'object' ? s.hafiza : Array.isArray(s.seen) && s.seen.length ? s.seen.slice(-400) : null;
+		out.seen = [];
 		return out;
 	}
 
 	save() {
+		if (this._h) this.d.hafiza = this._h.toJSON();
 		this.d.updatedAt = this.now();
 		try {
 			this.store?.set?.(SAVE_KEY, this.d);
@@ -339,19 +344,29 @@ export class Progress {
 		return targetDiff(this.skill(cat));
 	}
 
-	/** Görülen soru kayıtları (tekrarı azaltmak için). */
-	markSeen(ids) {
-		const s = this.d.seen;
-		for (const id of ids) {
-			const k = s.indexOf(id);
-			if (k >= 0) s.splice(k, 1);
-			s.push(id);
+	/** Soru hafızası (oyuncunun gördüğü sorular; Match.pick tekrar etmemek için okur ve yazar). */
+	get hafiza() {
+		return (this._h ||= new Hafiza(this.d.hafiza));
+	}
+
+	/** Soru soruldu: hafızaya yazıldı, kayıt sessizce (dinleyicisiz) diske. Maçı yarıda bırakan da bir daha görmez. */
+	gordu() {
+		this.d.hafiza = this.hafiza.toJSON();
+		try {
+			this.store?.set?.(SAVE_KEY, this.d);
+		} catch (e) {
+			/* kayıt kapalı */
 		}
-		if (s.length > 400) s.splice(0, s.length - 400);
+	}
+
+	/** Görülen soru kayıtları (eski arayüz: maç sonu listesi). Hafızada olmayanlar bu maçın sırasıyla eklenir. */
+	markSeen(ids) {
+		const h = this.hafiza;
+		for (const id of ids) if (h.yas(id) === Infinity) h.gor({ id });
 	}
 
 	seenSet() {
-		return new Set(this.d.seen);
+		return new Set(this.hafiza.m.keys());
 	}
 
 	// ---------------------------------------------------------------- ELO (dereceli oyun için hazır)

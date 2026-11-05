@@ -61,8 +61,9 @@ const CSS = /* css */ `
 .dn-yb-c.fix del::after{content:'';position:absolute;left:-2px;right:-2px;top:50%;height:3.5px;border-radius:2px;background:#e8343c;transform-origin:0 50%;transform:rotate(-4deg);animation:dnYbStrike .35s .35s ease-out both}
 .dn-yb-c.fix ins{position:relative;display:inline-block;padding:0 6px;border-radius:6px;text-decoration:none;color:#fff;background:linear-gradient(180deg,#4fd06a,#1f9a4a);box-shadow:0 0 0 2px #fff,0 0 18px rgba(62,224,122,.6),0 3px 0 #0f5a2a;
   transform:translateY(-26px) scale(.6);animation:dnYbIn .5s 1.2s cubic-bezier(.3,1.6,.5,1) forwards}
-.dn-yb-c.fix ins::before{content:'✎';position:absolute;left:50%;top:-20px;transform:translateX(-50%);font-size:15px;color:#1f9a4a}
-.dn-yb-c .fl-who{top:-12px;right:-12px;width:24px;height:24px;border-radius:8px}
+/* kim hangi kelimeyi işaretledi: kelimenin hemen sağında satır içi küçük portre (üst satıra, komşu kelimeye binmez) */
+.dn-yb-c .fl-who{position:relative;inset:auto;flex:none;align-self:center;width:20px;height:20px;margin:0 -1px 0 4px;border-radius:6px;border-width:2px}
+.dn-yb-c .fl-who+.fl-who{right:auto;margin-left:-8px}
 .dn-yb-row{display:flex;align-items:center;gap:10px;min-height:52px}
 .dn-yb-msg{flex:1;min-width:0;font:600 14px/1.25 'Fredoka',sans-serif;color:#cfe0ff}
 .dn-yb-msg.warn{color:#ffb894}
@@ -89,7 +90,13 @@ const CSS = /* css */ `
   font:500 14.5px/1.35 'Fredoka',sans-serif;color:#2a2a3a;animation:dnYbUp .4s 1.5s both}
 .dn-yb-n i{flex:none;padding:2px 7px;border-radius:4px;font-style:normal;font:italic 900 11px/1.4 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#fff;background:#1f9a4a}
 .dn-yb.done .dn-yb-row,.dn-yb.done .dn-yb-st{display:none}
-@media (max-height:700px){.dn-yb-pp{padding:30px 10px 10px 34px}.dn-yb-pp::before{left:24px}.dn-yb-o .fl-opt{min-height:48px}.dn-yb .fl-send{height:46px}}
+@media (max-height:700px){.dn-yb-pp{padding:30px 10px 10px 34px}.dn-yb-pp::before{left:24px}.dn-yb-o .fl-opt{min-height:48px}.dn-yb .fl-send{height:46px}
+  .fl-q.cover .dn-yb{gap:10px}
+  .fl-q.cover .dn-yb-pp{padding:34px 12px 12px 38px;background:repeating-linear-gradient(180deg,transparent 0 39px,rgba(60,110,210,.22) 39px 40.5px) 0 33px/100% 100% no-repeat,linear-gradient(180deg,#fffdf4,#f6edd6)}
+  .fl-q.cover .dn-yb-pp::before{left:26px}
+  .fl-q.cover .dn-yb-c{height:40px;font-size:clamp(18px,calc(5.2 * var(--vw)),22px);line-height:30px}
+  .fl-q.cover .dn-yb-o .fl-opt{min-height:50px}
+  .fl-q.cover .dn-yb-n{padding:8px 10px 9px;font-size:13.5px;line-height:1.3}}
 @keyframes ybPen{0%{transform:rotate(-14deg) scale(.6)}100%{transform:rotate(-4deg) scale(1)}}
 @keyframes ybNote{0%{transform:translateY(16px) rotate(-8deg) scale(.85)}}
 @keyframes dnYbStrike{from{transform:rotate(-4deg) scaleX(0)}to{transform:rotate(-4deg) scaleX(1)}}

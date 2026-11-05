@@ -37,6 +37,7 @@ import { UIController, BotController, RemoteController, publicView, PROTOCOL } f
 import { botLook } from './commanders.js';
 import { clock, setTimeout, clearTimeout } from '../core/clock.js';
 import { gkHazir, gkOnyukle } from '../quiz/d_gozkarari.js';
+import { Hafiza, kardes, bayat, eskilik, ikizler } from '../quiz/hafiza.js';
 
 export const MODES = {
 	'1v1': { players: 2, teams: null, label: "1'e 1" },
@@ -346,12 +347,22 @@ export class Match {
 		this.adj = new Map(this.map.map((i) => [i, b.provinces[i].nb.map((id) => b.byId.get(id).index).filter((j) => this.inMap.has(j))]));
 		this.value = new Map(); // il → puan değeri
 		this.used = new Set();
-		this.seen = this.persist ? this.progress.seenSet() : new Set();
+		// soru hafızası (src/quiz/hafiza.js): maçtaki insanların gördükleri. Yerel insan: kalıcı kayıt (ilerleme);
+		// çevrimiçi koltuk: katılımda gönderdiği özet (cfg.hafiza[koltuk] ya da 'hafiza' eylemi). usedK: bu maçta sorulan
+		// bilgi anahtarları (aynı bilginin iki sorusu aynı maçta çıkmaz).
+		this.mem = [];
+		if (this.persist && this.humanPlayer) {
+			this.progress.hafiza.yeniMac();
+			this.mem.push(this.progress.hafiza);
+		}
+		for (const p of this.players) if (p.ctl?.remote && cfg.hafiza?.[p.i]) this.mem.push((p.mem = Hafiza.from(cfg.hafiza[p.i])));
+		this.usedK = new Set();
 		this.recent = []; // son çıkan soru tipleri (art arda aynı tip gelmesin)
 		// v1.2 soru düzeni (src/quiz/mac.js): yeni tiplerin açık olanları, maçın soru havuzu (eski banka + köprü),
 		// tip sayaçları, eski/yeni dengesi ve soru günlüğü (an, tip; rapor ve sınama için)
 		this.flags = { ...BAYRAK, ...(cfg.yeni || {}) };
 		this.pool = [...QUESTIONS, ...yeniBank()].filter((q) => this.typeOn(q.type));
+		this.twin = ikizler(this.pool); // Mancınık ↔ kaynak tahmin sorusu (aynı soru iki kimlikle)
 		this.tcount = {};
 		this.cov = kapsam(this.pool, WHEEL_CATS); // yeni tiplerin kategori kapsamı (mac.js agirliklar)
 		this.mix = { n: 0, yeni: 0, hedef: 0 };
@@ -578,11 +589,21 @@ export class Match {
 		if (!list.length) list = P.filter(fit);
 		if (!list.length) list = P.filter((q) => !types || types.includes(q.type));
 		if (!list.length) list = QUESTIONS; // istenen tipte hiç soru yok: herhangi biri
+		// tekrar yok: en taze katman (maçtaki hiçbir insanın görmediği, bilgisi bu maçta sorulmamış sorular); hepsi
+		// görülmüşse en az görülen katmandan, en uzun zaman önce görülen önce (src/quiz/hafiza.js)
+		const H = this.mem;
+		let stale = false;
+		if (H.length || this.usedK.size) {
+			const b = list.map((q) => bayat(q, H, this.usedK, this.twin));
+			const min = Math.min(...b);
+			list = list.filter((q, i) => b[i] === min);
+			stale = min > 0;
+		}
 		const target = diff ?? this.targetDiffFor(who, cat);
 		let total = 0;
 		const w = list.map((q) => {
 			const d = q.diff - target;
-			let x = (Math.exp(-(d * d) / 0.6) + 0.03) * (this.seen.has(q.id) ? 0.3 : 1) * (this.used.has(q.id) ? 0.2 : 1);
+			let x = (Math.exp(-(d * d) / 0.6) + 0.03) * (this.used.has(q.id) ? 0.2 : 1) * (stale ? 1 + Math.min(200, eskilik(q, H, this.twin)) / 20 : 1);
 			if (moment) {
 				const k = okumaK(q.type, isYeni(q.type) ? this.secOfQ(q) : NaN, moment);
 				x *= k || 0.001;
@@ -596,6 +617,13 @@ export class Match {
 		const q = list[k];
 		this.used.add(q.id);
 		if (q.src) this.used.add(q.src); // Mancınık sorusu bankadaki tahmin sorusunun kardeşi: ikisi aynı maçta çıkmaz
+		const fk = kardes(q);
+		if (fk) this.usedK.add(fk);
+		for (const h of H) {
+			h.gor(q);
+			if (q.src) h.gor({ id: q.src }); // Mancınık: kaynak tahmin sorusu da görüldü (aynı metin, aynı cevap)
+		}
+		if (this.persist && this.humanPlayer) this.progress.gordu();
 		return q;
 	}
 
@@ -617,8 +645,11 @@ export class Match {
 	/** Kategoride (önce kullanılmamış) sorusu olan tipler; verisiz tipler hiç çekilmez. */
 	haveTypes(cat) {
 		const P = this.pool;
-		const of = (fresh) => new Set(P.filter((q) => (!cat || q.cat === cat) && (!fresh || !this.used.has(q.id)) && this.askable(q)).map((q) => q.type));
-		let s = of(true);
+		const of = (fresh, taze = false) => new Set(P.filter((q) => (!cat || q.cat === cat) && (!fresh || !this.used.has(q.id)) && (!taze || !bayat(q, this.mem, this.usedK, this.twin)) && this.askable(q)).map((q) => q.type));
+		// önce maçtaki insanların hiç görmediği sorusu kalan tipler: tükenen tip (ör. küçük havuz) tekrar etmez, sırasını
+		// başka tipe verir; hepsi tükenince eski davranış
+		let s = this.mem.length ? of(true, true) : new Set();
+		if (!s.size) s = of(true);
 		if (!s.size) s = of(false);
 		if (!s.size) s = new Set(P.map((q) => q.type));
 		return s;
@@ -868,6 +899,14 @@ export class Match {
 	 */
 	remoteAct(p, k, d) {
 		if (k === 'joker') return this.useJoker(d?.id, p);
+		if (k === 'hafiza') {
+			// koltuğun soru hafızası özeti (katılımda; yeniden bağlanınca tazelenir)
+			const h = Hafiza.from(d);
+			if (p.mem) this.mem.splice(this.mem.indexOf(p.mem), 1, h);
+			else this.mem.push(h);
+			p.mem = h;
+			return true;
+		}
 		const cur = this.cur;
 		if (!cur || cur.closed || !cur.who.includes(p) || !cur.ses) return null;
 		if (k === 'acildi') return cur.ses.open(p, true);

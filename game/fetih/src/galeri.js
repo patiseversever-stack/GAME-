@@ -235,8 +235,15 @@ export async function galeri() {
 	const want = decodeURIComponent(location.hash.slice(1));
 	if (want === 'tasarim') setTimeout(() => designBook(true), 0); // #tasarim: tasarım dili sayfası doğrudan açılır
 	addEventListener('hashchange', () => location.hash === '#tasarim' && designBook(true));
-	const S = { type: LIST.some(([t]) => t === want) ? want : LIST[0][0], k: 0, scene: 'duel', time: 'real', run: 0 };
+	// #tip, #tip:sıra ya da #tip@soru-kimliği (denetim araçları belirli soruyu doğrudan açar)
+	const [wt, wk] = want.split(/[:@]/);
+	const S = { type: LIST.some(([t]) => t === wt) ? wt : LIST[0][0], k: 0, scene: 'duel', time: 'real', run: 0 };
 	const ex = Object.fromEntries(LIST.map(([t]) => [t, examples(t)]));
+	if (wk) {
+		const L = ex[S.type];
+		const at = want.includes('@') ? L.findIndex((q) => q.id === wk) : Number(wk);
+		if (Number.isInteger(at) && at >= 0 && at < L.length) S.k = at;
+	}
 	const R = () => Math.random();
 
 	const draw = () => {

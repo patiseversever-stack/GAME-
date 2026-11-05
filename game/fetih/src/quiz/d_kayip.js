@@ -171,9 +171,10 @@ const CSS = /* css */ `
 .fl-q.locked .dn-ky-bar i{animation-play-state:paused}
 .dn-ky-top b{font-family:'Lilita One';font-weight:400;font-size:14px;letter-spacing:.04em;color:var(--gold)}
 .dn-ky-h{display:flex;flex-direction:column;gap:3px}
-.dn-ky-h span{position:relative;display:flex;align-items:center;gap:7px;height:25px;padding:0 9px;border-radius:9px;font-size:13.5px;white-space:nowrap;line-height:1.2;background:rgba(0,0,0,.28);overflow:hidden}
-.dn-ky-h span b{flex:none;font-family:'Lilita One';font-weight:400;font-size:11px;letter-spacing:.08em;padding:1px 6px;border-radius:6px;background:var(--gold);color:#3a2000}
-.dn-ky-h span.lock{color:#cfe0ff;opacity:.55}
+.dn-ky-h span{position:relative;display:flex;align-items:center;gap:8px;min-height:28px;padding:4px 10px 4px 8px;border-radius:4px;font:500 13.5px/1.22 'Fredoka',sans-serif;color:#eef0fa;
+  background:linear-gradient(90deg,rgba(255,210,90,.13),rgba(255,255,255,.03) 70%);box-shadow:inset 3px 0 0 var(--gold);overflow:hidden}
+.dn-ky-h span b{flex:none;align-self:flex-start;margin-top:1px;font:italic 900 11.5px/1.25 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em;padding:1px 8px 1px 6px;border-radius:0;clip-path:polygon(0 0,100% 0,88% 100%,0 100%);background:var(--gold);color:#3a2000}
+.dn-ky-h span.lock{color:#cfe0ff;opacity:.6;background:rgba(255,255,255,.04);box-shadow:inset 3px 0 0 rgba(255,255,255,.22)}
 .dn-ky-h span.lock b{background:rgba(255,255,255,.25);color:#fff}
 .dn-ky-h span.lock em{font-style:normal;margin-left:auto;font-family:'Lilita One';font-size:12px;letter-spacing:.04em}
 .dn-ky-h span.open{animation:flq-pop .4s cubic-bezier(.3,1.5,.5,1)}
