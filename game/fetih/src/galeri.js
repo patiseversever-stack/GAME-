@@ -31,7 +31,7 @@ const ORDER = [
 	['odd', 'Farklı olan'],
 	['emoji', 'Emoji'],
 	['riddle', 'Bilmece'],
-	['img', 'Resimli'],
+	// 'img' (Resimli): eski prosedürel çizimli tip; görselli soruların yerini Göz Kararı aldı (bankada sorusu yok)
 	['blitz', 'Yıldırım'],
 ];
 // galerideki bütün tipler tek listede: oyundakiler, ardından kullanıcının defterde tuttuğu yeni tipler (3. alan true).
@@ -78,11 +78,6 @@ const SAMPLES = {
 				{ w: 'ALANYA', clue: 'Kızıl Kule’nin ilçesi' },
 			],
 		},
-	],
-	img: [
-		{ id: 'ornek-im1', cat: 'cografya', diff: 1, type: 'img', q: 'Bu nedir?', img: 'kedi', mode: 'blur', a: ['Kedi', 'Köpek', 'Tavşan', 'Kuş'] },
-		{ id: 'ornek-im2', cat: 'cografya', diff: 2, type: 'img', q: 'Siluetteki yapı hangisi?', img: 'galata', mode: 'silhouette', a: ['Galata Kulesi', 'Kız Kulesi', 'Saat Kulesi', 'Beyazıt Kulesi'] },
-		{ id: 'ornek-im3', cat: 'eglence', diff: 2, type: 'img', q: 'Resimleri birleştir', img: ['kar', 'adam'], mode: 'rebus', w: 'KARADAM' },
 	],
 	blitz: [{ id: 'ornek-bz1', cat: 'cografya', diff: 1, type: 'blitz', q: 'Doğru mu yanlış mı?', items: BLITZ }],
 };
