@@ -2,6 +2,8 @@
 
 Taslak v0.1 · 5 Kasım 2026 · Sohbetteki kararlardan derlendi.
 
+> **Ada hatırlar.**
+
 ## Özet
 ADA sinematik bir hayatta kalma yarışma şovu. Kendi markamız; başka bir şovun adı, logosu ya da birebir öğeleri kullanılmaz.
 Oyuncu kendi yarışmacısını oynar. Takım parkurları, kamp hayatı, ittifaklar, kaptanlık seçimleri ve eleme geceleri var.
@@ -76,11 +78,9 @@ Her sezon farklı eşyalar çıkar. Örnekler:
 - Paylaşım klipleri her zaman dikey (9:16) çıkar.
 
 ## Ses
-- İkili sunucu: bir kadın ve bir erkek. İkisi de karizmatik.
-  - Kadın sunucu eleme gecesinin sesi: ciddi, gerilimli ve gizemli. Adanın sırrına dair ipuçları verir.
-  - Erkek sunucu parkurların sesi: coşkulu ve esprili.
-- Yardımcı anlatıcı perde arkasındaki yapımcıdır. Kameranın arkasından konuşur, adı bilinmez. Bazen kuralları değiştirir ve hikayedeki gizli plana bağlıdır.
-- Karakter taslakları için bkz. `KARAKTERLER.md`.
+- İkili sunucu: Lal Ayaz (kadın, eleme gecesinin sesi) ve Bora Kayın (erkek, parkurların sesi).
+- Yardımcı anlatıcı perde arkasındaki yapımcı Kule'dir. Kontrol kulesinden hoparlörle konuşur, adı bilinmez. Bazen kuralları değiştirir ve hikayedeki gizli plana bağlıdır.
+- Dünya, takımlar, mekanlar ve karakterler için bkz. `KARAKTERLER.md`.
 - Karakterler konuşur: yarışırken, birbirini desteklerken, kampta.
 - Adada arka plan konuşmaları, ortam sesleri ve efektler var.
 - Not: çok sayıda ses satırı ElevenLabs kredisi demek. Üretimden önce maliyet planı çıkarılacak.
