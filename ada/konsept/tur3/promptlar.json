@@ -1,0 +1,20 @@
+[
+  {
+    "id": "01_ada_manzara",
+    "model": "nano-banana-pro",
+    "aspect": "16:9",
+    "prompt": "Photorealistic cinematic still, like a frame from a big-budget adventure film combined with a premium televised competition, anamorphic lens look, natural light, true-to-life materials and colors, deep perspective and scale, absolutely no fantasy, no magic, no glowing symbols, no text, no logos, no watermark. Aerial drone shot at golden hour of a remote tropical island used for a survival competition show: dramatic sea cliffs on one side, a white sand beach on the east with a rustic camp marked by orange and gold flags, a sheltered cove on the west with a camp marked by turquoise and purple flags, dense jungle, a waterfall dropping into a lagoon, weathered ancient stone ruins half hidden in the jungle, professional obstacle course structures of timber and rope built along the beach and over the lagoon, a hazy hill at the center of the island, sun low over the ocean, long shadows, light sea spray haze."
+  },
+  {
+    "id": "02_yanki_cemberi",
+    "model": "nano-banana-pro",
+    "aspect": "16:9",
+    "prompt": "Photorealistic cinematic still, like a frame from a big-budget adventure film combined with a premium televised competition, anamorphic lens look, true-to-life materials and colors, deep perspective, absolutely no fantasy, no magic, no glowing symbols, no torches, no open fire, no text, no logos, no watermark. Night: a circle of weathered ancient standing stones in a jungle clearing used for the elimination ceremony of a survival competition show. The stones are lit by warm electric lanterns placed on the ground and by cool moonlight. Eleven tired contestants in team outfits, some orange and gold, some turquoise and purple, seated on rough wooden benches around the circle. A calm, authoritative female host in her forties wearing a dark field jacket stands at the center holding an old brass compass. Light mist, television production quality lighting, tense emotional atmosphere."
+  },
+  {
+    "id": "03_karakter_stil",
+    "model": "nano-banana-pro",
+    "aspect": "3:4",
+    "prompt": "Photorealistic character reference for a realistic mobile game, original character designs not resembling any real person, no text, no logos, no watermark. Two characters standing side by side, full body, head to toe in frame, neutral relaxed standing pose with arms slightly away from the body, plain neutral light gray studio background, soft even studio lighting, realistic skin, fabric and hair detail. Left: a 24-year-old athletic female cold-water swimmer with short platinum hair, swim goggles hanging around her neck, wearing an orange and gold competition athletic top, shorts and trail running shoes. Right: a 46-year-old rugged former lighthouse keeper with a short gray beard, a thick knitted wool sweater, cargo trousers and boots, and a pendant made from a piece of lighthouse lens glass."
+  }
+]

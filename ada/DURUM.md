@@ -37,6 +37,7 @@ Her oturumun başında bu dosyayı oku. Her oturumun sonunda güncelle: yapılan
     - D'nin profesyonel kurulmuş parkuru: net, spor yayını gibi.
     - A'nın doğal ahşap ve ip parkuru, gerçek TV şovu hissi.
   - Stilize, büyülü, parlayan semboller ve fantastik görünüm yok.
+- [x] Konsept görseller, tur 3 (`konsept/tur3/`): ada manzarası, Yankı Çemberi ve karakter stil kartı, yeni gerçekçi yönle. 27 kredi. Kalan Meshy bakiyesi 995.
   - Kendi markamız için parkurlara gerçekçi, parlamayan eski kalıntılar karışır; takım renkleri Şafak (altın-turuncu) ve Yakamoz (turkuaz-mor), engeller kendi tasarımımız.
 
 ## Sırada
