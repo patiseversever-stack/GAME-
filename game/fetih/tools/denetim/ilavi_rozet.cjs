@@ -34,6 +34,7 @@ const SAMPLES = JSON.parse(require('child_process').execSync(`node --input-type=
     const cutY = ui.el.classList.contains('qmap') && ui._mapTop ? ui._mapTop * SH - 8 : -1e9;
     const M = ui.pins.filter((q) => q.w && q.lox != null).map((q) => ({ t: q.el.textContent.trim(), r: { left: q.bx + q.lox - (q.w + 6) / 2, right: q.bx + q.lox + (q.w + 6) / 2, top: q.sy + q.loy - 6 - (q.h + 5), bottom: q.sy + q.loy - 4 } })).filter((q) => q.r.top >= cutY);
     const mo = [];
+    if (when === 'cevap filmi' && !ui.pins.some((q) => q.el.classList.contains('big') && q.w && q.lox != null && q.sy + q.loy - 6 - (q.h + 5) >= cutY)) mo.push(`${when} [hedef]: gizli ilin rozeti görünmüyor (kartın altında)`);
     for (let i = 0; i < M.length; i++) {
       const a = M[i];
       if (a.r.left < -1 || a.r.right > SW + 1) mo.push(`${when} [hedef]: "${a.t}" ekran kenarından taşıyor`);

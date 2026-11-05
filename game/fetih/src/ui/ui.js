@@ -1559,6 +1559,14 @@ export class UI {
 				for (const B of boxes) if (R.l < B.r && B.l < R.r && R.t < B.b && B.t < R.b) return false;
 				return true;
 			};
+			// binme payı: adayın öbür kutularla kesişim alanı (boş yer yoksa en az binen aday seçilir)
+			const cost = (ox2, oy2) => {
+				const R = box(ox2, oy2);
+				let c = R.l < 2 || R.r > SW - 2 || R.b > SH - 4 ? 1e6 : 0;
+				if (R.t < cutY) c += 1e5;
+				for (const B of boxes) c += Math.max(0, Math.min(R.r, B.r) - Math.max(R.l, B.l)) * Math.max(0, Math.min(R.b, B.b) - Math.max(R.t, B.t));
+				return c;
+			};
 			let ox = 0;
 			let oy = 0;
 			if (!free(0, 0)) {
@@ -1567,14 +1575,22 @@ export class UI {
 					oy = p.loy;
 				} else {
 					let found = false;
-					for (let k = 1; k <= 6 && !found; k++)
-						for (const [cx, cy] of [[0, -k * h], [0, k * h], [-k * w * 0.55, 0], [k * w * 0.55, 0], [-k * w * 0.5, -k * h], [k * w * 0.5, -k * h], [-k * w * 0.5, k * h], [k * w * 0.5, k * h]])
+					let bestC = cost(0, 0);
+					for (let k = 1; k <= 9 && !found; k++)
+						for (const [cx, cy] of [[0, -k * h], [0, k * h], [-k * w * 0.55, 0], [k * w * 0.55, 0], [-k * w * 0.5, -k * h], [k * w * 0.5, -k * h], [-k * w * 0.5, k * h], [k * w * 0.5, k * h]]) {
 							if (free(cx, cy)) {
 								ox = cx;
 								oy = cy;
 								found = true;
 								break;
 							}
+							const c = cost(cx, cy) + Math.hypot(cx, cy) * 0.5; // eşitlikte yakın aday
+							if (c < bestC) {
+								bestC = c;
+								ox = cx;
+								oy = cy;
+							}
+						}
 				}
 			}
 			p.lox = ox;
@@ -1582,10 +1598,15 @@ export class UI {
 			p.bx = bx;
 			boxes.push(box(ox, oy));
 		}
+		// yumuşak geçiş süreye bağlı (~80 ms zaman sabiti): kare hızından bağımsız (30 fps'te de, yavaş cihazda da aynı)
+		const nowT = performance.now();
+		const kT = 1 - Math.exp(-Math.min(0.5, (nowT - (this._tagT || nowT)) / 1000) / 0.08);
+		this._tagT = nowT;
 		for (const p of P) {
 			if (p.w) {
-				p.dx = (p.dx || 0) + (p.lox - (p.dx || 0)) * 0.3; // yumuşak geçiş
-				p.dy = (p.dy || 0) + (p.loy - (p.dy || 0)) * 0.3;
+				const k = p.dx == null ? 1 : kT;
+				p.dx = (p.dx ?? p.lox) + (p.lox - (p.dx ?? p.lox)) * k;
+				p.dy = (p.dy ?? p.loy) + (p.loy - (p.dy ?? p.loy)) * k;
 				// haritalı soruda kartın altına giren yazı rozeti gizlenir (kartın üstüne binmesin)
 				const hide = p.sy + p.dy - 6 - (p.h || 0) < cutY;
 				if (hide !== p.hid) {
