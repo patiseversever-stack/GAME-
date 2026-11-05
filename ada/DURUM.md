@@ -109,6 +109,15 @@ Kredi harcamadan maliyet sorgusuyla ölçüldü.
   - Ada (zemin, kumsal, deniz, gökyüzü, ışık, bitki yerleşimi): kodla yapılır, yapay zekâ parçaları üstüne yerleştirilir.
 - Kalite kararı için aynı konsept görsel 2-3 modelden geçirilip karşılaştırılacak.
 
+### Sınırsız haklar ve bilgisayar kullanımı
+- Higgsfield yardım merkezine göre sınırsız haklar sadece kişisel, insan kullanımı içindir; otomasyon araçları ve betikler kesinlikle yasaktır.
+- **Bu yüzden Claude, sınırsız hakları bilgisayar kullanımıyla (computer use) ya da başka otomasyonla kullanmaz.** Hesap riski var.
+- Uygun yol:
+  1. Claude hazır prompt'ları yazar.
+  2. Kullanıcı bunları higgsfield.ai'de kendi eliyle üretir.
+  3. Beğendiklerini sohbete gönderir ya da Claude Higgsfield kütüphanesinden okumayı dener.
+  4. Onaylananlar Meshy kredisiyle 3D'ye çevrilir.
+
 ### Öneri
 1. İskelet kredisiz yapılır, şimdilik paket gerekmiyor.
 2. Görsel yön testi için 3 günlük ücretsiz deneme kullanılır.
