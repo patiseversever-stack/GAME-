@@ -76,8 +76,11 @@ Her sezon farklı eşyalar çıkar. Örnekler:
 - Paylaşım klipleri her zaman dikey (9:16) çıkar.
 
 ## Ses
-- Ekranda görünen, kendine özgü bir sunucu ve bir yardımcı anlatıcı var.
-- Sunucunun kişiliği karışık: karizmatik. Eleme gecesinde ciddi ve gerilimli, rahat anlarda esprili. Adanın sırrına dair ipuçları veren gizemli bir yanı da var.
+- İkili sunucu: bir kadın ve bir erkek. İkisi de karizmatik.
+  - Kadın sunucu eleme gecesinin sesi: ciddi, gerilimli ve gizemli. Adanın sırrına dair ipuçları verir.
+  - Erkek sunucu parkurların sesi: coşkulu ve esprili.
+- Yardımcı anlatıcı perde arkasındaki yapımcıdır. Kameranın arkasından konuşur, adı bilinmez. Bazen kuralları değiştirir ve hikayedeki gizli plana bağlıdır.
+- Karakter taslakları için bkz. `KARAKTERLER.md`.
 - Karakterler konuşur: yarışırken, birbirini desteklerken, kampta.
 - Adada arka plan konuşmaları, ortam sesleri ve efektler var.
 - Not: çok sayıda ses satırı ElevenLabs kredisi demek. Üretimden önce maliyet planı çıkarılacak.
@@ -88,6 +91,8 @@ Her sezon farklı eşyalar çıkar. Örnekler:
 - **Sır (kayıp uygarlık + yapımcıların gizli planı):** Ormandaki kalıntılar kayıp bir uygarlıktan kalma. Kalıntılardaki semboller her parkurla biraz daha açılır, sezonlar boyunca bir harita tamamlanır. Yapımcılar bunu baştan biliyor. Şov aslında adanın kalbindeki sırrı çözebilecek birini seçmek için kurulmuş. Kazananı büyük bir görev bekliyor.
 - **Karakter geçmişi:** Oyuncu başta neden burada olduğunu seçer (ailesi için, kendini kanıtlamak için, ünlü olmak için, gizli bir sebep). Hikaye ve bazı diyaloglar buna göre şekillenir.
 - **Rakipler:** 40'tan fazla yazılmış karakterden oluşan bir havuz var. Her sezon farklı bir kadro gelir, bazı tanıdık yüzler geri döner.
+- **Yaş aralığı:** yarışmacılar 20-50 yaş arası.
+- **Yakınlaşma:** ağırlık dostluk ve rekabette. Nadiren hafif yakınlaşma imaları olabilir, açık sahne asla yok.
 - **Anlatım:**
   - Sinematik ara sahneler: tekne gelişi, ihanet, eleme, keşif.
   - Kameraya itiraf: yarışmacılar gün sonunda kameraya gerçek düşüncelerini anlatır. Botların sırlarını da buradan sezersin.
