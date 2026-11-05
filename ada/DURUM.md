@@ -29,6 +29,7 @@ Her oturumun başında bu dosyayı oku. Her oturumun sonunda güncelle: yapılan
 - [x] Kamp kuralları: diyalog, ilişkiler, ihanet, gizli oy, hayatta kalma mini oyunları
 - [x] Hikaye ve adanın sırrı
 - [x] Dünya, sunucular ve ilk sezon kadrosu, Aslı "Ayna" dahil (`KARAKTERLER.md`)
+- [x] Konsept görseller, tur 1 (`konsept/tur1/`): ada manzarası, hız parkuru, Yankı Çemberi, karakter stil kartı. Meshy'de Nano Banana Pro ile; görsel başına 9 kredi, toplam 36. Kalan Meshy bakiyesi 1.058.
 
 ## Sırada
 1. [ ] **İlk prototip (kredi harcamaz).**
@@ -101,6 +102,7 @@ Kredi harcamadan maliyet sorgusuyla ölçüldü.
 - **Bağlandı (5 Kasım 2026).** Anahtar ortamda "Ağ gizli anahtarı" olarak duruyor. Ara sunucu (proxy) `api.meshy.ai` isteklerine kendisi ekliyor; Claude anahtarı görmüyor, istekte de anahtar yazılmıyor.
   - Bakiye: 1.094 kredi (1.000 aylık + 94 kalıcı). Aylık kredi 25 Kasım 2026'da yenileniyor.
   - Abonelik kredisi API'de geçiyor.
+  - Meshy text-to-image (`nano-banana-pro`): görsel başına 9 kredi, yaklaşık 1376x768. Araç: `ada/tools/meshy_img.py`.
   - `assets.meshy.ai` (model indirme adresi) de açık. Adres kökü 403 veriyor; bu normal, dosyalar imzalı bağlantıyla iniyor.
   - Sohbete bir Meshy anahtarı yapıştırıldı; kullanıcıya iptal edip yenisini kullanması önerildi.
 - Bağlama yolu (sanat aşamasında):

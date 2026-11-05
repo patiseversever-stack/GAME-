@@ -1,0 +1,26 @@
+[
+  {
+    "id": "01_ada_manzara",
+    "model": "nano-banana-pro",
+    "aspect": "16:9",
+    "prompt": "Semi-realistic cinematic game key art for a premium mobile survival competition game, stylized-realistic proportions (not cartoon, not photoreal), tropical island at golden hour, turquoise sea, warm amber sunlight, long soft shadows, volumetric god rays, rich but natural colors, teal and amber color grade, ancient overgrown stone ruins carved with faintly glowing geometric symbols, lush jungle, clean readable shapes, high detail, filmic depth of field, no text, no logos, no watermark. Aerial establishing shot of the whole island at sunset: a crescent white-sand beach on the east side with a small camp marked by orange and gold flags, a sheltered cove on the west side with turquoise and purple tents, dense jungle, a tall waterfall, ancient stone ruins and a stepped stone tower rising above the canopy, a misty mysterious hill at the heart of the island, coral reef visible through crystal clear water."
+  },
+  {
+    "id": "02_hiz_parkuru",
+    "model": "nano-banana-pro",
+    "aspect": "9:16",
+    "prompt": "Semi-realistic cinematic game key art for a premium mobile survival competition game, stylized-realistic proportions (not cartoon, not photoreal), tropical island at golden hour, turquoise sea, warm amber sunlight, long soft shadows, volumetric god rays, rich but natural colors, teal and amber color grade, ancient overgrown stone ruins carved with faintly glowing geometric symbols, lush jungle, clean readable shapes, high detail, filmic depth of field, no text, no logos, no watermark. In-game view of a vertical mobile game, clean frame without any interface: third-person camera behind and slightly above an athletic female contestant in an orange and gold team outfit, sprinting away from the camera along a raised ancient stone causeway through jungle ruins. Obstacles ahead: a fallen carved column to jump over, a low stone arch to slide under, a gap over shallow turquoise water, a rope zipline between two ruined towers. Two rival runners in turquoise and purple outfits slightly behind on the side lanes. Dust kicked up, slight motion blur at the edges, strong sense of speed, golden hour backlight."
+  },
+  {
+    "id": "03_yanki_cemberi",
+    "model": "nano-banana-pro",
+    "aspect": "16:9",
+    "prompt": "Semi-realistic cinematic game key art for a premium mobile survival competition game, stylized-realistic proportions (not cartoon, not photoreal), ancient overgrown stone ruins carved with glowing geometric symbols, lush jungle, clean readable shapes, high detail, filmic depth of field, no text, no logos, no watermark. Night scene: a ring of ancient standing stones in a jungle clearing, the carved symbols on the stones glowing soft turquoise and gold, moonlight and floating dust motes, eleven contestants seated on wooden logs around the inside of the ring, a calm and authoritative female host in her forties standing at the center holding an old brass compass, tense dramatic atmosphere, purple and turquoise night palette, no fire, no torches."
+  },
+  {
+    "id": "04_karakter_stil",
+    "model": "nano-banana-pro",
+    "aspect": "3:4",
+    "prompt": "Character style sheet for a premium mobile survival competition game, semi-realistic stylized-realistic rendering (not cartoon, not photoreal), clean readable silhouettes, original character designs, no text, no logos, no watermark. Two original characters standing side by side, full body, head to toe in frame, neutral relaxed standing pose with arms slightly away from the body, plain warm light-gray studio background, soft even lighting. Left: a 24-year-old athletic female cold-water swimmer with short platinum hair, swim goggles hanging around her neck, an orange and gold team sports outfit. Right: a 46-year-old rugged former lighthouse keeper with a short gray beard, a thick knitted wool sweater, and a pendant made from a piece of lighthouse lens glass."
+  }
+]
