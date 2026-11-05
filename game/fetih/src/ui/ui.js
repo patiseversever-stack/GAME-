@@ -764,7 +764,7 @@ export class UI {
 				: who.map((p, k) => (k ? '<i class="vx">VS</i>' : '') + plate(p, '', '', who.length > 2 ? ranks.get(p.i) : 0)).join('');
 		const lbl = ctx.phase === 'altin' ? 'ALTIN SORU' : teams ? 'TAKIMLAR · HERKES CEVAPLIYOR' : ctx.phase === 'yayilma' ? 'YAYILMA · HERKES CEVAPLIYOR' : '';
 		const rule = ctx.predict ? `Tahmin et · +20` : !human ? 'İzliyorsun' : ctx.phase === 'altin' ? 'Altın soru' : tie ? 'Eşitlik bozma' : closest ? T.rule || 'En yakın kazanır' : '';
-		card.className = `fl-q${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}`;
+		card.className = `fl-q${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}${T.cover && !map ? ' cover' : ''}`;
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));
 		card.style.setProperty('--me', human ? avatarURL(this.look(human)) : 'none');

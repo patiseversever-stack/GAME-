@@ -63,10 +63,11 @@ const CSS = /* css */ `
 .gk-pt i::after{content:'';position:absolute;inset:0;transform-origin:0 50%;transform:scaleX(var(--k,1));background:linear-gradient(90deg,#ff7a2a,#ffd25a 70%,#fff3b8)}
 .gk-pt b{flex:none;min-width:2.1em;text-align:right;font:italic 900 22px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffd25a;text-shadow:0 2px 0 rgba(0,0,0,.45)}
 .gk-pt small{flex:none;font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;color:rgba(255,255,255,.55)}
+.gk-sw{position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
 .gk-st{position:relative;width:min(100%,330px);margin:2px auto 0;aspect-ratio:4/3;animation:gkIn .55s cubic-bezier(.2,1.4,.4,1) both}
 .gk-st svg{position:relative;display:block;width:100%;height:100%;overflow:visible}
 /* gölge ayrı, durgun katman: canlı resim her karede değişirken gölge yeniden süzülmez */
-.gk-st svg.sd{position:absolute;inset:0;transform:translateY(9px);filter:blur(9px);opacity:.62}
+.gk-st svg.sd{position:absolute;inset:0;transform:translateY(10px);filter:blur(12px);opacity:.75}
 @keyframes gkIn{0%{opacity:0;transform:translateY(-18px) rotate(-4deg) scale(.86)}100%{opacity:1;transform:none}}
 .gk-st .ld{animation:gkLd 1.1s linear infinite}
 @keyframes gkLd{0%{transform:translateX(-420px)}100%{transform:translateX(420px)}}
@@ -77,15 +78,50 @@ const CSS = /* css */ `
 @keyframes gkSh{0%{opacity:.85;transform:translateX(-460px) skewX(-20deg)}100%{opacity:.85;transform:translateX(520px) skewX(-20deg)}}
 .gk-st.rv{animation:gkPop .45s cubic-bezier(.3,1.6,.5,1) both}
 @keyframes gkPop{0%{transform:scale(1)}40%{transform:scale(1.045)}100%{transform:scale(1)}}
-.gk-cap{position:absolute;left:50%;bottom:-6px;z-index:2;max-width:94%;padding:6px 16px 7px;transform:translateX(-50%) skewX(-8deg);white-space:nowrap;
+.gk-cap{position:absolute;left:50%;top:-12px;z-index:3;max-width:94%;padding:6px 16px 7px;transform:translateX(-50%) skewX(-8deg);white-space:nowrap;
   font:400 21px/1 'Lilita One',sans-serif;color:#1a1200;background:linear-gradient(180deg,#ffe98a,#ffbf2a);box-shadow:0 0 0 2.5px #1a1200,0 6px 14px rgba(0,0,0,.5);animation:gkCap .5s .2s cubic-bezier(.3,1.7,.5,1) both}
 .gk-cap.no{color:#fff;background:linear-gradient(180deg,#ff6a55,#c42a1a)}
-@keyframes gkCap{0%{opacity:0;transform:translateX(-50%) skewX(-8deg) translateY(14px) scale(.6)}100%{opacity:1;transform:translateX(-50%) skewX(-8deg)}}
-.gk-info{display:flex;align-items:flex-start;gap:8px;margin-top:4px;padding:8px 11px;border-radius:12px;background:rgba(8,12,30,.72);box-shadow:inset 0 0 0 1.5px rgba(255,210,90,.45);
-  font:500 13.5px/1.3 'Fredoka',sans-serif;color:#eef2fb;animation:gkInfo .45s .5s ease-out both}
-.gk-info svg{flex:none;width:19px;height:19px;margin-top:-1px}
+@keyframes gkCap{0%{opacity:0;transform:translateX(-50%) skewX(-8deg) translateY(-14px) scale(.6)}100%{opacity:1;transform:translateX(-50%) skewX(-8deg)}}
+/* bilgi: cevaptan sonra soru kutusunun yerinde */
+.gk-info{display:flex;align-items:center;gap:9px;text-align:left;font:500 14.5px/1.3 'Fredoka',sans-serif;color:#3a2600;animation:gkInfo .45s .35s ease-out both}
+.gk-info svg{flex:none;width:22px;height:22px}
+.fl-qtext.gk-bilgi{justify-content:flex-start;padding:8px 13px;background:linear-gradient(180deg,#fff8de,#ffeab0)}
+.fl-qtext.gk-bilgi svg path:first-child{fill:#e0a10a}
+.fl-qtext.gk-bilgi svg path:last-child{stroke:#e0a10a}
+.gk-res{flex:1;min-width:0;display:flex;justify-content:flex-end}
+.gk-res .fl-chips{margin:0;flex-wrap:nowrap;justify-content:flex-end;gap:5px}
 @keyframes gkInfo{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 .dn-gk .fl-opts{margin-top:2px}
+/* ---------------------------------------------------------------- tam ekran (kart .cover): harita yok, görsel kalan yeri doldurur */
+.fl-q.cover .fl-qc{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding-top:76px;
+  background:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1.5px) 0 0/15px 15px,
+    radial-gradient(130% 62% at 50% 0%,color-mix(in srgb,var(--cc) 34%,#0b0f22) 0%,#090c1b 52%,#05060d 100%)}
+.fl-q.cover .fl-qc::before{content:'G\\00D6Z KARARI';display:flex;align-items:center;gap:8px;position:absolute;inset:34px auto auto 50%;height:auto;padding:0 0 0 30px;border-radius:0;opacity:1;transform:translateX(-50%);
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1.6 12C4.2 7.2 7.9 4.8 12 4.8s7.8 2.4 10.4 7.2c-2.6 4.8-6.3 7.2-10.4 7.2S4.2 16.8 1.6 12z' fill='%23fff'/%3E%3Ccircle cx='12' cy='12' r='4.6' fill='%231a2650'/%3E%3Ccircle cx='12' cy='12' r='2.1' fill='%23ffd25a'/%3E%3C/svg%3E") 0 50%/24px no-repeat;
+  font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.4),0 0 18px color-mix(in srgb,var(--cc) 70%,transparent);white-space:nowrap}
+.fl-q.cover .fl-qbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:10px}
+.fl-q.cover .dn-gk{flex:1 1 auto;min-height:0}
+.fl-q.cover .gk-sw{flex:1 1 auto;min-height:96px;container-type:size;padding:14px 0 4px}
+.fl-q.cover .gk-st{width:min(100cqw,133.3cqh);max-width:100%;margin:0}
+.fl-q.cover .fl-jk{display:none} /* bu tipte joker yok: çubuk da yer kaplamaz */
+/* şıklar hep iki sütun: uzun ad (Pachycephalosaurus) küçülerek sığar (fit.js), en çok iki satır */
+.fl-q.cover .fl-opts.one{grid-template-columns:1fr 1fr}
+.fl-q.cover .fl-opt span{overflow-wrap:normal;word-break:normal}
+.dn-gk.rv .gk-hd .md{display:none}
+/* kısa ekran (≤ 700 px): bant, soru ve şıklar sıkışır; görsel yine kalan yeri alır */
+@media (max-height:700px){
+  .fl-q.cover .fl-qc{padding-top:54px}
+  .fl-q.cover .fl-qc::before{top:22px;font-size:17px;background-size:20px;padding-left:26px}
+  .fl-q.cover .fl-qtext{min-height:0;padding:6px 10px;font-size:15.5px;line-height:1.2}
+  .fl-q.cover .fl-tbar{margin:5px 2px 6px}
+  .fl-q.cover .fl-qbody{margin-top:6px}
+  .fl-q.cover .gk-sw{padding:12px 0 2px;min-height:120px}
+  .fl-q.cover .gk-hd .kn b{font-size:12px}
+  .fl-q.cover .fl-opts{gap:6px}
+  .fl-q.cover .fl-opt{min-height:38px}
+  .fl-q.cover .fl-opt span{font-size:14px;line-height:1.1}
+  .fl-q.cover .gk-info{font-size:13px}
+}
 @media (prefers-reduced-motion:reduce){.gk-st,.gk-st.rv,.gk-cap,.gk-info{animation:none}.gk-st .ld{animation:none}}
 `;
 
@@ -98,6 +134,7 @@ export const gozkarari = {
 	kind: 'exact',
 	jokers: [], // KARARLAR v1.6: bu tipte joker yok
 	noJoker: true, // süre/sabotaj/kalkan/ikinci şans dahil (jokers.js support)
+	cover: true, // kart bütün ekranı kaplar: üstte düello afişi, altında soru; harita görünmez (ui.js .fl-q.cover)
 	prepare(q, R) {
 		const order = shuffle([0, 1, 2, 3], R);
 		const v = { q, opts: order.map((i) => q.a[i]), right: order.indexOf(0), frame: frameOf(q) };
@@ -125,7 +162,7 @@ export const gozkarari = {
 		el.innerHTML = `<div class="dn-gk">
 			<div class="gk-hd"><span class="kn">${EYE}<b>${esc(konu)}</b></span><span class="md">${MODE[q.mode] || ''}</span>
 				<span class="gk-pt"><i></i><b>100</b><small>PUAN</small></span></div>
-			<div class="gk-st"><svg class="sd" viewBox="0 0 400 300" aria-hidden="true"><path d="${fr.d}" fill="#02040c"/></svg><svg viewBox="0 0 400 300" role="img" aria-label="Göz Kararı görseli">
+			<div class="gk-sw"><div class="gk-st"><svg class="sd" viewBox="0 0 400 300" aria-hidden="true"><path d="${fr.d}" fill="#02040c"/></svg><svg viewBox="0 0 400 300" role="img" aria-label="Göz Kararı görseli">
 				<defs>${fr.defs}<clipPath id="c${k}"><path d="${fr.d}"/></clipPath>
 					<filter id="b${k}" x="0" y="0" width="1" height="1" color-interpolation-filters="sRGB"><feGaussianBlur stdDeviation="0" edgeMode="duplicate"/></filter>
 					${sil ? `${silBg}<mask id="m${k}" maskUnits="userSpaceOnUse" x="0" y="0" width="400" height="300"><image href="${GK_BASE + q.img}.m.png" width="400" height="300" preserveAspectRatio="none"/></mask>` : ''}
@@ -142,7 +179,7 @@ export const gozkarari = {
 					<rect class="sh" x="-60" width="90" height="300" fill="url(#l${k})" pointer-events="none"/>
 				</g>
 				${fr.over}
-			</svg></div>
+			</svg></div></div>
 			<div data-r="o"></div>
 		</div>`;
 		const root = el.querySelector('.dn-gk');
@@ -227,11 +264,21 @@ export const gozkarari = {
 					el.querySelector('.sl')?.setAttribute('opacity', '0');
 				}
 				st.classList.add('rv');
+				root.classList.add('rv');
 				const me = results.find((r) => r.p?.human) || null;
 				st.insertAdjacentHTML('beforeend', `<div class="gk-cap${me && !me.correct ? ' no' : ''}">${esc(v.opts[v.right])}</div>`);
 				playSfx('iaReveal');
 				const score = (r) => (r.correct ? Math.round(100 - 60 * clamp((r.time ?? sec) / (sec * SPAN), 0, 1)) : 0);
-				root.insertAdjacentHTML('beforeend', (q.b ? `<div class="gk-info">${BULB}<span>${esc(q.b)}</span></div>` : '') + chips(results, (r) => (r.correct ? '✓ ' + score(r) : r.value == null ? '—' : '✗')));
+				// bilgi: soru kutusunun yerine geçer (soru artık gerekmez, cevap görselin üstünde; hiçbir ekranda taşmaz)
+				const qt = el.closest('.fl-q')?.querySelector('.fl-qtext');
+				if (q.b && qt) {
+					qt.style.minHeight = qt.offsetHeight + 'px';
+					qt.classList.add('gk-bilgi');
+					qt.innerHTML = `<span class="gk-info">${BULB}<span>${esc(q.b)}</span></span>`;
+				} else if (q.b) st.insertAdjacentHTML('afterend', `<div class="gk-info">${BULB}<span>${esc(q.b)}</span></div>`);
+				// oyuncu puanları üst satırdaki puan sayacının yerine geçer (kart cevapta uzamaz)
+				const pt = el.querySelector('.gk-pt');
+				if (pt) pt.outerHTML = `<span class="gk-res">${chips(results, (r) => (r.correct ? '✓ ' + score(r) : r.value == null ? '—' : '✗'))}</span>`;
 			},
 			destroy() {
 				alive = false;

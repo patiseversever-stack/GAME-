@@ -36,6 +36,9 @@ const NAMES = [
 	'.dn-sv .sv-pick em',
 	'.gal .ty b',
 	'.fl-cat b',
+	'.gk-hd .kn b',
+	'.gk-cap',
+	'.fl-q.cover .fl-opt span',
 ];
 /** Cümle türü: küçülür, yine sığmazsa iki satıra iner. */
 const LINES = ['.rs-r>em', '.rs-r>em small', '.fl-rule', '.fl-q .fl-pin-hint .ph b', '.fl-lines .ln span', '.dn-ab-b>span', '.sv-mean small', '.fl-hilo .df'];
