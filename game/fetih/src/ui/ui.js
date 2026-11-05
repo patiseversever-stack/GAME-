@@ -1027,6 +1027,15 @@ export class UI {
 		}
 		s.className = `fl-stamp ${tone}`;
 		s.innerHTML = `${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ''}`;
+		// haritadaki yazı rozetleri damganın altına girmesin (yerleşim engeli; kart kapanınca setPins([]) siler)
+		const measure = () => {
+			if (!s.isConnected || !s.textContent) return (this._stampBox = null);
+			const r = s.getBoundingClientRect();
+			const u = this.el.getBoundingClientRect();
+			this._stampBox = { l: r.left - u.left - 4, r: r.right - u.left + 4, t: r.top - u.top - 4, b: r.bottom - u.top + 4 };
+		};
+		requestAnimationFrame(measure);
+		setTimeout(measure, 600); // giriş devinimi (ölçek) bitince gerçek boyu
 		// v1.5: damga cevap alanının (çengel tahtası, kelime kutuları) üstüne binmez: doğru cevap görülsün. Binecekse alanın
 		// hemen üstüne kayar; oraya da sığmıyorsa kısa görünüp kaybolur.
 		const zone = !q.classList.contains('map') && q.querySelector('.xw-grid,.an-word,.hr-word,.fl-word');
@@ -1488,6 +1497,7 @@ export class UI {
 	}
 
 	setPins(list) {
+		if (!list.length) this._stampBox = null;
 		for (const p of this.pins) p.el.remove();
 		for (const l of this.lines) l.el.remove();
 		this.lines = [];
@@ -1529,40 +1539,61 @@ export class UI {
 			}
 			p.ty = 0;
 		}
-		// yazı rozetleri çarpışmasın: üst üste binenleri dikeyde ayır (yalnız ölçülü rozetler; az sayıda, O(n²))
-		for (let it = 0; it < 3; it++)
-			for (let i = 0; i < P.length; i++) {
-				const a = P[i];
-				if (!a.w) continue;
-				for (let j = i + 1; j < P.length; j++) {
-					const c = P[j];
-					if (!c.w) continue;
-					const ox = (a.w + c.w) / 2 + 4 - Math.abs(a.sx - c.sx);
-					const ay = a.sy + a.ty;
-					const cy = c.sy + c.ty;
-					const oy = (a.h + c.h) / 2 + 3 - Math.abs(ay - cy);
-					if (ox <= 0 || oy <= 0) continue;
-					const up = ay <= cy ? a : c;
-					const dn = up === a ? c : a;
-					up.ty -= oy / 2;
-					dn.ty += oy / 2;
+		// yazı rozetleri (v1.7): öncelik sırasıyla BOŞ yere yerleşir. Önce kendi yeri, sonra bir önceki karedeki yeri (titremesin),
+		// sonra kademeli adaylar (yukarı, aşağı, yanlar, çaprazlar). Engeller: önce yerleşen rozetler, cevap damgası, ekran
+		// kenarı ve (haritalı soruda) kartın altı. Boş yer yoksa kendi yerinde kalır. Büyük rozet (cevap) önce yerleşir.
+		const SW = this.el.clientWidth || innerWidth;
+		const SH = this.el.clientHeight || innerHeight;
+		const cutY = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * SH - 8 : -1e9;
+		const boxes = this._stampBox ? [this._stampBox] : [];
+		const tags = P.filter((p) => p.w);
+		if (tags.length > 1) tags.sort((x, y) => (y.big ??= y.el.classList.contains('big')) - (x.big ??= x.el.classList.contains('big')));
+		for (const p of tags) {
+			const w = p.w + 6;
+			const h = p.h + 5;
+			const bx = p.w + 12 < SW ? Math.min(SW - p.w / 2 - 6, Math.max(p.w / 2 + 6, p.sx)) : p.sx;
+			const box = (ox, oy) => ({ l: bx + ox - w / 2, r: bx + ox + w / 2, t: p.sy + oy - 6 - h, b: p.sy + oy - 4 });
+			const free = (ox, oy) => {
+				const R = box(ox, oy);
+				if (R.l < 2 || R.r > SW - 2 || R.t < cutY || R.b > SH - 4) return false;
+				for (const B of boxes) if (R.l < B.r && B.l < R.r && R.t < B.b && B.t < R.b) return false;
+				return true;
+			};
+			let ox = 0;
+			let oy = 0;
+			if (!free(0, 0)) {
+				if (p.lox != null && (p.lox || p.loy) && free(p.lox, p.loy)) {
+					ox = p.lox;
+					oy = p.loy;
+				} else {
+					let found = false;
+					for (let k = 1; k <= 6 && !found; k++)
+						for (const [cx, cy] of [[0, -k * h], [0, k * h], [-k * w * 0.55, 0], [k * w * 0.55, 0], [-k * w * 0.5, -k * h], [k * w * 0.5, -k * h], [-k * w * 0.5, k * h], [k * w * 0.5, k * h]])
+							if (free(cx, cy)) {
+								ox = cx;
+								oy = cy;
+								found = true;
+								break;
+							}
 				}
 			}
-		// ekran kenarı: yazı rozeti ekrandan taşmasın (yalnız yatayda; rozetin oku yerinden çok kaymaz)
-		const SW = this.el.clientWidth || innerWidth;
-		for (const p of P) if (p.w && p.w + 12 < SW) p.sx = Math.min(SW - p.w / 2 - 6, Math.max(p.w / 2 + 6, p.sx));
-		// haritalı soruda kartın altına giren yazı rozeti gizlenir (kartın üstüne binmesin)
-		const cutY = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * (this.el.clientHeight || innerHeight) - 8 : -1e9;
+			p.lox = ox;
+			p.loy = oy;
+			p.bx = bx;
+			boxes.push(box(ox, oy));
+		}
 		for (const p of P) {
-			p.dy = (p.dy || 0) + (p.ty - (p.dy || 0)) * 0.25; // yumuşak: titremesin
 			if (p.w) {
-				const hide = p.sy + p.dy - (p.h || 0) < cutY;
+				p.dx = (p.dx || 0) + (p.lox - (p.dx || 0)) * 0.3; // yumuşak geçiş
+				p.dy = (p.dy || 0) + (p.loy - (p.dy || 0)) * 0.3;
+				// haritalı soruda kartın altına giren yazı rozeti gizlenir (kartın üstüne binmesin)
+				const hide = p.sy + p.dy - 6 - (p.h || 0) < cutY;
 				if (hide !== p.hid) {
 					p.hid = hide;
 					p.el.style.opacity = hide ? '0' : '';
 				}
-			}
-			p.el.style.transform = `translate(${p.sx.toFixed(1)}px,${(p.sy + p.dy).toFixed(1)}px)`;
+				p.el.style.transform = `translate(${(p.bx + p.dx).toFixed(1)}px,${(p.sy + p.dy).toFixed(1)}px)`;
+			} else p.el.style.transform = `translate(${p.sx.toFixed(1)}px,${p.sy.toFixed(1)}px)`;
 		}
 		for (const l of this.lines) {
 			app.toScreen(v.set(l.a.x, hb ? b.heightAt(l.a.x, l.a.z) : top, l.a.z), s);
