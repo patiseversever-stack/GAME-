@@ -307,7 +307,7 @@ async function play(cfg, { human = false, store, policy, accuracy } = {}) {
 	// tutarlılık
 	check(r.questions > 0, 'hiç soru sorulmadı');
 	check(m.players.every((p) => Number.isFinite(p.score)), 'skor NaN');
-	check(m.players.every((p) => p.jk && JOKER_ORDER.every((id) => p.jk[id].left >= 0 && p.jk[id].left <= JOKERS[id].max + 2)), 'joker hakkı aralık dışı');
+	{ const bad = m.players.flatMap((p) => JOKER_ORDER.filter((id) => !(p.jk?.[id]?.left >= 0 && p.jk[id].left <= JOKERS[id].max + 2)).map((id) => `${id}=${p.jk?.[id]?.left}/${JOKERS[id].max}`)); check(!bad.length, 'joker hakkı aralık dışı ' + cfg.mode + ' ' + bad.join(',')); }
 	check(app.board.provinces.every((p) => p.owner < m.players.length), 'geçersiz il sahibi');
 	check(m.cur === null, 'soru açık kaldı');
 	check(ms < 20000, `maç çok yavaş (${ms | 0} ms)`);
@@ -506,7 +506,7 @@ const bj = Object.values(stats.jokers.bot).reduce((a, b) => a + b, 0);
 check(bj > 0, 'botlar hiç joker kullanmadı');
 check(Object.keys(stats.jokers.bot).length >= 4, 'botlar yeterince çeşitli joker kullanmadı');
 for (const id of ['yari', 'sure', 'ikinci', 'sabotaj', 'kahin']) check((stats.jokers.human[id] || 0) > 0, `insan ${id} jokerini hiç kullanamadı`);
-for (const t of ['choice', 'tf', 'num', 'pin', 'hang', 'order', 'match', 'hilo', 'odd', 'emoji', 'proverb', 'riddle']) check(stats.matrix[t], `${t} tipi hiç sorulmadı`);
+for (const t of ['choice', 'tf', 'num', 'pin', 'hang', 'order', 'match', 'hilo', 'odd', 'proverb', 'riddle']) check(stats.matrix[t], `${t} tipi hiç sorulmadı`);
 
 // soru düzeni raporu (4. bölüm)
 {

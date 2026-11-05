@@ -1678,7 +1678,10 @@ export class Match {
 
 	/** Joker ödülü (REWARD): yalnız bu maçta; insan için bildirim. */
 	reward(p, id) {
-		const slot = p?.jk?.[id];
+		// tavan: bir jokerde en çok başlangıç + 2 hak (kullanılmayan joker yığılmasın); dolu ise boş yeri olan başka joker
+		const room = (k) => p?.jk?.[k] && p.jk[k].left < (JOKERS[k]?.max ?? 1) + 2;
+		if (!room(id)) id = REWARD.pool.find(room);
+		const slot = id && p.jk[id];
 		if (!slot) return;
 		slot.left++;
 		this.emit('reward', { player: p.i, id });

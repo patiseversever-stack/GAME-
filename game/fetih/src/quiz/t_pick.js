@@ -1,4 +1,4 @@
-// Seçmeli tipler: hilo, odd, emoji, proverb, riddle.
+// Seçmeli tipler: hilo, odd, emoji, proverb, riddle (bilmece: sır kartı).
 // Hepsi 'exact' türünde: bildi / bilemedi; eşitlikte hızlı olan kazanır.
 
 import { css, esc, shuffle, pCorrect, mountChoice, buzz, fmtNum, clamp } from './util.js';
@@ -98,12 +98,51 @@ const CSS = /* css */ `
 .fl-blank.set{animation:none;border-color:#fff;color:#fff}
 .fl-blank.right{background:#2a9a44;border-color:#fff;color:#fff}
 .fl-blank.wrong{background:#c8352a;border-color:#fff;color:#fff}
-/* bilmece */
-.fl-rid{display:flex;justify-content:center;margin:-2px 0 8px;font-size:44px;line-height:1.1;font-family:"Noto Color Emoji","Apple Color Emoji","Segoe UI Emoji",sans-serif;filter:drop-shadow(0 3px 0 rgba(0,0,0,.35))}
-.fl-rid span{display:inline-block;animation:flq-float 2.2s ease-in-out infinite}
+/* bilmece: SIR KARTI — iki dizelik bilmece kartı (Arena v1 siyah/beyaz). Dizeler sırayla belirir; cevapta
+   başlık "CEVAP · X" levhasına döner, dizelerdeki ipucu sözcükleri sırayla altı çizilerek yanar (neden o cevap). */
+.fl-q.ri .fl-qtext,.fl-q:has(.fl-sir) .fl-qtext{display:none}
+.fl-sir{position:relative;isolation:isolate;overflow:hidden;margin:2px 0 14px;padding:11px 58px 14px 15px;border-left:5px solid var(--cc,#fff);
+  background:linear-gradient(180deg,#171c35,#0d1124);clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%);transition:border-color .25s .2s}
+.fl-sir::before{content:'';position:absolute;inset:0;z-index:-1;opacity:0;background:var(--rg,none);transition:opacity .4s .15s}
+.fl-sir .hd{display:flex;align-items:center;gap:8px;min-height:20px;margin-bottom:7px;font:italic 800 12px/1.25 'Barlow Condensed',sans-serif;letter-spacing:.26em;color:var(--cc,#fff)}
+.fl-sir .hd::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,rgba(255,255,255,.25),transparent)}
+.fl-sir .an{display:inline-block;padding:3px 10px 2px;background:#fff;color:#0d1124;font:400 17px/1.05 'Lilita One',sans-serif;letter-spacing:.02em;font-style:normal;
+  transform:skewX(-8deg);box-shadow:0 3px 0 rgba(0,0,0,.3);animation:flRvAn .45s .1s cubic-bezier(.3,1.7,.5,1) both}
+.fl-sir p{margin:0;font-family:'Fredoka',sans-serif;font-weight:700;font-size:20px;line-height:1.22;color:#fff;text-wrap:pretty;
+  animation:flRvIn .45s cubic-bezier(.2,.9,.3,1) both;animation-delay:calc(.1s + var(--i) * .45s)}
+.fl-sir.s-lg p{font-size:18.5px}
+.fl-sir p+p{position:relative;margin-top:7px;padding-left:16px}
+.fl-sir p+p::before{content:'';position:absolute;left:1px;top:.62em;width:9px;height:2px;background:rgba(255,255,255,.45)}
+.fl-sir em{font-style:normal;background:linear-gradient(transparent 60%,rgba(255,210,90,.6) 60%,rgba(255,210,90,.6) 92%,transparent 92%) no-repeat 0 0/0% 100%;
+  transition:background-size .45s cubic-bezier(.6,0,.2,1);transition-delay:calc(.45s + var(--j) * .28s)}
+.fl-sir.s-on em{background-size:100% 100%}
+.fl-sir .qm{position:absolute;right:12px;top:50%;width:40px;margin-top:-48px;text-align:center;font:400 88px/1 'Lilita One',sans-serif;color:rgba(255,255,255,.09);
+  animation:flRvQ 3.4s ease-in-out infinite;transition:opacity .2s}
+.fl-sir.s-on .qm{opacity:0}
+.fl-sir .sl{position:absolute;right:10px;top:50%;width:40px;height:40px;margin-top:-20px;border-radius:50%;display:grid;place-items:center;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.25);
+  animation:flTfBig .5s .3s cubic-bezier(.3,1.8,.5,1) both}
+.fl-sir .sl svg{width:24px;height:24px;fill:none;stroke:var(--rk,#0d1124);stroke-width:4;stroke-linecap:round;stroke-linejoin:round}
+.fl-sir.s-ok{--rg:linear-gradient(100deg,rgba(40,190,95,.30),rgba(40,190,95,.06) 70%);--rk:#129a45;border-left-color:#3ad06e}
+.fl-sir.s-no{--rg:linear-gradient(100deg,rgba(230,70,50,.30),rgba(230,70,50,.06) 70%);--rk:#c42a1a;border-left-color:#ff5a46}
+.fl-sir.s-nt{--rg:linear-gradient(100deg,rgba(255,255,255,.12),transparent 70%);border-left-color:#fff}
+.fl-sir.s-on::before{opacity:1}
+.fl-sir.s-on .hd{color:#fff}
+@keyframes flRvIn{from{opacity:0;transform:translateY(7px)}to{opacity:1;transform:none}}
+/* küçük telefon (360×740 ve altı): kart sıkılaşır, jokerler ekranda kalır */
+@media (max-height:800px),(max-width:380px){
+  .fl-sir{padding:8px 44px 10px 12px;margin:0 0 10px}
+  .fl-sir .hd{margin-bottom:4px;min-height:16px}
+  .fl-sir p,.fl-sir.s-lg p{font-size:17px;line-height:1.18}
+  .fl-sir p+p{margin-top:4px;padding-left:13px}
+  .fl-sir .qm{font-size:66px;margin-top:-36px;right:8px;width:32px}
+  .fl-sir .sl{width:34px;height:34px;margin-top:-17px;right:6px}
+  .fl-sir .an{font-size:15px}
+}
+@keyframes flRvQ{50%{transform:rotate(9deg) translateY(-3px)}}
+@keyframes flRvAn{from{opacity:0;transform:skewX(-8deg) translateX(-10px) scale(.7)}to{opacity:1;transform:skewX(-8deg)}}
+@keyframes flTfBig{from{transform:scale(0) rotate(-50deg)}to{transform:none}}
 @keyframes flq-bounce{0%{transform:translateY(24px) scale(.3);opacity:0}100%{transform:none;opacity:1}}
 @keyframes flq-pulse{50%{box-shadow:0 0 0 4px rgba(255,210,90,.35)}}
-@keyframes flq-float{50%{transform:translateY(-4px) rotate(4deg)}}
 `;
 
 const choiceKind = (extra) => ({
@@ -344,14 +383,41 @@ export const proverb = {
 
 // ---------------------------------------------------------------- riddle
 export const riddle = {
-	time: 23,
+	time: 26, // iki dizelik bilmece: dizeler okunur, ipuçları tartılır (timing.test ortancası)
 	label: 'Bilmece',
 	prepare: (q, R) => prepChoice(q, R),
 	mount(el, v, api) {
 		css('pick', CSS);
-		el.innerHTML = '<div class="fl-rid"><span>🧞</span></div><div data-r="o"></div>';
+		el.closest('.fl-q')?.classList.add('ri');
+		// ipucu sözcükleri (q.k) dizede işaretlenir; cevap açılınca sırayla yanar
+		let j = 0;
+		const mark = (s) => {
+			let h = esc(s);
+			for (const k of v.q.k || []) {
+				const e = esc(k);
+				if (h.includes(e)) h = h.replace(e, `<em style="--j:${j++}">${e}</em>`);
+			}
+			return h;
+		};
+		const lines = String(v.q.q || '').split('\n');
+		const long = String(v.q.q || '').length > 92;
+		el.innerHTML = `<div class="fl-sir${long ? ' s-lg' : ''}"><div class="hd"><span>BİL BAKALIM</span></div>${lines
+			.map((s, i) => `<p style="--i:${i}">${mark(s)}</p>`)
+			.join('')}<span class="qm">?</span></div><div data-r="o"></div>`;
+		const card = el.querySelector('.fl-sir');
 		const ctl = mountChoice(el.querySelector('[data-r=o]'), v, api);
-		return { lock: ctl.lock, reveal: (r) => ctl.reveal(r), destroy() {} };
+		return {
+			lock: ctl.lock,
+			reveal(results) {
+				ctl.reveal(results);
+				const mine = ctl.mine;
+				const st = mine == null ? 'nt' : mine === v.right ? 'ok' : 'no';
+				card.classList.add('s-on', 's-' + st);
+				card.querySelector('.hd').innerHTML = `<span>CEVAP</span><b class="an">${esc(String(v.opts[v.right] ?? '').toLocaleUpperCase('tr-TR'))}</b>`;
+				card.insertAdjacentHTML('beforeend', `<span class="sl"><svg viewBox="0 0 24 24"><path d="${st === 'no' ? 'M6 6l12 12M18 6L6 18' : 'M5 12.5l4.5 4.5L19 7'}"/></svg></span>`);
+			},
+			destroy() {},
+		};
 	},
 	...choiceKind({ bot: (v, s, R) => choiceBot(v, s, R, [0.1, 0.85], -0.02) }),
 };
