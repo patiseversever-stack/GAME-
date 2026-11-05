@@ -16,6 +16,7 @@
 //   yanlis     'yer' { w } (bir kez)        'yer' { w, ok, opts? }                       { w: ilk işaret, f: yer doğruysa }
 //   halat      'halat' { k, c }             'halat' { k, ok, r } · herkese 'ip' { nets } { log: sunucu damgalı basışlar }
 //   fitil      'fitil' { k, c }             herkese 'top' { ev: [olaylar] } (açılış, cevap, patlama)   iki tarafın kaydı
+//   blitz      'bz' { k, a }                'bz' { k, ok, ans } (sıradaki ifade yargısı)  { score, n } sunucunun saydığı
 //   azbilinen  (yok; cevap sıra)            reveal: gerçek seçilme oranları (istatistik) { sıra }
 //   tufan, kusbakisi, kayip, golge, ikidogru: şık (0..n−1) · mancinik: sayı (min..max): yalnız doğrulama
 //
@@ -304,6 +305,35 @@ export const ADIM = {
 			const q = S.v.q;
 			const n = Number(x);
 			return Number.isFinite(n) && n >= q.min && n <= q.max ? n : null;
+		},
+	},
+	// Yıldırım: ifadelerin doğrusu istemciye gitmez (SECRET.blitz). Her basış sırayla sunucuya gelir, yargıyı ve sayımı
+	// sunucu yapar; yanlıştan sonra 0,6 sn ceza kilidi sunucuda da işler (rastgele seri basma puan getirmesin; ağ payı
+	// 0,15 sn). Son değer istemcinin bildirdiği skor değil, sunucunun saydığıdır.
+	blitz: {
+		open(S) {
+			S.st.log = [];
+			S.st.lock = 0;
+		},
+		acts: {
+			bz(S, d) {
+				const items = S.v.items || [];
+				const st = S.st;
+				const k = Number(d?.k);
+				if (!Number.isInteger(k) || k !== st.log.length || k >= items.length) return S.send('bz', { k, ok: false, rejected: true });
+				const t = S.t();
+				if (t > (S.v.sec ?? 20) + 0.5) return S.send('bz', { k, ok: false, late: true });
+				if (t < st.lock) return S.send('bz', { k, ok: false, locked: true, rejected: true });
+				const ans = !!items[k].ans;
+				const ok = !!d.a === ans;
+				st.log.push(ok);
+				if (!ok) st.lock = t + 0.6 - 0.15;
+				S.send('bz', { k, ok, ans });
+			},
+		},
+		final(S) {
+			const log = S.st.log || [];
+			return { score: log.filter(Boolean).length, n: log.length };
 		},
 	},
 	tufan: { final: (S, x) => choice(S, x) },

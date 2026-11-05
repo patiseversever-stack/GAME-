@@ -7,6 +7,8 @@
 // bitiren) belirler. İnsan süre dolunca otomatik gönderilir (arayüz value() ile skoru okur, time = süre);
 // botlar süre sonunda bitirmiş sayılır. correct = skor en az 5.
 // Yanlış cevap 0.6 sn'lik bir kilitlenme getirir (rastgele basarak puan toplanmasın).
+// ÇEVRİMİÇİ: ifadelerin doğrusu istemciye gitmez; her basış sunucuya gider (act 'bz'), yargı, sayım ve ceza kilidi
+// sunucudadır (game/sunucu.js ADIM.blitz); son değer sunucunun saydığıdır.
 
 import { css, esc, shuffle, pCorrect, clamp, buzz } from './util.js';
 import { secOf } from './timing.js';
@@ -218,13 +220,30 @@ export const blitz = {
 			deck.appendChild(f);
 			setTimeout(() => f.remove(), 450);
 		};
-		root.querySelector('.fl-tf').addEventListener('click', (e) => {
+		// yargı: yerelde ifadenin doğrusu görünümde; çevrimiçinde gizli (SECRET.blitz), sunucu yargılar (act 'bz' →
+		// ev 'bz' { k, ok, ans }; istemci arayüzü api.act / api.wait sağlar). Cevap gelene dek yeni basış alınmaz.
+		const online = items.some((it) => it.ans === undefined) && typeof api.act === 'function' && typeof api.wait === 'function';
+		let pending = false;
+		root.querySelector('.fl-tf').addEventListener('click', async (e) => {
 			const b = e.target.closest('.fl-opt');
-			if (!b || done || lock) return;
+			if (!b || done || lock || pending) return;
 			const say = b.dataset.a === '1';
 			const it = items[k];
-			const ok = say === !!it.ans;
-			log.push({ t: it.t, ans: !!it.ans, ok });
+			let ok;
+			let ans;
+			if (online) {
+				pending = true;
+				api.act('bz', { k, a: say });
+				const r = await api.wait('bz', 3000);
+				pending = false;
+				if (done || !r || r.rejected || r.late || r.k !== k) return;
+				ok = !!r.ok;
+				ans = !!r.ans;
+			} else {
+				ans = !!it.ans;
+				ok = say === ans;
+			}
+			log.push({ t: it.t, ans, ok });
 			pips[k]?.classList.add(ok ? 'y' : 'n');
 			fly(say, ok);
 			fx.classList.remove('ok', 'no');

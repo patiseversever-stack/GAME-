@@ -37,6 +37,8 @@
 //     k='yer'      d={ w }                   Yanlışı Bul (bir kez): → ev 'yer' { w, ok, opts? } (seçenekler yer doğruysa)
 //     k='halat'    d={ k, c }                Halat: basış, sunucu damgalar → ev 'halat' { k, ok, r } + herkese 'ip'
 //     k='fitil'    d={ k, c }                Fitil: ortak motorda (sunucu) cevap → herkese 'top' { ev:[olaylar] }
+//     k='bz'       d={ k, a }                Yıldırım: k. ifadeye cevap (a: true=DOĞRU) → ev 'bz' { k, ok, ans } (yargı, sayım ve
+//                                           0,6 sn ceza kilidi sunucuda; son değer sunucunun saydığı { score, n })
 //   Olaylar (t='ev'), k:
 //     'state'   d=snapshot()                tam durum: maç başında (harita ve koltuklar) ve yeniden bağlanmada
 //     'phase'   d={ phase, round, of?, order?, tied? }  baskent|yayilma|fetih|altin (order: o fetih turunun saldırı sırası,
@@ -444,6 +446,26 @@ export class BotClient {
 const plates = () => Array.from({ length: 81 }, (_, i) => i + 1);
 const pickOpt = (c, v) => c.int(v.opts?.length || v.facts?.length || 4);
 const OYNA = {
+	// Yıldırım: ifadelerin doğrusu görünümde yok; bot okuma hızında sırayla basar, yargıyı sunucu verir (yanlışta ceza
+	// kilidi). Döndürdüğü değer sunucuda yok sayılır (sunucu kendi saydığını kullanır).
+	async blitz(c, d) {
+		const items = d.v.items || [];
+		const sec = d.time || 15;
+		const t0 = performance.now();
+		let score = 0;
+		let n = 0;
+		for (let k = 0; k < items.length; k++) {
+			await c.sleep(500 + c.int(700));
+			if ((performance.now() - t0) / 1000 > sec) break;
+			c.act('bz', { k, a: c.int(2) === 1 });
+			const r = await c.wait('bz', 2000);
+			if (!r || r.late || r.rejected) break;
+			n++;
+			if (r.ok) score++;
+			else await c.sleep(650);
+		}
+		return { score, n };
+	},
 	async harfal(c, d) {
 		const n = d.v.n || 5;
 		const got = new Map();
