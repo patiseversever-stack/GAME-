@@ -5,7 +5,9 @@
 import { OUT } from './cssutil.js';
 
 export const CSS_TAGS = /* css */ `
-.fl-tags{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.fl-tags{position:absolute;inset:0;overflow:hidden;pointer-events:none;transition:opacity .3s}
+/* haritada seçim yapılan soruda (qmap) saldırı/savunma rozetleri söner: harita net görünsün; kart kapanınca geri gelir */
+.fl-ui.qmap .fl-tags{opacity:0}
 .fl-tag{position:absolute;left:0;top:0;transform-origin:0 0;display:block;padding:0;margin:0;background:none;border:0;text-align:center;will-change:transform;pointer-events:none;
   font-family:'Lilita One','Fredoka',system-ui,sans-serif;font-weight:400}
 .fl-ui .fl-tag.tp{pointer-events:auto}

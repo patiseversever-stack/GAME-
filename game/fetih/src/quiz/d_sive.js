@@ -142,52 +142,94 @@ function avatar(w = {}) {
 }
 
 const CSS = /* css */ `
-.dn-sv{display:flex;flex-direction:column;gap:7px}
-.dn-sv .sv-row{display:flex;align-items:flex-end;gap:9px}
-.dn-sv .sv-who{flex:none;width:62px;display:flex;flex-direction:column;align-items:center;gap:3px}
-.dn-sv .sv-av{width:58px;height:58px;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 0 rgba(0,0,0,.35);overflow:hidden;animation:svBob 1.4s ease-in-out infinite alternate}
-.dn-sv .sv-av svg{display:block;width:100%;height:100%}
-.dn-sv .sv-mouth{transform-origin:28px 39px;animation:svTalk .16s ease-in-out 14 alternate}
-.dn-sv .sv-who b{max-width:66px;font-family:'Lilita One';font-weight:400;font-size:11.5px;line-height:1.05;text-align:center;color:#fff;letter-spacing:.02em}
-.dn-sv .sv-who small{font-family:'Manrope';font-weight:800;font-size:9px;letter-spacing:.1em;color:#ffd25a;text-transform:uppercase;text-align:center;line-height:1.1}
-.dn-sv .sv-bub{position:relative;flex:1;min-width:0;padding:10px 13px 11px;border-radius:20px 20px 20px 6px;background:#fffdf6;color:#1c2550;box-shadow:0 4px 0 rgba(0,0,0,.3),inset 0 -3px 0 rgba(0,0,0,.06)}
-.dn-sv .sv-bub::before{content:'';position:absolute;left:-9px;bottom:6px;border:9px solid transparent;border-right-color:#fffdf6;border-left:0;border-bottom:0}
-.dn-sv .sv-say{font-family:'Lilita One';font-weight:400;font-size:clamp(20px,calc(5.6 * var(--vw,4px)),25px);line-height:1.12;letter-spacing:.01em}
-.dn-sv .sv-say i{font-style:normal;display:inline-block;animation:svCh .32s cubic-bezier(.3,1.7,.5,1) var(--d) both}
-.dn-sv .sv-say mark{color:#c0331f;background:linear-gradient(180deg,transparent 58%,rgba(255,200,40,.75) 58% 92%,transparent 92%);padding:0 1px}
-.dn-sv .sv-bub .sv-q{position:absolute;right:9px;top:-9px;padding:1px 7px 2px;border-radius:7px;font-family:'Manrope';font-weight:800;font-size:9px;letter-spacing:.14em;color:#fff;background:#e2553a;box-shadow:0 2px 0 rgba(0,0,0,.3)}
-.dn-sv .sv-bar{display:flex;align-items:center;gap:7px;min-height:38px}
-.dn-sv .sv-pick{flex:1;min-width:0;display:flex;align-items:center;gap:7px;padding:5px 10px;border-radius:12px;background:rgba(0,0,0,.28);font-family:'Fredoka';font-weight:600;font-size:13.5px;color:#cfe0ff;white-space:nowrap;overflow:hidden}
-.dn-sv .sv-pick i{flex:none;width:14px;height:14px;border-radius:4px;background:var(--rc,#556);box-shadow:inset 0 -2px 0 rgba(0,0,0,.25)}
-.dn-sv .sv-pick b{font-family:'Lilita One';font-weight:400;font-size:16px;color:#fff}
+/* AĞIZ ATLASI (Arena v1 siyah/beyaz): solda karakter (eğik çerçeveli portre, konuşurken ağız oynar), sağda arşiv kaydı:
+   kayıt ışığı + dalga biçimi (konuşma süresince oynar, sonra durulur), söz harf harf dökülür, ağız kelimeleri altın
+   vurgulu. Cevapta her ağız kelimesinin altına standart karşılığı altyazı gibi iner. Seçim çubuğu bölgenin renginde
+   plaka + beyaz eğik "BU YÖRE!" düğmesi. */
+.dn-sv{display:flex;flex-direction:column;gap:9px}
+.dn-sv .sv-row{display:flex;align-items:stretch;gap:10px}
+.dn-sv .sv-who{flex:none;width:72px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.dn-sv .sv-av{position:relative;width:68px;height:68px;overflow:hidden;background:#0d1124;border:3px solid #fff;transform:skewX(-6deg);box-shadow:0 4px 0 rgba(0,0,0,.35)}
+.dn-sv .sv-av svg{display:block;width:118%;height:118%;margin:-9% 0 0 -9%;transform:skewX(6deg)}
+.dn-sv .sv-mouth{transform-origin:28px 39px;animation:svTalk .16s ease-in-out var(--talk,14) alternate}
+.dn-sv .sv-who b{max-width:74px;font:400 12px/1.05 'Lilita One',sans-serif;text-align:center;color:#fff;letter-spacing:.02em}
+.dn-sv .sv-who small{padding:2px 6px 1px;background:#ffd25a;color:#1a1200;font:italic 800 9.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;text-transform:uppercase;transform:skewX(-8deg)}
+.dn-sv.done .sv-who small{background:#fff}
+.dn-sv .sv-bub{position:relative;flex:1;min-width:0;display:flex;flex-direction:column;gap:7px;padding:9px 13px 12px;border-left:5px solid var(--cc,#fff);
+  background:linear-gradient(180deg,#171c35,#0d1124);clip-path:polygon(0 0,100% 0,100% calc(100% - 14px),calc(100% - 14px) 100%,0 100%)}
+.dn-sv .sv-hd{display:flex;align-items:center;gap:8px;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em;color:rgba(255,255,255,.6)}
+.dn-sv .sv-hd .rec{display:flex;align-items:center;gap:5px;color:#fff}
+.dn-sv .sv-hd .rec i{width:8px;height:8px;border-radius:50%;background:#ff4a3a;box-shadow:0 0 8px #ff4a3a;animation:svRec 1s steps(2) infinite}
+.dn-sv .sv-hd .wv{flex:1;display:flex;align-items:center;gap:2px;height:16px}
+.dn-sv .sv-hd .wv i{flex:1;max-width:4px;height:100%;background:var(--cc,#ffd25a);transform-origin:50% 50%;transform:scaleY(.15);opacity:.85;
+  animation:svWave .32s ease-in-out var(--wd) var(--talk,14) alternate}
+.dn-sv .sv-hd em{font-style:normal;color:rgba(255,255,255,.45)}
+.dn-sv .sv-say{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(20px,calc(5.6 * var(--vw,4px)),25px);line-height:1.18;color:#fff;text-wrap:balance}
+.dn-sv .sv-say::before{content:'“';margin-right:2px;color:var(--cc,#ffd25a);font-family:'Lilita One'}
+.dn-sv .sv-say i{font-style:normal;display:inline-block;animation:svCh .3s cubic-bezier(.3,1.7,.5,1) var(--d) both}
+.dn-sv .sv-say mark{position:relative;display:inline-block;color:#ffd25a;background:linear-gradient(180deg,transparent 78%,rgba(255,210,90,.55) 78% 92%,transparent 92%);padding:0 1px}
+.dn-sv .sv-say mark[data-g]::after{content:attr(data-g);position:absolute;left:50%;top:100%;margin-top:1px;transform:translate(-50%,-4px);opacity:0;white-space:nowrap;
+  padding:1px 6px 2px;background:#fff;color:#0d1124;font:600 11.5px/1.2 'Fredoka',sans-serif;letter-spacing:0;pointer-events:none;transition:opacity .35s .2s,transform .35s .2s}
+.dn-sv.done .sv-say{padding-bottom:14px}
+.dn-sv.done .sv-say mark[data-g]::after{opacity:1;transform:translate(-50%,0)}
+.dn-sv .sv-bar{display:flex;align-items:stretch;gap:8px;min-height:44px}
+.dn-sv .sv-pick{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:6px 11px;background:rgba(255,255,255,.07);border-left:5px solid var(--rc,rgba(255,255,255,.25));
+  font:600 13.5px/1.15 'Fredoka',sans-serif;color:rgba(255,255,255,.7);white-space:nowrap;overflow:hidden;transition:border-color .25s}
+.dn-sv .sv-pick i{flex:none;width:12px;height:12px;background:var(--rc,rgba(255,255,255,.3));transform:skewX(-10deg)}
+.dn-sv .sv-pick b{font:400 17px/1 'Lilita One',sans-serif;color:#fff}
 .dn-sv .sv-pick em{font-style:normal;opacity:.75;overflow:hidden;text-overflow:ellipsis}
-.dn-sv .sv-go{flex:none;height:38px;padding:0 14px;border:0;border-radius:12px;font-family:'Lilita One';font-size:16px;letter-spacing:.03em;color:#3a2200;background:linear-gradient(180deg,#ffe48a,#ffc23a);box-shadow:0 4px 0 #a86a00;cursor:pointer;transition:transform .12s,filter .2s}
-.dn-sv .sv-go:disabled{filter:grayscale(1) brightness(.7);box-shadow:0 4px 0 #444;cursor:default}
-.dn-sv .sv-go:not(:disabled){animation:flq-pop .3s}
-.dn-sv .sv-go:active:not(:disabled){transform:translateY(3px);box-shadow:0 1px 0 #a86a00}
-.dn-sv .sv-poll{display:none;grid-template-columns:repeat(7,1fr);gap:3px;align-items:end;height:46px;padding:3px 4px 0;border-radius:10px;background:rgba(0,0,0,.25)}
+.dn-sv .sv-pick.on{animation:svPick .35s cubic-bezier(.3,1.6,.5,1)}
+.dn-sv .sv-go{flex:none;padding:0 16px;border:0;background:#fff;color:#0d1124;font:italic 800 19px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;
+  transform:skewX(-8deg);box-shadow:0 4px 0 rgba(0,0,0,.35);cursor:pointer;transition:transform .12s,opacity .2s}
+.dn-sv .sv-go:disabled{background:transparent;color:rgba(255,255,255,.35);box-shadow:inset 0 0 0 2px rgba(255,255,255,.2);cursor:default}
+.dn-sv .sv-go:not(:disabled){animation:svGo .35s cubic-bezier(.3,1.7,.5,1)}
+.dn-sv .sv-go:active:not(:disabled){transform:skewX(-8deg) translateY(3px)}
+.dn-sv .sv-poll{display:none;grid-template-columns:repeat(7,1fr);gap:4px;align-items:end;height:50px;padding:4px 6px 0;background:rgba(255,255,255,.06)}
 .dn-sv .sv-poll.on{display:grid}
-.dn-sv .sv-poll span{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font-family:'Manrope';font-weight:800;font-size:8px;color:#cfe0ff}
-.dn-sv .sv-poll span i{width:70%;border-radius:4px 4px 0 0;background:var(--rc);height:calc(var(--p) * .3px);min-height:2px;animation:svGrow .6s cubic-bezier(.3,1.4,.5,1) both}
+.dn-sv .sv-poll span{position:relative;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;font:italic 800 8.5px/1.1 'Barlow Condensed',sans-serif;letter-spacing:.04em;color:rgba(255,255,255,.7)}
+.dn-sv .sv-poll span i{width:70%;transform:skewX(-8deg);background:var(--rc);height:calc(var(--p) * .3px);min-height:2px;animation:svGrow .6s cubic-bezier(.3,1.4,.5,1) both}
 .dn-sv .sv-poll span em{font-style:normal;font-family:'Lilita One';font-size:10px;color:#fff}
 .dn-sv.done .sv-bar,.dn-sv.done .sv-poll{display:none}
+.dn-sv.done .sv-hd .wv i,.dn-sv.done .sv-hd .rec i{animation:none}
+.dn-sv.done .sv-hd .rec{color:rgba(255,255,255,.6)}
+.dn-sv.done .sv-hd .rec i{background:rgba(255,255,255,.4);box-shadow:none}
 .fl-qtext.sv-qt{display:block;padding:0;background:none;border:0;box-shadow:none;text-align:left}
-.sv-mean{padding:8px 11px 9px;border-radius:14px;background:linear-gradient(170deg,#1d3266,#132248);border:2px solid #ffd25a;box-shadow:0 4px 0 rgba(0,0,0,.35);animation:flq-pop .45s cubic-bezier(.3,1.6,.5,1)}
-.sv-mean .sv-w{display:flex;flex-wrap:wrap;justify-content:center;gap:2px 12px;margin-bottom:4px}
-.sv-mean .sv-w span{font-family:'Fredoka';font-weight:600;font-size:15px;line-height:1.2;color:#fff}
-.sv-mean .sv-w b{font-family:'Lilita One';font-weight:400;color:#ffd25a;font-size:18px}
-.sv-mean p{margin:0;font-family:'Manrope';font-weight:700;font-size:12px;line-height:1.35;color:#cfe0ff}
-.sv-mean .sv-rg{display:inline-block;margin-right:5px;padding:0 6px 1px;border-radius:6px;font-family:'Lilita One';font-weight:400;font-size:12px;color:#14203f;background:var(--rc)}
-.sv-mean small{display:block;margin-top:3px;font-family:'Manrope';font-weight:800;font-size:9.5px;letter-spacing:.06em;color:#8fa2cf;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.dn-tag.sv-rgt>div{background:rgba(10,18,44,.55);border-color:transparent;box-shadow:none;padding:1px 7px 2px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.92}
+.sv-mean{position:relative;padding:9px 12px 10px;border-left:5px solid var(--rc,#ffd25a);background:linear-gradient(180deg,#1b2140,#0f142a);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);animation:svMean .45s cubic-bezier(.3,1.5,.5,1)}
+.sv-mean .sv-w{display:flex;flex-wrap:wrap;gap:4px 14px;margin-bottom:5px}
+.sv-mean .sv-w span{font:600 15px/1.2 'Fredoka',sans-serif;color:rgba(255,255,255,.85)}
+.sv-mean .sv-w b{font:400 18px/1 'Lilita One',sans-serif;color:#ffd25a}
+.sv-mean p{margin:0;font:600 12.5px/1.35 'Fredoka',sans-serif;color:rgba(255,255,255,.8)}
+.sv-mean .sv-rg{display:inline-block;margin-right:6px;padding:1px 7px 2px;background:var(--rc);color:#0d1124;font:italic 800 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.08em;text-transform:uppercase;transform:skewX(-8deg)}
+.sv-mean small{display:block;margin-top:4px;font:italic 800 10.5px/1.2 'Barlow Condensed',sans-serif;letter-spacing:.08em;color:rgba(255,255,255,.5);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-tag.sv-rgt>div{background:rgba(7,10,24,.62);border-color:transparent;box-shadow:none;padding:1px 7px 2px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;opacity:.92}
 .dn-tag.sv-rgt>div::after{display:none}
 .dn-tag.sv-pct>div{border-color:var(--tc);font-family:'Lilita One';font-weight:400;font-size:13px}
-.dn-tag.sv-pct.win>div{font-size:17px;padding:3px 11px 4px;background:linear-gradient(180deg,#ffe48a,#ffc23a);color:#3a2200;box-shadow:0 4px 0 rgba(90,50,0,.6)}
+.dn-tag.sv-pct.win>div{font-size:17px;padding:3px 11px 4px;background:#ffd25a;color:#1a1200;border-color:#fff;box-shadow:0 4px 0 rgba(0,0,0,.45)}
 @keyframes svCh{from{opacity:0;transform:translateY(7px) scale(.6) rotate(-8deg)}to{opacity:1;transform:none}}
 @keyframes svTalk{from{transform:scaleY(.35)}to{transform:scaleY(1.15)}}
-@keyframes svBob{from{transform:translateY(0) rotate(-2deg)}to{transform:translateY(-3px) rotate(2deg)}}
+@keyframes svWave{from{transform:scaleY(.15)}to{transform:scaleY(var(--wh,.9))}}
+@keyframes svRec{50%{opacity:.25}}
 @keyframes svGrow{from{height:0}}
+@keyframes svPick{from{transform:translateX(-8px);opacity:.4}to{transform:none;opacity:1}}
+@keyframes svGo{from{transform:skewX(-8deg) scale(.8)}to{transform:skewX(-8deg)}}
+@keyframes svMean{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.dn-sv .sv-hd .wv i,.dn-sv .sv-hd .rec i{animation:none}}
 `;
+
+/** Ağız kelimesinin anlamı: vurgulanan parça ile anlam listesindeki kelime (ek almış hali de) eşleşir. */
+function glossOf(mark, mean) {
+	// düzenli ifade yalnız ASCII (sayfa windows-1252 okunabilir): harf sınıfı Unicode özelliğiyle
+	const n = (s) => String(s).toLocaleLowerCase('tr-TR').replace(/[^\p{L} ]/gu, '').trim();
+	const m = n(mark);
+	let best = null;
+	for (const [w, g] of mean || []) {
+		const k = n(w);
+		if (!k) continue;
+		if (m === k || m.startsWith(k.slice(0, Math.max(3, k.length - 2))) || k.startsWith(m)) if (!best || k.length > best[0].length) best = [k, g];
+	}
+	return best ? best[1] : '';
+}
 
 /** Isı rengi (0..1): buz mavisi → mor → kızıl → altın. */
 const HEAT = ['#5a8cff', '#b06cff', '#ff5a8a', '#ff9a3a', '#ffe14a'];
@@ -256,13 +298,15 @@ export const sive = {
 		el.innerHTML = `<div class="dn-sv">
 			<div class="sv-row">
 				<div class="sv-who"><div class="sv-av">${avatar(v.who)}</div><b>${esc(v.who.ad)}</b><small class="sv-from">nereli?</small></div>
-				<div class="sv-bub"><span class="sv-q">YÖRESEL SÖZ</span><div class="sv-say">${sayHTML(v.say)}</div></div>
+				<div class="sv-bub"><div class="sv-hd"><span class="rec"><i></i>KAYIT</span><span class="wv">${Array.from({ length: 22 }, (_, k) => `<i style="--wd:${((k * 37) % 11) * 0.03}s;--wh:${(0.35 + (((k * 53) % 13) / 13) * 0.65).toFixed(2)}"></i>`).join('')}</span><em>AĞIZ ATLASI</em></div><div class="sv-say">${sayHTML(v.say)}</div></div>
 			</div>
 			<div class="sv-poll"></div>
 			<div class="sv-bar"><div class="sv-pick"><i></i><em>Haritada bu ağzın yöresine dokun</em></div><button class="sv-go" disabled>BU YÖRE!</button></div>
 		</div>`;
 		rule(el, 'Yöreyi bul, ili bil');
 		const root = el.querySelector('.dn-sv');
+		// konuşma süresi: harfler dökülürken ağız ve dalga oynar (≈ harf × 35 ms), sonra durulur
+		root.style.setProperty('--talk', String(Math.max(6, Math.round(([...plain(v.say)].length * 0.035 + 0.4) / 0.16))));
 		const pick = root.querySelector('.sv-pick');
 		const go = root.querySelector('.sv-go');
 		let sel = -1;
@@ -331,6 +375,9 @@ export const sive = {
 			selTag.el.style.setProperty('--tc', RHOT[r]);
 			pick.style.setProperty('--rc', RHOT[r]);
 			pick.innerHTML = `<i></i><b>${esc(RNAME[r])}</b><em>· ${esc(p.name)}</em>`;
+			pick.classList.remove('on');
+			void pick.offsetWidth;
+			pick.classList.add('on');
 			go.disabled = false;
 			sfx(app, prev === r ? 'tap' : 'star');
 			buzz(8);
@@ -438,8 +485,13 @@ export const sive = {
 				// yazar; anlam soru yazısının yerine (kartın üstünde kalan kutu) konur.
 				const homeName = PROV[BY_ID.get(v.ils[0])]?.name || '';
 				const q = v.q;
+				// altyazı: her ağız kelimesinin altına standart karşılığı
+				for (const mk of root.querySelectorAll('.sv-say mark')) {
+					const g = glossOf(mk.textContent, q.mean);
+					if (g) mk.dataset.g = g;
+				}
 				root.querySelector('.sv-from').textContent = homeName;
-				const mean = `<div class="sv-mean"><div class="sv-w">${(q.mean || []).map(([w, m]) => `<span><b>${esc(w)}</b> = ${esc(m)}</span>`).join('')}</div><p><span class="sv-rg" style="--rc:${RHOT[v.region]}">${esc(RNAME[v.region])}</span>${esc(q.note || '')}</p><small>${esc(v.who.ad)} · ${esc(homeName)} · “${esc(plain(v.say))}”</small></div>`;
+				const mean = `<div class="sv-mean" style="--rc:${RHOT[v.region]}"><div class="sv-w">${(q.mean || []).map(([w, m]) => `<span><b>${esc(w)}</b> = ${esc(m)}</span>`).join('')}</div><p><span class="sv-rg" style="--rc:${RHOT[v.region]}">${esc(RNAME[v.region])}</span>${esc(q.note || '')}</p><small>${esc(v.who.ad)} · ${esc(homeName)} · “${esc(plain(v.say))}”</small></div>`;
 				const qt = el.closest('.fl-q')?.querySelector('.fl-qtext');
 				if (qt) {
 					qt.classList.add('sv-qt');
