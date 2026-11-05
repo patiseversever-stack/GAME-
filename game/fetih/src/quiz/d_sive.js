@@ -514,7 +514,7 @@ export const sive = {
 					tg.el.style.setProperty('--tc', '#ffd25a');
 					T.push(tg);
 					const rb = app.boundsOf(IN_REG[v.region]);
-					app.cam.fit({ x0: rb.x0 - 2, x1: rb.x1 + 2, z0: rb.z0 - 2, z1: rb.z1 + 6 }, { pitch: 0.86, pad: 1.1, top, dur: 1.7, arc: 4 });
+					app.cam.fit({ x0: rb.x0 - 1, x1: rb.x1 + 1, z0: rb.z0 - 1, z1: rb.z1 + 4 }, { pitch: 0.84, pad: 1.02, top, dur: 1.5, arc: 4 });
 					sfx(app, 'reveal');
 				});
 				// 3) il bonusu: asıl il(ler) kalkar ve parlar
@@ -531,6 +531,10 @@ export const sive = {
 					tg.el.style.setProperty('--tc', '#fff');
 					T.push(tg);
 					pop(app, hp.x, hp.z, '', { colors: ['#ffd25a', '#fff', RHOT[v.region]], n: 18, dist: 80 });
+					// kamera asıl ile alçalarak yaklaşır ve yavaşça etrafında döner; hedef damganın üstünde kalsın (lens yukarı)
+					const ib = app.boundsOf(v.ils.map((id) => BY_ID.get(id)).filter((i) => i != null));
+					const size = Math.max(ib.x1 - ib.x0, ib.z1 - ib.z0);
+					app.cam.shot((ib.x0 + ib.x1) / 2, (ib.z0 + ib.z1) / 2, { dist: size * 2.2 + 9, pitch: 0.66, yaw: app.cam.yaw + 0.3, dur: 2, arc: 4, yawRate: 0.04, distRate: -0.012, decay: 0.2, lens: top / 2 - (1 - top) * 0.22 });
 					sfx(app, myD?.bonus ? 'right' : 'star', { n: 4 });
 				});
 				// 4) Türkiye ne dedi: kalabalık çubukları kartta
