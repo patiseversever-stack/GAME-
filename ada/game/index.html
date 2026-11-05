@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#120d0a" />
+  <title>ADA · Hız Parkuru</title>
+  <link rel="stylesheet" href="./src/ui/style.css" />
+</head>
+<body>
+  <canvas id="sahne"></canvas>
+
+  <div id="yukleme" class="katman">
+    <div class="marka">ADA</div>
+    <div class="yukleme-yazi" id="yukleme-yazi">Ada hazırlanıyor…</div>
+    <div class="yukleme-cubuk"><span id="yukleme-dolum"></span></div>
+  </div>
+
+  <div id="giris" class="katman gizli">
+    <div class="giris-ust">
+      <div class="marka">ADA</div>
+      <div class="alt-baslik">Hız Parkuru · Kalıntılardan lagüne</div>
+    </div>
+    <div class="giris-alt">
+      <p class="bora"><b>Bora Kayın:</b> “Parkur yalan söylemez. Kalıntılar, uçurum, köprü, ip… ve lagün. Hazır mısın?”</p>
+      <ul class="ipuclari">
+        <li><span>↑</span> Yukarı kaydır: zıpla</li>
+        <li><span>↓</span> Aşağı kaydır: kay</li>
+        <li><span>← →</span> Yana kaydır: şerit değiştir</li>
+        <li><span>●</span> İp geçişinde dokun: ipe asıl</li>
+      </ul>
+      <button id="basla" class="dugme">KOŞ</button>
+      <div class="kalite">
+        Kalite:
+        <select id="kalite-sec">
+          <option value="oto">Otomatik</option>
+          <option value="dusuk">Düşük</option>
+          <option value="orta">Orta</option>
+          <option value="yuksek">Yüksek</option>
+        </select>
+        <span id="motor"></span>
+      </div>
+    </div>
+  </div>
+
+  <div id="hud" class="gizli">
+    <div class="hud-ust">
+      <div class="sure" id="sure">0:00.0</div>
+      <div class="bolum" id="bolum">Kalıntı Yolu</div>
+      <div class="sira" id="sira">1/4</div>
+    </div>
+    <div class="ilerleme"><div class="ray" id="ray"></div></div>
+  </div>
+
+  <div id="mesaj" class="mesaj"></div>
+  <div id="dokun" class="dokun gizli">DOKUN!</div>
+  <div id="geri-sayim" class="geri-sayim"></div>
+  <div id="etiketler"></div>
+
+  <div id="sonuc" class="katman gizli">
+    <div class="sonuc-kart">
+      <div class="sonuc-sira" id="sonuc-sira">1.</div>
+      <div class="sonuc-sure" id="sonuc-sure">0:52.4</div>
+      <div class="lakap-etiket">Bora'nın lakabı</div>
+      <div class="lakap" id="lakap">Kuyruklu Yıldız</div>
+      <p class="lakap-soz" id="lakap-soz"></p>
+      <ol class="siralama" id="siralama"></ol>
+      <div class="sonuc-dugmeler">
+        <button id="tekrar" class="dugme">TEKRAR KOŞ</button>
+        <button class="dugme ikincil" disabled>MEYDAN OKU · yakında</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

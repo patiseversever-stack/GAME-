@@ -1,0 +1,25 @@
+{
+  "name": "ada-oyun",
+  "version": "0.1.0",
+  "private": true,
+  "description": "ADA: sinematik hayatta kalma yarışma şovu (mobil web oyunu)",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host",
+    "build": "vite build",
+    "preview": "vite preview --host",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "three": "0.187.0"
+  },
+  "devDependencies": {
+    "@gltf-transform/core": "^4.5.1",
+    "@gltf-transform/extensions": "^4.5.1",
+    "@gltf-transform/functions": "^4.5.1",
+    "meshoptimizer": "^1.3.0",
+    "sharp": "^0.35.5",
+    "vite": "8.3.6",
+    "vitest": "5.1.0"
+  }
+}
