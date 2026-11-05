@@ -85,6 +85,13 @@ Her sezon farklı eşyalar çıkar. Örnekler:
 ## Hikaye
 - Karakterin kişisel yolculuğu ve rakiplerle dramalar: ittifaklar, ihanetler, dostluklar.
 - Adanın ve şovun arkasındaki sır sezonlar boyunca yavaş yavaş açılır.
+- **Sır (kayıp uygarlık + yapımcıların gizli planı):** Ormandaki kalıntılar kayıp bir uygarlıktan kalma. Kalıntılardaki semboller her parkurla biraz daha açılır, sezonlar boyunca bir harita tamamlanır. Yapımcılar bunu baştan biliyor. Şov aslında adanın kalbindeki sırrı çözebilecek birini seçmek için kurulmuş. Kazananı büyük bir görev bekliyor.
+- **Karakter geçmişi:** Oyuncu başta neden burada olduğunu seçer (ailesi için, kendini kanıtlamak için, ünlü olmak için, gizli bir sebep). Hikaye ve bazı diyaloglar buna göre şekillenir.
+- **Rakipler:** 40'tan fazla yazılmış karakterden oluşan bir havuz var. Her sezon farklı bir kadro gelir, bazı tanıdık yüzler geri döner.
+- **Anlatım:**
+  - Sinematik ara sahneler: tekne gelişi, ihanet, eleme, keşif.
+  - Kameraya itiraf: yarışmacılar gün sonunda kameraya gerçek düşüncelerini anlatır. Botların sırlarını da buradan sezersin.
+  - Sunucu anlatır: günün başında ve sonunda olanları özetler, ipuçları verir.
 
 ## Viral
 - Her parkurun sonunda otomatik ağır çekim tekrar klibi çıkar, tek dokunuşla paylaşılır.
