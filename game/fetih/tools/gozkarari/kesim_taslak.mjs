@@ -1,4 +1,4 @@
-// Kullanım: node kesim_taslak.mjs <çıktı.html> <adlar.json> — 30 kesim taslağının boş çizimi (kullanıcı seçimi için)
+// Kullanım: node kesim_taslak.mjs <çıktı.html> <adlar.json> — 30 kesim taslağı (el kesimi: her kenar dalgalı, köşeler kaymış), içinde örnek görsel
 // 30 kesim taslağı: köşeler + kenar profilleri (dışa +, içe −) → yoğun nokta → Chaikin yumuşatma → SVG yolu
 import fs from 'fs';
 
@@ -29,8 +29,11 @@ const rough = (a, n) => {
 	};
 };
 
-function build(pts, prof, { corner = 2 } = {}) {
+function build(pts0, prof, { corner = 2 } = {}) {
 	const out = [];
+	// köşeler ±11 px kaydırılır: hiçbir şekil simetrik, hiçbir kenar cetvel düzü değil
+	const pts = pts0.map(([x, y]) => [x + (R() - 0.5) * 22, y + (R() - 0.5) * 22]);
+	prof = pts.map((_, i) => add(prof[i] || flat, rough(5.5, 2 + Math.floor(R() * 3)), bow((R() - 0.5) * 12), rough(1.6, 9)));
 	for (let i = 0; i < pts.length; i++) {
 		const a = pts[i];
 		const b = pts[(i + 1) % pts.length];
@@ -63,6 +66,7 @@ function build(pts, prof, { corner = 2 } = {}) {
 
 // kutu: 400×300, iç pay ~24 (çıkıntılar sığsın). Saat yönünde: sol üst, sağ üst, sağ alt, sol alt.
 const B = [[24, 24], [376, 24], [376, 276], [24, 276]];
+const IMG = ['GK-001','GK-067','GK-021','GK-161','GK-031','GK-182','GK-011','GK-043','GK-098','GK-229','GK-064','GK-175','GK-083','GK-187','GK-261','GK-002','GK-127','GK-246','GK-193','GK-012','GK-133','GK-169','GK-254','GK-076','GK-216','GK-236','GK-062','GK-124','GK-005','GK-245'];
 const T = [
 	// 1 Bayrak (çizim 1): üst hafif kavis, iki yan eğik, alt yumuşak S
 	['Bayrak', [[70, 34], [372, 26], [340, 272], [28, 262]], [bow(5), bow(-3), add(S(9), bow(3)), bow(2)]],
@@ -99,11 +103,11 @@ const T = [
 	['Karma', [[24, 24], [300, 24], [376, 96], [376, 276], [24, 276]], [bow(3), bow(-3), wave(8, 2, 0.5), bump(0.55, 0.14, -20, 0.3), bow(2)]],
 ];
 
-let h = '<html><head><meta charset="utf-8"></head><body style="margin:0;background:radial-gradient(circle at 40% 30%,#3b3d3c,#121314);display:grid;grid-template-columns:repeat(5,250px);gap:26px 22px;padding:26px;font:800 17px sans-serif;color:#f2f2f2">';
+let h = '<html><head><meta charset="utf-8"></head><body style="margin:0;background:radial-gradient(circle at 40% 25%,#2d4a7a,#0f1a33 70%);display:grid;grid-template-columns:repeat(5,260px);gap:30px 24px;padding:28px;font:800 17px sans-serif;color:#ffd25a">';
 T.forEach(([name, pts, prof, corner], i) => {
 	seed = 101 + i * 37;
 	const d = build(pts, prof, { corner: corner ?? 2 });
-	h += `<div><svg viewBox="-10 -10 420 320" width="250" height="190"><path d="${d}" fill="rgba(255,255,255,.04)" stroke="#d23b3b" stroke-width="9" stroke-linejoin="round"/></svg><div>${i + 1}. ${name}</div></div>`;
+	h += `<div><div style="position:relative;width:260px;height:195px"><svg viewBox="0 0 400 300" width="260" height="195" style="position:absolute;inset:0;transform:translateY(8px);filter:blur(8px);opacity:.65"><path d="${d}" fill="#02040c"/></svg><svg viewBox="0 0 400 300" width="260" height="195" style="position:absolute;inset:0;overflow:visible"><defs><clipPath id="c${i}"><path d="${d}"/></clipPath></defs><image clip-path="url(#c${i})" href="file:///home/user/GAME-/game/fetih/dist/gk/${IMG[i]}.webp" x="-10" y="-8" width="420" height="316" preserveAspectRatio="xMidYMid slice"/></svg></div><div style="margin-top:10px">${i + 1}. ${name}</div></div>`;
 });
 fs.writeFileSync(process.argv[2], h + '</body></html>');
 fs.writeFileSync(process.argv[3], JSON.stringify(T.map(([n], i) => n)));
