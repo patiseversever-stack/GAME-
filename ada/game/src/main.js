@@ -12,6 +12,7 @@ import { createFollowCamera } from './render/camera.js';
 import { createPost, createDust } from './render/effects.js';
 import { createInput } from './input.js';
 import { pickQuality } from './quality.js';
+import { loadKit } from './render/island/props.js';
 
 const $ = (id) => document.getElementById(id);
 const params = new URLSearchParams(location.search);
@@ -70,7 +71,8 @@ async function boot() {
   const path = buildPath(course);
   setLoad(30, 'Kalıntılar ve orman yerleştiriliyor…');
   await nextFrame();
-  const world = buildWorld({ scene, renderer, course, path, quality });
+  const kit = await loadKit('./models/kit/', ['sutun_ayakta', 'sutun_devrik', 'tas_kapi', 'yikik_duvar', 'kaya_kumesi']);
+  const world = buildWorld({ scene, renderer, course, path, quality, kit });
   setLoad(62, 'Ece geliyor…');
   await nextFrame();
 

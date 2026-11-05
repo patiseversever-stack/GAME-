@@ -6,7 +6,7 @@ import { LANE_WIDTH } from '../../core/constants.js';
 import { paint, blob, merge, rng, pathTools, UP } from './util.js';
 import { bannerTexture } from '../textures.js';
 
-export function createTrack({ scene, course, path, quality, instanced, mats, detailNormal }) {
+export function createTrack({ scene, course, path, quality, instanced, mats, detailNormal, kp }) {
   const { along, yawAt, quatAt } = pathTools(path);
   const sec = Object.fromEntries(course.sections.map((s) => [s.id, s]));
   const zip = course.hazards.find((h) => h.type === 'zip');
@@ -128,10 +128,31 @@ export function createTrack({ scene, course, path, quality, instanced, mats, det
     const a = Math.min(...lanes), b = Math.max(...lanes);
     return { center: ((a + b) / 2) * LANE_WIDTH, width: (b - a + 1) * LANE_WIDTH };
   };
+  // hazır modellerle engeller (kalıntı kiti varsa)
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  function kitObstacle(o, center, width, zc) {
+    if (!kp) return false;
+    if (o.style === 'sutun' && kp.has('sutun_devrik')) {
+      return kp.add('sutun_devrik', along(zc, center, -0.05), quatAt(zc, new THREE.Euler(0, (R() - 0.5) * 0.08, 0)), V(width + 0.4, 0.98, 0.98));
+    }
+    if (o.style === 'kemer' && kp.has('sutun_devrik') && kp.has('yikik_duvar')) {
+      for (const sx of [-1, 1]) kp.add('yikik_duvar', along(zc, sx * (deckWidth / 2 + 0.45), -0.1), quatAt(zc, new THREE.Euler(0, Math.PI / 2 + (R() - 0.5) * 0.1, 0)), V(1.7, 1.25, 1.15));
+      return kp.add('sutun_devrik', along(zc, 0, 1.15), quatAt(zc, new THREE.Euler(0, (R() - 0.5) * 0.04, (R() - 0.5) * 0.03)), V(deckWidth + 2.2, 1.0, 1.0));
+    }
+    if (o.style === 'duvar' && kp.has('yikik_duvar')) {
+      return kp.add('yikik_duvar', along(zc, center, -0.1), quatAt(zc, new THREE.Euler(0, R() < 0.5 ? 0 : Math.PI, 0)), V(width + 0.3, 2.35, 1.35));
+    }
+    if (o.style === 'kaya' && kp.has('kaya_kumesi')) {
+      for (const l of o.lanes) kp.add('kaya_kumesi', along(zc, l * LANE_WIDTH, -0.2), quatAt(zc, new THREE.Euler(0, R() * Math.PI * 2, 0)), V(2.0, 1.9, 2.0));
+      return true;
+    }
+    return false;
+  }
   for (const o of course.obstacles) {
     const { center, width } = laneSpan(o.lanes);
     const zc = o.z + o.depth / 2;
     const yaw = yawAt(zc);
+    if (kitObstacle(o, center, width, zc)) continue;
     if (o.style === 'sutun') {
       const drums = Math.max(2, Math.round(width / 1.25));
       for (let i = 0; i < drums; i++) {

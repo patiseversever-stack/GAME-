@@ -52,7 +52,10 @@ function glyphTexture() {
   return t;
 }
 
-export function createDecor({ scene, course, path, terrain, quality, instanced, mats, deckWidth }) {
+export function createDecor({ scene, course, path, terrain, quality, instanced, mats, deckWidth, kp }) {
+  const V = (x, y, z) => new THREE.Vector3(x, y, z);
+  const has = (n) => kp && kp.has(n);
+  const yawQ = (ry, rx = 0, rz = 0) => new THREE.Quaternion().setFromEuler(new THREE.Euler(rx, ry, rz, 'YXZ'));
   const { along, yawAt } = pathTools(path);
   const sec = Object.fromEntries(course.sections.map((s) => [s.id, s]));
   const zip = course.hazards.find((h) => h.type === 'zip');
@@ -93,6 +96,22 @@ export function createDecor({ scene, course, path, terrain, quality, instanced, 
       const broken = R() < 0.4;
       const h = broken ? 1.0 + R() * 1.8 : 4.6 + R() * 1.8;
       const lean = broken ? 0 : (R() - 0.5) * 0.06;
+      if (has('sutun_ayakta') && has('sutun_devrik')) {
+        if (!broken) {
+          const a = 5.0 + R() * 1.6;
+          kp.add('sutun_ayakta', V(g.x, g.y - 0.15, g.z), yawQ(yawAt(s) + (R() < 0.5 ? 0 : Math.PI / 2), lean, lean), V(a * 0.3, a, a * 0.3));
+        } else {
+          kp.add('sutun_devrik', V(g.x, g.y - 0.1, g.z), yawQ(R() * 3, 0, Math.PI / 2), V(h + 0.4, 0.95, 0.95));
+          const fx = x + sx * (1.6 + R()), fs = s + (R() - 0.5) * 2;
+          const fg = ground(fs, fx);
+          kp.add('sutun_devrik', V(fg.x, fg.y - 0.12, fg.z), yawQ(yawAt(s) + (R() - 0.5) * 1.2), V(2.2 + R(), 0.88, 0.88));
+        }
+        for (let kk = 0; kk < 3; kk++) {
+          const rg = ground(s + (R() - 0.5) * 2.4, x + (R() - 0.5) * 2.4);
+          L.rubble.push({ x: rg.x, y: rg.y + 0.05, z: rg.z, rx: R() * 3, ry: R() * 3, s: 0.16 + R() * 0.22, color: STONE() });
+        }
+        continue;
+      }
       L.base.push({ x: g.x, y: g.y - 0.1, z: g.z, ry: yawAt(s), color: STONE() });
       L.fluted.push({ x: g.x, y: g.y + 0.45 + h / 2, z: g.z, rx: lean, rz: lean, sy: h, ry: R() * 3, color: STONE() });
       if (!broken) {
@@ -112,7 +131,14 @@ export function createDecor({ scene, course, path, terrain, quality, instanced, 
       }
     }
     // duvar kalıntısı ve oyma taşlar
-    if (R() < 0.6) {
+    if (R() < 0.6 && has('yikik_duvar')) {
+      const sx = R() < 0.5 ? -1 : 1;
+      const x0 = sx * (deckWidth / 2 + 5 + R() * 6);
+      const g = ground(s + 2, x0);
+      kp.add('yikik_duvar', V(g.x, g.y - 0.2, g.z), yawQ(yawAt(s) + Math.PI / 2 + (R() - 0.5) * 0.3), V(4 + R() * 3, 1.6 + R() * 1.2, 1.1));
+      const gg = ground(s + 2, x0 - sx * 0.6);
+      L.glyph.push({ pos: new THREE.Vector3(gg.x, gg.y + 0.9, gg.z), ry: yawAt(s) - sx * Math.PI / 2 });
+    } else if (R() < 0.6) {
       const sx = R() < 0.5 ? -1 : 1;
       const x0 = sx * (deckWidth / 2 + 5 + R() * 6);
       const n = 4 + Math.floor(R() * 5);
@@ -129,7 +155,12 @@ export function createDecor({ scene, course, path, terrain, quality, instanced, 
     }
   }
   // kalıntı yolunun ortasındaki büyük kemer kapı (yolun üstünden geçer, yüksek: engel değil)
-  {
+  if (has('tas_kapi')) {
+    for (const s of [sec.kalinti.z0 + 4, sec.kalinti.z0 + 96]) {
+      const wdt = deckWidth + 3.4;
+      kp.add('tas_kapi', along(s, 0, -0.2), new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 1, 0), yawAt(s)), V(wdt, wdt * 0.82, 2.2));
+    }
+  } else {
     const s = sec.kalinti.z0 + 52;
     for (const sx of [-1, 1]) {
       const g = ground(s, sx * (deckWidth / 2 + 1.0));
@@ -145,7 +176,19 @@ export function createDecor({ scene, course, path, terrain, quality, instanced, 
     L.moss.push({ x: top.x, y: top.y + 1.9, z: top.z, s: 1.2, sy: 0.5 });
   }
   // büyük yıkık kule (sol)
-  {
+  if (has('yikik_duvar')) {
+    const s = sec.kalinti.z0 + 82;
+    const c = ground(s, -18);
+    for (let k = 0; k < 9; k++) {
+      const a = (k / 9) * Math.PI * 2;
+      const hh = 3 + Math.abs(Math.sin(k * 1.7)) * 6.5;
+      kp.add('yikik_duvar', V(c.x + Math.cos(a) * 4.4, c.y - 0.3, c.z + Math.sin(a) * 4.4), yawQ(-a + Math.PI / 2), V(3.4, hh, 1.4));
+    }
+    for (let k = 0; k < 5; k++) {
+      const a = R() * Math.PI * 2, d = 6 + R() * 4;
+      kp.add('sutun_devrik', V(c.x + Math.cos(a) * d, c.y - 0.1, c.z + Math.sin(a) * d), yawQ(R() * 3), V(1.8 + R() * 1.5, 0.9, 0.9));
+    }
+  } else {
     const s = sec.kalinti.z0 + 82;
     const c = ground(s, -17);
     for (let lvl = 0; lvl < 20; lvl++) {
@@ -170,12 +213,14 @@ export function createDecor({ scene, course, path, terrain, quality, instanced, 
       const x = 6.5 + R() * 14;
       const g = ground(s + R() * 2, x);
       if (g.y > path.frame(s).pos.y - 1.2) continue;
+      if (has('kaya_kumesi')) { const sc = 1.6 + R() * 3.4; kp.add('kaya_kumesi', V(g.x, g.y - sc * 0.25, g.z), yawQ(R() * 6, (R() - 0.5) * 0.4, (R() - 0.5) * 0.4), V(sc, sc * (0.6 + R() * 0.5), sc)); continue; }
       L.rock.push({ x: g.x, y: g.y + 0.3, z: g.z, rx: R() * 3, ry: R() * 3, s: 1.2 + R() * 2.6, sy: 0.7 + R() * 0.6, color: tint(0x9c8670, 0.1) });
     }
     if (R() < 0.6) {
       const x = 18 + R() * 26;
       const g = ground(s, x);
-      L.rock.push({ x: g.x, y: Math.max(g.y, -1.6) + 0.4, z: g.z, rx: R() * 3, ry: R() * 3, s: 1.6 + R() * 3.5, sy: 0.75, color: tint(0x8c7864, 0.1) });
+      if (has('kaya_kumesi')) { const sc = 2.5 + R() * 5; kp.add('kaya_kumesi', V(g.x, Math.max(g.y, -1.6) - sc * 0.2, g.z), yawQ(R() * 6), V(sc, sc * 0.7, sc)); }
+      else L.rock.push({ x: g.x, y: Math.max(g.y, -1.6) + 0.4, z: g.z, rx: R() * 3, ry: R() * 3, s: 1.6 + R() * 3.5, sy: 0.75, color: tint(0x8c7864, 0.1) });
     }
   }
   // vadi duvarları ve koy kenarları
@@ -184,6 +229,7 @@ export function createDecor({ scene, course, path, terrain, quality, instanced, 
       const x = sx * (8 + R() * 22);
       const g = ground(s, x);
       if (g.y < -1.5) continue;
+      if (has('kaya_kumesi') && R() < 0.7) { const sc = 1.4 + R() * 3; kp.add('kaya_kumesi', V(g.x, g.y - sc * 0.25, g.z), yawQ(R() * 6, (R() - 0.5) * 0.5, (R() - 0.5) * 0.5), V(sc, sc * (0.6 + R() * 0.4), sc)); continue; }
       L.rock.push({ x: g.x, y: g.y + 0.2, z: g.z, rx: R() * 3, ry: R() * 3, s: 0.9 + R() * 2.4, sy: 0.65 + R() * 0.5, color: tint(0xa08a72, 0.1) });
     }
   }

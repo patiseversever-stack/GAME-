@@ -1,5 +1,11 @@
 # ADA: Durum ve Sıradaki İşler
 
+> **PROJE İPTAL EDİLDİ (5 Kasım 2026).** Kullanıcı görüntü kalitesinden memnun kalmadığı için projeyi iptal etti.
+> Tüm çalışma bu dalda kayıtlı duruyor. Kullanıcı açıkça istemedikçe devam etme.
+> Son durum: oynanabilir hız parkuru prototipi (`ada/game`), Ece 3D karakteri ve 5 kalıntı modeli (Meshy) var.
+> Görüntü kalitesi istenen seviyeye ulaşmadı. Kodla çizilen sahnenin tavanı düşük kaldı; gerçek kalite için profesyonel dokular ve modeller gerekiyordu.
+> Kalan bakiye: Meshy 756 kredi, Higgsfield 8 kredi.
+
 Son güncelleme: 5 Kasım 2026
 
 Her oturumun başında bu dosyayı oku. Her oturumun sonunda güncelle: yapılanları işaretle, sıradakini yaz, sonra commit ve push et.

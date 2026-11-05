@@ -1,0 +1,46 @@
+başlangıç bakiyesi: 906
+oluşturuldu sutun_ayakta
+oluşturuldu sutun_devrik
+oluşturuldu tas_kapi
+oluşturuldu yikik_duvar
+oluşturuldu kaya_kumesi
+  sutun_ayakta: IN_PROGRESS 1%
+  sutun_devrik: IN_PROGRESS 1%
+  tas_kapi: IN_PROGRESS 1%
+  yikik_duvar: IN_PROGRESS 1%
+  kaya_kumesi: IN_PROGRESS 1%
+  sutun_ayakta: IN_PROGRESS 18%
+  sutun_devrik: IN_PROGRESS 18%
+  tas_kapi: IN_PROGRESS 15%
+  yikik_duvar: IN_PROGRESS 18%
+  kaya_kumesi: IN_PROGRESS 15%
+  sutun_ayakta: IN_PROGRESS 45%
+  sutun_devrik: IN_PROGRESS 45%
+  tas_kapi: IN_PROGRESS 45%
+  yikik_duvar: IN_PROGRESS 45%
+  kaya_kumesi: IN_PROGRESS 45%
+  sutun_ayakta: IN_PROGRESS 67%
+  sutun_devrik: IN_PROGRESS 45%
+  tas_kapi: IN_PROGRESS 45%
+  yikik_duvar: IN_PROGRESS 45%
+  kaya_kumesi: IN_PROGRESS 45%
+  sutun_ayakta: IN_PROGRESS 99%
+  sutun_devrik: IN_PROGRESS 84%
+  tas_kapi: IN_PROGRESS 45%
+  yikik_duvar: IN_PROGRESS 45%
+  kaya_kumesi: IN_PROGRESS 45%
+indirildi sutun_ayakta 10737 KB
+  sutun_devrik: IN_PROGRESS 99%
+  tas_kapi: IN_PROGRESS 74%
+  yikik_duvar: IN_PROGRESS 45%
+  kaya_kumesi: IN_PROGRESS 67%
+indirildi sutun_devrik 12026 KB
+  tas_kapi: IN_PROGRESS 99%
+  yikik_duvar: IN_PROGRESS 67%
+  kaya_kumesi: IN_PROGRESS 84%
+indirildi tas_kapi 11930 KB
+  yikik_duvar: IN_PROGRESS 84%
+indirildi kaya_kumesi 11442 KB
+indirildi yikik_duvar 13672 KB
+bitiş bakiyesi: 756 harcanan: 150
+TAMAM

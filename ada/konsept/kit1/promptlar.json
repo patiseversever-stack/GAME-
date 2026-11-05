@@ -1,0 +1,32 @@
+[
+  {
+    "id": "sutun_ayakta",
+    "model": "nano-banana-pro",
+    "aspect": "3:4",
+    "prompt": "Photorealistic 3D game asset reference, single object only, isolated on a plain light gray studio background, soft even lighting, no shadows on the ground, full object in frame, three-quarter view. A weathered ancient limestone column from a lost tropical civilization: fluted shaft, simple square capital, square base, chipped edges, warm beige stone with darker weathering streaks, patches of green moss and lichen near the top and base, slightly broken corner on the capital. No text, no people, no vegetation around it."
+  },
+  {
+    "id": "sutun_devrik",
+    "model": "nano-banana-pro",
+    "aspect": "16:9",
+    "prompt": "Photorealistic 3D game asset reference, single object only, isolated on a plain light gray studio background, soft even lighting, no shadows on the ground, full object in frame, three-quarter view from slightly above. A fallen ancient limestone column lying horizontally on its side, made of three cylindrical fluted drums slightly misaligned, broken ends, warm beige stone, weathering stains, green moss on the upper surface. No text, no people, no ground plane."
+  },
+  {
+    "id": "tas_kapi",
+    "model": "nano-banana-pro",
+    "aspect": "16:9",
+    "prompt": "Photorealistic 3D game asset reference, single object only, isolated on a plain light gray studio background, soft even lighting, no shadows on the ground, full object in frame, front three-quarter view. A low ancient stone gateway: two thick square stone pillars made of stacked limestone blocks with one heavy horizontal stone lintel beam across the top, the opening is wide and low, weathered warm beige stone, chipped edges, moss and small hanging roots on the lintel. No text, no people."
+  },
+  {
+    "id": "yikik_duvar",
+    "model": "nano-banana-pro",
+    "aspect": "16:9",
+    "prompt": "Photorealistic 3D game asset reference, single object only, isolated on a plain light gray studio background, soft even lighting, no shadows on the ground, full object in frame, three-quarter view. A short section of a ruined ancient wall made of large stacked limestone blocks, irregular broken top edge, a few blocks missing, warm beige weathered stone, moss in the gaps between blocks, about chest height. No text, no people."
+  },
+  {
+    "id": "kaya_kumesi",
+    "model": "nano-banana-pro",
+    "aspect": "16:9",
+    "prompt": "Photorealistic 3D game asset reference, single object only, isolated on a plain light gray studio background, soft even lighting, no shadows on the ground, full object in frame, three-quarter view. A cluster of three large coastal boulders fused together, weathered sandstone and granite, warm gray-brown with lighter sun-bleached tops, cracks and small ledges, a few patches of green moss. No text, no water, no people."
+  }
+]
