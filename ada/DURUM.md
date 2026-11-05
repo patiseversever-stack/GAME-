@@ -57,6 +57,10 @@ Her oturumun başında bu dosyayı oku. Her oturumun sonunda güncelle: yapılan
   3. Telefonda akıcılık için poligon bütçesi: oyuncu 15-30 bin, bot 5-15 bin, obje 1-5 bin, arka plan 300-1.500.
   4. PBR haritaları sadece gerekiyorsa açılır.
 - Terminal Higgsfield'ın dosya sunucusuna ulaşamazsa, üretilen modelleri oyuna koymak için ağ izni gerekecek.
+- **Higgsfield Games'in kodu dışarı çıkmıyor.** Kod sadece Higgsfield'ın kendi bulut çalışma alanında düzenleniyor, Git şifresi verilmiyor. Üretilen dosyalar (model, görsel, ses) ise indirilebiliyor.
+- **Google AI Studio:** orada da kodu bir yapay zekâ (Gemini) yazıyor. Bağımsız bir incelemeye göre 3D model hattı yok.
+- **Google Project Genie (Genie 3):** sadece video çıkarıyor. Bir dünya en fazla 60 saniye, 720p; ABD'de, aylık 250 dolarlık abonelikle açık. Oyun yapımı için uygun değil.
+- Kullanıcı bir Higgsfield paketi almayı düşünüyor; paket bilgisini gönderecek. Gelince kredilerin neye yeteceğini hesapla.
 
 ## Açık sorular (acil değil)
 - Küçük satın alınabilir avantajlar online modda nasıl dengelenecek?
