@@ -60,7 +60,41 @@ Her oturumun başında bu dosyayı oku. Her oturumun sonunda güncelle: yapılan
 - **Higgsfield Games'in kodu dışarı çıkmıyor.** Kod sadece Higgsfield'ın kendi bulut çalışma alanında düzenleniyor, Git şifresi verilmiyor. Üretilen dosyalar (model, görsel, ses) ise indirilebiliyor.
 - **Google AI Studio:** orada da kodu bir yapay zekâ (Gemini) yazıyor. Bağımsız bir incelemeye göre 3D model hattı yok.
 - **Google Project Genie (Genie 3):** sadece video çıkarıyor. Bir dünya en fazla 60 saniye, 720p; ABD'de, aylık 250 dolarlık abonelikle açık. Oyun yapımı için uygun değil.
-- Kullanıcı bir Higgsfield paketi almayı düşünüyor; paket bilgisini gönderecek. Gelince kredilerin neye yeteceğini hesapla.
+## Higgsfield fiyatları (5 Kasım 2026)
+Kredi harcamadan maliyet sorgusuyla ölçüldü.
+
+| Üretim | Kredi |
+|---|---|
+| Karakter 3D (görselden 3D, Meshy 7, dokulu, iskeletli, T-poz, 20 bin poligon) | 44 |
+| Yazıdan 3D (Meshy 6, dokulu) | 25 |
+| Yazıdan 3D (Tripo); ucuz obje için | 5 |
+| Konsept görsel, Nano Banana Pro 2K | 2 |
+| Konsept görsel, GPT Image 2.6 | 0,25 |
+| Video, Seedance 2.5 | yaklaşık 15 |
+
+### MVP sanat ihtiyacı (tahmin): yaklaşık 1.000-1.300 kredi
+- 14 karakter (oyuncu, 11 bot, Lal, Bora): yaklaşık 600
+- Konsept görseller: yaklaşık 100
+- 30 kadar obje: 150-400
+- Fragman: yaklaşık 90
+
+### Paketler
+| Paket | Kredi / ay | Aylık | Yıllık ödemede, aylık |
+|---|---|---|---|
+| Plus | 1.000 | 49 $ | 39 $ |
+| Ultra | 3.000 | 129 $ | 99 $ |
+
+- 3 günlük ücretsiz Plus denemesi: 100 kredi.
+  - Sadece MCP üzerinden çalışıyor, kart gerekiyor.
+  - İptal edilmezse ayda 49 $'a yenileniyor. Bu sohbette "cancel auto-renewal" yazarak iptal ediliyor.
+- **Önemli:** "Sınırsız" ve "ücretsiz" üretimler sadece higgsfield.ai sitesinde geçerli. MCP'de yani Claude'da çalışmıyor, Claude sadece kredi harcayabilir.
+- Sınırsızlar sadece görsel ve video modellerini kapsıyor, 3D modelleri kapsamıyor.
+- 7 günlük sınırsızlar satın almadan sonraki 7 gün geçerli. 365 günlük sınırsızlar bir yıl geçerli; kampanya 6 Kasım'da bitiyor.
+
+### Öneri
+1. İskelet kredisiz yapılır, şimdilik paket gerekmiyor.
+2. Görsel yön testi için 3 günlük ücretsiz deneme kullanılır.
+3. Beğenilirse Plus aylık alınır.
 
 ## Açık sorular (acil değil)
 - Küçük satın alınabilir avantajlar online modda nasıl dengelenecek?
