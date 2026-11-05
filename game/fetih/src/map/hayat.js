@@ -32,17 +32,20 @@ const K = { KOY: 0, TRAKTOR: 1, DEGIRMEN: 2, TURBIN: 3, HAYVAN: 4, ISCI: 5 };
 const NK = 6;
 // sönme (kameraya uzaklık): [tam görünür, kayıp]. En yakın zum 9: odak 9 birimde, ekranın üstüne doğru söner.
 const FADE = [
-	[9.8, 12.4], // köy
-	[9.5, 12.2], // traktör
-	[10, 12.4], // yel değirmeni
-	[10.5, 12.4], // türbin
-	[9, 11.8], // hayvan
-	[9.6, 12.2], // insan (ayrıca ekran odağında)
+	[12.4, 14.6], // köy
+	[12.6, 14.6], // traktör
+	[12.6, 14.6], // yel değirmeni
+	[12.8, 14.6], // türbin
+	[12.2, 14.4], // hayvan
+	[12.6, 14.6], // insan (ayrıca ekran odağında)
 ];
+// v3 (kullanıcı: "il renginin altında kalıyor"): eskiden tam görünürlük 9–10'da bitiyordu, oyunun en yakın zumu 9 ve
+// filmlerin çekimleri 10–14 olduğundan nesneler hep sönme aralığında, benekli (yarı saydam) çiziliyor ve il rengi
+// içlerinden görünüyordu. Şimdi 12,5'e dek tam görünür, 14,5'te kaybolur; insan ve traktör ~%33 büyük.
 // katman (ve zeminin yakın zum programı) yalnız ekranın en yakın zemin noktası bu uzaklığın altındayken: üstünde bütün
-// nesneler zaten sönmüş (FADE ≤ 12,4), çizim ve geçiş yok. Serbest bakışta (eğim 0,9–0,95) kamera uzaklığı ~15'in
-// üstü, yani oyun zumu (18–24) ve uzak: 0 çağrı, zemin ana dalın programıyla.
-const NEAR = 12.6;
+// nesneler zaten sönmüş (FADE ≤ 14,6), çizim ve geçiş yok. Serbest bakışta (eğim 0,9–0,95) kamera uzaklığı oyun
+// zumunda (18–24) bunun çok üstü: 0 çağrı, zemin ana dalın programıyla.
+const NEAR = 14.8;
 // ayak izi yarıçapı (ölçek 1): çakışma denetimi
 const FOOT = [0.48, 0.1, 0.22, 0.3, 0.1, 0.11];
 
@@ -477,6 +480,17 @@ float castleK(vec2 q, float y) {
 	}
 	return k;
 }
+// savaş açıklığının yalnız savaş alanı kapsülü. clearK'nın ikinci kapsülü (kameranın görüş çizgisi) ön plan ağaçları
+// içindir: hayat nesnelerinde kameranın tam baktığı yerdeki insan, traktör ve evleri benekli (yarı saydam) yapıp il
+// renginin "altında" bırakıyordu (kullanıcı bildirimi).
+float clearA(vec2 q, float pad) {
+	if (uClearR.y < 0.001) return 0.0;
+	vec2 a = uClear.xy;
+	vec2 ab = uClear.zw - a;
+	float t = clamp(dot(q - a, ab) / max(dot(ab, ab), 1e-4), 0.0, 1.0);
+	float d = length(q - a - ab * t) - pad;
+	return uClearR.y * (1.0 - smoothstep(uClearR.x - uClearR.z, uClearR.x, d));
+}
 vec2 rot2(vec2 v, float a) {
 	float c = cos(a), s = sin(a);
 	return vec2(v.x * c - v.y * s, v.x * s + v.y * c);
@@ -509,12 +523,12 @@ void main() {
 	vec2 fd = uFade[kind];
 	float fade = 1.0 - smoothstep(fd.x, fd.y, distance(uEye, base));
 	// savaş açıklığında ve kale inerken gömülür
-	fade *= (1.0 - clearK(base.xz, 0.3)) * (1.0 - castleK(base.xz, base.y)) * clamp((uTime - uBorn) * 1.25, 0.0, 1.0);
+	fade *= (1.0 - clearA(base.xz, 0.3)) * (1.0 - castleK(base.xz, base.y)) * clamp((uTime - uBorn) * 1.25, 0.0, 1.0);
 	if (kind == ${K.ISCI}) {
 		// insan yalnız ekranın odağında (yaklaşılan noktada) görünür
 		vec4 cp = uVP * vec4(base, 1.0);
 		vec2 nd = cp.xy / max(cp.w, 1e-3);
-		fade *= 1.0 - smoothstep(0.66, 0.86, length(nd * vec2(1.0, 0.8)));
+		fade *= 1.0 - smoothstep(0.82, 1.0, length(nd * vec2(1.0, 0.8)));
 	}
 	vec4 T2 = texelFetch(uM, ivec2(vid * 3 + 2, kind), 0);
 	float part = T0.w;
@@ -663,7 +677,7 @@ void main() {
 	if (vFade < 0.999 && vFade <= bayer(gl_FragCoord.xy)) discard;
 	vec3 V = normalize(cameraPosition - vW);
 	if (dot(N, V) < 0.0) N = -N;
-	vec3 alb = vC * 0.92;
+	vec3 alb = vSlot > 2.5 ? min(vC * 1.08, vec3(1.0)) : vC * 0.92;
 	float ao = mix(0.62, 1.0, smoothstep(0.0, 0.05, vY));
 	// pencereler: duvarda tek sıra (gündüz koyu cam, gece sıcak ışık)
 	float win = 0.0;
@@ -682,6 +696,8 @@ void main() {
 	gLit = max(vSel.x * uSelLit, gPool);
 	vec3 c = shade(alb, N, V, ao, sh, 0.12, 0.6);
 	c = structInk(c, N, N, vW);
+	// kenar ışığı: araç, hayvan ve insan boyalı ilin üstünde silüetiyle ayrılsın (maliyetsiz)
+	if (vSlot > 2.5) c += vec3(1.0, 0.94, 0.82) * pow(1.0 - clamp(dot(N, V), 0.0, 1.0), 3.0) * 0.32 * (1.0 - nightK() * 0.6);
 	float nk = nightK();
 	if (nk > 0.001) {
 		c += N_WARM * nk * (win * 2.4 + vEm * 3.0);
@@ -1301,8 +1317,8 @@ export class Hayat {
 		// göre sayı (q2: ~her 1,6 birim²'ye bir hedef, q1: ~her 5 birim²'ye); köyün çevresi yeğlenir. Parsel başına bir iş.
 		const seen = new Set();
 		const JOB = { cay: 'pick', findik: 'pick', aycicegi: 'hoe', celtik: 'pick', hashas: 'pick', pamuk: 'pick', zeytin: 'pick', narenciye: 'pick', kayisi: 'pick', fistik: 'pick', bag: 'pick', gul: 'pick', lavanta: 'pick', pancar: 'hoe', misir: 'hoe', biber: 'hoe', yesil: 'hoe', saban: 'tractor', hasat: 'scythe', cayir: 'scythe', bugday: 'scythe', mera: 'herd', nadas: 'herd' };
-		const SW = 1.8; // insan ölçeği (boy ~0,22): oyuncak oranı, insan öne çıkar; traktör boyu insan kadar, ev mahyası biraz üstünde
-		const ST = 2.0; // traktör
+		const SW = 2.4; // insan ölçeği (v3: 1,8 → 2,4) (boy ~0,22): oyuncak oranı, insan öne çıkar; traktör boyu insan kadar, ev mahyası biraz üstünde
+		const ST = 2.6; // traktör (v3: 2,0 → 2,6)
 		for (const p of board.provinces) {
 			const pid = p.index;
 			const prof = this._prof(pid);
@@ -1355,7 +1371,7 @@ export class Hayat {
 				const trac = !slope && (job === 'tractor' || (job === 'hoe' && R() < 0.2) || (crop === 'hasat' && R() < 0.3));
 				if (herd && (nH >= maxH || !far(K.HAYVAN, jx, jz, 2.0))) continue; // otlakta sürü yoksa iş de yok
 				if (herd) {
-					const s = p.region === 'dogu' || p.region === 'karadeniz' ? 2.8 : 2.6;
+					const s = p.region === 'dogu' || p.region === 'karadeniz' ? 3.2 : 3.0;
 					if (!this._hit(jx, jz, FOOT[K.HAYVAN] * s, pid, -1, true)) {
 						nH++;
 						add({ k: K.HAYVAN, x: jx, z: jz, yaw: R() * 6.28, pid, v: animOf(p), s });
@@ -1384,7 +1400,7 @@ export class Hayat {
 					const ax = f.along[0];
 					const az = f.along[1];
 					for (let k = 0; k < n; k++) {
-						const off = (k - (n - 1) / 2) * 0.3;
+						const off = (k - (n - 1) / 2) * 0.4;
 						const wx = jx + f.across[0] * off + ax * (R() - 0.5) * 0.12;
 						const wz = jz + f.across[1] * off + az * (R() - 0.5) * 0.12;
 						const a2 = k > 0 && act === 0 && R() < 0.35 ? 2 : act;
