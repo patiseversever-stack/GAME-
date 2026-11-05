@@ -1548,8 +1548,20 @@ export class UI {
 					dn.ty += oy / 2;
 				}
 			}
+		// ekran kenarı: yazı rozeti ekrandan taşmasın (yalnız yatayda; rozetin oku yerinden çok kaymaz)
+		const SW = this.el.clientWidth || innerWidth;
+		for (const p of P) if (p.w && p.w + 12 < SW) p.sx = Math.min(SW - p.w / 2 - 6, Math.max(p.w / 2 + 6, p.sx));
+		// haritalı soruda kartın altına giren yazı rozeti gizlenir (kartın üstüne binmesin)
+		const cutY = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * (this.el.clientHeight || innerHeight) - 8 : -1e9;
 		for (const p of P) {
 			p.dy = (p.dy || 0) + (p.ty - (p.dy || 0)) * 0.25; // yumuşak: titremesin
+			if (p.w) {
+				const hide = p.sy + p.dy - (p.h || 0) < cutY;
+				if (hide !== p.hid) {
+					p.hid = hide;
+					p.el.style.opacity = hide ? '0' : '';
+				}
+			}
 			p.el.style.transform = `translate(${p.sx.toFixed(1)}px,${(p.sy + p.dy).toFixed(1)}px)`;
 		}
 		for (const l of this.lines) {

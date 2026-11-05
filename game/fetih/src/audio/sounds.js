@@ -861,6 +861,52 @@ export const SOUNDS = {
 		},
 	},
 
+	// ---------------------------------------------------------------- il avı (sıcak–soğuk)
+	// dokunuşun ısısı: n=0 kızgın (cızırtı + kor gümbürtüsü) … n=4 buz (cam çınlaması + soğuk rüzgâr)
+	iaHeat: {
+		prio: 2, cd: 0.15, max: 2, dur: 0.9, len: 1.0, tail: 0.6, peak: 0.6, intensity: 0,
+		variant: (o) => ({ n: clamp(o.n | 0, 0, 4) }),
+		all: () => [0, 1, 2, 3, 4].map((n) => ({ n })),
+		fn(e, t, o) {
+			const n = clamp(o.n | 0, 0, 4);
+			const hot = 1 - n / 4;
+			e.hit('woodLow', t, 0.5, 0.9 + n * 0.08);
+			if (n <= 2) {
+				// sıcak: alev savruluşu, cızırtı, alçak gümbür
+				e.noise(t, 0.45, 0.1 + hot * 0.12, 900, 4200, { q: 0.6, a: 0.05 });
+				e.noise(t + 0.05, 0.35, 0.06 + hot * 0.08, 5000, 2500, { type: 'highpass', a: 0.01 });
+				e.tone('sawtooth', 110 + n * 30, 70, t, 0.35, 0.05 + hot * 0.05, { a: 0.01, lp: 900 });
+				e.pluck('kanun', R(4 - n), t + 0.04, 0.32);
+				if (n === 0) e.hit('dum', t, 0.6, 1.1);
+			} else {
+				// soğuk: cam gibi iki çınlama, ince rüzgâr
+				bell(e, t + 0.02, R(14 + n), 0.18);
+				bell(e, t + 0.12, R(18 + n), 0.12, 0.3);
+				e.noise(t, 0.6, 0.05 + (n - 3) * 0.03, 3000, 7000, { type: 'highpass', a: 0.25 });
+				e.tone('sine', 1800 + n * 200, 1500, t, 0.4, 0.04, { a: 0.02 });
+			}
+		},
+	},
+	// ipucu açıldı: kâğıt çevrilir + kısa kanun
+	iaHint: {
+		prio: 1, cd: 0.2, max: 1, dur: 0.5, len: 0.55, tail: 0.4, peak: 0.5, intensity: 0,
+		fn(e, t) {
+			whoosh(e, t, 0.12, 0.08, 1500, 4500);
+			e.hit('woodTap', t + 0.08, 0.35, 1.3);
+			e.pluck('kanun', R(7), t + 0.1, 0.3, 0.1);
+			e.pluck('kanun', R(9), t + 0.16, 0.24, -0.1);
+		},
+	},
+	// bulunamayan gizli il açılır: tok vuruş + aşağı inen akor
+	iaReveal: {
+		prio: 2, cd: 0.4, max: 1, dur: 1.0, len: 1.1, tail: 0.7, peak: 0.6, intensity: 0,
+		fn(e, t) {
+			e.hit('dum', t, 0.7, 0.95);
+			[4, 2, 0].forEach((d, i) => e.pluck('kanun', H(d), t + 0.05 + i * 0.09, 0.34 - i * 0.04));
+			whoosh(e, t, 0.4, 0.08, 2500, 400);
+		},
+	},
+
 	// ---------------------------------------------------------------- sonuç
 	win: {
 		prio: 3, cd: 1, max: 1, dur: 4.4, len: 4.3, tail: 1.4, peak: 0.95, wet: 1.6, duck: [0.6, 3.2, 1.2], music: ['victory', 2.6],

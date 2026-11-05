@@ -84,29 +84,90 @@ function result(v, taps) {
 }
 
 const CSS = /* css */ `
-.dn-ia{display:flex;flex-direction:column;gap:8px}
-.dn-ia-row{display:flex;gap:10px;align-items:stretch}
-.dn-ia-sil{flex:none;width:96px;height:96px;border-radius:16px;display:grid;place-items:center;background:radial-gradient(circle at 50% 40%,#22396f,#0c1736);border:2.5px solid rgba(255,255,255,.75);box-shadow:0 4px 0 rgba(0,0,0,.35)}
-.dn-ia-sil svg{width:86px;height:86px;overflow:visible}
-.dn-ia-sil path{fill:#ffd25a;stroke:#fff;stroke-width:1.6;stroke-linejoin:round;filter:drop-shadow(0 2px 0 rgba(90,50,0,.6))}
-.dn-ia-sil.won path{fill:#7dff9a}
-.dn-ia-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
-.dn-ia-tries{display:flex;align-items:center;gap:6px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#cfe0ff}
-.dn-ia-tries i{width:15px;height:15px;border-radius:50%;background:#fff;border:2px solid rgba(255,255,255,.4);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2);transition:background .25s,transform .25s}
-.dn-ia-tries i.used{background:var(--hc,#2f6bff);transform:scale(.8)}
-.dn-ia-tries i.win{background:#7dff9a}
-.dn-ia-hints{display:flex;flex-direction:column;gap:4px}
-.dn-ia-hints span{display:flex;align-items:center;gap:6px;padding:4px 9px;border-radius:10px;font-size:14px;line-height:1.2;background:rgba(0,0,0,.28);animation:flq-pop .35s cubic-bezier(.3,1.5,.5,1)}
-.dn-ia-hints span b{flex:none;font-family:'Lilita One';font-weight:400;font-size:11px;letter-spacing:.08em;padding:1px 6px;border-radius:6px;background:var(--gold);color:#3a2000}
-.dn-ia-hints span.lock{opacity:.45}
-.dn-ia-log{display:flex;flex-wrap:wrap;gap:5px;min-height:0}
-.dn-ia-log span{display:inline-flex;align-items:center;gap:5px;padding:3px 9px 3px 4px;border-radius:999px;font-size:13.5px;line-height:1.1;color:#fff;background:rgba(0,0,0,.3);border:2px solid var(--hc);animation:flq-pop .3s cubic-bezier(.3,1.5,.5,1)}
-.dn-ia-log span i{width:14px;height:14px;border-radius:50%;background:var(--hc)}
-.dn-ia-log span em{font-style:normal;font-family:'Lilita One';color:var(--hc)}
-.dn-ia-leg{display:flex;align-items:center;gap:3px;font-size:10.5px;color:#cfe0ff;opacity:.85}
-.dn-ia-leg i{flex:1;height:6px;border-radius:3px}
-.dn-ia.done .dn-ia-leg{display:none}
+/* SICAK–SOĞUK RADARI (Arena v1 siyah/beyaz): solda dönen radar taramasında gizli ilin silueti; sağda termometre (en
+   yakın denemenin ibresi kızgından buza) ve kilitli ipuçları; altta 4 karoluk deneme tahtası (karo uzaklığın rengine
+   boyanır: il, km, yön). Haritada her dokunuşta ısı renginde şok dalgası; cevapta denemelerden gizli ile kesik iz. */
+.dn-ia{display:flex;flex-direction:column;gap:10px}
+.dn-ia-row{display:flex;gap:12px;align-items:stretch}
+.dn-ia-sil{position:relative;flex:none;width:104px;height:116px;overflow:hidden;isolation:isolate;background:#0b1022;border-left:4px solid var(--hc,#fff);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 12px),calc(100% - 12px) 100%,0 100%);transition:border-color .4s}
+.dn-ia-sil .rg{position:absolute;inset:0;z-index:-2;background:
+  linear-gradient(rgba(255,255,255,.09),rgba(255,255,255,.09)) 50% 0/1px 100% no-repeat,linear-gradient(rgba(255,255,255,.09),rgba(255,255,255,.09)) 0 46%/100% 1px no-repeat,
+  repeating-radial-gradient(circle at 50% 46%,transparent 0 15px,rgba(255,255,255,.08) 15px 16px)}
+.dn-ia-sil .sw{position:absolute;left:50%;top:46%;width:180px;height:180px;margin:-90px 0 0 -90px;z-index:-1;border-radius:50%;
+  background:conic-gradient(from 0deg,transparent 0 290deg,color-mix(in srgb,var(--hc,#ffd25a) 45%,transparent) 360deg);animation:dnIaSw 2.6s linear infinite}
+.dn-ia-sil svg{position:absolute;left:50%;top:46%;width:78px;height:78px;margin:-39px 0 0 -39px;overflow:visible}
+.dn-ia-sil path{fill:#fff;stroke:var(--hc,#ffd25a);stroke-width:1.8;stroke-linejoin:round;filter:drop-shadow(0 0 6px rgba(255,255,255,.35));transition:fill .4s,stroke .4s}
+.dn-ia-sil .lb{position:absolute;left:0;right:0;bottom:5px;text-align:center;font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.24em;color:rgba(255,255,255,.55)}
+.dn-ia-sil.won{--hc:#ffd25a}
+.dn-ia-sil.won path{fill:#ffd25a;stroke:#fff;animation:dnIaWin .6s cubic-bezier(.3,1.8,.5,1)}
+.dn-ia-sil.won .sw{animation-duration:.9s}
+.dn-ia-sil.flash::after{content:'';position:absolute;inset:0;background:var(--hc);opacity:0;animation:dnIaFl .5s ease-out}
+.dn-ia-info{flex:1;min-width:0;display:flex;flex-direction:column;gap:7px}
+.dn-ia-th{display:flex;flex-direction:column;gap:5px}
+.dn-ia-th .tt{display:flex;align-items:baseline;gap:7px;min-height:18px}
+.dn-ia-th small{font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em;color:rgba(255,255,255,.55)}
+.dn-ia-th .tt b{font:400 18px/1 'Lilita One',sans-serif;color:#fff;font-variant-numeric:tabular-nums}
+.dn-ia-th .tt em{margin-left:auto;font:italic 800 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:var(--hc,#fff);font-style:normal;text-transform:uppercase}
+.dn-ia-th .tb{position:relative;display:flex;gap:3px;height:9px}
+.dn-ia-th .tb i{flex:1;transform:skewX(-18deg);opacity:.85}
+.dn-ia-th .nw{position:absolute;left:0;top:0;bottom:0;width:100%;transform:translateX(calc(var(--p,-.04) * 100%));transition:transform .7s cubic-bezier(.3,1.5,.5,1);pointer-events:none}
+.dn-ia-th .nw::before{content:'';position:absolute;left:-2px;top:-5px;width:4px;height:19px;background:#fff;box-shadow:0 0 0 2px #0d1124,0 0 10px rgba(255,255,255,.8)}
+.dn-ia-th.none .nw{opacity:0}
+.dn-ia-hints{display:flex;flex-direction:column;gap:4px;perspective:400px}
+.dn-ia-hints span{display:flex;align-items:center;gap:7px;min-height:27px;padding:3px 8px;background:rgba(255,255,255,.07);font:600 13.5px/1.2 'Fredoka',sans-serif;color:#fff}
+.dn-ia-hints span b{flex:none;padding:3px 6px 2px;background:#ffd25a;color:#1a1200;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;transform:skewX(-8deg)}
+.dn-ia-hints span.lock{background:rgba(255,255,255,.03);color:rgba(255,255,255,.4)}
+.dn-ia-hints span.lock b{background:rgba(255,255,255,.16);color:rgba(255,255,255,.6)}
+.dn-ia-hints span.lock em{display:flex;align-items:center;gap:5px;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;font-style:normal}
+.dn-ia-hints span.lock em svg{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2.6}
+.dn-ia-hints span.op{animation:dnIaFlip .5s cubic-bezier(.3,1.4,.5,1)}
+.dn-ia-slots{display:grid;grid-template-columns:repeat(var(--n,4),1fr);gap:6px}
+.dn-ia-slots .sl{position:relative;min-width:0;height:50px;display:flex;flex-direction:column;justify-content:center;padding:4px 7px;overflow:hidden;
+  background:rgba(255,255,255,.06);border-bottom:3px solid rgba(255,255,255,.16);transform:skewX(-8deg)}
+.dn-ia-slots .sl>*{transform:skewX(8deg)}
+.dn-ia-slots .sl .nm{font:italic 800 11.5px/1.1 'Barlow Condensed',sans-serif;letter-spacing:.04em;text-transform:uppercase;color:rgba(255,255,255,.4);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-ia-slots .sl .km{font:400 17px/1.05 'Lilita One',sans-serif;color:rgba(255,255,255,.25);white-space:nowrap}
+.dn-ia-slots .sl .km i{font-style:normal;margin-left:3px}
+.dn-ia-slots .sl.on{background:linear-gradient(160deg,color-mix(in srgb,var(--hc) 92%,#fff),color-mix(in srgb,var(--hc) 70%,#000));border-bottom-color:#fff;animation:dnIaSlot .45s cubic-bezier(.3,1.6,.5,1)}
+.dn-ia-slots .sl.on .nm{color:rgba(0,0,0,.65)}
+.dn-ia-slots .sl.on .km{color:#0d1124}
+.dn-ia-slots .sl.win{--hc:#ffd25a;box-shadow:0 0 16px rgba(255,210,90,.6)}
+.dn-ia-slots .sl.cur{border-bottom-color:#fff;background:rgba(255,255,255,.1)}
+.dn-ia-slots .sl.cur .km{animation:dnIaBlink 1s steps(2) infinite}
+/* haritada şok dalgası */
+.dn-tag.dn-rt>div{width:0;height:0;padding:0;border:0;background:none;box-shadow:none}
+.dn-ring{position:absolute;left:-60px;top:-60px;width:120px;height:120px;border-radius:50%;border:4px solid var(--hc);opacity:0;animation:dnIaRing 1s cubic-bezier(.2,.7,.3,1) forwards}
+.dn-ring+.dn-ring{animation-delay:.16s;border-width:2px}
+.fl-line.dn-trail{border-top-width:3px;opacity:.95;filter:drop-shadow(0 0 4px rgba(0,0,0,.6))}
+@keyframes dnIaSw{to{transform:rotate(360deg)}}
+@keyframes dnIaWin{50%{transform:scale(1.18)}}
+@keyframes dnIaFl{0%{opacity:.55}100%{opacity:0}}
+@keyframes dnIaFlip{from{transform:rotateX(90deg);opacity:0}to{transform:none;opacity:1}}
+@keyframes dnIaSlot{from{transform:skewX(-8deg) scale(.6);opacity:0}to{transform:skewX(-8deg);opacity:1}}
+@keyframes dnIaBlink{50%{opacity:.2}}
+@keyframes dnIaRing{0%{transform:scale(.15);opacity:1}100%{transform:scale(1.6);opacity:0}}
+@keyframes dnIaTrail{from{opacity:0}to{opacity:.9}}
+@media (prefers-reduced-motion:reduce){.dn-ia-sil .sw{animation:none}}
 `;
+/** Termometredeki yer (0 kızgın … 1 buz): eşit genişlikli beş dilim, dilim içinde doğrusal. */
+const heatPos = (km) => {
+	let lo = 0;
+	for (let k = 0; k < HEAT.length; k++) {
+		const hi = Number.isFinite(HEAT[k][0]) ? HEAT[k][0] : 1100;
+		if (km < hi || k === HEAT.length - 1) return Math.min(1, (k + Math.min(1, (km - lo) / (hi - lo))) / HEAT.length);
+		lo = hi;
+	}
+	return 1;
+};
+const LOCK = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+/** "Plakası 31" gibi cevabı ele veren son ipucu yerine komşuları (haritadan, her zaman doğru). */
+function neighborHint(i) {
+	const nb = (PROV[i].nb || []).map((id) => BY_ID.get(id)).filter((k) => k != null).map((k) => PROV[k].name).sort((x, y) => x.localeCompare(y, 'tr'));
+	if (!nb.length) return '';
+	if (nb.length === 1) return `Tek komşusu ${nb[0]}`;
+	return `${nb.length} komşusu var; ikisi ${nb[0]} ve ${nb[1]}`;
+}
 
 export const ilavi = {
 	time: 30,
@@ -124,9 +185,10 @@ export const ilavi = {
 	},
 	prepare(q) {
 		const target = BY_ID.get(q.il);
-		const v = { q, hedef: target, tries: q.tries || TRIES, sil: silhouette(target), hints: (q.hints || []).slice() };
+		const hints = (q.hints || []).map((h) => (/^Plaka\S*\s+\d+$/.test(String(h).trim()) ? neighborHint(target) || h : h));
+		const v = { q, hedef: target, tries: q.tries || TRIES, sil: silhouette(target), hints };
 		return stamp(v, q, (q2, k, P, text) => {
-			for (const h of q2.hints || []) text(h);
+			for (const h of v.hints) text(h);
 			const n = v.tries;
 			return {
 				wait: 0.5 + 0.6,
@@ -143,20 +205,47 @@ export const ilavi = {
 		const hints = v.hints;
 		el.innerHTML = `<div class="dn-ia">
 			<div class="dn-ia-row">
-				<div class="dn-ia-sil"><svg viewBox="0 0 100 100"><path d="${v.sil}"/></svg></div>
+				<div class="dn-ia-sil"><i class="rg"></i><i class="sw"></i><svg viewBox="0 0 100 100"><path d="${v.sil}"/></svg><span class="lb">GİZLİ İL</span></div>
 				<div class="dn-ia-info">
-					<div class="dn-ia-tries">${'<i></i>'.repeat(v.tries)}<span>deneme</span></div>
-					<div class="dn-ia-hints">${hints.map((h, k) => `<span class="${k ? 'lock' : ''}"><b>İPUCU ${k + 1}</b>${k ? '<em>yanlışta açılır</em>' : esc(h)}</span>`).join('')}</div>
+					<div class="dn-ia-th none"><div class="tt"><small>EN YAKIN</small><b>—</b><em></em></div><div class="tb">${HEAT.map((h) => `<i style="background:${h[1]}"></i>`).join('')}<span class="nw"></span></div></div>
+					<div class="dn-ia-hints">${hints.map((h, k) => `<span class="${k ? 'lock' : ''}"><b>İPUCU ${k + 1}</b>${k ? `<em>${LOCK}YANLIŞTA AÇILIR</em>` : esc(h)}</span>`).join('')}</div>
 				</div>
 			</div>
-			<div class="dn-ia-log"></div>
-			<div class="dn-ia-leg"><span>kızgın</span>${HEAT.map((h) => `<i style="background:${h[1]}"></i>`).join('')}<span>buz</span></div>
+			<div class="dn-ia-slots" style="--n:${v.tries}">${Array.from({ length: v.tries }, (_, k) => `<div class="sl${k ? '' : ' cur'}"><span class="nm">${k + 1}. DENEME</span><span class="km">?</span></div>`).join('')}</div>
 		</div>`;
 		rule(el, 'Az denemede bul');
 		const root = el.querySelector('.dn-ia');
-		const dots = [...root.querySelectorAll('.dn-ia-tries i')];
+		const slots = [...root.querySelectorAll('.dn-ia-slots .sl')];
 		const hintEls = [...root.querySelectorAll('.dn-ia-hints span')];
-		const log = root.querySelector('.dn-ia-log');
+		const sil = root.querySelector('.dn-ia-sil');
+		const th = root.querySelector('.dn-ia-th');
+		let best = Infinity;
+		// termometre: en yakın denemenin ibresi
+		const gauge = (km) => {
+			if (km >= best) return;
+			best = km;
+			const h = heat(km);
+			th.classList.remove('none');
+			th.style.setProperty('--p', heatPos(km).toFixed(3));
+			th.style.setProperty('--hc', h[1]);
+			th.querySelector('.tt b').textContent = `${km} km`;
+			th.querySelector('.tt em').textContent = h[2];
+			sil.style.setProperty('--hc', h[1]);
+		};
+		const flash = () => {
+			sil.classList.remove('flash');
+			void sil.offsetWidth;
+			sil.classList.add('flash');
+		};
+		const fill = (k, cls, color, name, km) => {
+			const s = slots[k];
+			if (!s) return;
+			s.classList.remove('cur');
+			s.classList.add('on', ...cls);
+			s.style.setProperty('--hc', color);
+			s.innerHTML = `<span class="nm">${esc(name)}</span><span class="km">${km}</span>`;
+			slots[k + 1]?.classList.add('cur');
+		};
 		const taps = [];
 		let done = false;
 		const finish = () => {
@@ -175,11 +264,24 @@ export const ilavi = {
 			if (!el.isConnected) return;
 			app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.02, pad: 1.03, top: cardTop(el), dur: 0.7 });
 		});
+		// haritada ısı renginde şok dalgası (iki halka; yazı rozeti değil, çarpışma düzenine girmez)
+		const ring = (p, color) => {
+			const r = tag(app, `<i class="dn-ring" style="--hc:${color}"></i><i class="dn-ring" style="--hc:${color}"></i>`, p.x, p.z, 'dn-rt');
+			setTimeout(() => {
+				r.el.remove();
+				const L = app.ui.pins;
+				const at = L.indexOf(r);
+				if (at >= 0) L.splice(at, 1);
+			}, 1300);
+		};
+		const trails = [];
 		const open = (k) => {
 			const h = hintEls[k];
 			if (!h || !h.classList.contains('lock')) return;
 			h.classList.remove('lock');
+			h.classList.add('op');
 			h.innerHTML = `<b>İPUCU ${k + 1}</b>${esc(hints[k])}`;
+			sfx(app, 'iaHint', { delay: 0.25 });
 		};
 		api.onMapTap((pt) => {
 			if (done) return;
@@ -191,17 +293,21 @@ export const ilavi = {
 				return;
 			}
 			taps.push(p.id);
-			const dot = dots[taps.length - 1];
+			const k = taps.length - 1;
 			lit.push(i);
 			g.dark(lit);
 			if (i === v.hedef) {
 				g.paint(i, '#ffd25a', pt.x, pt.z);
 				g.fx(i, 0.6, 1);
-				dot?.classList.add('win');
+				fill(k, ['win'], '#ffd25a', p.name, 'BULDUN');
+				slots.slice(k + 1).forEach((s) => s.classList.remove('cur'));
+				gauge(0);
+				ring(p, '#ffd25a');
 				tag(app, `<b>${esc(p.name)}</b><em>✓</em>`, p.x, p.z, 'big').el.style.setProperty('--tc', '#7dff9a');
 				root.querySelector('.dn-ia-sil').classList.add('won');
 				pop(app, p.x, p.z, 'BULDUN!', { colors: ['#ffd25a', '#7dff9a', '#fff'], n: 18, dist: 90, cls: 'dn dn-gold' });
-				sfx(app, 'right');
+				sfx(app, 'right', { n: 5 });
+				sfx(app, 'fireworks', { delay: 0.25 });
 				buzz(14);
 				return finish();
 			}
@@ -209,17 +315,25 @@ export const ilavi = {
 			const h = heat(d.km);
 			g.paint(i, h[1], pt.x, pt.z);
 			g.fx(i, 0.3, 0);
-			dot?.style.setProperty('--hc', h[1]);
-			dot?.classList.add('used');
+			fill(k, [], h[1], p.name, `${d.km}<i>${d.dir}</i>`);
+			gauge(d.km);
+			flash();
+			ring(p, h[1]);
 			tag(app, `<b>${esc(p.name)}</b><em>${d.km} km ${d.dir}</em>`, p.x, p.z).el.style.setProperty('--tc', h[1]);
-			log.insertAdjacentHTML('beforeend', `<span style="--hc:${h[1]}"><i></i>${esc(p.name)}<em>${d.km} km ${d.dir}</em></span>`);
-			pop(app, p.x, p.z, `${h[2]}!`, { colors: [h[1], '#fff'], n: d.km < 250 ? 12 : 6, dist: 46, cls: `dn ${d.km < 450 ? 'dn-hot' : 'dn-cold'}` });
-			sfx(app, d.km < 250 ? 'star' : 'tap');
+			pop(app, p.x, p.z, `${h[2]}!`, { colors: [h[1], '#fff'], n: d.km < 250 ? 14 : 6, dist: 46, cls: `dn ${d.km < 450 ? 'dn-hot' : 'dn-cold'}` });
+			sfx(app, 'iaHeat', { n: HEAT.indexOf(h) });
 			buzz(d.km < 250 ? 20 : 8);
 			open(taps.length);
 			if (taps.length >= v.tries) setTimeout(finish, 450);
 		});
-		const close = onClose(el, () => g.restore());
+		const close = onClose(el, () => {
+			g.restore();
+			for (const l of trails) {
+				l.el.remove();
+				const at = app.ui.lines.indexOf(l);
+				if (at >= 0) app.ui.lines.splice(at, 1);
+			}
+		});
 		return {
 			lock() {
 				done = true;
@@ -245,17 +359,30 @@ export const ilavi = {
 					g.fx(v.hedef, 0.6, 1);
 					tag(app, `<b>${esc(t.name)}</b>`, t.x, t.z, 'big').el.style.setProperty('--tc', '#ffd25a');
 				}
-				// kadraj: gizli il ve bütün denemeler
+				// iz: her denemeden gizli ile kesik çizgi (denemenin ısı renginde); kart kapanınca kalkar
+				for (const id of taps) {
+					const j = BY_ID.get(id);
+					if (j == null || j === v.hedef) continue;
+					const e = document.createElement('i');
+					e.className = 'fl-line dn-trail';
+					e.style.borderTopColor = heat(between(j, v.hedef).km)[1];
+					app.ui.$.pins.insertBefore(e, app.ui.$.pins.firstChild);
+					const l = { el: e, a: { x: b.provinces[j].x, z: b.provinces[j].z }, b: { x: t.x, z: t.z } };
+					app.ui.lines.push(l);
+					trails.push(l);
+				}
+				if (!won) sfx(app, 'iaReveal');
+				// kadraj: gizli il ve bütün denemeler; alt pay geniş (damga ekranın altında: gizli il onun üstünde kalsın)
 				const list = [v.hedef, ...taps.map((id) => BY_ID.get(id))];
 				const bb = app.boundsOf(list);
 				const top = cardTop(el);
-				app.cam.fit({ x0: bb.x0 - 4, x1: bb.x1 + 4, z0: bb.z0 - 4, z1: bb.z1 + 3 }, { pitch: 1.0, pad: 1.15, top, dur: 0.9, arc: 3 });
+				app.cam.fit({ x0: bb.x0 - 4, x1: bb.x1 + 4, z0: bb.z0 - 4, z1: bb.z1 + Math.max(10, (bb.z1 - bb.z0) * 0.7) }, { pitch: 1.0, pad: 1.15, top, dur: 0.9, arc: 3 });
 				// sinematik son: genel bakıştan sonra kamera gizli ile alçalarak yaklaşır ve yavaşça etrafında döner
 				const tb = app.boundsOf([v.hedef]);
 				const size = Math.max(tb.x1 - tb.x0, tb.z1 - tb.z0);
 				setTimeout(() => {
 					if (!el.isConnected) return;
-					app.cam.shot(t.x, t.z, { dist: size * 2.1 + 9, pitch: 0.6, yaw: app.cam.yaw + 0.35, dur: 1.8, arc: 5, yawRate: 0.045, distRate: -0.015, decay: 0.2, lens: top / 2 });
+					app.cam.shot(t.x, t.z, { dist: size * 2.1 + 9, pitch: 0.6, yaw: app.cam.yaw + 0.35, dur: 1.8, arc: 5, yawRate: 0.045, distRate: -0.015, decay: 0.2, lens: top / 2 - (1 - top) * 0.24 });
 				}, 1100);
 				const meR = results.find((r) => r.p?.human);
 				if (meR) {
