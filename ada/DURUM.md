@@ -101,7 +101,7 @@ Kredi harcamadan maliyet sorgusuyla ölçüldü.
 - **Bağlandı (5 Kasım 2026).** Anahtar ortamda "Ağ gizli anahtarı" olarak duruyor. Ara sunucu (proxy) `api.meshy.ai` isteklerine kendisi ekliyor; Claude anahtarı görmüyor, istekte de anahtar yazılmıyor.
   - Bakiye: 1.094 kredi (1.000 aylık + 94 kalıcı). Aylık kredi 25 Kasım 2026'da yenileniyor.
   - Abonelik kredisi API'de geçiyor.
-  - `assets.meshy.ai` (model indirme adresi) hâlâ engelliydi; Ağ erişimi listesine eklenmesi gerekiyor.
+  - `assets.meshy.ai` (model indirme adresi) de açık. Adres kökü 403 veriyor; bu normal, dosyalar imzalı bağlantıyla iniyor.
   - Sohbete bir Meshy anahtarı yapıştırıldı; kullanıcıya iptal edip yenisini kullanması önerildi.
 - Bağlama yolu (sanat aşamasında):
   1. Kullanıcı Meshy API anahtarını ortam ayarlarına `MESHY_API_KEY` olarak ekler (Network secrets ya da ortam değişkeni). Anahtar asla sohbete yazılmaz.
