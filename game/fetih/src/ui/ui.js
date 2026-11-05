@@ -764,7 +764,7 @@ export class UI {
 				: who.map((p, k) => (k ? '<i class="vx">VS</i>' : '') + plate(p, '', '', who.length > 2 ? ranks.get(p.i) : 0)).join('');
 		const lbl = ctx.phase === 'altin' ? 'ALTIN SORU' : teams ? 'TAKIMLAR · HERKES CEVAPLIYOR' : ctx.phase === 'yayilma' ? 'YAYILMA · HERKES CEVAPLIYOR' : '';
 		const rule = ctx.predict ? `Tahmin et · +20` : !human ? 'İzliyorsun' : ctx.phase === 'altin' ? 'Altın soru' : tie ? 'Eşitlik bozma' : closest ? T.rule || 'En yakın kazanır' : '';
-		card.className = `fl-q${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}${T.cover && !map ? ' cover' : ''}`;
+		card.className = `fl-q t-${q.type}${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}${T.cover && !map ? ' cover' : ''}`;
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));
 		card.style.setProperty('--me', human ? avatarURL(this.look(human)) : 'none');
@@ -772,7 +772,7 @@ export class UI {
 		card.classList.toggle('qmid', qlen > 50 && qlen <= 80);
 		card.classList.toggle('qlong', qlen > 80);
 		card.innerHTML = `<div class="fl-qwho${duel ? ' duel' : teams ? ' teams' : ''}" style="--n:${who.length}"${lbl ? ` data-lb="${lbl}"` : ''}>${whoHTML}</div>
-			<div class="fl-qc">
+			<div class="fl-qc"${T.cover && !map ? ` data-cv="${esc(String(T.label || '').toLocaleUpperCase('tr-TR'))}"` : ''}>
 				<div class="fl-qhead"><span class="fl-cat"><span class="ci">${ico(cat.icon, { w: 2.6, c: cat.color })}</span><b>${esc(cat.name)}</b></span><span class="fl-type">${esc(
 					String(T.label || '').toLocaleUpperCase('tr-TR'),
 				)}</span>${rule ? `<span class="fl-rule">${esc(rule)}</span>` : ''}<span class="fl-clock"><b>${sec}</b></span></div>

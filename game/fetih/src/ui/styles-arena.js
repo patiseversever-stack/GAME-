@@ -640,4 +640,20 @@ export const CSS_ARENA = /* css */ `
 .fl-q .fl-pin-hint .fl-send:active{transform:translateY(2px);box-shadow:none}
 .fl-q .fl-pin-hint .fl-send:disabled{opacity:1;filter:none;color:rgba(255,255,255,.4);background:linear-gradient(#12151f,#12151f) padding-box,linear-gradient(90deg,rgba(255,255,255,.28),rgba(255,255,255,.28));
   clip-path:none;transform:skewX(-10deg);box-shadow:inset 0 0 0 1px rgba(255,255,255,.28)}
+
+/* ---------------------------------------------------------------- tam ekran kart (tip .cover ister: Göz Kararı, Halat, Mancınık)
+   üstte düello afişi, altında opak soru paneli; harita görünmez. Menü/durdur düğmelerinin bandında tipin adı (data-cv). */
+.fl-q.cover .fl-qc{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding-top:76px;
+  background:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1.5px) 0 0/15px 15px,
+    radial-gradient(130% 62% at 50% 0%,color-mix(in srgb,var(--cc) 34%,#0b0f22) 0%,#090c1b 52%,#05060d 100%)}
+.fl-q.cover .fl-qc::before{content:attr(data-cv);display:flex;align-items:center;gap:8px;position:absolute;inset:34px auto auto 50%;height:24px;padding:0;border-radius:0;opacity:1;transform:translateX(-50%);background:none;
+  font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.4),0 0 18px color-mix(in srgb,var(--cc) 70%,transparent);white-space:nowrap}
+.fl-q.cover .fl-qbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:10px}
+@media (max-height:700px){
+  .fl-q.cover .fl-qc{padding-top:54px}
+  .fl-q.cover .fl-qc::before{top:22px;font-size:17px;height:20px}
+  .fl-q.cover .fl-qtext{min-height:0;padding:6px 10px;font-size:15.5px;line-height:1.2}
+  .fl-q.cover .fl-tbar{margin:5px 2px 6px}
+  .fl-q.cover .fl-qbody{margin-top:6px}
+}
 `;

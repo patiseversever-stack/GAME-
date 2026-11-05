@@ -24,6 +24,7 @@ import { css, esc, shuffle, pCorrect, clamp, buzz } from './util.js';
 import { PLAYERS } from './timing.js';
 import { appOf, stamp, onOpen, onClose, rule, stampLater, sfx, DENEME_CSS } from './d_ortak.js';
 import { clock, setTimeout } from '../core/clock.js';
+import { sahneSVG, sahne, SAHNE_CSS, STEPS } from './d_halat_sahne.js';
 
 const len = (s) => [...String(s ?? '')].length;
 
@@ -35,12 +36,6 @@ export const LOCK = 0.9; // yanlış cevaptan sonra kilit (sn): 0,6 sn düzeltme
  * indirir (rastgele basmanın şans payı, yani varyansı küçülür).
  */
 export const gate = (it) => GAP + len(it.t) / 60 + (it.tf ? 0 : it.o.reduce((s, o) => s + len(o), 0) / 90);
-const STEPS = 7; // halatın görünen en uç adımı
-const SX = 15; // adım başına düğüm kayması (viewBox birimi)
-const CX = 180;
-const HY = 58; // ellerin yüksekliği
-
-
 /** Bir kaydı kurallarla yeniden oynat (sunucu da aynısını yapar). */
 export function tally(v, log, cap = (v.sec || 20) + 16) {
 	const n = v.items.length;
@@ -109,103 +104,12 @@ export function play(v, skill, R, mode = 'know') {
 	return log;
 }
 
-const CSS = /* css */ `
-.dn-ht{display:flex;flex-direction:column;gap:8px;user-select:none;-webkit-user-select:none}
-.dn-ht-arena{position:relative;height:112px;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#0e2150,#1a356c 70%,#20406e);border:2.5px solid rgba(255,255,255,.22);box-shadow:inset 0 -10px 22px rgba(0,0,0,.35)}
-.dn-ht-arena svg{position:absolute;inset:0;width:100%;height:100%}
-.dn-ht-dust{position:absolute;bottom:10px;width:26px;height:12px;border-radius:50%;background:radial-gradient(#e8d6b0,rgba(232,214,176,0));opacity:0;z-index:1;pointer-events:none}
-.dn-ht-dust.L{left:calc(3.5% + 30px);--dx:-4px}.dn-ht-dust.R{right:calc(3.5% + 30px);--dx:4px}
-.dn-ht-dust.on{animation:dnHtDust .5s ease-out}
-.dn-ht-cmd{position:absolute;bottom:14px;width:50px;transform-origin:50% 100%;transition:transform .18s ease-out;z-index:2}
-.dn-ht-cmd.L{left:3.5%}
-.dn-ht-cmd.R{right:3.5%}
-.dn-ht-cmd .fl-av{width:50px;height:50px;border-radius:14px;border:3px solid var(--pc,#fff);box-shadow:0 4px 0 rgba(0,0,0,.4)}
-.dn-ht-cmd.pull{animation:dnHtPullL .32s ease-out}
-.dn-ht-cmd.R.pull{animation-name:dnHtPullR}
-.dn-ht-cmd.slip{animation:dnHtSlipL .4s ease-out}
-.dn-ht-cmd.R.slip{animation-name:dnHtSlipR}
-.dn-ht-cmd.lost{animation:dnHtLostL .9s cubic-bezier(.5,0,.6,1) forwards}
-.dn-ht-cmd.R.lost{animation-name:dnHtLostR}
-.dn-ht-cmd.won{animation:dnHtWon .7s cubic-bezier(.3,1.6,.5,1) 2}
-.dn-ht-sc{position:absolute;top:6px;z-index:3;min-width:34px;padding:0 7px 1px;border-radius:10px;text-align:center;font-family:'Lilita One';font-size:17px;line-height:1.3;color:#fff;background:var(--pc,#555);border:2px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.35);transition:transform .15s}
-.dn-ht-sc.L{left:8px}.dn-ht-sc.R{right:8px}
-.dn-ht-sc.pop{transform:scale(1.3)}
-.dn-ht-sc small{font-family:'Fredoka';font-size:10px;font-weight:600;opacity:.9;margin-left:2px}
-.dn-ht-mid{position:absolute;left:50%;top:6px;transform:translateX(-50%);z-index:3;padding:1px 10px 2px;border-radius:9px;font-family:'Lilita One';font-size:13px;letter-spacing:.06em;white-space:nowrap;color:#ffe7a0;background:rgba(6,14,38,.75);border:1.5px solid rgba(255,210,90,.5)}
-.dn-ht.hot .dn-ht-mid{color:#fff;background:#c8352a;border-color:#fff;animation:dnHtBeat .5s ease-in-out infinite}
-.dn-ht-combo{position:absolute;top:30px;z-index:3;font-family:'Lilita One';font-size:15px;color:#ff9a3a;text-shadow:0 2px 0 rgba(0,0,0,.5);opacity:0;transform:scale(.6);transition:opacity .2s,transform .25s cubic-bezier(.3,1.6,.5,1)}
-.dn-ht-combo.L{left:10px}.dn-ht-combo.R{right:10px}
-.dn-ht-combo.on{opacity:1;transform:scale(1)}
-.dn-ht-q{position:relative;min-height:74px;display:grid;place-items:center;padding:16px 12px 8px;border-radius:16px;text-align:center;overflow:hidden;
-  background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06));border:2.5px solid rgba(255,255,255,.28);font-size:clamp(16px,calc(4.6 * var(--vw)),20px);line-height:1.22;font-weight:600;text-wrap:balance}
-.dn-ht-q>span{display:block;animation:dnHtIn .22s ease-out}
-.dn-ht-q>i{position:absolute;left:10px;top:4px;font-style:normal;font-family:'Lilita One';font-size:10.5px;letter-spacing:.12em;color:#9fc4ff}
-.dn-ht-q>u{position:absolute;right:10px;top:4px;text-decoration:none;font-family:'Lilita One';font-size:10.5px;letter-spacing:.08em;color:#9fc4ff}
-.dn-ht-q.ok{border-color:#7dff9a;box-shadow:0 0 0 3px rgba(125,255,154,.35)}
-.dn-ht-q.no{border-color:#ff6a5a;box-shadow:0 0 0 3px rgba(255,106,90,.35);animation:flq-shake .38s}
-.dn-ht-q .fix{display:block;margin-top:4px;font-size:13px;color:#ffb0a0}
-.dn-ht-a{position:relative}
-.dn-ht-a .fl-tf .fl-opt{min-height:64px;font-size:23px}
-.dn-ht-a .fl-tf .fl-opt::before{width:26px;height:26px}
-.dn-ht-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.dn-ht-g .fl-opt{min-height:52px;justify-content:center;text-align:center;padding:6px 8px 7px;font-size:clamp(14.5px,calc(4.1 * var(--vw)),17px)}
-.dn-ht-g.n3 .fl-opt:first-child{grid-column:1/3}
-.dn-ht-a .fl-opt.wait{pointer-events:none;opacity:.5;filter:saturate(.6)}
-.dn-ht-a .fl-opt.gone{opacity:.14;pointer-events:none}
-.dn-ht-a.lock .fl-opt{opacity:.35;pointer-events:none;filter:grayscale(.6)}
-.dn-ht-rd{position:absolute;left:8%;right:8%;top:-5px;height:3px;border-radius:2px;background:#9fc4ff;transform-origin:left;transform:scaleX(0);opacity:0}
-.dn-ht-a.read .dn-ht-rd{opacity:.8;animation:dnHtRd var(--gt) linear forwards}
-.dn-ht-lk{position:absolute;left:8%;right:8%;bottom:-6px;height:5px;border-radius:3px;background:#ff6a5a;transform-origin:left;transform:scaleX(0);opacity:0}
-.dn-ht-a.lock .dn-ht-lk{opacity:1;animation:dnHtLk var(--lk) linear forwards}
-.dn-ht.done .dn-ht-q,.dn-ht.done .dn-ht-a{display:none}
-.dn-ht-rows{display:none;flex-direction:column;gap:3px;font-size:12.5px;text-align:left}
-.dn-ht.done .dn-ht-rows{display:flex}
-.dn-ht-rows div{display:flex;gap:7px;align-items:center;padding:3px 8px;border-radius:8px;background:rgba(255,255,255,.06)}
-.dn-ht-rows div.n{background:rgba(255,80,60,.2)}
-.dn-ht-rows span:nth-child(2){min-width:0;overflow:hidden;text-overflow:clip;white-space:nowrap}
-.dn-ht-rows em{margin-left:auto;flex:none;font-style:normal;font-family:'Lilita One';opacity:.85}
-.dn-ht.hot .rope{animation:dnHtTaut .09s linear infinite}
-@keyframes dnHtIn{from{transform:translateY(12px) scale(.96)}}
-@keyframes dnHtDust{from{opacity:.85;transform:translateX(var(--dx)) scale(.4)}to{opacity:0;transform:translateX(calc(var(--dx) * 4)) scale(1.5)}}
-@keyframes dnHtRd{from{transform:scaleX(0)}to{transform:scaleX(1)}}
-@keyframes dnHtLk{from{transform:scaleX(1)}to{transform:scaleX(0)}}
-@keyframes dnHtPullL{40%{transform:translateX(-7px) rotate(-14deg)}}
-@keyframes dnHtPullR{40%{transform:translateX(7px) rotate(14deg)}}
-@keyframes dnHtSlipL{35%{transform:translateX(9px) rotate(10deg)}}
-@keyframes dnHtSlipR{35%{transform:translateX(-9px) rotate(-10deg)}}
-@keyframes dnHtLostL{30%{transform:translateX(20px) rotate(18deg)}to{transform:translateX(70px) rotate(80deg) translateY(10px);opacity:.75}}
-@keyframes dnHtLostR{30%{transform:translateX(-20px) rotate(-18deg)}to{transform:translateX(-70px) rotate(-80deg) translateY(10px);opacity:.75}}
-@keyframes dnHtWon{40%{transform:translateY(-12px) scale(1.12)}}
-@keyframes dnHtBeat{50%{transform:translateX(-50%) scale(1.1)}}
-@keyframes dnHtTaut{50%{transform:translateY(.7px)}}
-`;
-
-const ropeTex = (d) =>
-	`<path d="${d}" fill="none" stroke="#6a4420" stroke-width="7" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#d6a866" stroke-width="5" stroke-linecap="round"/><path d="${d}" fill="none" stroke="#8a5a2a" stroke-width="5" stroke-dasharray="2.2 3.2" stroke-linecap="butt"/><path d="${d}" fill="none" stroke="#fff3d0" stroke-width="1" opacity=".45" transform="translate(0,-1.4)"/>`;
-
-function arenaSVG(cL, cR) {
-	const marks = [];
-	for (let i = 1; i <= STEPS; i++) for (const s of [-1, 1]) marks.push(`<line x1="${CX + s * i * SX}" y1="98" x2="${CX + s * i * SX}" y2="${i % 3 === 0 ? 92 : 95}" stroke="#cfe0ff" stroke-opacity="${i % 3 === 0 ? 0.6 : 0.3}" stroke-width="1.2"/>`);
-	return `<svg viewBox="0 0 360 112" preserveAspectRatio="none" aria-hidden="true">
-		<defs><linearGradient id="dnHtG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5a3a1e"/><stop offset="1" stop-color="#2a1a0c"/></linearGradient></defs>
-		<path d="M0,74 C60,64 110,72 180,66 S300,62 360,72 L360,98 L0,98Z" fill="#14285a" opacity=".7"/>
-		<rect x="0" y="98" width="360" height="14" fill="url(#dnHtG)"/>
-		<rect x="0" y="98" width="${CX}" height="3" fill="${cL}" opacity=".8"/><rect x="${CX}" y="98" width="${CX}" height="3" fill="${cR}" opacity=".8"/>
-		<rect class="zone" x="${CX - 1}" y="30" width="2" height="68" fill="#ffd25a" opacity=".7"/>
-		<path d="M${CX},30 l12,4 -12,4z" fill="#ffd25a"/>
-		${marks.join('')}
-		<g class="rope"><g class="tails"></g><g class="main"></g>
-			<g fill="#f2c08a" stroke="#5a3214" stroke-width="1.4"><circle cx="66" cy="58" r="5"/><circle cx="58" cy="60" r="4.4"/><circle cx="294" cy="58" r="5"/><circle cx="302" cy="60" r="4.4"/></g>
-			<g class="knot"><path d="M-5,0 L-12,-9 L-9,0 L-12,9Z M5,0 L12,-9 L9,0 L12,9Z" fill="#e8343c" stroke="#fff" stroke-width="1.2" stroke-linejoin="round"/><circle r="5.5" fill="#e8343c" stroke="#fff" stroke-width="1.6"/><circle r="2" cx="-1.5" cy="-1.5" fill="#fff" opacity=".6"/></g>
-		</g>
-	</svg>`;
-}
-
 export const halat = {
 	time: 20,
 	label: 'Halat Çekme',
 	kind: 'closest',
 	keep: true,
+	cover: true, // tam ekran er meydanı (harita gizli)
 	jokers: ['yari'],
 	fmt: (v, value) => {
 		const s = tally(v, value?.log);
@@ -231,7 +135,7 @@ export const halat = {
 	},
 	mount(el, v, api) {
 		css('deneme', DENEME_CSS);
-		css('halat', CSS);
+		css('halat', SAHNE_CSS);
 		const app = appOf();
 		const m = app?.match;
 		const card = el.closest('.fl-q');
@@ -246,28 +150,23 @@ export const halat = {
 		while (who.length < 2) who.push({ i: -1, name: who.length ? 'Rakip' : 'Sen', color: who.length ? '#4a8cff' : '#e8343c', av: '<span class="fl-av"></span>', human: !who.length, steps: null, net: 0, ok: 0, j: 0, combo: 0 });
 		const meS = who.findIndex((w) => w.human);
 		const [L, Rt] = who;
+		const side = (w, cls) => `<div class="ht-side ${cls}" style="--pc:${w.color}">${w.av}<b>0</b></div>`;
 		el.innerHTML = `<div class="dn-ht">
-			<div class="dn-ht-arena">${arenaSVG(L.color, Rt.color)}
-				<div class="dn-ht-cmd L" style="--pc:${L.color}">${L.av}</div><div class="dn-ht-cmd R" style="--pc:${Rt.color}">${Rt.av}</div>
-				<b class="dn-ht-sc L" style="--pc:${L.color}">0</b><b class="dn-ht-sc R" style="--pc:${Rt.color}">0</b>
-				<i class="dn-ht-dust L"></i><i class="dn-ht-dust R"></i><span class="dn-ht-combo L"></span><span class="dn-ht-combo R"></span>
-				<span class="dn-ht-mid">HALAT ORTADA</span>
-			</div>
+			<div class="ht-hud">${side(L, 'L')}<div class="ht-meter"><span class="ht-mid">HALAT ORTADA</span><div class="ht-bar">${'<i></i>'.repeat(14)}</div></div>${side(Rt, 'R')}</div>
+			<div class="ht-sw"><div class="ht-arena">${sahneSVG(L.color, Rt.color)}<span class="ht-combo L"></span><span class="ht-combo R"></span><span class="ht-big"></span></div></div>
 			<div class="dn-ht-q"><i></i><u></u><span></span></div>
+			<div class="ht-dots"></div>
 			<div class="dn-ht-a"><i class="dn-ht-rd"></i><div class="dn-ht-btns"></div><i class="dn-ht-lk"></i></div>
 			<div class="dn-ht-rows"></div>
 		</div>`;
 		rule(el, 'Halatı kendine çek');
 		const root = el.querySelector('.dn-ht');
-		const svg = root.querySelector('svg');
-		const ropeMain = svg.querySelector('.main');
-		const ropeTails = svg.querySelector('.tails');
-		const knot = svg.querySelector('.knot');
-		const cmd = [root.querySelector('.dn-ht-cmd.L'), root.querySelector('.dn-ht-cmd.R')];
-		const sc = [root.querySelector('.dn-ht-sc.L'), root.querySelector('.dn-ht-sc.R')];
-		const dust = [root.querySelector('.dn-ht-dust.L'), root.querySelector('.dn-ht-dust.R')];
-		const combo = [root.querySelector('.dn-ht-combo.L'), root.querySelector('.dn-ht-combo.R')];
-		const mid = root.querySelector('.dn-ht-mid');
+		const sc = [root.querySelector('.ht-side.L b'), root.querySelector('.ht-side.R b')];
+		const combo = [root.querySelector('.ht-combo.L'), root.querySelector('.ht-combo.R')];
+		const mid = root.querySelector('.ht-mid');
+		const big = root.querySelector('.ht-big');
+		const segs = [...root.querySelectorAll('.ht-bar i')];
+		const dots = root.querySelector('.ht-dots');
 		const stage = root.querySelector('.dn-ht-q');
 		const sTxt = stage.querySelector('span');
 		const sKind = stage.querySelector('i');
@@ -276,28 +175,34 @@ export const halat = {
 		const btnHost = root.querySelector('.dn-ht-btns');
 		ans.style.setProperty('--lk', LOCK - GAP + 's');
 
-		// ---------------------------------------------------------------- halat (kare kare; durunca biter)
-		let kx = CX; // düğümün görünen yeri
-		let kv = 0;
-		let tension = 0; // çekişte 1'e sıçrar, söner
+		// ---------------------------------------------------------------- sahne (kare kare; durunca biter)
 		let alive = true;
 		let hot = false;
 		let t0 = null; // kart açıldı (sn)
 		let frozen = false;
 		const now = () => (t0 == null ? 0 : (clock.now() - t0) / 1000);
 		const pos = () => L.net - Rt.net; // + : sola (L) çekili
-		const restart = (e, cls) => {
-			e.classList.remove('pull', 'slip');
-			void e.offsetWidth;
-			e.classList.add(cls);
+		const sh = sahne(root, pos);
+		const sayBig = (txt, cls = '', ms = 900) => {
+			big.textContent = txt;
+			big.className = `ht-big on ${cls}`;
+			if (ms) setTimeout(() => big.classList.remove('on'), ms);
+		};
+		const meter = () => {
+			// 14 parça: ortadan önde olanın yanına doğru dolar
+			const p = Math.max(-STEPS, Math.min(STEPS, pos()));
+			const lead = p > 0 ? L : Rt;
+			root.style.setProperty('--lc', lead.color);
+			segs.forEach((e, i) => e.classList.toggle('on', p > 0 ? i >= 7 - p && i < 7 : p < 0 ? i >= 7 && i < 7 - p : false));
 		};
 		const midText = () => {
+			meter();
 			if (hot && !frozen) return;
 			const p = pos();
 			const lead = p === 0 ? null : p > 0 ? L : Rt;
 			mid.textContent = !lead ? 'HALAT ORTADA' : `${lead.human ? 'SEN' : lead.name.toLocaleUpperCase('tr-TR')} ÖNDE · ${Math.abs(p)}`;
 		};
-		/** Bir taraf çekti (dir: +1 kendine, −1 yanlış: halat kaydı). */
+		/** Bir taraf çekti (doğru) ya da kaydı (yanlış: halat rakibe kayar). */
 		const pull = (s, right) => {
 			const w = who[s];
 			w.net += right ? 1 : -1;
@@ -306,47 +211,19 @@ export const halat = {
 			sc[s].textContent = (w.net > 0 ? '+' : '') + w.net;
 			sc[s].classList.add('pop');
 			setTimeout(() => sc[s].classList.remove('pop'), 160);
-			combo[s].textContent = w.combo >= 3 ? `🔥 x${w.combo}` : '';
+			combo[s].textContent = w.combo >= 3 ? `SERİ ×${w.combo}` : '';
 			combo[s].classList.toggle('on', w.combo >= 3);
+			sh.pull(s, right, w.color);
 			if (right) {
-				restart(cmd[s], 'pull');
-				dust[s].classList.remove('on');
-				void dust[s].offsetWidth;
-				dust[s].classList.add('on');
-				restart(cmd[1 - s], 'slip');
-				tension = 1;
 				app?.cam?.impulse?.(s === meS ? 0.14 : 0.08);
+				if (w.combo === 3 || w.combo === 6) sayBig(w.combo === 6 ? 'DURDURULAMAZ!' : 'ALEV ALDI!', 'gold', 800);
 				if (s !== meS) {
 					sfx(app, 'whoosh');
 					if (meS >= 0) buzz(10);
 				}
-			} else {
-				restart(cmd[s], 'slip');
-				tension = 0.5;
 			}
 			midText();
 		};
-		const draw = () => {
-			const t = clock.now() / 1000;
-			const target = CX - clamp(pos(), -STEPS, STEPS) * SX;
-			// yay-sönüm: çekişte düğüm hızla kayar, hafifçe geri teper
-			kv += (target - kx) * 0.16;
-			kv *= 0.72;
-			kx += kv;
-			tension = Math.max(0, tension - 0.035);
-			const jit = hot && !frozen ? Math.sin(t * 46) * 0.9 : 0;
-			const sag = 7 - tension * 6.5 + jit;
-			const ky = HY + 1 + sag * 0.35;
-			const hl = 66 - (tension > 0.5 && pos() >= 0 ? 2 : 0);
-			const hr = 294;
-			ropeMain.innerHTML = ropeTex(`M${hl},${HY} Q${((hl + kx) / 2).toFixed(1)},${(HY + sag).toFixed(1)} ${kx.toFixed(1)},${ky.toFixed(1)} Q${((kx + hr) / 2).toFixed(1)},${(HY + sag).toFixed(1)} ${hr},${HY}`);
-			knot.setAttribute('transform', `translate(${kx.toFixed(1)},${ky.toFixed(1)}) rotate(${(kv * 2).toFixed(1)})`);
-			// komutanlar halatın gerginliğiyle geriye yaslanır; önde olan daha çok
-			const p = clamp(pos(), -STEPS, STEPS) / STEPS;
-			cmd[0].style.transform = `rotate(${(-6 - 6 * tension - 5 * p).toFixed(1)}deg)`;
-			cmd[1].style.transform = `rotate(${(6 + 6 * tension - 5 * p).toFixed(1)}deg)`;
-		};
-		ropeTails.innerHTML = ropeTex('M66,58 Q40,74 30,96 L8,98') + ropeTex('M294,58 Q320,74 330,96 L352,98');
 		const loop = () => {
 			if (!alive || !root.isConnected) return;
 			// bot taraflarının kaydı: kart açıldığından beri geçen süreye göre
@@ -361,14 +238,17 @@ export const halat = {
 				if (!hot && left <= 5 && left > 0) {
 					hot = true;
 					root.classList.add('hot');
+					sh.setHot(true);
 					mid.textContent = 'SON 5 SANİYE!';
+					sayBig('SON 5!', '', 900);
 					buzz(30);
 				}
 			}
-			draw();
+			sh.draw(clock.now() / 1000);
 			requestAnimationFrame(loop);
 		};
-		draw();
+		sh.draw(0);
+		meter();
 		requestAnimationFrame(loop);
 		onClose(el, () => (alive = false));
 
@@ -438,6 +318,7 @@ export const halat = {
 			for (const x of btnHost.querySelectorAll('.fl-opt')) if (x !== b) x.classList.add('wait');
 			const right = v.key ? v.key[k % n] === pick : null;
 			mine.push({ t: it.t, a: v.key ? it.o[v.key[k % n]] : '', right });
+			dots.innerHTML = mine.slice(-12).map((x) => `<i class="${x.right ? 'y' : x.right === false ? 'n' : ''}"></i>`).join('');
 			k++;
 			readyAt = t + (right === false ? LOCK - GAP : 0) + gate(v.items[k % n]);
 			if (right === null) {
@@ -494,25 +375,22 @@ export const halat = {
 					who[s].ok = tl.ok;
 					sc[s].textContent = (tl.net > 0 ? '+' : '') + tl.net;
 				}
-				tension = 1;
 				const order = results.slice().sort((a, b) => a.err - b.err || a.time - b.time);
 				const win = order[0];
 				const ws = who.findIndex((w) => w.i === win?.i);
 				const p = pos();
+				meter();
 				mid.textContent = p === 0 ? 'ORTADA · İSABET' : `${Math.abs(p)} ADIM`;
+				sh.setHot(false);
 				if (ws >= 0) {
 					setTimeout(() => {
-						cmd[ws].classList.remove('pull', 'slip');
-						cmd[1 - ws].classList.remove('pull', 'slip');
-						cmd[1 - ws].classList.add('lost');
-						cmd[ws].classList.add('won');
+						sh.finish(ws);
+						sayBig(p === 0 ? 'İSABET KAZANDI' : 'ÇAMURA!', 'gold', 1500);
 						app?.cam?.impulse?.(0.35);
 						sfx(app, 'cheer');
 						const fx = app?.ui?.fx;
-						if (fx) {
-							const r = cmd[ws].getBoundingClientRect();
-							fx.burst(r.left + r.width / 2, r.top + r.height / 2, { n: 18, dist: 90, colors: [who[ws].color, '#ffd25a', '#fff'], kind: 'star', size: 12, life: 800 });
-						}
+						const r = sc[ws].getBoundingClientRect();
+						if (fx) fx.burst(r.left + r.width / 2, r.top + r.height / 2, { n: 22, dist: 110, colors: [who[ws].color, '#ffd25a', '#fff'], kind: 'star', size: 12, life: 900 });
 					}, 350);
 				}
 				root.classList.add('done');

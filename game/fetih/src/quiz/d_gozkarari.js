@@ -93,38 +93,25 @@ const CSS = /* css */ `
 .gk-res .fl-chips{margin:0;flex-wrap:nowrap;justify-content:flex-end;gap:5px}
 @keyframes gkInfo{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 .dn-gk .fl-opts{margin-top:2px}
-/* ---------------------------------------------------------------- tam ekran (kart .cover): harita yok, görsel kalan yeri doldurur */
-.fl-q.cover .fl-qc{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding-top:76px;
-  background:radial-gradient(rgba(255,255,255,.045) 1px,transparent 1.5px) 0 0/15px 15px,
-    radial-gradient(130% 62% at 50% 0%,color-mix(in srgb,var(--cc) 34%,#0b0f22) 0%,#090c1b 52%,#05060d 100%)}
-.fl-q.cover .fl-qc::before{content:'G\\00D6Z KARARI';display:flex;align-items:center;gap:8px;position:absolute;inset:34px auto auto 50%;height:auto;padding:0 0 0 30px;border-radius:0;opacity:1;transform:translateX(-50%);
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1.6 12C4.2 7.2 7.9 4.8 12 4.8s7.8 2.4 10.4 7.2c-2.6 4.8-6.3 7.2-10.4 7.2S4.2 16.8 1.6 12z' fill='%23fff'/%3E%3Ccircle cx='12' cy='12' r='4.6' fill='%231a2650'/%3E%3Ccircle cx='12' cy='12' r='2.1' fill='%23ffd25a'/%3E%3C/svg%3E") 0 50%/24px no-repeat;
-  font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.4),0 0 18px color-mix(in srgb,var(--cc) 70%,transparent);white-space:nowrap}
-.fl-q.cover .fl-qbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:10px}
+/* ---------------------------------------------------------------- tam ekran (ortak düzen styles-arena.js .fl-q.cover; burada yalnız Göz Kararı) */
+.fl-q.t-gozkarari .fl-qc::before{padding-left:30px;background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M1.6 12C4.2 7.2 7.9 4.8 12 4.8s7.8 2.4 10.4 7.2c-2.6 4.8-6.3 7.2-10.4 7.2S4.2 16.8 1.6 12z' fill='%23fff'/%3E%3Ccircle cx='12' cy='12' r='4.6' fill='%231a2650'/%3E%3Ccircle cx='12' cy='12' r='2.1' fill='%23ffd25a'/%3E%3C/svg%3E") 0 50%/24px no-repeat}
 .fl-q.cover .dn-gk{flex:1 1 auto;min-height:0}
 .fl-q.cover .gk-sw{flex:1 1 auto;min-height:96px;container-type:size;padding:14px 0 4px}
 .fl-q.cover .gk-st{width:min(100cqw,133.3cqh);max-width:100%;margin:0}
-.fl-q.cover .fl-jk{display:none} /* bu tipte joker yok: çubuk da yer kaplamaz */
-/* şıklar hep iki sütun: uzun ad (Pachycephalosaurus) küçülerek sığar (fit.js), en çok iki satır */
-/* sütunlar ekrana kilitli (minmax 0): tek uzun kelime sütunu genişletip ekrandan taşırmaz; kelime bölünmez, küçülür */
-.fl-q.cover .fl-opts,.fl-q.cover .fl-opts.one{grid-template-columns:repeat(2,minmax(0,1fr))}
-.fl-q.cover .fl-opt{min-width:0}
-.fl-q.cover .fl-opt>span{flex:1 1 auto;min-width:0;overflow:hidden;overflow-wrap:normal;word-break:normal}
-/* son çare (320 px): küçülse de sığmayan tek kelime iki satıra bölünür */
-.fl-q.cover .fl-opt>span.fit-2{overflow-wrap:anywhere}
+.fl-q.t-gozkarari .fl-jk{display:none} /* bu tipte joker yok: çubuk da yer kaplamaz */
+/* şıklar hep iki sütun, ekrana kilitli (minmax 0): uzun ad küçülerek sığar (fit.js), son çare iki satır */
+.fl-q.t-gozkarari .fl-opts,.fl-q.t-gozkarari .fl-opts.one{grid-template-columns:repeat(2,minmax(0,1fr))}
+.fl-q.t-gozkarari .fl-opt{min-width:0}
+.fl-q.t-gozkarari .fl-opt>span{flex:1 1 auto;min-width:0;overflow:hidden;overflow-wrap:normal;word-break:normal}
+.fl-q.t-gozkarari .fl-opt>span.fit-2{overflow-wrap:anywhere}
 .dn-gk.rv .gk-hd .md{display:none}
-/* kısa ekran (≤ 700 px): bant, soru ve şıklar sıkışır; görsel yine kalan yeri alır */
 @media (max-height:700px){
-  .fl-q.cover .fl-qc{padding-top:54px}
-  .fl-q.cover .fl-qc::before{top:22px;font-size:17px;background-size:20px;padding-left:26px}
-  .fl-q.cover .fl-qtext{min-height:0;padding:6px 10px;font-size:15.5px;line-height:1.2}
-  .fl-q.cover .fl-tbar{margin:5px 2px 6px}
-  .fl-q.cover .fl-qbody{margin-top:6px}
+  .fl-q.t-gozkarari .fl-qc::before{background-size:20px;padding-left:26px}
   .fl-q.cover .gk-sw{padding:12px 0 2px;min-height:120px}
   .fl-q.cover .gk-hd .kn b{font-size:12px}
-  .fl-q.cover .fl-opts{gap:6px}
-  .fl-q.cover .fl-opt{min-height:38px}
-  .fl-q.cover .fl-opt span{font-size:14px;line-height:1.1}
+  .fl-q.t-gozkarari .fl-opts{gap:6px}
+  .fl-q.t-gozkarari .fl-opt{min-height:38px}
+  .fl-q.t-gozkarari .fl-opt span{font-size:14px;line-height:1.1}
   .fl-q.cover .gk-info{font-size:13px}
 }
 @media (prefers-reduced-motion:reduce){.gk-st,.gk-st.rv,.gk-cap,.gk-info{animation:none}.gk-st .ld{animation:none}}

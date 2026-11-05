@@ -19,56 +19,87 @@ import { setTimeout } from '../core/clock.js';
 const SLIDE = 2.2; // timing.js ACT.slide / ACT.step (orada dışa açık değil)
 const STEP = 0.45;
 
-// sahne (viewBox 360×150): yer çizgisi, mancınık, eksen
-const W = 360;
-const GY = 128; // yer
-const X0 = 84; // eksenin başı (min)
-const X1 = 346; // eksenin sonu (max)
-const PIV = { x: 42, y: 92 }; // kolun mili
-const ARM = 46;
-const WALL_H = 42;
+// sahne (viewBox 400×220): gece göğü, dağlar, alan; mancınık solda, eksen min→max sağa
+const W = 400;
+const H = 220;
+const GY = 188; // yer
+const X0 = 122; // eksenin başı (min)
+const X1 = 388; // eksenin sonu (max)
+const PIV = { x: 66, y: 138 }; // kolun mili
+const ARM = 52; // uzun kol (askı ucu)
+const SHORT = 17; // kısa kol (karşı ağırlık)
+const WALL_H = 52;
 
 const CSS = /* css */ `
-.dn-mc{display:flex;flex-direction:column;gap:8px;user-select:none;-webkit-user-select:none}
-.dn-mc-scene{position:relative;border-radius:16px;overflow:hidden;background:linear-gradient(180deg,#0b1a44 0%,#16306a 62%,#1d3b72 100%);border:2.5px solid rgba(255,255,255,.22);box-shadow:inset 0 -10px 24px rgba(0,0,0,.35)}
-.dn-mc-scene svg{display:block;width:100%;height:auto}
-.dn-mc-val{position:absolute;left:50%;top:6px;transform:translateX(-50%);display:flex;align-items:baseline;gap:5px;padding:1px 12px 3px;border-radius:12px;background:rgba(6,14,38,.72);border:2px solid rgba(255,210,90,.55);white-space:nowrap}
-.dn-mc-val b{font-family:'Lilita One';font-weight:400;font-size:30px;line-height:1.05;color:var(--gold);text-shadow:0 2px 0 #3a2000}
-.dn-mc-val small{font-size:14px;color:#fff;opacity:.9}
-.dn-mc-msg{position:absolute;left:50%;top:40%;transform:translate(-50%,-50%) scale(.6);font-family:'Lilita One';font-size:30px;letter-spacing:.03em;color:#fff;opacity:0;pointer-events:none;white-space:nowrap;
-  text-shadow:0 3px 0 rgba(0,0,0,.55),0 0 18px rgba(0,0,0,.5);transition:opacity .2s,transform .35s cubic-bezier(.3,1.7,.5,1)}
+.dn-mc{display:flex;flex-direction:column;gap:9px;min-height:0;user-select:none;-webkit-user-select:none}
+.fl-q.cover .dn-mc{flex:1 1 auto}
+.mc-sw{position:relative;flex:1 1 auto;min-height:150px;container-type:size}
+.fl-q:not(.cover) .mc-sw{flex:none;height:200px}
+.dn-mc-scene{position:absolute;inset:0;margin:auto;width:100%;height:min(100%,55cqw + 60px,360px);border-radius:18px;overflow:hidden;
+  background:radial-gradient(rgba(255,255,255,.55) .7px,transparent 1px) 0 0/31px 23px,#0b1640;box-shadow:0 0 0 2px rgba(255,255,255,.2),0 12px 28px rgba(0,0,0,.55)}
+.dn-mc-scene svg{position:absolute;inset:0;width:100%;height:100%}
+.dn-mc-val{position:absolute;left:50%;top:10px;z-index:2;transform:translateX(-50%);display:flex;align-items:center;gap:8px;padding:4px 14px 5px 8px;border-radius:14px;white-space:nowrap;
+  background:linear-gradient(180deg,#3a2410,#1a0e06);box-shadow:inset 0 0 0 2px #d9a23a,inset 0 0 0 4px #5a3a14,0 6px 14px rgba(0,0,0,.5)}
+.dn-mc-val i{flex:none;width:30px;height:30px;border-radius:50%;background:conic-gradient(from 225deg,#3ee07a 0,#ffd25a calc(var(--pw) * 135deg),#ff5a3a calc(var(--pw) * 270deg),rgba(255,255,255,.12) 0 270deg,transparent 0);
+  -webkit-mask:radial-gradient(circle,transparent 9px,#000 10px);mask:radial-gradient(circle,transparent 9px,#000 10px)}
+.dn-mc-val small.k{font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#d9a23a}
+.dn-mc-val b{font:italic 900 32px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffe27a;text-shadow:0 2px 0 #5a2a00,0 0 14px rgba(255,190,60,.5)}
+.dn-mc-val small.u{font-size:14px;color:#fff;opacity:.9}
+.dn-mc-msg{position:absolute;left:50%;top:42%;z-index:3;transform:translate(-50%,-50%) scale(.5);opacity:0;pointer-events:none;white-space:nowrap;text-align:center;
+  font:italic 900 40px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.03em;color:#fff;text-shadow:0 4px 0 rgba(0,0,0,.55),0 0 24px rgba(0,0,0,.6);transition:opacity .2s,transform .35s cubic-bezier(.3,1.7,.5,1)}
 .dn-mc-msg.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
-.dn-mc-msg.good{color:#7dff9a}.dn-mc-msg.gold{color:#ffd25a}.dn-mc-msg.bad{color:#ff6a5a}.dn-mc-msg.cold{color:#bfe3ff}
-.dn-mc-msg small{display:block;text-align:center;font-family:'Fredoka';font-weight:600;font-size:13px;letter-spacing:0;color:#fff;opacity:.9}
-.dn-mc .fl-range{height:34px}
+.dn-mc-msg.good{color:#7dff9a}.dn-mc-msg.gold{color:#ffd25a;text-shadow:0 4px 0 #7a4a00,0 0 30px rgba(255,210,90,.9)}.dn-mc-msg.bad{color:#ff6a5a;text-shadow:0 4px 0 #6a0a08,0 0 30px rgba(255,60,40,.8)}.dn-mc-msg.cold{color:#bfe3ff}
+.dn-mc-msg small{display:block;margin-top:5px;font:600 13px/1.2 'Fredoka',sans-serif;letter-spacing:0;color:#fff;opacity:.92}
+.dn-mc .fl-range{height:38px;-webkit-appearance:none;appearance:none;background:transparent}
+.dn-mc .fl-range::-webkit-slider-runnable-track{height:14px;border-radius:8px;background:linear-gradient(90deg,#2fbf5a,#ffd25a 55%,#ff5a3a);box-shadow:inset 0 0 0 2px rgba(0,0,0,.35),0 2px 0 rgba(0,0,0,.4)}
+.dn-mc .fl-range::-moz-range-track{height:14px;border-radius:8px;background:linear-gradient(90deg,#2fbf5a,#ffd25a 55%,#ff5a3a)}
+.dn-mc .fl-range::-webkit-slider-thumb{-webkit-appearance:none;width:34px;height:34px;margin-top:-10px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e8b06a,#9a5a22 60%,#5a3010);box-shadow:0 0 0 3px #2a1606,0 4px 8px rgba(0,0,0,.5),inset 0 -3px 0 rgba(0,0,0,.25)}
+.dn-mc .fl-range::-moz-range-thumb{width:30px;height:30px;border:3px solid #2a1606;border-radius:50%;background:radial-gradient(circle at 35% 30%,#e8b06a,#9a5a22 60%,#5a3010)}
 .dn-mc-row{display:flex;gap:6px}
-.dn-mc-row .fl-step{flex:1;min-width:0;padding:7px 4px 8px;font-size:16px}
-.dn-mc .fl-send{height:50px;padding:0 16px}
+.dn-mc-row .fl-step{flex:1;min-width:0;padding:8px 4px 9px;font:italic 800 17px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;color:#fff3d8;border:0;border-radius:10px;
+  background:linear-gradient(180deg,#8a5428,#5a3214);box-shadow:inset 0 0 0 2px #2a1606,inset 0 2px 0 rgba(255,255,255,.18),0 3px 0 #1a0c04}
+.dn-mc-row .fl-step:active{transform:translateY(2px);box-shadow:inset 0 0 0 2px #2a1606,0 1px 0 #1a0c04}
+.dn-mc .fl-send{height:54px;padding:0 16px;font:italic 900 26px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;color:#fff;border:0;border-radius:12px;
+  background:linear-gradient(180deg,#ffb23a,#ff5a1a 55%,#c8241a);box-shadow:inset 0 0 0 2px rgba(255,255,255,.5),0 5px 0 #6a0e08,0 0 22px rgba(255,110,40,.55);text-shadow:0 2px 0 rgba(0,0,0,.35);animation:mcGlow 1.4s ease-in-out infinite alternate}
 .dn-mc.sent .fl-range,.dn-mc.sent .dn-mc-row{opacity:.35;pointer-events:none}
-.dn-mc.sent .fl-send{opacity:.5;pointer-events:none}
+.dn-mc.sent .fl-send{opacity:.5;pointer-events:none;animation:none}
 .dn-mc.done .dn-mc-val{opacity:0;transition:opacity .4s}
 .dn-mc.done .fl-range,.dn-mc.done .dn-mc-row,.dn-mc.done .fl-send{display:none}
-.dn-mc .fog{animation:dnMcFog 6s ease-in-out infinite alternate}
-.dn-mc .fog2{animation-duration:8s;animation-direction:alternate-reverse}
-.dn-mc .fogs{transition:opacity 1s}
-.dn-mc .fogs.off{opacity:0}
-.dn-mc .wall{transition:transform .7s cubic-bezier(.3,1.5,.5,1),opacity .3s}
-.dn-mc .wall.hide{opacity:0;transform:translateY(${WALL_H + 6}px)}
-.dn-mc .wall.hit{animation:dnMcHit .4s}
-.dn-mc .arm{transition:transform .25s ease-out}
-.dn-mc .arm.fire{transition:transform .2s cubic-bezier(.6,0,.9,.4)}
+.dn-mc .fog{animation:dnMcFog 7s ease-in-out infinite alternate}
+.dn-mc .fog2{animation-duration:9s;animation-direction:alternate-reverse}
+.dn-mc .fogs{transition:opacity 1.2s,transform 1.6s ease-in}
+.dn-mc .fogs.off{opacity:0;transform:translateX(60px)}
+.dn-mc .wall{transition:transform .8s cubic-bezier(.3,1.4,.5,1),opacity .3s}
+.dn-mc .wall.hide{opacity:0;transform:translateY(${WALL_H + 12}px)}
+.dn-mc .wall.hit{animation:dnMcHit .45s}
 .dn-mc .pv{transition:opacity .2s}
 .dn-mc.sent .pv{opacity:0}
+.dn-mc .pvarc{animation:mcDash .8s linear infinite}
 .dn-mc .narrow{opacity:0;transition:opacity .3s}
 .dn-mc .narrow.on{opacity:1}
 .dn-mc .crowd{opacity:0;transition:opacity .3s}
 .dn-mc .crowd.on{opacity:1}
-.dn-mc .lt{font-family:'Lilita One';font-size:11px;paint-order:stroke;stroke:#0a1534;stroke-width:3px}
-.dn-mc .tk{font-family:'Fredoka';font-weight:600;font-size:9px;fill:#cfe0ff;opacity:.8}
-.dn-mc .dust{animation:dnMcDust .6s ease-out forwards}
-@keyframes dnMcFog{to{transform:translateX(-14px)}}
-@keyframes dnMcHit{30%{transform:translateX(3px)}60%{transform:translateX(-2px)}}
-@keyframes dnMcDust{from{opacity:.9;transform:scale(.3)}to{opacity:0;transform:scale(1.6)}}
+.dn-mc .lt{font:italic 900 13px 'Barlow Condensed','Lilita One',sans-serif;paint-order:stroke;stroke:#0a1534;stroke-width:3.4px}
+.dn-mc .tk{font:italic 800 10px 'Barlow Condensed',sans-serif;fill:#f4e4c4}
+.dn-mc .dust{animation:dnMcDust .7s ease-out forwards}
+.dn-mc .chunk{animation:mcChunk .9s cubic-bezier(.2,.6,.5,1) forwards}
+.dn-mc .flash{animation:mcFlash .45s ease-out forwards}
+.dn-mc .smk{animation:mcSmoke .9s ease-out forwards}
+.dn-mc .fire{animation:mcFlick .12s linear infinite alternate}
+.dn-mc .torch{animation:mcFlick .18s linear infinite alternate}
+.dn-mc .moon{filter:drop-shadow(0 0 10px rgba(255,240,200,.6))}
+.dn-mc .dust,.dn-mc .chunk,.dn-mc .flash,.dn-mc .smk,.dn-mc .fire,.dn-mc .torch{transform-box:fill-box;transform-origin:50% 50%}
+@keyframes dnMcFog{to{transform:translateX(-18px)}}
+@keyframes dnMcHit{25%{transform:translateX(4px)}55%{transform:translateX(-3px)}80%{transform:translateX(1px)}}
+@keyframes dnMcDust{from{opacity:.9;transform:scale(.3)}to{opacity:0;transform:scale(2)}}
+@keyframes mcChunk{0%{opacity:1;transform:translate(0,0)}100%{opacity:0;transform:translate(var(--dx),var(--dy))}}
+@keyframes mcFlash{from{opacity:.95;transform:scale(.4)}to{opacity:0;transform:scale(2.4)}}
+@keyframes mcSmoke{from{opacity:.55;transform:scale(.6)}to{opacity:0;transform:scale(2) translateY(-6px)}}
+@keyframes mcFlick{from{opacity:.75;transform:scale(.92)}to{opacity:1;transform:scale(1.08)}}
+@keyframes mcDash{to{stroke-dashoffset:-14}}
+@keyframes mcGlow{from{box-shadow:inset 0 0 0 2px rgba(255,255,255,.5),0 5px 0 #6a0e08,0 0 14px rgba(255,110,40,.4)}to{box-shadow:inset 0 0 0 2px rgba(255,255,255,.5),0 5px 0 #6a0e08,0 0 30px rgba(255,140,40,.85)}}
+@media (max-height:700px){.mc-sw{min-height:110px}.dn-mc .fl-send{height:44px;font-size:22px}.dn-mc-row .fl-step{padding:6px 4px 7px;font-size:15px}.dn-mc .fl-range{height:30px}}
+@media (prefers-reduced-motion:reduce){.dn-mc .fog,.dn-mc .pvarc,.dn-mc .fl-send,.dn-mc .torch{animation:none}}
 `;
 
 const fmtOf = (v) => (x) => (v.yil ? String(Math.round(x)) : Math.round(x).toLocaleString('tr-TR'));
@@ -86,8 +117,8 @@ const REL = (() => {
 /** Uçuş yayı (ikinci derece Bezier): yükseklik mesafeyle büyür, her zaman surun üstünden geçebilecek kadar. */
 function arc(ex) {
 	const f = (ex - REL.x) / (X1 - REL.x);
-	const cy = REL.y - 34 - 46 * f;
-	return { x0: REL.x, y0: REL.y, cx: (REL.x + ex) / 2 + 8, cy, x1: ex, y1: GY - 4 };
+	const cy = REL.y - 60 - 70 * f;
+	return { x0: REL.x, y0: REL.y, cx: (REL.x + ex) / 2 + 10, cy, x1: ex, y1: GY - 5 };
 }
 const at = (a, t) => ({ x: (1 - t) * (1 - t) * a.x0 + 2 * (1 - t) * t * a.cx + t * t * a.x1, y: (1 - t) * (1 - t) * a.y0 + 2 * (1 - t) * t * a.cy + t * t * a.y1 });
 const pathOf = (a) => `M${a.x0.toFixed(1)},${a.y0.toFixed(1)} Q${a.cx.toFixed(1)},${a.cy.toFixed(1)} ${a.x1.toFixed(1)},${a.y1.toFixed(1)}`;
@@ -107,75 +138,93 @@ function landX(v, value, wallX) {
 }
 
 const WOOD = '#a8662e';
-const WOOD_D = '#5a3214';
+const WOOD_D = '#4a2810';
+const WOOD_L = '#d08a4a';
+/** Kolun uç noktaları (açı derece; 0 = sağ, saat yönü artı). */
+const armEnds = (deg) => {
+	const a = (deg * Math.PI) / 180;
+	return { long: { x: PIV.x + Math.cos(a) * ARM, y: PIV.y + Math.sin(a) * ARM }, short: { x: PIV.x - Math.cos(a) * SHORT, y: PIV.y - Math.sin(a) * SHORT } };
+};
 function sceneSVG(v) {
 	const ticks = [0, 0.25, 0.5, 0.75, 1]
 		.map((f) => {
 			const x = X0 + f * (X1 - X0);
 			const val = v.q.min + f * (v.q.max - v.q.min);
-			return `<line x1="${x}" y1="${GY + 2}" x2="${x}" y2="${GY + 6}" stroke="#cfe0ff" stroke-opacity=".6" stroke-width="1.2"/><text class="tk" x="${x}" y="${GY + 16}" text-anchor="${f === 0 ? 'start' : f === 1 ? 'end' : 'middle'}">${esc(short(v, val))}</text>`;
+			return `<g><rect x="${x - 1.6}" y="${GY - 2}" width="3.2" height="12" rx="1" fill="#7a4a22" stroke="#2a1606" stroke-width=".8"/><rect x="${x - 1.6}" y="${GY - 2}" width="3.2" height="3" fill="#f4e4c4"/>
+				<text class="tk" x="${x}" y="${GY + 21}" text-anchor="${f === 0 ? 'start' : f === 1 ? 'end' : 'middle'}">${esc(short(v, val))}</text></g>`;
 		})
 		.join('');
-	const stars = Array.from({ length: 14 }, (_, i) => `<circle cx="${(i * 97) % 350 + 6}" cy="${(i * 53) % 52 + 6}" r="${i % 3 ? 0.8 : 1.2}" fill="#fff" opacity="${0.25 + (i % 4) * 0.12}"/>`).join('');
-	return `<svg viewBox="0 0 ${W} 150" aria-hidden="true">
+	const stars = Array.from({ length: 22 }, (_, i) => `<circle cx="${(i * 97) % 392 + 4}" cy="${(i * 53) % 84 + 4}" r="${i % 3 ? 0.7 : 1.2}" fill="#fff" opacity="${0.3 + (i % 4) * 0.15}"/>`).join('');
+	const wheel = (cx) => `<g transform="translate(${cx},${GY - 7})"><circle r="9.5" fill="${WOOD_D}"/><circle r="7.4" fill="${WOOD}"/><path d="M-7.4,0H7.4M0,-7.4V7.4M-5.2,-5.2L5.2,5.2M-5.2,5.2L5.2,-5.2" stroke="${WOOD_D}" stroke-width="1.4"/><circle r="2.2" fill="#c9a24a" stroke="${WOOD_D}" stroke-width=".8"/></g>`;
+	return `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="xMidYMax meet" aria-hidden="true">
 		<defs>
-			<linearGradient id="dnMcG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4a7a3a"/><stop offset="1" stop-color="#2a4a22"/></linearGradient>
-			<linearGradient id="dnMcS" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#d9d2c2"/><stop offset="1" stop-color="#8f8676"/></linearGradient>
-			<radialGradient id="dnMcR" cx=".35" cy=".35" r=".7"><stop offset="0" stop-color="#e8e2d6"/><stop offset="1" stop-color="#6d6458"/></radialGradient>
-			<filter id="dnMcB" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="5"/></filter>
+			<linearGradient id="mcSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0b1640"/><stop offset=".6" stop-color="#22306a"/><stop offset="1" stop-color="#4a3a6a"/></linearGradient>
+			<linearGradient id="mcG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f8a3a"/><stop offset="1" stop-color="#1f3f1a"/></linearGradient>
+			<linearGradient id="mcS" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#e4dccb"/><stop offset="1" stop-color="#8a8070"/></linearGradient>
+			<radialGradient id="mcR" cx=".35" cy=".35" r=".7"><stop offset="0" stop-color="#ece4d4"/><stop offset="1" stop-color="#5d554a"/></radialGradient>
+			<radialGradient id="mcF" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fffbe0"/><stop offset=".35" stop-color="#ffd24a"/><stop offset=".7" stop-color="#ff6a1a" stop-opacity=".85"/><stop offset="1" stop-color="#ff3a0a" stop-opacity="0"/></radialGradient>
+			<radialGradient id="mcMoon" cx=".4" cy=".4" r=".6"><stop offset="0" stop-color="#fffbe8"/><stop offset="1" stop-color="#e8dcb0"/></radialGradient>
+			<filter id="dnMcB" x="-30%" y="-60%" width="160%" height="220%"><feGaussianBlur stdDeviation="6"/></filter>
 		</defs>
+		<rect width="${W}" height="${H}" fill="url(#mcSky)"/>
 		${stars}
-		<path d="M0,${GY - 18} C40,${GY - 34} 90,${GY - 22} 130,${GY - 30} S220,${GY - 40} 260,${GY - 26} S330,${GY - 36} ${W},${GY - 24} L${W},${GY} L0,${GY}Z" fill="#14285a" opacity=".85"/>
-		<rect x="0" y="${GY}" width="${W}" height="${150 - GY}" fill="url(#dnMcG)"/>
-		<rect x="0" y="${GY}" width="${W}" height="2.5" fill="#7fb860" opacity=".7"/>
+		<g class="moon"><circle cx="322" cy="40" r="17" fill="url(#mcMoon)"/><circle cx="316" cy="36" r="3" fill="#d8cc9c" opacity=".6"/><circle cx="328" cy="46" r="2.2" fill="#d8cc9c" opacity=".5"/></g>
+		<path d="M0,132 L40,104 L72,122 L118,88 L160,116 L210,96 L250,120 L300,92 L340,114 L400,98 L400,${GY} L0,${GY}Z" fill="#1a2350" opacity=".9"/>
+		<path d="M262,100 l6,-10 h4 v-8 h3 v8 h6 v-6 h3 v6 h4 l6,10z M274,82 l2.5,-5 2.5,5z" fill="#141a3c"/>
+		<path d="M0,152 C50,136 100,150 150,140 S250,128 300,144 S370,134 400,140 L400,${GY} L0,${GY}Z" fill="#243a3a"/>
+		<rect x="0" y="${GY}" width="${W}" height="${H - GY}" fill="url(#mcG)"/>
+		<path d="M0,${GY} C80,${GY - 4} 160,${GY + 2} 260,${GY - 3} S360,${GY + 1} 400,${GY - 2} L400,${GY + 3} L0,${GY + 3}Z" fill="#7ac25a" opacity=".55"/>
+		${[[90, 0.8], [180, 1.2], [300, 0.9], [360, 1.1]].map(([x, k]) => `<ellipse cx="${x}" cy="${GY + 9}" rx="${6 * k}" ry="${2.4 * k}" fill="#5a5a50" opacity=".7"/>`).join('')}
 		<rect class="narrow" x="${X0}" y="${GY - 1}" width="0" height="5" rx="2.5" fill="#5ec8ff"/>
 		${ticks}
 		<g class="fogs">
-			<ellipse class="fog" cx="150" cy="${GY - 16}" rx="80" ry="22" fill="#cfe0ff" opacity=".2" filter="url(#dnMcB)"/>
-			<ellipse class="fog fog2" cx="250" cy="${GY - 22}" rx="90" ry="26" fill="#cfe0ff" opacity=".24" filter="url(#dnMcB)"/>
-			<ellipse class="fog" cx="320" cy="${GY - 12}" rx="60" ry="20" fill="#cfe0ff" opacity=".2" filter="url(#dnMcB)"/>
-			<text x="${(X0 + X1) / 2 + 20}" y="${GY - 20}" text-anchor="middle" font-family="Lilita One" font-size="13" fill="#e6efff" opacity=".55" letter-spacing="2">SUR SİSTE · AŞMA!</text>
+			<ellipse class="fog" cx="190" cy="${GY - 22}" rx="92" ry="28" fill="#cfe0ff" opacity=".22" filter="url(#dnMcB)"/>
+			<ellipse class="fog fog2" cx="290" cy="${GY - 30}" rx="104" ry="32" fill="#cfe0ff" opacity=".27" filter="url(#dnMcB)"/>
+			<ellipse class="fog" cx="360" cy="${GY - 16}" rx="70" ry="24" fill="#cfe0ff" opacity=".22" filter="url(#dnMcB)"/>
+			<g transform="translate(${(X0 + X1) / 2 + 30},${GY - 30})"><rect x="-58" y="-11" width="116" height="20" rx="3" fill="#5a3214" stroke="#2a1606" stroke-width="1.4"/><line x1="0" y1="9" x2="0" y2="30" stroke="#5a3214" stroke-width="3"/>
+				<text y="3.5" text-anchor="middle" font-family="'Barlow Condensed','Lilita One',sans-serif" font-style="italic" font-weight="900" font-size="12" fill="#ffe7a0" letter-spacing="1.6">SUR SİSTE · AŞMA!</text></g>
 		</g>
 		<g class="wall hide"></g>
-		<g class="pv"><path class="pvarc" d="" fill="none" stroke="#ffd25a" stroke-width="1.6" stroke-dasharray="3 4" stroke-linecap="round" opacity=".85"/>
-			<g class="pvmk"><line x1="0" y1="${GY - 20}" x2="0" y2="${GY}" stroke="#ffd25a" stroke-width="1.6"/><path d="M0,${GY - 20} l10,4 -10,4z" fill="#ffd25a"/><circle cx="0" cy="${GY}" r="3" fill="#ffd25a"/></g></g>
-		<g class="crowd"><line class="cl" x1="0" y1="${GY - 26}" x2="0" y2="${GY}" stroke="#c78bff" stroke-width="1.6" stroke-dasharray="2 2"/><text class="lt ct" x="0" y="${GY - 29}" text-anchor="middle" fill="#e2c8ff">seyirci</text></g>
+		<g class="pv"><path class="pvarc" d="" fill="none" stroke="#ffd25a" stroke-width="2" stroke-dasharray="3 4" stroke-linecap="round" opacity=".9"/>
+			<g class="pvmk"><circle cx="0" cy="${GY}" r="8" fill="none" stroke="#ffd25a" stroke-width="1.6"/><circle cx="0" cy="${GY}" r="3" fill="#ffd25a"/><path d="M-12,${GY}h6M6,${GY}h6M0,${GY - 12}v6" stroke="#ffd25a" stroke-width="1.6"/></g></g>
+		<g class="crowd"><line class="cl" x1="0" y1="${GY - 30}" x2="0" y2="${GY}" stroke="#c78bff" stroke-width="1.8" stroke-dasharray="3 2"/><text class="lt ct" x="0" y="${GY - 34}" text-anchor="middle" fill="#e2c8ff">seyirci</text></g>
 		<g class="stones"></g>
 		<g class="cat">
-			<ellipse cx="${PIV.x}" cy="${GY + 1}" rx="40" ry="4" fill="#000" opacity=".3"/>
-			<rect x="${PIV.x - 32}" y="${GY - 16}" width="64" height="8" rx="2" fill="${WOOD}" stroke="${WOOD_D}" stroke-width="1.5"/>
-			<path d="M${PIV.x - 14},${GY - 14} L${PIV.x},${PIV.y} L${PIV.x + 14},${GY - 14}" fill="none" stroke="${WOOD}" stroke-width="5" stroke-linejoin="round"/>
-			<path d="M${PIV.x - 14},${GY - 14} L${PIV.x},${PIV.y} L${PIV.x + 14},${GY - 14}" fill="none" stroke="${WOOD_D}" stroke-width="1.2" stroke-linejoin="round" opacity=".6"/>
-			<line x1="${PIV.x + 16}" y1="${GY - 14}" x2="${PIV.x + 24}" y2="${PIV.y + 6}" stroke="${WOOD}" stroke-width="3.5" stroke-linecap="round"/>
-			<rect x="${PIV.x + 20}" y="${PIV.y + 2}" width="10" height="5" rx="1.5" fill="#8a4a1a"/>
-			<g class="arm" style="transform-origin:${PIV.x}px ${PIV.y}px">
-				<line x1="${PIV.x - 10}" y1="${PIV.y}" x2="${PIV.x + ARM}" y2="${PIV.y}" stroke="${WOOD}" stroke-width="5" stroke-linecap="round"/>
-				<line x1="${PIV.x - 10}" y1="${PIV.y}" x2="${PIV.x + ARM}" y2="${PIV.y}" stroke="${WOOD_D}" stroke-width="1" opacity=".5"/>
-				<path d="M${PIV.x + ARM - 8},${PIV.y - 2} q8,10 16,0" fill="#6b3a16" stroke="${WOOD_D}" stroke-width="1.4"/>
-				<circle class="ammo" cx="${PIV.x + ARM}" cy="${PIV.y - 5}" r="5.2" fill="url(#dnMcR)" stroke="#3a342c" stroke-width="1"/>
-				<rect x="${PIV.x - 18}" y="${PIV.y - 6}" width="12" height="12" rx="2" fill="#5a5a66" stroke="#2a2a34" stroke-width="1.2"/>
-			</g>
-			<circle cx="${PIV.x}" cy="${PIV.y}" r="3.4" fill="#ffd25a" stroke="${WOOD_D}" stroke-width="1.2"/>
-			${[-22, 22].map((dx) => `<g transform="translate(${PIV.x + dx},${GY - 6})"><circle r="8.5" fill="${WOOD_D}"/><circle r="6.5" fill="${WOOD}"/><path d="M-6.5,0H6.5M0,-6.5V6.5" stroke="${WOOD_D}" stroke-width="1.6"/><circle r="2" fill="#ffd25a"/></g>`).join('')}
+			<ellipse cx="${PIV.x}" cy="${GY + 2}" rx="46" ry="5" fill="#000" opacity=".35"/>
+			<rect x="${PIV.x - 38}" y="${GY - 20}" width="76" height="9" rx="2" fill="${WOOD}" stroke="${WOOD_D}" stroke-width="1.6"/>
+			<rect x="${PIV.x - 38}" y="${GY - 20}" width="76" height="2.5" fill="${WOOD_L}" opacity=".6"/>
+			<path d="M${PIV.x - 26},${GY - 18} L${PIV.x - 2},${PIV.y} M${PIV.x + 26},${GY - 18} L${PIV.x + 2},${PIV.y}" stroke="${WOOD_D}" stroke-width="8" stroke-linecap="round"/>
+			<path d="M${PIV.x - 26},${GY - 18} L${PIV.x - 2},${PIV.y} M${PIV.x + 26},${GY - 18} L${PIV.x + 2},${PIV.y}" stroke="${WOOD}" stroke-width="5.4" stroke-linecap="round"/>
+			<path d="M${PIV.x - 16},${GY - 40} h32" stroke="${WOOD_D}" stroke-width="3.4" stroke-linecap="round"/>
+			<g class="cw"><path class="cwr" d="" stroke="#3a2a1a" stroke-width="1.4"/><g class="cwb"><rect x="-10" y="0" width="20" height="17" rx="2" fill="#5a4a3a" stroke="#1a120a" stroke-width="1.4"/><rect x="-10" y="0" width="20" height="5" fill="#7a6a5a"/>
+				<circle cx="-4.5" cy="10" r="2.6" fill="#8a8070"/><circle cx="3" cy="11.5" r="3" fill="#9a9080"/><circle cx="1" cy="6.5" r="2" fill="#7a7060"/></g></g>
+			<g class="arm"><line class="ab" x1="0" y1="0" x2="0" y2="0" stroke="${WOOD_D}" stroke-width="7" stroke-linecap="round"/><line class="af" x1="0" y1="0" x2="0" y2="0" stroke="${WOOD}" stroke-width="4.4" stroke-linecap="round"/>
+				<path class="sling" d="" fill="none" stroke="#c9a46a" stroke-width="1.3"/><g class="ammo"><circle r="6" fill="url(#mcR)" stroke="#2a241c" stroke-width="1"/><circle class="fire" r="9" fill="url(#mcF)" opacity="0"/></g></g>
+			<circle cx="${PIV.x}" cy="${PIV.y}" r="4" fill="#d9a23a" stroke="${WOOD_D}" stroke-width="1.4"/>
+			${wheel(PIV.x - 24)}${wheel(PIV.x + 24)}
 		</g>
 	</svg>`;
 }
 function wallSVG(v, wx) {
 	const top = GY - WALL_H;
+	const ww = 34;
 	const bricks = [];
-	for (let r = 0; r < 6; r++) {
-		const y = top + 6 + r * 6.4;
-		bricks.push(`<line x1="${wx - 12}" y1="${y}" x2="${wx + 12}" y2="${y}" stroke="#6a6154" stroke-width=".8"/>`);
-		for (let c = -1; c <= 1; c++) {
-			const x = wx + c * 8 + (r % 2 ? 4 : 0);
-			if (x > wx - 12 && x < wx + 12) bricks.push(`<line x1="${x}" y1="${y}" x2="${x}" y2="${y + 6.4}" stroke="#6a6154" stroke-width=".8"/>`);
+	for (let r = 0; r < 7; r++) {
+		const y = top + 7 + r * 6.6;
+		bricks.push(`<line x1="${wx - ww / 2}" y1="${y}" x2="${wx + ww / 2}" y2="${y}" stroke="#6a6154" stroke-width=".8"/>`);
+		for (let c = -2; c <= 2; c++) {
+			const x = wx + c * 9 + (r % 2 ? 4.5 : 0);
+			if (x > wx - ww / 2 + 1 && x < wx + ww / 2 - 1) bricks.push(`<line x1="${x}" y1="${y}" x2="${x}" y2="${y + 6.6}" stroke="#6a6154" stroke-width=".8"/>`);
 		}
 	}
-	const merl = [-12, -4, 4].map((dx) => `<rect x="${wx + dx}" y="${top - 6}" width="8" height="7" fill="url(#dnMcS)" stroke="#4a4338" stroke-width="1"/>`).join('');
-	return `<rect x="${wx - 12}" y="${top}" width="24" height="${WALL_H}" fill="url(#dnMcS)" stroke="#4a4338" stroke-width="1.4"/>${bricks.join('')}${merl}
-		<path d="M${wx - 4},${GY} v-10 a4,4 0 0 1 8,0 v10z" fill="#2a2018"/>
-		<line x1="${wx}" y1="${top - 6}" x2="${wx}" y2="${top - 24}" stroke="#d9d2c2" stroke-width="1.4"/><path d="M${wx},${top - 24} l13,4 -13,4z" fill="#e8343c"/>
-		<text class="lt" x="${wx}" y="${top - 28}" text-anchor="middle" fill="#7dff9a">${esc(fmtOf(v)(v.hedef))}</text>`;
+	const merl = [-17, -8.5, 0, 8.5].map((dx) => `<rect x="${wx + dx}" y="${top - 7}" width="8.5" height="8" fill="url(#mcS)" stroke="#4a4338" stroke-width="1"/>`).join('');
+	const torch = (x) => `<rect x="${x - 1.2}" y="${top + 14}" width="2.4" height="9" fill="#3a2a1a"/><path class="torch" d="M${x},${top + 4} q-4,6 0,10 q4,-4 0,-10z" fill="#ffb23a"/><circle cx="${x}" cy="${top + 11}" r="7" fill="#ffb23a" opacity=".22"/>`;
+	return `<ellipse cx="${wx}" cy="${GY + 1}" rx="${ww / 2 + 8}" ry="3.5" fill="#000" opacity=".35"/>
+		<rect x="${wx - ww / 2}" y="${top}" width="${ww}" height="${WALL_H}" fill="url(#mcS)" stroke="#4a4338" stroke-width="1.4"/>${bricks.join('')}${merl}
+		<path d="M${wx - 6},${GY} v-15 a6,6 0 0 1 12,0 v15z" fill="#2a2018" stroke="#1a120a" stroke-width="1"/>
+		${torch(wx - ww / 2 - 4)}${torch(wx + ww / 2 + 4)}
+		<line x1="${wx}" y1="${top - 7}" x2="${wx}" y2="${top - 30}" stroke="#d9d2c2" stroke-width="1.6"/><path d="M${wx},${top - 30} q9,-3 17,2 q-9,4 -17,9z" fill="#e8343c" stroke="#fff" stroke-width=".7"/>
+		<text class="lt" x="${wx}" y="${top - 35}" text-anchor="middle" fill="#7dff9a">${esc(fmtOf(v)(v.hedef))}</text>`;
 }
 
 export const mancinik = {
@@ -183,6 +232,7 @@ export const mancinik = {
 	label: 'Mancınık',
 	kind: 'closest',
 	keep: true,
+	cover: true, // tam ekran gece sahnesi (harita gizli)
 	jokers: ['yari', 'kahin'],
 	fmt: (v, value) => `${fmtOf(v)(Number(value))}${v.q.unit ? ' ' + v.q.unit : ''}`,
 	sub: (v, value) => {
@@ -209,7 +259,7 @@ export const mancinik = {
 		const fmt = fmtOf(v);
 		const mid = Math.round(q.min + (q.max - q.min) * 0.4);
 		el.innerHTML = `<div class="dn-mc">
-			<div class="dn-mc-scene">${sceneSVG(v)}<div class="dn-mc-val"><b data-r="val">${fmt(mid)}</b><small>${esc(q.unit || '')}</small></div><div class="dn-mc-msg"></div></div>
+			<div class="mc-sw"><div class="dn-mc-scene">${sceneSVG(v)}<div class="dn-mc-val"><i></i><small class="k">GÜÇ</small><b data-r="val">${fmt(mid)}</b><small class="u">${esc(q.unit || '')}</small></div><div class="dn-mc-msg"></div></div></div>
 			<input class="fl-range" type="range" min="${q.min}" max="${q.max}" step="1" value="${mid}" aria-label="mancınığın gücü">
 			<div class="dn-mc-row">
 				<button class="fl-step" data-d="${-S.big}">−${stepLabel(S.big)}</button><button class="fl-step" data-d="${-S.fine}">−${stepLabel(S.fine)}</button>
@@ -235,10 +285,47 @@ export const mancinik = {
 		let mine = null; // gönderilen değer
 		let myThrow = null; // kendi atışım: { known, landed, next }
 		const anims = new Set();
+		const ab = arm.querySelector('.ab');
+		const af = arm.querySelector('.af');
+		const sling = arm.querySelector('.sling');
+		const cwr = svg.querySelector('.cwr');
+		const cwb = svg.querySelector('.cwb');
+		const dial = root.querySelector('.dn-mc-val');
+		let armDeg = 160;
+		/** Kol açısı (derece; 180 sol): uzun kol, askı ve taş; kısa kolda asılı karşı ağırlık. */
+		const setArm = (deg, loaded = true) => {
+			armDeg = deg;
+			const { long, short } = armEnds(deg);
+			for (const l of [ab, af]) {
+				l.setAttribute('x1', short.x.toFixed(1));
+				l.setAttribute('y1', short.y.toFixed(1));
+				l.setAttribute('x2', long.x.toFixed(1));
+				l.setAttribute('y2', long.y.toFixed(1));
+			}
+			const sx = long.x + 3;
+			const sy = Math.min(GY - 8, long.y + 9);
+			sling.setAttribute('d', loaded ? `M${long.x.toFixed(1)},${long.y.toFixed(1)} Q${(sx - 4).toFixed(1)},${(sy + 2).toFixed(1)} ${sx.toFixed(1)},${sy.toFixed(1)}` : `M${long.x.toFixed(1)},${long.y.toFixed(1)} l6,10`);
+			ammo.setAttribute('transform', `translate(${sx.toFixed(1)},${sy.toFixed(1)})`);
+			cwr.setAttribute('d', `M${short.x.toFixed(1)},${short.y.toFixed(1)} v6`);
+			cwb.setAttribute('transform', `translate(${short.x.toFixed(1)},${(short.y + 6).toFixed(1)})`);
+		};
 		const pose = (x) => {
-			// kol gerilir: güç arttıkça kepçe yere iner (180° sola, 150° sol-aşağı)
+			// kol gerilir: güç arttıkça askı ucu yere iner, karşı ağırlık yükselir
 			const f = (x - q.min) / (q.max - q.min || 1);
-			arm.style.transform = `rotate(${(198 - 52 * f).toFixed(1)}deg)`;
+			setArm(168 - 34 * f);
+			dial.style.setProperty('--pw', f.toFixed(3));
+		};
+		/** Atış: karşı ağırlık düşer, kol öne savrulur (JS ara karesi; kutu kolla birlikte oynar). */
+		const swingArm = (ms = 260) => {
+			const from = armDeg;
+			const to = 282;
+			const a0 = performance.now();
+			const st = () => {
+				const k = Math.min(1, (performance.now() - a0) / ms);
+				setArm(from + (to - from) * k * k, k < 0.7);
+				if (k < 1) requestAnimationFrame(st);
+			};
+			requestAnimationFrame(st);
 		};
 		const set = (x) => {
 			x = Math.max(lo, Math.min(hi, Math.round(x)));
@@ -271,46 +358,67 @@ export const mancinik = {
 		};
 		const wallX = () => (v.hedef == null ? null : xOf(v, v.hedef));
 		/** Bir taşı at: renk, değer; bitince onLand(x). Kolu (yalnız kendi atışında) savurur. */
+		const NS = 'http://www.w3.org/2000/svg';
+		const mk = (tag, attrs, parent) => {
+			const e = document.createElementNS(NS, tag);
+			for (const [k, x] of Object.entries(attrs)) e.setAttribute(k, x);
+			parent.appendChild(e);
+			return e;
+		};
+		/** Çarpma: parlama, toprak parçaları, krater, işaret direği. */
+		const impact = (g, ex, color, label, big) => {
+			mk('ellipse', { cx: ex, cy: GY + 1, rx: big ? 11 : 8, ry: 2.6, fill: '#1a1208', opacity: '.75' }, g);
+			mk('circle', { class: 'flash', cx: ex, cy: GY - 6, r: big ? 13 : 10, fill: '#fff3b0' }, g);
+			for (let i = 0; i < (big ? 16 : 11); i++) {
+				const a = Math.PI * (0.1 + 0.8 * (i / (big ? 15 : 10)));
+				const c = mk('circle', { class: 'chunk', cx: ex, cy: GY - 3, r: (1.4 + (i % 3) * 0.8).toFixed(1), fill: i % 3 ? '#6a4a2a' : '#a07a4a' }, g);
+				c.style.setProperty('--dx', `${(Math.cos(a) * (14 + (i % 4) * 7) * (i % 2 ? 1 : -1)).toFixed(1)}px`);
+				c.style.setProperty('--dy', `${(-Math.sin(a) * (14 + (i % 5) * 6)).toFixed(1)}px`);
+			}
+			mk('circle', { class: 'dust', cx: ex, cy: GY - 4, r: 10, fill: '#e8dcc0' }, g);
+			g.insertAdjacentHTML('beforeend', `<line x1="${ex}" y1="${GY - 26}" x2="${ex}" y2="${GY}" stroke="${color}" stroke-width="2.2"/><path d="M${ex},${GY - 26} l12,4 -12,4z" fill="${color}"/>${label ? `<text class="lt" x="${ex}" y="${GY - 30}" text-anchor="middle" fill="${color}">${esc(label)}</text>` : ''}`);
+		};
+		/** Bir taşı at: renk, değer; bitince onLand(x). Kolu (yalnız kendi atışında) savurur. Taş alev alır, duman bırakır. */
 		const throwStone = (value, color, { swing = false, delay = 0, label = '', onLand } = {}) => {
 			const ex = landX(v, value, wallX());
 			const a = arc(ex);
-			const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
-			g.innerHTML = `<path d="${pathOf(a)}" fill="none" stroke="${color}" stroke-width="1.4" stroke-dasharray="2 3" opacity="0" class="trail"/><circle r="5.2" fill="url(#dnMcR)" stroke="${color}" stroke-width="2"/>`;
-			const ball = g.lastChild;
+			const g = document.createElementNS(NS, 'g');
+			g.innerHTML = `<path d="${pathOf(a)}" fill="none" stroke="${color}" stroke-width="1.4" stroke-dasharray="2 4" opacity="0" class="trail"/><g class="ball"><circle class="fire" r="11" fill="url(#mcF)"/><circle r="5.6" fill="url(#mcR)" stroke="${color}" stroke-width="1.8"/></g>`;
+			const ball = g.querySelector('.ball');
 			const trail = g.firstChild;
 			g.style.opacity = '0';
 			stones.appendChild(g);
 			const go = () => {
 				if (swing) {
-					arm.classList.add('fire');
-					arm.style.transform = 'rotate(282deg)';
-					ammo.style.opacity = '0';
+					swingArm();
+					setTimeout(() => ammo.setAttribute('opacity', '0'), 180);
 					sfx(app, 'catapult');
 					buzz(18);
 				} else sfx(app, 'whoosh');
-				const t0 = performance.now();
-				const dur = 700 + 450 * ((ex - REL.x) / (X1 - REL.x));
-				g.style.opacity = '1';
+				const t0 = performance.now() + (swing ? 180 : 0);
+				const dur = 850 + 550 * ((ex - REL.x) / (X1 - REL.x));
+				let lastSmoke = 0;
 				const step = () => {
 					if (!g.isConnected) return anims.delete(step);
-					const t = Math.min(1, (performance.now() - t0) / dur);
+					const nowT = performance.now();
+					if (nowT < t0) return requestAnimationFrame(step);
+					g.style.opacity = '1';
+					const t = Math.min(1, (nowT - t0) / dur);
 					const p = at(a, t);
-					ball.setAttribute('cx', p.x.toFixed(1));
-					ball.setAttribute('cy', p.y.toFixed(1));
-					ball.setAttribute('transform', `rotate(${(t * 540).toFixed(0)} ${p.x.toFixed(1)} ${p.y.toFixed(1)})`);
-					trail.setAttribute('opacity', String(Math.min(0.75, t * 2)));
-					trail.setAttribute('stroke-dashoffset', String(-t * 40));
+					ball.setAttribute('transform', `translate(${p.x.toFixed(1)},${p.y.toFixed(1)}) rotate(${(t * 720).toFixed(0)})`);
+					trail.setAttribute('opacity', String(Math.min(0.6, t * 2)));
+					if (nowT - lastSmoke > 45 && t < 0.98) {
+						lastSmoke = nowT;
+						const sm = mk('circle', { class: 'smk', cx: p.x.toFixed(1), cy: p.y.toFixed(1), r: (2.5 + Math.random() * 2).toFixed(1), fill: Math.random() < 0.3 ? '#ffb23a' : '#9aa0b8' }, g);
+						setTimeout(() => sm.remove(), 950);
+					}
 					if (t < 1) return requestAnimationFrame(step);
 					anims.delete(step);
-					// yere çarptı: toz, işaret
-					g.insertAdjacentHTML(
-						'beforeend',
-						`<circle class="dust" cx="${ex}" cy="${GY - 2}" r="9" fill="#e8dcc0" style="transform-origin:${ex}px ${GY - 2}px"/><line x1="${ex}" y1="${GY - 22}" x2="${ex}" y2="${GY}" stroke="${color}" stroke-width="2"/><path d="M${ex},${GY - 22} l11,4 -11,4z" fill="${color}"/>${
-							label ? `<text class="lt" x="${ex}" y="${GY - 26}" text-anchor="middle" fill="${color}">${esc(label)}</text>` : ''
-						}`,
-					);
-					ball.setAttribute('cy', String(GY - 4));
-					app?.cam?.impulse?.(0.08);
+					ball.remove();
+					const over = v.hedef != null && Number(value) > v.hedef;
+					impact(g, ex, color, label, swing);
+					app?.cam?.impulse?.(swing ? 0.16 : 0.08);
+					if (swing) buzz(over ? 40 : 25);
 					onLand?.(ex);
 				};
 				anims.add(step);
@@ -399,8 +507,7 @@ export const mancinik = {
 				} else setTimeout(() => msg.classList.remove('on'), 1400);
 				const list = results.filter((r) => r.value != null && !(keep && r.p?.human));
 				const rest = () => {
-					arm.classList.remove('fire');
-					arm.style.transform = 'rotate(170deg)';
+					setArm(282, false);
 					list.forEach((r, k) => throwStone(Number(r.value), r.color, { delay: 350 + k * 520, label: fmt(Number(r.value)) }));
 				};
 				if (keep && !myThrow.landed) myThrow.next = rest;
