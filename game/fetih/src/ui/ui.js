@@ -1547,7 +1547,8 @@ export class UI {
 		const cutY = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * SH - 8 : -1e9;
 		const boxes = this._stampBox ? [this._stampBox] : [];
 		const tags = P.filter((p) => p.w);
-		if (tags.length > 1) tags.sort((x, y) => (y.big ??= y.el.classList.contains('big')) - (x.big ??= x.el.classList.contains('big')));
+		for (const p of tags) p.big ??= p.el.classList.contains('big');
+		if (tags.length > 1) tags.sort((x, y) => y.big - x.big);
 		for (const p of tags) {
 			const w = p.w + 6;
 			const h = p.h + 5;
@@ -1593,6 +1594,8 @@ export class UI {
 						}
 				}
 			}
+			// cevabın büyük rozeti hiç gizlenmez: kartın altına giriyorsa kartın hemen altına iner
+			if (p.big && cutY > 0) oy = Math.max(oy, cutY + 2 - (p.sy - 6 - h));
 			p.lox = ox;
 			p.loy = oy;
 			p.bx = bx;
@@ -1608,7 +1611,7 @@ export class UI {
 				p.dx = (p.dx ?? p.lox) + (p.lox - (p.dx ?? p.lox)) * k;
 				p.dy = (p.dy ?? p.loy) + (p.loy - (p.dy ?? p.loy)) * k;
 				// haritalı soruda kartın altına giren yazı rozeti gizlenir (kartın üstüne binmesin)
-				const hide = p.sy + p.dy - 6 - (p.h || 0) < cutY;
+				const hide = !p.big && p.sy + p.dy - 6 - (p.h || 0) < cutY;
 				if (hide !== p.hid) {
 					p.hid = hide;
 					p.el.style.opacity = hide ? '0' : '';

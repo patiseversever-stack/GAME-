@@ -136,6 +136,9 @@ const CSS = /* css */ `
 .dn-ia-slots .sl.cur{border-bottom-color:#fff;background:rgba(255,255,255,.1)}
 .dn-ia-slots .sl.cur .km{animation:dnIaBlink 1s steps(2) infinite}
 /* haritada şok dalgası */
+.dn-tag.mini>div{gap:0;padding:1px 6px 2px}
+.dn-tag.mini b{display:none}
+.dn-tag.mini em{font-size:11.5px}
 .dn-tag.dn-rt>div{width:0;height:0;padding:0;border:0;background:none;box-shadow:none}
 .dn-ring{position:absolute;left:-60px;top:-60px;width:120px;height:120px;border-radius:50%;border:4px solid var(--hc);opacity:0;animation:dnIaRing 1s cubic-bezier(.2,.7,.3,1) forwards}
 .dn-ring+.dn-ring{animation-delay:.16s;border-width:2px}
@@ -275,6 +278,7 @@ export const ilavi = {
 			}, 1300);
 		};
 		const trails = [];
+		const tagsOn = []; // denemelerin harita rozetleri
 		const open = (k) => {
 			const h = hintEls[k];
 			if (!h || !h.classList.contains('lock')) return;
@@ -319,7 +323,14 @@ export const ilavi = {
 			gauge(d.km);
 			flash();
 			ring(p, h[1]);
-			tag(app, `<b>${esc(p.name)}</b><em>${d.km} km ${d.dir}</em>`, p.x, p.z).el.style.setProperty('--tc', h[1]);
+			// haritada yalnız son deneme tam rozet; öncekiler küçük km çipine iner (adlar karttaki tahtada)
+			for (const o of tagsOn) if (!o.el.classList.contains('mini')) {
+				o.el.classList.add('mini');
+				o.w = null; // arayüz yeniden ölçsün
+			}
+			const tg = tag(app, `<b>${esc(p.name)}</b><em>${d.km} km ${d.dir}</em>`, p.x, p.z);
+			tg.el.style.setProperty('--tc', h[1]);
+			tagsOn.push(tg);
 			pop(app, p.x, p.z, `${h[2]}!`, { colors: [h[1], '#fff'], n: d.km < 250 ? 14 : 6, dist: 46, cls: `dn ${d.km < 450 ? 'dn-hot' : 'dn-cold'}` });
 			sfx(app, 'iaHeat', { n: HEAT.indexOf(h) });
 			buzz(d.km < 250 ? 20 : 8);
@@ -352,6 +363,10 @@ export const ilavi = {
 				root.classList.add('done');
 				const t = b.provinces[v.hedef];
 				const won = taps.includes(t.id);
+				for (const o of tagsOn) if (!o.el.classList.contains('mini')) {
+					o.el.classList.add('mini');
+					o.w = null;
+				}
 				if (!won) {
 					lit.push(v.hedef);
 					g.dark(lit);
