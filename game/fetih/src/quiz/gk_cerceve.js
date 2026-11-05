@@ -14,7 +14,7 @@
 
 const W = 400;
 const H = 300;
-const M = 6; // gölge kutudan taşmasın diye küçük iç pay
+const M = 2; // gölge kutudan taşmasın diye küçük iç pay
 const f1 = (x) => Math.round(x * 10) / 10;
 
 function rand(seed) {
@@ -89,6 +89,8 @@ function ring([a, t, b, u], n, ph, k) {
 
 // her şekil: (R: tohumlu rastgele, b: [x0, y0, x1, y1] kesim kutusu) → SVG yolu
 const SHAPES = {
+	// düz: kesim yok, çerçeve yok; yalnız hafif yuvarlak köşeli görsel (kullanıcı kararı: şu an bütün sorular bunu kullanır)
+	duz: (R, [a, t, b, u]) => roundPoly([[a, t], [b, t], [b, u], [a, u]], 18),
 	// akışkan, organik leke: 9 nokta, yarıçapı tohumla dalgalanır
 	damla: (R, box) => smooth(ring(box, 9, R() * Math.PI * 2, () => 0.8 + R() * 0.14), 1.05),
 	egik: (R, [a, t, b, u]) => roundPoly([[a + 46, t], [b, t], [b - 46, u], [a, u]], 26),
@@ -193,8 +195,10 @@ export function hashStr(s) {
 }
 
 /** Soruya düşen kesim adı. */
+export const DUZ = true; // kullanıcı kararı (Kasım 2026): kesimsiz, çerçevesiz yerleşim; false olunca konu havuzları devreye girer
 export function frameOf(q) {
 	if (q.frame && SHAPES[q.frame]) return q.frame;
+	if (DUZ) return 'duz';
 	const pool = POOL[q.konu] || FRAMES;
 	return pool[hashStr(q.id || q.img || '') % pool.length];
 }
