@@ -907,6 +907,22 @@ export const SOUNDS = {
 		},
 	},
 
+	// ---------------------------------------------------------------- kimim ben
+	// yeni ipucu = değer düştü: kâğıt hışırtısı + kalan yıldıza göre inen iki nota ("jeton düştü"); n kalan değer (1..5)
+	kmDrop: {
+		prio: 1, cd: 0.3, max: 1, dur: 0.6, len: 0.65, tail: 0.5, peak: 0.5, intensity: 0,
+		variant: (o) => ({ n: clamp(o.n | 0, 1, 5) }),
+		all: () => [1, 2, 3, 4, 5].map((n) => ({ n })),
+		fn(e, t, o) {
+			const n = clamp(o.n | 0, 1, 5);
+			whoosh(e, t, 0.14, 0.07, 1800, 5000);
+			e.hit('woodTap', t + 0.03, 0.35, 1.2);
+			e.pluck('kanun', R(4 + n), t + 0.05, 0.3, -0.1);
+			e.pluck('kanun', R(2 + n), t + 0.14, 0.26, 0.1);
+			if (n <= 2) e.hit('rim', t + 0.05, 0.25, 0.9);
+		},
+	},
+
 	// ---------------------------------------------------------------- sonuç
 	win: {
 		prio: 3, cd: 1, max: 1, dur: 4.4, len: 4.3, tail: 1.4, peak: 0.95, wet: 1.6, duck: [0.6, 3.2, 1.2], music: ['victory', 2.6],

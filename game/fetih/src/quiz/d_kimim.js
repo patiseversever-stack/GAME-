@@ -34,19 +34,19 @@ const N = 5;
  * Görünüm CSS'te `.st-<tarz>` altında.
  */
 export const STYLES = {
-	ben: { head: '<b>🗣️ İL KONUŞUYOR</b><em>birinci ağızdan</em>', q: 'Bir il kendini anlatıyor. Kim bu?' },
+	ben: { head: '<b>İL KONUŞUYOR</b><em>birinci ağızdan</em>', q: 'Bir il kendini anlatıyor. Kim bu?' },
 	gunluk: { head: '<b>Yolcunun Günlüğü</b><em>defterden bir sayfa</em>', q: 'Bir yolcunun günlüğü: hangi ildeyiz?', pre: (k) => String(k + 1) },
 	manset: { head: '<b>FETİH POSTASI</b><em>SON DAKİKA · 81 İL BASKISI</em>', q: 'Bugünün manşetleri hangi ilden?' },
 	tarihci: { head: '<b>Tarihçinin Notları</b><em>arşivden, kenar notlarıyla</em>', q: 'Tarihçi hangi ili anlatıyor?', pre: (k) => '¹²³⁴⁵'[k] },
-	tarif: { head: '<b>👩‍🍳 Ustanın Tarifi</b><em>bir şehrin mutfağından</em>', q: 'Bu tarif hangi ilin mutfağından?', pre: (k) => String(k + 1) },
+	tarif: { head: '<b>Ustanın Tarifi</b><em>bir şehrin mutfağından</em>', q: 'Bu tarif hangi ilin mutfağından?', pre: (k) => String(k + 1) },
 	bilmece: { head: '<b>✦ Bilmece ✦</b><em>bil bakalım, ben kimim?</em>', q: 'Bilmecedeki il hangisi?' },
 	radyo: { head: '<b>FM 81.0</b><em>hava ve yol durumu · canlı</em>', q: 'Radyo hangi ilden yayında?' },
 	spiker: { head: '<b><i class="km-live">CANLI</i>MAÇ ANLATIMI</b><em>maç bu ilde oynanıyor</em>', q: 'Spiker hangi ilden anlatıyor?', pre: (k) => ["8'", "27'", "45+1'", "71'", "90'"][k] },
 	kartpostal: { head: '<b>Sevgili annecim,</b><em>buradan sevgiler!</em>', q: 'Kartpostal hangi ilden geldi?' },
-	emlak: { head: '<b>🏠 İLAN · SATILIK DEĞİL</b><em>sadece hava atıyoruz</em>', q: 'İlandaki il hangisi?', pre: () => '✓' },
+	emlak: { head: '<b>İLAN · SATILIK DEĞİL</b><em>sadece hava atıyoruz</em>', q: 'İlandaki il hangisi?', pre: () => '✓' },
 	mesaj: { head: '<b>Kuzenler</b><em>Selin yazıyor…</em>', q: 'Selin tatilde. Hangi ilde?', pre: (k) => ['14:02', '14:09', '14:15', '14:21', '14:30'][k], lock: 'typing' },
 	dedektif: { head: '<b>GİZLİ DOSYA № 81</b><em>şüpheli: bir il</em>', q: 'Şüpheli il hangisi?', pre: (k) => `KANIT ${k + 1}`, lock: 'redact' },
-	rehber: { head: '<b>🚩 Tur Rehberi</b><em>sayın misafirlerimiz…</em>', q: 'Rehber hangi ili gezdiriyor?' },
+	rehber: { head: '<b>Tur Rehberi</b><em>sayın misafirlerimiz…</em>', q: 'Rehber hangi ili gezdiriyor?' },
 	navigasyon: { head: '<b>➤ Navigasyon</b><em>rota oluşturuldu</em>', q: 'Navigasyon sizi hangi ile götürüyor?', pre: (k) => ['120 km', '40 km', '6 km', '800 m', 'VARDINIZ'][k] },
 	masal: { head: '<b>Masal</b><em>bir varmış, bir yokmuş…</em>', q: 'Masal hangi ilde geçiyor?' },
 };
@@ -176,7 +176,7 @@ const CSS = /* css */ `
 .st-rehber{--paper:linear-gradient(180deg,#fff6d6,#ffe9a6);--ink:#173a4a;--rule:rgba(23,58,74,.25);--hl:rgba(0,150,170,.2);background:linear-gradient(180deg,#fff6d6,#ffe9a6)}
 .st-rehber .km-hd b{color:#0f7d8c}
 .st-rehber .km-l{font-weight:600}
-.st-rehber .km-l span::before{content:'🎤 ';font-size:11px}
+.st-rehber .km-l span::before{content:'» ';color:#0f7d8c;font-weight:800}
 /* navigasyon */
 .st-navigasyon{--paper:#0b1726;--ink:#e8f2ff;--rule:rgba(57,160,255,.35);--lk:rgba(57,160,255,.12);--fuse:rgba(57,160,255,.5);--hl:rgba(57,160,255,.25);background:linear-gradient(180deg,#10223a,#0a1422)}
 .st-navigasyon .km-hd b{color:#39a0ff}
@@ -189,6 +189,53 @@ const CSS = /* css */ `
 .st-masal .km-hd b{font-size:19px;color:#7a2f72}
 .st-masal .km-l{font-size:16px;line-height:1.14}
 .st-masal .km-l:first-child.on span::first-letter{font-size:26px;line-height:.8;color:#7a2f72}
+/* v1.7 KİMİM ÇERÇEVESİ (Arena v1): kağıdın üstünde değer göstergesi. Solda "?" madalyonu, ortada 5 dilimli fitil (her
+   dilim bir sonraki ipucuna kadar erir), sağda ŞİMDİ BİLİRSEN ★n. İpucu açılınca yıldız düşer. Cevapta Türk plakası. */
+.km-wrap{display:flex;flex-direction:column;gap:8px}
+.km-hud{display:flex;align-items:center;gap:10px;min-height:42px}
+.km-hud .md{flex:none;width:38px;height:38px;display:grid;place-items:center;background:#fff;color:#0d1124;font:400 26px/1 'Lilita One',sans-serif;transform:skewX(-8deg);box-shadow:0 3px 0 rgba(0,0,0,.3)}
+.km-hud .md span{transform:skewX(8deg)}
+.km-hud .md.pulse{animation:kmMd .5s cubic-bezier(.3,1.8,.5,1)}
+.km-hud .fz{flex:1;min-width:0;display:flex;flex-direction:column;gap:5px}
+.km-hud .fz small{font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em;color:rgba(255,255,255,.6)}
+.km-hud .fz small b{color:#fff}
+.km-hud .sg{display:flex;gap:4px;height:10px}
+.km-hud .sg i{position:relative;flex:1;overflow:hidden;transform:skewX(-18deg);background:rgba(255,255,255,.12)}
+.km-hud .sg i::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,#ffd25a,#ffb020);transform-origin:0 50%}
+.km-hud .sg i.gone::after{transform:scaleX(0);transition:transform .25s}
+.km-hud .sg i.burn::after{animation:kmBurn var(--gap,3s) linear forwards}
+.km-hud .sg i.burn::before{content:'';position:absolute;top:-3px;bottom:-3px;width:6px;z-index:1;right:0;background:#fff;box-shadow:0 0 10px #ffd25a,0 0 4px #fff;animation:kmSpark var(--gap,3s) linear forwards;transform-origin:50% 50%}
+.fl-q.locked .km-hud .sg i.burn::after,.fl-q.locked .km-hud .sg i.burn::before{animation-play-state:paused}
+.km-hud .vl{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.km-hud .vl small{font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.18em;color:rgba(255,255,255,.55)}
+.km-hud .vl b{display:flex;align-items:center;gap:3px;font:400 26px/1 'Lilita One',sans-serif;color:#ffd25a;text-shadow:0 2px 0 rgba(0,0,0,.4)}
+.km-hud .vl b i{width:18px;height:18px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);background:#ffd25a}
+.km-hud .vl b.drop{animation:kmDrop .5s cubic-bezier(.3,1.6,.5,1)}
+.km-wrap.done .km-hud .sg i.burn::after,.km-wrap.done .km-hud .sg i.burn::before{animation:none}
+.km-wrap.done .km-hud .sg i.burn::before{display:none}
+.km-wrap.won .km-hud .md{background:#ffd25a;color:#1a1200}
+.km-wrap.lost .km-hud .md{background:#ff5a46;color:#fff}
+.dn-km .km-ft{display:none}
+.dn-km .km-l.typing mark::after{content:'▍';margin-left:1px;animation:kmType .5s steps(2) infinite;color:inherit;opacity:.7}
+/* cevap: Türk plakası + ad + bölge */
+.dn-km .km-ans{display:none;align-items:center;gap:10px;margin-top:8px;padding:7px 10px;border-radius:0;text-align:left;background:#0d1124;color:#fff;box-shadow:0 3px 0 rgba(0,0,0,.4);
+  clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%)}
+.dn-km.done .km-ans{display:flex;animation:kmAns .5s cubic-bezier(.3,1.5,.5,1)}
+.dn-km .km-ans .pl{flex:none;display:flex;align-items:stretch;height:30px;border:2px solid #111;border-radius:4px;background:#fff;overflow:hidden;box-shadow:0 2px 0 rgba(0,0,0,.4)}
+.dn-km .km-ans .pl i{width:13px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;background:#1f4fb4;color:#fff;font:700 7px/1 'Manrope',sans-serif;font-style:normal}
+.dn-km .km-ans .pl b{padding:0 8px;display:grid;place-items:center;font:700 19px/1 ui-monospace,'DejaVu Sans Mono',monospace;color:#111;letter-spacing:.04em}
+.dn-km .km-ans .nm{min-width:0;display:flex;flex-direction:column;gap:2px}
+.dn-km .km-ans .nm b{font:400 22px/1 'Lilita One',sans-serif;color:#ffd25a;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dn-km .km-ans .nm small{font:italic 800 10.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:rgba(255,255,255,.6);text-transform:uppercase}
+.dn-km .km-ans .st{margin-left:auto;display:flex;gap:2px}
+.dn-km .km-ans .st i{width:13px;height:13px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);background:#ffd25a}
+.dn-km .km-ans .st i.off{background:rgba(255,255,255,.16)}
+@keyframes kmBurn{from{transform:scaleX(1)}to{transform:scaleX(0)}}
+@keyframes kmSpark{from{right:0}to{right:calc(100% - 6px)}}
+@keyframes kmMd{50%{transform:skewX(-8deg) scale(1.2) rotate(-6deg)}}
+@keyframes kmDrop{0%{transform:translateY(-8px) scale(1.35);color:#fff}100%{transform:none}}
+@keyframes kmAns{from{opacity:0;transform:translateY(8px) scale(.94)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.km-hud .sg i.burn::before{display:none}}
 `;
 
 /** İpucu satırı (açık ya da kilitli). */
@@ -232,15 +279,20 @@ export const kimim = {
 		const app = appOf();
 		const st = STYLES[v.style] || STYLES.ben;
 		let shown = 1;
-		el.innerHTML = `<div class="dn-km st-${v.style}" style="--gap:${v.gap || GAP}s">
+		el.innerHTML = `<div class="km-wrap" style="--gap:${v.gap || GAP}s"><div class="km-hud"><span class="md"><span>?</span></span><div class="fz"><small>İPUCU <b>1</b>/${N} · FİTİL ERİYOR</small><div class="sg">${'<i></i>'.repeat(N)}</div></div><div class="vl"><small>ŞİMDİ BİLİRSEN</small><b><i></i><span>${N}</span></b></div></div><div class="dn-km st-${v.style}" style="--gap:${v.gap || GAP}s">
 			<div class="km-hd">${st.head}</div>
 			<div class="km-ls">${v.clues.map((_, k) => lineHTML(st, v, k, k < shown)).join('')}</div>
 			<div class="km-ft"><span class="km-n">İPUCU <b>1</b>/${N}</span><span class="km-st">${'<i></i>'.repeat(N)}</span><span class="km-tip">bildiğin an ile dokun</span></div>
 			<div class="km-ans"></div>
 			<div class="km-lock"><b>YANLIŞ İL!</b><span>${LOCK}</span></div>
-		</div>`;
+		</div></div>`;
 		rule(el, 'Erken bilen kazanır');
 		const root = el.querySelector('.dn-km');
+		const wrap = el.querySelector('.km-wrap');
+		const segs = [...wrap.querySelectorAll('.km-hud .sg i')];
+		const hudN = wrap.querySelector('.km-hud .fz small b');
+		const valEl = wrap.querySelector('.km-hud .vl b');
+		const md = wrap.querySelector('.km-hud .md');
 		const ls = root.querySelector('.km-ls');
 		const nEl = root.querySelector('.km-n b');
 		const stars = [...root.querySelectorAll('.km-st i')];
@@ -255,22 +307,71 @@ export const kimim = {
 			if (started && !done) ls.querySelector(`.km-l.lock[data-k="${shown}"]`)?.classList.add('next');
 			nEl.textContent = String(shown);
 			stars.forEach((s, k) => s.classList.toggle('off', k >= N - shown + 1));
+			// HUD: kalan değer = N − shown + 1 yıldız; sağdan sola dilimler söner, yanan dilim bir sonraki ipucuna kadar erir
+			const val = N - shown + 1;
+			hudN.textContent = String(shown);
+			const vs = valEl.querySelector('span');
+			if (vs.textContent !== String(val)) {
+				vs.textContent = String(val);
+				valEl.classList.remove('drop');
+				void valEl.offsetWidth;
+				valEl.classList.add('drop');
+			}
+			segs.forEach((s, k) => {
+				s.classList.toggle('gone', k >= val);
+				s.classList.toggle('burn', started && !done && k === val - 1 && shown < N);
+			});
 		};
 		const open = (k, fresh = true) => {
 			const cur = ls.querySelector(`.km-l[data-k="${k}"]`);
 			if (!cur || cur.classList.contains('on')) return;
 			if (!v.clues[k]) return; // çevrimiçi: metin sunucudan henüz gelmedi
 			cur.outerHTML = lineHTML(st, v, k, true);
-			if (fresh) ls.querySelector(`.km-l[data-k="${k}"]`)?.classList.add('fresh');
+			const line = ls.querySelector(`.km-l[data-k="${k}"]`);
+			if (fresh) line?.classList.add('fresh');
 			if (!done) shown = Math.max(shown, k + 1);
 			mark();
-			if (fresh && !done) sfx(app, 'tick');
+			if (fresh && !done) {
+				sfx(app, 'kmDrop', { n: N - shown + 1 });
+				md.classList.remove('pulse');
+				void md.offsetWidth;
+				md.classList.add('pulse');
+				// daktilo: metin ~0,6 sn'de yazılır (okumayı geciktirmez; satır yeri baştan ayrılmış)
+				const mk = line?.querySelector('mark');
+				const full = v.clues[k] || '';
+				if (mk && full.length > 4) {
+					line.classList.add('typing');
+					const step = Math.max(1, Math.ceil(full.length / 24));
+					let n = 0;
+					const tick = () => {
+						n = Math.min(full.length, n + step);
+						mk.textContent = full.slice(0, n);
+						if (n < full.length && !done) timers.push(setTimeout(tick, 24));
+						else {
+							mk.textContent = full;
+							line.classList.remove('typing');
+						}
+					};
+					mk.textContent = '';
+					tick();
+				}
+			}
 		};
+		// yazılmakta olan satırları tamamla (kilit ve bitişte daktilo zamanlayıcıları iptal edilir)
+		const typed = () =>
+			ls.querySelectorAll('.km-l.typing').forEach((l) => {
+				l.classList.remove('typing');
+				const mk = l.querySelector('mark');
+				if (mk) mk.textContent = v.clues[+l.dataset.k] || '';
+			});
 		const finish = () => {
 			if (done) return;
 			done = true;
 			for (const t of timers) clearTimeout(t);
 			root.classList.add('done');
+			wrap.classList.add('done');
+			typed();
+			mark();
 			api.answer({ taps: taps.slice(), at: shown - 1 });
 		};
 		const stopOpen = onOpen(el, () => {
@@ -283,6 +384,9 @@ export const kimim = {
 				done = true;
 				for (const t of timers) clearTimeout(t);
 				root.classList.add('done');
+				wrap.classList.add('done');
+				typed();
+				mark();
 			},
 			value: () => ({ taps: taps.slice(), at: shown - 1 }),
 			/** Çevrimiçi: sunucudan gelen ipucu. */
@@ -323,7 +427,10 @@ export const kimim = {
 				g.fx(i, 0.6, 1);
 				tag(app, `<b>${esc(p.name)}</b><em>✓</em>`, p.x, p.z, 'big').el.style.setProperty('--tc', '#7dff9a');
 				pop(app, p.x, p.z, `${shown}. İPUCUNDA!`, { colors: ['#ffd25a', '#7dff9a', '#fff'], n: 22 - shown * 2, dist: 90, cls: 'dn dn-gold' });
-				sfx(app, 'right');
+				wrap.classList.add('won');
+				md.querySelector('span').textContent = '✓';
+				sfx(app, 'right', { n: N - shown + 1 });
+				if (shown <= 2) sfx(app, 'fireworks', { delay: 0.2 });
 				buzz(14);
 				return finish();
 			}
@@ -354,7 +461,14 @@ export const kimim = {
 				ctlBase.lock();
 				for (let k = 0; k < N; k++) open(k, false);
 				const t = b.provinces[v.hedef];
-				root.querySelector('.km-ans').innerHTML = `<small>${REGION[t.region] || ''} · ${String(t.id).padStart(2, '0')}</small>${esc(t.name)}`;
+				const meV = results.find((r) => r.p?.human)?.value;
+				const rr = meV ? result(v, meV) : null;
+				const got = rr?.found ? N - rr.at : 0;
+				root.querySelector('.km-ans').innerHTML = `<span class="pl"><i>TR</i><b>${String(t.id).padStart(2, '0')}</b></span><span class="nm"><b>${esc(t.name)}</b><small>${esc(REGION[t.region] || '')} Bölgesi</small></span>${rr ? `<span class="st">${Array.from({ length: N }, (_, k) => `<i class="${k < got ? '' : 'off'}"></i>`).join('')}</span>` : ''}`;
+				if (!rr?.found) {
+					wrap.classList.add('lost');
+					md.querySelector('span').textContent = '!';
+				}
 				if (!lit.includes(v.hedef)) {
 					lit.push(v.hedef);
 					g.dark(lit);

@@ -1544,6 +1544,7 @@ export class UI {
 		// kenarı ve (haritalı soruda) kartın altı. Boş yer yoksa kendi yerinde kalır. Büyük rozet (cevap) önce yerleşir.
 		const SW = this.el.clientWidth || innerWidth;
 		const SH = this.el.clientHeight || innerHeight;
+		const nowT = performance.now();
 		const cutY = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * SH - 8 : -1e9;
 		const boxes = this._stampBox ? [this._stampBox] : [];
 		const tags = P.filter((p) => p.w);
@@ -1570,11 +1571,15 @@ export class UI {
 			};
 			let ox = 0;
 			let oy = 0;
-			if (!free(0, 0)) {
-				if (p.lox != null && (p.lox || p.loy) && free(p.lox, p.loy)) {
-					ox = p.lox;
-					oy = p.loy;
-				} else {
+			// yapışkanlık (zıplamasın): önceki yeri boşsa orada kalır; kendi yerine ancak orası 0,6 sn boş kalınca döner
+			const homeFree = free(0, 0);
+			p.homeT = homeFree ? (p.homeT ?? nowT) : null;
+			const stay = p.lox != null && (p.lox || p.loy) && free(p.lox, p.loy) && !(homeFree && nowT - p.homeT > 600);
+			if (stay) {
+				ox = p.lox;
+				oy = p.loy;
+			} else if (!homeFree) {
+				{
 					let found = false;
 					let bestC = cost(0, 0);
 					for (let k = 1; k <= 9 && !found; k++)
@@ -1602,7 +1607,6 @@ export class UI {
 			boxes.push(box(ox, oy));
 		}
 		// yumuşak geçiş süreye bağlı (~80 ms zaman sabiti): kare hızından bağımsız (30 fps'te de, yavaş cihazda da aynı)
-		const nowT = performance.now();
 		const kT = 1 - Math.exp(-Math.min(0.5, (nowT - (this._tagT || nowT)) / 1000) / 0.08);
 		this._tagT = nowT;
 		for (const p of P) {
@@ -1611,7 +1615,8 @@ export class UI {
 				p.dx = (p.dx ?? p.lox) + (p.lox - (p.dx ?? p.lox)) * k;
 				p.dy = (p.dy ?? p.loy) + (p.loy - (p.dy ?? p.loy)) * k;
 				// haritalı soruda kartın altına giren yazı rozeti gizlenir (kartın üstüne binmesin)
-				const hide = !p.big && p.sy + p.dy - 6 - (p.h || 0) < cutY;
+				const off = p.sx < -4 || p.sx > SW + 4 || p.sy < -4 || p.sy > SH + 4; // ait olduğu yer ekranın dışında
+				const hide = off || (!p.big && p.sy + p.dy - 6 - (p.h || 0) < cutY);
 				if (hide !== p.hid) {
 					p.hid = hide;
 					p.el.style.opacity = hide ? '0' : '';

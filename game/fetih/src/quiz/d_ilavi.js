@@ -142,7 +142,8 @@ const CSS = /* css */ `
 .dn-tag.dn-rt>div{width:0;height:0;padding:0;border:0;background:none;box-shadow:none}
 .dn-ring{position:absolute;left:-60px;top:-60px;width:120px;height:120px;border-radius:50%;border:4px solid var(--hc);opacity:0;animation:dnIaRing 1s cubic-bezier(.2,.7,.3,1) forwards}
 .dn-ring+.dn-ring{animation-delay:.16s;border-width:2px}
-.fl-line.dn-trail{border-top-width:3px;opacity:.95;filter:drop-shadow(0 0 4px rgba(0,0,0,.6))}
+.fl-line.dn-trail{border-top-width:3px;opacity:.95;filter:drop-shadow(0 0 4px rgba(0,0,0,.6));transition:opacity .5s}
+.fl-line.dn-trail.out{opacity:0}
 @keyframes dnIaSw{to{transform:rotate(360deg)}}
 @keyframes dnIaWin{50%{transform:scale(1.18)}}
 @keyframes dnIaFl{0%{opacity:.55}100%{opacity:0}}
@@ -397,6 +398,8 @@ export const ilavi = {
 				const size = Math.max(tb.x1 - tb.x0, tb.z1 - tb.z0);
 				setTimeout(() => {
 					if (!el.isConnected) return;
+					// yakın çekimde iz çizgileri söner (denemeler kadraj dışında kalır, çizgiler hedefte kesişip karışıyordu)
+					for (const l of trails) l.el.classList.add('out');
 					app.cam.shot(t.x, t.z, { dist: size * 2.1 + 9, pitch: 0.6, yaw: app.cam.yaw + 0.35, dur: 1.8, arc: 5, yawRate: 0.045, distRate: -0.015, decay: 0.2, lens: top / 2 - (1 - top) * 0.24 });
 				}, 1100);
 				const meR = results.find((r) => r.p?.human);
