@@ -41,6 +41,11 @@ Oyuncu kendi yarışmacısını oynar. Takım parkurları, kamp hayatı, ittifak
 - Hayatta kalma işleri: yemek, ateş, barınak. Enerjini ve takımın sana bakışını etkiler.
 - Gizli avantaj arama: bulabilirsin, ama yakalanırsan güven kaybedersin.
 - Hareket: kamp alanında serbest yürürsün, önemli konuşmalar sinematik sahneye döner.
+- Sohbet seçmeli diyalogla yapılır. Bota yaklaşırsın, 3-4 cevap seçeneği çıkar: dostça, kurnaz, dürüst, baskıcı. Bot kişiliğine ve hafızasına göre tepki verir.
+- İlişkiler kısmen görünür. Kimin sana yakın olduğunu kabaca görürsün (ısınma/soğuma), ama kimin kime oy vereceğini kesin bilemezsin.
+- İhanet duyum ve tanıkla ortaya çıkar. Biri seni görürse ya da başkası anlatırsa öğrenirler. Kampta kimin yakında olduğu önemli.
+- Oylar gizlidir. Eleme gecesinde oylar okunur ama kimin yazdığı gösterilmez.
+- Hayatta kalma işleri 20-30 saniyelik kısa mini oyunlardır: ateş yakmak, balık tutmak, barınak onarmak. İyi yaparsan takım seni sever.
 
 ## Gizli avantaj eşyaları
 Her sezon farklı eşyalar çıkar. Örnekler:
