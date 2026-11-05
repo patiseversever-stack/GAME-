@@ -558,7 +558,13 @@ export const sive = {
 };
 
 // ---------------------------------------------------------------- örnek sözler
-// 21 söz, yedi bölgeden üçer. Yazım ağzın telaffuzunu yansıtır; [köşeli] parça sözün anahtarı. Kaba, argo ya da bir
+// v1.7: 25 söz, yalnız GERÇEK ağız işaretiyle (ses değişimi, ek ya da yöreye özgü kelime; yemek adı tek başına değil).
+// Kaynaklar: Necati Demir ve Brendemoen (Trabzon), Aylin Çakır, TDK Türk Dünyası 47 (Ödemiş-Kiraz-Beydağ), Derleme
+// Sözlüğü (gari, bayak), Ş. H. Akalın, Adana'nın Söz Varlığı (essah, deppe), Antalya ağızları bibliyografyası, Konya
+// yerli ağzı şimdiki zaman (TDDED), Gemalmaz, Erzurum İli Ağızları, Ahmet Buran, Gakgo/Gakgoş (Elazığ; eskiden yanlışlıkla
+// Antep yazılmıştı), Daşdemir ve Efendioğlu (kartol), Günşen (Antep -IcI), Erten, Diyarbakır Ağzı, Eckmann, Edirne Ağzı,
+// Bayraktar, Aydamak. Elenenler (bölge ayırt etmiyor): ula, gardaş, kirve, süllüm, gadanı alım, abo, lo, yoh/çoh.
+// Eski not: 21 söz, yedi bölgeden üçer. Yazım ağzın telaffuzunu yansıtır; [köşeli] parça sözün anahtarı. Kaba, argo ya da bir
 // yöreyi küçümseyen ifade yok; karakter adları yöre ele vermez. Kaynaklar (her söz iki kaynak) commit raporunda:
 // TDK Güncel Türkçe Sözlük (yöresel işaretli maddeler), TDK Derleme Sözlüğü, Kültür ve Turizm Bakanlığı il
 // mutfağı sayfaları, Leyla Karahan "Anadolu Ağızlarının Sınıflandırılması" (TDK 1996).
@@ -574,32 +580,36 @@ const W = {
 };
 
 export const SIVE_SAMPLES = [
-	// Karadeniz
-	SV('dn-sv1', 1, 'karadeniz', [61, 53], '[Uşağum], gel da buraya!', [['uşak', 'çocuk'], ['da', 'haydi, pekiştirme']], 'Doğu Karadeniz’de çocuğa “uşak” denir; “-um” iyeliği de ağzın imzasıdır.', W.nine('Emine Nine', '#2f8a4a', '#4a7dd8')),
-	SV('dn-sv2', 1, 'karadeniz', [53, 61], '[Hemşo], çayi demledun mi?', [['hemşo', 'hemşerim']], 'Karadenizli birbirine “hemşo” diye seslenir; “çayi, demledun” yazımı ağzın ünlülerini taşır.', W.amca('Recep Amca', '#4a4f5e', '#1f8a8a')),
-	SV('dn-sv3', 2, 'karadeniz', [61, 53, 28, 8], '[Pancar] çorbasini koydum, soğumasun!', [['pancar', 'kara lahana']], 'Doğu Karadeniz’de “pancar” şeker pancarı değil, kara lahanadır; pancar çorbası kara lahana çorbası.', W.teyze('Hatice Teyze', '#7a3fa0', '#e0803a')),
-	// Ege
-	SV('dn-sv4', 1, 'ege', [48, 20, 9], '[Ula], n’aapıyon?', [['ula', 'arkadaşça seslenme'], ['n’aapıyon', 'ne yapıyorsun']], 'Muğla, Denizli ve Aydın’da “ula” sevecen bir seslenmedir; “-yon” Ege ağzının şimdiki zamanı.', W.genc('Mert', '#2a1a10', '#d8542a')),
-	SV('dn-sv5', 2, 'ege', [9, 35], '[Efem], böyle nereye gidiyon?', [['efe', 'zeybeklerin başı, yiğit']], 'Efe, Batı Anadolu’da zeybeklerin önderi; bugün yiğit, mert kişiye saygılı bir seslenme.', W.amca('Hüseyin Amca', '#2b2b2b', '#2f9b8a')),
-	SV('dn-sv6', 1, 'ege', [35], 'Bi [gevrek], bi [boyoz], bi de çay ver!', [['gevrek', 'simit'], ['boyoz', 'hamur işi']], 'İzmir’de simide “gevrek” denir; boyoz da İzmir kahvaltısının yağlı, kat kat hamur işidir.', W.abla('Deniz', '#5a3218', '#3a7bd5')),
-	// Marmara
-	SV('dn-sv7', 2, 'marmara', [22, 39, 59], '[Ayde bre], geç kalcaz!', [['ayde', 'haydi'], ['bre', 'seslenme']], 'Trakya’da, Rumeli göçmenlerinin ağzında “ayde” ve “bre” gündelik seslenmedir.', W.nine('Fatma Nine', '#d84a6a', '#6b5bd6')),
-	SV('dn-sv8', 2, 'marmara', [22, 39, 59], '[Kaşkavalı] da kes, sofra hazır!', [['kaşkaval', 'kaşar peyniri']], 'Trakya’da kaşar peynirine Balkanlardan gelen adıyla “kaşkaval” denir.', W.teyze('Ayten Teyze', '#e8a23a', '#3a8d6a')),
-	SV('dn-sv9', 3, 'marmara', [10, 16], 'Bi tabak [höşmerim] kap, sıcak sıcak!', [['höşmerim', 'peynir tatlısı']], 'Höşmerim, tuzsuz peynir, un ve şekerle yapılan bir tatlıdır; Balıkesir’in meşhur tatlısıdır.', W.usta('Tahsin Usta', '#c24a3a')),
-	// İç Anadolu
-	SV('dn-sv10', 2, 'icanadolu', [42], 'Hadi [gari], [etliekmek] soğuyo!', [['gari', 'artık'], ['etliekmek', 'kıymalı uzun pide']], 'Etliekmek Konya’nın kol boyu uzunluktaki pidesidir; “gari” Konya ağzında “artık”.', W.amca('Mustafa Amca', '#6b4a2a', '#c9a23a')),
-	SV('dn-sv11', 2, 'icanadolu', [38], 'Gız, bu [mantıyı] kim büktü? Kaşığa kırk tane sığıyo!', [['mantı', 'Kayseri mantısı']], 'Kayseri mantısı minicik bükülür; “bir kaşığa kırk tane sığmalı” diye övülür.', W.teyze('Nazmiye Teyze', '#3a6ad8', '#d65a7a')),
-	SV('dn-sv12', 2, 'icanadolu', [26], '[Çibörek] pişti, ağzını yakmadan ye!', [['çibörek', 'Tatar böreği']], 'Çibörek, Kırım Tatarlarının kıymalı, yarım ay biçimli kızarmış böreği; Eskişehir’in simgesidir.', W.abla('Gülsüm', '#20140c', '#7a5ad8')),
-	// Doğu Anadolu
-	SV('dn-sv13', 1, 'dogu', [25], '[Dadaş], ne [edirsen]?', [['dadaş', 'kardeş, delikanlı'], ['ne edirsen', 'ne yapıyorsun']], 'Erzurum ve çevresinde “dadaş” kardeş, delikanlı demektir; “-irsen” bu ağzın şimdiki zamanı.', W.kep('Ferhat', '#2c3e8a', '#1f6fb8')),
-	SV('dn-sv14', 2, 'dogu', [65], 'Bi [murtuğa] yap, kahvaltı edek!', [['murtuğa', 'tereyağında un ve yumurta']], 'Murtuğa, tereyağında kavrulan una yumurta katılarak yapılır; Van kahvaltısının yıldızıdır.', W.nine('Zeliha Nine', '#e0603a', '#3a5ab8')),
-	SV('dn-sv15', 2, 'dogu', [23, 44], '[Orcik] getirdim, cevizlisinden!', [['orcik', 'cevizli pestil sucuğu']], 'Orcik, cevizin üzüm pestiline batırılarak yapıldığı bir tatlıdır; Elazığ’ın meşhur tatlısıdır.', W.amca('İsmail Amca', '#3b3b4a', '#8a5ad0')),
-	// Güneydoğu Anadolu
-	SV('dn-sv16', 1, 'guneydogu', [27], '[Gakkoş], yuvalamayı [yidin] mi?', [['gakkoş', 'ağabey, kardeş'], ['yidin', 'yedin']], 'Gaziantep’te ağabeye ve yakın arkadaşa “gakkoş” denir; yuvalama da bayram sofrasının çorbası.', W.usta('Halil Usta', '#2a8a5a')),
-	SV('dn-sv17', 1, 'guneydogu', [63], 'Ağam, bi tutam [isot] at, acısı olsun!', [['isot', 'Urfa biberi']], 'İsot, güneşte ve gecede kararana dek kurutulan Urfa biberidir; Şanlıurfa mutfağının ruhudur.', W.amca('Mahmut Amca', '#7a1f1f', '#d88a2a')),
-	SV('dn-sv18', 3, 'guneydogu', [47, 72], '[Sembusek] fırından çıktı, gelin!', [['sembusek', 'kıymalı yarım ay hamur işi']], 'Sembusek, kıymayla doldurulup taş fırında pişirilen yarım ay biçimli hamur işidir; Mardin mutfağının simgesi.', W.abla('Leyla', '#1a120c', '#c24a6a')),
-	// Akdeniz
-	SV('dn-sv19', 1, 'akdeniz', [33], 'Bi [tantuni], bol limonlu olsun [gardaş]!', [['tantuni', 'sacda dana dürüm'], ['gardaş', 'kardeş']], 'Tantuni Mersin’in sacda pişen dürümüdür; “gardaş” k’nin g’ye döndüğü Anadolu ağzıyla kardeş.', W.genc('Cem', '#120c08', '#e04a3a')),
-	SV('dn-sv20', 2, 'akdeniz', [31], '[Oruk] yaptım, içi cevizli!', [['oruk', 'içli köfte']], 'Hatay’da içli köfteye “oruk” denir; uzun, ince biçimiyle tanınır.', W.teyze('Meryem Teyze', '#2a8ad8', '#d8a03a')),
-	SV('dn-sv21', 2, 'akdeniz', [1], 'Acılı [şalgam] olmadan kebap mı yenir hiç?', [['şalgam', 'mor havuç suyu']], 'Şalgam suyu mor havuç ve bulgurla mayalanır; Adana’nın kebap yanındaki vazgeçilmezidir.', W.amca('Cemil Amca', '#b8892a', '#3a9a5a')),
+	// Karadeniz: uşak (çocuk), iyelikte yuvarlaklaşma (-um), şimdiki zamanda -yrum, haçan (ne zaman)
+	SV('dn-sv1', 1, 'karadeniz', [61, 53], '[Uşağum], gel sofraya, çorba soğuyacak!', [['uşağum', 'çocuğum']], 'Karadeniz’de “uşak” çocuk demektir; Trabzon ağzında iyelik eki yuvarlaklaşır: uşağım > uşağum, evim > evum.', W.nine('Fadime Nine', '#2f8a4a', '#4a7dd8')),
+	SV('dn-sv2', 2, 'karadeniz', [61], 'Akşama hamsi [yapacaum], erken gel ha!', [['yapacaum', 'yapacağım']], 'Trabzon ağızlarında ünlüler yuvarlaklaşır: yapacağım > yapacaum, ettim > ettum, evim > evum.', W.abla('Cemile', '#2a1a10', '#d8542a')),
+	SV('dn-sv3', 2, 'karadeniz', [61], 'Az bekle, şimdi [celiyrum]!', [['celiyrum', 'geliyorum']], 'Trabzon’da Akçaabat’ın doğusunda şimdiki zaman ekinin o’su düşer, g de c olur: geliyorum > celiyrum.', W.amca('Hasan Amca', '#4a4f5e', '#1f8a8a')),
+	SV('dn-sv4', 3, 'karadeniz', [61, 53, 28], '[Haçan gelduk], kimse [yoğ idi]!', [['haçan gelduk', 'geldiğimizde'], ['yoğ idi', 'yoktu']], 'Haçan, Eski Türkçe “kaçan”dan gelir; Trabzon, Rize, Giresun ağızlarında “ne zaman, -dığı zaman” demektir.', W.amca('Rıfat Amca', '#3b3b4a', '#2f8a6a')),
+	// Ege: -yon (2. ve 1. kişi), gari (artık), -Ip dur- şimdiki zamanı
+	SV('dn-sv5', 1, 'ege', [35], 'Nereye [gidiyon] öyle, dur bi!', [['gidiyon', 'gidiyorsun']], 'İzmir’in Ödemiş, Kiraz, Beydağ ağızlarında şimdiki zamanın 2. tekil kişisi -(I)yon’dur: gidiyorsun > gidiyon.', W.amca('Ali Osman Amca', '#2b2b2b', '#2f9b8a')),
+	SV('dn-sv6', 2, 'ege', [9, 35, 20], '[Gari] eve gidelim, akşam oldu!', [['gari', 'artık']], 'Gari “artık, bundan böyle” demektir; Derleme Sözlüğü’ne Aydın, İzmir (Tire, Ödemiş, Bergama) ve Denizli’den derlenmiştir.', W.nine('Hatice Nine', '#d84a6a', '#3a7bd5')),
+	SV('dn-sv7', 2, 'ege', [9, 35, 48], 'Sabahtan beri ne [yapıp durun] öyle?', [['yapıp durun', 'yapıyorsun']], 'Ege ağızlarında şimdiki zaman “-Ip dur-” ile de kurulur: ne yapıyorsun > ne yapıp durun.', W.genc('Mehmet', '#2a1a10', '#e0803a')),
+	SV('dn-sv8', 3, 'ege', [35], 'Durun, ben de [geliyon], bekleyin!', [['geliyon', 'geliyorum']], 'Ödemiş-Kiraz-Beydağ ağzında 1. tekil kişide -m yanında -n de kullanılır: geliyorum > geliyon. Yani “geliyon” = geliyorum!', W.teyze('Emine Teyze', '#3a8d6a', '#5a3218')),
+	// Akdeniz: essah (gerçekten), Antalya buba/habar, deppe (bakır güğüm)
+	SV('dn-sv9', 2, 'akdeniz', [1, 33], '[Essah] mı? Bizim oğlan sınavı kazanmış!', [['essah', 'gerçekten mi']], 'Adana ağzında essah / esahtan “gerçek mi, gerçekten” demektir; Arapça “en doğru” anlamındaki esahh’tan gelir.', W.teyze('Gülizar Teyze', '#2a8ad8', '#d8a03a')),
+	SV('dn-sv10', 3, 'akdeniz', [7], '[Bubam] [habar] saldı, yaylaya çıkıyoz!', [['bubam', 'babam'], ['habar', 'haber']], 'Antalya ağızlarında baba > buba, haber > habar, asker > esker söylenişleri görülür; Yörük ağzının izidir.', W.nine('Fatma Nine', '#c2402a', '#3a9a7a')),
+	SV('dn-sv11', 3, 'akdeniz', [1], '[Deppe]yi doldur, tarlaya su götürelim!', [['deppe', 'bakır güğüm']], 'Adana ağızlarında deppe “bakırdan, kulplu, ağzı kapaklı güğüm” demektir; Arapça dabba’dan alınmıştır.', W.amca('Durmuş Amca', '#b8892a', '#3a9a5a')),
+	// İç Anadolu: bebe (Ankara), nörüyon (Yozgat, Kayseri), ne din / gı (Konya), bayaktan (Sivas, Yozgat)
+	SV('dn-sv12', 1, 'icanadolu', [6], '[La bebe], akşam Kızılay’da buluşuyoz!', [['bebe', 'delikanlı, arkadaş']], 'Ankara ağzının en ünlü kelimesi “bebe”dir: genç erkeğe, arkadaşa seslenmede “la bebe” denir.', W.genc('Cemal', '#120c08', '#e04a3a')),
+	SV('dn-sv13', 2, 'icanadolu', [66, 38], '[Nörüyon]? Çoktandır görünmüyon!', [['nörüyon', 'ne yapıyorsun']], 'Nörüyon “ne örüyorsun”, yani “ne iş görüyorsun, ne yapıyorsun” demektir; Yozgat ve Kayseri yöresinde yaygındır.', W.amca('Hüseyin Amca', '#6b4a2a', '#c9a23a')),
+	SV('dn-sv14', 2, 'icanadolu', [42], '[Ne din] [gı]? Ben öyle demedim!', [['ne din', 'ne diyorsun'], ['gı', 'kız']], 'Konya yerli ağzında şimdiki zaman yerine geniş zaman kullanılır: ne diyorsun > ne din; “gı” da “kız” seslenmesidir.', W.teyze('Hacer Teyze', '#3a6ad8', '#d65a7a')),
+	SV('dn-sv15', 3, 'icanadolu', [58, 66], '[Bayaktan] buradaydı, nereye kayboldu?', [['bayaktan', 'demin']], 'Bayak / bayaktan “demin, az önce” demektir; Derleme Sözlüğü’ne Sivas (Kangal, Gürün, Şarkışla) ve Yozgat’tan derlenmiştir.', W.usta('Ali Usta', '#c24a3a')),
+	// Doğu Anadolu: dadaş (Erzurum), gakgoş (Elazığ), -irsen (Erzurum, Kars), kartol (Kars, Erzurum)
+	SV('dn-sv16', 1, 'dogu', [25], '[Dadaş], hele otur, bir çay iç!', [['dadaş', 'kardeş, ağabey']], 'Dadaş Erzurum’da “ağabey, kardeş; yiğit delikanlı” demektir; Erzurumlular kendilerine de dadaş der.', W.amca('Ömer Amca', '#2c3e8a', '#1f6fb8')),
+	SV('dn-sv17', 1, 'dogu', [23], '[Gakgoş], gel otur yanıma!', [['gakgoş', 'kardeş']], 'Gakgo / gakgoş Elazığ’a özgüdür: “kardeş, ağabey” demektir, sondaki -ş sevgi bildirir. Antep değil, Elazığ!', W.genc('Ahmet', '#3b2414', '#8a5ad0')),
+	SV('dn-sv18', 2, 'dogu', [25, 36], 'Ne [diyirsen], bir daha söyle!', [['diyirsen', 'diyorsun']], 'Erzurum ve Kars ağızlarında şimdiki zaman eki -(y)ir’dir: diyirem (diyorum), diyirsen (diyorsun).', W.usta('Nuri Usta', '#2a6ad8')),
+	SV('dn-sv19', 3, 'dogu', [36, 25], 'Pazardan iki kilo [kartol] al gel!', [['kartol', 'patates']], 'Kartol, Rusça kartofel’den gelir; Kars, Erzurum ve Bayburt ağızlarında “patates” yerine kullanılır.', W.teyze('Sevim Teyze', '#e0603a', '#3a5ab8')),
+	// Güneydoğu: -IcI gelecek zaman (Antep), -i şimdiki zaman (Diyarbakır), -(I)y şimdiki zaman (Antep)
+	SV('dn-sv20', 2, 'guneydogu', [27], 'Dayın akşam [gelici], sofrayı kur!', [['gelici', 'gelecek']], 'Gaziantep ağzında gelecek zaman eki -IcI / -UcU’dur: gelecek > gelici, geleceğim > gelicim.', W.usta('Halil Usta', '#2a8a5a')),
+	SV('dn-sv21', 3, 'guneydogu', [21], 'Abin çarşıdan [geli], kapıyı aç!', [['geli', 'geliyor']], 'Diyarbakır merkez ağzında şimdiki zaman eki -i’dir: geliyor > geli. Çüngüş ve Çermik’te -iy biçimi kullanılır.', W.abla('Zeynep', '#1a120c', '#c24a6a')),
+	SV('dn-sv22', 2, 'guneydogu', [27], 'Bak, otobüs [geliy], koş yetiş!', [['geliy', 'geliyor']], 'Gaziantep ağzında şimdiki zaman -(I)y ekiyle kurulur: geliyor > geliy, gidiyor > gidiy.', W.amca('Mahmut Amca', '#7a1f1f', '#d88a2a')),
+	// Marmara (Trakya, Rumeli): ayde ve bre, söz sonunda ı/u > i, aydamak (sürmek)
+	SV('dn-sv23', 1, 'marmara', [22, 39, 59], '[Ayde] [bre], vapuru kaçıracağız!', [['ayde', 'haydi'], ['bre', 'be, hey']], 'Ayde (haydi) Balkan dilleriyle ortak Rumeli söyleyişidir; “bre” seslenmesiyle birlikte Trakya’da çok duyulur.', W.genc('Salih', '#2c3e8a', '#6b5bd6')),
+	SV('dn-sv24', 3, 'marmara', [22], 'Saat [alti] [oldi], nerde kaldın?', [['alti', 'altı'], ['oldi', 'oldu']], 'Edirne ağzında kelime sonundaki ı, u, ü i olur: altı > alti, oldu > oldi, köprü > köpri, buldu > buldi.', W.nine('Ayşe Nine', '#5a7ad8', '#b8403a')),
+	SV('dn-sv25', 3, 'marmara', [22, 39, 59], 'İnekleri sen [ayda], akşam [oldi]!', [['ayda', 'sür'], ['oldi', 'oldu']], 'Aydamak Trakya ağzında “hayvanları sürmek, sevk etmek”tir; ölçünlü dilde yoktur. “Oldi” de Edirne ağzının söyleyişi.', W.amca('Rıza Amca', '#4a3a2a', '#c94a6a')),
 ];
