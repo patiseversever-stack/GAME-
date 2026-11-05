@@ -36,6 +36,7 @@ import { targetDiff } from './progress.js';
 import { UIController, BotController, RemoteController, publicView, PROTOCOL } from './net.js';
 import { botLook } from './commanders.js';
 import { clock, setTimeout, clearTimeout } from '../core/clock.js';
+import { gkHazir, gkOnyukle } from '../quiz/d_gozkarari.js';
 
 export const MODES = {
 	'1v1': { players: 2, teams: null, label: "1'e 1" },
@@ -558,6 +559,8 @@ export class Match {
 
 	/** Soru bu maçta sorulabilir mi (havuzda değil, kardeşi sorulmamış, Kuşbakışı yapısı gömülü değil). */
 	askable(q) {
+		// Göz Kararı: görseller sayfanın yanında yoksa soru hiç çıkmaz (yedek çizim yok; KARARLAR v1.6)
+		if (q.type === 'gozkarari' && !gkHazir()) return false;
 		return !(q.src && this.used.has(q.src)) && kusbakisiUygun(q, this);
 	}
 
@@ -635,6 +638,7 @@ export class Match {
 		const base = this.targetDiffFor(who, cat);
 		const diff = clamp(base + egri(this.progressOf(), moment, first), 1, 3);
 		const q = this.pick({ cat: tie ? null : cat, types: [type], who, diff, moment });
+		if (q.type === 'gozkarari') gkOnyukle(q); // görsel VS girişi sırasında insin
 		// sayaçlar sorulan sorunun tipiyle (soru bulunamazsa havuz başka tipe düşebilir)
 		const t = q.type;
 		this.recent.push(t);

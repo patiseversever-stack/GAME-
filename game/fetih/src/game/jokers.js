@@ -183,6 +183,8 @@ export function support(id, T, v) {
 	const no = (why, na = true) => ({ ok: false, why, na });
 	const ok = { ok: true, why: '', na: false };
 	if (!T) return no('Soru yok', false);
+	// tipin hiç jokeri yoksa (Göz Kararı, KARARLAR v1.6: noJoker) süre, sabotaj, kalkan ve ikinci şans da kapalı
+	if (T.noJoker) return no('Bu soru tipinde joker yok');
 	// iki oyunculu canlı tur (Halat, Fitil: quiz/mac.js CANLI): tur ikisi için aynı saatte akar; süre, sabotaj ve ikinci
 	// şans uymaz (ikinci şans tek kişilik bir soru ister)
 	if (T.duo && (id === 'sure' || id === 'sabotaj' || id === 'ikinci')) return no('Canlı turda yok');
