@@ -21,6 +21,7 @@ import { clock } from '../core/clock.js';
 export const GK_BASE = 'gk/';
 const MODE = { blur: 'Netleşiyor', zoom: 'Uzaklaşıyor', sil: 'Siluet', detail: 'Ayrıntıdan bütüne' };
 const SPAN = 0.85; // puan ve görsel sürenin bu payında açılır
+const BLUR_K = 0.65; // bulanık kip SPAN'ın bu payında tam netleşir (kullanıcı: fotoğrafta netleşme biraz daha çabuk)
 
 // ---------------------------------------------------------------- görsellerin varlığı (tarayıcıda bir kez yoklanır)
 let OK = typeof Image === 'undefined' ? true : null; // node (sunucu, testler): karar istemcide
@@ -207,7 +208,11 @@ export const gozkarari = {
 		// kipin o andaki görünümü: bulanıklık (px), ölçek, odak
 		const view = (f) => {
 			const e = ease(clamp(f, 0, 1));
-			if (q.mode === 'blur') return { b: 26 * Math.pow(1 - e, 1.35), s: 1.04 - 0.04 * e, x: 0.5, y: 0.5 };
+			if (q.mode === 'blur') {
+				// netleşme puandan hızlı: sürenin ~%55'inde (20 sn'de ~11 sn) tam net; puan yine bütün aralıkta erir
+				const eb = ease(clamp(f / BLUR_K, 0, 1));
+				return { b: 24 * Math.pow(1 - eb, 1.35), s: 1.04 - 0.04 * eb, x: 0.5, y: 0.5 };
+			}
 			if (q.mode === 'zoom') return { b: 0, s: Math.exp(Math.log(5) * (1 - e)), x: f0[0], y: f0[1] };
 			if (q.mode === 'detail') return { b: 0, s: Math.exp(Math.log(6.5) * (1 - e)), x: f0[0] + (0.5 - f0[0]) * e, y: f0[1] + (0.5 - f0[1]) * e };
 			return { b: 0, s: 1, x: 0.5, y: 0.5 };
