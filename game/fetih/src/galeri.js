@@ -414,7 +414,7 @@ export async function galeri() {
 		extra[1].team = S.scene === 'esli' ? 1 : 3;
 		const clock = { extra: 0 };
 		// joker bağlamı (Match.ask ile aynı biçim): jokerler soruda gerçekten çalışır
-		m.cur = { q, v, T, who, clock, ctx, bots: [], used: new Map(who.map((p) => [p.i, new Set()])), second: new Set(), done: new Set(), boost: new Map(), delay: new Map(), timers: [], botUses: [], closed: false };
+		m.cur = { q, v, T, who, clock, clocks: new Map(who.map((p) => [p.i, p.human ? clock : { extra: 0 }])), ctx, bots: [], used: new Map(who.map((p) => [p.i, new Set()])), second: new Set(), done: new Set(), boost: new Map(), delay: new Map(), timers: [], botUses: [], closed: false };
 		const cur = m.cur;
 		cur.bots = who.filter((p) => p !== me).map((p) => ({ p, ...m.botAnswer(cur, p) }));
 		m.refreshJokers();

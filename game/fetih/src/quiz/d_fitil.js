@@ -380,13 +380,14 @@ const EMBERS = [
 ];
 
 // Bombanın çevre kutusu (120 birimlik SVG kutusunda, alt orta noktaya göre): gövde çemberi (atışta %7 büyür), fitil yolu ve
-// kıvılcım payı; iki yöne en eğik hali (TILT + devinimin taşması). fitArena koridoru bu ölçüyle paylaştırır.
+// kıvılcım parıltısı (30 birimlik kare, titreşimde 1,15 kat, bombayla eğik: kutusu ~20 birim yarıçap; fitil yandıkça yol
+// boyunca iner); iki yöne en eğik hali (TILT + devinimin taşması). fitArena koridoru bu ölçüyle paylaştırır.
 const TILT = 10;
 const FOOT = (() => {
 	const pts = [];
 	for (let a = 0; a < 24; a++) pts.push([60 + 44 * Math.cos((a / 24) * 2 * Math.PI), 74 + 44 * Math.sin((a / 24) * 2 * Math.PI)]);
 	for (const [x, y] of [[60, 30], [64, 16], [72, 9], [82, 10], [94, 14], [100, 22], [106, 24], [112, 18], [113, 12], [112, 6]])
-		for (let a = 0; a < 8; a++) pts.push([x + 9 * Math.cos((a / 8) * 2 * Math.PI), y + 9 * Math.sin((a / 8) * 2 * Math.PI)]);
+		for (let a = 0; a < 8; a++) pts.push([x + 20 * Math.cos((a / 8) * 2 * Math.PI), y + 20 * Math.sin((a / 8) * 2 * Math.PI)]);
 	pts.push([26, 114], [94, 114]);
 	const ext = (deg) => {
 		const r = (deg * Math.PI) / 180;
@@ -524,6 +525,10 @@ export const fitil = {
 			const lo = Lr + dx * OV - k * FOOT.a.lo;
 			const hi = Rl - dx * OV - k * FOOT.b.hi;
 			const cx = hi >= lo ? (lo + hi) / 2 : (Lr + Rl) / 2;
+			// boy değişince (yeniden ölçüm) bomba yeni yerine kaymadan oturur: eski yerinden süzülürken yeni portreye binmesin;
+			// yalnız topun yön değiştirmesi (--fs) devinimli
+			const snap = !!geo && (Math.abs(geo.cx - cx) > 0.5 || Math.abs(geo.dx - dx) > 0.5 || Math.abs(geo.k - k) > 0.004 || Math.abs(geo.floor - floor) > 0.5);
+			if (snap) ar.classList.add('nofx');
 			geo = { W, H, cx, dx, k, floor, Lr, Rl };
 			ar.style.setProperty('--bk', k.toFixed(3));
 			ar.style.setProperty('--bdx', dx.toFixed(1) + 'px');
@@ -532,6 +537,10 @@ export const fitil = {
 			ar.style.setProperty('--fl', (Lr - M + 2).toFixed(1) + 'px');
 			ar.style.setProperty('--fr', (W - Rl - M + 2).toFixed(1) + 'px');
 			spot();
+			if (snap) {
+				void ar.offsetWidth;
+				ar.classList.remove('nofx');
+			}
 		};
 		let fitRaf = 0;
 		const refit = () => {
