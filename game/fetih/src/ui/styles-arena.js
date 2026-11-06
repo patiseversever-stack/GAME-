@@ -90,9 +90,9 @@ export const CSS_ARENA = /* css */ `
 /* şık rozetleri v2 (onaylı taslak): cevapta seçilen şık boş kart olur, yazı görünmez ama yerini tutar (kutu boyu oynamaz),
    seçenlerin portreleri yazı alanının ortasında yan yana. Sığmazsa portreler birlikte küçülür: hiçbiri harfe, başka
    portreye ya da kutunun dışına taşmaz. Senin portren altın halkalı. */
-.fl-q .fl-opt.whod>span{position:relative;flex:1 1 auto;align-self:stretch;display:flex;align-items:center;visibility:hidden}
+.fl-q .fl-opt.whod>span:not(.fl-whos){position:relative;flex:1 1 auto;align-self:stretch;display:flex;align-items:center;visibility:hidden}
 .fl-q .fl-opt .fl-whos{position:absolute;inset:0;z-index:1;visibility:visible;display:flex;flex-direction:row;flex-wrap:nowrap;align-items:center;justify-content:center;gap:6px;pointer-events:none}
-.fl-q .fl-opt .fl-whos .fl-who{position:relative;inset:auto;margin:0;flex:0 1 auto;width:min(32px,calc((100% - (var(--wn,1) - 1) * 6px) / var(--wn,1)));height:auto;aspect-ratio:1;
+.fl-q .fl-opt .fl-whos .fl-who{box-sizing:border-box;position:relative;inset:auto;margin:0;flex:0 1 auto;width:min(32px,calc((100% - (var(--wn,1) - 1) * 6px) / var(--wn,1)));height:auto;aspect-ratio:1;
   border-radius:8px;border:2.5px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.3);transform:skewX(-6deg);overflow:hidden;animation:flPopIn .35s cubic-bezier(.3,1.8,.5,1) both}
 .fl-q .fl-opt .fl-whos .fl-who+.fl-who{animation-delay:.07s}
 .fl-q .fl-opt .fl-whos .fl-who+.fl-who+.fl-who{animation-delay:.14s}
@@ -504,7 +504,7 @@ export const CSS_ARENA = /* css */ `
 /* Doğru/Yanlış levhası: yazı kalkar, simgenin yanında aynı satırda portreler (levha alçak: alt satıra inen sıra kesiliyordu);
    yer yetmezse portreler birlikte küçülür */
 .fl-q .fl-tf.vd .fl-opt.whod{flex-wrap:nowrap}
-.fl-q .fl-tf.vd .fl-opt.whod>span{display:none}
+.fl-q .fl-tf.vd .fl-opt.whod>span:not(.fl-whos){display:none}
 .fl-q .fl-tf.vd .fl-opt .fl-whos{position:relative;inset:auto;flex:0 1 auto;min-width:0;gap:5px}
 .fl-q .fl-tf.vd .fl-opt .fl-whos .fl-who{margin:0;border-radius:50%;flex:0 1 32px;width:32px;min-width:0;height:auto;aspect-ratio:1}
 .fl-q .fl-tf.vd .fl-opt.dim .fl-whos .fl-who{flex-basis:26px;width:26px}
