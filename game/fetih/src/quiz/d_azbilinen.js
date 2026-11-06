@@ -94,6 +94,9 @@ const CSS = /* css */ `
    sıkışıyor, damga o anki yerleşime göre konuyor; küçültme gelince afiş açılıp her şey 24 px aşağı kayıyor, damga
    başlıktaki yazının üstünde kalıyordu (asıl düzeltme ortak: styles-arena .fl-qwho{flex:none}) */
 .fl-q.cover.t-azbilinen .fl-qwho{flex:none}
+/* soru yazısı daralmaz: uzun listenin (31 seçenek) esnek boyu kart sütununu taşırınca soru kutusu sıkışıp son satırı arama
+   kutusunun altına giriyordu (1280×720 çerçevesi, 4 satırlık soru); sıkışmayı gövde alır, liste kendi içinde kayar */
+.fl-q.cover.t-azbilinen .fl-qtext{flex:none}
 @media (max-height:720px){
   .fl-q.cover.t-azbilinen.rv .fl-rule{display:none}
   .dn-ab{gap:7px}
