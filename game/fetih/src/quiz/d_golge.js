@@ -707,8 +707,29 @@ function freeArea(el, app, out) {
 		out[1] = 1;
 		return out;
 	}
-	const b = card.getBoundingClientRect();
 	const H = cv.height;
+	// Arena düzeni: kart ekran boyunda, üstü saydam; boş alan afişin (oyuncu şeridi) altından kart içeriğinin başladığı
+	// yere kadar. Kartın kendi kutusu ölçülünce alan ekranın en altındaki şerit sanılıyor, perde görünmüyordu.
+	const qwho = card.querySelector('.fl-qwho');
+	const qc = card.querySelector('.fl-qc');
+	if (!card.classList.contains('map') && qc) {
+		const first = [...qc.children].find((e) => e.getBoundingClientRect().height > 0);
+		const wb = qwho?.getBoundingClientRect();
+		let top = wb && wb.height > 0 ? wb.bottom : cv.top;
+		// afişin altına asılı etiketler (düelloda hedef il, yayılmada "HERKES CEVAPLIYOR" bandı) perdenin tepesini örtmesin
+		const tag = card.querySelector('.fl-qwho .fl-qvs span');
+		const tb = tag?.getBoundingClientRect();
+		if (tb && tb.height > 0) top = Math.max(top, tb.bottom);
+		if (qwho?.dataset.lb && wb) top = Math.max(top, wb.top + wb.width * 0.335);
+		top += 6;
+		const bot = (first ? first.getBoundingClientRect().top : qc.getBoundingClientRect().top) - 6;
+		if (bot - top > 40) {
+			out[0] = Math.min(0.9, Math.max(0, (top - cv.top) / H));
+			out[1] = Math.min(1, Math.max(out[0] + 0.1, (bot - cv.top) / H));
+			return out;
+		}
+	}
+	const b = card.getBoundingClientRect();
 	if (b.top + b.height / 2 > cv.top + H / 2) {
 		const hud = app.ui?.el?.querySelector?.('.fl-hud');
 		const hb = hud?.getBoundingClientRect?.();

@@ -91,7 +91,8 @@ const CSS = /* css */ `
 .yn-kasa{position:relative;flex:1 1 auto;display:flex;flex-direction:column;gap:8px;min-height:0;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
 .yn-kasa .ks-sahne{position:relative;flex:1 1 auto;min-height:204px;overflow:hidden;border-radius:18px;
   background:radial-gradient(130% 80% at 50% -10%,#2a3557 0%,#121a36 46%,#070a18 100%);box-shadow:0 0 0 1.5px rgba(255,255,255,.12),0 14px 30px rgba(0,0,0,.55)}
-.yn-kasa.fis .ks-sahne{min-height:118px}
+/* cevapta sahne küçülebilir: 320'lik ekranda 4 koltuk (2×2 fiş) + NOT, arayüzün ölçeğine gerek kalmadan sığar */
+.yn-kasa.fis .ks-sahne{min-height:100px}
 /* çerçeve (kasanın gövdesi): koyu çelik, eğik kenar, perçinler */
 .yn-kasa .ks-kasa{position:absolute;inset:var(--m);border-radius:14px;perspective:var(--persp,1200px);
   background:linear-gradient(160deg,#3a4558 0%,#1f2735 55%,#141a25 100%);
@@ -231,7 +232,7 @@ const CSS = /* css */ `
 .yn-kasa .ks-perde{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(70% 60% at 50% 50%,rgba(4,6,14,.72),rgba(4,6,14,.4))}
 .yn-kasa.levha[data-yer=orta]:not(.acik) .ks-perde{opacity:1}
 .yn-kasa .ks-not{display:none;flex:none;align-items:flex-start;gap:8px;padding:7px 10px 8px;border-radius:8px;background:linear-gradient(180deg,#fbf3e0,#ece0c4);box-shadow:0 3px 0 rgba(0,0,0,.35);
-  font:600 12.5px/1.3 'Fredoka',sans-serif;color:#2a1d0c;animation:ksFis .42s .3s cubic-bezier(.2,.9,.3,1.25) both}
+  font:600 12.5px/1.3 'Fredoka',sans-serif;color:#2a1d0c;transform-origin:50% 100%;animation:ksFis .42s .3s cubic-bezier(.2,.9,.3,1.25) both}
 .yn-kasa .ks-not b{flex:none;padding:3px 6px 2px;border-radius:4px;background:#2a8a4a;color:#fff;font:italic 900 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;transform:skewX(-8deg)}
 .yn-kasa.fis .ks-not{display:flex}
 /* doğru şifre levhası ve fişler */
@@ -248,7 +249,7 @@ const CSS = /* css */ `
 .yn-kasa.fis .ks-bilet{display:grid}
 .yn-kasa .ks-b{position:relative;display:grid;grid-template-columns:22px 30px minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:6px;row-gap:3px;min-height:52px;padding:5px 8px 5px 0;
   border-radius:7px;color:#2a1d0c;background:linear-gradient(180deg,#fbf3e0,#e9ddc2);box-shadow:0 3px 0 rgba(0,0,0,.38),inset 0 0 0 1px rgba(90,60,10,.25);
-  animation:ksFis .42s calc(var(--k) * 110ms) cubic-bezier(.2,.9,.3,1.25) both}
+  transform-origin:50% 100%;animation:ksFis .42s calc(var(--k) * 110ms) cubic-bezier(.2,.9,.3,1.25) both}
 .yn-kasa .ks-b.win{background:linear-gradient(180deg,#fff6cf,#ffd769);box-shadow:0 3px 0 rgba(0,0,0,.38),inset 0 0 0 2px #c8901e,0 0 16px rgba(255,210,90,.45)}
 .yn-kasa .ks-b .rk{grid-row:1/3;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:7px 0 0 7px;color:#fff;background:var(--c);
   font:italic 900 15px/1 'Barlow Condensed','Lilita One',sans-serif;
@@ -291,7 +292,8 @@ const CSS = /* css */ `
 @keyframes ksKul{0%{opacity:0;transform:translateY(-18px) scale(.6)}18%{opacity:1;transform:none}82%{opacity:1;transform:none}100%{opacity:0;transform:scale(.8)}}
 @keyframes ksDalga{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.1)}}
 @keyframes ksLevha{0%{opacity:0;transform:scale(.7)}70%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:none}}
-@keyframes ksFis{0%{opacity:0;transform:translateY(-10px) scale(.94)}100%{opacity:1;transform:none}}
+/* fiş ve NOT alttan büyüyerek gelir (alt kenar yerinde): arayüzün sığdırma ölçümü giriş sırasında da son boyu görür */
+@keyframes ksFis{0%{opacity:0;transform:scale(.94)}100%{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.yn-kasa .ks-isin,.yn-kasa .ks-teker.hazir::after,.yn-kasa.dinle .ks-pen,.yn-kasa .ks-parla::before{animation:none}.yn-kasa .ks-kapi{transition-duration:.01s}}
 `;
 

@@ -331,6 +331,8 @@ export const FILM = {
 	// YENİ 10: kendi cevap filmleri (kart kilitlenir, yıl/kelime açılır)
 	tunel: [4200, 2800],
 	kelimeavi: [4200, 2800],
+	mayin: [4200, 2600],
+	rota: [5600, 3200],
 };
 /**
  * Sonuç ekranının süresi (ms, insanın içinde olduğu soru): cevap filminden sonra gelir. Sunucu cevap filmi + bu süre kadar

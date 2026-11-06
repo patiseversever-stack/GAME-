@@ -1295,16 +1295,16 @@ export class UI {
 			if (closest) {
 				const rank = order.indexOf(me);
 				if (rank === 0) {
-					st = me.err === 0 ? 'TAM İSABET!' : 'EN YAKIN SEN!';
+					st = me.err === 0 || (T.needsMap && me.correct) ? 'TAM İSABET!' : T.birinci || 'EN YAKIN SEN!'; // tipe özel sözcük (puanlı tipler)
 					tone = 'gold';
 				} else if (teams && w.p.team === me.p.team) {
 					st = 'TAKIMIN KAZANDI';
 					tone = 'gold';
-					sub = `${w.name} en yakın`;
+					sub = T.rozet ? `${w.name} · ${T.rozet.toLocaleLowerCase('tr-TR')}` : `${w.name} en yakın`;
 				} else {
 					st = `${rank + 1}. SIRADASIN`;
 					tone = 'bad';
-					sub = `${w.name} daha yakın`;
+					sub = `${w.name} ${T.ustun || 'daha yakın'}`;
 				}
 			} else if (me.correct) st = 'BİLDİN!';
 			else if (me.value == null) {
@@ -1330,7 +1330,7 @@ export class UI {
 			.map((r, k) => {
 				const { val, sub: rs, ok } = this._resVal(T, v, r, closest);
 				const win = k === 0 && (closest ? ok : r.correct);
-				const tag = win ? `<i class="rt">${closest ? (r.err === 0 || (T.needsMap && r.correct) ? 'TAM İSABET' : 'EN YAKIN') : 'EN HIZLI'}</i>` : '';
+				const tag = win ? `<i class="rt">${closest ? (r.err === 0 || (T.needsMap && r.correct) ? 'TAM İSABET' : T.rozet || 'EN YAKIN') : 'EN HIZLI'}</i>` : '';
 				const no = !closest && !r.correct;
 				const tm = teams ? `<span class="tm" style="--tc:${tcol(r.p.team)}">${r.p.team ? 'B' : 'A'}</span>` : '';
 				const pk = picks ? `<span class="pk${picks[k] ? '' : ' z'}">${picks[k] ? `+${picks[k]}<small>İL</small>` : '—'}</span>` : '';
@@ -1597,7 +1597,7 @@ export class UI {
 				else if (typeof r.value === 'number') val = `${fmt(r.value)}${unit ? ' ' + esc(unit) : ''}`;
 				else val = fmt(r.err);
 				const sub = !ok ? 'cevap yok' : typeof T.sub === 'function' ? esc(T.sub(v, r.value, r)) : map ? (r.correct ? 'tam isabet' : 'uzaklık') : r.err === 0 ? 'tam isabet' : `fark ${fmt(r.err)}`;
-				const tag = k === 0 && ok ? `<span class="tag">${r.err === 0 || (map && r.correct) ? 'TAM İSABET' : 'EN YAKIN'}</span>` : '';
+				const tag = k === 0 && ok ? `<span class="tag">${r.err === 0 || (map && r.correct) ? 'TAM İSABET' : T.rozet || 'EN YAKIN'}</span>` : '';
 				return `<div class="fl-cr ${k === 0 && ok ? 'win' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><span class="fl-av">${avatar({ ...this.look(r.p), img: null })}</span>
 					<span class="nm"><b>${esc(r.name)}${tag}</b><i class="bar"><u style="--w:${w.toFixed(3)}"></u></i></span><em>${val}<small>${sub}</small></em></div>`;
 			})
