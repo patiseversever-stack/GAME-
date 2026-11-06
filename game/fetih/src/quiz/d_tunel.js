@@ -74,12 +74,14 @@ const CSS = /* css */ `
    ad). Boşluk düğmeleri saydam ve plakaların altında (plaka dokunuşu geçirir): her boşluk komşu iki plakanın ortasına dek
    uzanır, en kısa ekranda da en az 40 px. Satır yerleri JS'te (çeviri), tünelin boyu baştan beş olaya göre ayrılır. */
 .fl-q.t-tunel .fl-qbody{padding-top:8px}
-.yn-tn{--rh:46px;--gp:10px;--ep:22px;--rx:40px;position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;user-select:none;-webkit-user-select:none}
+.yn-tn{--rh:46px;--gp:10px;--ep:30px;--rx:40px;position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;user-select:none;-webkit-user-select:none}
 /* rampa */
 .tn-dock{position:relative;z-index:5;flex:none;display:flex;flex-direction:column;gap:6px}
 .tn-dh{display:flex;align-items:center;gap:8px;min-height:22px}
-.tn-step{flex:none;font:italic 900 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.14em;color:#9fb0e0}
-.tn-step b{font-size:17px;color:#fff;letter-spacing:.04em}
+.tn-step{flex:none;display:flex;align-items:baseline;gap:4px;padding:3px 10px 2px 8px;font:italic 900 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.14em;color:#1a1200;
+  background:linear-gradient(180deg,#ffe08a,#f0b43a);clip-path:polygon(6px 0,100% 0,calc(100% - 6px) 100%,0 100%);box-shadow:inset 0 -2px 0 rgba(0,0,0,.18)}
+.tn-step b{font-size:16px;letter-spacing:.02em}
+.tn-step i{font-style:normal;opacity:.7}
 .tn-pips{display:flex;gap:4px}
 .tn-pips i{width:16px;height:6px;border-radius:3px;background:rgba(255,255,255,.18);transition:background .3s,box-shadow .3s}
 .tn-pips i.on{background:#ffd25a;box-shadow:0 0 8px rgba(255,210,90,.7)}
@@ -95,6 +97,10 @@ const CSS = /* css */ `
 .tn-card{position:absolute;inset:0;display:flex;align-items:center;gap:11px;padding:0 12px 0 10px;border-radius:12px;touch-action:none;cursor:grab;
   background:linear-gradient(180deg,#fffaf0,#efe4c8);color:#1a1f3a;box-shadow:0 2px 0 #d9c9a2,0 4px 0 #b9a47a,0 12px 22px rgba(0,0,0,.5);will-change:transform}
 .tn-card::before{content:'';position:absolute;left:-1px;top:8px;bottom:8px;width:6px;background:radial-gradient(circle,#0b0f22 2.2px,transparent 2.6px) 50% 0/6px 9px repeat-y}
+.tn-card::after{content:'';position:absolute;inset:0;border-radius:inherit;pointer-events:none;background:linear-gradient(105deg,transparent 0 38%,rgba(255,255,255,.75) 48%,transparent 58% 100%) no-repeat;
+  background-size:220% 100%;background-position:130% 0;animation:tnShine 3.6s ease-in-out 1.2s infinite}
+.tn-card .tn-yr i:not(.set){color:#ffd25a;text-shadow:0 0 8px rgba(255,210,90,.75)}
+.tn-slot::before{content:'';position:absolute;inset:-3px;border-radius:15px;box-shadow:0 0 0 1.5px rgba(255,210,90,.35),0 0 18px rgba(255,210,90,.22);pointer-events:none}
 .tn-card.in{animation:tnIn .42s cubic-bezier(.3,1.5,.5,1) both}
 .tn-card.lift{cursor:grabbing;transition:none;box-shadow:0 2px 0 #d9c9a2,0 4px 0 #b9a47a,0 22px 34px rgba(0,0,0,.6),0 0 0 3px #ffd25a}
 .tn-card.back{transition:transform .32s cubic-bezier(.3,1.4,.5,1)}
@@ -103,8 +109,15 @@ const CSS = /* css */ `
 .tn-card .tn-yr i{color:#ffd25a}
 .tn-card .tn-nm{flex:1 1 auto;min-width:0;font:400 19px/1.08 'Lilita One',sans-serif;letter-spacing:.01em;color:#1a1f3a}
 .tn-grip{flex:none;width:14px;height:24px;background:radial-gradient(circle,rgba(26,31,58,.45) 1.6px,transparent 2px) 0 0/7px 8px}
-.tn-hint{flex:none;text-align:center;font:600 12.5px/1.2 'Fredoka',sans-serif;color:#9fabd6}
-.tn-hint b{color:#ffd25a;font-weight:700}
+.tn-hint{flex:none;display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:2px 7px;text-align:center;font:600 12.5px/1.25 'Fredoka',sans-serif;color:#b8c2e6}
+.tn-hint .o,.tn-hint .n{display:inline-flex;align-items:center;gap:3px;padding:2px 7px 1px;font:italic 900 12.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#fff;
+  clip-path:polygon(4px 0,100% 0,calc(100% - 4px) 100%,0 100%)}
+.tn-hint .o{background:linear-gradient(180deg,#9a6bff,#6a3fd8)}
+.tn-hint .n{background:linear-gradient(180deg,#3fd6ff,#1a8fd0)}
+.tn-hint .o::before,.tn-hint .n::after{content:'';width:0;height:0;border:4px solid transparent}
+.tn-hint .o::before{border-bottom:6px solid #fff;border-top:0}
+.tn-hint .n::after{border-top:6px solid #fff;border-bottom:0}
+.tn-hint em{font-style:normal;color:#ffd25a;font-weight:700}
 /* yıl sayacı: dört hane, ortadan bölünmüş pencere (döner levha) */
 .tn-yr{display:flex;gap:2px;font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif}
 .tn-yr i{display:block;width:.64em;padding:.12em 0 .1em;text-align:center;font-style:normal;color:#fff;border-radius:3px;
@@ -140,8 +153,16 @@ const CSS = /* css */ `
 .tn-rail{position:absolute;z-index:1;left:18px;top:12px;bottom:12px;width:4px;border-radius:2px;background:linear-gradient(180deg,#b86bff,#5a8cff 55%,#46e0ff);
   box-shadow:0 0 10px rgba(120,140,255,.75);overflow:hidden}
 .tn-rail::after{content:'';position:absolute;left:0;right:0;top:0;height:30%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.95),transparent);will-change:transform;animation:tnFlow 2.4s linear infinite}
-.tn-end{position:absolute;z-index:1;right:12px;font:italic 900 10.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em;color:rgba(200,190,255,.6);pointer-events:none}
-.tn-end.top{top:6px}.tn-end.bot{bottom:6px;color:rgba(150,230,255,.65)}
+/* uç levhaları: tünelin tepesi ESKİ (geçmiş, mor), dibi YENİ (bugün, camgöbeği); oklar zamanın yönünü gösterir. Plakalar
+   --ep payının içine hiç girmez: levha onlara binmez */
+.tn-end{position:absolute;z-index:1;right:10px;display:flex;align-items:center;gap:6px;height:18px;padding:0 10px 0 8px;pointer-events:none;
+  font:italic 900 14px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:#fff;clip-path:polygon(5px 0,100% 0,calc(100% - 5px) 100%,0 100%)}
+.tn-end small{font-size:10px;letter-spacing:.2em;opacity:.78}
+.tn-end::before{content:'';width:0;height:0;border:5px solid transparent}
+.tn-end.top{top:6px;background:linear-gradient(180deg,rgba(150,100,255,.95),rgba(98,58,210,.95));box-shadow:0 0 14px rgba(150,100,255,.55)}
+.tn-end.top::before{border-bottom:7px solid #fff;border-top:0;margin-top:-2px}
+.tn-end.bot{bottom:6px;background:linear-gradient(180deg,rgba(60,214,255,.95),rgba(24,140,206,.95));box-shadow:0 0 14px rgba(60,214,255,.5)}
+.tn-end.bot::before{border-top:7px solid #fff;border-bottom:0;margin-bottom:-2px}
 .tn-gaps,.tn-items{position:absolute;inset:0}
 .tn-gaps{z-index:2}
 .tn-items{z-index:3;pointer-events:none}
@@ -162,6 +183,24 @@ const CSS = /* css */ `
 .yn-tn.drag .tn-node,.yn-tn.busy .tn-node,.yn-tn.over .tn-node{opacity:0}
 .tn-ghost{position:absolute;z-index:2;left:var(--rx);right:8px;top:0;height:var(--rh);border-radius:10px;border:2px dashed #ffd25a;background:rgba(255,210,90,.08);opacity:0;transition:opacity .15s,transform .2s;pointer-events:none}
 .tn-ghost.on{opacity:1}
+.tn-ghost{display:flex;align-items:center;justify-content:center;gap:8px;font:italic 900 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#ffd25a;text-shadow:0 0 10px rgba(255,210,90,.6);
+  box-shadow:0 0 18px rgba(255,210,90,.25),inset 0 0 18px rgba(255,210,90,.12)}
+.tn-ghost b{font-weight:900;color:#fff}
+/* ilk hamle öğreticisi: parlayan bir parmak izi karttan tünele iner (hedef boşluk göstermez: hep tünelin ortası) */
+.tn-tut{position:absolute;z-index:6;left:50%;top:0;width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;pointer-events:none;opacity:0;
+  background:radial-gradient(circle,rgba(255,255,255,.95) 0 28%,rgba(255,210,90,.55) 32%,rgba(255,210,90,0) 70%);box-shadow:0 0 0 2px rgba(255,255,255,.85);
+  animation:tnTut 1.7s cubic-bezier(.45,0,.3,1) 2 forwards}
+/* poll (seyirci): boşluk düğmesi oy yüzdesine döner, en çok oy alan altın */
+.tn-gap.poll .tn-node{left:3px;width:calc(var(--rx) - 7px);height:18px;margin-top:-9px;border-radius:9px;display:grid;place-items:center;
+  font:italic 900 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.02em;color:#ffe7a0;box-shadow:0 0 0 1.5px rgba(255,210,90,.75)}
+.tn-gap.poll .tn-node::before,.tn-gap.poll .tn-node::after{display:none}
+.tn-gap.poll.top .tn-node{background:#ffd25a;color:#1a1200;box-shadow:0 0 0 2px #fff,0 0 14px rgba(255,210,90,.9)}
+.tn-gap.poll.cut .tn-node{font-size:0}
+.tn-gap.poll.cut .tn-node::before,.tn-gap.poll.cut .tn-node::after{display:block;left:50%;width:10px;margin-left:-5px}
+/* kilit anı: yılın dev gölgesi tünelin derinliğinden geçip söner (arka katman; bitince kaldırılır) */
+.tn-big{position:absolute;z-index:0;left:0;right:0;top:46%;text-align:center;pointer-events:none;font:italic 900 86px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;
+  color:transparent;-webkit-text-stroke:1.5px rgba(150,230,255,.55);animation:tnBig 1.1s cubic-bezier(.2,.8,.3,1) forwards}
+.tn-big.no{-webkit-text-stroke-color:rgba(255,140,120,.6)}
 /* plaka */
 .tn-it{position:absolute;left:var(--rx);right:8px;top:0;height:var(--rh);display:flex;align-items:center;gap:9px;padding:0 9px 0 7px;border-radius:10px;
   background:linear-gradient(180deg,rgba(32,38,78,.96),rgba(18,22,50,.96));box-shadow:inset 0 0 0 1.5px rgba(160,170,255,.28),0 6px 14px rgba(0,0,0,.4);
@@ -224,13 +263,16 @@ const CSS = /* css */ `
 @keyframes tnBeam{0%{transform:scaleY(1);opacity:1}100%{transform:scaleY(9);opacity:0}}
 @keyframes tnEnter{0%{translate:0 -60%;scale:.3;opacity:0;filter:brightness(2.4)}55%{opacity:1}100%{translate:0 0;scale:1;opacity:1;filter:none}}
 @keyframes tnNudge{50%{transform:scale(1.35);box-shadow:0 0 0 2.5px #fff,0 0 20px rgba(255,210,90,1)}}
+@keyframes tnShine{0%{background-position:130% 0}45%,100%{background-position:-30% 0}}
+@keyframes tnTut{0%{transform:translateY(var(--y0)) scale(.6);opacity:0}15%{transform:translateY(var(--y0)) scale(1);opacity:1}75%{transform:translateY(var(--y1)) scale(1);opacity:1}100%{transform:translateY(var(--y1)) scale(1.5);opacity:0}}
+@keyframes tnBig{0%{transform:translateY(-50%) scale(2.2);opacity:0}25%{opacity:1}100%{transform:translateY(-50%) scale(1);opacity:0}}
 @keyframes tnPop{0%{transform:scale(.3);opacity:0}100%{transform:none;opacity:1}}
 @media (max-height:720px){
-  .yn-tn{--rh:38px;--gp:6px;--ep:18px;gap:8px}
+  .yn-tn{--rh:38px;--gp:6px;--ep:27px;gap:8px}
   .tn-dock{gap:5px}
   .tn-slot{height:50px}
   .tn-card .tn-nm{font-size:17px}
-  .tn-hint{display:none}
+  .tn-hint .t{display:none}
   .tn-it .tn-nm{font-size:14px}
   .tn-yr{font-size:18px}
   .tn-vd{height:54px}
@@ -240,7 +282,7 @@ const CSS = /* css */ `
   /* en kısa ekran (320×568): tünele yer: soru yazısı ve kural satırı (dar kartta kendi satırı) kalkar */
   .fl-q.t-tunel .fl-qtext,.fl-q.t-tunel .fl-qhead .fl-rule{display:none}
   .fl-q.t-tunel .fl-tbar{margin-bottom:4px}
-  .yn-tn{--rh:34px;--gp:4px;--ep:16px;--rx:36px;gap:6px}
+  .yn-tn{--rh:32px;--gp:4px;--ep:23px;--rx:36px;gap:5px}
   .fl-q.t-tunel .fl-qbody{padding-top:6px}
   .tn-dock{gap:4px}
   .tn-dh{min-height:16px}
@@ -254,13 +296,14 @@ const CSS = /* css */ `
   .tn-yr{font-size:16px}
   .tn-node{left:7px;width:20px;height:20px;margin-top:-10px}
   .tn-rail{left:16px}
-  .tn-end{font-size:9.5px}.tn-end.top{top:4px}.tn-end.bot{bottom:4px}
+  .tn-end{height:16px;font-size:12.5px;gap:5px}.tn-end small{display:none}.tn-end.top{top:4px}.tn-end.bot{bottom:4px}
+  .tn-hint{font-size:11.5px}.tn-hint .o,.tn-hint .n{font-size:11.5px;padding:1px 6px 0}
   .tn-vd{height:50px}
   .tn-av{width:19px;height:19px}
   .yn-tn.rv.pm{--rh:44px}
   .yn-tn.rv.pm .tn-av{width:18px;height:18px}
 }
-@media (prefers-reduced-motion:reduce){.tn-ring,.tn-rail::after,.tn-st b,.tn-mh,.tn-hh,.tn-it.enter{animation:none}.tn-ring{opacity:.25;transform:scale(calc(.3 + var(--i) * .15))}}
+@media (prefers-reduced-motion:reduce){.tn-ring,.tn-rail::after,.tn-st b,.tn-mh,.tn-hh,.tn-it.enter,.tn-card::after{animation:none}.tn-tut{display:none}.tn-ring{opacity:.25;transform:scale(calc(.3 + var(--i) * .15))}}
 `;
 
 const pad4 = (y) => String(y).padStart(4, ' ');
@@ -318,12 +361,12 @@ export const tunel = {
 		el.innerHTML = `<div class="yn-tn">
 			<div class="tn-vd"></div>
 			<div class="tn-dock">
-				<div class="tn-dh"><span class="tn-step"><b>1</b>/${N} KART</span><span class="tn-pips">${'<i></i>'.repeat(N)}</span>
+				<div class="tn-dh"><span class="tn-step">KART <b>1</b><i>/${N}</i></span><span class="tn-pips">${'<i></i>'.repeat(N)}</span>
 					<span class="tn-race">${bots.map((b) => `<span class="tn-rv" data-p="${b.p.i}" style="--pc:${esc(b.p.css || '#888')}"><span class="tn-av">${avOf(b.p.i)}</span><u>${'<i></i>'.repeat(N)}</u></span>`).join('')}</span></div>
 				<div class="tn-slot"><div class="tn-card" role="button" aria-label="Olay kartı: sürükle"><span class="tn-yr">${QMARK}</span><b class="tn-nm"></b><span class="tn-grip"></span></div></div>
-				<div class="tn-hint">Kartı tünele <b>sürükle</b> ya da bir boşluğa <b>dokun</b></div>
+				<div class="tn-hint"><span class="o">ESKİ</span>yukarıda<span class="n">YENİ</span>aşağıda<span class="t">· kartı <em>sürükle</em> ya da boşluğa <em>dokun</em></span></div>
 			</div>
-			<div class="tn-tube"><div class="tn-bg">${tunnelSVG()}${clockSVG()}</div><i class="tn-rail"></i><span class="tn-end top">GEÇMİŞ</span><span class="tn-end bot">BUGÜN</span>
+			<div class="tn-tube"><div class="tn-bg">${tunnelSVG()}${clockSVG()}</div><i class="tn-rail"></i><span class="tn-end top">ESKİ<small>GEÇMİŞ</small></span><span class="tn-end bot">YENİ<small>BUGÜN</small></span>
 				<div class="tn-gaps"></div><div class="tn-ghost"></div><div class="tn-items"></div></div>
 		</div>`;
 		rule(el, 'En çok doğru');

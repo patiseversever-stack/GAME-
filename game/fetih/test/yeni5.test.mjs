@@ -17,6 +17,8 @@ import { dogruBosluk, tunelYillari, puan } from './src/quiz/d_tunel.js';
 import { gecis, harfler, KABA, YON, DIRS, kelimeOf, sayim, hat } from './src/quiz/d_kelimeavi.js';
 import { CATS } from './src/quiz/categories.js';
 import { rng } from './src/core/math.js';
+import BANK from './src/data/q/index.js';
+import TR from './src/data/turkiye.json';
 
 let fails = 0;
 let checks = 0;
@@ -34,16 +36,91 @@ for (const t of Object.keys(TYPES)) {
 	ok(DENEME_TYPES[t] === TYPES[t] && DENEME_SAMPLES[t] === SAMPLES[t], t + ': deneme.js grubuna bağlı değil');
 	ok(TAZE_ORDER.some(([x]) => x === t), t + ': galerinin YENİ listesinde yok');
 	const list = SAMPLES[t];
-	ok(list.length === 3, t + ': tam 3 örnek');
+	ok(list.length >= 30, t + ': en az 30 örnek (' + list.length + ')');
+	// ilk üç örnek (galeri bağlantıları) değişmez: kolay, orta, zor
+	ok(list.slice(0, 3).every((q, i) => q.diff === i + 1), t + ': ilk üç örneğin zorluğu');
 	list.forEach((q, i) => {
-		ok(q.id === 'yn-' + t + '-' + (i + 1), q.id + ': kimlik');
-		ok(q.diff === i + 1, q.id + ': zorluk ' + q.diff);
+		ok(q.id === 'yn-' + t + '-' + (i + 1), q.id + ': kimlik sırası');
+		ok([1, 2, 3].includes(q.diff), q.id + ': zorluk ' + q.diff);
 		ok(!!CATS[q.cat], q.id + ': kategori ' + q.cat);
 		ok(q.type === t, q.id + ': tip');
+		ok(q.q && [...q.q].length <= 40, q.id + ': tema cümlesi en çok 40 harf');
 		// tipografik kesme: düz kesme işareti yok
 		ok(!JSON.stringify(q).includes("'"), q.id + ': düz kesme işareti (’ olmalı)');
 	});
-	ok(new Set(list.map((q) => q.cat)).size === 3, t + ': üç örnek üç ayrı konudan değil');
+	// altı konu ve üç zorluk dengeli
+	for (const c of Object.keys(CATS)) ok(list.filter((q) => q.cat === c).length >= 4, t + ': ' + c + ' konusunda 4 örnekten az');
+	for (const d of [1, 2, 3]) ok(list.filter((q) => q.diff === d).length >= 8, t + ': zorluk ' + d + ' 8 örnekten az');
+}
+
+// ---------------------------------------------------------------- olgular oyunun kendi verisiyle
+{
+	const norm = (s) => String(s).toLocaleLowerCase('tr-TR').replace(/[’']/g, '').replace(/[^a-zçğıöşüâîû0-9 ]/g, '').trim();
+	// bankadaki sıralama sorularının yılları: madde adı → yıl (tam sayı)
+	const bank = new Map();
+	for (const q of BANK) if (q.type === 'order' && /eski|yeni|yıl/i.test(q.q)) for (const it of q.items || []) if (Number.isInteger(it.v)) bank.set(norm(it.t), it.v);
+	// Zaman Tüneli olayı → bankadaki madde (adı farklı yazılanlar)
+	const ESLES = {
+		'Malazgirt Zaferi': 'Malazgirt Savaşı', 'İstanbul’un Fethi': 'İstanbul’un fethi', 'Cumhuriyet’in İlanı': 'Cumhuriyet’in ilanı',
+		'Harf Devrimi': 'Harf İnkılabı', 'Penisilinin keşfi': 'Penisilinin keşfi', 'Ay’a ilk insanlı iniş': 'Ay’a ilk insanlı iniş',
+		'İlk yapay uydu Sputnik': 'Sputnik’in fırlatılması', 'Gagarin’in uzay uçuşu': 'Gagarin’in uzay uçuşu',
+		'Galatasaray’ın UEFA Kupası': 'Galatasaray’ın UEFA Kupası', 'Millî Takım dünya üçüncüsü': 'Millî takımın Dünya üçüncülüğü',
+		'Naim’in ilk olimpiyat altını': 'Naim Süleymanoğlu', 'Fenerbahçe’nin kuruluşu': 'Fenerbahçe', 'Galatasaray’ın kuruluşu': 'Galatasaray',
+		'Göztepe’nin kuruluşu': 'Göztepe', 'Trabzonspor’un kuruluşu': 'Trabzonspor', 'İlk modern Olimpiyat Oyunları': 'İlk Yaz Olimpiyatı',
+		'İlk Dünya Kupası': 'Uruguay', 'Basketbolun icadı': 'Basketbol', 'Voleybolun icadı': 'Voleybol', 'Berlin Olimpiyatları': null,
+		'Roma Olimpiyatları': 'Roma', 'Barselona Olimpiyatları': 'Barselona', 'Rio Olimpiyatları': 'Rio de Janeiro',
+		'Efes’in ilk EuroLeague kupası': 'Efes’in EuroLeague şampiyonluğu', 'Fransız Devrimi': 'Fransız Devrimi', 'Magna Carta': 'Magna Carta',
+		'Berlin Duvarı’nın yıkılışı': 'Berlin Duvarı’nın yıkılması', 'Amerika’nın keşfi': 'Kolomb’un Amerika’ya ulaşması',
+		'Kolomb’un Amerika’ya varışı': 'Kolomb’un Amerika’ya ulaşması', 'Vasco da Gama Hindistan’da': 'Gama Hindistan’da',
+		'İlk dünya turunun tamamlanması': 'Macellan seferinin sonu', 'Güney Kutbu’na ilk varış': 'Güney Kutbu’na ilk varış',
+		'Everest’e ilk tırmanış': 'Everest’e ilk tırmanış', 'Bursa’nın fethi': 'Bursa', 'Mohaç Meydan Muharebesi': 'Mohaç',
+		'Ankara Savaşı': 'Ankara', 'Kösedağ Savaşı': 'Kösedağ', 'Preveze Deniz Savaşı': 'Preveze', 'Tanzimat Fermanı': 'Tanzimat Fermanı',
+		'Soyadı Kanunu': 'Soyadı Kanunu', 'Saltanatın kaldırılması': 'Saltanatın kaldırılması', 'Medeni Kanun’un kabulü': 'Medeni Kanun’un kabulü',
+		'NATO’ya üyelik': 'NATO’ya üyelik', 'Karlofça Antlaşması': 'Karlofça', 'Küçük Kaynarca Antlaşması': 'Küçük Kaynarca',
+		'Müteferrika Matbaası': 'Müteferrika matbaası', 'Boğaziçi Köprüsü’nün açılışı': 'Boğaziçi', 'Fatih Sultan Mehmet Köprüsü': 'Fatih Sultan Mehmet',
+		'Eyfel Kulesi’nin açılışı': 'Eyfel Kulesi', 'Newton’un Principia’sı': null, 'İlk kara delik fotoğrafı': 'İlk kara delik fotoğrafı',
+		'Transistörün icadı': 'Transistör', 'İlk cep telefonu araması': 'İlk cep telefonu araması', 'Web’in herkese açılışı': 'Web herkese açıldı',
+		'Uranüs’ün keşfi': 'Uranüs’ün keşfi', 'Neptün’ün keşfi': 'Neptün’ün keşfi', 'Don Kişot': 'Don Kişot', 'Küçük Prens': 'Küçük Prens',
+		'Sefiller': 'Sefiller', 'Robinson Crusoe': 'Robinson Crusoe', 'İstiklal Marşı’nın kabulü': 'İstiklal Marşı’nın kabulü',
+		'Orhan Pamuk’un Nobel Ödülü': 'Orhan Pamuk’un Nobel ödülü', 'Nâzım Hikmet’in doğumu': 'Nazım Hikmet', 'Yakup Kadri’nin Yaban’ı': 'Yaban',
+		'Süleymaniye Camii': 'Süleymaniye Camii', 'Dolmabahçe Sarayı': 'Dolmabahçe Sarayı', 'Şehzade Camii': 'Şehzade Camii', 'Anıtkabir': 'Anıtkabir',
+		'Rumeli Hisarı': 'Rumeli Hisarı', 'Picasso’nun Guernica’sı': 'Guernica', 'Van Gogh’un Yıldızlı Gece’si': 'Yıldızlı Gece',
+		'Mozart’ın Sihirli Flüt’ü': 'Sihirli Flüt', 'Bizet’nin Carmen’i': 'Carmen', 'Susuz Yaz': 'Susuz Yaz', 'Hababam Sınıfı': 'Hababam Sınıfı',
+		'Dünyayı Kurtaran Adam': 'Dünyayı Kurtaran Adam', 'Apple’ın kuruluşu': 'Apple', 'Google’ın kuruluşu': 'Google', 'Facebook’un kuruluşu': 'Facebook',
+		'Nokia’nın kuruluşu': 'Nokia', 'Rubik küpünün icadı': 'Rubik küpü', 'PlayStation’ın çıkışı': 'PlayStation', 'Pac-Man’in çıkışı': 'Pac-Man',
+		'Barbie’nin doğuşu': 'Barbie', 'iPhone’un tanıtılışı': 'iPhone', 'Pamuk Prenses': 'Pamuk Prenses', 'Aslan Kral': 'Aslan Kral',
+		'Shrek': 'Shrek', 'Karlar Ülkesi': 'Karlar Ülkesi', 'Türkiye internete bağlandı': 'Türkiye’nin internete bağlanması',
+		'TBMM’nin açılışı': null, 'Hatay’ın anavatana katılması': null,
+	};
+	let crossed = 0;
+	for (const q of SAMPLES.tunel)
+		for (const [t, y] of [...q.anchors, ...q.cards]) {
+			const b = ESLES[t];
+			if (!b) continue;
+			const by = bank.get(norm(b));
+			ok(by != null, q.id + ': bankada madde yok: ' + b);
+			if (by != null) {
+				crossed++;
+				ok(by === y, q.id + ': ' + t + ' yılı ' + y + ', bankada ' + by);
+			}
+		}
+	ok(crossed >= 90, 'Zaman Tüneli: bankayla karşılaştırılan olay az (' + crossed + ')');
+	// Kelime Avı: il adları ve plakalar turkiye.json’dan (plaka = il kimliği)
+	const ilAd = new Map(TR.provinces.map((p) => [harfler(p.name).join(''), p.id]));
+	const IL = { 'yn-kelimeavi-1': ['BURSA', 'EDİRNE'], 'yn-kelimeavi-2': ['NEVŞEHİR', 'DENİZLİ', 'MALATYA'], 'yn-kelimeavi-4': ['AMASYA', 'ERZURUM', 'SİVAS'],
+		'yn-kelimeavi-6': ['SAMSUN', 'SAKARYA'], 'yn-kelimeavi-30': ['BURSA'] };
+	for (const [id, ws] of Object.entries(IL)) {
+		const q = SAMPLES.kelimeavi.find((x) => x.id === id);
+		for (const w of ws) ok(q.words.some(([x]) => harfler(x).join('') === w) && ilAd.has(w), id + ': il adı ' + w);
+	}
+	const pl = SAMPLES.kelimeavi.find((x) => x.id === 'yn-kelimeavi-8');
+	for (const [w, c] of pl.words) ok(ilAd.get(harfler(w).join('')) === Number(c.match(/\\d+/)[0]), pl.id + ': ' + w + ' plakası');
+	// ipuçlarında geçen iller, göller ve nehirler oyunun haritasında var
+	const yer = (s) => TR.provinces.some((p) => p.name === s) || TR.lakes.some((l) => l.name === s) || TR.rivers.some((r) => r.name === s);
+	for (const s of ['Trabzon', 'Bolu', 'Hatay', 'Kilis', 'Ağrı', 'Van', 'Hakkari', 'Artvin', 'Gaziantep', 'Salda Gölü', 'Meriç', 'Çoruh', 'Büyük Menderes', 'Denizli', 'Nevşehir'])
+		ok(yer(s), 'turkiye.json: ' + s);
+	const ab = SAMPLES.kelimeavi.find((x) => x.id === 'yn-kelimeavi-11');
+	ok(ab.words.some(([w, c]) => w === 'SALDA' && TR.lakes.some((l) => l.name === 'Salda Gölü')), 'Salda Gölü');
 }
 
 // ---------------------------------------------------------------- Zaman Tüneli
@@ -54,6 +131,13 @@ for (const t of Object.keys(TYPES)) {
 		ok(q.anchors.length === 2 && q.cards.length === 3, q.id + ': 2 çapa, 3 kart');
 		ok(new Set(ys).size === 5 && ys.every((y) => Number.isInteger(y) && y > 1000 && y < 2030), q.id + ': yıllar farklı ve geçerli');
 		ok([...q.anchors, ...q.cards].every(([t]) => [...t].length <= 30), q.id + ': olay adı en çok 30 harf (plakaya sığsın)');
+		ok(new Set([...q.anchors, ...q.cards].map(([t]) => t)).size === 5, q.id + ': aynı olay iki kez');
+		// yakın yıllar sırayı belirsizleştirmesin: kolayda en az 5, ortada 3, zorda 2 yıl ara
+		const sy = ys.slice().sort((a, b) => a - b);
+		const gapMin = Math.min(...sy.slice(1).map((y, i) => y - sy[i]));
+		ok(gapMin >= [5, 3, 2][q.diff - 1], q.id + ': iki olay arası ' + gapMin + ' yıl (zorluk ' + q.diff + ')');
+		// olay adında yıl yok (kartın sırrı ele verilmesin)
+		ok([...q.anchors, ...q.cards].every(([t]) => !/\\b1\\d{3}\\b|\\b20\\d{2}\\b/.test(t)), q.id + ': olay adında yıl var');
 		const v = T.prepare(q, rng(1));
 		// doğru boşluk: tünelde kendisinden eski olay sayısı (elle)
 		for (let k = 0; k < 3; k++) {
