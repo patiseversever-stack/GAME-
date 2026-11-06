@@ -1,5 +1,5 @@
 // ÇAKIŞMA DENETİMİ v2 (soru galerisi, bütün ekran):
-//   node tools/denetim/cakisma.cjs <dist/SoruGalerisi.html> <tip,tip|cover> <GxY,GxY|hepsi> <çıktı_klasörü> [evre: soru,cevap] [paralel: 3]
+//   node tools/denetim/cakisma.cjs <dist/SoruGalerisi.html> <tip,tip|cover> <GxY,GxY|hepsi> <çıktı_klasörü> [evre: soru,joker,cevap] [paralel: 3]
 // Her tip ve ekran boyunda soruyu galeride açar; "soru" evresinde (kart oturunca) ve "cevap" evresinde (cevaplanıp
 // cevap filmi ve damga oturunca, animasyonlar sonuna sarılarak) bütün belgeyi ölçer:
 //   örtülme : görünür her yazı satırının üstünde (boyama sırasıyla, elementsFromPoint) başka bir öğe var mı:
@@ -294,6 +294,25 @@ async function one(b, spec, sz, page = null) {
 			const { bad, info } = await p.evaluate(measure);
 			await p.screenshot({ path: path.join(out, `${spec.replace(/[:@]/g, '_')}_soru_${W}x${H}.png`) });
 			res.push({ t: spec, evre: 'soru', sz, bad, info, errs: [...errs] });
+		}
+		if (evreler.includes('joker')) {
+			// joker evresi: kullanılabilir her joker sırayla basılır (yarı yarıya, seyirci, süre, şans…), ardından aynı jokere
+			// bir kez daha basılır ("kalmadı" bildirimi); joker etkileri, bildirimler ve rozetler yerleşmiş haliyle ölçülür
+			const n = await p.evaluate(() => document.querySelectorAll('.fl-q.on .fl-jkb').length);
+			for (let i = 0; i < n; i++) {
+				await p.evaluate((i) => {
+					const j = document.querySelectorAll('.fl-q.on .fl-jkb')[i];
+					if (j && !j.classList.contains('off') && !j.classList.contains('zero') && !/kalkan|sabotaj/i.test(j.textContent)) j.click();
+				}, i);
+				await p.waitForTimeout(700);
+			}
+			await p.evaluate(() => document.querySelector('.fl-q.on .fl-jkb')?.click());
+			await p.waitForTimeout(500);
+			await p.evaluate(() => document.getAnimations().forEach((a) => { try { if (a.effect?.getTiming().iterations !== Infinity) a.finish(); } catch {} }));
+			await p.waitForTimeout(300);
+			const { bad, info } = await p.evaluate(measure);
+			await p.screenshot({ path: path.join(out, `${spec.replace(/[:@]/g, '_')}_joker_${W}x${H}.png`) });
+			res.push({ t: spec, evre: 'joker', sz, bad, info, errs: [...errs] });
 		}
 		if (evreler.includes('cevap')) {
 			await answer(p, t);

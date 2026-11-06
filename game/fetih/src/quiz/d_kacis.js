@@ -377,9 +377,9 @@ export const kacis = {
 	rule: 'Doğru kapıyı aç, kaç',
 	revealMs: 4200, // cevap: kaçış planı açılır (~1,6 sn), herkes durduğu kapıya oturur; okumaya pay
 	jokers: ['yari', 'kahin'],
-	// sonuç ekranı başlığı ve birincinin etiketi (öneri: ui.js _showResult bunları "TAM İSABET / EN YAKIN" yerine kullanır)
-	winTitle: (v, r) => (r?.correct ? 'KAÇTIN!' : 'EN UZAĞA SEN!'),
-	winTag: (v, r) => (r?.correct ? 'KAÇTI' : 'EN DERİNE'),
+	// sonuç ekranı (ui.js _showResult): kimse kaçamadıysa en derine inen birinci; kaçan (err 0) arayüzün TAM İSABET'i
+	birinci: 'EN UZAĞA SEN!',
+	rozet: 'EN DERİNE',
 	fmt: (v, value) => {
 		const r = kacisOf(v, value);
 		return r.stop === 'cikis' ? 'KAÇTI' : `${r.n} oda`;
