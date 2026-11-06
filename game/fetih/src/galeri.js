@@ -13,7 +13,7 @@ import { TYPES } from './quiz/types.js';
 import { expansionPlan } from './game/match.js';
 import { CATS } from './quiz/categories.js';
 import { BANK } from './data/bank.js';
-import { DENEME_TYPES, DENEME_ORDER, DENEME_SAMPLES, bindApp } from './quiz/deneme.js';
+import { DENEME_TYPES, DENEME_ORDER, DENEME_SAMPLES, TAZE_ORDER, bindApp } from './quiz/deneme.js';
 import { designBook } from './ui/tasarim.js';
 
 const ORDER = [
@@ -36,7 +36,13 @@ const ORDER = [
 // galerideki bütün tipler tek listede: oyundakiler, ardından kullanıcının defterde tuttuğu yeni tipler (3. alan true).
 // Defterde elenen prototipler (Fetih Koşusu, Bağlantı Duvarı) listede yok; kodları src/quiz/ altında duruyor.
 const ELENEN = new Set(['kosu', 'baglanti']);
-const LIST = [...ORDER, ...DENEME_ORDER.filter(([t]) => !ELENEN.has(t)).map(([t, n, s]) => [t, n, true, s])];
+// en yeni tipler (kırmızı YENİ rozeti) listenin en üstünde; galeri ilk açılışta ilkiyle başlar
+const TAZE = new Set(TAZE_ORDER.map(([t]) => t));
+const LIST = [
+	...TAZE_ORDER.map(([t, n, s]) => [t, n, true, s]),
+	...ORDER,
+	...DENEME_ORDER.filter(([t]) => !ELENEN.has(t) && !TAZE.has(t)).map(([t, n, s]) => [t, n, true, s]),
+];
 const ALLT = { ...TYPES, ...DENEME_TYPES };
 const isNew = (t) => !!DENEME_TYPES[t];
 
@@ -148,6 +154,12 @@ body:has(.fl-ui.qmap) .gal-fab{top:auto!important;bottom:calc(14px + env(safe-ar
 .gal-pn button.nw{border-color:rgba(255,210,90,.55);background:linear-gradient(160deg,#243a72,#16254d)}
 .gal-pn button.nw i{font-style:normal;font-family:'Manrope',system-ui,sans-serif;font-weight:700;font-size:11px;line-height:1.25;color:#cfd9f2}
 .gal-pn button.nw.on i{color:rgba(58,34,0,.75)}
+/* en yeni tipler: kırmızı rozet */
+.gal .ty .nw.tz{color:#fff;background:#ff3d3d;box-shadow:0 0 10px rgba(255,61,61,.6)}
+.gal .meta .yeni.tz,.gal-pn small .yeni.tz{color:#ff6b6b}
+.gal-pn button.tz{border-color:rgba(255,90,90,.75);background:linear-gradient(160deg,#4d1a2e,#1d2450)}
+.gal-pn button.tz.on{border-color:#ffd25a;background:#ffd25a}
+.gal-pn h4.tz b{color:#ff6b6b}
 `;
 
 export async function galeri() {
@@ -259,21 +271,23 @@ export async function galeri() {
 		const v = T.prepare(q, R);
 		const ti = LIST.findIndex(([t]) => t === S.type);
 		const nw = isNew(S.type);
+		const tz = TAZE.has(S.type) ? ' tz' : '';
 		bar.innerHTML = `<span class="ey">FETİH LİGİ · SORU GALERİSİ · SÜRÜM ${esc(typeof __BUILD__ !== 'undefined' ? __BUILD__ : 'yerel')}</span>
-			<div class="hd"><button class="ty" id="g-type" aria-haspopup="listbox" aria-expanded="${!pn.hidden}">${nw ? '<span class="nw">YENİ</span>' : ''}<b>${esc(name)}</b><small>${ti + 1}/${LIST.length}</small><i>▼</i></button>
+			<div class="hd"><button class="ty" id="g-type" aria-haspopup="listbox" aria-expanded="${!pn.hidden}">${nw ? `<span class="nw${tz}">YENİ</span>` : ''}<b>${esc(name)}</b><small>${ti + 1}/${LIST.length}</small><i>▼</i></button>
 				<div class="nv"><button class="ar" id="g-prev" aria-label="Önceki örnek">‹</button><b>${S.k + 1}/${list.length}<small>ÖRNEK</small></b><button class="ar" id="g-next" aria-label="Sonraki örnek">›</button><button class="ar" id="g-close" aria-label="Kapat">✕</button></div></div>
 			<div class="meta"><b>${esc(q.id)}</b> · ${esc(cat)} · ${DIFF[q.diff] || ''} · süre <b>${v.sec ?? T.time} sn</b>${
-				nw ? ' · <em class="yeni">YENİ</em> <span class="note">maça henüz eklenmedi</span>' : SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok, örnek soru</span>' : ''
+				nw ? ` · <em class="yeni${tz}">YENİ</em> <span class="note">maça henüz eklenmedi</span>` : SAMPLES[S.type] ? ' · <span class="note">bankada henüz soru yok, örnek soru</span>' : ''
 			}</div>
 			<div class="ft"><button class="tg" id="g-scene">Sahne: <em>${SCENES[S.scene]}</em></button>
 				<button class="tg" id="g-time">Süre: <em>${S.time === 'real' ? 'Gerçek' : 'Sınırsız'}</em></button>
 				<button class="tg" id="g-again">↻ Yeniden</button><button class="tg" id="g-design"><em>◆</em> Tasarım dili</button>${document.fullscreenEnabled || document.documentElement.webkitRequestFullscreen ? '<button class="tg" id="g-full">⛶ Tam ekran</button>' : ''}</div>`;
 		bar.classList.toggle('open', !pn.hidden);
 		const item = ([t, n, nw2, sub]) =>
-			`<button data-t="${t}" role="option" aria-selected="${t === S.type}" class="${t === S.type ? 'on' : ''}${nw2 ? ' nw' : ''}">${esc(n)}${nw2 ? `<i>${esc(sub)}</i>` : ''}<small>${
-				nw2 ? `<em class="yeni">YENİ</em> · ${ex[t].length} soru` : SAMPLES[t] ? '<em>örnek soru</em>' : `${ex[t].length} soru`
+			`<button data-t="${t}" role="option" aria-selected="${t === S.type}" class="${t === S.type ? 'on' : ''}${nw2 ? ' nw' : ''}${TAZE.has(t) ? ' tz' : ''}">${esc(n)}${nw2 ? `<i>${esc(sub)}</i>` : ''}<small>${
+				nw2 ? `<em class="yeni${TAZE.has(t) ? ' tz' : ''}">YENİ</em> · ${ex[t].length} soru` : SAMPLES[t] ? '<em>örnek soru</em>' : `${ex[t].length} soru`
 			}</small></button>`;
-		pn.innerHTML = `<h4>TÜM SORU TİPLERİ · ${LIST.length}</h4>${LIST.map(item).join('')}`;
+		const nT = TAZE_ORDER.length;
+		pn.innerHTML = `<h4>TÜM SORU TİPLERİ · ${LIST.length}</h4>${nT ? `<h4 class="tz"><b>YENİ · ${nT} TİP</b></h4>${LIST.slice(0, nT).map(item).join('')}<h4>OYUNDAKİLER VE ÖNCEKİ DENEMELER</h4>` : ''}${LIST.slice(nT).map(item).join('')}`;
 		fit();
 		return { q, v, T };
 	};

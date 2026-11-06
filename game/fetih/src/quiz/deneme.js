@@ -25,9 +25,18 @@ import * as akil from './deneme-akil.js';
 import * as icat3b from './deneme-icat3b.js';
 import * as icat from './deneme-icat.js';
 import * as gk from './deneme-gozkarari.js';
+// YENİ 10 (kırmızı rozet, galerinin en üstü): beş grup, her biri iki tip
+import * as y1 from './deneme-yeni1.js';
+import * as y2 from './deneme-yeni2.js';
+import * as y3 from './deneme-yeni3.js';
+import * as y4 from './deneme-yeni4.js';
+import * as y5 from './deneme-yeni5.js';
 export { bindApp } from './d_ortak.js';
 
-const GROUPS = [harita, duello, akil, icat3b, icat, gk];
+const TAZE_GROUPS = [y1, y2, y3, y4, y5];
+const GROUPS = [harita, duello, akil, icat3b, icat, gk, ...TAZE_GROUPS];
+/** En yeni tipler (galeride en üstte, kırmızı YENİ rozetiyle): [tip, ad, tanıtım]. */
+export const TAZE_ORDER = TAZE_GROUPS.flatMap((g) => g.ORDER);
 
 export const DENEME_TYPES = Object.assign({ kusbakisi, kosu, ilavi, baglanti }, ...GROUPS.map((g) => g.TYPES));
 
