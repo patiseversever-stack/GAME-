@@ -17,7 +17,7 @@ import { botTime } from './timing.js';
 import { appOf, stamp, guard, camLock, onClose, onOpen, cardTop, tag, pop, sfx, rule, stampLater, LOOK, DENEME_CSS } from './d_ortak.js';
 import { clock, setTimeout, clearTimeout } from '../core/clock.js';
 import { holdLift } from './d_tufan.js';
-import { optFit, jokersOff } from './t_pick.js';
+import { optFit, jokersOff, tagFloor } from './t_pick.js';
 import DATA from '../data/turkiye.json';
 
 const PROV = DATA.provinces;
@@ -275,6 +275,7 @@ export const kayip = {
 			h.classList.add('open');
 			if (hintEls.every((x) => x.classList.contains('open'))) el.querySelector('.dn-ky')?.classList.add('all');
 			h.innerHTML = `<b>${['BÖLGE', 'KOMŞU', 'İPUCU'][k]}</b>${esc(v.hints[k])}`;
+			tagFloor(app, cardTop(el));
 			sfx(app, 'star');
 			buzz(8);
 			if (k === 0) {

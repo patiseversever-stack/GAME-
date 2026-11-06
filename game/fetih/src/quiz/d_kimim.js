@@ -16,7 +16,7 @@
 
 import { css, esc, pCorrect, clamp, buzz } from './util.js';
 import { PROFILE } from './timing.js';
-import { jokersOff } from './t_pick.js';
+import { jokersOff, tagFloor } from './t_pick.js';
 import { appOf, stamp, guard, onClose, onOpen, cardTop, tag, pop, sfx, rule, stampLater, tapX, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { setTimeout, clearTimeout } from '../core/clock.js';
 import DATA from '../data/turkiye.json';
@@ -385,6 +385,7 @@ export const kimim = {
 			const top = cardTop(el);
 			if (app && !done && lastTop >= 0 && Math.abs(top - lastTop) > 0.03) app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.02, pad: 1.03, top, dur: 0.6 });
 			if (lastTop < 0 || !done) lastTop = top;
+			tagFloor(app, top);
 		};
 		// yazılmakta olan satırları tamamla (kilit ve bitişte daktilo zamanlayıcıları iptal edilir)
 		const typed = () =>

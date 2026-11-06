@@ -72,7 +72,7 @@ const CSS = /* css */ `
 .fl-hilo .df.sm{font-size:11px;letter-spacing:.08em;padding:5px 9px}
 .fl-hilo .df.sm b{font-size:13px}
 .fl-hilo .df b{color:#ffc83a;font-weight:900;letter-spacing:.04em;font-size:15px}
-.fl-hilo.done{margin-bottom:30px}
+.fl-hilo.done{margin-bottom:36px} /* fark satırı (bottom:-34px) gövdenin içinde: 30 px'te 4 px taşıyor, ortak yakınlaştırma (ui._coverFit) her adımda yine taşıdığı için 0,8'e dek iniyordu */
 @keyframes flHlIn{from{opacity:0;transform:translateX(-26px) skewX(6deg)}}
 @keyframes flHlInB{from{opacity:0;transform:translateX(26px) skewX(6deg)}}
 @keyframes flHlVs{from{opacity:0;transform:rotate(45deg) scale(.3)}}
@@ -115,9 +115,10 @@ const CSS = /* css */ `
 .fl-sir em{font-style:normal;background:linear-gradient(transparent 60%,rgba(255,210,90,.6) 60%,rgba(255,210,90,.6) 92%,transparent 92%) no-repeat 0 0/0% 100%;
   transition:background-size .45s cubic-bezier(.6,0,.2,1);transition-delay:calc(.45s + var(--j) * .28s)}
 .fl-sir.s-on em{background-size:100% 100%}
-/* filigran soru işareti: ölçüleri kendi boyuna bağlı (em); JS kart kısaysa küçültür. Dönerken de kartın içinde kalır
-   (eskiden 88/66 px'lik işaret kartın sağ ve üst kenarından taşıp kırpılıyordu) */
-.fl-sir .qm{position:absolute;right:.2em;top:50%;width:.62em;margin-top:-.56em;text-align:center;font:400 88px/1 'Lilita One',sans-serif;color:rgba(255,255,255,.09);
+/* filigran soru işareti: ölçüleri kendi boyuna bağlı (em); JS kart kısaysa küçültür. Dönerken de kartın içinde ve sağdaki
+   yazısız payda kalır (58 px; kısa ekranda 44): 9° dönen kutu ~0,77 em. Eskiden 88/66 px'lik işaret kartın sağ ve üst
+   kenarından taşıp kırpılıyordu, sonra da (88 px, right .2em) dönerken satır sonundaki yazıya biniyordu (412 px'te ";") */
+.fl-sir .qm{position:absolute;right:.06em;top:50%;width:.62em;margin-top:-.56em;text-align:center;font:400 66px/1 'Lilita One',sans-serif;color:rgba(255,255,255,.09);
   animation:flRvQ 3.4s ease-in-out infinite;transition:opacity .2s}
 .fl-sir.s-on .qm{opacity:0}
 .fl-sir .sl{position:absolute;right:10px;top:50%;width:40px;height:40px;margin-top:-20px;border-radius:50%;display:grid;place-items:center;background:#fff;box-shadow:0 3px 0 rgba(0,0,0,.25);
@@ -135,7 +136,7 @@ const CSS = /* css */ `
   .fl-sir .hd{margin-bottom:4px;min-height:16px}
   .fl-sir p,.fl-sir.s-lg p{font-size:17px;line-height:1.18}
   .fl-sir p+p{margin-top:4px;padding-left:13px}
-  .fl-sir .qm{font-size:66px}
+  .fl-sir .qm{font-size:50px}
   .fl-sir .sl{width:34px;height:34px;margin-top:-17px;right:6px}
   .fl-sir .an{font-size:15px}
 }
@@ -215,6 +216,17 @@ export function optFit(el, { floor = 13 } = {}) {
 export function jokersOff(el) {
 	css('dnrv', '.fl-q.dn-rv .fl-jk{display:none}');
 	el.closest('.fl-q')?.classList.add('dn-rv');
+}
+
+/**
+ * Haritalı kart soru boyunca büyürse (ipucu, deneme satırı) arayüzün yazı rozeti sınırı da kartın altına iner. Arayüz kartın
+ * örttüğü payı (ui._mapTop) soru açılırken bir kez ölçer, harita rozetleri bu sınırın altına yerleşir (ui.js cutY). Kart
+ * sonradan büyüyünce sınır eskide kalıyor, rozet kartın joker çubuğuna biniyordu (320×568'de İl Avı'nda üç yanlıştan sonra
+ * "Kırklareli 1478 km"). Yalnız büyütür; arayüz sonraki soruda yeniden ölçer.
+ */
+export function tagFloor(app, top) {
+	const ui = app?.ui;
+	if (ui && typeof ui._mapTop === 'number' && top > ui._mapTop) ui._mapTop = top;
 }
 
 const choiceKind = (extra) => ({

@@ -16,7 +16,7 @@
 import { css, esc, pCorrect, clamp, buzz } from './util.js';
 import { botTime } from './timing.js';
 import { KM_PER_UNIT } from './types.js';
-import { jokersOff } from './t_pick.js';
+import { jokersOff, tagFloor } from './t_pick.js';
 import { appOf, stamp, guard, onClose, cardTop, tag, pop, sfx, rule, stampLater, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { setTimeout } from '../core/clock.js';
 import DATA from '../data/turkiye.json';
@@ -25,6 +25,9 @@ const PROV = DATA.provinces;
 const BY_ID = new Map(PROV.map((p, i) => [p.id, i]));
 const REGION = { marmara: 'Marmara', karadeniz: 'Karadeniz', ege: 'Ege', akdeniz: 'Akdeniz', icanadolu: 'İç Anadolu', dogu: 'Doğu Anadolu', guneydogu: 'Güneydoğu Anadolu' };
 const TRIES = 4;
+
+/** Deneme karosuna sığmayan uzun il adlarının yaygın kısa adı (yalnız karoda; haritada tam ad). */
+const SHORT = { Afyonkarahisar: 'Afyon', Kahramanmaraş: 'K.Maraş' };
 
 /** Uzaklığın rengi ve adı (km). */
 export const HEAT = [
@@ -132,8 +135,8 @@ const CSS = /* css */ `
   .dn-ia-sil{width:88px;height:102px}
   .dn-ia-sil svg{width:68px;height:68px;margin:-34px 0 0 -34px}
   .dn-ia-hints span{font-size:12.5px;line-height:1.18}
-  .dn-ia-slots{gap:4px}
-  .dn-ia-slots .sl{padding:4px 3px 4px 4px}
+  .dn-ia-slots{gap:3px}
+  .dn-ia-slots .sl{padding:4px 2px 4px 3px} /* "AFYONKARAHİSAR" 9 px'te sığsın (ortak sığdırıcı 8,5'e iniyordu) */
   .dn-ia-slots .sl .nm{letter-spacing:0}
 }
 .dn-ia-hints span.lock{background:rgba(255,255,255,.03);color:rgba(255,255,255,.4)}
@@ -267,6 +270,18 @@ export const ilavi = {
 			s.classList.add('on', ...cls);
 			s.style.setProperty('--hc', color);
 			s.innerHTML = `<span class="nm">${esc(name)}</span><span class="km">${km}</span>`;
+			// dar karoda (320 px'te 54 px) en uzun iki il adı 9 px'te de sığmıyor (ortak sığdırıcı 8,5 px'e iniyordu): yaygın kısa
+			// adı yazılır, tam adı karonun başlığında ve haritadaki rozette
+			const nm = s.firstChild;
+			if (SHORT[name]) {
+				nm.style.fontSize = '9px';
+				const over = nm.scrollWidth > nm.clientWidth + 1;
+				nm.style.fontSize = '';
+				if (over) {
+					nm.textContent = SHORT[name];
+					s.title = name;
+				}
+			}
 			slots[k + 1]?.classList.add('cur');
 		};
 		const taps = [];
@@ -303,6 +318,7 @@ export const ilavi = {
 			const top = cardTop(el);
 			if (!done && lastTop >= 0 && Math.abs(top - lastTop) > 0.03) app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.02, pad: 1.03, top, dur: 0.6 });
 			if (!done) lastTop = top;
+			tagFloor(app, top);
 		};
 		queueMicrotask(() => {
 			if (!el.isConnected) return;

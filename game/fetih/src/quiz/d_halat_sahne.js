@@ -129,6 +129,8 @@ export const SAHNE_CSS = /* css */ `
 /* gövdeyi tam doldurur (sahne esner): şıkların altındaki kilit çubuğu (−6 px) ve basılı şık gövdeden taşıp _coverFit'i
    bütün ekranı küçültmeye zorlamasın diye alt pay */
 .fl-q.cover .dn-ht{flex:1 1 auto;padding-bottom:8px}
+/* cevapta soru ve şıklar kalkar: kalan (skor, sahne, satırlar) dikeyde ortalanır; uzun ekranda altta yarım ekran boş kalmasın */
+.fl-q.cover .dn-ht.done{justify-content:center}
 .ht-hud{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
 .ht-side{display:flex;align-items:center;gap:6px;min-width:0}
 .ht-side.R{flex-direction:row-reverse}

@@ -556,7 +556,10 @@ export const tufan = {
 					if (win) btns[k].classList.add('isle');
 					btns[k].querySelector('span').insertAdjacentHTML('beforeend', `<em>${win ? 'SON ADA · ' : 'KALDI · '}${fmtM(v.alt[k])}</em>`);
 					ticks[k].classList.add('top');
-					caption(win ? 'Son ada' : p.name, win ? `${p.name} · ${fmtM(v.alt[k])}` : `Kaldı · ${fmtM(v.alt[k])}`, true, true);
+					// son yazı (kalıcı) yalnız sonuç damgası yokken (izleyici): damga ve büyük rozet aynı şeyi söylüyor ("SON ADA ·
+					// Afyonkarahisar ≈1.030 m"); yazı haritanın il rozetlerinin önünde yer tutmuyor, rozetler altına giriyordu
+					// (320×568'de "Bilecik ≈540 m", 360×640'ta son adanın büyük rozeti)
+					if (!verdict) caption(win ? 'Son ada' : p.name, win ? `${p.name} · ${fmtM(v.alt[k])}` : `Kaldı · ${fmtM(v.alt[k])}`, true, true);
 					snd.hope();
 					buzz(win ? 25 : 8);
 				};

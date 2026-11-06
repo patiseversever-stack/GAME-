@@ -676,12 +676,14 @@ const CSS = /* css */ `
 .fl-q.locked .dn-gg-bar i{animation-play-state:paused}
 .dn-gg-top b{font-family:'Lilita One';font-weight:400;font-size:14px;letter-spacing:.04em;color:var(--gold)}
 .dn-gg .fl-opt{min-height:50px}
-/* kısa ekran (≤720 px): kart ekranın üçte ikisini kaplıyor, gövde %70'e küçülüp "Fener dönüyor" etiketi 8 px'e düşüyordu.
-   Dört şık iki sütun (uzun kelime hecesinden bölünür, yazı küçülmez); tiyatroya da yer kalır */
-@media (max-height:720px){
-  .fl-q.t-golge .fl-opts,.fl-q.t-golge .fl-opts.one{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .fl-q.t-golge .fl-opt{min-width:0;min-height:46px}
-  .fl-q.t-golge .fl-opt>span{overflow-wrap:normal}
+/* en kısa ekran (320×568): kart gövdesi %70'e küçülüp "Fener dönüyor" etiketi 8 px'e düşüyordu. Tek sütun kalır (iki
+   sütunda iki oyuncunun portresi dar hücrede yazının üstüne biniyordu), şıklar ve üst şerit alçalır */
+@media (max-height:600px){
+  .dn-gg{gap:6px}
+  .dn-gg-top{gap:6px}
+  .dn-gg-top .sc{width:22px;height:22px}
+  .fl-q.t-golge .fl-opts{gap:6px}
+  .fl-q.t-golge .fl-opt,.fl-q.t-golge .fl-opts.one .fl-opt{min-height:38px;font-size:16.5px}
 }
 @keyframes dnShrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 `;
@@ -749,7 +751,7 @@ export const golge = {
 			<div data-r="o"></div>
 		</div>`;
 		const c = mountChoice(el.querySelector('[data-r=o]'), v, api, { onPick: () => sfx(app, 'tap') });
-		// uzun kelimeli şıklar hecesinden bölünebilsin (iki sütunda yazı küçülmez, kesilmez); mikro görevde: arayüzün şık
+		// uzun kelimeli şıklar gerekirse hecesinden bölünsün (yazı küçülmez, kesilmez); mikro görevde: arayüzün şık
 		// uzunluğu ölçüsü (mount'tan hemen sonra) yumuşak tireleri saymasın
 		queueMicrotask(() => {
 			for (const sp of el.querySelectorAll('[data-r=o] .fl-opt>span')) sp.innerHTML = heceli(sp.textContent);

@@ -71,11 +71,12 @@ const CSS = /* css */ `
 @media (max-height:720px){.dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:36px}.dn-ha-w b,.ha-chips i{flex-basis:min(48px,calc((100% - (var(--n) - 1) * 5px) / var(--n)))}.dn-ha-pts b{font-size:30px}.dn-ha-al{height:42px}.ha-pano{gap:7px;padding:8px 10px 10px}}
 @media (max-height:600px){.dn-ha{gap:7px}.dn-ha-g{display:none}.ha-pano{gap:5px;padding:6px 8px 8px}.dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:32px}.dn-ha .fl-keys{gap:4px}.ha-chips i{height:16px;font-size:10px}.dn-ha-pts b{font-size:26px}.dn-ha-al{height:38px;min-width:96px;font-size:18px}.dn-ha-w b,.ha-chips i{flex-basis:min(40px,calc((100% - (var(--n) - 1) * 5px) / var(--n)))}}
 /* en kısa ekran (320×568): gövde %71–79'a küçülüyor, jetonlardaki "100" 7 px'e düşüyordu. Kutular kare (genişliğe bağlı
-   kutu küçültmede uzayıp ölçeği daha da düşürüyordu), HARF AL tek satır, tuşlar 30 px */
+   kutu küçültmede uzayıp ölçeği daha da düşürüyordu), HARF AL alçak (iki satır kalır: tek satırda genişleyip 10 harflik
+   kelimede "1000 · 10 HARF" yazısının üstüne biniyordu), tuşlar 30 px */
 @media (max-height:600px){
   .ha-pano{padding:5px 8px 6px}
-  .dn-ha-al{height:32px;min-width:0;flex-direction:row;gap:6px;padding:0 15px;font-size:17px}
-  .dn-ha-al small{margin-top:0;font-size:10.5px}
+  .dn-ha-al{height:34px;min-width:88px;padding:0 12px;font-size:17px}
+  .dn-ha-al small{margin-top:1px;font-size:10px}
   .dn-ha-w b{aspect-ratio:1}
   .dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:30px}
 }

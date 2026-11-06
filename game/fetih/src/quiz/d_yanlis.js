@@ -93,6 +93,14 @@ const CSS = /* css */ `
   font:500 14.5px/1.35 'Fredoka',sans-serif;color:#2a2a3a;animation:dnYbUp .4s 1.5s both}
 .dn-yb-n i{flex:none;padding:2px 7px;border-radius:4px;font-style:normal;font:italic 900 11px/1.4 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#fff;background:#1f9a4a}
 .dn-yb.done .dn-yb-row,.dn-yb.done .dn-yb-st{display:none}
+/* sondaki not hafif eğik (0,6°): köşesi gövdenin dibinden 2–3 px taşıp "gizli içerik" bırakıyordu; alt pay içine alır */
+.fl-q.cover .dn-yb.done{padding-bottom:4px}
+/* cevapta seçenek notlarındaki portreler küçük ve sık: iki oyuncu aynı kısa seçeneği seçince ortak kurallarla (26 px, sağ
+   pay 63 px) yazıya ~40 px kalıyor, "savunmayı" portrelerin altına taşıyordu */
+.dn-yb.done .dn-yb-o .fl-opt>.fl-who{width:20px;height:20px;margin-top:-10px;right:7px;border-width:1.5px}
+.dn-yb.done .dn-yb-o .fl-opt>.fl-who+.fl-who{right:22px}
+.fl-q .dn-yb.done .dn-yb-o .fl-opt:has(>.fl-who){padding-right:32px}
+.fl-q .dn-yb.done .dn-yb-o .fl-opt:has(>.fl-who+.fl-who){padding-right:47px}
 @media (max-height:720px){.dn-yb-pp{padding:30px 10px 10px 34px}.dn-yb-pp::before{left:24px}.dn-yb-o .fl-opt{min-height:48px}.dn-yb .fl-send{height:46px}
   .fl-q.cover .dn-yb{gap:10px}
   .fl-q.cover .dn-yb-pp{padding:34px 12px 12px 38px;background:repeating-linear-gradient(180deg,transparent 0 39px,rgba(60,110,210,.22) 39px 40.5px) 0 33px/100% 100% no-repeat,linear-gradient(180deg,#fffdf4,#f6edd6)}
@@ -308,7 +316,13 @@ export const yanlis = {
 				span.outerHTML = `<del>${esc(v.words[v.bad].w)}</del><ins>${esc(v.q.ok)}</ins>`;
 				// düzeltme oturunca (eski kelime daralıp kalkınca) cümle bir satır kısalabilir: bir sınıf değişikliğiyle gövde
 				// yeniden ölçülsün (_coverFit animasyonları izlemez; yoksa ilk, uzun hâlin küçültmesi kalıyordu)
-				c.addEventListener('animationend', (e) => e.animationName === 'dnYbIn' && c.classList.add('oturdu'));
+				c.addEventListener('animationend', (e) => {
+					if (e.animationName !== 'dnYbIn') return;
+					c.classList.add('oturdu');
+					// yeni ölçekte şık notlarının genişliği değişir; sığdırıcı (fit.js) yalnız DOM değişikliğini izler: iki kare sonra
+					// (ölçek oturunca) şık yazılarına dokunulur, yeniden sığdırılır (yoksa eski boyuyla portrenin altına taşabiliyordu)
+					requestAnimationFrame(() => requestAnimationFrame(() => optsEl.querySelectorAll('.fl-opt>span').forEach((s) => s.classList.toggle('yf'))));
+				});
 				setTimeout(() => burst(c, ['#7dff9a', '#fff', '#ffd25a']), 1250);
 				// oyuncuların işaretlediği kelimeler
 				for (const r of results) {

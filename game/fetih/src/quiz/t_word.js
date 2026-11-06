@@ -64,6 +64,8 @@ const CSS = /* css */ `
   background:rgba(255,255,255,.06);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.24);transition:background .15s,box-shadow .15s}
 .xw-c.void{visibility:hidden}
 .xw-c sup{position:absolute;left:3px;top:2px;font:800 max(9px,calc(var(--cs) * .27))/1 ${FONT};font-style:normal;color:#ffd25a;pointer-events:none}
+/* numaralı kutuda harf biraz sağa-aşağı: küçük kutuda (20–26 px) numara harfin sol üstüne binmesin */
+.xw-c:has(>sup)>span{translate:calc(var(--cs) * .12) calc(var(--cs) * .07)}
 .xw-c.wd{background:rgba(255,210,90,.1);box-shadow:inset 0 0 0 2px rgba(255,210,90,.8)}
 .xw-c.nx{box-shadow:inset 0 0 0 3px #ffd25a,0 0 14px rgba(255,210,90,.6);animation:anNx 1.1s ease-in-out infinite}
 .xw-c.has{background:linear-gradient(180deg,#fff,#e2e8f5);box-shadow:0 3px 0 rgba(0,0,0,.45)}
@@ -104,19 +106,27 @@ const CSS = /* css */ `
 .xw.sh .an-b{height:34px;padding:0 12px;gap:6px;font-size:14px}
 .xw.sh .an-b svg{width:16px;height:16px}
 /* çok kısa ekran (< 600 px, 568'de gövdeye ~200 px): bir kademe daha sıkı; küçük kutuda harf kutunun daha büyük payı */
-.xw.xs{gap:5px;margin:0}
+.xw.xs{gap:4px;margin:0}
 .xw.xs .xw-c{font-size:calc(var(--cs) * .66)}
-.xw.xs .xw-c sup{font-size:max(10.5px,calc(var(--cs) * .3))} /* gövde ~0,84 yakınlaşınca da ~9 px */
-.xw.xs .xw-txt{min-height:38px;padding:4px 10px;gap:8px}
+.xw.xs .xw-c sup{left:2px;top:1px;font-size:max(10.75px,calc(var(--cs) * .3))} /* gövde 0,84'e yakınlaşınca da 9 px */
+.xw.xs .xw-txt{min-height:36px;padding:3px 10px;gap:8px}
 .xw.xs .xw-txt b{height:26px;padding:0 6px;font-size:17px}
 .xw.xs .xw-txt b i{font-size:13px}
-.xw.xs .xw-txt span{font-size:14.5px;line-height:1.14}
+.xw.xs .xw-txt span{font-size:14px;line-height:1.12}
 .xw.xs .xw-nav{width:36px}
 .xw.xs .an-tiles{gap:6px}
 .xw.xs .an-acts{gap:6px}
-.xw.xs .an-b{height:31px;padding:0 10px;font-size:13px}
+.xw.xs .an-b{height:28px;padding:0 10px;font-size:12.5px}
 .xw.xs .an-b svg{width:15px;height:15px}
 .xw.xs.done .xw-c{font-size:calc(var(--cs) * .6)}
+/* uzun kelimenin kartları tek sırada (JS .r1, yükseklik bütçesi): iki sıra kart yerine bir sıra, kart ~30–36 px */
+.xw.r1 .an-tiles{flex-wrap:nowrap;gap:5px}
+/* 568 px'te 7–8 satırlık tahta: bilinçli kayan alan (JS data-kaydir); üstte/altta satır kalan kenar solar */
+.xw-grid[data-kaydir]{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;align-content:start}
+.xw-grid[data-kaydir]::-webkit-scrollbar{display:none}
+.xw-grid[data-kaydir].dn{-webkit-mask:linear-gradient(180deg,#000 calc(100% - 18px),transparent);mask:linear-gradient(180deg,#000 calc(100% - 18px),transparent)}
+.xw-grid[data-kaydir].up{-webkit-mask:linear-gradient(0deg,#000 calc(100% - 18px),transparent);mask:linear-gradient(0deg,#000 calc(100% - 18px),transparent)}
+.xw-grid[data-kaydir].up.dn{-webkit-mask:linear-gradient(180deg,transparent,#000 18px,#000 calc(100% - 18px),transparent);mask:linear-gradient(180deg,transparent,#000 18px,#000 calc(100% - 18px),transparent)}
 @keyframes xwIn{0%{transform:scale(1.35);opacity:0}100%{transform:none}}
 @keyframes xwHot{50%{box-shadow:inset 0 0 0 2px #fff,0 4px 0 #8a5a00,0 0 22px rgba(255,210,90,.9)}}
 @keyframes flq-pop2{from{transform:scale(.4)}to{transform:scale(1)}}
@@ -407,10 +417,34 @@ export const cross = {
 		const hist = L.words.map(() => []); // kelime başına yerleştirme sırası (geri al)
 		const banks = L.words.map((w) => (w.tiles ? w.tiles.slice() : shuffle([...w.w], Math.random)));
 		const maxBank = Math.max(...banks.map((b) => b.length));
-		const per = maxBank <= 7 ? maxBank : Math.ceil(maxBank / 2);
-		const tw = clamp(Math.floor(((land ? 260 : W) - (per - 1) * 9) / per), 34, tiny ? 40 : land || short ? 44 : 56);
-		root.style.setProperty('--tw', tw + 'px');
-		root.style.setProperty('--th', clamp(Math.round(tw * 1.12), 40, tiny ? 44 : short ? 48 : 60) + 'px');
+		// düzen kademesi: 0 rahat, 1 sıkı (.sh), 2 daha sıkı (.xs); one: uzun kelimenin kartları iki sıra yerine tek sıra (.r1)
+		let mode = tiny ? 2 : short ? 1 : 0;
+		let one = false;
+		// kart sırası: satıra sığan kart sayısı (fit); uzun kelime iki dengeli sıraya bölünür (8 harf 4 + 4; eskiden 5 + 3 ya da
+		// 7 + 1), kart alanı en uzun kelimenin sıra sayısı kadar yer tutar (kelime değişince tahta zıplamaz)
+		let fit = 99;
+		let gx = 9;
+		const tiles = () => {
+			const per = one ? maxBank : maxBank <= 7 ? maxBank : Math.ceil(maxBank / 2);
+			const tw = clamp(Math.floor(((land ? 260 : W) - (per - 1) * (one ? 5 : 9)) / per), one ? 28 : 34, mode === 2 ? 36 : land || mode === 1 ? 44 : 56);
+			const th = clamp(Math.round(tw * 1.12), one ? 32 : 40, mode === 2 ? 40 : mode === 1 ? 48 : 60);
+			root.style.setProperty('--tw', tw + 'px');
+			root.style.setProperty('--th', th + 'px');
+			if (land) return;
+			gx = one ? 5 : mode === 2 ? 6 : mode === 1 ? 8 : 9; // sütun aralığı (.an-tiles, .sh, .xs, .r1)
+			const gy = one ? 5 : mode === 2 ? 6 : mode === 1 ? 8 : 12;
+			fit = one ? maxBank : Math.max(1, Math.floor((W + gx) / (tw + gx)));
+			const rows = Math.max(...banks.map((b) => Math.ceil(b.length / fit)));
+			bankEl.style.minHeight = `${rows * th + (rows - 1) * gy}px`;
+		};
+		tiles();
+		let csNow = cs;
+		const setCs = (c) => {
+			csNow = c;
+			gridEl.style.setProperty('--cs', c + 'px');
+			gridEl.style.gridTemplateColumns = `repeat(${L.cols},${c}px)`;
+			gridEl.style.gridAutoRows = c + 'px';
+		};
 		const known = L.cells.every((c) => c.ch);
 		let wi = 0;
 		let done = false;
@@ -427,6 +461,20 @@ export const cross = {
 			}
 			return st;
 		};
+		/** Kayan tahtada üstte/altta kalan satır varsa o kenar solar. */
+		const edge = () => {
+			if (!gridEl.hasAttribute('data-kaydir')) return;
+			gridEl.classList.toggle('up', gridEl.scrollTop > 1);
+			gridEl.classList.toggle('dn', gridEl.scrollTop + gridEl.clientHeight < gridEl.scrollHeight - 1);
+		};
+		gridEl.addEventListener('scroll', edge, { passive: true });
+		/** Seçili kelimenin kartları dengeli sıralarda: kart alanının eni sıradaki kart sayısına göre. */
+		const bankW = () => {
+			if (land) return;
+			const n = banks[wi].length;
+			const per = Math.ceil(n / Math.ceil(n / fit));
+			bankEl.style.maxWidth = `${per * parseFloat(root.style.getPropertyValue('--tw')) + (per - 1) * gx}px`;
+		};
 		const draw = () => {
 			const mine = cellsOf(wi);
 			const inWord = new Set(mine);
@@ -438,11 +486,14 @@ export const cross = {
 				e.classList.toggle('in', i === placed);
 				e.lastChild.textContent = letters[i];
 			});
+			// kayan tahta: sıradaki boş kutu (yoksa kelimenin başı) görünür
+			if (gridEl.hasAttribute('data-kaydir')) cellEls[nx >= 0 ? nx : mine[0]]?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
 			placed = -1;
 			const w = L.words[wi];
 			clueEl.innerHTML = `<b>${w.n}<i>${w.dir === 'a' ? '→' : '↓'}</i></b><span>${esc(w.clue)}</span>`;
 			const st = cardState(wi);
 			bankEl.innerHTML = banks[wi].map((ch, j) => `<span class="an-k${st[j] === 'give' ? ' give' : ''}"><button type="button" class="fl-tile an-t${st[j] ? ' used' : ''}" data-j="${j}">${esc(ch)}</button></span>`).join('');
+			bankW();
 			doneBtn.classList.toggle('hot', letters.every((x) => x));
 		};
 		const filled = () => letters.every((x) => x);
@@ -559,6 +610,66 @@ export const cross = {
 			},
 		});
 		draw();
+		// Yükseklik bütçesi (dikey): kart gövdeye sığmıyorsa önce tahta kutuları küçülür, sonra ipucu plakası, kartlar ve
+		// düğmeler sıkılaşır, uzun kelimenin kartları tek sıraya iner, en son kutular 20 px'e dek küçülür. Ortak yakınlaştırma
+		// (ui._coverFit) ancak bundan sonra da sığmazsa devreye girer: yazılar okunur boyda kalır. Eskiden yalnız
+		// yakınlaştırma vardı: uzun kelimeler dik kesişince tahta 7–8 satır oluyor, gövde 0,64–0,9'a iniyor, kutu numaraları
+		// 6–8 px, ipucu 9–11 px kalıyordu; 1280×720 çerçevesinde (325×704, tam ekran değil) düğmeler joker çubuğunun altına
+		// giriyordu. Yalnız küçültür (kart açıkken büyütmez: gözlemciyle salınım olmasın); joker çubuğu sonradan dolup gövde
+		// kısalırsa gözlemci yeniden ölçer.
+		const over = () => el.scrollHeight - el.clientHeight;
+		const shrink = (floor) => {
+			const o = over();
+			if (o <= 1 || csNow <= floor) return o;
+			setCs(Math.max(floor, csNow - Math.ceil((o + 1) / L.rows)));
+			return over();
+		};
+		const restyle = () => {
+			root.classList.toggle('sh', mode >= 1);
+			root.classList.toggle('xs', mode >= 2);
+			root.classList.toggle('r1', one);
+			tiles();
+			bankW();
+			return over();
+		};
+		const budget = () => {
+			if (done || land || !root.isConnected || !el.clientHeight) return;
+			const z0 = root.style.zoom; // ortak yakınlaştırma: ölçü onsuz
+			root.style.zoom = '';
+			let o = shrink(26);
+			if (o > 1 && mode < 1) {
+				mode = 1;
+				o = restyle();
+				o = shrink(24);
+			}
+			if (o > 1 && !one && maxBank > 7 && Math.floor((W - (maxBank - 1) * 5) / maxBank) >= 30) {
+				one = true;
+				o = restyle();
+				o = shrink(22);
+			}
+			if (o > 1 && mode < 2) {
+				mode = 2;
+				o = restyle();
+			}
+			if (o > 1) o = shrink(20);
+			// en sıkı düzen de sığmıyor (568 px'te 7–8 satırlık tahta: uzun kelimeler dik kesişiyor): tahta bilinçli kayan alan
+			// (data-kaydir), gövde ~0,9'a dek yakınlaşır, sıradaki boş kutu görünür kalır (draw). Yoksa her şey 0,64–0,7'ye
+			// iniyor, ipucu ~10 px, kutu numaraları ~7 px oluyordu. En az üç satır görünür (yoksa yalnız yakınlaştırma)
+			if (o > 1) {
+				const cut = el.scrollHeight - (Math.floor(el.clientHeight / 0.93) - 2); // ortak yakınlaştırma 0,02 adımla iner: ~0,9
+				const gh = gridEl.offsetHeight;
+				if (cut > 0 && gh - cut >= 3 * csNow + 8) {
+					gridEl.style.maxHeight = gh - cut + 'px';
+					gridEl.setAttribute('data-kaydir', '');
+					edge();
+				}
+			}
+			root.style.zoom = z0;
+		};
+		budget();
+		const ro = typeof ResizeObserver === 'function' ? new ResizeObserver(budget) : null;
+		ro?.observe(el);
+		document.fonts?.ready?.then(budget);
 		return {
 			lock() {
 				done = true;
@@ -567,14 +678,20 @@ export const cross = {
 			reveal(results) {
 				done = true;
 				stop();
+				ro?.disconnect();
+				gridEl.removeAttribute('data-kaydir');
+				gridEl.style.maxHeight = '';
+				gridEl.classList.remove('up', 'dn');
 				root.classList.add('done');
 				cellEls.forEach((e, i) => {
 					e.classList.remove('wd', 'nx', 'in');
 					if (L.cells[i].ch) e.classList.add(letters[i] === L.cells[i].ch ? 'ok' : 'bad');
 				});
-				if (root.closest('.fl-q.cover')) {
-					// tam ekran kart: kartlar ve düğmeler kalkar, tahta boşalan yere büyür (kısa ekranda çözüm okunsun; joker
-					// çubuğu da cevapta kalkar)
+				const cover = !!root.closest('.fl-q.cover');
+				if (cover || !land) {
+					// kartlar ve düğmeler kalkar, tahta boşalan yere büyür: çözüm okunsun, küçük kutuda numara harfe binmesin
+					// (tam ekran kartta joker çubuğu da cevapta kalkar; öbür kartta gövde eski boyunda kalır, kart zıplamaz)
+					const h0 = el.clientHeight;
 					bankEl.style.display = 'none';
 					root.querySelector('.an-acts').style.display = 'none';
 					requestAnimationFrame(() => {
@@ -582,13 +699,10 @@ export const cross = {
 						const z0 = root.style.zoom; // ui._coverFit'in yakınlaştırması: ölçü onsuz
 						root.style.zoom = '';
 						const st = getComputedStyle(root);
-						const avail = el.clientHeight - (parseFloat(getComputedStyle(el).paddingTop) || 0) - parseFloat(st.marginTop) - parseFloat(st.marginBottom) - (root.offsetHeight - gridEl.offsetHeight) - 4;
+						const avail = (cover ? el.clientHeight : h0) - (parseFloat(getComputedStyle(el).paddingTop) || 0) - parseFloat(st.marginTop) - parseFloat(st.marginBottom) - (root.offsetHeight - gridEl.offsetHeight) - 4;
 						root.style.zoom = z0;
-						const c2 = clamp(Math.min(Math.floor((W - (L.cols - 1) * 4) / L.cols), Math.floor((avail - (L.rows - 1) * 4) / L.rows)), cs, 50);
-						if (c2 <= cs) return;
-						gridEl.style.setProperty('--cs', c2 + 'px');
-						gridEl.style.gridTemplateColumns = `repeat(${L.cols},${c2}px)`;
-						gridEl.style.gridAutoRows = c2 + 'px';
+						const c2 = clamp(Math.min(Math.floor((W - (L.cols - 1) * 4) / L.cols), Math.floor((avail - (L.rows - 1) * 4) / L.rows)), csNow, 50);
+						if (c2 > csNow) setCs(c2);
 					});
 				} else bankEl.style.visibility = 'hidden';
 				setTimeout(() => {
@@ -601,7 +715,10 @@ export const cross = {
 					});
 				}, 800);
 			},
-			destroy: stop,
+			destroy() {
+				stop();
+				ro?.disconnect();
+			},
 		};
 	},
 	judge(v, value) {

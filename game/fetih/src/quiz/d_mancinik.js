@@ -201,6 +201,7 @@ function sceneSVG(v) {
 			<g class="pvmk"><circle cx="0" cy="${GY}" r="8" fill="none" stroke="#ffd25a" stroke-width="1.6"/><circle cx="0" cy="${GY}" r="3" fill="#ffd25a"/><path d="M-12,${GY}h6M6,${GY}h6M0,${GY - 12}v6" stroke="#ffd25a" stroke-width="1.6"/></g></g>
 		<g class="crowd"><line class="cl" x1="0" y1="${GY - 30}" x2="0" y2="${GY}" stroke="#c78bff" stroke-width="1.8" stroke-dasharray="3 2"/><text class="lt ct" x="0" y="${GY - 34}" text-anchor="middle" fill="#e2c8ff">seyirci</text></g>
 		<g class="stones"></g>
+		<g class="mss"></g>
 		<g class="cat">
 			<ellipse cx="${PIV.x}" cy="${GY + 2}" rx="46" ry="5" fill="#000" opacity=".35"/>
 			<rect x="${PIV.x - 38}" y="${GY - 20}" width="76" height="9" rx="2" fill="${WOOD}" stroke="${WOOD_D}" stroke-width="1.6"/>
@@ -291,6 +292,8 @@ export const mancinik = {
 		const pvMk = svg.querySelector('.pvmk');
 		const wall = svg.querySelector('.wall');
 		const stones = svg.querySelector('.stones');
+		// ölçü çizgileri ve fark yazıları kendi katmanında, taşların üstünde: sonradan atılan taşın krateri yazıyı örtmesin
+		const mss = svg.querySelector('.mss');
 		const msg = root.querySelector('.dn-mc-msg');
 		let lo = q.min;
 		let hi = q.max;
@@ -456,15 +459,17 @@ export const mancinik = {
 			g.setAttribute('class', 'ms');
 			g.innerHTML = `<line x1="${x0}" y1="${y}" x2="${x1}" y2="${y}" stroke="${col}" stroke-width="1.8"/><line x1="${x0}" y1="${y - 4}" x2="${x0}" y2="${y + 4}" stroke="${col}" stroke-width="1.8"/><line x1="${x1}" y1="${y - 4}" x2="${x1}" y2="${y + 4}" stroke="${col}" stroke-width="1.8"/>
 				<circle cx="${ex}" cy="${y}" r="3" fill="${color}" stroke="#fff" stroke-width="1"/><text x="${(x0 + x1) / 2}" y="${y - 3}" text-anchor="middle" fill="${col}">${esc(txt)}</text>`;
-			stones.appendChild(g);
+			mss.appendChild(g);
 		};
 		/** Kamera: sahnenin görünen alanını (viewBox) sur ve taşların çevresine yumuşakça daraltır. */
 		const zoomTo = (xs, ms = 900) => {
 			svg.closest('.dn-mc')?.classList.add('zoom');
 			const lo = Math.max(0, Math.min(...xs) - 46);
 			const hi = Math.min(W, Math.max(...xs) + 46);
-			const w = Math.max(150, hi - lo);
-			const h = (w * H) / W;
+			// görünen alan surun bayrağını ve değer yazısını (sur tepesinin 35 px üstü) da içerecek kadar yüksek: dar kadrajda
+			// yazı üstten kesiliyordu
+			const h = Math.max((Math.max(150, hi - lo) * H) / W, GY + 34 - (GY - WALL_H - 48));
+			const w = (h * W) / H;
 			const tx = Math.max(0, Math.min(W - w, (lo + hi) / 2 - w / 2));
 			const ty = Math.min(H - h, GY + 34 - h);
 			const a0 = performance.now();
@@ -561,6 +566,7 @@ export const mancinik = {
 				if (!keep) {
 					msg.classList.remove('on');
 					stones.innerHTML = '';
+					mss.innerHTML = '';
 				} else setTimeout(() => msg.classList.remove('on'), 1400);
 				const list = results.filter((r) => r.value != null && !(keep && r.p?.human));
 				const rest = () => {
@@ -578,7 +584,7 @@ export const mancinik = {
 					const xs = [wallX(), ...shot.map((r) => landX(v, Number(r.value), wallX()))];
 					setTimeout(() => zoomTo(xs), 450 + list.length * 520);
 					setTimeout(() => {
-						stones.querySelectorAll('.ms').forEach((e) => e.remove());
+						mss.innerHTML = '';
 						const meR0 = shot.find((r) => r.p?.human);
 						const marks = [win, meR0 && meR0 !== win ? meR0 : null].filter((r) => r && r.value != null);
 						marks.forEach((r, i) => measure(Number(r.value), r.color, i));
