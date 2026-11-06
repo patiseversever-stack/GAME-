@@ -132,6 +132,14 @@ for (const q of SAMPLES.mayin) {
 	ok(j.mines.length === 2 && j.mines.every((i) => v.alan.includes(i) && !v.guvenli.includes(i)), q.id + ': joker mayın göstermiyor');
 	const pv = M.publicView(v);
 	ok(pv.guvenli == null && pv.q.guvenli == null && !JSON.stringify(pv).includes('"not"'), q.id + ': publicView güvenli illeri sızdırıyor');
+	// çevrimiçi görünüm (güvenli iller yok): sayım ve biçim çökmesin; güvenli il sayısı görünümde kalır (sayaç)
+	let pvOk = true;
+	try {
+		pvOk = pv.n === v.guvenli.length && M.fmt(pv, { taps: S }) === '0/' + v.guvenli.length + ' il' && typeof M.sub(pv, { taps: S }) === 'string';
+	} catch {
+		pvOk = false;
+	}
+	ok(pvOk, q.id + ': çevrimiçi görünümde fmt/sub çöküyor');
 	ok(typeof M.fmt(v, { taps: S }) === 'string' && M.sub(v, { taps: [mines[0], mines[1]] }).includes('patladı'), q.id + ': fmt/sub');
 }
 const R = TYPES.rota;
@@ -170,6 +178,13 @@ for (const q of SAMPLES.rota) {
 	ok(jk.uc[0] === v.sira[0] && jk.uc[1] === v.sira[n - 1], q.id + ': joker kalkış ve varış');
 	const pv = R.publicView(v);
 	ok(pv.sira == null && pv.q.duraklar == null && pv.not == null && pv.kart.length === n, q.id + ': publicView sırayı sızdırıyor');
+	let pvOk = true;
+	try {
+		pvOk = R.fmt(pv, { route: sw }) === '0/' + n + ' durak' && typeof R.sub(pv, { route: sw }) === 'string';
+	} catch {
+		pvOk = false;
+	}
+	ok(pvOk, q.id + ': çevrimiçi görünümde fmt/sub çöküyor');
 	ok(R.fmt(v, { route: sw }) === '2/' + n + ' durak' && R.sub(v, { route: sw }) === '3. durakta saptı', q.id + ': fmt/sub');
 }
 

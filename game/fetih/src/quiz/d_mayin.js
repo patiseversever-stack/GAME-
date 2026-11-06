@@ -36,8 +36,9 @@ const FIRE = ['#fff6c8', '#ffd25a', '#ff9a2a', '#ff5a1f', '#c2200f', '#4a3a32'];
 
 /** Dokunuşlardan sonuç (sunucu da aynı hesabı yapar): ok (güvenli il dizinleri), boom (mayın dizinleri), dead, all. */
 export function sonuc(v, taps) {
+	const G = Array.isArray(v.guvenli) ? v.guvenli : []; // çevrimiçi görünümde yok (cevapla gelir)
 	const F = new Set(v.alan);
-	const S = new Set(v.guvenli);
+	const S = new Set(G);
 	const seen = new Set();
 	const ok = [];
 	const boom = [];
@@ -51,7 +52,7 @@ export function sonuc(v, taps) {
 			if (boom.length >= CAN) break;
 		}
 	}
-	return { ok, boom, dead: boom.length >= CAN, all: v.guvenli.length > 0 && ok.length === v.guvenli.length };
+	return { ok, boom, dead: boom.length >= CAN, all: G.length > 0 && ok.length === G.length };
 }
 
 // ---------------------------------------------------------------- çizimler (SVG; yazı yok)
@@ -239,7 +240,7 @@ export const mayin = {
 	birinci: 'EN ÇOK İL SENDE!',
 	ustun: 'daha çok il buldu',
 	rozet: 'EN ÇOK İL',
-	fmt: (v, value) => `${sonuc(v, value?.taps).ok.length}/${v.guvenli.length} il`,
+	fmt: (v, value) => `${sonuc(v, value?.taps).ok.length}/${v.n ?? v.guvenli?.length ?? 0} il`,
 	sub: (v, value) => {
 		const r = sonuc(v, value?.taps);
 		return r.boom.length ? `${r.boom.length} mayın${r.dead ? ' · patladı' : ''}` : 'mayınsız';
@@ -269,9 +270,14 @@ export const mayin = {
 		const app = appOf();
 		const me = app?.match?.humanPlayer;
 		const color = me?.css || '#ff3030';
-		const n = v.guvenli.length;
-		const S = new Set(v.guvenli);
+		const n = v.n ?? v.guvenli?.length ?? 0;
+		// güvenli iller yerelde görünümde; çevrimiçinde gizli (publicView): her dokunuşu sunucu yanıtlar (act 'il' →
+		// ev 'il' { il, mayin }; arayüz api.act / api.wait sağlar, t_blitz.js gibi). Cevap gelene dek yeni dokunuş alınmaz.
+		const known = Array.isArray(v.guvenli);
+		const S = new Set(known ? v.guvenli : []);
 		const F = new Set(v.alan);
+		const online = !known && typeof api.act === 'function' && typeof api.wait === 'function';
+		let pending = false;
 		const HINT = `Tarladaki illere dokun · ${CAN} canın var`;
 		el.innerHTML = `<div class="yn-my" style="--pc:${color}">
 			<div class="yn-my-tape">${MINE_ICO}<b>MAYIN</b><span data-r="tx">${esc(v.q.mayin || '')}</span></div>
@@ -514,8 +520,8 @@ export const mayin = {
 			h?.classList.add('off');
 		};
 		const spec = () => !!el.closest('.fl-q')?.classList.contains('spec'); // izlenen düello: dokunuş yok
-		api.onMapTap((pt) => {
-			if (done || over || !started || spec()) return;
+		api.onMapTap(async (pt) => {
+			if (done || over || pending || !started || spec()) return;
 			const i = b.pick(pt.x, pt.z);
 			if (i < 0) return;
 			if (i === v.merkez) {
@@ -534,8 +540,25 @@ export const mayin = {
 			}
 			seen.add(i);
 			const p = b.provinces[i];
+			let safe;
+			if (known) safe = S.has(i);
+			else if (online) {
+				pending = true;
+				api.act('il', { il: p.id });
+				const r = await api.wait('il', 3000);
+				pending = false;
+				if (!r || r.rejected || r.il !== p.id) {
+					seen.delete(i); // yanıt yok ya da reddedildi: dokunuş sayılmadı, yeniden denenebilir
+					return;
+				}
+				if (done || over) return;
+				safe = !r.mayin;
+			} else {
+				seen.delete(i); // yargılayacak kimse yok (çevrimiçi görünüm, sunucu adımı yok)
+				return;
+			}
 			taps.push(p.id);
-			if (S.has(i)) {
+			if (safe) {
 				found++;
 				g.paint(i, color, pt.x, pt.z);
 				g.fx(i, 0.42, 0);
@@ -588,6 +611,9 @@ export const mayin = {
 			reveal(results) {
 				jokersOff(el); // joker çubuğu kalkar: kart kısalır (kadraj aşağıda bundan sonra ölçülür)
 				done = true;
+				// çevrimiçinde güvenli iller cevapla gelir (sunucunun tam görünümü görünüme katılır); gelmediyse cevap çizilemez
+				if (!Array.isArray(v.guvenli)) return;
+				if (!known) for (const i of v.guvenli) S.add(i);
 				root.classList.add('done', 'rv');
 				sweep.classList.add('off');
 				const tx = root.querySelector('[data-r=tx]');

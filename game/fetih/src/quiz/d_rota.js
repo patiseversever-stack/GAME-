@@ -39,19 +39,20 @@ const MK_DY = -21; // durak işareti: ad hapının üstünde (ad noktasından px
 
 /** Rotadan sonuç: { pre (doğru başlangıç), pos (doğru yerdeki durak), n, all } (sunucu da aynı hesabı yapar). */
 export function sonuc(v, route) {
-	const n = v.sira.length;
+	const sira = Array.isArray(v.sira) ? v.sira : []; // çevrimiçi görünümde yok (cevapla gelir)
+	const n = sira.length;
 	const ids = [];
 	const seen = new Set();
 	for (const id of Array.isArray(route) ? route : []) {
 		const i = BY_ID.get(id);
-		if (i == null || seen.has(i) || !v.sira.includes(i)) continue;
+		if (i == null || seen.has(i) || !sira.includes(i)) continue;
 		seen.add(i);
 		ids.push(i);
 	}
 	let pre = 0;
-	while (pre < n && ids[pre] === v.sira[pre]) pre++;
+	while (pre < n && ids[pre] === sira[pre]) pre++;
 	let pos = 0;
-	for (let k = 0; k < n; k++) if (ids[k] === v.sira[k]) pos++;
+	for (let k = 0; k < n; k++) if (ids[k] === sira[k]) pos++;
 	return { pre, pos, n, all: pre === n, ids };
 }
 
@@ -178,7 +179,7 @@ export const rota = {
 	birinci: 'EN UZAĞA SEN UÇTUN!',
 	ustun: 'daha uzağa uçtu',
 	rozet: 'EN UZAK',
-	fmt: (v, value) => `${sonuc(v, value?.route).pre}/${v.sira.length} durak`,
+	fmt: (v, value) => `${sonuc(v, value?.route).pre}/${(v.sira || v.kart).length} durak`,
 	sub: (v, value) => {
 		const r = sonuc(v, value?.route);
 		return r.all ? 'tam rota' : !r.ids.length ? 'rota yok' : r.pre >= r.ids.length ? 'rota yarım kaldı' : `${r.pre + 1}. durakta saptı`;
@@ -211,7 +212,8 @@ export const rota = {
 		const app = appOf();
 		const me = app?.match?.humanPlayer;
 		const color = me?.css || '#ff3030';
-		const n = v.sira.length;
+		// soru boyunca yalnız karışık kartlar (v.kart) gerekir: çevrimiçi görünümde doğru sıra (v.sira) yok, cevapla gelir
+		const n = v.kart.length;
 		const HINT = 'Durakları sırayla seç: karttan ya da haritadan';
 		el.innerHTML = `<div class="yn-rt" style="--pc:${color}">
 			<div class="yn-rt-grid">${v.kart.map((i, k) => `<button class="yn-rt-c" data-i="${i}" style="--k:${k}"><span class="nb">${NUM(1)}</span><span class="lb"><b>${esc(v.ad[i])}</b><small></small></span></button>`).join('')}</div>
@@ -280,7 +282,7 @@ export const rota = {
 		const gMarks = sv('g', {}, K.svg); // durak işaretleri: ilin 3B ad hapının hemen üstünde (yayların üstünde)
 		const gPlane = sv('g', { transform: `translate(0 ${DY})` }, K.svg); // uçaklar ve gölgeleri: işaretlerin de üstünde uçar
 		const mk = new Map(); // il → { g, inner }
-		for (const i of v.sira) {
+		for (const i of v.kart) {
 			const gEl = sv('g', { class: 'mk', transform: 'translate(-99 -99)' }, gMarks); // ilk çizime dek ekran dışında
 			gEl.innerHTML = `<g class="in pop"><circle r="10.5" class="rg"/></g>`;
 			mk.set(i, { g: gEl, hid: false });
@@ -492,7 +494,8 @@ export const rota = {
 		// kadraj: bütün duraklar ve doğru rotanın yay tepeleri kartın altındaki alana (perspektif doğru)
 		const tepeler = () => {
 			const ek = [];
-			for (let k = 1; k < n; k++) for (const t of [0.3, 0.5, 0.7]) ek.push(yayNok(K.P.end(v.sira[k - 1], {}), K.P.end(v.sira[k], {}), t, {}));
+			const S0 = v.sira || v.kart;
+			for (let k = 1; k < n; k++) for (const t of [0.3, 0.5, 0.7]) ek.push(yayNok(K.P.end(S0[k - 1], {}), K.P.end(S0[k], {}), t, {}));
 			return ek;
 		};
 		// harita kurulumu bir mikro görevde: önceki kartın temizliği önce çalışsın (bkz. d_mayin.js)
@@ -500,8 +503,8 @@ export const rota = {
 			if (!el.isConnected) return;
 			g.allActive();
 			g.dark(lit);
-			unAd = adlar(app, v.sira);
-			cerceve(app, v.sira, { top: cardTop(el), alt: 62, pitch: 1.12, dur: 0.9, arc: 4, ek: tepeler() });
+			unAd = adlar(app, v.kart);
+			cerceve(app, v.kart, { top: cardTop(el), alt: 62, pitch: 1.12, dur: 0.9, arc: 4, ek: tepeler() });
 		});
 		const stopOpen = onOpen(el, () => {
 			started = true;
@@ -634,6 +637,8 @@ export const rota = {
 			reveal(results) {
 				jokersOff(el); // joker çubuğu kalkar: kart kısalır (kadraj aşağıda bundan sonra ölçülür)
 				done = true;
+				// çevrimiçinde doğru sıra cevapla gelir (sunucunun tam görünümü görünüme katılır); gelmediyse cevap çizilemez
+				if (!Array.isArray(v.sira)) return;
 				root.classList.add('done', 'rv');
 				const all = results.map((r) => ({ r, s: sonuc(v, r.value?.route) }));
 				const meR = all.find((x) => x.r.p?.human);
