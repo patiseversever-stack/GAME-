@@ -260,6 +260,9 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-qwho:not(.duel)::after{top:calc(var(--sat) + 28.5cqw);padding:.5cqw 3.6cqw;font-size:3.4cqw;letter-spacing:.2em}
 .fl-q:not(.map) .fl-qwho[style*="--n:4"]:not(.duel):not(.teams)::after{top:calc(var(--sat) + 25.5cqw)}
 .fl-ui.qon .fl-pbtn{top:calc(var(--sat) + 28px + min(calc(100 * var(--vw)), 560px) * .23)}
+/* kart kapanırken (qon düşer, afiş hâlâ görünür: Fitil gibi kendiliğinden biten turlar) düğme afişin altındaki süre etiketlerinin
+   üstüne zıplamasın: haritasız kart açık oldukça soru anındaki yerinde kalır */
+.fl-ui:has(.fl-q.on:not(.map)) .fl-pbtn{top:calc(var(--sat) + 28px + min(calc(100 * var(--vw)), 560px) * .23)}
 /* eşli */
 .fl-q:not(.map) .fl-tmh,.fl-q:not(.map) .fl-tmh.d{display:grid;grid-template-columns:minmax(0,1fr);align-content:center;row-gap:.8cqw;padding:var(--sat) 10cqw 0 2.6cqw}
 .fl-q:not(.map) .fl-tmh.d{padding:var(--sat) 2.6cqw 0 calc(12% + 9cqw);justify-items:end;text-align:right}
