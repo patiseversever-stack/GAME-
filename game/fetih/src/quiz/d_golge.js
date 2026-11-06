@@ -608,7 +608,9 @@ function makeTheater(tier) {
 	dust.renderOrder = 6;
 	back.add(dust);
 	const cam = new THREE.PerspectiveCamera(FOV, 1, 0.05, 40);
-	return { scene, U, own, mask, cloth, wall, frame, back, pivot, plinth, pring, flame, dust, cam, wood };
+	// perdenin önündeki her şey (perde, duvar, çerçeve, süsler): kamera perdeden içeri geçince gizlenir
+	const front = [cloth, wall, frame, gold, ros, ros2, ledge, lip];
+	return { scene, U, own, mask, cloth, wall, frame, back, pivot, plinth, pring, flame, dust, cam, wood, front };
 }
 
 // ---------------------------------------------------------------- ses (oyunun ses motoru; yoksa sessiz)
@@ -1012,6 +1014,9 @@ export const golge = {
 			r.setRenderTarget(null);
 			r.setClearColor(0x050304, 1);
 			r.clear();
+			// cevap: kamera perdenin ardına geçtiyse perde ve çerçeve görüntünün yarısını kapatıyordu: önde kalanlar gizlenir
+			const behind = cam.position.z < 0.35 || tr > 1.4; // perde açılıp kamera maketin yanına süzülürken çerçeve kadrajı kesiyordu
+			for (const m of T.front) m.visible = !behind;
 			r.render(T.scene, cam);
 			r.setClearColor(save, sa);
 		};
