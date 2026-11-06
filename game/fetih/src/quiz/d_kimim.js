@@ -240,7 +240,7 @@ const CSS = /* css */ `
 @keyframes kmBurn{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 @keyframes kmSpark{from{right:0}to{right:calc(100% - 6px)}}
 @keyframes kmMd{50%{transform:skewX(-8deg) scale(1.2) rotate(-6deg)}}
-@keyframes kmDrop{0%{transform:translateY(-8px) scale(1.35);color:#fff}100%{transform:none}}
+@keyframes kmDrop{0%{transform:translateY(5px) scale(1.2);color:#fff}100%{transform:none}} /* aşağıdan büyüyerek: üstteki ŞİMDİ BİLİRSEN etiketine taşmaz */
 @keyframes kmAns{from{opacity:0;transform:translateY(8px) scale(.94)}to{opacity:1;transform:none}}
 @media (prefers-reduced-motion:reduce){.km-hud .sg i.burn::before{display:none}}
 `;

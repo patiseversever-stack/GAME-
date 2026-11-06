@@ -382,6 +382,13 @@ export const mancinik = {
 			parent.appendChild(e);
 			return e;
 		};
+		// işaret yazıları üst üste binmesin: yakın düşen taşların yazısı bir kat yukarı çıkar (direği de uzar)
+		const placed = [];
+		const levelOf = (ex, label) => {
+			const w = [...String(label)].length * 7.4 + 6;
+			for (let k = 0; k < 6; k++) if (!placed.some((p) => p.k === k && Math.abs(p.x - ex) < (p.w + w) / 2)) return placed.push({ x: ex, w, k }), k;
+			return placed.push({ x: ex, w, k: 6 }), 6;
+		};
 		/** Çarpma: parlama, toprak parçaları, krater, işaret direği. */
 		const impact = (g, ex, color, label, big) => {
 			mk('ellipse', { cx: ex, cy: GY + 1, rx: big ? 11 : 8, ry: 2.6, fill: '#1a1208', opacity: '.75' }, g);
@@ -393,7 +400,8 @@ export const mancinik = {
 				c.style.setProperty('--dy', `${(-Math.sin(a) * (14 + (i % 5) * 6)).toFixed(1)}px`);
 			}
 			mk('circle', { class: 'dust', cx: ex, cy: GY - 4, r: 10, fill: '#e8dcc0' }, g);
-			g.insertAdjacentHTML('beforeend', `<line x1="${ex}" y1="${GY - 26}" x2="${ex}" y2="${GY}" stroke="${color}" stroke-width="2.2"/><path d="M${ex},${GY - 26} l12,4 -12,4z" fill="${color}"/>${label ? `<text class="lt" x="${ex}" y="${GY - 30}" text-anchor="middle" fill="${color}">${esc(label)}</text>` : ''}`);
+			const up = label ? levelOf(ex, label) * 15 : 0;
+			g.insertAdjacentHTML('beforeend', `<line x1="${ex}" y1="${GY - 26 - up}" x2="${ex}" y2="${GY}" stroke="${color}" stroke-width="2.2"/><path d="M${ex},${GY - 26 - up} l12,4 -12,4z" fill="${color}"/>${label ? `<text class="lt" x="${ex}" y="${GY - 30 - up}" text-anchor="middle" fill="${color}">${esc(label)}</text>` : ''}`);
 		};
 		/** Bir taşı at: renk, değer; bitince onLand(x). Kolu (yalnız kendi atışında) savurur. Taş alev alır, duman bırakır. */
 		const throwStone = (value, color, { swing = false, delay = 0, label = '', onLand } = {}) => {
@@ -468,7 +476,8 @@ export const mancinik = {
 			const hi = Math.min(W, Math.max(...xs) + 46);
 			// görünen alan surun bayrağını ve değer yazısını (sur tepesinin 35 px üstü) da içerecek kadar yüksek: dar kadrajda
 			// yazı üstten kesiliyordu
-			const h = Math.max((Math.max(150, hi - lo) * H) / W, GY + 34 - (GY - WALL_H - 48));
+			const upMax = Math.max(0, ...placed.map((p) => p.k)) * 15; // kat kat yükselen işaret yazıları da kadrajda kalsın
+			const h = Math.min(H, Math.max((Math.max(150, hi - lo) * H) / W, GY + 34 - (GY - WALL_H - 48), 34 + 30 + 18 + upMax));
 			const w = (h * W) / H;
 			const tx = Math.max(0, Math.min(W - w, (lo + hi) / 2 - w / 2));
 			const ty = Math.min(H - h, GY + 34 - h);
