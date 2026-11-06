@@ -213,7 +213,7 @@ const CSS = /* css */ `
 .km-hud .sg i.burn::after{animation:kmBurn var(--gap,3s) linear forwards}
 .km-hud .sg i.burn::before{content:'';position:absolute;top:-3px;bottom:-3px;width:6px;z-index:1;right:0;background:#fff;box-shadow:0 0 10px #ffd25a,0 0 4px #fff;animation:kmSpark var(--gap,3s) linear forwards;transform-origin:50% 50%}
 .fl-q.locked .km-hud .sg i.burn::after,.fl-q.locked .km-hud .sg i.burn::before{animation-play-state:paused}
-.km-hud .vl{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:5px} /* Lilita'nın yüksek harfi üstteki etikete değmesin */
+.km-hud .vl{flex:none;display:flex;flex-direction:column;align-items:flex-end;gap:8px} /* Lilita'nın yüksek harf payı (satırın ~5 px üstü) üstteki etikete değmesin */
 .km-hud .vl small{font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.18em;color:rgba(255,255,255,.55)}
 .km-hud .vl b{display:flex;align-items:center;gap:3px;font:400 26px/1 'Lilita One',sans-serif;color:#ffd25a;text-shadow:0 2px 0 rgba(0,0,0,.4)}
 .km-hud .vl b i{width:18px;height:18px;clip-path:polygon(50% 0,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%);background:#ffd25a}

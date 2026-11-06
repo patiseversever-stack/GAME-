@@ -1673,6 +1673,9 @@ export class UI {
 			if (p.w || p.sx == null) continue; // yazı rozetleri değil, iğneler
 			obs.push(p.goal ? { l: p.sx - 24, r: p.sx + 24, t: p.sy - 24, b: p.sy + 24, p } : { l: p.sx - 20, r: p.sx + 20, t: p.sy - 50, b: p.sy + 2, p });
 		}
+		// haritalı soruda kartın altı da engel: yazı kartın arkasına girmesin
+		const SH = this.el.clientHeight || innerHeight;
+		if (this.el.classList.contains('qmap') && this._mapTop) obs.push({ l: -1e5, r: 1e5, t: -1e5, b: this._mapTop * SH - 4, p: null });
 		K.sort((a, b) => a.sy - b.sy);
 		for (const p of K) {
 			p.kw ??= p.el.querySelector('.km')?.offsetWidth || 44;

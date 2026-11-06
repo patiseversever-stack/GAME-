@@ -501,11 +501,13 @@ export const CSS_ARENA = /* css */ `
 .fl-q .fl-tf.vd .fl-opt.dim,.fl-q.locked .fl-tf.vd .fl-opt.dim{opacity:1;filter:grayscale(.85) brightness(.42)}
 .fl-q .fl-tf.vd .fl-who{position:relative;inset:auto;flex:none;width:32px;height:32px;margin:0 0 0 -3px;border-radius:50%;border:2.5px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.3);overflow:hidden;animation:flPopIn .3s cubic-bezier(.3,1.8,.5,1) both}
 .fl-q .fl-tf.vd .fl-who:first-of-type{margin-left:2px}
-.fl-q .fl-tf.vd .fl-opt.whod{flex-wrap:wrap;align-content:center;row-gap:6px}
+/* Doğru/Yanlış levhası: yazı kalkar, simgenin yanında aynı satırda portreler (levha alçak: alt satıra inen sıra kesiliyordu);
+   yer yetmezse portreler birlikte küçülür */
+.fl-q .fl-tf.vd .fl-opt.whod{flex-wrap:nowrap}
 .fl-q .fl-tf.vd .fl-opt.whod>span{display:none}
-.fl-q .fl-tf.vd .fl-opt .fl-whos{position:relative;inset:auto;flex:0 0 100%;min-width:0}
-.fl-q .fl-tf.vd .fl-opt .fl-whos .fl-who{margin:0;border-radius:50%;height:auto;aspect-ratio:1;width:min(32px,calc((100% - (var(--wn,1) - 1) * 6px) / var(--wn,1)))}
-.fl-q .fl-tf.vd .fl-opt.dim .fl-whos .fl-who{width:min(26px,calc((100% - (var(--wn,1) - 1) * 6px) / var(--wn,1)))}
+.fl-q .fl-tf.vd .fl-opt .fl-whos{position:relative;inset:auto;flex:0 1 auto;min-width:0;gap:5px}
+.fl-q .fl-tf.vd .fl-opt .fl-whos .fl-who{margin:0;border-radius:50%;flex:0 1 32px;width:32px;min-width:0;height:auto;aspect-ratio:1}
+.fl-q .fl-tf.vd .fl-opt.dim .fl-whos .fl-who{flex-basis:26px;width:26px}
 .fl-q .fl-tf.vd .fl-opt.dim .fl-who{width:26px;height:26px;filter:grayscale(0)}
 .fl-q.locked .fl-tf.vd .fl-opt{opacity:1}
 
