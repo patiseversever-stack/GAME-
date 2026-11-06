@@ -669,7 +669,7 @@ export default [
 	{ id: "san-ek-rd-0010", cat: "sanat", diff: 1, type: "riddle", q: "Kalemin yaptığını bozar, her seferinde küçülür;\nKâğıtta hata kalmaz, ama kendisi tükenir.", a: ["Silgi", "Kalemtıraş", "Cetvel", "Zımba"], k: ["Kalemin yaptığını bozar", "kendisi tükenir"] },
 	{ id: "san-ek-rd-0011", cat: "sanat", diff: 2, type: "riddle", q: "Raf raf dizilmiş binlerce dilsiz bilge;\nSessizce gelen sorar, sırayla konuşurlar.", a: ["Kütüphane", "Kitapçı", "Okul", "Müze"], k: ["binlerce dilsiz bilge", "Sessizce"] },
 	{ id: "san-ek-rd-0012", cat: "sanat", diff: 1, type: "riddle", q: "Eski çağların eşyası camlı dolaplarda uyur;\nGezen bakar ama dokunamaz, bekçi yanda durur.", a: ["Müze", "Arşiv", "Antikacı", "Kütüphane"], k: ["camlı dolaplarda", "dokunamaz"] },
-	{ id: "san-ek-rd-0013", cat: "sanat", diff: 1, type: "riddle", q: "Dağa bağırırsın, o da sana söyler;\nAğzı yok, dili yok, son sözünü tekrarlar.", a: ["Yankı", "Rüzgâr", "Gök gürültüsü", "Papağan"], k: ["Dağa bağırırsın", "son sözünü tekrarlar"] },
+	{ id: "san-ek-rd-0013", cat: "sanat", diff: 1, type: "riddle", q: "Elsiz olmaz, sessiz olmaz; perde inince çoğalır;\nSanatçı onu bekler, salon onunla coşar.", a: ["Alkış", "Bilet", "Islık", "Çiçek"], k: ["perde inince çoğalır", "salon onunla coşar"] },
 	{ id: "san-ek-rd-0014", cat: "sanat", diff: 1, type: "riddle", q: "Ağzı yok konuşur, ayağı yok yürür;\nPulunu yapıştırınca uzak diyarlara gider.", a: ["Mektup", "Gazete", "Kitap", "Telgraf"], k: ["Ağzı yok konuşur", "Pulunu yapıştırınca"] },
 	{ id: "san-ek-rd-0015", cat: "sanat", diff: 1, type: "riddle", q: "İpleri yukarıda, kendisi aşağıda;\nNe yürür ne konuşur, ustası oynatmasa.", a: ["Kukla", "Uçurtma", "Gölge", "Robot"], k: ["İpleri yukarıda", "ustası oynatmasa"] },
 ];
