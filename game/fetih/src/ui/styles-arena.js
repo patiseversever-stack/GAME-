@@ -104,6 +104,17 @@ export const CSS_ARENA = /* css */ `
   .fl-q .fl-opt .fl-whos .fl-who{width:min(26px,calc((100% - (var(--wn,1) - 1) * 4px) / var(--wn,1)));border-width:2px;border-radius:7px}
 }
 
+/* seyirci jokeri: yüzde etiketi şıkkın içinde sağda (eğik kesimin dışına, üstteki şıkkın altına taşıyordu), çubuk altta */
+.fl-q .fl-opts .fl-opt:has(>.jq){padding-bottom:16px}
+.fl-q .fl-opt>.jq{top:auto;right:16px;bottom:3px;z-index:2;font-size:12px;line-height:15px;padding:0 6px;border-width:1.5px}
+.fl-q .fl-opt>.jp{left:48px;right:66px;bottom:7px;height:6px}
+.fl-q .fl-tf.vd .fl-opt>.jq{position:relative;inset:auto;flex:none;transform:none;margin:0;font-size:13px;line-height:18px}
+.fl-q .fl-tf.vd .fl-opt:has(>.jq){padding-bottom:0}
+.fl-q .fl-tf.vd .fl-opt>.jp{left:22px;right:22px;bottom:8px}
+/* joker bildirimleri: soru kartının üstünde, afişin ve asılı etiketlerin altında (kartın arkasında kalıp okunmuyordu) */
+.fl-toasts{z-index:60}
+.fl-ui.qon .fl-toasts{top:calc(var(--sat) + min(calc(100 * var(--vw)),560px) * .23 + 32px)}
+.fl-ui.qmap .fl-toasts{top:auto;bottom:calc(var(--sab) + 66px)}
 /* ---------------------------------------------------------------- jokerler: renkli eğik karolar, simge + kalın küçük ad */
 .fl-jk{gap:7px;margin-top:14px}
 .fl-jkb{max-width:none;min-width:0;height:56px;padding:0;justify-content:center;gap:2px;border-radius:0;border:1.5px solid rgba(255,255,255,.5);transform:skewX(-8deg);
