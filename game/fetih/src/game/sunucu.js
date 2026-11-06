@@ -339,6 +339,7 @@ export const ADIM = {
 	tufan: { final: (S, x) => choice(S, x) },
 	kusbakisi: { final: (S, x) => choice(S, x) },
 	golge: { final: (S, x) => choice(S, x) },
+	penalti: { final: (S, x) => choice(S, x) },
 	ikidogru: { final: (S, x) => choice(S, x) },
 };
 

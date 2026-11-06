@@ -194,6 +194,11 @@ const KCSS = /* css */ `
 .yn-myk .tr .ed{stroke:#ffe27a;stroke-width:1.6;opacity:.38;stroke-linecap:round}
 .yn-myk .tr .rim{fill:none;stroke:rgba(255,226,122,.16);stroke-width:1.2;stroke-dasharray:2 7}
 .yn-myk .tr.off{opacity:0}
+/* seçim kolaylığı: üzerine gelinen / basılan tarla ili parlak hatla çizilir (soru boyunca; dokunuş en yakın tarla iline gider) */
+.yn-myk .hv .hg{fill:none;stroke:rgba(255,236,170,.32);stroke-width:8;stroke-linejoin:round;stroke-linecap:round}
+.yn-myk .hv .hc{fill:rgba(255,255,255,.08);stroke:#fff8dc;stroke-width:2.3;stroke-linejoin:round}
+.yn-myk .hv.pr .hg{stroke:rgba(255,196,60,.5);stroke-width:12}
+.yn-myk .hv.pr .hc{fill:rgba(255,210,90,.16);stroke:${GOLD};stroke-width:2.8}
 @keyframes ynMySweep{to{transform:rotate(360deg)}}
 /* patlama */
 .yn-myk .bx .fl{transform-box:fill-box;transform-origin:50% 50%;animation:ynMyFlsh .32s ease-out forwards}
@@ -333,6 +338,10 @@ export const mayin = {
 		const lit = v.merkez >= 0 ? [v.merkez] : [];
 		const K = katman(app, 'yn-myk');
 		let unAd = () => {};
+		// seçim hattı (üzerine gelme, basma): işaretlerin altında, ilin kalkık yüzeyinin sınırında
+		const hv = sv('g', { class: 'hv', style: 'visibility:hidden' }, K.svg);
+		hv.innerHTML = '<path class="hg"/><path class="hc"/>';
+		const [hvG, hvC] = hv.children;
 		// işaretler: ilin 3B ad hapının üstüne oturur (ad: hapın ekrandaki gerçek yeri), patlama ilin tepesinde (top).
 		// bx (işaretin kendi kutusu, çapa noktasına göre) verilen işaret yerini seçer: adın üstü (öntanımlı), sağı ya da
 		// solu; komşu ilin adına ya da başka bir işarete binmeyen ilk yer. Kıyıda alt alta dizilen adlarda (İzmir, Aydın,
@@ -484,7 +493,7 @@ export const mayin = {
 				g.fx(v.merkez, 0.35, 1);
 			}
 			unAd = adlar(app, frame, K); // adlar çakışmasız (dar ekranda küçük illerin adı yaklaşınca gelir)
-			cerceve(app, frame, { top: cardTop(el), alt: 62, pitch: 1.2, dur: 0.9, arc: 4 });
+			cerceve(app, frame, { top: cardTop(el), alt: 54, yan: 6, pitch: 1.22, dur: 0.9, arc: 4 });
 		});
 		const stopOpen = onOpen(el, () => {
 			started = true;
@@ -501,6 +510,114 @@ export const mayin = {
 				}, 40 * k),
 			);
 		});
+		// ---------------------------------------------------------------- seçim kolaylığı
+		// Dokunuş tam bir tarla ilinin üstünde değilse (sınır çizgisi, küçük il, tarla dışına taşan parmak) küçük bir
+		// yarıçapta (ekranın ~%5'i, 16–30 px) en yakın tarla iline gider: halka halka örneklenir, en çok örneği alan il.
+		// Fare üzerine gelince ve parmak basınca il kalkar, parlak hatla çizilir (bırakınca dokunuş sayılır).
+		const cv = app.canvas;
+		const near = (cx, cy) => {
+			const i0 = app.pickAt(cx, cy);
+			if (i0 >= 0 && F.has(i0)) return i0;
+			const r = cv.getBoundingClientRect();
+			const R0 = clamp(Math.min(r.width, r.height) * 0.05, 16, 30);
+			for (const f of [0.4, 0.7, 1]) {
+				const hit = new Map();
+				for (let k = 0; k < 12; k++) {
+					const a = (k / 12) * Math.PI * 2 + f;
+					const j = app.pickAt(cx + Math.cos(a) * R0 * f, cy + Math.sin(a) * R0 * f);
+					if (j >= 0 && F.has(j)) hit.set(j, (hit.get(j) || 0) + 1);
+				}
+				if (hit.size) return [...hit].sort((x, y) => y[1] - x[1])[0][0];
+			}
+			return i0;
+		};
+		const so = {};
+		const sp = {};
+		const ringD = (P, i) => {
+			let d = '';
+			const p = b.provinces[i];
+			const lift = b.liftOf(i) + 0.03;
+			for (const r of p.rings) {
+				const step = r.length > 400 ? 4 : 2;
+				for (let k = 0; k < r.length; k += step) {
+					const x = r[k];
+					const z = -r[k + 1];
+					P.at(x, z, b.heightAt(x, z) + lift, sp);
+					if (sp.behind) return '';
+					d += (k ? 'L' : 'M') + sp.x.toFixed(1) + ' ' + sp.y.toFixed(1);
+				}
+				d += 'Z';
+			}
+			return d;
+		};
+		let hov = -1;
+		let press = false;
+		K.on((P) => {
+			if (hov < 0) return;
+			const d = ringD(P, hov);
+			hvG.setAttribute('d', d);
+			hvC.setAttribute('d', d);
+		});
+		const setHov = (i, pr = false) => {
+			if (done || over || !started || spec() || i < 0 || !F.has(i) || seen.has(i)) {
+				i = -1;
+				pr = false;
+			}
+			if (i === hov && pr === press) return;
+			if (hov >= 0 && !seen.has(hov)) g.fx(hov, 0, 0);
+			hov = i;
+			press = pr;
+			hv.classList.toggle('pr', pr);
+			hv.style.visibility = i >= 0 ? '' : 'hidden';
+			if (i >= 0) {
+				g.fx(i, pr ? 0.26 : 0.15, pr ? 0.55 : 0.3);
+				const d = ringD(K.P, i);
+				hvG.setAttribute('d', d);
+				hvC.setAttribute('d', d);
+			}
+		};
+		let mv = null;
+		let raf = 0;
+		let down = null;
+		const onMove = (e) => {
+			if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > 12) {
+				down = null;
+				setHov(-1); // kaydırma: basılı il bırakılır
+			}
+			if (e.pointerType !== 'mouse' || e.buttons) return;
+			mv = e;
+			if (!raf) raf = requestAnimationFrame(() => {
+				raf = 0;
+				if (mv && el.isConnected) setHov(near(mv.clientX, mv.clientY));
+			});
+		};
+		const onDown = (e) => {
+			down = { x: e.clientX, y: e.clientY };
+			setHov(near(e.clientX, e.clientY), true);
+		};
+		const onUp = (e) => {
+			down = null;
+			if (e.pointerType === 'mouse') setHov(near(e.clientX, e.clientY));
+			else setHov(-1);
+		};
+		const onLeave = () => setHov(-1);
+		cv.addEventListener('pointermove', onMove);
+		cv.addEventListener('pointerdown', onDown);
+		cv.addEventListener('pointerup', onUp);
+		cv.addEventListener('pointercancel', onLeave);
+		cv.addEventListener('pointerleave', onLeave);
+		const unHov = () => {
+			cv.removeEventListener('pointermove', onMove);
+			cv.removeEventListener('pointerdown', onDown);
+			cv.removeEventListener('pointerup', onUp);
+			cv.removeEventListener('pointercancel', onLeave);
+			cv.removeEventListener('pointerleave', onLeave);
+			if (raf) cancelAnimationFrame(raf);
+			setHov(-1);
+		};
+		// tarla illerinin dış hattı: aydınlık illerde beyaz bant tam güçte (seçim sayısından bağımsız)
+		const edge0 = b.uSelEdge ? b.uSelEdge.value : null;
+		if (b.uSelEdge) b.uSelEdge.value = 1;
 		// patlama (soru anı): yalnız insanın kendi dokunuşları
 		const boomAt = (i, x, z) => {
 			g.paint(i, SCORCH, x, z);
@@ -522,7 +639,9 @@ export const mayin = {
 		const spec = () => !!el.closest('.fl-q')?.classList.contains('spec'); // izlenen düello: dokunuş yok
 		api.onMapTap(async (pt) => {
 			if (done || over || pending || !started || spec()) return;
-			const i = b.pick(pt.x, pt.z);
+			K.P.at(pt.x, pt.z, null, so);
+			const r0 = cv.getBoundingClientRect();
+			const i = near(r0.left + so.x, r0.top + so.y);
 			if (i < 0) return;
 			if (i === v.merkez) {
 				sfx(app, 'tap');
@@ -594,10 +713,12 @@ export const mayin = {
 		});
 		const close = onClose(el, () => {
 			stopOpen();
+			unHov();
 			for (const t of timers) clearTimeout(t);
 			K.destroy();
 			unAd();
 			g.restore();
+			if (b.uSelEdge && edge0 != null) b.uSelEdge.value = edge0;
 		});
 		return {
 			...ctlBase,
@@ -611,6 +732,7 @@ export const mayin = {
 			reveal(results) {
 				jokersOff(el); // joker çubuğu kalkar: kart kısalır (kadraj aşağıda bundan sonra ölçülür)
 				done = true;
+				unHov();
 				// çevrimiçinde güvenli iller cevapla gelir (sunucunun tam görünümü görünüme katılır); gelmediyse cevap çizilemez
 				if (!Array.isArray(v.guvenli)) return;
 				if (!known) for (const i of v.guvenli) S.add(i);
@@ -692,7 +814,7 @@ export const mayin = {
 				sigdir([...sb.querySelectorAll('.nm')], 9);
 				// kadraj: kart kısaldı (joker çubuğu yok, damga sorunun yerinde); tarla kartın altında kalan alana
 				if (results.some((r) => r.p?.human)) damgaYeri(el); // damga sorunun yerinde: satır şimdi açılır, kadraj ondan sonra
-				cerceve(app, frame, { top: cardTop(el), alt: 62, pitch: 1.1, dur: 0.9, arc: 3 });
+				cerceve(app, frame, { top: cardTop(el), alt: 54, yan: 6, pitch: 1.12, dur: 0.9, arc: 3 });
 				sfx(app, 'iaReveal');
 				if (meR) {
 					const order2 = order.map((x) => x.r);

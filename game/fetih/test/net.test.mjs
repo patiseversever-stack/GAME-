@@ -216,6 +216,8 @@ for (const q of [...BANK, ...SAMPLES]) {
 		switch (type) {
 			case 'kusbakisi':
 				return has2(pv, 'right') || has2(q, 'site', 'il', 'a') || q.sid !== MAC.sidOf(full.q.site, salt) || MAC.siteOfSid(q.sid, salt, [full.q.site, 'galata', 'nemrut']) !== full.q.site;
+			case 'penalti':
+				return has2(pv, 'right') || has2(q, 'a');
 			case 'golge':
 				return has2(pv, 'right') || has2(q, 'model', 'a') || !q.sid;
 			case 'ilavi':
