@@ -207,6 +207,7 @@ const BASE = /* css */ `
 .fl-pin.goal{width:48px;height:48px;margin:-24px 0 0 -24px}
 .fl-pin.goal .pb{animation:flGoal .5s cubic-bezier(.3,1.6,.5,1) both}
 .fl-pin .km{position:absolute;left:50%;top:-20px;transform:translateX(-50%);padding:1px 6px;border-radius:7px;font-family:'Lilita One';font-size:13px;white-space:nowrap;background:var(--ink);border:1.5px solid #fff}
+.fl-pin.kd .km{top:auto;bottom:-24px}
 .fl-line{position:absolute;left:0;top:0;width:1px;height:0;border-top:3px solid #fff;transform-origin:0 50%;opacity:.9;will-change:transform}
 .fl-tapx{position:absolute;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;border:4px solid #ff5a4a;display:grid;place-items:center;font-size:26px;animation:flTapX .55s ease-out forwards}
 @keyframes flTapX{0%{opacity:1;transform:scale(.4)}60%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(1.25)}}

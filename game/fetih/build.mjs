@@ -120,7 +120,8 @@ writeFileSync(join(dist, 'FetihLigi.html'), html);
 const artArg = process.argv.find((a) => a.startsWith('--artifact='));
 if (artArg) {
 	const out = artArg.slice('--artifact='.length);
-	const page = `<title>Fetih Ligi</title>
+	const page = `<meta charset="utf-8">
+<title>Fetih Ligi</title>
 <meta name="theme-color" content="#1b2a4a">
 <style>${fontFaces()}
 :root{color-scheme:dark;--bg:#1b2a4a;--fg:#fff4e2;--dim:rgba(255,244,226,.6)}
@@ -141,7 +142,8 @@ body{position:fixed;inset:0}
 if (!dev || process.argv.includes('--galeri')) {
 	const gal = await build({ ...common, entryPoints: [join(root, 'src/galeri-sayfa.js')], format: 'iife', write: false });
 	const gjs = gal.outputFiles[0].text.replace(/<\/script/gi, '<\\/script');
-	const gpage = `<title>Fetih Ligi Soru Galerisi</title>
+	const gpage = `<meta charset="utf-8">
+<title>Fetih Ligi Soru Galerisi</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <meta name="theme-color" content="#0a1230">
 <style>${fontFaces()}

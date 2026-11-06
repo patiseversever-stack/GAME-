@@ -1,7 +1,7 @@
 // Seçmeli tipler: hilo, odd, proverb, riddle (bilmece: sır kartı).
 // Hepsi 'exact' türünde: bildi / bilemedi; eşitlikte hızlı olan kazanır.
 
-import { css, esc, shuffle, pCorrect, mountChoice, buzz, fmtNum, clamp } from './util.js';
+import { css, esc, shuffle, pCorrect, mountChoice, buzz, fmtNum, clamp, heceli } from './util.js';
 import { botTime } from './timing.js';
 import { clock, setTimeout } from '../core/clock.js';
 
@@ -156,6 +156,8 @@ const CSS = /* css */ `
 const OF_CSS = /* css */ `
 .fl-opts.of{container-type:inline-size}
 .fl-opts.of .fl-opt>span{overflow-wrap:normal}
+/* cevap anı: portre payı daralttı, 11 px'te de sığmayan tek kelime hece sınırından iki satıra (Afyon-karahisar) */
+.fl-opts.of .fl-opt>span.hy{white-space:normal;hyphens:manual;-webkit-hyphens:manual;line-height:1.05}
 /* dar haritalı kart (şıklar ≤ 350 px; il adları): harf bloğu ve sağ boşluk ince, yazıya yer (iki sütun kalsın, kart haritayı
    kapatmasın). Kap sorgusu: galerinin telefon çerçevesinde (1280×720 → 325 px) de dar sayılır */
 @container (max-width:350px){.fl-q.map .fl-opts.of:not(.one) .fl-opt{gap:8px}.fl-q.map .fl-opts.of:not(.one) .fl-opt:not(:has(>.fl-who)){padding-right:9px}.fl-q.map .fl-opts.of:not(.one) .fl-opt>i{width:29px}}
@@ -171,8 +173,9 @@ export function optFit(el, { floor = 13 } = {}) {
 	const run = () => {
 		if (!os.isConnected) return;
 		const cover = !!os.closest('.fl-q.cover');
-		if (!cover) for (const s of spans()) s.style.fontSize = '';
+		if (!cover) for (const s of spans()) if (!s.classList.contains('hy')) s.style.fontSize = '';
 		for (const s of spans()) {
+			if (s.classList.contains('hy')) continue;
 			if (cover) {
 				// tam ekran kart: fit.js tek kelimeyi tabanın %55'ine kadar küçültür; o boyda da sığmıyorsa tek sütun
 				if (late || os.classList.contains('one') || !over(s)) continue;
@@ -193,6 +196,22 @@ export function optFit(el, { floor = 13 } = {}) {
 			}
 		}
 	};
+	// cevapta hâlâ taşan (portrenin altına giren) yazı: hece sınırından iki satır; kutudan taşmayan en büyük boy (11–15 px)
+	const hy = () => {
+		if (!os.isConnected) return;
+		for (const s of spans()) {
+			if (s.classList.contains('hy') || s.children.length || s.parentElement.classList.contains('whod') || !over(s)) continue;
+			const txt = s.textContent;
+			if (/\s/.test(txt.trim()) || [...txt].length < 8) continue; // çok kelimeli yazı zaten satır kırar
+			s.innerHTML = heceli(txt);
+			s.classList.add('hy');
+			const b = s.parentElement;
+			const tall = () => b.scrollHeight > b.clientHeight + 1;
+			let px = 15;
+			s.style.fontSize = px + 'px';
+			while (px > 11 && (over(s) || tall())) s.style.fontSize = `${(px -= 0.5)}px`;
+		}
+	};
 	run();
 	const mo = new MutationObserver(run); // ui.js tek sütuna geçirirse (uzun şık) baştan ölç
 	mo.observe(os, { attributes: true, attributeFilter: ['class'] });
@@ -203,7 +222,11 @@ export function optFit(el, { floor = 13 } = {}) {
 		refit() {
 			late = true;
 			run();
-			requestAnimationFrame(run);
+			hy();
+			requestAnimationFrame(() => {
+				run();
+				hy();
+			});
 		},
 	};
 }

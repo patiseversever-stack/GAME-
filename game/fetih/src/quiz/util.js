@@ -219,3 +219,34 @@ export function typedWord(el, word, { onFull }) {
 		},
 	};
 }
+
+/**
+ * Uzun kelimeye hece sınırında yumuşak tire (U+00AD): dar iki sütunlu şıkta tek kelimelik uzun ad ("Pachycephalosaurus")
+ * kesilmez, 8,5 px'e küçülmez; tarayıcı yalnız gerektiğinde böler ve tire koyar. Kural (Türkçe hece): ünsüz + ünlüden
+ * önce bölünür; ilk ve son üç harf, iki bölme arası en az üç harf bölünmez; "ph, th, ch, sh, gh" bölünmez.
+ * Düzenli ifadelerde ASCII dışı harf yok (sayfa windows-1252 okunabilir: esbuild düzenli ifadeyi kaçışlamaz).
+ */
+const UNLU = /[aeiou\u0131\u00F6\u00FC\u00E2\u00EE\u00FBAEIOU\u0130\u00D6\u00DC\u00C2\u00CE\u00DB]/;
+const HARF = /\p{L}/u;
+export function heceli(s) {
+	return String(s)
+		.split(/(\s+)/)
+		.map((w) => {
+			const c = [...w];
+			if (c.length < 8) return esc(w);
+			let out = '';
+			let last = 0;
+			let seenV = false;
+			for (let i = 0; i < c.length; i++) {
+				const dig = /h/i.test(c[i]) && /[cpstg]/i.test(c[i - 1] || '');
+				if (i >= 3 && c.length - i >= 3 && i - last >= 3 && seenV && !dig && HARF.test(c[i - 1]) && HARF.test(c[i]) && !UNLU.test(c[i]) && UNLU.test(c[i + 1] || '')) {
+					out += '\u00AD';
+					last = i;
+				}
+				if (UNLU.test(c[i])) seenV = true;
+				out += esc(c[i]);
+			}
+			return out;
+		})
+		.join('');
+}

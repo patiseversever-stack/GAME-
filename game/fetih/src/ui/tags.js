@@ -294,6 +294,11 @@ export class Tags {
 		const { W, H } = this;
 		const land = W > H && H < 560;
 		this.bot = H - (this.ui.$.prompt.classList.contains('on') ? (land ? 165 : 200) : 28);
+		// haritasız soru kartı (altta) açıkken: kartın arkasına düşen il yazısı gizlenir, yarısı kartın altında kalmaz
+		// (kartın üst kenarı ui._coverFit ölçüsünden; sınıf okumak yerleşim hesaplatmaz)
+		const qe = this.ui.$.q;
+		const cardTop = qe && qe.classList.contains('on') && !qe.classList.contains('map') && this.ui._qcTop > 0 ? this.ui._qcTop : 1e9;
+		if (cardTop < 1e9) this.bot = Math.min(this.bot, cardTop - 8);
 		const v = this._v;
 		const s = this._s;
 		// 1) ekrana izdüşüm: etiket ilin üstünde ortalı (cx, cy merkez); rozet okların çıktığı yerin/kalenin tepesinde
@@ -420,7 +425,7 @@ export class Tags {
 		for (const it of items) {
 			const far = it.kind === 'badge'
 				? it.far || it.px < lo - 30 || it.px > hi + 30 || it.py < this.top - 30 || it.py > this.bot + 80
-				: it.far || it.py < this.top - 90 || it.py > this.bot + 120 || it.px < lo - 110 || it.px > hi + 110;
+				: it.far || it.py < this.top - 90 || it.py > this.bot + 120 || it.py > cardTop - 4 || it.px < lo - 110 || it.px > hi + 110;
 			if (it.farNow !== far) {
 				it.farNow = far;
 				it.el.classList.toggle('far', far);

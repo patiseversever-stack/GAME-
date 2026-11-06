@@ -765,7 +765,7 @@ export class UI {
 		const lbl = ctx.phase === 'altin' ? 'ALTIN SORU' : teams ? 'TAKIMLAR · HERKES CEVAPLIYOR' : ctx.phase === 'yayilma' ? 'YAYILMA · HERKES CEVAPLIYOR' : '';
 		const rule = ctx.predict ? `Tahmin et · +20` : !human ? 'İzliyorsun' : ctx.phase === 'altin' ? 'Altın soru' : tie ? 'Eşitlik bozma' : closest ? T.rule || 'En yakın kazanır' : '';
 		// tam ekran kart: tip her zaman ister (cover: true) ya da yalnız kısa ekranda ('kisa': yükseklik < 720 px; bulmaca tipleri)
-		const cover = !map && (T.cover === 'kisa' ? innerHeight < 720 : !!T.cover);
+		const cover = !map && (T.cover === 'kisa' ? (this.el.clientHeight || innerHeight) < 720 : !!T.cover);
 		card.className = `fl-q t-${q.type}${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}${cover ? ' cover' : ''}`;
 		if (cover && T.stampAt) card.dataset.st = T.stampAt; // damganın oturacağı alan (yoksa sorunun yeri)
 		else delete card.dataset.st;
@@ -1019,23 +1019,48 @@ export class UI {
 		this._cfo = null;
 		if (card.classList.contains('map') || typeof ResizeObserver === 'undefined') return; // haritalı kart: harita payı korunur
 		let raf = 0;
+		let refits = 0;
 		const fit = () => {
 			raf = 0;
 			if (!body.isConnected) return this._cfo?.disconnect();
 			const kids = [...body.children];
 			for (const k of kids) ro.observe(k); // içerik kendi boyunu değiştirince (sahne, satır içi stil) de ölç
-			for (const k of kids) k.style.zoom = '';
-			const over = () => body.scrollHeight - body.clientHeight > 1;
+			const set = (z) => {
+				for (const k of kids) k.style.zoom = z === 1 ? '' : String(z);
+			};
+			const gap = () => body.scrollHeight - body.clientHeight;
+			set(1);
 			let z = 1;
-			if (over()) {
-				z = Math.max(0.64, Math.floor((body.clientHeight / body.scrollHeight) * 100) / 100);
-				for (let i = 0; i < 10; i++) {
-					for (const k of kids) k.style.zoom = String(z);
-					if (!over() || z <= 0.64) break;
-					z = Math.max(0.64, +(z - 0.02).toFixed(2));
+			const g1 = gap();
+			if (g1 > 1) {
+				// sığan EN BÜYÜK ölçek aranır (ikiye bölme): oran tahmini satır kırılımı ve ölçeklenmeyen boşluklar yüzünden
+				// gereğinden küçük çıkıyordu (en uzun Az Bilinen cevabında altta 80 px boşluk)
+				let lo = 0.64;
+				let hi = 1;
+				set(lo);
+				const g0 = gap();
+				if (g0 > 1) z = g0 < g1 - 2 ? lo : 1; // en küçükte de sığmıyor: küçültme işe yarıyorsa en küçük, yaramıyorsa (mutlak konumlu taşma) hiç
+				else {
+					for (let i = 0; i < 6 && hi - lo > 0.015; i++) {
+						const mid = Math.round(((lo + hi) / 2) * 100) / 100;
+						set(mid);
+						if (gap() > 1) hi = mid;
+						else lo = mid;
+					}
+					z = lo;
 				}
+				set(z);
 			}
+			// kartın üst kenarı (oyun alanında): harita yazıları bunun altına girmez (tags.js)
+			const qcE = card.querySelector('.fl-qc');
+			if (qcE) this._qcTop = qcE.getBoundingClientRect().top - this.el.getBoundingClientRect().top;
+			const changed = body.dataset.fz !== undefined && body.dataset.fz !== String(z);
 			body.dataset.fz = String(z);
+			// ölçek değişince yazı sığdırma (fit.js) yeni genişliğe göre yeniden; salınmasın diye kart başına sınırlı
+			if (changed && refits < 4) {
+				refits++;
+				refitAll();
+			}
 		};
 		const kick = () => {
 			if (!raf) raf = requestAnimationFrame(fit);
@@ -1044,11 +1069,16 @@ export class UI {
 		ro.observe(body);
 		const mo = new MutationObserver(kick);
 		mo.observe(body, { childList: true, subtree: true, characterData: true, attributes: true, attributeFilter: ['class'] });
+		// giriş devinimi sürerken ölçülen boy (aşağıdan kayan kart taşma sayılır) devinim bitince yeniden ölçülür
+		body.addEventListener('animationend', kick);
+		body.addEventListener('transitionend', kick);
 		document.fonts?.ready?.then(kick);
 		this._cfo = {
 			disconnect: () => {
 				ro.disconnect();
 				mo.disconnect();
+				body.removeEventListener('animationend', kick);
+				body.removeEventListener('transitionend', kick);
 				if (raf) cancelAnimationFrame(raf);
 				this._cfo = null;
 			},
@@ -1068,26 +1098,36 @@ export class UI {
 		s.style.removeProperty('--k');
 		q.classList.remove('stamped');
 		let fit = null;
-		if (qc && q.classList.contains('cover')) {
-			// tam ekran tip: harita boşluğu yok. Damga tipin gösterdiği alana (Göz Kararı: resim, Halat/Mancınık: sahne)
-			// ya da sorunun yerine oturur: başlık satırının altından cevapların başladığı yere kadar; soru yazısı o an
-			// gizlenir (cevap belli), damga alana sığacak kadar küçülür. Cevaplara, sahnedeki yazılara binmez.
+		const coverSt = !!(qc && q.classList.contains('cover'));
+		// tam ekran tip: harita boşluğu yok. Damga tipin gösterdiği alana (Göz Kararı: resim, Halat/Mancınık: sahne)
+		// ya da sorunun yerine oturur: başlık satırının altından cevapların başladığı yere kadar; soru yazısı o an
+		// gizlenir (cevap belli), damga alana sığacak kadar küçülür. Cevaplara, sahnedeki yazılara binmez.
+		const coverBox = () => {
 			const zone = (q.dataset.st && q.querySelector(q.dataset.st)) || null;
-			const r = q.getBoundingClientRect();
 			const c = qc.getBoundingClientRect();
-			let box;
-			if (zone) box = zone.getBoundingClientRect();
-			else {
-				const hd = q.querySelector('.fl-qhead').getBoundingClientRect();
-				const bd = q.querySelector('.fl-qbody');
-				const first = [...bd.children].find((e) => e.getBoundingClientRect().height > 0);
-				const bt = first ? first.getBoundingClientRect().top : bd.getBoundingClientRect().top;
-				box = { left: c.left + 10, right: c.right - 10, top: hd.bottom + 3, bottom: bt - 3 };
-				q.classList.add('stamped');
-			}
-			fit = { w: box.right - box.left, h: box.bottom - box.top };
+			if (zone) return zone.getBoundingClientRect();
+			const hd = q.querySelector('.fl-qhead').getBoundingClientRect();
+			const bd = q.querySelector('.fl-qbody');
+			const first = [...bd.children].find((e) => e.getBoundingClientRect().height > 0);
+			const bt = first ? first.getBoundingClientRect().top : bd.getBoundingClientRect().top;
+			q.classList.add('stamped');
+			return { left: c.left + 10, right: c.right - 10, top: hd.bottom + 3, bottom: bt - 3 };
+		};
+		const coverPlace = (box) => {
+			const r = q.getBoundingClientRect();
 			s.style.top = Math.round((box.top + box.bottom) / 2 - r.top) + 'px';
 			s.style.left = Math.round((box.left + box.right) / 2 - r.left) + 'px';
+		};
+		const coverK = (box) => {
+			// doğal boyu (dönüşümsüz) ölç, eğiklik (skewX −8°) payıyla alana sığdır
+			const w0 = s.offsetWidth + s.offsetHeight * 0.15;
+			const h0 = s.offsetHeight;
+			const k = Math.max(0.45, Math.min(1, (box.right - box.left - 6) / w0, (box.bottom - box.top - 2) / h0));
+			s.style.setProperty('--k', k.toFixed(3));
+		};
+		if (coverSt) {
+			fit = coverBox();
+			coverPlace(fit);
 		} else if (qc) {
 			const r = q.getBoundingClientRect();
 			const who = q.querySelector('.fl-qwho');
@@ -1097,13 +1137,7 @@ export class UI {
 		}
 		s.className = `fl-stamp ${tone}`;
 		s.innerHTML = `${esc(text)}${sub ? `<small>${esc(sub)}</small>` : ''}`;
-		if (fit) {
-			// doğal boyu (dönüşümsüz) ölç, eğiklik (skewX −8°) payıyla alana sığdır
-			const w0 = s.offsetWidth + s.offsetHeight * 0.15;
-			const h0 = s.offsetHeight;
-			const k = Math.max(0.45, Math.min(1, (fit.w - 6) / w0, (fit.h - 2) / h0));
-			s.style.setProperty('--k', k.toFixed(3));
-		}
+		if (fit) coverK(fit);
 		// haritadaki yazı rozetleri damganın altına girmesin (yerleşim engeli; kart kapanınca setPins([]) siler)
 		const measure = () => {
 			if (!s.isConnected || !s.textContent) return (this._stampBox = null);
@@ -1111,8 +1145,22 @@ export class UI {
 			const u = this.el.getBoundingClientRect();
 			this._stampBox = { l: r.left - u.left - 4, r: r.right - u.left + 4, t: r.top - u.top - 4, b: r.bottom - u.top + 4 };
 		};
+		let held = false; // cevap alanı kuralı (aşağıda) damgayı taşıdıysa yeniden yerleştirme onu bozmaz
 		requestAnimationFrame(measure);
-		setTimeout(measure, 600); // giriş devinimi (ölçek) bitince gerçek boyu
+		setTimeout(() => {
+			// yerleşim oturduktan sonra (afiş, sığdırma ölçeği) alan yeniden ölçülür; kaydıysa damga yeni yerine
+			if (coverSt && !held && s.isConnected && s.textContent && q.contains(qc)) {
+				const b = coverBox();
+				const r = q.getBoundingClientRect();
+				const cy = Math.round((b.top + b.bottom) / 2 - r.top);
+				const cx = Math.round((b.left + b.right) / 2 - r.left);
+				if (Math.abs(cy - parseFloat(s.style.top)) > 2 || Math.abs(cx - parseFloat(s.style.left)) > 2) {
+					coverPlace(b);
+					coverK(b);
+				}
+			}
+			measure();
+		}, 600); // giriş devinimi (ölçek) bitince gerçek boyu
 		// v1.5: damga cevap alanının (çengel tahtası, kelime kutuları) üstüne binmez: doğru cevap görülsün. Binecekse alanın
 		// hemen üstüne kayar; oraya da sığmıyorsa kısa görünüp kaybolur.
 		const zone = !q.classList.contains('map') && q.querySelector('.xw-grid,.an-word,.hr-word,.fl-word');
@@ -1128,6 +1176,7 @@ export class UI {
 				const minC = (who ? who.getBoundingClientRect().bottom - qr.top : 0) + h / 2 - 24;
 				const want = zt - h / 2 - 6;
 				s.style.top = Math.round(Math.max(minC, want)) + 'px';
+				held = true;
 				if (want < minC - 4) s.classList.add('brief');
 			}
 		}
@@ -1466,7 +1515,25 @@ export class UI {
 			w.dataset.av = '1';
 			w.parentElement?.style.setProperty('--wn', w.parentElement.querySelectorAll('.fl-who').length);
 			w.style.borderColor = '#fff';
+			if (r.p?.human) w.classList.add('me');
 			w.innerHTML = avatar({ ...this.look(r.p), img: null });
+		}
+		// şık rozetleri v2: seçilen şık boş kart olur, seçenlerin portreleri ortada yan yana (yazı yer tutar, kutu boyu
+		// oynamaz; styles-arena .fl-whos). Doğru/Yanlış levhasında simgenin altında bir sıra.
+		for (const b of card.querySelectorAll('.fl-opt')) {
+			const ws = [...b.children].filter((c) => c.classList.contains('fl-who'));
+			if (!ws.length) continue;
+			const tf = !!b.closest('.fl-tf.vd');
+			const host = (!tf && b.querySelector(':scope>span')) || b;
+			let box = host.querySelector(':scope>.fl-whos');
+			if (!box) {
+				box = document.createElement('span');
+				box.className = 'fl-whos';
+				host.appendChild(box);
+			}
+			for (const w of ws) box.appendChild(w);
+			box.style.setProperty('--wn', box.children.length);
+			b.classList.add('whod');
 		}
 	}
 
@@ -1588,8 +1655,42 @@ export class UI {
 				e.innerHTML = `<div class="pb">${PIN_SHAPE(c)}${p.p ? `<span class="fl-av">${avatar({ ...this.look(p.p), img: null })}</span>` : ''}${p.km ? `<span class="km">${esc(p.km)}</span>` : ''}</div>`;
 			}
 			this.$.pins.appendChild(e);
-			return { el: e, x: p.x, z: p.z };
+			return { el: e, x: p.x, z: p.z, km: !!(p.km && !p.goal), goal: !!p.goal };
 		});
+	}
+
+	/**
+	 * Pin cevabı: iğnelerin "km" yazıları birbirine ve başka iğnelerin resmine binmesin. Yazı önce iğnenin üstünde; orası
+	 * dolu ise ucunun altına iner. Engeller: bütün iğnelerin gövdesi (ve hedef bayrağı), önce yerleşen yazılar. Üstten
+	 * aşağı sırayla yerleşir; ikisi de doluysa en az binen yer seçilir. Sınıf yalnız değişince yazılır.
+	 */
+	_kmPlace(P) {
+		const K = P.filter((p) => p.km);
+		if (!K.length) return;
+		const ov = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
+		const obs = [];
+		for (const p of P) {
+			if (p.w || p.sx == null) continue; // yazı rozetleri değil, iğneler
+			obs.push(p.goal ? { l: p.sx - 24, r: p.sx + 24, t: p.sy - 24, b: p.sy + 24, p } : { l: p.sx - 20, r: p.sx + 20, t: p.sy - 50, b: p.sy + 2, p });
+		}
+		K.sort((a, b) => a.sy - b.sy);
+		for (const p of K) {
+			p.kw ??= p.el.querySelector('.km')?.offsetWidth || 44;
+			const l = p.sx - p.kw / 2 - 3;
+			const r = p.sx + p.kw / 2 + 3;
+			const up = { l, r, t: p.sy - 72, b: p.sy - 49 };
+			const dn = { l, r, t: p.sy + 3, b: p.sy + 26 };
+			const hit = (R) => obs.reduce((a, B) => a + (B.p === p ? 0 : ov(R, B)), 0);
+			const hu = hit(up);
+			const hd = hu > 0 ? hit(dn) : 0;
+			// kararsız kalmasın: aşağıdaysa ancak yukarısı tamamen boşalınca çıkar
+			const down = hu > 0 && (hd < hu || (p.kd && hd <= hu));
+			if (down !== !!p.kd) {
+				p.kd = down;
+				p.el.classList.toggle('kd', down);
+			}
+			obs.push(down ? dn : up);
+		}
 	}
 
 	/** Her kare: iğneleri, çizgileri ve il adlarını ekrana izdüşür. */
@@ -1617,6 +1718,7 @@ export class UI {
 			}
 			p.ty = 0;
 		}
+		this._kmPlace(P);
 		// yazı rozetleri (v1.7): öncelik sırasıyla BOŞ yere yerleşir. Önce kendi yeri, sonra bir önceki karedeki yeri (titremesin),
 		// sonra kademeli adaylar (yukarı, aşağı, yanlar, çaprazlar). Engeller: önce yerleşen rozetler, cevap damgası, ekran
 		// kenarı ve (haritalı soruda) kartın altı. Boş yer yoksa kendi yerinde kalır. Büyük rozet (cevap) önce yerleşir.
@@ -1625,6 +1727,18 @@ export class UI {
 		const nowT = performance.now();
 		const cutY = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * SH - 8 : -1e9;
 		const boxes = this._stampBox ? [this._stampBox] : [];
+		// duraklat düğmesi de engel: rozet onun altına girmesin (yeri yarım saniyede bir ölçülür; her kare yerleşim okutmaz)
+		if (!this._pbT || nowT - this._pbT > 500) {
+			this._pbT = nowT;
+			const pb = this.$.pbtn;
+			const vis = pb && !pb.classList.contains('off') && pb.offsetWidth > 0;
+			if (vis) {
+				const r = pb.getBoundingClientRect();
+				const u = this.el.getBoundingClientRect();
+				this._pbBox = { l: r.left - u.left - 4, r: r.right - u.left + 4, t: r.top - u.top - 4, b: r.bottom - u.top + 4 };
+			} else this._pbBox = null;
+		}
+		if (this._pbBox) boxes.push(this._pbBox);
 		const tags = P.filter((p) => p.w);
 		for (const p of tags) p.big ??= p.el.classList.contains('big');
 		if (tags.length > 1) tags.sort((x, y) => y.big - x.big);

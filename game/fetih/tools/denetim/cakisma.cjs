@@ -67,7 +67,10 @@ async function answer(p, t) {
 const measure = () => {
 	const vw = innerWidth;
 	const vh = innerHeight;
-	const big = vw * vh * 0.35;
+	// büyük katman eşiği oyun alanına göre: galerinin geniş görünümlerinde oyun bir telefon çerçevesinde (1280×720 → 325×704);
+	// pencere alanıyla ölçülünce kart zemini hiç "büyük" sayılmıyor, opak kartın altındaki harita yazısı "örtülü" çıkıyordu
+	const gr = document.querySelector('.fl-ui')?.getBoundingClientRect();
+	const big = (gr && gr.width * gr.height > 0 ? gr.width * gr.height : vw * vh) * 0.35;
 	const vis = (e) => (e.checkVisibility ? e.checkVisibility({ checkOpacity: true, checkVisibilityCSS: true }) : true);
 	const ad = (e) => {
 		if (!e || e.nodeType !== 1) return String(e);
@@ -226,7 +229,9 @@ const measure = () => {
 		const cs = getComputedStyle(e);
 		const over = cs.overflowX === 'visible' && e.scrollWidth > e.clientWidth + 1 && cs.display !== 'inline';
 		// taşanı gizleyen kutuda (overflow ≠ visible) içerik kutunun dışına çıkamaz: kutunun kendisi ölçülür
-		const right = r.left + Math.max(r.width, cs.display !== 'inline' && cs.overflowX === 'visible' ? e.scrollWidth : 0);
+		// scrollWidth öğenin kendi (yakınlaştırılmamış) biriminde; dikdörtgen yakınlaştırılmış: aynı birime çevrilir
+		const zf = e.currentCSSZoom || 1;
+		const right = r.left + Math.max(r.width, cs.display !== 'inline' && cs.overflowX === 'visible' ? e.scrollWidth * zf : 0);
 		if (over || right > vw + 1) say(`sözde yazı taşıyor: ${ad(e)} ${pc.join(' ')} (${over ? 'kutusundan ' + (e.scrollWidth - e.clientWidth) + ' px' : 'ekrandan'})`);
 	}
 	// 5) yana taşma (kırpılmamış görünür öğe)
