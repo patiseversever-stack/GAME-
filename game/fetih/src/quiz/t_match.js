@@ -72,6 +72,7 @@ const CSS = /* css */ `
 `;
 
 export const match = {
+	cover: 'kisa', // kısa ekranda (yükseklik < 720 px) tam ekran kart: harita şeridi yerine bulmacaya yer (ui.js)
 	time: 22,
 	label: 'Eşleştir',
 	kind: 'closest',

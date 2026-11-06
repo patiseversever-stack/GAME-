@@ -47,7 +47,21 @@ async function answer(p, t) {
 		await p.waitForTimeout(300);
 		await c('.fl-q.on .fl-send');
 	}
-	else await p.evaluate(() => (document.querySelector('.fl-q.on .fl-opt') || document.querySelector('.fl-q.on .fl-send'))?.click());
+	else {
+		// her tip: kendi botunun (usta) cevabıyla, kartın kendi cevap yolundan (api.answer); yoksa ilk şık
+		const done = await p.evaluate(() => {
+			const c = window.__fl?.app?.ui?.current;
+			const T = c?.ctx?.T;
+			if (!T || !c.api?.answer) return false;
+			try {
+				c.api.answer(T.bot(c.ctx.v, 0.95, Math.random).value);
+				return true;
+			} catch {
+				return false;
+			}
+		});
+		if (!done) await p.evaluate(() => (document.querySelector('.fl-q.on .fl-opt') || document.querySelector('.fl-q.on .fl-send'))?.click());
+	}
 }
 
 const measure = () => {
@@ -129,10 +143,31 @@ const measure = () => {
 			if (x < 0 || y < 0 || x >= vw || y >= vh) continue;
 			const stack = document.elementsFromPoint(x, y);
 			let top = null;
+			let hidden = false;
+			// büyük katman: zemini opaksa (renk ya da ekranı kaplamayan bir panelin degradesi) altındaki yazı görünmez, çakışma
+			// da yoktur; saydam perde (vinyet, sinema karartması) yazıyı gizlemez
+			const opaque = (e, b) => {
+				const cs = getComputedStyle(e);
+				const a = (cs.backgroundColor.match(/rgba?\(([^)]+)\)/)?.[1] || '0,0,0,0').split(',').map(Number);
+				const alpha = a.length > 3 ? a[3] : 1;
+				const panel = cs.backgroundImage.includes('gradient') && b.width * b.height < vw * vh * 0.9;
+				return (alpha >= 0.85 || panel) && opq(e) >= 0.9;
+			};
+			const iL = stack.findIndex((e) => related(e, L.el));
+			// yazı ile üstündeki her şey arasında opak bir panel varsa yazı zaten görünmüyor
+			for (let j = 0; j < (iL < 0 ? stack.length : iL); j++) {
+				const e = stack[j];
+				const b = e.getBoundingClientRect();
+				if (b.width * b.height >= big && !related(e, L.el) && opaque(e, b)) {
+					hidden = true;
+					break;
+				}
+			}
 			for (const e of stack) {
+				if (hidden) break;
 				if (related(e, L.el)) break; // önce yazının kendisine (ya da atasına) ulaştık: üstünde yabancı yok
 				const b = e.getBoundingClientRect();
-				if (b.width * b.height >= big) continue; // perde / panel: altı zaten görünmez
+				if (b.width * b.height >= big) continue;
 				if (opq(e) < 0.12 || !vis(e)) continue;
 				const cs = getComputedStyle(e);
 				if (e.tagName === 'CANVAS') continue;
@@ -143,7 +178,7 @@ const measure = () => {
 				top = e;
 				break;
 			}
-			if (!top) continue;
+			if (hidden || !top) continue;
 			const key = ad(top) + '|' + L.s;
 			if (seenPair.has(key)) break;
 			seenPair.add(key);
@@ -162,7 +197,24 @@ const measure = () => {
 			if (related(a, b)) continue;
 			const ra = isect(a.getBoundingClientRect(), clipOf(a));
 			const rb = isect(b.getBoundingClientRect(), clipOf(b));
-			if (area(ra) > 0 && area(rb) > 0 && hit(ra, rb, 3)) say(`düğmeler üst üste: ${ad(a)} ↔ ${ad(b)}`);
+			if (!(area(ra) > 0 && area(rb) > 0 && hit(ra, rb, 3))) continue;
+			// kesimli (clip-path) düğmede dokunma alanı kesimin kendisi: kesişimin noktalarında gerçekten ikisi birden mi dokunuluyor
+			const ov = isect(ra, rb);
+			let both = 0;
+			let n = 0;
+			for (const fx of [0.2, 0.5, 0.8])
+				for (const fy of [0.2, 0.5, 0.8]) {
+					const x = ov.left + (ov.right - ov.left) * fx;
+					const y = ov.top + (ov.bottom - ov.top) * fy;
+					const hitEl = document.elementFromPoint(x, y);
+					n++;
+					if (hitEl && (a.contains(hitEl) || b.contains(hitEl))) both += a.contains(hitEl) && b.contains(hitEl) ? 1 : 0;
+				}
+			// kesimli ya da eğik (transform) levhalar komşusuyla kutu köşesinde kesişir, şekilleri değil: kesişim küçükse sayılmaz
+			const shaped = (e) => getComputedStyle(e).clipPath !== 'none' || getComputedStyle(e).transform !== 'none';
+			const small = area(ov) < 0.2 * Math.min(area(ra), area(rb));
+			const clipped = getComputedStyle(a).clipPath !== 'none' || getComputedStyle(b).clipPath !== 'none';
+			if (!((clipped && !both) || ((shaped(a) || shaped(b)) && small))) say(`düğmeler üst üste: ${ad(a)} ↔ ${ad(b)}`);
 		}
 	// 4b) sözde öğe yazısı (::before/::after içeriği: "SN", etiketler): öğenin içeriği kutusundan ya da ekrandan taşıyor mu
 	for (const e of document.querySelectorAll('.fl-ui *, .fl-q *')) {

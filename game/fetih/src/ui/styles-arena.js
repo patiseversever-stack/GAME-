@@ -75,6 +75,17 @@ export const CSS_ARENA = /* css */ `
 .fl-q .fl-opt:has(>.fl-who+.fl-who){padding-right:63px}
 .fl-q .fl-opt:has(>.fl-who+.fl-who+.fl-who){padding-right:80px}
 .fl-q .fl-opt:has(>.fl-who+.fl-who+.fl-who+.fl-who){padding-right:97px}
+/* dar ekranda (≤360 px) iki sütunlu şıkta portre küçük, yazıya daha çok yer */
+@media (max-width:360px){
+  .fl-q .fl-opts .fl-opt>.fl-who{width:21px;height:21px;margin-top:-10.5px;right:8px;border-width:1.5px}
+  .fl-q .fl-opts .fl-opt>.fl-who+.fl-who{right:21px}
+  .fl-q .fl-opts .fl-opt>.fl-who+.fl-who+.fl-who{right:34px}
+  .fl-q .fl-opts .fl-opt>.fl-who+.fl-who+.fl-who+.fl-who{right:47px}
+  .fl-q .fl-opts .fl-opt:has(>.fl-who){padding-right:33px}
+  .fl-q .fl-opts .fl-opt:has(>.fl-who+.fl-who){padding-right:46px}
+  .fl-q .fl-opts .fl-opt:has(>.fl-who+.fl-who+.fl-who){padding-right:59px}
+  .fl-q .fl-opts .fl-opt:has(>.fl-who+.fl-who+.fl-who+.fl-who){padding-right:72px}
+}
 .fl-who+.fl-who{right:31px}
 .fl-who+.fl-who+.fl-who{right:48px}
 .fl-who+.fl-who+.fl-who+.fl-who{right:65px}
@@ -666,6 +677,17 @@ export const CSS_ARENA = /* css */ `
 .fl-cvt{position:absolute;left:50%;top:28px;height:38px;max-width:calc(100% - 120px);display:block;text-align:center;transform:translateX(-50%);pointer-events:none;overflow:visible;
   font:italic 900 20px/38px 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.4),0 0 18px color-mix(in srgb,var(--cc) 70%,transparent);white-space:nowrap}
 .fl-ui.qcover .fl-tags,.fl-ui.qcover .fl-pins{opacity:0;visibility:hidden}
+/* haritasız klasik kart: menü/durdur düğmelerinin bandının (kartın tepesinden 28 + 38 px) altında kalır; kısa ekranda kart
+   uzayıp düğmelerin altına (saatin, kategorinin üstüne) girmez. Sığmayan gövde ui._coverFit ile orantılı küçülür. */
+.fl-q:not(.map):not(.cover) .fl-qc{display:flex;flex-direction:column;max-height:calc(100% - 23cqw - var(--sat) - 70px)}
+.fl-q:not(.map):not(.cover) .fl-qc>*{flex:none}
+.fl-q:not(.map):not(.cover) .fl-qc>.fl-qbody{flex:0 1 auto;min-height:0}
+/* dar kartta (≤370 px) kural yazısı kategori çipinin altına kendi satırına iner: saatin altına girmez, sıkışmaz */
+@container (max-width:370px){
+  .fl-q:not(.map) .fl-qhead{flex-wrap:wrap;row-gap:2px;height:auto}
+  .fl-q:not(.map) .fl-qhead .fl-rule{order:3;flex:1 0 100%;margin:0;padding:0 2px;text-align:left;font-size:11.5px;letter-spacing:.1em}
+  .fl-q .fl-prv::before{letter-spacing:.1em;font-size:12px}
+}
 /* cevap anında jokerler işe yaramaz: çubuk kalkar, açıklamalara yer açılır */
 .fl-q.cover.rv .fl-jk{display:none}
 .fl-q.cover .fl-qbody{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;margin-top:10px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;padding-top:12px;margin-top:-2px}

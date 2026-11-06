@@ -106,6 +106,7 @@ export function inversions(seq, items, dir = 'asc') {
 const up = (s) => String(s).toLocaleUpperCase('tr-TR');
 
 export const order = {
+	cover: 'kisa', // kısa ekranda (yükseklik < 720 px) tam ekran kart: harita şeridi yerine bulmacaya yer (ui.js)
 	time: 27,
 	label: 'Sırala',
 	kind: 'closest',

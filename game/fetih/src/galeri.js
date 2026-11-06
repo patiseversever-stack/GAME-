@@ -241,7 +241,12 @@ export async function galeri() {
 	const ex = Object.fromEntries(LIST.map(([t]) => [t, examples(t)]));
 	if (wk) {
 		const L = ex[S.type];
-		const at = want.includes('@') ? L.findIndex((q) => q.id === wk) : Number(wk);
+		let at = want.includes('@') ? L.findIndex((q) => q.id === wk) : Number(wk);
+		if (want.includes('@') && at < 0) {
+			// vitrinde yok (klasik tipte yalnız 4 örnek): bankadan getir, listenin sonuna ekle (denetim en uzun soruları açar)
+			const q = BANK.find((x) => x.id === wk && x.type === S.type);
+			if (q) at = L.push(q) - 1;
+		}
 		if (Number.isInteger(at) && at >= 0 && at < L.length) S.k = at;
 	}
 	const R = () => Math.random();

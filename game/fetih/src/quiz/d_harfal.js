@@ -69,6 +69,7 @@ const CSS = /* css */ `
 .dn-ha .fl-keys .fl-send:disabled{opacity:.45}
 .dn-ha.done .fl-keys,.dn-ha.done .dn-ha-al{display:none}
 @media (max-height:700px){.dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:36px}.dn-ha-w b,.ha-chips i{flex-basis:min(48px,calc((100% - (var(--n) - 1) * 5px) / var(--n)))}.dn-ha-pts b{font-size:30px}.dn-ha-al{height:42px}.ha-pano{gap:7px;padding:8px 10px 10px}}
+@media (max-height:600px){.dn-ha{gap:7px}.dn-ha-g{display:none}.ha-pano{gap:5px;padding:6px 8px 8px}.dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:32px}.dn-ha .fl-keys{gap:4px}.ha-chips i{height:16px;font-size:10px}.dn-ha-pts b{font-size:26px}.dn-ha-al{height:38px;min-width:96px;font-size:18px}.dn-ha-w b,.ha-chips i{flex-basis:min(40px,calc((100% - (var(--n) - 1) * 5px) / var(--n)))}}
 @keyframes dnHaFlip{0%{transform:perspective(200px) rotateX(90deg)}60%{transform:perspective(200px) rotateX(-14deg)}100%{transform:none}}
 @keyframes dnHaDrop{30%{color:#ff7a6a;transform:scale(.88)}}
 @keyframes dnHaCur{50%{opacity:.35}}

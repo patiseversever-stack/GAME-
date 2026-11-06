@@ -303,6 +303,7 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
 .fl-q.cover .dn-fz-lk{height:62px;border-radius:4px}
 .fl-q.cover .dn-fz-res{gap:8px}
 .fl-q.cover .dn-fz-res span{padding:4px 12px;border-radius:999px;font:600 13px/1.2 'Fredoka',sans-serif;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
+@media (max-height:600px){.fl-q.cover .dn-fz{gap:8px}.fl-q.cover .dn-fz-ar{min-height:124px!important}.fl-q.cover .dn-fz-qt{min-height:48px;padding:7px 10px;font-size:15px}.fl-q.cover .dn-fz-o .fl-opt{min-height:46px!important;font-size:18px}.fl-q.cover .dn-fz-res span{padding:2px 10px;font-size:12px}}
 @media (max-height:700px){.fl-q.cover .dn-fz-ar{min-height:150px}.fl-q.cover .dn-fz-pl i{width:50px;height:50px}.fl-q.cover .dn-fz-bomb{transform:translateX(calc(var(--bx,0px) * 1.2)) scale(1.08)}.fl-q.cover .dn-fz-o .fl-opt{min-height:52px}.fl-q.cover .dn-fz-qt{min-height:56px}}
 `;
 

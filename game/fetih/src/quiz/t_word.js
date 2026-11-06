@@ -109,6 +109,7 @@ ${LAND}{
 
 // ---------------------------------------------------------------- anagram
 export const anagram = {
+	cover: 'kisa', // kısa ekranda (yükseklik < 720 px) tam ekran kart: harita şeridi yerine bulmacaya yer (ui.js)
 	time: 26, // belge/yedek: bankanın ortancası (timing.test)
 	label: 'Anagram',
 	kind: 'exact',
@@ -268,6 +269,7 @@ export const anagram = {
 
 // ---------------------------------------------------------------- cross
 export const cross = {
+	cover: 'kisa', // kısa ekranda (yükseklik < 720 px) tam ekran kart: harita şeridi yerine bulmacaya yer (ui.js)
 	time: 45, // belge/yedek: bankanın ortancası (timing.test; v1.5: 3–4 kelime, kartlarla)
 	label: 'Çengel',
 	kind: 'closest',

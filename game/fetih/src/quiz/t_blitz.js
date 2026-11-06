@@ -148,6 +148,7 @@ const ZAP = '<svg class="zap" viewBox="0 0 100 40" preserveAspectRatio="none"><p
 const BOLT = '<svg viewBox="0 0 24 24"><path d="M13.5 2 4 13.5h6.5L9 22l10-12h-6.6z"/></svg>';
 
 export const blitz = {
+	cover: 'kisa', // kısa ekranda (yükseklik < 720 px) tam ekran kart: harita şeridi yerine bulmacaya yer (ui.js)
 	time: 18, // belge/yedek: bankanın ortancası (timing.test)
 	label: 'Yıldırım',
 	kind: 'closest',

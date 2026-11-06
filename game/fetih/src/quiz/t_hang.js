@@ -124,6 +124,7 @@ const CSS = /* css */ `
 `;
 
 export const hang = {
+	cover: 'kisa', // kısa ekranda (yükseklik < 720 px) tam ekran kart: harita şeridi yerine bulmacaya yer (ui.js)
 	time: 23,
 	label: 'Adam asmaca',
 	kind: 'exact',

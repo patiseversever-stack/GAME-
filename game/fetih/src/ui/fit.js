@@ -75,7 +75,8 @@ export function fitEl(el) {
 	const base = parseFloat(getComputedStyle(el).fontSize) || 14;
 	const over = () => el.scrollWidth > el.clientWidth + 0.5;
 	if (over()) {
-		const line = el.matches(FIT_LINES);
+		// tek kelime asla ortasından bölünmez: cümle türünde bile isim gibi küçülür (iki satıra inmez)
+		const line = el.matches(FIT_LINES) && /\s/.test(el.textContent.trim());
 		// isim tabanın %55'ine dek küçülür; cümle %72'de durur, sonra iki satıra iner
 		const floor = Math.max(MIN_PX, base * (line ? 0.72 : 0.55));
 		if (!shrink(el, floor, base, over) && line) {

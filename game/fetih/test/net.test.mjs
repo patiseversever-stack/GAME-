@@ -371,7 +371,8 @@ for (const q of [...BANK, ...SAMPLES]) {
 	let s1 = 9;
 	const R = () => ((s1 = (s1 * 16807) % 2147483647) / 2147483647);
 	const c1 = new BotClient(cli, { skill: 0.7, R });
-	const m = new Match(app, makeUI(), { mode: 'ffa3', length: 'quick', bot: 'usta', region: 'ege', seed: 61, seats: ['bot', 'remote', 'bot'], transports: { 1: srv }, allBots: true, persist: false });
+	// 1'e 1: her düello iki koltuğa da sorulur, dönen koltuğa istek gitmesi maçın akışına (soru bankasına) bağlı kalmaz
+	const m = new Match(app, makeUI(), { mode: '1v1', length: 'quick', bot: 'usta', region: 'ege', seed: 61, seats: ['bot', 'remote'], transports: { 1: srv }, allBots: true, persist: false });
 	let c2 = null;
 	let dropped = false;
 	m.on('phase', (d) => {

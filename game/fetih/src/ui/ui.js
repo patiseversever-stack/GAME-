@@ -764,8 +764,10 @@ export class UI {
 				: who.map((p, k) => (k ? '<i class="vx">VS</i>' : '') + plate(p, '', '', who.length > 2 ? ranks.get(p.i) : 0)).join('');
 		const lbl = ctx.phase === 'altin' ? 'ALTIN SORU' : teams ? 'TAKIMLAR · HERKES CEVAPLIYOR' : ctx.phase === 'yayilma' ? 'YAYILMA · HERKES CEVAPLIYOR' : '';
 		const rule = ctx.predict ? `Tahmin et · +20` : !human ? 'İzliyorsun' : ctx.phase === 'altin' ? 'Altın soru' : tie ? 'Eşitlik bozma' : closest ? T.rule || 'En yakın kazanır' : '';
-		card.className = `fl-q t-${q.type}${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}${T.cover && !map ? ' cover' : ''}`;
-		if (T.cover && !map && T.stampAt) card.dataset.st = T.stampAt; // damganın oturacağı alan (yoksa sorunun yeri)
+		// tam ekran kart: tip her zaman ister (cover: true) ya da yalnız kısa ekranda ('kisa': yükseklik < 720 px; bulmaca tipleri)
+		const cover = !map && (T.cover === 'kisa' ? innerHeight < 720 : !!T.cover);
+		card.className = `fl-q t-${q.type}${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}${cover ? ' cover' : ''}`;
+		if (cover && T.stampAt) card.dataset.st = T.stampAt; // damganın oturacağı alan (yoksa sorunun yeri)
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));
 		card.style.setProperty('--me', human ? avatarURL(this.look(human)) : 'none');
@@ -773,7 +775,7 @@ export class UI {
 		card.classList.toggle('qmid', qlen > 50 && qlen <= 80);
 		card.classList.toggle('qlong', qlen > 80);
 		card.innerHTML = `<div class="fl-qwho${duel ? ' duel' : teams ? ' teams' : ''}" style="--n:${who.length}"${lbl ? ` data-lb="${lbl}"` : ''}>${whoHTML}</div>
-			<div class="fl-qc">${T.cover && !map ? `<div class="fl-cvt">${esc(String(T.label || '').toLocaleUpperCase('tr-TR'))}</div>` : ''}
+			<div class="fl-qc">${cover ? `<div class="fl-cvt">${esc(String(T.label || '').toLocaleUpperCase('tr-TR'))}</div>` : ''}
 				<div class="fl-qhead"><span class="fl-cat"><span class="ci">${ico(cat.icon, { w: 2.6, c: cat.color })}</span><b>${esc(cat.name)}</b></span><span class="fl-type">${esc(
 					String(T.label || '').toLocaleUpperCase('tr-TR'),
 				)}</span>${rule ? `<span class="fl-rule">${esc(rule)}</span>` : ''}<span class="fl-clock"><b>${sec}</b></span></div>
@@ -844,7 +846,7 @@ export class UI {
 		this.el.classList.toggle('qon', !map); // haritasız soruda üst oyuncu kartları afişe yer açar
 		this.app.calmQ = !map && !!T.calm; // klasik soru tipi: harita arkada durgun (kare hızı: core/quality.js)
 		this.el.classList.toggle('qmap', map); // haritalı soruda üst şerit gizlenir, duraklat düğmesi alta iner
-		this.el.classList.toggle('qcover', !map && !!(T.cover || T.sahne)); // tam ekran kart ya da kendi sahnesini çizen tip (Gölge): haritanın il etiketleri ve iğneleri susar
+		this.el.classList.toggle('qcover', cover || (!map && !!T.sahne)); // tam ekran kart ya da kendi sahnesini çizen tip (Gölge): haritanın il etiketleri ve iğneleri susar
 		this.sfx('question', { type: q.type, cat: q.cat });
 		t0 = clock.now();
 		showBotJokers(this, ctx.botJokers, gen);
@@ -1007,13 +1009,13 @@ export class UI {
 	}
 
 	/**
-	 * Tam ekran kart: gövdenin içeriği ekrana sığmazsa (kısa ekran, en uzun soru, cevap notları) içerik orantılı küçülür
-	 * (CSS zoom, en az 0,7): hiçbir şey kaydırmaya ya da kesilmeye kalmaz. İçerik ve sınıflar değiştikçe yeniden ölçülür.
+	 * Haritasız kart (tam ekran ya da klasik): gövdenin içeriği ekrana sığmazsa (kısa ekran, en uzun soru, cevap notları) içerik orantılı küçülür
+	 * (CSS zoom, en az 0,64): hiçbir şey kaydırmaya ya da kesilmeye kalmaz. İçerik ve sınıflar değiştikçe yeniden ölçülür.
 	 */
 	_coverFit(card, body) {
 		this._cfo?.disconnect();
 		this._cfo = null;
-		if (!card.classList.contains('cover') || typeof ResizeObserver === 'undefined') return;
+		if (card.classList.contains('map') || typeof ResizeObserver === 'undefined') return; // haritalı kart: harita payı korunur
 		let raf = 0;
 		const fit = () => {
 			raf = 0;
@@ -1024,11 +1026,11 @@ export class UI {
 			const over = () => body.scrollHeight - body.clientHeight > 1;
 			let z = 1;
 			if (over()) {
-				z = Math.max(0.7, Math.floor((body.clientHeight / body.scrollHeight) * 100) / 100);
+				z = Math.max(0.64, Math.floor((body.clientHeight / body.scrollHeight) * 100) / 100);
 				for (let i = 0; i < 10; i++) {
 					for (const k of kids) k.style.zoom = String(z);
-					if (!over() || z <= 0.7) break;
-					z = Math.max(0.7, +(z - 0.02).toFixed(2));
+					if (!over() || z <= 0.64) break;
+					z = Math.max(0.64, +(z - 0.02).toFixed(2));
 				}
 			}
 			body.dataset.fz = String(z);

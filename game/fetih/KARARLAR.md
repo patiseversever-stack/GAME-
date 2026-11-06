@@ -111,3 +111,21 @@ Kaynak: kullanıcının cevapları (2026-11-02). Kodlamaya sorular bitince geçi
 | Üslup dağılımı | Konuya göre (tarih sahneleri minyatür/yağlı boya, hayvanlar gerçekçi, uzay Yıldızlı Gece, eşyalar 3D…), konu içinde birkaç sürpriz |
 | Tablo soruları | 50 tablo; sorular: tablonun adı · ressamı · Türk ressamlar; yarısı dünya klasikleri, yarısı Türk ve Osmanlı (yalnız kamu malı: ressam en az 70 yıl önce ölmüş); açılış ayrıntıdan bütüne |
 | Tablo kaynağı | ChatGPT yeniden üretir (kullanıcı seçimi); her biri aslına sadakat için tek tek denetlenir, aslına benzemeyen reddedilir |
+
+## Çakışma sözleşmesi ve tekrarsız soru (Kasım 2026)
+
+Kullanıcı: "Her şey çakışıyor... YALANI YAKALADIN kısmı da sorunun orada olsun, cevabın üstüne biniyor." ve "100 bin kişi
+oynayacak... kullanıcı önceki soruları tek tek çözmemeli, sürekli sorular değişmeli."
+
+| Konu | Karar |
+|---|---|
+| Denetim | `tools/denetim/cakisma.cjs`: bütün belge, boyama sırasıyla örtülen yazı, kırpılan/ekran dışı yazı, gizli içerik, üst üste düğme, sözde öğe taşması; soru + cevap; 320x568 → 1280x720 sekiz boy. Sorun = 0 olmadan iş bitmez. Bilinçli kayan liste `data-kaydir` (yalnız Az Bilinen'in 31'e varan seçeneği), altı solar |
+| Sonuç damgası | Haritasız kartta sorunun yerinde (başlık satırıyla cevapların arası), alana `--k` ile sığar, soru yazısı o an gizlenir; tip `stampAt` ile kendi alanını verebilir. Cevaplara, sahne yazılarına binmez |
+| Üst bant | Tam ekran kartta menü/durdur düğmeleri kartın tepesinden 28 px aşağıda (genişliğe bağlı aynı formül), başlık satırı 72 px'ten başlar; klasik kart düğme bandının altında kalır |
+| Sığmayan içerik | Haritasız kartta gövde sığmazsa içerik orantılı küçülür (zoom ≥ 0,64); kısa ekran (≤700, ≤600 px) kuralları önce yer açar; cevapta joker çubuğu kalkar |
+| Portre | Şıkta portre varsa yazı portrenin solunda biter; tek kelime asla ortasından bölünmez (sığdırıcı) |
+| Harita etiketleri | Tam ekran ya da kendi sahnesini çizen tipte (Gölge) il etiketleri ve iğneler gizli (`qcover`) |
+| Soru hafızası | `src/quiz/hafiza.js`: kimlik → görüldüğü maç; soru sorulduğu an kayda geçer (yarıda bırakan da); 15000 kimlik, 8000 bilgi anahtarı |
+| Seçim | En taze katman: maçtaki hiçbir insanın görmediği ve bilgisi bu maçta sorulmamış sorular; tükenen tip sırasını başka tipe verir; hepsi görülmüşse en eski görülen. Mancınık ile kaynak tahmin sorusu tek soru sayılır |
+| Çevrimiçi | İstemci 'hello' alınca `hafiza` eylemiyle özet gönderir (son 6000 kimlik); sunucu odadaki bütün insanların görmediğinden seçer |
+| Banka | Yeni sorular ek dosyalarda (`src/data/q/ek`, `src/data/ek`); ajanlar yazarken ara derleme `node build.mjs --ek-yok` |

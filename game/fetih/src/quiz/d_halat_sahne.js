@@ -223,6 +223,7 @@ export const SAHNE_CSS = /* css */ `
 .dn-ht-rows div.n{background:rgba(255,80,60,.2)}
 .dn-ht-rows span:nth-child(2){min-width:0;overflow:hidden;white-space:nowrap}
 .dn-ht-rows em{margin-left:auto;flex:none;font-style:normal;font-family:'Lilita One';opacity:.85}
+@media (max-height:600px){.ht-sw{min-height:92px!important}.dn-ht-q{min-height:48px!important;font-size:14px!important}.dn-ht-a .fl-tf .fl-opt{min-height:44px!important}.dn-ht-g .fl-opt{min-height:38px!important}}
 @media (max-height:700px){.ht-sw{min-height:110px}.dn-ht-q{min-height:56px;padding:16px 10px 6px;font-size:15px}.dn-ht-a .fl-tf .fl-opt{min-height:48px;font-size:19px}.dn-ht-g .fl-opt{min-height:42px}.ht-side .fl-av{width:28px;height:28px}.ht-side b{font-size:20px}}
 @keyframes dnHtIn{from{transform:translateY(12px) scale(.94)}}
 @keyframes dnHtRd{from{transform:scaleX(0)}to{transform:scaleX(1)}}

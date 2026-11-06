@@ -4,13 +4,16 @@
 import { build } from 'esbuild';
 import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = dirname(fileURLToPath(import.meta.url));
 const kb = (n) => (n / 1024).toFixed(0) + ' KB';
 const dev = process.argv.includes('--dev');
-const dist = join(root, 'dist');
+// --out=klasör: çıktılar başka klasöre (aynı anda çalışan denetim ajanları birbirinin derlemesini ezmesin)
+const OUT = process.argv.find((a) => a.startsWith('--out='))?.slice(6);
+const dist = OUT ? resolve(OUT) : join(root, 'dist');
+mkdirSync(dist, { recursive: true });
 mkdirSync(dist, { recursive: true });
 
 // Yazı tipleri: ana oyunla aynı aileler. Sadece latin + latin-ext (Türkçe harfler) gömülür.

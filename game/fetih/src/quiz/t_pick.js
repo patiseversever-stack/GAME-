@@ -165,6 +165,7 @@ function prepChoice(q, R, extra = {}) {
 
 // ---------------------------------------------------------------- hilo
 export const hilo = {
+	cover: 'kisa', // kısa ekranda (yükseklik < 720 px) tam ekran kart: harita şeridi yerine bulmacaya yer (ui.js)
 	time: 20,
 	label: 'Karşılaştır',
 	prepare(q, R) {

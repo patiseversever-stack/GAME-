@@ -1,11 +1,11 @@
 # Önce/sonra kareleri: her karede değişen yer çemberle, altında açıklama balonu. python3 isaret.py <çıktı> <json>
-# json: {"title": str, "panels": [{"img", "label", "tone": "bad|good", "circle": [x, y, r] (412x892 kare koordinatı), "text": [satırlar]}]}
+# json: {"title": str, "size": [G, Y] (kare boyu, vars. 412x892), "panels": [{"img", "label", "tone": "bad|good", "circle": [x, y, r] (kare koordinatı), "text": [satırlar]}]}
 import json, sys, textwrap
 from PIL import Image, ImageDraw, ImageFont
 B = '/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf'; R = '/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf'
 F = lambda s, b=True: ImageFont.truetype(B if b else R, s)
 out, spec = sys.argv[1], json.load(open(sys.argv[2]))
-S = 0.78; PW, PH = int(412 * S), int(892 * S); G = 26; BH = 250; TOP = 70
+SW, SH = spec.get('size', [412, 892]); S = 0.78 * 892 / SH if SH < 892 else 0.78; PW, PH = int(SW * S), int(SH * S); G = 26; BH = 250; TOP = 70
 n = len(spec['panels']); W = n * PW + (n + 1) * G; H = TOP + 44 + PH + 40 + BH
 im = Image.new('RGB', (W, H), (12, 15, 26)); d = ImageDraw.Draw(im)
 d.text((G, 20), spec['title'], fill=(255, 210, 90), font=F(30))
