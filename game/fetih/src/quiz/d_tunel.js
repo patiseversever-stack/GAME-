@@ -40,18 +40,28 @@ export function puan(v, value) {
 	return { ok: marks.filter((m) => m === true).length, marks };
 }
 
-// tünel halkaları: kaybolma noktasından (üstte, geçmiş) izleyiciye doğru akan neon çerçeveler
+// tünel: kaybolma noktası (üstte, geçmiş) ve ışınlar duran bir SVG; halkalar ve ışık çizgileri HTML katmanları, yalnız
+// transform/opacity ile canlanır (çizim her karede yenilenmez: telefonda ve yazılım GL'de ucuz)
 const RINGS = 7;
 function tunnelSVG() {
-	const rings = Array.from({ length: RINGS }, (_, i) => `<rect class="tn-ring" x="2" y="2" width="96" height="96" rx="9" style="--i:${i}"/>`).join('');
 	const rays = [8, 22, 36, 64, 78, 92].map((x) => `<line x1="50" y1="9" x2="${x}" y2="100"/>`).join('');
 	return `<svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-		<defs><linearGradient id="tnRg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#b86bff"/><stop offset=".55" stop-color="#5a8cff"/><stop offset="1" stop-color="#46e0ff"/></linearGradient>
-		<radialGradient id="tnVp" cx=".5" cy=".09" r=".5"><stop offset="0" stop-color="#d9b8ff" stop-opacity=".55"/><stop offset=".3" stop-color="#7a5cff" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
+		<defs><radialGradient id="tnVp" cx=".5" cy=".09" r=".5"><stop offset="0" stop-color="#d9b8ff" stop-opacity=".55"/><stop offset=".3" stop-color="#7a5cff" stop-opacity=".18"/><stop offset="1" stop-color="#000" stop-opacity="0"/></radialGradient></defs>
 		<rect width="100" height="100" fill="url(#tnVp)"/>
 		<g class="tn-rays">${rays}</g>
-		<g class="tn-rings">${rings}</g>
-	</svg>`;
+	</svg>${Array.from({ length: RINGS }, (_, i) => `<i class="tn-ring" style="--i:${i}"></i>`).join('')}${[-62, -38, -20, 20, 38, 62, -78, 78, -50, 50]
+		.map((a, i) => `<i class="tn-st" style="--r:${90 + a}deg;--i:${i}"><b></b></i>`)
+		.join('')}`;
+}
+/** Kaybolma noktasındaki saat kadranı: kartlar kilitlenince akrep ve yelkovan hızla döner. */
+function clockSVG() {
+	const ticks = Array.from({ length: 12 }, (_, i) => {
+		const a = (i * Math.PI) / 6;
+		const r0 = i % 3 ? 15.5 : 13.5;
+		return `<line x1="${(20 + Math.sin(a) * r0).toFixed(2)}" y1="${(20 - Math.cos(a) * r0).toFixed(2)}" x2="${(20 + Math.sin(a) * 17.5).toFixed(2)}" y2="${(20 - Math.cos(a) * 17.5).toFixed(2)}"/>`;
+	}).join('');
+	return `<svg class="tn-clock" viewBox="0 0 40 40" aria-hidden="true"><circle cx="20" cy="20" r="19" class="tn-cf"/><g class="tn-tk">${ticks}</g>
+		<line class="tn-hh" x1="20" y1="20" x2="20" y2="10.5"/><line class="tn-mh" x1="20" y1="20" x2="20" y2="5.5"/><circle cx="20" cy="20" r="2.2" fill="#ffd25a"/></svg>`;
 }
 
 const CHECK = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4.5 12.5l5 5 10-11' fill='none' stroke='%23fff' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
@@ -105,16 +115,31 @@ const CSS = /* css */ `
 .tn-tube{position:relative;flex:1 1 auto;min-height:calc(5 * var(--rh) + 4 * var(--gp) + 2 * var(--ep));border-radius:16px;overflow:hidden;
   background:radial-gradient(120% 70% at 50% 0%,#24124a 0%,#0c0a24 55%,#05060f 100%);box-shadow:inset 0 0 0 1.5px rgba(150,120,255,.28),inset 0 -20px 40px rgba(0,0,0,.5),0 12px 26px rgba(0,0,0,.5)}
 .tn-bg{position:absolute;inset:0;z-index:0;pointer-events:none}
-.tn-bg svg{position:absolute;inset:0;width:100%;height:100%}
+.tn-bg>svg:first-child{position:absolute;inset:0;width:100%;height:100%}
 .tn-rays line{stroke:rgba(150,140,255,.11);stroke-width:.35;vector-effect:non-scaling-stroke}
-.tn-ring{fill:none;stroke:url(#tnRg);stroke-width:1.6;vector-effect:non-scaling-stroke;transform-box:view-box;transform-origin:50% 9%;opacity:0;
-  animation:tnRing 5.6s linear infinite;animation-delay:calc(var(--i) * -.8s)}
-.tn-tube.warp .tn-ring{animation-duration:1.4s;stroke-width:2.4}
+/* halka: tünelin çerçevesi kaybolma noktasından büyüyerek gelir (renk sırayla mor, mavi, camgöbeği) */
+.tn-ring{position:absolute;inset:2%;border-radius:9%;box-shadow:inset 0 0 0 2px var(--rc,#8a6bff),0 0 12px color-mix(in srgb,var(--rc,#8a6bff) 55%,transparent);
+  transform-origin:50% 9%;opacity:0;will-change:transform,opacity;animation:tnRing 5.6s linear infinite;animation-delay:calc(var(--i) * -.8s)}
+.tn-ring:nth-of-type(3n+1){--rc:#b86bff}.tn-ring:nth-of-type(3n+2){--rc:#5a8cff}.tn-ring:nth-of-type(3n){--rc:#46e0ff}
+.tn-tube.warp .tn-ring{animation-duration:1.4s}
+/* ışık çizgisi: kaybolma noktasından kendi açısıyla dışa kayan kısa parıltı */
+.tn-st{position:absolute;left:50%;top:9%;width:0;height:0;transform:rotate(var(--r))}
+.tn-st b{position:absolute;left:0;top:-1px;width:26px;height:2px;border-radius:1px;background:linear-gradient(90deg,rgba(220,230,255,0),rgba(230,240,255,.9));
+  opacity:0;will-change:transform,opacity;animation:tnSt 2.6s linear infinite;animation-delay:calc(var(--i) * -.27s)}
+.tn-tube.warp .tn-st b{animation-duration:.7s}
+.tn-bg .tn-clock{position:absolute;z-index:0;left:50%;top:calc(9% - 17px);width:34px;height:34px;margin-left:-17px;pointer-events:none;filter:drop-shadow(0 0 6px rgba(190,150,255,.8))}
+.tn-cf{fill:rgba(16,10,40,.85);stroke:#b88bff;stroke-width:1.6}
+.tn-tk line{stroke:#d9c6ff;stroke-width:1.4;stroke-linecap:round}
+.tn-hh,.tn-mh{stroke:#ffd25a;stroke-width:2.4;stroke-linecap:round;transform-origin:20px 20px}
+.tn-mh{stroke:#fff;stroke-width:1.6;animation:tnHand 12s linear infinite}
+.tn-hh{animation:tnHand 144s linear infinite}
+.tn-tube.warp .tn-mh{animation-duration:.6s}
+.tn-tube.warp .tn-hh{animation-duration:4s}
 .tn-tube.flash{animation:tnFlash .7s ease-out}
 .tn-tube.flash.no{animation:tnFlashNo .7s ease-out}
 .tn-rail{position:absolute;z-index:1;left:18px;top:12px;bottom:12px;width:4px;border-radius:2px;background:linear-gradient(180deg,#b86bff,#5a8cff 55%,#46e0ff);
   box-shadow:0 0 10px rgba(120,140,255,.75);overflow:hidden}
-.tn-rail::after{content:'';position:absolute;left:0;right:0;top:-30%;height:30%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.95),transparent);animation:tnFlow 2.4s linear infinite}
+.tn-rail::after{content:'';position:absolute;left:0;right:0;top:0;height:30%;background:linear-gradient(180deg,transparent,rgba(255,255,255,.95),transparent);will-change:transform;animation:tnFlow 2.4s linear infinite}
 .tn-end{position:absolute;z-index:1;right:12px;font:italic 900 10.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.2em;color:rgba(200,190,255,.6);pointer-events:none}
 .tn-end.top{top:6px}.tn-end.bot{bottom:6px;color:rgba(150,230,255,.65)}
 .tn-gaps,.tn-items{position:absolute;inset:0}
@@ -129,6 +154,8 @@ const CSS = /* css */ `
 .tn-line{position:absolute;left:var(--rx);right:10px;top:var(--ny);height:0;border-top:2px dashed rgba(255,210,90,.35);opacity:0;transition:opacity .2s;pointer-events:none}
 .tn-gap.hot .tn-node,.tn-gap:active .tn-node{transform:scale(1.25);box-shadow:0 0 0 2.5px #fff,0 0 18px rgba(255,210,90,.9)}
 .tn-gap.hot .tn-line,.tn-gap:active .tn-line{opacity:1}
+.tn-gaps.nudge .tn-node{animation:tnNudge .5s ease-in-out 2}
+.tn-gaps.nudge .tn-line{opacity:.8;transition:opacity .2s}
 .tn-gap.cut .tn-node{box-shadow:0 0 0 2px #ff5a4a;background:#2a0c10}
 .tn-gap.cut .tn-node::before,.tn-gap.cut .tn-node::after{background:#ff5a4a;transform:rotate(45deg)}
 .tn-gap.cut .tn-node::after{transform:rotate(-45deg)}
@@ -145,13 +172,19 @@ const CSS = /* css */ `
 .tn-it.a .tn-dot{background:#ffd25a;box-shadow:0 0 0 3px #0c0f24,0 0 12px rgba(255,210,90,.9)}
 .tn-it.a .tn-yr i{color:#ffe7a0}
 .tn-it.a::after{content:'';flex:none;width:16px;height:16px;opacity:.85;background:#ffd25a url("${ANCHOR}") 50% 50%/12px no-repeat;border-radius:50%}
-.tn-it.c.ok{background:linear-gradient(180deg,rgba(12,70,90,.96),rgba(8,36,56,.96));box-shadow:inset 0 0 0 2px #46e0ff,0 0 18px rgba(70,224,255,.45),0 6px 14px rgba(0,0,0,.4)}
+.tn-it.c.ok{background:linear-gradient(180deg,rgba(16,96,120,.97),rgba(8,44,66,.97));box-shadow:inset 0 0 0 2.5px #46e0ff,0 0 22px rgba(70,224,255,.6),0 6px 14px rgba(0,0,0,.4)}
+.tn-it.c.ok::after,.tn-it.c.no::after{content:'';flex:none;width:20px;height:20px;border-radius:50%;background:#1fb85a url("${CHECK}") 50% 50%/13px no-repeat;box-shadow:0 0 0 2px rgba(255,255,255,.85)}
+.tn-it.c.no::after{background:#e8343c url("${CROSS}") 50% 50%/11px no-repeat}
+.yn-tn.rv .tn-it.c::after{display:none}
 .tn-it.c.ok .tn-dot{background:#46e0ff;box-shadow:0 0 0 3px #0c0f24,0 0 14px #46e0ff}
-.tn-it.c.no{background:linear-gradient(180deg,rgba(100,22,30,.96),rgba(56,10,16,.96));box-shadow:inset 0 0 0 2px #ff5a4a,0 0 16px rgba(255,90,74,.45),0 6px 14px rgba(0,0,0,.4)}
+.tn-it.c.no{background:linear-gradient(180deg,rgba(120,26,34,.97),rgba(64,12,18,.97));box-shadow:inset 0 0 0 2.5px #ff5a4a,0 0 20px rgba(255,90,74,.55),0 6px 14px rgba(0,0,0,.4)}
 .tn-it.c.no .tn-dot{background:#ff5a4a;box-shadow:0 0 0 3px #0c0f24,0 0 14px #ff5a4a}
 .tn-it.c.no .tn-yr i{color:#ffb4aa}
 .tn-it.c.miss{background:linear-gradient(180deg,rgba(40,44,70,.96),rgba(24,26,44,.96));box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.35),0 6px 14px rgba(0,0,0,.4)}
+/* giriş: çapalar kaybolma noktasından (geçmişin derinliğinden) yuvalarına uçar (transform yerleşim için: translate/scale ayrı) */
+.tn-it.enter{animation:tnEnter .75s cubic-bezier(.2,.9,.3,1.15) both;animation-delay:calc(var(--o) * 140ms)}
 .tn-it.shake{animation:tnShake .42s}
+.tn-it.mv{z-index:2;transition:transform .55s cubic-bezier(.45,0,.3,1),box-shadow .3s;box-shadow:inset 0 0 0 2.5px #ff5a4a,0 0 26px rgba(255,90,74,.7),0 16px 26px rgba(0,0,0,.6)}
 .tn-it.land .tn-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:3px solid currentColor;animation:tnShock .7s ease-out forwards}
 .tn-it.c.ok.land .tn-dot{color:#46e0ff}.tn-it.c.no.land .tn-dot{color:#ff5a4a}
 .tn-it.sweep{animation:tnSweep .55s ease-out both;animation-delay:calc(var(--o) * 110ms)}
@@ -160,8 +193,8 @@ const CSS = /* css */ `
 .tn-beam.no{background:radial-gradient(closest-side,rgba(255,240,240,.95),rgba(255,90,74,.6) 45%,rgba(255,90,74,0))}
 /* cevap: rampa damga bandına döner; kart plakalarında oyuncuların portreleri (doğru/yanlış rozetli) */
 .tn-vd{display:none;flex:none;height:62px}
-.yn-tn.rv .tn-vd{display:block}
-.yn-tn.rv .tn-dock{display:none}
+.yn-tn.rv .tn-vd,.yn-tn.vd .tn-vd{display:block}
+.yn-tn.rv .tn-dock,.yn-tn.vd .tn-dock{display:none}
 .tn-who{flex:none;display:grid;grid-auto-flow:column;grid-template-rows:auto;gap:3px 4px}
 .tn-who.n3,.tn-who.n4{grid-template-rows:auto auto;grid-auto-columns:min-content}
 .tn-av{position:relative;width:22px;height:22px;border-radius:7px;box-shadow:0 0 0 2px var(--pc),0 2px 0 rgba(0,0,0,.4);overflow:visible}
@@ -173,45 +206,61 @@ const CSS = /* css */ `
 .tn-who .tn-av.none{opacity:.45}
 .tn-who .tn-av.me{box-shadow:0 0 0 2px #ffd25a,0 0 9px rgba(255,210,90,.7),0 2px 0 rgba(0,0,0,.4)}
 .yn-tn.rv.pm{--rh:54px}
+.yn-tn.rv.pm .tn-who{gap:2px 3px;margin-right:2px}
+.yn-tn.rv.pm .tn-av{width:20px;height:20px;border-radius:6px}
+.yn-tn.rv.pm .tn-who .tn-av::after{width:11px;height:11px;right:-4px;bottom:-4px;background-size:7px}
 @keyframes tnIn{0%{transform:translateY(-22px) rotate(-3deg);opacity:0}100%{transform:none;opacity:1}}
 @keyframes tnFlip{0%{transform:scaleY(1)}50%{transform:scaleY(.25)}100%{transform:scaleY(1)}}
 @keyframes tnSet{0%{transform:scale(1.5);color:#fff}100%{transform:none}}
 @keyframes tnRing{0%{transform:scale(.06);opacity:0}12%{opacity:.75}70%{opacity:.4}100%{transform:scale(1.5);opacity:0}}
-@keyframes tnFlow{0%{top:-30%}100%{top:100%}}
+@keyframes tnFlow{0%{transform:translateY(-100%)}100%{transform:translateY(340%)}}
+@keyframes tnSt{0%{transform:translateX(8px) scaleX(.3);opacity:0}15%{opacity:.85}100%{transform:translateX(260px) scaleX(1.6);opacity:0}}
+@keyframes tnHand{to{transform:rotate(360deg)}}
 @keyframes tnFlash{0%{box-shadow:inset 0 0 0 2px #46e0ff,inset 0 0 60px rgba(70,224,255,.55),0 12px 26px rgba(0,0,0,.5)}}
 @keyframes tnFlashNo{0%{box-shadow:inset 0 0 0 2px #ff5a4a,inset 0 0 60px rgba(255,90,74,.5),0 12px 26px rgba(0,0,0,.5)}}
 @keyframes tnShake{20%{margin-left:-7px}40%{margin-left:7px}60%{margin-left:-5px}80%{margin-left:4px}}
 @keyframes tnShock{0%{transform:scale(.6);opacity:1}100%{transform:scale(3.2);opacity:0}}
 @keyframes tnSweep{0%{filter:brightness(1)}35%{filter:brightness(1.9) saturate(1.3)}100%{filter:none}}
 @keyframes tnBeam{0%{transform:scaleY(1);opacity:1}100%{transform:scaleY(9);opacity:0}}
+@keyframes tnEnter{0%{translate:0 -60%;scale:.3;opacity:0;filter:brightness(2.4)}55%{opacity:1}100%{translate:0 0;scale:1;opacity:1;filter:none}}
+@keyframes tnNudge{50%{transform:scale(1.35);box-shadow:0 0 0 2.5px #fff,0 0 20px rgba(255,210,90,1)}}
 @keyframes tnPop{0%{transform:scale(.3);opacity:0}100%{transform:none;opacity:1}}
 @media (max-height:720px){
-  .yn-tn{--rh:40px;--gp:8px;--ep:20px;gap:8px}
-  .tn-slot{height:52px}
+  .yn-tn{--rh:38px;--gp:6px;--ep:18px;gap:8px}
+  .tn-dock{gap:5px}
+  .tn-slot{height:50px}
   .tn-card .tn-nm{font-size:17px}
   .tn-hint{display:none}
   .tn-it .tn-nm{font-size:14px}
   .tn-yr{font-size:18px}
   .tn-vd{height:54px}
-  .yn-tn.rv.pm{--rh:50px}
+  .yn-tn.rv.pm{--rh:48px}
 }
 @media (max-height:600px){
-  .yn-tn{--rh:36px;--gp:6px;--ep:18px;--rx:36px;gap:6px}
+  /* en kısa ekran (320×568): tünele yer: soru yazısı ve kural satırı (dar kartta kendi satırı) kalkar */
+  .fl-q.t-tunel .fl-qtext,.fl-q.t-tunel .fl-qhead .fl-rule{display:none}
+  .fl-q.t-tunel .fl-tbar{margin-bottom:4px}
+  .yn-tn{--rh:34px;--gp:4px;--ep:16px;--rx:36px;gap:6px}
   .fl-q.t-tunel .fl-qbody{padding-top:6px}
-  .tn-dh{min-height:18px}
-  .tn-slot{height:46px}
+  .tn-dock{gap:4px}
+  .tn-dh{min-height:16px}
+  .tn-step{font-size:12px}.tn-step b{font-size:15px}
+  .tn-slot{height:44px}
   .tn-card{gap:8px}
-  .tn-card .tn-yr{font-size:18px}
+  .tn-card .tn-yr{font-size:17px}
   .tn-card .tn-nm{font-size:16px}
-  .tn-it .tn-nm{font-size:13px}
+  .tn-it{gap:7px;padding:0 7px 0 6px}
+  .tn-it .tn-nm{font-size:13px;line-height:1.05}
   .tn-yr{font-size:16px}
-  .tn-node{left:7px}
+  .tn-node{left:7px;width:20px;height:20px;margin-top:-10px}
   .tn-rail{left:16px}
+  .tn-end{font-size:9.5px}.tn-end.top{top:4px}.tn-end.bot{bottom:4px}
   .tn-vd{height:50px}
   .tn-av{width:19px;height:19px}
   .yn-tn.rv.pm{--rh:44px}
+  .yn-tn.rv.pm .tn-av{width:18px;height:18px}
 }
-@media (prefers-reduced-motion:reduce){.tn-ring,.tn-rail::after{animation:none}.tn-ring{opacity:.25;transform:scale(calc(.3 + var(--i) * .15))}}
+@media (prefers-reduced-motion:reduce){.tn-ring,.tn-rail::after,.tn-st b,.tn-mh,.tn-hh,.tn-it.enter{animation:none}.tn-ring{opacity:.25;transform:scale(calc(.3 + var(--i) * .15))}}
 `;
 
 const pad4 = (y) => String(y).padStart(4, ' ');
@@ -223,6 +272,7 @@ export const tunel = {
 	label: 'Zaman Tüneli',
 	kind: 'closest',
 	cover: true, // tam ekran neon tünel (harita gizli): beş istasyonlu dikey tünel telefonun boyunu ister
+	calm: true, // harita arkada durgun (klasik tiplerle aynı işaret)
 	keep: true,
 	stampAt: '.tn-vd', // cevap damgası rampanın yerinde (sorunun alanı), tünele ve plakalara binmez
 	rule: 'En çok doğru',
@@ -250,10 +300,10 @@ export const tunel = {
 			let look = LOOK.orient + 2 * LOOK.gaze;
 			for (let i = 0; i < N; i++) look += LOOK.gaze + (2 + i) * 0.14; // kartı oku, büyüyen tüneli tara
 			return {
-				wait: 0.5 + N * 1.0, // her yerleştirmenin kilit canlandırması (sayaç, gerçek yerine kayış)
+				wait: 0.5 + N * 0.85, // her yerleştirmenin kilit canlandırması (sayaç, gerçek yerine kayış)
 				look,
 				// yılı hatırla, komşularla karşılaştır; sonraki kartlar daha ince (boşluk sayısı artar)
-				think: N * (P.think[0] + P.think[1] * k) + 0.9 * N,
+				think: N * (P.think[0] + P.think[1] * k) + 0.5 * N,
 				act: N * (0.6 * DRAG + 0.4 * TAP),
 			};
 		});
@@ -273,7 +323,7 @@ export const tunel = {
 				<div class="tn-slot"><div class="tn-card" role="button" aria-label="Olay kartı: sürükle"><span class="tn-yr">${QMARK}</span><b class="tn-nm"></b><span class="tn-grip"></span></div></div>
 				<div class="tn-hint">Kartı tünele <b>sürükle</b> ya da bir boşluğa <b>dokun</b></div>
 			</div>
-			<div class="tn-tube"><div class="tn-bg">${tunnelSVG()}</div><i class="tn-rail"></i><span class="tn-end top">GEÇMİŞ</span><span class="tn-end bot">BUGÜN</span>
+			<div class="tn-tube"><div class="tn-bg">${tunnelSVG()}${clockSVG()}</div><i class="tn-rail"></i><span class="tn-end top">GEÇMİŞ</span><span class="tn-end bot">BUGÜN</span>
 				<div class="tn-gaps"></div><div class="tn-ghost"></div><div class="tn-items"></div></div>
 		</div>`;
 		rule(el, 'En çok doğru');
@@ -320,10 +370,14 @@ export const tunel = {
 			const cs = getComputedStyle(root);
 			return { rh: parseFloat(cs.getPropertyValue('--rh')) || 44, gp: parseFloat(cs.getPropertyValue('--gp')) || 8, ep: parseFloat(cs.getPropertyValue('--ep')) || 20, H: tube.clientHeight || 300 };
 		};
-		/** m olay (+ istenirse g boşluğunda bir yuva): satırların tepesi. */
+		/**
+		 * m olay (+ istenirse g boşluğunda bir yuva): satırların tepesi. Aralık tünele yayılır (az olayda geniş, dolunca en az
+		 * --gp): tünel her an dolu görünür, erken kartlarda boşluklar da büyük.
+		 */
 		const lay = (m, open = -1) => {
-			const { rh, gp, ep, H } = geo();
+			const { rh, gp: g0, ep, H } = geo();
 			const slots = m + (open >= 0 ? 1 : 0);
+			const gp = clamp((H - slots * rh - 2 * ep) / Math.max(1, slots), g0, 64);
 			const total = slots * rh + Math.max(0, slots - 1) * gp;
 			const top0 = Math.max(ep, (H - total) / 2);
 			const ys = [];
@@ -352,7 +406,7 @@ export const tunel = {
 			const L = lay(list.length);
 			const m = list.length;
 			const mid = (i) => L.ys[i] + L.rh / 2;
-			const off = Math.max(L.gp / 2, 14);
+			const off = Math.max(L.gp / 2, 12);
 			let html = '';
 			for (let j = 0; j <= m; j++) {
 				const top = j === 0 ? 0 : mid(j - 1);
@@ -365,7 +419,8 @@ export const tunel = {
 			gapsEl.innerHTML = html;
 		};
 		const refresh = () => {
-			place(shown, true);
+			if (busy) return; // kart uçarken satırlar yerinde (uçuş bitince kendisi yerleştirir)
+			place(shown, !root.classList.contains('rv'));
 			if (!done && step < N) gaps();
 		};
 		// tünelin boyu ölçülünce (yazı tipi, sığdırma) satırlar yerine
@@ -498,10 +553,13 @@ export const tunel = {
 					// gerçek yerine kayar (kırmızı), yılı açılır
 					list.splice(list.indexOf(it), 1);
 					list.splice(want, 0, it);
-					place(-1);
 					e.classList.remove('shake');
+					e.classList.add('mv'); // kayan kart komşularının üstünden geçer
+					place(-1);
+					sfx(app, 'whoosh', { vol: 0.45, rate: 0.8 });
+					await new Promise((r) => later(r, 560));
+					e.classList.remove('mv');
 					e.classList.add('land');
-					await new Promise((r) => later(r, 380));
 					beam(it, false);
 					await spin(e.querySelector('.tn-yr'), it.y, 0);
 					burstAt(e, ['#ff8a7a', '#fff'], `DOĞRUSU ${it.y}`, 'dn dn-hot');
@@ -602,7 +660,15 @@ export const tunel = {
 			const d = drag;
 			drag = null;
 			root.classList.remove('drag');
-			if (!d.on) return;
+			if (!d.on) {
+				// karta dokunup bıraktı: boşluklar nabız gibi atar (sürükle ya da boşluğa dokun)
+				gapsEl.classList.remove('nudge');
+				void gapsEl.offsetWidth;
+				gapsEl.classList.add('nudge');
+				later(() => gapsEl.classList.remove('nudge'), 1100);
+				sfx(app, 'tap');
+				return;
+			}
 			if (d.g != null && !done && !busy) {
 				shown = -1;
 				ghost.classList.remove('on');
@@ -623,6 +689,12 @@ export const tunel = {
 		const stopOpen = onOpen(el, () => {
 			t0 = clock.now();
 			sfx(app, 'whoosh');
+			list.forEach((it, o) => {
+				it.el.style.setProperty('--o', o);
+				it.el.classList.add('enter');
+				later(() => it.el.classList.remove('enter'), 1100 + o * 140);
+			});
+			flash(true);
 			for (const b of bots) {
 				const ts = Array.isArray(b.value?.t) ? b.value.t : [];
 				ts.forEach((t, k) => Number.isFinite(t) && later(() => !done && raceOf(b.p.i)[k]?.classList.add('on'), t * 1000));
@@ -642,6 +714,9 @@ export const tunel = {
 			lock() {
 				done = true;
 				drag = null;
+				// süre doldu (kart kaldı): damga bandı hemen açılır, arayüzün "SÜRE DOLDU" damgası rampanın yerine otursun. Üç kart
+				// konduysa açmaz: son kartın kilidi oynarken tünel kaymasın (bandı cevap ekranı açar)
+				if (G.some((g) => g == null)) root.classList.add('vd');
 				root.classList.remove('drag');
 				cardEl.classList.remove('lift');
 				cardEl.style.transform = '';
@@ -759,7 +834,7 @@ export const tunel = {
 			g.push(x);
 			t.push(Math.round(Tt * fr[k] * 10) / 10);
 		}
-		return { value: { g, t }, time: Math.max(1, Tt) };
+		return { value: { g, t }, time: Math.max(1, t[N - 1]) };
 	},
 	/** Sınama: üç kartı da doğru ve hepsini yanlış yere koyan cevap. */
 	ornek(v) {

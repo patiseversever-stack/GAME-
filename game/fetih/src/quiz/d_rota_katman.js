@@ -108,6 +108,15 @@ export function katman(app, cls) {
 			const p = b.provinces[i];
 			return P.at(p.x, p.z, b.heightAt(p.x, p.z) + b.liftOf(i), out);
 		},
+		/** İlin 3B ad noktası (ad hapının ortası; yükselme dahil): işaretler bunun üstüne oturur, adı örtmez. */
+		lab(i, out = {}) {
+			b.labelAt(i, v);
+			app.toScreen(v, s);
+			out.x = s.x;
+			out.y = s.y;
+			out.behind = !!s.behind;
+			return out;
+		},
 		/** İlin tepesinin dünya noktası (yay ucu). */
 		end(i, out = {}) {
 			const p = b.provinces[i];
@@ -173,12 +182,43 @@ export function katman(app, cls) {
  * sorusunda sinema adları susturur ("cevabı ele vermesin"); bu tiplerde adlar sorunun parçası. Dönen işlev ad katmanının
  * kipini eski haline koyar (susturma durumuna dokunmaz: soru bitince sinema kendisi açar).
  */
-export function adlar(app, list) {
+export function adlar(app, list, K = null) {
 	const L = app.board?.labelLayer;
 	if (!L?.show) return () => {};
 	const saved = { mode: L.mode, base: L.base, forced: L.forced?.slice?.(), hiTo: L.hiTo?.slice?.() };
 	L.suspend?.(false);
 	L.show(list.slice());
+	// K verilirse çakışma elemesi: ad katmanı liste kipinde çakışan adları yalnız biraz kaydırır; dar ekranda (320 px) sık
+	// tarlada adlar üst üste biniyordu ("KIRIKKALE" ile "KIRŞEHİR"). Her çizimde ad noktaları izdüşer, büyük ilden küçüğe
+	// çakışmayan alt küme seçilir, yalnız değişince katmana verilir (yaklaştırınca saklananlar geri gelir).
+	if (K && L.size) {
+		const b = app.board;
+		const byArea = list.slice().sort((x, y) => (b.provinces[y].area || 0) - (b.provinces[x].area || 0));
+		const o = {};
+		let last = list.join();
+		K.on((P) => {
+			const keep = [];
+			const box = [];
+			for (const i of byArea) {
+				P.lab(i, o);
+				if (o.behind) continue;
+				const w = 21 * (L.size[i * 3] || 3) * 0.94 + 4;
+				const h = 20;
+				const r = { l: o.x - w / 2, r: o.x + w / 2, t: o.y - h / 2, b: o.y + h / 2, a: w * h };
+				// hafif değme serbest (katman adı biraz kaydırır); ancak küçük hapın üçte birinden çoğu örtülüyorsa elenir
+				const heavy = (q) => Math.max(0, Math.min(r.r, q.r) - Math.max(r.l, q.l)) * Math.max(0, Math.min(r.b, q.b) - Math.max(r.t, q.t)) > 0.34 * Math.min(r.a, q.a);
+				if (box.some(heavy)) continue;
+				box.push(r);
+				keep.push(i);
+			}
+			keep.sort((x, y) => x - y);
+			const key = keep.join();
+			if (key !== last) {
+				last = key;
+				L.show(keep);
+			}
+		});
+	}
 	return () => {
 		if (saved.forced && L.forced) L.forced.set(saved.forced);
 		if (saved.hiTo && L.hiTo) L.hiTo.set(saved.hiTo);
@@ -188,5 +228,143 @@ export function adlar(app, list) {
 	};
 }
 
+/**
+ * Kadraj (perspektif doğru): illerin bütün sınır noktaları ve isteğe bağlı dünya noktaları (yay tepeleri) kartın
+ * altındaki boş dikdörtgene sığar. cam.fit kutuyu hedef derinlikte sığdırır; eğik bakışta yakın (güney) kenar daha geniş
+ * görünür ve köşedeki il ekrandan taşıyordu. Burada kameranın son duruşu (camera.js _apply ile aynı yerleşim ve lens
+ * kaydırması) ayrı bir kamerayla kurulur, noktalar izdüşer, uzaklık ve hedef birkaç adımda düzeltilir; sonra tek bir
+ * yumuşak çekim. top: kartın örttüğü pay (0..1), alt: alttan boş bırakılan px (düğmeler), yan: yanlardan px.
+ */
+const _c = new THREE.PerspectiveCamera();
+const _t = new THREE.Vector3();
+const _p = new THREE.Vector3();
+export function cerceve(app, list, { top = 0, alt = 64, yan = 10, pitch = 1.1, yaw = 0, dur = 0.9, arc = 4, yawRate = 0, decay = 0, ek = [] } = {}) {
+	const b = app.board;
+	const W = app._rc?.width || app.ui?.el?.clientWidth || innerWidth;
+	const H = app._rc?.height || app.ui?.el?.clientHeight || innerHeight;
+	const pts = [];
+	for (const i of list) {
+		const p = b.provinces[i];
+		for (const r of p.rings)
+			for (let k = 0; k < r.length; k += 4) {
+				const x = r[k];
+				const z = -r[k + 1];
+				pts.push(x, b.heightAt(x, z) + 0.3, z);
+			}
+	}
+	for (const q of ek) pts.push(q.x, q.y, q.z);
+	const bb = app.boundsOf(list);
+	_c.fov = app.camera.fov;
+	_c.aspect = W / H;
+	_c.near = app.camera.near;
+	_c.far = app.camera.far;
+	const lens = top / 2;
+	if (lens) _c.setViewOffset(_c.aspect, 1, 0, -lens, _c.aspect, 1);
+	else _c.clearViewOffset();
+	_c.updateProjectionMatrix();
+	_t.set((bb.x0 + bb.x1) / 2, 0, (bb.z0 + bb.z1) / 2);
+	let dist = app.cam.fitDist(bb, pitch, 1.1, top);
+	const R = { x0: yan, x1: W - yan, y0: top * H + 4, y1: H - alt };
+	const tf = Math.tan((_c.fov * Math.PI) / 360);
+	const sp = Math.max(0.3, Math.sin(pitch));
+	for (let it = 0; it < 10; it++) {
+		const cp = Math.cos(pitch);
+		_c.position.set(_t.x - Math.sin(yaw) * cp * dist, Math.sin(pitch) * dist, _t.z + Math.cos(yaw) * cp * dist);
+		_c.lookAt(_t);
+		_c.updateMatrixWorld();
+		let x0 = Infinity;
+		let x1 = -Infinity;
+		let y0 = Infinity;
+		let y1 = -Infinity;
+		for (let k = 0; k < pts.length; k += 3) {
+			_p.set(pts[k], pts[k + 1], pts[k + 2]).project(_c);
+			if (_p.z > 1) continue;
+			const sx = (_p.x * 0.5 + 0.5) * W;
+			const sy = (-_p.y * 0.5 + 0.5) * H;
+			if (sx < x0) x0 = sx;
+			if (sx > x1) x1 = sx;
+			if (sy < y0) y0 = sy;
+			if (sy > y1) y1 = sy;
+		}
+		if (!Number.isFinite(x0)) break;
+		const s = Math.min((R.x1 - R.x0) / Math.max(1, x1 - x0), (R.y1 - R.y0) / Math.max(1, y1 - y0));
+		const ex = (R.x0 + R.x1) / 2 - (x0 + x1) / 2;
+		const ey = (R.y0 + R.y1) / 2 - (y0 + y1) / 2;
+		const upp = (2 * dist * tf) / H; // hedef derinliğinde px başına dünya birimi
+		_t.x -= ex * upp;
+		_t.z -= (ey * upp) / sp;
+		dist = Math.max(8, dist / Math.pow(s, 0.9));
+		if (Math.abs(s - 1) < 0.008 && Math.abs(ex) < 1 && Math.abs(ey) < 1) break;
+	}
+	app.cam.shot(_t.x, _t.z, { dist, pitch, yaw, dur, arc, yawRate, decay, lens });
+	return { x: _t.x, z: _t.z, dist };
+}
+
 /** Ekranda iki nokta arası açı (derece): uçağın burnu gidiş yönüne. */
 export const aci = (a, b) => (Math.atan2(b.y - a.y, b.x - a.x) * 180) / Math.PI;
+
+// ---------------------------------------------------------------- cevap damgası: sorunun yerinde
+// Haritalı kartta arayüz damgayı ekranın altına (haritanın üstüne) basar. Bu iki tipte cevap haritanın kendisi (mayınlar,
+// bayraklar, altın rota): damga kartın soru satırına oturur, alana sığacak kadar küçülür (--k), soru yazısı o an gizlenir
+// (tam ekran kartların kuralı). Kapsam: kartın kendi tip sınıfı (.t-mayin, .t-rota).
+export const DAMGA_CSS = /* css */ `
+.fl-q.map.t-mayin.yn3-st .fl-qtext,.fl-q.map.t-rota.yn3-st .fl-qtext{visibility:hidden;min-height:58px}
+@media (max-height:640px){.fl-q.map.t-mayin.yn3-st .fl-qtext,.fl-q.map.t-rota.yn3-st .fl-qtext{min-height:50px}}
+.fl-q.map.t-mayin.yn3-st .fl-stamp.on,.fl-q.map.t-rota.yn3-st .fl-stamp.on{animation:yn3St .45s cubic-bezier(.3,1.7,.5,1) forwards}
+@keyframes yn3St{0%{opacity:0;transform:translate(-50%,-50%) skewX(-8deg) scale(calc(var(--k,1) * 1.9))}60%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(calc(var(--k,1) * .96))}100%{opacity:1;transform:translate(-50%,-50%) skewX(-8deg) scale(var(--k,1))}}
+`;
+
+/** Damganın yerini aç: soru yazısı gizlenir, satır damgaya yetecek kadar uzar. Kadraj ölçülmeden ÖNCE çağrılır. */
+export function damgaYeri(el) {
+	el.closest('.fl-q')?.classList.add('yn3-st');
+}
+
+/** Damgayı kartın soru satırına taşı (stampLater'dan sonra çağrılır). */
+export function damga(el) {
+	const card = el.closest('.fl-q');
+	if (!card) return;
+	let last = '';
+	const place = () => {
+		const s = card.querySelector('.fl-stamp');
+		const box = card.querySelector('.fl-qtext');
+		if (!card.isConnected || !s || !box || !s.textContent) return;
+		card.classList.add('yn3-st');
+		const cr = card.getBoundingClientRect();
+		const r = box.getBoundingClientRect();
+		s.style.setProperty('--k', '1');
+		// doğal boy (dönüşümsüz); eğiklik (skewX −8°) payı
+		const w0 = s.offsetWidth + s.offsetHeight * 0.15;
+		const h0 = s.offsetHeight || 1;
+		const k = Math.max(0.4, Math.min(1, (r.width - 6) / w0, (r.height + 2) / h0));
+		const top = Math.round(r.top - cr.top + r.height / 2);
+		const left = Math.round(r.left - cr.left + r.width / 2);
+		const key = `${top}|${left}|${k.toFixed(2)}`;
+		s.style.top = top + 'px';
+		s.style.left = left + 'px';
+		s.style.setProperty('--k', k.toFixed(3));
+		if (key === last) return;
+		last = key;
+		// giriş devinimi yeni ölçekle baştan (yalnız yer ya da ölçek değiştiyse)
+		s.classList.remove('on');
+		void s.offsetWidth;
+		s.classList.add('on');
+	};
+	setTimeout(place, 30);
+	setTimeout(place, 700);
+}
+
+/** Tek satırlık yazı kutusuna sığsın: yarımşar piksel küçülür (en az min px); "…" ile kesilmez. */
+export function sigdir(list, min = 9) {
+	const run = () => {
+		for (const e of list) {
+			if (!e?.isConnected) continue;
+			e.style.fontSize = '';
+			let px = parseFloat(getComputedStyle(e).fontSize) || 14;
+			while (px > min && e.scrollWidth > e.clientWidth + 0.5) e.style.fontSize = `${(px -= 0.5)}px`;
+		}
+	};
+	run();
+	requestAnimationFrame(run);
+	document.fonts?.ready?.then(run);
+	return run;
+}

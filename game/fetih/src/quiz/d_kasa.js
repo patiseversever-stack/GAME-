@@ -15,8 +15,10 @@
 // rakamlar tamburda söner. Bedeli yarım tambur: eşit tamburda dinlemeyen önde, ama dinleyip bir tambur fazla açan yine
 // önde. Tür 'closest': err = (n − açılan) + 0,5 · dinleme + 0,49 · |şifre − cevap| / 10^n; doğru = bütün tamburlar.
 //
-// Veri: { q, ans (10..9999 tam sayı; basamak sayısı = tambur), unit?, not? (cevapta levhanın altında tek satır) }.
+// Veri: { q, ans (10..9999 tam sayı; basamak sayısı = tambur), unit?, not? (cevapta fişlerin altında NOT satırı) }.
 // Değer: { c: '1923' (n hane), h: [dinlenen tambur] }.
+// Film: kol çekilince yoklama hemen başlar (tambur başına 0,36 sn), fişler kapı/alarmdan sonra gelir. Cevap kol çekilmeden
+// gelirse (süre bitti) film kısa sürer (~1,4 sn): son görünüm denetimin ölçtüğü anda ekranda olsun.
 // Çevrimiçi: cevap v.hedef'te, publicView siler; yoklama ve kapı filmi cevap ekranında oynar. Stetoskop sunucuya
 // sorulmalı (act 'dinle' { k, d } → { k, yön }); o kanca kurulana dek cevabı bilmeyen istemcide düğme kapalıdır.
 // Jokerler: yarı yarıya → bir tamburun rakamı açılır (altın, kilitli); seyirci → kalabalığın şifresi tamburlarda işaretli.
@@ -91,7 +93,7 @@ const CSS = /* css */ `
   background:radial-gradient(130% 80% at 50% -10%,#2a3557 0%,#121a36 46%,#070a18 100%);box-shadow:0 0 0 1.5px rgba(255,255,255,.12),0 14px 30px rgba(0,0,0,.55)}
 .yn-kasa.fis .ks-sahne{min-height:118px}
 /* çerçeve (kasanın gövdesi): koyu çelik, eğik kenar, perçinler */
-.yn-kasa .ks-kasa{position:absolute;inset:var(--m);border-radius:14px;perspective:1200px;
+.yn-kasa .ks-kasa{position:absolute;inset:var(--m);border-radius:14px;perspective:var(--persp,1200px);
   background:linear-gradient(160deg,#3a4558 0%,#1f2735 55%,#141a25 100%);
   box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.14),inset 0 2px 0 rgba(255,255,255,.12),0 10px 24px rgba(0,0,0,.6)}
 .yn-kasa .ks-pc{position:absolute;pointer-events:none;background:radial-gradient(circle at 40% 35%,#c7d0de 0 1.4px,#5a6578 1.9px,#1a2130 2.8px,transparent 3.3px) 0 0/var(--rp) var(--rp)}
@@ -105,27 +107,44 @@ const CSS = /* css */ `
 .yn-kasa .ks-ic{position:absolute;inset:var(--f);border-radius:9px;overflow:hidden;
   background:radial-gradient(80% 70% at 50% 60%,#5a3a0c 0%,#24170a 60%,#0d0804 100%);box-shadow:inset 0 0 26px rgba(0,0,0,.85)}
 .yn-kasa .ks-hazine{position:absolute;left:8%;right:8%;bottom:4%;height:62%;width:84%}
-.yn-kasa .ks-isin{position:absolute;inset:-40%;opacity:0;transition:opacity 1s .3s;
-  background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,226,140,.34) 0 7deg,rgba(255,226,140,0) 7deg 20deg);animation:ksDon 18s linear infinite}
+.yn-kasa .ks-isin{position:absolute;inset:-40%;opacity:0;transition:opacity 1s .3s;will-change:transform;
+  background:repeating-conic-gradient(from 0deg at 50% 50%,rgba(255,226,140,.34) 0 7deg,rgba(255,226,140,0) 7deg 20deg);animation:ksDon 18s linear infinite paused}
+.yn-kasa.nur .ks-isin{animation-play-state:running}
 .yn-kasa .ks-nur{position:absolute;inset:0;opacity:0;transition:opacity .9s .2s;
   background:radial-gradient(60% 55% at 50% 62%,rgba(255,244,200,.95) 0%,rgba(255,200,80,.55) 38%,rgba(255,170,40,0) 75%)}
 .yn-kasa.nur .ks-isin{opacity:1}.yn-kasa.nur .ks-nur{opacity:1}
+.yn-kasa.nur .ks-kasa{box-shadow:inset 0 0 0 1.5px rgba(255,230,160,.5),inset 0 2px 0 rgba(255,255,255,.12),0 0 34px 6px rgba(255,196,70,.45),0 10px 24px rgba(0,0,0,.6);transition:box-shadow .9s .2s}
+.yn-kasa.nur .ks-sahne{background:radial-gradient(90% 70% at 50% 55%,#5a4418 0%,#1d1a2c 55%,#070a18 100%);transition:background .9s}
 /* kapı: çelik plaka, iç bordür, tam yüz; menteşesinde döner */
 .yn-kasa .ks-kapi{position:absolute;inset:var(--f);border-radius:9px;transform-origin:0 50%;transform-style:preserve-3d;
   transition:transform 1.25s cubic-bezier(.55,.02,.22,1)}
+/* kapının yüzü: tornada işlenmiş çelik (iç içe parlak halkalar, kasa kapılarının "perlage" işçiliği), eğik kenar */
 .yn-kasa .ks-yuz{position:absolute;inset:0;border-radius:9px;backface-visibility:hidden;
-  background:repeating-linear-gradient(90deg,rgba(255,255,255,.025) 0 1px,rgba(0,0,0,0) 1px 3px),
-    radial-gradient(90% 70% at 30% 18%,rgba(255,255,255,.16),rgba(255,255,255,0) 60%),
-    linear-gradient(165deg,#64748c 0%,#46546a 42%,#2e3949 100%);
-  box-shadow:inset 0 0 0 2px rgba(255,255,255,.14),inset 0 0 0 calc(var(--p) * .45) rgba(20,26,36,.0),inset 0 0 0 calc(var(--p) * .45 + 2px) rgba(0,0,0,.28),0 6px 16px rgba(0,0,0,.6)}
-.yn-kasa .ks-yuz::before{content:'';position:absolute;inset:calc(var(--p) * .45);border-radius:6px;border:2px solid rgba(255,255,255,.08);box-shadow:inset 0 0 0 1px rgba(0,0,0,.35);pointer-events:none}
+  background:repeating-radial-gradient(circle at var(--wx,50%) var(--wy,68%),rgba(255,255,255,.05) 0 1px,rgba(0,0,0,.05) 1px 2.5px),
+    conic-gradient(from 20deg at var(--wx,50%) var(--wy,68%),rgba(255,255,255,.16),rgba(255,255,255,0) 16%,rgba(255,255,255,.12) 50%,rgba(255,255,255,0) 66%,rgba(255,255,255,.16)),
+    radial-gradient(110% 80% at 28% 10%,rgba(255,255,255,.16),rgba(255,255,255,0) 58%),
+    linear-gradient(170deg,#6b7b94 0%,#4a586f 40%,#323d4f 78%,#283141 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.3),inset 2px 0 0 rgba(255,255,255,.12),inset 0 -3px 0 rgba(0,0,0,.35),inset -2px 0 0 rgba(0,0,0,.25),0 8px 18px rgba(0,0,0,.65)}
+/* iç bordür: perçinli çerçeve şeridi */
+.yn-kasa .ks-yuz::before{content:'';position:absolute;inset:calc(var(--p) * .42);border-radius:7px;pointer-events:none;
+  border:2px solid rgba(0,0,0,.28);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 0 0 1px rgba(255,255,255,.08)}
+.yn-kasa .ks-yuz::after{content:'';position:absolute;inset:calc(var(--p) * .42 - 4px);pointer-events:none;
+  background:radial-gradient(circle at 40% 35%,#d4dbe6 0 1.2px,#59647a 1.7px,#1a2130 2.5px,transparent 3px) 0 0/var(--rp) var(--rp);
+  -webkit-mask:linear-gradient(#000 0 0) top/100% 8px no-repeat,linear-gradient(#000 0 0) bottom/100% 8px no-repeat,linear-gradient(#000 0 0) left/8px 100% no-repeat,linear-gradient(#000 0 0) right/8px 100% no-repeat;
+  mask:linear-gradient(#000 0 0) top/100% 8px no-repeat,linear-gradient(#000 0 0) bottom/100% 8px no-repeat,linear-gradient(#000 0 0) left/8px 100% no-repeat,linear-gradient(#000 0 0) right/8px 100% no-repeat}
+/* çeliğin üstünden ağır ağır geçen ışık (sonsuz; yazıların altında) */
+.yn-kasa .ks-parla{position:absolute;inset:0;border-radius:9px;overflow:hidden;pointer-events:none;backface-visibility:hidden}
+.yn-kasa .ks-parla::before{content:'';position:absolute;top:-20%;bottom:-20%;left:0;width:38%;transform:translateX(-160%) skewX(-18deg);will-change:transform;
+  background:linear-gradient(90deg,rgba(255,255,255,0),rgba(255,255,255,.09) 45%,rgba(255,255,255,.16) 50%,rgba(255,255,255,.09) 55%,rgba(255,255,255,0));animation:ksParla 6.5s 1.2s ease-in-out infinite}
+.yn-kasa.acik .ks-parla,.yn-kasa.alarm .ks-parla{display:none}
+@keyframes ksParla{0%{transform:translateX(-160%) skewX(-18deg)}38%,100%{transform:translateX(340%) skewX(-18deg)}}
 .yn-kasa .ks-kal{position:absolute;top:0;bottom:0;left:100%;width:20px;transform-origin:0 50%;transform:rotateY(90deg);border-radius:0 6px 6px 0;
   background:linear-gradient(90deg,#2b3442,#5d6a80 45%,#2b3442)}
 .yn-kasa .ks-arka{position:absolute;inset:0;border-radius:9px;transform:rotateY(180deg);backface-visibility:hidden;
   background:repeating-linear-gradient(0deg,#3a4558 0 14px,#2a3342 14px 16px),#303a4a;box-shadow:inset 0 0 0 3px #1b222d}
 /* sürgüler: kapının sağ kenarından çerçeveye girer; açılırken kapıya çekilir */
-.yn-kasa .ks-sg{position:absolute;right:calc(var(--f) * -1 + 2px);width:calc(var(--f) + 6px);height:11px;margin-top:-5.5px;border-radius:3px;
-  background:linear-gradient(180deg,#eef2f7,#9aa4b4 45%,#4c5566);box-shadow:0 0 0 1px #1c232e;transition:transform .35s cubic-bezier(.5,0,.3,1)}
+.yn-kasa .ks-sg{position:absolute;right:calc(var(--f) * -1 + 2px);width:calc(var(--f) + 8px);height:14px;margin-top:-7px;border-radius:4px;
+  background:linear-gradient(180deg,#fff1b8,#e2ad44 45%,#8a5a14);box-shadow:0 0 0 1px #3a2404,inset 0 1px 0 rgba(255,255,255,.6);transition:transform .35s cubic-bezier(.5,0,.3,1)}
 .yn-kasa.surgu .ks-sg{transform:translateX(calc(var(--f) * -1 - 4px))}
 .yn-kasa .ks-mn{position:absolute;left:calc(var(--f) * .5 - 6px);width:12px;height:14%;z-index:3;border-radius:6px;
   background:linear-gradient(90deg,#2b3442,#a7b0bf 45%,#3a4454);box-shadow:0 0 0 1px #10151e,0 3px 6px rgba(0,0,0,.5)}
@@ -147,11 +166,13 @@ const CSS = /* css */ `
 .yn-kasa .ks-pen:focus-visible{box-shadow:inset 0 0 0 2px #4a2e06,0 0 0 2px #2a1a04,0 0 0 4px #6ac8ff}
 .yn-kasa .ks-pen canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
 .yn-kasa .ks-pen::after{content:'';position:absolute;inset:0;pointer-events:none;border-radius:8px;opacity:0;transition:opacity .25s}
-.yn-kasa .ks-tb.ok .ks-pen{box-shadow:inset 0 0 0 2px #0e5a28,0 0 0 2.5px #3ee07a,0 0 18px 2px rgba(62,224,122,.75)}
+.yn-kasa .ks-tb.ok .ks-pen{box-shadow:inset 0 0 0 2px #0e5a28,0 0 0 2.5px #3ee07a,0 0 18px 2px rgba(62,224,122,.75);animation:ksTak .3s ease-out}
 .yn-kasa .ks-tb.no .ks-pen{box-shadow:inset 0 0 0 2px #6a0a08,0 0 0 2.5px #ff4a3a,0 0 18px 2px rgba(255,70,50,.8);animation:ksSars .42s}
 .yn-kasa .ks-tb.no .ks-pen::after{background:rgba(255,40,20,.35);animation:ksCak .5s ease-out forwards}
 .yn-kasa .ks-tb.jam .ks-pen{box-shadow:inset 0 0 0 2px #1a1206,0 0 0 2px #2a2418}
 .yn-kasa .ks-tb.jam .ks-ok,.yn-kasa.kontrol .ks-ok,.yn-kasa.rv .ks-ok{opacity:.35;pointer-events:none}
+.yn-kasa.fis .ks-ok,.yn-kasa.fis .ks-alt{display:none}
+.yn-kasa[data-yer=alt] .ks-ici,.yn-kasa[data-yer=yan] .ks-ici{justify-content:flex-start}
 .yn-kasa .ks-tb.altin .ks-pen{box-shadow:inset 0 0 0 2px #7a4e06,0 0 0 2.5px #ffd25a,0 0 14px 1px rgba(255,210,90,.6)}
 .yn-kasa .ks-tb.altin .ks-ok{opacity:.35;pointer-events:none}
 /* dinleme: stetoskobun göğüs ucu tamburun üstünde, ses halkaları */
@@ -162,17 +183,29 @@ const CSS = /* css */ `
 .yn-kasa .ks-tb.dinliyor .ks-kul::before,.yn-kasa .ks-tb.dinliyor .ks-kul::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:2px solid #6ac8ff;animation:ksDalga .5s .15s ease-out 2 both}
 .yn-kasa .ks-tb.dinliyor .ks-kul::after{animation-delay:.42s}
 /* alt sıra: kol (AÇ) ve stetoskop */
-.yn-kasa .ks-alt{display:flex;align-items:center;justify-content:center;gap:var(--gx)}
-.yn-kasa.genis .ks-alt{flex-direction:column;gap:8px}
-.yn-kasa .ks-teker{position:relative;width:var(--wd);height:var(--wd);padding:0;border:0;border-radius:50%;cursor:pointer;touch-action:none;
+/* dikeyde kol kapının ekseninde, stetoskop sağında; yan yanada alt alta */
+.yn-kasa .ks-alt{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;column-gap:calc(var(--gx) + var(--wd) * .13);width:100%}
+.yn-kasa .ks-alt .ks-ty{grid-column:2}
+.yn-kasa .ks-alt .ks-st{grid-column:3;justify-self:start}
+.yn-kasa.genis .ks-alt{display:flex;flex-direction:column;align-items:center;width:auto;gap:calc(6px + var(--wd) * .13)}
+.yn-kasa .ks-ty{position:relative;flex:none;width:var(--wd);height:var(--wd)}
+/* kolun ardındaki kilit aynası: oyulmuş iç içe halkalar */
+.yn-kasa .ks-halka{position:absolute;inset:-13%;border-radius:50%;pointer-events:none;
+  background:repeating-radial-gradient(circle,rgba(255,255,255,0) 0 5px,rgba(255,255,255,.08) 5px 6px,rgba(0,0,0,.18) 6px 7px),radial-gradient(circle,#4f5d74 0,#3a465a 62%,#263040 100%);
+  box-shadow:inset 0 2px 0 rgba(255,255,255,.22),inset 0 -2px 4px rgba(0,0,0,.45),0 0 0 2px rgba(0,0,0,.3),0 0 0 4px rgba(255,255,255,.06),0 6px 14px rgba(0,0,0,.4)}
+.yn-kasa .ks-halka::before{content:'';position:absolute;inset:3px;border-radius:50%;
+  background:repeating-conic-gradient(from -1deg,rgba(255,236,190,.8) 0 2deg,rgba(255,236,190,0) 2deg 12deg);
+  -webkit-mask:radial-gradient(circle,transparent calc(50% - 6px),#000 calc(50% - 5.5px) 50%,transparent calc(50% + .5px));mask:radial-gradient(circle,transparent calc(50% - 6px),#000 calc(50% - 5.5px) 50%,transparent calc(50% + .5px))}
+.yn-kasa .ks-teker{position:relative;width:100%;height:100%;padding:0;border:0;border-radius:50%;cursor:pointer;touch-action:none;
   background:radial-gradient(circle,rgba(0,0,0,0) 54%,rgba(0,0,0,.35) 56%,rgba(255,255,255,.07) 64%,rgba(0,0,0,0) 66%),radial-gradient(circle,#3d495c 0,#2a3342 70%,#222a37 100%);
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.1),inset 0 -3px 8px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.5)}
 .yn-kasa .ks-teker svg{position:absolute;inset:-6%;width:112%;height:112%}
 .yn-kasa .ks-teker .ks-kol{transition:transform .5s cubic-bezier(.3,1.4,.5,1)}
 .yn-kasa .ks-teker b{position:relative;z-index:1;display:block;font:400 calc(var(--wd) * .2)/1 'Lilita One',sans-serif;letter-spacing:.04em;color:#3a2404;text-shadow:0 1px 0 rgba(255,245,200,.7)}
 .yn-kasa .ks-teker:active{filter:brightness(1.08)}
-.yn-kasa .ks-teker.hazir{animation:ksHazir 1.6s ease-in-out infinite}
-.yn-kasa .ks-st{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:66px;height:var(--sh);padding:4px 10px;border:0;border-radius:12px;cursor:pointer;touch-action:manipulation;
+.yn-kasa .ks-teker::after{content:'';position:absolute;inset:-3px;border-radius:50%;pointer-events:none;opacity:0;box-shadow:0 0 0 2px rgba(255,210,90,.55),0 0 18px rgba(255,210,90,.5)}
+.yn-kasa .ks-teker.hazir::after{animation:ksHazir 1.6s ease-in-out infinite}
+.yn-kasa .ks-st{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;min-width:66px;height:var(--sh);padding:4px 10px;border:0;border-radius:12px;cursor:pointer;touch-action:manipulation;
   color:#dff2ff;background:linear-gradient(180deg,#2c5a86,#1a3a5e 60%,#132a46);box-shadow:inset 0 0 0 1.5px #6ac8ff,inset 0 2px 0 rgba(255,255,255,.18),0 3px 0 #0a1830}
 .yn-kasa .ks-st svg{width:22px;height:22px}
 .yn-kasa .ks-st b{font:italic 900 13px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em}
@@ -181,7 +214,7 @@ const CSS = /* css */ `
 .yn-kasa.dinle .ks-st small{color:#071a30}
 .yn-kasa .ks-st:disabled{opacity:.42;cursor:default;filter:saturate(.4)}
 .yn-kasa.cekildi .ks-teker .ks-kol{transform:rotate(90deg)}
-.yn-kasa.cekildi .ks-teker{animation:none}
+.yn-kasa.cekildi .ks-teker::after{animation:none;opacity:0}
 .yn-kasa.cekildi .ks-st,.yn-kasa.rv .ks-st{opacity:.38;pointer-events:none}
 .yn-kasa.rv .ks-alt{opacity:0;visibility:hidden;transition:opacity .3s,visibility 0s .3s}
 /* alarm: tepedeki fenerden dönen kırmızı ışık ve kırmızı nabız (sonlu: söner) */
@@ -194,8 +227,13 @@ const CSS = /* css */ `
 .yn-kasa.alarm .ks-fener{opacity:1;animation:ksFener .4s steps(2) 6}
 .yn-kasa.alarm .ks-kapi{animation:ksSars .55s .05s}
 /* kapı açılır: sürgüler, menteşe, ışık */
-.yn-kasa.acik .ks-kapi{transform:rotateY(-84deg)}
-.yn-kasa.acik .ks-ici,.yn-kasa.acik .ks-sg{opacity:0;transition:opacity .4s .7s}
+.yn-kasa.acik .ks-kapi{transform:rotateY(-80deg)}
+.yn-kasa .ks-perde{position:absolute;inset:0;z-index:5;pointer-events:none;opacity:0;transition:opacity .4s;background:radial-gradient(70% 60% at 50% 50%,rgba(4,6,14,.72),rgba(4,6,14,.4))}
+.yn-kasa.levha[data-yer=orta]:not(.acik) .ks-perde{opacity:1}
+.yn-kasa .ks-not{display:none;flex:none;align-items:flex-start;gap:8px;padding:7px 10px 8px;border-radius:8px;background:linear-gradient(180deg,#fbf3e0,#ece0c4);box-shadow:0 3px 0 rgba(0,0,0,.35);
+  font:600 12.5px/1.3 'Fredoka',sans-serif;color:#2a1d0c;animation:ksFis .42s .3s cubic-bezier(.2,.9,.3,1.25) both}
+.yn-kasa .ks-not b{flex:none;padding:3px 6px 2px;border-radius:4px;background:#2a8a4a;color:#fff;font:italic 900 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;transform:skewX(-8deg)}
+.yn-kasa.fis .ks-not{display:flex}
 /* doğru şifre levhası ve fişler */
 .yn-kasa .ks-yer{position:absolute;z-index:6;display:none;align-items:center;justify-content:center;pointer-events:none}
 .yn-kasa.levha .ks-yer{display:flex}
@@ -206,16 +244,16 @@ const CSS = /* css */ `
 .yn-kasa .ks-levha b u{text-decoration:none;font-size:.46em;letter-spacing:.02em;margin-left:5px}
 .yn-kasa .ks-levha em{max-width:30ch;font:600 11.5px/1.25 'Fredoka',sans-serif;font-style:normal;text-align:center;color:#4a2e06}
 .yn-kasa.acik .ks-levha{background:linear-gradient(180deg,#fff7d6 0%,#ffd25a 50%,#d99a24 100%)}
-.yn-kasa .ks-bilet{display:none;flex:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px}
+.yn-kasa .ks-bilet{display:none;flex:none;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px;container-type:inline-size}
 .yn-kasa.fis .ks-bilet{display:grid}
 .yn-kasa .ks-b{position:relative;display:grid;grid-template-columns:22px 30px minmax(0,1fr) auto;grid-template-rows:auto auto;align-items:center;column-gap:6px;row-gap:3px;min-height:52px;padding:5px 8px 5px 0;
   border-radius:7px;color:#2a1d0c;background:linear-gradient(180deg,#fbf3e0,#e9ddc2);box-shadow:0 3px 0 rgba(0,0,0,.38),inset 0 0 0 1px rgba(90,60,10,.25);
   animation:ksFis .42s calc(var(--k) * 110ms) cubic-bezier(.2,.9,.3,1.25) both}
 .yn-kasa .ks-b.win{background:linear-gradient(180deg,#fff6cf,#ffd769);box-shadow:0 3px 0 rgba(0,0,0,.38),inset 0 0 0 2px #c8901e,0 0 16px rgba(255,210,90,.45)}
-.yn-kasa .ks-b .rk{grid-row:1/3;align-self:stretch;display:grid;place-items:center;border-radius:7px 0 0 7px;color:#fff;background:var(--c);
+.yn-kasa .ks-b .rk{grid-row:1/3;align-self:stretch;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;border-radius:7px 0 0 7px;color:#fff;background:var(--c);
   font:italic 900 15px/1 'Barlow Condensed','Lilita One',sans-serif;
   -webkit-mask:radial-gradient(circle at 100% 7px,transparent 2.6px,#000 3px) 0 0/100% 10px;mask:radial-gradient(circle at 100% 7px,transparent 2.6px,#000 3px) 0 0/100% 10px}
-.yn-kasa .ks-b .fl-who{position:relative;inset:auto;top:auto;right:auto;grid-row:1/3;width:30px;height:30px;margin:0;border-radius:8px;border:2px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.3);overflow:hidden}
+.yn-kasa .ks-b .fl-who{position:static;grid-row:1/3;width:30px;height:30px;margin:0;border-radius:8px;border:2px solid #fff;box-shadow:0 2px 0 rgba(0,0,0,.3);overflow:hidden}
 .yn-kasa .ks-b .fl-who.me{box-shadow:0 0 0 2px #ffd25a,0 2px 0 rgba(0,0,0,.3)}
 .yn-kasa .ks-b .nm{grid-column:3;min-width:0;font:700 13px/1.1 'Fredoka',sans-serif;white-space:nowrap;overflow:hidden}
 .yn-kasa .ks-b .tg{grid-column:4;justify-self:end;display:flex;align-items:center;gap:3px;padding:2px 6px 3px;border-radius:5px;white-space:nowrap;
@@ -227,20 +265,34 @@ const CSS = /* css */ `
 .yn-kasa .ks-b .kd i.ok{color:#fff;background:#25a552}
 .yn-kasa .ks-b .kd i.no{color:#fff;background:#e2392c}
 .yn-kasa .ks-b .kd i.jam{color:#8f846c;background:#cfc4a8}
-.yn-kasa .ks-b .kd .st{flex:none;width:16px;height:16px;margin-left:2px;color:#2c6ea8}
+.yn-kasa .ks-b .rk svg{width:11px;height:11px;flex:none}
+.yn-kasa .ks-b .rk b{font:inherit}
+/* dar fiş (iki sütunda 340 px'ten dar sıra: 320'lik ekran, masaüstü çerçevesi): yazılı etiket kalkar, ad bütün satırı alır;
+   "açtı" ve "dinledi" işaretleri sıra numarasının şeridinde */
+@container (max-width:339px){
+  .yn-kasa .ks-b{grid-template-columns:19px 26px minmax(0,1fr);column-gap:5px;padding-right:6px}
+  .yn-kasa .ks-b .tg{display:none}
+  .yn-kasa .ks-b .fl-who{width:26px;height:26px}
+  .yn-kasa .ks-b .kd{grid-column:3;gap:2px}
+  .yn-kasa .ks-b .kd i{width:15px;height:18px;font-size:13px}
+}
+.yn-kasa .ks-b.dar{grid-template-columns:19px 26px minmax(0,1fr)}
+.yn-kasa .ks-b.dar .tg{display:none}
+.yn-kasa .ks-b.dar .kd{grid-column:3}
 .yn-kasa .ks-b .kd .yok{font:600 12px/1 'Fredoka',sans-serif;color:#7a6a50}
 @keyframes ksDon{to{transform:rotate(360deg)}}
 @keyframes ksSars{20%{transform:translateX(-5px)}45%{transform:translateX(5px)}70%{transform:translateX(-3px)}90%{transform:translateX(2px)}}
 @keyframes ksCak{0%{opacity:1}100%{opacity:0}}
+@keyframes ksTak{0%{transform:none}35%{transform:translateY(3px)}70%{transform:translateY(-1px)}100%{transform:none}}
 @keyframes ksAlarm{0%{opacity:0}10%{opacity:1}30%{opacity:.55}45%{opacity:1}65%{opacity:.55}80%{opacity:.9}100%{opacity:0}}
 @keyframes ksFener{to{filter:brightness(2.2) drop-shadow(0 0 10px #ff3a2a)}}
-@keyframes ksHazir{0%,100%{box-shadow:inset 0 0 0 2px rgba(255,255,255,.1),inset 0 -3px 8px rgba(0,0,0,.4),0 4px 12px rgba(0,0,0,.5)}50%{box-shadow:inset 0 0 0 2px rgba(255,210,90,.5),inset 0 -3px 8px rgba(0,0,0,.4),0 0 18px rgba(255,210,90,.45)}}
+@keyframes ksHazir{0%,100%{opacity:0}50%{opacity:1}}
 @keyframes ksDinle{0%,100%{box-shadow:inset 0 0 0 2px #4a2e06,0 0 0 2px #2a1a04}50%{box-shadow:inset 0 0 0 2px #4a2e06,0 0 0 3px #6ac8ff,0 0 14px rgba(106,200,255,.7)}}
 @keyframes ksKul{0%{opacity:0;transform:translateY(-18px) scale(.6)}18%{opacity:1;transform:none}82%{opacity:1;transform:none}100%{opacity:0;transform:scale(.8)}}
 @keyframes ksDalga{0%{opacity:.9;transform:scale(1)}100%{opacity:0;transform:scale(2.1)}}
-@keyframes ksLevha{0%{opacity:0;transform:translateY(14px) scale(.85)}100%{opacity:1;transform:none}}
-@keyframes ksFis{0%{opacity:0;transform:translateY(16px) rotate(-3deg)}100%{opacity:1;transform:none}}
-@media (prefers-reduced-motion:reduce){.yn-kasa .ks-isin,.yn-kasa .ks-teker.hazir,.yn-kasa.dinle .ks-pen{animation:none}.yn-kasa .ks-kapi{transition-duration:.01s}}
+@keyframes ksLevha{0%{opacity:0;transform:scale(.7)}70%{opacity:1;transform:scale(1.04)}100%{opacity:1;transform:none}}
+@keyframes ksFis{0%{opacity:0;transform:translateY(-10px) scale(.94)}100%{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.yn-kasa .ks-isin,.yn-kasa .ks-teker.hazir::after,.yn-kasa.dinle .ks-pen,.yn-kasa .ks-parla::before{animation:none}.yn-kasa .ks-kapi{transition-duration:.01s}}
 `;
 
 // ---------------------------------------------------------------- tambur (tuval): silindir izdüşümü, yay fiziği
@@ -319,11 +371,14 @@ class Drum {
 			this.last = r;
 			this.hooks.tick(this, Math.abs(this.vel));
 		}
-		if (this.mode !== 'idle' || this.dirty) {
-			this.draw();
-			this.dirty = false;
-		}
+		if (this.mode !== 'idle') this.dirty = true;
 		return this.mode !== 'idle';
+	}
+	/** Gerekiyorsa yeniden çiz (karede bir kez). */
+	paint() {
+		if (!this.dirty) return;
+		this.draw();
+		this.dirty = false;
 	}
 	size() {
 		const b = this.pen.getBoundingClientRect();
@@ -375,7 +430,7 @@ class Drum {
 			const sc = Math.cos(a);
 			const d = ((i % 10) + 10) % 10;
 			const center = Math.abs(a) < ARC / 2;
-			let alpha = 0.18 + 0.82 * sc * sc;
+			let alpha = 0.1 + 0.9 * sc * sc * sc * sc; // komşu rakamlar sönük: okunan rakam öne çıkar
 			const h = this.hint;
 			const out = h && ((h.rel > 0 && d <= h.d) || (h.rel < 0 && d >= h.d) || (h.rel === 0 && d !== h.d));
 			if (out) alpha *= 0.28;
@@ -438,10 +493,11 @@ export const kasa = {
 	label: 'Kasa Soygunu',
 	kind: 'closest',
 	cover: true, // tam ekran kasa kapısı (harita gizli)
+	calm: true, // harita arkada durgun (klasik tiplerle aynı işaret)
 	keep: true,
 	rule: 'Kilit soldan açılır',
 	jokers: ['yari', 'kahin'],
-	revealMs: 6200, // yoklama + kapı/alarm + fişler
+	revealMs: 6800, // yoklama + kapı/alarm + fişler
 	fmt: (v, value) => `${value && typeof value.c === 'string' ? value.c : '—'}${v.q.unit ? ' ' + v.q.unit : ''}`,
 	sub: (v, value) => {
 		const y = yokla(v, value);
@@ -458,8 +514,9 @@ export const kasa = {
 				look: LOOK.orient + (n + 1) * LOOK.gaze, // tamburlar ve kol
 				// cevabı hatırla, sonra basamak basamak kur (soldan: yüzyıl, onyıl…)
 				think: P.think[0] + P.think[1] * k + 0.4 * n,
-				// tambur başına: tamburu bul, ortalama 2,5 adım çevir (sarmal: en çok 5); sonra kolu çevir
-				act: n * (0.5 + 2.5 * STEP) + ACT.confirm,
+				// tambur başına: tamburu bul, ortalama 2,5 adım çevir (sarmal: en çok 5); sonra kolu çevir. Stetoskop isteğe
+				// bağlı (DİNLE + tambur + 1,2 sn dinleme): beklenen payı 0,8 sn
+				act: n * (0.5 + 2.5 * STEP) + ACT.confirm + 0.8,
 			};
 		});
 	},
@@ -477,7 +534,7 @@ export const kasa = {
 					<div class="ks-ic">${insideSVG()}<i class="ks-isin"></i><i class="ks-nur"></i></div>
 					<i class="ks-mn" style="top:18%"></i><i class="ks-mn" style="bottom:18%"></i>
 					<div class="ks-kapi">
-						<div class="ks-arka"></div><div class="ks-yuz"></div><i class="ks-kal"></i>
+						<div class="ks-arka"></div><div class="ks-yuz"></div><i class="ks-parla"></i><i class="ks-kal"></i>
 						<i class="ks-sg" style="top:24%"></i><i class="ks-sg" style="top:50%"></i><i class="ks-sg" style="top:76%"></i>
 						<div class="ks-ici">
 							<div class="ks-pano">${Array.from(
@@ -488,7 +545,7 @@ export const kasa = {
 								<button class="ks-ok" data-k="${k}" data-d="-1" aria-label="${k + 1}. tambur: bir azalt">${svgDn}</button></div>`,
 							).join('')}</div>
 							<div class="ks-alt">
-								<button class="ks-teker hazir" aria-label="Kolu çevir: kasayı aç">${wheelSVG(id)}<b>AÇ</b></button>
+								<div class="ks-ty"><i class="ks-halka"></i><button class="ks-teker hazir" aria-label="Kolu çevir: kasayı aç">${wheelSVG(id)}<b>AÇ</b></button></div>
 								<button class="ks-st" aria-label="Stetoskop: bir tamburu dinle (yarım tambur bedel)">${svgSteth}<b>DİNLE</b><small>−½ tambur</small></button>
 							</div>
 						</div>
@@ -496,9 +553,11 @@ export const kasa = {
 					<i class="ks-fener"></i>
 				</div>
 				<div class="ks-alarm"><i></i></div>
+				<div class="ks-perde"></div>
 				<div class="ks-yer"></div>
 			</div>
 			<div class="ks-bilet"></div>
+			${known && v.q.not ? `<div class="ks-not"><b>NOT</b><span>${esc(v.q.not)}</span></div>` : ''}
 		</div>`;
 		rule(el, 'Kilit soldan açılır');
 		const root = el.querySelector('.yn-kasa');
@@ -514,7 +573,6 @@ export const kasa = {
 			stBtn.querySelector('small').textContent = 'çevrimiçi kapalı';
 		}
 		let done = false; // kol çekildi ya da süre bitti
-		let revealed = false;
 		let listen = false;
 		let hint = null; // { k, d, rel }
 		let checkP = null; // yoklama filmi (Promise)
@@ -537,10 +595,18 @@ export const kasa = {
 			raf = 0;
 			if (!alive || !root.isConnected) return;
 			const now = clock.now();
-			const dt = Math.min(0.05, Math.max(0.001, (now - lastT) / 1000));
+			// geç gelen karede alt adımlar: yay yavaş cihazda da gerçek sürede oturur
+			let rem = Math.min(0.3, Math.max(0.001, (now - lastT) / 1000));
 			lastT = now;
 			let any = false;
-			for (const d of drums) any = d.step(dt) || any;
+			while (rem > 1e-4) {
+				const h = Math.min(1 / 90, rem);
+				rem -= h;
+				any = false;
+				for (const d of drums) any = d.step(h, rem > 1e-4) || any;
+				if (!any) break;
+			}
+			for (const d of drums) d.paint();
 			if (any) raf = requestAnimationFrame(loop);
 		};
 		const wake = () => {
@@ -564,6 +630,8 @@ export const kasa = {
 		const lockedK = (k) => done || drums[k].state === 'altin' || tbs[k].classList.contains('dinliyor');
 
 		// ------------------------------------------------ yerleşim (sahne boyuna göre: dikey ya da yan yana)
+		// Soru: tambur panosu + kol (dikey: kol altta; dar ve alçak sahnede yan yana: kol sağda). Cevap (fişler açıkken):
+		// oklar ve kol kalkar; doğru şifre levhası panonun altına (ya da sağına), sığmazsa kapının ortasına oturur.
 		let lay = null;
 		const fit = () => {
 			const W = sahne.clientWidth;
@@ -574,48 +642,60 @@ export const kasa = {
 			const p = clamp(Math.round(Math.min(W, H) * 0.05), 9, 20); // kapının iç payı
 			const iw = W - 2 * m - 2 * f - 2 * p;
 			const ih = H - 2 * m - 2 * f - 2 * p;
-			const rv = revealed;
+			const comp = root.classList.contains('fis');
 			const g = clamp(Math.round(iw * 0.02), 4, 8);
 			const pp = clamp(Math.round(iw * 0.025), 6, 10);
+			const gy = clamp(Math.round(ih * 0.04), 6, 14);
+			const gx = clamp(Math.round(iw * 0.04), 8, 16);
 			const sh = 46; // stetoskop düğmesi
-			const solve = (wide) => {
-				let ah = rv ? 0 : clamp(Math.round(ih * 0.13), 40, 46);
-				const gy = clamp(Math.round(ih * 0.04), 6, 14);
-				const gx = clamp(Math.round(iw * 0.04), 8, 16);
-				let wd;
-				let dw;
-				let dh;
-				if (!wide) {
-					dw = Math.min(70, (iw - 2 * pp - (n - 1) * g) / n);
-					wd = rv ? 0 : clamp(Math.round(Math.min(iw * 0.34, ih * 0.3)), 62, 118);
-					const ctrl = rv ? Math.min(96, ih * 0.42) : Math.max(wd, sh);
-					dh = ih - 2 * pp - (rv ? 0 : 2 * ah + 8) - gy - ctrl;
-					if (dh < 56 && !rv) {
-						const need = 56 - dh;
-						const cut = Math.min(need, wd - 62);
+			let L;
+			if (!comp) {
+				const ah = clamp(Math.round(ih * 0.13), 40, 46);
+				const tall = () => {
+					const dw = Math.min(70, (iw - 2 * pp - (n - 1) * g) / n);
+					// tambur penceresi önce (en çok 1,55 × genişlik), kol kalan yerin çoğunu alır (kilit aynası payıyla)
+					let dh = Math.min(dw * 1.55, 112, ih - 2 * pp - 2 * ah - 8 - gy - 62);
+					let wd = clamp(Math.round(Math.min(iw * 0.4, (ih - 2 * pp - 2 * ah - 8 - gy - dh) / 1.2)), 62, 132);
+					if (dh < 56) {
+						const cut = Math.min(56 - dh, wd - 62);
 						wd -= cut;
 						dh += cut;
 					}
-					dh = Math.min(dh, dw * 1.55, 112);
-				} else {
-					wd = rv ? 0 : clamp(Math.round(Math.min(iw * 0.3, ih * 0.62)), 60, 112);
-					const cw = rv ? Math.min(150, iw * 0.42) : Math.max(wd, 70);
-					dw = Math.min(70, (iw - cw - gx - 2 * pp - (n - 1) * g) / n);
-					dh = Math.min(ih - 2 * pp - (rv ? 0 : 2 * ah + 8), dw * 1.55, 112);
-					if (!rv && wd + 8 + sh > ih) wd = Math.max(56, ih - 8 - sh);
-				}
-				return { wide, ah, gy, gx, wd, dw: Math.floor(dw), dh: Math.floor(dh), score: Math.min(dw, dh / 1.3) };
-			};
-			const a = solve(false);
-			const b = solve(true);
-			// yan yana: dikeyde tambur sığmıyorsa ve yanda daha büyük çıkıyorsa
-			const L = (a.dh >= 54 && a.dw >= 40) || b.score <= a.score + 2 ? a : b;
-			lay = { W, H, m, f, p, ...L };
+					return { wide: false, ah, wd, dw, dh };
+				};
+				const wide = () => {
+					let wd = clamp(Math.round(Math.min(iw * 0.3, ih * 0.62)), 60, 112);
+					if (wd * 1.26 + 6 + sh > ih) wd = Math.max(52, Math.floor((ih - 6 - sh) / 1.26)); // kol, kilit aynası ve stetoskop alt alta
+					const dw = Math.min(70, (iw - Math.max(wd, 70) - gx - 2 * pp - (n - 1) * g) / n);
+					return { wide: true, ah, wd, dw, dh: Math.min(ih - 2 * pp - 2 * ah - 8, dw * 1.55, 112) };
+				};
+				const a = tall();
+				const b = wide();
+				const sc = (x) => Math.min(x.dw, x.dh / 1.3);
+				// yan yana: dikeyde tambur sığmıyorsa ve yanda daha büyük çıkıyorsa
+				L = (a.dh >= 54 && a.dw >= 40) || sc(b) <= sc(a) + 2 ? a : b;
+				L.slot = '';
+			} else {
+				const dwT = Math.min(70, (iw - 2 * pp - (n - 1) * g) / n);
+				const dhT = Math.min(ih - 2 * pp - gy - 62, dwT * 1.4, 96);
+				const dwW = Math.min(70, (iw - 150 - gx - 2 * pp - (n - 1) * g) / n);
+				const dhW = Math.min(ih - 2 * pp, dwW * 1.4, 96);
+				if (dhT >= 44) L = { wide: false, dw: dwT, dh: dhT, slot: 'alt' };
+				else if (dwW >= 34 && dhW >= 44) L = { wide: true, dw: dwW, dh: dhW, slot: 'yan' };
+				else L = { wide: false, dw: dwT, dh: Math.min(ih - 2 * pp, dwT * 1.4, 96), slot: 'orta' };
+				L.ah = 0;
+				L.wd = 0;
+			}
+			L.dw = Math.floor(L.dw);
+			L.dh = Math.floor(L.dh);
+			lay = { W, H, m, f, p, gy, gx, ...L };
 			const s = root.style;
 			s.setProperty('--m', m + 'px');
 			s.setProperty('--f', f + 'px');
 			s.setProperty('--p', p + 'px');
 			s.setProperty('--rp', clamp(Math.round(Math.min(W, H) * 0.06), 14, 24) + 'px');
+			s.setProperty('--pl', clamp(Math.round(Math.min(W, H) * 0.075), 16, 30) + 'px');
+			s.setProperty('--persp', Math.round(Math.max(W, 260) * 3.2) + 'px'); // her boyda aynı derinlik hissi
 			s.setProperty('--g', g + 'px');
 			s.setProperty('--pp', pp + 'px');
 			s.setProperty('--ah', L.ah + 'px');
@@ -623,26 +703,45 @@ export const kasa = {
 			s.setProperty('--dh', Math.max(40, L.dh) + 'px');
 			s.setProperty('--wd', Math.max(48, L.wd) + 'px');
 			s.setProperty('--sh', sh + 'px');
-			s.setProperty('--gy', L.gy + 'px');
-			s.setProperty('--gx', L.gx + 'px');
+			s.setProperty('--gy', gy + 'px');
+			s.setProperty('--gx', gx + 'px');
 			root.classList.toggle('genis', L.wide);
+			root.dataset.yer = L.slot;
 			for (const d of drums) d.size();
 			place();
+			// tornalanmış yüzün merkezi kolun ekseninde (kapı yüzüne göre yüzde)
+			const ty = root.querySelector('.ks-ty');
+			const kp = root.querySelector('.ks-kapi');
+			if (ty?.offsetWidth && kp?.offsetHeight) {
+				const o = off(ty);
+				const k0 = off(kp);
+				s.setProperty('--wy', (((o.y - k0.y + o.h / 2) / kp.offsetHeight) * 100).toFixed(1) + '%');
+				s.setProperty('--wx', (((o.x - k0.x + o.w / 2) / kp.offsetWidth) * 100).toFixed(1) + '%');
+			}
 		};
-		/** Levhanın yeri: kolun bulunduğu alan (dikeyde altta, yan yanada sağda). */
+		/** Öğenin sahnedeki yeri (yerleşim pikseli; dönüşümler, açık kapının 3B dönüşü dahil, sayılmaz). */
+		const off = (e) => {
+			let x = 0;
+			let y = 0;
+			for (let c = e; c && c !== sahne; c = c.offsetParent) {
+				x += c.offsetLeft;
+				y += c.offsetTop;
+			}
+			return { x, y, w: e.offsetWidth, h: e.offsetHeight };
+		};
+		/** Levhanın yeri: panonun altı (dikey), sağı (yan yana) ya da kapının ortası. */
 		const place = () => {
 			if (!lay) return;
-			const { W, H, m, f, p } = lay;
-			const pano = root.querySelector('.ks-pano').getBoundingClientRect();
-			const sr = sahne.getBoundingClientRect();
-			const z = sr.width / (W || 1) || 1; // _coverFit ölçeği (ekran px / yerleşim px)
-			const pr = { l: (pano.left - sr.left) / z, r: (pano.right - sr.left) / z, t: (pano.top - sr.top) / z, b: (pano.bottom - sr.top) / z };
-			const box = lay.wide
-				? { left: pr.r + 8, top: m + f + 4, width: W - m - f - 6 - (pr.r + 8), height: H - 2 * (m + f + 4) }
-				: { left: m + f + 4, top: pr.b + 6, width: W - 2 * (m + f + 4), height: H - m - f - 4 - (pr.b + 6) };
-			if (box.width < 60 || box.height < 50) Object.assign(box, { left: m + f + p, top: m + f + p, width: W - 2 * (m + f + p), height: H - 2 * (m + f + p) });
+			const { W, H, m, f, gy, gx } = lay;
+			const pn = off(root.querySelector('.ks-pano'));
+			const e0 = m + f + 4;
+			let box;
+			const slot = root.classList.contains('acik') ? 'orta' : lay.slot; // kapı açıldıysa pano kapıyla gitti: levha hazinenin önünde
+			if (slot === 'alt') box = { left: e0, top: pn.y + pn.h + gy * 0.5, width: W - 2 * e0, height: H - e0 - (pn.y + pn.h + gy * 0.5) };
+			else if (slot === 'yan') box = { left: pn.x + pn.w + gx * 0.5, top: e0, width: W - e0 - (pn.x + pn.w + gx * 0.5), height: H - 2 * e0 };
+			else box = { left: e0, top: e0, width: W - 2 * e0, height: H - 2 * e0 };
 			Object.assign(yer.style, { left: box.left + 'px', top: box.top + 'px', width: Math.max(0, box.width) + 'px', height: Math.max(0, box.height) + 'px' });
-			const lf = clamp(Math.min(box.width / (n * 0.95 + 1.2), box.height * 0.42), 20, 40);
+			const lf = clamp(Math.min((box.width - 30) / (n * 0.78 + (v.q.unit ? 1.1 : 0.2)), box.height * 0.46), 18, 38);
 			root.style.setProperty('--lf', lf.toFixed(1) + 'px');
 		};
 		const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => fit()) : null;
@@ -651,20 +750,24 @@ export const kasa = {
 		document.fonts?.load?.('400 40px "Lilita One"').then(() => {
 			for (const d of drums) d.size();
 		}, () => {});
-		// açılış: tamburlar karışık hızla döner, sırayla sıfıra oturur
-		const intro = () => {
-			drums.forEach((d, k) => {
-				d.pos = d.last = -(7 + k * 3);
-				d.target = 0;
-				d.mode = rm ? 'idle' : 'spring';
-				if (rm) d.pos = 0;
-				d.vel = 0;
-				d.dirty = true;
-			});
-			wake();
-		};
-		intro();
-		const offOpen = onOpen(el, () => {});
+		// açılış: kart açılınca tamburlar karışık hızla döner, sırayla sıfıra oturur (kasa "karıştırılır")
+		drums.forEach((d, k) => {
+			d.pos = d.last = rm ? 0 : -(7 + k * 3);
+			d.target = 0;
+		});
+		let introT = 0;
+		const offOpen = onOpen(el, () => {
+			introT = setTimeout(() => {
+				if (!alive) return;
+				for (const d of drums) {
+					if (d.mode === 'idle' && !done) {
+						d.mode = rm ? 'idle' : 'spring';
+						d.dirty = true;
+					}
+				}
+				wake();
+			}, 260);
+		});
 
 		// ------------------------------------------------ girdi: oklar, sürükleme, dokunma, klavye
 		root.addEventListener('click', (e) => {
@@ -702,6 +805,7 @@ export const kasa = {
 				if (drag.s.length > 6) drag.s.shift();
 				d.dirty = true;
 				d.step(0);
+				d.paint();
 				wake();
 			});
 			const up = (e) => {
@@ -850,20 +954,22 @@ export const kasa = {
 			const r = elx.getBoundingClientRect();
 			f.burst(r.left + r.width / 2, r.top + r.height / 2, o);
 		};
-		const openDoor = async () => {
+		const openDoor = async (quick = false) => {
 			root.classList.add('surgu');
 			sfx(app, 'whoosh');
-			await wait(420);
+			await wait(quick ? 150 : 420);
 			if (!alive) return;
 			root.classList.add('acik');
+			place();
 			sfx(app, 'castle');
 			buzz(30);
-			await wait(520);
+			await wait(quick ? 150 : 520);
 			if (!alive) return;
 			root.classList.add('nur');
 			sfx(app, 'coin');
 			const ic = root.querySelector('.ks-ic');
 			burstAt(ic, { n: 22, dist: 150, colors: ['#ffd25a', '#fff3b0', '#f2a51a', '#ffffff'], kind: 'star', size: 13, life: 1100 });
+			if (quick) return;
 			await wait(280);
 			burstAt(ic, { n: 14, dist: 110, colors: ['#ffd25a', '#fff8d8'], size: 9, life: 900 });
 		};
@@ -872,13 +978,14 @@ export const kasa = {
 			sfx(app, 'sabotage');
 			buzz(60);
 		};
-		/** Tamburları soldan yokla; dönüş: yoklama sonucu. */
-		const check = async (c) => {
+		/** Tamburları soldan yokla; dönüş: yoklama sonucu. quick: kol çekilmeden gelen cevap (süre bitti): kısa film. */
+		const check = async (c, quick = false) => {
 			const y = yokla(v, { c, h: hint ? [hint.k] : [] });
 			if (!y || !alive) return y;
 			root.classList.add('kontrol');
 			for (let k = 0; k < n; k++) {
 				if (!alive) return y;
+				tbs[k].classList.remove('altin');
 				if (k < y.lead) {
 					drums[k].state = 'ok';
 					tbs[k].classList.add('ok');
@@ -891,6 +998,7 @@ export const kasa = {
 					buzz(45);
 					for (let j = k + 1; j < n; j++) {
 						drums[j].state = 'jam';
+						tbs[j].classList.remove('altin');
 						tbs[j].classList.add('jam');
 					}
 					for (const d of drums) d.dirty = true;
@@ -899,11 +1007,11 @@ export const kasa = {
 				}
 				drums[k].dirty = true;
 				wake();
-				await wait(rm ? 60 : 360);
+				await wait(rm ? 60 : quick ? 170 : 360);
 			}
-			await wait(260);
+			await wait(quick ? 80 : 260);
 			if (!alive) return y;
-			if (y.open) await openDoor();
+			if (y.open) await openDoor(quick);
 			else alarm();
 			return y;
 		};
@@ -911,27 +1019,35 @@ export const kasa = {
 		// ------------------------------------------------ cevap: levha, fişler, damga
 		const ticket = (r, k, win) => {
 			const y = yokla(v, r.value);
-			const digits = y
-				? [...r.value.c].map((ch, i) => `<i class="${i < y.lead ? 'ok' : i === y.lead ? 'no' : 'jam'}">${ch}</i>`).join('') + (y.hint ? `<span class="st" title="dinledi">${svgSteth}</span>` : '')
-				: `<span class="yok">şifre yok</span>`;
-			const tag = y ? (y.open ? `<span class="tg ac">${svgCheck}AÇTI</span>` : `<span class="tg">${y.lead}/${n}</span>`) : '<span class="tg">—</span>';
-			return `<div class="ks-b${win ? ' win' : ''}" style="--c:${esc(r.color)};--k:${k}"><span class="rk">${k + 1}</span><b class="fl-who" style="background:${esc(r.color)}"></b><span class="nm">${esc(r.name)}</span>${tag}<span class="kd">${digits}</span></div>`;
+			const digits = y ? [...r.value.c].map((ch, i) => `<i class="${i < y.lead ? 'ok' : i === y.lead ? 'no' : 'jam'}">${ch}</i>`).join('') : `<span class="yok">şifre yok</span>`;
+			const tag = y ? (y.open ? `<span class="tg ac">AÇTI</span>` : `<span class="tg">${y.lead}/${n}</span>`) : '<span class="tg">—</span>';
+			// sıra şeridi: numara, altında "açtı" ve "dinledi" işaretleri (dar fişte etiketin yerini tutar)
+			const marks = (y?.open ? svgCheck : '') + (y?.hint ? svgSteth : '');
+			return `<div class="ks-b${win ? ' win' : ''}" style="--c:${esc(r.color)};--k:${k}"><span class="rk"><b>${k + 1}</b>${marks}</span><b class="fl-who" style="background:${esc(r.color)}"></b><span class="nm">${esc(r.name)}</span>${tag}<span class="kd">${digits}</span></div>`;
 		};
+		/** Fişteki adlar sığsın: yazı küçülür; en küçükte de sığmazsa fiş dar biçime geçer (etiket kalkar, ad bütün satırı alır). */
 		const fitNames = () => {
 			for (const e of bilet.querySelectorAll('.nm')) {
-				e.style.fontSize = '';
-				let fs = 13;
-				for (let i = 0; i < 12 && e.scrollWidth > e.clientWidth + 0.5 && fs > 9; i++) e.style.fontSize = (fs -= 0.5) + 'px';
+				const b = e.closest('.ks-b');
+				b.classList.remove('dar');
+				for (let pass = 0; pass < 2; pass++) {
+					e.style.fontSize = '';
+					let fs = 13;
+					for (let i = 0; i < 12 && e.scrollWidth > e.clientWidth + 0.5 && fs > 9; i++) e.style.fontSize = (fs -= 0.5) + 'px';
+					if (e.scrollWidth <= e.clientWidth + 0.5 || b.classList.contains('dar')) break;
+					b.classList.add('dar');
+				}
 			}
 		};
 		const plate = () => {
 			if (!known) return;
 			const u = v.q.unit ? `<u>${esc(v.q.unit)}</u>` : '';
-			yer.innerHTML = `<div class="ks-levha"><small>DOĞRU ŞİFRE</small><b>${esc(hedefStr(v))}${u}</b>${v.q.not ? `<em>${esc(v.q.not)}</em>` : ''}</div>`;
+			yer.innerHTML = `<div class="ks-levha"><small>DOĞRU ŞİFRE</small><b>${esc(hedefStr(v))}${u}</b></div>`;
 			root.classList.add('levha');
 			place();
 		};
 
+		onClose(el, cleanup); // kart kapanınca: kare döngüsü, zamanlayıcılar, gözlemciler durur
 		return {
 			lock() {
 				done = true;
@@ -960,7 +1076,6 @@ export const kasa = {
 				}
 			},
 			reveal(results) {
-				revealed = true;
 				done = true;
 				listen = false;
 				root.classList.remove('dinle');
@@ -971,6 +1086,7 @@ export const kasa = {
 				// fişler hemen kurulur (arayüz avatarları şimdi koyar), yoklama bitince görünür
 				bilet.innerHTML = order.map((r, k) => ticket(r, k, k === 0 && r.value != null)).join('');
 				bilet.querySelectorAll('.fl-who').forEach((w, k) => order[k]?.p?.human && w.classList.add('me'));
+				const quick = !checkP; // kol çekilmedi (süre bitti ya da cevap dışarıdan): film kısa, sonuç hemen
 				const run = async () => {
 					if (!checkP && known) {
 						const mc = me && me.value && typeof me.value.c === 'string' && me.value.c.length === n ? me.value.c : null;
@@ -979,7 +1095,7 @@ export const kasa = {
 							[...mc].forEach((ch, k) => drums[k].to(Number(ch), 2));
 							root.classList.add('cekildi');
 							sfx(app, 'defend');
-							checkP = wait(560).then(() => check(mc));
+							checkP = wait(200).then(() => check(mc, true));
 						} else {
 							// izleyici ya da cevapsız: tamburlar doğru şifreye döner; biri açtıysa kapı açılır
 							[...hedefStr(v)].forEach((ch, k) => {
@@ -987,18 +1103,17 @@ export const kasa = {
 								drums[k].state = 'altin';
 								tbs[k].classList.add('altin');
 							});
-							checkP = wait(700).then(() => (results.some((r) => r.correct) ? openDoor() : alarm()));
+							checkP = wait(300).then(() => (results.some((r) => r.correct) ? openDoor(true) : alarm()));
 						}
 					}
 					await checkP;
-					await wait(420);
+					await wait(quick ? 120 : 420);
 					if (!alive) return;
 					plate();
 					root.classList.add('fis');
-					requestAnimationFrame(() => {
-						fitNames();
-						fit();
-					});
+					fit(); // sahne küçüldü: yerleşim hemen (gözlemciyi beklemeden)
+					fitNames();
+					requestAnimationFrame(fitNames);
 					sfx(app, 'reveal');
 					if (me && app) {
 						const y = yokla(v, me.value);
@@ -1026,10 +1141,10 @@ export const kasa = {
 			raf = 0;
 			for (const t of timers) clearTimeout(t);
 			timers.clear();
+			clearTimeout(introT);
 			ro?.disconnect();
 			offOpen?.();
 		}
-		onClose(el, cleanup);
 	},
 	joker(id, v, R) {
 		const n = v.n;

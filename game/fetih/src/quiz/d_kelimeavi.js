@@ -34,8 +34,9 @@ export const DIRS = [
 	[-1, -1],
 	[1, -1],
 ];
-/** Zorluğa göre yerleşim yönleri. */
+/** Zorluğa göre yerleşim yönleri ve ağırlıkları (orta ve zorda düz soldan sağa az: kelime ilk bakışta okunmasın). */
 export const YON = { 1: [0, 1, 2], 2: [0, 1, 2, 3], 3: [0, 1, 2, 3, 4, 5, 6, 7] };
+const YON_W = { 1: [1, 1, 0.8], 2: [0.5, 1, 1.15, 1.15], 3: [0.35, 0.55, 0.75, 0.75, 1.25, 1.2, 1, 1] };
 /** Kelime renkleri (ipucu, kapsül, cevap): altın, camgöbeği, pembe. */
 export const RENK = ['#ffd25a', '#46d8ff', '#ff70b0'];
 
@@ -97,7 +98,7 @@ export function denetle(g, n, words, place) {
  * Tabloyu kur: words (harf dizileri ya da yazı), n boy, dirs izinli yönler, R rastgele. Dönen: { g (düz dizi), place:
  * [{ r, c, d, len }] } ya da null (sığmadı). Belirlenimci (yalnız R kullanılır).
  */
-export function kur(words, n, dirs, R) {
+export function kur(words, n, dirs, R, dw = null) {
 	const W = words.map((w) => (Array.isArray(w) ? w : harfler(w)));
 	for (let tur = 0; tur < 160; tur++) {
 		const g = new Array(n * n).fill('');
@@ -130,15 +131,36 @@ export function kur(words, n, dirs, R) {
 				ok = false;
 				break;
 			}
-			// ağırlık: henüz kullanılmamış doğrultu, tek kesişme (tablo derli toplu), rastgele
-			const wt = cands.map((x) => (used.has(x.d % 4) ? 1 : 3.2) * (x.ov === 1 ? 2.4 : x.ov === 0 ? 1 : 0.25));
-			let u = R() * wt.reduce((a, b) => a + b, 0);
-			let pick = cands[cands.length - 1];
-			for (let k = 0; k < cands.length; k++)
-				if ((u -= wt[k]) <= 0) {
-					pick = cands[k];
-					break;
+			// önce yön (zorluğun yön ağırlığı; kullanılmış doğrultu çok az: üç kelime üç ayrı yönde), sonra yer: tek kesişme
+			// (tablo derli toplu), kenardan, hele sol üst köşeden ve ilk satırdan başlayan yatay kelime az (göz tabloya oradan
+			// girer), aynı doğrultuda yan yana duran kelime az (üst üste üç dikey "NNN / EEE" gibi okunmasın)
+			const byD = new Map();
+			for (const x of cands) (byD.get(x.d) || byD.set(x.d, []).get(x.d)).push(x);
+			const ds = [...byD.keys()];
+			const dW = ds.map((d) => (dw ? dw[dirs.indexOf(d)] ?? 1 : 1) * (used.has(d % 4) ? 0.12 : 1));
+			const pickW = (arr, wts) => {
+				let u = R() * wts.reduce((a, b) => a + b, 0);
+				for (let k = 0; k < arr.length; k++) if ((u -= wts[k]) <= 0) return arr[k];
+				return arr[arr.length - 1];
+			};
+			const dd = pickW(ds, dW);
+			const inD = byD.get(dd);
+			// aynı doğrultudaki bir kelimeye komşu mu (yanında ya da ucunun devamında): ikisi birleşip tek kelime gibi okunmasın
+			const side = (x) => {
+				const [dr, dc] = DIRS[x.d];
+				const near = (r, c) => inside(n, r, c) && lines[ix(n, r, c)].includes(x.d % 4);
+				for (let k = 0; k < L.length; k++) {
+					const r = x.r + dr * k;
+					const c = x.c + dc * k;
+					if (near(r - 1, c) || near(r + 1, c) || near(r, c - 1) || near(r, c + 1)) return true;
 				}
+				return near(x.r - dr, x.c - dc) || near(x.r + dr * L.length, x.c + dc * L.length);
+			};
+			const wt = inD.map((x) => {
+				const edge = (x.r === 0 || x.c === 0 ? 0.6 : 1) * (x.r === 0 && x.c === 0 ? 0.5 : 1) * (x.d % 4 === 0 && (x.r === 0 || x.r === n - 1) ? 0.5 : 1);
+				return (x.ov === 1 ? 2.4 : x.ov === 0 ? 1 : 0.25) * edge * (side(x) ? 0.15 : 1);
+			});
+			const pick = pickW(inD, wt);
 			const [dr, dc] = DIRS[pick.d];
 			for (let k = 0; k < L.length; k++) {
 				const j = ix(n, pick.r + dr * k, pick.c + dc * k);
@@ -239,31 +261,39 @@ const CSS = /* css */ `
 .fl-q.t-kelimeavi .fl-qbody{padding-top:8px}
 .yn-ka{position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:9px;user-select:none;-webkit-user-select:none}
 .ka-vd{display:none;flex:none;height:62px}
-.yn-ka.rv .ka-vd{display:block}
+.yn-ka.rv .ka-vd,.yn-ka.vd .ka-vd{display:block}
 .ka-clues{flex:none;display:flex;flex-direction:column;gap:5px}
 .ka-clue{position:relative;display:flex;align-items:center;gap:8px;min-height:34px;padding:3px 12px 3px 0;background:linear-gradient(90deg,rgba(255,255,255,.085),rgba(255,255,255,.035));
   box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);clip-path:polygon(0 0,100% 0,calc(100% - 6px) 100%,0 100%);transition:background .3s,box-shadow .3s}
 .ka-no{flex:none;align-self:stretch;width:30px;display:grid;place-items:center;font:italic 900 19px/1 'Barlow Condensed','Lilita One',sans-serif;color:#0b0e1c;
   background:var(--wc);clip-path:polygon(0 0,100% 0,78% 100%,0 100%);transition:background .3s}
 .ka-ct{flex:1 1 auto;min-width:0;font:600 14.5px/1.15 'Fredoka',sans-serif;color:#eef2ff}
-.ka-ans{display:none;flex:none;font:400 18px/1.05 'Lilita One',sans-serif;letter-spacing:.06em;color:var(--wc);text-shadow:0 0 12px color-mix(in srgb,var(--wc) 55%,transparent);white-space:nowrap}
+/* ipucundaki boşluk (cevap buraya gelir): kesik yazı sanılmasın diye açık bir boşluk çizgisi */
+.ka-blank{display:inline-block;width:2.2em;height:.2em;margin-left:.15em;vertical-align:baseline;border-radius:2px;background:var(--wc);opacity:.85}
+.ka-ans{display:none;position:absolute;left:38px;top:50%;transform:translateY(-50%);font:400 18px/1.05 'Lilita One',sans-serif;letter-spacing:.06em;color:var(--wc);text-shadow:0 0 12px color-mix(in srgb,var(--wc) 55%,transparent);white-space:nowrap}
 .ka-len{flex:none;padding:3px 7px 2px;border-radius:5px;font:italic 800 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;color:#aeb8de;background:rgba(0,0,0,.35);white-space:nowrap}
-.ka-who{display:flex;gap:4px;flex:none}
-.ka-who:empty{display:none}
+/* rakip portreleri: yer baştan ayrılır (rakip sayısına göre), portreler üst üste biner; ipucu yazısı oyunda hiç kaymaz */
+.ka-who{display:flex;justify-content:flex-end;flex:none;width:var(--rw,0px)}
+.ka-who .ka-av+.ka-av{margin-left:-9px}
+.yn-ka.rv .ka-who{width:auto;gap:4px}
+.yn-ka.rv .ka-who .ka-av+.ka-av{margin-left:0}
+.yn-ka.rv.pm .ka-who{gap:0}
+.yn-ka.rv.pm .ka-who .ka-av+.ka-av{margin-left:-6px}
 .ka-av{position:relative;width:26px;height:26px;flex:none;border-radius:8px;box-shadow:0 0 0 2px var(--pc),0 2px 0 rgba(0,0,0,.4);overflow:hidden;animation:kaPop .4s cubic-bezier(.3,1.8,.5,1) both}
 .ka-av .fl-av{display:block;width:100%;height:100%;border:0;border-radius:0;box-shadow:none;transform:none}
 .ka-av.me{box-shadow:0 0 0 2px #ffd25a,0 0 10px rgba(255,210,90,.6)}
 /* bulunan ipucu: sekme onay işaretine döner, plaka kelimenin renginde parlar, harf sayısının yerine cevap */
 .ka-clue.got{background:linear-gradient(90deg,color-mix(in srgb,var(--wc) 26%,transparent),rgba(255,255,255,.04));box-shadow:inset 0 0 0 1.5px color-mix(in srgb,var(--wc) 70%,transparent)}
 .ka-clue.got .ka-no{font-size:0;background:var(--wc) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4.5 12.5l5 5 10-11' fill='none' stroke='%230b0e1c' stroke-width='3.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") 42% 50%/16px no-repeat}
-.ka-clue.got .ka-ans{display:block}
-.ka-clue.got .ka-len{display:none}
+/* oyunda bulunan ipucu: cevap ipucu yazısının üstüne yazılır (satırın boyu, dolayısıyla tablo, hiç değişmez) */
+.ka-clue.got .ka-ans{display:block;animation:kaAns .45s cubic-bezier(.3,1.6,.5,1) both}
+.ka-clue.got .ka-ct,.ka-clue.got .ka-len{visibility:hidden}
 .ka-clue.flash{animation:kaFlash .7s ease-out}
 /* cevapta: kelime büyük, ipucu altında küçük, sağda bulanların portreleri; bulamadığın kelime beyaz */
 .yn-ka.rv .ka-clue{display:grid;grid-template-columns:30px minmax(0,1fr) auto;grid-template-areas:"no ans who" "no ct who";align-items:center;column-gap:8px;row-gap:2px;padding:4px 12px 4px 0}
 .yn-ka.rv .ka-no{grid-area:no}
-.yn-ka.rv .ka-ans{grid-area:ans;display:block}
-.yn-ka.rv .ka-ct{grid-area:ct;font-size:12.5px;color:#aab4d6}
+.yn-ka.rv .ka-ans{grid-area:ans;display:block;position:static;transform:none;animation:none}
+.yn-ka.rv .ka-ct{grid-area:ct;font-size:12.5px;color:#aab4d6;visibility:visible}
 .yn-ka.rv .ka-who,.yn-ka.rv .ka-none{grid-area:who}
 .yn-ka.rv .ka-len{display:none}
 .yn-ka.rv .ka-clue:not(.got) .ka-ans{color:#fff;text-shadow:none}
@@ -278,19 +308,27 @@ const CSS = /* css */ `
     radial-gradient(90% 90% at 32% 24%,rgba(255,255,255,.11),rgba(255,255,255,0) 62%) 0 0/1em 1em,
     linear-gradient(180deg,#2a3256,#1a2040);
   box-shadow:0 0 0 3px #c99a3a,0 0 0 5px #3a2a10,0 0 0 6px #0a0c14,0 14px 30px rgba(0,0,0,.55),inset 0 0 1.6em rgba(0,0,0,.45)}
+/* parlama: karoların üstünden ara ara geçen ışık (kapsüllerin ve harflerin altında; yalnız transform ile kayar) */
+.ka-gl{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:inherit;pointer-events:none}
+.ka-gl::before{content:'';position:absolute;top:0;bottom:0;left:0;width:60%;background:linear-gradient(105deg,transparent 0 20%,rgba(255,255,255,.08) 42%,rgba(255,255,255,.15) 50%,rgba(255,255,255,.08) 58%,transparent 80% 100%);
+  transform:translateX(-110%);will-change:transform;animation:kaGlint 5.5s ease-in-out infinite}
 .ka-hl,.ka-cells{position:absolute;inset:0}
 .ka-hl{pointer-events:none;z-index:1}
 .ka-cells{z-index:2;display:grid;grid-template-columns:repeat(var(--n),1fr);grid-template-rows:repeat(var(--n),1fr);pointer-events:none}
 .ka-c{display:grid;place-items:center;font:400 .58em/1 'Lilita One',sans-serif;color:#f3ecdb;text-shadow:0 .06em 0 rgba(0,0,0,.55);transition:color .2s,transform .2s}
+/* giriş: harfler sol üstten çapraz bir dalgayla döner (kart açılınca) */
+.yn-ka.intro .ka-c{animation:kaIn .42s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--w) * 26ms)}
 .ka-c.sel,.ka-c.anc{color:#1a1200;text-shadow:none;transform:scale(1.12)}
 .ka-c.on{color:#0b0e1c;text-shadow:0 1px 0 rgba(255,255,255,.35);animation:kaLetter .5s cubic-bezier(.3,1.9,.5,1) both;animation-delay:calc(var(--k) * 55ms)}
 .ka-c.hint{position:relative}
 .ka-c.hint::after{content:'';position:absolute;inset:.08em;border-radius:50%;box-shadow:0 0 0 .07em #fff,0 0 .35em .12em rgba(255,255,255,.65);animation:kaHint 1s ease-in-out infinite alternate;pointer-events:none}
 .ka-c.rv{color:#fff;text-shadow:0 0 .3em rgba(255,255,255,.55)}
+.ka-c.on.rv{color:#0b0e1c;text-shadow:0 1px 0 rgba(255,255,255,.35)}
 /* kapsül: başlangıç hücresinin ortasından döner; uzunluk ve kalınlık hücre biriminde */
 .ka-pill{position:absolute;left:calc(var(--x) * 1em - .41em);top:calc(var(--y) * 1em - .41em);width:calc(var(--l) * 1em + .82em);height:.82em;border-radius:.41em;
   transform-origin:.41em .41em;transform:rotate(var(--a));background:var(--wc,#ffd25a);box-shadow:0 0 0 .05em rgba(255,255,255,.55),0 0 .5em color-mix(in srgb,var(--wc,#ffd25a) 70%,transparent);overflow:hidden}
-.ka-pill.sel,.ka-pill.anc{--wc:#ffd25a;background:linear-gradient(90deg,#ffe58a,#ffc23a);opacity:.95}
+/* süren seçim beyaz (bulunan kelime kendi rengine dolar: altın, camgöbeği, pembe) */
+.ka-pill.sel,.ka-pill.anc{--wc:#ffffff;background:linear-gradient(90deg,#ffffff,#dfe8ff);box-shadow:0 0 0 .05em #fff,0 0 .55em rgba(200,220,255,.85);opacity:.96}
 .ka-pill.anc{animation:kaHint .6s ease-in-out infinite alternate}
 .ka-pill.no{--wc:#ff4a3a;background:linear-gradient(90deg,#ff8070,#e8343c);animation:kaNo .42s ease-in-out both,kaFade .3s .42s ease-in forwards}
 .ka-pill.got{animation:kaGot .45s cubic-bezier(.3,1.6,.5,1) both}
@@ -306,6 +344,7 @@ const CSS = /* css */ `
 .yn-ka.rv .ka-tip{display:none}
 @keyframes kaPop{0%{transform:scale(.3);opacity:0}100%{transform:none;opacity:1}}
 @keyframes kaFlash{0%{filter:brightness(2.2)}100%{filter:none}}
+@keyframes kaAns{0%{opacity:0;transform:translateY(-50%) scale(1.6)}100%{opacity:1;transform:translateY(-50%)}}
 @keyframes kaLetter{0%{transform:scale(1)}45%{transform:scale(1.42) rotate(-6deg)}100%{transform:scale(1)}}
 @keyframes kaHint{from{opacity:.35}to{opacity:1}}
 @keyframes kaNo{20%{transform:rotate(var(--a)) translateX(-.12em)}40%{transform:rotate(var(--a)) translateX(.12em)}60%{transform:rotate(var(--a)) translateX(-.08em)}80%{transform:rotate(var(--a)) translateX(.06em)}}
@@ -313,9 +352,13 @@ const CSS = /* css */ `
 @keyframes kaGot{0%{transform:rotate(var(--a)) scaleY(.4);opacity:.3}100%{transform:rotate(var(--a));opacity:1}}
 @keyframes kaSweep{0%{background-position:-80% 0}100%{background-position:180% 0}}
 @keyframes kaShake{20%{transform:translateX(-5px)}40%{transform:translateX(5px)}60%{transform:translateX(-3px)}80%{transform:translateX(3px)}}
+@keyframes kaIn{0%{opacity:0;transform:scale(.2) rotate(-25deg)}100%{opacity:1;transform:none}}
+@keyframes kaGlint{0%,55%{transform:translateX(-110%)}100%{transform:translateX(190%)}}
 @keyframes kaWin{0%{box-shadow:0 0 0 3px #ffd25a,0 0 0 5px #3a2a10,0 0 2em .6em rgba(255,210,90,.75)}}
 /* kısa ekran: ipuçları alçak, ipucu satırı tek satıra yakın; en kısa ekranda soru yazısı yerine ipuçları konuşur */
 @media (max-height:720px){
+  /* kısa ekran: tema cümlesi kalkar (ipuçları konuşur), yer tabloya */
+  .fl-q.t-kelimeavi .fl-qtext{display:none}
   .yn-ka{gap:7px}
   .ka-clue{min-height:29px}
   .ka-no{width:26px;font-size:17px}
@@ -325,17 +368,19 @@ const CSS = /* css */ `
   .yn-ka.rv .ka-clue{grid-template-columns:26px minmax(0,1fr) auto}
 }
 @media (max-height:600px){
-  .fl-q.t-kelimeavi .fl-qtext{display:none}
-  .fl-q.t-kelimeavi .fl-qbody{padding-top:6px}
-  .yn-ka{gap:6px}
-  .ka-clues{gap:4px}
-  .ka-clue{min-height:26px;gap:6px}
-  .ka-ct{font-size:12.5px}
+  /* en kısa ekran (320×568): tabloya yer: soru yazısı ve kural satırı (dar kartta kendi satırı) kalkar, ipuçları sıkışır */
+  .fl-q.t-kelimeavi .fl-qhead .fl-rule{display:none}
+  .fl-q.t-kelimeavi .fl-qbody{padding-top:4px}
+  .fl-q.t-kelimeavi .fl-tbar{margin-bottom:4px}
+  .yn-ka{gap:5px}
+  .ka-clues{gap:3px}
+  .ka-clue{min-height:24px;gap:6px;padding-top:1px;padding-bottom:1px}
+  .ka-ct{font-size:12px;line-height:1.08}
   .ka-len{padding:2px 5px 1px;font-size:11px}
   .ka-vd{height:50px}
   .ka-av{width:22px;height:22px}
 }
-@media (prefers-reduced-motion:reduce){.ka-c.hint::after,.ka-pill::after,.ka-pill.anc{animation:none}}
+@media (prefers-reduced-motion:reduce){.ka-c.hint::after,.ka-pill::after,.ka-pill.anc,.ka-gl::before,.yn-ka.intro .ka-c{animation:none}}
 `;
 
 export const kelimeavi = {
@@ -343,6 +388,7 @@ export const kelimeavi = {
 	label: 'Kelime Avı',
 	kind: 'closest',
 	cover: true, // tam ekran av panosu (harita gizli): tablo telefonun genişliğini ister
+	calm: true, // harita arkada durgun (klasik tiplerle aynı işaret)
 	keep: true,
 	stampAt: '.ka-vd', // cevap damgası ipuçlarının üstündeki boş bantta (soru yazısının yerinde); tabloya, cevaplara binmez
 	rule: 'En çok kelime',
@@ -360,7 +406,8 @@ export const kelimeavi = {
 		const longest = Math.max(3, ...list.map((x) => x.w.length));
 		const n = clamp(Math.round(Number(q.n) || [7, 8, 9][diff - 1]), longest, 10);
 		const dirs = YON[diff];
-		const res = kur(list.map((x) => x.w), n, dirs, R) || kur(list.map((x) => x.w), n, dirs, mulberry(n * 7919 + list.length)) || kur(list.map((x) => x.w), n + 1, dirs, mulberry(17));
+		const W0 = list.map((x) => x.w);
+		const res = kur(W0, n, dirs, R, YON_W[diff]) || kur(W0, n, dirs, mulberry(n * 7919 + list.length), YON_W[diff]) || kur(W0, n + 1, dirs, mulberry(17));
 		if (!res) throw new Error(`kelimeavi: ${q.id} tablosu kurulamadı`);
 		const N = res.g.length === n * n ? n : n + 1;
 		const grid = Array.from({ length: N }, (_, r) => res.g.slice(r * N, r * N + N).join(''));
@@ -380,7 +427,7 @@ export const kelimeavi = {
 				wait: 0.5 + v.clues.length * 0.45, // bulunan kelimenin canlandırması (harfler ipucuna uçar)
 				look: LOOK.orient + v.clues.length * LOOK.gaze + 0.35 * N, // ipuçlarına ve tabloya ilk bakış
 				// her kelime için: ipucunu çöz (zorlukla), tabloyu tara (hücre sayısıyla), yönü fark et
-				think: v.clues.length * (P.think[0] + P.think[1] * k + cells * 0.052 + rev * 1.1),
+				think: v.clues.length * (P.think[0] + P.think[1] * k + cells * 0.042 + rev * 0.8),
 				act: v.clues.reduce((s, x) => s + 1.05 + 0.09 * x.len, 0) + ACT.tap, // kaydır, bırak (bir de kaçan seçim)
 			};
 		});
@@ -394,12 +441,15 @@ export const kelimeavi = {
 		const W = v.words || [];
 		const nW = v.clues.length;
 		const avOf = (i) => card?.querySelector(`.fl-qwho .fl-qp[data-p="${i}"] .fl-av`)?.outerHTML || '<span class="fl-av"></span>';
-		el.innerHTML = `<div class="yn-ka" style="--n:${n}">
+		const cur = app?.match?.cur;
+		const bots = cur?.v === v ? cur.bots || [] : [];
+		const rw = bots.length ? 26 + 17 * (Math.min(3, bots.length) - 1) : 0;
+		el.innerHTML = `<div class="yn-ka" style="--n:${n};--rw:${rw}px">
 			<div class="ka-vd"></div>
 			<div class="ka-clues">${v.clues
-				.map((x, i) => `<div class="ka-clue" data-i="${i}" style="--wc:${RENK[i % 3]}"><i class="ka-no">${i + 1}</i><span class="ka-ct">${esc(x.c)}</span><b class="ka-ans"></b><em class="ka-len">${x.len} HARF</em><span class="ka-who"></span></div>`)
+				.map((x, i) => `<div class="ka-clue" data-i="${i}" style="--wc:${RENK[i % 3]}"><i class="ka-no">${i + 1}</i><span class="ka-ct">${esc(x.c).replace(/\s*\u2026\s*/g, ' <u class="ka-blank"></u> ').trim()}</span><b class="ka-ans"></b><em class="ka-len">${x.len} HARF</em><span class="ka-who"></span></div>`)
 				.join('')}</div>
-			<div class="ka-board"><div class="ka-grid"><div class="ka-hl"></div><div class="ka-cells">${G.map((row, r) => row.map((ch, c) => `<span class="ka-c" data-r="${r}" data-c="${c}">${esc(ch)}</span>`).join('')).join('')}</div></div></div>
+			<div class="ka-board"><div class="ka-grid"><i class="ka-gl"></i><div class="ka-hl"></div><div class="ka-cells">${G.map((row, r) => row.map((ch, c) => `<span class="ka-c" data-r="${r}" data-c="${c}" style="--w:${r + c}">${esc(ch)}</span>`).join('')).join('')}</div></div></div>
 			<div class="ka-tip">Harflerin üstünden <b>düz bir çizgide</b> kaydır, bırak</div>
 		</div>`;
 		rule(el, 'En çok kelime');
@@ -417,6 +467,7 @@ export const kelimeavi = {
 		let done = false;
 		let drag = null;
 		let anchor = null;
+		let settle = Promise.resolve(); // son kelimenin kutlaması (cevap ekranı bunun ardından)
 		const now = () => (t0 ? Math.round(((clock.now() - t0) / 1000) * 10) / 10 : 0);
 		const fx = () => app?.ui?.fx;
 
@@ -503,7 +554,7 @@ export const kelimeavi = {
 			// harfler ipucuna uçar (kopyalar kökün içinde; ipucu cevabıyla dolunca kalkar)
 			const rb = root.getBoundingClientRect();
 			const zf = rb.width / (root.offsetWidth || rb.width) || 1; // _coverFit yakınlaştırması
-			const target = clue.getBoundingClientRect();
+			const target = clue.querySelector('.ka-ct').getBoundingClientRect();
 			const letters = [...w.w];
 			cells.forEach(([r, c], k) => {
 				const src = cellOf(r, c).getBoundingClientRect();
@@ -513,7 +564,7 @@ export const kelimeavi = {
 				const sz = Math.max(16, Math.min(28, src.width * 0.86)) / zf;
 				f.style.cssText = `--wc:${RENK[i % 3]};width:${sz.toFixed(1)}px;height:${sz.toFixed(1)}px;left:${((src.left + src.width / 2 - rb.left) / zf - sz / 2).toFixed(1)}px;top:${((src.top + src.height / 2 - rb.top) / zf - sz / 2).toFixed(1)}px;font-size:${(sz * 0.62).toFixed(1)}px`;
 				root.appendChild(f);
-				const tx = ((target.left + target.width * 0.55 + (k - letters.length / 2) * 13 - src.left - src.width / 2) / zf).toFixed(1);
+				const tx = ((target.left + 10 + k * 13 - src.left - src.width / 2) / zf).toFixed(1);
 				const ty = ((target.top + target.height / 2 - src.top - src.height / 2) / zf).toFixed(1);
 				setTimeout(() => {
 					f.style.transform = `translate(${tx}px,${ty}px) scale(.55) rotate(${(k % 2 ? 1 : -1) * 12}deg)`;
@@ -540,9 +591,17 @@ export const kelimeavi = {
 			done = true;
 			clearSel();
 			setAnchor(null);
-			grid.classList.add('win');
-			sfx(app, 'fireworks', { vol: 0.7 });
+			// cevap hemen gider (saat üçüncü kelimenin anı); kutlama kartta sürer, cevap ekranı onu bekler
 			api.answer({ s: log.slice() });
+			let fin;
+			settle = new Promise((r) => (fin = r));
+			later(() => {
+				grid.classList.add('win');
+				sfx(app, 'fireworks', { vol: 0.7 });
+				const g = grid.getBoundingClientRect();
+				fx()?.burst(g.left + g.width / 2, g.top + g.height / 2, { n: 26, dist: 150, colors: [...RENK, '#fff'], kind: 'star', size: 13, life: 900 });
+			}, 520);
+			later(fin, 1250);
 		};
 		const submit = (r0, c0, r1, c1) => {
 			const cells = hat(n, r0, c0, r1, c1);
@@ -554,7 +613,7 @@ export const kelimeavi = {
 				found.set(i, t);
 				for (const c of root.querySelectorAll(`.ka-c.hint`)) if (cells.some(([r, cc]) => cellOf(r, cc) === c)) c.classList.remove('hint');
 				celebrate(i);
-				if (found.size === nW) later(finish, 650);
+				if (found.size === nW) finish();
 				return;
 			}
 			// yanlış (ya da zaten bulunmuş): kapsül kızarır, sarsılır, söner
@@ -617,8 +676,6 @@ export const kelimeavi = {
 		});
 
 		// rakipler: botun planı kartta oynanır (bulduğu kelimenin ipucuna portresi düşer; yeri gösterilmez)
-		const cur = app?.match?.cur;
-		const bots = cur?.v === v ? cur.bots || [] : [];
 		const rivalChip = (i, p) => {
 			const box = clueEl[i]?.querySelector('.ka-who');
 			if (!box || box.querySelector(`[data-p="${p.i}"]`)) return;
@@ -628,6 +685,8 @@ export const kelimeavi = {
 		const stopOpen = onOpen(el, () => {
 			t0 = clock.now();
 			sfx(app, 'whoosh');
+			root.classList.add('intro');
+			later(() => root.classList.remove('intro'), 520 + 2 * n * 26);
 			for (const b of bots) {
 				const s = sayim(v, b.value);
 				for (const [i, t] of s.got)
@@ -647,6 +706,9 @@ export const kelimeavi = {
 				drag = null;
 				clearSel();
 				setAnchor(null);
+				// süre doldu (kelime kaldı): damga bandı hemen açılır, arayüzün "SÜRE DOLDU" damgası kendi yerine otursun. Hepsi
+				// bulunduysa açmaz: son kelimenin harfleri uçarken pano kaymasın (bandı cevap ekranı açar)
+				if (found.size < nW) root.classList.add('vd');
 			},
 			value: () => ({ s: log.slice() }),
 			joker(e) {
@@ -655,12 +717,20 @@ export const kelimeavi = {
 				app?.ui?.toast?.('Bulunmamış kelimelerin ilk harfi parlıyor', { tone: 'good', ms: 1800 });
 			},
 			reveal(results) {
+				// son kelimenin kutlaması sürüyorsa önce o biter
+				settle.then(() => el.isConnected && show(results));
+			},
+			destroy: close,
+		};
+		function show(results) {
+			{
 				done = true;
 				drag = null;
 				clearSel();
 				setAnchor(null);
 				for (const c of root.querySelectorAll('.ka-c.hint')) c.classList.remove('hint');
 				root.classList.add('rv');
+				root.classList.toggle('pm', results.length > 2); // 3–4 oyuncu: portreler biraz üst üste
 				const meR = results.find((r) => r.p?.human);
 				const mine = meR ? sayim(v, meR.value) : { got: new Map(), miss: 0, last: 0 };
 				// insanın değeri kartın gördüğünden farklıysa (süre doldu, denetim cevabı) kartı ona göre tamamla
@@ -703,9 +773,8 @@ export const kelimeavi = {
 					else stampLater(app, meR.value == null ? 'SÜRE DOLDU' : 'AV BOŞ', 'bad', why || 'Kelimeler tabloda işaretli');
 				}
 				if (!mine.got.size) sfx(app, 'reveal');
-			},
-			destroy: close,
-		};
+			}
+		}
 	},
 	joker(id, v) {
 		if (id !== 'yari' || !Array.isArray(v.words)) return null;
@@ -748,10 +817,10 @@ export const kelimeavi = {
 			s.push(R() < 0.25 ? [e[0], e[1], w.r, w.c, t] : [w.r, w.c, e[0], e[1], t]);
 		}
 		s.sort((a, b) => a[4] - b[4]);
-		const got = sayim(v, { s }).got.size;
+		const sc = sayim(v, { s });
 		// hepsini bulan son kelimede cevaplar; bulamayan aramayı yavaş oyuncunun süresinde bırakır
 		const give = Math.min(v.sec || 60, Math.max(T + 1.5, v.slow || T + 1.5));
-		const time = got === v.words.length ? Math.max(1, T) : Math.max(1, Math.min(v.sec || 60, give));
+		const time = sc.got.size === v.words.length ? Math.max(1, sc.last) : Math.max(1, Math.min(v.sec || 60, give));
 		return { value: { s }, time };
 	},
 	/** Sınama: üç kelimeyi bulan ve hiçbir şey bulamayan cevap. */

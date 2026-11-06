@@ -48,12 +48,25 @@ const CSS = /* css */ `
 .pk-cam{position:absolute;inset:0;transform-origin:50% 46%;transition:transform .9s cubic-bezier(.2,.8,.25,1)}
 .yn-pk.slow .pk-cam{transform:scale(1.045)}
 .pk-bg{position:absolute;inset:0;width:100%;height:100%;z-index:0}
-.pk-bg .fl{opacity:0;transform-box:fill-box;transform-origin:50% 50%;animation:pkFlash 3.2s ease-out infinite}
-.pk-bg .crowd{transform-box:fill-box;transform-origin:50% 100%}
-.yn-pk.roar .pk-bg .crowd{animation:pkJump .32s ease-in-out 4 alternate}
-.yn-pk.roar .pk-bg .fl{animation:pkFlashB .9s ease-out 2}
-.pk-bg .beam{mix-blend-mode:screen;animation:pkBeam 4.5s ease-in-out infinite alternate}
-.pk-bg .led{transform-box:fill-box;animation:pkLed 2.4s linear infinite}
+.pk-crowd,.pk-beams{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.pk-crowd{transform-origin:50% 100%}
+.yn-pk.roar .pk-crowd{animation:pkJump .32s ease-in-out 4 alternate}
+.pk-beams{mix-blend-mode:screen;animation:pkBeam 4.5s ease-in-out infinite alternate}
+.pk-fls{position:absolute;inset:0;z-index:0;pointer-events:none}
+.pk-fls i{position:absolute;width:var(--r);height:var(--r);margin:calc(var(--r) / -2) 0 0 calc(var(--r) / -2);border-radius:50%;background:#fff;box-shadow:0 0 6px 2px rgba(255,255,255,.8);opacity:0;
+  animation:pkFlash var(--du) ease-out var(--dl) infinite}
+.yn-pk.roar .pk-fls i{animation:pkFlashB .9s ease-out calc(var(--dl) * .12) 2}
+.pk-led{position:absolute;left:0;right:0;z-index:0;overflow:hidden;pointer-events:none}
+.pk-led i{position:absolute;left:0;top:0;bottom:0;width:200%;background:repeating-linear-gradient(90deg,var(--cc2) 0 12.5%,#ffd25a 12.5% 25%,var(--cc2) 25% 37.5%,#fff 37.5% 50%);
+  opacity:.85;animation:pkLed 2.4s linear infinite}
+.yn-pk.roar .pk-led i{animation-duration:.6s}
+.pk-sw{position:absolute;left:-35%;width:35%;z-index:0;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.14),transparent);animation:pkSweep 6.5s linear infinite}
+.yn-pk.roar .pk-sw{animation-duration:1.2s}
+.pk-flag{position:absolute;z-index:0;pointer-events:none;width:var(--fw);height:var(--fh2)}
+.pk-flag svg{position:absolute;inset:0;width:100%;height:100%;overflow:visible}
+.pk-flag b{position:absolute;left:0;top:0;width:var(--fw);height:var(--fh);background:var(--c);clip-path:polygon(0 0,100% 0,82% 50%,100% 100%,0 100%);transform-origin:0 50%;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.3);animation:pkFlag 1.1s ease-in-out var(--dl) infinite alternate}
+.pk-flag::before{content:'';position:absolute;left:-1px;top:0;bottom:0;width:2px;background:#c8d0dc}
 .pk-net{position:absolute;left:0;top:0;width:100%;height:100%;z-index:1;overflow:visible;pointer-events:none}
 .pk-net .mesh{transform-box:view-box}
 .pk-net .rip{fill:none;stroke:#fff;stroke-width:2;opacity:0}
@@ -116,10 +129,17 @@ const CSS = /* css */ `
 .pk-fr i{position:absolute;background:linear-gradient(90deg,#c9d2e2,#fff 38%,#fff 55%,#aab4c8);box-shadow:0 0 0 1.2px rgba(10,20,40,.55),0 3px 8px rgba(0,0,0,.45)}
 .pk-fr i.bar{background:linear-gradient(180deg,#fff,#fff 45%,#b8c2d6)}
 .pk-fr.shake{animation:pkPost .5s cubic-bezier(.36,.07,.19,.97)}
+/* karlı derbi: direk diplerinde kar yığını, kenarlarda kırağı (levhaların altında: yazıya binmez) */
+.yn-pk[data-hava=kar] .pk-fr i.post::after{content:'';position:absolute;left:-7px;right:-7px;bottom:-4px;height:9px;border-radius:50% 50% 30% 30%;background:radial-gradient(60% 90% at 50% 100%,#fff,#e8f2ff 70%,rgba(232,242,255,0))}
+.yn-pk[data-hava=kar] .pk-vig{opacity:1;background:radial-gradient(85% 80% at 50% 45%,transparent 60%,rgba(220,236,255,.28))}
+.yn-pk[data-hava=kar].slow .pk-vig{background:radial-gradient(75% 70% at 50% 45%,transparent 55%,rgba(0,0,10,.6))}
 .pk-fr .snow{position:absolute;left:-2px;right:-2px;height:7px;top:-5px;border-radius:6px 6px 2px 2px;background:radial-gradient(circle at 10% 100%,#fff 0 5px,transparent 6px) 0 0/16px 7px repeat-x,#fff;opacity:.95;filter:drop-shadow(0 -1px 1px rgba(160,200,255,.7))}
 .pk-ball{position:absolute;z-index:8;left:0;top:0;pointer-events:none;will-change:transform}
 .pk-ball svg{width:100%;height:100%;overflow:visible}
+.pk-ball .spin{transform-origin:0 0}
 .pk-ball.trail::before{content:'';position:absolute;inset:6%;border-radius:50%;box-shadow:0 0 14px 6px rgba(255,255,255,.45)}
+.pk-boot{position:absolute;z-index:7;pointer-events:none;transform-origin:20% 18%;transform:rotate(-16deg);filter:drop-shadow(0 4px 4px rgba(0,0,0,.45))}
+.pk-boot svg{width:100%;height:100%;overflow:visible}
 .pk-shadow{position:absolute;z-index:2;border-radius:50%;background:radial-gradient(closest-side,rgba(0,0,0,.55),rgba(0,0,0,0));pointer-events:none}
 .pk-spot{position:absolute;z-index:1;border-radius:50%;background:#f4f8ff;opacity:.9;pointer-events:none}
 .pk-hint{position:absolute;z-index:7;left:50%;transform:translate(-50%,-50%) skewX(-8deg);padding:3px 12px;white-space:nowrap;pointer-events:none;
@@ -133,6 +153,8 @@ const CSS = /* css */ `
 .pk-tag small{font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:var(--tc,#ffd25a)}
 .pk-tag b{font:italic 900 14px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.04em;color:#fff;white-space:nowrap;text-transform:uppercase}
 .pk-tag.short b{display:none}
+.yn-pk.rv .pk-tag{opacity:0;transition:opacity .3s}
+.yn-pk.rv .pk-boot{opacity:0;transition:opacity .35s .75s}
 /* şut işaretleri (cevap): portreli top, oyuncu rengi halka, köşesinin dışında bir sırada */
 .pk-mk{position:absolute;z-index:7;width:var(--mk);height:var(--mk);margin:calc(var(--mk) / -2) 0 0 calc(var(--mk) / -2);border-radius:50%;pointer-events:none;
   box-shadow:0 0 0 2.5px var(--c),0 0 0 4px rgba(255,255,255,.9),0 4px 8px rgba(0,0,0,.5);background:var(--c);animation:pkMk .42s var(--dl) cubic-bezier(.3,1.7,.5,1) both}
@@ -153,11 +175,15 @@ const CSS = /* css */ `
 .pk-vig{position:absolute;inset:0;z-index:4;pointer-events:none;opacity:0;transition:opacity .5s;background:radial-gradient(75% 70% at 50% 45%,transparent 55%,rgba(0,0,10,.6))}
 .yn-pk.slow .pk-vig{opacity:1}
 .yn-pk[data-hava=aksam] .pk-st{background:#2a1530}
+.fl-q.hot .yn-pk .pk-kp .kp-in{animation-duration:.85s}
+.fl-q.hot .yn-pk .pk-led i{background:repeating-linear-gradient(90deg,#ff3a2a 0 12.5%,#2a0806 12.5% 25%);animation-duration:.8s}
 @keyframes pkFlash{0%,86%{opacity:0;transform:scale(.4)}90%{opacity:1;transform:scale(1.4)}100%{opacity:0;transform:scale(.6)}}
 @keyframes pkFlashB{0%{opacity:0}12%{opacity:1;transform:scale(1.6)}100%{opacity:0;transform:scale(.6)}}
 @keyframes pkJump{to{transform:translateY(-3px)}}
 @keyframes pkBeam{from{opacity:.55}to{opacity:.9}}
 @keyframes pkLed{to{transform:translateX(-50%)}}
+@keyframes pkFlag{from{transform:skewY(-7deg) scaleX(.94)}to{transform:skewY(6deg) scaleX(1.02)}}
+@keyframes pkSweep{from{transform:translateX(0)}to{transform:translateX(400%)}}
 @keyframes pkSnow{from{transform:translate(0,0)}to{transform:translate(var(--x),calc(var(--H) + 16px))}}
 @keyframes pkIdle{0%,100%{transform:translateX(0) translateY(0)}25%{transform:translateX(-3%) translateY(-1.5%)}50%{transform:translateX(0) translateY(0)}75%{transform:translateX(3%) translateY(-1.5%)}}
 @keyframes pkCrouch{to{transform:scaleY(.93) scaleX(1.04)}}
@@ -170,7 +196,7 @@ const CSS = /* css */ `
 @keyframes pkWhite{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
 @keyframes pkCall{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-10deg)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.18) rotate(-4deg)}70%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-4deg)}100%{opacity:0;transform:translate(-50%,-62%) scale(1.06) rotate(-4deg)}}
 @keyframes pkHint{from{transform:translate(-50%,-50%) skewX(-8deg) scale(1)}to{transform:translate(-50%,-50%) skewX(-8deg) scale(1.06)}}
-@media (prefers-reduced-motion:reduce){.pk-kp .kp-in,.pk-bg .fl,.pk-bg .beam,.pk-snow i,.pk-hint{animation:none}}
+@media (prefers-reduced-motion:reduce){.pk-kp .kp-in,.pk-fls i,.pk-beams,.pk-snow i,.pk-hint,.pk-sw,.pk-flag b,.pk-led i{animation:none}}
 `;
 
 // ---------------------------------------------------------------- çizimler
@@ -199,29 +225,43 @@ const keeperSVG = (id) => `<svg class="kp-fig" viewBox="0 0 100 150" aria-hidden
 	<g class="kp-ball" transform="translate(50 71)"><circle r="10.5" fill="#f2f5fa" stroke="#1b2133" stroke-width="1.6"/><path d="M0-4 4-1 2.5 3.5h-5L-4-1z" fill="#1b2133"/></g>
 	</svg>`;
 
+/** Şutçunun kramponu (yandan; rengi şutçunun rengi, beyaz şeritler, krampon dişleri). */
+const bootSVG = (id) => `<svg viewBox="0 0 120 70" aria-hidden="true"><defs><linearGradient id="pkbt${id}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="color-mix(in srgb,var(--me) 70%,#fff)"/><stop offset=".5" stop-color="var(--me)"/><stop offset="1" stop-color="color-mix(in srgb,var(--me) 60%,#000)"/></linearGradient></defs>
+	<path d="M10-30h26v46H10z" fill="#f2f4f8"/><path d="M10-14h26v6H10zM10-2h26v6H10z" fill="var(--me)"/>
+	<path d="M8 22Q9 10 30 12L70 22Q96 30 108 44Q112 52 104 56H14Q6 54 6 44Z" fill="url(#pkbt${id})" stroke="rgba(0,0,0,.45)" stroke-width="1.6"/>
+	<path d="M44 26 58 50M54 28 68 52M64 31 76 53" stroke="#fff" stroke-width="4.2" stroke-linecap="round" opacity=".92"/>
+	<path d="M30 15l6 6 4-7 6 7 4-6" fill="none" stroke="#fff" stroke-width="2" stroke-linejoin="round" opacity=".85"/>
+	<path d="M10 56H106Q108 62 100 63H14Q8 62 10 56Z" fill="#161b2a"/><path d="M22 63h7v5h-7zM44 63h7v5h-7zM70 63h7v5h-7zM90 63h7v5h-7z" fill="#0c0f18"/>
+	<ellipse cx="92" cy="40" rx="9" ry="4" fill="#fff" opacity=".28" transform="rotate(24 92 40)"/></svg>`;
+
 const ICO = {
 	ok: '<svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>',
 	no: '<svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>',
+	kum: '<svg viewBox="0 0 24 24"><path d="M7 3h10M7 21h10M8 3c0 5 8 5 8 9s-8 4-8 9M16 3c0 5-8 5-8 9s8 4 8 9" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/></svg>',
 	kp: '<svg viewBox="0 0 24 24"><path d="M6 13V7a1.5 1.5 0 0 1 3 0v4V5a1.5 1.5 0 0 1 3 0v6V6a1.5 1.5 0 0 1 3 0v6-3a1.5 1.5 0 0 1 3 0v6c0 4-3 7-7 7s-6-2.5-6-6z" fill="#d8f24a" stroke="#fff" stroke-width="1.2"/></svg>',
 };
 
-/** Sahne zemini (gökyüzü, ışık kuleleri, tribün, LED pano, saha): ölçülen boyda, bozulmadan çizilir. */
-function bgSVG(L, hava, team, seed) {
+/**
+ * Sahne zemini, ölçülen boyda: durağan bir SVG (gökyüzü, güneş ya da ışık kuleleri, tribün gövdesi, saha, çizgiler) ve
+ * canlı parçaların yerleri. Canlı parçalar (seyirci, flaşlar, huzmeler, LED pano, ışık dalgası, bayraklar) ayrı küçük
+ * katmanlarda yalnız transform/opacity ile oynar: büyük SVG'nin her karede yeniden boyanması (telefonda pahalı) önlenir.
+ */
+function stadium(L, hava, team, seed) {
 	const { W, H, gx, gw, gy, gb } = L;
 	const R = rngOf(seed);
 	const sky = hava === 'aksam'
-		? '<stop offset="0" stop-color="#1c1240"/><stop offset=".45" stop-color="#6a2a6a"/><stop offset=".8" stop-color="#ff7a4a"/><stop offset="1" stop-color="#ffb46a"/>'
+		? '<stop offset="0" stop-color="#2a1650"/><stop offset=".4" stop-color="#8a2f6a"/><stop offset=".75" stop-color="#ff7a4a"/><stop offset="1" stop-color="#ffc06a"/>'
 		: hava === 'kar'
 			? '<stop offset="0" stop-color="#0a1430"/><stop offset=".6" stop-color="#1e3460"/><stop offset="1" stop-color="#3a5a8a"/>'
 			: '<stop offset="0" stop-color="#050a26"/><stop offset=".55" stop-color="#0e1d55"/><stop offset="1" stop-color="#22357a"/>';
-	const standTop = Math.max(6, gy - Math.min(46, H * 0.16));
+	const standTop = Math.max(6, Math.round(gy * 0.62));
 	const standBot = gb - (gb - gy) * 0.34; // tribünün dibi kalenin arkasında (LED pano)
 	// tribün katları: yüzler (küçük daireler), arada atkılar (iki oyuncunun renkleri)
 	const rows = Math.max(3, Math.min(9, Math.round((standBot - standTop) / 11)));
 	const rh = (standBot - standTop) / rows;
 	const pal = hava === 'aksam' ? ['#2a1830', '#3a2238', '#4a2a3a', '#20142a'] : ['#1a2550', '#243166', '#2e3a74', '#141d44', '#38407a'];
 	let heads = '';
-	let flash = '';
+	const flashes = [];
 	for (let r = 0; r < rows; r++) {
 		const y = standTop + rh * (r + 0.62);
 		const sz = rh * (0.3 + 0.06 * (r / rows));
@@ -230,27 +270,34 @@ function bgSVG(L, hava, team, seed) {
 		for (let x = -R() * step; x < W + step; x += step * (0.85 + R() * 0.3)) {
 			const tc = R() < 0.18 ? team[R() < 0.5 ? 0 : 1] : pal[Math.floor(R() * pal.length)];
 			heads += `<circle cx="${f1(x)}" cy="${f1(y + (R() - 0.5) * rh * 0.2)}" r="${f1(sz)}" fill="${tc}"/>`;
-			if (R() < 0.05) flash += `<circle class="fl" cx="${f1(x)}" cy="${f1(y - sz)}" r="${f1(Math.max(1.6, sz * 0.7))}" fill="#fff" style="animation-delay:${f1(R() * 3.2)}s;animation-duration:${f1(2.4 + R() * 2.4)}s"/>`;
+			if (R() < 0.08 && x > 2 && x < W - 2) flashes.push({ x, y: y - sz, r: Math.max(1.6, sz * 0.7), dl: R() * 3.2, du: 2.4 + R() * 2.4 });
 		}
 	}
-	// ışık kuleleri ve huzmeleri (gece, kar); akşamda güneş
-	const lamp = (x, side) => {
-		const y = Math.max(4, standTop - 2);
-		const w = Math.min(46, W * 0.13);
+	// ışık kuleleri (gece, kar): gövde durağan zeminde, huzmeler ayrı katmanda nefes alır; akşamda güneş tribünün ardında
+	const lw = Math.min(46, W * 0.13);
+	const ly = Math.max(4, standTop - 2);
+	const lamp = (x) => {
 		let dots = '';
-		for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) dots += `<circle cx="${f1(x + (i + 0.5) * (w / 4) - w / 2)}" cy="${f1(y + 3 + j * 5)}" r="1.7" fill="#fffbe6"/>`;
-		const bx = x + side * -W * 0.35;
-		return `<path class="beam" d="M${f1(x - w / 2)} ${f1(y + 6)} L${f1(x + w / 2)} ${f1(y + 6)} L${f1(bx + W * 0.18)} ${f1(gb)} L${f1(bx - W * 0.18)} ${f1(gb)}Z" fill="url(#pkbm${seed})" opacity=".7"/>
-			<rect x="${f1(x - w / 2 - 2)}" y="${f1(y - 1)}" width="${f1(w + 4)}" height="14" rx="2" fill="#2a3352"/>${dots}<circle cx="${f1(x)}" cy="${f1(y + 6)}" r="${f1(w * 0.7)}" fill="url(#pkgl${seed})"/>`;
+		for (let i = 0; i < 4; i++) for (let j = 0; j < 2; j++) dots += `<circle cx="${f1(x + (i + 0.5) * (lw / 4) - lw / 2)}" cy="${f1(ly + 3 + j * 5)}" r="1.7" fill="#fffbe6"/>`;
+		return `<rect x="${f1(x - lw / 2 - 2)}" y="${f1(ly - 1)}" width="${f1(lw + 4)}" height="14" rx="2" fill="#2a3352"/>${dots}<circle cx="${f1(x)}" cy="${f1(ly + 6)}" r="${f1(lw * 0.7)}" fill="url(#pkgl${seed})"/>`;
 	};
-	const lights = hava === 'aksam'
-		? `<circle cx="${f1(W * 0.78)}" cy="${f1(standTop + 6)}" r="${f1(W * 0.09)}" fill="#ffe0a0" opacity=".9"/><circle cx="${f1(W * 0.78)}" cy="${f1(standTop + 6)}" r="${f1(W * 0.3)}" fill="url(#pkgl${seed})" opacity=".8"/>`
-		: lamp(W * 0.12, -1) + lamp(W * 0.88, 1);
+	const beam = (x, side) => {
+		const bx = x + side * -W * 0.35;
+		return `<path d="M${f1(x - lw / 2)} ${f1(ly + 6)} L${f1(x + lw / 2)} ${f1(ly + 6)} L${f1(bx + W * 0.18)} ${f1(gb)} L${f1(bx - W * 0.18)} ${f1(gb)}Z" fill="url(#pkbm${seed})" opacity=".7"/>`;
+	};
+	const sun = hava === 'aksam' ? `<circle cx="${f1(W * 0.74)}" cy="${f1(standTop + 2)}" r="${f1(W * 0.34)}" fill="url(#pkgl${seed})" opacity=".85"/><circle cx="${f1(W * 0.74)}" cy="${f1(standTop + 2)}" r="${f1(Math.max(12, W * 0.075))}" fill="#fff0b8"/>` : '';
+	const lights = hava === 'aksam' ? '' : lamp(W * 0.12) + lamp(W * 0.88);
 	const stars = hava === 'aksam' ? '' : Array.from({ length: 18 }, (_, i) => `<circle cx="${f1((i * 97.3) % W)}" cy="${f1(((i * 41.7) % Math.max(8, standTop - 4)) + 2)}" r="${i % 3 ? 0.7 : 1.1}" fill="#fff" opacity="${0.25 + (i % 4) * 0.12}"/>`).join('');
+	// bayraklar: iki takımın rengi (şutçu, kaleci)
+	const fh = Math.max(9, Math.min(16, rh * 1.2));
+	const flags = [
+		{ x: W * 0.27, c: team[0], k: 0 },
+		{ x: W * 0.66, c: team[1], k: 1 },
+		...(W > 360 ? [{ x: W * 0.46, c: team[0], k: 2 }] : []),
+	].map((f) => ({ ...f, y: standTop + rh * 1.4, h: fh }));
 	// LED pano: kalenin arkasında, ağın ardından görünür
 	const ledY = standBot - 2;
 	const ledH = Math.max(6, (gb - gy) * 0.1);
-	const led = `<rect x="0" y="${f1(ledY)}" width="${W}" height="${f1(ledH)}" fill="#0a0f24"/><g clip-path="url(#pkld${seed})"><g class="led"><rect x="0" y="${f1(ledY + 1)}" width="${W * 2}" height="${f1(ledH - 2)}" fill="url(#pkle${seed})"/></g></g>`;
 	// saha: kale çizgisinin önü; biçme şeritleri yakına doğru kalınlaşır (perspektif)
 	const grassA = hava === 'kar' ? '#5e8f6e' : hava === 'aksam' ? '#3d7a34' : '#2c7a38';
 	const grassB = hava === 'kar' ? '#557f63' : hava === 'aksam' ? '#356c2e' : '#256b31';
@@ -267,16 +314,17 @@ function bgSVG(L, hava, team, seed) {
 	const lines = `<path d="M0 ${f1(gb)}H${W}" stroke="${ln}" stroke-width="2"/>
 		<path d="M${f1(gx - gw * 0.32)} ${f1(gb)} L${f1(gx - gw * 0.5)} ${six} H${f1(gx + gw * 1.5)} L${f1(gx + gw * 1.32)} ${f1(gb)}" fill="none" stroke="${ln}" stroke-width="2.2"/>`;
 	const snowPatch = hava === 'kar' ? Array.from({ length: 16 }, () => `<ellipse cx="${f1(R() * W)}" cy="${f1(gb + R() * (H - gb))}" rx="${f1(6 + R() * 16)}" ry="${f1(2 + R() * 4)}" fill="#fff" opacity="${f1(0.18 + R() * 0.25)}"/>`).join('') : '';
-	return `<svg class="pk-bg" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"><defs>
-		<linearGradient id="pksk${seed}" x1="0" y1="0" x2="0" y2="1">${sky}</linearGradient>
-		<linearGradient id="pkbm${seed}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbe0" stop-opacity=".55"/><stop offset="1" stop-color="#fffbe0" stop-opacity="0"/></linearGradient>
+	const vb = `viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true"`;
+	const bg = `<svg class="pk-bg" ${vb}><defs>
+		<linearGradient id="pksk${seed}" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="${f1(standTop + 8)}">${sky}</linearGradient>
 		<radialGradient id="pkgl${seed}"><stop offset="0" stop-color="#fff8d8" stop-opacity=".9"/><stop offset="1" stop-color="#fff8d8" stop-opacity="0"/></radialGradient>
-		<linearGradient id="pkle${seed}" x1="0" x2="1"><stop offset="0" stop-color="var(--cc2)"/><stop offset=".125" stop-color="#ffd25a"/><stop offset=".25" stop-color="var(--cc2)"/><stop offset=".375" stop-color="#ffffff"/><stop offset=".5" stop-color="var(--cc2)"/><stop offset=".625" stop-color="#ffd25a"/><stop offset=".75" stop-color="var(--cc2)"/><stop offset=".875" stop-color="#ffffff"/><stop offset="1" stop-color="var(--cc2)"/></linearGradient>
-		<clipPath id="pkld${seed}"><rect x="0" y="${f1(ledY)}" width="${W}" height="${f1(ledH)}"/></clipPath>
 		</defs>
-		<rect width="${W}" height="${H}" fill="url(#pksk${seed})"/>${stars}
+		<rect width="${W}" height="${H}" fill="url(#pksk${seed})"/>${stars}${sun}
 		<path d="M0 ${f1(standTop)} Q${f1(W / 2)} ${f1(standTop - 10)} ${W} ${f1(standTop)} V${f1(standBot)} H0Z" fill="${hava === 'aksam' ? '#24142e' : '#0b1230'}"/>
-		<g class="crowd">${heads}</g>${flash}${lights}${led}${grass}${snowPatch}${lines}</svg>`;
+		${lights}<rect x="0" y="${f1(ledY)}" width="${W}" height="${f1(ledH)}" fill="#0a0f24"/>${grass}${snowPatch}${lines}</svg>`;
+	const crowd = `<svg class="pk-crowd" ${vb}>${heads}</svg>`;
+	const beams = hava === 'aksam' ? '' : `<svg class="pk-beams" ${vb}><defs><linearGradient id="pkbm${seed}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fffbe0" stop-opacity=".55"/><stop offset="1" stop-color="#fffbe0" stop-opacity="0"/></linearGradient></defs>${beam(W * 0.12, -1)}${beam(W * 0.88, 1)}</svg>`;
+	return { bg, crowd, beams, flashes, flags, led: { y: ledY + 1, h: ledH - 2 }, stand: { top: standTop, bot: standBot } };
 }
 
 /** Ağ (arka ağ ve yan ağlar, baklava örgüsü) ve dalga halkaları. */
@@ -359,7 +407,7 @@ export const penalti = {
 		if (id === 'kahin') {
 			// seyirci: doğru köşeye %42–78 (zor soruda daha az), ara sıra (%12) kalabalık yanılır
 			const d = clamp(Number(v.q.diff) || 2, 1, 3);
-			let pr = 0.42 + R() * 0.2 + (3 - d) * 0.08;
+			const pr = 0.42 + R() * 0.2 + (3 - d) * 0.08;
 			let top = v.right;
 			if (R() < 0.12) do top = Math.floor(R() * 4); while (top === v.right);
 			const w = [0, 1, 2, 3].map((i) => (i === top ? 0 : 0.35 + R()));
@@ -404,7 +452,7 @@ export const penalti = {
 				${v.opts.map((o, i) => `<button class="pk-t ${CORNER[i]}" data-i="${i}" style="--lc:${LCOL[i]}" aria-label="${LETTER[i]}: ${esc(o)}"><b class="pk-tx">${heceli(o)}</b></button>`).join('')}
 				<div class="pk-fr"><i class="post l"></i><i class="post r"></i><i class="bar">${v.hava === 'kar' ? '<s class="snow"></s>' : ''}</i></div>
 				${LETTER.map((x, i) => `<span class="pk-l" style="--lc:${LCOL[i]}">${x}</span>`).join('')}
-				<div class="pk-ball">${ballSVG(id)}</div>
+				<div class="pk-boot">${bootSVG(id)}</div><div class="pk-ball">${ballSVG(id)}</div>
 				${human ? '<span class="pk-hint">KÖŞENİ SEÇ</span>' : ''}
 				${keeper ? `<span class="pk-tag k" style="--tc:${esc(kc)}">${keeper.av}<small>KALECİ</small><b>${esc(keeper.name)}</b></span>` : ''}
 				<div class="pk-vig"></div><div class="pk-fx"></div>
@@ -414,6 +462,7 @@ export const penalti = {
 		const camEl = root.querySelector('.pk-cam');
 		const kp = root.querySelector('.pk-kp');
 		const ball = root.querySelector('.pk-ball');
+		const boot = root.querySelector('.pk-boot');
 		const shadow = root.querySelector('.pk-shadow');
 		const spot = root.querySelector('.pk-spot');
 		const tiles = [...root.querySelectorAll('.pk-t')];
@@ -427,9 +476,9 @@ export const penalti = {
 		let L = null;
 		let done = false;
 		let revealed = false;
-		let mine = null;
 		let alive = true;
 		let flight = null; // ağır çekim: { u, t0, raf }
+		let frozen = false; // cevap: kale yerinde kalır, sahne aşağı büyür
 		let pollPct = null;
 
 		// ------------------------------------------------------------ yerleşim (ölçülen sahne boyuna göre)
@@ -443,14 +492,22 @@ export const penalti = {
 			const W = st.clientWidth;
 			const H = st.clientHeight;
 			if (!W || !H || (L && L.W === W && L.H === H)) return;
-			const pad = clamp(Math.round(W * 0.03), 6, 14);
-			const laneT = clamp(Math.round(H * 0.12), 26, 44);
-			const laneB = clamp(Math.round(H * 0.11), 26, 40);
-			const ballZ = clamp(Math.round(H * 0.2), 42, 130);
-			const gw = Math.min(W - 2 * pad, 560);
-			const gh = Math.max(104, Math.min(gw * 0.6, H - laneT - laneB - ballZ));
-			const extra = Math.max(0, H - laneT - laneB - ballZ - gh);
-			const gy = Math.round(laneT + extra * 0.42);
+			const mk = clamp(Math.round(W * 0.082), 24, 34);
+			// cevapta joker çubuğu kalkar, sahne yalnız aşağı doğru büyür: kale yerinde kalır (şut anında sıçramasın),
+			// yalnız saha uzar; alt köşelerin şut işaretleri kale çizgisinin altına
+			const keep = frozen && L && L.W === W;
+			let pad, laneT, laneB, gw, gh, gy;
+			if (keep) ({ pad, laneT, laneB, gw, gh, gy } = L);
+			else {
+				pad = clamp(Math.round(W * 0.03), 6, 14);
+				laneT = clamp(Math.round(H * 0.11), mk + 6, 48);
+				laneB = clamp(Math.round(H * 0.05), 6, 32);
+				const ballZ = clamp(Math.round(H * 0.2), 38, 150);
+				gw = Math.min(W - 2 * pad, 560);
+				gh = Math.max(104, Math.min(gw * 0.64, H - laneT - laneB - ballZ - 6));
+				const extra = Math.max(0, H - laneT - laneB - ballZ - gh);
+				gy = Math.round(laneT + extra * 0.5);
+			}
 			const gx = Math.round((W - gw) / 2);
 			const gb = gy + gh;
 			const pt = clamp(Math.round(gw * 0.024), 5, 12);
@@ -471,17 +528,22 @@ export const penalti = {
 			].map((p) => ({ ...p, w: pw, h: ph, cx: p.x + pw / 2, cy: p.y + ph / 2 }));
 			const kh = ih * 0.9;
 			const kw = kh * (100 / 150);
-			const bs = clamp(Math.round(Math.min(W * 0.1, ballZ * 0.62)), 26, 54);
-			const by = gb + laneB + (H - gb - laneB) * 0.5;
-			L = { W, H, pad, laneT, laneB, gx, gy, gw, gh, gb, pt, ix, iy, iw, ih, cg, pan, kw, kh, kx: W / 2 - kw / 2, ky: gb - kh, bs, bx: W / 2, by, mk: clamp(Math.round(W * 0.082), 24, 34) };
+			const bs = keep ? L.bs : clamp(Math.round(Math.min(W * 0.12, (H - gb - laneB) * 0.56)), 26, 64);
+			const by = keep ? L.by : gb + laneB + (H - gb - laneB) * 0.47;
+			// alt köşelerin şut işaretleri: kale çizgisinin altında (cevapta künye ve krampon söner, yer açılır)
+			const mby = gb + clamp((H - gb) * 0.28, mk * 0.5 + 6, mk * 0.5 + 16);
+			L = { W, H, pad, laneT, laneB, gx, gy, gw, gh, gb, pt, ix, iy, iw, ih, cg, pan, kw, kh, kx: W / 2 - kw / 2, ky: gb - kh, bs, bx: W / 2, by, mk, mby };
 			root.style.setProperty('--mk', L.mk + 'px');
-			root.querySelector('.pk-bgw').innerHTML = bgSVG(L, v.hava, [shooter.color, kc], `${v.q.id || 'pk'}${id}`);
+			const S = stadium(L, v.hava, [shooter.color, kc], `${v.q.id || 'pk'}${id}`);
+			const fl = S.flags.map((f) => `<span class="pk-flag" style="left:${f1(f.x)}px;top:${f1(f.y - f.h * 1.7)}px;--fw:${f1(f.h * 1.6)}px;--fh:${f1(f.h)}px;--fh2:${f1(f.h * 1.7)}px;--c:${esc(f.c)};--dl:-${f.k * 0.4}s"><b></b></span>`).join('');
+			const fs = S.flashes.map((f) => `<i style="left:${f1(f.x)}px;top:${f1(f.y)}px;--r:${f1(f.r * 2)}px;--dl:${f1(f.dl)}s;--du:${f1(f.du)}s"></i>`).join('');
+			root.querySelector('.pk-bgw').innerHTML = `${S.bg}${S.crowd}<div class="pk-fls">${fs}</div><i class="pk-sw" style="top:${f1(S.stand.top)}px;height:${f1(S.stand.bot - S.stand.top)}px"></i>${fl}${S.beams}<div class="pk-led" style="top:${f1(S.led.y)}px;height:${f1(Math.max(2, S.led.h))}px"><i></i></div>`;
 			root.querySelector('.pk-netw').innerHTML = netSVG(L, `${id}`);
 			const snow = root.querySelector('.pk-snow');
 			if (snow) {
 				const R = rngOf(v.q.id || 'kar');
 				snow.style.setProperty('--H', H + 'px');
-				snow.innerHTML = Array.from({ length: 34 }, () => `<i style="left:${f1(R() * W)}px;--s:${f1(1.6 + R() * 2.6)}px;--d:${f1(3.4 + R() * 3)}s;--dl:${f1(-R() * 6)}s;--x:${f1((R() - 0.5) * 40)}px"></i>`).join('');
+				snow.innerHTML = Array.from({ length: 52 }, (_, k) => `<i style="left:${f1(R() * W)}px;--s:${f1(k % 9 ? 1.5 + R() * 2.4 : 4.5 + R() * 2)}px;--d:${f1(k % 9 ? 3.4 + R() * 3 : 2.2 + R())}s;--dl:${f1(-R() * 6)}s;--x:${f1((R() - 0.5) * 40)}px"></i>`).join('');
 			}
 			tiles.forEach((t, i) => place(t, pan[i].x, pan[i].y, pan[i].w, pan[i].h));
 			const cx = [gx, gx + gw, gx, gx + gw];
@@ -495,18 +557,23 @@ export const penalti = {
 			if (!flight && !revealed) setBall(bs, L.bx, by, 1, 0);
 			place(spot, L.bx - bs * 0.42, by + bs * 0.32, bs * 0.84, bs * 0.26);
 			if (hint) place(hint, W / 2, laneT * 0.5 + 2);
+			// şutçunun kramponu topun solunda (dokununca vurur)
+			const bw2 = bs * 1.9;
+			place(boot, L.bx - bs * 0.42 - bw2 * 0.9, by + bs * 0.5 - bw2 * 0.52, bw2, bw2 * (70 / 120));
 			if (tagK) {
-				// kalecinin künyesi topun solunda; sığmazsa yalnız portre ve KALECİ (top yazının üstüne binmesin)
+				// kalecinin künyesi topun sağında; sığmazsa yalnız portre ve KALECİ (top yazının üstüne binmesin)
 				tagK.classList.remove('short');
-				tagK.style.left = f1(Math.max(6, gx)) + 'px';
-				tagK.style.top = f1(Math.min(H - 16, by + bs * 0.05)) + 'px';
-				if (tagK.offsetLeft + tagK.offsetWidth > W / 2 - bs * 0.62 - 6) tagK.classList.add('short');
+				tagK.style.left = f1(L.bx + bs * 0.75 + 8) + 'px';
+				tagK.style.top = f1(Math.min(H - 16, by + bs * 0.1)) + 'px';
+				if (tagK.offsetLeft + tagK.offsetWidth > W - 6) tagK.classList.add('short');
 			}
 			fit();
 			if (pollPct) poll(pollPct);
 		};
 		/** Top: konum (merkez), ölçek, dönüş; gölgesi yerde (kale çizgisine doğru küçülür). */
+		let ballAt = null; // topun son çizildiği yer (uçuş yeni yola yumuşakça geçsin)
 		const setBall = (s, x, y, k, rot, sh = true) => {
+			ballAt = { x, y, k };
 			const d = s * k;
 			ball.style.width = ball.style.height = s + 'px';
 			ball.style.transform = `translate(${f1(x - s / 2)}px,${f1(y - s / 2)}px) scale(${k.toFixed(3)})`;
@@ -563,6 +630,18 @@ export const penalti = {
 		const at = (p, u) => ({ x: (1 - u) * (1 - u) * p.x0 + 2 * u * (1 - u) * p.cx + u * u * p.x1, y: (1 - u) * (1 - u) * p.y0 + 2 * u * (1 - u) * p.cy + u * u * p.y1 });
 		const kOf = (u, k1) => 1 + (k1 - 1) * Math.pow(u, 0.85);
 		const K1 = 0.42; // kale düzlemindeki ölçek
+		/** Krampon vuruşu: ayak bileğinden öne savrulur, geri çekilir. */
+		const swing = () =>
+			boot.animate(
+				[
+					{ transform: 'rotate(-16deg)' },
+					{ transform: 'rotate(-30deg) translateX(-4%)', offset: 0.3 },
+					{ transform: 'rotate(14deg) translateX(10%)', offset: 0.55 },
+					{ transform: 'rotate(8deg) translateX(8%)', offset: 0.75 },
+					{ transform: 'rotate(-16deg)' },
+				],
+				{ duration: 620, easing: 'cubic-bezier(.3,.7,.4,1)' },
+			);
 		/** Kalkış (dokununca): top u=0.22'ye fırlar, sonra ağır çekimde süzülür (cevap gelene dek). */
 		const kick = (c) => {
 			if (!L || flight) return;
@@ -570,9 +649,12 @@ export const penalti = {
 			const path = pathTo(t.cx, t.cy);
 			flight = { u: 0, t0: clock.now(), path, raf: 0, c, fast: null };
 			ball.classList.add('trail');
+			swing();
 			sfx(app, 'tap', { rate: 0.55 });
 			sfx(app, 'whoosh');
 			buzz(14);
+			// ağır çekimde stat susar, kalp atışı: cevap gelene dek her 0,6 sn bir tok vuruş
+			for (const ms of [380, 980, 1580]) later(() => !revealed && alive && sfx(app, 'count', { left: 2 }), ms);
 			const step = () => {
 				if (!alive || !flight || flight.fast) return;
 				const s = (clock.now() - flight.t0) / 1000;
@@ -584,43 +666,58 @@ export const penalti = {
 			flight.raf = requestAnimationFrame(step);
 		};
 		/** Kalan uçuş: u'dan 1'e (hedef cevaba göre), sonra çarpma. */
-		const fly = (path, u0, ms, onEnd, spin0 = 0) => {
-			const t0 = clock.now();
+		/**
+		 * Kalan uçuş ve ardından gelen (düşüş, sekme, sönme): tek bir Web Animations devinimi. Kare hızından bağımsızdır
+		 * (yavaş telefonda ve denetim aracında da son kare doğru: aracın finish()'i sona sarar); son durum öğenin kendi
+		 * stilidir. tail: [{ x, y, k, o, ms }] uçuştan sonraki duraklar.
+		 */
+		const tfOf = (x, y, k) => `translate(${f1(x - L.bs / 2)}px,${f1(y - L.bs / 2)}px) scale(${k.toFixed(3)})`;
+		const fly = (path, u0, ms, tail = []) => {
 			if (flight) cancelAnimationFrame(flight.raf);
 			const f = flight || { u: 0 };
 			f.fast = true;
 			flight = f;
-			const step = () => {
-				if (!alive) return;
-				const k = clamp((clock.now() - t0) / ms, 0, 1);
+			const from = ballAt && u0 > 0 ? { ...ballAt } : null;
+			const total = ms + tail.reduce((a, t) => a + t.ms, 0);
+			const frames = [];
+			const N = 14;
+			const q0 = at(path, u0);
+			for (let i = 0; i <= N; i++) {
+				const k = i / N;
 				const u = u0 + (1 - u0) * (1 - Math.pow(1 - k, 1.6));
 				const p = at(path, u);
-				setBall(L.bs, p.x, p.y, kOf(u, K1), spin0 + k * 520);
-				if (k < 1) f.raf = requestAnimationFrame(step);
-				else onEnd?.();
-			};
-			f.raf = requestAnimationFrame(step);
-		};
-		/** Sekme ya da kaçış: noktadan dışarı (ölçek k0 → k1), sonunda söner. */
-		const bounce = (x0, y0, x1, y1, k0, k1, ms) => {
-			const t0 = clock.now();
-			const step = () => {
-				if (!alive) return;
-				const k = clamp((clock.now() - t0) / ms, 0, 1);
-				const e = ease(k);
-				setBall(L.bs, x0 + (x1 - x0) * e, y0 + (y1 - y0) * e - Math.sin(k * Math.PI) * L.H * 0.08, k0 + (k1 - k0) * e, 600 + k * 400, false);
-				ball.style.opacity = String(1 - Math.max(0, k - 0.55) / 0.45);
-				shadow.style.opacity = '0';
-				if (k < 1) requestAnimationFrame(step);
-			};
-			requestAnimationFrame(step);
+				// ağır çekimdeki yerden yeni yola (sahne cevapta büyüdüyse) ilk %30'da kayarak geç
+				if (from && k < 0.3) {
+					const b = 1 - easeIO(k / 0.3);
+					p.x += (from.x - q0.x) * b;
+					p.y += (from.y - q0.y) * b;
+				}
+				frames.push({ transform: tfOf(p.x, p.y, kOf(u, K1)), opacity: 1, offset: (k * ms) / total });
+			}
+			let t = ms;
+			for (const st2 of tail) {
+				t += st2.ms;
+				frames.push({ transform: tfOf(st2.x, st2.y, st2.k), opacity: st2.o, offset: t / total, easing: st2.ease || 'linear' });
+			}
+			const last = frames[frames.length - 1];
+			ball.style.width = ball.style.height = L.bs + 'px';
+			ball.style.transform = last.transform;
+			ball.style.opacity = String(last.opacity);
+			ball.animate(frames, { duration: total, easing: 'linear' });
+			const spin = ball.querySelector('.spin');
+			if (spin) {
+				spin.removeAttribute('transform');
+				spin.style.transform = 'rotate(900deg)';
+				spin.animate([{ transform: 'rotate(0deg)' }, { transform: 'rotate(900deg)' }], { duration: total, easing: 'cubic-bezier(.2,.7,.4,1)' });
+			}
+			shadow.style.opacity = '0';
+			shadow.animate([{ opacity: 1 }, { opacity: 0 }], { duration: Math.min(ms, 320) });
 		};
 
 		// ------------------------------------------------------------ dokunuş
 		const pick = (i) => {
 			if (done || revealed || !human) return;
 			done = true;
-			mine = i;
 			root.classList.add('pick', 'slow');
 			tiles[i].classList.add('aim');
 			for (const t of tiles) t.disabled = true;
@@ -645,7 +742,7 @@ export const penalti = {
 				t.insertAdjacentHTML('beforeend', `<span class="pk-pc" style="--w:${(pc / 100).toFixed(2)}"><i></i></span>`);
 				const p = L.pan[i];
 				// oy etiketi levhanın dışında: üst köşelerde üst direğin üstü, altta kale çizgisinin altı (yazıya binmez)
-				const y = i < 2 ? L.gy - L.laneT * 0.5 : L.gb + L.laneB * 0.5;
+				const y = i < 2 ? L.gy - L.laneT * 0.5 : L.gb + Math.max(9, L.laneB * 0.5);
 				const x = i % 2 ? p.x + p.w - 26 : p.x + 26;
 				root.querySelector('.pk-cam').insertAdjacentHTML('beforeend', `<span class="pk-poll" style="left:${f1(x)}px;top:${f1(y)}px">%${pc}</span>`);
 			});
@@ -691,19 +788,19 @@ export const penalti = {
 			const top = c < 2;
 			const kx = L.W / 2;
 			const ky = L.ky + L.kh * 0.64;
-			const inner = left ? p.x + p.w * 0.78 : p.x + p.w * 0.22;
-			const dx = (inner - kx) * 0.92;
-			const dy = top ? (p.cy - ky) * 0.58 : (p.cy - ky) * 0.7 + L.kh * 0.1;
-			const a = (left ? -1 : 1) * (top ? 64 : 86);
-			const land = top ? Math.min(L.gb - ky - L.kh * 0.12, (L.pan[2].cy - ky) * 0.6) : dy;
+			const inner = left ? p.x + p.w * 0.7 : p.x + p.w * 0.3;
+			const dx = (inner - kx) * (top ? 0.78 : 0.95);
+			const dy = top ? -L.ih * 0.34 : (p.cy - ky) * 0.55 + L.kh * 0.12;
+			const a = (left ? -1 : 1) * (top ? 46 : 84);
+			const land = top ? L.kh * 0.08 : dy;
 			later(() => kp.classList.add('reach'), 60);
 			const anim = kp.animate(
 				[
 					{ transform: 'translate(0,0) rotate(0deg)', offset: 0 },
 					{ transform: `translate(${f1(dx * 0.12)}px,${f1(-L.kh * 0.06)}px) rotate(${f1(a * 0.15)}deg)`, offset: 0.07 },
 					{ transform: `translate(${f1(dx)}px,${f1(dy)}px) rotate(${f1(a)}deg)`, offset: 0.24 },
-					{ transform: `translate(${f1(dx * 1.03)}px,${f1(land)}px) rotate(${f1(a * 1.08)}deg)`, offset: 0.42 },
-					{ transform: `translate(${f1(dx * 1.03)}px,${f1(land)}px) rotate(${f1(a * 1.08)}deg)`, offset: 0.62 },
+					{ transform: `translate(${f1(dx * 1.04)}px,${f1(land)}px) rotate(${f1(top ? a * 1.75 : a * 1.06)}deg)`, offset: 0.44 },
+					{ transform: `translate(${f1(dx * 1.04)}px,${f1(land)}px) rotate(${f1(top ? a * 1.75 : a * 1.06)}deg)`, offset: 0.62 },
 					{ transform: 'translate(0,0) rotate(0deg)', offset: 1 },
 				],
 				{ duration: 1750, easing: 'cubic-bezier(.3,.7,.4,1)', fill: 'none' },
@@ -733,15 +830,16 @@ export const penalti = {
 					let x;
 					let y;
 					if (c === 4) {
-						x = L.W - L.gx - L.mk * 0.7 - j * gap;
-						y = L.by;
+						// şut yok (süre doldu): alt sıranın ortasında, kum saatiyle
+						x = L.W / 2 + (j - (list.length - 1) / 2) * gap;
+						y = L.mby;
 					} else {
 						const left = c % 2 === 0;
 						const x0 = left ? L.gx + L.mk * 1.15 : L.gx + L.gw - L.mk * 1.15;
 						x = x0 + (left ? 1 : -1) * j * gap;
-						y = c < 2 ? L.gy - L.laneT * 0.5 : L.gb + L.laneB * 0.52;
+						y = c < 2 ? L.gy - L.laneT * 0.5 : L.mby;
 					}
-					const badge = c === 4 ? '' : `<u class="${isK ? 'kp' : r.correct ? 'ok' : 'no'}">${isK ? ICO.kp : r.correct ? ICO.ok : ICO.no}</u>`;
+					const badge = c === 4 ? `<u class="kp">${ICO.kum}</u>` : `<u class="${isK ? 'kp' : r.correct ? 'ok' : 'no'}">${isK ? ICO.kp : r.correct ? ICO.ok : ICO.no}</u>`;
 					h += `<span class="pk-mk${pl?.human ? ' me' : ''}" style="left:${f1(x)}px;top:${f1(y)}px;--c:${esc(r.color)};--dl:${Math.round(k * 90)}ms;--fy:${c < 2 ? -10 : 10}px">${pl?.av || ''}${badge}</span>`;
 					k++;
 				});
@@ -779,7 +877,9 @@ export const penalti = {
 				}
 			},
 			reveal(results) {
-				if (!L) layout();
+				// cevapta joker çubuğu kalkar, sahne aşağı büyür: kale yerinde kalır, saha uzar (eşzamanlı ölçüm)
+				frozen = true;
+				layout();
 				revealed = true;
 				done = true;
 				root.classList.add('rv');
@@ -824,10 +924,27 @@ export const penalti = {
 					const path = pathTo(tx, ty);
 					if (!flight) {
 						ball.classList.add('trail');
+						swing();
 						sfx(app, 'tap', { rate: 0.55 });
 					}
 					sfx(app, 'whoosh');
-					fly(path, u0, ms, () => {
+					// uçuşun ardı: gol → ağda süzülüp düşer; kurtarış → eldivende kalır (top söner, kalecinin elinde görünür);
+					// direk → sekip dışarı; üstten ya da yandan aut → tribüne, kenara kaçar. Hepsi sonunda söner.
+					const bxo = left ? -L.bs : L.W + L.bs;
+					const tail =
+						out === 'gol'
+							? [{ x: tx, y: ty + (L.gb - ty - L.bs * K1) * 0.45, k: K1, o: 1, ms: 260, ease: 'ease-in' }, { x: tx, y: L.gb - L.bs * K1 * 0.6, k: K1 * 0.9, o: 0, ms: 300 }]
+							: out === 'kurtardi'
+								? [{ x: tx, y: ty, k: K1, o: 0, ms: 40 }]
+								: out === 'direk'
+									? c < 2
+										? [{ x: left ? tx - L.W * 0.08 : tx + L.W * 0.08, y: L.gy - L.laneT * 0.4, k: 0.55, o: 1, ms: 240, ease: 'ease-out' }, { x: left ? tx - L.W * 0.16 : tx + L.W * 0.16, y: L.by - L.bs, k: 0.75, o: 0, ms: 380, ease: 'ease-in' }]
+										: [{ x: (tx + bxo) / 2, y: ty + L.H * 0.06, k: 0.55, o: 1, ms: 260, ease: 'ease-out' }, { x: bxo, y: ty + L.H * 0.25, k: 0.62, o: 0, ms: 360 }]
+									: out === 'ust'
+										? [{ x: tx + (left ? -1 : 1) * L.W * 0.08, y: -L.bs, k: K1 * 0.8, o: 0, ms: 520, ease: 'ease-out' }]
+										: [{ x: bxo, y: ty - L.H * 0.06, k: K1 * 0.8, o: 0, ms: 520, ease: 'ease-out' }];
+					fly(path, u0, ms, tail);
+					later(() => {
 						if (!alive) return;
 						const host = st.getBoundingClientRect();
 						const scl = host.width / Math.max(1, L.W);
@@ -837,13 +954,13 @@ export const penalti = {
 						if (out === 'gol') {
 							tiles[c].classList.add('hit');
 							const net = root.querySelector('.pk-net .mesh');
-							net?.animate([{ transform: 'none' }, { transform: `translate(${f1((tx - L.W / 2) * 0.03)}px,${f1(-L.gh * 0.03)}px) scale(1.035)` }, { transform: 'scale(.99)' }, { transform: 'none' }], { duration: 620, easing: 'ease-out' });
+							net?.animate([{ transform: 'none' }, { transform: `translate(${f1((tx - L.W / 2) * 0.05)}px,${f1(-L.gh * 0.05)}px) scale(1.07)` }, { transform: `translate(${f1((L.W / 2 - tx) * 0.012)}px,0) scale(.985)` }, { transform: 'scale(1.01)' }, { transform: 'none' }], { duration: 760, easing: 'ease-out' });
 							for (const [cl, dl] of [['a', 0], ['b', 140]]) {
 								const rp = root.querySelector(`.pk-net .rip.${cl}`);
 								if (!rp) continue;
 								rp.setAttribute('cx', f1(tx));
 								rp.setAttribute('cy', f1(ty));
-								rp.animate([{ opacity: 0.9, r: '4px' }, { opacity: 0, r: `${f1(L.gw * 0.22)}px` }], { duration: 700, delay: dl, easing: 'ease-out' });
+								rp.animate([{ opacity: 1, r: '4px', strokeWidth: '4px' }, { opacity: 0, r: `${f1(L.gw * 0.3)}px`, strokeWidth: '1px' }], { duration: 760, delay: dl, easing: 'ease-out' });
 							}
 							rings(tx, ty, 5);
 							root.classList.add('roar');
@@ -856,20 +973,7 @@ export const penalti = {
 							sfx(app, 'fireworks');
 							later(() => sfx(app, 'fireworks', { pan: 0.6 }), 260);
 							buzz([30, 40, 60]);
-							// top ağda süzülüp düşer, söner
-							const t0 = clock.now();
-							const drop = () => {
-								if (!alive) return;
-								const k = clamp((clock.now() - t0) / 520, 0, 1);
-								setBall(L.bs, tx, ty + (L.gb - ty - L.bs * K1) * k * k, K1 * (1 - 0.1 * k), 900, false);
-								ball.style.opacity = String(1 - Math.max(0, k - 0.4) / 0.6);
-								shadow.style.opacity = '0';
-								if (k < 1) requestAnimationFrame(drop);
-							};
-							requestAnimationFrame(drop);
 						} else if (out === 'kurtardi') {
-							ball.style.opacity = '0';
-							shadow.style.opacity = '0';
 							rings(tx, ty, 3);
 							sfx(app, 'defend');
 							buzz(40);
@@ -880,19 +984,14 @@ export const penalti = {
 							rings(tx, ty, 2.5);
 							sfx(app, 'defend');
 							buzz([40, 30, 40]);
-							const bx = left ? -L.bs : L.W + L.bs;
-							bounce(tx, ty, c < 2 ? (left ? tx - L.W * 0.12 : tx + L.W * 0.12) : bx, c < 2 ? L.by - L.bs : ty + L.H * 0.25, K1, c < 2 ? 0.75 : 0.62, 620);
-						} else {
-							sfx(app, 'whoosh');
-							bounce(tx, ty, out === 'ust' ? tx + (left ? -1 : 1) * L.W * 0.08 : left ? -L.bs : L.W + L.bs, out === 'ust' ? -L.bs : ty - L.H * 0.06, K1, K1 * 0.8, 560);
-						}
+						} else sfx(app, 'whoosh');
 						call(out, L.gy + L.gh * (out === 'gol' ? 0.42 : 0.5));
 						// köşelerin hükmü: doğru yeşil, seçilen yanlışlar kırmızı, öbürleri sönük
 						tiles.forEach((t, i) => {
 							t.classList.remove('aim');
 							t.classList.toggle('ok', i === v.right);
 						});
-					});
+					}, ms);
 				} else if (L) {
 					// şut yok (süre doldu): top noktada kalır; kalecinin uçuşu ve doğru köşe yine görünür
 					later(() => tiles.forEach((t, i) => t.classList.toggle('ok', i === v.right)), 520);

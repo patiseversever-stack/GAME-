@@ -53,9 +53,9 @@ const GLOW = new Set([2, 6]); // pencere, alev (gece yanar)
  */
 export const TEMA = {
 	gunduz: {
-		key: [3.3, 3.0, 2.55], sky: [0.4, 0.55, 0.85], gnd: [0.3, 0.26, 0.2], rim: [0.3, 0.42, 0.7],
-		skyTop: [0.1, 0.28, 0.78], skyHor: [0.66, 0.8, 0.97], sunC: [1, 0.88, 0.65], sunGlow: 0.55, sunDisc: 5, sunPow: 40,
-		fog: [0.66, 0.8, 0.97], fogD: 0.16, ground: lin('#b8a774'), clouds: 0.9, cloudC: [1, 1, 1], vig: 0.32, expo: 1.12,
+		key: [3.3, 3.0, 2.55], sky: [0.36, 0.5, 0.85], gnd: [0.26, 0.24, 0.16], rim: [0.3, 0.42, 0.7],
+		skyTop: [0.05, 0.2, 0.7], skyHor: [0.5, 0.68, 0.94], sunC: [1, 0.88, 0.65], sunGlow: 0.55, sunDisc: 5, sunPow: 40,
+		fog: [0.5, 0.68, 0.94], fogD: 0.11, ground: lin('#a8a56a'), clouds: 0.9, cloudC: [1, 1, 1], vig: 0.36, expo: 1.05,
 	},
 	batim: {
 		key: [3.6, 1.85, 0.8], sky: [0.34, 0.24, 0.4], gnd: [0.34, 0.17, 0.09], rim: [1, 0.45, 0.22],
@@ -560,7 +560,7 @@ function tri(X, Y, IW, t, W, H, zb, tid, B0, B1) {
  * Yedek resim (maket kurulamazsa ya da tarama çökerse): temanın göğü, ufuk ve zemin, ortada sisli bir anıt silueti
  * (cevabı ele vermez). Kart hiçbir zaman boş ya da bozuk görünmez.
  */
-export function yedek(ctx, W, H, theme = 'gunduz') {
+export function yedek(ctx, W, H, theme = 'gunduz', siluet = true) {
 	const th = TEMA[theme] || TEMA.gunduz;
 	const css = (c, a = 1) => `rgba(${c.map((x) => Math.round(Math.pow(Math.min(1, x * 0.9), 1 / 2.2) * 255)).join(',')},${a})`;
 	const g = ctx.createLinearGradient(0, 0, 0, H);
@@ -570,6 +570,7 @@ export function yedek(ctx, W, H, theme = 'gunduz') {
 	g.addColorStop(1, css(th.ground.map((x) => x * 0.55)));
 	ctx.fillStyle = g;
 	ctx.fillRect(0, 0, W, H);
+	if (!siluet) return;
 	// siluet: kubbe, iki kule, kaide (her yapıya uyan yalın bir anıt)
 	ctx.fillStyle = css(th.gnd.map((x) => x * 0.6 + 0.02), 0.85);
 	const cx = W / 2;
