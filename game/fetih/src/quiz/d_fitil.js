@@ -190,7 +190,9 @@ function pickItems(q, R) {
 const FUSE_D = 'M60 30 C60 16 70 8 82 10 C94 12 96 26 106 24 C113 22 114 12 112 6';
 let UID = 0;
 
-const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4px;height:14px;border-radius:7px;background:linear-gradient(90deg,rgba(255,210,90,.85) var(--p),rgba(19,34,74,.12) var(--p));font:700 10px/14px Fredoka,system-ui,sans-serif;font-style:normal;color:#3a2000;text-align:right;padding-right:6px;pointer-events:none}
+const CSS = /* css */ `/* seyirci oyu: şıkkın altında ince çubuk. <b> (eskiden <i>: ortak .fl-opt>i harf rozeti kuralları çubuğa da uyuyor, kısa ekranda gövdeyi 3 px taşırıp ui._coverFit'i 0,68'e küçültüyordu) */
+.dn-fz-o .fl-opt>.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4px;height:12px;border-radius:6px;background:linear-gradient(90deg,rgba(255,210,90,.85) var(--p),rgba(19,34,74,.12) var(--p));font:700 9.5px/12px Fredoka,system-ui,sans-serif;letter-spacing:0;text-transform:none;text-shadow:none;color:#3a2000;text-align:right;padding-right:6px;pointer-events:none}
+.dn-fz-o .fl-opt:has(>.dn-fz-aud){padding-bottom:16px}
 
 .fl-q.dn-fz-card .fl-clock,.fl-q.dn-fz-card .fl-tbar{visibility:hidden}
 .fl-q.dn-fz-card.dn-boom .fl-qc{animation:dnFzShake .7s cubic-bezier(.36,.07,.19,.97) both}
@@ -498,7 +500,7 @@ export const fitil = {
 			const H = A.height / z;
 			if (W < 60 || H < 60) return;
 			ar.classList.toggle('kisa', H < 120); // kısa arenada durum etiketi kalkar
-	ar.style.setProperty('--pd', Math.round(clamp(H * 0.36, 30, 64)) + 'px');
+			ar.style.setProperty('--pd', Math.round(clamp(H * 0.36, 30, 64)) + 'px');
 			ar.style.setProperty('--pw', Math.round(clamp(W * 0.27, 76, 96)) + 'px');
 			const rel = (e) => {
 				const r = e.getBoundingClientRect();
@@ -515,7 +517,8 @@ export const fitil = {
 			const span = FOOT.b.hi - FOOT.a.lo;
 			const OV = 1.16; // kayışın taşması (cubic-bezier .3,1.35: yolun ~%8'i)
 			let dx = clamp(lane * 0.13, 8, 34);
-			const k = clamp(Math.min((lane - 2 * dx * OV) / span, (floor - 4) / FOOT.top), 0.34, 1.2);
+			// en çok 0,9: geniş arenada da gövde (80 birim) portreden pek büyük olmaz; bomba sahnenin yıldızı, oyuncunun üstünü örten dev değil
+			const k = clamp(Math.min((lane - 2 * dx * OV) / span, (floor - 4) / FOOT.top), 0.34, 0.9);
 			if (2 * dx * OV + k * span > lane) dx = Math.max(2, (lane - k * span) / (2 * OV));
 			// orta nokta: iki uçtaki halinin ikisi de koridorda kalacak aralığın ortası
 			const lo = Lr + dx * OV - k * FOOT.a.lo;
@@ -573,7 +576,7 @@ export const fitil = {
 			if (aud && audLeft > 0) {
 				audLeft--;
 				const pr = aud[k % v.items.length];
-				btns.forEach((b, i) => b.insertAdjacentHTML('beforeend', `<i class="dn-fz-aud" style="--p:${pr[i]}%">%${pr[i]}</i>`));
+				btns.forEach((b, i) => b.insertAdjacentHTML('beforeend', `<b class="dn-fz-aud" style="--p:${pr[i]}%">%${pr[i]}</b>`));
 			}
 		};
 		const lockUI = (until) => {
@@ -727,7 +730,9 @@ export const fitil = {
 		cancelAnimationFrame(fitRaf);
 		ro?.disconnect();
 			for (const t of timers) clearTimeout(t);
-			card?.classList.remove('dn-fz-card', 'dn-boom');
+			// kart sıradaki soruya geçtiyse (gövde yenilendi) sınıflar artık onun: dokunma (galeride sahne değişince yeni
+			// Fitil kartından dn-fz-card siliniyor, gizli saat görünüyordu)
+			if (root.isConnected) card?.classList.remove('dn-fz-card', 'dn-boom');
 		});
 		return {
 			lock() {

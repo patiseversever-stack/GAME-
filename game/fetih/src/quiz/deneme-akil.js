@@ -3,8 +3,8 @@
 // Sözleşme: TYPES = { tip: tipNesnesi }, ORDER = [[tip, galerideki adı, bir satırlık tanıtım]], SAMPLES = { tip: [soru…] }.
 //
 // İçerik elle yazıldı. İki Doğru Bir Yalan'da her doğru bilginin iki kaynağı `k` alanında; yalanlar kesin yanlış
-// (açıklamada doğrusu). Az Bilinen'deki yüzdeler TAHMİNİ seçilme oranlarıdır (100 kişiden kaçının aklına gelir);
-// çevrimiçinde gerçek oyuncu seçimleriyle değişir.
+// (açıklamada doğrusu). Az Bilinen'de tam beş şık var: 3–4 doğrunun yanındaki sayı TAHMİNİ anket sonucudur (100 kişiden
+// kaçının aklına gelir), 1–2 tuzağın yanında neden yanlış olduğu yazar; çevrimiçinde sunucu oyuncu seçimleriyle karıştırabilir.
 
 import { PROFILE } from './timing.js';
 import { yanlis } from './d_yanlis.js';
@@ -21,7 +21,7 @@ Object.assign(PROFILE, {
 	yanlis: { min: 20, max: 45, think: [5, 1.5] }, // cümleyi tart, şüpheliyi seç, doğrusunu hatırla
 	ikidogru: { min: 20, max: 45, think: [6, 2] }, // üç bilgiyi tart, en "fazla iyi" olanı ele
 	harfal: { min: 20, max: 55, think: [5, 2] }, // tanımı çöz; gerekirse harf al, deseni yeniden düşün
-	azbilinen: { min: 20, max: 45, think: [6, 2] }, // doğruları hatırla, az bilineni seç
+	azbilinen: { min: 20, max: 40, think: [6, 2] }, // beş şık: tuzağı ayıkla, doğrulardan az bilineni tart
 });
 
 export const TYPES = { yanlis, ikidogru, harfal, azbilinen };
@@ -30,7 +30,7 @@ export const ORDER = [
 	['yanlis', 'Yanlışı Bul', 'Yanlış kelimeye dokun, düzelt'],
 	['ikidogru', 'İki Doğru Bir Yalan', 'Üç şaşırtıcı bilgi, biri yalan'],
 	['harfal', 'Harf Al', 'Her harf 100 puan; harf alan kaybeder'],
-	['azbilinen', 'Az Bilinen', 'Doğru ama az bilinen cevap kazanır'],
+	['azbilinen', 'Az Bilinen', 'Beş şık: az bilinen doğru kazanır'],
 ];
 
 const YQ = 'Bu cümlede bir kelime yanlış. Bul ve düzelt!';

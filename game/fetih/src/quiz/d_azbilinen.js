@@ -158,16 +158,32 @@ const trapIdx = (v) => v.pct.map((p, i) => (p < 0 ? i : -1)).filter((i) => i >= 
 /** En az bilinen doğru (en çok puan). */
 const bestOf = (v) => goodIdx(v).reduce((a, i) => (a < 0 || v.pct[i] < v.pct[a] ? i : a), -1);
 
-/** Ad yazısı kutusuna sığsın: tek kelime asla ortasından bölünmez, en çok iki satır; sığmazsa yarımşar piksel küçülür. */
+/**
+ * Yazılar kutusuna sığsın, hiçbiri kesilmesin: şerit tek satır; ad önce biraz küçülerek (tabanın %86'sına dek) tek
+ * satıra sığmaya çalışır, olmazsa taban boyla iki satıra iner; tek kelime asla ortasından bölünmez, üç satır olmaz
+ * (gerekirse tabanın %68'ine dek küçülür). Adımlar yarım piksel.
+ */
 function fitNames(root) {
+	const hd = root.querySelector('.ab-hd');
+	if (hd?.clientWidth) {
+		hd.style.fontSize = '';
+		let fs = parseFloat(getComputedStyle(hd).fontSize) || 12;
+		for (let k = 0; k < 16 && hd.scrollWidth > hd.clientWidth + 0.5 && fs > 8.5; k++) hd.style.fontSize = (fs -= 0.5) + 'px';
+	}
 	for (const n of root.querySelectorAll('.ab-n')) {
 		n.style.fontSize = '';
 		if (!n.clientWidth) continue;
 		const base = parseFloat(getComputedStyle(n).fontSize) || 16;
 		const lh = parseFloat(getComputedStyle(n).lineHeight) || base * 1.1;
 		let fs = base;
-		const over = () => n.scrollWidth > n.clientWidth + 0.5 || n.offsetHeight > lh * (fs / base) * 2 + 1;
-		for (let k = 0; k < 24 && over() && fs > base * 0.68; k++) n.style.fontSize = (fs -= 0.5) + 'px';
+		const lines = () => n.offsetHeight / (lh * (fs / base));
+		const wide = () => n.scrollWidth > n.clientWidth + 0.5;
+		for (let k = 0; k < 12 && (wide() || lines() > 1.5) && fs > base * 0.86; k++) n.style.fontSize = (fs -= 0.5) + 'px';
+		if (wide() || lines() > 1.5) {
+			n.style.fontSize = '';
+			fs = base;
+			for (let k = 0; k < 24 && (wide() || lines() > 2.5) && fs > base * 0.68; k++) n.style.fontSize = (fs -= 0.5) + 'px';
+		}
 	}
 }
 
@@ -179,8 +195,8 @@ export const azbilinen = {
 	keep: true, // cevap tahtası (levhalar) kalır
 	jokers: ['yari', 'kahin'],
 	rule: 'Nadiri kazanır',
-	// sonuç ekranı sözcükleri (ui._showResult): "EN YAKIN SEN!" yerine
-	birinci: 'EN NADİR CEVAP SENDE!',
+	// sonuç ekranı sözcükleri (ui._showResult): "EN YAKIN SEN!" yerine. Kısa: sonuç damgası 320 px'te 15–16 harf alır
+	birinci: 'EN NADİR SENDE!',
 	rozet: 'EN NADİR',
 	ustun: 'seni geçti',
 	fmt: (v, value) => {
@@ -260,7 +276,7 @@ export const azbilinen = {
 				}
 				if (e.poll) {
 					root.classList.add('jk');
-					hd.querySelector('em').textContent = 'Seyirci: yüzde kaçı doğru diyor';
+					hd.innerHTML = '<i></i><b>Seyirci oyu</b><em>Yüzde kaçı doğru diyor</em>';
 					plates.forEach((b, i) => {
 						if (b.classList.contains('gone') || b.querySelector('.ab-jq')) return;
 						const m = b.querySelector('.ab-m');
@@ -341,11 +357,12 @@ export const azbilinen = {
 						const pts = 100 - v.pct[mine];
 						const w = ord[0];
 						const same = pick(v, w.value) === mine;
-						const tag = mine === best ? 'En az bilinen cevap!' : win ? `En nadiri ${v.pool[best]} (+${100 - v.pct[best]})` : same ? `Aynı cevap: ${w.name} daha hızlı` : `${w.name} daha az bilineni buldu`;
-						stampLater(app, `+${pts} PUAN`, win ? 'gold' : '', tag);
+						// geride kaldıysan önce nedeni (aynı cevap ama yavaş ya da rakip daha az bilineni buldu), kazandıysan en nadiri
+						const tag = !win ? (same ? `Aynı cevap: ${w.name} daha hızlı` : `${w.name} daha az bilineni buldu`) : mine === best ? 'En az bilinen cevap!' : `En nadiri ${v.pool[best]} (+${100 - v.pct[best]})`;
+						stampLater(app, `+${pts} PUAN`, win ? 'gold' : 'warn', tag); // doğru ama geride: turuncu (yeşil kazanmış gibi okunuyordu)
 					} else if (mine >= 0) stampLater(app, 'TUZAK!', 'bad', `${v.pool[mine]}: ${v.note[mine] || 'doğru cevap değil'}`);
 					else stampLater(app, 'SÜRE DOLDU', 'warn', `En nadiri ${v.pool[best]} (+${100 - v.pct[best]})`);
-					if (mine === best && app.ui?.fx && !rm)
+					if (mine === best && win && app.ui?.fx && !rm)
 						setTimeout(() => {
 							const b = plates[best];
 							if (!b?.isConnected) return;
