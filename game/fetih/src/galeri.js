@@ -234,7 +234,6 @@ export async function galeri() {
 	];
 	const want = decodeURIComponent(location.hash.slice(1));
 	if (want === 'tasarim') setTimeout(() => designBook(true), 0); // #tasarim: tasarım dili sayfası doğrudan açılır
-	addEventListener('hashchange', () => location.hash === '#tasarim' && designBook(true));
 	// #tip, #tip:sıra ya da #tip@soru-kimliği (denetim araçları belirli soruyu doğrudan açar)
 	const [wt, wk] = want.split(/[:@]/);
 	const S = { type: LIST.some(([t]) => t === wt) ? wt : LIST[0][0], k: 0, scene: 'duel', time: 'real', run: 0 };
@@ -292,6 +291,24 @@ export async function galeri() {
 		drawer(false);
 		play();
 	};
+	// adres değişince (#tip, #tip:sıra, #tip@kimlik) sayfa yenilenmeden o soru açılır: denetim araçları haritayı bir kez kurup
+	// soruları sırayla gezer
+	addEventListener('hashchange', () => {
+		const h = decodeURIComponent(location.hash.slice(1));
+		if (h === 'tasarim') return designBook(true);
+		const [t, k] = h.split(/[:@]/);
+		if (!LIST.some(([x]) => x === t)) return;
+		const L = ex[t];
+		let at = 0;
+		if (k && h.includes('@')) {
+			at = L.findIndex((q) => q.id === k);
+			if (at < 0) {
+				const q = BANK.find((x) => x.id === k && x.type === t);
+				at = q ? L.push(q) - 1 : 0;
+			}
+		} else if (k) at = Number(k) || 0;
+		go(t, at);
+	});
 	bar.addEventListener('click', (e) => {
 		const b = e.target.closest('button');
 		if (!b) return;

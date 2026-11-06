@@ -225,7 +225,8 @@ const measure = () => {
 		if (!r.width) continue;
 		const cs = getComputedStyle(e);
 		const over = cs.overflowX === 'visible' && e.scrollWidth > e.clientWidth + 1 && cs.display !== 'inline';
-		const right = r.left + Math.max(r.width, cs.display !== 'inline' ? e.scrollWidth : 0);
+		// taşanı gizleyen kutuda (overflow ≠ visible) içerik kutunun dışına çıkamaz: kutunun kendisi ölçülür
+		const right = r.left + Math.max(r.width, cs.display !== 'inline' && cs.overflowX === 'visible' ? e.scrollWidth : 0);
 		if (over || right > vw + 1) say(`sözde yazı taşıyor: ${ad(e)} ${pc.join(' ')} (${over ? 'kutusundan ' + (e.scrollWidth - e.clientWidth) + ' px' : 'ekrandan'})`);
 	}
 	// 5) yana taşma (kırpılmamış görünür öğe)
@@ -244,20 +245,44 @@ const measure = () => {
 	return { bad: [...new Set(bad)], info };
 };
 
-async function one(b, spec, sz) {
+const hashOf = (spec) => '#' + encodeURIComponent(spec).replace(/%40/g, '@').replace(/%3A/g, ':');
+
+/** spec'i aç: yeni sayfada (goto) ya da TEK kipinde açık sayfada adresi değiştirerek (harita yeniden kurulmaz). */
+async function openSpec(p, spec, reuse) {
 	const t = spec.split(/[:@]/)[0];
-	const [W, H] = sz.split('x').map(Number);
-	const p = await b.newPage({ viewport: { width: W, height: H } });
-	const errs = [];
-	p.on('pageerror', (e) => errs.push(e.message));
-	const res = [];
-	try {
-		await p.goto('file://' + path.resolve(html) + '#' + encodeURIComponent(spec).replace(/%40/g, '@').replace(/%3A/g, ':'), { timeout: 180000 });
+	const id = spec.includes('@') ? spec.split('@')[1] : '';
+	if (!reuse) {
+		await p.goto('file://' + path.resolve(html) + hashOf(spec), { timeout: 180000 });
 		await p.waitForFunction(() => document.querySelector('.fl-q.on .fl-qbody > *'), null, { timeout: 400000, polling: 250 });
 		if (t !== 'halat') await p.evaluate(() => document.getElementById('g-time')?.click());
 		await p.waitForTimeout(1500);
-		await p.waitForFunction(() => { const q = document.querySelector('.fl-q.on'); return q && q.querySelector('.fl-qbody > *') && getComputedStyle(q).opacity === '1'; }, null, { timeout: 120000, polling: 250 });
-		await p.waitForTimeout(1500);
+	} else {
+		const prev = await p.evaluate(() => document.querySelector('.fl-q')?.dataset.qid || '');
+		await p.evaluate((h) => (location.hash = h), hashOf(spec));
+		await p.waitForFunction(
+			([t, id, prev]) => {
+				const q = document.querySelector('.fl-q.on');
+				return q && q.classList.contains('t-' + t) && (id ? q.dataset.qid === id : q.dataset.qid !== prev) && q.querySelector('.fl-qbody > *');
+			},
+			[t, id, prev],
+			{ timeout: 180000, polling: 250 },
+		);
+	}
+	await p.waitForFunction(() => { const q = document.querySelector('.fl-q.on'); return q && q.querySelector('.fl-qbody > *') && getComputedStyle(q).opacity === '1'; }, null, { timeout: 120000, polling: 250 });
+	await p.waitForTimeout(1500);
+}
+
+async function one(b, spec, sz, page = null) {
+	const t = spec.split(/[:@]/)[0];
+	const [W, H] = sz.split('x').map(Number);
+	const p = page || (await b.newPage({ viewport: { width: W, height: H } }));
+	const errs = [];
+	const onErr = (e) => errs.push(e.message);
+	p.on('pageerror', onErr);
+	const res = [];
+	let broken = false;
+	try {
+		await openSpec(p, spec, !!page && page.__acik);
 		if (evreler.includes('soru')) {
 			await p.evaluate(() => document.getAnimations().forEach((a) => { try { if (a.effect?.getTiming().iterations !== Infinity) a.finish(); } catch {} }));
 			await p.waitForTimeout(300);
@@ -283,8 +308,11 @@ async function one(b, spec, sz) {
 		}
 	} catch (e) {
 		res.push({ t: spec, evre: 'hata', sz, bad: ['denetim çalışmadı: ' + e.message.split('\n')[0]], errs });
+		broken = true;
 	}
-	await p.close();
+	p.off('pageerror', onErr);
+	if (page && !broken) page.__acik = true;
+	else await p.close();
 	for (const r of res) {
 		console.log(`${r.t} ${r.evre} ${r.sz}: ${r.bad.length ? r.bad.length + ' sorun' : 'temiz'}${r.errs.length ? ' · sayfa hatası: ' + r.errs[0] : ''}`);
 		for (const x of r.bad) console.log('   - ' + x);
@@ -299,13 +327,45 @@ async function one(b, spec, sz) {
 	for (const sz of sizes) for (const t of types) jobs.push([t, sz]);
 	const all = [];
 	let k = 0;
-	const worker = async () => {
-		while (k < jobs.length) {
-			const [t, sz] = jobs[k++];
-			all.push(...(await one(b, t, sz)));
+	// TEK=1: her işçi her ekran boyunda tek sayfa açar, soruları adresle gezer (harita bir kez kurulur; çok daha hızlı)
+	const TEK = !!process.env.TEK;
+	const pages = new Map();
+	const P = Math.max(1, +parA);
+	const tekWorker = async (w) => {
+		// ekran boyları işçilere paylaştırılır; her boy tek sayfada baştan sona
+		for (let i = w; i < sizes.length; i += P) {
+			const sz = sizes[i];
+			const [W, H] = sz.split('x').map(Number);
+			let page = null;
+			for (const t of types) {
+				if (!page || page.isClosed()) {
+					page = await b.newPage({ viewport: { width: W, height: H } });
+					page.__acik = false;
+				}
+				all.push(...(await one(b, t, sz, page)));
+			}
+			if (page && !page.isClosed()) await page.close();
 		}
 	};
-	await Promise.all(Array.from({ length: Math.max(1, +parA) }, worker));
+	const worker = async (w) => {
+		if (TEK) return tekWorker(w);
+		while (k < jobs.length) {
+			const [t, sz] = jobs[k++];
+			let page = null;
+			if (TEK) {
+				const key = w + '|' + sz;
+				page = pages.get(key);
+				if (!page || page.isClosed()) {
+					const [W, H] = sz.split('x').map(Number);
+					page = await b.newPage({ viewport: { width: W, height: H } });
+					page.__acik = false;
+					pages.set(key, page);
+				}
+			}
+			all.push(...(await one(b, t, sz, page)));
+		}
+	};
+	await Promise.all(Array.from({ length: Math.max(1, +parA) }, (_, w) => worker(w)));
 	await b.close();
 	fs.writeFileSync(path.join(out, 'ozet.json'), JSON.stringify(all, null, 1));
 	const n = all.reduce((s, r) => s + r.bad.length + r.errs.length, 0);

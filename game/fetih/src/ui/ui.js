@@ -768,6 +768,8 @@ export class UI {
 		const cover = !map && (T.cover === 'kisa' ? innerHeight < 720 : !!T.cover);
 		card.className = `fl-q t-${q.type}${map ? ' map' : ''}${closest ? ' kc' : ''}${human ? '' : ' spec'}${cover ? ' cover' : ''}`;
 		if (cover && T.stampAt) card.dataset.st = T.stampAt; // damganın oturacağı alan (yoksa sorunun yeri)
+		else delete card.dataset.st;
+		card.dataset.qid = q.id || ''; // denetim araçları açık sorunun kimliğini okur
 		card.style.setProperty('--cc', cat.color);
 		card.style.setProperty('--cd', shade(cat.color, -0.4));
 		card.style.setProperty('--me', human ? avatarURL(this.look(human)) : 'none');

@@ -302,10 +302,12 @@ export const cross = {
 		const { L } = v;
 		const land = isLand();
 		const W = Math.min(Math.max(240, (el.closest('.fl-ui')?.clientWidth || innerWidth) - 32), 440);
-		// kutu boyu: genişliğe ve (dikeyde) ~300 px tahta yüksekliğine sığar; 3–4 kelimede iri kutular
+		// kutu boyu: genişliğe ve (dikeyde) tahta yüksekliğine sığar; 3–4 kelimede iri kutular. Tahta yüksekliği ekranla
+		// küçülür (740 px'te 300, 568 px'te 128): kısa telefonda bulmaca ipucu, harf kartları ve düğmelerle birlikte sığar
+		const BH = clamp(innerHeight - 440, 128, 300);
 		const cs = land
 			? clamp(Math.min(Math.floor((210 - (L.cols - 1) * 4) / L.cols), Math.floor((210 - (L.rows - 1) * 4) / L.rows)), 18, 36)
-			: clamp(Math.min(Math.floor((W - (L.cols - 1) * 4) / L.cols), Math.floor((300 - (L.rows - 1) * 4) / L.rows)), 26, 50);
+			: clamp(Math.min(Math.floor((W - (L.cols - 1) * 4) / L.cols), Math.floor((BH - (L.rows - 1) * 4) / L.rows)), 20, 50);
 		const idxAt = new Map(L.cells.map((c, i) => [c.r + ',' + c.c, i]));
 		const wordsAt = L.cells.map(() => ({}));
 		const len = (w) => w.len ?? [...w.w].length;
