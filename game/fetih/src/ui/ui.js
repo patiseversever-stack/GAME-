@@ -1660,39 +1660,66 @@ export class UI {
 	}
 
 	/**
-	 * Pin cevabı: iğnelerin "km" yazıları birbirine ve başka iğnelerin resmine binmesin. Yazı önce iğnenin üstünde; orası
-	 * dolu ise ucunun altına iner. Engeller: bütün iğnelerin gövdesi (ve hedef bayrağı), önce yerleşen yazılar. Üstten
-	 * aşağı sırayla yerleşir; ikisi de doluysa en az binen yer seçilir. Sınıf yalnız değişince yazılır.
+	 * Pin cevabı: iğnelerin "km" yazıları birbirine, başka iğnelere, hedef bayrağına binmesin, kartın arkasına ve ekran
+	 * kenarının dışına çıkmasın. Aday yerler: iğnenin üstü, ucunun altı, sağı, solu; ilk boş olan seçilir. Hiçbiri boş
+	 * değilse en az binen (yazı üstüne yazı en ağır, iğne gövdesi orta, hedef bayrağı hafif). Yazı ekranın içine kaydırılır.
+	 * Sınıf ve kayma yalnız değişince yazılır.
 	 */
 	_kmPlace(P) {
 		const K = P.filter((p) => p.km);
 		if (!K.length) return;
+		const SW = this.el.clientWidth || innerWidth;
+		const SH = this.el.clientHeight || innerHeight;
 		const ov = (a, b) => Math.max(0, Math.min(a.r, b.r) - Math.max(a.l, b.l)) * Math.max(0, Math.min(a.b, b.b) - Math.max(a.t, b.t));
 		const obs = [];
 		for (const p of P) {
 			if (p.w || p.sx == null) continue; // yazı rozetleri değil, iğneler
-			obs.push(p.goal ? { l: p.sx - 24, r: p.sx + 24, t: p.sy - 24, b: p.sy + 24, p } : { l: p.sx - 20, r: p.sx + 20, t: p.sy - 50, b: p.sy + 2, p });
+			obs.push(p.goal ? { l: p.sx - 24, r: p.sx + 24, t: p.sy - 24, b: p.sy + 24, p, k: 0.3 } : { l: p.sx - 20, r: p.sx + 20, t: p.sy - 50, b: p.sy + 2, p, k: 1 });
 		}
-		// haritalı soruda kartın altı da engel: yazı kartın arkasına girmesin
-		const SH = this.el.clientHeight || innerHeight;
-		if (this.el.classList.contains('qmap') && this._mapTop) obs.push({ l: -1e5, r: 1e5, t: -1e5, b: this._mapTop * SH - 4, p: null });
+		// haritalı soruda kartın altı engel: yazı kartın arkasına girmesin
+		const top = this.el.classList.contains('qmap') && this._mapTop ? this._mapTop * SH - 4 : 2;
+		obs.push({ l: -1e5, r: 1e5, t: -1e5, b: top, p: null, k: 10 });
 		K.sort((a, b) => a.sy - b.sy);
 		for (const p of K) {
 			p.kw ??= p.el.querySelector('.km')?.offsetWidth || 44;
-			const l = p.sx - p.kw / 2 - 3;
-			const r = p.sx + p.kw / 2 + 3;
-			const up = { l, r, t: p.sy - 72, b: p.sy - 49 };
-			const dn = { l, r, t: p.sy + 3, b: p.sy + 26 };
-			const hit = (R) => obs.reduce((a, B) => a + (B.p === p ? 0 : ov(R, B)), 0);
-			const hu = hit(up);
-			const hd = hu > 0 ? hit(dn) : 0;
-			// kararsız kalmasın: aşağıdaysa ancak yukarısı tamamen boşalınca çıkar
-			const down = hu > 0 && (hd < hu || (p.kd && hd <= hu));
-			if (down !== !!p.kd) {
-				p.kd = down;
-				p.el.classList.toggle('kd', down);
+			const w = p.kw + 6;
+			const at = (cx, t, b, m) => {
+				const l0 = cx - w / 2;
+				const kx = Math.max(4 - l0, Math.min(0, SW - 4 - (l0 + w))); // ekranın içine kaydır
+				return { l: l0 + kx, r: l0 + kx + w, t, b, m, kx };
+			};
+			const C = [
+				at(p.sx, p.sy - 72, p.sy - 49, ''),
+				at(p.sx, p.sy + 3, p.sy + 26, 'kd'),
+				at(p.sx + 22 + w / 2, p.sy - 38, p.sy - 15, 'kr'),
+				at(p.sx - 22 - w / 2, p.sy - 38, p.sy - 15, 'kl'),
+			];
+			const cost = (R) => obs.reduce((a, B) => a + (B.p === p ? 0 : ov(R, B) * B.k), 0) + (R.b > SH - 4 ? 1e4 : 0);
+			// kararsız kalmasın: şimdiki yer boşsa ondan çıkılmaz
+			const cur = C.find((c) => c.m === (p.km0 || ''));
+			let best = cur && cost(cur) === 0 ? cur : null;
+			if (!best) {
+				let bc = Infinity;
+				for (const c of C) {
+					const v = cost(c);
+					if (v < bc - 0.5) {
+						bc = v;
+						best = c;
+					}
+					if (v === 0) break;
+				}
 			}
-			obs.push(down ? dn : up);
+			if (best.m !== (p.km0 || '')) {
+				if (p.km0) p.el.classList.remove(p.km0);
+				if (best.m) p.el.classList.add(best.m);
+				p.km0 = best.m;
+			}
+			const kx = Math.round(best.kx);
+			if (kx !== p.kx0) {
+				p.kx0 = kx;
+				p.el.style.setProperty('--kx', kx + 'px');
+			}
+			obs.push({ ...best, p: null, k: 10 });
 		}
 	}
 
