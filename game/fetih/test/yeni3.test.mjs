@@ -1,11 +1,10 @@
 // YENİ grup 3 sınaması (Mayın Tarlası, Uçuş Rotası):  node test/yeni3.test.mjs
 // deneme.test.mjs gibi esbuild ile paketler (tipler harita verisini içe aktarır).
 // Denetler:
-//   örnek gerçekleri harita verisinden (src/data/turkiye.json): komşuluk kuralında güvenli iller = merkezin tarladaki
-//   komşuları ve merkezin bütün komşuları tarlada; kıyı kuralında güvenli iller = denize sınırı olmayanlar (deniz sınırı
-//   ≥ 20 km; verinin yabancı kara sınırındaki birkaç km'lik kırıntıları sayılmaz); genç il kuralında güvenli iller =
-//   plakası 68–81 olanlar; Ege rotasında duraklar Ege'ye (batı kıyısı) kıyısı olan illerin tamamı ve il merkezleri
-//   kuzeyden güneye sıralı; tarla 10–16 il, rota 4–6 durak, kimlikler ve kategoriler doğru
+//   örnek gerçekleri harita verisinden (src/data/turkiye.json): her Mayın sorusunun güvenli illeri kuraldan (komşuluk, komşu
+//   sayısı, bölge, kıyı, deniz, ülke sınırı, göl, plaka, elle listeler) yeniden hesaplanır; komşuluk sorusunda merkezin
+//   bütün komşuları tarlada; tarla bir bütün. Her Rota sorusunun sırası veriden (enlem, boylam, ırmak çizgisi, doruk, alan,
+//   plaka) ya da yazılı beklenen sırayla doğrulanır. Sayı (≥ 30), kimlik, zorluk ve kategori dağılımı, kısa notlar
 //   tip sözleşmesi: süre, publicView cevabı taşımıyor, judge (kısmi puan, ikinci mayından sonrası sayılmaz, sapma noktası),
 //   bot (değer api.answer ile aynı biçimde; usta acemiden iyi), joker etkisi, fmt/sub
 import { build } from 'esbuild';
@@ -55,53 +54,211 @@ ok(Object.keys(TYPES).join() === 'mayin,rota', 'TYPES');
 ok(ORDER.length === 2 && ORDER.every(([t, n, s]) => TYPES[t] && n && s), 'ORDER');
 for (const t of ['mayin', 'rota']) {
 	ok(PROFILE[t] && limits(t).lo >= 20, t + ': PROFILE');
-	ok(SAMPLES[t].length === 3, t + ': 3 örnek');
+	ok(SAMPLES[t].length >= 30, t + ': en az 30 soru (' + SAMPLES[t].length + ')');
+	const cats = new Set();
+	const diffs = new Set();
 	SAMPLES[t].forEach((q, k) => {
-		ok(q.id === 'yn-' + t + '-' + (k + 1), q.id + ': kimlik');
-		ok(q.diff === k + 1, q.id + ': zorluk ' + q.diff);
+		ok(q.id === 'yn-' + t + '-' + (k + 1), q.id + ': kimlik sırası');
+		if (k < 3) ok(q.diff === k + 1, q.id + ': ilk üç sorunun zorluğu değişmedi ' + q.diff);
+		ok([1, 2, 3].includes(q.diff), q.id + ': zorluk ' + q.diff);
 		ok(!!CATS[q.cat], q.id + ': kategori ' + q.cat);
 		ok(q.type === t, q.id + ': tip');
 		ok(!/[\\u{1F300}-\\u{1FAFF}\\u{2600}-\\u{27BF}]/u.test(JSON.stringify(q)), q.id + ': emoji');
-		ok(!/'/.test(q.q + (q.mayin || '') + (q.not || '')), q.id + ': düz kesme işareti (’ olmalı)');
+		ok(!/'/.test(JSON.stringify(q).replace(/"/g, '')), q.id + ': düz kesme işareti (’ olmalı)');
+		cats.add(q.cat);
+		diffs.add(q.diff);
 	});
+	ok(diffs.size === 3 && cats.size >= 3, t + ': zorluk ve kategori dağılımı');
+	ok(new Set(SAMPLES[t].map((q) => q.q)).size === SAMPLES[t].length, t + ': aynı soru metni iki kez');
 }
 
-// ---------------------------------------------------------------- Mayın Tarlası: gerçekler veriden
-const [m1, m2, m3] = SAMPLES.mayin;
+// ---------------------------------------------------------------- veriden gerçekler
+const ID = Object.fromEntries(DATA.provinces.map((p) => [p.name, p.id]));
+const ids = (s) => s.split(',').map((n) => {
+	ok(ID[n] != null, 'il adı: ' + n);
+	return ID[n];
+});
+// kara sınırı: veride yabancı ülkeyle (−1) sınırı ≥ 20 km olan iller (15 il)
+const land = new Map();
+for (const b of DATA.borders) {
+	if (P.has(b.a) && P.has(b.b)) continue;
+	const other = P.has(b.a) ? b.b : b.a;
+	const pid = P.has(b.a) ? b.a : b.b;
+	if (other === -1) land.set(pid, (land.get(pid) || 0) + len(b.pts));
+}
+const sinir = (id) => (land.get(id) || 0) >= 20;
+ok(same([...land.keys()].filter(sinir), ids('Edirne,Kırklareli,Artvin,Ardahan,Kars,Iğdır,Ağrı,Van,Hakkari,Şırnak,Mardin,Şanlıurfa,Gaziantep,Kilis,Hatay')), 'veri: 15 sınır ili');
+// denizler (elle; dört listenin birleşimi verideki 28 kıyı iliyle aynı olmalı)
+const DENIZ = {
+	K: ids('Kırklareli,İstanbul,Kocaeli,Sakarya,Düzce,Zonguldak,Bartın,Kastamonu,Sinop,Samsun,Ordu,Giresun,Trabzon,Rize,Artvin'),
+	M: ids('Tekirdağ,İstanbul,Kocaeli,Yalova,Bursa,Balıkesir,Çanakkale'),
+	E: ids('Edirne,Çanakkale,Balıkesir,İzmir,Aydın,Muğla'),
+	A: ids('Muğla,Antalya,Mersin,Adana,Hatay'),
+};
+const kiyi = (id) => Object.keys(DENIZ).filter((k) => DENIZ[k].includes(id));
+ok(same([...new Set(Object.values(DENIZ).flat())], [...sea.keys()].filter(coast)), 'deniz listeleri verideki 28 kıyı iliyle aynı değil');
+// Suriye sınırı (elle; hepsi verideki sınır illerinden)
+const SURIYE = ids('Hatay,Kilis,Gaziantep,Şanlıurfa,Mardin,Şırnak');
+ok(SURIYE.every(sinir), 'Suriye sınırındaki iller veride sınır ili');
+const IRAN = ids('Iğdır,Ağrı,Van,Hakkari');
+ok(IRAN.every(sinir), 'İran sınırındaki iller veride sınır ili');
+// göl kıyısı: verideki göl halkasının noktaları (çevresinde) ilin içinde
+const pip = (x, y, r) => {
+	let c = false;
+	for (let i = 0, j = r.length - 2; i < r.length; j = i, i += 2) {
+		const xi = r[i], yi = r[i + 1], xj = r[j], yj = r[j + 1];
+		if (yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi) c = !c;
+	}
+	return c;
+};
+const inP = (id, x, y) => P.get(id).rings.some((r) => pip(x, y, r));
+const golKiyi = (ad) => {
+	const L = DATA.lakes.find((l) => l.name === ad);
+	const n = new Map();
+	for (let k = 0; k < L.ring.length; k += 2)
+		for (const p of DATA.provinces)
+			for (const [dx, dy] of [[0.08, 0], [-0.08, 0], [0, 0.08], [0, -0.08]]) if (inP(p.id, L.ring[k] + dx, L.ring[k + 1] + dy)) n.set(p.id, (n.get(p.id) || 0) + 1);
+	return [...n].filter(([, c]) => c >= 40).map(([id]) => id);
+};
+const BUYUKSEHIR = ids('Adana,Ankara,Antalya,Aydın,Balıkesir,Bursa,Denizli,Diyarbakır,Erzurum,Eskişehir,Gaziantep,Hatay,İstanbul,İzmir,Kahramanmaraş,Kayseri,Kocaeli,Konya,Malatya,Manisa,Mardin,Mersin,Muğla,Ordu,Sakarya,Samsun,Şanlıurfa,Tekirdağ,Trabzon,Van');
+ok(BUYUKSEHIR.length === 30, '30 büyükşehir');
+const UNVAN = ids('Gaziantep,Kahramanmaraş,Şanlıurfa');
+const reg = (id) => P.get(id).region;
+const nbs = (id) => P.get(id).nb;
+
+// Mayın Tarlası: her sorunun güvenli illeri = tarladan kurala uyanlar (kural veriden ya da yukarıdaki listelerden)
+const MK = {
+	'yn-mayin-1': (id) => nbs(6).includes(id),
+	'yn-mayin-2': (id) => !coast(id),
+	'yn-mayin-3': (id) => id >= 68,
+	'yn-mayin-4': (id) => kiyi(id).includes('K'),
+	'yn-mayin-5': (id) => kiyi(id).includes('A'),
+	'yn-mayin-6': (id) => kiyi(id).includes('M'),
+	'yn-mayin-7': (id) => kiyi(id).length === 2,
+	'yn-mayin-8': (id) => reg(id) === 'karadeniz' && !coast(id),
+	'yn-mayin-9': (id) => golKiyi('Tuz Gölü').includes(id),
+	'yn-mayin-10': sinir,
+	'yn-mayin-11': (id) => SURIYE.includes(id),
+	'yn-mayin-12': (id) => IRAN.includes(id),
+	'yn-mayin-13': (id) => nbs(42).includes(id),
+	'yn-mayin-14': (id) => nbs(58).includes(id),
+	'yn-mayin-15': (id) => nbs(25).includes(id),
+	'yn-mayin-16': (id) => nbs(46).includes(id),
+	'yn-mayin-17': (id) => nbs(14).includes(id),
+	'yn-mayin-18': (id) => nbs(21).includes(id),
+	'yn-mayin-19': (id) => nbs(3).includes(id),
+	'yn-mayin-20': (id) => nbs(id).length >= 7,
+	'yn-mayin-21': (id) => nbs(id).length === 3,
+	'yn-mayin-22': (id) => reg(id) === 'guneydogu',
+	'yn-mayin-23': (id) => reg(id) === 'ege',
+	'yn-mayin-24': (id) => reg(id) === 'icanadolu',
+	'yn-mayin-25': (id) => reg(id) === 'akdeniz',
+	'yn-mayin-26': (id) => reg(id) === 'marmara',
+	'yn-mayin-27': (id) => reg(id) === 'dogu',
+	'yn-mayin-28': (id) => id > 40,
+	'yn-mayin-29': (id) => id >= 72,
+	'yn-mayin-30': (id) => UNVAN.includes(id),
+	'yn-mayin-31': (id) => BUYUKSEHIR.includes(id),
+};
+ok(same(golKiyi('Tuz Gölü'), ids('Ankara,Konya,Aksaray')), 'veri: Tuz Gölü üç ilin sınırında');
 for (const q of SAMPLES.mayin) {
 	ok(q.alan.length >= 10 && q.alan.length <= 16, q.id + ': tarla 10–16 il (' + q.alan.length + ')');
 	ok(new Set(q.alan).size === q.alan.length && q.alan.every((id) => P.has(id)), q.id + ': tarla illeri');
 	ok(q.guvenli.every((id) => q.alan.includes(id)), q.id + ': güvenli il tarlada değil');
 	ok(q.guvenli.length >= 3 && q.alan.length - q.guvenli.length >= 3, q.id + ': güvenli ve mayın en az 3');
 	ok(q.merkez == null || !q.alan.includes(q.merkez), q.id + ': merkez tarlada');
+	ok(q.mayin && q.not && [...q.not].length <= 96, q.id + ': mayın kuralı ve kısa not');
+	const rule = MK[q.id];
+	ok(!!rule, q.id + ': sınamada kuralı yok');
+	if (!rule) continue;
+	const want = q.alan.filter(rule);
+	ok(same(q.guvenli, want), q.id + ': güvenli iller kurala uymuyor (olmalı: ' + want.map(name) + ' · yazılan: ' + q.guvenli.map(name) + ')');
+	// komşuluk sorusunda merkezin bütün komşuları tarlada (eksik komşu tuzak sayılırdı)
+	if (q.merkez != null) {
+		const nb = nbs(q.merkez);
+		ok(nb.every((id) => q.alan.includes(id)), q.id + ': merkezin her komşusu tarlada değil (' + nb.filter((id) => !q.alan.includes(id)).map(name) + ')');
+		ok(new RegExp(nb.length + ' komşu').test(q.not), q.id + ': notta komşu sayısı');
+	}
+	// tarla bir bütün: her il tarladaki (ya da merkezdeki) bir ile komşu (kamera dar bir bölgeyi çerçeveler)
+	{
+		const pool = q.merkez != null ? [...q.alan, q.merkez] : q.alan;
+		ok(q.alan.every((id) => nbs(id).some((x) => pool.includes(x))), q.id + ': tarlada kopuk il (' + q.alan.filter((id) => !nbs(id).some((x) => pool.includes(x))).map(name) + ')');
+	}
 }
-// 1) komşuluk
-const nb = P.get(m1.merkez).nb;
-ok(same(m1.guvenli, m1.alan.filter((id) => nb.includes(id))), m1.id + ': güvenli iller merkezin tarladaki komşuları değil');
-ok(nb.every((id) => m1.alan.includes(id)), m1.id + ': merkezin her komşusu tarlada değil (' + nb.filter((id) => !m1.alan.includes(id)).map(name) + ')');
-ok(name(m1.merkez) === 'Ankara' && nb.length === 7, m1.id + ': Ankara’nın 7 komşusu (not)');
-// 2) kıyı (28 kıyı ili: veride deniz sınırı ≥ 20 km olanlar)
-ok([...sea.keys()].filter(coast).length === 28, 'veri: 28 kıyı ili');
-ok(same(m2.guvenli, m2.alan.filter((id) => !coast(id))), m2.id + ': güvenli iller kıyısı olmayanlar değil');
-ok(m2.guvenli.includes(20) && !coast(20), m2.id + ': Denizli’nin kıyısı yok (not)');
-// 3) genç iller (plaka 68–81: 1989'dan bu yana il oldu)
-ok(same(m3.guvenli, m3.alan.filter((id) => id >= 68)), m3.id + ': güvenli iller plakası 68–81 olanlar değil');
-ok(same(m3.guvenli, [74, 77, 78, 81]), m3.id + ': notta adı geçen genç iller (Bartın, Yalova, Karabük, Düzce)');
+// notlarda adı geçen sayılar ve tuzaklar
+ok(same(SAMPLES.mayin[2].guvenli, [74, 77, 78, 81]), 'yn-mayin-3: notta adı geçen genç iller (Bartın, Yalova, Karabük, Düzce)');
+ok(nbs(42).length === 9 && nbs(25).length === 9 && nbs(58).length === 8 && nbs(46).length === 7, 'veri: komşu sayıları (Konya, Erzurum 9; Sivas 8; Kahramanmaraş 7)');
+ok(!coast(ID['Osmaniye']) && reg(ID['Osmaniye']) === 'akdeniz', 'veri: Osmaniye Akdeniz’de ve kıyısız');
+ok(!sinir(ID['Erzurum']) && sinir(ID['Iğdır']), 'veri: Erzurum’un ülke sınırı yok');
+ok([...sea.keys()].filter(coast).filter(sinir).length === 4, 'veri: hem kıyı hem sınır ili dört');
 
-// ---------------------------------------------------------------- Uçuş Rotası: gerçekler
-const [r1, r2, r3] = SAMPLES.rota;
+// Uçuş Rotası
+const lon = (id) => P.get(id).center[0];
+const desc = (a, f) => a.every((x, k) => !k || f(a[k - 1]) > f(x));
+const asc = (a, f) => a.every((x, k) => !k || f(a[k - 1]) < f(x));
+const peak = (ad) => DATA.peaks.find((p) => p.name === ad);
+const nehir = (ad) => {
+	// verideki ırmak çizgisinin (ilk parça) geçtiği iller sırasıyla
+	const s = DATA.rivers.find((r) => r.name === ad);
+	const seq = [];
+	for (let k = 0; k < s.pts.length; k += 2) {
+		const p = DATA.provinces.find((p) => inP(p.id, s.pts[k], s.pts[k + 1]));
+		if (p && seq[seq.length - 1] !== p.id) seq.push(p.id);
+	}
+	return seq;
+};
+const altdizi = (a, b) => {
+	let j = 0;
+	for (const x of b) if (x === a[j]) j++;
+	return j === a.length;
+};
+const RK = {
+	'yn-rota-1': (I) => I.map(name).join() === 'Samsun,Amasya,Erzurum,Sivas,Ankara',
+	'yn-rota-2': (I) => I.every(coast) && desc(I, lat) && I.join() === DENIZ.E.slice().sort((a, b) => lat(b) - lat(a)).join(),
+	'yn-rota-3': (I, q) => q.duraklar.map((d) => d.ad).join() === 'Göbeklitepe,Çatalhöyük,Efes,Ayasofya,Selimiye,Anıtkabir' && I.map(name).join() === 'Şanlıurfa,Konya,İzmir,İstanbul,Edirne,Ankara',
+	'yn-rota-4': (I) => I.every((id) => kiyi(id).includes('K')) && asc(I, lon),
+	'yn-rota-5': (I) => same(I, DENIZ.A) && asc(I, lon),
+	'yn-rota-6': (I) => desc(I, lat) && I.every((x, k) => !k || lat(I[k - 1]) - lat(x) > 0.5),
+	'yn-rota-7': (I) => same(I, SURIYE) && asc(I, lon),
+	'yn-rota-8': (I) => I.every(sinir) && desc(I, lat),
+	'yn-rota-9': (I) => I.every((id) => kiyi(id).includes('M')) && I.every((x, k) => !k || nbs(I[k - 1]).includes(x)) && I.map(name).join() === 'Tekirdağ,İstanbul,Kocaeli,Yalova,Bursa,Balıkesir',
+	'yn-rota-10': (I) => desc(I, lon) && I.map(name).join() === 'Erzincan,Tokat,Çorum,Bolu,Düzce,Kocaeli',
+	'yn-rota-11': (I) => altdizi(I, nehir('Kızılırmak')) && I[0] === ID['Sivas'] && I[I.length - 1] === ID['Samsun'],
+	'yn-rota-12': (I) => altdizi(I, nehir('Dicle')),
+	'yn-rota-13': (I, q) => q.duraklar.map((d) => d.ad || name(d.il)).join() === 'Erzurum,Kemaliye,Keban,Birecik,Karkamış' && I.map(name).join() === 'Erzurum,Erzincan,Elazığ,Şanlıurfa,Gaziantep',
+	'yn-rota-14': (I, q) =>
+		q.duraklar.every((d) => {
+			const p = peak(d.ad);
+			return p && inP(d.il, p.p[0], p.p[1]) && d.not === p.m + ' m';
+		}) && asc(q.duraklar, (d) => peak(d.ad).m),
+	'yn-rota-15': (I) => I.map(name).join() === 'İzmir,Ankara,Sivas,Kars,Erzurum',
+	'yn-rota-16': (I) => desc(I, (id) => P.get(id).area) && I[0] === DATA.provinces.slice().sort((a, b) => b.area - a.area)[0].id && I[I.length - 1] === DATA.provinces.slice().sort((a, b) => a.area - b.area)[0].id,
+	'yn-rota-17': (I, q) => q.duraklar.map((d) => d.ad).join() === 'Van Gölü,Tuz Gölü,Beyşehir,Eğirdir,İznik' && [['Van Gölü', 0], ['Tuz Gölü', 1], ['Beyşehir Gölü', 2], ['Eğirdir Gölü', 3], ['İznik Gölü', 4]].every(([g, k]) => golKiyi(g).includes(I[k])),
+	'yn-rota-18': (I, q) => asc(I, (id) => id) && q.duraklar.every((d) => d.not.startsWith(String(d.il))),
+	'yn-rota-19': (I) => I.map(name).join() === 'Muş,Bursa,İstanbul,Çanakkale,Kütahya',
+	'yn-rota-20': (I) => I.map(name).join() === 'Bilecik,Bursa,Edirne,İstanbul,Ankara',
+	'yn-rota-21': (I) => I.map(name).join() === 'Eskişehir,Afyonkarahisar,Kütahya,İzmir,Bursa,Ankara',
+	'yn-rota-22': (I) => I.map(name).join() === 'Çorum,Ankara,Manisa,Konya,Bursa',
+	'yn-rota-23': (I, q) => asc(I, (id) => id) && I.every((id) => id >= 68) && asc(q.duraklar, (d) => +d.not),
+	'yn-rota-24': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Çorum,Adıyaman,Denizli,Karabük,Çanakkale',
+	'yn-rota-25': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Konya,Kars,Aydın,Şanlıurfa,Malatya,Ankara',
+	'yn-rota-26': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Sivas,Bursa,Edirne,İstanbul,Ankara',
+	'yn-rota-27': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'Tekirdağ,Diyarbakır,Sivas,Sakarya,Kırşehir',
+	'yn-rota-28': (I) => I.map(name).join() === 'Aydın,Muğla,Sinop,Amasya,İzmir,Çanakkale',
+	'yn-rota-29': (I, q) => asc(q.duraklar, (d) => +d.not) && I.map(name).join() === 'İstanbul,Ankara,İzmir,Bursa,Eskişehir,Trabzon',
+	'yn-rota-30': (I) => I.map(name).join() === 'Ankara,Kayseri,Sivas,Erzincan,Erzurum,Kars',
+	'yn-rota-31': (I) => I.map(name).join() === 'Ankara,Eskişehir,Bilecik,Sakarya,Kocaeli,İstanbul' && I.every((x, k) => !k || nbs(I[k - 1]).includes(x)),
+};
+ok(altdizi([58, 38, 50, 40, 71], nehir('Kızılırmak')) && nehir('Dicle')[0] === ID['Elazığ'], 'veri: ırmak çizgileri');
 for (const q of SAMPLES.rota) {
 	ok(q.duraklar.length >= 4 && q.duraklar.length <= 6, q.id + ': 4–6 durak');
 	ok(new Set(q.duraklar.map((d) => d.il)).size === q.duraklar.length && q.duraklar.every((d) => P.has(d.il)), q.id + ': duraklar farklı iller');
-	ok(q.duraklar.every((d) => d.not && [...d.not].length <= 12), q.id + ': her durağın kısa notu');
+	ok(q.duraklar.every((d) => d.not && [...d.not].length <= 12), q.id + ': her durağın kısa notu (' + q.duraklar.filter((d) => [...d.not].length > 12).map((d) => d.not) + ')');
+	ok(q.duraklar.every((d) => !d.ad || [...d.ad].length <= 13), q.id + ': kart adı kısa');
+	const I = q.duraklar.map((d) => d.il);
+	const rule = RK[q.id];
+	ok(!!rule && rule(I, q), q.id + ': sıra doğrulanamadı (' + I.map(name) + ')');
 }
-ok(r1.duraklar.map((d) => name(d.il)).join() === 'Samsun,Amasya,Erzurum,Sivas,Ankara', r1.id + ': 1919 sırası');
-const ege = r2.duraklar.map((d) => d.il);
-ok(ege.every(coast), r2.id + ': her durağın kıyısı var');
-for (let k = 1; k < ege.length; k++) ok(lat(ege[k - 1]) > lat(ege[k]), r2.id + ': kuzeyden güneye değil (' + name(ege[k - 1]) + ' / ' + name(ege[k]) + ')');
-ok(ege.join() === '22,17,10,35,9,48', r2.id + ': Ege kıyısındaki altı il (Edirne, Çanakkale, Balıkesir, İzmir, Aydın, Muğla)');
-ok(r3.duraklar.map((d) => d.ad).join() === 'Göbeklitepe,Çatalhöyük,Efes,Ayasofya,Selimiye,Anıtkabir', r3.id + ': yerler');
-ok(r3.duraklar.map((d) => name(d.il)).join() === 'Şanlıurfa,Konya,İzmir,İstanbul,Edirne,Ankara', r3.id + ': yerlerin illeri');
 
 // ---------------------------------------------------------------- tip davranışı
 const M = TYPES.mayin;

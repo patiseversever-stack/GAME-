@@ -5,8 +5,9 @@
 // uçak iner ve rota gönderilir.
 //
 // İmza an (cevap): oyuncunun rotası hayalete döner (soluk kesik çizgi), saptığı ayak kırmızı yanar; altın uçak doğru
-// rotayı uçar: arkasında parlayan altın iz ve beyaz uçak izi (kontrail), her durakta altın madalya, yıldız patlaması ve
-// yükselen bir nota. Kartta doğru sıra (her durağın notu: tarih, yer) ve her oyuncunun mini rotası.
+// rotayı uçar: arkasında parlayan altın iz ve ışıyan kontrail, her durakta altın madalya, yere yayılan iniş nabzı, yıldız
+// patlaması ve yükselen bir nota. Kamera alçalıp uçağı izler (biraz önüne, varacağı durağa bakar); son durakta bütün
+// rotaya geri çekilir. Oyuncunun uçağı da kendi renginde kontrail bırakır, her inişte nabız atar. Kartta doğru sıra (her durağın notu: tarih, yer) ve her oyuncunun mini rotası.
 //
 // Puan (tür 'closest'): EN UZUN DOĞRU BAŞLANGIÇ (kalkıştan ilk sapmaya kadar doğru durak sayısı). Rota bir zincir:
 // bir durakta sapan uçak sonraki her ayağı yanlış yere uçar (navigasyondaki gibi). Bu kural rotayı kalkıştan başlayarak
@@ -26,6 +27,7 @@ import { jokersOff } from './t_pick.js';
 import { appOf, stamp, guard, onClose, onOpen, cardTop, pop, tapX, sfx, rule, stampLater, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { clock, setTimeout, clearTimeout } from '../core/clock.js';
 import { katman, adlar, el as sv, digit, CROSS, PLANE, PLANE_TAIL, yayNok, aci, damga, damgaYeri, sigdir, cerceve, DAMGA_CSS } from './d_rota_katman.js';
+import { setNightTone } from '../gfx/env.js';
 import DATA from '../data/turkiye.json';
 
 const PROV = DATA.provinces;
@@ -141,7 +143,17 @@ const KCSS = /* css */ `
 .yn-rtk .lg.gd{stroke:${GOLD};stroke-width:4.4}
 .yn-rtk .lg.gdg{stroke:rgba(255,200,60,.3);stroke-width:13}
 .yn-rtk .lg.gdh{stroke:#fff8d8;stroke-width:1.3}
-.yn-rtk .ct{fill:none;stroke-linecap:round;stroke-width:7}
+.yn-rtk .ct{fill:none;stroke-linecap:round;stroke-width:6}
+.yn-rtk .ct.g{stroke-width:17;opacity:.55}
+.yn-rtk .ct.h{stroke-width:2;opacity:.95}
+/* iniş nabzı: durağın çevresinde yere yayılan halkalar (kamera eğimiyle basık) */
+.yn-rtk .pg .r1,.yn-rtk .pg .r2{fill:none;transform-box:fill-box;transform-origin:50% 50%}
+.yn-rtk .pg .r1{stroke:var(--c);stroke-width:3.2;animation:ynRtPing .85s cubic-bezier(.2,.7,.3,1) forwards}
+.yn-rtk .pg .r2{stroke:#fff;stroke-width:1.6;animation:ynRtPing 1s .12s cubic-bezier(.2,.7,.3,1) both}
+.yn-rtk .pg .fl{fill:var(--c);transform-box:fill-box;transform-origin:50% 50%;animation:ynRtFl .55s ease-out forwards}
+.yn-rtk .pg.big .r1{stroke-width:4.2}
+@keyframes ynRtPing{0%{transform:scale(.15);opacity:1}100%{transform:scale(1.7);opacity:0}}
+@keyframes ynRtFl{0%{transform:scale(.4);opacity:.85}100%{transform:scale(1.5);opacity:0}}
 .yn-rtk .mk .rg{fill:rgba(8,12,30,.55);stroke:rgba(255,255,255,.85);stroke-width:2;stroke-dasharray:3.2 2.6}
 .yn-rtk .mk .dc{stroke:#fff;stroke-width:2}
 .yn-rtk .mk .dg{fill:none;stroke:#fff;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
@@ -163,7 +175,7 @@ const KCSS = /* css */ `
 .yn-rtk .gh2{opacity:.55;transition:opacity .4s}
 @keyframes ynRtDash{to{stroke-dashoffset:-15}}
 @keyframes ynRtPop{0%{transform:scale(.2);opacity:0}60%{transform:scale(1.25);opacity:1}100%{transform:none;opacity:1}}
-@media (prefers-reduced-motion:reduce){.yn-rtk .lg.me,.yn-rtk .lg.meb{animation:none}}
+@media (prefers-reduced-motion:reduce){.yn-rtk .lg.me,.yn-rtk .lg.meb{animation:none}.yn-rtk .pg{display:none}}
 `;
 
 export const rota = {
@@ -172,9 +184,10 @@ export const rota = {
 	kind: 'closest',
 	needsMap: true,
 	jokers: ['yari'],
-	// cevap filmi: altın uçuş (kalkış 0,64 sn + ayak başına 0,73 sn; 6 durakta ~4,3 sn) ve son madalya; ui.reveal kartı bu kadar tutar
-	revealMs: 5600,
-	rule: 'Rotada en uzak uçan',
+	// cevap filmi: altın uçuş (kalkış 0,64 sn + ayak başına 0,73 sn; 6 durakta ~4,3 sn; kamera uçağı izler), son madalya ve
+	// bütün rotaya geri çekilen kamera (1,3 sn); ui.reveal kartı bu kadar tutar
+	revealMs: 6600,
+	rule: 'En uzağa uçan',
 	// sonuç ekranının dili (öneri: ui.js _showResult "EN YAKIN SEN!" / "X daha yakın" / "EN YAKIN" yerine bunları okusun)
 	birinci: 'EN UZAĞA SEN UÇTUN!',
 	ustun: 'daha uzağa uçtu',
@@ -220,7 +233,7 @@ export const rota = {
 			<div class="yn-rt-hint">${HINT}</div>
 			<div class="yn-rt-sb"></div>
 		</div>`;
-		rule(el, 'Rotada en uzak uçan');
+		rule(el, 'En uzağa uçan');
 		const root = el.querySelector('.yn-rt');
 		const grid = root.querySelector('.yn-rt-grid');
 		const chips = new Map([...grid.querySelectorAll('.yn-rt-c')].map((c) => [Number(c.dataset.i), c]));
@@ -275,10 +288,25 @@ export const rota = {
 		K.svg.style.setProperty('--pc', color);
 		K.defs.innerHTML = `<linearGradient id="ynRtGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1a8"/><stop offset=".55" stop-color="#ffc83a"/><stop offset="1" stop-color="#d08a10"/></linearGradient>
 			<radialGradient id="ynRtGlow"><stop offset="0" stop-color="#ffe27a" stop-opacity=".75"/><stop offset="1" stop-color="#ffb020" stop-opacity="0"/></radialGradient>
-			<linearGradient id="ynRtTrail" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".85"/></linearGradient>`;
+			<linearGradient id="ynRtTrail" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset="1" stop-color="#fff" stop-opacity=".85"/></linearGradient>
+			<linearGradient id="ynRtTrailG" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#ffb020" stop-opacity="0"/><stop offset=".7" stop-color="#ffd25a" stop-opacity=".35"/><stop offset="1" stop-color="#fff1a8" stop-opacity=".7"/></linearGradient>
+			<linearGradient id="ynRtTrailM" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${color}" stop-opacity="0"/><stop offset="1" stop-color="${color}" stop-opacity=".55"/></linearGradient>`;
+		// kontrail gradyanı yolun kendi koordinatında: kuyruktan (a) uçağa (b) doğru açılır
+		const grad = (ids, a, b) => {
+			for (const id of ids) {
+				const gr = K.defs.querySelector('#' + id);
+				gr.setAttribute('x1', a.x.toFixed(1));
+				gr.setAttribute('y1', a.y.toFixed(1));
+				gr.setAttribute('x2', b.x.toFixed(1));
+				gr.setAttribute('y2', b.y.toFixed(1));
+			}
+		};
 		const top = sv('g', { transform: `translate(0 ${DY})` }, K.svg);
 		const gLegs = sv('g', {}, top); // gölge izleri ve oyuncunun ayakları
 		const gGold = sv('g', {}, top); // altın rota (cevap)
+		const gTrail = sv('g', {}, top); // oyuncu uçağının kontraili
+		const meTrail = [sv('path', { class: 'ct g', stroke: 'url(#ynRtTrailM)' }, gTrail), sv('path', { class: 'ct h', stroke: 'url(#ynRtTrail)' }, gTrail)];
+		const gPing = sv('g', {}, K.svg); // iniş nabızları: yerde, işaretlerin altında
 		const gMarks = sv('g', {}, K.svg); // durak işaretleri: ilin 3B ad hapının hemen üstünde (yayların üstünde)
 		const gPlane = sv('g', { transform: `translate(0 ${DY})` }, K.svg); // uçaklar ve gölgeleri: işaretlerin de üstünde uçar
 		const mk = new Map(); // il → { g, inner }
@@ -385,6 +413,23 @@ export const rota = {
 			show(p.g, !q1.behind);
 			show(p.sh, false);
 		};
+		// iniş nabzı: durağın tepesinde yere yayılan iki halka ve bir parlama
+		const pings = [];
+		const ping = (i, c, big = false) => {
+			const r = big ? 26 : 20;
+			const gEl = sv('g', { class: 'pg' + (big ? ' big' : ''), style: `--c:${c}` }, gPing);
+			gEl.innerHTML = `<g><ellipse class="r1" rx="${r}" ry="${r}"/><ellipse class="r2" rx="${r}" ry="${r}"/><circle class="fl" r="${big ? 11 : 8}"/></g>`;
+			const pg = { g: gEl, i, p: {}, q: {} };
+			pings.push(pg);
+			later(() => {
+				gEl.remove();
+				const k = pings.indexOf(pg);
+				if (k >= 0) pings.splice(k, 1);
+			}, 1150);
+		};
+		// cevap filminde kamera altın uçağı izler (biraz önüne, varacağı durağa bakar); film bitince bütün rotaya çekilir
+		const reduce = typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches;
+		const camF = { on: false, x: 0, y: 0, z: 0, t: 0 };
 		// altın rota (cevap): ayak başına gölge, parıltı, çizgi, iç parlaklık; uçak izi (kontrail)
 		const gold = { on: false, k: 0, u: 0, legs: [], trail: null };
 		K.on((P) => {
@@ -420,6 +465,14 @@ export const rota = {
 				show(m.g, !m.p.behind);
 				if (!m.p.behind) m.g.setAttribute('transform', `translate(${m.x.toFixed(1)} ${m.y.toFixed(1)})`);
 			}
+			if (pings.length) {
+				const flat = clamp(Math.sin(app.cam.pitch || 1.1), 0.35, 0.92);
+				for (const pg of pings) {
+					P.end(pg.i, pg.p);
+					P.at(pg.p.x, pg.p.z, pg.p.y, pg.q);
+					pg.g.setAttribute('transform', `translate(${pg.q.x.toFixed(1)} ${(pg.q.y + DY).toFixed(1)}) scale(1 ${flat.toFixed(3)})`);
+				}
+			}
 			// oyuncunun ayakları
 			for (const L of legs) {
 				const A = endOf(L.a);
@@ -436,7 +489,19 @@ export const rota = {
 			if (pMe.fl) {
 				const f = pMe.fl;
 				const u = Math.min(1, (T - f.t0) / f.dur);
-				placePlane(pMe, P, endOf(f.a), endOf(f.b), ease(u));
+				const A = endOf(f.a);
+				const B = endOf(f.b);
+				const e = ease(u);
+				placePlane(pMe, P, A, B, e);
+				// kontrail: uçağın arkasında kısa, oyuncu renginde parlayan beyaz iz
+				const t0 = Math.max(0, e - 0.3);
+				const d = u < 1 ? K.P.yol(A, B, t0, e, 12) : '';
+				for (const t of meTrail) t.setAttribute('d', d);
+				if (d) {
+					yayNok(A, B, t0, o2);
+					P.at(o2.x, o2.z, o2.y, q2);
+					grad(['ynRtTrail', 'ynRtTrailM'], q2, q1);
+				}
 				if (u >= 1) {
 					pMe.fl = null;
 					pMe.at = f.b;
@@ -459,19 +524,23 @@ export const rota = {
 					const e = ease(u);
 					placePlane(pGold, P, A, B, e);
 					// kontrail: uçağın arkasındaki son dilim, kuyruktan uçağa doğru açılan beyaz
-					const t0 = Math.max(0, e - 0.34);
-					gold.trail.setAttribute('d', K.P.yol(A, B, t0, e, 14));
+					// kamera izi: uçağın biraz önü (varacağı durağa doğru), yumuşak süzülme
+					if (camF.on) {
+						const dt = Math.min(0.1, Math.max(0, T - camF.t));
+						camF.t = T;
+						const a = 1 - Math.exp(-dt * 3.2);
+						camF.x += (o1.x + (B.x - o1.x) * 0.35 - camF.x) * a;
+						camF.z += (o1.z + (B.z - o1.z) * 0.35 - camF.z) * a;
+					}
+					const t0 = Math.max(0, e - 0.4);
+					const d = K.P.yol(A, B, t0, e, 16);
+					for (const t of gold.trail) t.setAttribute('d', d);
 					yayNok(A, B, t0, o2);
 					P.at(o2.x, o2.z, o2.y, q2);
-					const gr = K.defs.querySelector('#ynRtTrail');
-					// (gradyan yolun kendi koordinatında: üst grubun kaydırması ikisine de aynı uygulanır)
-					gr.setAttribute('x1', q2.x.toFixed(1));
-					gr.setAttribute('y1', q2.y.toFixed(1));
-					gr.setAttribute('x2', q1.x.toFixed(1));
-					gr.setAttribute('y2', q1.y.toFixed(1));
+					grad(['ynRtTrail', 'ynRtTrailG'], q2, q1);
 				} else if (pGold.at >= 0) {
 					parkPlane(pGold, P, pGold.at);
-					gold.trail.setAttribute('d', '');
+					for (const t of gold.trail) t.setAttribute('d', '');
 				}
 				for (let k = 0; k < gold.legs.length; k++) {
 					const L = gold.legs[k];
@@ -498,11 +567,20 @@ export const rota = {
 			for (let k = 1; k < n; k++) for (const t of [0.3, 0.5, 0.7]) ek.push(yayNok(K.P.end(S0[k - 1], {}), K.P.end(S0[k], {}), t, {}));
 			return ek;
 		};
+		// gece güvencesi (bkz. d_mayin.js): önceki kartın geç gelen temizliği haritayı gündüze döndürürse gece yeniden kurulur
+		let darkList = null;
+		K.on(() => {
+			if (darkList && b.nightTo < 1) {
+				setNightTone(b.G, 'baskent');
+				b.night(true, darkList.length ? darkList : null);
+			}
+		});
 		// harita kurulumu bir mikro görevde: önceki kartın temizliği önce çalışsın (bkz. d_mayin.js)
 		queueMicrotask(() => {
 			if (!el.isConnected) return;
 			g.allActive();
 			g.dark(lit);
+			darkList = lit;
 			unAd = adlar(app, v.kart);
 			cerceve(app, v.kart, { top: cardTop(el), alt: 62, pitch: 1.12, dur: 0.9, arc: 4, ek: tepeler() });
 		});
@@ -539,12 +617,14 @@ export const rota = {
 				pMe.ang = -20;
 				pMe.sx = 1;
 				pop(app, p.x, p.z, '', { colors: [color, '#fff'], n: 10, dist: 40 });
+				ping(i, color);
 				sfx(app, 'claim');
 			} else {
 				const a = route[k - 1];
 				legTo(a, i);
 				fly(pMe, a, i, LEG, () => {
 					pop(app, p.x, p.z, '', { colors: [color, '#fff', GOLD], n: 9, dist: 38 });
+					ping(i, color);
 					sfx(app, 'tap');
 				});
 				sfx(app, 'whoosh');
@@ -584,6 +664,7 @@ export const rota = {
 					}
 			}, 340);
 			pMe.fl = null;
+			for (const t of meTrail) t.setAttribute('d', '');
 			if (route.length) {
 				// uçak geri döner: son kalan durağa (park yanı o durağa gelen ayağa göre)
 				pMe.at = route[route.length - 1];
@@ -702,13 +783,16 @@ export const rota = {
 				// işaretler: önce hepsi halka; sapma durağında kırmızı çarpı
 				for (const i of v.sira) ringMark(i);
 				if (devK >= 0 && mineIds[devK] != null) setMark(mineIds[devK], `<circle r="11.5" class="xr"/><path d="${CROSS}" class="xx" transform="scale(1.05)"/>`);
-				// altın uçuş: kalkıştan varışa, ayak ayak; her durakta altın madalya ve yükselen nota
+				// altın uçuş: kalkıştan varışa, ayak ayak; her durakta altın madalya, iniş nabzı ve yükselen nota
+				let tp = 0;
+				let fr = null;
 				gold.on = true;
 				for (let k = 0; k < n - 1; k++) {
 					const g3 = [sv('path', { class: 'lg gdg' }, gGold), sv('path', { class: 'lg gd' }, gGold), sv('path', { class: 'lg gdh' }, gGold)];
 					gold.legs.push({ g1: g3[0], g2: g3[1], g3: g3[2] });
 				}
-				gold.trail = sv('path', { class: 'ct', stroke: 'url(#ynRtTrail)' }, gGold);
+				gold.trail = [sv('path', { class: 'ct g', stroke: 'url(#ynRtTrailG)' }, gGold), sv('path', { class: 'ct', stroke: 'url(#ynRtTrail)' }, gGold), sv('path', { class: 'ct h', stroke: 'url(#ynRtTrail)' }, gGold)];
+				for (const t of meTrail) t.setAttribute('d', '');
 				const medal = (k) => {
 					const i = v.sira[k];
 					const p = b.provinces[i];
@@ -716,6 +800,7 @@ export const rota = {
 					const wrongHere = devK >= 0 && mineIds[devK] === i;
 					setMark(i, `<circle r="12.5" class="gm"/><path d="${digit(k + 1)}" class="gmd" transform="scale(1.1)"/>${wrongHere ? `<g transform="translate(11 -10) scale(.62)"><circle r="11.5" class="xr"/><path d="${CROSS}" class="xx"/></g>` : ''}`);
 					g.fx(i, 0.6, 1);
+					ping(i, GOLD, true);
 					pop(app, p.x, p.z, '', { colors: [GOLD, '#fff', '#ffe9a8'], n: 12, dist: 54 });
 					sfx(app, 'star', { n: Math.min(2, Math.floor((k * 3) / Math.max(1, n - 1))) });
 				};
@@ -724,12 +809,26 @@ export const rota = {
 					gold.u = 0;
 					if (k >= n - 1) {
 						pGold.at = v.sira[n - 1];
+						// iniş: kamera bütün altın rotaya çekilir
+						if (camF.on) {
+							camF.on = false;
+							cerceve(app, v.sira, { top: tp, alt: 62, pitch: 1.08, dur: 1.3, arc: 2, ek: tepeler() });
+						}
 						if (mineS?.all) {
 							sfx(app, 'fireworks', { delay: 0.1 });
 							const p = b.provinces[v.sira[n - 1]];
 							pop(app, p.x, p.z, 'KUSURSUZ!', { colors: [GOLD, '#fff', '#7dff9a'], n: 24, dist: 100, cls: 'dn dn-gold' });
 						}
 						return;
+					}
+					if (k === 0 && fr && !reduce) {
+						// kalkış: kamera alçalır, yaklaşır ve uçağı izlemeye başlar
+						const s0 = endOf(v.sira[0]);
+						camF.x = s0.x;
+						camF.z = s0.z;
+						camF.t = now();
+						camF.on = true;
+						app.cam.shot(s0.x, s0.z, { follow: camF, dist: fr.dist * 0.78, pitch: 1.0, dur: 1.0, arc: 0, lens: tp / 2 });
 					}
 					fly(pGold, v.sira[k], v.sira[k + 1], GLEG, () => {
 						medal(k + 1);
@@ -745,7 +844,8 @@ export const rota = {
 				}, 380);
 				// kadraj: kart kısaldı (joker çubuğu yok, damga sorunun yerinde); duraklar ve altın yaylar kartın altındaki alana
 				if (results.some((r) => r.p?.human)) damgaYeri(el); // damga sorunun yerinde: satır şimdi açılır, kadraj ondan sonra
-				cerceve(app, v.sira, { top: cardTop(el), alt: 62, pitch: 1.08, dur: 0.9, arc: 3, ek: tepeler() });
+				tp = cardTop(el);
+				fr = cerceve(app, v.sira, { top: tp, alt: 62, pitch: 1.08, dur: 0.9, arc: 3, ek: tepeler() });
 				if (meR) {
 					const ord = order.map((x) => x.r);
 					const win = ord[0] === meR.r;

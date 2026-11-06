@@ -5,9 +5,12 @@
 //   mayin  Mayın Tarlası  bölgedeki illerden kurala uyanlara bas, mayına basma; iki can (3B harita, gece tarlası)
 //   rota   Uçuş Rotası    4–6 durağı doğru sırayla uç; uçak her ayağı kavisli uçar, cevapta altın rota (3B harita)
 //
-// Örnekler elle yazıldı. Harita gerçekleri (komşuluk, denize kıyı, plaka) src/data/turkiye.json'dan doğrulanır
-// (test/yeni3.test.mjs); tarihler bankanın doğrulanmış sorularıyla aynı (Göbeklitepe ≈ MÖ 9600, Çatalhöyük ≈ MÖ 7400,
-// Ayasofya 537, Selimiye 1575, Anıtkabir 1953; Amasya Genelgesi Haziran, Erzurum Kongresi Temmuz, Sivas Kongresi Eylül 1919).
+// Örnekler elle yazıldı (31 + 31). Harita gerçekleri src/data/turkiye.json'dan doğrulanır (test/yeni3.test.mjs): komşuluk
+// ve komşu sayısı, bölge, denize kıyı (hangi deniz: sınamadaki elle liste, birleşimi verideki 28 kıyı ili), ülke sınırı
+// (verideki 15 sınır ili), göl kıyısı (göl halkası), plaka, ırmak çizgisinin geçtiği iller, doruk yükseltisi, il alanı,
+// il ortalarının enlem ve boylam sırası. Mayın sorularında her güvenli il kümesi kuraldan yeniden hesaplanır; tuzaklar
+// sınırdaki "yanlış bilinen" iller (Gümüşhane denizsiz, Çorum Karadeniz'de, Hakkari Suriye'ye komşu değil, Kahramanmaraş
+// 46). Tarihler ve sıralar yalnız kesin bilinenlerden; eşit yıl yok (UNESCO: 1985'te giren üç alan alınmadı).
 
 import { PROFILE } from './timing.js';
 import { mayin } from './d_mayin.js';
@@ -89,11 +92,11 @@ export const SAMPLES = {
 			[31, 79, 27, 63, 47, 73, 80, 46, 2, 21, 72, 56, 30],
 			[31, 79, 27, 63, 47, 73],
 			{ not: 'Hakkari’nin sınırı Irak ve İran’la, Suriye’ye değil. Şırnak hem Suriye hem Irak sınırında.' }),
-		// 12) hem kıyı hem kara sınırı: Edirne (Ege + Yunanistan, Bulgaristan), Kırklareli, Artvin, Hatay
-		MY('yn-mayin-12', 'cografya', 3, 'Hem kıyısı hem ülke sınırı olan illere bas!', 'İkisinden biri eksik olan her il',
-			[22, 39, 8, 31, 34, 59, 17, 53, 75, 79, 27, 1, 33],
-			[22, 39, 8, 31],
-			{ not: 'Yalnız dört il: Edirne, Kırklareli, Artvin ve Hatay. Kilis’in sınırı var, kıyısı yok.' }),
+		// 12) İran sınırı (4 il); Kars'ın sınırı Ermenistan'la, Şırnak'ınki Irak ve Suriye'yle
+		MY('yn-mayin-12', 'cografya', 3, 'İran’a sınırı olan illere bas!', 'İran’a sınırı olmayan her il',
+			[76, 4, 65, 30, 36, 75, 25, 13, 49, 56, 73],
+			[76, 4, 65, 30],
+			{ not: 'İran sınırında dört il var. Kars’ın sınırı Ermenistan’la, Şırnak’ınki Irak ve Suriye’yle.' }),
 		// ---- komşuluk (merkezin bütün komşuları tarlada; tuzaklar sınıra en yakın komşu olmayanlar)
 		// 13) Konya: 9 komşu
 		MY('yn-mayin-13', 'cografya', 2, 'Konya’ya komşu illere bas!', 'Konya’ya komşu olmayan her il',

@@ -16,6 +16,9 @@
 // Değer: { taps: [plaka, …] } (sırayla; sunucu yargıyı bundan kurar: ikinci mayından sonraki dokunuşlar sayılmaz).
 // Çevrimiçi: publicView güvenli illeri taşımaz; her dokunuşu sunucu yanıtlar (act 'il' → ev { plaka, mayin }).
 // Joker: yarı yarıya → mayın dedektörü: iki mayının üstünde sarı ikaz üçgeni.
+// Seçim kolaylığı: kamera tarlayı daha yakından ve geniş çerçeveler, tarla illerinin beyaz dış hattı tam güçte. Dokunuş tam
+// bir tarla ilinin üstünde değilse küçük bir yarıçapta (ekranın ~%5'i) en yakın tarla iline gider; fare üzerine gelince ve
+// parmak basınca il kalkar ve parlak hatla çizilir.
 
 import { css, esc, shuffle, pCorrect, clamp, buzz } from './util.js';
 import { botTime } from './timing.js';
@@ -23,6 +26,7 @@ import { jokersOff } from './t_pick.js';
 import { appOf, stamp, guard, onClose, onOpen, cardTop, pop, sfx, rule, stampLater, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { setTimeout, clearTimeout } from '../core/clock.js';
 import { katman, adlar, el as sv, CHECK, damga, damgaYeri, sigdir, cerceve, DAMGA_CSS } from './d_rota_katman.js';
+import { setNightTone } from '../gfx/env.js';
 import DATA from '../data/turkiye.json';
 
 const PROV = DATA.provinces;
@@ -240,7 +244,7 @@ export const mayin = {
 	jokers: ['yari'],
 	// cevap filmi (mayınlar sırayla açılır, bayraklar dikilir): ui.reveal cevap ekranını en az bu kadar tutar
 	revealMs: 4200,
-	rule: 'En çok güvenli il',
+	rule: 'En çok il bulan',
 	// sonuç ekranının dili (öneri: ui.js _showResult "EN YAKIN SEN!" / "X daha yakın" / "EN YAKIN" yerine bunları okusun)
 	birinci: 'EN ÇOK İL SENDE!',
 	ustun: 'daha çok il buldu',
@@ -296,7 +300,7 @@ export const mayin = {
 			<div class="yn-my-hint">${HINT}</div>
 			<div class="yn-my-sb"></div>
 		</div>`;
-		rule(el, 'En çok güvenli il');
+		rule(el, 'En çok il bulan');
 		const root = el.querySelector('.yn-my');
 		const cnt = root.querySelector('.cnt b');
 		const segs = [...root.querySelectorAll('.seg i')];
@@ -480,6 +484,14 @@ export const mayin = {
 			sweep.setAttribute('transform', `translate(${sw.x.toFixed(1)} ${sw.y.toFixed(1)}) scale(${(sw.r / 100).toFixed(3)})`);
 			if (sweep.style.visibility) sweep.style.visibility = '';
 		});
+		// gece güvencesi: önceki kartın geç gelen temizliği (galeride hızlı geçişte) haritayı gündüze döndürürse gece yeniden kurulur
+		let darkList = null;
+		K.on(() => {
+			if (darkList && b.nightTo < 1) {
+				setNightTone(b.G, 'baskent');
+				b.night(true, darkList.length ? darkList : null);
+			}
+		});
 		// kadraj: tarlanın bütün illeri kartın altındaki alana (perspektif doğru; alttaki düğmelerden uzak)
 		// harita kurulumu bir mikro görevde: önceki kartın temizliği (gözlemci) önce çalışsın. Galeride soru hızla değişince
 		// eski kartın g.restore()'u yeni kartın karanlığından SONRA gelip sahip renklerini geri boyuyordu.
@@ -487,6 +499,7 @@ export const mayin = {
 			if (!el.isConnected) return;
 			g.allActive();
 			g.dark(lit);
+			darkList = lit;
 			if (v.merkez >= 0) {
 				const mp = b.provinces[v.merkez];
 				g.paint(v.merkez, '#d9a521', mp.x, mp.z);
@@ -759,6 +772,7 @@ export const mayin = {
 				// mayınlar karanlığa çöker, güvenli iller altın hatla ışıkta kalır
 				const litR = v.merkez >= 0 ? [...v.guvenli, v.merkez] : v.guvenli.slice();
 				g.dark(litR);
+				darkList = litR;
 				for (const i of v.guvenli) {
 					const p = b.provinces[i];
 					if (mine.has(i)) {
