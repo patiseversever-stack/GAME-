@@ -61,6 +61,11 @@ const CSS = /* css */ `
 .fl-bz2 .cd.end p{font-size:20px;color:rgba(255,255,255,.85)}
 /* levha + ceza */
 .fl-bz2 .fl-tf.vd{position:relative;height:80px}
+/* dar kartta yazı ve simge kartın enine göre küçülür (406 px ve üstünde 30 px, eskisi gibi): 320 px'te 30 px "YANLIŞ"
+   yarı levhaya sığmayıp ortasından bölünüyordu ("YANLI / Ş"), "DOĞRU" dikişteki "YA DA" rozetinin altına giriyordu */
+.fl-q .fl-bz2 .fl-tf.vd .fl-opt{font-size:clamp(22px,7.4cqw,30px);gap:clamp(6px,2.4cqw,10px)}
+.fl-bz2 .fl-tf.vd .ic{width:clamp(28px,9.4cqw,38px);height:clamp(28px,9.4cqw,38px)}
+.fl-bz2 .fl-tfmid b{bottom:3px}
 .fl-bz2 .cz{position:absolute;left:0;right:0;bottom:-8px;height:4px;background:#ff5a46;transform-origin:left;transform:scaleX(0);z-index:3}
 .fl-bz2.lock .cz{animation:flBzCz .6s linear forwards}
 .fl-bz2.lock .fl-tf .fl-opt{filter:grayscale(.8) brightness(.5);pointer-events:none}

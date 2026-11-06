@@ -97,6 +97,22 @@ const CSS = /* css */ `
   .fl-q.cover .dn-yb-c{height:40px;font-size:clamp(18px,calc(5.2 * var(--vw)),22px);line-height:30px}
   .fl-q.cover .dn-yb-o .fl-opt{min-height:50px}
   .fl-q.cover .dn-yb-n{padding:8px 10px 9px;font-size:13.5px;line-height:1.3}}
+/* en kısa ekran (≤600 px, 320×568): gövde ancak %64'e küçülerek sığıyordu (etiketler 8, not 7–9 px). Adım şeridi,
+   kâğıt, kelime satırları ve İŞARETLE satırı sıkışır; cetvel çizgileri yeni satır boyuna (36 px) oturur. */
+@media (max-height:600px){
+  .fl-q.cover .dn-yb{gap:6px}
+  .dn-yb-st span{gap:6px;padding:3px 10px 3px 3px;font-size:13px}
+  .dn-yb-st span i{width:21px;height:21px;border-radius:6px;font-size:13px}
+  .fl-q.cover .dn-yb-pp{padding:28px 10px 8px 34px;background:repeating-linear-gradient(180deg,transparent 0 35px,rgba(60,110,210,.22) 35px 36.5px) 0 28px/100% 100% no-repeat,linear-gradient(180deg,#fffdf4,#f6edd6)}
+  .fl-q.cover .dn-yb-pp::before{left:24px}
+  .dn-yb-pp::after{left:7px;top:38px;box-shadow:0 48px 0 #1a1f3a,0 96px 0 #1a1f3a}
+  .dn-yb-hd{left:34px;right:10px;top:7px;font-size:11px}
+  .fl-q.cover .dn-yb-c{height:36px;font-size:clamp(16px,calc(5 * var(--vw)),20px);line-height:28px}
+  .dn-yb-row{min-height:44px}
+  .dn-yb .fl-send{height:42px;min-width:124px;font-size:16px}
+  .fl-q.cover .dn-yb-o .fl-opt{min-height:40px}
+  .fl-q.cover .dn-yb-n{padding:7px 9px 8px;font-size:13.5px;line-height:1.26}
+}
 @keyframes ybPen{0%{transform:rotate(-14deg) scale(.6)}100%{transform:rotate(-4deg) scale(1)}}
 @keyframes ybNote{0%{transform:translateY(16px) rotate(-8deg) scale(.85)}}
 @keyframes dnYbStrike{from{transform:rotate(-4deg) scaleX(0)}to{transform:rotate(-4deg) scaleX(1)}}
