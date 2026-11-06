@@ -28,18 +28,19 @@ const CSS = /* css */ `
    Ölçüler gövdenin GERÇEK boyundan: .dn-ha boyut kabı (container-type:size), yükseklikler cqh, genişlikler cqw; dar
    kapta jeton şeridi ve ipucu satırı kalkar (kap sorgusu). Ekran yüksekliği değil kabın boyu: tanımın satır sayısı, afiş,
    joker çubuğu hesaba girer. 320×568'de 10 harf ve 14 taş küçültmesiz (ui._coverFit zoom'u 1) sığar. */
-.dn-ha{--pp:10px;--tp:clamp(3px,1.6cqh,6px);--tg:clamp(4px,1.8cqh,6px);display:flex;flex-direction:column;align-items:stretch;
+.dn-ha{--pp:10px;--tp:clamp(3px,1.6cqh,6px);--tg:clamp(3px,1.8cqh,6px);display:flex;flex-direction:column;align-items:stretch;
   user-select:none;-webkit-user-select:none;container-type:inline-size;
-  --hb:clamp(30px,12.5cqh,46px);--ab:clamp(30px,12.5cqh,46px);--chh:clamp(14px,5cqh,20px);
+  --hb:clamp(28px,12.5cqh,46px);--ab:clamp(28px,12.5cqh,46px);--chh:clamp(14px,5cqh,20px);
   --bw:min(50px,calc((100cqw - 2 * var(--pp) - (var(--n) - 1) * 5px) / var(--n)));
-  --bh:min(calc(var(--bw) * 1.2),clamp(24px,14cqh,60px));
+  --bh:min(calc(var(--bw) * 1.2),clamp(22px,calc((14 + (2 - var(--rows,2)) * 9) * 1cqh),60px));
   --tw:min(48px,calc((100cqw - 2 * var(--tp) - (var(--m) - 1) * var(--tg)) / var(--m)));
-  --th:min(calc(var(--tw) * 1.15),clamp(29px,13.5cqh,50px))}
+  --th:min(calc(var(--tw) * 1.15),clamp(28px,calc((13.5 + (2 - var(--rows,2)) * 7) * 1cqh),50px))}
 /* iç sarmal: kabın kendi özelliklerinde cqh kabı değil ekranı ölçer; boşluklar ve boylar içeride */
-.ha-in{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:clamp(5px,2.4cqh,10px);align-items:stretch}
+.ha-in{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:clamp(4px,2.4cqh,10px);align-items:stretch}
+.ha-in>*{flex-shrink:0}
 .fl-q.cover .dn-ha{flex:1 1 auto;min-height:0;container-type:size}
 .fl-q.cover .dn-ha .ha-havuz{margin-top:auto}
-.ha-pano{position:relative;display:flex;flex-direction:column;gap:clamp(4px,2cqh,8px);padding:clamp(4px,2.5cqh,10px) var(--pp) clamp(5px,2.8cqh,11px);border-radius:14px;
+.ha-pano{position:relative;display:flex;flex-direction:column;gap:clamp(4px,2cqh,8px);padding:clamp(3px,2.5cqh,10px) var(--pp) clamp(4px,2.8cqh,11px);border-radius:14px;
   background:radial-gradient(120% 90% at 50% 0%,#262b40 0%,#141724 70%),#141724;
   box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1),inset 0 2px 0 rgba(255,255,255,.08),0 0 0 3px #0a0c14,0 14px 30px rgba(0,0,0,.55)}
 .ha-pano::before,.ha-pano::after{content:'';position:absolute;top:clamp(4px,2cqh,8px);width:6px;height:6px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8a93b0,#3a4058)}
@@ -103,11 +104,11 @@ const CSS = /* css */ `
 .dn-ha .ha-havuz .ha-t:active{transform:translateY(2px);box-shadow:inset 0 1.5px 0 #fff,0 1px 0 #b39c6e,0 2px 4px rgba(0,0,0,.4)}
 .dn-ha .ha-havuz .ha-t.used,.dn-ha .ha-havuz .ha-t.wait{color:transparent;text-shadow:none;cursor:default;background:rgba(255,255,255,.025);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12);
   outline:1.5px dashed rgba(255,255,255,.16);outline-offset:-5px}
-.dn-ha .ha-havuz .ha-t.seal{outline:0;background:rgba(0,0,0,.18);box-shadow:inset 0 1px 3px rgba(0,0,0,.5)}
+.dn-ha .ha-havuz .ha-t.seal{outline:0;background:rgba(0,0,0,.28);box-shadow:inset 0 1px 4px rgba(0,0,0,.65),inset 0 0 0 1px rgba(255,255,255,.05)}
 .dn-ha .ha-havuz .ha-t.back{animation:dnHaLand .3s cubic-bezier(.3,1.6,.5,1)}
 .dn-ha .ha-havuz.no{animation:dnHaNudge .3s}
 /* alt sıra: ⌫ ve GÖNDER eğik levhalar (arena dili) */
-.ha-act{display:flex;gap:8px;align-items:stretch;height:var(--ab)}
+.ha-in>.ha-act{display:flex;gap:8px;align-items:stretch;height:var(--ab);min-height:26px;flex-shrink:1}
 .dn-ha .ha-act .ha-bk{flex:0 0 clamp(58px,20cqw,78px);display:grid;place-items:center;padding:0;border:0;border-radius:0;color:#e9ecf6;cursor:pointer;
   clip-path:polygon(12% 0,100% 0,88% 100%,0 100%);background:linear-gradient(180deg,#30374f,#1e2337);box-shadow:inset 0 2px 0 rgba(255,255,255,.12);transition:transform .08s,filter .2s;touch-action:manipulation}
 .dn-ha .ha-act .ha-bk svg{width:clamp(20px,calc(var(--ab) * .58),26px);height:auto}
@@ -245,7 +246,8 @@ export const harfal = {
 		const al = [];
 		let done = false;
 		const cols = tiles.length <= 7 ? tiles.length : Math.ceil(tiles.length / 2);
-		el.innerHTML = `<div class="dn-ha" style="--n:${n};--m:${cols}"><div class="ha-in">
+		const rows = Math.ceil(tiles.length / cols);
+		el.innerHTML = `<div class="dn-ha" style="--n:${n};--m:${cols};--rows:${rows}"><div class="ha-in">
 			<div class="ha-pano">
 				<div class="ha-hd"><span class="dn-ha-pts"><small>KASA</small><b>${n * 100}</b><em>${n} HARF</em></span><button class="dn-ha-al">HARF AL<small>−100 puan</small></button></div>
 				<div class="dn-ha-w">${Array.from({ length: n }, (_, i) => `<button class="ha-b" style="--k:${i}" aria-label="${i + 1}. harf" disabled><span></span></button>`).join('')}</div>
@@ -503,6 +505,13 @@ export const harfal = {
 		};
 		document.addEventListener('keydown', onEnter);
 		draw();
+		// yuva boyu cevapta sabit kalır: cevap anında (lock, joker çubuğu henüz yerinde) ölçülür; ui.reveal .rv ekleyince çubuk
+		// kalkar, kap uzar, yuvalar (yükseklik cqh) büyüyüp oynamasın
+		const freeze = () => {
+			if (wEl.style.getPropertyValue('--bhf')) return;
+			const bh = boxes[0]?.getBoundingClientRect().height / (root.currentCSSZoom || 1);
+			if (bh > 0) wEl.style.setProperty('--bhf', bh.toFixed(1) + 'px');
+		};
 		const cleanup = () => {
 			off();
 			document.removeEventListener('keydown', onEnter);
@@ -511,6 +520,7 @@ export const harfal = {
 		};
 		return {
 			lock() {
+				freeze();
 				done = true;
 				draw();
 			},
@@ -524,9 +534,7 @@ export const harfal = {
 				done = true;
 				cleanup();
 				root.classList.remove('ready', 'sent');
-				// yuva boyu cevapta sabit kalır (joker çubuğu kalkınca kap uzar; yuvalar büyüyüp oynamasın)
-				const bh = boxes[0]?.getBoundingClientRect().height / (root.currentCSSZoom || 1);
-				if (bh > 0) wEl.style.setProperty('--bhf', bh.toFixed(1) + 'px');
+				freeze(); // lock çağrılmadıysa (izleyici) şimdiki boy
 				root.classList.add('done');
 				const meR = results.find((r) => r.p?.human);
 				const mine = meR ? score(v, meR.value) : null;

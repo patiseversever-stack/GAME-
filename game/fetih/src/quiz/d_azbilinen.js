@@ -31,8 +31,9 @@ const CROWN = '<svg class="ab-cr" viewBox="0 0 24 16" aria-hidden="true"><path d
 const CSS = /* css */ `
 /* BEŞ LEVHA: arena şıkları gibi açık zemin, renkli harf bloğu, eğik sağ kenar. Cevapta levhalar puana göre dizilir:
    harf bloğu söyleyen sayısına döner, levhanın kendisi 100 kişilik çubuktur (dolu kısım = söyleyenler), sağda kazanılan
-   puan. Ölçüler ekran boyuna göre (--ph levha boyu, --fs ad boyu); gövde yine sığmazsa ui._coverFit küçültür. */
-.dn-ab{--ph:54px;--pmax:74px;--g:9px;--kw:46px;--fs:clamp(18px,calc(5.3 * var(--vw)),23px);--rh:58px;--rfs:clamp(16.5px,calc(4.7 * var(--vw)),20px);
+   puan. Levha boyu tercih edilen boydur (--pb soru, --rb cevap): yer azsa içeriğinin boyuna dek kısalır, yazı hiç kırpılmaz;
+   gövde yine sığmazsa ui._coverFit küçültür. */
+.dn-ab{--pb:72px;--g:9px;--kw:46px;--fs:clamp(18px,calc(5.3 * var(--vw)),23px);--rb:70px;--rfs:clamp(16.5px,calc(4.7 * var(--vw)),20px);
   flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:9px;user-select:none;-webkit-user-select:none}
 .fl-q.cover.t-azbilinen .fl-qwho,.fl-q.cover.t-azbilinen .fl-qtext{flex:none}
 /* şerit: 100 KİŞİYE SORULDU · kural (cevapta: KAÇI SÖYLEDİ · PUAN = 100 − KİŞİ) */
@@ -45,7 +46,7 @@ const CSS = /* css */ `
 .dn-ab.jk .ab-hd em{color:#ff8cc0}
 /* levhalar */
 .ab-ps{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:var(--g)}
-.ab-p{position:relative;flex:1 1 0;min-height:var(--ph);max-height:var(--pmax);display:flex;align-items:stretch;padding:0;border:0;border-radius:0;text-align:left;color:#0e1430;
+.ab-p{position:relative;flex:0 1 var(--pb);display:flex;align-items:stretch;padding:0;border:0;border-radius:0;text-align:left;color:#0e1430;
   background:linear-gradient(180deg,#fff,#e4e9f4);clip-path:polygon(0 0,100% 0,calc(100% - 11px) 100%,0 100%);touch-action:manipulation;cursor:pointer;
   transition:transform .08s,opacity .25s,filter .15s;animation:abIn .34s cubic-bezier(.3,1.4,.5,1) backwards;animation-delay:calc(var(--k) * 45ms)}
 .ab-p:active{transform:translateY(2px);filter:brightness(.94)}
@@ -68,7 +69,7 @@ const CSS = /* css */ `
 .dn-ab.jk .ab-p:not(.gone) .ab-m{padding-bottom:9px}
 /* ---- cevap */
 .dn-ab.done .ab-ps{gap:var(--g)}
-.dn-ab.done .ab-p{min-height:var(--rh);max-height:none;flex:0 0 auto;opacity:1;cursor:default;animation:none;transition:transform .55s cubic-bezier(.3,1.15,.4,1)}
+.dn-ab.done .ab-p{flex:0 1 var(--rb);opacity:1;cursor:default;animation:none;transition:transform .55s cubic-bezier(.3,1.15,.4,1)}
 .dn-ab.done .ab-p .ab-m{padding:4px 8px 4px 11px}
 .dn-ab.done .ab-n{font-size:var(--rfs)}
 .ab-k small{font:italic 800 9.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:rgba(255,255,255,.62)}
@@ -94,7 +95,7 @@ const CSS = /* css */ `
 .dn-ab.done .ab-p.best .ab-k,.ab-p.best .ab-pt{background:#1a1200}
 .dn-ab.done .ab-p.best .ab-k b,.ab-p.best .ab-pt b{color:#ffd25a}
 .ab-p.best .ab-s{color:#8a5a00}
-.ab-cr{display:inline-block;width:19px;height:13px;margin:0 6px 0 0;vertical-align:-1px;color:#e0a000}
+.dn-ab .ab-n .ab-cr{display:inline-block;width:19px;height:13px;margin:0 6px 0 0;vertical-align:-1px;color:#e0a000}
 /* tuzak: kırmızı levha, çarpı, üstü çizili ad, neden yanlış */
 .dn-ab.done .ab-p.trap{background:#ffe1dc}
 .dn-ab.done .ab-p.trap .ab-k{background:#d8392a}
@@ -104,7 +105,7 @@ const CSS = /* css */ `
 .ab-p.trap .ab-pt{background:#7a160d}
 /* kısa ekran (≤720 px; 1280×720 çerçevesi dahil): levhalar alçalır, yazı küçülür */
 @media (max-height:720px){
-  .dn-ab{--ph:44px;--pmax:58px;--g:6px;--kw:40px;--fs:clamp(16px,calc(4.9 * var(--vw)),19px);--rh:47px;--rfs:clamp(15px,calc(4.4 * var(--vw)),17px);gap:6px}
+  .dn-ab{--pb:52px;--g:6px;--kw:40px;--fs:clamp(16px,calc(4.9 * var(--vw)),19px);--rb:50px;--rfs:clamp(15px,calc(4.4 * var(--vw)),17px);gap:6px}
   .ab-k b{font-size:22px}
   .dn-ab.done .ab-k b{font-size:20px}
   .ab-pt{width:52px}
@@ -116,7 +117,7 @@ const CSS = /* css */ `
 }
 /* en kısa ekran (≤600 px): soruda şerit kalkar (kural başlıkta), levhalar sıkı; cevapta şerit döner (jokerler kalkınca yer açılır) */
 @media (max-height:600px){
-  .dn-ab{--ph:36px;--pmax:44px;--g:5px;--kw:34px;--fs:16px;--rh:42px;--rfs:15px;gap:5px}
+  .dn-ab{--pb:40px;--g:5px;--kw:34px;--fs:16px;--rb:44px;--rfs:15px;gap:5px}
   .dn-ab:not(.done):not(.jk) .ab-hd{display:none}
   .ab-k b{font-size:20px}
   .dn-ab.done .ab-k b{font-size:18px}
@@ -134,7 +135,7 @@ const CSS = /* css */ `
 /* dar kart (≤340 px): portreler daha sık */
 @container (max-width:340px){
   .dn-ab .ab-w .fl-who{margin-left:-8px}
-  .ab-cr{width:16px;height:11px;margin-right:4px}
+  .dn-ab .ab-n .ab-cr{width:16px;height:11px;margin-right:4px}
 }
 /* girişler yukarıdan: aşağı kayan parça gövdenin altından taşıp _coverFit'i boş yere küçültürdü */
 @keyframes abIn{from{opacity:0;transform:translateY(-8px)}}

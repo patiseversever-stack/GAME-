@@ -194,7 +194,8 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
 
 .fl-q.dn-fz-card .fl-clock,.fl-q.dn-fz-card .fl-tbar{visibility:hidden}
 .fl-q.dn-fz-card.dn-boom .fl-qc{animation:dnFzShake .7s cubic-bezier(.36,.07,.19,.97) both}
-.dn-fz{display:flex;flex-direction:column;gap:8px;--red:#ff4a2a}
+.dn-fz{--red:#ff4a2a}
+.dn-fz-in{display:flex;flex-direction:column;gap:8px}
 .dn-fz-ar{position:relative;height:142px;border-radius:18px;overflow:hidden;background:radial-gradient(120% 90% at 50% 100%,#2a1a3a 0,#120c22 55%,#0a0816 100%);border:2px solid rgba(255,255,255,.12);box-shadow:inset 0 -18px 30px rgba(0,0,0,.45)}
 .dn-fz-ar::before{content:'';position:absolute;inset:0;background:radial-gradient(60% 70% at var(--hx,50%) 70%,rgba(255,120,40,.0),rgba(255,120,40,0));transition:background .5s}
 .dn-fz.warm .dn-fz-ar::before{background:radial-gradient(55% 75% at var(--hx,50%) 72%,rgba(255,120,40,.28),rgba(255,120,40,0))}
@@ -279,8 +280,10 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
    devinimin taşması dahil sığar; tabanı portrelerin tabanında, ad ve durum etiketi tabanın altında: hiçbir ekran boyunda
    oyuncunun portresine, adına ya da etiketine binmez (eskiden 1,3 kat büyütülmüş 120 px'lik bomba SEN'in üstüne biniyordu). */
 /* arena esner: soru kâğıdının satır sayısı değişince boyu arenadan gelir (gövde taşmaz, ui._coverFit küçültmez); bomba
-   ve portreler fitArena ile yeni boya uyar */
-.fl-q.cover .dn-fz{flex:1 1 auto;min-height:0;gap:12px;justify-content:space-between}
+   ve portreler fitArena ile yeni boya uyar. .dn-fz boyut kabı: sıkışma ekranın değil gövdenin gerçek boyuna göre (kap
+   sorguları aşağıda; galerinin 1280×720 telefon çerçevesi de, tanımın satır sayısı da hesaba girer) */
+.fl-q.cover .dn-fz{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;container-type:size}
+.fl-q.cover .dn-fz-in{flex:1 1 auto;min-height:0;gap:12px;justify-content:space-between}
 .fl-q.cover .dn-fz-ar{flex:1 1 0;height:auto;min-height:150px;max-height:290px;border:0;border-radius:16px;
   background:radial-gradient(55% 60% at 50% 40%,rgba(255,160,70,.2),rgba(255,160,70,0) 70%),linear-gradient(180deg,#170f2c 0%,#0d0a1c 63%,#2a1a18 63.4%,#1a100e 100%);
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.1),inset 0 -30px 40px rgba(0,0,0,.45),0 14px 30px rgba(0,0,0,.5)}
@@ -325,12 +328,13 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
 .fl-q.cover .dn-fz-lk{height:62px;border-radius:4px}
 .fl-q.cover .dn-fz-res{gap:8px}
 .fl-q.cover .dn-fz-res span{padding:4px 12px;border-radius:999px;font:600 13px/1.2 'Fredoka',sans-serif;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
-/* kısa ekranlar (büyükten küçüğe: küçük olan ezer). Soru türü etiketi (DOĞRU MU? / HANGİSİ?) kısa ekranda kalkar: şıklar
-   zaten söylüyor, yazı bütün genişliği alır (82 harflik soru iki-üç satır) */
-@media (max-height:700px){.fl-q.cover .dn-fz{gap:9px}.fl-q.cover .dn-fz-q{gap:8px}.fl-q.cover .dn-fz-ar{min-height:96px}
+/* kısa gövde (kap sorgusu, büyükten küçüğe: küçük olan ezer). Soru türü etiketi (DOĞRU MU? / HANGİSİ?) kalkar: şıklar
+   zaten söylüyor, yazı bütün genişliği alır (82 harflik soru 320 px'de üç satır). En kısada skor satırı da kalkar (sonucu
+   damga söyler). */
+@container (max-height:399px){.fl-q.cover .dn-fz-in{gap:9px}.fl-q.cover .dn-fz-q{gap:8px}.fl-q.cover .dn-fz-ar{min-height:96px}
   .fl-q.cover .dn-fz-qt{min-height:50px;padding:7px 12px;font-size:15.5px}.fl-q.cover .dn-fz-qt em{display:none}
   .fl-q.cover .dn-fz-o .fl-opt{min-height:48px;font-size:20px}.fl-q.cover .dn-fz-lk{height:48px}.fl-q.cover .dn-fz-res span{padding:2px 10px;font-size:12px}}
-@media (max-height:600px){.fl-q.cover .dn-fz{gap:6px}.fl-q.cover .dn-fz-q{gap:6px}.fl-q.cover .dn-fz-ar{min-height:68px}
+@container (max-height:299px){.fl-q.cover .dn-fz-in{gap:6px}.fl-q.cover .dn-fz-q{gap:6px}.fl-q.cover .dn-fz-ar{min-height:68px}
   .fl-q.cover .dn-fz-qt{min-height:44px;padding:6px 10px;font-size:15px}
   .fl-q.cover .dn-fz-o .fl-opt{min-height:42px;font-size:18px}.fl-q.cover .dn-fz-lk{height:42px}.fl-q.cover .dn-fz-res{display:none}
   .fl-q.cover .dn-fz-pl b{padding:1px 9px 2px;font-size:13px}.fl-q.cover .dn-fz-pl small{font-size:11px}.dn-fz-mk{width:20px;height:20px}.dn-fz-mk svg{width:12px;height:12px}}
@@ -437,7 +441,7 @@ export const fitil = {
 		const id = ++UID;
 		const L = 84.2; // fitil yolunun boyu (FUSE_D, birim)
 		const F = FUSE[1];
-		el.innerHTML = `<div class="dn-fz" style="--L:${L};--F:${F}s;--D:${((L * (F - FUSE[0])) / F).toFixed(1)}">
+		el.innerHTML = `<div class="dn-fz" style="--L:${L};--F:${F}s;--D:${((L * (F - FUSE[0])) / F).toFixed(1)}"><div class="dn-fz-in">
 			<div class="dn-fz-ar" style="--ca:${esc(me.css)};--cb:${esc(foe.css)}">
 				<div class="dn-fz-fl"></div>
 				<div class="dn-fz-tag">HER AN PATLAYABİLİR</div>
@@ -452,7 +456,7 @@ export const fitil = {
 				<div class="dn-fz-lk"><span>KİLİT</span><u></u></div>
 			</div>
 			<div class="dn-fz-res"><span>Doğru: <b data-r="s0">0</b></span><span>Rakip: <b data-r="s1">0</b></span></div>
-		</div>`;
+		</div></div>`;
 		const root = el.firstElementChild;
 		const ar = root.querySelector('.dn-fz-ar');
 		const bomb = root.querySelector('.dn-fz-bomb');
