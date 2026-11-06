@@ -71,8 +71,7 @@ const CSS = /* css */ `
 .pk-net .mesh{transform-box:view-box}
 .pk-net .rip{fill:none;stroke:#fff;stroke-width:2;opacity:0}
 .pk-snow{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
-.pk-snow i{position:absolute;top:-8px;width:var(--s);height:var(--s);border-radius:50%;background:#fff;opacity:.85;box-shadow:0 0 4px rgba(255,255,255,.7);
-  animation:pkSnow var(--d) linear var(--dl) infinite}
+.pk-snow i{position:absolute;top:-8px;width:var(--s);height:var(--s);border-radius:50%;opacity:.9;background:radial-gradient(circle,#fff 0 42%,rgba(255,255,255,.75) 56%,rgba(255,255,255,0) 72%)}
 /* kaleci: gövde SVG, başı oyuncunun portresi. Levhaların altında durur (yazıya binmez); yalnız uçuşta öne geçer */
 .pk-kp{position:absolute;z-index:3;transform-origin:50% 64%;pointer-events:none}
 .pk-kp.fly{z-index:8}
@@ -184,7 +183,6 @@ const CSS = /* css */ `
 @keyframes pkLed{to{transform:translateX(-50%)}}
 @keyframes pkFlag{from{transform:skewY(-7deg) scaleX(.94)}to{transform:skewY(6deg) scaleX(1.02)}}
 @keyframes pkSweep{from{transform:translateX(0)}to{transform:translateX(400%)}}
-@keyframes pkSnow{from{transform:translate(0,0)}to{transform:translate(var(--x),calc(var(--H) + 16px))}}
 @keyframes pkIdle{0%,100%{transform:translateX(0) translateY(0)}25%{transform:translateX(-3%) translateY(-1.5%)}50%{transform:translateX(0) translateY(0)}75%{transform:translateX(3%) translateY(-1.5%)}}
 @keyframes pkCrouch{to{transform:scaleY(.93) scaleX(1.04)}}
 @keyframes pkAim{from{transform:scale(.82);opacity:.55}to{transform:scale(1.08);opacity:1}}
@@ -196,7 +194,7 @@ const CSS = /* css */ `
 @keyframes pkWhite{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
 @keyframes pkCall{0%{opacity:0;transform:translate(-50%,-50%) scale(.3) rotate(-10deg)}22%{opacity:1;transform:translate(-50%,-50%) scale(1.18) rotate(-4deg)}70%{opacity:1;transform:translate(-50%,-50%) scale(1) rotate(-4deg)}100%{opacity:0;transform:translate(-50%,-62%) scale(1.06) rotate(-4deg)}}
 @keyframes pkHint{from{transform:translate(-50%,-50%) skewX(-8deg) scale(1)}to{transform:translate(-50%,-50%) skewX(-8deg) scale(1.06)}}
-@media (prefers-reduced-motion:reduce){.pk-kp .kp-in,.pk-fls i,.pk-beams,.pk-snow i,.pk-hint,.pk-sw,.pk-flag b,.pk-led i{animation:none}}
+@media (prefers-reduced-motion:reduce){.pk-kp .kp-in,.pk-fls i,.pk-beams,.pk-hint,.pk-sw,.pk-flag b,.pk-led i{animation:none}}
 `;
 
 // ---------------------------------------------------------------- çizimler
@@ -541,9 +539,18 @@ export const penalti = {
 			root.querySelector('.pk-netw').innerHTML = netSVG(L, `${id}`);
 			const snow = root.querySelector('.pk-snow');
 			if (snow) {
+				// kar: tanecikler açık değerli WAAPI devinimiyle düşer. Değişkenli @keyframes (var(--H)) bileşikçide koşmuyordu:
+				// 52 tanecik her karede ana iş parçacığında boyanıyordu (yazılım çizicide ekran görüntüsü 5–8 sn uzuyordu).
+				// Gölgesiz yumuşak kenar (degrade); azaltılmış devinimde tanecikler yerinde durur
 				const R = rngOf(v.q.id || 'kar');
-				snow.style.setProperty('--H', H + 'px');
-				snow.innerHTML = Array.from({ length: 52 }, (_, k) => `<i style="left:${f1(R() * W)}px;--s:${f1(k % 9 ? 1.5 + R() * 2.4 : 4.5 + R() * 2)}px;--d:${f1(k % 9 ? 3.4 + R() * 3 : 2.2 + R())}s;--dl:${f1(-R() * 6)}s;--x:${f1((R() - 0.5) * 40)}px"></i>`).join('');
+				const still = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
+				const flakes = Array.from({ length: 40 }, (_, k) => ({ x: R() * W, y: R() * H, s: k % 8 ? 1.8 + R() * 2.6 : 4.8 + R() * 2, d: (k % 8 ? 3.4 + R() * 3 : 2.2 + R()) * 1000, dl: R(), dx: (R() - 0.5) * 40 }));
+				snow.innerHTML = flakes.map((f) => `<i style="left:${f1(f.x)}px;${still ? `top:${f1(f.y)}px;` : ''}--s:${f1(f.s)}px"></i>`).join('');
+				if (!still)
+					[...snow.children].forEach((e, k) => {
+						const f = flakes[k];
+						e.animate?.([{ transform: 'translate3d(0,0,0)' }, { transform: `translate3d(${f1(f.dx)}px,${f1(H + 16)}px,0)` }], { duration: Math.round(f.d), delay: -Math.round(f.dl * f.d), iterations: Infinity, easing: 'linear' });
+					});
 			}
 			tiles.forEach((t, i) => place(t, pan[i].x, pan[i].y, pan[i].w, pan[i].h));
 			const cx = [gx, gx + gw, gx, gx + gw];

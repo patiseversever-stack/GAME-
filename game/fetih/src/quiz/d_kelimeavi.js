@@ -36,7 +36,7 @@ export const DIRS = [
 ];
 /** Zorluğa göre yerleşim yönleri ve ağırlıkları (orta ve zorda düz soldan sağa az: kelime ilk bakışta okunmasın). */
 export const YON = { 1: [0, 1, 2], 2: [0, 1, 2, 3], 3: [0, 1, 2, 3, 4, 5, 6, 7] };
-const YON_W = { 1: [1, 1, 0.8], 2: [0.5, 1, 1.15, 1.15], 3: [0.35, 0.55, 0.75, 0.75, 1.25, 1.2, 1, 1] };
+const YON_W = { 1: [1, 1, 0.8], 2: [0.35, 1, 1.2, 1.2], 3: [0.3, 0.5, 0.75, 0.75, 1.25, 1.2, 1, 1] };
 /** Kelime renkleri (ipucu, kapsül, cevap): altın, camgöbeği, pembe. */
 export const RENK = ['#ffd25a', '#46d8ff', '#ff70b0'];
 
@@ -157,7 +157,8 @@ export function kur(words, n, dirs, R, dw = null) {
 				return near(x.r - dr, x.c - dc) || near(x.r + dr * L.length, x.c + dc * L.length);
 			};
 			const wt = inD.map((x) => {
-				const edge = (x.r === 0 || x.c === 0 ? 0.6 : 1) * (x.r === 0 && x.c === 0 ? 0.5 : 1) * (x.d % 4 === 0 && (x.r === 0 || x.r === n - 1) ? 0.5 : 1);
+				// göz tabloya sol üstten girer: ilk satırda yatay ve ilk sütunda dikey kelime çok az, köşeden başlayan az
+				const edge = (x.r === 0 || x.c === 0 ? 0.6 : 1) * (x.r === 0 && x.c === 0 ? 0.5 : 1) * (x.d % 4 === 0 ? (x.r === 0 ? 0.12 : x.r === n - 1 ? 0.45 : 1) : 1) * (x.d % 4 === 1 && x.c === 0 ? 0.3 : 1);
 				return (x.ov === 1 ? 2.4 : x.ov === 0 ? 1 : 0.25) * edge * (side(x) ? 0.15 : 1);
 			});
 			const pick = pickW(inD, wt);

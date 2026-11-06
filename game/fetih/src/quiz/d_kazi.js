@@ -22,7 +22,7 @@ import { botTime } from './timing.js';
 import { appOf, stamp, onClose, onOpen, rule, stampLater, sfx, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { clock, setTimeout, clearTimeout } from '../core/clock.js';
 import { HEROES } from '../map/hero_index.js';
-import { modelKur, ciz, yedek, TEMA } from './d_kazi_cizim.js';
+import { modelKur, ciz, yedek, kaziIsci, TEMA } from './d_kazi_cizim.js';
 import { degHz } from '../audio/scales.js';
 import DATA from '../data/turkiye.json';
 
@@ -411,6 +411,7 @@ export const kazi = {
 		let job = null;
 		let jobT = 0;
 		let picDrawn = false;
+		let started = false; // resim işi bir kez başlar (işçi çalışırken boy değişse de)
 		const putPic = () => {
 			if (!pic || picDrawn) return;
 			picDrawn = true;
@@ -420,67 +421,114 @@ export const kazi = {
 			if (pic.rgba) x.putImageData(new ImageData(pic.rgba, pic.W, pic.H), 0, 0);
 			else yedek(x, pic.W, pic.H, q.tema);
 		};
+		// resim hazır olunca bekleyenler (cevap anı resmi bekler: folyo boşluğa soyulmasın)
+		let waiters = [];
+		let pre = false; // ön izleme (çeyrek boy) çizildi: cevap anı beklemez, tam resim gelince yerine oturur
+		const flush = () => {
+			const w = waiters;
+			waiters = [];
+			for (const f of w) f();
+		};
+		const havePic = (p) => {
+			if (pic) return;
+			pic = p;
+			putPic();
+			flush();
+		};
+		const havePre = (r) => {
+			if (pic || pre || !r?.rgba) return;
+			pre = true;
+			try {
+				const off = document.createElement('canvas');
+				off.width = r.W;
+				off.height = r.H;
+				off.getContext('2d').putImageData(new ImageData(r.rgba, r.W, r.H), 0, 0);
+				const x = cvR.getContext('2d');
+				x.imageSmoothingEnabled = true;
+				x.imageSmoothingQuality = 'high';
+				x.drawImage(off, 0, 0, cvR.width, cvR.height);
+			} catch {
+				/* ön izleme olmadı: tam resmi bekle */
+			}
+			flush();
+		};
+		let mainJob = null; // ana iş parçacığında çiz (işçi yoksa ya da geç kaldıysa)
 		const startJob = (Wc, Hc) => {
 			// resmin boyu pencerenin oranında; genişlik pencerenin CSS genişliğinin 1,3 katı (en çok 460): 2×2 örneklemeyle
 			const low = (app?.tier?.id ?? 1) === 0; // düşük kademe: daha küçük resim (çizim süresi yarıya iner)
-			const W = Math.round(clamp(Wc * (low ? 1 : 1.3), 220, low ? 360 : 460));
+			const W = Math.round(clamp(Wc * (low ? 1 : 1.25), 220, low ? 360 : 440));
 			const H = Math.round(W * clamp(Hc / Math.max(1, Wc), 0.38, 0.9));
 			const key = `${q.id}|${q.model}|${W}x${H}`;
-			if (RESIM.has(key)) {
-				pic = RESIM.get(key);
-				return putPic();
-			}
+			if (RESIM.has(key)) return havePic(RESIM.get(key));
 			// bekleme: temanın göğü ve zemini (siluetsiz: yanıltmasın); kazınan yer boş görünmez
 			cvR.width = W;
 			cvR.height = H;
 			yedek(cvR.getContext('2d'), W, H, q.tema, false);
-			if (!HEROES[q.model]) {
-				pic = { W, H, rgba: null };
-				return putPic();
-			}
+			if (!HEROES[q.model]) return havePic({ W, H, rgba: null });
 			const L = [Math.cos(K.el ?? 0.8) * Math.sin(K.az ?? 1), Math.sin(K.el ?? 0.8), Math.cos(K.el ?? 0.8) * Math.cos(K.az ?? 1)];
-			const gen = (function* () {
-				const it = modelKur(q.model);
-				let s;
-				while (!(s = it.next()).done) yield;
-				const g = s.value;
-				const ao = g.userData.ao;
-				if (ao) {
-					const t0 = performance.now();
-					while (!ao.next().done) if (performance.now() - t0 > 6) yield;
-				}
-				const geo = { pos: g.getAttribute('position').array, nor: g.getAttribute('normal').array, col: g.getAttribute('col').array, info: g.getAttribute('info').array };
-				const out = {};
-				yield* ciz(geo, { W, H, ss: 2, yaw: K.yaw, pitch: K.pitch, fov: K.fov || 30, fill: K.fill || 0.8, box: K.box, panX: K.panX, panY: K.panY, groundY: K.gy, light: L, theme: th, slice: 7 }, out);
-				g.dispose();
-				return out;
-			})();
-			job = gen;
-			const pump = () => {
-				if (job !== gen || LIVE !== me || !el.isConnected) return;
-				const t0 = performance.now();
-				try {
-					while (performance.now() - t0 < 9) {
-						const r = gen.next();
-						if (r.done) {
-							job = null;
-							pic = { W: r.value.W, H: r.value.H, rgba: r.value.rgba };
-							RESIM.set(key, pic);
-							if (RESIM.size > 6) RESIM.delete(RESIM.keys().next().value);
-							return putPic();
-						}
+			const opt = { W, H, ss: 2, yaw: K.yaw, pitch: K.pitch, fov: K.fov || 30, fill: K.fill || 0.8, box: K.box, panX: K.panX, panY: K.panY, groundY: K.gy, light: L, theme: th, slice: 7 };
+			const keep = (r) => {
+				RESIM.set(key, r);
+				if (RESIM.size > 6) RESIM.delete(RESIM.keys().next().value);
+			};
+			mainJob = () => {
+				mainJob = null;
+				if (pic || job) return;
+				const gen = (function* () {
+					const it = modelKur(q.model, low);
+					let st;
+					while (!(st = it.next()).done) yield;
+					const g = st.value;
+					const ao = g.userData.ao;
+					if (ao) {
+						const t0 = performance.now();
+						while (!ao.next().done) if (performance.now() - t0 > 6) yield;
 					}
-				} catch (e) {
-					console.error('kazı kazan resmi çizilemedi', e);
-					job = null;
-					pic = { W, H, rgba: null };
-					return putPic();
-				}
+					const geo = { pos: g.getAttribute('position').array, nor: g.getAttribute('normal').array, col: g.getAttribute('col').array, info: g.getAttribute('info').array };
+					const out = {};
+					yield* ciz(geo, opt, out);
+					g.dispose();
+					return out;
+				})();
+				job = gen;
+				const pump = () => {
+					if (job !== gen || LIVE !== me || !el.isConnected) return;
+					const t0 = performance.now();
+					try {
+						while (performance.now() - t0 < 9) {
+							const r = gen.next();
+							if (r.done) {
+								job = null;
+								const p = { W: r.value.W, H: r.value.H, rgba: r.value.rgba };
+								keep(p);
+								return havePic(p);
+							}
+						}
+					} catch (e) {
+						console.error('kazı kazan resmi çizilemedi', e);
+						job = null;
+						return havePic({ W, H, rgba: null });
+					}
+					jobT = setTimeout(pump, 0);
+				};
 				jobT = setTimeout(pump, 0);
 			};
-			jobT = setTimeout(pump, 0);
+			// önce işçide (oyunun yapı işçisinin kodu + çizici): ana iş parçacığı hiç beklemez
+			const wk = kaziIsci();
+			if (!wk) return mainJob();
+			const hero = { kind: q.model, site: { x: 0, y: 0, z: 0, s: 1, ry: 0, index: 0 }, tone: [0.42, 0.4, 0.3], seg: low ? 0.75 : 1, minPart: 0, cluster: 0, grid: { st: 1, gx0: 0, gy0: 0, nx: 1, ny: 1, h: [0] }, provs: [] };
+			const preOpt = { ...opt, W: Math.round(W / 2), H: Math.round(H / 2), ss: 1, slice: 1e9 };
+			wk.ciz(hero, { ...opt, slice: 1e9 }, preOpt, (r) => LIVE === me && el.isConnected && havePre(r)).then((r) => {
+				if (r) keep(r);
+				if (LIVE !== me || !el.isConnected || pic) return;
+				if (r) havePic(r);
+				else mainJob?.();
+			});
 		};
 		const finishJob = () => {
+			// cevap anında resim yoksa: ana iş parçacığında hemen bitir (işçi geç kaldıysa yeni bir iş başlar)
+			if (pic || pre) return;
+			if (!job) mainJob?.();
 			if (!job) return;
 			clearTimeout(jobT);
 			const gen = job;
@@ -488,11 +536,10 @@ export const kazi = {
 			try {
 				let r;
 				while (!(r = gen.next()).done);
-				pic = { W: r.value.W, H: r.value.H, rgba: r.value.rgba };
+				havePic({ W: r.value.W, H: r.value.H, rgba: r.value.rgba });
 			} catch (e) {
-				pic = { W: cvR.width, H: cvR.height, rgba: null };
+				havePic({ W: cvR.width, H: cvR.height, rgba: null });
 			}
-			putPic();
 		};
 		// ---------------------------------------------------------------- folyo: boy, çizim, kazıma
 		let fw = 0;
@@ -585,7 +632,10 @@ export const kazi = {
 				stampAt(s.p[0][0], s.p[0][1], r0, 0);
 				for (let i = 1; i < s.p.length; i++) segment(s.p[i - 1], s.p[i], r0, false);
 			}
-			if (!pic && !job) startJob(r.width, r.height);
+			if (!started) {
+				started = true;
+				startJob(r.width, r.height);
+			}
 			return true;
 		};
 		const ro = typeof ResizeObserver !== 'undefined' ? new ResizeObserver(() => !peeling && !peeled && size()) : null;
@@ -906,8 +956,6 @@ export const kazi = {
 				lock();
 				c.reveal(results, (val) => (val && Number.isInteger(val.i) ? val.i : null));
 				fit.refit();
-				if (!pic) finishJob();
-				putPic();
 				ip.classList.add('gone');
 				const meR = results.find((r) => r.p?.human);
 				// kendi puanım: gönderdiğim değerden (denetim araçları da aynı yoldan cevaplar)
@@ -925,11 +973,22 @@ export const kazi = {
 						return `<span class="yn-kz-c done${j.correct ? '' : ' no'}${win ? ' win' : ''}${r.p?.human ? ' me' : ''}" style="--pc:${esc(r.color)};--k:${k}">${avOf(card, r.p)}<b>${r.value == null ? '—' : j.correct ? j.score : 'YANLIŞ'}</b>${r.value == null ? '' : `<small>%${s}</small>`}<i>${j.correct ? CHECK : CROSS}</i></span>`;
 					})
 					.join('');
-				root.classList.add('rv');
-				root.classList.toggle('iyi', !!meR?.correct);
-				sesA.soy();
-				peel(matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 500 : 1100, () => {});
-				setTimeout(() => sesA.plaka(!!meR?.correct), 1250);
+				// imza anı resim hazır olunca: işçi çizmekteyse kısa bir bekleme (en çok ~1,2 sn), sonra burada bitirilir
+				const go = () => {
+					if (LIVE !== me || !el.isConnected) return;
+					root.classList.add('rv');
+					root.classList.toggle('iyi', !!meR?.correct);
+					sesA.soy();
+					peel(matchMedia?.('(prefers-reduced-motion: reduce)')?.matches ? 500 : 1100, () => {});
+					setTimeout(() => sesA.plaka(!!meR?.correct), 1250);
+				};
+				if (pic || pre) go();
+				else {
+					// işçi çizmekte: ön izlemeyi bekle (çok yüklü cihazda en çok ~4 sn), sonra burada bitir
+					waiters.push(go);
+					if (job) finishJob();
+					else setTimeout(() => !pic && !pre && finishJob(), 4000);
+				}
 				if (meR && app) {
 					const j = kazi.judge(v, meR.value);
 					const s = Math.round(clamp(Number(meR.value?.s) || 0, 0, 1) * 100);
