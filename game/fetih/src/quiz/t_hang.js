@@ -50,6 +50,9 @@ const CSS = /* css */ `
 .hr{position:relative;display:flex;flex-direction:column;align-items:center;gap:10px;margin:2px 0 12px;user-select:none;-webkit-user-select:none}
 /* --------------------------------------------------- kelime şeridi: eğik kutular (şık dili) */
 .hr-top{position:relative;display:flex;align-items:center;justify-content:center;gap:10px;width:100%}
+/* uzun kelime: kutular kendi sırasında tam genişlik, hak ve karıştır altında (JS: kutu tek sırada 20 px'ten dar kalırdı) */
+.hr-top.two{flex-wrap:wrap;row-gap:8px}
+.hr-top.two .hr-word{flex:1 0 100%}
 .hr-word{display:flex;justify-content:center;gap:6px;max-width:100%}
 .hr-word s{flex:none;width:10px}
 .hr-s{position:relative;flex:none;width:var(--sw,34px);height:min(calc(var(--sw,34px) * 1.25),44px);display:grid;place-items:center;transform:skewX(-8deg);overflow:hidden;
@@ -143,7 +146,8 @@ export const hang = {
 		const n = word.length;
 		const lock = word.map((c) => c === ' ');
 		const free = () => word.map((c, i) => i).filter((i) => !lock[i]); // açılmamış konumlar
-		const vw = Math.min(innerWidth || 400, 560);
+		// genişlik oyun alanından (pencereden değil): galerinin telefon çerçevesinde (1280×720'de 325 px) şerit taşmasın
+		const vw = Math.min(el.closest('.fl-ui')?.clientWidth || innerWidth || 400, 560);
 		// şerit: bir (≤5 harf) ya da iki sıra kart; genişlik ekrana, kart boyu sıraya göre
 		const nt = v.tiles.length;
 		const GX = 10;
@@ -155,10 +159,17 @@ export const hang = {
 		const TH = Math.round(Math.min(60, Math.max(48, TW * 0.86)));
 		const H = rows * TH + (rows - 1) * GY + 8;
 		const K = Math.max(TW, TH);
-		const sw = Math.min(40, Math.floor((Math.min(vw - 40, 380) - 110 - (n - 1) * 6) / n));
+		// kelime kutuları: kısa kelimede hak çubukları ve karıştır düğmesiyle aynı sırada (110 px onlara); uzun kelimede o sırada
+		// kutu 20 px'ten dar kalır (320 px'te 10 harf: 11 px kutu, 9 px harf), o zaman kutular tek başına tam genişlik bir sıra,
+		// hak ve karıştır altında ortada
+		const WT = Math.min(vw - 40, 380);
+		const sp = word.filter((c) => c === ' ').length;
+		const sw1 = Math.floor((WT - 110 - (n - 1) * 6) / n);
+		const two = sw1 < 20;
+		const sw = Math.min(40, two ? Math.floor((WT - (n - 1) * 6 - sp * 10) / Math.max(1, n - sp)) : sw1);
 		const mixBtn = `<button class="hr-mix" aria-label="Karıştır">${MIX_SVG}<b></b></button>`;
 		el.innerHTML = `<div class="hr" style="--w:${W}px;--h:${H}px;--tw:${TW}px;--th:${TH}px;--sw:${sw}px">
-			<div class="hr-top"><div class="hr-word">${word.map((c, i) => (c === ' ' ? '<s></s>' : `<b class="hr-s" data-i="${i}"></b>`)).join('')}</div><div class="hr-hp" aria-label="Hak">${'<i></i>'.repeat(MAX)}</div>${mixBtn}</div>
+			<div class="hr-top${two ? ' two' : ''}"><div class="hr-word">${word.map((c, i) => (c === ' ' ? '<s></s>' : `<b class="hr-s" data-i="${i}"></b>`)).join('')}</div><div class="hr-hp" aria-label="Hak">${'<i></i>'.repeat(MAX)}</div>${mixBtn}</div>
 			<div class="hr-stage">
 				<div class="hr-plat">
 					<div class="hr-face"></div>
