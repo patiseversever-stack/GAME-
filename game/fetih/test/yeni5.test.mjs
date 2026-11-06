@@ -1,6 +1,6 @@
 // Yeni 5 deneme tipleri sınaması (Zaman Tüneli, Kelime Avı):  node test/yeni5.test.mjs
 // Denetler: örnek sayısı, kimlik, kategori, zorluk 1-2-3; Zaman Tüneli: yıllar farklı, doğru boşluk hesabı, judge yalnız
-// doğru boşlukları kabul eder, publicView kartların yılını taşımaz, joker doğru boşluğu kapatmaz; Kelime Avı: her örnek
+// doğru boşlukları kabul eder, publicView kartların yılını taşımaz, joker doğru boşluğu kapatmaz, seyirci oyları 100; Kelime Avı: her örnek
 // 300 farklı tohumla kurulur ve her tabloda her kelime TAM BİR kez geçer (sekiz yön), kaba kelime yok, kelimeler zorluğun
 // yönlerinde, publicView yerleşimi taşımaz, seçim iki uçtan da kabul edilir, botlar beceriyle iyileşir ve geçerli değer
 // üretir. deneme.test.mjs gibi esbuild ile paketler.
@@ -169,6 +169,14 @@ for (const t of Object.keys(TYPES)) {
 			const e = T.joker('yari', v, rng(50 + r));
 			ok(e.cut.length === 3 && e.cut.every((c, k) => c.length >= 1 && !c.includes(want[k]) && c.every((g) => g >= 0 && g <= k + 2)), q.id + ': joker doğru boşluğu kapatıyor');
 		}
+		// seyirci: kart başına k+3 boşluğun oyları, toplam 100, negatif yok; ortalamada doğru boşluk önde
+		let lead = 0;
+		for (let r = 0; r < 40; r++) {
+			const e = T.joker('kahin', v, rng(70 + r));
+			ok(e.poll.length === 3 && e.poll.every((pc, k) => pc.length === k + 3 && pc.every((x) => Number.isInteger(x) && x >= 0) && pc.reduce((a, b) => a + b, 0) === 100), q.id + ': seyirci oyları');
+			lead += e.poll.filter((pc, k) => pc[want[k]] === Math.max(...pc)).length;
+		}
+		ok(lead > 40 * 3 * 0.55, q.id + ': seyirci doğru boşluğu yeterince öne koymuyor ' + lead);
 		// bot: değer biçimi, süreler, beceriyle doğruluk
 		const rate = [0, 0];
 		for (let k = 0; k < 600; k++) {
@@ -228,6 +236,13 @@ for (const t of Object.keys(TYPES)) {
 				const pv = T.publicView(v);
 				ok(!pv.words && !JSON.stringify(pv).includes('"r":') && pv.grid.length === n && pv.clues.length === 3, q.id + ': publicView yerleşimi sızdırıyor');
 				ok(T.joker('yari', v).first.every(([i, r, c]) => v.words[i].r === r && v.words[i].c === c), q.id + ': joker ilk harfleri');
+				// seyirci: her kelimenin en az bir harfi kendi 3×3 bölgesinde, bölge tablonun içinde
+				const z = T.joker('kahin', v, rng(seed + 3)).zone;
+				ok(z.length === 3 && z.every(([i, r0, c0]) => {
+					const w = v.words[i];
+					const [dr, dc] = DIRS[w.d];
+					return r0 >= 0 && c0 >= 0 && r0 + 3 <= n && c0 + 3 <= n && Array.from({ length: w.len }, (_, k) => [w.r + dr * k, w.c + dc * k]).some(([r, c]) => r >= r0 && r < r0 + 3 && c >= c0 && c < c0 + 3);
+				}), q.id + ': seyirci bölgesi kelimeyi kapsamıyor');
 			}
 		}
 		// zor örnekte ters yönler gerçekten kullanılıyor; kolayda hiç

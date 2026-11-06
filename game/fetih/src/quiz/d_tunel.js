@@ -74,6 +74,8 @@ const CSS = /* css */ `
    ad). Boşluk düğmeleri saydam ve plakaların altında (plaka dokunuşu geçirir): her boşluk komşu iki plakanın ortasına dek
    uzanır, en kısa ekranda da en az 40 px. Satır yerleri JS'te (çeviri), tünelin boyu baştan beş olaya göre ayrılır. */
 .fl-q.t-tunel .fl-qbody{padding-top:8px}
+/* bildirim (joker, "kalmadı") tam ekran kartın başlığının yerine oturur: başlık o an söner (arayüzün kural göstergesiyle aynı yol) */
+.fl-ui.toaston .fl-q.t-tunel .fl-cvt{opacity:0;transition:opacity .15s}
 .yn-tn{--rh:46px;--gp:10px;--ep:30px;--rx:40px;position:relative;flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:10px;user-select:none;-webkit-user-select:none}
 /* rampa */
 .tn-dock{position:relative;z-index:5;flex:none;display:flex;flex-direction:column;gap:6px}
@@ -102,6 +104,10 @@ const CSS = /* css */ `
 .tn-card .tn-yr i:not(.set){color:#ffd25a;text-shadow:0 0 8px rgba(255,210,90,.75)}
 .tn-slot::before{content:'';position:absolute;inset:-3px;border-radius:15px;box-shadow:0 0 0 1.5px rgba(255,210,90,.35),0 0 18px rgba(255,210,90,.22);pointer-events:none}
 .tn-card.in{animation:tnIn .42s cubic-bezier(.3,1.5,.5,1) both}
+.tn-where{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;gap:6px;padding:0 10px;opacity:0;transition:opacity .15s;pointer-events:none;
+  font:italic 900 15px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#ffd25a;text-shadow:0 0 10px rgba(255,210,90,.55);white-space:nowrap}
+.tn-where b{color:#fff;font-size:18px}
+.yn-tn.drag .tn-where{opacity:1}
 .tn-card.lift{cursor:grabbing;transition:none;box-shadow:0 2px 0 #d9c9a2,0 4px 0 #b9a47a,0 22px 34px rgba(0,0,0,.6),0 0 0 3px #ffd25a}
 .tn-card.back{transition:transform .32s cubic-bezier(.3,1.4,.5,1)}
 .tn-card.gone{visibility:hidden}
@@ -118,6 +124,7 @@ const CSS = /* css */ `
 .tn-hint .o::before{border-bottom:6px solid #fff;border-top:0}
 .tn-hint .n::after{border-top:6px solid #fff;border-bottom:0}
 .tn-hint em{font-style:normal;color:#ffd25a;font-weight:700}
+.tn-hint .t{flex:1 0 100%;color:#9fabd6}
 /* yıl sayacı: dört hane, ortadan bölünmüş pencere (döner levha) */
 .tn-yr{display:flex;gap:2px;font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif}
 .tn-yr i{display:block;width:.64em;padding:.12em 0 .1em;text-align:center;font-style:normal;color:#fff;border-radius:3px;
@@ -319,8 +326,11 @@ export const tunel = {
 	keep: true,
 	stampAt: '.tn-vd', // cevap damgası rampanın yerinde (sorunun alanı), tünele ve plakalara binmez
 	rule: 'En çok doğru',
+	birinci: 'TÜNELİN USTASI SEN!', // sonuç ekranı (ui.js): "EN YAKIN" yerine tipin sözcükleri
+	ustun: 'seni geçti', // eşit doğruda hızlı olan önde: "daha çok" demez
+	rozet: 'EN ÇOK DOĞRU',
 	revealMs: 4200,
-	jokers: ['yari'],
+	jokers: ['yari', 'kahin'],
 	fmt: (v, value) => `${puan(v, value).ok}/${N} doğru`,
 	sub: (v, value) => {
 		const s = puan(v, value);
@@ -363,8 +373,8 @@ export const tunel = {
 			<div class="tn-dock">
 				<div class="tn-dh"><span class="tn-step">KART <b>1</b><i>/${N}</i></span><span class="tn-pips">${'<i></i>'.repeat(N)}</span>
 					<span class="tn-race">${bots.map((b) => `<span class="tn-rv" data-p="${b.p.i}" style="--pc:${esc(b.p.css || '#888')}"><span class="tn-av">${avOf(b.p.i)}</span><u>${'<i></i>'.repeat(N)}</u></span>`).join('')}</span></div>
-				<div class="tn-slot"><div class="tn-card" role="button" aria-label="Olay kartı: sürükle"><span class="tn-yr">${QMARK}</span><b class="tn-nm"></b><span class="tn-grip"></span></div></div>
-				<div class="tn-hint"><span class="o">ESKİ</span>yukarıda<span class="n">YENİ</span>aşağıda<span class="t">· kartı <em>sürükle</em> ya da boşluğa <em>dokun</em></span></div>
+				<div class="tn-slot"><span class="tn-where">TÜNELE BIRAK</span><div class="tn-card" role="button" aria-label="Olay kartı: sürükle"><span class="tn-yr">${QMARK}</span><b class="tn-nm"></b><span class="tn-grip"></span></div></div>
+				<div class="tn-hint"><span class="o">ESKİ</span>yukarıda<span class="n">YENİ</span>aşağıda<span class="t">Kartı <em>sürükle</em> ya da doğru boşluğa <em>dokun</em></span></div>
 			</div>
 			<div class="tn-tube"><div class="tn-bg">${tunnelSVG()}${clockSVG()}</div><i class="tn-rail"></i><span class="tn-end top">ESKİ<small>GEÇMİŞ</small></span><span class="tn-end bot">YENİ<small>BUGÜN</small></span>
 				<div class="tn-gaps"></div><div class="tn-ghost"></div><div class="tn-items"></div></div>
@@ -375,6 +385,7 @@ export const tunel = {
 		const itemsEl = root.querySelector('.tn-items');
 		const gapsEl = root.querySelector('.tn-gaps');
 		const ghost = root.querySelector('.tn-ghost');
+		const whereEl = root.querySelector('.tn-where');
 		const cardEl = root.querySelector('.tn-card');
 		const nameEl = cardEl.querySelector('.tn-nm');
 		const stepEl = root.querySelector('.tn-step b');
@@ -393,6 +404,7 @@ export const tunel = {
 		let done = false; // cevap gitti ya da kilitlendi
 		let busy = false; // kart uçuyor / kilitleniyor
 		let cut = null; // yarı yarıya: kart başına kapalı boşluklar
+		let poll = null; // seyirci: kart başına boşlukların oy yüzdesi
 		let settle = Promise.resolve(); // son yerleştirmenin canlandırması (cevap ekranı bunun ardından)
 		const now = () => (t0 ? Math.round(((clock.now() - t0) / 1000) * 10) / 10 : 0);
 
@@ -439,7 +451,15 @@ export const tunel = {
 					it.el.style.transition = '';
 				}
 			});
-			if (L.ghost != null) ghost.style.transform = `translateY(${L.ghost.toFixed(1)}px)`;
+			if (L.ghost != null) {
+			ghost.style.transform = `translateY(${L.ghost.toFixed(1)}px)`;
+			// yuvanın adı: komşu yıllarla (yılı açılmış olaylar), kart buraya düşerse ne demek
+			const m = list.length;
+			const yr = (it) => `<b>${esc(String(it.y))}</b>`;
+			ghost.innerHTML = open === 0 ? `${yr(list[0])} ÖNCESİ` : open >= m ? `${yr(list[m - 1])} SONRASI` : `${yr(list[open - 1])} İLE ${yr(list[open])} ARASI`;
+		}
+		// rampadaki boş yuva sürüklerken kartın nereye düşeceğini söyler (kart parmağın altında yuvayı örter)
+		whereEl.innerHTML = L.ghost != null ? ghost.innerHTML : 'TÜNELE BIRAK';
 			ghost.classList.toggle('on', L.ghost != null);
 			shown = open;
 			return L;
@@ -457,7 +477,10 @@ export const tunel = {
 				const ny = (j === 0 ? L.ys[0] - off : j === m ? L.ys[m - 1] + L.rh + off : (L.ys[j - 1] + L.rh + L.ys[j]) / 2) - top;
 				const a = j === 0 ? `${list[0].t} öncesi` : j === m ? `${list[m - 1].t} sonrası` : `${list[j - 1].t} ile ${list[j].t} arası`;
 				const isCut = !!cut?.[step]?.includes(j);
-				html += `<button class="tn-gap${isCut ? ' cut' : ''}" data-g="${j}" style="top:${top.toFixed(1)}px;height:${(bot - top).toFixed(1)}px;--ny:${ny.toFixed(1)}px" aria-label="${esc(a)}"${isCut ? ' disabled' : ''}><i class="tn-line"></i><i class="tn-node"></i></button>`;
+				const pv = poll?.[step];
+				const pc = pv ? pv[j] ?? 0 : null;
+				const top1 = pv && pc === Math.max(...pv.filter((_, g) => !cut?.[step]?.includes(g)));
+				html += `<button class="tn-gap${isCut ? ' cut' : ''}${pv ? ' poll' : ''}${top1 && !isCut ? ' top' : ''}" data-g="${j}" style="top:${top.toFixed(1)}px;height:${(bot - top).toFixed(1)}px;--ny:${ny.toFixed(1)}px" aria-label="${esc(a)}${pv ? ` · seyirci %${pc}` : ''}"${isCut ? ' disabled' : ''}><i class="tn-line"></i><i class="tn-node">${pv && !isCut ? `%${pc}` : ''}</i></button>`;
 			}
 			gapsEl.innerHTML = html;
 		};
@@ -528,6 +551,40 @@ export const tunel = {
 			f.burst(r.left + r.width * 0.3, r.top + r.height / 2, { n: 16, dist: 80, colors, kind: 'star', size: 11, life: 700 });
 			if (text) f.text(r.left + r.width / 2, r.top - 4, text, { cls, life: 1000 });
 		};
+		/** Kilit anı: yılın dev gölgesi tünelin derinliğinden geçer (arka katman, bitince kalkar). */
+		const bigYear = (y, ok) => {
+			const b = document.createElement('i');
+			b.className = `tn-big${ok ? '' : ' no'}`;
+			b.textContent = String(y);
+			b.addEventListener('animationend', () => b.remove());
+			tube.querySelector('.tn-bg').appendChild(b);
+			later(() => b.remove(), 1300);
+		};
+		/** İlk hamle öğreticisi: parlayan parmak izi karttan tünelin ortasına iki kez iner, boşluklar nabız gibi atar. */
+		let tut = null;
+		const stopTut = () => {
+			tut?.remove();
+			tut = null;
+		};
+		const tutorial = () => {
+			if (done || step || drag || G[0] != null) return;
+			const rr = root.getBoundingClientRect();
+			const zf = rr.height / (root.offsetHeight || 1) || 1;
+			const c = cardEl.getBoundingClientRect();
+			const tb = tube.getBoundingClientRect();
+			tut = document.createElement('i');
+			tut.className = 'tn-tut';
+			tut.style.setProperty('--y0', `${((c.top + c.height / 2 - rr.top) / zf).toFixed(1)}px`);
+			tut.style.setProperty('--y1', `${((tb.top + tb.height * 0.52 - rr.top) / zf).toFixed(1)}px`);
+			tut.addEventListener('animationend', stopTut);
+			root.appendChild(tut);
+			gapsEl.classList.remove('nudge');
+			void gapsEl.offsetWidth;
+			gapsEl.classList.add('nudge');
+			later(() => gapsEl.classList.remove('nudge'), 1100);
+			later(stopTut, 3600);
+		};
+		root.addEventListener('pointerdown', stopTut, true);
 		const flash = (ok) => {
 			tube.classList.remove('flash', 'no', 'warp');
 			void tube.offsetWidth;
@@ -583,6 +640,7 @@ export const tunel = {
 					beam(it, true);
 					flash(true);
 					pips[k].className = 'ok';
+					bigYear(it.y, true);
 					await spin(e.querySelector('.tn-yr'), it.y, 0);
 					burstAt(e, ['#46e0ff', '#fff', '#ffd25a'], 'DOĞRU YER!');
 					sfx(app, 'right', { n: k + 1 });
@@ -604,6 +662,7 @@ export const tunel = {
 					e.classList.remove('mv');
 					e.classList.add('land');
 					beam(it, false);
+					bigYear(it.y, false);
 					await spin(e.querySelector('.tn-yr'), it.y, 0);
 					burstAt(e, ['#ff8a7a', '#fff'], `DOĞRUSU ${it.y}`, 'dn dn-hot');
 				}
@@ -738,6 +797,7 @@ export const tunel = {
 				later(() => it.el.classList.remove('enter'), 1100 + o * 140);
 			});
 			flash(true);
+			later(tutorial, 900);
 			for (const b of bots) {
 				const ts = Array.isArray(b.value?.t) ? b.value.t : [];
 				ts.forEach((t, k) => Number.isFinite(t) && later(() => !done && raceOf(b.p.i)[k]?.classList.add('on'), t * 1000));
@@ -757,6 +817,7 @@ export const tunel = {
 			lock() {
 				done = true;
 				drag = null;
+				stopTut();
 				// süre doldu (kart kaldı): damga bandı hemen açılır, arayüzün "SÜRE DOLDU" damgası rampanın yerine otursun. Üç kart
 				// konduysa açmaz: son kartın kilidi oynarken tünel kaymasın (bandı cevap ekranı açar)
 				if (G.some((g) => g == null)) root.classList.add('vd');
@@ -768,10 +829,16 @@ export const tunel = {
 			},
 			value: () => ({ g: G.slice(), t: T.slice() }),
 			joker(e) {
+				if (Array.isArray(e?.poll)) {
+					poll = e.poll;
+					if (!busy && !done && step < N) gaps();
+					app?.ui?.toast?.('Seyirci oyunu verdi', { tone: 'good', ms: 1600 });
+					return;
+				}
 				if (!Array.isArray(e?.cut)) return;
 				cut = e.cut;
-				if (!busy && step < N) gaps();
-				app?.ui?.toast?.('Her kart için yanlış boşlukların yarısı kapandı', { tone: 'good', ms: 1800 });
+				if (!busy && !done && step < N) gaps();
+				app?.ui?.toast?.('Yanlış boşlukların yarısı kapandı', { tone: 'good', ms: 1600 });
 			},
 			reveal(results) {
 				const run = () => {
@@ -832,6 +899,24 @@ export const tunel = {
 		};
 	},
 	joker(id, v, R) {
+		if (id === 'kahin') {
+			// seyirci: kart başına boşlukların oy yüzdesi (toplam 100). Doğru boşluk çoğunlukla önde, ama zorlukla ve yakın
+			// yıllı kartta seyirci de yanılır: oyun komşu boşluklara yayılır (yanlış boşluğa en çok oy düşebilir)
+			const diff = clamp(Math.round(Number(v.q?.diff) || 2), 1, 3);
+			return {
+				poll: v.years.map((y, k) => {
+					const want = dogruBosluk(v, k);
+					const m = k + 3;
+					const near = Math.min(...tunelYillari(v, k).map((x) => Math.abs(x - y)));
+					const p = clamp(0.66 - 0.07 * diff - 0.03 * k - (near <= 5 ? 0.06 : near <= 20 ? 0.03 : 0) + R() * 0.12, 0.3, 0.85);
+					const w = Array.from({ length: m }, (_, g) => (g === want ? 0 : (1 / (1 + Math.abs(g - want))) * (0.6 + R())));
+					const sw = w.reduce((a, b) => a + b, 0) || 1;
+					const pct = w.map((x) => Math.round((x / sw) * (100 - Math.round(p * 100))));
+					pct[want] = 100 - pct.reduce((a, b) => a + b, 0);
+					return pct;
+				}),
+			};
+		}
 		if (id !== 'yari') return null;
 		// her kart için yanlış boşlukların yarısı (en az biri) kapanır
 		return {
