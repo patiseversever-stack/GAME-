@@ -278,8 +278,10 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
    Bomba boyu ve yolu arenanın gerçek ölçüsünden (fitArena, JS): iki portrenin arasındaki koridora, iki yöne eğik hali ve
    devinimin taşması dahil sığar; tabanı portrelerin tabanında, ad ve durum etiketi tabanın altında: hiçbir ekran boyunda
    oyuncunun portresine, adına ya da etiketine binmez (eskiden 1,3 kat büyütülmüş 120 px'lik bomba SEN'in üstüne biniyordu). */
-.fl-q.cover .dn-fz{flex:1 1 auto;gap:12px;justify-content:space-between}
-.fl-q.cover .dn-fz-ar{flex:1 1 auto;height:auto;min-height:190px;max-height:290px;border:0;border-radius:16px;
+/* arena esner: soru kâğıdının satır sayısı değişince boyu arenadan gelir (gövde taşmaz, ui._coverFit küçültmez); bomba
+   ve portreler fitArena ile yeni boya uyar */
+.fl-q.cover .dn-fz{flex:1 1 auto;min-height:0;gap:12px;justify-content:space-between}
+.fl-q.cover .dn-fz-ar{flex:1 1 0;height:auto;min-height:150px;max-height:290px;border:0;border-radius:16px;
   background:radial-gradient(55% 60% at 50% 40%,rgba(255,160,70,.2),rgba(255,160,70,0) 70%),linear-gradient(180deg,#170f2c 0%,#0d0a1c 63%,#2a1a18 63.4%,#1a100e 100%);
   box-shadow:inset 0 0 0 2px rgba(255,255,255,.1),inset 0 -30px 40px rgba(0,0,0,.45),0 14px 30px rgba(0,0,0,.5)}
 .fl-q.cover .dn-fz-ar::after{content:'';position:absolute;left:0;right:0;bottom:0;height:36.6%;pointer-events:none;
@@ -293,9 +295,12 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
 .fl-q.cover .dn-fz-pl b{max-width:var(--pw,96px);padding:2px 10px 3px;font:italic 900 14px/1.1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--pc);clip-path:polygon(8% 0,100% 0,92% 100%,0 100%)}
 .fl-q.cover .dn-fz-pl small{order:3;font:italic 900 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em;white-space:nowrap} /* durum etiketi adın altında */
 .fl-q.cover .dn-fz-pl b,.fl-q.cover .dn-fz-pl small{position:relative;z-index:2}
+.fl-q.cover .dn-fz-ar.kisa .dn-fz-pl small{display:none}
+.fl-q.cover .dn-fz-ar.kisa .dn-fz-pl b{padding:1px 8px 2px;font-size:12.5px}
 .fl-q.cover .dn-fz-tag{top:8px;font:italic 900 12px/1.2 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;padding:3px 12px;white-space:nowrap;z-index:3} /* left:50% ile yarı genişliğe sıkışıp iki satıra kırılıyordu; bombanın önünde */
 /* patlama: halka ve BOOM yazısı bombanın gövdesinde, yazı koridora göre boyutlanır */
 .fl-q.cover .dn-fz-ring{left:var(--rx,50%);top:var(--ry,50%)}
+.dn-fz-ar.boom .dn-fz-tag{opacity:0!important;animation:none!important} /* patlayınca uyarı söner (BOOM yazısı üstüne binmesin) */
 .fl-q.cover .dn-fz-ar .boomt{left:var(--bcx,50%);top:calc(var(--bfy,100px) - var(--bk,.6) * 46px);font-size:clamp(26px,calc(var(--bk,.6) * 60px),52px);-webkit-text-stroke-width:clamp(2px,calc(var(--bk,.6) * 3.4px),3px);z-index:4}
 /* rakip cevapladı işareti (✓ bildi / ✗ yanıldı): rakibin portresinin dış üst köşesinde rozet. Eskiden doğru cevapta
    şıkkın (eğik levhanın) üst kenarına "Defne ✓" etiketi biniyordu, yanlışta soru kâğıdındaydı. */
@@ -320,10 +325,14 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
 .fl-q.cover .dn-fz-lk{height:62px;border-radius:4px}
 .fl-q.cover .dn-fz-res{gap:8px}
 .fl-q.cover .dn-fz-res span{padding:4px 12px;border-radius:999px;font:600 13px/1.2 'Fredoka',sans-serif;background:rgba(255,255,255,.07);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12)}
-/* kısa ekranlar (büyükten küçüğe: küçük olan ezer) */
-@media (max-height:700px){.fl-q.cover .dn-fz-ar{min-height:150px}.fl-q.cover .dn-fz-o .fl-opt{min-height:52px}.fl-q.cover .dn-fz-qt{min-height:56px}}
-@media (max-height:600px){.fl-q.cover .dn-fz{gap:8px}.fl-q.cover .dn-fz-q{gap:8px}.fl-q.cover .dn-fz-ar{min-height:118px}.fl-q.cover .dn-fz-qt{min-height:48px;padding:7px 10px;font-size:15px}
-  .fl-q.cover .dn-fz-o .fl-opt{min-height:46px;font-size:18px}.fl-q.cover .dn-fz-lk{height:46px}.fl-q.cover .dn-fz-res span{padding:2px 10px;font-size:12px}
+/* kısa ekranlar (büyükten küçüğe: küçük olan ezer). Soru türü etiketi (DOĞRU MU? / HANGİSİ?) kısa ekranda kalkar: şıklar
+   zaten söylüyor, yazı bütün genişliği alır (82 harflik soru iki-üç satır) */
+@media (max-height:700px){.fl-q.cover .dn-fz{gap:9px}.fl-q.cover .dn-fz-q{gap:8px}.fl-q.cover .dn-fz-ar{min-height:96px}
+  .fl-q.cover .dn-fz-qt{min-height:50px;padding:7px 12px;font-size:15.5px}.fl-q.cover .dn-fz-qt em{display:none}
+  .fl-q.cover .dn-fz-o .fl-opt{min-height:48px;font-size:20px}.fl-q.cover .dn-fz-lk{height:48px}.fl-q.cover .dn-fz-res span{padding:2px 10px;font-size:12px}}
+@media (max-height:600px){.fl-q.cover .dn-fz{gap:6px}.fl-q.cover .dn-fz-q{gap:6px}.fl-q.cover .dn-fz-ar{min-height:68px}
+  .fl-q.cover .dn-fz-qt{min-height:44px;padding:6px 10px;font-size:15px}
+  .fl-q.cover .dn-fz-o .fl-opt{min-height:42px;font-size:18px}.fl-q.cover .dn-fz-lk{height:42px}.fl-q.cover .dn-fz-res{display:none}
   .fl-q.cover .dn-fz-pl b{padding:1px 9px 2px;font-size:13px}.fl-q.cover .dn-fz-pl small{font-size:11px}.dn-fz-mk{width:20px;height:20px}.dn-fz-mk svg{width:12px;height:12px}}
 `;
 
@@ -484,7 +493,8 @@ export const fitil = {
 			const W = A.width / z;
 			const H = A.height / z;
 			if (W < 60 || H < 60) return;
-			ar.style.setProperty('--pd', Math.round(clamp(H * 0.3, 40, 64)) + 'px');
+			ar.classList.toggle('kisa', H < 120); // kısa arenada durum etiketi kalkar
+	ar.style.setProperty('--pd', Math.round(clamp(H * 0.36, 30, 64)) + 'px');
 			ar.style.setProperty('--pw', Math.round(clamp(W * 0.27, 76, 96)) + 'px');
 			const rel = (e) => {
 				const r = e.getBoundingClientRect();

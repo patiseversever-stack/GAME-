@@ -1,8 +1,9 @@
 // Akıl ve kelime deneme tipleri sınaması (Yanlışı Bul, İki Doğru Bir Yalan, Harf Al, Az Bilinen):
 //   node test/deneme-akil.test.mjs
-// Denetler: örnek sayıları; cevap anahtarı (tek yanlış kelime, tek yalan, harf kümesi, yüzdeler); TEK doğru cevap
-// (judge yalnız anahtarı tam kabul eder); çevrimiçi görünüm (publicView) cevabı, notları ve oranları taşımıyor;
-// jokerler cevabı bozmuyor; arama Türkçe harf ve yazım hatasına dayanıklı. deneme.test.mjs gibi esbuild ile paketler.
+// Denetler: örnek sayıları; cevap anahtarı (tek yanlış kelime, tek yalan, harf kümesi, Az Bilinen'de tam beş şık:
+// 3–4 doğru + 1–2 nedenli tuzak, tekil ve belirgin söyleyen sayıları); TEK doğru cevap (judge yalnız anahtarı tam
+// kabul eder); çevrimiçi görünüm (publicView) cevabı, notları ve oranları taşımıyor; jokerler cevabı bozmuyor (Az
+// Bilinen: yarı yarıya tam iki şık, seyirci her şıkka yüzde). deneme.test.mjs gibi esbuild ile paketler.
 import { build } from 'esbuild';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,7 +13,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const BODY = /* js */ `
 import { TYPES, SAMPLES } from './src/quiz/deneme-akil.js';
 import { words } from './src/quiz/d_yanlis.js';
-import { ara, sade } from './src/quiz/d_azbilinen.js';
+import { sade } from './src/quiz/d_azbilinen.js';
 import { KEYS } from './src/quiz/util.js';
 import { rng } from './src/core/math.js';
 
@@ -118,43 +119,63 @@ const R = () => rng(11);
 	}
 }
 
-// ---------------------------------------------------------------- Az Bilinen
+// ---------------------------------------------------------------- Az Bilinen (beş şık)
 {
 	const T = TYPES.azbilinen;
+	const mix = [0, 0]; // tek tuzaklı (4+1), iki tuzaklı (3+2)
+	const L = (x) => [...String(x)].length;
 	for (const q of SAMPLES.azbilinen) {
-		ok(q.ans.length >= 4 && q.wrong.length >= 4, q.id + ': en az 4 doğru ve 4 tuzak');
-		ok(q.ans.every(([n, p]) => typeof n === 'string' && Number.isInteger(p) && p >= 1 && p <= 99), q.id + ': yüzdeler 1–99 tam sayı');
-		const names = [...q.ans.map((a) => a[0]), ...q.wrong];
-		ok(new Set(names.map(sade)).size === names.length, q.id + ': adlar tekil değil');
+		ok(Array.isArray(q.ans) && Array.isArray(q.wrong) && q.ans.length + q.wrong.length === 5, q.id + ': tam 5 şık olmalı');
+		ok(q.ans.length >= 3 && q.ans.length <= 4 && q.wrong.length >= 1 && q.wrong.length <= 2, q.id + ': 3–4 doğru ve 1–2 tuzak olmalı');
+		mix[Math.min(1, Math.max(0, q.wrong.length - 1))]++;
+		ok(q.ans.every((a) => a.length === 2 && typeof a[0] === 'string' && Number.isInteger(a[1]) && a[1] >= 1 && a[1] <= 99), q.id + ': doğru şık [ad, 1–99 kişi] olmalı');
+		ok(q.wrong.every((w) => Array.isArray(w) && w.length === 2 && typeof w[0] === 'string' && typeof w[1] === 'string' && L(w[1]) >= 6 && L(w[1]) <= 32), q.id + ': tuzak [ad, 6–32 harflik neden] olmalı');
+		const cnt = q.ans.map((a) => a[1]).sort((x, y) => x - y);
+		ok(new Set(cnt).size === cnt.length, q.id + ': söyleyen sayıları tekil değil (' + cnt + ')');
+		ok(cnt[1] - cnt[0] >= 3, q.id + ': en az bilinen ikinciden belirgin değil (' + cnt + ')');
+		ok(cnt[cnt.length - 1] >= 25 && cnt[cnt.length - 1] - cnt[0] >= 20, q.id + ': popülerlikler yeterince farklı değil (' + cnt + ')');
+		const names = [...q.ans.map((a) => a[0]), ...q.wrong.map((w) => w[0])];
+		ok(new Set(names.map(sade)).size === 5, q.id + ': adlar tekil değil');
+		ok(names.every((n) => L(n) >= 1 && L(n) <= 24), q.id + ': şık adı 24 harften uzun');
+		ok(L(q.q) <= 66, q.id + ': soru 66 harften uzun (en dar ekranda iki satır)');
 		const v = T.prepare(q);
-		const valid = new Set(q.ans.map((a) => a[0]));
-		const best = Math.min(...q.ans.map((a) => a[1]));
+		ok(v.pool.length === 5 && v.pct.length === 5 && v.note.length === 5, q.id + ': görünüm beş şık taşımıyor');
+		ok(v.pool.every((n, i) => !i || v.pool[i - 1].localeCompare(n, 'tr', { numeric: true }) <= 0), q.id + ': şıklar alfabetik değil (doğruların yeri ele verilir)');
+		const best = cnt[0];
 		v.pool.forEach((n, i) => {
 			const j = T.judge(v, i);
-			if (valid.has(n)) {
-				const p = q.ans.find((a) => a[0] === n)[1];
-				ok(j.correct && j.err === p && j.pts === 100 - p, q.id + ': doğru cevap ' + n);
-			} else ok(!j.correct && j.err === 100 && j.pts === 0, q.id + ': tuzak kabul edildi ' + n);
-			// arama: Türkçe harfsiz ve bir harf eksik yazımla bulunur
-			const plain = sade(n);
-			ok(ara(v.pool, plain).includes(i), q.id + ': aramada bulunamadı (' + plain + ')');
-			const w0 = plain.length >= 5 ? plain.slice(0, 2) + plain.slice(3, 6) : plain;
-			ok(ara(v.pool, w0).includes(i), q.id + ': yazım hatasıyla bulunamadı (' + w0 + ' → ' + n + ')');
+			const a = q.ans.find((x) => x[0] === n);
+			if (a) ok(j.correct && j.err === a[1] && j.pts === 100 - a[1] && v.note[i] === '', q.id + ': doğru cevap ' + n + ' ' + JSON.stringify(j));
+			else ok(!j.correct && j.err === 100 && j.pts === 0 && v.note[i] === q.wrong.find((w) => w[0] === n)?.[1], q.id + ': tuzak kabul edildi ' + n);
 		});
-		ok(T.judge(v, null).err > 100 && !T.judge(v, 999).correct, q.id + ': boş/geçersiz cevap');
-		ok(Math.min(...v.pool.map((_, i) => T.judge(v, i).err)) === best, q.id + ': en az bilinen en iyi');
+		ok(T.judge(v, null).err > 100 && !T.judge(v, 999).correct && !T.judge(v, -1).correct && !T.judge(v, 1.5).correct, q.id + ': boş/geçersiz cevap');
+		ok(Math.min(...v.pool.map((_, i) => T.judge(v, i).err)) === best, q.id + ': en az bilinen en iyi değil');
+		const ex = T.ornek(v);
+		ok(T.judge(v, ex.good).err === best && T.judge(v, ex.bad).correct === false, q.id + ': örnek doğru/yanlış');
+		ok(typeof T.fmt(v, ex.good) === 'string' && /puan/.test(T.fmt(v, ex.good)) && T.sub(v, ex.bad).includes('tuzak'), q.id + ': fmt/sub');
 		const pv = T.publicView(v);
-		ok(!pv.pct && !pv.alias && !pv.q.ans && !pv.q.wrong && pv.pool.length === names.length && !/"(pct|ans|wrong|alias)"/.test(JSON.stringify(pv)), q.id + ': publicView doğruları sızdırıyor');
+		const s = JSON.stringify(pv);
+		ok(!pv.pct && !pv.note && !pv.q.ans && !pv.q.wrong && pv.pool.length === 5 && !/"(pct|ans|wrong|note|alias)"/.test(s) && q.wrong.every((w) => !s.includes(w[1])), q.id + ': publicView doğruları sızdırıyor');
+		// yarı yarıya: tam iki şık söner; kalan üçü doğru, en az bilinen hep kalır
 		const e = T.joker('yari', v, R());
-		ok(e.hide.length >= 2 && e.hide.every((i) => !valid.has(v.pool[i])), q.id + ': yarı yarıya doğru cevap siliyor');
+		const left = v.pool.map((_, i) => i).filter((i) => !e.hide.includes(i));
+		ok(e.hide.length === 2 && new Set(e.hide).size === 2 && e.hide.every((i) => i >= 0 && i < 5), q.id + ': yarı yarıya tam iki şık silmeli');
+		ok(left.length === 3 && left.every((i) => v.pct[i] >= 0) && left.some((i) => v.pct[i] === best), q.id + ': yarı yarıya doğru cevap ya da en az bilineni siliyor');
+		// seyirci: her şıkka 1–99 yüzde; ortalamada tuzak doğrulardan az, en bilinen en az bilinenden çok oy alır
+		const avg = new Array(5).fill(0);
+		for (let k = 0; k < 40; k++) {
+			const p = T.joker('kahin', v, rng(900 + k)).poll;
+			ok(p.length === 5 && p.every((x) => Number.isInteger(x) && x >= 1 && x <= 99), q.id + ': seyirci yüzdeleri');
+			p.forEach((x, i) => (avg[i] += x / 40));
+		}
+		const good = v.pool.map((_, i) => i).filter((i) => v.pct[i] >= 0);
+		const traps = v.pool.map((_, i) => i).filter((i) => v.pct[i] < 0);
+		const top = good.reduce((a, i) => (v.pct[i] > v.pct[a] ? i : a), good[0]);
+		const low = good.reduce((a, i) => (v.pct[i] < v.pct[a] ? i : a), good[0]);
+		ok(Math.max(...traps.map((i) => avg[i])) < Math.min(...good.map((i) => avg[i])) && avg[top] > avg[low], q.id + ': seyirci oyları anlamsız ' + avg.map(Math.round));
 	}
-	// eşanlam ve kısaltma
-	const ab = TYPES.azbilinen.prepare(SAMPLES.azbilinen[0]);
-	ok(ara(ab.pool, 'afyon', ab.alias)[0] === ab.pool.indexOf('Afyonkarahisar'), 'arama: kısaltma');
-	ok(ara(ab.pool, 'izmr', ab.alias).includes(ab.pool.indexOf('İzmir')), 'arama: harf eksik');
-	ok(ara(ab.pool, 'usak', ab.alias)[0] === ab.pool.indexOf('Uşak'), 'arama: Türkçe harfsiz');
-	const pd = TYPES.azbilinen.prepare(SAMPLES.azbilinen.find((q) => q.id === 'dn-ab07'));
-	ok(ara(pd.pool, 'fatih', pd.alias)[0] === pd.pool.indexOf('Mehmed'), 'arama: eşanlam (Fatih → Mehmed)');
+	ok(mix[0] >= 30 && mix[1] >= 30, 'azbilinen: tek ve iki tuzaklı sorular dengeli değil (' + mix + ')');
+	console.log('  azbilinen: ' + mix[0] + ' soru 4 doğru + 1 tuzak, ' + mix[1] + ' soru 3 doğru + 2 tuzak');
 }
 
 // ---------------------------------------------------------------- botlar: usta acemiden iyi (her tip)

@@ -1,143 +1,149 @@
-// AZ BİLİNEN (deneme): Pointless tarzı çok cevaplı soru ("Ege Bölgesi'nden bir il"). Doğru cevaplar arasında en
-// az seçilen en çok puanı alır: puan = 100 − seçilme yüzdesi; yanlış cevap 0. "İzmir" diyen güvende ama az puanlı,
-// "Uşak" diyen kahraman. Listede tuzaklar da var (Balıkesir Marmara'da, Sultanahmet Sinan'ın değil).
+// AZ BİLİNEN (deneme, v2: beş levha): "100 kişiye soruldu" anketi. Ekranda tam beş şık: 3–4 doğru cevap (100 kişiden
+// kaçının söylediğiyle: biri herkesin bildiği, biri orta, biri ya da ikisi az bilinen) ve 1–2 inandırıcı tuzak. Doğrular
+// arasında en az söylenen en çok puanı alır: puan = 100 − söyleyen; tuzak 0. Karar: güvenli ama az puanlı bilineni mi,
+// çok puanlı ama tuzak olabilecek az bilineni mi seçeceksin. Tek dokunuş cevaplar (arama kutusu, liste yok).
 //
-// Seçilme yüzdeleri: çevrimdışında ve galeride elle konmuş TAHMİNİ oranlar (100 kişiden kaçının aklına gelir:
-// tanınırlık tahmini); ekranda "tahmini oran" diye yazar. Çevrimiçinde gerçek oyuncu seçimlerinden birikir (sunucu
-// istatistiği) ve bu değerlerin yerini alır.
+// Söyleyen sayıları: elle konmuş TAHMİNİ anket oranları (100 kişiden kaçının aklına gelir; bir kişi birden çok cevap
+// sayabilir, toplam 100'ü aşabilir). Çevrimiçinde sunucu (sunucu.js) bunları oyuncu seçimleriyle karıştırabilir:
+// v.oran 'karma' | 'gercek' olunca cevap şeridinde "oyuncu seçimi" yazar.
 //
-// Veri: ans: [[ad, tahmini %, ...eşanlamlar]], wrong: [tuzak ad, …] (liste = ikisinin birleşimi, alfabetik).
-// Değer: seçilen listedeki sıra (v.pool). Tür 'closest': err = seçilme yüzdesi (yanlış 100); correct = doğru cevap.
-// Çevrimiçi: publicView yalnız listeyi taşır (hangisinin doğru olduğu ve oranlar cevapta gelir).
-// Giriş: liste + arama (Türkçe harf ve küçük yazım hatası duyarsız: "usak", "afyon", "suleymaniye").
-// Joker: yarı yarıya → listedeki tuzakların yarısı silinir.
+// Veri: ans: [[ad, söyleyen]] (3–4), wrong: [[tuzak ad, neden yanlış]] (1–2); toplam tam 5 şık.
+// Görünüm: pool (adlar, Türkçe alfabetik), pct (söyleyen; tuzak −1), note (tuzağın nedeni; doğruda ''). Değer: pool sırası.
+// Tür 'closest': err = söyleyen (tuzak 100, boş 101); correct = doğru cevap; pts = 100 − söyleyen.
+// Çevrimiçi: publicView yalnız adları taşır (pct, note, q.ans, q.wrong cevapta gelir).
+// Jokerler: yarı yarıya → en kötü iki şık söner (önce tuzaklar, sonra en çok söylenen doğru; kalan üçü hep doğru,
+// en az bilinen hep kalır); seyirci → her şık için "doğru" diyen seyirci yüzdesi (az bilinen doğru daha az oy alır,
+// bazen seyirci tuzağa kanar).
+// Cevap: aynı beş levha puana göre dizilir (en az bilinen altın, en üstte; tuzaklar kırmızı, en altta); her levhada
+// söyleyen sayısı ve 100 kişilik çubuk, kazanılan puan ve seçenlerin portreleri (.fl-who). Damga sorunun yerinde.
 
-import { css, esc, shuffle, pCorrect, clamp, buzz } from './util.js';
+import { css, esc, clamp, buzz } from './util.js';
 import { botTime } from './timing.js';
-import { appOf, stamp, rule, stampLater, sfx, LOOK, ACT } from './d_ortak.js';
+import { appOf, stamp, rule, stampLater, sfx, onClose, LOOK, ACT } from './d_ortak.js';
 import { setTimeout } from '../core/clock.js';
 
+const LETTERS = 'ABCDEF';
+// harf blokları: arena şık renkleri (mavi, turuncu, yeşil, mor) + camgöbeği
+const COLS = ['#2f7bff', '#ff8a1f', '#22c46a', '#a24bff', '#14b4cf', '#e0583a'];
+const X_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" fill="none"/></svg>';
+const CROWN = '<svg class="ab-cr" viewBox="0 0 24 16" aria-hidden="true"><path d="M1.5 15h21l.8-11.2-6.4 4.8L12 .8 7.1 8.6.7 3.8z" fill="currentColor"/></svg>';
+
 const CSS = /* css */ `
-/* KALABALIK ANKETİ: 100 kişiye soruldu; seçenekler oy pusulası gibi akan kartlar. Cevapta senin cevabın için
-   "100 kişiden kaçı" nokta tablosu yanar; bütün doğrular en az bilinenden en çok bilinene akar (en nadiri altın taç,
-   tuzaklar kırmızı). Liste uzunsa (31 seçeneğe kadar) yalnız liste kendi içinde kayar, başlığıyla görünür kalır. */
-.dn-ab{display:flex;flex-direction:column;gap:9px;user-select:none;-webkit-user-select:none}
-.fl-q.cover .dn-ab{flex:1 1 auto;min-height:0}
-.ab-crowd{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;background:linear-gradient(90deg,rgba(180,91,255,.16),rgba(236,79,147,.1));box-shadow:inset 0 0 0 1.5px rgba(200,140,255,.25)}
-.ab-crowd i{flex:none;width:58px;height:26px;background:
-  radial-gradient(circle at 50% 30%,#d9b8ff 0 3px,transparent 3.5px) 0 0/10px 13px,
-  radial-gradient(ellipse 4px 5px at 50% 95%,#a77ee6 0 99%,transparent) 0 0/10px 13px;opacity:.9}
-.ab-crowd span{flex:1;min-width:0;font:500 13px/1.25 'Fredoka',sans-serif;color:#d8ccff}
-.ab-crowd b{font-weight:700;color:#fff}
-.dn-ab-s{position:relative;flex:none}
-.dn-ab-s input{width:100%;height:42px;padding:0 38px 0 14px;border-radius:11px;font:600 16px 'Fredoka',sans-serif;color:#fff;background:#0b0f20;border:2px solid rgba(255,255,255,.18);
-  box-shadow:inset 0 3px 0 rgba(0,0,0,.35);outline:none;user-select:text;-webkit-user-select:text}
-.dn-ab-s input:focus{border-color:#c79bff;box-shadow:inset 0 3px 0 rgba(0,0,0,.35),0 0 0 3px rgba(180,91,255,.25)}
-.dn-ab-s input::placeholder{color:#7f88ad}
-.dn-ab-s::after{content:'';position:absolute;right:13px;top:50%;width:13px;height:13px;margin-top:-9px;border:2.5px solid #8f97b8;border-radius:50%}
-.dn-ab-s::before{content:'';position:absolute;right:10px;top:50%;width:2.5px;height:8px;margin-top:2px;background:#8f97b8;transform:rotate(-45deg);border-radius:2px}
-/* oy pusulaları: içeriği kadar genişleyen, akan kartlar */
-.dn-ab-l{flex:0 1 auto;min-height:0;display:flex;flex-wrap:wrap;align-content:flex-start;gap:7px;overflow-y:auto;overscroll-behavior:contain;padding:2px 2px 6px;scrollbar-width:thin;scrollbar-color:rgba(200,160,255,.5) transparent}
-.dn-ab-i{flex:0 1 auto;max-width:100%;min-height:38px;padding:6px 12px 7px;border:0;border-radius:9px;text-align:center;font:600 clamp(14px,calc(3.9 * var(--vw)),16px)/1.15 'Fredoka',sans-serif;color:#1d2238;
-  background:linear-gradient(180deg,#fffdf6,#efe8d6);box-shadow:0 2px 0 #cbbf9e,0 4px 8px rgba(0,0,0,.3);touch-action:manipulation;transition:transform .08s,opacity .25s;overflow-wrap:anywhere}
-.dn-ab-i:active{transform:translateY(2px)}
-.dn-ab-i.sel{color:#2a1400;background:linear-gradient(180deg,#fff1b8,#ffcf4a);box-shadow:0 0 0 3px #fff,0 0 0 5.5px #b45bff,0 4px 10px rgba(0,0,0,.35)}
-.dn-ab-i.gone{display:none}
-.dn-ab-i.top{order:-1}
-.dn-ab-none{flex:1 0 100%;padding:10px;text-align:center;font-size:13.5px;color:#9fb0d6}
-.dn-ab-f{flex:none;display:flex;align-items:center;gap:10px}
-.dn-ab-f span{flex:1;min-width:0;font:500 13px/1.25 'Fredoka',sans-serif;color:#cfd6f0}
-.dn-ab-f span b{color:#ffd25a;font-weight:700}
-.dn-ab .fl-send{flex:none;width:auto;min-width:118px;height:48px;padding:0 16px;font-size:18px}
-/* cevap */
-.dn-ab.done .ab-crowd,.dn-ab.done .dn-ab-s,.dn-ab.done .dn-ab-l,.dn-ab.done .dn-ab-f{display:none}
-.ab-me{position:relative;display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;
-  background:linear-gradient(135deg,#2a1a4a,#16122a);box-shadow:inset 0 0 0 2px rgba(200,140,255,.35),0 10px 24px rgba(0,0,0,.45);animation:abUp .45s cubic-bezier(.3,1.4,.5,1) both}
-.ab-me.gold{background:linear-gradient(135deg,#4a3200,#1e1508);box-shadow:inset 0 0 0 2.5px #ffd25a,0 0 26px rgba(255,200,60,.35),0 10px 24px rgba(0,0,0,.45)}
-.ab-me.bad{background:linear-gradient(135deg,#4a120c,#1e0a0a);box-shadow:inset 0 0 0 2.5px #ff5a4a,0 10px 24px rgba(0,0,0,.45)}
-.ab-dots{flex:none;width:clamp(64px,calc(22 * var(--vw)),96px);aspect-ratio:1;display:grid;grid-template-columns:repeat(10,1fr);grid-template-rows:repeat(10,1fr);gap:1.6px}
-.ab-dots u{border-radius:50%;background:rgba(255,255,255,.14);text-decoration:none}
-.ab-dots u.on{background:#ffd25a;box-shadow:0 0 4px rgba(255,210,90,.8);animation:abDot .3s both;animation-delay:calc(var(--k) * 14ms)}
-.ab-me.bad .ab-dots u.on{background:#ff6a5a;box-shadow:none}
-.ab-tx{min-width:0;display:flex;flex-direction:column;gap:2px}
-.ab-tx small{font:italic 900 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;color:#bda8e8}
-.ab-tx b{font:400 clamp(19px,calc(5.6 * var(--vw)),24px)/1.05 'Lilita One',sans-serif;color:#fff;overflow-wrap:anywhere}
-.ab-tx span{font:500 13px/1.25 'Fredoka',sans-serif;color:#e6dcff}
-.ab-tx span em{font-style:normal;font-weight:700;color:#ffd25a}
-.ab-me>strong{font:400 34px/1 'Lilita One',sans-serif;color:#ffd25a;text-shadow:0 2px 0 #5a3a00}
-.ab-me.bad>strong{color:#ff8a78;text-shadow:0 2px 0 #5a0a00}
-.ab-me .fl-who{position:absolute;inset:auto;top:-10px;left:-8px;width:24px;height:24px;margin:0;border-radius:7px}
-.ab-me .fl-who+.fl-who{left:12px;right:auto}
-.dn-ab-r{display:flex;flex-direction:column;gap:7px;min-height:0}
-.dn-ab-h{display:flex;justify-content:space-between;align-items:baseline;gap:8px;padding:0 2px;font:italic 900 11.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.14em;color:#a8a0c8}
-.dn-ab-h em{font-style:normal;letter-spacing:.04em;color:#c6a8ff;white-space:nowrap}
-.dn-ab-bars{display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
-.dn-ab-b{position:relative;display:inline-flex;align-items:center;gap:6px;min-height:30px;padding:3px 4px 3px 10px;border-radius:8px;background:#161a30;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1);
-  overflow:hidden;animation:abIn .32s both;animation-delay:calc(var(--k) * 35ms)}
-.dn-ab-b>u{position:absolute;left:0;top:0;bottom:0;width:calc(var(--p) * 1%);background:rgba(160,110,255,.22);text-decoration:none}
-.dn-ab-b>span{position:relative;font:600 13.5px/1.15 'Fredoka',sans-serif;color:#eef0fa}
-.dn-ab-b>em{position:relative;flex:none;padding:2px 6px;border-radius:6px;font-style:normal;font:800 11.5px/1.2 'Fredoka',sans-serif;color:#d8ccff;background:rgba(255,255,255,.08);font-variant-numeric:tabular-nums}
-.dn-ab-b.low{background:linear-gradient(90deg,#4a3200,#2a1e08);box-shadow:inset 0 0 0 2px #ffd25a,0 0 14px rgba(255,200,60,.35)}
-.dn-ab-b.low>span::before{content:'';display:inline-block;width:14px;height:10px;margin-right:5px;vertical-align:-1px;background:#ffd25a;clip-path:polygon(0 100%,0 20%,25% 55%,50% 0,75% 55%,100% 20%,100% 100%)}
-.dn-ab-b.low>em{color:#3a2400;background:#ffd25a}
-.dn-ab-b.me{box-shadow:inset 0 0 0 2.5px #fff,0 0 0 2px #b45bff}
-.dn-ab-b.bad{background:#3a0e0e;box-shadow:inset 0 0 0 2px #ff5a4a}
-.dn-ab-b.bad>em{color:#fff;background:#d53b2c}
-.dn-ab-b .fl-who{position:relative;inset:auto;flex:none;width:18px;height:18px;margin:0;border-radius:5px;border-width:2px}
-.dn-ab-b .fl-who+.fl-who{right:auto;margin-left:-6px}
-.dn-ab-l.more{-webkit-mask:linear-gradient(180deg,#000 calc(100% - 34px),transparent);mask:linear-gradient(180deg,#000 calc(100% - 34px),transparent)}
-@media (max-height:720px){.ab-crowd{display:none}.dn-ab-i{min-height:34px;padding:5px 10px 6px}.ab-dots{width:62px}}
-/* kısa ekran, cevap: 20+ doğrusu olan soruda (ad toplamı 280 harfe kadar) gövde %64'e küçülüyor, etiketler 7 px'e
-   düşüyordu. Kart tek satır ve sıkı, çubuklar alçak ve dar aralıklı; kural yazısı (cevapta işe yaramaz, dar kartta
-   kendi satırını kaplar) başlıktan kalkar. Yazı tabanı 12,5 px (rozetler 11 px): küçültme payı büyür. */
-/* üst afiş daralmasın: cevap içeriği (küçültülmeden önce) kartı taşırınca afiş esnek öğe olarak 86 px'ten 62 px'e
-   sıkışıyor, damga o anki yerleşime göre konuyor; küçültme gelince afiş açılıp her şey 24 px aşağı kayıyor, damga
-   başlıktaki yazının üstünde kalıyordu (asıl düzeltme ortak: styles-arena .fl-qwho{flex:none}) */
-.fl-q.cover.t-azbilinen .fl-qwho{flex:none}
-/* soru yazısı daralmaz: uzun listenin (31 seçenek) esnek boyu kart sütununu taşırınca soru kutusu sıkışıp son satırı arama
-   kutusunun altına giriyordu (1280×720 çerçevesi, 4 satırlık soru); sıkışmayı gövde alır, liste kendi içinde kayar */
-.fl-q.cover.t-azbilinen .fl-qtext{flex:none}
+/* BEŞ LEVHA: arena şıkları gibi açık zemin, renkli harf bloğu, eğik sağ kenar. Cevapta levhalar puana göre dizilir:
+   harf bloğu söyleyen sayısına döner, levhanın kendisi 100 kişilik çubuktur (dolu kısım = söyleyenler), sağda kazanılan
+   puan. Ölçüler ekran boyuna göre (--ph levha boyu, --fs ad boyu); gövde yine sığmazsa ui._coverFit küçültür. */
+.dn-ab{--ph:54px;--pmax:74px;--g:9px;--kw:46px;--fs:clamp(18px,calc(5.3 * var(--vw)),23px);--rh:58px;--rfs:clamp(16.5px,calc(4.7 * var(--vw)),20px);
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:9px;user-select:none;-webkit-user-select:none}
+.fl-q.cover.t-azbilinen .fl-qwho,.fl-q.cover.t-azbilinen .fl-qtext{flex:none}
+/* şerit: 100 KİŞİYE SORULDU · kural (cevapta: KAÇI SÖYLEDİ · PUAN = 100 − KİŞİ) */
+.ab-hd{flex:none;display:flex;align-items:center;gap:8px;min-width:0;padding:0 2px;white-space:nowrap;
+  font:italic 800 clamp(10.5px,calc(3.25 * var(--vw)),13px)/1.15 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.75)}
+.ab-hd i{flex:none;width:31px;height:13px;color:#ffd25a;background:radial-gradient(circle at 50% 26%,currentColor 0 2.3px,transparent 2.8px) 0 0/6.2px 13px,
+  radial-gradient(ellipse 2.5px 4.2px at 50% 100%,currentColor 0 99%,transparent) 0 0/6.2px 13px}
+.ab-hd b{font-weight:800;color:#fff}
+.ab-hd em{margin-left:auto;font-style:normal;color:#ffd25a}
+.dn-ab.jk .ab-hd em{color:#ff8cc0}
+/* levhalar */
+.ab-ps{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:var(--g)}
+.ab-p{position:relative;flex:1 1 0;min-height:var(--ph);max-height:var(--pmax);display:flex;align-items:stretch;padding:0;border:0;border-radius:0;text-align:left;color:#0e1430;
+  background:linear-gradient(180deg,#fff,#e4e9f4);clip-path:polygon(0 0,100% 0,calc(100% - 11px) 100%,0 100%);touch-action:manipulation;cursor:pointer;
+  transition:transform .08s,opacity .25s,filter .15s;animation:abIn .34s cubic-bezier(.3,1.4,.5,1) backwards;animation-delay:calc(var(--k) * 45ms)}
+.ab-p:active{transform:translateY(2px);filter:brightness(.94)}
+.ab-k{flex:none;width:var(--kw);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding-right:5px;font-style:normal;color:#fff;
+  background:var(--lc);clip-path:polygon(0 0,100% 0,calc(100% - 9px) 100%,0 100%)}
+.ab-k b{font:italic 800 25px/1 'Barlow Condensed','Lilita One',sans-serif;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+.ab-m{position:relative;flex:1 1 auto;min-width:0;display:flex;align-items:center;gap:8px;padding:5px 16px 5px 11px}
+.ab-t{position:relative;z-index:1;flex:1 1 auto;min-width:0;display:flex;flex-direction:column;justify-content:center;gap:2px}
+.ab-n{display:block;min-width:0;font:700 var(--fs)/1.1 'Fredoka',sans-serif;overflow-wrap:normal;word-break:normal}
+.ab-p.pick{background:linear-gradient(90deg,#ffe066,#ffbb1f);color:#1a1200}
+.ab-p.pick .ab-k{background:#1a1200;color:#ffd25a}
+.ab-p.pick .ab-k b{text-shadow:none}
+.dn-ab.lk .ab-p:not(.pick){opacity:.55}
+.ab-p.gone{opacity:.14;pointer-events:none;transform:scale(.97)}
+/* seyirci: şıkkın sağında pembe yüzde, altta ince çubuk ("doğru" diyenler) */
+.ab-jq{position:relative;z-index:2;flex:none;padding:0 7px;border-radius:9px;border:2px solid #fff;text-decoration:none;font:400 14px/19px 'Lilita One',sans-serif;color:#fff;background:#ec4f93;
+  box-shadow:0 2px 0 rgba(0,0,0,.3);animation:abPop .35s .25s cubic-bezier(.3,1.8,.5,1) backwards}
+.ab-jp{position:absolute;left:11px;right:16px;bottom:4px;height:5px;border-radius:3px;background:rgba(10,21,52,.14);overflow:hidden;text-decoration:none}
+.ab-jp i{display:block;height:100%;width:calc(var(--w) * 1%);border-radius:3px;background:linear-gradient(90deg,#ff9cc8,#ec4f93);transform-origin:0 50%;animation:abGrow .8s .2s cubic-bezier(.2,.8,.3,1) backwards}
+.dn-ab.jk .ab-p:not(.gone) .ab-m{padding-bottom:9px}
+/* ---- cevap */
+.dn-ab.done .ab-ps{gap:var(--g)}
+.dn-ab.done .ab-p{min-height:var(--rh);max-height:none;flex:0 0 auto;opacity:1;cursor:default;animation:none;transition:transform .55s cubic-bezier(.3,1.15,.4,1)}
+.dn-ab.done .ab-p .ab-m{padding:4px 8px 4px 11px}
+.dn-ab.done .ab-n{font-size:var(--rfs)}
+.ab-k small{font:italic 800 9.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:rgba(255,255,255,.62)}
+.dn-ab.done .ab-k{background:#0e1430}
+.dn-ab.done .ab-k b{font:400 23px/1 'Lilita One',sans-serif;letter-spacing:0;text-shadow:none;font-variant-numeric:tabular-nums}
+.dn-ab.done .ab-p.ok{background:#eef2f9}
+.ab-f{position:absolute;left:0;top:0;bottom:0;z-index:0;width:calc(var(--p) * 1%);background:linear-gradient(90deg,#86eaa6,#3cc977);transform-origin:0 50%;
+  animation:abGrow .75s cubic-bezier(.2,.8,.3,1) backwards;animation-delay:calc(.2s + var(--k) * 70ms)}
+.ab-s{display:block;font:italic 800 11.5px/1.1 'Barlow Condensed','Fredoka',sans-serif;letter-spacing:.08em;text-transform:uppercase}
+.ab-w{position:relative;z-index:1;flex:none;display:flex;align-items:center;padding-left:3px}
+.dn-ab .ab-w .fl-who{position:relative;inset:auto;top:auto;right:auto;left:auto;bottom:auto;flex:none;width:26px;height:26px;margin:0 0 0 -6px;border:2px solid #fff;border-radius:7px;
+  box-shadow:0 2px 0 rgba(0,0,0,.3);transform:skewX(-6deg);overflow:hidden;animation:abPop .35s cubic-bezier(.3,1.8,.5,1) backwards;animation-delay:calc(.45s + var(--k) * 70ms)}
+.dn-ab .ab-w .fl-who:first-child{margin-left:0}
+.dn-ab .ab-w .fl-who.me{box-shadow:0 0 0 2.5px #ffd25a,0 2px 0 rgba(0,0,0,.3)}
+.dn-ab .ab-w .fl-who .fl-avs{display:block;width:100%;height:100%}
+.ab-pt{flex:none;width:58px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;padding-right:9px;color:#fff;background:#0e1430;
+  clip-path:polygon(9px 0,100% 0,100% 100%,0 100%);animation:abPop .35s cubic-bezier(.3,1.8,.5,1) backwards;animation-delay:calc(.35s + var(--k) * 70ms)}
+.ab-pt b{font:400 21px/1 'Lilita One',sans-serif;font-variant-numeric:tabular-nums}
+.ab-pt small{font:italic 800 9.5px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:rgba(255,255,255,.62)}
+/* en az bilinen: altın levha, taç, EN AZ BİLİNEN */
+.dn-ab.done .ab-p.best{background:#fff3c8}
+.ab-p.best .ab-f{background:linear-gradient(90deg,#ffe27a,#ffbd2a)}
+.dn-ab.done .ab-p.best .ab-k,.ab-p.best .ab-pt{background:#1a1200}
+.dn-ab.done .ab-p.best .ab-k b,.ab-p.best .ab-pt b{color:#ffd25a}
+.ab-p.best .ab-s{color:#8a5a00}
+.ab-cr{display:inline-block;width:19px;height:13px;margin:0 6px 0 0;vertical-align:-1px;color:#e0a000}
+/* tuzak: kırmızı levha, çarpı, üstü çizili ad, neden yanlış */
+.dn-ab.done .ab-p.trap{background:#ffe1dc}
+.dn-ab.done .ab-p.trap .ab-k{background:#d8392a}
+.ab-p.trap .ab-k svg{width:22px;height:22px;color:#fff}
+.ab-p.trap .ab-n{color:#7a160d;text-decoration:line-through;text-decoration-color:rgba(200,40,30,.75);text-decoration-thickness:2.5px}
+.ab-p.trap .ab-s{color:#b3261a;text-transform:none;letter-spacing:.02em;font-size:12.5px}
+.ab-p.trap .ab-pt{background:#7a160d}
+/* kısa ekran (≤720 px; 1280×720 çerçevesi dahil): levhalar alçalır, yazı küçülür */
 @media (max-height:720px){
+  .dn-ab{--ph:44px;--pmax:58px;--g:6px;--kw:40px;--fs:clamp(16px,calc(4.9 * var(--vw)),19px);--rh:47px;--rfs:clamp(15px,calc(4.4 * var(--vw)),17px);gap:6px}
+  .ab-k b{font-size:22px}
+  .dn-ab.done .ab-k b{font-size:20px}
+  .ab-pt{width:52px}
+  .ab-pt b{font-size:19px}
+  .ab-s{font-size:10.5px}
+  .ab-p.trap .ab-s{font-size:11.5px}
+  .dn-ab .ab-w .fl-who{width:23px;height:23px}
   .fl-q.cover.t-azbilinen.rv .fl-rule{display:none}
-  .dn-ab{gap:7px}
-  .ab-me{gap:10px;padding:8px 11px;border-radius:12px}
-  .ab-dots{width:54px;gap:1.2px}
-  .ab-tx b{font-size:clamp(17px,calc(5 * var(--vw)),21px)}
-  .ab-tx span{font-size:12.5px}
-  .ab-me>strong{font-size:30px}
-  .dn-ab-r{gap:5px}
-  .dn-ab-bars{gap:4px}
-  .dn-ab-b{gap:5px;min-height:26px;padding:2px 3px 2px 8px;border-radius:7px}
-  .dn-ab-b>span{font-size:12.5px;line-height:1.12}
-  .dn-ab-b>em{padding:1px 5px;font-size:11px}
-  /* çok doğrulu soruda (9+ çip) çipler iki sütunlu ızgara, uzun ad hücresinde sarar. Akan çipler dar ekranda satıra birer
-     dizilip boyu genişliğe çok bağlıyordu: _coverFit ölçeği tek adımda (1 ölçekteki boydan) kestiriyor, küçültünce
-     satırlar kısalınca gövde yarı boş kalıyordu (ek-ab-0013: 0,71, altta 80 px boşluk) */
-  .dn-ab-bars:has(>.dn-ab-b:nth-child(9)){display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
-  .dn-ab-bars:has(>.dn-ab-b:nth-child(9))>.dn-ab-b>span{flex:1 1 auto;min-width:0}
 }
-/* en kısa ekran (320×568): 16–24 doğrulu soruda çipler satıra ikişer sığsın diye alçak ve sık (yazı 12 px, rozet
-   10,5 px); kart da sıkışır */
+/* en kısa ekran (≤600 px): soruda şerit kalkar (kural başlıkta), levhalar sıkı; cevapta şerit döner (jokerler kalkınca yer açılır) */
 @media (max-height:600px){
-  .ab-me{gap:8px;padding:6px 9px}
-  .ab-dots{width:46px;gap:1px}
-  .ab-tx b{font-size:17px}
-  .ab-tx span{font-size:12px}
-  .ab-me>strong{font-size:26px}
-  .dn-ab-bars{gap:2px 3px}
-  .dn-ab-b{gap:4px;min-height:19px;padding:1px 2px 1px 7px;border-radius:6px}
-  .dn-ab-b>span{font-size:12px;line-height:1.1}
-  .dn-ab-b>em{padding:0 4px;font-size:10.5px;line-height:1.35}
-  .dn-ab-b .fl-who{width:15px;height:15px}
+  .dn-ab{--ph:36px;--pmax:44px;--g:5px;--kw:34px;--fs:16px;--rh:42px;--rfs:15px;gap:5px}
+  .dn-ab:not(.done):not(.jk) .ab-hd{display:none}
+  .ab-k b{font-size:20px}
+  .dn-ab.done .ab-k b{font-size:18px}
+  .ab-k small,.ab-pt small{font-size:8.5px}
+  .ab-m{padding:3px 14px 3px 9px}
+  .ab-pt{width:47px}
+  .ab-pt b{font-size:17px}
+  .ab-s{font-size:10px}
+  .ab-p.trap .ab-s{font-size:11px}
+  .dn-ab .ab-w .fl-who{width:21px;height:21px;margin-left:-5px;border-radius:6px}
+  .ab-jq{font-size:13px;line-height:17px;padding:0 6px}
+  .ab-jp{bottom:3px;height:4px}
+  .dn-ab.jk .ab-p:not(.gone) .ab-m{padding-bottom:7px}
 }
-/* girişler yukarıdan: aşağı kayan parça gövdenin altından taşıp _coverFit'i boş yere küçültmeye zorlar (taşma ölçüsü
-   animasyon sürerken alınır, bitince yeniden alınmaz); yukarı taşma ölçüye girmez */
-@keyframes abIn{from{transform:translateY(-6px) scale(.96)}}
-@keyframes abUp{from{transform:translateY(-10px) scale(.97)}}
-@keyframes abDot{from{transform:scale(0)}}
+/* dar kart (≤340 px): portreler daha sık */
+@container (max-width:340px){
+  .dn-ab .ab-w .fl-who{margin-left:-8px}
+  .ab-cr{width:16px;height:11px;margin-right:4px}
+}
+/* girişler yukarıdan: aşağı kayan parça gövdenin altından taşıp _coverFit'i boş yere küçültürdü */
+@keyframes abIn{from{opacity:0;transform:translateY(-8px)}}
+@keyframes abPop{from{transform:scale(.4);opacity:0}}
+@keyframes abGrow{from{transform:scaleX(0)}}
+@media (prefers-reduced-motion:reduce){.ab-p,.ab-f,.ab-pt,.ab-jq,.ab-jp i,.dn-ab .ab-w .fl-who{animation:none!important;transition:none!important}}
 `;
 
-/** Arama için sadeleştir: küçük harf, Türkçe harfler düz, harf ve rakam dışı yok. */
+/** Arama ve teklik denetimi için sadeleştir: küçük harf, Türkçe harfler düz, harf ve rakam dışı yok. */
 export const sade = (s) =>
 	String(s ?? '')
 		.toLocaleLowerCase('tr-TR')
@@ -145,55 +151,37 @@ export const sade = (s) =>
 		.replace(/[\u00E7\u011F\u0131\u00F6\u015F\u00FC\u00E2\u00EE\u00FB]/g, (c) => ({ ç: 'c', ğ: 'g', ı: 'i', ö: 'o', ş: 's', ü: 'u', â: 'a', î: 'i', û: 'u' })[c])
 		.replace(/[^a-z0-9]/g, '');
 
-function lev(a, b) {
-	if (a === b) return 0;
-	const m = a.length;
-	const n = b.length;
-	let prev = Array.from({ length: n + 1 }, (_, j) => j);
-	for (let i = 1; i <= m; i++) {
-		const cur = [i];
-		for (let j = 1; j <= n; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-		prev = cur;
-	}
-	return prev[n];
-}
-
-/**
- * Yazım hatasına dayanıklı arama: sorgu bir adın (ya da eşanlamının) herhangi bir kelimesinin başıyla en çok
- * ⌊uzunluk/4⌋ harf farkla eşleşirse ya da adın içinde geçerse bulunur. Dönen: uyan sıralar (iyi eşleşen önce).
- */
-export function ara(names, query, alias = []) {
-	const q = sade(query);
-	if (!q) return names.map((_, i) => i);
-	const tol = Math.floor(q.length / 4);
-	const hits = [];
-	names.forEach((name, i) => {
-		let best = 99;
-		for (const full of [name, ...(alias[i] || [])]) {
-			const s = sade(full);
-			if (s.includes(q)) best = Math.min(best, s.startsWith(q) ? 0 : 1);
-			// kelime kelime ve boşluksuz bütün ad ("neilarmstrng") üzerinden
-			for (const w of [...String(full).split(/[\s'\u2019-]+/), full]) {
-				const sw = sade(w);
-				if (!sw) continue;
-				const d = Math.min(lev(q, sw.slice(0, q.length)), lev(q, sw.slice(0, q.length + 1)), lev(q, sw));
-				if (d <= tol) best = Math.min(best, 1 + d);
-			}
-		}
-		if (best < 99) hits.push([best, i]);
-	});
-	return hits.sort((a, b) => a[0] - b[0] || a[1] - b[1]).map((h) => h[1]);
-}
-
 const pick = (v, value) => (Number.isInteger(value) && value >= 0 && value < v.pool.length ? value : -1);
+const goodIdx = (v) => v.pct.map((p, i) => (p >= 0 ? i : -1)).filter((i) => i >= 0);
+const trapIdx = (v) => v.pct.map((p, i) => (p < 0 ? i : -1)).filter((i) => i >= 0);
+/** En az bilinen doğru (en çok puan). */
+const bestOf = (v) => goodIdx(v).reduce((a, i) => (a < 0 || v.pct[i] < v.pct[a] ? i : a), -1);
+
+/** Ad yazısı kutusuna sığsın: tek kelime asla ortasından bölünmez, en çok iki satır; sığmazsa yarımşar piksel küçülür. */
+function fitNames(root) {
+	for (const n of root.querySelectorAll('.ab-n')) {
+		n.style.fontSize = '';
+		if (!n.clientWidth) continue;
+		const base = parseFloat(getComputedStyle(n).fontSize) || 16;
+		const lh = parseFloat(getComputedStyle(n).lineHeight) || base * 1.1;
+		let fs = base;
+		const over = () => n.scrollWidth > n.clientWidth + 0.5 || n.offsetHeight > lh * (fs / base) * 2 + 1;
+		for (let k = 0; k < 24 && over() && fs > base * 0.68; k++) n.style.fontSize = (fs -= 0.5) + 'px';
+	}
+}
 
 export const azbilinen = {
-	time: 30,
+	time: 25,
 	label: 'Az Bilinen',
 	kind: 'closest',
-	cover: true, // tam ekran kalabalık anketi
-	keep: true,
-	jokers: ['yari'],
+	cover: true, // tam ekran anket: beş levha
+	keep: true, // cevap tahtası (levhalar) kalır
+	jokers: ['yari', 'kahin'],
+	rule: 'Nadiri kazanır',
+	// sonuç ekranı sözcükleri (ui._showResult): "EN YAKIN SEN!" yerine
+	birinci: 'EN NADİR CEVAP SENDE!',
+	rozet: 'EN NADİR',
+	ustun: 'seni geçti',
 	fmt: (v, value) => {
 		const i = pick(v, value);
 		return i < 0 || v.pct[i] < 0 ? '0 puan' : `${100 - v.pct[i]} puan`;
@@ -201,18 +189,20 @@ export const azbilinen = {
 	sub: (v, value) => {
 		const i = pick(v, value);
 		if (i < 0) return 'cevap yok';
-		return v.pct[i] < 0 ? `${v.pool[i]} · yanlış` : v.pool[i];
+		return v.pct[i] < 0 ? `${v.pool[i]} · tuzak` : `${v.pool[i]} · ${v.pct[i]} kişi`;
 	},
 	prepare(q) {
-		const items = [...q.ans.map(([n, p, ...al]) => ({ n, p, al })), ...q.wrong.map((n) => ({ n, p: -1, al: [] }))].sort((a, b) => a.n.localeCompare(b.n, 'tr'));
-		const v = { q, pool: items.map((x) => x.n), alias: items.map((x) => x.al), pct: items.map((x) => x.p) };
+		const items = [...q.ans.map(([n, p]) => ({ n, p, t: '' })), ...q.wrong.map((w) => (typeof w === 'string' ? { n: w, p: -1, t: '' } : { n: w[0], p: -1, t: w[1] || '' }))].sort((a, b) =>
+			a.n.localeCompare(b.n, 'tr', { numeric: true }),
+		);
+		const v = { q, pool: items.map((x) => x.n), pct: items.map((x) => x.p), note: items.map((x) => x.t) };
 		return stamp(v, q, (q2, k, P, text) => {
-			text(v.pool.join(' '), 0.3); // listeyi göz gezdirerek tarar
+			text(v.pool.join(' ')); // beş adı okur
 			return {
-				look: LOOK.orient + v.pool.length * 0.12,
-				// doğruları hatırla, hangisinin az bilindiğini tart
+				look: LOOK.orient + v.pool.length * LOOK.gaze,
+				// hangisi doğru, hangisi tuzak; doğrulardan hangisi az bilinir: risk ile puanı tart
 				think: P.think[0] + P.think[1] * k,
-				act: 2 * ACT.tap + ACT.confirm + 1, // kaydır ya da ara
+				act: ACT.tap,
 			};
 		});
 	},
@@ -220,142 +210,183 @@ export const azbilinen = {
 		css('azbilinen', CSS);
 		const app = appOf();
 		el.innerHTML = `<div class="dn-ab">
-			<div class="ab-crowd"><i></i><span><b>100 kişiye</b> soruldu. En az söylenen <b>doğru</b> cevap en çok puanı alır.</span></div>
-			<label class="dn-ab-s"><input type="search" enterkeyhint="search" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Ara ya da listeden seç (${v.pool.length})" aria-label="Cevap ara"></label>
-			<div class="dn-ab-l" data-kaydir>${v.pool.map((n, i) => `<button class="dn-ab-i" data-i="${i}">${esc(n)}</button>`).join('')}<div class="dn-ab-none" hidden>Listede yok: başka türlü yaz</div></div>
-			<div class="dn-ab-f"><span>Doğru ama <b>az bilinen</b> cevap çok puan</span><button class="fl-send" disabled>GÖNDER</button></div>
+			<div class="ab-hd"><i></i><b>100 kişiye soruldu</b><em>Az söylenen doğru kazanır</em></div>
+			<div class="ab-ps">${v.pool
+				.map(
+					(n, i) =>
+						`<button class="ab-p dn-ab-i" data-i="${i}" style="--lc:${COLS[i % COLS.length]};--k:${i}" aria-label="${esc(`${LETTERS[i]}: ${n}`)}"><i class="ab-k"><b>${LETTERS[i]}</b></i><span class="ab-m"><span class="ab-t"><span class="ab-n">${esc(n)}</span></span></span></button>`,
+				)
+				.join('')}</div>
 		</div>`;
 		rule(el, 'Nadiri kazanır');
 		const root = el.querySelector('.dn-ab');
-		const input = root.querySelector('input');
-		const list = root.querySelector('.dn-ab-l');
-		const items = [...list.querySelectorAll('.dn-ab-i')];
-		const none = list.querySelector('.dn-ab-none');
-		const info = root.querySelector('.dn-ab-f span');
-		const send = root.querySelector('.fl-send');
-		const hidden = new Set();
+		const hd = root.querySelector('.ab-hd');
+		const list = root.querySelector('.ab-ps');
+		const plates = [...list.querySelectorAll('.ab-p')];
 		let sel = -1;
 		let done = false;
-		const filter = () => {
-			const hits = ara(v.pool, input.value, v.alias);
-			const set = new Set(hits);
-			const q = input.value.trim();
-			items.forEach((b, i) => {
-				b.classList.toggle('gone', hidden.has(i) || !set.has(i));
-				b.classList.toggle('top', !!q && hits[0] === i);
-			});
-			none.hidden = items.some((b) => !b.classList.contains('gone'));
-		};
-		// liste ekrana sığmıyorsa altı solar: devamı olduğu görülür (yalnız liste kayar)
-		const more = () => list.classList.toggle('more', list.scrollHeight > list.clientHeight + 2 && list.scrollTop + list.clientHeight < list.scrollHeight - 2);
-		list.addEventListener('scroll', more, { passive: true });
-		requestAnimationFrame(more);
-		input.addEventListener('input', () => requestAnimationFrame(more));
-		input.addEventListener('input', filter);
-		input.addEventListener('keydown', (e) => {
-			if (e.key !== 'Enter') return;
-			const first = items.find((b) => b.classList.contains('top') && !b.classList.contains('gone')) || items.find((b) => !b.classList.contains('gone'));
-			if (first) choose(Number(first.dataset.i));
-			input.blur();
-		});
-		const choose = (i) => {
-			if (done) return;
-			items[sel]?.classList.remove('sel');
-			sel = i;
-			items[i].classList.add('sel');
-			info.innerHTML = `Seçimin: <b>${esc(v.pool[i])}</b>`;
-			send.disabled = false;
-			sfx(app, 'tap');
-			buzz(5);
-		};
+		const fit = () => root.isConnected && fitNames(root);
+		requestAnimationFrame(fit);
+		document.fonts?.ready?.then(fit);
+		addEventListener('resize', fit);
+		onClose(el, () => removeEventListener('resize', fit));
 		list.addEventListener('click', (e) => {
-			const b = e.target.closest('.dn-ab-i');
-			if (b) choose(Number(b.dataset.i));
-		});
-		send.addEventListener('click', () => {
-			if (done || sel < 0) return;
+			const b = e.target.closest('.ab-p');
+			if (!b || done || b.classList.contains('gone')) return;
 			done = true;
-			send.disabled = true;
-			input.disabled = true;
-			info.innerHTML = `<b>${esc(v.pool[sel])}</b> gönderildi`;
-			buzz(10);
+			sel = Number(b.dataset.i);
+			b.classList.add('pick');
+			root.classList.add('lk');
+			sfx(app, 'tap');
+			buzz(8);
 			api.answer(sel);
 		});
 		return {
 			lock() {
 				done = true;
-				send.disabled = true;
-				input.disabled = true;
+				root.classList.add('lk');
 			},
 			value: () => (sel >= 0 ? sel : null),
 			joker(e) {
-				if (!e?.hide) return;
-				for (const i of e.hide) if (i !== sel) hidden.add(i);
-				filter();
-				app?.ui?.toast?.(`${e.hide.length} tuzak listeden silindi`, { tone: 'good', ms: 1800 });
+				if (!e) return;
+				if (e.hide) {
+					for (const i of e.hide) {
+						if (i === sel || !plates[i]) continue;
+						plates[i].classList.add('gone');
+						plates[i].disabled = true;
+					}
+					app?.ui?.toast?.(`Yarı yarıya: ${e.hide.length} şık elendi, kalanların hepsi doğru`, { tone: 'good', ms: 2000 });
+				}
+				if (e.poll) {
+					root.classList.add('jk');
+					hd.querySelector('em').textContent = 'Seyirci: yüzde kaçı doğru diyor';
+					plates.forEach((b, i) => {
+						if (b.classList.contains('gone') || b.querySelector('.ab-jq')) return;
+						const m = b.querySelector('.ab-m');
+						m.insertAdjacentHTML('beforeend', `<s class="ab-jq">%${e.poll[i]}</s><u class="ab-jp"><i style="--w:${e.poll[i]}"></i></u>`);
+					});
+					app?.ui?.toast?.('Seyirci oy verdi: her şık için "doğru" diyenler', { tone: 'good', ms: 2000 });
+					requestAnimationFrame(fit);
+				}
 			},
 			reveal(results) {
 				done = true;
-				root.classList.add('done');
-				input.blur();
-				const meR = results.find((r) => r.p?.human);
-				const mine = meR ? pick(v, meR.value) : -1;
-				const ok = v.pct.map((p, i) => (p >= 0 ? i : -1)).filter((i) => i >= 0).sort((a, b) => v.pct[b] - v.pct[a]);
-				const minP = Math.min(...ok.map((i) => v.pct[i]));
+				removeEventListener('resize', fit);
+				const rm = !!app?.ui?.rm || (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches);
+				const first = new Map(plates.map((b) => [b, b.getBoundingClientRect().top]));
+				const best = bestOf(v);
+				const good = goodIdx(v).sort((a, b) => v.pct[a] - v.pct[b] || a - b);
+				const order = [...good, ...trapIdx(v)];
 				const who = (i) =>
 					results
 						.filter((r) => pick(v, r.value) === i)
 						.map((r) => `<b class="fl-who" style="background:${r.color}"></b>`)
 						.join('');
-				// doğrular en az bilinenden en çok bilinene; oyuncuların seçtiği tuzaklar başta kırmızı
-				const asc = ok.slice().sort((a, b) => v.pct[a] - v.pct[b]);
-				const chip = (i, k) =>
-					`<div class="dn-ab-b${i === mine ? ' me' : ''}${v.pct[i] === minP ? ' low' : ''}" style="--p:${v.pct[i]};--k:${k}"><u></u><span>${esc(v.pool[i])}</span>${who(i)}<em>%${v.pct[i]}</em></div>`;
-				const badChips = [...new Set(results.map((r) => pick(v, r.value)).filter((i) => i >= 0 && v.pct[i] < 0))]
-					.map((i) => `<div class="dn-ab-b bad${i === mine ? ' me' : ''}" style="--p:0;--k:0"><u></u><span>${esc(v.pool[i])}</span>${who(i)}<em>TUZAK</em></div>`)
-					.join('');
-				// senin cevabın: 100 kişiden kaçı söyledi (nokta tablosu)
-				let meCard = '';
-				if (meR) {
-					const good = mine >= 0 && v.pct[mine] >= 0;
-					const p = good ? v.pct[mine] : mine >= 0 ? 0 : 0;
-					const dots = Array.from({ length: 100 }, (_, k) => `<u${k < p ? ` class="on" style="--k:${k}"` : ''}></u>`).join('');
-					const cls = good ? (v.pct[mine] === minP ? ' gold' : '') : ' bad';
-					const name = mine >= 0 ? esc(v.pool[mine]) : 'Cevap yok';
-					const line = good ? `100 kişiden <em>${p}</em> kişi bunu söyledi` : mine >= 0 ? 'Doğru cevaplardan değil: tuzak' : 'Süre doldu';
-					meCard = `<div class="ab-me${cls}"><div class="ab-dots">${dots}</div><div class="ab-tx"><small>SENİN CEVABIN</small><b>${name}</b><span>${line}</span></div><strong>${good ? '+' + (100 - p) : '0'}</strong></div>`;
+				const real = v.oran === 'gercek' ? '100 oyuncudan kaçı seçti' : v.oran === 'karma' ? 'Anket ve oyuncu seçimi' : '100 kişiden kaçı söyledi';
+				root.classList.remove('lk', 'jk');
+				root.classList.add('done');
+				hd.innerHTML = `<i></i><b>${real}</b><em>Puan = 100 − kişi</em>`;
+				order.forEach((i, k) => {
+					const b = plates[i];
+					const p = v.pct[i];
+					const trap = p < 0;
+					b.classList.remove('pick', 'gone');
+					b.disabled = true;
+					b.classList.add(trap ? 'trap' : 'ok');
+					if (i === best) b.classList.add('best');
+					b.style.setProperty('--k', String(k));
+					b.style.setProperty('--p', String(trap ? 0 : clamp(p, 0, 100)));
+					b.querySelector('.ab-k').innerHTML = trap ? `${X_SVG}<small>TUZAK</small>` : `<b data-n="${p}">${p}</b><small>KİŞİ</small>`;
+					const sub = trap ? esc(v.note[i] || 'Doğru cevaplardan değil') : i === best ? 'En az bilinen' : '';
+					b.querySelector('.ab-m').innerHTML = `${trap ? '' : '<u class="ab-f"></u>'}<span class="ab-t"><span class="ab-n">${i === best ? CROWN : ''}${esc(v.pool[i])}</span>${
+						sub ? `<small class="ab-s">${sub}</small>` : ''
+					}</span><span class="ab-w">${who(i)}</span>`;
+					b.insertAdjacentHTML('beforeend', `<b class="ab-pt"><b data-n="${trap ? 0 : 100 - p}">${trap ? '0' : '+' + (100 - p)}</b><small>PUAN</small></b>`);
+					b.setAttribute('aria-label', `${v.pool[i]}: ${trap ? 'tuzak, 0 puan' : `${p} kişi, ${100 - p} puan`}`);
+				});
+				// puana göre diz (en az bilinen üstte): FLIP, yalnız transform
+				list.append(...order.map((i) => plates[i]));
+				fitNames(root);
+				if (!rm) {
+					const z = root.currentCSSZoom || 1;
+					for (const b of plates) {
+						const dy = (first.get(b) - b.getBoundingClientRect().top) / z;
+						if (Math.abs(dy) < 1) continue;
+						b.style.transition = 'none';
+						b.style.transform = `translateY(${dy.toFixed(1)}px)`;
+					}
+					void list.offsetHeight;
+					for (const b of plates) {
+						b.style.transition = '';
+						b.style.transform = '';
+					}
+					// sayılar sıfırdan sayar (söyleyen ve puan), çubuklarla birlikte
+					const fx = app?.ui?.fx;
+					if (fx?.count)
+						for (const n of root.querySelectorAll('[data-n]')) {
+							const to = Number(n.dataset.n);
+							const f = n.closest('.ab-pt') && to > 0 ? (x) => '+' + Math.round(x) : (x) => String(Math.round(x));
+							n.textContent = f(0);
+							setTimeout(() => n.isConnected && fx.count(n, 0, to, 650, f), 250);
+						}
 				}
-				root.insertAdjacentHTML(
-					'beforeend',
-					`${meCard}<div class="dn-ab-r"><div class="dn-ab-h"><span>${ok.length} DOĞRU · EN AZ BİLİNENDEN EN ÇOK BİLİNENE</span><em>tahmini oran</em></div><div class="dn-ab-bars">${badChips}${asc.map((i, k) => chip(i, k + 1)).join('')}</div></div>`,
-				);
+				// damga (sorunun yerinde): senin cevabın, puanın ve kim kazandı
+				const meR = results.find((r) => r.p?.human);
 				if (meR && app) {
-					const order = results.slice().sort((a, b2) => a.err - b2.err || a.time - b2.time);
-					const win = order[0] === meR;
+					const ord = results.slice().sort((a, b) => a.err - b.err || a.time - b.time);
+					const win = ord[0] === meR || results.length === 1;
+					const mine = pick(v, meR.value);
 					if (mine >= 0 && v.pct[mine] >= 0) {
 						const pts = 100 - v.pct[mine];
-						const tag = v.pct[mine] === minP ? 'En az bilinen cevap!' : pts >= 80 ? 'Az bilinen cevap!' : pts < 40 ? 'Doğru ama herkes bunu der' : '';
-						stampLater(app, `+${pts} PUAN`, win ? 'gold' : '', win ? tag : `${order[0].name} daha az bilineni buldu`);
-					} else stampLater(app, mine >= 0 ? 'YANLIŞ CEVAP' : 'SÜRE DOLDU', 'bad', mine >= 0 ? `${v.pool[mine]} doğru cevaplardan değil` : '');
+						const w = ord[0];
+						const same = pick(v, w.value) === mine;
+						const tag = mine === best ? 'En az bilinen cevap!' : win ? `En nadiri ${v.pool[best]} (+${100 - v.pct[best]})` : same ? `Aynı cevap: ${w.name} daha hızlı` : `${w.name} daha az bilineni buldu`;
+						stampLater(app, `+${pts} PUAN`, win ? 'gold' : '', tag);
+					} else if (mine >= 0) stampLater(app, 'TUZAK!', 'bad', `${v.pool[mine]}: ${v.note[mine] || 'doğru cevap değil'}`);
+					else stampLater(app, 'SÜRE DOLDU', 'warn', `En nadiri ${v.pool[best]} (+${100 - v.pct[best]})`);
+					if (mine === best && app.ui?.fx && !rm)
+						setTimeout(() => {
+							const b = plates[best];
+							if (!b?.isConnected) return;
+							const r = b.getBoundingClientRect();
+							app.ui.fx.burst(r.left + r.width * 0.3, r.top + r.height / 2, { n: 16, dist: 90, colors: ['#ffd25a', '#fff', '#ffb21f'], kind: 'star', size: 12, life: 800 });
+						}, 650);
 				}
-				setTimeout(() => {
-					const w = el.closest('.fl-q')?.querySelector('.fl-cr.win .tag');
-					if (w) w.textContent = 'KAZANDI';
-				}, 0);
 			},
-			destroy() {},
+			destroy() {
+				removeEventListener('resize', fit);
+			},
 		};
 	},
 	joker(id, v, R) {
-		if (id !== 'yari') return null;
-		const wrong = v.pct.map((p, i) => (p < 0 ? i : -1)).filter((i) => i >= 0);
-		return { hide: shuffle(wrong, R).slice(0, Math.ceil(wrong.length / 2)).sort((a, b) => a - b) };
+		const n = v.pool.length;
+		if (id === 'yari') {
+			// en kötü iki şık: önce tuzaklar, sonra en çok söylenen doğrular; en az bilinen hiç elenmez
+			const worst = [...Array(n).keys()].sort((a, b) => (v.pct[b] < 0 ? 1000 : v.pct[b]) - (v.pct[a] < 0 ? 1000 : v.pct[a]) || a - b);
+			return { hide: worst.slice(0, 2).sort((a, b) => a - b) };
+		}
+		if (id === 'kahin') {
+			// seyirci her şık için "doğru mu?" oyu verir: bilinen doğru çok, az bilinen doğru az oy alır; tuzak az alır.
+			// Bazen (zorlukla artar) seyirci bir tuzağa kanar, en az bilineni de küçümser.
+			const d = v.q?.diff || 2;
+			const traps = trapIdx(v);
+			const fooled = traps.length > 0 && R() < (d >= 3 ? 0.14 : d === 2 ? 0.08 : 0.04);
+			const lure = fooled ? traps[Math.floor(R() * traps.length)] : -1;
+			const best = bestOf(v);
+			const poll = v.pct.map((p, i) => {
+				let y = p < 0 ? (i === lure ? 0.64 + R() * 0.2 : 0.14 + R() * 0.24) : 0.46 + 0.5 * Math.sqrt(p / 100) + (R() - 0.5) * 0.1;
+				if (fooled && i === best) y -= 0.15;
+				return Math.round(100 * clamp(y, 0.06, 0.98));
+			});
+			return { poll };
+		}
+		return null;
 	},
-	/** Çevrimiçi görünüm: yalnız liste (alfabetik); doğrular ve oranlar cevapta gelir. */
+	/** Çevrimiçi görünüm: yalnız şık adları (alfabetik); doğrular, sayılar ve tuzak nedenleri cevapta gelir. */
 	publicView(v) {
 		const o = JSON.parse(JSON.stringify(v));
 		delete o.pct;
-		delete o.alias; // eşanlamlar yalnız doğru cevaplarda var: hangisinin doğru olduğunu ele verir
+		delete o.note;
 		delete o.q.ans;
 		delete o.q.wrong;
 		return o;
@@ -367,25 +398,28 @@ export const azbilinen = {
 		return p < 0 ? { correct: false, err: 100, pts: 0 } : { correct: true, err: p, pts: 100 - p };
 	},
 	bot(v, skill, R) {
-		const p = clamp(pCorrect(skill, v.q.diff) + 0.15, 0.1, 0.96);
-		const ok = v.pct.map((x, i) => (x >= 0 ? i : -1)).filter((i) => i >= 0);
-		const bad = v.pct.map((x, i) => (x < 0 ? i : -1)).filter((i) => i >= 0);
+		const d = v.q?.diff || 2;
+		const ok = goodIdx(v);
+		const bad = trapIdx(v);
+		// tuzağa kanma: acemi inandırıcı tuzağa sık düşer, usta pek düşmez (zor soruda daha sık)
+		const fooled = bad.length > 0 && R() < clamp(0.42 - 0.45 * skill + 0.07 * (d - 2), 0.02, 0.6);
 		let value;
-		if (R() < p) {
-			// acemi bilineni söyler, usta az bilinene oynar
+		if (fooled) value = bad[Math.floor(R() * bad.length)];
+		else {
+			// acemi bilineni söyler (güvenli, az puan), usta az bilinene oynar
 			const ex = 1.1 - 2.2 * skill;
 			const w = ok.map((i) => (v.pct[i] + 3) ** ex);
 			let r = R() * w.reduce((a, b) => a + b, 0);
 			value = ok[ok.length - 1];
-			for (let k = 0; k < ok.length; k++) if ((r -= w[k]) <= 0) {
-				value = ok[k];
-				break;
-			}
-		} else value = bad[Math.floor(R() * bad.length)];
+			for (let k = 0; k < ok.length; k++)
+				if ((r -= w[k]) <= 0) {
+					value = ok[k];
+					break;
+				}
+		}
 		return { value, time: botTime(v, R, skill, 0.15, 0.95) };
 	},
 	ornek(v) {
-		const ok = v.pct.map((x, i) => (x >= 0 ? i : -1)).filter((i) => i >= 0);
-		return { good: ok.reduce((a, b) => (v.pct[b] < v.pct[a] ? b : a)), bad: v.pct.findIndex((x) => x < 0) };
+		return { good: bestOf(v), bad: trapIdx(v)[0] };
 	},
 };

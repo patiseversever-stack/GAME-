@@ -25,38 +25,45 @@ const CSS = /* css */ `
 /* HARF PANOSU: perçinli koyu pano; başlıkta kasa ve HARF AL kolu, altında harf yuvaları ve her yuvanın 100 puanlık jetonu.
    Altta HARF HAVUZU: lacivert tepside fildişi taşlar. Taşa dokununca taş yuvasına uçar (havuzdaki yeri kesik çizgili boş
    yuva olarak bekler); dolu yuvaya dokununca geri uçar. Alınan harf mavi, bedava harf altın taşla kilitlenir, jetonu düşer.
-   Ölçüler .dn-ha'nın genişliğinden (kap birimi cqw): 10 harf ve 14 taş 320 px'e küçültmesiz sığar. */
-.dn-ha{--pp:12px;--tp:6px;--tg:6px;--bhx:60px;--thx:50px;--chh:20px;container-type:inline-size;display:flex;flex-direction:column;gap:9px;align-items:stretch;user-select:none;-webkit-user-select:none;
+   Ölçüler gövdenin GERÇEK boyundan: .dn-ha boyut kabı (container-type:size), yükseklikler cqh, genişlikler cqw; dar
+   kapta jeton şeridi ve ipucu satırı kalkar (kap sorgusu). Ekran yüksekliği değil kabın boyu: tanımın satır sayısı, afiş,
+   joker çubuğu hesaba girer. 320×568'de 10 harf ve 14 taş küçültmesiz (ui._coverFit zoom'u 1) sığar. */
+.dn-ha{--pp:10px;--tp:clamp(3px,1.6cqh,6px);--tg:clamp(4px,1.8cqh,6px);display:flex;flex-direction:column;align-items:stretch;
+  user-select:none;-webkit-user-select:none;container-type:inline-size;
+  --hb:clamp(30px,12.5cqh,46px);--ab:clamp(30px,12.5cqh,46px);--chh:clamp(14px,5cqh,20px);
   --bw:min(50px,calc((100cqw - 2 * var(--pp) - (var(--n) - 1) * 5px) / var(--n)));
+  --bh:min(calc(var(--bw) * 1.2),clamp(24px,14cqh,60px));
   --tw:min(48px,calc((100cqw - 2 * var(--tp) - (var(--m) - 1) * var(--tg)) / var(--m)));
-  --th:min(calc(var(--tw) * 1.12),var(--thx))}
-.fl-q.cover .dn-ha{flex:1 1 auto;justify-content:flex-start}
+  --th:min(calc(var(--tw) * 1.15),clamp(29px,13.5cqh,50px))}
+/* iç sarmal: kabın kendi özelliklerinde cqh kabı değil ekranı ölçer; boşluklar ve boylar içeride */
+.ha-in{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:clamp(5px,2.4cqh,10px);align-items:stretch}
+.fl-q.cover .dn-ha{flex:1 1 auto;min-height:0;container-type:size}
 .fl-q.cover .dn-ha .ha-havuz{margin-top:auto}
-.ha-pano{position:relative;display:flex;flex-direction:column;gap:8px;padding:10px var(--pp) 11px;border-radius:14px;
+.ha-pano{position:relative;display:flex;flex-direction:column;gap:clamp(4px,2cqh,8px);padding:clamp(4px,2.5cqh,10px) var(--pp) clamp(5px,2.8cqh,11px);border-radius:14px;
   background:radial-gradient(120% 90% at 50% 0%,#262b40 0%,#141724 70%),#141724;
   box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.1),inset 0 2px 0 rgba(255,255,255,.08),0 0 0 3px #0a0c14,0 14px 30px rgba(0,0,0,.55)}
-.ha-pano::before,.ha-pano::after{content:'';position:absolute;top:8px;width:6px;height:6px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8a93b0,#3a4058)}
+.ha-pano::before,.ha-pano::after{content:'';position:absolute;top:clamp(4px,2cqh,8px);width:6px;height:6px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#8a93b0,#3a4058)}
 .ha-pano::before{left:8px}.ha-pano::after{right:8px}
 .ha-hd{display:flex;align-items:center;gap:10px;padding:0 6px}
 .dn-ha-pts{flex:1;min-width:0;display:flex;align-items:baseline;gap:7px}
 .dn-ha-pts small{font:italic 900 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.18em;color:#8f97b8}
-.dn-ha-pts b{font:400 34px/1 'Lilita One',sans-serif;color:#ffd25a;font-variant-numeric:tabular-nums;text-shadow:0 2px 0 #5a3a00,0 0 18px rgba(255,200,60,.35);transition:color .3s}
+.dn-ha-pts b{font:400 clamp(24px,calc(var(--hb) * .74),34px)/1 'Lilita One',sans-serif;color:#ffd25a;font-variant-numeric:tabular-nums;text-shadow:0 2px 0 #5a3a00,0 0 18px rgba(255,200,60,.35);transition:color .3s}
 .dn-ha-pts b.drop{animation:dnHaDrop .45s}
 .dn-ha-pts em{font-style:normal;font:italic 800 12px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;color:#8f97b8;white-space:nowrap}
-.dn-ha-al{flex:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:108px;height:46px;padding:0 16px;border:0;border-radius:0;
-  clip-path:polygon(9% 0,100% 0,91% 100%,0 100%);font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em;color:#fff;
+.dn-ha-al{flex:none;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:clamp(88px,calc(var(--hb) * 2.35),108px);height:var(--hb);padding:0 14px;border:0;border-radius:0;
+  clip-path:polygon(9% 0,100% 0,91% 100%,0 100%);font:italic 900 clamp(16px,calc(var(--hb) * .44),20px)/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.1em;color:#fff;
   background:linear-gradient(180deg,#4fb6ff,#1a62c8);box-shadow:inset 0 2px 0 rgba(255,255,255,.35),inset 0 -4px 0 rgba(0,0,0,.25);transition:transform .08s,filter .2s;touch-action:manipulation}
-.dn-ha-al small{font:800 10.5px/1 'Fredoka',sans-serif;letter-spacing:.06em;color:#ffe6a0;margin-top:3px}
+.dn-ha-al small{font:800 10px/1 'Fredoka',sans-serif;letter-spacing:.06em;color:#ffe6a0;margin-top:clamp(1px,.6cqh,3px)}
 .dn-ha-al:active{transform:translateY(2px) scale(.98)}
 .dn-ha-al:disabled{filter:grayscale(.8) brightness(.6)}
 /* yuvalar ve jetonlar aynı ızgarada: her jeton kendi yuvasının altında */
 .dn-ha-w,.ha-chips{display:flex;gap:5px;justify-content:center;flex-wrap:nowrap}
 .ha-chips i{flex:0 0 var(--bw);min-width:0}
-.dn-ha-w .ha-b{flex:0 0 var(--bw);min-width:0;height:min(calc(var(--bw) * 1.2),var(--bhx));position:relative;padding:0;border:0;border-radius:8px;display:grid;place-items:center;cursor:pointer;
-  font:400 min(calc(var(--bw) * .66),31px)/1 'Lilita One',sans-serif;color:#1d2238;transform-origin:50% 60%;
+.dn-ha-w .ha-b{flex:0 0 var(--bw);min-width:0;height:var(--bhf,var(--bh));position:relative;padding:0;border:0;border-radius:8px;display:grid;place-items:center;cursor:pointer;
+  font:400 min(calc(var(--bw) * .66),calc(var(--bhf,var(--bh)) * .72),31px)/1 'Lilita One',sans-serif;color:#1d2238;transform-origin:50% 60%;
   background:linear-gradient(180deg,#0a0d17,#171c2e);box-shadow:inset 0 2px 6px rgba(0,0,0,.65),inset 0 -1.5px 0 rgba(255,255,255,.08);touch-action:manipulation}
 .dn-ha-w .ha-b:disabled{cursor:default;color:#1d2238}
-.dn-ha-w .ha-b::after{content:'';position:absolute;left:4px;right:4px;bottom:4px;height:3px;border-radius:2px;background:rgba(255,255,255,.07)}
+.dn-ha-w .ha-b::after{content:'';position:absolute;left:4px;right:4px;bottom:3px;height:3px;border-radius:2px;background:rgba(255,255,255,.07)}
 .dn-ha-w .ha-b.cur::after{background:#ffd25a;box-shadow:0 0 10px #ffd25a;animation:dnHaCur 1s ease-in-out infinite}
 .dn-ha-w .ha-b span{position:relative;z-index:1}
 /* dolu yuva: taşın yüzü (kilitli: mavi alınan, altın bedava) */
@@ -72,25 +79,26 @@ const CSS = /* css */ `
 .dn-ha-w.full{animation:dnHaNudge .3s}
 .dn-ha.ready .dn-ha-w .ha-b.on{box-shadow:inset 0 1.5px 0 rgba(255,255,255,.7),0 3px 0 var(--te),0 0 0 2px rgba(255,210,90,.55),0 5px 10px rgba(0,0,0,.4)}
 .dn-ha.sent .dn-ha-w .ha-b{animation:dnHaSent .4s cubic-bezier(.3,1.5,.5,1) both;animation-delay:calc(var(--k) * 40ms)}
-/* cevap: doğruysa yuvalar sırayla zıplayıp yeşillenir; yanlışsa senin kelimen kırmızı titrer, sonra yuvalar dönüp doğruyu gösterir */
+/* cevap: doğruysa yuvalar sırayla zıplayıp yeşillenir; yanlışsa senin kelimen kırmızı titrer, sonra her yuva dönüp doğruyu
+   gösterir (fildişi taş, kırmızı çerçeve) */
 .dn-ha-w.rv .ha-b{--te:#07080d;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.25)}
 .dn-ha-w.rv.ok .ha-b{--te:#14602e;background:linear-gradient(180deg,#4fd67a,#1f9a4c);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.45),0 3px 0 var(--te),0 0 14px rgba(80,230,130,.45);animation:dnHaPop .5s cubic-bezier(.3,1.7,.5,1) both;animation-delay:calc(var(--k) * 70ms)}
 .dn-ha-w.rv.no{animation:flq-shake .4s}
 .dn-ha-w.rv.no .ha-b{--te:#5a1208;background:linear-gradient(180deg,#ec6a55,#b8331f);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.35),0 3px 0 var(--te);animation:dnHaFlip .5s ease-out both;animation-delay:calc(.42s + var(--k) * 70ms)}
 .dn-ha-w.rv.no .ha-b.ans{--te:#b39c6e;color:#1d2238;text-shadow:none;background:linear-gradient(180deg,#fffdf4,#ece0c2);box-shadow:inset 0 1.5px 0 #fff,0 3px 0 var(--te),0 0 0 2px rgba(255,120,100,.55)}
-.ha-chips i{height:var(--chh);display:grid;place-items:center;border-radius:10px;font:italic 900 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.04em;font-style:normal;color:#5a3a00;
+.ha-chips i{height:var(--chh);display:grid;place-items:center;border-radius:10px;font:italic 900 clamp(10px,calc(var(--chh) * .56),11px)/1 'Barlow Condensed',sans-serif;letter-spacing:.04em;font-style:normal;color:#5a3a00;
   background:radial-gradient(circle at 40% 30%,#fff2b0,#f5b324 60%,#b8760a);box-shadow:inset 0 -2px 0 rgba(0,0,0,.2),0 2px 0 #6a4000;transition:transform .45s cubic-bezier(.5,0,.8,.5),opacity .45s,filter .45s}
 .ha-chips i.gone{transform:translateY(7px) rotate(-14deg);opacity:.28;filter:grayscale(1);text-decoration:line-through;text-decoration-thickness:2px}
 .ha-chips i.free{background:radial-gradient(circle at 40% 30%,#e8fff0,#7fe8a0 60%,#2a9a52);color:#0b3a1c;box-shadow:inset 0 -2px 0 rgba(0,0,0,.2),0 2px 0 #145a2a}
 .ha-chips.win i:not(.gone){animation:dnHaWin .6s cubic-bezier(.3,1.6,.5,1) both;animation-delay:calc(var(--k) * 60ms)}
-.dn-ha-g{min-height:18px;text-align:center;font:500 13.5px/1.3 'Fredoka',sans-serif;color:#aab4d6}
+.dn-ha-g{display:none;min-height:18px;text-align:center;font:500 13.5px/1.3 'Fredoka',sans-serif;color:#aab4d6}
 .dn-ha-g s{color:#ff9a8a;text-decoration-thickness:2px}
 .dn-ha-g b{color:#7dff9a;font-weight:700}
 /* harf havuzu: lacivert tepsi, fildişi taşlar; kullanılan taşın yeri kesik çizgili yuva, alınan harfinki mühürlü */
-.ha-havuz{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:var(--tg);padding:var(--tp);border-radius:14px;
+.ha-havuz{display:flex;flex-wrap:wrap;justify-content:center;align-content:center;gap:var(--tg);padding:var(--tp);border-radius:12px;
   background:linear-gradient(180deg,#0d1120,#151a2d);box-shadow:inset 0 2px 8px rgba(0,0,0,.55),inset 0 0 0 1.5px rgba(255,255,255,.06),0 1px 0 rgba(255,255,255,.05)}
 .dn-ha .ha-havuz .ha-t{flex:0 0 var(--tw);max-width:none;width:var(--tw);height:var(--th);margin:0;padding:0;border:0;border-radius:9px;display:grid;place-items:center;cursor:pointer;
-  font:400 min(calc(var(--tw) * .62),calc(var(--th) * .64),28px)/1 'Lilita One',sans-serif;color:#1d2238;text-shadow:0 1px 0 rgba(255,255,255,.6);
+  font:400 min(calc(var(--tw) * .62),calc(var(--th) * .66),28px)/1 'Lilita One',sans-serif;color:#1d2238;text-shadow:0 1px 0 rgba(255,255,255,.6);
   background:linear-gradient(180deg,#fffdf4,#ece0c2);box-shadow:inset 0 1.5px 0 #fff,0 3px 0 #b39c6e,0 5px 8px rgba(0,0,0,.45);transition:transform .08s,box-shadow .08s;touch-action:manipulation}
 .dn-ha .ha-havuz .ha-t:active{transform:translateY(2px);box-shadow:inset 0 1.5px 0 #fff,0 1px 0 #b39c6e,0 2px 4px rgba(0,0,0,.4)}
 .dn-ha .ha-havuz .ha-t.used,.dn-ha .ha-havuz .ha-t.wait{color:transparent;text-shadow:none;cursor:default;background:rgba(255,255,255,.025);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.12);
@@ -99,44 +107,30 @@ const CSS = /* css */ `
 .dn-ha .ha-havuz .ha-t.back{animation:dnHaLand .3s cubic-bezier(.3,1.6,.5,1)}
 .dn-ha .ha-havuz.no{animation:dnHaNudge .3s}
 /* alt sıra: ⌫ ve GÖNDER eğik levhalar (arena dili) */
-.ha-act{display:flex;gap:8px;align-items:stretch;height:46px}
-.dn-ha .ha-act .ha-bk{flex:0 0 74px;display:grid;place-items:center;padding:0;border:0;border-radius:0;color:#e9ecf6;cursor:pointer;
+.ha-act{display:flex;gap:8px;align-items:stretch;height:var(--ab)}
+.dn-ha .ha-act .ha-bk{flex:0 0 clamp(58px,20cqw,78px);display:grid;place-items:center;padding:0;border:0;border-radius:0;color:#e9ecf6;cursor:pointer;
   clip-path:polygon(12% 0,100% 0,88% 100%,0 100%);background:linear-gradient(180deg,#30374f,#1e2337);box-shadow:inset 0 2px 0 rgba(255,255,255,.12);transition:transform .08s,filter .2s;touch-action:manipulation}
-.dn-ha .ha-act .ha-bk svg{width:26px;height:22px}
+.dn-ha .ha-act .ha-bk svg{width:clamp(20px,calc(var(--ab) * .58),26px);height:auto}
 .dn-ha .ha-act .ha-bk:active{transform:translateY(2px)}
 .dn-ha .ha-act .ha-bk:disabled{filter:brightness(.55);cursor:default}
 .dn-ha .ha-act .fl-send{flex:1 1 auto;width:auto;height:auto;margin:0;padding:0 10px;border:0;border-radius:0;clip-path:polygon(4% 0,100% 0,96% 100%,0 100%);
-  font:italic 900 22px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#0b0c12;text-shadow:none;background:linear-gradient(180deg,#fff,#e6e9f2);box-shadow:none;transition:transform .08s,filter .2s}
+  font:italic 900 clamp(18px,calc(var(--ab) * .5),22px)/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;color:#0b0c12;text-shadow:none;background:linear-gradient(180deg,#fff,#e6e9f2);box-shadow:none;transition:transform .08s,filter .2s}
 .dn-ha .ha-act .fl-send:active{transform:translateY(2px);box-shadow:none}
 .dn-ha .ha-act .fl-send:disabled{opacity:1;filter:none;color:rgba(255,255,255,.38);background:linear-gradient(180deg,#1a1f30,#141827);box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.16)}
 .dn-ha.ready .ha-act .fl-send:not(:disabled){background:linear-gradient(180deg,#ffe27a,#f5b324);animation:dnHaReady 1s ease-in-out infinite}
 .dn-ha.sent .ha-havuz .ha-t{opacity:.55}
 .dn-ha.done .ha-havuz,.dn-ha.done .ha-act,.dn-ha.done .dn-ha-al{display:none}
+.dn-ha.done .dn-ha-g{display:block}
+/* kabın boyuna göre: uzun kapta ipucu satırı (havuzun üstünde), kısa kapta jeton şeridi kalkar (kalan puanı kasa söyler;
+   alınan harf mavi, bedava harf altın taşla görünür) */
+@container (min-height:380px){.dn-ha .dn-ha-g{display:block}.fl-q.cover .dn-ha .ha-havuz{margin-top:0}.fl-q.cover .dn-ha:not(.done) .dn-ha-g{margin-top:auto}}
+@container (max-height:229px){.dn-ha .ha-chips{display:none}}
 /* uçan taş: kartın üstünde ayrı katmanda (gövdenin taşma ölçüsüne ve küçültmesine girmez) */
 .ha-fx{position:absolute;inset:0;pointer-events:none;z-index:30;overflow:visible}
 .ha-fly{position:absolute;display:grid;place-items:center;border-radius:8px;font-family:'Lilita One',sans-serif;font-style:normal;line-height:1;color:#1d2238;will-change:transform;
   background:linear-gradient(180deg,#fffdf4,#ece0c2);box-shadow:inset 0 1.5px 0 #fff,0 3px 0 #b39c6e,0 10px 16px rgba(0,0,0,.45)}
 .ha-fly.al{color:#fff;background:linear-gradient(180deg,#5cc0ff,#1d6ad0);box-shadow:inset 0 1.5px 0 rgba(255,255,255,.6),0 3px 0 #0f3f86,0 0 16px rgba(80,180,255,.7)}
 .ha-fly.free{color:#3a2200;background:linear-gradient(180deg,#ffe27a,#f5b324);box-shadow:inset 0 1.5px 0 #fff6c8,0 3px 0 #9a6a00,0 0 16px rgba(255,200,60,.7)}
-@media (max-height:760px){.dn-ha{--bhx:52px;--thx:46px;gap:8px}.ha-act{height:44px}}
-@media (max-height:700px){.dn-ha{--bhx:46px;--thx:42px;--chh:18px;gap:7px}.dn-ha-pts b{font-size:30px}.dn-ha-al{height:42px}.ha-pano{gap:6px;padding:8px var(--pp) 9px}.ha-act{height:42px}.dn-ha .ha-act .fl-send{font-size:20px}}
-/* en kısa ekran (320×568): yuvalar kare, jetonlar ince, ipucu satırı kalkar; taşlar 34 px (dokunma payı klavye tuşunun
-   iki katı), alt sıra 36 px. Gövde 1:1 sığar (ui._coverFit küçültmez). */
-@media (max-height:600px){
-  .dn-ha{--pp:8px;--tp:5px;--tg:5px;--bhx:40px;--thx:34px;--chh:15px;gap:6px}
-  .dn-ha-g{display:none}
-  .ha-pano{gap:5px;padding:5px var(--pp) 7px}
-  .ha-pano::before,.ha-pano::after{top:5px}
-  .dn-ha-pts b{font-size:26px}
-  .dn-ha-al{height:34px;min-width:88px;padding:0 12px;font-size:17px}
-  .dn-ha-al small{margin-top:1px;font-size:10px}
-  .dn-ha-w .ha-b{height:min(var(--bw),var(--bhx))}
-  .ha-chips i{font-size:10px}
-  .ha-act{height:36px}
-  .dn-ha .ha-act .fl-send{font-size:19px}
-  .dn-ha .ha-act .ha-bk svg{width:22px;height:19px}
-  .dn-ha.done .dn-ha-g{display:block}
-}
 @media (prefers-reduced-motion:reduce){.dn-ha *,.ha-fly{animation:none!important;transition:none!important}}
 @keyframes dnHaFlip{0%{transform:perspective(200px) rotateX(0)}45%{transform:perspective(200px) rotateX(90deg)}75%{transform:perspective(200px) rotateX(-12deg)}100%{transform:none}}
 @keyframes dnHaLand{0%{transform:scale(1.16,.84)}55%{transform:scale(.94,1.08)}100%{transform:none}}
@@ -251,7 +245,7 @@ export const harfal = {
 		const al = [];
 		let done = false;
 		const cols = tiles.length <= 7 ? tiles.length : Math.ceil(tiles.length / 2);
-		el.innerHTML = `<div class="dn-ha" style="--n:${n};--m:${cols}">
+		el.innerHTML = `<div class="dn-ha" style="--n:${n};--m:${cols}"><div class="ha-in">
 			<div class="ha-pano">
 				<div class="ha-hd"><span class="dn-ha-pts"><small>KASA</small><b>${n * 100}</b><em>${n} HARF</em></span><button class="dn-ha-al">HARF AL<small>−100 puan</small></button></div>
 				<div class="dn-ha-w">${Array.from({ length: n }, (_, i) => `<button class="ha-b" style="--k:${i}" aria-label="${i + 1}. harf" disabled><span></span></button>`).join('')}</div>
@@ -260,7 +254,7 @@ export const harfal = {
 			<div class="dn-ha-g">Harflere dokun, kutuları doldur</div>
 			<div class="ha-havuz">${tiles.map((t, k) => `<button class="fl-key ha-t" data-t="${k}" data-k="${esc(t.c)}">${esc(t.c)}</button>`).join('')}</div>
 			<div class="ha-act"><button class="ha-bk" aria-label="Son harfi geri al" disabled>${BACK_SVG}</button><button class="fl-send" disabled>GÖNDER</button></div>
-		</div>`;
+		</div></div>`;
 		rule(el, 'Az harf al');
 		const root = el.querySelector('.dn-ha');
 		const boxes = [...root.querySelectorAll('.dn-ha-w .ha-b')];
@@ -530,6 +524,9 @@ export const harfal = {
 				done = true;
 				cleanup();
 				root.classList.remove('ready', 'sent');
+				// yuva boyu cevapta sabit kalır (joker çubuğu kalkınca kap uzar; yuvalar büyüyüp oynamasın)
+				const bh = boxes[0]?.getBoundingClientRect().height / (root.currentCSSZoom || 1);
+				if (bh > 0) wEl.style.setProperty('--bhf', bh.toFixed(1) + 'px');
 				root.classList.add('done');
 				const meR = results.find((r) => r.p?.human);
 				const mine = meR ? score(v, meR.value) : null;
