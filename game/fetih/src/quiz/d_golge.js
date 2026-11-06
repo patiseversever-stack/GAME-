@@ -29,6 +29,7 @@
 
 import * as THREE from 'three';
 import { css, shuffle, pCorrect, mountChoice } from './util.js';
+import { heceli } from './d_gozkarari.js';
 import { botTime } from './timing.js';
 import { appOf, stamp, onClose, onOpen, sfx, LOOK, DENEME_CSS } from './d_ortak.js';
 import { clock, setTimeout, clearTimeout, setInterval, clearInterval } from '../core/clock.js';
@@ -675,6 +676,13 @@ const CSS = /* css */ `
 .fl-q.locked .dn-gg-bar i{animation-play-state:paused}
 .dn-gg-top b{font-family:'Lilita One';font-weight:400;font-size:14px;letter-spacing:.04em;color:var(--gold)}
 .dn-gg .fl-opt{min-height:50px}
+/* kısa ekran (≤720 px): kart ekranın üçte ikisini kaplıyor, gövde %70'e küçülüp "Fener dönüyor" etiketi 8 px'e düşüyordu.
+   Dört şık iki sütun (uzun kelime hecesinden bölünür, yazı küçülmez); tiyatroya da yer kalır */
+@media (max-height:720px){
+  .fl-q.t-golge .fl-opts,.fl-q.t-golge .fl-opts.one{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .fl-q.t-golge .fl-opt{min-width:0;min-height:46px}
+  .fl-q.t-golge .fl-opt>span{overflow-wrap:normal}
+}
 @keyframes dnShrink{from{transform:scaleX(1)}to{transform:scaleX(0)}}
 `;
 const LANTERN =
@@ -741,6 +749,11 @@ export const golge = {
 			<div data-r="o"></div>
 		</div>`;
 		const c = mountChoice(el.querySelector('[data-r=o]'), v, api, { onPick: () => sfx(app, 'tap') });
+		// uzun kelimeli şıklar hecesinden bölünebilsin (iki sütunda yazı küçülmez, kesilmez); mikro görevde: arayüzün şık
+		// uzunluğu ölçüsü (mount'tan hemen sonra) yumuşak tireleri saymasın
+		queueMicrotask(() => {
+			for (const sp of el.querySelectorAll('[data-r=o] .fl-opt>span')) sp.innerHTML = heceli(sp.textContent);
+		});
 		const bar = el.querySelector('.dn-gg-bar i');
 		const FILM = Math.max(8, Math.min(v.sec || 20, 40) * 0.86);
 		bar.style.setProperty('--t', FILM + 's');

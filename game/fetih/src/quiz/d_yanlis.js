@@ -20,6 +20,9 @@ const CSS = /* css */ `
 /* DÜZELTME MASASI: çizgili kâğıt, kırmızı kalemle daire, sarı yapışkan notlar */
 .dn-yb{display:flex;flex-direction:column;gap:12px;user-select:none;-webkit-user-select:none}
 .fl-q.cover .dn-yb{flex:1 1 auto;justify-content:center;gap:16px}
+/* üst afiş daralmasın: cevap içeriği küçültülmeden önce kartı taşırınca afiş sıkışıp damga yanlış yere konuyordu
+   (asıl düzeltme ortak: styles-arena .fl-qwho{flex:none}) */
+.fl-q.cover.t-yanlis .fl-qwho{flex:none}
 .fl-q.cover .dn-yb-pp{padding:40px 16px 22px 44px;background:repeating-linear-gradient(180deg,transparent 0 45px,rgba(60,110,210,.22) 45px 46.5px) 0 39px/100% 100% no-repeat,linear-gradient(180deg,#fffdf4,#f6edd6)}
 .fl-q.cover .dn-yb-c{height:46px;font-size:clamp(20px,calc(5.8 * var(--vw)),25px);line-height:34px}
 .fl-q.cover .dn-yb-o .fl-opt{min-height:74px}
@@ -90,7 +93,7 @@ const CSS = /* css */ `
   font:500 14.5px/1.35 'Fredoka',sans-serif;color:#2a2a3a;animation:dnYbUp .4s 1.5s both}
 .dn-yb-n i{flex:none;padding:2px 7px;border-radius:4px;font-style:normal;font:italic 900 11px/1.4 'Barlow Condensed',sans-serif;letter-spacing:.12em;color:#fff;background:#1f9a4a}
 .dn-yb.done .dn-yb-row,.dn-yb.done .dn-yb-st{display:none}
-@media (max-height:700px){.dn-yb-pp{padding:30px 10px 10px 34px}.dn-yb-pp::before{left:24px}.dn-yb-o .fl-opt{min-height:48px}.dn-yb .fl-send{height:46px}
+@media (max-height:720px){.dn-yb-pp{padding:30px 10px 10px 34px}.dn-yb-pp::before{left:24px}.dn-yb-o .fl-opt{min-height:48px}.dn-yb .fl-send{height:46px}
   .fl-q.cover .dn-yb{gap:10px}
   .fl-q.cover .dn-yb-pp{padding:34px 12px 12px 38px;background:repeating-linear-gradient(180deg,transparent 0 39px,rgba(60,110,210,.22) 39px 40.5px) 0 33px/100% 100% no-repeat,linear-gradient(180deg,#fffdf4,#f6edd6)}
   .fl-q.cover .dn-yb-pp::before{left:26px}
@@ -113,12 +116,22 @@ const CSS = /* css */ `
   .fl-q.cover .dn-yb-o .fl-opt{min-height:40px}
   .fl-q.cover .dn-yb-n{padding:7px 9px 8px;font-size:13.5px;line-height:1.26}
 }
+/* kısa ekran, cevap: doğrusu cümlenin içinde yeşil; seçenekler (kim neyi seçti) içerik genişliğinde notlar olarak
+   satırlara dizilir (kısa olanlar aynı satırı paylaşır), alçak ve sık; kural yazısı (dar kartta kendi satırı) kalkar.
+   Eskiden üç tam genişlik şerit gövdeyi %70'e küçültüyor, NOT ve not yazısı 8 px'e düşüyordu. */
+@media (max-height:720px){
+  .fl-q.cover.t-yanlis.rv .fl-rule{display:none}
+  .fl-q.cover .dn-yb.done .dn-yb-o:not(.three){display:flex;flex-wrap:wrap;gap:6px 8px}
+  .fl-q.cover .dn-yb.done .dn-yb-o .fl-opt{flex:1 1 auto;min-height:38px;padding-top:5px;padding-bottom:5px} /* yan paylar ortak kuraldan: portreli şıkta yazı portrenin solunda kalır */
+  .fl-q.cover .dn-yb.done .dn-yb-o.three{gap:8px}
+}
 @keyframes ybPen{0%{transform:rotate(-14deg) scale(.6)}100%{transform:rotate(-4deg) scale(1)}}
-@keyframes ybNote{0%{transform:translateY(16px) rotate(-8deg) scale(.85)}}
+/* girişler yukarıdan (aşağı kayan not gövdenin altından taşıp _coverFit'i boş yere küçültmeye zorluyordu) */
+@keyframes ybNote{0%{transform:translateY(-12px) rotate(-8deg) scale(.85)}}
 @keyframes dnYbStrike{from{transform:rotate(-4deg) scaleX(0)}to{transform:rotate(-4deg) scaleX(1)}}
 @keyframes dnYbOut{to{max-width:0;opacity:0;margin-right:-2px}}
 @keyframes dnYbIn{to{transform:none}}
-@keyframes dnYbUp{from{transform:translateY(10px)}}
+@keyframes dnYbUp{from{transform:translateY(-8px)}}
 @media (prefers-reduced-motion:reduce){.dn-yb-c::after,.dn-yb-o .fl-opt{animation:none}}
 `;
 
@@ -293,6 +306,9 @@ export const yanlis = {
 				c.classList.add('fix');
 				c.style.setProperty('--w', `${wpx}px`);
 				span.outerHTML = `<del>${esc(v.words[v.bad].w)}</del><ins>${esc(v.q.ok)}</ins>`;
+				// düzeltme oturunca (eski kelime daralıp kalkınca) cümle bir satır kısalabilir: bir sınıf değişikliğiyle gövde
+				// yeniden ölçülsün (_coverFit animasyonları izlemez; yoksa ilk, uzun hâlin küçültmesi kalıyordu)
+				c.addEventListener('animationend', (e) => e.animationName === 'dnYbIn' && c.classList.add('oturdu'));
 				setTimeout(() => burst(c, ['#7dff9a', '#fff', '#ffd25a']), 1250);
 				// oyuncuların işaretlediği kelimeler
 				for (const r of results) {

@@ -57,10 +57,15 @@ const CSS = /* css */ `
 .gk-hd .kn{flex:0 1 auto;min-width:0;display:flex;align-items:center;gap:6px;padding:4px 10px 4px 6px;transform:skewX(-8deg);background:#0b1230;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.75)}
 .gk-hd .kn>*{transform:skewX(8deg)}
 .gk-hd .kn svg{flex:none;width:20px;height:20px}
-.gk-hd .kn b{min-width:0;white-space:nowrap;overflow:hidden;font:italic 800 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#fff}
+/* konu adı ("Dinozor ve deniz canlıları") dar ekranda iki satıra iner: eskiden tek satırda sıkışıp puan sayacını
+   ekrandan itiyor ("PUAN" kesiliyordu), cevapta oyuncu çipleri üstüne biniyordu */
+.gk-hd .kn{flex:1 1 auto;max-width:max-content}
+.gk-hd .kn b{min-width:0;white-space:normal;overflow-wrap:normal;font:italic 800 13px/1.08 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.08em;text-transform:uppercase;color:#fff}
 .gk-hd .md{flex:none;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.62)}
-.gk-pt{flex:1;display:flex;align-items:center;gap:7px;min-width:70px}
-.gk-pt i{flex:1;position:relative;height:9px;overflow:hidden;transform:skewX(-14deg);background:rgba(255,255,255,.13);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
+/* sayaç içeriğinden (çubuğun en az 22 px'i + sayı + PUAN) dar olmaz: konu adı daralıp iki satıra iner; eskiden sayaç
+   70 px'e sıkışıyor, "PUAN" ekranın kenarından taşıyordu */
+.gk-pt{flex:1;display:flex;align-items:center;gap:7px;min-width:auto}
+.gk-pt i{flex:1;min-width:22px;position:relative;height:9px;overflow:hidden;transform:skewX(-14deg);background:rgba(255,255,255,.13);box-shadow:inset 0 0 0 1px rgba(255,255,255,.25)}
 .gk-pt i::after{content:'';position:absolute;inset:0;transform-origin:0 50%;transform:scaleX(var(--k,1));background:linear-gradient(90deg,#ff7a2a,#ffd25a 70%,#fff3b8)}
 .gk-pt b{flex:none;min-width:2.1em;text-align:right;font:italic 900 22px/1 'Barlow Condensed','Lilita One',sans-serif;color:#ffd25a;text-shadow:0 2px 0 rgba(0,0,0,.45)}
 .gk-pt small{flex:none;font:italic 800 10px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;color:rgba(255,255,255,.55)}
@@ -89,7 +94,8 @@ const CSS = /* css */ `
 .fl-qtext.gk-bilgi{justify-content:flex-start;padding:8px 13px;background:linear-gradient(180deg,#fff8de,#ffeab0)}
 .fl-qtext.gk-bilgi svg path:first-child{fill:#e0a10a}
 .fl-qtext.gk-bilgi svg path:last-child{stroke:#e0a10a}
-.gk-res{flex:1;min-width:0;display:flex;justify-content:flex-end}
+/* oyuncu çipleri doğal genişliğinde (konu adı daralır, gerekirse iki satır): taşıp sola, konu adının üstüne binmez */
+.gk-res{flex:none;margin-left:auto;display:flex;justify-content:flex-end}
 .gk-res .fl-chips{margin:0;flex-wrap:nowrap;justify-content:flex-end;gap:5px}
 @keyframes gkInfo{0%{opacity:0;transform:translateY(8px)}100%{opacity:1;transform:none}}
 .dn-gk .fl-opts{margin-top:2px}
@@ -119,6 +125,37 @@ const CSS = /* css */ `
 
 const ease = (x) => 1 - Math.pow(1 - x, 2.4);
 let UID = 0;
+
+/**
+ * Uzun kelimeye hece sınırında yumuşak tire (U+00AD): dar iki sütunlu şıkta tek kelimelik uzun ad ("Pachycephalosaurus")
+ * kesilmez, 8,5 px'e küçülmez; tarayıcı yalnız gerektiğinde böler ve tire koyar. Kural (Türkçe hece): ünsüz + ünlüden
+ * önce bölünür; ilk ve son üç harf, iki bölme arası en az üç harf bölünmez; "ph, th, ch, sh, gh" bölünmez.
+ * Düzenli ifadelerde ASCII dışı harf yok (sayfa windows-1252 okunabilir: esbuild düzenli ifadeyi kaçışlamaz).
+ */
+const UNLU = /[aeiou\u0131\u00F6\u00FC\u00E2\u00EE\u00FBAEIOU\u0130\u00D6\u00DC\u00C2\u00CE\u00DB]/;
+const HARF = /\p{L}/u;
+export function heceli(s) {
+	return String(s)
+		.split(/(\s+)/)
+		.map((w) => {
+			const c = [...w];
+			if (c.length < 8) return esc(w);
+			let out = '';
+			let last = 0;
+			let seenV = false;
+			for (let i = 0; i < c.length; i++) {
+				const dig = /h/i.test(c[i]) && /[cpstg]/i.test(c[i - 1] || '');
+				if (i >= 3 && c.length - i >= 3 && i - last >= 3 && seenV && !dig && HARF.test(c[i - 1]) && HARF.test(c[i]) && !UNLU.test(c[i]) && UNLU.test(c[i + 1] || '')) {
+					out += '\u00AD';
+					last = i;
+				}
+				if (UNLU.test(c[i])) seenV = true;
+				out += esc(c[i]);
+			}
+			return out;
+		})
+		.join('');
+}
 
 export const gozkarari = {
 	time: 20,
@@ -234,6 +271,11 @@ export const gozkarari = {
 			onPick() {
 				done = true; // görsel cevap anında donar: puan o anda kilitlenir
 			},
+		});
+		// uzun kelimeli şıklar hecesinden bölünebilsin (yazı küçülmez, kesilmez). Mikro görevde: arayüzün şık uzunluğu
+		// ölçüsü (ui.question, mount'tan hemen sonra) yumuşak tireleri saymasın; sığdırıcı (fit.js) sonraki karede ölçer
+		queueMicrotask(() => {
+			for (const sp of el.querySelectorAll('[data-r=o] .fl-opt>span')) sp.innerHTML = heceli(sp.textContent);
 		});
 		return {
 			lock() {

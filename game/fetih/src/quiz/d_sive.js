@@ -14,6 +14,7 @@
 
 import { css, esc, pCorrect, clamp, buzz } from './util.js';
 import { botTime, PROFILE } from './timing.js';
+import { jokersOff } from './t_pick.js';
 import { appOf, stamp, guard, onClose, cardTop, tag, pop, sfx, rule, stampLater, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { setTimeout } from '../core/clock.js';
 import { rng } from '../core/math.js';
@@ -106,7 +107,7 @@ function sayHTML(s) {
 			.split(/( +)/)
 			.map((w) => (/^ +$/.test(w) || !w ? w : `<span class="w">${[...w].map((c) => `<i style="--d:${(k++ * 0.035).toFixed(3)}s">${esc(c)}</i>`).join('')}</span>`))
 			.join('');
-		out += hot ? `<mark>${chars}</mark>` : chars;
+		out += hot ? `<mark><span class="mk">${chars}</span></mark>` : chars;
 	}
 	return out;
 }
@@ -171,12 +172,17 @@ const CSS = /* css */ `
 .dn-sv .sv-say{font-family:'Fredoka',sans-serif;font-weight:700;font-size:clamp(20px,calc(5.6 * var(--vw,4px)),25px);line-height:1.18;color:#fff;text-wrap:balance}
 .dn-sv .sv-say::before{content:'“';margin-right:2px;color:var(--cc,#ffd25a);font-family:'Lilita One'}
 .dn-sv .sv-say .w{white-space:nowrap}
-.dn-sv .sv-say i{font-style:normal;display:inline-block;animation:svCh .3s cubic-bezier(.3,1.7,.5,1) var(--d) both}
-.dn-sv .sv-say mark{position:relative;display:inline-block;color:#ffd25a;background:linear-gradient(180deg,transparent 78%,rgba(255,210,90,.55) 78% 92%,transparent 92%);padding:0 1px}
-.dn-sv .sv-say mark[data-g]::after{content:attr(data-g);position:absolute;left:50%;top:100%;margin-top:1px;transform:translate(-50%,-4px);opacity:0;white-space:nowrap;
+/* harf belirişi: dolgu yalnız geriye (backwards): bitince harfte dönüşüm kalmaz (her harf ayrı katman olup komşusunun
+   üstüne taşmasın; görünüm aynı) */
+.dn-sv .sv-say i{font-style:normal;display:inline-block;animation:svCh .3s cubic-bezier(.3,1.7,.5,1) var(--d) backwards}
+/* ağız kelimesi: kelime ve altındaki anlam (cevapta) tek sütun kutu; kutu anlamı kadar geniş, satır anlam kadar uzar. Eskiden
+   anlam kutunun dışına (top:100%) asılıyordu: alttaki satırın üstüne biniyor, kelimeden geniş anlam kutudan taşıyordu */
+.dn-sv .sv-say mark{position:relative;display:inline-flex;flex-direction:column;align-items:center;vertical-align:baseline;color:#ffd25a;background:none;padding:0 1px}
+.dn-sv .sv-say mark .mk{background:linear-gradient(180deg,transparent 78%,rgba(255,210,90,.55) 78% 92%,transparent 92%)}
+.dn-sv .sv-say mark[data-g]::after{content:attr(data-g);margin:2px 0 3px;transform:translateY(-4px);opacity:0;white-space:nowrap;
   padding:1px 6px 2px;background:#fff;color:#0d1124;font:600 11.5px/1.2 'Fredoka',sans-serif;letter-spacing:0;pointer-events:none;transition:opacity .35s .2s,transform .35s .2s}
-.dn-sv.done .sv-say{line-height:2.05;padding-bottom:4px}
-.dn-sv.done .sv-say mark[data-g]::after{opacity:1;transform:translate(-50%,0)}
+.dn-sv.done .sv-say{padding-bottom:2px}
+.dn-sv.done .sv-say mark[data-g]::after{opacity:1;transform:none}
 .dn-sv .sv-bar{display:flex;align-items:stretch;gap:8px;min-height:44px}
 .dn-sv .sv-pick{flex:1;min-width:0;display:flex;align-items:center;gap:8px;padding:6px 11px;background:rgba(255,255,255,.07);border-left:5px solid var(--rc,rgba(255,255,255,.25));
   font:600 13.5px/1.15 'Fredoka',sans-serif;color:rgba(255,255,255,.7);overflow:hidden;transition:border-color .25s}
@@ -330,6 +336,12 @@ export const sive = {
 		const root = el.querySelector('.dn-sv');
 		// konuşma süresi: harfler dökülürken ağız ve dalga oynar (≈ harf × 35 ms), sonra durulur
 		root.style.setProperty('--talk', String(Math.max(6, Math.round(([...plain(v.say)].length * 0.035 + 0.4) / 0.16))));
+		// harf harf dökülme bitince kelimeler düz yazıya döner (harf kutuları yalnız canlandırma için; yan yana yüzlerce
+		// küçük kutu yerine kelime başına tek metin: dar harflerde komşu kutu sınırları üst üste sayılıyordu)
+		setTimeout(() => {
+			if (!root.isConnected) return;
+			for (const w of root.querySelectorAll('.sv-say .w')) w.textContent = w.textContent;
+		}, [...plain(v.say)].length * 35 + 450);
 		const pick = root.querySelector('.sv-pick');
 		const go = root.querySelector('.sv-go');
 		let sel = -1;
@@ -439,6 +451,7 @@ export const sive = {
 				}
 			},
 			reveal(results) {
+				jokersOff(el); // joker çubuğu kalkar: kart kısalır, damga ve harita açıkta (kadraj aşağıda bundan sonra)
 				done = true;
 				root.classList.add('done');
 				go.disabled = true;

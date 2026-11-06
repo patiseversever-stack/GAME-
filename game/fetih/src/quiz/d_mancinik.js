@@ -89,7 +89,10 @@ const CSS = /* css */ `
 .mc-res div.win{background:linear-gradient(90deg,#ffe066,#ffbb1f);color:#1a1200;box-shadow:inset 0 0 0 2px #fff,0 0 22px rgba(255,210,90,.5)}
 .mc-res .rk{align-self:stretch;width:38px;display:grid;place-items:center;transform:none;background:var(--c);font:italic 900 22px/1 'Barlow Condensed','Lilita One',sans-serif;color:#fff}
 .mc-res b{flex:0 1 auto;min-width:0;max-width:40%;font:700 16px/1.1 'Fredoka',sans-serif;white-space:nowrap;overflow:hidden}
-.mc-res em{flex:1 1 0;min-width:0;text-align:right;font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;white-space:nowrap}
+/* değer ve birim: birim küçük ve bölünmez, gerekirse sayının altına iner ("12.345 milyon yıl" dar ekranda etiketin üstüne
+   taşmasın) */
+.mc-res em{flex:1 1 0;min-width:0;text-align:right;font:italic 900 20px/1 'Barlow Condensed','Lilita One',sans-serif;white-space:normal;overflow-wrap:normal}
+.mc-res em small{font-size:.74em;letter-spacing:.02em;white-space:nowrap}
 .mc-res u{flex:none;text-decoration:none;padding:3px 8px;border-radius:6px;font:italic 900 13px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;white-space:nowrap;color:#fff;background:#2fbf5a}
 .mc-res u.over{background:#e8343c}.mc-res u.gold{background:#1a1200;color:#ffd25a}
 .mc-res div.win u{background:#1a1200;color:#ffd25a}
@@ -584,9 +587,9 @@ export const mancinik = {
 						if (r.value == null) return `<div style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><b>${esc(r.name)}</b><em>—</em><u class="over">ATIŞ YOK</u></div>`;
 						const o = outcome(v, Number(r.value));
 						const tag = o.d === 0 ? ['TAM İSABET', 'gold'] : o.over ? [`${fmt(o.d)} AŞTI`, 'over'] : [`${fmt(-o.d)} KISA`, ''];
-						return `<div class="${r === win ? 'win' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><b>${esc(r.name)}</b><em>${fmt(Number(r.value))}${q.unit ? ' ' + esc(q.unit) : ''}</em><u class="${tag[1]}">${esc(tag[0])}</u></div>`;
+						return `<div class="${r === win ? 'win' : ''}" style="--c:${r.color};--k:${k}"><span class="rk">${k + 1}</span><b>${esc(r.name)}</b><em>${fmt(Number(r.value))}${q.unit ? ` <small>${esc(q.unit)}</small>` : ''}</em><u class="${tag[1]}">${esc(tag[0])}</u></div>`;
 					});
-					root.querySelector('.mc-res').innerHTML = `<div style="--c:#7dff9a;--k:0;background:#06140a"><span class="rk" style="background:#2a6a3a">✓</span><b>Doğru cevap</b><em>${fmt(v.hedef)}${q.unit ? ' ' + esc(q.unit) : ''}</em></div>` + rows.join('');
+					root.querySelector('.mc-res').innerHTML = `<div style="--c:#7dff9a;--k:0;background:#06140a"><span class="rk" style="background:#2a6a3a">✓</span><b>Doğru cevap</b><em>${fmt(v.hedef)}${q.unit ? ` <small>${esc(q.unit)}</small>` : ''}</em></div>` + rows.join('');
 				}
 				const winOver = win && win.value != null && outcome(v, win.value).over;
 				const meR = results.find((r) => r.p?.human);

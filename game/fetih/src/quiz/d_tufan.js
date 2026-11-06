@@ -33,6 +33,7 @@ import * as THREE from 'three';
 import { css, esc, shuffle, pCorrect, mountChoice, buzz } from './util.js';
 import { botTime } from './timing.js';
 import { appOf, stamp, guard, camLock, onClose, onOpen, cardTop, tag, sfx, rule, stampLater, LOOK, DENEME_CSS } from './d_ortak.js';
+import { optFit } from './t_pick.js';
 import { floodOf, holdLift, rainFrame, boltAt, glowAt } from './d_tufan_film.js';
 import { sesOf } from './d_tufan_ses.js';
 import { clock, setTimeout } from '../core/clock.js';
@@ -196,8 +197,17 @@ export const tufan = {
 		</div>`;
 		const root = el.firstElementChild;
 		const c = mountChoice(el.querySelector('[data-r=o]'), v, api, { onPick: () => sfx(app, 'tap') });
+		const f = optFit(el.querySelector('[data-r=o]')); // il adı kelime ortasından bölünmez (t_pick.js)
 		rule(el, v.q.mode === 'once' ? 'İlk batanı bul' : 'Son adayı bul');
-		if (!app) return { lock: c.lock, reveal: (r) => c.reveal(r), destroy() {} };
+		if (!app)
+			return {
+				lock: c.lock,
+				reveal(r) {
+					c.reveal(r);
+					f.refit();
+				},
+				destroy() {},
+			};
 		const b = app.board;
 		const C = app.cam;
 		const idx = v.ils.map((id) => BY_ID.get(id));
@@ -461,6 +471,7 @@ export const tufan = {
 			reveal(results) {
 				reveal = true;
 				c.reveal(results);
+				f.refit();
 				card?.classList.add('dn-tf-rv', 'dn-tf-film'); // joker satırı kalkar; cevap damgası filmin ortasında çekilir
 				gBox.classList.remove('hot');
 				// sahip renkleri film boyunca gizli: gecenin gizlediği boyalar gH'ye geçer (gece kalkar, renkler gelmez)
@@ -502,6 +513,13 @@ export const tufan = {
 					return KM[4] + (a[3] - a[2]) * 0.1 * smooth((t - KT[4]) / 2.4);
 				};
 				const P = (k) => b.provinces[idx[k]];
+				// rozetin içeriği büyüdü (ad + rakım, "SON ADA"): arayüz yeniden ölçsün; eski boyla yerleşen rozetler üst üste
+				// biniyordu (İl Avı'ndaki gibi). Büyük rozet (son ada) önce yerleşir.
+				const resize = (k) => {
+					tags[k].w = null;
+					tags[k].h = null;
+					tags[k].big = tags[k].el.classList.contains('big');
+				};
 				const sink = (k, t) => {
 					sunk[k] = true;
 					sinkT[k] = t;
@@ -512,6 +530,7 @@ export const tufan = {
 					const e = tags[k].el;
 					e.classList.add(gold ? 'isle' : 'sunk');
 					e.innerHTML = `<div>${gold ? '<b>İLK BATAN</b>' : ''}<b>${esc(p.name)}</b><em>${fmtM(v.alt[k])}</em></div>`;
+					resize(k);
 					btns[k].classList.add('sunk', 'alt');
 					if (gold) btns[k].classList.add('isle');
 					btns[k].querySelector('span').insertAdjacentHTML('beforeend', `<em>${gold ? 'İLK BATTI · ' : 'BATTI · '}${fmtM(v.alt[k])}</em>`);
@@ -532,6 +551,7 @@ export const tufan = {
 					e.classList.add(win ? 'isle' : 'sunk');
 					e.classList.add('big');
 					e.innerHTML = `<div>${win ? '<b>SON ADA</b>' : ''}<b>${esc(p.name)}</b><em>${fmtM(v.alt[k])}</em></div>`;
+					resize(k);
 					btns[k].classList.add('alt');
 					if (win) btns[k].classList.add('isle');
 					btns[k].querySelector('span').insertAdjacentHTML('beforeend', `<em>${win ? 'SON ADA · ' : 'KALDI · '}${fmtM(v.alt[k])}</em>`);

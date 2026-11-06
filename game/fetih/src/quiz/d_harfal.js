@@ -68,8 +68,17 @@ const CSS = /* css */ `
 .dn-ha .fl-keys .fl-send{flex:3.2;max-width:none;width:auto;height:42px;margin:0 0 0 2px;padding:0 8px;font-size:17px}
 .dn-ha .fl-keys .fl-send:disabled{opacity:.45}
 .dn-ha.done .fl-keys,.dn-ha.done .dn-ha-al{display:none}
-@media (max-height:700px){.dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:36px}.dn-ha-w b,.ha-chips i{flex-basis:min(48px,calc((100% - (var(--n) - 1) * 5px) / var(--n)))}.dn-ha-pts b{font-size:30px}.dn-ha-al{height:42px}.ha-pano{gap:7px;padding:8px 10px 10px}}
+@media (max-height:720px){.dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:36px}.dn-ha-w b,.ha-chips i{flex-basis:min(48px,calc((100% - (var(--n) - 1) * 5px) / var(--n)))}.dn-ha-pts b{font-size:30px}.dn-ha-al{height:42px}.ha-pano{gap:7px;padding:8px 10px 10px}}
 @media (max-height:600px){.dn-ha{gap:7px}.dn-ha-g{display:none}.ha-pano{gap:5px;padding:6px 8px 8px}.dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:32px}.dn-ha .fl-keys{gap:4px}.ha-chips i{height:16px;font-size:10px}.dn-ha-pts b{font-size:26px}.dn-ha-al{height:38px;min-width:96px;font-size:18px}.dn-ha-w b,.ha-chips i{flex-basis:min(40px,calc((100% - (var(--n) - 1) * 5px) / var(--n)))}}
+/* en kısa ekran (320×568): gövde %71–79'a küçülüyor, jetonlardaki "100" 7 px'e düşüyordu. Kutular kare (genişliğe bağlı
+   kutu küçültmede uzayıp ölçeği daha da düşürüyordu), HARF AL tek satır, tuşlar 30 px */
+@media (max-height:600px){
+  .ha-pano{padding:5px 8px 6px}
+  .dn-ha-al{height:32px;min-width:0;flex-direction:row;gap:6px;padding:0 15px;font-size:17px}
+  .dn-ha-al small{margin-top:0;font-size:10.5px}
+  .dn-ha-w b{aspect-ratio:1}
+  .dn-ha .fl-key,.dn-ha .fl-keys .fl-send{height:30px}
+}
 @keyframes dnHaFlip{0%{transform:perspective(200px) rotateX(90deg)}60%{transform:perspective(200px) rotateX(-14deg)}100%{transform:none}}
 @keyframes dnHaDrop{30%{color:#ff7a6a;transform:scale(.88)}}
 @keyframes dnHaCur{50%{opacity:.35}}

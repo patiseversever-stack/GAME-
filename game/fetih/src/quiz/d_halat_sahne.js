@@ -126,7 +126,9 @@ export const SAHNE_CSS = /* css */ `
 /* yalnız sahne (.ht-sw) daralır: öteki parçalar içeriği kadar kalır. Eskiden soru tahtası ve şıklar da daralıyordu
    (min-height içeriğin altına iniyordu): tahtadaki "Doğrusu" satırı kesiliyor, dört şıkkın alt sırası gövdeden taşıyordu */
 .dn-ht>*{flex:none}
-.fl-q.cover .dn-ht{flex:1 1 auto}
+/* gövdeyi tam doldurur (sahne esner): şıkların altındaki kilit çubuğu (−6 px) ve basılı şık gövdeden taşıp _coverFit'i
+   bütün ekranı küçültmeye zorlamasın diye alt pay */
+.fl-q.cover .dn-ht{flex:1 1 auto;padding-bottom:8px}
 .ht-hud{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:8px}
 .ht-side{display:flex;align-items:center;gap:6px;min-width:0}
 .ht-side.R{flex-direction:row-reverse}
@@ -229,12 +231,16 @@ export const SAHNE_CSS = /* css */ `
 .dn-ht-rows span:nth-child(2){flex:1 1 auto;min-width:0}
 .dn-ht-rows em{flex:0 1 auto;max-width:42%;text-align:right;font-style:normal;font-family:'Lilita One';opacity:.85}
 @media (max-height:600px){.ht-sw{min-height:72px!important}.dn-ht-q{min-height:48px!important;font-size:14px!important}.dn-ht-a .fl-tf .fl-opt{min-height:44px!important}.dn-ht-g .fl-opt{min-height:38px!important}}
-@media (max-height:700px){.ht-sw{min-height:90px}.dn-ht-q{min-height:56px;padding:16px 10px 6px;font-size:15px}.dn-ht-a .fl-tf .fl-opt{min-height:48px;font-size:19px}.dn-ht-g .fl-opt{min-height:42px}.ht-side .fl-av{width:28px;height:28px}.ht-side b{font-size:20px}
+@media (max-height:720px){.ht-sw{min-height:90px}.dn-ht-q{min-height:56px;padding:16px 10px 6px;font-size:15px}.dn-ht-a .fl-tf .fl-opt{min-height:48px;font-size:19px}.dn-ht-g .fl-opt{min-height:42px}.ht-side .fl-av{width:28px;height:28px}.ht-side b{font-size:20px}
   /* kısa ekranda yer soruya ve şıklara: olay kaydı (sahnedeki "+1 DOĞRU" balonlarının yinelemesi) ve turun başlık satırı
      (kategori çipinde ve kural yazısında zaten var) soru boyunca gizlenir; cevapta başlık satırı damganın yeri olur */
   .dn-ht{gap:6px}
   .ht-log{display:none}
-  .fl-q.cover.t-halat:not(.rv) .fl-qtext{display:none}}
+  .fl-q.cover.t-halat:not(.rv) .fl-qtext{display:none}
+  /* alçak sahnede (≤110 px) çekiş balonu (%36) köşedeki ad etiketinin (%7 + 32 px) üstüne biniyordu: etiketler kalkar
+     (taraflar üstteki portre, skor ve ölçerin uçlarındaki adlarla belli), seri rozeti köşeye çıkar */
+  .ht-tag{display:none}
+  .ht-combo{top:6%}}
 @keyframes dnHtIn{from{transform:translateY(12px) scale(.94)}}
 @keyframes dnHtRd{from{transform:scaleX(0)}to{transform:scaleX(1)}}
 @keyframes dnHtLk{from{transform:scaleX(1)}to{transform:scaleX(0)}}

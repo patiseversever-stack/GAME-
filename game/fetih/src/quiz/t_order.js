@@ -54,23 +54,28 @@ const CSS = /* css */ `
 @keyframes flq-ordsel{50%{box-shadow:0 0 0 5px rgba(255,210,90,.6),0 5px 0 var(--gold-dd)}}
 `;
 
+// Türkçe harfli düzenli ifadeler dizgiden kurulur (rx): derleyici dizgileri ASCII'ye kaçırır, düzenli ifade sabitlerini
+// kaçırmaz; karakter kümesi bildirmeyen sayfada (galeri file:// ile windows-1252 okunur) /küçükten büyüğe/ hiç eşleşmiyor,
+// uç etiketleri varsayılana düşüyordu.
+const rx = (s) => new RegExp(s, 'i');
+
 /**
  * Yön ifadeleri: [artan, azalan, küçük değerin ucu, büyük değerin ucu]. Soru metninde tam bir tanesi geçer.
  * Azalan sorularda liste büyükten başlar; uç etiketleri de yönle birlikte yer değiştirir.
  */
 export const DIRS = [
-	[/eskiden yeniye/i, /yeniden eskiye/i, 'en eski', 'en yeni'],
-	[/küçükten büyüğe/i, /büyükten küçüğe/i, 'en küçük', 'en büyük'],
-	[/kısadan uzuna/i, /uzundan kısaya/i, 'en kısa', 'en uzun'],
-	[/yakından uzağa/i, /uzaktan yakına/i, 'en yakın', 'en uzak'],
-	[/yavaştan hızlıya/i, /hızlıdan yavaşa/i, 'en yavaş', 'en hızlı'],
-	[/hafiften ağıra/i, /ağırdan hafife/i, 'en hafif', 'en ağır'],
-	[/alçaktan yükseğe/i, /yüksekten alçağa/i, 'en alçak', 'en yüksek'],
-	[/düşükten yükseğe/i, /yüksekten düşüğe/i, 'en düşük', 'en yüksek'],
-	[/azdan çoğa/i, /çoktan aza/i, 'en az', 'en çok'],
-	[/soğuktan sıcağa/i, /sıcaktan soğuğa/i, 'en soğuk', 'en sıcak'],
-	[/yılın başından sonuna/i, /yılın sonundan başına/i, 'yılın başı', 'yılın sonu'],
-	[/alfabe.*baştan sona/i, /alfabe.*sondan başa/i, "A'ya yakın", "Z'ye yakın"],
+	[rx('eskiden yeniye'), rx('yeniden eskiye'), 'en eski', 'en yeni'],
+	[rx('küçükten büyüğe'), rx('büyükten küçüğe'), 'en küçük', 'en büyük'],
+	[rx('kısadan uzuna'), rx('uzundan kısaya'), 'en kısa', 'en uzun'],
+	[rx('yakından uzağa'), rx('uzaktan yakına'), 'en yakın', 'en uzak'],
+	[rx('yavaştan hızlıya'), rx('hızlıdan yavaşa'), 'en yavaş', 'en hızlı'],
+	[rx('hafiften ağıra'), rx('ağırdan hafife'), 'en hafif', 'en ağır'],
+	[rx('alçaktan yükseğe'), rx('yüksekten alçağa'), 'en alçak', 'en yüksek'],
+	[rx('düşükten yükseğe'), rx('yüksekten düşüğe'), 'en düşük', 'en yüksek'],
+	[rx('azdan çoğa'), rx('çoktan aza'), 'en az', 'en çok'],
+	[rx('soğuktan sıcağa'), rx('sıcaktan soğuğa'), 'en soğuk', 'en sıcak'],
+	[rx('yılın başından sonuna'), rx('yılın sonundan başına'), 'yılın başı', 'yılın sonu'],
+	[rx('alfabe.*baştan sona'), rx('alfabe.*sondan başa'), "A'ya yakın", "Z'ye yakın"],
 ];
 
 /** Soru metnindeki yön ifadeleri: [{ dir, lo, hi }] (sınama için hepsi; oyun ilkini kullanır). */

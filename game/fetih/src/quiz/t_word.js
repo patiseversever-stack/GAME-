@@ -103,6 +103,20 @@ const CSS = /* css */ `
 .xw.sh .an-acts{gap:8px}
 .xw.sh .an-b{height:34px;padding:0 12px;gap:6px;font-size:14px}
 .xw.sh .an-b svg{width:16px;height:16px}
+/* çok kısa ekran (< 600 px, 568'de gövdeye ~200 px): bir kademe daha sıkı; küçük kutuda harf kutunun daha büyük payı */
+.xw.xs{gap:5px;margin:0}
+.xw.xs .xw-c{font-size:calc(var(--cs) * .66)}
+.xw.xs .xw-c sup{font-size:max(10.5px,calc(var(--cs) * .3))} /* gövde ~0,84 yakınlaşınca da ~9 px */
+.xw.xs .xw-txt{min-height:38px;padding:4px 10px;gap:8px}
+.xw.xs .xw-txt b{height:26px;padding:0 6px;font-size:17px}
+.xw.xs .xw-txt b i{font-size:13px}
+.xw.xs .xw-txt span{font-size:14.5px;line-height:1.14}
+.xw.xs .xw-nav{width:36px}
+.xw.xs .an-tiles{gap:6px}
+.xw.xs .an-acts{gap:6px}
+.xw.xs .an-b{height:31px;padding:0 10px;font-size:13px}
+.xw.xs .an-b svg{width:15px;height:15px}
+.xw.xs.done .xw-c{font-size:calc(var(--cs) * .6)}
 @keyframes xwIn{0%{transform:scale(1.35);opacity:0}100%{transform:none}}
 @keyframes xwHot{50%{box-shadow:inset 0 0 0 2px #fff,0 4px 0 #8a5a00,0 0 22px rgba(255,210,90,.9)}}
 @keyframes flq-pop2{from{transform:scale(.4)}to{transform:scale(1)}}
@@ -345,9 +359,10 @@ export const cross = {
 		// 568 px'te gövde ancak ~0,64 yakınlaştırmayla sığıyor, tahta harfleri 8 px'e iniyordu, düğmeler joker çubuğunun
 		// altında kalıyordu
 		const short = !land && H0 < 700;
+		const tiny = short && H0 < 600; // 568 px: gövdeye ~200 px kalır, her şey bir kademe daha sıkı (.xw.xs)
 		// kutu boyu: genişliğe ve (dikeyde) tahta yüksekliğine sığar; 3–4 kelimede iri kutular. Tahta yüksekliği ekranla
-		// küçülür (740 px'te 300, 568 px'te 128): kısa telefonda bulmaca ipucu, harf kartları ve düğmelerle birlikte sığar
-		const BH = clamp(H0 - 440, 128, 300);
+		// küçülür (740 px'te 300, 640 px'te 200, 568 px'te 113): kısa telefonda ipucu, harf kartları ve düğmelerle birlikte sığar
+		const BH = tiny ? clamp(H0 - 455, 104, 300) : clamp(H0 - 440, 128, 300);
 		const cs = land
 			? clamp(Math.min(Math.floor((210 - (L.cols - 1) * 4) / L.cols), Math.floor((210 - (L.rows - 1) * 4) / L.rows)), 18, 36)
 			: clamp(Math.min(Math.floor((W - (L.cols - 1) * 4) / L.cols), Math.floor((BH - (L.rows - 1) * 4) / L.rows)), 20, 50);
@@ -374,7 +389,7 @@ export const cross = {
 		}).join('');
 		const chev = (d) => SVG(d < 0 ? '<path d="m15 18-6-6 6-6"/>' : '<path d="m9 18 6-6-6-6"/>');
 		const I_OK = SVG('<path d="M20 6 9 17l-5-5"/>');
-		el.innerHTML = `<div class="an xw${short ? ' sh' : ''}">
+		el.innerHTML = `<div class="an xw${short ? ' sh' : ''}${tiny ? ' xs' : ''}">
 			<div class="xw-grid" style="--cs:${cs}px;grid-template-columns:repeat(${L.cols},${cs}px);grid-auto-rows:${cs}px">${grid}</div>
 			<div class="xw-clue"><button type="button" class="xw-nav" data-d="-1" aria-label="önceki kelime">${chev(-1)}</button><div class="xw-txt" data-r="clue"></div><button type="button" class="xw-nav" data-d="1" aria-label="sonraki kelime">${chev(1)}</button></div>
 			<div class="an-tiles" data-r="bank"></div>
@@ -393,9 +408,9 @@ export const cross = {
 		const banks = L.words.map((w) => (w.tiles ? w.tiles.slice() : shuffle([...w.w], Math.random)));
 		const maxBank = Math.max(...banks.map((b) => b.length));
 		const per = maxBank <= 7 ? maxBank : Math.ceil(maxBank / 2);
-		const tw = clamp(Math.floor(((land ? 260 : W) - (per - 1) * 9) / per), 34, land || short ? 44 : 56);
+		const tw = clamp(Math.floor(((land ? 260 : W) - (per - 1) * 9) / per), 34, tiny ? 40 : land || short ? 44 : 56);
 		root.style.setProperty('--tw', tw + 'px');
-		root.style.setProperty('--th', clamp(Math.round(tw * 1.12), 40, short ? 48 : 60) + 'px');
+		root.style.setProperty('--th', clamp(Math.round(tw * 1.12), 40, tiny ? 44 : short ? 48 : 60) + 'px');
 		const known = L.cells.every((c) => c.ch);
 		let wi = 0;
 		let done = false;

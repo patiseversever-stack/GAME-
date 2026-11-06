@@ -288,11 +288,16 @@ const CSS = /* css */ `.dn-fz-aud{position:absolute;left:8px;right:8px;bottom:4p
 .fl-q.cover .dn-fz-pl i .fl-av{width:100%;height:100%;border-radius:50%}
 .fl-q.cover .dn-fz-pl b{max-width:96px;padding:2px 10px 3px;font:italic 900 14px/1.1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.06em;text-transform:uppercase;color:#fff;background:var(--pc);clip-path:polygon(8% 0,100% 0,92% 100%,0 100%)}
 .fl-q.cover .dn-fz-pl small{order:3;font:italic 900 12px/1 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em} /* durum etiketi adın altında: bomba yana yatınca üstüne binmez */
-.fl-q.cover .dn-fz-tag{top:10px;font:italic 900 12px/1.2 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;padding:3px 12px}
+.fl-q.cover .dn-fz-tag{top:10px;font:italic 900 12px/1.2 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.16em;padding:3px 12px;white-space:nowrap;z-index:3} /* left:50% ile yarı genişliğe sıkışıp iki satıra kırılıyordu; bombanın önünde */
+/* oyuncu adı ve durum etiketi bombanın önünde: kısa sahnede büyütülmüş bomba oyuncuya doğru savrulunca üstlerine biniyordu */
+.fl-q.cover .dn-fz-pl b,.fl-q.cover .dn-fz-pl small{position:relative;z-index:2}
 .fl-q.cover .dn-fz-q{gap:10px}
 .fl-q.cover .dn-fz-qt{min-height:66px;padding:10px 14px;border-radius:10px;font:600 clamp(16px,calc(4.6 * var(--vw,4px)),20px)/1.22 'Fredoka',sans-serif;color:#1d2238;
   background:linear-gradient(180deg,#fffdf6,#f1e8d2);box-shadow:0 2px 0 #d9c9a2,0 4px 0 #c9b688,0 10px 18px rgba(0,0,0,.4)}
 .fl-q.cover .dn-fz-qt em{font:italic 900 12px/1.2 'Barlow Condensed','Lilita One',sans-serif;letter-spacing:.12em;padding:3px 8px;border-radius:4px;color:#fff;background:#e8562a}
+/* rakip yanıldı işareti ("Defne ✗"): soru kâğıdında düz yazı gibi cümlenin sonuna ekleniyordu (sorunun parçası sanılıyordu);
+   şıklardaki gibi rakibin renginde küçük etiket olur, soru yazısının sağında */
+.dn-fz-qt>.fw{flex:none;align-self:flex-start;margin-left:auto;padding:1px 6px;border-radius:8px;font:600 11px/1.3 'Fredoka',sans-serif;color:#fff;background:var(--pc);border:2px solid #fff;white-space:nowrap;animation:flPopIn .3s cubic-bezier(.3,1.8,.5,1) both}
 .fl-q.cover .dn-fz-o{gap:10px}
 .fl-q.cover .dn-fz-o .fl-opt{min-height:62px;border:0;border-radius:0;clip-path:polygon(5% 0,100% 0,95% 100%,0 100%);font:italic 900 clamp(19px,calc(5.4 * var(--vw,4px)),24px)/1.05 'Barlow Condensed','Lilita One',sans-serif;
   letter-spacing:.08em;text-transform:uppercase;color:#1d2238;background:linear-gradient(180deg,#fff,#e6e9f2);box-shadow:none}

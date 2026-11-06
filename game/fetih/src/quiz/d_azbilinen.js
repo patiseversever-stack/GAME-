@@ -86,9 +86,51 @@ const CSS = /* css */ `
 .dn-ab-b .fl-who{position:relative;inset:auto;flex:none;width:18px;height:18px;margin:0;border-radius:5px;border-width:2px}
 .dn-ab-b .fl-who+.fl-who{right:auto;margin-left:-6px}
 .dn-ab-l.more{-webkit-mask:linear-gradient(180deg,#000 calc(100% - 34px),transparent);mask:linear-gradient(180deg,#000 calc(100% - 34px),transparent)}
-@media (max-height:700px){.ab-crowd{display:none}.dn-ab-i{min-height:34px;padding:5px 10px 6px}.ab-dots{width:62px}}
-@keyframes abIn{from{transform:translateY(6px) scale(.96)}}
-@keyframes abUp{from{transform:translateY(10px) scale(.97)}}
+@media (max-height:720px){.ab-crowd{display:none}.dn-ab-i{min-height:34px;padding:5px 10px 6px}.ab-dots{width:62px}}
+/* kısa ekran, cevap: 20+ doğrusu olan soruda (ad toplamı 280 harfe kadar) gövde %64'e küçülüyor, etiketler 7 px'e
+   düşüyordu. Kart tek satır ve sıkı, çubuklar alçak ve dar aralıklı; kural yazısı (cevapta işe yaramaz, dar kartta
+   kendi satırını kaplar) başlıktan kalkar. Yazı tabanı 12,5 px (rozetler 11 px): küçültme payı büyür. */
+/* üst afiş daralmasın: cevap içeriği (küçültülmeden önce) kartı taşırınca afiş esnek öğe olarak 86 px'ten 62 px'e
+   sıkışıyor, damga o anki yerleşime göre konuyor; küçültme gelince afiş açılıp her şey 24 px aşağı kayıyor, damga
+   başlıktaki yazının üstünde kalıyordu (asıl düzeltme ortak: styles-arena .fl-qwho{flex:none}) */
+.fl-q.cover.t-azbilinen .fl-qwho{flex:none}
+@media (max-height:720px){
+  .fl-q.cover.t-azbilinen.rv .fl-rule{display:none}
+  .dn-ab{gap:7px}
+  .ab-me{gap:10px;padding:8px 11px;border-radius:12px}
+  .ab-dots{width:54px;gap:1.2px}
+  .ab-tx b{font-size:clamp(17px,calc(5 * var(--vw)),21px)}
+  .ab-tx span{font-size:12.5px}
+  .ab-me>strong{font-size:30px}
+  .dn-ab-r{gap:5px}
+  .dn-ab-bars{gap:4px}
+  .dn-ab-b{gap:5px;min-height:26px;padding:2px 3px 2px 8px;border-radius:7px}
+  .dn-ab-b>span{font-size:12.5px;line-height:1.12}
+  .dn-ab-b>em{padding:1px 5px;font-size:11px}
+  /* çok doğrulu soruda (9+ çip) çipler iki sütunlu ızgara, uzun ad hücresinde sarar. Akan çipler dar ekranda satıra birer
+     dizilip boyu genişliğe çok bağlıyordu: _coverFit ölçeği tek adımda (1 ölçekteki boydan) kestiriyor, küçültünce
+     satırlar kısalınca gövde yarı boş kalıyordu (ek-ab-0013: 0,71, altta 80 px boşluk) */
+  .dn-ab-bars:has(>.dn-ab-b:nth-child(9)){display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .dn-ab-bars:has(>.dn-ab-b:nth-child(9))>.dn-ab-b>span{flex:1 1 auto;min-width:0}
+}
+/* en kısa ekran (320×568): 16–24 doğrulu soruda çipler satıra ikişer sığsın diye alçak ve sık (yazı 12 px, rozet
+   10,5 px); kart da sıkışır */
+@media (max-height:600px){
+  .ab-me{gap:8px;padding:6px 9px}
+  .ab-dots{width:46px;gap:1px}
+  .ab-tx b{font-size:17px}
+  .ab-tx span{font-size:12px}
+  .ab-me>strong{font-size:26px}
+  .dn-ab-bars{gap:2px 3px}
+  .dn-ab-b{gap:4px;min-height:19px;padding:1px 2px 1px 7px;border-radius:6px}
+  .dn-ab-b>span{font-size:12px;line-height:1.1}
+  .dn-ab-b>em{padding:0 4px;font-size:10.5px;line-height:1.35}
+  .dn-ab-b .fl-who{width:15px;height:15px}
+}
+/* girişler yukarıdan: aşağı kayan parça gövdenin altından taşıp _coverFit'i boş yere küçültmeye zorlar (taşma ölçüsü
+   animasyon sürerken alınır, bitince yeniden alınmaz); yukarı taşma ölçüye girmez */
+@keyframes abIn{from{transform:translateY(-6px) scale(.96)}}
+@keyframes abUp{from{transform:translateY(-10px) scale(.97)}}
 @keyframes abDot{from{transform:scale(0)}}
 `;
 

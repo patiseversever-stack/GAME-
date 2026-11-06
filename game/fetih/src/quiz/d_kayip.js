@@ -17,6 +17,7 @@ import { botTime } from './timing.js';
 import { appOf, stamp, guard, camLock, onClose, onOpen, cardTop, tag, pop, sfx, rule, stampLater, LOOK, DENEME_CSS } from './d_ortak.js';
 import { clock, setTimeout, clearTimeout } from '../core/clock.js';
 import { holdLift } from './d_tufan.js';
+import { optFit, jokersOff } from './t_pick.js';
 import DATA from '../data/turkiye.json';
 
 const PROV = DATA.provinces;
@@ -162,6 +163,12 @@ function pit(app, i) {
 const CSS = /* css */ `
 .dn-ky{display:flex;flex-direction:column;gap:6px}
 .dn-ky .fl-opt{min-height:44px}
+/* üç ipucu da açılınca ilerleme satırı ("İpuçları açılıyor … ERKEN BİL") işini bitirmiştir, katlanır: kısa ekranda kart
+   haritayı (kuyu ipucunun kendisi) daha az kapatsın (568 px'te %75 → %70 altı) */
+.dn-ky.all .dn-ky-top{display:none}
+/* dar kart (içerik ≤ 350 px): ipucu satırları ve şıklar sıkı */
+.dn-ky{container-type:inline-size}
+@container (max-width:350px){.dn-ky .fl-opt{min-height:40px}.dn-ky-h span{min-height:25px;padding:3px 8px 3px 7px;font-size:12.5px;line-height:1.18}}
 .dn-ky-top{display:flex;align-items:center;gap:8px;height:20px;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#cfe0ff}
 .dn-ky-top .sc{flex:none;width:18px;height:18px;border-radius:50%;background:#000;border:2px solid var(--gold);box-shadow:0 0 10px rgba(255,190,70,.8),inset 0 0 6px rgba(255,190,70,.6)}
 .dn-ky-bar{flex:1;height:8px;border-radius:6px;background:rgba(255,255,255,.14);overflow:hidden;position:relative}
@@ -232,10 +239,19 @@ export const kayip = {
 		</div>`;
 		rule(el, 'Erken bilen kazanır');
 		const c = mountChoice(el.querySelector('[data-r=o]'), v, api, { onPick: () => sfx(app, 'tap') });
+		const f = optFit(el.querySelector('[data-r=o]')); // il adı kelime ortasından bölünmez (t_pick.js)
 		const bar = el.querySelector('.dn-ky-bar i');
 		bar.style.setProperty('--t', film + 's');
 		const hintEls = [...el.querySelectorAll('.dn-ky-h span')];
-		if (!app) return { lock: c.lock, reveal: (r) => c.reveal(r), destroy() {} };
+		if (!app)
+			return {
+				lock: c.lock,
+				reveal(r) {
+					c.reveal(r);
+					f.refit();
+				},
+				destroy() {},
+			};
 		const b = app.board;
 		const i = v.hedef;
 		const p = b.provinces[i];
@@ -257,6 +273,7 @@ export const kayip = {
 			if (!h || h.classList.contains('open')) return;
 			h.classList.remove('lock');
 			h.classList.add('open');
+			if (hintEls.every((x) => x.classList.contains('open'))) el.querySelector('.dn-ky')?.classList.add('all');
 			h.innerHTML = `<b>${['BÖLGE', 'KOMŞU', 'İPUCU'][k]}</b>${esc(v.hints[k])}`;
 			sfx(app, 'star');
 			buzz(8);
@@ -302,11 +319,14 @@ export const kayip = {
 				for (const t of timers) clearTimeout(t);
 			},
 			reveal(results) {
+				jokersOff(el); // joker çubuğu kalkar: kart kısalır, damga ve harita açıkta (kadraj aşağıda bundan sonra)
 				c.reveal(results);
+				f.refit();
 				for (const t of timers) clearTimeout(t);
 				// gökten iniş: hızlanarak düşer, yerine oturur (hafif sekme), sonra altın boya
 				const top = cardTop(el);
-				app.cam.shot(p.x, p.z, { dist: size * 1.7 + 26, pitch: 0.58, yaw: app.cam.yaw + 0.25, dur: 1.2, arc: 2, yawRate: 0.05, decay: 0.2, lens: top / 2 });
+				// il, ekranın altındaki cevap damgasının üstünde kalsın (İl Avı ve Şive gibi): "YERİNE OTURDU!" damgaya biniyordu
+				app.cam.shot(p.x, p.z, { dist: size * 1.7 + 26, pitch: 0.58, yaw: app.cam.yaw + 0.25, dur: 1.2, arc: 2, yawRate: 0.05, decay: 0.2, lens: top / 2 - (1 - top) * 0.24 });
 				const H = 7;
 				const D = 1.15;
 				let t0 = 0;

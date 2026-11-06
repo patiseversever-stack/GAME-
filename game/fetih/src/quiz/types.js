@@ -12,11 +12,11 @@
 //
 // Botların doğruluk modeli: P(doğru) = skill + 0.25 − 0.15·zorluk (0.08..0.95 arası).
 
-import { pCorrect, gauss, esc, mountChoice } from './util.js';
+import { pCorrect, gauss, esc, mountChoice, css } from './util.js';
 import { timing, botTime } from './timing.js';
 import { order } from './t_order.js';
 import { match } from './t_match.js';
-import { hilo, odd, proverb, riddle } from './t_pick.js';
+import { hilo, odd, proverb, riddle, optFit } from './t_pick.js';
 import { anagram, cross } from './t_word.js';
 import { img } from './t_img.js';
 import { blitz } from './t_blitz.js';
@@ -93,6 +93,19 @@ export function numSteps(min, max) {
 	const fine = span <= 1000 ? 1 : niceStep(span / 1000);
 	return { fine, big: fine * 10 };
 }
+/**
+ * HÜKÜM levhası (Doğru mu?) dar kartta (ortak stil styles-arena.js .fl-tf.vd; Yıldırım'ın aynısı t_blitz.js'te): yazı ve simge
+ * kartın enine göre küçülür (406 px ve üstünde eskisi gibi); portreler yazının yanına sığmazsa alt satıra iner, kelime
+ * ortasından bölünmez. 320 px'te iki portreli sönük yarıda "YANLI / Ş", 1280×720 çerçevesinde (325 px) "DOĞRU" kırpılıyordu.
+ */
+const TF_CSS = /* css */ `
+.fl-q.tf .fl-tf.vd .fl-opt{font-size:clamp(22px,7.4cqw,30px);flex-wrap:wrap;align-content:center;row-gap:3px}
+.fl-q.tf .fl-tf.vd:has(.pick) .fl-opt:not(.pick),.fl-q.tf .fl-tf.vd .fl-opt.dim{font-size:clamp(17px,6cqw,22px)}
+.fl-q.tf .fl-tf.vd .ic{width:clamp(28px,9.4cqw,38px);height:clamp(28px,9.4cqw,38px)}
+.fl-q.tf .fl-tf.vd:has(.pick) .fl-opt:not(.pick) .ic,.fl-q.tf .fl-tf.vd .fl-opt.dim .ic{width:28px;height:28px}
+.fl-q.tf .fl-tf.vd .fl-opt>span{overflow-wrap:normal}
+`;
+
 /** Adım düğmesi yazısı: 10 bin, 2 mn gibi kısa (düğmeye sığsın). */
 const stepLabel = (n) => (n >= 1e6 ? `${(n / 1e6).toLocaleString('tr-TR')} mn` : n >= 1e4 ? `${(n / 1e3).toLocaleString('tr-TR')} bin` : n.toLocaleString('tr-TR'));
 
@@ -107,7 +120,15 @@ export const TYPES = {
 		},
 		mount(el, v, api) {
 			const c = mountChoice(el, v, api);
-			return { lock: c.lock, reveal: (r) => c.reveal(r), destroy() {} };
+			const f = optFit(el); // şık yazısı kelime ortasından bölünmez (t_pick.js)
+			return {
+				lock: c.lock,
+				reveal(r) {
+					c.reveal(r);
+					f.refit();
+				},
+				destroy() {},
+			};
 		},
 		judge(v, value) {
 			return { correct: value === v.right, err: value === v.right ? 0 : 1 };
@@ -128,7 +149,8 @@ export const TYPES = {
 			return { q, right: q.ans ? 0 : 1 };
 		},
 		mount(el, v, api) {
-			// Arena "HÜKÜM": tek eğik levhanın iki yarısı, ortada "YA DA" dikişi (stil: styles-arena.js .fl-tf.vd)
+			// Arena "HÜKÜM": tek eğik levhanın iki yarısı, ortada "YA DA" dikişi (stil: styles-arena.js .fl-tf.vd; dar kart: TF_CSS)
+			css('tf', TF_CSS);
 			el.innerHTML = `<div class="fl-tf vd"><button class="fl-opt fl-yes" data-i="0"><em class="ic"><svg viewBox="0 0 24 24"><path d="M4.5 12.5l5 5 10-11"/></svg></em><span>DOĞRU</span></button><div class="fl-tfmid"><i></i><b>YA DA</b></div><button class="fl-opt fl-no" data-i="1"><em class="ic"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></svg></em><span>YANLIŞ</span></button></div>`;
 			el.closest('.fl-q')?.classList.add('tf');
 			const btns = [...el.querySelectorAll('.fl-opt')];
@@ -184,6 +206,10 @@ export const TYPES = {
 			const q = v.q;
 			const mid = Math.round((q.min + q.max) / 2);
 			const S = numSteps(q.min, q.max);
+			// yıl sorusu (ui.js yearish ile aynı ölçü): binlik ayraç yok (1.910 değil 1910). Düzenli ifade dizgiden: karakter kümesi
+			// bildirmeyen sayfada (galeri) /yıl/ sabiti hiç eşleşmiyordu, ui.js'nin sonradan düzeltmesi de bu yüzden çalışmıyordu
+			const year = !q.unit && Number.isInteger(q.ans) && q.ans >= 500 && q.ans <= 2100 && new RegExp('yıl', 'i').test(q.q || '');
+			const fmt = (x) => (year ? String(x) : x.toLocaleString('tr-TR'));
 			el.innerHTML = `<div class="fl-num">
 				<div class="fl-num-val"><b data-r="val">${mid}</b><small>${esc(q.unit || '')}</small></div>
 				<input class="fl-range" type="range" min="${q.min}" max="${q.max}" step="1" value="${mid}" aria-label="tahmin">
@@ -200,7 +226,7 @@ export const TYPES = {
 			const set = (x) => {
 				x = Math.max(lo, Math.min(hi, Math.round(x)));
 				range.value = String(x);
-				val.textContent = x.toLocaleString('tr-TR');
+				val.textContent = fmt(x);
 			};
 			set(mid);
 			range.addEventListener('input', () => set(Number(range.value)));
@@ -233,9 +259,9 @@ export const TYPES = {
 					const rows = results
 						.slice()
 						.sort((a, b) => a.err - b.err)
-						.map((r) => `<div class="fl-guess"><b style="background:${r.color}"></b><span>${esc(r.name)}</span><em>${r.value == null ? '—' : Number(r.value).toLocaleString('tr-TR')}</em></div>`)
+						.map((r) => `<div class="fl-guess"><b style="background:${r.color}"></b><span>${esc(r.name)}</span><em>${r.value == null ? '—' : fmt(Number(r.value))}</em></div>`)
 						.join('');
-					el.innerHTML = `<div class="fl-num-ans"><small>Doğru cevap</small><b>${q.ans.toLocaleString('tr-TR')} ${esc(q.unit || '')}</b></div><div class="fl-guesses">${rows}</div>`;
+					el.innerHTML = `<div class="fl-num-ans"><small>Doğru cevap</small><b>${fmt(q.ans)} ${esc(q.unit || '')}</b></div><div class="fl-guesses">${rows}</div>`;
 				},
 				destroy() {},
 			};

@@ -146,6 +146,77 @@ const CSS = /* css */ `
 @keyframes flq-pulse{50%{box-shadow:0 0 0 4px rgba(255,210,90,.35)}}
 `;
 
+// ---------------------------------------------------------------- şık yazısı: kelime ortasından bölünmez
+// Ortak kural (styles-q .fl-opt>span overflow-wrap:anywhere) dar sütunda tek kelimeyi harf ortasından böler, ui.js iki
+// sütunu yalnız harf sayısıyla seçer (kelime boyuna bakmaz): 320 px'te "Konstantin/opolis", haritalı kartta "Gülşehi/r",
+// cevapta portre gelince "Atıcıl/ık". Burada şık yazısı bölünmez; satırına sığmayan şık yarımşar piksel küçülür, tabanda da
+// sığmıyorsa şıklar tek sütuna geçer (soru açılırken, kadraj kartın son boyunu ölçmeden önce). Cevapta yalnız küçülür
+// (tek sütuna atlamaz). Tam ekran kartta küçültmeyi ortak sığdırıcı (fit.js) yapar; burada yalnız sütun kararı.
+const OF_CSS = /* css */ `
+.fl-opts.of{container-type:inline-size}
+.fl-opts.of .fl-opt>span{overflow-wrap:normal}
+/* dar haritalı kart (şıklar ≤ 350 px; il adları): harf bloğu ve sağ boşluk ince, yazıya yer (iki sütun kalsın, kart haritayı
+   kapatmasın). Kap sorgusu: galerinin telefon çerçevesinde (1280×720 → 325 px) de dar sayılır */
+@container (max-width:350px){.fl-q.map .fl-opts.of:not(.one) .fl-opt{gap:8px}.fl-q.map .fl-opts.of:not(.one) .fl-opt:not(:has(>.fl-who)){padding-right:9px}.fl-q.map .fl-opts.of:not(.one) .fl-opt>i{width:29px}}
+`;
+export function optFit(el, { floor = 13 } = {}) {
+	css('optfit', OF_CSS);
+	const os = el.querySelector('.fl-opts');
+	if (!os) return { refit() {} };
+	os.classList.add('of');
+	const spans = () => [...os.querySelectorAll('.fl-opt>span')];
+	const over = (s) => s.scrollWidth > s.clientWidth + 1;
+	let late = false;
+	const run = () => {
+		if (!os.isConnected) return;
+		const cover = !!os.closest('.fl-q.cover');
+		if (!cover) for (const s of spans()) s.style.fontSize = '';
+		for (const s of spans()) {
+			if (cover) {
+				// tam ekran kart: fit.js tek kelimeyi tabanın %55'ine kadar küçültür; o boyda da sığmıyorsa tek sütun
+				if (late || os.classList.contains('one') || !over(s)) continue;
+				const f0 = s.style.fontSize;
+				s.style.fontSize = Math.max(8.5, parseFloat(getComputedStyle(s.parentElement).fontSize) * 0.55) + 'px';
+				const still = over(s);
+				s.style.fontSize = f0;
+				if (still) os.classList.add('one');
+				continue;
+			}
+			if (!over(s)) continue;
+			let px = parseFloat(getComputedStyle(s).fontSize) || 18;
+			const lo = late ? 11 : floor;
+			while (px > lo && over(s)) s.style.fontSize = `${(px -= 0.5)}px`;
+			if (over(s) && !late && !os.classList.contains('one')) {
+				os.classList.add('one'); // gözlemci yeniden ölçer
+				return;
+			}
+		}
+	};
+	run();
+	const mo = new MutationObserver(run); // ui.js tek sütuna geçirirse (uzun şık) baştan ölç
+	mo.observe(os, { attributes: true, attributeFilter: ['class'] });
+	requestAnimationFrame(run);
+	document.fonts?.ready?.then(run);
+	return {
+		/** Cevap: portreler yazının payını daralttı. */
+		refit() {
+			late = true;
+			run();
+			requestAnimationFrame(run);
+		},
+	};
+}
+
+/**
+ * Haritalı kartın cevap anı: joker çubuğu kalkar (cevapta işe yaramaz; tam ekran kartta ve Tufan'da da böyle). Kart kısalır,
+ * harita ve cevap damgası (haritalı kartta ekranın altından 150 px yukarıda) kartın altında açıkta kalır: kısa ekranda damga
+ * joker çubuğunun, Kimim'de ipucu satırlarının üstüne biniyordu. Kadraj (cardTop) bundan SONRA ölçülmeli.
+ */
+export function jokersOff(el) {
+	css('dnrv', '.fl-q.dn-rv .fl-jk{display:none}');
+	el.closest('.fl-q')?.classList.add('dn-rv');
+}
+
 const choiceKind = (extra) => ({
 	kind: 'exact',
 	judge(v, value) {
@@ -182,10 +253,12 @@ export const hilo = {
 		css('pick', CSS);
 		const raw = String(v.q.unit || '').trim();
 		const unit = raw.replace(/\s*\(.*?\)\s*/g, '').trim(); // "km² (yaklaşık)" → "km²"
-		const approx = /yaklaşık/i.test(raw) || /yaklaşık/i.test(v.q.prop || '');
+		// Türkçe harfli düzenli ifadeler dizgiden (derleyici dizgiyi ASCII'ye kaçırır, düzenli ifade sabitini kaçırmaz: karakter
+		// kümesi bildirmeyen sayfada /yaklaşık/ hiç eşleşmiyor, "≈" düşüyordu)
+		const approx = new RegExp('yaklaşık', 'i').test(raw) || new RegExp('yaklaşık', 'i').test(v.q.prop || '');
 		const mo = unit === 'MÖ' || unit === 'MS';
 		// yıl karşılaştırması (icat, kuruluş, tamamlanma yılı…): güç çubuğu anlamsız, fark "yıl" olarak söylenir
-		const year = mo || /yıl/i.test(v.q.prop || '') || (!unit && v.sides.every((s) => Number.isInteger(s.v) && s.v >= 1000 && s.v <= 2100));
+		const year = mo || new RegExp('yıl', 'i').test(v.q.prop || '') || (!unit && v.sides.every((s) => Number.isInteger(s.v) && s.v >= 1000 && s.v <= 2100));
 		el.innerHTML = `<div class="fl-hilo${year ? ' yil' : ''}" lang="tr">${v.sides
 			.map(
 				(s, i) =>
@@ -328,10 +401,12 @@ export const odd = {
 		el.innerHTML = '<div class="fl-odd"></div><div data-r="why"></div>';
 		const box = el.querySelector('.fl-odd');
 		const ctl = mountChoice(box, v, api);
+		const f = optFit(box);
 		return {
 			lock: ctl.lock,
 			reveal(results) {
 				ctl.reveal(results);
+				f.refit();
 				ctl.btns.forEach((b, i) => i !== v.right && !b.classList.contains('wrong') && b.classList.add('dim'));
 				if (v.q.why) el.querySelector('[data-r=why]').innerHTML = `<div class="fl-why"><b>${esc(v.opts[v.right])}</b> farklı: ${esc(v.q.why)}</div>`;
 			},
@@ -357,10 +432,12 @@ export const proverb = {
 				blank.classList.add('set');
 			},
 		});
+		const f = optFit(el.querySelector('[data-r=o]'));
 		return {
 			lock: ctl.lock,
 			reveal(results) {
 				ctl.reveal(results);
+				f.refit();
 				const mine = ctl.mine;
 				blank.classList.add('set');
 				if (mine === v.right) blank.classList.add('right');
@@ -416,10 +493,12 @@ export const riddle = {
 		fitQm();
 		requestAnimationFrame(fitQm);
 		const ctl = mountChoice(el.querySelector('[data-r=o]'), v, api);
+		const f = optFit(el.querySelector('[data-r=o]'));
 		return {
 			lock: ctl.lock,
 			reveal(results) {
 				ctl.reveal(results);
+				f.refit();
 				const mine = ctl.mine;
 				const st = mine == null ? 'nt' : mine === v.right ? 'ok' : 'no';
 				card.classList.add('s-on', 's-' + st);

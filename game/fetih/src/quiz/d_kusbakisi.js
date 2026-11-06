@@ -26,6 +26,7 @@
 import { css, esc, shuffle, pCorrect, mountChoice } from './util.js';
 import { botTime } from './timing.js';
 import { lonLatToWorld } from './types.js';
+import { optFit, jokersOff } from './t_pick.js';
 import { appOf, stamp, guard, camLock, cut, onClose, onOpen, cardTop, tag, sfx, LOOK, DENEME_CSS } from './d_ortak.js';
 import { clock, setInterval, clearInterval } from '../core/clock.js';
 
@@ -98,6 +99,17 @@ const CSS = /* css */ `
 .dn-kb-top .ip i{width:16px;height:8px;transform:skewX(-18deg);background:rgba(255,255,255,.16);transition:background .3s}
 .dn-kb-top .ip i.on{background:#ffd25a;box-shadow:0 0 8px rgba(255,210,90,.8);animation:dnPip .5s cubic-bezier(.3,1.8,.5,1)}
 .dn-kb .fl-opt{min-height:50px}
+/* dar kart (içerik ≤ 350 px: 320–375 px telefon): uzun yapı adlarında da şıklar iki sütun. Tek sütun kartı 320×568'de
+   ekranın %82'sine uzatıp kamera görüntüsünü (ipucunun kendisi) ince bir şeride sıkıştırıyordu. Yazı küçük, satır kelime
+   arasında kırılır, kelime bölünmez (optFit) */
+.dn-kb{container-type:inline-size}
+@container (max-width:350px){
+  .dn-kb .fl-opts.one{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+  .dn-kb .fl-opts.one .fl-opt{min-height:50px;gap:8px;font-size:15px;line-height:1.1;clip-path:polygon(0 0,100% 0,96% 100%,0 100%)}
+  .dn-kb .fl-opts.one .fl-opt:not(:has(>.fl-who)){padding-right:9px} /* portreli şıkta ortak portre payı geçerli */
+  .dn-kb .fl-opts.one .fl-opt>i{width:29px}
+  .dn-kb-top{min-height:34px}
+}
 /* dürbün: haritanın kenarları kararır, ortası açık; zamanla açılır (yalnız transform ve opacity) */
 .dn-scope{position:absolute;left:50%;top:var(--cy,60%);width:150vmax;height:150vmax;margin:-75vmax 0 0 -75vmax;pointer-events:none;border-radius:50%;
   background:radial-gradient(circle,transparent 0 13%,rgba(255,226,140,.55) 13.4%,rgba(4,8,22,.0) 14.2%,rgba(4,8,22,.55) 19%,rgba(4,8,22,.92) 33%);transform:scale(1);opacity:1}
@@ -280,6 +292,7 @@ export const kusbakisi = {
 			<div data-r="o"></div>
 		</div>`;
 		const c = mountChoice(el.querySelector('[data-r=o]'), v, api, { onPick: () => sfx(app, 'tap') });
+		const f = optFit(el.querySelector('[data-r=o]')); // il / yapı adı kelime ortasından bölünmez (t_pick.js)
 		const bar = el.querySelector('.dn-kb-bar i');
 		const mk = el.querySelector('.dn-kb-bar s');
 		const altEl = el.querySelector('.dn-kb-top .al b');
@@ -287,7 +300,15 @@ export const kusbakisi = {
 		const FILM = Math.min(v.sec || 20, v.film || v.sec || 20);
 		bar.style.setProperty('--t', FILM * 0.92 + 's');
 		mk.style.setProperty('--t', FILM * 0.92 + 's');
-		if (!app) return { lock: c.lock, reveal: (r) => c.reveal(r), destroy() {} };
+		if (!app)
+			return {
+				lock: c.lock,
+				reveal(r) {
+					c.reveal(r);
+					f.refit();
+				},
+				destroy() {},
+			};
 		const q = v.q;
 		PREV?.(); // önceki Kuşbakışı kartının temizliği önce
 		const sp = spotOf(app, q);
@@ -449,7 +470,9 @@ export const kusbakisi = {
 		return {
 			lock: c.lock,
 			reveal(results) {
+				jokersOff(el); // joker çubuğu kalkar: kart kısalır (kadraj aşağıda bundan sonra ölçülür)
 				c.reveal(results);
+				f.refit();
 				clearInterval(tick);
 				unlock();
 				scope.classList.add('off');

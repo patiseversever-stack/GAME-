@@ -16,6 +16,12 @@ const CSS = /* css */ `
 /* YALAN MAKİNESİ: titreyen iğne, üç dosya kartı, mürekkepli DOĞRU / YALAN damgaları */
 .dn-id{display:flex;flex-direction:column;gap:10px;user-select:none;-webkit-user-select:none}
 .fl-q.cover .dn-id{flex:1 1 auto;gap:14px}
+/* kartlar gövdeyi tam doldurur: son kartın altına taşan "ŞÜPHELİ" rozeti (−11 px) gövdeden taşıp _coverFit'i bütün
+   ekranı küçültmeye zorluyordu (3. karta dokununca). Alttaki pay rozeti içine alır. */
+.fl-q.cover .dn-id:not(.done){padding-bottom:11px}
+/* üst afiş daralmasın: cevap içeriği küçültülmeden önce kartı taşırınca afiş sıkışıp damga yanlış yere konuyordu
+   (asıl düzeltme ortak: styles-arena .fl-qwho{flex:none}) */
+.fl-q.cover.t-ikidogru .fl-qwho{flex:none}
 .fl-q.cover .dn-id-c{flex:1 1 0;min-height:auto;max-height:170px;font-size:clamp(16px,calc(4.7 * var(--vw)),20px)}
 .fl-q.cover .dn-id-c>div{display:flex;flex-direction:column;justify-content:center}
 .fl-q.cover .dn-id-c>i b{font-size:30px}
@@ -64,7 +70,7 @@ const CSS = /* css */ `
 .dn-id-c .dn-id-tg{float:right;position:relative;z-index:2;margin:-4px -4px 6px 12px;padding:3px 10px 4px;border-radius:7px;font:400 17px/1 'Lilita One',sans-serif;letter-spacing:.08em;
   color:var(--sc);background:#fffdf6;box-shadow:inset 0 0 0 3px var(--sc),0 3px 8px rgba(0,0,0,.3);transform:rotate(-6deg);animation:dnIdTag .42s cubic-bezier(.3,1.8,.5,1) both}
 .dn-id-c.ok{--sc:#1f9a4a}
-.dn-id-c.lie{--sc:#c8241a;background:linear-gradient(180deg,#ffe6e0,#ffc9bf);box-shadow:0 0 0 3px #e8343c,0 0 26px rgba(255,60,40,.55),0 10px 18px rgba(0,0,0,.45);animation:dnIdLie .55s cubic-bezier(.3,1.6,.5,1)}
+.dn-id-c.lie{--sc:#c8241a;background:linear-gradient(180deg,#ffe6e0,#ffc9bf);box-shadow:0 0 0 3px #e8343c,0 0 26px rgba(255,60,40,.55),0 10px 18px rgba(0,0,0,.45);animation:dnIdLie .55s cubic-bezier(.3,1.6,.5,1);transform-origin:50% 100%}
 .dn-id-c.lie>i{background:#c8241a}
 .dn-id-c.lie .dn-id-tg{font-size:20px;color:#fff;background:#c8241a;box-shadow:0 0 0 2.5px #fff,0 4px 10px rgba(0,0,0,.35);transform:rotate(5deg)}
 .dn-id-c.lie p{text-decoration:line-through;text-decoration-color:rgba(200,36,26,.75);text-decoration-thickness:2.5px}
@@ -74,11 +80,11 @@ const CSS = /* css */ `
 .dn-id-c.lie .dn-id-nt b{color:#c8241a}
 .dn-id-c:nth-child(3) .dn-id-nt,.dn-id-c:nth-child(3) .dn-id-tg{animation-delay:.18s}.dn-id-c:nth-child(4) .dn-id-nt,.dn-id-c:nth-child(4) .dn-id-tg{animation-delay:.36s}
 .dn-id-c>i .fl-who{position:relative;inset:auto;width:24px;height:24px;margin-top:6px;border-radius:7px;box-shadow:0 0 0 2px #fff}
-@media (max-height:700px){.id-pg{height:40px}.dn-id-c>div{padding:9px 10px 10px}.dn-id{gap:8px}.fl-q.cover .dn-id.done .id-pg{display:none}}
+@media (max-height:720px){.id-pg{height:40px}.dn-id-c>div{padding:9px 10px 10px}.dn-id{gap:8px}.fl-q.cover .dn-id.done .id-pg{display:none}}
 /* kısa ekran, tam ekran kart: kapak kurallarıyla AYNI seçiciler (onlardan sonra gelir, yoksa ezilmez). Eskiden kapak
    kuralları kısa ekran kurallarını eziyordu: yalan makinesi 62 px, aralar 14 px kalıyor, gövde en küçük ölçeğe (0,64)
    iniyor, bilgiler 10 px'e düşüyordu. Makine ince bir şerit olur, aralar ve iç boşluklar daralır, yazı 14 px'ten başlar. */
-@media (max-height:700px){
+@media (max-height:720px){
   .fl-q.cover .dn-id{gap:8px}
   .fl-q.cover .id-pg{height:30px}
   .fl-q.cover .id-pg b{top:5px;padding:2px 6px;font-size:10px}
@@ -93,9 +99,26 @@ const CSS = /* css */ `
   .fl-q.cover .dn-id.done .dn-id-c>i b{font-size:22px}
   .dn-id-c .dn-id-tg{margin:-4px -4px 3px 8px;padding:2px 8px 3px;font-size:15px}
   .dn-id-c.lie .dn-id-tg{font-size:17px}
+  /* cevapta: kural yazısı (dar kartta kendi satırı) ve şeritteki DOSYA yazısı kalkar; numara ve portre kalır */
+  .fl-q.cover.t-ikidogru.rv .fl-rule{display:none}
+  .fl-q.cover .dn-id.done .dn-id-c>i small{display:none}
 }
-/* en kısa ekranda (≤600 px) yalan makinesi gizlenir (süs): gövde bilgilere kalır */
-@media (max-height:600px){.fl-q.cover .id-pg{display:none}}
+/* en kısa ekranda (≤600 px) yalan makinesi gizlenir (süs): gövde bilgilere kalır. Cevapta sıkı düzen (bilgi + not
+   ortanca ~510 harf; eskiden gövde %75–80'e küçülüyor, notlar 9 px'e düşüyordu): numara şeridi daralır (numara ve
+   seçenin portresi kalır), damga küçülür, bilgi 12,5 px, not 12 px */
+@media (max-height:600px){
+  .fl-q.cover .id-pg{display:none}
+  .fl-q.cover .dn-id.done{gap:6px}
+  .fl-q.cover .dn-id.done .dn-id-c{font-size:12.5px;line-height:1.17}
+  .fl-q.cover .dn-id.done .dn-id-c>i{width:24px}
+  .fl-q.cover .dn-id.done .dn-id-c>i b{font-size:19px}
+  .fl-q.cover .dn-id.done .dn-id-c>i .fl-who{width:18px;height:18px;margin-top:4px;border-radius:5px}
+  .fl-q.cover .dn-id.done .dn-id-c>div{padding:7px 8px 6px}
+  .fl-q.cover .dn-id.done .dn-id-nt{margin-top:3px;padding-top:3px;font-size:.96em;line-height:1.17}
+  .fl-q.cover .dn-id.done .dn-id-c::after{left:30px}
+  .dn-id-c .dn-id-tg{margin:-3px -3px 2px 6px;padding:1px 6px 2px;font-size:13.5px}
+  .dn-id-c.lie .dn-id-tg{font-size:15px}
+}
 /* dar ekranda numara şeridi incelir: yazı sütunu genişler (daha az satır, daha az küçültme) */
 @media (max-width:380px){
   .fl-q.cover .dn-id-c>i{width:36px}

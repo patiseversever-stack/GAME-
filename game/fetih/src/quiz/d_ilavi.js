@@ -16,6 +16,7 @@
 import { css, esc, pCorrect, clamp, buzz } from './util.js';
 import { botTime } from './timing.js';
 import { KM_PER_UNIT } from './types.js';
+import { jokersOff } from './t_pick.js';
 import { appOf, stamp, guard, onClose, cardTop, tag, pop, sfx, rule, stampLater, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { setTimeout } from '../core/clock.js';
 import DATA from '../data/turkiye.json';
@@ -114,9 +115,27 @@ const CSS = /* css */ `
 .dn-ia-th .nw{position:absolute;left:0;top:0;bottom:0;width:100%;transform:translateX(calc(var(--p,-.04) * 100%));transition:transform .7s cubic-bezier(.3,1.5,.5,1);pointer-events:none}
 .dn-ia-th .nw::before{content:'';position:absolute;left:-2px;top:-5px;width:4px;height:19px;background:#fff;box-shadow:0 0 0 2px #0d1124,0 0 10px rgba(255,255,255,.8)}
 .dn-ia-th.none .nw{opacity:0}
-.dn-ia-hints{display:flex;flex-direction:column;gap:4px;perspective:400px}
+.dn-ia-hints{position:relative;display:flex;flex-direction:column;gap:4px;perspective:400px}
 .dn-ia-hints span{display:flex;align-items:center;gap:7px;min-height:27px;padding:3px 8px;background:rgba(255,255,255,.07);font:600 13.5px/1.2 'Fredoka',sans-serif;color:#fff}
 .dn-ia-hints span b{flex:none;padding:3px 6px 2px;background:#ffd25a;color:#1a1200;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.1em;transform:skewX(-8deg)}
+/* açık ipucu: yazı rozetin altına da akar (dar sütunda rozet satırın üçte birini yiyordu: 5 satırlık ipucu) */
+.dn-ia-hints span:not(.lock){display:block;padding:5px 8px 4px}
+.dn-ia-hints span:not(.lock) b{display:inline-block;margin-right:7px;vertical-align:1px}
+/* kısa ekran: ipucu listesi bilinçli kayan liste (JS data-kaydir + max-height); son açılan ipucu görünür, üstte eskiler solar */
+.dn-ia-hints>span{flex:none} /* kayan listede satırlar küçülmez (sıkışıp üst üste binmesin) */
+.dn-ia-hints[data-kaydir]{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-mask:linear-gradient(180deg,transparent 0,#000 14px);mask:linear-gradient(180deg,transparent 0,#000 14px)}
+.dn-ia-hints[data-kaydir]::-webkit-scrollbar{display:none}
+/* dar kart (içerik ≤ 350 px): siluet küçük, ipucu yazısı ve deneme karoları sıkı (karoda uzun il adı kırpılıyordu) */
+.dn-ia{container-type:inline-size}
+@container (max-width:350px){
+  .dn-ia-row{gap:10px}
+  .dn-ia-sil{width:88px;height:102px}
+  .dn-ia-sil svg{width:68px;height:68px;margin:-34px 0 0 -34px}
+  .dn-ia-hints span{font-size:12.5px;line-height:1.18}
+  .dn-ia-slots{gap:4px}
+  .dn-ia-slots .sl{padding:4px 3px 4px 4px}
+  .dn-ia-slots .sl .nm{letter-spacing:0}
+}
 .dn-ia-hints span.lock{background:rgba(255,255,255,.03);color:rgba(255,255,255,.4)}
 .dn-ia-hints span.lock b{background:rgba(255,255,255,.16);color:rgba(255,255,255,.6)}
 .dn-ia-hints span.lock em{display:flex;align-items:center;gap:5px;font:italic 800 11px/1 'Barlow Condensed',sans-serif;letter-spacing:.16em;font-style:normal}
@@ -264,8 +283,30 @@ export const ilavi = {
 		g.allActive();
 		const lit = [];
 		g.dark(lit); // karanlık harita: sahip renkleri yok, yalnız denenen iller ışıkta
+		// kısa ekranda kart ekranın en çok ~%62'sini örter (haritaya dokunulacak): açılan ipuçları sığmazsa ipucu listesi bilinçli
+		// kayan liste olur (data-kaydir), son açılan ipucu görünür. 568 px'te üç yanlıştan sonra kart ekranın %89'unu kaplıyor,
+		// dördüncü dokunuşa harita kalmıyordu. Kart büyürse harita kadrajı kartın altına yeniden ortalanır.
+		const hintsEl = root.querySelector('.dn-ia-hints');
+		let lastTop = -1;
+		const fitCard = () => {
+			const card = el.closest('.fl-q');
+			const host = card?.parentElement;
+			if (!hintsEl.isConnected || !host) return;
+			hintsEl.style.maxHeight = '';
+			const H = host.clientHeight || innerHeight;
+			const over = card.offsetTop + card.offsetHeight - Math.min(H * 0.62, H - 210);
+			const kay = over > 1;
+			if (kay) hintsEl.style.maxHeight = Math.max(58, hintsEl.offsetHeight - over) + 'px';
+			hintsEl.toggleAttribute('data-kaydir', kay);
+			const last = hintEls.filter((h) => !h.classList.contains('lock')).pop();
+			if (kay && last) hintsEl.scrollTop = Math.max(0, last.offsetTop + last.offsetHeight - hintsEl.clientHeight);
+			const top = cardTop(el);
+			if (!done && lastTop >= 0 && Math.abs(top - lastTop) > 0.03) app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.02, pad: 1.03, top, dur: 0.6 });
+			if (!done) lastTop = top;
+		};
 		queueMicrotask(() => {
 			if (!el.isConnected) return;
+			fitCard();
 			app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.02, pad: 1.03, top: cardTop(el), dur: 0.7 });
 		});
 		// haritada ısı renginde şok dalgası (iki halka; yazı rozeti değil, çarpışma düzenine girmez)
@@ -287,6 +328,7 @@ export const ilavi = {
 			h.classList.add('op');
 			h.innerHTML = `<b>İPUCU ${k + 1}</b>${esc(hints[k])}`;
 			sfx(app, 'iaHint', { delay: 0.25 });
+			fitCard();
 		};
 		api.onMapTap((pt) => {
 			if (done) return;
@@ -360,6 +402,7 @@ export const ilavi = {
 				}
 			},
 			reveal(results) {
+				jokersOff(el); // joker çubuğu kalkar: kart kısalır, damga ve harita açıkta (kadraj aşağıda bundan sonra)
 				done = true;
 				root.classList.add('done');
 				const t = b.provinces[v.hedef];

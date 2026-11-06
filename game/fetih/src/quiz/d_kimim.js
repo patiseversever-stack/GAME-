@@ -16,6 +16,7 @@
 
 import { css, esc, pCorrect, clamp, buzz } from './util.js';
 import { PROFILE } from './timing.js';
+import { jokersOff } from './t_pick.js';
 import { appOf, stamp, guard, onClose, onOpen, cardTop, tag, pop, sfx, rule, stampLater, tapX, LOOK, ACT, DENEME_CSS } from './d_ortak.js';
 import { setTimeout, clearTimeout } from '../core/clock.js';
 import DATA from '../data/turkiye.json';
@@ -65,6 +66,12 @@ const CSS = /* css */ `
 .dn-km .km-hd b{font-family:'Lilita One';font-weight:400;font-size:15px;letter-spacing:.03em;white-space:nowrap}
 .dn-km .km-hd em{font-style:normal;font-family:'Manrope';font-weight:800;font-size:9.5px;letter-spacing:.12em;text-transform:uppercase;opacity:.7;white-space:nowrap;overflow:hidden;text-overflow:clip}
 .dn-km .km-ls{display:flex;flex-direction:column;gap:4px}
+/* kısa ekran: ipucu listesi bilinçli kayan liste (JS data-kaydir + max-height); en yenisi altta, eskiler üstte solar */
+.dn-km .km-ls>.km-l{flex:none} /* kayan listede satırlar küçülmez (sıkışıp üst üste binmesin) */
+.dn-km .km-ls[data-kaydir]{overflow-y:auto;overscroll-behavior:contain;scrollbar-width:none;-webkit-mask:linear-gradient(180deg,transparent 0,#000 18px);mask:linear-gradient(180deg,transparent 0,#000 18px)}
+.dn-km .km-ls[data-kaydir]::-webkit-scrollbar{display:none}
+/* başlık: alt yazı başlığın yanına sığmazsa alt satıra iner (dar kartta kırpılıyordu: "ARŞİVDEN, KENAR NOTLA") */
+.dn-km .km-hd{flex-wrap:wrap;row-gap:1px}
 .dn-km .km-l{display:flex;align-items:flex-start;gap:7px;font-family:'Fredoka';font-weight:500;font-size:14px;line-height:1.24}
 .dn-km .km-l.on{animation:kmIn .45s cubic-bezier(.25,1.4,.5,1) both}
 .dn-km .km-l mark{color:inherit;background:none;-webkit-box-decoration-break:clone;box-decoration-break:clone}
@@ -222,7 +229,7 @@ const CSS = /* css */ `
   clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%)}
 .dn-km.done .km-ans{display:flex;animation:kmAns .5s cubic-bezier(.3,1.5,.5,1)}
 .dn-km .km-ans .pl{flex:none;display:flex;align-items:stretch;height:30px;border:2px solid #111;border-radius:4px;background:#fff;overflow:hidden;box-shadow:0 2px 0 rgba(0,0,0,.4)}
-.dn-km .km-ans .pl i{width:13px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;background:#1f4fb4;color:#fff;font:700 7px/1 'Manrope',sans-serif;font-style:normal}
+.dn-km .km-ans .pl i{width:16px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:2px;background:#1f4fb4;color:#fff;font:700 9px/1 'Manrope',sans-serif;font-style:normal}
 .dn-km .km-ans .pl b{padding:0 8px;display:grid;place-items:center;font:700 19px/1 ui-monospace,'DejaVu Sans Mono',monospace;color:#111;letter-spacing:.04em}
 .dn-km .km-ans .nm{min-width:0;display:flex;flex-direction:column;gap:2px}
 .dn-km .km-ans .nm b{font:400 22px/1 'Lilita One',sans-serif;color:#ffd25a;white-space:nowrap;overflow:hidden;text-overflow:clip}
@@ -351,11 +358,33 @@ export const kimim = {
 							mk.textContent = full;
 							line.classList.remove('typing');
 						}
+						fitLs();
 					};
 					mk.textContent = '';
 					tick();
 				}
 			}
+			fitLs();
+		};
+		// kısa ekranda kart ekranın en çok ~%62'sini örter (haritaya dokunulacak; cevapta damga kartın altında açıkta kalır):
+		// sığmayan ipuçları bilinçli kayan listede (data-kaydir), en yenisi altta görünür, eskiler üstte solar. 568 px'te 3 ipucu
+		// kartı ekranın %83'üne uzatıyordu, 5 ipucu ve cevap levhası ekranı aşıyordu. Uzun ekranda liste kendi boyunda.
+		let lastTop = -1;
+		const fitLs = () => {
+			const card = el.closest('.fl-q');
+			const host = card?.parentElement;
+			if (!ls.isConnected || !host) return;
+			ls.style.maxHeight = '';
+			const H = host.clientHeight || innerHeight;
+			const over = card.offsetTop + card.offsetHeight - Math.min(H * 0.62, H - 210);
+			const kay = over > 1;
+			if (kay) ls.style.maxHeight = Math.max(64, ls.offsetHeight - over) + 'px';
+			ls.toggleAttribute('data-kaydir', kay);
+			if (kay) ls.scrollTop = ls.scrollHeight;
+			// kart büyüdüyse harita kadrajı kartın altına yeniden ortalanır (soru boyunca; cevap kendi kadrajını kurar)
+			const top = cardTop(el);
+			if (app && !done && lastTop >= 0 && Math.abs(top - lastTop) > 0.03) app.cam.fit(app.boundsOf(PROV.map((_, i) => i)), { pitch: 1.02, pad: 1.03, top, dur: 0.6 });
+			if (lastTop < 0 || !done) lastTop = top;
 		};
 		// yazılmakta olan satırları tamamla (kilit ve bitişte daktilo zamanlayıcıları iptal edilir)
 		const typed = () =>
@@ -378,7 +407,9 @@ export const kimim = {
 			started = true;
 			mark();
 			for (let k = 1; k < N; k++) timers.push(setTimeout(() => !done && open(k), (v.gap || GAP) * 1000 * k));
+			fitLs();
 		});
+		fitLs();
 		const ctlBase = {
 			lock() {
 				done = true;
@@ -458,6 +489,7 @@ export const kimim = {
 				}
 			},
 			reveal(results) {
+				jokersOff(el); // joker çubuğu kalkar: kart kısalır, damga ve harita açıkta (kadraj aşağıda bundan sonra)
 				ctlBase.lock();
 				for (let k = 0; k < N; k++) open(k, false);
 				const t = b.provinces[v.hedef];
@@ -469,6 +501,7 @@ export const kimim = {
 					wrap.classList.add('lost');
 					md.querySelector('span').textContent = '!';
 				}
+				fitLs(); // bütün ipuçları ve cevap levhası: kart yine en çok ~%62 (kadraj ve damga bunun altında)
 				if (!lit.includes(v.hedef)) {
 					lit.push(v.hedef);
 					g.dark(lit);
@@ -483,7 +516,8 @@ export const kimim = {
 				const size = Math.max(tb.x1 - tb.x0, tb.z1 - tb.z0);
 				setTimeout(() => {
 					if (!el.isConnected) return;
-					app.cam.shot(t.x, t.z, { dist: size * 2.1 + 9, pitch: 0.6, yaw: app.cam.yaw + 0.35, dur: 1.8, arc: 5, yawRate: 0.045, distRate: -0.015, decay: 0.2, lens: top / 2 });
+					// il, ekranın altındaki cevap damgasının üstünde kalsın (İl Avı ve Şive gibi)
+					app.cam.shot(t.x, t.z, { dist: size * 2.1 + 9, pitch: 0.6, yaw: app.cam.yaw + 0.35, dur: 1.8, arc: 5, yawRate: 0.045, distRate: -0.015, decay: 0.2, lens: top / 2 - (1 - top) * 0.24 });
 					pop(app, t.x, t.z, '', { colors: ['#ffd25a', '#fff'], n: 16, dist: 70 });
 				}, 950);
 				const meR = results.find((r) => r.p?.human);
