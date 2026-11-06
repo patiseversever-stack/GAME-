@@ -296,6 +296,7 @@ export const mayin = {
 		let found = 0;
 		let booms = 0;
 		let done = false;
+		let over = false; // tarla kapandı (ikinci mayın ya da temiz): cevap gönderilene dek dokunuş sayılmaz
 		let started = false;
 		const timers = [];
 		const later = (fn, ms) => timers.push(setTimeout(() => el.isConnected && fn(), ms));
@@ -321,13 +322,11 @@ export const mayin = {
 
 		const b = app.board;
 		const g = guard(app);
-		g.allActive();
 		const frame = v.merkez >= 0 ? [...v.alan, v.merkez] : v.alan.slice();
 		// karanlık harita: yalnız tarla (ve merkez) ışıkta; ışıklar açılışta merkezden dışa sırayla yanar
 		const lit = v.merkez >= 0 ? [v.merkez] : [];
-		g.dark(lit);
 		const K = katman(app, 'yn-myk');
-		const unAd = adlar(app, frame, K); // adlar çakışmasız (dar ekranda küçük illerin adı yaklaşınca gelir)
+		let unAd = () => {};
 		// işaretler: ilin 3B ad hapının üstüne oturur (lab: ad noktası), patlama ilin tepesinde (top)
 		const marks = []; // { g, i, dx, dy, top, hid }
 		const o = {};
@@ -357,11 +356,8 @@ export const mayin = {
 			if (k >= 0) marks.splice(k, 1);
 			m.g.remove();
 		};
-		// merkez il: altın, hafif kalkık ve parlak; üstünde altın elmas ve nabız halkası
+		// merkez il: altın elmas ve nabız halkası (il boyası ve kalkışı aşağıda, harita kurulurken)
 		if (v.merkez >= 0) {
-			const mp = b.provinces[v.merkez];
-			g.paint(v.merkez, '#d9a521', mp.x, mp.z);
-			g.fx(v.merkez, 0.35, 1);
 			mark(v.merkez, `<g class="pp"><circle r="13" class="mzr"/><path d="M0 -11L8 0L0 11L-8 0Z" class="mz"/><path d="M0 -5.2L1.5 -1.6L5.2 -1.4L2.3 1L3.3 4.6L0 2.6L-3.3 4.6L-2.3 1L-5.2 -1.4L-1.5 -1.6Z" fill="#fff"/></g>`, { dy: -25 });
 		}
 		// dedektör taraması: tarlanın ekrandaki ortasında, tarlayı saran yarıçapta dönen soluk dilim (altı ince dilimle solar)
@@ -396,8 +392,18 @@ export const mayin = {
 			if (sweep.style.visibility) sweep.style.visibility = '';
 		});
 		// kadraj: tarlanın bütün illeri kartın altındaki alana (perspektif doğru; alttaki düğmelerden uzak)
+		// harita kurulumu bir mikro görevde: önceki kartın temizliği (gözlemci) önce çalışsın. Galeride soru hızla değişince
+		// eski kartın g.restore()'u yeni kartın karanlığından SONRA gelip sahip renklerini geri boyuyordu.
 		queueMicrotask(() => {
 			if (!el.isConnected) return;
+			g.allActive();
+			g.dark(lit);
+			if (v.merkez >= 0) {
+				const mp = b.provinces[v.merkez];
+				g.paint(v.merkez, '#d9a521', mp.x, mp.z);
+				g.fx(v.merkez, 0.35, 1);
+			}
+			unAd = adlar(app, frame, K); // adlar çakışmasız (dar ekranda küçük illerin adı yaklaşınca gelir)
 			cerceve(app, frame, { top: cardTop(el), alt: 62, pitch: 1.2, dur: 0.9, arc: 4 });
 		});
 		const stopOpen = onOpen(el, () => {
@@ -435,7 +441,7 @@ export const mayin = {
 		};
 		const spec = () => !!el.closest('.fl-q')?.classList.contains('spec'); // izlenen düello: dokunuş yok
 		api.onMapTap((pt) => {
-			if (done || !started || spec()) return;
+			if (done || over || !started || spec()) return;
 			const i = b.pick(pt.x, pt.z);
 			if (i < 0) return;
 			if (i === v.merkez) {
@@ -472,6 +478,7 @@ export const mayin = {
 				buzz(12);
 				if (!booms) say(all ? 'Tarla temiz!' : `${p.name} güvenli · ${n - found} il kaldı`);
 				if (all) {
+					over = true;
 					sfx(app, 'fetih', { delay: 0.15 });
 					app.ui?.fx?.confetti?.(app.ui.el.clientWidth || 360, { n: 40 });
 					later(finish, 650);
@@ -480,6 +487,7 @@ export const mayin = {
 				booms++;
 				boomAt(i, pt.x, pt.z);
 				if (booms >= CAN) {
+					over = true;
 					root.classList.add('dead');
 					say('İkinci mayın · tarla kapandı', true);
 					sfx(app, 'eliminate', { delay: 0.35 });

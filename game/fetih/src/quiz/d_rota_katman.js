@@ -155,8 +155,12 @@ export function katman(app, cls) {
 			}
 		}
 	};
-	// kare sürücüsü (Tufan'ın deseni): yalnız kart açıkken; öncekini saklar, bırakırken geri koyar
+	// kare sürücüsü (Tufan'ın deseni): yalnız kart açıkken; öncekini saklar, bırakırken geri koyar. Önceki bir katmanın
+	// sürücüsü saklanmaz (galeride soru hızla değişince eski kartın temizliği yenisinin kurulumundan sonra gelebilir:
+	// ölü bir sürücü geri konursa uygulama hiç dinlenmez)
 	prev = Object.prototype.hasOwnProperty.call(scene, 'onBeforeRender') ? scene.onBeforeRender : null;
+	if (prev?.__yn3) prev = null;
+	drive.__yn3 = true;
 	scene.onBeforeRender = drive;
 	return {
 		svg,

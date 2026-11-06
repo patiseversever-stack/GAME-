@@ -57,8 +57,8 @@ export function sonuc(v, route) {
 
 const ease = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u < 0.5 ? 2 * u * u : 1 - Math.pow(-2 * u + 2, 2) / 2);
 const smooth = (u) => (u <= 0 ? 0 : u >= 1 ? 1 : u * u * (3 - 2 * u));
-const PARK_X = 17; // park yeri: durak işaretinin sağ altı (numara okunsun)
-const PARK_Y = 12;
+const PARK_X = 20; // park yeri: durak işaretinin üst yanı (numara da ilin adı da okunsun); yan, gelen ayağın karşısı
+const PARK_Y = -6;
 
 /** Kartta (DOM) çizgi rakam: <svg> içinde. */
 const NUM = (k, cls = '') => `<svg class="dgt ${cls}" viewBox="-6 -6 12 12" aria-hidden="true"><path d="${digit(k)}"/></svg>`;
@@ -150,7 +150,8 @@ const KCSS = /* css */ `
 .yn-rtk .mk .xr{fill:#ff4a3a;stroke:#fff;stroke-width:1.8}
 .yn-rtk .mk .xx{fill:none;stroke:#fff;stroke-width:2.2;stroke-linecap:round}
 .yn-rtk .pop{transform-box:fill-box;transform-origin:50% 50%;animation:ynRtPop .45s cubic-bezier(.3,1.8,.5,1) both}
-.yn-rtk .pl .bd{fill:#f6f9ff;stroke:#0a1230;stroke-width:1.5;stroke-linejoin:round}
+.yn-rtk .pl .hl{fill:none;stroke:rgba(4,8,24,.6);stroke-width:4.5;stroke-linejoin:round;vector-effect:non-scaling-stroke}
+.yn-rtk .pl .bd{fill:#f6f9ff;stroke:#0a1230;stroke-width:1.4;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .yn-rtk .pl .tl{fill:var(--pc)}
 .yn-rtk .pl .st{stroke:var(--pc);stroke-width:1.7;stroke-linecap:round}
 .yn-rtk .pl.gold .bd{fill:url(#ynRtGold);stroke:#fff6cc}
@@ -266,10 +267,8 @@ export const rota = {
 
 		const b = app.board;
 		const g = guard(app);
-		g.allActive();
 		const lit = [];
-		g.dark(lit);
-		const unAd = adlar(app, v.sira);
+		let unAd = () => {};
 		const K = katman(app, 'yn-rtk');
 		K.svg.style.setProperty('--pc', color);
 		K.defs.innerHTML = `<linearGradient id="ynRtGold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff1a8"/><stop offset=".55" stop-color="#ffc83a"/><stop offset="1" stop-color="#d08a10"/></linearGradient>
@@ -298,8 +297,8 @@ export const rota = {
 			const sh = sv('g', { class: 'ps', style: 'visibility:hidden' }, gPlane);
 			sh.innerHTML = `<path d="${PLANE}" transform="scale(.82)"/>`;
 			const gEl = sv('g', { class: `pl ${cls}`, style: 'visibility:hidden' }, gPlane);
-			gEl.innerHTML = `${cls === 'gold' ? '<circle r="26" class="gl"/>' : ''}<path d="${PLANE}" class="bd"/><path d="${PLANE_TAIL}" class="tl"/><path d="M11 0H-12.5" class="st"/>`;
-			return { g: gEl, sh, at: -1, fl: null, ang: 0 };
+			gEl.innerHTML = `${cls === 'gold' ? '<circle r="26" class="gl"/>' : ''}<path d="${PLANE}" class="hl"/><path d="${PLANE}" class="bd"/><path d="${PLANE_TAIL}" class="tl"/><path d="M11 0H-12.5" class="st"/>`;
+			return { g: gEl, sh, at: -1, fl: null, ang: 0, sx: 1 };
 		};
 		const pMe = plane('me');
 		const pGold = plane('gold');
@@ -319,13 +318,26 @@ export const rota = {
 		};
 		const now = () => clock.now() / 1000;
 		const fly = (p, a, bI, dur, onEnd = null) => {
-			p.fl = { a, b: bI, t0: now(), dur, onEnd };
+			p.fl = { a, b: bI, t0: now(), dur, onEnd, sx: p.sx };
 		};
 		const o1 = {};
 		const o2 = {};
 		const q1 = {};
 		const q2 = {};
 		const q3 = {};
+		const o4 = {};
+		const q4 = {};
+		const q5 = {};
+		/** Park yanı (+1 sağ, −1 sol): gelen ayak sağdan iniyorsa uçak sola park eder (ayağın üstüne konmasın). Dik inişte yan korunur. */
+		const yanOf = (P, A, B, sx) => {
+			yayNok(A, B, 0.9, o4);
+			P.at(o4.x, o4.z, o4.y, q4);
+			P.at(B.x, B.z, B.y, q5);
+			const dx = q4.x - q5.x; // geri yön: duraktan gelen ayağa doğru
+			const d = Math.hypot(dx, q4.y - q5.y);
+			if (d < 0.5) return sx;
+			return dx > 0.2 * d ? -1 : dx < -0.2 * d ? 1 : sx;
+		};
 		const show = (e, on) => {
 			if (e._on === on) return;
 			e._on = on;
@@ -346,24 +358,28 @@ export const rota = {
 			// kısa ayakta (komşu iki il) küçük uçak: ayağın ekran boyuyla ölçeklenir; irtifada biraz büyür
 			P.at(A.x, A.z, A.y, q2);
 			P.at(B.x, B.z, B.y, q3);
-			p.base = clamp(Math.hypot(q3.x - q2.x, q3.y - q2.y) / 140, 0.58, 1);
+			p.base = clamp(Math.hypot(q3.x - q2.x, q3.y - q2.y) / 130, 0.76, 1.05);
 			const s = p.base * (1 + 0.32 * Math.sin(Math.PI * u));
 			// park yerinden kalkış ve park yerine iniş: işaretin yanındaki park noktasıyla uçuş yolu arasında yumuşak geçiş
-			const f = Math.max(1 - smooth(u / 0.16), smooth((u - 0.84) / 0.16));
-			const px = q1.x + PARK_X * f;
-			const py = q1.y + PARK_Y * f;
+			// (kalkışta eski durağın park yanı, inişte yeni durağınki)
+			const fl = p.fl;
+			if (fl) fl.sx1 = yanOf(P, A, B, fl.sx1 ?? 1);
+			const f0 = 1 - smooth(u / 0.16);
+			const f1 = smooth((u - 0.84) / 0.16);
+			const px = q1.x + PARK_X * ((fl ? fl.sx : p.sx) * f0 + (fl ? fl.sx1 : p.sx) * f1);
+			const py = q1.y + PARK_Y * (f0 + f1);
 			p.g.setAttribute('transform', `translate(${px.toFixed(1)} ${py.toFixed(1)}) rotate(${p.ang.toFixed(1)}) scale(${s.toFixed(3)})`);
 			P.at(o1.x, o1.z, o1.g + 0.05, q3);
 			p.sh.setAttribute('transform', `translate(${(q3.x + 3).toFixed(1)} ${(q3.y + 4).toFixed(1)}) rotate(${p.ang.toFixed(1)}) scale(${(p.base * (0.9 - 0.2 * Math.sin(Math.PI * u))).toFixed(3)})`);
 			show(p.g, !q1.behind);
 			show(p.sh, !q3.behind && u > 0.02 && u < 0.98);
 		};
-		/** Uçağı bir durağa park et: işaretin sağ altında (numara okunsun), burnu son ayağın yönünde. */
+		/** Uçağı bir durağa park et: işaretin üst yanında (numara ve ad okunsun), burnu son ayağın yönünde. */
 		const parkPlane = (p, P, i) => {
 			P.end(i, o1);
 			P.at(o1.x, o1.z, o1.y, q1);
 			const s = p.base ?? 0.85;
-			p.g.setAttribute('transform', `translate(${(q1.x + PARK_X).toFixed(1)} ${(q1.y + PARK_Y).toFixed(1)}) rotate(${p.ang.toFixed(1)}) scale(${s.toFixed(3)})`);
+			p.g.setAttribute('transform', `translate(${(q1.x + PARK_X * p.sx).toFixed(1)} ${(q1.y + PARK_Y).toFixed(1)}) rotate(${p.ang.toFixed(1)}) scale(${s.toFixed(3)})`);
 			show(p.g, !q1.behind);
 			show(p.sh, false);
 		};
@@ -422,6 +438,7 @@ export const rota = {
 				if (u >= 1) {
 					pMe.fl = null;
 					pMe.at = f.b;
+					pMe.sx = f.sx1 ?? pMe.sx;
 					f.onEnd?.();
 				}
 			} else if (pMe.at >= 0) parkPlane(pMe, P, pMe.at);
@@ -467,6 +484,7 @@ export const rota = {
 				if (f && gold.u >= 1) {
 					pGold.fl = null;
 					pGold.at = f.b;
+					pGold.sx = f.sx1 ?? pGold.sx;
 					f.onEnd?.();
 				}
 			}
@@ -477,8 +495,12 @@ export const rota = {
 			for (let k = 1; k < n; k++) for (const t of [0.3, 0.5, 0.7]) ek.push(yayNok(K.P.end(v.sira[k - 1], {}), K.P.end(v.sira[k], {}), t, {}));
 			return ek;
 		};
+		// harita kurulumu bir mikro görevde: önceki kartın temizliği önce çalışsın (bkz. d_mayin.js)
 		queueMicrotask(() => {
 			if (!el.isConnected) return;
+			g.allActive();
+			g.dark(lit);
+			unAd = adlar(app, v.sira);
 			cerceve(app, v.sira, { top: cardTop(el), alt: 62, pitch: 1.12, dur: 0.9, arc: 4, ek: tepeler() });
 		});
 		const stopOpen = onOpen(el, () => {
@@ -512,6 +534,7 @@ export const rota = {
 				// kalkış: uçak durakta belirir
 				pMe.at = i;
 				pMe.ang = -20;
+				pMe.sx = 1;
 				pop(app, p.x, p.z, '', { colors: [color, '#fff'], n: 10, dist: 40 });
 				sfx(app, 'claim');
 			} else {
@@ -559,8 +582,9 @@ export const rota = {
 			}, 340);
 			pMe.fl = null;
 			if (route.length) {
-				// uçak geri döner: son kalan durağa
+				// uçak geri döner: son kalan durağa (park yanı o durağa gelen ayağa göre)
 				pMe.at = route[route.length - 1];
+				pMe.sx = route.length > 1 ? yanOf(K.P, endOf(route[route.length - 2]), endOf(pMe.at), 1) : 1;
 			} else pMe.at = -1;
 			chips.get(i)?.classList.add('shk');
 			later(() => chips.get(i)?.classList.remove('shk'), 360);
