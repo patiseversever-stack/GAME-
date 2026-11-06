@@ -849,6 +849,13 @@ export class UI {
 		this.app.calmQ = !map && !!T.calm; // klasik soru tipi: harita arkada durgun (kare hızı: core/quality.js)
 		this.el.classList.toggle('qmap', map); // haritalı soruda üst şerit gizlenir, duraklat düğmesi alta iner
 		this.el.classList.toggle('qcover', cover || (!map && !!T.sahne)); // tam ekran kart ya da kendi sahnesini çizen tip (Gölge): haritanın il etiketleri ve iğneleri susar
+		// tam ekran kart giriş devinimini bitirince (≈ 450 ms) arkadaki harita çizimi durur (app.js frame); kendi sahnesini
+		// haritayla çizen tip (T.sahne) hariç
+		clearTimeout(this._coverT);
+		this.app.coverQ = false;
+		if (cover && !T.sahne) this._coverT = setTimeout(() => {
+			if (gen === this._gen && card.classList.contains('on')) this.app.coverQ = true;
+		}, 450);
 		this.sfx('question', { type: q.type, cat: q.cat });
 		t0 = clock.now();
 		showBotJokers(this, ctx.botJokers, gen);
@@ -1243,6 +1250,8 @@ export class UI {
 		const ansMs = Number.isFinite(ctx.film) ? Math.max(closest ? 3000 : 1900, Math.min(15000, film)) : Math.max(closest ? 2200 : 1600, Math.min(15000, film));
 		await this._hold(ansMs);
 		if (gen !== this._gen) return;
+		clearTimeout(this._coverT);
+		this.app.coverQ = false;
 		card.classList.remove('on');
 		this.el.classList.remove('qon', 'qmap', 'qcover');
 		this.app.calmQ = false;
@@ -2072,6 +2081,8 @@ export class UI {
 		const $ = this.$;
 		$.q.className = 'fl-q';
 		$.q.innerHTML = '';
+		clearTimeout(this._coverT);
+		this.app.coverQ = false;
 		this.el.classList.remove('qon', 'qmap', 'qcover');
 		this.app.calmQ = false;
 		$.wheel.classList.remove('on', 'pick', 'done', 'spinning', 'fetih');

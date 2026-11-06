@@ -117,6 +117,27 @@ export function katman(app, cls) {
 			out.behind = !!s.behind;
 			return out;
 		},
+		/**
+		 * Ad hapının ekrandaki gerçek yeri ve yarı boyu (css px): ad katmanının kaydırması (çakışan seçim adı kayar), ölçeği
+		 * ve ekran kenarına kıstırması dahil (labels.js shader'ıyla aynı hesap). out: { x, y, hw, hh, behind }.
+		 */
+		ad(i, out = {}) {
+			b.labelAt(i, v);
+			app.toScreen(v, s);
+			const L = b.labelLayer;
+			const off = L?.off;
+			const sc = off ? off[i * 3 + 2] || 1 : 1;
+			const hh = ((17 + 4 * (L?.hi?.[i] ?? 1)) * sc) / 2;
+			const hw = hh * (L?.size?.[i * 3] || 3);
+			const W = app._rc?.width || app.ui?.el?.clientWidth || innerWidth;
+			const H = app._rc?.height || app.ui?.el?.clientHeight || innerHeight;
+			out.x = Math.min(W - hw - 6, Math.max(hw + 6, s.x + (off ? off[i * 3] : 0)));
+			out.y = Math.min(H - hh - 6, Math.max(hh + 6, s.y - (off ? off[i * 3 + 1] : 0)));
+			out.hw = hw;
+			out.hh = hh;
+			out.behind = !!s.behind;
+			return out;
+		},
 		/** İlin tepesinin dünya noktası (yay ucu). */
 		end(i, out = {}) {
 			const p = b.provinces[i];

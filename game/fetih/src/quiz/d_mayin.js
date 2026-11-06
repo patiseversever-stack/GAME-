@@ -327,28 +327,102 @@ export const mayin = {
 		const lit = v.merkez >= 0 ? [v.merkez] : [];
 		const K = katman(app, 'yn-myk');
 		let unAd = () => {};
-		// işaretler: ilin 3B ad hapının üstüne oturur (lab: ad noktası), patlama ilin tepesinde (top)
-		const marks = []; // { g, i, dx, dy, top, hid }
+		// işaretler: ilin 3B ad hapının üstüne oturur (ad: hapın ekrandaki gerçek yeri), patlama ilin tepesinde (top).
+		// bx (işaretin kendi kutusu, çapa noktasına göre) verilen işaret yerini seçer: adın üstü (öntanımlı), sağı ya da
+		// solu; komşu ilin adına ya da başka bir işarete binmeyen ilk yer. Kıyıda alt alta dizilen adlarda (İzmir, Aydın,
+		// Muğla) üstteki yer bir üst ilin adının üstüydü.
+		const marks = []; // { g, i, dx, dy, top, hid, bx, at }
 		const o = {};
+		const occ = []; // bu çizimde dolu kutular: görünen adlar (i) ve yerleşen işaretler (i = −1)
+		const cut = (a, q) => Math.max(0, Math.min(a.r, q.r) - Math.max(a.l, q.l)) * Math.max(0, Math.min(a.b, q.b) - Math.max(a.t, q.t));
+		const box = (x, y, bx) => ({ l: x + bx[0], t: y + bx[1], r: x + bx[2], b: y + bx[3], i: -1 });
+		const cand = Array.from({ length: 6 }, () => [0, 0]);
+		const scr = { l: 0, t: 0, r: 0, b: 0 };
 		const place = (P, m) => {
 			if (m.top) P.top(m.i, o);
-			else P.lab(m.i, o);
+			else P.ad(m.i, o);
 			const hide = o.behind;
 			if (hide !== m.hid) {
 				m.hid = hide;
 				m.g.style.visibility = hide ? 'hidden' : '';
 			}
-			if (!hide) m.g.setAttribute('transform', `translate(${(o.x + m.dx).toFixed(1)} ${(o.y + m.dy).toFixed(1)})`);
+			if (hide) return;
+			let x = o.x + m.dx;
+			let y = o.y + m.dy;
+			if (m.bx && !m.top) {
+				// adayların sırası: adın üstü, üstte sağa ve sola kayık, sağı, solu, altı. Kendi adı görünmüyorsa (dar ekranda
+				// elenmiş) işaret çapa noktasına iğne gibi oturur: yan adaylar noktanın hemen yanında
+				const own = (La?.alpha?.[m.i] ?? 1) >= 0.35;
+				const hw = own ? o.hw : 0;
+				const hh = own ? o.hh * 0.82 : 0;
+				const [x0, y0, x1, y1] = m.bx;
+				const yc = o.y - (y0 + y1) / 2;
+				cand[0][0] = x;
+				cand[0][1] = y;
+				cand[1][0] = x + hw * 0.72;
+				cand[1][1] = y;
+				cand[2][0] = x - hw * 0.72;
+				cand[2][1] = y;
+				cand[3][0] = o.x + hw + 3 - x0;
+				cand[3][1] = yc;
+				cand[4][0] = o.x - hw - 3 - x1;
+				cand[4][1] = yc;
+				cand[5][0] = x;
+				cand[5][1] = o.y + hh + 3 - y0;
+				scr.r = app._rc?.width || innerWidth;
+				scr.b = app._rc?.height || innerHeight;
+				const cost = (k) => {
+					const r = box(cand[k][0], cand[k][1], m.bx);
+					// ekran dışında kalan pay da binme sayılır (kesik işaret)
+					let s = (r.r - r.l) * (r.b - r.t) - cut(r, scr);
+					for (const q of occ) if (q.i !== m.i) s += cut(r, q);
+					return s;
+				};
+				// üstü boşsa hep üstü; değilse önceki yer hâlâ boşsa o (kamera oynarken işaret gidip gelmesin); yoksa sıradaki
+				// ilk boş yer; hiçbiri boş değilse en az binen
+				let k = 0;
+				if (cost(0) > 3) {
+					if (m.at > 0 && cost(m.at) <= 3) k = m.at;
+					else {
+						let best = Infinity;
+						for (let j = 0; j < cand.length; j++) {
+							const c = cost(j);
+							if (c <= 3) {
+								k = j;
+								break;
+							}
+							if (c < best) {
+								best = c;
+								k = j;
+							}
+						}
+					}
+				}
+				m.at = k;
+				x = cand[k][0];
+				y = cand[k][1];
+				occ.push(box(x, y, m.bx));
+			}
+			m.g.setAttribute('transform', `translate(${x.toFixed(1)} ${y.toFixed(1)})`);
 		};
-		const mark = (i, html, { dx = 0, dy = 0, cls = '', top = false } = {}) => {
+		const mark = (i, html, { dx = 0, dy = 0, cls = '', top = false, bx = null } = {}) => {
 			const gEl = sv('g', { class: cls }, K.svg);
 			gEl.innerHTML = html;
-			const m = { g: gEl, i, dx, dy, top, hid: false };
+			const m = { g: gEl, i, dx, dy, top, hid: false, bx, at: 0 };
 			marks.push(m);
 			place(K.P, m); // hemen yerinde (bir sonraki çizimi beklemeden; köşede bir kare görünmesin)
 			return m;
 		};
+		const La = app.board.labelLayer;
 		K.on((P) => {
+			occ.length = 0;
+			for (const i of frame) {
+				if ((La?.alpha?.[i] ?? 1) < 0.35) continue;
+				P.ad(i, o);
+				if (o.behind) continue;
+				// görünen hap (hücrenin kenar payı düşülür)
+				occ.push({ l: o.x - o.hw * 0.96, r: o.x + o.hw * 0.96, t: o.y - o.hh * 0.82, b: o.y + o.hh * 0.82, i });
+			}
 			for (const m of marks) place(P, m);
 		});
 		const unmark = (m) => {
@@ -358,7 +432,7 @@ export const mayin = {
 		};
 		// merkez il: altın elmas ve nabız halkası (il boyası ve kalkışı aşağıda, harita kurulurken)
 		if (v.merkez >= 0) {
-			mark(v.merkez, `<g class="pp"><circle r="13" class="mzr"/><path d="M0 -11L8 0L0 11L-8 0Z" class="mz"/><path d="M0 -5.2L1.5 -1.6L5.2 -1.4L2.3 1L3.3 4.6L0 2.6L-3.3 4.6L-2.3 1L-5.2 -1.4L-1.5 -1.6Z" fill="#fff"/></g>`, { dy: -25 });
+			mark(v.merkez, `<g class="pp"><circle r="13" class="mzr"/><path d="M0 -11L8 0L0 11L-8 0Z" class="mz"/><path d="M0 -5.2L1.5 -1.6L5.2 -1.4L2.3 1L3.3 4.6L0 2.6L-3.3 4.6L-2.3 1L-5.2 -1.4L-1.5 -1.6Z" fill="#fff"/></g>`, { dy: -25, bx: [-9, -12, 9, 12] });
 		}
 		// dedektör taraması: tarlanın ekrandaki ortasında, tarlayı saran yarıçapta dönen soluk dilim (altı ince dilimle solar)
 		const sweep = sv('g', { class: 'tr', style: 'visibility:hidden' }, K.svg);
@@ -428,7 +502,7 @@ export const mayin = {
 			const flat = Math.max(0.35, Math.min(0.85, Math.sin(app.cam.pitch || 1)));
 			const bx = mark(i, boomSVG(flat), { cls: 'bx', top: true });
 			later(() => unmark(bx), 1400);
-			mark(i, `<g class="pp">${BOOMED}</g>`, { dy: -26 });
+			mark(i, `<g class="pp">${BOOMED}</g>`, { dy: -26, bx: [-14, -14, 14, 14] });
 			pop(app, x, z, 'BUM!', { colors: FIRE, n: 30, dist: 120, cls: 'dn yn-my-bum' });
 			app.cam.impulse?.(0.9);
 			sfx(app, 'tower');
@@ -465,7 +539,7 @@ export const mayin = {
 				found++;
 				g.paint(i, color, pt.x, pt.z);
 				g.fx(i, 0.42, 0);
-				mark(i, `<g class="fd">${FLAG(color, 1.1)}</g>`, { dx: 3, dy: -13 });
+				mark(i, `<g class="fd">${FLAG(color, 1.1)}</g>`, { dx: 3, dy: -13, bx: [-6, -34.4, 17.2, 2.5] });
 				segs[found - 1]?.classList.add('on');
 				cnt.textContent = String(found);
 				cnt.classList.remove('pop');
@@ -507,7 +581,7 @@ export const mayin = {
 			// yarı yarıya: mayın dedektörü iki mayını sarı üçgenle işaretler
 			joker(e) {
 				if (!Array.isArray(e?.mines)) return;
-				for (const i of e.mines) if (!seen.has(i)) mark(i, `<g class="pp">${WARN}</g>`, { dy: -26 });
+				for (const i of e.mines) if (!seen.has(i)) mark(i, `<g class="pp">${WARN}</g>`, { dy: -26, bx: [-10.5, -12.5, 10.5, 6.5] });
 				app.ui.toast?.('Mayın dedektörü: iki mayın işaretlendi', { tone: 'good', ms: 2000 });
 				sfx(app, 'kbPing', { n: 1 });
 			},
@@ -557,7 +631,8 @@ export const mayin = {
 					if (mineB.has(i) && !seen.has(i)) g.paint(i, SCORCH, p.x, p.z);
 					if (mineB.has(i)) g.fx(i, -0.22, 0);
 					const dots = hit.map((r, j) => `<circle class="dot" cx="${(j - (hit.length - 1) / 2) * 9}" cy="12.5" r="3.6" style="fill:${r.color}"/>`).join('');
-					mark(i, `<g class="pp" style="--d:${(0.15 + k * 0.11).toFixed(2)}s">${hit.length ? BOOMED : MINE()}${dots}</g>`, { dy: -27 });
+					const xs = Math.max(14, ((hit.length - 1) / 2) * 9 + 3.8);
+					mark(i, `<g class="pp" style="--d:${(0.15 + k * 0.11).toFixed(2)}s">${hit.length ? BOOMED : MINE()}${dots}</g>`, { dy: -27, bx: hit.length ? [-xs, -14, xs, 16.4] : [-11, -12.8, 11, 10.8] });
 					later(() => sfx(app, 'tick'), 150 + k * 110);
 				});
 				// güvenli iller: onu bulanların bayrakları yan yana (oyuncu sırasıyla); kimse bulamadıysa yeşil halka
@@ -565,12 +640,13 @@ export const mayin = {
 					const who = okBy.get(i) || [];
 					const d = (0.35 + mines.length * 0.11 + k * 0.08).toFixed(2);
 					if (!who.length) {
-						mark(i, `<g class="pp" style="--d:${d}s"><circle r="9" class="okc"/><path d="${CHECK}" class="ok" transform="scale(1.05)"/></g>`, { dy: -23 });
+						mark(i, `<g class="pp" style="--d:${d}s"><circle r="9" class="okc"/><path d="${CHECK}" class="ok" transform="scale(1.05)"/></g>`, { dy: -23, bx: [-10, -10, 10, 10] });
 						return;
 					}
 					const s = who.length > 2 ? 0.72 : 0.86;
 					const html = who.map((r, j) => `<g transform="translate(${((j - (who.length - 1) / 2) * 13 * s).toFixed(1)} 0)">${FLAG(r.color, s)}</g>`).join('');
-					mark(i, `<g class="fd" style="--d:${d}s">${html}</g>`, { dx: 2, dy: -13 });
+					const ex = ((who.length - 1) / 2) * 13 * s;
+					mark(i, `<g class="fd" style="--d:${d}s">${html}</g>`, { dx: 2, dy: -13, bx: [-ex - 5.6 * s, -31.4 * s, ex + 15.8 * s, 2.4 * s] });
 				});
 				// kart: oyuncu satırları (portreleri arayüz .fl-who işaretlerinden çizer)
 				const order = all.slice().sort((x, y) => x.r.err - y.r.err || x.r.time - y.r.time);

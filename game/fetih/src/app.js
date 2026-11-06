@@ -455,7 +455,9 @@ export class App {
 		this._moved = this._motion(dt);
 		if (draw) {
 			this.ui.update();
-			this.render();
+			// opak tam ekran soru kartı açıkken arkadaki 3B harita çizilmez (kartın altında görünmüyor; telefonda bütün 3B
+			// geçişi boşa gidiyordu). Son kare tuvalde kalır; kart kapanınca çizim kaldığı yerden sürer. ui.js coverQ'yu koyar.
+			if (!this.coverQ || !this.ui.$?.q?.classList.contains('on')) this.render(); // kart kapandıysa (her yoldan) çizim hemen sürer
 		}
 	}
 

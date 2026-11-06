@@ -244,6 +244,8 @@ export const CSS_ARENA = /* css */ `
 .fl-q:not(.map) .fl-qwho .fl-qp .tt:empty{display:none}
 /* cevapta süreler afişin altında görünür; aynı yere asılı "YAYILMA · HERKES CEVAPLIYOR" bandı o an söner (üstlerini örterdi) */
 .fl-q.rv:not(.map) .fl-qwho:not(.duel)::after{opacity:0;transition:opacity .2s}
+/* tam ekran kartta takım bandı tip başlığının üstüne biniyordu (2v2): afiş takımları zaten gösteriyor */
+.fl-q.cover .fl-qwho.teams::after{display:none}
 .fl-q:not(.map) .fl-qwho:not(.duel):not(.teams) .fl-qp .tt{left:50%;right:auto;transform:translateX(-50%)}
 /* VS rozetleri ve etiketler */
 .fl-q:not(.map) .fl-qwho .fl-qvs{top:auto;bottom:-4.2cqw;padding:.2cqw 2cqw}

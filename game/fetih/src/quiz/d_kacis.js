@@ -110,7 +110,7 @@ const CSS = /* css */ `
 .kc-door .dr-pl::before{left:3px}.kc-door .dr-pl::after{right:3px}
 .kc-door .dr-tx{display:block;max-width:100%;font:700 14px/1.06 'Fredoka',sans-serif;color:var(--ink);text-shadow:0 1px 0 rgba(255,255,255,.55);overflow-wrap:normal;word-break:normal;hyphens:manual}
 .kc-door::after{content:'';position:absolute;left:6%;right:6%;bottom:-3px;height:5px;border-radius:50%;pointer-events:none;
-  background:radial-gradient(closest-side,rgba(var(--glow),.95),rgba(var(--glow),0));filter:blur(1px);animation:kcGlow 1.6s ease-in-out infinite alternate}
+  background:radial-gradient(closest-side,rgba(var(--glow),.95),rgba(var(--glow),.35) 55%,rgba(var(--glow),0));animation:kcGlow 1.6s ease-in-out infinite alternate}
 .kc-door .dr-knob{position:absolute;top:58%;width:7%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff6d0,#9a6a1a 60%,#4a2a06);pointer-events:none;right:9%}
 .kc-door.d2 .dr-knob{right:auto;left:9%}
 .kc-door:not(:disabled):active .dr-f{filter:brightness(1.18)}
@@ -130,11 +130,12 @@ const CSS = /* css */ `
 .yn-kc.busy .kc-door,.yn-kc.over .kc-door{pointer-events:none}
 .yn-kc.alarm .kc-door:not(.trap){filter:saturate(.4) brightness(.6)}
 /* ışıklar: saray meşale, lab floresan, stad kafesli lamba; hepsi titreşir. Kap arka duvarın içinde, kapılardan önce:
-   ışık duvarın üstüne düşer, kapılar ve levhalar ışığın üstünde kalır (yerleşim oda koordinatında: kap duvarın köşesini geri alır) */
+   ışık duvarın üstüne düşer, kapılar ve levhalar ışığın üstünde kalır (yerleşim oda koordinatında: kap duvarın köşesini geri alır).
+   Parıltı düz karışımla: screen karışımı her karede ayrı bir çizim geçişi istiyordu (yazılım çizicide ekran 1,5–2 kat yavaştı) */
 .kc-lamps{position:absolute;left:calc(var(--bL) * -1);top:calc(var(--bT) * -1);width:0;height:0;pointer-events:none}
 .kc-lamp{position:absolute;width:var(--lw);height:calc(var(--lw) * 2);margin-left:calc(var(--lw) / -2);pointer-events:none}
 .kc-lamp .gl{position:absolute;left:50%;top:30%;width:calc(var(--lw) * 7);height:calc(var(--lw) * 7);margin:calc(var(--lw) * -3.5) 0 0 calc(var(--lw) * -3.5);border-radius:50%;
-  background:radial-gradient(closest-side,rgba(var(--glow),.55),rgba(var(--glow),.12) 60%,transparent);animation:kcGlow 1.3s ease-in-out infinite alternate;mix-blend-mode:screen}
+  background:radial-gradient(closest-side,rgba(var(--glow),.62),rgba(var(--glow),.14) 60%,transparent);animation:kcGlow 1.3s ease-in-out infinite alternate}
 .kc-lamp .br{position:absolute;left:30%;right:30%;top:55%;height:45%;background:linear-gradient(90deg,#2a1a0a,#7a5a2a,#2a1a0a);border-radius:2px}
 .kc-lamp .fl{position:absolute;left:12%;right:12%;top:0;height:62%;border-radius:50% 50% 45% 45%/62% 62% 38% 38%;transform-origin:50% 100%;
   background:radial-gradient(60% 50% at 50% 70%,#fff8d0,#ffd23a 40%,#ff7a1a 70%,rgba(255,60,10,0) 100%);animation:kcFlame .16s ease-in-out infinite alternate}
@@ -762,11 +763,12 @@ export const kacis = {
 				asking = false;
 				d.classList.remove('ask');
 				if (!alive || over || revealed) return;
-				if (!r || r.rejected || r.late || r.k !== k) {
-					if (!r?.late) for (const x of doorsEl.children) if (!x.classList.contains('gone')) x.disabled = false;
+				if (r && (r.rejected || r.late || r.k !== k)) {
+					if (!r.late) for (const x of doorsEl.children) if (!x.classList.contains('gone')) x.disabled = false;
 					return;
 				}
-				ok = !!r.ok;
+				// yanıt yoksa (sunucuda adım yok ya da ağ koptu) koşu donmasın: kapı açılır, hükmü cevapta sunucunun judge'ı verir
+				ok = r ? !!r.ok : true;
 			}
 			picks.push(i);
 			at.push(t);

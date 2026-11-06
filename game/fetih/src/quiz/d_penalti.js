@@ -71,7 +71,7 @@ const CSS = /* css */ `
 .pk-net .mesh{transform-box:view-box}
 .pk-net .rip{fill:none;stroke:#fff;stroke-width:2;opacity:0}
 .pk-snow{position:absolute;inset:0;z-index:4;pointer-events:none;overflow:hidden}
-.pk-snow i{position:absolute;top:-8px;width:var(--s);height:var(--s);border-radius:50%;opacity:.9;background:radial-gradient(circle,#fff 0 42%,rgba(255,255,255,.75) 56%,rgba(255,255,255,0) 72%)}
+.pk-snow i{position:absolute;top:-8px;width:var(--s);height:var(--s);border-radius:50%;opacity:.9;background:radial-gradient(circle,#fff 0 50%,rgba(255,255,255,.7) 62%,rgba(255,255,255,0) 74%)}
 /* kaleci: gövde SVG, başı oyuncunun portresi. Levhaların altında durur (yazıya binmez); yalnız uçuşta öne geçer */
 .pk-kp{position:absolute;z-index:3;transform-origin:50% 64%;pointer-events:none}
 .pk-kp.fly{z-index:8}
@@ -540,11 +540,11 @@ export const penalti = {
 			const snow = root.querySelector('.pk-snow');
 			if (snow) {
 				// kar: tanecikler açık değerli WAAPI devinimiyle düşer. Değişkenli @keyframes (var(--H)) bileşikçide koşmuyordu:
-				// 52 tanecik her karede ana iş parçacığında boyanıyordu (yazılım çizicide ekran görüntüsü 5–8 sn uzuyordu).
+				// 52 tanecik her karede ana iş parçacığında boyanıyordu (yazılım çizicide ekran görüntüsü 5–8 sn uzuyordu); 26 iri tanecik.
 				// Gölgesiz yumuşak kenar (degrade); azaltılmış devinimde tanecikler yerinde durur
 				const R = rngOf(v.q.id || 'kar');
 				const still = !!globalThis.matchMedia?.('(prefers-reduced-motion: reduce)')?.matches;
-				const flakes = Array.from({ length: 40 }, (_, k) => ({ x: R() * W, y: R() * H, s: k % 8 ? 1.8 + R() * 2.6 : 4.8 + R() * 2, d: (k % 8 ? 3.4 + R() * 3 : 2.2 + R()) * 1000, dl: R(), dx: (R() - 0.5) * 40 }));
+				const flakes = Array.from({ length: 26 }, (_, k) => ({ x: R() * W, y: R() * H, s: k % 6 ? 3 + R() * 2.6 : 6.5 + R() * 2.5, d: (k % 6 ? 3.4 + R() * 3 : 2.2 + R()) * 1000, dl: R(), dx: (R() - 0.5) * 40 }));
 				snow.innerHTML = flakes.map((f) => `<i style="left:${f1(f.x)}px;${still ? `top:${f1(f.y)}px;` : ''}--s:${f1(f.s)}px"></i>`).join('');
 				if (!still)
 					[...snow.children].forEach((e, k) => {
